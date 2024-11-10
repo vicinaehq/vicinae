@@ -1,14 +1,11 @@
-import { OmnicastClient, UpdateOptions } from './omnicast';
-import { Action, Container, CurrentRowChangedAction, List, ListItem, SearchInput, StatefulComponent, TextChangedAction } from './ui';
+import { OmnicastClient } from './omnicast';
+import { Action, CurrentRowChangedAction, HStack, List, ListItem, LocalImage, SearchInput, Component, TextChangedAction, VStack } from './native-ui';
 
 class OnSearch extends TextChangedAction {}
 class OnRowChanged extends CurrentRowChangedAction {}
 class TimeoutOkay extends Action {}
 
-class Application extends StatefulComponent {
-	selected: number = 0
-	inputValue = ""
-	count = 0;
+class FruitList extends Component {
 	items = [
 		{name: 'banana'},
 		{name: 'strawberry'},
@@ -18,43 +15,62 @@ class Application extends StatefulComponent {
 		{name: 'pineapple'},
 	]
 	activeItem = this.items[0]
+	selected = 0
 
-	update(action: OnSearch | OnRowChanged | TimeoutOkay, { dispatchAsync }: UpdateOptions) {
+	onMount() {
+		console.log(`mounted ${this.type}`);
+	}
+
+	update(action: Action) {
+		if (action instanceof OnRowChanged) {
+			this.selected = action.value;
+			console.log({ selected: this.selected });
+		}
+	}
+
+	render() {
+		console.log(`render list: ${this.selected}`);
+		return (
+			new List(
+				...this.items.map(({ name }) => new ListItem(name)),
+			)
+			.selected(this.selected)
+			.currentRowChanged(OnRowChanged)
+		)
+	}
+};
+
+class Application extends Component {
+	inputValue = ""
+	count = 0;
+	
+	onMount() {
+		console.log('mounted');
+	}
+
+	updateProps() {
+	}
+
+	update(action: OnSearch | OnRowChanged | TimeoutOkay) {
 		if (action instanceof OnSearch) {
 			this.inputValue = action.value;
 		}
-		else if (action instanceof OnRowChanged) {
-			this.selected = action.value;
-			this.activeItem = this.items[action.value];
-			console.log('dispatching');
-			dispatchAsync(async () => {
-				return new Promise<TimeoutOkay>(resolve => setTimeout(() => resolve(new TimeoutOkay()), 2000));
-			});
-		}
-		else if (action instanceof TimeoutOkay) {
-			console.log('timeout is okay');
-		} else {
-			
-		}
-
 
 		++this.count;
 	}
 
 	render() {
-		console.log({ item: this.activeItem });
-
 		return (
-			new Container(
-				[
-					new SearchInput({ placeholder: 'la ting la bing', onTextChanged: OnSearch }),
-					new List(
-						this.items.map(({ name }) => new ListItem({ label: name })),
-						{ selected: this.selected, currentRowChanged: OnRowChanged  }
-					)
-				],
-				{ direction: 'vertical', margins: 10 }
+			new VStack(
+				new HStack(
+					new LocalImage('/home/aurelle/Pictures/peepobank/peepo-glod.png').size(40),
+					new SearchInput({ placeholder: 'la ting la bing', style: "font-size: 16px", onTextChanged: OnSearch }),
+					new LocalImage('/home/aurelle/peepo-weird-wid.gif').size(40)
+				)
+				.margins(0),
+				new FruitList()
 			)
+			.margins(10)
 		);
 	}
 };

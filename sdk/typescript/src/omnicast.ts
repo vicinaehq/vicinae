@@ -1,6 +1,7 @@
 import { createConnection, Socket } from 'net';
-import { Action, Component, isHandlerType, StatefulComponent } from './ui';
+import { Action, NativeElement, isHandlerType, Node, Component, HandlerType } from './native-ui';
 import { randomUUID } from 'crypto';
+import { inspect } from 'util';
 
 export const MessageTypes = [
 	'render',
@@ -30,12 +31,42 @@ export type SerializedComponent = {
 	children: SerializedComponent[],
 };
 
+export type Nullable<T> = T | null;
+
+export type ComponentTree = {
+	component: Node,
+	children: ComponentTree[];
+};
+
 export class OmnicastClient {
 	private socket: Socket;
 	private handlerMap = new Map<string, RegisteredHandler>;
-	private currentTree: SerializedComponent | null = null;
+	private handlerStore = new Map<Symbol, Map<HandlerType, string>>;
+	private root: Nullable<ComponentTree> = null;
 
-	private sendRaw(data: Record<string, any>)  {
+	private findHandler(node: Node, type: HandlerType): Nullable<string> {
+		return this.handlerStore.get(node.id)?.get(type) ?? null;
+	}
+
+	private createHandler(node: Node, type: HandlerType): string {
+		const handlers = this.handlerStore.get(node.id) ?? new Map<HandlerType, string>();
+		const id = randomUUID();
+
+		handlers.set(type, id);
+		this.handlerStore.set(node.id, handlers);
+
+		return id;
+	}
+
+	private getOrCreateHandler(node: Node, type: HandlerType) {
+		const id = this.findHandler(node, type);
+
+		if (id) return id;
+		 
+		return this.createHandler(node, type);
+	}
+
+	private sendRaw(data: Record<string, any>) {
 		const msg = Buffer.from(JSON.stringify(data), 'utf-8')
 		const buffer = Buffer.allocUnsafe(msg.length + 4);
 
@@ -44,7 +75,7 @@ export class OmnicastClient {
 
 		this.socket.write(buffer);
 	}
-	
+
 	private parseMessage(data: Buffer): Message {
 		const mlen = data.readUInt32LE();
 		const payload = data.subarray(4, mlen + 4);
@@ -72,55 +103,135 @@ export class OmnicastClient {
 		this.app.render();
 	}
 
-	public renderNode(ctx: StatefulComponent, current: Record<string, any> | null, node: Component): SerializedComponent {
-		const data: SerializedComponent = {
-			type: node.type,
-			props: node.props,
-			children: []
-		};
+	serializeNativeElement(node: NativeElement): ComponentTree {
+		const tree: ComponentTree = { component: node, children: [] };
 
-		const dispatchAsync = (fn: () => Promise<Action>) => {
+		for (const children of node.children) {
+			tree.children.push(this.serializeNode(children));
 		}
 
-		for (const [k, v] of Object.entries(node.props)) {
-			if (isHandlerType(k)) {
-				let id = '';
-				if (current && current.type == node.type && current.props[k]) id = current.props[k];
-				else id = randomUUID();
+		return tree;
+	}
 
-				const HandlerAction: new(...params: any[]) => Action = data.props[k];
+    serializeNode(node: Node): ComponentTree {
+		if (node instanceof Component) {
+			return { component: node, children: [this.serializeNativeElement(node.render())] };
+		}
+		return this.serializeNativeElement(node); 
+	}
 
-				data.props[k] = id;
-				this.handlerMap.set(id, {
-					dispatcher: (payload: any[]) => ctx.update(new HandlerAction(payload), { dispatchAsync: this.dispatchAsync.bind(this) })
-				});
-			} else {
-				data.props[k] = v;
+	public printAsHtml(tree: ComponentTree) {
+		let s = '';
+
+		const recurse = (tree: ComponentTree, depth = 0) => {
+			const indent = `\t`.repeat(depth);
+
+			const props = Object.entries(tree.component.props).filter(([k]) => !isHandlerType(k)).map(([k, v]) => `${k}=${v}`).join(' ');
+
+			if (tree.children.length == 0) {
+				s += indent + `<${tree.component.type} ${props} />\n`
+				return ;
 			}
+
+			s += indent + `<${tree.component.type} ${props}>\n`
+			for (const child of tree.children) {
+				recurse(child, depth + 1);
+			}
+			s += indent + `</${tree.component.type}>\n`;
 		}
 
-		for (let i = 0; i != node.children.length; i += 1) {
-			const child = node.children[i];
-			let childCtx = child instanceof Component ? ctx : child;
-			let childNode = child instanceof Component ? child : child.render();
+		recurse(tree);
 
-			data.children[i] = this.renderNode(childCtx, current?.children[i] ?? null, childNode);
+		console.log(s);
+	}
+
+	public printTree(node: Node) {
+		const serialized = this.serializeNode(node);
+
+		console.log(inspect(serialized, { colors: true, depth: null }));
+	}
+
+	public updateComponentTree(root: Nullable<ComponentTree>, next: ComponentTree): ComponentTree {
+		if (!root) {
+			return this.updateComponentTree(next, next);
 		}
 
-		return data;
+		if (root.component.type != next.component.type) {
+			if (next.component instanceof Component) next.component.onMount();
+			root = next;
+		}
+
+
+		root.component.props = { ...next.component.props };
+
+		const min = Math.min(root.children.length, root.children.length);
+
+		for (let i = 0; i != min; ++i) {
+			root.children[i] = this.updateComponentTree(root.children[i], next.children[i]);
+		}
+
+		for (let i = min; i < next.children.length; ++i) {
+			root.children.push(this.updateComponentTree(next.children[i], next.children[i]));
+		}
+
+		while (root.children.length > next.children.length) root.children.pop();
+
+		return root;
+	}
+
+
+	serializeTree(tree: ComponentTree): SerializedComponent {
+		const serialize = (ctx: Component, tree: ComponentTree): SerializedComponent => {
+			if (tree.component instanceof Component) {
+				// custom component always have only one child
+				return serialize(tree.component, tree.children[0]);
+			}
+			
+			const { type, props, } = tree.component;
+			const data: SerializedComponent = {
+				type,
+				props,
+				children: []
+			};
+
+			for (const [k, v] of Object.entries(data.props)) {
+				if (isHandlerType(k)) {
+					const HandlerAction: new (...params: any[]) => Action = data.props[k];
+					const id = this.getOrCreateHandler(tree.component, k);
+
+					data.props[k] = id;
+					this.handlerMap.set(id, {
+						dispatcher: (payload: any[]) => ctx.update(new HandlerAction(payload), { dispatchAsync: () => {} })
+					});
+				} else {
+					data.props[k] = v;
+				}
+			}
+
+			for (const child of tree.children) {
+				data.children.push(serialize(ctx, child))
+			}
+
+			return data;
+		}
+
+		return serialize(this.app, tree);
 	}
 
 	public render() {
+		if (this.root == null) this.app.onMount();
+
 		const root = this.app.render();
-		const tree = this.renderNode(this.app, this.currentTree, root);
+		const tree = this.updateComponentTree(this.root, this.serializeNode(root));
+		const data = this.serializeTree(tree);
 
-		//console.log(JSON.stringify(tree, null, 2));
+		//console.log(JSON.stringify(data, null, 2));
 
-		this.currentTree = tree;
-		this.sendMessage('render', { root: tree });
+		this.root = tree;
+		this.sendMessage('render', { root: data });
 	}
- 
-	constructor(private readonly app: StatefulComponent) {
+
+	constructor(private readonly app: Component) {
 		this.socket = createConnection({ path: process.env.ENDPOINT! });
 		this.sendMessage('register', { token: process.env.TOKEN! });
 
@@ -129,18 +240,23 @@ export class OmnicastClient {
 				const message = this.parseMessage(data);
 
 				if (message.type == 'event') {
+					console.log(message);
 					const handler = this.handlerMap.get(message.data.handlerId);
 
-					if (!handler) return ;
+					if (!handler) {
+						console.log('no handler ' + message.data.handlerId);
+						return;
+					}
 
 					handler.dispatcher(message.data);
 					this.render();
 				}
-			}  catch (error) {
-				console.error(error);	
+			} catch (error) {
+				console.error(error);
 			}
 		});
 
-		this.socket.on('error', (error) => { throw error });
+	   this.socket.on('error', (error) => { throw error });
 	}
-};
+}
+
