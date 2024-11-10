@@ -1,4 +1,5 @@
 #pragma once
+#include "extension_manager.hpp"
 #include <iostream>
 #include <jsoncpp/json/json.h>
 #include <jsoncpp/json/value.h>
@@ -33,10 +34,11 @@ public:
   virtual Component *popChild() { return nullptr; }
 };
 
-Component *createComponent(std::string_view type, Json::Value props,
-                           Json::Value children);
+Component *createComponent(ExtensionManager *manager, std::string_view type,
+                           Json::Value props, Json::Value children);
 
-Component *renderComponentTree(Component *root, Json::Value newNode);
+Component *renderComponentTree(ExtensionManager *manager, Component *root,
+                               Json::Value newNode);
 
 class ListItemComponent : public Component {
 
@@ -51,6 +53,12 @@ public:
   }
 
   void updateProps(Json::Value newProps) override {
+    if (auto selected = newProps.find("selected");
+        selected && selected->isBool()) {
+      std::cout << "set selected item=" << selected->asBool() << std::endl;
+      item->setSelected(selected->asBool());
+    }
+
     item->setText(QString::fromStdString(newProps["label"].asString()));
     props = newProps;
   }
@@ -58,10 +66,12 @@ public:
 
 class ListComponent : public Component {
   QListWidget *list;
+  ExtensionManager *manager;
 
 public:
-  ListComponent(Json::Value props, Json::Value children)
-      : Component("List", props, children) {
+  ListComponent(ExtensionManager *manager, Json::Value props,
+                Json::Value children)
+      : Component("List", props, children), manager(manager) {
     list = new QListWidget();
     ui = list;
 
@@ -71,14 +81,34 @@ public:
       list->addItem(component->item);
       this->children.push_back(component);
     }
+
+    if (auto currentRowChanged = props.find("currentRowChanged");
+        currentRowChanged && currentRowChanged->isString()) {
+      std::string id = currentRowChanged->asString();
+
+      list->connect(list, &QListWidget::currentRowChanged, [this, id](int row) {
+        this->manager->handler("currentRowChanged", id, row);
+      });
+    }
+
+    updateProps(props);
   };
 
-  void updateProps(Json::Value newProps) override { props = newProps; };
+  void updateProps(Json::Value newProps) override {
+    if (auto selected = newProps.find("selected");
+        selected && selected->isInt()) {
+      std::cout << "set selected item=" << selected->asInt() << std::endl;
+      list->setCurrentRow(selected->asInt());
+    }
+
+    props = newProps;
+  };
 
   void appendChild(Component *child) override {
     if (auto *listItem = dynamic_cast<ListItemComponent *>(child)) {
       list->addItem(listItem->item);
     }
+
     children.push_back(child);
   }
 };
@@ -87,7 +117,8 @@ class ContainerComponent : public Component {
   QBoxLayout *layout;
 
 public:
-  ContainerComponent(Json::Value props, Json::Value children)
+  ContainerComponent(ExtensionManager *manager, Json::Value props,
+                     Json::Value children)
       : Component("container", props, children) {
     layout = new QBoxLayout(QBoxLayout::Direction::TopToBottom);
     ui = new QWidget();
@@ -98,8 +129,8 @@ public:
     updateProps(props);
 
     for (const auto &child : children) {
-      auto component = createComponent(child["type"].asString(), child["props"],
-                                       child["children"]);
+      auto component = createComponent(manager, child["type"].asString(),
+                                       child["props"], child["children"]);
 
       layout->addWidget(component->ui, 0, Qt::AlignTop);
       this->children.push_back(component);
@@ -158,12 +189,24 @@ public:
 
 class SearchInputComponent : public Component {
   QLineEdit *input;
+  ExtensionManager *manager;
 
 public:
-  SearchInputComponent(Json::Value props, Json::Value children)
-      : Component("SearchInput", props, children) {
+  SearchInputComponent(ExtensionManager *manager, Json::Value props,
+                       Json::Value children)
+      : Component("SearchInput", props, children), manager(manager) {
     input = new QLineEdit();
     ui = input;
+
+    if (auto el = props.find("onTextChanged"); el && el->isString()) {
+      std::string handlerId = el->asString();
+
+      input->connect(input, &QLineEdit::textChanged,
+                     [this, handlerId](const QString &s) {
+                       this->manager->handler<std::string>(
+                           "onTextChanged", handlerId, s.toStdString());
+                     });
+    }
 
     updateProps(props);
   }
@@ -193,6 +236,7 @@ public:
       : Component("Image", props, children) {
     label = new QLabel();
     ui = label;
+    updateProps(props);
   }
 
   void updateProps(Json::Value newProps) override {

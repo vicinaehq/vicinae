@@ -1,5 +1,4 @@
 #include "extension_manager.hpp"
-#include "render.hpp"
 #include <QUuid>
 #include <cstdint>
 #include <fcntl.h>
@@ -99,10 +98,10 @@ void ExtensionManager::startServer() {
     fd_set readFds = readSet;
     fd_set writeFds = writeSet;
 
-    std::cout << "selecting..." << std::endl;
+    // std::cout << "selecting..." << std::endl;
     if (select(1024, &readFds, nullptr, nullptr, nullptr) != -1) {
-      std::cout << "selected..." << std::endl;
-      // accept new connection on socket
+      // std::cout << "selected..." << std::endl;
+      //  accept new connection on socket
       if (FD_ISSET(daemonSock, &readFds)) {
         int client = accept(daemonSock, nullptr, nullptr);
 
@@ -124,16 +123,17 @@ void ExtensionManager::startServer() {
           int rc = read(conn.fd, &mlen, sizeof(mlen));
 
           if (rc < sizeof(mlen)) {
-            std::cout << "Failed to read message length!" << std::endl;
+            // std::cout << "Failed to read message length!" << std::endl;
             continue;
           }
 
-          std::cout << "message of length=" << mlen << std::endl;
+          // std::cout << "message of length=" << mlen << std::endl;
 
           rc = read(conn.fd, buf, mlen);
 
           if (rc < mlen) {
-            std::cout << "Failed to read message of mlen length!" << std::endl;
+            // std::cout << "Failed to read message of mlen length!" <<
+            // std::endl;
             continue;
           }
 
@@ -166,6 +166,7 @@ void ExtensionManager::startServer() {
             */
 
               if (it->second->token == activeId) {
+                std::cout << buf << std::endl;
                 emit render(data["root"]);
               }
             }

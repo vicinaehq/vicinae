@@ -52,7 +52,7 @@ const MyList = (n) => {
 					props: {},
 					children: [
 						{ type: "ListItem", props: { label: "TingTing", onClick: 'ereriueruerie' } },
-						{ type: "ListItem", props: { label: `Count: ${n}` } },
+						{ type: "ListItem", props: { label: `Count: ${n}`, selected: n % 2 == 0 } },
 						{ type: "ListItem", props: { label: "BingBing", onClick: 'wejkrikjejerijere' } }
 					]
 				},

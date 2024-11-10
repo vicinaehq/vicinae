@@ -17,15 +17,15 @@
 #include <qwidget.h>
 #include <stdexcept>
 
-Component *createComponent(std::string_view type, Json::Value props,
-                           Json::Value children) {
+Component *createComponent(ExtensionManager *manager, std::string_view type,
+                           Json::Value props, Json::Value children) {
   std::cout << "[+Component] " << type << std::endl;
   if (type == "container")
-    return new ContainerComponent(props, children);
+    return new ContainerComponent(manager, props, children);
   if (type == "SearchInput")
-    return new SearchInputComponent(props, children);
+    return new SearchInputComponent(manager, props, children);
   if (type == "List")
-    return new ListComponent(props, children);
+    return new ListComponent(manager, props, children);
   if (type == "ListItem")
     return new ListItemComponent(props, children);
   if (type == "Image")
@@ -35,41 +35,49 @@ Component *createComponent(std::string_view type, Json::Value props,
                            std::string(type));
 }
 
-Component *renderComponentTree(Component *root, Json::Value newNode) {
+void deleteComponent(Component *component) {
+  std::cout << "[-Component] " << component->type << std::endl;
+  delete component;
+}
+
+Component *renderComponentTree(ExtensionManager *manager, Component *root,
+                               Json::Value newNode) {
   auto type = newNode["type"].asString();
   auto props = newNode["props"];
   auto children = newNode["children"];
 
   if (!root || type != root->type) {
-    root = createComponent(type, props, children);
+    root = createComponent(manager, type, props, children);
   }
 
-  root->updateProps(props);
+  if (root->props != props) {
+    root->updateProps(props);
+  }
 
   auto minSize = std::min((size_t)children.size(), root->children.size());
 
   // update existing children
   for (int i = 0; i != minSize; ++i) {
     auto from = root->children.at(i);
-    auto to = renderComponentTree(from, children[i]);
+    auto to = renderComponentTree(manager, from, children[i]);
 
     if (from != to) {
       root->replaceChild(from, to);
-      delete from;
+      deleteComponent(from);
     }
   }
 
   for (int i = minSize; i < children.size(); ++i) {
     auto child = children[i];
-    auto component = createComponent(child["type"].asString(), child["props"],
-                                     child["children"]);
+    auto component = createComponent(manager, child["type"].asString(),
+                                     child["props"], child["children"]);
 
     root->appendChild(component);
   }
 
   while (root->children.size() > children.size()) {
     if (Component *pop = root->popChild())
-      delete pop;
+      deleteComponent(pop);
   }
 
   return root;

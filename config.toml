@@ -1,4 +1,4 @@
 [[extensions]]
 name = "My Extension"
 enabled = true
-exec = ["node", "./scripts/extension.js"]
+exec = ["tsx", "sdk/typescript/src/index.ts"]

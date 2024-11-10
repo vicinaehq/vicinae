@@ -198,12 +198,12 @@ int main(int argc, char **argv) {
 
       for (const auto &conn : connections) {
         if (FD_ISSET(conn.fd, &readFds)) {
-          std::cout << conn.fd << " wants to read" << std::endl;
+          //std::cout << conn.fd << " wants to read" << std::endl;
           uint32_t mlen = 0;
           int rc = read(conn.fd, &mlen, sizeof(mlen));
 
           if (rc < sizeof(mlen)) {
-            std::cout << "Failed to read message length!" << std::endl;
+            //std::cout << "Failed to read message length!" << std::endl;
             continue;
           }
 

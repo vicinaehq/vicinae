@@ -57,15 +57,16 @@ public:
       Json::Value data;
 
       data["type"] = type;
-      data["id"] = id;
+      data["handlerId"] = id;
       data["value"] = payload;
 
-      root["type"] = "handler";
+      root["type"] = "event";
       root["data"] = data;
 
       std::string jsonstring = root.toStyledString();
 
       uint32_t n = jsonstring.size();
+      std::cout << "sending " << jsonstring << " bytes=" << n << std::endl;
 
       send(ext.connection->fd, &n, sizeof(n), 0);
       send(ext.connection->fd, jsonstring.data(), jsonstring.size(), 0);
