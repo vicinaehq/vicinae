@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import { UpdateOptions } from "../omnicast";
+import { Alignment } from "./container";
 
 export class Action {};
 
@@ -13,6 +14,11 @@ export class NativeElement<T = Record<string, any>> {
 	
 	buildProp(key: keyof T, value: T[keyof T]) {
 		this.props[key] = value;
+		return this;
+	}
+
+	selfAlign(align: Alignment) {
+		(this.props as any).selfAlign = align;
 		return this;
 	}
 };

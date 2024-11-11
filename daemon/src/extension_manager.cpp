@@ -88,7 +88,7 @@ void ExtensionManager::startServer() {
     FD_SET(pipefd[0], &readSet);
   }
 
-  char buf[8096];
+  char buf[102400];
   bool isRunning = true;
 
   std::vector<Connection> connections;

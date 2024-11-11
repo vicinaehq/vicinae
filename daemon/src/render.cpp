@@ -22,7 +22,7 @@ Component *createComponent(ExtensionManager *manager, std::string_view type,
                            QWidget *parent) {
   std::cout << "[+Component] " << type << std::endl;
   if (type == "container")
-    return new ContainerComponent(manager, props, children);
+    return new ContainerComponent(manager, props, children, parent);
   if (type == "SearchInput")
     return new SearchInputComponent(manager, props, children);
   if (type == "List")
@@ -30,9 +30,9 @@ Component *createComponent(ExtensionManager *manager, std::string_view type,
   if (type == "ListItem")
     return new ListItemComponent(manager, props, children);
   if (type == "Label")
-    return new LabelComponent(manager, props, children);
+    return new LabelComponent(manager, props, children, parent);
   if (type == "Image")
-    return new ImageComponent(props, children);
+    return new ImageComponent(props, children, parent);
 
   throw std::runtime_error("Tried to create unknown component of type " +
                            std::string(type));
