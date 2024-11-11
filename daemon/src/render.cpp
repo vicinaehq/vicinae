@@ -18,16 +18,19 @@
 #include <stdexcept>
 
 Component *createComponent(ExtensionManager *manager, std::string_view type,
-                           Json::Value props, Json::Value children) {
+                           Json::Value props, Json::Value children,
+                           QWidget *parent) {
   std::cout << "[+Component] " << type << std::endl;
   if (type == "container")
     return new ContainerComponent(manager, props, children);
   if (type == "SearchInput")
     return new SearchInputComponent(manager, props, children);
   if (type == "List")
-    return new ListComponent(manager, props, children);
+    return new ListComponent(manager, props, children, parent);
   if (type == "ListItem")
-    return new ListItemComponent(props, children);
+    return new ListItemComponent(manager, props, children);
+  if (type == "Label")
+    return new LabelComponent(manager, props, children);
   if (type == "Image")
     return new ImageComponent(props, children);
 
@@ -81,4 +84,23 @@ Component *renderComponentTree(ExtensionManager *manager, Component *root,
   }
 
   return root;
+}
+
+QFlags<Qt::AlignmentFlag> parseQtAlignment(const std::string &s) {
+  if (s == "top")
+    return Qt::AlignTop;
+  if (s == "left")
+    return Qt::AlignLeft;
+  if (s == "bottom")
+    return Qt::AlignBottom;
+  if (s == "right")
+    return Qt::AlignRight;
+  if (s == "center")
+    return Qt::AlignCenter;
+  if (s == "hcenter")
+    return Qt::AlignHCenter;
+  if (s == "vcenter")
+    return Qt::AlignVCenter;
+
+  return {};
 }

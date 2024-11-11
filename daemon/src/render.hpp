@@ -5,16 +5,19 @@
 #include <jsoncpp/json/value.h>
 #include <qboxlayout.h>
 #include <qbrush.h>
+#include <qflags.h>
 #include <qlabel.h>
 #include <qlayout.h>
 #include <qlineedit.h>
 #include <qlistwidget.h>
 #include <qnamespace.h>
+#include <qobject.h>
 #include <qpixmap.h>
+#include <qsizepolicy.h>
 #include <qwidget.h>
 #include <string_view>
 
-class ContainerComponent;
+QFlags<Qt::AlignmentFlag> parseQtAlignment(const std::string &s);
 
 class Component {
 
@@ -23,19 +26,49 @@ public:
   Json::Value props;
   std::vector<Component *> children;
   QWidget *ui = nullptr;
+  QWidget *parent = nullptr;
 
   Component(std::string_view name, Json::Value initialProps,
-            Json::Value children)
-      : type(name), props(initialProps) {}
+            Json::Value children, QWidget *parent = nullptr)
+      : type(name), props(initialProps), parent(parent) {}
 
-  virtual void updateProps(Json::Value newProps) { props = newProps; }
+  virtual void updateProps(Json::Value newProps) {
+    auto parent = ui->parentWidget();
+
+    if (parent) {
+      if (parent->layout()) {
+        if (auto layout = qobject_cast<QBoxLayout *>(parent->layout())) {
+          std::cout << "has layout!" << std::endl;
+          if (auto align = newProps.find("align"); align && align->isString()) {
+            std::cout << "set layout align for " << type << std::endl;
+            layout->setAlignment(ui, parseQtAlignment(align->asString()));
+          }
+          if (auto stretch = newProps.find("stretch");
+              stretch && stretch->isUInt64()) {
+            std::cout << "set stretch factor for " << type << " to "
+                      << stretch->asUInt64() << std::endl;
+            layout->setStretchFactor(ui, stretch->asUInt64());
+          }
+        } else {
+          std::cout << "Parent is not a QBoxLayout*" << this->type << std::endl;
+        }
+      } else {
+        std::cout << "parent has not layout " << this->type << std::endl;
+      }
+    } else {
+      std::cout << "No parent for widget " << this->type << std::endl;
+    }
+
+    props = newProps;
+  }
   virtual void appendChild(Component *child) {}
   virtual void replaceChild(Component *prev, Component *next) {}
   virtual Component *popChild() { return nullptr; }
 };
 
 Component *createComponent(ExtensionManager *manager, std::string_view type,
-                           Json::Value props, Json::Value children);
+                           Json::Value props, Json::Value children,
+                           QWidget *parent = nullptr);
 
 Component *renderComponentTree(ExtensionManager *manager, Component *root,
                                Json::Value newNode);
@@ -44,12 +77,24 @@ class ListItemComponent : public Component {
 
 public:
   QListWidgetItem *item;
+  ExtensionManager *manager;
 
-  ListItemComponent(Json::Value props, Json::Value children)
-      : Component("ListItem", props, children) {
-    item = new QListWidgetItem();
+  ListItemComponent(ExtensionManager *manager, Json::Value props,
+                    Json::Value children, QListWidget *list = nullptr)
+      : Component("ListItem", props, children), manager(manager) {
+    item = new QListWidgetItem(list);
     ui = (QWidget *)item;
     updateProps(props);
+
+    if (children.size() > 0 && list) {
+      auto child = children[0];
+      Component *component = createComponent(manager, child["type"].asString(),
+                                             child["props"], child["children"]);
+
+      list->setItemWidget(item, component->ui);
+      item->setSizeHint(component->ui->size());
+      this->children.push_back(component);
+    }
   }
 
   void updateProps(Json::Value newProps) override {
@@ -59,7 +104,10 @@ public:
       item->setSelected(selected->asBool());
     }
 
-    item->setText(QString::fromStdString(newProps["label"].asString()));
+    if (auto label = newProps.find("label"); label && label->isString()) {
+      item->setText(QString::fromStdString(label->asString()));
+    }
+
     props = newProps;
   }
 };
@@ -70,13 +118,16 @@ class ListComponent : public Component {
 
 public:
   ListComponent(ExtensionManager *manager, Json::Value props,
-                Json::Value children)
+                Json::Value children, QWidget *parent = nullptr)
       : Component("List", props, children), manager(manager) {
-    list = new QListWidget();
+    list = new QListWidget(parent);
     ui = list;
 
+    // list->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
     for (const auto &child : children) {
-      auto component = new ListItemComponent(child["props"], child["children"]);
+      auto component = new ListItemComponent(manager, child["props"],
+                                             child["children"], list);
 
       list->addItem(component->item);
       this->children.push_back(component);
@@ -95,6 +146,12 @@ public:
   };
 
   void updateProps(Json::Value newProps) override {
+    Component::updateProps(newProps);
+
+    if (auto align = newProps.find("alignItems"); align && align->isString()) {
+      list->setItemAlignment(parseQtAlignment(align->asString()));
+    }
+
     if (auto selected = newProps.find("selected");
         selected && selected->isInt()) {
       std::cout << "set selected item=" << selected->asInt() << std::endl;
@@ -121,23 +178,30 @@ public:
                      Json::Value children)
       : Component("container", props, children) {
     layout = new QBoxLayout(QBoxLayout::Direction::TopToBottom);
+    // layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
     ui = new QWidget();
 
     ui->setLayout(layout);
-    layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
 
     updateProps(props);
 
     for (const auto &child : children) {
       auto component = createComponent(manager, child["type"].asString(),
-                                       child["props"], child["children"]);
+                                       child["props"], child["children"], ui);
 
-      layout->addWidget(component->ui, 0, Qt::AlignTop);
+      component->ui->setParent(ui);
+      layout->addWidget(component->ui);
       this->children.push_back(component);
     }
   }
 
   void updateProps(Json::Value newProps) override {
+    auto item = layout->itemAt(0);
+
+    if (auto el = newProps.find("style"); el && el->isString()) {
+      ui->setStyleSheet(QString::fromStdString(el->asString()));
+    }
+
     if (auto el = newProps.find("direction"); el && el->isString()) {
       auto s = el->asString();
 
@@ -145,6 +209,14 @@ public:
         layout->setDirection(QBoxLayout::Direction::TopToBottom);
       else if (s == "horizontal")
         layout->setDirection(QBoxLayout::Direction::LeftToRight);
+    }
+
+    if (auto el = newProps.find("align"); el && el->isString()) {
+      layout->setAlignment(parseQtAlignment(el->asString()));
+    }
+
+    if (auto el = newProps.find("spacing"); el && el->isUInt64()) {
+      layout->setSpacing(el->asUInt64());
     }
 
     if (auto margins = props.find("margins")) {
@@ -258,6 +330,33 @@ public:
     }
 
     label->setPixmap(map);
+    props = newProps;
+  }
+};
+
+class LabelComponent : public Component {
+  QLabel *label;
+  ExtensionManager *manager;
+
+public:
+  LabelComponent(ExtensionManager *manager, Json::Value props,
+                 Json::Value children)
+      : Component("Label", props, children), manager(manager) {
+    label = new QLabel();
+    ui = label;
+
+    updateProps(props);
+  }
+
+  void updateProps(Json::Value newProps) override {
+    if (auto el = props.find("text"); el && el->isString()) {
+      label->setText(QString::fromStdString(el->asString()));
+    }
+
+    if (auto el = newProps.find("style"); el && el->isString()) {
+      label->setStyleSheet(QString::fromStdString(el->asString()));
+    }
+
     props = newProps;
   }
 };

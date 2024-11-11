@@ -3,6 +3,7 @@ import { ActionFactory, CurrentRowChangedAction, Node, NativeElement } from './t
 export type ListProps = {
 	selected?: number;
 	currentRowChanged?: ActionFactory<CurrentRowChangedAction>;
+	stretch?: 0 | 1;
 };
 
 export class List extends NativeElement<ListProps> {
@@ -11,6 +12,7 @@ export class List extends NativeElement<ListProps> {
 	}
 	
 	selected(n: number) { return this.buildProp('selected', n) }
+	stretch(n: number) { return this.buildProp('stretch', n); }
 	
 	currentRowChanged(action: ActionFactory<CurrentRowChangedAction>) { return this.buildProp('currentRowChanged', action); }
 }

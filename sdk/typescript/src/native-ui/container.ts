@@ -3,6 +3,7 @@ import { NativeElement, Node } from './types';
 export type ContainerProps = {
 	direction?: 'horizontal' | 'vertical'
 	margins?: [number, number, number, number] | number;
+	style?: string;
 };
 
 export class Container extends NativeElement<ContainerProps> {
@@ -13,6 +14,8 @@ export class Container extends NativeElement<ContainerProps> {
 	margins(n: number | [number, number, number, number]): Container {
 		return this.buildProp('margins', n);
 	}
+
+	style(s: string) { return this.buildProp('style', s); }
 }
 
 export class VStack extends Container {

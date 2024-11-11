@@ -1,9 +1,23 @@
 import { OmnicastClient } from './omnicast';
-import { Action, CurrentRowChangedAction, HStack, List, ListItem, LocalImage, SearchInput, Component, TextChangedAction, VStack } from './native-ui';
+import { Action, CurrentRowChangedAction, HStack, List, ListItem, LocalImage, SearchInput, Component, TextChangedAction, VStack, Label } from './native-ui';
 
 class OnSearch extends TextChangedAction {}
 class OnRowChanged extends CurrentRowChangedAction {}
 class TimeoutOkay extends Action {}
+
+class FruitWidget extends Component {
+	onMount() {
+	}
+
+	update() {}
+
+	render() {
+		return new HStack(
+			new LocalImage('/home/aurelle/Pictures/peepobank/peepo-glod.png').size(40),
+			new Label(`${Date.now()}`)
+		);
+	}
+}
 
 class FruitList extends Component {
 	items = [
@@ -32,7 +46,7 @@ class FruitList extends Component {
 		console.log(`render list: ${this.selected}`);
 		return (
 			new List(
-				...this.items.map(({ name }) => new ListItem(name)),
+				...this.items.map(({ name }) => new ListItem(new FruitWidget())),
 			)
 			.selected(this.selected)
 			.currentRowChanged(OnRowChanged)
@@ -67,10 +81,18 @@ class Application extends Component {
 					new SearchInput({ placeholder: 'la ting la bing', style: "font-size: 16px", onTextChanged: OnSearch }),
 					new LocalImage('/home/aurelle/peepo-weird-wid.gif').size(40)
 				)
+				//.style("background-color: green")
 				.margins(0),
-				new FruitList()
+				new FruitList(),
+				new HStack(
+					new LocalImage('/home/aurelle/Pictures/peepobank/peepo-glod.png').size(40),
+					new SearchInput({ placeholder: 'la ting la bing', style: "font-size: 16px", onTextChanged: OnSearch }),
+					new LocalImage('/home/aurelle/peepo-weird-wid.gif').size(40)
+				)
+				//.style("background-color: red"),
 			)
 			.margins(10)
+			//.style("background-color: blue")
 		);
 	}
 };
