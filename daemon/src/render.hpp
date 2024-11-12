@@ -1,5 +1,6 @@
 #pragma once
 #include "extension_manager.hpp"
+#include <QTimer>
 #include <iostream>
 #include <jsoncpp/json/json.h>
 #include <jsoncpp/json/value.h>
@@ -12,13 +13,14 @@
 #include <qlistwidget.h>
 #include <qnamespace.h>
 #include <qobject.h>
+#include <qobjectdefs.h>
 #include <qpixmap.h>
 #include <qsizepolicy.h>
 #include <qwidget.h>
-#include <stdexcept>
 #include <string_view>
 
 QFlags<Qt::AlignmentFlag> parseQtAlignment(const std::string &s);
+Qt::ScrollBarPolicy parseQtScrollBarPolicy(const std::string &s);
 
 class Component {
 
@@ -37,45 +39,28 @@ public:
   void updateInitialProps(QWidget *widget, Json::Value newProps) {
     auto parent = widget->parentWidget();
 
-    if (!newProps.find("selfAlign")) {
-      return;
-    }
-
-    std::cout << "parent2=" << parent << std::endl;
-
     if (parent) {
       if (parent->layout()) {
         if (auto layout = qobject_cast<QBoxLayout *>(parent->layout())) {
-          std::cout << "has layout!" << std::endl;
           if (auto align = newProps.find("selfAlign");
               align && align->isString()) {
 
-            std::cout << ">>>>>>> ALIGN <<<<<<" << std::endl;
-
-            for (int i = 0; i != layout->count(); ++i) {
-              auto item = layout->itemAt(i);
-              auto w = item->widget();
-
-              if (w != widget) {
-                std::cout << "Not right widget" << std::endl;
-                continue;
-              }
-
-              item->setAlignment(parseQtAlignment(align->asString()));
-              std::cout << "set layout align for " << type << std::endl;
-            }
+            layout->setAlignment(widget, parseQtAlignment(align->asString()));
           }
           if (auto stretch = newProps.find("stretch");
               stretch && stretch->isUInt64()) {
             std::cout << "set stretch factor for " << type << " to "
                       << stretch->asUInt64() << std::endl;
-            layout->setStretchFactor(widget, stretch->asUInt64());
+            if (!layout->setStretchFactor(widget, stretch->asUInt64())) {
+              std::cout << "Failed to set stretch factor" << std::endl;
+            }
           }
         } else {
-          std::cout << "Parent is not a QBoxLayout*" << this->type << std::endl;
+          // std::cout << "Parent is not a QBoxLayout*" << this->type <<
+          // std::endl;
         }
       } else {
-        std::cout << "parent has no layout " << this->type << std::endl;
+        // std::cout << "parent has no layout " << this->type << std::endl;
       }
     } else {
       std::cout << "No parent for widget " << this->type << std::endl;
@@ -86,42 +71,23 @@ public:
   virtual void appendChild(Component *child) {}
   virtual void replaceChild(Component *prev, Component *next) {}
   virtual Component *popChild() { return nullptr; }
-};
 
-static QSize computeTreeSizeHint(Component *root) {
-  int width = 0, height = 0;
-  std::stack<Component *> stack;
+  ~Component() {
+    std::cout << "[-Component] " << type << std::endl;
 
-  stack.push(root);
-
-  while (!stack.empty()) {
-    auto component = stack.top();
-    stack.pop();
-
-    auto size = component->ui->sizeHint();
-
-    std::cout << "COMPUTE FOR TYPE=" << component->type << " " << size.width()
-              << "x" << size.height() << std::endl;
-
-    if (size.width() > width)
-      width = size.width();
-    if (size.height() > height)
-      height = size.height();
-
-    for (const auto &child : component->children) {
-      stack.push(child);
+    for (const auto &child : children) {
+      delete child;
     }
   }
-
-  return QSize{width, height};
-}
+};
 
 Component *createComponent(ExtensionManager *manager, std::string_view type,
                            Json::Value props, Json::Value children,
                            QWidget *parent = nullptr);
 
 Component *renderComponentTree(ExtensionManager *manager, Component *root,
-                               Json::Value newNode);
+                               Json::Value newNode,
+                               Component *parent = nullptr);
 
 class ListItemComponent : public Component {
 
@@ -137,21 +103,14 @@ public:
     updateProps(props);
 
     if (children.size() > 0 && list) {
+      std::cout << "rendering list!" << std::endl;
       auto child = children[0];
       std::cout << "before list" << std::endl;
       Component *component =
           createComponent(manager, child["type"].asString(), child["props"],
                           child["children"], list);
-      std::cout << "after list" << std::endl;
 
       list->setItemWidget(item, component->ui);
-      std::cout << "list size=" << component->ui->sizeHint().width() << "x"
-                << component->ui->sizeHint().height() << std::endl;
-      auto qsize = computeTreeSizeHint(component);
-
-      std::cout << "w=" << qsize.width() << " h=" << qsize.height()
-                << std::endl;
-
       item->setSizeHint(component->ui->sizeHint());
       this->children.push_back(component);
     }
@@ -160,7 +119,6 @@ public:
   void updateProps(Json::Value newProps) override {
     if (auto selected = newProps.find("selected");
         selected && selected->isBool()) {
-      std::cout << "set selected item=" << selected->asBool() << std::endl;
       item->setSelected(selected->asBool());
     }
 
@@ -175,6 +133,7 @@ public:
 class ListComponent : public Component {
   QListWidget *list;
   ExtensionManager *manager;
+  int idx = 0;
 
 public:
   ListComponent(ExtensionManager *manager, Json::Value props,
@@ -196,6 +155,8 @@ public:
       std::string id = currentRowChanged->asString();
 
       list->connect(list, &QListWidget::currentRowChanged, [this, id](int row) {
+        if (idx == row)
+          return;
         this->manager->handler("currentRowChanged", id, row);
       });
     }
@@ -205,6 +166,16 @@ public:
 
   void updateProps(Json::Value newProps) override {
     Component::updateInitialProps(ui, newProps);
+
+    if (auto policy = newProps.find("vscroll"); policy && policy->isString()) {
+      list->setVerticalScrollBarPolicy(
+          parseQtScrollBarPolicy(policy->asString()));
+    }
+
+    if (auto policy = newProps.find("hscroll"); policy && policy->isString()) {
+      list->setHorizontalScrollBarPolicy(
+          parseQtScrollBarPolicy(policy->asString()));
+    }
 
     if (auto spacing = newProps.find("spacing");
         spacing && spacing->isUInt64()) {
@@ -218,6 +189,7 @@ public:
     if (auto selected = newProps.find("selected");
         selected && selected->isInt()) {
       std::cout << "set selected item=" << selected->asInt() << std::endl;
+      idx = selected->asInt();
       list->setCurrentRow(selected->asInt());
     }
 
@@ -231,10 +203,23 @@ public:
 
     children.push_back(child);
   }
+
+  Component *popChild() override {
+    if (children.empty())
+      return nullptr;
+
+    auto lastPos = children.size() - 1;
+    auto component = children.at(lastPos);
+
+    list->takeItem(lastPos);
+    children.pop_back();
+
+    return component;
+  }
 };
 
 class ContainerComponent : public Component {
-  QBoxLayout *layout;
+  QBoxLayout *layout = nullptr;
 
 public:
   ContainerComponent(ExtensionManager *manager, Json::Value props,
@@ -248,8 +233,22 @@ public:
       auto component = createComponent(manager, child["type"].asString(),
                                        child["props"], child["children"], ui);
 
-      layout->addWidget(component->ui);
-      component->updateProps(child["props"]);
+      int stretch = 0;
+      QFlags<Qt::AlignmentFlag> selfAlign;
+
+      if (auto el = child["props"].find("stretch"); el && el->isInt64()) {
+        stretch = el->asInt64();
+      }
+      if (auto el = child["props"].find("selfAlign"); el && el->isString()) {
+        selfAlign = parseQtAlignment(el->asString());
+      }
+
+      std::cout << "add " << component->type << " with stretch=" << stretch
+                << " and selfAlign= " << selfAlign
+                << "for=" << child["props"].toStyledString() << std::endl;
+      layout->addWidget(component->ui, stretch, selfAlign);
+
+      // component->updateProps(child["props"]);
       this->children.push_back(component);
     }
 
@@ -257,9 +256,7 @@ public:
   }
 
   void updateProps(Json::Value newProps) override {
-    Component::updateInitialProps(ui, newProps);
-
-    auto item = layout->itemAt(0);
+    // Component::updateInitialProps(ui, newProps);
 
     if (auto el = newProps.find("style"); el && el->isString()) {
       ui->setStyleSheet(QString::fromStdString(el->asString()));
@@ -300,7 +297,16 @@ public:
   }
 
   void appendChild(Component *child) override {
-    layout->addWidget(child->ui);
+    int stretch = 0;
+    QFlags<Qt::AlignmentFlag> selfAlign;
+
+    if (auto el = child->props.find("stretch"); el && el->isInt64()) {
+      stretch = el->asInt64();
+    }
+    if (auto el = child->props.find("selfAlign"); el && el->isString()) {
+      selfAlign = parseQtAlignment(el->asString());
+    }
+    layout->addWidget(child->ui, stretch, selfAlign);
     children.push_back(child);
   }
 
@@ -343,10 +349,20 @@ public:
                      });
     }
 
+    if (auto el = props.find("focused"); el && el->isBool()) {
+      std::cout << "set focus=" << el->asBool() << std::endl;
+
+      if (el->asBool())
+        QTimer::singleShot(0, input, SLOT(setFocus()));
+      else
+        QTimer::singleShot(0, input, SLOT(clearFocus()));
+    }
+
     updateProps(props);
   }
 
   void updateProps(Json::Value newProps) override {
+
     if (auto el = newProps.find("placeholder"); el && el->isString()) {
       input->setPlaceholderText(QString::fromStdString(el->asString()));
     }
@@ -394,8 +410,6 @@ public:
     }
 
     label->setPixmap(map);
-    std::cout << label->sizeHint().width() << "x" << label->sizeHint().height()
-              << std::endl;
     props = newProps;
   }
 };
@@ -408,7 +422,6 @@ public:
   LabelComponent(ExtensionManager *manager, Json::Value props,
                  Json::Value children, QWidget *parent = nullptr)
       : Component("Label", props, children), manager(manager) {
-    std::cout << "parent=" << parent << std::endl;
     label = new QLabel(parent);
     ui = label;
 

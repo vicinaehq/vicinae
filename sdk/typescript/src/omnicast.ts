@@ -164,7 +164,7 @@ export class OmnicastClient {
 
 		root.component.props = { ...next.component.props };
 
-		const min = Math.min(root.children.length, root.children.length);
+		const min = Math.min(root.children.length, next.children.length);
 
 		for (let i = 0; i != min; ++i) {
 			root.children[i] = this.updateComponentTree(root.children[i], next.children[i]);
@@ -223,9 +223,10 @@ export class OmnicastClient {
 
 		const root = this.app.render();
 		const tree = this.updateComponentTree(this.root, this.serializeNode(root));
+		this.printAsHtml(tree);
 		const data = this.serializeTree(tree);
 
-		//console.log(JSON.stringify(data, null, 2));
+		console.log(JSON.stringify(data, null, 2));
 
 		this.root = tree;
 		this.sendMessage('render', { root: data });
@@ -240,7 +241,6 @@ export class OmnicastClient {
 				const message = this.parseMessage(data);
 
 				if (message.type == 'event') {
-					console.log(message);
 					const handler = this.handlerMap.get(message.data.handlerId);
 
 					if (!handler) {

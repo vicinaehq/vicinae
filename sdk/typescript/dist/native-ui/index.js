@@ -17,4 +17,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./container"), exports);
 __exportStar(require("./image"), exports);
 __exportStar(require("./list"), exports);
+__exportStar(require("./label"), exports);
+__exportStar(require("./search-input"), exports);
 __exportStar(require("./types"), exports);

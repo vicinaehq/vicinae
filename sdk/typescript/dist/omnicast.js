@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OmnicastClient = exports.MessageTypes = void 0;
 const net_1 = require("net");
@@ -63,12 +54,10 @@ class OmnicastClient {
             data: payload
         });
     }
-    dispatchAsync(fn) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const action = yield fn();
-            this.app.update(action, { dispatchAsync: this.dispatchAsync.bind(this) });
-            this.app.render();
-        });
+    async dispatchAsync(fn) {
+        const action = await fn();
+        this.app.update(action, { dispatchAsync: this.dispatchAsync.bind(this) });
+        this.app.render();
     }
     serializeNativeElement(node) {
         const tree = { component: node, children: [] };
@@ -110,16 +99,17 @@ class OmnicastClient {
             return this.updateComponentTree(next, next);
         }
         if (root.component.type != next.component.type) {
-            console.log('recreate!');
+            if (next.component instanceof native_ui_1.Component)
+                next.component.onMount();
             root = next;
         }
         root.component.props = Object.assign({}, next.component.props);
-        const min = Math.min(root.children.length, root.children.length);
+        const min = Math.min(root.children.length, next.children.length);
         for (let i = 0; i != min; ++i) {
             root.children[i] = this.updateComponentTree(root.children[i], next.children[i]);
         }
         for (let i = min; i < next.children.length; ++i) {
-            root.children.push(this.updateComponentTree(null, next.children[i]));
+            root.children.push(this.updateComponentTree(next.children[i], next.children[i]));
         }
         while (root.children.length > next.children.length)
             root.children.pop();
@@ -162,8 +152,8 @@ class OmnicastClient {
             this.app.onMount();
         const root = this.app.render();
         const tree = this.updateComponentTree(this.root, this.serializeNode(root));
+        this.printAsHtml(tree);
         const data = this.serializeTree(tree);
-        //this.printTree(root);
         console.log(JSON.stringify(data, null, 2));
         this.root = tree;
         this.sendMessage('render', { root: data });
@@ -179,7 +169,6 @@ class OmnicastClient {
             try {
                 const message = this.parseMessage(data);
                 if (message.type == 'event') {
-                    console.log(message);
                     const handler = this.handlerMap.get(message.data.handlerId);
                     if (!handler) {
                         console.log('no handler ' + message.data.handlerId);

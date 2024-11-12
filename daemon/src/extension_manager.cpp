@@ -166,7 +166,8 @@ void ExtensionManager::startServer() {
             */
 
               if (it->second->token == activeId) {
-                std::cout << buf << std::endl;
+                std::cout << ">>>>>>>>>>>>>>>>> RENDER <<<<<<<<<<<<<<<"
+                          << std::endl;
                 emit render(data["root"]);
               }
             }

@@ -28,13 +28,13 @@ export class Container extends NativeElement<ContainerProps> {
 }
 
 export class VStack extends Container {
-	constructor(...children: Node[]) {
-		super(children, { margins: 0, direction: 'vertical' });
+	constructor(...children: (Node | null | undefined)[]) {
+		super(children.filter((s): s is Node => !!s), { margins: 0, direction: 'vertical' });
 	}
 }
 
 export class HStack extends Container {
-	constructor(...children: Node[]) {
-		super(children, { margins: 0, direction: 'horizontal' });
+	constructor(...children: (Node | null | undefined)[]) {
+		super(children.filter((s): s is Node => !!s), { margins: 0, direction: 'horizontal' });
 	}
 }

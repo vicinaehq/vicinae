@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TextChangedAction = exports.CurrentRowChangedAction = exports.isHandlerType = exports.HandlerTypes = exports.Component = exports.SearchInput = exports.NativeElement = exports.Action = void 0;
+exports.TextChangedAction = exports.CurrentRowChangedAction = exports.isHandlerType = exports.HandlerTypes = exports.Component = exports.NativeElement = exports.Action = void 0;
 const crypto_1 = require("crypto");
 class Action {
 }
@@ -17,15 +17,16 @@ class NativeElement {
         this.props[key] = value;
         return this;
     }
-}
-exports.NativeElement = NativeElement;
-;
-class SearchInput extends NativeElement {
-    constructor(props) {
-        super(SearchInput.name, props, []);
+    selfAlign(align) {
+        this.props.selfAlign = align;
+        return this;
+    }
+    stretch(n) {
+        this.props.stretch = n;
+        return this;
     }
 }
-exports.SearchInput = SearchInput;
+exports.NativeElement = NativeElement;
 ;
 class Component {
     constructor() {

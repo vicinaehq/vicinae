@@ -21,19 +21,13 @@ export class NativeElement<T = Record<string, any>> {
 		(this.props as any).selfAlign = align;
 		return this;
 	}
-};
 
-export type SearchInputProps = {
-	onTextChanged?: ActionFactory<TextChangedAction>;
-	placeholder?: string;
-	style?: string;
-};
-
-export class SearchInput extends NativeElement<SearchInputProps> {
-	constructor(props: SearchInputProps) {
-		super(SearchInput.name, props, []);
+	stretch(n: number) {
+		(this.props as any).stretch = n;
+		return this;
 	}
 };
+
 
 
 export abstract class Component {

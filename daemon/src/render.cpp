@@ -13,6 +13,7 @@
 #include <qlayout.h>
 #include <qlineedit.h>
 #include <qlistwidget.h>
+#include <qnamespace.h>
 #include <qobjectdefs.h>
 #include <qwidget.h>
 #include <stdexcept>
@@ -28,7 +29,8 @@ Component *createComponent(ExtensionManager *manager, std::string_view type,
   if (type == "List")
     return new ListComponent(manager, props, children, parent);
   if (type == "ListItem")
-    return new ListItemComponent(manager, props, children);
+    return new ListItemComponent(manager, props, children,
+                                 (QListWidget *)parent);
   if (type == "Label")
     return new LabelComponent(manager, props, children, parent);
   if (type == "Image")
@@ -38,50 +40,64 @@ Component *createComponent(ExtensionManager *manager, std::string_view type,
                            std::string(type));
 }
 
-void deleteComponent(Component *component) {
-  std::cout << "[-Component] " << component->type << std::endl;
+static void deleteComponent(Component *component) {
+  std::cout << "Deleting=" << component->type << std::endl;
+  if (auto ui = component->ui)
+    ui->deleteLater();
   delete component;
 }
 
 Component *renderComponentTree(ExtensionManager *manager, Component *root,
-                               Json::Value newNode) {
+                               Json::Value newNode, Component *parent) {
   auto type = newNode["type"].asString();
   auto props = newNode["props"];
   auto children = newNode["children"];
 
   if (!root || type != root->type) {
-    root = createComponent(manager, type, props, children);
+    return createComponent(manager, type, props, children,
+                           parent ? parent->ui : nullptr);
   }
 
-  if (root->props != props) {
-    root->updateProps(props);
-  }
+  // if (root->props != props) {
+  //}
 
   auto minSize = std::min((size_t)children.size(), root->children.size());
 
   // update existing children
   for (int i = 0; i != minSize; ++i) {
     auto from = root->children.at(i);
-    auto to = renderComponentTree(manager, from, children[i]);
+    auto to = renderComponentTree(manager, from, children[i], root);
 
     if (from != to) {
+      std::cout << "[REPLACE] " << from->type << " to: " << to->type
+                << std::endl;
       root->replaceChild(from, to);
-      deleteComponent(from);
+      if (from->type != "ListItem")
+        deleteComponent(from);
     }
+
+    root->children[i] = to;
   }
 
   for (int i = minSize; i < children.size(); ++i) {
     auto child = children[i];
-    auto component = createComponent(manager, child["type"].asString(),
-                                     child["props"], child["children"]);
+    std::cout << "new child " << child["type"] << " for parent of type "
+              << (parent ? parent->type : "NO_PARENT") << std::endl;
+    auto component =
+        createComponent(manager, child["type"].asString(), child["props"],
+                        child["children"], root->ui);
 
     root->appendChild(component);
   }
 
   while (root->children.size() > children.size()) {
-    if (Component *pop = root->popChild())
-      deleteComponent(pop);
+    if (Component *pop = root->popChild()) {
+      if (pop->type != "ListItem")
+        deleteComponent(pop);
+    }
   }
+
+  root->updateProps(props);
 
   return root;
 }
@@ -103,4 +119,13 @@ QFlags<Qt::AlignmentFlag> parseQtAlignment(const std::string &s) {
     return Qt::AlignVCenter;
 
   return {};
+}
+
+Qt::ScrollBarPolicy parseQtScrollBarPolicy(const std::string &s) {
+  if (s == "always-off")
+    return Qt::ScrollBarPolicy::ScrollBarAlwaysOff;
+  else if (s == "always-on")
+    return Qt::ScrollBarPolicy::ScrollBarAlwaysOn;
+
+  return Qt::ScrollBarPolicy::ScrollBarAsNeeded;
 }
