@@ -44,7 +44,8 @@ export abstract class Component {
 
 export const HandlerTypes = [
 	'onTextChanged',
-	'currentRowChanged'
+	'currentRowChanged',
+	'onKeyPress'
 ] as const;
 
 export type HandlerType = typeof HandlerTypes[number];
@@ -52,6 +53,10 @@ export type HandlerType = typeof HandlerTypes[number];
 export const isHandlerType = (s: string): s is HandlerType => HandlerTypes.includes(s as any);
 
 export type TextChangedActionPayload = {
+	value: string;
+};
+
+export type KeyPressActionPayload = {
 	value: string;
 };
 
@@ -66,6 +71,15 @@ export class CurrentRowChangedAction {
 		this.value = init.value;
 	}
 };
+
+export class KeyPressAction {
+	key: string;
+
+	constructor(init: KeyPressActionPayload) {
+		this.key = init.value;
+	}
+};
+
 
 export class TextChangedAction {
 	value: string;

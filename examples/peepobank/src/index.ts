@@ -1,9 +1,10 @@
-import { Component, CurrentRowChangedAction, HStack, Image, Label, List, ListItem, LocalImage, OmnicastClient, SearchInput, TextChangedAction, VStack } from '@omnicast/sdk';
+import { Component, CurrentRowChangedAction, HStack, Image, KeyPressAction, Label, List, ListItem, LocalImage, OmnicastClient, SearchInput, TextChangedAction, VStack } from '@omnicast/sdk';
 import { readdirSync } from 'fs';
 import { join } from 'path';
 
 export class OnSearchChanged extends TextChangedAction {};
-export type AppAction = OnSearchChanged;
+export class OnInputKeyPress extends KeyPressAction {};
+export type AppAction = OnSearchChanged | OnInputKeyPress;
 
 export type Peepo = {
 	name: string;
@@ -96,6 +97,14 @@ class Application extends Component {
 		this.selectedIdx = this.selectedPeepos.length > 0 ? 0 : -1;
 	}
 
+	handleKeyPress(code: string) {
+		if (code == "Up") {
+			this.selectedIdx = Math.max(0, this.selectedIdx - 1);
+		}
+		else if (code == "Down") {
+			this.selectedIdx = Math.min(this.selectedIdx + 1, this.selectedPeepos.length);
+		}
+	}
 
 	update(action: AppAction) {
 		if (action instanceof OnSearchChanged) {
@@ -104,6 +113,9 @@ class Application extends Component {
 		if (action instanceof OnPeepoRowChanged) {
 			console.log({ action });
 			this.selectedIdx = action.value == -1 ? 0 : action.value;
+		}
+		if (action instanceof OnInputKeyPress) {
+			this.handleKeyPress(action.key);
 		}
 	}
 
@@ -118,6 +130,7 @@ class Application extends Component {
 				.focused(true)
 				.placeholder("Search for a peepo")
 				.onTextChanged(OnSearchChanged)
+				.onKeyPressed(OnInputKeyPress)
 			),
 			new HStack(
 				new List(

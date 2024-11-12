@@ -1,9 +1,11 @@
 #pragma once
 #include "extension_manager.hpp"
+#include <QKeyEvent>
 #include <QTimer>
 #include <iostream>
 #include <jsoncpp/json/json.h>
 #include <jsoncpp/json/value.h>
+#include <qapplication.h>
 #include <qboxlayout.h>
 #include <qbrush.h>
 #include <qflags.h>
@@ -16,11 +18,32 @@
 #include <qobjectdefs.h>
 #include <qpixmap.h>
 #include <qsizepolicy.h>
+#include <qtmetamacros.h>
 #include <qwidget.h>
 #include <string_view>
 
 QFlags<Qt::AlignmentFlag> parseQtAlignment(const std::string &s);
 Qt::ScrollBarPolicy parseQtScrollBarPolicy(const std::string &s);
+
+class SearchInput : public QLineEdit {
+  Q_OBJECT
+
+public:
+  SearchInput(QWidget *parent = nullptr) : QLineEdit(parent) {}
+
+signals:
+  void onKeyPress(const QString &s);
+
+protected:
+  void keyPressEvent(QKeyEvent *e) override {
+    auto key = QKeySequence(e->key()).toString();
+    std::cout << "key=" << key.toStdString() << std::endl;
+
+    emit onKeyPress(key);
+
+    QLineEdit::keyPressEvent(e);
+  }
+};
 
 class Component {
 
@@ -329,14 +352,14 @@ public:
 };
 
 class SearchInputComponent : public Component {
-  QLineEdit *input;
+  SearchInput *input;
   ExtensionManager *manager;
 
 public:
   SearchInputComponent(ExtensionManager *manager, Json::Value props,
                        Json::Value children)
       : Component("SearchInput", props, children), manager(manager) {
-    input = new QLineEdit();
+    input = new SearchInput();
     ui = input;
 
     if (auto el = props.find("onTextChanged"); el && el->isString()) {
@@ -346,6 +369,16 @@ public:
                      [this, handlerId](const QString &s) {
                        this->manager->handler<std::string>(
                            "onTextChanged", handlerId, s.toStdString());
+                     });
+    }
+
+    if (auto el = props.find("onKeyPress"); el && el->isString()) {
+      std::string handlerId = el->asString();
+
+      input->connect(input, &SearchInput::onKeyPress,
+                     [this, handlerId](const QString &s) {
+                       this->manager->handler<std::string>(
+                           "onKeyPress", handlerId, s.toStdString());
                      });
     }
 

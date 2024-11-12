@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TextChangedAction = exports.CurrentRowChangedAction = exports.isHandlerType = exports.HandlerTypes = exports.Component = exports.NativeElement = exports.Action = void 0;
+exports.TextChangedAction = exports.KeyPressAction = exports.CurrentRowChangedAction = exports.isHandlerType = exports.HandlerTypes = exports.Component = exports.NativeElement = exports.Action = void 0;
 const crypto_1 = require("crypto");
 class Action {
 }
@@ -40,7 +40,8 @@ exports.Component = Component;
 ;
 exports.HandlerTypes = [
     'onTextChanged',
-    'currentRowChanged'
+    'currentRowChanged',
+    'onKeyPress'
 ];
 const isHandlerType = (s) => exports.HandlerTypes.includes(s);
 exports.isHandlerType = isHandlerType;
@@ -50,6 +51,13 @@ class CurrentRowChangedAction {
     }
 }
 exports.CurrentRowChangedAction = CurrentRowChangedAction;
+;
+class KeyPressAction {
+    constructor(init) {
+        this.key = init.value;
+    }
+}
+exports.KeyPressAction = KeyPressAction;
 ;
 class TextChangedAction {
     constructor(init) {

@@ -226,7 +226,7 @@ export class OmnicastClient {
 		this.printAsHtml(tree);
 		const data = this.serializeTree(tree);
 
-		console.log(JSON.stringify(data, null, 2));
+		//console.log(JSON.stringify(data, null, 2));
 
 		this.root = tree;
 		this.sendMessage('render', { root: data });
