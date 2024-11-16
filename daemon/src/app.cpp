@@ -1,5 +1,6 @@
 #include "app.hpp"
 #include "extension_manager.hpp"
+#include "index-command.hpp"
 #include "render.hpp"
 #include <QApplication>
 #include <QLabel>
@@ -14,11 +15,15 @@
 #include <qwidget.h>
 
 AppWindow::AppWindow(QWidget *parent) : QMainWindow(parent) {
-  // setFixedWidth(600);
-  // setFixedHeight(400);
+  // setFixedWidth(800);
+  // setFixedHeight(600);
+
+  setMinimumWidth(850);
+  setMinimumHeight(550);
 
   auto config = loadConfig("config.toml");
 
+  /*
   auto extman = new ExtensionManager(config->extensions);
   QThread *extmanThread = new QThread(this);
 
@@ -38,4 +43,7 @@ AppWindow::AppWindow(QWidget *parent) : QMainWindow(parent) {
           &ExtensionManager::startServer);
 
   extmanThread->start();
+  */
+
+  setCentralWidget(new IndexCommand());
 }

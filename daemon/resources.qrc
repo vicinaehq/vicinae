@@ -1,0 +1,7 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+  <qresource>
+    <file>assets/icons/hyprland.svg</file>
+    <file>assets/icons/sway.svg</file>
+  </qresource>
+</RCC>

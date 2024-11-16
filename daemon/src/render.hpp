@@ -184,6 +184,8 @@ public:
       });
     }
 
+    list->setFocusPolicy(Qt::NoFocus);
+
     updateProps(props);
   };
 

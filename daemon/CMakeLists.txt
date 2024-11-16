@@ -10,6 +10,7 @@ set(TARGET spellcastd)
 find_package(Qt6 REQUIRED COMPONENTS Widgets)
 find_package(SQLite3 REQUIRED)
 
+
 option(WAYLAND_LAYER_SHELL "Enable support for the Wayland layer shell
 protocol, required for proper window positioning on most wlroots-based
 compositors." OFF)
@@ -25,6 +26,7 @@ endif()
 
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}/src
+	${CMAKE_CURRENT_SOURCE_DIR}/src/lib
 )
 
 qt_add_executable(${TARGET}
@@ -33,6 +35,9 @@ qt_add_executable(${TARGET}
 	src/render.cpp
 	src/extension_manager.cpp
 	src/config.cpp
+	src/commands/index-command.cpp
+	src/lib/tinyexpr.cpp
+	./resources.qrc
 )
 
 target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
