@@ -3,5 +3,9 @@
   <qresource>
     <file>assets/icons/hyprland.svg</file>
     <file>assets/icons/sway.svg</file>
+    <file>assets/icons/google.svg</file>
+    <file>assets/icons/npm.svg</file>
+    <file>assets/icons/github.svg</file>
+    <file>assets/icons/duckduckgo.svg</file>
   </qresource>
 </RCC>

@@ -6,8 +6,8 @@
 #include <qfontdatabase.h>
 #include <qlogging.h>
 
-static const char *colorSelected = "rgb(41, 40, 37)";
-static const char *baseBackground = "rgb(32, 31, 29)";
+static const char *colorSelected = "rgba(41, 40, 37, 230)";
+static const char *baseBackground = "rgba(32, 31, 29, 240)";
 static const char *baseText = "rgb(239, 239, 239)";
 
 static const char *defaultStyleSheet = R"(
@@ -35,8 +35,22 @@ QListWidget::item {
 	margin-right: 8px;
 }
 
-QLineEdit {
+QListWidget, .top-bar QLineEdit, .quicklink-completion {
 	background-color: %2;
+}
+
+QListWidget {
+	border-bottom: 1px white solid;
+}
+
+.quicklink-completion QLineEdit {
+	background-color: %3;
+	border: 1px #ffffff solid;
+	font-size: 11pt;
+	border-radius: 5px;
+}
+
+.top-bar > QLineEdit {
 	font-size: 12pt;
 	border: none;
 }

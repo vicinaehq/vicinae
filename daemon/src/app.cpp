@@ -18,6 +18,9 @@ AppWindow::AppWindow(QWidget *parent) : QMainWindow(parent) {
   // setFixedWidth(800);
   // setFixedHeight(600);
 
+  setWindowFlags(Qt::FramelessWindowHint);
+  setAttribute(Qt::WA_TranslucentBackground);
+
   setMinimumWidth(850);
   setMinimumHeight(550);
 

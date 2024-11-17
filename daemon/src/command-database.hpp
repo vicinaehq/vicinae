@@ -32,5 +32,7 @@ struct CommandDatabase {
                                "Sway", false, "focus left window"});
     commands.push_back(Command{"Focus right window", ":/assets/icons/sway.svg",
                                "Sway", false, "focus right window"});
+    commands.push_back(Command{"Search system packages", "package", "Portage",
+                               true, "search system packages"});
   }
 };

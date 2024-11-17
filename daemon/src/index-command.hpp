@@ -1,16 +1,23 @@
 #include "command-database.hpp"
+#include "quicklist-database.hpp"
 #include "xdg-desktop-database.hpp"
 #include <QPainter>
+#include <numbers>
 #include <qboxlayout.h>
+#include <qcoreevent.h>
 #include <qicon.h>
+#include <qitemselectionmodel.h>
 #include <qlabel.h>
 #include <qlineedit.h>
 #include <qlist.h>
 #include <qlistwidget.h>
 #include <qlogging.h>
+#include <qmap.h>
 #include <qnamespace.h>
+#include <qobject.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
+#include <variant>
 
 class GenericListItem : public QWidget {
   QLabel *iconLabel;
@@ -31,11 +38,6 @@ public:
 
     auto left = new QWidget();
     auto leftLayout = new QHBoxLayout();
-
-    // if (!iconName.isEmpty() && iconName.at(0) == ':') {
-    //  todo
-    // this->iconLabel->setPixmap(QIcon::fromTheme("window").pixmap(25, 25));
-    //} else {
 
     auto icon = QIcon::fromTheme(iconName);
 
@@ -60,8 +62,6 @@ public:
     this->kind->setText(kind);
     this->kind->setProperty("class", "minor");
     mainLayout->addWidget(this->kind, 0, Qt::AlignRight);
-
-    qDebug() << "Created GenericListItem";
   }
 };
 
@@ -93,6 +93,126 @@ public:
     // right->setStyleSheet("background-color: red");
 
     setLayout(layout);
+  }
+};
+
+class InlineQLineEdit : public QLineEdit {
+  Q_OBJECT
+
+private:
+  void resizeFromText(const QString &s) {
+    auto fm = fontMetrics();
+
+    setFixedWidth(fm.boundingRect(s).width() + 15);
+  }
+
+public:
+  InlineQLineEdit(const QString &placeholder, QWidget *parent = nullptr)
+      : QLineEdit(parent) {
+    connect(this, &QLineEdit::textChanged, this, &InlineQLineEdit::textChanged);
+
+    setPlaceholderText(placeholder);
+    resizeFromText(placeholder + "...");
+    setTextMargins(5, 5, 0, 5);
+  }
+
+protected slots:
+  void textChanged(const QString &s) {
+    const QString &text = s.isEmpty() ? placeholderText() : s;
+
+    resizeFromText(text);
+  }
+};
+
+class QuicklinkCompleter : public QWidget {
+
+public:
+  QList<InlineQLineEdit *> inputs;
+
+  QuicklinkCompleter(const Quicklink &link, QWidget *parent = nullptr)
+      : QWidget(parent) {
+    auto mainContainer = new QHBoxLayout();
+
+    QIcon::setThemeName("Papirus-Dark");
+
+    setProperty("class", "quicklink-completion");
+
+    // mainContainer->setAlignment(Qt::AlignVCenter);
+    mainContainer->setContentsMargins(0, 0, 0, 0);
+    mainContainer->setSpacing(10);
+
+    auto iconLabel = new QLabel();
+
+    iconLabel->setPixmap(QIcon::fromTheme(link.iconName).pixmap(22, 22));
+    mainContainer->addWidget(iconLabel, 0);
+
+    for (const auto &placeholder : link.placeholders) {
+      auto input = new InlineQLineEdit(placeholder);
+
+      inputs.push_back(input);
+      mainContainer->addWidget(input, 1, Qt::AlignLeft);
+    }
+
+    setLayout(mainContainer);
+  }
+
+  QList<QString> collectArgs() {
+    QList<QString> ss;
+
+    for (const auto &input : inputs)
+      ss.push_back(input->text());
+
+    return ss;
+  }
+
+  // focus first empty placeholder
+  // returns true if something was focused, false otherwise
+  bool focusFirstEmpty() {
+    for (auto &input : inputs) {
+      if (input->text().isEmpty()) {
+        std::cout << "found empty input" << std::endl;
+        emit input->setFocus();
+        return true;
+      }
+    }
+
+    return false;
+  }
+};
+
+struct TopBar : QWidget {
+  QHBoxLayout *layout;
+  QLineEdit *input;
+  QuicklinkCompleter *quickInput = nullptr;
+
+public:
+  TopBar(QWidget *parent = nullptr)
+      : QWidget(parent), layout(new QHBoxLayout()), input(new QLineEdit()) {
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(input);
+    layout->setSpacing(0);
+    setLayout(layout);
+    setProperty("class", "top-bar");
+  }
+
+  void destroyQuicklinkCompleter() {
+    if (quickInput) {
+      layout->removeWidget(quickInput);
+      quickInput->deleteLater();
+      quickInput = nullptr;
+      input->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+    }
+  }
+
+  void activateQuicklinkCompleter(const Quicklink &link) {
+    destroyQuicklinkCompleter();
+
+    auto completion = new QuicklinkCompleter(link);
+
+    quickInput = completion;
+    auto fm = input->fontMetrics();
+    input->setFixedWidth(fm.boundingRect(input->text()).width() + 35);
+    layout->addWidget(completion, 1);
   }
 };
 
@@ -198,16 +318,91 @@ public:
   }
 };
 
+struct CodeToColor {
+  QString input;
+};
+
+struct Calculator {
+  QString expression;
+  QString result;
+};
+
+using Selectable =
+    std::variant<Command, App, Quicklink, CodeToColor, Calculator>;
+
+class ManagedList : public QListWidget {
+  Q_OBJECT
+
+  QList<QString> sectionNames;
+  QList<Selectable> items;
+  QMap<QListWidgetItem *, Selectable> widgetToData;
+
+signals:
+  void itemSelected(const Selectable &data);
+  void itemActivated(const Selectable &data);
+
+protected slots:
+  void selectionChanged(QListWidgetItem *item, QListWidgetItem *previous) {
+    if (auto it = widgetToData.find(item); it != widgetToData.end()) {
+      emit itemSelected(*it);
+    }
+  }
+
+  void itemActivate(QListWidgetItem *item) {
+    if (auto it = widgetToData.find(item); it != widgetToData.end()) {
+      emit itemActivated(*it);
+    }
+  }
+
+public:
+  ManagedList(QWidget *parent = nullptr) : QListWidget(parent) {
+    connect(this, &QListWidget::currentItemChanged, this,
+            &ManagedList::selectionChanged);
+    connect(this, &QListWidget::itemActivated, this,
+            &ManagedList::itemActivate);
+  }
+
+  void addSection(const QString &name) {
+    auto item = new QListWidgetItem(this);
+    auto widget = new QLabel(name);
+
+    widget->setContentsMargins(8, sectionNames.count() > 0 ? 10 : 0, 0, 10);
+    item->setFlags(item->flags() & !Qt::ItemIsSelectable);
+    widget->setProperty("class", "minor category-name");
+
+    addItem(item);
+    setItemWidget(item, widget);
+    item->setSizeHint(widget->sizeHint());
+    sectionNames.push_back(name);
+  }
+
+  void addWidgetItem(const Selectable &data, QWidget *widget) {
+    auto item = new QListWidgetItem(this);
+
+    addItem(item);
+    setItemWidget(item, widget);
+    item->setSizeHint(widget->sizeHint());
+    widgetToData.insert(item, data);
+  }
+};
+
 class IndexCommand : public QWidget {
+  Q_OBJECT
+
   std::unique_ptr<XdgDesktopDatabase> xdg;
   std::unique_ptr<CommandDatabase> cmdDb;
+  std::unique_ptr<QuicklistDatabase> quicklinkDb;
   QList<Command> usableWithCommands;
-  QLineEdit *input = nullptr;
-  QListWidget *list = nullptr;
+  TopBar *topBar = nullptr;
+  ManagedList *list = nullptr;
   StatusBar *statusBar = nullptr;
+  QList<Selectable> selectables;
 
 private slots:
   void inputTextChanged(const QString &);
+  bool eventFilter(QObject *obj, QEvent *event) override;
+  void itemSelected(const Selectable &item);
+  void itemActivated(const Selectable &item);
 
 public:
   IndexCommand(QWidget *parent = nullptr);
