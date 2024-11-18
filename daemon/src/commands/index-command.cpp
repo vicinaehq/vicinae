@@ -1,10 +1,10 @@
 #include "index-command.hpp"
 #include "command-database.hpp"
+#include "omnicast.hpp"
 #include "quicklist-database.hpp"
 #include "tinyexpr.hpp"
 #include "xdg-desktop-database.hpp"
 #include <cmath>
-#include <memory>
 #include <qapplication.h>
 #include <qboxlayout.h>
 #include <qcontainerfwd.h>
@@ -20,26 +20,24 @@
 #include <qobject.h>
 #include <qwidget.h>
 #include <string_view>
-#include <variant>
 
-IndexCommand::IndexCommand(QWidget *parent)
-    : QWidget(parent), topBar(new TopBar()), list(new ManagedList()),
-      statusBar(new StatusBar()) {
+IndexCommand::IndexCommand(AppWindow *app)
+    : CommandWidget(app), list(new ManagedList()) {
 
-  xdg = std::make_unique<XdgDesktopDatabase>(XdgDesktopDatabase());
-  cmdDb = std::make_unique<CommandDatabase>(CommandDatabase());
-  quicklinkDb = std::make_unique<QuicklistDatabase>(QuicklistDatabase());
+  xdg = new XdgDesktopDatabase();
+  cmdDb = new CommandDatabase();
+  quicklinkDb = new QuicklistDatabase();
 
   for (const auto &cmd : cmdDb->commands) {
     if (!cmd.usableWith)
       continue;
-    usableWithCommands.push_back(cmd);
+    usableWithCommands.push_back(new Command(cmd));
   }
 
   auto layout = new QVBoxLayout();
 
-  topBar->input->setPlaceholderText("Search for apps or commands...");
-  topBar->input->setTextMargins(15, 20, 0, 20);
+  app->topBar->input->setPlaceholderText("Search for apps or commands...");
+  app->topBar->input->setTextMargins(15, 20, 0, 20);
 
   list->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   list->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -50,17 +48,17 @@ IndexCommand::IndexCommand(QWidget *parent)
   layout->setContentsMargins(0, 0, 0, 0);
   layout->setAlignment(Qt::AlignTop);
 
-  layout->addWidget(topBar);
   layout->addWidget(list, 1);
-  layout->addWidget(statusBar);
 
-  topBar->input->installEventFilter(this);
+  app->topBar->input->installEventFilter(this);
 
-  connect(topBar->input, &QLineEdit::textChanged, this,
+  connect(app->topBar->input, &QLineEdit::textChanged, this,
           &IndexCommand::inputTextChanged);
   connect(list, &ManagedList::itemSelected, this, &IndexCommand::itemSelected);
   connect(list, &ManagedList::itemActivated, this,
           &IndexCommand::itemActivated);
+
+  inputTextChanged("");
 
   setLayout(layout);
 }
@@ -95,8 +93,8 @@ bool IndexCommand::eventFilter(QObject *obj, QEvent *event) {
 
     qDebug() << QKeySequence(keyEvent->key()).toString();
 
-    if (keyEvent->key() == Qt::Key_Return && topBar->quickInput) {
-      if (topBar->quickInput->focusFirstEmpty())
+    if (keyEvent->key() == Qt::Key_Return && app->topBar->quickInput) {
+      if (app->topBar->quickInput->focusFirstEmpty())
         return true;
     }
 
@@ -109,47 +107,56 @@ bool IndexCommand::eventFilter(QObject *obj, QEvent *event) {
   return false;
 }
 
-void IndexCommand::itemSelected(const Selectable &item) {
-  topBar->destroyQuicklinkCompleter();
+void IndexCommand::itemSelected(const IActionnable &item) {
+  destroyCompletion();
 
-  if (auto command = std::get_if<Command>(&item)) {
-    qDebug() << "command " << command->name;
-  } else if (auto app = std::get_if<App>(&item)) {
-    qDebug() << "app " << app->name;
-  } else if (auto quicklink = std::get_if<Quicklink>(&item)) {
-    if (!quicklink->placeholders.isEmpty()) {
-      topBar->activateQuicklinkCompleter(*quicklink);
-      for (const auto &input : topBar->quickInput->inputs) {
-        input->installEventFilter(this);
-      }
+  if (auto quicklink = dynamic_cast<const Quicklink *>(&item)) {
+    createCompletion(quicklink->placeholders);
+    app->topBar->quickInput->setIcon(quicklink->iconName);
+
+    for (const auto &input : app->topBar->quickInput->inputs) {
+      input->installEventFilter(this);
     }
-
-    qDebug() << "quicklink " << quicklink->name;
   }
+
+  auto actions = item.generateActions();
+
+  if (!actions.isEmpty()) {
+    app->statusBar->setSelectedAction(actions.at(0));
+  } else {
+  }
+
+  qDebug() << "Selection changed";
 }
 
-void IndexCommand::itemActivated(const Selectable &item) {
-  if (auto command = std::get_if<Command>(&item)) {
-    qDebug() << "activated command " << command->name;
-  } else if (auto app = std::get_if<App>(&item)) {
-    qDebug() << "activated app " << app->name;
-  } else if (auto quicklink = std::get_if<Quicklink>(&item)) {
-    if (auto completer = topBar->quickInput) {
-      for (const auto &arg : completer->collectArgs()) {
-        qDebug() << "arg=" << arg;
-      }
-    }
-    qDebug() << "activated quicklink " << quicklink->name;
+void IndexCommand::itemActivated(const IActionnable &item) {
+  auto actions = item.generateActions();
+
+  if (actions.isEmpty()) {
+    return;
   }
+
+  if (auto command = dynamic_cast<const Command *>(&item)) {
+    app->setCommand(command);
+    return;
+  }
+
+  QList<QString> command{app->topBar->input->text()};
+
+  if (auto completer = app->topBar->quickInput) {
+    for (const auto &input : completer->inputs) {
+      command.push_back(input->text());
+    }
+  }
+
+  actions.at(0)->exec(command);
 }
 
 void IndexCommand::inputTextChanged(const QString &text) {
   list->clear();
-  selectables.clear();
 
   std::string_view query(text.toLatin1().data());
 
-  /*
   if (QColor(text).isValid()) {
     list->addSection("Color");
 
@@ -162,7 +169,7 @@ void IndexCommand::inputTextChanged(const QString &text) {
     auto right = new VStack(circle, new Chip(text));
     auto widget = new TransformResult(left, right);
 
-    list->addWidgetItem(widget, nullptr);
+    list->addWidgetItem(new CodeToColor(text), widget);
   }
 
   if (text.size() > 1) {
@@ -181,10 +188,10 @@ void IndexCommand::inputTextChanged(const QString &text) {
       auto left = new VStack(exprLabel, new Chip("Expression"));
       auto right = new VStack(answerLabel, new Chip("Answer"));
 
-      list->addWidgetItem(new TransformResult(left, right));
+      list->addWidgetItem(new Calculator(text, answerLabel->text()),
+                          new TransformResult(left, right));
     }
   }
-  */
 
   auto apps = xdg->query(text.toStdString());
   QList<Command> matchingCommands;
@@ -207,7 +214,7 @@ void IndexCommand::inputTextChanged(const QString &text) {
       auto widget = new GenericListItem(quicklink.iconName,
                                         quicklink.displayName, "", "Quicklink");
 
-      list->addWidgetItem(quicklink, widget);
+      list->addWidgetItem(new Quicklink(quicklink), widget);
     }
   }
 
@@ -217,28 +224,29 @@ void IndexCommand::inputTextChanged(const QString &text) {
                                       QString::fromStdString(app.name), "",
                                       "Application");
 
-    list->addWidgetItem(app, widget);
+    list->addWidgetItem(new App(app), widget);
   }
 
   for (const auto &cmd : matchingCommands) {
     auto widget =
         new GenericListItem(cmd.iconName, cmd.name, cmd.category, "Command");
 
-    selectables.push_back(cmd);
-    list->addWidgetItem(cmd, widget);
+    list->addWidgetItem(new Command(cmd), widget);
   }
 
   if (usableWithCommands.size() > 0) {
     list->addSection(QString("Use \"%1\" with...").arg(text));
   }
 
-  for (const auto &cmd : usableWithCommands) {
+  for (const auto cmd : usableWithCommands) {
     auto widget =
-        new GenericListItem(cmd.iconName, cmd.name, cmd.category, "Command");
+        new GenericListItem(cmd->iconName, cmd->name, cmd->category, "Command");
 
-    selectables.push_back(cmd);
-    list->addWidgetItem(cmd, widget);
+    list->addWidgetItem(new Command(*cmd), widget);
   }
+
+  if (list->count() == 0)
+    destroyCompletion();
 
   // select first selectable element
   for (int i = 0; i != list->count(); ++i) {

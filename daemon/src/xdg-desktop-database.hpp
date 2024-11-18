@@ -1,4 +1,5 @@
 #pragma once
+#include "index-command.hpp"
 #include "ini.hpp"
 #include "utils.hpp"
 #include <algorithm>
@@ -6,14 +7,36 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <memory>
+#include <qdebug.h>
+#include <qlogging.h>
 #include <system_error>
 #include <vector>
 
-struct App {
+class App : public IActionnable {
+public:
   std::string normalizedName;
   std::string name;
   std::string exec;
   std::string icon;
+  std::string mime;
+
+  using Ref = const App &;
+
+  struct Open : public IAction {
+    Ref ref;
+
+    QString name() const override { return "Open Application"; }
+    void exec(const QList<QString> cmd) const override {
+      qDebug() << "executng app ";
+    }
+
+    Open(Ref ref) : ref(ref) {}
+  };
+
+  ActionList generateActions() const override {
+    return {std::make_shared<Open>(*this)};
+  }
 };
 
 class XdgDesktopDatabase {
@@ -59,11 +82,13 @@ public:
                            std::string_view value) {
           if (section == "Desktop Entry") {
             if (key == "Name")
-              app->name = std::string(value);
+              app->name = value;
             if (key == "Exec")
-              app->exec = std::string(value);
+              app->exec = value;
             if (key == "Icon")
-              app->icon = std::string(value);
+              app->icon = value;
+            if (key == "MimeType")
+              app->mime = value;
           }
         });
 
@@ -71,6 +96,11 @@ public:
         app->normalizedName = app->name;
         std::transform(app->name.begin(), app->name.end(),
                        app->normalizedName.begin(), ::tolower);
+
+        if (app->mime.find("scheme-handler") != std::string::npos) {
+          qDebug() << "scheme handler in " << app->mime;
+        }
+
         this->apps.push_back(app);
       }
     }

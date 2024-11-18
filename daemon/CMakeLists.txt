@@ -36,6 +36,7 @@ qt_add_executable(${TARGET}
 	src/extension_manager.cpp
 	src/config.cpp
 	src/commands/index-command.cpp
+	src/omnicast.hpp
 	src/index-command.hpp
 	src/lib/tinyexpr.cpp
 	./resources.qrc

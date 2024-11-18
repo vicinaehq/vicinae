@@ -6,8 +6,8 @@
 #include <qfontdatabase.h>
 #include <qlogging.h>
 
-static const char *colorSelected = "rgba(41, 40, 37, 230)";
-static const char *baseBackground = "rgba(32, 31, 29, 240)";
+static const char *colorSelected = "rgba(43, 42, 41, 230)";
+static const char *baseBackground = "rgba(30, 29, 28, 240)";
 static const char *baseText = "rgb(239, 239, 239)";
 
 static const char *defaultStyleSheet = R"(
@@ -22,6 +22,10 @@ QWidget {
 QListWidget {
 	background-color: %2;
 	border: none;
+}
+
+#CommandWidget {
+	background-color: %2;
 }
 
 QLabel.minor {
