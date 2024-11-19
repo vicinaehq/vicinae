@@ -23,13 +23,9 @@ QMainWindow > QWidget {
 	background-color: %2;
 }
 
-QListWidget {
+QLineEdit, QListWidget {
 	border: none;
 	background-color: transparent;
-}
-
-QLabel.minor {
-	color: #AAAAAA;
 }
 
 QListWidget::item {
@@ -39,40 +35,13 @@ QListWidget::item {
 	margin-right: 8px;
 }
 
-.top-bar QLineEdit, .top-bar .quicklink-completion {
-	background-color: transparent;
-}
-
-/*
-.top-bar {
-	background-color: %2;
-}
-*/
-
-.top-bar .back-button {
+QListWidget::item:hover, 
+QListWidget::item:selected {
 	background-color: %3;
-	border-radius: 5px;
-	padding: 5px;
 }
 
-QListWidget {
-	border-bottom: 1px white solid;
-}
-
-.quicklink-completion QLineEdit {
-	background-color: %3;
-	border: 1px #ffffff solid;
-	font-size: 11pt;
-	border-radius: 5px;
-}
-
-.top-bar > QLineEdit {
-	font-size: 12pt;
-	border: none;
-}
-
-QListWidget::item:hover, QListWidget::item:selected {
-	background-color: %3;
+QLabel.minor {
+	color: #AAAAAA;
 }
 
 QLabel.transform-left {
@@ -82,6 +51,23 @@ QLabel.transform-left {
 
 QLabel.chip {
 	background-color: %2;
+	border-radius: 5px;
+}
+
+.top-bar > QLineEdit {
+	font-size: 12pt;
+}
+
+.top-bar .back-button {
+	background-color: %3;
+	border-radius: 5px;
+	padding: 5px;
+}
+
+.quicklink-completion QLineEdit {
+	background-color: %3;
+	border: 1px white solid;
+	font-size: 11pt;
 	border-radius: 5px;
 }
 
@@ -96,9 +82,9 @@ QWidget.status-bar {
 
 int main(int argc, char **argv) {
   QApplication qapp(argc, argv);
-  auto app = new AppWindow();
+  AppWindow app;
 
-  app->show();
+  app.show();
 
   int fontId = QFontDatabase::addApplicationFont(
       "./assets/fonts/SF-Pro-Text-Regular.otf");

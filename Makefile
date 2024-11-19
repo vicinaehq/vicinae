@@ -1,11 +1,11 @@
 BUILD_DIR := build
 
 all: configure
-	cmake --build $(BUILD_DIR) -j$(shell nproc)
+	cmake --build $(BUILD_DIR)
 .PHONY: all
 
 configure:
-	cmake -B $(BUILD_DIR)
+	PARALLEL_LEVEL=$(shell nproc) cmake -GNinja -B $(BUILD_DIR)
 .PHONY: configure
 
 clean:
