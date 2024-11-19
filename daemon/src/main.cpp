@@ -19,13 +19,13 @@ QWidget {
 	color: %4;
 }
 
-QListWidget {
+QMainWindow > QWidget {
 	background-color: %2;
-	border: none;
 }
 
-#CommandWidget {
-	background-color: %2;
+QListWidget {
+	border: none;
+	background-color: transparent;
 }
 
 QLabel.minor {
@@ -39,8 +39,20 @@ QListWidget::item {
 	margin-right: 8px;
 }
 
-QListWidget, .top-bar QLineEdit, .quicklink-completion {
+.top-bar QLineEdit, .top-bar .quicklink-completion {
+	background-color: transparent;
+}
+
+/*
+.top-bar {
 	background-color: %2;
+}
+*/
+
+.top-bar .back-button {
+	background-color: %3;
+	border-radius: 5px;
+	padding: 5px;
 }
 
 QListWidget {

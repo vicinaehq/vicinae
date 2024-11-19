@@ -37,7 +37,7 @@ IndexCommand::IndexCommand(AppWindow *app)
   auto layout = new QVBoxLayout();
 
   app->topBar->input->setPlaceholderText("Search for apps or commands...");
-  app->topBar->input->setTextMargins(15, 20, 0, 20);
+  // app->topBar->input->setTextMargins(15, 20, 0, 20);
 
   list->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   list->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);

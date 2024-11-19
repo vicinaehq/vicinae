@@ -25,12 +25,14 @@ void AppWindow::setCommandWidget(CommandWidget *widget) {
 }
 
 void AppWindow::resetCommand() {
+  topBar->hideBackButton();
   currentCommand = std::nullopt;
   setCommandWidget(new IndexCommand(this));
 }
 
 void AppWindow::setCommand(const Command *cmd) {
   currentCommand = cmd;
+  topBar->showBackButton();
   setCommandWidget(cmd->widgetFactory(this));
 }
 

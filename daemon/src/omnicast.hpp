@@ -6,7 +6,10 @@
 #include <QPainter>
 #include <QVBoxLayout>
 #include <QWidget>
+#include <qboxlayout.h>
+#include <qlabel.h>
 #include <qmainwindow.h>
+#include <qnamespace.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
 
@@ -192,19 +195,43 @@ public:
 };
 
 struct TopBar : QWidget {
+  QLabel *backButtonLabel = nullptr;
   QHBoxLayout *layout;
   QLineEdit *input;
   InputCompleter *quickInput = nullptr;
+  QWidget *backWidget = nullptr;
 
 public:
   TopBar(QWidget *parent = nullptr)
       : QWidget(parent), layout(new QHBoxLayout()), input(new QLineEdit()) {
-    layout->setContentsMargins(0, 0, 0, 0);
+    backButtonLabel = new QLabel();
+
+    QIcon::setThemeName("Papirus-Dark");
+
+    input->setTextMargins(10, 10, 10, 10);
+
+    backWidget = new QWidget();
+    auto backContainer = new QVBoxLayout();
+
+    backContainer->setContentsMargins(0, 0, 0, 0);
+    backContainer->addWidget(backButtonLabel, 0, Qt::AlignCenter);
+    backWidget->setLayout(backContainer);
+
+    backButtonLabel->setPixmap(QIcon::fromTheme("arrow-left").pixmap(20, 20));
+
+    backButtonLabel->setProperty("class", "back-button");
+    backWidget->hide();
+
+    layout->addWidget(backWidget);
     layout->addWidget(input);
     layout->setSpacing(0);
     setLayout(layout);
     setProperty("class", "top-bar");
   }
+
+  void showBackButton() { backWidget->show(); }
+
+  void hideBackButton() { backWidget->hide(); }
 
   void destroyQuicklinkCompleter() {
     if (quickInput) {
