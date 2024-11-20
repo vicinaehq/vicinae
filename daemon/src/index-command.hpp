@@ -51,10 +51,12 @@ class IndexCommand : public CommandWidget {
 
 private:
   void inputTextChanged(const QString &);
-  bool eventFilter(QObject *obj, QEvent *event);
+  bool eventFilter(QObject *obj, QEvent *event) override;
   void itemSelected(const IActionnable &item);
   void itemActivated(const IActionnable &item);
 
 public:
   IndexCommand(AppWindow *app);
+
+  void onSearchChanged(const QString &) override;
 };

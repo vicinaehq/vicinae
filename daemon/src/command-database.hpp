@@ -2,6 +2,7 @@
 #include "calculator-database.hpp"
 #include "index-command.hpp"
 #include "omnicast.hpp"
+#include "tinyexpr.hpp"
 #include <QKeyEvent>
 #include <QString>
 #include <memory>
@@ -30,15 +31,12 @@ public:
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(list);
 
-    connect(searchbar(), &QLineEdit::textChanged, this,
-            &CalculatorHistoryCommand::textChanged);
-
     searchbar()->clear();
     searchbar()->installEventFilter(this);
-    searchbar()->setPlaceholderText("Browse history and do maths");
+    searchbar()->setPlaceholderText("Browse history and do maths...");
 
     entries = CalculatorDatabase::get().list();
-    textChanged("");
+    onSearchChanged("");
 
     setLayout(layout);
   }
@@ -76,17 +74,45 @@ public:
     return false;
   }
 
-public slots:
-  void textChanged(const QString &q) {
+  void onSearchChanged(const QString &q) override {
     list->clear();
-    list->addSection("History");
+
+    std::string_view query(q.toLatin1().data());
+
+    if (query.size() > 1) {
+      te_parser parser;
+
+      if (double result = parser.evaluate(query); !std::isnan(result)) {
+        list->addSection("Calculator");
+
+        auto exprLabel = new QLabel(q);
+
+        exprLabel->setProperty("class", "transform-left");
+
+        auto answerLabel = new QLabel(QString::number(result));
+        answerLabel->setProperty("class", "transform-left");
+
+        auto left = new VStack(exprLabel, new Chip("Expression"));
+        auto right = new VStack(answerLabel, new Chip("Answer"));
+
+        list->addWidgetItem(new Calculator(q, answerLabel->text()),
+                            new TransformResult(left, right));
+      }
+    }
+
+    QList<CalculatorEntry> matches;
 
     for (const auto &row : entries) {
-      bool matches = row.expression.contains(q) || row.result.contains(q);
+      if (row.expression.contains(q) || row.result.contains(q)) {
+        matches.push_back(row);
+      }
+    }
 
-      if (!matches)
-        continue;
+    if (!matches.isEmpty()) {
+      list->addSection("History");
+    }
 
+    for (const auto &row : matches) {
       auto format = QString("%1 = %2").arg(row.expression).arg(row.result);
 
       list->addWidgetItem(

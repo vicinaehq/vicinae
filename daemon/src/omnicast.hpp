@@ -470,8 +470,13 @@ protected:
   QLineEdit *searchbar() { return app->topBar->input; }
 
 public:
-  CommandWidget(AppWindow *app) : app(app) { setObjectName("CommandWidget"); }
+  CommandWidget(AppWindow *app) : app(app) {
+    setObjectName("CommandWidget");
+    connect(app->topBar->input, &QLineEdit::textChanged, this,
+            &CommandWidget::onSearchChanged);
+  }
 
 signals:
   void replaceCommand(const Command *);
+  virtual void onSearchChanged(const QString &);
 };

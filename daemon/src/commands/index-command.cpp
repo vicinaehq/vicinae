@@ -52,13 +52,11 @@ IndexCommand::IndexCommand(AppWindow *app)
 
   app->topBar->input->installEventFilter(this);
 
-  connect(app->topBar->input, &QLineEdit::textChanged, this,
-          &IndexCommand::inputTextChanged);
   connect(list, &ManagedList::itemSelected, this, &IndexCommand::itemSelected);
   connect(list, &ManagedList::itemActivated, this,
           &IndexCommand::itemActivated);
 
-  inputTextChanged("");
+  onSearchChanged("");
 
   setLayout(layout);
 }
@@ -152,7 +150,7 @@ void IndexCommand::itemActivated(const IActionnable &item) {
   actions.at(0)->exec(command);
 }
 
-void IndexCommand::inputTextChanged(const QString &text) {
+void IndexCommand::onSearchChanged(const QString &text) {
   list->clear();
 
   std::string_view query(text.toLatin1().data());
