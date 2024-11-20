@@ -1,4 +1,5 @@
 #pragma once
+#include "calculator-database.hpp"
 #include "omnicast.hpp"
 
 struct CodeToColor : public IActionnable {
@@ -20,6 +21,7 @@ struct Calculator : public IActionnable {
 
     void exec(const QList<QString> cmd) const override {
       qDebug() << "copying " << ref.result << " into clipboard";
+      CalculatorDatabase::get().saveComputation(ref.expression, ref.result);
     }
 
     QString name() const override { return "Copy result"; }

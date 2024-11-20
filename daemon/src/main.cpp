@@ -2,9 +2,13 @@
 #include <QApplication>
 #include <QFontDatabase>
 #include <QSurfaceFormat>
+#include <QtSql/QtSql>
+#include <QtSql/qsqldatabase.h>
 #include <jsoncpp/json/reader.h>
 #include <qfontdatabase.h>
+#include <qlist.h>
 #include <qlogging.h>
+#include <qobject.h>
 
 static const char *colorSelected = "rgba(43, 42, 41, 230)";
 static const char *baseBackground = "rgba(30, 29, 28, 240)";

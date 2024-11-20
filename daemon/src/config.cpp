@@ -1,6 +1,12 @@
 #include "config.hpp"
 
 std::unique_ptr<Config> loadConfig(std::string_view path) {
+  auto dir = Config::dir();
+
+  if (!dir.exists()) {
+    dir.mkpath(".");
+  }
+
   Config cfg;
   toml::table tbl = toml::parse_file(path);
 

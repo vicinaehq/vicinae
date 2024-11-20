@@ -1,4 +1,7 @@
 #pragma once
+#include <QDir>
+#include <qdir.h>
+#include <qtenvironmentvariables.h>
 #include <string>
 #include <toml++/toml.h>
 #include <vector>
@@ -10,6 +13,13 @@ struct ConfigExtension {
 };
 
 struct Config {
+  static QString dirPath() {
+    return QDir::cleanPath(QDir::homePath() + QDir::separator() + ".config" +
+                           QDir::separator() + "omni");
+  }
+
+  static QDir dir() { return dirPath(); }
+
   std::vector<ConfigExtension> extensions;
 };
 

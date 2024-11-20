@@ -7,7 +7,7 @@ set(LIBS)
 
 set(TARGET spellcastd)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Sql)
 find_package(SQLite3 REQUIRED)
 
 
@@ -15,7 +15,7 @@ option(WAYLAND_LAYER_SHELL "Enable support for the Wayland layer shell
 protocol, required for proper window positioning on most wlroots-based
 compositors." OFF)
 
-list(APPEND LIBS tomlplusplus Qt6::Widgets jsoncpp)
+list(APPEND LIBS tomlplusplus Qt6::Widgets Qt6::Sql jsoncpp)
 
 if (WAYLAND_LAYER_SHELL)
 	find_package(Qt6 REQUIRED COMPONENTS WaylandClient)

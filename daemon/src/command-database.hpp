@@ -1,20 +1,100 @@
 #pragma once
+#include "calculator-database.hpp"
+#include "index-command.hpp"
 #include "omnicast.hpp"
+#include <QKeyEvent>
 #include <QString>
 #include <memory>
+#include <qapplication.h>
 #include <qboxlayout.h>
+#include <qdir.h>
 #include <qlabel.h>
 #include <qlist.h>
+#include <qlogging.h>
 #include <qwidget.h>
 
 class CalculatorHistoryCommand : public CommandWidget {
+  ManagedList *list;
+  QList<CalculatorEntry> entries;
+
 public:
-  CalculatorHistoryCommand(AppWindow *app) : CommandWidget(app) {
+  CalculatorHistoryCommand(AppWindow *app)
+      : CommandWidget(app), list(new ManagedList()) {
     auto layout = new QVBoxLayout();
 
-    layout->addWidget(new QLabel("Calculator history"));
+    for (const auto &row : CalculatorDatabase::get().list()) {
+      qDebug() << row.expression << " = " << row.result << " at "
+               << row.timestamp;
+    }
+
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(list);
+
+    connect(searchbar(), &QLineEdit::textChanged, this,
+            &CalculatorHistoryCommand::textChanged);
+
+    searchbar()->clear();
+    searchbar()->installEventFilter(this);
+    searchbar()->setPlaceholderText("Browse history and do maths");
+
+    entries = CalculatorDatabase::get().list();
+    textChanged("");
 
     setLayout(layout);
+  }
+
+  bool isListKey(QKeyEvent *event) {
+    switch (event->key()) {
+    case Qt::Key_Left:
+    case Qt::Key_Right:
+    case Qt::Key_Up:
+    case Qt::Key_Down:
+    case Qt::Key_Return:
+      return true;
+    default:
+      return false;
+    }
+  }
+
+  bool eventFilter(QObject *obj, QEvent *event) override {
+    if (event->type() == QEvent::KeyPress) {
+      auto keyEvent = static_cast<QKeyEvent *>(event);
+
+      qDebug() << QKeySequence(keyEvent->key()).toString();
+
+      if (keyEvent->key() == Qt::Key_Return && app->topBar->quickInput) {
+        if (app->topBar->quickInput->focusFirstEmpty())
+          return true;
+      }
+
+      if (isListKey(keyEvent)) {
+        QApplication::sendEvent(list, event);
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+public slots:
+  void textChanged(const QString &q) {
+    list->clear();
+    list->addSection("History");
+
+    for (const auto &row : entries) {
+      bool matches = row.expression.contains(q) || row.result.contains(q);
+
+      if (!matches)
+        continue;
+
+      auto format = QString("%1 = %2").arg(row.expression).arg(row.result);
+
+      list->addWidgetItem(
+          new Calculator(row.expression, row.result),
+          new GenericListItem("pcbcalculator", format, "", "Calculator"));
+    }
+
+    list->selectFirstEligible();
   }
 };
 

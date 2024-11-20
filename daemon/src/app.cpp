@@ -61,7 +61,7 @@ AppWindow::AppWindow(QWidget *parent)
   setMinimumWidth(850);
   setMinimumHeight(550);
 
-  // auto config = loadConfig("config.toml");
+  auto config = loadConfig("config.toml");
 
   /*
   auto extman = new ExtensionManager(config->extensions);

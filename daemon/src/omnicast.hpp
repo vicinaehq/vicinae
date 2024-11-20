@@ -4,35 +4,22 @@
 #include <QLineEdit>
 #include <QListWidget>
 #include <QPainter>
+#include <QStringList>
 #include <QVBoxLayout>
 #include <QWidget>
 #include <qboxlayout.h>
 #include <qlabel.h>
+#include <qlineedit.h>
 #include <qmainwindow.h>
 #include <qnamespace.h>
+#include <qprocess.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
 
-static void xdgOpen(std::string_view url) {
-  int pid = fork();
+static void xdgOpen(const QString &url) {
+  QProcess process;
 
-  if (pid != 0)
-    return;
-
-  daemon(0, 0);
-
-  char **argv = new char *[3];
-
-  argv[0] = strdup("xdg-open");
-  argv[1] = strdup(url.data());
-  argv[2] = nullptr;
-
-  if (execvp(argv[0], argv) == -1) {
-    perror("failed to execvp");
-    free(argv[0]);
-    free(argv[1]);
-    delete[] argv;
-  }
+  process.startDetached("xdg-open", QStringList() << url);
 }
 
 class IAction {
@@ -362,6 +349,18 @@ public:
     QListWidget::clear();
   }
 
+  void selectFirstEligible() {
+    for (int i = 0; i != count(); ++i) {
+      auto item = QListWidget::item(i);
+
+      if (!item->flags().testFlag(Qt::ItemIsSelectable))
+        continue;
+
+      QListWidget::setCurrentItem(item);
+      break;
+    }
+  }
+
   void addSection(const QString &name) {
     auto item = new QListWidgetItem(this);
     auto widget = new QLabel(name);
@@ -467,6 +466,8 @@ protected:
       app->topBar->destroyQuicklinkCompleter();
     }
   }
+
+  QLineEdit *searchbar() { return app->topBar->input; }
 
 public:
   CommandWidget(AppWindow *app) : app(app) { setObjectName("CommandWidget"); }

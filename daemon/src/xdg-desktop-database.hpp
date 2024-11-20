@@ -8,6 +8,7 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <qcontainerfwd.h>
 #include <qdebug.h>
 #include <qlogging.h>
 #include <system_error>
@@ -27,6 +28,7 @@ public:
     Ref ref;
 
     QString name() const override { return "Open Application"; }
+
     void exec(const QList<QString> cmd) const override {
       qDebug() << "executng app ";
     }
