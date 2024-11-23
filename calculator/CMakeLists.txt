@@ -7,8 +7,13 @@ set(TARGET calculator)
 
 add_compile_options(-march=native -g3)
 
+
 set(SRCS 
 	src/main.cpp
+	src/tokenizer.cpp
+	src/ast.cpp
+	src/parser.cpp
+	src/unit.cpp
 )
 
 include_directories(
