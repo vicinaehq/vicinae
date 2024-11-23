@@ -186,33 +186,26 @@ static std::vector<std::pair<std::string_view, std::string_view>>
         {"plus", "+"},
         {"minus", "-"},
         {"divided by", "/"},
-		{"div by", "/"},
-		{"div", "/"},
         {"multiplied by", "*"},
-        {"mul by", "*"},
-        {"mul", "*"},
         {"times", "*"},
         {"power", "^"},
+		{"**", "^"},
         {"to the power of", "^"},
+		{"% of", "/100 *"},
+		{"percent of", "/100 *"},
     };
 // clang-format on 
 	
 std::string Parser::preprocess(std::string_view view) {
   std::string s;
   size_t i = 0;
-  unsigned char prev = 0;
 
   while (i < view.size()) {
     bool replaced = false;
     std::string_view sub{view.begin() + i, view.end()};
 
-    if (!prev || std::isblank(prev)) {
       for (const auto& [k, v] : subsitutionMap) {
 		 if (sub.size() < k.size()) continue ;
-
-		 bool isNextOk = sub.size() == k.size() || std::isblank(sub.at(k.size()));
-
-		 if (!isNextOk) continue ;
 
         if (strncasecmp(k.data(), sub.data(), k.size()) == 0) {
           s += v;
@@ -221,11 +214,9 @@ std::string Parser::preprocess(std::string_view view) {
 		  break ;
         }
       }
-    }
 
     if (!replaced) {
       s += view.at(i);
-      prev = view.at(i);
       i++;
     }
   }
