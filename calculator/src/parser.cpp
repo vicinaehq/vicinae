@@ -72,14 +72,20 @@ Parser::ComputationResult Parser::evaluateBinExpr(AST::BinaryExpression *expr) {
   if (expr->op == "in") {
     auto lhs = evaluateNode(expr->lhs);
 
+    ComputationResult res(lhs.value);
+
+    if (auto format = expr->rhs->valueAs<AST::FormatLiteral>()) {
+      res.format = format->format;
+
+      return res;
+    }
+
     auto rhs = expr->rhs->valueAs<AST::UnitLiteral>();
 
     if (!rhs) {
       throw std::runtime_error(
           "unit literal expected at the right hand side of in operator");
     }
-
-    ComputationResult res(lhs.value);
 
     res.unit = rhs->unit;
 
@@ -238,7 +244,11 @@ double Parser::evaluate(std::string_view expression) {
   std::cout << "result=" << node.value;
 
   if (node.unit) {
-    std::cout << " (" << node.unit->displayName << ")";
+    std::cout << " " << node.unit->displayName;
+  }
+
+  if (node.format) {
+	  std::cout << " " << node.format->get().displayName;
   }
 
   std::cout << std::endl;

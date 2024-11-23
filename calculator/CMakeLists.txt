@@ -14,12 +14,14 @@ set(SRCS
 	src/ast.cpp
 	src/parser.cpp
 	src/unit.cpp
+	src/output.cpp
 )
 
 include_directories(
 	src
 )
 
+add_library(calc ${SRCS})
 add_executable(calculator ${SRCS})
 target_compile_options(calculator PUBLIC -Wall)
 install(TARGETS ${TARGET})

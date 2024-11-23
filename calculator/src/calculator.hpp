@@ -15,6 +15,14 @@
 #include <vector>
 
 // clang-format off
+struct OutputFormat {
+	enum Type { Decimal, Hex, Base64 };
+
+	Type type;
+	std::vector<std::string_view> names;
+	std::string_view displayName;
+};
+
 struct Unit {
   enum Type { 
 	  Seconds, Minutes, Hours, Days, Years, 
@@ -54,6 +62,8 @@ static std::map<std::string_view, double> variables = {
 // clang-format on
 
 std::optional<Unit> findUnitByName(std::string_view s);
+std::optional<std::reference_wrapper<OutputFormat>>
+findFormatByName(std::string_view name);
 
 struct Token {
   using ValueType = std::variant<double, std::string_view>;
@@ -85,6 +95,7 @@ struct Token {
   }
 
   const std::string_view *asString() const {
+
     if (auto p = std::get_if<std::string_view>(&data);
         p && type == Type::STRING)
       return p;
@@ -101,10 +112,12 @@ static std::map<Token::Type, std::string_view> map = {
 enum State {
   START,
   NUMBER,
+  NUMBER_LITERAL,
+  NUMBER_EXPONENT,
+  NUMBER_FRACTION,
   WHITESPACE,
   OPERATOR,
   STRING,
-  SIGN,
 };
 
 class Tokenizer {
@@ -162,10 +175,15 @@ public:
     Unit unit;
   };
 
+  struct FormatLiteral {
+    const OutputFormat &format;
+  };
+
   class Node {
   public:
     using NodeValue = std::variant<FunctionCall, NumericValue, BinaryExpression,
-                                   StringLiteral, UnitLiteral, UnaryExpression>;
+                                   StringLiteral, UnitLiteral, UnaryExpression,
+                                   FormatLiteral>;
 
     template <typename T> T *valueAs() { return std::get_if<T>(&data); }
 
@@ -203,8 +221,10 @@ public:
   struct ComputationResult {
     double value;
     std::optional<Unit> unit;
+    std::optional<std::reference_wrapper<const OutputFormat>> format;
 
-    ComputationResult(double value) : value(value), unit(std::nullopt) {}
+    ComputationResult(double value)
+        : value(value), unit(std::nullopt), format(std::nullopt) {}
   };
 
 private:

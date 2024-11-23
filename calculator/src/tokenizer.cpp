@@ -1,6 +1,10 @@
 #include "calculator.hpp"
 #include <iostream>
 
+static const std::string_view hexCharset = "0123456789ABCDEF";
+static const std::string_view decCharset = "0123456789";
+static const std::string_view octalCharset = "01234567";
+
 Tokenizer::Tokenizer(std::string_view input) noexcept
     : input(input), current(next()) {}
 
@@ -20,26 +24,24 @@ void Tokenizer::reset() {
 std::optional<Token> Tokenizer::next() {
   size_t start = cursor, end = cursor;
   size_t i = cursor;
-  int sign = 1;
+  double number = 0;
+  double fraction = 0;
+  double exponent = 0;
+  std::string_view baseCharset = decCharset;
 
-  for (; i != input.size(); ++i) {
-    char ch = input.at(i);
+  for (; i <= input.size(); ++i) {
+    char ch = i < input.size() ? input.at(i) : 0;
     std::string_view view{input.begin() + start, input.begin() + end};
 
     switch (state) {
     case START:
-      /*
-if ((ch == '+' || ch == '-') && (!prev || prev->isUnaryPredictor())) {
-sign = ch == '-' ? -sign : sign;
-state = SIGN;
-++end;
-std::cout << "new sign:" << sign << std::endl;
-}
-    */
-
       if (std::isdigit(ch)) {
-        state = NUMBER;
-        ++end;
+        if (ch == '0')
+          state = NUMBER_LITERAL;
+        else {
+          state = NUMBER;
+          --i;
+        }
       } else if (std::isblank(ch)) {
         state = WHITESPACE;
         ++end;
@@ -52,34 +54,80 @@ std::cout << "new sign:" << sign << std::endl;
       }
       break;
 
-    case SIGN:
-      if (ch == '+' || ch == '-') {
-        sign = ch == '-' ? -sign : sign;
-        ++end;
-      } else {
-        start = end;
-        state = START;
-        --i;
+    case NUMBER_EXPONENT:
+      if (ch == '-' || ch == '+') {
+        if (ch == '-')
+          exponent *= -1;
+        break;
       }
+      if (auto pos = baseCharset.find(ch); pos != std::string::npos) {
+        exponent = exponent * baseCharset.size() + pos;
+        break;
+      }
+
+      --i;
+      state = NUMBER;
       break;
+
+    case NUMBER_FRACTION:
+      if (auto pos = baseCharset.find(ch); pos != std::string::npos) {
+        fraction = fraction * baseCharset.size() + pos;
+        break;
+      }
+
+      while (fraction >= 1)
+        fraction /= baseCharset.size();
+
+      --i;
+      state = NUMBER;
+      break;
+
+    case NUMBER_LITERAL:
+      switch (tolower(ch)) {
+      case 'x':
+        baseCharset = hexCharset;
+        break;
+      case 'b':
+        baseCharset = "01";
+        break;
+      case '.':
+        --i;
+        break; // not octal
+      default:
+        baseCharset = octalCharset;
+        break;
+      }
+      state = NUMBER;
+      start = end;
+      break;
+
+    case NUMBER:
+      if (tolower(ch) == 'e') {
+        state = NUMBER_EXPONENT;
+        break;
+      }
+
+      if (ch == '.') {
+        state = NUMBER_FRACTION;
+        break;
+      }
+
+      if (auto pos = baseCharset.find(ch); pos != std::string::npos) {
+        number = number * baseCharset.size() + pos;
+        break;
+      }
+
+      state = START;
+      cursor = i;
+      return commitToken({view, (number + fraction) * std::pow(10, exponent),
+                          Token::Type::NUMBER});
 
     case OPERATOR:
       state = START;
       cursor = i;
       return commitToken({view, view, Token::Type::OPERATOR});
-    case NUMBER:
-      if (std::isdigit(ch) || ch == '.')
-        ++end;
-      else {
-        state = START;
-        cursor = i;
-        double v = std::stod(view.data()) * sign;
-
-        return commitToken({view, v, Token::Type::NUMBER});
-      }
-      break;
     case STRING:
-      if (std::isalpha(ch))
+      if (std::isalnum(ch))
         ++end;
       else {
         state = START;
@@ -107,28 +155,5 @@ std::cout << "new sign:" << sign << std::endl;
     }
   }
 
-  std::string_view s{input.begin() + start, input.begin() + end};
-
-  cursor = i;
-
-  std::optional<Token> token = std::nullopt;
-
-  switch (state) {
-  case NUMBER:
-    std::cout << "sign=" << sign << std::endl;
-    token = {s, std::stod(s.data()) * sign, Token::Type::NUMBER};
-    break;
-  case STRING:
-    token = {s, s, Token::Type::STRING};
-    break;
-  case OPERATOR:
-    token = {s, s, Token::Type::OPERATOR};
-    break;
-  default:
-    break;
-  }
-
-  state = START;
-
-  return token;
+  return std::nullopt;
 }

@@ -74,6 +74,10 @@ AST::Node *AST::parseString() {
   if (const auto unit = findUnitByName(name->raw))
     return new Node(UnitLiteral{*unit});
 
+  if (auto format = findFormatByName(name->raw)) {
+    return new Node{FormatLiteral{*format}};
+  }
+
   if (tk.peak()->raw != "(")
     throw std::runtime_error(std::string{"Unexpected token: "} +
                              name->asString()->data());
@@ -154,33 +158,37 @@ void AST::printNode(Node *root, size_t depth) {
     return;
 
   if (auto binexpr = root->valueAs<BinaryExpression>()) {
-    std::cout << padding(depth) << "operator " << binexpr->op << "(" << "\n";
+    std::cerr << padding(depth) << "operator " << binexpr->op << "(" << "\n";
     printNode(binexpr->lhs, depth + 1);
     printNode(binexpr->rhs, depth + 1);
-    std::cout << padding(depth) << ")" << "\n";
+    std::cerr << padding(depth) << ")" << "\n";
   }
   if (auto num = root->valueAs<NumericValue>()) {
-    std::cout << padding(depth) << "Number(" << num->value << ")\n";
+    std::cerr << padding(depth) << "Number(" << num->value << ")\n";
   }
   if (auto fn = root->valueAs<FunctionCall>()) {
 
-    std::cout << padding(depth) << "FunctionCall " << fn->name << "(\n";
+    std::cerr << padding(depth) << "FunctionCall " << fn->name << "(\n";
     for (size_t i = 0; i != fn->args.size(); ++i) {
       printNode(fn->args.at(i), depth + 1);
     }
 
-    std::cout << ")" << std::endl;
+    std::cerr << ")" << std::endl;
   }
   if (auto conv = root->valueAs<StringLiteral>()) {
-    std::cout << padding(depth) << "String: " << conv->raw << std::endl;
+    std::cerr << padding(depth) << "String: " << conv->raw << std::endl;
   }
   if (auto unit = root->valueAs<UnitLiteral>()) {
-    std::cout << padding(depth) << "Unit: " << unit->unit.displayName
+    std::cerr << padding(depth) << "Unit: " << unit->unit.displayName
               << std::endl;
   }
+  if (auto output = root->valueAs<FormatLiteral>()) {
+    std::cerr << padding(depth)
+              << "Output Format: " << output->format.displayName << std::endl;
+  }
   if (auto unexpr = root->valueAs<UnaryExpression>()) {
-    std::cout << padding(depth) << "unary " << unexpr->op << "(" << "\n";
+    std::cerr << padding(depth) << "unary " << unexpr->op << "(" << "\n";
     printNode(unexpr->value, depth + 1);
-    std::cout << padding(depth) << ")" << "\n";
+    std::cerr << padding(depth) << ")" << "\n";
   }
 }
