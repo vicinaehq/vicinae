@@ -10,9 +10,12 @@
 #include <qlogging.h>
 #include <qobject.h>
 
-static const char *colorSelected = "rgba(43, 42, 41, 230)";
-static const char *baseBackground = "rgba(30, 29, 28, 240)";
+static const char *colorSelected = "rgba(40, 39, 38, 255)";
+// static const char *colorSelected = "rgba(53, 52, 51, 255)";
+//  static const char *baseBackground = "rgba(30, 29, 28, 240)";
+static const char *baseBackground = "rgba(23, 22, 21, 240)";
 static const char *baseText = "rgb(239, 239, 239)";
+static const char *statusBackground = "rgba(35, 35, 35, 255)";
 
 static const char *defaultStyleSheet = R"(
 QWidget {
@@ -76,7 +79,7 @@ QLabel.chip {
 }
 
 QWidget.status-bar {
-	background-color: %3;
+	background-color: %5;
 }
 
 .status-bar QLabel {
@@ -110,7 +113,8 @@ int main(int argc, char **argv) {
                          .arg(family)
                          .arg(baseBackground)
                          .arg(colorSelected)
-                         .arg(baseText));
+                         .arg(baseText)
+                         .arg(statusBackground));
 
   return qapp.exec();
 }

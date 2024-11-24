@@ -1,5 +1,24 @@
 #include "calculator.hpp"
+#include <cctype>
 #include <iostream>
+#include <unordered_map>
+
+struct Operator {};
+
+// clang-format off
+static const std::unordered_map<std::string_view, OperatorType> opMap = {
+	{"+", OperatorType::PLUS},
+	{"-", OperatorType::MINUS},
+	{"*", OperatorType::STAR},
+	{"/", OperatorType::DIV},
+	{"%", OperatorType::MOD},
+	{"^", OperatorType::CARET},
+	{">>", OperatorType::LSHIFT},
+	{"<<", OperatorType::RSHIFT},
+	{"~", OperatorType::TILDE},
+	{"in", OperatorType::IN},
+};
+// clang-format on
 
 static const std::string_view hexCharset = "0123456789ABCDEF";
 static const std::string_view decCharset = "0123456789";
@@ -27,14 +46,17 @@ std::optional<Token> Tokenizer::next() {
   double number = 0;
   double fraction = 0;
   double exponent = 0;
+  double exponentSign = 1;
   std::string_view baseCharset = decCharset;
 
-  for (; i <= input.size(); ++i) {
+  for (;;) {
     char ch = i < input.size() ? input.at(i) : 0;
     std::string_view view{input.begin() + start, input.begin() + end};
 
     switch (state) {
     case START:
+      if (!ch)
+        return std::nullopt;
       if (std::isdigit(ch)) {
         if (ch == '0')
           state = NUMBER_LITERAL;
@@ -48,7 +70,7 @@ std::optional<Token> Tokenizer::next() {
       } else if (std::ispunct(ch)) {
         state = OPERATOR;
         ++end;
-      } else if (std::isalpha(ch)) {
+      } else {
         state = STRING;
         ++end;
       }
@@ -57,14 +79,17 @@ std::optional<Token> Tokenizer::next() {
     case NUMBER_EXPONENT:
       if (ch == '-' || ch == '+') {
         if (ch == '-')
-          exponent *= -1;
+          exponentSign *= -1;
+        ++end;
         break;
       }
       if (auto pos = baseCharset.find(ch); pos != std::string::npos) {
         exponent = exponent * baseCharset.size() + pos;
+        ++end;
         break;
       }
 
+      exponent *= exponentSign;
       --i;
       state = NUMBER;
       break;
@@ -72,6 +97,7 @@ std::optional<Token> Tokenizer::next() {
     case NUMBER_FRACTION:
       if (auto pos = baseCharset.find(ch); pos != std::string::npos) {
         fraction = fraction * baseCharset.size() + pos;
+        ++end;
         break;
       }
 
@@ -123,23 +149,42 @@ std::optional<Token> Tokenizer::next() {
                           Token::Type::NUMBER});
 
     case OPERATOR:
+      if (std::ispunct(ch)) {
+        ++end;
+        break;
+      }
+
+      cursor = i;
+      state = START;
+      start = end;
+
+      if (view == "(")
+        return commitToken({view, view, Token::Type::LPAREN});
+      if (view == ")")
+        return commitToken({view, view, Token::Type::RPAREN});
+      if (auto it = opMap.find(view); it != opMap.end()) {
+        return commitToken({view, view, Token::Type::OPERATOR});
+      }
+
+      // unknown operator is tokenized as a string
+      return commitToken({view, view, Token::Type::STRING});
+
+    case STRING:
+      if (std::isalnum(ch)) {
+        ++end;
+        break;
+      }
+
       state = START;
       cursor = i;
-      return commitToken({view, view, Token::Type::OPERATOR});
-    case STRING:
-      if (std::isalnum(ch))
-        ++end;
-      else {
-        state = START;
-        cursor = i;
 
-        if (auto it = variables.find(view); it != variables.end()) {
-          return commitToken({view, it->second, Token::Type::NUMBER});
-        }
-
-        return commitToken({view, view, Token::Type::STRING});
+      if (auto it = opMap.find(view); it != opMap.end()) {
+        return commitToken({view, view, Token::Type::OPERATOR});
       }
-      break;
+
+      std::cout << "stoken=" << view << std::endl;
+
+      return commitToken({view, view, Token::Type::STRING});
 
     case WHITESPACE:
       if (!std::isblank(ch)) {
@@ -153,6 +198,8 @@ std::optional<Token> Tokenizer::next() {
     default:
       break;
     }
+
+    ++i;
   }
 
   return std::nullopt;

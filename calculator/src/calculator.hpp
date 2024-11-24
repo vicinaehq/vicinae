@@ -8,11 +8,54 @@
 #include <functional>
 #include <map>
 #include <optional>
+#include <ostream>
 #include <string>
 #include <string_view>
 #include <strings.h>
 #include <variant>
 #include <vector>
+
+#define RETURN_IF_ERR(expr)                                                    \
+  ({                                                                           \
+    auto _result = (expr);                                                     \
+    if (!_result) {                                                            \
+      return _result.error();                                                  \
+    }                                                                          \
+    *_result;                                                                  \
+  })
+
+class CalculatorError {
+  std::string message;
+
+public:
+  CalculatorError(std::string_view message) : message(message) {}
+
+  std::string_view what() const { return message; }
+};
+
+class ParseError : public CalculatorError {
+public:
+  ParseError(std::string_view message) : CalculatorError(message) {}
+};
+
+class UsageError : public CalculatorError {
+public:
+  UsageError(std::string_view message) : CalculatorError(message) {}
+};
+
+template <class T, class U> class Result {
+  std::variant<T, U> data;
+
+public:
+  operator bool() { return std::get_if<T>(&data); }
+  const T &operator*() { return *std::get_if<T>(&data); }
+  const T &operator->() { return *std::get_if<T>(&data); }
+  const U &error() { return *std::get_if<U>(&data); }
+  const T &value() { return *std::get_if<T>(&data); }
+
+  Result(const T &p) : data(p) {}
+  Result(const U &p) : data(p) {}
+};
 
 // clang-format off
 struct OutputFormat {
@@ -25,14 +68,15 @@ struct OutputFormat {
 
 struct Unit {
   enum Type { 
-	  Seconds, Minutes, Hours, Days, Years, 
+	  Milliseconds, Seconds, Minutes, Hours, Days, Years, 
+	  Bytes, Kilobytes, Megabytes, Gigabytes, Kibibytes, Mebibytes, Gibibytes,
 	  Grams, Kilograms,
 	  Ounces, Pounds, TonsUS,
 	  Millimeters, Centimeters, Meters, Kilometers,
 	  Inches, Feet, Yards, Miles
 
   };
-  enum Category { Time, Weight, Length, Currency };
+  enum Category { Time, Weight, Length, Currency, DigitalStorage };
 
   Type type;
   Category category;
@@ -46,14 +90,6 @@ struct Function {
 	std::function<double(double arg)> fn;
 };
 
-static std::vector<Function> functions = {
-	{ "sqrt", [](double x) { return std::sqrt(x); } },
-	{ "cos", [](double x) { return std::cos(x); } },
-	{ "acos", [](double x) { return std::acos(x); } },
-	{ "cosh", [](double x) { return std::cosh(x); } },
-	{ "cos", [](double x) { return std::cos(x); } },
-};
-
 static std::map<std::string_view, double> variables = {
 	{"PI", M_PI},
 	{"E", M_E}
@@ -61,13 +97,35 @@ static std::map<std::string_view, double> variables = {
 
 // clang-format on
 
-std::optional<Unit> findUnitByName(std::string_view s);
+std::optional<std::reference_wrapper<const Unit>>
+findUnitByName(std::string_view s);
 std::optional<std::reference_wrapper<OutputFormat>>
 findFormatByName(std::string_view name);
 
+// unary or binary
+enum OperatorType {
+  PLUS,
+  MINUS,
+  STAR,
+  DIV,
+  MOD,
+  CARET,
+  LSHIFT,
+  RSHIFT,
+  TILDE,
+  IN
+};
+
 struct Token {
-  using ValueType = std::variant<double, std::string_view>;
-  enum Type { NUMBER, STRING, OPERATOR, UNIT, LPAREN, RPAREN };
+  using ValueType = std::variant<double, std::string_view, OperatorType>;
+  enum Type {
+    NUMBER,
+    STRING,
+    OPERATOR,
+    UNIT,
+    LPAREN,
+    RPAREN,
+  };
 
   std::string_view raw;
   ValueType data;
@@ -77,9 +135,6 @@ struct Token {
   bool isString() const { return type == STRING; };
   bool isOperator() const { return type == OPERATOR; };
   bool isOperand() const { return type != OPERATOR; };
-  bool isUnaryPredictor() const {
-    return type == OPERATOR && *asOperator() != ")";
-  };
 
   const double *asNumber() const {
     if (auto p = std::get_if<double>(&data))
@@ -139,7 +194,7 @@ public:
 };
 
 static std::map<std::string_view, size_t> precedenceTable = {
-    {"in", 2}, {"+", 1}, {"-", 1}, {"/", 2}, {"*", 2}, {"^", 2},
+    {"as", 2}, {"in", 1}, {"+", 1}, {"-", 1}, {"/", 2}, {"*", 2}, {"^", 2},
 };
 
 class AST {
@@ -172,7 +227,7 @@ public:
   };
 
   struct UnitLiteral {
-    Unit unit;
+    const Unit &unit;
   };
 
   struct FormatLiteral {
@@ -197,10 +252,10 @@ public:
 
   bool isOperator(const Token &tok);
 
-  Node *parseExpression(size_t minPrecedence = 1);
-  Node *parseString();
-  Node *parseUnaryExpression();
-  Node *parseTerm();
+  Result<Node *, CalculatorError> parseExpression(size_t minPrecedence = 1);
+  Result<Node *, CalculatorError> parseString();
+  Result<Node *, CalculatorError> parseUnaryExpression();
+  Result<Node *, CalculatorError> parseTerm();
 
   void printNode(Node *root, size_t depth = 0);
 
@@ -209,7 +264,7 @@ public:
 
   AST(Tokenizer &tokenizer) noexcept;
 
-  Node *parse();
+  Result<Node *, CalculatorError> parse();
 
   ~AST();
 };
@@ -218,23 +273,27 @@ class Parser {
 public:
   Parser();
 
-  struct ComputationResult {
+  struct Number {
     double value;
     std::optional<Unit> unit;
     std::optional<std::reference_wrapper<const OutputFormat>> format;
 
-    ComputationResult(double value)
+    Number(double value)
         : value(value), unit(std::nullopt), format(std::nullopt) {}
   };
 
 private:
   bool isArithmeticOperator(std::string_view op);
-  ComputationResult evaluateBinExpr(AST::BinaryExpression *expr);
-  ComputationResult evaluateFunctionCall(const AST::FunctionCall &call);
-  ComputationResult evaluateUnaryExpr(const AST::UnaryExpression &unexpr);
-  ComputationResult evaluateNode(AST::Node *root);
+  Result<Number, CalculatorError> evaluateBinExpr(AST::BinaryExpression *expr);
+  Result<Number, CalculatorError>
+  evaluateFunctionCall(const AST::FunctionCall &call);
+  Result<Number, CalculatorError>
+  evaluateUnaryExpr(const AST::UnaryExpression &unexpr);
+  Result<Number, CalculatorError> evaluateNode(AST::Node *root);
   std::string preprocess(std::string_view input);
 
 public:
-  double evaluate(std::string_view expression);
+  Result<Number, CalculatorError> evaluate(std::string_view expression);
 };
+
+std::ostream &operator<<(std::ostream &lhs, const Parser::Number &num);

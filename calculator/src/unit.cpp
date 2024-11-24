@@ -2,55 +2,21 @@
 
 // clang-format off
 static std::vector<Unit> units = {
-	{
-		.type = Unit::Type::Seconds,
-		.category = Unit::Category::Time,
-		.names = {  "second", "seconds", "secs" },
-		.displayName = "seconds",
-		.conversionFactor = 1,
-	},
-	{
-		.type = Unit::Type::Minutes,
-		.category = Unit::Category::Time,
-		.names = {  "minute", "minutes", "mins", "min" },
-		.displayName = "minutes",
-		.conversionFactor = 60,
-	},
-	{
-		.type = Unit::Type::Hours,
-		.category = Unit::Category::Time,
-		.names = {  "hour", "hours", "hrs" },
-		.displayName = "hours",
-		.conversionFactor = 3600,
-	},
-	{
-		.type = Unit::Type::Days,
-		.category = Unit::Category::Time,
-		.names = {  "day", "days" },
-		.displayName = "days",
-		.conversionFactor = 86400,
-	},
-	{
-		.type = Unit::Type::Years,
-		.category = Unit::Category::Time,
-		.names = {  "year", "years" },
-		.displayName = "years",
-		.conversionFactor = 31557600
-	},
-	{
-		.type = Unit::Type::Grams,
-		.category = Unit::Category::Weight,
-		.names = {  "g", "gram", "grams" },
-		.displayName = "grams",
-		.conversionFactor = 1,
-	},
-	{
-		.type = Unit::Type::Pounds,
-		.category = Unit::Category::Weight,
-		.names = {  "pound", "pounds" },
-		.displayName = "pounds",
-		.conversionFactor = 0.00220462262185
-	},
+	{ Unit::Type::Milliseconds, Unit::Category::Time, { "ms", "milliseconds" }, "milliseconds", 1 },
+	{ Unit::Type::Seconds, Unit::Category::Time, { "second", "seconds", "secs", "sec" }, "seconds", 1000 },
+	{ Unit::Type::Minutes, Unit::Category::Time, {  "minute", "minutes", "mins", "min" }, "minutes", 60000 },
+	{ Unit::Type::Hours, Unit::Category::Time, { "hour", "hours", "hrs" }, "hours", 3600000 },
+	{ Unit::Type::Days, Unit::Category::Time, { "day", "days" }, "days", 86400000 },
+	{ Unit::Type::Years, Unit::Category::Time, { "year", "years" }, "years", 31557600000 },
+
+	{ Unit::Type::Bytes, Unit::Category::DigitalStorage, { "byte", "bytes" }, "bytes", 1 },
+	{ Unit::Type::Kilobytes, Unit::Category::DigitalStorage, { "kb", "kilobyte", "kilobytes" }, "kilobytes", 1e3 },
+	{ Unit::Type::Megabytes, Unit::Category::DigitalStorage, {  "mb", "megabyte", "megabytes" }, "megabytes",  1e6 },
+	{ Unit::Type::Gigabytes, Unit::Category::DigitalStorage, { "gb", "gigabyte", "gigabytes" }, "gigabytes", 1e9 },
+
+	{ Unit::Type::Kibibytes, Unit::Category::DigitalStorage, { "kib", "kibibyte", "kibibytes" }, "kibibytes", 1024 },
+	{ Unit::Type::Mebibytes, Unit::Category::DigitalStorage, {  "mib", "mibibyte", "mibibytes" }, "mebibytes",  1048576 },
+	{ Unit::Type::Gibibytes, Unit::Category::DigitalStorage, { "gib", "gigabyte", "gigabytes" }, "gibibytes", 1073741824 },
 
 	 // Weight Units (Metric)
     { Unit::Type::Grams, Unit::Category::Weight, { "g", "gram", "grams" }, "grams", 1 },
@@ -78,13 +44,15 @@ static std::vector<Unit> units = {
 static std::map<Unit::Type, Unit::Type> defaultUnits{
     {Unit::Type::Grams, Unit::Type::Ounces}};
 
-std::optional<Unit> findUnitByName(std::string_view s) {
-  for (const auto &unit : units) {
-    for (const auto &name : unit.names) {
-      if (strncasecmp(name.data(), s.data(), name.size()) == 0)
-        return unit;
-    }
-  }
+std::optional<std::reference_wrapper<const Unit>>
+findUnitByName(std::string_view name) {
+  auto pred = [name](const Unit &a) {
+    return std::find(a.names.begin(), a.names.end(), name) != a.names.end();
+  };
+
+  if (auto it = std::find_if(units.begin(), units.end(), pred);
+      it != units.end())
+    return *it;
 
   return std::nullopt;
 }

@@ -1,7 +1,5 @@
 #include "calculator.hpp"
 #include <functional>
-#include <iostream>
-#include <ostream>
 
 static std::vector<OutputFormat> formats = {
     {OutputFormat::Type::Decimal, {"decimal"}, "decimal"},
@@ -12,7 +10,6 @@ static std::vector<OutputFormat> formats = {
 std::optional<std::reference_wrapper<OutputFormat>>
 findFormatByName(std::string_view name) {
   auto pred = [name](OutputFormat &a) {
-    std::cout << "candidate=" << "base64" << std::endl;
     return std::find(a.names.begin(), a.names.end(), name) != a.names.end();
   };
 

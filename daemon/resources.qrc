@@ -8,5 +8,6 @@
     <file>assets/icons/github.svg</file>
     <file>assets/icons/duckduckgo.svg</file>
     <file>assets/icons/tux.svg</file>
+    <file>assets/icons/wikipedia.svg</file>
 	</qresource>
 </RCC>

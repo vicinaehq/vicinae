@@ -1,7 +1,18 @@
 #include "calculator.hpp"
 #include <cctype>
+#include <format>
 #include <iostream>
 #include <strings.h>
+
+static std::vector<Function> functions = {
+    {"sqrt", [](double x) { return std::sqrt(x); }},
+    {"cos", [](double x) { return std::cos(x); }},
+    {"acos", [](double x) { return std::acos(x); }},
+    {"cosh", [](double x) { return std::cosh(x); }},
+    {"cos", [](double x) { return std::cos(x); }},
+    {"round", [](double x) { return std::round(x); }},
+    {"ceil", [](double x) { return std::ceil(x); }},
+};
 
 static std::optional<Function> findFunctionByName(std::string_view name) {
   for (const auto &fn : functions) {
@@ -18,26 +29,29 @@ bool Parser::isArithmeticOperator(std::string_view op) {
   return op == "+" || op == "-" || op == "/" || op == "*" || op == "^";
 }
 
-Parser::ComputationResult Parser::evaluateBinExpr(AST::BinaryExpression *expr) {
+Result<Parser::Number, CalculatorError>
+Parser::evaluateBinExpr(AST::BinaryExpression *expr) {
   if (isArithmeticOperator(expr->op)) {
-    auto lhs = evaluateNode(expr->lhs);
-    auto rhs = evaluateNode(expr->rhs);
+    auto lhs = RETURN_IF_ERR(evaluateNode(expr->lhs));
+    auto rhs = RETURN_IF_ERR(evaluateNode(expr->rhs));
 
-    std::cout << lhs.value;
+    /*
+std::cout << lhs.value;
 
-    if (lhs.unit) {
-      std::cout << "(" << lhs.unit->displayName << ")";
-    }
+if (lhs.unit) {
+  std::cerr << "(" << lhs.unit->displayName << ")";
+}
 
-    std::cout << " " << expr->op << rhs.value;
+std::cerr << " " << expr->op << rhs.value;
 
-    if (rhs.unit) {
-      std::cout << "(" << rhs.unit->displayName << ")";
-    }
+if (rhs.unit) {
+  std::cerr << "(" << rhs.unit->displayName << ")";
+}
 
-    std::cout << std::endl;
+std::cerr << std::endl;
+    */
 
-    ComputationResult res(0);
+    Number res(0);
 
     res.unit = lhs.unit ? lhs.unit : rhs.unit;
 
@@ -45,10 +59,7 @@ Parser::ComputationResult Parser::evaluateBinExpr(AST::BinaryExpression *expr) {
 
     if (lhs.unit && rhs.unit) {
       if (lhs.unit->category != rhs.unit->category)
-        throw std::runtime_error(
-            std::string("Operation on incompatible units: ") +
-            lhs.unit->displayName.data() + " with " +
-            rhs.unit->displayName.data());
+        return UsageError("Incompatible units");
 
       scaledRhs =
           rhs.value * (rhs.unit->conversionFactor / lhs.unit->conversionFactor);
@@ -65,14 +76,15 @@ Parser::ComputationResult Parser::evaluateBinExpr(AST::BinaryExpression *expr) {
       res.value = lhs.value / scaledRhs;
     if (expr->op == "^")
       res.value = std::pow(lhs.value, scaledRhs);
+    if (expr->op == "%")
+      res.value = static_cast<long>(lhs.value) % static_cast<long>(scaledRhs);
 
     return res;
   }
 
-  if (expr->op == "in") {
-    auto lhs = evaluateNode(expr->lhs);
-
-    ComputationResult res(lhs.value);
+  if (expr->op == "in" || expr->op == "as") {
+    auto lhs = RETURN_IF_ERR(evaluateNode(expr->lhs));
+    Number res(lhs.value);
 
     if (auto format = expr->rhs->valueAs<AST::FormatLiteral>()) {
       res.format = format->format;
@@ -83,18 +95,16 @@ Parser::ComputationResult Parser::evaluateBinExpr(AST::BinaryExpression *expr) {
     auto rhs = expr->rhs->valueAs<AST::UnitLiteral>();
 
     if (!rhs) {
-      throw std::runtime_error(
+      return ParseError(
           "unit literal expected at the right hand side of in operator");
     }
 
     res.unit = rhs->unit;
 
     if (lhs.unit) {
-      if (lhs.unit->category != rhs->unit.category)
-        throw std::runtime_error(
-            std::string("Operation on incompatible units: ") +
-            lhs.unit->displayName.data() + " with " +
-            rhs->unit.displayName.data());
+      if (lhs.unit->category != rhs->unit.category) {
+        return UsageError("Incompatible units");
+      }
 
       res.value *= (lhs.unit->conversionFactor / rhs->unit.conversionFactor);
     }
@@ -103,56 +113,61 @@ Parser::ComputationResult Parser::evaluateBinExpr(AST::BinaryExpression *expr) {
       res.value = (unit->unit.conversionFactor / rhs->unit.conversionFactor);
     }
 
-    std::cout << "set unit to " << res.unit->displayName << std::endl;
+    std::cerr << "set unit to " << res.unit->displayName << std::endl;
 
     return res;
   }
 
-  throw std::runtime_error("Unknown operator " + std::string{expr->op});
+  return ParseError("Unknown operator " + std::string{expr->op});
 }
 
-Parser::ComputationResult
+Result<Parser::Number, CalculatorError>
 Parser::evaluateFunctionCall(const AST::FunctionCall &call) {
   auto func = findFunctionByName(call.name);
 
   if (!func)
-    throw std::runtime_error(std::string("Function ") + call.name.data() +
-                             " is not available");
+    return ParseError(std::string("Function ") + call.name.data() +
+                      " is not available");
 
   if (call.args.empty())
-    return 0;
+    return ParseError("No arguments for function");
 
-  auto rhs = evaluateNode(call.args.at(0));
-
-  auto ret = func->fn(rhs.value);
-
-  ComputationResult res(ret);
+  auto rhs = RETURN_IF_ERR(evaluateNode(call.args.at(0)));
+  Number res(func->fn(rhs.value));
 
   res.unit = rhs.unit;
 
   return res;
 }
 
-Parser::ComputationResult
+Result<Parser::Number, CalculatorError>
 Parser::evaluateUnaryExpr(const AST::UnaryExpression &unexpr) {
-  if (unexpr.op == "+") {
+  if (unexpr.op == "+")
     return evaluateNode(unexpr.value);
-  }
+
   if (unexpr.op == "-") {
-    ComputationResult res(evaluateNode(unexpr.value));
+    Number res(RETURN_IF_ERR(evaluateNode(unexpr.value)));
 
     res.value *= -1;
 
     return res;
   }
 
-  throw std::runtime_error(std::string("unsupported unary expr ") +
-                           unexpr.op.data());
+  if (unexpr.op == "~") {
+    Number n = RETURN_IF_ERR(evaluateNode(unexpr.value));
+
+    n.value = ~static_cast<unsigned long>(n.value);
+
+    return n;
+  }
+
+  return ParseError(std::string("unsupported unary expr ") +
+                    std::string(unexpr.op));
 }
 
-Parser::ComputationResult Parser::evaluateNode(AST::Node *root) {
+Result<Parser::Number, CalculatorError> Parser::evaluateNode(AST::Node *root) {
   if (!root)
-    return ComputationResult(0);
+    return Number(0);
 
   if (auto binexpr = root->valueAs<AST::BinaryExpression>()) {
     return evaluateBinExpr(binexpr);
@@ -163,7 +178,7 @@ Parser::ComputationResult Parser::evaluateNode(AST::Node *root) {
   }
 
   if (auto num = root->valueAs<AST::NumericValue>()) {
-    ComputationResult comp(num->value);
+    Number comp(num->value);
 
     if (!num->unit.empty())
       comp.unit = findUnitByName(num->unit);
@@ -176,14 +191,14 @@ Parser::ComputationResult Parser::evaluateNode(AST::Node *root) {
   }
 
   if (auto unit = root->valueAs<AST::UnitLiteral>()) {
-    ComputationResult result(1);
+    Number result(1);
 
     result.unit = unit->unit;
 
     return result;
   }
 
-  return 0;
+  return ParseError("Cannot evaluate node");
 }
 
 // clang-format off
@@ -230,28 +245,24 @@ std::string Parser::preprocess(std::string_view view) {
   return s;
 }
 
-double Parser::evaluate(std::string_view expression) {
+Result<Parser::Number, CalculatorError> Parser::evaluate(std::string_view expression) {
   std::string preprocessed = preprocess(expression);
   Tokenizer tokenizer(preprocessed);
-  std::cout << "prepro=" << preprocessed << std::endl;
   AST ast(tokenizer);
 
-  AST::Node *root = ast.parse();
+
+  auto root = RETURN_IF_ERR(ast.parse());
+
   ast.print();
 
-  auto node = evaluateNode(root);
+  return evaluateNode(root);
+}
 
-  std::cout << "result=" << node.value;
+std::ostream& operator<<(std::ostream& lhs, const Parser::Number& num) {
+	lhs << num.value;
 
-  if (node.unit) {
-    std::cout << " " << node.unit->displayName;
-  }
+	if (num.unit)
+		lhs << " " << num.unit->displayName;
 
-  if (node.format) {
-	  std::cout << " " << node.format->get().displayName;
-  }
-
-  std::cout << std::endl;
-
-  return 0;
+	return lhs;
 }

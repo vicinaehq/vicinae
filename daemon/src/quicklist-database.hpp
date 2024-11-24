@@ -53,6 +53,11 @@ public:
                               ":/assets/icons/duckduckgo.svg",
                               "ddg",
                               {"query"}});
+    links.push_back(Quicklink{"Search Wikipedia",
+                              "https://www.wikipedia.com/w?search=%1",
+                              ":/assets/icons/wikipedia.svg",
+                              "wikipedia",
+                              {"query"}});
     links.push_back(Quicklink{"NPM",
                               "https://www.npm.com/search?q={query}",
                               ":/assets/icons/npm.svg",

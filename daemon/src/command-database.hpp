@@ -15,12 +15,14 @@
 #include <qwidget.h>
 
 class CalculatorHistoryCommand : public CommandWidget {
+  CalculatorDatabase &cdb;
   ManagedList *list;
   QList<CalculatorEntry> entries;
 
 public:
   CalculatorHistoryCommand(AppWindow *app)
-      : CommandWidget(app), list(new ManagedList()) {
+      : CommandWidget(app), cdb(CalculatorDatabase::get()),
+        list(new ManagedList()) {
     auto layout = new QVBoxLayout();
 
     for (const auto &row : CalculatorDatabase::get().list()) {
@@ -31,47 +33,14 @@ public:
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(list);
 
-    searchbar()->clear();
-    searchbar()->installEventFilter(this);
-    searchbar()->setPlaceholderText("Browse history and do maths...");
+    setSearchPlaceholder("Browse history and do maths...");
+    clearSearch();
+    forwardInputEvents(list);
 
-    entries = CalculatorDatabase::get().list();
+    entries = cdb.list();
     onSearchChanged("");
 
     setLayout(layout);
-  }
-
-  bool isListKey(QKeyEvent *event) {
-    switch (event->key()) {
-    case Qt::Key_Left:
-    case Qt::Key_Right:
-    case Qt::Key_Up:
-    case Qt::Key_Down:
-    case Qt::Key_Return:
-      return true;
-    default:
-      return false;
-    }
-  }
-
-  bool eventFilter(QObject *obj, QEvent *event) override {
-    if (event->type() == QEvent::KeyPress) {
-      auto keyEvent = static_cast<QKeyEvent *>(event);
-
-      qDebug() << QKeySequence(keyEvent->key()).toString();
-
-      if (keyEvent->key() == Qt::Key_Return && app->topBar->quickInput) {
-        if (app->topBar->quickInput->focusFirstEmpty())
-          return true;
-      }
-
-      if (isListKey(keyEvent)) {
-        QApplication::sendEvent(list, event);
-        return true;
-      }
-    }
-
-    return false;
   }
 
   void onSearchChanged(const QString &q) override {
@@ -108,9 +77,8 @@ public:
       }
     }
 
-    if (!matches.isEmpty()) {
+    if (!matches.isEmpty())
       list->addSection("History");
-    }
 
     for (const auto &row : matches) {
       auto format = QString("%1 = %2").arg(row.expression).arg(row.result);

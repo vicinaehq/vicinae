@@ -1,4 +1,5 @@
 #include "index-command.hpp"
+#include "calculator.hpp"
 #include "command-database.hpp"
 #include "omnicast.hpp"
 #include "quicklist-database.hpp"
@@ -43,6 +44,7 @@ IndexCommand::IndexCommand(AppWindow *app)
   list->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   list->setFocusPolicy(Qt::NoFocus);
   list->setSpacing(0);
+  list->setContentsMargins(0, 0, 0, 0);
 
   layout->setSpacing(0);
   layout->setContentsMargins(0, 0, 0, 0);
@@ -50,15 +52,15 @@ IndexCommand::IndexCommand(AppWindow *app)
 
   layout->addWidget(list, 1);
 
-  app->topBar->input->installEventFilter(this);
-
   connect(list, &ManagedList::itemSelected, this, &IndexCommand::itemSelected);
   connect(list, &ManagedList::itemActivated, this,
           &IndexCommand::itemActivated);
 
-  onSearchChanged("");
+  forwardInputEvents(list);
 
   setLayout(layout);
+
+  onSearchChanged("");
 }
 
 static QListWidgetItem *generateLabel(const QString &name, size_t idx) {
@@ -85,6 +87,7 @@ static bool isListKey(QKeyEvent *event) {
   }
 }
 
+/*
 bool IndexCommand::eventFilter(QObject *obj, QEvent *event) {
   if (event->type() == QEvent::KeyPress) {
     auto keyEvent = static_cast<QKeyEvent *>(event);
@@ -104,6 +107,7 @@ bool IndexCommand::eventFilter(QObject *obj, QEvent *event) {
 
   return false;
 }
+*/
 
 void IndexCommand::itemSelected(const IActionnable &item) {
   destroyCompletion();
@@ -171,20 +175,24 @@ void IndexCommand::onSearchChanged(const QString &text) {
   }
 
   if (text.size() > 1) {
-    te_parser parser;
+    Parser parser;
 
-    if (double result = parser.evaluate(query); !std::isnan(result)) {
+    if (auto result = parser.evaluate(query)) {
+      auto value = result.value();
       list->addSection("Calculator");
 
       auto exprLabel = new QLabel(text);
 
       exprLabel->setProperty("class", "transform-left");
 
-      auto answerLabel = new QLabel(QString::number(result));
+      auto answerLabel = new QLabel(QString::number(value.value));
       answerLabel->setProperty("class", "transform-left");
 
       auto left = new VStack(exprLabel, new Chip("Expression"));
-      auto right = new VStack(answerLabel, new Chip("Answer"));
+      auto right = new VStack(
+          answerLabel,
+          new Chip(value.unit ? QString(value.unit->displayName.data())
+                              : "Answer"));
 
       list->addWidgetItem(new Calculator(text, answerLabel->text()),
                           new TransformResult(left, right));

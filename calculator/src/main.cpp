@@ -9,13 +9,20 @@ int main(int argc, char **argv) {
     std::string line;
 
     while (std::getline(std::cin, line)) {
-      parser.evaluate(line);
+      std::cout << parser.evaluate(line) << std::endl;
     }
 
     return 0;
   }
 
   for (int i = 1; i < argc; ++i) {
-    parser.evaluate(argv[i]);
+    auto res = parser.evaluate(argv[i]);
+
+    if (!res) {
+      std::cout << "computation error " << res.error().what() << std::endl;
+      return 0;
+    }
+
+    std::cout << res.value() << std::endl;
   }
 }

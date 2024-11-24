@@ -1,11 +1,18 @@
 #pragma once
 #include "config.hpp"
+#include "exchange-rate-service.hpp"
+#include <QtNetwork/QtNetwork>
+#include <QtNetwork/qnetworkaccessmanager.h>
+#include <QtNetwork/qnetworkreply.h>
+#include <QtNetwork/qnetworkrequest.h>
 #include <QtSql/QSql>
 #include <QtSql/qsqldatabase.h>
 #include <QtSql/qsqlquery.h>
 #include <qdatetime.h>
 #include <qdir.h>
 #include <qlogging.h>
+#include <qobject.h>
+#include <qtmetamacros.h>
 
 struct CalculatorEntry {
   QString expression;
@@ -13,7 +20,7 @@ struct CalculatorEntry {
   QDateTime timestamp;
 };
 
-class CalculatorDatabase {
+class CalculatorDatabase : public QObject {
   QSqlDatabase db;
 
 public:
@@ -27,9 +34,13 @@ public:
 public:
   CalculatorDatabase(const CalculatorDatabase &rhs) = delete;
 
-  CalculatorDatabase(const QString &path) {
-    db = QSqlDatabase::addDatabase("QSQLITE");
+  CalculatorDatabase(const QString &path)
+      : db(QSqlDatabase::addDatabase("QSQLITE")) {
     db.setDatabaseName(path);
+
+    auto exrate = new ExchangeRateService();
+
+    exrate->fetchSymbol("USD");
 
     if (!db.open()) {
       qDebug() << "Failed to open calculator db";
@@ -44,12 +55,21 @@ public:
 			result TEXT NOT NULL,
 			created_at INTEGER DEFAULT (unixepoch())
 		);
+
+		CREATE TABLE IF NOT EXISTS currency_exchange_rates (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			base_symbol TEXT NOT NULL,
+			quote_symbol TEXT NOT NULL,
+			rate REAL
+		);
 	)");
 
     if (!query.exec()) {
       qDebug() << "Failed to execute initial query";
     }
   }
+
+  void updateExchangeRate(const QList<QString> &symbols = {"USD", "EUR"}) {}
 
   void saveComputation(const QString &expression, const QString &result) {
     QSqlQuery query(db);
@@ -88,4 +108,7 @@ public:
 
     return entries;
   }
+
+public slots:
+  void requestFinished(QNetworkReply *reply) {}
 };

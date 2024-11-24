@@ -1,6 +1,5 @@
 #include "calculator.hpp"
 #include <iostream>
-#include <stdexcept>
 
 static std::string padding(size_t n) {
   size_t indent_size = 2;
@@ -32,27 +31,34 @@ AST::~AST() {
     delete root;
 }
 
-AST::Node *AST::parse() { return root = parseExpression(); }
+Result<AST::Node *, CalculatorError> AST::parse() {
+  return root = RETURN_IF_ERR(parseExpression());
+}
 
-AST::Node *AST::parseExpression(size_t minPrecedence) {
-  auto left = parseTerm();
+Result<AST::Node *, CalculatorError>
+AST::parseExpression(size_t minPrecedence) {
+  auto left = RETURN_IF_ERR(parseTerm());
 
-  while (tk.peak() && tk.peak()->raw != ")") {
+  static std::string_view lastOp = "";
+
+  while (tk.peak() && tk.peak()->type != Token::RPAREN) {
     auto op = tk.peak();
 
     auto unit = findUnitByName(op->raw);
-    std::string_view finalOp = unit ? "in" : op->raw;
+    std::string_view finalOp = unit ? "as" : op->raw;
+
+    if (!unit && op->type != Token::OPERATOR) {
+      return ParseError(std::string("Expected operator but got ") +
+                        std::string(op->raw));
+    }
 
     if (finalOp.empty())
-      throw std::runtime_error("Empty operator");
+      return ParseError("Empty operator");
 
     auto precedence = precedenceTable[finalOp];
 
-    // if the "in" operator is used explictly make it left associative
-    if (finalOp == "in" && !unit) {
-      std::cout << "left associative" << std::endl;
+    if (lastOp == "in" || lastOp == "as")
       precedence = 1;
-    }
 
     if (precedence < minPrecedence)
       break;
@@ -60,7 +66,9 @@ AST::Node *AST::parseExpression(size_t minPrecedence) {
     if (!unit)
       tk.consume();
 
-    Node *right = parseExpression(precedence + 1);
+    lastOp = finalOp;
+
+    Node *right = RETURN_IF_ERR(parseExpression(precedence + 1));
 
     left = new Node(BinaryExpression(finalOp, left, right));
   }
@@ -68,8 +76,10 @@ AST::Node *AST::parseExpression(size_t minPrecedence) {
   return left;
 }
 
-AST::Node *AST::parseString() {
+Result<AST::Node *, CalculatorError> AST::parseString() {
   auto name = tk.consume();
+
+  std::cout << "string=" << name->raw << std::endl;
 
   if (const auto unit = findUnitByName(name->raw))
     return new Node(UnitLiteral{*unit});
@@ -78,16 +88,16 @@ AST::Node *AST::parseString() {
     return new Node{FormatLiteral{*format}};
   }
 
-  if (tk.peak()->raw != "(")
-    throw std::runtime_error(std::string{"Unexpected token: "} +
-                             name->asString()->data());
+  if (tk.peak()->type != Token::LPAREN)
+    return ParseError(std::string("Unexpected token: ") +
+                      std::string(name->raw));
 
   FunctionCall call{.name = name->raw};
 
   tk.consume();
 
-  while (tk.peak() && tk.peak()->raw != ")") {
-    auto arg = parseExpression();
+  while (tk.peak() && tk.peak()->type != Token::RPAREN) {
+    auto arg = RETURN_IF_ERR(parseExpression());
 
     call.args.push_back(arg);
 
@@ -96,7 +106,7 @@ AST::Node *AST::parseString() {
     tk.consume();
   }
 
-  if (auto tok = tk.consume(); tok && tok->raw == ")")
+  if (auto tok = tk.consume(); tok && tok->type == Token::RPAREN)
     return new Node{call};
 
   std::cerr << "expected ) at the end of function call";
@@ -104,13 +114,17 @@ AST::Node *AST::parseString() {
   return nullptr;
 }
 
-AST::Node *AST::parseUnaryExpression() {
+Result<AST::Node *, CalculatorError> AST::parseUnaryExpression() {
   auto op = tk.consume();
 
-  return new Node{UnaryExpression{op->raw, parseTerm()}};
+  // todo: we might want to check if op is a valid unary operator
+
+  auto term = RETURN_IF_ERR(parseTerm());
+
+  return new Node{UnaryExpression{op->raw, term}};
 }
 
-AST::Node *AST::parseTerm() {
+Result<AST::Node *, CalculatorError> AST::parseTerm() {
   if (!tk.peak())
     return nullptr;
 
@@ -122,7 +136,7 @@ AST::Node *AST::parseTerm() {
     return new Node(NumericValue{num});
   }
 
-  if (tk.peak()->raw == "(") {
+  if (tk.peak()->type == Token::LPAREN) {
     tk.consume();
     auto expr = parseExpression();
     tk.consume();
@@ -130,7 +144,7 @@ AST::Node *AST::parseTerm() {
     return expr;
   }
 
-  if (tk.peak()->isOperator()) {
+  if (tk.peak()->type == Token::OPERATOR) {
     return parseUnaryExpression();
   }
 

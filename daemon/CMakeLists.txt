@@ -7,7 +7,7 @@ set(LIBS)
 
 set(TARGET spellcastd)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets Sql)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Sql Network)
 find_package(SQLite3 REQUIRED)
 
 
@@ -15,7 +15,7 @@ option(WAYLAND_LAYER_SHELL "Enable support for the Wayland layer shell
 protocol, required for proper window positioning on most wlroots-based
 compositors." OFF)
 
-list(APPEND LIBS tomlplusplus Qt6::Widgets Qt6::Sql jsoncpp)
+list(APPEND LIBS tomlplusplus Qt6::Widgets Qt6::Sql Qt6::Network jsoncpp calc)
 
 if (WAYLAND_LAYER_SHELL)
 	find_package(Qt6 REQUIRED COMPONENTS WaylandClient)
@@ -36,6 +36,8 @@ qt_add_executable(${TARGET}
 	src/extension_manager.cpp
 	src/config.cpp
 	src/commands/index-command.cpp
+	src/commands/index-command.cpp
+	src/exchange-rate-service.hpp
 	src/omnicast.hpp
 	src/index-command.hpp
 	src/lib/tinyexpr.cpp

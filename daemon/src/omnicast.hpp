@@ -1,5 +1,6 @@
 #pragma once
 #include <QHBoxLayout>
+#include <QKeyEvent>
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
@@ -7,11 +8,17 @@
 #include <QStringList>
 #include <QVBoxLayout>
 #include <QWidget>
+#include <qapplication.h>
 #include <qboxlayout.h>
 #include <qlabel.h>
 #include <qlineedit.h>
+#include <qlist.h>
+#include <qlistwidget.h>
+#include <qlogging.h>
 #include <qmainwindow.h>
+#include <qmath.h>
 #include <qnamespace.h>
+#include <qobject.h>
 #include <qprocess.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
@@ -216,6 +223,20 @@ public:
     setProperty("class", "top-bar");
   }
 
+  bool eventFilter(QObject *obj, QEvent *event) override {
+    if (event->type() == QEvent::KeyPress) {
+      auto keyEvent = static_cast<QKeyEvent *>(event);
+      auto key = keyEvent->key();
+
+      if (key == Qt::Key_Return) {
+        QApplication::sendEvent(input, event);
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   void showBackButton() { backWidget->show(); }
 
   void hideBackButton() { backWidget->hide(); }
@@ -233,6 +254,10 @@ public:
     destroyQuicklinkCompleter();
 
     auto completion = new InputCompleter(placeholders);
+
+    for (const auto &input : completion->inputs) {
+      input->installEventFilter(this);
+    }
 
     quickInput = completion;
     auto fm = input->fontMetrics();
@@ -333,6 +358,7 @@ protected slots:
 
 public:
   ManagedList(QWidget *parent = nullptr) : QListWidget(parent) {
+    setFocusPolicy(Qt::NoFocus);
     connect(this, &QListWidget::currentItemChanged, this,
             &ManagedList::selectionChanged);
     connect(this, &QListWidget::itemActivated, this,
@@ -345,6 +371,7 @@ public:
     }
 
     items.clear();
+    sectionNames.clear();
     widgetToData.clear();
     QListWidget::clear();
   }
@@ -454,8 +481,37 @@ public slots:
 class CommandWidget : public QWidget {
   Q_OBJECT
 
+  QList<QWidget *> inputFwdTo;
+
 protected:
   AppWindow *app = nullptr;
+
+  bool eventFilter(QObject *obj, QEvent *event) override {
+    if (obj == searchbar() && event->type() == QEvent::KeyPress) {
+      auto keyEvent = static_cast<QKeyEvent *>(event);
+      auto key = keyEvent->key();
+
+      if (key == Qt::Key_Return && app->topBar->quickInput) {
+        if (app->topBar->quickInput->focusFirstEmpty())
+          return true;
+      }
+
+      switch (key) {
+      case Qt::Key_Up:
+      case Qt::Key_Down:
+      case Qt::Key_Return:
+      case Qt::Key_Enter:
+        for (const auto &widget : inputFwdTo) {
+          QApplication::sendEvent(widget, event);
+        }
+        break;
+      default:
+        break;
+      }
+    }
+
+    return false;
+  }
 
   void createCompletion(const QList<QString> &inputs) {
     app->topBar->activateQuicklinkCompleter(inputs);
@@ -469,14 +525,51 @@ protected:
 
   QLineEdit *searchbar() { return app->topBar->input; }
 
+  void setSearchPlaceholder(const QString &s) {
+    searchbar()->setPlaceholderText(s);
+  }
+
+  void forwardInputEvents(QWidget *widget) {
+    for (const auto &w : inputFwdTo) {
+      if (widget == w)
+        return;
+    }
+
+    inputFwdTo.push_back(widget);
+  }
+
+  // Unless you are dynamically creating objects that will be forwarded input
+  // events you don't need to call this.
+  void unforwardInputEvents(QWidget *widget) {
+    for (const auto &w : inputFwdTo) {
+      if (widget == w) {
+        inputFwdTo.removeOne(w);
+      }
+    }
+  }
+
+  void clearSearch() { app->topBar->input->clear(); }
+
+  void setSearch(const QString &s) { app->topBar->input->clear(); }
+
+  void setToast() {}
+
 public:
   CommandWidget(AppWindow *app) : app(app) {
     setObjectName("CommandWidget");
     connect(app->topBar->input, &QLineEdit::textChanged, this,
             &CommandWidget::onSearchChanged);
+
+    app->topBar->input->installEventFilter(this);
   }
+
+public slots:
+  virtual void onSearchChanged(const QString &) {}
 
 signals:
   void replaceCommand(const Command *);
-  virtual void onSearchChanged(const QString &);
+
+  // TODO: implement both
+  // virtual void onActionSelected();
+  // virtual void onActionActivated();
 };
