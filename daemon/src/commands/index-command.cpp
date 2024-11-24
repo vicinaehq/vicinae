@@ -4,6 +4,7 @@
 #include "omnicast.hpp"
 #include "quicklist-database.hpp"
 #include "tinyexpr.hpp"
+#include "ui/color_circle.hpp"
 #include "xdg-desktop-database.hpp"
 #include <cmath>
 #include <qapplication.h>
@@ -38,13 +39,6 @@ IndexCommand::IndexCommand(AppWindow *app)
   auto layout = new QVBoxLayout();
 
   app->topBar->input->setPlaceholderText("Search for apps or commands...");
-  // app->topBar->input->setTextMargins(15, 20, 0, 20);
-
-  list->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  list->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  list->setFocusPolicy(Qt::NoFocus);
-  list->setSpacing(0);
-  list->setContentsMargins(0, 0, 0, 0);
 
   layout->setSpacing(0);
   layout->setContentsMargins(0, 0, 0, 0);

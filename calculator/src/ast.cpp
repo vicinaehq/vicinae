@@ -79,8 +79,6 @@ AST::parseExpression(size_t minPrecedence) {
 Result<AST::Node *, CalculatorError> AST::parseString() {
   auto name = tk.consume();
 
-  std::cout << "string=" << name->raw << std::endl;
-
   if (const auto unit = findUnitByName(name->raw))
     return new Node(UnitLiteral{*unit});
 

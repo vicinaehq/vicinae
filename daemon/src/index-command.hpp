@@ -1,6 +1,8 @@
 #pragma once
 #include "calculator-database.hpp"
 #include "omnicast.hpp"
+#include "ui/command_widget.hpp"
+#include "ui/managed_list.hpp"
 
 struct CodeToColor : public IActionnable {
   QString input;

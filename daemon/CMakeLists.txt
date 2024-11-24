@@ -32,8 +32,6 @@ include_directories(
 qt_add_executable(${TARGET}
 	src/main.cpp
 	src/app.cpp
-	src/render.cpp
-	src/extension_manager.cpp
 	src/config.cpp
 	src/commands/index-command.cpp
 	src/commands/index-command.cpp
@@ -42,6 +40,25 @@ qt_add_executable(${TARGET}
 	src/index-command.hpp
 	src/lib/tinyexpr.cpp
 	./resources.qrc
+
+	#src/render.cpp
+	#src/extension_manager.cpp
+
+	src/ui/status_bar.hpp
+	src/ui/status_bar.cpp
+	src/ui/input_completer.hpp
+	src/ui/input_completer.cpp
+	src/ui/inline_qline_edit.hpp
+	src/ui/inline_qline_edit.cpp
+	src/ui/top_bar.hpp
+	src/ui/top_bar.cpp
+	src/ui/color_circle.hpp
+	src/ui/color_circle.cpp
+	src/ui/command_widget.hpp
+	src/ui/command_widget.cpp
+	src/ui/managed_list.hpp
+	src/ui/managed_list.cpp
+	
 )
 
 target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)

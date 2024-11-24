@@ -42,6 +42,10 @@ QListWidget::item {
 	margin-right: 8px;
 }
 
+.top-bar {
+	border-bottom: 2px white solid;
+}
+
 QListWidget::item:hover, 
 QListWidget::item:selected {
 	background-color: %3;

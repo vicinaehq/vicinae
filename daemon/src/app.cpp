@@ -28,12 +28,14 @@ void AppWindow::resetCommand() {
   topBar->hideBackButton();
   currentCommand = std::nullopt;
   setCommandWidget(new IndexCommand(this));
+  statusBar->reset();
 }
 
 void AppWindow::setCommand(const Command *cmd) {
   currentCommand = cmd;
   topBar->showBackButton();
   setCommandWidget(cmd->widgetFactory(this));
+  statusBar->setActiveCommand(cmd->name, cmd->iconName);
 }
 
 bool AppWindow::eventFilter(QObject *obj, QEvent *event) {

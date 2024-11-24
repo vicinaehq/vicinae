@@ -182,8 +182,6 @@ std::optional<Token> Tokenizer::next() {
         return commitToken({view, view, Token::Type::OPERATOR});
       }
 
-      std::cout << "stoken=" << view << std::endl;
-
       return commitToken({view, view, Token::Type::STRING});
 
     case WHITESPACE:
