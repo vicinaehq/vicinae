@@ -1,4 +1,5 @@
 #pragma once
+#include "ui/action_popover.hpp"
 #include "ui/status_bar.hpp"
 #include "ui/top_bar.hpp"
 #include <QHBoxLayout>
@@ -125,23 +126,24 @@ public:
 };
 
 class Command;
-class CommandWidget;
+class CommandObject;
 
 class AppWindow : public QMainWindow {
   Q_OBJECT
 
 public:
-  CommandWidget *baseCommand = nullptr;
   TopBar *topBar = nullptr;
   StatusBar *statusBar = nullptr;
-  CommandWidget *command = nullptr;
+  ActionPopover *actionPopover;
+
+  CommandObject *command = nullptr;
   QVBoxLayout *layout = nullptr;
   std::optional<const Command *> currentCommand = std::nullopt;
 
   AppWindow(QWidget *parent = 0);
 
   void resetCommand();
-  void setCommandWidget(CommandWidget *cmd);
+  void setCommandObject(CommandObject *cmd);
 
 public slots:
   void setCommand(const Command *command);

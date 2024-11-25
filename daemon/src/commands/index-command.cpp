@@ -3,10 +3,10 @@
 #include "command-database.hpp"
 #include "omnicast.hpp"
 #include "quicklist-database.hpp"
-#include "tinyexpr.hpp"
 #include "ui/color_circle.hpp"
 #include "xdg-desktop-database.hpp"
 #include <cmath>
+#include <memory>
 #include <qapplication.h>
 #include <qboxlayout.h>
 #include <qcontainerfwd.h>
@@ -24,7 +24,7 @@
 #include <string_view>
 
 IndexCommand::IndexCommand(AppWindow *app)
-    : CommandWidget(app), list(new ManagedList()) {
+    : CommandObject(app), list(new ManagedList()) {
 
   xdg = new XdgDesktopDatabase();
   cmdDb = new CommandDatabase();
@@ -52,100 +52,46 @@ IndexCommand::IndexCommand(AppWindow *app)
 
   forwardInputEvents(list);
 
-  setLayout(layout);
+  widget->setLayout(layout);
 
   onSearchChanged("");
 }
 
-static QListWidgetItem *generateLabel(const QString &name, size_t idx) {
-  auto item = new QListWidgetItem();
-  auto widget = new QLabel("Results");
-
-  widget->setContentsMargins(8, idx > 0 ? 10 : 0, 0, 10);
-  item->setFlags(item->flags() & !Qt::ItemIsSelectable);
-  widget->setProperty("class", "minor category-name");
-
-  return item;
-}
-
-static bool isListKey(QKeyEvent *event) {
-  switch (event->key()) {
-  case Qt::Key_Left:
-  case Qt::Key_Right:
-  case Qt::Key_Up:
-  case Qt::Key_Down:
-  case Qt::Key_Return:
-    return true;
-  default:
-    return false;
-  }
-}
-
-/*
-bool IndexCommand::eventFilter(QObject *obj, QEvent *event) {
-  if (event->type() == QEvent::KeyPress) {
-    auto keyEvent = static_cast<QKeyEvent *>(event);
-
-    qDebug() << QKeySequence(keyEvent->key()).toString();
-
-    if (keyEvent->key() == Qt::Key_Return && app->topBar->quickInput) {
-      if (app->topBar->quickInput->focusFirstEmpty())
-        return true;
-    }
-
-    if (isListKey(keyEvent)) {
-      QApplication::sendEvent(list, event);
-      return true;
-    }
-  }
-
-  return false;
-}
-*/
-
 void IndexCommand::itemSelected(const IActionnable &item) {
   destroyCompletion();
 
-  if (auto quicklink = dynamic_cast<const Quicklink *>(&item)) {
-    createCompletion(quicklink->placeholders);
-    app->topBar->quickInput->setIcon(quicklink->iconName);
-
-    for (const auto &input : app->topBar->quickInput->inputs) {
-      input->installEventFilter(this);
-    }
+  if (auto link = dynamic_cast<const Quicklink *>(&item)) {
+    createCompletion(link->placeholders, link->iconName);
   }
 
-  auto actions = item.generateActions();
-
-  if (!actions.isEmpty()) {
-    app->statusBar->setSelectedAction(actions.at(0));
-  } else {
-  }
-
+  setActions(item.generateActions());
   qDebug() << "Selection changed";
 }
 
 void IndexCommand::itemActivated(const IActionnable &item) {
   auto actions = item.generateActions();
 
-  if (actions.isEmpty()) {
+  if (actions.isEmpty())
     return;
+
+  onActionActivated(actions.at(0));
+}
+
+void IndexCommand::onActionActivated(std::shared_ptr<IAction> action) {
+  if (auto openApp = std::dynamic_pointer_cast<App::Open>(action)) {
+    qDebug() << "opening app " << openApp->name();
+  }
+  if (auto execCmd =
+          std::dynamic_pointer_cast<Command::ExecuteCommand>(action)) {
+    app->setCommand(&execCmd->ref);
   }
 
-  if (auto command = dynamic_cast<const Command *>(&item)) {
-    app->setCommand(command);
-    return;
+  if (auto openLink = std::dynamic_pointer_cast<Quicklink::Open>(action)) {
+    openLink->open(completions());
   }
 
-  QList<QString> command{app->topBar->input->text()};
-
-  if (auto completer = app->topBar->quickInput) {
-    for (const auto &input : completer->inputs) {
-      command.push_back(input->text());
-    }
-  }
-
-  actions.at(0)->exec(command);
+  clearSearch();
+  qDebug() << "activated action:" << action->name();
 }
 
 void IndexCommand::onSearchChanged(const QString &text) {

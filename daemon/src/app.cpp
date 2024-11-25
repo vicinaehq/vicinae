@@ -1,6 +1,8 @@
 #include "command-database.hpp"
+#include "command-object.hpp"
 #include "index-command.hpp"
 #include "omnicast.hpp"
+#include "ui/action_popover.hpp"
 #include <QApplication>
 #include <QLabel>
 #include <QMainWindow>
@@ -16,38 +18,50 @@
 #include <qtmetamacros.h>
 #include <qwidget.h>
 
-void AppWindow::setCommandWidget(CommandWidget *widget) {
+void AppWindow::setCommandObject(CommandObject *cmd) {
   auto oldCmd = command;
 
-  layout->replaceWidget(oldCmd, widget);
+  layout->replaceWidget(oldCmd->widget, cmd->widget);
   oldCmd->deleteLater();
-  command = widget;
+  command = cmd;
 }
 
 void AppWindow::resetCommand() {
   topBar->hideBackButton();
   currentCommand = std::nullopt;
-  setCommandWidget(new IndexCommand(this));
+  setCommandObject(new IndexCommand(this));
   statusBar->reset();
 }
 
 void AppWindow::setCommand(const Command *cmd) {
   currentCommand = cmd;
   topBar->showBackButton();
-  setCommandWidget(cmd->widgetFactory(this));
+  setCommandObject(cmd->widgetFactory(this));
   statusBar->setActiveCommand(cmd->name, cmd->iconName);
 }
 
 bool AppWindow::eventFilter(QObject *obj, QEvent *event) {
-  if (obj == topBar->input && event->type() == QEvent::KeyPress &&
-      currentCommand) {
+  if (event->type() == QEvent::KeyPress) {
     auto keyEvent = static_cast<QKeyEvent *>(event);
     auto key = keyEvent->key();
-    bool isEsc = keyEvent->key() == Qt::Key_Escape;
 
-    if (isEsc || (keyEvent->key() == Qt::Key_Backspace &&
-                  topBar->input->text().isEmpty())) {
-      resetCommand();
+    if (obj == topBar->input && currentCommand) {
+      bool isEsc = keyEvent->key() == Qt::Key_Escape;
+
+      if (isEsc || (keyEvent->key() == Qt::Key_Backspace &&
+                    topBar->input->text().isEmpty())) {
+        resetCommand();
+        return true;
+      }
+    }
+
+    if (keyEvent->modifiers().testFlag(Qt::ControlModifier)) {
+      qDebug() << "control";
+    }
+
+    if (keyEvent->modifiers().testFlag(Qt::ControlModifier) &&
+        key == Qt::Key_B) {
+      actionPopover->showActions();
       return true;
     }
   }
@@ -56,7 +70,8 @@ bool AppWindow::eventFilter(QObject *obj, QEvent *event) {
 }
 
 AppWindow::AppWindow(QWidget *parent)
-    : QMainWindow(parent), topBar(new TopBar()), statusBar(new StatusBar()) {
+    : QMainWindow(parent), topBar(new TopBar()), statusBar(new StatusBar()),
+      actionPopover(new ActionPopover(this)) {
   setWindowFlags(Qt::FramelessWindowHint);
   setAttribute(Qt::WA_TranslucentBackground);
 
@@ -97,11 +112,8 @@ AppWindow::AppWindow(QWidget *parent)
   layout->setAlignment(Qt::AlignTop);
   topBar->input->installEventFilter(this);
   layout->addWidget(topBar);
-  layout->addWidget(command, 1);
+  layout->addWidget(command->widget, 1);
   layout->addWidget(statusBar);
-
-  connect(command, &CommandWidget::replaceCommand, this,
-          &AppWindow::setCommand);
 
   auto widget = new QWidget();
 

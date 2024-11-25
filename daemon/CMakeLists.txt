@@ -60,6 +60,10 @@ qt_add_executable(${TARGET}
 	src/ui/managed_list.cpp
 	src/ui/toast.hpp
 	src/ui/toast.cpp
+	src/ui/action_popover.hpp
+	src/ui/action_popover.cpp
+	src/command-object.hpp
+	src/command-object.cpp
 )
 
 target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)

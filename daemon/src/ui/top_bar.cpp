@@ -48,6 +48,7 @@ void TopBar::destroyQuicklinkCompleter() {
     layout->removeWidget(quickInput);
     quickInput->deleteLater();
     quickInput = nullptr;
+    input->setFocus();
     input->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
   }
 }

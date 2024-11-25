@@ -1,20 +1,19 @@
 #pragma once
-#include "app.hpp"
 #include "common.hpp"
-#include "ui/status_bar.hpp"
-#include <QLineEdit>
+#include "omnicast.hpp"
+#include <qobject.h>
+#include <qwidget.h>
 
-class CommandWidget : public QWidget {
+class CommandObject : public QObject {
   Q_OBJECT
 
   QList<QWidget *> inputFwdTo;
+  bool eventFilter(QObject *obj, QEvent *event) override;
 
 protected:
   AppWindow *app = nullptr;
 
-  bool eventFilter(QObject *obj, QEvent *event);
-
-  void createCompletion(const QList<QString> &inputs);
+  void createCompletion(const QList<QString> &inputs, const QString &icon);
   void destroyCompletion();
   QLineEdit *searchbar();
   void setSearchPlaceholder(const QString &s);
@@ -22,6 +21,11 @@ protected:
   void setToast(const QString &message,
                 ToastPriority priority = ToastPriority::Success);
   void setActions(const QList<std::shared_ptr<IAction>> &actions);
+
+  QString query() const;
+  QList<QString> completions() const;
+
+  QList<QString> parseCommandLine();
 
   // Unless you are dynamically creating objects that will be forwarded input
   // events you don't need to call this.
@@ -31,16 +35,12 @@ protected:
   void setSearch(const QString &s);
 
 public:
-  CommandWidget(AppWindow *app);
+  QWidget *widget;
+
+  CommandObject(AppWindow *app);
+  virtual ~CommandObject();
 
 public slots:
   virtual void onSearchChanged(const QString &) {}
   virtual void onActionActivated(std::shared_ptr<IAction> action) {}
-
-signals:
-  void replaceCommand(const Command *);
-
-  // TODO: implement both
-  // virtual void onActionSelected();
-  // virtual void onActionActivated();
 };

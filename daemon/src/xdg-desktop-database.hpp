@@ -29,15 +29,37 @@ public:
 
     QString name() const override { return "Open Application"; }
 
-    void exec(const QList<QString> cmd) const override {
-      qDebug() << "executng app ";
-    }
+    void exec(const QList<QString> cmd) const { qDebug() << "executng app "; }
 
     Open(Ref ref) : ref(ref) {}
   };
 
+  struct OpenInTerminal : public IAction {
+    Ref ref;
+
+    QString name() const override { return "Open in terminal"; }
+
+    void exec(const QList<QString> cmd) const { qDebug() << "executng app "; }
+
+    OpenInTerminal(Ref ref) : ref(ref) {}
+  };
+
+  struct OpenDesktopFile : public IAction {
+    Ref ref;
+
+    QString name() const override { return "Open desktop file"; }
+
+    void exec(const QList<QString> cmd) const { qDebug() << "executng app "; }
+
+    OpenDesktopFile(Ref ref) : ref(ref) {}
+  };
+
   ActionList generateActions() const override {
-    return {std::make_shared<Open>(*this)};
+    return {
+        std::make_shared<Open>(*this),
+        std::make_shared<OpenInTerminal>(*this),
+        std::make_shared<OpenDesktopFile>(*this),
+    };
   }
 };
 

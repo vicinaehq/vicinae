@@ -1,5 +1,6 @@
 #pragma once
 #include "calculator-database.hpp"
+#include "command-object.hpp"
 #include "index-command.hpp"
 #include "omnicast.hpp"
 #include "tinyexpr.hpp"
@@ -14,14 +15,14 @@
 #include <qlogging.h>
 #include <qwidget.h>
 
-class CalculatorHistoryCommand : public CommandWidget {
+class CalculatorHistoryCommand : public CommandObject {
   CalculatorDatabase &cdb;
   ManagedList *list;
   QList<CalculatorEntry> entries;
 
 public:
   CalculatorHistoryCommand(AppWindow *app)
-      : CommandWidget(app), cdb(CalculatorDatabase::get()),
+      : CommandObject(app), cdb(CalculatorDatabase::get()),
         list(new ManagedList()) {
     auto layout = new QVBoxLayout();
 
@@ -40,7 +41,7 @@ public:
     entries = cdb.list();
     onSearchChanged("");
 
-    setLayout(layout);
+    widget->setLayout(layout);
 
     connect(list, &ManagedList::itemActivated,
             [this]() { setToast("Copied in clipboard"); });
@@ -95,7 +96,7 @@ public:
   }
 };
 
-using WidgetFactory = std::function<CommandWidget *(AppWindow *)>;
+using WidgetFactory = std::function<CommandObject *(AppWindow *)>;
 
 class Command : public IActionnable {
 public:
@@ -107,16 +108,16 @@ public:
   WidgetFactory widgetFactory;
 
   struct ExecuteCommand : public IAction {
-    QString name() const override { return "Open command"; }
-    void exec(const QList<QString> cmd) const override {
-      qDebug() << "execute command";
-    }
+    const Command &ref;
 
-    ExecuteCommand() {}
+    QString name() const override { return "Open command"; }
+    void exec(const QList<QString> cmd) const { qDebug() << "execute command"; }
+
+    ExecuteCommand(const Command &ref) : ref(ref) {}
   };
 
   ActionList generateActions() const override {
-    return {std::make_shared<ExecuteCommand>()};
+    return {std::make_shared<ExecuteCommand>(*this)};
   }
 
   Command(const QString &name, const QString &iconName, const QString &category,

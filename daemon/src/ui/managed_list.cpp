@@ -2,6 +2,7 @@
 #include <QLabel>
 
 ManagedList::ManagedList(QWidget *parent) : QListWidget(parent) {
+  setProperty("class", "managed-list");
   setFocusPolicy(Qt::NoFocus);
   setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);

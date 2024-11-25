@@ -18,11 +18,11 @@ struct Quicklink : public IActionnable {
     Open(const Quicklink &ref) : ref(ref) {}
 
     QString name() const override { return "Open link"; }
-    void exec(const QList<QString> cmd) const override {
+    void open(const QList<QString> args) const {
       QString url = QString(ref.url);
 
-      for (size_t i = 1; i < cmd.size(); ++i) {
-        url = url.arg(cmd.at(i));
+      for (size_t i = 0; i < args.size(); ++i) {
+        url = url.arg(args.at(i));
       }
 
       xdgOpen(url.toLatin1().data());

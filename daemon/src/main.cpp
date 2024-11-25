@@ -35,15 +35,27 @@ QLineEdit, QListWidget {
 	background-color: transparent;
 }
 
-QListWidget::item {
+.managed-list::item {
 	font-size: 9pt;
 	margin-left: 8px;
 	border-radius: 8px;
 	margin-right: 8px;
 }
 
-.top-bar {
-	border-bottom: 2px white solid;
+#action-popover {
+	background-color: %5;
+	border-radius: 5px;
+	background-color: rgba(35, 35, 35, 240);
+}
+
+#action-popover QLineEdit {
+	background-color: transparent;
+	border: none;
+}
+
+#action-popover QListWidget {
+	background-color: transparent;
+	border-bottom: 1px solid #444;
 }
 
 QListWidget::item:hover, 

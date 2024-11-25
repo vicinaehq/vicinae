@@ -5,6 +5,8 @@ CommandWidget::CommandWidget(AppWindow *app) : app(app) {
   setObjectName("CommandWidget");
   connect(app->topBar->input, &QLineEdit::textChanged, this,
           &CommandWidget::onSearchChanged);
+  connect(app->actionPopover, &ActionPopover::actionActivated, this,
+          &CommandWidget::onActionActivated);
 
   app->topBar->input->installEventFilter(this);
 }
@@ -34,6 +36,10 @@ bool CommandWidget::eventFilter(QObject *obj, QEvent *event) {
   }
 
   return false;
+}
+
+void CommandWidget::setActions(const QList<std::shared_ptr<IAction>> &actions) {
+  app->actionPopover->setActions(actions);
 }
 
 void CommandWidget::createCompletion(const QList<QString> &inputs) {

@@ -1,7 +1,7 @@
 #pragma once
 #include "calculator-database.hpp"
+#include "command-object.hpp"
 #include "omnicast.hpp"
-#include "ui/command_widget.hpp"
 #include "ui/managed_list.hpp"
 
 struct CodeToColor : public IActionnable {
@@ -21,7 +21,7 @@ struct Calculator : public IActionnable {
 
     CopyAction(const Calculator &r) : ref(r) {}
 
-    void exec(const QList<QString> cmd) const override {
+    void exec(const QList<QString> cmd) const {
       qDebug() << "copying " << ref.result << " into clipboard";
       CalculatorDatabase::get().saveComputation(ref.expression, ref.result);
     }
@@ -42,7 +42,7 @@ class XdgDesktopDatabase;
 class QuicklistDatabase;
 class Command;
 
-class IndexCommand : public CommandWidget {
+class IndexCommand : public CommandObject {
   Q_OBJECT;
 
   XdgDesktopDatabase *xdg;
@@ -53,12 +53,14 @@ class IndexCommand : public CommandWidget {
 
 private:
   void inputTextChanged(const QString &);
-  // bool eventFilter(QObject *obj, QEvent *event) override;
   void itemSelected(const IActionnable &item);
   void itemActivated(const IActionnable &item);
 
 public:
+  friend IAction;
+
   IndexCommand(AppWindow *app);
 
   void onSearchChanged(const QString &) override;
+  void onActionActivated(std::shared_ptr<IAction> action) override;
 };
