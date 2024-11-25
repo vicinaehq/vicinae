@@ -22,6 +22,6 @@ include_directories(
 )
 
 add_library(calc ${SRCS})
-add_executable(calculator ${SRCS})
-target_compile_options(calculator PUBLIC -Wall)
-install(TARGETS ${TARGET})
+#add_executable(calculator ${SRCS})
+#target_compile_options(calculator PUBLIC -Wall)
+#install(TARGETS ${TARGET})

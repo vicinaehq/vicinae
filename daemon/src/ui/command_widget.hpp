@@ -1,5 +1,6 @@
 #pragma once
 #include "app.hpp"
+#include "ui/status_bar.hpp"
 #include <QLineEdit>
 
 class CommandWidget : public QWidget {
@@ -17,6 +18,8 @@ protected:
   QLineEdit *searchbar();
   void setSearchPlaceholder(const QString &s);
   void forwardInputEvents(QWidget *widget);
+  void setToast(const QString &message,
+                ToastPriority priority = ToastPriority::Success);
 
   // Unless you are dynamically creating objects that will be forwarded input
   // events you don't need to call this.

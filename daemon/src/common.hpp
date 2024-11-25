@@ -1,5 +1,6 @@
 #pragma once
 #include <QString>
+#include <qwidget.h>
 
 class IAction {
 public:
@@ -13,4 +14,8 @@ protected:
 
 public:
   virtual ActionList generateActions() const = 0;
+};
+
+template <class T> class Clonable : public T {
+  virtual T *clone() = 0;
 };

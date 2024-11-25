@@ -157,6 +157,9 @@ void IndexCommand::onSearchChanged(const QString &text) {
     list->addSection("Color");
 
     auto circle = new ColorCircle(text, QSize(60, 60));
+
+    circle->setStroke("#BBB", 3);
+
     auto colorLabel = new QLabel(text);
 
     colorLabel->setProperty("class", "transform-left");

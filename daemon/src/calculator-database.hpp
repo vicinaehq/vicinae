@@ -38,9 +38,11 @@ public:
       : db(QSqlDatabase::addDatabase("QSQLITE")) {
     db.setDatabaseName(path);
 
-    auto exrate = new ExchangeRateService();
+    /*
+auto exrate = new ExchangeRateService();
 
-    exrate->fetchSymbol("USD");
+exrate->fetchSymbol("USD");
+    */
 
     if (!db.open()) {
       qDebug() << "Failed to open calculator db";

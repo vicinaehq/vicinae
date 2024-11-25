@@ -41,6 +41,9 @@ public:
     onSearchChanged("");
 
     setLayout(layout);
+
+    connect(list, &ManagedList::itemActivated,
+            [this]() { setToast("Copied in clipboard"); });
   }
 
   void onSearchChanged(const QString &q) override {

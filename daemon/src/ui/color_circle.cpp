@@ -1,9 +1,8 @@
 #include "ui/color_circle.hpp"
 
-ColorCircle::ColorCircle(const QString &color, QSize size, QWidget *parent)
-    : QWidget(parent), s(color), size(size) {
+ColorCircle::ColorCircle(QColor color, QSize size, QWidget *parent)
+    : QWidget(parent), color(color), size(size), strokeWidth(0) {
   setFixedSize(size);
-  qDebug() << "constructed ColorCircle";
 }
 
 void ColorCircle::paintEvent(QPaintEvent *event) {
@@ -16,10 +15,22 @@ void ColorCircle::paintEvent(QPaintEvent *event) {
   int w = width();
   int h = height();
 
-  painter.setBrush(QColor("#BBBBBB"));
-  painter.drawEllipse(0, 0, w, h);
-  painter.setBrush(QColor(s));
-  painter.drawEllipse(3, 3, w - 6, h - 6);
+  qreal diam = strokeWidth * 2;
+
+  if (strokeWidth > 0) {
+    painter.setBrush(strokeColor);
+    painter.drawEllipse(0, 0, w, h);
+  }
+
+  painter.setBrush(color);
+  painter.drawEllipse(strokeWidth, strokeWidth, w - diam, h - diam);
 }
 
 QSize ColorCircle::sizeHint() const { return size; }
+
+ColorCircle &ColorCircle::setStroke(QColor color, size_t width) {
+  strokeColor = color;
+  strokeWidth = width;
+
+  return *this;
+}

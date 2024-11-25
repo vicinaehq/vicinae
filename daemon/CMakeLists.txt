@@ -58,7 +58,8 @@ qt_add_executable(${TARGET}
 	src/ui/command_widget.cpp
 	src/ui/managed_list.hpp
 	src/ui/managed_list.cpp
-	
+	src/ui/toast.hpp
+	src/ui/toast.cpp
 )
 
 target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)

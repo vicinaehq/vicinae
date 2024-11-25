@@ -1,15 +1,22 @@
 #pragma once
 #include "common.hpp"
+#include "ui/toast.hpp"
 #include <QBoxLayout>
 #include <QLabel>
 #include <QWidget>
 #include <qboxlayout.h>
+#include <qdatetime.h>
+#include <qhash.h>
 #include <qlabel.h>
+#include <qlogging.h>
+#include <qtimer.h>
+#include <qtmetamacros.h>
 #include <qwidget.h>
 
 class StatusBar : public QWidget {
   QWidget *leftWidget;
   QLabel *selectedActionLabel;
+  QWidget *tmpLeft = nullptr;
 
   class CurrentCommandWidget : public QWidget {
   public:
@@ -46,7 +53,8 @@ class StatusBar : public QWidget {
 
 public:
   void setSelectedAction(const std::shared_ptr<IAction> &action);
-
+  void setToast(const QString &text,
+                ToastPriority priority = ToastPriority::Success);
   void setActiveCommand(const QString &name, const QString &icon);
   void reset();
 

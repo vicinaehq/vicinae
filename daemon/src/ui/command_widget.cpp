@@ -72,3 +72,7 @@ void CommandWidget::unforwardInputEvents(QWidget *widget) {
 void CommandWidget::clearSearch() { app->topBar->input->clear(); }
 
 void CommandWidget::setSearch(const QString &s) { app->topBar->input->clear(); }
+
+void CommandWidget::setToast(const QString &message, ToastPriority priority) {
+  app->statusBar->setToast(message, priority);
+}

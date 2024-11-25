@@ -1,9 +1,12 @@
+#pragma once
 #include <QPainter>
 #include <QWidget>
 
 class ColorCircle : public QWidget {
-  QString s;
+  QColor color;
   QSize size;
+  QColor strokeColor;
+  size_t strokeWidth;
 
 protected:
   void paintEvent(QPaintEvent *event) override;
@@ -11,5 +14,7 @@ protected:
   QSize sizeHint() const override;
 
 public:
-  ColorCircle(const QString &color, QSize size, QWidget *parent = nullptr);
+  ColorCircle(QColor color, QSize size, QWidget *parent = nullptr);
+
+  ColorCircle &setStroke(QColor color, size_t width = 3);
 };
