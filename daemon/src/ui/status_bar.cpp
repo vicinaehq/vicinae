@@ -51,7 +51,7 @@ void StatusBar::setLeftWidget(QWidget *left) {
   leftWidget = left;
 }
 
-void StatusBar::setActiveCommand(const QString &name, const QString &icon) {
+void StatusBar::setActiveCommand(const QString &name, QIcon icon) {
   setLeftWidget(new CurrentCommandWidget(name, icon));
 }
 

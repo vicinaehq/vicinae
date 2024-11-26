@@ -33,11 +33,15 @@ qt_add_executable(${TARGET}
 	src/main.cpp
 	src/app.cpp
 	src/config.cpp
-	src/commands/index-command.cpp
-	src/commands/index-command.cpp
+
+	src/commands/index/index-command.hpp
+	src/commands/index/index-command.cpp
+	src/commands/calculator-history/calculator-history.hpp
+	src/commands/calculator-history/calculator-history.cpp
+
 	src/exchange-rate-service.hpp
 	src/omnicast.hpp
-	src/index-command.hpp
+
 	src/lib/tinyexpr.cpp
 	./resources.qrc
 

@@ -1,4 +1,5 @@
-#include "index-command.hpp"
+#include "commands/index/index-command.hpp"
+#include "calculator-database.hpp"
 #include "calculator.hpp"
 #include "command-database.hpp"
 #include "omnicast.hpp"
@@ -21,10 +22,10 @@
 #include <qnamespace.h>
 #include <qobject.h>
 #include <qwidget.h>
+#include <qwindowdefs.h>
 #include <string_view>
 
-IndexCommand::IndexCommand(AppWindow *app)
-    : CommandObject(app), list(new ManagedList()) {
+IndexCommand::IndexCommand() : CommandObject(), list(new ManagedList()) {
 
   xdg = new XdgDesktopDatabase();
   cmdDb = new CommandDatabase();
@@ -37,8 +38,6 @@ IndexCommand::IndexCommand(AppWindow *app)
   }
 
   auto layout = new QVBoxLayout();
-
-  app->topBar->input->setPlaceholderText("Search for apps or commands...");
 
   layout->setSpacing(0);
   layout->setContentsMargins(0, 0, 0, 0);
@@ -53,8 +52,14 @@ IndexCommand::IndexCommand(AppWindow *app)
   forwardInputEvents(list);
 
   widget->setLayout(layout);
+}
 
-  onSearchChanged("");
+void IndexCommand::onMount() { onSearchChanged(""); }
+
+void IndexCommand::onAttach() {
+  setSearchPlaceholder("Search apps and commands...");
+  setSearch(query);
+  searchbar()->selectAll();
 }
 
 void IndexCommand::itemSelected(const IActionnable &item) {
@@ -81,9 +86,26 @@ void IndexCommand::onActionActivated(std::shared_ptr<IAction> action) {
   if (auto openApp = std::dynamic_pointer_cast<App::Open>(action)) {
     qDebug() << "opening app " << openApp->name();
   }
+
   if (auto execCmd =
           std::dynamic_pointer_cast<Command::ExecuteCommand>(action)) {
-    app->setCommand(&execCmd->ref);
+    pushCommand(execCmd->ref.widgetFactory());
+    return;
+  }
+
+  if (auto ac = std::dynamic_pointer_cast<Calculator::CopyAction>(action)) {
+    CalculatorDatabase::get().saveComputation(ac->ref.expression,
+                                              ac->ref.result);
+    setToast("Copied in clipboard");
+    return;
+  }
+
+  if (auto ac = std::dynamic_pointer_cast<Calculator::OpenCalculatorHistory>(
+          action)) {
+    CalculatorDatabase::get().saveComputation(ac->ref.expression,
+                                              ac->ref.result);
+    pushCommand(new CalculatorHistoryCommand(ac->ref.expression));
+    return;
   }
 
   if (auto openLink = std::dynamic_pointer_cast<Quicklink::Open>(action)) {
@@ -95,6 +117,7 @@ void IndexCommand::onActionActivated(std::shared_ptr<IAction> action) {
 }
 
 void IndexCommand::onSearchChanged(const QString &text) {
+  query = text;
   list->clear();
 
   std::string_view query(text.toLatin1().data());

@@ -1,5 +1,6 @@
 #pragma once
-#include "index-command.hpp"
+#include "common.hpp"
+#include "omnicast.hpp"
 #include <QString>
 #include <memory>
 #include <qlist.h>

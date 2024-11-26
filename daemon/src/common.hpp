@@ -2,9 +2,14 @@
 #include <QString>
 #include <qwidget.h>
 
+class ActionExecutionContext;
+
 class IAction {
 public:
   virtual QString name() const = 0;
+  virtual QIcon icon() const {
+    return QIcon::fromTheme("application-x-executable");
+  }
 };
 
 class IActionnable {
@@ -13,8 +18,4 @@ protected:
 
 public:
   virtual ActionList generateActions() const = 0;
-};
-
-template <class T> class Clonable : public T {
-  virtual T *clone() = 0;
 };

@@ -7,6 +7,7 @@
 #include <qboxlayout.h>
 #include <qdatetime.h>
 #include <qhash.h>
+#include <qicon.h>
 #include <qlabel.h>
 #include <qlogging.h>
 #include <qtimer.h>
@@ -20,12 +21,12 @@ class StatusBar : public QWidget {
 
   class CurrentCommandWidget : public QWidget {
   public:
-    CurrentCommandWidget(const QString &name, const QString &icon) {
+    CurrentCommandWidget(const QString &name, QIcon icon) {
       auto layout = new QHBoxLayout();
       auto iconLabel = new QLabel();
 
       layout->setContentsMargins(0, 0, 0, 0);
-      iconLabel->setPixmap(QIcon::fromTheme(icon).pixmap(22, 22));
+      iconLabel->setPixmap(icon.pixmap(22, 22));
       layout->addWidget(iconLabel);
       layout->addWidget(new QLabel(name));
 
@@ -55,7 +56,7 @@ public:
   void setSelectedAction(const std::shared_ptr<IAction> &action);
   void setToast(const QString &text,
                 ToastPriority priority = ToastPriority::Success);
-  void setActiveCommand(const QString &name, const QString &icon);
+  void setActiveCommand(const QString &name, QIcon icon);
   void reset();
 
   StatusBar(QWidget *parent = nullptr);

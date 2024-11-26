@@ -48,6 +48,7 @@ signals:
 
 public:
   void showActions();
+  void toggleActions();
   void setActions(const QList<std::shared_ptr<IAction>> &actions);
 
   ActionPopover(QWidget *parent = 0);

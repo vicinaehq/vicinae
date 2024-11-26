@@ -58,6 +58,11 @@ QLineEdit, QListWidget {
 	border-bottom: 1px solid #444;
 }
 
+#action-popover QListWidget::item {
+	font-size: 9pt;
+	border-radius: 8px;
+}
+
 QListWidget::item:hover, 
 QListWidget::item:selected {
 	background-color: %3;

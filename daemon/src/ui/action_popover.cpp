@@ -24,24 +24,23 @@ ActionItem::ActionItem(std::shared_ptr<IAction> action, QWidget *parent)
   resultType = new QLabel("Type");
   resultType->setProperty("class", "action-shortcut");
 
-  QPixmap *pix = 0;
-
-  if (!pix || pix->isNull()) {
-    pix = new QPixmap(
-        QIcon::fromTheme("application-x-executable").pixmap(25, 25));
-  }
-
   QHBoxLayout *layout = new QHBoxLayout(this);
 
   layout->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
   layout->setSpacing(10);
-  image->setPixmap(
-      pix->scaled(25, 25, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+  image->setPixmap(action->icon().pixmap(25, 25));
   layout->addWidget(image);
   layout->addWidget(titleLabel, 1);
   // layout->addWidget(new KeyIndicator(action.bind));
 
   setLayout(layout);
+}
+
+void ActionPopover::toggleActions() {
+  if (isVisible())
+    hide();
+  else
+    showActions();
 }
 
 void ActionPopover::paintEvent(QPaintEvent *event) {
@@ -101,6 +100,7 @@ ActionPopover::ActionPopover(QWidget *parent) : QWidget(parent) {
   _list->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   _list->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   _list->setSelectionMode(QAbstractItemView::SingleSelection);
+  _list->setFocusPolicy(Qt::NoFocus);
 
   connect(_list, &QListWidget::itemActivated, this,
           &ActionPopover::itemActivated);

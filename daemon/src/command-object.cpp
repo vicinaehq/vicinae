@@ -2,25 +2,38 @@
 #include "omnicast.hpp"
 #include <qwidget.h>
 
-CommandObject::CommandObject(AppWindow *app) : app(app), widget(new QWidget()) {
-  setObjectName("CommandObject");
-  connect(app->topBar->input, &QLineEdit::textChanged, this,
-          &CommandObject::onSearchChanged);
-  connect(app->actionPopover, &ActionPopover::actionActivated, this,
-          &CommandObject::onActionActivated);
+static const QString defaultName = "Unnamed action";
 
-  app->topBar->input->installEventFilter(this);
+CommandObject::CommandObject() : widget(new QWidget()) {
+  qDebug() << "New command object";
+  setObjectName("CommandObject");
 }
+
+void attachApp(AppWindow *app) {}
+
+void detachApp() {}
 
 CommandObject::~CommandObject() { widget->deleteLater(); }
 
+const QString &CommandObject::name() { return defaultName; }
+
+void CommandObject::onAttach() {}
+
+void CommandObject::onDetach() {}
+
+void CommandObject::onMount() {}
+
+QIcon CommandObject::icon() {
+  return QIcon::fromTheme("application-x-executable");
+}
+
 bool CommandObject::eventFilter(QObject *obj, QEvent *event) {
-  if (obj == searchbar() && event->type() == QEvent::KeyPress) {
+  if (app()->topBar->input && event->type() == QEvent::KeyPress) {
     auto keyEvent = static_cast<QKeyEvent *>(event);
     auto key = keyEvent->key();
 
-    if (key == Qt::Key_Return && app->topBar->quickInput) {
-      if (app->topBar->quickInput->focusFirstEmpty())
+    if (key == Qt::Key_Return && app()->topBar->quickInput) {
+      if (app()->topBar->quickInput->focusFirstEmpty())
         return true;
     }
 
@@ -42,25 +55,25 @@ bool CommandObject::eventFilter(QObject *obj, QEvent *event) {
 }
 
 void CommandObject::setActions(const QList<std::shared_ptr<IAction>> &actions) {
-  app->actionPopover->setActions(actions);
+  app()->actionPopover->setActions(actions);
 
   if (!actions.isEmpty())
-    app->statusBar->setSelectedAction(actions.at(0));
+    app()->statusBar->setSelectedAction(actions.at(0));
 }
 
 void CommandObject::createCompletion(const QList<QString> &inputs,
                                      const QString &icon) {
-  app->topBar->activateQuicklinkCompleter(inputs);
-  app->topBar->quickInput->setIcon(icon);
+  app()->topBar->activateQuicklinkCompleter(inputs);
+  app()->topBar->quickInput->setIcon(icon);
 }
 
 void CommandObject::destroyCompletion() {
-  if (app->topBar->quickInput) {
-    app->topBar->destroyQuicklinkCompleter();
+  if (app()->topBar->quickInput) {
+    app()->topBar->destroyQuicklinkCompleter();
   }
 }
 
-QLineEdit *CommandObject::searchbar() { return app->topBar->input; }
+QLineEdit *CommandObject::searchbar() { return app()->topBar->input; }
 
 void CommandObject::setSearchPlaceholder(const QString &s) {
   searchbar()->setPlaceholderText(s);
@@ -83,20 +96,22 @@ void CommandObject::unforwardInputEvents(QWidget *widget) {
   }
 }
 
-void CommandObject::clearSearch() { app->topBar->input->clear(); }
+void CommandObject::clearSearch() { app()->topBar->input->clear(); }
 
-void CommandObject::setSearch(const QString &s) { app->topBar->input->clear(); }
-
-void CommandObject::setToast(const QString &message, ToastPriority priority) {
-  app->statusBar->setToast(message, priority);
+void CommandObject::setSearch(const QString &s) {
+  app()->topBar->input->setText(s);
 }
 
-QString CommandObject::query() const { return app->topBar->input->text(); }
+void CommandObject::setToast(const QString &message, ToastPriority priority) {
+  app()->statusBar->setToast(message, priority);
+}
+
+QString CommandObject::query() const { return app()->topBar->input->text(); }
 
 QList<QString> CommandObject::completions() const {
   QList<QString> completions;
 
-  if (auto completer = app->topBar->quickInput) {
+  if (auto completer = app()->topBar->quickInput) {
     for (const auto &input : completer->inputs) {
       completions.push_back(input->text());
     }

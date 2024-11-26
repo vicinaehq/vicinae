@@ -25,6 +25,7 @@
 #include <qprocess.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
+#include <stack>
 
 static void xdgOpen(const QString &url) {
   QProcess process;
@@ -132,11 +133,14 @@ class AppWindow : public QMainWindow {
   Q_OBJECT
 
 public:
+  std::stack<CommandObject *> commandStack;
+  std::stack<QString> queryStack;
+
   TopBar *topBar = nullptr;
   StatusBar *statusBar = nullptr;
   ActionPopover *actionPopover;
 
-  CommandObject *command = nullptr;
+  // CommandObject *command = nullptr;
   QVBoxLayout *layout = nullptr;
   std::optional<const Command *> currentCommand = std::nullopt;
 
@@ -146,6 +150,9 @@ public:
   void setCommandObject(CommandObject *cmd);
 
 public slots:
+  void pushCommandObject(CommandObject *cmd);
+  void popCommandObject();
+
   void setCommand(const Command *command);
   bool eventFilter(QObject *obj, QEvent *event) override;
 };

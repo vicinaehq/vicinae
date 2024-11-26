@@ -1,12 +1,10 @@
 #pragma once
-#include "index-command.hpp"
+#include "common.hpp"
 #include "ini.hpp"
 #include "utils.hpp"
 #include <algorithm>
 #include <cstdlib>
 #include <filesystem>
-#include <fstream>
-#include <iostream>
 #include <memory>
 #include <qcontainerfwd.h>
 #include <qdebug.h>
@@ -28,8 +26,7 @@ public:
     Ref ref;
 
     QString name() const override { return "Open Application"; }
-
-    void exec(const QList<QString> cmd) const { qDebug() << "executng app "; }
+    QIcon icon() const override { return QIcon::fromTheme(ref.icon.c_str()); }
 
     Open(Ref ref) : ref(ref) {}
   };
@@ -38,8 +35,7 @@ public:
     Ref ref;
 
     QString name() const override { return "Open in terminal"; }
-
-    void exec(const QList<QString> cmd) const { qDebug() << "executng app "; }
+    QIcon icon() const override { return QIcon::fromTheme("xterm"); }
 
     OpenInTerminal(Ref ref) : ref(ref) {}
   };
@@ -48,8 +44,7 @@ public:
     Ref ref;
 
     QString name() const override { return "Open desktop file"; }
-
-    void exec(const QList<QString> cmd) const { qDebug() << "executng app "; }
+    QIcon icon() const override { return QIcon::fromTheme(ref.icon.c_str()); }
 
     OpenDesktopFile(Ref ref) : ref(ref) {}
   };
