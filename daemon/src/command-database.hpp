@@ -1,6 +1,9 @@
 #pragma once
 #include "command-object.hpp"
 #include "commands/calculator-history/calculator-history.hpp"
+#include "commands/create-quicklink/create-quicklink.hpp"
+#include "commands/manage-quicklinks/quicklink-manager.hpp"
+#include "common.hpp"
 #include "omnicast.hpp"
 #include <QKeyEvent>
 #include <QString>
@@ -14,8 +17,6 @@
 #include <qlogging.h>
 #include <qwidget.h>
 
-using WidgetFactory = std::function<CommandObject *()>;
-
 class Command : public IActionnable {
 public:
   QString name;
@@ -23,12 +24,13 @@ public:
   QString category;
   bool usableWith;
   QString normalizedName;
-  WidgetFactory widgetFactory;
+  std::shared_ptr<ICommandFactory> widgetFactory;
 
   struct ExecuteCommand : public IAction {
     const Command &ref;
 
     QString name() const override { return "Open command"; }
+    QIcon icon() const override { return QIcon::fromTheme(ref.iconName); }
 
     ExecuteCommand(const Command &ref) : ref(ref) {}
   };
@@ -38,10 +40,11 @@ public:
   }
 
   Command(const QString &name, const QString &iconName, const QString &category,
-          bool usableWith, const QString &normalizedName, WidgetFactory factory)
+          bool usableWith, const QString &normalizedName,
+          std::shared_ptr<ICommandFactory> factory)
       : name(name), iconName(iconName), category(category),
         usableWith(usableWith), normalizedName(normalizedName),
-        widgetFactory(factory) {}
+        widgetFactory(std::move(factory)) {}
 };
 
 struct CommandDatabase {
@@ -52,9 +55,16 @@ struct CommandDatabase {
 commands.push_back(
   Command("Search Files", "search", "File Search", true, "search files"));
           */
-    commands.push_back(
-        Command("Calculator history", "pcbcalculator", "Calculator", false,
-                "search calculator history",
-                []() { return new CalculatorHistoryCommand(); }));
+    commands.push_back(Command(
+        "Calculator history", "pcbcalculator", "Calculator", false,
+        "search calculator history",
+        std::make_shared<BasicCommandFactory<CalculatorHistoryCommand>>()));
+    commands.push_back(Command(
+        "Browse quicklinks", "link", "Quicklink", false, "browse quicklink",
+        std::make_shared<BasicCommandFactory<QuickLinkManagerCommand>>()));
+
+    commands.push_back(Command(
+        "Create quicklink", "link", "Quicklink", false, "create quicklink",
+        std::make_shared<BasicCommandFactory<CreateQuickLinkCommand>>()));
   };
 };

@@ -106,6 +106,15 @@ QWidget.status-bar {
 .status-bar QLabel {
 	font-size: 9pt;
 }
+
+.details-row {
+	border: none;
+	border-bottom: 1px solid #666666;
+}
+
+.divider {
+	color: #222222;
+}
 )";
 
 int main(int argc, char **argv) {

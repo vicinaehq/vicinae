@@ -1,13 +1,18 @@
+#include "calculator-database.hpp"
 #include "command-database.hpp"
 #include "command-object.hpp"
 #include "commands/index/index-command.hpp"
+#include "common.hpp"
 #include "omnicast.hpp"
+#include "quicklist-database.hpp"
 #include "ui/action_popover.hpp"
+#include "xdg-desktop-database.hpp"
 #include <QApplication>
 #include <QLabel>
 #include <QMainWindow>
 #include <QThread>
 #include <QVBoxLayout>
+#include <memory>
 #include <optional>
 #include <qboxlayout.h>
 #include <qevent.h>
@@ -29,13 +34,14 @@ command = cmd;
 */
 }
 
-void AppWindow::pushCommandObject(CommandObject *cmd) {
+void AppWindow::pushCommandObject(std::shared_ptr<ICommandFactory> factory) {
   if (commandStack.empty())
     throw std::runtime_error(
         "Tried to push command to an empty command stack. At least one command "
         "(the root one) should be present.");
 
   CommandObject *top = commandStack.top();
+  CommandObject *cmd = (*factory)(this);
 
   layout->replaceWidget(top->widget, cmd->widget);
 
@@ -51,14 +57,11 @@ void AppWindow::pushCommandObject(CommandObject *cmd) {
   topBar->input->installEventFilter(cmd);
 
   commandStack.push(cmd);
-  cmd->onMount();
   cmd->onAttach();
 
   if (commandStack.size() == 2) {
     topBar->showBackButton();
   }
-
-  // cmd->onAttach();
 }
 
 void AppWindow::popCommandObject() {
@@ -79,6 +82,8 @@ void AppWindow::popCommandObject() {
   prev->setParent(nullptr);
 
   // restore next
+  topBar->input->setReadOnly(false);
+  topBar->input->show();
   topBar->input->installEventFilter(next);
   next->setParent(this);
   next->onAttach();
@@ -95,7 +100,7 @@ void AppWindow::popCommandObject() {
 void AppWindow::resetCommand() {
   topBar->hideBackButton();
   currentCommand = std::nullopt;
-  setCommandObject(new IndexCommand());
+  // setCommandObject(new IndexCommand());
   statusBar->reset();
 }
 
@@ -167,21 +172,27 @@ AppWindow::AppWindow(QWidget *parent)
   extmanThread->start();
   */
 
+  quicklinkDatabase = std::make_shared<QuicklistDatabase>(
+      Config::dirPath() + QDir::separator() + "quicklinks.db");
+  calculatorDatabase = std::make_shared<CalculatorDatabase>(
+      Config::dirPath() + QDir::separator() + "calculator.db");
+  xdd = std::make_shared<XdgDesktopDatabase>();
+
   layout = new QVBoxLayout();
 
   layout->setSpacing(0);
   layout->setContentsMargins(0, 0, 0, 0);
 
-  auto index = new IndexCommand();
+  auto index = new IndexCommand(this);
 
   index->setParent(this);
-  index->onMount();
   index->onAttach();
 
   layout->setAlignment(Qt::AlignTop);
   topBar->input->installEventFilter(this);
   topBar->input->installEventFilter(index);
   layout->addWidget(topBar);
+  layout->addWidget(new HDivider);
   layout->addWidget(index->widget, 1);
   layout->addWidget(statusBar);
 
@@ -197,4 +208,22 @@ AppWindow::AppWindow(QWidget *parent)
           [this](auto arg) { commandStack.top()->onSearchChanged(arg); });
   connect(actionPopover, &ActionPopover::actionActivated,
           [this](auto arg) { commandStack.top()->onActionActivated(arg); });
+}
+
+template <>
+std::shared_ptr<QuicklistDatabase>
+AppWindow::service<QuicklistDatabase>() const {
+  return quicklinkDatabase;
+}
+
+template <>
+std::shared_ptr<XdgDesktopDatabase>
+AppWindow::service<XdgDesktopDatabase>() const {
+  return xdd;
+}
+
+template <>
+std::shared_ptr<CalculatorDatabase>
+AppWindow::service<CalculatorDatabase>() const {
+  return calculatorDatabase;
 }

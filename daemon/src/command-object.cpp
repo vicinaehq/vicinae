@@ -2,9 +2,8 @@
 #include "omnicast.hpp"
 #include <qwidget.h>
 
-static const QString defaultName = "Unnamed action";
-
-CommandObject::CommandObject() : widget(new QWidget()) {
+CommandObject::CommandObject(AppWindow *app)
+    : app_(app), widget(new QWidget()) {
   qDebug() << "New command object";
   setObjectName("CommandObject");
 }
@@ -15,13 +14,19 @@ void detachApp() {}
 
 CommandObject::~CommandObject() { widget->deleteLater(); }
 
-const QString &CommandObject::name() { return defaultName; }
+QString CommandObject::name() { return "Unnamed command"; }
 
 void CommandObject::onAttach() {}
 
 void CommandObject::onDetach() {}
 
 void CommandObject::onMount() {}
+
+void CommandObject::hideSearch() {
+  app()->topBar->input->hide();
+  app()->topBar->input->setReadOnly(true);
+  app()->topBar->input->setText("");
+}
 
 QIcon CommandObject::icon() {
   return QIcon::fromTheme("application-x-executable");

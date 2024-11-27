@@ -2,14 +2,14 @@
 
 #include "calculator-database.hpp"
 #include "command-object.hpp"
+#include "common.hpp"
 #include "tinyexpr.hpp"
 #include "ui/managed_list.hpp"
 
 class CalculatorHistoryCommand : public CommandObject {
-  CalculatorDatabase &cdb;
+  std::shared_ptr<CalculatorDatabase> cdb;
   ManagedList *list;
   QList<CalculatorEntry> entries;
-  QString n = "Calculator history";
   QString initText;
 
   struct Calculator : public IActionnable {
@@ -44,30 +44,34 @@ class CalculatorHistoryCommand : public CommandObject {
   };
 
 public:
-  CalculatorHistoryCommand(const QString &initText = "")
-      : CommandObject(), initText(initText), cdb(CalculatorDatabase::get()),
-        list(new ManagedList()) {
-    auto layout = new QVBoxLayout();
+  class Factory : public ICommandFactory {
+    QString initText;
 
-    for (const auto &row : CalculatorDatabase::get().list()) {
-      qDebug() << row.expression << " = " << row.result << " at "
-               << row.timestamp;
+    virtual CommandObject *operator()(AppWindow *app) {
+      return new CalculatorHistoryCommand(app, initText);
     }
 
-    layout->setContentsMargins(0, 0, 0, 0);
+  public:
+    Factory(const QString &initText) : initText(initText) {}
+  };
+
+  CalculatorHistoryCommand(AppWindow *app, const QString &initText = "")
+      : CommandObject(app), initText(initText), list(new ManagedList()) {
+    auto layout = new QVBoxLayout();
+
+    layout->setContentsMargins(0, 10, 0, 0);
     layout->addWidget(list);
 
     forwardInputEvents(list);
-
-    entries = cdb.list();
 
     widget->setLayout(layout);
 
     connect(list, &ManagedList::itemActivated,
             [this]() { setToast("Copied in clipboard"); });
-  }
 
-  void onMount() override {}
+    cdb = service<CalculatorDatabase>();
+    entries = cdb->list();
+  }
 
   void onAttach() override {
     setSearchPlaceholder("Browse history and do maths...");
@@ -75,7 +79,7 @@ public:
     onSearchChanged(initText);
   }
 
-  const QString &name() override { return n; }
+  QString name() override { return "Calculator history"; }
 
   QIcon icon() override { return QIcon::fromTheme("pcbcalculator"); }
 

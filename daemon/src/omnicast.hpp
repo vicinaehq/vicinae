@@ -1,7 +1,11 @@
 #pragma once
+#include "calculator-database.hpp"
+#include "common.hpp"
+#include "quicklist-database.hpp"
 #include "ui/action_popover.hpp"
 #include "ui/status_bar.hpp"
 #include "ui/top_bar.hpp"
+#include "xdg-desktop-database.hpp"
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include <QLabel>
@@ -26,12 +30,6 @@
 #include <qtmetamacros.h>
 #include <qwidget.h>
 #include <stack>
-
-static void xdgOpen(const QString &url) {
-  QProcess process;
-
-  process.startDetached("xdg-open", QStringList() << url);
-}
 
 class GenericListItem : public QWidget {
   QLabel *iconLabel;
@@ -136,6 +134,12 @@ public:
   std::stack<CommandObject *> commandStack;
   std::stack<QString> queryStack;
 
+  std::shared_ptr<QuicklistDatabase> quicklinkDatabase;
+  std::shared_ptr<XdgDesktopDatabase> xdd;
+  std::shared_ptr<CalculatorDatabase> calculatorDatabase;
+
+  template <typename T> std::shared_ptr<T> service() const;
+
   TopBar *topBar = nullptr;
   StatusBar *statusBar = nullptr;
   ActionPopover *actionPopover;
@@ -150,7 +154,7 @@ public:
   void setCommandObject(CommandObject *cmd);
 
 public slots:
-  void pushCommandObject(CommandObject *cmd);
+  void pushCommandObject(std::shared_ptr<ICommandFactory> factory);
   void popCommandObject();
 
   void setCommand(const Command *command);

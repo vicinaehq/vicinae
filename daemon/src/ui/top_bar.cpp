@@ -21,7 +21,7 @@ TopBar::TopBar(QWidget *parent)
   backButtonLabel->setProperty("class", "back-button");
   backWidget->hide();
 
-  layout->addWidget(backWidget);
+  layout->addWidget(backWidget, 0, Qt::AlignLeft);
   layout->addWidget(input);
   layout->setSpacing(0);
   setLayout(layout);

@@ -20,10 +20,12 @@ class IndexCommand : public CommandObject {
   Q_OBJECT;
 
   QString query;
-  XdgDesktopDatabase *xdg;
+  std::shared_ptr<XdgDesktopDatabase> xdg;
   CommandDatabase *cmdDb;
-  QuicklistDatabase *quicklinkDb;
   QList<Command *> usableWithCommands;
+
+  std::shared_ptr<QuicklistDatabase> quicklinkDb;
+
   ManagedList *list = nullptr;
 
   struct Calculator : public IActionnable {
@@ -63,10 +65,9 @@ private:
   void itemActivated(const IActionnable &item);
 
 public:
-  IndexCommand();
+  IndexCommand(AppWindow *app);
 
   void onAttach() override;
-  void onMount() override;
   void onSearchChanged(const QString &) override;
   void onActionActivated(std::shared_ptr<IAction> action) override;
 };

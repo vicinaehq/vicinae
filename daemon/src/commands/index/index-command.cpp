@@ -2,6 +2,7 @@
 #include "calculator-database.hpp"
 #include "calculator.hpp"
 #include "command-database.hpp"
+#include "commands/calculator-history/calculator-history.hpp"
 #include "omnicast.hpp"
 #include "quicklist-database.hpp"
 #include "ui/color_circle.hpp"
@@ -25,11 +26,10 @@
 #include <qwindowdefs.h>
 #include <string_view>
 
-IndexCommand::IndexCommand() : CommandObject(), list(new ManagedList()) {
-
-  xdg = new XdgDesktopDatabase();
+IndexCommand::IndexCommand(AppWindow *app)
+    : CommandObject(app), quicklinkDb(service<QuicklistDatabase>()),
+      xdg(service<XdgDesktopDatabase>()), list(new ManagedList()) {
   cmdDb = new CommandDatabase();
-  quicklinkDb = new QuicklistDatabase();
 
   for (const auto &cmd : cmdDb->commands) {
     if (!cmd.usableWith)
@@ -40,10 +40,11 @@ IndexCommand::IndexCommand() : CommandObject(), list(new ManagedList()) {
   auto layout = new QVBoxLayout();
 
   layout->setSpacing(0);
-  layout->setContentsMargins(0, 0, 0, 0);
   layout->setAlignment(Qt::AlignTop);
 
   layout->addWidget(list, 1);
+
+  layout->setContentsMargins(0, 10, 0, 0);
 
   connect(list, &ManagedList::itemSelected, this, &IndexCommand::itemSelected);
   connect(list, &ManagedList::itemActivated, this,
@@ -52,9 +53,9 @@ IndexCommand::IndexCommand() : CommandObject(), list(new ManagedList()) {
   forwardInputEvents(list);
 
   widget->setLayout(layout);
-}
 
-void IndexCommand::onMount() { onSearchChanged(""); }
+  onSearchChanged("");
+}
 
 void IndexCommand::onAttach() {
   setSearchPlaceholder("Search apps and commands...");
@@ -89,7 +90,7 @@ void IndexCommand::onActionActivated(std::shared_ptr<IAction> action) {
 
   if (auto execCmd =
           std::dynamic_pointer_cast<Command::ExecuteCommand>(action)) {
-    pushCommand(execCmd->ref.widgetFactory());
+    pushCommand(execCmd->ref.widgetFactory);
     return;
   }
 
@@ -104,7 +105,8 @@ void IndexCommand::onActionActivated(std::shared_ptr<IAction> action) {
           action)) {
     CalculatorDatabase::get().saveComputation(ac->ref.expression,
                                               ac->ref.result);
-    pushCommand(new CalculatorHistoryCommand(ac->ref.expression));
+    pushCommand(std::make_unique<CalculatorHistoryCommand::Factory>(
+        ac->ref.expression));
     return;
   }
 

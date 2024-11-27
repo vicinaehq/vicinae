@@ -1,4 +1,5 @@
 #pragma once
+#include "common.hpp"
 #include "omnicast.hpp"
 #include "ui/toast.hpp"
 #include <qicon.h>
@@ -16,7 +17,7 @@ class CommandObject : public QObject {
   AppWindow *app_ = nullptr;
 
 protected:
-  AppWindow *app() const { return static_cast<AppWindow *>(parent()); }
+  AppWindow *app() const { return app_; }
 
   void createCompletion(const QList<QString> &inputs, const QString &icon);
   void destroyCompletion();
@@ -32,15 +33,22 @@ protected:
 
   void unforwardInputEvents(QWidget *widget);
   void clearSearch();
+  void hideSearch();
   void setSearch(const QString &s);
-  void pushCommand(CommandObject *next) { app()->pushCommandObject(next); }
+  void pushCommand(std::shared_ptr<ICommandFactory> fac) {
+    app()->pushCommandObject(fac);
+  }
+
+  template <typename T> std::shared_ptr<T> service() {
+    return app()->service<T>();
+  }
 
 public:
   friend ActionExecutionContext;
 
   QWidget *widget;
 
-  CommandObject();
+  CommandObject(AppWindow *app);
   virtual ~CommandObject();
 
 public slots:
@@ -55,20 +63,6 @@ public slots:
   QString query() const;
   QList<QString> completions() const;
 
-  virtual const QString &name();
+  virtual QString name();
   virtual QIcon icon();
-};
-
-class ActionExecutionContext {
-  CommandObject &obj;
-
-public:
-  ActionExecutionContext(CommandObject &obj) : obj(obj) {}
-
-  void setToast(const QString &message,
-                ToastPriority priority = ToastPriority::Success) {
-    obj.setToast(message, priority);
-  }
-
-  void pushCommand(CommandObject *next) { obj.app()->pushCommandObject(next); }
 };
