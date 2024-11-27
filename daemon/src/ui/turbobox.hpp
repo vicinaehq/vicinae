@@ -2,6 +2,7 @@
 #include "omnicast.hpp"
 #include "xdg-desktop-database.hpp"
 #include <QEvent>
+#include <qaction.h>
 #include <qapplication.h>
 #include <qboxlayout.h>
 #include <qevent.h>
@@ -46,6 +47,7 @@ public:
     popover->setWindowFlags(Qt::Popup);
     auto *popoverLayout = new QVBoxLayout(popover);
     popoverLayout->setContentsMargins(0, 0, 0, 0);
+    popoverLayout->setSpacing(0);
 
     searchField = new QLineEdit(popover);
     searchField->setContentsMargins(10, 10, 10, 10);
@@ -132,7 +134,7 @@ private slots:
     filterItems("");
   }
 
-  void selectItem(QListWidgetItem *item) {
+  virtual void selectItem(QListWidgetItem *item) {
     // Set selected item in the input field
     selectedItem = item->text();
     inputField->setText(selectedItem);
@@ -144,24 +146,30 @@ private slots:
 class AppTurbobox : public Turbobox {
   Service<XdgDesktopDatabase> xdd;
 
-  class DesktopItemWidget : public QWidget {
+  struct DesktopItemWidget : public QWidget {
+    App app;
+
   public:
-    DesktopItemWidget(const QString &name, QIcon icon) {
+    DesktopItemWidget(App app) : app(app) {
+      auto icon = QIcon::fromTheme(app.icon.c_str());
       auto layout = new QHBoxLayout();
       auto iconLabel = new QLabel();
 
       layout->setAlignment(Qt::AlignLeft);
 
-      iconLabel->setPixmap(icon.pixmap(20, 20));
+      iconLabel->setPixmap(icon.pixmap(18, 18));
 
+      layout->setSpacing(10);
       layout->addWidget(iconLabel);
-      layout->addWidget(new QLabel(name));
+      layout->addWidget(new QLabel(app.name.c_str()));
 
       setLayout(layout);
     }
   };
 
 public:
+  QAction *action = nullptr;
+
   AppTurbobox(Service<XdgDesktopDatabase> xdd) : xdd(xdd) {
     inputField->setText("Chromium");
   }
@@ -174,8 +182,7 @@ public:
         auto item = new QListWidgetItem();
 
         listWidget->addItem(item);
-        auto widget = new DesktopItemWidget(app.name.c_str(),
-                                            QIcon::fromTheme(app.icon.c_str()));
+        auto widget = new DesktopItemWidget(app);
         listWidget->setItemWidget(item, widget);
         item->setSizeHint(widget->sizeHint());
       }
@@ -184,5 +191,23 @@ public:
     if (listWidget->count() > 0) {
       listWidget->setCurrentRow(0);
     }
+  }
+
+  void selectItem(QListWidgetItem *item) override {
+    auto widget =
+        static_cast<DesktopItemWidget *>(listWidget->itemWidget(item));
+
+    inputField->setText(widget->app.name.c_str());
+
+    auto label = new QLabel();
+
+    auto icon = QIcon::fromTheme(widget->app.icon.c_str());
+
+    if (action)
+      inputField->removeAction(action);
+
+    action = inputField->addAction(icon, QLineEdit::LeadingPosition);
+
+    popover->hide();
   }
 };

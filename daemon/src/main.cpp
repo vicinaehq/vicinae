@@ -131,7 +131,8 @@ QLineEdit.form-input:focus {
 .turbobox .popover {
 	background-color: %2;
 	border: none;
-	border: 1px #222222 solid;
+	border-radius: 5px;
+	border: 1px solid #222222;
 }
 )";
 

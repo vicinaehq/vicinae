@@ -5,23 +5,20 @@
 #include <qwidget.h>
 
 class FormInput : public QWidget {
+  QLabel *error;
 
 public:
-  QLineEdit *input;
-
-  FormInput(const QString &label) {
-    input = new QLineEdit();
+  FormInput(const QString &label, QWidget *item) {
+    // input = new QLineEdit();
     auto layout = new QHBoxLayout();
+    error = new QLabel();
 
-    input->setProperty("class", "form-input");
+    // input->setProperty("class", "form-input");
     layout->setSpacing(20);
     layout->addWidget(new QLabel(label), 1, Qt::AlignVCenter | Qt::AlignRight);
-    layout->addWidget(input, 7, Qt::AlignVCenter);
+    layout->addWidget(item, 4, Qt::AlignVCenter);
+    layout->addWidget(error, 2, Qt::AlignVCenter);
 
     setLayout(layout);
   }
-
-  void setPlaceholder(const QString &text) { input->setPlaceholderText(text); }
-
-  void setFocus() { input->setFocus(); }
 };
