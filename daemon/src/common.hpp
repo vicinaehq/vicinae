@@ -1,11 +1,13 @@
 #pragma once
 #include <QHBoxLayout>
 #include <QString>
+#include <cmath>
 #include <memory>
 #include <qboxlayout.h>
 #include <qframe.h>
 #include <qicon.h>
 #include <qlabel.h>
+#include <qnamespace.h>
 #include <qprocess.h>
 #include <qwidget.h>
 
@@ -98,3 +100,15 @@ public:
 };
 
 class IconLabel {};
+
+class Container : public QWidget {
+public:
+  Container(QWidget *child, size_t maxWidth = 600) {
+    auto box = new QVBoxLayout();
+
+    box->addWidget(child, 0, Qt::AlignHCenter);
+    // box->addWidget(child, 0);
+
+    setLayout(box);
+  }
+};

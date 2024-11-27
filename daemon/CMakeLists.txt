@@ -66,6 +66,7 @@ qt_add_executable(${TARGET}
 	src/ui/toast.cpp
 	src/ui/action_popover.hpp
 	src/ui/action_popover.cpp
+	src/ui/turbobox.hpp
 	src/command-object.hpp
 	src/command-object.cpp
 )

@@ -84,6 +84,7 @@ void AppWindow::popCommandObject() {
   // restore next
   topBar->input->setReadOnly(false);
   topBar->input->show();
+  topBar->input->setFocus();
   topBar->input->installEventFilter(next);
   next->setParent(this);
   next->onAttach();
@@ -115,7 +116,7 @@ bool AppWindow::eventFilter(QObject *obj, QEvent *event) {
     auto keyEvent = static_cast<QKeyEvent *>(event);
     auto key = keyEvent->key();
 
-    if (obj == topBar->input && commandStack.size() > 1) {
+    if (commandStack.size() > 1) {
       bool isEsc = keyEvent->key() == Qt::Key_Escape;
 
       if (isEsc || (keyEvent->key() == Qt::Key_Backspace &&
@@ -189,6 +190,7 @@ AppWindow::AppWindow(QWidget *parent)
   index->onAttach();
 
   layout->setAlignment(Qt::AlignTop);
+  installEventFilter(this);
   topBar->input->installEventFilter(this);
   topBar->input->installEventFilter(index);
   layout->addWidget(topBar);

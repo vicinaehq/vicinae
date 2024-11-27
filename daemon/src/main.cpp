@@ -115,6 +115,24 @@ QWidget.status-bar {
 .divider {
 	color: #222222;
 }
+
+QLineEdit.form-input {
+	padding: 5px;
+	border: none;
+	border: 1px solid #222222;
+	border-radius: 5px;
+}
+
+QLineEdit.form-input:focus {
+	border: none;
+	border: 1px solid #666666;
+}
+
+.turbobox .popover {
+	background-color: %2;
+	border: none;
+	border: 1px #222222 solid;
+}
 )";
 
 int main(int argc, char **argv) {

@@ -15,6 +15,7 @@
 #include <QStringList>
 #include <QVBoxLayout>
 #include <QWidget>
+#include <memory>
 #include <qapplication.h>
 #include <qboxlayout.h>
 #include <qlabel.h>
@@ -126,6 +127,8 @@ public:
 
 class Command;
 class CommandObject;
+
+template <class T> using Service = std::shared_ptr<T>;
 
 class AppWindow : public QMainWindow {
   Q_OBJECT
