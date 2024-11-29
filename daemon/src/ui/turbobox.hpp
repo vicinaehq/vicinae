@@ -1,6 +1,6 @@
+#include "app-database.hpp"
 #include "common.hpp"
 #include "omnicast.hpp"
-#include "xdg-desktop-database.hpp"
 #include <QEvent>
 #include <qaction.h>
 #include <qapplication.h>
@@ -144,14 +144,14 @@ private slots:
 };
 
 class AppTurbobox : public Turbobox {
-  Service<XdgDesktopDatabase> xdd;
+  Service<AppDatabase> xdd;
 
   struct DesktopItemWidget : public QWidget {
-    App app;
+    std::shared_ptr<DesktopFile> app;
 
   public:
-    DesktopItemWidget(App app) : app(app) {
-      auto icon = QIcon::fromTheme(app.icon.c_str());
+    DesktopItemWidget(std::shared_ptr<DesktopFile> app) : app(app) {
+      auto icon = QIcon::fromTheme(app->icon);
       auto layout = new QHBoxLayout();
       auto iconLabel = new QLabel();
 
@@ -161,7 +161,7 @@ class AppTurbobox : public Turbobox {
 
       layout->setSpacing(10);
       layout->addWidget(iconLabel);
-      layout->addWidget(new QLabel(app.name.c_str()));
+      layout->addWidget(new QLabel(app->name));
 
       setLayout(layout);
     }
@@ -170,21 +170,34 @@ class AppTurbobox : public Turbobox {
 public:
   QAction *action = nullptr;
 
-  AppTurbobox(Service<XdgDesktopDatabase> xdd) : xdd(xdd) {
+  AppTurbobox(Service<AppDatabase> appDb) : xdd(appDb) {
     inputField->setText("Chromium");
   }
 
   void filterItems(const QString &text) override {
     listWidget->clear();
-    for (const auto &app : xdd->query(text.toLatin1().data())) {
-      if (QString::fromStdString(app.normalizedName)
-              .contains(text, Qt::CaseInsensitive)) {
+
+    for (const auto app : xdd->apps) {
+      bool appMatches = app->name.contains(text, Qt::CaseInsensitive);
+
+      if (appMatches) {
         auto item = new QListWidgetItem();
 
         listWidget->addItem(item);
         auto widget = new DesktopItemWidget(app);
         listWidget->setItemWidget(item, widget);
         item->setSizeHint(widget->sizeHint());
+      }
+
+      for (const auto action : app->actions) {
+        if (appMatches || action->name.contains(text, Qt::CaseInsensitive)) {
+          auto item = new QListWidgetItem();
+
+          listWidget->addItem(item);
+          auto widget = new DesktopItemWidget(action);
+          listWidget->setItemWidget(item, widget);
+          item->setSizeHint(widget->sizeHint());
+        }
       }
     }
 
@@ -197,11 +210,11 @@ public:
     auto widget =
         static_cast<DesktopItemWidget *>(listWidget->itemWidget(item));
 
-    inputField->setText(widget->app.name.c_str());
+    inputField->setText(widget->app->name);
 
     auto label = new QLabel();
 
-    auto icon = QIcon::fromTheme(widget->app.icon.c_str());
+    auto icon = QIcon::fromTheme(widget->app->icon);
 
     if (action)
       inputField->removeAction(action);

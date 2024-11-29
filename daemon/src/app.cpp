@@ -1,3 +1,4 @@
+#include "app-database.hpp"
 #include "calculator-database.hpp"
 #include "command-database.hpp"
 #include "command-object.hpp"
@@ -200,6 +201,8 @@ AppWindow::AppWindow(QWidget *parent)
 
   commandStack.push(index);
 
+  appDb = std::make_shared<AppDatabase>();
+
   auto widget = new QWidget();
 
   widget->setLayout(layout);
@@ -228,4 +231,9 @@ template <>
 std::shared_ptr<CalculatorDatabase>
 AppWindow::service<CalculatorDatabase>() const {
   return calculatorDatabase;
+}
+
+template <>
+std::shared_ptr<AppDatabase> AppWindow::service<AppDatabase>() const {
+  return appDb;
 }

@@ -56,8 +56,6 @@ struct Quicklink : public IActionnable {
         continue;
       }
 
-      qDebug() << "start = " << start << fmtUrl;
-
       if (start == -1) {
         fmtUrl += url.at(i);
       }

@@ -11,14 +11,14 @@
 #include <qwidget.h>
 
 class CreateQuickLinkCommand : public CommandObject {
-  Service<XdgDesktopDatabase> xdd;
+  Service<AppDatabase> xdd;
   InputField *nameField;
   InputField *urlField;
   AppTurbobox *appField;
 
 public:
   CreateQuickLinkCommand(AppWindow *app)
-      : CommandObject(app), xdd(service<XdgDesktopDatabase>()) {
+      : CommandObject(app), xdd(service<AppDatabase>()) {
     auto layout = new QVBoxLayout();
 
     auto w = new QWidget();
