@@ -117,7 +117,7 @@ QWidget.status-bar {
 }
 
 QLineEdit.form-input {
-	padding: 5px;
+	padding: 8px;
 	border: none;
 	border: 1px solid #222222;
 	border-radius: 5px;

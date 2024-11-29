@@ -179,6 +179,7 @@ AppWindow::AppWindow(QWidget *parent)
   calculatorDatabase = std::make_shared<CalculatorDatabase>(
       Config::dirPath() + QDir::separator() + "calculator.db");
   xdd = std::make_shared<XdgDesktopDatabase>();
+  appDb = std::make_shared<AppDatabase>();
 
   layout = new QVBoxLayout();
 
@@ -200,8 +201,6 @@ AppWindow::AppWindow(QWidget *parent)
   layout->addWidget(statusBar);
 
   commandStack.push(index);
-
-  appDb = std::make_shared<AppDatabase>();
 
   auto widget = new QWidget();
 

@@ -1,4 +1,5 @@
 #include "commands/index/index-command.hpp"
+#include "app-database.hpp"
 #include "calculator-database.hpp"
 #include "calculator.hpp"
 #include "command-database.hpp"
@@ -25,6 +26,56 @@
 #include <qwidget.h>
 #include <qwindowdefs.h>
 #include <string_view>
+
+class AppActionnable : public IActionnable {
+
+public:
+  std::shared_ptr<DesktopFile> desktopFile;
+
+  AppActionnable(std::shared_ptr<DesktopFile> desktopFile)
+      : desktopFile(desktopFile) {}
+
+  using Ref = const AppActionnable &;
+
+  struct Open : public IAction {
+    Ref ref;
+
+    QString name() const override { return "Open Application"; }
+    QIcon icon() const override {
+      return QIcon::fromTheme(ref.desktopFile->icon);
+    }
+
+    Open(Ref ref) : ref(ref) {}
+  };
+
+  struct OpenInTerminal : public IAction {
+    Ref ref;
+
+    QString name() const override { return "Open in terminal"; }
+    QIcon icon() const override { return QIcon::fromTheme("xterm"); }
+
+    OpenInTerminal(Ref ref) : ref(ref) {}
+  };
+
+  struct OpenDesktopFile : public IAction {
+    Ref ref;
+
+    QString name() const override { return "Open desktop file"; }
+    QIcon icon() const override {
+      return QIcon::fromTheme(ref.desktopFile->icon);
+    }
+
+    OpenDesktopFile(Ref ref) : ref(ref) {}
+  };
+
+  ActionList generateActions() const override {
+    return {
+        std::make_shared<Open>(*this),
+        std::make_shared<OpenInTerminal>(*this),
+        std::make_shared<OpenDesktopFile>(*this),
+    };
+  }
+};
 
 IndexCommand::IndexCommand(AppWindow *app)
     : CommandObject(app), quicklinkDb(service<QuicklistDatabase>()),
@@ -167,7 +218,14 @@ void IndexCommand::onSearchChanged(const QString &text) {
     }
   }
 
-  auto apps = xdg->query(text.toStdString());
+  auto appDb = service<AppDatabase>();
+  QList<std::shared_ptr<DesktopFile>> apps;
+
+  for (const auto app : appDb->apps) {
+    if (!app->noDisplay && app->name.contains(text, Qt::CaseInsensitive))
+      apps.push_back(app);
+  }
+
   QList<Command> matchingCommands;
 
   for (const auto &cmd : cmdDb->commands) {
@@ -194,11 +252,9 @@ void IndexCommand::onSearchChanged(const QString &text) {
 
   for (size_t i = 0; i != apps.size(); ++i) {
     auto &app = apps.at(i);
-    auto widget = new GenericListItem(QString::fromStdString(app.icon),
-                                      QString::fromStdString(app.name), "",
-                                      "Application");
+    auto widget = new GenericListItem(app->icon, app->name, "", "Application");
 
-    list->addWidgetItem(new App(app), widget);
+    list->addWidgetItem(new AppActionnable(app), widget);
   }
 
   for (const auto &cmd : matchingCommands) {

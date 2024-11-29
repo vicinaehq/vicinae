@@ -220,7 +220,7 @@ public:
       inputField->removeAction(action);
 
     action = inputField->addAction(icon, QLineEdit::LeadingPosition);
-
+    searchField->clear();
     popover->hide();
   }
 };
