@@ -128,7 +128,7 @@ private slots:
     const QPoint globalPos =
         inputField->mapToGlobal(QPoint(0, inputField->height() + 10));
     popover->move(globalPos);
-    popover->resize(inputField->width(), 400); // Adjust height as needed
+    popover->resize(inputField->width(), 300); // Adjust height as needed
     popover->show();
     searchField->setFocus();
     filterItems("");
