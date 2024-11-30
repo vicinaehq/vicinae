@@ -3,6 +3,8 @@
 #include <QSqlError>
 #include <QString>
 #include <memory>
+#include <numbers>
+#include <qdatetime.h>
 #include <qdir.h>
 #include <qlist.h>
 #include <qlogging.h>
@@ -12,11 +14,13 @@
 struct Quicklink : public IActionnable {
   uint id;
   QString app;
+  uint openCount;
   QString displayName;
   QString url;
   QString iconName;
   QString name;
   QList<QString> placeholders;
+  std::optional<QDateTime> lastUsedAt;
 
   struct Open : public IAction {
     const Quicklink &ref;
@@ -40,8 +44,9 @@ struct Quicklink : public IActionnable {
   }
 
   Quicklink(uint id, const QString &name, const QString &url,
-            const QString &icon, const QString &app)
-      : id(id), app(app) {
+            const QString &icon, const QString &app, uint openCount,
+            std::optional<QDateTime> lastUsedAt)
+      : id(id), app(app), openCount(openCount), lastUsedAt(lastUsedAt) {
     size_t i = 0;
     int start = -1;
     QString fmtUrl;
@@ -117,7 +122,7 @@ public:
     QSqlQuery query(db);
 
     query.prepare(R"(
-		SELECT id, name, link, icon, app FROM links
+		SELECT id, name, link, icon, app, open_count, last_used_at FROM links
 	)");
 
     if (!query.exec()) {
@@ -125,16 +130,58 @@ public:
     }
 
     while (query.next()) {
-      links.push_back({
-          query.value(0).toUInt(),
-          query.value(1).toString(),
-          query.value(2).toString(),
-          query.value(3).toString(),
-          query.value(4).toString(),
-      });
+      auto lastUsedAtField = query.value(6);
+      std::optional<QDateTime> lastUsedAt;
+
+      if (!lastUsedAtField.isNull())
+        QDateTime::fromSecsSinceEpoch(lastUsedAtField.toULongLong());
+
+      Quicklink newLink{query.value(0).toUInt(),
+                        query.value(1).toString(),
+                        query.value(2).toString(),
+                        query.value(3).toString(),
+                        query.value(4).toString(),
+                        query.value(5).toUInt(),
+                        lastUsedAt};
+      links.push_back(newLink);
     }
 
     return links;
+  }
+
+  Quicklink *findById(uint id) {
+    for (auto &link : links) {
+      if (link.id == id)
+        return &link;
+    }
+
+    return nullptr;
+  }
+
+  void incrementOpenCount(uint id) {
+    auto link = findById(id);
+
+    if (!link)
+      return;
+
+    QSqlQuery query(db);
+
+    query.prepare(R"(
+		UPDATE links 
+		SET 
+			open_count = open_count + 1, 
+			last_used_at = unixepoch() 
+		WHERE id = ?
+	)");
+
+    query.addBindValue(id);
+
+    link->openCount += 1;
+    link->lastUsedAt = QDateTime::currentDateTime();
+
+    if (!query.exec()) {
+      qDebug() << "query.exec() failed: " << query.lastError().text();
+    }
   }
 
   void addLink(const AddQuicklinkPayload &payload) {
@@ -153,11 +200,8 @@ public:
       qDebug() << "query.exec() failed: " << query.lastError().text();
     }
 
-    // todo: get actual id
-    links.push_back(
-        {100, payload.name, payload.link, payload.icon, payload.app});
-
-    // links.push_back({payload.name, payload.link, payload.icon});
+    links.push_back({query.lastInsertId().toUInt(), payload.name, payload.link,
+                     payload.icon, payload.app, 0, std::nullopt});
   }
 
   QuicklistDatabase(const QString &path)
@@ -182,8 +226,9 @@ public:
 			icon TEXT NOT NULL,
 			link TEXT NOT NULL,
 			app TEXT NOT NULL,
+			open_count INTEGER DEFAULT 0,
 			created_at INTEGER DEFAULT (unixepoch()),
-			updated_at INTEGER DEFAULT (unixepoch())
+			last_used_at INTEGER
 		);
 	)");
 

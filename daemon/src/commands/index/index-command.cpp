@@ -185,6 +185,7 @@ void IndexCommand::onActionActivated(std::shared_ptr<IAction> action) {
         url = url.arg(args.at(i));
       }
       app->launch({url});
+      quicklinkDb->incrementOpenCount(openLink->ref.id);
     } else {
       setToast("No app to open link", ToastPriority::Danger);
     }

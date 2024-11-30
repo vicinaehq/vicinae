@@ -138,8 +138,14 @@ public:
 
       info->name->setText(rhs.name);
       info->link->setText(rhs.url);
-      info->lastUpdated->setText("Never");
-      info->opened->setText("0");
+
+      if (rhs.lastUsedAt) {
+        info->lastUpdated->setText(rhs.lastUsedAt->toString());
+      } else {
+        info->lastUpdated->setText("Never");
+      }
+
+      info->opened->setText(QString::number(rhs.openCount));
     }
   };
 
