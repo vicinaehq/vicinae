@@ -7,6 +7,7 @@
 #include "omnicast.hpp"
 #include "quicklist-database.hpp"
 #include "ui/color_circle.hpp"
+#include "ui/toast.hpp"
 #include "xdg-desktop-database.hpp"
 #include <cmath>
 #include <memory>
@@ -30,9 +31,9 @@
 class AppActionnable : public IActionnable {
 
 public:
-  std::shared_ptr<DesktopFile> desktopFile;
+  std::shared_ptr<DesktopEntry> desktopFile;
 
-  AppActionnable(std::shared_ptr<DesktopFile> desktopFile)
+  AppActionnable(std::shared_ptr<DesktopEntry> desktopFile)
       : desktopFile(desktopFile) {}
 
   using Ref = const AppActionnable &;
@@ -40,40 +41,42 @@ public:
   struct Open : public IAction {
     Ref ref;
 
-    QString name() const override { return "Open Application"; }
-    QIcon icon() const override {
-      return QIcon::fromTheme(ref.desktopFile->icon);
-    }
+    QString name() const override { return ref.desktopFile->name; }
+    QIcon icon() const override { return ref.desktopFile->icon(); }
 
     Open(Ref ref) : ref(ref) {}
-  };
-
-  struct OpenInTerminal : public IAction {
-    Ref ref;
-
-    QString name() const override { return "Open in terminal"; }
-    QIcon icon() const override { return QIcon::fromTheme("xterm"); }
-
-    OpenInTerminal(Ref ref) : ref(ref) {}
   };
 
   struct OpenDesktopFile : public IAction {
     Ref ref;
 
     QString name() const override { return "Open desktop file"; }
-    QIcon icon() const override {
-      return QIcon::fromTheme(ref.desktopFile->icon);
-    }
+    QIcon icon() const override { return ref.desktopFile->icon(); }
 
     OpenDesktopFile(Ref ref) : ref(ref) {}
   };
 
+  struct OpenAction : public IAction {
+    std::shared_ptr<DesktopExecutable> action;
+
+    QString name() const override { return action->name; }
+    QIcon icon() const override { return action->icon(); }
+
+    OpenAction(std::shared_ptr<DesktopExecutable> action) : action(action) {}
+  };
+
   ActionList generateActions() const override {
-    return {
-        std::make_shared<Open>(*this),
-        std::make_shared<OpenInTerminal>(*this),
-        std::make_shared<OpenDesktopFile>(*this),
+    ActionList list{
+        std::make_shared<OpenAction>(this->desktopFile),
     };
+
+    for (const auto &action : desktopFile->actions) {
+      list.push_back(std::make_shared<OpenAction>(action));
+    }
+
+    list.push_back(std::make_shared<OpenDesktopFile>(*this));
+
+    return list;
   }
 };
 
@@ -118,7 +121,9 @@ void IndexCommand::itemSelected(const IActionnable &item) {
   destroyCompletion();
 
   if (auto link = dynamic_cast<const Quicklink *>(&item)) {
-    createCompletion(link->placeholders, link->iconName);
+    if (!link->placeholders.isEmpty()) {
+      createCompletion(link->placeholders, link->iconName);
+    }
   }
 
   setActions(item.generateActions());
@@ -135,8 +140,16 @@ void IndexCommand::itemActivated(const IActionnable &item) {
 }
 
 void IndexCommand::onActionActivated(std::shared_ptr<IAction> action) {
-  if (auto openApp = std::dynamic_pointer_cast<App::Open>(action)) {
+  if (auto openApp =
+          std::dynamic_pointer_cast<AppActionnable::OpenAction>(action)) {
     qDebug() << "opening app " << openApp->name();
+    if (!openApp->action->launch()) {
+      setToast("Failed to launch app", ToastPriority::Danger);
+    }
+
+    clearSearch();
+    hideWindow();
+    return;
   }
 
   if (auto execCmd =
@@ -162,7 +175,19 @@ void IndexCommand::onActionActivated(std::shared_ptr<IAction> action) {
   }
 
   if (auto openLink = std::dynamic_pointer_cast<Quicklink::Open>(action)) {
-    openLink->open(completions());
+    auto appDb = service<AppDatabase>();
+
+    if (auto app = appDb->getById(openLink->ref.app)) {
+      QString url = QString(openLink->ref.url);
+      auto args = completions();
+
+      for (size_t i = 0; i < args.size(); ++i) {
+        url = url.arg(args.at(i));
+      }
+      app->launch({url});
+    } else {
+      setToast("No app to open link", ToastPriority::Danger);
+    }
   }
 
   clearSearch();
@@ -219,7 +244,7 @@ void IndexCommand::onSearchChanged(const QString &text) {
   }
 
   auto appDb = service<AppDatabase>();
-  QList<std::shared_ptr<DesktopFile>> apps;
+  QList<std::shared_ptr<DesktopEntry>> apps;
 
   for (const auto app : appDb->apps) {
     if (!app->noDisplay && app->name.contains(text, Qt::CaseInsensitive))
@@ -240,11 +265,12 @@ void IndexCommand::onSearchChanged(const QString &text) {
   }
 
   for (const auto &quicklink : quicklinkDb->links) {
-    if (text.size() > 0 && quicklink.name.startsWith(text)) {
+    if (text.size() > 0 && quicklink.name.contains(text, Qt::CaseInsensitive)) {
       qDebug() << "quicklink matches " << quicklink.displayName;
 
-      auto widget = new GenericListItem(quicklink.iconName,
-                                        quicklink.displayName, "", "Quicklink");
+      auto widget = new GenericListItem(QIcon::fromTheme(quicklink.iconName),
+                                        quicklink.displayName, quicklink.url,
+                                        "Quicklink");
 
       list->addWidgetItem(new Quicklink(quicklink), widget);
     }
@@ -252,14 +278,15 @@ void IndexCommand::onSearchChanged(const QString &text) {
 
   for (size_t i = 0; i != apps.size(); ++i) {
     auto &app = apps.at(i);
-    auto widget = new GenericListItem(app->icon, app->name, "", "Application");
+    auto widget =
+        new GenericListItem(app->icon(), app->name, "", "Application");
 
     list->addWidgetItem(new AppActionnable(app), widget);
   }
 
   for (const auto &cmd : matchingCommands) {
-    auto widget =
-        new GenericListItem(cmd.iconName, cmd.name, cmd.category, "Command");
+    auto widget = new GenericListItem(QIcon::fromTheme(cmd.iconName), cmd.name,
+                                      cmd.category, "Command");
 
     list->addWidgetItem(new Command(cmd), widget);
   }
@@ -269,8 +296,8 @@ void IndexCommand::onSearchChanged(const QString &text) {
   }
 
   for (const auto cmd : usableWithCommands) {
-    auto widget =
-        new GenericListItem(cmd->iconName, cmd->name, cmd->category, "Command");
+    auto widget = new GenericListItem(QIcon::fromTheme(cmd->iconName),
+                                      cmd->name, cmd->category, "Command");
 
     list->addWidgetItem(new Command(*cmd), widget);
   }

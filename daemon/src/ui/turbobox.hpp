@@ -147,11 +147,11 @@ class AppTurbobox : public Turbobox {
   Service<AppDatabase> xdd;
 
   struct DesktopItemWidget : public QWidget {
-    std::shared_ptr<DesktopFile> app;
+    std::shared_ptr<DesktopExecutable> app;
 
   public:
-    DesktopItemWidget(std::shared_ptr<DesktopFile> app) : app(app) {
-      auto icon = QIcon::fromTheme(app->icon);
+    DesktopItemWidget(std::shared_ptr<DesktopExecutable> app) : app(app) {
+      auto icon = app->icon();
       auto layout = new QHBoxLayout();
       auto iconLabel = new QLabel();
 
@@ -161,7 +161,7 @@ class AppTurbobox : public Turbobox {
 
       layout->setSpacing(10);
       layout->addWidget(iconLabel);
-      layout->addWidget(new QLabel(app->name));
+      layout->addWidget(new QLabel(app->fullyQualifiedName()));
 
       setLayout(layout);
     }
@@ -169,6 +169,7 @@ class AppTurbobox : public Turbobox {
 
 public:
   QAction *action = nullptr;
+  std::shared_ptr<DesktopExecutable> selected;
 
   AppTurbobox(Service<AppDatabase> appDb) : xdd(appDb) {
     inputField->setText("Chromium");
@@ -206,21 +207,25 @@ public:
     }
   }
 
-  void selectItem(QListWidgetItem *item) override {
-    auto widget =
-        static_cast<DesktopItemWidget *>(listWidget->itemWidget(item));
-
-    inputField->setText(widget->app->name);
+  void setSelected(std::shared_ptr<DesktopExecutable> app) {
+    inputField->setText(app->name);
 
     auto label = new QLabel();
-
-    auto icon = QIcon::fromTheme(widget->app->icon);
+    auto icon = app->icon();
 
     if (action)
       inputField->removeAction(action);
 
+    selected = app;
     action = inputField->addAction(icon, QLineEdit::LeadingPosition);
     searchField->clear();
     popover->hide();
+  }
+
+  void selectItem(QListWidgetItem *item) override {
+    auto widget =
+        static_cast<DesktopItemWidget *>(listWidget->itemWidget(item));
+
+    setSelected(widget->app);
   }
 };

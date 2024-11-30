@@ -123,9 +123,9 @@ public:
     for (const auto &row : matches) {
       auto format = QString("%1 = %2").arg(row.expression).arg(row.result);
 
-      list->addWidgetItem(
-          new Calculator(row.expression, row.result),
-          new GenericListItem("pcbcalculator", format, "", "Calculator"));
+      list->addWidgetItem(new Calculator(row.expression, row.result),
+                          new GenericListItem(QIcon::fromTheme("pcbcalculator"),
+                                              format, "", "Calculator"));
     }
 
     list->selectFirstEligible();

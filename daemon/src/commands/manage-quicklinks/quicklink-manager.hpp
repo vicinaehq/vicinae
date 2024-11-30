@@ -1,8 +1,11 @@
+#include "app-database.hpp"
 #include "command-object.hpp"
 #include "common.hpp"
 #include "omnicast.hpp"
 #include "quicklist-database.hpp"
 #include "ui/managed_list.hpp"
+#include "ui/toast.hpp"
+#include <memory>
 #include <qboxlayout.h>
 #include <qframe.h>
 #include <qlabel.h>
@@ -11,8 +14,31 @@
 #include <qwidget.h>
 #include <unistd.h>
 
+class EditQuicklinkAction : public IAction {
+public:
+  QString name() const override { return "Edit link"; }
+  QIcon icon() const override { return QIcon::fromTheme("edit"); }
+};
+
+class DuplicateLinkAction : public IAction {
+public:
+  QString name() const override { return "Duplicate link"; }
+  QIcon icon() const override { return QIcon::fromTheme("edit"); }
+};
+
+class DeleteQuicklinkAction : public IAction {
+public:
+  const Quicklink &link;
+
+  QString name() const override { return "Delete link"; }
+  QIcon icon() const override { return QIcon::fromTheme("node-delete"); }
+
+  DeleteQuicklinkAction(const Quicklink &link) : link(link) {}
+};
+
 class QuickLinkManagerCommand : public CommandObject {
-  std::shared_ptr<QuicklistDatabase> quicklinkDb;
+  Service<QuicklistDatabase> quicklinkDb;
+  Service<AppDatabase> appDb;
   ManagedList *list;
   QHBoxLayout *layout;
   SplitView *split;
@@ -84,9 +110,10 @@ public:
 
   class QuicklinkDetailsWidget : public QWidget {
     QuicklinkInfoListWidget *info;
+    Service<AppDatabase> &appDb;
 
   public:
-    QuicklinkDetailsWidget() {
+    QuicklinkDetailsWidget(Service<AppDatabase> &appDb) : appDb(appDb) {
       auto layout = new QVBoxLayout();
 
       layout->setContentsMargins(0, 0, 0, 0);
@@ -101,10 +128,16 @@ public:
     }
 
     void load(const Quicklink &rhs) {
+      if (auto app = appDb->getById(rhs.app)) {
+        info->appName->setText(app->name);
+        info->appIcon->setPixmap(app->icon().pixmap(20, 20));
+      } else {
+        info->appIcon->setPixmap(QIcon::fromTheme(rhs.iconName).pixmap(20, 20));
+        info->appName->setText("-/-");
+      }
+
       info->name->setText(rhs.name);
       info->link->setText(rhs.url);
-      info->appIcon->setPixmap(QIcon::fromTheme("chromium").pixmap(20, 20));
-      info->appName->setText("chromium");
       info->lastUpdated->setText("Never");
       info->opened->setText("0");
     }
@@ -115,6 +148,7 @@ public:
   QuickLinkManagerCommand(AppWindow *app)
       : CommandObject(app), list(new ManagedList()) {
     quicklinkDb = service<QuicklistDatabase>();
+    appDb = service<AppDatabase>();
 
     for (const auto &link : quicklinkDb->links) {
       qDebug() << link.name;
@@ -122,7 +156,7 @@ public:
 
     forwardInputEvents(list);
 
-    details = new QuicklinkDetailsWidget();
+    details = new QuicklinkDetailsWidget(appDb);
     list->setStyleSheet("QListWidget { margin-top: 10px; }");
     widget = split = new SplitView(list, details);
 
@@ -148,8 +182,9 @@ public:
     list->addSection(QString("%1 quicklinks").arg(links.size()));
 
     for (const auto link : links) {
-      list->addWidgetItem(
-          link, new GenericListItem(link->iconName, link->name, "", ""));
+      list->addWidgetItem(link,
+                          new GenericListItem(QIcon::fromTheme(link->iconName),
+                                              link->name, "", ""));
     }
 
     if (links.isEmpty()) {
@@ -160,13 +195,31 @@ public:
     }
   }
 
+  void onActionActivated(std::shared_ptr<IAction> action) override {
+    if (auto ac = std::dynamic_pointer_cast<DeleteQuicklinkAction>(action)) {
+      if (quicklinkDb->remove(ac->link.id)) {
+        setToast("Quicklink successfully deleted", ToastPriority::Success);
+        onSearchChanged(query());
+      } else {
+        setToast("Failed to delete quicklink", ToastPriority::Danger);
+      }
+    }
+  }
+
 public slots:
   void itemSelected(const IActionnable &item) {
     const Quicklink &link = static_cast<const Quicklink &>(item);
 
     qDebug() << "item selected " << link.name;
 
-    createCompletion(link.placeholders, link.iconName);
+    if (!link.placeholders.isEmpty()) {
+      createCompletion(link.placeholders, link.iconName);
+    } else {
+      destroyCompletion();
+    }
+
+    setActions({std::make_shared<DeleteQuicklinkAction>(link)});
+
     details->load(link);
     split->expand();
   }

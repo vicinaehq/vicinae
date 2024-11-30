@@ -18,6 +18,7 @@
 #include <memory>
 #include <qapplication.h>
 #include <qboxlayout.h>
+#include <qicon.h>
 #include <qlabel.h>
 #include <qlineedit.h>
 #include <qlist.h>
@@ -39,9 +40,8 @@ class GenericListItem : public QWidget {
   QLabel *kind;
 
 public:
-  GenericListItem(const QString &iconName, const QString &name,
-                  const QString &category, const QString &kind,
-                  QWidget *parent = nullptr)
+  GenericListItem(QIcon icon, const QString &name, const QString &category,
+                  const QString &kind, QWidget *parent = nullptr)
       : QWidget(parent), iconLabel(new QLabel), name(new QLabel),
         category(new QLabel), kind(new QLabel) {
 
@@ -51,8 +51,6 @@ public:
 
     auto left = new QWidget();
     auto leftLayout = new QHBoxLayout();
-
-    auto icon = QIcon::fromTheme(iconName);
 
     if (icon.isNull())
       icon = QIcon::fromTheme("desktop");

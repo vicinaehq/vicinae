@@ -1,4 +1,5 @@
 #include "ui/input_completer.hpp"
+#include <qnamespace.h>
 
 InputCompleter::InputCompleter(const QList<QString> &placeholders,
                                QWidget *parent)
@@ -9,19 +10,21 @@ InputCompleter::InputCompleter(const QList<QString> &placeholders,
 
   setProperty("class", "quicklink-completion");
 
+  mainContainer->setAlignment(Qt::AlignLeft);
+
   // mainContainer->setAlignment(Qt::AlignVCenter);
   mainContainer->setContentsMargins(0, 0, 0, 0);
   mainContainer->setSpacing(10);
 
   iconLabel = new QLabel();
 
-  mainContainer->addWidget(iconLabel, 0);
+  mainContainer->addWidget(iconLabel, 0, Qt::AlignLeft);
 
   for (const auto &placeholder : placeholders) {
     auto input = new InlineQLineEdit(placeholder);
 
     inputs.push_back(input);
-    mainContainer->addWidget(input, 1, Qt::AlignLeft);
+    mainContainer->addWidget(input, 0, Qt::AlignLeft);
   }
 
   setLayout(mainContainer);

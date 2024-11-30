@@ -10,6 +10,8 @@
 #include <qsqlquery.h>
 
 struct Quicklink : public IActionnable {
+  uint id;
+  QString app;
   QString displayName;
   QString url;
   QString iconName;
@@ -37,7 +39,9 @@ struct Quicklink : public IActionnable {
     return {std::make_shared<Open>(*this)};
   }
 
-  Quicklink(const QString &name, const QString &url, const QString &icon) {
+  Quicklink(uint id, const QString &name, const QString &url,
+            const QString &icon, const QString &app)
+      : id(id), app(app) {
     size_t i = 0;
     int start = -1;
     QString fmtUrl;
@@ -90,14 +94,30 @@ struct QuicklistDatabase {
   QList<Quicklink> links;
 
 public:
-  void remove(unsigned id);
+  bool remove(unsigned id) {
+    QSqlQuery query(db);
+
+    query.prepare(R"(
+		DELETE FROM links WHERE id = ?
+	)");
+
+    query.addBindValue(id);
+
+    if (!query.exec()) {
+      qDebug() << "query.exec() failed";
+      return false;
+    }
+
+    links.removeIf([id](auto &link) { return link.id == id; });
+    return true;
+  }
 
   QList<Quicklink> loadAll() {
     QList<Quicklink> links;
     QSqlQuery query(db);
 
     query.prepare(R"(
-		SELECT name, link, icon FROM links
+		SELECT id, name, link, icon, app FROM links
 	)");
 
     if (!query.exec()) {
@@ -106,39 +126,42 @@ public:
 
     while (query.next()) {
       links.push_back({
-          query.value(0).toString(),
+          query.value(0).toUInt(),
           query.value(1).toString(),
           query.value(2).toString(),
+          query.value(3).toString(),
+          query.value(4).toString(),
       });
     }
 
     return links;
-
-    // links.push_back({payload.name, payload.link, payload.icon});
   }
 
   void addLink(const AddQuicklinkPayload &payload) {
     QSqlQuery query(db);
 
-    query.prepare(R"(
-		INSERT INTO links (name, icon, link, app) 
-		VALUES (:name, :icon, :link, :app)
-	)");
+    query.prepare(
+        "INSERT INTO links (name, icon, link, app) VALUES (?, ?, ?, ?)");
+    query.addBindValue(payload.name);
+    query.addBindValue(payload.icon);
+    query.addBindValue(payload.link);
+    query.addBindValue(payload.app);
 
-    query.bindValue(":name", payload.name);
-    query.bindValue(":icon", payload.icon);
-    query.bindValue(":link", payload.link);
-    query.bindValue(":app", payload.app);
+    qDebug() << payload.name << payload.icon << payload.link << payload.app;
 
     if (!query.exec()) {
-      qDebug() << "query.exec() failed";
+      qDebug() << "query.exec() failed: " << query.lastError().text();
     }
+
+    // todo: get actual id
+    links.push_back(
+        {100, payload.name, payload.link, payload.icon, payload.app});
 
     // links.push_back({payload.name, payload.link, payload.icon});
   }
 
   QuicklistDatabase(const QString &path)
-      : db(QSqlDatabase::addDatabase("QSQLITE")) {
+      : db(QSqlDatabase::addDatabase("QSQLITE", "quicklinks")) {
 
     QFile file(path);
 
@@ -173,15 +196,15 @@ public:
       addLink({.name = "google",
                .icon = ":/assets/icons/google.svg",
                .link = "https://www.google.com/search?q={query}",
-               .app = "chrome"});
+               .app = ""});
       addLink({.name = "duckduckgo",
                .icon = ":/assets/icons/duckduckgo.svg",
                .link = "https://www.duckduckgo.com/search?q={query}",
-               .app = "chrome"});
+               .app = ""});
 
       qDebug() << "Done initializing";
+    } else {
+      links = loadAll();
     }
-
-    links = loadAll();
   }
 };

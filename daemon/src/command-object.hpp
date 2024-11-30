@@ -35,6 +35,8 @@ protected:
   void clearSearch();
   void hideSearch();
   void setSearch(const QString &s);
+  void hideWindow() { app()->hide(); }
+  void popCurrent() { app()->popCommandObject(); }
   void pushCommand(std::shared_ptr<ICommandFactory> fac) {
     app()->pushCommandObject(fac);
   }
