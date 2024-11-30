@@ -2,7 +2,9 @@
 #include <QHBoxLayout>
 #include <QString>
 #include <cmath>
+#include <functional>
 #include <memory>
+#include <optional>
 #include <qboxlayout.h>
 #include <qframe.h>
 #include <qicon.h>
@@ -10,6 +12,8 @@
 #include <qnamespace.h>
 #include <qprocess.h>
 #include <qwidget.h>
+
+template <class T> using OptionalRef = std::optional<std::reference_wrapper<T>>;
 
 class ActionExecutionContext;
 

@@ -5,6 +5,7 @@
 #include "commands/index/index-command.hpp"
 #include "common.hpp"
 #include "omnicast.hpp"
+#include "quicklink-seeder.hpp"
 #include "quicklist-database.hpp"
 #include "ui/action_popover.hpp"
 #include "xdg-desktop-database.hpp"
@@ -156,8 +157,13 @@ AppWindow::AppWindow(QWidget *parent)
       Config::dirPath() + QDir::separator() + "quicklinks.db");
   calculatorDatabase = std::make_shared<CalculatorDatabase>(
       Config::dirPath() + QDir::separator() + "calculator.db");
-  xdd = std::make_shared<XdgDesktopDatabase>();
   appDb = std::make_shared<AppDatabase>();
+
+  auto seeder = std::make_unique<QuickLinkSeeder>(appDb, quicklinkDatabase);
+
+  if (quicklinkDatabase->list().isEmpty()) {
+    seeder->seed();
+  }
 
   layout = new QVBoxLayout();
 
@@ -196,12 +202,6 @@ template <>
 std::shared_ptr<QuicklistDatabase>
 AppWindow::service<QuicklistDatabase>() const {
   return quicklinkDatabase;
-}
-
-template <>
-std::shared_ptr<XdgDesktopDatabase>
-AppWindow::service<XdgDesktopDatabase>() const {
-  return xdd;
 }
 
 template <>

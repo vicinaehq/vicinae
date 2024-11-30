@@ -82,7 +82,7 @@ public:
 
 IndexCommand::IndexCommand(AppWindow *app)
     : CommandObject(app), quicklinkDb(service<QuicklistDatabase>()),
-      xdg(service<XdgDesktopDatabase>()), list(new ManagedList()) {
+      list(new ManagedList()) {
   cmdDb = new CommandDatabase();
 
   for (const auto &cmd : cmdDb->commands) {
@@ -178,13 +178,7 @@ void IndexCommand::onActionActivated(std::shared_ptr<IAction> action) {
     auto appDb = service<AppDatabase>();
 
     if (auto app = appDb->getById(openLink->ref.app)) {
-      QString url = QString(openLink->ref.url);
-      auto args = completions();
-
-      for (size_t i = 0; i < args.size(); ++i) {
-        url = url.arg(args.at(i));
-      }
-      app->launch({url});
+      openLink->open(app, completions());
       quicklinkDb->incrementOpenCount(openLink->ref.id);
     } else {
       setToast("No app to open link", ToastPriority::Danger);
@@ -265,15 +259,16 @@ void IndexCommand::onSearchChanged(const QString &text) {
     list->addSection("Results");
   }
 
-  for (const auto &quicklink : quicklinkDb->links) {
-    if (text.size() > 0 && quicklink.name.contains(text, Qt::CaseInsensitive)) {
-      qDebug() << "quicklink matches " << quicklink.displayName;
+  for (const auto &quicklink : quicklinkDb->list()) {
+    if (text.size() > 0 &&
+        quicklink->name.contains(text, Qt::CaseInsensitive)) {
+      qDebug() << "quicklink matches " << quicklink->displayName;
 
-      auto widget = new GenericListItem(QIcon::fromTheme(quicklink.iconName),
-                                        quicklink.displayName, quicklink.url,
+      auto widget = new GenericListItem(QIcon::fromTheme(quicklink->iconName),
+                                        quicklink->displayName, quicklink->url,
                                         "Quicklink");
 
-      list->addWidgetItem(new Quicklink(quicklink), widget);
+      list->addWidgetItem(new Quicklink(*quicklink), widget);
     }
   }
 

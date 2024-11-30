@@ -1,11 +1,12 @@
 #pragma once
+#include "app-database.hpp"
 #include "common.hpp"
 #include <QSqlError>
 #include <QString>
 #include <memory>
-#include <numbers>
 #include <qdatetime.h>
 #include <qdir.h>
+#include <qhash.h>
 #include <qlist.h>
 #include <qlogging.h>
 #include <qsqldatabase.h>
@@ -28,14 +29,16 @@ struct Quicklink : public IActionnable {
     Open(const Quicklink &ref) : ref(ref) {}
 
     QString name() const override { return "Open link"; }
-    void open(const QList<QString> args) const {
+
+    bool open(std::shared_ptr<DesktopExecutable> app,
+              const QList<QString> args) const {
       QString url = QString(ref.url);
 
       for (size_t i = 0; i < args.size(); ++i) {
         url = url.arg(args.at(i));
       }
 
-      xdgOpen(url.toLatin1().data());
+      return app->launch({url});
     }
   };
 
@@ -71,8 +74,6 @@ struct Quicklink : public IActionnable {
       ++i;
     }
 
-    qDebug() << "file=" << fmtUrl;
-
     this->displayName = name;
     this->name = name;
     this->iconName = icon;
@@ -93,19 +94,27 @@ struct AddQuicklinkPayload {
   const QString &app;
 };
 
-struct QuicklistDatabase {
+class QuicklistDatabase {
   QSqlDatabase db;
+  QList<std::shared_ptr<Quicklink>> links;
+  using List = QList<std::shared_ptr<Quicklink>>;
 
-  QList<Quicklink> links;
+  Quicklink *findMutableById(uint id) {
+    for (auto &link : links) {
+      if (link->id == id)
+        return link.get();
+    }
+
+    return nullptr;
+  }
 
 public:
-  bool remove(unsigned id) {
+  const List &list() { return links; }
+
+  bool removeOne(uint id) {
     QSqlQuery query(db);
 
-    query.prepare(R"(
-		DELETE FROM links WHERE id = ?
-	)");
-
+    query.prepare("DELETE FROM links WHERE id = ?");
     query.addBindValue(id);
 
     if (!query.exec()) {
@@ -113,56 +122,53 @@ public:
       return false;
     }
 
-    links.removeIf([id](auto &link) { return link.id == id; });
+    links.removeIf([id](auto &link) { return link->id == id; });
+
     return true;
   }
 
-  QList<Quicklink> loadAll() {
-    QList<Quicklink> links;
+  List reloadAll() {
+    List links;
     QSqlQuery query(db);
 
     query.prepare(R"(
-		SELECT id, name, link, icon, app, open_count, last_used_at FROM links
+		SELECT id, name, link, icon, app, open_count, last_used_at 
+		FROM links
 	)");
 
     if (!query.exec()) {
       qDebug() << "query.exec() failed";
+      return links;
     }
 
     while (query.next()) {
+      auto id = query.value(0).toUInt();
+      auto name = query.value(1).toString();
+      auto link = query.value(2).toString();
+      auto icon = query.value(3).toString();
+      auto app = query.value(4).toString();
+      auto openCount = query.value(5).toUInt();
       auto lastUsedAtField = query.value(6);
+
       std::optional<QDateTime> lastUsedAt;
 
-      if (!lastUsedAtField.isNull())
-        QDateTime::fromSecsSinceEpoch(lastUsedAtField.toULongLong());
+      if (!lastUsedAtField.isNull()) {
+        lastUsedAt =
+            QDateTime::fromSecsSinceEpoch(lastUsedAtField.toULongLong());
+      }
 
-      Quicklink newLink{query.value(0).toUInt(),
-                        query.value(1).toString(),
-                        query.value(2).toString(),
-                        query.value(3).toString(),
-                        query.value(4).toString(),
-                        query.value(5).toUInt(),
-                        lastUsedAt};
-      links.push_back(newLink);
+      links.push_back(std::make_shared<Quicklink>(
+          Quicklink{id, name, link, icon, app, openCount, lastUsedAt}));
     }
 
     return links;
   }
 
-  Quicklink *findById(uint id) {
-    for (auto &link : links) {
-      if (link.id == id)
-        return &link;
-    }
-
-    return nullptr;
-  }
-
-  void incrementOpenCount(uint id) {
-    auto link = findById(id);
+  bool incrementOpenCount(uint id) {
+    auto link = findMutableById(id);
 
     if (!link)
-      return;
+      return false;
 
     QSqlQuery query(db);
 
@@ -176,19 +182,24 @@ public:
 
     query.addBindValue(id);
 
+    if (!query.exec()) {
+      qDebug() << "query.exec() failed: " << query.lastError().text();
+      return false;
+    }
+
     link->openCount += 1;
     link->lastUsedAt = QDateTime::currentDateTime();
 
-    if (!query.exec()) {
-      qDebug() << "query.exec() failed: " << query.lastError().text();
-    }
+    return true;
   }
 
-  void addLink(const AddQuicklinkPayload &payload) {
+  void insertLink(const AddQuicklinkPayload &payload) {
     QSqlQuery query(db);
 
-    query.prepare(
-        "INSERT INTO links (name, icon, link, app) VALUES (?, ?, ?, ?)");
+    query.prepare(R"(
+		INSERT INTO links (name, icon, link, app) 
+		VALUES (?, ?, ?, ?)
+	)");
     query.addBindValue(payload.name);
     query.addBindValue(payload.icon);
     query.addBindValue(payload.link);
@@ -198,10 +209,14 @@ public:
 
     if (!query.exec()) {
       qDebug() << "query.exec() failed: " << query.lastError().text();
+      return;
     }
 
-    links.push_back({query.lastInsertId().toUInt(), payload.name, payload.link,
-                     payload.icon, payload.app, 0, std::nullopt});
+    auto link = std::make_shared<Quicklink>(
+        Quicklink{query.lastInsertId().toUInt(), payload.name, payload.link,
+                  payload.icon, payload.app, 0, std::nullopt});
+
+    links.push_back(link);
   }
 
   QuicklistDatabase(const QString &path)
@@ -237,19 +252,6 @@ public:
       return;
     }
 
-    if (isFirstInit) {
-      addLink({.name = "google",
-               .icon = ":/assets/icons/google.svg",
-               .link = "https://www.google.com/search?q={query}",
-               .app = ""});
-      addLink({.name = "duckduckgo",
-               .icon = ":/assets/icons/duckduckgo.svg",
-               .link = "https://www.duckduckgo.com/search?q={query}",
-               .app = ""});
-
-      qDebug() << "Done initializing";
-    } else {
-      links = loadAll();
-    }
+    links = reloadAll();
   }
 };

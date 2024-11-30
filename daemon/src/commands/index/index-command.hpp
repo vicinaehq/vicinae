@@ -12,7 +12,6 @@ struct CodeToColor : public IActionnable {
 };
 
 class CommandDatabase;
-class XdgDesktopDatabase;
 class QuicklistDatabase;
 class Command;
 
@@ -20,7 +19,6 @@ class IndexCommand : public CommandObject {
   Q_OBJECT;
 
   QString query;
-  std::shared_ptr<XdgDesktopDatabase> xdg;
   CommandDatabase *cmdDb;
   QList<Command *> usableWithCommands;
 

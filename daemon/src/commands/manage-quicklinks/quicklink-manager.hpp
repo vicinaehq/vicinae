@@ -14,6 +14,17 @@
 #include <qwidget.h>
 #include <unistd.h>
 
+class OpenLinkAction : public IAction {
+
+public:
+  const Quicklink &link;
+
+  QString name() const override { return "Open link"; }
+  QIcon icon() const override { return QIcon::fromTheme("edit"); }
+
+  OpenLinkAction(const Quicklink &link) : link(link) {}
+};
+
 class EditQuicklinkAction : public IAction {
 public:
   QString name() const override { return "Edit link"; }
@@ -156,10 +167,6 @@ public:
     quicklinkDb = service<QuicklistDatabase>();
     appDb = service<AppDatabase>();
 
-    for (const auto &link : quicklinkDb->links) {
-      qDebug() << link.name;
-    }
-
     forwardInputEvents(list);
 
     details = new QuicklinkDetailsWidget(appDb);
@@ -178,17 +185,17 @@ public:
   void onSearchChanged(const QString &query) override {
     list->clear();
 
-    QList<Quicklink *> links;
+    QList<const Quicklink *> links;
 
-    for (auto &link : quicklinkDb->links) {
-      if (link.name.toLower().contains(query.toLower()))
-        links.push_back(&link);
+    for (auto &link : quicklinkDb->list()) {
+      if (link->name.toLower().contains(query.toLower()))
+        links.push_back(link.get());
     }
 
     list->addSection(QString("%1 quicklinks").arg(links.size()));
 
     for (const auto link : links) {
-      list->addWidgetItem(link,
+      list->addWidgetItem(new Quicklink(*link),
                           new GenericListItem(QIcon::fromTheme(link->iconName),
                                               link->name, "", ""));
     }
@@ -203,7 +210,7 @@ public:
 
   void onActionActivated(std::shared_ptr<IAction> action) override {
     if (auto ac = std::dynamic_pointer_cast<DeleteQuicklinkAction>(action)) {
-      if (quicklinkDb->remove(ac->link.id)) {
+      if (quicklinkDb->removeOne(ac->link.id)) {
         setToast("Quicklink successfully deleted", ToastPriority::Success);
         onSearchChanged(query());
       } else {
@@ -224,7 +231,8 @@ public slots:
       destroyCompletion();
     }
 
-    setActions({std::make_shared<DeleteQuicklinkAction>(link)});
+    setActions({std::make_shared<OpenLinkAction>(link),
+                std::make_shared<DeleteQuicklinkAction>(link)});
 
     details->load(link);
     split->expand();

@@ -126,6 +126,7 @@ public:
 class Command;
 class CommandObject;
 class AppDatabase;
+class QuicklistDatabase;
 
 template <class T> using Service = std::shared_ptr<T>;
 
@@ -137,7 +138,6 @@ public:
   std::stack<QString> queryStack;
 
   std::shared_ptr<QuicklistDatabase> quicklinkDatabase;
-  std::shared_ptr<XdgDesktopDatabase> xdd;
   std::shared_ptr<CalculatorDatabase> calculatorDatabase;
   Service<AppDatabase> appDb;
 

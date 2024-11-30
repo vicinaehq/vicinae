@@ -60,10 +60,10 @@ public:
   }
 
   void onActionActivated(std::shared_ptr<IAction> action) override {
-    linkDb->addLink({.name = nameField->text(),
-                     .icon = appField->selected->icon().name(),
-                     .link = urlField->text(),
-                     .app = appField->selected->id});
+    linkDb->insertLink({.name = nameField->text(),
+                        .icon = appField->selected->icon().name(),
+                        .link = urlField->text(),
+                        .app = appField->selected->id});
     popCurrent();
   }
 
