@@ -42,7 +42,6 @@ qt_add_executable(${TARGET}
 	src/exchange-rate-service.hpp
 	src/omnicast.hpp
 
-	src/lib/tinyexpr.cpp
 	./resources.qrc
 
 	#src/render.cpp

@@ -1,11 +1,11 @@
 #pragma once
 #include "calculator-database.hpp"
+#include "clipboard-service.hpp"
 #include "common.hpp"
 #include "quicklist-database.hpp"
 #include "ui/action_popover.hpp"
 #include "ui/status_bar.hpp"
 #include "ui/top_bar.hpp"
-#include "xdg-desktop-database.hpp"
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include <QLabel>
@@ -127,6 +127,7 @@ class Command;
 class CommandObject;
 class AppDatabase;
 class QuicklistDatabase;
+class ICommandFactory;
 
 template <class T> using Service = std::shared_ptr<T>;
 
@@ -139,6 +140,8 @@ public:
 
   std::shared_ptr<QuicklistDatabase> quicklinkDatabase;
   std::shared_ptr<CalculatorDatabase> calculatorDatabase;
+  std::shared_ptr<ClipboardService> clipboardService;
+
   Service<AppDatabase> appDb;
 
   template <typename T> std::shared_ptr<T> service() const;

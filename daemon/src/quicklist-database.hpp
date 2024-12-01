@@ -1,6 +1,5 @@
 #pragma once
-#include "app-database.hpp"
-#include "common.hpp"
+#include <QLineEdit>
 #include <QSqlError>
 #include <QString>
 #include <memory>
@@ -12,7 +11,7 @@
 #include <qsqldatabase.h>
 #include <qsqlquery.h>
 
-struct Quicklink : public IActionnable {
+struct Quicklink {
   uint id;
   QString app;
   uint openCount;
@@ -22,29 +21,6 @@ struct Quicklink : public IActionnable {
   QString name;
   QList<QString> placeholders;
   std::optional<QDateTime> lastUsedAt;
-
-  struct Open : public IAction {
-    const Quicklink &ref;
-
-    Open(const Quicklink &ref) : ref(ref) {}
-
-    QString name() const override { return "Open link"; }
-
-    bool open(std::shared_ptr<DesktopExecutable> app,
-              const QList<QString> args) const {
-      QString url = QString(ref.url);
-
-      for (size_t i = 0; i < args.size(); ++i) {
-        url = url.arg(args.at(i));
-      }
-
-      return app->launch({url});
-    }
-  };
-
-  ActionList generateActions() const override {
-    return {std::make_shared<Open>(*this)};
-  }
 
   Quicklink(uint id, const QString &name, const QString &url,
             const QString &icon, const QString &app, uint openCount,

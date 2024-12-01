@@ -9,6 +9,7 @@
 #include <qicon.h>
 #include <qlist.h>
 #include <qlogging.h>
+#include <qmimetype.h>
 #include <qprocess.h>
 #include <qset.h>
 #include <qsettings.h>
@@ -204,6 +205,7 @@ public:
 class DesktopAction;
 
 struct DesktopEntry : public DesktopExecutable {
+  QString path;
   QString icon_;
 
   bool terminal;
@@ -260,18 +262,6 @@ public:
   QHash<QString, QSet<QString>> appToMimes;
   QHash<QString, QString> mimeToDefaultApp;
 
-public:
-  QList<std::shared_ptr<DesktopEntry>> apps;
-
-  // entry: firefox-esr.desktop
-  // action: firefox-esr.desktop.open-in-private-window
-  std::shared_ptr<DesktopExecutable> getById(const QString &id) {
-    if (auto it = appMap.find(id); it != appMap.end())
-      return *it;
-
-    return nullptr;
-  }
-
   bool addDesktopFile(const QString &path) {
     QFileInfo info(path);
     QSettings ini(info.filePath(), QSettings::IniFormat);
@@ -289,6 +279,8 @@ public:
 
         entry = std::make_shared<DesktopEntry>();
         ini.beginGroup(group);
+        entry->path = path;
+        entry->path = path;
         entry->id = info.fileName();
         entry->name = ini.value("Name").toString();
         entry->exec = ini.value("Exec").toString();
@@ -331,6 +323,37 @@ public:
     }
 
     return true;
+  }
+
+public:
+  QList<std::shared_ptr<DesktopEntry>> apps;
+
+  // entry: firefox-esr.desktop
+  // action: firefox-esr.desktop.open-in-private-window
+  std::shared_ptr<DesktopExecutable> getById(const QString &id) {
+    if (auto it = appMap.find(id); it != appMap.end())
+      return *it;
+
+    return nullptr;
+  }
+
+  std::shared_ptr<DesktopExecutable> findBestOpenerForMime(QMimeType mime) {
+    if (auto app = defaultForMime(mime.name()))
+      return app;
+
+    for (const auto &mime : mime.parentMimeTypes()) {
+      if (auto app = defaultForMime(mime))
+        return app;
+    }
+
+    if (auto it = mimeToApps.find(mime.name()); it != mimeToApps.end()) {
+      for (const auto id : *it) {
+        if (auto app = getById(id))
+          return app;
+      }
+    }
+
+    return nullptr;
   }
 
   std::shared_ptr<DesktopExecutable> defaultBrowser() {

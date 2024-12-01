@@ -1,5 +1,4 @@
 #pragma once
-#include "common.hpp"
 #include "ui/toast.hpp"
 #include <QBoxLayout>
 #include <QLabel>
@@ -13,6 +12,8 @@
 #include <qtimer.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
+
+class IAction;
 
 class StatusBar : public QWidget {
   QWidget *leftWidget;

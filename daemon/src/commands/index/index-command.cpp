@@ -1,14 +1,12 @@
 #include "commands/index/index-command.hpp"
+#include "actions.hpp"
 #include "app-database.hpp"
-#include "calculator-database.hpp"
 #include "calculator.hpp"
 #include "command-database.hpp"
-#include "commands/calculator-history/calculator-history.hpp"
+#include "command-object.hpp"
 #include "omnicast.hpp"
 #include "quicklist-database.hpp"
 #include "ui/color_circle.hpp"
-#include "ui/toast.hpp"
-#include "xdg-desktop-database.hpp"
 #include <cmath>
 #include <memory>
 #include <qapplication.h>
@@ -32,35 +30,20 @@ class AppActionnable : public IActionnable {
 
 public:
   std::shared_ptr<DesktopEntry> desktopFile;
+  Service<AppDatabase> appDb;
 
-  AppActionnable(std::shared_ptr<DesktopEntry> desktopFile)
-      : desktopFile(desktopFile) {}
+  AppActionnable(Service<AppDatabase> appDb,
+                 std::shared_ptr<DesktopEntry> desktopFile)
+      : appDb(appDb), desktopFile(desktopFile) {}
 
   using Ref = const AppActionnable &;
-
-  struct Open : public IAction {
-    Ref ref;
-
-    QString name() const override { return ref.desktopFile->name; }
-    QIcon icon() const override { return ref.desktopFile->icon(); }
-
-    Open(Ref ref) : ref(ref) {}
-  };
-
-  struct OpenDesktopFile : public IAction {
-    Ref ref;
-
-    QString name() const override { return "Open desktop file"; }
-    QIcon icon() const override { return ref.desktopFile->icon(); }
-
-    OpenDesktopFile(Ref ref) : ref(ref) {}
-  };
 
   struct OpenAction : public IAction {
     std::shared_ptr<DesktopExecutable> action;
 
     QString name() const override { return action->name; }
     QIcon icon() const override { return action->icon(); }
+    void exec(ExecutionContext ctx) override { action->launch(); }
 
     OpenAction(std::shared_ptr<DesktopExecutable> action) : action(action) {}
   };
@@ -74,7 +57,8 @@ public:
       list.push_back(std::make_shared<OpenAction>(action));
     }
 
-    list.push_back(std::make_shared<OpenDesktopFile>(*this));
+    list.push_back(std::make_shared<OpenInDefaultAppAction>(
+        appDb, desktopFile->path, "Open Desktop File"));
 
     return list;
   }
@@ -84,6 +68,7 @@ IndexCommand::IndexCommand(AppWindow *app)
     : CommandObject(app), quicklinkDb(service<QuicklistDatabase>()),
       list(new ManagedList()) {
   cmdDb = new CommandDatabase();
+  appDb = service<AppDatabase>();
 
   for (const auto &cmd : cmdDb->commands) {
     if (!cmd.usableWith)
@@ -140,58 +125,15 @@ void IndexCommand::itemActivated(const IActionnable &item) {
 }
 
 void IndexCommand::onActionActivated(std::shared_ptr<IAction> action) {
-  if (auto openApp =
-          std::dynamic_pointer_cast<AppActionnable::OpenAction>(action)) {
-    qDebug() << "opening app " << openApp->name();
-    if (!openApp->action->launch()) {
-      setToast("Failed to launch app", ToastPriority::Danger);
-    }
-
-    clearSearch();
-    hideWindow();
-    return;
-  }
-
-  if (auto execCmd =
-          std::dynamic_pointer_cast<Command::ExecuteCommand>(action)) {
-    pushCommand(execCmd->ref.widgetFactory);
-    return;
-  }
-
-  if (auto ac = std::dynamic_pointer_cast<Calculator::CopyAction>(action)) {
-    CalculatorDatabase::get().saveComputation(ac->ref.expression,
-                                              ac->ref.result);
-    setToast("Copied in clipboard");
-    return;
-  }
-
-  if (auto ac = std::dynamic_pointer_cast<Calculator::OpenCalculatorHistory>(
-          action)) {
-    CalculatorDatabase::get().saveComputation(ac->ref.expression,
-                                              ac->ref.result);
-    pushCommand(std::make_unique<CalculatorHistoryCommand::Factory>(
-        ac->ref.expression));
-    return;
-  }
-
-  if (auto openLink = std::dynamic_pointer_cast<Quicklink::Open>(action)) {
-    auto appDb = service<AppDatabase>();
-
-    if (auto app = appDb->getById(openLink->ref.app)) {
-      openLink->open(app, completions());
-      quicklinkDb->incrementOpenCount(openLink->ref.id);
-    } else {
-      setToast("No app to open link", ToastPriority::Danger);
-    }
-  }
-
-  clearSearch();
   qDebug() << "activated action:" << action->name();
+  action->exec(*this);
 }
 
 void IndexCommand::onSearchChanged(const QString &text) {
   query = text;
   list->clear();
+
+  ExecutionContext ctx(*this);
 
   std::string_view query(text.toLatin1().data());
 
@@ -210,7 +152,7 @@ void IndexCommand::onSearchChanged(const QString &text) {
     auto right = new VStack(circle, new Chip(text));
     auto widget = new TransformResult(left, right);
 
-    list->addWidgetItem(new CodeToColor(text), widget);
+    list->addWidgetItem(new CodeToColor(ctx, text), widget);
   }
 
   if (text.size() > 1) {
@@ -233,12 +175,12 @@ void IndexCommand::onSearchChanged(const QString &text) {
           new Chip(value.unit ? QString(value.unit->displayName.data())
                               : "Answer"));
 
-      list->addWidgetItem(new Calculator(text, answerLabel->text()),
-                          new TransformResult(left, right));
+      list->addWidgetItem(
+          new ActionnableCalculator(ctx, text, answerLabel->text()),
+          new TransformResult(left, right));
     }
   }
 
-  auto appDb = service<AppDatabase>();
   QList<std::shared_ptr<DesktopEntry>> apps;
 
   for (const auto app : appDb->apps) {
@@ -268,7 +210,7 @@ void IndexCommand::onSearchChanged(const QString &text) {
                                         quicklink->displayName, quicklink->url,
                                         "Quicklink");
 
-      list->addWidgetItem(new Quicklink(*quicklink), widget);
+      list->addWidgetItem(new ActionnableQuicklink(ctx, *quicklink), widget);
     }
   }
 
@@ -277,25 +219,18 @@ void IndexCommand::onSearchChanged(const QString &text) {
     auto widget =
         new GenericListItem(app->icon(), app->name, "", "Application");
 
-    list->addWidgetItem(new AppActionnable(app), widget);
+    list->addWidgetItem(new AppActionnable(appDb, app), widget);
   }
 
   for (const auto &cmd : matchingCommands) {
     auto widget = new GenericListItem(QIcon::fromTheme(cmd.iconName), cmd.name,
                                       cmd.category, "Command");
 
-    list->addWidgetItem(new Command(cmd), widget);
+    list->addWidgetItem(new ActionnableCommand(ctx, cmd), widget);
   }
 
   if (usableWithCommands.size() > 0) {
     list->addSection(QString("Use \"%1\" with...").arg(text));
-  }
-
-  for (const auto cmd : usableWithCommands) {
-    auto widget = new GenericListItem(QIcon::fromTheme(cmd->iconName),
-                                      cmd->name, cmd->category, "Command");
-
-    list->addWidgetItem(new Command(*cmd), widget);
   }
 
   if (list->count() == 0)

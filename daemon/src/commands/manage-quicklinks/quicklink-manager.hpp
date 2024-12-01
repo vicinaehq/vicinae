@@ -1,10 +1,10 @@
+#include "actions.hpp"
 #include "app-database.hpp"
 #include "command-object.hpp"
 #include "common.hpp"
 #include "omnicast.hpp"
 #include "quicklist-database.hpp"
 #include "ui/managed_list.hpp"
-#include "ui/toast.hpp"
 #include <memory>
 #include <qboxlayout.h>
 #include <qframe.h>
@@ -13,39 +13,6 @@
 #include <qnamespace.h>
 #include <qwidget.h>
 #include <unistd.h>
-
-class OpenLinkAction : public IAction {
-
-public:
-  const Quicklink &link;
-
-  QString name() const override { return "Open link"; }
-  QIcon icon() const override { return QIcon::fromTheme("edit"); }
-
-  OpenLinkAction(const Quicklink &link) : link(link) {}
-};
-
-class EditQuicklinkAction : public IAction {
-public:
-  QString name() const override { return "Edit link"; }
-  QIcon icon() const override { return QIcon::fromTheme("edit"); }
-};
-
-class DuplicateLinkAction : public IAction {
-public:
-  QString name() const override { return "Duplicate link"; }
-  QIcon icon() const override { return QIcon::fromTheme("edit"); }
-};
-
-class DeleteQuicklinkAction : public IAction {
-public:
-  const Quicklink &link;
-
-  QString name() const override { return "Delete link"; }
-  QIcon icon() const override { return QIcon::fromTheme("node-delete"); }
-
-  DeleteQuicklinkAction(const Quicklink &link) : link(link) {}
-};
 
 class QuickLinkManagerCommand : public CommandObject {
   Service<QuicklistDatabase> quicklinkDb;
@@ -195,7 +162,7 @@ public:
     list->addSection(QString("%1 quicklinks").arg(links.size()));
 
     for (const auto link : links) {
-      list->addWidgetItem(new Quicklink(*link),
+      list->addWidgetItem(new ActionnableQuicklink(*this, *link),
                           new GenericListItem(QIcon::fromTheme(link->iconName),
                                               link->name, "", ""));
     }
@@ -209,32 +176,23 @@ public:
   }
 
   void onActionActivated(std::shared_ptr<IAction> action) override {
-    if (auto ac = std::dynamic_pointer_cast<DeleteQuicklinkAction>(action)) {
-      if (quicklinkDb->removeOne(ac->link.id)) {
-        setToast("Quicklink successfully deleted", ToastPriority::Success);
-        onSearchChanged(query());
-      } else {
-        setToast("Failed to delete quicklink", ToastPriority::Danger);
-      }
-    }
+    action->exec(*this);
   }
 
 public slots:
   void itemSelected(const IActionnable &item) {
-    const Quicklink &link = static_cast<const Quicklink &>(item);
+    auto action = static_cast<const ActionnableQuicklink &>(item);
 
-    qDebug() << "item selected " << link.name;
+    qDebug() << "item selected " << action.link.name;
 
-    if (!link.placeholders.isEmpty()) {
-      createCompletion(link.placeholders, link.iconName);
+    if (!action.link.placeholders.isEmpty()) {
+      createCompletion(action.link.placeholders, action.link.iconName);
     } else {
       destroyCompletion();
     }
 
-    setActions({std::make_shared<OpenLinkAction>(link),
-                std::make_shared<DeleteQuicklinkAction>(link)});
-
-    details->load(link);
+    setActions(item.generateActions());
+    details->load(action.link);
     split->expand();
   }
 

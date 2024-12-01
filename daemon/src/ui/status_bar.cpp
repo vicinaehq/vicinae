@@ -1,4 +1,5 @@
 #include "ui/status_bar.hpp"
+#include "command-object.hpp"
 #include <qlogging.h>
 #include <qnamespace.h>
 #include <qtimer.h>

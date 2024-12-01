@@ -1,5 +1,4 @@
 #pragma once
-#include "common.hpp"
 #include <qlabel.h>
 #include <qlineedit.h>
 #include <qlist.h>
@@ -8,6 +7,7 @@
 #include <qwidget.h>
 
 class SearchResult;
+class IAction;
 
 typedef std::function<void(void)> ActionHandler;
 

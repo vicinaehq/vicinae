@@ -1,5 +1,5 @@
 #include "action_popover.hpp"
-#include "common.hpp"
+#include "command-object.hpp"
 
 #include <cctype>
 #include <qapplication.h>

@@ -1,6 +1,6 @@
 #pragma once
+#include "app-database.hpp"
 #include "command-object.hpp"
-#include "omnicast.hpp"
 #include "ui/managed_list.hpp"
 
 struct CodeToColor : public IActionnable {
@@ -8,7 +8,7 @@ struct CodeToColor : public IActionnable {
 
   ActionList generateActions() const override { return {}; }
 
-  CodeToColor(const QString &input) : input(input) {}
+  CodeToColor(ExecutionContext ctx, const QString &input) : input(input) {}
 };
 
 class CommandDatabase;
@@ -18,44 +18,13 @@ class Command;
 class IndexCommand : public CommandObject {
   Q_OBJECT;
 
+  Service<AppDatabase> appDb;
   QString query;
   CommandDatabase *cmdDb;
   QList<Command *> usableWithCommands;
 
   std::shared_ptr<QuicklistDatabase> quicklinkDb;
-
   ManagedList *list = nullptr;
-
-  struct Calculator : public IActionnable {
-    QString expression;
-    QString result;
-
-    struct CopyAction : IAction {
-      const Calculator &ref;
-
-      CopyAction(const Calculator &r) : ref(r) {}
-
-      QString name() const override { return "Copy result"; }
-      QIcon icon() const override { return QIcon::fromTheme("pcbcalculator"); }
-    };
-
-    struct OpenCalculatorHistory : IAction {
-      const Calculator &ref;
-
-      OpenCalculatorHistory(const Calculator &r) : ref(r) {}
-
-      QIcon icon() const override { return QIcon::fromTheme("pcbcalculator"); }
-      QString name() const override { return "Open calculator historty"; }
-    };
-
-    ActionList generateActions() const override {
-      return {std::make_shared<CopyAction>(*this),
-              std::make_shared<OpenCalculatorHistory>(*this)};
-    }
-
-    Calculator(const QString &expression, const QString &result)
-        : expression(expression), result(result) {}
-  };
 
 private:
   void inputTextChanged(const QString &);

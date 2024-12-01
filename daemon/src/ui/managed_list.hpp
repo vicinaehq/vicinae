@@ -1,5 +1,5 @@
 #pragma once
-#include "common.hpp"
+#include "command-object.hpp"
 #include <QListWidget>
 
 class ManagedList : public QListWidget {

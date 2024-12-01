@@ -7,7 +7,9 @@
 #include <qtmetamacros.h>
 #include <qwidget.h>
 
+class ExecutionContext;
 class IAction;
+class ICommandFactory;
 
 class CommandObject : public QObject {
   Q_OBJECT
@@ -26,8 +28,6 @@ protected:
   void forwardInputEvents(QWidget *widget);
   void setActions(const QList<std::shared_ptr<IAction>> &actions);
 
-  QList<QString> parseCommandLine();
-
   // t Unless you are dynamically creating objects that will be forwarded input
   //  events you don't need to call this.
 
@@ -36,6 +36,7 @@ protected:
   void hideSearch();
   void setSearch(const QString &s);
   void hideWindow() { app()->hide(); }
+
   void popCurrent() { app()->popCommandObject(); }
   void pushCommand(std::shared_ptr<ICommandFactory> fac) {
     app()->pushCommandObject(fac);
@@ -46,8 +47,7 @@ protected:
   }
 
 public:
-  friend ActionExecutionContext;
-
+  friend ExecutionContext;
   QWidget *widget;
 
   CommandObject(AppWindow *app);
@@ -67,4 +67,55 @@ public slots:
 
   virtual QString name();
   virtual QIcon icon();
+};
+
+class ExecutionContext {
+  CommandObject &obj;
+
+public:
+  ExecutionContext(CommandObject &obj) : obj(obj) {}
+
+  void setToast(const QString &msg, ToastPriority priority) {
+    obj.setToast(msg, priority);
+  }
+
+  QList<QString> completions() { return obj.completions(); }
+
+  QString query() const { return obj.query(); }
+
+  void setSearch(const QString &s) { obj.setSearch(s); }
+
+  void hideWindow() { obj.hideWindow(); }
+
+  void reloadSearch() { obj.onSearchChanged(obj.query()); }
+
+  void pushCommand(std::shared_ptr<ICommandFactory> fac) {
+    return obj.pushCommand(fac);
+  }
+
+  void popCurrent() { return obj.popCurrent(); }
+
+  template <typename T> Service<T> service() { return obj.service<T>(); }
+};
+
+class IAction {
+
+public:
+  virtual QString name() const = 0;
+  virtual QIcon icon() const {
+    return QIcon::fromTheme("application-x-executable");
+  }
+
+  virtual void exec(ExecutionContext ctx) = 0;
+
+  IAction() {}
+};
+
+class IActionnable {
+protected:
+  using ActionList = QList<std::shared_ptr<IAction>>;
+
+public:
+  IActionnable() {}
+  virtual ActionList generateActions() const = 0;
 };

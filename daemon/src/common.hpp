@@ -3,7 +3,6 @@
 #include <QString>
 #include <cmath>
 #include <functional>
-#include <memory>
 #include <optional>
 #include <qboxlayout.h>
 #include <qframe.h>
@@ -12,26 +11,12 @@
 #include <qnamespace.h>
 #include <qprocess.h>
 #include <qwidget.h>
+#include <qwindowdefs.h>
 
 template <class T> using OptionalRef = std::optional<std::reference_wrapper<T>>;
 
-class ActionExecutionContext;
-
-class IAction {
-public:
-  virtual QString name() const = 0;
-  virtual QIcon icon() const {
-    return QIcon::fromTheme("application-x-executable");
-  }
-};
-
-class IActionnable {
-protected:
-  using ActionList = QList<std::shared_ptr<IAction>>;
-
-public:
-  virtual ActionList generateActions() const = 0;
-};
+class CommandObject;
+class ExecutionContext;
 
 static void xdgOpen(const QString &url) {
   QProcess process;

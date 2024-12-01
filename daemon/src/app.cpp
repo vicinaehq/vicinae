@@ -8,7 +8,6 @@
 #include "quicklink-seeder.hpp"
 #include "quicklist-database.hpp"
 #include "ui/action_popover.hpp"
-#include "xdg-desktop-database.hpp"
 #include <QApplication>
 #include <QLabel>
 #include <QMainWindow>
@@ -158,11 +157,14 @@ AppWindow::AppWindow(QWidget *parent)
   calculatorDatabase = std::make_shared<CalculatorDatabase>(
       Config::dirPath() + QDir::separator() + "calculator.db");
   appDb = std::make_shared<AppDatabase>();
+  clipboardService = std::make_shared<ClipboardService>();
 
-  auto seeder = std::make_unique<QuickLinkSeeder>(appDb, quicklinkDatabase);
+  {
+    auto seeder = std::make_unique<QuickLinkSeeder>(appDb, quicklinkDatabase);
 
-  if (quicklinkDatabase->list().isEmpty()) {
-    seeder->seed();
+    if (quicklinkDatabase->list().isEmpty()) {
+      seeder->seed();
+    }
   }
 
   layout = new QVBoxLayout();
@@ -213,4 +215,9 @@ AppWindow::service<CalculatorDatabase>() const {
 template <>
 std::shared_ptr<AppDatabase> AppWindow::service<AppDatabase>() const {
   return appDb;
+}
+
+template <>
+std::shared_ptr<ClipboardService> AppWindow::service<ClipboardService>() const {
+  return clipboardService;
 }

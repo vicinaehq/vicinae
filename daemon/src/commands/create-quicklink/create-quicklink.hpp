@@ -17,6 +17,7 @@ class Submission : public IAction {
 public:
   QString name() const override { return "Create link"; }
   QIcon icon() const override { return QIcon::fromTheme("link"); }
+  void exec(ExecutionContext ctx) override {}
 };
 
 class CreateQuickLinkCommand : public CommandObject {
