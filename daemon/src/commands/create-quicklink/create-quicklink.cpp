@@ -35,7 +35,7 @@ CreateQuickLinkCommand::CreateQuickLinkCommand(AppWindow *app)
 void CreateQuickLinkCommand::onActionActivated(
     std::shared_ptr<IAction> action) {
   linkDb->insertLink({.name = nameField->text(),
-                      .icon = appField->selected->icon().name(),
+                      .icon = appField->selected->iconName(),
                       .link = urlField->text(),
                       .app = appField->selected->id});
   popCurrent();

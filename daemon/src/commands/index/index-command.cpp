@@ -109,9 +109,11 @@ void IndexCommand::onAttach() {
 void IndexCommand::itemSelected(const IActionnable &item) {
   destroyCompletion();
 
-  if (auto link = dynamic_cast<const Quicklink *>(&item)) {
-    if (!link->placeholders.isEmpty()) {
-      createCompletion(link->placeholders, link->iconName);
+  if (auto action = dynamic_cast<const ActionnableQuicklink *>(&item)) {
+    auto &link = action->link;
+
+    if (!link.placeholders.isEmpty()) {
+      createCompletion(link.placeholders, link.iconName);
     }
   }
 
@@ -201,21 +203,27 @@ void IndexCommand::onSearchChanged(const QString &text) {
     matchingCommands.push_back(cmd);
   }
 
-  if (!apps.empty() || !matchingCommands.empty()) {
-    list->addSection("Results");
-  }
+  QList<std::shared_ptr<Quicklink>> links;
 
   for (const auto &quicklink : quicklinkDb->list()) {
     if (text.size() > 0 &&
         quicklink->name.contains(text, Qt::CaseInsensitive)) {
-      qDebug() << "quicklink matches " << quicklink->displayName;
-
-      auto widget = new GenericListItem(QIcon::fromTheme(quicklink->iconName),
-                                        quicklink->displayName, quicklink->url,
-                                        "Quicklink");
-
-      list->addWidgetItem(new ActionnableQuicklink(ctx, *quicklink), widget);
+      links.push_back(quicklink);
     }
+  }
+
+  if (!apps.empty() || !matchingCommands.empty() || !links.empty()) {
+    list->addSection("Results");
+  }
+
+  for (const auto &quicklink : links) {
+    qDebug() << "quicklink matches " << quicklink->displayName;
+
+    auto widget = new GenericListItem(QIcon::fromTheme(quicklink->iconName),
+                                      quicklink->displayName, quicklink->url,
+                                      "Quicklink");
+
+    list->addWidgetItem(new ActionnableQuicklink(ctx, *quicklink), widget);
   }
 
   for (size_t i = 0; i != apps.size(); ++i) {

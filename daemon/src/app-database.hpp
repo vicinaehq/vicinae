@@ -151,6 +151,7 @@ public:
   virtual bool displayable() const = 0;
   virtual bool isTerminalApp() const = 0;
   virtual const QString &fullyQualifiedName() const { return name; }
+  virtual const QString &iconName() const = 0;
 
   DesktopExecutable() {}
 
@@ -223,6 +224,7 @@ struct DesktopEntry : public DesktopExecutable {
   QList<std::shared_ptr<DesktopAction>> actions;
 
   bool isTerminalApp() const override { return terminal; }
+  const QString &iconName() const override { return icon_; }
   QIcon icon() const override { return QIcon::fromTheme(icon_); }
   bool displayable() const override { return !hidden && !noDisplay; };
 };
@@ -243,6 +245,9 @@ struct DesktopAction : public DesktopExecutable {
         parent_(parent), icon_(ini.value("Icon").toString()),
         fqn_(parent->name + ": " + name) {}
 
+  const QString &iconName() const override {
+    return icon_.isEmpty() ? parent_->icon_ : icon_;
+  }
   QIcon icon() const override {
     auto icon = QIcon::fromTheme(icon_);
 
