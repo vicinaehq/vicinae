@@ -93,9 +93,14 @@ public:
       }
 
       QString url = link.url;
+      auto completions = ctx.completions();
 
       for (const auto &arg : ctx.completions()) {
         url = url.arg(arg);
+      }
+
+      if (completions.isEmpty() && link.placeholders.size() == 1) {
+        url = url.arg(ctx.query());
       }
 
       app->launch({url});

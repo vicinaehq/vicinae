@@ -117,14 +117,22 @@ bool AppWindow::eventFilter(QObject *obj, QEvent *event) {
     auto keyEvent = static_cast<QKeyEvent *>(event);
     auto key = keyEvent->key();
 
-    if (commandStack.size() > 1) {
-      bool isEsc = keyEvent->key() == Qt::Key_Escape;
+    bool isEsc = keyEvent->key() == Qt::Key_Escape;
 
+    if (commandStack.size() > 1) {
       if (isEsc || (keyEvent->key() == Qt::Key_Backspace &&
                     topBar->input->text().isEmpty())) {
         popCommandObject();
         return true;
       }
+    } else if (isEsc) {
+      qDebug() << "esc";
+      if (topBar->input->text().isEmpty()) {
+        hide();
+      } else {
+        topBar->input->clear();
+      }
+      return true;
     }
 
     if (keyEvent->modifiers().testFlag(Qt::ControlModifier)) {

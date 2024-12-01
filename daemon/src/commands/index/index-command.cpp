@@ -68,6 +68,17 @@ public:
   }
 };
 
+class UseWithQuicklinkActionnable : public IActionnable {
+  const Quicklink &link;
+
+public:
+  UseWithQuicklinkActionnable(const Quicklink &link) : link(link) {}
+
+  ActionList generateActions() const override {
+    return {std::make_shared<ActionnableQuicklink::OpenQuicklinkAction>(link)};
+  }
+};
+
 IndexCommand::IndexCommand(AppWindow *app)
     : CommandObject(app), quicklinkDb(service<QuicklistDatabase>()),
       list(new ManagedList()) {
@@ -204,12 +215,16 @@ void IndexCommand::onSearchChanged(const QString &text) {
   }
 
   QList<std::shared_ptr<Quicklink>> links;
+  QList<std::shared_ptr<Quicklink>> useWithQuicklinks;
 
   for (const auto &quicklink : quicklinkDb->list()) {
     if (text.size() > 0 &&
         quicklink->name.contains(text, Qt::CaseInsensitive)) {
       links.push_back(quicklink);
     }
+
+    if (quicklink->placeholders.size() == 1)
+      useWithQuicklinks.push_back(quicklink);
   }
 
   if (!apps.empty() || !matchingCommands.empty() || !links.empty()) {
@@ -241,8 +256,16 @@ void IndexCommand::onSearchChanged(const QString &text) {
     list->addWidgetItem(new ActionnableCommand(ctx, cmd), widget);
   }
 
-  if (usableWithCommands.size() > 0) {
+  if (!useWithQuicklinks.isEmpty()) {
     list->addSection(QString("Use \"%1\" with...").arg(text));
+  }
+
+  for (const auto &link : useWithQuicklinks) {
+    auto widget =
+        new GenericListItem(QIcon::fromTheme(link->iconName), link->displayName,
+                            link->url, "Quicklink");
+
+    list->addWidgetItem(new UseWithQuicklinkActionnable(*link), widget);
   }
 
   if (list->count() == 0)

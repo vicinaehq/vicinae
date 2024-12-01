@@ -4,9 +4,12 @@
 #include <QSurfaceFormat>
 #include <QtSql/QtSql>
 #include <QtSql/qsqldatabase.h>
+#include <arpa/inet.h>
 #include <jsoncpp/json/reader.h>
 #include <qfontdatabase.h>
 #include <qlist.h>
+#include <qlocalserver.h>
+#include <qlocalsocket.h>
 #include <qlogging.h>
 #include <qobject.h>
 
@@ -137,6 +140,37 @@ QLineEdit.form-input:focus {
 
 int main(int argc, char **argv) {
   QApplication qapp(argc, argv);
+  QString socketPath = QDir::temp().absoluteFilePath("spellcastd.sock");
+  QFile socketFile(socketPath);
+
+  if (socketFile.exists()) {
+    QLocalSocket client;
+
+    client.connectToServer(socketPath);
+    if (client.waitForConnected()) {
+      QByteArray packet;
+      quint32 length = 4;
+      QDataStream stream(&packet, QIODevice::WriteOnly);
+
+      stream.setByteOrder(QDataStream::BigEndian);
+      stream << length;
+      stream << "Open";
+      qDebug() << "Opening running instance";
+
+      client.write("open");
+      client.flush();
+      client.waitForDisconnected();
+
+      return 0;
+    }
+
+    qDebug() << "Failed to connect, will attempt to launch app again...";
+  }
+
+  socketFile.remove();
+
+  QLocalServer server;
+
   AppWindow app;
 
   app.show();
@@ -163,6 +197,32 @@ int main(int argc, char **argv) {
                          .arg(colorSelected)
                          .arg(baseText)
                          .arg(statusBackground));
+
+  if (!server.listen(socketPath)) {
+    qDebug() << "Local server could not listen on " << socketPath;
+    return 1;
+  }
+
+  qDebug() << "Server listening on " << socketPath;
+
+  QObject::connect(&server, &QLocalServer::newConnection, [&server, &app]() {
+    QLocalSocket *socket = server.nextPendingConnection();
+
+    socket->waitForReadyRead();
+    auto data = socket->readAll();
+
+    qDebug() << data;
+
+    if (data == "open") {
+      if (app.isHidden())
+        app.show();
+      else
+        app.hide();
+    }
+
+    socket->write("ok");
+    socket->disconnectFromServer();
+  });
 
   return qapp.exec();
 }

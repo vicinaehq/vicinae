@@ -23,6 +23,7 @@
 #include <qlineedit.h>
 #include <qlist.h>
 #include <qlistwidget.h>
+#include <qlocalserver.h>
 #include <qlogging.h>
 #include <qmainwindow.h>
 #include <qmath.h>
@@ -133,6 +134,8 @@ template <class T> using Service = std::shared_ptr<T>;
 
 class AppWindow : public QMainWindow {
   Q_OBJECT
+
+  QLocalServer commandServer;
 
 public:
   std::stack<CommandObject *> commandStack;
