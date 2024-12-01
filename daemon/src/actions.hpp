@@ -1,5 +1,6 @@
 #pragma once
 #include "app-database.hpp"
+#include "calculator-database.hpp"
 #include "command-object.hpp"
 #include "common.hpp"
 #include "quicklist-database.hpp"
@@ -137,19 +138,42 @@ class ActionnableCalculator : public IActionnable {
   QString expression;
   QString result;
 
-  struct OpenInHistoryAction : IAction {
-    QString initText;
+  struct CopyResultAction : public IAction {
+    const ActionnableCalculator &calc;
 
-    QString name() const override { return "Open in history"; }
-    QIcon icon() const override { return QIcon::fromTheme("pcbcalculator"); }
+    QString name() const override { return "Copy result"; }
+    QIcon icon() const override { return QIcon::fromTheme("clipboard"); }
+
     void exec(ExecutionContext ctx) override {
-      /*
-ctx.pushCommand(
-std::make_shared<CalculatorHistoryCommand::Factory>(initText));
-        */
+      auto calcDb = ctx.service<CalculatorDatabase>();
+      auto clip = ctx.service<ClipboardService>();
+
+      clip->copyText(calc.result);
+      calcDb->saveComputation(calc.expression, calc.result);
+      ctx.hideWindow();
+      ctx.setSearch("");
     }
 
-    OpenInHistoryAction(const QString &initText = "") : initText(initText) {}
+    CopyResultAction(const ActionnableCalculator &calc) : calc(calc) {}
+  };
+
+  struct CopyExpressionAction : public IAction {
+    const ActionnableCalculator &calc;
+
+    QString name() const override { return "Copy expression"; }
+    QIcon icon() const override { return QIcon::fromTheme("clipboard"); }
+
+    void exec(ExecutionContext ctx) override {
+      auto calcDb = ctx.service<CalculatorDatabase>();
+      auto clip = ctx.service<ClipboardService>();
+
+      clip->copyText(calc.expression + " = " + calc.result);
+      calcDb->saveComputation(calc.expression, calc.result);
+      ctx.hideWindow();
+      ctx.setSearch("");
+    }
+
+    CopyExpressionAction(const ActionnableCalculator &calc) : calc(calc) {}
   };
 
 public:
@@ -158,10 +182,7 @@ public:
       : expression(expression), result(result) {}
 
   ActionList generateActions() const override {
-
-    return {std::make_shared<CopyTextToClipboardAction>(result, "Copy result"),
-            std::make_shared<CopyTextToClipboardAction>(
-                expression + " = " + result, "Copy expression"),
-            std::make_shared<OpenInHistoryAction>(expression)};
+    return {std::make_shared<CopyResultAction>(*this),
+            std::make_shared<CopyExpressionAction>(*this)};
   }
 };

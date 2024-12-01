@@ -46,7 +46,7 @@ struct XdgCommandLine {
     enum State { START, PERCENT, FIELD_CODE, STRING, WS, QUOTED, ESCAPED };
     State state = START;
 
-    Tokenizer(const QString &s) : s(s) {}
+    Tokenizer(const QString &s) : s(s) { qDebug() << "phrase" << s; }
 
     std::optional<XdgCommandLine::Token> next() {
       size_t i = cursor;
@@ -117,8 +117,12 @@ struct XdgCommandLine {
                                        arg};
 
         case QUOTED:
+          qDebug() << "Quoted";
           if (c == '"') {
             state = START;
+            cursor = i + 1;
+            return XdgCommandLine::Token{XdgCommandLine::TokenType::String,
+                                         arg};
           } else {
             arg += c;
           }
