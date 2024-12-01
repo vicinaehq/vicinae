@@ -142,6 +142,8 @@ public:
 
     connect(list, &ManagedList::itemSelected, this,
             &QuickLinkManagerCommand::itemSelected);
+    connect(list, &ManagedList::itemActivated, this,
+            &QuickLinkManagerCommand::onItemActivated);
   }
 
   void onAttach() override {
@@ -173,6 +175,13 @@ public:
     } else {
       list->selectFirstEligible();
     }
+  }
+
+  void onItemActivated(const IActionnable &activate) {
+    auto actions = activate.generateActions();
+
+    if (!actions.isEmpty())
+      actions.at(0)->exec(*this);
   }
 
   void onActionActivated(std::shared_ptr<IAction> action) override {

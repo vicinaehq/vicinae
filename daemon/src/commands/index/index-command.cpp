@@ -43,7 +43,11 @@ public:
 
     QString name() const override { return action->name; }
     QIcon icon() const override { return action->icon(); }
-    void exec(ExecutionContext ctx) override { action->launch(); }
+    void exec(ExecutionContext ctx) override {
+      action->launch();
+      ctx.hideWindow();
+      ctx.setSearch("");
+    }
 
     OpenAction(std::shared_ptr<DesktopExecutable> action) : action(action) {}
   };

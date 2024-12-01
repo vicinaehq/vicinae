@@ -28,51 +28,10 @@ class CreateQuickLinkCommand : public CommandObject {
   AppTurbobox *appField;
 
 public:
-  CreateQuickLinkCommand(AppWindow *app)
-      : CommandObject(app), linkDb(service<QuicklistDatabase>()),
-        xdd(service<AppDatabase>()) {
-    auto layout = new QVBoxLayout();
+  CreateQuickLinkCommand(AppWindow *app);
 
-    auto w = new QWidget();
-
-    layout->setAlignment(Qt::AlignTop | Qt::AlignCenter);
-
-    nameField = new InputField();
-    urlField = new InputField();
-    appField = new AppTurbobox(xdd);
-
-    nameField->setPlaceholderText("Quicklink name");
-    urlField->setPlaceholderText("https://google.com/search?q={query}");
-
-    layout->addWidget(new FormInput("Name", nameField));
-    layout->addWidget(new FormInput("URL", urlField));
-    layout->addWidget(new FormInput("App", appField));
-
-    w->setLayout(layout);
-    w->setFixedWidth(600);
-
-    if (auto browser = xdd->defaultBrowser()) {
-      appField->setSelected(browser);
-    }
-
-    widget->setLayout(layout);
-
-    setActions({std::make_shared<Submission>()});
-  }
-
-  void onActionActivated(std::shared_ptr<IAction> action) override {
-    linkDb->insertLink({.name = nameField->text(),
-                        .icon = appField->selected->icon().name(),
-                        .link = urlField->text(),
-                        .app = appField->selected->id});
-    popCurrent();
-  }
-
-  void onAttach() override {
-    hideSearch();
-    nameField->setFocus();
-  }
-
-  QIcon icon() override { return QIcon::fromTheme("link"); }
-  QString name() override { return "Create quicklink"; }
+  void onActionActivated(std::shared_ptr<IAction> action) override;
+  void onAttach() override;
+  QIcon icon() override;
+  QString name() override;
 };

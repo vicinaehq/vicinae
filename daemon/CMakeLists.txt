@@ -38,6 +38,8 @@ qt_add_executable(${TARGET}
 	src/commands/index/index-command.cpp
 	src/commands/calculator-history/calculator-history.hpp
 	src/commands/calculator-history/calculator-history.cpp
+	src/commands/create-quicklink/create-quicklink.hpp
+	src/commands/create-quicklink/create-quicklink.cpp
 
 	src/exchange-rate-service.hpp
 	src/omnicast.hpp
