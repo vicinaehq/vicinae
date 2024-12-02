@@ -13,6 +13,13 @@
 #include <qwidget.h>
 #include <qwindowdefs.h>
 
+class NonAssignable {
+public:
+  NonAssignable(const NonAssignable &) = delete;
+  NonAssignable &operator=(const NonAssignable &) = delete;
+  NonAssignable() {}
+};
+
 template <class T> using OptionalRef = std::optional<std::reference_wrapper<T>>;
 
 class CommandObject;

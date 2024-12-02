@@ -1,20 +1,12 @@
-#include "app-database.hpp"
-#include "calculator-database.hpp"
-#include "command-database.hpp"
+#include "app.hpp"
 #include "command-object.hpp"
 #include "commands/index/index-command.hpp"
-#include "common.hpp"
-#include "omnicast.hpp"
 #include "quicklink-seeder.hpp"
-#include "quicklist-database.hpp"
-#include "ui/action_popover.hpp"
-#include <QApplication>
 #include <QLabel>
 #include <QMainWindow>
 #include <QThread>
 #include <QVBoxLayout>
 #include <memory>
-#include <optional>
 #include <qboxlayout.h>
 #include <qevent.h>
 #include <qlogging.h>
@@ -24,16 +16,6 @@
 #include <qtmetamacros.h>
 #include <qwidget.h>
 #include <stdexcept>
-
-void AppWindow::setCommandObject(CommandObject *cmd) {
-  /*
-auto oldCmd = command;
-
-layout->replaceWidget(oldCmd->widget, cmd->widget);
-oldCmd->deleteLater();
-command = cmd;
-*/
-}
 
 void AppWindow::pushCommandObject(std::shared_ptr<ICommandFactory> factory) {
   if (commandStack.empty())
@@ -62,6 +44,12 @@ void AppWindow::pushCommandObject(std::shared_ptr<ICommandFactory> factory) {
 
   if (commandStack.size() == 2) {
     topBar->showBackButton();
+  }
+}
+
+void AppWindow::popToRoot() {
+  while (commandStack.size() > 1) {
+    popCommandObject();
   }
 }
 
@@ -97,19 +85,6 @@ void AppWindow::popCommandObject() {
   }
 
   prev->deleteLater();
-}
-
-void AppWindow::resetCommand() {
-  topBar->hideBackButton();
-  currentCommand = std::nullopt;
-  // setCommandObject(new IndexCommand());
-  statusBar->reset();
-}
-
-void AppWindow::setCommand(const Command *cmd) {
-  currentCommand = cmd;
-  topBar->showBackButton();
-  // statusBar->setActiveCommand(cmd->name, cmd->iconName);
 }
 
 bool AppWindow::eventFilter(QObject *obj, QEvent *event) {
@@ -160,15 +135,15 @@ AppWindow::AppWindow(QWidget *parent)
 
   auto config = loadConfig("config.toml");
 
-  quicklinkDatabase = std::make_shared<QuicklistDatabase>(
+  quicklinkDatabase = std::make_unique<QuicklistDatabase>(
       Config::dirPath() + QDir::separator() + "quicklinks.db");
-  calculatorDatabase = std::make_shared<CalculatorDatabase>(
+  calculatorDatabase = std::make_unique<CalculatorDatabase>(
       Config::dirPath() + QDir::separator() + "calculator.db");
-  appDb = std::make_shared<AppDatabase>();
-  clipboardService = std::make_shared<ClipboardService>();
+  appDb = std::make_unique<AppDatabase>();
+  clipboardService = std::make_unique<ClipboardService>();
 
   {
-    auto seeder = std::make_unique<QuickLinkSeeder>(appDb, quicklinkDatabase);
+    auto seeder = std::make_unique<QuickLinkSeeder>(*appDb, *quicklinkDatabase);
 
     if (quicklinkDatabase->list().isEmpty()) {
       seeder->seed();
@@ -209,23 +184,20 @@ AppWindow::AppWindow(QWidget *parent)
 }
 
 template <>
-std::shared_ptr<QuicklistDatabase>
-AppWindow::service<QuicklistDatabase>() const {
-  return quicklinkDatabase;
+Service<QuicklistDatabase> AppWindow::service<QuicklistDatabase>() const {
+  return *quicklinkDatabase;
 }
 
 template <>
-std::shared_ptr<CalculatorDatabase>
-AppWindow::service<CalculatorDatabase>() const {
-  return calculatorDatabase;
+Service<CalculatorDatabase> AppWindow::service<CalculatorDatabase>() const {
+  return *calculatorDatabase;
+}
+
+template <> Service<AppDatabase> AppWindow::service<AppDatabase>() const {
+  return *appDb;
 }
 
 template <>
-std::shared_ptr<AppDatabase> AppWindow::service<AppDatabase>() const {
-  return appDb;
-}
-
-template <>
-std::shared_ptr<ClipboardService> AppWindow::service<ClipboardService>() const {
-  return clipboardService;
+Service<ClipboardService> AppWindow::service<ClipboardService>() const {
+  return *clipboardService;
 }

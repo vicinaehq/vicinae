@@ -19,9 +19,9 @@ public:
   QString name() const override { return nm; }
   QIcon icon() const override { return QIcon::fromTheme("clipboard"); }
   void exec(ExecutionContext ctx) override {
-    auto clipboard = ctx.service<ClipboardService>();
+    auto &clipboard = ctx.service<ClipboardService>();
 
-    clipboard->copyText(text);
+    clipboard.copyText(text);
     ctx.hideWindow();
     ctx.setSearch("");
   }
@@ -71,7 +71,7 @@ struct OpenInDefaultAppAction : public IAction {
     QMimeDatabase mimeDb;
     auto mime = mimeDb.mimeTypeForFile(fileName);
 
-    app = appDb->findBestOpenerForMime(mime);
+    app = appDb.findBestOpenerForMime(mime);
   }
 };
 
@@ -84,8 +84,8 @@ public:
     QString name() const override { return "Open link"; }
     QIcon icon() const override { return QIcon::fromTheme(link.iconName); }
     void exec(ExecutionContext ctx) override {
-      auto appDb = ctx.service<AppDatabase>();
-      auto app = appDb->getById(link.app);
+      auto &appDb = ctx.service<AppDatabase>();
+      auto app = appDb.getById(link.app);
 
       if (!app) {
         ctx.setToast("No app to open link", ToastPriority::Danger);
@@ -118,7 +118,7 @@ public:
     void exec(ExecutionContext ctx) override {
       auto db = ctx.service<QuicklistDatabase>();
 
-      if (db->removeOne(link.id)) {
+      if (db.removeOne(link.id)) {
         ctx.setToast("Link deleted", ToastPriority::Success);
       } else {
         ctx.setToast("Failed to delete link", ToastPriority::Danger);
@@ -150,11 +150,11 @@ class ActionnableCalculator : public IActionnable {
     QIcon icon() const override { return QIcon::fromTheme("clipboard"); }
 
     void exec(ExecutionContext ctx) override {
-      auto calcDb = ctx.service<CalculatorDatabase>();
-      auto clip = ctx.service<ClipboardService>();
+      auto &calcDb = ctx.service<CalculatorDatabase>();
+      auto &clip = ctx.service<ClipboardService>();
 
-      clip->copyText(calc.result);
-      calcDb->saveComputation(calc.expression, calc.result);
+      clip.copyText(calc.result);
+      calcDb.saveComputation(calc.expression, calc.result);
       ctx.hideWindow();
       ctx.setSearch("");
     }
@@ -169,11 +169,11 @@ class ActionnableCalculator : public IActionnable {
     QIcon icon() const override { return QIcon::fromTheme("clipboard"); }
 
     void exec(ExecutionContext ctx) override {
-      auto calcDb = ctx.service<CalculatorDatabase>();
-      auto clip = ctx.service<ClipboardService>();
+      auto &calcDb = ctx.service<CalculatorDatabase>();
+      auto &clip = ctx.service<ClipboardService>();
 
-      clip->copyText(calc.expression + " = " + calc.result);
-      calcDb->saveComputation(calc.expression, calc.result);
+      clip.copyText(calc.expression + " = " + calc.result);
+      calcDb.saveComputation(calc.expression, calc.result);
       ctx.hideWindow();
       ctx.setSearch("");
     }

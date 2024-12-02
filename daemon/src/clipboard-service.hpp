@@ -1,9 +1,10 @@
+#include "common.hpp"
 #include <QClipboard>
 #include <qapplication.h>
 #include <qclipboard.h>
 #include <qdir.h>
 
-class ClipboardService {
+class ClipboardService : public NonAssignable {
 public:
   ClipboardService() {}
 

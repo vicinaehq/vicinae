@@ -80,10 +80,9 @@ public:
 };
 
 IndexCommand::IndexCommand(AppWindow *app)
-    : CommandObject(app), quicklinkDb(service<QuicklistDatabase>()),
-      list(new ManagedList()) {
+    : CommandObject(app), appDb(service<AppDatabase>()),
+      quicklinkDb(service<QuicklistDatabase>()), list(new ManagedList()) {
   cmdDb = new CommandDatabase();
-  appDb = service<AppDatabase>();
 
   for (const auto &cmd : cmdDb->commands) {
     if (!cmd.usableWith)
@@ -200,7 +199,7 @@ void IndexCommand::onSearchChanged(const QString &text) {
 
   QList<std::shared_ptr<DesktopEntry>> apps;
 
-  for (const auto app : appDb->apps) {
+  for (const auto app : appDb.apps) {
     if (!app->noDisplay && app->name.contains(text, Qt::CaseInsensitive))
       apps.push_back(app);
   }
@@ -217,7 +216,7 @@ void IndexCommand::onSearchChanged(const QString &text) {
   QList<std::shared_ptr<Quicklink>> links;
   QList<std::shared_ptr<Quicklink>> useWithQuicklinks;
 
-  for (const auto &quicklink : quicklinkDb->list()) {
+  for (const auto &quicklink : quicklinkDb.list()) {
     if (text.size() > 0 &&
         quicklink->name.contains(text, Qt::CaseInsensitive)) {
       links.push_back(quicklink);

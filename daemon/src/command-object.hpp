@@ -1,6 +1,6 @@
 #pragma once
+#include "app.hpp"
 #include "common.hpp"
-#include "omnicast.hpp"
 #include "ui/toast.hpp"
 #include <qicon.h>
 #include <qobject.h>
@@ -42,9 +42,7 @@ protected:
     app()->pushCommandObject(fac);
   }
 
-  template <typename T> std::shared_ptr<T> service() {
-    return app()->service<T>();
-  }
+  template <typename T> Service<T> service() { return app()->service<T>(); }
 
 public:
   friend ExecutionContext;

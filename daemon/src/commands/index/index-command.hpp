@@ -1,5 +1,4 @@
 #pragma once
-#include "app-database.hpp"
 #include "command-object.hpp"
 #include "ui/managed_list.hpp"
 
@@ -23,7 +22,7 @@ class IndexCommand : public CommandObject {
   CommandDatabase *cmdDb;
   QList<Command *> usableWithCommands;
 
-  std::shared_ptr<QuicklistDatabase> quicklinkDb;
+  Service<QuicklistDatabase> quicklinkDb;
   ManagedList *list = nullptr;
 
 private:

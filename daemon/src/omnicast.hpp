@@ -1,11 +1,4 @@
 #pragma once
-#include "calculator-database.hpp"
-#include "clipboard-service.hpp"
-#include "common.hpp"
-#include "quicklist-database.hpp"
-#include "ui/action_popover.hpp"
-#include "ui/status_bar.hpp"
-#include "ui/top_bar.hpp"
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include <QLabel>
@@ -15,7 +8,6 @@
 #include <QStringList>
 #include <QVBoxLayout>
 #include <QWidget>
-#include <memory>
 #include <qapplication.h>
 #include <qboxlayout.h>
 #include <qicon.h>
@@ -32,7 +24,6 @@
 #include <qprocess.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
-#include <stack>
 
 class GenericListItem : public QWidget {
   QLabel *iconLabel;
@@ -122,50 +113,4 @@ public:
     layout->addWidget(posRight, 1);
     setLayout(layout);
   }
-};
-
-class Command;
-class CommandObject;
-class AppDatabase;
-class QuicklistDatabase;
-class ICommandFactory;
-
-template <class T> using Service = std::shared_ptr<T>;
-
-class AppWindow : public QMainWindow {
-  Q_OBJECT
-
-  QLocalServer commandServer;
-
-public:
-  std::stack<CommandObject *> commandStack;
-  std::stack<QString> queryStack;
-
-  std::shared_ptr<QuicklistDatabase> quicklinkDatabase;
-  std::shared_ptr<CalculatorDatabase> calculatorDatabase;
-  std::shared_ptr<ClipboardService> clipboardService;
-
-  Service<AppDatabase> appDb;
-
-  template <typename T> std::shared_ptr<T> service() const;
-
-  TopBar *topBar = nullptr;
-  StatusBar *statusBar = nullptr;
-  ActionPopover *actionPopover;
-
-  // CommandObject *command = nullptr;
-  QVBoxLayout *layout = nullptr;
-  std::optional<const Command *> currentCommand = std::nullopt;
-
-  AppWindow(QWidget *parent = 0);
-
-  void resetCommand();
-  void setCommandObject(CommandObject *cmd);
-
-public slots:
-  void pushCommandObject(std::shared_ptr<ICommandFactory> factory);
-  void popCommandObject();
-
-  void setCommand(const Command *command);
-  bool eventFilter(QObject *obj, QEvent *event) override;
 };

@@ -7,7 +7,8 @@
 
 CalculatorHistoryCommand::CalculatorHistoryCommand(AppWindow *app,
                                                    const QString &initText)
-    : CommandObject(app), initText(initText), list(new ManagedList()) {
+    : CommandObject(app), cdb(service<CalculatorDatabase>()),
+      initText(initText), list(new ManagedList()) {
   auto layout = new QVBoxLayout();
 
   layout->setContentsMargins(0, 10, 0, 0);
@@ -20,8 +21,7 @@ CalculatorHistoryCommand::CalculatorHistoryCommand(AppWindow *app,
   connect(list, &ManagedList::itemActivated,
           [this]() { setToast("Copied in clipboard"); });
 
-  cdb = service<CalculatorDatabase>();
-  entries = cdb->list();
+  entries = cdb.list();
 }
 
 void CalculatorHistoryCommand::onAttach() {
@@ -79,8 +79,8 @@ void CalculatorHistoryCommand::onSearchChanged(const QString &q) {
 
     list->addWidgetItem(
         new ActionnableCalculator(ctx, row.expression, row.result),
-        new GenericListItem(QIcon::fromTheme("pcbcalculator"), format, "",
-                            "Calculator"));
+        new GenericListItem(QIcon::fromTheme("pcbcalculator"), format,
+                            row.timestamp.toString(), "Calculator"));
   }
 
   list->selectFirstEligible();

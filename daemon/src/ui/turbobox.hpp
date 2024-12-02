@@ -178,7 +178,7 @@ public:
   void filterItems(const QString &text) override {
     listWidget->clear();
 
-    for (const auto app : xdd->apps) {
+    for (const auto app : xdd.apps) {
       bool appMatches = app->name.contains(text, Qt::CaseInsensitive);
 
       if (appMatches) {

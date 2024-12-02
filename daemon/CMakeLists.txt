@@ -41,6 +41,8 @@ qt_add_executable(${TARGET}
 	src/commands/create-quicklink/create-quicklink.hpp
 	src/commands/create-quicklink/create-quicklink.cpp
 
+	src/command-database.cpp
+
 	src/exchange-rate-service.hpp
 	src/omnicast.hpp
 
@@ -59,8 +61,6 @@ qt_add_executable(${TARGET}
 	src/ui/top_bar.cpp
 	src/ui/color_circle.hpp
 	src/ui/color_circle.cpp
-	src/ui/command_widget.hpp
-	src/ui/command_widget.cpp
 	src/ui/managed_list.hpp
 	src/ui/managed_list.cpp
 	src/ui/toast.hpp

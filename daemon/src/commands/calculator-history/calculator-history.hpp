@@ -6,7 +6,7 @@
 #include "ui/managed_list.hpp"
 
 class CalculatorHistoryCommand : public CommandObject {
-  std::shared_ptr<CalculatorDatabase> cdb;
+  Service<CalculatorDatabase> cdb;
   ManagedList *list;
   QList<CalculatorEntry> entries;
   QString initText;

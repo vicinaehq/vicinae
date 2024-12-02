@@ -106,7 +106,7 @@ public:
     }
 
     void load(const Quicklink &rhs) {
-      if (auto app = appDb->getById(rhs.app)) {
+      if (auto app = appDb.getById(rhs.app)) {
         info->appName->setText(app->name);
         info->appIcon->setPixmap(app->icon().pixmap(20, 20));
       } else {
@@ -130,10 +130,8 @@ public:
   QuicklinkDetailsWidget *details = nullptr;
 
   QuickLinkManagerCommand(AppWindow *app)
-      : CommandObject(app), list(new ManagedList()) {
-    quicklinkDb = service<QuicklistDatabase>();
-    appDb = service<AppDatabase>();
-
+      : CommandObject(app), appDb(service<AppDatabase>()),
+        quicklinkDb(service<QuicklistDatabase>()), list(new ManagedList()) {
     forwardInputEvents(list);
 
     details = new QuicklinkDetailsWidget(appDb);
@@ -156,7 +154,7 @@ public:
 
     QList<const Quicklink *> links;
 
-    for (auto &link : quicklinkDb->list()) {
+    for (auto &link : quicklinkDb.list()) {
       if (link->name.toLower().contains(query.toLower()))
         links.push_back(link.get());
     }

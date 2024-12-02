@@ -1,4 +1,5 @@
 #pragma once
+#include "common.hpp"
 #include <cctype>
 #include <memory>
 #include <qanystringview.h>
@@ -14,7 +15,6 @@
 #include <qset.h>
 #include <qsettings.h>
 #include <qtenvironmentvariables.h>
-#include <stdexcept>
 
 // clang-format off
 static const QList<QDir> defaultPaths = {
@@ -262,7 +262,7 @@ struct DesktopAction : public DesktopExecutable {
   bool isTerminalApp() const override { return parent_->terminal; }
 };
 
-class AppDatabase {
+class AppDatabase : public NonAssignable {
 
 public:
   QList<QDir> paths;

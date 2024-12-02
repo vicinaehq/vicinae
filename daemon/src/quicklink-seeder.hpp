@@ -13,19 +13,19 @@ public:
       : appDb(appDb), linkDb(quicklinkDb) {}
 
   bool seed() {
-    auto browser = appDb->defaultBrowser();
+    auto browser = appDb.defaultBrowser();
 
     if (!browser)
       return false;
 
-    linkDb->insertLink({.name = "google",
-                        .icon = ":/assets/icons/google.svg",
-                        .link = "https://www.google.com/search?q={query}",
-                        .app = browser->id});
-    linkDb->insertLink({.name = "duckduckgo",
-                        .icon = ":/assets/icons/duckduckgo.svg",
-                        .link = "https://www.duckduckgo.com/search?q={query}",
-                        .app = browser->id});
+    linkDb.insertLink({.name = "google",
+                       .icon = ":/assets/icons/google.svg",
+                       .link = "https://www.google.com/search?q={query}",
+                       .app = browser->id});
+    linkDb.insertLink({.name = "duckduckgo",
+                       .icon = ":/assets/icons/duckduckgo.svg",
+                       .link = "https://www.duckduckgo.com/search?q={query}",
+                       .app = browser->id});
 
     return true;
   }

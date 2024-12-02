@@ -1,4 +1,5 @@
-#include "command-database.hpp"
+#include "commands/create-quicklink/create-quicklink.hpp"
+#include "command-object.hpp"
 
 CreateQuickLinkCommand::CreateQuickLinkCommand(AppWindow *app)
     : CommandObject(app), linkDb(service<QuicklistDatabase>()),
@@ -23,7 +24,7 @@ CreateQuickLinkCommand::CreateQuickLinkCommand(AppWindow *app)
   w->setLayout(layout);
   w->setFixedWidth(600);
 
-  if (auto browser = xdd->defaultBrowser()) {
+  if (auto browser = xdd.defaultBrowser()) {
     appField->setSelected(browser);
   }
 
@@ -34,10 +35,10 @@ CreateQuickLinkCommand::CreateQuickLinkCommand(AppWindow *app)
 
 void CreateQuickLinkCommand::onActionActivated(
     std::shared_ptr<IAction> action) {
-  linkDb->insertLink({.name = nameField->text(),
-                      .icon = appField->selected->iconName(),
-                      .link = urlField->text(),
-                      .app = appField->selected->id});
+  linkDb.insertLink({.name = nameField->text(),
+                     .icon = appField->selected->iconName(),
+                     .link = urlField->text(),
+                     .app = appField->selected->id});
   popCurrent();
 }
 
