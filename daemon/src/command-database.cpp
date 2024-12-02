@@ -16,5 +16,5 @@ CommandDatabase::CommandDatabase() {
 
   commands.push_back(Command(
       "Create quicklink", "link", "Quicklink", false, "create quicklink",
-      std::make_shared<BasicCommandFactory<QuickLinkManagerCommand>>()));
+      std::make_shared<BasicCommandFactory<CreateQuickLinkCommand>>()));
 }

@@ -1,7 +1,10 @@
 #pragma once
+#include "calculator.hpp"
 #include "common.hpp"
+#include "xdg/xdg-desktop.hpp"
 #include <cctype>
 #include <memory>
+#include <numbers>
 #include <qanystringview.h>
 #include <qcontainerfwd.h>
 #include <qdir.h>
@@ -276,6 +279,10 @@ public:
     QSettings ini(info.filePath(), QSettings::IniFormat);
     auto groups = ini.childGroups();
     std::shared_ptr<DesktopEntry> entry = nullptr;
+
+    XdgDesktopEntry ent(path);
+
+    qDebug() << ent.name << ent.comment << ent.icon << ent.mimeType;
 
     if (appMap.find(info.fileName()) != appMap.end())
       return false;
