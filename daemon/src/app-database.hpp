@@ -4,7 +4,6 @@
 #include "xdg/xdg-desktop.hpp"
 #include <cctype>
 #include <memory>
-#include <numbers>
 #include <qanystringview.h>
 #include <qcontainerfwd.h>
 #include <qdir.h>
@@ -32,119 +31,6 @@ static bool isLinkOpenerFieldCode(QString s) {
   return s == 'f' || s == 'F' || s == 'u' || s == 'U';
 }
 
-struct XdgCommandLine {
-  enum TokenType {
-    String,
-    FieldCode,
-  };
-
-  struct Token {
-    TokenType type;
-    QString value;
-  };
-
-  struct Tokenizer {
-    const QString &s;
-    size_t cursor = 0;
-    enum State { START, PERCENT, FIELD_CODE, STRING, WS, QUOTED, ESCAPED };
-    State state = START;
-
-    Tokenizer(const QString &s) : s(s) { qDebug() << "phrase" << s; }
-
-    std::optional<XdgCommandLine::Token> next() {
-      size_t i = cursor;
-      QString arg;
-
-      if (i >= s.size())
-        return std::nullopt;
-
-      while (true) {
-        QChar c = i < s.size() ? s.at(i) : QChar(0);
-
-        switch (state) {
-        case START:
-          if (c == '%')
-            state = PERCENT;
-          else if (c == '\\')
-            state = ESCAPED;
-          else if (c == '"')
-            state = QUOTED;
-          else if (c.isSpace())
-            state = WS;
-          else if (c.isPrint()) {
-            arg += c;
-            state = STRING;
-          } else
-            return std::nullopt;
-          break;
-        case STRING:
-          if (c.isPrint() && !c.isSpace())
-            arg += c;
-          else {
-            state = START;
-            cursor = i + 1;
-            return XdgCommandLine::Token{XdgCommandLine::TokenType::String,
-                                         arg};
-          }
-          break;
-        case WS:
-          if (!c.isSpace()) {
-            state = START;
-          }
-          break;
-        case PERCENT:
-          if (c == '%') {
-            arg += c;
-            state = START;
-            break;
-          }
-
-          arg = c;
-          state = FIELD_CODE;
-          break;
-        case FIELD_CODE:
-          if (c.isLetterOrNumber()) {
-            state = START;
-            --i;
-            break;
-          }
-
-          state = START;
-
-          // ignore field code if not recognized
-          if (!fieldCodeSet.contains(arg))
-            break;
-
-          cursor = i;
-          return XdgCommandLine::Token{XdgCommandLine::TokenType::FieldCode,
-                                       arg};
-
-        case QUOTED:
-          qDebug() << "Quoted";
-          if (c == '"') {
-            state = START;
-            cursor = i + 1;
-            return XdgCommandLine::Token{XdgCommandLine::TokenType::String,
-                                         arg};
-          } else {
-            arg += c;
-          }
-
-          break;
-        case ESCAPED:
-          arg += c;
-          state = START;
-          break;
-        }
-
-        ++i;
-      }
-
-      return std::nullopt;
-    }
-  };
-};
-
 class DesktopExecutable {
 public:
   QString id;
@@ -162,49 +48,53 @@ public:
       : id(id), name(name), exec(exec) {}
 
   bool launch(const QList<QString> &args) {
-    XdgCommandLine::Tokenizer tokenizer(exec);
-    QProcess proc;
-    std::optional<XdgCommandLine::Token> token;
+    /*
+XdgCommandLine::Tokenizer tokenizer(exec);
+QProcess proc;
+std::optional<XdgCommandLine::Token> token;
 
-    QStringList cmdArgs;
-    size_t expandedCount = 0;
+QStringList cmdArgs;
+size_t expandedCount = 0;
 
-    while ((token = tokenizer.next())) {
-      if (token->type == XdgCommandLine::TokenType::FieldCode) {
-        if (token->value == 'f' || token->value == 'u' && !args.isEmpty()) {
-          cmdArgs << args.at(0);
-          ++expandedCount;
-        } else if (token->value == 'F' || token->value == 'U') {
-          cmdArgs << args;
-          expandedCount = args.size();
-        }
-        continue;
-      }
+while ((token = tokenizer.next())) {
+if (token->type == XdgCommandLine::TokenType::FieldCode) {
+  if (token->value == 'f' || token->value == 'u' && !args.isEmpty()) {
+    cmdArgs << args.at(0);
+    ++expandedCount;
+  } else if (token->value == 'F' || token->value == 'U') {
+    cmdArgs << args;
+    expandedCount = args.size();
+  }
+  continue;
+}
 
-      cmdArgs << token->value;
-    }
+cmdArgs << token->value;
+}
 
-    // if some arguments have not been expanded, add them at the end of the
-    // command line
-    for (size_t i = expandedCount; i < args.size(); ++i) {
-      cmdArgs << args.at(i);
-    }
+// if some arguments have not been expanded, add them at the end of the
+// command line
+for (size_t i = expandedCount; i < args.size(); ++i) {
+cmdArgs << args.at(i);
+}
 
-    QStringList argv;
+QStringList argv;
 
-    if (isTerminalApp()) {
-      argv << "/bin/alacritty";
-      argv << "-e";
-      argv << "/bin/sh";
-      argv << "-c";
-      argv << cmdArgs.join(" ");
-    } else {
-      argv << cmdArgs;
-    }
+if (isTerminalApp()) {
+argv << "/bin/alacritty";
+argv << "-e";
+argv << "/bin/sh";
+argv << "-c";
+argv << cmdArgs.join(" ");
+} else {
+argv << cmdArgs;
+}
 
-    qDebug() << "Execute" << argv;
+qDebug() << "Execute" << argv;
 
-    return proc.startDetached(argv.at(0), argv.sliced(1));
+return proc.startDetached(argv.at(0), argv.sliced(1));
+  */
+
+    return false;
   }
 
   bool launch() { return launch({}); }
@@ -213,46 +103,38 @@ public:
 class DesktopAction;
 
 struct DesktopEntry : public DesktopExecutable {
+  XdgDesktopEntry data;
   QString path;
-  QString icon_;
-
-  bool terminal;
-  QList<QString> categories;
-  QList<QString> keywords;
-  QList<QString> mimeTypes;
-
-  bool noDisplay;
-  bool hidden;
 
   QList<std::shared_ptr<DesktopAction>> actions;
 
-  bool isTerminalApp() const override { return terminal; }
-  const QString &iconName() const override { return icon_; }
-  QIcon icon() const override { return QIcon::fromTheme(icon_); }
-  bool displayable() const override { return !hidden && !noDisplay; };
+  DesktopEntry(const QString &path, const QString &id,
+               const XdgDesktopEntry &data)
+      : DesktopExecutable(id, data.name, data.exec.join(' ')), path(path),
+        data(data) {}
+
+  bool isTerminalApp() const override { return data.terminal; }
+  const QString &iconName() const override { return data.icon; }
+  QIcon icon() const override { return QIcon::fromTheme(data.icon); }
+  bool displayable() const override { return !data.hidden && !data.noDisplay; };
 };
 
 struct DesktopAction : public DesktopExecutable {
-  QString id_;
+  XdgDesktopEntry::Action data;
   std::shared_ptr<DesktopEntry> parent_;
-  QString absolute_id_;
-  QString icon_;
   QString fqn_;
 
-  DesktopAction(std::shared_ptr<DesktopEntry> parent) : parent_(parent) {}
-
-  DesktopAction(const QString &id, QSettings &ini,
+  DesktopAction(const XdgDesktopEntry::Action &action,
                 std::shared_ptr<DesktopEntry> &parent)
-      : DesktopExecutable(parent->id + "." + id, ini.value("Name").toString(),
-                          ini.value("Exec").toString()),
-        parent_(parent), icon_(ini.value("Icon").toString()),
-        fqn_(parent->name + ": " + name) {}
+      : DesktopExecutable(parent->id + "." + action.id, action.name,
+                          action.exec.join(' ')),
+        data(action), parent_(parent), fqn_(parent->name + ": " + name) {}
 
   const QString &iconName() const override {
-    return icon_.isEmpty() ? parent_->icon_ : icon_;
+    return data.icon.isEmpty() ? parent_->iconName() : data.icon;
   }
   QIcon icon() const override {
-    auto icon = QIcon::fromTheme(icon_);
+    auto icon = QIcon::fromTheme(data.icon);
 
     if (icon.isNull())
       return parent_->icon();
@@ -262,7 +144,7 @@ struct DesktopAction : public DesktopExecutable {
 
   const QString &fullyQualifiedName() const override { return fqn_; }
   bool displayable() const override { return parent_->displayable(); }
-  bool isTerminalApp() const override { return parent_->terminal; }
+  bool isTerminalApp() const override { return parent_->isTerminalApp(); }
 };
 
 class AppDatabase : public NonAssignable {
@@ -276,66 +158,23 @@ public:
 
   bool addDesktopFile(const QString &path) {
     QFileInfo info(path);
-    QSettings ini(info.filePath(), QSettings::IniFormat);
-    auto groups = ini.childGroups();
-    std::shared_ptr<DesktopEntry> entry = nullptr;
-
     XdgDesktopEntry ent(path);
 
-    qDebug() << ent.name << ent.comment << ent.icon << ent.mimeType;
-
-    if (appMap.find(info.fileName()) != appMap.end())
-      return false;
-
-    for (const auto &group : groups) {
-      auto ss = group.split(' ');
-
-      if ((ss.size() == 2 && ss[0].toLower() == "desktop" &&
-           ss[1].toLower() == "entry")) {
-
-        entry = std::make_shared<DesktopEntry>();
-        ini.beginGroup(group);
-        entry->path = path;
-        entry->path = path;
-        entry->id = info.fileName();
-        entry->name = ini.value("Name").toString();
-        entry->exec = ini.value("Exec").toString();
-        entry->icon_ = ini.value("Icon").toString();
-        entry->terminal = ini.value("Terminal", false).toBool();
-        entry->categories = ini.value("Categories").toString().split(' ');
-        entry->keywords = ini.value("Keywords").toString().split(' ');
-        entry->mimeTypes = ini.value("MimeType").toString().split(' ');
-        entry->noDisplay = ini.value("NoDisplay", false).toBool();
-        entry->hidden = ini.value("Hidden", false).toBool();
-        ini.endGroup();
-        break;
-      }
-    }
-
-    if (!entry)
-      return false;
+    auto entry =
+        std::make_shared<DesktopEntry>(info.filePath(), info.fileName(), ent);
 
     apps.push_back(entry);
     appMap.insert(entry->id, entry);
 
-    for (const auto &group : groups) {
-      auto ss = group.split(' ');
+    qDebug() << "add id " << entry->id;
 
-      if (ss.size() == 3 && ss[0].toLower() == "desktop" &&
-          ss[1].toLower() == "action") {
-        ini.beginGroup(group);
-        auto action = std::make_shared<DesktopAction>(entry);
+    for (const auto &action : ent.actions) {
+      auto ac = std::make_shared<DesktopAction>(action, entry);
 
-        action->id = entry->id + '.' + ss[2];
-        action->name = ini.value("Name").toString();
-        action->exec = ini.value("Exec").toString();
-        action->icon_ = ini.value("Icon", entry->icon()).toString();
-        action->fqn_ = entry->name + ": " + action->name;
-        entry->actions.push_back(action);
-        ini.endGroup();
+      qDebug() << "add " << ac->id;
 
-        appMap.insert(action->id, action);
-      }
+      entry->actions.push_back(ac);
+      appMap.insert(ac->id, ac);
     }
 
     return true;
@@ -391,6 +230,7 @@ public:
 
   std::shared_ptr<DesktopExecutable> defaultForMime(const QString &mime) {
     if (auto it = mimeToDefaultApp.find(mime); it != mimeToDefaultApp.end()) {
+      qDebug() << "found default app for " << mime << *it;
       if (auto appIt = appMap.find(*it); appIt != appMap.end())
         return *appIt;
     }
@@ -447,7 +287,8 @@ public:
 
       ini.beginGroup("Default Applications");
       for (const auto &key : ini.allKeys()) {
-        qDebug() << "add default app " << ini.value(key) << " for mime " << key;
+        qDebug() << "add default app " << ini.value(key).toString()
+                 << " for mime " << key;
         mimeToDefaultApp.insert(key, ini.value(key).toString());
       }
       ini.endGroup();
@@ -489,6 +330,20 @@ public:
       ini.endGroup();
 
       qDebug() << "scanning mimeapp" << path;
+    }
+
+    for (const auto &k : mimeToApps.keys()) {
+      for (const auto &apps : mimeToApps[k]) {
+        qDebug() << k << apps;
+      }
+    }
+
+    for (const auto &apps : mimeToApps["text/plain"]) {
+      qDebug() << "text/plain" << apps;
+    }
+
+    for (const auto &mime : mimeToDefaultApp.keys()) {
+      qDebug() << mime << mimeToDefaultApp[mime];
     }
   }
 };

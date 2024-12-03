@@ -72,6 +72,7 @@ class XdgDesktopEntry {
 
 public:
   XdgDesktopEntry(const QString &path) {
+    qDebug() << "Opening " << path;
     QFile file(path);
 
     file.open(QIODevice::ReadOnly);
@@ -82,6 +83,7 @@ public:
   }
 
   struct Action {
+    QString id;
     QString name;
     QString icon;
     QList<QString> exec;

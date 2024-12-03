@@ -292,8 +292,6 @@ XdgDesktopEntry XdgDesktopEntry::Parser::parse() {
       auto groupName = parseGroupHeader();
       auto it = groups.insert(groupName, {});
 
-      qDebug() << "add group" << groupName;
-
       currentGroup = &*it;
       localePriorities.clear();
     }
@@ -340,7 +338,7 @@ XdgDesktopEntry XdgDesktopEntry::Parser::parse() {
   entry.version = (*it)[QStringLiteral("Version")];
   entry.name = (*it)[QStringLiteral("Name")];
   entry.genericName = (*it)[QStringLiteral("GenericName")];
-  entry.noDisplay = (*it)[QStringLiteral("GenericName")] == "true";
+  entry.noDisplay = (*it)[QStringLiteral("NoDisplay")] == "true";
   entry.comment = (*it)[QStringLiteral("Comment")];
   entry.icon = (*it)[QStringLiteral("Icon")];
   entry.hidden = (*it)[QStringLiteral("Hidden")] == "true";
@@ -366,6 +364,7 @@ XdgDesktopEntry XdgDesktopEntry::Parser::parse() {
 
       auto group = groups[groupName];
 
+      action.id = parts[2].toString();
       action.name = group[QStringLiteral("Name")];
       action.icon = group[QStringLiteral("Icon")];
 

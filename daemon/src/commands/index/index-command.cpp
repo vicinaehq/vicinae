@@ -20,6 +20,7 @@
 #include <qlist.h>
 #include <qlistwidget.h>
 #include <qlogging.h>
+#include <qmimedatabase.h>
 #include <qnamespace.h>
 #include <qobject.h>
 #include <qwidget.h>
@@ -57,12 +58,17 @@ public:
         std::make_shared<OpenAction>(this->desktopFile),
     };
 
+    QMimeDatabase mimeDb;
+    auto mime = mimeDb.mimeTypeForFile(desktopFile->path);
+
     for (const auto &action : desktopFile->actions) {
       list.push_back(std::make_shared<OpenAction>(action));
     }
 
-    list.push_back(std::make_shared<OpenInDefaultAppAction>(
-        appDb, desktopFile->path, "Open Desktop File"));
+    if (auto app = appDb.findBestOpenerForMime(mime)) {
+      list.push_back(
+          std::make_shared<OpenInAppAction>(app, "Open Desktop File"));
+    }
 
     return list;
   }
@@ -200,7 +206,7 @@ void IndexCommand::onSearchChanged(const QString &text) {
   QList<std::shared_ptr<DesktopEntry>> apps;
 
   for (const auto app : appDb.apps) {
-    if (!app->noDisplay && app->name.contains(text, Qt::CaseInsensitive))
+    if (!app->data.noDisplay && app->name.contains(text, Qt::CaseInsensitive))
       apps.push_back(app);
   }
 

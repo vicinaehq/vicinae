@@ -32,9 +32,10 @@ public:
 };
 
 struct OpenInAppAction : public IAction {
+  QString message;
   std::shared_ptr<DesktopExecutable> app;
 
-  QString name() const override { return app->name; }
+  QString name() const override { return message; }
 
   QIcon icon() const override { return app->icon(); }
 
@@ -44,7 +45,9 @@ struct OpenInAppAction : public IAction {
     ctx.setSearch("");
   }
 
-  OpenInAppAction(std::shared_ptr<DesktopExecutable> &app) : app(app) {}
+  OpenInAppAction(std::shared_ptr<DesktopExecutable> &app,
+                  const QString &msg = "")
+      : app(app), message(!msg.isEmpty() ? msg : app->name) {}
 };
 
 struct OpenInDefaultAppAction : public IAction {
