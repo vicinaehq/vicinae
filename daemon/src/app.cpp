@@ -1,7 +1,10 @@
 #include "app.hpp"
 #include "command-object.hpp"
+#include "command.hpp"
 #include "commands/index/index-command.hpp"
+#include "extension_manager.hpp"
 #include "quicklink-seeder.hpp"
+#include "root-command.hpp"
 #include <QLabel>
 #include <QMainWindow>
 #include <QThread>
@@ -124,6 +127,83 @@ bool AppWindow::eventFilter(QObject *obj, QEvent *event) {
   return false;
 }
 
+void AppWindow::popCurrentView() {
+  if (navigationStack.size() == 0) {
+    qDebug() << "Attempted to pop while navigationStack.size() == 0";
+    return;
+  }
+
+  navigationStack.pop();
+
+  if (navigationStack.size() > 0) {
+    connectView(*navigationStack.top());
+  }
+}
+
+void AppWindow::popToRootView() {
+  while (!navigationStack.empty()) {
+    popCurrentView();
+  }
+}
+
+void AppWindow::disconnectView(View &view) {
+  disconnect(topBar->input, &QLineEdit::textChanged, &view,
+             &View::onSearchChanged);
+
+  // view->app
+  disconnect(&view, &View::pushView, this, &AppWindow::pushView);
+  disconnect(&view, &View::pop, this, &AppWindow::popCurrentView);
+  disconnect(&view, &View::popToRoot, this, &AppWindow::popToRootView);
+
+  if (auto extView = dynamic_cast<ExtensionView *>(&view)) {
+    disconnect(&*extensionManager, &ExtensionManager::extensionMessage, extView,
+               &ExtensionView::extensionMessage);
+  }
+
+  view.widget->setParent(nullptr);
+  view.widget->hide();
+
+  topBar->input->removeEventFilter(&view);
+}
+
+void AppWindow::connectView(View &view) {
+  // app->view
+  connect(topBar->input, &QLineEdit::textChanged, &view,
+          &View::onSearchChanged);
+
+  // view->app
+  connect(&view, &View::pushView, this, &AppWindow::pushView);
+  connect(&view, &View::pop, this, &AppWindow::popCurrentView);
+  connect(&view, &View::popToRoot, this, &AppWindow::popToRootView);
+
+  if (auto extView = dynamic_cast<ExtensionView *>(&view)) {
+    connect(&*extensionManager, &ExtensionManager::extensionMessage, extView,
+            &ExtensionView::extensionMessage);
+  }
+
+  if (navigationStack.empty()) {
+    layout->replaceWidget(defaultWidget, view.widget);
+  } else {
+    layout->replaceWidget(navigationStack.top()->widget, view.widget);
+  }
+
+  view.widget->show();
+  topBar->input->installEventFilter(&view);
+}
+
+void AppWindow::pushView(View *view) {
+  if (navigationStack.size() > 0) {
+    auto old = navigationStack.top();
+
+    disconnectView(*old);
+  }
+
+  connectView(*view);
+  navigationStack.push(std::move(view));
+}
+
+void AppWindow::launchCommand(ViewCommand *cmd) { pushView(cmd->load(*this)); }
+
 AppWindow::AppWindow(QWidget *parent)
     : QMainWindow(parent), topBar(new TopBar()), statusBar(new StatusBar()),
       actionPopover(new ActionPopover(this)) {
@@ -134,6 +214,10 @@ AppWindow::AppWindow(QWidget *parent)
   setMinimumHeight(550);
 
   auto config = loadConfig("config.toml");
+
+  extensionManager = std::make_unique<ExtensionManager>();
+
+  extensionManager->start();
 
   quicklinkDatabase = std::make_unique<QuicklistDatabase>(
       Config::dirPath() + QDir::separator() + "quicklinks.db");
@@ -155,21 +239,23 @@ AppWindow::AppWindow(QWidget *parent)
   layout->setSpacing(0);
   layout->setContentsMargins(0, 0, 0, 0);
 
+  /*
   auto index = new IndexCommand(this);
 
   index->setParent(this);
   index->onAttach();
+  */
 
   layout->setAlignment(Qt::AlignTop);
   installEventFilter(this);
   topBar->input->installEventFilter(this);
-  topBar->input->installEventFilter(index);
+  // topBar->input->installEventFilter(index);
   layout->addWidget(topBar);
   layout->addWidget(new HDivider);
-  layout->addWidget(index->widget, 1);
+  layout->addWidget(defaultWidget, 1);
   layout->addWidget(statusBar);
 
-  commandStack.push(index);
+  // commandStack.push(index);
 
   auto widget = new QWidget();
 
@@ -177,10 +263,16 @@ AppWindow::AppWindow(QWidget *parent)
 
   setCentralWidget(widget);
 
-  connect(topBar->input, &QLineEdit::textChanged,
-          [this](auto arg) { commandStack.top()->onSearchChanged(arg); });
+  launchCommand(new RootCommand);
+
+  /*
+  connect(topBar->input, &QLineEdit::textChanged, [this](auto arg) {
+    commandStack.top()->onSearchChanged(arg);
+    emit navigationStack.top()->onSearchChanged(arg);
+  });
   connect(actionPopover, &ActionPopover::actionActivated,
           [this](auto arg) { commandStack.top()->onActionActivated(arg); });
+ */
 }
 
 template <>
@@ -200,4 +292,9 @@ template <> Service<AppDatabase> AppWindow::service<AppDatabase>() const {
 template <>
 Service<ClipboardService> AppWindow::service<ClipboardService>() const {
   return *clipboardService;
+}
+
+template <>
+Service<ExtensionManager> AppWindow::service<ExtensionManager>() const {
+  return *extensionManager;
 }

@@ -1,78 +1,236 @@
 #pragma once
-#include "config.hpp"
-#include <QObject>
-#include <ctime>
-#include <iostream>
-#include <jsoncpp/json/value.h>
-#include <optional>
+#include <QDebug>
+#include <QJsonArray>
+#include <QString>
+#include <QUuid>
+#include <qdir.h>
+#include <qjsondocument.h>
+#include <qjsonobject.h>
+#include <qlocalserver.h>
+#include <qlocalsocket.h>
+#include <qlogging.h>
 #include <qobject.h>
-#include <qtmetamacros.h>
-#include <string>
-#include <sys/socket.h>
-#include <vector>
+#include <qprocess.h>
+#include <qstringview.h>
+#include <qtypes.h>
+#include <quuid.h>
+#include <unistd.h>
 
-enum ExtensionStatus {
-  RUNNING,
-  CRASHED,
-};
+struct Message {
+  QString id;
+  QString type;
+  QJsonObject data;
 
-struct Connection {
-  time_t createdAt;
-  int fd;
+  static Message create(const QString &type, QJsonObject data) {
+    auto id = QUuid::createUuid().toString(QUuid::StringFormat::WithoutBraces);
+
+    return {id, type, data};
+  }
+
+  static Message createReply(const Message &lhs, QJsonObject data) {
+    return {lhs.id, lhs.type, data};
+  }
 };
 
 struct Extension {
-  std::string name;
-  std::vector<std::string> exec;
-  time_t startedAt;
-  struct {
-    pid_t pid;
-    int in;
-    int out;
-  } proc;
-  std::optional<Connection> connection;
-  ExtensionStatus status;
-  std::string token;
+  struct Command {
+    QString name;
+    QString title;
+    QString subtitle;
+    QString description;
+    QString mode;
+    QString extensionId;
+  };
+
+  QString sessionId;
+  QList<Extension::Command> commands;
 };
+
+static const char *exec =
+    "/home/aurelle/prog/perso/omnicast-sdk/extension-manager/dist/index.js";
 
 class ExtensionManager : public QObject {
   Q_OBJECT
 
-  std::vector<Extension> extensions;
-  std::string activeId;
+  QProcess process;
+  QLocalServer ipc;
+  QString socketPath;
+  QLocalSocket *managerSocket = nullptr;
+  QList<Extension> loadedExtensions;
+
+  Message parsePacket(QByteArray &buf) {
+    QDataStream dataStream(&buf, QIODevice::ReadOnly);
+    QByteArray data;
+
+    dataStream >> data;
+
+    auto json = QJsonDocument::fromJson(data);
+
+    qDebug() << "type=" << json["type"].toString();
+
+    auto id = json["id"].toString();
+    auto type = json["type"].toString();
+    auto mdat = json["data"].toObject();
+
+    return {id, type, mdat};
+  }
+
+  void writePacket(const QString &message) {
+    QByteArray data;
+    QDataStream dataStream(&data, QIODevice::WriteOnly);
+
+    dataStream << message.toUtf8();
+
+    managerSocket->write(data);
+    managerSocket->waitForBytesWritten();
+  }
+
+  void writeMessage(const Message &msg) {
+    QJsonObject obj;
+
+    obj["id"] = msg.id;
+    obj["type"] = msg.type;
+    obj["data"] = msg.data;
+
+    QJsonDocument doc(obj);
+
+    QByteArray data;
+    QDataStream dataStream(&data, QIODevice::WriteOnly);
+
+    dataStream << doc.toJson();
+    managerSocket->write(data);
+    managerSocket->waitForBytesWritten();
+  }
+
+  void parseListExtensionData(QJsonObject &obj) {
+    QList<Extension> extensions;
+
+    for (const auto &ext : obj["extensions"].toArray()) {
+      auto extObj = ext.toObject();
+      Extension extension{.sessionId = extObj["sessionId"].toString()};
+
+      for (const auto &cmd : extObj["commands"].toArray()) {
+        auto cmdObj = cmd.toObject();
+        Extension::Command finalCmd{.name = cmdObj["name"].toString(),
+                                    .title = cmdObj["title"].toString(),
+                                    .subtitle = cmdObj["subtitle"].toString(),
+                                    .description =
+                                        cmdObj["description"].toString(),
+                                    .mode = cmdObj["mode"].toString(),
+                                    .extensionId = extension.sessionId};
+
+        extension.commands.push_back(finalCmd);
+      }
+
+      extensions.push_back(extension);
+    }
+
+    loadedExtensions = extensions;
+  }
 
 public:
-  ExtensionManager(const std::vector<ConfigExtension> &confExts);
+  ExtensionManager() : socketPath("/tmp/omnicast-extension-manager.sock") {}
 
-  void startServer();
+  void reply(const Message &message, QJsonObject data) {
+    writeMessage(Message::createReply(message, data));
+  }
 
-  template <class T>
-  void handler(std::string type, std::string id, T const &payload) {
-    std::cout << type << ": " << payload << std::endl;
-    for (const auto &ext : extensions) {
-      if (ext.token != activeId)
-        continue;
+  const QList<Extension> &extensions() { return loadedExtensions; }
 
-      Json::Value root;
-      Json::Value data;
+  void activateCommand(const QString &extensionId, const QString &cmdName) {
+    QJsonObject data;
 
-      data["type"] = type;
-      data["handlerId"] = id;
-      data["value"] = payload;
+    data["extensionId"] = extensionId;
+    data["commandName"] = cmdName;
 
-      root["type"] = "event";
-      root["data"] = data;
+    writeMessage(Message::create("activate-command", data));
+  }
 
-      std::string jsonstring = root.toStyledString();
+  void start() {
+    QFile file(socketPath);
 
-      uint32_t n = jsonstring.size();
-      std::cout << "sending " << jsonstring << " bytes=" << n << std::endl;
+    if (file.exists())
+      file.remove();
 
-      send(ext.connection->fd, &n, sizeof(n), 0);
-      send(ext.connection->fd, jsonstring.data(), jsonstring.size(), 0);
+    if (!ipc.listen(socketPath)) {
+      qDebug() << "failed to listen on socket path" << socketPath;
+      return;
     }
+
+    auto environ = QProcess::systemEnvironment();
+
+    environ << "OMNICAST_SERVER_URL=" + socketPath;
+
+    process.setWorkingDirectory(
+        "/home/aurelle/.local/share/omnicast/extensions");
+
+    connect(&process, &QProcess::readyReadStandardOutput, this,
+            &ExtensionManager::readOutput);
+    connect(&process, &QProcess::readyReadStandardError, this,
+            &ExtensionManager::readError);
+    connect(&process, &QProcess::finished, this, &ExtensionManager::finished);
+    connect(&ipc, &QLocalServer::newConnection, this,
+            &ExtensionManager::newConnection);
+
+    process.setEnvironment(environ);
+    process.start("/bin/node", {"runtime.js"});
   }
 
 signals:
-  void render(Json::Value root);
+  void extensionMessage(const Message &msg);
+
+private slots:
+  void newConnection() {
+    qDebug() << "new connection";
+    managerSocket = ipc.nextPendingConnection();
+    writeMessage(Message::create("ping", {}));
+
+    managerSocket->waitForReadyRead();
+    qDebug() << "ready read";
+    auto buf = managerSocket->readAll();
+
+    qDebug() << "Got back a packet of size" << buf.size() << buf;
+    auto msg = parsePacket(buf);
+
+    if (msg.type != "pong") {
+      qDebug() << "pong expected, got " << msg.type;
+    }
+
+    connect(managerSocket, &QLocalSocket::readyRead, this,
+            &ExtensionManager::readLocalSocket);
+
+    writeMessage(Message::create("list-extensions", {}));
+  }
+
+  void readLocalSocket() {
+    auto buf = managerSocket->readAll();
+    auto msg = parsePacket(buf);
+
+    qDebug() << "got message of type " << msg.type;
+
+    if (msg.type == "list-extensions") {
+      parseListExtensionData(msg.data);
+    } else {
+      emit extensionMessage(msg);
+    }
+
+    // QTextStream(stdout) << QJsonDocument(msg.data).toJson();
+  }
+
+  void finished(int exitCode, QProcess::ExitStatus status) {
+    qDebug()
+        << "Extension manager exited prematurely. Extensions will not work";
+  }
+
+  void readOutput() {
+    auto buf = process.readAllStandardOutput();
+
+    QTextStream(stdout) << buf;
+  }
+
+  void readError() {
+    auto buf = process.readAllStandardError();
+
+    QTextStream(stderr) << buf;
+  }
 };

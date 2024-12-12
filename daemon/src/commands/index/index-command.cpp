@@ -1,9 +1,13 @@
 #include "commands/index/index-command.hpp"
 #include "actions.hpp"
 #include "app-database.hpp"
+#include "app.hpp"
 #include "calculator.hpp"
 #include "command-database.hpp"
 #include "command-object.hpp"
+#include "common.hpp"
+#include "extension_manager.hpp"
+#include "extension_object.hpp"
 #include "omnicast.hpp"
 #include "quicklist-database.hpp"
 #include "ui/color_circle.hpp"
@@ -74,6 +78,40 @@ public:
   }
 };
 
+class ExtensionCommandFactory : public ICommandFactory {
+  Extension::Command cmd;
+
+public:
+  ExtensionCommandFactory(const Extension::Command &cmd) : cmd(cmd) {}
+
+  virtual CommandObject *operator()(AppWindow *app) {
+    return new ExtensionObject(app, cmd);
+  }
+};
+
+class ExtensionCommandActionnable : public IActionnable {
+  Extension::Command cmd;
+
+  struct ExecuteCommand : public IAction {
+    Extension::Command cmd;
+
+    QString name() const override { return "Open command"; }
+    QIcon icon() const override { return QIcon::fromTheme(""); }
+    void exec(ExecutionContext ctx) override {
+      ctx.pushCommand(std::make_shared<ExtensionCommandFactory>(cmd));
+    }
+
+    ExecuteCommand(const Extension::Command &cmd) : cmd(cmd) {}
+  };
+
+public:
+  ActionList generateActions() const override {
+    return {std::make_shared<ExecuteCommand>(cmd)};
+  }
+
+  ExtensionCommandActionnable(const Extension::Command &cmd) : cmd(cmd) {}
+};
+
 class UseWithQuicklinkActionnable : public IActionnable {
   const Quicklink &link;
 
@@ -87,13 +125,14 @@ public:
 
 IndexCommand::IndexCommand(AppWindow *app)
     : CommandObject(app), appDb(service<AppDatabase>()),
+      extensionManager(service<ExtensionManager>()),
       quicklinkDb(service<QuicklistDatabase>()), list(new ManagedList()) {
   cmdDb = new CommandDatabase();
 
   for (const auto &cmd : cmdDb->commands) {
     if (!cmd.usableWith)
       continue;
-    usableWithCommands.push_back(new Command(cmd));
+    usableWithCommands.push_back(new CommandInfo(cmd));
   }
 
   auto layout = new QVBoxLayout();
@@ -210,7 +249,7 @@ void IndexCommand::onSearchChanged(const QString &text) {
       apps.push_back(app);
   }
 
-  QList<Command> matchingCommands;
+  QList<CommandInfo> matchingCommands;
 
   for (const auto &cmd : cmdDb->commands) {
     if (!cmd.normalizedName.contains(text))
@@ -221,6 +260,7 @@ void IndexCommand::onSearchChanged(const QString &text) {
 
   QList<std::shared_ptr<Quicklink>> links;
   QList<std::shared_ptr<Quicklink>> useWithQuicklinks;
+  QList<const Extension::Command *> filteredExtensionCommands;
 
   for (const auto &quicklink : quicklinkDb.list()) {
     if (text.size() > 0 &&
@@ -232,7 +272,18 @@ void IndexCommand::onSearchChanged(const QString &text) {
       useWithQuicklinks.push_back(quicklink);
   }
 
-  if (!apps.empty() || !matchingCommands.empty() || !links.empty()) {
+  for (const auto &ext : extensionManager.extensions()) {
+    qDebug() << "session ID" << ext.sessionId;
+    for (const auto &cmd : ext.commands) {
+      if (!cmd.name.contains(text, Qt::CaseInsensitive))
+        continue;
+
+      filteredExtensionCommands.push_back(&cmd);
+    }
+  }
+
+  if (!apps.empty() || !matchingCommands.empty() || !links.empty() ||
+      !filteredExtensionCommands.empty()) {
     list->addSection("Results");
   }
 
@@ -244,6 +295,13 @@ void IndexCommand::onSearchChanged(const QString &text) {
                                       "Quicklink");
 
     list->addWidgetItem(new ActionnableQuicklink(ctx, *quicklink), widget);
+  }
+
+  for (const auto &cmd : filteredExtensionCommands) {
+    auto widget = new GenericListItem(QIcon::fromTheme("executable"), cmd->name,
+                                      cmd->subtitle, "Command");
+
+    list->addWidgetItem(new ExtensionCommandActionnable(*cmd), widget);
   }
 
   for (size_t i = 0; i != apps.size(); ++i) {

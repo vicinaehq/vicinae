@@ -2,6 +2,8 @@
 #include "app-database.hpp"
 #include "calculator-database.hpp"
 #include "clipboard-service.hpp"
+#include "command.hpp"
+#include "extension_manager.hpp"
 #include "quicklist-database.hpp"
 #include <jsoncpp/json/value.h>
 #include <qboxlayout.h>
@@ -24,10 +26,19 @@ public:
   std::stack<CommandObject *> commandStack;
   std::stack<QString> queryStack;
 
+  std::stack<View *> navigationStack;
+
   std::unique_ptr<QuicklistDatabase> quicklinkDatabase;
   std::unique_ptr<CalculatorDatabase> calculatorDatabase;
   std::unique_ptr<ClipboardService> clipboardService;
   std::unique_ptr<AppDatabase> appDb;
+  std::unique_ptr<ExtensionManager> extensionManager;
+
+  void pushView(View *view);
+  void popCurrentView();
+  void popToRootView();
+  void disconnectView(View &view);
+  void connectView(View &view);
 
   template <typename T> Service<T> service() const;
 
@@ -35,10 +46,13 @@ public:
   StatusBar *statusBar = nullptr;
   ActionPopover *actionPopover = nullptr;
   QVBoxLayout *layout = nullptr;
+  QWidget *defaultWidget = new QWidget();
 
   void pushCommandObject(std::shared_ptr<ICommandFactory> factory);
   void popCommandObject();
   void popToRoot();
+
+  void launchCommand(ViewCommand *cmd);
 
   AppWindow(QWidget *parent = 0);
 

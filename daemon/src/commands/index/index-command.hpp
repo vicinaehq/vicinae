@@ -1,5 +1,6 @@
 #pragma once
 #include "command-object.hpp"
+#include "extension_manager.hpp"
 #include "ui/managed_list.hpp"
 
 struct CodeToColor : public IActionnable {
@@ -12,15 +13,16 @@ struct CodeToColor : public IActionnable {
 
 class CommandDatabase;
 class QuicklistDatabase;
-class Command;
+class CommandInfo;
 
 class IndexCommand : public CommandObject {
   Q_OBJECT;
 
   Service<AppDatabase> appDb;
+  Service<ExtensionManager> extensionManager;
   QString query;
   CommandDatabase *cmdDb;
-  QList<Command *> usableWithCommands;
+  QList<CommandInfo *> usableWithCommands;
 
   Service<QuicklistDatabase> quicklinkDb;
   ManagedList *list = nullptr;

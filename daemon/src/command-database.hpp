@@ -13,7 +13,7 @@
 #include <qlogging.h>
 #include <qwidget.h>
 
-class Command {
+class CommandInfo {
 public:
   QString name;
   QString iconName;
@@ -22,9 +22,10 @@ public:
   QString normalizedName;
   std::shared_ptr<ICommandFactory> widgetFactory;
 
-  Command(const QString &name, const QString &iconName, const QString &category,
-          bool usableWith, const QString &normalizedName,
-          std::shared_ptr<ICommandFactory> factory)
+  CommandInfo(const QString &name, const QString &iconName,
+              const QString &category, bool usableWith,
+              const QString &normalizedName,
+              std::shared_ptr<ICommandFactory> factory)
       : name(name), iconName(iconName), category(category),
         usableWith(usableWith), normalizedName(normalizedName),
         widgetFactory(factory) {}
@@ -33,7 +34,7 @@ public:
 class ActionnableCommand : public IActionnable {
 public:
   struct ExecuteCommand : public IAction {
-    Command cmd;
+    CommandInfo cmd;
 
     QString name() const override { return "Open command"; }
     QIcon icon() const override { return QIcon::fromTheme(""); }
@@ -41,12 +42,12 @@ public:
       ctx.pushCommand(cmd.widgetFactory);
     }
 
-    ExecuteCommand(const Command &cmd) : cmd(cmd) {}
+    ExecuteCommand(const CommandInfo &cmd) : cmd(cmd) {}
   };
 
-  Command cmd;
+  CommandInfo cmd;
 
-  ActionnableCommand(ExecutionContext ctx, const Command &cmd) : cmd(cmd) {}
+  ActionnableCommand(ExecutionContext ctx, const CommandInfo &cmd) : cmd(cmd) {}
 
   ActionList generateActions() const override {
     return {std::make_shared<ExecuteCommand>(cmd)};
@@ -54,7 +55,7 @@ public:
 };
 
 struct CommandDatabase {
-  QList<Command> commands;
+  QList<CommandInfo> commands;
 
   CommandDatabase();
 };
