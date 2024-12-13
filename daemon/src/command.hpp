@@ -1,4 +1,5 @@
 #pragma once
+#include "app.hpp"
 #include "extension_manager.hpp"
 #include <qjsonobject.h>
 #include <qlabel.h>
@@ -19,11 +20,13 @@ public:
   QWidget *widget;
   View(AppWindow &app) : app(app) {}
 
+  template <typename T> Service<T> service() { return app.service<T>(); }
+
 public slots:
   virtual void onSearchChanged(const QString &s) {}
 
 signals:
-  void launchCommand();
+  void launchCommand(ViewCommand *command);
   void pushView(View *view);
   void pop();
   void popToRoot();
@@ -39,7 +42,9 @@ class ExtensionView : public View {
   std::optional<RootComponent> component;
 
 public slots:
-  void extensionMessage(const Message &msg) {}
+  void extensionMessage(const Message &msg) {
+    qDebug() << "got extension message" << msg.type << "from view";
+  }
 
   void render(QJsonObject data) {
     auto tree = data["root"].toObject();
@@ -50,7 +55,11 @@ public slots:
   }
 
 public:
-  ExtensionView(AppWindow &app) : View(app) { widget = new QWidget(); }
+  ExtensionView(AppWindow &app, const QString &name) : View(app) {
+    widget = new QLabel(name);
+  }
+
+  ~ExtensionView() { qDebug() << "Destroy extension view"; }
 };
 
 class Command {};
@@ -60,12 +69,34 @@ public:
   ViewCommand() {}
 
   virtual View *load(AppWindow &) = 0;
+  virtual void unload(AppWindow &) {}
+
+  ~ViewCommand() { qDebug() << "destroyed view"; }
 };
 
 /**
  */
 class HeadlessCommand : public Command {
   virtual void load() = 0;
+};
+
+class ExtensionCommand : public ViewCommand {
+  QString cmd;
+  QString ext;
+
+public:
+  ExtensionCommand(const QString &extensionId, const QString &cmd)
+      : ext(extensionId), cmd(cmd) {}
+
+  View *load(AppWindow &app) override {
+    app.extensionManager->activateCommand(ext, cmd);
+
+    return new ExtensionView(app, cmd);
+  }
+
+  void unload(AppWindow &app) override {
+    app.extensionManager->deactivateCommand(ext, cmd);
+  }
 };
 
 using CommandType = std::variant<ViewCommand>;

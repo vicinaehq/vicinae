@@ -146,6 +146,15 @@ public:
     writeMessage(Message::create("activate-command", data));
   }
 
+  void deactivateCommand(const QString &extensionId, const QString &cmdName) {
+    QJsonObject data;
+
+    data["extensionId"] = extensionId;
+    data["commandName"] = cmdName;
+
+    writeMessage(Message::create("deactivate-command", data));
+  }
+
   void start() {
     QFile file(socketPath);
 

@@ -10,6 +10,7 @@
 #include <QThread>
 #include <QVBoxLayout>
 #include <memory>
+#include <numbers>
 #include <qboxlayout.h>
 #include <qevent.h>
 #include <qlogging.h>
@@ -97,10 +98,10 @@ bool AppWindow::eventFilter(QObject *obj, QEvent *event) {
 
     bool isEsc = keyEvent->key() == Qt::Key_Escape;
 
-    if (commandStack.size() > 1) {
+    if (navigationStack.size() > 1) {
       if (isEsc || (keyEvent->key() == Qt::Key_Backspace &&
                     topBar->input->text().isEmpty())) {
-        popCommandObject();
+        popCurrentView();
         return true;
       }
     } else if (isEsc) {
@@ -128,15 +129,30 @@ bool AppWindow::eventFilter(QObject *obj, QEvent *event) {
 }
 
 void AppWindow::popCurrentView() {
-  if (navigationStack.size() == 0) {
+  if (navigationStack.size() == 1) {
     qDebug() << "Attempted to pop while navigationStack.size() == 0";
     return;
   }
 
+  auto previous = navigationStack.top();
   navigationStack.pop();
 
-  if (navigationStack.size() > 0) {
-    connectView(*navigationStack.top());
+  disconnectView(*previous);
+
+  auto next = navigationStack.top();
+
+  layout->replaceWidget(previous->widget, next->widget);
+  previous->widget->setParent(nullptr);
+  previous->setParent(nullptr);
+
+  connectView(*next);
+  next->setParent(this);
+  next->widget->show();
+
+  previous->deleteLater();
+
+  if (navigationStack.size() == 1) {
+    currentCommand->unload(*this);
   }
 }
 
@@ -154,14 +170,12 @@ void AppWindow::disconnectView(View &view) {
   disconnect(&view, &View::pushView, this, &AppWindow::pushView);
   disconnect(&view, &View::pop, this, &AppWindow::popCurrentView);
   disconnect(&view, &View::popToRoot, this, &AppWindow::popToRootView);
+  disconnect(&view, &View::launchCommand, this, &AppWindow::launchCommand);
 
   if (auto extView = dynamic_cast<ExtensionView *>(&view)) {
     disconnect(&*extensionManager, &ExtensionManager::extensionMessage, extView,
                &ExtensionView::extensionMessage);
   }
-
-  view.widget->setParent(nullptr);
-  view.widget->hide();
 
   topBar->input->removeEventFilter(&view);
 }
@@ -175,19 +189,13 @@ void AppWindow::connectView(View &view) {
   connect(&view, &View::pushView, this, &AppWindow::pushView);
   connect(&view, &View::pop, this, &AppWindow::popCurrentView);
   connect(&view, &View::popToRoot, this, &AppWindow::popToRootView);
+  connect(&view, &View::launchCommand, this, &AppWindow::launchCommand);
 
   if (auto extView = dynamic_cast<ExtensionView *>(&view)) {
     connect(&*extensionManager, &ExtensionManager::extensionMessage, extView,
             &ExtensionView::extensionMessage);
   }
 
-  if (navigationStack.empty()) {
-    layout->replaceWidget(defaultWidget, view.widget);
-  } else {
-    layout->replaceWidget(navigationStack.top()->widget, view.widget);
-  }
-
-  view.widget->show();
   topBar->input->installEventFilter(&view);
 }
 
@@ -199,10 +207,25 @@ void AppWindow::pushView(View *view) {
   }
 
   connectView(*view);
-  navigationStack.push(std::move(view));
+
+  if (navigationStack.empty()) {
+    layout->replaceWidget(defaultWidget, view->widget);
+  } else {
+    auto cur = navigationStack.top();
+
+    layout->replaceWidget(cur->widget, view->widget);
+    cur->widget->setParent(nullptr);
+    cur->widget->hide();
+  }
+
+  navigationStack.push(view);
 }
 
-void AppWindow::launchCommand(ViewCommand *cmd) { pushView(cmd->load(*this)); }
+void AppWindow::launchCommand(ViewCommand *cmd) {
+  currentCommand = cmd;
+
+  pushView(cmd->load(*this));
+}
 
 AppWindow::AppWindow(QWidget *parent)
     : QMainWindow(parent), topBar(new TopBar()), statusBar(new StatusBar()),

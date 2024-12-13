@@ -2,7 +2,6 @@
 #include "app-database.hpp"
 #include "calculator-database.hpp"
 #include "clipboard-service.hpp"
-#include "command.hpp"
 #include "extension_manager.hpp"
 #include "quicklist-database.hpp"
 #include <jsoncpp/json/value.h>
@@ -19,6 +18,10 @@
 
 template <class T> using Service = T &;
 
+class View;
+class ViewCommand;
+class Command;
+
 class AppWindow : public QMainWindow {
   Q_OBJECT
 
@@ -27,6 +30,7 @@ public:
   std::stack<QString> queryStack;
 
   std::stack<View *> navigationStack;
+  ViewCommand *currentCommand;
 
   std::unique_ptr<QuicklistDatabase> quicklinkDatabase;
   std::unique_ptr<CalculatorDatabase> calculatorDatabase;
