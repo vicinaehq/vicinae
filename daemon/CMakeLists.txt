@@ -76,7 +76,6 @@ qt_add_executable(${TARGET}
 	src/ui/turbobox.hpp
 	src/command-object.hpp
 	src/extension_manager.hpp
-	src/extension_object.hpp
 	src/command-object.cpp
 )
 

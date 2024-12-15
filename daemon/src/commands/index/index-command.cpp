@@ -7,7 +7,6 @@
 #include "command-object.hpp"
 #include "common.hpp"
 #include "extension_manager.hpp"
-#include "extension_object.hpp"
 #include "omnicast.hpp"
 #include "quicklist-database.hpp"
 #include "ui/color_circle.hpp"
@@ -84,9 +83,7 @@ class ExtensionCommandFactory : public ICommandFactory {
 public:
   ExtensionCommandFactory(const Extension::Command &cmd) : cmd(cmd) {}
 
-  virtual CommandObject *operator()(AppWindow *app) {
-    return new ExtensionObject(app, cmd);
-  }
+  virtual CommandObject *operator()(AppWindow *app) {}
 };
 
 class ExtensionCommandActionnable : public IActionnable {
