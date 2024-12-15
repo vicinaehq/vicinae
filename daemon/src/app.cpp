@@ -10,6 +10,7 @@
 #include <QThread>
 #include <QVBoxLayout>
 #include <memory>
+#include <new>
 #include <numbers>
 #include <qboxlayout.h>
 #include <qevent.h>

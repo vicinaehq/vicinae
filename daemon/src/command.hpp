@@ -1,4 +1,5 @@
 #pragma once
+#include "app-database.hpp"
 #include "app.hpp"
 #include "extension_manager.hpp"
 #include <qjsonobject.h>
@@ -37,12 +38,35 @@ class ExtensionList {};
 class ExtensionView : public View {
   Q_OBJECT
 
+  Service<ExtensionManager> extensionManager;
+  Service<AppDatabase> appDb;
+
   using RootComponent = std::variant<ExtensionList>;
 
   std::optional<RootComponent> component;
 
 public slots:
   void extensionMessage(const Message &msg) {
+    if (msg.type == "list-applications") {
+      QJsonObject res;
+      auto appArr = QJsonArray();
+
+      for (const auto &app : appDb.apps) {
+        QJsonObject obj;
+
+        obj["id"] = app->id;
+        obj["name"] = app->name;
+        appArr.push_back(obj);
+      }
+
+      res["apps"] = appArr;
+      extensionManager.reply(msg, res);
+    }
+
+    if (msg.type == "render") {
+      QTextStream(stdout) << QJsonDocument(msg.data).toJson();
+    }
+
     qDebug() << "got extension message" << msg.type << "from view";
   }
 
@@ -55,7 +79,9 @@ public slots:
   }
 
 public:
-  ExtensionView(AppWindow &app, const QString &name) : View(app) {
+  ExtensionView(AppWindow &app, const QString &name)
+      : View(app), extensionManager(service<ExtensionManager>()),
+        appDb(service<AppDatabase>()) {
     widget = new QLabel(name);
   }
 

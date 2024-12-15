@@ -72,6 +72,9 @@ class ExtensionManager : public QObject {
     auto type = json["type"].toString();
     auto mdat = json["data"].toObject();
 
+    qDebug() << "Extension ID" << json["extensionId"];
+    qDebug() << "Command name" << json["commandName"];
+
     return {id, type, mdat};
   }
 
