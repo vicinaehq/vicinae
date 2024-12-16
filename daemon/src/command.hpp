@@ -67,6 +67,7 @@ struct ListModel {
   bool isShowingDetail;
   QString navigationTitle;
   QString searchPlaceholderText;
+  QString onSearchTextChange;
   QList<ListItemViewModel> items;
 };
 
@@ -77,6 +78,7 @@ class ExtensionList : public QWidget {
   QListWidget *list;
   QList<ListItemViewModel> items;
   QHash<QListWidgetItem *, ListItemViewModel> itemMap;
+  Service<ExtensionManager> extensionManager;
 
 private slots:
   void currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous) {
@@ -91,8 +93,12 @@ private slots:
   }
 
 public:
-  ExtensionList(const ListModel &model, View &parent)
-      : parent(parent), list(new QListWidget()) {
+  ListModel model;
+
+  ExtensionList(const ListModel &model, View &parent,
+                Service<ExtensionManager> manager)
+      : parent(parent), list(new QListWidget()), extensionManager(manager),
+        model(model) {
     auto layout = new QVBoxLayout();
 
     list->setFocusPolicy(Qt::NoFocus);
@@ -110,6 +116,7 @@ public:
   }
 
   void dispatchModel(const ListModel &model) {
+    this->model = model;
     list->clear();
 
     parent.setSearchPlaceholderText(model.searchPlaceholderText);
@@ -127,6 +134,17 @@ public:
   void onSearchTextChanged(const QString &s) {
     list->clear();
     itemMap.clear();
+
+    if (!model.onSearchTextChange.isEmpty()) {
+      QJsonObject payload;
+      auto args = QJsonArray();
+
+      args.push_back(s);
+      payload["handlerId"] = model.onSearchTextChange;
+      payload["args"] = args;
+
+      extensionManager.sendCommand("invoke-handler", payload);
+    }
 
     for (const auto &item : items) {
       if (!item.title.contains(s, Qt::CaseInsensitive))
@@ -156,6 +174,9 @@ public:
 
 class ExtensionView : public View {
   Q_OBJECT
+
+  QString extensionId;
+  QString commandName;
 
   Service<ExtensionManager> extensionManager;
   Service<AppDatabase> appDb;
@@ -187,6 +208,7 @@ class ExtensionView : public View {
     model.isShowingDetail = props["isShowingDetail"].toBool(false);
     model.navigationTitle = props["navigationTitle"].toString("Command");
     model.searchPlaceholderText = props["searchBarPlaceholder"].toString();
+    model.onSearchTextChange = props["onSearchTextChange"].toString();
 
     for (const auto &child : list["children"].toArray()) {
       auto childObj = child.toObject();
@@ -251,11 +273,21 @@ class ExtensionView : public View {
       auto model = constructListModel(tree);
 
       if (componentType != "list") {
-        setRootComponent("list", new ExtensionList(model, *this));
+        setRootComponent("list",
+                         new ExtensionList(model, *this, extensionManager));
       } else {
         static_cast<ExtensionList *>(component)->dispatchModel(model);
       }
     }
+  }
+
+public:
+  void invokeHandler(const QString &handlerId, QJsonObject payload) {
+    payload["handlerId"] = handlerId;
+    payload["extensionId"] = extensionId;
+    payload["commandName"] = commandName;
+
+    extensionManager.sendCommand("invoke-handler", payload);
   }
 
 public slots:
@@ -291,7 +323,8 @@ public slots:
   }
 
 public:
-  ExtensionView(AppWindow &app, const QString &name)
+  ExtensionView(AppWindow &app, const QString &extensionId,
+                const QString &commandName)
       : View(app), extensionManager(service<ExtensionManager>()),
         appDb(service<AppDatabase>()) {
     widget = new QWidget();
@@ -332,7 +365,7 @@ public:
   View *load(AppWindow &app) override {
     app.extensionManager->activateCommand(ext, cmd);
 
-    return new ExtensionView(app, cmd);
+    return new ExtensionView(app, ext, cmd);
   }
 
   void unload(AppWindow &app) override {

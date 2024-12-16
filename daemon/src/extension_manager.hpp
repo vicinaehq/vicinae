@@ -158,6 +158,10 @@ public:
     writeMessage(Message::create("deactivate-command", data));
   }
 
+  void sendCommand(const QString &type, QJsonObject obj) {
+    writeMessage(Message::create(type, obj));
+  }
+
   void start() {
     QFile file(socketPath);
 
