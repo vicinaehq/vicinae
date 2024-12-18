@@ -337,22 +337,10 @@ private slots:
     qDebug() << "Extension command loaded" << sessionId;
   }
 
-  void extensionRequest(const QString &sessionId, const QString &action,
-                        const QJsonObject &payload) {
-    if (this->sessionId != sessionId) {
+  void extensionRequest(const QString &sessionId, const QString &id,
+                        const QString &action, const QJsonObject &payload) {
+    if (this->sessionId != sessionId)
       return;
-    }
-
-    qDebug() << "extension request" << action;
-  }
-
-  void extensionEvent(const QString &sessionId, const QString &action,
-                      const QJsonObject &payload) {
-    if (this->sessionId != sessionId) {
-      return;
-    }
-
-    qDebug() << "got event from " << sessionId << action;
 
     if (action == "render") {
       if (!viewStack.isEmpty()) {
@@ -366,19 +354,36 @@ private slots:
         app.pushView(view);
         view->render(payload);
       }
+
+      app.extensionManager->respond(id, {});
     }
 
-    if (action == "push-view") {
-      auto view = new ExtensionView(app);
+    if (action == "list-applications") {
+      QJsonArray apps;
 
-      viewStack.push(view);
-      app.pushView(view);
+      for (const auto &app : app.appDb->apps) {
+        QJsonObject appObj;
+
+        appObj["id"] = app->id;
+        appObj["name"] = app->name;
+
+        apps.push_back(appObj);
+      }
+
+      QJsonObject responseData;
+
+      responseData["apps"] = apps;
+
+      app.extensionManager->respond(id, responseData);
     }
 
-    if (action == "pop-view") {
-      viewStack.pop();
-      app.popCurrentView();
-    }
+    qDebug() << "extension request" << action;
+  }
+
+  void extensionEvent(const QString &sessionId, const QString &action,
+                      const QJsonObject &payload) {
+    if (this->sessionId != sessionId)
+      return;
   }
 
 public:

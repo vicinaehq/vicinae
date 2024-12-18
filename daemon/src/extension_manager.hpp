@@ -236,23 +236,6 @@ class ExtensionManager : public QObject {
     request(target, action, payload);
   }
 
-  bool respond(const QString &id, const QJsonObject &payload) {
-    auto it = incomingPendingRequests.find(id);
-
-    if (it == incomingPendingRequests.end()) {
-      return false;
-    }
-
-    auto envelope = *it;
-
-    incomingPendingRequests.remove(id);
-    envelope.target = envelope.sender;
-    envelope.sender = selfMessenger;
-    sendMessage(envelope, payload);
-
-    return true;
-  }
-
   void writeMessage(const Message &msg) {
     QJsonObject obj;
 
@@ -298,6 +281,25 @@ class ExtensionManager : public QObject {
 
 public:
   ExtensionManager() : socketPath("/tmp/omnicast-extension-manager.sock") {}
+
+  bool respond(const QString &id, const QJsonObject &payload) {
+    auto it = incomingPendingRequests.find(id);
+
+    if (it == incomingPendingRequests.end()) {
+      qDebug() << "no request with id " << id;
+      return false;
+    }
+
+    auto envelope = *it;
+
+    incomingPendingRequests.remove(id);
+    envelope.target = envelope.sender;
+    envelope.sender = selfMessenger;
+    envelope.type = MessageType::RESPONSE;
+    sendMessage(envelope, payload);
+
+    return true;
+  }
 
   void emitExtensionEvent(const QString &sessionId, const QString &action,
                           const QJsonObject &payload) {
@@ -368,8 +370,8 @@ signals:
                         const QJsonObject &payload);
   void extensionEvent(const QString &sessionId, const QString &action,
                       const QJsonObject &payload);
-  void extensionRequest(const QString &sessionId, const QString &action,
-                        const QJsonObject &payload);
+  void extensionRequest(const QString &sessionId, const QString &id,
+                        const QString &action, const QJsonObject &payload);
 
   void commandLoaded(const LoadedCommand &);
 
@@ -417,42 +419,47 @@ private slots:
   }
 
   void readLocalSocket() {
-    auto buf = managerSocket->readAll();
-    auto msg = parsePacket(buf);
+    while (managerSocket->bytesAvailable() > 0) {
+      auto buf = managerSocket->readAll();
+      auto msg = parsePacket(buf);
 
-    qDebug() << "got message of type " << msg.envelope.id << msg.envelope.type
-             << msg.envelope.action;
+      qDebug() << "got message of type " << msg.envelope.id << msg.envelope.type
+               << msg.envelope.action;
 
-    if (msg.envelope.sender.type == Messenger::Type::MANAGER) {
       if (msg.envelope.type == MessageType::REQUEST) {
-        qDebug() << "manager->main is not supported";
-        return;
+        incomingPendingRequests.insert(msg.envelope.id, msg.envelope);
       }
 
-      if (msg.envelope.type == MessageType::RESPONSE) {
-        auto it = outgoingPendingRequests.find(msg.envelope.id);
-
-        if (it == outgoingPendingRequests.end()) {
-          qDebug() << "No matching request for manager response";
+      if (msg.envelope.sender.type == Messenger::Type::MANAGER) {
+        if (msg.envelope.type == MessageType::REQUEST) {
+          qDebug() << "manager->main is not supported";
           return;
         }
 
-        outgoingPendingRequests.remove(msg.envelope.id);
-        handleManagerResponse(msg);
-      }
-    }
+        if (msg.envelope.type == MessageType::RESPONSE) {
+          auto it = outgoingPendingRequests.find(msg.envelope.id);
 
-    if (msg.envelope.sender.type == Messenger::Type::EXTENSION) {
-      if (msg.envelope.type == MessageType::EVENT) {
-        emit extensionEvent(msg.envelope.sender.id, msg.envelope.action,
-                            msg.data);
+          if (it == outgoingPendingRequests.end()) {
+            qDebug() << "No matching request for manager response";
+            return;
+          }
+
+          outgoingPendingRequests.remove(msg.envelope.id);
+          handleManagerResponse(msg);
+        }
       }
-      if (msg.envelope.type == MessageType::REQUEST) {
-        emit extensionRequest(msg.envelope.sender.id, msg.envelope.action,
+
+      if (msg.envelope.sender.type == Messenger::Type::EXTENSION) {
+        if (msg.envelope.type == MessageType::EVENT) {
+          emit extensionEvent(msg.envelope.sender.id, msg.envelope.action,
                               msg.data);
+        }
+        if (msg.envelope.type == MessageType::REQUEST) {
+          emit extensionRequest(msg.envelope.sender.id, msg.envelope.id,
+                                msg.envelope.action, msg.data);
+        }
       }
     }
-
     // QTextStream(stdout) << QJsonDocument(msg.data).toJson();
   }
 

@@ -129,7 +129,7 @@ bool AppWindow::eventFilter(QObject *obj, QEvent *event) {
 
 void AppWindow::popCurrentView() {
   if (navigationStack.size() == 1) {
-    qDebug() << "Attempted to pop while navigationStack.size() == 0";
+    qDebug() << "Attempted to pop root search";
     return;
   }
 
@@ -154,6 +154,7 @@ void AppWindow::popCurrentView() {
     currentCommand->unload(*this);
     currentCommand->deleteLater();
     currentCommand = nullptr;
+    topBar->hideBackButton();
   }
 }
 
@@ -173,13 +174,6 @@ void AppWindow::disconnectView(View &view) {
   disconnect(&view, &View::popToRoot, this, &AppWindow::popToRootView);
   disconnect(&view, &View::launchCommand, this, &AppWindow::launchCommand);
 
-  /*
-  if (auto extView = dynamic_cast<ExtensionView *>(&view)) {
-    disconnect(&*extensionManager, &ExtensionManager::extensionMessage, extView,
-               &ExtensionView::extensionMessage);
-  }
-  */
-
   topBar->input->removeEventFilter(&view);
 }
 
@@ -194,13 +188,6 @@ void AppWindow::connectView(View &view) {
   connect(&view, &View::popToRoot, this, &AppWindow::popToRootView);
   connect(&view, &View::launchCommand, this, &AppWindow::launchCommand);
 
-  /*
-  if (auto extView = dynamic_cast<ExtensionView *>(&view)) {
-    connect(&*extensionManager, &ExtensionManager::extensionMessage, extView,
-            &ExtensionView::extensionMessage);
-  }
-  */
-
   topBar->input->installEventFilter(&view);
 }
 
@@ -209,6 +196,10 @@ void AppWindow::pushView(View *view) {
     auto old = navigationStack.top();
 
     disconnectView(*old);
+  }
+
+  if (navigationStack.size() == 1) {
+    topBar->showBackButton();
   }
 
   connectView(*view);
