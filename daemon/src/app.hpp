@@ -20,6 +20,7 @@ template <class T> using Service = T &;
 
 class View;
 class ViewCommand;
+class ExtensionView;
 class Command;
 
 class AppWindow : public QMainWindow {
@@ -30,7 +31,7 @@ public:
   std::stack<QString> queryStack;
 
   std::stack<View *> navigationStack;
-  ViewCommand *currentCommand;
+  ViewCommand *currentCommand = nullptr;
 
   std::unique_ptr<QuicklistDatabase> quicklinkDatabase;
   std::unique_ptr<CalculatorDatabase> calculatorDatabase;
@@ -39,6 +40,7 @@ public:
   std::unique_ptr<ExtensionManager> extensionManager;
 
   void pushView(View *view);
+  void pushExtensionView(ExtensionView *view);
   void popCurrentView();
   void popToRootView();
   void disconnectView(View &view);

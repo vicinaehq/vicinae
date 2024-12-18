@@ -10,8 +10,6 @@
 #include <QThread>
 #include <QVBoxLayout>
 #include <memory>
-#include <new>
-#include <numbers>
 #include <qboxlayout.h>
 #include <qevent.h>
 #include <qlogging.h>
@@ -154,6 +152,8 @@ void AppWindow::popCurrentView() {
 
   if (navigationStack.size() == 1) {
     currentCommand->unload(*this);
+    currentCommand->deleteLater();
+    currentCommand = nullptr;
   }
 }
 
@@ -173,10 +173,12 @@ void AppWindow::disconnectView(View &view) {
   disconnect(&view, &View::popToRoot, this, &AppWindow::popToRootView);
   disconnect(&view, &View::launchCommand, this, &AppWindow::launchCommand);
 
+  /*
   if (auto extView = dynamic_cast<ExtensionView *>(&view)) {
     disconnect(&*extensionManager, &ExtensionManager::extensionMessage, extView,
                &ExtensionView::extensionMessage);
   }
+  */
 
   topBar->input->removeEventFilter(&view);
 }
@@ -192,10 +194,12 @@ void AppWindow::connectView(View &view) {
   connect(&view, &View::popToRoot, this, &AppWindow::popToRootView);
   connect(&view, &View::launchCommand, this, &AppWindow::launchCommand);
 
+  /*
   if (auto extView = dynamic_cast<ExtensionView *>(&view)) {
     connect(&*extensionManager, &ExtensionManager::extensionMessage, extView,
             &ExtensionView::extensionMessage);
   }
+  */
 
   topBar->input->installEventFilter(&view);
 }
@@ -223,9 +227,18 @@ void AppWindow::pushView(View *view) {
 }
 
 void AppWindow::launchCommand(ViewCommand *cmd) {
+  if (currentCommand) {
+    currentCommand->unload(*this);
+    currentCommand->deleteLater();
+  }
+
   currentCommand = cmd;
 
-  pushView(cmd->load(*this));
+  auto view = cmd->load(*this);
+
+  if (view) {
+    pushView(view);
+  }
 }
 
 AppWindow::AppWindow(QWidget *parent)

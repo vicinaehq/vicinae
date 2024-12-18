@@ -16,6 +16,7 @@ class RootView : public View {
   Service<ExtensionManager> extensionManager;
   QListWidget *list;
   QMap<QListWidgetItem *, Extension::Command> itemToCommand;
+  AppWindow &app;
 
 public:
   virtual void onSearchChanged(const QString &s) override {
@@ -51,7 +52,7 @@ public:
   }
 
   RootView(AppWindow &app)
-      : View(app), appDb(service<AppDatabase>()),
+      : View(app), app(app), appDb(service<AppDatabase>()),
         extensionManager(service<ExtensionManager>()), list(new QListWidget) {
     list->setFocusPolicy(Qt::NoFocus);
     list->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -60,18 +61,24 @@ public:
     connect(list, &QListWidget::currentItemChanged, this,
             &RootView::currentItemChanged);
     connect(list, &QListWidget::itemActivated, this, &RootView::itemActivate);
+    connect(&extensionManager, &ExtensionManager::commandLoaded, this,
+            &RootView::commandLoaded);
 
     widget = list;
   }
 
 private slots:
+  void commandLoaded(const LoadedCommand &command) {
+    qDebug() << "command loaded" << command.sessionId << command.command.name;
+  }
+
   void currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous) {
   }
 
   void itemActivate(QListWidgetItem *item) {
     auto cmd = itemToCommand[item];
 
-    emit launchCommand(new ExtensionCommand(cmd.extensionId, cmd.name));
+    emit launchCommand(new ExtensionCommand(app, cmd.extensionId, cmd.name));
   }
 };
 

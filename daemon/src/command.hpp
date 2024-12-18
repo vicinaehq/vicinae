@@ -142,8 +142,6 @@ public:
       args.push_back(s);
       payload["handlerId"] = model.onSearchTextChange;
       payload["args"] = args;
-
-      extensionManager.sendCommand("invoke-handler", payload);
     }
 
     for (const auto &item : items) {
@@ -174,9 +172,6 @@ public:
 
 class ExtensionView : public View {
   Q_OBJECT
-
-  QString extensionId;
-  QString commandName;
 
   Service<ExtensionManager> extensionManager;
   Service<AppDatabase> appDb;
@@ -265,9 +260,16 @@ class ExtensionView : public View {
     return model;
   }
 
+public:
+signals:
+  void extensionEvent(const QString &action, const QJsonObject &payload);
+
+public slots:
   void render(QJsonObject data) {
     auto tree = data["root"].toObject();
     auto rootType = tree["type"].toString();
+
+    qDebug() << "render extension view";
 
     if (rootType == "list") {
       auto model = constructListModel(tree);
@@ -281,50 +283,15 @@ class ExtensionView : public View {
     }
   }
 
-public:
-  void invokeHandler(const QString &handlerId, QJsonObject payload) {
-    payload["handlerId"] = handlerId;
-    payload["extensionId"] = extensionId;
-    payload["commandName"] = commandName;
-
-    extensionManager.sendCommand("invoke-handler", payload);
-  }
-
-public slots:
-  void extensionMessage(const Message &msg) {
-    if (msg.type == "list-applications") {
-      QJsonObject res;
-      auto appArr = QJsonArray();
-
-      for (const auto &app : appDb.apps) {
-        QJsonObject obj;
-
-        obj["id"] = app->id;
-        obj["name"] = app->name;
-        appArr.push_back(obj);
-      }
-
-      res["apps"] = appArr;
-      extensionManager.reply(msg, res);
-    }
-
-    if (msg.type == "render") {
-      QTextStream(stdout) << QJsonDocument(msg.data).toJson();
-      render(msg.data);
-    }
-
-    qDebug() << "got extension message" << msg.type << "from view";
-  }
-
   void onSearchChanged(const QString &s) override {
+    qDebug() << "on search changed";
     if (componentType == "list") {
       static_cast<ExtensionList *>(component)->onSearchTextChanged(s);
     }
   }
 
 public:
-  ExtensionView(AppWindow &app, const QString &extensionId,
-                const QString &commandName)
+  ExtensionView(AppWindow &app)
       : View(app), extensionManager(service<ExtensionManager>()),
         appDb(service<AppDatabase>()) {
     widget = new QWidget();
@@ -336,7 +303,9 @@ public:
   ~ExtensionView() { qDebug() << "Destroy extension view"; }
 };
 
-class Command {};
+;
+
+class Command : public QObject {};
 
 class ViewCommand : public Command {
 public:
@@ -348,48 +317,90 @@ public:
   ~ViewCommand() { qDebug() << "destroyed view"; }
 };
 
-/**
- */
 class HeadlessCommand : public Command {
   virtual void load() = 0;
 };
 
 class ExtensionCommand : public ViewCommand {
-  QString cmd;
-  QString ext;
+  Q_OBJECT
+
+  QStack<ExtensionView *> viewStack;
+  QString extensionId;
+  QString commandName;
+  QString sessionId;
+  AppWindow &app;
+
+private slots:
+  void commandLoaded(const LoadedCommand &cmd) {
+    sessionId = cmd.sessionId;
+
+    qDebug() << "Extension command loaded" << sessionId;
+  }
+
+  void extensionRequest(const QString &sessionId, const QString &action,
+                        const QJsonObject &payload) {
+    if (this->sessionId != sessionId) {
+      return;
+    }
+
+    qDebug() << "extension request" << action;
+  }
+
+  void extensionEvent(const QString &sessionId, const QString &action,
+                      const QJsonObject &payload) {
+    if (this->sessionId != sessionId) {
+      return;
+    }
+
+    qDebug() << "got event from " << sessionId << action;
+
+    if (action == "render") {
+      if (!viewStack.isEmpty()) {
+        auto top = viewStack.top();
+
+        top->render(payload);
+      } else {
+        auto view = new ExtensionView(app);
+
+        viewStack.push(view);
+        app.pushView(view);
+        view->render(payload);
+      }
+    }
+
+    if (action == "push-view") {
+      auto view = new ExtensionView(app);
+
+      viewStack.push(view);
+      app.pushView(view);
+    }
+
+    if (action == "pop-view") {
+      viewStack.pop();
+      app.popCurrentView();
+    }
+  }
 
 public:
-  ExtensionCommand(const QString &extensionId, const QString &cmd)
-      : ext(extensionId), cmd(cmd) {}
+  ExtensionCommand(AppWindow &app, const QString &extensionId,
+                   const QString &commandName)
+      : app(app), extensionId(extensionId), commandName(commandName) {}
 
   View *load(AppWindow &app) override {
-    app.extensionManager->activateCommand(ext, cmd);
+    connect(app.extensionManager.get(), &ExtensionManager::commandLoaded, this,
+            &ExtensionCommand::commandLoaded);
+    connect(app.extensionManager.get(), &ExtensionManager::extensionEvent, this,
+            &ExtensionCommand::extensionEvent);
+    connect(app.extensionManager.get(), &ExtensionManager::extensionRequest,
+            this, &ExtensionCommand::extensionRequest);
 
-    return new ExtensionView(app, ext, cmd);
+    app.extensionManager->loadCommand(extensionId, commandName);
+
+    return nullptr;
   }
 
   void unload(AppWindow &app) override {
-    app.extensionManager->deactivateCommand(ext, cmd);
+    if (!sessionId.isEmpty())
+      app.extensionManager->unloadCommand(sessionId);
   }
 };
-
-using CommandType = std::variant<ViewCommand>;
-
-/*
-class CalculatorHistoryList : public View {
-public:
-  CalculatorHistoryList() { widget = new QLabel(); }
-
-  void onSearchChanged(const QString &s) override {
-    qDebug() << "on search changed";
-
-    emit launchCommand();
-
-    emit pushView(std::make_unique<CalculatorHistoryList>());
-  }
-};
-
-class CalculatorHistoryCommand : public ViewCommand {
-  UniqueView load() { return std::make_unique<CalculatorHistoryList>(); }
-};
-*/
