@@ -55,6 +55,27 @@ class ExtensionView : public View {
       itemModel.title = props["title"].toString();
       itemModel.subtitle = props["subtitle"].toString();
 
+      if (auto it = props.find("actions"); it != props.end()) {
+        ActionPannel pannel;
+        auto obj = it->toObject();
+
+        auto pannelProps = obj["props"].toObject();
+        auto children = obj["children"].toArray();
+
+        pannel.title = pannelProps["title"].toString();
+
+        for (const auto &ref : children) {
+          auto obj = ref.toObject();
+          ActionModel action;
+
+          action.title = obj["title"].toString();
+          action.onAction = obj["onAction"].toString();
+          pannel.actions.push_back(action);
+        }
+
+        itemModel.actionPannel = pannel;
+      }
+
       if (auto it = props.find("detail"); it != props.end()) {
         auto detailProps = it->toObject()["props"].toObject();
         ListItemDetail detail;

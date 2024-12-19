@@ -14,6 +14,20 @@ struct MetadataSeparator {};
 
 using MetadataItem = std::variant<MetadataLabel, MetadataSeparator>;
 
+struct ActionModel {
+  QString title;
+  QString onAction;
+};
+
+struct ActionPannelDivider {};
+
+using ActionPannelItem = std::variant<ActionModel, ActionPannelDivider>;
+
+struct ActionPannel {
+  QString title;
+  QList<ActionModel> actions;
+};
+
 struct ListItemDetail {
   QString markdown;
   QList<MetadataItem> metadata;
@@ -24,6 +38,7 @@ struct ListItemViewModel {
   QString title;
   QString subtitle;
   std::optional<ListItemDetail> detail;
+  std::optional<ActionPannel> actionPannel;
 };
 
 struct ListModel {
