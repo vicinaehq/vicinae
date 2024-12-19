@@ -304,8 +304,9 @@ public:
   void emitExtensionEvent(const QString &sessionId, const QString &action,
                           const QJsonObject &payload) {
     Messenger target{.id = sessionId, .type = Messenger::Type::EXTENSION};
+    auto envelope = makeEnvelope(MessageType::EVENT, target, action);
 
-    request(target, action, payload);
+    sendMessage(envelope, payload);
   }
 
   void reply(const Message &message, QJsonObject data) {

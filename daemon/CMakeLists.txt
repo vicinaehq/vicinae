@@ -42,6 +42,11 @@ qt_add_executable(${TARGET}
 
 	src/root-command.hpp
 	src/command.hpp
+	src/extension.hpp
+	src/extension-list.hpp
+	src/extension-view.hpp
+	src/view.hpp
+
 
 	src/xdg/xdg-desktop.cpp
 

@@ -54,6 +54,7 @@ public:
   RootView(AppWindow &app)
       : View(app), app(app), appDb(service<AppDatabase>()),
         extensionManager(service<ExtensionManager>()), list(new QListWidget) {
+    forwardInputEvents(list);
     list->setFocusPolicy(Qt::NoFocus);
     list->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     list->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
