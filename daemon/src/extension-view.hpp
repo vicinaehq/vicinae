@@ -42,6 +42,11 @@ class ExtensionView : public View {
 
       action.title = obj["title"].toString();
       action.onAction = obj["onAction"].toString();
+
+      if (obj.contains("icon")) {
+        action.icon = constructImageLikeModel(obj.value("icon").toObject());
+      }
+
       pannel.actions.push_back(action);
     }
 
@@ -73,6 +78,39 @@ class ExtensionView : public View {
     return items;
   }
 
+  ImageLikeModel constructImageLikeModel(const QJsonObject &data) {
+    ImageLikeModel model;
+
+    qDebug() << "image" << QJsonDocument(data).toJson();
+
+    if (data.contains("url")) {
+      ImageUrlModel model;
+
+      model.url = data.value("url").toString();
+
+      return model;
+    }
+
+    if (data.contains("path")) {
+      ImageFileModel model;
+
+      model.path = data.value("path").toString();
+
+      return model;
+    }
+
+    if (data.contains("iconName")) {
+      ThemeIconModel model;
+
+      model.iconName = data.value("iconName").toString();
+      model.theme = data.value("theme").toString();
+
+      return model;
+    }
+
+    return ThemeIconModel{.iconName = "application-x-executable"};
+  }
+
   ListItemDetail constructListItemDetailModel(QJsonObject &instance) {
     ListItemDetail detail;
     auto props = instance["props"].toObject();
@@ -101,6 +139,10 @@ class ExtensionView : public View {
         QUuid::createUuid().toString(QUuid::StringFormat::WithoutBraces));
     model.title = props["title"].toString();
     model.subtitle = props["subtitle"].toString();
+
+    if (props.contains("icon")) {
+      model.icon = constructImageLikeModel(props.value("icon").toObject());
+    }
 
     for (const auto &child : children) {
       auto obj = child.toObject();

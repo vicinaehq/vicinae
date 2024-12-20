@@ -114,7 +114,6 @@ bool AppWindow::eventFilter(QObject *obj, QEvent *event) {
     }
 
     if (keyEvent->modifiers().testFlag(Qt::ControlModifier)) {
-      qDebug() << "control";
     }
 
     if (keyEvent->modifiers().testFlag(Qt::ControlModifier) &&

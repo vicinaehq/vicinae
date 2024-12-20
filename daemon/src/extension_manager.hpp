@@ -125,7 +125,7 @@ class Bus : public QObject {
 
     auto json = QJsonDocument::fromJson(data);
 
-    // QTextStream(stdout) << json.toJson();
+    QTextStream(stdout) << json.toJson();
 
     return parseFullMessage(json.object());
   }
@@ -236,9 +236,6 @@ private slots:
     while (socket->bytesAvailable() > 0) {
       auto buf = socket->readAll();
       auto msg = parsePacket(buf);
-
-      qDebug() << "got message of type " << msg.envelope.id << msg.envelope.type
-               << msg.envelope.action;
 
       if (msg.envelope.type == MessageType::REQUEST) {
         incomingPendingRequests.insert(msg.envelope.id, msg.envelope);

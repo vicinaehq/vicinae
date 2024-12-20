@@ -5,6 +5,22 @@
 #include <qjsonobject.h>
 #include <qtmetamacros.h>
 
+struct ThemeIconModel {
+  QString iconName;
+  QString theme;
+};
+
+struct ImageFileModel {
+  QString path;
+};
+
+struct ImageUrlModel {
+  QString url;
+};
+
+using ImageLikeModel =
+    std::variant<ImageUrlModel, ThemeIconModel, ImageFileModel>;
+
 struct MetadataLabel {
   QString text;
   QString title;
@@ -17,6 +33,7 @@ using MetadataItem = std::variant<MetadataLabel, MetadataSeparator>;
 struct ActionModel {
   QString title;
   QString onAction;
+  std::optional<ImageLikeModel> icon;
 };
 
 struct ActionPannelDivider {};
@@ -37,6 +54,7 @@ struct ListItemViewModel {
   QString id;
   QString title;
   QString subtitle;
+  std::optional<ImageLikeModel> icon;
   std::optional<ListItemDetail> detail;
   std::optional<ActionPannel> actionPannel;
 };
