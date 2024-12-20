@@ -1,15 +1,47 @@
 #pragma once
+#include "common.hpp"
 #include "extension.hpp"
 #include "omnicast.hpp"
 #include "view.hpp"
 #include <QListWidget>
+#include <qboxlayout.h>
+#include <qlabel.h>
 #include <qlistwidget.h>
+#include <qsizepolicy.h>
+#include <qwidget.h>
+
+class DetailWidget : public QWidget {
+  QVBoxLayout *layout;
+  QLabel *markdown;
+
+public:
+  DetailWidget() : layout(new QVBoxLayout), markdown(new QLabel) {
+    layout->addWidget(markdown);
+
+    setLayout(layout);
+  }
+
+  void dispatchModel(const ListItemDetail &model) {
+    QString s;
+
+    for (const auto &meta : model.metadata) {
+      if (auto label = std::get_if<MetadataLabel>(&meta)) {
+        s += label->text;
+      }
+    }
+
+    markdown->setText(s);
+  }
+};
 
 class ExtensionList : public ExtensionComponent {
   Q_OBJECT
 
   View &parent;
+  QHBoxLayout *layout;
   QListWidget *list;
+  DetailWidget *detail = nullptr;
+
   QList<ListItemViewModel> items;
   QHash<QListWidgetItem *, ListItemViewModel> itemMap;
 
@@ -20,8 +52,23 @@ private slots:
     qDebug() << "selected item" << item.title;
 
     if (item.detail) {
+      auto newDetailWidget = new DetailWidget();
+
       qDebug() << "item has detail with" << item.detail->metadata.size()
                << "metadata lines";
+
+      if (layout->count() == 2) {
+        layout->addWidget(newDetailWidget, 2);
+      } else {
+        layout->replaceWidget(detail, newDetailWidget);
+        detail->deleteLater();
+      }
+
+      detail = newDetailWidget;
+      detail->dispatchModel(*item.detail);
+    } else if (detail) {
+      layout->removeWidget(detail);
+      detail->deleteLater();
     }
   }
 
@@ -29,16 +76,17 @@ public:
   ListModel model;
 
   ExtensionList(const ListModel &model, View &parent)
-      : parent(parent), list(new QListWidget()), model(model) {
-    auto layout = new QVBoxLayout();
-
+      : parent(parent), layout(new QHBoxLayout), list(new QListWidget()),
+        model(model) {
     parent.forwardInputEvents(list);
 
     list->setFocusPolicy(Qt::NoFocus);
     list->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     list->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-    layout->addWidget(list);
+    list->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
+    layout->addWidget(list, 1);
+    layout->addWidget(new VDivider());
     layout->setContentsMargins(0, 0, 0, 0);
 
     connect(list, &QListWidget::currentItemChanged, this,

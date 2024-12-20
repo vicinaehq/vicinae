@@ -3,6 +3,7 @@
 #include <QJsonArray>
 #include <QString>
 #include <QUuid>
+#include <qdebug.h>
 #include <qdir.h>
 #include <qhash.h>
 #include <qjsondocument.h>
@@ -14,6 +15,8 @@
 #include <qobject.h>
 #include <qprocess.h>
 #include <qstringview.h>
+#include <qthread.h>
+#include <qtmetamacros.h>
 #include <qtypes.h>
 #include <quuid.h>
 #include <unistd.h>
@@ -58,7 +61,7 @@ struct LoadedCommand {
 static const char *exec =
     "/home/aurelle/prog/perso/omnicast-sdk/extension-manager/dist/index.js";
 
-class ExtensionManager : public QObject {
+class Bus : public QObject {
   Q_OBJECT
 
   enum MessageType { REQUEST, RESPONSE, EVENT };
@@ -112,11 +115,7 @@ class ExtensionManager : public QObject {
   QHash<QString, MessageEnvelope> outgoingPendingRequests;
   QHash<QString, MessageEnvelope> incomingPendingRequests;
 
-  QProcess process;
-  QLocalServer ipc;
-  QString socketPath;
-  QLocalSocket *managerSocket = nullptr;
-  QList<Extension> loadedExtensions;
+  QLocalSocket *socket;
 
   FullMessage parsePacket(QByteArray &buf) {
     QDataStream dataStream(&buf, QIODevice::ReadOnly);
@@ -126,7 +125,7 @@ class ExtensionManager : public QObject {
 
     auto json = QJsonDocument::fromJson(data);
 
-    QTextStream(stdout) << json.toJson();
+    // QTextStream(stdout) << json.toJson();
 
     return parseFullMessage(json.object());
   }
@@ -204,8 +203,10 @@ class ExtensionManager : public QObject {
     QDataStream dataStream(&data, QIODevice::WriteOnly);
 
     dataStream << doc.toJson();
-    managerSocket->write(data);
-    managerSocket->waitForBytesWritten();
+    socket->write(data);
+    qDebug() << "waiting for write...";
+    socket->waitForBytesWritten(1000);
+    qDebug() << "wrote message";
   }
 
   void request(const Messenger &target, const QString &action,
@@ -223,12 +224,6 @@ class ExtensionManager : public QObject {
     sendMessage(envelope, payload);
   }
 
-  void requestManager(const QString &action, const QJsonObject &payload) {
-    Messenger target{.type = Messenger::Type::MANAGER};
-
-    request(target, action, payload);
-  }
-
   void requestExtension(const QString &sessionId, const QString &action,
                         const QJsonObject &payload) {
     Messenger target{.id = sessionId, .type = Messenger::Type::EXTENSION};
@@ -236,51 +231,65 @@ class ExtensionManager : public QObject {
     request(target, action, payload);
   }
 
-  void writeMessage(const Message &msg) {
-    QJsonObject obj;
+private slots:
+  void readyRead() {
+    while (socket->bytesAvailable() > 0) {
+      auto buf = socket->readAll();
+      auto msg = parsePacket(buf);
 
-    obj["id"] = msg.id;
-    obj["type"] = msg.type;
-    obj["data"] = msg.data;
+      qDebug() << "got message of type " << msg.envelope.id << msg.envelope.type
+               << msg.envelope.action;
 
-    QJsonDocument doc(obj);
-
-    QByteArray data;
-    QDataStream dataStream(&data, QIODevice::WriteOnly);
-
-    dataStream << doc.toJson();
-    managerSocket->write(data);
-    managerSocket->waitForBytesWritten();
-  }
-
-  void parseListExtensionData(QJsonObject &obj) {
-    QList<Extension> extensions;
-
-    for (const auto &ext : obj["extensions"].toArray()) {
-      auto extObj = ext.toObject();
-      Extension extension{.sessionId = extObj["sessionId"].toString()};
-
-      for (const auto &cmd : extObj["commands"].toArray()) {
-        auto cmdObj = cmd.toObject();
-        Extension::Command finalCmd{.name = cmdObj["name"].toString(),
-                                    .title = cmdObj["title"].toString(),
-                                    .subtitle = cmdObj["subtitle"].toString(),
-                                    .description =
-                                        cmdObj["description"].toString(),
-                                    .mode = cmdObj["mode"].toString(),
-                                    .extensionId = extension.sessionId};
-
-        extension.commands.push_back(finalCmd);
+      if (msg.envelope.type == MessageType::REQUEST) {
+        incomingPendingRequests.insert(msg.envelope.id, msg.envelope);
       }
 
-      extensions.push_back(extension);
-    }
+      if (msg.envelope.sender.type == Messenger::Type::MANAGER) {
+        if (msg.envelope.type == MessageType::REQUEST) {
+          qDebug() << "manager->main is not supported";
+          return;
+        }
 
-    loadedExtensions = extensions;
+        if (msg.envelope.type == MessageType::RESPONSE) {
+          auto it = outgoingPendingRequests.find(msg.envelope.id);
+
+          if (it == outgoingPendingRequests.end()) {
+            qDebug() << "No matching request for manager response";
+            return;
+          }
+
+          outgoingPendingRequests.remove(msg.envelope.id);
+          emit managerResponse(msg.envelope.action, msg.data);
+        }
+      }
+
+      if (msg.envelope.sender.type == Messenger::Type::EXTENSION) {
+        if (msg.envelope.type == MessageType::EVENT) {
+          emit extensionEvent(msg.envelope.sender.id, msg.envelope.action,
+                              msg.data);
+        }
+        if (msg.envelope.type == MessageType::REQUEST) {
+          emit extensionRequest(msg.envelope.sender.id, msg.envelope.id,
+                                msg.envelope.action, msg.data);
+        }
+      }
+    }
   }
 
 public:
-  ExtensionManager() : socketPath("/tmp/omnicast-extension-manager.sock") {}
+signals:
+  void managerResponse(const QString &action, QJsonObject &data);
+  void extensionRequest(const QString &sessionId, const QString &id,
+                        const QString &action, QJsonObject &data);
+  void extensionEvent(const QString &sessionId, const QString &action,
+                      QJsonObject &data);
+
+public:
+  void requestManager(const QString &action, const QJsonObject &payload) {
+    Messenger target{.type = Messenger::Type::MANAGER};
+
+    request(target, action, payload);
+  }
 
   bool respond(const QString &id, const QJsonObject &payload) {
     auto it = incomingPendingRequests.find(id);
@@ -309,11 +318,7 @@ public:
     sendMessage(envelope, payload);
   }
 
-  void reply(const Message &message, QJsonObject data) {
-    writeMessage(Message::createReply(message, data));
-  }
-
-  const QList<Extension> &extensions() { return loadedExtensions; }
+  void ping() { requestManager("ping", {}); }
 
   void loadCommand(const QString &extensionId, const QString &cmdName) {
     QJsonObject data;
@@ -332,12 +337,39 @@ public:
     requestManager("unload-command", data);
   }
 
-  void sendCommand(const QString &type, QJsonObject obj) {
-    writeMessage(Message::create(type, obj));
+  Bus(QLocalSocket *socket) : socket(socket) {
+    connect(socket, &QLocalSocket::readyRead, this, &Bus::readyRead);
   }
 
-  void start() {
+  ~Bus() { socket->deleteLater(); }
+};
+
+class ExtensionManagerImpl : public QObject {
+  Q_OBJECT
+
+  QProcess process;
+  QLocalServer ipc;
+  QString socketPath = "/tmp/omnicast-extension-manager.sock";
+  Bus *bus = nullptr;
+
+public slots:
+  bool respond(const QString &id, const QJsonObject &payload) {
+    return bus->respond(id, payload);
+  }
+
+  void emitExtensionEvent(const QString &sessionId, const QString &action,
+                          const QJsonObject &payload) {
+    return bus->emitExtensionEvent(sessionId, action, payload);
+  }
+
+  void requestManager(const QString &action, const QJsonObject &payload) {
+    return bus->requestManager(action, payload);
+  }
+
+  void run() {
     QFile file(socketPath);
+
+    qDebug() << "run file";
 
     if (file.exists())
       file.remove();
@@ -355,113 +387,42 @@ public:
         "/home/aurelle/.local/share/omnicast/extensions");
 
     connect(&process, &QProcess::readyReadStandardOutput, this,
-            &ExtensionManager::readOutput);
+            &ExtensionManagerImpl::readOutput);
     connect(&process, &QProcess::readyReadStandardError, this,
-            &ExtensionManager::readError);
-    connect(&process, &QProcess::finished, this, &ExtensionManager::finished);
+            &ExtensionManagerImpl::readError);
+    connect(&process, &QProcess::finished, this,
+            &ExtensionManagerImpl::finished);
     connect(&ipc, &QLocalServer::newConnection, this,
-            &ExtensionManager::newConnection);
+            &ExtensionManagerImpl::newConnection);
 
     process.setEnvironment(environ);
     process.start("/bin/node", {"runtime.js"});
+    qDebug() << "started process";
   }
 
 signals:
-  void extensionMessage(const QString &sessionId, const QString &action,
-                        const QJsonObject &payload);
   void extensionEvent(const QString &sessionId, const QString &action,
                       const QJsonObject &payload);
   void extensionRequest(const QString &sessionId, const QString &id,
                         const QString &action, const QJsonObject &payload);
-
+  void managerResponse(const QString &action, QJsonObject &payload);
   void commandLoaded(const LoadedCommand &);
 
 private slots:
   void newConnection() {
     qDebug() << "new connection";
-    managerSocket = ipc.nextPendingConnection();
-    requestManager("ping", {});
+    auto socket = ipc.nextPendingConnection();
 
-    managerSocket->waitForReadyRead();
-    auto buf = managerSocket->readAll();
+    bus = new Bus(socket);
 
-    qDebug() << "Got back a packet of size" << buf.size() << buf;
-    auto msg = parsePacket(buf);
+    connect(bus, &Bus::managerResponse, this,
+            &ExtensionManagerImpl::managerResponse);
+    connect(bus, &Bus::extensionEvent, this,
+            &ExtensionManagerImpl::extensionEvent);
+    connect(bus, &Bus::extensionRequest, this,
+            &ExtensionManagerImpl::extensionRequest);
 
-    if (msg.envelope.action != "pong") {
-      qDebug() << "pong expected, got " << msg.envelope.action;
-    }
-
-    qDebug() << "received pong";
-
-    connect(managerSocket, &QLocalSocket::readyRead, this,
-            &ExtensionManager::readLocalSocket);
-
-    requestManager("list-extensions", {});
-  }
-
-  void handleManagerResponse(FullMessage &msg) {
-    QString &action = msg.envelope.action;
-
-    if (action == "list-extensions") {
-      return parseListExtensionData(msg.data);
-    }
-
-    if (action == "load-command") {
-      auto sessionId = msg.data["sessionId"].toString();
-
-      LoadedCommand cmd;
-
-      cmd.sessionId = sessionId;
-      cmd.command.name = msg.data["command"].toObject()["name"].toString();
-
-      emit commandLoaded(cmd);
-    }
-  }
-
-  void readLocalSocket() {
-    while (managerSocket->bytesAvailable() > 0) {
-      auto buf = managerSocket->readAll();
-      auto msg = parsePacket(buf);
-
-      qDebug() << "got message of type " << msg.envelope.id << msg.envelope.type
-               << msg.envelope.action;
-
-      if (msg.envelope.type == MessageType::REQUEST) {
-        incomingPendingRequests.insert(msg.envelope.id, msg.envelope);
-      }
-
-      if (msg.envelope.sender.type == Messenger::Type::MANAGER) {
-        if (msg.envelope.type == MessageType::REQUEST) {
-          qDebug() << "manager->main is not supported";
-          return;
-        }
-
-        if (msg.envelope.type == MessageType::RESPONSE) {
-          auto it = outgoingPendingRequests.find(msg.envelope.id);
-
-          if (it == outgoingPendingRequests.end()) {
-            qDebug() << "No matching request for manager response";
-            return;
-          }
-
-          outgoingPendingRequests.remove(msg.envelope.id);
-          handleManagerResponse(msg);
-        }
-      }
-
-      if (msg.envelope.sender.type == Messenger::Type::EXTENSION) {
-        if (msg.envelope.type == MessageType::EVENT) {
-          emit extensionEvent(msg.envelope.sender.id, msg.envelope.action,
-                              msg.data);
-        }
-        if (msg.envelope.type == MessageType::REQUEST) {
-          emit extensionRequest(msg.envelope.sender.id, msg.envelope.id,
-                                msg.envelope.action, msg.data);
-        }
-      }
-    }
-    // QTextStream(stdout) << QJsonDocument(msg.data).toJson();
+    bus->requestManager("list-extensions", {});
   }
 
   void finished(int exitCode, QProcess::ExitStatus status) {
@@ -472,12 +433,134 @@ private slots:
   void readOutput() {
     auto buf = process.readAllStandardOutput();
 
-    QTextStream(stdout) << buf;
+    // QTextStream(stdout) << buf;
   }
 
   void readError() {
     auto buf = process.readAllStandardError();
 
     QTextStream(stderr) << buf;
+  }
+};
+
+class ExtensionManager : public QObject {
+  Q_OBJECT
+  ExtensionManagerImpl *impl;
+  QList<Extension> loadedExtensions;
+  QThread thread;
+
+private:
+signals:
+  void sendResponse(const QString &id, const QJsonObject &data);
+  void sendExtensionEvent(const QString &sessionId, const QString &action,
+                          const QJsonObject &payload);
+  void sendManagerRequest(const QString &action, const QJsonObject &data);
+
+public:
+  ExtensionManager() : impl(new ExtensionManagerImpl) {}
+
+signals:
+  void extensionEvent(const QString &sessionId, const QString &action,
+                      const QJsonObject &payload);
+  void extensionRequest(const QString &sessionId, const QString &id,
+                        const QString &action, const QJsonObject &payload);
+  void commandLoaded(const LoadedCommand &);
+
+public:
+  const QList<Extension> &extensions() { return loadedExtensions; }
+
+  void respond(const QString &id, const QJsonObject &data) {
+    emit sendResponse(id, data);
+  }
+
+  void emitExtensionEvent(const QString &sessionId, const QString &action,
+                          const QJsonObject &payload) {
+    emit sendExtensionEvent(sessionId, action, payload);
+  }
+
+  void requestManager(const QString &action, const QJsonObject &payload) {
+    emit sendManagerRequest(action, payload);
+  }
+
+  void loadCommand(const QString &extensionId, const QString &cmd) {
+    QJsonObject payload;
+
+    payload["extensionId"] = extensionId;
+    payload["commandName"] = cmd;
+
+    emit sendManagerRequest("load-command", payload);
+  }
+
+  void unloadCommand(const QString &sessionId) {
+    QJsonObject payload;
+
+    payload["sessionId"] = sessionId;
+
+    emit sendManagerRequest("unload-command", payload);
+  }
+
+  void parseListExtensionData(QJsonObject &obj) {
+    QList<Extension> extensions;
+
+    for (const auto &ext : obj["extensions"].toArray()) {
+      auto extObj = ext.toObject();
+      Extension extension{.sessionId = extObj["sessionId"].toString()};
+
+      for (const auto &cmd : extObj["commands"].toArray()) {
+        auto cmdObj = cmd.toObject();
+        Extension::Command finalCmd{.name = cmdObj["name"].toString(),
+                                    .title = cmdObj["title"].toString(),
+                                    .subtitle = cmdObj["subtitle"].toString(),
+                                    .description =
+                                        cmdObj["description"].toString(),
+                                    .mode = cmdObj["mode"].toString(),
+                                    .extensionId = extension.sessionId};
+
+        extension.commands.push_back(finalCmd);
+      }
+
+      extensions.push_back(extension);
+    }
+
+    loadedExtensions = extensions;
+  }
+
+  void handleManagerResponse(const QString &action, QJsonObject &data) {
+    if (action == "list-extensions") {
+      return parseListExtensionData(data);
+    }
+
+    if (action == "load-command") {
+      auto sessionId = data["sessionId"].toString();
+
+      LoadedCommand cmd;
+
+      cmd.sessionId = sessionId;
+      cmd.command.name = data["command"].toObject()["name"].toString();
+
+      emit commandLoaded(cmd);
+    }
+  }
+
+  void start() {
+    connect(impl, &ExtensionManagerImpl::extensionEvent, this,
+            &ExtensionManager::extensionEvent);
+    connect(impl, &ExtensionManagerImpl::extensionRequest, this,
+            &ExtensionManager::extensionRequest);
+    connect(impl, &ExtensionManagerImpl::commandLoaded, this,
+            &ExtensionManager::commandLoaded);
+    connect(impl, &ExtensionManagerImpl::managerResponse, this,
+            &ExtensionManager::handleManagerResponse);
+
+    connect(this, &ExtensionManager::sendResponse, impl,
+            &ExtensionManagerImpl::respond);
+    connect(this, &ExtensionManager::sendExtensionEvent, impl,
+            &ExtensionManagerImpl::emitExtensionEvent);
+    connect(this, &ExtensionManager::sendManagerRequest, impl,
+            &ExtensionManagerImpl::requestManager);
+
+    impl->run();
+
+    qDebug() << "start implementation";
   }
 };

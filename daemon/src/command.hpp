@@ -39,6 +39,7 @@ class ExtensionCommand : public ViewCommand {
   QString commandName;
   QString sessionId;
   AppWindow &app;
+  std::optional<QJsonObject> lastRender;
 
 private slots:
   void commandLoaded(const LoadedCommand &cmd) {
@@ -47,32 +48,39 @@ private slots:
     qDebug() << "Extension command loaded" << sessionId;
   }
 
+  void batchRender() {
+    if (lastRender) {
+      render(*lastRender);
+      lastRender = std::nullopt;
+    }
+  }
+
+  void render(const QJsonObject &payload) {
+    if (!viewStack.isEmpty()) {
+      auto top = viewStack.top();
+
+      top->render(payload);
+    } else {
+      auto view = new ExtensionView(app);
+
+      connect(view, &ExtensionView::extensionEvent, this,
+              [this](const QString &action, const QJsonObject &obj) {
+                app.extensionManager->emitExtensionEvent(this->sessionId,
+                                                         action, obj);
+              });
+
+      viewStack.push(view);
+      app.pushView(view);
+      view->render(payload);
+    }
+  }
+
   void extensionRequest(const QString &sessionId, const QString &id,
                         const QString &action, const QJsonObject &payload) {
     if (this->sessionId != sessionId)
       return;
 
-    if (action == "render") {
-      if (!viewStack.isEmpty()) {
-        auto top = viewStack.top();
-
-        top->render(payload);
-      } else {
-        auto view = new ExtensionView(app);
-
-        connect(view, &ExtensionView::extensionEvent, this,
-                [this](const QString &action, const QJsonObject &obj) {
-                  app.extensionManager->emitExtensionEvent(this->sessionId,
-                                                           action, obj);
-                });
-
-        viewStack.push(view);
-        app.pushView(view);
-        view->render(payload);
-      }
-
-      app.extensionManager->respond(id, {});
-    }
+    qDebug() << "[ExtensionCommand] extension request" << action;
 
     if (action == "list-applications") {
       QJsonArray apps;
@@ -92,14 +100,16 @@ private slots:
 
       app.extensionManager->respond(id, responseData);
     }
-
-    qDebug() << "extension request" << action;
   }
 
   void extensionEvent(const QString &sessionId, const QString &action,
                       const QJsonObject &payload) {
     if (this->sessionId != sessionId)
       return;
+
+    if (action == "render") {
+      render(payload);
+    }
   }
 
 public:
@@ -114,6 +124,12 @@ public:
             &ExtensionCommand::extensionEvent);
     connect(app.extensionManager.get(), &ExtensionManager::extensionRequest,
             this, &ExtensionCommand::extensionRequest);
+
+    auto timer = new QTimer(this);
+
+    connect(timer, &QTimer::timeout, this, &ExtensionCommand::batchRender);
+
+    timer->start(10);
 
     app.extensionManager->loadCommand(extensionId, commandName);
 

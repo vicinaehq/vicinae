@@ -29,6 +29,95 @@ class ExtensionView : public View {
     componentType = type;
   }
 
+  ActionPannel constructActionPannelModel(QJsonObject &instance) {
+    ActionPannel pannel;
+    auto props = instance["props"].toObject();
+    auto children = instance["children"].toArray();
+
+    pannel.title = props["title"].toString();
+
+    for (const auto &ref : children) {
+      auto obj = ref.toObject();
+      ActionModel action;
+
+      action.title = obj["title"].toString();
+      action.onAction = obj["onAction"].toString();
+      pannel.actions.push_back(action);
+    }
+
+    return pannel;
+  }
+
+  QList<MetadataItem>
+  constructListItemDetailMetadataModel(QJsonObject &instance) {
+    auto children = instance["children"].toArray();
+    QList<MetadataItem> items;
+
+    for (const auto &ref : children) {
+      auto child = ref.toObject();
+      auto type = child["type"].toString();
+      auto props = child["props"].toObject();
+
+      if (type == "list-item-detail-metadata-label") {
+        items.push_back(MetadataLabel{
+            .text = props["text"].toString(),
+            .title = props["title"].toString(),
+        });
+      }
+
+      if (type == "list-item-detail-metadata-separator") {
+        items.push_back(MetadataSeparator{});
+      }
+    }
+
+    return items;
+  }
+
+  ListItemDetail constructListItemDetailModel(QJsonObject &instance) {
+    ListItemDetail detail;
+    auto props = instance["props"].toObject();
+    auto children = instance["children"].toArray();
+
+    detail.markdown = props["markdown"].toString();
+
+    for (const auto &child : children) {
+      auto obj = child.toObject();
+      auto type = obj["type"].toString();
+
+      if (type == "list-item-detail-metadata") {
+        detail.metadata = constructListItemDetailMetadataModel(obj);
+      }
+    }
+
+    return detail;
+  }
+
+  ListItemViewModel constructListItemViewModel(QJsonObject &instance) {
+    ListItemViewModel model;
+    auto props = instance["props"].toObject();
+    auto children = instance["children"].toArray();
+
+    model.id = props["id"].toString(
+        QUuid::createUuid().toString(QUuid::StringFormat::WithoutBraces));
+    model.title = props["title"].toString();
+    model.subtitle = props["subtitle"].toString();
+
+    for (const auto &child : children) {
+      auto obj = child.toObject();
+      auto type = obj["type"].toString();
+
+      if (type == "action-pannel") {
+        model.actionPannel = constructActionPannelModel(obj);
+      }
+
+      if (type == "list-item-detail") {
+        model.detail = constructListItemDetailModel(obj);
+      }
+    }
+
+    return model;
+  }
+
   ListModel constructListModel(QJsonObject &list) {
     ListModel model;
     auto props = list["props"].toObject();
@@ -42,75 +131,14 @@ class ExtensionView : public View {
 
     for (const auto &child : list["children"].toArray()) {
       auto childObj = child.toObject();
-      ListItemViewModel itemModel;
 
       if (childObj["type"].toString() != "list-item") {
         throw std::runtime_error("list item can only have list-item children");
       }
 
-      auto props = childObj["props"].toObject();
+      auto item = constructListItemViewModel(childObj);
 
-      itemModel.id = props["id"].toString(
-          QUuid::createUuid().toString(QUuid::StringFormat::WithoutBraces));
-      itemModel.title = props["title"].toString();
-      itemModel.subtitle = props["subtitle"].toString();
-
-      if (auto it = props.find("actions"); it != props.end()) {
-        ActionPannel pannel;
-        auto obj = it->toObject();
-
-        auto pannelProps = obj["props"].toObject();
-        auto children = obj["children"].toArray();
-
-        pannel.title = pannelProps["title"].toString();
-
-        for (const auto &ref : children) {
-          auto obj = ref.toObject();
-          ActionModel action;
-
-          action.title = obj["title"].toString();
-          action.onAction = obj["onAction"].toString();
-          pannel.actions.push_back(action);
-        }
-
-        itemModel.actionPannel = pannel;
-      }
-
-      if (auto it = props.find("detail"); it != props.end()) {
-        auto detailProps = it->toObject()["props"].toObject();
-        ListItemDetail detail;
-
-        detail.markdown = detailProps["markdown"].toString();
-
-        if (auto it = detailProps.find("metadata"); it != detailProps.end()) {
-          auto children = it->toObject()["children"].toArray();
-
-          QList<MetadataItem> items;
-
-          for (const auto &ref : children) {
-            auto child = ref.toObject();
-            auto type = child["type"].toString();
-            auto props = child["props"].toObject();
-
-            if (type == "list-item-detail-metadata-label") {
-              items.push_back(MetadataLabel{
-                  .text = props["text"].toString(),
-                  .title = props["title"].toString(),
-              });
-            }
-
-            if (type == "list-item-detail-metadata-separator") {
-              items.push_back(MetadataSeparator{});
-            }
-          }
-
-          detail.metadata = items;
-        }
-
-        itemModel.detail = detail;
-      }
-
-      model.items.push_back(itemModel);
+      model.items.push_back(item);
     }
 
     return model;

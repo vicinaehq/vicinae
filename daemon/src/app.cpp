@@ -245,8 +245,6 @@ AppWindow::AppWindow(QWidget *parent)
 
   extensionManager = std::make_unique<ExtensionManager>();
 
-  extensionManager->start();
-
   quicklinkDatabase = std::make_unique<QuicklistDatabase>(
       Config::dirPath() + QDir::separator() + "quicklinks.db");
   calculatorDatabase = std::make_unique<CalculatorDatabase>(
@@ -261,6 +259,8 @@ AppWindow::AppWindow(QWidget *parent)
       seeder->seed();
     }
   }
+
+  extensionManager->start();
 
   layout = new QVBoxLayout();
 
