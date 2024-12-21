@@ -90,6 +90,7 @@ private slots:
 
         appObj["id"] = app->id;
         appObj["name"] = app->name;
+        appObj["icon"] = app->iconName();
 
         apps.push_back(appObj);
       }
