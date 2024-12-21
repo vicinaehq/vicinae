@@ -143,6 +143,10 @@ QLineEdit.form-input:focus {
 	border: none;
 	border: 1px solid #222222;
 }
+
+QTextEdit {
+	background-color: transparent;
+}
 )";
 
 int main(int argc, char **argv) {

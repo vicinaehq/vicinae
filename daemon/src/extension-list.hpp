@@ -5,6 +5,7 @@
 #include "omnicast.hpp"
 #include "view.hpp"
 #include <QListWidget>
+#include <QTextEdit>
 #include <qboxlayout.h>
 #include <qdir.h>
 #include <qlabel.h>
@@ -14,6 +15,7 @@
 #include <qnetworkreply.h>
 #include <qnetworkrequest.h>
 #include <qsizepolicy.h>
+#include <qtextedit.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
 #include <variant>
@@ -174,27 +176,59 @@ public:
   }
 };
 
-class DetailWidget : public QWidget {
+class MetadataWidget : public QWidget {
   QVBoxLayout *layout;
-  QLabel *markdown;
 
 public:
-  DetailWidget() : layout(new QVBoxLayout), markdown(new QLabel) {
-    layout->addWidget(markdown);
+  MetadataWidget() : layout(new QVBoxLayout) {
+    layout->setContentsMargins(10, 10, 10, 10);
+    setLayout(layout);
+  }
+
+  void addRow(QWidget *left, QWidget *right) {
+    auto widget = new QWidget();
+    auto rowLayout = new QHBoxLayout();
+
+    if (layout->count() > 0) {
+      layout->addWidget(new HDivider);
+    }
+
+    rowLayout->setContentsMargins(0, 0, 0, 0);
+    rowLayout->addWidget(left, 0, Qt::AlignLeft | Qt::AlignVCenter);
+    rowLayout->addWidget(right, 0, Qt::AlignRight | Qt::AlignVCenter);
+    widget->setLayout(rowLayout);
+    layout->addWidget(widget);
+  }
+};
+
+class DetailWidget : public QWidget {
+  QVBoxLayout *layout;
+  QTextEdit *markdownEditor;
+  MetadataWidget *metadata;
+
+public:
+  DetailWidget()
+      : layout(new QVBoxLayout), markdownEditor(new QTextEdit),
+        metadata(new MetadataWidget) {
+    markdownEditor->setReadOnly(true);
+    layout->addWidget(markdownEditor, 1);
+    layout->addWidget(new HDivider);
+    layout->addWidget(metadata);
+    layout->setContentsMargins(0, 0, 0, 0);
 
     setLayout(layout);
   }
 
   void dispatchModel(const ListItemDetail &model) {
-    QString s;
+    markdownEditor->setMarkdown(model.markdown);
 
-    for (const auto &meta : model.metadata) {
-      if (auto label = std::get_if<MetadataLabel>(&meta)) {
-        s += label->text;
+    for (size_t i = 0; i != model.metadata.size(); ++i) {
+      auto &item = model.metadata.at(i);
+
+      if (auto label = std::get_if<MetadataLabel>(&item)) {
+        metadata->addRow(new QLabel(label->title), new QLabel(label->text));
       }
     }
-
-    markdown->setText(s);
   }
 };
 
@@ -249,6 +283,7 @@ public:
     list->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     list->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
+    layout->setSpacing(0);
     layout->addWidget(list, 1);
     layout->addWidget(new VDivider());
     layout->setContentsMargins(0, 0, 0, 0);
