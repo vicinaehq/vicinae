@@ -2,6 +2,7 @@
 #include "app.hpp"
 #include "common.hpp"
 #include "extension.hpp"
+#include "markdown-view.hpp"
 #include "omnicast.hpp"
 #include "view.hpp"
 #include <QListWidget>
@@ -203,14 +204,13 @@ public:
 
 class DetailWidget : public QWidget {
   QVBoxLayout *layout;
-  QTextEdit *markdownEditor;
+  MarkdownView *markdownEditor;
   MetadataWidget *metadata;
 
 public:
   DetailWidget()
-      : layout(new QVBoxLayout), markdownEditor(new QTextEdit),
+      : layout(new QVBoxLayout), markdownEditor(new MarkdownView()),
         metadata(new MetadataWidget) {
-    markdownEditor->setReadOnly(true);
     layout->addWidget(markdownEditor, 1);
     layout->addWidget(new HDivider);
     layout->addWidget(metadata);
