@@ -8,6 +8,7 @@
 #include <qboxlayout.h>
 #include <stack>
 
+#include "icon-cache-service.hpp"
 #include "ui/action_popover.hpp"
 #include "ui/status_bar.hpp"
 #include "ui/top_bar.hpp"
@@ -38,6 +39,7 @@ public:
   std::unique_ptr<ClipboardService> clipboardService;
   std::unique_ptr<AppDatabase> appDb;
   std::unique_ptr<ExtensionManager> extensionManager;
+  std::unique_ptr<IconCacheService> iconCache;
 
   void pushView(View *view);
   void pushExtensionView(ExtensionView *view);

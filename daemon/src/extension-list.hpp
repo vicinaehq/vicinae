@@ -1,4 +1,5 @@
 #pragma once
+#include "app.hpp"
 #include "common.hpp"
 #include "extension.hpp"
 #include "omnicast.hpp"
@@ -37,17 +38,24 @@ public:
   }
 };
 
-class HttpImageWidget : public QWidget {
+class HttpImageIconWidget : public QWidget {
   Q_OBJECT
+  QString url;
   QLabel *label;
   QNetworkAccessManager *netman;
   QSize size;
+  Service<IconCacheService> iconCache;
 
 private slots:
   void requestFinished(QNetworkReply *reply) {
     QPixmap pix;
 
     pix.loadFromData(reply->readAll());
+
+    auto cacheReadyPixmap =
+        pix.scaled({128, 128}, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+
+    iconCache.set(url, cacheReadyPixmap);
 
     auto scaledPixmap =
         pix.scaled(size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
@@ -56,15 +64,23 @@ private slots:
   }
 
 public:
-  HttpImageWidget(const QString &url, QSize size)
-      : label(new QLabel), netman(new QNetworkAccessManager), size(size) {
+  HttpImageIconWidget(const QString &url, QSize size,
+                      Service<IconCacheService> iconCache)
+      : url(url), label(new QLabel), netman(new QNetworkAccessManager),
+        size(size), iconCache(iconCache) {
     QNetworkRequest req;
 
     connect(netman, &QNetworkAccessManager::finished, this,
-            &HttpImageWidget::requestFinished);
+            &HttpImageIconWidget::requestFinished);
 
-    req.setUrl(url);
-    netman->get(req);
+    if (auto pix = iconCache.get(url)) {
+      qDebug() << "use cached image";
+      label->setPixmap(
+          pix->scaled(size, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    } else {
+      req.setUrl(url);
+      netman->get(req);
+    }
 
     auto layout = new QVBoxLayout();
 
@@ -75,7 +91,7 @@ public:
     setLayout(layout);
   }
 
-  ~HttpImageWidget() { netman->deleteLater(); }
+  ~HttpImageIconWidget() { netman->deleteLater(); }
 };
 
 class FileImageWidget : public QWidget {
@@ -102,9 +118,11 @@ public:
   }
 };
 
-static QWidget *createImageWidgetFromModel(const ImageLikeModel &image) {
+static QWidget *
+createImageWidgetFromModel(const ImageLikeModel &image,
+                           Service<IconCacheService> iconCache) {
   if (auto model = std::get_if<ImageUrlModel>(&image)) {
-    return new HttpImageWidget(model->url, {25, 25});
+    return new HttpImageIconWidget(model->url, {25, 25}, iconCache);
   }
 
   if (auto model = std::get_if<ImageFileModel>(&image)) {
@@ -190,6 +208,7 @@ class ExtensionList : public ExtensionComponent {
 
   QList<ListItemViewModel> items;
   QHash<QListWidgetItem *, ListItemViewModel> itemMap;
+  Service<IconCacheService> iconCache;
 
 private slots:
   void currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous) {
@@ -223,7 +242,7 @@ public:
 
   ExtensionList(const ListModel &model, View &parent)
       : parent(parent), layout(new QHBoxLayout), list(new QListWidget()),
-        model(model) {
+        model(model), iconCache(parent.service<IconCacheService>()) {
     parent.forwardInputEvents(list);
 
     list->setFocusPolicy(Qt::NoFocus);
@@ -265,7 +284,7 @@ public:
       if (!item.title.contains(s, Qt::CaseInsensitive))
         continue;
 
-      auto iconWidget = createImageWidgetFromModel(*item.icon);
+      auto iconWidget = createImageWidgetFromModel(item.icon, iconCache);
       auto widget =
           new ListItemWidget(iconWidget, item.title, item.subtitle, "");
       auto listItem = new QListWidgetItem();

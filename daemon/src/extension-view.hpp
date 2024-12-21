@@ -139,10 +139,7 @@ class ExtensionView : public View {
         QUuid::createUuid().toString(QUuid::StringFormat::WithoutBraces));
     model.title = props["title"].toString();
     model.subtitle = props["subtitle"].toString();
-
-    if (props.contains("icon")) {
-      model.icon = constructImageLikeModel(props.value("icon").toObject());
-    }
+    model.icon = constructImageLikeModel(props.value("icon").toObject());
 
     for (const auto &child : children) {
       auto obj = child.toObject();

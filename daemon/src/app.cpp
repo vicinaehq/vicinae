@@ -250,6 +250,7 @@ AppWindow::AppWindow(QWidget *parent)
       Config::dirPath() + QDir::separator() + "calculator.db");
   appDb = std::make_unique<AppDatabase>();
   clipboardService = std::make_unique<ClipboardService>();
+  iconCache = std::make_unique<IconCacheService>();
 
   {
     auto seeder = std::make_unique<QuickLinkSeeder>(*appDb, *quicklinkDatabase);
@@ -324,4 +325,9 @@ Service<ClipboardService> AppWindow::service<ClipboardService>() const {
 template <>
 Service<ExtensionManager> AppWindow::service<ExtensionManager>() const {
   return *extensionManager;
+}
+
+template <>
+Service<IconCacheService> AppWindow::service<IconCacheService>() const {
+  return *iconCache;
 }

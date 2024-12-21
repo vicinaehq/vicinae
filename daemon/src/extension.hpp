@@ -54,7 +54,7 @@ struct ListItemViewModel {
   QString id;
   QString title;
   QString subtitle;
-  std::optional<ImageLikeModel> icon;
+  ImageLikeModel icon;
   std::optional<ListItemDetail> detail;
   std::optional<ActionPannel> actionPannel;
 };
