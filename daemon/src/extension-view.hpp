@@ -53,6 +53,38 @@ class ExtensionView : public View {
     return pannel;
   }
 
+  ListItemDetail constructListItemDetailModel(QJsonObject &instance) {
+    ListItemDetail detail;
+    auto props = instance["props"].toObject();
+    auto children = instance["children"].toArray();
+
+    detail.markdown = props["markdown"].toString();
+
+    for (const auto &child : children) {
+      auto obj = child.toObject();
+      auto type = obj["type"].toString();
+
+      if (type == "list-item-detail-metadata") {
+        detail.metadata = constructListItemDetailMetadataModel(obj);
+      }
+    }
+
+    return detail;
+  }
+
+  TagItemModel constructTagItemModel(const QJsonObject &instance) {
+    TagItemModel model;
+    auto props = instance.value("props").toObject();
+
+    if (props.contains("icon"))
+      model.icon = constructImageLikeModel(props.value("icon").toObject());
+
+    model.text = props.value("text").toString();
+    model.onAction = props.value("onAction").toString();
+
+    return model;
+  }
+
   QList<MetadataItem>
   constructListItemDetailMetadataModel(QJsonObject &instance) {
     auto children = instance["children"].toArray();
@@ -72,6 +104,10 @@ class ExtensionView : public View {
 
       if (type == "list-item-detail-metadata-separator") {
         items.push_back(MetadataSeparator{});
+      }
+
+      if (type == "tag-list") {
+        items.push_back(constructTagListModel(child));
       }
     }
 
@@ -111,23 +147,17 @@ class ExtensionView : public View {
     return ThemeIconModel{.iconName = "application-x-executable"};
   }
 
-  ListItemDetail constructListItemDetailModel(QJsonObject &instance) {
-    ListItemDetail detail;
-    auto props = instance["props"].toObject();
-    auto children = instance["children"].toArray();
+  TagListModel constructTagListModel(const QJsonObject &instance) {
+    TagListModel model;
+    auto props = instance.value("props").toObject();
 
-    detail.markdown = props["markdown"].toString();
+    model.title = props.value("title").toString();
 
-    for (const auto &child : children) {
-      auto obj = child.toObject();
-      auto type = obj["type"].toString();
-
-      if (type == "list-item-detail-metadata") {
-        detail.metadata = constructListItemDetailMetadataModel(obj);
-      }
+    for (const auto &child : instance.value("children").toArray()) {
+      model.items.push_back(constructTagItemModel(child.toObject()));
     }
 
-    return detail;
+    return model;
   }
 
   ListItemViewModel constructListItemViewModel(QJsonObject &instance) {

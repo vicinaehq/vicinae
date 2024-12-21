@@ -21,6 +21,24 @@ struct ImageUrlModel {
 using ImageLikeModel =
     std::variant<ImageUrlModel, ThemeIconModel, ImageFileModel>;
 
+struct ThemeColor {
+  QString colorName;
+};
+
+using ColorLikeModel = std::variant<ThemeColor>;
+
+struct TagItemModel {
+  QString text;
+  std::optional<ImageLikeModel> icon;
+  std::optional<ThemeColor> color;
+  QString onAction;
+};
+
+struct TagListModel {
+  QString title;
+  QList<TagItemModel> items;
+};
+
 struct MetadataLabel {
   QString text;
   QString title;
@@ -28,7 +46,8 @@ struct MetadataLabel {
 
 struct MetadataSeparator {};
 
-using MetadataItem = std::variant<MetadataLabel, MetadataSeparator>;
+using MetadataItem =
+    std::variant<MetadataLabel, MetadataSeparator, TagListModel>;
 
 struct ActionModel {
   QString title;

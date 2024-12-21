@@ -228,6 +228,11 @@ public:
       if (auto label = std::get_if<MetadataLabel>(&item)) {
         metadata->addRow(new QLabel(label->title), new QLabel(label->text));
       }
+
+      if (auto tagList = std::get_if<TagListModel>(&item)) {
+        metadata->addRow(new QLabel(tagList->title),
+                         new QLabel(QString::number(tagList->items.count())));
+      }
     }
   }
 };
