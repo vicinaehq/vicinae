@@ -21,16 +21,20 @@ struct ImageUrlModel {
 using ImageLikeModel =
     std::variant<ImageUrlModel, ThemeIconModel, ImageFileModel>;
 
-struct ThemeColor {
-  QString colorName;
+struct ColorStringModel {
+  QString colorString;
 };
 
-using ColorLikeModel = std::variant<ThemeColor>;
+struct ThemeColorModel {
+  QString themeColor;
+};
+
+using ColorLikeModel = QString;
 
 struct TagItemModel {
   QString text;
   std::optional<ImageLikeModel> icon;
-  std::optional<ThemeColor> color;
+  std::optional<ColorLikeModel> color;
   QString onAction;
 };
 

@@ -53,6 +53,18 @@ class ExtensionView : public View {
     return pannel;
   }
 
+  ColorLikeModel constructColorLikeModel(const QJsonObject &instance) {
+    if (instance.contains("themeColor")) {
+      return instance.value("themeColor").toString();
+    }
+
+    if (instance.contains("colorString")) {
+      return instance.value("colorString").toString();
+    }
+
+    return "primary-text";
+  }
+
   ListItemDetail constructListItemDetailModel(QJsonObject &instance) {
     ListItemDetail detail;
     auto props = instance["props"].toObject();
@@ -78,6 +90,10 @@ class ExtensionView : public View {
 
     if (props.contains("icon"))
       model.icon = constructImageLikeModel(props.value("icon").toObject());
+
+    if (props.contains("color")) {
+      model.color = constructColorLikeModel(props.value("color").toObject());
+    }
 
     model.text = props.value("text").toString();
     model.onAction = props.value("onAction").toString();

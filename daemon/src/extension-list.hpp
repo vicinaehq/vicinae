@@ -4,6 +4,8 @@
 #include "extension.hpp"
 #include "markdown-view.hpp"
 #include "omnicast.hpp"
+#include "tag.hpp"
+#include "theme.hpp"
 #include "view.hpp"
 #include <QListWidget>
 #include <QTextEdit>
@@ -122,14 +124,14 @@ public:
 };
 
 static QWidget *
-createImageWidgetFromModel(const ImageLikeModel &image,
+createImageWidgetFromModel(const ImageLikeModel &image, QSize size,
                            Service<IconCacheService> iconCache) {
   if (auto model = std::get_if<ImageUrlModel>(&image)) {
-    return new HttpImageIconWidget(model->url, {25, 25}, iconCache);
+    return new HttpImageIconWidget(model->url, size, iconCache);
   }
 
   if (auto model = std::get_if<ImageFileModel>(&image)) {
-    return new FileImageWidget(model->path, {25, 25});
+    return new FileImageWidget(model->path, size);
   }
 
   if (auto model = std::get_if<ThemeIconModel>(&image)) {
@@ -190,27 +192,26 @@ public:
     auto widget = new QWidget();
     auto rowLayout = new QHBoxLayout();
 
-    if (layout->count() > 0) {
-      layout->addWidget(new HDivider);
-    }
-
-    rowLayout->setContentsMargins(0, 0, 0, 0);
+    rowLayout->setContentsMargins(0, 2, 0, 2);
     rowLayout->addWidget(left, 0, Qt::AlignLeft | Qt::AlignVCenter);
     rowLayout->addWidget(right, 0, Qt::AlignRight | Qt::AlignVCenter);
     widget->setLayout(rowLayout);
     layout->addWidget(widget);
   }
+
+  void addSeparator() { layout->addWidget(new HDivider); }
 };
 
 class DetailWidget : public QWidget {
   QVBoxLayout *layout;
   MarkdownView *markdownEditor;
   MetadataWidget *metadata;
+  Service<IconCacheService> iconCache;
 
 public:
-  DetailWidget()
+  DetailWidget(Service<IconCacheService> iconCache)
       : layout(new QVBoxLayout), markdownEditor(new MarkdownView()),
-        metadata(new MetadataWidget) {
+        metadata(new MetadataWidget), iconCache(iconCache) {
     layout->addWidget(markdownEditor, 1);
     layout->addWidget(new HDivider);
     layout->addWidget(metadata);
@@ -220,6 +221,8 @@ public:
   }
 
   void dispatchModel(const ListItemDetail &model) {
+    ThemeService theme;
+
     markdownEditor->setMarkdown(model.markdown);
 
     for (size_t i = 0; i != model.metadata.size(); ++i) {
@@ -229,9 +232,33 @@ public:
         metadata->addRow(new QLabel(label->title), new QLabel(label->text));
       }
 
-      if (auto tagList = std::get_if<TagListModel>(&item)) {
-        metadata->addRow(new QLabel(tagList->title),
-                         new QLabel(QString::number(tagList->items.count())));
+      if (std::get_if<MetadataSeparator>(&item)) {
+        metadata->addSeparator();
+      }
+
+      if (auto model = std::get_if<TagListModel>(&item)) {
+        auto list = new TagList;
+
+        for (const auto &item : model->items) {
+          auto tag = new Tag();
+
+          tag->setText(item.text);
+
+          if (item.color) {
+            tag->setColor(theme.getColor(*item.color));
+          } else {
+            tag->setColor(theme.getColor("primary-text"));
+          }
+
+          if (item.icon) {
+            tag->addLeftWidget(
+                createImageWidgetFromModel(*item.icon, {16, 16}, iconCache));
+          }
+
+          list->addTag(tag);
+        }
+
+        metadata->addRow(new QLabel(model->title), list);
       }
     }
   }
@@ -256,7 +283,7 @@ private slots:
     qDebug() << "selected item" << item.title;
 
     if (item.detail) {
-      auto newDetailWidget = new DetailWidget();
+      auto newDetailWidget = new DetailWidget(iconCache);
 
       qDebug() << "item has detail with" << item.detail->metadata.size()
                << "metadata lines";
@@ -324,7 +351,8 @@ public:
       if (!item.title.contains(s, Qt::CaseInsensitive))
         continue;
 
-      auto iconWidget = createImageWidgetFromModel(item.icon, iconCache);
+      auto iconWidget =
+          createImageWidgetFromModel(item.icon, {25, 25}, iconCache);
       auto widget =
           new ListItemWidget(iconWidget, item.title, item.subtitle, "");
       auto listItem = new QListWidgetItem();
