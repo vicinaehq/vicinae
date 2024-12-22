@@ -1,5 +1,7 @@
 #include "action_popover.hpp"
 #include "command-object.hpp"
+#include "extension.hpp"
+#include "image-viewer.hpp"
 
 #include <cctype>
 #include <qapplication.h>
@@ -43,6 +45,41 @@ void ActionPopover::toggleActions() {
     showActions();
 }
 
+void ActionPopover::dispatchModel(const ActionPannelModel &model) {
+  list->clear();
+
+  if (!model.title.isEmpty()) {
+    list->addItem(model.title);
+  }
+
+  for (const auto &child : model.children) {
+    if (auto model = std::get_if<ActionModel>(&child)) {
+      auto listItem = new QListWidgetItem;
+      auto widget = new ActionListItemWidget(
+          ImageViewer::createFromModel(*model->icon, {25, 25}), model->title,
+          "", "");
+
+      list->addItem(listItem);
+      list->setItemWidget(listItem, widget);
+      listItem->setSizeHint(widget->sizeHint());
+    }
+    if (auto model = std::get_if<ActionPannelSectionModel>(&child)) {
+    }
+    if (auto model = std::get_if<ActionPannelSubmenuModel>(&child)) {
+    }
+  }
+
+  for (int i = 0; i != list->count(); ++i) {
+    auto item = list->item(i);
+
+    if (!item->flags().testFlag(Qt::ItemIsSelectable))
+      continue;
+
+    list->setCurrentItem(item);
+    break;
+  }
+}
+
 void ActionPopover::paintEvent(QPaintEvent *event) {
   QStyleOption o;
   QPainter p(this);
@@ -59,11 +96,11 @@ void ActionPopover::filterActions(const QString &text) {
         _currentActions[i]->name().toLower().contains(text.toLower());
 
     if (!reselected && matches) {
-      _list->setCurrentRow(i);
+      list->setCurrentRow(i);
       reselected = true;
     }
 
-    _list->item(i)->setHidden(!matches);
+    list->item(i)->setHidden(!matches);
   }
 }
 
@@ -71,7 +108,7 @@ void ActionPopover::itemActivated(QListWidgetItem *item) {
   if (!item)
     return;
 
-  ActionItem *actionItem = (ActionItem *)_list->itemWidget(item);
+  ActionItem *actionItem = (ActionItem *)list->itemWidget(item);
 
   emit actionActivated(actionItem->action);
   hide();
@@ -84,37 +121,37 @@ ActionPopover::ActionPopover(QWidget *parent) : QWidget(parent) {
 
   layout->setContentsMargins(0, 0, 0, 0);
 
-  _list = new QListWidget();
-  _input = new QLineEdit();
-  _input->installEventFilter(this);
+  list = new QListWidget();
+  input = new QLineEdit();
+  input->installEventFilter(this);
 
-  connect(_input, &QLineEdit::textChanged, this, &ActionPopover::filterActions);
+  connect(input, &QLineEdit::textChanged, this, &ActionPopover::filterActions);
 
-  layout->addWidget(_list);
-  layout->addWidget(_input);
+  layout->addWidget(list);
+  layout->addWidget(input);
 
   setObjectName("action-popover");
 
-  _list->setContentsMargins(0, 0, 0, 0);
-  _list->setSpacing(0);
-  _list->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  _list->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  _list->setSelectionMode(QAbstractItemView::SingleSelection);
-  _list->setFocusPolicy(Qt::NoFocus);
+  list->setContentsMargins(0, 0, 0, 0);
+  list->setSpacing(0);
+  list->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  list->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  list->setSelectionMode(QAbstractItemView::SingleSelection);
+  list->setFocusPolicy(Qt::NoFocus);
 
-  connect(_list, &QListWidget::itemActivated, this,
+  connect(list, &QListWidget::itemActivated, this,
           &ActionPopover::itemActivated);
 
-  _input->setPlaceholderText("Search actions");
-  _input->setTextMargins(5, 5, 5, 5);
+  input->setPlaceholderText("Search actions");
+  input->setTextMargins(5, 5, 5, 5);
 
   setLayout(layout);
 }
 
 bool ActionPopover::eventFilter(QObject *obj, QEvent *event) {
-  if (obj == _input && event->type() == QEvent::KeyPress) {
+  if (obj == input && event->type() == QEvent::KeyPress) {
     QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
-    QApplication::sendEvent(_list, keyEvent);
+    QApplication::sendEvent(list, keyEvent);
 
     return false;
   }
@@ -127,20 +164,8 @@ void ActionPopover::setActions(const QList<std::shared_ptr<IAction>> &actions) {
 }
 
 void ActionPopover::showActions() {
-  _list->clear();
-
-  for (const auto &action : _currentActions) {
-    auto actionItem = new ActionItem(action);
-    auto item = new QListWidgetItem(_list);
-
-    item->setSizeHint(QSize(0, 45));
-    _list->addItem(item);
-    _list->setItemWidget(item, actionItem);
-  }
-
-  _input->setFocus();
-  _input->clear();
-  _list->setCurrentRow(0);
+  input->setFocus();
+  input->clear();
 
   adjustSize();
 

@@ -36,6 +36,10 @@ class ExtensionView : public View {
     action.title = props.value("title").toString();
     action.onAction = props.value("onAction").toString();
 
+    if (props.contains("icon")) {
+      action.icon = constructImageLikeModel(props.value("icon").toObject());
+    }
+
     return action;
   }
 
@@ -82,8 +86,8 @@ class ExtensionView : public View {
     return model;
   }
 
-  ActionPannel constructActionPannelModel(QJsonObject &instance) {
-    ActionPannel pannel;
+  ActionPannelModel constructActionPannelModel(QJsonObject &instance) {
+    ActionPannelModel pannel;
     auto props = instance["props"].toObject();
     auto children = instance["children"].toArray();
 
@@ -247,7 +251,7 @@ class ExtensionView : public View {
       auto obj = child.toObject();
       auto type = obj["type"].toString();
 
-      if (type == "action-pannel") {
+      if (type == "action-panel") {
         model.actionPannel = constructActionPannelModel(obj);
       }
 

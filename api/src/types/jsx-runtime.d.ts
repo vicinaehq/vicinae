@@ -35,6 +35,7 @@ declare module 'react' {
 				children?: ReactNode;
 			},
 			'action': {
+				title: string;
 				onAction: () => void,
 				icon?: SerializedImageLike;
 			},

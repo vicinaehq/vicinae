@@ -22,6 +22,7 @@ RemoteImageViewer::RemoteImageViewer()
 
 void RemoteImageViewer::load(const QString &url, Qt::Alignment align,
                              QSize scaled) {
+  qDebug() << "fetching " << url;
   this->align = align;
   QNetworkRequest req;
 

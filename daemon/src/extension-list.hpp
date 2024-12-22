@@ -167,6 +167,7 @@ private slots:
 
     if (item.actionPannel) {
       qDebug() << "actions:" << item.actionPannel->children.size();
+      parent.setActions(*item.actionPannel);
     }
 
     if (item.detail) {

@@ -14,6 +14,7 @@ export type FinalizedActionProps = {
 };
 
 export type ActionProps = BaseActionProps & {
+	title: string;
 	onAction: () => void
 };
 
@@ -31,6 +32,7 @@ export type ActionOpenProps = BaseActionProps & {
 
 const ActionRoot: React.FC<ActionProps> = (props) => {
 	const nativeProps: React.JSX.IntrinsicElements['action'] = {
+		title: props.title,
 		onAction: props.onAction,
 	}
 

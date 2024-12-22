@@ -1,5 +1,6 @@
 #pragma once
 #include "app.hpp"
+#include "extension.hpp"
 #include <qboxlayout.h>
 #include <qjsonobject.h>
 #include <qlabel.h>
@@ -59,6 +60,9 @@ public:
   template <typename T> Service<T> service() { return app.service<T>(); }
   void setSearchPlaceholderText(const QString &s) {
     app.topBar->input->setPlaceholderText(s);
+  }
+  void setActions(const ActionPannelModel &model) {
+    app.actionPopover->dispatchModel(model);
   }
 
 public slots:

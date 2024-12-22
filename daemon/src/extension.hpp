@@ -74,7 +74,7 @@ struct ActionPannelSubmenuModel {
 using ActionPannelItem = std::variant<ActionModel, ActionPannelSectionModel,
                                       ActionPannelSubmenuModel>;
 
-struct ActionPannel {
+struct ActionPannelModel {
   QString title;
   QList<ActionPannelItem> children;
 };
@@ -90,7 +90,7 @@ struct ListItemViewModel {
   QString subtitle;
   ImageLikeModel icon;
   std::optional<ListItemDetail> detail;
-  std::optional<ActionPannel> actionPannel;
+  std::optional<ActionPannelModel> actionPannel;
 };
 
 struct ListModel {
