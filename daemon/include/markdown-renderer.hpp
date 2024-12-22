@@ -1,14 +1,7 @@
 #pragma once
-#include "remote-image-viewer.hpp"
-#include <QDebug>
-#include <QString>
+#include <QVBoxLayout>
+#include <QWidget>
 #include <cmark.h>
-#include <qboxlayout.h>
-#include <qlabel.h>
-#include <qnamespace.h>
-#include <qnetworkaccessmanager.h>
-#include <qnetworkreply.h>
-#include <qwidget.h>
 
 struct Resolution {
   int width;

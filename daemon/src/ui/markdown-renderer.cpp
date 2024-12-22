@@ -1,4 +1,5 @@
 #include "markdown-renderer.hpp"
+#include "remote-image-viewer.hpp"
 #include <qnamespace.h>
 
 MarkdownImage::MarkdownImage(cmark_node *node) : layout(new QVBoxLayout) {
