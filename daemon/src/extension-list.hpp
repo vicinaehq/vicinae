@@ -2,7 +2,7 @@
 #include "app.hpp"
 #include "common.hpp"
 #include "extension.hpp"
-#include "markdown-view.hpp"
+#include "markdown-renderer.hpp"
 #include "omnicast.hpp"
 #include "tag.hpp"
 #include "theme.hpp"
@@ -281,6 +281,10 @@ private slots:
     auto &item = itemMap[current];
 
     qDebug() << "selected item" << item.title;
+
+    if (item.actionPannel) {
+      qDebug() << "actions:" << item.actionPannel->actions.size();
+    }
 
     if (item.detail) {
       auto newDetailWidget = new DetailWidget(iconCache);

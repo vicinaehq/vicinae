@@ -25,6 +25,7 @@ if (WAYLAND_LAYER_SHELL)
 endif()
 
 include_directories(
+	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_SOURCE_DIR}/src
 	${CMAKE_CURRENT_SOURCE_DIR}/src/lib
 )
@@ -40,7 +41,11 @@ qt_add_executable(${TARGET}
 	src/commands/calculator-history/calculator-history.cpp
 	src/commands/create-quicklink/create-quicklink.hpp
 
-	src/markdown-view.hpp
+	include/markdown-renderer.hpp
+	src/ui/markdown-renderer.cpp
+
+	include/remote-image-viewer.hpp
+	src/ui/remote-image-viewer.cpp
 
 	src/root-command.hpp
 	src/command.hpp
