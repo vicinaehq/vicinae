@@ -24,124 +24,6 @@
 #include <qwidget.h>
 #include <variant>
 
-class ThemeIconImageWidget : public QWidget {
-  QLabel *label;
-
-public:
-  ThemeIconImageWidget(const QString &iconName, const QString &iconTheme = "")
-      : label(new QLabel) {
-    auto icon = QIcon::fromTheme(iconName);
-
-    qDebug() << "icon from theme" << iconName;
-
-    label->setPixmap(icon.pixmap(25, 25));
-
-    auto layout = new QVBoxLayout();
-
-    layout->addWidget(label);
-    layout->setContentsMargins(0, 0, 0, 0);
-    setLayout(layout);
-  }
-};
-
-class HttpImageIconWidget : public QWidget {
-  Q_OBJECT
-  QString url;
-  QLabel *label;
-  QNetworkAccessManager *netman;
-  QSize size;
-  Service<IconCacheService> iconCache;
-
-private slots:
-  void requestFinished(QNetworkReply *reply) {
-    QPixmap pix;
-
-    pix.loadFromData(reply->readAll());
-
-    auto cacheReadyPixmap =
-        pix.scaled({128, 128}, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-
-    iconCache.set(url, cacheReadyPixmap);
-
-    auto scaledPixmap =
-        pix.scaled(size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-
-    label->setPixmap(scaledPixmap);
-  }
-
-public:
-  HttpImageIconWidget(const QString &url, QSize size,
-                      Service<IconCacheService> iconCache)
-      : url(url), label(new QLabel), netman(new QNetworkAccessManager),
-        size(size), iconCache(iconCache) {
-    QNetworkRequest req;
-
-    connect(netman, &QNetworkAccessManager::finished, this,
-            &HttpImageIconWidget::requestFinished);
-
-    if (auto pix = iconCache.get(url)) {
-      qDebug() << "use cached image";
-      label->setPixmap(
-          pix->scaled(size, Qt::KeepAspectRatio, Qt::SmoothTransformation));
-    } else {
-      req.setUrl(url);
-      netman->get(req);
-    }
-
-    auto layout = new QVBoxLayout();
-
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->addWidget(label);
-    label->setFixedSize(size);
-
-    setLayout(layout);
-  }
-
-  ~HttpImageIconWidget() { netman->deleteLater(); }
-};
-
-class FileImageWidget : public QWidget {
-  QLabel *label;
-
-public:
-  FileImageWidget(const QString &path, QSize size) : label(new QLabel) {
-    auto file = QFile(path);
-
-    if (!file.exists())
-      return;
-    if (!file.open(QIODevice::ReadOnly))
-      return;
-
-    auto data = file.readAll();
-    auto layout = new QVBoxLayout();
-
-    label->setPixmap(QPixmap(data).scaled(size, Qt::KeepAspectRatio,
-                                          Qt::SmoothTransformation));
-
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->addWidget(label);
-    setLayout(layout);
-  }
-};
-
-static QWidget *
-createImageWidgetFromModel(const ImageLikeModel &image, QSize size,
-                           Service<IconCacheService> iconCache) {
-  if (auto model = std::get_if<ImageUrlModel>(&image)) {
-    return new HttpImageIconWidget(model->url, size, iconCache);
-  }
-
-  if (auto model = std::get_if<ImageFileModel>(&image)) {
-    return new FileImageWidget(model->path, size);
-  }
-
-  if (auto model = std::get_if<ThemeIconModel>(&image)) {
-    return new ThemeIconImageWidget(model->iconName, model->theme);
-  }
-
-  return new ThemeIconImageWidget("application-x-executable", "");
-}
-
 class ListItemWidget : public QWidget {
   QWidget *icon;
   QLabel *name;
@@ -284,7 +166,7 @@ private slots:
     qDebug() << "selected item" << item.title;
 
     if (item.actionPannel) {
-      qDebug() << "actions:" << item.actionPannel->actions.size();
+      qDebug() << "actions:" << item.actionPannel->children.size();
     }
 
     if (item.detail) {

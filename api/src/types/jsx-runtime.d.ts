@@ -1,6 +1,6 @@
 import * as React from 'react';
 import type { ListProps, ListItemProps, ListItemDetailProps, ListItemDetailMetadataProps, ListItemDetailMetadataLabelProps, ListItemDetailMetadataSeparator } from '../components/list';
-import { ActionPannelProps } from '../components/action-pannel';
+import { ActionPanelProps } from '../components/action-pannel';
 import { ActionProps, FinalizedActionProps } from '../components';
 import { ImageLike, SerializedImageLike } from '../image';
 import { SerializedColorLike } from '../color';
@@ -19,10 +19,24 @@ declare module 'react' {
 			'list-item-detail-metadata': ListItemDetailMetadataProps
 			'list-item-detail-metadata-label': ListItemDetailMetadataLabelProps,
 			'list-item-detail-metadata-separator': ListItemDetailMetadataSeparator,
-			'action-pannel': ActionPannelProps,
+			'action-panel': {
+				title?: string;
+				children?: ReactNode;
+			},
+			'action-panel-submenu': {
+				title: string;
+				icon?: SerializedImageLike;
+				onOpen?: () => void;
+				onSearchTextChange?: (text: string) => void;
+				children?: React.ReactNode;
+			},
+			'action-panel-section': {
+				title?: section;
+				children?: ReactNode;
+			},
 			'action': {
 				onAction: () => void,
-				icon?: ImageLike
+				icon?: SerializedImageLike;
 			},
 			'tag-list': {
 				title?: string;

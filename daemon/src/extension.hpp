@@ -59,13 +59,24 @@ struct ActionModel {
   std::optional<ImageLikeModel> icon;
 };
 
-struct ActionPannelDivider {};
+struct ActionPannelSectionModel {
+  QList<ActionModel> actions;
+};
 
-using ActionPannelItem = std::variant<ActionModel, ActionPannelDivider>;
+struct ActionPannelSubmenuModel {
+  QString title;
+  std::optional<ImageLikeModel> icon;
+  QString onOpen;
+  QString onSearchTextChange;
+  QList<std::variant<ActionPannelSectionModel, ActionModel>> children;
+};
+
+using ActionPannelItem = std::variant<ActionModel, ActionPannelSectionModel,
+                                      ActionPannelSubmenuModel>;
 
 struct ActionPannel {
   QString title;
-  QList<ActionModel> actions;
+  QList<ActionPannelItem> children;
 };
 
 struct ListItemDetail {

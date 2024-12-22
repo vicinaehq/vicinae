@@ -29,6 +29,59 @@ class ExtensionView : public View {
     componentType = type;
   }
 
+  ActionModel constructActionModel(const QJsonObject &instance) {
+    auto props = instance.value("props").toObject();
+    ActionModel action;
+
+    action.title = props.value("title").toString();
+    action.onAction = props.value("onAction").toString();
+
+    return action;
+  }
+
+  ActionPannelSectionModel
+  constructActionPanelSection(const QJsonObject &instance) {
+    auto props = instance.value("props").toObject();
+    ActionPannelSectionModel model;
+
+    for (const auto &child : instance.value("children").toArray()) {
+      auto action = constructActionModel(child.toObject());
+
+      model.actions.push_back(action);
+    }
+
+    return model;
+  }
+
+  ActionPannelSubmenuModel
+  constructActionPanelSubmenu(const QJsonObject &instance) {
+    auto props = instance.value("props").toObject();
+    ActionPannelSubmenuModel model;
+
+    model.title = props.value("title").toString();
+    model.onOpen = props.value("onOpen").toString();
+    model.onSearchTextChange = props.value("onSearchTextChange").toString();
+
+    if (props.contains("icon")) {
+      model.icon = constructImageLikeModel(props.value("icon").toObject());
+    }
+
+    for (const auto &child : instance.value("children").toArray()) {
+      auto obj = child.toObject();
+      auto type = obj.value("type").toString();
+
+      if (type == "action-panel-section") {
+        model.children.push_back(constructActionPanelSection(obj));
+      }
+
+      if (type == "action") {
+        model.children.push_back(constructActionModel(obj));
+      }
+    }
+
+    return model;
+  }
+
   ActionPannel constructActionPannelModel(QJsonObject &instance) {
     ActionPannel pannel;
     auto props = instance["props"].toObject();
@@ -38,16 +91,19 @@ class ExtensionView : public View {
 
     for (const auto &ref : children) {
       auto obj = ref.toObject();
-      ActionModel action;
+      auto type = obj.value("type").toString();
 
-      action.title = obj["title"].toString();
-      action.onAction = obj["onAction"].toString();
-
-      if (obj.contains("icon")) {
-        action.icon = constructImageLikeModel(obj.value("icon").toObject());
+      if (type == "action") {
+        pannel.children.push_back(constructActionModel(obj));
       }
 
-      pannel.actions.push_back(action);
+      else if (type == "action-panel-section") {
+        pannel.children.push_back(constructActionPanelSection(obj));
+      }
+
+      else if (type == "action-panel-submenu") {
+        pannel.children.push_back(constructActionPanelSubmenu(obj));
+      }
     }
 
     return pannel;
