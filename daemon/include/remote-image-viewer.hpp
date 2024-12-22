@@ -16,6 +16,7 @@ class RemoteImageViewer : public QWidget {
   QNetworkAccessManager *net;
   QLabel *label;
   Qt::Alignment align;
+  QSize scaled;
 
 private slots:
   void requestFinished(QNetworkReply *);
@@ -24,7 +25,8 @@ public:
   RemoteImageViewer();
   ~RemoteImageViewer();
 
-  void load(const QString &url, Qt::Alignment = Qt::AlignCenter);
+  void load(const QString &url, Qt::Alignment = Qt::AlignCenter,
+            QSize size = {});
 
 signals:
   void imageLoaded();

@@ -2,6 +2,7 @@
 #include "app.hpp"
 #include "common.hpp"
 #include "extension.hpp"
+#include "image-viewer.hpp"
 #include "markdown-renderer.hpp"
 #include "omnicast.hpp"
 #include "tag.hpp"
@@ -252,7 +253,7 @@ public:
 
           if (item.icon) {
             tag->addLeftWidget(
-                createImageWidgetFromModel(*item.icon, {16, 16}, iconCache));
+                ImageViewer::createFromModel(*item.icon, {16, 16}));
           }
 
           list->addTag(tag);
@@ -355,8 +356,7 @@ public:
       if (!item.title.contains(s, Qt::CaseInsensitive))
         continue;
 
-      auto iconWidget =
-          createImageWidgetFromModel(item.icon, {25, 25}, iconCache);
+      auto iconWidget = ImageViewer::createFromModel(item.icon, {25, 25});
       auto widget =
           new ListItemWidget(iconWidget, item.title, item.subtitle, "");
       auto listItem = new QListWidgetItem();
