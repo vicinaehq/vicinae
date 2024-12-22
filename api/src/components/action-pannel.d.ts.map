@@ -1,0 +1,1 @@
+{"version":3,"file":"action-pannel.d.ts","sourceRoot":"","sources":["action-pannel.tsx"],"names":[],"mappings":"AAAA,OAAO,EAAE,SAAS,EAAE,MAAM,OAAO,CAAC;AAElC,MAAM,MAAM,iBAAiB,GAAG;IAC/B,KAAK,EAAE,MAAM,CAAC;IACd,QAAQ,EAAE,SAAS,EAAE,CAAC;CACtB,CAAC;AAEF,QAAA,MAAM,YAAY,EAAE,KAAK,CAAC,EAAE,CAAC,iBAAiB,CAM7C,CAAA;AAED,eAAe,YAAY,CAAC"}

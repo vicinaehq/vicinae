@@ -1,0 +1,186 @@
+import Reconciler, { OpaqueRoot } from 'react-reconciler';
+import { setTimeout, clearTimeout } from 'node:timers';
+import { DefaultEventPriority } from 'react-reconciler/constants';
+import { ReactElement } from 'react';
+
+type InstanceType = string;
+type InstanceProps = Record<string, any>;
+type Container = { _root?: OpaqueRoot, children: InstanceType[] };
+type Instance = {
+	type: InstanceType,
+	props: InstanceProps;
+	children: Instance[];
+};
+type TextInstance = any;
+type SuspenseInstance = any;
+type HydratableInstance = any;
+type PublicInstance = Instance;
+type HostContext = {};
+type UpdatePayload = {};
+type ChildSet = {};
+type MyTimeoutHandle = number;
+type NoTimeout = number;
+
+const ctx: HostContext = {
+};
+
+const hostConfig: Reconciler.HostConfig<
+	InstanceType,
+	InstanceProps,
+	Container,
+	Instance,
+	TextInstance,
+	SuspenseInstance,
+	HydratableInstance,
+	PublicInstance,
+	HostContext,
+	UpdatePayload,
+	ChildSet,
+	MyTimeoutHandle,
+	NoTimeout
+> = {
+	supportsMutation: true,
+	supportsPersistence: false,
+	supportsHydration: false,
+
+	createInstance(type, props, root, ctx, handle) {
+		return {
+			type,
+			props,
+			children: [],
+		}
+	},
+
+	createTextInstance() {
+		throw new Error(`createTextInstance is not supported`);
+	},
+
+	appendInitialChild(parent, child) {
+		parent.children = [child];
+	},
+
+	finalizeInitialChildren(instance, type, props, root, ctx) {
+		return false;
+	},
+
+	prepareUpdate(instance, type, oldProps, newProps, root, ctx) {
+		return null;
+	},
+
+	shouldSetTextContent() {
+		return false;
+	},
+
+	getRootHostContext(root) {
+		return ctx;
+	},
+
+	getChildHostContext(parentHostContext, type, root) {
+		return ctx;
+	},
+
+	getPublicInstance(instance) { return instance; },
+
+	prepareForCommit(container) {
+		return null;
+	},
+
+	resetAfterCommit() {
+		return null;
+	},
+
+	preparePortalMount(container) {},
+
+	scheduleTimeout: setTimeout,
+	cancelTimeout: (id) => clearTimeout(id),
+	noTimeout: -1,
+	supportsMicrotasks: false,
+	scheduleMicrotask: queueMicrotask,
+
+	isPrimaryRenderer: true,
+
+	getCurrentEventPriority() {
+		return DefaultEventPriority;
+	},
+
+	getInstanceFromNode() { return null; },
+
+	beforeActiveInstanceBlur() {},
+	afterActiveInstanceBlur() {},
+
+	prepareScopeUpdate(scope, instance) {},
+	getInstanceFromScope(scope) { return null },
+
+	detachDeletedInstance(instance) {
+	},
+
+	// mutation methods
+	appendChild(parent, child) {
+		if (!parent.children) parent.children = [child];
+		else parent.children.push(child);
+	},
+
+	appendChildToContainer(container, child) {
+		container.children.push(child);
+	},
+
+	insertBefore(parent, child, beforeChild) {
+		const beforeIdx = parent.children.indexOf(beforeChild);
+
+		if (beforeIdx == -1) {
+			throw new Error(`insertBefore: beforeChild not found `);
+		}
+
+		if (beforeIdx == 0) parent.children.unshift(child);
+		else parent.children.splice(beforeIdx - 1, 0, child);
+	},
+
+	insertInContainerBefore(container, child) {
+		throw new Error(`root container can only have one child`);
+	},
+
+	removeChild(parent, child) {
+		const childIdx = parent.children.indexOf(child);
+
+		parent.children.splice(childIdx, 1);
+	},
+
+	removeChildFromContainer(container, child) {
+		container.children = [];
+	},
+
+	resetTextContent() {},
+
+	commitTextUpdate() {},
+
+	commitMount() {},
+
+	commitUpdate(instance, payload, type, prevProps, nextProps, handle) {
+	},
+
+	hideInstance() {},
+
+	hideTextInstance() {},
+	
+	unhideInstance() {},
+
+	unhideTextInstance() {},
+
+	clearContainer(container) {
+		container.children = [];
+	}
+};
+
+const reconciler = Reconciler(hostConfig);
+
+export default {
+	render(element: ReactElement, container: Container) {
+		if (!container._root) {
+			container._root = reconciler.createContainer(container, 0, null, false, null, '', (error) => {console.error('recoverable error', error)}, null);
+		}
+
+		reconciler.updateContainer(element, container, null, () => {
+			console.error('rendered');
+		});
+	}
+};
