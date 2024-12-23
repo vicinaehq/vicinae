@@ -1,4 +1,0 @@
-[[extensions]]
-name = "Peepobank"
-enabled = true
-exec = ["tsx", "examples/peepobank/src/index.ts"]
