@@ -1,4 +1,0 @@
-[[extensions]]
-name = "My Extension"
-enabled = true
-exec = ["node", "scripts/extension.js"]
