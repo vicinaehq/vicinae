@@ -40,6 +40,8 @@ qt_add_executable(${TARGET}
 	src/commands/calculator-history/calculator-history.cpp
 	src/commands/create-quicklink/create-quicklink.hpp
 
+	include/image-fetcher.hpp
+
 	include/markdown-renderer.hpp
 	src/ui/markdown-renderer.cpp
 

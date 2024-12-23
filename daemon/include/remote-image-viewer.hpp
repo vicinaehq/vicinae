@@ -5,6 +5,7 @@
 #include <qnetworkaccessmanager.h>
 #include <qnetworkreply.h>
 #include <qnetworkrequest.h>
+#include <qpixmap.h>
 #include <qsize.h>
 #include <qstring.h>
 #include <qtmetamacros.h>
@@ -13,20 +14,19 @@
 class RemoteImageViewer : public QWidget {
   Q_OBJECT
 
-  QNetworkAccessManager *net;
   QLabel *label;
+  QString url;
   Qt::Alignment align;
   QSize scaled;
+  int maxCacheSize = 128 * 128;
 
 private slots:
-  void requestFinished(QNetworkReply *);
+  void loaded(QPixmap pix);
 
 public:
-  RemoteImageViewer();
+  RemoteImageViewer(const QString &url, Qt::Alignment = Qt::AlignCenter,
+                    QSize size = {});
   ~RemoteImageViewer();
-
-  void load(const QString &url, Qt::Alignment = Qt::AlignCenter,
-            QSize size = {});
 
 signals:
   void imageLoaded();

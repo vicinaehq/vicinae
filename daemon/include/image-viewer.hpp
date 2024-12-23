@@ -15,9 +15,7 @@ public:
   static QWidget *createFromModel(const ImageLikeModel &imageLike,
                                   QSize size = {}) {
     if (auto model = std::get_if<ImageUrlModel>(&imageLike)) {
-      auto widget = new RemoteImageViewer();
-
-      widget->load(model->url, Qt::AlignCenter, size);
+      auto widget = new RemoteImageViewer(model->url, Qt::AlignCenter, size);
 
       return widget;
     }

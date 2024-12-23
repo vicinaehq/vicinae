@@ -26,9 +26,8 @@ MarkdownImage::MarkdownImage(cmark_node *node) : layout(new QVBoxLayout) {
 
   layout->setContentsMargins(0, 0, 0, 0);
 
-  auto remoteImg = new RemoteImageViewer();
+  auto remoteImg = new RemoteImageViewer(url, Qt::AlignCenter);
 
-  remoteImg->load(url, Qt::AlignCenter);
   layout->addWidget(remoteImg, 0);
   setLayout(layout);
 }

@@ -1,46 +1,45 @@
 #include "remote-image-viewer.hpp"
+#include "image-fetcher.hpp"
 #include <qboxlayout.h>
 #include <qnamespace.h>
 #include <qnetworkaccessmanager.h>
 #include <qnetworkreply.h>
 #include <qnetworkrequest.h>
+#include <qpixmapcache.h>
 #include <qsize.h>
 
-RemoteImageViewer::RemoteImageViewer()
-    : net(new QNetworkAccessManager()), label(new QLabel),
-      align(Qt::AlignCenter), scaled() {
+static QString makeSizedCacheKey(const QString &url, QSize size) {
+  return url + QString::number(size.width()) + QString::number(size.height());
+}
+
+RemoteImageViewer::RemoteImageViewer(const QString &url, Qt::Alignment align,
+                                     QSize size)
+    : label(new QLabel), url(url), align(align), scaled(size) {
   auto layout = new QVBoxLayout();
 
   layout->addWidget(label);
   layout->setContentsMargins(0, 0, 0, 0);
 
-  connect(net, &QNetworkAccessManager::finished, this,
-          &RemoteImageViewer::requestFinished);
-
   setLayout(layout);
-}
 
-void RemoteImageViewer::load(const QString &url, Qt::Alignment align,
-                             QSize scaled) {
-  qDebug() << "fetching " << url;
-  this->align = align;
-  QNetworkRequest req;
+  if (size.isValid()) {
+    label->setFixedSize(size);
+    const QString &cacheKey = makeSizedCacheKey(url, size);
+    QPixmap pix;
 
-  if (scaled.isValid()) {
-    label->setFixedSize(scaled);
+    if (QPixmapCache::find(cacheKey, &pix)) {
+      qDebug() << "cached in QPixmapCache!";
+      loaded(pix);
+      return;
+    }
   }
 
-  this->scaled = scaled;
-  req.setUrl(url);
-  net->get(req);
+  auto reply = ImageFetcher::instance().fetch(url, {.cache = false});
+
+  connect(reply, &ImageReply::imageLoaded, this, &RemoteImageViewer::loaded);
 }
 
-void RemoteImageViewer::requestFinished(QNetworkReply *reply) {
-  auto buf = reply->readAll();
-  QPixmap pix;
-
-  pix.loadFromData(buf);
-
+void RemoteImageViewer::loaded(QPixmap pix) {
   int width = label->width();
   int height = label->height();
 
@@ -55,7 +54,15 @@ void RemoteImageViewer::requestFinished(QNetworkReply *reply) {
   label->setAlignment(Qt::AlignCenter);
   label->setPixmap(scaledPix);
 
+  if (scaled.isValid() && scaled.width() * scaled.height() < maxCacheSize) {
+    auto key = makeSizedCacheKey(url, scaled);
+
+    QPixmapCache::insert(key, scaledPix);
+  }
+
   emit imageLoaded();
 }
 
-RemoteImageViewer::~RemoteImageViewer() { delete net; }
+RemoteImageViewer::~RemoteImageViewer() {
+  qDebug() << "delete remote image viewer";
+}
