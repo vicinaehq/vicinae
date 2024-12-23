@@ -4,6 +4,8 @@ import { DefaultEventPriority } from 'react-reconciler/constants';
 import { ReactElement } from 'react';
 import { bus } from '@omnicast/api';
 import { randomBytes, randomUUID } from 'node:crypto';
+import { deepClone, compare, Operation } from 'fast-json-patch';
+import { inspect } from 'node:util';
 
 type InstanceType = string;
 type InstanceProps = Record<string, any>;
@@ -205,12 +207,23 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 }
 
 export type RendererConfig = {
-	onUpdate?: (tree: Instance) => void;
+	onInitialRender: (tree: Instance) => void
+	onUpdate?: (tree: Instance, changes: Operation[]) => void;
 };
 
 export const createRenderer = (config: RendererConfig) => {
 	const container: Container = { children: [] };
-	const hostConfig = createHostConfig({}, () => config.onUpdate?.(container.children[0]));
+	let oldTree: Instance | null = null;
+
+	const hostConfig = createHostConfig({}, () => {
+		if (!oldTree) return ;
+
+		const tree = container.children[0];
+		const ops = compare(tree, oldTree ?? {});
+
+		config.onUpdate?.(tree, ops)
+		oldTree = deepClone(tree);
+	});
 	const reconciler = Reconciler(hostConfig);
 
 	return {
@@ -219,7 +232,12 @@ export const createRenderer = (config: RendererConfig) => {
 				container._root = reconciler.createContainer(container, 0, null, false, null, '', (error) => {console.error('recoverable error', error)}, null);
 			}
 
-			reconciler.updateContainer(element, container._root, null, () => {});
+			reconciler.updateContainer(element, container._root, null, () => {
+				const tree = container.children[0];
+
+				config.onInitialRender(tree)
+				oldTree = deepClone(tree);
+			});
 		}
 	};
 }

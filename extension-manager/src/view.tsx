@@ -44,8 +44,13 @@ export const renderView = async () => {
 	});
 
 	const renderer = createRenderer({
-		onUpdate: (root) => {
+		onInitialRender: (root) => {
 			bus!.emit('render', { root });
+		},
+		onUpdate: (root, changes) => {
+			if (changes.length === 0) return ;
+
+			bus!.emit('render', { root, changes });
 		}
 	});
 
