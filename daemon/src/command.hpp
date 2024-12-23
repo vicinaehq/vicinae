@@ -55,24 +55,54 @@ private slots:
     }
   }
 
+  void forwardExtensionEvent(const QString &action, const QJsonObject &obj) {
+
+    app.extensionManager->emitExtensionEvent(this->sessionId, action, obj);
+  }
+
   void render(const QJsonObject &payload) {
     if (!viewStack.isEmpty()) {
       auto top = viewStack.top();
 
       top->render(payload);
     } else {
+      /*
+auto view = new ExtensionView(app);
+
+connect(view, &ExtensionView::extensionEvent, this,
+    &ExtensionCommand::forwardExtensionEvent);
+
+viewStack.push(view);
+app.pushView(view);
+view->render(payload);
+*/
       auto view = new ExtensionView(app);
 
-      connect(view, &ExtensionView::extensionEvent, this,
-              [this](const QString &action, const QJsonObject &obj) {
-                app.extensionManager->emitExtensionEvent(this->sessionId,
-                                                         action, obj);
-              });
-
-      viewStack.push(view);
-      app.pushView(view);
+      pushView(view);
       view->render(payload);
     }
+  }
+
+  void pushView(ExtensionView *view) {
+    if (!viewStack.isEmpty()) {
+      auto view = viewStack.top();
+      disconnect(view, &ExtensionView::extensionEvent, this,
+                 &ExtensionCommand::forwardExtensionEvent);
+    }
+
+    connect(view, &ExtensionView::extensionEvent, this,
+            &ExtensionCommand::forwardExtensionEvent);
+
+    viewStack.push(view);
+    app.pushView(view);
+  }
+
+  void popView() {
+    auto old = viewStack.top();
+    viewStack.pop();
+
+    old->deleteLater();
+    app.popCurrentView();
   }
 
   void extensionRequest(const QString &sessionId, const QString &id,
@@ -86,6 +116,9 @@ private slots:
       QJsonArray apps;
 
       for (const auto &app : app.appDb->apps) {
+        if (!app->displayable())
+          continue;
+
         QJsonObject appObj;
 
         appObj["id"] = app->id;
@@ -100,6 +133,16 @@ private slots:
       responseData["apps"] = apps;
 
       app.extensionManager->respond(id, responseData);
+    }
+
+    if (action == "push-view") {
+      pushView(new ExtensionView(app));
+      app.extensionManager->respond(id, {});
+    }
+
+    if (action == "pop-view") {
+      popView();
+      app.extensionManager->respond(id, {});
     }
   }
 

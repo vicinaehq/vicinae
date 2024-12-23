@@ -90,13 +90,15 @@ class DetailWidget : public QWidget {
   MarkdownView *markdownEditor;
   MetadataWidget *metadata;
   Service<IconCacheService> iconCache;
+  HDivider *divider;
 
 public:
   DetailWidget(Service<IconCacheService> iconCache)
       : layout(new QVBoxLayout), markdownEditor(new MarkdownView()),
-        metadata(new MetadataWidget), iconCache(iconCache) {
+        metadata(new MetadataWidget), iconCache(iconCache),
+        divider(new HDivider) {
     layout->addWidget(markdownEditor, 1);
-    layout->addWidget(new HDivider);
+    layout->addWidget(divider);
     layout->addWidget(metadata);
     layout->setContentsMargins(0, 0, 0, 0);
 
@@ -107,6 +109,14 @@ public:
     ThemeService theme;
 
     markdownEditor->setMarkdown(model.markdown);
+
+    if (model.metadata.isEmpty()) {
+      divider->hide();
+      metadata->hide();
+    } else {
+      divider->show();
+      metadata->show();
+    }
 
     for (size_t i = 0; i != model.metadata.size(); ++i) {
       auto &item = model.metadata.at(i);
