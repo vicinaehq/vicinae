@@ -1,11 +1,13 @@
 #pragma once
 #include "extension.hpp"
 #include <qboxlayout.h>
+#include <qhash.h>
 #include <qlabel.h>
 #include <qlineedit.h>
 #include <qlist.h>
 #include <qlistwidget.h>
 #include <qpixmap.h>
+#include <qstack.h>
 #include <qwidget.h>
 
 class ActionListItemWidget : public QWidget {
@@ -76,9 +78,14 @@ class ActionPopover : public QWidget {
   QList<std::shared_ptr<IAction>> _currentActions;
   QLineEdit *input;
   QListWidget *list;
+  QHash<QListWidgetItem *, ActionPannelItem> itemMap;
+
+  QStack<QList<ActionPannelItem>> menuStack;
 
   void paintEvent(QPaintEvent *event) override;
   bool eventFilter(QObject *obj, QEvent *event) override;
+
+  void renderItems(const QList<ActionPannelItem> &items);
 
 private slots:
   void filterActions(const QString &text);
@@ -86,6 +93,7 @@ private slots:
 
 signals:
   void actionActivated(std::shared_ptr<IAction> action);
+  void actionPressed(ActionModel model);
 
 public:
   void dispatchModel(const ActionPannelModel &model);

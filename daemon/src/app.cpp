@@ -166,6 +166,8 @@ void AppWindow::popToRootView() {
 void AppWindow::disconnectView(View &view) {
   disconnect(topBar->input, &QLineEdit::textChanged, &view,
              &View::onSearchChanged);
+  disconnect(actionPopover, &ActionPopover::actionPressed, &view,
+             &View::onActionActivated);
 
   // view->app
   disconnect(&view, &View::pushView, this, &AppWindow::pushView);
@@ -180,6 +182,8 @@ void AppWindow::connectView(View &view) {
   // app->view
   connect(topBar->input, &QLineEdit::textChanged, &view,
           &View::onSearchChanged);
+  connect(actionPopover, &ActionPopover::actionPressed, &view,
+          &View::onActionActivated);
 
   // view->app
   connect(&view, &View::pushView, this, &AppWindow::pushView);

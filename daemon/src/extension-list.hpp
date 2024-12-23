@@ -261,6 +261,10 @@ public:
     }
   }
 
+  void onActionActivated(ActionModel model) {
+    qDebug() << "activated" << model.title;
+  }
+
   void onSearchTextChanged(const QString &s) {
     if (!model.onSearchTextChange.isEmpty()) {
       QJsonObject payload;

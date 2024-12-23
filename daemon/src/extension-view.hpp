@@ -318,6 +318,16 @@ public slots:
     }
   }
 
+  void onActionActivated(ActionModel model) override {
+    if (!model.onAction.isEmpty()) {
+      emit extensionEvent(model.onAction, {});
+    }
+
+    if (componentType == "list") {
+      static_cast<ExtensionList *>(component)->onActionActivated(model);
+    }
+  }
+
 public:
   ExtensionView(AppWindow &app) : View(app) {
     widget = new QWidget();

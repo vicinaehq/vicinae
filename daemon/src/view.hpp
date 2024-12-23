@@ -67,6 +67,7 @@ public:
 
 public slots:
   virtual void onSearchChanged(const QString &s) {}
+  virtual void onActionActivated(ActionModel model) {}
 
 signals:
   void launchCommand(ViewCommand *command);

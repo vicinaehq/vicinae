@@ -46,14 +46,17 @@ void ActionPopover::toggleActions() {
 }
 
 void ActionPopover::dispatchModel(const ActionPannelModel &model) {
+  menuStack.clear();
+  menuStack.push_back(model.children);
+  renderItems(model.children);
+}
+
+void ActionPopover::renderItems(const QList<ActionPannelItem> &items) {
   list->clear();
+  itemMap.clear();
 
-  if (!model.title.isEmpty()) {
-    list->addItem(model.title);
-  }
-
-  for (const auto &child : model.children) {
-    if (auto model = std::get_if<ActionModel>(&child)) {
+  for (const auto &item : items) {
+    if (auto model = std::get_if<ActionModel>(&item)) {
       auto listItem = new QListWidgetItem;
       auto widget = new ActionListItemWidget(
           ImageViewer::createFromModel(*model->icon, {25, 25}), model->title,
@@ -62,10 +65,20 @@ void ActionPopover::dispatchModel(const ActionPannelModel &model) {
       list->addItem(listItem);
       list->setItemWidget(listItem, widget);
       listItem->setSizeHint(widget->sizeHint());
+      itemMap.insert(listItem, item);
     }
-    if (auto model = std::get_if<ActionPannelSectionModel>(&child)) {
+    if (auto model = std::get_if<ActionPannelSectionModel>(&item)) {
     }
-    if (auto model = std::get_if<ActionPannelSubmenuModel>(&child)) {
+    if (auto model = std::get_if<ActionPannelSubmenuModel>(&item)) {
+      auto listItem = new QListWidgetItem;
+      auto widget = new ActionListItemWidget(
+          ImageViewer::createFromModel(*model->icon, {25, 25}), model->title,
+          "", "");
+
+      list->addItem(listItem);
+      list->setItemWidget(listItem, widget);
+      listItem->setSizeHint(widget->sizeHint());
+      itemMap.insert(listItem, item);
     }
   }
 
@@ -89,28 +102,32 @@ void ActionPopover::paintEvent(QPaintEvent *event) {
 }
 
 void ActionPopover::filterActions(const QString &text) {
-  bool reselected = false;
+  if (menuStack.isEmpty())
+    return;
 
-  for (size_t i = 0; i != _currentActions.size(); ++i) {
-    auto matches =
-        _currentActions[i]->name().toLower().contains(text.toLower());
+  QList<ActionPannelItem> items;
 
-    if (!reselected && matches) {
-      list->setCurrentRow(i);
-      reselected = true;
+  for (const auto &item : menuStack.top()) {
+    if (auto model = std::get_if<ActionModel>(&item);
+        model->title.contains(text, Qt::CaseInsensitive)) {
+      items.push_back(item);
     }
-
-    list->item(i)->setHidden(!matches);
   }
+
+  renderItems(items);
 }
 
 void ActionPopover::itemActivated(QListWidgetItem *item) {
-  if (!item)
+  if (!item || !itemMap.contains(item))
     return;
 
-  ActionItem *actionItem = (ActionItem *)list->itemWidget(item);
+  auto action = itemMap.value(item);
 
-  emit actionActivated(actionItem->action);
+  if (auto model = std::get_if<ActionModel>(&action)) {
+    qDebug() << "selected action with title" << model->title;
+    emit actionPressed(*model);
+  }
+
   hide();
 }
 
