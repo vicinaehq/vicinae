@@ -244,8 +244,6 @@ AppWindow::AppWindow(QWidget *parent)
   setMinimumWidth(850);
   setMinimumHeight(550);
 
-  auto config = loadConfig("config.toml");
-
   extensionManager = std::make_unique<ExtensionManager>();
 
   quicklinkDatabase = std::make_unique<QuicklistDatabase>(

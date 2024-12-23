@@ -33,7 +33,6 @@ include_directories(
 qt_add_executable(${TARGET}
 	src/main.cpp
 	src/app.cpp
-	src/config.cpp
 
 	src/commands/index/index-command.hpp
 	src/commands/index/index-command.cpp
