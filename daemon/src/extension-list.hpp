@@ -231,32 +231,13 @@ public:
 
     qDebug() << "items" << model.items.size() << "list count" << list->count();
 
-    auto previousRow = list->currentRow();
-
-    list->clear();
-    itemMap.clear();
+    items.clear();
 
     for (const auto &item : model.items) {
-      auto iconWidget = ImageViewer::createFromModel(item.icon, {25, 25});
-      auto widget =
-          new ListItemWidget(iconWidget, item.title, item.subtitle, "");
-      auto listItem = new QListWidgetItem;
-
-      list->addItem(listItem);
-      list->setItemWidget(listItem, widget);
-      listItem->setSizeHint(widget->sizeHint());
-      itemMap.insert(listItem, item);
+      items.push_back(item);
     }
 
-    for (int i = 0; i != list->count(); ++i) {
-      auto item = list->item(i);
-
-      if (!item->flags().testFlag(Qt::ItemIsSelectable))
-        continue;
-
-      list->setCurrentItem(item);
-      break;
-    }
+    buildList("");
 
     /*
 for (size_t i = 0; i != model.items.size(); ++i) {
@@ -354,6 +335,7 @@ for (size_t i = model.items.size(); i < list->count();) {
   }
 
   void onSearchTextChanged(const QString &s) {
+    qDebug() << "onSearchTextChange" << s;
     if (!model.onSearchTextChange.isEmpty()) {
       QJsonObject payload;
       auto args = QJsonArray();

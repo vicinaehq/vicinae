@@ -40,6 +40,7 @@ class ExtensionCommand : public ViewCommand {
   QString sessionId;
   AppWindow &app;
   std::optional<QJsonObject> lastRender;
+  bool popFlag = false;
 
 private slots:
   void commandLoaded(const LoadedCommand &cmd) {
@@ -61,6 +62,11 @@ private slots:
   }
 
   void render(const QJsonObject &payload) {
+    if (popFlag) {
+      popFlag = false;
+      return;
+    }
+
     if (!viewStack.isEmpty()) {
       auto top = viewStack.top();
 
@@ -168,6 +174,23 @@ public:
             &ExtensionCommand::extensionEvent);
     connect(app.extensionManager.get(), &ExtensionManager::extensionRequest,
             this, &ExtensionCommand::extensionRequest);
+
+    connect(&app, &AppWindow::currentViewPoped, this, [this, &app]() {
+      qDebug() << "curent view poped from extension";
+
+      app.extensionManager->emitExtensionEvent(sessionId, "pop-view", {});
+      popFlag = true;
+
+      auto old = viewStack.top();
+
+      viewStack.pop();
+      old->deleteLater();
+
+      if (!viewStack.isEmpty()) {
+        connect(viewStack.top(), &ExtensionView::extensionEvent, this,
+                &ExtensionCommand::forwardExtensionEvent);
+      }
+    });
 
     auto timer = new QTimer(this);
 

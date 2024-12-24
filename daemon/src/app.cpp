@@ -155,6 +155,8 @@ void AppWindow::popCurrentView() {
     currentCommand = nullptr;
     topBar->hideBackButton();
   }
+
+  emit currentViewPoped();
 }
 
 void AppWindow::popToRootView() {
