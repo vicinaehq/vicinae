@@ -28,7 +28,6 @@ RemoteImageViewer::RemoteImageViewer(const QString &url, Qt::Alignment align,
     QPixmap pix;
 
     if (QPixmapCache::find(cacheKey, &pix)) {
-      qDebug() << "cached in QPixmapCache!";
       loaded(pix);
       return;
     }
@@ -63,6 +62,4 @@ void RemoteImageViewer::loaded(QPixmap pix) {
   emit imageLoaded();
 }
 
-RemoteImageViewer::~RemoteImageViewer() {
-  qDebug() << "delete remote image viewer";
-}
+RemoteImageViewer::~RemoteImageViewer() {}

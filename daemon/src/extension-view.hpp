@@ -1,6 +1,7 @@
 #pragma once
 #include "extension-list.hpp"
 #include "extension.hpp"
+#include "json-patch.hpp"
 #include "view.hpp"
 #include <qboxlayout.h>
 #include <qjsonobject.h>
@@ -193,8 +194,6 @@ class ExtensionView : public View {
   ImageLikeModel constructImageLikeModel(const QJsonObject &data) {
     ImageLikeModel model;
 
-    qDebug() << "image" << QJsonDocument(data).toJson();
-
     if (data.contains("url")) {
       ImageUrlModel model;
 
@@ -236,7 +235,8 @@ class ExtensionView : public View {
     return model;
   }
 
-  ListItemViewModel constructListItemViewModel(QJsonObject &instance) {
+  ListItemViewModel constructListItemViewModel(QJsonObject &instance,
+                                               const JsonPatch &patch) {
     ListItemViewModel model;
     auto props = instance["props"].toObject();
     auto children = instance["children"].toArray();
@@ -246,6 +246,8 @@ class ExtensionView : public View {
     model.title = props["title"].toString();
     model.subtitle = props["subtitle"].toString();
     model.icon = constructImageLikeModel(props.value("icon").toObject());
+
+    size_t i = 0;
 
     for (const auto &child : children) {
       auto obj = child.toObject();
@@ -258,12 +260,14 @@ class ExtensionView : public View {
       if (type == "list-item-detail") {
         model.detail = constructListItemDetailModel(obj);
       }
+
+      i += 1;
     }
 
     return model;
   }
 
-  ListModel constructListModel(QJsonObject &list) {
+  ListModel constructListModel(QJsonObject &list, const JsonPatch &patch) {
     ListModel model;
     auto props = list["props"].toObject();
 
@@ -274,6 +278,8 @@ class ExtensionView : public View {
     model.searchPlaceholderText = props["searchBarPlaceholder"].toString();
     model.onSearchTextChange = props["onSearchTextChange"].toString();
 
+    size_t i = 0;
+
     for (const auto &child : list["children"].toArray()) {
       auto childObj = child.toObject();
 
@@ -281,9 +287,16 @@ class ExtensionView : public View {
         throw std::runtime_error("list item can only have list-item children");
       }
 
-      auto item = constructListItemViewModel(childObj);
+      auto item = constructListItemViewModel(childObj, patch);
+
+      item.changed = patch.isSubtreeChanged(QString("/children/%1").arg(i));
+
+      if (item.changed) {
+        qDebug() << "item " << i << "contents were changed";
+      }
 
       model.items.push_back(item);
+      i += 1;
     }
 
     return model;
@@ -295,13 +308,14 @@ signals:
 
 public slots:
   void render(QJsonObject data) {
+    JsonPatch patch(data["changes"].toArray());
     auto tree = data["root"].toObject();
     auto rootType = tree["type"].toString();
 
     qDebug() << "render extension view";
 
     if (rootType == "list") {
-      auto model = constructListModel(tree);
+      auto model = constructListModel(tree, patch);
 
       if (componentType != "list") {
         setRootComponent("list", new ExtensionList(model, *this));

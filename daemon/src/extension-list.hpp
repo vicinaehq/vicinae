@@ -168,6 +168,7 @@ class ExtensionList : public ExtensionComponent {
   QList<ListItemViewModel> items;
   QHash<QListWidgetItem *, ListItemViewModel> itemMap;
   Service<IconCacheService> iconCache;
+  bool isInitialChange = false;
 
 private slots:
   void currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous) {
@@ -227,16 +228,93 @@ public:
 
   void dispatchModel(const ListModel &model) {
     this->model = model;
-    list->clear();
 
-    parent.setSearchPlaceholderText(model.searchPlaceholderText);
-    items.clear();
+    qDebug() << "items" << model.items.size() << "list count" << list->count();
+
+    auto previousRow = list->currentRow();
+
+    list->clear();
+    itemMap.clear();
 
     for (const auto &item : model.items) {
-      items.push_back(item);
+      auto iconWidget = ImageViewer::createFromModel(item.icon, {25, 25});
+      auto widget =
+          new ListItemWidget(iconWidget, item.title, item.subtitle, "");
+      auto listItem = new QListWidgetItem;
+
+      list->addItem(listItem);
+      list->setItemWidget(listItem, widget);
+      listItem->setSizeHint(widget->sizeHint());
+      itemMap.insert(listItem, item);
     }
 
-    buildList("");
+    for (int i = 0; i != list->count(); ++i) {
+      auto item = list->item(i);
+
+      if (!item->flags().testFlag(Qt::ItemIsSelectable))
+        continue;
+
+      list->setCurrentItem(item);
+      break;
+    }
+
+    /*
+for (size_t i = 0; i != model.items.size(); ++i) {
+  auto &item = model.items.at(i);
+
+  if (list->count() > i) {
+    if (!item.changed)
+      continue;
+
+    auto listItem = list->item(i);
+    auto iconWidget = ImageViewer::createFromModel(item.icon, {25, 25});
+    auto widget =
+        new ListItemWidget(iconWidget, item.title, item.subtitle, "");
+
+    list->setItemWidget(listItem, widget);
+    listItem->setSizeHint(widget->sizeHint());
+    itemMap.insert(listItem, item);
+  } else {
+    auto iconWidget = ImageViewer::createFromModel(item.icon, {25, 25});
+    auto widget =
+        new ListItemWidget(iconWidget, item.title, item.subtitle, "");
+    auto listItem = new QListWidgetItem;
+
+    list->addItem(listItem);
+    list->setItemWidget(listItem, widget);
+    listItem->setSizeHint(widget->sizeHint());
+    itemMap.insert(listItem, item);
+  }
+
+  for (int i = 0; i != list->count(); ++i) {
+    auto item = list->item(i);
+
+    if (!item->flags().testFlag(Qt::ItemIsSelectable))
+      continue;
+
+    auto &modelItem = model.items.at(i);
+
+    if (list->currentRow() == i && modelItem.changed) {
+      // emit list->currentItemChanged(item, item);
+    } else {
+      list->setCurrentItem(item);
+    }
+
+    break;
+  }
+}
+
+for (size_t i = model.items.size(); i < list->count();) {
+  auto item = list->item(i);
+
+  list->itemWidget(item)->deleteLater();
+  list->takeItem(i);
+
+  itemMap.remove(item);
+}
+    */
+
+    parent.setSearchPlaceholderText(model.searchPlaceholderText);
 
     qDebug() << "dispatching model update";
   }

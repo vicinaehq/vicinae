@@ -2,6 +2,7 @@
 #include <QList>
 #include <QString>
 #include <QWidget>
+#include <cmath>
 #include <qjsonobject.h>
 #include <qtmetamacros.h>
 
@@ -85,6 +86,7 @@ struct ListItemDetail {
 };
 
 struct ListItemViewModel {
+  bool changed;
   QString id;
   QString title;
   QString subtitle;

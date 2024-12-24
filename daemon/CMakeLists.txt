@@ -42,6 +42,8 @@ qt_add_executable(${TARGET}
 
 	include/image-fetcher.hpp
 
+	src/json-patch.cpp
+
 	include/markdown-renderer.hpp
 	src/ui/markdown-renderer.cpp
 

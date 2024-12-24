@@ -219,7 +219,12 @@ export const createRenderer = (config: RendererConfig) => {
 		if (!oldTree) return ;
 
 		const tree = container.children[0];
-		const ops = compare(tree, oldTree ?? {});
+		const ops = compare(oldTree ?? {}, tree);
+
+		for (const op of ops) {
+			const unsafeOp = op as any;
+			if (unsafeOp.value) delete unsafeOp.value;
+		}
 
 		config.onUpdate?.(tree, ops)
 		oldTree = deepClone(tree);
