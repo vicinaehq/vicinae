@@ -68,7 +68,9 @@ class Omnicast {
 		packet.writeUint32BE(message.length, 0);
 		message.copy(packet, 4, 0);
 
-		return new Promise((resolve) => this.client.write(packet, resolve));
+		const write = this.client.write(packet);
+
+		console.log({ write });
 	}
 
 	private respond(envelope: MessageEnvelope, data: Record<string, any>) {
@@ -146,7 +148,15 @@ class Omnicast {
 				console.error(error);
 			});
 
-			worker.on('message', async ({ envelope, data }) => {
+			worker.on('error', (error) => {
+				console.error(`worker error`, error);
+			});
+
+			worker.on('online', () => {
+				console.log(`worker is online`);
+			});
+
+			worker.on('message', ({ envelope, data }) => {
 				this.requestMap.set(envelope.id, worker);
 
 				const qualifiedPayload: FullMessage = {
@@ -163,7 +173,9 @@ class Omnicast {
 					data
 				};
 
-				await this.writePacket(Buffer.from(JSON.stringify(qualifiedPayload)));
+				console.log(`from worker`, qualifiedPayload);
+
+				this.writePacket(Buffer.from(JSON.stringify(qualifiedPayload)));
 			});
 
 			worker.on('error', (error) => { 

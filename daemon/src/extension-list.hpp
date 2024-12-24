@@ -1,10 +1,11 @@
 #pragma once
 #include "app.hpp"
 #include "common.hpp"
+#include "extend/detail-model.hpp"
+#include "extend/list-model.hpp"
 #include "extension.hpp"
 #include "image-viewer.hpp"
 #include "markdown-renderer.hpp"
-#include "omnicast.hpp"
 #include "tag.hpp"
 #include "theme.hpp"
 #include "view.hpp"
@@ -105,12 +106,12 @@ public:
     setLayout(layout);
   }
 
-  void dispatchModel(const ListItemDetail &model) {
+  void dispatchModel(const DetailModel &model) {
     ThemeService theme;
 
     markdownEditor->setMarkdown(model.markdown);
 
-    if (model.metadata.isEmpty()) {
+    if (model.metadata.children.isEmpty()) {
       divider->hide();
       metadata->hide();
     } else {
@@ -118,8 +119,8 @@ public:
       metadata->show();
     }
 
-    for (size_t i = 0; i != model.metadata.size(); ++i) {
-      auto &item = model.metadata.at(i);
+    for (size_t i = 0; i != model.metadata.children.size(); ++i) {
+      auto &item = model.metadata.children.at(i);
 
       if (auto label = std::get_if<MetadataLabel>(&item)) {
         metadata->addRow(new QLabel(label->title), new QLabel(label->text));
@@ -184,8 +185,8 @@ private slots:
     if (item.detail) {
       auto newDetailWidget = new DetailWidget(iconCache);
 
-      qDebug() << "item has detail with" << item.detail->metadata.size()
-               << "metadata lines";
+      qDebug() << "item has detail with"
+               << item.detail->metadata.children.size() << "metadata lines";
 
       if (layout->count() == 2) {
         layout->addWidget(newDetailWidget, 2);
@@ -239,62 +240,6 @@ public:
 
     buildList("");
 
-    /*
-for (size_t i = 0; i != model.items.size(); ++i) {
-  auto &item = model.items.at(i);
-
-  if (list->count() > i) {
-    if (!item.changed)
-      continue;
-
-    auto listItem = list->item(i);
-    auto iconWidget = ImageViewer::createFromModel(item.icon, {25, 25});
-    auto widget =
-        new ListItemWidget(iconWidget, item.title, item.subtitle, "");
-
-    list->setItemWidget(listItem, widget);
-    listItem->setSizeHint(widget->sizeHint());
-    itemMap.insert(listItem, item);
-  } else {
-    auto iconWidget = ImageViewer::createFromModel(item.icon, {25, 25});
-    auto widget =
-        new ListItemWidget(iconWidget, item.title, item.subtitle, "");
-    auto listItem = new QListWidgetItem;
-
-    list->addItem(listItem);
-    list->setItemWidget(listItem, widget);
-    listItem->setSizeHint(widget->sizeHint());
-    itemMap.insert(listItem, item);
-  }
-
-  for (int i = 0; i != list->count(); ++i) {
-    auto item = list->item(i);
-
-    if (!item->flags().testFlag(Qt::ItemIsSelectable))
-      continue;
-
-    auto &modelItem = model.items.at(i);
-
-    if (list->currentRow() == i && modelItem.changed) {
-      // emit list->currentItemChanged(item, item);
-    } else {
-      list->setCurrentItem(item);
-    }
-
-    break;
-  }
-}
-
-for (size_t i = model.items.size(); i < list->count();) {
-  auto item = list->item(i);
-
-  list->itemWidget(item)->deleteLater();
-  list->takeItem(i);
-
-  itemMap.remove(item);
-}
-    */
-
     parent.setSearchPlaceholderText(model.searchPlaceholderText);
 
     qDebug() << "dispatching model update";
@@ -335,7 +280,7 @@ for (size_t i = model.items.size(); i < list->count();) {
   }
 
   void onSearchTextChanged(const QString &s) {
-    qDebug() << "onSearchTextChange" << s;
+    qDebug() << "onSearchTextChange" << model.onSearchTextChange;
     if (!model.onSearchTextChange.isEmpty()) {
       QJsonObject payload;
       auto args = QJsonArray();

@@ -1,5 +1,5 @@
 #pragma once
-#include "extension.hpp"
+#include "extend/action-model.hpp"
 #include <qboxlayout.h>
 #include <qhash.h>
 #include <qlabel.h>

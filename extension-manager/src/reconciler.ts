@@ -170,7 +170,9 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 		},
 
 		removeChildFromContainer(container, child) {
-			container.children = [];
+			const childIdx = container.children.indexOf(child);
+
+			container.children.splice(childIdx, 1);
 		},
 
 		resetTextContent() {},
@@ -218,7 +220,13 @@ export const createRenderer = (config: RendererConfig) => {
 	const hostConfig = createHostConfig({}, () => {
 		if (!oldTree) return ;
 
-		const tree = container.children[0];
+		const tree = container.children[container.children.length - 1];
+
+		if (!tree) {
+			console.error('no tree, WTF!!');
+			return ;
+		}
+
 		const ops = compare(oldTree ?? {}, tree);
 
 		for (const op of ops) {
@@ -238,7 +246,7 @@ export const createRenderer = (config: RendererConfig) => {
 			}
 
 			reconciler.updateContainer(element, container._root, null, () => {
-				const tree = container.children[0];
+				const tree = container.children[container.children.length - 1];
 
 				config.onInitialRender(tree)
 				oldTree = deepClone(tree);

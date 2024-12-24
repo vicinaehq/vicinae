@@ -219,6 +219,8 @@ void AppWindow::pushView(View *view) {
     cur->widget->hide();
   }
 
+  topBar->input->clear();
+
   navigationStack.push(view);
 }
 

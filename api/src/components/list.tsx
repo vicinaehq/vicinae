@@ -1,6 +1,8 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useEffect, useRef } from 'react';
 import { ImageLike, serializeImageLike } from '../image';
 import { TagList } from './tag';
+import { bus } from '../bus';
+import { randomUUID } from 'crypto';
 
 export type ListProps = {
 	actions?: React.ReactNode;
@@ -43,8 +45,19 @@ export type ListItemDetailMetadataLabelProps = {
 export type ListItemDetailMetadataSeparator = {
 }
 
-const ListRoot: React.FC<ListProps> = (props) => {
-	return <list {...props} />;
+const ListRoot: React.FC<ListProps> = ({ onSearchTextChange, ...props }) => {
+	const handlerId = useRef<string>(randomUUID());
+
+	useEffect(() => {
+		if (onSearchTextChange) {
+			console.log(`mount handler ${handlerId.current}`);
+			bus!.subscribe(handlerId.current, onSearchTextChange);
+			
+			return () => { bus!.unsubscribe(handlerId.current); }
+		}
+	}, []);
+
+	return <list onSearchTextChange={onSearchTextChange ? handlerId.current : undefined} {...props} />;
 }
 
 const ListItem: React.FC<ListItemProps> = ({ detail, actions, ...props }) => {

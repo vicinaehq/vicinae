@@ -57,6 +57,12 @@ class Bus {
   constructor(private readonly port: MessagePort) {
 	  console.error('INSTANCIATE BUS');
 	  port.on('message', this.handleMessage.bind(this));
+	  port.on('messageerror', (error) => {
+		  console.error(`Message error from manager`, error);
+	  });
+	  port.on('close', () => {
+		  console.error(`Parent port closed prematurely`);
+	  });
   }
 
   unsubscribe(id: string) {
@@ -94,20 +100,24 @@ class Bus {
   request(action: string, data: Record<string, any>): Promise<Message> {
 	const id = randomUUID();
 
-	return new Promise<Message>((resolve) => {
-		this.requestMap.set(id, { resolve });
-		console.log(`add id for message type ${action}` + id);
+	return new Promise<Message>((resolve, reject) => {
+		try {
+			this.requestMap.set(id, { resolve });
+			console.log(`add id for message type ${action}` + id);
 
-		const message: Message = {
-			envelope: {
-				type: 'request',
-				action, 
-				id
-			},
-			data
-		};
+			const message: Message = {
+				envelope: {
+					type: 'request',
+					action, 
+					id
+				},
+				data
+			};
 
-		this.port.postMessage(message);
+			this.port.postMessage(message);
+		} catch (error) {
+			reject(error);
+		}
 	});
   }
 };

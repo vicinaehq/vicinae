@@ -2,6 +2,10 @@ import React, { ReactNode, useEffect, useState } from 'react';
 import context from './navigation-context';
 import { bus } from '../bus';
 
+const View: React.FC<{ children: ReactNode }> = ({ children }) => {
+	return <>{children}</>
+}
+
 export const NavigationProvider: React.FC<{ root: ReactNode }>= ({ root }) => {
 	const [navStack, setNavStack] = useState<ReactNode[]>([root]);
 
@@ -18,15 +22,22 @@ export const NavigationProvider: React.FC<{ root: ReactNode }>= ({ root }) => {
 	}
 
 	useEffect(() => {
+		console.log('stack is now of size' + navStack.length);
+	}, [navStack])
+
+	useEffect(() => {
 		const listener = bus!.subscribe('pop-view', () => {
+			console.log('popping from current nav stack of size ' + navStack.length);
 			setNavStack((cur) => cur.slice(0, -1));
 		});
 
 		return () => listener.unsubscribe();
 	}, []);
-	
-	const currentView = navStack.at(-1) ?? null;
 
+
+	console.log('stack is now of size' + navStack.length);
+
+	
 	return (
 		<context.Provider
 			value={{
@@ -34,7 +45,7 @@ export const NavigationProvider: React.FC<{ root: ReactNode }>= ({ root }) => {
 				pop
 			}}
 		>
-			{currentView}
+			{navStack.map((el, idx) => <View key={idx}>{el}</View>)}
 		</context.Provider>
 	);
 } 

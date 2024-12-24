@@ -62,11 +62,6 @@ private slots:
   }
 
   void render(const QJsonObject &payload) {
-    if (popFlag) {
-      popFlag = false;
-      return;
-    }
-
     if (!viewStack.isEmpty()) {
       auto top = viewStack.top();
 
@@ -160,6 +155,8 @@ view->render(payload);
     if (action == "render") {
       render(payload);
     }
+
+    app.extensionManager->flush();
   }
 
 public:
@@ -178,7 +175,6 @@ public:
     connect(&app, &AppWindow::currentViewPoped, this, [this, &app]() {
       qDebug() << "curent view poped from extension";
 
-      app.extensionManager->emitExtensionEvent(sessionId, "pop-view", {});
       popFlag = true;
 
       auto old = viewStack.top();
@@ -190,6 +186,8 @@ public:
         connect(viewStack.top(), &ExtensionView::extensionEvent, this,
                 &ExtensionCommand::forwardExtensionEvent);
       }
+
+      app.extensionManager->emitExtensionEvent(sessionId, "pop-view", {});
     });
 
     auto timer = new QTimer(this);

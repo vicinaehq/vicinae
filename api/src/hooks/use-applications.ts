@@ -12,14 +12,18 @@ export const useApplications = (): [AppInfo[], boolean] => {
 	const [apps, setApps] = useState<AppInfo[]>([]);
 
 	useEffect(() => {
-		bus!.request('list-applications', {}).then(({ data }) => {
+		console.log('get apps');
+		bus!.request('list-applications', {})
+		.then(({ data }) => {
+			'got apps'
 			setApps((data.apps as any[]).map<AppInfo>((app: any) => ({
 				id: app.id,
 				name: app.name,
 				icon: { iconName: app.icon }
 			})));
 			setIsLoading(false);
-		});
+		})
+		.catch((error) => { console.error(`Failed to get apps`, error); })
 	}, []);
 
 	return [apps, isLoading];

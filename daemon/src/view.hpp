@@ -1,6 +1,5 @@
 #pragma once
 #include "app.hpp"
-#include "extension.hpp"
 #include <qboxlayout.h>
 #include <qjsonobject.h>
 #include <qlabel.h>

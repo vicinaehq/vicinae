@@ -41,6 +41,15 @@ qt_add_executable(${TARGET}
 	src/commands/calculator-history/calculator-history.cpp
 	src/commands/create-quicklink/create-quicklink.hpp
 
+	src/extend/action-model.cpp
+	src/extend/color-model.cpp
+	src/extend/detail-model.cpp
+	src/extend/image-model.cpp
+	src/extend/list-model.cpp
+	src/extend/metadata-model.cpp
+	src/extend/model-parser.cpp
+	src/extend/tag-list.cpp
+
 	include/image-fetcher.hpp
 
 	src/json-patch.cpp

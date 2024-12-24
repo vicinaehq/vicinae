@@ -8,7 +8,17 @@ import { SerializedColorLike } from '../color';
 declare module 'react' {
 	namespace JSX {
 		interface IntrinsicElements {
-			list: ListProps,
+			list: {
+				actions?: React.ReactNode;
+				children?: React.ReactNode;
+				filtering?: boolean;
+				isLoading?: boolean;
+				isShowingDetail?: boolean;
+				searchBarPlaceholder?: string;
+				navigationTitle?: string;
+				onSearchTextChange?: string;
+				onSelectionChange?: (id: string) => void;
+			},
 			'list-item': {
 				title: string;
 				id?: string;
