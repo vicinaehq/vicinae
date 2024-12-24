@@ -1,4 +1,5 @@
 #pragma once
+#include "extend/model-parser.hpp"
 #include <QDebug>
 #include <QJsonArray>
 #include <QString>
@@ -61,16 +62,36 @@ struct LoadedCommand {
 static const char *exec =
     "/home/aurelle/prog/perso/omnicast-sdk/extension-manager/dist/index.js";
 
-class Bus : public QObject {
+enum MessageType { REQUEST, RESPONSE, EVENT };
+
+static QHash<MessageType, QString> messageTypeToString = {
+    {MessageType::REQUEST, "request"},
+    {MessageType::RESPONSE, "response"},
+    {MessageType::EVENT, "event"},
+};
+
+struct Messenger {
+  enum Type { MAIN, MANAGER, EXTENSION };
+
+  QString id;
+  Type type;
+};
+
+struct MessageEnvelope {
+  QString id;
+  MessageType type;
+  Messenger sender;
+  Messenger target;
+  QString action;
+};
+
+struct FullMessage {
+  MessageEnvelope envelope;
+  QJsonObject data;
+};
+
+class DataDecoder : public QObject {
   Q_OBJECT
-
-  enum MessageType { REQUEST, RESPONSE, EVENT };
-
-  QHash<MessageType, QString> messageTypeToString = {
-      {MessageType::REQUEST, "request"},
-      {MessageType::RESPONSE, "response"},
-      {MessageType::EVENT, "event"},
-  };
 
   QHash<QString, MessageType> stringToMessageType = {
       {"request", MessageType::REQUEST},
@@ -78,66 +99,11 @@ class Bus : public QObject {
       {"event", MessageType::EVENT},
   };
 
-  struct Messenger {
-    enum Type { MAIN, MANAGER, EXTENSION };
-
-    QString id;
-    Type type;
-  };
-
-  QHash<Messenger::Type, QString> messengerTypeToString = {
-      {Messenger::Type::MAIN, "main"},
-      {Messenger::Type::MANAGER, "manager"},
-      {Messenger::Type::EXTENSION, "extension"},
-  };
-
   QHash<QString, Messenger::Type> stringToMessengerType = {
-      {"main", Messenger::Type::MAIN},
-      {"manager", Messenger::Type::MANAGER},
-      {"extension", Messenger::Type::EXTENSION},
+      {"main", Messenger::MAIN},
+      {"manager", Messenger::MANAGER},
+      {"extension", Messenger::EXTENSION},
   };
-
-  struct MessageEnvelope {
-    QString id;
-    MessageType type;
-    Messenger sender;
-    Messenger target;
-    QString action;
-  };
-
-  struct FullMessage {
-    MessageEnvelope envelope;
-    QJsonObject data;
-  };
-
-  Messenger selfMessenger{.type = Messenger::MAIN};
-
-  QHash<QString, MessageEnvelope> outgoingPendingRequests;
-  QHash<QString, MessageEnvelope> incomingPendingRequests;
-
-  QLocalSocket *socket;
-
-  FullMessage parsePacket(QByteArray &buf) {
-    QDataStream dataStream(&buf, QIODevice::ReadOnly);
-    QByteArray data;
-
-    dataStream >> data;
-
-    auto json = QJsonDocument::fromJson(data);
-
-    QTextStream(stdout) << json.toJson();
-
-    return parseFullMessage(json.object());
-  }
-
-  QJsonObject serializeMessenger(const Messenger &lhs) {
-    QJsonObject obj;
-
-    obj["id"] = lhs.id;
-    obj["type"] = messengerTypeToString[lhs.type];
-
-    return obj;
-  }
 
   Messenger parseMessenger(const QJsonObject &lhs) {
     Messenger messenger{.id = lhs["id"].toString(),
@@ -166,6 +132,53 @@ class Bus : public QObject {
     auto data = lhs["data"].toObject();
 
     return {envelope, data};
+  }
+
+public slots:
+  void processData(const QByteArray &data) {
+    auto json = QJsonDocument::fromJson(data);
+    // QTextStream(stdout) << json.toJson();
+    auto msg = parseFullMessage(json.object());
+
+    emit messageParsed(msg);
+  }
+
+signals:
+  void messageParsed(FullMessage message);
+};
+
+class Bus : public QObject {
+  Q_OBJECT
+
+  QThread *workerThread = nullptr;
+  DataDecoder *worker = nullptr;
+
+  Messenger selfMessenger{.type = Messenger::MAIN};
+
+  QHash<QString, MessageEnvelope> outgoingPendingRequests;
+  QHash<QString, MessageEnvelope> incomingPendingRequests;
+
+  QHash<Messenger::Type, QString> messengerTypeToString = {
+      {Messenger::Type::MAIN, "main"},
+      {Messenger::Type::MANAGER, "manager"},
+      {Messenger::Type::EXTENSION, "extension"},
+  };
+
+  QHash<QString, Messenger::Type> stringToMessengerType = {
+      {"main", Messenger::MAIN},
+      {"manager", Messenger::MANAGER},
+      {"extension", Messenger::EXTENSION},
+  };
+
+  QLocalSocket *socket;
+
+  QJsonObject serializeMessenger(const Messenger &lhs) {
+    QJsonObject obj;
+
+    obj["id"] = lhs.id;
+    obj["type"] = messengerTypeToString[lhs.type];
+
+    return obj;
   }
 
   MessageEnvelope makeEnvelope(MessageType type, const Messenger &target,
@@ -236,54 +249,61 @@ private slots:
     qDebug() << "bus errror" << error;
   }
 
+  void handleMessage(FullMessage msg) {
+    qDebug() << "readyRead: got message of type" << msg.envelope.action;
+
+    if (msg.envelope.type == MessageType::REQUEST) {
+      incomingPendingRequests.insert(msg.envelope.id, msg.envelope);
+    }
+
+    if (msg.envelope.sender.type == Messenger::Type::MANAGER) {
+      if (msg.envelope.type == MessageType::REQUEST) {
+        qDebug() << "manager->main is not supported";
+        return;
+      }
+
+      if (msg.envelope.type == MessageType::RESPONSE) {
+        auto it = outgoingPendingRequests.find(msg.envelope.id);
+
+        if (it == outgoingPendingRequests.end()) {
+          qDebug() << "No matching request for manager response";
+          return;
+        }
+
+        outgoingPendingRequests.remove(msg.envelope.id);
+        emit managerResponse(msg.envelope.action, msg.data);
+      }
+    }
+
+    if (msg.envelope.sender.type == Messenger::Type::EXTENSION) {
+      if (msg.envelope.type == MessageType::EVENT) {
+        emit extensionEvent(msg.envelope.sender.id, msg.envelope.action,
+                            msg.data);
+      }
+      if (msg.envelope.type == MessageType::REQUEST) {
+        emit extensionRequest(msg.envelope.sender.id, msg.envelope.id,
+                              msg.envelope.action, msg.data);
+      }
+    }
+  }
+
   void readyRead() {
     while (socket->bytesAvailable() > 0) {
+      auto start = std::chrono::high_resolution_clock::now();
       auto buf = socket->readAll();
+      auto end = std::chrono::high_resolution_clock::now();
+      auto duration =
+          std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
+              .count();
+      qDebug() << "read stuff in" << duration << "ms";
+
       QDataStream dataStream(&buf, QIODevice::ReadOnly);
       QByteArray data;
 
       while (!dataStream.atEnd()) {
         dataStream >> data;
 
-        auto json = QJsonDocument::fromJson(data);
-        QTextStream(stdout) << json.toJson();
-        auto msg = parseFullMessage(json.object());
-
-        qDebug() << "readyRead: got message of type" << msg.envelope.action;
-
-        if (msg.envelope.type == MessageType::REQUEST) {
-          incomingPendingRequests.insert(msg.envelope.id, msg.envelope);
-        }
-
-        if (msg.envelope.sender.type == Messenger::Type::MANAGER) {
-          if (msg.envelope.type == MessageType::REQUEST) {
-            qDebug() << "manager->main is not supported";
-            return;
-          }
-
-          if (msg.envelope.type == MessageType::RESPONSE) {
-            auto it = outgoingPendingRequests.find(msg.envelope.id);
-
-            if (it == outgoingPendingRequests.end()) {
-              qDebug() << "No matching request for manager response";
-              return;
-            }
-
-            outgoingPendingRequests.remove(msg.envelope.id);
-            emit managerResponse(msg.envelope.action, msg.data);
-          }
-        }
-
-        if (msg.envelope.sender.type == Messenger::Type::EXTENSION) {
-          if (msg.envelope.type == MessageType::EVENT) {
-            emit extensionEvent(msg.envelope.sender.id, msg.envelope.action,
-                                msg.data);
-          }
-          if (msg.envelope.type == MessageType::REQUEST) {
-            emit extensionRequest(msg.envelope.sender.id, msg.envelope.id,
-                                  msg.envelope.action, msg.data);
-          }
-        }
+        emit worker->processData(data);
       }
     }
   }
@@ -351,9 +371,14 @@ public:
 
   void flush() { emit socket->readyRead(); }
 
-  Bus(QLocalSocket *socket) : socket(socket) {
+  Bus(QLocalSocket *socket)
+      : socket(socket), workerThread(new QThread), worker(new DataDecoder) {
     connect(socket, &QLocalSocket::readyRead, this, &Bus::readyRead);
     connect(socket, &QLocalSocket::errorOccurred, this, &Bus::handleError);
+    connect(worker, &DataDecoder::messageParsed, this, &Bus::handleMessage);
+
+    worker->moveToThread(workerThread);
+    workerThread->start();
   }
 
   ~Bus() { socket->deleteLater(); }

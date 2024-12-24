@@ -1,6 +1,7 @@
 #pragma once
 #include "app-database.hpp"
 #include "app.hpp"
+#include "extend/model-parser.hpp"
 #include "extension-view.hpp"
 #include "extension_manager.hpp"
 #include <qboxlayout.h>
@@ -10,6 +11,7 @@
 #include <qlogging.h>
 #include <qnamespace.h>
 #include <qobject.h>
+#include <qthread.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
 
@@ -31,6 +33,20 @@ class HeadlessCommand : public Command {
   virtual void load() = 0;
 };
 
+class RenderModeler : public QObject {
+  Q_OBJECT
+
+public slots:
+  void createModel(const QJsonObject &payload) {
+    auto tree = payload.value("root").toObject();
+
+    emit modelCreated(ModelParser().parse(tree));
+  }
+
+signals:
+  void modelCreated(RenderModel model);
+};
+
 class ExtensionCommand : public ViewCommand {
   Q_OBJECT
 
@@ -42,6 +58,12 @@ class ExtensionCommand : public ViewCommand {
   std::optional<QJsonObject> lastRender;
   bool popFlag = false;
 
+  QThread *modelerThread;
+  RenderModeler *modeler;
+
+signals:
+  void createModelRenderTask(const QJsonObject &payload);
+
 private slots:
   void commandLoaded(const LoadedCommand &cmd) {
     sessionId = cmd.sessionId;
@@ -49,38 +71,23 @@ private slots:
     qDebug() << "Extension command loaded" << sessionId;
   }
 
-  void batchRender() {
-    if (lastRender) {
-      render(*lastRender);
-      lastRender = std::nullopt;
-    }
-  }
-
   void forwardExtensionEvent(const QString &action, const QJsonObject &obj) {
 
     app.extensionManager->emitExtensionEvent(this->sessionId, action, obj);
   }
 
-  void render(const QJsonObject &payload) {
+  void modelCreated(RenderModel model) {
+    qDebug() << "model created";
     if (!viewStack.isEmpty()) {
       auto top = viewStack.top();
 
-      top->render(payload);
+      top->render(model);
     } else {
-      /*
-auto view = new ExtensionView(app);
 
-connect(view, &ExtensionView::extensionEvent, this,
-    &ExtensionCommand::forwardExtensionEvent);
-
-viewStack.push(view);
-app.pushView(view);
-view->render(payload);
-*/
       auto view = new ExtensionView(app);
 
       pushView(view);
-      view->render(payload);
+      view->render(model);
     }
   }
 
@@ -153,16 +160,30 @@ view->render(payload);
       return;
 
     if (action == "render") {
-      render(payload);
+      emit createModelRenderTask(payload);
     }
-
-    app.extensionManager->flush();
   }
 
 public:
   ExtensionCommand(AppWindow &app, const QString &extensionId,
                    const QString &commandName)
-      : app(app), extensionId(extensionId), commandName(commandName) {}
+      : app(app), extensionId(extensionId), commandName(commandName),
+        modelerThread(new QThread), modeler(new RenderModeler) {
+    modeler->moveToThread(modelerThread);
+
+    connect(this, &ExtensionCommand::createModelRenderTask, modeler,
+            &RenderModeler::createModel);
+    connect(modeler, &RenderModeler::modelCreated, this,
+            &ExtensionCommand::modelCreated);
+
+    modelerThread->start();
+  }
+
+  ~ExtensionCommand() {
+    modelerThread->quit();
+    modelerThread->deleteLater();
+    modeler->deleteLater();
+  }
 
   View *load(AppWindow &app) override {
     connect(app.extensionManager.get(), &ExtensionManager::commandLoaded, this,
@@ -189,12 +210,6 @@ public:
 
       app.extensionManager->emitExtensionEvent(sessionId, "pop-view", {});
     });
-
-    auto timer = new QTimer(this);
-
-    connect(timer, &QTimer::timeout, this, &ExtensionCommand::batchRender);
-
-    timer->start(10);
 
     app.extensionManager->loadCommand(extensionId, commandName);
 

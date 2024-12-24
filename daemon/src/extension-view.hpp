@@ -36,11 +36,7 @@ signals:
   void extensionEvent(const QString &action, const QJsonObject &payload);
 
 public slots:
-  void render(QJsonObject data) {
-    JsonPatch patch(data["changes"].toArray());
-    auto tree = data["root"].toObject();
-    auto model = ModelParser().parse(tree);
-
+  void render(RenderModel model) {
     if (auto listModel = std::get_if<ListModel>(&model)) {
       if (componentType != "list") {
         setRootComponent("list", new ExtensionList(*listModel, *this));
