@@ -1,5 +1,6 @@
 #pragma once
 #include "extend/list-model.hpp"
+#include "extend/root-detail-model.hpp"
 #include <qjsonobject.h>
 
 struct InvalidModel {
@@ -7,7 +8,7 @@ struct InvalidModel {
 };
 
 using RenderTree = QJsonObject;
-using RenderModel = std::variant<ListModel, InvalidModel>;
+using RenderModel = std::variant<ListModel, RootDetailModel, InvalidModel>;
 
 class ModelParser {
 public:

@@ -150,6 +150,11 @@ void AppWindow::popCurrentView() {
 
   previous->deleteLater();
 
+  topBar->input->setReadOnly(false);
+  topBar->input->show();
+  topBar->input->setFocus();
+  topBar->input->installEventFilter(next);
+
   if (navigationStack.size() == 1) {
     currentCommand->unload(*this);
     currentCommand->deleteLater();
@@ -221,6 +226,9 @@ void AppWindow::pushView(View *view) {
   }
 
   topBar->input->clear();
+  topBar->input->setReadOnly(false);
+  topBar->input->show();
+  topBar->input->setFocus();
 
   navigationStack.push(view);
 }

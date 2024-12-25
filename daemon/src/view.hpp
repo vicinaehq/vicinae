@@ -64,6 +64,12 @@ public:
     app.actionPopover->dispatchModel(model);
   }
 
+  void hideInput() {
+    app.topBar->input->hide();
+    app.topBar->input->setReadOnly(true);
+    app.topBar->input->setText("");
+  }
+
 public slots:
   virtual void onSearchChanged(const QString &s) {}
   virtual void onActionActivated(ActionModel model) {}
