@@ -124,6 +124,12 @@ private slots:
       app.extensionManager->respond(id, responseData);
     }
 
+    if (action == "clipboard-copy") {
+      app.clipboardService->copyText(payload.value("text").toString());
+      app.statusBar->setToast("Copied into clipboard");
+      app.extensionManager->respond(id, {});
+    }
+
     if (action == "push-view") {
       pushView(new ExtensionView(app));
       app.extensionManager->respond(id, {});
