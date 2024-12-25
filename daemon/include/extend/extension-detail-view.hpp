@@ -9,6 +9,8 @@
 #include "markdown-renderer.hpp"
 #include "tag.hpp"
 #include "theme.hpp"
+#include "ui/metadata-pane.hpp"
+#include "ui/vertical-metadata.hpp"
 #include "view.hpp"
 #include <QListWidget>
 #include <QTextEdit>
@@ -25,43 +27,19 @@
 #include <qtmetamacros.h>
 #include <qwidget.h>
 
-class VerticalMetadataPane : public QWidget {
-  QVBoxLayout *layout;
-
-public:
-  VerticalMetadataPane() : layout(new QVBoxLayout) {
-    layout->setContentsMargins(10, 10, 10, 10);
-    layout->setAlignment(Qt::AlignTop);
-    setLayout(layout);
-  }
-
-  void addRow(QWidget *left, QWidget *right) {
-    auto widget = new QWidget();
-    auto rowLayout = new QVBoxLayout();
-
-    rowLayout->setContentsMargins(0, 2, 0, 2);
-    rowLayout->addWidget(left);
-    rowLayout->addWidget(right);
-    widget->setLayout(rowLayout);
-    layout->addWidget(widget);
-  }
-
-  void addSeparator() { layout->addWidget(new HDivider); }
-};
-
 class ExtensionDetailView : public ExtensionComponent {
   Q_OBJECT
 
   View &parent;
   QHBoxLayout *layout;
   MarkdownView *markdownEditor;
-  VerticalMetadataPane *metadata;
+  VerticalMetadata *metadata;
 
 private slots:
 public:
   ExtensionDetailView(const RootDetailModel &model, View &parent)
       : parent(parent), layout(new QHBoxLayout),
-        markdownEditor(new MarkdownView), metadata(new VerticalMetadataPane) {
+        markdownEditor(new MarkdownView), metadata(new VerticalMetadata()) {
     layout->setSpacing(0);
     layout->addWidget(markdownEditor, 2);
     layout->addWidget(new VDivider());
@@ -81,41 +59,10 @@ public:
     ThemeService theme;
 
     if (model.metadata) {
-      auto newMeta = new VerticalMetadataPane();
+      auto newMeta = new VerticalMetadata();
 
-      for (const auto &item : model.metadata->children) {
-        if (auto label = std::get_if<MetadataLabel>(&item)) {
-          newMeta->addRow(new QLabel(label->title), new QLabel(label->text));
-        }
-
-        if (std::get_if<MetadataSeparator>(&item)) {
-          newMeta->addSeparator();
-        }
-
-        if (auto model = std::get_if<TagListModel>(&item)) {
-          auto list = new TagList;
-
-          for (const auto &item : model->items) {
-            auto tag = new Tag();
-
-            tag->setText(item.text);
-
-            if (item.color) {
-              tag->setColor(theme.getColor(*item.color));
-            } else {
-              tag->setColor(theme.getColor("primary-text"));
-            }
-
-            if (item.icon) {
-              tag->addLeftWidget(
-                  ImageViewer::createFromModel(*item.icon, {16, 16}));
-            }
-
-            list->addTag(tag);
-          }
-
-          newMeta->addRow(new QLabel(model->title), list);
-        }
+      for (const auto &child : model.metadata->children) {
+        newMeta->addItem(child);
       }
 
       layout->replaceWidget(metadata, newMeta);

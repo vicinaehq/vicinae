@@ -7,6 +7,8 @@
 #include "markdown-renderer.hpp"
 #include "tag.hpp"
 #include "theme.hpp"
+#include "ui/horizontal-metadata.hpp"
+#include "ui/metadata-pane.hpp"
 #include "view.hpp"
 #include <QListWidget>
 #include <QTextEdit>
@@ -61,39 +63,16 @@ public:
   }
 };
 
-class MetadataWidget : public QWidget {
-  QVBoxLayout *layout;
-
-public:
-  MetadataWidget() : layout(new QVBoxLayout) {
-    layout->setContentsMargins(10, 10, 10, 10);
-    setLayout(layout);
-  }
-
-  void addRow(QWidget *left, QWidget *right) {
-    auto widget = new QWidget();
-    auto rowLayout = new QHBoxLayout();
-
-    rowLayout->setContentsMargins(0, 2, 0, 2);
-    rowLayout->addWidget(left, 0, Qt::AlignLeft | Qt::AlignVCenter);
-    rowLayout->addWidget(right, 0, Qt::AlignRight | Qt::AlignVCenter);
-    widget->setLayout(rowLayout);
-    layout->addWidget(widget);
-  }
-
-  void addSeparator() { layout->addWidget(new HDivider); }
-};
-
 class DetailWidget : public QWidget {
   QVBoxLayout *layout;
   MarkdownView *markdownEditor;
-  MetadataWidget *metadata;
+  HorizontalMetadata *metadata;
   HDivider *divider;
 
 public:
   DetailWidget()
       : layout(new QVBoxLayout), markdownEditor(new MarkdownView()),
-        metadata(new MetadataWidget), divider(new HDivider) {
+        metadata(new HorizontalMetadata()), divider(new HDivider) {
     layout->addWidget(markdownEditor, 1);
     layout->addWidget(divider);
     layout->addWidget(metadata);
@@ -115,41 +94,8 @@ public:
       metadata->show();
     }
 
-    for (size_t i = 0; i != model.metadata.children.size(); ++i) {
-      auto &item = model.metadata.children.at(i);
-
-      if (auto label = std::get_if<MetadataLabel>(&item)) {
-        metadata->addRow(new QLabel(label->title), new QLabel(label->text));
-      }
-
-      if (std::get_if<MetadataSeparator>(&item)) {
-        metadata->addSeparator();
-      }
-
-      if (auto model = std::get_if<TagListModel>(&item)) {
-        auto list = new TagList;
-
-        for (const auto &item : model->items) {
-          auto tag = new Tag();
-
-          tag->setText(item.text);
-
-          if (item.color) {
-            tag->setColor(theme.getColor(*item.color));
-          } else {
-            tag->setColor(theme.getColor("primary-text"));
-          }
-
-          if (item.icon) {
-            tag->addLeftWidget(
-                ImageViewer::createFromModel(*item.icon, {16, 16}));
-          }
-
-          list->addTag(tag);
-        }
-
-        metadata->addRow(new QLabel(model->title), list);
-      }
+    for (const auto &child : model.metadata.children) {
+      metadata->addItem(child);
     }
   }
 };

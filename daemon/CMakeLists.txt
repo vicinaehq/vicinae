@@ -46,6 +46,19 @@ qt_add_executable(${TARGET}
 	include/extend/extension-command.hpp
 	include/extend/extension-detail-view.hpp
 
+	include/ui/metadata-pane.hpp
+	src/ui/metadata-pane.cpp
+
+	include/ui/horizontal-metadata.hpp
+	src/ui/horizontal-metadata.cpp
+
+	include/ui/vertical-metadata.hpp
+	src/ui/vertical-metadata.cpp
+
+	include/ui/text-label.hpp
+	src/ui/text-label.cpp
+
+
 	src/extend/action-model.cpp
 	src/extend/color-model.cpp
 	src/extend/detail-model.cpp

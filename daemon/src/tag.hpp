@@ -1,4 +1,7 @@
 #pragma once
+#include "extend/tag-model.hpp"
+#include "image-viewer.hpp"
+#include "theme.hpp"
 #include <qboxlayout.h>
 #include <qlabel.h>
 #include <qnamespace.h>
@@ -33,9 +36,24 @@ hsl.setHsl(hsl.hue(), hsl.saturation(), hsl.lightness() * 1.5);
 public:
   Tag() : layout(new QHBoxLayout), label(new QLabel) {
     setProperty("class", "tag");
-    layout->setContentsMargins(4, 4, 4, 4);
+    layout->setContentsMargins(5, 5, 5, 5);
     layout->addWidget(label, 0, Qt::AlignCenter);
     setLayout(layout);
+  }
+
+  void applyModel(const TagItemModel &model) {
+    ThemeService theme;
+
+    setText(model.text);
+
+    if (model.color) {
+      setColor(theme.getColor(*model.color));
+    }
+    if (model.icon) {
+      auto img = ImageViewer::createFromModel(*model.icon, {16, 16});
+
+      addLeftWidget(img);
+    }
   }
 
   void setText(const QString &text) { label->setText(text); }
