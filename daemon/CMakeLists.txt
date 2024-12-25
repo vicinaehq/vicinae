@@ -41,6 +41,10 @@ qt_add_executable(${TARGET}
 	src/commands/calculator-history/calculator-history.cpp
 	src/commands/create-quicklink/create-quicklink.hpp
 
+	include/extend/list-view.hpp
+	include/extend/extension-view.hpp
+	include/extend/extension-command.hpp
+
 	src/extend/action-model.cpp
 	src/extend/color-model.cpp
 	src/extend/detail-model.cpp
@@ -63,8 +67,6 @@ qt_add_executable(${TARGET}
 	src/root-command.hpp
 	src/command.hpp
 	src/extension.hpp
-	src/extension-list.hpp
-	src/extension-view.hpp
 	src/view.hpp
 
 

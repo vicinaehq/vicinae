@@ -1,8 +1,6 @@
 #pragma once
-#include "extend/model-parser.hpp"
-#include "extension-list.hpp"
+#include "extend/list-view.hpp"
 #include "extension.hpp"
-#include "json-patch.hpp"
 #include "view.hpp"
 #include <qboxlayout.h>
 #include <qjsonobject.h>

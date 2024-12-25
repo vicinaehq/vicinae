@@ -1,5 +1,4 @@
 #pragma once
-#include "app.hpp"
 #include "common.hpp"
 #include "extend/detail-model.hpp"
 #include "extend/list-model.hpp"
@@ -23,7 +22,6 @@
 #include <qtextedit.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
-#include <variant>
 
 class ListItemWidget : public QWidget {
   QWidget *icon;
@@ -90,14 +88,12 @@ class DetailWidget : public QWidget {
   QVBoxLayout *layout;
   MarkdownView *markdownEditor;
   MetadataWidget *metadata;
-  Service<IconCacheService> iconCache;
   HDivider *divider;
 
 public:
-  DetailWidget(Service<IconCacheService> iconCache)
+  DetailWidget()
       : layout(new QVBoxLayout), markdownEditor(new MarkdownView()),
-        metadata(new MetadataWidget), iconCache(iconCache),
-        divider(new HDivider) {
+        metadata(new MetadataWidget), divider(new HDivider) {
     layout->addWidget(markdownEditor, 1);
     layout->addWidget(divider);
     layout->addWidget(metadata);
@@ -168,8 +164,6 @@ class ExtensionList : public ExtensionComponent {
 
   QList<ListItemViewModel> items;
   QHash<QListWidgetItem *, ListItemViewModel> itemMap;
-  Service<IconCacheService> iconCache;
-  bool isInitialChange = false;
 
 private slots:
   void currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous) {
@@ -183,7 +177,7 @@ private slots:
     }
 
     if (item.detail) {
-      auto newDetailWidget = new DetailWidget(iconCache);
+      auto newDetailWidget = new DetailWidget();
 
       qDebug() << "item has detail with"
                << item.detail->metadata.children.size() << "metadata lines";
@@ -208,7 +202,7 @@ public:
 
   ExtensionList(const ListModel &model, View &parent)
       : parent(parent), layout(new QHBoxLayout), list(new QListWidget()),
-        model(model), iconCache(parent.service<IconCacheService>()) {
+        model(model) {
     parent.forwardInputEvents(list);
 
     list->setFocusPolicy(Qt::NoFocus);

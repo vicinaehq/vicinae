@@ -3,6 +3,7 @@
 #include "app-database.hpp"
 #include "app.hpp"
 #include "command.hpp"
+#include "extend/extension-command.hpp"
 #include "extension_manager.hpp"
 #include "omnicast.hpp"
 #include <qlabel.h>

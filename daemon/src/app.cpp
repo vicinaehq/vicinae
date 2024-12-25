@@ -3,6 +3,7 @@
 #include "command.hpp"
 #include "commands/index/index-command.hpp"
 #include "extension_manager.hpp"
+#include "image-fetcher.hpp"
 #include "quicklink-seeder.hpp"
 #include "root-command.hpp"
 #include <QLabel>
@@ -257,6 +258,8 @@ AppWindow::AppWindow(QWidget *parent)
   appDb = std::make_unique<AppDatabase>();
   clipboardService = std::make_unique<ClipboardService>();
   iconCache = std::make_unique<IconCacheService>();
+
+  ImageFetcher::instance();
 
   {
     auto seeder = std::make_unique<QuickLinkSeeder>(*appDb, *quicklinkDatabase);
