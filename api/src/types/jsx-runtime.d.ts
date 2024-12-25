@@ -8,6 +8,10 @@ import { SerializedColorLike } from '../color';
 declare module 'react' {
 	namespace JSX {
 		interface IntrinsicElements {
+			detail: {
+				navigationTitle?: string;
+				markdown: string;
+			},
 			list: {
 				actions?: React.ReactNode;
 				children?: React.ReactNode;
@@ -27,8 +31,19 @@ declare module 'react' {
 			},
 			'list-item-detail': ListItemDetailProps,
 			'list-item-detail-metadata': ListItemDetailMetadataProps
-			'list-item-detail-metadata-label': ListItemDetailMetadataLabelProps,
-			'list-item-detail-metadata-separator': ListItemDetailMetadataSeparator,
+
+			metadata: {
+				children?: ReactNode;
+			},
+
+			'metadata-label': {
+				title: string;
+				text: string;
+				icon?: SerializedImageLike;
+			}
+
+			'metadata-separator': {},
+
 			'action-panel': {
 				title?: string;
 				children?: ReactNode;

@@ -14,14 +14,14 @@ MetadataModel MetadataModelParser::parse(const QJsonObject &instance) {
     auto type = child["type"].toString();
     auto props = child["props"].toObject();
 
-    if (type == "list-item-detail-metadata-label") {
+    if (type == "metadata-label") {
       items.push_back(MetadataLabel{
           .text = props["text"].toString(),
           .title = props["title"].toString(),
       });
     }
 
-    if (type == "list-item-detail-metadata-separator") {
+    if (type == "metadata-separator") {
       items.push_back(MetadataSeparator{});
     }
 

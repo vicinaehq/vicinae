@@ -1,8 +1,8 @@
 import React, { ReactNode, useEffect, useRef } from 'react';
 import { ImageLike, serializeImageLike } from '../image';
-import { TagList } from './tag';
 import { bus } from '../bus';
 import { randomUUID } from 'crypto';
+import { Metadata } from './metadata';
 
 export type ListProps = {
 	actions?: React.ReactNode;
@@ -30,20 +30,6 @@ export type ListItemDetailProps = {
 	markdown?: string;
 	metadata?: React.ReactNode
 };
-
-export type ListItemDetailMetadataProps = {
-	children: React.ReactNode;
-};
-
-export type ListItemDetailMetadataLabelProps = {
-	title: string;
-	text: string;
-	icon?: string;
-};
-
-
-export type ListItemDetailMetadataSeparator = {
-}
 
 const ListRoot: React.FC<ListProps> = ({ onSearchTextChange, ...props }) => {
 	const handlerId = useRef<string>(randomUUID());
@@ -85,27 +71,10 @@ const ListItemDetail: React.FC<ListItemDetailProps> = ({ metadata, ...props }) =
 	)
 }
 
-const Metadata: React.FC<ListItemDetailMetadataProps> = (props) => {
-	return <list-item-detail-metadata {...props} />;
-}
-
-const MetadataLabel: React.FC<ListItemDetailMetadataLabelProps> = (props) => {
-	return <list-item-detail-metadata-label {...props} />
-}
-
-const MetadataSeparator: React.FC<{}> = (props) => {
-	return <list-item-detail-metadata-separator {...props} />
-}
-
-
 export const List = Object.assign(ListRoot, {
 	Item: Object.assign(ListItem, {
 		Detail: Object.assign(ListItemDetail, {
-			Metadata: Object.assign(Metadata, {
-				Label: MetadataLabel,
-				Separator: MetadataSeparator,
-				TagList
-			})
+			Metadata
 		})
 	})
 });
