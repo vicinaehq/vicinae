@@ -1,4 +1,5 @@
 #pragma once
+#include "extend/extension-detail-view.hpp"
 #include "extend/list-view.hpp"
 #include "extension.hpp"
 #include "view.hpp"
@@ -40,6 +41,16 @@ public slots:
         setRootComponent("list", new ExtensionList(*listModel, *this));
       } else {
         static_cast<ExtensionList *>(component)->dispatchModel(*listModel);
+      }
+    }
+
+    if (auto detailModel = std::get_if<RootDetailModel>(&model)) {
+      if (componentType != "detail") {
+        setRootComponent("detail",
+                         new ExtensionDetailView(*detailModel, *this));
+      } else {
+        static_cast<ExtensionDetailView *>(component)->dispatchModel(
+            *detailModel);
       }
     }
   }

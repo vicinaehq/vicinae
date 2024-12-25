@@ -1,16 +1,19 @@
-import { Metadata, MetadataProps } from './metadata';
+import { ReactNode } from 'react';
+import { Metadata } from './metadata';
 
 export type DetailProps = {
 	navigationTitle?: string;
-	metadata?: React.FC<MetadataProps>;
+	metadata?: ReactNode;
 	markdown: string;
 };
 
-const DetailRoot: React.FC<DetailProps> = (props) => {
+const DetailRoot: React.FC<DetailProps> = ({ metadata, ...props }) => {
 	const nativeProps: React.JSX.IntrinsicElements['detail'] = props;
 
 	return (
-		<detail {...nativeProps} />
+		<detail {...nativeProps}>
+			{metadata}
+		</detail>
 	);
 }
 

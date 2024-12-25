@@ -1,25 +1,30 @@
 #include "extend/root-detail-model.hpp"
 #include "extend/action-model.hpp"
 #include "extend/metadata-model.hpp"
+#include <qjsonarray.h>
 #include <qjsonobject.h>
 
 RootDetailModelParser::RootDetailModelParser() {}
 
 RootDetailModel RootDetailModelParser::parse(const QJsonObject &instance) {
   RootDetailModel model;
+  auto props = instance.value("props").toObject();
 
-  model.navigationTitle = instance.value("navigationTitle").toString();
-  model.markdown = instance.value("markdown").toString();
-  model.isLoading = instance.value("isLoading").toBool();
+  model.navigationTitle = props.value("navigationTitle").toString();
+  model.markdown = props.value("markdown").toString();
+  model.isLoading = props.value("isLoading").toBool();
 
-  if (instance.contains("actions")) {
-    model.actions =
-        ActionPannelParser().parse(instance.value("actions").toObject());
-  }
+  for (const auto &child : instance.value("children").toArray()) {
+    auto obj = child.toObject();
+    auto type = obj.value("type").toString();
 
-  if (instance.contains("metadata")) {
-    model.metadata =
-        MetadataModelParser().parse(instance.value("metadata").toObject());
+    if (type == "actions") {
+      model.actions = ActionPannelParser().parse(obj);
+    }
+
+    else if (type == "metadata") {
+      model.metadata = MetadataModelParser().parse(obj);
+    }
   }
 
   return model;

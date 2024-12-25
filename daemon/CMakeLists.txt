@@ -44,6 +44,7 @@ qt_add_executable(${TARGET}
 	include/extend/list-view.hpp
 	include/extend/extension-view.hpp
 	include/extend/extension-command.hpp
+	include/extend/extension-detail-view.hpp
 
 	src/extend/action-model.cpp
 	src/extend/color-model.cpp
