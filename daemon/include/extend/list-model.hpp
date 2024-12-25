@@ -14,6 +14,14 @@ struct ListItemViewModel {
   std::optional<ActionPannelModel> actionPannel;
 };
 
+struct ListSectionModel {
+  QString title;
+  QString subtitle;
+  QList<ListItemViewModel> children;
+};
+
+using ListChild = std::variant<ListItemViewModel, ListSectionModel>;
+
 struct ListModel {
   bool isLoading;
   bool isFiltering;
@@ -21,11 +29,12 @@ struct ListModel {
   QString navigationTitle;
   QString searchPlaceholderText;
   QString onSearchTextChange;
-  QList<ListItemViewModel> items;
+  QList<ListChild> items;
 };
 
 class ListModelParser {
   ListItemViewModel parseListItem(const QJsonObject &instance);
+  ListSectionModel parseSection(const QJsonObject &instance);
 
 public:
   ListModelParser();

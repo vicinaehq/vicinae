@@ -108,7 +108,7 @@ class ExtensionList : public ExtensionComponent {
   QListWidget *list;
   DetailWidget *detail = nullptr;
 
-  QList<ListItemViewModel> items;
+  QList<ListChild> items;
   QHash<QListWidgetItem *, ListItemViewModel> itemMap;
 
 private slots:
@@ -190,18 +190,48 @@ public:
     itemMap.clear();
 
     for (const auto &item : items) {
-      if (!item.title.contains(s, Qt::CaseInsensitive))
-        continue;
+      if (auto model = std::get_if<ListSectionModel>(&item)) {
+        qDebug() << "list section model with " << model->children.size();
+        QList<const ListItemViewModel *> matchingItems;
 
-      auto iconWidget = ImageViewer::createFromModel(item.icon, {25, 25});
-      auto widget =
-          new ListItemWidget(iconWidget, item.title, item.subtitle, "");
-      auto listItem = new QListWidgetItem();
+        for (const auto &item : model->children) {
+          if (!item.title.contains(s, Qt::CaseInsensitive))
+            continue;
+          matchingItems.push_back(&item);
+        }
 
-      list->addItem(listItem);
-      list->setItemWidget(listItem, widget);
-      listItem->setSizeHint(widget->sizeHint());
-      itemMap.insert(listItem, item);
+        if (matchingItems.isEmpty())
+          continue;
+
+        // append list section name
+
+        for (const auto &item : matchingItems) {
+          auto iconWidget = ImageViewer::createFromModel(item->icon, {25, 25});
+          auto widget =
+              new ListItemWidget(iconWidget, item->title, item->subtitle, "");
+          auto listItem = new QListWidgetItem();
+
+          list->addItem(listItem);
+          list->setItemWidget(listItem, widget);
+          listItem->setSizeHint(widget->sizeHint());
+          itemMap.insert(listItem, *item);
+        }
+      }
+
+      if (auto model = std::get_if<ListItemViewModel>(&item)) {
+        if (!model->title.contains(s, Qt::CaseInsensitive))
+          continue;
+
+        auto iconWidget = ImageViewer::createFromModel(model->icon, {25, 25});
+        auto widget =
+            new ListItemWidget(iconWidget, model->title, model->subtitle, "");
+        auto listItem = new QListWidgetItem();
+
+        list->addItem(listItem);
+        list->setItemWidget(listItem, widget);
+        listItem->setSizeHint(widget->sizeHint());
+        itemMap.insert(listItem, *model);
+      }
     }
 
     for (int i = 0; i != list->count(); ++i) {

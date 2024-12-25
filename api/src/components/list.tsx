@@ -71,7 +71,20 @@ const ListItemDetail: React.FC<ListItemDetailProps> = ({ metadata, ...props }) =
 	)
 }
 
+type ListSectionProps = {
+	title?: string;
+	subtitle?: string;
+	children?: ReactNode;
+};
+
+const ListSection: React.FC<ListSectionProps> = (props) => {
+	const nativeProps: React.JSX.IntrinsicElements['list-section'] = props;
+
+	return <list-section {...nativeProps} />
+}
+
 export const List = Object.assign(ListRoot, {
+	Section: ListSection,
 	Item: Object.assign(ListItem, {
 		Detail: Object.assign(ListItemDetail, {
 			Metadata

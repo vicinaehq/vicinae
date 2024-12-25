@@ -137,6 +137,7 @@ class DataDecoder : public QObject {
 public slots:
   void processData(const QByteArray &data) {
     auto json = QJsonDocument::fromJson(data);
+
     // QTextStream(stdout) << json.toJson();
     auto msg = parseFullMessage(json.object());
 

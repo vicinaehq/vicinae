@@ -36,6 +36,27 @@ ListItemViewModel ListModelParser::parseListItem(const QJsonObject &instance) {
   return model;
 }
 
+ListSectionModel ListModelParser::parseSection(const QJsonObject &instance) {
+  ListSectionModel model;
+  auto props = instance.value("props").toObject();
+
+  model.title = props.value("title").toString();
+  model.subtitle = props.value("subtitle").toString();
+
+  for (const auto &child : instance.value("children").toArray()) {
+    auto obj = child.toObject();
+    auto type = obj.value("type").toString();
+
+    if (type == "list-item") {
+      auto item = parseListItem(obj);
+
+      model.children.push_back(item);
+    }
+  }
+
+  return model;
+}
+
 ListModelParser::ListModelParser() {}
 
 ListModel ListModelParser::parse(const QJsonObject &instance) {
@@ -53,14 +74,19 @@ ListModel ListModelParser::parse(const QJsonObject &instance) {
 
   for (const auto &child : instance.value("children").toArray()) {
     auto childObj = child.toObject();
+    auto type = childObj.value("type").toString();
 
-    if (childObj["type"].toString() != "list-item") {
-      throw std::runtime_error("list item can only have list-item children");
+    if (type == "list-item") {
+      auto item = parseListItem(childObj);
+
+      model.items.push_back(item);
     }
 
-    auto item = parseListItem(childObj);
+    if (type == "list-section") {
+      auto section = parseSection(childObj);
 
-    model.items.push_back(item);
+      model.items.push_back(section);
+    }
 
     /*
 item.changed = patch.isSubtreeChanged(QString("/children/%1").arg(i));

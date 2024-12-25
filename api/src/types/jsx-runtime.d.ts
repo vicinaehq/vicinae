@@ -23,6 +23,11 @@ declare module 'react' {
 				onSearchTextChange?: string;
 				onSelectionChange?: (id: string) => void;
 			},
+			'list-section': {
+				title?: string;
+				subtitle?: string;
+				children?: ReactNode;
+			},
 			'list-item': {
 				title: string;
 				id?: string;
