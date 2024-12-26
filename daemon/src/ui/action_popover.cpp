@@ -1,5 +1,6 @@
 #include "action_popover.hpp"
 #include "command-object.hpp"
+#include "extend/image-model.hpp"
 #include "extension.hpp"
 #include "image-viewer.hpp"
 
@@ -58,9 +59,17 @@ void ActionPopover::renderItems(const QList<ActionPannelItem> &items) {
   for (const auto &item : items) {
     if (auto model = std::get_if<ActionModel>(&item)) {
       auto listItem = new QListWidgetItem;
+      ImageLikeModel imageModel;
+
+      if (!model->icon) {
+        imageModel = ThemeIconModel{.iconName = "application-x-executable"};
+      } else {
+        imageModel = *model->icon;
+      }
+
       auto widget = new ActionListItemWidget(
-          ImageViewer::createFromModel(*model->icon, {25, 25}), model->title,
-          "", "");
+          ImageViewer::createFromModel(imageModel, {25, 25}), model->title, "",
+          "");
 
       list->addItem(listItem);
       list->setItemWidget(listItem, widget);

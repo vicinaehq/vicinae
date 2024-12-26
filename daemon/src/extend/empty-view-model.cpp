@@ -21,7 +21,7 @@ EmptyViewModel EmptyViewModelParser::parse(const QJsonObject &instance) {
     auto obj = child.toObject();
     auto type = obj.value("type").toString();
 
-    if (type == "action-pannel") {
+    if (type == "action-panel") {
       model.actions = ActionPannelParser().parse(obj);
     }
   }

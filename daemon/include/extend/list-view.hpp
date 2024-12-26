@@ -6,24 +6,25 @@
 #include "extension.hpp"
 #include "image-viewer.hpp"
 #include "markdown-renderer.hpp"
-#include "tag.hpp"
 #include "theme.hpp"
 #include "ui/horizontal-metadata.hpp"
-#include "ui/metadata-pane.hpp"
 #include "ui/text-label.hpp"
 #include "view.hpp"
 #include <QListWidget>
+#include <QStackedLayout>
 #include <QTextEdit>
 #include <qboxlayout.h>
 #include <qdir.h>
 #include <qlabel.h>
 #include <qlistwidget.h>
+#include <qlogging.h>
 #include <qnamespace.h>
 #include <qnetworkaccessmanager.h>
 #include <qnetworkreply.h>
 #include <qnetworkrequest.h>
 #include <qobject.h>
 #include <qsizepolicy.h>
+#include <qstackedlayout.h>
 #include <qtextedit.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
@@ -129,16 +130,22 @@ public:
 class EmptyViewWidget : public QWidget {
 public:
   EmptyViewWidget(const EmptyViewModel &model) {
+    auto container = new QVBoxLayout();
+
+    container->setAlignment(Qt::AlignCenter);
+
     auto layout = new QVBoxLayout();
 
     if (model.icon) {
-      layout->addWidget(ImageViewer::createFromModel(*model.icon, {64, 64}));
+      layout->addWidget(ImageViewer::createFromModel(*model.icon, {64, 64}), 0,
+                        Qt::AlignCenter);
     }
 
-    layout->addWidget(new QLabel(model.title));
-    layout->addWidget(new TextLabel(model.description));
+    layout->addWidget(new QLabel(model.title), 0, Qt::AlignCenter);
+    layout->addWidget(new TextLabel(model.description), 0, Qt::AlignCenter);
 
-    setLayout(layout);
+    container->addLayout(layout);
+    setLayout(container);
   }
 };
 
@@ -146,13 +153,20 @@ class ExtensionList : public ExtensionComponent {
   Q_OBJECT
 
   View &parent;
-  QHBoxLayout *layout;
+
+  QVBoxLayout *layout;
+
+  QWidget *shownWidget = nullptr;
+
+  QWidget *listWithDetails;
+  QHBoxLayout *listLayout;
   QListWidget *list;
   DetailWidget *detail = nullptr;
 
+  EmptyViewWidget *emptyView = nullptr;
+
   QList<ListChild> items;
   QHash<QListWidgetItem *, ListItemViewModel> itemMap;
-  EmptyViewWidget *emptyView = nullptr;
 
 private slots:
   void currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous) {
@@ -171,17 +185,17 @@ private slots:
       qDebug() << "item has detail with"
                << item.detail->metadata.children.size() << "metadata lines";
 
-      if (layout->count() == 2) {
-        layout->addWidget(newDetailWidget, 2);
+      if (listLayout->count() == 2) {
+        listLayout->addWidget(newDetailWidget, 2);
       } else {
-        layout->replaceWidget(detail, newDetailWidget);
+        listLayout->replaceWidget(detail, newDetailWidget);
         detail->deleteLater();
       }
 
       detail = newDetailWidget;
       detail->dispatchModel(*item.detail);
     } else if (detail) {
-      layout->removeWidget(detail);
+      listLayout->removeWidget(detail);
       detail->deleteLater();
     }
   }
@@ -190,40 +204,78 @@ public:
   ListModel model;
 
   ExtensionList(const ListModel &model, View &parent)
-      : parent(parent), layout(new QHBoxLayout), list(new QListWidget()),
-        model(model) {
+      : parent(parent), layout(new QVBoxLayout), listWithDetails(new QWidget),
+        listLayout(new QHBoxLayout), list(new QListWidget()), model(model) {
     parent.forwardInputEvents(list);
 
     list->setFocusPolicy(Qt::NoFocus);
     list->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     list->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-    layout->setSpacing(0);
-    layout->addWidget(list, 1);
-    layout->addWidget(new VDivider());
-    layout->setContentsMargins(0, 0, 0, 0);
+    listLayout->setSpacing(0);
+    listLayout->addWidget(list, 1);
+    listLayout->addWidget(new VDivider());
+    listLayout->setContentsMargins(0, 0, 0, 0);
+    listWithDetails->setLayout(listLayout);
 
     connect(list, &QListWidget::currentItemChanged, this,
             &ExtensionList::currentItemChanged);
+
+    shownWidget = listWithDetails;
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(shownWidget);
 
     setLayout(layout);
     dispatchModel(model);
   }
 
-  void dispatchModel(const ListModel &model) {
-    this->model = model;
+  void setShownWidget(QWidget *widget) {
+    if (shownWidget == widget)
+      return;
 
+    widget->show();
+    layout->replaceWidget(shownWidget, widget);
+    shownWidget->hide();
+    shownWidget = widget;
+  }
+
+  void showEmptyView(const EmptyViewModel &model) {
+    auto view = new EmptyViewWidget(model);
+
+    if (model.actions) {
+      parent.setActions(*model.actions);
+    }
+
+    setShownWidget(view);
+  }
+
+  void dispatchModel(const ListModel &model) {
     qDebug() << "items" << model.items.size() << "list count" << list->count();
 
     items.clear();
+    parent.setSearchPlaceholderText(model.searchPlaceholderText);
 
     for (const auto &item : model.items) {
       items.push_back(item);
     }
 
-    buildList("");
+    if (model.emptyView) {
+      auto updatedEmptyView = new EmptyViewWidget(*model.emptyView);
 
-    parent.setSearchPlaceholderText(model.searchPlaceholderText);
+      qDebug() << "refresh empty view";
+
+      if (emptyView)
+        emptyView->deleteLater();
+
+      emptyView = updatedEmptyView;
+    }
+
+    if (!model.emptyView && emptyView) {
+      emptyView->deleteLater();
+      emptyView = nullptr;
+    }
+
+    buildList("");
 
     qDebug() << "dispatching model update";
   }
@@ -284,6 +336,15 @@ public:
         itemMap.insert(listItem, *model);
       }
     }
+
+    qDebug() << "list count" << list->count() << model.isLoading;
+
+    if (list->count() == 0 && !model.isLoading && model.emptyView) {
+      showEmptyView(*model.emptyView);
+      return;
+    }
+
+    setShownWidget(listWithDetails);
 
     for (int i = 0; i != list->count(); ++i) {
       auto item = list->item(i);

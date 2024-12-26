@@ -1,5 +1,5 @@
 #pragma once
-#include "extension.hpp"
+#include "extend/image-model.hpp"
 #include "remote-image-viewer.hpp"
 #include <qboxlayout.h>
 #include <qlabel.h>
@@ -24,6 +24,10 @@ public:
       auto icon = QIcon::fromTheme(model->iconName);
       auto label = new QLabel();
       QSize iconSize = size.isValid() ? size : defaultIconSize;
+
+      if (icon.isNull()) {
+        icon = QIcon::fromTheme("application-x-executable");
+      }
 
       label->setPixmap(icon.pixmap(iconSize));
       label->setAlignment(Qt::AlignCenter);
