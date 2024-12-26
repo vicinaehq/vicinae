@@ -106,9 +106,18 @@ class ListSectionHeaderWidget : public QWidget {
 public:
   ListSectionHeaderWidget(const ListSectionModel &model) {
     auto layout = new QHBoxLayout();
-    QString name = QString("%1 %2").arg(model.title).arg(model.children.size());
 
-    layout->addWidget(new TextLabel(name), 0, Qt::AlignLeft | Qt::AlignVCenter);
+    auto leftWidget = new QWidget();
+    auto leftLayout = new QHBoxLayout();
+
+    leftLayout->setContentsMargins(0, 0, 0, 0);
+    leftLayout->setSpacing(10);
+    leftLayout->addWidget(new TextLabel(model.title));
+    leftLayout->addWidget(
+        new TextLabel(QString::number(model.children.size())));
+    leftWidget->setLayout(leftLayout);
+
+    layout->addWidget(leftWidget, 0, Qt::AlignLeft | Qt::AlignVCenter);
     layout->addWidget(new TextLabel(model.subtitle), 0,
                       Qt::AlignRight | Qt::AlignVCenter);
 
