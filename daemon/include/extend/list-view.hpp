@@ -1,6 +1,7 @@
 #pragma once
 #include "common.hpp"
 #include "extend/detail-model.hpp"
+#include "extend/empty-view-model.hpp"
 #include "extend/list-model.hpp"
 #include "extension.hpp"
 #include "image-viewer.hpp"
@@ -125,6 +126,22 @@ public:
   }
 };
 
+class EmptyViewWidget : public QWidget {
+public:
+  EmptyViewWidget(const EmptyViewModel &model) {
+    auto layout = new QVBoxLayout();
+
+    if (model.icon) {
+      layout->addWidget(ImageViewer::createFromModel(*model.icon, {64, 64}));
+    }
+
+    layout->addWidget(new QLabel(model.title));
+    layout->addWidget(new TextLabel(model.description));
+
+    setLayout(layout);
+  }
+};
+
 class ExtensionList : public ExtensionComponent {
   Q_OBJECT
 
@@ -135,6 +152,7 @@ class ExtensionList : public ExtensionComponent {
 
   QList<ListChild> items;
   QHash<QListWidgetItem *, ListItemViewModel> itemMap;
+  EmptyViewWidget *emptyView = nullptr;
 
 private slots:
   void currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous) {

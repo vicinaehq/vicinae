@@ -1,6 +1,7 @@
 #include "extend/list-model.hpp"
 #include "extend/action-model.hpp"
 #include "extend/detail-model.hpp"
+#include "extend/empty-view-model.hpp"
 #include "extend/image-model.hpp"
 #include <qjsonarray.h>
 #include <qjsonobject.h>
@@ -86,6 +87,10 @@ ListModel ListModelParser::parse(const QJsonObject &instance) {
       auto section = parseSection(childObj);
 
       model.items.push_back(section);
+    }
+
+    if (type == "empty-view") {
+      model.emptyView = EmptyViewModelParser().parse(childObj);
     }
 
     /*

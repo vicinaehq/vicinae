@@ -1,6 +1,7 @@
 #pragma once
 #include "extend/action-model.hpp"
 #include "extend/detail-model.hpp"
+#include "extend/empty-view-model.hpp"
 #include "extend/image-model.hpp"
 #include <qjsonobject.h>
 
@@ -30,6 +31,7 @@ struct ListModel {
   QString searchPlaceholderText;
   QString onSearchTextChange;
   QList<ListChild> items;
+  std::optional<EmptyViewModel> emptyView;
 };
 
 class ListModelParser {

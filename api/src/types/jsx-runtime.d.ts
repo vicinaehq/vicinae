@@ -36,6 +36,12 @@ declare module 'react' {
 			},
 			'list-item-detail': ListItemDetailProps,
 			'list-item-detail-metadata': ListItemDetailMetadataProps
+			
+			'empty-view': {
+				description?: string;
+				title?: string;
+				icon?: SerializedImageLike;
+			},
 
 			metadata: {
 				children?: ReactNode;

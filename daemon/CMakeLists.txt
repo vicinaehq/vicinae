@@ -59,6 +59,7 @@ qt_add_executable(${TARGET}
 	src/ui/text-label.cpp
 
 
+
 	src/extend/action-model.cpp
 	src/extend/color-model.cpp
 	src/extend/detail-model.cpp
@@ -68,6 +69,7 @@ qt_add_executable(${TARGET}
 	src/extend/model-parser.cpp
 	src/extend/tag-list.cpp
 	src/extend/root-detail-model.cpp
+	src/extend/empty-view-model.cpp
 
 	include/image-fetcher.hpp
 

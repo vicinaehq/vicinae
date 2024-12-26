@@ -3,6 +3,7 @@ import { ImageLike, serializeImageLike } from '../image';
 import { bus } from '../bus';
 import { randomUUID } from 'crypto';
 import { Metadata } from './metadata';
+import { EmptyView } from './empty-view';
 
 export type ListProps = {
 	actions?: React.ReactNode;
@@ -85,6 +86,7 @@ const ListSection: React.FC<ListSectionProps> = (props) => {
 
 export const List = Object.assign(ListRoot, {
 	Section: ListSection,
+	EmptyView,
 	Item: Object.assign(ListItem, {
 		Detail: Object.assign(ListItemDetail, {
 			Metadata
