@@ -9,6 +9,7 @@
 #include "theme.hpp"
 #include "ui/horizontal-metadata.hpp"
 #include "ui/metadata-pane.hpp"
+#include "ui/text-label.hpp"
 #include "view.hpp"
 #include <QListWidget>
 #include <QTextEdit>
@@ -20,6 +21,7 @@
 #include <qnetworkaccessmanager.h>
 #include <qnetworkreply.h>
 #include <qnetworkrequest.h>
+#include <qobject.h>
 #include <qsizepolicy.h>
 #include <qtextedit.h>
 #include <qtmetamacros.h>
@@ -97,6 +99,20 @@ public:
     for (const auto &child : model.metadata.children) {
       metadata->addItem(child);
     }
+  }
+};
+
+class ListSectionHeaderWidget : public QWidget {
+public:
+  ListSectionHeaderWidget(const ListSectionModel &model) {
+    auto layout = new QHBoxLayout();
+    QString name = QString("%1 %2").arg(model.title).arg(model.children.size());
+
+    layout->addWidget(new TextLabel(name), 0, Qt::AlignLeft | Qt::AlignVCenter);
+    layout->addWidget(new TextLabel(model.subtitle), 0,
+                      Qt::AlignRight | Qt::AlignVCenter);
+
+    setLayout(layout);
   }
 };
 
@@ -204,6 +220,14 @@ public:
           continue;
 
         // append list section name
+
+        auto headerItem = new QListWidgetItem();
+
+        headerItem->setFlags(headerItem->flags() & !Qt::ItemIsSelectable);
+        list->addItem(headerItem);
+        auto headerWidget = new ListSectionHeaderWidget(*model);
+        list->setItemWidget(headerItem, headerWidget);
+        headerItem->setSizeHint(headerWidget->sizeHint());
 
         for (const auto &item : matchingItems) {
           auto iconWidget = ImageViewer::createFromModel(item->icon, {25, 25});
