@@ -1,11 +1,29 @@
 #include "ui/status_bar.hpp"
 #include "command-object.hpp"
+#include "extend/action-model.hpp"
+#include "ui/action_popover.hpp"
 #include <qlogging.h>
 #include <qnamespace.h>
 #include <qtimer.h>
 
 void StatusBar::setSelectedAction(const std::shared_ptr<IAction> &action) {
   selectedActionLabel->setText(action->name());
+}
+
+void StatusBar::setCurrentAction(const ActionPannelItem &item) {
+  if (auto model = std::get_if<ActionModel>(&item)) {
+    selectedActionLabel->setText(model->title);
+  }
+  if (auto model = std::get_if<ActionPannelSubmenuModel>(&item)) {
+    selectedActionLabel->setText(model->title);
+  }
+  if (auto model = std::get_if<ActionPannelSectionModel>(&item)) {
+    if (model->actions.isEmpty()) {
+      auto &action = model->actions.at(0);
+
+      selectedActionLabel->setText(action.title);
+    }
+  }
 }
 
 StatusBar::StatusBar(QWidget *parent) : QWidget(parent), leftWidget(nullptr) {

@@ -1,8 +1,8 @@
 #pragma once
 #include "common.hpp"
 #include "extend/detail-model.hpp"
+#include "extend/extension-list-controller.hpp"
 #include "extend/list-model.hpp"
-#include "extend/list-view.hpp"
 #include "extend/root-detail-model.hpp"
 #include "extension.hpp"
 #include "image-viewer.hpp"

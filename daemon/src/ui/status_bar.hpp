@@ -1,4 +1,5 @@
 #pragma once
+#include "extend/action-model.hpp"
 #include "ui/toast.hpp"
 #include <QBoxLayout>
 #include <QLabel>
@@ -54,6 +55,7 @@ class StatusBar : public QWidget {
   void setLeftWidget(QWidget *left);
 
 public:
+  void setCurrentAction(const ActionPannelItem &item);
   void setSelectedAction(const std::shared_ptr<IAction> &action);
   void setToast(const QString &text,
                 ToastPriority priority = ToastPriority::Success);

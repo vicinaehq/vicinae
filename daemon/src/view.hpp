@@ -62,6 +62,11 @@ public:
   }
   void setActions(const ActionPannelModel &model) {
     app.actionPopover->dispatchModel(model);
+
+    if (!model.children.isEmpty()) {
+      auto &first = model.children.at(0);
+      app.statusBar->setCurrentAction(first);
+    }
   }
 
   void hideInput() {

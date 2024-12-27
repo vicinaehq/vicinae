@@ -41,10 +41,13 @@ qt_add_executable(${TARGET}
 	src/commands/calculator-history/calculator-history.cpp
 	src/commands/create-quicklink/create-quicklink.hpp
 
-	include/extend/list-view.hpp
+	include/extend/extension-list-controller.hpp
 	include/extend/extension-view.hpp
 	include/extend/extension-command.hpp
 	include/extend/extension-detail-view.hpp
+	
+	include/ui/list-view.hpp
+	include/ui/empty-view.hpp
 
 	include/ui/metadata-pane.hpp
 	src/ui/metadata-pane.cpp

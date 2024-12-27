@@ -1,32 +1,15 @@
 #pragma once
+
 #include "common.hpp"
+#include "extend/action-model.hpp"
 #include "extend/detail-model.hpp"
-#include "extend/empty-view-model.hpp"
 #include "extend/list-model.hpp"
-#include "extension.hpp"
 #include "image-viewer.hpp"
 #include "markdown-renderer.hpp"
-#include "theme.hpp"
+#include "ui/empty-view.hpp"
 #include "ui/horizontal-metadata.hpp"
-#include "ui/text-label.hpp"
-#include "view.hpp"
-#include <QListWidget>
-#include <QStackedLayout>
-#include <QTextEdit>
 #include <qboxlayout.h>
-#include <qdir.h>
-#include <qlabel.h>
 #include <qlistwidget.h>
-#include <qlogging.h>
-#include <qnamespace.h>
-#include <qnetworkaccessmanager.h>
-#include <qnetworkreply.h>
-#include <qnetworkrequest.h>
-#include <qobject.h>
-#include <qsizepolicy.h>
-#include <qstackedlayout.h>
-#include <qtextedit.h>
-#include <qtmetamacros.h>
 #include <qwidget.h>
 
 class ListItemWidget : public QWidget {
@@ -86,8 +69,6 @@ public:
   }
 
   void dispatchModel(const DetailModel &model) {
-    ThemeService theme;
-
     markdownEditor->setMarkdown(model.markdown);
 
     if (model.metadata.children.isEmpty()) {
@@ -127,32 +108,8 @@ public:
   }
 };
 
-class EmptyViewWidget : public QWidget {
-public:
-  EmptyViewWidget(const EmptyViewModel &model) {
-    auto container = new QVBoxLayout();
-
-    container->setAlignment(Qt::AlignCenter);
-
-    auto layout = new QVBoxLayout();
-
-    if (model.icon) {
-      layout->addWidget(ImageViewer::createFromModel(*model.icon, {64, 64}), 0,
-                        Qt::AlignCenter);
-    }
-
-    layout->addWidget(new QLabel(model.title), 0, Qt::AlignCenter);
-    layout->addWidget(new TextLabel(model.description), 0, Qt::AlignCenter);
-
-    container->addLayout(layout);
-    setLayout(container);
-  }
-};
-
-class ExtensionList : public ExtensionComponent {
+class ListView : public QWidget {
   Q_OBJECT
-
-  View &parent;
 
   QVBoxLayout *layout;
 
@@ -172,11 +129,13 @@ private slots:
   void currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous) {
     auto &item = itemMap[current];
 
+    emit itemChanged(item.id);
+
     qDebug() << "selected item" << item.title;
 
     if (item.actionPannel) {
       qDebug() << "actions:" << item.actionPannel->children.size();
-      parent.setActions(*item.actionPannel);
+      emit setActions(*item.actionPannel);
     }
 
     if (item.detail) {
@@ -200,33 +159,10 @@ private slots:
     }
   }
 
-public:
-  ListModel model;
+  void handleItemActivated(QListWidgetItem *listItem) {
+    auto &item = itemMap[listItem];
 
-  ExtensionList(const ListModel &model, View &parent)
-      : parent(parent), layout(new QVBoxLayout), listWithDetails(new QWidget),
-        listLayout(new QHBoxLayout), list(new QListWidget()), model(model) {
-    parent.forwardInputEvents(list);
-
-    list->setFocusPolicy(Qt::NoFocus);
-    list->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    list->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-
-    listLayout->setSpacing(0);
-    listLayout->addWidget(list, 1);
-    listLayout->addWidget(new VDivider());
-    listLayout->setContentsMargins(0, 0, 0, 0);
-    listWithDetails->setLayout(listLayout);
-
-    connect(list, &QListWidget::currentItemChanged, this,
-            &ExtensionList::currentItemChanged);
-
-    shownWidget = listWithDetails;
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->addWidget(shownWidget);
-
-    setLayout(layout);
-    dispatchModel(model);
+    emit itemActivated(item.id);
   }
 
   void setShownWidget(QWidget *widget) {
@@ -243,17 +179,48 @@ public:
     auto view = new EmptyViewWidget(model);
 
     if (model.actions) {
-      parent.setActions(*model.actions);
     }
 
     setShownWidget(view);
   }
 
+public:
+  ListModel model;
+
+  ListView()
+      : layout(new QVBoxLayout), listWithDetails(new QWidget),
+        listLayout(new QHBoxLayout), list(new QListWidget()) {
+    list->setFocusPolicy(Qt::NoFocus);
+    list->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    list->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
+    listLayout->setSpacing(0);
+    listLayout->addWidget(list, 1);
+    listLayout->addWidget(new VDivider());
+    listLayout->setContentsMargins(0, 0, 0, 0);
+    listWithDetails->setLayout(listLayout);
+
+    connect(list, &QListWidget::currentItemChanged, this,
+            &ListView::currentItemChanged);
+    connect(list, &QListWidget::itemActivated, this,
+            &ListView::handleItemActivated);
+
+    shownWidget = listWithDetails;
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(shownWidget);
+
+    setLayout(layout);
+    dispatchModel(model);
+  }
+
+  QListWidget *listWidget() { return list; }
+
   void dispatchModel(const ListModel &model) {
+    this->model = model;
+
     qDebug() << "items" << model.items.size() << "list count" << list->count();
 
     items.clear();
-    parent.setSearchPlaceholderText(model.searchPlaceholderText);
 
     for (const auto &item : model.items) {
       items.push_back(item);
@@ -275,12 +242,12 @@ public:
       emptyView = nullptr;
     }
 
-    buildList("");
+    filterItems("");
 
     qDebug() << "dispatching model update";
   }
 
-  void buildList(const QString &s = "") {
+  void filterItems(const QString &s = "") {
     list->clear();
     itemMap.clear();
 
@@ -297,8 +264,6 @@ public:
 
         if (matchingItems.isEmpty())
           continue;
-
-        // append list section name
 
         auto headerItem = new QListWidgetItem();
 
@@ -357,25 +322,8 @@ public:
     }
   }
 
-  void onActionActivated(ActionModel model) {
-    qDebug() << "activated" << model.title;
-  }
-
-  void onSearchTextChanged(const QString &s) {
-    qDebug() << "onSearchTextChange" << model.onSearchTextChange;
-    if (!model.onSearchTextChange.isEmpty()) {
-      QJsonObject payload;
-      auto args = QJsonArray();
-
-      args.push_back(s);
-      payload["args"] = args;
-
-      emit extensionEvent(model.onSearchTextChange, payload);
-    }
-
-    if (!model.onSearchTextChange.isEmpty())
-      return;
-
-    buildList(s);
-  }
+signals:
+  void setActions(const ActionPannelModel &model);
+  void itemChanged(const QString &id);
+  void itemActivated(const QString &id);
 };

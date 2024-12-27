@@ -168,7 +168,6 @@ public:
 
   ~ExtensionCommand() {
     modelerThread->quit();
-    modelerThread->deleteLater();
     modeler->deleteLater();
   }
 

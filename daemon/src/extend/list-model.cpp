@@ -6,13 +6,13 @@
 #include <qjsonarray.h>
 #include <qjsonobject.h>
 
-ListItemViewModel ListModelParser::parseListItem(const QJsonObject &instance) {
+ListItemViewModel ListModelParser::parseListItem(const QJsonObject &instance,
+                                                 size_t index) {
   ListItemViewModel model;
   auto props = instance.value("props").toObject();
   auto children = instance.value("children").toArray();
 
-  model.id = props["id"].toString(
-      QUuid::createUuid().toString(QUuid::StringFormat::WithoutBraces));
+  model.id = props["id"].toString(QString::number(index));
   model.title = props["title"].toString();
   model.subtitle = props["subtitle"].toString();
   model.icon = ImageModelParser().parse((props.value("icon").toObject()));
@@ -44,15 +44,19 @@ ListSectionModel ListModelParser::parseSection(const QJsonObject &instance) {
   model.title = props.value("title").toString();
   model.subtitle = props.value("subtitle").toString();
 
+  size_t index = 0;
+
   for (const auto &child : instance.value("children").toArray()) {
     auto obj = child.toObject();
     auto type = obj.value("type").toString();
 
     if (type == "list-item") {
-      auto item = parseListItem(obj);
+      auto item = parseListItem(obj, index);
 
       model.children.push_back(item);
     }
+
+    ++index;
   }
 
   return model;
@@ -71,14 +75,14 @@ ListModel ListModelParser::parse(const QJsonObject &instance) {
   model.searchPlaceholderText = props["searchBarPlaceholder"].toString();
   model.onSearchTextChange = props["onSearchTextChange"].toString();
 
-  size_t i = 0;
+  size_t index = 0;
 
   for (const auto &child : instance.value("children").toArray()) {
     auto childObj = child.toObject();
     auto type = childObj.value("type").toString();
 
     if (type == "list-item") {
-      auto item = parseListItem(childObj);
+      auto item = parseListItem(childObj, index);
 
       model.items.push_back(item);
     }
@@ -93,15 +97,7 @@ ListModel ListModelParser::parse(const QJsonObject &instance) {
       model.emptyView = EmptyViewModelParser().parse(childObj);
     }
 
-    /*
-item.changed = patch.isSubtreeChanged(QString("/children/%1").arg(i));
-
-if (item.changed) {
-  qDebug() << "item " << i << "contents were changed";
-}
-
-i += 1;
-    */
+    ++index;
   }
 
   return model;

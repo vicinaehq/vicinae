@@ -228,6 +228,14 @@ public:
     return nullptr;
   }
 
+  std::shared_ptr<DesktopExecutable> defaultFileBrowser() {
+    return defaultForMime("inode/directory");
+  }
+
+  std::shared_ptr<DesktopExecutable> defaultTextEditor() {
+    return defaultForMime("text/plain");
+  }
+
   std::shared_ptr<DesktopExecutable> defaultForMime(const QString &mime) {
     if (auto it = mimeToDefaultApp.find(mime); it != mimeToDefaultApp.end()) {
       qDebug() << "found default app for " << mime << *it;

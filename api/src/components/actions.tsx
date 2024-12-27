@@ -1,21 +1,17 @@
 import React, { ReactNode } from "react";
 import { AppInfo, useNavigation } from "../hooks";
 import { Clipboard } from "../clipboard";
-import { ImageLike, SerializedImageLike, serializeImageLike } from "../image";
+import { ImageLike, serializeImageLike } from "../image";
+import { KeyboardShortcut } from "../keyboard";
 
 export type BaseActionProps = {
 	title: string;
 	icon?: ImageLike;
 }
 
-export type FinalizedActionProps = {
-	onAction: () => void;
-	icon?: SerializedImageLike;
-};
-
 export type ActionProps = BaseActionProps & {
-	title: string;
-	onAction: () => void
+	onAction: () => void;
+	shortcut?: KeyboardShortcut;
 };
 
 export type CopyToClipboardProps = BaseActionProps & {
@@ -30,14 +26,11 @@ export type ActionOpenProps = BaseActionProps & {
 	app?: AppInfo;
 };
 
-const ActionRoot: React.FC<ActionProps> = (props) => {
-	const nativeProps: React.JSX.IntrinsicElements['action'] = {
-		title: props.title,
-		onAction: props.onAction,
-	}
+const ActionRoot: React.FC<ActionProps> = ({ icon, ...props }) => {
+	const nativeProps: React.JSX.IntrinsicElements['action'] = props;
 
-	if (props.icon) {
-		nativeProps.icon = serializeImageLike(props.icon);
+	if (icon) {
+		nativeProps.icon = serializeImageLike(icon);
 	}
 
 	return <action {...nativeProps} />

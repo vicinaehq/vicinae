@@ -54,9 +54,10 @@ QLineEdit, QListWidget {
 }
 
 #action-popover {
-	background-color: %5;
+	border: none;
 	border-radius: 5px;
-	background-color: rgba(35, 35, 35, 240);
+	border: 1px white solid;
+	background-color: rgba(23, 22, 21, 200)
 }
 
 #action-popover QLineEdit {

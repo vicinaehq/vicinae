@@ -4,6 +4,7 @@ import { ActionPanelProps } from '../components/action-pannel';
 import { ActionProps, FinalizedActionProps } from '../components';
 import { ImageLike, SerializedImageLike } from '../image';
 import { SerializedColorLike } from '../color';
+import { KeyboardShortcut } from '../keyboard';
 
 declare module 'react' {
 	namespace JSX {
@@ -73,6 +74,7 @@ declare module 'react' {
 			'action': {
 				title: string;
 				onAction: () => void,
+				shortcut?: KeyboardShortcut;
 				icon?: SerializedImageLike;
 			},
 			'tag-list': {

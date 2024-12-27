@@ -38,6 +38,5 @@ class ActionPannelParser {
 
 public:
   ActionPannelParser();
-
   ActionPannelModel parse(const QJsonObject &instance);
 };

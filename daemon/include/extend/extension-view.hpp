@@ -1,6 +1,6 @@
 #pragma once
 #include "extend/extension-detail-view.hpp"
-#include "extend/list-view.hpp"
+#include "extend/extension-list-controller.hpp"
 #include "extension.hpp"
 #include "view.hpp"
 #include <qboxlayout.h>
