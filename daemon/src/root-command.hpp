@@ -5,8 +5,10 @@
 #include "command.hpp"
 #include "extend/action-model.hpp"
 #include "extend/extension-command.hpp"
+#include "extend/list-model.hpp"
 #include "extension_manager.hpp"
-#include "ui/list-view.hpp"
+#include "files-command.hpp"
+#include "ui/custom-list-view.hpp"
 #include <qhash.h>
 #include <qlabel.h>
 #include <qlist.h>
@@ -31,24 +33,27 @@ struct ExtensionLoadAction {
   Extension::Command command;
 };
 
-using ExtensionAction = std::variant<ExtensionLoadAction>;
-using ActionType = std::variant<AppAction, ExtensionAction>;
+struct OpenHomeDirectoryAction {};
 
-class RootView : public View {
+using ExtensionAction = std::variant<ExtensionLoadAction>;
+using ActionType =
+    std::variant<AppAction, ExtensionAction, OpenHomeDirectoryAction>;
+
+class RootView : public CustomList<ActionType> {
+  AppWindow &app;
   Service<AppDatabase> appDb;
   Service<ExtensionManager> extensionManager;
-  ListView *list;
-  AppWindow &app;
   QHash<QString, std::variant<Extension::Command>> itemMap;
-  QHash<QString, ActionType> actionMap;
   QMimeDatabase mimeDb;
 
 public:
-  virtual void onSearchChanged(const QString &s) override {
+  ListModel search(const QString &s) override {
     auto start = std::chrono::high_resolution_clock::now();
 
     ListModel model;
     ListSectionModel results{.title = "Results"};
+
+    model.searchPlaceholderText = "Search for apps or commands...";
 
     auto textEditor = appDb.defaultTextEditor();
     auto fileBrowser = appDb.defaultFileBrowser();
@@ -76,19 +81,21 @@ public:
               .title = "Open application",
               .onAction = app->id + ".open",
               .icon = ThemeIconModel{.iconName = app->iconName()},
-          };
+              .shortcut = KeyboardShortcutModel{.key = "return"}};
 
-          actionMap.insert(openAction.onAction, OpenAppAction{app});
+          addAction(openAction.onAction, OpenAppAction{app});
           panelModel.children.push_back(openAction);
 
           if (fileBrowser) {
             ActionModel openInFileBrowser{
                 .title = QString("Open in %1").arg(fileBrowser->name),
                 .onAction = app->id + ".open." + fileBrowser->id,
-                .icon = ThemeIconModel{.iconName = fileBrowser->iconName()}};
+                .icon = ThemeIconModel{.iconName = fileBrowser->iconName()},
+                .shortcut = KeyboardShortcutModel{.key = "return",
+                                                  .modifiers = {"cmd"}}};
 
-            actionMap.insert(openInFileBrowser.onAction,
-                             OpenAppInFileBrowserAction{app, fileBrowser});
+            addAction(openInFileBrowser.onAction,
+                      OpenAppInFileBrowserAction{app, fileBrowser});
             panelModel.children.push_back(openInFileBrowser);
           }
 
@@ -106,11 +113,7 @@ public:
           break;
         }
       }
-
-      model.items.push_back(results);
     }
-
-    ListSectionModel extensionSection{.title = "Extensions"};
 
     for (const auto &extension : extensionManager.extensions()) {
 
@@ -130,17 +133,35 @@ public:
         ActionPannelModel panelModel;
         ActionModel loadAction{.title = "Load command",
                                .onAction = item.id + ".load",
-                               .icon = item.icon};
+                               .icon = item.icon,
+                               .shortcut =
+                                   KeyboardShortcutModel{.key = "return"}};
 
         panelModel.children.push_back(loadAction);
-        actionMap.insert(loadAction.onAction, ExtensionLoadAction{cmd});
+        addAction(loadAction.onAction, ExtensionLoadAction{cmd});
         item.actionPannel = panelModel;
 
-        extensionSection.children.push_back(item);
+        results.children.push_back(item);
       }
     }
 
-    model.items.push_back(extensionSection);
+    ListItemViewModel item;
+
+    item.id = "home-explorer";
+    item.title = "Home directory";
+    item.icon = ThemeIconModel{.iconName = "folder"};
+    item.actionPannel = ActionPannelModel{
+        .children = {ActionModel{.title = "Open",
+                                 .onAction = "open-home",
+                                 .icon = item.icon,
+                                 .shortcut = KeyboardShortcutModel{
+                                     .key = "return", .modifiers = {}}}}};
+
+    addAction("open-home", OpenHomeDirectoryAction{});
+
+    results.children.push_back(item);
+
+    model.items.push_back(results);
 
     auto end = std::chrono::high_resolution_clock::now();
     auto duration =
@@ -148,29 +169,10 @@ public:
             .count();
     qDebug() << "root searched in " << duration << "ms";
 
-    list->dispatchModel(model);
+    return model;
   }
 
-  RootView(AppWindow &app)
-      : View(app), app(app), appDb(service<AppDatabase>()),
-        extensionManager(service<ExtensionManager>()), list(new ListView) {
-    forwardInputEvents(list->listWidget());
-
-    connect(list, &ListView::itemChanged, this, &RootView::itemChanged);
-    connect(list, &ListView::itemActivated, this, &RootView::itemActivated);
-    connect(list, &ListView::setActions, this, &RootView::setActions);
-
-    widget = list;
-  }
-
-private slots:
-  void itemChanged(const QString &id) {}
-
-  void itemActivated(const QString &id) {}
-
-  void onActionActivated(ActionModel model) override {
-    const auto &action = actionMap.value(model.onAction);
-
+  void action(const ActionType &action) override {
     if (auto appAction = std::get_if<AppAction>(&action)) {
       if (auto openAppAction = std::get_if<OpenAppAction>(appAction)) {
         qDebug() << "launch app";
@@ -192,8 +194,16 @@ private slots:
       }
     }
 
+    if (auto homeAction = std::get_if<OpenHomeDirectoryAction>(&action)) {
+      emit pushView(new FilesView(app));
+    }
+
     qDebug() << "action activated in root command";
   }
+
+  RootView(AppWindow &app)
+      : CustomList(app), app(app), appDb(service<AppDatabase>()),
+        extensionManager(service<ExtensionManager>()) {}
 };
 
 class RootCommand : public ViewCommand {

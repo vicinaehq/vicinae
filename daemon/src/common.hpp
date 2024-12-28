@@ -5,6 +5,7 @@
 #include <functional>
 #include <optional>
 #include <qboxlayout.h>
+#include <qevent.h>
 #include <qframe.h>
 #include <qicon.h>
 #include <qlabel.h>
@@ -107,4 +108,9 @@ public:
 
     setLayout(box);
   }
+};
+
+class IInputHandler {
+public:
+  virtual void handleInput(QKeyEvent *event) = 0;
 };

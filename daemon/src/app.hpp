@@ -2,6 +2,7 @@
 #include "app-database.hpp"
 #include "calculator-database.hpp"
 #include "clipboard-service.hpp"
+#include "extend/action-model.hpp"
 #include "extension_manager.hpp"
 #include "quicklist-database.hpp"
 #include <jsoncpp/json/value.h>
@@ -24,6 +25,13 @@ class ViewCommand;
 class ExtensionView;
 class Command;
 
+struct ViewSnapshot {
+  View *view;
+  QString query;
+  QString placeholderText;
+  QList<ActionPannelItem> actions;
+};
+
 class AppWindow : public QMainWindow {
   Q_OBJECT
 
@@ -31,7 +39,7 @@ public:
   std::stack<CommandObject *> commandStack;
   std::stack<QString> queryStack;
 
-  std::stack<View *> navigationStack;
+  std::stack<ViewSnapshot> navigationStack;
   ViewCommand *currentCommand = nullptr;
 
   std::unique_ptr<QuicklistDatabase> quicklinkDatabase;
@@ -41,9 +49,6 @@ public:
   std::unique_ptr<ExtensionManager> extensionManager;
   std::unique_ptr<IconCacheService> iconCache;
 
-  void pushView(View *view);
-  void pushExtensionView(ExtensionView *view);
-  void popCurrentView();
   void popToRootView();
   void disconnectView(View &view);
   void connectView(View &view);
@@ -63,9 +68,11 @@ public:
   void launchCommand(ViewCommand *cmd);
 
   AppWindow(QWidget *parent = 0);
+  bool eventFilter(QObject *obj, QEvent *event) override;
 
 public slots:
-  bool eventFilter(QObject *obj, QEvent *event) override;
+  void pushView(View *view);
+  void popCurrentView();
 
 signals:
   void currentViewPoped();

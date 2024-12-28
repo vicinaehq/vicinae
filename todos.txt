@@ -1,0 +1,4 @@
+- keep state on extension pop
+- synchronize initial extension view pushing better
+
+- allow displaying of native widget in details

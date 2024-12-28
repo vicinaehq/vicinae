@@ -6,10 +6,14 @@
 #include "extend/list-model.hpp"
 #include "image-viewer.hpp"
 #include "markdown-renderer.hpp"
+#include "ui/action_popover.hpp"
 #include "ui/empty-view.hpp"
 #include "ui/horizontal-metadata.hpp"
+#include <qapplication.h>
 #include <qboxlayout.h>
+#include <qevent.h>
 #include <qlistwidget.h>
+#include <qnamespace.h>
 #include <qwidget.h>
 
 class ListItemWidget : public QWidget {
@@ -108,7 +112,7 @@ public:
   }
 };
 
-class ListView : public QWidget {
+class ListView : public QWidget, public IInputHandler {
   Q_OBJECT
 
   QVBoxLayout *layout;
@@ -121,6 +125,7 @@ class ListView : public QWidget {
   DetailWidget *detail = nullptr;
 
   EmptyViewWidget *emptyView = nullptr;
+  ActionPopover *actionPanel = nullptr;
 
   QList<ListChild> items;
   QHash<QListWidgetItem *, ListItemViewModel> itemMap;
@@ -135,6 +140,7 @@ private slots:
 
     if (item.actionPannel) {
       qDebug() << "actions:" << item.actionPannel->children.size();
+      // actionPanel->dispatchModel(*item.actionPannel);
       emit setActions(*item.actionPannel);
     }
 
@@ -179,6 +185,7 @@ private slots:
     auto view = new EmptyViewWidget(model);
 
     if (model.actions) {
+      emit setActions(*model.actions);
     }
 
     setShownWidget(view);
@@ -187,9 +194,24 @@ private slots:
 public:
   ListModel model;
 
+  void handleInput(QKeyEvent *event) override {
+    auto key = event->key();
+
+    switch (key) {
+    case Qt::Key_Up:
+    case Qt::Key_Down:
+    case Qt::Key_Return:
+      QApplication::sendEvent(list, event);
+      break;
+    default:
+      break;
+    }
+  }
+
   ListView()
       : layout(new QVBoxLayout), listWithDetails(new QWidget),
-        listLayout(new QHBoxLayout), list(new QListWidget()) {
+        listLayout(new QHBoxLayout), list(new QListWidget()),
+        actionPanel(new ActionPopover) {
     list->setFocusPolicy(Qt::NoFocus);
     list->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     list->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -323,7 +345,43 @@ public:
   }
 
 signals:
+  void activatePrimaryAction();
   void setActions(const ActionPannelModel &model);
   void itemChanged(const QString &id);
   void itemActivated(const QString &id);
+};
+
+template <class ItemType, class ActionType> class ListController {
+  QHash<QString, ItemType> itemMap;
+  QHash<QString, ActionType> actionMap;
+
+protected:
+  void addItem(const QString &id, const ItemType &item) {
+    itemMap.insert(id, item);
+  }
+
+  void addAction(const QString &id, const ActionType &action) {
+    actionMap.insert(id, action);
+  }
+
+public:
+  virtual ListModel search(const QString &s) = 0;
+  virtual void onActionActivated(const ActionType &action) {
+    qDebug() << "ouin ouin";
+  }
+
+  void reset() {
+    itemMap.clear();
+    actionMap.clear();
+  }
+
+  void handleSearch(const QString &s) { search(s); }
+
+  void handleActionActivated(const QString &s) {
+    auto &action = actionMap.value(s);
+
+    onActionActivated(action);
+  }
+
+  ListController() {}
 };

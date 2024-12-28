@@ -1,11 +1,18 @@
 #pragma once
 #include "extend/image-model.hpp"
 #include <qjsonobject.h>
+#include <qnamespace.h>
+
+struct KeyboardShortcutModel {
+  QString key;
+  QStringList modifiers;
+};
 
 struct ActionModel {
   QString title;
   QString onAction;
   std::optional<ImageLikeModel> icon;
+  std::optional<KeyboardShortcutModel> shortcut;
 };
 
 struct ActionPannelSectionModel {
@@ -29,6 +36,7 @@ struct ActionPannelModel {
 };
 
 class ActionPannelParser {
+  KeyboardShortcutModel parseKeyboardShortcut(const QJsonObject &shortcut);
   ActionModel parseAction(const QJsonObject &instance);
 
   ActionPannelSectionModel

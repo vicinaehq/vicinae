@@ -60,7 +60,7 @@ bool CommandObject::eventFilter(QObject *obj, QEvent *event) {
 }
 
 void CommandObject::setActions(const QList<std::shared_ptr<IAction>> &actions) {
-  app()->actionPopover->setActions(actions);
+  // app()->actionPopover->setActions(actions);
 
   if (!actions.isEmpty())
     app()->statusBar->setSelectedAction(actions.at(0));

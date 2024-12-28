@@ -6,6 +6,7 @@
 #include "image-fetcher.hpp"
 #include "quicklink-seeder.hpp"
 #include "root-command.hpp"
+#include "ui/keyboard.hpp"
 #include <QLabel>
 #include <QMainWindow>
 #include <QThread>
@@ -92,9 +93,22 @@ void AppWindow::popCommandObject() {
 }
 
 bool AppWindow::eventFilter(QObject *obj, QEvent *event) {
-  if (event->type() == QEvent::KeyPress) {
+  if (obj == topBar->input && event->type() == QEvent::KeyPress) {
     auto keyEvent = static_cast<QKeyEvent *>(event);
     auto key = keyEvent->key();
+
+    qDebug() << "key event from app filter";
+
+    for (const auto &action : actionPopover->currentActions()) {
+      if (auto model = std::get_if<ActionModel>(&action); model->shortcut) {
+        KeyboardShortcut shortcut(*model->shortcut);
+
+        if (shortcut == keyEvent) {
+          emit actionPopover->actionPressed(*model);
+          return true;
+        }
+      }
+    }
 
     bool isEsc = keyEvent->key() == Qt::Key_Escape;
 
@@ -112,9 +126,6 @@ bool AppWindow::eventFilter(QObject *obj, QEvent *event) {
         topBar->input->clear();
       }
       return true;
-    }
-
-    if (keyEvent->modifiers().testFlag(Qt::ControlModifier)) {
     }
 
     if (keyEvent->modifiers().testFlag(Qt::ControlModifier) &&
@@ -136,29 +147,38 @@ void AppWindow::popCurrentView() {
   auto previous = navigationStack.top();
   navigationStack.pop();
 
-  disconnectView(*previous);
+  disconnectView(*previous.view);
 
   auto next = navigationStack.top();
 
-  layout->replaceWidget(previous->widget, next->widget);
-  previous->widget->setParent(nullptr);
-  previous->setParent(nullptr);
+  layout->replaceWidget(previous.view->widget, next.view->widget);
+  previous.view->widget->setParent(nullptr);
+  previous.view->setParent(nullptr);
 
-  connectView(*next);
-  next->setParent(this);
-  next->widget->show();
+  connectView(*next.view);
+  next.view->setParent(this);
+  next.view->widget->show();
 
-  previous->deleteLater();
+  previous.view->deleteLater();
 
   topBar->input->setReadOnly(false);
   topBar->input->show();
   topBar->input->setFocus();
-  topBar->input->installEventFilter(next);
+  topBar->input->installEventFilter(next.view);
+  topBar->input->setText(next.query);
+  topBar->input->setPlaceholderText(next.placeholderText);
+  topBar->input->selectAll();
+  actionPopover->setActions(next.actions);
+
+  if (!next.actions.isEmpty())
+    statusBar->setCurrentAction(next.actions[0]);
 
   if (navigationStack.size() == 1) {
-    currentCommand->unload(*this);
-    currentCommand->deleteLater();
-    currentCommand = nullptr;
+    if (currentCommand) {
+      currentCommand->unload(*this);
+      currentCommand->deleteLater();
+      currentCommand = nullptr;
+    }
     topBar->hideBackButton();
   }
 
@@ -172,7 +192,7 @@ void AppWindow::popToRootView() {
 }
 
 void AppWindow::disconnectView(View &view) {
-  disconnect(topBar->input, &QLineEdit::textChanged, &view,
+  disconnect(topBar->input, &QLineEdit::textEdited, &view,
              &View::onSearchChanged);
   disconnect(actionPopover, &ActionPopover::actionPressed, &view,
              &View::onActionActivated);
@@ -182,14 +202,15 @@ void AppWindow::disconnectView(View &view) {
   disconnect(&view, &View::pop, this, &AppWindow::popCurrentView);
   disconnect(&view, &View::popToRoot, this, &AppWindow::popToRootView);
   disconnect(&view, &View::launchCommand, this, &AppWindow::launchCommand);
+  disconnect(&view, &View::activatePrimaryAction, actionPopover,
+             &ActionPopover::selectPrimary);
 
   topBar->input->removeEventFilter(&view);
 }
 
 void AppWindow::connectView(View &view) {
   // app->view
-  connect(topBar->input, &QLineEdit::textChanged, &view,
-          &View::onSearchChanged);
+  connect(topBar->input, &QLineEdit::textEdited, &view, &View::onSearchChanged);
   connect(actionPopover, &ActionPopover::actionPressed, &view,
           &View::onActionActivated);
 
@@ -198,39 +219,48 @@ void AppWindow::connectView(View &view) {
   connect(&view, &View::pop, this, &AppWindow::popCurrentView);
   connect(&view, &View::popToRoot, this, &AppWindow::popToRootView);
   connect(&view, &View::launchCommand, this, &AppWindow::launchCommand);
+  connect(&view, &View::activatePrimaryAction, actionPopover,
+          &ActionPopover::selectPrimary);
 
+  view.onAttach();
   topBar->input->installEventFilter(&view);
 }
 
 void AppWindow::pushView(View *view) {
   if (navigationStack.size() > 0) {
-    auto old = navigationStack.top();
+    auto &old = navigationStack.top();
 
-    disconnectView(*old);
+    disconnectView(*old.view);
   }
 
   if (navigationStack.size() == 1) {
     topBar->showBackButton();
   }
 
-  connectView(*view);
-
   if (navigationStack.empty()) {
     layout->replaceWidget(defaultWidget, view->widget);
   } else {
-    auto cur = navigationStack.top();
+    auto &cur = navigationStack.top();
 
-    layout->replaceWidget(cur->widget, view->widget);
-    cur->widget->setParent(nullptr);
-    cur->widget->hide();
+    cur.query = topBar->input->text();
+    cur.placeholderText = topBar->input->placeholderText();
+    cur.actions = actionPopover->currentActions();
+
+    layout->replaceWidget(cur.view->widget, view->widget);
+    cur.view->widget->setParent(nullptr);
+    cur.view->widget->hide();
   }
 
-  topBar->input->clear();
+  connectView(*view);
+
+  navigationStack.push({.view = view});
+
   topBar->input->setReadOnly(false);
   topBar->input->show();
   topBar->input->setFocus();
+  topBar->input->clear();
 
-  navigationStack.push(view);
+  emit topBar->input->textEdited("");
 }
 
 void AppWindow::launchCommand(ViewCommand *cmd) {
@@ -284,17 +314,9 @@ AppWindow::AppWindow(QWidget *parent)
   layout->setSpacing(0);
   layout->setContentsMargins(0, 0, 0, 0);
 
-  /*
-  auto index = new IndexCommand(this);
-
-  index->setParent(this);
-  index->onAttach();
-  */
-
   layout->setAlignment(Qt::AlignTop);
   installEventFilter(this);
   topBar->input->installEventFilter(this);
-  // topBar->input->installEventFilter(index);
   layout->addWidget(topBar);
   layout->addWidget(new HDivider);
   layout->addWidget(defaultWidget, 1);

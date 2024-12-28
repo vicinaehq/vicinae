@@ -1,5 +1,6 @@
 #pragma once
 #include "extend/action-model.hpp"
+#include "ui/keyboard.hpp"
 #include <qboxlayout.h>
 #include <qhash.h>
 #include <qlabel.h>
@@ -96,10 +97,12 @@ signals:
   void actionPressed(ActionModel model);
 
 public:
+  QList<ActionPannelItem> currentActions() const;
+  void selectPrimary();
   void dispatchModel(const ActionPannelModel &model);
   void showActions();
   void toggleActions();
-  void setActions(const QList<std::shared_ptr<IAction>> &actions);
+  void setActions(const QList<ActionPannelItem> &actions);
 
   ActionPopover(QWidget *parent = 0);
 };

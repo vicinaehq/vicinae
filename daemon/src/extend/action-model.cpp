@@ -3,12 +3,27 @@
 #include <qjsonarray.h>
 #include <qjsonobject.h>
 
+KeyboardShortcutModel
+ActionPannelParser::parseKeyboardShortcut(const QJsonObject &shortcut) {
+  KeyboardShortcutModel model{.key = shortcut.value("key").toString()};
+
+  for (const auto &mod : shortcut.value("modifiers").toArray()) {
+    model.modifiers << mod.toString();
+  }
+
+  return model;
+}
+
 ActionModel ActionPannelParser::parseAction(const QJsonObject &instance) {
   auto props = instance.value("props").toObject();
   ActionModel action;
 
   action.title = props.value("title").toString();
   action.onAction = props.value("onAction").toString();
+
+  if (props.contains("shortcut")) {
+    action.shortcut = parseKeyboardShortcut(props.value("shortcut").toObject());
+  }
 
   if (props.contains("icon")) {
     action.icon = ImageModelParser().parse(props.value("icon").toObject());

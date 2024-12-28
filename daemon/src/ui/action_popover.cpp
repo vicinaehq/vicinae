@@ -1,5 +1,6 @@
 #include "action_popover.hpp"
 #include "command-object.hpp"
+#include "extend/action-model.hpp"
 #include "extend/image-model.hpp"
 #include "extension.hpp"
 #include "image-viewer.hpp"
@@ -48,8 +49,16 @@ void ActionPopover::toggleActions() {
 
 void ActionPopover::dispatchModel(const ActionPannelModel &model) {
   menuStack.clear();
+
   menuStack.push_back(model.children);
   renderItems(model.children);
+}
+
+QList<ActionPannelItem> ActionPopover::currentActions() const {
+  if (menuStack.isEmpty())
+    return {};
+
+  return menuStack.top();
 }
 
 void ActionPopover::renderItems(const QList<ActionPannelItem> &items) {
@@ -67,8 +76,18 @@ void ActionPopover::renderItems(const QList<ActionPannelItem> &items) {
         imageModel = *model->icon;
       }
 
+      QString str;
+
+      if (model->shortcut) {
+        QStringList lst;
+
+        lst << model->shortcut->modifiers;
+        lst << model->shortcut->key;
+        str = lst.join(" + ");
+      }
+
       auto widget = new ActionListItemWidget(
-          ImageViewer::createFromModel(imageModel, {25, 25}), model->title, "",
+          ImageViewer::createFromModel(imageModel, {25, 25}), model->title, str,
           "");
 
       list->addItem(listItem);
@@ -185,27 +204,57 @@ bool ActionPopover::eventFilter(QObject *obj, QEvent *event) {
   return false;
 }
 
-void ActionPopover::setActions(const QList<std::shared_ptr<IAction>> &actions) {
-  _currentActions = actions;
+void ActionPopover::setActions(const QList<ActionPannelItem> &actions) {
+  menuStack.clear();
+  menuStack.push(actions);
+}
+
+void ActionPopover::selectPrimary() {
+  for (const auto &item : menuStack.top()) {
+    if (auto model = std::get_if<ActionModel>(&item)) {
+      emit actionPressed(*model);
+      return;
+    }
+    if (auto model = std::get_if<ActionPannelSubmenuModel>(&item)) {
+    }
+    if (auto model = std::get_if<ActionPannelSectionModel>(&item)) {
+      if (model->actions.isEmpty()) {
+        auto &action = model->actions.at(0);
+
+        emit actionPressed(action);
+        return;
+      }
+    }
+  }
 }
 
 void ActionPopover::showActions() {
   input->setFocus();
   input->clear();
 
+  auto window = QApplication::activeWindow();
+
+  if (!window) {
+    qDebug() << "showActions: no active window, won't show popover";
+    return;
+  }
+
+  qDebug() << "creating list with " << window->width() << "x"
+           << window->height();
+
   adjustSize();
 
-  auto parentGeo = parentWidget()->geometry();
+  auto parentGeo = window->geometry();
 
   qDebug() << "width=" << parentGeo.width() << " height=" << parentGeo.height();
   qDebug() << "width2=" << width() << " height2=" << height();
   qDebug() << "width2=" << geometry().width()
            << " height2=" << geometry().height();
 
-  setMinimumWidth(parentWidget()->width() * 0.45);
+  setMinimumWidth(window->width() * 0.45);
   auto x = parentGeo.width() - width() - 10;
   auto y = parentGeo.height() - height() - 50;
-  QPoint global = parentWidget()->mapToGlobal(QPoint(x, y));
+  QPoint global = window->mapToGlobal(QPoint(x, y));
 
   move(global);
   show();

@@ -7,11 +7,11 @@ import { KeyboardShortcut } from "../keyboard";
 export type BaseActionProps = {
 	title: string;
 	icon?: ImageLike;
+	shortcut?: KeyboardShortcut;
 }
 
 export type ActionProps = BaseActionProps & {
 	onAction: () => void;
-	shortcut?: KeyboardShortcut;
 };
 
 export type CopyToClipboardProps = BaseActionProps & {

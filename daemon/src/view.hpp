@@ -1,6 +1,8 @@
 #pragma once
 #include "app.hpp"
+#include "common.hpp"
 #include <qboxlayout.h>
+#include <qcompare.h>
 #include <qjsonobject.h>
 #include <qlabel.h>
 #include <qlistwidget.h>
@@ -14,11 +16,14 @@ class View : public QObject {
   Q_OBJECT
   AppWindow &app;
   QList<QWidget *> inputFwdTo;
+  QList<IInputHandler *> inputHandlers;
 
   bool eventFilter(QObject *obj, QEvent *event) override {
-    if (app.topBar->input && event->type() == QEvent::KeyPress) {
+    if (obj == app.topBar->input && event->type() == QEvent::KeyPress) {
       auto keyEvent = static_cast<QKeyEvent *>(event);
       auto key = keyEvent->key();
+
+      qDebug() << "key event from view filter";
 
       if (key == Qt::Key_Return && app.topBar->quickInput) {
         if (app.topBar->quickInput->focusFirstEmpty())
@@ -28,11 +33,13 @@ class View : public QObject {
       switch (key) {
       case Qt::Key_Up:
       case Qt::Key_Down:
-      case Qt::Key_Return:
-      case Qt::Key_Enter:
         for (const auto &widget : inputFwdTo) {
           QApplication::sendEvent(widget, event);
         }
+        for (auto handler : inputHandlers) {
+          handler->handleInput(keyEvent);
+        }
+
         break;
       default:
         break;
@@ -56,6 +63,10 @@ public:
     inputFwdTo.push_back(widget);
   }
 
+  void addInputHandler(IInputHandler *widget) {
+    inputHandlers.push_back(widget);
+  }
+
   template <typename T> Service<T> service() { return app.service<T>(); }
   void setSearchPlaceholderText(const QString &s) {
     app.topBar->input->setPlaceholderText(s);
@@ -77,10 +88,12 @@ public:
 
 public slots:
   virtual void onSearchChanged(const QString &s) {}
+  virtual void onAttach() {}
   virtual void onActionActivated(ActionModel model) {}
 
 signals:
   void launchCommand(ViewCommand *command);
+  void activatePrimaryAction();
   void pushView(View *view);
   void pop();
   void popToRoot();
