@@ -49,6 +49,8 @@ qt_add_executable(${TARGET}
 	include/ui/list-view.hpp
 	include/ui/empty-view.hpp
 
+	include/ui/native-list.hpp
+
 	include/ui/metadata-pane.hpp
 	src/ui/metadata-pane.cpp
 

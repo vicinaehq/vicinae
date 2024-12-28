@@ -220,6 +220,7 @@ public:
     listLayout->addWidget(list, 1);
     listLayout->addWidget(new VDivider());
     listLayout->setContentsMargins(0, 0, 0, 0);
+
     listWithDetails->setLayout(listLayout);
 
     connect(list, &QListWidget::currentItemChanged, this,
