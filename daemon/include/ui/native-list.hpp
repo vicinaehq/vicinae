@@ -2,9 +2,7 @@
 #pragma once
 
 #include "common.hpp"
-#include "extend/image-model.hpp"
-#include "extend/list-model.hpp"
-#include "omnicast.hpp"
+#include "extend/action-model.hpp"
 #include "ui/list-view.hpp"
 #include <qabstractitemmodel.h>
 #include <qboxlayout.h>
@@ -19,139 +17,7 @@
 #include <qtmetamacros.h>
 #include <qvariant.h>
 #include <qwidget.h>
-#include <tuple>
 #include <variant>
-
-class NativeListItemWidget : public QWidget {
-  // QWidget *icon;
-  QLabel *name;
-  QLabel *category;
-  QLabel *kind;
-
-public:
-  NativeListItemWidget(const QString &name, const QString &category,
-                       const QString &kind, QWidget *parent = nullptr)
-      : QWidget(parent), name(new QLabel), category(new QLabel),
-        kind(new QLabel) {
-
-    auto mainLayout = new QHBoxLayout();
-
-    setLayout(mainLayout);
-
-    auto left = new QWidget();
-    auto leftLayout = new QHBoxLayout();
-
-    this->name->setText(name);
-    this->category->setText(category);
-    this->category->setProperty("class", "minor");
-
-    left->setLayout(leftLayout);
-    leftLayout->setSpacing(15);
-    leftLayout->setContentsMargins(0, 0, 0, 0);
-    // leftLayout->addWidget(this->icon);
-    leftLayout->addWidget(this->name);
-    leftLayout->addWidget(this->category);
-
-    mainLayout->addWidget(left, 0, Qt::AlignLeft);
-
-    this->kind->setText(kind);
-    this->kind->setProperty("class", "minor");
-    mainLayout->addWidget(this->kind, 0, Qt::AlignRight);
-  }
-};
-
-struct NativeListItem {
-  QString title;
-  QString subtitle;
-  ImageLikeModel icon;
-};
-
-/*
-
-class NativeListModel : public QAbstractListModel {
-  QList<NativeListItem> items;
-
-  QVariant headerData(int section, Qt::Orientation orientation,
-                      int role = Qt::DisplayRole) const override {
-    return "";
-  }
-
-  QVariant data(const QModelIndex &index, int role) const override {
-    const NativeListItem &data = items.at(index.row());
-
-    switch (role) {
-    case Qt::UserRole:
-      return QVariant::fromValue(data);
-    default:
-      return {};
-    }
-  }
-
-  int rowCount(const QModelIndex &parent = QModelIndex()) const override {
-    return items.size();
-  }
-
-public:
-  void setItems(const QList<NativeListItem> &items) { this->items = items; }
-};
-
-class NativeListItemDelegate : public QStyledItemDelegate {
-public:
-  NativeListItemDelegate(QObject *parent = nullptr)
-      : QStyledItemDelegate(parent) {}
-
-  QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option,
-                        const QModelIndex &index) const override {
-    auto item = index.data(Qt::UserRole).value<NativeListItem>();
-    auto editor = new NativeListItemWidget(item.title, "", "");
-
-    qDebug() << "created editor for" << item.title;
-
-    return editor;
-  }
-
-  void setEditorData(QWidget *editor, const QModelIndex &index) const override {
-  }
-
-  void paint(QPainter *painter, const QStyleOptionViewItem &option,
-             const QModelIndex &index) const override {
-    auto item = index.data(Qt::UserRole).value<NativeListItem>();
-    QBrush brush;
-
-    brush.setColor("green");
-
-    painter->setBackground(brush);
-    painter->drawText(QPoint{0, 0}, item.title);
-  }
-};
-
-class NativeList : public QListView {
-  NativeListModel *model;
-  NativeListItemDelegate *delegate;
-
-public:
-  NativeList()
-      : model(new NativeListModel), delegate(new NativeListItemDelegate) {
-    model->setItems({
-        {"Item 1"},
-        {"Item 2"},
-        {"Item 3"},
-        {"Item 4"},
-        {"Item 5"},
-        {"Item 6"},
-    });
-
-    setModel(model);
-    setItemDelegate(delegate);
-    show();
-  }
-
-  void currentChanged(const QModelIndex &current,
-                      const QModelIndex &previous) override {
-    qDebug() << "item changed";
-  }
-};
-*/
 
 class ListSectionHeader : public QWidget {
 public:
@@ -192,22 +58,27 @@ using ListItem = std::variant<NativeListSection, ListItemData>;
 
 class AbstractNativeListItemDelegate {
 public:
+  virtual void selectionChanged(const QVariant &data) {}
   virtual QWidget *createDetail(const QVariant &data, int role) {
     return nullptr;
   }
   virtual QWidget *createItem(const QVariant &data, int role) = 0;
+  virtual QList<QVariant> createActions(const QVariant &data) { return {}; }
 };
 
 class AbstractNativeListModel : public QObject {
   Q_OBJECT
 
-  QList<ListItem> items;
+  QList<ListItem> m_items;
+  QList<ListItemData> flatItems;
   std::optional<NativeListSection> currentSection;
 
 public:
-  void beginReset() { items.clear(); }
-
-  const ListItem &at(int index) const { return items.at(index); }
+  void beginReset() {
+    m_items.clear();
+    flatItems.clear();
+    currentSection.reset();
+  }
 
   void beginSection(const QString &name) {
     endSection();
@@ -218,32 +89,42 @@ public:
     if (!currentSection || currentSection->items.isEmpty())
       return;
 
-    items.push_back(*currentSection);
+    m_items.push_back(*currentSection);
     currentSection.reset();
   }
 
   void addItem(const QVariant &data, int role) {
+    flatItems.push_back({.role = role, .data = data});
+
     if (currentSection) {
-      currentSection->items.push_back({role, data});
+      currentSection->items.push_back({.role = role, .data = data});
       return;
     }
 
-    items.push_back(ListItemData{role, data});
+    m_items.push_back(ListItemData{.role = role, .data = data});
   }
+
+  const QList<ListItem> &items() const { return m_items; }
+
+  const ListItemData &row(int idx) { return flatItems.at(idx); }
 
   void endReset() {
     endSection();
-    emit itemsChanged(this->items);
+    emit itemsChanged();
   }
 
 signals:
-  void itemsChanged(const QList<ListItem> &items);
+  void itemsChanged();
 };
 
 template <class T>
-class VariantNativeListItemDelegate : public AbstractNativeListItemDelegate {
+class TypedNativeListDelegate : public AbstractNativeListItemDelegate {
   QWidget *createItem(const QVariant &data, int role) override {
     return createItemFromVariant(data.value<T>());
+  }
+
+  void selectionChanged(const QVariant &data) override {
+    return variantSelectionChanged(data.value<T>());
   }
 
   QWidget *createDetail(const QVariant &data, int role) override {
@@ -255,10 +136,10 @@ public:
   virtual QWidget *createDetailFromVariant(const T &variant) {
     return nullptr;
   };
+  virtual void variantSelectionChanged(const T &variant) {}
 };
 
-template <class T>
-class VariantNativeListModel : public AbstractNativeListModel {
+template <class T> class TypedNativeListModel : public AbstractNativeListModel {
   QList<T> items;
 
 public:
@@ -274,34 +155,43 @@ class NativeList : public QWidget {
   AbstractNativeListModel *model = nullptr;
 
   QHBoxLayout *splitter;
+  QHash<QListWidgetItem *, const ListItemData *> itemMap;
   QListWidget *list;
-  QList<NativeListItem> row;
 
   void addListItem(const ListItemData &listItem) {
     auto itemWidget = new QListWidgetItem;
     auto widget = itemDelegate->createItem(listItem.data, listItem.role);
 
+    if (!widget) {
+      qDebug() << "Could not create widget for native list: "
+                  "delegate->createItem returned null";
+      return;
+    }
+
     list->addItem(itemWidget);
     list->setItemWidget(itemWidget, widget);
     itemWidget->setSizeHint(widget->sizeHint());
+    itemMap.insert(itemWidget, &listItem);
   }
 
 private slots:
-  void currentRowChanged(int currentRow) {
-    if (currentRow < 0)
+  void currentItemChanged(QListWidgetItem *next, QListWidgetItem *prev) {
+    if (!itemMap.contains(next))
       return;
 
-    /*
-if (delegate->createDetail(item)) {
-  qDebug() << "create detail";
-}
-    */
+    auto item = itemMap.value(next);
+
+    itemDelegate->selectionChanged(item->data);
+
+    if (itemDelegate->createDetail(item->data, item->role)) {
+      qDebug() << "create detail";
+    }
   }
 
-  void modelItemsChanged(const QList<ListItem> &items) {
+  void modelItemsChanged() {
     list->clear();
 
-    for (const auto &item : items) {
+    for (const auto &item : model->items()) {
       if (auto section = std::get_if<NativeListSection>(&item)) {
         auto headerItem = new QListWidgetItem();
 
@@ -344,6 +234,8 @@ public:
             &NativeList::modelItemsChanged);
   }
 
+  QListWidget *listWidget() { return list; }
+
   NativeList()
       : itemDelegate(nullptr), model(nullptr), splitter(new QHBoxLayout),
         list(new QListWidget) {
@@ -357,9 +249,12 @@ public:
     list->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
     setLayout(splitter);
-    connect(list, &QListWidget::currentRowChanged, this,
-            &NativeList::currentRowChanged);
+    connect(list, &QListWidget::currentItemChanged, this,
+            &NativeList::currentItemChanged);
   }
+
+signals:
+  void selectionChanged(const QVariant &variant);
 };
 
 template <class T> class VariantNativeList : public NativeList {

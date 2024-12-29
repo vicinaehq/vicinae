@@ -2,7 +2,6 @@
 #include "app-database.hpp"
 #include "calculator-database.hpp"
 #include "clipboard-service.hpp"
-#include "extend/action-model.hpp"
 #include "extension_manager.hpp"
 #include "quicklist-database.hpp"
 #include <jsoncpp/json/value.h>
@@ -29,7 +28,9 @@ struct ViewSnapshot {
   View *view;
   QString query;
   QString placeholderText;
-  QList<ActionPannelItem> actions;
+  QList<ActionData> actions;
+  AbstractActionItemDelegate *actionDelegate;
+  NewActionPannelModel *actionModel;
 };
 
 class AppWindow : public QMainWindow {

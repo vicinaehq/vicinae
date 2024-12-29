@@ -41,7 +41,7 @@ public:
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(list);
 
-    connect(list, &ListView::setActions, &parent, &View::setActions);
+    // connect(list, &ListView::setActions, &parent, &View::setActions);
     connect(list, &ListView::itemChanged, this, &ExtensionList::itemChanged);
 
     setLayout(layout);

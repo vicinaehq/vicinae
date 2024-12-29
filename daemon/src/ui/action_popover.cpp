@@ -2,7 +2,6 @@
 #include "command-object.hpp"
 #include "extend/action-model.hpp"
 #include "extend/image-model.hpp"
-#include "extension.hpp"
 #include "image-viewer.hpp"
 
 #include <cctype>
@@ -51,7 +50,7 @@ void ActionPopover::dispatchModel(const ActionPannelModel &model) {
   menuStack.clear();
 
   menuStack.push_back(model.children);
-  renderItems(model.children);
+  // renderItems(model.children);
 }
 
 QList<ActionPannelItem> ActionPopover::currentActions() const {
@@ -61,53 +60,53 @@ QList<ActionPannelItem> ActionPopover::currentActions() const {
   return menuStack.top();
 }
 
-void ActionPopover::renderItems(const QList<ActionPannelItem> &items) {
+void ActionPopover::renderItems(const QList<ActionData> &items) {
   list->clear();
   itemMap.clear();
 
   for (const auto &item : items) {
-    if (auto model = std::get_if<ActionModel>(&item)) {
-      auto listItem = new QListWidgetItem;
-      ImageLikeModel imageModel;
+    // if (auto model = std::get_if<ActionModel>(&item)) {
+    auto listItem = new QListWidgetItem;
+    ImageLikeModel imageModel;
 
-      if (!model->icon) {
-        imageModel = ThemeIconModel{.iconName = "application-x-executable"};
-      } else {
-        imageModel = *model->icon;
-      }
+    imageModel = item.icon;
 
-      QString str;
+    QString str;
 
-      if (model->shortcut) {
-        QStringList lst;
+    if (item.shortcut) {
+      QStringList lst;
 
-        lst << model->shortcut->modifiers;
-        lst << model->shortcut->key;
-        str = lst.join(" + ");
-      }
-
-      auto widget = new ActionListItemWidget(
-          ImageViewer::createFromModel(imageModel, {25, 25}), model->title, str,
-          "");
-
-      list->addItem(listItem);
-      list->setItemWidget(listItem, widget);
-      listItem->setSizeHint(widget->sizeHint());
-      itemMap.insert(listItem, item);
+      lst << item.shortcut->modifiers;
+      lst << item.shortcut->key;
+      str = lst.join(" + ");
     }
-    if (auto model = std::get_if<ActionPannelSectionModel>(&item)) {
-    }
-    if (auto model = std::get_if<ActionPannelSubmenuModel>(&item)) {
-      auto listItem = new QListWidgetItem;
-      auto widget = new ActionListItemWidget(
-          ImageViewer::createFromModel(*model->icon, {25, 25}), model->title,
-          "", "");
 
-      list->addItem(listItem);
-      list->setItemWidget(listItem, widget);
-      listItem->setSizeHint(widget->sizeHint());
-      itemMap.insert(listItem, item);
-    }
+    auto widget = new ActionListItemWidget(
+        ImageViewer::createFromModel(imageModel, {25, 25}), item.title, "",
+        str);
+
+    list->addItem(listItem);
+    list->setItemWidget(listItem, widget);
+    listItem->setSizeHint(widget->sizeHint());
+    itemMap.insert(listItem, item);
+
+    /*
+}
+
+if (auto model = std::get_if<ActionPannelSectionModel>(&item)) {
+}
+if (auto model = std::get_if<ActionPannelSubmenuModel>(&item)) {
+auto listItem = new QListWidgetItem;
+auto widget = new ActionListItemWidget(
+    ImageViewer::createFromModel(*model->icon, {25, 25}), model->title,
+    "", "");
+
+list->addItem(listItem);
+list->setItemWidget(listItem, widget);
+listItem->setSizeHint(widget->sizeHint());
+itemMap.insert(listItem, item);
+}
+  */
   }
 
   for (int i = 0; i != list->count(); ++i) {
@@ -130,33 +129,31 @@ void ActionPopover::paintEvent(QPaintEvent *event) {
 }
 
 void ActionPopover::filterActions(const QString &text) {
-  if (menuStack.isEmpty())
-    return;
+  /*
+if (menuStack.isEmpty())
+return;
 
-  QList<ActionPannelItem> items;
+QList<ActionPannelItem> items;
 
-  for (const auto &item : menuStack.top()) {
-    if (auto model = std::get_if<ActionModel>(&item);
-        model->title.contains(text, Qt::CaseInsensitive)) {
-      items.push_back(item);
-    }
-  }
+for (const auto &item : menuStack.top()) {
+if (auto model = std::get_if<ActionModel>(&item);
+  model->title.contains(text, Qt::CaseInsensitive)) {
+items.push_back(item);
+}
+}
 
-  renderItems(items);
+renderItems(items);
+*/
 }
 
 void ActionPopover::itemActivated(QListWidgetItem *item) {
   if (!item || !itemMap.contains(item))
     return;
 
-  auto action = itemMap.value(item);
-
-  if (auto model = std::get_if<ActionModel>(&action)) {
-    qDebug() << "selected action with title" << model->title;
-    emit actionPressed(*model);
-  }
+  const auto &action = itemMap.value(item);
 
   hide();
+  action.execute();
 }
 
 ActionPopover::ActionPopover(QWidget *parent) : QWidget(parent) {
@@ -241,6 +238,8 @@ void ActionPopover::showActions() {
 
   qDebug() << "creating list with " << window->width() << "x"
            << window->height();
+
+  renderItems(actionData);
 
   adjustSize();
 

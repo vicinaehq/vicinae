@@ -75,7 +75,7 @@ public:
     }
 
     if (model.actions) {
-      parent.setActions(*model.actions);
+      // parent.setActions(*model.actions);
     }
 
     qDebug() << "dispatching model update";

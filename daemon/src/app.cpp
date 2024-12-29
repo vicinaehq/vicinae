@@ -99,15 +99,8 @@ bool AppWindow::eventFilter(QObject *obj, QEvent *event) {
 
     qDebug() << "key event from app filter";
 
-    for (const auto &action : actionPopover->currentActions()) {
-      if (auto model = std::get_if<ActionModel>(&action); model->shortcut) {
-        KeyboardShortcut shortcut(*model->shortcut);
-
-        if (shortcut == keyEvent) {
-          emit actionPopover->actionPressed(*model);
-          return true;
-        }
-      }
+    if (actionPopover->submitKeypress(keyEvent)) {
+      return true;
     }
 
     bool isEsc = keyEvent->key() == Qt::Key_Escape;
@@ -161,6 +154,8 @@ void AppWindow::popCurrentView() {
 
   previous.view->deleteLater();
 
+  qDebug() << "restore action model and delegate";
+  actionPopover->setActionData(next.actions);
   topBar->input->setReadOnly(false);
   topBar->input->show();
   topBar->input->setFocus();
@@ -168,10 +163,6 @@ void AppWindow::popCurrentView() {
   topBar->input->setText(next.query);
   topBar->input->setPlaceholderText(next.placeholderText);
   topBar->input->selectAll();
-  actionPopover->setActions(next.actions);
-
-  if (!next.actions.isEmpty())
-    statusBar->setCurrentAction(next.actions[0]);
 
   if (navigationStack.size() == 1) {
     if (currentCommand) {
@@ -244,7 +235,7 @@ void AppWindow::pushView(View *view) {
 
     cur.query = topBar->input->text();
     cur.placeholderText = topBar->input->placeholderText();
-    cur.actions = actionPopover->currentActions();
+    cur.actions = actionPopover->actions();
 
     layout->replaceWidget(cur.view->widget, view->widget);
     cur.view->widget->setParent(nullptr);
@@ -261,6 +252,8 @@ void AppWindow::pushView(View *view) {
   topBar->input->clear();
 
   emit topBar->input->textEdited("");
+
+  view->onMount();
 }
 
 void AppWindow::launchCommand(ViewCommand *cmd) {

@@ -1,5 +1,4 @@
 #pragma once
-#include "calculator.hpp"
 #include "common.hpp"
 #include "xdg/xdg-desktop.hpp"
 #include <cctype>
@@ -238,7 +237,6 @@ public:
 
   std::shared_ptr<DesktopExecutable> defaultForMime(const QString &mime) {
     if (auto it = mimeToDefaultApp.find(mime); it != mimeToDefaultApp.end()) {
-      qDebug() << "found default app for " << mime << *it;
       if (auto appIt = appMap.find(*it); appIt != appMap.end())
         return *appIt;
     }

@@ -71,12 +71,23 @@ public:
   void setSearchPlaceholderText(const QString &s) {
     app.topBar->input->setPlaceholderText(s);
   }
-  void setActions(const ActionPannelModel &model) {
-    app.actionPopover->dispatchModel(model);
+  void setActions(const QList<ActionData> &actions) {
+    QList<ActionData> newActions = actions;
 
-    if (!model.children.isEmpty()) {
-      auto &first = model.children.at(0);
-      app.statusBar->setCurrentAction(first);
+    if (newActions.size() > 0) {
+      newActions[0].shortcut =
+          KeyboardShortcutModel{.key = "return", .modifiers = {}};
+    }
+
+    if (newActions.size() > 1) {
+      newActions[1].shortcut =
+          KeyboardShortcutModel{.key = "return", .modifiers = {"ctrl"}};
+    }
+
+    app.actionPopover->setActionData(newActions);
+
+    if (!actions.isEmpty()) {
+      // app.statusBar->setCurrentAction(actions.at(0).title);
     }
   }
 
@@ -85,6 +96,8 @@ public:
     app.topBar->input->setReadOnly(true);
     app.topBar->input->setText("");
   }
+
+  virtual void onMount() {}
 
 public slots:
   virtual void onSearchChanged(const QString &s) {}
