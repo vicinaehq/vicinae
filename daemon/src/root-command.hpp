@@ -8,12 +8,15 @@
 #include "extend/extension-command.hpp"
 #include "extension_manager.hpp"
 #include "manage-quicklinks-command.hpp"
+#include "navigation-list-view.hpp"
 #include "omnicast.hpp"
 #include "ui/action_popover.hpp"
 #include "ui/color_circle.hpp"
 #include "ui/list-view.hpp"
 #include "ui/native-list.hpp"
+#include "ui/test-list.hpp"
 #include <functional>
+#include <memory>
 #include <qcoreevent.h>
 #include <qhash.h>
 #include <qlabel.h>
@@ -24,10 +27,16 @@
 #include <qnamespace.h>
 #include <qwidget.h>
 
-struct OpenAppAction {
-  std::shared_ptr<DesktopEntry> app;
+struct OpenAppAction : public AbstractAction {
+  std::shared_ptr<DesktopExecutable> application;
+  QList<QString> args;
 
-  OpenAppAction() : app(app) {}
+  void execute(AppWindow &app) override { application->launch(args); }
+
+  OpenAppAction(const std::shared_ptr<DesktopExecutable> &app,
+                const QString &title, const QList<QString> args)
+      : AbstractAction(title, ThemeIconModel{.iconName = app->iconName()}),
+        application(app), args(args) {}
 };
 
 struct Action {
@@ -48,7 +57,21 @@ struct ExtensionLoadAction {
 struct BuiltinCommand {
   QString name;
   QString iconName;
-  std::function<View *(AppWindow &app)> factory;
+  std::function<View *(AppWindow &app, const QString &)> factory;
+};
+
+struct OpenBuiltinCommandAction : public AbstractAction {
+  BuiltinCommand cmd;
+  QString text;
+
+  void execute(AppWindow &app) override {
+    emit app.pushView(cmd.factory(app, text));
+  }
+
+  OpenBuiltinCommandAction(const BuiltinCommand &cmd, const QString &text = "")
+      : AbstractAction("Open command",
+                       ThemeIconModel{.iconName = cmd.iconName}),
+        cmd(cmd), text(text) {}
 };
 
 struct FallbackCommand {
@@ -78,18 +101,136 @@ struct ColorItem {
   QColor color;
 };
 
+class CalculatorListItem : public AbstractNativeListItem {
+  CalculatorItem item;
+
+  QWidget *createItem() const override {
+    auto exprLabel = new QLabel(item.expression);
+
+    exprLabel->setProperty("class", "transform-left");
+
+    auto answerLabel = new QLabel(QString::number(item.result));
+    answerLabel->setProperty("class", "transform-left");
+
+    auto left = new VStack(exprLabel, new Chip("Expression"));
+    auto right = new VStack(
+        answerLabel, new Chip(item.unit ? QString(item.unit->displayName.data())
+                                        : "Answer"));
+
+    return new TransformResult(left, right);
+  }
+
+  QList<AbstractAction *> createActions() const override { return {}; }
+
+public:
+  CalculatorListItem(const CalculatorItem &item) : item(item) {}
+};
+
+class AppListItem : public AbstractNativeListItem {
+  std::shared_ptr<DesktopEntry> app;
+  Service<AppDatabase> appDb;
+
+  QWidget *createItem() const override {
+    return new ListItemWidget(
+        ImageViewer::createFromModel(
+            ThemeIconModel{.iconName = app->iconName()}, {25, 25}),
+        app->name, "", "Application");
+  }
+
+  QList<AbstractAction *> createActions() const override {
+    QList<AbstractAction *> actions;
+    auto fileBrowser = appDb.defaultFileBrowser();
+    auto textEditor = appDb.defaultTextEditor();
+
+    actions.push_back(new OpenAppAction(app, "Open", {}));
+
+    if (fileBrowser) {
+      actions.push_back(
+          new OpenAppAction(fileBrowser, "Open in folder", {app->path}));
+    }
+
+    if (textEditor) {
+      actions.push_back(
+          new OpenAppAction(textEditor, "Open desktop file", {app->path}));
+    }
+
+    return actions;
+  }
+
+public:
+  AppListItem(const std::shared_ptr<DesktopEntry> &app,
+              Service<AppDatabase> appDb)
+      : app(app), appDb(appDb) {}
+  ~AppListItem() { qDebug() << "destroy app list item"; }
+};
+
+class ColorListItem : public AbstractNativeListItem {
+  QColor color;
+
+  QWidget *createItem() const override {
+    auto circle = new ColorCircle(color.name(), QSize(60, 60));
+
+    circle->setStroke("#BBB", 3);
+
+    auto colorLabel = new QLabel(color.name());
+
+    colorLabel->setProperty("class", "transform-left");
+
+    auto left = new VStack(colorLabel, new Chip("HEX"));
+    auto right = new VStack(circle, new Chip(color.name()));
+
+    return new TransformResult(left, right);
+  }
+
+  QList<AbstractAction *> createActions() const override { return {}; }
+
+public:
+  ColorListItem(QColor color) : color(color) {}
+};
+
+class BuiltinCommandListItem : public AbstractNativeListItem {
+  BuiltinCommand cmd;
+
+  QWidget *createItem() const override {
+    return new ListItemWidget(
+        ImageViewer::createFromModel(ThemeIconModel{.iconName = cmd.iconName},
+                                     {25, 25}),
+        cmd.name, "", "Command");
+  }
+
+  QList<AbstractAction *> createActions() const override {
+    return {new OpenBuiltinCommandAction(cmd)};
+  }
+
+public:
+  BuiltinCommandListItem(const BuiltinCommand &cmd) : cmd(cmd) {}
+};
+
+class FallbackCommandListItem : public AbstractNativeListItem {
+  FallbackCommand cmd;
+
+  QWidget *createItem() const override {
+    return new ListItemWidget(
+        ImageViewer::createFromModel(ThemeIconModel{.iconName = cmd.iconName},
+                                     {25, 25}),
+        cmd.name, "", "Command");
+  }
+
+public:
+  FallbackCommandListItem(const FallbackCommand &cmd) : cmd(cmd) {}
+};
+
 using RootItem =
     std::variant<AppItem, ColorItem, CalculatorItem, Extension::Command,
                  BuiltinCommand, FallbackCommand>;
 
-class RootView : public View, public TypedNativeListDelegate<RootItem> {
+class RootView : public NavigationListView {
   AppWindow &app;
   Service<AppDatabase> appDb;
   Service<ExtensionManager> extensionManager;
   QHash<QString, std::variant<Extension::Command>> itemMap;
   QMimeDatabase mimeDb;
 
-  TypedNativeListModel<RootItem> *model = new TypedNativeListModel<RootItem>();
   NativeList *list = new NativeList();
 
   NewActionPannelModel *actionModel = new NewActionPannelModel;
@@ -98,22 +239,31 @@ class RootView : public View, public TypedNativeListDelegate<RootItem> {
       {.name = "Search files",
        .iconName = ":assets/icons/files.png",
        .factory =
-           [](AppWindow &app) { return new CalculatorHistoryView(app); }},
+           [](AppWindow &app, const QString &s) {
+             return new CalculatorHistoryView(app);
+           }},
       {.name = "Calculator history",
        .iconName = ":assets/icons/calculator.png",
        .factory =
-           [](AppWindow &app) { return new CalculatorHistoryView(app); }},
+           [](AppWindow &app, const QString &s) {
+             return new CalculatorHistoryView(app);
+           }},
       {.name = "Manage quicklinks",
        .iconName = ":assets/icons/quicklink.png",
-       .factory = [](AppWindow &app) { return new ManageQuicklinksView(app); }},
+       .factory =
+           [](AppWindow &app, const QString &s) {
+             return new ManageQuicklinksView(app);
+           }},
       {.name = "Create quicklink",
        .iconName = ":assets/icons/quicklink.png",
        .factory =
-           [](AppWindow &app) { return new CalculatorHistoryView(app); }},
+           [](AppWindow &app, const QString &s) {
+             return new CalculatorHistoryView(app);
+           }},
 
   };
 
-  QList<FallbackCommand> fallbackCommands{
+  QList<BuiltinCommand> fallbackCommands{
       {.name = "Search files",
        .iconName = ":assets/icons/files.png",
        .factory =
@@ -135,15 +285,19 @@ public:
 
       if (auto result = parser.evaluate(s.toLatin1().data())) {
         auto value = result.value();
+        auto data = CalculatorItem{
+            .expression = s, .result = value.value, .unit = value.unit};
+        auto item = std::make_shared<CalculatorListItem>(data);
 
-        model->addItem(CalculatorItem{
-            .expression = s, .result = value.value, .unit = value.unit});
+        model->addItem(item);
       }
     }
 
     if (QColor(s).isValid()) {
       model->beginSection("Color");
-      model->addItem(ColorItem{QColor(s)});
+      auto item = std::make_shared<ColorListItem>(s);
+
+      model->addItem(item);
     }
 
     model->beginSection("Results");
@@ -157,7 +311,9 @@ public:
           if (!word.startsWith(s, Qt::CaseInsensitive))
             continue;
 
-          model->addItem(AppItem{app});
+          auto appItem = std::make_shared<AppListItem>(app, appDb);
+
+          model->addItem(appItem);
           break;
         }
       }
@@ -168,7 +324,7 @@ public:
         if (!cmd.name.contains(s, Qt::CaseInsensitive))
           continue;
 
-        model->addItem(cmd);
+        auto item = std::make_shared<Extension::Command>(cmd);
       }
     }
 
@@ -176,13 +332,17 @@ public:
       if (!cmd.name.contains(s, Qt::CaseInsensitive))
         continue;
 
-      model->addItem(cmd);
+      auto item = std::make_shared<BuiltinCommandListItem>(cmd);
+
+      model->addItem(item);
     }
 
     model->beginSection(QString("Use \"%1\" with...").arg(s));
 
     for (const auto &cmd : fallbackCommands) {
-      model->addItem(cmd);
+      auto item = std::make_shared<BuiltinCommandListItem>(cmd);
+
+      model->addItem(item);
     }
 
     auto end = std::chrono::high_resolution_clock::now();
@@ -192,70 +352,6 @@ public:
     qDebug() << "root searched in " << duration << "ms";
 
     model->endReset();
-  }
-
-  void variantSelectionChanged(const RootItem &variant) override {
-    QList<ActionData> actions;
-
-    if (auto app = std::get_if<AppItem>(&variant)) {
-      auto fileBrowser = appDb.defaultFileBrowser();
-      auto textEditor = appDb.defaultTextEditor();
-
-      auto fn = std::bind(&RootView::openApp, this, app->entry);
-      actions = {
-          ActionData{.title = "Open app",
-                     .icon = {.iconName = app->entry->iconName()},
-                     .execute = fn},
-          ActionData{.title = "Open in " + fileBrowser->name,
-                     .icon = {.iconName = fileBrowser->iconName()},
-                     .execute = std::bind(&RootView::openAppInFileBrowser, this,
-                                          app->entry, fileBrowser)},
-          ActionData{.title = "Open desktop file",
-                     .icon = {.iconName = textEditor->iconName()},
-                     .execute = std::bind(&RootView::openAppDesktopFile, this,
-                                          textEditor, app->entry->path)},
-      };
-    }
-
-    if (auto calc = std::get_if<CalculatorItem>(&variant)) {
-      actions = {ActionData{.title = "Copy result",
-                            .icon = {.iconName = "pcbcalculator"},
-                            .execute = std::bind(
-                                &RootView::copyCalculatorResult, this)},
-                 ActionData{.title = "Open history",
-                            .icon = {.iconName = "pcbcalculator"},
-                            .execute = [this]() {
-                              emit pushView(new CalculatorHistoryView(app));
-                            }}};
-    }
-
-    if (auto cmd = std::get_if<Extension::Command>(&variant)) {
-      actions = {ActionData{
-          .title = cmd->name,
-          .icon = {.iconName = "folder"},
-          .execute = std::bind(&RootView::loadExtension, this, *cmd)}};
-    }
-
-    if (auto cmd = std::get_if<BuiltinCommand>(&variant)) {
-      actions = {ActionData{
-          .title = "Open command",
-          .icon = {.iconName = cmd->iconName},
-          .execute = std::bind(&RootView::launchBuiltinCommand, this, *cmd)}};
-    }
-
-    if (auto cmd = std::get_if<FallbackCommand>(&variant)) {
-      actions = {
-          ActionData{.title = "Open command",
-                     .icon = {.iconName = cmd->iconName},
-                     .execute = std::bind(&RootView::launchFallbackCommand,
-                                          this, *cmd, "")}};
-    }
-
-    setActions(actions);
-  }
-
-  void launchBuiltinCommand(BuiltinCommand cmd) {
-    emit pushView(cmd.factory(app));
   }
 
   void launchFallbackCommand(const FallbackCommand &cmd, const QString &query) {
@@ -283,88 +379,13 @@ public:
         new ExtensionCommand(app, command.extensionId, command.name));
   }
 
-  QWidget *createItemFromVariant(const RootItem &variant) override {
-    if (auto app = std::get_if<AppItem>(&variant)) {
-      return new ListItemWidget(
-          ImageViewer::createFromModel(
-              ThemeIconModel{.iconName = app->entry->iconName()}, {25, 25}),
-          app->entry->name, "", "Application");
-    }
-
-    if (auto command = std::get_if<Extension::Command>(&variant)) {
-      return new ListItemWidget(
-          ImageViewer::createFromModel(ThemeIconModel{.iconName = "folder"},
-                                       {25, 25}),
-          command->name, "Extension", "Command");
-    }
-
-    if (auto cmd = std::get_if<BuiltinCommand>(&variant)) {
-      return new ListItemWidget(
-          ImageViewer::createFromModel(
-              ThemeIconModel{.iconName = cmd->iconName}, {25, 25}),
-          cmd->name, "", "Command");
-    }
-
-    if (auto cmd = std::get_if<FallbackCommand>(&variant)) {
-      return new ListItemWidget(
-          ImageViewer::createFromModel(
-              ThemeIconModel{.iconName = cmd->iconName}, {25, 25}),
-          cmd->name, "", "Command");
-    }
-
-    if (auto color = std::get_if<ColorItem>(&variant)) {
-      auto circle = new ColorCircle(color->color.name(), QSize(60, 60));
-
-      circle->setStroke("#BBB", 3);
-
-      auto colorLabel = new QLabel(color->color.name());
-
-      colorLabel->setProperty("class", "transform-left");
-
-      auto left = new VStack(colorLabel, new Chip("HEX"));
-      auto right = new VStack(circle, new Chip(color->color.name()));
-
-      return new TransformResult(left, right);
-    }
-
-    if (auto result = std::get_if<CalculatorItem>(&variant)) {
-      auto exprLabel = new QLabel(result->expression);
-
-      exprLabel->setProperty("class", "transform-left");
-
-      auto answerLabel = new QLabel(QString::number(result->result));
-      answerLabel->setProperty("class", "transform-left");
-
-      auto left = new VStack(exprLabel, new Chip("Expression"));
-      auto right = new VStack(
-          answerLabel,
-          new Chip(result->unit ? QString(result->unit->displayName.data())
-                                : "Answer"));
-
-      return new TransformResult(left, right);
-    }
-
-    return nullptr;
+  void onMount() override {
+    setSearchPlaceholderText("Search for apps or commands...");
   }
 
   RootView(AppWindow &app)
-      : View(app), app(app), appDb(service<AppDatabase>()),
-        extensionManager(service<ExtensionManager>()) {
-    list->setModel(model);
-    list->setItemDelegate(this);
-    forwardInputEvents(list->listWidget());
-    setSearchPlaceholderText("Search for apps or commands...");
-
-    /*
-connect(list, &NativeList::setActions, this,
-        [this](const auto &actions) { actionModel->setItems(actions); });
-    */
-
-    connect(list, &NativeList::selectionChanged, this,
-            [](const QVariant &variant) { qDebug() << "selection changed"; });
-
-    widget = list;
-  }
+      : NavigationListView(app), app(app), appDb(service<AppDatabase>()),
+        extensionManager(service<ExtensionManager>()) {}
 
   ~RootView() { delete model; }
 };

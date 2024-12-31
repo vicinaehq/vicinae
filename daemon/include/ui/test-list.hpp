@@ -26,7 +26,7 @@ public:
   virtual std::unique_ptr<CompleterData> createCompleter() const {
     return nullptr;
   }
-  virtual size_t id() const = 0;
+  virtual size_t id() const { return 0; };
 
   virtual QList<AbstractAction *> createActions() const { return {}; }
 

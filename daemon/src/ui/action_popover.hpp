@@ -228,12 +228,12 @@ signals:
   void actionExecuted(AbstractAction *action);
 
 public:
-  bool submitKeypress(QKeyEvent *event) {
-    for (const auto &action : actionData) {
-      if (!action.shortcut)
+  bool findBoundAction(QKeyEvent *event) {
+    for (auto action : signalActions) {
+      if (!action->shortcut)
         continue;
-      if (KeyboardShortcut(*action.shortcut) == event) {
-        action.execute();
+      if (KeyboardShortcut(*action->shortcut) == event) {
+        emit actionExecuted(action);
         return true;
       }
     }

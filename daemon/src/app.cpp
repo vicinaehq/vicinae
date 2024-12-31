@@ -30,7 +30,7 @@ bool AppWindow::eventFilter(QObject *obj, QEvent *event) {
 
     // qDebug() << "key event from app filter";
 
-    if (actionPopover->submitKeypress(keyEvent)) {
+    if (actionPopover->findBoundAction(keyEvent)) {
       return true;
     }
 
