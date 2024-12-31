@@ -15,6 +15,7 @@
 #include <qtmetamacros.h>
 
 struct CalculatorEntry {
+  int id;
   QString expression;
   QString result;
   QDateTime timestamp;
@@ -86,12 +87,21 @@ exrate->fetchSymbol("USD");
     }
   }
 
+  bool removeById(int id) {
+    QSqlQuery query(db);
+
+    query.prepare("DELETE FROM history WHERE id = :id");
+    query.bindValue(":id", id);
+
+    return query.exec();
+  }
+
   QList<CalculatorEntry> list() {
     QSqlQuery query(db);
 
     query.exec(R"(
 	  	SELECT
-			expression, result, created_at
+			id, expression, result, created_at
 		FROM
 			history
 		ORDER BY created_at DESC
@@ -100,12 +110,14 @@ exrate->fetchSymbol("USD");
     QList<CalculatorEntry> entries;
 
     while (query.next()) {
-      uint epoch = query.value(2).toUInt();
+      uint epoch = query.value(3).toUInt();
 
-      entries.push_back(
-          CalculatorEntry{.expression = query.value(0).toString(),
-                          .result = query.value(1).toString(),
-                          .timestamp = QDateTime::fromSecsSinceEpoch(epoch)});
+      entries.push_back(CalculatorEntry{
+          .id = query.value(0).toInt(),
+          .expression = query.value(1).toString(),
+          .result = query.value(2).toString(),
+          .timestamp = QDateTime::fromSecsSinceEpoch(epoch),
+      });
     }
 
     return entries;

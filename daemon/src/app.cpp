@@ -1,12 +1,9 @@
 #include "app.hpp"
-#include "command-object.hpp"
 #include "command.hpp"
-#include "commands/index/index-command.hpp"
 #include "extension_manager.hpp"
 #include "image-fetcher.hpp"
 #include "quicklink-seeder.hpp"
 #include "root-command.hpp"
-#include "ui/keyboard.hpp"
 #include <QLabel>
 #include <QMainWindow>
 #include <QThread>
@@ -20,76 +17,10 @@
 #include <qobject.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
-#include <stdexcept>
-
-void AppWindow::pushCommandObject(std::shared_ptr<ICommandFactory> factory) {
-  if (commandStack.empty())
-    throw std::runtime_error(
-        "Tried to push command to an empty command stack. At least one command "
-        "(the root one) should be present.");
-
-  CommandObject *top = commandStack.top();
-  CommandObject *cmd = (*factory)(this);
-
-  layout->replaceWidget(top->widget, cmd->widget);
-
-  // clean top
-  topBar->input->removeEventFilter(top);
-  top->widget->setParent(nullptr);
-  top->setParent(nullptr);
-  top->widget->hide();
-
-  // setup next
-  statusBar->setActiveCommand(cmd->name(), cmd->icon());
-  cmd->setParent(this);
-  topBar->input->installEventFilter(cmd);
-
-  commandStack.push(cmd);
-  cmd->onAttach();
-
-  if (commandStack.size() == 2) {
-    topBar->showBackButton();
-  }
-}
 
 void AppWindow::popToRoot() {
   while (commandStack.size() > 1) {
-    popCommandObject();
   }
-}
-
-void AppWindow::popCommandObject() {
-  if (commandStack.size() < 2)
-    throw std::runtime_error("Cannot pop stack < 2 ");
-
-  CommandObject *prev = commandStack.top();
-  commandStack.pop();
-  CommandObject *next = commandStack.top();
-
-  qDebug() << "pop " << prev->name() << " for " << next->name();
-
-  layout->replaceWidget(prev->widget, next->widget);
-
-  // tear down prev
-  topBar->input->removeEventFilter(prev);
-  prev->onDetach();
-  prev->setParent(nullptr);
-
-  // restore next
-  topBar->input->setReadOnly(false);
-  topBar->input->show();
-  topBar->input->setFocus();
-  topBar->input->installEventFilter(next);
-  next->setParent(this);
-  next->onAttach();
-  next->widget->show();
-
-  if (commandStack.size() == 1) {
-    statusBar->reset();
-    topBar->hideBackButton();
-  }
-
-  prev->deleteLater();
 }
 
 bool AppWindow::eventFilter(QObject *obj, QEvent *event) {
@@ -97,7 +28,7 @@ bool AppWindow::eventFilter(QObject *obj, QEvent *event) {
     auto keyEvent = static_cast<QKeyEvent *>(event);
     auto key = keyEvent->key();
 
-    qDebug() << "key event from app filter";
+    // qDebug() << "key event from app filter";
 
     if (actionPopover->submitKeypress(keyEvent)) {
       return true;
@@ -156,6 +87,7 @@ void AppWindow::popCurrentView() {
 
   qDebug() << "restore action model and delegate";
   actionPopover->setActionData(next.actions);
+  topBar->destroyQuicklinkCompleter();
   topBar->input->setReadOnly(false);
   topBar->input->show();
   topBar->input->setFocus();
@@ -271,6 +203,10 @@ void AppWindow::launchCommand(ViewCommand *cmd) {
   }
 }
 
+void AppWindow::executeAction(AbstractAction *action) {
+  action->execute(*this);
+}
+
 AppWindow::AppWindow(QWidget *parent)
     : QMainWindow(parent), topBar(new TopBar()), statusBar(new StatusBar()),
       actionPopover(new ActionPopover(this)) {
@@ -289,6 +225,9 @@ AppWindow::AppWindow(QWidget *parent)
   appDb = std::make_unique<AppDatabase>();
   clipboardService = std::make_unique<ClipboardService>();
   iconCache = std::make_unique<IconCacheService>();
+
+  connect(actionPopover, &ActionPopover::actionExecuted, this,
+          &AppWindow::executeAction);
 
   ImageFetcher::instance();
 

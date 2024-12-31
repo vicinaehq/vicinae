@@ -35,11 +35,11 @@ qt_add_executable(${TARGET}
 	src/app.cpp
 	src/app.hpp
 
-	src/commands/index/index-command.hpp
-	src/commands/index/index-command.cpp
-	src/commands/calculator-history/calculator-history.hpp
-	src/commands/calculator-history/calculator-history.cpp
-	src/commands/create-quicklink/create-quicklink.hpp
+	#src/commands/index/index-command.hpp
+	#src/commands/index/index-command.cpp
+	#src/commands/calculator-history/calculator-history.hpp
+	#src/commands/calculator-history/calculator-history.cpp
+	#src/commands/create-quicklink/create-quicklink.hpp
 
 	include/extend/extension-list-controller.hpp
 	include/extend/extension-view.hpp
@@ -50,6 +50,9 @@ qt_add_executable(${TARGET}
 	include/ui/empty-view.hpp
 
 	include/ui/native-list.hpp
+	include/ui/test-list.hpp
+
+	src/manage-quicklinks-command.hpp
 
 	include/ui/metadata-pane.hpp
 	src/ui/metadata-pane.cpp
@@ -62,8 +65,6 @@ qt_add_executable(${TARGET}
 
 	include/ui/text-label.hpp
 	src/ui/text-label.cpp
-
-
 
 	src/extend/action-model.cpp
 	src/extend/color-model.cpp
@@ -94,11 +95,11 @@ qt_add_executable(${TARGET}
 
 	src/xdg/xdg-desktop.cpp
 
-	src/commands/create-quicklink/create-quicklink.cpp
+	#src/commands/create-quicklink/create-quicklink.cpp
 
-	src/command-database.cpp
+	#src/command-database.cpp
 
-	src/exchange-rate-service.hpp
+	#src/exchange-rate-service.hpp
 	src/omnicast.hpp
 
 	./resources.qrc
@@ -116,16 +117,12 @@ qt_add_executable(${TARGET}
 	src/ui/top_bar.cpp
 	src/ui/color_circle.hpp
 	src/ui/color_circle.cpp
-	src/ui/managed_list.hpp
-	src/ui/managed_list.cpp
 	src/ui/toast.hpp
 	src/ui/toast.cpp
 	src/ui/action_popover.hpp
 	src/ui/action_popover.cpp
 	src/ui/turbobox.hpp
-	src/command-object.hpp
 	src/extension_manager.hpp
-	src/command-object.cpp
 )
 
 target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)

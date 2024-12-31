@@ -1,9 +1,9 @@
-
-
+#pragma once
 #include "app.hpp"
 #include "calculator-database.hpp"
 #include "ui/action_popover.hpp"
 #include "ui/native-list.hpp"
+#include "ui/toast.hpp"
 #include "view.hpp"
 #include <qnamespace.h>
 #include <variant>
@@ -13,20 +13,22 @@ struct CalculatorCopyResultAction {
 };
 
 using HistoryAction = std::variant<CalculatorCopyResultAction>;
+
 struct HistoryRow {
   QString expression;
   QString result;
 };
 
 class CalculatorHistoryView : public View,
-                              public TypedNativeListDelegate<HistoryRow> {
+                              public TypedNativeListDelegate<CalculatorEntry> {
   AppWindow &app;
   NativeList *list;
-  TypedNativeListModel<HistoryRow> *model;
+  TypedNativeListModel<CalculatorEntry> *model;
   QList<CalculatorEntry> entries;
   Service<ClipboardService> clipboardService;
+  Service<CalculatorDatabase> calculatorDb;
 
-  QWidget *createItemFromVariant(const HistoryRow &variant) override {
+  QWidget *createItemFromVariant(const CalculatorEntry &variant) override {
     return new ListItemWidget(
         ImageViewer::createFromModel(
             ThemeIconModel{.iconName = "pcbcalculator"}, {25, 25}),
@@ -45,7 +47,21 @@ class CalculatorHistoryView : public View,
     app.statusBar->setToast("Copied");
   }
 
-  void variantSelectionChanged(const HistoryRow &variant) override {
+  void removeEntry(int id) {
+    auto removed = calculatorDb.removeById(id);
+
+    if (!removed) {
+      app.statusBar->setToast("Failed to remove entry", ToastPriority::Danger);
+    } else {
+      app.statusBar->setToast("Entry removed");
+      model->removeItemIf([id](const QVariant &variant) {
+        return id == variant.value<CalculatorEntry>().id;
+      });
+      entries.removeIf([id](auto &item) { return item.id == id; });
+    }
+  }
+
+  void variantSelectionChanged(const CalculatorEntry &variant) override {
     ActionData copyResultAction{
         .title = "Copy result",
         .icon = ThemeIconModel{.iconName = "pcbcalculator"},
@@ -56,8 +72,13 @@ class CalculatorHistoryView : public View,
         .icon = ThemeIconModel{.iconName = "pcbcalculator"},
         .execute = std::bind(&CalculatorHistoryView::copyResult, this,
                              variant.result)};
+    ActionData removeEntry{
+        .title = "Remove entry",
+        .icon = ThemeIconModel{.iconName = "pcbcalculator"},
+        .execute =
+            std::bind(&CalculatorHistoryView::removeEntry, this, variant.id)};
 
-    setActions({copyResultAction, copyExpression});
+    setActions({copyResultAction, copyExpression, removeEntry});
   }
 
   void onSearchChanged(const QString &s) override {
@@ -70,18 +91,21 @@ class CalculatorHistoryView : public View,
         continue;
       }
 
-      model->addItem(HistoryRow{.result = entry.result});
+      model->addItem(entry);
     }
     model->endReset();
   }
 
-  void onMount() override {}
+  void onMount() override {
+    setSearchPlaceholderText("Browse calculator history...");
+  }
 
 public:
   CalculatorHistoryView(AppWindow &app)
       : View(app), app(app), list(new NativeList),
         clipboardService(service<ClipboardService>()),
-        model(new TypedNativeListModel<HistoryRow>()) {
+        calculatorDb(service<CalculatorDatabase>()),
+        model(new TypedNativeListModel<CalculatorEntry>()) {
     list->setItemDelegate(this);
     list->setModel(model);
 

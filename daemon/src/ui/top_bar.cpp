@@ -1,4 +1,5 @@
 #include "ui/top_bar.hpp"
+#include "extend/image-model.hpp"
 #include <qnamespace.h>
 
 TopBar::TopBar(QWidget *parent)
@@ -53,10 +54,14 @@ void TopBar::destroyQuicklinkCompleter() {
   }
 }
 
-void TopBar::activateQuicklinkCompleter(const QList<QString> &placeholders) {
+void TopBar::activateQuicklinkCompleter(const CompleterData &data) {
   destroyQuicklinkCompleter();
 
-  auto completion = new InputCompleter(placeholders);
+  auto completion = new InputCompleter(data.placeholders);
+
+  if (auto icon = std::get_if<ThemeIconModel>(&data.model)) {
+    completion->setIcon(icon->iconName);
+  }
 
   for (const auto &input : completion->inputs) {
     input->installEventFilter(this);

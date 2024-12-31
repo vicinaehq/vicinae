@@ -62,8 +62,6 @@ public:
   QVBoxLayout *layout = nullptr;
   QWidget *defaultWidget = new QWidget();
 
-  void pushCommandObject(std::shared_ptr<ICommandFactory> factory);
-  void popCommandObject();
   void popToRoot();
 
   void launchCommand(ViewCommand *cmd);
@@ -74,6 +72,7 @@ public:
 public slots:
   void pushView(View *view);
   void popCurrentView();
+  void executeAction(AbstractAction *action);
 
 signals:
   void currentViewPoped();

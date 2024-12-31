@@ -1,5 +1,4 @@
 #include "action_popover.hpp"
-#include "command-object.hpp"
 #include "extend/action-model.hpp"
 #include "extend/image-model.hpp"
 #include "image-viewer.hpp"
@@ -16,28 +15,6 @@
 #include <qpainter.h>
 #include <qstyleoption.h>
 #include <qwidget.h>
-
-ActionItem::ActionItem(std::shared_ptr<IAction> action, QWidget *parent)
-    : QWidget(parent), action(action) {
-  setFixedHeight(45);
-  setProperty("class", "action-item");
-  image = new QLabel();
-  titleLabel = new QLabel(action->name());
-  titleLabel->setProperty("class", "action-name");
-  resultType = new QLabel("Type");
-  resultType->setProperty("class", "action-shortcut");
-
-  QHBoxLayout *layout = new QHBoxLayout(this);
-
-  layout->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-  layout->setSpacing(10);
-  image->setPixmap(action->icon().pixmap(25, 25));
-  layout->addWidget(image);
-  layout->addWidget(titleLabel, 1);
-  // layout->addWidget(new KeyIndicator(action.bind));
-
-  setLayout(layout);
-}
 
 void ActionPopover::toggleActions() {
   if (isVisible())
@@ -147,13 +124,17 @@ renderItems(items);
 }
 
 void ActionPopover::itemActivated(QListWidgetItem *item) {
-  if (!item || !itemMap.contains(item))
-    return;
+  if (itemMap.contains(item)) {
+    const auto &action = itemMap.value(item);
 
-  const auto &action = itemMap.value(item);
+    action.execute();
+  }
+
+  if (signalItemMap.contains(item)) {
+    emit actionExecuted(signalItemMap[item]);
+  }
 
   hide();
-  action.execute();
 }
 
 ActionPopover::ActionPopover(QWidget *parent) : QWidget(parent) {
@@ -239,7 +220,11 @@ void ActionPopover::showActions() {
   qDebug() << "creating list with " << window->width() << "x"
            << window->height();
 
-  renderItems(actionData);
+  if (!signalActions.isEmpty()) {
+    renderSignalItems(signalActions);
+  } else {
+    renderItems(actionData);
+  }
 
   adjustSize();
 

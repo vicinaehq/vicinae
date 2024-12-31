@@ -1,6 +1,7 @@
 #pragma once
 #include "extend/action-model.hpp"
 #include "extend/image-model.hpp"
+#include "image-viewer.hpp"
 #include "ui/keyboard.hpp"
 #include "ui/status_bar.hpp"
 #include <qboxlayout.h>
@@ -18,10 +19,22 @@
 #include <qvariant.h>
 #include <qwidget.h>
 
-class AbstractAction {
+class AppWindow;
+
+class AbstractAction : public QObject {
 public:
-  virtual ActionModel present() = 0;
-  virtual void execute() = 0;
+  QString title;
+  ThemeIconModel icon;
+  std::optional<KeyboardShortcutModel> shortcut;
+
+  void setShortcut(const KeyboardShortcutModel &shortcut) {
+    this->shortcut = shortcut;
+  }
+
+  AbstractAction(const QString &title, const ThemeIconModel &icon = {})
+      : title(title), icon(icon) {}
+
+  virtual void execute(AppWindow &app) = 0;
 };
 
 struct ActionData {
@@ -171,8 +184,11 @@ class ActionPopover : public QWidget {
   QListWidget *list;
   QList<ActionData> actionData;
   QHash<QListWidgetItem *, ActionData> itemMap;
+  QHash<QListWidgetItem *, AbstractAction *> signalItemMap;
 
   QStack<QList<ActionPannelItem>> menuStack;
+
+  QList<AbstractAction *> signalActions;
 
   void paintEvent(QPaintEvent *event) override;
   bool eventFilter(QObject *obj, QEvent *event) override;
@@ -209,6 +225,7 @@ private slots:
 signals:
   void actionActivated(std::shared_ptr<IAction> action);
   void actionPressed(ActionModel model);
+  void actionExecuted(AbstractAction *action);
 
 public:
   bool submitKeypress(QKeyEvent *event) {
@@ -247,8 +264,52 @@ public:
   void toggleActions();
   void setActions(const QList<ActionPannelItem> &actions);
 
+  void renderSignalItems(const QList<AbstractAction *> actions) {
+    list->clear();
+    itemMap.clear();
+
+    for (const auto &item : actions) {
+      auto listItem = new QListWidgetItem;
+      ImageLikeModel imageModel;
+
+      imageModel = item->icon;
+
+      QString str;
+
+      if (item->shortcut) {
+        QStringList lst;
+
+        lst << item->shortcut->modifiers;
+        lst << item->shortcut->key;
+        str = lst.join(" + ");
+      }
+
+      auto widget = new ActionListItemWidget(
+          ImageViewer::createFromModel(imageModel, {25, 25}), item->title, "",
+          str);
+
+      list->addItem(listItem);
+      list->setItemWidget(listItem, widget);
+      listItem->setSizeHint(widget->sizeHint());
+      signalItemMap.insert(listItem, item);
+    }
+
+    for (int i = 0; i != list->count(); ++i) {
+      auto item = list->item(i);
+
+      if (!item->flags().testFlag(Qt::ItemIsSelectable))
+        continue;
+
+      list->setCurrentItem(item);
+      break;
+    }
+  }
+
   ActionPopover(QWidget *parent = 0);
 
 public slots:
   void setActionData(const QList<ActionData> &actions) { actionData = actions; }
+  void setSignalActions(const QList<AbstractAction *> &actions) {
+    signalActions = actions;
+  }
 };

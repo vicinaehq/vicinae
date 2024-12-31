@@ -23,7 +23,7 @@ class View : public QObject {
       auto keyEvent = static_cast<QKeyEvent *>(event);
       auto key = keyEvent->key();
 
-      qDebug() << "key event from view filter";
+      // qDebug() << "key event from view filter";
 
       if (key == Qt::Key_Return && app.topBar->quickInput) {
         if (app.topBar->quickInput->focusFirstEmpty())
@@ -85,6 +85,24 @@ public:
     }
 
     app.actionPopover->setActionData(newActions);
+
+    if (!actions.isEmpty()) {
+      // app.statusBar->setCurrentAction(actions.at(0).title);
+    }
+  }
+
+  void setSignalActions(const QList<AbstractAction *> &actions) {
+    if (actions.size() > 0) {
+      actions[0]->setShortcut(
+          KeyboardShortcutModel{.key = "return", .modifiers = {}});
+    }
+
+    if (actions.size() > 1) {
+      actions[1]->setShortcut(
+          KeyboardShortcutModel{.key = "return", .modifiers = {}});
+    }
+
+    app.actionPopover->setSignalActions(actions);
 
     if (!actions.isEmpty()) {
       // app.statusBar->setCurrentAction(actions.at(0).title);

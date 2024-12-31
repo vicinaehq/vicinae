@@ -56,7 +56,6 @@ class StatusBar : public QWidget {
 
 public:
   void setCurrentAction(const ActionPannelItem &item);
-  void setSelectedAction(const std::shared_ptr<IAction> &action);
   void setToast(const QString &text,
                 ToastPriority priority = ToastPriority::Success);
   void setActiveCommand(const QString &name, QIcon icon);

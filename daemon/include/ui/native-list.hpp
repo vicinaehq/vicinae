@@ -3,6 +3,7 @@
 
 #include "common.hpp"
 #include "extend/action-model.hpp"
+#include "extend/list-model.hpp"
 #include "ui/list-view.hpp"
 #include <qabstractitemmodel.h>
 #include <qboxlayout.h>
@@ -93,6 +94,45 @@ public:
     currentSection.reset();
   }
 
+  bool removeItemIf(std::function<bool(const QVariant &variant)> predicate) {
+    size_t idx = 0;
+
+    for (size_t i = 0; i != m_items.size(); ++i) {
+      auto &item = m_items[i];
+
+      if (auto section = std::get_if<NativeListSection>(&item)) {
+        ++idx;
+
+        for (size_t i = 0; i != section->items.size(); ++i) {
+          auto &item = section->items.at(i);
+
+          if (!predicate(item.data)) {
+            ++idx;
+            continue;
+          }
+
+          section->items.removeAt(i);
+          emit itemDeleted(idx);
+
+          return true;
+        }
+      }
+
+      if (auto data = std::get_if<ListItemData>(&item)) {
+        if (!predicate(data->data)) {
+          ++idx;
+          continue;
+        }
+
+        m_items.removeAt(i);
+        emit itemDeleted(idx);
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   void addItem(const QVariant &data, int role) {
     flatItems.push_back({.role = role, .data = data});
 
@@ -115,6 +155,7 @@ public:
 
 signals:
   void itemsChanged();
+  void itemDeleted(int idx);
 };
 
 template <class T>
@@ -140,12 +181,18 @@ public:
 };
 
 template <class T> class TypedNativeListModel : public AbstractNativeListModel {
-  QList<T> items;
-
 public:
   void addItem(const T &item) {
     AbstractNativeListModel::addItem(QVariant::fromValue(item), 0);
   }
+
+  /*
+  void removeIf(std::function<bool(const T &item)> predicate) {
+    AbstractNativeListModel::removeItemIf([predicate](const QVariant &variant) {
+      return predicate(variant.value<T>());
+    });
+  }
+  */
 };
 
 class NativeList : public QWidget {
@@ -183,9 +230,21 @@ private slots:
 
     itemDelegate->selectionChanged(item->data);
 
-    if (itemDelegate->createDetail(item->data, item->role)) {
-      qDebug() << "create detail";
+    if (auto detail = itemDelegate->createDetail(item->data, item->role)) {
+      QWidget *old = splitter->itemAt(2)->widget();
+
+      splitter->replaceWidget(old, detail);
+      old->deleteLater();
     }
+  }
+
+  void itemDeleted(int idx) {
+    auto item = list->item(idx);
+
+    if (auto widget = list->itemWidget(item))
+      widget->deleteLater();
+
+    list->takeItem(idx);
   }
 
   void modelItemsChanged() {
@@ -232,6 +291,8 @@ public:
     this->model = model;
     connect(model, &AbstractNativeListModel::itemsChanged, this,
             &NativeList::modelItemsChanged);
+    connect(model, &AbstractNativeListModel::itemDeleted, this,
+            &NativeList::itemDeleted);
   }
 
   QListWidget *listWidget() { return list; }
@@ -240,9 +301,15 @@ public:
       : itemDelegate(nullptr), model(nullptr), splitter(new QHBoxLayout),
         list(new QListWidget) {
     splitter->addWidget(list, 1);
-    splitter->addWidget(new HDivider);
+    splitter->addWidget(new VDivider);
+
+    auto fakeDetails = new QWidget();
+
+    fakeDetails->hide();
+
+    splitter->addWidget(fakeDetails, 2);
+    splitter->setSpacing(0);
     splitter->setContentsMargins(0, 0, 0, 0);
-    // splitter->addWidget(new QWidget, 2);
 
     list->setFocusPolicy(Qt::NoFocus);
     list->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);

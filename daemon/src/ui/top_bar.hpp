@@ -1,10 +1,16 @@
 #pragma once
+#include "extend/image-model.hpp"
 #include "ui/input_completer.hpp"
 #include <QKeyEvent>
 #include <QLabel>
 #include <QLineEdit>
 #include <qapplication.h>
 #include <qboxlayout.h>
+
+struct CompleterData {
+  QList<QString> placeholders;
+  ImageLikeModel model;
+};
 
 struct TopBar : QWidget {
   QLabel *backButtonLabel = nullptr;
@@ -20,5 +26,5 @@ public:
   void showBackButton();
   void hideBackButton();
   void destroyQuicklinkCompleter();
-  void activateQuicklinkCompleter(const QList<QString> &placeholders);
+  void activateQuicklinkCompleter(const CompleterData &data);
 };

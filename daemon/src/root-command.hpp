@@ -5,10 +5,9 @@
 #include "calculator-history-command.hpp"
 #include "calculator.hpp"
 #include "command.hpp"
-#include "commands/calculator-history/calculator-history.hpp"
-#include "extend/action-model.hpp"
 #include "extend/extension-command.hpp"
 #include "extension_manager.hpp"
+#include "manage-quicklinks-command.hpp"
 #include "omnicast.hpp"
 #include "ui/action_popover.hpp"
 #include "ui/color_circle.hpp"
@@ -46,6 +45,18 @@ struct ExtensionLoadAction {
   Extension::Command command;
 };
 
+struct BuiltinCommand {
+  QString name;
+  QString iconName;
+  std::function<View *(AppWindow &app)> factory;
+};
+
+struct FallbackCommand {
+  QString name;
+  QString iconName;
+  std::function<View *(AppWindow &app, const QString &query)> factory;
+};
+
 struct OpenHomeDirectoryAction {};
 
 using ExtensionAction = std::variant<ExtensionLoadAction>;
@@ -68,7 +79,8 @@ struct ColorItem {
 };
 
 using RootItem =
-    std::variant<AppItem, ColorItem, CalculatorItem, Extension::Command>;
+    std::variant<AppItem, ColorItem, CalculatorItem, Extension::Command,
+                 BuiltinCommand, FallbackCommand>;
 
 class RootView : public View, public TypedNativeListDelegate<RootItem> {
   AppWindow &app;
@@ -81,6 +93,34 @@ class RootView : public View, public TypedNativeListDelegate<RootItem> {
   NativeList *list = new NativeList();
 
   NewActionPannelModel *actionModel = new NewActionPannelModel;
+
+  QList<BuiltinCommand> builtinCommands{
+      {.name = "Search files",
+       .iconName = ":assets/icons/files.png",
+       .factory =
+           [](AppWindow &app) { return new CalculatorHistoryView(app); }},
+      {.name = "Calculator history",
+       .iconName = ":assets/icons/calculator.png",
+       .factory =
+           [](AppWindow &app) { return new CalculatorHistoryView(app); }},
+      {.name = "Manage quicklinks",
+       .iconName = ":assets/icons/quicklink.png",
+       .factory = [](AppWindow &app) { return new ManageQuicklinksView(app); }},
+      {.name = "Create quicklink",
+       .iconName = ":assets/icons/quicklink.png",
+       .factory =
+           [](AppWindow &app) { return new CalculatorHistoryView(app); }},
+
+  };
+
+  QList<FallbackCommand> fallbackCommands{
+      {.name = "Search files",
+       .iconName = ":assets/icons/files.png",
+       .factory =
+           [](AppWindow &app, const QString &query) {
+             return new CalculatorHistoryView(app);
+           }},
+  };
 
 public:
   void onSearchChanged(const QString &s) override {
@@ -130,6 +170,19 @@ public:
 
         model->addItem(cmd);
       }
+    }
+
+    for (const auto &cmd : builtinCommands) {
+      if (!cmd.name.contains(s, Qt::CaseInsensitive))
+        continue;
+
+      model->addItem(cmd);
+    }
+
+    model->beginSection(QString("Use \"%1\" with...").arg(s));
+
+    for (const auto &cmd : fallbackCommands) {
+      model->addItem(cmd);
     }
 
     auto end = std::chrono::high_resolution_clock::now();
@@ -183,7 +236,30 @@ public:
           .execute = std::bind(&RootView::loadExtension, this, *cmd)}};
     }
 
+    if (auto cmd = std::get_if<BuiltinCommand>(&variant)) {
+      actions = {ActionData{
+          .title = "Open command",
+          .icon = {.iconName = cmd->iconName},
+          .execute = std::bind(&RootView::launchBuiltinCommand, this, *cmd)}};
+    }
+
+    if (auto cmd = std::get_if<FallbackCommand>(&variant)) {
+      actions = {
+          ActionData{.title = "Open command",
+                     .icon = {.iconName = cmd->iconName},
+                     .execute = std::bind(&RootView::launchFallbackCommand,
+                                          this, *cmd, "")}};
+    }
+
     setActions(actions);
+  }
+
+  void launchBuiltinCommand(BuiltinCommand cmd) {
+    emit pushView(cmd.factory(app));
+  }
+
+  void launchFallbackCommand(const FallbackCommand &cmd, const QString &query) {
+    emit pushView(cmd.factory(app, query));
   }
 
   void openApp(std::shared_ptr<DesktopEntry> app) { app->launch(); }
@@ -220,6 +296,20 @@ public:
           ImageViewer::createFromModel(ThemeIconModel{.iconName = "folder"},
                                        {25, 25}),
           command->name, "Extension", "Command");
+    }
+
+    if (auto cmd = std::get_if<BuiltinCommand>(&variant)) {
+      return new ListItemWidget(
+          ImageViewer::createFromModel(
+              ThemeIconModel{.iconName = cmd->iconName}, {25, 25}),
+          cmd->name, "", "Command");
+    }
+
+    if (auto cmd = std::get_if<FallbackCommand>(&variant)) {
+      return new ListItemWidget(
+          ImageViewer::createFromModel(
+              ThemeIconModel{.iconName = cmd->iconName}, {25, 25}),
+          cmd->name, "", "Command");
     }
 
     if (auto color = std::get_if<ColorItem>(&variant)) {
@@ -263,6 +353,7 @@ public:
     list->setModel(model);
     list->setItemDelegate(this);
     forwardInputEvents(list->listWidget());
+    setSearchPlaceholderText("Search for apps or commands...");
 
     /*
 connect(list, &NativeList::setActions, this,

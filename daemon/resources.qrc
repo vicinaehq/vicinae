@@ -9,5 +9,8 @@
     <file>assets/icons/duckduckgo.svg</file>
     <file>assets/icons/tux.svg</file>
     <file>assets/icons/wikipedia.svg</file>
+    <file>assets/icons/files.png</file>
+    <file>assets/icons/calculator.png</file>
+    <file>assets/icons/quicklink.png</file>
 	</qresource>
 </RCC>
