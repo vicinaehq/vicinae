@@ -18,7 +18,17 @@ public:
       app.topBar->destroyQuicklinkCompleter();
     }
 
-    setSignalActions(item.createActions());
+    auto actions = item.createActions();
+    auto size = actions.size();
+
+    if (size > 0)
+      actions[0]->setShortcut(
+          KeyboardShortcutModel{.key = "return", .modifiers = {}});
+    if (size > 1)
+      actions[1]->setShortcut(
+          KeyboardShortcutModel{.key = "return", .modifiers = {"ctrl"}});
+
+    setSignalActions(actions);
   }
 
   NavigationListView(AppWindow &app)

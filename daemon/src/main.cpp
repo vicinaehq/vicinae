@@ -39,20 +39,6 @@ QLineEdit, QListWidget {
 	background-color: transparent;
 }
 
-.managed-list::item {
-	font-size: 9pt;
-	margin-left: 8px;
-	border-radius: 8px;
-	margin-right: 8px;
-}
-
-.managed-list .list-label {
-	font-size: 9pt;
-	margin-left: 8px;
-	margin-right: 8px;
-	color: red;
-}
-
 #action-popover {
 	border: none;
 	border-radius: 5px;

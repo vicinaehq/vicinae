@@ -134,19 +134,12 @@ public:
 
 template <class T>
 class TypedActionDelegate : public AbstractActionItemDelegate {
-  ActionModel present(const QVariant &data) override {
-    return presentVariant(data.value<T>());
-  }
+  ActionModel present(const QVariant &data) override {}
 
-  void activate(const QVariant &data) override {
-    return activateVariant(data.value<T>());
-  }
+  void activate(const QVariant &data) override {}
 
 public:
   TypedActionDelegate() {}
-
-  virtual ActionModel presentVariant(const T &action) {};
-  virtual void activateVariant(const T &action) {};
 };
 
 enum ActionAfterActivateBehavior {

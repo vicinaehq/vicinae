@@ -30,7 +30,7 @@ public:
 
     auto mainLayout = new QHBoxLayout();
 
-    setLayout(mainLayout);
+    mainLayout->setContentsMargins(10, 0, 10, 0);
 
     auto left = new QWidget();
     auto leftLayout = new QHBoxLayout();
@@ -51,7 +51,11 @@ public:
     this->kind->setText(kind);
     this->kind->setProperty("class", "minor");
     mainLayout->addWidget(this->kind, 0, Qt::AlignRight);
+
+    setLayout(mainLayout);
   }
+
+  QSize sizeHint() const override { return {0, 40}; }
 };
 
 class DetailWidget : public QWidget {

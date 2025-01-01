@@ -92,16 +92,6 @@ public:
   }
 
   void setSignalActions(const QList<AbstractAction *> &actions) {
-    if (actions.size() > 0) {
-      actions[0]->setShortcut(
-          KeyboardShortcutModel{.key = "return", .modifiers = {}});
-    }
-
-    if (actions.size() > 1) {
-      actions[1]->setShortcut(
-          KeyboardShortcutModel{.key = "return", .modifiers = {}});
-    }
-
     app.actionPopover->setSignalActions(actions);
 
     if (!actions.isEmpty()) {
