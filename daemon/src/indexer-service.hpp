@@ -1,5 +1,6 @@
 #pragma once
 #include "filesystem-database.hpp"
+#include <fnmatch.h>
 #include <memory>
 #include <qdir.h>
 #include <qfileinfo.h>
@@ -42,6 +43,116 @@ signals:
   void requestWrite(const QList<FileInfo> &batch);
 };
 
+struct GitIgnorePattern {
+  bool negated;
+  QString pattern;
+
+  GitIgnorePattern() : negated(false) {}
+};
+
+class IgnoreFile {
+  QList<GitIgnorePattern> list;
+
+  bool evaluatePattern(const QString &target, const GitIgnorePattern &ignore) {
+    // qDebug() << "VS" << target;
+    size_t cursor = 0;
+    auto &pattern = ignore.pattern;
+    bool starFlag = false;
+    // qDebug() << target << "VS" << ignore.pattern;
+
+    for (const auto &ch : ignore.pattern) {
+      if (ch == '*')
+        starFlag = true;
+      else if (starFlag) {
+        while (cursor < target.size() && target.at(cursor) != ch)
+          ++cursor;
+
+        if (cursor == target.size())
+          return false;
+
+        starFlag = false;
+      } else {
+        if (target.at(cursor) != ch) {
+          return false;
+        }
+
+        ++cursor;
+      }
+    }
+
+    auto matches = cursor == target.size();
+
+    if (ignore.negated)
+      matches = !matches;
+    if (target.endsWith("node_modules")) {
+      qDebug() << target << "VS" << ignore.pattern << matches
+               << "negated=" << ignore.negated;
+    }
+
+    return matches;
+  }
+
+public:
+  IgnoreFile() {}
+  IgnoreFile(const QString &path) {
+    QFile file(path);
+
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+      return;
+    }
+
+    QTextStream in(&file);
+
+    while (!in.atEnd()) {
+      auto line = in.readLine().trimmed();
+      size_t idx = 0;
+
+      GitIgnorePattern pattern;
+
+      if (line.isEmpty() || line.startsWith('#'))
+        continue;
+
+      if (line.size() > idx && line.at(idx) == '!') {
+        pattern.negated = true;
+        ++idx;
+      }
+
+      if (line.size() > idx && line.at(idx) == '/') {
+        pattern.pattern =
+            QFileInfo(path).dir().absolutePath() + line.sliced(idx);
+      } else {
+        pattern.pattern = line.sliced(idx);
+      }
+
+      // qDebug() << "add pattern" << pattern.pattern;
+      list << pattern;
+    }
+  }
+
+  void append(const IgnoreFile &file) { list << file.list; }
+
+  bool matches(const QFileInfo &info) {
+
+    if (info.absoluteFilePath().endsWith("api/node_modules")) {
+      qDebug() << "compare target against" << list.size() << "patterns";
+    }
+
+    for (const auto &pattern : list) {
+      QString compared = pattern.pattern.startsWith('/')
+                             ? info.absoluteFilePath()
+                             : info.fileName();
+
+      if (evaluatePattern(compared, pattern)) {
+
+        // qDebug() << compared << "ignored by" << pattern.pattern;
+        return true;
+      }
+    }
+
+    return false;
+  }
+};
+
 class IndexManager : public QObject {
   Q_OBJECT
 
@@ -60,35 +171,37 @@ class IndexManager : public QObject {
       QString dirPath = dirs.pop();
       QDir dir(dirPath);
       QFileInfo dirInfo(dirPath);
+      QDir parent(dir);
 
-      auto indexed = db->listIndexedDirectory(dirPath);
+      IgnoreFile ignoreFile;
 
-      qDebug() << "indexed entries for" << dirPath << indexed.size();
+      do {
+        QString gitignorePath = parent.absoluteFilePath(".gitignore");
+        QFile gitignore(gitignorePath);
+
+        qDebug() << "assessing presence of ignore" << gitignorePath;
+
+        if (gitignore.exists()) {
+          ignoreFile.append(gitignorePath);
+        }
+
+        parent.cdUp();
+      } while (!parent.isRoot());
+
       for (auto entry : dir.entryList()) {
         if (entry.startsWith('.'))
           continue;
 
-        QString path = dir.path() + QDir::separator() + entry;
+        QString path = dir.absolutePath() + QDir::separator() + entry;
         QFileInfo info(path);
+
+        if (ignoreFile.matches(info)) {
+          // qDebug() << "ignored" << path;
+          continue;
+        }
 
         if (info.isDir())
           dirs.push_back(path);
-
-        std::optional<IndexedEntry> indexedEntry;
-
-        for (const auto &entry : indexed) {
-          if (entry.path == path) {
-            indexedEntry = entry;
-            break;
-          }
-        }
-
-        auto currentLastModified = info.lastModified().toSecsSinceEpoch();
-
-        if (indexedEntry && indexedEntry->mtime == currentLastModified) {
-          qDebug() << "Skipping" << path << "last modified did not change";
-          continue;
-        }
 
         if (info.isFile())
           saveFile(info);
@@ -113,6 +226,7 @@ class IndexManager : public QObject {
                              .mtime = info.lastModified(),
                              .type = type,
                              .parentPath = info.dir().absolutePath()};
+    qDebug() << "indexed" << info.absoluteFilePath();
   }
 
   void flushInserts() {

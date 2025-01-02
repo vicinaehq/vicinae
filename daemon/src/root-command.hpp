@@ -27,6 +27,7 @@
 #include <qmap.h>
 #include <qmimedatabase.h>
 #include <qnamespace.h>
+#include <qthreadpool.h>
 #include <qwidget.h>
 
 struct OpenAppAction : public AbstractAction {
@@ -360,114 +361,116 @@ class RootView : public NavigationListView {
 
 public:
   void onSearchChanged(const QString &s) override {
-    auto start = std::chrono::high_resolution_clock::now();
-    auto fileBrowser = appDb.defaultFileBrowser();
+    QThreadPool::globalInstance()->start([this, s]() {
+      auto start = std::chrono::high_resolution_clock::now();
+      auto fileBrowser = appDb.defaultFileBrowser();
 
-    auto &indexer = service<IndexerService>();
-    auto searchRequest = indexer.search(s);
+      auto &indexer = service<IndexerService>();
+      auto searchRequest = indexer.search(s);
 
-    connect(searchRequest, &SearchRequest::finished, this,
-            [](const QList<FileInfo> &files) {
-              qDebug() << "Search done";
-              for (const auto &file : files) {
-                qDebug() << "file" << file.path;
-              }
-            });
+      connect(searchRequest, &SearchRequest::finished, this,
+              [](const QList<FileInfo> &files) {
+                qDebug() << "Search done";
+                for (const auto &file : files) {
+                  qDebug() << "file" << file.path;
+                }
+              });
 
-    model->beginReset();
+      model->beginReset();
 
-    if (s.size() > 1) {
-      model->beginSection("Calculator");
-      Parser parser;
+      if (s.size() > 1) {
+        model->beginSection("Calculator");
+        Parser parser;
 
-      if (auto result = parser.evaluate(s.toLatin1().data())) {
-        auto value = result.value();
-        auto data = CalculatorItem{
-            .expression = s, .result = value.value, .unit = value.unit};
-        auto item = std::make_shared<CalculatorListItem>(data);
+        if (auto result = parser.evaluate(s.toLatin1().data())) {
+          auto value = result.value();
+          auto data = CalculatorItem{
+              .expression = s, .result = value.value, .unit = value.unit};
+          auto item = std::make_shared<CalculatorListItem>(data);
+
+          model->addItem(item);
+        }
+      }
+
+      if (QColor(s).isValid()) {
+        model->beginSection("Color");
+        auto item = std::make_shared<ColorListItem>(s);
 
         model->addItem(item);
       }
-    }
 
-    if (QColor(s).isValid()) {
-      model->beginSection("Color");
-      auto item = std::make_shared<ColorListItem>(s);
+      model->beginSection("Results");
 
-      model->addItem(item);
-    }
-
-    model->beginSection("Results");
-
-    if (!s.isEmpty()) {
-      for (const auto &link : quicklinkDb.list()) {
-        if (!link->name.contains(s, Qt::CaseInsensitive))
-          continue;
-
-        model->addItem(std::make_shared<QuicklinkRootListItem>(link));
-      }
-    }
-
-    if (!s.isEmpty()) {
-      for (auto &app : appDb.apps) {
-        if (!app->displayable())
-          continue;
-
-        for (const auto &word : app->name.split(" ")) {
-          if (!word.startsWith(s, Qt::CaseInsensitive))
+      if (!s.isEmpty()) {
+        for (const auto &link : quicklinkDb.list()) {
+          if (!link->name.contains(s, Qt::CaseInsensitive))
             continue;
 
-          auto appItem = std::make_shared<AppListItem>(app, appDb);
-
-          model->addItem(appItem);
-          break;
+          model->addItem(std::make_shared<QuicklinkRootListItem>(link));
         }
       }
-    }
 
-    for (const auto &extension : extensionManager.extensions()) {
-      for (const auto &cmd : extension.commands) {
+      if (!s.isEmpty()) {
+        for (auto &app : appDb.apps) {
+          if (!app->displayable())
+            continue;
+
+          for (const auto &word : app->name.split(" ")) {
+            if (!word.startsWith(s, Qt::CaseInsensitive))
+              continue;
+
+            auto appItem = std::make_shared<AppListItem>(app, appDb);
+
+            model->addItem(appItem);
+            break;
+          }
+        }
+      }
+
+      for (const auto &extension : extensionManager.extensions()) {
+        for (const auto &cmd : extension.commands) {
+          if (!cmd.name.contains(s, Qt::CaseInsensitive))
+            continue;
+
+          auto item = std::make_shared<ExtensionListItem>(cmd);
+
+          model->addItem(item);
+        }
+      }
+
+      for (const auto &cmd : builtinCommands) {
         if (!cmd.name.contains(s, Qt::CaseInsensitive))
           continue;
 
-        auto item = std::make_shared<ExtensionListItem>(cmd);
-
-        model->addItem(item);
-      }
-    }
-
-    for (const auto &cmd : builtinCommands) {
-      if (!cmd.name.contains(s, Qt::CaseInsensitive))
-        continue;
-
-      auto item = std::make_shared<BuiltinCommandListItem>(cmd);
-
-      model->addItem(item);
-    }
-
-    if (!s.isEmpty()) {
-      model->beginSection(QString("Use \"%1\" with...").arg(s));
-
-      for (const auto &cmd : fallbackCommands) {
         auto item = std::make_shared<BuiltinCommandListItem>(cmd);
 
         model->addItem(item);
       }
 
-      for (const auto &link : quicklinkDb.list()) {
-        auto item = std::make_shared<FallbackQuicklinkListItem>(link);
+      if (!s.isEmpty()) {
+        model->beginSection(QString("Use \"%1\" with...").arg(s));
 
-        model->addItem(item);
+        for (const auto &cmd : fallbackCommands) {
+          auto item = std::make_shared<BuiltinCommandListItem>(cmd);
+
+          model->addItem(item);
+        }
+
+        for (const auto &link : quicklinkDb.list()) {
+          auto item = std::make_shared<FallbackQuicklinkListItem>(link);
+
+          model->addItem(item);
+        }
       }
-    }
 
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration =
-        std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
-            .count();
-    qDebug() << "root searched in " << duration << "ms";
+      auto end = std::chrono::high_resolution_clock::now();
+      auto duration =
+          std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
+              .count();
+      qDebug() << "root searched in " << duration << "ms";
 
-    model->endReset();
+      model->endReset();
+    });
   }
 
   void loadExtension(Extension::Command command) {
