@@ -3,6 +3,7 @@
 #include "calculator-database.hpp"
 #include "clipboard-service.hpp"
 #include "extension_manager.hpp"
+#include "indexer-service.hpp"
 #include "quicklist-database.hpp"
 #include <jsoncpp/json/value.h>
 #include <qboxlayout.h>
@@ -49,6 +50,7 @@ public:
   std::unique_ptr<AppDatabase> appDb;
   std::unique_ptr<ExtensionManager> extensionManager;
   std::unique_ptr<IconCacheService> iconCache;
+  std::unique_ptr<IndexerService> indexer;
 
   void popToRootView();
   void disconnectView(View &view);

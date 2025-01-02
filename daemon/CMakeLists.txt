@@ -107,6 +107,11 @@ qt_add_executable(${TARGET}
 	#src/render.cpp
 	#src/extension_manager.cpp
 
+	src/filesystem-database.hpp
+	src/files-command.hpp
+	src/indexer-service.hpp
+
+
 	src/ui/status_bar.hpp
 	src/ui/status_bar.cpp
 	src/ui/input_completer.hpp

@@ -72,7 +72,6 @@ class XdgDesktopEntry {
 
 public:
   XdgDesktopEntry(const QString &path) {
-    qDebug() << "Opening " << path;
     QFile file(path);
 
     file.open(QIODevice::ReadOnly);

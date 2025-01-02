@@ -1,32 +1,27 @@
 #pragma once
-#include "ui/custom-list-view.hpp"
 
-class FilesView : public CustomList<int> {
-  ListModel search(const QString &s) override {
-    ListModel model;
+#include "app.hpp"
+#include "indexer-service.hpp"
+#include "navigation-list-view.hpp"
 
-    QDir directory("/home/aurelle");
-    QStringList filesAndDirs =
-        directory.entryList(QDir::NoDotAndDotDot | QDir::AllEntries);
+class FilesView : public NavigationListView {
+  Service<IndexerService> indexer;
 
-    model.searchPlaceholderText = "Search file in home directory";
-
-    for (const QString &entry : filesAndDirs) {
-      ListItemViewModel item;
-      QString fullpath = "/home/aurelle/" + entry;
-
-      item.id = fullpath;
-      item.title = entry;
-      item.icon = ThemeIconModel{.iconName = "folder"};
-
-      model.items.push_back(item);
-    }
-
-    return model;
+public slots:
+  void onFileSearchFinished(const QList<FileInfo> &files) {
+    model->beginReset();
+    qDebug() << "Got" << files.size() << "files";
+    model->endReset();
   }
 
-  void action(const int &action) override { qDebug() << "My wonderful file!"; }
-
 public:
-  FilesView(AppWindow &app) : CustomList(app) {}
+  void onSearchChanged(const QString &s) override {
+    auto request = indexer.search(s);
+
+    connect(request, &SearchRequest::finished, this,
+            [this](auto files) { onFileSearchFinished(files); });
+  }
+
+  FilesView(AppWindow &app)
+      : NavigationListView(app), indexer(service<IndexerService>()) {}
 };

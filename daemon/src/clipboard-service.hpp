@@ -1,3 +1,4 @@
+#pragma once
 #include "common.hpp"
 #include <QClipboard>
 #include <qapplication.h>

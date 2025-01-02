@@ -7,8 +7,8 @@
 #include "calculator.hpp"
 #include "command.hpp"
 #include "extend/extension-command.hpp"
-#include "extend/extension-list-controller.hpp"
 #include "extension_manager.hpp"
+#include "files-command.hpp"
 #include "manage-quicklinks-command.hpp"
 #include "navigation-list-view.hpp"
 #include "omnicast.hpp"
@@ -16,7 +16,6 @@
 #include "ui/action_popover.hpp"
 #include "ui/color_circle.hpp"
 #include "ui/list-view.hpp"
-#include "ui/native-list.hpp"
 #include "ui/test-list.hpp"
 #include <functional>
 #include <memory>
@@ -320,14 +319,14 @@ class RootView : public NavigationListView {
     CalculatorListItem(const CalculatorItem &item) : item(item) {}
   };
 
-  NativeList *list = new NativeList();
-
   QList<BuiltinCommand> builtinCommands{
       {.name = "Search files",
        .iconName = ":assets/icons/files.png",
        .factory =
            [](AppWindow &app, const QString &s) {
-             return new CalculatorHistoryView(app);
+             auto file = new FilesView(app);
+
+             return file;
            }},
       {.name = "Calculator history",
        .iconName = ":assets/icons/calculator.png",
@@ -363,6 +362,17 @@ public:
   void onSearchChanged(const QString &s) override {
     auto start = std::chrono::high_resolution_clock::now();
     auto fileBrowser = appDb.defaultFileBrowser();
+
+    auto &indexer = service<IndexerService>();
+    auto searchRequest = indexer.search(s);
+
+    connect(searchRequest, &SearchRequest::finished, this,
+            [](const QList<FileInfo> &files) {
+              qDebug() << "Search done";
+              for (const auto &file : files) {
+                qDebug() << "file" << file.path;
+              }
+            });
 
     model->beginReset();
 

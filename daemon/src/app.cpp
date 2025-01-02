@@ -1,7 +1,9 @@
 #include "app.hpp"
 #include "command.hpp"
 #include "extension_manager.hpp"
+#include "filesystem-database.hpp"
 #include "image-fetcher.hpp"
+#include "indexer-service.hpp"
 #include "quicklink-seeder.hpp"
 #include "root-command.hpp"
 #include <QLabel>
@@ -225,6 +227,8 @@ AppWindow::AppWindow(QWidget *parent)
   appDb = std::make_unique<AppDatabase>();
   clipboardService = std::make_unique<ClipboardService>();
   iconCache = std::make_unique<IconCacheService>();
+  indexer = std::make_unique<IndexerService>(Config::dirPath() +
+                                             QDir::separator() + "files.db");
 
   connect(actionPopover, &ActionPopover::actionExecuted, this,
           &AppWindow::executeAction);
@@ -272,11 +276,18 @@ AppWindow::AppWindow(QWidget *parent)
   connect(actionPopover, &ActionPopover::actionActivated,
           [this](auto arg) { commandStack.top()->onActionActivated(arg); });
  */
+
+  qDebug() << QDir::homePath();
+  indexer->index(QDir::homePath() + QDir::separator() + "Downloads");
 }
 
 template <>
 Service<QuicklistDatabase> AppWindow::service<QuicklistDatabase>() const {
   return *quicklinkDatabase;
+}
+
+template <> Service<IndexerService> AppWindow::service<IndexerService>() const {
+  return *indexer;
 }
 
 template <>
