@@ -157,10 +157,10 @@ public:
     for (size_t i = 1; i != executable.exec.size(); ++i) {
       auto &part = executable.exec.at(i);
 
-      if (part == "%u") {
+      if (part == "%u" || part == "%f") {
         if (!args.isEmpty())
           argv << args.at(0);
-      } else if (part == "%U")
+      } else if (part == "%U" || part == "%F")
         argv << args;
       else
         argv << part;

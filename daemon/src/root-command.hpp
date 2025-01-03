@@ -245,6 +245,10 @@ class RootView : public NavigationListView {
 
       actions << new OpenAppAction(app, "Open", {});
 
+      for (const auto &desktopAction : app->actions) {
+        actions << new OpenAppAction(desktopAction, desktopAction->name, {});
+      }
+
       if (fileBrowser) {
         actions << new OpenAppAction(fileBrowser, "Open in folder",
                                      {app->path});

@@ -206,6 +206,7 @@ void AppWindow::executeAction(AbstractAction *action) {
 
 void AppWindow::closeWindow(bool withPopToRoot) {
   hide();
+  topBar->input->clear();
 
   if (withPopToRoot)
     popToRootView();
