@@ -54,11 +54,9 @@ class IgnoreFile {
   QList<GitIgnorePattern> list;
 
   bool evaluatePattern(const QString &target, const GitIgnorePattern &ignore) {
-    // qDebug() << "VS" << target;
     size_t cursor = 0;
     auto &pattern = ignore.pattern;
     bool starFlag = false;
-    // qDebug() << target << "VS" << ignore.pattern;
 
     for (const auto &ch : ignore.pattern) {
       if (ch == '*')
@@ -124,7 +122,6 @@ public:
         pattern.pattern = line.sliced(idx);
       }
 
-      // qDebug() << "add pattern" << pattern.pattern;
       list << pattern;
     }
   }
@@ -143,8 +140,6 @@ public:
                              : info.fileName();
 
       if (evaluatePattern(compared, pattern)) {
-
-        // qDebug() << compared << "ignored by" << pattern.pattern;
         return true;
       }
     }
@@ -165,7 +160,7 @@ class IndexManager : public QObject {
   void indexDirectory(const QString &base) {
     QStack<QString> dirs;
 
-    dirs.push_back(base);
+    dirs << base;
 
     while (!dirs.isEmpty()) {
       QString dirPath = dirs.pop();
@@ -175,30 +170,26 @@ class IndexManager : public QObject {
 
       IgnoreFile ignoreFile;
 
-      do {
+      while (!parent.isRoot()) {
         QString gitignorePath = parent.absoluteFilePath(".gitignore");
         QFile gitignore(gitignorePath);
-
-        qDebug() << "assessing presence of ignore" << gitignorePath;
 
         if (gitignore.exists()) {
           ignoreFile.append(gitignorePath);
         }
 
         parent.cdUp();
-      } while (!parent.isRoot());
+      }
 
       for (auto entry : dir.entryList()) {
         if (entry.startsWith('.'))
           continue;
 
-        QString path = dir.absolutePath() + QDir::separator() + entry;
+        QString path = dir.absoluteFilePath(entry);
         QFileInfo info(path);
 
-        if (ignoreFile.matches(info)) {
-          // qDebug() << "ignored" << path;
+        if (ignoreFile.matches(info))
           continue;
-        }
 
         if (info.isDir())
           dirs.push_back(path);
@@ -234,29 +225,6 @@ class IndexManager : public QObject {
     currentBatch.clear();
   }
 
-  void indexFile(const QString &file) {
-    QFileInfo f(file);
-    FileType type;
-
-    if (f.isDir())
-      type = FileType::Directory;
-    else if (f.isFile())
-      type = FileType::RegularFile;
-    else
-      return;
-
-    currentBatch << FileInfo{.name = f.fileName(),
-                             .path = file,
-                             .mtime = f.lastModified(),
-                             .type = type};
-
-    if (currentBatch.size() > 1000) {
-      flushInserts();
-    }
-
-    // qDebug() << "inserted " << file;
-  }
-
 public:
   void indexWork(const QString &path) {
     qDebug() << "index work";
@@ -264,8 +232,6 @@ public:
 
     if (info.isDir()) {
       indexDirectory(path);
-    } else {
-      indexFile(path);
     }
 
     flushInserts();
@@ -302,12 +268,10 @@ public:
   IndexerService(const QString &text) : managerThread(new QThread) {
     QFile file(text);
 
-    /*
-if (file.exists()) {
-  qDebug() << "Removed " << text;
-  file.remove();
-}
-    */
+    if (file.exists()) {
+      qDebug() << "Removed " << text;
+      file.remove();
+    }
 
     manager = new IndexManager(text);
     manager->moveToThread(managerThread);

@@ -18,7 +18,7 @@ INSERT INTO files (name, path, mtime, type, parent_path) VALUES (:name, :path, :
 )";
 
 static const char *searchFileQuery = R"(
-SELECT files.name, files.path, files.is_dir FROM files JOIN fts ON files.id = fts.rowid WHERE fts.name MATCH :query || '*' LIMIT :limit;
+SELECT files.name, files.path, files.type FROM files JOIN fts ON files.id = fts.rowid WHERE fts.name MATCH :query || '*' LIMIT :limit;
 )";
 
 static const char *listDirectoryQuery = R"(
