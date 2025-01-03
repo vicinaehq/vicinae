@@ -34,7 +34,7 @@ class DesktopExecutable {
 public:
   QString id;
   QString name;
-  QString exec;
+  QList<QString> exec;
   virtual QIcon icon() const = 0;
   virtual bool displayable() const = 0;
   virtual bool isTerminalApp() const = 0;
@@ -43,60 +43,11 @@ public:
 
   DesktopExecutable() {}
 
-  DesktopExecutable(const QString &id, const QString &name, const QString &exec)
-      : id(id), name(name), exec(exec) {}
-
-  bool launch(const QList<QString> &args) {
-    /*
-XdgCommandLine::Tokenizer tokenizer(exec);
-QProcess proc;
-std::optional<XdgCommandLine::Token> token;
-
-QStringList cmdArgs;
-size_t expandedCount = 0;
-
-while ((token = tokenizer.next())) {
-if (token->type == XdgCommandLine::TokenType::FieldCode) {
-  if (token->value == 'f' || token->value == 'u' && !args.isEmpty()) {
-    cmdArgs << args.at(0);
-    ++expandedCount;
-  } else if (token->value == 'F' || token->value == 'U') {
-    cmdArgs << args;
-    expandedCount = args.size();
+  DesktopExecutable(const QString &id, const QString &name,
+                    const QList<QString> &exec)
+      : id(id), name(name), exec(exec) {
+    qDebug() << "dexecutable" << exec;
   }
-  continue;
-}
-
-cmdArgs << token->value;
-}
-
-// if some arguments have not been expanded, add them at the end of the
-// command line
-for (size_t i = expandedCount; i < args.size(); ++i) {
-cmdArgs << args.at(i);
-}
-
-QStringList argv;
-
-if (isTerminalApp()) {
-argv << "/bin/alacritty";
-argv << "-e";
-argv << "/bin/sh";
-argv << "-c";
-argv << cmdArgs.join(" ");
-} else {
-argv << cmdArgs;
-}
-
-qDebug() << "Execute" << argv;
-
-return proc.startDetached(argv.at(0), argv.sliced(1));
-  */
-
-    return false;
-  }
-
-  bool launch() { return launch({}); }
 };
 
 class DesktopAction;
@@ -109,8 +60,7 @@ struct DesktopEntry : public DesktopExecutable {
 
   DesktopEntry(const QString &path, const QString &id,
                const XdgDesktopEntry &data)
-      : DesktopExecutable(id, data.name, data.exec.join(' ')), path(path),
-        data(data) {}
+      : DesktopExecutable(id, data.name, data.exec), path(path), data(data) {}
 
   bool isTerminalApp() const override { return data.terminal; }
   const QString &iconName() const override { return data.icon; }
@@ -126,7 +76,7 @@ struct DesktopAction : public DesktopExecutable {
   DesktopAction(const XdgDesktopEntry::Action &action,
                 std::shared_ptr<DesktopEntry> &parent)
       : DesktopExecutable(parent->id + "." + action.id, action.name,
-                          action.exec.join(' ')),
+                          action.exec),
         data(action), parent_(parent), fqn_(parent->name + ": " + name) {}
 
   const QString &iconName() const override {
@@ -159,6 +109,8 @@ public:
     QFileInfo info(path);
     XdgDesktopEntry ent(path);
 
+    qDebug() << "exec" << ent.exec;
+
     auto entry =
         std::make_shared<DesktopEntry>(info.filePath(), info.fileName(), ent);
 
@@ -189,6 +141,41 @@ public:
       return *it;
 
     return nullptr;
+  }
+
+  void launch(const DesktopExecutable &executable) { launch(executable, {}); }
+
+  bool launch(const DesktopExecutable &executable, const QList<QString> &args) {
+    if (executable.exec.isEmpty()) {
+      qDebug() << "Empty Exec line, nothing to launch";
+      return false;
+    }
+
+    auto &program = executable.exec.at(0);
+    QStringList argv;
+
+    for (size_t i = 1; i != executable.exec.size(); ++i) {
+      auto &part = executable.exec.at(i);
+
+      if (part == "%u") {
+        if (!args.isEmpty())
+          argv << args.at(0);
+      } else if (part == "%U")
+        argv << args;
+      else
+        argv << part;
+    }
+
+    QProcess process;
+
+    qDebug() << "launch" << program << argv;
+
+    if (!process.startDetached(program, argv)) {
+      qDebug() << executable.name << "failed to launch";
+      return false;
+    }
+
+    return true;
   }
 
   std::shared_ptr<DesktopExecutable> findBestOpenerForMime(QMimeType mime) {

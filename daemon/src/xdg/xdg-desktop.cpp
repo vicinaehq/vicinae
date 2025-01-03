@@ -343,8 +343,8 @@ XdgDesktopEntry XdgDesktopEntry::Parser::parse() {
   entry.icon = (*it)[QStringLiteral("Icon")];
   entry.hidden = (*it)[QStringLiteral("Hidden")] == "true";
   entry.tryExec = (*it)[QStringLiteral("TryExec")];
-  // parse exec
-  // entry.exec = (*it)[QStringLiteral("Exec")];
+  entry.exec = ExecParser::parse((*it)[QStringLiteral("Exec")]);
+
   entry.path = (*it)[QStringLiteral("Path")];
   entry.terminal = (*it)[QStringLiteral("Terminal")] == "true";
   auto actions = (*it)[QStringLiteral("Actions")].split(';');
@@ -367,7 +367,7 @@ XdgDesktopEntry XdgDesktopEntry::Parser::parse() {
       action.id = parts[2].toString();
       action.name = group[QStringLiteral("Name")];
       action.icon = group[QStringLiteral("Icon")];
-
+      action.exec = ExecParser::parse(group[QStringLiteral("Exec")]);
       entry.actions.push_back(action);
     }
   }

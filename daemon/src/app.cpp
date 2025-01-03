@@ -2,7 +2,6 @@
 #include "block-device-service.hpp"
 #include "command.hpp"
 #include "extension_manager.hpp"
-#include "filesystem-database.hpp"
 #include "image-fetcher.hpp"
 #include "indexer-service.hpp"
 #include "quicklink-seeder.hpp"
@@ -20,11 +19,6 @@
 #include <qobject.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
-
-void AppWindow::popToRoot() {
-  while (commandStack.size() > 1) {
-  }
-}
 
 bool AppWindow::eventFilter(QObject *obj, QEvent *event) {
   if (obj == topBar->input && event->type() == QEvent::KeyPress) {
@@ -112,7 +106,7 @@ void AppWindow::popCurrentView() {
 }
 
 void AppWindow::popToRootView() {
-  while (!navigationStack.empty()) {
+  while (navigationStack.size() > 1) {
     popCurrentView();
   }
 }
@@ -208,6 +202,13 @@ void AppWindow::launchCommand(ViewCommand *cmd) {
 
 void AppWindow::executeAction(AbstractAction *action) {
   action->execute(*this);
+}
+
+void AppWindow::closeWindow(bool withPopToRoot) {
+  hide();
+
+  if (withPopToRoot)
+    popToRootView();
 }
 
 AppWindow::AppWindow(QWidget *parent)

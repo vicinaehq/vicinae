@@ -17,6 +17,7 @@
 #include "ui/color_circle.hpp"
 #include "ui/list-view.hpp"
 #include "ui/test-list.hpp"
+#include "ui/toast.hpp"
 #include <functional>
 #include <memory>
 #include <qcoreevent.h>
@@ -34,7 +35,14 @@ struct OpenAppAction : public AbstractAction {
   std::shared_ptr<DesktopExecutable> application;
   QList<QString> args;
 
-  void execute(AppWindow &app) override { application->launch(args); }
+  void execute(AppWindow &app) override {
+    if (!app.appDb->launch(*application.get(), args)) {
+      app.statusBar->setToast("Failed to start app", ToastPriority::Danger);
+      return;
+    }
+
+    app.closeWindow(true);
+  }
 
   OpenAppAction(const std::shared_ptr<DesktopExecutable> &app,
                 const QString &title, const QList<QString> args)

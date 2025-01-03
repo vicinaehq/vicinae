@@ -223,7 +223,7 @@ class DirectoryIndexerRunnable : public QObject, public QRunnable {
       currentBatch.clear();
     }
 
-    qDebug() << "indexed" << info.absoluteFilePath();
+    // qDebug() << "indexed" << info.absoluteFilePath();
   }
 
 public:

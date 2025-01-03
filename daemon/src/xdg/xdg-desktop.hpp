@@ -2,7 +2,9 @@
 #include <QDebug>
 #include <QString>
 #include <QStringView>
+#include <cctype>
 #include <clocale>
+#include <qcontainerfwd.h>
 #include <qdir.h>
 #include <qhash.h>
 #include <qlocale.h>
@@ -23,6 +25,76 @@ struct Locale {
 };
 
 class XdgDesktopEntry {
+  class ExecParser {
+    enum State {
+      START,
+      WHITESPACE,
+      DQUOTE,
+
+      DQUOTE_ESCAPE,
+    };
+
+  public:
+    static QStringList parse(const QString &key) {
+      QStringList list;
+      size_t start = 0;
+      size_t end = 0;
+      State state = START;
+      QString token;
+
+      while (end < key.size()) {
+        auto ch = key.at(end);
+
+        switch (state) {
+        case START:
+          if (ch == '"') {
+            state = DQUOTE;
+          }
+
+          else if (ch.isSpace()) {
+            list << token;
+            token.clear();
+            state = WHITESPACE;
+          }
+
+          else {
+            token.push_back(ch);
+          }
+
+          break;
+        case WHITESPACE:
+          if (!ch.isSpace()) {
+            --end;
+            start = end + 1;
+            state = START;
+          }
+          break;
+        case DQUOTE:
+          if (ch == '\\') {
+            state = DQUOTE_ESCAPE;
+            ++end;
+          } else if (ch == '"') {
+            state = START;
+          } else {
+            token.push_back(ch);
+          }
+          break;
+        case DQUOTE_ESCAPE:
+          token.push_back(ch);
+          state = DQUOTE;
+          break;
+        }
+
+        ++end;
+      }
+
+      if (!token.isEmpty())
+        list << token;
+
+      return list;
+    }
+  };
+
   class Parser {
     struct Entry {
       QStringView key;

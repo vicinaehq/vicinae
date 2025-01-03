@@ -55,6 +55,7 @@ public:
   void popToRootView();
   void disconnectView(View &view);
   void connectView(View &view);
+  void closeWindow(bool popToRoot = false);
 
   template <typename T> Service<T> service() const;
 
