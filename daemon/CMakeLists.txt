@@ -7,7 +7,7 @@ set(LIBS)
 
 set(TARGET spellcastd)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets Sql Network)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Sql Network Pdf)
 find_package(SQLite3 REQUIRED)
 find_package(cmark REQUIRED)
 
@@ -15,7 +15,7 @@ option(WAYLAND_LAYER_SHELL "Enable support for the Wayland layer shell
 protocol, required for proper window positioning on most wlroots-based
 compositors." OFF)
 
-list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network cmark calc)
+list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Pdf cmark calc)
 
 if (WAYLAND_LAYER_SHELL)
 	find_package(Qt6 REQUIRED COMPONENTS WaylandClient)

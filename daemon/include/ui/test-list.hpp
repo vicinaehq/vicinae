@@ -30,7 +30,10 @@ class VContainer : public QWidget {
 public:
   QVBoxLayout *layout;
 
-  VContainer() : layout(new QVBoxLayout) { setLayout(layout); }
+  VContainer() : layout(new QVBoxLayout) {
+    layout->setContentsMargins(0, 0, 0, 0);
+    setLayout(layout);
+  }
 };
 
 class TestDetailWidget : public QWidget {
@@ -67,10 +70,17 @@ public:
     return nullptr;
   }
   virtual QWidget *createItem() const = 0;
+  virtual QWidget *updateItem() const { return nullptr; };
+
   virtual std::unique_ptr<CompleterData> createCompleter() const {
     return nullptr;
   }
   virtual size_t id() const { return 0; };
+
+  // a unique role that differenciate two different kinds of list widget,
+  // usually rendering a different widget. This determines whether the list
+  // should call update or create a brand new widget on update.
+  virtual size_t role() { return 0; }
 
   virtual QList<AbstractAction *> createActions() const { return {}; }
 

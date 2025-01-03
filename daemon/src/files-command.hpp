@@ -7,6 +7,7 @@
 #include "indexer-service.hpp"
 #include "navigation-list-view.hpp"
 #include "ui/test-list.hpp"
+#include <QtPdf/QPdfDocument>
 #include <qboxlayout.h>
 #include <qfileinfo.h>
 #include <qicon.h>
@@ -25,6 +26,29 @@ class FilesView : public NavigationListView {
     QWidget *createView() const override {
       auto widget = new QWidget();
       auto layout = new QHBoxLayout();
+
+      if (info.fileName().endsWith("pdf")) {
+        auto doc = new QPdfDocument();
+
+        auto err = doc->load(info.absoluteFilePath());
+
+        if (doc->error() != QPdfDocument::Error::None) {
+          qDebug() << "error loading" << info.absoluteFilePath();
+        } else {
+          qDebug() << "load pdf " << info.absoluteFilePath();
+        }
+
+        auto originalSize = doc->pagePointSize(0);
+        auto factor = 500 / originalSize.height();
+        int targetWidth = originalSize.width() * factor;
+
+        auto image = doc->render(0, {targetWidth, 500});
+        auto label = new QLabel();
+
+        label->setPixmap(QPixmap::fromImage(image));
+
+        return label;
+      }
 
       layout->addWidget(ImageViewer::createFromModel(
                             ThemeIconModel{.iconName = iconName}, {128, 128}),
