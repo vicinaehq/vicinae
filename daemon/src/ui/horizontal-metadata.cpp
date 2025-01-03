@@ -9,7 +9,7 @@
 HorizontalMetadata::HorizontalMetadata() : layout(new QVBoxLayout) {
   layout->setAlignment(Qt::AlignTop);
   layout->setContentsMargins(12, 12, 12, 12);
-  layout->setSpacing(12);
+  layout->setSpacing(10);
 
   setLayout(layout);
 }

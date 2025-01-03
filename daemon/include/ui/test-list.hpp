@@ -26,6 +26,13 @@ public:
   virtual MetadataModel createMetadata() const { return {}; }
 };
 
+class VContainer : public QWidget {
+public:
+  QVBoxLayout *layout;
+
+  VContainer() : layout(new QVBoxLayout) { setLayout(layout); }
+};
+
 class TestDetailWidget : public QWidget {
   QVBoxLayout *layout;
   QWidget *view;
@@ -138,6 +145,7 @@ class TestList : public QWidget {
   QHBoxLayout *splitter;
   QHash<QListWidgetItem *, AbstractNativeListItem *> itemMap;
   QListWidget *list;
+  VContainer *detailContainer;
   AbstractTestListModel *model;
 
   void addListItem(AbstractNativeListItem *item) {
@@ -164,10 +172,21 @@ private slots:
     auto item = itemMap.value(next);
 
     if (auto detail = item->createDetail()) {
-      QWidget *old = splitter->itemAt(2)->widget();
+      auto detailWidget = new TestDetailWidget(*detail.get());
 
-      splitter->replaceWidget(old, new TestDetailWidget(*detail.get()));
-      old->deleteLater();
+      if (detailContainer->layout->count() > 0) {
+        QWidget *old = detailContainer->layout->itemAt(0)->widget();
+
+        detailContainer->layout->replaceWidget(old, detailWidget);
+        old->deleteLater();
+      } else {
+        detailContainer->layout->addWidget(detailWidget);
+      }
+
+      auto detailWidth = (width() / 3) * 2;
+      qDebug() << "detail width" << detailWidth;
+      detailContainer->setFixedWidth(detailWidth);
+      detailContainer->show();
     }
 
     emit selectionChanged(*item);
@@ -209,7 +228,7 @@ private slots:
     if (list->count() == 0) {
       QWidget *detail = splitter->itemAt(2)->widget();
 
-      detail->hide();
+      detailContainer->hide();
     }
 
     for (int i = 0; i != list->count(); ++i) {
@@ -235,15 +254,14 @@ public:
   QListWidget *listWidget() { return list; }
 
   TestList()
-      : model(nullptr), splitter(new QHBoxLayout), list(new QListWidget) {
+      : model(nullptr), splitter(new QHBoxLayout), list(new QListWidget),
+        detailContainer(new VContainer) {
     splitter->addWidget(list, 1);
     splitter->addWidget(new VDivider);
+    splitter->addWidget(detailContainer, 2);
 
-    auto fakeDetails = new QWidget();
+    detailContainer->hide();
 
-    fakeDetails->hide();
-
-    splitter->addWidget(fakeDetails, 2);
     splitter->setSpacing(0);
     splitter->setContentsMargins(0, 0, 0, 0);
 
