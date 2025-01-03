@@ -325,7 +325,7 @@ class RootView : public NavigationListView {
        .iconName = ":assets/icons/files.png",
        .factory =
            [](AppWindow &app, const QString &s) {
-             auto file = new FilesView(app);
+             auto file = new FilesView(app, s);
 
              return file;
            }},
@@ -355,7 +355,7 @@ class RootView : public NavigationListView {
        .iconName = ":assets/icons/files.png",
        .factory =
            [](AppWindow &app, const QString &query) {
-             return new CalculatorHistoryView(app);
+             return new FilesView(app, query);
            }},
   };
 

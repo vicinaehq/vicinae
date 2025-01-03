@@ -1,4 +1,5 @@
 #include "app.hpp"
+#include "block-device-service.hpp"
 #include "command.hpp"
 #include "extension_manager.hpp"
 #include "filesystem-database.hpp"
@@ -241,6 +242,14 @@ AppWindow::AppWindow(QWidget *parent)
     if (quicklinkDatabase->list().isEmpty()) {
       seeder->seed();
     }
+  }
+
+  auto blk = std::make_unique<BlockDeviceService>();
+
+  qDebug() << "listing mountpoints";
+
+  for (const auto mnt : blk->deviceMountpoints()) {
+    qDebug() << mnt.devicePath << mnt.mountpointPath;
   }
 
   extensionManager->start();

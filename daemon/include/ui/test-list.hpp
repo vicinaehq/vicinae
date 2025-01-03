@@ -169,6 +169,12 @@ private slots:
       }
     }
 
+    if (list->count() == 0) {
+      QWidget *detail = splitter->itemAt(2)->widget();
+
+      detail->hide();
+    }
+
     for (int i = 0; i != list->count(); ++i) {
       auto item = list->item(i);
 

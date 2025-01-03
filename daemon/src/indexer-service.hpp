@@ -5,6 +5,7 @@
 #include <qdir.h>
 #include <qfileinfo.h>
 #include <qobject.h>
+#include <qrunnable.h>
 #include <qthread.h>
 #include <qthreadpool.h>
 #include <qtmetamacros.h>
@@ -26,11 +27,13 @@ class IndexWriter : public QObject {
   std::unique_ptr<FilesystemDatabase> con;
 
   void writeBatch(const QList<FileInfo> &batch) {
+    qDebug() << "writing...";
     if (!con->insert(batch)) {
       qDebug() << "failed to insert batch";
     } else {
       qDebug() << "inserted" << batch.size();
     }
+    qDebug() << "written...";
   }
 
 public:
@@ -148,19 +151,16 @@ public:
   }
 };
 
-class IndexManager : public QObject {
+class DirectoryIndexerRunnable : public QObject, public QRunnable {
   Q_OBJECT
 
-  std::unique_ptr<FilesystemDatabase> db;
-  QThread *writerThread;
-  IndexWriter *writer;
-
+  QString entrypoint;
   QList<FileInfo> currentBatch;
 
-  void indexDirectory(const QString &base) {
+  void run() override {
     QStack<QString> dirs;
 
-    dirs << base;
+    dirs << entrypoint;
 
     while (!dirs.isEmpty()) {
       QString dirPath = dirs.pop();
@@ -217,24 +217,42 @@ class IndexManager : public QObject {
                              .mtime = info.lastModified(),
                              .type = type,
                              .parentPath = info.dir().absolutePath()};
+
+    if (currentBatch.size() > 1000) {
+      emit batchReady(currentBatch);
+      currentBatch.clear();
+    }
+
     qDebug() << "indexed" << info.absoluteFilePath();
   }
 
-  void flushInserts() {
-    emit writer->requestWrite(currentBatch);
-    currentBatch.clear();
-  }
+public:
+  DirectoryIndexerRunnable(const QString &entrypoint)
+      : entrypoint(entrypoint) {}
+
+signals:
+  void batchReady(const QList<FileInfo> &batch);
+};
+
+class IndexManager : public QObject {
+  Q_OBJECT
+
+  std::unique_ptr<FilesystemDatabase> db;
+  QThread *writerThread;
+  IndexWriter *writer;
+
+  QList<FileInfo> currentBatch;
+
+  void indexDirectory(const QString &base) {}
 
 public:
   void indexWork(const QString &path) {
-    qDebug() << "index work";
-    QFileInfo info(path);
+    auto task = new DirectoryIndexerRunnable(path);
 
-    if (info.isDir()) {
-      indexDirectory(path);
-    }
+    connect(task, &DirectoryIndexerRunnable::batchReady, writer,
+            &IndexWriter::requestWrite);
 
-    flushInserts();
+    QThreadPool::globalInstance()->start(task);
   }
 
   void search(SearchRequest *request) {
