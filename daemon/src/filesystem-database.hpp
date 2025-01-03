@@ -147,6 +147,12 @@ public:
     QSqlQuery query(db);
     QVariantList names, paths, mtimes, types, parentPaths;
 
+    if (!db.transaction()) {
+      qDebug() << "FilesystemDatabase::insert: failed to start transaction"
+               << query.lastError();
+      return false;
+    }
+
     for (const auto &info : batch) {
       names << info.name;
       paths << info.path;
@@ -168,12 +174,18 @@ public:
       qDebug() << "failed to insert" << query.lastError();
     }
 
+    if (!db.commit()) {
+      qDebug() << "FilesystemDatabase::insert: failed to commit transaction"
+               << query.lastError();
+      return false;
+    }
+
     return ok;
   }
 
   void remove(const FileInfo &info) {}
 
-  QList<FileInfo> search(const QString &q, uint limit = 10) {
+  QList<FileInfo> search(const QString &q, uint limit = 30) {
     QList<FileInfo> results;
     QSqlQuery query(db);
 

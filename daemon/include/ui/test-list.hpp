@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common.hpp"
+#include "extend/metadata-model.hpp"
 #include "ui/action_popover.hpp"
 #include "ui/native-list.hpp"
 #include "ui/top_bar.hpp"
@@ -19,9 +20,45 @@
 #include <qwidget.h>
 #include <variant>
 
+class AbstractNativeListItemDetail {
+public:
+  virtual QWidget *createView() const { return nullptr; };
+  virtual MetadataModel createMetadata() const { return {}; }
+};
+
+class TestDetailWidget : public QWidget {
+  QVBoxLayout *layout;
+  QWidget *view;
+  HorizontalMetadata *metadata;
+  HDivider *divider;
+
+public:
+  TestDetailWidget(const AbstractNativeListItemDetail &detail)
+      : layout(new QVBoxLayout), view(detail.createView()),
+        metadata(new HorizontalMetadata()), divider(new HDivider) {
+    layout->addWidget(view, 1);
+    layout->addWidget(divider);
+    layout->addWidget(metadata);
+    layout->setContentsMargins(0, 0, 0, 0);
+
+    view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    metadata->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+    setLayout(layout);
+
+    auto detailMetadata = detail.createMetadata();
+
+    for (const auto &child : detailMetadata.children) {
+      metadata->addItem(child);
+    }
+  }
+};
+
 class AbstractNativeListItem : public QObject {
 public:
-  virtual QWidget *createDetail() const { return nullptr; }
+  virtual std::unique_ptr<AbstractNativeListItemDetail> createDetail() const {
+    return nullptr;
+  }
   virtual QWidget *createItem() const = 0;
   virtual std::unique_ptr<CompleterData> createCompleter() const {
     return nullptr;
@@ -129,7 +166,7 @@ private slots:
     if (auto detail = item->createDetail()) {
       QWidget *old = splitter->itemAt(2)->widget();
 
-      splitter->replaceWidget(old, detail);
+      splitter->replaceWidget(old, new TestDetailWidget(*detail.get()));
       old->deleteLater();
     }
 

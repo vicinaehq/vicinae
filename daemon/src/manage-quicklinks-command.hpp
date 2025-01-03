@@ -3,6 +3,7 @@
 #include "navigation-list-view.hpp"
 #include "quicklist-database.hpp"
 #include "ui/action_popover.hpp"
+#include "ui/list-view.hpp"
 #include "ui/test-list.hpp"
 #include "ui/toast.hpp"
 #include <memory>
@@ -84,7 +85,9 @@ public:
     });
   }
 
-  QWidget *createDetail() const override { return new QLabel(link->name); }
+  std::unique_ptr<AbstractNativeListItemDetail> createDetail() const override {
+    return nullptr;
+  }
 
   size_t id() const override { return qHash(link->id); }
 
