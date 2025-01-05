@@ -1,88 +1,74 @@
 #pragma once
 #include "app.hpp"
 #include "calculator-database.hpp"
+#include "navigation-list-view.hpp"
 #include "ui/action_popover.hpp"
-#include "ui/native-list.hpp"
-#include "ui/toast.hpp"
-#include "view.hpp"
+#include "ui/calculator-list-item-widget.hpp"
 #include <qnamespace.h>
-#include <variant>
+#include <qthreadpool.h>
 
-struct CalculatorCopyResultAction {
-  QString result;
-};
-
-using HistoryAction = std::variant<CalculatorCopyResultAction>;
-
-struct HistoryRow {
-  QString expression;
-  QString result;
-};
-
-class CalculatorHistoryView : public View,
-                              public TypedNativeListDelegate<CalculatorEntry> {
-  AppWindow &app;
-  NativeList *list;
-  TypedNativeListModel<CalculatorEntry> *model;
+class CalculatorHistoryView : public NavigationListView {
   QList<CalculatorEntry> entries;
-  Service<ClipboardService> clipboardService;
   Service<CalculatorDatabase> calculatorDb;
 
-  QWidget *createItemFromVariant(const CalculatorEntry &variant) override {
-    return new ListItemWidget(
-        ImageViewer::createFromModel(
-            ThemeIconModel{.iconName = "pcbcalculator"}, {25, 25}),
-        variant.result, "", "Entry");
-  }
+  class CalculatorHistoryListItem : public AbstractNativeListItem {
+    CalculatorEntry entry;
 
-  void copyResult(QString result) {
-    qDebug() << "copy result";
-    clipboardService.copyText(result);
-    app.statusBar->setToast("Copied");
-  }
-
-  void copyExpression(QString expression) {
-    qDebug() << "copy expression";
-    clipboardService.copyText(expression);
-    app.statusBar->setToast("Copied");
-  }
-
-  void removeEntry(int id) {
-    auto removed = calculatorDb.removeById(id);
-
-    if (!removed) {
-      app.statusBar->setToast("Failed to remove entry", ToastPriority::Danger);
-    } else {
-      app.statusBar->setToast("Entry removed");
-      model->removeItemIf([id](const QVariant &variant) {
-        return id == variant.value<CalculatorEntry>().id;
-      });
-      entries.removeIf([id](auto &item) { return item.id == id; });
+  public:
+    QWidget *createItem() const override {
+      return new ListItemWidget(
+          ImageViewer::createFromModel(
+              ThemeIconModel{.iconName = "pcbcalculator"}, {25, 25}),
+          entry.expression, "", entry.result);
     }
-  }
 
-  void variantSelectionChanged(const CalculatorEntry &variant) override {
-    ActionData copyResultAction{
-        .title = "Copy result",
-        .icon = ThemeIconModel{.iconName = "pcbcalculator"},
-        .execute = std::bind(&CalculatorHistoryView::copyResult, this,
-                             variant.result)};
-    ActionData copyExpression{
-        .title = "Copy expression",
-        .icon = ThemeIconModel{.iconName = "pcbcalculator"},
-        .execute = std::bind(&CalculatorHistoryView::copyResult, this,
-                             variant.result)};
-    ActionData removeEntry{
-        .title = "Remove entry",
-        .icon = ThemeIconModel{.iconName = "pcbcalculator"},
-        .execute =
-            std::bind(&CalculatorHistoryView::removeEntry, this, variant.id)};
+    QList<AbstractAction *> createActions() const override {
+      return {new CopyTextAction("Copy result", entry.result),
+              new CopyTextAction("Copy expression", entry.expression)};
+    }
 
-    setActions({copyResultAction, copyExpression, removeEntry});
-  }
+    CalculatorHistoryListItem(const CalculatorEntry &entry) : entry(entry) {}
+  };
+
+  class CalculatorListItem : public AbstractNativeListItem {
+    CalculatorItem item;
+
+    QWidget *createItem() const override {
+      return new CalculatorListItemWidget(item);
+    }
+
+    QList<AbstractAction *> createActions() const override {
+      QString sresult = QString::number(item.result);
+
+      return {
+          new CopyCalculatorResultAction(item, "Copy result", sresult),
+          new CopyCalculatorResultAction(
+              item, "Copy expression",
+              QString("%1 = %2").arg(item.expression).arg(sresult)),
+      };
+    }
+
+  public:
+    CalculatorListItem(const CalculatorItem &item) : item(item) {}
+  };
 
   void onSearchChanged(const QString &s) override {
     model->beginReset();
+
+    if (s.size() > 1) {
+      model->beginSection("Calculator");
+      Parser parser;
+
+      if (auto result = parser.evaluate(s.toLatin1().data())) {
+        auto value = result.value();
+        auto data = CalculatorItem{
+            .expression = s, .result = value.value, .unit = value.unit};
+        auto item = std::make_shared<CalculatorListItem>(data);
+
+        model->addItem(item);
+      }
+    }
+
     model->beginSection("History");
 
     for (const auto &entry : entries) {
@@ -91,26 +77,19 @@ class CalculatorHistoryView : public View,
         continue;
       }
 
-      model->addItem(entry);
+      model->addItem(std::make_shared<CalculatorHistoryListItem>(entry));
     }
     model->endReset();
   }
 
   void onMount() override {
-    setSearchPlaceholderText("Browse calculator history...");
+    setSearchPlaceholderText(
+        "Do maths, convert units or search past calculations...");
   }
 
 public:
   CalculatorHistoryView(AppWindow &app)
-      : View(app), app(app), list(new NativeList),
-        clipboardService(service<ClipboardService>()),
-        calculatorDb(service<CalculatorDatabase>()),
-        model(new TypedNativeListModel<CalculatorEntry>()) {
-    list->setItemDelegate(this);
-    list->setModel(model);
-
-    entries = app.calculatorDatabase->list();
-    qDebug() << "listed " << entries.size();
-    widget = list;
+      : NavigationListView(app), calculatorDb(service<CalculatorDatabase>()) {
+    entries = calculatorDb.list();
   }
 };

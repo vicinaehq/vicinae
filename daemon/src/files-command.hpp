@@ -154,15 +154,8 @@ public:
             [this](auto files) { onFileSearchFinished(files); });
   }
 
-  void onMount() override {
-    if (!baseQuery.isEmpty()) {
-      app.topBar->input->setText(baseQuery);
-    }
-  }
+  void onMount() override {}
 
-  FilesView(AppWindow &app, const QString &text)
-      : NavigationListView(app), app(app), indexer(service<IndexerService>()),
-        baseQuery(text) {
-    qDebug() << "hello text" << text;
-  }
+  FilesView(AppWindow &app)
+      : NavigationListView(app), app(app), indexer(service<IndexerService>()) {}
 };

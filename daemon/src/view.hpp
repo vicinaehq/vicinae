@@ -113,9 +113,10 @@ public slots:
   virtual void onActionActivated(ActionModel model) {}
 
 signals:
-  void launchCommand(ViewCommand *command);
+  void launchCommand(ViewCommand *command,
+                     const LaunchCommandOptions &opts = {});
   void activatePrimaryAction();
-  void pushView(View *view);
+  void pushView(View *view, const PushViewOptions &options = {});
   void pop();
   void popToRoot();
 };

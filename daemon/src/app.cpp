@@ -61,6 +61,19 @@ bool AppWindow::eventFilter(QObject *obj, QEvent *event) {
 }
 
 void AppWindow::popCurrentView() {
+  if (commandStack.isEmpty()) {
+    qDebug() << "AppWindow::popCurrentView: commandStack is empty";
+    return;
+  }
+
+  auto &activeCommand = commandStack.top();
+
+  if (activeCommand.viewStack.isEmpty()) {
+    qDebug()
+        << "AppWindow::popCurrentView: active command has an empty view stack";
+    return;
+  }
+
   if (navigationStack.size() == 1) {
     qDebug() << "Attempted to pop root search";
     return;
@@ -84,7 +97,7 @@ void AppWindow::popCurrentView() {
   previous.view->deleteLater();
 
   qDebug() << "restore action model and delegate";
-  actionPopover->setActionData(next.actions);
+  actionPopover->setSignalActions(next.actions);
   topBar->destroyQuicklinkCompleter();
   topBar->input->setReadOnly(false);
   topBar->input->show();
@@ -95,12 +108,18 @@ void AppWindow::popCurrentView() {
   topBar->input->selectAll();
 
   if (navigationStack.size() == 1) {
-    if (currentCommand) {
-      currentCommand->unload(*this);
-      currentCommand->deleteLater();
-      currentCommand = nullptr;
-    }
     topBar->hideBackButton();
+  }
+
+  qDebug() << "view stack size" << activeCommand.viewStack.size();
+
+  if (activeCommand.viewStack.size() == 1) {
+    activeCommand.command->unload(*this);
+    activeCommand.command->deleteLater();
+    commandStack.pop();
+    qDebug() << "popping cmd stack now" << commandStack.size();
+  } else {
+    activeCommand.viewStack.pop();
   }
 
   emit currentViewPoped();
@@ -148,7 +167,14 @@ void AppWindow::connectView(View &view) {
   topBar->input->installEventFilter(&view);
 }
 
-void AppWindow::pushView(View *view) {
+void AppWindow::pushView(View *view, const PushViewOptions &opts) {
+  if (commandStack.empty()) {
+    qDebug() << "AppWindow::pushView called with empty command stack";
+    return;
+  }
+
+  auto &currentCommand = commandStack.top();
+
   if (navigationStack.size() > 0) {
     auto &old = navigationStack.top();
 
@@ -166,7 +192,7 @@ void AppWindow::pushView(View *view) {
 
     cur.query = topBar->input->text();
     cur.placeholderText = topBar->input->placeholderText();
-    cur.actions = actionPopover->actions();
+    cur.actions = actionPopover->signalActions;
 
     layout->replaceWidget(cur.view->widget, view->widget);
     cur.view->widget->setParent(nullptr);
@@ -175,27 +201,26 @@ void AppWindow::pushView(View *view) {
 
   connectView(*view);
 
+  actionPopover->setSignalActions({});
+  currentCommand.viewStack.push({.view = view});
   navigationStack.push({.view = view});
 
   topBar->input->setReadOnly(false);
   topBar->input->show();
   topBar->input->setFocus();
-  topBar->input->clear();
+  topBar->input->setText(opts.searchQuery);
+  emit topBar->input->textChanged(opts.searchQuery);
   view->onMount();
 }
 
-void AppWindow::launchCommand(ViewCommand *cmd) {
-  if (currentCommand) {
-    currentCommand->unload(*this);
-    currentCommand->deleteLater();
-  }
-
-  currentCommand = cmd;
+void AppWindow::launchCommand(ViewCommand *cmd,
+                              const LaunchCommandOptions &opts) {
+  commandStack.push({.command = cmd});
 
   auto view = cmd->load(*this);
 
   if (view) {
-    pushView(view);
+    pushView(view, {.searchQuery = opts.searchQuery});
   }
 }
 

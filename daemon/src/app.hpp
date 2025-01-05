@@ -7,10 +7,12 @@
 #include "quicklist-database.hpp"
 #include <jsoncpp/json/value.h>
 #include <qboxlayout.h>
+#include <qhash.h>
 #include <stack>
 
 #include "icon-cache-service.hpp"
 #include "ui/action_popover.hpp"
+#include "ui/calculator-list-item-widget.hpp"
 #include "ui/status_bar.hpp"
 #include "ui/top_bar.hpp"
 
@@ -29,20 +31,30 @@ struct ViewSnapshot {
   View *view;
   QString query;
   QString placeholderText;
-  QList<ActionData> actions;
-  AbstractActionItemDelegate *actionDelegate;
-  NewActionPannelModel *actionModel;
+  QList<AbstractAction *> actions;
+};
+
+struct CommandSnapshot {
+  QStack<ViewSnapshot> viewStack;
+  ViewCommand *command;
+};
+
+struct LaunchCommandOptions {
+  QString searchQuery;
+};
+
+struct PushViewOptions {
+  QString searchQuery;
 };
 
 class AppWindow : public QMainWindow {
   Q_OBJECT
 
 public:
-  std::stack<CommandObject *> commandStack;
   std::stack<QString> queryStack;
 
   std::stack<ViewSnapshot> navigationStack;
-  ViewCommand *currentCommand = nullptr;
+  QStack<CommandSnapshot> commandStack;
 
   std::unique_ptr<QuicklistDatabase> quicklinkDatabase;
   std::unique_ptr<CalculatorDatabase> calculatorDatabase;
@@ -67,13 +79,13 @@ public:
 
   void popToRoot();
 
-  void launchCommand(ViewCommand *cmd);
+  void launchCommand(ViewCommand *cmd, const LaunchCommandOptions &opts = {});
 
   AppWindow(QWidget *parent = 0);
   bool eventFilter(QObject *obj, QEvent *event) override;
 
 public slots:
-  void pushView(View *view);
+  void pushView(View *view, const PushViewOptions &opts = {});
   void popCurrentView();
   void executeAction(AbstractAction *action);
 
@@ -113,4 +125,19 @@ public:
   CopyTextAction(const QString &title, const QString &text)
       : AbstractAction(title, ThemeIconModel{.iconName = "clipboard"}),
         text(text) {}
+};
+
+class CopyCalculatorResultAction : public CopyTextAction {
+  CalculatorItem item;
+
+public:
+  void execute(AppWindow &app) override {
+    app.calculatorDatabase->saveComputation(item.expression,
+                                            QString::number(item.result));
+    CopyTextAction::execute(app);
+  }
+
+  CopyCalculatorResultAction(const CalculatorItem &item, const QString &title,
+                             const QString &copyText)
+      : CopyTextAction(title, copyText), item(item) {}
 };

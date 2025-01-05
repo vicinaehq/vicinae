@@ -118,30 +118,6 @@ public:
   }
 };
 
-class AbstractActionItemDelegate {
-public:
-  virtual ActionModel present(const QVariant &data) = 0;
-  virtual KeyboardShortcutModel primaryActionShortcut() {
-    return KeyboardShortcutModel{
-        .key = "return",
-    };
-  }
-  virtual KeyboardShortcutModel secondaryActionShortcut() {
-    return KeyboardShortcutModel{.key = "return", .modifiers = {"ctrl"}};
-  }
-  virtual void activate(const QVariant &data) {};
-};
-
-template <class T>
-class TypedActionDelegate : public AbstractActionItemDelegate {
-  ActionModel present(const QVariant &data) override {}
-
-  void activate(const QVariant &data) override {}
-
-public:
-  TypedActionDelegate() {}
-};
-
 enum ActionAfterActivateBehavior {
   ActionAfterActivateClose,
   ActionAfterActivateReset,
@@ -169,7 +145,6 @@ class ActionPopover : public QWidget {
   Q_OBJECT
 
   NewActionPannelModel *m_model;
-  AbstractActionItemDelegate *m_delegate;
 
   QList<ShownActionItem> shownActionItems;
   QList<std::shared_ptr<IAction>> _currentActions;
@@ -181,8 +156,6 @@ class ActionPopover : public QWidget {
 
   QStack<QList<ActionPannelItem>> menuStack;
 
-  QList<AbstractAction *> signalActions;
-
   void paintEvent(QPaintEvent *event) override;
   bool eventFilter(QObject *obj, QEvent *event) override;
 
@@ -192,35 +165,14 @@ private slots:
   void filterActions(const QString &text);
   void itemActivated(QListWidgetItem *item);
 
-  void modelItemsChanged(const QList<QVariant> &items) {
-    QList<ActionPannelItem> finalItems;
-    size_t index = 0;
-
-    shownActionItems.clear();
-
-    for (const auto &item : items) {
-      auto presentation = m_delegate->present(item);
-
-      switch (finalItems.size()) {
-      case 0:
-        presentation.shortcut = m_delegate->primaryActionShortcut();
-        break;
-      case 1:
-        presentation.shortcut = m_delegate->secondaryActionShortcut();
-        break;
-      }
-
-      shownActionItems.push_back({.data = item, .presentation = presentation});
-      finalItems.push_back(presentation);
-    }
-  }
-
 signals:
   void actionActivated(std::shared_ptr<IAction> action);
   void actionPressed(ActionModel model);
   void actionExecuted(AbstractAction *action);
 
 public:
+  QList<AbstractAction *> signalActions;
+
   bool findBoundAction(QKeyEvent *event) {
     for (auto action : signalActions) {
       if (!action->shortcut)
@@ -234,19 +186,7 @@ public:
     return false;
   }
 
-  AbstractActionItemDelegate *delegate() const { return m_delegate; }
-
   NewActionPannelModel *model() const { return m_model; }
-
-  void setDelegate(AbstractActionItemDelegate *delegate) {
-    this->m_delegate = delegate;
-  }
-
-  void setModel(NewActionPannelModel *model) {
-    this->m_model = model;
-    connect(this->m_model, &NewActionPannelModel::itemsChanged, this,
-            &ActionPopover::modelItemsChanged);
-  }
 
   QList<ActionPannelItem> currentActions() const;
   QList<ActionData> actions() const { return actionData; }

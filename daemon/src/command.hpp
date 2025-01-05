@@ -28,3 +28,9 @@ public:
 class HeadlessCommand : public Command {
   virtual void load() = 0;
 };
+
+template <typename T> class SingleViewCommand : public ViewCommand {
+  View *load(AppWindow &app) override { return new T(app); }
+
+  void unload(AppWindow &) override { qDebug() << "Command unloaded"; }
+};

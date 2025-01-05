@@ -14,9 +14,11 @@
 #include "omnicast.hpp"
 #include "quicklist-database.hpp"
 #include "ui/action_popover.hpp"
+#include "ui/calculator-list-item-widget.hpp"
 #include "ui/color_circle.hpp"
 #include "ui/list-view.hpp"
 #include "ui/test-list.hpp"
+#include "ui/toast.hpp"
 #include <QtConcurrent/QtConcurrent>
 #include <functional>
 #include <memory>
@@ -36,7 +38,7 @@
 struct BuiltinCommand {
   QString name;
   QString iconName;
-  std::function<View *(AppWindow &app, const QString &)> factory;
+  std::function<ViewCommand *(AppWindow &app, const QString &)> factory;
 };
 
 struct OpenBuiltinCommandAction : public AbstractAction {
@@ -44,7 +46,7 @@ struct OpenBuiltinCommandAction : public AbstractAction {
   QString text;
 
   void execute(AppWindow &app) override {
-    emit app.pushView(cmd.factory(app, text));
+    emit app.launchCommand(cmd.factory(app, text), {.searchQuery = text});
   }
 
   OpenBuiltinCommandAction(const BuiltinCommand &cmd,
@@ -62,7 +64,7 @@ struct OpenCommandAction : public AbstractAction {
   QString arg;
 
   void execute(AppWindow &app) override {
-    emit app.launchCommand(factory(app, arg));
+    app.launchCommand(factory(app, arg), {});
   }
 
   OpenCommandAction(CommandFactory factory, const QString &title,
@@ -71,10 +73,54 @@ struct OpenCommandAction : public AbstractAction {
         factory(factory), arg(arg) {}
 };
 
-struct CalculatorItem {
-  QString expression;
-  double result;
-  std::optional<Unit> unit;
+struct OpenQuicklinkAction : public AbstractAction {
+  std::shared_ptr<Quicklink> link;
+  QList<QString> args;
+
+  void execute(AppWindow &app) override {
+    auto linkApp = app.appDb->getById(link->app);
+
+    if (!linkApp) {
+      app.statusBar->setToast("No app with id " + link->app,
+                              ToastPriority::Danger);
+      return;
+    }
+
+    QString url = link->url;
+
+    for (const auto &arg : args)
+      url = url.arg(arg);
+
+    if (!app.appDb->launch(*linkApp.get(), {url})) {
+      app.statusBar->setToast("Failed to launch app", ToastPriority::Danger);
+      return;
+    }
+
+    app.closeWindow(true);
+  }
+
+  void setArgs(const QList<QString> &args) { this->args = args; }
+
+  OpenQuicklinkAction(const std::shared_ptr<Quicklink> &link,
+                      const QList<QString> &args = {})
+      : AbstractAction("Open link"), link(link), args(args) {}
+};
+
+struct OpenCompletedQuicklinkAction : public OpenQuicklinkAction {
+  void execute(AppWindow &app) {
+    if (!app.topBar->quickInput) {
+      app.statusBar->setToast("No completer is available",
+                              ToastPriority::Danger);
+      return;
+    }
+
+    setArgs(app.topBar->quickInput->collectArgs());
+    OpenQuicklinkAction::execute(app);
+  }
+
+  OpenCompletedQuicklinkAction(const std::shared_ptr<Quicklink> &link,
+                               const QList<QString> &args = {})
+      : OpenQuicklinkAction(link) {}
 };
 
 class ColorListItem : public AbstractNativeListItem {
@@ -121,26 +167,11 @@ public:
       : cmd(cmd), text(text) {}
 };
 
-class CopyCalculatorResultAction : public CopyTextAction {
-  CalculatorItem item;
-
-public:
-  void execute(AppWindow &app) override {
-    app.calculatorDatabase->saveComputation(item.expression,
-                                            QString::number(item.result));
-    CopyTextAction::execute(app);
-  }
-
-  CopyCalculatorResultAction(const CalculatorItem &item, const QString &title,
-                             const QString &copyText)
-      : CopyTextAction(title, copyText), item(item) {}
-};
-
 static BuiltinCommand calculatorHistoryCommand{
     .name = "Calculator history",
     .iconName = ":assets/icons/calculator.png",
     .factory = [](AppWindow &app, const QString &s) {
-      return new CalculatorHistoryView(app);
+      return new SingleViewCommand<CalculatorHistoryView>;
     }};
 
 class RootView : public NavigationListView {
@@ -148,8 +179,6 @@ class RootView : public NavigationListView {
   Service<AppDatabase> appDb;
   Service<ExtensionManager> extensionManager;
   Service<QuicklistDatabase> quicklinkDb;
-  QHash<QString, std::variant<Extension::Command>> itemMap;
-  QMimeDatabase mimeDb;
 
   class FallbackCommandListItem : public AbstractNativeListItem {
   public:
@@ -173,29 +202,35 @@ class RootView : public NavigationListView {
                         .model = ThemeIconModel{.iconName = link->iconName}});
     }
 
-    QList<AbstractAction *> createActions() const override { return {}; }
+    QList<AbstractAction *> createActions() const override {
+      return {new OpenCompletedQuicklinkAction(link)};
+    }
 
   public:
     QuicklinkRootListItem(const std::shared_ptr<Quicklink> &link)
         : link(link) {}
   };
 
-  class FallbackQuicklinkListItem : public FallbackCommandListItem {
-    std::unique_ptr<QuicklinkRootListItem> quicklink;
-
-    QList<AbstractAction *> createActions() const override {
-      QList<AbstractAction *> actions{};
-
-      actions << quicklink->createActions();
-
-      return actions;
-    }
-
-    QWidget *createItem() const override { return quicklink->createItem(); }
+  class FallbackQuicklinkListItem : public AbstractNativeListItem {
+    std::shared_ptr<Quicklink> link;
+    QString query;
 
   public:
-    FallbackQuicklinkListItem(const std::shared_ptr<Quicklink> &link)
-        : quicklink(std::make_unique<QuicklinkRootListItem>(link)) {}
+    QWidget *createItem() const override {
+      return new ListItemWidget(
+          ImageViewer::createFromModel(
+              ThemeIconModel{.iconName = link->iconName}, {25, 25}),
+          link->name, "", "Quicklink");
+    }
+
+    QList<AbstractAction *> createActions() const override {
+      return {new OpenQuicklinkAction(link, {query})};
+    }
+
+  public:
+    FallbackQuicklinkListItem(const std::shared_ptr<Quicklink> &link,
+                              const QString &fallbackQuery)
+        : link(link), query(fallbackQuery) {}
   };
 
   class AppListItem : public AbstractNativeListItem {
@@ -270,20 +305,7 @@ class RootView : public NavigationListView {
     CalculatorItem item;
 
     QWidget *createItem() const override {
-      auto exprLabel = new QLabel(item.expression);
-
-      exprLabel->setProperty("class", "transform-left");
-
-      auto answerLabel = new QLabel(QString::number(item.result));
-      answerLabel->setProperty("class", "transform-left");
-
-      auto left = new VStack(exprLabel, new Chip("Expression"));
-      auto right =
-          new VStack(answerLabel,
-                     new Chip(item.unit ? QString(item.unit->displayName.data())
-                                        : "Answer"));
-
-      return new TransformResult(left, right);
+      return new CalculatorListItemWidget(item);
     }
 
     QList<AbstractAction *> createActions() const override {
@@ -295,7 +317,7 @@ class RootView : public NavigationListView {
               item, "Copy expression",
               QString("%1 = %2").arg(item.expression).arg(sresult)),
           new OpenBuiltinCommandAction(calculatorHistoryCommand,
-                                       "Open history"),
+                                       "Open in history", item.expression),
       };
     }
 
@@ -308,7 +330,7 @@ class RootView : public NavigationListView {
        .iconName = ":assets/icons/files.png",
        .factory =
            [](AppWindow &app, const QString &s) {
-             auto file = new FilesView(app, s);
+             auto file = new SingleViewCommand<FilesView>;
 
              return file;
            }},
@@ -316,19 +338,19 @@ class RootView : public NavigationListView {
        .iconName = ":assets/icons/calculator.png",
        .factory =
            [](AppWindow &app, const QString &s) {
-             return new CalculatorHistoryView(app);
+             return new SingleViewCommand<CalculatorHistoryView>;
            }},
       {.name = "Manage quicklinks",
        .iconName = ":assets/icons/quicklink.png",
        .factory =
            [](AppWindow &app, const QString &s) {
-             return new ManageQuicklinksView(app);
+             return new SingleViewCommand<ManageQuicklinksView>;
            }},
       {.name = "Create quicklink",
        .iconName = ":assets/icons/quicklink.png",
        .factory =
            [](AppWindow &app, const QString &s) {
-             return new CalculatorHistoryView(app);
+             return new SingleViewCommand<CalculatorHistoryView>;
            }},
 
   };
@@ -338,7 +360,7 @@ class RootView : public NavigationListView {
        .iconName = ":assets/icons/files.png",
        .factory =
            [](AppWindow &app, const QString &query) {
-             return new FilesView(app, query);
+             return new SingleViewCommand<FilesView>();
            }},
   };
 
@@ -354,17 +376,6 @@ public:
     auto future = QtConcurrent::run([this, s]() {
       auto start = std::chrono::high_resolution_clock::now();
       auto fileBrowser = appDb.defaultFileBrowser();
-
-      auto &indexer = service<IndexerService>();
-      auto searchRequest = indexer.search(s);
-
-      connect(searchRequest, &SearchRequest::finished, this,
-              [](const QList<FileInfo> &files) {
-                qDebug() << "Search done";
-                for (const auto &file : files) {
-                  qDebug() << "file" << file.path;
-                }
-              });
 
       model->beginReset();
 
@@ -393,7 +404,7 @@ public:
 
       if (!s.isEmpty()) {
         for (const auto &link : quicklinkDb.list()) {
-          if (!link->name.contains(s, Qt::CaseInsensitive))
+          if (!link->name.startsWith(s, Qt::CaseInsensitive))
             continue;
 
           model->addItem(std::make_shared<QuicklinkRootListItem>(link));
@@ -447,7 +458,7 @@ public:
         }
 
         for (const auto &link : quicklinkDb.list()) {
-          auto item = std::make_shared<FallbackQuicklinkListItem>(link);
+          auto item = std::make_shared<FallbackQuicklinkListItem>(link, s);
 
           model->addItem(item);
         }
@@ -463,11 +474,6 @@ public:
     });
 
     searchFutureWatcher.setFuture(future);
-  }
-
-  void loadExtension(Extension::Command command) {
-    emit launchCommand(
-        new ExtensionCommand(app, command.extensionId, command.name));
   }
 
   void onMount() override {

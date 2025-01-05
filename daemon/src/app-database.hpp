@@ -214,19 +214,32 @@ public:
   }
 
   QList<std::shared_ptr<DesktopExecutable>>
-  findMimeOpeners(const QString &mime) {
+  findMimeOpeners(const QString &mimeName) {
     QList<std::shared_ptr<DesktopExecutable>> apps;
-    auto defaultApp = defaultForMime(mime);
+    QSet<QString> seen;
+    QList<QString> mimes = {mimeName};
+    auto mime = mimeDb.mimeTypeForName(mimeName);
 
-    if (defaultApp)
-      apps << defaultApp;
+    mimes << mime.parentMimeTypes();
 
-    if (auto it = mimeToApps.find(mime); it != mimeToApps.end()) {
-      for (const auto id : *it) {
-        if (defaultApp && defaultApp->id == id)
-          continue;
-        if (auto app = getById(id))
-          apps << app;
+    for (const auto &name : mime.parentMimeTypes()) {
+      qDebug() << "for mime name" << name;
+      auto defaultApp = defaultForMime(name);
+
+      if (defaultApp && !seen.contains(defaultApp->id)) {
+        apps << defaultApp;
+        seen.insert(defaultApp->id);
+      }
+
+      if (auto it = mimeToApps.find(name); it != mimeToApps.end()) {
+        for (const auto id : *it) {
+          if (seen.contains(id))
+            continue;
+          if (auto app = getById(id)) {
+            apps << app;
+            seen.insert(id);
+          }
+        }
       }
     }
 
