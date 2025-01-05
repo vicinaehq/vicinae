@@ -17,10 +17,12 @@
 #include "ui/color_circle.hpp"
 #include "ui/list-view.hpp"
 #include "ui/test-list.hpp"
-#include "ui/toast.hpp"
+#include <QtConcurrent/QtConcurrent>
 #include <functional>
 #include <memory>
 #include <qcoreevent.h>
+#include <qfuture.h>
+#include <qfuturewatcher.h>
 #include <qhash.h>
 #include <qlabel.h>
 #include <qlist.h>
@@ -30,25 +32,6 @@
 #include <qnamespace.h>
 #include <qthreadpool.h>
 #include <qwidget.h>
-
-struct OpenAppAction : public AbstractAction {
-  std::shared_ptr<DesktopExecutable> application;
-  QList<QString> args;
-
-  void execute(AppWindow &app) override {
-    if (!app.appDb->launch(*application.get(), args)) {
-      app.statusBar->setToast("Failed to start app", ToastPriority::Danger);
-      return;
-    }
-
-    app.closeWindow(true);
-  }
-
-  OpenAppAction(const std::shared_ptr<DesktopExecutable> &app,
-                const QString &title, const QList<QString> args)
-      : AbstractAction(title, ThemeIconModel{.iconName = app->iconName()}),
-        application(app), args(args) {}
-};
 
 struct BuiltinCommand {
   QString name;
@@ -120,6 +103,7 @@ public:
 
 class BuiltinCommandListItem : public AbstractNativeListItem {
   BuiltinCommand cmd;
+  QString text;
 
   QWidget *createItem() const override {
     return new ListItemWidget(
@@ -129,25 +113,12 @@ class BuiltinCommandListItem : public AbstractNativeListItem {
   }
 
   QList<AbstractAction *> createActions() const override {
-    return {new OpenBuiltinCommandAction(cmd)};
+    return {new OpenBuiltinCommandAction(cmd, "Open command", text)};
   }
 
 public:
-  BuiltinCommandListItem(const BuiltinCommand &cmd) : cmd(cmd) {}
-};
-
-class CopyTextAction : public AbstractAction {
-  QString text;
-
-public:
-  void execute(AppWindow &app) override {
-    app.clipboardService->copyText(text);
-    app.statusBar->setToast("Copied in clipboard");
-  }
-
-  CopyTextAction(const QString &title, const QString &text)
-      : AbstractAction(title, ThemeIconModel{.iconName = "clipboard"}),
-        text(text) {}
+  BuiltinCommandListItem(const BuiltinCommand &cmd, const QString &text = "")
+      : cmd(cmd), text(text) {}
 };
 
 class CopyCalculatorResultAction : public CopyTextAction {
@@ -371,9 +342,16 @@ class RootView : public NavigationListView {
            }},
   };
 
+  QFutureWatcher<void> searchFutureWatcher;
+
 public:
   void onSearchChanged(const QString &s) override {
-    QThreadPool::globalInstance()->start([this, s]() {
+    if (searchFutureWatcher.isRunning()) {
+      searchFutureWatcher.cancel();
+      searchFutureWatcher.waitForFinished();
+    }
+
+    auto future = QtConcurrent::run([this, s]() {
       auto start = std::chrono::high_resolution_clock::now();
       auto fileBrowser = appDb.defaultFileBrowser();
 
@@ -463,7 +441,7 @@ public:
         model->beginSection(QString("Use \"%1\" with...").arg(s));
 
         for (const auto &cmd : fallbackCommands) {
-          auto item = std::make_shared<BuiltinCommandListItem>(cmd);
+          auto item = std::make_shared<BuiltinCommandListItem>(cmd, s);
 
           model->addItem(item);
         }
@@ -483,6 +461,8 @@ public:
 
       model->endReset();
     });
+
+    searchFutureWatcher.setFuture(future);
   }
 
   void loadExtension(Extension::Command command) {
@@ -497,7 +477,8 @@ public:
   RootView(AppWindow &app)
       : NavigationListView(app), app(app), appDb(service<AppDatabase>()),
         extensionManager(service<ExtensionManager>()),
-        quicklinkDb(service<QuicklistDatabase>()) {}
+        quicklinkDb(service<QuicklistDatabase>()),
+        searchFutureWatcher(new QFutureWatcher<void>) {}
 
   ~RootView() { delete model; }
 };

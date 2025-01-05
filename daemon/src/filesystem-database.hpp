@@ -14,11 +14,11 @@
 #include <stdexcept>
 
 static const char *insertFileQuery = R"(
-INSERT INTO files (name, path, mtime, type, parent_path) VALUES (:name, :path, :mtime, :type, :parent_path);
+INSERT INTO files (name, path, mtime, type, parent_path, mime) VALUES (:name, :path, :mtime, :type, :parent_path, :mime);
 )";
 
 static const char *searchFileQuery = R"(
-SELECT files.name, files.path, files.type FROM files JOIN fts ON files.id = fts.rowid WHERE fts.name MATCH :query || '*' LIMIT :limit;
+SELECT files.name, files.path, files.mime, files.type FROM files JOIN fts ON files.id = fts.rowid WHERE fts.name MATCH :query || '*' LIMIT :limit;
 )";
 
 static const char *listDirectoryQuery = R"(
@@ -37,7 +37,8 @@ CREATE TABLE IF NOT EXISTS files (
 	path TEXT NOT NULL UNIQUE,
 	parent_path TEXT,
 	mtime INTEGER,
-	type INTEGER
+	type INTEGER,
+	mime TEXT
 )
 )";
 
@@ -72,6 +73,7 @@ struct FileInfo {
   QDateTime mtime;
   FileType type;
   QString parentPath;
+  QString mime;
 };
 
 struct IndexedEntry {
@@ -145,7 +147,7 @@ public:
   bool insert(const QList<FileInfo> &batch) {
     bool ok = true;
     QSqlQuery query(db);
-    QVariantList names, paths, mtimes, types, parentPaths;
+    QVariantList names, paths, mtimes, types, parentPaths, mime;
 
     if (!db.transaction()) {
       qDebug() << "FilesystemDatabase::insert: failed to start transaction"
@@ -159,6 +161,7 @@ public:
       mtimes << info.mtime.toSecsSinceEpoch();
       types << info.type;
       parentPaths << info.parentPath;
+      mime << info.mime;
     }
 
     query.prepare(insertFileQuery);
@@ -168,6 +171,7 @@ public:
     query.bindValue(":mtime", mtimes);
     query.bindValue(":type", types);
     query.bindValue(":parent_path", parentPaths);
+    query.bindValue(":mime", mime);
     ok = query.execBatch();
 
     if (!ok) {
@@ -199,6 +203,8 @@ public:
 
       info.name = query.value(0).toString();
       info.path = query.value(1).toString();
+      info.mime = query.value(2).toString();
+      info.type = static_cast<FileType>(query.value(3).toInt());
       results << info;
     }
 

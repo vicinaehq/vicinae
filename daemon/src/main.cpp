@@ -175,11 +175,11 @@ int main(int argc, char **argv) {
   app.show();
 
   int fontId = QFontDatabase::addApplicationFont(
-      "./assets/fonts/SF-Pro-Text-Regular.otf");
+      ":assets/fonts/SF-Pro-Text-Regular.otf");
   fontId =
-      QFontDatabase::addApplicationFont("./assets/fonts/SF-Pro-Text-Light.otf");
+      QFontDatabase::addApplicationFont(":assets/fonts/SF-Pro-Text-Light.otf");
   fontId =
-      QFontDatabase::addApplicationFont("./assets/fonts/SF-Pro-Text-Bold.otf");
+      QFontDatabase::addApplicationFont(":assets/fonts/SF-Pro-Text-Bold.otf");
 
   for (const auto &family : QFontDatabase::applicationFontFamilies(fontId)) {
     qDebug() << "family=" << family;

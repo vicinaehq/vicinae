@@ -1,4 +1,5 @@
 #pragma once
+#include "ui/action_popover.hpp"
 #include <QHBoxLayout>
 #include <QString>
 #include <cmath>

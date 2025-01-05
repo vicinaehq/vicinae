@@ -11,6 +11,7 @@
 #include <qicon.h>
 #include <qlist.h>
 #include <qlogging.h>
+#include <qmimedatabase.h>
 #include <qmimetype.h>
 #include <qprocess.h>
 #include <qset.h>
@@ -104,6 +105,7 @@ public:
   QHash<QString, QSet<QString>> mimeToApps;
   QHash<QString, QSet<QString>> appToMimes;
   QHash<QString, QString> mimeToDefaultApp;
+  QMimeDatabase mimeDb;
 
   bool addDesktopFile(const QString &path) {
     QFileInfo info(path);
@@ -113,6 +115,11 @@ public:
 
     auto entry =
         std::make_shared<DesktopEntry>(info.filePath(), info.fileName(), ent);
+
+    for (const auto &mimeName : ent.mimeType) {
+      mimeToApps[mimeName].insert(entry->id);
+      appToMimes[entry->id].insert(mimeName);
+    }
 
     apps.push_back(entry);
     appMap.insert(entry->id, entry);
@@ -151,10 +158,19 @@ public:
       return false;
     }
 
-    auto &program = executable.exec.at(0);
+    QString program;
     QStringList argv;
+    size_t offset = 0;
 
-    for (size_t i = 1; i != executable.exec.size(); ++i) {
+    if (executable.isTerminalApp()) {
+      program = "alacritty";
+      argv << "-e";
+    } else {
+      program = executable.exec.at(0);
+      offset = 1;
+    }
+
+    for (size_t i = offset; i != executable.exec.size(); ++i) {
       auto &part = executable.exec.at(i);
 
       if (part == "%u" || part == "%f") {
@@ -195,6 +211,26 @@ public:
     }
 
     return nullptr;
+  }
+
+  QList<std::shared_ptr<DesktopExecutable>>
+  findMimeOpeners(const QString &mime) {
+    QList<std::shared_ptr<DesktopExecutable>> apps;
+    auto defaultApp = defaultForMime(mime);
+
+    if (defaultApp)
+      apps << defaultApp;
+
+    if (auto it = mimeToApps.find(mime); it != mimeToApps.end()) {
+      for (const auto id : *it) {
+        if (defaultApp && defaultApp->id == id)
+          continue;
+        if (auto app = getById(id))
+          apps << app;
+      }
+    }
+
+    return apps;
   }
 
   std::shared_ptr<DesktopExecutable> defaultBrowser() {

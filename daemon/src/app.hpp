@@ -80,3 +80,37 @@ public slots:
 signals:
   void currentViewPoped();
 };
+
+struct OpenAppAction : public AbstractAction {
+  std::shared_ptr<DesktopExecutable> application;
+  QList<QString> args;
+
+  void execute(AppWindow &app) override {
+    if (!app.appDb->launch(*application.get(), args)) {
+      app.statusBar->setToast("Failed to start app", ToastPriority::Danger);
+      return;
+    }
+
+    app.closeWindow(true);
+  }
+
+  OpenAppAction(const std::shared_ptr<DesktopExecutable> &app,
+                const QString &title, const QList<QString> args)
+      : AbstractAction(title, ThemeIconModel{.iconName = app->iconName()}),
+        application(app), args(args) {}
+};
+
+class CopyTextAction : public AbstractAction {
+  QString text;
+
+public:
+  void execute(AppWindow &app) override {
+    app.clipboardService->copyText(text);
+    app.closeWindow();
+    app.statusBar->setToast("Copied in clipboard");
+  }
+
+  CopyTextAction(const QString &title, const QString &text)
+      : AbstractAction(title, ThemeIconModel{.iconName = "clipboard"}),
+        text(text) {}
+};

@@ -13,9 +13,11 @@
 #include <qicon.h>
 #include <qmimedatabase.h>
 #include <qnamespace.h>
+#include <qnetworkrequest.h>
 #include <qthreadpool.h>
 
 class FilesView : public NavigationListView {
+  AppWindow &app;
   QString baseQuery;
   Service<IndexerService> indexer;
 
@@ -99,18 +101,35 @@ class FilesView : public NavigationListView {
       return std::make_unique<FileListItemDetail>(file.path, iconName);
     }
 
-    QList<AbstractAction *> createActions() const override { return {}; }
+    QList<AbstractAction *> createActions() const override {
+      QList<AbstractAction *> actions;
+
+      for (const auto &app : appDb.findMimeOpeners(file.mime)) {
+        actions << new OpenAppAction(app, app->name, {file.path});
+      }
+
+      if (auto browser = appDb.defaultFileBrowser()) {
+        actions << new OpenAppAction(browser, "Open in " + browser->name,
+                                     {file.path});
+      }
+
+      actions << new CopyTextAction("Copy path", file.path);
+      actions << new CopyTextAction("Copy name", file.name);
+
+      return actions;
+    }
 
   public:
     FileListItem(const FileInfo &info, Service<AppDatabase> appDb)
         : file(info), appDb(appDb) {
-      auto mime = mimeDb.mimeTypeForFile(info.path);
+      auto mime = mimeDb.mimeTypeForName(info.mime);
       QIcon icon = QIcon::fromTheme(mime.iconName());
 
-      if (icon.isNull())
-        iconName = mime.genericIconName();
-      else
+      if (!icon.isNull()) {
         iconName = mime.iconName();
+      } else {
+        iconName = mime.genericIconName();
+      }
     }
   };
 
@@ -136,11 +155,14 @@ public:
   }
 
   void onMount() override {
-    if (!baseQuery.isEmpty())
-      onSearchChanged(baseQuery);
+    if (!baseQuery.isEmpty()) {
+      app.topBar->input->setText(baseQuery);
+    }
   }
 
   FilesView(AppWindow &app, const QString &text)
-      : NavigationListView(app), indexer(service<IndexerService>()),
-        baseQuery(text) {}
+      : NavigationListView(app), app(app), indexer(service<IndexerService>()),
+        baseQuery(text) {
+    qDebug() << "hello text" << text;
+  }
 };

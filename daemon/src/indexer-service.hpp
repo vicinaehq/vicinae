@@ -4,6 +4,7 @@
 #include <memory>
 #include <qdir.h>
 #include <qfileinfo.h>
+#include <qmimedatabase.h>
 #include <qobject.h>
 #include <qrunnable.h>
 #include <qthread.h>
@@ -27,13 +28,12 @@ class IndexWriter : public QObject {
   std::unique_ptr<FilesystemDatabase> con;
 
   void writeBatch(const QList<FileInfo> &batch) {
-    qDebug() << "writing...";
     if (!con->insert(batch)) {
       qDebug() << "failed to insert batch";
     } else {
-      qDebug() << "inserted" << batch.size();
+      // qDebug() << "inserted" << batch.size();
     }
-    qDebug() << "written...";
+    // qDebug() << "written...";
   }
 
 public:
@@ -156,6 +156,7 @@ class DirectoryIndexerRunnable : public QObject, public QRunnable {
 
   QString entrypoint;
   QList<FileInfo> currentBatch;
+  QMimeDatabase mimeDb;
 
   void run() override {
     QStack<QString> dirs;
@@ -212,11 +213,17 @@ class DirectoryIndexerRunnable : public QObject, public QRunnable {
     else
       return;
 
+    auto path = info.absoluteFilePath();
+    QStringList mimes;
+    auto mime = mimeDb.mimeTypeForFile(info);
+
+    mimes << mime.name() << mime.parentMimeTypes();
     currentBatch << FileInfo{.name = info.fileName(),
-                             .path = info.absoluteFilePath(),
+                             .path = path,
                              .mtime = info.lastModified(),
                              .type = type,
-                             .parentPath = info.dir().absolutePath()};
+                             .parentPath = info.dir().absolutePath(),
+                             .mime = mime.name()};
 
     if (currentBatch.size() > 1000) {
       emit batchReady(currentBatch);

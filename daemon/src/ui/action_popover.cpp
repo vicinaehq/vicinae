@@ -106,6 +106,16 @@ void ActionPopover::paintEvent(QPaintEvent *event) {
 }
 
 void ActionPopover::filterActions(const QString &text) {
+  QList<AbstractAction *> filteredActions;
+
+  for (auto action : signalActions) {
+    if (action->title.contains(text, Qt::CaseInsensitive)) {
+      filteredActions << action;
+    }
+  }
+
+  renderSignalItems(filteredActions);
+
   /*
 if (menuStack.isEmpty())
 return;
