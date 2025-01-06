@@ -1,5 +1,7 @@
 #pragma once
 #include "extend/action-model.hpp"
+#include "extend/image-model.hpp"
+#include "image-viewer.hpp"
 #include "ui/toast.hpp"
 #include <QBoxLayout>
 #include <QLabel>
@@ -14,8 +16,6 @@
 #include <qtmetamacros.h>
 #include <qwidget.h>
 
-class IAction;
-
 class StatusBar : public QWidget {
   QWidget *leftWidget;
   QLabel *selectedActionLabel;
@@ -23,13 +23,12 @@ class StatusBar : public QWidget {
 
   class CurrentCommandWidget : public QWidget {
   public:
-    CurrentCommandWidget(const QString &name, QIcon icon) {
+    CurrentCommandWidget(const QString &name, const ImageLikeModel &model) {
       auto layout = new QHBoxLayout();
       auto iconLabel = new QLabel();
 
       layout->setContentsMargins(0, 0, 0, 0);
-      iconLabel->setPixmap(icon.pixmap(22, 22));
-      layout->addWidget(iconLabel);
+      layout->addWidget(ImageViewer::createFromModel(model, {25, 25}));
       layout->addWidget(new QLabel(name));
 
       setLayout(layout);
@@ -58,7 +57,7 @@ public:
   void setCurrentAction(const ActionPannelItem &item);
   void setToast(const QString &text,
                 ToastPriority priority = ToastPriority::Success);
-  void setActiveCommand(const QString &name, QIcon icon);
+  void setNavigationTitle(const QString &name, const ImageLikeModel &model);
   void reset();
 
   StatusBar(QWidget *parent = nullptr);

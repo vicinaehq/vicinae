@@ -1,4 +1,5 @@
 #include "ui/status_bar.hpp"
+#include "extend/image-model.hpp"
 #include <qlogging.h>
 #include <qnamespace.h>
 #include <qtimer.h>
@@ -47,7 +48,8 @@ void StatusBar::setLeftWidget(QWidget *left) {
   leftWidget = left;
 }
 
-void StatusBar::setActiveCommand(const QString &name, QIcon icon) {
+void StatusBar::setNavigationTitle(const QString &name,
+                                   const ImageLikeModel &icon) {
   setLeftWidget(new CurrentCommandWidget(name, icon));
 }
 

@@ -122,6 +122,10 @@ void AppWindow::popCurrentView() {
     activeCommand.viewStack.pop();
   }
 
+  if (navigationStack.size() == 1) {
+    statusBar->reset();
+  }
+
   emit currentViewPoped();
 }
 
@@ -197,6 +201,10 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
     layout->replaceWidget(cur.view->widget, view->widget);
     cur.view->widget->setParent(nullptr);
     cur.view->widget->hide();
+
+    if (opts.navigation)
+      statusBar->setNavigationTitle(opts.navigation->title,
+                                    opts.navigation->icon);
   }
 
   connectView(*view);
@@ -220,7 +228,8 @@ void AppWindow::launchCommand(ViewCommand *cmd,
   auto view = cmd->load(*this);
 
   if (view) {
-    pushView(view, {.searchQuery = opts.searchQuery});
+    pushView(view,
+             {.searchQuery = opts.searchQuery, .navigation = opts.navigation});
   }
 }
 

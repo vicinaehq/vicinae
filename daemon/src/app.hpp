@@ -2,6 +2,7 @@
 #include "app-database.hpp"
 #include "calculator-database.hpp"
 #include "clipboard-service.hpp"
+#include "extend/image-model.hpp"
 #include "extension_manager.hpp"
 #include "indexer-service.hpp"
 #include "quicklist-database.hpp"
@@ -39,12 +40,19 @@ struct CommandSnapshot {
   ViewCommand *command;
 };
 
+struct NavigationStatus {
+  QString title;
+  ImageLikeModel icon;
+};
+
 struct LaunchCommandOptions {
   QString searchQuery;
+  std::optional<NavigationStatus> navigation;
 };
 
 struct PushViewOptions {
   QString searchQuery;
+  std::optional<NavigationStatus> navigation;
 };
 
 class AppWindow : public QMainWindow {
