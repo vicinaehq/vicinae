@@ -4,6 +4,7 @@
 #include "extension_manager.hpp"
 #include "image-fetcher.hpp"
 #include "indexer-service.hpp"
+#include "process-manager-service.hpp"
 #include "quicklink-seeder.hpp"
 #include "root-command.hpp"
 #include <QLabel>
@@ -265,6 +266,11 @@ AppWindow::AppWindow(QWidget *parent)
   iconCache = std::make_unique<IconCacheService>();
   indexer = std::make_unique<IndexerService>(Config::dirPath() +
                                              QDir::separator() + "files.db");
+  processManagerService = std::make_unique<ProcessManagerService>();
+
+  for (const auto &proc : processManagerService->list()) {
+    qDebug() << proc.comm << proc.pid;
+  }
 
   connect(actionPopover, &ActionPopover::actionExecuted, this,
           &AppWindow::executeAction);
@@ -358,4 +364,10 @@ Service<ExtensionManager> AppWindow::service<ExtensionManager>() const {
 template <>
 Service<IconCacheService> AppWindow::service<IconCacheService>() const {
   return *iconCache;
+}
+
+template <>
+Service<ProcessManagerService>
+AppWindow::service<ProcessManagerService>() const {
+  return *processManagerService;
 }

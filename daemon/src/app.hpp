@@ -5,6 +5,7 @@
 #include "extend/image-model.hpp"
 #include "extension_manager.hpp"
 #include "indexer-service.hpp"
+#include "process-manager-service.hpp"
 #include "quicklist-database.hpp"
 #include <jsoncpp/json/value.h>
 #include <qboxlayout.h>
@@ -71,6 +72,7 @@ public:
   std::unique_ptr<ExtensionManager> extensionManager;
   std::unique_ptr<IconCacheService> iconCache;
   std::unique_ptr<IndexerService> indexer;
+  std::unique_ptr<ProcessManagerService> processManagerService;
 
   void popToRootView();
   void disconnectView(View &view);

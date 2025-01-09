@@ -241,6 +241,9 @@ private slots:
       detailContainer->hide();
     }
 
+    // list->setMinimumHeight(2000);
+    // list->updateGeometry();
+
     for (int i = 0; i != list->count(); ++i) {
       auto item = list->item(i);
 

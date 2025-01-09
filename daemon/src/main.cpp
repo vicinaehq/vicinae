@@ -30,7 +30,7 @@ QWidget {
 	color: %4;
 }
 
-QMainWindow > QWidget {
+QMainWindow > QWidget, .virtual-list {
 	background-color: %2;
 }
 

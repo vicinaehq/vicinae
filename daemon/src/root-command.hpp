@@ -9,6 +9,7 @@
 #include "extend/extension-command.hpp"
 #include "extension_manager.hpp"
 #include "files-command.hpp"
+#include "manage-processes-command.hpp"
 #include "manage-quicklinks-command.hpp"
 #include "navigation-list-view.hpp"
 #include "omnicast.hpp"
@@ -356,6 +357,12 @@ class RootView : public NavigationListView {
        .factory =
            [](AppWindow &app, const QString &s) {
              return new SingleViewCommand<CalculatorHistoryView>;
+           }},
+      {.name = "Manage processes",
+       .iconName = ":assets/icons/process-manager.png",
+       .factory =
+           [](AppWindow &app, const QString &s) {
+             return new SingleViewCommand<ManageProcessesMainView>;
            }},
 
   };
