@@ -45,6 +45,8 @@ qt_add_executable(${TARGET}
 	include/extend/extension-view.hpp
 	include/extend/extension-command.hpp
 	include/extend/extension-detail-view.hpp
+
+	include/ui/virtual-list.hpp
 	
 	include/ui/list-view.hpp
 	include/ui/empty-view.hpp

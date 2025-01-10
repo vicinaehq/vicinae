@@ -2,16 +2,15 @@
 
 #include "app.hpp"
 #include "command.hpp"
-#include "navigation-list-view.hpp"
 #include "process-manager-service.hpp"
 #include "ui/test-list.hpp"
 #include "ui/virtual-list.hpp"
 #include "view.hpp"
 #include <qnamespace.h>
-#include <type_traits>
 
 class ManageProcessesMainView : public View {
   Service<ProcessManagerService> processManager;
+  VirtualListModel *model;
   VirtualListWidget *list;
 
   class ProcListItem : public AbstractNativeListItem {
@@ -25,15 +24,15 @@ class ManageProcessesMainView : public View {
           info.comm, "", QString::number(idx));
     }
 
+    int height() const override { return 40; }
+
   public:
     ProcListItem(const ProcessInfo &info, int idx) : info(info), idx(idx) {}
   };
 
   void onSearchChanged(const QString &text) override {
-    // model->beginReset();
-    // model->beginSection("Running processes");
-
-    QList<std::shared_ptr<AbstractNativeListItem>> items;
+    model->beginReset();
+    model->beginSection("Running processes");
 
     size_t limit = 0;
     size_t i = 0;
@@ -45,17 +44,19 @@ class ManageProcessesMainView : public View {
       if (!proc.comm.contains(text, Qt::CaseInsensitive))
         continue;
 
-      items << std::make_shared<ProcListItem>(proc, i - 1);
+      model->addItem(std::make_shared<ProcListItem>(proc, i - 1));
       ++limit;
     }
 
-    list->setItems(items);
+    model->endReset();
   }
 
 public:
   ManageProcessesMainView(AppWindow &app)
-      : View(app), list(new VirtualListWidget),
+      : View(app), model(new VirtualListModel), list(new VirtualListWidget),
         processManager(service<ProcessManagerService>()) {
+    forwardInputEvents(list);
+    list->setModel(model);
     widget = list;
   }
 };

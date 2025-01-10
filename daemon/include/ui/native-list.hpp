@@ -24,6 +24,8 @@ class ListSectionHeader : public QWidget {
 public:
   ListSectionHeader(const QString &title, const QString &subtitle,
                     size_t count) {
+    setAttribute(Qt::WA_StyledBackground);
+
     auto layout = new QHBoxLayout();
 
     auto leftWidget = new QWidget();

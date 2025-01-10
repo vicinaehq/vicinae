@@ -76,6 +76,7 @@ public:
     return nullptr;
   }
   virtual size_t id() const { return 0; };
+  virtual bool isSelectable() const { return true; };
 
   // a unique role that differenciate two different kinds of list widget,
   // usually rendering a different widget. This determines whether the list
@@ -85,6 +86,8 @@ public:
   virtual QList<AbstractAction *> createActions() const { return {}; }
 
 public:
+  virtual int height() const { return 40; }
+
   AbstractNativeListItem() {}
 };
 

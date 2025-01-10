@@ -61,10 +61,23 @@ QLineEdit, QListWidget {
 	border-radius: 8px;
 }
 
+QScrollArea, QScrollArea > QWidget { background: transparent; }
+
+#fucking-viewport { background: transparent; }
+
+VirtualListItemWidget {
+	background-color: transparent;
+}
+
+VirtualListItemWidget[selected="true"] {
+	background-color: %3;
+}
+
 QListWidget::item:hover, 
 QListWidget::item:selected {
 	background-color: %3;
 }
+
 
 QLabel.minor {
 	color: #AAAAAA;
