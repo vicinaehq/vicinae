@@ -69,7 +69,7 @@ VirtualListItemWidget {
 	background-color: transparent;
 }
 
-VirtualListItemWidget[selected="true"] {
+VirtualListItemWidget[selected="true"], VirtualListItemWidget[hovered="true"] {
 	background-color: %3;
 }
 

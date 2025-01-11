@@ -330,7 +330,7 @@ AppWindow::AppWindow(QWidget *parent)
   qDebug() << QDir::homePath();
   // indexer->index(QDir::homePath() + QDir::separator() +
   //"prog/perso/getsslnow/");
-  indexer->index(QDir::homePath());
+  // indexer->index(QDir::homePath());
 }
 
 template <>

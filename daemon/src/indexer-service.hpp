@@ -86,8 +86,10 @@ class IgnoreFile {
     if (ignore.negated)
       matches = !matches;
     if (target.endsWith("node_modules")) {
-      qDebug() << target << "VS" << ignore.pattern << matches
-               << "negated=" << ignore.negated;
+      /*
+qDebug() << target << "VS" << ignore.pattern << matches
+     << "negated=" << ignore.negated;
+                 */
     }
 
     return matches;
