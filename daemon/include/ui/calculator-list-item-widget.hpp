@@ -23,9 +23,8 @@ class CalculatorListItemWidget : public QWidget {
     answerLabel->setProperty("class", "transform-left");
 
     auto left = new VStack(exprLabel, new Chip("Expression"));
-    auto right = new VStack(
-        answerLabel, new Chip(item.unit ? QString(item.unit->displayName.data())
-                                        : "Answer"));
+    auto right =
+        new VStack(answerLabel, new Chip(item.unit ? QString(item.unit->displayName.data()) : "Answer"));
 
     auto layout = new QVBoxLayout();
 
@@ -36,7 +35,5 @@ class CalculatorListItemWidget : public QWidget {
   }
 
 public:
-  CalculatorListItemWidget(const CalculatorItem &item) : item(item) {
-    setupUi();
-  }
+  CalculatorListItemWidget(const CalculatorItem &item) : item(item) { setupUi(); }
 };

@@ -69,7 +69,11 @@ VirtualListItemWidget {
 	background-color: transparent;
 }
 
-VirtualListItemWidget[selected="true"], VirtualListItemWidget[hovered="true"] {
+VirtualListItemWidget[selected="true"] {
+	background-color: %3;
+}
+
+VirtualListItemWidget[hovered="true"] {
 	background-color: %3;
 }
 
@@ -187,12 +191,9 @@ int main(int argc, char **argv) {
 
   app.show();
 
-  int fontId = QFontDatabase::addApplicationFont(
-      ":assets/fonts/SF-Pro-Text-Regular.otf");
-  fontId =
-      QFontDatabase::addApplicationFont(":assets/fonts/SF-Pro-Text-Light.otf");
-  fontId =
-      QFontDatabase::addApplicationFont(":assets/fonts/SF-Pro-Text-Bold.otf");
+  int fontId = QFontDatabase::addApplicationFont(":assets/fonts/SF-Pro-Text-Regular.otf");
+  fontId = QFontDatabase::addApplicationFont(":assets/fonts/SF-Pro-Text-Light.otf");
+  fontId = QFontDatabase::addApplicationFont(":assets/fonts/SF-Pro-Text-Bold.otf");
 
   for (const auto &family : QFontDatabase::applicationFontFamilies(fontId)) {
     qDebug() << "family=" << family;

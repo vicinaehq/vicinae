@@ -26,13 +26,14 @@ class View : public QObject {
       // qDebug() << "key event from view filter";
 
       if (key == Qt::Key_Return && app.topBar->quickInput) {
-        if (app.topBar->quickInput->focusFirstEmpty())
-          return true;
+        if (app.topBar->quickInput->focusFirstEmpty()) return true;
       }
 
       switch (key) {
       case Qt::Key_Up:
       case Qt::Key_Down:
+      case Qt::Key_Return:
+      case Qt::Key_Enter:
         for (const auto &widget : inputFwdTo) {
           QApplication::sendEvent(widget, event);
         }
@@ -56,32 +57,25 @@ public:
 
   void forwardInputEvents(QWidget *widget) {
     for (const auto &w : inputFwdTo) {
-      if (widget == w)
-        return;
+      if (widget == w) return;
     }
 
     inputFwdTo.push_back(widget);
   }
 
-  void addInputHandler(IInputHandler *widget) {
-    inputHandlers.push_back(widget);
-  }
+  void addInputHandler(IInputHandler *widget) { inputHandlers.push_back(widget); }
 
   template <typename T> Service<T> service() { return app.service<T>(); }
-  void setSearchPlaceholderText(const QString &s) {
-    app.topBar->input->setPlaceholderText(s);
-  }
+  void setSearchPlaceholderText(const QString &s) { app.topBar->input->setPlaceholderText(s); }
   void setActions(const QList<ActionData> &actions) {
     QList<ActionData> newActions = actions;
 
     if (newActions.size() > 0) {
-      newActions[0].shortcut =
-          KeyboardShortcutModel{.key = "return", .modifiers = {}};
+      newActions[0].shortcut = KeyboardShortcutModel{.key = "return", .modifiers = {}};
     }
 
     if (newActions.size() > 1) {
-      newActions[1].shortcut =
-          KeyboardShortcutModel{.key = "return", .modifiers = {"ctrl"}};
+      newActions[1].shortcut = KeyboardShortcutModel{.key = "return", .modifiers = {"ctrl"}};
     }
 
     app.actionPopover->setActionData(newActions);
@@ -113,8 +107,7 @@ public slots:
   virtual void onActionActivated(ActionModel model) {}
 
 signals:
-  void launchCommand(ViewCommand *command,
-                     const LaunchCommandOptions &opts = {});
+  void launchCommand(ViewCommand *command, const LaunchCommandOptions &opts = {});
   void activatePrimaryAction();
   void pushView(View *view, const PushViewOptions &options = {});
   void pop();

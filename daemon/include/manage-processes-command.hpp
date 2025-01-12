@@ -19,8 +19,7 @@ class ManageProcessesMainView : public View {
 
     QWidget *createItem() const override {
       return new ListItemWidget(
-          ImageViewer::createFromModel(
-              ThemeIconModel{.iconName = "application-x-executable"}, {25, 25}),
+          ImageViewer::createFromModel(ThemeIconModel{.iconName = "application-x-executable"}, {25, 25}),
           info.comm, "", QString::number(idx));
     }
 
@@ -39,10 +38,7 @@ class ManageProcessesMainView : public View {
 
     for (const auto &proc : processManager.list()) {
       ++i;
-      if (limit >= 500)
-        break;
-      if (!proc.comm.contains(text, Qt::CaseInsensitive))
-        continue;
+      if (!proc.comm.contains(text, Qt::CaseInsensitive)) continue;
 
       model->addItem(std::make_shared<ProcListItem>(proc, i - 1));
       ++limit;
@@ -58,11 +54,14 @@ public:
     forwardInputEvents(list);
     list->setModel(model);
     widget = list;
+
+    connect(list, &VirtualListWidget::itemActivated, this,
+            [](const AbstractNativeListItem &item) { qDebug() << "item activated"; });
+    connect(list, &VirtualListWidget::selectionChanged, this,
+            [](const AbstractNativeListItem &item) { qDebug() << "Selection changed"; });
   }
 };
 
 class ManageProcessesCommand : public ViewCommand {
-  View *load(AppWindow &app) override {
-    return new ManageProcessesMainView(app);
-  }
+  View *load(AppWindow &app) override { return new ManageProcessesMainView(app); }
 };

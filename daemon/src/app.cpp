@@ -28,15 +28,12 @@ bool AppWindow::eventFilter(QObject *obj, QEvent *event) {
 
     // qDebug() << "key event from app filter";
 
-    if (actionPopover->findBoundAction(keyEvent)) {
-      return true;
-    }
+    if (actionPopover->findBoundAction(keyEvent)) { return true; }
 
     bool isEsc = keyEvent->key() == Qt::Key_Escape;
 
     if (navigationStack.size() > 1) {
-      if (isEsc || (keyEvent->key() == Qt::Key_Backspace &&
-                    topBar->input->text().isEmpty())) {
+      if (isEsc || (keyEvent->key() == Qt::Key_Backspace && topBar->input->text().isEmpty())) {
         popCurrentView();
         return true;
       }
@@ -51,8 +48,7 @@ bool AppWindow::eventFilter(QObject *obj, QEvent *event) {
       return true;
     }
 
-    if (keyEvent->modifiers().testFlag(Qt::ControlModifier) &&
-        key == Qt::Key_B) {
+    if (keyEvent->modifiers().testFlag(Qt::ControlModifier) && key == Qt::Key_B) {
       actionPopover->toggleActions();
       return true;
     }
@@ -70,8 +66,7 @@ void AppWindow::popCurrentView() {
   auto &activeCommand = commandStack.top();
 
   if (activeCommand.viewStack.isEmpty()) {
-    qDebug()
-        << "AppWindow::popCurrentView: active command has an empty view stack";
+    qDebug() << "AppWindow::popCurrentView: active command has an empty view stack";
     return;
   }
 
@@ -108,9 +103,7 @@ void AppWindow::popCurrentView() {
   topBar->input->setPlaceholderText(next.placeholderText);
   topBar->input->selectAll();
 
-  if (navigationStack.size() == 1) {
-    topBar->hideBackButton();
-  }
+  if (navigationStack.size() == 1) { topBar->hideBackButton(); }
 
   qDebug() << "view stack size" << activeCommand.viewStack.size();
 
@@ -123,9 +116,7 @@ void AppWindow::popCurrentView() {
     activeCommand.viewStack.pop();
   }
 
-  if (navigationStack.size() == 1) {
-    statusBar->reset();
-  }
+  if (navigationStack.size() == 1) { statusBar->reset(); }
 
   emit currentViewPoped();
 }
@@ -137,36 +128,30 @@ void AppWindow::popToRootView() {
 }
 
 void AppWindow::disconnectView(View &view) {
-  disconnect(topBar->input, &QLineEdit::textChanged, &view,
-             &View::onSearchChanged);
-  disconnect(actionPopover, &ActionPopover::actionPressed, &view,
-             &View::onActionActivated);
+  disconnect(topBar->input, &QLineEdit::textChanged, &view, &View::onSearchChanged);
+  disconnect(actionPopover, &ActionPopover::actionPressed, &view, &View::onActionActivated);
 
   // view->app
   disconnect(&view, &View::pushView, this, &AppWindow::pushView);
   disconnect(&view, &View::pop, this, &AppWindow::popCurrentView);
   disconnect(&view, &View::popToRoot, this, &AppWindow::popToRootView);
   disconnect(&view, &View::launchCommand, this, &AppWindow::launchCommand);
-  disconnect(&view, &View::activatePrimaryAction, actionPopover,
-             &ActionPopover::selectPrimary);
+  disconnect(&view, &View::activatePrimaryAction, actionPopover, &ActionPopover::selectPrimary);
 
   topBar->input->removeEventFilter(&view);
 }
 
 void AppWindow::connectView(View &view) {
   // app->view
-  connect(topBar->input, &QLineEdit::textChanged, &view,
-          &View::onSearchChanged);
-  connect(actionPopover, &ActionPopover::actionPressed, &view,
-          &View::onActionActivated);
+  connect(topBar->input, &QLineEdit::textChanged, &view, &View::onSearchChanged);
+  connect(actionPopover, &ActionPopover::actionPressed, &view, &View::onActionActivated);
 
   // view->app
   connect(&view, &View::pushView, this, &AppWindow::pushView);
   connect(&view, &View::pop, this, &AppWindow::popCurrentView);
   connect(&view, &View::popToRoot, this, &AppWindow::popToRootView);
   connect(&view, &View::launchCommand, this, &AppWindow::launchCommand);
-  connect(&view, &View::activatePrimaryAction, actionPopover,
-          &ActionPopover::selectPrimary);
+  connect(&view, &View::activatePrimaryAction, actionPopover, &ActionPopover::selectPrimary);
 
   view.onAttach();
   topBar->input->installEventFilter(&view);
@@ -186,9 +171,7 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
     disconnectView(*old.view);
   }
 
-  if (navigationStack.size() == 1) {
-    topBar->showBackButton();
-  }
+  if (navigationStack.size() == 1) { topBar->showBackButton(); }
 
   if (navigationStack.empty()) {
     layout->replaceWidget(defaultWidget, view->widget);
@@ -203,9 +186,7 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
     cur.view->widget->setParent(nullptr);
     cur.view->widget->hide();
 
-    if (opts.navigation)
-      statusBar->setNavigationTitle(opts.navigation->title,
-                                    opts.navigation->icon);
+    if (opts.navigation) statusBar->setNavigationTitle(opts.navigation->title, opts.navigation->icon);
   }
 
   connectView(*view);
@@ -222,28 +203,21 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
   view->onMount();
 }
 
-void AppWindow::launchCommand(ViewCommand *cmd,
-                              const LaunchCommandOptions &opts) {
+void AppWindow::launchCommand(ViewCommand *cmd, const LaunchCommandOptions &opts) {
   commandStack.push({.command = cmd});
 
   auto view = cmd->load(*this);
 
-  if (view) {
-    pushView(view,
-             {.searchQuery = opts.searchQuery, .navigation = opts.navigation});
-  }
+  if (view) { pushView(view, {.searchQuery = opts.searchQuery, .navigation = opts.navigation}); }
 }
 
-void AppWindow::executeAction(AbstractAction *action) {
-  action->execute(*this);
-}
+void AppWindow::executeAction(AbstractAction *action) { action->execute(*this); }
 
 void AppWindow::closeWindow(bool withPopToRoot) {
   hide();
   topBar->input->clear();
 
-  if (withPopToRoot)
-    popToRootView();
+  if (withPopToRoot) popToRootView();
 }
 
 AppWindow::AppWindow(QWidget *parent)
@@ -257,32 +231,28 @@ AppWindow::AppWindow(QWidget *parent)
 
   extensionManager = std::make_unique<ExtensionManager>();
 
-  quicklinkDatabase = std::make_unique<QuicklistDatabase>(
-      Config::dirPath() + QDir::separator() + "quicklinks.db");
-  calculatorDatabase = std::make_unique<CalculatorDatabase>(
-      Config::dirPath() + QDir::separator() + "calculator.db");
+  quicklinkDatabase =
+      std::make_unique<QuicklistDatabase>(Config::dirPath() + QDir::separator() + "quicklinks.db");
+  calculatorDatabase =
+      std::make_unique<CalculatorDatabase>(Config::dirPath() + QDir::separator() + "calculator.db");
   appDb = std::make_unique<AppDatabase>();
   clipboardService = std::make_unique<ClipboardService>();
   iconCache = std::make_unique<IconCacheService>();
-  indexer = std::make_unique<IndexerService>(Config::dirPath() +
-                                             QDir::separator() + "files.db");
+  indexer = std::make_unique<IndexerService>(Config::dirPath() + QDir::separator() + "files.db");
   processManagerService = std::make_unique<ProcessManagerService>();
 
   for (const auto &proc : processManagerService->list()) {
     qDebug() << proc.comm << proc.pid;
   }
 
-  connect(actionPopover, &ActionPopover::actionExecuted, this,
-          &AppWindow::executeAction);
+  connect(actionPopover, &ActionPopover::actionExecuted, this, &AppWindow::executeAction);
 
   ImageFetcher::instance();
 
   {
     auto seeder = std::make_unique<QuickLinkSeeder>(*appDb, *quicklinkDatabase);
 
-    if (quicklinkDatabase->list().isEmpty()) {
-      seeder->seed();
-    }
+    if (quicklinkDatabase->list().isEmpty()) { seeder->seed(); }
   }
 
   auto blk = std::make_unique<BlockDeviceService>();
@@ -333,41 +303,28 @@ AppWindow::AppWindow(QWidget *parent)
   // indexer->index(QDir::homePath());
 }
 
-template <>
-Service<QuicklistDatabase> AppWindow::service<QuicklistDatabase>() const {
+template <> Service<QuicklistDatabase> AppWindow::service<QuicklistDatabase>() const {
   return *quicklinkDatabase;
 }
 
-template <> Service<IndexerService> AppWindow::service<IndexerService>() const {
-  return *indexer;
-}
+template <> Service<IndexerService> AppWindow::service<IndexerService>() const { return *indexer; }
 
-template <>
-Service<CalculatorDatabase> AppWindow::service<CalculatorDatabase>() const {
+template <> Service<CalculatorDatabase> AppWindow::service<CalculatorDatabase>() const {
   return *calculatorDatabase;
 }
 
-template <> Service<AppDatabase> AppWindow::service<AppDatabase>() const {
-  return *appDb;
-}
+template <> Service<AppDatabase> AppWindow::service<AppDatabase>() const { return *appDb; }
 
-template <>
-Service<ClipboardService> AppWindow::service<ClipboardService>() const {
+template <> Service<ClipboardService> AppWindow::service<ClipboardService>() const {
   return *clipboardService;
 }
 
-template <>
-Service<ExtensionManager> AppWindow::service<ExtensionManager>() const {
+template <> Service<ExtensionManager> AppWindow::service<ExtensionManager>() const {
   return *extensionManager;
 }
 
-template <>
-Service<IconCacheService> AppWindow::service<IconCacheService>() const {
-  return *iconCache;
-}
+template <> Service<IconCacheService> AppWindow::service<IconCacheService>() const { return *iconCache; }
 
-template <>
-Service<ProcessManagerService>
-AppWindow::service<ProcessManagerService>() const {
+template <> Service<ProcessManagerService> AppWindow::service<ProcessManagerService>() const {
   return *processManagerService;
 }

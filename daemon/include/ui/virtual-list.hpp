@@ -4,33 +4,34 @@
 #include <QBoxLayout>
 #include <QScrollArea>
 #include <QScrollBar>
-#include <numbers>
+#include <locale>
 #include <qboxlayout.h>
 #include <qcoreevent.h>
 #include <qevent.h>
 #include <qframe.h>
 #include <qhash.h>
+#include <qjsonvalue.h>
 #include <qlabel.h>
 #include <qlogging.h>
+#include <qmap.h>
 #include <qminmax.h>
 #include <qnamespace.h>
 #include <qobject.h>
 #include <qscrollarea.h>
+#include <qscrollbar.h>
 #include <qstyleoption.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
-#include <regex>
 #include <variant>
 
-static int WIDGET_SIZE = 40;
+static const int SCROLL_GAP = 5;
 
 struct VirtualListSection {
   QString name;
   QList<std::shared_ptr<AbstractNativeListItem>> items;
 };
 
-using VirtualListChild =
-    std::variant<VirtualListSection, std::shared_ptr<AbstractNativeListItem>>;
+using VirtualListChild = std::variant<VirtualListSection, std::shared_ptr<AbstractNativeListItem>>;
 
 struct VirtualListItem {
   int offset;
@@ -41,9 +42,7 @@ class SectionLabelListItem : public AbstractNativeListItem {
   QString section;
   int count;
 
-  QWidget *createItem() const override {
-    return new ListSectionHeader(section, "", count);
-  }
+  QWidget *createItem() const override { return new ListSectionHeader(section, "", count); }
 
   bool isSelectable() const override { return false; }
 
@@ -87,8 +86,7 @@ public:
   void endSection() {
     if (currentSection) {
       if (!currentSection->items.isEmpty()) {
-        auto labelItem =
-            std::make_shared<SectionLabelListItem>(currentSection->name);
+        auto labelItem = std::make_shared<SectionLabelListItem>(currentSection->name);
 
         labelItem->setCount(currentSection->items.size());
         items << labelItem << currentSection->items;
@@ -113,10 +111,10 @@ class VirtualListItemWidget : public QFrame {
   Q_OBJECT
 
   QWidget *widget = nullptr;
+  bool selectable = true;
 
   void resizeEvent(QResizeEvent *event) override {
-    if (widget)
-      widget->setFixedSize(event->size());
+    if (widget) widget->setFixedSize(event->size());
   }
 
   void updateStyle() {
@@ -124,23 +122,35 @@ class VirtualListItemWidget : public QFrame {
     style()->unpolish(this);
   }
 
-  void enterEvent(QEnterEvent *event) override {
-    setProperty("hovered", true);
-    updateStyle();
+  void enterEvent(QEnterEvent *event) override { emit hovered(true); }
+  void leaveEvent(QEvent *event) override { emit hovered(false); }
+
+  void mousePressEvent(QMouseEvent *event) override {
+    if (event->button() == Qt::LeftButton) { emit selected(); }
   }
 
-  void leaveEvent(QEvent *event) override {
+public:
+  VirtualListItemWidget(QWidget *parent = nullptr) : QFrame(parent) {}
+
+  void setSelectable(bool selectable = true) { this->selectable = selectable; }
+
+  void reset() {
+    setProperty("selected", false);
     setProperty("hovered", false);
     updateStyle();
   }
 
-public:
-  VirtualListItemWidget(QWidget *parent = nullptr) : QFrame(parent) {
-    setMouseTracking(true);
+  void setSelected(bool selected) {
+    if (!selectable) return;
+
+    setProperty("selected", selected);
+    updateStyle();
   }
 
-  void setSelected(bool selected) {
-    setProperty("selected", selected);
+  void setHovered(bool hovered) {
+    if (!selectable) return;
+
+    setProperty("hovered", hovered);
     updateStyle();
   }
 
@@ -150,6 +160,10 @@ public:
     qDebug() << "size" << size();
     w->setFixedSize(size());
   }
+
+signals:
+  void hovered(bool flag);
+  void selected();
 };
 
 class VirtualListContainer : public QFrame {
@@ -159,12 +173,13 @@ public:
   QVBoxLayout *layout;
   QWidget *spacer;
 
+  void mouseMoveEvent(QMouseEvent *event) override { qDebug() << "mouse virtual"; }
+
   VirtualListContainer() : layout(new QVBoxLayout), spacer(new QWidget) {
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setAlignment(Qt::AlignTop);
     layout->setSpacing(0);
     layout->addWidget(spacer);
-
     spacer->setFixedHeight(0);
     setLayout(layout);
   }
@@ -173,122 +188,92 @@ public:
 class VirtualListWidget : public QScrollArea {
   Q_OBJECT
 
-  QHash<int, VirtualListItemWidget *> visibleWidgets;
-  QList<VirtualListItem> virtualItems;
+  QScrollBar *scrollBar;
+  QMap<int, VirtualListItemWidget *> visibleWidgets;
+  QList<VirtualListItem> items;
   int currentSelectionIndex = 0;
-
   VirtualListContainer *container;
   VirtualListModel *model = nullptr;
 
 private:
-  void scrollContentsBy(int dx, int dy) override {
-    /*
-// QScrollArea::scrollContentsBy(dx, dy);
-y -= dy;
-qDebug() << "scroll contents by" << dx << "x" << dy << "height" << height();
-qDebug() << "new y" << y;
-
-updateVisibleItems(y, height());
-  */
-  }
-
-  void valueChanged(int value) {
-    qDebug() << "value" << value;
-    updateVisibleItems(value, height());
-  }
+  void valueChanged(int value) { updateVisibleItems(value, height()); }
 
   int getPreviousSelected() {
-    if (currentSelectionIndex == 0)
-      return currentSelectionIndex;
+    if (currentSelectionIndex == 0) return currentSelectionIndex;
 
     int previous = currentSelectionIndex - 1;
 
-    while (previous >= 0 && !virtualItems.at(previous).item->isSelectable())
-      ++previous;
+    while (previous >= 0 && !items.at(previous).item->isSelectable())
+      --previous;
 
     return previous;
   }
 
   int getNextSelected() {
-    if (currentSelectionIndex == virtualItems.size() - 1)
-      return currentSelectionIndex;
+    if (currentSelectionIndex == items.size() - 1) return currentSelectionIndex;
 
     int next = currentSelectionIndex + 1;
 
-    while (currentSelectionIndex < virtualItems.size() &&
-           !virtualItems.at(next).item->isSelectable())
+    while (currentSelectionIndex < items.size() && !items.at(next).item->isSelectable())
       ++next;
 
     return next;
   }
 
-  bool isInViewport() { auto value = verticalScrollBar()->value(); }
-
   void selectItem(int selectionIndex) {
-    if (selectionIndex >= virtualItems.size())
-      return;
+    if (selectionIndex < 0 || selectionIndex >= items.size()) return;
 
     qDebug() << "selecting" << selectionIndex;
 
-    if (auto previousItem = visibleWidgets.value(currentSelectionIndex)) {
-      previousItem->setSelected(false);
-    }
+    if (auto previousItem = visibleWidgets.value(currentSelectionIndex)) { previousItem->setSelected(false); }
 
-    if (auto nextItem = visibleWidgets.value(selectionIndex)) {
-      nextItem->setSelected(true);
-    }
+    if (auto nextItem = visibleWidgets.value(selectionIndex)) { nextItem->setSelected(true); }
 
-    auto &newItem = virtualItems.at(selectionIndex);
+    auto &newItem = items.at(selectionIndex);
+    auto scrollHeight = verticalScrollBar()->value();
 
-    auto scrollValue = verticalScrollBar()->value();
-
-    int targetOffset = newItem.offset;
-
-    int scrollOffset = scrollValue + height();
-
-    qDebug() << QString("%1 > %2").arg(targetOffset).arg(scrollOffset);
-
-    if (newItem.offset < scrollOffset) {
-      int space = scrollOffset - newItem.offset;
-      int height = newItem.item->height();
-
-      if (space < height) {
-        verticalScrollBar()->setValue(scrollValue + height - space);
-      }
-    }
-
-    if (targetOffset > scrollOffset) {
-      verticalScrollBar()->setValue(scrollValue + targetOffset - scrollOffset);
-    }
+    qDebug() << "item=" << newItem.offset << "height=" << scrollHeight;
 
     currentSelectionIndex = selectionIndex;
 
-    emit selectionChanged(*virtualItems.at(selectionIndex).item);
+    if (newItem.offset <= scrollHeight || newItem.offset - scrollHeight < newItem.item->height()) {
+      auto distance = scrollHeight - newItem.offset;
+
+      qDebug() << distance;
+      scrollBar->setValue(scrollHeight - distance - newItem.item->height() - SCROLL_GAP);
+      qDebug() << "scroll up";
+      // scroll up
+    } else if ((newItem.offset - scrollHeight) > (height() - newItem.item->height())) {
+      // scroll down
+      auto distance = abs(newItem.offset - scrollHeight - height());
+      scrollBar->setValue(scrollHeight + distance + SCROLL_GAP);
+
+      qDebug() << distance;
+      qDebug() << "scroll down";
+    }
+
+    emit selectionChanged(*items.at(selectionIndex).item);
   }
 
   void updateVisibleItems(int y, int height) {
-    if (virtualItems.isEmpty())
-      return;
+    if (items.isEmpty()) return;
 
     int startIndex = 0;
 
-    while (startIndex < virtualItems.size() - 1 &&
-           virtualItems.at(startIndex).offset < y)
+    while (startIndex < items.size() - 1 && items.at(startIndex).offset < y)
       ++startIndex;
 
     int endIndex = startIndex;
-    int startOffset = virtualItems.at(endIndex).offset;
+    int startOffset = items.at(endIndex).offset;
 
-    while (endIndex < virtualItems.size() - 1 &&
-           virtualItems.at(endIndex).offset - startOffset < height)
+    while (endIndex < items.size() - 1 && items.at(endIndex).offset - startOffset < height)
       ++endIndex;
 
     qDebug() << "range" << startIndex << "to" << endIndex;
-
     qDebug() << "start" << startIndex << "end" << endIndex;
 
     if (startIndex > 1) {
-      container->spacer->setFixedHeight(virtualItems.at(startIndex - 1).offset);
+      container->spacer->setFixedHeight(items.at(startIndex - 1).offset);
     } else {
       container->spacer->setFixedHeight(0);
     }
@@ -306,34 +291,38 @@ updateVisibleItems(y, height());
     }
 
     for (int i = startIndex; i <= endIndex; ++i) {
-      if (visibleWidgets.contains(i))
-        continue;
+      if (auto widget = visibleWidgets.value(i)) { continue; }
 
-      auto &item = virtualItems.at(i).item;
+      auto &item = items.at(i).item;
       auto widget = item->createItem();
 
-      if (!widget)
-        continue;
+      if (!widget) continue;
 
-      auto listItemWidget = new VirtualListItemWidget();
+      auto listItemWidget = new VirtualListItemWidget(container);
+
+      listItemWidget->setSelectable(item->isSelectable());
+
+      connect(listItemWidget, &VirtualListItemWidget::selected, this, [this, i]() { selectItem(i); });
+      connect(listItemWidget, &VirtualListItemWidget::hovered, this,
+              [this, i, listItemWidget](bool hovered) { listItemWidget->setHovered(hovered); });
 
       listItemWidget->setFixedHeight(item->height());
       listItemWidget->setWidget(widget);
 
-      if (currentSelectionIndex == i)
-        listItemWidget->setSelected(true);
+      if (currentSelectionIndex == i) listItemWidget->setSelected(true);
 
       container->layout->insertWidget(i - startIndex + 1, listItemWidget);
       visibleWidgets.insert(i, listItemWidget);
     }
-  }
 
-  /*
-  void resizeEvent(QResizeEvent *event) override {
-    QScrollArea::resizeEvent(event);
-    updateVisibleItems(y, event->size().height());
+    QTimer::singleShot(0, [this]() {
+      for (auto widget : visibleWidgets) {
+        auto hovered = widget->rect().contains(widget->mapFromGlobal(QCursor::pos()));
+
+        widget->setHovered(hovered);
+      }
+    });
   }
-  */
 
   bool eventFilter(QObject *, QEvent *event) override {
     if (event->type() == QEvent::KeyPress) {
@@ -347,7 +336,10 @@ updateVisibleItems(y, height());
       case Qt::Key_Down:
         selectItem(getNextSelected());
         return true;
-        break;
+      case Qt::Key_Return:
+      case Qt::Key_Enter:
+        activateSelectedItem();
+        return true;
       default:
         break;
       }
@@ -356,31 +348,16 @@ updateVisibleItems(y, height());
     return false;
   }
 
-public:
-  VirtualListWidget() : container(new VirtualListContainer) {
-    installEventFilter(this);
-    setFrameShape(QFrame::NoFrame);
-    setWidgetResizable(true);
-    setWidget(container);
-    container->setAutoFillBackground(false);
+  void activateSelectedItem() {
+    qDebug() << "Activate selected";
+    if (currentSelectionIndex >= items.size()) return;
 
-    connect(verticalScrollBar(), &QScrollBar::valueChanged, this,
-            &VirtualListWidget::valueChanged);
-  }
-
-  void setModel(VirtualListModel *newModel) {
-    if (model)
-      model->deleteLater();
-    model = newModel;
-    connect(model, &VirtualListModel::commitReset, this,
-            &VirtualListWidget::setItems);
+    emit itemActivated(*items.at(currentSelectionIndex).item);
   }
 
   void clear() {
     while (container->layout->count() > 1) {
-      if (auto item = container->layout->takeAt(1)) {
-        item->widget()->deleteLater();
-      }
+      if (auto item = container->layout->takeAt(1)) { item->widget()->deleteLater(); }
     }
     visibleWidgets.clear();
   }
@@ -396,8 +373,8 @@ public:
       offset += item->height();
     }
 
-    this->virtualItems = virtualItems;
-    container->setMinimumHeight(offset);
+    this->items = virtualItems;
+    scrollBar->setMaximum(offset);
 
     if (verticalScrollBar()->value() > 0) {
       verticalScrollBar()->setValue(0);
@@ -407,14 +384,32 @@ public:
 
     int firstSelected = 0;
 
-    while (firstSelected < virtualItems.size() &&
-           !virtualItems.at(firstSelected).item->isSelectable()) {
+    while (firstSelected < virtualItems.size() && !virtualItems.at(firstSelected).item->isSelectable()) {
       ++firstSelected;
     }
 
     selectItem(firstSelected);
   }
 
+public:
+  VirtualListWidget() : container(new VirtualListContainer), scrollBar(verticalScrollBar()) {
+    installEventFilter(this);
+    setFrameShape(QFrame::NoFrame);
+    setFocusPolicy(Qt::NoFocus);
+    setWidgetResizable(true);
+    setWidget(container);
+    container->setAutoFillBackground(false);
+
+    connect(verticalScrollBar(), &QScrollBar::valueChanged, this, &VirtualListWidget::valueChanged);
+  }
+
+  void setModel(VirtualListModel *newModel) {
+    if (model) model->deleteLater();
+    model = newModel;
+    connect(model, &VirtualListModel::commitReset, this, &VirtualListWidget::setItems);
+  }
+
 signals:
   void selectionChanged(const AbstractNativeListItem &);
+  void itemActivated(const AbstractNativeListItem &);
 };

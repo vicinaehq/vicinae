@@ -1,14 +1,15 @@
 #pragma once
 #include "app.hpp"
 #include "ui/test-list.hpp"
+#include "ui/virtual-list.hpp"
 #include "view.hpp"
 
 class NavigationListView : public View {
   AppWindow &app;
-  TestList *list;
+  VirtualListWidget *list;
 
 protected:
-  AbstractTestListModel *model;
+  VirtualListModel *model;
 
 public:
   void selectionChanged(const AbstractNativeListItem &item) {
@@ -21,22 +22,16 @@ public:
     auto actions = item.createActions();
     auto size = actions.size();
 
-    if (size > 0)
-      actions[0]->setShortcut(
-          KeyboardShortcutModel{.key = "return", .modifiers = {}});
-    if (size > 1)
-      actions[1]->setShortcut(
-          KeyboardShortcutModel{.key = "return", .modifiers = {"ctrl"}});
+    if (size > 0) actions[0]->setShortcut(KeyboardShortcutModel{.key = "return", .modifiers = {}});
+    if (size > 1) actions[1]->setShortcut(KeyboardShortcutModel{.key = "return", .modifiers = {"ctrl"}});
 
     setSignalActions(actions);
   }
 
   NavigationListView(AppWindow &app)
-      : View(app), app(app), list(new TestList),
-        model(new AbstractTestListModel) {
-    connect(list, &TestList::selectionChanged, this,
-            &NavigationListView::selectionChanged);
-    forwardInputEvents(list->listWidget());
+      : View(app), app(app), list(new VirtualListWidget), model(new VirtualListModel) {
+    connect(list, &VirtualListWidget::selectionChanged, this, &NavigationListView::selectionChanged);
+    forwardInputEvents(list);
     list->setModel(model);
     widget = list;
   }

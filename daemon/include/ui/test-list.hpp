@@ -70,7 +70,7 @@ public:
     return nullptr;
   }
   virtual QWidget *createItem() const = 0;
-  virtual QWidget *updateItem() const { return nullptr; };
+  virtual QWidget *updateItem(QWidget *current) const { return createItem(); };
 
   virtual std::unique_ptr<CompleterData> createCompleter() const {
     return nullptr;
