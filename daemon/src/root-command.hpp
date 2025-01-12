@@ -2,7 +2,6 @@
 
 #include "app-database.hpp"
 #include "app.hpp"
-#include "calculator-database.hpp"
 #include "calculator-history-command.hpp"
 #include "calculator.hpp"
 #include "command.hpp"
@@ -143,22 +142,18 @@ public:
   ColorListItem(QColor color) : color(color) {}
 };
 
-class BuiltinCommandListItem : public AbstractNativeListItem {
+class BuiltinCommandListItem : public StandardListItem {
   BuiltinCommand cmd;
   QString text;
-
-  QWidget *createItem() const override {
-    return new ListItemWidget(
-        ImageViewer::createFromModel(ThemeIconModel{.iconName = cmd.iconName}, {25, 25}), cmd.name, "",
-        "Command");
-  }
 
   QList<AbstractAction *> createActions() const override {
     return {new OpenBuiltinCommandAction(cmd, "Open command", text)};
   }
 
 public:
-  BuiltinCommandListItem(const BuiltinCommand &cmd, const QString &text = "") : cmd(cmd), text(text) {}
+  BuiltinCommandListItem(const BuiltinCommand &cmd, const QString &text = "")
+      : StandardListItem(cmd.name, "", "Command", ThemeIconModel{.iconName = cmd.iconName}), cmd(cmd),
+        text(text) {}
 };
 
 static BuiltinCommand calculatorHistoryCommand{
@@ -220,15 +215,9 @@ class RootView : public NavigationListView {
         : link(link), query(fallbackQuery) {}
   };
 
-  class AppListItem : public AbstractNativeListItem {
+  class AppListItem : public StandardListItem {
     std::shared_ptr<DesktopEntry> app;
     Service<AppDatabase> appDb;
-
-    QWidget *createItem() const override {
-      return new ListItemWidget(
-          ImageViewer::createFromModel(ThemeIconModel{.iconName = app->iconName()}, {25, 25}), app->name, "",
-          "Application");
-    }
 
     QList<AbstractAction *> createActions() const override {
       QList<AbstractAction *> actions;
@@ -252,7 +241,8 @@ class RootView : public NavigationListView {
 
   public:
     AppListItem(const std::shared_ptr<DesktopEntry> &app, Service<AppDatabase> appDb)
-        : app(app), appDb(appDb) {}
+        : StandardListItem(app->name, "", "Application", ThemeIconModel{.iconName = app->iconName()}),
+          app(app), appDb(appDb) {}
     ~AppListItem() { qDebug() << "destroy app list item"; }
   };
 

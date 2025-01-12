@@ -15,7 +15,9 @@
 #include "icon-cache-service.hpp"
 #include "ui/action_popover.hpp"
 #include "ui/calculator-list-item-widget.hpp"
+#include "ui/list-view.hpp"
 #include "ui/status_bar.hpp"
+#include "ui/test-list.hpp"
 #include "ui/top_bar.hpp"
 
 #include <qmainwindow.h>
@@ -116,10 +118,9 @@ struct OpenAppAction : public AbstractAction {
     app.closeWindow(true);
   }
 
-  OpenAppAction(const std::shared_ptr<DesktopExecutable> &app,
-                const QString &title, const QList<QString> args)
-      : AbstractAction(title, ThemeIconModel{.iconName = app->iconName()}),
-        application(app), args(args) {}
+  OpenAppAction(const std::shared_ptr<DesktopExecutable> &app, const QString &title,
+                const QList<QString> args)
+      : AbstractAction(title, ThemeIconModel{.iconName = app->iconName()}), application(app), args(args) {}
 };
 
 class CopyTextAction : public AbstractAction {
@@ -133,8 +134,7 @@ public:
   }
 
   CopyTextAction(const QString &title, const QString &text)
-      : AbstractAction(title, ThemeIconModel{.iconName = "clipboard"}),
-        text(text) {}
+      : AbstractAction(title, ThemeIconModel{.iconName = "clipboard"}), text(text) {}
 };
 
 class CopyCalculatorResultAction : public CopyTextAction {
@@ -142,12 +142,34 @@ class CopyCalculatorResultAction : public CopyTextAction {
 
 public:
   void execute(AppWindow &app) override {
-    app.calculatorDatabase->saveComputation(item.expression,
-                                            QString::number(item.result));
+    app.calculatorDatabase->saveComputation(item.expression, QString::number(item.result));
     CopyTextAction::execute(app);
   }
 
-  CopyCalculatorResultAction(const CalculatorItem &item, const QString &title,
-                             const QString &copyText)
+  CopyCalculatorResultAction(const CalculatorItem &item, const QString &title, const QString &copyText)
       : CopyTextAction(title, copyText), item(item) {}
+};
+
+class StandardListItem : public AbstractNativeListItem {
+  QString title;
+  QString subtitle;
+  QString kind;
+  ImageLikeModel imageLike;
+
+  QWidget *createItem() const override {
+    return new ListItemWidget(ImageViewer::createFromModel(imageLike, {25, 25}), title, "", kind);
+  }
+
+  QWidget *updateItem(QWidget *current) const override {
+    auto widget = static_cast<ListItemWidget *>(current);
+
+    return createItem();
+  }
+
+  int height() const override { return 40; }
+
+public:
+  StandardListItem(const QString &title, const QString &subtitle, const QString &kind,
+                   const ImageLikeModel &imageLike)
+      : title(title), subtitle(subtitle), kind(kind), imageLike(imageLike) {}
 };

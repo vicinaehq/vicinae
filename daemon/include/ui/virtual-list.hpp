@@ -173,8 +173,6 @@ public:
   QVBoxLayout *layout;
   QWidget *spacer;
 
-  void mouseMoveEvent(QMouseEvent *event) override { qDebug() << "mouse virtual"; }
-
   VirtualListContainer() : layout(new QVBoxLayout), spacer(new QWidget) {
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setAlignment(Qt::AlignTop);
@@ -232,7 +230,7 @@ private:
     auto &newItem = items.at(selectionIndex);
     auto scrollHeight = verticalScrollBar()->value();
 
-    qDebug() << "item=" << newItem.offset << "height=" << scrollHeight;
+    // qDebug() << "item=" << newItem.offset << "height=" << scrollHeight;
 
     currentSelectionIndex = selectionIndex;
 
