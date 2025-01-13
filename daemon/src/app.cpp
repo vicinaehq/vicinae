@@ -44,6 +44,7 @@ bool AppWindow::eventFilter(QObject *obj, QEvent *event) {
       } else {
         qDebug() << "reset text";
         topBar->input->clear();
+        emit topBar->input->textEdited("");
       }
       return true;
     }
@@ -128,7 +129,7 @@ void AppWindow::popToRootView() {
 }
 
 void AppWindow::disconnectView(View &view) {
-  disconnect(topBar->input, &QLineEdit::textChanged, &view, &View::onSearchChanged);
+  disconnect(topBar->input, &QLineEdit::textEdited, &view, &View::onSearchChanged);
   disconnect(actionPopover, &ActionPopover::actionPressed, &view, &View::onActionActivated);
 
   // view->app
@@ -143,7 +144,7 @@ void AppWindow::disconnectView(View &view) {
 
 void AppWindow::connectView(View &view) {
   // app->view
-  connect(topBar->input, &QLineEdit::textChanged, &view, &View::onSearchChanged);
+  connect(topBar->input, &QLineEdit::textEdited, &view, &View::onSearchChanged);
   connect(actionPopover, &ActionPopover::actionPressed, &view, &View::onActionActivated);
 
   // view->app
@@ -199,7 +200,7 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
   topBar->input->show();
   topBar->input->setFocus();
   topBar->input->setText(opts.searchQuery);
-  emit topBar->input->textChanged(opts.searchQuery);
+  emit topBar->input->textEdited(opts.searchQuery);
   view->onMount();
 }
 

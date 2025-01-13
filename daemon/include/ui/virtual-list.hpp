@@ -364,6 +364,8 @@ private:
     QList<VirtualListItem> virtualItems;
     int offset = 0;
 
+    qDebug() << "clear items";
+
     clear();
 
     for (auto &item : items) {
@@ -396,6 +398,7 @@ public:
     setFocusPolicy(Qt::NoFocus);
     setWidgetResizable(true);
     setWidget(container);
+    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     container->setAutoFillBackground(false);
 
     connect(verticalScrollBar(), &QScrollBar::valueChanged, this, &VirtualListWidget::valueChanged);
