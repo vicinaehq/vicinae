@@ -47,7 +47,11 @@ qt_add_executable(${TARGET}
 	include/extend/extension-detail-view.hpp
 
 	include/ui/virtual-list.hpp
+	include/create-quicklink-command.hpp
+
+
 	
+	include/ui/form.hpp
 	include/ui/list-view.hpp
 	include/ui/empty-view.hpp
 

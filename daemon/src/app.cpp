@@ -22,7 +22,7 @@
 #include <qwidget.h>
 
 bool AppWindow::eventFilter(QObject *obj, QEvent *event) {
-  if (obj == topBar->input && event->type() == QEvent::KeyPress) {
+  if (event->type() == QEvent::KeyPress) {
     auto keyEvent = static_cast<QKeyEvent *>(event);
     auto key = keyEvent->key();
 

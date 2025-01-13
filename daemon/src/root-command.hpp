@@ -5,6 +5,7 @@
 #include "calculator-history-command.hpp"
 #include "calculator.hpp"
 #include "command.hpp"
+#include "create-quicklink-command.hpp"
 #include "extend/extension-command.hpp"
 #include "extension_manager.hpp"
 #include "files-command.hpp"
@@ -310,7 +311,7 @@ class RootView : public NavigationListView {
       {.name = "Create quicklink",
        .iconName = ":assets/icons/quicklink.png",
        .factory = [](AppWindow &app,
-                     const QString &s) { return new SingleViewCommand<CalculatorHistoryView>; }},
+                     const QString &s) { return new SingleViewCommand<CreateQuicklinkCommandView>; }},
       {.name = "Manage processes",
        .iconName = ":assets/icons/process-manager.png",
        .factory = [](AppWindow &app,
