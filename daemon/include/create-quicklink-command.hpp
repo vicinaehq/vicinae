@@ -1,9 +1,11 @@
 #pragma once
+#include "app-database.hpp"
 #include "app.hpp"
 #include "ui/action_popover.hpp"
 #include "ui/form.hpp"
 #include "view.hpp"
 #include <functional>
+#include <qnamespace.h>
 
 class CallbackAction : public AbstractAction {
   using SubmitHandler = std::function<void(AppWindow &app)>;
@@ -17,18 +19,37 @@ public:
 };
 
 class CreateQuicklinkCommandView : public View {
+  Service<AppDatabase> appDb;
   FormWidget *form;
   FormInputWidget *name;
   FormInputWidget *link;
-  FormInputWidget *description;
+  FormDropdown *appSelector;
+
+  void handleAppSelectorTextChanged(const QString &text) {
+    appSelector->model()->beginReset();
+    for (const auto &app : appDb.apps) {
+      if (!app->name.contains(text, Qt::CaseInsensitive)) continue;
+
+      appSelector->model()->addItem(std::make_shared<AppListItem>(app, appDb));
+
+      qDebug() << "app selector changed";
+    }
+    appSelector->model()->endReset();
+  }
 
 public:
   CreateQuicklinkCommandView(AppWindow &app)
-      : View(app), form(new FormWidget), name(new FormInputWidget("name")), link(new FormInputWidget("link")),
-        description(new FormInputWidget("description")) {
+      : View(app), appDb(service<AppDatabase>()), form(new FormWidget), name(new FormInputWidget("name")),
+        link(new FormInputWidget("link")), appSelector(new FormDropdown) {
+    name->setName("Name");
     form->addInput(name);
+    link->setName("URL");
     form->addInput(link);
-    form->addInput(description);
+    form->addInput(appSelector);
+
+    connect(appSelector, &FormDropdown::textChanged, this,
+            &CreateQuicklinkCommandView::handleAppSelectorTextChanged);
+
     widget = form;
   }
 
@@ -41,8 +62,7 @@ public:
   }
 
   void submit(AppWindow &app) {
-    qDebug() << "creating link" << name->text() << "for url" << link->text() << "description"
-             << description->text();
+    qDebug() << "creating link" << name->text() << "for url" << link->text() << "description";
     app.statusBar->setToast("Submitted");
   }
 };

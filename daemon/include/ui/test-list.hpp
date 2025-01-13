@@ -5,6 +5,7 @@
 #include "ui/action_popover.hpp"
 #include "ui/native-list.hpp"
 #include "ui/top_bar.hpp"
+#include "ui/virtual-list.hpp"
 #include <qabstractitemmodel.h>
 #include <qboxlayout.h>
 #include <qlabel.h>
@@ -44,8 +45,8 @@ class TestDetailWidget : public QWidget {
 
 public:
   TestDetailWidget(const AbstractNativeListItemDetail &detail)
-      : layout(new QVBoxLayout), view(detail.createView()),
-        metadata(new HorizontalMetadata()), divider(new HDivider) {
+      : layout(new QVBoxLayout), view(detail.createView()), metadata(new HorizontalMetadata()),
+        divider(new HDivider) {
     layout->addWidget(view, 1);
     layout->addWidget(divider);
     layout->addWidget(metadata);
@@ -64,19 +65,11 @@ public:
   }
 };
 
-class AbstractNativeListItem : public QObject {
+class AbstractNativeListItem : public QObject, public AbstractVirtualListItem {
 public:
-  virtual std::unique_ptr<AbstractNativeListItemDetail> createDetail() const {
-    return nullptr;
-  }
-  virtual QWidget *createItem() const = 0;
-  virtual QWidget *updateItem(QWidget *current) const { return createItem(); };
-
-  virtual std::unique_ptr<CompleterData> createCompleter() const {
-    return nullptr;
-  }
+  virtual std::unique_ptr<AbstractNativeListItemDetail> createDetail() const { return nullptr; }
+  virtual std::unique_ptr<CompleterData> createCompleter() const { return nullptr; }
   virtual size_t id() const { return 0; };
-  virtual bool isSelectable() const { return true; };
 
   // a unique role that differenciate two different kinds of list widget,
   // usually rendering a different widget. This determines whether the list
@@ -118,8 +111,7 @@ public:
   }
 
   void endSection() {
-    if (!currentSection || currentSection->items.isEmpty())
-      return;
+    if (!currentSection || currentSection->items.isEmpty()) return;
 
     m_items.push_back(*currentSection);
     currentSection.reset();
@@ -138,9 +130,7 @@ public:
 
   const QList<TestListItem> &items() const { return m_items; }
 
-  const AbstractNativeListItem &row(int idx) {
-    return *flatItems.at(idx).get();
-  }
+  const AbstractNativeListItem &row(int idx) { return *flatItems.at(idx).get(); }
 
   void endReset() {
     endSection();
@@ -179,8 +169,7 @@ class TestList : public QWidget {
 
 private slots:
   void currentItemChanged(QListWidgetItem *next, QListWidgetItem *prev) {
-    if (!itemMap.contains(next))
-      return;
+    if (!itemMap.contains(next)) return;
 
     auto item = itemMap.value(next);
 
@@ -208,8 +197,7 @@ private slots:
   void itemDeleted(int idx) {
     auto item = list->item(idx);
 
-    if (auto widget = list->itemWidget(item))
-      widget->deleteLater();
+    if (auto widget = list->itemWidget(item)) widget->deleteLater();
 
     list->takeItem(idx);
   }
@@ -223,8 +211,7 @@ private slots:
 
         headerItem->setFlags(headerItem->flags() & !Qt::ItemIsSelectable);
         list->addItem(headerItem);
-        auto headerWidget =
-            new ListSectionHeader(section->title, "", section->items.size());
+        auto headerWidget = new ListSectionHeader(section->title, "", section->items.size());
         list->setItemWidget(headerItem, headerWidget);
         headerItem->setSizeHint(headerWidget->sizeHint());
 
@@ -233,9 +220,7 @@ private slots:
         }
       }
 
-      if (auto listItem = std::get_if<AbstractNativeListItem *>(&item)) {
-        addListItem(*listItem);
-      }
+      if (auto listItem = std::get_if<AbstractNativeListItem *>(&item)) { addListItem(*listItem); }
     }
 
     if (list->count() == 0) {
@@ -250,8 +235,7 @@ private slots:
     for (int i = 0; i != list->count(); ++i) {
       auto item = list->item(i);
 
-      if (!item->flags().testFlag(Qt::ItemIsSelectable))
-        continue;
+      if (!item->flags().testFlag(Qt::ItemIsSelectable)) continue;
 
       list->setCurrentItem(item);
       break;
@@ -261,17 +245,14 @@ private slots:
 public:
   void setModel(AbstractTestListModel *model) {
     this->model = model;
-    connect(model, &AbstractTestListModel::itemsChanged, this,
-            &TestList::modelItemsChanged);
-    connect(model, &AbstractTestListModel::itemDeleted, this,
-            &TestList::itemDeleted);
+    connect(model, &AbstractTestListModel::itemsChanged, this, &TestList::modelItemsChanged);
+    connect(model, &AbstractTestListModel::itemDeleted, this, &TestList::itemDeleted);
   }
 
   QListWidget *listWidget() { return list; }
 
   TestList()
-      : model(nullptr), splitter(new QHBoxLayout), list(new QListWidget),
-        detailContainer(new VContainer) {
+      : model(nullptr), splitter(new QHBoxLayout), list(new QListWidget), detailContainer(new VContainer) {
     splitter->addWidget(list, 1);
     splitter->addWidget(new VDivider);
     splitter->addWidget(detailContainer, 2);
@@ -286,8 +267,7 @@ public:
     list->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
     setLayout(splitter);
-    connect(list, &QListWidget::currentItemChanged, this,
-            &TestList::currentItemChanged);
+    connect(list, &QListWidget::currentItemChanged, this, &TestList::currentItemChanged);
   }
 
 signals:

@@ -2,16 +2,15 @@
 
 #include "app.hpp"
 #include "command.hpp"
+#include "navigation-list-view.hpp"
 #include "process-manager-service.hpp"
 #include "ui/test-list.hpp"
 #include "ui/virtual-list.hpp"
 #include "view.hpp"
 #include <qnamespace.h>
 
-class ManageProcessesMainView : public View {
+class ManageProcessesMainView : public NavigationListView {
   Service<ProcessManagerService> processManager;
-  VirtualListModel *model;
-  VirtualListWidget *list;
 
   class ProcListItem : public AbstractNativeListItem {
     ProcessInfo info;
@@ -49,17 +48,7 @@ class ManageProcessesMainView : public View {
 
 public:
   ManageProcessesMainView(AppWindow &app)
-      : View(app), model(new VirtualListModel), list(new VirtualListWidget),
-        processManager(service<ProcessManagerService>()) {
-    forwardInputEvents(list);
-    list->setModel(model);
-    widget = list;
-
-    connect(list, &VirtualListWidget::itemActivated, this,
-            [](const AbstractNativeListItem &item) { qDebug() << "item activated"; });
-    connect(list, &VirtualListWidget::selectionChanged, this,
-            [](const AbstractNativeListItem &item) { qDebug() << "Selection changed"; });
-  }
+      : NavigationListView(app), processManager(service<ProcessManagerService>()) {}
 };
 
 class ManageProcessesCommand : public ViewCommand {

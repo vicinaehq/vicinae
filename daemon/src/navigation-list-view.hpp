@@ -12,7 +12,9 @@ protected:
   VirtualListModel *model;
 
 public:
-  void selectionChanged(const AbstractNativeListItem &item) {
+  void selectionChanged(const AbstractVirtualListItem &listItem) {
+    auto &item = static_cast<const AbstractNativeListItem &>(listItem);
+
     if (auto completer = item.createCompleter()) {
       app.topBar->activateQuicklinkCompleter(*completer.get());
     } else {

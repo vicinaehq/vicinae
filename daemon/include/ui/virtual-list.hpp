@@ -26,19 +26,27 @@
 
 static const int SCROLL_GAP = 5;
 
-struct VirtualListSection {
-  QString name;
-  QList<std::shared_ptr<AbstractNativeListItem>> items;
+class AbstractVirtualListItem {
+public:
+  virtual QWidget *createItem() const = 0;
+  virtual QWidget *updateItem(QWidget *widget) const { return createItem(); };
+  virtual bool isSelectable() const { return true; }
+  virtual int height() const = 0;
 };
 
-using VirtualListChild = std::variant<VirtualListSection, std::shared_ptr<AbstractNativeListItem>>;
+struct VirtualListSection {
+  QString name;
+  QList<std::shared_ptr<AbstractVirtualListItem>> items;
+};
+
+using VirtualListChild = std::variant<VirtualListSection, std::shared_ptr<AbstractVirtualListItem>>;
 
 struct VirtualListItem {
   int offset;
-  std::shared_ptr<AbstractNativeListItem> item;
+  std::shared_ptr<AbstractVirtualListItem> item;
 };
 
-class SectionLabelListItem : public AbstractNativeListItem {
+class SectionLabelListItem : public AbstractVirtualListItem {
   QString section;
   int count;
 
@@ -57,7 +65,7 @@ public:
 class VirtualListModel : public QObject {
   Q_OBJECT
 
-  using Item = std::shared_ptr<AbstractNativeListItem>;
+  using Item = std::shared_ptr<AbstractVirtualListItem>;
 
   struct Section {
     QString name;
@@ -96,7 +104,7 @@ public:
     }
   }
 
-  void addItem(const std::shared_ptr<AbstractNativeListItem> &item) {
+  void addItem(const std::shared_ptr<AbstractVirtualListItem> &item) {
     if (currentSection) {
       currentSection->items << item;
       return;
@@ -360,7 +368,7 @@ private:
     visibleWidgets.clear();
   }
 
-  void setItems(const QList<std::shared_ptr<AbstractNativeListItem>> &items) {
+  void setItems(const QList<std::shared_ptr<AbstractVirtualListItem>> &items) {
     QList<VirtualListItem> virtualItems;
     int offset = 0;
 
@@ -392,7 +400,8 @@ private:
   }
 
 public:
-  VirtualListWidget() : container(new VirtualListContainer), scrollBar(verticalScrollBar()) {
+  VirtualListWidget(QWidget *parent = nullptr)
+      : QScrollArea(parent), container(new VirtualListContainer), scrollBar(verticalScrollBar()) {
     installEventFilter(this);
     setFrameShape(QFrame::NoFrame);
     setFocusPolicy(Qt::NoFocus);
@@ -411,6 +420,6 @@ public:
   }
 
 signals:
-  void selectionChanged(const AbstractNativeListItem &);
-  void itemActivated(const AbstractNativeListItem &);
+  void selectionChanged(const AbstractVirtualListItem &);
+  void itemActivated(const AbstractVirtualListItem &);
 };

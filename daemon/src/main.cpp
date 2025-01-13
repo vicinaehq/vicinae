@@ -131,7 +131,7 @@ QWidget.status-bar {
 	color: #222222;
 }
 
-QLineEdit.form-input {
+FormInputWidget > QLineEdit, FormDropdown > QLineEdit {
 	padding: 8px;
 	border: none;
 	border: 1px solid #222222;
