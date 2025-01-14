@@ -28,8 +28,7 @@ protected:
 
 public:
   Turbobox()
-      : inputField(new QLineEdit), searchField(new QLineEdit()),
-        popover(new QWidget(this, Qt::Popup)) {
+      : inputField(new QLineEdit), searchField(new QLineEdit()), popover(new QWidget(this, Qt::Popup)) {
     auto *layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
 
@@ -72,11 +71,9 @@ public:
 
     inputField->setProperty("class", "form-input");
 
-    connect(inputField, &QLineEdit::returnPressed, this,
-            &Turbobox::showPopover);
+    connect(inputField, &QLineEdit::returnPressed, this, &Turbobox::showPopover);
     connect(searchField, &QLineEdit::textChanged, this, &Turbobox::filterItems);
-    connect(listWidget, &QListWidget::itemActivated, this,
-            &Turbobox::selectItem);
+    connect(listWidget, &QListWidget::itemActivated, this, &Turbobox::selectItem);
   }
 
   bool eventFilter(QObject *obj, QEvent *event) override {
@@ -84,8 +81,7 @@ public:
       if (event->type() == QEvent::KeyPress) {
         auto key = static_cast<QKeyEvent *>(event)->key();
 
-        if (key == Qt::Key_Up || key == Qt::Key_Down || key == Qt::Key_Return ||
-            key == Qt::Key_Enter) {
+        if (key == Qt::Key_Up || key == Qt::Key_Down || key == Qt::Key_Return || key == Qt::Key_Enter) {
           QApplication::sendEvent(listWidget, event);
           return true;
         }
@@ -112,21 +108,16 @@ protected:
     // Filter items in the list
     listWidget->clear();
     for (const auto &item : items) {
-      if (item.contains(text, Qt::CaseInsensitive)) {
-        listWidget->addItem(item);
-      }
+      if (item.contains(text, Qt::CaseInsensitive)) { listWidget->addItem(item); }
     }
 
-    if (listWidget->count() > 0) {
-      listWidget->setCurrentRow(0);
-    }
+    if (listWidget->count() > 0) { listWidget->setCurrentRow(0); }
   }
 
 private slots:
   void showPopover() {
     // Position the popover just below the input field
-    const QPoint globalPos =
-        inputField->mapToGlobal(QPoint(0, inputField->height() + 10));
+    const QPoint globalPos = inputField->mapToGlobal(QPoint(0, inputField->height() + 10));
     popover->move(globalPos);
     popover->resize(inputField->width(), 300); // Adjust height as needed
     popover->show();
@@ -171,9 +162,7 @@ public:
   QAction *action = nullptr;
   std::shared_ptr<DesktopExecutable> selected;
 
-  AppTurbobox(Service<AppDatabase> appDb) : xdd(appDb) {
-    inputField->setText("Chromium");
-  }
+  AppTurbobox(Service<AppDatabase> appDb) : xdd(appDb) { inputField->setText("Chromium"); }
 
   void filterItems(const QString &text) override {
     listWidget->clear();
@@ -202,9 +191,7 @@ public:
       }
     }
 
-    if (listWidget->count() > 0) {
-      listWidget->setCurrentRow(0);
-    }
+    if (listWidget->count() > 0) { listWidget->setCurrentRow(0); }
   }
 
   void setSelected(std::shared_ptr<DesktopExecutable> app) {
@@ -213,8 +200,7 @@ public:
     auto label = new QLabel();
     auto icon = app->icon();
 
-    if (action)
-      inputField->removeAction(action);
+    if (action) inputField->removeAction(action);
 
     selected = app;
     action = inputField->addAction(icon, QLineEdit::LeadingPosition);
@@ -223,8 +209,7 @@ public:
   }
 
   void selectItem(QListWidgetItem *item) override {
-    auto widget =
-        static_cast<DesktopItemWidget *>(listWidget->itemWidget(item));
+    auto widget = static_cast<DesktopItemWidget *>(listWidget->itemWidget(item));
 
     setSelected(widget->app);
   }

@@ -81,6 +81,9 @@ public:
   void connectView(View &view);
   void closeWindow(bool popToRoot = false);
 
+  void selectPrimaryAction();
+  void selectSecondaryAction();
+
   template <typename T> Service<T> service() const;
 
   TopBar *topBar = nullptr;
@@ -94,6 +97,8 @@ public:
   void launchCommand(ViewCommand *cmd, const LaunchCommandOptions &opts = {});
 
   AppWindow(QWidget *parent = 0);
+  // bool eventFilter(QObject *obj, QEvent *event) override;
+  bool event(QEvent *event) override;
   bool eventFilter(QObject *obj, QEvent *event) override;
 
 public slots:

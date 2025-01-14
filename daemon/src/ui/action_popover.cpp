@@ -31,8 +31,7 @@ void ActionPopover::dispatchModel(const ActionPannelModel &model) {
 }
 
 QList<ActionPannelItem> ActionPopover::currentActions() const {
-  if (menuStack.isEmpty())
-    return {};
+  if (menuStack.isEmpty()) return {};
 
   return menuStack.top();
 }
@@ -58,9 +57,8 @@ void ActionPopover::renderItems(const QList<ActionData> &items) {
       str = lst.join(" + ");
     }
 
-    auto widget = new ActionListItemWidget(
-        ImageViewer::createFromModel(imageModel, {25, 25}), item.title, "",
-        str);
+    auto widget =
+        new ActionListItemWidget(ImageViewer::createFromModel(imageModel, {25, 25}), item.title, "", str);
 
     list->addItem(listItem);
     list->setItemWidget(listItem, widget);
@@ -89,8 +87,7 @@ itemMap.insert(listItem, item);
   for (int i = 0; i != list->count(); ++i) {
     auto item = list->item(i);
 
-    if (!item->flags().testFlag(Qt::ItemIsSelectable))
-      continue;
+    if (!item->flags().testFlag(Qt::ItemIsSelectable)) continue;
 
     list->setCurrentItem(item);
     break;
@@ -109,9 +106,7 @@ void ActionPopover::filterActions(const QString &text) {
   QList<AbstractAction *> filteredActions;
 
   for (auto action : signalActions) {
-    if (action->title.contains(text, Qt::CaseInsensitive)) {
-      filteredActions << action;
-    }
+    if (action->title.contains(text, Qt::CaseInsensitive)) { filteredActions << action; }
   }
 
   renderSignalItems(filteredActions);
@@ -140,9 +135,7 @@ void ActionPopover::itemActivated(QListWidgetItem *item) {
     action.execute();
   }
 
-  if (signalItemMap.contains(item)) {
-    emit actionExecuted(signalItemMap[item]);
-  }
+  if (signalItemMap.contains(item)) { emit actionExecuted(signalItemMap[item]); }
 
   hide();
 }
@@ -172,8 +165,7 @@ ActionPopover::ActionPopover(QWidget *parent) : QWidget(parent) {
   list->setSelectionMode(QAbstractItemView::SingleSelection);
   list->setFocusPolicy(Qt::NoFocus);
 
-  connect(list, &QListWidget::itemActivated, this,
-          &ActionPopover::itemActivated);
+  connect(list, &QListWidget::itemActivated, this, &ActionPopover::itemActivated);
 
   input->setPlaceholderText("Search actions");
   input->setTextMargins(5, 5, 5, 5);
@@ -197,25 +189,6 @@ void ActionPopover::setActions(const QList<ActionPannelItem> &actions) {
   menuStack.push(actions);
 }
 
-void ActionPopover::selectPrimary() {
-  for (const auto &item : menuStack.top()) {
-    if (auto model = std::get_if<ActionModel>(&item)) {
-      emit actionPressed(*model);
-      return;
-    }
-    if (auto model = std::get_if<ActionPannelSubmenuModel>(&item)) {
-    }
-    if (auto model = std::get_if<ActionPannelSectionModel>(&item)) {
-      if (model->actions.isEmpty()) {
-        auto &action = model->actions.at(0);
-
-        emit actionPressed(action);
-        return;
-      }
-    }
-  }
-}
-
 void ActionPopover::showActions() {
   input->setFocus();
   input->clear();
@@ -227,8 +200,7 @@ void ActionPopover::showActions() {
     return;
   }
 
-  qDebug() << "creating list with " << window->width() << "x"
-           << window->height();
+  qDebug() << "creating list with " << window->width() << "x" << window->height();
 
   if (!signalActions.isEmpty()) {
     renderSignalItems(signalActions);
@@ -242,8 +214,7 @@ void ActionPopover::showActions() {
 
   qDebug() << "width=" << parentGeo.width() << " height=" << parentGeo.height();
   qDebug() << "width2=" << width() << " height2=" << height();
-  qDebug() << "width2=" << geometry().width()
-           << " height2=" << geometry().height();
+  qDebug() << "width2=" << geometry().width() << " height2=" << geometry().height();
 
   setMinimumWidth(window->width() * 0.45);
   auto x = parentGeo.width() - width() - 10;

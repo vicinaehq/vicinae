@@ -5,6 +5,7 @@
 #include "ui/form.hpp"
 #include "view.hpp"
 #include <functional>
+#include <memory>
 #include <qnamespace.h>
 
 class CallbackAction : public AbstractAction {
@@ -16,6 +17,16 @@ public:
       : AbstractAction("Submit", {.iconName = "submit"}), handler(localHandler) {}
 
   void execute(AppWindow &app) override { handler(app); }
+};
+
+class AppSelectorItem : public AbstractFormDropdownItem {
+public:
+  std::shared_ptr<DesktopExecutable> app;
+
+  QIcon icon() const override { return app->icon(); }
+  QString displayName() const override { return app->name; }
+
+  AppSelectorItem(const std::shared_ptr<DesktopExecutable> &app) : app(app) {}
 };
 
 class CreateQuicklinkCommandView : public View {
@@ -30,7 +41,7 @@ class CreateQuicklinkCommandView : public View {
     for (const auto &app : appDb.apps) {
       if (!app->name.contains(text, Qt::CaseInsensitive)) continue;
 
-      appSelector->model()->addItem(std::make_shared<AppListItem>(app, appDb));
+      appSelector->model()->addItem(std::make_shared<AppSelectorItem>(app));
 
       qDebug() << "app selector changed";
     }
@@ -63,6 +74,15 @@ public:
 
   void submit(AppWindow &app) {
     qDebug() << "creating link" << name->text() << "for url" << link->text() << "description";
+    auto item = std::static_pointer_cast<AppSelectorItem>(appSelector->value());
+
+    if (!item) {
+      qDebug() << "no app selected";
+      return;
+    }
+
+    qDebug() << "app" << item->app->id;
+
     app.statusBar->setToast("Submitted");
   }
 };

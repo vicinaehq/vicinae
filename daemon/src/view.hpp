@@ -19,7 +19,7 @@ class View : public QObject {
   QList<IInputHandler *> inputHandlers;
 
   bool eventFilter(QObject *obj, QEvent *event) override {
-    if (obj == app.topBar->input && event->type() == QEvent::KeyPress) {
+    if (event->type() == QEvent::KeyPress) {
       auto keyEvent = static_cast<QKeyEvent *>(event);
       auto key = keyEvent->key();
 
@@ -53,7 +53,7 @@ class View : public QObject {
 protected:
 public:
   QWidget *widget;
-  View(AppWindow &app) : app(app) {}
+  View(AppWindow &app) : app(app) { installEventFilter(this); }
 
   void forwardInputEvents(QWidget *widget) {
     for (const auto &w : inputFwdTo) {
@@ -93,6 +93,8 @@ public:
     }
   }
 
+  void showActionPannel() {}
+
   void hideInput() {
     app.topBar->input->hide();
     app.topBar->input->setReadOnly(true);
@@ -107,8 +109,8 @@ public slots:
   virtual void onActionActivated(ActionModel model) {}
 
 signals:
-  void launchCommand(ViewCommand *command, const LaunchCommandOptions &opts = {});
   void activatePrimaryAction();
+  void launchCommand(ViewCommand *command, const LaunchCommandOptions &opts = {});
   void pushView(View *view, const PushViewOptions &options = {});
   void pop();
   void popToRoot();

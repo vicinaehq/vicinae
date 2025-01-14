@@ -1,10 +1,8 @@
 #pragma once
 #include "ui/native-list.hpp"
-#include "ui/test-list.hpp"
 #include <QBoxLayout>
 #include <QScrollArea>
 #include <QScrollBar>
-#include <locale>
 #include <qboxlayout.h>
 #include <qcoreevent.h>
 #include <qevent.h>
@@ -134,7 +132,13 @@ class VirtualListItemWidget : public QFrame {
   void leaveEvent(QEvent *event) override { emit hovered(false); }
 
   void mousePressEvent(QMouseEvent *event) override {
+    if (!selectable) return;
     if (event->button() == Qt::LeftButton) { emit selected(); }
+  }
+
+  void mouseDoubleClickEvent(QMouseEvent *event) override {
+    if (!selectable) return;
+    if (event->button() == Qt::LeftButton) { emit leftDoubleClick(); }
   }
 
 public:
@@ -165,13 +169,13 @@ public:
   void setWidget(QWidget *w) {
     widget = w;
     w->setParent(this);
-    qDebug() << "size" << size();
     w->setFixedSize(size());
   }
 
 signals:
   void hovered(bool flag);
   void selected();
+  void leftDoubleClick();
 };
 
 class VirtualListContainer : public QFrame {
@@ -238,8 +242,6 @@ private:
     auto &newItem = items.at(selectionIndex);
     auto scrollHeight = verticalScrollBar()->value();
 
-    // qDebug() << "item=" << newItem.offset << "height=" << scrollHeight;
-
     currentSelectionIndex = selectionIndex;
 
     if (newItem.offset <= scrollHeight || newItem.offset - scrollHeight < newItem.item->height()) {
@@ -258,7 +260,7 @@ private:
       qDebug() << "scroll down";
     }
 
-    emit selectionChanged(*items.at(selectionIndex).item);
+    emit selectionChanged(items.at(selectionIndex).item);
   }
 
   void updateVisibleItems(int y, int height) {
@@ -274,6 +276,8 @@ private:
 
     while (endIndex < items.size() - 1 && items.at(endIndex).offset - startOffset < height)
       ++endIndex;
+
+    qDebug() << "items" << items.size();
 
     qDebug() << "range" << startIndex << "to" << endIndex;
     qDebug() << "start" << startIndex << "end" << endIndex;
@@ -309,6 +313,8 @@ private:
       listItemWidget->setSelectable(item->isSelectable());
 
       connect(listItemWidget, &VirtualListItemWidget::selected, this, [this, i]() { selectItem(i); });
+      connect(listItemWidget, &VirtualListItemWidget::leftDoubleClick, this,
+              [this, item]() { itemActivated(item); });
       connect(listItemWidget, &VirtualListItemWidget::hovered, this,
               [this, i, listItemWidget](bool hovered) { listItemWidget->setHovered(hovered); });
 
@@ -330,35 +336,32 @@ private:
     });
   }
 
-  bool eventFilter(QObject *, QEvent *event) override {
-    if (event->type() == QEvent::KeyPress) {
-      auto keyEvent = static_cast<QKeyEvent *>(event);
+  void keyPressEvent(QKeyEvent *keyEvent) override {
+    if (keyEvent->modifiers() != Qt::Modifiers{}) return;
 
-      switch (keyEvent->key()) {
-      case Qt::Key_Up:
-        selectItem(getPreviousSelected());
-        return true;
-        break;
-      case Qt::Key_Down:
-        selectItem(getNextSelected());
-        return true;
-      case Qt::Key_Return:
-      case Qt::Key_Enter:
-        activateSelectedItem();
-        return true;
-      default:
-        break;
-      }
+    switch (keyEvent->key()) {
+    case Qt::Key_Up:
+      selectItem(getPreviousSelected());
+      return;
+    case Qt::Key_Down:
+      selectItem(getNextSelected());
+      return;
+    case Qt::Key_Return:
+    case Qt::Key_Enter:
+      activateSelectedItem();
+      return;
+    default:
+      break;
     }
 
-    return false;
+    QScrollArea::keyPressEvent(keyEvent);
   }
 
   void activateSelectedItem() {
     qDebug() << "Activate selected";
     if (currentSelectionIndex >= items.size()) return;
 
-    emit itemActivated(*items.at(currentSelectionIndex).item);
+    emit itemActivated(items.at(currentSelectionIndex).item);
   }
 
   void clear() {
@@ -402,7 +405,7 @@ private:
 public:
   VirtualListWidget(QWidget *parent = nullptr)
       : QScrollArea(parent), container(new VirtualListContainer), scrollBar(verticalScrollBar()) {
-    installEventFilter(this);
+    // installEventFilter(this);
     setFrameShape(QFrame::NoFrame);
     setFocusPolicy(Qt::NoFocus);
     setWidgetResizable(true);
@@ -420,6 +423,6 @@ public:
   }
 
 signals:
-  void selectionChanged(const AbstractVirtualListItem &);
-  void itemActivated(const AbstractVirtualListItem &);
+  void selectionChanged(const std::shared_ptr<AbstractVirtualListItem> &);
+  void itemActivated(const std::shared_ptr<AbstractVirtualListItem> &);
 };

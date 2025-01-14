@@ -1,9 +1,11 @@
 #pragma once
 
 #include "ui/virtual-list.hpp"
+#include <memory>
 #include <qboxlayout.h>
 #include <qjsonvalue.h>
 #include <qlabel.h>
+#include <qlayoutitem.h>
 #include <qlineedit.h>
 #include <qnamespace.h>
 #include <qobject.h>
@@ -54,21 +56,54 @@ signals:
   void textChanged(const QString &text);
 };
 
+class AbstractFormDropdownItem : public AbstractVirtualListItem {
+public:
+  virtual QIcon icon() const = 0;
+  virtual QString displayName() const = 0;
+  QWidget *createItem() const override {
+    auto iconLabel = new QLabel;
+    auto label = new QLabel;
+    auto layout = new QHBoxLayout;
+
+    layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
+
+    iconLabel->setPixmap(icon().pixmap(25, 25));
+    label->setText(displayName());
+
+    layout->addWidget(iconLabel);
+    layout->addWidget(label);
+    layout->setContentsMargins(0, 0, 0, 0);
+
+    auto widget = new QWidget;
+
+    widget->setLayout(layout);
+
+    return widget;
+  }
+  int height() const override { return 30; }
+};
+
+class FormDropdownModel : public VirtualListModel {
+public:
+  void addItem(const std::shared_ptr<AbstractFormDropdownItem> &item) { VirtualListModel::addItem(item); }
+};
+
 class FormDropdown : public QWidget {
   Q_OBJECT
 
 protected:
   VirtualListWidget *list;
-  VirtualListModel *listModel;
+  FormDropdownModel *listModel;
   QLineEdit *inputField;
   QLineEdit *searchField;
   QWidget *popover;
   QString selectedItem;
   QStringList items;
+  std::shared_ptr<AbstractFormDropdownItem> currentItem = nullptr;
 
 public:
   FormDropdown()
-      : listModel(new VirtualListModel), inputField(new QLineEdit), searchField(new QLineEdit()),
+      : listModel(new FormDropdownModel), inputField(new QLineEdit), searchField(new QLineEdit()),
         popover(new QWidget(this, Qt::Popup)) {
     auto *layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
@@ -110,13 +145,17 @@ public:
 
     inputField->setProperty("class", "form-input");
 
-    connect(inputField, &QLineEdit::returnPressed, this, &FormDropdown::showPopover);
+    // connect(inputField, &QLineEdit::returnPressed, this, &FormDropdown::showPopover);
     connect(searchField, &QLineEdit::textChanged, this, &FormDropdown::filterItems);
     connect(searchField, &QLineEdit::textChanged, this, &FormDropdown::textChanged);
-    // connect(list, &QListWidget::itemActivated, this, &Turbobox::selectItem);
+    connect(list, &VirtualListWidget::itemActivated, this, &FormDropdown::itemActivated);
   }
 
-  VirtualListModel *model() { return listModel; }
+  FormDropdownModel *model() { return listModel; }
+
+  const std::shared_ptr<AbstractFormDropdownItem> &value() { return currentItem; }
+
+  void setValue(const std::shared_ptr<AbstractFormDropdownItem> &item) { itemActivated(item); }
 
   bool eventFilter(QObject *obj, QEvent *event) override {
     if (obj == searchField) {
@@ -131,6 +170,15 @@ public:
     }
 
     if (obj == inputField) {
+      if (event->type() == QEvent::KeyPress) {
+        auto kv = static_cast<QKeyEvent *>(event);
+
+        if (kv->modifiers() == Qt::Modifiers{} && kv->key() == Qt::Key_Return) {
+          showPopover();
+          return true;
+        }
+      }
+
       if (event->type() == QEvent::MouseButtonPress) {
         showPopover();
         return true;
@@ -145,11 +193,29 @@ public:
 signals:
   void itemChanged(const QString &s);
   void textChanged(const QString &s);
+  void selectionChanged(const std::shared_ptr<AbstractFormDropdownItem> &item);
 
 protected:
   virtual void filterItems(const QString &text) {}
 
+  QAction *action = nullptr;
+
 private slots:
+  void itemActivated(const std::shared_ptr<AbstractVirtualListItem> &vitem) {
+    auto item = std::static_pointer_cast<AbstractFormDropdownItem>(vitem);
+
+    inputField->setText(item->displayName());
+
+    if (action) inputField->removeAction(action);
+
+    action = inputField->addAction(item->icon(), QLineEdit::LeadingPosition);
+
+    currentItem = item;
+
+    popover->hide();
+    emit selectionChanged(item);
+  }
+
   void showPopover() {
     // Position the popover just below the input field
     const QPoint globalPos = inputField->mapToGlobal(QPoint(0, inputField->height() + 10));

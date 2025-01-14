@@ -2,8 +2,7 @@
 #include "extend/image-model.hpp"
 #include <qnamespace.h>
 
-TopBar::TopBar(QWidget *parent)
-    : QWidget(parent), layout(new QHBoxLayout()), input(new QLineEdit()) {
+TopBar::TopBar(QWidget *parent) : QWidget(parent), layout(new QHBoxLayout()), input(new SearchBar()) {
   backButtonLabel = new QLabel();
 
   QIcon::setThemeName("Papirus-Dark");
@@ -59,9 +58,7 @@ void TopBar::activateQuicklinkCompleter(const CompleterData &data) {
 
   auto completion = new InputCompleter(data.placeholders);
 
-  if (auto icon = std::get_if<ThemeIconModel>(&data.model)) {
-    completion->setIcon(icon->iconName);
-  }
+  if (auto icon = std::get_if<ThemeIconModel>(&data.model)) { completion->setIcon(icon->iconName); }
 
   for (const auto &input : completion->inputs) {
     input->installEventFilter(this);

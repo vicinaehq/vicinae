@@ -27,12 +27,9 @@ public:
   ThemeIconModel icon;
   std::optional<KeyboardShortcutModel> shortcut;
 
-  void setShortcut(const KeyboardShortcutModel &shortcut) {
-    this->shortcut = shortcut;
-  }
+  void setShortcut(const KeyboardShortcutModel &shortcut) { this->shortcut = shortcut; }
 
-  AbstractAction(const QString &title, const ThemeIconModel &icon = {})
-      : title(title), icon(icon) {}
+  AbstractAction(const QString &title, const ThemeIconModel &icon = {}) : title(title), icon(icon) {}
 
   virtual void execute(AppWindow &app) = 0;
 };
@@ -51,11 +48,9 @@ class ActionListItemWidget : public QWidget {
   QLabel *kind;
 
 public:
-  ActionListItemWidget(QWidget *image, const QString &name,
-                       const QString &category, const QString &kind,
+  ActionListItemWidget(QWidget *image, const QString &name, const QString &category, const QString &kind,
                        QWidget *parent = nullptr)
-      : QWidget(parent), icon(image), name(new QLabel), category(new QLabel),
-        kind(new QLabel) {
+      : QWidget(parent), icon(image), name(new QLabel), category(new QLabel), kind(new QLabel) {
 
     auto mainLayout = new QHBoxLayout();
 
@@ -104,8 +99,7 @@ signals:
   void itemsChanged(const QList<QVariant> &items);
 };
 
-template <typename T>
-class VariantActionPannelModel : public NewActionPannelModel {
+template <typename T> class VariantActionPannelModel : public NewActionPannelModel {
 public:
   void setItems(const QList<T> &items) {
     QList<QVariant> variants;
@@ -175,8 +169,7 @@ public:
 
   bool findBoundAction(QKeyEvent *event) {
     for (auto action : signalActions) {
-      if (!action->shortcut)
-        continue;
+      if (!action->shortcut) continue;
       if (KeyboardShortcut(*action->shortcut) == event) {
         emit actionExecuted(action);
         return true;
@@ -191,7 +184,6 @@ public:
   QList<ActionPannelItem> currentActions() const;
   QList<ActionData> actions() const { return actionData; }
 
-  void selectPrimary();
   void dispatchModel(const ActionPannelModel &model);
   void showActions();
   void toggleActions();
@@ -217,9 +209,8 @@ public:
         str = lst.join(" + ");
       }
 
-      auto widget = new ActionListItemWidget(
-          ImageViewer::createFromModel(imageModel, {25, 25}), item->title, "",
-          str);
+      auto widget =
+          new ActionListItemWidget(ImageViewer::createFromModel(imageModel, {25, 25}), item->title, "", str);
 
       list->addItem(listItem);
       list->setItemWidget(listItem, widget);
@@ -230,8 +221,7 @@ public:
     for (int i = 0; i != list->count(); ++i) {
       auto item = list->item(i);
 
-      if (!item->flags().testFlag(Qt::ItemIsSelectable))
-        continue;
+      if (!item->flags().testFlag(Qt::ItemIsSelectable)) continue;
 
       list->setCurrentItem(item);
       break;
@@ -242,7 +232,5 @@ public:
 
 public slots:
   void setActionData(const QList<ActionData> &actions) { actionData = actions; }
-  void setSignalActions(const QList<AbstractAction *> &actions) {
-    signalActions = actions;
-  }
+  void setSignalActions(const QList<AbstractAction *> &actions) { signalActions = actions; }
 };

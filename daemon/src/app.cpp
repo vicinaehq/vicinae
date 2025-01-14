@@ -7,6 +7,7 @@
 #include "process-manager-service.hpp"
 #include "quicklink-seeder.hpp"
 #include "root-command.hpp"
+#include "ui/action_popover.hpp"
 #include <QLabel>
 #include <QMainWindow>
 #include <QThread>
@@ -25,11 +26,23 @@ bool AppWindow::eventFilter(QObject *obj, QEvent *event) {
   if (event->type() == QEvent::KeyPress) {
     auto keyEvent = static_cast<QKeyEvent *>(event);
     auto key = keyEvent->key();
+    qDebug() << "app filter" << QKeySequence(key).toString();
 
-    // qDebug() << "key event from app filter";
+    if (actionPopover->findBoundAction(keyEvent)) return true;
 
-    if (actionPopover->findBoundAction(keyEvent)) { return true; }
+    if (keyEvent->modifiers().testFlag(Qt::ControlModifier) && key == Qt::Key_B) {
+      actionPopover->toggleActions();
+      return true;
+    }
+  }
 
+  return false;
+}
+
+bool AppWindow::event(QEvent *event) {
+  if (event->type() == QEvent::KeyPress) {
+    auto keyEvent = static_cast<QKeyEvent *>(event);
+    auto key = keyEvent->key();
     bool isEsc = keyEvent->key() == Qt::Key_Escape;
 
     if (navigationStack.size() > 1) {
@@ -37,7 +50,9 @@ bool AppWindow::eventFilter(QObject *obj, QEvent *event) {
         popCurrentView();
         return true;
       }
-    } else if (isEsc) {
+    }
+
+    if (isEsc) {
       qDebug() << "esc";
       if (topBar->input->text().isEmpty()) {
         hide();
@@ -49,11 +64,11 @@ bool AppWindow::eventFilter(QObject *obj, QEvent *event) {
       return true;
     }
 
-    if (keyEvent->modifiers().testFlag(Qt::ControlModifier) && key == Qt::Key_B) {
-      actionPopover->toggleActions();
-      return true;
-    }
+    QApplication::sendEvent(navigationStack.top().view, event);
+    return true;
   }
+
+  QWidget::event(event);
 
   return false;
 }
@@ -66,15 +81,9 @@ void AppWindow::popCurrentView() {
 
   auto &activeCommand = commandStack.top();
 
-  if (activeCommand.viewStack.isEmpty()) {
-    qDebug() << "AppWindow::popCurrentView: active command has an empty view stack";
-    return;
-  }
+  if (activeCommand.viewStack.isEmpty()) return;
 
-  if (navigationStack.size() == 1) {
-    qDebug() << "Attempted to pop root search";
-    return;
-  }
+  if (navigationStack.size() == 1) return;
 
   auto previous = navigationStack.top();
   navigationStack.pop();
@@ -93,13 +102,11 @@ void AppWindow::popCurrentView() {
 
   previous.view->deleteLater();
 
-  qDebug() << "restore action model and delegate";
   actionPopover->setSignalActions(next.actions);
   topBar->destroyQuicklinkCompleter();
   topBar->input->setReadOnly(false);
   topBar->input->show();
   topBar->input->setFocus();
-  topBar->input->installEventFilter(next.view);
   topBar->input->setText(next.query);
   topBar->input->setPlaceholderText(next.placeholderText);
   topBar->input->selectAll();
@@ -137,9 +144,9 @@ void AppWindow::disconnectView(View &view) {
   disconnect(&view, &View::pop, this, &AppWindow::popCurrentView);
   disconnect(&view, &View::popToRoot, this, &AppWindow::popToRootView);
   disconnect(&view, &View::launchCommand, this, &AppWindow::launchCommand);
-  disconnect(&view, &View::activatePrimaryAction, actionPopover, &ActionPopover::selectPrimary);
+  disconnect(&view, &View::activatePrimaryAction, this, &AppWindow::selectPrimaryAction);
 
-  topBar->input->removeEventFilter(&view);
+  view.removeEventFilter(this);
 }
 
 void AppWindow::connectView(View &view) {
@@ -152,10 +159,10 @@ void AppWindow::connectView(View &view) {
   connect(&view, &View::pop, this, &AppWindow::popCurrentView);
   connect(&view, &View::popToRoot, this, &AppWindow::popToRootView);
   connect(&view, &View::launchCommand, this, &AppWindow::launchCommand);
-  connect(&view, &View::activatePrimaryAction, actionPopover, &ActionPopover::selectPrimary);
+  connect(&view, &View::activatePrimaryAction, this, &AppWindow::selectPrimaryAction);
 
   view.onAttach();
-  topBar->input->installEventFilter(&view);
+  view.installEventFilter(this);
 }
 
 void AppWindow::pushView(View *view, const PushViewOptions &opts) {
@@ -212,11 +219,24 @@ void AppWindow::launchCommand(ViewCommand *cmd, const LaunchCommandOptions &opts
   if (view) { pushView(view, {.searchQuery = opts.searchQuery, .navigation = opts.navigation}); }
 }
 
+void AppWindow::selectPrimaryAction() {
+  if (actionPopover->signalActions.isEmpty()) return;
+
+  executeAction(actionPopover->signalActions.at(0));
+}
+
+void AppWindow::selectSecondaryAction() {
+  if (actionPopover->signalActions.size() > 1) return;
+
+  executeAction(actionPopover->signalActions.at(1));
+}
+
 void AppWindow::executeAction(AbstractAction *action) { action->execute(*this); }
 
 void AppWindow::closeWindow(bool withPopToRoot) {
   hide();
   topBar->input->clear();
+  topBar->destroyQuicklinkCompleter();
 
   if (withPopToRoot) popToRootView();
 }
@@ -246,6 +266,7 @@ AppWindow::AppWindow(QWidget *parent)
     qDebug() << proc.comm << proc.pid;
   }
 
+  connect(topBar->input, &SearchBar::pop, this, &AppWindow::popCurrentView);
   connect(actionPopover, &ActionPopover::actionExecuted, this, &AppWindow::executeAction);
 
   ImageFetcher::instance();
@@ -272,7 +293,6 @@ AppWindow::AppWindow(QWidget *parent)
   layout->setContentsMargins(0, 0, 0, 0);
 
   layout->setAlignment(Qt::AlignTop);
-  installEventFilter(this);
   topBar->input->installEventFilter(this);
   layout->addWidget(topBar);
   layout->addWidget(new HDivider);
