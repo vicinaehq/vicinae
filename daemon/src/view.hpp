@@ -54,6 +54,10 @@ protected:
 public:
   QWidget *widget;
   View(AppWindow &app) : app(app) { installEventFilter(this); }
+  ~View() {
+    qDebug() << "~View()";
+    if (widget) widget->deleteLater();
+  }
 
   void forwardInputEvents(QWidget *widget) {
     for (const auto &w : inputFwdTo) {

@@ -23,14 +23,21 @@ class AppSelectorItem : public AbstractFormDropdownItem {
 public:
   std::shared_ptr<DesktopExecutable> app;
 
-  QIcon icon() const override { return app->icon(); }
-  QString displayName() const override { return app->name; }
+  QIcon icon() const override {
+    auto icon = QIcon::fromTheme(app->iconName());
+
+    if (icon.isNull()) return QIcon::fromTheme("application-x-executable");
+
+    return icon;
+  }
+  QString displayName() const override { return app->fullyQualifiedName(); }
 
   AppSelectorItem(const std::shared_ptr<DesktopExecutable> &app) : app(app) {}
 };
 
 class CreateQuicklinkCommandView : public View {
   Service<AppDatabase> appDb;
+
   FormWidget *form;
   FormInputWidget *name;
   FormInputWidget *link;
@@ -39,12 +46,22 @@ class CreateQuicklinkCommandView : public View {
   void handleAppSelectorTextChanged(const QString &text) {
     appSelector->model()->beginReset();
     for (const auto &app : appDb.apps) {
-      if (!app->name.contains(text, Qt::CaseInsensitive)) continue;
+      bool appFlag = false;
 
-      appSelector->model()->addItem(std::make_shared<AppSelectorItem>(app));
+      if (app->isOpener() && app->name.contains(text, Qt::CaseInsensitive)) {
+        appSelector->model()->addItem(std::make_shared<AppSelectorItem>(app));
+        appFlag = true;
+      }
 
-      qDebug() << "app selector changed";
+      for (const auto &app : app->actions) {
+        if (!app->isOpener()) continue;
+
+        if (appFlag || app->name.contains(text, Qt::CaseInsensitive)) {
+          appSelector->model()->addItem(std::make_shared<AppSelectorItem>(app));
+        }
+      }
     }
+
     appSelector->model()->endReset();
   }
 
@@ -52,11 +69,13 @@ public:
   CreateQuicklinkCommandView(AppWindow &app)
       : View(app), appDb(service<AppDatabase>()), form(new FormWidget), name(new FormInputWidget("name")),
         link(new FormInputWidget("link")), appSelector(new FormDropdown) {
+    name->setFocus();
     name->setName("Name");
     form->addInput(name);
     link->setName("URL");
     form->addInput(link);
     form->addInput(appSelector);
+    appSelector->setName("Open with");
 
     connect(appSelector, &FormDropdown::textChanged, this,
             &CreateQuicklinkCommandView::handleAppSelectorTextChanged);
@@ -65,11 +84,15 @@ public:
   }
 
   void onMount() override {
+    hideInput();
     auto submitAction = new CallbackAction([this](AppWindow &app) { submit(app); });
 
     submitAction->setShortcut(KeyboardShortcutModel{.key = "return", .modifiers = {"ctrl"}});
 
     setSignalActions({submitAction});
+
+    handleAppSelectorTextChanged("");
+    name->focus();
   }
 
   void submit(AppWindow &app) {
@@ -78,6 +101,7 @@ public:
 
     if (!item) {
       qDebug() << "no app selected";
+      appSelector->setError("Required");
       return;
     }
 

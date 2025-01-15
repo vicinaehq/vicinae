@@ -12,45 +12,51 @@
 #include <qtmetamacros.h>
 #include <qwidget.h>
 
-class FormItemWidget : public QWidget {
-  QString m_name;
-  QString m_error;
-
+class FormQLineEdit : public QLineEdit {
 public:
-  const QString &name() { return m_name; }
-  const QString &error() { return m_error; }
-  void setName(const QString &name) { this->m_name = name; }
-  void setError(const QString &error) { this->m_error = error; }
-
-  FormItemWidget(const QString &name = "") : m_name(name) {}
+  FormQLineEdit(QWidget *parent = nullptr) : QLineEdit(parent) { setProperty("isFormQLineEdit", true); }
 };
 
-class FormInputWidget : public QWidget {
-  Q_OBJECT
-
-  QLabel *label;
-  QLineEdit *input;
-  QLabel *error;
-  virtual bool validate() { return true; };
+class FormItemWidget : public QWidget {
+  QLabel *nameLabel;
+  QLabel *errorLabel;
+  QWidget *widget;
+  QHBoxLayout *layout;
 
 public:
-  FormInputWidget(const QString &id) : label(new QLabel), input(new QLineEdit), error(new QLabel) {
-    connect(input, &QLineEdit::textChanged, this, &FormInputWidget::textChanged);
+  void setName(const QString &name) { nameLabel->setText(name); }
+  void setError(const QString &error) { errorLabel->setText(error); }
 
-    auto layout = new QHBoxLayout();
-
+  FormItemWidget(const QString &name = "")
+      : nameLabel(new QLabel), errorLabel(new QLabel), widget(new QWidget), layout(new QHBoxLayout) {
     layout->setSpacing(20);
-    layout->addWidget(label, 1, Qt::AlignVCenter | Qt::AlignRight);
-    layout->addWidget(input, 4, Qt::AlignVCenter);
-    layout->addWidget(error, 2, Qt::AlignVCenter);
-
+    layout->addWidget(nameLabel, 1, Qt::AlignVCenter | Qt::AlignRight);
+    layout->addWidget(widget, 4, Qt::AlignVCenter);
+    layout->addWidget(errorLabel, 2, Qt::AlignVCenter);
     setLayout(layout);
+  }
+
+  void focus() { widget->setFocus(); }
+
+  void setWidget(QWidget *widget) {
+    layout->replaceWidget(this->widget, widget);
+    this->widget->deleteLater();
+    this->widget = widget;
+  }
+};
+
+class FormInputWidget : public FormItemWidget {
+  Q_OBJECT
+  FormQLineEdit *input;
+
+public:
+  FormInputWidget(const QString &name) : FormItemWidget(name), input(new FormQLineEdit) {
+    setWidget(input);
+    connect(input, &QLineEdit::textChanged, this, &FormInputWidget::textChanged);
   }
 
   QString text() { return input->text(); }
   void setText(const QString &value) {}
-  void setName(const QString &name) { label->setText(name); }
-  void setError(const QString &error) {}
 
 signals:
   void textChanged(const QString &text);
@@ -65,14 +71,15 @@ public:
     auto label = new QLabel;
     auto layout = new QHBoxLayout;
 
-    layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
+    layout->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
 
-    iconLabel->setPixmap(icon().pixmap(25, 25));
+    iconLabel->setPixmap(icon().pixmap(20, 20));
     label->setText(displayName());
 
+    layout->setSpacing(10);
     layout->addWidget(iconLabel);
     layout->addWidget(label);
-    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setContentsMargins(10, 0, 10, 0);
 
     auto widget = new QWidget;
 
@@ -80,7 +87,7 @@ public:
 
     return widget;
   }
-  int height() const override { return 30; }
+  int height() const override { return 35; }
 };
 
 class FormDropdownModel : public VirtualListModel {
@@ -88,74 +95,18 @@ public:
   void addItem(const std::shared_ptr<AbstractFormDropdownItem> &item) { VirtualListModel::addItem(item); }
 };
 
-class FormDropdown : public QWidget {
+class FormDropdown : public FormItemWidget {
   Q_OBJECT
+
+  int POPOVER_HEIGHT = 300;
 
 protected:
   VirtualListWidget *list;
   FormDropdownModel *listModel;
-  QLineEdit *inputField;
+  FormQLineEdit *inputField;
   QLineEdit *searchField;
   QWidget *popover;
-  QString selectedItem;
-  QStringList items;
   std::shared_ptr<AbstractFormDropdownItem> currentItem = nullptr;
-
-public:
-  FormDropdown()
-      : listModel(new FormDropdownModel), inputField(new QLineEdit), searchField(new QLineEdit()),
-        popover(new QWidget(this, Qt::Popup)) {
-    auto *layout = new QVBoxLayout(this);
-    layout->setContentsMargins(0, 0, 0, 0);
-
-    setProperty("class", "turbobox");
-
-    popover->setProperty("class", "popover");
-
-    // Main input field
-    inputField = new QLineEdit(this);
-    inputField->setPlaceholderText("Select an item...");
-    inputField->setReadOnly(true); // Read-only to behave like a combo box
-    layout->addWidget(inputField);
-
-    // Create the popover
-    popover->setWindowFlags(Qt::Popup);
-    auto *popoverLayout = new QVBoxLayout(popover);
-    popoverLayout->setContentsMargins(0, 0, 0, 0);
-    popoverLayout->setSpacing(0);
-
-    searchField = new QLineEdit(popover);
-    searchField->setContentsMargins(10, 10, 10, 10);
-    searchField->setPlaceholderText("Search...");
-    popoverLayout->addWidget(searchField);
-
-    list = new VirtualListWidget(popover);
-    list->setModel(listModel);
-    list->setContentsMargins(10, 10, 10, 10);
-    popoverLayout->addWidget(new HDivider);
-    popoverLayout->addWidget(list);
-
-    items = {"Apple", "Banana", "Cherry", "Date", "Grape", "Kiwi", "Mango"};
-
-    inputField->installEventFilter(this);
-    searchField->installEventFilter(this);
-
-    // connect(inputField, &QLineEdit::focusInEvent, this,
-    // &Turbobox::showPopover);
-
-    inputField->setProperty("class", "form-input");
-
-    // connect(inputField, &QLineEdit::returnPressed, this, &FormDropdown::showPopover);
-    connect(searchField, &QLineEdit::textChanged, this, &FormDropdown::filterItems);
-    connect(searchField, &QLineEdit::textChanged, this, &FormDropdown::textChanged);
-    connect(list, &VirtualListWidget::itemActivated, this, &FormDropdown::itemActivated);
-  }
-
-  FormDropdownModel *model() { return listModel; }
-
-  const std::shared_ptr<AbstractFormDropdownItem> &value() { return currentItem; }
-
-  void setValue(const std::shared_ptr<AbstractFormDropdownItem> &item) { itemActivated(item); }
 
   bool eventFilter(QObject *obj, QEvent *event) override {
     if (obj == searchField) {
@@ -188,16 +139,64 @@ public:
     return false;
   }
 
-  QString getSelectedItem() const { return selectedItem; }
+public:
+  FormDropdown(const QString &name = "")
+      : FormItemWidget(name), listModel(new FormDropdownModel), inputField(new FormQLineEdit),
+        searchField(new QLineEdit()), popover(new QWidget(this, Qt::Popup)) {
+    auto *layout = new QVBoxLayout();
+    layout->setContentsMargins(0, 0, 0, 0);
+
+    popover->setProperty("class", "popover");
+
+    // Main input field
+    inputField->setPlaceholderText("Select an item...");
+    inputField->setReadOnly(true); // Read-only to behave like a combo box
+    layout->addWidget(inputField);
+
+    // Create the popover
+    popover->setWindowFlags(Qt::Popup);
+    auto *popoverLayout = new QVBoxLayout(popover);
+    popoverLayout->setContentsMargins(0, 0, 0, 0);
+    popoverLayout->setSpacing(0);
+
+    searchField = new QLineEdit(popover);
+    searchField->setContentsMargins(10, 10, 10, 10);
+    searchField->setPlaceholderText("Search...");
+    popoverLayout->addWidget(searchField);
+
+    list = new VirtualListWidget(popover);
+    list->setModel(listModel);
+    list->setContentsMargins(10, 10, 10, 10);
+    popoverLayout->addWidget(new HDivider);
+    popoverLayout->addWidget(list);
+
+    inputField->installEventFilter(this);
+    searchField->installEventFilter(this);
+
+    connect(searchField, &QLineEdit::textChanged, this, &FormDropdown::textChanged);
+    connect(list, &VirtualListWidget::itemActivated, this, &FormDropdown::itemActivated);
+
+    auto widget = new QWidget();
+    widget->setLayout(layout);
+
+    setWidget(widget);
+  }
+
+  ~FormDropdown() {
+    qDebug() << "~FormDropdown";
+    listModel->deleteLater();
+    popover->deleteLater();
+  }
+
+  FormDropdownModel *model() { return listModel; }
+  const std::shared_ptr<AbstractFormDropdownItem> &value() { return currentItem; }
+  void setValue(const std::shared_ptr<AbstractFormDropdownItem> &item) { itemActivated(item); }
 
 signals:
-  void itemChanged(const QString &s);
   void textChanged(const QString &s);
   void selectionChanged(const std::shared_ptr<AbstractFormDropdownItem> &item);
 
 protected:
-  virtual void filterItems(const QString &text) {}
-
   QAction *action = nullptr;
 
 private slots:
@@ -217,21 +216,12 @@ private slots:
   }
 
   void showPopover() {
-    // Position the popover just below the input field
     const QPoint globalPos = inputField->mapToGlobal(QPoint(0, inputField->height() + 10));
+
     popover->move(globalPos);
-    popover->resize(inputField->width(), 300); // Adjust height as needed
+    popover->resize(inputField->width(), POPOVER_HEIGHT);
     popover->show();
     searchField->setFocus();
-    filterItems("");
-  }
-
-  virtual void selectItem(QListWidgetItem *item) {
-    // Set selected item in the input field
-    selectedItem = item->text();
-    inputField->setText(selectedItem);
-    popover->hide();
-    emit itemChanged(selectedItem);
   }
 };
 

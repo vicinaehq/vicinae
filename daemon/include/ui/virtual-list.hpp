@@ -208,6 +208,10 @@ class VirtualListWidget : public QScrollArea {
 private:
   void valueChanged(int value) { updateVisibleItems(value, height()); }
 
+  void resizeEvent(QResizeEvent *event) override {
+    updateVisibleItems(scrollBar->value(), event->size().height());
+  }
+
   int getPreviousSelected() {
     if (currentSelectionIndex == 0) return currentSelectionIndex;
 
@@ -405,7 +409,6 @@ private:
 public:
   VirtualListWidget(QWidget *parent = nullptr)
       : QScrollArea(parent), container(new VirtualListContainer), scrollBar(verticalScrollBar()) {
-    // installEventFilter(this);
     setFrameShape(QFrame::NoFrame);
     setFocusPolicy(Qt::NoFocus);
     setWidgetResizable(true);
