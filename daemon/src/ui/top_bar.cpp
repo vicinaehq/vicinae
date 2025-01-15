@@ -58,7 +58,9 @@ void TopBar::activateQuicklinkCompleter(const CompleterData &data) {
 
   auto completion = new InputCompleter(data.placeholders);
 
-  if (auto icon = std::get_if<ThemeIconModel>(&data.model)) { completion->setIcon(icon->iconName); }
+  if (!data.placeholders.isEmpty()) {
+    if (auto icon = std::get_if<ThemeIconModel>(&data.model)) { completion->setIcon(icon->iconName); }
+  }
 
   for (const auto &input : completion->inputs) {
     input->installEventFilter(this);

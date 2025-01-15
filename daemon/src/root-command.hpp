@@ -104,12 +104,8 @@ struct OpenQuicklinkAction : public AbstractAction {
 
 struct OpenCompletedQuicklinkAction : public OpenQuicklinkAction {
   void execute(AppWindow &app) {
-    if (!app.topBar->quickInput) {
-      app.statusBar->setToast("No completer is available", ToastPriority::Danger);
-      return;
-    }
+    if (app.topBar->quickInput) { setArgs(app.topBar->quickInput->collectArgs()); }
 
-    setArgs(app.topBar->quickInput->collectArgs());
     OpenQuicklinkAction::execute(app);
   }
 
@@ -220,8 +216,9 @@ class RootView : public NavigationListView {
     Extension::Command cmd;
 
     QWidget *createItem() const override {
-      return new ListItemWidget(ImageViewer::createFromModel(ThemeIconModel{.iconName = "folder"}, {25, 25}),
-                                cmd.name, cmd.title, "Command");
+      return new ListItemWidget(
+          ImageViewer::createFromModel(ThemeIconModel{.iconName = ":icons/cog.svg"}, {25, 25}), cmd.name,
+          cmd.title, "Command");
     }
 
     QList<AbstractAction *> createActions() const override {
@@ -382,6 +379,8 @@ public:
         }
 
         for (const auto &link : quicklinkDb.list()) {
+          if (link->placeholders.size() != 1) continue;
+
           auto item = std::make_shared<FallbackQuicklinkListItem>(link, s);
 
           model->addItem(item);

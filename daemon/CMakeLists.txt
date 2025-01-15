@@ -49,6 +49,9 @@ qt_add_executable(${TARGET}
 	include/ui/virtual-list.hpp
 	include/create-quicklink-command.hpp
 
+	include/builtin_icon.hpp
+	src/builtin_icon.cpp
+
 
 	
 	include/ui/form.hpp
@@ -109,6 +112,7 @@ qt_add_executable(${TARGET}
 	src/omnicast.hpp
 
 	./resources.qrc
+	./icons.qrc
 
 	#src/render.cpp
 	#src/extension_manager.cpp

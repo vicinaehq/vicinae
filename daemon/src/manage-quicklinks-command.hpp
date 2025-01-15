@@ -23,8 +23,7 @@ class OpenLinkAction : public AbstractAction {
   }
 
 public:
-  OpenLinkAction(const std::shared_ptr<Quicklink> &link,
-                 const std::shared_ptr<DesktopExecutable> &app)
+  OpenLinkAction(const std::shared_ptr<Quicklink> &link, const std::shared_ptr<DesktopExecutable> &app)
       : AbstractAction("Open link", {.iconName = link->iconName}) {}
 
 signals:
@@ -48,8 +47,7 @@ class RemoveLinkAction : public AbstractAction {
 
 public:
   RemoveLinkAction(const std::shared_ptr<Quicklink> &link)
-      : AbstractAction("Remove link", {.iconName = link->iconName}),
-        link(link) {}
+      : AbstractAction("Remove link", {.iconName = link->iconName}), link(link) {}
 
 signals:
   void linkRemoved();
@@ -62,9 +60,8 @@ class QuicklinkItem : public AbstractNativeListItem {
 public:
   QWidget *createItem() const override {
     return new ListItemWidget(
-        ImageViewer::createFromModel(ThemeIconModel{.iconName = link->iconName},
-                                     {25, 25}),
-        link->name, "", "Quicklink");
+        ImageViewer::createFromModel(ThemeIconModel{.iconName = link->iconName}, {25, 25}), link->name, "",
+        "Quicklink");
   }
 
   QList<AbstractAction *> createActions() const override {
@@ -80,20 +77,17 @@ public:
 
   std::unique_ptr<CompleterData> createCompleter() const override {
     return std::make_unique<CompleterData>(CompleterData{
-        .placeholders = {"query"},
+        .placeholders = link->placeholders,
         .model = ThemeIconModel{.iconName = link->iconName},
     });
   }
 
-  std::unique_ptr<AbstractNativeListItemDetail> createDetail() const override {
-    return nullptr;
-  }
+  std::unique_ptr<AbstractNativeListItemDetail> createDetail() const override { return nullptr; }
 
   size_t id() const override { return qHash(link->id); }
 
 public:
-  QuicklinkItem(const std::shared_ptr<Quicklink> &link)
-      : AbstractNativeListItem(), link(link) {}
+  QuicklinkItem(const std::shared_ptr<Quicklink> &link) : AbstractNativeListItem(), link(link) {}
 
 signals:
   void removed() const;
@@ -107,9 +101,7 @@ class ManageQuicklinksView : public NavigationListView {
     model->beginSection("Quicklinks");
 
     for (const auto &link : quicklinkDb.list()) {
-      if (!link->name.contains(s, Qt::CaseInsensitive)) {
-        continue;
-      }
+      if (!link->name.contains(s, Qt::CaseInsensitive)) { continue; }
 
       auto item = std::make_shared<QuicklinkItem>(link);
 
@@ -125,6 +117,5 @@ class ManageQuicklinksView : public NavigationListView {
   void onMount() override { setSearchPlaceholderText("Browse quicklinks..."); }
 
 public:
-  ManageQuicklinksView(AppWindow &app)
-      : NavigationListView(app), quicklinkDb(service<QuicklistDatabase>()) {}
+  ManageQuicklinksView(AppWindow &app) : NavigationListView(app), quicklinkDb(service<QuicklistDatabase>()) {}
 };

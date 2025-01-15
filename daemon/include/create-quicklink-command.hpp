@@ -1,6 +1,8 @@
 #pragma once
 #include "app-database.hpp"
 #include "app.hpp"
+#include "builtin_icon.hpp"
+#include "quicklist-database.hpp"
 #include "ui/action_popover.hpp"
 #include "ui/form.hpp"
 #include "view.hpp"
@@ -35,13 +37,31 @@ public:
   AppSelectorItem(const std::shared_ptr<DesktopExecutable> &app) : app(app) {}
 };
 
+class IconSelectorItem : public AbstractFormDropdownItem {
+public:
+  QString iconName;
+
+  QIcon icon() const override {
+    auto icon = BuiltinIconService::fromName(iconName);
+
+    if (icon.isNull()) return QIcon::fromTheme("application-x-executable");
+
+    return icon;
+  }
+  QString displayName() const override { return iconName; }
+
+  IconSelectorItem(const QString &iconName) : iconName(iconName) {}
+};
+
 class CreateQuicklinkCommandView : public View {
   Service<AppDatabase> appDb;
+  Service<QuicklistDatabase> quicklinkDb;
 
   FormWidget *form;
   FormInputWidget *name;
   FormInputWidget *link;
   FormDropdown *appSelector;
+  FormDropdown *iconSelector;
 
   void handleAppSelectorTextChanged(const QString &text) {
     appSelector->model()->beginReset();
@@ -65,22 +85,48 @@ class CreateQuicklinkCommandView : public View {
     appSelector->model()->endReset();
   }
 
+  void iconSelectorTextChanged(const QString &text) {
+    iconSelector->model()->beginReset();
+
+    for (const auto &name : BuiltinIconService::icons()) {
+      if (name.contains(text, Qt::CaseInsensitive)) {
+        iconSelector->model()->addItem(std::make_shared<IconSelectorItem>(name));
+      }
+    }
+
+    iconSelector->model()->endReset();
+  }
+
 public:
   CreateQuicklinkCommandView(AppWindow &app)
-      : View(app), appDb(service<AppDatabase>()), form(new FormWidget), name(new FormInputWidget("name")),
-        link(new FormInputWidget("link")), appSelector(new FormDropdown) {
+      : View(app), appDb(service<AppDatabase>()), quicklinkDb(service<QuicklistDatabase>()),
+        form(new FormWidget), name(new FormInputWidget("name")), link(new FormInputWidget("link")),
+        appSelector(new FormDropdown), iconSelector(new FormDropdown) {
     name->setFocus();
     name->setName("Name");
     form->addInput(name);
     link->setName("URL");
     form->addInput(link);
     form->addInput(appSelector);
+    form->addInput(iconSelector);
     appSelector->setName("Open with");
+    iconSelector->setName("Icon");
 
     connect(appSelector, &FormDropdown::textChanged, this,
             &CreateQuicklinkCommandView::handleAppSelectorTextChanged);
+    connect(iconSelector, &FormDropdown::textChanged, this,
+            &CreateQuicklinkCommandView::iconSelectorTextChanged);
 
     widget = form;
+  }
+
+  void loadDuplicate(const Quicklink &quicklink) {
+    name->setText(QString("Copy of %1").arg(quicklink.name));
+    link->setText(quicklink.url);
+
+    if (auto app = appDb.getById(quicklink.app)) {
+      appSelector->setValue(std::make_shared<AppSelectorItem>(app));
+    }
   }
 
   void onMount() override {
@@ -92,21 +138,32 @@ public:
     setSignalActions({submitAction});
 
     handleAppSelectorTextChanged("");
+    iconSelectorTextChanged("");
     name->focus();
   }
 
   void submit(AppWindow &app) {
-    qDebug() << "creating link" << name->text() << "for url" << link->text() << "description";
     auto item = std::static_pointer_cast<AppSelectorItem>(appSelector->value());
 
     if (!item) {
-      qDebug() << "no app selected";
       appSelector->setError("Required");
       return;
     }
 
-    qDebug() << "app" << item->app->id;
+    auto icon = std::static_pointer_cast<IconSelectorItem>(iconSelector->value());
 
-    app.statusBar->setToast("Submitted");
+    if (!icon) {
+      iconSelector->setError("Required");
+      return;
+    }
+
+    quicklinkDb.insertLink(AddQuicklinkPayload{
+        .name = name->text(),
+        .icon = QString(":icons/%1").arg(icon->iconName),
+        .link = link->text(),
+        .app = item->app->id,
+    });
+    app.statusBar->setToast("Created new quicklink");
+    pop();
   }
 };
