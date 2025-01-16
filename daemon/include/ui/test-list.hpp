@@ -69,7 +69,6 @@ class AbstractNativeListItem : public QObject, public AbstractVirtualListItem {
 public:
   virtual std::unique_ptr<AbstractNativeListItemDetail> createDetail() const { return nullptr; }
   virtual std::unique_ptr<CompleterData> createCompleter() const { return nullptr; }
-  virtual size_t id() const { return 0; };
 
   // a unique role that differenciate two different kinds of list widget,
   // usually rendering a different widget. This determines whether the list

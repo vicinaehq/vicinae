@@ -25,11 +25,20 @@
 static const int SCROLL_GAP = 5;
 
 class AbstractVirtualListItem {
+  size_t m_id;
+
 public:
   virtual QWidget *createItem() const = 0;
   virtual QWidget *updateItem(QWidget *widget) const { return createItem(); };
   virtual bool isSelectable() const { return true; }
   virtual int height() const = 0;
+  virtual size_t id() const {
+    static size_t id = qHash(QUuid::createUuid());
+
+    return id;
+  }
+
+  AbstractVirtualListItem(size_t id = qHash(QUuid::createUuid())) : m_id(id) {}
 };
 
 struct VirtualListSection {
@@ -75,6 +84,7 @@ class VirtualListModel : public QObject {
 
 signals:
   void commitReset(const QList<Item> &items);
+  void selectionChanged(const Item &item);
 
 public:
   void beginReset() { items.clear(); }
@@ -101,6 +111,8 @@ public:
       currentSection.reset();
     }
   }
+
+  void setSelected(const std::shared_ptr<AbstractVirtualListItem> &item) { emit selectionChanged(item); }
 
   void addItem(const std::shared_ptr<AbstractVirtualListItem> &item) {
     if (currentSection) {
@@ -384,6 +396,7 @@ private:
     clear();
 
     for (auto &item : items) {
+      qDebug() << "id" << item->id();
       virtualItems.push_back({.offset = offset, .item = item});
       offset += item->height();
     }
@@ -423,6 +436,10 @@ public:
     if (model) model->deleteLater();
     model = newModel;
     connect(model, &VirtualListModel::commitReset, this, &VirtualListWidget::setItems);
+    /*
+connect(model, &VirtualListModel::selectionChanged, this, [this](const auto& selected){
+    });
+    */
   }
 
 signals:

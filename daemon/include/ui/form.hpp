@@ -56,7 +56,7 @@ public:
   }
 
   QString text() { return input->text(); }
-  void setText(const QString &value) {}
+  void setText(const QString &value) { input->setText(value); }
 
 signals:
   void textChanged(const QString &text);
@@ -191,6 +191,8 @@ public:
   FormDropdownModel *model() { return listModel; }
   const std::shared_ptr<AbstractFormDropdownItem> &value() { return currentItem; }
   void setValue(const std::shared_ptr<AbstractFormDropdownItem> &item) { itemActivated(item); }
+
+  QString searchText() { return searchField->text(); }
 
 signals:
   void textChanged(const QString &s);

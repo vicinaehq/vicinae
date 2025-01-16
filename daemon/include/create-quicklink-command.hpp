@@ -8,10 +8,12 @@
 #include "ui/action_popover.hpp"
 #include "ui/form.hpp"
 #include "view.hpp"
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <qnamespace.h>
 #include <qpixmap.h>
+#include <qtypes.h>
 
 class CallbackAction : public AbstractAction {
   using SubmitHandler = std::function<void(AppWindow &app)>;
@@ -27,6 +29,7 @@ public:
 class AppSelectorItem : public AbstractFormDropdownItem {
 public:
   std::shared_ptr<DesktopExecutable> app;
+  bool isDefault;
 
   QIcon icon() const override {
     auto icon = QIcon::fromTheme(app->iconName());
@@ -35,9 +38,16 @@ public:
 
     return icon;
   }
-  QString displayName() const override { return app->fullyQualifiedName(); }
+  QString displayName() const override {
+    QString name = app->fullyQualifiedName();
 
-  AppSelectorItem(const std::shared_ptr<DesktopExecutable> &app) : app(app) {}
+    if (isDefault) name += " (Default)";
+
+    return name;
+  }
+
+  AppSelectorItem(const std::shared_ptr<DesktopExecutable> &app, bool isDefault = false)
+      : app(app), isDefault(isDefault) {}
 };
 
 class AbstractIconSelectorItem : public AbstractFormDropdownItem {
@@ -50,7 +60,7 @@ public:
   QString dname;
 
   QIcon icon() const override {
-    auto icon = BuiltinIconService::fromName(name);
+    auto icon = QIcon(name);
 
     if (icon.isNull()) return QIcon::fromTheme("application-x-executable");
 
@@ -58,7 +68,9 @@ public:
   }
   QString displayName() const override {
     if (!dname.isEmpty()) return dname;
-    return name;
+    auto ss = name.split('/');
+
+    return ss.at(ss.size() - 1).split('.').at(0);
   }
   QString iconName() const override { return name; }
 
@@ -94,7 +106,7 @@ class CreateQuicklinkCommandView : public View {
   void handleAppSelectorTextChanged(const QString &text) {
     appSelector->model()->beginReset();
 
-    if (defaultOpener && QString("default").contains(text, Qt::CaseInsensitive)) {
+    if (defaultOpener && defaultOpener->displayName().contains(text, Qt::CaseInsensitive)) {
       appSelector->model()->addItem(defaultOpener);
     }
 
@@ -140,22 +152,14 @@ class CreateQuicklinkCommandView : public View {
     if (!url.isValid()) return;
 
     if (auto app = appDb.findBestUrlOpener(url)) {
-      auto opener = std::make_shared<AppSelectorItem>(app);
+      auto opener = std::make_shared<AppSelectorItem>(app, true);
 
       qDebug() << "match" << app->id << "for scheme" << url.scheme();
 
+      if (appSelector->value().get() == defaultOpener.get()) { appSelector->setValue(opener); }
+
       defaultOpener = opener;
-      appSelector->setValue(opener);
-    }
-
-    if (url.scheme().startsWith("http")) {
-      auto reply = FaviconFetcher::fetch(url.host(), {128, 128});
-
-      connect(reply, &ImageReply::imageLoaded, this, [this, url](QPixmap favicon) {
-        qDebug() << "got favicon from " << url.host();
-        defaultIcon = std::make_shared<IconSelectorFaviconItem>(favicon, "Default");
-        iconSelector->setValue(defaultIcon);
-      });
+      handleAppSelectorTextChanged(appSelector->searchText());
     }
   }
 
@@ -181,16 +185,21 @@ public:
     connect(iconSelector, &FormDropdown::textChanged, this,
             &CreateQuicklinkCommandView::iconSelectorTextChanged);
 
+    defaultIcon = std::make_shared<IconSelectorItem>(":icons/link.svg", "Default");
+    iconSelector->setValue(defaultIcon);
+
     widget = form;
   }
 
-  void loadDuplicate(const Quicklink &quicklink) {
+  void loadLink(const Quicklink &quicklink) {
     name->setText(QString("Copy of %1").arg(quicklink.name));
     link->setText(quicklink.url);
 
     if (auto app = appDb.getById(quicklink.app)) {
       appSelector->setValue(std::make_shared<AppSelectorItem>(app));
     }
+
+    iconSelector->setValue(std::make_shared<IconSelectorItem>(quicklink.iconName));
   }
 
   void onMount() override {
@@ -203,9 +212,6 @@ public:
 
     handleAppSelectorTextChanged("");
     iconSelectorTextChanged("");
-
-    defaultIcon = std::make_shared<IconSelectorItem>("link", "Default");
-    iconSelector->setValue(defaultIcon);
 
     name->focus();
   }
@@ -227,7 +233,7 @@ public:
 
     quicklinkDb.insertLink(AddQuicklinkPayload{
         .name = name->text(),
-        .icon = QString(":icons/%1").arg(icon->iconName()),
+        .icon = icon->iconName(),
         .link = link->text(),
         .app = item->app->id,
     });

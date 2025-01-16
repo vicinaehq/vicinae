@@ -102,6 +102,26 @@ struct OpenQuicklinkAction : public AbstractAction {
       : AbstractAction("Open link"), link(link), args(args) {}
 };
 
+struct EditQuicklinkAction : public AbstractAction {
+  std::shared_ptr<Quicklink> link;
+  QList<QString> args;
+
+  void execute(AppWindow &app) override {
+    auto view = new CreateQuicklinkCommandView(app);
+
+    view->loadLink(*link);
+
+    emit app.pushView(
+        view, {.navigation = NavigationStatus{
+                   .title = "Edit link", .icon = ThemeIconModel{.iconName = ":assets/icons/quicklink.png"}}});
+  }
+
+  void setArgs(const QList<QString> &args) { this->args = args; }
+
+  EditQuicklinkAction(const std::shared_ptr<Quicklink> &link, const QList<QString> &args = {})
+      : AbstractAction("Edit link"), link(link), args(args) {}
+};
+
 struct OpenCompletedQuicklinkAction : public OpenQuicklinkAction {
   void execute(AppWindow &app) {
     if (app.topBar->quickInput) { setArgs(app.topBar->quickInput->collectArgs()); }
@@ -185,7 +205,7 @@ class RootView : public NavigationListView {
     }
 
     QList<AbstractAction *> createActions() const override {
-      return {new OpenCompletedQuicklinkAction(link)};
+      return {new OpenCompletedQuicklinkAction(link), new EditQuicklinkAction(link)};
     }
 
   public:
@@ -204,7 +224,7 @@ class RootView : public NavigationListView {
     }
 
     QList<AbstractAction *> createActions() const override {
-      return {new OpenQuicklinkAction(link, {query})};
+      return {new OpenQuicklinkAction(link, {query}), new EditQuicklinkAction(link)};
     }
 
   public:

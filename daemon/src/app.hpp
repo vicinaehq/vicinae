@@ -19,6 +19,7 @@
 #include "ui/status_bar.hpp"
 #include "ui/test-list.hpp"
 #include "ui/top_bar.hpp"
+#include "ui/virtual-list.hpp"
 
 #include <qmainwindow.h>
 #include <qtmetamacros.h>
@@ -203,6 +204,8 @@ class AppListItem : public StandardListItem {
 
     return actions;
   }
+
+  size_t id() const override { return qHash(app->id); }
 
 public:
   AppListItem(const std::shared_ptr<DesktopEntry> &app, Service<AppDatabase> appDb)

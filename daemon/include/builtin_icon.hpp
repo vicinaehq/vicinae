@@ -5,5 +5,4 @@
 class BuiltinIconService {
 public:
   static const QList<QString> &icons();
-  static QIcon fromName(const QString &name);
 };
