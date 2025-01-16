@@ -20,6 +20,11 @@ class ImageReply : public QObject {
   QNetworkReply *reply;
 
   void finished() {
+    if (reply->error() != QNetworkReply::NoError) {
+      emit loadingError();
+      return;
+    }
+
     auto buf = reply->readAll();
     QPixmap pix;
 
@@ -36,6 +41,7 @@ public:
 
 signals:
   void imageLoaded(QPixmap img);
+  void loadingError();
 };
 
 class ImageFetcher : public NonAssignable {
@@ -50,22 +56,18 @@ public:
 
   ImageFetcher() : manager(new QNetworkAccessManager) {
     QString directory =
-        QStandardPaths::writableLocation(QStandardPaths::CacheLocation) +
-        QLatin1StringView("/omnicast/");
+        QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QLatin1StringView("/omnicast/");
     qDebug() << "cache dir" << directory;
     // manager->setCache(diskCache);
   }
 
-  ImageReply *fetch(const QString &url,
-                    const FetchImageOptions &options = {.cache = true}) const {
+  ImageReply *fetch(const QString &url, const FetchImageOptions &options = {.cache = true}) const {
     QNetworkRequest request(url);
 
     if (options.cache) {
-      request.setAttribute(QNetworkRequest::CacheLoadControlAttribute,
-                           QNetworkRequest::PreferCache);
+      request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
     } else {
-      request.setAttribute(QNetworkRequest::CacheLoadControlAttribute,
-                           QNetworkRequest::AlwaysNetwork);
+      request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::AlwaysNetwork);
     }
 
     return new ImageReply(manager->get(request));

@@ -2,6 +2,8 @@
 #include "app-database.hpp"
 #include "app.hpp"
 #include "builtin_icon.hpp"
+#include "favicon-fetcher.hpp"
+#include "image-fetcher.hpp"
 #include "quicklist-database.hpp"
 #include "ui/action_popover.hpp"
 #include "ui/form.hpp"
@@ -9,6 +11,7 @@
 #include <functional>
 #include <memory>
 #include <qnamespace.h>
+#include <qpixmap.h>
 
 class CallbackAction : public AbstractAction {
   using SubmitHandler = std::function<void(AppWindow &app)>;
@@ -37,13 +40,17 @@ public:
   AppSelectorItem(const std::shared_ptr<DesktopExecutable> &app) : app(app) {}
 };
 
-class IconSelectorItem : public AbstractFormDropdownItem {
+class AbstractIconSelectorItem : public AbstractFormDropdownItem {
+  virtual QString iconName() const = 0;
+};
+
+class IconSelectorItem : public AbstractIconSelectorItem {
 public:
-  QString iconName;
+  QString name;
   QString dname;
 
   QIcon icon() const override {
-    auto icon = BuiltinIconService::fromName(iconName);
+    auto icon = BuiltinIconService::fromName(name);
 
     if (icon.isNull()) return QIcon::fromTheme("application-x-executable");
 
@@ -51,11 +58,24 @@ public:
   }
   QString displayName() const override {
     if (!dname.isEmpty()) return dname;
-    return iconName;
+    return name;
   }
+  QString iconName() const override { return name; }
 
   IconSelectorItem(const QString &iconName, const QString &displayName = "")
-      : iconName(iconName), dname(displayName) {}
+      : name(iconName), dname(displayName) {}
+};
+
+class IconSelectorFaviconItem : public AbstractIconSelectorItem {
+public:
+  QPixmap pixmap;
+  QString dname;
+
+  QIcon icon() const override { return pixmap; }
+  QString displayName() const override { return dname; }
+  QString iconName() const override { return dname; }
+
+  IconSelectorFaviconItem(QPixmap pixmap, const QString &displayName) : pixmap(pixmap), dname(displayName) {}
 };
 
 class CreateQuicklinkCommandView : public View {
@@ -68,10 +88,16 @@ class CreateQuicklinkCommandView : public View {
   FormDropdown *appSelector;
   FormDropdown *iconSelector;
 
-  std::shared_ptr<IconSelectorItem> defaultIcon;
+  std::shared_ptr<AbstractIconSelectorItem> defaultIcon;
+  std::shared_ptr<AppSelectorItem> defaultOpener;
 
   void handleAppSelectorTextChanged(const QString &text) {
     appSelector->model()->beginReset();
+
+    if (defaultOpener && QString("default").contains(text, Qt::CaseInsensitive)) {
+      appSelector->model()->addItem(defaultOpener);
+    }
+
     for (const auto &app : appDb.apps) {
       bool appFlag = false;
 
@@ -108,6 +134,31 @@ class CreateQuicklinkCommandView : public View {
     iconSelector->model()->endReset();
   }
 
+  void handleLinkChange(const QString &text) {
+    QUrl url(text);
+
+    if (!url.isValid()) return;
+
+    if (auto app = appDb.findBestUrlOpener(url)) {
+      auto opener = std::make_shared<AppSelectorItem>(app);
+
+      qDebug() << "match" << app->id << "for scheme" << url.scheme();
+
+      defaultOpener = opener;
+      appSelector->setValue(opener);
+    }
+
+    if (url.scheme().startsWith("http")) {
+      auto reply = FaviconFetcher::fetch(url.host(), {128, 128});
+
+      connect(reply, &ImageReply::imageLoaded, this, [this, url](QPixmap favicon) {
+        qDebug() << "got favicon from " << url.host();
+        defaultIcon = std::make_shared<IconSelectorFaviconItem>(favicon, "Default");
+        iconSelector->setValue(defaultIcon);
+      });
+    }
+  }
+
 public:
   CreateQuicklinkCommandView(AppWindow &app)
       : View(app), appDb(service<AppDatabase>()), quicklinkDb(service<QuicklistDatabase>()),
@@ -122,6 +173,8 @@ public:
     form->addInput(iconSelector);
     appSelector->setName("Open with");
     iconSelector->setName("Icon");
+
+    connect(link, &FormInputWidget::textChanged, this, &CreateQuicklinkCommandView::handleLinkChange);
 
     connect(appSelector, &FormDropdown::textChanged, this,
             &CreateQuicklinkCommandView::handleAppSelectorTextChanged);
@@ -174,7 +227,7 @@ public:
 
     quicklinkDb.insertLink(AddQuicklinkPayload{
         .name = name->text(),
-        .icon = QString(":icons/%1").arg(icon->iconName),
+        .icon = QString(":icons/%1").arg(icon->iconName()),
         .link = link->text(),
         .app = item->app->id,
     });

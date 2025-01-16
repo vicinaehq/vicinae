@@ -58,8 +58,7 @@ bool AppWindow::event(QEvent *event) {
         hide();
       } else {
         qDebug() << "reset text";
-        topBar->input->clear();
-        emit topBar->input->textEdited("");
+        clearSearch();
       }
       return true;
     }
@@ -71,6 +70,11 @@ bool AppWindow::event(QEvent *event) {
   QWidget::event(event);
 
   return false;
+}
+
+void AppWindow::clearSearch() {
+  topBar->input->clear();
+  emit topBar->input->textEdited("");
 }
 
 void AppWindow::popCurrentView() {
@@ -235,7 +239,7 @@ void AppWindow::executeAction(AbstractAction *action) { action->execute(*this); 
 
 void AppWindow::closeWindow(bool withPopToRoot) {
   hide();
-  topBar->input->clear();
+  clearSearch();
   topBar->destroyQuicklinkCompleter();
 
   if (withPopToRoot) popToRootView();

@@ -83,6 +83,7 @@ public:
 
   void selectPrimaryAction();
   void selectSecondaryAction();
+  void clearSearch();
 
   template <typename T> Service<T> service() const;
 

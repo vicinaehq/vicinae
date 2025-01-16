@@ -17,6 +17,7 @@
 #include <qset.h>
 #include <qsettings.h>
 #include <qtenvironmentvariables.h>
+#include <qurl.h>
 
 // clang-format off
 static const QList<QDir> defaultPaths = {
@@ -191,8 +192,23 @@ public:
     return true;
   }
 
+  std::shared_ptr<DesktopExecutable> findBestUrlOpener(const QUrl &url) {
+    QString mime = "x-scheme-handler/" + url.scheme();
+
+    if (auto appId = mimeToDefaultApp.value(url.scheme()); !appId.isEmpty()) {
+      if (auto app = appMap.value(appId)) return app;
+    }
+
+    for (const auto &appId : mimeToApps.value(mime)) {
+      if (auto app = appMap.value(appId)) return app;
+    }
+
+    return nullptr;
+  }
+
   std::shared_ptr<DesktopExecutable> findBestOpenerForMime(QMimeType mime) {
-    if (auto app = defaultForMime(mime.name())) return app;
+    qDebug() << "find best opener for" << mime.name();
+    if (auto app = defaultForMime(mime.name())) { return app; }
 
     for (const auto &mime : mime.parentMimeTypes()) {
       if (auto app = defaultForMime(mime)) return app;
