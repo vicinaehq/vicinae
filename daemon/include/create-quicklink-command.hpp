@@ -40,6 +40,7 @@ public:
 class IconSelectorItem : public AbstractFormDropdownItem {
 public:
   QString iconName;
+  QString dname;
 
   QIcon icon() const override {
     auto icon = BuiltinIconService::fromName(iconName);
@@ -48,9 +49,13 @@ public:
 
     return icon;
   }
-  QString displayName() const override { return iconName; }
+  QString displayName() const override {
+    if (!dname.isEmpty()) return dname;
+    return iconName;
+  }
 
-  IconSelectorItem(const QString &iconName) : iconName(iconName) {}
+  IconSelectorItem(const QString &iconName, const QString &displayName = "")
+      : iconName(iconName), dname(displayName) {}
 };
 
 class CreateQuicklinkCommandView : public View {
@@ -62,6 +67,8 @@ class CreateQuicklinkCommandView : public View {
   FormInputWidget *link;
   FormDropdown *appSelector;
   FormDropdown *iconSelector;
+
+  std::shared_ptr<IconSelectorItem> defaultIcon;
 
   void handleAppSelectorTextChanged(const QString &text) {
     appSelector->model()->beginReset();
@@ -87,6 +94,10 @@ class CreateQuicklinkCommandView : public View {
 
   void iconSelectorTextChanged(const QString &text) {
     iconSelector->model()->beginReset();
+
+    if (defaultIcon && QString("default").contains(text, Qt::CaseInsensitive)) {
+      iconSelector->model()->addItem(defaultIcon);
+    }
 
     for (const auto &name : BuiltinIconService::icons()) {
       if (name.contains(text, Qt::CaseInsensitive)) {
@@ -139,6 +150,10 @@ public:
 
     handleAppSelectorTextChanged("");
     iconSelectorTextChanged("");
+
+    defaultIcon = std::make_shared<IconSelectorItem>("link", "Default");
+    iconSelector->setValue(defaultIcon);
+
     name->focus();
   }
 
