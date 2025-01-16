@@ -33,12 +33,12 @@ public:
   virtual bool isSelectable() const { return true; }
   virtual int height() const = 0;
   virtual size_t id() const {
-    static size_t id = qHash(QUuid::createUuid());
+    size_t id = qHash(QUuid::createUuid());
 
     return id;
   }
 
-  AbstractVirtualListItem(size_t id = qHash(QUuid::createUuid())) : m_id(id) {}
+  AbstractVirtualListItem() {}
 };
 
 struct VirtualListSection {
@@ -430,6 +430,15 @@ public:
     container->setAutoFillBackground(false);
 
     connect(verticalScrollBar(), &QScrollBar::valueChanged, this, &VirtualListWidget::valueChanged);
+  }
+
+  void setSelected(size_t id) {
+    for (size_t i = 0; i != items.size(); ++i) {
+      if (items.at(i).item->id() == id) {
+        selectItem(i);
+        break;
+      }
+    }
   }
 
   void setModel(VirtualListModel *newModel) {

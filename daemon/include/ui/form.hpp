@@ -190,7 +190,10 @@ public:
 
   FormDropdownModel *model() { return listModel; }
   const std::shared_ptr<AbstractFormDropdownItem> &value() { return currentItem; }
-  void setValue(const std::shared_ptr<AbstractFormDropdownItem> &item) { itemActivated(item); }
+  void setValue(const std::shared_ptr<AbstractFormDropdownItem> &item) {
+    list->setSelected(item->id());
+    itemActivated(item);
+  }
 
   QString searchText() { return searchField->text(); }
 
@@ -213,12 +216,15 @@ private slots:
 
     currentItem = item;
 
+    searchField->clear();
     popover->hide();
     emit selectionChanged(item);
   }
 
   void showPopover() {
     const QPoint globalPos = inputField->mapToGlobal(QPoint(0, inputField->height() + 10));
+
+    if (currentItem) list->setSelected(currentItem->id());
 
     popover->move(globalPos);
     popover->resize(inputField->width(), POPOVER_HEIGHT);

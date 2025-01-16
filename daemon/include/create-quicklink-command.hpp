@@ -46,6 +46,8 @@ public:
     return name;
   }
 
+  size_t id() const override { return qHash(app->id); }
+
   AppSelectorItem(const std::shared_ptr<DesktopExecutable> &app, bool isDefault = false)
       : app(app), isDefault(isDefault) {}
 };
@@ -185,6 +187,8 @@ public:
     connect(iconSelector, &FormDropdown::textChanged, this,
             &CreateQuicklinkCommandView::iconSelectorTextChanged);
 
+    handleAppSelectorTextChanged("");
+
     defaultIcon = std::make_shared<IconSelectorItem>(":icons/link.svg", "Default");
     iconSelector->setValue(defaultIcon);
 
@@ -210,7 +214,6 @@ public:
 
     setSignalActions({submitAction});
 
-    handleAppSelectorTextChanged("");
     iconSelectorTextChanged("");
 
     name->focus();
