@@ -223,6 +223,59 @@ void AppWindow::launchCommand(ViewCommand *cmd, const LaunchCommandOptions &opts
   if (view) { pushView(view, {.searchQuery = opts.searchQuery, .navigation = opts.navigation}); }
 }
 
+void AppWindow::resizeEvent(QResizeEvent *event) {
+  QMainWindow::resizeEvent(event);
+
+  /*
+  // Set a rounded mask based on the new size
+  int radius = 20; // Adjust radius as needed
+  QRegion region(0, 0, width(), height(), QRegion::Rectangle);
+  QRegion roundedRegion =
+      QRegion(width() / 2 - radius, height() / 2 - radius, radius * 2, radius * 2, QRegion::Ellipse);
+  region = region.subtracted(region - roundedRegion);
+  setMask(region);
+  */
+}
+
+void AppWindow::paintEvent(QPaintEvent *event) {
+  int borderRadius = 15;
+  int borderWidth = 1;
+  QColor borderColor("#444444");
+  QColor backgroundColor("#171615");
+
+  backgroundColor.setAlphaF(0.98);
+
+  QPainter painter(this);
+
+  painter.setRenderHint(QPainter::Antialiasing, true);
+
+  QPainterPath path;
+  path.addRoundedRect(rect(), borderRadius, borderRadius);
+
+  painter.setClipPath(path);
+
+  painter.fillPath(path, backgroundColor);
+
+  QPen pen(borderColor, borderWidth); // Border with a thickness of 2
+  painter.setPen(pen);
+  painter.drawPath(path);
+
+  /*
+    QColor backgroundColor("#171615");
+
+    backgroundColor.setAlphaF(0.9);
+
+    QPainter painter(this);
+
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    painter.setPen("#444444");
+    painter.setBrush(backgroundColor);
+    painter.drawRoundedRect(0, 0, width(), height(), 15, 15);
+
+    // painter.fillRect(rect(), backgroundColor); // Adjust color as needed
+    // */
+}
+
 void AppWindow::selectPrimaryAction() {
   if (actionPopover->signalActions.isEmpty()) return;
 

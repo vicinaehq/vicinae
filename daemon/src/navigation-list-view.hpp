@@ -4,6 +4,8 @@
 #include "ui/virtual-list.hpp"
 #include "view.hpp"
 #include <memory>
+#include <qboxlayout.h>
+#include <qwidget.h>
 
 class NavigationListView : public View {
   AppWindow &app;
@@ -41,6 +43,14 @@ public:
     connect(list, &VirtualListWidget::itemActivated, this, &NavigationListView::itemActivated);
     forwardInputEvents(list);
     list->setModel(model);
-    widget = list;
+
+    auto container = new QWidget;
+    auto containerLayout = new QVBoxLayout;
+
+    container->setLayout(containerLayout);
+    containerLayout->setContentsMargins(8, 0, 8, 0);
+    containerLayout->addWidget(list);
+
+    widget = container;
   }
 };

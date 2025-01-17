@@ -3,6 +3,7 @@
 #include "extend/image-model.hpp"
 #include "image-viewer.hpp"
 
+#include <QPainterPath>
 #include <cctype>
 #include <qapplication.h>
 #include <qboxlayout.h>
@@ -95,11 +96,26 @@ itemMap.insert(listItem, item);
 }
 
 void ActionPopover::paintEvent(QPaintEvent *event) {
-  QStyleOption o;
-  QPainter p(this);
+  int borderRadius = 10;
+  QColor borderColor("#444444");
 
-  o.initFrom(this);
-  style()->drawPrimitive(QStyle::PE_Widget, &o, &p, this);
+  QPainter painter(this);
+
+  painter.setRenderHint(QPainter::Antialiasing, true);
+
+  QPainterPath path;
+  path.addRoundedRect(rect(), borderRadius, borderRadius);
+
+  painter.setClipPath(path);
+
+  QColor backgroundColor("#171615");
+
+  painter.fillPath(path, backgroundColor);
+
+  // Draw the border
+  QPen pen(borderColor, 1); // Border with a thickness of 2
+  painter.setPen(pen);
+  painter.drawPath(path);
 }
 
 void ActionPopover::filterActions(const QString &text) {

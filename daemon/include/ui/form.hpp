@@ -3,13 +3,16 @@
 #include "ui/virtual-list.hpp"
 #include <memory>
 #include <qboxlayout.h>
+#include <QPainterPath>
 #include <qjsonvalue.h>
 #include <qlabel.h>
 #include <qlayoutitem.h>
 #include <qlineedit.h>
 #include <qnamespace.h>
 #include <qobject.h>
+#include <qpainter.h>
 #include <qtmetamacros.h>
+#include <qtypes.h>
 #include <qwidget.h>
 
 class FormQLineEdit : public QLineEdit {
@@ -57,6 +60,7 @@ public:
 
   QString text() { return input->text(); }
   void setText(const QString &value) { input->setText(value); }
+  void setPlaceholderText(const QString &text) { input->setPlaceholderText(text); }
 
 signals:
   void textChanged(const QString &text);
@@ -95,6 +99,44 @@ public:
   void addItem(const std::shared_ptr<AbstractFormDropdownItem> &item) { VirtualListModel::addItem(item); }
 };
 
+class Popover : public QWidget {
+  Q_OBJECT
+
+  void closeEvent(QCloseEvent *event) override { emit closed(); }
+
+public:
+  Popover(QWidget *parent = nullptr) : QWidget(parent) {
+    setWindowFlags(Qt::FramelessWindowHint | Qt::Popup);
+    setAttribute(Qt::WA_TranslucentBackground);
+  }
+
+  void paintEvent(QPaintEvent *event) override {
+    int borderRadius = 10;
+    QColor borderColor("#444444");
+
+    QPainter painter(this);
+
+    painter.setRenderHint(QPainter::Antialiasing, true);
+
+    QPainterPath path;
+    path.addRoundedRect(rect(), borderRadius, borderRadius);
+
+    painter.setClipPath(path);
+
+    QColor backgroundColor("#171615");
+
+    painter.fillPath(path, backgroundColor);
+
+    // Draw the border
+    QPen pen(borderColor, 1); // Border with a thickness of 2
+    painter.setPen(pen);
+    painter.drawPath(path);
+  }
+
+signals:
+  void closed();
+};
+
 class FormDropdown : public FormItemWidget {
   Q_OBJECT
 
@@ -105,7 +147,7 @@ protected:
   FormDropdownModel *listModel;
   FormQLineEdit *inputField;
   QLineEdit *searchField;
-  QWidget *popover;
+  Popover *popover;
   std::shared_ptr<AbstractFormDropdownItem> currentItem = nullptr;
 
   bool eventFilter(QObject *obj, QEvent *event) override {
@@ -142,7 +184,7 @@ protected:
 public:
   FormDropdown(const QString &name = "")
       : FormItemWidget(name), listModel(new FormDropdownModel), inputField(new FormQLineEdit),
-        searchField(new QLineEdit()), popover(new QWidget(this, Qt::Popup)) {
+        searchField(new QLineEdit()), popover(new Popover(this)) {
     auto *layout = new QVBoxLayout();
     layout->setContentsMargins(0, 0, 0, 0);
 
@@ -156,25 +198,33 @@ public:
     // Create the popover
     popover->setWindowFlags(Qt::Popup);
     auto *popoverLayout = new QVBoxLayout(popover);
-    popoverLayout->setContentsMargins(0, 0, 0, 0);
+    popoverLayout->setContentsMargins(1, 1, 1, 1);
     popoverLayout->setSpacing(0);
 
     searchField = new QLineEdit(popover);
-    searchField->setContentsMargins(10, 10, 10, 10);
+    searchField->setContentsMargins(15, 15, 15, 15);
     searchField->setPlaceholderText("Search...");
     popoverLayout->addWidget(searchField);
 
     list = new VirtualListWidget(popover);
     list->setModel(listModel);
-    list->setContentsMargins(10, 10, 10, 10);
     popoverLayout->addWidget(new HDivider);
-    popoverLayout->addWidget(list);
 
     inputField->installEventFilter(this);
     searchField->installEventFilter(this);
 
+    auto listContainerWidget = new QWidget;
+    auto listContainerLayout = new QVBoxLayout;
+
+    listContainerLayout->setContentsMargins(10, 10, 10, 10);
+    listContainerLayout->addWidget(list);
+    listContainerWidget->setLayout(listContainerLayout);
+
+    popoverLayout->addWidget(listContainerWidget);
+
     connect(searchField, &QLineEdit::textChanged, this, &FormDropdown::textChanged);
     connect(list, &VirtualListWidget::itemActivated, this, &FormDropdown::itemActivated);
+    connect(popover, &Popover::closed, this, [this]() { searchField->clear(); });
 
     auto widget = new QWidget();
     widget->setLayout(layout);
@@ -224,7 +274,12 @@ private slots:
   void showPopover() {
     const QPoint globalPos = inputField->mapToGlobal(QPoint(0, inputField->height() + 10));
 
-    if (currentItem) list->setSelected(currentItem->id());
+    if (currentItem) {
+      list->setSelected(currentItem->id());
+      qDebug() << "selecting " << currentItem->id();
+    } else {
+      qDebug() << "no current item";
+    }
 
     popover->move(globalPos);
     popover->resize(inputField->width(), POPOVER_HEIGHT);
@@ -234,9 +289,9 @@ private slots:
 };
 
 class FormWidget : public QWidget {
+public:
   QVBoxLayout *layout;
 
-public:
   FormWidget() : layout(new QVBoxLayout) {
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(10);

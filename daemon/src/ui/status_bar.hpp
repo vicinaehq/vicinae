@@ -2,6 +2,7 @@
 #include "extend/action-model.hpp"
 #include "extend/image-model.hpp"
 #include "image-viewer.hpp"
+#include "ui/text-label.hpp"
 #include "ui/toast.hpp"
 #include <QBoxLayout>
 #include <QLabel>
@@ -28,8 +29,9 @@ class StatusBar : public QWidget {
       auto iconLabel = new QLabel();
 
       layout->setContentsMargins(0, 0, 0, 0);
-      layout->addWidget(ImageViewer::createFromModel(model, {25, 25}));
-      layout->addWidget(new QLabel(name));
+      layout->setSpacing(10);
+      layout->addWidget(ImageViewer::createFromModel(model, {20, 20}));
+      layout->addWidget(new TextLabel(name));
 
       setLayout(layout);
     }
@@ -42,8 +44,7 @@ class StatusBar : public QWidget {
 
       auto leftIcon = new QLabel();
       QIcon::setThemeName("Papirus-Dark");
-      leftIcon->setPixmap(
-          QIcon::fromTheme(":/assets/icons/tux.svg").pixmap(22, 22));
+      leftIcon->setPixmap(QIcon::fromTheme(":/assets/icons/tux.svg").pixmap(20, 20));
       leftLayout->addWidget(leftIcon);
       leftLayout->setContentsMargins(0, 0, 0, 0);
 
@@ -51,12 +52,12 @@ class StatusBar : public QWidget {
     }
   };
 
+  void paintEvent(QPaintEvent *event) override;
   void setLeftWidget(QWidget *left);
 
 public:
   void setCurrentAction(const ActionPannelItem &item);
-  void setToast(const QString &text,
-                ToastPriority priority = ToastPriority::Success);
+  void setToast(const QString &text, ToastPriority priority = ToastPriority::Success);
   void setNavigationTitle(const QString &name, const ImageLikeModel &model);
   void reset();
 

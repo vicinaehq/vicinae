@@ -14,6 +14,7 @@
 #include <qmap.h>
 #include <qminmax.h>
 #include <qnamespace.h>
+#include <QPainterPath>
 #include <qobject.h>
 #include <qscrollarea.h>
 #include <qscrollbar.h>
@@ -130,14 +131,11 @@ class VirtualListItemWidget : public QFrame {
 
   QWidget *widget = nullptr;
   bool selectable = true;
+  bool isSelected = false;
+  bool isHovered = false;
 
   void resizeEvent(QResizeEvent *event) override {
     if (widget) widget->setFixedSize(event->size());
-  }
-
-  void updateStyle() {
-    style()->polish(this);
-    style()->unpolish(this);
   }
 
   void enterEvent(QEnterEvent *event) override { emit hovered(true); }
@@ -153,29 +151,41 @@ class VirtualListItemWidget : public QFrame {
     if (event->button() == Qt::LeftButton) { emit leftDoubleClick(); }
   }
 
+  void paintEvent(QPaintEvent *) override {
+    if (isSelected || isHovered) {
+      int borderRadius = 10;
+      QPainter painter(this);
+
+      painter.setRenderHint(QPainter::Antialiasing, true);
+
+      QPainterPath path;
+      path.addRoundedRect(rect(), borderRadius, borderRadius);
+
+      painter.setClipPath(path);
+
+      QColor backgroundColor("#282726");
+
+      painter.fillPath(path, backgroundColor);
+    }
+  }
+
 public:
   VirtualListItemWidget(QWidget *parent = nullptr) : QFrame(parent) {}
 
   void setSelectable(bool selectable = true) { this->selectable = selectable; }
 
-  void reset() {
-    setProperty("selected", false);
-    setProperty("hovered", false);
-    updateStyle();
-  }
-
   void setSelected(bool selected) {
     if (!selectable) return;
 
-    setProperty("selected", selected);
-    updateStyle();
+    isSelected = selected;
+    repaint();
   }
 
   void setHovered(bool hovered) {
     if (!selectable) return;
 
-    setProperty("hovered", hovered);
-    updateStyle();
+    isHovered = hovered;
+    repaint();
   }
 
   void setWidget(QWidget *w) {

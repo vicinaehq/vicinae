@@ -38,6 +38,7 @@ public:
 
     return icon;
   }
+
   QString displayName() const override {
     QString name = app->fullyQualifiedName();
 
@@ -76,6 +77,8 @@ public:
   }
   QString iconName() const override { return name; }
 
+  size_t id() const override { return qHash(name); }
+
   IconSelectorItem(const QString &iconName, const QString &displayName = "")
       : name(iconName), dname(displayName) {}
 };
@@ -106,17 +109,19 @@ class CreateQuicklinkCommandView : public View {
   std::shared_ptr<AppSelectorItem> defaultOpener;
 
   void handleAppSelectorTextChanged(const QString &text) {
-    appSelector->model()->beginReset();
+    auto model = appSelector->model();
+
+    model->beginReset();
 
     if (defaultOpener && defaultOpener->displayName().contains(text, Qt::CaseInsensitive)) {
-      appSelector->model()->addItem(defaultOpener);
+      model->addItem(defaultOpener);
     }
 
     for (const auto &app : appDb.apps) {
       bool appFlag = false;
 
       if (app->isOpener() && app->name.contains(text, Qt::CaseInsensitive)) {
-        appSelector->model()->addItem(std::make_shared<AppSelectorItem>(app));
+        model->addItem(std::make_shared<AppSelectorItem>(app));
         appFlag = true;
       }
 
@@ -124,12 +129,12 @@ class CreateQuicklinkCommandView : public View {
         if (!app->isOpener()) continue;
 
         if (appFlag || app->name.contains(text, Qt::CaseInsensitive)) {
-          appSelector->model()->addItem(std::make_shared<AppSelectorItem>(app));
+          model->addItem(std::make_shared<AppSelectorItem>(app));
         }
       }
     }
 
-    appSelector->model()->endReset();
+    model->endReset();
   }
 
   void iconSelectorTextChanged(const QString &text) {
@@ -172,8 +177,10 @@ public:
         appSelector(new FormDropdown), iconSelector(new FormDropdown) {
     name->setFocus();
     name->setName("Name");
+    name->setPlaceholderText("Quicklink name");
     form->addInput(name);
     link->setName("URL");
+    link->setPlaceholderText("https://google.com/search?q={argument}");
     form->addInput(link);
     form->addInput(appSelector);
     form->addInput(iconSelector);
@@ -187,11 +194,20 @@ public:
     connect(iconSelector, &FormDropdown::textChanged, this,
             &CreateQuicklinkCommandView::iconSelectorTextChanged);
 
-    handleAppSelectorTextChanged("");
-
     defaultIcon = std::make_shared<IconSelectorItem>(":icons/link.svg", "Default");
     iconSelector->setValue(defaultIcon);
 
+    if (auto browser = appDb.defaultBrowser()) {
+      auto opener = std::make_shared<AppSelectorItem>(browser, true);
+
+      appSelector->setValue(opener);
+      defaultOpener = opener;
+    }
+
+    handleAppSelectorTextChanged("");
+    iconSelectorTextChanged("");
+
+    form->setContentsMargins(0, 10, 0, 0);
     widget = form;
   }
 
@@ -213,8 +229,6 @@ public:
     submitAction->setShortcut(KeyboardShortcutModel{.key = "return", .modifiers = {"ctrl"}});
 
     setSignalActions({submitAction});
-
-    iconSelectorTextChanged("");
 
     name->focus();
   }

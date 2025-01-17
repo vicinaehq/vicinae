@@ -1,7 +1,10 @@
 #include "ui/status_bar.hpp"
 #include "extend/image-model.hpp"
+#include <qevent.h>
 #include <qlogging.h>
+#include <QPainterPath>
 #include <qnamespace.h>
+#include <qpainter.h>
 #include <qtimer.h>
 
 StatusBar::StatusBar(QWidget *parent) : QWidget(parent), leftWidget(nullptr) {
@@ -37,8 +40,7 @@ void StatusBar::setLeftWidget(QWidget *left) {
 
   layout()->replaceWidget(oldWidget, left);
 
-  if (oldWidget && oldWidget)
-    oldWidget->deleteLater();
+  if (oldWidget && oldWidget) oldWidget->deleteLater();
 
   if (tmpLeft) {
     tmpLeft->deleteLater();
@@ -48,12 +50,22 @@ void StatusBar::setLeftWidget(QWidget *left) {
   leftWidget = left;
 }
 
-void StatusBar::setNavigationTitle(const QString &name,
-                                   const ImageLikeModel &icon) {
+void StatusBar::setNavigationTitle(const QString &name, const ImageLikeModel &icon) {
   setLeftWidget(new CurrentCommandWidget(name, icon));
 }
 
 void StatusBar::reset() { setLeftWidget(new DefaultLeftWidget()); }
+
+void StatusBar::paintEvent(QPaintEvent *event) {
+  QPainter painter(this);
+  painter.setRenderHint(QPainter::Antialiasing, true);
+
+  QColor backgroundColor("#232323");
+
+  painter.fillRect(this->rect(), backgroundColor);
+
+  parentWidget()->update();
+}
 
 void StatusBar::setToast(const QString &text, ToastPriority priority) {
   auto toast = new ToastWidget(text, priority);

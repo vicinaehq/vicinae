@@ -16,7 +16,7 @@ TopBar::TopBar(QWidget *parent) : QWidget(parent), layout(new QHBoxLayout()), in
   backContainer->addWidget(backButtonLabel, 0, Qt::AlignCenter);
   backWidget->setLayout(backContainer);
 
-  backButtonLabel->setPixmap(QIcon::fromTheme("arrow-left").pixmap(20, 20));
+  backButtonLabel->setPixmap(QIcon::fromTheme(":icons/arrow-left").pixmap(16, 16));
 
   backButtonLabel->setProperty("class", "back-button");
   backWidget->hide();

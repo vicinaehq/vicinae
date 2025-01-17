@@ -9,6 +9,7 @@
 #include "quicklist-database.hpp"
 #include <jsoncpp/json/value.h>
 #include <qboxlayout.h>
+#include <qevent.h>
 #include <qhash.h>
 #include <stack>
 
@@ -61,6 +62,9 @@ struct PushViewOptions {
 
 class AppWindow : public QMainWindow {
   Q_OBJECT
+
+  void paintEvent(QPaintEvent *event) override;
+  void resizeEvent(QResizeEvent *event) override;
 
 public:
   std::stack<QString> queryStack;

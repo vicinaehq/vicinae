@@ -30,9 +30,11 @@ QWidget {
 	color: %4;
 }
 
+/*
 QMainWindow > QWidget, .virtual-list {
 	background-color: %2;
 }
+*/
 
 QLineEdit, QListWidget {
 	border: none;
@@ -112,10 +114,6 @@ QLabel.chip {
 	border: 1px white solid;
 	font-size: 11pt;
 	border-radius: 5px;
-}
-
-QWidget.status-bar {
-	background-color: %5;
 }
 
 .status-bar QLabel {
