@@ -28,17 +28,9 @@ public:
 
       if (icon.isNull()) { icon = QIcon::fromTheme("application-x-executable"); }
 
-      QScreen *screen = QApplication::primaryScreen();
-      qreal devicePixelRatio = screen->devicePixelRatio();
       QSize logicalSize = size.isValid() ? size : defaultIconSize;
-      QSize scaledSize = logicalSize * devicePixelRatio;
 
-      QPixmap pixmap = icon.pixmap(scaledSize, QIcon::Mode::Normal, QIcon::State::Off);
-
-      /*
-  pixmap = pixmap.scaled(size.isValid() ? size : defaultIconSize, Qt::KeepAspectRatio,
-                         Qt::SmoothTransformation);
-                                                     */
+      QPixmap pixmap = icon.pixmap(logicalSize, QIcon::Mode::Normal, QIcon::State::Off);
 
       label->setPixmap(pixmap);
       label->setAlignment(Qt::AlignCenter);
