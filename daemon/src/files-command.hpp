@@ -7,7 +7,6 @@
 #include "indexer-service.hpp"
 #include "navigation-list-view.hpp"
 #include "ui/test-list.hpp"
-#include <QtPdf/QPdfDocument>
 #include <qboxlayout.h>
 #include <qfileinfo.h>
 #include <qicon.h>
@@ -29,32 +28,8 @@ class FilesView : public NavigationListView {
       auto widget = new QWidget();
       auto layout = new QHBoxLayout();
 
-      if (info.fileName().endsWith("pdf")) {
-        auto doc = new QPdfDocument();
-
-        auto err = doc->load(info.absoluteFilePath());
-
-        if (doc->error() != QPdfDocument::Error::None) {
-          qDebug() << "error loading" << info.absoluteFilePath();
-        } else {
-          qDebug() << "load pdf " << info.absoluteFilePath();
-        }
-
-        auto originalSize = doc->pagePointSize(0);
-        auto factor = 500 / originalSize.height();
-        int targetWidth = originalSize.width() * factor;
-
-        auto image = doc->render(0, {targetWidth, 500});
-        auto label = new QLabel();
-
-        label->setPixmap(QPixmap::fromImage(image));
-
-        return label;
-      }
-
-      layout->addWidget(ImageViewer::createFromModel(
-                            ThemeIconModel{.iconName = iconName}, {128, 128}),
-                        0, Qt::AlignCenter);
+      layout->addWidget(ImageViewer::createFromModel(ThemeIconModel{.iconName = iconName}, {128, 128}), 0,
+                        Qt::AlignCenter);
       widget->setLayout(layout);
 
       return widget;
@@ -71,16 +46,13 @@ class FilesView : public NavigationListView {
                                .title = "Type",
                            },
                            MetadataSeparator{},
-                           MetadataLabel{.text = info.lastRead().toString(),
-                                         .title = "Last accessed"},
+                           MetadataLabel{.text = info.lastRead().toString(), .title = "Last accessed"},
                            MetadataSeparator{},
-                           MetadataLabel{.text = info.lastModified().toString(),
-                                         .title = "Last modified"}}};
+                           MetadataLabel{.text = info.lastModified().toString(), .title = "Last modified"}}};
     }
 
   public:
-    FileListItemDetail(const QString &path, const QString &iconName)
-        : info(path), iconName(iconName) {}
+    FileListItemDetail(const QString &path, const QString &iconName) : info(path), iconName(iconName) {}
   };
 
   class FileListItem : public AbstractNativeListItem {
@@ -90,14 +62,11 @@ class FilesView : public NavigationListView {
     Service<AppDatabase> appDb;
 
     QWidget *createItem() const override {
-      return new ListItemWidget(
-          ImageViewer::createFromModel(ThemeIconModel{.iconName = iconName},
-                                       {25, 25}),
-          file.name, "", "");
+      return new ListItemWidget(ImageViewer::createFromModel(ThemeIconModel{.iconName = iconName}, {25, 25}),
+                                file.name, "", "");
     }
 
-    std::unique_ptr<AbstractNativeListItemDetail>
-    createDetail() const override {
+    std::unique_ptr<AbstractNativeListItemDetail> createDetail() const override {
       return std::make_unique<FileListItemDetail>(file.path, iconName);
     }
 
@@ -109,8 +78,7 @@ class FilesView : public NavigationListView {
       }
 
       if (auto browser = appDb.defaultFileBrowser()) {
-        actions << new OpenAppAction(browser, "Open in " + browser->name,
-                                     {file.path});
+        actions << new OpenAppAction(browser, "Open in " + browser->name, {file.path});
       }
 
       actions << new CopyTextAction("Copy path", file.path);
@@ -120,8 +88,7 @@ class FilesView : public NavigationListView {
     }
 
   public:
-    FileListItem(const FileInfo &info, Service<AppDatabase> appDb)
-        : file(info), appDb(appDb) {
+    FileListItem(const FileInfo &info, Service<AppDatabase> appDb) : file(info), appDb(appDb) {
       auto mime = mimeDb.mimeTypeForName(info.mime);
       QIcon icon = QIcon::fromTheme(mime.iconName());
 
@@ -139,8 +106,7 @@ public slots:
     model->beginSection("Files");
 
     for (const auto &file : files) {
-      model->addItem(
-          std::make_unique<FileListItem>(file, service<AppDatabase>()));
+      model->addItem(std::make_unique<FileListItem>(file, service<AppDatabase>()));
     }
 
     model->endReset();
@@ -150,12 +116,10 @@ public:
   void onSearchChanged(const QString &s) override {
     auto request = indexer.search(s);
 
-    connect(request, &SearchRequest::finished, this,
-            [this](auto files) { onFileSearchFinished(files); });
+    connect(request, &SearchRequest::finished, this, [this](auto files) { onFileSearchFinished(files); });
   }
 
   void onMount() override {}
 
-  FilesView(AppWindow &app)
-      : NavigationListView(app), app(app), indexer(service<IndexerService>()) {}
+  FilesView(AppWindow &app) : NavigationListView(app), app(app), indexer(service<IndexerService>()) {}
 };
