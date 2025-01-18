@@ -1,27 +1,40 @@
 #pragma once
-#include "ui/native-list.hpp"
-#include <QBoxLayout>
-#include <QScrollArea>
-#include <QScrollBar>
-#include <qboxlayout.h>
-#include <qcoreevent.h>
+#include "ui/text-label.hpp"
+#include <QWidget>
 #include <qevent.h>
-#include <qframe.h>
-#include <qhash.h>
-#include <qjsonvalue.h>
-#include <qlabel.h>
-#include <qlogging.h>
-#include <qmap.h>
-#include <qminmax.h>
-#include <qnamespace.h>
-#include <QPainterPath>
-#include <qobject.h>
-#include <qscrollarea.h>
+#include <qpainterpath.h>
+#include <QVBoxLayout>
 #include <qscrollbar.h>
-#include <qstyleoption.h>
-#include <qtmetamacros.h>
-#include <qwidget.h>
-#include <variant>
+#include <qscrollarea.h>
+#include <qpainter.h>
+#include <qframe.h>
+#include <qtimer.h>
+#include <quuid.h>
+
+class ListSectionHeader : public QWidget {
+public:
+  ListSectionHeader(const QString &title, const QString &subtitle, size_t count) {
+    setAttribute(Qt::WA_StyledBackground);
+
+    auto layout = new QHBoxLayout();
+
+    layout->setContentsMargins(8, 8, 8, 8);
+
+    auto leftWidget = new QWidget();
+    auto leftLayout = new QHBoxLayout();
+
+    leftLayout->setContentsMargins(0, 0, 0, 0);
+    leftLayout->setSpacing(10);
+    leftLayout->addWidget(new TextLabel(title));
+    if (count > 0) { leftLayout->addWidget(new TextLabel(QString::number(count))); }
+    leftWidget->setLayout(leftLayout);
+
+    layout->addWidget(leftWidget, 0, Qt::AlignLeft | Qt::AlignVCenter);
+    layout->addWidget(new TextLabel(subtitle), 0, Qt::AlignRight | Qt::AlignVCenter);
+
+    setLayout(layout);
+  }
+};
 
 static const int SCROLL_GAP = 5;
 
@@ -126,6 +139,7 @@ public:
 
   VirtualListModel() {}
 };
+
 class VirtualListItemWidget : public QFrame {
   Q_OBJECT
 

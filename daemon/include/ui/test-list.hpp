@@ -3,7 +3,7 @@
 #include "common.hpp"
 #include "extend/metadata-model.hpp"
 #include "ui/action_popover.hpp"
-#include "ui/native-list.hpp"
+#include "ui/horizontal-metadata.hpp"
 #include "ui/top_bar.hpp"
 #include "ui/virtual-list.hpp"
 #include <qabstractitemmodel.h>

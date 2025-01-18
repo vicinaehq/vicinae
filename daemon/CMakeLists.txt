@@ -58,7 +58,6 @@ qt_add_executable(${TARGET}
 	include/ui/list-view.hpp
 	include/ui/empty-view.hpp
 
-	include/ui/native-list.hpp
 	include/ui/test-list.hpp
 
 	src/manage-quicklinks-command.hpp

@@ -150,12 +150,6 @@ QLineEdit[isFormQLineEdit="true"]:focus  {
 	border: 1px solid #666666;
 }
 
-.popover {
-	background-color: %2;
-	border: none;
-	border: 1px solid #222222;
-}
-
 QTextEdit {
 	background-color: transparent;
 }

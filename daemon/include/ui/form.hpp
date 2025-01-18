@@ -1,5 +1,6 @@
 #pragma once
 
+#include "common.hpp"
 #include "ui/virtual-list.hpp"
 #include <memory>
 #include <qboxlayout.h>

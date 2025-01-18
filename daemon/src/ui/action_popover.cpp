@@ -1,10 +1,11 @@
 #include "action_popover.hpp"
+#include "common.hpp"
 #include "extend/action-model.hpp"
-#include "extend/image-model.hpp"
-#include "image-viewer.hpp"
+#include "ui/virtual-list.hpp"
 
 #include <QPainterPath>
 #include <cctype>
+#include <memory>
 #include <qapplication.h>
 #include <qboxlayout.h>
 #include <qevent.h>
@@ -37,64 +38,6 @@ QList<ActionPannelItem> ActionPopover::currentActions() const {
   return menuStack.top();
 }
 
-void ActionPopover::renderItems(const QList<ActionData> &items) {
-  list->clear();
-  itemMap.clear();
-
-  for (const auto &item : items) {
-    // if (auto model = std::get_if<ActionModel>(&item)) {
-    auto listItem = new QListWidgetItem;
-    ImageLikeModel imageModel;
-
-    imageModel = item.icon;
-
-    QString str;
-
-    if (item.shortcut) {
-      QStringList lst;
-
-      lst << item.shortcut->modifiers;
-      lst << item.shortcut->key;
-      str = lst.join(" + ");
-    }
-
-    auto widget =
-        new ActionListItemWidget(ImageViewer::createFromModel(imageModel, {25, 25}), item.title, "", str);
-
-    list->addItem(listItem);
-    list->setItemWidget(listItem, widget);
-    listItem->setSizeHint(widget->sizeHint());
-    itemMap.insert(listItem, item);
-
-    /*
-}
-
-if (auto model = std::get_if<ActionPannelSectionModel>(&item)) {
-}
-if (auto model = std::get_if<ActionPannelSubmenuModel>(&item)) {
-auto listItem = new QListWidgetItem;
-auto widget = new ActionListItemWidget(
-    ImageViewer::createFromModel(*model->icon, {25, 25}), model->title,
-    "", "");
-
-list->addItem(listItem);
-list->setItemWidget(listItem, widget);
-listItem->setSizeHint(widget->sizeHint());
-itemMap.insert(listItem, item);
-}
-  */
-  }
-
-  for (int i = 0; i != list->count(); ++i) {
-    auto item = list->item(i);
-
-    if (!item->flags().testFlag(Qt::ItemIsSelectable)) continue;
-
-    list->setCurrentItem(item);
-    break;
-  }
-}
-
 void ActionPopover::paintEvent(QPaintEvent *event) {
   int borderRadius = 10;
   QColor borderColor("#444444");
@@ -118,73 +61,49 @@ void ActionPopover::paintEvent(QPaintEvent *event) {
   painter.drawPath(path);
 }
 
-void ActionPopover::filterActions(const QString &text) {
-  QList<AbstractAction *> filteredActions;
+void ActionPopover::itemActivated(const std::shared_ptr<AbstractVirtualListItem> &item) {
+  auto actionItem = std::static_pointer_cast<ActionListItem>(item);
 
-  for (auto action : signalActions) {
-    if (action->title.contains(text, Qt::CaseInsensitive)) { filteredActions << action; }
-  }
-
-  renderSignalItems(filteredActions);
-
-  /*
-if (menuStack.isEmpty())
-return;
-
-QList<ActionPannelItem> items;
-
-for (const auto &item : menuStack.top()) {
-if (auto model = std::get_if<ActionModel>(&item);
-  model->title.contains(text, Qt::CaseInsensitive)) {
-items.push_back(item);
-}
-}
-
-renderItems(items);
-*/
-}
-
-void ActionPopover::itemActivated(QListWidgetItem *item) {
-  if (itemMap.contains(item)) {
-    const auto &action = itemMap.value(item);
-
-    action.execute();
-  }
-
-  if (signalItemMap.contains(item)) { emit actionExecuted(signalItemMap[item]); }
-
+  emit actionExecuted(actionItem->action);
   hide();
 }
 
-ActionPopover::ActionPopover(QWidget *parent) : QWidget(parent) {
-  setWindowFlags(Qt::Popup);
+ActionPopover::ActionPopover(QWidget *parent)
+    : QWidget(parent), list(new VirtualListWidget), listModel(new VirtualListModel) {
+  setWindowFlags(Qt::FramelessWindowHint | Qt::Popup);
+  setAttribute(Qt::WA_TranslucentBackground);
+
+  list->setModel(listModel);
 
   auto layout = new QVBoxLayout(this);
 
   layout->setContentsMargins(0, 0, 0, 0);
 
-  list = new QListWidget();
   input = new QLineEdit();
   input->installEventFilter(this);
 
-  connect(input, &QLineEdit::textChanged, this, &ActionPopover::filterActions);
+  // connect(input, &QLineEdit::textChanged, this, &ActionPopover::filterActions);
 
-  layout->addWidget(list);
+  auto listContainer = new QWidget;
+  auto listLayout = new QVBoxLayout;
+
+  listLayout->setContentsMargins(10, 10, 10, 10);
+  listLayout->addWidget(list);
+  listContainer->setLayout(listLayout);
+
+  layout->addWidget(listContainer);
+
+  input->setContentsMargins(15, 15, 15, 15);
+
+  layout->setSpacing(0);
+
+  layout->addWidget(listContainer);
+  layout->addWidget(new HDivider);
   layout->addWidget(input);
 
-  setObjectName("action-popover");
-
-  list->setContentsMargins(0, 0, 0, 0);
-  list->setSpacing(0);
-  list->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  list->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  list->setSelectionMode(QAbstractItemView::SingleSelection);
-  list->setFocusPolicy(Qt::NoFocus);
-
-  connect(list, &QListWidget::itemActivated, this, &ActionPopover::itemActivated);
+  connect(list, &VirtualListWidget::itemActivated, this, &ActionPopover::itemActivated);
 
   input->setPlaceholderText("Search actions");
-  input->setTextMargins(5, 5, 5, 5);
 
   setLayout(layout);
 }
@@ -218,12 +137,7 @@ void ActionPopover::showActions() {
 
   qDebug() << "creating list with " << window->width() << "x" << window->height();
 
-  if (!signalActions.isEmpty()) {
-    renderSignalItems(signalActions);
-  } else {
-    renderItems(actionData);
-  }
-
+  renderSignalItems(signalActions);
   adjustSize();
 
   auto parentGeo = window->geometry();
@@ -233,6 +147,7 @@ void ActionPopover::showActions() {
   qDebug() << "width2=" << geometry().width() << " height2=" << geometry().height();
 
   setMinimumWidth(window->width() * 0.45);
+  setFixedHeight(200);
   auto x = parentGeo.width() - width() - 10;
   auto y = parentGeo.height() - height() - 50;
   QPoint global = window->mapToGlobal(QPoint(x, y));

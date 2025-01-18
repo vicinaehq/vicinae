@@ -145,7 +145,7 @@ public:
   }
 
   CopyTextAction(const QString &title, const QString &text)
-      : AbstractAction(title, ThemeIconModel{.iconName = "clipboard"}), text(text) {}
+      : AbstractAction(title, ThemeIconModel{.iconName = ":icons/copy-clipboard"}), text(text) {}
 };
 
 class CopyCalculatorResultAction : public CopyTextAction {

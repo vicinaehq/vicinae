@@ -3,7 +3,7 @@
 #include "extend/image-model.hpp"
 #include "image-viewer.hpp"
 #include "ui/keyboard.hpp"
-#include "ui/status_bar.hpp"
+#include "ui/virtual-list.hpp"
 #include <qboxlayout.h>
 #include <qevent.h>
 #include <qhash.h>
@@ -34,11 +34,36 @@ public:
   virtual void execute(AppWindow &app) = 0;
 };
 
-struct ActionData {
-  QString title;
-  ThemeIconModel icon;
-  std::function<void(void)> execute;
-  std::optional<KeyboardShortcutModel> shortcut;
+class ActionListItem : public AbstractVirtualListItem {
+public:
+  AbstractAction *action;
+
+  QWidget *createItem() const override {
+    auto iconLabel = new QLabel;
+    auto label = new QLabel;
+    auto layout = new QHBoxLayout;
+
+    layout->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+    label->setText(action->title);
+
+    layout->setSpacing(10);
+    layout->addWidget(ImageViewer::createFromModel(action->icon, {25, 25}));
+    layout->addWidget(label);
+    layout->setContentsMargins(10, 0, 10, 0);
+
+    auto widget = new QWidget;
+
+    widget->setLayout(layout);
+
+    return widget;
+  }
+
+  int height() const override { return 40; }
+
+  QWidget *updateItem(QWidget *current) const override { return createItem(); }
+
+public:
+  ActionListItem(AbstractAction *action) : action(action) {}
 };
 
 class ActionListItemWidget : public QWidget {
@@ -81,37 +106,6 @@ public:
 class SearchResult;
 class IAction;
 
-typedef std::function<void(void)> ActionHandler;
-
-class NewActionPannelModel : public QObject {
-  Q_OBJECT
-  QList<QVariant> items;
-
-public:
-  void setItems(const QList<QVariant> &items) {
-    this->items = items;
-    emit itemsChanged(items);
-  }
-
-  const QVariant &row(int index) { return this->items.at(index); }
-
-signals:
-  void itemsChanged(const QList<QVariant> &items);
-};
-
-template <typename T> class VariantActionPannelModel : public NewActionPannelModel {
-public:
-  void setItems(const QList<T> &items) {
-    QList<QVariant> variants;
-
-    for (const auto &item : items) {
-      variants.push_back(QVariant::fromValue(item));
-    }
-
-    NewActionPannelModel::setItems(variants);
-  }
-};
-
 enum ActionAfterActivateBehavior {
   ActionAfterActivateClose,
   ActionAfterActivateReset,
@@ -138,14 +132,11 @@ public:
 class ActionPopover : public QWidget {
   Q_OBJECT
 
-  NewActionPannelModel *m_model;
-
   QList<ShownActionItem> shownActionItems;
   QList<std::shared_ptr<IAction>> _currentActions;
   QLineEdit *input;
-  QListWidget *list;
-  QList<ActionData> actionData;
-  QHash<QListWidgetItem *, ActionData> itemMap;
+  VirtualListWidget *list;
+  VirtualListModel *listModel;
   QHash<QListWidgetItem *, AbstractAction *> signalItemMap;
 
   QStack<QList<ActionPannelItem>> menuStack;
@@ -153,11 +144,8 @@ class ActionPopover : public QWidget {
   void paintEvent(QPaintEvent *event) override;
   bool eventFilter(QObject *obj, QEvent *event) override;
 
-  void renderItems(const QList<ActionData> &items);
-
 private slots:
-  void filterActions(const QString &text);
-  void itemActivated(QListWidgetItem *item);
+  void itemActivated(const std::shared_ptr<AbstractVirtualListItem> &item);
 
 signals:
   void actionActivated(std::shared_ptr<IAction> action);
@@ -179,10 +167,7 @@ public:
     return false;
   }
 
-  NewActionPannelModel *model() const { return m_model; }
-
   QList<ActionPannelItem> currentActions() const;
-  QList<ActionData> actions() const { return actionData; }
 
   void dispatchModel(const ActionPannelModel &model);
   void showActions();
@@ -190,15 +175,9 @@ public:
   void setActions(const QList<ActionPannelItem> &actions);
 
   void renderSignalItems(const QList<AbstractAction *> actions) {
-    list->clear();
-    itemMap.clear();
+    listModel->beginReset();
 
     for (const auto &item : actions) {
-      auto listItem = new QListWidgetItem;
-      ImageLikeModel imageModel;
-
-      imageModel = item->icon;
-
       QString str;
 
       if (item->shortcut) {
@@ -209,28 +188,14 @@ public:
         str = lst.join(" + ");
       }
 
-      auto widget =
-          new ActionListItemWidget(ImageViewer::createFromModel(imageModel, {25, 25}), item->title, "", str);
-
-      list->addItem(listItem);
-      list->setItemWidget(listItem, widget);
-      listItem->setSizeHint(widget->sizeHint());
-      signalItemMap.insert(listItem, item);
+      listModel->addItem(std::make_shared<ActionListItem>(item));
     }
 
-    for (int i = 0; i != list->count(); ++i) {
-      auto item = list->item(i);
-
-      if (!item->flags().testFlag(Qt::ItemIsSelectable)) continue;
-
-      list->setCurrentItem(item);
-      break;
-    }
+    listModel->endReset();
   }
 
   ActionPopover(QWidget *parent = 0);
 
 public slots:
-  void setActionData(const QList<ActionData> &actions) { actionData = actions; }
   void setSignalActions(const QList<AbstractAction *> &actions) { signalActions = actions; }
 };

@@ -71,23 +71,6 @@ public:
 
   template <typename T> Service<T> service() { return app.service<T>(); }
   void setSearchPlaceholderText(const QString &s) { app.topBar->input->setPlaceholderText(s); }
-  void setActions(const QList<ActionData> &actions) {
-    QList<ActionData> newActions = actions;
-
-    if (newActions.size() > 0) {
-      newActions[0].shortcut = KeyboardShortcutModel{.key = "return", .modifiers = {}};
-    }
-
-    if (newActions.size() > 1) {
-      newActions[1].shortcut = KeyboardShortcutModel{.key = "return", .modifiers = {"ctrl"}};
-    }
-
-    app.actionPopover->setActionData(newActions);
-
-    if (!actions.isEmpty()) {
-      // app.statusBar->setCurrentAction(actions.at(0).title);
-    }
-  }
 
   void setSignalActions(const QList<AbstractAction *> &actions) {
     app.actionPopover->setSignalActions(actions);
