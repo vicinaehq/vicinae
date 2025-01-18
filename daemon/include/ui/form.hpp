@@ -240,9 +240,16 @@ public:
 
   FormDropdownModel *model() { return listModel; }
   const std::shared_ptr<AbstractFormDropdownItem> &value() { return currentItem; }
-  void setValue(const std::shared_ptr<AbstractFormDropdownItem> &item) {
-    list->setSelected(item->id());
-    itemActivated(item);
+  void setValue(const std::shared_ptr<AbstractFormDropdownItem> &vitem) {
+    list->setSelected(vitem->id());
+    auto item = std::static_pointer_cast<AbstractFormDropdownItem>(vitem);
+
+    inputField->setText(item->displayName());
+
+    if (action) inputField->removeAction(action);
+
+    action = inputField->addAction(item->icon(), QLineEdit::LeadingPosition);
+    currentItem = item;
   }
 
   QString searchText() { return searchField->text(); }

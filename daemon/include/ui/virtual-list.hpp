@@ -406,7 +406,6 @@ private:
     clear();
 
     for (auto &item : items) {
-      qDebug() << "id" << item->id();
       virtualItems.push_back({.offset = offset, .item = item});
       offset += item->height();
     }

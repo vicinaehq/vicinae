@@ -354,6 +354,7 @@ AppWindow::AppWindow(QWidget *parent)
   layout->addWidget(topBar);
   layout->addWidget(new HDivider);
   layout->addWidget(defaultWidget, 1);
+  layout->addWidget(new HDivider);
   layout->addWidget(statusBar);
 
   // commandStack.push(index);

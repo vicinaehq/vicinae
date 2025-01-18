@@ -30,6 +30,14 @@ QWidget {
 	color: %4;
 }
 
+QWidget * {
+	font-family: '%1';
+	font-size: 10pt;
+	font-weight: lighter;
+	letter-spacing: -0.5px;
+	color: %4;
+}
+
 /*
 QMainWindow > QWidget, .virtual-list {
 	background-color: %2;
@@ -193,6 +201,12 @@ int main(int argc, char **argv) {
   int fontId = QFontDatabase::addApplicationFont(":assets/fonts/SF-Pro-Text-Regular.otf");
   fontId = QFontDatabase::addApplicationFont(":assets/fonts/SF-Pro-Text-Light.otf");
   fontId = QFontDatabase::addApplicationFont(":assets/fonts/SF-Pro-Text-Bold.otf");
+
+  QFont font("SF Pro Text");
+
+  font.setHintingPreference(QFont::HintingPreference::PreferNoHinting);
+
+  QApplication::setFont(font);
 
   for (const auto &family : QFontDatabase::applicationFontFamilies(fontId)) {
     qDebug() << "family=" << family;

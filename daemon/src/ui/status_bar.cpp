@@ -60,11 +60,9 @@ void StatusBar::paintEvent(QPaintEvent *event) {
   QPainter painter(this);
   painter.setRenderHint(QPainter::Antialiasing, true);
 
-  QColor backgroundColor("#232323");
+  // QColor backgroundColor("#121212");
 
-  painter.fillRect(this->rect(), backgroundColor);
-
-  parentWidget()->update();
+  // painter.fillRect(this->rect().adjusted(1, 1, -1, -1), backgroundColor);
 }
 
 void StatusBar::setToast(const QString &text, ToastPriority priority) {

@@ -99,7 +99,7 @@ struct OpenQuicklinkAction : public AbstractAction {
   void setArgs(const QList<QString> &args) { this->args = args; }
 
   OpenQuicklinkAction(const std::shared_ptr<Quicklink> &link, const QList<QString> &args = {})
-      : AbstractAction("Open link"), link(link), args(args) {}
+      : AbstractAction("Open link", ThemeIconModel{.iconName = ":icons/link.svg"}), link(link), args(args) {}
 };
 
 struct EditQuicklinkAction : public AbstractAction {
@@ -107,9 +107,7 @@ struct EditQuicklinkAction : public AbstractAction {
   QList<QString> args;
 
   void execute(AppWindow &app) override {
-    auto view = new CreateQuicklinkCommandView(app);
-
-    view->loadLink(*link);
+    auto view = new EditCommandQuicklinkView(app, *link);
 
     emit app.pushView(
         view, {.navigation = NavigationStatus{
@@ -119,7 +117,27 @@ struct EditQuicklinkAction : public AbstractAction {
   void setArgs(const QList<QString> &args) { this->args = args; }
 
   EditQuicklinkAction(const std::shared_ptr<Quicklink> &link, const QList<QString> &args = {})
-      : AbstractAction("Edit link"), link(link), args(args) {}
+      : AbstractAction("Edit link", ThemeIconModel{.iconName = ":icons/pencil.svg"}), link(link), args(args) {
+  }
+};
+
+struct DuplicateQuicklinkAction : public AbstractAction {
+  std::shared_ptr<Quicklink> link;
+  QList<QString> args;
+
+  void execute(AppWindow &app) override {
+    auto view = new EditCommandQuicklinkView(app, *link);
+
+    emit app.pushView(view, {.navigation = NavigationStatus{
+                                 .title = "Duplicate link",
+                                 .icon = ThemeIconModel{.iconName = ":assets/icons/quicklink.png"}}});
+  }
+
+  void setArgs(const QList<QString> &args) { this->args = args; }
+
+  DuplicateQuicklinkAction(const std::shared_ptr<Quicklink> &link, const QList<QString> &args = {})
+      : AbstractAction("Duplicate link", ThemeIconModel{.iconName = ":icons/duplicate.svg"}), link(link),
+        args(args) {}
 };
 
 struct OpenCompletedQuicklinkAction : public OpenQuicklinkAction {
@@ -205,7 +223,8 @@ class RootView : public NavigationListView {
     }
 
     QList<AbstractAction *> createActions() const override {
-      return {new OpenCompletedQuicklinkAction(link), new EditQuicklinkAction(link)};
+      return {new OpenCompletedQuicklinkAction(link), new EditQuicklinkAction(link),
+              new DuplicateQuicklinkAction(link)};
     }
 
   public:
@@ -224,7 +243,8 @@ class RootView : public NavigationListView {
     }
 
     QList<AbstractAction *> createActions() const override {
-      return {new OpenQuicklinkAction(link, {query}), new EditQuicklinkAction(link)};
+      return {new OpenQuicklinkAction(link, {query}), new EditQuicklinkAction(link),
+              new DuplicateQuicklinkAction(link)};
     }
 
   public:
@@ -297,7 +317,7 @@ class RootView : public NavigationListView {
       {.name = "Create quicklink",
        .iconName = ":assets/icons/quicklink.png",
        .factory = [](AppWindow &app,
-                     const QString &s) { return new SingleViewCommand<CreateQuicklinkCommandView>; }},
+                     const QString &s) { return new SingleViewCommand<QuicklinkCommandView>; }},
       {.name = "Manage processes",
        .iconName = ":assets/icons/process-manager.png",
        .factory = [](AppWindow &app,
