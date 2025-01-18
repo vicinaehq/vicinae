@@ -304,5 +304,10 @@ public:
     iconSelector->setValue(std::make_shared<IconSelectorItem>(quicklink.iconName));
   }
 
+  void onMount() override {
+    QuicklinkCommandView::onMount();
+    name->selectAll();
+  }
+
   void submit(AppWindow &app) override { qDebug() << "Duplicated quicklink"; }
 };

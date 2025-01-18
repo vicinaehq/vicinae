@@ -17,8 +17,7 @@ class CalculatorHistoryView : public NavigationListView {
   public:
     QWidget *createItem() const override {
       return new ListItemWidget(
-          ImageViewer::createFromModel(
-              ThemeIconModel{.iconName = "pcbcalculator"}, {25, 25}),
+          ImageViewer::createFromModel(ThemeIconModel{.iconName = ":icons/calculator"}, {25, 25}),
           entry.expression, "", entry.result);
     }
 
@@ -33,18 +32,15 @@ class CalculatorHistoryView : public NavigationListView {
   class CalculatorListItem : public AbstractNativeListItem {
     CalculatorItem item;
 
-    QWidget *createItem() const override {
-      return new CalculatorListItemWidget(item);
-    }
+    QWidget *createItem() const override { return new CalculatorListItemWidget(item); }
 
     QList<AbstractAction *> createActions() const override {
       QString sresult = QString::number(item.result);
 
       return {
           new CopyCalculatorResultAction(item, "Copy result", sresult),
-          new CopyCalculatorResultAction(
-              item, "Copy expression",
-              QString("%1 = %2").arg(item.expression).arg(sresult)),
+          new CopyCalculatorResultAction(item, "Copy expression",
+                                         QString("%1 = %2").arg(item.expression).arg(sresult)),
       };
     }
 
@@ -61,8 +57,7 @@ class CalculatorHistoryView : public NavigationListView {
 
       if (auto result = parser.evaluate(s.toLatin1().data())) {
         auto value = result.value();
-        auto data = CalculatorItem{
-            .expression = s, .result = value.value, .unit = value.unit};
+        auto data = CalculatorItem{.expression = s, .result = value.value, .unit = value.unit};
         auto item = std::make_shared<CalculatorListItem>(data);
 
         model->addItem(item);
@@ -83,8 +78,7 @@ class CalculatorHistoryView : public NavigationListView {
   }
 
   void onMount() override {
-    setSearchPlaceholderText(
-        "Do maths, convert units or search past calculations...");
+    setSearchPlaceholderText("Do maths, convert units or search past calculations...");
   }
 
 public:

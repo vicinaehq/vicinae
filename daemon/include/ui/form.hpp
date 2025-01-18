@@ -60,6 +60,7 @@ public:
 
   QString text() { return input->text(); }
   void setText(const QString &value) { input->setText(value); }
+  void selectAll() { input->selectAll(); }
   void setPlaceholderText(const QString &text) { input->setPlaceholderText(text); }
 
 signals:

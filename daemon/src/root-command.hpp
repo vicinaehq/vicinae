@@ -126,7 +126,7 @@ struct DuplicateQuicklinkAction : public AbstractAction {
   QList<QString> args;
 
   void execute(AppWindow &app) override {
-    auto view = new EditCommandQuicklinkView(app, *link);
+    auto view = new DuplicateQuicklinkCommandView(app, *link);
 
     emit app.pushView(view, {.navigation = NavigationStatus{
                                  .title = "Duplicate link",

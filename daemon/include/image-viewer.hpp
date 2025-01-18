@@ -12,8 +12,7 @@ static QSize defaultIconSize = {32, 32};
 
 class ImageViewer : public QWidget {
 public:
-  static QWidget *createFromModel(const ImageLikeModel &imageLike,
-                                  QSize size = {}) {
+  static QWidget *createFromModel(const ImageLikeModel &imageLike, QSize size = {}) {
     if (auto model = std::get_if<ImageUrlModel>(&imageLike)) {
       auto widget = new RemoteImageViewer(model->url, Qt::AlignCenter, size);
 
@@ -25,11 +24,17 @@ public:
       auto label = new QLabel();
       QSize iconSize = size.isValid() ? size : defaultIconSize;
 
-      if (icon.isNull()) {
-        icon = QIcon::fromTheme("application-x-executable");
-      }
+      if (icon.isNull()) { icon = QIcon::fromTheme("application-x-executable"); }
 
-      label->setPixmap(icon.pixmap(iconSize));
+      auto sizes = icon.availableSizes();
+
+      QPixmap pixmap = icon.pixmap(sizes.isEmpty() ? defaultIconSize : sizes.first());
+
+      int newWidth =
+          static_cast<int>((pixmap.width() * size.height()) / static_cast<double>(pixmap.height()));
+      pixmap = pixmap.scaled(newWidth, size.height(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+
+      label->setPixmap(pixmap);
       label->setAlignment(Qt::AlignCenter);
 
       return label;
