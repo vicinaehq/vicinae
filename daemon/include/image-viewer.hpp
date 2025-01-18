@@ -28,11 +28,7 @@ public:
 
       auto sizes = icon.availableSizes();
 
-      QPixmap pixmap = icon.pixmap(sizes.isEmpty() ? defaultIconSize : sizes.first());
-
-      int newWidth =
-          static_cast<int>((pixmap.width() * size.height()) / static_cast<double>(pixmap.height()));
-      pixmap = pixmap.scaled(newWidth, size.height(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+      QPixmap pixmap = icon.pixmap(size.isValid() ? size : defaultIconSize, Qt::KeepAspectRatio);
 
       label->setPixmap(pixmap);
       label->setAlignment(Qt::AlignCenter);
