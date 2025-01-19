@@ -9,7 +9,8 @@
 
 class NavigationListView : public View {
   AppWindow &app;
-  VirtualListWidget *list;
+  // VirtualListWidget *list;
+  MegaVirtualListWidget *list;
 
 protected:
   VirtualListModel *model;
@@ -38,9 +39,9 @@ public:
   }
 
   NavigationListView(AppWindow &app)
-      : View(app), app(app), list(new VirtualListWidget), model(new VirtualListModel) {
-    connect(list, &VirtualListWidget::selectionChanged, this, &NavigationListView::selectionChanged);
-    connect(list, &VirtualListWidget::itemActivated, this, &NavigationListView::itemActivated);
+      : View(app), app(app), list(new MegaVirtualListWidget), model(new VirtualListModel) {
+    connect(list, &MegaVirtualListWidget::selectionChanged, this, &NavigationListView::selectionChanged);
+    connect(list, &MegaVirtualListWidget::itemActivated, this, &NavigationListView::itemActivated);
     forwardInputEvents(list);
     list->setModel(model);
 
