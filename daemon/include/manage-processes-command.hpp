@@ -4,7 +4,6 @@
 #include "command.hpp"
 #include "navigation-list-view.hpp"
 #include "process-manager-service.hpp"
-#include "ui/test-list.hpp"
 #include "ui/virtual-list.hpp"
 #include "view.hpp"
 #include <qnamespace.h>
@@ -12,7 +11,7 @@
 class ManageProcessesMainView : public NavigationListView {
   Service<ProcessManagerService> processManager;
 
-  class ProcListItem : public AbstractNativeListItem {
+  class ProcListItem : public StandardListItem {
     ProcessInfo info;
     int idx;
 
@@ -25,7 +24,10 @@ class ManageProcessesMainView : public NavigationListView {
     int height() const override { return 40; }
 
   public:
-    ProcListItem(const ProcessInfo &info, int idx) : info(info), idx(idx) {}
+    ProcListItem(const ProcessInfo &info, int idx)
+        : StandardListItem(info.comm, "", QString::number(idx),
+                           ThemeIconModel{.iconName = "application-x-executable"}),
+          info(info), idx(idx) {}
   };
 
   void onSearchChanged(const QString &text) override {

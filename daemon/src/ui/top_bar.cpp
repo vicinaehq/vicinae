@@ -51,10 +51,14 @@ void TopBar::destroyQuicklinkCompleter() {
     input->setFocus();
     input->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
   }
+
+  completerData.reset();
 }
 
 void TopBar::activateQuicklinkCompleter(const CompleterData &data) {
   destroyQuicklinkCompleter();
+
+  completerData = data;
 
   auto completion = new InputCompleter(data.placeholders);
 
@@ -62,8 +66,11 @@ void TopBar::activateQuicklinkCompleter(const CompleterData &data) {
     if (auto icon = std::get_if<ThemeIconModel>(&data.model)) { completion->setIcon(icon->iconName); }
   }
 
-  for (const auto &input : completion->inputs) {
+  for (size_t i = 0; i != completion->inputs.size(); ++i) {
+    auto input = completion->inputs.at(i);
+
     input->installEventFilter(this);
+    if (i < data.values.size()) input->setText(data.values.at(i));
   }
 
   quickInput = completion;

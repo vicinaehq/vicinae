@@ -115,6 +115,8 @@ void AppWindow::popCurrentView() {
   topBar->input->setPlaceholderText(next.placeholderText);
   topBar->input->selectAll();
 
+  if (next.completer) { topBar->activateQuicklinkCompleter(*next.completer); }
+
   if (navigationStack.size() == 1) { topBar->hideBackButton(); }
 
   qDebug() << "view stack size" << activeCommand.viewStack.size();
@@ -193,6 +195,15 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
     cur.query = topBar->input->text();
     cur.placeholderText = topBar->input->placeholderText();
     cur.actions = actionPopover->signalActions;
+    cur.completer.reset();
+
+    if (topBar->quickInput && topBar->completerData) {
+      cur.completer = CompleterData{
+          .placeholders = topBar->completerData->placeholders,
+          .values = topBar->quickInput->collectArgs(),
+          .model = topBar->completerData->model,
+      };
+    }
 
     layout->replaceWidget(cur.view->widget, view->widget);
     cur.view->widget->setParent(nullptr);
@@ -207,6 +218,7 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
   currentCommand.viewStack.push({.view = view});
   navigationStack.push({.view = view});
 
+  topBar->destroyQuicklinkCompleter();
   topBar->input->setReadOnly(false);
   topBar->input->show();
   topBar->input->setFocus();

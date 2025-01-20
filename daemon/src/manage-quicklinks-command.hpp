@@ -53,17 +53,11 @@ signals:
   void linkRemoved();
 };
 
-class QuicklinkItem : public AbstractNativeListItem {
+class QuicklinkItem : public StandardListItem {
   Q_OBJECT
   std::shared_ptr<Quicklink> link;
 
 public:
-  QWidget *createItem() const override {
-    return new ListItemWidget(
-        ImageViewer::createFromModel(ThemeIconModel{.iconName = link->iconName}, {25, 25}), link->name, "",
-        "Quicklink");
-  }
-
   QList<AbstractAction *> createActions() const override {
     auto remove = new RemoveLinkAction(link);
 
@@ -87,7 +81,9 @@ public:
   size_t id() const override { return qHash(link->id); }
 
 public:
-  QuicklinkItem(const std::shared_ptr<Quicklink> &link) : AbstractNativeListItem(), link(link) {}
+  QuicklinkItem(const std::shared_ptr<Quicklink> &link)
+      : StandardListItem(link->name, "", "Quicklink", ThemeIconModel{.iconName = link->iconName}),
+        link(link) {}
 
 signals:
   void removed() const;

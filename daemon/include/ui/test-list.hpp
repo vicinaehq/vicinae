@@ -73,7 +73,6 @@ public:
   // a unique role that differenciate two different kinds of list widget,
   // usually rendering a different widget. This determines whether the list
   // should call update or create a brand new widget on update.
-  virtual size_t role() { return 0; }
 
   virtual QList<AbstractAction *> createActions() const { return {}; }
 

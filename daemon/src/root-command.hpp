@@ -23,6 +23,7 @@
 #include <QtConcurrent/QtConcurrent>
 #include <functional>
 #include <memory>
+#include <numbers>
 #include <qcoreevent.h>
 #include <qfuture.h>
 #include <qfuturewatcher.h>
@@ -171,6 +172,8 @@ class ColorListItem : public AbstractNativeListItem {
 
   int height() const override { return 120; }
 
+  int role() const override { return 2; }
+
   QList<AbstractAction *> createActions() const override { return {}; }
 
 public:
@@ -202,21 +205,10 @@ class RootView : public NavigationListView {
   Service<ExtensionManager> extensionManager;
   Service<QuicklistDatabase> quicklinkDb;
 
-  class FallbackCommandListItem : public AbstractNativeListItem {
-  public:
-    QList<AbstractAction *> createActions() const override { return {}; }
-  };
-
-  class QuicklinkRootListItem : public AbstractNativeListItem {
+  class QuicklinkRootListItem : public StandardListItem {
     std::shared_ptr<Quicklink> link;
 
   public:
-    QWidget *createItem() const override {
-      return new ListItemWidget(
-          ImageViewer::createFromModel(ThemeIconModel{.iconName = link->iconName}, {25, 25}), link->name, "",
-          "Quicklink");
-    }
-
     std::unique_ptr<CompleterData> createCompleter() const override {
       return std::make_unique<CompleterData>(CompleterData{
           .placeholders = link->placeholders, .model = ThemeIconModel{.iconName = link->iconName}});
@@ -228,10 +220,12 @@ class RootView : public NavigationListView {
     }
 
   public:
-    QuicklinkRootListItem(const std::shared_ptr<Quicklink> &link) : link(link) {}
+    QuicklinkRootListItem(const std::shared_ptr<Quicklink> &link)
+        : StandardListItem(link->name, "", "Quicklink", ThemeIconModel{.iconName = link->iconName}),
+          link(link) {}
   };
 
-  class FallbackQuicklinkListItem : public AbstractNativeListItem {
+  class FallbackQuicklinkListItem : public StandardListItem {
     std::shared_ptr<Quicklink> link;
     QString query;
 
@@ -249,10 +243,11 @@ class RootView : public NavigationListView {
 
   public:
     FallbackQuicklinkListItem(const std::shared_ptr<Quicklink> &link, const QString &fallbackQuery)
-        : link(link), query(fallbackQuery) {}
+        : StandardListItem(link->name, "", "Quicklink", ThemeIconModel{.iconName = link->iconName}),
+          link(link), query(fallbackQuery) {}
   };
 
-  class ExtensionListItem : public AbstractNativeListItem {
+  class ExtensionListItem : public StandardListItem {
     Extension::Command cmd;
 
     QWidget *createItem() const override {
@@ -272,13 +267,17 @@ class RootView : public NavigationListView {
     }
 
   public:
-    ExtensionListItem(const Extension::Command &cmd) : cmd(cmd) {}
+    ExtensionListItem(const Extension::Command &cmd)
+        : StandardListItem(cmd.name, cmd.title, "Command", ThemeIconModel{.iconName = ":icons/cog.svg"}),
+          cmd(cmd) {}
   };
 
   class CalculatorListItem : public AbstractNativeListItem {
     CalculatorItem item;
 
     QWidget *createItem() const override { return new CalculatorListItemWidget(item); }
+
+    int role() const override { return 1; }
 
     int height() const override { return 100; }
 

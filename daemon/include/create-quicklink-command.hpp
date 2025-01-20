@@ -44,6 +44,8 @@ public:
     return name;
   }
 
+  int role() const override { return 0; }
+
   size_t id() const override { return qHash(app->id); }
 
   AppSelectorItem(const std::shared_ptr<DesktopExecutable> &app, bool isDefault = false)
@@ -75,6 +77,8 @@ public:
   QString iconName() const override { return name; }
 
   size_t id() const override { return qHash(name); }
+
+  int role() const override { return 0; }
 
   IconSelectorItem(const QString &iconName, const QString &displayName = "")
       : name(iconName), dname(displayName) {}

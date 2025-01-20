@@ -38,6 +38,7 @@ struct ViewSnapshot {
   QString query;
   QString placeholderText;
   QList<AbstractAction *> actions;
+  std::optional<CompleterData> completer;
 };
 
 struct CommandSnapshot {
@@ -178,6 +179,7 @@ class StandardListItem : public AbstractNativeListItem {
   }
 
   int height() const override { return 40; }
+  int role() const override { return 0; }
 
 public:
   StandardListItem(const QString &title, const QString &subtitle, const QString &kind,

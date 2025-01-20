@@ -55,19 +55,13 @@ class FilesView : public NavigationListView {
     FileListItemDetail(const QString &path, const QString &iconName) : info(path), iconName(iconName) {}
   };
 
-  class FileListItem : public AbstractNativeListItem {
+  class FileListItem : public StandardListItem {
     QMimeDatabase mimeDb;
-    QString iconName;
     FileInfo file;
     Service<AppDatabase> appDb;
 
-    QWidget *createItem() const override {
-      return new ListItemWidget(ImageViewer::createFromModel(ThemeIconModel{.iconName = iconName}, {25, 25}),
-                                file.name, "", "");
-    }
-
     std::unique_ptr<AbstractNativeListItemDetail> createDetail() const override {
-      return std::make_unique<FileListItemDetail>(file.path, iconName);
+      return std::make_unique<FileListItemDetail>(file.path, iconNameFromMime(file.mime));
     }
 
     QList<AbstractAction *> createActions() const override {
@@ -87,17 +81,19 @@ class FilesView : public NavigationListView {
       return actions;
     }
 
-  public:
-    FileListItem(const FileInfo &info, Service<AppDatabase> appDb) : file(info), appDb(appDb) {
-      auto mime = mimeDb.mimeTypeForName(info.mime);
+    QString iconNameFromMime(const QString &name) const {
+      auto mime = mimeDb.mimeTypeForName(name);
       QIcon icon = QIcon::fromTheme(mime.iconName());
 
-      if (!icon.isNull()) {
-        iconName = mime.iconName();
-      } else {
-        iconName = mime.genericIconName();
-      }
+      if (!icon.isNull()) { return mime.iconName(); }
+
+      return mime.genericIconName();
     }
+
+  public:
+    FileListItem(const FileInfo &info, Service<AppDatabase> appDb)
+        : StandardListItem(file.name, "", "", ThemeIconModel{.iconName = iconNameFromMime(info.mime)}),
+          file(info), appDb(appDb) {}
   };
 
 public slots:

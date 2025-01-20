@@ -26,6 +26,7 @@ signals:
 
 struct CompleterData {
   QList<QString> placeholders;
+  QList<QString> values;
   ImageLikeModel model;
 };
 
@@ -35,6 +36,7 @@ struct TopBar : QWidget {
   SearchBar *input;
   InputCompleter *quickInput = nullptr;
   QWidget *backWidget = nullptr;
+  std::optional<CompleterData> completerData;
 
 public:
   TopBar(QWidget *parent = nullptr);
