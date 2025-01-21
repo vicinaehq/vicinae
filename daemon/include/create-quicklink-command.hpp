@@ -5,6 +5,7 @@
 #include "quicklist-database.hpp"
 #include "ui/action_popover.hpp"
 #include "ui/form.hpp"
+#include "ui/toast.hpp"
 #include "view.hpp"
 #include <functional>
 #include <memory>
@@ -230,7 +231,7 @@ public:
 
   void loadLink(const Quicklink &quicklink) {
     name->setText(QString("Copy of %1").arg(quicklink.name));
-    link->setText(quicklink.url);
+    link->setText(quicklink.rawUrl);
 
     if (auto app = appDb.getById(quicklink.app)) {
       appSelector->setValue(std::make_shared<AppSelectorItem>(app));
@@ -283,7 +284,7 @@ public:
   EditCommandQuicklinkView(AppWindow &app, const Quicklink &quicklink)
       : QuicklinkCommandView(app), quicklink(quicklink) {
     name->setText(quicklink.name);
-    link->setText(quicklink.url);
+    link->setText(quicklink.rawUrl);
 
     if (auto app = appDb.getById(quicklink.app)) {
       appSelector->setValue(std::make_shared<AppSelectorItem>(app));
@@ -292,14 +293,43 @@ public:
     iconSelector->setValue(std::make_shared<IconSelectorItem>(quicklink.iconName));
   }
 
-  void submit(AppWindow &app) override { qDebug() << "Edit command quicklink view"; }
+  void submit(AppWindow &app) override {
+    auto item = std::static_pointer_cast<AppSelectorItem>(appSelector->value());
+
+    if (!item) {
+      appSelector->setError("Required");
+      return;
+    }
+
+    auto icon = std::static_pointer_cast<IconSelectorItem>(iconSelector->value());
+
+    if (!icon) {
+      iconSelector->setError("Required");
+      return;
+    }
+
+    bool updateResult = quicklinkDb.updateLink(UpdateQuicklinkPayload{
+        .id = quicklink.id,
+        .name = name->text(),
+        .icon = icon->iconName(),
+        .link = link->text(),
+        .app = item->app->id,
+    });
+
+    if (!updateResult) {
+      app.statusBar->setToast("Failed to update result", ToastPriority::Danger);
+      return;
+    }
+
+    pop();
+  }
 };
 
 class DuplicateQuicklinkCommandView : public QuicklinkCommandView {
 public:
   DuplicateQuicklinkCommandView(AppWindow &app, const Quicklink &quicklink) : QuicklinkCommandView(app) {
     name->setText(QString("Copy of %1").arg(quicklink.name));
-    link->setText(quicklink.url);
+    link->setText(quicklink.rawUrl);
 
     if (auto app = appDb.getById(quicklink.app)) {
       appSelector->setValue(std::make_shared<AppSelectorItem>(app));
@@ -313,5 +343,33 @@ public:
     name->selectAll();
   }
 
-  void submit(AppWindow &app) override { qDebug() << "Duplicated quicklink"; }
+  void submit(AppWindow &app) override {
+    auto item = std::static_pointer_cast<AppSelectorItem>(appSelector->value());
+
+    if (!item) {
+      appSelector->setError("Required");
+      return;
+    }
+
+    auto icon = std::static_pointer_cast<IconSelectorItem>(iconSelector->value());
+
+    if (!icon) {
+      iconSelector->setError("Required");
+      return;
+    }
+
+    bool insertResult = quicklinkDb.insertLink(AddQuicklinkPayload{
+        .name = name->text(),
+        .icon = icon->iconName(),
+        .link = link->text(),
+        .app = item->app->id,
+    });
+
+    if (!insertResult) {
+      app.statusBar->setToast("Failed to create quicklink", ToastPriority::Danger);
+      return;
+    }
+
+    pop();
+  }
 };

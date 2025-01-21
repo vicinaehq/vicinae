@@ -17,18 +17,29 @@ struct Quicklink {
   uint openCount;
   QString displayName;
   QString url;
+  QString rawUrl;
   QString iconName;
   QString name;
   QList<QString> placeholders;
   std::optional<QDateTime> lastUsedAt;
 
-  Quicklink(uint id, const QString &name, const QString &url,
-            const QString &icon, const QString &app, uint openCount,
-            std::optional<QDateTime> lastUsedAt)
+  Quicklink(uint id, const QString &name, const QString &url, const QString &icon, const QString &app,
+            uint openCount, std::optional<QDateTime> lastUsedAt)
       : id(id), app(app), openCount(openCount), lastUsedAt(lastUsedAt) {
+    this->displayName = name;
+    this->name = name;
+    this->iconName = icon;
+    this->rawUrl = url;
+
+    parseUrl(url);
+  }
+
+  void parseUrl(const QString &url) {
     size_t i = 0;
     int start = -1;
     QString fmtUrl;
+
+    placeholders.clear();
 
     while (i < url.size()) {
       if (url.at(i) == '{') {
@@ -44,26 +55,23 @@ struct Quicklink {
         continue;
       }
 
-      if (start == -1) {
-        fmtUrl += url.at(i);
-      }
+      if (start == -1) { fmtUrl += url.at(i); }
       ++i;
     }
 
-    this->displayName = name;
-    this->name = name;
-    this->iconName = icon;
     this->url = fmtUrl;
   }
-
-  Quicklink(const QString &displayName, const QString &url,
-            const QString &iconName, const QString &name,
-            const QList<QString> &placeholders)
-      : displayName(displayName), url(url), iconName(iconName), name(name),
-        placeholders(placeholders) {}
 };
 
 struct AddQuicklinkPayload {
+  const QString &name;
+  const QString &icon;
+  const QString &link;
+  const QString &app;
+};
+
+struct UpdateQuicklinkPayload {
+  uint id;
   const QString &name;
   const QString &icon;
   const QString &link;
@@ -77,8 +85,7 @@ class QuicklistDatabase {
 
   Quicklink *findMutableById(uint id) {
     for (auto &link : links) {
-      if (link->id == id)
-        return link.get();
+      if (link->id == id) return link.get();
     }
 
     return nullptr;
@@ -129,12 +136,11 @@ public:
       std::optional<QDateTime> lastUsedAt;
 
       if (!lastUsedAtField.isNull()) {
-        lastUsedAt =
-            QDateTime::fromSecsSinceEpoch(lastUsedAtField.toULongLong());
+        lastUsedAt = QDateTime::fromSecsSinceEpoch(lastUsedAtField.toULongLong());
       }
 
-      links.push_back(std::make_shared<Quicklink>(
-          Quicklink{id, name, link, icon, app, openCount, lastUsedAt}));
+      links.push_back(
+          std::make_shared<Quicklink>(Quicklink{id, name, link, icon, app, openCount, lastUsedAt}));
     }
 
     return links;
@@ -143,8 +149,7 @@ public:
   bool incrementOpenCount(uint id) {
     auto link = findMutableById(id);
 
-    if (!link)
-      return false;
+    if (!link) return false;
 
     QSqlQuery query(db);
 
@@ -169,7 +174,7 @@ public:
     return true;
   }
 
-  void insertLink(const AddQuicklinkPayload &payload) {
+  bool insertLink(const AddQuicklinkPayload &payload) {
     QSqlQuery query(db);
 
     query.prepare(R"(
@@ -185,18 +190,63 @@ public:
 
     if (!query.exec()) {
       qDebug() << "query.exec() failed: " << query.lastError().text();
-      return;
+      return false;
     }
 
-    auto link = std::make_shared<Quicklink>(
-        Quicklink{query.lastInsertId().toUInt(), payload.name, payload.link,
-                  payload.icon, payload.app, 0, std::nullopt});
+    auto link =
+        std::make_shared<Quicklink>(Quicklink{query.lastInsertId().toUInt(), payload.name, payload.link,
+                                              payload.icon, payload.app, 0, std::nullopt});
 
     links.push_back(link);
+
+    return true;
   }
 
-  QuicklistDatabase(const QString &path)
-      : db(QSqlDatabase::addDatabase("QSQLITE", "quicklinks")) {
+  std::shared_ptr<Quicklink> findById(int id) {
+    for (const auto &link : links) {
+      if (link->id == id) return link;
+    }
+
+    return nullptr;
+  }
+
+  bool updateLink(const UpdateQuicklinkPayload &payload) {
+    auto quicklink = findById(payload.id);
+
+    if (!quicklink) return false;
+
+    QSqlQuery query(db);
+
+    query.prepare(R"(
+		UPDATE links
+		SET
+			name = ?,
+			icon = ?,
+			link = ?,
+			app = ?
+		WHERE id = ?
+	)");
+    query.addBindValue(payload.name);
+    query.addBindValue(payload.icon);
+    query.addBindValue(payload.link);
+    query.addBindValue(payload.app);
+    query.addBindValue(payload.id);
+
+    if (!query.exec()) {
+      qDebug() << "query.exec() failed: " << query.lastError().text();
+      return false;
+    }
+
+    quicklink->name = payload.name;
+    quicklink->iconName = payload.icon;
+    quicklink->rawUrl = payload.link;
+    quicklink->parseUrl(payload.link);
+    quicklink->app = payload.app;
+
+    return true;
+  }
+
+  QuicklistDatabase(const QString &path) : db(QSqlDatabase::addDatabase("QSQLITE", "quicklinks")) {
 
     QFile file(path);
 
@@ -204,9 +254,7 @@ public:
 
     db.setDatabaseName(path);
 
-    if (!db.open()) {
-      qDebug() << "Failed to open quicklinks db";
-    }
+    if (!db.open()) { qDebug() << "Failed to open quicklinks db"; }
 
     QSqlQuery query(db);
 
