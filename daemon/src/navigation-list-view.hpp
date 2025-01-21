@@ -10,9 +10,9 @@
 class NavigationListView : public View {
   AppWindow &app;
   // VirtualListWidget *list;
-  VirtualListWidget *list;
 
 protected:
+  VirtualListWidget *list;
   VirtualListModel *model;
 
 public:

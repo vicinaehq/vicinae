@@ -1,4 +1,5 @@
 #pragma once
+#include "extension_manager.hpp"
 #include "ui/text-label.hpp"
 #include <QWidget>
 #include <chrono>
@@ -75,11 +76,15 @@ struct VirtualListItem {
   std::shared_ptr<AbstractVirtualListItem> item;
 };
 
+enum BuiltinListRole { SectionLabel = 256 };
+
 class SectionLabelListItem : public AbstractVirtualListItem {
   QString section;
   int count;
 
   QWidget *createItem() const override { return new ListSectionHeader(section, "", count); }
+
+  int role() const override { return SectionLabel; }
 
   bool isSelectable() const override { return false; }
 
@@ -146,7 +151,26 @@ public:
     items << item;
   }
 
-  void removeItem(size_t id) { emit itemRemoved(id); }
+  void removeItem(size_t id) {
+    for (size_t i = 0; i != items.size(); ++i) {
+      const auto &item = items.at(i);
+
+      if (item->id() != id) continue;
+
+      if (i > 0) {
+        const auto &before = items.at(i - 1);
+        bool beforeCheck = before->role() == BuiltinListRole::SectionLabel;
+        bool afterCheck = i + 1 == items.size() || items.at(i + 1)->role() == BuiltinListRole::SectionLabel;
+
+        if (beforeCheck && afterCheck) removeItem(before->id());
+      }
+
+      items.removeAt(i);
+      break;
+    }
+
+    emit itemRemoved(id);
+  }
 
   void removeItem(const std::shared_ptr<AbstractVirtualListItem> &item) { removeItem(item->id()); }
 
@@ -296,39 +320,6 @@ private:
     return next;
   }
 
-  void selectItem(int selectionIndex) {
-    if (selectionIndex < 0 || selectionIndex >= items.size()) return;
-
-    qDebug() << "selecting" << selectionIndex;
-
-    if (auto previousItem = visibleWidgets.value(currentSelectionIndex)) { previousItem->setSelected(false); }
-
-    if (auto nextItem = visibleWidgets.value(selectionIndex)) { nextItem->setSelected(true); }
-
-    auto &newItem = items.at(selectionIndex);
-    auto scrollHeight = scrollBar->value();
-
-    currentSelectionIndex = selectionIndex;
-
-    if (newItem.offset <= scrollHeight || newItem.offset - scrollHeight < newItem.item->height()) {
-      auto distance = scrollHeight - newItem.offset;
-
-      qDebug() << distance;
-      scrollBar->setValue(scrollHeight - distance - newItem.item->height() - SCROLL_GAP);
-      qDebug() << "scroll up";
-      // scroll up
-    } else if ((newItem.offset - scrollHeight) > (height() - newItem.item->height())) {
-      // scroll down
-      auto distance = abs(newItem.offset - scrollHeight - height());
-      scrollBar->setValue(scrollHeight + distance + SCROLL_GAP);
-
-      qDebug() << distance;
-      qDebug() << "scroll down";
-    }
-
-    emit selectionChanged(items.at(selectionIndex).item);
-  }
-
   void updateVisibleItems(int y, int height) {
     if (virtualScrollHeight == 0)
       scrollBar->hide();
@@ -462,9 +453,10 @@ if (updatedWidget != itemWidget->widget) {
         for (int j = i + 1; j < items.size(); ++j) {
           items[j].offset -= item->height();
         }
+
         items.removeAt(i);
 
-        if (currentSelectionIndex == i) selectItem(currentSelectionIndex);
+        if (currentSelectionIndex == i) selectItem(getNextSelected());
       }
     }
 
@@ -536,6 +528,50 @@ public:
 
     setLayout(layout);
     connect(scrollBar, &QScrollBar::valueChanged, this, &VirtualListWidget::valueChanged);
+  }
+
+  int selected() { return currentSelectionIndex; }
+
+  void selectFrom(int index) {
+    while (index < items.size() && !items.at(index).item->isSelectable())
+      ++index;
+
+    if (index == items.size()) return;
+
+    selectItem(index);
+  }
+
+  void selectItem(int selectionIndex) {
+    if (selectionIndex < 0 || selectionIndex >= items.size()) return;
+
+    qDebug() << "selecting" << selectionIndex;
+
+    if (auto previousItem = visibleWidgets.value(currentSelectionIndex)) { previousItem->setSelected(false); }
+
+    if (auto nextItem = visibleWidgets.value(selectionIndex)) { nextItem->setSelected(true); }
+
+    auto &newItem = items.at(selectionIndex);
+    auto scrollHeight = scrollBar->value();
+
+    currentSelectionIndex = selectionIndex;
+
+    if (newItem.offset <= scrollHeight || newItem.offset - scrollHeight < newItem.item->height()) {
+      auto distance = scrollHeight - newItem.offset;
+
+      qDebug() << distance;
+      scrollBar->setValue(scrollHeight - distance - newItem.item->height() - SCROLL_GAP);
+      qDebug() << "scroll up";
+      // scroll up
+    } else if ((newItem.offset - scrollHeight) > (height() - newItem.item->height())) {
+      // scroll down
+      auto distance = abs(newItem.offset - scrollHeight - height());
+      scrollBar->setValue(scrollHeight + distance + SCROLL_GAP);
+
+      qDebug() << distance;
+      qDebug() << "scroll down";
+    }
+
+    emit selectionChanged(items.at(selectionIndex).item);
   }
 
   void clear() {

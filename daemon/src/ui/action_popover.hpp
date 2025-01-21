@@ -52,7 +52,7 @@ public:
     label->setText(action->title);
 
     layout->setSpacing(10);
-    layout->addWidget(ImageViewer::createFromModel(action->icon, {25, 25}));
+    layout->addWidget(ImageViewer::createFromModel(action->icon, {20, 20}));
     layout->addWidget(label);
     layout->setContentsMargins(10, 0, 10, 0);
 

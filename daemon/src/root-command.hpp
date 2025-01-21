@@ -369,11 +369,14 @@ class RootView : public NavigationListView {
   };
 
   QFutureWatcher<void> searchFutureWatcher;
+  QString query;
 
-  void handleLinkDeletion(std::shared_ptr<QuicklinkRootListItem> link) { model->removeItem(link); }
+  void handleLinkDeletion(std::shared_ptr<QuicklinkRootListItem> link) { onSearchChanged(query); }
 
 public:
   void onSearchChanged(const QString &s) override {
+    query = s;
+
     if (searchFutureWatcher.isRunning()) {
       searchFutureWatcher.cancel();
       searchFutureWatcher.waitForFinished();
@@ -382,6 +385,8 @@ public:
     // auto future = QtConcurrent::run([this, s]() {
     auto start = std::chrono::high_resolution_clock::now();
     auto fileBrowser = appDb.defaultFileBrowser();
+
+    auto selected = list->selected();
 
     model->beginReset();
 
@@ -476,6 +481,7 @@ public:
     qDebug() << "root searched in " << duration << "ms";
 
     model->endReset();
+    list->selectFrom(selected);
     //});
 
     // searchFutureWatcher.setFuture(future);
