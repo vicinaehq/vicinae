@@ -1,11 +1,13 @@
 #pragma once
 #include "ui/text-label.hpp"
 #include <QWidget>
+#include <chrono>
 #include <numbers>
 #include <qapplication.h>
 #include <QStack>
 #include <qboxlayout.h>
 #include <qevent.h>
+#include <qobject.h>
 #include <qpainterpath.h>
 #include <QVBoxLayout>
 #include <qscrollbar.h>
@@ -44,7 +46,7 @@ public:
 
 static const int SCROLL_GAP = 5;
 
-class AbstractVirtualListItem {
+class AbstractVirtualListItem : public QObject {
   size_t m_id;
 
 public:
@@ -54,12 +56,11 @@ public:
   virtual int role() const { return qHash(QUuid::createUuid()); }
   virtual int height() const = 0;
   virtual size_t id() const {
-    size_t id = qHash(QUuid::createUuid());
-
-    return id;
+    qDebug() << "default id called";
+    return m_id;
   }
 
-  AbstractVirtualListItem() {}
+  AbstractVirtualListItem(size_t id = qHash(QUuid::createUuid())) : m_id(id) {}
 };
 
 struct VirtualListSection {
@@ -106,6 +107,7 @@ class VirtualListModel : public QObject {
 signals:
   void commitReset(const QList<Item> &items);
   void selectionChanged(const Item &item);
+  void itemRemoved(size_t id);
 
 public:
   void beginReset() { items.clear(); }
@@ -143,6 +145,10 @@ public:
 
     items << item;
   }
+
+  void removeItem(size_t id) { emit itemRemoved(id); }
+
+  void removeItem(const std::shared_ptr<AbstractVirtualListItem> &item) { removeItem(item->id()); }
 
   VirtualListModel() {}
 };
@@ -443,6 +449,28 @@ if (updatedWidget != itemWidget->widget) {
     emit itemActivated(items.at(currentSelectionIndex).item);
   }
 
+  void removeById(size_t id) {
+    qDebug() << "remove by id" << id;
+
+    for (int i = 0; i != items.size(); ++i) {
+      const auto &item = items.at(i).item;
+
+      qDebug() << item->id() << "VS" << id;
+
+      if (item->id() == id) {
+        qDebug() << "found" << id << "at index" << i;
+        for (int j = i + 1; j < items.size(); ++j) {
+          items[j].offset -= item->height();
+        }
+        items.removeAt(i);
+
+        if (currentSelectionIndex == i) selectItem(currentSelectionIndex);
+      }
+    }
+
+    updateVisibleItems(scrollBar->value(), height());
+  }
+
   void setItems(const QList<std::shared_ptr<AbstractVirtualListItem>> &items) {
     QList<VirtualListItem> virtualItems;
     int offset = 0;
@@ -530,6 +558,7 @@ public:
     if (model) model->deleteLater();
     model = newModel;
     connect(model, &VirtualListModel::commitReset, this, &VirtualListWidget::setItems);
+    connect(model, &VirtualListModel::itemRemoved, this, &VirtualListWidget::removeById);
   }
 
 signals:

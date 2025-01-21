@@ -22,6 +22,8 @@
 class AppWindow;
 
 class AbstractAction : public QObject {
+  Q_OBJECT
+
 public:
   QString title;
   ThemeIconModel icon;
@@ -32,6 +34,9 @@ public:
   AbstractAction(const QString &title, const ThemeIconModel &icon = {}) : title(title), icon(icon) {}
 
   virtual void execute(AppWindow &app) = 0;
+
+signals:
+  void didExecute();
 };
 
 class ActionListItem : public AbstractVirtualListItem {

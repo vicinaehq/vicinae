@@ -300,7 +300,11 @@ void AppWindow::selectSecondaryAction() {
   executeAction(actionPopover->signalActions.at(1));
 }
 
-void AppWindow::executeAction(AbstractAction *action) { action->execute(*this); }
+void AppWindow::executeAction(AbstractAction *action) {
+  action->execute(*this);
+  emit action->didExecute();
+  qDebug() << "emitted execute";
+}
 
 void AppWindow::closeWindow(bool withPopToRoot) {
   hide();

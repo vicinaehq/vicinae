@@ -20,7 +20,6 @@
 #include "ui/status_bar.hpp"
 #include "ui/test-list.hpp"
 #include "ui/top_bar.hpp"
-#include "ui/virtual-list.hpp"
 
 #include <qmainwindow.h>
 #include <qtmetamacros.h>
@@ -183,8 +182,8 @@ class StandardListItem : public AbstractNativeListItem {
 
 public:
   StandardListItem(const QString &title, const QString &subtitle, const QString &kind,
-                   const ImageLikeModel &imageLike)
-      : title(title), subtitle(subtitle), kind(kind), imageLike(imageLike) {}
+                   const ImageLikeModel &imageLike, size_t id = qHash(QUuid::createUuid()))
+      : AbstractNativeListItem(id), title(title), subtitle(subtitle), kind(kind), imageLike(imageLike) {}
 };
 
 class AppListItem : public StandardListItem {

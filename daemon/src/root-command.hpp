@@ -122,6 +122,25 @@ struct EditQuicklinkAction : public AbstractAction {
   }
 };
 
+struct RemoveQuicklinkAction : public AbstractAction {
+  std::shared_ptr<Quicklink> link;
+  QList<QString> args;
+
+public:
+  void execute(AppWindow &app) override {
+    bool removeResult = app.quicklinkDatabase->removeOne(link->id);
+
+    if (removeResult) {
+      app.statusBar->setToast("Removed link");
+    } else {
+      app.statusBar->setToast("Failed to remove link", ToastPriority::Danger);
+    }
+  }
+
+  RemoveQuicklinkAction(const std::shared_ptr<Quicklink> &link)
+      : AbstractAction("Remove link", ThemeIconModel{.iconName = ":icons/trash.svg"}), link(link) {}
+};
+
 struct DuplicateQuicklinkAction : public AbstractAction {
   std::shared_ptr<Quicklink> link;
   QList<QString> args;
@@ -199,31 +218,50 @@ static BuiltinCommand calculatorHistoryCommand{
     .iconName = ":assets/icons/calculator.png",
     .factory = [](AppWindow &app, const QString &s) { return new SingleViewCommand<CalculatorHistoryView>; }};
 
+class QuicklinkRootListItem : public StandardListItem {
+  Q_OBJECT
+
+  std::shared_ptr<Quicklink> link;
+
+public:
+  std::unique_ptr<CompleterData> createCompleter() const override {
+    return std::make_unique<CompleterData>(CompleterData{
+        .placeholders = link->placeholders, .model = ThemeIconModel{.iconName = link->iconName}});
+  }
+
+  QList<AbstractAction *> createActions() const override {
+    auto removeAction = new RemoveQuicklinkAction(link);
+
+    connect(removeAction, &AbstractAction::didExecute, this, &QuicklinkRootListItem::removed);
+
+    return {new OpenCompletedQuicklinkAction(link), new EditQuicklinkAction(link),
+            new DuplicateQuicklinkAction(link), removeAction};
+  }
+
+  size_t id() const override {
+    auto hash = qHash(QString("link-%1").arg(link->id));
+
+    qDebug() << "quicklink id called for link id " << link->id << hash;
+
+    return hash;
+  }
+
+public:
+  QuicklinkRootListItem(const std::shared_ptr<Quicklink> &link)
+      : StandardListItem(link->name, "", "Quicklink", ThemeIconModel{.iconName = link->iconName}),
+        link(link) {}
+
+  ~QuicklinkRootListItem() { qDebug() << "Destroyed quicklink item"; }
+
+signals:
+  void removed();
+};
+
 class RootView : public NavigationListView {
   AppWindow &app;
   Service<AppDatabase> appDb;
   Service<ExtensionManager> extensionManager;
   Service<QuicklistDatabase> quicklinkDb;
-
-  class QuicklinkRootListItem : public StandardListItem {
-    std::shared_ptr<Quicklink> link;
-
-  public:
-    std::unique_ptr<CompleterData> createCompleter() const override {
-      return std::make_unique<CompleterData>(CompleterData{
-          .placeholders = link->placeholders, .model = ThemeIconModel{.iconName = link->iconName}});
-    }
-
-    QList<AbstractAction *> createActions() const override {
-      return {new OpenCompletedQuicklinkAction(link), new EditQuicklinkAction(link),
-              new DuplicateQuicklinkAction(link)};
-    }
-
-  public:
-    QuicklinkRootListItem(const std::shared_ptr<Quicklink> &link)
-        : StandardListItem(link->name, "", "Quicklink", ThemeIconModel{.iconName = link->iconName}),
-          link(link) {}
-  };
 
   class FallbackQuicklinkListItem : public StandardListItem {
     std::shared_ptr<Quicklink> link;
@@ -332,6 +370,8 @@ class RootView : public NavigationListView {
 
   QFutureWatcher<void> searchFutureWatcher;
 
+  void handleLinkDeletion(std::shared_ptr<QuicklinkRootListItem> link) { model->removeItem(link); }
+
 public:
   void onSearchChanged(const QString &s) override {
     if (searchFutureWatcher.isRunning()) {
@@ -339,101 +379,106 @@ public:
       searchFutureWatcher.waitForFinished();
     }
 
-    auto future = QtConcurrent::run([this, s]() {
-      auto start = std::chrono::high_resolution_clock::now();
-      auto fileBrowser = appDb.defaultFileBrowser();
+    // auto future = QtConcurrent::run([this, s]() {
+    auto start = std::chrono::high_resolution_clock::now();
+    auto fileBrowser = appDb.defaultFileBrowser();
 
-      model->beginReset();
+    model->beginReset();
 
-      if (s.size() > 1) {
-        model->beginSection("Calculator");
-        Parser parser;
+    if (s.size() > 1) {
+      model->beginSection("Calculator");
+      Parser parser;
 
-        if (auto result = parser.evaluate(s.toLatin1().data())) {
-          auto value = result.value();
-          auto data = CalculatorItem{.expression = s, .result = value.value, .unit = value.unit};
-          auto item = std::make_shared<CalculatorListItem>(data);
-
-          model->addItem(item);
-        }
-      }
-
-      if (QColor(s).isValid()) {
-        model->beginSection("Color");
-        auto item = std::make_shared<ColorListItem>(s);
+      if (auto result = parser.evaluate(s.toLatin1().data())) {
+        auto value = result.value();
+        auto data = CalculatorItem{.expression = s, .result = value.value, .unit = value.unit};
+        auto item = std::make_shared<CalculatorListItem>(data);
 
         model->addItem(item);
       }
+    }
 
-      model->beginSection("Results");
+    if (QColor(s).isValid()) {
+      model->beginSection("Color");
+      auto item = std::make_shared<ColorListItem>(s);
 
-      if (!s.isEmpty()) {
-        for (const auto &link : quicklinkDb.list()) {
-          if (!link->name.startsWith(s, Qt::CaseInsensitive)) continue;
+      model->addItem(item);
+    }
 
-          model->addItem(std::make_shared<QuicklinkRootListItem>(link));
+    model->beginSection("Results");
+
+    if (!s.isEmpty()) {
+      for (const auto &link : quicklinkDb.list()) {
+        if (!link->name.startsWith(s, Qt::CaseInsensitive)) continue;
+
+        auto quicklink = std::make_shared<QuicklinkRootListItem>(link);
+
+        connect(quicklink.get(), &QuicklinkRootListItem::removed, this,
+                [this, quicklink]() { handleLinkDeletion(quicklink); });
+
+        model->addItem(quicklink);
+      }
+    }
+
+    if (!s.isEmpty()) {
+      for (auto &app : appDb.apps) {
+        if (!app->displayable()) continue;
+
+        for (const auto &word : app->name.split(" ")) {
+          if (!word.startsWith(s, Qt::CaseInsensitive)) continue;
+
+          auto appItem = std::make_shared<AppListItem>(app, appDb);
+
+          model->addItem(appItem);
+          break;
         }
       }
+    }
 
-      if (!s.isEmpty()) {
-        for (auto &app : appDb.apps) {
-          if (!app->displayable()) continue;
-
-          for (const auto &word : app->name.split(" ")) {
-            if (!word.startsWith(s, Qt::CaseInsensitive)) continue;
-
-            auto appItem = std::make_shared<AppListItem>(app, appDb);
-
-            model->addItem(appItem);
-            break;
-          }
-        }
-      }
-
-      for (const auto &extension : extensionManager.extensions()) {
-        for (const auto &cmd : extension.commands) {
-          if (!cmd.name.contains(s, Qt::CaseInsensitive)) continue;
-
-          auto item = std::make_shared<ExtensionListItem>(cmd);
-
-          model->addItem(item);
-        }
-      }
-
-      for (const auto &cmd : builtinCommands) {
+    for (const auto &extension : extensionManager.extensions()) {
+      for (const auto &cmd : extension.commands) {
         if (!cmd.name.contains(s, Qt::CaseInsensitive)) continue;
 
-        auto item = std::make_shared<BuiltinCommandListItem>(cmd);
+        auto item = std::make_shared<ExtensionListItem>(cmd);
+
+        model->addItem(item);
+      }
+    }
+
+    for (const auto &cmd : builtinCommands) {
+      if (!cmd.name.contains(s, Qt::CaseInsensitive)) continue;
+
+      auto item = std::make_shared<BuiltinCommandListItem>(cmd);
+
+      model->addItem(item);
+    }
+
+    if (!s.isEmpty()) {
+      model->beginSection(QString("Use \"%1\" with...").arg(s));
+
+      for (const auto &cmd : fallbackCommands) {
+        auto item = std::make_shared<BuiltinCommandListItem>(cmd, s);
 
         model->addItem(item);
       }
 
-      if (!s.isEmpty()) {
-        model->beginSection(QString("Use \"%1\" with...").arg(s));
+      for (const auto &link : quicklinkDb.list()) {
+        if (link->placeholders.size() != 1) continue;
 
-        for (const auto &cmd : fallbackCommands) {
-          auto item = std::make_shared<BuiltinCommandListItem>(cmd, s);
+        auto item = std::make_shared<FallbackQuicklinkListItem>(link, s);
 
-          model->addItem(item);
-        }
-
-        for (const auto &link : quicklinkDb.list()) {
-          if (link->placeholders.size() != 1) continue;
-
-          auto item = std::make_shared<FallbackQuicklinkListItem>(link, s);
-
-          model->addItem(item);
-        }
+        model->addItem(item);
       }
+    }
 
-      auto end = std::chrono::high_resolution_clock::now();
-      auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-      qDebug() << "root searched in " << duration << "ms";
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    qDebug() << "root searched in " << duration << "ms";
 
-      model->endReset();
-    });
+    model->endReset();
+    //});
 
-    searchFutureWatcher.setFuture(future);
+    // searchFutureWatcher.setFuture(future);
   }
 
   void onMount() override { setSearchPlaceholderText("Search for apps or commands..."); }

@@ -65,7 +65,7 @@ public:
   }
 };
 
-class AbstractNativeListItem : public QObject, public AbstractVirtualListItem {
+class AbstractNativeListItem : public AbstractVirtualListItem {
 public:
   virtual std::unique_ptr<AbstractNativeListItemDetail> createDetail() const { return nullptr; }
   virtual std::unique_ptr<CompleterData> createCompleter() const { return nullptr; }
@@ -79,7 +79,7 @@ public:
 public:
   virtual int height() const { return 40; }
 
-  AbstractNativeListItem() {}
+  AbstractNativeListItem(size_t id = qHash(QUuid::createUuid())) : AbstractVirtualListItem(id) {}
 };
 
 struct ListSection {
