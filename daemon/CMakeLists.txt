@@ -46,6 +46,8 @@ qt_add_executable(${TARGET}
 	include/extend/extension-command.hpp
 	include/extend/extension-detail-view.hpp
 
+	src/calculator-history-command.hpp
+
 	include/ui/virtual-list.hpp
 	include/create-quicklink-command.hpp
 

@@ -153,7 +153,7 @@ class CopyCalculatorResultAction : public CopyTextAction {
 
 public:
   void execute(AppWindow &app) override {
-    app.calculatorDatabase->saveComputation(item.expression, QString::number(item.result));
+    app.calculatorDatabase->insertComputation(item.expression, QString::number(item.result));
     CopyTextAction::execute(app);
   }
 
