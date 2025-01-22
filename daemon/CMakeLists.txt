@@ -48,6 +48,9 @@ qt_add_executable(${TARGET}
 
 	src/calculator-history-command.hpp
 
+	src/tinyexpr.cpp
+	include/tinyexpr.hpp
+
 	include/ui/virtual-list.hpp
 	include/create-quicklink-command.hpp
 

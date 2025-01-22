@@ -38,6 +38,8 @@ public:
         entry.expression, "", entry.result);
   }
 
+  size_t id() const override { return qHash(QString("history-entry-%1").arg(entry.id)); };
+
   QList<AbstractAction *> createActions() const override {
     auto removeAction = new RemoveCalculatorHistoryEntryAction(entry.id);
 
