@@ -371,18 +371,15 @@ class RootView : public NavigationListView {
   QFutureWatcher<void> searchFutureWatcher;
   QString query;
 
-  void handleLinkDeletion(std::shared_ptr<QuicklinkRootListItem> link) { onSearchChanged(query); }
+  void handleLinkDeletion(std::shared_ptr<QuicklinkRootListItem> link) {
+    auto oldSelection = list->selected();
+
+    resetItems(query);
+    list->setSelected(oldSelection);
+  }
 
 public:
-  void onSearchChanged(const QString &s) override {
-    query = s;
-
-    if (searchFutureWatcher.isRunning()) {
-      searchFutureWatcher.cancel();
-      searchFutureWatcher.waitForFinished();
-    }
-
-    // auto future = QtConcurrent::run([this, s]() {
+  void resetItems(const QString &s) {
     auto start = std::chrono::high_resolution_clock::now();
     auto fileBrowser = appDb.defaultFileBrowser();
 
@@ -481,10 +478,11 @@ public:
     qDebug() << "root searched in " << duration << "ms";
 
     model->endReset();
-    list->selectFrom(selected);
-    //});
+  }
 
-    // searchFutureWatcher.setFuture(future);
+  void onSearchChanged(const QString &s) override {
+    query = s;
+    resetItems(query);
   }
 
   void onMount() override { setSearchPlaceholderText("Search for apps or commands..."); }

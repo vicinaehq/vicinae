@@ -9,26 +9,24 @@ struct ProcessInfo {
 };
 
 class ProcessManagerService {
-  QDir procDir;
 
 public:
   QList<ProcessInfo> list() {
     QList<ProcessInfo> procList;
+    QDir baseDir("/proc");
 
-    for (const auto &name : procDir.entryList()) {
+    for (const auto &name : baseDir.entryList()) {
       bool isNum = false;
       auto pid = name.toInt(&isNum);
 
-      if (!isNum)
-        continue;
+      if (!isNum) continue;
 
       ProcessInfo info{.pid = pid};
-      auto processPath = procDir.absoluteFilePath(name);
+      auto processPath = baseDir.absoluteFilePath(name);
       {
         QFile commFile(processPath + QDir::separator() + "comm");
 
-        if (!commFile.open(QIODevice::ReadOnly | QIODevice::Text))
-          continue;
+        if (!commFile.open(QIODevice::ReadOnly | QIODevice::Text)) continue;
 
         info.comm = commFile.readAll().trimmed();
       }
@@ -39,5 +37,5 @@ public:
     return procList;
   }
 
-  ProcessManagerService() : procDir("/proc") {}
+  ProcessManagerService() {}
 };

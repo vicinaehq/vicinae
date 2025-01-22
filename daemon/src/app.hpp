@@ -216,5 +216,5 @@ public:
   AppListItem(const std::shared_ptr<DesktopEntry> &app, Service<AppDatabase> appDb)
       : StandardListItem(app->name, "", "Application", ThemeIconModel{.iconName = app->iconName()}), app(app),
         appDb(appDb) {}
-  ~AppListItem() { qDebug() << "destroy app list item"; }
+  ~AppListItem() {}
 };

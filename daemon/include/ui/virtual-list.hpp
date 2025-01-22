@@ -277,7 +277,7 @@ class VirtualListWidget : public QWidget {
   QScrollBar *scrollBar;
   QMap<int, VirtualListItemWidget *> visibleWidgets;
   QList<VirtualListItem> items;
-  int currentSelectionIndex = 0;
+  int currentSelectionIndex = -1;
   VirtualListContainer *container;
   VirtualListModel *model = nullptr;
   QHash<int, QStack<VirtualListItemWidget *>> widgetPools;
