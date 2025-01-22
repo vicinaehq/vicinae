@@ -481,8 +481,6 @@ if (updatedWidget != itemWidget->widget) {
     virtualScrollHeight = qMax(offset - height(), 0);
     scrollBar->setMaximum(virtualScrollHeight);
 
-    qDebug() << "set items YOLO";
-
     if (scrollBar->value() > 0) {
       scrollBar->setValue(0);
     } else {

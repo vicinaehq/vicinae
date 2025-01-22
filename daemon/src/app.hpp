@@ -218,3 +218,27 @@ public:
         appDb(appDb) {}
   ~AppListItem() {}
 };
+
+class BaseCalculatorListItem : public AbstractNativeListItem {
+protected:
+  CalculatorItem item;
+
+  QWidget *createItem() const override { return new CalculatorListItemWidget(item); }
+
+  int role() const override { return 1; }
+
+  int height() const override { return 100; }
+
+  QList<AbstractAction *> createActions() const override {
+    QString sresult = QString::number(item.result);
+
+    return {
+        new CopyCalculatorResultAction(item, "Copy result", sresult),
+        new CopyCalculatorResultAction(item, "Copy expression",
+                                       QString("%1 = %2").arg(item.expression).arg(sresult)),
+    };
+  }
+
+public:
+  BaseCalculatorListItem(const CalculatorItem &item) : item(item) {}
+};

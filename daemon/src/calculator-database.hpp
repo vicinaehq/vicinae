@@ -102,6 +102,8 @@ public:
 
     if (!query.exec()) { qDebug() << "query.exec() failed"; }
 
+    if (!query.next()) return;
+
     uint epoch = query.value(3).toUInt();
     auto entry = CalculatorEntry{
         .id = query.value(0).toInt(),

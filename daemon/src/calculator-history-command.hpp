@@ -2,6 +2,7 @@
 #include "app.hpp"
 #include "calculator-database.hpp"
 #include "navigation-list-view.hpp"
+#include "tinyexpr.hpp"
 #include "ui/action_popover.hpp"
 #include <qnamespace.h>
 #include <qsharedpointer.h>
@@ -75,17 +76,15 @@ class CalculatorHistoryView : public NavigationListView {
 
     if (s.size() > 1) {
       model->beginSection("Calculator");
-      Parser parser;
+      te_parser parser;
+      double result = parser.evaluate(s.toLatin1().data());
 
-      /*
-  if (auto result = parser.evaluate(s.toLatin1().data())) {
-    auto value = result.value();
-    auto data = CalculatorItem{.expression = s, .result = value.value, .unit = value.unit};
-    auto item = std::make_shared<CalculatorListItem>(data);
+      if (!std::isnan(result)) {
+        auto data = CalculatorItem{.expression = s, .result = result};
+        auto item = std::make_shared<BaseCalculatorListItem>(data);
 
-    model->addItem(item);
-  }
-      */
+        model->addItem(item);
+      }
     }
 
     model->beginSection("History");

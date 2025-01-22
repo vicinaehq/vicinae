@@ -14,6 +14,7 @@
 #include "navigation-list-view.hpp"
 #include "omnicast.hpp"
 #include "quicklist-database.hpp"
+#include "tinyexpr.hpp"
 #include "ui/action_popover.hpp"
 #include "ui/calculator-list-item-widget.hpp"
 #include "ui/color_circle.hpp"
@@ -21,6 +22,7 @@
 #include "ui/test-list.hpp"
 #include "ui/toast.hpp"
 #include <QtConcurrent/QtConcurrent>
+#include <cmath>
 #include <functional>
 #include <memory>
 #include <numbers>
@@ -310,28 +312,17 @@ class RootView : public NavigationListView {
           cmd(cmd) {}
   };
 
-  class CalculatorListItem : public AbstractNativeListItem {
-    CalculatorItem item;
-
-    QWidget *createItem() const override { return new CalculatorListItemWidget(item); }
-
-    int role() const override { return 1; }
-
-    int height() const override { return 100; }
-
+  class RootCalculatorListItem : public BaseCalculatorListItem {
     QList<AbstractAction *> createActions() const override {
-      QString sresult = QString::number(item.result);
+      auto actions = BaseCalculatorListItem::createActions();
 
-      return {
-          new CopyCalculatorResultAction(item, "Copy result", sresult),
-          new CopyCalculatorResultAction(item, "Copy expression",
-                                         QString("%1 = %2").arg(item.expression).arg(sresult)),
-          new OpenBuiltinCommandAction(calculatorHistoryCommand, "Open in history", item.expression),
-      };
+      actions << new OpenBuiltinCommandAction(calculatorHistoryCommand, "Open in history", item.expression);
+
+      return actions;
     }
 
   public:
-    CalculatorListItem(const CalculatorItem &item) : item(item) {}
+    RootCalculatorListItem(const CalculatorItem &item) : BaseCalculatorListItem(item) {}
   };
 
   QList<BuiltinCommand> builtinCommands{
@@ -389,12 +380,12 @@ public:
 
     if (s.size() > 1) {
       model->beginSection("Calculator");
-      Parser parser;
+      te_parser parser;
+      double result = parser.evaluate(s.toLatin1().data());
 
-      if (auto result = parser.evaluate(s.toLatin1().data())) {
-        auto value = result.value();
-        auto data = CalculatorItem{.expression = s, .result = value.value, .unit = value.unit};
-        auto item = std::make_shared<CalculatorListItem>(data);
+      if (!std::isnan(result)) {
+        auto data = CalculatorItem{.expression = s, .result = result};
+        auto item = std::make_shared<RootCalculatorListItem>(data);
 
         model->addItem(item);
       }
