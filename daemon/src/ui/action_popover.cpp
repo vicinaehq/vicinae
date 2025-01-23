@@ -87,7 +87,7 @@ ActionPopover::ActionPopover(QWidget *parent)
   auto listContainer = new QWidget;
   auto listLayout = new QVBoxLayout;
 
-  listLayout->setContentsMargins(10, 10, 10, 10);
+  listLayout->setContentsMargins(0, 0, 0, 0);
   listLayout->addWidget(list);
   listContainer->setLayout(listLayout);
 

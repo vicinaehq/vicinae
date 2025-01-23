@@ -3,12 +3,12 @@
 #include "app-database.hpp"
 #include "app.hpp"
 #include "calculator-history-command.hpp"
-#include "calculator.hpp"
 #include "command.hpp"
 #include "create-quicklink-command.hpp"
 #include "extend/extension-command.hpp"
 #include "extension_manager.hpp"
 #include "files-command.hpp"
+#include "icon-browser-command.hpp"
 #include "manage-processes-command.hpp"
 #include "manage-quicklinks-command.hpp"
 #include "navigation-list-view.hpp"
@@ -25,7 +25,6 @@
 #include <cmath>
 #include <functional>
 #include <memory>
-#include <numbers>
 #include <qcoreevent.h>
 #include <qfuture.h>
 #include <qfuturewatcher.h>
@@ -350,6 +349,9 @@ class RootView : public NavigationListView {
        .iconName = ":assets/icons/process-manager.png",
        .factory = [](AppWindow &app,
                      const QString &s) { return new SingleViewCommand<ManageProcessesMainView>; }},
+      {.name = "Browse bundled icons",
+       .iconName = ":/icons/link.svg",
+       .factory = [](AppWindow &app, const QString &s) { return new SingleViewCommand<IconBrowserView>; }},
 
   };
 
@@ -373,7 +375,6 @@ public:
   void resetItems(const QString &s) {
     auto start = std::chrono::high_resolution_clock::now();
     auto fileBrowser = appDb.defaultFileBrowser();
-
     auto selected = list->selected();
 
     model->beginReset();

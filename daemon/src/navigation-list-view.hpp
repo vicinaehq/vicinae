@@ -9,11 +9,13 @@
 
 class NavigationListView : public View {
   AppWindow &app;
-  // VirtualListWidget *list;
 
 protected:
   VirtualListWidget *list;
   VirtualListModel *model;
+  QWidget *emptyView = nullptr;
+  QWidget *currentWidget = nullptr;
+  QVBoxLayout *layout;
 
 public:
   void selectionChanged(const std::shared_ptr<AbstractVirtualListItem> &listItem) {
@@ -38,19 +40,49 @@ public:
     emit activatePrimaryAction();
   }
 
+  virtual QWidget *createEmptyView() {
+    qDebug() << "Default create empty view called";
+    return nullptr;
+  }
+
+  virtual QList<AbstractAction *> createEmptyViewActions() { return {}; }
+
+  void onListItemsChanged(const QList<std::shared_ptr<AbstractVirtualListItem>> &items) {
+    if (items.isEmpty()) {
+      if (!emptyView) emptyView = createEmptyView();
+
+      if (emptyView) {
+        qDebug() << "replace empty view";
+        layout->replaceWidget(currentWidget, emptyView);
+        currentWidget = emptyView;
+      }
+    }
+
+    else if (currentWidget == emptyView) {
+      layout->replaceWidget(currentWidget, list);
+      currentWidget = list;
+    }
+  }
+
   NavigationListView(AppWindow &app)
-      : View(app), app(app), list(new VirtualListWidget), model(new VirtualListModel) {
+      : View(app), app(app), list(new VirtualListWidget), model(new VirtualListModel),
+        layout(new QVBoxLayout) {
     connect(list, &VirtualListWidget::selectionChanged, this, &NavigationListView::selectionChanged);
     connect(list, &VirtualListWidget::itemActivated, this, &NavigationListView::itemActivated);
     forwardInputEvents(list);
     list->setModel(model);
 
-    auto container = new QWidget;
-    auto containerLayout = new QVBoxLayout;
+    list->setViewportMargins(10, 0, 10, 0);
 
-    container->setLayout(containerLayout);
-    containerLayout->setContentsMargins(8, 0, 8, 0);
-    containerLayout->addWidget(list);
+    connect(model, &VirtualListModel::commitReset, this, &NavigationListView::onListItemsChanged);
+
+    auto container = new QWidget;
+
+    container->setLayout(layout);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(list);
+
+    currentWidget = list;
 
     widget = container;
   }

@@ -14,9 +14,10 @@ public:
 
     auto layout = new QVBoxLayout();
 
+    layout->setSpacing(10);
+
     if (model.icon) {
-      layout->addWidget(ImageViewer::createFromModel(*model.icon, {64, 64}), 0,
-                        Qt::AlignCenter);
+      layout->addWidget(ImageViewer::createFromModel(*model.icon, {32, 32}), 0, Qt::AlignCenter);
     }
 
     layout->addWidget(new QLabel(model.title), 0, Qt::AlignCenter);

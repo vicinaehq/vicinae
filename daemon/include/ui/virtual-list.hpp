@@ -1,9 +1,6 @@
 #pragma once
-#include "extension_manager.hpp"
 #include "ui/text-label.hpp"
 #include <QWidget>
-#include <chrono>
-#include <numbers>
 #include <qapplication.h>
 #include <QStack>
 #include <qboxlayout.h>
@@ -16,6 +13,7 @@
 #include <qpainter.h>
 #include <qframe.h>
 #include <qtimer.h>
+#include <qtmetamacros.h>
 #include <quuid.h>
 #include <qwidget.h>
 #include <sys/socket.h>
@@ -27,7 +25,7 @@ public:
 
     auto layout = new QHBoxLayout();
 
-    layout->setContentsMargins(8, 8, 8, 8);
+    layout->setContentsMargins(5, 5, 5, 5);
 
     auto leftWidget = new QWidget();
     auto leftLayout = new QHBoxLayout();
@@ -271,6 +269,19 @@ public:
   }
 };
 
+class ViewportWidget : public QWidget {
+  Q_OBJECT
+
+  void resizeEvent(QResizeEvent *event) override {
+    QWidget::resizeEvent(event);
+    qDebug() << "viewport resize!";
+    emit resized();
+  }
+
+signals:
+  void resized();
+};
+
 class VirtualListWidget : public QWidget {
   Q_OBJECT
 
@@ -282,10 +293,12 @@ class VirtualListWidget : public QWidget {
   VirtualListModel *model = nullptr;
   QHash<int, QStack<VirtualListItemWidget *>> widgetPools;
 
+  QHBoxLayout *layout;
+
   int virtualScrollHeight = 0;
   int virtualHeight = 0;
 
-  QWidget *viewport;
+  ViewportWidget *viewport;
 
 private:
   void valueChanged(int value) { updateVisibleItems(value, height()); }
@@ -321,10 +334,6 @@ private:
   }
 
   void updateVisibleItems(int y, int height) {
-    if (virtualScrollHeight == 0)
-      scrollBar->hide();
-    else
-      scrollBar->show();
 
     if (items.isEmpty()) return;
 
@@ -340,18 +349,12 @@ private:
     while (endIndex < items.size() - 1 && items.at(endIndex).offset - startOffset < height)
       ++endIndex;
 
-    qDebug() << "items" << items.size();
-    qDebug() << "y" << y;
-
-    qDebug() << "range" << startIndex << "to" << endIndex;
-    qDebug() << "start" << startIndex << "end" << endIndex;
-
-    int offset = items.at(startIndex).offset - y;
+    int offset = scrollBar->value() == 0 ? 10 : items.at(startIndex).offset - y;
 
     qDebug() << "base offset" << offset;
 
     for (int idx : visibleWidgets.keys()) {
-      // if (idx >= startIndex && idx <= endIndex) continue;
+      if (idx >= startIndex && idx <= endIndex) continue;
 
       visibleWidgets.value(idx)->deleteLater();
 
@@ -370,8 +373,6 @@ pool.push_back(widget);
 
       visibleWidgets.remove(idx);
     }
-
-    visibleWidgets.clear();
 
     for (int i = startIndex; i <= endIndex; ++i) {
       VirtualListItemWidget *itemWidget = visibleWidgets.value(i);
@@ -394,7 +395,6 @@ if (updatedWidget != itemWidget->widget) {
 
         itemWidget = new VirtualListItemWidget(viewport);
 
-        itemWidget->setFixedSize({viewport->width(), item->height()});
         itemWidget->setWidget(item->createItem(), item->role());
         itemWidget->setSelectable(item->isSelectable());
 
@@ -405,7 +405,8 @@ if (updatedWidget != itemWidget->widget) {
                 [this, i, itemWidget](bool hovered) { itemWidget->setHovered(hovered); });
       }
 
-      itemWidget->move(0, offset);
+      itemWidget->setFixedSize({viewport->width() - 20, item->height()});
+      itemWidget->move(10, offset);
       itemWidget->show();
       offset += item->height();
 
@@ -441,15 +442,10 @@ if (updatedWidget != itemWidget->widget) {
   }
 
   void removeById(size_t id) {
-    qDebug() << "remove by id" << id;
-
     for (int i = 0; i != items.size(); ++i) {
       const auto &item = items.at(i).item;
 
-      qDebug() << item->id() << "VS" << id;
-
       if (item->id() == id) {
-        qDebug() << "found" << id << "at index" << i;
         for (int j = i + 1; j < items.size(); ++j) {
           items[j].offset -= item->height();
         }
@@ -481,6 +477,12 @@ if (updatedWidget != itemWidget->widget) {
     virtualScrollHeight = qMax(offset - height(), 0);
     scrollBar->setMaximum(virtualScrollHeight);
 
+    if (virtualScrollHeight == 0) {
+      scrollBar->hide();
+    } else {
+      scrollBar->show();
+    }
+
     if (scrollBar->value() > 0) {
       scrollBar->setValue(0);
     } else {
@@ -509,10 +511,13 @@ if (updatedWidget != itemWidget->widget) {
 
 public:
   VirtualListWidget(QWidget *parent = nullptr)
-      : QWidget(parent), viewport(new QWidget), scrollBar(new QScrollBar) {
+      : QWidget(parent), viewport(new ViewportWidget), scrollBar(new QScrollBar) {
     setFocusPolicy(Qt::NoFocus);
 
-    auto layout = new QHBoxLayout;
+    connect(viewport, &ViewportWidget::resized, this,
+            [this]() { updateVisibleItems(scrollBar->value(), height()); });
+
+    layout = new QHBoxLayout;
 
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
@@ -527,6 +532,8 @@ public:
     setLayout(layout);
     connect(scrollBar, &QScrollBar::valueChanged, this, &VirtualListWidget::valueChanged);
   }
+
+  void setViewportMargins(int left, int top, int right, int bottom) {}
 
   int selected() { return currentSelectionIndex; }
 

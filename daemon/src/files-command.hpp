@@ -6,10 +6,12 @@
 #include "filesystem-database.hpp"
 #include "indexer-service.hpp"
 #include "navigation-list-view.hpp"
+#include "ui/empty-view.hpp"
 #include "ui/test-list.hpp"
 #include <qboxlayout.h>
 #include <qfileinfo.h>
 #include <qicon.h>
+#include <qlabel.h>
 #include <qmimedatabase.h>
 #include <qnamespace.h>
 #include <qnetworkrequest.h>
@@ -109,6 +111,12 @@ public slots:
   }
 
 public:
+  QWidget *createEmptyView() override {
+    return new EmptyViewWidget(EmptyViewModel{.title = "No files matching your search",
+                                              .description = "Try to use different search terms",
+                                              .icon = ThemeIconModel{.iconName = ":assets/icons/files.png"}});
+  }
+
   void onSearchChanged(const QString &s) override {
     auto request = indexer.search(s);
 

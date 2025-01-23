@@ -218,7 +218,7 @@ public:
     auto listContainerWidget = new QWidget;
     auto listContainerLayout = new QVBoxLayout;
 
-    listContainerLayout->setContentsMargins(10, 10, 10, 10);
+    listContainerLayout->setContentsMargins(0, 0, 0, 0);
     listContainerLayout->addWidget(list);
     listContainerWidget->setLayout(listContainerLayout);
 
