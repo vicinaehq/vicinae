@@ -1,5 +1,4 @@
 #pragma once
-#include "calculator.hpp"
 #include "omnicast.hpp"
 #include <qboxlayout.h>
 #include <qlabel.h>
@@ -8,7 +7,6 @@
 struct CalculatorItem {
   QString expression;
   double result;
-  std::optional<Unit> unit;
 };
 
 class CalculatorListItemWidget : public QWidget {
@@ -23,8 +21,7 @@ class CalculatorListItemWidget : public QWidget {
     answerLabel->setProperty("class", "transform-left");
 
     auto left = new VStack(exprLabel, new Chip("Expression"));
-    auto right =
-        new VStack(answerLabel, new Chip(item.unit ? QString(item.unit->displayName.data()) : "Answer"));
+    auto right = new VStack(answerLabel, new Chip("Answer"));
 
     auto layout = new QVBoxLayout();
 

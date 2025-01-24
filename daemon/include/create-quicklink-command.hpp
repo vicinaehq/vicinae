@@ -10,6 +10,7 @@
 #include <memory>
 #include <qnamespace.h>
 #include <qpixmap.h>
+#include <qtmetamacros.h>
 #include <qtypes.h>
 
 class CallbackAction : public AbstractAction {
@@ -277,6 +278,8 @@ public:
 };
 
 class EditCommandQuicklinkView : public QuicklinkCommandView {
+  Q_OBJECT
+
   const Quicklink &quicklink;
 
 public:
@@ -320,8 +323,12 @@ public:
       return;
     }
 
+    emit quicklinkEdited();
     pop();
   }
+
+signals:
+  void quicklinkEdited();
 };
 
 class DuplicateQuicklinkCommandView : public QuicklinkCommandView {

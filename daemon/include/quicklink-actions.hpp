@@ -4,6 +4,7 @@
 #include "create-quicklink-command.hpp"
 #include "quicklist-database.hpp"
 #include "ui/action_popover.hpp"
+#include <qtmetamacros.h>
 
 struct OpenQuicklinkAction : public AbstractAction {
   std::shared_ptr<Quicklink> link;
@@ -37,11 +38,16 @@ struct OpenQuicklinkAction : public AbstractAction {
 };
 
 struct EditQuicklinkAction : public AbstractAction {
+  Q_OBJECT
+
+public:
   std::shared_ptr<Quicklink> link;
   QList<QString> args;
 
   void execute(AppWindow &app) override {
     auto view = new EditCommandQuicklinkView(app, *link);
+
+    connect(view, &EditCommandQuicklinkView::quicklinkEdited, this, &EditQuicklinkAction::edited);
 
     emit app.pushView(
         view, {.navigation = NavigationStatus{
@@ -53,6 +59,9 @@ struct EditQuicklinkAction : public AbstractAction {
   EditQuicklinkAction(const std::shared_ptr<Quicklink> &link, const QList<QString> &args = {})
       : AbstractAction("Edit link", ThemeIconModel{.iconName = ":icons/pencil.svg"}), link(link), args(args) {
   }
+
+signals:
+  void edited();
 };
 
 struct RemoveQuicklinkAction : public AbstractAction {

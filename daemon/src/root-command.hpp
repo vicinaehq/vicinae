@@ -132,12 +132,15 @@ public:
   }
 
   QList<AbstractAction *> createActions() const override {
-    auto removeAction = new RemoveQuicklinkAction(link);
+    auto open = new OpenCompletedQuicklinkAction(link);
+    auto edit = new EditQuicklinkAction(link);
+    auto duplicate = new DuplicateQuicklinkAction(link);
+    auto remove = new RemoveQuicklinkAction(link);
 
-    connect(removeAction, &AbstractAction::didExecute, this, &QuicklinkRootListItem::removed);
+    connect(edit, &EditQuicklinkAction::edited, this, &QuicklinkRootListItem::edited);
+    connect(remove, &AbstractAction::didExecute, this, &QuicklinkRootListItem::removed);
 
-    return {new OpenCompletedQuicklinkAction(link), new EditQuicklinkAction(link),
-            new DuplicateQuicklinkAction(link), removeAction};
+    return {open, edit, duplicate, remove};
   }
 
   size_t id() const override {
@@ -156,6 +159,7 @@ public:
   ~QuicklinkRootListItem() { qDebug() << "Destroyed quicklink item"; }
 
 signals:
+  void edited();
   void removed();
 };
 
@@ -308,8 +312,10 @@ public:
 
         auto quicklink = std::make_shared<QuicklinkRootListItem>(link);
 
+        connect(quicklink.get(), &QuicklinkRootListItem::edited, this,
+                [this, quicklink]() { resetItems(query); });
         connect(quicklink.get(), &QuicklinkRootListItem::removed, this,
-                [this, quicklink]() { handleLinkDeletion(quicklink); });
+                [this, quicklink]() { resetItems(query); });
 
         model->addItem(quicklink);
       }
