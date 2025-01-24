@@ -93,6 +93,7 @@ void AppWindow::popCurrentView() {
   navigationStack.pop();
 
   disconnectView(*previous.view);
+  previous.view->deleteLater();
 
   auto next = navigationStack.top();
 

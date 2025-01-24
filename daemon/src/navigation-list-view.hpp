@@ -111,7 +111,7 @@ public:
       split->clearDetail();
     }
 
-    auto actions = item->createActions();
+    auto actions = item->generateActions();
     auto size = actions.size();
 
     if (size > 0) actions[0]->setShortcut(KeyboardShortcutModel{.key = "return", .modifiers = {}});
@@ -173,4 +173,6 @@ public:
 
     widget = container;
   }
+
+  ~NavigationListView() { model->deleteLater(); }
 };

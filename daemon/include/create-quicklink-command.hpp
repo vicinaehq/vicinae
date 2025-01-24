@@ -1,6 +1,5 @@
 #pragma once
 #include "app-database.hpp"
-#include "app.hpp"
 #include "builtin_icon.hpp"
 #include "quicklist-database.hpp"
 #include "ui/action_popover.hpp"

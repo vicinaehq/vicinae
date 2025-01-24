@@ -2,6 +2,7 @@
 #include "app.hpp"
 #include "extend/metadata-model.hpp"
 #include "navigation-list-view.hpp"
+#include "quicklink-actions.hpp"
 #include "quicklist-database.hpp"
 #include "ui/action_popover.hpp"
 #include "ui/list-view.hpp"
@@ -104,14 +105,14 @@ class QuicklinkItem : public StandardListItem {
 
 public:
   QList<AbstractAction *> createActions() const override {
+    auto open = new OpenCompletedQuicklinkAction(link);
+    auto edit = new EditQuicklinkAction(link);
+    auto duplicate = new DuplicateQuicklinkAction(link);
     auto remove = new RemoveLinkAction(link);
 
-    connect(remove, &RemoveLinkAction::linkRemoved, this, [this]() {
-      qDebug() << "hello removed";
-      emit removed();
-    });
+    connect(remove, &RemoveLinkAction::linkRemoved, this, &QuicklinkItem::removed);
 
-    return {remove};
+    return {open, edit, duplicate, remove};
   }
 
   std::unique_ptr<CompleterData> createCompleter() const override {

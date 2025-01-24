@@ -67,6 +67,8 @@ public:
 
 class AbstractNativeListItem : public AbstractVirtualListItem {
 public:
+  QList<AbstractAction *> actions;
+
   virtual std::unique_ptr<AbstractNativeListItemDetail> createDetail() const { return nullptr; }
   virtual std::unique_ptr<CompleterData> createCompleter() const { return nullptr; }
 
@@ -76,10 +78,21 @@ public:
 
   virtual QList<AbstractAction *> createActions() const { return {}; }
 
+  QList<AbstractAction *> generateActions() {
+    actions = createActions();
+
+    return actions;
+  }
+
 public:
   virtual int height() const { return 40; }
 
   AbstractNativeListItem(size_t id = qHash(QUuid::createUuid())) : AbstractVirtualListItem(id) {}
+  ~AbstractNativeListItem() {
+    for (const auto &action : actions) {
+      action->deleteLater();
+    }
+  }
 };
 
 struct ListSection {
