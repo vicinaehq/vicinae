@@ -1,5 +1,6 @@
 #pragma once
 #include "app.hpp"
+#include "extend/metadata-model.hpp"
 #include "navigation-list-view.hpp"
 #include "quicklist-database.hpp"
 #include "ui/action_popover.hpp"
@@ -53,6 +54,50 @@ signals:
   void linkRemoved();
 };
 
+class QuicklinkItemDetail : public AbstractNativeListItemDetail {
+  std::shared_ptr<Quicklink> link;
+
+  QWidget *createView() const override {
+    auto widget = new QWidget();
+    auto layout = new QHBoxLayout();
+
+    layout->setAlignment(Qt::AlignTop);
+    layout->addWidget(new QLabel(link->rawUrl));
+    widget->setLayout(layout);
+
+    return widget;
+  }
+
+  MetadataModel createMetadata() const override {
+    QList<MetadataItem> items;
+
+    items << MetadataLabel{
+        .text = link->name,
+        .title = "Name",
+    };
+    items << MetadataLabel{
+        .text = link->app,
+        .title = "Application",
+    };
+    items << MetadataLabel{
+        .text = QString::number(link->openCount),
+        .title = "Opened",
+    };
+
+    if (link->lastUsedAt) {
+      items << MetadataLabel{
+          .text = link->lastUsedAt->toString(),
+          .title = "Last used at",
+      };
+    }
+
+    return {.children = items};
+  }
+
+public:
+  QuicklinkItemDetail(const std::shared_ptr<Quicklink> &quicklink) : link(quicklink) {}
+};
+
 class QuicklinkItem : public StandardListItem {
   Q_OBJECT
   std::shared_ptr<Quicklink> link;
@@ -76,7 +121,9 @@ public:
     });
   }
 
-  std::unique_ptr<AbstractNativeListItemDetail> createDetail() const override { return nullptr; }
+  std::unique_ptr<AbstractNativeListItemDetail> createDetail() const override {
+    return std::make_unique<QuicklinkItemDetail>(link);
+  }
 
   size_t id() const override { return qHash(link->id); }
 

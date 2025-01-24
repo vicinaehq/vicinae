@@ -30,6 +30,7 @@ struct Quicklink {
     this->name = name;
     this->iconName = icon;
     this->rawUrl = url;
+    this->lastUsedAt = lastUsedAt;
 
     parseUrl(url);
   }

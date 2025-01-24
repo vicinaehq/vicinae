@@ -1,11 +1,87 @@
 #pragma once
 #include "app.hpp"
+#include "common.hpp"
 #include "ui/test-list.hpp"
 #include "ui/virtual-list.hpp"
 #include "view.hpp"
 #include <memory>
 #include <qboxlayout.h>
 #include <qwidget.h>
+
+class ListDetailWidget : public QWidget {
+  QVBoxLayout *layout;
+  QWidget *view;
+  HorizontalMetadata *metadata;
+  HDivider *divider;
+
+public:
+  ListDetailWidget(const AbstractNativeListItemDetail &detail)
+      : layout(new QVBoxLayout), view(detail.createView()), metadata(new HorizontalMetadata()),
+        divider(new HDivider) {
+    layout->addWidget(view, 1);
+    layout->addWidget(divider);
+    layout->addWidget(metadata);
+    layout->setContentsMargins(0, 0, 0, 0);
+
+    view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    metadata->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+    setLayout(layout);
+
+    auto detailMetadata = detail.createMetadata();
+
+    for (const auto &child : detailMetadata.children) {
+      metadata->addItem(child);
+    }
+  }
+};
+
+class ListDetailSplit : public QWidget {
+  QHBoxLayout *layout;
+  QWidget *list;
+  VDivider *divider;
+  QWidget *detailWidget = nullptr;
+
+  void resizeEvent(QResizeEvent *event) override {
+    if (detailWidget) { detailWidget->setFixedWidth(width() * 0.65); }
+  }
+
+public:
+  ListDetailSplit(VirtualListWidget *list) : layout(new QHBoxLayout), list(list), divider(new VDivider) {
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(list);
+    layout->addWidget(divider);
+    layout->setSpacing(0);
+
+    divider->hide();
+
+    setLayout(layout);
+  }
+
+  void clearDetail() {
+    if (layout->count() == 3) {
+      if (auto item = layout->takeAt(2)) { item->widget()->deleteLater(); }
+    }
+
+    detailWidget = nullptr;
+  }
+
+  void setDetail(const AbstractNativeListItemDetail &detail) {
+    detailWidget = new ListDetailWidget(detail);
+
+    if (layout->count() == 3) {
+      auto currentWidget = layout->itemAt(2)->widget();
+
+      layout->replaceWidget(currentWidget, detailWidget);
+      currentWidget->deleteLater();
+    } else {
+      layout->addWidget(detailWidget);
+    }
+
+    detailWidget->setFixedWidth(width() * 0.65);
+    divider->show();
+  }
+};
 
 class NavigationListView : public View {
   AppWindow &app;
@@ -17,6 +93,8 @@ protected:
   QWidget *currentWidget = nullptr;
   QVBoxLayout *layout;
 
+  ListDetailSplit *split;
+
 public:
   void selectionChanged(const std::shared_ptr<AbstractVirtualListItem> &listItem) {
     auto item = std::static_pointer_cast<AbstractNativeListItem>(listItem);
@@ -25,6 +103,12 @@ public:
       app.topBar->activateQuicklinkCompleter(*completer.get());
     } else {
       app.topBar->destroyQuicklinkCompleter();
+    }
+
+    if (auto detail = item->createDetail()) {
+      split->setDetail(*detail);
+    } else {
+      split->clearDetail();
     }
 
     auto actions = item->createActions();
@@ -49,10 +133,12 @@ public:
 
   void onListItemsChanged(const QList<std::shared_ptr<AbstractVirtualListItem>> &items) {
     if (items.isEmpty()) {
+      app.topBar->destroyQuicklinkCompleter();
+      split->clearDetail();
+
       if (!emptyView) emptyView = createEmptyView();
 
       if (emptyView) {
-        qDebug() << "replace empty view";
         layout->replaceWidget(currentWidget, emptyView);
         currentWidget = emptyView;
       }
@@ -60,13 +146,13 @@ public:
 
     else if (currentWidget == emptyView) {
       layout->replaceWidget(currentWidget, list);
-      currentWidget = list;
+      currentWidget = split;
     }
   }
 
   NavigationListView(AppWindow &app)
-      : View(app), app(app), list(new VirtualListWidget), model(new VirtualListModel),
-        layout(new QVBoxLayout) {
+      : View(app), app(app), list(new VirtualListWidget), split(new ListDetailSplit(list)),
+        model(new VirtualListModel), layout(new QVBoxLayout) {
     connect(list, &VirtualListWidget::selectionChanged, this, &NavigationListView::selectionChanged);
     connect(list, &VirtualListWidget::itemActivated, this, &NavigationListView::itemActivated);
     forwardInputEvents(list);
@@ -79,10 +165,11 @@ public:
     auto container = new QWidget;
 
     container->setLayout(layout);
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->addWidget(list);
 
-    currentWidget = list;
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(split);
+
+    currentWidget = split;
 
     widget = container;
   }

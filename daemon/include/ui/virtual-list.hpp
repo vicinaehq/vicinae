@@ -314,7 +314,7 @@ private:
   int getPreviousSelected() {
     if (currentSelectionIndex == 0) return currentSelectionIndex;
 
-    int previous = currentSelectionIndex - 1;
+    int previous = qMin(currentSelectionIndex - 1, items.size() - 1);
 
     while (previous >= 0 && !items.at(previous).item->isSelectable())
       --previous;
