@@ -5,9 +5,7 @@
 #include "quicklink-actions.hpp"
 #include "quicklist-database.hpp"
 #include "ui/action_popover.hpp"
-#include "ui/list-view.hpp"
 #include "ui/test-list.hpp"
-#include "ui/toast.hpp"
 #include <memory>
 #include <qlabel.h>
 #include <qnamespace.h>
@@ -15,45 +13,6 @@
 #include <qtmetamacros.h>
 #include <qwidget.h>
 #include <sys/socket.h>
-
-class OpenLinkAction : public AbstractAction {
-  Q_OBJECT
-  std::shared_ptr<Quicklink> link;
-
-  void execute(AppWindow &app) override {
-    // bool removed = app.quicklinkDatabase->removeOne(link->id);
-  }
-
-public:
-  OpenLinkAction(const std::shared_ptr<Quicklink> &link, const std::shared_ptr<DesktopExecutable> &app)
-      : AbstractAction("Open link", {.iconName = link->iconName}) {}
-
-signals:
-  void linkRemoved();
-};
-
-class RemoveLinkAction : public AbstractAction {
-  Q_OBJECT
-  std::shared_ptr<Quicklink> link;
-
-  void execute(AppWindow &app) override {
-    bool removed = app.quicklinkDatabase->removeOne(link->id);
-
-    if (removed) {
-      app.statusBar->setToast("Removed link");
-      emit linkRemoved();
-    } else {
-      app.statusBar->setToast("Failed to remove link", ToastPriority::Danger);
-    }
-  }
-
-public:
-  RemoveLinkAction(const std::shared_ptr<Quicklink> &link)
-      : AbstractAction("Remove link", {.iconName = link->iconName}), link(link) {}
-
-signals:
-  void linkRemoved();
-};
 
 class QuicklinkItemDetail : public AbstractNativeListItemDetail {
   std::shared_ptr<Quicklink> link;
@@ -99,7 +58,7 @@ public:
   QuicklinkItemDetail(const std::shared_ptr<Quicklink> &quicklink) : link(quicklink) {}
 };
 
-class QuicklinkItem : public StandardListItem {
+class QuicklinkItem : public StandardListItem2 {
   Q_OBJECT
   std::shared_ptr<Quicklink> link;
 
@@ -108,9 +67,11 @@ public:
     auto open = new OpenCompletedQuicklinkAction(link);
     auto edit = new EditQuicklinkAction(link);
     auto duplicate = new DuplicateQuicklinkAction(link);
-    auto remove = new RemoveLinkAction(link);
+    auto remove = new RemoveQuicklinkAction(link);
 
-    connect(remove, &RemoveLinkAction::linkRemoved, this, &QuicklinkItem::removed);
+    connect(edit, &EditQuicklinkAction::edited, this, &QuicklinkItem::edited);
+    connect(duplicate, &DuplicateQuicklinkAction::duplicated, this, &QuicklinkItem::duplicated);
+    connect(remove, &RemoveQuicklinkAction::didExecute, this, &QuicklinkItem::removed);
 
     return {open, edit, duplicate, remove};
   }
@@ -130,32 +91,47 @@ public:
 
 public:
   QuicklinkItem(const std::shared_ptr<Quicklink> &link)
-      : StandardListItem(link->name, "", "Quicklink", ThemeIconModel{.iconName = link->iconName}),
-        link(link) {}
+      : StandardListItem2(link->name, "", "Quicklink", link->iconName), link(link) {}
 
 signals:
+  void edited() const;
   void removed() const;
+  void duplicated() const;
 };
 
 class ManageQuicklinksView : public NavigationListView {
   Service<QuicklistDatabase> quicklinkDb;
+  QString query;
 
-  void onSearchChanged(const QString &s) override {
+  void handleRefresh() {
+    auto old = list->selected();
+
+    resetItems(query);
+    list->selectFrom(old);
+  }
+
+  void resetItems(const QString &query) {
     model->beginReset();
     model->beginSection("Quicklinks");
 
     for (const auto &link : quicklinkDb.list()) {
-      if (!link->name.contains(s, Qt::CaseInsensitive)) { continue; }
+      if (!link->name.contains(query, Qt::CaseInsensitive)) { continue; }
 
       auto item = std::make_shared<QuicklinkItem>(link);
 
-      connect(item.get(), &QuicklinkItem::removed, this,
-              [this, item]() { qDebug() << "removed by id" << item.get(); });
+      connect(item.get(), &QuicklinkItem::edited, this, &ManageQuicklinksView::handleRefresh);
+      connect(item.get(), &QuicklinkItem::duplicated, this, &ManageQuicklinksView::handleRefresh);
+      connect(item.get(), &QuicklinkItem::removed, this, &ManageQuicklinksView::handleRefresh);
 
       model->addItem(item);
     }
 
     model->endReset();
+  }
+
+  void onSearchChanged(const QString &s) override {
+    query = s;
+    resetItems(s);
   }
 
   void onMount() override { setSearchPlaceholderText("Browse quicklinks..."); }

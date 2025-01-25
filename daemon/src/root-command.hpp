@@ -120,7 +120,7 @@ static BuiltinCommand calculatorHistoryCommand{
     .iconName = ":assets/icons/calculator.png",
     .factory = [](AppWindow &app, const QString &s) { return new SingleViewCommand<CalculatorHistoryView>; }};
 
-class QuicklinkRootListItem : public StandardListItem {
+class QuicklinkRootListItem : public StandardListItem2 {
   Q_OBJECT
 
   std::shared_ptr<Quicklink> link;
@@ -138,6 +138,7 @@ public:
     auto remove = new RemoveQuicklinkAction(link);
 
     connect(edit, &EditQuicklinkAction::edited, this, &QuicklinkRootListItem::edited);
+    connect(duplicate, &DuplicateQuicklinkAction::duplicated, this, &QuicklinkRootListItem::duplicated);
     connect(remove, &AbstractAction::didExecute, this, &QuicklinkRootListItem::removed);
 
     return {open, edit, duplicate, remove};
@@ -153,14 +154,14 @@ public:
 
 public:
   QuicklinkRootListItem(const std::shared_ptr<Quicklink> &link)
-      : StandardListItem(link->name, "", "Quicklink", ThemeIconModel{.iconName = link->iconName}),
-        link(link) {}
+      : StandardListItem2(link->name, "", "Quicklink", link->iconName), link(link) {}
 
   ~QuicklinkRootListItem() { qDebug() << "Destroyed quicklink item"; }
 
 signals:
   void edited();
   void removed();
+  void duplicated();
 };
 
 class RootView : public NavigationListView {
@@ -169,7 +170,7 @@ class RootView : public NavigationListView {
   Service<ExtensionManager> extensionManager;
   Service<QuicklistDatabase> quicklinkDb;
 
-  class FallbackQuicklinkListItem : public StandardListItem {
+  class FallbackQuicklinkListItem : public StandardListItem2 {
     std::shared_ptr<Quicklink> link;
     QString query;
 
@@ -187,8 +188,7 @@ class RootView : public NavigationListView {
 
   public:
     FallbackQuicklinkListItem(const std::shared_ptr<Quicklink> &link, const QString &fallbackQuery)
-        : StandardListItem(link->name, "", "Quicklink", ThemeIconModel{.iconName = link->iconName}),
-          link(link), query(fallbackQuery) {}
+        : StandardListItem2(link->name, "", "Quicklink", link->iconName), link(link), query(fallbackQuery) {}
   };
 
   class ExtensionListItem : public StandardListItem {
@@ -269,7 +269,7 @@ class RootView : public NavigationListView {
   QFutureWatcher<void> searchFutureWatcher;
   QString query;
 
-  void handleLinkDeletion(std::shared_ptr<QuicklinkRootListItem> link) {
+  void handleRefresh() {
     auto oldSelection = list->selected();
 
     resetItems(query);
@@ -280,7 +280,6 @@ public:
   void resetItems(const QString &s) {
     auto start = std::chrono::high_resolution_clock::now();
     auto fileBrowser = appDb.defaultFileBrowser();
-    auto selected = list->selected();
 
     model->beginReset();
 
@@ -312,10 +311,9 @@ public:
 
         auto quicklink = std::make_shared<QuicklinkRootListItem>(link);
 
-        connect(quicklink.get(), &QuicklinkRootListItem::edited, this,
-                [this, quicklink]() { resetItems(query); });
-        connect(quicklink.get(), &QuicklinkRootListItem::removed, this,
-                [this, quicklink]() { resetItems(query); });
+        connect(quicklink.get(), &QuicklinkRootListItem::edited, this, &RootView::handleRefresh);
+        connect(quicklink.get(), &QuicklinkRootListItem::duplicated, this, &RootView::handleRefresh);
+        connect(quicklink.get(), &QuicklinkRootListItem::removed, this, &RootView::handleRefresh);
 
         model->addItem(quicklink);
       }

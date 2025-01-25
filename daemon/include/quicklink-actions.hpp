@@ -84,11 +84,16 @@ public:
 };
 
 struct DuplicateQuicklinkAction : public AbstractAction {
+  Q_OBJECT
+
+public:
   std::shared_ptr<Quicklink> link;
   QList<QString> args;
 
   void execute(AppWindow &app) override {
     auto view = new DuplicateQuicklinkCommandView(app, *link);
+
+    connect(view, &DuplicateQuicklinkCommandView::duplicated, this, &DuplicateQuicklinkAction::duplicated);
 
     emit app.pushView(view, {.navigation = NavigationStatus{
                                  .title = "Duplicate link",
@@ -100,6 +105,9 @@ struct DuplicateQuicklinkAction : public AbstractAction {
   DuplicateQuicklinkAction(const std::shared_ptr<Quicklink> &link, const QList<QString> &args = {})
       : AbstractAction("Duplicate link", ThemeIconModel{.iconName = ":icons/duplicate.svg"}), link(link),
         args(args) {}
+
+signals:
+  void duplicated();
 };
 
 struct OpenCompletedQuicklinkAction : public OpenQuicklinkAction {

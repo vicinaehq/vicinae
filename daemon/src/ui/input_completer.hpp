@@ -1,4 +1,5 @@
 #pragma once
+#include "omni-icon.hpp"
 #include "ui/inline_qline_edit.hpp"
 #include <QHBoxLayout>
 #include <QLabel>
@@ -8,7 +9,7 @@ class InputCompleter : public QWidget {
 
 public:
   QList<InlineQLineEdit *> inputs;
-  QLabel *iconLabel;
+  OmniIcon *icon;
 
   InputCompleter(const QList<QString> &placeholders, QWidget *parent = nullptr);
 

@@ -8,6 +8,7 @@
 #include <qboxlayout.h>
 #include <qlineedit.h>
 #include <qnamespace.h>
+#include <qtimer.h>
 #include <qtmetamacros.h>
 
 class SearchBar : public QLineEdit {
@@ -20,7 +21,19 @@ public:
     QLineEdit::keyPressEvent(event);
   }
 
+  SearchBar() {
+    auto debounce = new QTimer();
+
+    debounce->setInterval(10);
+    debounce->setSingleShot(true);
+    connect(debounce, &QTimer::timeout, this, &SearchBar::debounce);
+    connect(this, &QLineEdit::textEdited, debounce, [debounce]() { debounce->start(); });
+  }
+
+  void debounce() { emit debouncedTextEdited(text()); }
+
 signals:
+  void debouncedTextEdited(const QString &text);
   void pop();
 };
 

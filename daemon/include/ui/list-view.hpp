@@ -6,6 +6,7 @@
 #include "extend/list-model.hpp"
 #include "image-viewer.hpp"
 #include "markdown-renderer.hpp"
+#include "omni-icon.hpp"
 #include "ui/action_popover.hpp"
 #include "ui/empty-view.hpp"
 #include "ui/horizontal-metadata.hpp"
@@ -23,10 +24,52 @@ class ListItemWidget : public QWidget {
   QLabel *kind;
 
 public:
-  ListItemWidget(QWidget *image, const QString &name, const QString &category,
-                 const QString &kind, QWidget *parent = nullptr)
-      : QWidget(parent), icon(image), name(new QLabel), category(new QLabel),
-        kind(new QLabel) {
+  ListItemWidget(QWidget *image, const QString &name, const QString &category, const QString &kind,
+                 QWidget *parent = nullptr)
+      : QWidget(parent), icon(image), name(new QLabel), category(new QLabel), kind(new QLabel) {
+
+    auto mainLayout = new QHBoxLayout();
+
+    mainLayout->setContentsMargins(10, 0, 10, 0);
+
+    auto left = new QWidget();
+    auto leftLayout = new QHBoxLayout();
+
+    this->name->setText(name);
+    this->category->setText(category);
+    this->category->setProperty("class", "minor");
+
+    left->setLayout(leftLayout);
+    leftLayout->setSpacing(15);
+    leftLayout->setContentsMargins(0, 0, 0, 0);
+    leftLayout->addWidget(this->icon);
+    leftLayout->addWidget(this->name);
+    leftLayout->addWidget(this->category);
+
+    mainLayout->addWidget(left, 0, Qt::AlignLeft);
+
+    this->kind->setText(kind);
+    this->kind->setProperty("class", "minor");
+    mainLayout->addWidget(this->kind, 0, Qt::AlignRight);
+
+    setLayout(mainLayout);
+  }
+
+  QSize sizeHint() const override { return {0, 40}; }
+};
+
+class ListItemWidget2 : public QWidget {
+  OmniIcon *icon;
+  QLabel *name;
+  QLabel *category;
+  QLabel *kind;
+
+public:
+  ListItemWidget2(const QString &iconDescriptor, const QString &name, const QString &category,
+                  const QString &kind, QWidget *parent = nullptr)
+      : QWidget(parent), icon(new OmniIcon), name(new QLabel), category(new QLabel), kind(new QLabel) {
+
+    icon->setIcon(iconDescriptor, {25, 25});
 
     auto mainLayout = new QHBoxLayout();
 
@@ -66,8 +109,8 @@ class DetailWidget : public QWidget {
 
 public:
   DetailWidget()
-      : layout(new QVBoxLayout), markdownEditor(new MarkdownView()),
-        metadata(new HorizontalMetadata()), divider(new HDivider) {
+      : layout(new QVBoxLayout), markdownEditor(new MarkdownView()), metadata(new HorizontalMetadata()),
+        divider(new HDivider) {
     layout->addWidget(markdownEditor, 1);
     layout->addWidget(divider);
     layout->addWidget(metadata);
@@ -104,13 +147,11 @@ public:
     leftLayout->setContentsMargins(0, 0, 0, 0);
     leftLayout->setSpacing(10);
     leftLayout->addWidget(new TextLabel(model.title));
-    leftLayout->addWidget(
-        new TextLabel(QString::number(model.children.size())));
+    leftLayout->addWidget(new TextLabel(QString::number(model.children.size())));
     leftWidget->setLayout(leftLayout);
 
     layout->addWidget(leftWidget, 0, Qt::AlignLeft | Qt::AlignVCenter);
-    layout->addWidget(new TextLabel(model.subtitle), 0,
-                      Qt::AlignRight | Qt::AlignVCenter);
+    layout->addWidget(new TextLabel(model.subtitle), 0, Qt::AlignRight | Qt::AlignVCenter);
 
     setLayout(layout);
   }
@@ -151,8 +192,7 @@ private slots:
     if (item.detail) {
       auto newDetailWidget = new DetailWidget();
 
-      qDebug() << "item has detail with"
-               << item.detail->metadata.children.size() << "metadata lines";
+      qDebug() << "item has detail with" << item.detail->metadata.children.size() << "metadata lines";
 
       if (listLayout->count() == 2) {
         listLayout->addWidget(newDetailWidget, 2);
@@ -176,8 +216,7 @@ private slots:
   }
 
   void setShownWidget(QWidget *widget) {
-    if (shownWidget == widget)
-      return;
+    if (shownWidget == widget) return;
 
     widget->show();
     layout->replaceWidget(shownWidget, widget);
@@ -188,9 +227,7 @@ private slots:
   void showEmptyView(const EmptyViewModel &model) {
     auto view = new EmptyViewWidget(model);
 
-    if (model.actions) {
-      emit setActions(*model.actions);
-    }
+    if (model.actions) { emit setActions(*model.actions); }
 
     setShownWidget(view);
   }
@@ -213,9 +250,8 @@ public:
   }
 
   ListView()
-      : layout(new QVBoxLayout), listWithDetails(new QWidget),
-        listLayout(new QHBoxLayout), list(new QListWidget()),
-        actionPanel(new ActionPopover) {
+      : layout(new QVBoxLayout), listWithDetails(new QWidget), listLayout(new QHBoxLayout),
+        list(new QListWidget()), actionPanel(new ActionPopover) {
     list->setFocusPolicy(Qt::NoFocus);
     list->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     list->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -227,10 +263,8 @@ public:
 
     listWithDetails->setLayout(listLayout);
 
-    connect(list, &QListWidget::currentItemChanged, this,
-            &ListView::currentItemChanged);
-    connect(list, &QListWidget::itemActivated, this,
-            &ListView::handleItemActivated);
+    connect(list, &QListWidget::currentItemChanged, this, &ListView::currentItemChanged);
+    connect(list, &QListWidget::itemActivated, this, &ListView::handleItemActivated);
 
     shownWidget = listWithDetails;
     layout->setContentsMargins(0, 0, 0, 0);
@@ -258,8 +292,7 @@ public:
 
       qDebug() << "refresh empty view";
 
-      if (emptyView)
-        emptyView->deleteLater();
+      if (emptyView) emptyView->deleteLater();
 
       emptyView = updatedEmptyView;
     }
@@ -284,13 +317,11 @@ public:
         QList<const ListItemViewModel *> matchingItems;
 
         for (const auto &item : model->children) {
-          if (!item.title.contains(s, Qt::CaseInsensitive))
-            continue;
+          if (!item.title.contains(s, Qt::CaseInsensitive)) continue;
           matchingItems.push_back(&item);
         }
 
-        if (matchingItems.isEmpty())
-          continue;
+        if (matchingItems.isEmpty()) continue;
 
         auto headerItem = new QListWidgetItem();
 
@@ -302,8 +333,7 @@ public:
 
         for (const auto &item : matchingItems) {
           auto iconWidget = ImageViewer::createFromModel(item->icon, {25, 25});
-          auto widget =
-              new ListItemWidget(iconWidget, item->title, item->subtitle, "");
+          auto widget = new ListItemWidget(iconWidget, item->title, item->subtitle, "");
           auto listItem = new QListWidgetItem();
 
           list->addItem(listItem);
@@ -314,12 +344,10 @@ public:
       }
 
       if (auto model = std::get_if<ListItemViewModel>(&item)) {
-        if (!model->title.contains(s, Qt::CaseInsensitive))
-          continue;
+        if (!model->title.contains(s, Qt::CaseInsensitive)) continue;
 
         auto iconWidget = ImageViewer::createFromModel(model->icon, {25, 25});
-        auto widget =
-            new ListItemWidget(iconWidget, model->title, model->subtitle, "");
+        auto widget = new ListItemWidget(iconWidget, model->title, model->subtitle, "");
         auto listItem = new QListWidgetItem();
 
         list->addItem(listItem);
@@ -341,8 +369,7 @@ public:
     for (int i = 0; i != list->count(); ++i) {
       auto item = list->item(i);
 
-      if (!item->flags().testFlag(Qt::ItemIsSelectable))
-        continue;
+      if (!item->flags().testFlag(Qt::ItemIsSelectable)) continue;
 
       list->setCurrentItem(item);
       break;
@@ -361,19 +388,13 @@ template <class ItemType, class ActionType> class ListController {
   QHash<QString, ActionType> actionMap;
 
 protected:
-  void addItem(const QString &id, const ItemType &item) {
-    itemMap.insert(id, item);
-  }
+  void addItem(const QString &id, const ItemType &item) { itemMap.insert(id, item); }
 
-  void addAction(const QString &id, const ActionType &action) {
-    actionMap.insert(id, action);
-  }
+  void addAction(const QString &id, const ActionType &action) { actionMap.insert(id, action); }
 
 public:
   virtual ListModel search(const QString &s) = 0;
-  virtual void onActionActivated(const ActionType &action) {
-    qDebug() << "ouin ouin";
-  }
+  virtual void onActionActivated(const ActionType &action) { qDebug() << "ouin ouin"; }
 
   void reset() {
     itemMap.clear();

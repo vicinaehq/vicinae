@@ -99,6 +99,7 @@ signals:
   void activatePrimaryAction();
   void launchCommand(ViewCommand *command, const LaunchCommandOptions &opts = {});
   void pushView(View *view, const PushViewOptions &options = {});
+  // Pops the view from the navigation stack.
   void pop();
   void popToRoot();
 };

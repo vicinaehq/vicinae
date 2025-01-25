@@ -29,13 +29,7 @@ public:
   std::shared_ptr<DesktopExecutable> app;
   bool isDefault;
 
-  QIcon icon() const override {
-    auto icon = QIcon::fromTheme(app->iconName());
-
-    if (icon.isNull()) return QIcon::fromTheme("application-x-executable");
-
-    return icon;
-  }
+  QString icon() const override { return app->iconName(); }
 
   QString displayName() const override {
     QString name = app->fullyQualifiedName();
@@ -53,29 +47,19 @@ public:
       : app(app), isDefault(isDefault) {}
 };
 
-class AbstractIconSelectorItem : public AbstractFormDropdownItem {
-  virtual QString iconName() const = 0;
-};
-
-class IconSelectorItem : public AbstractIconSelectorItem {
+class IconSelectorItem : public AbstractFormDropdownItem {
 public:
   QString name;
   QString dname;
 
-  QIcon icon() const override {
-    auto icon = QIcon::fromTheme(name);
+  QString icon() const override { return name; }
 
-    if (icon.isNull()) return QIcon::fromTheme("application-x-executable");
-
-    return icon;
-  }
   QString displayName() const override {
     if (!dname.isEmpty()) return dname;
     auto ss = name.split('/');
 
     return ss.at(ss.size() - 1).split('.').at(0);
   }
-  QString iconName() const override { return name; }
 
   size_t id() const override { return qHash(name); }
 
@@ -83,18 +67,6 @@ public:
 
   IconSelectorItem(const QString &iconName, const QString &displayName = "")
       : name(iconName), dname(displayName) {}
-};
-
-class IconSelectorFaviconItem : public AbstractIconSelectorItem {
-public:
-  QPixmap pixmap;
-  QString dname;
-
-  QIcon icon() const override { return pixmap; }
-  QString displayName() const override { return dname; }
-  QString iconName() const override { return dname; }
-
-  IconSelectorFaviconItem(QPixmap pixmap, const QString &displayName) : pixmap(pixmap), dname(displayName) {}
 };
 
 class QuicklinkCommandView : public View {
@@ -161,6 +133,14 @@ class QuicklinkCommandView : public View {
       defaultOpener = opener;
       handleAppSelectorTextChanged(appSelector->searchText());
     }
+
+    auto icon = std::make_shared<IconSelectorItem>(QString("favicon:%1").arg(url.host()), url.host());
+
+    if (iconSelector->value()->id() == defaultIcon->id()) {
+      defaultIcon = icon;
+      iconSelectorTextChanged(iconSelector->searchText());
+      iconSelector->setValue(defaultIcon);
+    }
   }
 
   void appSelectionChanged(const std::shared_ptr<AbstractFormDropdownItem> &item) {
@@ -185,7 +165,7 @@ protected:
   FormDropdown *appSelector;
   FormDropdown *iconSelector;
 
-  std::shared_ptr<AbstractIconSelectorItem> defaultIcon;
+  std::shared_ptr<IconSelectorItem> defaultIcon;
   std::shared_ptr<AppSelectorItem> defaultOpener;
 
 public:
@@ -268,7 +248,7 @@ public:
 
     quicklinkDb.insertLink(AddQuicklinkPayload{
         .name = name->text(),
-        .icon = icon->iconName(),
+        .icon = icon->icon(),
         .link = link->text(),
         .app = item->app->id,
     });
@@ -292,7 +272,7 @@ public:
       appSelector->setValue(std::make_shared<AppSelectorItem>(app));
     }
 
-    iconSelector->setValue(std::make_shared<IconSelectorItem>(quicklink.iconName));
+    iconSelector->setValue(std::make_shared<IconSelectorItem>(quicklink.iconName, quicklink.iconName));
   }
 
   void submit(AppWindow &app) override {
@@ -313,7 +293,7 @@ public:
     bool updateResult = quicklinkDb.updateLink(UpdateQuicklinkPayload{
         .id = quicklink.id,
         .name = name->text(),
-        .icon = icon->iconName(),
+        .icon = icon->icon(),
         .link = link->text(),
         .app = item->app->id,
     });
@@ -323,8 +303,8 @@ public:
       return;
     }
 
-    emit quicklinkEdited();
     pop();
+    emit quicklinkEdited();
   }
 
 signals:
@@ -332,6 +312,8 @@ signals:
 };
 
 class DuplicateQuicklinkCommandView : public QuicklinkCommandView {
+  Q_OBJECT
+
 public:
   DuplicateQuicklinkCommandView(AppWindow &app, const Quicklink &quicklink) : QuicklinkCommandView(app) {
     name->setText(QString("Copy of %1").arg(quicklink.name));
@@ -366,7 +348,7 @@ public:
 
     bool insertResult = quicklinkDb.insertLink(AddQuicklinkPayload{
         .name = name->text(),
-        .icon = icon->iconName(),
+        .icon = icon->icon(),
         .link = link->text(),
         .app = item->app->id,
     });
@@ -377,5 +359,10 @@ public:
     }
 
     pop();
+
+    emit duplicated();
   }
+
+signals:
+  void duplicated();
 };

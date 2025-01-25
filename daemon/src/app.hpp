@@ -186,7 +186,31 @@ public:
       : AbstractNativeListItem(id), title(title), subtitle(subtitle), kind(kind), imageLike(imageLike) {}
 };
 
-class AppListItem : public StandardListItem {
+class StandardListItem2 : public AbstractNativeListItem {
+  QString title;
+  QString subtitle;
+  QString kind;
+  QString iconDescriptor;
+
+  QWidget *createItem() const override { return new ListItemWidget2(iconDescriptor, title, "", kind); }
+
+  QWidget *updateItem(QWidget *current) const override {
+    auto widget = static_cast<ListItemWidget *>(current);
+
+    return createItem();
+  }
+
+  int height() const override { return 40; }
+  int role() const override { return 0; }
+
+public:
+  StandardListItem2(const QString &title, const QString &subtitle, const QString &kind,
+                    const QString &iconDescriptor, size_t id = qHash(QUuid::createUuid()))
+      : AbstractNativeListItem(id), title(title), subtitle(subtitle), kind(kind),
+        iconDescriptor(iconDescriptor) {}
+};
+
+class AppListItem : public StandardListItem2 {
   std::shared_ptr<DesktopEntry> app;
   Service<AppDatabase> appDb;
 
@@ -214,8 +238,7 @@ class AppListItem : public StandardListItem {
 
 public:
   AppListItem(const std::shared_ptr<DesktopEntry> &app, Service<AppDatabase> appDb)
-      : StandardListItem(app->name, "", "Application", ThemeIconModel{.iconName = app->iconName()}), app(app),
-        appDb(appDb) {}
+      : StandardListItem2(app->name, "", "Application", app->iconName()), app(app), appDb(appDb) {}
   ~AppListItem() {}
 };
 

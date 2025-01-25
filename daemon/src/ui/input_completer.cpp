@@ -1,9 +1,9 @@
 #include "ui/input_completer.hpp"
+#include "omni-icon.hpp"
 #include <qnamespace.h>
 
-InputCompleter::InputCompleter(const QList<QString> &placeholders,
-                               QWidget *parent)
-    : QWidget(parent) {
+InputCompleter::InputCompleter(const QList<QString> &placeholders, QWidget *parent)
+    : QWidget(parent), icon(new OmniIcon) {
   auto mainContainer = new QHBoxLayout();
 
   QIcon::setThemeName("Papirus-Dark");
@@ -16,9 +16,7 @@ InputCompleter::InputCompleter(const QList<QString> &placeholders,
   mainContainer->setContentsMargins(0, 0, 0, 0);
   mainContainer->setSpacing(10);
 
-  iconLabel = new QLabel();
-
-  mainContainer->addWidget(iconLabel, 0, Qt::AlignLeft);
+  mainContainer->addWidget(icon, 0, Qt::AlignLeft);
 
   for (const auto &placeholder : placeholders) {
     auto input = new InlineQLineEdit(placeholder);
@@ -51,5 +49,7 @@ bool InputCompleter::focusFirstEmpty() const {
 }
 
 void InputCompleter::setIcon(const QString &iconName) {
-  iconLabel->setPixmap(QIcon::fromTheme(iconName).pixmap(22, 22));
+  // iconLabel->setPixmap(QIcon::fromTheme(iconName).pixmap(22, 22));
+  // icon->setIcon(iconName, {22, 22});
+  icon->setIcon("favicon:app.hyperliquid.xyz", {22, 22});
 }

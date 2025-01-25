@@ -8,6 +8,7 @@
 #include "quicklink-seeder.hpp"
 #include "root-command.hpp"
 #include "ui/action_popover.hpp"
+#include "ui/top_bar.hpp"
 #include <QLabel>
 #include <QMainWindow>
 #include <QThread>
@@ -143,7 +144,7 @@ void AppWindow::popToRootView() {
 }
 
 void AppWindow::disconnectView(View &view) {
-  disconnect(topBar->input, &QLineEdit::textEdited, &view, &View::onSearchChanged);
+  disconnect(topBar->input, &SearchBar::debouncedTextEdited, &view, &View::onSearchChanged);
   disconnect(actionPopover, &ActionPopover::actionPressed, &view, &View::onActionActivated);
 
   // view->app
@@ -158,7 +159,7 @@ void AppWindow::disconnectView(View &view) {
 
 void AppWindow::connectView(View &view) {
   // app->view
-  connect(topBar->input, &QLineEdit::textEdited, &view, &View::onSearchChanged);
+  connect(topBar->input, &SearchBar::debouncedTextEdited, &view, &View::onSearchChanged);
   connect(actionPopover, &ActionPopover::actionPressed, &view, &View::onActionActivated);
 
   // view->app

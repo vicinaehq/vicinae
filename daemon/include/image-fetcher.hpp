@@ -46,6 +46,7 @@ signals:
 
 class ImageFetcher : public NonAssignable {
   QNetworkAccessManager *manager;
+  QNetworkDiskCache *diskCache;
 
 public:
   static const ImageFetcher &instance() {
@@ -54,11 +55,11 @@ public:
     return fetcher;
   }
 
-  ImageFetcher() : manager(new QNetworkAccessManager) {
+  ImageFetcher() : manager(new QNetworkAccessManager), diskCache(new QNetworkDiskCache) {
     QString directory =
         QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QLatin1StringView("/omnicast/");
     qDebug() << "cache dir" << directory;
-    // manager->setCache(diskCache);
+    manager->setCache(diskCache);
   }
 
   ImageReply *fetch(const QString &url, const FetchImageOptions &options = {.cache = true}) const {

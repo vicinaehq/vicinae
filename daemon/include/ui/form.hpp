@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common.hpp"
+#include "omni-icon.hpp"
 #include "ui/virtual-list.hpp"
 #include <memory>
 #include <qboxlayout.h>
@@ -70,16 +71,16 @@ signals:
 
 class AbstractFormDropdownItem : public AbstractVirtualListItem {
 public:
-  virtual QIcon icon() const = 0;
+  virtual QString icon() const = 0;
   virtual QString displayName() const = 0;
   QWidget *createItem() const override {
-    auto iconLabel = new QLabel;
+    auto iconLabel = new OmniIcon;
     auto label = new QLabel;
     auto layout = new QHBoxLayout;
 
     layout->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
 
-    iconLabel->setPixmap(icon().pixmap(20, 20));
+    iconLabel->setIcon(icon(), {20, 20}, "application-x-executable");
     label->setText(displayName());
 
     layout->setSpacing(10);
@@ -248,9 +249,18 @@ public:
 
     inputField->setText(item->displayName());
 
-    if (action) inputField->removeAction(action);
+    auto icon = new OmniIcon;
 
-    action = inputField->addAction(item->icon(), QLineEdit::LeadingPosition);
+    connect(icon, &OmniIcon::imageUpdated, this, [this, icon](QPixmap pixmap) {
+      qDebug() << "updated icon";
+      if (action) inputField->removeAction(action);
+      action = inputField->addAction(QIcon(pixmap), QLineEdit::LeadingPosition);
+      icon->deleteLater();
+    });
+
+    QTimer::singleShot(0,
+                       [icon, item]() { icon->setIcon(item->icon(), {32, 32}, "application-x-executable"); });
+
     currentItem = item;
   }
 
@@ -269,9 +279,17 @@ private slots:
 
     inputField->setText(item->displayName());
 
-    if (action) inputField->removeAction(action);
+    auto icon = new OmniIcon;
 
-    action = inputField->addAction(item->icon(), QLineEdit::LeadingPosition);
+    connect(icon, &OmniIcon::imageUpdated, this, [this, icon](QPixmap pixmap) {
+      qDebug() << "updated icon";
+      if (action) inputField->removeAction(action);
+      action = inputField->addAction(QIcon(pixmap), QLineEdit::LeadingPosition);
+      icon->deleteLater();
+    });
+
+    QTimer::singleShot(0,
+                       [icon, item]() { icon->setIcon(item->icon(), {32, 32}, "application-x-executable"); });
 
     currentItem = item;
 

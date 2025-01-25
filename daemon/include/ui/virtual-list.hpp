@@ -172,6 +172,10 @@ public:
 
   void removeItem(const std::shared_ptr<AbstractVirtualListItem> &item) { removeItem(item->id()); }
 
+  const std::shared_ptr<AbstractVirtualListItem> &itemAt(size_t idx) { return items.at(idx); }
+
+  const QList<std::shared_ptr<AbstractVirtualListItem>> &getItems() { return items; }
+
   VirtualListModel() {}
 };
 
