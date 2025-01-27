@@ -50,6 +50,5 @@ bool InputCompleter::focusFirstEmpty() const {
 
 void InputCompleter::setIcon(const QString &iconName) {
   // iconLabel->setPixmap(QIcon::fromTheme(iconName).pixmap(22, 22));
-  // icon->setIcon(iconName, {22, 22});
-  icon->setIcon("favicon:app.hyperliquid.xyz", {22, 22});
+  icon->setIcon(iconName, {22, 22});
 }

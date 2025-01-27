@@ -175,12 +175,6 @@ class RootView : public NavigationListView {
     QString query;
 
   public:
-    QWidget *createItem() const override {
-      return new ListItemWidget(
-          ImageViewer::createFromModel(ThemeIconModel{.iconName = link->iconName}, {25, 25}), link->name, "",
-          "Quicklink");
-    }
-
     QList<AbstractAction *> createActions() const override {
       return {new OpenQuicklinkAction(link, {query}), new EditQuicklinkAction(link),
               new DuplicateQuicklinkAction(link)};

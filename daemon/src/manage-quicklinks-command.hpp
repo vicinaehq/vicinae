@@ -91,7 +91,7 @@ public:
 
 public:
   QuicklinkItem(const std::shared_ptr<Quicklink> &link)
-      : StandardListItem2(link->name, "", "Quicklink", link->iconName), link(link) {}
+      : StandardListItem2(link->name, "", "", link->iconName), link(link) {}
 
 signals:
   void edited() const;
