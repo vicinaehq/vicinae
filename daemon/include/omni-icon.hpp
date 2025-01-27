@@ -1,5 +1,6 @@
 #pragma once
 
+#include "builtin_icon.hpp"
 #include "image-fetcher.hpp"
 #include <qlabel.h>
 #include <qnamespace.h>
@@ -13,7 +14,7 @@ class OmniIcon : public QLabel {
 
   QString currentId;
 
-  void setDefaultIcon(QSize size) { setPixmap(QIcon::fromTheme("application-x-executable").pixmap(size)); }
+  void setDefaultIcon(QSize size) { setIcon(BuiltinIconService::unknownIcon(), size); }
   void setPixmap(const QPixmap &pixmap) {
     qDebug() << "set pixmap!!!";
     emit imageUpdated(pixmap);
@@ -43,8 +44,6 @@ public:
     } else {
       name = ss.at(0);
     }
-
-    qDebug() << "type" << type << "name" << name;
 
     if (type == "favicon") {
       QPixmap pm;
@@ -91,7 +90,7 @@ public:
 
     if (icon.isNull()) {
       if (fallback.isEmpty())
-        setDefaultIcon(size);
+        return setDefaultIcon(size);
       else
         return setIcon(fallback, size);
     }
