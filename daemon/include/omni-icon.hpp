@@ -4,6 +4,7 @@
 #include <qlabel.h>
 #include <qnamespace.h>
 #include <qpixmap.h>
+#include <qpixmapcache.h>
 #include <qtmetamacros.h>
 #include "favicon-fetcher.hpp"
 
@@ -46,6 +47,13 @@ public:
     qDebug() << "type" << type << "name" << name;
 
     if (type == "favicon") {
+      QPixmap pm;
+
+      if (QPixmapCache::find(name, &pm)) {
+        setPixmap(pm.scaled(size, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        return;
+      }
+
       auto reply = FaviconFetcher::fetchFavicon(name, size);
 
       connect(reply, &FaviconReply::failed, this, [this, fallback, size, reply]() {
