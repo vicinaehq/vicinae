@@ -3,6 +3,7 @@
 #include "command.hpp"
 #include "extension_manager.hpp"
 #include "image-fetcher.hpp"
+#include "ollama-service.hpp"
 #include "indexer-service.hpp"
 #include "process-manager-service.hpp"
 #include "quicklink-seeder.hpp"

@@ -12,6 +12,7 @@
 #include "manage-processes-command.hpp"
 #include "manage-quicklinks-command.hpp"
 #include "navigation-list-view.hpp"
+#include "ollama-command.hpp"
 #include "omnicast.hpp"
 #include "quicklist-database.hpp"
 #include "tinyexpr.hpp"
@@ -246,8 +247,7 @@ class RootView : public NavigationListView {
                      const QString &s) { return new SingleViewCommand<ManageQuicklinksView>; }},
       {.name = "Ask AI",
        .iconName = ":assets/icons/ollama.png",
-       .factory = [](AppWindow &app,
-                     const QString &s) { return new SingleViewCommand<ManageQuicklinksView>; }},
+       .factory = [](AppWindow &app, const QString &s) { return new SingleViewCommand<AskOllamaView>; }},
       {.name = "Browse AI conversations",
        .iconName = ":assets/icons/ollama.png",
        .factory = [](AppWindow &app,

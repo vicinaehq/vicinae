@@ -46,6 +46,8 @@ qt_add_executable(${TARGET}
 	include/extend/extension-command.hpp
 	include/extend/extension-detail-view.hpp
 
+	include/ollama-service.hpp
+
 	include/favicon-fetcher.hpp
 	include/omni-icon.hpp
 
