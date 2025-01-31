@@ -50,10 +50,11 @@ class AbstractVirtualListItem : public QObject {
 
 public:
   virtual QWidget *createItem() const = 0;
-  virtual QWidget *updateItem(QWidget *widget) const { return createItem(); };
+  virtual QWidget *updateItem(QWidget *widget) const { return new QWidget(createItem()); };
   virtual bool isSelectable() const { return true; }
   virtual int role() const { return qHash(QUuid::createUuid()); }
   virtual int height() const = 0;
+
   virtual size_t id() const {
     qDebug() << "default id called";
     return m_id;
@@ -256,23 +257,6 @@ signals:
   void leftDoubleClick();
 };
 
-class VirtualListContainer : public QFrame {
-  Q_OBJECT
-
-public:
-  QVBoxLayout *layout;
-  QWidget *spacer;
-
-  VirtualListContainer() : layout(new QVBoxLayout), spacer(new QWidget) {
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->setAlignment(Qt::AlignTop);
-    layout->setSpacing(0);
-    layout->addWidget(spacer);
-    spacer->setFixedHeight(0);
-    setLayout(layout);
-  }
-};
-
 class ViewportWidget : public QWidget {
   Q_OBJECT
 
@@ -289,11 +273,12 @@ signals:
 class VirtualListWidget : public QWidget {
   Q_OBJECT
 
+  enum Orientation { Horizontal, Vertical };
+
   QScrollBar *scrollBar;
   QMap<int, VirtualListItemWidget *> visibleWidgets;
   QList<VirtualListItem> items;
   int currentSelectionIndex = -1;
-  VirtualListContainer *container;
   VirtualListModel *model = nullptr;
   QHash<int, QStack<VirtualListItemWidget *>> widgetPools;
 
@@ -303,6 +288,8 @@ class VirtualListWidget : public QWidget {
   int virtualHeight = 0;
 
   ViewportWidget *viewport;
+
+  int spacing = 0;
 
 private:
   void valueChanged(int value) { updateVisibleItems(value, height()); }
@@ -361,20 +348,6 @@ private:
       if (idx >= startIndex && idx <= endIndex) continue;
 
       visibleWidgets.value(idx)->deleteLater();
-
-      /*
-    if (auto widget = visibleWidgets.value(idx)) {
-      widget->deleteLater();
-      widget->widget->deleteLater();
-
-auto &pool = widgetPools[widget->type];
-
-widget->setParent(nullptr);
-widget->hide();
-pool.push_back(widget);
-    }
-    */
-
       visibleWidgets.remove(idx);
     }
 
@@ -383,20 +356,6 @@ pool.push_back(widget);
       auto &item = items.at(i).item;
 
       if (!itemWidget) {
-        /*
-auto &pool = widgetPools[item->role()];
-
-if (!pool.isEmpty()) {
-itemWidget = pool.pop();
-auto updatedWidget = item->updateItem(itemWidget->widget);
-
-if (updatedWidget != itemWidget->widget) {
-  itemWidget->widget->deleteLater();
-  itemWidget->setWidget(updatedWidget, item->role());
-}
-}
-      */
-
         itemWidget = new VirtualListItemWidget(viewport);
 
         itemWidget->setWidget(item->createItem(), item->role());
@@ -412,7 +371,7 @@ if (updatedWidget != itemWidget->widget) {
       itemWidget->setFixedSize({viewport->width() - 20, item->height()});
       itemWidget->move(10, offset);
       itemWidget->show();
-      offset += item->height();
+      offset += item->height() + spacing;
 
       if (currentSelectionIndex == i) itemWidget->setSelected(true);
       visibleWidgets.insert(i, itemWidget);
@@ -471,7 +430,7 @@ if (updatedWidget != itemWidget->widget) {
 
     for (auto &item : items) {
       virtualItems.push_back({.offset = offset, .item = item});
-      offset += item->height();
+      offset += item->height() + spacing;
     }
 
     this->items = virtualItems;
@@ -582,6 +541,8 @@ public:
 
     emit selectionChanged(items.at(selectionIndex).item);
   }
+
+  void setSpacing(int spacing) { this->spacing = spacing; }
 
   void clear() {
     for (auto widget : visibleWidgets) {

@@ -5,6 +5,7 @@
 #include "calculator-history-command.hpp"
 #include "command.hpp"
 #include "create-quicklink-command.hpp"
+#include "emoji-command.hpp"
 #include "extend/extension-command.hpp"
 #include "extension_manager.hpp"
 #include "files-command.hpp"
@@ -245,6 +246,9 @@ class RootView : public NavigationListView {
        .iconName = ":assets/icons/quicklink.png",
        .factory = [](AppWindow &app,
                      const QString &s) { return new SingleViewCommand<ManageQuicklinksView>; }},
+      {.name = "Search Emoji & Symbols",
+       .iconName = ":assets/icons/emoji.png",
+       .factory = [](AppWindow &app, const QString &s) { return new SingleViewCommand<EmojiView>; }},
       {.name = "Ask AI",
        .iconName = ":assets/icons/ollama.png",
        .factory = [](AppWindow &app, const QString &s) { return new SingleViewCommand<AskOllamaView>; }},
