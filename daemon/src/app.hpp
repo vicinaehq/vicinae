@@ -11,6 +11,7 @@
 #include <qboxlayout.h>
 #include <qevent.h>
 #include <qhash.h>
+#include <qobject.h>
 #include <stack>
 
 #include "icon-cache-service.hpp"

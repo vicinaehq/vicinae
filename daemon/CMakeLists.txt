@@ -48,6 +48,8 @@ qt_add_executable(${TARGET}
 
 	include/ollama-service.hpp
 
+	include/ui/virtual-grid.hpp
+
 	include/favicon-fetcher.hpp
 	include/omni-icon.hpp
 

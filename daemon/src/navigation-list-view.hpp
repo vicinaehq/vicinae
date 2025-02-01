@@ -150,6 +150,18 @@ public:
     }
   }
 
+  bool inputFilter(QKeyEvent *event) override {
+    switch (event->key()) {
+    case Qt::Key_Up:
+    case Qt::Key_Down:
+    case Qt::Key_Enter:
+      QApplication::sendEvent(list, event);
+      return true;
+    }
+
+    return false;
+  }
+
   NavigationListView(AppWindow &app)
       : View(app), app(app), list(new VirtualListWidget), split(new ListDetailSplit(list)),
         model(new VirtualListModel), layout(new QVBoxLayout) {

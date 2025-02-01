@@ -25,18 +25,20 @@
 #include <qwidget.h>
 
 bool AppWindow::eventFilter(QObject *obj, QEvent *event) {
-  if (event->type() == QEvent::KeyPress) {
-    auto keyEvent = static_cast<QKeyEvent *>(event);
-    auto key = keyEvent->key();
-    qDebug() << "app filter" << QKeySequence(key).toString();
+  /*
+if (event->type() == QEvent::KeyPress) {
+auto keyEvent = static_cast<QKeyEvent *>(event);
+auto key = keyEvent->key();
+qDebug() << "app filter" << QKeySequence(key).toString();
 
-    if (actionPopover->findBoundAction(keyEvent)) return true;
+if (actionPopover->findBoundAction(keyEvent)) return true;
 
-    if (keyEvent->modifiers().testFlag(Qt::ControlModifier) && key == Qt::Key_B) {
-      actionPopover->toggleActions();
-      return true;
-    }
-  }
+if (keyEvent->modifiers().testFlag(Qt::ControlModifier) && key == Qt::Key_B) {
+actionPopover->toggleActions();
+return true;
+}
+}
+*/
 
   return false;
 }
@@ -65,7 +67,14 @@ bool AppWindow::event(QEvent *event) {
       return true;
     }
 
-    QApplication::sendEvent(navigationStack.top().view, event);
+    if (actionPopover->findBoundAction(keyEvent)) return true;
+
+    if (keyEvent->modifiers().testFlag(Qt::ControlModifier) && key == Qt::Key_B) {
+      actionPopover->toggleActions();
+      return true;
+    }
+
+    // QApplication::sendEvent(navigationStack.top().view, event);
     return true;
   }
 
@@ -156,6 +165,7 @@ void AppWindow::disconnectView(View &view) {
   disconnect(&view, &View::activatePrimaryAction, this, &AppWindow::selectPrimaryAction);
 
   view.removeEventFilter(this);
+  topBar->input->removeEventFilter(&view);
 }
 
 void AppWindow::connectView(View &view) {
@@ -172,6 +182,7 @@ void AppWindow::connectView(View &view) {
 
   view.onAttach();
   view.installEventFilter(this);
+  topBar->input->installEventFilter(&view);
 }
 
 void AppWindow::pushView(View *view, const PushViewOptions &opts) {

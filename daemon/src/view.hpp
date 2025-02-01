@@ -3,6 +3,7 @@
 #include "common.hpp"
 #include <qboxlayout.h>
 #include <qcompare.h>
+#include <qevent.h>
 #include <qjsonobject.h>
 #include <qlabel.h>
 #include <qlistwidget.h>
@@ -19,33 +20,13 @@ class View : public QObject {
   QList<IInputHandler *> inputHandlers;
 
   bool eventFilter(QObject *obj, QEvent *event) override {
-    if (event->type() == QEvent::KeyPress) {
+    if (event->type() == QEvent::KeyPress && obj == app.topBar->input) {
       auto keyEvent = static_cast<QKeyEvent *>(event);
-      auto key = keyEvent->key();
 
-      // qDebug() << "key event from view filter";
-
-      if (key == Qt::Key_Return && app.topBar->quickInput) {
-        if (app.topBar->quickInput->focusFirstEmpty()) return true;
-      }
-
-      switch (key) {
-      case Qt::Key_Up:
-      case Qt::Key_Down:
-      case Qt::Key_Return:
-      case Qt::Key_Enter:
-        for (const auto &widget : inputFwdTo) {
-          QApplication::sendEvent(widget, event);
-        }
-        for (auto handler : inputHandlers) {
-          handler->handleInput(keyEvent);
-        }
-
-        break;
-      default:
-        break;
-      }
+      return inputFilter(keyEvent);
     }
+
+    if (event->type() == QEvent::KeyPress) { qDebug() << "keypress"; }
 
     return false;
   }
@@ -53,7 +34,7 @@ class View : public QObject {
 protected:
 public:
   QWidget *widget;
-  View(AppWindow &app) : app(app) { installEventFilter(this); }
+  View(AppWindow &app) : app(app) {}
   ~View() {
     qDebug() << "~View()";
     if (widget) widget->deleteLater();
@@ -89,6 +70,8 @@ public:
   }
 
   virtual void onMount() {}
+
+  virtual bool inputFilter(QKeyEvent *event) { return false; }
 
 public slots:
   virtual void onSearchChanged(const QString &s) {}

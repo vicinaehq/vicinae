@@ -1,8 +1,8 @@
 #pragma once
 #include "app-database.hpp"
 #include "app.hpp"
+#include "grid-view.hpp"
 #include "ui/virtual-grid.hpp"
-#include "view.hpp"
 #include <qnamespace.h>
 
 class AppGridItem : public AbstractGridItem {
@@ -15,13 +15,13 @@ public:
   AppGridItem(const std::shared_ptr<DesktopExecutable> &app) : app(app) {}
 };
 
-class EmojiView : public View {
+class EmojiView : public GridView {
   Service<AppDatabase> appDb;
-  VirtualGridWidget *grid;
 
 public:
-  EmojiView(AppWindow &app) : View(app), appDb(service<AppDatabase>()), grid(new VirtualGridWidget) {
+  EmojiView(AppWindow &app) : GridView(app), appDb(service<AppDatabase>()) {
     widget = grid;
+    grid->setColumns(8);
   }
 
   void onSearchChanged(const QString &s) override {

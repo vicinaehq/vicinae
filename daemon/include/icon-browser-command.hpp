@@ -1,13 +1,11 @@
 #pragma once
 #include "app.hpp"
 #include "builtin_icon.hpp"
+#include "grid-view.hpp"
 #include "ui/virtual-grid.hpp"
-#include "view.hpp"
 #include <qnamespace.h>
 
-class IconBrowserView : public View {
-  VirtualGridWidget *grid;
-
+class IconBrowserView : public GridView {
   class IconBrowserItem : public AbstractGridItem {
     QString name, displayName;
 
@@ -34,8 +32,5 @@ class IconBrowserView : public View {
   }
 
 public:
-  IconBrowserView(AppWindow &app) : View(app), grid(new VirtualGridWidget) {
-    grid->setColumns(8);
-    widget = grid;
-  }
+  IconBrowserView(AppWindow &app) : GridView(app) { grid->setColumns(8); }
 };
