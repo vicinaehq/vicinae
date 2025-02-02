@@ -16,7 +16,6 @@ class OmniIcon : public QLabel {
 
   void setDefaultIcon(QSize size) { setIcon(BuiltinIconService::unknownIcon(), size); }
   void setPixmap(const QPixmap &pixmap) {
-    qDebug() << "set pixmap!!!";
     emit imageUpdated(pixmap);
     QLabel::setPixmap(pixmap);
   }

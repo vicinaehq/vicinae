@@ -1,7 +1,10 @@
 #pragma once
 #include "builtin_icon.hpp"
 #include "omni-icon.hpp"
+#include "ui/action_popover.hpp"
+#include <numbers>
 #include <qboxlayout.h>
+#include <qhash.h>
 #include <qlabel.h>
 #include <qnamespace.h>
 #include <qscrollbar.h>
@@ -136,6 +139,19 @@ public:
     main->setIcon(item.iconName());
   }
 
+  int computeItemHeight(const AbstractGridItem &item) {
+    int height = main->height();
+    auto fm = fontMetrics();
+    auto spacing = layout->spacing();
+    auto title = item.title();
+    auto subtitle = item.subtitle();
+
+    if (!title.isEmpty()) { height += fm.ascent() + spacing; }
+    if (!subtitle.isEmpty()) { height += fm.ascent() + spacing; }
+
+    return height;
+  }
+
 signals:
   void clicked();
   void doubleClicked();
@@ -144,16 +160,24 @@ signals:
 class VirtualGridWidget : public QWidget {
   Q_OBJECT
 
-  int m_columns = 6;
+  struct VirtualItem {
+    int height;
+    int offset;
+    bool visible;
+    AbstractGridItem *item;
+  };
+
+  QList<VirtualItem> m_virtual_items;
+
+  int ncols = 6;
   int m_inset = 0;
   int m_spacing = 10;
   int m_padding = 10;
   int m_selected = -1;
 
-  QList<AbstractGridItem *> m_items;
   QWidget *viewport;
   QScrollBar *scrollBar;
-  QList<QWidget *> visibleWidgets;
+  QHash<int, GridItemWidget *> visibleWidgets;
 
   void keyPressEvent(QKeyEvent *event) override {
     switch (event->key()) {
@@ -161,20 +185,19 @@ class VirtualGridWidget : public QWidget {
       setSelected(qMax(0, m_selected - 1));
       break;
     case Qt::Key_Right:
-      setSelected(qMin(m_selected + 1, m_items.size() - 1));
+      setSelected(qMin(m_selected + 1, m_virtual_items.size() - 1));
       break;
     case Qt::Key_Up:
-      setSelected(qMax(0, m_selected - m_columns));
+      setSelected(qMax(0, m_selected - ncols));
       break;
     case Qt::Key_Down:
-      setSelected(qMin(m_selected + m_columns, m_items.size() - 1));
+      setSelected(qMin(m_selected + ncols, m_virtual_items.size() - 1));
       break;
     case Qt::Key_Return:
-      if (m_selected >= 0 && m_selected < m_items.size()) emit itemActivated(*m_items[m_selected]);
+      if (m_selected >= 0 && m_selected < m_virtual_items.size())
+        emit itemActivated(*m_virtual_items[m_selected].item);
       break;
     }
-
-    // QWidget::keyPressEvent(event);
   }
 
   void resizeEvent(QResizeEvent *event) override {
@@ -182,92 +205,159 @@ class VirtualGridWidget : public QWidget {
     updateViewport();
   }
 
+  int innerTotalSpacing() { return (ncols - 1) * m_spacing; }
+  int columnWidth() { return (viewport->width() - innerTotalSpacing() - m_padding * 2) / ncols; }
+
   void updateViewport() {
     int scrollHeight = scrollBar->value();
-    int height = scrollHeight == 0 ? m_padding : 0;
     int width = m_padding;
-    int totalSpacing = (m_columns - 1) * m_spacing;
-    int columnWidth = (viewport->width() - totalSpacing - m_padding * 2) / m_columns;
-
-    for (const auto &visible : visibleWidgets) {
-      visible->deleteLater();
-    }
-
-    visibleWidgets.clear();
+    int colWidth = columnWidth();
 
     int maxHeight = 0;
+    int startIndex = 0;
 
-    for (int i = 0; i != m_items.size(); ++i) {
-      auto item = m_items[i];
-      auto widget = new GridItemWidget(viewport);
+    while (startIndex < m_virtual_items.size()) {
+      auto item = m_virtual_items[startIndex];
 
-      connect(widget, &GridItemWidget::clicked, this, [this, i]() { setSelected(i); });
-      connect(widget, &GridItemWidget::doubleClicked, this, [this, item]() { emit itemActivated(*item); });
+      if (item.offset + item.height >= scrollHeight) break;
+      ++startIndex;
+    }
 
-      widget->setInset(m_inset);
-      widget->setFixedWidth(columnWidth);
-      widget->main->setFixedSize(columnWidth, columnWidth);
-      widget->setSelected(m_selected == i);
-      widget->setItem(*item);
+    int height = scrollHeight == 0 ? m_padding : m_virtual_items[startIndex].offset - scrollHeight;
+    int endIndex = startIndex;
 
-      auto size = widget->sizeHint();
+    for (; endIndex != m_virtual_items.size(); ++endIndex) {
+      auto vitem = m_virtual_items[endIndex];
+      auto item = vitem.item;
+      auto *widget = visibleWidgets.value(endIndex);
 
+      if (!widget) {
+        widget = new GridItemWidget(viewport);
+        widget->setInset(m_inset);
+        widget->setFixedWidth(colWidth);
+        widget->main->setFixedSize(colWidth, colWidth);
+        widget->setItem(*item);
+        visibleWidgets.insert(endIndex, widget);
+
+        connect(widget, &GridItemWidget::clicked, this, [this, endIndex]() { setSelected(endIndex); });
+        connect(widget, &GridItemWidget::doubleClicked, this, [this, item]() { emit itemActivated(*item); });
+      }
+
+      widget->setSelected(m_selected == endIndex);
       widget->move(width, height);
       widget->show();
 
-      qDebug() << "move" << width << height;
+      width += colWidth + m_spacing;
+      maxHeight = qMax(maxHeight, vitem.height);
 
-      visibleWidgets << widget;
-
-      width += columnWidth + m_spacing;
-
-      maxHeight = qMax(maxHeight, size.height());
-
-      if (width + columnWidth > viewport->width()) {
+      if (width + colWidth > viewport->width()) {
         height += maxHeight + m_spacing;
         width = m_padding;
         maxHeight = 0;
       }
       if (height > viewport->height()) break;
     }
+
+    for (auto idx : visibleWidgets.keys()) {
+      if (idx < startIndex || idx > endIndex) {
+        visibleWidgets.value(idx)->deleteLater();
+        visibleWidgets.remove(idx);
+      }
+    }
   }
 
-public:
-  void setColumns(int columns = 1) { this->m_columns = columns; }
-  void setInset(int inset = 10) { this->m_inset = inset; }
+  bool eventFilter(QObject *watched, QEvent *event) override {
+    if (watched == viewport && event->type() == QEvent::Wheel) {
+      QWheelEvent *wheelEvent = static_cast<QWheelEvent *>(event);
+      QApplication::sendEvent(scrollBar, event);
 
-  void setItems(const QList<AbstractGridItem *> &items) {
-    m_items = items;
-    m_selected = 0;
-
-    GridItemWidget widget;
-
-    for (int i = 0; i != items.size(); ++i) {
-      auto item = items[i];
-
-      widget.setItem(*item);
+      return true; // Event is handled, no need to propagate
     }
 
-    updateViewport();
+    return QWidget::eventFilter(watched, event); // Default behavior
   }
 
-  void setSelected(int index) {
-    if (m_selected == index || index < 0 || index >= m_items.size()) return;
-
-    auto item = m_items[index];
-
-    m_selected = index;
-    updateViewport();
-    emit selectionChanged(*item);
-  }
-
-  VirtualGridWidget() : viewport(new QWidget), scrollBar(new QScrollBar) {
+  void setupUi() {
     auto layout = new QHBoxLayout;
 
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(viewport);
-    // layout->addWidget(scrollBar);
+    layout->addWidget(scrollBar);
     setLayout(layout);
+  }
+
+public:
+  void setColumns(int columns = 1) { this->ncols = columns; }
+  void setInset(int inset = 10) { this->m_inset = inset; }
+
+  void setItems(const QList<AbstractGridItem *> &items) {
+    m_selected = 0;
+
+    GridItemWidget widget;
+    QList<VirtualItem> virtualItems;
+
+    int offset = 0;
+    int colWidth = columnWidth();
+
+    widget.setFixedWidth(colWidth);
+    widget.main->setFixedSize(colWidth, colWidth);
+
+    int maxHeight = 0;
+
+    for (int i = 0; i != items.size(); ++i) {
+      if (i > 0 && i % ncols == 0) {
+        offset += maxHeight + m_spacing;
+        maxHeight = 0;
+      }
+
+      auto item = items[i];
+      int height = widget.computeItemHeight(*item);
+
+      qDebug() << "itemHeight" << height;
+
+      virtualItems << VirtualItem{
+          .height = height,
+          .offset = offset,
+          .visible = true,
+          .item = item,
+      };
+      maxHeight = std::max(height, maxHeight);
+    }
+
+    if (items.size() % ncols) { offset += maxHeight + m_spacing; }
+
+    for (const auto &widget : visibleWidgets)
+      widget->deleteLater();
+
+    visibleWidgets.clear();
+
+    qDebug() << "offset=" << offset << "height=" << viewport->height();
+
+    int virtualScrollHeight = qMax(0, offset - viewport->height());
+
+    m_virtual_items = virtualItems;
+
+    scrollBar->setVisible(virtualScrollHeight > 0);
+    scrollBar->setValue(0);
+    scrollBar->setMaximum(virtualScrollHeight);
+
+    QTimer::singleShot(0, [this]() { updateViewport(); });
+  }
+
+  void setSelected(int index) {
+    if (m_selected == index || index < 0 || index >= m_virtual_items.size()) return;
+
+    auto item = m_virtual_items[index];
+
+    m_selected = index;
+    updateViewport();
+    emit selectionChanged(*m_virtual_items[index].item);
+  }
+
+  VirtualGridWidget() : viewport(new QWidget), scrollBar(new QScrollBar) {
+    setupUi();
+    installEventFilter(this);
+    connect(scrollBar, &QScrollBar::valueChanged, this, &VirtualGridWidget::updateViewport);
   }
 
 signals:
