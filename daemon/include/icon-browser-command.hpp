@@ -10,7 +10,7 @@ class IconBrowserView : public GridView {
     QString name, displayName;
 
     QString iconName() const override { return name; }
-    QString title() const override { return displayName; };
+    QString tooltip() const override { return displayName; }
 
   public:
     IconBrowserItem(const QString &name, const QString &displayName) : name(name), displayName(displayName) {}

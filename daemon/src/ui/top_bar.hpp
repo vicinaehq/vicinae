@@ -6,6 +6,7 @@
 #include <QLineEdit>
 #include <qapplication.h>
 #include <qboxlayout.h>
+#include <qevent.h>
 #include <qlineedit.h>
 #include <qnamespace.h>
 #include <qtimer.h>
@@ -14,13 +15,20 @@
 class SearchBar : public QLineEdit {
   Q_OBJECT
 
-public:
-  void keyPressEvent(QKeyEvent *event) override {
-    if (event->key() == Qt::Key_Backspace && text().isEmpty()) { emit pop(); }
+  bool event(QEvent *event) override {
+    if (event->type() == QEvent::KeyPress) {
+      auto keyEvent = static_cast<QKeyEvent *>(event);
 
-    QLineEdit::keyPressEvent(event);
+      if (keyEvent->key() == Qt::Key_Backspace && text().isEmpty()) {
+        emit pop();
+        return true;
+      }
+    }
+
+    return QLineEdit::event(event);
   }
 
+public:
   SearchBar() {
     auto debounce = new QTimer();
 

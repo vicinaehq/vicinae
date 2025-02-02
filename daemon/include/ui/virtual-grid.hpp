@@ -30,15 +30,57 @@ public:
   virtual QString title() const { return {}; }
   virtual QString subtitle() const { return {}; }
   virtual QString iconName() const = 0;
+  virtual QString tooltip() const { return {}; }
 };
 
 class MainWidget : public QWidget {
   Q_OBJECT
 
+  class Tooltip : public QWidget {
+    QLabel *label;
+
+    void paintEvent(QPaintEvent *event) override {
+      int borderRadius = 10;
+      QColor borderColor("#444444");
+
+      QPainter painter(this);
+
+      painter.setRenderHint(QPainter::Antialiasing, true);
+
+      QPainterPath path;
+      path.addRoundedRect(rect(), borderRadius, borderRadius);
+
+      painter.setClipPath(path);
+
+      QColor backgroundColor("#171615");
+
+      painter.fillPath(path, backgroundColor);
+
+      // Draw the border
+      QPen pen(borderColor, 1); // Border with a thickness of 2
+      painter.setPen(pen);
+      painter.drawPath(path);
+    }
+
+  public:
+    Tooltip(QWidget *parent = nullptr) : QWidget(parent), label(new QLabel) {
+      setWindowFlags(Qt::FramelessWindowHint | Qt::ToolTip);
+      setAttribute(Qt::WA_TranslucentBackground);
+
+      auto layout = new QVBoxLayout;
+
+      layout->addWidget(label);
+      setLayout(layout);
+    }
+
+    void setText(const QString &s) { label->setText(s); }
+  };
+
   QVBoxLayout *layout;
   OmniIcon *icon;
   bool m_selected;
   bool m_hovered;
+  Tooltip *tooltip;
 
 protected:
   int borderWidth() const { return 3; }
@@ -78,13 +120,32 @@ protected:
   void mouseDoubleClickEvent(QMouseEvent *event) override { emit doubleClicked(); }
 
 public:
-  MainWidget() : layout(new QVBoxLayout), icon(new OmniIcon), m_selected(false), m_hovered(false) {
+  MainWidget()
+      : layout(new QVBoxLayout), icon(new OmniIcon), m_selected(false), m_hovered(false),
+        tooltip(new Tooltip) {
     layout->addWidget(icon, 0, Qt::AlignCenter);
     setLayout(layout);
+
+    tooltip->hide();
   }
+
+  ~MainWidget() { tooltip->deleteLater(); }
+
+  void setTooltipText(const QString &text) { tooltip->setText(text); }
 
   void setHovered(bool hovered) {
     m_hovered = hovered;
+
+    if (hovered) {
+      const QPoint globalPos = mapToGlobal(QPoint(0, height() + 10));
+
+      tooltip->adjustSize();
+      tooltip->move(globalPos);
+      tooltip->show();
+    } else {
+      tooltip->hide();
+    }
+
     update();
   }
 
@@ -118,6 +179,7 @@ public:
     layout->addWidget(main);
     layout->addWidget(titleLabel);
     layout->addWidget(subtitleLabel);
+
     setLayout(layout);
 
     connect(main, &MainWidget::clicked, this, &GridItemWidget::clicked);
@@ -131,6 +193,8 @@ public:
   void setItem(const AbstractGridItem &item) {
     auto title = item.title();
     auto subtitle = item.subtitle();
+
+    if (auto text = item.tooltip(); !text.isEmpty()) { main->setTooltipText(text); }
 
     titleLabel->setText(title);
     subtitleLabel->setText(subtitle);
