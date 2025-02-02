@@ -6,7 +6,7 @@
 #include <qnamespace.h>
 
 class IconBrowserView : public GridView {
-  class IconBrowserItem : public AbstractGridItem {
+  class IconBrowserItem : public AbstractIconGridItem {
     QString name, displayName;
 
     QString iconName() const override { return name; }

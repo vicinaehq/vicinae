@@ -5,7 +5,7 @@
 #include "ui/virtual-grid.hpp"
 #include <qnamespace.h>
 
-class AppGridItem : public AbstractGridItem {
+class AppGridItem : public AbstractIconGridItem {
   std::shared_ptr<DesktopExecutable> app;
 
 public:

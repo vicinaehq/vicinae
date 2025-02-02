@@ -342,8 +342,6 @@ private:
 
     int offset = scrollBar->value() == 0 ? 10 : items.at(startIndex).offset - y;
 
-    qDebug() << "base offset" << offset;
-
     for (int idx : visibleWidgets.keys()) {
       if (idx >= startIndex && idx <= endIndex) continue;
 

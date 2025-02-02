@@ -1,8 +1,6 @@
 #pragma once
 #include "builtin_icon.hpp"
 #include "omni-icon.hpp"
-#include "ui/action_popover.hpp"
-#include <numbers>
 #include <qboxlayout.h>
 #include <qhash.h>
 #include <qlabel.h>
@@ -29,8 +27,20 @@ class AbstractGridItem {
 public:
   virtual QString title() const { return {}; }
   virtual QString subtitle() const { return {}; }
-  virtual QString iconName() const = 0;
+  virtual QWidget *widget() const = 0;
   virtual QString tooltip() const { return {}; }
+};
+
+class AbstractIconGridItem : public AbstractGridItem {
+  virtual QWidget *widget() const {
+    auto icon = new OmniIcon;
+
+    icon->setIcon(iconName(), {38, 38});
+
+    return icon;
+  }
+
+  virtual QString iconName() const = 0;
 };
 
 class MainWidget : public QWidget {
@@ -74,20 +84,21 @@ class MainWidget : public QWidget {
     }
 
     void setText(const QString &s) { label->setText(s); }
+    QString text() { return label->text(); }
   };
 
   QVBoxLayout *layout;
   OmniIcon *icon;
-  bool m_selected;
-  bool m_hovered;
+  bool selected;
+  bool hovered;
   Tooltip *tooltip;
 
 protected:
   int borderWidth() const { return 3; }
 
   QColor borderColor() const {
-    if (m_selected) return "#BBBBBB";
-    if (m_hovered) return "#888888";
+    if (selected) return "#BBBBBB";
+    if (hovered) return "#888888";
 
     return "#202020";
   }
@@ -121,9 +132,7 @@ protected:
 
 public:
   MainWidget()
-      : layout(new QVBoxLayout), icon(new OmniIcon), m_selected(false), m_hovered(false),
-        tooltip(new Tooltip) {
-    layout->addWidget(icon, 0, Qt::AlignCenter);
+      : layout(new QVBoxLayout), icon(new OmniIcon), selected(false), hovered(false), tooltip(new Tooltip) {
     setLayout(layout);
 
     tooltip->hide();
@@ -133,28 +142,43 @@ public:
 
   void setTooltipText(const QString &text) { tooltip->setText(text); }
 
+  void showTooltip() {
+    const QPoint globalPos = mapToGlobal(QPoint(0, height() + 5));
+
+    tooltip->adjustSize();
+    tooltip->move(globalPos);
+    tooltip->show();
+  }
+
+  void hideTooltip() { tooltip->hide(); }
+
   void setHovered(bool hovered) {
-    m_hovered = hovered;
+    this->hovered = hovered;
 
-    if (hovered) {
-      const QPoint globalPos = mapToGlobal(QPoint(0, height() + 10));
-
-      tooltip->adjustSize();
-      tooltip->move(globalPos);
-      tooltip->show();
-    } else {
-      tooltip->hide();
-    }
+    if (hovered && !tooltip->text().isEmpty())
+      showTooltip();
+    else
+      hideTooltip();
 
     update();
   }
 
   void setSelected(bool selected) {
-    m_selected = selected;
+    this->selected = selected;
     update();
   }
   void setInset(int inset) { layout->setContentsMargins(inset, inset, inset, inset); }
   void setIcon(const QString &name) { icon->setIcon(name, {56, 56}); }
+  void setWidget(QWidget *widget) {
+    if (layout->count() > 0) {
+      auto old = layout->itemAt(0)->widget();
+
+      layout->replaceWidget(old, widget);
+      old->deleteLater();
+    } else {
+      layout->addWidget(widget, 0, Qt::AlignCenter);
+    }
+  }
 
 signals:
   void clicked();
@@ -200,7 +224,7 @@ public:
     subtitleLabel->setText(subtitle);
     titleLabel->setVisible(!title.isEmpty());
     subtitleLabel->setVisible(!subtitle.isEmpty());
-    main->setIcon(item.iconName());
+    main->setWidget(item.widget());
   }
 
   int computeItemHeight(const AbstractGridItem &item) {
