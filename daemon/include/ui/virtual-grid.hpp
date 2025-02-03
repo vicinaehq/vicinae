@@ -438,8 +438,17 @@ public:
     auto item = m_virtual_items[index];
 
     m_selected = index;
+
+    int scrollHeight = scrollBar->value();
+
+    if (item.offset + item.height - scrollHeight > viewport->height()) {
+      scrollBar->setValue(item.offset + item.height - viewport->height());
+    } else if (item.offset - scrollHeight < 0) {
+      scrollBar->setValue(scrollHeight - (scrollHeight - item.offset));
+    }
+
     updateViewport();
-    emit selectionChanged(*m_virtual_items[index].item);
+    emit selectionChanged(*item.item);
   }
 
   VirtualGridWidget() : viewport(new QWidget), scrollBar(new QScrollBar) {
