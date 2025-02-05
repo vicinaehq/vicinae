@@ -55,6 +55,8 @@ qt_add_executable(${TARGET}
 
 	include/quicklink-actions.hpp
 
+	src/emoji-list.cpp
+
 	src/calculator-history-command.hpp
 
 	src/tinyexpr.cpp

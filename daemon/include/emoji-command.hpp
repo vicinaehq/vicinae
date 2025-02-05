@@ -1,22 +1,30 @@
 #pragma once
 #include "app-database.hpp"
 #include "app.hpp"
+#include "emoji-database.hpp"
 #include "grid-view.hpp"
 #include "ui/virtual-grid.hpp"
+#include <qlabel.h>
 #include <qnamespace.h>
 
-class AppGridItem : public AbstractIconGridItem {
-  std::shared_ptr<DesktopExecutable> app;
+class EmojiGridItem : public AbstractGridItem {
+  const EmojiInfo &info;
 
 public:
-  QString title() const override { return app->name; }
-  QString iconName() const override { return app->iconName(); }
+  QString tooltip() const override { return info.description; }
 
-  AppGridItem(const std::shared_ptr<DesktopExecutable> &app) : app(app) {}
+  QWidget *widget() const override {
+    auto label = new QLabel(QString("<span style=\"font-size: 48px;\">%1</span>").arg(info.emoji));
+
+    return label;
+  }
+
+  EmojiGridItem(const EmojiInfo &info) : info(info) {}
 };
 
 class EmojiView : public GridView {
   Service<AppDatabase> appDb;
+  EmojiDatabase emojiDb;
 
 public:
   EmojiView(AppWindow &app) : GridView(app), appDb(service<AppDatabase>()) {
@@ -27,8 +35,8 @@ public:
   void onSearchChanged(const QString &s) override {
     QList<AbstractGridItem *> items;
 
-    for (const auto &app : appDb.apps) {
-      if (app->name.contains(s, Qt::CaseInsensitive)) { items.push_back(new AppGridItem(app)); }
+    for (const auto &emoji : emojiDb.list()) {
+      if (QString(emoji.description).contains(s, Qt::CaseInsensitive)) { items << new EmojiGridItem(emoji); }
     }
 
     grid->setItems(items);

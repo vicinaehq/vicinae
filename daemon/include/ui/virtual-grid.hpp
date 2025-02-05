@@ -29,6 +29,8 @@ public:
   virtual QString subtitle() const { return {}; }
   virtual QWidget *widget() const = 0;
   virtual QString tooltip() const { return {}; }
+
+  virtual ~AbstractGridItem() {}
 };
 
 class AbstractIconGridItem : public AbstractGridItem {
@@ -422,6 +424,10 @@ public:
     qDebug() << "offset=" << offset << "height=" << viewport->height();
 
     int virtualScrollHeight = qMax(0, offset - viewport->height());
+
+    for (const auto &item : m_virtual_items) {
+      delete item.item;
+    }
 
     m_virtual_items = virtualItems;
 
