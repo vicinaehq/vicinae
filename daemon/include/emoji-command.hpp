@@ -8,13 +8,14 @@
 #include <qnamespace.h>
 
 class EmojiGridItem : public AbstractGridItem {
-  const EmojiInfo &info;
 
 public:
+  const EmojiInfo &info;
+
   QString tooltip() const override { return info.description; }
 
-  QWidget *widget() const override {
-    auto label = new QLabel(QString("<span style=\"font-size: 48px;\">%1</span>").arg(info.emoji));
+  QWidget *centerWidget() const override {
+    auto label = new QLabel(QString("<span style=\"font-size: 40px;\">%1</span>").arg(info.emoji));
 
     return label;
   }
@@ -30,15 +31,31 @@ public:
   EmojiView(AppWindow &app) : GridView(app), appDb(service<AppDatabase>()) {
     widget = grid;
     grid->setColumns(8);
+    grid->setMargins(10, 0, 10, 0);
   }
 
   void onSearchChanged(const QString &s) override {
-    QList<AbstractGridItem *> items;
+    QList<EmojiGridItem *> items;
 
     for (const auto &emoji : emojiDb.list()) {
       if (QString(emoji.description).contains(s, Qt::CaseInsensitive)) { items << new EmojiGridItem(emoji); }
     }
 
-    grid->setItems(items);
+    QList<VirtualGridSection> sections;
+    QHash<QString, VirtualGridSection *> sectionMap;
+
+    for (auto item : items) {
+      auto section = sectionMap.value(item->info.category);
+
+      if (!section) {
+        sections << VirtualGridSection(item->info.category);
+        section = &sections[sections.size() - 1];
+        sectionMap.insert(item->info.category, section);
+      }
+
+      section->addItem(item);
+    }
+
+    grid->setSections(sections);
   }
 };
