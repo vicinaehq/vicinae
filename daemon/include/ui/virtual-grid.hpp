@@ -29,6 +29,11 @@ static size_t MAX_COLSPAN = -1;
 
 class AbstractGridItemWidget;
 
+enum GridMemberRole {
+  GridSectionNameRole,
+  GridItemRole,
+};
+
 class AbstractGridMember {
 public:
   virtual AbstractGridItemWidget *widget(int columnWidth) const = 0;
@@ -36,6 +41,9 @@ public:
   virtual int colspan() { return 1; }
   virtual void setSelected(QWidget *target, bool selected) {}
   virtual bool selectable() { return true; }
+  virtual bool role() { return GridItemRole; }
+
+  virtual ~AbstractGridMember() {}
 };
 
 class VirtualGridSection {
@@ -241,6 +249,8 @@ struct GridSectionLabel : public AbstractGridMember {
     return w.sizeHint().height();
   }
 
+  bool role() override { return GridSectionNameRole; }
+
   bool selectable() override { return false; }
 
   GridSectionLabel(const QString &name, int count) : name(name), count(count) {}
@@ -251,6 +261,11 @@ class GridItemWrapper : public QWidget {
 
   AbstractGridMember *item = nullptr;
   AbstractGridItemWidget *widget = nullptr;
+
+  void resizeEvent(QResizeEvent *event) override {
+    if (widget) { widget->setFixedSize(event->size()); }
+    QWidget::resizeEvent(event);
+  }
 
 public:
   void setItem(AbstractGridMember *item) {
@@ -278,6 +293,13 @@ class GridItemWidget : public AbstractGridItemWidget {
   EllidedLabel *subtitleLabel;
   bool m_selected;
 
+  void resizeEvent(QResizeEvent *event) override {
+    auto size = event->size();
+
+    main->setFixedSize({size.width(), size.width()});
+    AbstractGridItemWidget::resizeEvent(event);
+  }
+
 public:
   MainWidget *main;
 
@@ -294,8 +316,6 @@ public:
     connect(main, &MainWidget::clicked, this, &AbstractGridItemWidget::clicked);
     connect(main, &MainWidget::doubleClicked, this, &AbstractGridItemWidget::doubleClicked);
   }
-
-  ~GridItemWidget() { qDebug() << "delete grid item widget"; }
 
   void setSelected(bool selected) { main->setSelected(selected); }
 
@@ -342,7 +362,7 @@ public:
   virtual AbstractGridItemWidget *widget(int columnWidth) const override {
     auto item = new GridItemWidget();
 
-    item->main->setFixedSize(columnWidth, columnWidth);
+    // item->main->setFixedSize(columnWidth, columnWidth);
     item->setTitle(title());
     item->setSubtitle(subtitle());
     item->setTooltipText(tooltip());
@@ -369,24 +389,16 @@ signals:
 class VirtualGridWidget : public QWidget {
   Q_OBJECT
 
-  struct AbsoluteSection {
-    int low;
-    int high;
-  };
-
   struct VirtualWidget {
     int height;
     int offset;
     int widthOffset;
     int width;
-    int flatIndex;
     AbstractGridMember *item;
   };
 
   QList<VirtualWidget> m_virtual_items;
-  QList<AbstractGridMember *> flatItems;
-
-  QList<AbsoluteSection> sections;
+  QList<VirtualGridSection> sections;
 
   int ncols = 6;
   int m_inset = 0;
@@ -427,18 +439,20 @@ class VirtualGridWidget : public QWidget {
   }
 
   void selectLeft() {
-    auto previous = previousSelectableIndex(m_selected);
+    auto previous = previousSelectableIndex(m_selected - 1);
 
     if (previous != -1) setSelected(previous);
   }
 
   void selectRight() {
-    auto next = nextSelectableIndex(m_selected);
+    auto next = nextSelectableIndex(m_selected + 1);
 
     if (next != -1) setSelected(next);
   }
 
   void selectTop() {
+    if (m_selected == -1 || m_selected >= m_virtual_items.size()) return;
+
     auto current = m_virtual_items[m_selected];
     int nextRowStart = m_selected;
 
@@ -456,6 +470,8 @@ class VirtualGridWidget : public QWidget {
   }
 
   void selectBottom() {
+    if (m_selected == -1 || m_selected >= m_virtual_items.size()) return;
+
     int selected = m_selected;
     auto current = m_virtual_items[selected];
     int nextRowStart = selected;
@@ -475,8 +491,6 @@ class VirtualGridWidget : public QWidget {
 
       int rowCount = nextRowEnd - nextRowStart;
 
-      qDebug() << "row count" << rowCount;
-
       for (int i = 0; i != rowCount; ++i) {
         int index = nextRowEnd - i - 1;
         auto item = m_virtual_items[index];
@@ -491,31 +505,12 @@ class VirtualGridWidget : public QWidget {
     }
   }
 
-  void resizeEvent(QResizeEvent *event) override {
-    QWidget::resizeEvent(event);
-    updateViewport();
-  }
-
   int innerTotalSpacing() { return (ncols - 1) * m_spacing; }
   int columnWidth(size_t colspan = 1) {
     return (viewport->width() - innerTotalSpacing() - margins.left - margins.right) / ncols;
   }
 
-  void recomputeLayout() {
-    /*
-int colWidth = columnWidth();
-
-for (auto &item : m_virtual_items) {
-int newHeight = item.item->heightForWidth(colWidth);
-int delta = newHeight - item.height;
-
-item.height = newHeight;
-item.offset += delta;
-}
-
-updateViewport();
-  */
-  }
+  void recomputeLayout(QResizeEvent *resize) { updateLayout(); }
 
   void updateViewport() {
     int scrollHeight = scrollBar->value();
@@ -530,12 +525,14 @@ updateViewport();
       ++startIndex;
     }
 
+    if (startIndex >= m_virtual_items.size()) return;
+
     int height = scrollHeight == 0 ? margins.top : m_virtual_items[startIndex].offset - scrollHeight;
     int endIndex = startIndex;
 
     int rowOffset = scrollHeight == 0 ? 0 : m_virtual_items[startIndex].offset;
 
-    for (; endIndex != m_virtual_items.size(); ++endIndex) {
+    for (; endIndex < m_virtual_items.size(); ++endIndex) {
       auto vitem = m_virtual_items[endIndex];
       auto item = vitem.item;
       auto widget = visibleWidgets.value(endIndex);
@@ -609,10 +606,70 @@ public:
     margins.bottom = bottom;
   }
 
+  void updateLayout() {
+    int offset = 0;
+    int colWidth = columnWidth();
+    QList<VirtualWidget> vitems;
+
+    for (const auto &section : sections) {
+      auto &items = section.items();
+      int maxHeight = 0;
+
+      if (!items.isEmpty()) {
+        auto item = new GridSectionLabel(section.name(), items.size());
+        int height = item->heightForWidth(colWidth);
+
+        vitems << VirtualWidget{.height = height,
+                                .offset = offset,
+                                .widthOffset = margins.left,
+                                .width = viewport->width() - margins.left - margins.right,
+                                .item = item};
+        offset += height;
+      }
+
+      int widthOffset = margins.left;
+
+      for (int i = 0; i != items.size(); ++i) {
+        auto item = items.at(i);
+        int height = item->heightForWidth(colWidth);
+        int vindex = vitems.size();
+
+        VirtualWidget vitem{
+            .height = height, .offset = offset, .widthOffset = widthOffset, .width = colWidth, .item = item};
+        vitems << vitem;
+        widthOffset += colWidth + m_spacing;
+        maxHeight = std::max(height, maxHeight);
+
+        if (auto widget = visibleWidgets.value(vindex)) { widget->resize(vitem.width, vitem.height); }
+
+        if ((i + 1) % ncols == 0) {
+          offset += maxHeight + m_spacing;
+          widthOffset = margins.left;
+          maxHeight = 0;
+        }
+      }
+
+      if (items.size() % ncols) { offset += maxHeight; }
+    }
+
+    offset += margins.bottom;
+
+    int virtualScrollHeight = qMax(0, offset - viewport->height());
+
+    qDebug() << virtualScrollHeight << virtualScrollHeight;
+
+    m_virtual_items = vitems;
+    scrollBar->setVisible(virtualScrollHeight > 0);
+    scrollBar->setMaximum(virtualScrollHeight);
+    updateViewport();
+  }
+
   void setSections(const QList<VirtualGridSection> &sections) {
     int offset = 0;
     QList<VirtualWidget> vitems;
     int colWidth = columnWidth();
+
+    this->sections = sections;
 
     for (const auto &section : sections) {
       auto &items = section.items();
@@ -651,6 +708,8 @@ public:
       if (items.size() % ncols) { offset += maxHeight; }
     }
 
+    offset += margins.bottom;
+
     for (const auto &widget : visibleWidgets)
       widget->deleteLater();
 
@@ -664,17 +723,15 @@ public:
 
     m_virtual_items = vitems;
     m_selected = nextSelectableIndex(0);
+    scrollBar->setMaximum(virtualScrollHeight);
     scrollBar->setVisible(virtualScrollHeight > 0);
     scrollBar->setValue(0);
-    scrollBar->setMaximum(virtualScrollHeight);
 
     QTimer::singleShot(0, [this]() { updateViewport(); });
-
-    setSelected(m_selected);
   }
 
   int previousSelectableIndex(int base) {
-    for (int i = base - 1; i >= 0; --i) {
+    for (int i = base; i >= 0; --i) {
       if (m_virtual_items[i].item->selectable()) return i;
     }
 
@@ -682,7 +739,7 @@ public:
   }
 
   int nextSelectableIndex(int base) {
-    for (int i = base + 1; i < m_virtual_items.size(); ++i) {
+    for (int i = base; i < m_virtual_items.size(); ++i) {
       if (m_virtual_items[i].item->selectable()) return i;
     }
 
@@ -690,6 +747,8 @@ public:
   }
 
   void scrollTo(int index) {
+    if (m_selected == -1 || m_selected >= m_virtual_items.size()) return;
+
     auto item = m_virtual_items[index];
     int scrollHeight = scrollBar->value();
 
@@ -712,9 +771,30 @@ public:
 
     auto item = m_virtual_items[index];
 
+    int scrollHeight = scrollBar->value();
+
+    int oldSelected = m_selected;
+
     m_selected = index;
 
-    int scrollHeight = scrollBar->value();
+    int previousRowEnd = index;
+
+    while (previousRowEnd >= 0 && m_virtual_items[previousRowEnd].offset == item.offset) {
+      --previousRowEnd;
+    }
+
+    if (previousRowEnd >= 0) {
+      auto previousItem = m_virtual_items[previousRowEnd];
+
+      if (previousItem.item->role() == GridSectionNameRole) {
+        if (previousItem.offset - scrollHeight < 0) {
+          scrollBar->setValue(scrollHeight - (scrollHeight - item.offset) -
+                              m_virtual_items[previousRowEnd].height);
+          updateViewport();
+          return;
+        }
+      }
+    }
 
     if (item.offset + item.height - scrollHeight > viewport->height()) {
       scrollBar->setValue(item.offset + item.height - viewport->height());
@@ -728,6 +808,7 @@ public:
 
   VirtualGridWidget() : viewport(new GridViewportWidget), scrollBar(new QScrollBar) {
     setupUi();
+    setMargins(10, 10, 10, 10);
     installEventFilter(this);
     connect(scrollBar, &QScrollBar::valueChanged, this, &VirtualGridWidget::updateViewport);
     connect(viewport, &GridViewportWidget::resized, this, &VirtualGridWidget::recomputeLayout);

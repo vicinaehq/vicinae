@@ -15,7 +15,7 @@ public:
   QString tooltip() const override { return info.description; }
 
   QWidget *centerWidget() const override {
-    auto label = new QLabel(QString("<span style=\"font-size: 40px;\">%1</span>").arg(info.emoji));
+    auto label = new QLabel(QString("<span style=\"font-size: 36px;\">%1</span>").arg(info.emoji));
 
     return label;
   }
@@ -31,7 +31,6 @@ public:
   EmojiView(AppWindow &app) : GridView(app), appDb(service<AppDatabase>()) {
     widget = grid;
     grid->setColumns(8);
-    grid->setMargins(10, 0, 10, 0);
   }
 
   void onSearchChanged(const QString &s) override {
