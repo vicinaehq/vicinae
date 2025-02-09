@@ -241,11 +241,11 @@ struct GridSectionLabel : public AbstractGridMember {
   int count;
 
   AbstractGridItemWidget *widget(int columnWidth) const override {
-    return new GridListSectionHeader(name, "", 10);
+    return new GridListSectionHeader(name, "", count);
   }
 
   int heightForWidth(int columnWidth) const override {
-    GridListSectionHeader w(name, "", 10);
+    GridListSectionHeader w(name, "", count);
 
     return w.sizeHint().height();
   }

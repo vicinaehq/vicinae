@@ -359,6 +359,7 @@ static const QList<QString> builtinIcons = {
     ":icons/x-mark-circle.svg",
     ":icons/x-mark-top-right-square.svg",
     ":icons/xmark.svg",
+    ":icons/keyboard-shift.svg",
 };
 
 const QList<QString> &BuiltinIconService::icons() { return builtinIcons; }
