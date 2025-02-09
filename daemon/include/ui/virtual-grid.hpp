@@ -28,8 +28,6 @@ public:
   EllidedLabel() { setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred); }
 };
 
-static size_t MAX_COLSPAN = -1;
-
 class AbstractGridItemWidget;
 
 enum GridMemberRole {
@@ -812,12 +810,11 @@ public:
     }
 
     m_virtual_items = vitems;
-    m_selected = nextSelectableIndex(0);
     scrollBar->setMaximum(virtualScrollHeight);
     scrollBar->setVisible(virtualScrollHeight > 0);
     scrollBar->setValue(0);
-
-    QTimer::singleShot(0, [this]() { updateViewport(); });
+    m_selected = -1;
+    setSelected(nextSelectableIndex(0));
   }
 
   int previousSelectableIndex(int base) {
@@ -893,7 +890,7 @@ public:
     }
 
     updateViewport();
-    // emit selectionChanged(*item.item);
+    emit selectionChanged(*item.item);
   }
 
   void resizeEvent(QResizeEvent *event) override {
@@ -904,7 +901,6 @@ public:
   }
 
   VirtualGridWidget() : viewport(new GridViewportWidget(this)), scrollBar(new MyScrollBar(this)) {
-    // setupUi();
     setMargins(15, 10, 15, 10);
     scrollBar->hide();
     scrollBar->setMinimum(0);
@@ -915,6 +911,6 @@ public:
   }
 
 signals:
-  void itemActivated(const AbstractGridItem &item);
-  void selectionChanged(const AbstractGridItem &item);
+  void itemActivated(const AbstractGridMember &item);
+  void selectionChanged(const AbstractGridMember &item);
 };

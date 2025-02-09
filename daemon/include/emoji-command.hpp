@@ -31,6 +31,12 @@ public:
   EmojiView(AppWindow &app) : GridView(app), appDb(service<AppDatabase>()) {
     widget = grid;
     grid->setColumns(8);
+
+    connect(grid, &VirtualGridWidget::selectionChanged, this, [this](const AbstractGridMember &item) {
+      auto emoji = static_cast<const EmojiGridItem &>(item);
+
+      qDebug() << "selected emoji" << emoji.info.emoji;
+    });
   }
 
   void onSearchChanged(const QString &s) override {
