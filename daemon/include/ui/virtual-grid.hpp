@@ -1,13 +1,16 @@
 #pragma once
 #include "builtin_icon.hpp"
 #include "omni-icon.hpp"
+#include "ui/action_popover.hpp"
 #include "ui/virtual-list.hpp"
 #include <qboxlayout.h>
+#include <qdatetime.h>
 #include <qevent.h>
 #include <qhash.h>
 #include <qlabel.h>
 #include <qnamespace.h>
 #include <qscrollbar.h>
+#include <qtimer.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
 
@@ -384,6 +387,93 @@ class GridViewportWidget : public QWidget {
 
 signals:
   void resized(QResizeEvent *event);
+
+public:
+  GridViewportWidget(QWidget *parent = nullptr) : QWidget(parent) {}
+};
+
+class MyScrollBar : public QScrollBar {
+  Q_OBJECT
+
+  bool isSliderShown = false;
+  bool isHovered = false;
+  QTimer dismissTimer;
+
+  void handleValueChanged(int value) {
+    if (!isHovered) {
+      isSliderShown = true;
+      dismissTimer.start();
+    }
+  }
+
+  void setSliderVisibility(bool visible) {
+    isSliderShown = visible;
+    update();
+  }
+
+  void enterEvent(QEnterEvent *event) override {
+    isHovered = true;
+    setSliderVisibility(true);
+  }
+  void leaveEvent(QEvent *event) override {
+    isHovered = false;
+    setSliderVisibility(false);
+  }
+
+  void paintEvent(QPaintEvent *event) override {
+    Q_UNUSED(event);
+
+    if (!isSliderShown) return;
+
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
+
+    // Get scrollbar handle geometry
+    QStyleOptionSlider opt;
+    opt.initFrom(this);
+    opt.orientation = orientation();
+    opt.minimum = minimum();
+    opt.maximum = maximum();
+    opt.sliderPosition = value();
+    opt.sliderValue = value();
+    opt.singleStep = singleStep();
+    opt.pageStep = pageStep();
+
+    QRect grooveRect = style()->subControlRect(QStyle::CC_ScrollBar, &opt, QStyle::SC_ScrollBarGroove, this);
+    QRect handleRect = style()->subControlRect(QStyle::CC_ScrollBar, &opt, QStyle::SC_ScrollBarSlider, this);
+
+    int paddingTop = handleRect.top() - grooveRect.top();
+    int paddingBottom = grooveRect.bottom() - handleRect.bottom();
+    int paddingLeft = handleRect.left() - grooveRect.left();
+    int paddingRight = grooveRect.right() - handleRect.right();
+
+    QColor handleColor = QColor(100, 100, 100, 150);
+
+    painter.setBrush(handleColor);
+    painter.setPen(Qt::NoPen);
+
+    // Rounded scrollbar
+    int radius = 4;
+    if (orientation() == Qt::Horizontal) {
+      // handleRect.setHeight(8); // Ensure correct thickness
+      qDebug() << "horizontal";
+    } else {
+      handleRect.setWidth(8);
+    }
+    painter.drawRoundedRect(handleRect, radius, radius);
+  }
+
+public:
+  MyScrollBar(QWidget *parent = nullptr) : QScrollBar(parent) {
+    setStyleSheet("background: transparent;");
+    setAttribute(Qt::WA_Hover, true);
+
+    dismissTimer.setSingleShot(true);
+    dismissTimer.setInterval(500);
+
+    connect(this, &QScrollBar::valueChanged, this, &MyScrollBar::handleValueChanged);
+    connect(&dismissTimer, &QTimer::timeout, this, [this]() { setSliderVisibility(false); });
+  }
 };
 
 class VirtualGridWidget : public QWidget {
@@ -806,10 +896,20 @@ public:
     // emit selectionChanged(*item.item);
   }
 
-  VirtualGridWidget() : viewport(new GridViewportWidget), scrollBar(new QScrollBar) {
-    setupUi();
-    setMargins(10, 10, 10, 10);
-    installEventFilter(this);
+  void resizeEvent(QResizeEvent *event) override {
+    viewport->setFixedSize(event->size());
+
+    scrollBar->setFixedSize(scrollBar->sizeHint().width(), height());
+    scrollBar->move(width() - scrollBar->sizeHint().width(), 0);
+  }
+
+  VirtualGridWidget() : viewport(new GridViewportWidget(this)), scrollBar(new MyScrollBar(this)) {
+    // setupUi();
+    setMargins(15, 10, 15, 10);
+    scrollBar->hide();
+    scrollBar->setMinimum(0);
+    scrollBar->setSingleStep(40);
+    viewport->installEventFilter(this);
     connect(scrollBar, &QScrollBar::valueChanged, this, &VirtualGridWidget::updateViewport);
     connect(viewport, &GridViewportWidget::resized, this, &VirtualGridWidget::recomputeLayout);
   }
