@@ -257,8 +257,6 @@ static const QList<QString> builtinIcons = {
     ":icons/quote-block.svg",
     ":icons/racket.svg",
     ":icons/raindrop.svg",
-    ":icons/raycast-logo-neg.svg",
-    ":icons/raycast-logo-pos.svg",
     ":icons/receipt.svg",
     ":icons/redo.svg",
     ":icons/remove-person.svg",
