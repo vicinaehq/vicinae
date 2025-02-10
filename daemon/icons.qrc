@@ -356,5 +356,6 @@
 		<file>icons/x-mark-top-right-square.svg</file>
 		<file>icons/xmark.svg</file>
 		<file>icons/keyboard-shift.svg</file>
+		<file>icons/enter-key.svg</file>
 	</qresource>
 </RCC>

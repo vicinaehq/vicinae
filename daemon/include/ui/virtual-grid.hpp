@@ -39,8 +39,6 @@ class AbstractGridMember {
 public:
   virtual AbstractGridItemWidget *widget(int columnWidth) const = 0;
   virtual int heightForWidth(int columnWidth) const = 0;
-  virtual int colspan() { return 1; }
-  virtual void setSelected(QWidget *target, bool selected) {}
   virtual bool selectable() { return true; }
   virtual bool role() { return GridItemRole; }
 
@@ -203,6 +201,9 @@ signals:
 class AbstractGridItemWidget : public QWidget {
   Q_OBJECT
 
+public:
+  virtual void selectionChanged(bool selected) {}
+
 signals:
   void clicked();
   void doubleClicked();
@@ -279,7 +280,7 @@ public:
     connect(this->widget, &AbstractGridItemWidget::doubleClicked, this, &GridItemWrapper::doubleClicked);
   }
 
-  void setSelected(bool selected) { item->setSelected(widget, selected); }
+  void setSelected(bool selected) { widget->selectionChanged(selected); }
 
   GridItemWrapper(QWidget *parent = nullptr) : QWidget(parent) {}
 
@@ -318,7 +319,7 @@ public:
     connect(main, &MainWidget::doubleClicked, this, &AbstractGridItemWidget::doubleClicked);
   }
 
-  void setSelected(bool selected) { main->setSelected(selected); }
+  void selectionChanged(bool selected) override { main->setSelected(selected); }
 
   void setTitle(const QString &title) {
     titleLabel->setText(title);
@@ -343,10 +344,6 @@ public:
 
   virtual QWidget *centerWidget() const = 0;
 
-  void setSelected(QWidget *target, bool selected) override {
-    static_cast<GridItemWidget *>(target)->setSelected(selected);
-  }
-
   int heightForWidth(int columnWidth) const override {
     static GridItemWidget ruler;
 
@@ -363,7 +360,6 @@ public:
   virtual AbstractGridItemWidget *widget(int columnWidth) const override {
     auto item = new GridItemWidget();
 
-    // item->main->setFixedSize(columnWidth, columnWidth);
     item->setTitle(title());
     item->setSubtitle(subtitle());
     item->setTooltipText(tooltip());
@@ -390,7 +386,7 @@ public:
   GridViewportWidget(QWidget *parent = nullptr) : QWidget(parent) {}
 };
 
-class MyScrollBar : public QScrollBar {
+class OmniScrollBar : public QScrollBar {
   Q_OBJECT
 
   bool isSliderShown = false;
@@ -462,14 +458,14 @@ class MyScrollBar : public QScrollBar {
   }
 
 public:
-  MyScrollBar(QWidget *parent = nullptr) : QScrollBar(parent) {
+  OmniScrollBar(QWidget *parent = nullptr) : QScrollBar(parent) {
     setStyleSheet("background: transparent;");
     setAttribute(Qt::WA_Hover, true);
 
     dismissTimer.setSingleShot(true);
     dismissTimer.setInterval(500);
 
-    connect(this, &QScrollBar::valueChanged, this, &MyScrollBar::handleValueChanged);
+    connect(this, &QScrollBar::valueChanged, this, &OmniScrollBar::handleValueChanged);
     connect(&dismissTimer, &QTimer::timeout, this, [this]() { setSliderVisibility(false); });
   }
 };
@@ -488,12 +484,9 @@ class VirtualGridWidget : public QWidget {
   QList<VirtualWidget> m_virtual_items;
   QList<VirtualGridSection> sections;
 
-  int ncols = 6;
-  int m_inset = 0;
+  int ncols = 1;
   int m_spacing = 10;
-  int m_padding = 10;
   int m_selected = -1;
-
   struct {
     int left;
     int top;
@@ -501,7 +494,6 @@ class VirtualGridWidget : public QWidget {
     int right;
   } margins;
 
-  GridViewportWidget *viewport;
   QScrollBar *scrollBar;
   QHash<int, GridItemWrapper *> visibleWidgets;
 
@@ -521,8 +513,8 @@ class VirtualGridWidget : public QWidget {
       break;
     case Qt::Key_Return:
       if (m_selected >= 0 && m_selected < m_virtual_items.size())
-        // emit itemActivated(*m_virtual_items[m_selected].item);
-        break;
+        emit itemActivated(*m_virtual_items[m_selected].item);
+      break;
     }
   }
 
@@ -595,7 +587,7 @@ class VirtualGridWidget : public QWidget {
 
   int innerTotalSpacing() { return (ncols - 1) * m_spacing; }
   int columnWidth(size_t colspan = 1) {
-    return (viewport->width() - innerTotalSpacing() - margins.left - margins.right) / ncols;
+    return (width() - innerTotalSpacing() - margins.left - margins.right) / ncols;
   }
 
   void recomputeLayout(QResizeEvent *resize) { updateLayout(); }
@@ -631,7 +623,7 @@ class VirtualGridWidget : public QWidget {
       }
 
       if (!widget) {
-        widget = new GridItemWrapper(viewport);
+        widget = new GridItemWrapper(this);
         widget->setFixedSize({vitem.width, vitem.height});
         widget->setItem(item);
         visibleWidgets.insert(endIndex, widget);
@@ -652,7 +644,7 @@ class VirtualGridWidget : public QWidget {
       widget->move(vitem.widthOffset, height);
       widget->show();
 
-      if (height > viewport->height()) break;
+      if (height > this->height()) break;
     }
 
     for (auto idx : visibleWidgets.keys()) {
@@ -663,6 +655,9 @@ class VirtualGridWidget : public QWidget {
     }
   }
 
+  void wheelEvent(QWheelEvent *event) override { QApplication::sendEvent(scrollBar, event); }
+
+  /*
   bool eventFilter(QObject *watched, QEvent *event) override {
     if (watched == viewport && event->type() == QEvent::Wheel) {
       QWheelEvent *wheelEvent = static_cast<QWheelEvent *>(event);
@@ -673,16 +668,7 @@ class VirtualGridWidget : public QWidget {
 
     return QWidget::eventFilter(watched, event); // Default behavior
   }
-
-  void setupUi() {
-    auto layout = new QHBoxLayout;
-
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->setSpacing(0);
-    layout->addWidget(viewport);
-    layout->addWidget(scrollBar);
-    setLayout(layout);
-  }
+  */
 
 public:
   void setColumns(int columns = 1) { this->ncols = columns; }
@@ -710,7 +696,7 @@ public:
         vitems << VirtualWidget{.height = height,
                                 .offset = offset,
                                 .widthOffset = margins.left,
-                                .width = viewport->width() - margins.left - margins.right,
+                                .width = width() - margins.left - margins.right,
                                 .item = item};
         offset += height;
       }
@@ -742,7 +728,7 @@ public:
 
     offset += margins.bottom;
 
-    int virtualScrollHeight = qMax(0, offset - viewport->height());
+    int virtualScrollHeight = qMax(0, offset - height());
 
     qDebug() << virtualScrollHeight << virtualScrollHeight;
 
@@ -770,7 +756,7 @@ public:
         vitems << VirtualWidget{.height = height,
                                 .offset = offset,
                                 .widthOffset = margins.left,
-                                .width = viewport->width() - margins.left - margins.right,
+                                .width = width() - margins.left - margins.right,
                                 .item = item};
         offset += height;
       }
@@ -803,7 +789,7 @@ public:
 
     visibleWidgets.clear();
 
-    int virtualScrollHeight = qMax(0, offset - viewport->height());
+    int virtualScrollHeight = qMax(0, offset - height());
 
     for (const auto &item : m_virtual_items) {
       delete item.item;
@@ -833,19 +819,6 @@ public:
     return -1;
   }
 
-  void scrollTo(int index) {
-    if (m_selected == -1 || m_selected >= m_virtual_items.size()) return;
-
-    auto item = m_virtual_items[index];
-    int scrollHeight = scrollBar->value();
-
-    if (item.offset + item.height - scrollHeight > viewport->height()) {
-      scrollBar->setValue(item.offset + item.height - viewport->height());
-    } else if (item.offset - scrollHeight < 0) {
-      scrollBar->setValue(scrollHeight - (scrollHeight - item.offset));
-    }
-  }
-
   void setSelected(int index) {
     if (m_selected == index || index < 0 || index >= m_virtual_items.size()) return;
 
@@ -857,10 +830,7 @@ public:
     if (index >= m_virtual_items.size()) return;
 
     auto item = m_virtual_items[index];
-
     int scrollHeight = scrollBar->value();
-
-    int oldSelected = m_selected;
 
     m_selected = index;
 
@@ -883,8 +853,8 @@ public:
       }
     }
 
-    if (item.offset + item.height - scrollHeight > viewport->height()) {
-      scrollBar->setValue(item.offset + item.height - viewport->height());
+    if (item.offset + item.height - scrollHeight > height()) {
+      scrollBar->setValue(item.offset + item.height - height());
     } else if (item.offset - scrollHeight < 0) {
       scrollBar->setValue(scrollHeight - (scrollHeight - item.offset));
     }
@@ -894,20 +864,17 @@ public:
   }
 
   void resizeEvent(QResizeEvent *event) override {
-    viewport->setFixedSize(event->size());
-
-    scrollBar->setFixedSize(scrollBar->sizeHint().width(), height());
+    scrollBar->setFixedSize(margins.right, height());
     scrollBar->move(width() - scrollBar->sizeHint().width(), 0);
+    recomputeLayout(event);
   }
 
-  VirtualGridWidget() : viewport(new GridViewportWidget(this)), scrollBar(new MyScrollBar(this)) {
+  VirtualGridWidget() : scrollBar(new OmniScrollBar(this)) {
     setMargins(15, 10, 15, 10);
     scrollBar->hide();
     scrollBar->setMinimum(0);
     scrollBar->setSingleStep(40);
-    viewport->installEventFilter(this);
     connect(scrollBar, &QScrollBar::valueChanged, this, &VirtualGridWidget::updateViewport);
-    connect(viewport, &GridViewportWidget::resized, this, &VirtualGridWidget::recomputeLayout);
   }
 
 signals:
