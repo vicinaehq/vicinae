@@ -433,15 +433,11 @@ class OmniScrollBar : public QScrollBar {
     opt.singleStep = singleStep();
     opt.pageStep = pageStep();
 
-    QRect grooveRect = style()->subControlRect(QStyle::CC_ScrollBar, &opt, QStyle::SC_ScrollBarGroove, this);
     QRect handleRect = style()->subControlRect(QStyle::CC_ScrollBar, &opt, QStyle::SC_ScrollBarSlider, this);
-
-    int paddingTop = handleRect.top() - grooveRect.top();
-    int paddingBottom = grooveRect.bottom() - handleRect.bottom();
-    int paddingLeft = handleRect.left() - grooveRect.left();
-    int paddingRight = grooveRect.right() - handleRect.right();
-
     QColor handleColor = QColor(100, 100, 100, 150);
+
+    // painter.setBrush(QColor("red"));
+    // painter.drawRect(rect());
 
     painter.setBrush(handleColor);
     painter.setPen(Qt::NoPen);
@@ -453,6 +449,10 @@ class OmniScrollBar : public QScrollBar {
       qDebug() << "horizontal";
     } else {
       handleRect.setWidth(8);
+
+      auto xAdjust = round((width() - handleRect.width()) / (double)2);
+
+      handleRect = handleRect.adjusted(xAdjust, 0, xAdjust, 0);
     }
     painter.drawRoundedRect(handleRect, radius, radius);
   }
@@ -587,7 +587,11 @@ class VirtualGridWidget : public QWidget {
 
   int innerTotalSpacing() { return (ncols - 1) * m_spacing; }
   int columnWidth(size_t colspan = 1) {
-    return (width() - innerTotalSpacing() - margins.left - margins.right) / ncols;
+    double w = floor((width() - innerTotalSpacing() - margins.left - margins.right) / (double)ncols);
+
+    qDebug() << "colWidth" << w;
+
+    return w;
   }
 
   void recomputeLayout(QResizeEvent *resize) { updateLayout(); }
@@ -656,19 +660,6 @@ class VirtualGridWidget : public QWidget {
   }
 
   void wheelEvent(QWheelEvent *event) override { QApplication::sendEvent(scrollBar, event); }
-
-  /*
-  bool eventFilter(QObject *watched, QEvent *event) override {
-    if (watched == viewport && event->type() == QEvent::Wheel) {
-      QWheelEvent *wheelEvent = static_cast<QWheelEvent *>(event);
-      QApplication::sendEvent(scrollBar, event);
-
-      return true; // Event is handled, no need to propagate
-    }
-
-    return QWidget::eventFilter(watched, event); // Default behavior
-  }
-  */
 
 public:
   void setColumns(int columns = 1) { this->ncols = columns; }
@@ -746,12 +737,18 @@ public:
     this->sections = sections;
 
     for (const auto &section : sections) {
+      int usableSpace = width() - innerTotalSpacing() - margins.left - margins.right;
+      int idealColumnWidth = usableSpace / ncols;
+      int error = usableSpace - idealColumnWidth * ncols;
+
       auto &items = section.items();
       int maxHeight = 0;
 
       if (!items.isEmpty()) {
         auto item = new GridSectionLabel(section.name(), items.size());
         int height = item->heightForWidth(colWidth);
+
+        qDebug() << "margins left" << margins.left << "margins right" << margins.right;
 
         vitems << VirtualWidget{.height = height,
                                 .offset = offset,
@@ -766,6 +763,7 @@ public:
       for (int i = 0; i != items.size(); ++i) {
         auto item = items.at(i);
         int height = item->heightForWidth(colWidth);
+        int colWidth = idealColumnWidth + (error < i % ncols);
 
         vitems << VirtualWidget{
             .height = height, .offset = offset, .widthOffset = widthOffset, .width = colWidth, .item = item};
@@ -843,13 +841,11 @@ public:
     if (previousRowEnd >= 0) {
       auto previousItem = m_virtual_items[previousRowEnd];
 
-      if (previousItem.item->role() == GridSectionNameRole) {
-        if (previousItem.offset - scrollHeight < 0) {
-          scrollBar->setValue(scrollHeight - (scrollHeight - item.offset) -
-                              m_virtual_items[previousRowEnd].height);
-          updateViewport();
-          return;
-        }
+      if (previousItem.item->role() == GridSectionNameRole && previousItem.offset - scrollHeight < 0) {
+        scrollBar->setValue(scrollHeight - (scrollHeight - item.offset) -
+                            m_virtual_items[previousRowEnd].height);
+        updateViewport();
+        return;
       }
     }
 
@@ -865,12 +861,12 @@ public:
 
   void resizeEvent(QResizeEvent *event) override {
     scrollBar->setFixedSize(margins.right, height());
-    scrollBar->move(width() - scrollBar->sizeHint().width(), 0);
+    scrollBar->move(width() - margins.right, 0);
     recomputeLayout(event);
   }
 
   VirtualGridWidget() : scrollBar(new OmniScrollBar(this)) {
-    setMargins(15, 10, 15, 10);
+    setMargins(20, 10, 20, 10);
     scrollBar->hide();
     scrollBar->setMinimum(0);
     scrollBar->setSingleStep(40);
