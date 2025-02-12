@@ -1,5 +1,6 @@
 #pragma once
 #include "app.hpp"
+#include "ui/list-view.hpp"
 #include "ui/virtual-grid.hpp"
 #include "view.hpp"
 #include <qnamespace.h>
@@ -21,6 +22,15 @@ protected:
     return View::inputFilter(event);
   }
 
+  void selectionChanged(const AbstractGridMember &member) {
+    auto item = static_cast<const AbstractActionnableGridItem *>(&member);
+
+    setSignalActions(item->createActions());
+  }
+
 public:
-  GridView(AppWindow &app) : View(app), grid(new VirtualGridWidget) { widget = grid; }
+  GridView(AppWindow &app) : View(app), grid(new VirtualGridWidget) {
+    connect(grid, &VirtualGridWidget::selectionChanged, this, &GridView::selectionChanged);
+    widget = grid;
+  }
 };

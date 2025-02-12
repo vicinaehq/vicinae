@@ -1,10 +1,13 @@
 #pragma once
 #include "app.hpp"
 #include "calculator-database.hpp"
+#include "grid-view.hpp"
 #include "navigation-list-view.hpp"
-#include "tinyexpr.hpp"
 #include "ui/action_popover.hpp"
+#include "ui/list-view.hpp"
+#include "ui/virtual-grid.hpp"
 #include <qnamespace.h>
+#include <qobject.h>
 #include <qsharedpointer.h>
 #include <qthreadpool.h>
 #include <qtmetamacros.h>
@@ -27,19 +30,13 @@ public:
   }
 };
 
-class CalculatorHistoryListItem : public AbstractNativeListItem {
+class CalculatorHistoryListItem : public SimpleListGridItem {
   Q_OBJECT
 
   CalculatorEntry entry;
 
 public:
-  QWidget *createItem() const override {
-    return new ListItemWidget(
-        ImageViewer::createFromModel(ThemeIconModel{.iconName = ":icons/calculator"}, {25, 25}),
-        entry.expression, "", entry.result);
-  }
-
-  size_t id() const override { return qHash(QString("history-entry-%1").arg(entry.id)); };
+  // size_t id() const override { return qHash(QString("history-entry-%1").arg(entry.id)); };
 
   QList<AbstractAction *> createActions() const override {
     auto removeAction = new RemoveCalculatorHistoryEntryAction(entry.id);
@@ -53,41 +50,44 @@ public:
     };
   }
 
-  CalculatorHistoryListItem(const CalculatorEntry &entry) : entry(entry) {}
+  CalculatorHistoryListItem(const CalculatorEntry &entry)
+      : SimpleListGridItem(":icons/calculator", entry.expression, "", entry.result), entry(entry) {}
 
 signals:
   void removed();
 };
 
-class CalculatorHistoryView : public NavigationListView {
+class CalculatorHistoryView : public GridView {
   Service<CalculatorDatabase> calculatorDb;
-
   QString query;
 
   void handleListEntryRemoval() {
-    auto oldSelection = list->selected();
+    /*
+auto oldSelection = list->selected();
 
-    reloadSearch(query);
-    list->selectFrom(oldSelection);
+reloadSearch(query);
+list->selectFrom(oldSelection);
+  */
   }
 
   void reloadSearch(const QString &s) {
-    model->beginReset();
 
-    if (s.size() > 1) {
-      model->beginSection("Calculator");
-      te_parser parser;
-      double result = parser.evaluate(s.toLatin1().data());
+    /*
+if (s.size() > 1) {
+  model->beginSection("Calculator");
+  te_parser parser;
+  double result = parser.evaluate(s.toLatin1().data());
 
-      if (!std::isnan(result)) {
-        auto data = CalculatorItem{.expression = s, .result = result};
-        auto item = std::make_shared<BaseCalculatorListItem>(data);
+  if (!std::isnan(result)) {
+    auto data = CalculatorItem{.expression = s, .result = result};
+    auto item = std::make_shared<BaseCalculatorListItem>(data);
 
-        model->addItem(item);
-      }
-    }
+    model->addItem(item);
+  }
+}
+    */
 
-    model->beginSection("History");
+    VirtualGridSection history("History");
 
     for (const auto &entry : calculatorDb.listAll()) {
       if (!entry.expression.contains(s, Qt::CaseInsensitive) &&
@@ -95,13 +95,16 @@ class CalculatorHistoryView : public NavigationListView {
         continue;
       }
 
-      auto item = std::make_shared<CalculatorHistoryListItem>(entry);
+      auto item = new CalculatorHistoryListItem(entry);
 
-      connect(item.get(), &CalculatorHistoryListItem::removed, this, [this]() { handleListEntryRemoval(); });
-
-      model->addItem(item);
+      connect(item, &CalculatorHistoryListItem::removed, this, [this, item]() {
+        qDebug() << "remove";
+        grid->remove(item);
+      });
+      history.addItem(item);
     }
-    model->endReset();
+
+    grid->setSections({history});
   }
 
   void onSearchChanged(const QString &s) override {
@@ -114,6 +117,8 @@ class CalculatorHistoryView : public NavigationListView {
   }
 
 public:
-  CalculatorHistoryView(AppWindow &app)
-      : NavigationListView(app), calculatorDb(service<CalculatorDatabase>()) {}
+  CalculatorHistoryView(AppWindow &app) : GridView(app), calculatorDb(service<CalculatorDatabase>()) {
+    grid->setSpacing(0);
+    grid->setMargins(10, 5, 10, 5);
+  }
 };

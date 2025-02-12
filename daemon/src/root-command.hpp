@@ -6,7 +6,6 @@
 #include "command.hpp"
 #include "create-quicklink-command.hpp"
 #include "emoji-command.hpp"
-#include "extend/extension-command.hpp"
 #include "extension_manager.hpp"
 #include "files-command.hpp"
 #include "icon-browser-command.hpp"
@@ -197,13 +196,15 @@ class RootView : public NavigationListView {
     }
 
     QList<AbstractAction *> createActions() const override {
-      auto open = new OpenCommandAction(
-          [this](AppWindow &app, const QString &query) {
-            return new ExtensionCommand(app, cmd.extensionId, cmd.name);
-          },
-          "Open command", "folder");
+      /*
+auto open = new OpenCommandAction(
+[this](AppWindow &app, const QString &query) {
+  return new ExtensionCommand(app, cmd.extensionId, cmd.name);
+},
+"Open command", "folder");
 
-      return {open};
+return {open};
+*/
     }
 
   public:
@@ -341,15 +342,17 @@ public:
       }
     }
 
-    for (const auto &extension : extensionManager.extensions()) {
-      for (const auto &cmd : extension.commands) {
-        if (!cmd.name.contains(s, Qt::CaseInsensitive)) continue;
+    /*
+for (const auto &extension : extensionManager.extensions()) {
+  for (const auto &cmd : extension.commands) {
+    if (!cmd.name.contains(s, Qt::CaseInsensitive)) continue;
 
-        auto item = std::make_shared<ExtensionListItem>(cmd);
+    auto item = std::make_shared<ExtensionListItem>(cmd);
 
-        model->addItem(item);
-      }
-    }
+    model->addItem(item);
+  }
+}
+    */
 
     for (const auto &cmd : builtinCommands) {
       if (!cmd.name.contains(s, Qt::CaseInsensitive)) continue;

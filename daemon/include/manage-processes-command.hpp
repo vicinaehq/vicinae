@@ -2,38 +2,42 @@
 
 #include "app.hpp"
 #include "command.hpp"
-#include "navigation-list-view.hpp"
+#include "grid-view.hpp"
 #include "process-manager-service.hpp"
-#include "ui/virtual-list.hpp"
+#include "ui/action_popover.hpp"
+#include "ui/list-view.hpp"
 #include "view.hpp"
-#include <qnamespace.h>
+#include <csignal>
 
-class ManageProcessesMainView : public NavigationListView {
+class KillProcessAction : public AbstractAction {
+  int pid;
+
+  void execute(AppWindow &app) override { kill(pid, SIGKILL); }
+
+public:
+  KillProcessAction(int pid)
+      : AbstractAction("Kill process", ThemeIconModel{.iconName = ":icons/droplets.svg"}), pid(pid) {}
+};
+
+class ManageProcessesMainView : public GridView {
   Service<ProcessManagerService> processManager;
 
-  class ProcListItem : public StandardListItem {
+  class ProcListItem : public SimpleListGridItem {
     ProcessInfo info;
     int idx;
 
-    QWidget *createItem() const override {
-      return new ListItemWidget(
-          ImageViewer::createFromModel(ThemeIconModel{.iconName = "application-x-executable"}, {25, 25}),
-          info.comm, "", QString::number(idx));
+    virtual QList<AbstractAction *> createActions() const override {
+      return {new CopyTextAction("Copy pid", QString::number(info.pid)), new KillProcessAction(info.pid)};
     }
-
-    int height() const override { return 40; }
 
   public:
     ProcListItem(const ProcessInfo &info, int idx)
-        : StandardListItem(info.comm, "", QString::number(idx),
-                           ThemeIconModel{.iconName = "application-x-executable"}),
+        : SimpleListGridItem("application-x-executable", info.comm, "", QString::number(info.pid)),
           info(info), idx(idx) {}
   };
 
   void onSearchChanged(const QString &text) override {
-    model->beginReset();
-    model->beginSection("Running processes");
-
+    VirtualGridSection processes("Running processes");
     size_t limit = 0;
     size_t i = 0;
 
@@ -41,16 +45,20 @@ class ManageProcessesMainView : public NavigationListView {
       ++i;
       if (!proc.comm.contains(text, Qt::CaseInsensitive)) continue;
 
-      model->addItem(std::make_shared<ProcListItem>(proc, i - 1));
+      processes.addItem(new ProcListItem(proc, i - 1));
       ++limit;
     }
 
-    model->endReset();
+    grid->setSections({processes});
   }
 
+  void onMount() override { setSearchPlaceholderText("Search processes..."); }
+
 public:
-  ManageProcessesMainView(AppWindow &app)
-      : NavigationListView(app), processManager(service<ProcessManagerService>()) {}
+  ManageProcessesMainView(AppWindow &app) : GridView(app), processManager(service<ProcessManagerService>()) {
+    grid->setSpacing(0);
+    grid->setMargins(10, 5, 10, 5);
+  }
 };
 
 class ManageProcessesCommand : public ViewCommand {

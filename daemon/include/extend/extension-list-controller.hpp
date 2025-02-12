@@ -2,7 +2,6 @@
 #include "extend/action-model.hpp"
 #include "extend/list-model.hpp"
 #include "extension.hpp"
-#include "ui/list-view.hpp"
 #include "view.hpp"
 #include <QListWidget>
 #include <QStackedLayout>
@@ -28,21 +27,20 @@ class ExtensionList : public ExtensionComponent {
 
   View &parent;
   QVBoxLayout *layout;
-  ListView *list;
+  // ListView *list;
 
 private slots:
 public:
   ListModel model;
 
-  ExtensionList(const ListModel &model, View &parent)
-      : parent(parent), layout(new QVBoxLayout), list(new ListView) {
-    parent.forwardInputEvents(list->listWidget());
+  ExtensionList(const ListModel &model, View &parent) : parent(parent), layout(new QVBoxLayout) {
+    // parent.forwardInputEvents(list->listWidget());
 
     layout->setContentsMargins(0, 0, 0, 0);
-    layout->addWidget(list);
+    // layout->addWidget(list);
 
     // connect(list, &ListView::setActions, &parent, &View::setActions);
-    connect(list, &ListView::itemChanged, this, &ExtensionList::itemChanged);
+    // connect(list, &ListView::itemChanged, this, &ExtensionList::itemChanged);
 
     setLayout(layout);
     dispatchModel(model);
@@ -50,14 +48,12 @@ public:
 
   void dispatchModel(const ListModel &model) {
     parent.setSearchPlaceholderText(model.searchPlaceholderText);
-    list->dispatchModel(model);
+    // list->dispatchModel(model);
     this->model = model;
     qDebug() << "dispatching model update";
   }
 
-  void onActionActivated(ActionModel model) {
-    qDebug() << "activated" << model.title;
-  }
+  void onActionActivated(ActionModel model) { qDebug() << "activated" << model.title; }
 
   void itemChanged(const QString &id) { qDebug() << "item with id " << id; }
 
@@ -73,9 +69,8 @@ public:
       emit extensionEvent(model.onSearchTextChange, payload);
     }
 
-    if (!model.onSearchTextChange.isEmpty())
-      return;
+    if (!model.onSearchTextChange.isEmpty()) return;
 
-    list->filterItems(s);
+    // list->filterItems(s);
   }
 };

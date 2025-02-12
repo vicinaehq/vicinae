@@ -10,11 +10,15 @@
 #include "ui/action_popover.hpp"
 #include "ui/empty-view.hpp"
 #include "ui/horizontal-metadata.hpp"
+#include "ui/virtual-grid.hpp"
 #include <qapplication.h>
 #include <qboxlayout.h>
+#include <qcoreevent.h>
 #include <qevent.h>
 #include <qlistwidget.h>
 #include <qnamespace.h>
+#include <qobject.h>
+#include <qtpreprocessorsupport.h>
 #include <qwidget.h>
 
 class ListItemWidget : public QWidget {
@@ -101,6 +105,134 @@ public:
   QSize sizeHint() const override { return {0, 40}; }
 };
 
+class SimpleListWidget : public AbstractGridItemWidget {
+  bool isSelected;
+  bool isHovered;
+
+  void paintEvent(QPaintEvent *event) override {
+    QPainter painter(this);
+
+    if (isSelected || isHovered) {
+      int borderRadius = 10;
+      QPainter painter(this);
+
+      painter.setRenderHint(QPainter::Antialiasing, true);
+
+      QPainterPath path;
+      path.addRoundedRect(rect(), borderRadius, borderRadius);
+
+      painter.setClipPath(path);
+
+      QColor backgroundColor("#282726");
+
+      painter.fillPath(path, backgroundColor);
+    }
+  }
+
+  void selectionChanged(bool selected) override {
+    this->isSelected = selected;
+    update();
+  }
+
+  void mousePressEvent(QMouseEvent *event) override {
+    if (event->button() == Qt::LeftButton) { emit clicked(); }
+  }
+
+  void mouseDoubleClickEvent(QMouseEvent *event) override {
+    if (event->button() == Qt::LeftButton) { emit doubleClicked(); }
+  }
+
+  void setHovered(bool hovered) {
+    this->isHovered = hovered;
+    update();
+  }
+
+  void enterEvent(QEnterEvent *event) override {
+    Q_UNUSED(event);
+    setHovered(true);
+  }
+
+  void leaveEvent(QEvent *event) override {
+    Q_UNUSED(event);
+    setHovered(false);
+  }
+
+public:
+  SimpleListWidget(QWidget *parent = nullptr)
+      : AbstractGridItemWidget(parent), isSelected(false), isHovered(false) {
+    setAttribute(Qt::WA_Hover, true);
+  }
+};
+
+class ListItemWidget3 : public SimpleListWidget {
+  OmniIcon *icon;
+  QLabel *name;
+  QLabel *category;
+  QLabel *kind;
+
+public:
+  ListItemWidget3(const QString &iconDescriptor, const QString &name, const QString &category,
+                  const QString &kind, QWidget *parent = nullptr)
+      : SimpleListWidget(parent), icon(new OmniIcon), name(new QLabel), category(new QLabel),
+        kind(new QLabel) {
+
+    icon->setIcon(iconDescriptor, {25, 25});
+
+    auto mainLayout = new QHBoxLayout();
+
+    mainLayout->setContentsMargins(10, 8, 10, 8);
+
+    auto left = new QWidget();
+    auto leftLayout = new QHBoxLayout();
+
+    this->name->setText(name);
+    this->category->setText(category);
+    this->category->setProperty("class", "minor");
+
+    left->setLayout(leftLayout);
+    leftLayout->setSpacing(15);
+    leftLayout->setContentsMargins(0, 0, 0, 0);
+    leftLayout->addWidget(this->icon);
+    leftLayout->addWidget(this->name);
+    leftLayout->addWidget(this->category);
+
+    mainLayout->addWidget(left, 0, Qt::AlignLeft);
+
+    this->kind->setText(kind);
+    this->kind->setProperty("class", "minor");
+    mainLayout->addWidget(this->kind, 0, Qt::AlignRight);
+
+    setLayout(mainLayout);
+  }
+};
+
+class AbstractActionnableGridItem : public AbstractGridMember {
+public:
+  virtual QList<AbstractAction *> createActions() const { return {}; }
+};
+
+class SimpleListGridItem : public AbstractActionnableGridItem {
+  QString iconDescriptor;
+  QString name;
+  QString category;
+  QString kind;
+
+  AbstractGridItemWidget *widget(int columnWidth) const override {
+    return new ListItemWidget3(iconDescriptor, name, category, kind);
+  }
+
+  int heightForWidth(int columnWidth) const override {
+    static ListItemWidget3 ruler(":assets/icons/airplane-landing.svg", "", "", "", nullptr);
+
+    return ruler.sizeHint().height();
+  }
+
+public:
+  SimpleListGridItem(const QString &iconDescriptor, const QString &name, const QString &category,
+                     const QString &kind)
+      : iconDescriptor(iconDescriptor), name(name), category(category), kind(kind) {}
+};
+
 class DetailWidget : public QWidget {
   QVBoxLayout *layout;
   MarkdownView *markdownEditor;
@@ -155,259 +287,4 @@ public:
 
     setLayout(layout);
   }
-};
-
-class ListView : public QWidget, public IInputHandler {
-  Q_OBJECT
-
-  QVBoxLayout *layout;
-
-  QWidget *shownWidget = nullptr;
-
-  QWidget *listWithDetails;
-  QHBoxLayout *listLayout;
-  QListWidget *list;
-  DetailWidget *detail = nullptr;
-
-  EmptyViewWidget *emptyView = nullptr;
-  ActionPopover *actionPanel = nullptr;
-
-  QList<ListChild> items;
-  QHash<QListWidgetItem *, ListItemViewModel> itemMap;
-
-private slots:
-  void currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous) {
-    auto &item = itemMap[current];
-
-    emit itemChanged(item.id);
-
-    qDebug() << "selected item" << item.title;
-
-    if (item.actionPannel) {
-      qDebug() << "actions:" << item.actionPannel->children.size();
-      // actionPanel->dispatchModel(*item.actionPannel);
-      emit setActions(*item.actionPannel);
-    }
-
-    if (item.detail) {
-      auto newDetailWidget = new DetailWidget();
-
-      qDebug() << "item has detail with" << item.detail->metadata.children.size() << "metadata lines";
-
-      if (listLayout->count() == 2) {
-        listLayout->addWidget(newDetailWidget, 2);
-      } else {
-        listLayout->replaceWidget(detail, newDetailWidget);
-        detail->deleteLater();
-      }
-
-      detail = newDetailWidget;
-      detail->dispatchModel(*item.detail);
-    } else if (detail) {
-      listLayout->removeWidget(detail);
-      detail->deleteLater();
-    }
-  }
-
-  void handleItemActivated(QListWidgetItem *listItem) {
-    auto &item = itemMap[listItem];
-
-    emit itemActivated(item.id);
-  }
-
-  void setShownWidget(QWidget *widget) {
-    if (shownWidget == widget) return;
-
-    widget->show();
-    layout->replaceWidget(shownWidget, widget);
-    shownWidget->hide();
-    shownWidget = widget;
-  }
-
-  void showEmptyView(const EmptyViewModel &model) {
-    auto view = new EmptyViewWidget(model);
-
-    if (model.actions) { emit setActions(*model.actions); }
-
-    setShownWidget(view);
-  }
-
-public:
-  ListModel model;
-
-  void handleInput(QKeyEvent *event) override {
-    auto key = event->key();
-
-    switch (key) {
-    case Qt::Key_Up:
-    case Qt::Key_Down:
-    case Qt::Key_Return:
-      QApplication::sendEvent(list, event);
-      break;
-    default:
-      break;
-    }
-  }
-
-  ListView()
-      : layout(new QVBoxLayout), listWithDetails(new QWidget), listLayout(new QHBoxLayout),
-        list(new QListWidget()), actionPanel(new ActionPopover) {
-    list->setFocusPolicy(Qt::NoFocus);
-    list->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    list->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-
-    listLayout->setSpacing(0);
-    listLayout->addWidget(list, 1);
-    listLayout->addWidget(new VDivider());
-    listLayout->setContentsMargins(0, 0, 0, 0);
-
-    listWithDetails->setLayout(listLayout);
-
-    connect(list, &QListWidget::currentItemChanged, this, &ListView::currentItemChanged);
-    connect(list, &QListWidget::itemActivated, this, &ListView::handleItemActivated);
-
-    shownWidget = listWithDetails;
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->addWidget(shownWidget);
-
-    setLayout(layout);
-    dispatchModel(model);
-  }
-
-  QListWidget *listWidget() { return list; }
-
-  void dispatchModel(const ListModel &model) {
-    this->model = model;
-
-    qDebug() << "items" << model.items.size() << "list count" << list->count();
-
-    items.clear();
-
-    for (const auto &item : model.items) {
-      items.push_back(item);
-    }
-
-    if (model.emptyView) {
-      auto updatedEmptyView = new EmptyViewWidget(*model.emptyView);
-
-      qDebug() << "refresh empty view";
-
-      if (emptyView) emptyView->deleteLater();
-
-      emptyView = updatedEmptyView;
-    }
-
-    if (!model.emptyView && emptyView) {
-      emptyView->deleteLater();
-      emptyView = nullptr;
-    }
-
-    filterItems("");
-
-    qDebug() << "dispatching model update";
-  }
-
-  void filterItems(const QString &s = "") {
-    list->clear();
-    itemMap.clear();
-
-    for (const auto &item : items) {
-      if (auto model = std::get_if<ListSectionModel>(&item)) {
-        qDebug() << "list section model with " << model->children.size();
-        QList<const ListItemViewModel *> matchingItems;
-
-        for (const auto &item : model->children) {
-          if (!item.title.contains(s, Qt::CaseInsensitive)) continue;
-          matchingItems.push_back(&item);
-        }
-
-        if (matchingItems.isEmpty()) continue;
-
-        auto headerItem = new QListWidgetItem();
-
-        headerItem->setFlags(headerItem->flags() & !Qt::ItemIsSelectable);
-        list->addItem(headerItem);
-        auto headerWidget = new ListSectionHeaderWidget(*model);
-        list->setItemWidget(headerItem, headerWidget);
-        headerItem->setSizeHint(headerWidget->sizeHint());
-
-        for (const auto &item : matchingItems) {
-          auto iconWidget = ImageViewer::createFromModel(item->icon, {25, 25});
-          auto widget = new ListItemWidget(iconWidget, item->title, item->subtitle, "");
-          auto listItem = new QListWidgetItem();
-
-          list->addItem(listItem);
-          list->setItemWidget(listItem, widget);
-          listItem->setSizeHint(widget->sizeHint());
-          itemMap.insert(listItem, *item);
-        }
-      }
-
-      if (auto model = std::get_if<ListItemViewModel>(&item)) {
-        if (!model->title.contains(s, Qt::CaseInsensitive)) continue;
-
-        auto iconWidget = ImageViewer::createFromModel(model->icon, {25, 25});
-        auto widget = new ListItemWidget(iconWidget, model->title, model->subtitle, "");
-        auto listItem = new QListWidgetItem();
-
-        list->addItem(listItem);
-        list->setItemWidget(listItem, widget);
-        listItem->setSizeHint(widget->sizeHint());
-        itemMap.insert(listItem, *model);
-      }
-    }
-
-    qDebug() << "list count" << list->count() << model.isLoading;
-
-    if (list->count() == 0 && !model.isLoading && model.emptyView) {
-      showEmptyView(*model.emptyView);
-      return;
-    }
-
-    setShownWidget(listWithDetails);
-
-    for (int i = 0; i != list->count(); ++i) {
-      auto item = list->item(i);
-
-      if (!item->flags().testFlag(Qt::ItemIsSelectable)) continue;
-
-      list->setCurrentItem(item);
-      break;
-    }
-  }
-
-signals:
-  void activatePrimaryAction();
-  void setActions(const ActionPannelModel &model);
-  void itemChanged(const QString &id);
-  void itemActivated(const QString &id);
-};
-
-template <class ItemType, class ActionType> class ListController {
-  QHash<QString, ItemType> itemMap;
-  QHash<QString, ActionType> actionMap;
-
-protected:
-  void addItem(const QString &id, const ItemType &item) { itemMap.insert(id, item); }
-
-  void addAction(const QString &id, const ActionType &action) { actionMap.insert(id, action); }
-
-public:
-  virtual ListModel search(const QString &s) = 0;
-  virtual void onActionActivated(const ActionType &action) { qDebug() << "ouin ouin"; }
-
-  void reset() {
-    itemMap.clear();
-    actionMap.clear();
-  }
-
-  void handleSearch(const QString &s) { search(s); }
-
-  void handleActionActivated(const QString &s) {
-    auto &action = actionMap.value(s);
-
-    onActionActivated(action);
-  }
-
-  ListController() {}
 };
