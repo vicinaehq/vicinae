@@ -37,7 +37,9 @@ class ManageProcessesMainView : public GridView {
   };
 
   void onSearchChanged(const QString &text) override {
-    VirtualGridSection processes("Running processes");
+    grid->clear();
+
+    auto processes = grid->section("Running processes");
     size_t limit = 0;
     size_t i = 0;
 
@@ -45,11 +47,11 @@ class ManageProcessesMainView : public GridView {
       ++i;
       if (!proc.comm.contains(text, Qt::CaseInsensitive)) continue;
 
-      processes.addItem(new ProcListItem(proc, i - 1));
+      processes->addItem(new ProcListItem(proc, i - 1));
       ++limit;
     }
 
-    grid->setSections({processes});
+    grid->updateLayout();
   }
 
   void onMount() override { setSearchPlaceholderText("Search processes..."); }

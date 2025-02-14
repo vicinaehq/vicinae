@@ -20,6 +20,8 @@ public:
     return label;
   }
 
+  int key() const override { return qHash(info.emoji); }
+
   EmojiGridItem(const EmojiInfo &info) : info(info) {}
 };
 

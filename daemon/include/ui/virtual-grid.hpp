@@ -43,6 +43,7 @@ public:
   virtual int heightForWidth(int columnWidth) const = 0;
   virtual bool selectable() { return true; }
   virtual bool role() { return GridItemRole; }
+  virtual int key() const { return qHash(QUuid::createUuid().toString()); }
 
   AbstractGridMember() {}
   virtual ~AbstractGridMember() {}
@@ -485,6 +486,7 @@ class VirtualGridWidget : public QWidget {
   Q_OBJECT
 
   struct VirtualWidget {
+    int key;
     int height;
     int offset;
     int widthOffset;
@@ -493,7 +495,7 @@ class VirtualGridWidget : public QWidget {
   };
 
   QList<VirtualWidget> m_virtual_items;
-  QList<VirtualGridSection> sections;
+  QList<VirtualGridSection> m_sections;
 
   int ncols = 1;
   int m_spacing = 10;
@@ -509,6 +511,7 @@ class VirtualGridWidget : public QWidget {
   QHash<AbstractGridMember *, GridItemWrapper *> itemWidgets;
   QHash<int, GridItemWrapper *> visibleWidgets;
   QHash<QString, GridListSectionHeader *> sectionHeaders;
+  QHash<int, GridItemWrapper *> widgetCache;
 
   void keyPressEvent(QKeyEvent *event) override {
     switch (event->key()) {
@@ -606,6 +609,10 @@ class VirtualGridWidget : public QWidget {
   }
 
   void updateViewport() {
+    for (auto widget : widgetCache) {
+      widget->hide();
+    }
+
     int scrollHeight = scrollBar->value();
     int startIndex = 0;
 
@@ -626,7 +633,7 @@ class VirtualGridWidget : public QWidget {
     for (; endIndex < m_virtual_items.size(); ++endIndex) {
       auto vitem = m_virtual_items[endIndex];
       auto item = vitem.item;
-      auto widget = itemWidgets.value(vitem.item);
+      auto widget = widgetCache.value(vitem.key);
 
       if (rowOffset < vitem.offset) {
         height += vitem.offset - rowOffset;
@@ -637,7 +644,7 @@ class VirtualGridWidget : public QWidget {
         widget = new GridItemWrapper(this);
         widget->setFixedSize({vitem.width, vitem.height});
         widget->setItem(item);
-        itemWidgets.insert(vitem.item, widget);
+        widgetCache.insert(vitem.key, widget);
 
         if (item->selectable()) {
           connect(widget, &GridItemWrapper::clicked, this, [this, endIndex]() {
@@ -653,9 +660,11 @@ class VirtualGridWidget : public QWidget {
 
       visibleWidgets.insert(endIndex, widget);
       widget->setSelected(m_selected == endIndex);
-      widget->move(vitem.widthOffset, height);
-      widget->show();
 
+      QPoint pos(vitem.widthOffset, height);
+
+      if (pos != widget->pos()) { widget->move(pos); }
+      if (!widget->isVisible()) widget->show();
       if (height > this->height()) break;
     }
 
@@ -664,7 +673,7 @@ class VirtualGridWidget : public QWidget {
         auto vitem = m_virtual_items[idx];
         auto widget = visibleWidgets[idx];
 
-        itemWidgets.remove(vitem.item);
+        widgetCache.remove(vitem.key);
         visibleWidgets.remove(idx);
         widget->deleteLater();
       }
@@ -675,6 +684,18 @@ class VirtualGridWidget : public QWidget {
 
 public:
   void setColumns(int columns = 1) { this->ncols = columns; }
+
+  VirtualGridSection *section(const QString &key) {
+    for (auto &section : m_sections) {
+      if (section.name() == key) return &section;
+    }
+
+    m_sections << VirtualGridSection(key);
+
+    return &m_sections[m_sections.size() - 1];
+  }
+
+  const QList<VirtualGridSection> &sections() { return m_sections; }
 
   void setMargins(int left, int top, int right, int bottom) {
     margins.left = left;
@@ -688,8 +709,9 @@ public:
   void calculateLayout() {
     QList<VirtualWidget> vitems;
     int offset = 0;
+    QHash<int, GridItemWrapper *> updatedCache;
 
-    for (const auto &section : sections) {
+    for (const auto &section : m_sections) {
       int innerGapSpacing = m_spacing * (ncols - 1);
       int usableSpace = width() - innerGapSpacing - margins.left - margins.right;
       int idealColumnWidth = usableSpace / ncols;
@@ -700,8 +722,12 @@ public:
       if (!items.isEmpty() && !section.name().isEmpty()) {
         auto item = new GridSectionLabel(section.name(), items.size());
         int height = item->heightForWidth(width() - margins.left - margins.right);
+        auto key = item->key();
 
-        vitems << VirtualWidget{.height = height,
+        if (auto widget = widgetCache.value(key)) { updatedCache.insert(key, widget); }
+
+        vitems << VirtualWidget{.key = key,
+                                .height = height,
                                 .offset = offset,
                                 .widthOffset = margins.left,
                                 .width = width() - margins.left - margins.right,
@@ -715,9 +741,16 @@ public:
         auto item = items.at(i);
         int colWidth = idealColumnWidth + (error < i % ncols);
         int height = item->heightForWidth(colWidth);
+        int key = item->key();
 
-        vitems << VirtualWidget{
-            .height = height, .offset = offset, .widthOffset = widthOffset, .width = colWidth, .item = item};
+        if (auto widget = widgetCache.value(key)) { updatedCache.insert(key, widget); }
+
+        vitems << VirtualWidget{.key = key,
+                                .height = height,
+                                .offset = offset,
+                                .widthOffset = widthOffset,
+                                .width = colWidth,
+                                .item = item};
         widthOffset += colWidth + m_spacing;
         maxHeight = std::max(height, maxHeight);
 
@@ -730,6 +763,16 @@ public:
 
       if (items.size() % ncols) { offset += maxHeight; }
     }
+
+    for (auto key : widgetCache.keys()) {
+      if (!updatedCache.value(key)) { widgetCache.value(key)->deleteLater(); }
+    }
+
+    for (auto key : updatedCache.keys()) {
+      qDebug() << "cached" << key;
+    }
+
+    widgetCache = updatedCache;
 
     offset += margins.bottom;
 
@@ -757,12 +800,12 @@ public:
     }
 
     m_virtual_items.clear();
-    this->sections.clear();
+    this->m_sections.clear();
   }
 
   void setSections(const QList<VirtualGridSection> &sections) {
     clear();
-    this->sections = sections;
+    this->m_sections = sections;
     calculateLayout();
 
     m_selected = -1;
@@ -788,7 +831,7 @@ public:
   void setSpacing(int spacing) { m_spacing = spacing; }
 
   void remove(AbstractGridMember *member) {
-    for (auto &section : sections) {
+    for (auto &section : m_sections) {
       section.removeItem(member);
     }
 
