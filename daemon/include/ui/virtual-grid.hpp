@@ -500,6 +500,7 @@ class VirtualGridWidget : public QWidget {
   int ncols = 1;
   int m_spacing = 10;
   int m_selected = -1;
+  int m_selection_key = -1;
   struct {
     int left;
     int top;
@@ -510,7 +511,6 @@ class VirtualGridWidget : public QWidget {
   QScrollBar *scrollBar;
   QHash<AbstractGridMember *, GridItemWrapper *> itemWidgets;
   QHash<int, GridItemWrapper *> visibleWidgets;
-  QHash<QString, GridListSectionHeader *> sectionHeaders;
   QHash<int, GridItemWrapper *> widgetCache;
 
   void keyPressEvent(QKeyEvent *event) override {
@@ -634,6 +634,7 @@ class VirtualGridWidget : public QWidget {
       auto vitem = m_virtual_items[endIndex];
       auto item = vitem.item;
       auto widget = widgetCache.value(vitem.key);
+      int key = vitem.key;
 
       if (rowOffset < vitem.offset) {
         height += vitem.offset - rowOffset;
@@ -646,16 +647,17 @@ class VirtualGridWidget : public QWidget {
         widget->setItem(item);
         widgetCache.insert(vitem.key, widget);
 
-        if (item->selectable()) {
-          connect(widget, &GridItemWrapper::clicked, this, [this, endIndex]() {
-            qDebug() << "clicked";
-            setSelected(endIndex);
-          });
-          connect(widget, &GridItemWrapper::doubleClicked, this,
-                  [this, item]() { emit itemActivated(*item); });
-        }
       } else {
         widget->setFixedSize({vitem.width, vitem.height});
+      }
+
+      if (item->selectable()) {
+        widget->disconnect();
+        connect(widget, &GridItemWrapper::clicked, this, [this, endIndex, key]() {
+          qDebug() << "clicked";
+          setSelectedKey(key);
+        });
+        connect(widget, &GridItemWrapper::doubleClicked, this, [this, item]() { emit itemActivated(*item); });
       }
 
       visibleWidgets.insert(endIndex, widget);
@@ -778,6 +780,17 @@ public:
 
     int virtualScrollHeight = qMax(0, offset - height());
 
+    if (m_selected != -1 && m_selected < vitems.size()) {
+      qDebug() << "selected" << m_selected << "size" << vitems.size();
+      auto item = vitems[m_selected];
+      int selectionKey = item.key;
+
+      if (selectionKey != m_selection_key) {
+        emit selectionChanged(*item.item);
+        m_selection_key = selectionKey;
+      }
+    }
+
     m_virtual_items = vitems;
     scrollBar->setMaximum(virtualScrollHeight);
     scrollBar->setVisible(virtualScrollHeight > 0);
@@ -830,26 +843,23 @@ public:
 
   void setSpacing(int spacing) { m_spacing = spacing; }
 
-  void remove(AbstractGridMember *member) {
-    for (auto &section : m_sections) {
-      section.removeItem(member);
+  void remove(AbstractGridMember *member) {}
+
+  void setSelectedKey(int key) {
+    for (int i = 0; i != m_virtual_items.size(); ++i) {
+      auto &item = m_virtual_items[i];
+
+      if (item.key == key) {
+        setSelected(i);
+        return;
+      }
     }
-
-    if (auto widget = itemWidgets.value(member)) {
-      widget->deleteLater();
-      itemWidgets.remove(member);
-    }
-
-    member->deleteLater();
-
-    updateLayout();
   }
 
   void setSelected(int index) {
     if (m_selected == index || index < 0 || index >= m_virtual_items.size()) return;
 
     while (index < m_virtual_items.size() && !m_virtual_items[index].item->selectable()) {
-      qDebug() << "skip" << index << "non selectable";
       ++index;
     }
 
@@ -884,7 +894,11 @@ public:
     }
 
     updateViewport();
-    emit selectionChanged(*item.item);
+
+    if (m_selection_key != item.key) {
+      emit selectionChanged(*item.item);
+      m_selection_key = item.key;
+    }
   }
 
   void resizeEvent(QResizeEvent *event) override {

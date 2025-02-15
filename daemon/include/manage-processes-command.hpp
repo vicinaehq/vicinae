@@ -30,6 +30,8 @@ class ManageProcessesMainView : public GridView {
       return {new CopyTextAction("Copy pid", QString::number(info.pid)), new KillProcessAction(info.pid)};
     }
 
+    int key() const override { return info.pid; }
+
   public:
     ProcListItem(const ProcessInfo &info, int idx)
         : SimpleListGridItem("application-x-executable", info.comm, "", QString::number(info.pid)),
@@ -52,6 +54,7 @@ class ManageProcessesMainView : public GridView {
     }
 
     grid->updateLayout();
+    grid->setSelected(0);
   }
 
   void onMount() override { setSearchPlaceholderText("Search processes..."); }

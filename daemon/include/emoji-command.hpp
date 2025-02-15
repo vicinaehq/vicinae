@@ -48,21 +48,22 @@ public:
       if (QString(emoji.description).contains(s, Qt::CaseInsensitive)) { items << new EmojiGridItem(emoji); }
     }
 
-    QList<VirtualGridSection> sections;
     QHash<QString, VirtualGridSection *> sectionMap;
+
+    grid->clear();
 
     for (auto item : items) {
       auto section = sectionMap.value(item->info.category);
 
       if (!section) {
-        sections << VirtualGridSection(item->info.category);
-        section = &sections[sections.size() - 1];
+        section = grid->section(item->info.category);
         sectionMap.insert(item->info.category, section);
       }
 
       section->addItem(item);
     }
 
-    grid->setSections(sections);
+    grid->updateLayout();
+    grid->setSelected(0);
   }
 };
