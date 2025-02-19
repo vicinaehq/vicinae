@@ -9,39 +9,59 @@
 class IconBrowserView : public GridView {
 
   class IconBrowserItem : public AbstractGridItem {
-    QString name, displayName;
+    QString m_name, m_displayName;
 
-    QString tooltip() const override { return displayName; }
+    QString tooltip() const override { return m_displayName; }
 
     QWidget *centerWidget() const override {
       auto iconLabel = new QLabel;
 
-      iconLabel->setPixmap(QIcon::fromTheme(name).pixmap({32, 32}));
+      iconLabel->setPixmap(QIcon::fromTheme(m_name).pixmap({32, 32}));
 
       return iconLabel;
     }
 
+    int key() const override { return qHash(m_name); }
+
   public:
-    IconBrowserItem(const QString &name, const QString &displayName) : name(name), displayName(displayName) {}
+    const QString &name() { return m_name; }
+    const QString &displayName() { return m_displayName; }
+
+    IconBrowserItem(const QString &name, const QString &displayName)
+        : m_name(name), m_displayName(displayName) {}
   };
 
-  void onSearchChanged(const QString &s) override {
-    VirtualGridSection section("Icons");
+  std::vector<IconBrowserItem *> items;
 
+  void onSearchChanged(const QString &s) override {
+    grid->clear();
+
+    auto icons = grid->section("Icons");
+
+    for (const auto &item : items) {
+      if (item->displayName().contains(s, Qt::CaseInsensitive)) { icons->addItem(item); }
+    }
+
+    grid->calculateLayout();
+    grid->setSelected(0);
+  }
+
+  void onMount() override {
     for (const auto &icon : BuiltinIconService::icons()) {
       auto ss = icon.split(".");
       ss = ss.at(0).split("/");
 
       auto displayName = ss.at(ss.size() - 1);
 
-      if (displayName.contains(s, Qt::CaseInsensitive)) {
-        section.addItem(new IconBrowserItem(icon, displayName));
-      }
+      items.push_back(new IconBrowserItem(icon, displayName));
     }
-
-    grid->setSections({section});
   }
 
 public:
   IconBrowserView(AppWindow &app) : GridView(app) { grid->setColumns(8); }
+  ~IconBrowserView() {
+    for (const auto &item : items) {
+      item->deleteLater();
+    }
+  }
 };
