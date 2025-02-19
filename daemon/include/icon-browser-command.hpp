@@ -1,7 +1,7 @@
 #pragma once
 #include "app.hpp"
 #include "builtin_icon.hpp"
-#include "grid-view.hpp"
+#include "ui/grid-view.hpp"
 #include "ui/virtual-grid.hpp"
 #include <qlabel.h>
 #include <qnamespace.h>

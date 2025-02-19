@@ -55,9 +55,14 @@ qt_add_executable(${TARGET}
 
 	include/quicklink-actions.hpp
 
+	include/ui/grid-view.hpp
+
 	src/emoji-list.cpp
 
 	src/calculator-history-command.hpp
+
+	src/ui/ellided-label.cpp
+	include/ui/ellided-label.hpp
 
 	src/tinyexpr.cpp
 	include/tinyexpr.hpp

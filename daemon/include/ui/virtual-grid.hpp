@@ -1,8 +1,7 @@
 #pragma once
 #include "builtin_icon.hpp"
-#include "omni-icon.hpp"
 #include "ui/action_popover.hpp"
-#include "ui/virtual-list.hpp"
+#include "ui/text-label.hpp"
 #include <qboxlayout.h>
 #include <qdatetime.h>
 #include <qevent.h>
@@ -43,10 +42,84 @@ public:
   virtual int heightForWidth(int columnWidth) const = 0;
   virtual bool selectable() { return true; }
   virtual bool role() { return GridItemRole; }
-  virtual int key() const { return qHash(QUuid::createUuid().toString()); }
+  virtual int key() const {
+    qDebug() << "default key()";
+    return qHash(QUuid::createUuid().toString());
+  }
 
   AbstractGridMember() {}
   virtual ~AbstractGridMember() {}
+};
+
+class AbstractGridItemWidget : public QWidget {
+  Q_OBJECT
+
+public:
+  virtual void selectionChanged(bool selected) {}
+
+signals:
+  void clicked();
+  void doubleClicked();
+
+public:
+  AbstractGridItemWidget(QWidget *parent = nullptr) : QWidget(parent) {}
+};
+
+class GridListSectionHeader : public AbstractGridItemWidget {
+  TextLabel *countLabel;
+
+public:
+  GridListSectionHeader(const QString &title, const QString &subtitle, size_t count)
+      : countLabel(new TextLabel) {
+    setAttribute(Qt::WA_StyledBackground);
+
+    auto layout = new QHBoxLayout();
+
+    layout->setContentsMargins(5, 15, 5, 10);
+
+    auto leftWidget = new QWidget();
+    auto leftLayout = new QHBoxLayout();
+
+    leftLayout->setContentsMargins(0, 0, 0, 0);
+    leftLayout->setSpacing(10);
+    leftLayout->addWidget(new TextLabel(title));
+    leftLayout->addWidget(countLabel);
+
+    countLabel->setText(QString::number(count));
+    leftWidget->setLayout(leftLayout);
+
+    layout->addWidget(leftWidget, 0, Qt::AlignLeft | Qt::AlignVCenter);
+    layout->addWidget(new TextLabel(subtitle), 0, Qt::AlignRight | Qt::AlignVCenter);
+
+    setLayout(layout);
+  }
+
+  void setCount(int count) { countLabel->setText(QString::number(count)); }
+};
+
+struct GridSectionLabel : public AbstractGridMember {
+  QString name;
+  int count;
+
+  AbstractGridItemWidget *widget(int columnWidth) const override {
+    return new GridListSectionHeader(name, "", count);
+  }
+
+  int heightForWidth(int columnWidth) const override {
+    GridListSectionHeader w(name, "", count);
+
+    return w.sizeHint().height();
+  }
+
+  int key() const override { return qHash("section:" + name); }
+
+  bool role() override { return GridSectionNameRole; }
+
+  bool selectable() override { return false; }
+
+  void setCount(int count) { this->count = count; }
+
+  GridSectionLabel(const QString &name) : name(name), count(0) {}
 };
 
 class VirtualGridSection {
@@ -71,205 +144,6 @@ public:
   }
 };
 
-class MainWidget : public QWidget {
-  Q_OBJECT
-
-  class Tooltip : public QWidget {
-    QLabel *label;
-
-    void paintEvent(QPaintEvent *event) override {
-      int borderRadius = 10;
-      QColor borderColor("#444444");
-
-      QPainter painter(this);
-
-      painter.setRenderHint(QPainter::Antialiasing, true);
-
-      QPainterPath path;
-      path.addRoundedRect(rect(), borderRadius, borderRadius);
-
-      painter.setClipPath(path);
-
-      QColor backgroundColor("#171615");
-
-      painter.fillPath(path, backgroundColor);
-
-      // Draw the border
-      QPen pen(borderColor, 1); // Border with a thickness of 2
-      painter.setPen(pen);
-      painter.drawPath(path);
-    }
-
-  public:
-    Tooltip(QWidget *parent = nullptr) : QWidget(parent), label(new QLabel) {
-      setWindowFlags(Qt::FramelessWindowHint | Qt::ToolTip);
-      setAttribute(Qt::WA_TranslucentBackground);
-
-      auto layout = new QVBoxLayout;
-
-      layout->addWidget(label);
-      setLayout(layout);
-    }
-
-    void setText(const QString &s) { label->setText(s); }
-    QString text() { return label->text(); }
-  };
-
-  QVBoxLayout *layout;
-  bool selected;
-  bool hovered;
-  Tooltip *tooltip;
-
-protected:
-  int borderWidth() const { return 3; }
-
-  QColor borderColor() const {
-    if (selected) return "#BBBBBB";
-    if (hovered) return "#888888";
-
-    return "#202020";
-  }
-
-  void paintEvent(QPaintEvent *event) override {
-    int borderRadius = 10;
-
-    QPainter painter(this);
-
-    painter.setRenderHint(QPainter::Antialiasing, true);
-
-    QPainterPath path;
-    path.addRoundedRect(rect(), borderRadius, borderRadius);
-
-    painter.setClipPath(path);
-
-    QColor backgroundColor("#202020");
-
-    painter.fillPath(path, backgroundColor);
-
-    QPen pen(borderColor(), 3);
-    painter.setPen(pen);
-    painter.drawPath(path);
-  }
-
-  void enterEvent(QEnterEvent *event) override { setHovered(true); }
-  void leaveEvent(QEvent *event) override { setHovered(false); }
-
-  void mousePressEvent(QMouseEvent *event) override { emit clicked(); }
-  void mouseDoubleClickEvent(QMouseEvent *event) override { emit doubleClicked(); }
-
-public:
-  MainWidget() : layout(new QVBoxLayout), selected(false), hovered(false), tooltip(new Tooltip) {
-    setLayout(layout);
-
-    tooltip->hide();
-  }
-
-  ~MainWidget() { tooltip->deleteLater(); }
-
-  void setTooltipText(const QString &text) { tooltip->setText(text); }
-
-  void showTooltip() {
-    const QPoint globalPos = mapToGlobal(QPoint(0, height() + 5));
-
-    tooltip->adjustSize();
-    tooltip->move(globalPos);
-    tooltip->show();
-  }
-
-  void hideTooltip() { tooltip->hide(); }
-
-  void setHovered(bool hovered) {
-    this->hovered = hovered;
-
-    if (hovered && !tooltip->text().isEmpty())
-      showTooltip();
-    else
-      hideTooltip();
-
-    update();
-  }
-
-  void setSelected(bool selected) {
-    this->selected = selected;
-    update();
-  }
-  void setInset(int inset) { layout->setContentsMargins(inset, inset, inset, inset); }
-  void setWidget(QWidget *widget) {
-    if (layout->count() > 0) {
-      auto old = layout->itemAt(0)->widget();
-
-      layout->replaceWidget(old, widget);
-      old->deleteLater();
-    } else {
-      layout->addWidget(widget, 0, Qt::AlignCenter);
-    }
-  }
-
-signals:
-  void clicked();
-  void doubleClicked();
-};
-
-class AbstractGridItemWidget : public QWidget {
-  Q_OBJECT
-
-public:
-  virtual void selectionChanged(bool selected) {}
-
-signals:
-  void clicked();
-  void doubleClicked();
-
-public:
-  AbstractGridItemWidget(QWidget *parent = nullptr) : QWidget(parent) {}
-};
-
-class GridListSectionHeader : public AbstractGridItemWidget {
-public:
-  GridListSectionHeader(const QString &title, const QString &subtitle, size_t count) {
-    setAttribute(Qt::WA_StyledBackground);
-
-    auto layout = new QHBoxLayout();
-
-    layout->setContentsMargins(5, 15, 5, 10);
-
-    auto leftWidget = new QWidget();
-    auto leftLayout = new QHBoxLayout();
-
-    leftLayout->setContentsMargins(0, 0, 0, 0);
-    leftLayout->setSpacing(10);
-    leftLayout->addWidget(new TextLabel(title));
-    if (count > 0) { leftLayout->addWidget(new TextLabel(QString::number(count))); }
-    leftWidget->setLayout(leftLayout);
-
-    layout->addWidget(leftWidget, 0, Qt::AlignLeft | Qt::AlignVCenter);
-    layout->addWidget(new TextLabel(subtitle), 0, Qt::AlignRight | Qt::AlignVCenter);
-
-    setLayout(layout);
-  }
-};
-
-struct GridSectionLabel : public AbstractGridMember {
-  QString name;
-  int count;
-
-  AbstractGridItemWidget *widget(int columnWidth) const override {
-    return new GridListSectionHeader(name, "", count);
-  }
-
-  int heightForWidth(int columnWidth) const override {
-    GridListSectionHeader w(name, "", count);
-
-    return w.sizeHint().height();
-  }
-
-  bool role() override { return GridSectionNameRole; }
-
-  bool selectable() override { return false; }
-
-  GridSectionLabel(const QString &name, int count) : name(name), count(count) {}
-};
-
 class GridItemWrapper : public QWidget {
   Q_OBJECT
 
@@ -292,6 +166,8 @@ public:
     connect(this->widget, &AbstractGridItemWidget::doubleClicked, this, &GridItemWrapper::doubleClicked);
   }
 
+  AbstractGridItemWidget *unwrap() const { return widget; }
+
   void setSelected(bool selected) { widget->selectionChanged(selected); }
 
   GridItemWrapper(QWidget *parent = nullptr) : QWidget(parent) {}
@@ -299,103 +175,6 @@ public:
 signals:
   void clicked();
   void doubleClicked();
-};
-
-class GridItemWidget : public AbstractGridItemWidget {
-  QVBoxLayout *layout;
-  EllidedLabel *titleLabel;
-  EllidedLabel *subtitleLabel;
-  bool m_selected;
-
-  void resizeEvent(QResizeEvent *event) override {
-    auto size = event->size();
-
-    main->setFixedSize({size.width(), size.width()});
-    AbstractGridItemWidget::resizeEvent(event);
-  }
-
-public:
-  MainWidget *main;
-
-  GridItemWidget(QWidget *parent = nullptr)
-      : AbstractGridItemWidget(parent), layout(new QVBoxLayout), main(new MainWidget),
-        titleLabel(new EllidedLabel), subtitleLabel(new EllidedLabel), m_selected(false) {
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->addWidget(main);
-    layout->addWidget(titleLabel);
-    layout->addWidget(subtitleLabel);
-
-    setLayout(layout);
-
-    connect(main, &MainWidget::clicked, this, &AbstractGridItemWidget::clicked);
-    connect(main, &MainWidget::doubleClicked, this, &AbstractGridItemWidget::doubleClicked);
-  }
-
-  void selectionChanged(bool selected) override { main->setSelected(selected); }
-
-  void setTitle(const QString &title) {
-    titleLabel->setText(title);
-    titleLabel->setVisible(!title.isEmpty());
-  }
-
-  void setSubtitle(const QString &subtitle) {
-    subtitleLabel->setText(subtitle);
-    subtitleLabel->setVisible(!subtitle.isEmpty());
-  }
-
-  void setTooltipText(const QString &tooltip) { main->setTooltipText(tooltip); }
-
-  void setWidget(QWidget *widget) { main->setWidget(widget); }
-  size_t spacing() { return layout->spacing(); }
-};
-
-class AbstractGridItem : public AbstractGridMember {
-public:
-  virtual QString title() const { return {}; }
-  virtual QString subtitle() const { return {}; }
-
-  virtual QWidget *centerWidget() const = 0;
-
-  int heightForWidth(int columnWidth) const override {
-    static GridItemWidget ruler;
-
-    auto fm = ruler.fontMetrics();
-    auto spacing = ruler.spacing();
-    int height = columnWidth;
-
-    if (!title().isEmpty()) { height += fm.ascent() + spacing; }
-    if (!subtitle().isEmpty()) { height += fm.ascent() + spacing; }
-
-    return height;
-  }
-
-  virtual AbstractGridItemWidget *widget(int columnWidth) const override {
-    auto item = new GridItemWidget();
-
-    item->setTitle(title());
-    item->setSubtitle(subtitle());
-    item->setTooltipText(tooltip());
-    item->setWidget(centerWidget());
-
-    return item;
-  }
-
-  virtual QString tooltip() const { return {}; }
-};
-
-class GridViewportWidget : public QWidget {
-  Q_OBJECT
-
-  void resizeEvent(QResizeEvent *event) override {
-    QWidget::resizeEvent(event);
-    emit resized(event);
-  }
-
-signals:
-  void resized(QResizeEvent *event);
-
-public:
-  GridViewportWidget(QWidget *parent = nullptr) : QWidget(parent) {}
 };
 
 class OmniScrollBar : public QScrollBar {
@@ -494,8 +273,20 @@ class VirtualGridWidget : public QWidget {
     AbstractGridMember *item;
   };
 
-  QList<VirtualWidget> m_virtual_items;
+  struct ListItemInfo {
+    AbstractGridMember *item;
+    bool visible;
+  };
+
   QList<VirtualGridSection> m_sections;
+  std::vector<VirtualWidget> m_virtual_items;
+  std::vector<ListItemInfo> m_items;
+
+  struct RemoveOperation {
+    AbstractGridMember *item;
+  };
+
+  std::vector<RemoveOperation> pendingRm;
 
   int ncols = 1;
   int m_spacing = 10;
@@ -512,6 +303,8 @@ class VirtualGridWidget : public QWidget {
   QHash<AbstractGridMember *, GridItemWrapper *> itemWidgets;
   QHash<int, GridItemWrapper *> visibleWidgets;
   QHash<int, GridItemWrapper *> widgetCache;
+
+  QHash<AbstractGridMember *, int> vitemMap;
 
   void keyPressEvent(QKeyEvent *event) override {
     switch (event->key()) {
@@ -653,9 +446,9 @@ class VirtualGridWidget : public QWidget {
 
       if (item->selectable()) {
         widget->disconnect();
-        connect(widget, &GridItemWrapper::clicked, this, [this, endIndex, key]() {
+        connect(widget, &GridItemWrapper::clicked, this, [this, endIndex]() {
           qDebug() << "clicked";
-          setSelectedKey(key);
+          setSelected(endIndex);
         });
         connect(widget, &GridItemWrapper::doubleClicked, this, [this, item]() { emit itemActivated(*item); });
       }
@@ -684,6 +477,9 @@ class VirtualGridWidget : public QWidget {
 
   void wheelEvent(QWheelEvent *event) override { QApplication::sendEvent(scrollBar, event); }
 
+  int virtualHeight = 0;
+  bool resetFlag = false;
+
 public:
   void setColumns(int columns = 1) { this->ncols = columns; }
 
@@ -708,32 +504,103 @@ public:
 
   void updateLayout() { calculateLayout(); }
 
+  // todo: fix linear search
+  void setItemVisibility(AbstractGridMember *item, bool value) {
+    for (auto &li : m_items) {
+      if (li.item == item) li.visible = value;
+    }
+  }
+
+  int indexOfItem(AbstractGridMember *item) {
+    for (int i = 0; i != m_virtual_items.size(); ++i) {
+      if (m_virtual_items[i].item == item) return i;
+    }
+
+    return -1;
+  }
+
+  const std::vector<ListItemInfo> &items() { return m_items; }
+
+  void addItem(AbstractGridMember *item, const QString &section = "") {
+    m_items.push_back({.item = item, .visible = true});
+  }
+
+  QHash<QString, GridSectionLabel *> sectionLabelMap;
+
+  bool removeSection(const QString &name) {
+    for (int i = 0; i != m_sections.size(); ++i) {
+      if (m_sections[i].name() == name) {
+        sectionLabelMap.value(name)->deleteLater();
+        m_sections.removeAt(i);
+
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  int totalItemSize() {
+    int count = 0;
+
+    for (const auto &section : m_sections) {
+      count += section.items().size();
+    }
+
+    return count;
+  }
+
   void calculateLayout() {
-    QList<VirtualWidget> vitems;
+    auto start = std::chrono::high_resolution_clock::now();
+
     int offset = 0;
     QHash<int, GridItemWrapper *> updatedCache;
+    int size = totalItemSize();
+
+    m_virtual_items.clear();
+    m_virtual_items.reserve(size);
+
+    int marginFreeWidth = width() - margins.left - margins.right;
+
+    qDebug() << "total items" << size;
 
     for (const auto &section : m_sections) {
       int innerGapSpacing = m_spacing * (ncols - 1);
-      int usableSpace = width() - innerGapSpacing - margins.left - margins.right;
+      int usableSpace = marginFreeWidth - innerGapSpacing;
       int idealColumnWidth = usableSpace / ncols;
       int error = usableSpace - idealColumnWidth * ncols;
       auto &items = section.items();
       int maxHeight = 0;
 
       if (!items.isEmpty() && !section.name().isEmpty()) {
-        auto item = new GridSectionLabel(section.name(), items.size());
-        int height = item->heightForWidth(width() - margins.left - margins.right);
-        auto key = item->key();
+        auto labelItem = sectionLabelMap.value(section.name());
 
-        if (auto widget = widgetCache.value(key)) { updatedCache.insert(key, widget); }
+        if (!labelItem) {
+          labelItem = new GridSectionLabel(section.name());
+          sectionLabelMap.insert(section.name(), labelItem);
+        }
 
-        vitems << VirtualWidget{.key = key,
-                                .height = height,
-                                .offset = offset,
-                                .widthOffset = margins.left,
-                                .width = width() - margins.left - margins.right,
-                                .item = item};
+        labelItem->setCount(items.size());
+
+        auto key = labelItem->key();
+
+        if (auto widget = widgetCache.value(key)) {
+          auto labelWidget = static_cast<GridListSectionHeader *>(widget->unwrap());
+
+          labelWidget->setCount(items.size());
+          updatedCache.insert(key, widget);
+        }
+
+        int height = labelItem->heightForWidth(width() - margins.left - margins.right);
+
+        VirtualWidget vitem{.key = key,
+                            .height = height,
+                            .offset = offset,
+                            .widthOffset = margins.left,
+                            .width = width() - margins.left - margins.right,
+                            .item = labelItem};
+
+        m_virtual_items.push_back(std::move(vitem));
         offset += height;
       }
 
@@ -747,12 +614,14 @@ public:
 
         if (auto widget = widgetCache.value(key)) { updatedCache.insert(key, widget); }
 
-        vitems << VirtualWidget{.key = key,
-                                .height = height,
-                                .offset = offset,
-                                .widthOffset = widthOffset,
-                                .width = colWidth,
-                                .item = item};
+        VirtualWidget vitem{.key = key,
+                            .height = height,
+                            .offset = offset,
+                            .widthOffset = widthOffset,
+                            .width = colWidth,
+                            .item = item};
+
+        m_virtual_items.push_back(std::move(vitem));
         widthOffset += colWidth + m_spacing;
         maxHeight = std::max(height, maxHeight);
 
@@ -770,50 +639,40 @@ public:
       if (!updatedCache.value(key)) { widgetCache.value(key)->deleteLater(); }
     }
 
-    for (auto key : updatedCache.keys()) {
-      qDebug() << "cached" << key;
-    }
+    /*
+for (auto key : updatedCache.keys()) {
+  qDebug() << "cached" << key;
+}
+    */
 
     widgetCache = updatedCache;
-
     offset += margins.bottom;
 
-    int virtualScrollHeight = qMax(0, offset - height());
+    int virtualScrollHeight = std::max(0, offset - height());
 
-    if (m_selected != -1 && m_selected < vitems.size()) {
-      qDebug() << "selected" << m_selected << "size" << vitems.size();
-      auto item = vitems[m_selected];
-      int selectionKey = item.key;
-
-      if (selectionKey != m_selection_key) {
-        emit selectionChanged(*item.item);
-        m_selection_key = selectionKey;
-      }
-    }
-
-    m_virtual_items = vitems;
     scrollBar->setMaximum(virtualScrollHeight);
     scrollBar->setVisible(virtualScrollHeight > 0);
-    scrollBar->setValue(0);
     clearVisibilityMap();
+
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
+    qDebug() << "computed layout in" << duration << "ms";
+
     updateViewport();
   }
 
   void clear() {
-    clearVisibilityMap();
-
-    for (auto widget : itemWidgets) {
+    for (auto widget : sectionLabelMap) {
       widget->deleteLater();
     }
 
-    itemWidgets.clear();
-
-    for (const auto item : m_virtual_items) {
-      item.item->deleteLater();
-    }
+    sectionLabelMap.clear();
+    clearVisibilityMap();
+    scrollBar->setValue(0);
 
     m_virtual_items.clear();
-    this->m_sections.clear();
+    m_sections.clear();
   }
 
   void setSections(const QList<VirtualGridSection> &sections) {
@@ -841,20 +700,21 @@ public:
     return -1;
   }
 
+  AbstractGridItemWidget *itemWidget(AbstractGridMember *item) {
+    int idx = indexOfItem(item);
+
+    if (idx == -1) return nullptr;
+
+    int key = m_virtual_items[idx].key;
+
+    if (auto wrapper = widgetCache.value(key)) { return wrapper->unwrap(); }
+
+    return nullptr;
+  }
+
   void setSpacing(int spacing) { m_spacing = spacing; }
 
   void remove(AbstractGridMember *member) {}
-
-  void setSelectedKey(int key) {
-    for (int i = 0; i != m_virtual_items.size(); ++i) {
-      auto &item = m_virtual_items[i];
-
-      if (item.key == key) {
-        setSelected(i);
-        return;
-      }
-    }
-  }
 
   void setSelected(int index) {
     if (m_selected == index || index < 0 || index >= m_virtual_items.size()) return;

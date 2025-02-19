@@ -1,7 +1,7 @@
 #pragma once
 #include "app.hpp"
 #include "calculator-database.hpp"
-#include "grid-view.hpp"
+#include "ui/grid-view.hpp"
 #include "navigation-list-view.hpp"
 #include "ui/action_popover.hpp"
 #include "ui/list-view.hpp"

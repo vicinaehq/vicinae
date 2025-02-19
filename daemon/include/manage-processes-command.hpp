@@ -2,12 +2,13 @@
 
 #include "app.hpp"
 #include "command.hpp"
-#include "grid-view.hpp"
+#include "ui/grid-view.hpp"
 #include "process-manager-service.hpp"
 #include "ui/action_popover.hpp"
 #include "ui/list-view.hpp"
 #include "view.hpp"
 #include <csignal>
+#include <qnamespace.h>
 
 class KillProcessAction : public AbstractAction {
   int pid;
@@ -33,31 +34,36 @@ class ManageProcessesMainView : public GridView {
     int key() const override { return info.pid; }
 
   public:
+    const ProcessInfo &proc() const { return info; }
+
     ProcListItem(const ProcessInfo &info, int idx)
         : SimpleListGridItem("application-x-executable", info.comm, "", QString::number(info.pid)),
           info(info), idx(idx) {}
   };
 
   void onSearchChanged(const QString &text) override {
-    grid->clear();
+    qDebug() << "vitems" << grid->items().size();
 
-    auto processes = grid->section("Running processes");
-    size_t limit = 0;
-    size_t i = 0;
+    for (auto li : grid->items()) {
+      auto procItem = static_cast<ProcListItem *>(li.item);
+      bool visible = procItem->proc().comm.contains(text, Qt::CaseInsensitive);
 
-    for (const auto &proc : processManager.list()) {
-      ++i;
-      if (!proc.comm.contains(text, Qt::CaseInsensitive)) continue;
+      qDebug() << "item";
 
-      processes->addItem(new ProcListItem(proc, i - 1));
-      ++limit;
+      grid->setItemVisibility(procItem, visible);
     }
 
-    grid->updateLayout();
+    grid->calculateLayout();
     grid->setSelected(0);
   }
 
-  void onMount() override { setSearchPlaceholderText("Search processes..."); }
+  void onMount() override {
+    setSearchPlaceholderText("Search processes...");
+
+    for (const auto &proc : processManager.list()) {
+      grid->addItem(new ProcListItem(proc, 0));
+    }
+  }
 
 public:
   ManageProcessesMainView(AppWindow &app) : GridView(app), processManager(service<ProcessManagerService>()) {

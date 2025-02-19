@@ -2,13 +2,12 @@
 #include "app-database.hpp"
 #include "app.hpp"
 #include "emoji-database.hpp"
-#include "grid-view.hpp"
+#include "ui/grid-view.hpp"
 #include "ui/virtual-grid.hpp"
 #include <qlabel.h>
 #include <qnamespace.h>
 
 class EmojiGridItem : public AbstractGridItem {
-
 public:
   const EmojiInfo &info;
 
@@ -22,12 +21,21 @@ public:
 
   int key() const override { return qHash(info.emoji); }
 
+  QList<AbstractAction *> createActions() const override {
+    return {
+        new CopyTextAction("Copy emoji", info.emoji),
+        new CopyTextAction("Copy emoji name", info.description),
+    };
+  }
+
   EmojiGridItem(const EmojiInfo &info) : info(info) {}
 };
 
 class EmojiView : public GridView {
   Service<AppDatabase> appDb;
   EmojiDatabase emojiDb;
+
+  std::vector<EmojiGridItem *> emojiItems;
 
 public:
   EmojiView(AppWindow &app) : GridView(app), appDb(service<AppDatabase>()) {
@@ -41,26 +49,40 @@ public:
     });
   }
 
-  void onSearchChanged(const QString &s) override {
-    QList<EmojiGridItem *> items;
-
-    for (const auto &emoji : emojiDb.list()) {
-      if (QString(emoji.description).contains(s, Qt::CaseInsensitive)) { items << new EmojiGridItem(emoji); }
+  ~EmojiView() {
+    for (auto item : emojiItems) {
+      item->deleteLater();
     }
+  }
 
-    QHash<QString, VirtualGridSection *> sectionMap;
+  void onMount() override {
+    for (const auto &emoji : emojiDb.list()) {
+      emojiItems.push_back(new EmojiGridItem(emoji));
+    }
+  }
 
+  void onSearchChanged(const QString &s) override {
     grid->clear();
 
-    for (auto item : items) {
-      auto section = sectionMap.value(item->info.category);
+    if (s.isEmpty()) {
+      QHash<QString, VirtualGridSection *> sectionMap;
 
-      if (!section) {
-        section = grid->section(item->info.category);
-        sectionMap.insert(item->info.category, section);
+      for (auto item : emojiItems) {
+        auto section = sectionMap.value(item->info.category);
+
+        if (!section) {
+          section = grid->section(item->info.category);
+          sectionMap.insert(item->info.category, section);
+        }
+
+        section->addItem(item);
       }
+    } else {
+      auto results = grid->section("Results");
 
-      section->addItem(item);
+      for (auto item : emojiItems) {
+        if (QString(item->info.description).contains(s, Qt::CaseInsensitive)) { results->addItem(item); }
+      }
     }
 
     grid->updateLayout();

@@ -4,5 +4,5 @@
 
 class TextLabel : public QLabel {
 public:
-  TextLabel(const QString &s);
+  TextLabel(const QString &s = "");
 };
