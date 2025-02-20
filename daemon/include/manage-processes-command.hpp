@@ -39,37 +39,32 @@ class ManageProcessesMainView : public GridView {
 
     ProcListItem(const ProcessInfo &info)
         : SimpleListGridItem("xterm", info.comm, "", QString::number(info.pid)), info(info) {}
+
+    ~ProcListItem() { qDebug() << "destroy proc list item" << info.comm; }
   };
 
-  std::vector<QPointer<ProcListItem>> items;
-
   void onSearchChanged(const QString &text) override {
-    items.clear();
-    grid->clear();
+    grid->clearContents();
 
     auto processes = grid->section("Processes");
     auto ps = processManager.list();
-
-    items.reserve(ps.size());
 
     for (const auto &proc : ps) {
       if (proc.comm.contains(text, Qt::CaseInsensitive)) {
         auto item = new ProcListItem(proc);
 
-        processes->addItem(item);
-        items.push_back(item);
+        processes->addItem(new ProcListItem(proc));
       }
     }
 
     grid->calculateLayout();
-    grid->setSelected(0);
+    grid->selectFirst();
   }
 
   void onMount() override { setSearchPlaceholderText("Search processes..."); }
 
 public:
   ManageProcessesMainView(AppWindow &app) : GridView(app), processManager(service<ProcessManagerService>()) {
-    grid->setSpacing(0);
     grid->setMargins(10, 5, 10, 5);
   }
 };

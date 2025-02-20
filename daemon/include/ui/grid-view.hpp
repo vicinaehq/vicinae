@@ -2,8 +2,11 @@
 #include "app.hpp"
 #include "ui/list-view.hpp"
 #include "ui/virtual-grid.hpp"
+#include "ui/ellided-label.hpp"
 #include "view.hpp"
 #include <qnamespace.h>
+#include <qobject.h>
+#include <qwidget.h>
 
 class MainWidget : public QWidget {
   Q_OBJECT
@@ -221,6 +224,26 @@ public:
     item->setWidget(centerWidget());
 
     return item;
+  }
+
+  virtual int updateId() const override { return qHash("grid-item"); }
+
+  virtual bool update(AbstractGridItemWidget *widget, int colWidth) const override {
+    auto item = static_cast<GridItemWidget *>(widget);
+
+    if (!item) {
+      qDebug() << "wrong widget" << typeid(item).name();
+      return false;
+    }
+
+    qDebug() << "valid widget" << typeid(item).name();
+
+    item->setTitle(title());
+    item->setSubtitle(subtitle());
+    item->setTooltipText(tooltip());
+    item->setWidget(centerWidget());
+
+    return true;
   }
 
   virtual QString tooltip() const { return {}; }

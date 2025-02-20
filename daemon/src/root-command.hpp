@@ -285,6 +285,13 @@ return {open};
   }
 
 public:
+  void newSearch(const QString &s) {
+    VirtualGridWidget *grid;
+    auto fileBrowser = appDb.defaultFileBrowser();
+
+    grid->clearContents();
+  }
+
   void resetItems(const QString &s) {
     auto start = std::chrono::high_resolution_clock::now();
     auto fileBrowser = appDb.defaultFileBrowser();

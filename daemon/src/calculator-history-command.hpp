@@ -2,7 +2,6 @@
 #include "app.hpp"
 #include "calculator-database.hpp"
 #include "ui/grid-view.hpp"
-#include "navigation-list-view.hpp"
 #include "ui/action_popover.hpp"
 #include "ui/list-view.hpp"
 #include "ui/virtual-grid.hpp"
@@ -61,15 +60,6 @@ class CalculatorHistoryView : public GridView {
   Service<CalculatorDatabase> calculatorDb;
   QString query;
 
-  void handleListEntryRemoval() {
-    /*
-auto oldSelection = list->selected();
-
-reloadSearch(query);
-list->selectFrom(oldSelection);
-  */
-  }
-
   void reloadSearch(const QString &s) {
 
     /*
@@ -87,7 +77,9 @@ if (s.size() > 1) {
 }
     */
 
-    VirtualGridSection history("History");
+    grid->clearContents();
+
+    auto history = grid->section("History");
 
     for (const auto &entry : calculatorDb.listAll()) {
       if (!entry.expression.contains(s, Qt::CaseInsensitive) &&
@@ -97,14 +89,16 @@ if (s.size() > 1) {
 
       auto item = new CalculatorHistoryListItem(entry);
 
-      connect(item, &CalculatorHistoryListItem::removed, this, [this, item]() {
-        qDebug() << "remove";
-        grid->remove(item);
+      connect(item, &CalculatorHistoryListItem::removed, this, [this, history, item]() {
+        history->removeItem(item);
+        grid->calculateLayout();
       });
-      history.addItem(item);
+
+      history->addItem(item);
     }
 
-    grid->setSections({history});
+    grid->calculateLayout();
+    grid->selectFirst();
   }
 
   void onSearchChanged(const QString &s) override {
@@ -118,7 +112,6 @@ if (s.size() > 1) {
 
 public:
   CalculatorHistoryView(AppWindow &app) : GridView(app), calculatorDb(service<CalculatorDatabase>()) {
-    grid->setSpacing(0);
     grid->setMargins(10, 5, 10, 5);
   }
 };

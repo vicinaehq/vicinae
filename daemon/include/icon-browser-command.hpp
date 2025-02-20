@@ -31,19 +31,22 @@ class IconBrowserView : public GridView {
         : m_name(name), m_displayName(displayName) {}
   };
 
-  std::vector<IconBrowserItem *> items;
+  std::vector<QSharedPointer<IconBrowserItem>> items;
 
   void onSearchChanged(const QString &s) override {
-    grid->clear();
+    grid->clearContents();
 
     auto icons = grid->section("Icons");
+
+    icons->setColumns(8);
+    icons->setSpacing(10);
 
     for (const auto &item : items) {
       if (item->displayName().contains(s, Qt::CaseInsensitive)) { icons->addItem(item); }
     }
 
     grid->calculateLayout();
-    grid->setSelected(0);
+    grid->selectFirst();
   }
 
   void onMount() override {
@@ -53,15 +56,12 @@ class IconBrowserView : public GridView {
 
       auto displayName = ss.at(ss.size() - 1);
 
-      items.push_back(new IconBrowserItem(icon, displayName));
+      items.push_back(
+          QSharedPointer<IconBrowserItem>(new IconBrowserItem(icon, displayName), &QObject::deleteLater));
     }
   }
 
 public:
-  IconBrowserView(AppWindow &app) : GridView(app) { grid->setColumns(8); }
-  ~IconBrowserView() {
-    for (const auto &item : items) {
-      item->deleteLater();
-    }
-  }
+  IconBrowserView(AppWindow &app) : GridView(app) {}
+  ~IconBrowserView() {}
 };

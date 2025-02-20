@@ -57,6 +57,9 @@ qt_add_executable(${TARGET}
 
 	include/ui/grid-view.hpp
 
+	include/ui/omni-scroll-bar.hpp
+	src/ui/omni-scroll-bar.cpp
+
 	src/emoji-list.cpp
 
 	src/calculator-history-command.hpp

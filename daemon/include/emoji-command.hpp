@@ -34,14 +34,10 @@ public:
 class EmojiView : public GridView {
   Service<AppDatabase> appDb;
   EmojiDatabase emojiDb;
-
-  std::vector<EmojiGridItem *> emojiItems;
+  std::vector<QSharedPointer<EmojiGridItem>> emojiItems;
 
 public:
   EmojiView(AppWindow &app) : GridView(app), appDb(service<AppDatabase>()) {
-    widget = grid;
-    grid->setColumns(8);
-
     connect(grid, &VirtualGridWidget::selectionChanged, this, [this](const AbstractGridMember &item) {
       auto &emoji = static_cast<const EmojiGridItem &>(item);
 
@@ -49,20 +45,14 @@ public:
     });
   }
 
-  ~EmojiView() {
-    for (auto item : emojiItems) {
-      item->deleteLater();
-    }
-  }
-
   void onMount() override {
     for (const auto &emoji : emojiDb.list()) {
-      emojiItems.push_back(new EmojiGridItem(emoji));
+      emojiItems.push_back(QSharedPointer<EmojiGridItem>(new EmojiGridItem(emoji), &QObject::deleteLater));
     }
   }
 
   void onSearchChanged(const QString &s) override {
-    grid->clear();
+    grid->clearContents();
 
     if (s.isEmpty()) {
       QHash<QString, VirtualGridSection *> sectionMap;
@@ -72,6 +62,8 @@ public:
 
         if (!section) {
           section = grid->section(item->info.category);
+          section->setColumns(8);
+          section->setSpacing(10);
           sectionMap.insert(item->info.category, section);
         }
 
@@ -80,12 +72,15 @@ public:
     } else {
       auto results = grid->section("Results");
 
+      results->setColumns(8);
+      results->setSpacing(10);
+
       for (auto item : emojiItems) {
         if (QString(item->info.description).contains(s, Qt::CaseInsensitive)) { results->addItem(item); }
       }
     }
 
-    grid->updateLayout();
-    grid->setSelected(0);
+    grid->calculateLayout();
+    grid->selectFirst();
   }
 };
