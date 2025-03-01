@@ -46,6 +46,24 @@ qt_add_executable(${TARGET}
 	include/extend/extension-command.hpp
 	include/extend/extension-detail-view.hpp
 
+	# omni list 
+	include/ui/omni-list.hpp
+	src/ui/omni-list.cpp
+
+	include/ui/omni-list-item-widget-wrapper.hpp
+	src/ui/omni-list-item-widget-wrapper.cpp
+
+	include/ui/selectable-omni-list-widget.hpp
+	src/ui/selectable-omni-list-widget.cpp
+
+	include/ui/list-section-header.hpp
+	src/ui/list-section-header.cpp
+
+	include/ui/default-list-item-widget.hpp
+	src/ui/default-list-item-widget.cpp
+
+	include/ui/omni-list-item-widget.hpp
+
 	include/ollama-service.hpp
 
 	include/ui/virtual-grid.hpp

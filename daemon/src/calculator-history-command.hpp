@@ -1,10 +1,14 @@
 #pragma once
 #include "app.hpp"
 #include "calculator-database.hpp"
+#include "tinyexpr.hpp"
 #include "ui/grid-view.hpp"
 #include "ui/action_popover.hpp"
 #include "ui/list-view.hpp"
+#include "ui/omni-list-view.hpp"
+#include "ui/omni-list.hpp"
 #include "ui/virtual-grid.hpp"
+#include <memory>
 #include <qnamespace.h>
 #include <qobject.h>
 #include <qsharedpointer.h>
@@ -29,81 +33,55 @@ public:
   }
 };
 
-class CalculatorHistoryListItem : public SimpleListGridItem {
-  Q_OBJECT
+class CalculatorHistoryListItem : public OmniListView::AbstractActionnableItem {
+  using RemoveCallback = std::function<void(const QString &id)>;
 
-  CalculatorEntry entry;
+  RemoveCallback _rmCb;
+  CalculatorEntry _entry;
 
 public:
-  // size_t id() const override { return qHash(QString("history-entry-%1").arg(entry.id)); };
+  QString id() const override { return QString("history-entry-%1").arg(_entry.id); };
 
-  QList<AbstractAction *> createActions() const override {
-    auto removeAction = new RemoveCalculatorHistoryEntryAction(entry.id);
+  const CalculatorEntry &entry() const { return _entry; }
 
-    connect(removeAction, &AbstractAction::didExecute, this, &CalculatorHistoryListItem::removed);
+  QList<AbstractAction *> generateActions() const override {
+    auto removeAction = new RemoveCalculatorHistoryEntryAction(_entry.id);
+
+    QObject::connect(removeAction, &RemoveCalculatorHistoryEntryAction::didExecute, [this]() {
+      if (_rmCb) _rmCb(id());
+    });
 
     return {
-        new CopyTextAction("Copy result", entry.result),
-        new CopyTextAction("Copy expression", entry.expression),
+        new CopyTextAction("Copy result", _entry.result),
+        new CopyTextAction("Copy expression", _entry.expression),
         removeAction,
     };
   }
 
-  CalculatorHistoryListItem(const CalculatorEntry &entry)
-      : SimpleListGridItem(":icons/calculator", entry.expression, "", entry.result), entry(entry) {}
+  void setRemoveCallback(const RemoveCallback &cb) { _rmCb = cb; }
 
-signals:
-  void removed();
+  ItemData data() const override {
+    return {.icon = ":icons/calculator", .name = _entry.expression, .kind = _entry.result};
+  }
+
+  CalculatorHistoryListItem(const CalculatorEntry &entry) : _entry(entry) {}
 };
 
-class CalculatorHistoryView : public GridView {
+class CalculatorHistoryView : public OmniListView {
   Service<CalculatorDatabase> calculatorDb;
-  QString query;
 
-  void reloadSearch(const QString &s) {
+  void handleRemove(const QString &id) { list->removeItem(id); }
 
-    /*
-if (s.size() > 1) {
-  model->beginSection("Calculator");
-  te_parser parser;
-  double result = parser.evaluate(s.toLatin1().data());
+  void executeSearch(ItemList &items, const QString &s) override {
+    items.push_back(std::make_unique<OmniList::VirtualSection>("History"));
+    for (const auto &history : calculatorDb.listAll()) {
+      if (!history.expression.contains(s, Qt::CaseInsensitive)) continue;
 
-  if (!std::isnan(result)) {
-    auto data = CalculatorItem{.expression = s, .result = result};
-    auto item = std::make_shared<BaseCalculatorListItem>(data);
+      auto item = std::make_unique<CalculatorHistoryListItem>(history);
 
-    model->addItem(item);
-  }
-}
-    */
-
-    grid->clearContents();
-
-    auto history = grid->section("History");
-
-    for (const auto &entry : calculatorDb.listAll()) {
-      if (!entry.expression.contains(s, Qt::CaseInsensitive) &&
-          !entry.result.contains(s, Qt::CaseInsensitive)) {
-        continue;
-      }
-
-      auto item = new CalculatorHistoryListItem(entry);
-
-      connect(item, &CalculatorHistoryListItem::removed, this, [this, history, item]() {
-        history->removeItem(item);
-        grid->calculateLayout();
-      });
-
-      history->addItem(item);
+      item->setRemoveCallback(std::bind_front(&CalculatorHistoryView::handleRemove, this));
+      items.push_back(std::move(item));
     }
-
-    grid->calculateLayout();
-    grid->selectFirst();
-  }
-
-  void onSearchChanged(const QString &s) override {
-    query = s;
-    reloadSearch(s);
   }
 
   void onMount() override {
@@ -111,7 +89,5 @@ if (s.size() > 1) {
   }
 
 public:
-  CalculatorHistoryView(AppWindow &app) : GridView(app), calculatorDb(service<CalculatorDatabase>()) {
-    grid->setMargins(10, 5, 10, 5);
-  }
+  CalculatorHistoryView(AppWindow &app) : OmniListView(app), calculatorDb(service<CalculatorDatabase>()) {}
 };

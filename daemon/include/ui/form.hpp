@@ -2,7 +2,7 @@
 
 #include "common.hpp"
 #include "omni-icon.hpp"
-#include "ui/virtual-list.hpp"
+#include "ui/omni-list.hpp"
 #include <memory>
 #include <qboxlayout.h>
 #include <QPainterPath>
@@ -13,6 +13,7 @@
 #include <qnamespace.h>
 #include <qobject.h>
 #include <qpainter.h>
+#include <qsharedpointer.h>
 #include <qtmetamacros.h>
 #include <qtypes.h>
 #include <qwidget.h>
@@ -69,37 +70,13 @@ signals:
   void textChanged(const QString &text);
 };
 
-class AbstractFormDropdownItem : public AbstractVirtualListItem {
+class AbstractFormDropdownItem : public AbstractDefaultListItem {
 public:
+  AbstractFormDropdownItem() {}
+
   virtual QString icon() const = 0;
   virtual QString displayName() const = 0;
-  QWidget *createItem() const override {
-    auto iconLabel = new OmniIcon;
-    auto label = new QLabel;
-    auto layout = new QHBoxLayout;
-
-    layout->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-
-    iconLabel->setIcon(icon(), {20, 20}, "application-x-executable");
-    label->setText(displayName());
-
-    layout->setSpacing(10);
-    layout->addWidget(iconLabel);
-    layout->addWidget(label);
-    layout->setContentsMargins(10, 0, 10, 0);
-
-    auto widget = new QWidget;
-
-    widget->setLayout(layout);
-
-    return widget;
-  }
-  int height() const override { return 35; }
-};
-
-class FormDropdownModel : public VirtualListModel {
-public:
-  void addItem(const std::shared_ptr<AbstractFormDropdownItem> &item) { VirtualListModel::addItem(item); }
+  ItemData data() const override { return {.icon = icon(), .name = displayName()}; }
 };
 
 class Popover : public QWidget {
@@ -140,18 +117,30 @@ signals:
   void closed();
 };
 
+class DefaultFormDropdownFilter : public OmniList::ItemFilter {
+  QString query;
+
+  bool matches(const OmniList::AbstractVirtualItem &item) override {
+    auto &dropdowmItem = static_cast<const AbstractFormDropdownItem &>(item);
+
+    return dropdowmItem.displayName().contains(query, Qt::CaseInsensitive);
+  }
+
+public:
+  DefaultFormDropdownFilter(const QString &query) : query(query) {}
+};
+
 class FormDropdown : public FormItemWidget {
   Q_OBJECT
 
   int POPOVER_HEIGHT = 300;
 
 protected:
-  VirtualListWidget *list;
-  FormDropdownModel *listModel;
+  OmniList *list;
   FormQLineEdit *inputField;
   QLineEdit *searchField;
   Popover *popover;
-  std::shared_ptr<AbstractFormDropdownItem> currentItem = nullptr;
+  QString selectedId;
 
   bool eventFilter(QObject *obj, QEvent *event) override {
     if (obj == searchField) {
@@ -184,10 +173,17 @@ protected:
     return false;
   }
 
+  using UpdateItemCallback = std::function<void(AbstractFormDropdownItem *item)>;
+
+  struct UpdateItemPayload {
+    QString icon;
+    QString displayName;
+  };
+
 public:
   FormDropdown(const QString &name = "")
-      : FormItemWidget(name), listModel(new FormDropdownModel), inputField(new FormQLineEdit),
-        searchField(new QLineEdit()), popover(new Popover(this)) {
+      : FormItemWidget(name), list(new OmniList), inputField(new FormQLineEdit), searchField(new QLineEdit()),
+        popover(new Popover(this)) {
     auto *layout = new QVBoxLayout();
     layout->setContentsMargins(0, 0, 0, 0);
 
@@ -209,8 +205,6 @@ public:
     searchField->setPlaceholderText("Search...");
     popoverLayout->addWidget(searchField);
 
-    list = new VirtualListWidget(popover);
-    list->setModel(listModel);
     popoverLayout->addWidget(new HDivider);
 
     inputField->installEventFilter(this);
@@ -225,8 +219,9 @@ public:
 
     popoverLayout->addWidget(listContainerWidget);
 
-    connect(searchField, &QLineEdit::textChanged, this, &FormDropdown::textChanged);
-    connect(list, &VirtualListWidget::itemActivated, this, &FormDropdown::itemActivated);
+    connect(searchField, &QLineEdit::textChanged, this, &FormDropdown::handleTextChanged);
+    connect(list, &OmniList::itemActivated, this, &FormDropdown::itemActivated);
+    connect(list, &OmniList::itemUpdated, this, &FormDropdown::itemUpdated);
     connect(popover, &Popover::closed, this, [this]() { searchField->clear(); });
 
     auto widget = new QWidget();
@@ -236,23 +231,56 @@ public:
   }
 
   ~FormDropdown() {
-    qDebug() << "~FormDropdown";
-    listModel->deleteLater();
+    qDebug() << "~FormDropdown2";
     popover->deleteLater();
   }
 
-  FormDropdownModel *model() { return listModel; }
-  const std::shared_ptr<AbstractFormDropdownItem> &value() { return currentItem; }
-  void setValue(const std::shared_ptr<AbstractFormDropdownItem> &vitem) {
-    list->setSelected(vitem->id());
-    auto item = std::static_pointer_cast<AbstractFormDropdownItem>(vitem);
+  void beginUpdate() { list->beginUpdate(); }
+
+  void commitUpdate() { list->commitUpdate(); }
+
+  void clear() {
+    inputField->clear();
+    inputField->removeAction(action);
+    list->clear();
+    selectedId.clear();
+  }
+
+  void addItem(std::unique_ptr<AbstractFormDropdownItem> item) { list->addItem(std::move(item)); }
+
+  void addSection(const QString &name) { list->addSection(name); }
+
+  void updateItem(const QString &id, const UpdateItemCallback &cb) {
+    list->updateItem(id, [&cb](OmniList::AbstractVirtualItem *item) {
+      cb(static_cast<AbstractFormDropdownItem *>(item));
+    });
+  }
+
+  const AbstractFormDropdownItem *value() const {
+    if (auto selected = list->itemAt(selectedId); selected) {
+      return static_cast<const AbstractFormDropdownItem *>(selected);
+    }
+
+    return nullptr;
+  }
+
+  void setValue(const QString &id) {
+    auto selectedItem = list->setSelected(id);
+
+    if (!selectedItem) {
+      qDebug() << "selectValue: no item with ID:" << id;
+      return;
+    }
+
+    selectedId = id;
+
+    auto item = static_cast<const AbstractFormDropdownItem *>(selectedItem);
 
     inputField->setText(item->displayName());
 
     auto icon = new OmniIcon;
 
     connect(icon, &OmniIcon::imageUpdated, this, [this, icon](QPixmap pixmap) {
-      qDebug() << "updated icon";
       if (action) inputField->removeAction(action);
       action = inputField->addAction(QIcon(pixmap), QLineEdit::LeadingPosition);
       icon->deleteLater();
@@ -260,52 +288,42 @@ public:
 
     QTimer::singleShot(0,
                        [icon, item]() { icon->setIcon(item->icon(), {32, 32}, "application-x-executable"); });
-
-    currentItem = item;
   }
 
   QString searchText() { return searchField->text(); }
 
 signals:
   void textChanged(const QString &s);
-  void selectionChanged(const std::shared_ptr<AbstractFormDropdownItem> &item);
+  void selectionChanged(const AbstractFormDropdownItem &item);
 
 protected:
   QAction *action = nullptr;
 
 private slots:
-  void itemActivated(const std::shared_ptr<AbstractVirtualListItem> &vitem) {
-    auto item = std::static_pointer_cast<AbstractFormDropdownItem>(vitem);
+  void handleTextChanged(const QString &text) {
+    list->setFilter(std::make_unique<DefaultFormDropdownFilter>(text));
+    emit textChanged(text);
+  }
 
-    inputField->setText(item->displayName());
-
-    auto icon = new OmniIcon;
-
-    connect(icon, &OmniIcon::imageUpdated, this, [this, icon](QPixmap pixmap) {
-      qDebug() << "updated icon";
-      if (action) inputField->removeAction(action);
-      action = inputField->addAction(QIcon(pixmap), QLineEdit::LeadingPosition);
-      icon->deleteLater();
-    });
-
-    QTimer::singleShot(0,
-                       [icon, item]() { icon->setIcon(item->icon(), {32, 32}, "application-x-executable"); });
-
-    currentItem = item;
-
+  void itemActivated(const OmniList::AbstractVirtualItem &vitem) {
+    setValue(vitem.id());
     searchField->clear();
     popover->hide();
-    emit selectionChanged(item);
+    emit selectionChanged(static_cast<const AbstractFormDropdownItem &>(vitem));
+  }
+
+  void itemUpdated(const OmniList::AbstractVirtualItem &item) {
+    qDebug() << "updated" << item.id() << "vs" << selectedId;
+    if (item.id() == selectedId) setValue(item.id());
   }
 
   void showPopover() {
     const QPoint globalPos = inputField->mapToGlobal(QPoint(0, inputField->height() + 10));
 
-    if (currentItem) {
-      list->setSelected(currentItem->id());
-      qDebug() << "selecting " << currentItem->id();
+    if (!selectedId.isEmpty()) {
+      list->setSelected(selectedId);
     } else {
-      qDebug() << "no current item";
+      list->selectFirst();
     }
 
     popover->move(globalPos);

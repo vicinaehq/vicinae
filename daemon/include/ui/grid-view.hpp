@@ -4,6 +4,7 @@
 #include "ui/virtual-grid.hpp"
 #include "ui/ellided-label.hpp"
 #include "view.hpp"
+#include <numbers>
 #include <qnamespace.h>
 #include <qobject.h>
 #include <qwidget.h>
@@ -118,10 +119,11 @@ public:
   void setHovered(bool hovered) {
     this->hovered = hovered;
 
-    if (hovered && !tooltip->text().isEmpty())
+    if (hovered && !tooltip->text().isEmpty()) {
       showTooltip();
-    else
+    } else {
       hideTooltip();
+    }
 
     update();
   }
@@ -231,13 +233,6 @@ public:
   virtual bool update(AbstractGridItemWidget *widget, int colWidth) const override {
     auto item = static_cast<GridItemWidget *>(widget);
 
-    if (!item) {
-      qDebug() << "wrong widget" << typeid(item).name();
-      return false;
-    }
-
-    qDebug() << "valid widget" << typeid(item).name();
-
     item->setTitle(title());
     item->setSubtitle(subtitle());
     item->setTooltipText(tooltip());
@@ -248,11 +243,13 @@ public:
 
   virtual QString tooltip() const { return {}; }
 
-  virtual QList<AbstractAction *> createActions() const { return {}; }
+  virtual QList<AbstractAction *> createActions() const override { return {}; }
 };
 
 class GridView : public View {
+
 protected:
+  int cacheKey = -1;
   VirtualGridWidget *grid;
 
   bool inputFilter(QKeyEvent *event) override {
@@ -268,15 +265,57 @@ protected:
     return View::inputFilter(event);
   }
 
+  void selectionActivated(const AbstractGridMember &member) { emit activatePrimaryAction(); }
   void selectionChanged(const AbstractGridMember &member) {
     auto item = static_cast<const AbstractActionnableGridItem *>(&member);
+    int newKey = item->key();
 
-    setSignalActions(item->createActions());
+    if (newKey != cacheKey) {
+      if (auto completer = item->createCompleter()) {
+        app.topBar->activateQuicklinkCompleter(*completer);
+        delete completer;
+      } else {
+        app.topBar->destroyQuicklinkCompleter();
+      }
+    }
+
+    cacheKey = newKey;
+
+    auto actions = item->createActions();
+    auto size = actions.size();
+
+    if (size > 0) actions[0]->setShortcut(KeyboardShortcutModel{.key = "return", .modifiers = {}});
+    if (size > 1) actions[1]->setShortcut(KeyboardShortcutModel{.key = "return", .modifiers = {"ctrl"}});
+
+    setSignalActions(actions);
   }
 
+  QString query;
+
 public:
+  void reselect() {
+    auto key = grid->selectedKey();
+    handleSearch(query);
+    grid->setSelectedKey(key);
+  }
+
+  void reselectKey(int key) {
+    cacheKey = -1;
+    grid->invalidateCacheKey(key);
+    reselect();
+  }
+
+  virtual void handleSearch(const QString &s) {}
+
+  void onSearchChanged(const QString &s) override {
+    query = s;
+    handleSearch(s);
+    grid->selectFirst();
+  }
+
   GridView(AppWindow &app) : View(app), grid(new VirtualGridWidget) {
     connect(grid, &VirtualGridWidget::selectionChanged, this, &GridView::selectionChanged);
+    connect(grid, &VirtualGridWidget::itemActivated, this, &GridView::selectionActivated);
     widget = grid;
   }
 };

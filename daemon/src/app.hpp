@@ -21,6 +21,7 @@
 #include "ui/status_bar.hpp"
 #include "ui/test-list.hpp"
 #include "ui/top_bar.hpp"
+#include "ui/virtual-grid.hpp"
 
 #include <qmainwindow.h>
 #include <qtmetamacros.h>
@@ -32,6 +33,21 @@ class View;
 class ViewCommand;
 class ExtensionView;
 class Command;
+
+class ViewDisplayer : public QWidget {
+  QVBoxLayout *layout;
+
+public:
+  ViewDisplayer() : layout(new QVBoxLayout) {
+    layout->setContentsMargins(0, 0, 0, 0);
+    setLayout(layout);
+  }
+
+  void setWidget(QWidget *widget) {
+    layout->takeAt(0);
+    layout->addWidget(widget);
+  }
+};
 
 struct ViewSnapshot {
   View *view;
@@ -98,6 +114,7 @@ public:
   ActionPopover *actionPopover = nullptr;
   QVBoxLayout *layout = nullptr;
   QWidget *defaultWidget = new QWidget();
+  ViewDisplayer *viewDisplayer;
 
   void popToRoot();
 
@@ -211,38 +228,6 @@ public:
         iconDescriptor(iconDescriptor) {}
 };
 
-class AppListItem : public StandardListItem2 {
-  std::shared_ptr<DesktopEntry> app;
-  Service<AppDatabase> appDb;
-
-  QList<AbstractAction *> createActions() const override {
-    QList<AbstractAction *> actions;
-    auto fileBrowser = appDb.defaultFileBrowser();
-    auto textEditor = appDb.defaultTextEditor();
-
-    actions << new OpenAppAction(app, "Open", {});
-
-    for (const auto &desktopAction : app->actions) {
-      actions << new OpenAppAction(desktopAction, desktopAction->name, {});
-    }
-
-    if (fileBrowser) { actions << new OpenAppAction(fileBrowser, "Open in folder", {app->path}); }
-
-    if (textEditor) { actions << new OpenAppAction(textEditor, "Open desktop file", {app->path}); }
-
-    actions << new CopyTextAction("Copy file path", app->path);
-
-    return actions;
-  }
-
-  size_t id() const override { return qHash(app->id); }
-
-public:
-  AppListItem(const std::shared_ptr<DesktopEntry> &app, Service<AppDatabase> appDb)
-      : StandardListItem2(app->name, "", "Application", app->iconName()), app(app), appDb(appDb) {}
-  ~AppListItem() {}
-};
-
 class BaseCalculatorListItem : public AbstractNativeListItem {
 protected:
   CalculatorItem item;
@@ -265,4 +250,56 @@ protected:
 
 public:
   BaseCalculatorListItem(const CalculatorItem &item) : item(item) {}
+};
+
+class CalculatorGridListItemWidget : public SimpleListWidget {
+  CalculatorItem item;
+
+  void setupUi() {
+    auto exprLabel = new QLabel(item.expression);
+
+    exprLabel->setProperty("class", "transform-left");
+
+    auto answerLabel = new QLabel(QString::number(item.result));
+    answerLabel->setProperty("class", "transform-left");
+
+    auto left = new VStack(exprLabel, new Chip("Expression"));
+    auto right = new VStack(answerLabel, new Chip("Answer"));
+
+    auto layout = new QVBoxLayout();
+
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(new TransformResult(left, right));
+
+    setLayout(layout);
+  }
+
+public:
+  CalculatorGridListItemWidget(const CalculatorItem &item) : item(item) { setupUi(); }
+};
+
+class BasicCalculatorItem : public AbstractActionnableGridItem {
+protected:
+  CalculatorItem item;
+
+  AbstractGridItemWidget *widget(int colWidth) const override {
+    return new CalculatorGridListItemWidget(item);
+  }
+
+  int heightForWidth(int width) const override {
+    return CalculatorGridListItemWidget(item).sizeHint().height();
+  }
+
+  QList<AbstractAction *> createActions() const override {
+    QString sresult = QString::number(item.result);
+
+    return {
+        new CopyCalculatorResultAction(item, "Copy result", sresult),
+        new CopyCalculatorResultAction(item, "Copy expression",
+                                       QString("%1 = %2").arg(item.expression).arg(sresult)),
+    };
+  }
+
+public:
+  BasicCalculatorItem(const CalculatorItem &item) : item(item) {}
 };

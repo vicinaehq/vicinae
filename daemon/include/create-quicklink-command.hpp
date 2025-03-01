@@ -8,10 +8,13 @@
 #include "view.hpp"
 #include <functional>
 #include <memory>
+#include <numbers>
 #include <qnamespace.h>
 #include <qpixmap.h>
+#include <qsharedpointer.h>
 #include <qtmetamacros.h>
 #include <qtypes.h>
+#include <qvariant.h>
 
 class CallbackAction : public AbstractAction {
   using SubmitHandler = std::function<void(AppWindow &app)>;
@@ -34,17 +37,22 @@ public:
   QString displayName() const override {
     QString name = app->fullyQualifiedName();
 
-    if (isDefault) name += " (Default)";
-
     return name;
   }
 
-  int role() const override { return 0; }
+  void setApp(const std::shared_ptr<DesktopExecutable> &app) { this->app = app; }
 
-  size_t id() const override { return qHash(app->id); }
+  QString id() const override { return app->id; }
 
-  AppSelectorItem(const std::shared_ptr<DesktopExecutable> &app, bool isDefault = false)
-      : app(app), isDefault(isDefault) {}
+  AppSelectorItem(const std::shared_ptr<DesktopExecutable> &app) : app(app) {}
+};
+
+class DefaultAppItem : public AppSelectorItem {
+  QString id() const override { return "default"; }
+  QString displayName() const override { return AppSelectorItem::displayName() + " (Default)"; }
+
+public:
+  DefaultAppItem(const std::shared_ptr<DesktopExecutable> &app) : AppSelectorItem(app) {}
 };
 
 class IconSelectorItem : public AbstractFormDropdownItem {
@@ -61,59 +69,32 @@ public:
     return ss.at(ss.size() - 1).split('.').at(0);
   }
 
-  size_t id() const override { return qHash(name); }
+  QString id() const override { return name; }
 
-  int role() const override { return 0; }
+  void setDisplayName(const QString &name) { this->dname = name; }
+
+  void setIcon(const QString &icon) {
+    qDebug() << "set icon to " << icon << "from" << this->name;
+    this->name = icon;
+  }
 
   IconSelectorItem(const QString &iconName, const QString &displayName = "")
       : name(iconName), dname(displayName) {}
 };
 
+class DefaultIconSelectorItem : public IconSelectorItem {
+  QString id() const override { return "default"; }
+  QString displayName() const override { return "Default"; }
+
+public:
+  DefaultIconSelectorItem(const QString &iconName, const QString &displayName = "")
+      : IconSelectorItem(iconName, displayName) {}
+};
+
 class QuicklinkCommandView : public View {
-  void handleAppSelectorTextChanged(const QString &text) {
-    auto model = appSelector->model();
+  void handleAppSelectorTextChanged(const QString &text) {}
 
-    model->beginReset();
-
-    if (defaultOpener && defaultOpener->displayName().contains(text, Qt::CaseInsensitive)) {
-      model->addItem(defaultOpener);
-    }
-
-    for (const auto &app : appDb.apps) {
-      bool appFlag = false;
-
-      if (app->isOpener() && app->name.contains(text, Qt::CaseInsensitive)) {
-        model->addItem(std::make_shared<AppSelectorItem>(app));
-        appFlag = true;
-      }
-
-      for (const auto &app : app->actions) {
-        if (!app->isOpener()) continue;
-
-        if (appFlag || app->name.contains(text, Qt::CaseInsensitive)) {
-          model->addItem(std::make_shared<AppSelectorItem>(app));
-        }
-      }
-    }
-
-    model->endReset();
-  }
-
-  void iconSelectorTextChanged(const QString &text) {
-    iconSelector->model()->beginReset();
-
-    if (defaultIcon && QString("default").contains(text, Qt::CaseInsensitive)) {
-      iconSelector->model()->addItem(defaultIcon);
-    }
-
-    for (const auto &name : BuiltinIconService::icons()) {
-      if (name.contains(text, Qt::CaseInsensitive)) {
-        iconSelector->model()->addItem(std::make_shared<IconSelectorItem>(name));
-      }
-    }
-
-    iconSelector->model()->endReset();
-  }
+  void iconSelectorTextChanged(const QString &text) {}
 
   void handleLinkChange(const QString &text) {
     QUrl url(text);
@@ -121,38 +102,31 @@ class QuicklinkCommandView : public View {
     if (!url.isValid()) return;
 
     if (auto app = appDb.findBestUrlOpener(url)) {
-      auto opener = std::make_shared<AppSelectorItem>(app, true);
-
-      qDebug() << "match" << app->id << "for scheme" << url.scheme();
-
-      if (appSelector->value().get() == defaultOpener.get()) {
-        appSelector->setValue(opener);
-        appSelectionChanged(opener);
-      }
-
-      defaultOpener = opener;
-      handleAppSelectorTextChanged(appSelector->searchText());
+      appSelector->updateItem("default", [&app](AbstractFormDropdownItem *item) {
+        static_cast<AppSelectorItem *>(item)->setApp(app);
+      });
     }
 
-    auto icon = std::make_shared<IconSelectorItem>(QString("favicon:%1").arg(url.host()), url.host());
+    if (!url.scheme().startsWith("http")) return;
 
-    if (iconSelector->value()->id() == defaultIcon->id()) {
-      defaultIcon = icon;
-      iconSelectorTextChanged(iconSelector->searchText());
-      iconSelector->setValue(defaultIcon);
-    }
+    iconSelector->updateItem("default", [&url](AbstractFormDropdownItem *item) {
+      auto icon = QString("favicon:%1").arg(url.host());
+      auto iconItem = static_cast<IconSelectorItem *>(item);
+
+      iconItem->setIcon(icon);
+      iconItem->setDisplayName(url.host());
+    });
   }
 
-  void appSelectionChanged(const std::shared_ptr<AbstractFormDropdownItem> &item) {
-    auto appItem = std::static_pointer_cast<AppSelectorItem>(item);
-    bool isCurrentDefault = iconSelector->value()->id() == defaultIcon->id();
+  void appSelectionChanged(const AbstractFormDropdownItem &item) {
+    auto &appItem = static_cast<const AppSelectorItem &>(item);
 
-    defaultIcon = std::make_shared<IconSelectorItem>(appItem->app->iconName(),
-                                                     QString("%1 (Default)").arg(appItem->app->name));
+    iconSelector->updateItem("default", [appItem](AbstractFormDropdownItem *item) {
+      auto icon = static_cast<IconSelectorItem *>(item);
 
-    iconSelectorTextChanged(iconSelector->searchText());
-
-    if (isCurrentDefault) { iconSelector->setValue(defaultIcon); }
+      icon->setIcon(appItem.icon());
+      icon->setDisplayName(appItem.displayName());
+    });
   }
 
 protected:
@@ -164,9 +138,6 @@ protected:
   FormInputWidget *link;
   FormDropdown *appSelector;
   FormDropdown *iconSelector;
-
-  std::shared_ptr<IconSelectorItem> defaultIcon;
-  std::shared_ptr<AppSelectorItem> defaultOpener;
 
 public:
   QuicklinkCommandView(AppWindow &app)
@@ -192,18 +163,33 @@ public:
     connect(iconSelector, &FormDropdown::textChanged, this, &QuicklinkCommandView::iconSelectorTextChanged);
     connect(appSelector, &FormDropdown::selectionChanged, this, &QuicklinkCommandView::appSelectionChanged);
 
-    defaultIcon = std::make_shared<IconSelectorItem>(":icons/link.svg", "Default");
-    iconSelector->setValue(defaultIcon);
+    appSelector->beginUpdate();
+    appSelector->addSection("Apps");
 
     if (auto browser = appDb.defaultBrowser()) {
-      auto opener = std::make_shared<AppSelectorItem>(browser, true);
-
-      appSelector->setValue(opener);
-      defaultOpener = opener;
+      appSelector->addItem(std::make_unique<DefaultAppItem>(browser));
     }
 
-    handleAppSelectorTextChanged("");
-    iconSelectorTextChanged("");
+    for (const auto &app : appDb.apps) {
+      appSelector->addItem(std::make_unique<AppSelectorItem>(app));
+
+      for (const auto &action : app->actions) {
+        appSelector->addItem(std::make_unique<AppSelectorItem>(action));
+      }
+    }
+
+    appSelector->commitUpdate();
+    appSelector->setValue("default");
+
+    iconSelector->beginUpdate();
+    iconSelector->addItem(std::make_unique<DefaultIconSelectorItem>(":icons/link.svg", "Default"));
+
+    for (const auto &name : BuiltinIconService::icons()) {
+      iconSelector->addItem(std::make_unique<IconSelectorItem>(name));
+    }
+
+    iconSelector->commitUpdate();
+    iconSelector->setValue("default");
 
     form->setContentsMargins(0, 10, 0, 0);
     widget = form;
@@ -214,10 +200,10 @@ public:
     link->setText(quicklink.rawUrl);
 
     if (auto app = appDb.getById(quicklink.app)) {
-      appSelector->setValue(std::make_shared<AppSelectorItem>(app));
+      // appSelector->setValue(std::make_shared<AppSelectorItem>(app));
     }
 
-    iconSelector->setValue(std::make_shared<IconSelectorItem>(quicklink.iconName));
+    // iconSelector->setValue(std::make_shared<IconSelectorItem>(quicklink.iconName));
   }
 
   void onMount() override {
@@ -232,14 +218,14 @@ public:
   }
 
   virtual void submit(AppWindow &app) {
-    auto item = std::static_pointer_cast<AppSelectorItem>(appSelector->value());
+    auto item = static_cast<const AppSelectorItem *>(appSelector->value());
 
     if (!item) {
       appSelector->setError("Required");
       return;
     }
 
-    auto icon = std::static_pointer_cast<IconSelectorItem>(iconSelector->value());
+    auto icon = static_cast<const IconSelectorItem *>(iconSelector->value());
 
     if (!icon) {
       iconSelector->setError("Required");
@@ -269,21 +255,21 @@ public:
     link->setText(quicklink.rawUrl);
 
     if (auto app = appDb.getById(quicklink.app)) {
-      appSelector->setValue(std::make_shared<AppSelectorItem>(app));
+      // appSelector->setValue(std::make_shared<AppSelectorItem>(app));
     }
 
-    iconSelector->setValue(std::make_shared<IconSelectorItem>(quicklink.iconName, quicklink.iconName));
+    // iconSelector->setValue(std::make_shared<IconSelectorItem>(quicklink.iconName, quicklink.iconName));
   }
 
   void submit(AppWindow &app) override {
-    auto item = std::static_pointer_cast<AppSelectorItem>(appSelector->value());
+    auto item = static_cast<const AppSelectorItem *>(appSelector->value());
 
     if (!item) {
       appSelector->setError("Required");
       return;
     }
 
-    auto icon = std::static_pointer_cast<IconSelectorItem>(iconSelector->value());
+    auto icon = static_cast<const IconSelectorItem *>(iconSelector->value());
 
     if (!icon) {
       iconSelector->setError("Required");
@@ -320,10 +306,10 @@ public:
     link->setText(quicklink.rawUrl);
 
     if (auto app = appDb.getById(quicklink.app)) {
-      appSelector->setValue(std::make_shared<AppSelectorItem>(app));
+      // appSelector->setValue(std::make_shared<AppSelectorItem>(app));
     }
 
-    iconSelector->setValue(std::make_shared<IconSelectorItem>(quicklink.iconName));
+    // iconSelector->setValue(std::make_shared<IconSelectorItem>(quicklink.iconName));
   }
 
   void onMount() override {
@@ -332,14 +318,14 @@ public:
   }
 
   void submit(AppWindow &app) override {
-    auto item = std::static_pointer_cast<AppSelectorItem>(appSelector->value());
+    auto item = static_cast<const AppSelectorItem *>(appSelector->value());
 
     if (!item) {
       appSelector->setError("Required");
       return;
     }
 
-    auto icon = std::static_pointer_cast<IconSelectorItem>(iconSelector->value());
+    auto icon = static_cast<const IconSelectorItem *>(iconSelector->value());
 
     if (!icon) {
       iconSelector->setError("Required");

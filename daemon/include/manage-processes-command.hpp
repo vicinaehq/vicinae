@@ -1,11 +1,10 @@
 #pragma once
 
-#include "app.hpp"
 #include "command.hpp"
-#include "ui/grid-view.hpp"
 #include "process-manager-service.hpp"
 #include "ui/action_popover.hpp"
-#include "ui/list-view.hpp"
+#include "ui/omni-list-view.hpp"
+#include "ui/omni-list.hpp"
 #include "view.hpp"
 #include <csignal>
 #include <QPointer>
@@ -21,51 +20,51 @@ public:
       : AbstractAction("Kill process", ThemeIconModel{.iconName = ":icons/droplets.svg"}), pid(pid) {}
 };
 
-class ManageProcessesMainView : public GridView {
+class ManageProcessesMainView : public OmniListView {
   Service<ProcessManagerService> processManager;
 
-  class ProcListItem : public SimpleListGridItem {
+  class ProcListItem : public OmniListView::AbstractActionnableItem {
     ProcessInfo info;
     int idx;
 
-    virtual QList<AbstractAction *> createActions() const override {
+    virtual QList<AbstractAction *> generateActions() const override {
       return {new CopyTextAction("Copy pid", QString::number(info.pid)), new KillProcessAction(info.pid)};
     }
 
-    int key() const override { return info.pid; }
+    QString id() const override { return QString::number(info.pid); }
+
+    ItemData data() const override {
+      return {.icon = "xterm", .name = info.comm, .category = "", .kind = QString::number(info.pid)};
+    }
 
   public:
     const ProcessInfo &proc() const { return info; }
 
-    ProcListItem(const ProcessInfo &info)
-        : SimpleListGridItem("xterm", info.comm, "", QString::number(info.pid)), info(info) {}
+    ProcListItem(const ProcessInfo &info) : info(info) {}
 
-    ~ProcListItem() { qDebug() << "destroy proc list item" << info.comm; }
+    ~ProcListItem() {}
   };
 
-  void onSearchChanged(const QString &text) override {
-    grid->clearContents();
-
-    auto processes = grid->section("Processes");
+  void executeSearch(ItemList &list, const QString &s) override {
     auto ps = processManager.list();
 
+    list.push_back(std::make_unique<OmniList::VirtualSection>("Running processes"));
+
     for (const auto &proc : ps) {
-      if (proc.comm.contains(text, Qt::CaseInsensitive)) {
-        auto item = new ProcListItem(proc);
+      if (!proc.comm.contains(s, Qt::CaseInsensitive)) continue;
 
-        processes->addItem(new ProcListItem(proc));
-      }
+      auto item = std::make_unique<ProcListItem>(proc);
+
+      list.push_back(std::move(item));
     }
-
-    grid->calculateLayout();
-    grid->selectFirst();
   }
 
   void onMount() override { setSearchPlaceholderText("Search processes..."); }
 
 public:
-  ManageProcessesMainView(AppWindow &app) : GridView(app), processManager(service<ProcessManagerService>()) {
-    grid->setMargins(10, 5, 10, 5);
+  ManageProcessesMainView(AppWindow &app)
+      : OmniListView(app), processManager(service<ProcessManagerService>()) {
+    widget = list;
   }
 };
 

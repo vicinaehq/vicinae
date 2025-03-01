@@ -17,6 +17,12 @@ public:
 
   QList<QString> collectArgs() const;
 
+  void setValues(const QList<QString> &values) {
+    for (int i = 0; i < inputs.size() && i < values.size(); ++i) {
+      inputs[i]->setText(values[i]);
+    }
+  }
+
   // focus first empty placeholder
   // returns true if something was focused, false otherwise
   bool focusFirstEmpty() const;

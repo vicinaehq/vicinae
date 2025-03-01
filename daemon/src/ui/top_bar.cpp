@@ -2,10 +2,8 @@
 #include "extend/image-model.hpp"
 #include <qnamespace.h>
 
-TopBar::TopBar(QWidget *parent) : QWidget(parent), layout(new QHBoxLayout()), input(new SearchBar()) {
+TopBar::TopBar(QWidget *parent) : QWidget(parent), layout(new QHBoxLayout()), input(new SearchBar(this)) {
   backButtonLabel = new QLabel();
-
-  QIcon::setThemeName("Papirus-Dark");
 
   input->setTextMargins(10, 10, 10, 10);
 
@@ -25,7 +23,15 @@ TopBar::TopBar(QWidget *parent) : QWidget(parent), layout(new QHBoxLayout()), in
   layout->addWidget(input);
   layout->setSpacing(0);
   setLayout(layout);
+
   setProperty("class", "top-bar");
+
+  connect(input, &QLineEdit::textChanged, this, [this]() {
+    if (completerData) {
+      auto fm = input->fontMetrics();
+      input->setFixedWidth(fm.boundingRect(input->text()).width() + 35);
+    }
+  });
 }
 
 bool TopBar::eventFilter(QObject *obj, QEvent *event) {

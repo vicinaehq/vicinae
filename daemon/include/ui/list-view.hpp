@@ -10,7 +10,9 @@
 #include "ui/action_popover.hpp"
 #include "ui/empty-view.hpp"
 #include "ui/horizontal-metadata.hpp"
+#include "ui/top_bar.hpp"
 #include "ui/virtual-grid.hpp"
+#include "ui/omni-list.hpp"
 #include <qapplication.h>
 #include <qboxlayout.h>
 #include <qcoreevent.h>
@@ -209,16 +211,12 @@ public:
 class AbstractActionnableGridItem : public AbstractGridMember {
 public:
   virtual QList<AbstractAction *> createActions() const { return {}; }
+  virtual CompleterData *createCompleter() const { return nullptr; }
 };
 
 class SimpleListGridItem : public AbstractActionnableGridItem {
-  QString iconDescriptor;
-  QString name;
-  QString category;
-  QString kind;
-
   AbstractGridItemWidget *widget(int columnWidth) const override {
-    return new ListItemWidget3(iconDescriptor, name, category, kind);
+    return new ListItemWidget3(iconName(), name(), category(), kind());
   }
 
   int heightForWidth(int columnWidth) const override {
@@ -227,10 +225,13 @@ class SimpleListGridItem : public AbstractActionnableGridItem {
     return ruler.sizeHint().height();
   }
 
+  virtual QString name() const = 0;
+  virtual QString iconName() const = 0;
+  virtual QString category() const { return ""; }
+  virtual QString kind() const { return ""; }
+
 public:
-  SimpleListGridItem(const QString &iconDescriptor, const QString &name, const QString &category,
-                     const QString &kind)
-      : iconDescriptor(iconDescriptor), name(name), category(category), kind(kind) {}
+  SimpleListGridItem() {}
 };
 
 class DetailWidget : public QWidget {

@@ -108,12 +108,12 @@ void AppWindow::popCurrentView() {
 
   auto next = navigationStack.top();
 
-  layout->replaceWidget(previous.view->widget, next.view->widget);
   previous.view->widget->setParent(nullptr);
   previous.view->setParent(nullptr);
 
   connectView(*next.view);
   next.view->setParent(this);
+  viewDisplayer->setWidget(next.view->widget);
   next.view->widget->show();
 
   previous.view->deleteLater();
@@ -202,7 +202,7 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
   if (navigationStack.size() == 1) { topBar->showBackButton(); }
 
   if (navigationStack.empty()) {
-    layout->replaceWidget(defaultWidget, view->widget);
+    viewDisplayer->setWidget(view->widget);
   } else {
     auto &cur = navigationStack.top();
 
@@ -219,9 +219,10 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
       };
     }
 
-    layout->replaceWidget(cur.view->widget, view->widget);
+    // layout->replaceWidget(cur.view->widget, view->widget);
     cur.view->widget->setParent(nullptr);
     cur.view->widget->hide();
+    viewDisplayer->setWidget(view->widget);
 
     if (opts.navigation) statusBar->setNavigationTitle(opts.navigation->title, opts.navigation->icon);
   }
@@ -249,19 +250,7 @@ void AppWindow::launchCommand(ViewCommand *cmd, const LaunchCommandOptions &opts
   if (view) { pushView(view, {.searchQuery = opts.searchQuery, .navigation = opts.navigation}); }
 }
 
-void AppWindow::resizeEvent(QResizeEvent *event) {
-  QMainWindow::resizeEvent(event);
-
-  /*
-  // Set a rounded mask based on the new size
-  int radius = 20; // Adjust radius as needed
-  QRegion region(0, 0, width(), height(), QRegion::Rectangle);
-  QRegion roundedRegion =
-      QRegion(width() / 2 - radius, height() / 2 - radius, radius * 2, radius * 2, QRegion::Ellipse);
-  region = region.subtracted(region - roundedRegion);
-  setMask(region);
-  */
-}
+void AppWindow::resizeEvent(QResizeEvent *event) { QMainWindow::resizeEvent(event); }
 
 void AppWindow::paintEvent(QPaintEvent *event) {
   int borderRadius = 15;
@@ -285,21 +274,6 @@ void AppWindow::paintEvent(QPaintEvent *event) {
   QPen pen(borderColor, borderWidth); // Border with a thickness of 2
   painter.setPen(pen);
   painter.drawPath(path);
-
-  /*
-    QColor backgroundColor("#171615");
-
-    backgroundColor.setAlphaF(0.9);
-
-    QPainter painter(this);
-
-    painter.setRenderHint(QPainter::Antialiasing, true);
-    painter.setPen("#444444");
-    painter.setBrush(backgroundColor);
-    painter.drawRoundedRect(0, 0, width(), height(), 15, 15);
-
-    // painter.fillRect(rect(), backgroundColor); // Adjust color as needed
-    // */
 }
 
 void AppWindow::selectPrimaryAction() {
@@ -329,7 +303,7 @@ void AppWindow::closeWindow(bool withPopToRoot) {
 }
 
 AppWindow::AppWindow(QWidget *parent)
-    : QMainWindow(parent), topBar(new TopBar()), statusBar(new StatusBar()),
+    : QMainWindow(parent), topBar(new TopBar()), viewDisplayer(new ViewDisplayer), statusBar(new StatusBar()),
       actionPopover(new ActionPopover(this)) {
   setWindowFlags(Qt::FramelessWindowHint);
   setAttribute(Qt::WA_TranslucentBackground);
@@ -383,7 +357,7 @@ AppWindow::AppWindow(QWidget *parent)
   topBar->input->installEventFilter(this);
   layout->addWidget(topBar);
   layout->addWidget(new HDivider);
-  layout->addWidget(defaultWidget, 1);
+  layout->addWidget(viewDisplayer, 1);
   layout->addWidget(new HDivider);
   layout->addWidget(statusBar);
 
@@ -396,20 +370,6 @@ AppWindow::AppWindow(QWidget *parent)
   setCentralWidget(widget);
 
   launchCommand(new RootCommand);
-
-  /*
-  connect(topBar->input, &QLineEdit::textChanged, [this](auto arg) {
-    commandStack.top()->onSearchChanged(arg);
-    emit navigationStack.top()->onSearchChanged(arg);
-  });
-  connect(actionPopover, &ActionPopover::actionActivated,
-          [this](auto arg) { commandStack.top()->onActionActivated(arg); });
- */
-
-  qDebug() << QDir::homePath();
-  // indexer->index(QDir::homePath() + QDir::separator() +
-  //"prog/perso/getsslnow/");
-  // indexer->index(QDir::homePath());
 }
 
 template <> Service<QuicklistDatabase> AppWindow::service<QuicklistDatabase>() const {

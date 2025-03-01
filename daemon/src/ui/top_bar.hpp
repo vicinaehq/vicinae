@@ -11,10 +11,12 @@
 #include <qnamespace.h>
 #include <qtimer.h>
 #include <qtmetamacros.h>
+#include <qwidget.h>
 
 class SearchBar : public QLineEdit {
   Q_OBJECT
 
+protected:
   bool event(QEvent *event) override {
     if (event->type() == QEvent::KeyPress) {
       auto keyEvent = static_cast<QKeyEvent *>(event);
@@ -29,8 +31,8 @@ class SearchBar : public QLineEdit {
   }
 
 public:
-  SearchBar() {
-    auto debounce = new QTimer();
+  SearchBar(QWidget *parent = nullptr) : QLineEdit(parent) {
+    auto debounce = new QTimer(this);
 
     debounce->setInterval(10);
     debounce->setSingleShot(true);
@@ -51,7 +53,7 @@ struct CompleterData {
   ImageLikeModel model;
 };
 
-struct TopBar : QWidget {
+struct TopBar : public QWidget {
   QLabel *backButtonLabel = nullptr;
   QHBoxLayout *layout;
   SearchBar *input;

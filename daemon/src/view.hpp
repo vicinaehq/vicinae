@@ -15,7 +15,6 @@
 
 class View : public QObject {
   Q_OBJECT
-  AppWindow &app;
   QList<QWidget *> inputFwdTo;
   QList<IInputHandler *> inputHandlers;
 
@@ -32,6 +31,8 @@ class View : public QObject {
   }
 
 protected:
+  AppWindow &app;
+
 public:
   QWidget *widget;
   View(AppWindow &app) : app(app) {}
