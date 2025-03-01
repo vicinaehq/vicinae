@@ -7,7 +7,6 @@
 #include "indexer-service.hpp"
 #include "process-manager-service.hpp"
 #include "quicklist-database.hpp"
-#include <jsoncpp/json/value.h>
 #include <qboxlayout.h>
 #include <qevent.h>
 #include <qhash.h>
