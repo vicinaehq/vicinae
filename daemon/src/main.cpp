@@ -6,7 +6,6 @@
 #include <QtSql/qsqldatabase.h>
 #include <arpa/inet.h>
 #include <cmark.h>
-#include <jsoncpp/json/reader.h>
 #include <qfontdatabase.h>
 #include <qlist.h>
 #include <qlocalserver.h>
