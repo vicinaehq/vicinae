@@ -1,5 +1,7 @@
 #pragma once
 #include "omnicast.hpp"
+#include "ui/omni-list-item-widget.hpp"
+#include "ui/selectable-omni-list-widget.hpp"
 #include <qboxlayout.h>
 #include <qlabel.h>
 #include <qwidget.h>
@@ -9,7 +11,7 @@ struct CalculatorItem {
   double result;
 };
 
-class CalculatorListItemWidget : public QWidget {
+class CalculatorListItemWidget : public SelectableOmniListWidget {
   CalculatorItem item;
 
   void setupUi() {

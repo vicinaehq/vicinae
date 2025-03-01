@@ -12,7 +12,7 @@ protected:
   ItemList itemList;
 
 public:
-  class AbstractActionnableItem : public AbstractDefaultListItem {
+  class IActionnable {
   public:
     virtual QList<AbstractAction *> generateActions() const { return {}; };
   };
@@ -24,9 +24,9 @@ private:
 
     qDebug() << "selected id" << next->id();
 
-    auto nextItem = static_cast<const AbstractActionnableItem *>(next);
-
-    setSignalActions(nextItem->generateActions());
+    if (auto nextItem = dynamic_cast<const IActionnable *>(next)) {
+      setSignalActions(nextItem->generateActions());
+    }
   }
 
   virtual void itemActivated(const OmniList::AbstractVirtualItem &item) {

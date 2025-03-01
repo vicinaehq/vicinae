@@ -23,7 +23,7 @@ public:
 class ManageProcessesMainView : public OmniListView {
   Service<ProcessManagerService> processManager;
 
-  class ProcListItem : public OmniListView::AbstractActionnableItem {
+  class ProcListItem : public AbstractDefaultListItem, OmniListView::IActionnable {
     ProcessInfo info;
     int idx;
 

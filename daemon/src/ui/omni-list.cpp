@@ -72,10 +72,8 @@ void OmniList::updateVisibleItems() {
       auto widget = current->second;
 
       if (item.item->recyclable()) {
-        qDebug() << "added to pool" << item.item->typeId();
         moveToPool(item.item->typeId(), widget);
       } else {
-        qDebug() << "deletion of out of scope item" << item.id << "at" << current->first;
         widget->deleteLater();
       }
 
@@ -136,9 +134,6 @@ void OmniList::calculateHeights() {
 
       if (item.vIndex >= visibleIndexRange.lower && item.vIndex <= visibleIndexRange.upper) {
         if (auto it = _widgetCache.find(item.id); it != _widgetCache.end()) {
-
-          qDebug() << "preserve cached" << item.id;
-
           updatedCache[item.id] = it->second;
         }
       }
@@ -470,6 +465,7 @@ void OmniList::clear() {
   _filter.reset();
   _selected = DEFAULT_SELECTION_INDEX;
   _virtualHeight = 0;
+
   calculateHeights();
 }
 
@@ -527,6 +523,44 @@ bool OmniList::updateItem(const QString &id, const UpdateItemCallback &cb) {
   emit itemUpdated(*info.item.get());
 
   return true;
+}
+
+void OmniList::invalidateCache() {
+  for (const auto &[id, widget] : _widgetCache) {
+    auto item = itemAt(id);
+
+    if (item->recyclable()) {
+      moveToPool(item->typeId(), widget);
+    } else {
+      widget->deleteLater();
+    }
+  }
+
+  _widgetCache.clear();
+  _visibleWidgets.clear();
+
+  if (!_isUpdating) { updateVisibleItems(); }
+}
+
+void OmniList::invalidateCache(const QString &id) {
+  auto it = _widgetCache.find(id);
+
+  if (it == _widgetCache.end()) { return; }
+
+  auto idx = indexOfItem(id);
+  auto &info = _items.at(idx);
+
+  if (info.item->recyclable()) {
+    moveToPool(info.item->typeId(), it->second);
+  } else {
+    it->second->deleteLater();
+  }
+
+  _widgetCache.erase(it);
+
+  if (info.vIndex != -1) { _visibleWidgets.erase(info.vIndex); }
+
+  if (!_isUpdating) { updateVisibleItems(); }
 }
 
 const OmniList::AbstractVirtualItem *OmniList::setSelected(const QString &id,

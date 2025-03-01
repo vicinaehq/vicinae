@@ -34,7 +34,7 @@ public:
     virtual void recycle(QWidget *base) const {}
     virtual bool recyclable() const { return false; }
     virtual QString id() const = 0;
-    virtual size_t typeId() { return typeid(*this).hash_code(); }
+    virtual size_t typeId() const { return typeid(*this).hash_code(); }
     virtual bool selectable() const { return true; }
     virtual ListRole role() const { return ListRole::ListItem; }
     virtual HeightCalculationPolicy heightCalculationPolicy() {
@@ -174,6 +174,8 @@ public:
   void updateFromList(std::vector<std::unique_ptr<AbstractVirtualItem>> &nextList,
                       SelectionPolicy selectionPolicy = SelectionPolicy::KeepSelection);
   void addSection(const QString &name);
+  void invalidateCache();
+  void invalidateCache(const QString &id);
   void beginUpdate();
   void commitUpdate();
   void addItem(std::unique_ptr<AbstractVirtualItem> item);

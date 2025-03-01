@@ -1,13 +1,9 @@
 #pragma once
 #include "app.hpp"
 #include "calculator-database.hpp"
-#include "tinyexpr.hpp"
-#include "ui/grid-view.hpp"
 #include "ui/action_popover.hpp"
-#include "ui/list-view.hpp"
 #include "ui/omni-list-view.hpp"
 #include "ui/omni-list.hpp"
-#include "ui/virtual-grid.hpp"
 #include <memory>
 #include <qnamespace.h>
 #include <qobject.h>
@@ -33,7 +29,7 @@ public:
   }
 };
 
-class CalculatorHistoryListItem : public OmniListView::AbstractActionnableItem {
+class CalculatorHistoryListItem : public AbstractDefaultListItem, public OmniListView::IActionnable {
   using RemoveCallback = std::function<void(const QString &id)>;
 
   RemoveCallback _rmCb;

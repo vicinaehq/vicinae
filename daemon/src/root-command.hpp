@@ -19,8 +19,10 @@
 #include "ui/action_popover.hpp"
 #include "ui/calculator-list-item-widget.hpp"
 #include "ui/color_circle.hpp"
+#include "ui/default-list-item-widget.hpp"
 #include "ui/grid-view.hpp"
 #include "ui/list-view.hpp"
+#include "ui/omni-list-item-widget.hpp"
 #include "ui/omni-list-view.hpp"
 #include "ui/omni-list.hpp"
 #include "ui/test-list.hpp"
@@ -106,7 +108,7 @@ public:
   ColorListItem(QColor color) : color(color) {}
 };
 
-class BuiltinCommandListItem : public OmniListView::AbstractActionnableItem {
+class BuiltinCommandListItem : public AbstractDefaultListItem, public OmniListView::IActionnable {
 protected:
   BuiltinCommand cmd;
   QString text;
@@ -136,7 +138,7 @@ static BuiltinCommand calculatorHistoryCommand{
     .iconName = ":assets/icons/calculator.png",
     .factory = [](AppWindow &app, const QString &s) { return new SingleViewCommand<CalculatorHistoryView>; }};
 
-class QuicklinkRootListItem : public OmniListView::AbstractActionnableItem {
+class QuicklinkRootListItem : public AbstractDefaultListItem, public OmniListView::IActionnable {
 public:
   std::shared_ptr<Quicklink> link;
 
@@ -180,7 +182,7 @@ class RootView : public OmniListView {
   Service<ExtensionManager> extensionManager;
   Service<QuicklistDatabase> quicklinkDb;
 
-  class AppListItem : public OmniListView::AbstractActionnableItem {
+  class AppListItem : public AbstractDefaultListItem, public OmniListView::IActionnable {
     std::shared_ptr<DesktopEntry> app;
     Service<AppDatabase> appDb;
 
@@ -220,7 +222,7 @@ class RootView : public OmniListView {
     ~AppListItem() {}
   };
 
-  class FallbackQuicklinkListItem : public OmniListView::AbstractActionnableItem {
+  class FallbackQuicklinkListItem : public AbstractDefaultListItem, OmniListView::IActionnable {
     QString query;
 
   public:
@@ -259,17 +261,33 @@ class RootView : public OmniListView {
           cmd(cmd) {}
   };
 
-  class RootCalculatorListItem : public BaseCalculatorListItem {
-    QList<AbstractAction *> createActions() const override {
-      auto actions = BaseCalculatorListItem::createActions();
+  class BaseCalculatorListItem : public OmniList::AbstractVirtualItem, public OmniListView::IActionnable {
+  protected:
+    CalculatorItem item;
 
-      actions << new OpenBuiltinCommandAction(calculatorHistoryCommand, "Open in history", item.expression);
+    OmniListItemWidget *createWidget() const override { return new CalculatorListItemWidget(item); }
 
-      return actions;
+    int calculateHeight() const override {
+      static CalculatorListItemWidget ruler({});
+
+      return ruler.sizeHint().height();
+    }
+
+    QString id() const override { return item.expression; }
+
+    QList<AbstractAction *> generateActions() const override {
+      QString sresult = QString::number(item.result);
+
+      return {new CopyCalculatorResultAction(item, "Copy result", sresult),
+              new CopyCalculatorResultAction(item, "Copy expression",
+                                             QString("%1 = %2").arg(item.expression).arg(sresult)),
+              new OpenBuiltinCommandAction(calculatorHistoryCommand, "Open in history", item.expression)
+
+      };
     }
 
   public:
-    RootCalculatorListItem(const CalculatorItem &item) : BaseCalculatorListItem(item) {}
+    BaseCalculatorListItem(const CalculatorItem &item) : item(item) {}
   };
 
   QList<BuiltinCommand> builtinCommands{
@@ -349,9 +367,9 @@ public:
 
       if (!std::isnan(result)) {
         auto data = CalculatorItem{.expression = s, .result = result};
-        auto item = std::make_shared<RootCalculatorListItem>(data);
+        auto item = std::make_unique<BaseCalculatorListItem>(data);
 
-        // calculator->addItem(new BasicCalculatorItem(data));
+        list.push_back(std::move(item));
       }
     }
 
