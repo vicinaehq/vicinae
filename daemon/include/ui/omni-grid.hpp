@@ -24,7 +24,6 @@ public:
       widget->setTooltipText(tooltip());
 
       if (centerWidgetRecyclable()) {
-        qDebug() << "recycle center widget";
         recycleCenterWidget(widget->widget());
       } else {
         widget->setWidget(centerWidget());

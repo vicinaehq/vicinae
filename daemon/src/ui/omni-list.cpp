@@ -90,7 +90,6 @@ void OmniList::updateVisibleItems() {
         connect(widget, &OmniListItemWidgetWrapper::clicked, this, &OmniList::itemClicked);
         connect(widget, &OmniListItemWidgetWrapper::doubleClicked, this, &OmniList::itemDoubleClicked);
         widget->setWidget(info.item->createWidget());
-        qDebug() << "create new widget" << info.item->typeId();
       }
 
       CachedWidget cache{.widget = widget, .recyclingId = 0};
@@ -233,7 +232,6 @@ void OmniList::calculateHeights() {
   for (auto &[key, cache] : _widgetCache) {
     if (auto it = updatedCache.find(key); it == updatedCache.end()) {
       if (cache.recyclingId) {
-        qDebug() << "recycling" << cache.recyclingId;
         moveToPool(cache.recyclingId, cache.widget);
       } else {
         cache.widget->deleteLater();
