@@ -4,21 +4,32 @@
 #include "emoji-database.hpp"
 #include "ui/grid-view.hpp"
 #include "ui/omni-grid.hpp"
-#include "ui/virtual-grid.hpp"
 #include <memory>
 #include <qlabel.h>
 #include <qnamespace.h>
 
 class EmojiGridItem : public OmniGrid::AbstractGridItem {
+  QString generateMarkup() const {
+    return QString("<span style=\"font-size: 36px;\">%1</span>").arg(info.emoji);
+  }
+
 public:
   const EmojiInfo &info;
 
   QString tooltip() const override { return info.description; }
 
   QWidget *centerWidget() const override {
-    auto label = new QLabel(QString("<span style=\"font-size: 36px;\">%1</span>").arg(info.emoji));
+    auto label = new QLabel(generateMarkup());
 
     return label;
+  }
+
+  bool centerWidgetRecyclable() const override { return true; }
+
+  void recycleCenterWidget(QWidget *widget) const override {
+    auto label = static_cast<QLabel *>(widget);
+
+    label->setText(generateMarkup());
   }
 
   QString id() const override { return info.description; }

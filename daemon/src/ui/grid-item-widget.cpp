@@ -1,6 +1,7 @@
 #include "ui/grid-item-widget.hpp"
 #include "ui/grid-item-content-widget.hpp"
 #include "ui/omni-list-item-widget.hpp"
+#include <qwidget.h>
 
 void GridItemWidget2::resizeEvent(QResizeEvent *event) {
   auto size = event->size();
@@ -37,5 +38,6 @@ void GridItemWidget2::setTooltipText(const QString &tooltip) { main->setTooltipT
 void GridItemWidget2::selectionChanged(bool selected) { main->setSelected(selected); }
 
 void GridItemWidget2::setWidget(QWidget *widget) { main->setWidget(widget); }
+QWidget *GridItemWidget2::widget() const { return main->widget(); }
 
 size_t GridItemWidget2::spacing() { return layout->spacing(); }

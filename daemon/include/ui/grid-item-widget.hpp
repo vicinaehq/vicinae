@@ -4,6 +4,7 @@
 #include "ui/omni-list-item-widget.hpp"
 #include <qboxlayout.h>
 #include <qevent.h>
+#include <qwidget.h>
 
 class GridItemWidget2 : public OmniListItemWidget {
   QVBoxLayout *layout;
@@ -22,5 +23,6 @@ public:
   void setTooltipText(const QString &tooltip);
 
   void setWidget(QWidget *widget);
+  QWidget *widget() const;
   size_t spacing();
 };

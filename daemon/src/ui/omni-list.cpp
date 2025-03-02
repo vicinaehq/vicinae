@@ -75,11 +75,12 @@ void OmniList::updateVisibleItems() {
   for (; endIndex < _virtual_items.size() && viewportY < viewportSize.height(); ++endIndex) {
     auto &vinfo = _virtual_items[endIndex];
     auto &info = vmap(endIndex);
-    auto widget = _widgetCache[info.id];
+    auto cacheIt = _widgetCache.find(info.id);
+    OmniListItemWidgetWrapper *widget = nullptr;
 
     if (lastY != -1 && lastY != vinfo.y) { viewportY += vinfo.y - lastY; }
 
-    if (!widget) {
+    if (cacheIt == _widgetCache.end()) {
       if (auto wrapper = takeFromPool(info.item->typeId())) {
         info.item->recycle(wrapper->widget());
         wrapper->setParent(this);
@@ -89,9 +90,16 @@ void OmniList::updateVisibleItems() {
         connect(widget, &OmniListItemWidgetWrapper::clicked, this, &OmniList::itemClicked);
         connect(widget, &OmniListItemWidgetWrapper::doubleClicked, this, &OmniList::itemDoubleClicked);
         widget->setWidget(info.item->createWidget());
+        qDebug() << "create new widget" << info.item->typeId();
       }
 
-      _widgetCache[info.id] = widget;
+      CachedWidget cache{.widget = widget, .recyclingId = 0};
+
+      if (info.item->recyclable()) { cache.recyclingId = info.item->typeId(); }
+
+      _widgetCache[info.id] = cache;
+    } else {
+      widget = cacheIt->second.widget;
     }
 
     QPoint pos(vinfo.x, viewportY);
@@ -136,7 +144,7 @@ void OmniList::calculateHeights() {
   int yOffset = 0;
   int availableWidth = width() - margins.left - margins.right;
   std::optional<SectionCalculationContext> sctx;
-  std::unordered_map<QString, OmniListItemWidgetWrapper *> updatedCache;
+  std::unordered_map<QString, CachedWidget> updatedCache;
 
   _virtual_items.clear();
 
@@ -159,6 +167,7 @@ void OmniList::calculateHeights() {
       }
 
       section->setCount(count);
+      section->initWidth(availableWidth);
 
       if (section->showHeader()) {
         item.vIndex = _virtual_items.size();
@@ -199,8 +208,6 @@ void OmniList::calculateHeights() {
         height = item.item->calculateHeight(width);
         sctx->maxHeight = std::max(sctx->maxHeight, height);
 
-        // qDebug() << "sctx->x" << sctx->x << availableWidth;
-
         if (sctx->x >= availableWidth) {
           yOffset += sctx->maxHeight;
           sctx->x = margins.left;
@@ -223,8 +230,15 @@ void OmniList::calculateHeights() {
 
   yOffset += margins.bottom;
 
-  for (auto &[key, widget] : _widgetCache) {
-    if (auto it = updatedCache.find(key); it == updatedCache.end()) { widget->deleteLater(); }
+  for (auto &[key, cache] : _widgetCache) {
+    if (auto it = updatedCache.find(key); it == updatedCache.end()) {
+      if (cache.recyclingId) {
+        qDebug() << "recycling" << cache.recyclingId;
+        moveToPool(cache.recyclingId, cache.widget);
+      } else {
+        cache.widget->deleteLater();
+      }
+    }
   }
 
   _visibleWidgets.clear();
@@ -294,8 +308,8 @@ void OmniList::updateFromList(std::vector<std::unique_ptr<AbstractVirtualItem>> 
 }
 
 void OmniList::clearVisibleWidgets() {
-  for (const auto &[_, widget] : _widgetCache) {
-    widget->deleteLater();
+  for (const auto &[_, cache] : _widgetCache) {
+    cache.widget->deleteLater();
   }
   _visibleWidgets.clear();
   _widgetCache.clear();
@@ -572,7 +586,7 @@ bool OmniList::updateItem(const QString &id, const UpdateItemCallback &cb) {
   if (auto it = _visibleWidgets.find(info.vIndex); it != _visibleWidgets.end()) { _visibleWidgets.erase(it); }
 
   if (auto it = _widgetCache.find(info.id); it != _widgetCache.end()) {
-    it->second->deleteLater();
+    it->second.widget->deleteLater();
     _widgetCache.erase(it);
   }
 
@@ -584,13 +598,13 @@ bool OmniList::updateItem(const QString &id, const UpdateItemCallback &cb) {
 }
 
 void OmniList::invalidateCache() {
-  for (const auto &[id, widget] : _widgetCache) {
+  for (const auto &[id, cached] : _widgetCache) {
     auto item = itemAt(id);
 
     if (item->recyclable()) {
-      moveToPool(item->typeId(), widget);
+      moveToPool(item->typeId(), cached.widget);
     } else {
-      widget->deleteLater();
+      cached.widget->deleteLater();
     }
   }
 
@@ -609,9 +623,9 @@ void OmniList::invalidateCache(const QString &id) {
   auto &info = _items.at(idx);
 
   if (info.item->recyclable()) {
-    moveToPool(info.item->typeId(), it->second);
+    moveToPool(info.item->typeId(), it->second.widget);
   } else {
-    it->second->deleteLater();
+    it->second.widget->deleteLater();
   }
 
   _widgetCache.erase(it);

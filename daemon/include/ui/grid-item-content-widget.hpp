@@ -37,6 +37,7 @@ public:
   void setSelected(bool selected);
   void setInset(int inset);
   void setWidget(QWidget *widget);
+  QWidget *widget() const;
 
 signals:
   void clicked();

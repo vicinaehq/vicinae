@@ -22,8 +22,18 @@ public:
       widget->setTitle(title());
       widget->setSubtitle(subtitle());
       widget->setTooltipText(tooltip());
-      widget->setWidget(centerWidget());
+
+      if (centerWidgetRecyclable()) {
+        qDebug() << "recycle center widget";
+        recycleCenterWidget(widget->widget());
+      } else {
+        widget->setWidget(centerWidget());
+      }
     }
+
+    virtual bool centerWidgetRecyclable() const { return false; }
+
+    virtual void recycleCenterWidget(QWidget *widget) const {}
 
     bool recyclable() const override { return true; }
 
@@ -43,7 +53,10 @@ public:
     OmniListItemWidget *createWidget() const override {
       auto widget = new GridItemWidget2();
 
-      recycle(widget);
+      widget->setTitle(title());
+      widget->setSubtitle(subtitle());
+      widget->setTooltipText(tooltip());
+      widget->setWidget(centerWidget());
 
       return widget;
     }

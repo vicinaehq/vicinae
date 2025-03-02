@@ -120,12 +120,16 @@ private:
     int x;
     int maxHeight;
   };
+  struct CachedWidget {
+    OmniListItemWidgetWrapper *widget;
+    size_t recyclingId;
+  };
 
   QScrollBar *scrollBar;
   std::vector<ListItemInfo> _items;
   std::vector<VirtualListWidgetInfo> _virtual_items;
   std::unordered_map<size_t, OmniListItemWidgetWrapper *> _visibleWidgets;
-  std::unordered_map<QString, OmniListItemWidgetWrapper *> _widgetCache;
+  std::unordered_map<QString, CachedWidget> _widgetCache;
   std::unordered_map<size_t, std::stack<OmniListItemWidgetWrapper *>> _widgetPools;
   std::unordered_map<QString, size_t> _idMap;
   std::unique_ptr<AbstractItemFilter> _filter;

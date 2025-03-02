@@ -45,6 +45,12 @@ void GridItemContentWidget::setWidget(QWidget *widget) {
   }
 }
 
+QWidget *GridItemContentWidget::widget() const {
+  if (layout->count() > 0) { return layout->itemAt(0)->widget(); }
+
+  return nullptr;
+}
+
 void GridItemContentWidget::setSelected(bool selected) {
   this->selected = selected;
   update();
