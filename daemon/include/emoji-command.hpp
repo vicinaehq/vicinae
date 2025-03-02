@@ -15,12 +15,13 @@ class EmojiViewer : public QWidget {
   void paintEvent(QPaintEvent *event) override {
     QPainter painter(this);
     QFont font = painter.font();
-    font.setPointSize(height() * 0.8);
+
+    font.setPointSize(height() * 0.6);
     painter.setFont(font);
     painter.drawText(rect(), Qt::AlignCenter, _emoji);
   }
 
-  QSize sizeHint() const override { return {32, 32}; }
+  QSize sizeHint() const override { return {40, 40}; }
 
 public:
   void setEmoji(const QString &emoji) {
@@ -28,14 +29,12 @@ public:
     update();
   }
 
-  EmojiViewer(const QString &emoji) : _emoji(emoji) {}
+  EmojiViewer(const QString &emoji) : _emoji(emoji) {
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  }
 };
 
 class EmojiGridItem : public OmniGrid::AbstractGridItem {
-  QString generateMarkup() const {
-    return QString("<span style=\"font-size: 36px;\">%1</span>").arg(info.emoji);
-  }
-
 public:
   const EmojiInfo &info;
 
