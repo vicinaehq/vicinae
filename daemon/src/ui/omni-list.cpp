@@ -2,6 +2,7 @@
 #include "ui/omni-list-item-widget-wrapper.hpp"
 #include "ui/omni-scroll-bar.hpp"
 #include "ui/virtual-list.hpp"
+#include <chrono>
 #include <qapplication.h>
 #include <qevent.h>
 
@@ -54,7 +55,9 @@ void OmniList::itemClicked(int index) { setSelectedIndex(index); }
 void OmniList::itemDoubleClicked(int index) const { emit itemActivated(*vmap(index).item.get()); }
 
 void OmniList::updateVisibleItems() {
+  auto start = std::chrono::high_resolution_clock::now();
   if (_virtual_items.empty()) return;
+  setUpdatesEnabled(false);
 
   int scrollHeight = scrollBar->value();
   int startIndex = 0;
@@ -80,15 +83,18 @@ void OmniList::updateVisibleItems() {
 
     if (lastY != -1 && lastY != vinfo.y) { viewportY += vinfo.y - lastY; }
 
+    bool isWidgetCreated = false;
+
+    auto start = std::chrono::high_resolution_clock::now();
     if (cacheIt == _widgetCache.end()) {
       if (auto wrapper = takeFromPool(info.item->typeId())) {
         info.item->recycle(wrapper->widget());
-        wrapper->setParent(this);
         widget = wrapper;
       } else {
         widget = new OmniListItemWidgetWrapper(this);
         connect(widget, &OmniListItemWidgetWrapper::clicked, this, &OmniList::itemClicked);
         connect(widget, &OmniListItemWidgetWrapper::doubleClicked, this, &OmniList::itemDoubleClicked);
+        widget->stackUnder(scrollBar);
         widget->setWidget(info.item->createWidget());
       }
 
@@ -96,6 +102,7 @@ void OmniList::updateVisibleItems() {
 
       if (info.item->recyclable()) { cache.recyclingId = info.item->typeId(); }
 
+      isWidgetCreated = true;
       _widgetCache[info.id] = cache;
     } else {
       widget = cacheIt->second.widget;
@@ -106,15 +113,21 @@ void OmniList::updateVisibleItems() {
 
     // qDebug() << info.id << pos << size;
 
+    widget->blockSignals(true);
     widget->setIndex(endIndex);
     widget->setSelected(endIndex == _selected);
     widget->setFixedSize(size);
-    widget->stackUnder(scrollBar);
     widget->move(pos);
     widget->show();
+    widget->blockSignals(false);
 
     lastY = vinfo.y;
     _visibleWidgets[endIndex] = widget;
+
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() / 1e6;
+
+    qDebug() << "updateVisibleItems() individual item" << "=" << duration << "ms" << isWidgetCreated;
   }
 
   visibleIndexRange = {startIndex, endIndex - 1};
@@ -136,6 +149,9 @@ void OmniList::updateVisibleItems() {
       _widgetCache.erase(item.id);
     }
   }
+
+  setUpdatesEnabled(true);
+  update();
 }
 
 void OmniList::calculateHeights() {
@@ -266,7 +282,6 @@ OmniListItemWidgetWrapper *OmniList::takeFromPool(size_t type) {
 
 void OmniList::moveToPool(size_t type, OmniListItemWidgetWrapper *widget) {
   widget->hide();
-  widget->setParent(nullptr);
   _widgetPools[type].push(widget);
 }
 
@@ -669,4 +684,8 @@ OmniList::OmniList()
   int scrollBarWidth = scrollBar->sizeHint().width();
 
   setMargins(5, 5, 5, 5);
+  _virtual_items.reserve(100);
+  _items.reserve(100);
+  _visibleWidgets.reserve(100);
+  _widgetCache.reserve(100);
 }

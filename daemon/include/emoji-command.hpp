@@ -62,6 +62,7 @@ public:
   }
 
   void onSearchChanged(const QString &s) override {
+    auto start = std::chrono::high_resolution_clock::now();
     newItems.clear();
 
     if (s.isEmpty()) {
@@ -90,6 +91,10 @@ public:
         }
       }
     }
+
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() / 1e6;
+    qDebug() << "emojiSearch()" << "=" << duration << "ms";
 
     grid->updateFromList(newItems, OmniGrid::SelectFirst);
   }
