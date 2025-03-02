@@ -62,6 +62,15 @@ qt_add_executable(${TARGET}
 	include/ui/default-list-item-widget.hpp
 	src/ui/default-list-item-widget.cpp
 
+	include/ui/grid-item-content-widget.hpp
+	src/ui/grid-item-content-widget.cpp
+
+	include/ui/tooltip.hpp
+	src/ui/tooltip.cpp
+
+	include/ui/grid-item-widget.hpp
+	src/ui/grid-item-widget.cpp
+
 	include/ui/omni-list-item-widget.hpp
 
 	include/ollama-service.hpp

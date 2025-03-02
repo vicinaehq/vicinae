@@ -267,7 +267,7 @@ class RootView : public OmniListView {
 
     OmniListItemWidget *createWidget() const override { return new CalculatorListItemWidget(item); }
 
-    int calculateHeight() const override {
+    int calculateHeight(int width) const override {
       static CalculatorListItemWidget ruler({});
 
       return ruler.sizeHint().height();

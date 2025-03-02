@@ -3,11 +3,13 @@
 #include "app.hpp"
 #include "emoji-database.hpp"
 #include "ui/grid-view.hpp"
+#include "ui/omni-grid.hpp"
 #include "ui/virtual-grid.hpp"
+#include <memory>
 #include <qlabel.h>
 #include <qnamespace.h>
 
-class EmojiGridItem : public AbstractGridItem {
+class EmojiGridItem : public OmniGrid::AbstractGridItem {
 public:
   const EmojiInfo &info;
 
@@ -19,9 +21,9 @@ public:
     return label;
   }
 
-  int key() const override { return qHash(info.emoji); }
+  QString id() const override { return info.description; }
 
-  QList<AbstractAction *> createActions() const override {
+  QList<AbstractAction *> createActions() const {
     return {
         new CopyTextAction("Copy emoji", info.emoji),
         new CopyTextAction("Copy emoji name", info.description),
@@ -34,53 +36,50 @@ public:
 class EmojiView : public GridView {
   Service<AppDatabase> appDb;
   EmojiDatabase emojiDb;
-  std::vector<QSharedPointer<EmojiGridItem>> emojiItems;
+  OmniGrid *grid;
+  std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> newItems;
 
 public:
-  EmojiView(AppWindow &app) : GridView(app), appDb(service<AppDatabase>()) {
-    connect(grid, &VirtualGridWidget::selectionChanged, this, [this](const AbstractGridMember &item) {
-      auto &emoji = static_cast<const EmojiGridItem &>(item);
-
-      qDebug() << "selected emoji" << emoji.info.emoji;
-    });
+  EmojiView(AppWindow &app) : GridView(app), grid(new OmniGrid), appDb(service<AppDatabase>()) {
+    widget = grid;
   }
 
   void onMount() override {
-    for (const auto &emoji : emojiDb.list()) {
-      emojiItems.push_back(QSharedPointer<EmojiGridItem>(new EmojiGridItem(emoji), &QObject::deleteLater));
-    }
+    grid->setColumns(8);
+    grid->setSpacing(10);
+    grid->setMargins(20, 10, 20, 10);
   }
 
   void onSearchChanged(const QString &s) override {
-    grid->clearContents();
+    newItems.clear();
 
     if (s.isEmpty()) {
-      QHash<QString, VirtualGridSection *> sectionMap;
+      std::unordered_map<QString, std::vector<const EmojiInfo *>> sectionMap;
 
-      for (auto item : emojiItems) {
-        auto section = sectionMap.value(item->info.category);
+      for (auto &item : emojiDb.list()) {
+        auto &list = sectionMap[item.category];
 
-        if (!section) {
-          section = grid->section(item->info.category);
-          section->setColumns(8);
-          section->setSpacing(10);
-          sectionMap.insert(item->info.category, section);
+        list.push_back(&item);
+      }
+
+      for (auto &[name, items] : sectionMap) {
+        newItems.push_back(std::make_unique<OmniGrid::GridSection>(name, grid->columns(), grid->spacing()));
+
+        for (auto item : items) {
+          newItems.push_back(std::make_unique<EmojiGridItem>(*item));
         }
-
-        section->addItem(item);
       }
     } else {
-      auto results = grid->section("Results");
+      newItems.push_back(
+          std::make_unique<OmniGrid::GridSection>("Results", grid->columns(), grid->spacing()));
 
-      results->setColumns(8);
-      results->setSpacing(10);
-
-      for (auto item : emojiItems) {
-        if (QString(item->info.description).contains(s, Qt::CaseInsensitive)) { results->addItem(item); }
+      for (auto &item : emojiDb.list()) {
+        if (QString(item.description).contains(s, Qt::CaseInsensitive)) {
+          newItems.push_back(std::make_unique<EmojiGridItem>(item));
+        }
       }
     }
 
-    grid->calculateLayout();
-    grid->selectFirst();
+    grid->updateFromList(newItems, OmniGrid::SelectFirst);
   }
 };

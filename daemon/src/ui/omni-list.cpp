@@ -1,8 +1,53 @@
 #include "ui/omni-list.hpp"
 #include "ui/omni-list-item-widget-wrapper.hpp"
 #include "ui/omni-scroll-bar.hpp"
+#include "ui/virtual-list.hpp"
 #include <qapplication.h>
 #include <qevent.h>
+
+const QString &OmniList::VirtualSection::name() const { return _name; }
+
+QString OmniList::VirtualSection::id() const { return name(); }
+
+bool OmniList::VirtualSection::showHeader() { return count() > 0 && !_name.isEmpty(); }
+
+int OmniList::VirtualSection::calculateItemWidth(int width, int index) const { return width; }
+
+int OmniList::VirtualSection::calculateItemX(int x, int index) const { return x; }
+
+void OmniList::VirtualSection::initWidth(int width) {}
+
+void OmniList::VirtualSection::setCount(int count) { _count = count; }
+
+int OmniList::VirtualSection::count() const { return _count; }
+
+OmniListItemWidget *OmniList::VirtualSection::createWidget() const {
+  return new OmniListSectionHeader(_name, "", count());
+}
+
+int OmniList::VirtualSection::calculateHeight(int width) const {
+  static OmniListSectionHeader ruler("", "", 0);
+
+  return ruler.sizeHint().height();
+}
+
+OmniList::VirtualSection::VirtualSection(const QString &name) : _name(name), _count(0) {}
+
+bool OmniList::AbstractVirtualItem::recyclable() const { return false; }
+
+bool OmniList::AbstractVirtualItem::selectable() const { return true; }
+
+OmniList::AbstractVirtualItem::ListRole OmniList::AbstractVirtualItem::role() const {
+  return ListRole::ListItem;
+}
+
+void OmniList::AbstractVirtualItem::recycle(QWidget *base) const {}
+
+bool OmniList::AbstractVirtualItem::isListItem() const { return role() == ListRole::ListItem; };
+
+bool OmniList::AbstractVirtualItem::isSection() const { return role() == ListRole::ListSection; }
+
+size_t OmniList::AbstractVirtualItem::typeId() const { return typeid(*this).hash_code(); }
 
 void OmniList::itemClicked(int index) { setSelectedIndex(index); }
 
@@ -25,15 +70,17 @@ void OmniList::updateVisibleItems() {
   int viewportY = marginOffset + _virtual_items[startIndex].y - scrollHeight;
   QSize viewportSize = size();
   int endIndex = startIndex;
+  int lastY = -1;
 
   for (; endIndex < _virtual_items.size() && viewportY < viewportSize.height(); ++endIndex) {
     auto &vinfo = _virtual_items[endIndex];
     auto &info = vmap(endIndex);
     auto widget = _widgetCache[info.id];
 
+    if (lastY != -1 && lastY != vinfo.y) { viewportY += vinfo.y - lastY; }
+
     if (!widget) {
       if (auto wrapper = takeFromPool(info.item->typeId())) {
-        qDebug() << "recycled";
         info.item->recycle(wrapper->widget());
         wrapper->setParent(this);
         widget = wrapper;
@@ -58,7 +105,8 @@ void OmniList::updateVisibleItems() {
     widget->stackUnder(scrollBar);
     widget->move(pos);
     widget->show();
-    viewportY += vinfo.height;
+
+    lastY = vinfo.y;
     _visibleWidgets[endIndex] = widget;
   }
 
@@ -117,7 +165,7 @@ void OmniList::calculateHeights() {
         VirtualListWidgetInfo vinfo{.x = margins.left,
                                     .y = yOffset,
                                     .width = availableWidth,
-                                    .height = item.item->calculateHeight(),
+                                    .height = item.item->calculateHeight(availableWidth),
                                     .index = i};
         _virtual_items.push_back(vinfo);
         yOffset += vinfo.height;
@@ -125,7 +173,7 @@ void OmniList::calculateHeights() {
 
       sctx = {.section = section, .x = margins.left};
     } else if (role == AbstractVirtualItem::ListItem && !item.filtered) {
-      int height = item.item->calculateHeight();
+      int height = 0;
       int width = availableWidth;
       int x = margins.left;
       int y = yOffset;
@@ -139,10 +187,19 @@ void OmniList::calculateHeights() {
       }
 
       if (sctx) {
-        width = sctx->section->computeWidth(width, sctx->index);
+        width = sctx->section->calculateItemWidth(width, sctx->index);
+        // x = sctx->section->calculateItemX(sctx->x, sctx->index);
+        if (sctx->x == margins.left && sctx->index > 0) {
+          yOffset += sctx->section->spacing();
+          y = yOffset;
+        }
+
         x = sctx->x;
-        sctx->x += width;
+        sctx->x = sctx->x + width + sctx->section->spacing();
+        height = item.item->calculateHeight(width);
         sctx->maxHeight = std::max(sctx->maxHeight, height);
+
+        // qDebug() << "sctx->x" << sctx->x << availableWidth;
 
         if (sctx->x >= availableWidth) {
           yOffset += sctx->maxHeight;
@@ -152,6 +209,7 @@ void OmniList::calculateHeights() {
 
         ++sctx->index;
       } else {
+        height = item.item->calculateHeight(width);
         yOffset += height;
       }
 
@@ -414,9 +472,9 @@ void OmniList::clearFilter() {
   if (!_isUpdating) calculateHeights();
 }
 
-const OmniList::ItemFilter *OmniList::filter() const { return _filter.get(); }
+const OmniList::AbstractItemFilter *OmniList::filter() const { return _filter.get(); }
 
-void OmniList::setFilter(std::unique_ptr<ItemFilter> filter) {
+void OmniList::setFilter(std::unique_ptr<AbstractItemFilter> filter) {
   for (int i = 0; i != _items.size(); ++i) {
     auto &info = _items[i];
 

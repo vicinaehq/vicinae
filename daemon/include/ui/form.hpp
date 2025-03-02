@@ -117,7 +117,7 @@ signals:
   void closed();
 };
 
-class DefaultFormDropdownFilter : public OmniList::ItemFilter {
+class DefaultFormDropdownFilter : public OmniList::AbstractItemFilter {
   QString query;
 
   bool matches(const OmniList::AbstractVirtualItem &item) override {

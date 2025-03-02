@@ -27,22 +27,18 @@ public:
   class AbstractVirtualItem {
   public:
     enum ListRole { ListItem, ListSection, ListDivider };
-    enum HeightCalculationPolicy { AlwaysRecalculate, Uniform };
 
-    virtual int calculateHeight() const = 0;
+    virtual int calculateHeight(int width) const = 0;
     virtual OmniListItemWidget *createWidget() const = 0;
-    virtual void recycle(QWidget *base) const {}
-    virtual bool recyclable() const { return false; }
+    virtual void recycle(QWidget *base) const;
+    virtual bool recyclable() const;
     virtual QString id() const = 0;
-    virtual size_t typeId() const { return typeid(*this).hash_code(); }
-    virtual bool selectable() const { return true; }
-    virtual ListRole role() const { return ListRole::ListItem; }
-    virtual HeightCalculationPolicy heightCalculationPolicy() {
-      return HeightCalculationPolicy::AlwaysRecalculate;
-    }
+    virtual size_t typeId() const;
+    virtual bool selectable() const;
+    virtual ListRole role() const;
 
-    bool isListItem() const { return role() == ListRole::ListItem; }
-    bool isSection() const { return role() == ListRole::ListSection; }
+    bool isListItem() const;
+    bool isSection() const;
   };
 
   class VirtualSection : public AbstractVirtualItem {
@@ -53,33 +49,33 @@ public:
     ListRole role() const override { return ListRole::ListSection; }
     bool selectable() const override { return false; }
 
-    const QString &name() const { return _name; }
-    QString id() const override { return _name; }
+    virtual int spacing() const { return 0; }
 
-    virtual bool showHeader() { return count() > 0 && !_name.isEmpty(); }
+    const QString &name() const;
+    QString id() const override;
 
-    virtual int computeWidth(int width, int index) const { return width; }
-    virtual void initWidth(int width) {}
+    /**
+     * Whether or not this header itself should be displayed.
+     * Usually hidden when the section is empty or has no name
+     */
+    virtual bool showHeader();
 
-    void setCount(int count) { _count = count; }
-    int count() const { return _count; }
+    virtual int calculateItemWidth(int width, int index) const;
+    virtual int calculateItemX(int x, int index) const;
+    virtual void initWidth(int width);
 
-    OmniListItemWidget *createWidget() const override {
-      return new OmniListSectionHeader(_name, "", count());
-    }
+    void setCount(int count);
+    int count() const;
 
-    int calculateHeight() const override {
-      static OmniListSectionHeader ruler("", "", 0);
+    OmniListItemWidget *createWidget() const override;
+    int calculateHeight(int width) const override;
 
-      return ruler.sizeHint().height();
-    }
-
-    VirtualSection(const QString &name) : _name(name), _count(0) {}
+    VirtualSection(const QString &name);
   };
 
-  class ItemFilter {
+  class AbstractItemFilter {
   public:
-    virtual bool matches(const AbstractVirtualItem &item) { return true; }
+    virtual bool matches(const AbstractVirtualItem &item) = 0;
   };
 
   using UpdateItemCallback = std::function<void(AbstractVirtualItem *)>;
@@ -132,7 +128,7 @@ private:
   std::unordered_map<QString, OmniListItemWidgetWrapper *> _widgetCache;
   std::unordered_map<size_t, std::stack<OmniListItemWidgetWrapper *>> _widgetPools;
   std::unordered_map<QString, size_t> _idMap;
-  std::unique_ptr<ItemFilter> _filter;
+  std::unique_ptr<AbstractItemFilter> _filter;
   int _selected;
   QString _selectedId;
   bool _isUpdating;
@@ -185,8 +181,8 @@ public:
                                          ScrollBehaviour scrollBehaviour = ScrollBehaviour::ScrollAbsolute);
 
   void clearFilter();
-  void setFilter(std::unique_ptr<ItemFilter> filter);
-  const ItemFilter *filter() const;
+  void setFilter(std::unique_ptr<AbstractItemFilter> filter);
+  const AbstractItemFilter *filter() const;
   const AbstractVirtualItem *itemAt(const QString &id) const;
   bool selectFirst();
   bool updateItem(const QString &id, const UpdateItemCallback &cb);
@@ -212,13 +208,11 @@ public:
   };
   virtual ItemData data() const = 0;
 
-  int calculateHeight() const override {
+  int calculateHeight(int width) const override {
     static DefaultListItemWidget ruler("", "", "", "");
 
     return ruler.sizeHint().height();
   }
-
-  HeightCalculationPolicy heightCalculationPolicy() override { return HeightCalculationPolicy::Uniform; }
 
   bool recyclable() const override { return true; }
 
