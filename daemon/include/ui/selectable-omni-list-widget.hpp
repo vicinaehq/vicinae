@@ -9,6 +9,7 @@ class SelectableOmniListWidget : public OmniListItemWidget {
   bool isSelected;
   bool isHovered;
 
+protected:
   void paintEvent(QPaintEvent *event) override;
   void selectionChanged(bool selected) override;
   void mousePressEvent(QMouseEvent *event) override;

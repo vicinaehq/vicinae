@@ -7,6 +7,29 @@
 #include <memory>
 #include <qlabel.h>
 #include <qnamespace.h>
+#include <qwidget.h>
+
+class EmojiViewer : public QWidget {
+  QString _emoji;
+
+  void paintEvent(QPaintEvent *event) override {
+    QPainter painter(this);
+    QFont font = painter.font();
+    font.setPointSize(height() * 0.8);
+    painter.setFont(font);
+    painter.drawText(rect(), Qt::AlignCenter, _emoji);
+  }
+
+  QSize sizeHint() const override { return {32, 32}; }
+
+public:
+  void setEmoji(const QString &emoji) {
+    _emoji = emoji;
+    update();
+  }
+
+  EmojiViewer(const QString &emoji) : _emoji(emoji) {}
+};
 
 class EmojiGridItem : public OmniGrid::AbstractGridItem {
   QString generateMarkup() const {
@@ -18,18 +41,14 @@ public:
 
   QString tooltip() const override { return info.description; }
 
-  QWidget *centerWidget() const override {
-    auto label = new QLabel(generateMarkup());
-
-    return label;
-  }
+  QWidget *centerWidget() const override { return new EmojiViewer(info.emoji); }
 
   bool centerWidgetRecyclable() const override { return true; }
 
   void recycleCenterWidget(QWidget *widget) const override {
-    auto label = static_cast<QLabel *>(widget);
+    auto label = static_cast<EmojiViewer *>(widget);
 
-    label->setText(generateMarkup());
+    label->setEmoji(info.emoji);
   }
 
   QString id() const override { return info.description; }
