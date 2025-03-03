@@ -3,7 +3,6 @@
 #include "command.hpp"
 #include "extension_manager.hpp"
 #include "image-fetcher.hpp"
-#include "ollama-service.hpp"
 #include "indexer-service.hpp"
 #include "process-manager-service.hpp"
 #include "quicklink-seeder.hpp"
@@ -23,25 +22,6 @@
 #include <qobject.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
-
-bool AppWindow::eventFilter(QObject *obj, QEvent *event) {
-  /*
-if (event->type() == QEvent::KeyPress) {
-auto keyEvent = static_cast<QKeyEvent *>(event);
-auto key = keyEvent->key();
-qDebug() << "app filter" << QKeySequence(key).toString();
-
-if (actionPopover->findBoundAction(keyEvent)) return true;
-
-if (keyEvent->modifiers().testFlag(Qt::ControlModifier) && key == Qt::Key_B) {
-actionPopover->toggleActions();
-return true;
-}
-}
-*/
-
-  return false;
-}
 
 bool AppWindow::event(QEvent *event) {
   if (event->type() == QEvent::KeyPress) {
@@ -78,9 +58,7 @@ bool AppWindow::event(QEvent *event) {
     return true;
   }
 
-  QWidget::event(event);
-
-  return false;
+  return QWidget::event(event);
 }
 
 void AppWindow::clearSearch() {
@@ -219,7 +197,6 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
       };
     }
 
-    // layout->replaceWidget(cur.view->widget, view->widget);
     cur.view->widget->setParent(nullptr);
     cur.view->widget->hide();
     viewDisplayer->setWidget(view->widget);

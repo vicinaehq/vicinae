@@ -1,6 +1,0 @@
-- keep state on extension pop
-   tqDebug() << "id called";
-- synchronize initial extension view pushing better
-
-- allow displaying of native widget in details
-

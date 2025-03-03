@@ -18,6 +18,7 @@
 #include "tinyexpr.hpp"
 #include "ui/action_popover.hpp"
 #include "ui/calculator-list-item-widget.hpp"
+#include "ui/color-transform-widget.hpp"
 #include "ui/color_circle.hpp"
 #include "ui/default-list-item-widget.hpp"
 #include "ui/grid-view.hpp"
@@ -27,6 +28,7 @@
 #include "ui/omni-list.hpp"
 #include "ui/test-list.hpp"
 #include "quicklink-actions.hpp"
+#include "ui/transform-result.hpp"
 #include <QtConcurrent/QtConcurrent>
 #include <cmath>
 #include <functional>
@@ -80,29 +82,31 @@ struct OpenCommandAction : public AbstractAction {
       : AbstractAction(title, ThemeIconModel{.iconName = iconName}), factory(factory), arg(arg) {}
 };
 
-class ColorListItem : public AbstractNativeListItem {
+class ColorListItem : public OmniList::AbstractVirtualItem, public OmniListView::IActionnable {
   QColor color;
 
-  QWidget *createItem() const override {
-    auto circle = new ColorCircle(color.name(), QSize(60, 60));
+  OmniListItemWidget *createWidget() const override {
+    auto widget = new ColorTransformWidget();
 
-    circle->setStroke("#BBB", 3);
+    widget->setColor(color.name(), color);
 
-    auto colorLabel = new QLabel(color.name());
-
-    colorLabel->setProperty("class", "transform-left");
-
-    auto left = new VStack(colorLabel, new Chip("HEX"));
-    auto right = new VStack(circle, new Chip(color.name()));
-
-    return new TransformResult(left, right);
+    return widget;
   }
 
-  int height() const override { return 120; }
+  QString id() const override { return color.name(); }
 
-  int role() const override { return 2; }
+  int calculateHeight(int width) const override {
+    static ColorTransformWidget *widget = nullptr;
 
-  QList<AbstractAction *> createActions() const override { return {}; }
+    if (!widget) {
+      widget = new ColorTransformWidget;
+      widget->setColor("", "blue");
+    }
+
+    return widget->sizeHint().height();
+  }
+
+  QList<AbstractAction *> generateActions() const override { return {}; }
 
 public:
   ColorListItem(QColor color) : color(color) {}
@@ -373,14 +377,7 @@ public:
       }
     }
 
-    /*
-  if (QColor(s).isValid()) {
-  model->beginSection("Color");
-  auto item = std::make_shared<ColorListItem>(s);
-
-  model->addItem(item);
-  }
-    */
+    if (QColor(s).isValid()) { list.push_back(std::make_unique<ColorListItem>(s)); }
 
     list.push_back(std::make_unique<OmniList::VirtualSection>("Results"));
 

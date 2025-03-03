@@ -103,6 +103,11 @@ qt_add_executable(${TARGET}
 	include/builtin_icon.hpp
 	src/builtin_icon.cpp
 
+	include/ui/transform-result.hpp
+	src/ui/transform-result.cpp
+
+	include/ui/color-transform-widget.hpp
+	src/ui/color-transform-widget.cpp
 
 	
 	include/ui/form.hpp
@@ -156,9 +161,6 @@ qt_add_executable(${TARGET}
 
 	#src/commands/create-quicklink/create-quicklink.cpp
 
-	#src/command-database.cpp
-
-	#src/exchange-rate-service.hpp
 	src/omnicast.hpp
 
 	./resources.qrc

@@ -1,7 +1,11 @@
 #include "ui/ellided-label.hpp"
 #include <qevent.h>
+#include <qlabel.h>
+#include <qwidget.h>
 
-EllidedLabel::EllidedLabel() { setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred); }
+EllidedLabel::EllidedLabel(const QString &text, QWidget *parent) : QLabel(text, parent) {
+  setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+}
 
 void EllidedLabel::paintEvent(QPaintEvent *event) {
   QFrame::paintEvent(event);

@@ -120,9 +120,7 @@ public:
   void launchCommand(ViewCommand *cmd, const LaunchCommandOptions &opts = {});
 
   AppWindow(QWidget *parent = 0);
-  // bool eventFilter(QObject *obj, QEvent *event) override;
   bool event(QEvent *event) override;
-  bool eventFilter(QObject *obj, QEvent *event) override;
 
 public slots:
   void pushView(View *view, const PushViewOptions &opts = {});
@@ -225,80 +223,4 @@ public:
                     const QString &iconDescriptor, size_t id = qHash(QUuid::createUuid()))
       : AbstractNativeListItem(id), title(title), subtitle(subtitle), kind(kind),
         iconDescriptor(iconDescriptor) {}
-};
-
-class BaseCalculatorListItem : public AbstractNativeListItem {
-protected:
-  CalculatorItem item;
-
-  QWidget *createItem() const override { return new CalculatorListItemWidget(item); }
-
-  int role() const override { return 1; }
-
-  int height() const override { return 100; }
-
-  QList<AbstractAction *> createActions() const override {
-    QString sresult = QString::number(item.result);
-
-    return {
-        new CopyCalculatorResultAction(item, "Copy result", sresult),
-        new CopyCalculatorResultAction(item, "Copy expression",
-                                       QString("%1 = %2").arg(item.expression).arg(sresult)),
-    };
-  }
-
-public:
-  BaseCalculatorListItem(const CalculatorItem &item) : item(item) {}
-};
-
-class CalculatorGridListItemWidget : public SimpleListWidget {
-  CalculatorItem item;
-
-  void setupUi() {
-    auto exprLabel = new QLabel(item.expression);
-
-    exprLabel->setProperty("class", "transform-left");
-
-    auto answerLabel = new QLabel(QString::number(item.result));
-    answerLabel->setProperty("class", "transform-left");
-
-    auto left = new VStack(exprLabel, new Chip("Expression"));
-    auto right = new VStack(answerLabel, new Chip("Answer"));
-
-    auto layout = new QVBoxLayout();
-
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->addWidget(new TransformResult(left, right));
-
-    setLayout(layout);
-  }
-
-public:
-  CalculatorGridListItemWidget(const CalculatorItem &item) : item(item) { setupUi(); }
-};
-
-class BasicCalculatorItem : public AbstractActionnableGridItem {
-protected:
-  CalculatorItem item;
-
-  AbstractGridItemWidget *widget(int colWidth) const override {
-    return new CalculatorGridListItemWidget(item);
-  }
-
-  int heightForWidth(int width) const override {
-    return CalculatorGridListItemWidget(item).sizeHint().height();
-  }
-
-  QList<AbstractAction *> createActions() const override {
-    QString sresult = QString::number(item.result);
-
-    return {
-        new CopyCalculatorResultAction(item, "Copy result", sresult),
-        new CopyCalculatorResultAction(item, "Copy expression",
-                                       QString("%1 = %2").arg(item.expression).arg(sresult)),
-    };
-  }
-
-public:
-  BasicCalculatorItem(const CalculatorItem &item) : item(item) {}
 };

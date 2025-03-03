@@ -25,92 +25,11 @@
 #include <qtmetamacros.h>
 #include <qwidget.h>
 
-class GenericListItem : public QWidget {
-  QLabel *iconLabel;
-  QLabel *name;
-  QLabel *category;
-  QLabel *kind;
-
-public:
-  GenericListItem(QIcon icon, const QString &name, const QString &category,
-                  const QString &kind, QWidget *parent = nullptr)
-      : QWidget(parent), iconLabel(new QLabel), name(new QLabel),
-        category(new QLabel), kind(new QLabel) {
-
-    auto mainLayout = new QHBoxLayout();
-
-    setLayout(mainLayout);
-
-    auto left = new QWidget();
-    auto leftLayout = new QHBoxLayout();
-
-    if (icon.isNull())
-      icon = QIcon::fromTheme("desktop");
-
-    this->iconLabel->setPixmap(icon.pixmap(25, 25));
-
-    this->name->setText(name);
-    this->category->setText(category);
-    this->category->setProperty("class", "minor");
-
-    left->setLayout(leftLayout);
-    leftLayout->setSpacing(15);
-    leftLayout->setContentsMargins(0, 0, 0, 0);
-    leftLayout->addWidget(this->iconLabel);
-    leftLayout->addWidget(this->name);
-    leftLayout->addWidget(this->category);
-
-    mainLayout->addWidget(left, 0, Qt::AlignLeft);
-
-    this->kind->setText(kind);
-    this->kind->setProperty("class", "minor");
-    mainLayout->addWidget(this->kind, 0, Qt::AlignRight);
-  }
-};
-
-class VStack : public QWidget {
-public:
-  VStack(QWidget *left, QWidget *right) {
-    auto layout = new QVBoxLayout();
-
-    layout->setSpacing(10);
-    layout->addWidget(left, 1, Qt::AlignCenter);
-    layout->addWidget(right, 1, Qt::AlignBottom | Qt::AlignCenter);
-    setLayout(layout);
-  }
-};
-
 class Chip : public QLabel {
 public:
   Chip(const QString &s) {
     setText(s);
     setContentsMargins(10, 5, 10, 5);
     setProperty("class", "chip");
-  }
-};
-
-class TransformResult : public QWidget {
-
-protected:
-  void paintEvent(QPaintEvent *event) override {
-    QPainter painter(this);
-
-    int w = width();
-    int h = height();
-
-    painter.setPen(Qt::NoPen);
-    painter.setBrush(QColor("#666666"));
-    painter.drawRect(w / 2, 0, 1, h / 2 - 20);
-    painter.drawRect(w / 2, h / 2 + 20, 1, h / 2 - 20);
-  }
-
-public:
-  TransformResult(QWidget *posLeft, QWidget *posRight) {
-    auto layout = new QHBoxLayout();
-
-    layout->setContentsMargins(10, 10, 10, 10);
-    layout->addWidget(posLeft, 1);
-    layout->addWidget(posRight, 1);
-    setLayout(layout);
   }
 };

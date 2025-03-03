@@ -1,7 +1,5 @@
 #pragma once
-#include "omnicast.hpp"
-#include "ui/omni-list-item-widget.hpp"
-#include "ui/selectable-omni-list-widget.hpp"
+#include "ui/transform-result.hpp"
 #include <qboxlayout.h>
 #include <qlabel.h>
 #include <qwidget.h>
@@ -11,26 +9,13 @@ struct CalculatorItem {
   double result;
 };
 
-class CalculatorListItemWidget : public SelectableOmniListWidget {
+class CalculatorListItemWidget : public TransformResult {
   CalculatorItem item;
+  TransformResult *_transform;
 
   void setupUi() {
-    auto exprLabel = new QLabel(item.expression);
-
-    exprLabel->setProperty("class", "transform-left");
-
-    auto answerLabel = new QLabel(QString::number(item.result));
-    answerLabel->setProperty("class", "transform-left");
-
-    auto left = new VStack(exprLabel, new Chip("Expression"));
-    auto right = new VStack(answerLabel, new Chip("Answer"));
-
-    auto layout = new QVBoxLayout();
-
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->addWidget(new TransformResult(left, right));
-
-    setLayout(layout);
+    setBase(item.expression, "Expression");
+    setResult(QString::number(item.result), "Answer");
   }
 
 public:

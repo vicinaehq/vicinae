@@ -58,3 +58,6 @@ SelectableOmniListWidget::SelectableOmniListWidget(QWidget *parent)
     : OmniListItemWidget(parent), isSelected(false), isHovered(false) {
   setAttribute(Qt::WA_Hover, true);
 }
+
+bool SelectableOmniListWidget::selected() const { return isSelected; }
+bool SelectableOmniListWidget::hovered() const { return isHovered; }

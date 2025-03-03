@@ -19,5 +19,7 @@ protected:
   void leaveEvent(QEvent *event) override;
 
 public:
+  bool selected() const;
+  bool hovered() const;
   SelectableOmniListWidget(QWidget *parent = nullptr);
 };
