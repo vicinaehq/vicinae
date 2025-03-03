@@ -5,6 +5,7 @@
 #include <chrono>
 #include <qapplication.h>
 #include <qevent.h>
+#include <qnamespace.h>
 
 const QString &OmniList::VirtualSection::name() const { return _name; }
 
@@ -328,48 +329,98 @@ void OmniList::clearVisibleWidgets() {
   _widgetCache.clear();
 }
 
-void OmniList::selectDown() {
-  if (_virtual_items.empty()) return;
+bool OmniList::selectDown() {
+  if (_virtual_items.empty()) return false;
   if (_selected == -1) {
     _selected = 0;
-    return;
+    return true;
   }
 
   auto &current = _virtual_items[_selected];
-  auto nextSelection = _selected + 1;
+  int next = _selected;
 
-  while (nextSelection < _virtual_items.size()) {
-    auto &info = _virtual_items[nextSelection];
-
-    if (info.y > current.y && _items[info.index].item->selectable()) {
-      setSelectedIndex(nextSelection, ScrollBehaviour::ScrollRelative);
-      return;
-    }
-
-    ++nextSelection;
+  while (next < _virtual_items.size() && _virtual_items[next].y == current.y) {
+    ++next;
   }
+
+  int endNext = next;
+
+  qDebug() << "next" << next;
+
+  while (endNext < _virtual_items.size() && _virtual_items[endNext].y == _virtual_items[next].y) {
+    ++endNext;
+  }
+
+  qDebug() << "endNext" << endNext - 1;
+
+  for (int i = endNext - 1; i >= next; --i) {
+    auto &vItem = _virtual_items[i];
+    auto &item = _items[vItem.index];
+
+    if (vItem.x <= current.x && item.item->selectable()) {
+      setSelectedIndex(i, ScrollBehaviour::ScrollRelative);
+      return true;
+    }
+  }
+
+  return false;
 }
 
-void OmniList::selectUp() {
-  if (_virtual_items.empty()) return;
+bool OmniList::selectUp() {
+  if (_virtual_items.empty()) return false;
   if (_selected == -1) {
     _selected = 0;
-    return;
+    return true;
   }
 
   auto &current = _virtual_items[_selected];
-  int nextSelection = _selected - 1;
 
-  while (nextSelection >= 0) {
-    auto &info = _virtual_items[nextSelection];
+  for (int i = _selected - 1; i >= 0; --i) {
+    auto &vitem = _virtual_items[i];
+    auto &item = _items[vitem.index];
 
-    if (info.y < current.y && _items[info.index].item->selectable()) {
-      setSelectedIndex(nextSelection, ScrollBehaviour::ScrollRelative);
-      return;
+    if (vitem.y < current.y && vitem.x <= current.x && item.item->selectable()) {
+      setSelectedIndex(i, ScrollBehaviour::ScrollRelative);
+      return true;
     }
+  };
 
-    --nextSelection;
+  return false;
+}
+
+bool OmniList::selectLeft() {
+  auto base = _virtual_items[_selected];
+  int availableWidth = width() - margins.left - margins.right;
+
+  for (int i = _selected - 1; i >= 0; --i) {
+    auto &vItem = _virtual_items[i];
+
+    if (!vmap(i).item->selectable()) { continue; }
+    if (vItem.y < base.y && vItem.width == base.width && base.width == availableWidth) { return false; }
+
+    setSelectedIndex(i, ScrollBehaviour::ScrollRelative);
+    return true;
   }
+
+  return false;
+}
+
+bool OmniList::selectRight() {
+  auto base = _virtual_items[_selected];
+  int availableWidth = width() - margins.left - margins.right;
+
+  for (int i = _selected + 1; i < _virtual_items.size(); ++i) {
+    auto &vItem = _virtual_items[i];
+
+    if (!vmap(i).item->selectable()) { continue; }
+
+    if (vItem.y > base.y && vItem.width == base.width && base.width == availableWidth) return false;
+
+    setSelectedIndex(i, ScrollBehaviour::ScrollRelative);
+    return true;
+  }
+
+  return false;
 }
 
 void OmniList::setSelectedIndex(int index, ScrollBehaviour scrollBehaviour) {
@@ -398,6 +449,18 @@ int OmniList::previousRowIndex(int index) {
     auto &info = _virtual_items[i];
 
     if (info.y < base.y) { return i; }
+  }
+
+  return -1;
+}
+
+int OmniList::nextRowIndex(int index) {
+  auto &base = _virtual_items[index];
+
+  for (int i = index + 1; i < _virtual_items.size(); ++i) {
+    auto &info = _virtual_items[i];
+
+    if (info.y > base.y) { return i; }
   }
 
   return -1;
@@ -450,11 +513,13 @@ bool OmniList::event(QEvent *event) {
 
     switch (kev->key()) {
     case Qt::Key_Down:
-      selectDown();
-      return true;
+      return selectDown();
     case Qt::Key_Up:
-      selectUp();
-      return true;
+      return selectUp();
+    case Qt::Key_Left:
+      return selectLeft();
+    case Qt::Key_Right:
+      return selectRight();
     case Qt::Key_Return:
       activateCurrentSelection();
       return true;

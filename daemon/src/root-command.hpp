@@ -26,6 +26,7 @@
 #include "ui/omni-list-item-widget.hpp"
 #include "ui/omni-list-view.hpp"
 #include "ui/omni-list.hpp"
+#include "ui/peepobank-command.hpp"
 #include "ui/test-list.hpp"
 #include "quicklink-actions.hpp"
 #include "ui/transform-result.hpp"
@@ -322,11 +323,11 @@ class RootView : public OmniListView {
        .iconName = ":assets/icons/process-manager.png",
        .factory = [](AppWindow &app,
                      const QString &s) { return new SingleViewCommand<ManageProcessesMainView>; }},
-      {.name = "Browse bundled icons",
-       .iconName = ":/icons/link.svg",
-       .factory = [](AppWindow &app, const QString &s) { return new SingleViewCommand<IconBrowserView>; }},
-
-  };
+      {
+          .name = "Peepobank",
+          .iconName = ":/icons/link.svg",
+          .factory = [](AppWindow &app, const QString &s) { return new SingleViewCommand<PeepobankView>; },
+      }};
 
   QList<BuiltinCommand> fallbackCommands{
       {.name = "Search files",

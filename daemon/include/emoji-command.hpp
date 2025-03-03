@@ -16,12 +16,11 @@ class EmojiViewer : public QWidget {
     QPainter painter(this);
     QFont font = painter.font();
 
-    font.setPointSize(height() * 0.6);
+    font.setPointSize(height() * 0.4);
+    qDebug() << "emoji" << height();
     painter.setFont(font);
     painter.drawText(rect(), Qt::AlignCenter, _emoji);
   }
-
-  QSize sizeHint() const override { return {40, 40}; }
 
 public:
   void setEmoji(const QString &emoji) {

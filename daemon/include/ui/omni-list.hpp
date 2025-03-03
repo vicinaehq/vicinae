@@ -124,6 +124,7 @@ private:
     OmniListItemWidgetWrapper *widget;
     size_t recyclingId;
   };
+  struct NavigationBehaviour {};
 
   QScrollBar *scrollBar;
   std::vector<ListItemInfo> _items;
@@ -148,8 +149,10 @@ private:
 
   void clearVisibleWidgets();
 
-  void selectUp();
-  void selectDown();
+  bool selectUp();
+  bool selectDown();
+  bool selectLeft();
+  bool selectRight();
 
   OmniListItemWidgetWrapper *takeFromPool(size_t type);
   void moveToPool(size_t type, OmniListItemWidgetWrapper *wrapper);
@@ -159,6 +162,7 @@ private:
   void activateCurrentSelection() const;
   void setSelectedIndex(int index, ScrollBehaviour scrollBehaviour = ScrollRelative);
   int previousRowIndex(int index);
+  int nextRowIndex(int index);
 
   void scrollTo(int idx, ScrollBehaviour behaviour = ScrollBehaviour::ScrollAbsolute);
   ListItemInfo &vmap(int vindex);

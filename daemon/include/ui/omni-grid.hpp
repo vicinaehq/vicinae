@@ -103,5 +103,5 @@ public:
 
   void addItem(std::unique_ptr<AbstractGridItem> item) { OmniList::addItem(std::move(item)); }
 
-  OmniGrid() : _ncols(1), _spacing(0), _inset(10) {}
+  OmniGrid() : _ncols(8), _spacing(10), _inset(10) { setMargins(20, 10, 20, 10); }
 };

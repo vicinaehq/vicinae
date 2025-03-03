@@ -10,6 +10,16 @@ QColor GridItemContentWidget::borderColor() const {
   return "#202020";
 }
 
+void GridItemContentWidget::resizeEvent(QResizeEvent *event) {
+  QWidget::resizeEvent(event);
+
+  if (_widget) {
+    _widget->setFixedSize(innerWidgetSize());
+    _widget->move(_inset, _inset);
+    qDebug() << "grid widget size inner" << innerWidgetSize() << "real" << size();
+  }
+}
+
 void GridItemContentWidget::paintEvent(QPaintEvent *event) {
   int borderRadius = 10;
 
@@ -34,29 +44,25 @@ void GridItemContentWidget::paintEvent(QPaintEvent *event) {
 void GridItemContentWidget::mousePressEvent(QMouseEvent *event) { emit clicked(); }
 void GridItemContentWidget::mouseDoubleClickEvent(QMouseEvent *event) { emit doubleClicked(); }
 
+QSize GridItemContentWidget::innerWidgetSize() const { return {width() - _inset * 2, height() - _inset * 2}; }
+
 void GridItemContentWidget::setWidget(QWidget *widget) {
-  if (layout->count() > 0) {
-    auto old = layout->itemAt(0)->widget();
+  if (_widget) { _widget->deleteLater(); }
 
-    layout->replaceWidget(old, widget);
-    old->deleteLater();
-  } else {
-    layout->addWidget(widget, 0, Qt::AlignCenter);
-  }
+  _widget = widget;
+  widget->setParent(this);
+  widget->setFixedSize(innerWidgetSize());
+  widget->move(_inset, _inset);
 }
 
-QWidget *GridItemContentWidget::widget() const {
-  if (layout->count() > 0) { return layout->itemAt(0)->widget(); }
-
-  return nullptr;
-}
+QWidget *GridItemContentWidget::widget() const { return _widget; }
 
 void GridItemContentWidget::setSelected(bool selected) {
   this->selected = selected;
   update();
 }
 
-void GridItemContentWidget::setInset(int inset) { layout->setContentsMargins(inset, inset, inset, inset); }
+void GridItemContentWidget::setInset(int inset) { _inset = inset; }
 
 void GridItemContentWidget::setHovered(bool hovered) {
   this->hovered = hovered;
@@ -83,9 +89,7 @@ void GridItemContentWidget::showTooltip() {
 void GridItemContentWidget::setTooltipText(const QString &text) { tooltip->setText(text); }
 
 GridItemContentWidget::GridItemContentWidget()
-    : layout(new QVBoxLayout), selected(false), hovered(false), tooltip(new Tooltip) {
-  setLayout(layout);
-
+    : _widget(nullptr), selected(false), hovered(false), tooltip(new Tooltip), _inset(10) {
   tooltip->hide();
 }
 

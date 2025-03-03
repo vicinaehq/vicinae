@@ -1,6 +1,7 @@
 #pragma once
 #include "ui/tooltip.hpp"
 #include <qboxlayout.h>
+#include <qevent.h>
 #include <qlabel.h>
 #include <qpainter.h>
 #include <qpainterpath.h>
@@ -11,10 +12,11 @@
 class GridItemContentWidget : public QWidget {
   Q_OBJECT
 
-  QVBoxLayout *layout;
   bool selected;
   bool hovered;
+  int _inset;
   Tooltip *tooltip;
+  QWidget *_widget;
 
 protected:
   int borderWidth() const;
@@ -23,8 +25,10 @@ protected:
   void enterEvent(QEnterEvent *event) override { setHovered(true); }
   void leaveEvent(QEvent *event) override { setHovered(false); }
 
+  void resizeEvent(QResizeEvent *event) override;
   void mousePressEvent(QMouseEvent *event) override;
   void mouseDoubleClickEvent(QMouseEvent *event) override;
+  QSize innerWidgetSize() const;
 
 public:
   GridItemContentWidget();
