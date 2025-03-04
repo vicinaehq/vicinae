@@ -1,17 +1,4 @@
 #pragma once
-#include "common.hpp"
-#include "extend/detail-model.hpp"
-#include "extend/extension-list-controller.hpp"
-#include "extend/list-model.hpp"
-#include "extend/root-detail-model.hpp"
-#include "extension.hpp"
-#include "image-viewer.hpp"
-#include "markdown-renderer.hpp"
-#include "tag.hpp"
-#include "theme.hpp"
-#include "ui/metadata-pane.hpp"
-#include "ui/vertical-metadata.hpp"
-#include "view.hpp"
 #include <QListWidget>
 #include <QTextEdit>
 #include <qboxlayout.h>
@@ -27,6 +14,7 @@
 #include <qtmetamacros.h>
 #include <qwidget.h>
 
+/*
 class ExtensionDetailView : public ExtensionComponent {
   Q_OBJECT
 
@@ -85,3 +73,4 @@ public:
     qDebug() << "activated" << model.title;
   }
 };
+*/

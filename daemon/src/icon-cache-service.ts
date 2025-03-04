@@ -1,2 +1,0 @@
-class IconCacheService: public NonAs {
-};

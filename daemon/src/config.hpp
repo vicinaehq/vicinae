@@ -14,13 +14,8 @@ struct ConfigExtension {
 
 struct Config {
   static QString dirPath() {
-    return QDir::cleanPath(QDir::homePath() + QDir::separator() + ".config" +
-                           QDir::separator() + "omni");
+    return QDir::cleanPath(QDir::homePath() + QDir::separator() + ".config" + QDir::separator() + "omni");
   }
 
   static QDir dir() { return dirPath(); }
-
-  std::vector<ConfigExtension> extensions;
 };
-
-std::unique_ptr<Config> loadConfig(std::string_view path);

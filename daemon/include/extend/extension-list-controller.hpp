@@ -1,7 +1,6 @@
 #pragma once
 #include "extend/action-model.hpp"
 #include "extend/list-model.hpp"
-#include "extension.hpp"
 #include "view.hpp"
 #include <QListWidget>
 #include <QStackedLayout>
@@ -22,6 +21,7 @@
 #include <qtmetamacros.h>
 #include <qwidget.h>
 
+/*
 class ExtensionList : public ExtensionComponent {
   Q_OBJECT
 
@@ -74,3 +74,4 @@ public:
     // list->filterItems(s);
   }
 };
+*/

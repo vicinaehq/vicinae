@@ -1,5 +1,4 @@
 #include "app.hpp"
-#include "block-device-service.hpp"
 #include "command.hpp"
 #include "extension_manager.hpp"
 #include "image-fetcher.hpp"
@@ -296,7 +295,6 @@ AppWindow::AppWindow(QWidget *parent)
       std::make_unique<CalculatorDatabase>(Config::dirPath() + QDir::separator() + "calculator.db");
   appDb = std::make_unique<AppDatabase>();
   clipboardService = std::make_unique<ClipboardService>();
-  iconCache = std::make_unique<IconCacheService>();
   indexer = std::make_unique<IndexerService>(Config::dirPath() + QDir::separator() + "files.db");
   processManagerService = std::make_unique<ProcessManagerService>();
 
@@ -313,14 +311,6 @@ AppWindow::AppWindow(QWidget *parent)
     auto seeder = std::make_unique<QuickLinkSeeder>(*appDb, *quicklinkDatabase);
 
     if (quicklinkDatabase->list().isEmpty()) { seeder->seed(); }
-  }
-
-  auto blk = std::make_unique<BlockDeviceService>();
-
-  qDebug() << "listing mountpoints";
-
-  for (const auto mnt : blk->deviceMountpoints()) {
-    qDebug() << mnt.devicePath << mnt.mountpointPath;
   }
 
   extensionManager->start();
@@ -368,8 +358,6 @@ template <> Service<ClipboardService> AppWindow::service<ClipboardService>() con
 template <> Service<ExtensionManager> AppWindow::service<ExtensionManager>() const {
   return *extensionManager;
 }
-
-template <> Service<IconCacheService> AppWindow::service<IconCacheService>() const { return *iconCache; }
 
 template <> Service<ProcessManagerService> AppWindow::service<ProcessManagerService>() const {
   return *processManagerService;

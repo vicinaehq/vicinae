@@ -1,6 +1,5 @@
 #pragma once
 #include "command.hpp"
-#include "extend/extension-view.hpp"
 #include "extend/model-parser.hpp"
 #include "extension_manager.hpp"
 #include <qboxlayout.h>
@@ -62,42 +61,43 @@ private slots:
     if (!viewStack.isEmpty()) {
       auto top = viewStack.top();
 
-      top->render(model);
+      // top->render(model);
     } else {
 
-      auto view = new ExtensionView(app);
+      // auto view = new ExtensionView(app);
 
-      pushView(view);
-      view->render(model);
+      // pushView(view);
+      // view->render(model);
     }
   }
 
   void pushView(ExtensionView *view) {
-    if (!viewStack.isEmpty()) {
-      auto view = viewStack.top();
-      disconnect(view, &ExtensionView::extensionEvent, this,
-                 &ExtensionCommand::forwardExtensionEvent);
-    }
+    /*
+if (!viewStack.isEmpty()) {
+auto view = viewStack.top();
+disconnect(view, &ExtensionView::extensionEvent, this,
+           &ExtensionCommand::forwardExtensionEvent);
+}
 
-    connect(view, &ExtensionView::extensionEvent, this,
-            &ExtensionCommand::forwardExtensionEvent);
+connect(view, &ExtensionView::extensionEvent, this,
+      &ExtensionCommand::forwardExtensionEvent);
 
-    viewStack.push(view);
-    app.pushView(view);
+viewStack.push(view);
+app.pushView(view);
+  */
   }
 
   void popView() {
     auto old = viewStack.top();
     viewStack.pop();
 
-    old->deleteLater();
+    // old->deleteLater();
     app.popCurrentView();
   }
 
-  void extensionRequest(const QString &sessionId, const QString &id,
-                        const QString &action, const QJsonObject &payload) {
-    if (this->sessionId != sessionId)
-      return;
+  void extensionRequest(const QString &sessionId, const QString &id, const QString &action,
+                        const QJsonObject &payload) {
+    if (this->sessionId != sessionId) return;
 
     qDebug() << "[ExtensionCommand] extension request" << action;
 
@@ -105,8 +105,7 @@ private slots:
       QJsonArray apps;
 
       for (const auto &app : app.appDb->apps) {
-        if (!app->displayable())
-          continue;
+        if (!app->displayable()) continue;
 
         QJsonObject appObj;
 
@@ -131,7 +130,7 @@ private slots:
     }
 
     if (action == "push-view") {
-      pushView(new ExtensionView(app));
+      // pushView(new ExtensionView(app));
       app.extensionManager->respond(id, {});
     }
 
@@ -141,27 +140,20 @@ private slots:
     }
   }
 
-  void extensionEvent(const QString &sessionId, const QString &action,
-                      const QJsonObject &payload) {
-    if (this->sessionId != sessionId)
-      return;
+  void extensionEvent(const QString &sessionId, const QString &action, const QJsonObject &payload) {
+    if (this->sessionId != sessionId) return;
 
-    if (action == "render") {
-      emit createModelRenderTask(payload);
-    }
+    if (action == "render") { emit createModelRenderTask(payload); }
   }
 
 public:
-  ExtensionCommand(AppWindow &app, const QString &extensionId,
-                   const QString &commandName)
-      : app(app), extensionId(extensionId), commandName(commandName),
-        modelerThread(new QThread), modeler(new RenderModeler) {
+  ExtensionCommand(AppWindow &app, const QString &extensionId, const QString &commandName)
+      : app(app), extensionId(extensionId), commandName(commandName), modelerThread(new QThread),
+        modeler(new RenderModeler) {
     modeler->moveToThread(modelerThread);
 
-    connect(this, &ExtensionCommand::createModelRenderTask, modeler,
-            &RenderModeler::createModel);
-    connect(modeler, &RenderModeler::modelCreated, this,
-            &ExtensionCommand::modelCreated);
+    connect(this, &ExtensionCommand::createModelRenderTask, modeler, &RenderModeler::createModel);
+    connect(modeler, &RenderModeler::modelCreated, this, &ExtensionCommand::modelCreated);
 
     modelerThread->start();
   }
@@ -176,8 +168,8 @@ public:
             &ExtensionCommand::commandLoaded);
     connect(app.extensionManager.get(), &ExtensionManager::extensionEvent, this,
             &ExtensionCommand::extensionEvent);
-    connect(app.extensionManager.get(), &ExtensionManager::extensionRequest,
-            this, &ExtensionCommand::extensionRequest);
+    connect(app.extensionManager.get(), &ExtensionManager::extensionRequest, this,
+            &ExtensionCommand::extensionRequest);
 
     connect(&app, &AppWindow::currentViewPoped, this, [this, &app]() {
       qDebug() << "curent view poped from extension";
@@ -187,11 +179,13 @@ public:
       auto old = viewStack.top();
 
       viewStack.pop();
-      old->deleteLater();
+      // old->deleteLater();
 
       if (!viewStack.isEmpty()) {
-        connect(viewStack.top(), &ExtensionView::extensionEvent, this,
-                &ExtensionCommand::forwardExtensionEvent);
+        /*
+      connect(viewStack.top(), &ExtensionView::extensionEvent, this,
+              &ExtensionCommand::forwardExtensionEvent);
+                              */
       }
 
       app.extensionManager->emitExtensionEvent(sessionId, "pop-view", {});
@@ -203,7 +197,6 @@ public:
   }
 
   void unload(AppWindow &app) override {
-    if (!sessionId.isEmpty())
-      app.extensionManager->unloadCommand(sessionId);
+    if (!sessionId.isEmpty()) app.extensionManager->unloadCommand(sessionId);
   }
 };

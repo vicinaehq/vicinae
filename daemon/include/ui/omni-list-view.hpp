@@ -1,5 +1,6 @@
 #pragma once
 #include "extend/metadata-model.hpp"
+#include "ui/horizontal-metadata.hpp"
 #include "ui/omni-list.hpp"
 #include "view.hpp"
 #include <qevent.h>

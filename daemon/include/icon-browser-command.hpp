@@ -1,10 +1,8 @@
 #pragma once
-#include "app.hpp"
-#include "builtin_icon.hpp"
-#include "ui/grid-view.hpp"
-#include "ui/virtual-grid.hpp"
 #include <qlabel.h>
 #include <qnamespace.h>
+
+/*
 
 class IconBrowserView : public GridView {
 
@@ -65,3 +63,4 @@ public:
   IconBrowserView(AppWindow &app) : GridView(app) {}
   ~IconBrowserView() {}
 };
+*/

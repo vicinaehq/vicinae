@@ -82,8 +82,6 @@ qt_add_executable(${TARGET}
 
 	include/quicklink-actions.hpp
 
-	include/ui/grid-view.hpp
-
 	include/ui/omni-scroll-bar.hpp
 	src/ui/omni-scroll-bar.cpp
 
@@ -115,7 +113,6 @@ qt_add_executable(${TARGET}
 
 	
 	include/ui/form.hpp
-	include/ui/list-view.hpp
 	include/ui/empty-view.hpp
 
 	src/manage-quicklinks-command.hpp
@@ -155,7 +152,6 @@ qt_add_executable(${TARGET}
 
 	src/root-command.hpp
 	src/command.hpp
-	src/extension.hpp
 	src/view.hpp
 	
 
@@ -185,7 +181,6 @@ qt_add_executable(${TARGET}
 	src/ui/toast.cpp
 	src/ui/action_popover.hpp
 	src/ui/action_popover.cpp
-	src/ui/turbobox.hpp
 	src/extension_manager.hpp
 )
 

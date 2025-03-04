@@ -16,7 +16,6 @@
 class View : public QObject {
   Q_OBJECT
   QList<QWidget *> inputFwdTo;
-  QList<IInputHandler *> inputHandlers;
 
   bool eventFilter(QObject *obj, QEvent *event) override {
     if (event->type() == QEvent::KeyPress && obj == app.topBar->input) {
@@ -48,8 +47,6 @@ public:
 
     inputFwdTo.push_back(widget);
   }
-
-  void addInputHandler(IInputHandler *widget) { inputHandlers.push_back(widget); }
 
   template <typename T> Service<T> service() { return app.service<T>(); }
   void setSearchPlaceholderText(const QString &s) { app.topBar->input->setPlaceholderText(s); }
