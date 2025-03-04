@@ -109,12 +109,14 @@ qt_add_executable(${TARGET}
 	include/ui/color-transform-widget.hpp
 	src/ui/color-transform-widget.cpp
 
+	include/ui/emoji-viewer.hpp
+	src/ui/emoji-viewer.cpp
+
+
 	
 	include/ui/form.hpp
 	include/ui/list-view.hpp
 	include/ui/empty-view.hpp
-
-	include/ui/test-list.hpp
 
 	src/manage-quicklinks-command.hpp
 
@@ -155,7 +157,7 @@ qt_add_executable(${TARGET}
 	src/command.hpp
 	src/extension.hpp
 	src/view.hpp
-
+	
 
 	src/xdg/xdg-desktop.cpp
 
@@ -166,13 +168,8 @@ qt_add_executable(${TARGET}
 	./resources.qrc
 	./icons.qrc
 
-	#src/render.cpp
-	#src/extension_manager.cpp
-
 	src/filesystem-database.hpp
-	src/files-command.hpp
 	src/indexer-service.hpp
-
 
 	src/ui/status_bar.hpp
 	src/ui/status_bar.cpp

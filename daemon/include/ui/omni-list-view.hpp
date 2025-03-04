@@ -1,10 +1,75 @@
 #pragma once
+#include "extend/metadata-model.hpp"
 #include "ui/omni-list.hpp"
 #include "view.hpp"
+#include <qevent.h>
 #include <qnamespace.h>
+#include <qwidget.h>
 
 class OmniListView : public View {
+  class DetailSplit : public QWidget {
+    QWidget *_base;
+    QWidget *_detail;
+    bool _isPaneOpened;
+    bool _dividerStrokeWidth = 1;
+
+  protected:
+    void recalculate() {
+      double factor = _isPaneOpened ? 0.35 : 1;
+      int baseWidth = width() * factor;
+      int detailWidth = width() - baseWidth;
+
+      _base->setFixedSize({baseWidth, height()});
+      _base->move(0, 0);
+
+      if (_detail) {
+        _detail->setFixedSize({detailWidth, height()});
+        _detail->move(baseWidth, 0);
+        _detail->show();
+      }
+    }
+
+    void resizeEvent(QResizeEvent *event) override {
+      recalculate();
+      QWidget::resizeEvent(event);
+    }
+
+    void paintEvent(QPaintEvent *event) override {
+      QWidget::paintEvent(event);
+      QPainter painter(this);
+
+      if (_isPaneOpened) {
+        painter.setPen("#222222");
+        painter.drawRect(_base->width(), 0, _dividerStrokeWidth, height());
+      }
+    }
+
+  public:
+    void setDetail(QWidget *detail) {
+      if (_detail) { _detail->deleteLater(); }
+      detail->setParent(this);
+      _detail = detail;
+      _isPaneOpened = true;
+      recalculate();
+    }
+
+    void clearDetail() {
+      _isPaneOpened = false;
+      recalculate();
+      if (_detail) {
+        _detail->deleteLater();
+        _detail = nullptr;
+      }
+    }
+
+    DetailSplit(QWidget *base, QWidget *parent = nullptr)
+        : QWidget(parent), _base(base), _detail(nullptr), _isPaneOpened(false) {
+      base->setParent(this);
+    }
+  };
+
 protected:
+  DetailSplit *split;
   OmniList *list;
 
   using ItemList = std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>>;
@@ -12,9 +77,45 @@ protected:
   ItemList itemList;
 
 public:
+  class MetadataDetailModel {
+  public:
+    virtual QWidget *createView() const { return new QWidget; }
+    virtual MetadataModel createMetadata() const { return {}; }
+  };
+
+  class SideDetailWidget : public QWidget {
+    QVBoxLayout *layout;
+    QWidget *view;
+    HorizontalMetadata *metadata;
+    HDivider *divider;
+
+  public:
+    SideDetailWidget(const MetadataDetailModel &detail)
+        : layout(new QVBoxLayout), view(detail.createView()), metadata(new HorizontalMetadata()),
+          divider(new HDivider) {
+      layout->addWidget(view, 1);
+      layout->addWidget(divider);
+      layout->addWidget(metadata);
+      layout->setContentsMargins(0, 0, 0, 0);
+
+      view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+      metadata->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+      setLayout(layout);
+
+      auto detailMetadata = detail.createMetadata();
+
+      for (const auto &child : detailMetadata.children) {
+        metadata->addItem(child);
+      }
+    }
+  };
+
   class IActionnable {
   public:
     virtual QList<AbstractAction *> generateActions() const { return {}; };
+    virtual QWidget *generateDetail() const { return nullptr; }
+    virtual std::unique_ptr<CompleterData> createCompleter() const { return nullptr; }
   };
 
 private:
@@ -25,6 +126,18 @@ private:
     qDebug() << "selected id" << next->id();
 
     if (auto nextItem = dynamic_cast<const IActionnable *>(next)) {
+      if (auto detail = nextItem->generateDetail()) {
+        split->setDetail(detail);
+      } else {
+        split->clearDetail();
+      }
+
+      if (auto completer = nextItem->createCompleter()) {
+        app.topBar->activateQuicklinkCompleter(*completer);
+      } else {
+        app.topBar->destroyQuicklinkCompleter();
+      }
+
       setSignalActions(nextItem->generateActions());
     }
   }
@@ -58,7 +171,8 @@ private:
 
 public:
   OmniListView(AppWindow &app) : View(app), list(new OmniList) {
-    widget = list;
+    split = new DetailSplit(list);
+    widget = split;
     connect(list, &OmniList::selectionChanged, this, &OmniListView::selectionChanged);
     connect(list, &OmniList::itemActivated, this, &OmniListView::itemActivated);
   }

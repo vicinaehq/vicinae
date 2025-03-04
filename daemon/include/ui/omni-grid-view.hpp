@@ -1,3 +1,4 @@
+#pragma once
 #include "app.hpp"
 #include "ui/omni-grid.hpp"
 #include "view.hpp"
@@ -13,9 +14,7 @@ protected:
 
   virtual void selectionChanged(const OmniList::AbstractVirtualItem *next,
                                 const OmniList::AbstractVirtualItem *previous) {
-    if (!next) return;
-
-    qDebug() << "selected id" << next->id();
+    if (!next) { return; }
 
     if (auto nextItem = dynamic_cast<const IActionnable *>(next)) {
       setSignalActions(nextItem->generateActions());

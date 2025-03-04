@@ -18,9 +18,7 @@
 #include "ui/calculator-list-item-widget.hpp"
 #include "ui/list-view.hpp"
 #include "ui/status_bar.hpp"
-#include "ui/test-list.hpp"
 #include "ui/top_bar.hpp"
-#include "ui/virtual-grid.hpp"
 
 #include <qmainwindow.h>
 #include <qtmetamacros.h>
@@ -174,53 +172,4 @@ public:
 
   CopyCalculatorResultAction(const CalculatorItem &item, const QString &title, const QString &copyText)
       : CopyTextAction(title, copyText), item(item) {}
-};
-
-class StandardListItem : public AbstractNativeListItem {
-  QString title;
-  QString subtitle;
-  QString kind;
-  ImageLikeModel imageLike;
-
-  QWidget *createItem() const override {
-    return new ListItemWidget(ImageViewer::createFromModel(imageLike, {25, 25}), title, "", kind);
-  }
-
-  QWidget *updateItem(QWidget *current) const override {
-    auto widget = static_cast<ListItemWidget *>(current);
-
-    return createItem();
-  }
-
-  int height() const override { return 40; }
-  int role() const override { return 0; }
-
-public:
-  StandardListItem(const QString &title, const QString &subtitle, const QString &kind,
-                   const ImageLikeModel &imageLike, size_t id = qHash(QUuid::createUuid()))
-      : AbstractNativeListItem(id), title(title), subtitle(subtitle), kind(kind), imageLike(imageLike) {}
-};
-
-class StandardListItem2 : public AbstractNativeListItem {
-  QString title;
-  QString subtitle;
-  QString kind;
-  QString iconDescriptor;
-
-  QWidget *createItem() const override { return new ListItemWidget2(iconDescriptor, title, "", kind); }
-
-  QWidget *updateItem(QWidget *current) const override {
-    auto widget = static_cast<ListItemWidget *>(current);
-
-    return createItem();
-  }
-
-  int height() const override { return 40; }
-  int role() const override { return 0; }
-
-public:
-  StandardListItem2(const QString &title, const QString &subtitle, const QString &kind,
-                    const QString &iconDescriptor, size_t id = qHash(QUuid::createUuid()))
-      : AbstractNativeListItem(id), title(title), subtitle(subtitle), kind(kind),
-        iconDescriptor(iconDescriptor) {}
 };

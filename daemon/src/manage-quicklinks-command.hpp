@@ -1,11 +1,11 @@
 #pragma once
 #include "app.hpp"
 #include "extend/metadata-model.hpp"
-#include "navigation-list-view.hpp"
 #include "quicklink-actions.hpp"
 #include "quicklist-database.hpp"
 #include "ui/action_popover.hpp"
-#include "ui/test-list.hpp"
+#include "ui/omni-list-view.hpp"
+#include "ui/omni-list.hpp"
 #include <memory>
 #include <qlabel.h>
 #include <qnamespace.h>
@@ -14,7 +14,7 @@
 #include <qwidget.h>
 #include <sys/socket.h>
 
-class QuicklinkItemDetail : public AbstractNativeListItemDetail {
+class QuicklinkItemDetail : public OmniListView::MetadataDetailModel {
   std::shared_ptr<Quicklink> link;
 
   QWidget *createView() const override {
@@ -58,23 +58,24 @@ public:
   QuicklinkItemDetail(const std::shared_ptr<Quicklink> &quicklink) : link(quicklink) {}
 };
 
-class QuicklinkItem : public StandardListItem2 {
-  Q_OBJECT
+class QuicklinkItem : public AbstractDefaultListItem, public OmniListView::IActionnable {
   std::shared_ptr<Quicklink> link;
 
 public:
-  QList<AbstractAction *> createActions() const override {
+  QList<AbstractAction *> generateActions() const override {
     auto open = new OpenCompletedQuicklinkAction(link);
     auto edit = new EditQuicklinkAction(link);
     auto duplicate = new DuplicateQuicklinkAction(link);
     auto remove = new RemoveQuicklinkAction(link);
 
-    connect(edit, &EditQuicklinkAction::edited, this, &QuicklinkItem::edited);
-    connect(duplicate, &DuplicateQuicklinkAction::duplicated, this, &QuicklinkItem::duplicated);
-    connect(remove, &RemoveQuicklinkAction::didExecute, this, &QuicklinkItem::removed);
+    // connect(edit, &EditQuicklinkAction::edited, this, &QuicklinkItem::edited);
+    // connect(duplicate, &DuplicateQuicklinkAction::duplicated, this, &QuicklinkItem::duplicated);
+    // connect(remove, &RemoveQuicklinkAction::didExecute, this, &QuicklinkItem::removed);
 
     return {open, edit, duplicate, remove};
   }
+
+  const QString &name() const { return link->name; }
 
   std::unique_ptr<CompleterData> createCompleter() const override {
     return std::make_unique<CompleterData>(CompleterData{
@@ -83,59 +84,58 @@ public:
     });
   }
 
-  std::unique_ptr<AbstractNativeListItemDetail> createDetail() const override {
-    return std::make_unique<QuicklinkItemDetail>(link);
+  ItemData data() const override {
+    return {
+        .icon = link->iconName,
+        .name = link->name,
+    };
   }
 
-  size_t id() const override { return qHash(link->id); }
+  QWidget *generateDetail() const override {
+    auto detailModel = std::make_unique<QuicklinkItemDetail>(link);
+
+    return new OmniListView::SideDetailWidget(*detailModel.get());
+  }
+
+  QString id() const override { return QString::number(link->id); }
 
 public:
-  QuicklinkItem(const std::shared_ptr<Quicklink> &link)
-      : StandardListItem2(link->name, "", "", link->iconName), link(link) {}
-
-signals:
-  void edited() const;
-  void removed() const;
-  void duplicated() const;
+  QuicklinkItem(const std::shared_ptr<Quicklink> &link) : link(link) {}
 };
 
-class ManageQuicklinksView : public NavigationListView {
+class ManageQuicklinksView : public OmniListView {
   Service<QuicklistDatabase> quicklinkDb;
   QString query;
 
-  void handleRefresh() {
-    auto old = list->selected();
+  class QuicklinkItemFilter : public OmniList::AbstractItemFilter {
+    QString query;
 
-    resetItems(query);
-    list->selectFrom(old);
-  }
+    bool matches(const OmniList::AbstractVirtualItem &item) override {
+      auto &linkItem = static_cast<const QuicklinkItem &>(item);
 
-  void resetItems(const QString &query) {
-    model->beginReset();
-    model->beginSection("Quicklinks");
-
-    for (const auto &link : quicklinkDb.list()) {
-      if (!link->name.contains(query, Qt::CaseInsensitive)) { continue; }
-
-      auto item = std::make_shared<QuicklinkItem>(link);
-
-      connect(item.get(), &QuicklinkItem::edited, this, &ManageQuicklinksView::handleRefresh);
-      connect(item.get(), &QuicklinkItem::duplicated, this, &ManageQuicklinksView::handleRefresh);
-      connect(item.get(), &QuicklinkItem::removed, this, &ManageQuicklinksView::handleRefresh);
-
-      model->addItem(item);
+      return linkItem.name().contains(query, Qt::CaseInsensitive);
     }
 
-    model->endReset();
+  public:
+    QuicklinkItemFilter(const QString &query) : query(query) {}
+  };
+
+  void onMount() override {
+    setSearchPlaceholderText("Browse quicklinks...");
+
+    list->beginUpdate();
+
+    for (auto &link : quicklinkDb.list()) {
+      list->addItem(std::make_unique<QuicklinkItem>(link));
+    }
+
+    list->commitUpdate();
   }
 
   void onSearchChanged(const QString &s) override {
-    query = s;
-    resetItems(s);
+    list->setFilter(std::make_unique<QuicklinkItemFilter>(s));
   }
 
-  void onMount() override { setSearchPlaceholderText("Browse quicklinks..."); }
-
 public:
-  ManageQuicklinksView(AppWindow &app) : NavigationListView(app), quicklinkDb(service<QuicklistDatabase>()) {}
+  ManageQuicklinksView(AppWindow &app) : OmniListView(app), quicklinkDb(service<QuicklistDatabase>()) {}
 };

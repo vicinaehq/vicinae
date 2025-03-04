@@ -339,7 +339,8 @@ bool OmniList::selectDown() {
   auto &current = _virtual_items[_selected];
   int next = _selected;
 
-  while (next < _virtual_items.size() && _virtual_items[next].y == current.y) {
+  while (next < _virtual_items.size() &&
+         (_virtual_items[next].y == current.y || !vmap(next).item->selectable())) {
     ++next;
   }
 

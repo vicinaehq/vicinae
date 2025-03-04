@@ -2,36 +2,13 @@
 #include "app-database.hpp"
 #include "app.hpp"
 #include "emoji-database.hpp"
-#include "ui/grid-view.hpp"
-#include "ui/omni-grid.hpp"
+#include "ui/omni-grid-view.hpp"
+#include "ui/emoji-viewer.hpp"
 #include <memory>
+#include <qevent.h>
 #include <qlabel.h>
 #include <qnamespace.h>
 #include <qwidget.h>
-
-class EmojiViewer : public QWidget {
-  QString _emoji;
-
-  void paintEvent(QPaintEvent *event) override {
-    QPainter painter(this);
-    QFont font = painter.font();
-
-    font.setPointSize(height() * 0.4);
-    qDebug() << "emoji" << height();
-    painter.setFont(font);
-    painter.drawText(rect(), Qt::AlignCenter, _emoji);
-  }
-
-public:
-  void setEmoji(const QString &emoji) {
-    _emoji = emoji;
-    update();
-  }
-
-  EmojiViewer(const QString &emoji) : _emoji(emoji) {
-    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  }
-};
 
 class EmojiGridItem : public OmniGrid::AbstractGridItem {
 public:
@@ -39,7 +16,13 @@ public:
 
   QString tooltip() const override { return info.description; }
 
-  QWidget *centerWidget() const override { return new EmojiViewer(info.emoji); }
+  QWidget *centerWidget() const override {
+    auto emoji = new EmojiViewer(info.emoji);
+
+    emoji->setHeightScale(0.4);
+
+    return emoji;
+  }
 
   bool centerWidgetRecyclable() const override { return true; }
 
@@ -61,40 +44,36 @@ public:
   EmojiGridItem(const EmojiInfo &info) : info(info) {}
 };
 
-class EmojiView : public GridView {
+class EmojiView : public OmniGridView {
   Service<AppDatabase> appDb;
   EmojiDatabase emojiDb;
-  OmniGrid *grid;
   std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> newItems;
 
 public:
-  EmojiView(AppWindow &app) : GridView(app), grid(new OmniGrid), appDb(service<AppDatabase>()) {
-    widget = grid;
-  }
+  EmojiView(AppWindow &app) : OmniGridView(app), appDb(service<AppDatabase>()) {}
 
-  void onMount() override {
-    grid->setColumns(8);
-    grid->setSpacing(10);
-    grid->setMargins(20, 10, 20, 10);
-  }
+  void onMount() override {}
 
   void onSearchChanged(const QString &s) override {
-    auto start = std::chrono::high_resolution_clock::now();
     newItems.clear();
 
     if (s.isEmpty()) {
       std::unordered_map<QString, std::vector<const EmojiInfo *>> sectionMap;
+      std::vector<QString> sectionNames;
 
       for (auto &item : emojiDb.list()) {
-        auto &list = sectionMap[item.category];
+        if (auto it = sectionMap.find(item.category); it == sectionMap.end()) {
+          sectionMap.insert({item.category, {}});
+          sectionNames.push_back(item.category);
+        }
 
-        list.push_back(&item);
+        sectionMap[item.category].push_back(&item);
       }
 
-      for (auto &[name, items] : sectionMap) {
+      for (const auto &name : sectionNames) {
         newItems.push_back(std::make_unique<OmniGrid::GridSection>(name, grid->columns(), grid->spacing()));
 
-        for (auto item : items) {
+        for (auto item : sectionMap[name]) {
           newItems.push_back(std::make_unique<EmojiGridItem>(*item));
         }
       }
@@ -108,10 +87,6 @@ public:
         }
       }
     }
-
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() / 1e6;
-    qDebug() << "emojiSearch()" << "=" << duration << "ms";
 
     grid->updateFromList(newItems, OmniGrid::SelectFirst);
   }

@@ -7,11 +7,9 @@
 #include "create-quicklink-command.hpp"
 #include "emoji-command.hpp"
 #include "extension_manager.hpp"
-#include "files-command.hpp"
 #include "icon-browser-command.hpp"
 #include "manage-processes-command.hpp"
 #include "manage-quicklinks-command.hpp"
-#include "navigation-list-view.hpp"
 #include "ollama-command.hpp"
 #include "omnicast.hpp"
 #include "quicklist-database.hpp"
@@ -27,7 +25,6 @@
 #include "ui/omni-list-view.hpp"
 #include "ui/omni-list.hpp"
 #include "ui/peepobank-command.hpp"
-#include "ui/test-list.hpp"
 #include "quicklink-actions.hpp"
 #include "ui/transform-result.hpp"
 #include <QtConcurrent/QtConcurrent>
@@ -45,6 +42,7 @@
 #include <qmap.h>
 #include <qmimedatabase.h>
 #include <qnamespace.h>
+#include <qnetworkcookiejar.h>
 #include <qthreadpool.h>
 #include <qwidget.h>
 
@@ -147,9 +145,9 @@ class QuicklinkRootListItem : public AbstractDefaultListItem, public OmniListVie
 public:
   std::shared_ptr<Quicklink> link;
 
-  CompleterData *createCompleter() const {
-    return new CompleterData{.placeholders = link->placeholders,
-                             .model = ThemeIconModel{.iconName = link->iconName}};
+  std::unique_ptr<CompleterData> createCompleter() const override {
+    return std::make_unique<CompleterData>(CompleterData{
+        .placeholders = link->placeholders, .model = ThemeIconModel{.iconName = link->iconName}});
   }
 
   QList<AbstractAction *> generateActions() const override {
@@ -157,12 +155,6 @@ public:
     auto edit = new EditQuicklinkAction(link);
     auto duplicate = new DuplicateQuicklinkAction(link);
     auto remove = new RemoveQuicklinkAction(link);
-
-    qDebug() << "createActions";
-
-    // connect(edit, &EditQuicklinkAction::edited, this, &QuicklinkRootListItem::edited);
-    // connect(duplicate, &DuplicateQuicklinkAction::duplicated, this, &QuicklinkRootListItem::duplicated);
-    // connect(remove, &AbstractAction::didExecute, this, &QuicklinkRootListItem::removed);
 
     return {open, edit, duplicate, remove};
   }
@@ -173,12 +165,7 @@ public:
 
 public:
   QuicklinkRootListItem(const std::shared_ptr<Quicklink> &link) : link(link) {}
-
-  ~QuicklinkRootListItem() { qDebug() << "[-LINK] link with id" << link->id; }
-
-  // void edited();
-  // void removed();
-  // void duplicated();
+  ~QuicklinkRootListItem() {}
 };
 
 class RootView : public OmniListView {
@@ -249,6 +236,7 @@ class RootView : public OmniListView {
         : link(link), query(fallbackQuery) {}
   };
 
+  /*
   class ExtensionListItem : public StandardListItem {
     Extension::Command cmd;
 
@@ -265,6 +253,7 @@ class RootView : public OmniListView {
         : StandardListItem(cmd.name, cmd.title, "Command", ThemeIconModel{.iconName = ":icons/cog.svg"}),
           cmd(cmd) {}
   };
+  */
 
   class BaseCalculatorListItem : public OmniList::AbstractVirtualItem, public OmniListView::IActionnable {
   protected:
@@ -296,14 +285,6 @@ class RootView : public OmniListView {
   };
 
   QList<BuiltinCommand> builtinCommands{
-      {.name = "Search files",
-       .iconName = ":assets/icons/files.png",
-       .factory =
-           [](AppWindow &app, const QString &s) {
-             auto file = new SingleViewCommand<FilesView>;
-
-             return file;
-           }},
       {.name = "Calculator history",
        .iconName = ":assets/icons/calculator.png",
        .factory = [](AppWindow &app,
@@ -329,35 +310,7 @@ class RootView : public OmniListView {
           .factory = [](AppWindow &app, const QString &s) { return new SingleViewCommand<PeepobankView>; },
       }};
 
-  QList<BuiltinCommand> fallbackCommands{
-      {.name = "Search files",
-       .iconName = ":assets/icons/files.png",
-       .factory = [](AppWindow &app, const QString &query) { return new SingleViewCommand<FilesView>(); }},
-  };
-
-  /*
-  void removeQuicklink(QuicklinkRootListItem *item) {
-    grid->removeByKey(item->key());
-    grid->removeByKey(item->fallbackKey());
-    grid->calculateLayout();
-  }
-
-  void editedQuicklink(QuicklinkRootListItem *item) {
-    grid->invalidateCacheKey(item->key());
-    grid->invalidateCacheKey(item->fallbackKey());
-
-    if (auto completer = item->createCompleter()) {
-      auto values = app.topBar->quickInput->collectArgs();
-
-      app.topBar->destroyQuicklinkCompleter();
-      app.topBar->activateQuicklinkCompleter(*completer);
-      app.topBar->quickInput->setValues(values);
-      delete completer;
-    }
-
-    grid->calculateLayout();
-  }
-  */
+  QList<BuiltinCommand> fallbackCommands{};
 
 public:
   void executeSearch(ItemList &list, const QString &s) override {
@@ -387,14 +340,6 @@ public:
         if (!link->name.startsWith(s, Qt::CaseInsensitive)) continue;
 
         auto quicklink = std::make_unique<QuicklinkRootListItem>(link);
-
-        /*
-connect(quicklink, &QuicklinkRootListItem::edited, this,
-        [this, quicklink]() { editedQuicklink(quicklink); });
-connect(quicklink, &QuicklinkRootListItem::duplicated, this, [this, s]() { reselect(); });
-connect(quicklink, &QuicklinkRootListItem::removed, this,
-        [this, quicklink]() { removeQuicklink(quicklink); });
-        */
 
         list.push_back(std::move(quicklink));
       }
