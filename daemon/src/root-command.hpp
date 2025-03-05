@@ -180,7 +180,7 @@ class RootView : public OmniListView {
       auto fileBrowser = appDb.defaultFileBrowser();
       auto textEditor = appDb.defaultTextEditor();
 
-      actions << new OpenAppAction(app, "Open", {});
+      actions << new OpenAppAction(app, "Open Application", {});
 
       for (const auto &desktopAction : app->actions) {
         actions << new OpenAppAction(desktopAction, desktopAction->name, {});

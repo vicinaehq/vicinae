@@ -63,6 +63,7 @@ class PeepobankView : public OmniGridView {
 
   class PeepoItem : public OmniGrid::AbstractGridItem, public OmniGridView::IActionnable {
     PeepoInfo _info;
+    std::shared_ptr<DesktopExecutable> _fileBrowser;
 
     QString navigationTitle() const override { return _info.name.split(".").at(0); }
 
@@ -73,9 +74,8 @@ class PeepobankView : public OmniGridView {
     bool centerWidgetRecyclable() const override { return true; }
 
     QList<AbstractAction *> generateActions() const override {
-      return {
-          new CopyTextAction("Copy peepo path", _info.path),
-      };
+      return {new CopyTextAction("Copy peepo path", _info.path),
+              new OpenAppAction(_fileBrowser, "Open in file browser", {_info.path})};
     }
 
     void recycleCenterWidget(QWidget *base) const override {
@@ -94,7 +94,8 @@ class PeepobankView : public OmniGridView {
 
   public:
     const QString &name() const { return _info.name; }
-    PeepoItem(const PeepoInfo &info) : _info(info) {}
+    PeepoItem(const PeepoInfo &info, const std::shared_ptr<DesktopExecutable> &fileBrowser)
+        : _info(info), _fileBrowser(fileBrowser) {}
   };
 
   class PeepoFilter : public OmniList::AbstractItemFilter {
@@ -112,6 +113,8 @@ class PeepobankView : public OmniGridView {
 
   void onMount() override {
     OmniGridView::onMount();
+    auto &appDb = service<AppDatabase>();
+    auto fileBrowser = appDb.defaultFileBrowser();
 
     QDir dir(bankPath);
 
@@ -121,10 +124,12 @@ class PeepobankView : public OmniGridView {
     for (auto entry : dir.entryList()) {
       if (entry.startsWith(".")) continue;
 
-      grid->addItem(std::make_unique<PeepoItem>(PeepoInfo{
-          .name = entry,
-          .path = dir.filePath(entry),
-      }));
+      grid->addItem(std::make_unique<PeepoItem>(
+          PeepoInfo{
+              .name = entry,
+              .path = dir.filePath(entry),
+          },
+          fileBrowser));
     }
 
     grid->commitUpdate();

@@ -9,3 +9,4 @@ add_compile_options(-march=native -g3)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/calculator/src)
 add_subdirectory(daemon)
+add_subdirectory(proto)

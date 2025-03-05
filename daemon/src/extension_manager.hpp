@@ -22,18 +22,18 @@
 #include <quuid.h>
 #include <unistd.h>
 
-struct Message {
+struct MessageBuilder {
   QString id;
   QString type;
   QJsonObject data;
 
-  static Message create(const QString &type, QJsonObject data) {
+  static MessageBuilder create(const QString &type, QJsonObject data) {
     auto id = QUuid::createUuid().toString(QUuid::StringFormat::WithoutBraces);
 
     return {id, type, data};
   }
 
-  static Message createReply(const Message &lhs, QJsonObject data) {
+  static MessageBuilder createReply(const MessageBuilder &lhs, QJsonObject data) {
     return {lhs.id, lhs.type, data};
   }
 };
@@ -59,8 +59,7 @@ struct LoadedCommand {
   } command;
 };
 
-static const char *exec =
-    "/home/aurelle/prog/perso/omnicast-sdk/extension-manager/dist/index.js";
+static const char *exec = "/home/aurelle/prog/perso/omnicast-sdk/extension-manager/dist/index.js";
 
 enum MessageType { REQUEST, RESPONSE, EVENT };
 
@@ -106,8 +105,7 @@ class DataDecoder : public QObject {
   };
 
   Messenger parseMessenger(const QJsonObject &lhs) {
-    Messenger messenger{.id = lhs["id"].toString(),
-                        .type = stringToMessengerType[lhs["type"].toString()]};
+    Messenger messenger{.id = lhs["id"].toString(), .type = stringToMessengerType[lhs["type"].toString()]};
 
     return messenger;
   }
@@ -182,8 +180,7 @@ class Bus : public QObject {
     return obj;
   }
 
-  MessageEnvelope makeEnvelope(MessageType type, const Messenger &target,
-                               const QString &action) {
+  MessageEnvelope makeEnvelope(MessageType type, const Messenger &target, const QString &action) {
     auto id = QUuid::createUuid().toString(QUuid::StringFormat::WithoutBraces);
     MessageEnvelope envelope{
         .id = id,
@@ -196,8 +193,7 @@ class Bus : public QObject {
     return envelope;
   }
 
-  void sendMessage(const MessageEnvelope &envelope,
-                   const QJsonObject &payload) {
+  void sendMessage(const MessageEnvelope &envelope, const QJsonObject &payload) {
     QJsonObject serializedEnvelope;
 
     serializedEnvelope["id"] = envelope.id;
@@ -223,32 +219,27 @@ class Bus : public QObject {
     qDebug() << "wrote message";
   }
 
-  void request(const Messenger &target, const QString &action,
-               const QJsonObject &payload) {
+  void request(const Messenger &target, const QString &action, const QJsonObject &payload) {
     auto envelope = makeEnvelope(MessageType::REQUEST, target, action);
 
     outgoingPendingRequests.insert(envelope.id, envelope);
     sendMessage(envelope, payload);
   }
 
-  void emitEvent(const Messenger &target, const QString &action,
-                 const QJsonObject &payload) {
+  void emitEvent(const Messenger &target, const QString &action, const QJsonObject &payload) {
     auto envelope = makeEnvelope(MessageType::EVENT, target, action);
 
     sendMessage(envelope, payload);
   }
 
-  void requestExtension(const QString &sessionId, const QString &action,
-                        const QJsonObject &payload) {
+  void requestExtension(const QString &sessionId, const QString &action, const QJsonObject &payload) {
     Messenger target{.id = sessionId, .type = Messenger::Type::EXTENSION};
 
     request(target, action, payload);
   }
 
 private slots:
-  void handleError(QLocalSocket::LocalSocketError error) {
-    qDebug() << "bus errror" << error;
-  }
+  void handleError(QLocalSocket::LocalSocketError error) { qDebug() << "bus errror" << error; }
 
   void handleMessage(FullMessage msg) {
     qDebug() << "readyRead: got message of type" << msg.envelope.action;
@@ -278,12 +269,10 @@ private slots:
 
     if (msg.envelope.sender.type == Messenger::Type::EXTENSION) {
       if (msg.envelope.type == MessageType::EVENT) {
-        emit extensionEvent(msg.envelope.sender.id, msg.envelope.action,
-                            msg.data);
+        emit extensionEvent(msg.envelope.sender.id, msg.envelope.action, msg.data);
       }
       if (msg.envelope.type == MessageType::REQUEST) {
-        emit extensionRequest(msg.envelope.sender.id, msg.envelope.id,
-                              msg.envelope.action, msg.data);
+        emit extensionRequest(msg.envelope.sender.id, msg.envelope.id, msg.envelope.action, msg.data);
       }
     }
   }
@@ -293,9 +282,7 @@ private slots:
       auto start = std::chrono::high_resolution_clock::now();
       auto buf = socket->readAll();
       auto end = std::chrono::high_resolution_clock::now();
-      auto duration =
-          std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
-              .count();
+      auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
       qDebug() << "read stuff in" << duration << "ms";
 
       QDataStream dataStream(&buf, QIODevice::ReadOnly);
@@ -312,10 +299,9 @@ private slots:
 public:
 signals:
   void managerResponse(const QString &action, QJsonObject &data);
-  void extensionRequest(const QString &sessionId, const QString &id,
-                        const QString &action, QJsonObject &data);
-  void extensionEvent(const QString &sessionId, const QString &action,
-                      QJsonObject &data);
+  void extensionRequest(const QString &sessionId, const QString &id, const QString &action,
+                        QJsonObject &data);
+  void extensionEvent(const QString &sessionId, const QString &action, QJsonObject &data);
 
 public:
   void requestManager(const QString &action, const QJsonObject &payload) {
@@ -343,8 +329,7 @@ public:
     return true;
   }
 
-  void emitExtensionEvent(const QString &sessionId, const QString &action,
-                          const QJsonObject &payload) {
+  void emitExtensionEvent(const QString &sessionId, const QString &action, const QJsonObject &payload) {
     Messenger target{.id = sessionId, .type = Messenger::Type::EXTENSION};
     auto envelope = makeEnvelope(MessageType::EVENT, target, action);
 
@@ -372,8 +357,7 @@ public:
 
   void flush() { emit socket->readyRead(); }
 
-  Bus(QLocalSocket *socket)
-      : socket(socket), workerThread(new QThread), worker(new DataDecoder) {
+  Bus(QLocalSocket *socket) : socket(socket), workerThread(new QThread), worker(new DataDecoder) {
     connect(socket, &QLocalSocket::readyRead, this, &Bus::readyRead);
     connect(socket, &QLocalSocket::errorOccurred, this, &Bus::handleError);
     connect(worker, &DataDecoder::messageParsed, this, &Bus::handleMessage);
@@ -397,12 +381,9 @@ class ExtensionManager : public QObject {
 public:
   const QList<Extension> &extensions() const { return loadedExtensions; }
 
-  bool respond(const QString &id, const QJsonObject &payload) {
-    return bus->respond(id, payload);
-  }
+  bool respond(const QString &id, const QJsonObject &payload) { return bus->respond(id, payload); }
 
-  void emitExtensionEvent(const QString &sessionId, const QString &action,
-                          const QJsonObject &payload) {
+  void emitExtensionEvent(const QString &sessionId, const QString &action, const QJsonObject &payload) {
     return bus->emitExtensionEvent(sessionId, action, payload);
   }
 
@@ -416,8 +397,7 @@ public slots:
 
     qDebug() << "run file";
 
-    if (file.exists())
-      file.remove();
+    if (file.exists()) file.remove();
 
     if (!ipc.listen(socketPath)) {
       qDebug() << "failed to listen on socket path" << socketPath;
@@ -428,16 +408,12 @@ public slots:
 
     environ << "OMNICAST_SERVER_URL=" + socketPath;
 
-    process.setWorkingDirectory(
-        "/home/aurelle/.local/share/omnicast/extensions");
+    process.setWorkingDirectory("/home/aurelle/.local/share/omnicast/extensions");
 
-    connect(&process, &QProcess::readyReadStandardOutput, this,
-            &ExtensionManager::readOutput);
-    connect(&process, &QProcess::readyReadStandardError, this,
-            &ExtensionManager::readError);
+    connect(&process, &QProcess::readyReadStandardOutput, this, &ExtensionManager::readOutput);
+    connect(&process, &QProcess::readyReadStandardError, this, &ExtensionManager::readError);
     connect(&process, &QProcess::finished, this, &ExtensionManager::finished);
-    connect(&ipc, &QLocalServer::newConnection, this,
-            &ExtensionManager::newConnection);
+    connect(&ipc, &QLocalServer::newConnection, this, &ExtensionManager::newConnection);
 
     process.setEnvironment(environ);
     process.start("/bin/node", {"runtime.js"});
@@ -475,8 +451,7 @@ public slots:
         Extension::Command finalCmd{.name = cmdObj["name"].toString(),
                                     .title = cmdObj["title"].toString(),
                                     .subtitle = cmdObj["subtitle"].toString(),
-                                    .description =
-                                        cmdObj["description"].toString(),
+                                    .description = cmdObj["description"].toString(),
                                     .mode = cmdObj["mode"].toString(),
                                     .extensionId = extension.sessionId};
 
@@ -490,9 +465,7 @@ public slots:
   }
 
   void handleManagerResponse(const QString &action, QJsonObject &data) {
-    if (action == "list-extensions") {
-      return parseListExtensionData(data);
-    }
+    if (action == "list-extensions") { return parseListExtensionData(data); }
 
     if (action == "load-command") {
       auto sessionId = data["sessionId"].toString();
@@ -507,10 +480,9 @@ public slots:
   }
 
 signals:
-  void extensionEvent(const QString &sessionId, const QString &action,
-                      const QJsonObject &payload);
-  void extensionRequest(const QString &sessionId, const QString &id,
-                        const QString &action, const QJsonObject &payload);
+  void extensionEvent(const QString &sessionId, const QString &action, const QJsonObject &payload);
+  void extensionRequest(const QString &sessionId, const QString &id, const QString &action,
+                        const QJsonObject &payload);
   void managerResponse(const QString &action, QJsonObject &payload);
   void commandLoaded(const LoadedCommand &);
 
@@ -521,18 +493,15 @@ private slots:
 
     bus = new Bus(socket);
 
-    connect(bus, &Bus::managerResponse, this,
-            &ExtensionManager::handleManagerResponse);
+    connect(bus, &Bus::managerResponse, this, &ExtensionManager::handleManagerResponse);
     connect(bus, &Bus::extensionEvent, this, &ExtensionManager::extensionEvent);
-    connect(bus, &Bus::extensionRequest, this,
-            &ExtensionManager::extensionRequest);
+    connect(bus, &Bus::extensionRequest, this, &ExtensionManager::extensionRequest);
 
     bus->requestManager("list-extensions", {});
   }
 
   void finished(int exitCode, QProcess::ExitStatus status) {
-    qDebug()
-        << "Extension manager exited prematurely. Extensions will not work";
+    qDebug() << "Extension manager exited prematurely. Extensions will not work";
   }
 
   void readOutput() {
