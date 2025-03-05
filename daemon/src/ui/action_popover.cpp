@@ -20,7 +20,7 @@
 
 void ActionPopover::toggleActions() {
   if (isVisible())
-    hide();
+    close();
   else
     showActions();
 }
@@ -65,7 +65,7 @@ void ActionPopover::itemActivated(const std::shared_ptr<AbstractVirtualListItem>
   auto actionItem = std::static_pointer_cast<ActionListItem>(item);
 
   emit actionExecuted(actionItem->action);
-  hide();
+  close();
 }
 
 ActionPopover::ActionPopover(QWidget *parent)

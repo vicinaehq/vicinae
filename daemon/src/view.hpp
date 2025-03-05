@@ -51,11 +51,16 @@ public:
   template <typename T> Service<T> service() { return app.service<T>(); }
   void setSearchPlaceholderText(const QString &s) { app.topBar->input->setPlaceholderText(s); }
 
+  QString navigationTitle() { return app.statusBar->navigationTitle(); }
+  void setNavigationTitle(const QString &title) { return app.statusBar->setNavigationTitle(title); }
+
   void setSignalActions(const QList<AbstractAction *> &actions) {
     app.actionPopover->setSignalActions(actions);
 
     if (!actions.isEmpty()) {
-      // app.statusBar->setCurrentAction(actions.at(0).title);
+      app.statusBar->setAction(*actions.at(0));
+    } else {
+      app.statusBar->clearAction();
     }
   }
 

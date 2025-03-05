@@ -24,6 +24,11 @@ protected:
   void paintEvent(QPaintEvent *event) override;
   void enterEvent(QEnterEvent *event) override { setHovered(true); }
   void leaveEvent(QEvent *event) override { setHovered(false); }
+  void moveEvent(QMoveEvent *event) override {
+    QWidget::moveEvent(event);
+    // reposition the tooltip relative to the widget
+    if (tooltip->isVisible()) { showTooltip(); }
+  }
 
   void resizeEvent(QResizeEvent *event) override;
   void mousePressEvent(QMouseEvent *event) override;

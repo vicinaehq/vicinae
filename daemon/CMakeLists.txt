@@ -110,10 +110,16 @@ qt_add_executable(${TARGET}
 	include/ui/emoji-viewer.hpp
 	src/ui/emoji-viewer.cpp
 
-
-	
 	include/ui/form.hpp
 	include/ui/empty-view.hpp
+
+	include/ui/keyboard-shortcut-indicator.hpp
+	src/ui/keyboard-shortcut-indicator.cpp
+
+	include/ui/shortcut-button.hpp
+	src/ui/shortcut-button.cpp
+
+	include/emoji-command.hpp
 
 	src/manage-quicklinks-command.hpp
 

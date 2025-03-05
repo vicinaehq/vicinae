@@ -56,10 +56,29 @@ public:
 };
 
 class VDivider : public QFrame {
-public:
-  VDivider(size_t width = 1) {
-    setFrameShape(QFrame::VLine);
-    setFixedWidth(width);
-    setProperty("class", "divider");
+  QColor _color;
+  size_t _width;
+
+  void paintEvent(QPaintEvent *event) override {
+    QPainter painter(this);
+    auto margins = contentsMargins();
+
+    painter.setBrush(QBrush(_color));
+    painter.setPen(_color);
+    painter.drawRect(0, margins.top(), _width, height() - margins.top() - margins.bottom());
   }
+
+public:
+  void setWidth(int width) {
+    _width = width;
+    setFixedWidth(width);
+    updateGeometry();
+  }
+
+  void setColor(QColor color) {
+    _color = color;
+    update();
+  }
+
+  VDivider(QWidget *parent = nullptr) : _width(1), _color("#222222") { setFixedWidth(_width); }
 };

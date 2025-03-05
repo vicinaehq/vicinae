@@ -96,14 +96,13 @@ struct KeyboardShortcut {
   Qt::KeyboardModifiers modifiers;
 
 public:
-  KeyboardShortcut(const KeyboardShortcutModel &model)
-      : key(keyMap.value(model.key)) {
+  KeyboardShortcut(const KeyboardShortcutModel &model) : key(keyMap.value(model.key)) {
     for (const auto &mod : model.modifiers) {
       modifiers.setFlag(modifierMap.value(mod));
     }
   }
 
-  bool operator==(QKeyEvent *event) {
-    return event->key() == key && event->modifiers() == modifiers;
-  }
+  KeyboardShortcut() {}
+
+  bool operator==(QKeyEvent *event) { return event->key() == key && event->modifiers() == modifiers; }
 };

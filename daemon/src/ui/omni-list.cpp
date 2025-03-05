@@ -112,8 +112,6 @@ void OmniList::updateVisibleItems() {
     QPoint pos(vinfo.x, viewportY);
     QSize size(vinfo.width, vinfo.height);
 
-    // qDebug() << info.id << pos << size;
-
     widget->blockSignals(true);
     widget->setIndex(endIndex);
     widget->setSelected(endIndex == _selected);
@@ -127,8 +125,6 @@ void OmniList::updateVisibleItems() {
 
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() / 1e6;
-
-    qDebug() << "updateVisibleItems() individual item" << "=" << duration << "ms" << isWidgetCreated;
   }
 
   visibleIndexRange = {startIndex, endIndex - 1};
@@ -429,13 +425,19 @@ void OmniList::setSelectedIndex(int index, ScrollBehaviour scrollBehaviour) {
 
   qDebug() << "set selected index" << index;
 
-  if (index == -1) return;
-
   auto previous = _selected >= 0 && _selected < _virtual_items.size() ? vmap(_selected).item.get() : nullptr;
   auto next = index >= 0 && index < _virtual_items.size() ? vmap(index).item.get() : nullptr;
 
   _selected = index;
   updateVisibleItems();
+
+  if (index == -1) {
+    if (!_selectedId.isEmpty()) {
+      _selectedId.clear();
+      emit selectionChanged(next, previous);
+    }
+    return;
+  }
 
   if (_selectedId != next->id()) {
     _selectedId = next->id();
@@ -599,6 +601,7 @@ bool OmniList::selectFirst() {
     }
   }
 
+  setSelectedIndex(-1);
   return false;
 }
 

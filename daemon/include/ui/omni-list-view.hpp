@@ -122,7 +122,7 @@ public:
 private:
   virtual void selectionChanged(const OmniList::AbstractVirtualItem *next,
                                 const OmniList::AbstractVirtualItem *previous) {
-    if (!next) return;
+    if (!next) { return; }
 
     qDebug() << "selected id" << next->id();
 
@@ -139,7 +139,13 @@ private:
         app.topBar->destroyQuicklinkCompleter();
       }
 
-      setSignalActions(nextItem->generateActions());
+      auto actions = nextItem->generateActions();
+
+      if (!actions.isEmpty()) { actions.at(0)->setShortcut({.key = "return"}); }
+
+      setSignalActions(actions);
+    } else {
+      setSignalActions({});
     }
   }
 

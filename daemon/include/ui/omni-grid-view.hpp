@@ -4,20 +4,43 @@
 #include "view.hpp"
 
 class OmniGridView : public View {
+  QString baseNavigationTitle;
+
 protected:
   OmniGrid *grid;
 
+public:
   class IActionnable {
   public:
-    QList<AbstractAction *> generateActions() const { return {}; }
+    virtual QList<AbstractAction *> generateActions() const { return {}; }
+    virtual QString navigationTitle() const { return {}; }
   };
 
   virtual void selectionChanged(const OmniList::AbstractVirtualItem *next,
                                 const OmniList::AbstractVirtualItem *previous) {
-    if (!next) { return; }
+    if (!next) {
+      setNavigationTitle(baseNavigationTitle);
+      setSignalActions({});
+      return;
+    }
 
     if (auto nextItem = dynamic_cast<const IActionnable *>(next)) {
-      setSignalActions(nextItem->generateActions());
+      if (auto title = nextItem->navigationTitle(); !title.isEmpty()) {
+        qDebug() << "set navigation";
+        setNavigationTitle(baseNavigationTitle + " - " + title);
+      } else {
+        qDebug() << "set default navigation";
+        setNavigationTitle(baseNavigationTitle);
+      }
+
+      auto actions = nextItem->generateActions();
+
+      if (!actions.isEmpty()) { actions.at(0)->setShortcut({.key = "return"}); }
+
+      setSignalActions(actions);
+
+    } else {
+      qDebug() << "fuck dynamic cast";
     }
   }
 
@@ -25,6 +48,8 @@ protected:
     qDebug() << "activated";
     emit activatePrimaryAction();
   }
+
+  void onMount() override { baseNavigationTitle = navigationTitle(); }
 
   bool inputFilter(QKeyEvent *event) override {
     switch (event->key()) {
@@ -41,5 +66,10 @@ protected:
   }
 
 public:
-  OmniGridView(AppWindow &app) : View(app), grid(new OmniGrid) { widget = grid; }
+  OmniGridView(AppWindow &app) : View(app), grid(new OmniGrid) {
+    widget = grid;
+
+    connect(grid, &OmniGrid::selectionChanged, this, &OmniGridView::selectionChanged);
+    connect(grid, &OmniGrid::itemActivated, this, &OmniGridView::itemActivated);
+  }
 };

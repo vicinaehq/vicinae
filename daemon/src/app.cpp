@@ -7,6 +7,7 @@
 #include "quicklink-seeder.hpp"
 #include "root-command.hpp"
 #include "ui/action_popover.hpp"
+#include "ui/status-bar.hpp"
 #include "ui/top_bar.hpp"
 #include <QLabel>
 #include <QMainWindow>
@@ -49,7 +50,8 @@ bool AppWindow::event(QEvent *event) {
     if (actionPopover->findBoundAction(keyEvent)) return true;
 
     if (keyEvent->modifiers().testFlag(Qt::ControlModifier) && key == Qt::Key_B) {
-      actionPopover->toggleActions();
+      actionPopover->showActions();
+
       return true;
     }
 
@@ -96,6 +98,13 @@ void AppWindow::popCurrentView() {
   previous.view->deleteLater();
 
   actionPopover->setSignalActions(next.actions);
+
+  if (next.actions.isEmpty()) {
+    statusBar->clearAction();
+  } else {
+    statusBar->setAction(*next.actions.at(0));
+  }
+
   topBar->destroyQuicklinkCompleter();
   topBar->input->setReadOnly(false);
   topBar->input->show();
@@ -200,12 +209,13 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
     cur.view->widget->hide();
     viewDisplayer->setWidget(view->widget);
 
-    if (opts.navigation) statusBar->setNavigationTitle(opts.navigation->title, opts.navigation->icon);
+    if (opts.navigation) statusBar->setNavigation(opts.navigation->title, opts.navigation->icon);
   }
 
   connectView(*view);
 
   actionPopover->setSignalActions({});
+  statusBar->clearAction();
   currentCommand.viewStack.push({.view = view});
   navigationStack.push({.view = view});
 
@@ -304,6 +314,12 @@ AppWindow::AppWindow(QWidget *parent)
 
   connect(topBar->input, &SearchBar::pop, this, &AppWindow::popCurrentView);
   connect(actionPopover, &ActionPopover::actionExecuted, this, &AppWindow::executeAction);
+  connect(statusBar, &StatusBar::actionButtonClicked, this, [this]() { actionPopover->showActions(); });
+  connect(statusBar, &StatusBar::currentActionButtonClicked, this, [this]() { selectPrimaryAction(); });
+  connect(actionPopover, &ActionPopover::closed, this,
+          [this]() { statusBar->setActionButtonHighlight(false); });
+  connect(actionPopover, &ActionPopover::opened, this,
+          [this]() { statusBar->setActionButtonHighlight(true); });
 
   ImageFetcher::instance();
 

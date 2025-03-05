@@ -61,14 +61,22 @@ class PeepobankView : public OmniGridView {
     PeepoLabel() : pixmap(std::monostate{}) { setAlignment(Qt::AlignCenter); }
   };
 
-  class PeepoItem : public OmniGrid::AbstractGridItem {
+  class PeepoItem : public OmniGrid::AbstractGridItem, public OmniGridView::IActionnable {
     PeepoInfo _info;
+
+    QString navigationTitle() const override { return _info.name.split(".").at(0); }
 
     QString id() const override { return _info.path; }
 
     QString tooltip() const override { return _info.name; }
 
     bool centerWidgetRecyclable() const override { return true; }
+
+    QList<AbstractAction *> generateActions() const override {
+      return {
+          new CopyTextAction("Copy peepo path", _info.path),
+      };
+    }
 
     void recycleCenterWidget(QWidget *base) const override {
       auto label = static_cast<PeepoLabel *>(base);
@@ -103,6 +111,8 @@ class PeepobankView : public OmniGridView {
   };
 
   void onMount() override {
+    OmniGridView::onMount();
+
     QDir dir(bankPath);
 
     grid->beginUpdate();

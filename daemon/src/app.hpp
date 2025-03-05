@@ -78,6 +78,19 @@ class AppWindow : public QMainWindow {
   void paintEvent(QPaintEvent *event) override;
   void resizeEvent(QResizeEvent *event) override;
 
+  void showEvent(QShowEvent *event) override {
+    QPoint globalCursorPos = QCursor::pos();
+    QPoint localPos = mapFromGlobal(globalCursorPos);
+
+    // Create and send a mouse move event
+    QMouseEvent mouseEvent(QEvent::MouseMove, localPos, globalCursorPos, Qt::NoButton, Qt::NoButton,
+                           Qt::NoModifier);
+    QApplication::sendEvent(this, &mouseEvent);
+    qDebug() << "showing!!";
+
+    QMainWindow::showEvent(event);
+  }
+
 public:
   std::stack<QString> queryStack;
 

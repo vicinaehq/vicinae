@@ -13,5 +13,5 @@ void EllidedLabel::paintEvent(QPaintEvent *event) {
   auto metrics = fontMetrics();
   auto elided = metrics.elidedText(text(), Qt::ElideRight, width());
 
-  painter.drawText(QPoint(0, metrics.ascent()), elided);
+  painter.drawText(rect(), alignment(), elided);
 }

@@ -4,13 +4,15 @@
 #include "emoji-database.hpp"
 #include "ui/omni-grid-view.hpp"
 #include "ui/emoji-viewer.hpp"
+#include "ui/omni-grid.hpp"
+#include "ui/omni-list.hpp"
 #include <memory>
 #include <qevent.h>
 #include <qlabel.h>
 #include <qnamespace.h>
 #include <qwidget.h>
 
-class EmojiGridItem : public OmniGrid::AbstractGridItem {
+class EmojiGridItem : public OmniGrid::AbstractGridItem, public OmniGridView::IActionnable {
 public:
   const EmojiInfo &info;
 
@@ -34,12 +36,14 @@ public:
 
   QString id() const override { return info.description; }
 
-  QList<AbstractAction *> createActions() const {
+  QList<AbstractAction *> generateActions() const override {
     return {
         new CopyTextAction("Copy emoji", info.emoji),
         new CopyTextAction("Copy emoji name", info.description),
     };
   }
+
+  QString navigationTitle() const override { return info.description; }
 
   EmojiGridItem(const EmojiInfo &info) : info(info) {}
 };
@@ -51,8 +55,6 @@ class EmojiView : public OmniGridView {
 
 public:
   EmojiView(AppWindow &app) : OmniGridView(app), appDb(service<AppDatabase>()) {}
-
-  void onMount() override {}
 
   void onSearchChanged(const QString &s) override {
     newItems.clear();

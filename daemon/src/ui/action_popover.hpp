@@ -149,6 +149,16 @@ class ActionPopover : public QWidget {
   void paintEvent(QPaintEvent *event) override;
   bool eventFilter(QObject *obj, QEvent *event) override;
 
+  void closeEvent(QCloseEvent *event) override {
+    QWidget::closeEvent(event);
+    emit closed();
+  }
+
+  void showEvent(QShowEvent *event) override {
+    QWidget::showEvent(event);
+    emit opened();
+  }
+
 private slots:
   void itemActivated(const std::shared_ptr<AbstractVirtualListItem> &item);
 
@@ -156,6 +166,8 @@ signals:
   void actionActivated(std::shared_ptr<IAction> action);
   void actionPressed(ActionModel model);
   void actionExecuted(AbstractAction *action);
+  void closed() const;
+  void opened() const;
 
 public:
   QList<AbstractAction *> signalActions;
