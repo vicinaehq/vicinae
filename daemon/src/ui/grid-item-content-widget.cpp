@@ -16,7 +16,6 @@ void GridItemContentWidget::resizeEvent(QResizeEvent *event) {
   if (_widget) {
     _widget->setFixedSize(innerWidgetSize());
     _widget->move(_inset, _inset);
-    qDebug() << "grid widget size inner" << innerWidgetSize() << "real" << size();
   }
 }
 

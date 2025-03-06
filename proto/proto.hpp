@@ -1,164 +1,110 @@
 #pragma once
 
 #include <cstdint>
-#include <deque>
-#include <map>
-#include <memory>
 #include <netinet/in.h>
+#include <optional>
 #include <string>
+#include <unordered_map>
 #include <variant>
 #include <vector>
 #include <endian.h>
 
-enum ArgumentType { Array, Object, String, Number, Dict };
+namespace Proto {
+class Variant;
 
-using BufferType = std::vector<uint8_t>;
-using NumberType = int32_t;
+using String = std::string;
+using Int = int32_t;
+using Boolean = bool;
+using Array = std::vector<Variant>;
+using Dict = std::unordered_map<std::string, Variant>;
 
-class ArgumentArray;
+class Variant {
+  union ArgumentUnion {
+    Int integer;
+    String string;
+    Array array;
+    Dict dict;
+    Boolean boolean;
 
-struct Argument {
-  using ArgumentDict = std::map<std::string, Argument>;
-  using ArgumentValue =
-      std::variant<NumberType, BufferType, std::unique_ptr<ArgumentArray>, std::unique_ptr<ArgumentDict>>;
+    ArgumentUnion() : integer(0) {}
+    ~ArgumentUnion() {}
+  };
 
-  ArgumentValue _value;
+  using VariantValue = std::variant<Int, String, Boolean, Array, Dict>;
 
-  template <typename T> const T *value() const {
-    if (auto p = std::get_if<T>(&_value)) { return p; }
+  VariantValue _value;
 
-    return nullptr;
-  }
+public:
+  // not amazing, we should try to find something that works at compile time
+  template <typename T> static size_t tagForType() { return VariantValue(T{}).index(); }
 
-  const ArgumentArray *array() const {
-    auto arr = value<std::unique_ptr<ArgumentArray>>();
-    if (arr) return arr->get();
-    return nullptr;
-  }
+  bool isArray() const;
+  bool isDict() const;
+  bool isBool() const;
+  bool isString() const;
+  bool isInt() const;
 
-  std::string string(const std::string &dflt = "") const {
-    if (auto n = std::get_if<BufferType>(&_value)) { return {n->begin(), n->end()}; }
+  const Array &asArray(const Array &dflt = {}) const;
+  const Dict &asDict(const Dict &dict = {}) const;
+  bool asBool(bool dflt = {}) const;
+  const std::string &asString(const std::string &dflt = {}) const;
+  Int asInt(int dflt = {}) const;
 
-    return dflt;
-  }
+  const Array *tryArray() const;
+  const Dict *tryDict() const;
+  const bool *tryBool() const;
+  const std::string *tryString() const;
+  const Int *tryInt() const;
 
-  NumberType number(NumberType dflt = 0) const {
-    if (auto n = std::get_if<NumberType>(&_value)) { return *n; }
+  size_t tag() const { return _value.index(); }
 
-    return dflt;
-  }
-
-  Argument &operator=(const Argument &arg) {
-    if (auto n = std::get_if<NumberType>(&arg._value)) {
-      _value = *n;
-    } else if (auto buffer = std::get_if<BufferType>(&arg._value)) {
-      _value = *buffer;
-    } else if (auto array = std::get_if<std::unique_ptr<ArgumentArray>>(&arg._value)) {
-      _value = std::make_unique<ArgumentArray>(*array->get());
-    } else if (auto array = std::get_if<std::unique_ptr<ArgumentDict>>(&arg._value)) {
-      _value = std::make_unique<ArgumentDict>(*array->get());
-    }
-
-    return *this;
-  }
-
-  Argument(const Argument &rhs) noexcept { *this = rhs; }
-
-  Argument(std::unique_ptr<ArgumentArray> array) { _value = std::move(array); }
-  Argument(std::unique_ptr<ArgumentDict> dict) { _value = std::move(dict); }
-  Argument(const std::string &s) { _value = BufferType{s.begin(), s.end()}; }
-  Argument(const char *s) { *this = std::string(s); }
-  template <typename T> Argument(const T &init) { _value = init; }
-  Argument() {}
-
-  ~Argument() {}
+  Variant(const std::vector<uint8_t> &s);
+  Variant(Int n);
+  Variant(const Dict &dict);
+  Variant(const Array &dict);
+  Variant(bool val);
+  Variant(const std::string &string);
+  Variant(const char *s);
+  Variant(unsigned int n);
+  Variant();
 };
 
-namespace Marshaler {
-void marshal(std::vector<uint8_t> &packet, uint32_t value);
-void marshal(std::vector<uint8_t> &packet, const Argument &arg);
-void marshal(std::vector<uint8_t> &packet, const ArgumentArray &array);
-void marshalString(std::vector<uint8_t> &packet, const std::vector<uint8_t> &s);
-void marshalDict(std::vector<uint8_t> &packet, const Argument::ArgumentDict &dict);
+class Marshaler {
+public:
+  struct Error {
+    std::string message;
 
-ArgumentArray unmarshalArray(const std::vector<uint8_t> &packet, size_t &idx);
-Argument unmarshalArgument(const std::vector<uint8_t> &packet, size_t &idx);
-Argument::ArgumentDict unmarshalDict(const std::vector<uint8_t> &packet, size_t &idx);
+  public:
+    Error(const std::string &m) : message(m) {}
+  };
 
-}; // namespace Marshaler
+protected:
+  void marshal(std::vector<uint8_t> &packet, uint32_t value) const noexcept;
+  void marshal(std::vector<uint8_t> &packet, const Variant &arg) const noexcept;
+  void marshal(std::vector<uint8_t> &packet, const Array &array) const noexcept;
+  void marshal(std::vector<uint8_t> &packet, const Dict &dict) const noexcept;
 
-class ArgumentArray {
-  std::deque<Argument> _args;
+  std::optional<Error> unmarshal(const std::vector<uint8_t> &packet, size_t &idx, Array &arr) const noexcept;
+  std::optional<Error> unmarshal(const std::vector<uint8_t> &packet, size_t &idx,
+                                 Variant &arg) const noexcept;
+  std::optional<Error> unmarshal(const std::vector<uint8_t> &packet, size_t &idx, Dict &dict) const noexcept;
 
 public:
-  auto begin() const { return _args.begin(); }
-  auto end() const { return _args.end(); }
-
-private:
-public:
-  template <typename T> void append(const T &value) { _args.push_back(value); }
-
-  void append(const std::string &value) { _args.push_back(BufferType(value.begin(), value.end())); }
-  void append(const char *value) { append(std::string(value)); }
-
-  void append(const int &value) { _args.push_back(static_cast<NumberType>(value)); }
-  void append(const ArgumentArray &array) { _args.push_back(std::make_unique<ArgumentArray>(array)); }
-  void append(const Argument::ArgumentDict &array) {
-    _args.push_back(std::make_unique<Argument::ArgumentDict>(array));
-  }
-
-  template <typename T> void pop(T &value) {
-    value = *_args.at(0).value<T>();
-    _args.pop_front();
-  }
-  void pop(int &value) {
-    value = *_args.at(0).value<NumberType>();
-    _args.pop_front();
-  }
-  void pop(unsigned int &value) {
-    value = *_args.at(0).value<NumberType>();
-    _args.pop_front();
-  }
-  void pop(ArgumentArray &array) {
-    array = *_args.at(0).value<std::unique_ptr<ArgumentArray>>()->get();
-    _args.pop_front();
-  }
-  void pop(Argument::ArgumentDict &dict) {
-    dict = *_args.at(0).value<std::unique_ptr<Argument::ArgumentDict>>()->get();
-    _args.pop_front();
-  }
-  void pop(std::string &value) {
-    std::vector<uint8_t> buf;
-
-    pop(buf);
-    value = std::string(buf.begin(), buf.end());
-  }
-
-  template <typename T> ArgumentArray &operator>>(T &value) {
-    pop(value);
-    return *this;
-  }
-
-  template <typename T> ArgumentArray &operator<<(const T &value) {
-    append(value);
-    return *this;
-  }
-
-  size_t size() const { return _args.size(); }
-
-  ArgumentArray() {}
-
-  ArgumentArray(const std::vector<uint8_t> &packet) {
-    size_t idx = 0;
-
-    _args = Marshaler::unmarshalArray(packet, idx)._args;
-  }
-
-  std::vector<uint8_t> build() const {
+  template <typename T> std::vector<uint8_t> marshal(const T &item) noexcept {
     std::vector<uint8_t> packet;
 
-    Marshaler::marshal(packet, *this);
+    marshal(packet, item);
 
     return packet;
   }
+
+  template <typename T> std::variant<T, Error> unmarshal(const std::vector<uint8_t> &packet) {
+    T item;
+    size_t idx = 0;
+
+    if (auto err = unmarshal(packet, idx, item)) { return *err; }
+
+    return item;
+  }
 };
+} // namespace Proto

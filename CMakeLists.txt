@@ -8,5 +8,6 @@ add_compile_options(-march=native -g3)
 #add_compile_options(-march=x86-64)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/calculator/src)
+add_subdirectory(omnictl)
 add_subdirectory(daemon)
 add_subdirectory(proto)

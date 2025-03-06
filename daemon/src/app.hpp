@@ -2,10 +2,12 @@
 #include "app-database.hpp"
 #include "calculator-database.hpp"
 #include "clipboard-service.hpp"
+#include "command-server.hpp"
 #include "extend/image-model.hpp"
 #include "extension_manager.hpp"
 #include "indexer-service.hpp"
 #include "process-manager-service.hpp"
+#include "proto.hpp"
 #include "quicklist-database.hpp"
 #include <qboxlayout.h>
 #include <qevent.h>
@@ -72,8 +74,10 @@ struct PushViewOptions {
   std::optional<NavigationStatus> navigation;
 };
 
-class AppWindow : public QMainWindow {
+class AppWindow : public QMainWindow, public ICommandHandler {
   Q_OBJECT
+
+  CommandServer *_commandServer;
 
   void paintEvent(QPaintEvent *event) override;
   void resizeEvent(QResizeEvent *event) override;
@@ -89,6 +93,12 @@ class AppWindow : public QMainWindow {
     qDebug() << "showing!!";
 
     QMainWindow::showEvent(event);
+  }
+
+  std::variant<CommandResponse, CommandError> handleCommand(const CommandMessage &message) const override {
+    if (message.type == "ping") { return "pong"; }
+
+    return CommandError{"Unknowm command"};
   }
 
 public:

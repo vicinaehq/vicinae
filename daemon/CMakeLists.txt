@@ -15,7 +15,7 @@ option(WAYLAND_LAYER_SHELL "Enable support for the Wayland layer shell
 protocol, required for proper window positioning on most wlroots-based
 compositors." OFF)
 
-list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network cmark)
+list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network cmark proto)
 
 if (WAYLAND_LAYER_SHELL)
 	find_package(Qt6 REQUIRED COMPONENTS WaylandClient)
@@ -28,6 +28,7 @@ include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_SOURCE_DIR}/src
 	${CMAKE_CURRENT_SOURCE_DIR}/src/lib
+	${CMAKE_CURRENT_SOURCE_DIR}/../proto
 )
 
 qt_add_executable(${TARGET}

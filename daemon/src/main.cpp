@@ -156,6 +156,7 @@ QTextEdit {
 
 int main(int argc, char **argv) {
   QApplication qapp(argc, argv);
+  /*
   QString socketPath = QDir::temp().absoluteFilePath("spellcastd.sock");
   QFile socketFile(socketPath);
 
@@ -184,8 +185,7 @@ int main(int argc, char **argv) {
   }
 
   socketFile.remove();
-
-  QLocalServer server;
+  */
 
   AppWindow app;
 
@@ -216,32 +216,6 @@ int main(int argc, char **argv) {
                          .arg(colorSelected)
                          .arg(baseText)
                          .arg(statusBackground));
-
-  if (!server.listen(socketPath)) {
-    qDebug() << "Local server could not listen on " << socketPath;
-    return 1;
-  }
-
-  qDebug() << "Server listening on " << socketPath;
-
-  QObject::connect(&server, &QLocalServer::newConnection, [&server, &app]() {
-    QLocalSocket *socket = server.nextPendingConnection();
-
-    socket->waitForReadyRead();
-    auto data = socket->readAll();
-
-    qDebug() << data;
-
-    if (data == "open") {
-      if (app.isHidden())
-        app.show();
-      else
-        app.hide();
-    }
-
-    socket->write("ok");
-    socket->disconnectFromServer();
-  });
 
   return qapp.exec();
 }

@@ -1,4 +1,5 @@
 #include "app.hpp"
+#include "command-server.hpp"
 #include "command.hpp"
 #include "extension_manager.hpp"
 #include "image-fetcher.hpp"
@@ -307,6 +308,16 @@ AppWindow::AppWindow(QWidget *parent)
   clipboardService = std::make_unique<ClipboardService>();
   indexer = std::make_unique<IndexerService>(Config::dirPath() + QDir::separator() + "files.db");
   processManagerService = std::make_unique<ProcessManagerService>();
+
+  _commandServer = new CommandServer(this);
+  QString socketPath = QDir::temp().absoluteFilePath("spellcastd.sock");
+
+  if (!_commandServer->start(socketPath)) {
+    qDebug() << "could not start the command server";
+    return;
+  }
+
+  _commandServer->setHandler(this);
 
   for (const auto &proc : processManagerService->list()) {
     qDebug() << proc.comm << proc.pid;
