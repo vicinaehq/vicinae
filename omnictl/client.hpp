@@ -109,7 +109,6 @@ public:
     int rc = 0;
 
     while ((rc = recv(_fd, _buf, sizeof(_buf), 0)) > 0) {
-      std::cout << "rc" << rc << std::endl;
       packet.insert(packet.end(), _buf, _buf + rc);
     }
 
@@ -117,7 +116,7 @@ public:
 
     uint32_t length = ntohl(*reinterpret_cast<uint32_t *>(packet.data()));
 
-    std::cout << "answer of length" << length << std::endl;
+    // std::cout << "answer of length" << length << std::endl;
     auto result = marshaler.unmarshal<Proto::Array>({packet.begin() + sizeof(uint32_t), packet.end()});
 
     if (auto err = std::get_if<Proto::Marshaler::Error>(&result)) {

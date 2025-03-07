@@ -5,7 +5,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(LIBS)
 
-set(TARGET spellcastd)
+set(TARGET omnicast)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets Sql Network)
 find_package(SQLite3 REQUIRED)
@@ -46,6 +46,9 @@ qt_add_executable(${TARGET}
 	include/extend/extension-view.hpp
 	include/extend/extension-command.hpp
 	include/extend/extension-detail-view.hpp
+
+	include/command-database.hpp
+	src/command-database.cpp
 
 	# omni list 
 	include/ui/omni-list.hpp

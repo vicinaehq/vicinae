@@ -5,6 +5,7 @@
 #include <ostream>
 #include <string>
 #include <vector>
+#include "table.hpp"
 
 #ifndef OMNICAST_VERSION
 #define OMNICAST_VERSION "unknown"
@@ -70,6 +71,11 @@ public:
 
 class CmdCommand : public Command {
   class PushCommand : public Command {
+    void execute(const std::vector<std::string> &args) const override {
+      std::cout << "argument: " << args.at(0);
+      auto res = CommandClient::oneshot("command.push", Proto::Array{args.at(0)});
+    }
+
   public:
     PushCommand() : Command("push", "Push a command on top of the navigation stack") {
       addPositional("command_id");
@@ -88,6 +94,25 @@ class CmdCommand : public Command {
   };
 
   class ListCommand : public Command {
+    void execute(const std::vector<std::string> &args) const override {
+      auto result = CommandClient::oneshot("command.list");
+      auto commands = result.value().asArray();
+      TableFormatter table;
+
+      table.addColumn("ID", 30, Alignment::LEFT);
+      table.addColumn("Name", 30, Alignment::LEFT);
+
+      for (const auto &cmd : commands) {
+        auto dict = cmd.asDict();
+        auto id = dict["id"].asString();
+        auto name = dict["name"].asString();
+
+        table.addRow({id, name});
+      }
+
+      table.render();
+    }
+
   public:
     ListCommand() : Command("list", "List available commands") {}
   };

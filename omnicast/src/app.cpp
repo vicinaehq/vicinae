@@ -1,4 +1,5 @@
 #include "app.hpp"
+#include "command-database.hpp"
 #include "command-server.hpp"
 #include "command.hpp"
 #include "extension_manager.hpp"
@@ -308,6 +309,7 @@ AppWindow::AppWindow(QWidget *parent)
   clipboardService = std::make_unique<ClipboardService>();
   indexer = std::make_unique<IndexerService>(Config::dirPath() + QDir::separator() + "files.db");
   processManagerService = std::make_unique<ProcessManagerService>();
+  commandDb = std::make_unique<CommandDatabase>();
 
   _commandServer = new CommandServer(this);
   QString socketPath = QDir::temp().absoluteFilePath("omnicast.sock");
@@ -389,3 +391,5 @@ template <> Service<ExtensionManager> AppWindow::service<ExtensionManager>() con
 template <> Service<ProcessManagerService> AppWindow::service<ProcessManagerService>() const {
   return *processManagerService;
 }
+
+template <> Service<CommandDatabase> AppWindow::service<CommandDatabase>() const { return *commandDb; }

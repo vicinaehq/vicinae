@@ -20,5 +20,3 @@ target_compile_options(${TARGET} PUBLIC -g3)
 
 add_executable(prototest main.cpp)
 target_link_libraries(prototest PRIVATE proto)
-
-install(TARGETS ${TARGET})

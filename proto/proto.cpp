@@ -1,5 +1,6 @@
 #include "proto.hpp"
 #include <cstdint>
+#include <iostream>
 #include <string>
 #include <variant>
 
@@ -155,7 +156,7 @@ std::optional<Marshaler::Error> Marshaler::unmarshal(const std::vector<uint8_t> 
   if (tag == Variant::tagForType<Array>()) {
     Array arr;
 
-    if (auto err = unmarshal(packet, idx, arg)) { return err; }
+    if (auto err = unmarshal(packet, idx, arr)) { return err; }
 
     arg = arr;
 

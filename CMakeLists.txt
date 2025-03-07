@@ -10,5 +10,5 @@ add_compile_options(-march=native -g3)
 #add_compile_options(-march=x86-64)
 
 add_subdirectory(omnictl)
-add_subdirectory(daemon)
+add_subdirectory(omnicast)
 add_subdirectory(proto)

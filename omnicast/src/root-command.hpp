@@ -42,12 +42,7 @@
 #include <qnetworkcookiejar.h>
 #include <qthreadpool.h>
 #include <qwidget.h>
-
-struct BuiltinCommand {
-  QString name;
-  QString iconName;
-  std::function<ViewCommand *(AppWindow &app, const QString &)> factory;
-};
+#include "command-database.hpp"
 
 struct OpenBuiltinCommandAction : public AbstractAction {
   BuiltinCommand cmd;
@@ -170,6 +165,7 @@ class RootView : public OmniListView {
   Service<AppDatabase> appDb;
   Service<ExtensionManager> extensionManager;
   Service<QuicklistDatabase> quicklinkDb;
+  Service<CommandDatabase> commandDb;
 
   class AppListItem : public AbstractDefaultListItem, public OmniListView::IActionnable {
     std::shared_ptr<DesktopEntry> app;
@@ -281,37 +277,33 @@ class RootView : public OmniListView {
     BaseCalculatorListItem(const CalculatorItem &item) : item(item) {}
   };
 
-  QList<BuiltinCommand> builtinCommands{
-      {.name = "Calculator history",
-       .iconName = ":assets/icons/calculator.png",
-       .factory = [](AppWindow &app,
-                     const QString &s) { return new SingleViewCommand<CalculatorHistoryView>; }},
-      {.name = "Create quicklink",
-       .iconName = ":assets/icons/quicklink.png",
-       .factory = [](AppWindow &app,
-                     const QString &s) { return new SingleViewCommand<QuicklinkCommandView>; }},
-      {.name = "Manage quicklinks",
-       .iconName = ":assets/icons/quicklink.png",
-       .factory = [](AppWindow &app,
-                     const QString &s) { return new SingleViewCommand<ManageQuicklinksView>; }},
-      {.name = "Search Emoji & Symbols",
-       .iconName = ":assets/icons/emoji.png",
-       .factory = [](AppWindow &app, const QString &s) { return new SingleViewCommand<EmojiView>; }},
-      {.name = "Manage processes",
-       .iconName = ":assets/icons/process-manager.png",
-       .factory = [](AppWindow &app,
-                     const QString &s) { return new SingleViewCommand<ManageProcessesMainView>; }},
-      {
-          .name = "Peepobank",
-          .iconName = ":/icons/link.svg",
-          .factory = [](AppWindow &app, const QString &s) { return new SingleViewCommand<PeepobankView>; },
-      }};
-
-  QList<BuiltinCommand> fallbackCommands{};
-
 public:
+  // list without filtering
+  void generateBaseSearch(ItemList &list) {
+    list.push_back(std::make_unique<OmniList::VirtualSection>("Commands"));
+
+    for (const auto &cmd : commandDb.list()) {
+      list.push_back(std::make_unique<BuiltinCommandListItem>(cmd));
+    }
+
+    for (const auto &link : quicklinkDb.list()) {
+      list.push_back(std::make_unique<QuicklinkRootListItem>(link));
+    }
+
+    list.push_back(std::make_unique<OmniList::VirtualSection>("Apps"));
+
+    for (auto &app : appDb.apps) {
+      if (!app->displayable()) continue;
+
+      list.push_back(std::make_unique<AppListItem>(app, appDb));
+    }
+  }
+
   void executeSearch(ItemList &list, const QString &s) override {
+    if (s.isEmpty()) return generateBaseSearch(list);
+
     auto start = std::chrono::high_resolution_clock::now();
+
     auto fileBrowser = appDb.defaultFileBrowser();
 
     if (s.size() > 1) {
@@ -367,19 +359,23 @@ public:
   }
     */
 
-    for (const auto &cmd : builtinCommands) {
+    auto &commandDb = service<CommandDatabase>();
+
+    for (const auto &cmd : commandDb.list()) {
       if (!cmd.name.contains(s, Qt::CaseInsensitive)) continue;
 
       list.push_back(std::make_unique<BuiltinCommandListItem>(cmd));
     }
 
+    if (s.isEmpty()) {
+      for (const auto &app : appDb.apps) {
+        if (app->displayable()) { list.push_back(std::make_unique<AppListItem>(app, appDb)); }
+      }
+    }
+
     list.push_back(std::make_unique<OmniList::VirtualSection>(QString("Use \"%1\" with...").arg(s)));
 
     if (!s.isEmpty()) {
-      for (const auto &cmd : fallbackCommands) {
-        list.push_back(std::make_unique<FallbackBuiltinCommandListItem>(cmd, s));
-      }
-
       for (const auto &link : quicklinkDb.list()) {
         if (link->placeholders.size() != 1) continue;
 
@@ -396,7 +392,8 @@ public:
 
   RootView(AppWindow &app)
       : OmniListView(app), app(app), appDb(service<AppDatabase>()),
-        extensionManager(service<ExtensionManager>()), quicklinkDb(service<QuicklistDatabase>()) {}
+        extensionManager(service<ExtensionManager>()), quicklinkDb(service<QuicklistDatabase>()),
+        commandDb(service<CommandDatabase>()) {}
 
   ~RootView() {}
 };

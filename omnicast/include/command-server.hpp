@@ -17,7 +17,7 @@
 
 struct CommandMessage {
   std::string type;
-  Proto::Array params;
+  Proto::Variant params;
 };
 
 struct ClientInfo {
@@ -116,10 +116,7 @@ class CommandServer : public QObject {
         return;
       }
 
-      CommandMessage cmd{
-          .type = message[0].asString(),
-          .params = message[1].asArray(),
-      };
+      CommandMessage cmd{.type = message[0].asString(), .params = message[1]};
 
       if (!_handler) {
         writeError(client->notifier->socket(), {.error = "No handler configured on the server side"});

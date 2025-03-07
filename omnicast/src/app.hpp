@@ -2,6 +2,7 @@
 #include "app-database.hpp"
 #include "calculator-database.hpp"
 #include "clipboard-service.hpp"
+#include "command-database.hpp"
 #include "command-server.hpp"
 #include "extend/image-model.hpp"
 #include "extension_manager.hpp"
@@ -102,6 +103,39 @@ class AppWindow : public QMainWindow, public ICommandHandler {
       return true;
     }
 
+    if (message.type == "command.list") {
+      Proto::Array results;
+
+      for (const auto &cmd : commandDb->list()) {
+        Proto::Dict result;
+
+        result["id"] = cmd.id.toUtf8().constData();
+        result["name"] = cmd.name.toUtf8().constData();
+        results.push_back(result);
+      }
+
+      return results;
+    }
+
+    if (message.type == "command.push") {
+      auto args = message.params.asArray();
+
+      if (args.empty()) { return CommandError{"Ill-formed command.push request"}; }
+
+      auto id = args.at(0).asString();
+
+      if (auto cmd = commandDb->findById(id.c_str())) {
+        emit launchCommand(
+            cmd->factory(*this, ""),
+            {.navigation = NavigationStatus{.title = cmd->name, .icon = ThemeIconModel{cmd->iconName}}});
+        setVisible(true);
+
+        return true;
+      }
+
+      return CommandError{"No such command"};
+    }
+
     return CommandError{"Unknowm command"};
   }
 
@@ -118,6 +152,7 @@ public:
   std::unique_ptr<ExtensionManager> extensionManager;
   std::unique_ptr<IndexerService> indexer;
   std::unique_ptr<ProcessManagerService> processManagerService;
+  std::unique_ptr<CommandDatabase> commandDb;
 
   void popToRootView();
   void disconnectView(View &view);
