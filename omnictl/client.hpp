@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cstdint>
+#include <cstdlib>
+#include <filesystem>
 #include <cstring>
 #include <fcntl.h>
 #include "proto.hpp"
@@ -10,9 +12,23 @@
 #include <string>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <unistd.h>
+#include <variant>
 
 struct CommandError {
   std::string message;
+};
+
+class CommandResponse {
+  std::variant<Proto::Variant, CommandError> _value;
+
+public:
+  operator bool() { return isOk(); }
+  bool isOk() { return std::holds_alternative<Proto::Variant>(_value); }
+  Proto::Variant value() { return isOk() ? std::get<Proto::Variant>(_value) : Proto::Variant(); }
+
+  CommandResponse(const Proto::Variant &variant) : _value(variant) {}
+  CommandResponse(const CommandError &error) : _value(error) {}
 };
 
 class CommandClient {
@@ -20,7 +36,8 @@ class CommandClient {
   char _buf[8096];
 
 public:
-  CommandClient() {}
+  CommandClient() : _fd(-1) {}
+  ~CommandClient() { close(_fd); }
 
   bool connect(const std::string &localPath) {
     _fd = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -37,15 +54,41 @@ public:
     strncpy(serverAddr.sun_path, localPath.c_str(), sizeof(serverAddr.sun_path) - 1);
 
     if (::connect(_fd, reinterpret_cast<sockaddr *>(&serverAddr), sizeof(serverAddr)) < 0) {
-      std::cout << "failed to connect";
+      close(_fd);
       return false;
     }
 
     return true;
   }
 
-  std::variant<Proto::Variant, CommandError> request(const std::string &type, const Proto::Array &params) {
-    Proto::Array message({type, Proto::Boolean(true)});
+  bool connect() {
+    std::vector<std::filesystem::path> dirs;
+
+    if (auto p = getenv("XDG_RUNTIME_DIR")) { dirs.push_back(p); }
+
+    dirs.push_back("/tmp");
+
+    for (const auto &dir : dirs) {
+      auto localPath = dir / "omnicast.sock";
+
+      if (connect(localPath)) { return true; }
+    }
+
+    return false;
+  }
+
+  static CommandResponse oneshot(const std::string &type, const Proto::Variant &data = {}) {
+    CommandClient client;
+
+    if (!client.connect()) {
+      throw std::runtime_error("Failed to connect to omnicast daemon. Is omnicast running?");
+    }
+
+    return client.request(type, data);
+  }
+
+  CommandResponse request(const std::string &type, const Proto::Variant &data = {}) {
+    Proto::Array message({type, data});
     Proto::Marshaler marshaler;
 
     {

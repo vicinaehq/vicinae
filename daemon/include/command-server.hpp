@@ -48,13 +48,13 @@ enum CommandResponseStatus {
 
 class ICommandHandler {
 public:
-  virtual std::variant<CommandResponse, CommandError> handleCommand(const CommandMessage &message) const = 0;
+  virtual std::variant<CommandResponse, CommandError> handleCommand(const CommandMessage &message) = 0;
 };
 
 class CommandServer : public QObject {
   qintptr _serverFd;
   QSocketNotifier *_notifier;
-  const ICommandHandler *_handler;
+  ICommandHandler *_handler;
   std::unordered_map<int, std::unique_ptr<ClientInfo>> _clients;
 
   void writeResponse(int fd, const Proto::Variant &data) {
@@ -226,5 +226,5 @@ public:
     return true;
   }
 
-  void setHandler(const ICommandHandler *handler) { _handler = handler; }
+  void setHandler(ICommandHandler *handler) { _handler = handler; }
 };

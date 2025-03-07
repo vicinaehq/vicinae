@@ -14,9 +14,11 @@ include_directories(
 
 set(SRCS
 	main.cpp
+	command.hpp
+	command.cpp
 )
 
-add_executable(${TARGET} main.cpp)
+add_executable(${TARGET} ${SRCS})
 target_compile_options(${TARGET} PUBLIC -g3)
 target_link_libraries(${TARGET} PRIVATE proto)
 

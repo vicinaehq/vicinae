@@ -310,7 +310,7 @@ AppWindow::AppWindow(QWidget *parent)
   processManagerService = std::make_unique<ProcessManagerService>();
 
   _commandServer = new CommandServer(this);
-  QString socketPath = QDir::temp().absoluteFilePath("spellcastd.sock");
+  QString socketPath = QDir::temp().absoluteFilePath("omnicast.sock");
 
   if (!_commandServer->start(socketPath)) {
     qDebug() << "could not start the command server";

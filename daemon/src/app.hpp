@@ -95,8 +95,12 @@ class AppWindow : public QMainWindow, public ICommandHandler {
     QMainWindow::showEvent(event);
   }
 
-  std::variant<CommandResponse, CommandError> handleCommand(const CommandMessage &message) const override {
+  std::variant<CommandResponse, CommandError> handleCommand(const CommandMessage &message) override {
     if (message.type == "ping") { return "pong"; }
+    if (message.type == "toggle") {
+      setVisible(!isVisible());
+      return true;
+    }
 
     return CommandError{"Unknowm command"};
   }
