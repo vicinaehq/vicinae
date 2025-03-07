@@ -69,6 +69,7 @@ struct DesktopEntry : public DesktopExecutable {
   DesktopEntry(const QString &path, const QString &id, const XdgDesktopEntry &data)
       : DesktopExecutable(id, data.name, data.exec), path(path), data(data) {}
 
+  const QString &wmClass() const { return data.startupWMClass; }
   bool isTerminalApp() const override { return data.terminal; }
   const QString &iconName() const override { return data.icon; }
   QIcon icon() const override { return QIcon::fromTheme(data.icon); }
@@ -139,7 +140,7 @@ public:
   }
 
 public:
-  QList<std::shared_ptr<DesktopEntry>> apps;
+  std::vector<std::shared_ptr<DesktopEntry>> apps;
 
   // entry: firefox-esr.desktop
   // action: firefox-esr.desktop.open-in-private-window
@@ -201,6 +202,14 @@ public:
 
     for (const auto &appId : mimeToApps.value(mime)) {
       if (auto app = appMap.value(appId)) return app;
+    }
+
+    return nullptr;
+  }
+
+  std::shared_ptr<DesktopEntry> findByWMClass(const QString &wmClass) const {
+    for (const auto &app : apps) {
+      if (app->wmClass() == wmClass) return app;
     }
 
     return nullptr;
