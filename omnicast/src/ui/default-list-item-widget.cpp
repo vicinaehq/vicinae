@@ -1,4 +1,5 @@
 #include "ui/default-list-item-widget.hpp"
+#include "omni-icon.hpp"
 #include <qwidget.h>
 
 void DefaultListItemWidget::setName(const QString &name) { this->_name->setText(name); }
@@ -9,11 +10,13 @@ void DefaultListItemWidget::setCategory(const QString &category) { _category->se
 
 void DefaultListItemWidget::setKind(const QString &kind) { _kind->setText(kind); }
 
-DefaultListItemWidget::DefaultListItemWidget(const QString &iconDescriptor, const QString &name,
+DefaultListItemWidget::DefaultListItemWidget(const OmniIconUrl &iconUrl, const QString &name,
                                              const QString &category, const QString &kind, QWidget *parent)
     : SelectableOmniListWidget(parent), _icon(new OmniIcon), _name(new QLabel), _category(new QLabel),
       _kind(new QLabel) {
-  _icon->setIcon(iconDescriptor, {25, 25});
+
+  _icon->setFixedSize(25, 25);
+  _icon->setUrl(iconUrl);
 
   auto mainLayout = new QHBoxLayout();
 

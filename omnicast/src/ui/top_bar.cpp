@@ -1,5 +1,4 @@
 #include "ui/top_bar.hpp"
-#include "extend/image-model.hpp"
 #include <qnamespace.h>
 
 TopBar::TopBar(QWidget *parent) : QWidget(parent), layout(new QHBoxLayout()), input(new SearchBar(this)) {
@@ -68,9 +67,7 @@ void TopBar::activateQuicklinkCompleter(const CompleterData &data) {
 
   auto completion = new InputCompleter(data.placeholders);
 
-  if (!data.placeholders.isEmpty()) {
-    if (auto icon = std::get_if<ThemeIconModel>(&data.model)) { completion->setIcon(icon->iconName); }
-  }
+  if (!data.placeholders.isEmpty()) { completion->setIcon(data.iconUrl); }
 
   for (size_t i = 0; i != completion->inputs.size(); ++i) {
     auto input = completion->inputs.at(i);

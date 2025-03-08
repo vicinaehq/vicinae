@@ -125,9 +125,9 @@ class AppWindow : public QMainWindow, public ICommandHandler {
       auto id = args.at(0).asString();
 
       if (auto cmd = commandDb->findById(id.c_str())) {
-        emit launchCommand(
-            cmd->factory(*this, ""),
-            {.navigation = NavigationStatus{.title = cmd->name, .icon = ThemeIconModel{cmd->iconName}}});
+        emit launchCommand(cmd->factory(*this, ""),
+                           {.navigation = NavigationStatus{.title = cmd->name,
+                                                           .icon = ThemeIconModel{.iconName = "firefox"}}});
         setVisible(true);
 
         return true;

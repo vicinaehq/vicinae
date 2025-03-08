@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <!-- Main launcher circle -->
+  <circle cx="12" cy="12" r="10" fill="none" stroke="white" stroke-width="1.5"/>
+  
+  <!-- Central hub - rocket/command center -->
+  <circle cx="12" cy="12" r="3" fill="white"/>
+  
+  <!-- Functionality nodes -->
+  <circle cx="5" cy="12" r="1.2" fill="white"/>
+  <circle cx="19" cy="12" r="1.2" fill="white"/>
+  <circle cx="12" cy="5" r="1.2" fill="white"/>
+  <circle cx="12" cy="19" r="1.2" fill="white"/>
+  
+  <!-- Diagonal nodes representing extended functionality -->
+  <circle cx="7.5" cy="7.5" r="1" fill="white"/>
+  <circle cx="16.5" cy="7.5" r="1" fill="white"/>
+  <circle cx="7.5" cy="16.5" r="1" fill="white"/>
+  <circle cx="16.5" cy="16.5" r="1" fill="white"/>
+  
+  <!-- Connection lines from center to nodes -->
+  <line x1="12" y1="12" x2="5" y2="12" stroke="white" stroke-width="1.2"/>
+  <line x1="12" y1="12" x2="19" y2="12" stroke="white" stroke-width="1.2"/>
+  <line x1="12" y1="12" x2="12" y2="5" stroke="white" stroke-width="1.2"/>
+  <line x1="12" y1="12" x2="12" y2="19" stroke="white" stroke-width="1.2"/>
+  
+  <!-- Diagonal connections -->
+  <line x1="12" y1="12" x2="7.5" y2="7.5" stroke="white" stroke-width="0.8"/>
+  <line x1="12" y1="12" x2="16.5" y2="7.5" stroke="white" stroke-width="0.8"/>
+  <line x1="12" y1="12" x2="7.5" y2="16.5" stroke="white" stroke-width="0.8"/>
+  <line x1="12" y1="12" x2="16.5" y2="16.5" stroke="white" stroke-width="0.8"/>
+</svg>

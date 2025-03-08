@@ -145,6 +145,7 @@ private:
 
       setSignalActions(actions);
     } else {
+      app.topBar->destroyQuicklinkCompleter();
       setSignalActions({});
     }
   }

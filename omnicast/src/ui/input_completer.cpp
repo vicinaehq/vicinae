@@ -10,6 +10,8 @@ InputCompleter::InputCompleter(const QList<QString> &placeholders, QWidget *pare
 
   setProperty("class", "quicklink-completion");
 
+  icon->setFixedSize(22, 22);
+
   mainContainer->setAlignment(Qt::AlignLeft);
 
   // mainContainer->setAlignment(Qt::AlignVCenter);
@@ -48,7 +50,7 @@ bool InputCompleter::focusFirstEmpty() const {
   return false;
 }
 
-void InputCompleter::setIcon(const QString &iconName) {
+void InputCompleter::setIcon(const OmniIconUrl &url) {
   // iconLabel->setPixmap(QIcon::fromTheme(iconName).pixmap(22, 22));
-  icon->setIcon(iconName, {22, 22});
+  icon->setUrl(url);
 }

@@ -1,6 +1,7 @@
 <!DOCTYPE RCC>
 <RCC version="1.0">
 	<qresource>
+		<file>icons/omnicast.svg</file>
 		<file>icons/add-person.svg</file>
 		<file>icons/airplane-filled.svg</file>
 		<file>icons/airplane-landing.svg</file>

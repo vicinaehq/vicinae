@@ -10,6 +10,7 @@
 #include "icon-browser-command.hpp"
 #include "manage-processes-command.hpp"
 #include "manage-quicklinks-command.hpp"
+#include "omni-icon.hpp"
 #include "omnicast.hpp"
 #include "quicklist-database.hpp"
 #include "tinyexpr.hpp"
@@ -49,15 +50,15 @@ struct OpenBuiltinCommandAction : public AbstractAction {
   QString text;
 
   void execute(AppWindow &app) override {
-    emit app.launchCommand(cmd.factory(app, text),
-                           {.searchQuery = text,
-                            .navigation = NavigationStatus{
-                                .title = cmd.name, .icon = ThemeIconModel{.iconName = cmd.iconName}}});
+    emit app.launchCommand(
+        cmd.factory(app, text),
+        {.searchQuery = text,
+         .navigation = NavigationStatus{.title = cmd.name, .icon = ThemeIconModel{.iconName = "firefox"}}});
   }
 
   OpenBuiltinCommandAction(const BuiltinCommand &cmd, const QString &title = "Open command",
                            const QString &text = "")
-      : AbstractAction(title, ThemeIconModel{.iconName = cmd.iconName}), cmd(cmd), text(text) {}
+      : AbstractAction(title, ThemeIconModel{.iconName = "firefox"}), cmd(cmd), text(text) {}
 };
 
 using CommandFactory = std::function<ViewCommand *(AppWindow &app, const QString &arg)>;
@@ -114,7 +115,7 @@ protected:
 
   QString id() const override { return cmd.name; }
 
-  ItemData data() const override { return {.icon = cmd.iconName, .name = cmd.name, .kind = "Command"}; }
+  ItemData data() const override { return {.iconUrl = cmd.iconUrl, .name = cmd.name, .kind = "Command"}; }
 
 public:
   BuiltinCommandListItem(const BuiltinCommand &cmd, const QString &text = "") : cmd(cmd), text(text) {}
@@ -130,7 +131,7 @@ public:
 
 static BuiltinCommand calculatorHistoryCommand{
     .name = "Calculator history",
-    .iconName = ":assets/icons/calculator.png",
+    .iconUrl = OmniIconUrl(":assets/icons/calculator.png"),
     .factory = [](AppWindow &app, const QString &s) { return new SingleViewCommand<CalculatorHistoryView>; }};
 
 class QuicklinkRootListItem : public AbstractDefaultListItem, public OmniListView::IActionnable {
@@ -138,8 +139,8 @@ public:
   std::shared_ptr<Quicklink> link;
 
   std::unique_ptr<CompleterData> createCompleter() const override {
-    return std::make_unique<CompleterData>(CompleterData{
-        .placeholders = link->placeholders, .model = ThemeIconModel{.iconName = link->iconName}});
+    return std::make_unique<CompleterData>(
+        CompleterData{.placeholders = link->placeholders, .iconUrl = link->iconName});
   }
 
   QList<AbstractAction *> generateActions() const override {
@@ -151,7 +152,9 @@ public:
     return {open, edit, duplicate, remove};
   }
 
-  ItemData data() const override { return {.icon = link->iconName, .name = link->name, .kind = "Quicklink"}; }
+  ItemData data() const override {
+    return {.iconUrl = link->iconName, .name = link->name, .kind = "Quicklink", ._iconColor = "red"};
+  }
 
   QString id() const override { return QString("link-%1").arg(link->id); }
 
@@ -193,7 +196,7 @@ class RootView : public OmniListView {
 
     ItemData data() const override {
       return {
-          .icon = app->iconName(),
+          .iconUrl = app->iconUrl(),
           .name = app->name,
           .kind = "Application",
       };
@@ -219,7 +222,7 @@ class RootView : public OmniListView {
     }
 
     ItemData data() const override {
-      return {.icon = link->iconName, .name = link->name, .kind = "Quicklink"};
+      return {.iconUrl = link->iconName, .name = link->name, .kind = "Quicklink"};
     }
 
     QString id() const override { return QString("fallback-link-%1").arg(link->id); }

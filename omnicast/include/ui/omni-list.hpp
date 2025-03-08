@@ -1,5 +1,5 @@
 #pragma once
-#include "ui/list-section-header.hpp"
+#include "omni-icon.hpp"
 #include "ui/omni-list-item-widget-wrapper.hpp"
 #include "ui/omni-list-item-widget.hpp"
 #include "ui/default-list-item-widget.hpp"
@@ -209,15 +209,16 @@ signals:
 class AbstractDefaultListItem : public OmniList::AbstractVirtualItem {
 public:
   struct ItemData {
-    QString icon;
+    OmniIconUrl iconUrl;
     QString name;
     QString category;
     QString kind;
+    QColor _iconColor;
   };
   virtual ItemData data() const = 0;
 
   int calculateHeight(int width) const override {
-    static DefaultListItemWidget ruler("", "", "", "");
+    static DefaultListItemWidget ruler(OmniIconUrl(""), "", "", "");
 
     return ruler.sizeHint().height();
   }
@@ -231,12 +232,12 @@ public:
     widget->setName(itemData.name);
     widget->setCategory(itemData.category);
     widget->setKind(itemData.kind);
-    widget->setIcon(itemData.icon);
+    widget->setIconUrl(itemData.iconUrl);
   }
 
   OmniListItemWidget *createWidget() const override {
     auto d = data();
-    auto item = new DefaultListItemWidget(d.icon, d.name, d.category, d.kind);
+    auto item = new DefaultListItemWidget(d.iconUrl, d.name, d.category, d.kind);
 
     return item;
   }

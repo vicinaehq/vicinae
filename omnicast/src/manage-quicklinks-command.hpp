@@ -78,15 +78,13 @@ public:
   const QString &name() const { return link->name; }
 
   std::unique_ptr<CompleterData> createCompleter() const override {
-    return std::make_unique<CompleterData>(CompleterData{
-        .placeholders = link->placeholders,
-        .model = ThemeIconModel{.iconName = link->iconName},
-    });
+    return std::make_unique<CompleterData>(
+        CompleterData{.placeholders = link->placeholders, .iconUrl = link->iconName});
   }
 
   ItemData data() const override {
     return {
-        .icon = link->iconName,
+        .iconUrl = link->iconName,
         .name = link->name,
     };
   }

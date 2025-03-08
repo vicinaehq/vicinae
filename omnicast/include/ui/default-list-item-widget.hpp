@@ -13,7 +13,8 @@ public:
   void setIcon(const QString &name);
   void setCategory(const QString &category);
   void setKind(const QString &kind);
+  void setIconUrl(const OmniIconUrl &url) { _icon->setUrl(url); }
 
-  DefaultListItemWidget(const QString &iconDescriptor, const QString &name, const QString &category,
+  DefaultListItemWidget(const OmniIconUrl &iconUrl, const QString &name, const QString &category,
                         const QString &kind, QWidget *parent = nullptr);
 };

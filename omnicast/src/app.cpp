@@ -203,7 +203,7 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
       cur.completer = CompleterData{
           .placeholders = topBar->completerData->placeholders,
           .values = topBar->quickInput->collectArgs(),
-          .model = topBar->completerData->model,
+          .iconUrl = topBar->completerData->iconUrl,
       };
     }
 

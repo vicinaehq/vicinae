@@ -1,5 +1,6 @@
 #pragma once
 #include "common.hpp"
+#include "omni-icon.hpp"
 #include "xdg/xdg-desktop.hpp"
 #include <cctype>
 #include <memory>
@@ -74,6 +75,7 @@ struct DesktopEntry : public DesktopExecutable {
   const QString &iconName() const override { return data.icon; }
   QIcon icon() const override { return QIcon::fromTheme(data.icon); }
   bool displayable() const override { return !data.hidden && !data.noDisplay; };
+  OmniIconUrl iconUrl() { return QString("icon://system/%1").arg(data.icon); }
 };
 
 struct DesktopAction : public DesktopExecutable {

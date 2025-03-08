@@ -39,7 +39,7 @@ public:
 
   static FaviconReply *fetchFavicon(const QString &domain, QSize size) {
     auto serializedSize = QString("%1x%2").arg(size.width()).arg(size.height());
-    auto url = QString("https://icons.duckduckgo.com/ip3/%1.ico").arg(domain);
+    auto url = QString("https://www.google.com/s2/favicons?domain=%1&sz=64").arg(domain);
 
     QPixmap pm;
 

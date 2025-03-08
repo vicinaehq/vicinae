@@ -34,7 +34,10 @@ class ManageProcessesMainView : public OmniListView {
     QString id() const override { return QString::number(info.pid); }
 
     ItemData data() const override {
-      return {.icon = "xterm", .name = info.comm, .category = "", .kind = QString::number(info.pid)};
+      return {.iconUrl = OmniIconUrl::makeSystem("xterm"),
+              .name = info.comm,
+              .category = "",
+              .kind = QString::number(info.pid)};
     }
 
   public:

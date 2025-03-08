@@ -13,7 +13,7 @@ public:
 
   InputCompleter(const QList<QString> &placeholders, QWidget *parent = nullptr);
 
-  void setIcon(const QString &iconName);
+  void setIcon(const OmniIconUrl &url);
 
   QList<QString> collectArgs() const;
 

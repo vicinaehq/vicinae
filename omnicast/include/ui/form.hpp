@@ -76,7 +76,9 @@ public:
 
   virtual QString icon() const = 0;
   virtual QString displayName() const = 0;
-  ItemData data() const override { return {.icon = icon(), .name = displayName()}; }
+  ItemData data() const override {
+    return {.iconUrl = OmniIconUrl::makeSystem(icon()), .name = displayName()};
+  }
 };
 
 class Popover : public QWidget {

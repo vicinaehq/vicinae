@@ -1,4 +1,5 @@
 #pragma once
+#include "omni-icon.hpp"
 #include <QKeyEvent>
 #include <QString>
 #include <qapplication.h>
@@ -16,7 +17,7 @@ class ViewCommand;
 struct BuiltinCommand {
   QString id;
   QString name;
-  QString iconName;
+  OmniIconUrl iconUrl;
   std::function<ViewCommand *(AppWindow &app, const QString &)> factory;
 };
 

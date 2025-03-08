@@ -1,5 +1,6 @@
 #pragma once
 #include "extend/image-model.hpp"
+#include "omni-icon.hpp"
 #include "ui/input_completer.hpp"
 #include <QKeyEvent>
 #include <QLabel>
@@ -50,7 +51,7 @@ signals:
 struct CompleterData {
   QList<QString> placeholders;
   QList<QString> values;
-  ImageLikeModel model;
+  OmniIconUrl iconUrl;
 };
 
 struct TopBar : public QWidget {

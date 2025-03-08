@@ -2,6 +2,7 @@
 #include "extend/action-model.hpp"
 #include "extend/image-model.hpp"
 #include "image-viewer.hpp"
+#include "omni-icon.hpp"
 #include "ui/action_popover.hpp"
 #include "ui/text-label.hpp"
 #include "ui/toast.hpp"
@@ -52,13 +53,12 @@ class StatusBar : public QWidget {
   public:
     DefaultLeftWidget() {
       auto leftLayout = new QHBoxLayout();
+      auto icon = new OmniIcon;
 
-      auto leftIcon = new QLabel();
-      QIcon::setThemeName("Papirus-Dark");
-      leftIcon->setPixmap(QIcon::fromTheme(":/assets/icons/tux.svg").pixmap(20, 20));
-      leftLayout->addWidget(leftIcon);
+      icon->setFixedSize(22, 22);
+      icon->setUrl(BuiltinOmniIconUrl("omnicast"));
+      leftLayout->addWidget(icon);
       leftLayout->setContentsMargins(0, 0, 0, 0);
-
       setLayout(leftLayout);
     }
   };
