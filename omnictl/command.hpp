@@ -56,6 +56,7 @@ public:
 
   void setFlag(const Flag &flag);
   void addAlias(const std::string &alias);
+  const std::vector<std::string> &aliases() const;
   void setParent(const Command &parent);
   void addPositional(const std::string &name);
 

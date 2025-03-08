@@ -33,7 +33,9 @@ void Command::start(const std::vector<std::string> &args) const {
     auto &name = args.at(pos.size());
 
     for (const auto &cmd : scmds) {
-      if (cmd->name() == name || std::find(_aliases.begin(), _aliases.end(), name) != _aliases.end()) {
+      auto &aliases = cmd->aliases();
+
+      if (cmd->name() == name || std::find(aliases.begin(), aliases.end(), name) != aliases.end()) {
         cmd->start({args.begin() + 1, args.end()});
         return;
       }
@@ -53,6 +55,7 @@ void Command::start(const std::vector<std::string> &args) const {
 
 void Command::setFlag(const Flag &flag) { _flags.push_back(flag); }
 void Command::addAlias(const std::string &alias) { _aliases.push_back(alias); }
+const std::vector<std::string> &Command::aliases() const { return _aliases; }
 void Command::setParent(const Command &parent) { _parent = &parent; }
 void Command::addPositional(const std::string &name) { _positionals.push_back(name); }
 
