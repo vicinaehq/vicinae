@@ -150,7 +150,6 @@ public:
   std::unique_ptr<ClipboardService> clipboardService;
   std::unique_ptr<AppDatabase> appDb;
   std::unique_ptr<ExtensionManager> extensionManager;
-  std::unique_ptr<IndexerService> indexer;
   std::unique_ptr<ProcessManagerService> processManagerService;
   std::unique_ptr<CommandDatabase> commandDb;
 

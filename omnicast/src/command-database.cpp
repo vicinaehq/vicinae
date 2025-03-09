@@ -4,6 +4,7 @@
 #include "icon-browser-command.hpp"
 #include "manage-processes-command.hpp"
 #include "manage-quicklinks-command.hpp"
+#include "manage-themes-command.hpp"
 #include "omni-icon.hpp"
 #include "ui/peepobank-command.hpp"
 
@@ -37,7 +38,7 @@ static std::vector<BuiltinCommand> builtinCommands{
     {.id = "theme.manage",
      .name = "Manage themes",
      .iconUrl = BuiltinOmniIconUrl("brush").setBackgroundTint(ColorTint::Red),
-     .factory = [](AppWindow &app, const QString &s) { return new SingleViewCommand<ManageQuicklinksView>; }},
+     .factory = [](AppWindow &app, const QString &s) { return new SingleViewCommand<ManageThemesView>; }},
 
     {.id = "process.list",
      .name = "List Processes",

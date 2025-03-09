@@ -19,10 +19,11 @@ class ShortcutButton : public Button {
   KeyboardShortcutIndicatorWidget *_shortcut_indicator;
 
 public:
-  void hovered(bool hovered) override;
+  void hoverChanged(bool hovered) override;
   void setText(const QString &text);
   void setTextColor(const QColor &color);
   void setShortcut(const KeyboardShortcutModel &model);
+  void resetColor();
 
   ShortcutButton();
 };

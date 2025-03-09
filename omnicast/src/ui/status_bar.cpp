@@ -51,6 +51,11 @@ StatusBar::StatusBar(QWidget *parent) : QWidget(parent), leftWidget(nullptr) {
   _actionButton->setShortcut(KeyboardShortcutModel{.key = "B", .modifiers = {"ctrl"}});
   _actionButton->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
+  connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this](const ThemeInfo &info) {
+    _selectedActionButton->resetColor();
+    _actionButton->resetColor();
+  });
+
   rightLayout->addWidget(_actionButton, 0, Qt::AlignRight);
 
   layout->addWidget(leftWidget, 0, Qt::AlignLeft);
@@ -68,7 +73,7 @@ void StatusBar::setAction(const AbstractAction &action) {
   _selectedActionButton->show();
 }
 
-void StatusBar::setActionButtonHighlight(bool highlight) { _actionButton->hovered(highlight); }
+void StatusBar::setActionButtonHighlight(bool highlight) { _actionButton->hoverChanged(highlight); }
 
 void StatusBar::clearAction() { _selectedActionButton->hide(); }
 

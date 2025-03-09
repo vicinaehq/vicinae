@@ -6,10 +6,10 @@
 bool Button::event(QEvent *event) {
   switch (event->type()) {
   case QEvent::HoverEnter:
-    hovered(true);
+    hoverChanged(true);
     break;
   case QEvent::HoverLeave:
-    hovered(false);
+    hoverChanged(false);
     break;
   default:
     break;
@@ -38,6 +38,6 @@ void Button::paintEvent(QPaintEvent *event) {
 
 void Button::setBackgroundColor(const QColor &color) { _bgColor = color; }
 
-void Button::hovered(bool hovered) { update(); }
+void Button::hoverChanged(bool hovered) { update(); }
 
 Button::Button() : _hovered(false) { setAttribute(Qt::WA_Hover); }

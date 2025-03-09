@@ -121,7 +121,7 @@ public:
     virtual std::unique_ptr<CompleterData> createCompleter() const { return nullptr; }
   };
 
-private:
+protected:
   virtual void selectionChanged(const OmniList::AbstractVirtualItem *next,
                                 const OmniList::AbstractVirtualItem *previous) {
     if (!next) { return; }

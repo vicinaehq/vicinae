@@ -12,7 +12,8 @@ protected:
   void paintEvent(QPaintEvent *event) override;
 
 public:
-  virtual void hovered(bool hovered);
+  virtual void hoverChanged(bool hovered);
+  bool hovered() const { return _hovered; }
   void setBackgroundColor(const QColor &color);
 
   Button();

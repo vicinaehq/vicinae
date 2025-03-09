@@ -3,13 +3,21 @@
 #include "ui/ellided-label.hpp"
 #include <qcolor.h>
 
-void ShortcutButton::hovered(bool hovered) {
+void ShortcutButton::hoverChanged(bool hovered) {
   auto &theme = ThemeService::instance().theme();
 
   _shortcut_indicator->setBackgroundColor(hovered ? theme.colors.mainSelectedBackground
                                                   : theme.colors.mainHoveredBackground);
   setBackgroundColor(hovered ? theme.colors.mainHoveredBackground : QColor::Invalid);
   update();
+}
+
+void ShortcutButton::resetColor() {
+  auto &theme = ThemeService::instance().theme();
+
+  _shortcut_indicator->setBackgroundColor(hovered() ? theme.colors.mainSelectedBackground
+                                                    : theme.colors.mainHoveredBackground);
+  setBackgroundColor(hovered() ? theme.colors.mainHoveredBackground : QColor::Invalid);
 }
 
 void ShortcutButton::setText(const QString &text) {

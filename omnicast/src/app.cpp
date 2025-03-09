@@ -282,6 +282,7 @@ void AppWindow::selectSecondaryAction() {
 void AppWindow::executeAction(AbstractAction *action) {
   action->execute(*this);
   emit action->didExecute();
+  if (auto cb = action->executionCallback()) { cb(); }
   qDebug() << "emitted execute";
 }
 
@@ -297,14 +298,14 @@ AppWindow::AppWindow(QWidget *parent)
     : QMainWindow(parent), topBar(new TopBar()), viewDisplayer(new ViewDisplayer), statusBar(new StatusBar()),
       actionPopover(new ActionPopover(this)) {
   setWindowFlags(Qt::FramelessWindowHint);
-  setAttribute(Qt::WA_TranslucentBackground);
+  setAttribute(Qt::WA_TranslucentBackground, true);
 
   setMinimumWidth(850);
   setMinimumHeight(550);
 
   topBar->setFixedHeight(55);
 
-  ThemeService::instance().setTheme("Raycast Dark Industrial");
+  ThemeService::instance().setTheme("Dracula");
 
   extensionManager = std::make_unique<ExtensionManager>();
 
@@ -314,7 +315,7 @@ AppWindow::AppWindow(QWidget *parent)
       std::make_unique<CalculatorDatabase>(Config::dirPath() + QDir::separator() + "calculator.db");
   appDb = std::make_unique<AppDatabase>();
   clipboardService = std::make_unique<ClipboardService>();
-  indexer = std::make_unique<IndexerService>(Config::dirPath() + QDir::separator() + "files.db");
+  // indexer = std::make_unique<IndexerService>(Config::dirPath() + QDir::separator() + "files.db");
   processManagerService = std::make_unique<ProcessManagerService>();
   commandDb = std::make_unique<CommandDatabase>();
 
@@ -379,7 +380,9 @@ template <> Service<QuicklistDatabase> AppWindow::service<QuicklistDatabase>() c
   return *quicklinkDatabase;
 }
 
+/*
 template <> Service<IndexerService> AppWindow::service<IndexerService>() const { return *indexer; }
+*/
 
 template <> Service<CalculatorDatabase> AppWindow::service<CalculatorDatabase>() const {
   return *calculatorDatabase;

@@ -28,8 +28,12 @@ public:
   QString title;
   ThemeIconModel icon;
   std::optional<KeyboardShortcutModel> shortcut;
+  std::function<void(void)> _execCallback;
 
   void setShortcut(const KeyboardShortcutModel &shortcut) { this->shortcut = shortcut; }
+  void setExecutionCallback(const std::function<void(void)> &cb) { _execCallback = cb; }
+
+  std::function<void(void)> executionCallback() const { return _execCallback; }
 
   AbstractAction(const QString &title, const ThemeIconModel &icon = {}) : title(title), icon(icon) {}
 
