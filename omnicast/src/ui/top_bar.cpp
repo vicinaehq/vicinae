@@ -1,26 +1,30 @@
 #include "ui/top_bar.hpp"
+#include "omni-icon.hpp"
+#include "theme.hpp"
+#include "ui/icon-button.hpp"
 #include <qnamespace.h>
 
 TopBar::TopBar(QWidget *parent) : QWidget(parent), layout(new QHBoxLayout()), input(new SearchBar(this)) {
-  backButtonLabel = new QLabel();
+  setAttribute(Qt::WA_TranslucentBackground, true);
+  backButton = new IconButton;
 
-  input->setTextMargins(10, 10, 10, 10);
+  // input->setTextMargins(10, 10, 10, 10);
 
-  backWidget = new QWidget();
-  auto backContainer = new QVBoxLayout();
+  backButton->setFixedSize(25, 25);
 
-  backContainer->setContentsMargins(0, 5, 0, 5);
-  backContainer->addWidget(backButtonLabel, 0, Qt::AlignCenter);
-  backWidget->setLayout(backContainer);
+  connect(&ThemeService::instance(), &ThemeService::themeChanged, [this](const ThemeInfo &info) {
+    backButton->setBackgroundColor(info.colors.mainSelectedBackground);
+  });
 
-  backButtonLabel->setPixmap(QIcon::fromTheme(":icons/arrow-left").pixmap(16, 16));
+  backButton->setUrl(BuiltinOmniIconUrl("arrow-left"));
+  backButton->hide();
 
-  backButtonLabel->setProperty("class", "back-button");
-  backWidget->hide();
+  connect(backButton, &IconButton::clicked, input, &SearchBar::pop);
 
-  layout->addWidget(backWidget, 0, Qt::AlignLeft);
+  layout->setContentsMargins(15, 10, 15, 10);
+  layout->addWidget(backButton, 0, Qt::AlignLeft | Qt::AlignVCenter);
   layout->addWidget(input);
-  layout->setSpacing(0);
+  layout->setSpacing(10);
   setLayout(layout);
 
   setProperty("class", "top-bar");
@@ -82,6 +86,6 @@ void TopBar::activateQuicklinkCompleter(const CompleterData &data) {
   layout->addWidget(completion, 1);
 }
 
-void TopBar::showBackButton() { backWidget->show(); }
+void TopBar::showBackButton() { backButton->show(); }
 
-void TopBar::hideBackButton() { backWidget->hide(); }
+void TopBar::hideBackButton() { backButton->hide(); }

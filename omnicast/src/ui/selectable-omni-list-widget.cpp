@@ -1,4 +1,5 @@
 #include "ui/selectable-omni-list-widget.hpp"
+#include "theme.hpp"
 #include "ui/omni-list-item-widget.hpp"
 #include <qevent.h>
 
@@ -16,7 +17,10 @@ void SelectableOmniListWidget::paintEvent(QPaintEvent *event) {
 
     painter.setClipPath(path);
 
-    QColor backgroundColor("#282726");
+    auto &theme = ThemeService::instance().theme();
+
+    QColor backgroundColor(isHovered ? theme.colors.mainHoveredBackground
+                                     : theme.colors.mainSelectedBackground);
 
     painter.fillPath(path, backgroundColor);
   }

@@ -1,4 +1,5 @@
 #pragma once
+#include "theme.hpp"
 #include "ui/action_popover.hpp"
 #include <QHBoxLayout>
 #include <QString>
@@ -47,12 +48,32 @@ public:
 };
 
 class HDivider : public QFrame {
-public:
-  HDivider(size_t height = 1) {
-    setFrameShape(QFrame::HLine);
-    setFixedHeight(height);
-    setProperty("class", "divider");
+  QColor _color;
+  size_t _height;
+
+  void paintEvent(QPaintEvent *event) override {
+    QPainter painter(this);
+    auto margins = contentsMargins();
+    auto &theme = ThemeService::instance().theme();
+
+    painter.setBrush(QBrush(theme.colors.border));
+    painter.setPen(theme.colors.border);
+    painter.drawRect(0, margins.top(), width(), _height);
   }
+
+public:
+  void setHeight(int height) {
+    _height = height;
+    setFixedHeight(height);
+    updateGeometry();
+  }
+
+  void setColor(QColor color) {
+    _color = color;
+    update();
+  }
+
+  HDivider(QWidget *parent = nullptr) : _height(1), _color("#222222") { setFixedHeight(_height); }
 };
 
 class VDivider : public QFrame {
@@ -62,9 +83,10 @@ class VDivider : public QFrame {
   void paintEvent(QPaintEvent *event) override {
     QPainter painter(this);
     auto margins = contentsMargins();
+    auto &theme = ThemeService::instance().theme();
 
-    painter.setBrush(QBrush(_color));
-    painter.setPen(_color);
+    painter.setBrush(QBrush(theme.colors.border));
+    painter.setPen(theme.colors.border);
     painter.drawRect(0, margins.top(), _width, height() - margins.top() - margins.bottom());
   }
 

@@ -10,6 +10,7 @@
 #include "root-command.hpp"
 #include "ui/action_popover.hpp"
 #include "ui/status-bar.hpp"
+#include "theme.hpp"
 #include "ui/top_bar.hpp"
 #include <QLabel>
 #include <QMainWindow>
@@ -211,7 +212,7 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
     cur.view->widget->hide();
     viewDisplayer->setWidget(view->widget);
 
-    if (opts.navigation) statusBar->setNavigation(opts.navigation->title, opts.navigation->icon);
+    if (opts.navigation) statusBar->setNavigation(opts.navigation->title, opts.navigation->iconUrl);
   }
 
   connectView(*view);
@@ -243,10 +244,12 @@ void AppWindow::resizeEvent(QResizeEvent *event) { QMainWindow::resizeEvent(even
 void AppWindow::paintEvent(QPaintEvent *event) {
   int borderRadius = 10;
   int borderWidth = 1;
-  QColor borderColor("#444444");
-  QColor backgroundColor("#202020");
 
-  backgroundColor.setAlphaF(0.98);
+  auto &theme = ThemeService::instance().theme();
+
+  QColor finalBgColor = theme.colors.mainBackground;
+
+  finalBgColor.setAlphaF(0.98);
 
   QPainter painter(this);
 
@@ -257,9 +260,9 @@ void AppWindow::paintEvent(QPaintEvent *event) {
 
   painter.setClipPath(path);
 
-  painter.fillPath(path, backgroundColor);
+  painter.fillPath(path, finalBgColor);
 
-  QPen pen(borderColor, borderWidth); // Border with a thickness of 2
+  QPen pen(theme.colors.border, borderWidth); // Border with a thickness of 2
   painter.setPen(pen);
   painter.drawPath(path);
 }
@@ -298,6 +301,10 @@ AppWindow::AppWindow(QWidget *parent)
 
   setMinimumWidth(850);
   setMinimumHeight(550);
+
+  topBar->setFixedHeight(55);
+
+  ThemeService::instance().setTheme("Raycast Dark Industrial");
 
   extensionManager = std::make_unique<ExtensionManager>();
 

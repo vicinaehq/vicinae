@@ -7,6 +7,7 @@
 #include "extend/image-model.hpp"
 #include "extension_manager.hpp"
 #include "indexer-service.hpp"
+#include "omni-icon.hpp"
 #include "process-manager-service.hpp"
 #include "proto.hpp"
 #include "quicklist-database.hpp"
@@ -62,7 +63,7 @@ struct CommandSnapshot {
 
 struct NavigationStatus {
   QString title;
-  ImageLikeModel icon;
+  OmniIconUrl iconUrl;
 };
 
 struct LaunchCommandOptions {
@@ -126,8 +127,7 @@ class AppWindow : public QMainWindow, public ICommandHandler {
 
       if (auto cmd = commandDb->findById(id.c_str())) {
         emit launchCommand(cmd->factory(*this, ""),
-                           {.navigation = NavigationStatus{.title = cmd->name,
-                                                           .icon = ThemeIconModel{.iconName = "firefox"}}});
+                           {.navigation = NavigationStatus{.title = cmd->name, .iconUrl = cmd->iconUrl}});
         setVisible(true);
 
         return true;

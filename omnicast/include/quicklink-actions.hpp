@@ -2,6 +2,7 @@
 
 #include "app.hpp"
 #include "create-quicklink-command.hpp"
+#include "omni-icon.hpp"
 #include "quicklist-database.hpp"
 #include "ui/action_popover.hpp"
 #include <qtmetamacros.h>
@@ -49,9 +50,9 @@ public:
 
     connect(view, &EditCommandQuicklinkView::quicklinkEdited, this, &EditQuicklinkAction::edited);
 
-    emit app.pushView(
-        view, {.navigation = NavigationStatus{
-                   .title = "Edit link", .icon = ThemeIconModel{.iconName = ":assets/icons/quicklink.png"}}});
+    emit app.pushView(view, {.navigation = NavigationStatus{
+                                 .title = "Edit link",
+                                 .iconUrl = BuiltinOmniIconUrl("link").setBackgroundTint(ColorTint::Red)}});
   }
 
   void setArgs(const QList<QString> &args) { this->args = args; }
@@ -97,7 +98,7 @@ public:
 
     emit app.pushView(view, {.navigation = NavigationStatus{
                                  .title = "Duplicate link",
-                                 .icon = ThemeIconModel{.iconName = ":assets/icons/quicklink.png"}}});
+                                 .iconUrl = BuiltinOmniIconUrl("link").setBackgroundTint(ColorTint::Red)}});
   }
 
   void setArgs(const QList<QString> &args) { this->args = args; }

@@ -1,5 +1,6 @@
 #pragma once
 #include "extend/metadata-model.hpp"
+#include "theme.hpp"
 #include "ui/horizontal-metadata.hpp"
 #include "ui/omni-list.hpp"
 #include "view.hpp"
@@ -36,11 +37,12 @@ class OmniListView : public View {
     }
 
     void paintEvent(QPaintEvent *event) override {
+      auto &theme = ThemeService::instance().theme();
       QWidget::paintEvent(event);
       QPainter painter(this);
 
       if (_isPaneOpened) {
-        painter.setPen("#222222");
+        painter.setPen(theme.colors.border);
         painter.drawRect(_base->width(), 0, _dividerStrokeWidth, height());
       }
     }

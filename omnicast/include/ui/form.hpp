@@ -2,6 +2,7 @@
 
 #include "common.hpp"
 #include "omni-icon.hpp"
+#include "theme.hpp"
 #include "ui/omni-list.hpp"
 #include <memory>
 #include <qboxlayout.h>
@@ -19,8 +20,31 @@
 #include <qwidget.h>
 
 class FormQLineEdit : public QLineEdit {
+  void paintEvent(QPaintEvent *event) override {
+    auto &theme = ThemeService::instance().theme();
+    int borderRadius = 5;
+
+    QPainter painter(this);
+
+    painter.setRenderHint(QPainter::Antialiasing, true);
+
+    QPainterPath path;
+    path.addRoundedRect(rect(), borderRadius, borderRadius);
+
+    painter.setClipPath(path);
+
+    painter.fillPath(path, theme.colors.statusBackground);
+
+    // Draw the border
+    QPen pen(theme.colors.border, 1); // Border with a thickness of 2
+    painter.setPen(pen);
+    painter.drawPath(path);
+
+    QLineEdit::paintEvent(event);
+  }
+
 public:
-  FormQLineEdit(QWidget *parent = nullptr) : QLineEdit(parent) { setProperty("isFormQLineEdit", true); }
+  FormQLineEdit(QWidget *parent = nullptr) : QLineEdit(parent) { setContentsMargins(8, 8, 8, 8); }
 };
 
 class FormItemWidget : public QWidget {
@@ -93,8 +117,8 @@ public:
   }
 
   void paintEvent(QPaintEvent *event) override {
+    auto &theme = ThemeService::instance().theme();
     int borderRadius = 10;
-    QColor borderColor("#444444");
 
     QPainter painter(this);
 
@@ -105,12 +129,10 @@ public:
 
     painter.setClipPath(path);
 
-    QColor backgroundColor("#171615");
-
-    painter.fillPath(path, backgroundColor);
+    painter.fillPath(path, theme.colors.statusBackground);
 
     // Draw the border
-    QPen pen(borderColor, 1); // Border with a thickness of 2
+    QPen pen(theme.colors.border, 1); // Border with a thickness of 2
     painter.setPen(pen);
     painter.drawPath(path);
   }

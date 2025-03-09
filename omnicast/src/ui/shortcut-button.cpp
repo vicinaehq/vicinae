@@ -1,45 +1,14 @@
 #include "ui/shortcut-button.hpp"
+#include "theme.hpp"
 #include "ui/ellided-label.hpp"
 #include <qcolor.h>
 
-bool ShortcutButton::event(QEvent *event) {
-  switch (event->type()) {
-  case QEvent::HoverEnter:
-    setHovered(true);
-    break;
-  case QEvent::HoverLeave:
-    setHovered(false);
-    break;
-  default:
-    break;
-  }
+void ShortcutButton::hovered(bool hovered) {
+  auto &theme = ThemeService::instance().theme();
 
-  return QWidget::event(event);
-}
-
-void ShortcutButton::mousePressEvent(QMouseEvent *event) {
-  if (event->button() == Qt::LeftButton) { emit clicked(); }
-  QWidget::mousePressEvent(event);
-}
-
-void ShortcutButton::paintEvent(QPaintEvent *event) {
-  QPainter painter(this);
-
-  if (_hovered) {
-    painter.setRenderHint(QPainter::Antialiasing);
-    painter.setPen(Qt::NoPen);
-    painter.setBrush(QBrush("#222222"));
-    painter.drawRoundedRect(rect(), 5, 5);
-  }
-
-  QWidget::paintEvent(event);
-}
-
-void ShortcutButton::setHovered(bool hovered) {
-  if (hovered == _hovered) { return; }
-
-  _shortcut_indicator->setBackgroundColor(hovered ? "#333333" : "#222222");
-  _hovered = hovered;
+  _shortcut_indicator->setBackgroundColor(hovered ? theme.colors.mainSelectedBackground
+                                                  : theme.colors.mainHoveredBackground);
+  setBackgroundColor(hovered ? theme.colors.mainHoveredBackground : QColor::Invalid);
   update();
 }
 
@@ -59,10 +28,11 @@ void ShortcutButton::setShortcut(const KeyboardShortcutModel &model) {
 }
 
 ShortcutButton::ShortcutButton()
-    : _label(new EllidedLabel), _shortcut_indicator(new KeyboardShortcutIndicatorWidget), _hovered(false) {
+    : _label(new EllidedLabel), _shortcut_indicator(new KeyboardShortcutIndicatorWidget) {
   setAttribute(Qt::WA_Hover);
   auto layout = new QHBoxLayout;
 
+  _label->setProperty("subtext", true);
   layout->setAlignment(Qt::AlignVCenter);
   layout->addWidget(_label, 0, Qt::AlignLeft);
   layout->addWidget(_shortcut_indicator, 0, Qt::AlignRight);

@@ -36,6 +36,8 @@ qt_add_executable(${TARGET}
 	src/app.cpp
 	src/app.hpp
 
+	include/theme.hpp
+
 	#src/commands/index/index-command.hpp
 	#src/commands/index/index-command.cpp
 	#src/commands/calculator-history/calculator-history.hpp
@@ -46,6 +48,9 @@ qt_add_executable(${TARGET}
 	include/extend/extension-view.hpp
 	include/extend/extension-command.hpp
 	include/extend/extension-detail-view.hpp
+
+	include/ui/button.hpp
+	src/ui/button.cpp
 
 	include/command-database.hpp
 	src/command-database.cpp

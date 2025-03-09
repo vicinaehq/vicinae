@@ -46,8 +46,8 @@ class IconBrowserView : public OmniGridView {
   void onSearchChanged(const QString &s) override { grid->setFilter(std::make_unique<IconFilter>(s)); }
 
   void onMount() override {
-    grid->setColumns(8);
-    grid->setInset(25);
+    grid->setColumns(10);
+    grid->setInset(20);
     grid->beginUpdate();
     grid->addSection("Icons");
 

@@ -12,8 +12,7 @@ class Tag : public QWidget {
   QLabel *label;
 
   int calculateLuminance(QColor color) {
-    return 0.2126 * color.redF() + 0.7152 * color.greenF() +
-           0.0722 * color.blueF();
+    return 0.2126 * color.redF() + 0.7152 * color.greenF() + 0.0722 * color.blueF();
   }
 
   QColor computeBackground(QColor main) {
@@ -47,7 +46,7 @@ public:
     setText(model.text);
 
     if (model.color) {
-      setColor(theme.getColor(*model.color));
+      // setColor(theme.getColor(*model.color));
     }
     if (model.icon) {
       auto img = ImageViewer::createFromModel(*model.icon, {16, 16});
@@ -75,9 +74,7 @@ public:
     setStyleSheet(s.arg(color.name()).arg(bg.name(QColor::HexArgb)));
   }
 
-  void addLeftWidget(QWidget *left) {
-    layout->insertWidget(0, left, 0, Qt::AlignCenter);
-  }
+  void addLeftWidget(QWidget *left) { layout->insertWidget(0, left, 0, Qt::AlignCenter); }
 };
 
 class TagList : public QWidget {

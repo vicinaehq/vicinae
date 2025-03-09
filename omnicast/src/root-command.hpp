@@ -52,8 +52,7 @@ struct OpenBuiltinCommandAction : public AbstractAction {
   void execute(AppWindow &app) override {
     emit app.launchCommand(
         cmd.factory(app, text),
-        {.searchQuery = text,
-         .navigation = NavigationStatus{.title = cmd.name, .icon = ThemeIconModel{.iconName = "firefox"}}});
+        {.searchQuery = text, .navigation = NavigationStatus{.title = cmd.name, .iconUrl = cmd.iconUrl}});
   }
 
   OpenBuiltinCommandAction(const BuiltinCommand &cmd, const QString &title = "Open command",

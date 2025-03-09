@@ -27,7 +27,7 @@ DefaultListItemWidget::DefaultListItemWidget(const OmniIconUrl &iconUrl, const Q
 
   this->_name->setText(name);
   this->_category->setText(category);
-  this->_category->setProperty("class", "minor");
+  this->_category->setProperty("subtext", true);
 
   left->setLayout(leftLayout);
   leftLayout->setSpacing(15);
@@ -39,7 +39,7 @@ DefaultListItemWidget::DefaultListItemWidget(const OmniIconUrl &iconUrl, const Q
   mainLayout->addWidget(left, 0, Qt::AlignLeft);
 
   this->_kind->setText(kind);
-  this->_kind->setProperty("class", "minor");
+  this->_kind->setProperty("subtext", true);
   mainLayout->addWidget(this->_kind, 0, Qt::AlignRight);
 
   setLayout(mainLayout);

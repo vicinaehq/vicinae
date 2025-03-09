@@ -33,13 +33,16 @@ class StatusBar : public QWidget {
     TextLabel *_title;
 
   public:
-    CurrentCommandWidget(const QString &name, const ImageLikeModel &model) : _title(new TextLabel(name)) {
+    CurrentCommandWidget(const QString &name, const OmniIconUrl &iconUrl) : _title(new TextLabel(name)) {
       auto layout = new QHBoxLayout();
-      auto iconLabel = new QLabel();
+      auto icon = new OmniIcon();
+
+      icon->setFixedSize(20, 20);
+      icon->setUrl(iconUrl);
 
       layout->setContentsMargins(0, 0, 0, 0);
       layout->setSpacing(10);
-      layout->addWidget(ImageViewer::createFromModel(model, {20, 20}));
+      layout->addWidget(icon);
       layout->addWidget(_title);
 
       setLayout(layout);
@@ -71,7 +74,7 @@ public:
   void clearAction();
   void setActionButtonHighlight(bool highlight);
   void setToast(const QString &text, ToastPriority priority = ToastPriority::Success);
-  void setNavigation(const QString &name, const ImageLikeModel &model);
+  void setNavigation(const QString &name, const OmniIconUrl &iconUrl);
   QString navigationTitle() const;
   void setNavigationTitle(const QString &name);
   void reset();

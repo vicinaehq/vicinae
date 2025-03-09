@@ -274,7 +274,7 @@ class OmniIcon : public QWidget {
   }
 
 public:
-  OmniIcon() { setContentsMargins(0, 0, 0, 0); }
+  OmniIcon(QWidget *parent = nullptr) : QWidget(parent) { setContentsMargins(0, 0, 0, 0); }
   ~OmniIcon() {}
 
   void setUrl(const OmniIconUrl &url) {

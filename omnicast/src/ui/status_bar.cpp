@@ -4,6 +4,8 @@
 #include <qevent.h>
 #include <qlogging.h>
 #include <QPainterPath>
+#include "omni-icon.hpp"
+#include "theme.hpp"
 #include "ui/shortcut-button.hpp"
 #include <qnamespace.h>
 #include <qpainter.h>
@@ -66,7 +68,7 @@ void StatusBar::setAction(const AbstractAction &action) {
   _selectedActionButton->show();
 }
 
-void StatusBar::setActionButtonHighlight(bool highlight) { _actionButton->setHovered(highlight); }
+void StatusBar::setActionButtonHighlight(bool highlight) { _actionButton->hovered(highlight); }
 
 void StatusBar::clearAction() { _selectedActionButton->hide(); }
 
@@ -85,7 +87,7 @@ void StatusBar::setLeftWidget(QWidget *left) {
   leftWidget = left;
 }
 
-void StatusBar::setNavigation(const QString &name, const ImageLikeModel &icon) {
+void StatusBar::setNavigation(const QString &name, const OmniIconUrl &icon) {
   setLeftWidget(new CurrentCommandWidget(name, icon));
 }
 
@@ -103,12 +105,12 @@ void StatusBar::reset() { setLeftWidget(new DefaultLeftWidget()); }
 
 void StatusBar::paintEvent(QPaintEvent *event) {
   QPainter painter(this);
-  QColor backgroundColor("#242424");
+  auto &theme = ThemeService::instance().theme();
   int radius = 10;
   int borderWidth = 1;
 
   painter.setRenderHint(QPainter::Antialiasing, true);
-  painter.setBrush(QBrush(backgroundColor));
+  painter.setBrush(QBrush(theme.colors.statusBackground));
   painter.setPen(Qt::NoPen);
   painter.drawRect(borderWidth, borderWidth, width() - borderWidth * 2, radius);
   painter.drawRoundedRect(rect().adjusted(1, 1, -1, -1), radius, radius);

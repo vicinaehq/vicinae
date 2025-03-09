@@ -1,6 +1,7 @@
 #include "action_popover.hpp"
 #include "common.hpp"
 #include "extend/action-model.hpp"
+#include "theme.hpp"
 #include "ui/virtual-list.hpp"
 
 #include <QPainterPath>
@@ -40,7 +41,7 @@ QList<ActionPannelItem> ActionPopover::currentActions() const {
 
 void ActionPopover::paintEvent(QPaintEvent *event) {
   int borderRadius = 10;
-  QColor borderColor("#444444");
+  auto &theme = ThemeService::instance().theme();
 
   QPainter painter(this);
 
@@ -51,12 +52,12 @@ void ActionPopover::paintEvent(QPaintEvent *event) {
 
   painter.setClipPath(path);
 
-  QColor backgroundColor("#171615");
+  QColor backgroundColor(theme.colors.mainBackground);
 
   painter.fillPath(path, backgroundColor);
 
   // Draw the border
-  QPen pen(borderColor, 1); // Border with a thickness of 2
+  QPen pen(theme.colors.border, 1); // Border with a thickness of 2
   painter.setPen(pen);
   painter.drawPath(path);
 }

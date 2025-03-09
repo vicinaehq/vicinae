@@ -1,6 +1,7 @@
 #include "ui/keyboard-shortcut-indicator.hpp"
 #include "builtin_icon.hpp"
 #include "extend/action-model.hpp"
+#include "theme.hpp"
 #include <qnamespace.h>
 #include <qpainter.h>
 #include <qwidget.h>
@@ -18,21 +19,22 @@ void KeyboardShortcutIndicatorWidget::setBackgroundColor(QColor color) { _backgr
 
 void KeyboardShortcutIndicatorWidget::drawKey(const QString &key, QRect rect, QPainter &painter) {
   int padding = height() * 0.2;
+  auto &theme = ThemeService::instance().theme();
 
-  painter.setPen(_backgroundColor);
   painter.setBrush(QBrush(_backgroundColor));
+  painter.setPen(Qt::NoPen);
   painter.drawRoundedRect(rect, 6, 6);
 
   QRect contentRect(rect.x() + padding, rect.y() + padding, rect.width() - padding * 2,
                     rect.height() - padding * 2);
 
   if (auto it = keyToIcon.find(key); it != keyToIcon.end()) {
-    auto controlIcon = BuiltinIconService::loadTinted(it->second, "#999999");
+    auto controlIcon = BuiltinIconService::loadTinted(it->second, theme.colors.subtext);
 
     painter.drawPixmap(contentRect,
                        controlIcon.scaled(contentRect.size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
   } else {
-    painter.setPen("#999999");
+    painter.setPen(theme.colors.subtext);
     painter.drawText(contentRect, Qt::AlignCenter, _shortcutModel.key);
   }
 }

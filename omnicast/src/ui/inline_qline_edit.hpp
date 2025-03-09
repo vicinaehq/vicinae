@@ -7,6 +7,9 @@ class InlineQLineEdit : public QLineEdit {
 private:
   void resizeFromText(const QString &s);
 
+protected:
+  void paintEvent(QPaintEvent *) override;
+
 public:
   InlineQLineEdit(const QString &placeholder, QWidget *parent = nullptr);
 

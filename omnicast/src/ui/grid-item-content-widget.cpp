@@ -1,4 +1,6 @@
 #include "ui/grid-item-content-widget.hpp"
+#include "theme.hpp"
+#include <qnamespace.h>
 #include <qwidget.h>
 
 int GridItemContentWidget::borderWidth() const { return 3; }
@@ -20,6 +22,7 @@ void GridItemContentWidget::resizeEvent(QResizeEvent *event) {
 }
 
 void GridItemContentWidget::paintEvent(QPaintEvent *event) {
+  auto &theme = ThemeService::instance().theme();
   int borderRadius = 10;
 
   QPainter painter(this);
@@ -31,12 +34,17 @@ void GridItemContentWidget::paintEvent(QPaintEvent *event) {
 
   painter.setClipPath(path);
 
-  QColor backgroundColor("#202020");
+  QColor backgroundColor(theme.colors.mainHoveredBackground);
 
   painter.fillPath(path, backgroundColor);
 
-  QPen pen(borderColor(), 3);
-  painter.setPen(pen);
+  if (selected || hovered) {
+    QPen pen(borderColor(), 3);
+    painter.setPen(pen);
+  } else {
+    painter.setPen(Qt::NoPen);
+  }
+
   painter.drawPath(path);
 }
 

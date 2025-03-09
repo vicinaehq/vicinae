@@ -1,6 +1,7 @@
 #pragma once
 #include "extend/image-model.hpp"
 #include "omni-icon.hpp"
+#include "ui/icon-button.hpp"
 #include "ui/input_completer.hpp"
 #include <QKeyEvent>
 #include <QLabel>
@@ -55,11 +56,10 @@ struct CompleterData {
 };
 
 struct TopBar : public QWidget {
-  QLabel *backButtonLabel = nullptr;
+  IconButton *backButton = nullptr;
   QHBoxLayout *layout;
   SearchBar *input;
   InputCompleter *quickInput = nullptr;
-  QWidget *backWidget = nullptr;
   std::optional<CompleterData> completerData;
 
 public:
