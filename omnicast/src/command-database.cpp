@@ -1,6 +1,7 @@
 #include "command-database.hpp"
 #include "calculator-history-command.hpp"
 #include "emoji-command.hpp"
+#include "icon-browser-command.hpp"
 #include "manage-processes-command.hpp"
 #include "manage-quicklinks-command.hpp"
 #include "omni-icon.hpp"
@@ -32,7 +33,11 @@ static std::vector<BuiltinCommand> builtinCommands{
     {.id = "icon.search",
      .name = "Search Omnicast Icons",
      .iconUrl = BuiltinOmniIconUrl("omnicast").setBackgroundTint(ColorTint::Red),
-     .factory = [](AppWindow &app, const QString &s) { return new SingleViewCommand<EmojiView>; }},
+     .factory = [](AppWindow &app, const QString &s) { return new SingleViewCommand<IconBrowserView>; }},
+    {.id = "theme.manage",
+     .name = "Manage themes",
+     .iconUrl = BuiltinOmniIconUrl("brush").setBackgroundTint(ColorTint::Red),
+     .factory = [](AppWindow &app, const QString &s) { return new SingleViewCommand<ManageQuicklinksView>; }},
 
     {.id = "process.list",
      .name = "List Processes",

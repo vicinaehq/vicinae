@@ -22,6 +22,7 @@ public:
   void setSubtitle(const QString &subtitle);
   void setTooltipText(const QString &tooltip);
 
+  void setInset(int inset) { main->setInset(inset); }
   void setWidget(QWidget *widget);
   QWidget *widget() const;
   size_t spacing();

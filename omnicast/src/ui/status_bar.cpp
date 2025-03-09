@@ -10,6 +10,7 @@
 #include <qtimer.h>
 
 StatusBar::StatusBar(QWidget *parent) : QWidget(parent), leftWidget(nullptr) {
+  setAttribute(Qt::WA_TranslucentBackground);
   auto layout = new QHBoxLayout();
 
   setFixedHeight(40);
@@ -102,11 +103,15 @@ void StatusBar::reset() { setLeftWidget(new DefaultLeftWidget()); }
 
 void StatusBar::paintEvent(QPaintEvent *event) {
   QPainter painter(this);
+  QColor backgroundColor("#242424");
+  int radius = 10;
+  int borderWidth = 1;
+
   painter.setRenderHint(QPainter::Antialiasing, true);
-
-  // QColor backgroundColor("#121212");
-
-  // painter.fillRect(this->rect().adjusted(1, 1, -1, -1), backgroundColor);
+  painter.setBrush(QBrush(backgroundColor));
+  painter.setPen(Qt::NoPen);
+  painter.drawRect(borderWidth, borderWidth, width() - borderWidth * 2, radius);
+  painter.drawRoundedRect(rect().adjusted(1, 1, -1, -1), radius, radius);
 }
 
 void StatusBar::setToast(const QString &text, ToastPriority priority) {

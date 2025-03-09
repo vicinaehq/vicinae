@@ -29,8 +29,6 @@ void KeyboardShortcutIndicatorWidget::drawKey(const QString &key, QRect rect, QP
   if (auto it = keyToIcon.find(key); it != keyToIcon.end()) {
     auto controlIcon = BuiltinIconService::loadTinted(it->second, "#999999");
 
-    qDebug() << "loading pixmap" << it->second;
-
     painter.drawPixmap(contentRect,
                        controlIcon.scaled(contentRect.size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
   } else {
@@ -46,7 +44,6 @@ void KeyboardShortcutIndicatorWidget::paintEvent(QPaintEvent *event) {
   QRect rect{0, 0, height(), height()};
 
   for (const auto &mod : _shortcutModel.modifiers) {
-    qDebug() << "modifier" << mod;
     drawKey(mod, rect, painter);
     rect.moveLeft(rect.left() + height() + _hspacing);
   }
@@ -58,13 +55,10 @@ QSize KeyboardShortcutIndicatorWidget::sizeHint() const {
   int count = _shortcutModel.modifiers.size() + 1;
   int width = count * _boxSize + ((count - 1) * _hspacing);
 
-  qDebug() << "size hint returned" << count;
-
   return {width, _boxSize};
 }
 
 void KeyboardShortcutIndicatorWidget::setShortcut(const KeyboardShortcutModel &model) {
-  qDebug() << "set shortcut to" << model.key << "with" << model.modifiers;
   _shortcutModel = model;
   updateGeometry();
   update();

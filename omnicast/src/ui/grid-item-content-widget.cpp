@@ -61,7 +61,10 @@ void GridItemContentWidget::setSelected(bool selected) {
   update();
 }
 
-void GridItemContentWidget::setInset(int inset) { _inset = inset; }
+void GridItemContentWidget::setInset(int inset) {
+  _inset = inset;
+  update();
+}
 
 void GridItemContentWidget::setHovered(bool hovered) {
   this->hovered = hovered;

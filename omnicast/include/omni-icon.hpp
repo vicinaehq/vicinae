@@ -2,9 +2,11 @@
 
 #include "builtin_icon.hpp"
 #include "image-fetcher.hpp"
+#include <QtSvg/qsvgrenderer.h>
 #include <qbrush.h>
 #include <qlabel.h>
 #include <qlogging.h>
+#include <QtSvg/QSvgRenderer>
 #include <qnamespace.h>
 #include <qpainter.h>
 #include <qpixmap.h>
@@ -199,9 +201,12 @@ public:
 class OmniIcon : public QWidget {
   Q_OBJECT
 
+  QSvgRenderer renderer;
+
   QPixmap _pixmap;
   QColor _background;
   int _backgroundRadius = 6;
+  OmniIconUrl _url;
   std::optional<TintGradientInfo> _gradientInfo;
 
   void setDefaultIcon(QSize size) { setIcon(BuiltinIconService::unknownIcon(), size); }
@@ -210,6 +215,26 @@ class OmniIcon : public QWidget {
     emit imageUpdated(pixmap);
     _pixmap = pixmap;
     update();
+  }
+
+  void resizeEvent(QResizeEvent *event) override {
+    QWidget::resizeEvent(event);
+    qDebug() << "resize" << event->size();
+    recalculate();
+  }
+
+  void recalculate() {
+    qDebug() << "recalculate SVG!" << _url.name();
+    if (_url.type() == OmniIconType::Builtin) {
+      auto pixRect = rect().marginsRemoved(contentsMargins());
+      QPixmap drawingSurface(pixRect.size());
+      drawingSurface.fill(Qt::transparent);
+
+      QPainter painter(&drawingSurface);
+
+      renderer.render(&painter);
+      setPixmap(drawingSurface);
+    }
   }
 
   void paintEvent(QPaintEvent *event) override {
@@ -253,6 +278,7 @@ public:
   ~OmniIcon() {}
 
   void setUrl(const OmniIconUrl &url) {
+    _url = url;
     setContentsMargins(0, 0, 0, 0);
     _gradientInfo.reset();
 
@@ -294,15 +320,14 @@ public:
     if (type == OmniIconType::System) { auto icon = QIcon::fromTheme(url.name()); }
 
     if (type == OmniIconType::Builtin) {
-      QPixmap pixmap(QString(":icons/%1.svg").arg(url.name()));
+      auto icon = QString(":icons/%1.svg").arg(url.name());
 
-      if (!pixmap.isNull()) {
-        setPixmap(pixmap.scaled(iconSize, Qt::KeepAspectRatio, Qt::SmoothTransformation));
-        return;
-      } else {
+      if (!renderer.load(icon)) {
         setDefaultIcon(iconSize);
-        return;
+      } else {
+        // recalculate();
       }
+      return;
     }
 
     auto icon = QIcon::fromTheme(url.name());

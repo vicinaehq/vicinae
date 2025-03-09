@@ -174,6 +174,7 @@ protected:
 
 public:
   OmniList();
+  ~OmniList() { qDebug() << "destroy omnilist"; }
 
   void updateFromList(std::vector<std::unique_ptr<AbstractVirtualItem>> &nextList,
                       SelectionPolicy selectionPolicy = SelectionPolicy::KeepSelection);

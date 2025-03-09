@@ -241,10 +241,10 @@ void AppWindow::launchCommand(ViewCommand *cmd, const LaunchCommandOptions &opts
 void AppWindow::resizeEvent(QResizeEvent *event) { QMainWindow::resizeEvent(event); }
 
 void AppWindow::paintEvent(QPaintEvent *event) {
-  int borderRadius = 15;
+  int borderRadius = 10;
   int borderWidth = 1;
   QColor borderColor("#444444");
-  QColor backgroundColor("#171615");
+  QColor backgroundColor("#202020");
 
   backgroundColor.setAlphaF(0.98);
 

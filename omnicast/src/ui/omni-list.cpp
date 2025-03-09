@@ -113,10 +113,13 @@ void OmniList::updateVisibleItems() {
     QPoint pos(vinfo.x, viewportY);
     QSize size(vinfo.width, vinfo.height);
 
+    // qDebug() << "pos" << pos << "size" << size << info.item->id();
+
     widget->blockSignals(true);
     widget->setIndex(endIndex);
     widget->setSelected(endIndex == _selected);
-    widget->setFixedSize(size);
+    if (widget->size() != size) { widget->resize(size); }
+    // widget->setFixedSize(size);
     widget->move(pos);
     widget->show();
     widget->blockSignals(false);
@@ -535,6 +538,8 @@ bool OmniList::event(QEvent *event) {
 
 void OmniList::resizeEvent(QResizeEvent *event) {
   auto size = event->size();
+
+  qDebug() << "resize event" << event->size();
 
   scrollBar->setPageStep(size.height());
   scrollBar->setFixedHeight(size.height());

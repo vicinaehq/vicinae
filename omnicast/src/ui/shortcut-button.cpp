@@ -25,8 +25,6 @@ void ShortcutButton::mousePressEvent(QMouseEvent *event) {
 void ShortcutButton::paintEvent(QPaintEvent *event) {
   QPainter painter(this);
 
-  qDebug() << "shortcut button" << size();
-
   if (_hovered) {
     painter.setRenderHint(QPainter::Antialiasing);
     painter.setPen(Qt::NoPen);

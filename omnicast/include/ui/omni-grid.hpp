@@ -11,6 +11,8 @@ class OmniGrid : public OmniList {
 
 public:
   class AbstractGridItem : public AbstractVirtualItem {
+    int _inset;
+
     virtual QString title() const { return {}; }
     virtual QString subtitle() const { return {}; }
     virtual QString tooltip() const { return {}; }
@@ -52,6 +54,7 @@ public:
     OmniListItemWidget *createWidget() const override {
       auto widget = new GridItemWidget2();
 
+      widget->setInset(_inset);
       widget->setTitle(title());
       widget->setSubtitle(subtitle());
       widget->setTooltipText(tooltip());
@@ -59,6 +62,11 @@ public:
 
       return widget;
     }
+
+  public:
+    void setInset(int inset) { _inset = inset; }
+
+    AbstractGridItem() : _inset(10) {}
   };
 
   class GridSection : public OmniList::VirtualSection {
@@ -101,7 +109,10 @@ public:
     OmniList::addItem(std::make_unique<GridSection>(name, _ncols, _spacing));
   }
 
-  void addItem(std::unique_ptr<AbstractGridItem> item) { OmniList::addItem(std::move(item)); }
+  void addItem(std::unique_ptr<AbstractGridItem> item) {
+    item->setInset(_inset);
+    OmniList::addItem(std::move(item));
+  }
 
   OmniGrid() : _ncols(8), _spacing(10), _inset(10) { setMargins(20, 10, 20, 10); }
 };
