@@ -8,20 +8,11 @@
 class IconButton : public Button {
   OmniIcon *_icon;
 
-  void resizeEvent(QResizeEvent *event) {
-    auto margins = contentsMargins();
-    auto iconRect = rect().marginsRemoved(contentsMargins());
-
-    _icon->setFixedSize(iconRect.size());
-    _icon->move(margins.left(), margins.top());
-    Button::resizeEvent(event);
-  }
+protected:
+  void resizeEvent(QResizeEvent *event) override;
 
 public:
-  IconButton() : _icon(new OmniIcon(this)) {
-    setContentsMargins(3, 3, 3, 3);
-    _icon->show();
-  }
+  IconButton();
 
-  void setUrl(const OmniIconUrl &url) { _icon->setUrl(url); }
+  void setUrl(const OmniIconUrl &url);
 };

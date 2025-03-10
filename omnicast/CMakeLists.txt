@@ -52,6 +52,9 @@ qt_add_executable(${TARGET}
 	include/ui/button.hpp
 	src/ui/button.cpp
 
+	include/ui/icon-button.hpp
+	src/ui/icon-button.cpp
+
 	include/command-database.hpp
 	src/command-database.cpp
 
