@@ -33,30 +33,6 @@ static std::vector<std::pair<QString, ColorTint>> colorTints = {
     {"yellow", ColorTint::Yellow},
 };
 
-struct TintLinearGradientInfo {
-  QColor start;
-  QColor end;
-};
-
-struct TintRadialGradientInfo {
-  QColor start;
-  QColor end;
-};
-
-using TintGradientInfo = std::variant<TintLinearGradientInfo, TintRadialGradientInfo>;
-
-// clang-format off
-static std::unordered_map<ColorTint, TintGradientInfo> tintGradientInfoMap = {
-	{
-		ColorTint::Red, 
-		TintRadialGradientInfo{
-       		.start = "#ff7a7c",
-       		.end = "#cc2020",
-		}
-	}
-};
-// clang-format on
-
 class OmniIconUrl {
   OmniIconType _type;
   bool _isValid;
@@ -229,13 +205,8 @@ class OmniIcon : public QWidget {
   Q_OBJECT
 
   QSvgRenderer renderer;
-  QSize _oldSize;
-
   QPixmap _pixmap;
-  QColor _background;
-  int _backgroundRadius = 6;
   OmniIconUrl _url;
-  std::optional<TintGradientInfo> _gradientInfo;
 
   void setDefaultIcon(QSize size) { setIcon(BuiltinIconService::unknownIcon(), size); }
 
@@ -247,9 +218,6 @@ class OmniIcon : public QWidget {
 
   void resizeEvent(QResizeEvent *event) override {
     QWidget::resizeEvent(event);
-
-    if (event->size() == _oldSize) { return; }
-
     recalculate();
   }
 
@@ -277,7 +245,6 @@ class OmniIcon : public QWidget {
   }
 
   void recalculate() {
-    _oldSize = size();
     auto &theme = ThemeService::instance().theme();
     QPixmap canva(size());
     QPainter cp(&canva);

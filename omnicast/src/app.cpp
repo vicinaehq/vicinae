@@ -305,7 +305,7 @@ AppWindow::AppWindow(QWidget *parent)
 
   topBar->setFixedHeight(55);
 
-  ThemeService::instance().setTheme("Tokyo Night");
+  ThemeService::instance().setTheme("Catppuccin Mocha");
 
   extensionManager = std::make_unique<ExtensionManager>();
 

@@ -322,7 +322,10 @@ public:
       }
     }
 
-    if (QColor(s).isValid()) { list.push_back(std::make_unique<ColorListItem>(s)); }
+    if (QColor(s).isValid()) {
+      list.push_back(std::make_unique<OmniList::VirtualSection>("Color"));
+      list.push_back(std::make_unique<ColorListItem>(s));
+    }
 
     list.push_back(std::make_unique<OmniList::VirtualSection>("Results"));
 
