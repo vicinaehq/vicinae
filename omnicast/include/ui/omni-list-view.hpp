@@ -38,13 +38,15 @@ class OmniListView : public View {
 
     void paintEvent(QPaintEvent *event) override {
       auto &theme = ThemeService::instance().theme();
-      QWidget::paintEvent(event);
       QPainter painter(this);
 
       if (_isPaneOpened) {
         painter.setPen(theme.colors.border);
-        painter.drawRect(_base->width(), 0, _dividerStrokeWidth, height());
+        painter.setBrush(theme.colors.border);
+        painter.drawRect(_base->width(), 0, 1, height());
       }
+
+      QWidget::paintEvent(event);
     }
 
   public:

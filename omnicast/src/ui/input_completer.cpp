@@ -8,13 +8,9 @@ InputCompleter::InputCompleter(const QList<QString> &placeholders, QWidget *pare
 
   QIcon::setThemeName("Papirus-Dark");
 
-  setProperty("class", "quicklink-completion");
-
-  icon->setFixedSize(22, 22);
+  icon->setFixedSize(25, 25);
 
   mainContainer->setAlignment(Qt::AlignLeft);
-
-  // mainContainer->setAlignment(Qt::AlignVCenter);
   mainContainer->setContentsMargins(0, 0, 0, 0);
   mainContainer->setSpacing(10);
 

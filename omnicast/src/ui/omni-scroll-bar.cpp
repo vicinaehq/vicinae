@@ -1,4 +1,5 @@
 #include "ui/omni-scroll-bar.hpp"
+#include "theme.hpp"
 #include <qscrollbar.h>
 #include <qwidget.h>
 
@@ -15,6 +16,7 @@ OmniScrollBar::OmniScrollBar(QWidget *parent) : QScrollBar(parent) {
 
 void OmniScrollBar::paintEvent(QPaintEvent *event) {
   Q_UNUSED(event);
+  auto &theme = ThemeService::instance().theme();
 
   if (!isSliderShown) return;
 
@@ -33,9 +35,8 @@ void OmniScrollBar::paintEvent(QPaintEvent *event) {
   opt.pageStep = pageStep();
 
   QRect handleRect = style()->subControlRect(QStyle::CC_ScrollBar, &opt, QStyle::SC_ScrollBarSlider, this);
-  QColor handleColor = QColor(100, 100, 100, 150);
 
-  painter.setBrush(handleColor);
+  painter.setBrush(theme.colors.mainSelectedBackground);
   painter.setPen(Qt::NoPen);
 
   // Rounded scrollbar

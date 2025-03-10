@@ -4,6 +4,7 @@
 #include "image-fetcher.hpp"
 #include <QtSvg/qsvgrenderer.h>
 #include <qbrush.h>
+#include <qcolor.h>
 #include <qlabel.h>
 #include <qlogging.h>
 #include <QtSvg/QSvgRenderer>
@@ -16,6 +17,7 @@
 #include <qurlquery.h>
 #include <qwidget.h>
 #include "favicon-fetcher.hpp"
+#include "theme.hpp"
 
 enum OmniIconType { Invalid, Builtin, Favicon, System, Http, Local };
 
@@ -62,6 +64,7 @@ class OmniIconUrl {
   QSize _size;
   ColorTint _bgTint;
   ColorTint _fgTint;
+  QColor _fillColor;
 
 public:
   static OmniIconUrl makeSystem(const QString &name) {
@@ -141,10 +144,17 @@ public:
   QSize size() const { return _size; }
   ColorTint foregroundTint() const { return _fgTint; }
   ColorTint backgroundTint() const { return _bgTint; }
+  const QColor &fillColor() const { return _fillColor; }
 
   void setType(OmniIconType type) { _type = type; }
   void setName(const QString &name) { _name = name; }
   void setSize(QSize size) { _size = size; }
+
+  OmniIconUrl &setFill(const QColor &color) {
+    _fillColor = color;
+    return *this;
+  }
+
   OmniIconUrl &setForegroundTint(ColorTint tint) {
     _fgTint = tint;
     return *this;
@@ -176,17 +186,26 @@ public:
     if (auto height = query.queryItemValue("height"); !height.isEmpty()) { _size.setHeight(height.toInt()); }
     if (auto fgTint = query.queryItemValue("fg_tint"); !fgTint.isEmpty()) { _fgTint = tintForName(fgTint); }
     if (auto bgTint = query.queryItemValue("bg_tint"); !bgTint.isEmpty()) { _bgTint = tintForName(bgTint); }
+    if (auto fill = query.queryItemValue("fill"); !fill.isEmpty()) { _fillColor = fill; }
 
     _isValid = true;
   }
 };
 
 class BuiltinOmniIconUrl : public OmniIconUrl {
+  QColor _fillColor;
+
 public:
   BuiltinOmniIconUrl(const QString &name, ColorTint tint = InvalidTint) : OmniIconUrl() {
     setType(OmniIconType::Builtin);
     setName(name);
     setForegroundTint(tint);
+    setFill(ThemeService::instance().theme().colors.text);
+  }
+
+  BuiltinOmniIconUrl &setFillColor(const QColor &color) {
+    _fillColor = color;
+    return *this;
   }
 };
 
@@ -219,12 +238,36 @@ class OmniIcon : public QWidget {
 
   void resizeEvent(QResizeEvent *event) override {
     QWidget::resizeEvent(event);
-    qDebug() << "resize" << event->size();
     recalculate();
   }
 
+  QPixmap fillMonochrome(const QPixmap &source, const QColor &oldColor, const QColor &newColor) {
+    QImage image = source.toImage();
+
+    // Get the RGB value for the new color
+    QRgb newRgb = newColor.rgb();
+
+    // White color in RGB (fully opaque)
+    QRgb whiteRgb = oldColor.rgb();
+
+    // Iterate through all pixels in the image
+    for (int y = 0; y < image.height(); ++y) {
+      for (int x = 0; x < image.width(); ++x) {
+        QRgb pixelColor = image.pixel(x, y);
+
+        // Check if the pixel is white (ignoring alpha)
+        if ((pixelColor & 0x00FFFFFF) == (whiteRgb & 0x00FFFFFF)) {
+          // Preserve the original alpha channel
+          QRgb newColorWithAlpha = (pixelColor & 0xFF000000) | (newRgb & 0x00FFFFFF);
+          image.setPixel(x, y, newColorWithAlpha);
+        }
+      }
+    }
+
+    return QPixmap::fromImage(image);
+  }
+
   void recalculate() {
-    qDebug() << "recalculate SVG!" << _url.name();
     if (_url.type() == OmniIconType::Builtin) {
       auto pixRect = rect().marginsRemoved(contentsMargins());
       QPixmap drawingSurface(pixRect.size());
@@ -233,6 +276,12 @@ class OmniIcon : public QWidget {
       QPainter painter(&drawingSurface);
 
       renderer.render(&painter);
+
+      if (auto fill = _url.fillColor(); fill.isValid()) {
+        painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
+        painter.fillRect(drawingSurface.rect(), fill);
+      }
+
       setPixmap(drawingSurface);
     }
   }

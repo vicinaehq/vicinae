@@ -20,7 +20,6 @@ class GridItemContentWidget : public QWidget {
 
 protected:
   int borderWidth() const;
-  QColor borderColor() const;
   void paintEvent(QPaintEvent *event) override;
   void enterEvent(QEnterEvent *event) override { setHovered(true); }
   void leaveEvent(QEvent *event) override { setHovered(false); }

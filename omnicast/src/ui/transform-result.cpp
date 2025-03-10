@@ -1,5 +1,6 @@
 #include "ui/transform-result.hpp"
 #include "omnicast.hpp"
+#include "theme.hpp"
 #include "ui/ellided-label.hpp"
 #include "ui/selectable-omni-list-widget.hpp"
 #include <qboxlayout.h>
@@ -61,6 +62,7 @@ void TransformResult::selectionChanged(bool value) {
 }
 
 void TransformResult::paintEvent(QPaintEvent *event) {
+  auto &theme = ThemeService::instance().theme();
   SelectableOmniListWidget::paintEvent(event);
   QPainter painter(this);
   int midW = width() / 2;
@@ -68,7 +70,7 @@ void TransformResult::paintEvent(QPaintEvent *event) {
   auto margins = contentsMargins();
 
   painter.setPen(Qt::NoPen);
-  painter.setBrush(QColor("#666666"));
+  painter.setBrush(theme.colors.subtext);
 
   _base->setFixedSize({midW, availableHeight()});
   _base->move(0, margins.top());

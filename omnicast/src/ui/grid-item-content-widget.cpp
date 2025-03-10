@@ -5,13 +5,6 @@
 
 int GridItemContentWidget::borderWidth() const { return 3; }
 
-QColor GridItemContentWidget::borderColor() const {
-  if (selected) return "#BBBBBB";
-  if (hovered) return "#888888";
-
-  return "#202020";
-}
-
 void GridItemContentWidget::resizeEvent(QResizeEvent *event) {
   QWidget::resizeEvent(event);
 
@@ -39,7 +32,7 @@ void GridItemContentWidget::paintEvent(QPaintEvent *event) {
   painter.fillPath(path, backgroundColor);
 
   if (selected || hovered) {
-    QPen pen(borderColor(), 3);
+    QPen pen(selected ? theme.colors.text : theme.colors.subtext, 3);
     painter.setPen(pen);
   } else {
     painter.setPen(Qt::NoPen);

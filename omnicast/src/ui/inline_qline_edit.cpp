@@ -37,10 +37,10 @@ void InlineQLineEdit::paintEvent(QPaintEvent *event) {
 
   painter.setClipPath(path);
 
-  painter.fillPath(path, theme.colors.mainSelectedBackground);
+  painter.fillPath(path, theme.colors.statusBackground);
 
   // Draw the border
-  QPen pen(theme.colors.border, 1); // Border with a thickness of 2
+  QPen pen(theme.colors.statusBackgroundBorder, 1); // Border with a thickness of 2
   painter.setPen(pen);
   painter.drawPath(path);
 
