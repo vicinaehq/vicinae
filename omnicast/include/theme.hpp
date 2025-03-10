@@ -566,6 +566,182 @@ public:
 
       registerTheme(theme);
     }
+
+    {
+      ThemeInfo theme;
+      theme.name = "Ayu Mirage";
+      theme.colors.text = QColor("#CBCCC6");                   // Foreground
+      theme.colors.subtext = QColor("#8A9199");                // Comment/subtle color
+      theme.colors.border = QColor("#1F2430");                 // Border color
+      theme.colors.mainBackground = QColor("#171B24");         // Darker color for main background
+      theme.colors.mainSelectedBackground = QColor("#34455A"); // Selection background
+      theme.colors.mainHoveredBackground = QColor("#1C212B");  // Hover background
+      theme.colors.statusBackground = QColor("#1F2430");       // Original background for status bar
+      theme.colors.statusBackgroundBorder = QColor("#1F2430"); // Status border
+
+      ThemeLinearGradient redGradient;
+      redGradient.points = {QColor("#F28779"), QColor("#E36D5E")};
+
+      ThemeLinearGradient blueGradient;
+      blueGradient.points = {QColor("#5CCFE6"), QColor("#39B9D4")};
+
+      ThemeLinearGradient greenGradient;
+      greenGradient.points = {QColor("#BAE67E"), QColor("#A1D15C")};
+
+      ThemeLinearGradient purpleGradient;
+      purpleGradient.points = {QColor("#D4BFFF"), QColor("#B799E3")};
+
+      ThemeLinearGradient orangeGradient;
+      orangeGradient.points = {QColor("#FFA759"), QColor("#F28C38")};
+
+      ThemeLinearGradient yellowGradient;
+      yellowGradient.points = {QColor("#FFD580"), QColor("#FFB454")};
+
+      ThemeLinearGradient magentaGradient;
+      magentaGradient.points = {QColor("#FF99C9"), QColor("#F279AB")};
+
+      theme.colors.red = redGradient;
+      theme.colors.blue = blueGradient;
+      theme.colors.green = greenGradient;
+      theme.colors.purple = purpleGradient;
+      theme.colors.orange = orangeGradient;
+      theme.colors.yellow = yellowGradient;
+      theme.colors.magenta = magentaGradient;
+
+      registerTheme(theme);
+    }
+
+    // 12. Ayu Dark
+    {
+      ThemeInfo theme;
+      theme.name = "Ayu Dark";
+      theme.colors.text = QColor("#B3B1AD");                   // Foreground
+      theme.colors.subtext = QColor("#788889");                // Comment/subtle color
+      theme.colors.border = QColor("#0A0E14");                 // Border color
+      theme.colors.mainBackground = QColor("#09080F");         // Darker color for main background
+      theme.colors.mainSelectedBackground = QColor("#1F2430"); // Selection background
+      theme.colors.mainHoveredBackground = QColor("#0D1017");  // Hover background
+      theme.colors.statusBackground = QColor("#0A0E14");       // Original background for status bar
+      theme.colors.statusBackgroundBorder = QColor("#0A0E14"); // Status border
+
+      ThemeLinearGradient redGradient;
+      redGradient.points = {QColor("#F07178"), QColor("#E25A62")};
+
+      ThemeLinearGradient blueGradient;
+      blueGradient.points = {QColor("#39BAE6"), QColor("#229DC5")};
+
+      ThemeLinearGradient greenGradient;
+      greenGradient.points = {QColor("#C2D94C"), QColor("#A9C12C")};
+
+      ThemeLinearGradient purpleGradient;
+      purpleGradient.points = {QColor("#A37ACC"), QColor("#895EB3")};
+
+      ThemeLinearGradient orangeGradient;
+      orangeGradient.points = {QColor("#FF8F40"), QColor("#FF7216")};
+
+      ThemeLinearGradient yellowGradient;
+      yellowGradient.points = {QColor("#FFB454"), QColor("#FF9A20")};
+
+      ThemeLinearGradient magentaGradient;
+      magentaGradient.points = {QColor("#E6B673"), QColor("#D69C54")};
+
+      theme.colors.red = redGradient;
+      theme.colors.blue = blueGradient;
+      theme.colors.green = greenGradient;
+      theme.colors.purple = purpleGradient;
+      theme.colors.orange = orangeGradient;
+      theme.colors.yellow = yellowGradient;
+      theme.colors.magenta = magentaGradient;
+
+      registerTheme(theme);
+    }
+
+    {
+      ThemeInfo theme;
+      theme.name = "Kanagawa Dragon";
+      theme.colors.text = QColor("#DCD7BA");                   // Foreground
+      theme.colors.subtext = QColor("#727169");                // Comment/subtle color
+      theme.colors.border = QColor("#1F1F28");                 // Border color
+      theme.colors.mainBackground = QColor("#181820");         // Darker color for main background
+      theme.colors.mainSelectedBackground = QColor("#2A2A37"); // Selection background
+      theme.colors.mainHoveredBackground = QColor("#1C1C27");  // Hover background
+      theme.colors.statusBackground = QColor("#1F1F28");       // Original background for status bar
+      theme.colors.statusBackgroundBorder = QColor("#2A2A37"); // Status border
+
+      ThemeLinearGradient redGradient;
+      redGradient.points = {QColor("#E82424"), QColor("#C41C1C")};
+
+      ThemeLinearGradient blueGradient;
+      blueGradient.points = {QColor("#7E9CD8"), QColor("#5D7AB8")};
+
+      ThemeLinearGradient greenGradient;
+      greenGradient.points = {QColor("#98BB6C"), QColor("#7FA252")};
+
+      ThemeLinearGradient purpleGradient;
+      purpleGradient.points = {QColor("#957FB8"), QColor("#7C689E")};
+
+      ThemeLinearGradient orangeGradient;
+      orangeGradient.points = {QColor("#FF9E3B"), QColor("#E58225")};
+
+      ThemeLinearGradient yellowGradient;
+      yellowGradient.points = {QColor("#E6C384"), QColor("#D1AA64")};
+
+      ThemeLinearGradient magentaGradient;
+      magentaGradient.points = {QColor("#D27E99"), QColor("#B66179")};
+
+      theme.colors.red = redGradient;
+      theme.colors.blue = blueGradient;
+      theme.colors.green = greenGradient;
+      theme.colors.purple = purpleGradient;
+      theme.colors.orange = orangeGradient;
+      theme.colors.yellow = yellowGradient;
+      theme.colors.magenta = magentaGradient;
+    }
+
+    // 15. Kanagawa Wave (standard variant)
+    {
+      ThemeInfo theme;
+      theme.name = "Kanagawa Wave";
+      theme.colors.text = QColor("#DCD7BA");                   // Foreground
+      theme.colors.subtext = QColor("#727169");                // Comment/subtle color
+      theme.colors.border = QColor("#16161D");                 // Border color
+      theme.colors.mainBackground = QColor("#12121B");         // Darker color for main background
+      theme.colors.mainSelectedBackground = QColor("#223249"); // Selection background
+      theme.colors.mainHoveredBackground = QColor("#16161D");  // Hover background
+      theme.colors.statusBackground = QColor("#1F1F28");       // Original background for status bar
+      theme.colors.statusBackgroundBorder = QColor("#16161D"); // Status border
+
+      ThemeLinearGradient redGradient;
+      redGradient.points = {QColor("#C34043"), QColor("#A63538")};
+
+      ThemeLinearGradient blueGradient;
+      blueGradient.points = {QColor("#7FB4CA"), QColor("#5D99B0")};
+
+      ThemeLinearGradient greenGradient;
+      greenGradient.points = {QColor("#76946A"), QColor("#5F7954")};
+
+      ThemeLinearGradient purpleGradient;
+      purpleGradient.points = {QColor("#938AA9"), QColor("#7A7290")};
+
+      ThemeLinearGradient orangeGradient;
+      orangeGradient.points = {QColor("#FFA066"), QColor("#FF884D")};
+
+      ThemeLinearGradient yellowGradient;
+      yellowGradient.points = {QColor("#DCA561"), QColor("#C88D45")};
+
+      ThemeLinearGradient magentaGradient;
+      magentaGradient.points = {QColor("#D27E99"), QColor("#B66179")};
+
+      theme.colors.red = redGradient;
+      theme.colors.blue = blueGradient;
+      theme.colors.green = greenGradient;
+      theme.colors.purple = purpleGradient;
+      theme.colors.orange = orangeGradient;
+      theme.colors.yellow = yellowGradient;
+      theme.colors.magenta = magentaGradient;
+
+      registerTheme(theme);
+    }
   }
 
   ThemeService() { registerBuiltinThemes(); }

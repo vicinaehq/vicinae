@@ -164,9 +164,9 @@ public:
     return *this;
   }
 
-  OmniIconUrl() noexcept {}
+  OmniIconUrl() : _bgTint(InvalidTint), _fgTint(InvalidTint) {}
   OmniIconUrl(const QString &s) noexcept { *this = std::move(QUrl(s)); }
-  OmniIconUrl(const QUrl &url) noexcept {
+  OmniIconUrl(const QUrl &url) : _bgTint(InvalidTint), _fgTint(InvalidTint) {
     if (url.scheme() != "icon") { return; }
 
     _type = typeForName(url.host());
@@ -217,10 +217,19 @@ public:
   }
 };
 
+class SystemOmniIconUrl : public OmniIconUrl {
+public:
+  SystemOmniIconUrl(const QString &name) : OmniIconUrl() {
+    setType(OmniIconType::System);
+    setName(name);
+  }
+};
+
 class OmniIcon : public QWidget {
   Q_OBJECT
 
   QSvgRenderer renderer;
+  QSize _oldSize;
 
   QPixmap _pixmap;
   QColor _background;
@@ -238,51 +247,99 @@ class OmniIcon : public QWidget {
 
   void resizeEvent(QResizeEvent *event) override {
     QWidget::resizeEvent(event);
+
+    if (event->size() == _oldSize) { return; }
+
     recalculate();
   }
 
-  QPixmap fillMonochrome(const QPixmap &source, const QColor &oldColor, const QColor &newColor) {
-    QImage image = source.toImage();
-
-    // Get the RGB value for the new color
-    QRgb newRgb = newColor.rgb();
-
-    // White color in RGB (fully opaque)
-    QRgb whiteRgb = oldColor.rgb();
-
-    // Iterate through all pixels in the image
-    for (int y = 0; y < image.height(); ++y) {
-      for (int x = 0; x < image.width(); ++x) {
-        QRgb pixelColor = image.pixel(x, y);
-
-        // Check if the pixel is white (ignoring alpha)
-        if ((pixelColor & 0x00FFFFFF) == (whiteRgb & 0x00FFFFFF)) {
-          // Preserve the original alpha channel
-          QRgb newColorWithAlpha = (pixelColor & 0xFF000000) | (newRgb & 0x00FFFFFF);
-          image.setPixel(x, y, newColorWithAlpha);
-        }
-      }
+  ColorLike getThemeTintColor(const ThemeInfo &info, ColorTint tint) {
+    switch (tint) {
+    case ColorTint::Blue:
+      return info.colors.blue;
+    case ColorTint::Green:
+      return info.colors.green;
+    case ColorTint::Magenta:
+      return info.colors.magenta;
+    case ColorTint::Orange:
+      return info.colors.orange;
+    case ColorTint::Purple:
+      return info.colors.purple;
+    case ColorTint::Red:
+      return info.colors.red;
+    case ColorTint::Yellow:
+      return info.colors.yellow;
+    default:
+      break;
     }
 
-    return QPixmap::fromImage(image);
+    return {};
   }
 
   void recalculate() {
+    _oldSize = size();
+    auto &theme = ThemeService::instance().theme();
+    QPixmap canva(size());
+    QPainter cp(&canva);
+
+    canva.fill(Qt::transparent);
+    cp.setRenderHint(QPainter::SmoothPixmapTransform, true);
+    cp.setRenderHint(QPainter::Antialiasing, true);
+    cp.setPen(Qt::NoPen);
+
+    if (auto tint = _url.backgroundTint(); tint != InvalidTint) {
+      setContentsMargins(3, 3, 3, 3);
+
+      int cornerRadius = canva.width() / 4;
+      auto colorLike = getThemeTintColor(theme, tint);
+
+      if (auto color = std::get_if<QColor>(&colorLike)) {
+        cp.setBrush(*color);
+        cp.drawRoundedRect(canva.rect(), cornerRadius, cornerRadius);
+      } else if (auto lgrad = std::get_if<ThemeLinearGradient>(&colorLike)) {
+        QLinearGradient gradient;
+
+        for (int i = 0; i != lgrad->points.size(); ++i) {
+          gradient.setColorAt(i, lgrad->points[i]);
+        }
+
+        cp.setBrush(gradient);
+        cp.drawRoundedRect(canva.rect(), cornerRadius, cornerRadius);
+      } else if (auto rgrad = std::get_if<ThemeRadialGradient>(&colorLike)) {
+        QRadialGradient gradient(canva.rect().center(), canva.rect().width() / 2.0);
+
+        gradient.setSpread(QGradient::PadSpread);
+        gradient.setCoordinateMode(QGradient::ObjectBoundingMode);
+
+        for (int i = 0; i != rgrad->points.size(); ++i) {
+          gradient.setColorAt(i, rgrad->points[i]);
+        }
+
+        cp.setBrush(gradient);
+        cp.drawRoundedRect(canva.rect(), cornerRadius, cornerRadius);
+      }
+    }
+
+    QRect innerRect = canva.rect().marginsRemoved(contentsMargins());
+
     if (_url.type() == OmniIconType::Builtin) {
-      auto pixRect = rect().marginsRemoved(contentsMargins());
-      QPixmap drawingSurface(pixRect.size());
-      drawingSurface.fill(Qt::transparent);
+      QPixmap svgPix(innerRect.size());
 
-      QPainter painter(&drawingSurface);
+      svgPix.fill(Qt::transparent);
 
-      renderer.render(&painter);
+      {
+        QPainter painter(&svgPix);
 
-      if (auto fill = _url.fillColor(); fill.isValid()) {
-        painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
-        painter.fillRect(drawingSurface.rect(), fill);
+        renderer.render(&painter);
+
+        if (auto fill = _url.fillColor(); fill.isValid()) {
+          painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
+          painter.fillRect(svgPix.rect(), fill);
+        }
       }
 
-      setPixmap(drawingSurface);
+      cp.drawPixmap(innerRect, svgPix);
+      setPixmap(canva);
     }
   }
 
@@ -290,57 +347,23 @@ class OmniIcon : public QWidget {
     QPainter painter(this);
 
     painter.setRenderHint(QPainter::Antialiasing, true);
-
-    if (_gradientInfo) {
-      QBrush brush;
-
-      if (auto info = std::get_if<TintRadialGradientInfo>(&*_gradientInfo)) {
-        QRadialGradient gradient(rect().center(), rect().width() / 2.0);
-        gradient.setColorAt(0, info->start); // Center color
-        gradient.setColorAt(1, info->end);   // Edge color
-        gradient.setSpread(QGradient::PadSpread);
-        gradient.setCoordinateMode(QGradient::ObjectBoundingMode);
-        brush = gradient;
-      } else if (auto info = std::get_if<TintLinearGradientInfo>(&*_gradientInfo)) {
-        QLinearGradient gradient;
-
-        gradient.setColorAt(0, info->start);
-        gradient.setColorAt(1, info->end);
-        brush = gradient;
-      }
-
-      painter.setBrush(brush);
-      painter.setPen(Qt::NoPen);
-      int cornerRadius = rect().width() / 4;
-
-      painter.drawRoundedRect(rect(), cornerRadius, cornerRadius);
-    }
-
-    auto pixRect = rect().marginsRemoved(contentsMargins());
-    auto scaled = _pixmap.scaled(pixRect.size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
-
-    painter.drawPixmap(pixRect, scaled);
+    painter.drawPixmap(rect(), _pixmap.scaled(size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
   }
 
 public:
-  OmniIcon(QWidget *parent = nullptr) : QWidget(parent) { setContentsMargins(0, 0, 0, 0); }
+  OmniIcon(const OmniIconUrl &url, QWidget *parent = nullptr) : QWidget(parent) { setUrl(url); }
+  OmniIcon(QWidget *parent = nullptr) : QWidget(parent) {
+    connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() { recalculate(); });
+    setContentsMargins(0, 0, 0, 0);
+  }
   ~OmniIcon() {}
 
   void setUrl(const OmniIconUrl &url) {
     _url = url;
-    setContentsMargins(0, 0, 0, 0);
-    _gradientInfo.reset();
 
     auto type = url.type();
     // take widget size if no icon size is specified
     QSize iconSize = url.size().isValid() ? url.size() : size();
-
-    if (url.backgroundTint() != InvalidTint) {
-      if (auto it = tintGradientInfoMap.find(url.backgroundTint()); it != tintGradientInfoMap.end()) {
-        setContentsMargins(3, 3, 3, 3);
-        _gradientInfo = it->second;
-      }
-    }
 
     if (type == OmniIconType::Favicon) {
       QPixmap pm;
@@ -374,7 +397,7 @@ public:
       if (!renderer.load(icon)) {
         setDefaultIcon(iconSize);
       } else {
-        // recalculate();
+        recalculate();
       }
       return;
     }

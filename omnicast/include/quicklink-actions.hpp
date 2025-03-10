@@ -35,7 +35,7 @@ struct OpenQuicklinkAction : public AbstractAction {
   void setArgs(const QList<QString> &args) { this->args = args; }
 
   OpenQuicklinkAction(const std::shared_ptr<Quicklink> &link, const QList<QString> &args = {})
-      : AbstractAction("Open link", ThemeIconModel{.iconName = ":icons/link.svg"}), link(link), args(args) {}
+      : AbstractAction("Open link", BuiltinOmniIconUrl("link")), link(link), args(args) {}
 };
 
 struct EditQuicklinkAction : public AbstractAction {
@@ -58,8 +58,7 @@ public:
   void setArgs(const QList<QString> &args) { this->args = args; }
 
   EditQuicklinkAction(const std::shared_ptr<Quicklink> &link, const QList<QString> &args = {})
-      : AbstractAction("Edit link", ThemeIconModel{.iconName = ":icons/pencil.svg"}), link(link), args(args) {
-  }
+      : AbstractAction("Edit link", BuiltinOmniIconUrl("pencil")), link(link), args(args) {}
 
 signals:
   void edited();
@@ -81,7 +80,7 @@ public:
   }
 
   RemoveQuicklinkAction(const std::shared_ptr<Quicklink> &link)
-      : AbstractAction("Remove link", ThemeIconModel{.iconName = ":icons/trash.svg"}), link(link) {}
+      : AbstractAction("Remove link", BuiltinOmniIconUrl("trash")), link(link) {}
 };
 
 struct DuplicateQuicklinkAction : public AbstractAction {
@@ -104,8 +103,7 @@ public:
   void setArgs(const QList<QString> &args) { this->args = args; }
 
   DuplicateQuicklinkAction(const std::shared_ptr<Quicklink> &link, const QList<QString> &args = {})
-      : AbstractAction("Duplicate link", ThemeIconModel{.iconName = ":icons/duplicate.svg"}), link(link),
-        args(args) {}
+      : AbstractAction("Duplicate link", BuiltinOmniIconUrl("duplicate")), link(link), args(args) {}
 
 signals:
   void duplicated();

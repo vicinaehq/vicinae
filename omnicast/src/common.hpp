@@ -1,6 +1,5 @@
 #pragma once
 #include "theme.hpp"
-#include "ui/action_popover.hpp"
 #include <QHBoxLayout>
 #include <QString>
 #include <cmath>
@@ -12,6 +11,7 @@
 #include <qicon.h>
 #include <qlabel.h>
 #include <qnamespace.h>
+#include <qpainter.h>
 #include <qprocess.h>
 #include <qwidget.h>
 #include <qwindowdefs.h>

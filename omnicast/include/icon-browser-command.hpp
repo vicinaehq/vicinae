@@ -17,6 +17,7 @@ class IconBrowserView : public OmniGridView {
     QWidget *centerWidget() const override {
       auto icon = new OmniIcon;
 
+      icon->setFixedSize(30, 30);
       icon->setUrl(BuiltinOmniIconUrl(m_displayName));
 
       return icon;

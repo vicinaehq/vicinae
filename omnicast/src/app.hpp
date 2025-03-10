@@ -202,7 +202,7 @@ struct OpenAppAction : public AbstractAction {
 
   OpenAppAction(const std::shared_ptr<DesktopExecutable> &app, const QString &title,
                 const QList<QString> args)
-      : AbstractAction(title, ThemeIconModel{.iconName = app->iconName()}), application(app), args(args) {}
+      : AbstractAction(title, app->iconUrl()), application(app), args(args) {}
 };
 
 class CopyTextAction : public AbstractAction {
@@ -216,7 +216,7 @@ public:
   }
 
   CopyTextAction(const QString &title, const QString &text)
-      : AbstractAction(title, ThemeIconModel{.iconName = ":icons/copy-clipboard"}), text(text) {}
+      : AbstractAction(title, BuiltinOmniIconUrl("copy-clipboard")), text(text) {}
 };
 
 class CopyCalculatorResultAction : public CopyTextAction {

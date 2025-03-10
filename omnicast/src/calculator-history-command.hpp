@@ -1,6 +1,7 @@
 #pragma once
 #include "app.hpp"
 #include "calculator-database.hpp"
+#include "omni-icon.hpp"
 #include "ui/action_popover.hpp"
 #include "ui/omni-list-view.hpp"
 #include "ui/omni-list.hpp"
@@ -16,7 +17,7 @@ class RemoveCalculatorHistoryEntryAction : public AbstractAction {
 
 public:
   RemoveCalculatorHistoryEntryAction(uint id)
-      : AbstractAction("Remove entry", ThemeIconModel{.iconName = ":icons/trash.svg"}), id(id) {}
+      : AbstractAction("Remove entry", BuiltinOmniIconUrl("trash")), id(id) {}
 
   void execute(AppWindow &app) override {
     bool removed = app.calculatorDatabase->removeById(id);

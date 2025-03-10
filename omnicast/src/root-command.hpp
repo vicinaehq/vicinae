@@ -57,7 +57,7 @@ struct OpenBuiltinCommandAction : public AbstractAction {
 
   OpenBuiltinCommandAction(const BuiltinCommand &cmd, const QString &title = "Open command",
                            const QString &text = "")
-      : AbstractAction(title, ThemeIconModel{.iconName = "firefox"}), cmd(cmd), text(text) {}
+      : AbstractAction(title, cmd.iconUrl), cmd(cmd), text(text) {}
 };
 
 using CommandFactory = std::function<ViewCommand *(AppWindow &app, const QString &arg)>;
@@ -70,7 +70,7 @@ struct OpenCommandAction : public AbstractAction {
 
   OpenCommandAction(CommandFactory factory, const QString &title, const QString &iconName,
                     const QString &arg = "")
-      : AbstractAction(title, ThemeIconModel{.iconName = iconName}), factory(factory), arg(arg) {}
+      : AbstractAction(title, iconName), factory(factory), arg(arg) {}
 };
 
 class ColorListItem : public OmniList::AbstractVirtualItem, public OmniListView::IActionnable {

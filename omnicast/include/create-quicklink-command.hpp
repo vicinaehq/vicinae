@@ -1,6 +1,7 @@
 #pragma once
 #include "app-database.hpp"
 #include "builtin_icon.hpp"
+#include "omni-icon.hpp"
 #include "quicklist-database.hpp"
 #include "ui/action_popover.hpp"
 #include "ui/form.hpp"
@@ -8,7 +9,6 @@
 #include "view.hpp"
 #include <functional>
 #include <memory>
-#include <numbers>
 #include <qnamespace.h>
 #include <qpixmap.h>
 #include <qsharedpointer.h>
@@ -22,7 +22,7 @@ class CallbackAction : public AbstractAction {
 
 public:
   CallbackAction(const SubmitHandler &localHandler)
-      : AbstractAction("Submit", {.iconName = "submit"}), handler(localHandler) {}
+      : AbstractAction("Submit", BuiltinOmniIconUrl("submit")), handler(localHandler) {}
 
   void execute(AppWindow &app) override { handler(app); }
 };

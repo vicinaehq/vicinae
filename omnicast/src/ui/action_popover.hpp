@@ -2,7 +2,13 @@
 #include "extend/action-model.hpp"
 #include "extend/image-model.hpp"
 #include "image-viewer.hpp"
+#include "omni-icon.hpp"
+#include "theme.hpp"
+#include "ui/keyboard-shortcut-indicator.hpp"
 #include "ui/keyboard.hpp"
+#include "ui/omni-list-item-widget.hpp"
+#include "ui/omni-list.hpp"
+#include "ui/selectable-omni-list-widget.hpp"
 #include "ui/virtual-list.hpp"
 #include <qboxlayout.h>
 #include <qevent.h>
@@ -12,6 +18,7 @@
 #include <qlineedit.h>
 #include <qlist.h>
 #include <qlistwidget.h>
+#include <qnamespace.h>
 #include <qobject.h>
 #include <qpixmap.h>
 #include <qstack.h>
@@ -26,7 +33,7 @@ class AbstractAction : public QObject {
 
 public:
   QString title;
-  ThemeIconModel icon;
+  OmniIconUrl iconUrl;
   std::optional<KeyboardShortcutModel> shortcut;
   std::function<void(void)> _execCallback;
 
@@ -35,7 +42,7 @@ public:
 
   std::function<void(void)> executionCallback() const { return _execCallback; }
 
-  AbstractAction(const QString &title, const ThemeIconModel &icon = {}) : title(title), icon(icon) {}
+  AbstractAction(const QString &title, const OmniIconUrl &icon) : title(title), iconUrl(icon) {}
 
   virtual void execute(AppWindow &app) = 0;
 
@@ -43,33 +50,97 @@ signals:
   void didExecute();
 };
 
-class ActionListItem : public AbstractVirtualListItem {
+class ActionListWidget : public SelectableOmniListWidget {
+  OmniIcon *_icon;
+  QLabel *_label;
+  KeyboardShortcutIndicatorWidget *_shortcut;
+
+public:
+  ActionListWidget &setIconUrl(const OmniIconUrl &url) {
+    _icon->setUrl(url);
+    return *this;
+  }
+
+  ActionListWidget &setShortcut(const KeyboardShortcutModel &shortcut) {
+    _shortcut->setShortcut(shortcut);
+    _shortcut->show();
+    return *this;
+  }
+
+  ActionListWidget &clearShortcut() {
+    _shortcut->hide();
+    return *this;
+  }
+
+  ActionListWidget &setTitle(const QString &title) {
+    _label->setText(title);
+    return *this;
+  }
+
+  void selectionChanged(bool selected) override {
+    SelectableOmniListWidget::selectionChanged(selected);
+    auto &theme = ThemeService::instance().theme();
+
+    if (selected) {
+      _shortcut->setBackgroundColor(theme.colors.statusBackground);
+    } else {
+      _shortcut->setBackgroundColor(theme.colors.statusBackground);
+    }
+  }
+
+  ActionListWidget()
+      : _icon(new OmniIcon), _label(new QLabel), _shortcut(new KeyboardShortcutIndicatorWidget) {
+    auto &theme = ThemeService::instance().theme();
+    auto layout = new QHBoxLayout;
+
+    _shortcut->hide();
+    _shortcut->setBackgroundColor(theme.colors.statusBackground);
+
+    _icon->setFixedSize(22, 22);
+    layout->setAlignment(Qt::AlignVCenter);
+    layout->setSpacing(10);
+    layout->addWidget(_icon);
+    layout->addWidget(_label);
+    layout->addWidget(_shortcut, 0, Qt::AlignRight);
+    layout->setContentsMargins(8, 8, 8, 8);
+
+    setLayout(layout);
+  }
+};
+
+class ActionListItem : public OmniList::AbstractVirtualItem {
 public:
   AbstractAction *action;
 
-  QWidget *createItem() const override {
-    auto iconLabel = new QLabel;
-    auto label = new QLabel;
-    auto layout = new QHBoxLayout;
+  QString id() const override { return action->title + action->iconUrl.toString(); }
 
-    layout->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    label->setText(action->title);
+  OmniListItemWidget *createWidget() const override {
+    auto widget = new ActionListWidget;
 
-    layout->setSpacing(10);
-    layout->addWidget(ImageViewer::createFromModel(action->icon, {20, 20}));
-    layout->addWidget(label);
-    layout->setContentsMargins(10, 0, 10, 0);
-
-    auto widget = new QWidget;
-
-    widget->setLayout(layout);
+    setup(widget);
 
     return widget;
   }
 
-  int height() const override { return 40; }
+  int calculateHeight(int width) const override {
+    static ActionListWidget ruler;
 
-  QWidget *updateItem(QWidget *current) const override { return createItem(); }
+    return ruler.sizeHint().height();
+  }
+
+  bool recyclable() const override { return true; }
+
+  void setup(ActionListWidget *widget) const {
+    widget->setTitle(action->title).setIconUrl(action->iconUrl);
+
+    if (auto shortcut = action->shortcut) {
+      widget->setShortcut(*shortcut);
+    } else {
+      widget->clearShortcut();
+    }
+  }
+
+  void recycle(QWidget *base) const override { setup(static_cast<ActionListWidget *>(base)); }
 
 public:
   ActionListItem(AbstractAction *action) : action(action) {}
@@ -144,8 +215,7 @@ class ActionPopover : public QWidget {
   QList<ShownActionItem> shownActionItems;
   QList<std::shared_ptr<IAction>> _currentActions;
   QLineEdit *input;
-  VirtualListWidget *list;
-  VirtualListModel *listModel;
+  OmniList *list;
   QHash<QListWidgetItem *, AbstractAction *> signalItemMap;
 
   QStack<QList<ActionPannelItem>> menuStack;
@@ -164,7 +234,7 @@ class ActionPopover : public QWidget {
   }
 
 private slots:
-  void itemActivated(const std::shared_ptr<AbstractVirtualListItem> &item);
+  void itemActivated(const OmniList::AbstractVirtualItem &item);
 
 signals:
   void actionActivated(std::shared_ptr<IAction> action);
@@ -196,7 +266,7 @@ public:
   void setActions(const QList<ActionPannelItem> &actions);
 
   void renderSignalItems(const QList<AbstractAction *> actions) {
-    listModel->beginReset();
+    std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> items;
 
     for (const auto &item : actions) {
       QString str;
@@ -209,10 +279,10 @@ public:
         str = lst.join(" + ");
       }
 
-      listModel->addItem(std::make_shared<ActionListItem>(item));
+      items.push_back(std::make_unique<ActionListItem>(item));
     }
 
-    listModel->endReset();
+    list->updateFromList(items, OmniList::SelectionPolicy::SelectFirst);
   }
 
   ActionPopover(QWidget *parent = 0);

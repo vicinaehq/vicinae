@@ -41,6 +41,7 @@ public:
   virtual bool isTerminalApp() const = 0;
   virtual const QString &fullyQualifiedName() const { return name; }
   virtual const QString &iconName() const = 0;
+  virtual OmniIconUrl iconUrl() const = 0;
 
   // whether the executable can open url(s) or file(s)
   bool isOpener() {
@@ -75,7 +76,7 @@ struct DesktopEntry : public DesktopExecutable {
   const QString &iconName() const override { return data.icon; }
   QIcon icon() const override { return QIcon::fromTheme(data.icon); }
   bool displayable() const override { return !data.hidden && !data.noDisplay; };
-  OmniIconUrl iconUrl() { return QString("icon://system/%1").arg(data.icon); }
+  OmniIconUrl iconUrl() const override { return SystemOmniIconUrl(data.icon); }
 };
 
 struct DesktopAction : public DesktopExecutable {
@@ -99,6 +100,9 @@ struct DesktopAction : public DesktopExecutable {
   const QString &fullyQualifiedName() const override { return fqn_; }
   bool displayable() const override { return parent_->displayable(); }
   bool isTerminalApp() const override { return parent_->isTerminalApp(); }
+  virtual OmniIconUrl iconUrl() const override {
+    return data.icon.isEmpty() ? parent_->iconUrl() : SystemOmniIconUrl(data.icon);
+  }
 };
 
 class AppDatabase : public NonAssignable {

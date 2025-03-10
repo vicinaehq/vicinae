@@ -1,6 +1,7 @@
 #pragma once
 
 #include "command.hpp"
+#include "omni-icon.hpp"
 #include "process-manager-service.hpp"
 #include "ui/action_popover.hpp"
 #include "ui/omni-list-view.hpp"
@@ -16,8 +17,7 @@ class KillProcessAction : public AbstractAction {
   void execute(AppWindow &app) override { kill(pid, SIGKILL); }
 
 public:
-  KillProcessAction(int pid)
-      : AbstractAction("Kill process", ThemeIconModel{.iconName = ":icons/droplets.svg"}), pid(pid) {}
+  KillProcessAction(int pid) : AbstractAction("Kill process", BuiltinOmniIconUrl("droplets")), pid(pid) {}
 };
 
 class ManageProcessesMainView : public OmniListView {

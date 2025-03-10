@@ -2,6 +2,7 @@
 #include "common.hpp"
 #include "extend/action-model.hpp"
 #include "theme.hpp"
+#include "ui/omni-list.hpp"
 #include "ui/virtual-list.hpp"
 
 #include <QPainterPath>
@@ -62,19 +63,16 @@ void ActionPopover::paintEvent(QPaintEvent *event) {
   painter.drawPath(path);
 }
 
-void ActionPopover::itemActivated(const std::shared_ptr<AbstractVirtualListItem> &item) {
-  auto actionItem = std::static_pointer_cast<ActionListItem>(item);
+void ActionPopover::itemActivated(const OmniList::AbstractVirtualItem &item) {
+  auto actionItem = static_cast<const ActionListItem &>(item);
 
-  emit actionExecuted(actionItem->action);
+  emit actionExecuted(actionItem.action);
   close();
 }
 
-ActionPopover::ActionPopover(QWidget *parent)
-    : QWidget(parent), list(new VirtualListWidget), listModel(new VirtualListModel) {
+ActionPopover::ActionPopover(QWidget *parent) : QWidget(parent), list(new OmniList) {
   setWindowFlags(Qt::FramelessWindowHint | Qt::Popup);
   setAttribute(Qt::WA_TranslucentBackground);
-
-  list->setModel(listModel);
 
   auto layout = new QVBoxLayout(this);
 
@@ -102,7 +100,7 @@ ActionPopover::ActionPopover(QWidget *parent)
   layout->addWidget(new HDivider);
   layout->addWidget(input);
 
-  connect(list, &VirtualListWidget::itemActivated, this, &ActionPopover::itemActivated);
+  connect(list, &OmniList::itemActivated, this, &ActionPopover::itemActivated);
 
   input->setPlaceholderText("Search actions");
 
@@ -136,19 +134,13 @@ void ActionPopover::showActions() {
     return;
   }
 
-  qDebug() << "creating list with " << window->width() << "x" << window->height();
-
   renderSignalItems(signalActions);
   adjustSize();
 
   auto parentGeo = window->geometry();
 
-  qDebug() << "width=" << parentGeo.width() << " height=" << parentGeo.height();
-  qDebug() << "width2=" << width() << " height2=" << height();
-  qDebug() << "width2=" << geometry().width() << " height2=" << geometry().height();
-
-  setMinimumWidth(window->width() * 0.45);
-  setFixedHeight(200);
+  setMinimumWidth(window->width() * 0.5);
+  setFixedHeight(window->height() * 0.45);
   auto x = parentGeo.width() - width() - 10;
   auto y = parentGeo.height() - height() - 50;
   QPoint global = window->mapToGlobal(QPoint(x, y));

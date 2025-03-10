@@ -228,7 +228,7 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
   topBar->input->setFocus();
   topBar->input->setText(opts.searchQuery);
   emit topBar->input->textEdited(opts.searchQuery);
-  view->onMount();
+  QTimer::singleShot(0, [view]() { view->onMount(); });
 }
 
 void AppWindow::launchCommand(ViewCommand *cmd, const LaunchCommandOptions &opts) {

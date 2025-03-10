@@ -3,6 +3,7 @@
 #include <qobject.h>
 #include <qpixmap.h>
 #include <qpixmapcache.h>
+#include <qtimer.h>
 #include <qtmetamacros.h>
 
 class FaviconReply : public QObject {

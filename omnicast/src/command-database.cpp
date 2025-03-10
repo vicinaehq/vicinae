@@ -37,7 +37,7 @@ static std::vector<BuiltinCommand> builtinCommands{
      .factory = [](AppWindow &app, const QString &s) { return new SingleViewCommand<IconBrowserView>; }},
     {.id = "theme.manage",
      .name = "Manage themes",
-     .iconUrl = BuiltinOmniIconUrl("brush").setBackgroundTint(ColorTint::Red),
+     .iconUrl = BuiltinOmniIconUrl("brush").setBackgroundTint(ColorTint::Purple),
      .factory = [](AppWindow &app, const QString &s) { return new SingleViewCommand<ManageThemesView>; }},
 
     {.id = "process.list",

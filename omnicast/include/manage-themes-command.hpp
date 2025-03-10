@@ -5,7 +5,6 @@
 #include "ui/action_popover.hpp"
 #include "ui/omni-list-view.hpp"
 #include "ui/omni-list.hpp"
-#include <filesystem>
 #include <memory>
 #include <qlabel.h>
 #include <qnamespace.h>
@@ -23,7 +22,8 @@ class SetThemeAction : public AbstractAction {
   }
 
 public:
-  SetThemeAction(const QString &themeName) : AbstractAction("Set theme"), _themeName(themeName) {}
+  SetThemeAction(const QString &themeName)
+      : AbstractAction("Set theme", BuiltinOmniIconUrl("brush")), _themeName(themeName) {}
 };
 
 class ThemeItem : public AbstractDefaultListItem, public OmniListView::IActionnable {
