@@ -1,6 +1,5 @@
 #include "ui/status_bar.hpp"
 #include "common.hpp"
-#include "extend/image-model.hpp"
 #include <qevent.h>
 #include <qlogging.h>
 #include <QPainterPath>
@@ -109,16 +108,19 @@ QString StatusBar::navigationTitle() const {
 void StatusBar::reset() { setLeftWidget(new DefaultLeftWidget()); }
 
 void StatusBar::paintEvent(QPaintEvent *event) {
-  QPainter painter(this);
   auto &theme = ThemeService::instance().theme();
+  QPainter painter(this);
   int radius = 10;
   int borderWidth = 1;
+  QPen pen(theme.colors.statusBackgroundBorder, borderWidth);
 
   painter.setRenderHint(QPainter::Antialiasing, true);
   painter.setBrush(QBrush(theme.colors.statusBackground));
+  painter.setPen(pen);
+  painter.drawRoundedRect(rect(), radius, radius);
   painter.setPen(Qt::NoPen);
-  painter.drawRect(borderWidth, borderWidth, width() - borderWidth * 2, radius);
-  painter.drawRoundedRect(rect().adjusted(1, 1, -1, -1), radius, radius);
+  // fill top to get rid of the top border
+  painter.drawRect(borderWidth, 0, width() - borderWidth * 2, height() - radius);
 }
 
 void StatusBar::setToast(const QString &text, ToastPriority priority) {
