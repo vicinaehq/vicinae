@@ -52,6 +52,8 @@ qt_add_executable(${TARGET}
 	include/ui/button.hpp
 	src/ui/button.cpp
 
+	include/clipboard-service.hpp
+
 	include/ui/icon-button.hpp
 	src/ui/icon-button.cpp
 

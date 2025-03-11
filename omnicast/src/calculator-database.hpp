@@ -12,6 +12,9 @@
 #include <qlogging.h>
 #include <qobject.h>
 #include <qtmetamacros.h>
+#include <qwidget.h>
+
+class MyWidget : public QWidget {};
 
 struct CalculatorEntry {
   int id;

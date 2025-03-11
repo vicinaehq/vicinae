@@ -126,7 +126,13 @@ public:
 protected:
   virtual void selectionChanged(const OmniList::AbstractVirtualItem *next,
                                 const OmniList::AbstractVirtualItem *previous) {
-    if (!next) { return; }
+    if (!next) {
+      split->clearDetail();
+      app.topBar->destroyQuicklinkCompleter();
+      setSignalActions({});
+
+      return;
+    }
 
     qDebug() << "selected id" << next->id();
 
@@ -149,6 +155,7 @@ protected:
 
       setSignalActions(actions);
     } else {
+      split->clearDetail();
       app.topBar->destroyQuicklinkCompleter();
       setSignalActions({});
     }

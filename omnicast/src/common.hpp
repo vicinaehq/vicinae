@@ -16,6 +16,13 @@
 #include <qwidget.h>
 #include <qwindowdefs.h>
 
+template <typename T> struct PaginatedResponse {
+  int totalCount;
+  int currentPage;
+  int totalPages;
+  std::vector<T> data;
+};
+
 class NonAssignable {
 public:
   NonAssignable(const NonAssignable &) = delete;

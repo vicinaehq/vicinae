@@ -65,12 +65,21 @@ public:
     virtual void initWidth(int width);
 
     void setCount(int count);
-    int count() const;
+    virtual int count() const;
 
     OmniListItemWidget *createWidget() const override;
     int calculateHeight(int width) const override;
 
     VirtualSection(const QString &name);
+  };
+
+  class FixedCountSection : public VirtualSection {
+    int _count = 0;
+
+    int count() const override { return _count; }
+
+  public:
+    FixedCountSection(const QString &name, int count) : VirtualSection(name), _count(count) {}
   };
 
   class AbstractItemFilter {

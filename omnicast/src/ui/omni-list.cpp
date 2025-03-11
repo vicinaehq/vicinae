@@ -2,7 +2,6 @@
 #include "ui/list-section-header.hpp"
 #include "ui/omni-list-item-widget-wrapper.hpp"
 #include "ui/omni-scroll-bar.hpp"
-#include "ui/virtual-list.hpp"
 #include <chrono>
 #include <qapplication.h>
 #include <qevent.h>

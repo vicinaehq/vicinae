@@ -314,7 +314,8 @@ AppWindow::AppWindow(QWidget *parent)
   calculatorDatabase =
       std::make_unique<CalculatorDatabase>(Config::dirPath() + QDir::separator() + "calculator.db");
   appDb = std::make_unique<AppDatabase>();
-  clipboardService = std::make_unique<ClipboardService>();
+  clipboardService =
+      std::make_unique<ClipboardService>(Config::dirPath() + QDir::separator() + "clipboard.db");
   // indexer = std::make_unique<IndexerService>(Config::dirPath() + QDir::separator() + "files.db");
   processManagerService = std::make_unique<ProcessManagerService>();
   commandDb = std::make_unique<CommandDatabase>();

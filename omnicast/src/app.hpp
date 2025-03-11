@@ -104,6 +104,19 @@ class AppWindow : public QMainWindow, public ICommandHandler {
       return true;
     }
 
+    if (message.type == "clipboard.store") {
+      auto values = message.params.asArray();
+
+      if (values.size() != 2) { return CommandError{"Ill-formed clipboard.store request"}; }
+
+      auto data = values[0].asString();
+      auto options = values[1].asDict();
+      auto mimeName = options["mime"].asString();
+      auto copied = clipboardService->copy(QByteArray(data.data(), data.size()));
+
+      return copied;
+    }
+
     if (message.type == "command.list") {
       Proto::Array results;
 

@@ -1,5 +1,6 @@
 #include "command-database.hpp"
 #include "calculator-history-command.hpp"
+#include "clipboard-history-command.hpp"
 #include "emoji-command.hpp"
 #include "icon-browser-command.hpp"
 #include "manage-processes-command.hpp"
@@ -18,7 +19,7 @@ static std::vector<BuiltinCommand> builtinCommands{
      .name = "Clipboard History",
      .iconUrl = BuiltinOmniIconUrl("copy-clipboard").setBackgroundTint(ColorTint::Red),
      .factory = [](AppWindow &app,
-                   const QString &s) { return new SingleViewCommand<CalculatorHistoryView>; }},
+                   const QString &s) { return new SingleViewCommand<ClipboardHistoryCommand>; }},
     {.id = "quicklink.create",
      .name = "Create Quicklink",
      .iconUrl = BuiltinOmniIconUrl("link").setBackgroundTint(ColorTint::Red),

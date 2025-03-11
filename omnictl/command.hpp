@@ -4,6 +4,7 @@
 #include <memory>
 #include <ostream>
 #include <string>
+#include <unistd.h>
 #include <vector>
 #include "table.hpp"
 
@@ -130,10 +131,35 @@ public:
 };
 
 class ClipboardCommand : public Command {
+  class StoreCommand : public Command {
+    void execute(const std::vector<std::string> &args) const override {
+      std::string data;
+      char buf[8096];
+      int rc = 0;
+
+      while ((rc = read(STDIN_FILENO, buf, sizeof(buf))) > 0) {
+        data += {buf, (size_t)rc};
+      }
+
+      auto res = CommandClient::oneshot("clipboard.store", Proto::Array{data, Proto::Dict{}});
+
+      std::cout << (res.isOk() ? "OK" : "KO") << std::endl;
+    }
+
+  public:
+    StoreCommand() : Command("store", "Store a new item in clipboard") {
+      addAlias("add");
+      addAlias("push");
+    }
+  };
+
   void execute(const std::vector<std::string> &args) const override { std::cout << "clipboard"; }
 
 public:
-  ClipboardCommand() : Command("clipboard", "Interact with the clipboard managerl") { addAlias("clip"); }
+  ClipboardCommand() : Command("clipboard", "Interact with the clipboard managerl") {
+    addAlias("clip");
+    registerCommand(std::make_unique<StoreCommand>());
+  }
 };
 
 class ToogleCommand : public Command {
