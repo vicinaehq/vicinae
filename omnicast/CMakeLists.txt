@@ -7,7 +7,7 @@ set(LIBS)
 
 set(TARGET omnicast)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets Sql Network Svg)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Sql Network Svg WaylandClient)
 find_package(SQLite3 REQUIRED)
 find_package(cmark REQUIRED)
 
@@ -15,7 +15,7 @@ option(WAYLAND_LAYER_SHELL "Enable support for the Wayland layer shell
 protocol, required for proper window positioning on most wlroots-based
 compositors." OFF)
 
-list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg cmark proto)
+list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::WaylandClient cmark proto)
 
 if (WAYLAND_LAYER_SHELL)
 	find_package(Qt6 REQUIRED COMPONENTS WaylandClient)
@@ -36,6 +36,7 @@ qt_add_executable(${TARGET}
 	src/app.cpp
 	src/app.hpp
 
+	src/get-wayland-wlr-data-control-client-protocol.cpp
 	include/theme.hpp
 
 	#src/commands/index/index-command.hpp
@@ -48,6 +49,11 @@ qt_add_executable(${TARGET}
 	include/extend/extension-view.hpp
 	include/extend/extension-command.hpp
 	include/extend/extension-detail-view.hpp
+
+	include/wayland-wlr-data-control-client-protocol.h
+	src/wayland-wlr-data-control-client-protocol.c
+
+	include/get-wayland-wlr-data-control-client-protocol.hpp
 
 	include/ui/button.hpp
 	src/ui/button.cpp

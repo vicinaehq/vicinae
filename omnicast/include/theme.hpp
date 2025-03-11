@@ -90,9 +90,13 @@ public:
 			letter-spacing: -0.5px;
 			color: %1;
 		}
-		QLineEdit {
+		QLineEdit, QTextEdit {
 			background-color: transparent;
 			border: none;
+		}
+
+		QTextEdit {
+			font-family: monospace;
 		}
 
 		.top-bar QLineEdit {

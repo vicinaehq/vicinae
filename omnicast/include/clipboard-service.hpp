@@ -30,6 +30,7 @@ struct ClipboardHistoryEntry {
   uint64_t pinnedAt;
   QString md5sum;
   uint64_t createdAt;
+  QString filePath;
 };
 
 class ClipboardService : public QObject, public NonAssignable {

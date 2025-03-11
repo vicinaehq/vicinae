@@ -4,27 +4,36 @@
 #include "clipboard-service.hpp"
 #include "command-database.hpp"
 #include "command-server.hpp"
+#include <QScreen>
 #include "extend/image-model.hpp"
 #include "extension_manager.hpp"
+#include "get-wayland-wlr-data-control-client-protocol.hpp"
 #include "indexer-service.hpp"
 #include "omni-icon.hpp"
 #include "process-manager-service.hpp"
 #include "proto.hpp"
 #include "quicklist-database.hpp"
+#include <QtWaylandClient/qwaylandclientextension.h>
+#include <cstring>
 #include <qboxlayout.h>
 #include <qevent.h>
 #include <qhash.h>
+#include <qlogging.h>
 #include <qobject.h>
+#include <qscreen_platform.h>
 #include <stack>
 
 #include "ui/action_popover.hpp"
 #include "ui/calculator-list-item-widget.hpp"
 #include "ui/status_bar.hpp"
 #include "ui/top_bar.hpp"
+#include "wayland-wlr-data-control-client-protocol.h"
 
 #include <qmainwindow.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
+#include <stdexcept>
+#include <wayland-client-protocol.h>
 
 template <class T> using Service = T &;
 

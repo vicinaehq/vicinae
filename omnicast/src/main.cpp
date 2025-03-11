@@ -4,6 +4,7 @@
 #include <QSurfaceFormat>
 #include <QtSql/QtSql>
 #include <QtSql/qsqldatabase.h>
+#include <QtWaylandClient/qwaylandclientextension.h>
 #include <arpa/inet.h>
 #include <cmark.h>
 #include <qfontdatabase.h>
@@ -12,6 +13,10 @@
 #include <qlocalsocket.h>
 #include <qlogging.h>
 #include <qobject.h>
+#include <QtWaylandClient/QWaylandClientExtension>
+#include <qtmetamacros.h>
+#include <wayland-util.h>
+#include "wayland-wlr-data-control-client-protocol.h"
 
 static const char *colorSelected = "rgba(40, 39, 38, 255)";
 // static const char *colorSelected = "rgba(53, 52, 51, 255)";

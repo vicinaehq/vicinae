@@ -75,12 +75,14 @@ bool ClipboardService::copy(const QByteArray &data) {
   }
 
   bool isText = mime.name() == "text/plain" || mime.inherits("text/plain");
-  QString textPreview = isText ? data.sliced(0, 50) : "Image";
+  QString textPreview = isText ? data.sliced(0, qMin(data.size(), 50)) : "Image";
   auto entry = InsertClipboardHistoryLine{
       .mimeType = mime.name(),
       .textPreview = textPreview,
       .md5sum = md5sum,
   };
+
+  qDebug() << "Storing content of type" << mime.name() << data.constData();
 
   int id = insertHistoryLine(entry);
 
@@ -118,13 +120,16 @@ std::vector<ClipboardHistoryEntry> ClipboardService::collectedSearch(const QStri
   }
 
   while (query.next()) {
+    auto sum = query.value(4).toString();
+
     entries.push_back(ClipboardHistoryEntry{
         .id = query.value(0).toInt(),
         .mimeType = query.value(1).toString(),
         .textPreview = query.value(2).toString(),
         .pinnedAt = query.value(3).toULongLong(),
-        .md5sum = query.value(4).toString(),
+        .md5sum = sum,
         .createdAt = query.value(5).toULongLong(),
+        .filePath = _data_dir.absoluteFilePath(sum),
     });
   }
 
@@ -162,13 +167,16 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardService::listAll(int limit, in
   if (!query.exec()) { return {}; }
 
   while (query.next()) {
+    auto sum = query.value(4).toString();
+
     response.data.push_back(ClipboardHistoryEntry{
         .id = query.value(0).toInt(),
         .mimeType = query.value(1).toString(),
         .textPreview = query.value(2).toString(),
         .pinnedAt = query.value(3).toULongLong(),
-        .md5sum = query.value(4).toString(),
+        .md5sum = sum,
         .createdAt = query.value(5).toULongLong(),
+        .filePath = _data_dir.absoluteFilePath(sum),
     });
   }
 

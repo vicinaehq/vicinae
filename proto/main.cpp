@@ -1,31 +1,25 @@
-#include "proto.hpp"
 #include <iostream>
+#include <wayland-client-core.h>
+#include <wayland-client-protocol.h>
 
 int main() {
-  Proto::Marshaler marshaler;
-  Proto::Array arr;
+  /*
+wl_display *display = wl_display_connect(nullptr);
 
-  arr.push_back(42);
-  arr.push_back("Hello world");
-  arr.push_back(Proto::Dict{{"type", "fire"}, {"json", true}});
+if (!display) {
+std::cerr << "wl_display_connect failed" << std::endl;
+return 1;
+}
 
-  auto packet = marshaler.marshal(arr);
-  auto result = marshaler.unmarshal<Proto::Array>(packet);
+auto registry = wl_display_get_registry(display);
 
-  if (auto err = std::get_if<Proto::Marshaler::Error>(&result)) {
-    std::cout << "unmarshal failed" << err->message << std::endl;
-    return 1;
-  }
+if (!registry) {
+std::cerr << "wl_display_get_registry failed" << std::endl;
+wl_display_disconnect(display);
+return 1;
+}
 
-  auto newArr = std::get<Proto::Array>(result);
-
-  if (newArr.size() == 3) {
-    auto n = newArr.at(0).asInt();
-    auto s = newArr.at(1).asString();
-    auto opts = newArr.at(2).asDict();
-
-    std::cout << n << s << std::endl;
-    std::cout << "type=" << opts["type"].asString() << std::endl;
-    std::cout << "json=" << opts["json"].asBool() << std::endl;
-  }
+wl_display_disconnect(display);
+std::cout << "okay" << std::endl;
+*/
 }

@@ -8,23 +8,42 @@
 #include "ui/omni-list.hpp"
 #include "ui/toast.hpp"
 #include <memory>
+#include <qboxlayout.h>
 #include <qlabel.h>
 #include <qnamespace.h>
 #include <qobject.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
 #include <sys/socket.h>
+#include "text-file-viewer.hpp"
+
+class TextContainer : public QWidget {
+  QVBoxLayout *_layout;
+
+public:
+  void setWidget(QWidget *widget) { _layout->addWidget(widget); }
+
+  TextContainer() {
+    _layout = new QVBoxLayout;
+    setLayout(_layout);
+  }
+};
 
 class ClipboardItemDetail : public OmniListView::MetadataDetailModel {
   ClipboardHistoryEntry entry;
 
   QWidget *createView() const override {
     auto widget = new QWidget();
-    auto layout = new QHBoxLayout();
 
-    layout->setAlignment(Qt::AlignTop);
-    layout->addWidget(new QLabel(entry.textPreview));
-    widget->setLayout(layout);
+    if (entry.mimeType == "text/plain") {
+      auto container = new TextContainer;
+      auto viewer = new TextFileViewer();
+
+      container->setWidget(viewer);
+      viewer->load(entry.filePath);
+
+      return container;
+    }
 
     return widget;
   }
