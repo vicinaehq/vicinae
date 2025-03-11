@@ -1,6 +1,5 @@
 #pragma once
 #include "app.hpp"
-#include "calculator-history-command.hpp"
 #include "clipboard-service.hpp"
 #include "omni-icon.hpp"
 #include "theme.hpp"
@@ -42,6 +41,10 @@ class ClipboardItemDetail : public OmniListView::MetadataDetailModel {
         .title = "ID",
     };
     items << MetadataLabel{
+        .text = QDateTime::fromSecsSinceEpoch(entry.createdAt).toString(),
+        .title = "Copied at",
+    };
+    items << MetadataLabel{
         .text = entry.md5sum,
         .title = "Checksum (MD5)",
     };
@@ -59,20 +62,24 @@ class ClipboardHistoryItem : public AbstractDefaultListItem, public OmniListView
 
   class PinClipboardAction : public AbstractAction {
     int _id;
+    bool _value;
 
     void execute(AppWindow &app) override {
-      if (!app.clipboardService->setPinned(_id, true)) {
-        app.statusBar->setToast("Failed to pin", ToastPriority::Danger);
+      if (!app.clipboardService->setPinned(_id, _value)) {
+        app.statusBar->setToast("Failed to " + QString(_value ? "pin" : "unpin"), ToastPriority::Danger);
+      } else {
+        app.statusBar->setToast(_value ? "Pinned" : "Unpinned", ToastPriority::Success);
       }
     }
 
   public:
-    PinClipboardAction(int id) : AbstractAction("Pin", BuiltinOmniIconUrl("pin")), _id(id) {}
+    PinClipboardAction(int id, bool value)
+        : AbstractAction(value ? "Pin" : "Unpin", BuiltinOmniIconUrl("pin")), _id(id), _value(value) {}
   };
 
 public:
   QList<AbstractAction *> generateActions() const override {
-    auto pin = new PinClipboardAction(info.id);
+    auto pin = new PinClipboardAction(info.id, !info.pinnedAt);
 
     pin->setExecutionCallback([this]() {
       if (_pinCallback) { _pinCallback(info.id); }
@@ -85,10 +92,7 @@ public:
 
   void setPinCallback(const std::function<void(int)> &cb) { _pinCallback = cb; }
 
-  ItemData data() const override {
-    return {.iconUrl = BuiltinOmniIconUrl(info.isPinned ? "pin" : "copy-clipboard"),
-            .name = info.textPreview};
-  }
+  ItemData data() const override { return {.iconUrl = BuiltinOmniIconUrl("text"), .name = info.textPreview}; }
 
   QWidget *generateDetail() const override {
     auto detail = std::make_unique<ClipboardItemDetail>(info);
@@ -106,11 +110,7 @@ class ClipboardHistoryCommand : public OmniListView {
   Service<ClipboardService> _clipboardService;
 
   void generateList(const QString &query) {
-    auto &themeService = ThemeService::instance();
     std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> newList;
-    auto &current = themeService.theme();
-    list->clearSelection();
-
     int totalCount = 0;
     std::vector<ClipboardHistoryEntry> items;
 
@@ -124,29 +124,29 @@ class ClipboardHistoryCommand : public OmniListView {
       totalCount = items.size();
     }
 
+    list->clearSelection();
     newList.push_back(std::make_unique<OmniList::VirtualSection>("Pinned"));
     size_t i = 0;
 
-    while (i < items.size() && items[i].isPinned) {
+    while (i < items.size() && items[i].pinnedAt) {
       auto &entry = items[i];
       auto candidate = std::make_unique<ClipboardHistoryItem>(entry);
 
+      candidate->setPinCallback([this, &entry, query](int id) {
+        list->invalidateCache(QString::number(id));
+        generateList(query);
+      });
       newList.push_back(std::move(candidate));
       ++i;
     }
-
-    qDebug() << "i" << totalCount - i;
 
     newList.push_back(std::make_unique<OmniList::FixedCountSection>("History", totalCount - i));
 
     while (i < items.size()) {
       auto &entry = items[i];
-
       auto candidate = std::make_unique<ClipboardHistoryItem>(entry);
 
       candidate->setPinCallback([this, &entry, query](int id) {
-        qDebug() << "pinned";
-        list->clearSelection();
         list->invalidateCache(QString::number(id));
         generateList(query);
       });
@@ -158,7 +158,7 @@ class ClipboardHistoryCommand : public OmniListView {
     list->updateFromList(newList, OmniList::SelectionPolicy::SelectFirst);
   }
 
-  void onMount() override { setSearchPlaceholderText("Manage themes..."); }
+  void onMount() override { setSearchPlaceholderText("Browse clipboard history..."); }
 
   void onSearchChanged(const QString &s) override { generateList(s); }
 

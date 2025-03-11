@@ -112,6 +112,7 @@ class PeepobankView : public OmniGridView {
   };
 
   void onMount() override {
+
     OmniGridView::onMount();
     auto &appDb = service<AppDatabase>();
     auto fileBrowser = appDb.defaultFileBrowser();

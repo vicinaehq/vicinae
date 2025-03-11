@@ -20,10 +20,10 @@ public:
   KillProcessAction(int pid) : AbstractAction("Kill process", BuiltinOmniIconUrl("droplets")), pid(pid) {}
 };
 
-class ManageProcessesMainView : public OmniListView {
+class ManageProcessesMainView : public OmniListView, public OmniListView::IActionnable {
   Service<ProcessManagerService> processManager;
 
-  class ProcListItem : public AbstractDefaultListItem, OmniListView::IActionnable {
+  class ProcListItem : public AbstractDefaultListItem, public OmniListView::IActionnable {
     ProcessInfo info;
     int idx;
 
@@ -34,7 +34,7 @@ class ManageProcessesMainView : public OmniListView {
     QString id() const override { return QString::number(info.pid); }
 
     ItemData data() const override {
-      return {.iconUrl = OmniIconUrl::makeSystem("xterm"),
+      return {.iconUrl = BuiltinOmniIconUrl("bar-chart"),
               .name = info.comm,
               .category = "",
               .kind = QString::number(info.pid)};
@@ -66,9 +66,7 @@ class ManageProcessesMainView : public OmniListView {
 
 public:
   ManageProcessesMainView(AppWindow &app)
-      : OmniListView(app), processManager(service<ProcessManagerService>()) {
-    widget = list;
-  }
+      : OmniListView(app), processManager(service<ProcessManagerService>()) {}
 };
 
 class ManageProcessesCommand : public ViewCommand {
