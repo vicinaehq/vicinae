@@ -1,4 +1,5 @@
 #include "app.hpp"
+#include "clipboard-service.hpp"
 #include "command-database.hpp"
 #include "command-server.hpp"
 #include "command.hpp"
@@ -16,6 +17,7 @@
 #include <QLabel>
 #include <QMainWindow>
 #include <QThread>
+#include "clipboard-manager.hpp"
 #include <QVBoxLayout>
 #include <memory>
 #include <qboxlayout.h>
@@ -333,10 +335,6 @@ AppWindow::AppWindow(QWidget *parent)
 
   _commandServer->setHandler(this);
 
-  for (const auto &proc : processManagerService->list()) {
-    qDebug() << proc.comm << proc.pid;
-  }
-
   connect(topBar->input, &SearchBar::pop, this, &AppWindow::popCurrentView);
   connect(actionPopover, &ActionPopover::actionExecuted, this, &AppWindow::executeAction);
   connect(statusBar, &StatusBar::actionButtonClicked, this, [this]() { actionPopover->showActions(); });
@@ -353,6 +351,13 @@ AppWindow::AppWindow(QWidget *parent)
 
     if (quicklinkDatabase->list().isEmpty()) { seeder->seed(); }
   }
+
+  auto wlrClip = new WlrClipboardManager;
+
+  connect(wlrClip, &AbstractClipboardManager::saveSelection, clipboardService.get(),
+          &ClipboardService::saveSelection);
+
+  wlrClip->start();
 
   extensionManager->start();
 

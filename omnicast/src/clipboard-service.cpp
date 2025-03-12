@@ -183,6 +183,10 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardService::listAll(int limit, in
   return response;
 }
 
+void ClipboardService::saveSelection(const ClipboardSelection &selection) {
+  qDebug() << "save selection of size" << selection.offers.size();
+}
+
 ClipboardService::ClipboardService(const QString &path)
     : db(QSqlDatabase::addDatabase("QSQLITE")), _path(path),
       _data_dir(_path.dir().filePath("clipboard-data")) {
@@ -195,15 +199,21 @@ ClipboardService::ClipboardService(const QString &path)
   QSqlQuery query(db);
 
   query.exec(R"(
-		CREATE TABLE IF NOT EXISTS history (
+		CREATE TABLE IF NOT EXISTS selection (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			selection_hash_md5 TEXT NOT NULL,
+			preferred_mime_type TEXT NOT NULL,
+			source TEXT,
+			created_at INTEGER DEFAULT (unixepoch()),
+			pinned_at INTEGER DEFAULT 0
+		);
+
+		CREATE TABLE IF NOT EXISTS data_offer (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			mime_type TEXT NOT NULL,
 			text_preview TEXT,
 			content_hash_md5 TEXT NOT NULL,
-			source TEXT,
-			created_at INTEGER DEFAULT (unixepoch()),
-			pinned_at INTEGER
-		);
+		)
 	)");
 
   query.exec(R"(

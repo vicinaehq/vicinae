@@ -98,6 +98,24 @@ public:
     return packet;
   }
 
+  /**
+   * Marshals item and preprend its size to the message as a 4 bytes integer (network byte order)
+   */
+  template <typename T> std::vector<uint8_t> marshalSized(const T &item) noexcept {
+    std::vector<uint8_t> messageData = marshal(item);
+    uint32_t length = messageData.size();
+    std::vector<uint8_t> packet;
+
+    packet.reserve(messageData.size() + sizeof(uint32_t));
+    packet.push_back((length >> 24) & 0xFF);
+    packet.push_back((length >> 16) & 0xFF);
+    packet.push_back((length >> 8) & 0xFF);
+    packet.push_back(length & 0xFF);
+    packet.insert(packet.end(), messageData.begin(), messageData.end());
+
+    return packet;
+  }
+
   template <typename T> std::variant<T, Error> unmarshal(const std::vector<uint8_t> &packet) {
     T item;
     size_t idx = 0;

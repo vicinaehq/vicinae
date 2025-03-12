@@ -39,6 +39,8 @@ qt_add_executable(${TARGET}
 	src/get-wayland-wlr-data-control-client-protocol.cpp
 	include/theme.hpp
 
+	include/clipboard-manager.hpp
+
 	#src/commands/index/index-command.hpp
 	#src/commands/index/index-command.cpp
 	#src/commands/calculator-history/calculator-history.hpp

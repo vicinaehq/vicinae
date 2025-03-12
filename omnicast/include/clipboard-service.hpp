@@ -16,6 +16,7 @@
 #include <qsqlquery.h>
 #include <qstringview.h>
 #include <qtmetamacros.h>
+#include "clipboard-manager.hpp"
 
 struct InsertClipboardHistoryLine {
   QString mimeType;
@@ -50,6 +51,7 @@ public:
   bool copy(const QByteArray &data);
   int insertHistoryLine(const InsertClipboardHistoryLine &payload);
   void copyText(const QString &text);
+  void saveSelection(const ClipboardSelection &selection);
 
 signals:
   void itemCopied(const InsertClipboardHistoryLine &item) const;

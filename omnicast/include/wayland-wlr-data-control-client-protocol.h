@@ -7,7 +7,7 @@
 #include <stddef.h>
 #include "wayland-client.h"
 
-#ifdef  __cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -160,7 +160,6 @@ extern const struct wl_interface zwlr_data_control_offer_v1_interface;
 #define ZWLR_DATA_CONTROL_MANAGER_V1_GET_DATA_DEVICE 1
 #define ZWLR_DATA_CONTROL_MANAGER_V1_DESTROY 2
 
-
 /**
  * @ingroup iface_zwlr_data_control_manager_v1
  */
@@ -176,22 +175,20 @@ extern const struct wl_interface zwlr_data_control_offer_v1_interface;
 
 /** @ingroup iface_zwlr_data_control_manager_v1 */
 static inline void
-zwlr_data_control_manager_v1_set_user_data(struct zwlr_data_control_manager_v1 *zwlr_data_control_manager_v1, void *user_data)
-{
-	wl_proxy_set_user_data((struct wl_proxy *) zwlr_data_control_manager_v1, user_data);
+zwlr_data_control_manager_v1_set_user_data(struct zwlr_data_control_manager_v1 *zwlr_data_control_manager_v1,
+                                           void *user_data) {
+  wl_proxy_set_user_data((struct wl_proxy *)zwlr_data_control_manager_v1, user_data);
 }
 
 /** @ingroup iface_zwlr_data_control_manager_v1 */
-static inline void *
-zwlr_data_control_manager_v1_get_user_data(struct zwlr_data_control_manager_v1 *zwlr_data_control_manager_v1)
-{
-	return wl_proxy_get_user_data((struct wl_proxy *) zwlr_data_control_manager_v1);
+static inline void *zwlr_data_control_manager_v1_get_user_data(
+    struct zwlr_data_control_manager_v1 *zwlr_data_control_manager_v1) {
+  return wl_proxy_get_user_data((struct wl_proxy *)zwlr_data_control_manager_v1);
 }
 
 static inline uint32_t
-zwlr_data_control_manager_v1_get_version(struct zwlr_data_control_manager_v1 *zwlr_data_control_manager_v1)
-{
-	return wl_proxy_get_version((struct wl_proxy *) zwlr_data_control_manager_v1);
+zwlr_data_control_manager_v1_get_version(struct zwlr_data_control_manager_v1 *zwlr_data_control_manager_v1) {
+  return wl_proxy_get_version((struct wl_proxy *)zwlr_data_control_manager_v1);
 }
 
 /**
@@ -199,15 +196,16 @@ zwlr_data_control_manager_v1_get_version(struct zwlr_data_control_manager_v1 *zw
  *
  * Create a new data source.
  */
-static inline struct zwlr_data_control_source_v1 *
-zwlr_data_control_manager_v1_create_data_source(struct zwlr_data_control_manager_v1 *zwlr_data_control_manager_v1)
-{
-	struct wl_proxy *id;
+static inline struct zwlr_data_control_source_v1 *zwlr_data_control_manager_v1_create_data_source(
+    struct zwlr_data_control_manager_v1 *zwlr_data_control_manager_v1) {
+  struct wl_proxy *id;
 
-	id = wl_proxy_marshal_flags((struct wl_proxy *) zwlr_data_control_manager_v1,
-			 ZWLR_DATA_CONTROL_MANAGER_V1_CREATE_DATA_SOURCE, &zwlr_data_control_source_v1_interface, wl_proxy_get_version((struct wl_proxy *) zwlr_data_control_manager_v1), 0, NULL);
+  id = wl_proxy_marshal_flags((struct wl_proxy *)zwlr_data_control_manager_v1,
+                              ZWLR_DATA_CONTROL_MANAGER_V1_CREATE_DATA_SOURCE,
+                              &zwlr_data_control_source_v1_interface,
+                              wl_proxy_get_version((struct wl_proxy *)zwlr_data_control_manager_v1), 0, NULL);
 
-	return (struct zwlr_data_control_source_v1 *) id;
+  return (struct zwlr_data_control_source_v1 *)id;
 }
 
 /**
@@ -215,15 +213,16 @@ zwlr_data_control_manager_v1_create_data_source(struct zwlr_data_control_manager
  *
  * Create a data device that can be used to manage a seat's selection.
  */
-static inline struct zwlr_data_control_device_v1 *
-zwlr_data_control_manager_v1_get_data_device(struct zwlr_data_control_manager_v1 *zwlr_data_control_manager_v1, struct wl_seat *seat)
-{
-	struct wl_proxy *id;
+static inline struct zwlr_data_control_device_v1 *zwlr_data_control_manager_v1_get_data_device(
+    struct zwlr_data_control_manager_v1 *zwlr_data_control_manager_v1, struct wl_seat *seat) {
+  struct wl_proxy *id;
 
-	id = wl_proxy_marshal_flags((struct wl_proxy *) zwlr_data_control_manager_v1,
-			 ZWLR_DATA_CONTROL_MANAGER_V1_GET_DATA_DEVICE, &zwlr_data_control_device_v1_interface, wl_proxy_get_version((struct wl_proxy *) zwlr_data_control_manager_v1), 0, NULL, seat);
+  id = wl_proxy_marshal_flags(
+      (struct wl_proxy *)zwlr_data_control_manager_v1, ZWLR_DATA_CONTROL_MANAGER_V1_GET_DATA_DEVICE,
+      &zwlr_data_control_device_v1_interface,
+      wl_proxy_get_version((struct wl_proxy *)zwlr_data_control_manager_v1), 0, NULL, seat);
 
-	return (struct zwlr_data_control_device_v1 *) id;
+  return (struct zwlr_data_control_device_v1 *)id;
 }
 
 /**
@@ -233,19 +232,19 @@ zwlr_data_control_manager_v1_get_data_device(struct zwlr_data_control_manager_v1
  * appropriate destroy request has been called.
  */
 static inline void
-zwlr_data_control_manager_v1_destroy(struct zwlr_data_control_manager_v1 *zwlr_data_control_manager_v1)
-{
-	wl_proxy_marshal_flags((struct wl_proxy *) zwlr_data_control_manager_v1,
-			 ZWLR_DATA_CONTROL_MANAGER_V1_DESTROY, NULL, wl_proxy_get_version((struct wl_proxy *) zwlr_data_control_manager_v1), WL_MARSHAL_FLAG_DESTROY);
+zwlr_data_control_manager_v1_destroy(struct zwlr_data_control_manager_v1 *zwlr_data_control_manager_v1) {
+  wl_proxy_marshal_flags(
+      (struct wl_proxy *)zwlr_data_control_manager_v1, ZWLR_DATA_CONTROL_MANAGER_V1_DESTROY, NULL,
+      wl_proxy_get_version((struct wl_proxy *)zwlr_data_control_manager_v1), WL_MARSHAL_FLAG_DESTROY);
 }
 
 #ifndef ZWLR_DATA_CONTROL_DEVICE_V1_ERROR_ENUM
 #define ZWLR_DATA_CONTROL_DEVICE_V1_ERROR_ENUM
 enum zwlr_data_control_device_v1_error {
-	/**
-	 * source given to set_selection or set_primary_selection was already used before
-	 */
-	ZWLR_DATA_CONTROL_DEVICE_V1_ERROR_USED_SOURCE = 1,
+  /**
+   * source given to set_selection or set_primary_selection was already used before
+   */
+  ZWLR_DATA_CONTROL_DEVICE_V1_ERROR_USED_SOURCE = 1,
 };
 #endif /* ZWLR_DATA_CONTROL_DEVICE_V1_ERROR_ENUM */
 
@@ -254,72 +253,68 @@ enum zwlr_data_control_device_v1_error {
  * @struct zwlr_data_control_device_v1_listener
  */
 struct zwlr_data_control_device_v1_listener {
-	/**
-	 * introduce a new wlr_data_control_offer
-	 *
-	 * The data_offer event introduces a new wlr_data_control_offer
-	 * object, which will subsequently be used in either the
-	 * wlr_data_control_device.selection event (for the regular
-	 * clipboard selections) or the
-	 * wlr_data_control_device.primary_selection event (for the primary
-	 * clipboard selections). Immediately following the
-	 * wlr_data_control_device.data_offer event, the new data_offer
-	 * object will send out wlr_data_control_offer.offer events to
-	 * describe the MIME types it offers.
-	 */
-	void (*data_offer)(void *data,
-			   struct zwlr_data_control_device_v1 *zwlr_data_control_device_v1,
-			   struct zwlr_data_control_offer_v1 *id);
-	/**
-	 * advertise new selection
-	 *
-	 * The selection event is sent out to notify the client of a new
-	 * wlr_data_control_offer for the selection for this device. The
-	 * wlr_data_control_device.data_offer and the
-	 * wlr_data_control_offer.offer events are sent out immediately
-	 * before this event to introduce the data offer object. The
-	 * selection event is sent to a client when a new selection is set.
-	 * The wlr_data_control_offer is valid until a new
-	 * wlr_data_control_offer or NULL is received. The client must
-	 * destroy the previous selection wlr_data_control_offer, if any,
-	 * upon receiving this event.
-	 *
-	 * The first selection event is sent upon binding the
-	 * wlr_data_control_device object.
-	 */
-	void (*selection)(void *data,
-			  struct zwlr_data_control_device_v1 *zwlr_data_control_device_v1,
-			  struct zwlr_data_control_offer_v1 *id);
-	/**
-	 * this data control is no longer valid
-	 *
-	 * This data control object is no longer valid and should be
-	 * destroyed by the client.
-	 */
-	void (*finished)(void *data,
-			 struct zwlr_data_control_device_v1 *zwlr_data_control_device_v1);
-	/**
-	 * advertise new primary selection
-	 *
-	 * The primary_selection event is sent out to notify the client
-	 * of a new wlr_data_control_offer for the primary selection for
-	 * this device. The wlr_data_control_device.data_offer and the
-	 * wlr_data_control_offer.offer events are sent out immediately
-	 * before this event to introduce the data offer object. The
-	 * primary_selection event is sent to a client when a new primary
-	 * selection is set. The wlr_data_control_offer is valid until a
-	 * new wlr_data_control_offer or NULL is received. The client must
-	 * destroy the previous primary selection wlr_data_control_offer,
-	 * if any, upon receiving this event.
-	 *
-	 * If the compositor supports primary selection, the first
-	 * primary_selection event is sent upon binding the
-	 * wlr_data_control_device object.
-	 * @since 2
-	 */
-	void (*primary_selection)(void *data,
-				  struct zwlr_data_control_device_v1 *zwlr_data_control_device_v1,
-				  struct zwlr_data_control_offer_v1 *id);
+  /**
+   * introduce a new wlr_data_control_offer
+   *
+   * The data_offer event introduces a new wlr_data_control_offer
+   * object, which will subsequently be used in either the
+   * wlr_data_control_device.selection event (for the regular
+   * clipboard selections) or the
+   * wlr_data_control_device.primary_selection event (for the primary
+   * clipboard selections). Immediately following the
+   * wlr_data_control_device.data_offer event, the new data_offer
+   * object will send out wlr_data_control_offer.offer events to
+   * describe the MIME types it offers.
+   */
+  void (*data_offer)(void *data, struct zwlr_data_control_device_v1 *zwlr_data_control_device_v1,
+                     struct zwlr_data_control_offer_v1 *id);
+  /**
+   * advertise new selection
+   *
+   * The selection event is sent out to notify the client of a new
+   * wlr_data_control_offer for the selection for this device. The
+   * wlr_data_control_device.data_offer and the
+   * wlr_data_control_offer.offer events are sent out immediately
+   * before this event to introduce the data offer object. The
+   * selection event is sent to a client when a new selection is set.
+   * The wlr_data_control_offer is valid until a new
+   * wlr_data_control_offer or NULL is received. The client must
+   * destroy the previous selection wlr_data_control_offer, if any,
+   * upon receiving this event.
+   *
+   * The first selection event is sent upon binding the
+   * wlr_data_control_device object.
+   */
+  void (*selection)(void *data, struct zwlr_data_control_device_v1 *zwlr_data_control_device_v1,
+                    struct zwlr_data_control_offer_v1 *id);
+  /**
+   * this data control is no longer valid
+   *
+   * This data control object is no longer valid and should be
+   * destroyed by the client.
+   */
+  void (*finished)(void *data, struct zwlr_data_control_device_v1 *zwlr_data_control_device_v1);
+  /**
+   * advertise new primary selection
+   *
+   * The primary_selection event is sent out to notify the client
+   * of a new wlr_data_control_offer for the primary selection for
+   * this device. The wlr_data_control_device.data_offer and the
+   * wlr_data_control_offer.offer events are sent out immediately
+   * before this event to introduce the data offer object. The
+   * primary_selection event is sent to a client when a new primary
+   * selection is set. The wlr_data_control_offer is valid until a
+   * new wlr_data_control_offer or NULL is received. The client must
+   * destroy the previous primary selection wlr_data_control_offer,
+   * if any, upon receiving this event.
+   *
+   * If the compositor supports primary selection, the first
+   * primary_selection event is sent upon binding the
+   * wlr_data_control_device object.
+   * @since 2
+   */
+  void (*primary_selection)(void *data, struct zwlr_data_control_device_v1 *zwlr_data_control_device_v1,
+                            struct zwlr_data_control_offer_v1 *id);
 };
 
 /**
@@ -327,10 +322,10 @@ struct zwlr_data_control_device_v1_listener {
  */
 static inline int
 zwlr_data_control_device_v1_add_listener(struct zwlr_data_control_device_v1 *zwlr_data_control_device_v1,
-					 const struct zwlr_data_control_device_v1_listener *listener, void *data)
-{
-	return wl_proxy_add_listener((struct wl_proxy *) zwlr_data_control_device_v1,
-				     (void (**)(void)) listener, data);
+                                         const struct zwlr_data_control_device_v1_listener *listener,
+                                         void *data) {
+  return wl_proxy_add_listener((struct wl_proxy *)zwlr_data_control_device_v1, (void (**)(void))listener,
+                               data);
 }
 
 #define ZWLR_DATA_CONTROL_DEVICE_V1_SET_SELECTION 0
@@ -369,22 +364,20 @@ zwlr_data_control_device_v1_add_listener(struct zwlr_data_control_device_v1 *zwl
 
 /** @ingroup iface_zwlr_data_control_device_v1 */
 static inline void
-zwlr_data_control_device_v1_set_user_data(struct zwlr_data_control_device_v1 *zwlr_data_control_device_v1, void *user_data)
-{
-	wl_proxy_set_user_data((struct wl_proxy *) zwlr_data_control_device_v1, user_data);
+zwlr_data_control_device_v1_set_user_data(struct zwlr_data_control_device_v1 *zwlr_data_control_device_v1,
+                                          void *user_data) {
+  wl_proxy_set_user_data((struct wl_proxy *)zwlr_data_control_device_v1, user_data);
 }
 
 /** @ingroup iface_zwlr_data_control_device_v1 */
 static inline void *
-zwlr_data_control_device_v1_get_user_data(struct zwlr_data_control_device_v1 *zwlr_data_control_device_v1)
-{
-	return wl_proxy_get_user_data((struct wl_proxy *) zwlr_data_control_device_v1);
+zwlr_data_control_device_v1_get_user_data(struct zwlr_data_control_device_v1 *zwlr_data_control_device_v1) {
+  return wl_proxy_get_user_data((struct wl_proxy *)zwlr_data_control_device_v1);
 }
 
 static inline uint32_t
-zwlr_data_control_device_v1_get_version(struct zwlr_data_control_device_v1 *zwlr_data_control_device_v1)
-{
-	return wl_proxy_get_version((struct wl_proxy *) zwlr_data_control_device_v1);
+zwlr_data_control_device_v1_get_version(struct zwlr_data_control_device_v1 *zwlr_data_control_device_v1) {
+  return wl_proxy_get_version((struct wl_proxy *)zwlr_data_control_device_v1);
 }
 
 /**
@@ -400,10 +393,11 @@ zwlr_data_control_device_v1_get_version(struct zwlr_data_control_device_v1 *zwlr
  * To unset the selection, set the source to NULL.
  */
 static inline void
-zwlr_data_control_device_v1_set_selection(struct zwlr_data_control_device_v1 *zwlr_data_control_device_v1, struct zwlr_data_control_source_v1 *source)
-{
-	wl_proxy_marshal_flags((struct wl_proxy *) zwlr_data_control_device_v1,
-			 ZWLR_DATA_CONTROL_DEVICE_V1_SET_SELECTION, NULL, wl_proxy_get_version((struct wl_proxy *) zwlr_data_control_device_v1), 0, source);
+zwlr_data_control_device_v1_set_selection(struct zwlr_data_control_device_v1 *zwlr_data_control_device_v1,
+                                          struct zwlr_data_control_source_v1 *source) {
+  wl_proxy_marshal_flags((struct wl_proxy *)zwlr_data_control_device_v1,
+                         ZWLR_DATA_CONTROL_DEVICE_V1_SET_SELECTION, NULL,
+                         wl_proxy_get_version((struct wl_proxy *)zwlr_data_control_device_v1), 0, source);
 }
 
 /**
@@ -412,10 +406,10 @@ zwlr_data_control_device_v1_set_selection(struct zwlr_data_control_device_v1 *zw
  * Destroys the data device object.
  */
 static inline void
-zwlr_data_control_device_v1_destroy(struct zwlr_data_control_device_v1 *zwlr_data_control_device_v1)
-{
-	wl_proxy_marshal_flags((struct wl_proxy *) zwlr_data_control_device_v1,
-			 ZWLR_DATA_CONTROL_DEVICE_V1_DESTROY, NULL, wl_proxy_get_version((struct wl_proxy *) zwlr_data_control_device_v1), WL_MARSHAL_FLAG_DESTROY);
+zwlr_data_control_device_v1_destroy(struct zwlr_data_control_device_v1 *zwlr_data_control_device_v1) {
+  wl_proxy_marshal_flags((struct wl_proxy *)zwlr_data_control_device_v1, ZWLR_DATA_CONTROL_DEVICE_V1_DESTROY,
+                         NULL, wl_proxy_get_version((struct wl_proxy *)zwlr_data_control_device_v1),
+                         WL_MARSHAL_FLAG_DESTROY);
 }
 
 /**
@@ -433,20 +427,21 @@ zwlr_data_control_device_v1_destroy(struct zwlr_data_control_device_v1 *zwlr_dat
  * The compositor will ignore this request if it does not support primary
  * selection.
  */
-static inline void
-zwlr_data_control_device_v1_set_primary_selection(struct zwlr_data_control_device_v1 *zwlr_data_control_device_v1, struct zwlr_data_control_source_v1 *source)
-{
-	wl_proxy_marshal_flags((struct wl_proxy *) zwlr_data_control_device_v1,
-			 ZWLR_DATA_CONTROL_DEVICE_V1_SET_PRIMARY_SELECTION, NULL, wl_proxy_get_version((struct wl_proxy *) zwlr_data_control_device_v1), 0, source);
+static inline void zwlr_data_control_device_v1_set_primary_selection(
+    struct zwlr_data_control_device_v1 *zwlr_data_control_device_v1,
+    struct zwlr_data_control_source_v1 *source) {
+  wl_proxy_marshal_flags((struct wl_proxy *)zwlr_data_control_device_v1,
+                         ZWLR_DATA_CONTROL_DEVICE_V1_SET_PRIMARY_SELECTION, NULL,
+                         wl_proxy_get_version((struct wl_proxy *)zwlr_data_control_device_v1), 0, source);
 }
 
 #ifndef ZWLR_DATA_CONTROL_SOURCE_V1_ERROR_ENUM
 #define ZWLR_DATA_CONTROL_SOURCE_V1_ERROR_ENUM
 enum zwlr_data_control_source_v1_error {
-	/**
-	 * offer sent after wlr_data_control_device.set_selection
-	 */
-	ZWLR_DATA_CONTROL_SOURCE_V1_ERROR_INVALID_OFFER = 1,
+  /**
+   * offer sent after wlr_data_control_device.set_selection
+   */
+  ZWLR_DATA_CONTROL_SOURCE_V1_ERROR_INVALID_OFFER = 1,
 };
 #endif /* ZWLR_DATA_CONTROL_SOURCE_V1_ERROR_ENUM */
 
@@ -455,29 +450,26 @@ enum zwlr_data_control_source_v1_error {
  * @struct zwlr_data_control_source_v1_listener
  */
 struct zwlr_data_control_source_v1_listener {
-	/**
-	 * send the data
-	 *
-	 * Request for data from the client. Send the data as the
-	 * specified MIME type over the passed file descriptor, then close
-	 * it.
-	 * @param mime_type MIME type for the data
-	 * @param fd file descriptor for the data
-	 */
-	void (*send)(void *data,
-		     struct zwlr_data_control_source_v1 *zwlr_data_control_source_v1,
-		     const char *mime_type,
-		     int32_t fd);
-	/**
-	 * selection was cancelled
-	 *
-	 * This data source is no longer valid. The data source has been
-	 * replaced by another data source.
-	 *
-	 * The client should clean up and destroy this data source.
-	 */
-	void (*cancelled)(void *data,
-			  struct zwlr_data_control_source_v1 *zwlr_data_control_source_v1);
+  /**
+   * send the data
+   *
+   * Request for data from the client. Send the data as the
+   * specified MIME type over the passed file descriptor, then close
+   * it.
+   * @param mime_type MIME type for the data
+   * @param fd file descriptor for the data
+   */
+  void (*send)(void *data, struct zwlr_data_control_source_v1 *zwlr_data_control_source_v1,
+               const char *mime_type, int32_t fd);
+  /**
+   * selection was cancelled
+   *
+   * This data source is no longer valid. The data source has been
+   * replaced by another data source.
+   *
+   * The client should clean up and destroy this data source.
+   */
+  void (*cancelled)(void *data, struct zwlr_data_control_source_v1 *zwlr_data_control_source_v1);
 };
 
 /**
@@ -485,10 +477,10 @@ struct zwlr_data_control_source_v1_listener {
  */
 static inline int
 zwlr_data_control_source_v1_add_listener(struct zwlr_data_control_source_v1 *zwlr_data_control_source_v1,
-					 const struct zwlr_data_control_source_v1_listener *listener, void *data)
-{
-	return wl_proxy_add_listener((struct wl_proxy *) zwlr_data_control_source_v1,
-				     (void (**)(void)) listener, data);
+                                         const struct zwlr_data_control_source_v1_listener *listener,
+                                         void *data) {
+  return wl_proxy_add_listener((struct wl_proxy *)zwlr_data_control_source_v1, (void (**)(void))listener,
+                               data);
 }
 
 #define ZWLR_DATA_CONTROL_SOURCE_V1_OFFER 0
@@ -514,22 +506,20 @@ zwlr_data_control_source_v1_add_listener(struct zwlr_data_control_source_v1 *zwl
 
 /** @ingroup iface_zwlr_data_control_source_v1 */
 static inline void
-zwlr_data_control_source_v1_set_user_data(struct zwlr_data_control_source_v1 *zwlr_data_control_source_v1, void *user_data)
-{
-	wl_proxy_set_user_data((struct wl_proxy *) zwlr_data_control_source_v1, user_data);
+zwlr_data_control_source_v1_set_user_data(struct zwlr_data_control_source_v1 *zwlr_data_control_source_v1,
+                                          void *user_data) {
+  wl_proxy_set_user_data((struct wl_proxy *)zwlr_data_control_source_v1, user_data);
 }
 
 /** @ingroup iface_zwlr_data_control_source_v1 */
 static inline void *
-zwlr_data_control_source_v1_get_user_data(struct zwlr_data_control_source_v1 *zwlr_data_control_source_v1)
-{
-	return wl_proxy_get_user_data((struct wl_proxy *) zwlr_data_control_source_v1);
+zwlr_data_control_source_v1_get_user_data(struct zwlr_data_control_source_v1 *zwlr_data_control_source_v1) {
+  return wl_proxy_get_user_data((struct wl_proxy *)zwlr_data_control_source_v1);
 }
 
 static inline uint32_t
-zwlr_data_control_source_v1_get_version(struct zwlr_data_control_source_v1 *zwlr_data_control_source_v1)
-{
-	return wl_proxy_get_version((struct wl_proxy *) zwlr_data_control_source_v1);
+zwlr_data_control_source_v1_get_version(struct zwlr_data_control_source_v1 *zwlr_data_control_source_v1) {
+  return wl_proxy_get_version((struct wl_proxy *)zwlr_data_control_source_v1);
 }
 
 /**
@@ -542,10 +532,11 @@ zwlr_data_control_source_v1_get_version(struct zwlr_data_control_source_v1 *zwlr
  * error.
  */
 static inline void
-zwlr_data_control_source_v1_offer(struct zwlr_data_control_source_v1 *zwlr_data_control_source_v1, const char *mime_type)
-{
-	wl_proxy_marshal_flags((struct wl_proxy *) zwlr_data_control_source_v1,
-			 ZWLR_DATA_CONTROL_SOURCE_V1_OFFER, NULL, wl_proxy_get_version((struct wl_proxy *) zwlr_data_control_source_v1), 0, mime_type);
+zwlr_data_control_source_v1_offer(struct zwlr_data_control_source_v1 *zwlr_data_control_source_v1,
+                                  const char *mime_type) {
+  wl_proxy_marshal_flags((struct wl_proxy *)zwlr_data_control_source_v1, ZWLR_DATA_CONTROL_SOURCE_V1_OFFER,
+                         NULL, wl_proxy_get_version((struct wl_proxy *)zwlr_data_control_source_v1), 0,
+                         mime_type);
 }
 
 /**
@@ -554,10 +545,10 @@ zwlr_data_control_source_v1_offer(struct zwlr_data_control_source_v1 *zwlr_data_
  * Destroys the data source object.
  */
 static inline void
-zwlr_data_control_source_v1_destroy(struct zwlr_data_control_source_v1 *zwlr_data_control_source_v1)
-{
-	wl_proxy_marshal_flags((struct wl_proxy *) zwlr_data_control_source_v1,
-			 ZWLR_DATA_CONTROL_SOURCE_V1_DESTROY, NULL, wl_proxy_get_version((struct wl_proxy *) zwlr_data_control_source_v1), WL_MARSHAL_FLAG_DESTROY);
+zwlr_data_control_source_v1_destroy(struct zwlr_data_control_source_v1 *zwlr_data_control_source_v1) {
+  wl_proxy_marshal_flags((struct wl_proxy *)zwlr_data_control_source_v1, ZWLR_DATA_CONTROL_SOURCE_V1_DESTROY,
+                         NULL, wl_proxy_get_version((struct wl_proxy *)zwlr_data_control_source_v1),
+                         WL_MARSHAL_FLAG_DESTROY);
 }
 
 /**
@@ -565,16 +556,15 @@ zwlr_data_control_source_v1_destroy(struct zwlr_data_control_source_v1 *zwlr_dat
  * @struct zwlr_data_control_offer_v1_listener
  */
 struct zwlr_data_control_offer_v1_listener {
-	/**
-	 * advertise offered MIME type
-	 *
-	 * Sent immediately after creating the wlr_data_control_offer
-	 * object. One event per offered MIME type.
-	 * @param mime_type offered MIME type
-	 */
-	void (*offer)(void *data,
-		      struct zwlr_data_control_offer_v1 *zwlr_data_control_offer_v1,
-		      const char *mime_type);
+  /**
+   * advertise offered MIME type
+   *
+   * Sent immediately after creating the wlr_data_control_offer
+   * object. One event per offered MIME type.
+   * @param mime_type offered MIME type
+   */
+  void (*offer)(void *data, struct zwlr_data_control_offer_v1 *zwlr_data_control_offer_v1,
+                const char *mime_type);
 };
 
 /**
@@ -582,10 +572,10 @@ struct zwlr_data_control_offer_v1_listener {
  */
 static inline int
 zwlr_data_control_offer_v1_add_listener(struct zwlr_data_control_offer_v1 *zwlr_data_control_offer_v1,
-					const struct zwlr_data_control_offer_v1_listener *listener, void *data)
-{
-	return wl_proxy_add_listener((struct wl_proxy *) zwlr_data_control_offer_v1,
-				     (void (**)(void)) listener, data);
+                                        const struct zwlr_data_control_offer_v1_listener *listener,
+                                        void *data) {
+  return wl_proxy_add_listener((struct wl_proxy *)zwlr_data_control_offer_v1, (void (**)(void))listener,
+                               data);
 }
 
 #define ZWLR_DATA_CONTROL_OFFER_V1_RECEIVE 0
@@ -607,22 +597,20 @@ zwlr_data_control_offer_v1_add_listener(struct zwlr_data_control_offer_v1 *zwlr_
 
 /** @ingroup iface_zwlr_data_control_offer_v1 */
 static inline void
-zwlr_data_control_offer_v1_set_user_data(struct zwlr_data_control_offer_v1 *zwlr_data_control_offer_v1, void *user_data)
-{
-	wl_proxy_set_user_data((struct wl_proxy *) zwlr_data_control_offer_v1, user_data);
+zwlr_data_control_offer_v1_set_user_data(struct zwlr_data_control_offer_v1 *zwlr_data_control_offer_v1,
+                                         void *user_data) {
+  wl_proxy_set_user_data((struct wl_proxy *)zwlr_data_control_offer_v1, user_data);
 }
 
 /** @ingroup iface_zwlr_data_control_offer_v1 */
 static inline void *
-zwlr_data_control_offer_v1_get_user_data(struct zwlr_data_control_offer_v1 *zwlr_data_control_offer_v1)
-{
-	return wl_proxy_get_user_data((struct wl_proxy *) zwlr_data_control_offer_v1);
+zwlr_data_control_offer_v1_get_user_data(struct zwlr_data_control_offer_v1 *zwlr_data_control_offer_v1) {
+  return wl_proxy_get_user_data((struct wl_proxy *)zwlr_data_control_offer_v1);
 }
 
 static inline uint32_t
-zwlr_data_control_offer_v1_get_version(struct zwlr_data_control_offer_v1 *zwlr_data_control_offer_v1)
-{
-	return wl_proxy_get_version((struct wl_proxy *) zwlr_data_control_offer_v1);
+zwlr_data_control_offer_v1_get_version(struct zwlr_data_control_offer_v1 *zwlr_data_control_offer_v1) {
+  return wl_proxy_get_version((struct wl_proxy *)zwlr_data_control_offer_v1);
 }
 
 /**
@@ -640,10 +628,11 @@ zwlr_data_control_offer_v1_get_version(struct zwlr_data_control_offer_v1 *zwlr_d
  * This request may happen multiple times for different MIME types.
  */
 static inline void
-zwlr_data_control_offer_v1_receive(struct zwlr_data_control_offer_v1 *zwlr_data_control_offer_v1, const char *mime_type, int32_t fd)
-{
-	wl_proxy_marshal_flags((struct wl_proxy *) zwlr_data_control_offer_v1,
-			 ZWLR_DATA_CONTROL_OFFER_V1_RECEIVE, NULL, wl_proxy_get_version((struct wl_proxy *) zwlr_data_control_offer_v1), 0, mime_type, fd);
+zwlr_data_control_offer_v1_receive(struct zwlr_data_control_offer_v1 *zwlr_data_control_offer_v1,
+                                   const char *mime_type, int32_t fd) {
+  wl_proxy_marshal_flags((struct wl_proxy *)zwlr_data_control_offer_v1, ZWLR_DATA_CONTROL_OFFER_V1_RECEIVE,
+                         NULL, wl_proxy_get_version((struct wl_proxy *)zwlr_data_control_offer_v1), 0,
+                         mime_type, fd);
 }
 
 /**
@@ -652,13 +641,13 @@ zwlr_data_control_offer_v1_receive(struct zwlr_data_control_offer_v1 *zwlr_data_
  * Destroys the data offer object.
  */
 static inline void
-zwlr_data_control_offer_v1_destroy(struct zwlr_data_control_offer_v1 *zwlr_data_control_offer_v1)
-{
-	wl_proxy_marshal_flags((struct wl_proxy *) zwlr_data_control_offer_v1,
-			 ZWLR_DATA_CONTROL_OFFER_V1_DESTROY, NULL, wl_proxy_get_version((struct wl_proxy *) zwlr_data_control_offer_v1), WL_MARSHAL_FLAG_DESTROY);
+zwlr_data_control_offer_v1_destroy(struct zwlr_data_control_offer_v1 *zwlr_data_control_offer_v1) {
+  wl_proxy_marshal_flags((struct wl_proxy *)zwlr_data_control_offer_v1, ZWLR_DATA_CONTROL_OFFER_V1_DESTROY,
+                         NULL, wl_proxy_get_version((struct wl_proxy *)zwlr_data_control_offer_v1),
+                         WL_MARSHAL_FLAG_DESTROY);
 }
 
-#ifdef  __cplusplus
+#ifdef __cplusplus
 }
 #endif
 

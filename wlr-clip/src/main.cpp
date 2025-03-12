@@ -1,0 +1,93 @@
+#include <cstdint>
+#include <cstdio>
+#include <cstring>
+#include <iostream>
+#include <iostream>
+#include <memory>
+#include <ostream>
+#include <stdexcept>
+#include <sys/syscall.h>
+#include <unistd.h>
+#include <vector>
+#include <wayland-client-core.h>
+#include <wayland-client-protocol.h>
+#include <wayland-util.h>
+#include "data-control-client.hpp"
+#include "display.hpp"
+#include "proto.hpp"
+#include "wayland-wlr-data-control-client-protocol.h"
+
+class Clipman : public WaylandDisplay,
+                public WaylandRegistry::Listener,
+                public DataControlManager::DataDevice::Listener {
+  std::unique_ptr<WaylandRegistry> _registry;
+  std::unique_ptr<DataControlManager> _dcm;
+  std::unique_ptr<WaylandSeat> _seat;
+
+  void global(WaylandRegistry &reg, uint32_t name, const char *interface, uint32_t version) override {
+    if (strcmp(interface, zwlr_data_control_manager_v1_interface.name) == 0) {
+      auto manager = reg.bind<zwlr_data_control_manager_v1>(name, &zwlr_data_control_manager_v1_interface,
+                                                            std::min(version, 1u));
+      _dcm = std::make_unique<DataControlManager>(manager);
+    }
+
+    if (strcmp(interface, wl_seat_interface.name) == 0) {
+      _seat =
+          std::make_unique<WaylandSeat>(reg.bind<wl_seat>(name, &wl_seat_interface, std::min(version, 1u)));
+    }
+  }
+
+  void selection(DataControlManager::DataDevice &device,
+                 DataControlManager::DataDevice::DataOffer &offer) override {
+    if (isatty(STDOUT_FILENO)) {
+      std::cerr << "********** " << "BEGIN SELECTION" << "**********" << std::endl;
+      for (const auto &mime : offer.mimes()) {
+        auto data = offer.receive(*this, mime);
+
+        std::cerr << mime << " (" << data.size() << " bytes)" << std::endl;
+      }
+      std::cerr << "********** " << "END SELECTION" << "**********" << std::endl;
+    } else {
+      Proto::Array args{"selection"};
+      Proto::Marshaler marshaler;
+      Proto::Array offers;
+
+      for (const auto &mime : offer.mimes()) {
+        Proto::Dict offerData;
+
+        offerData["data"] = offer.receive(*this, mime);
+        offerData["mime_type"] = mime;
+        offers.push_back(offerData);
+      }
+
+      args.push_back(offers);
+      auto message = marshaler.marshalSized(args);
+
+      write(STDOUT_FILENO, message.data(), message.size());
+    }
+  }
+
+public:
+  Clipman() : _dcm(nullptr), _seat(nullptr) {
+    _registry = registry();
+    _registry->addListener(this);
+  }
+
+  void run() {
+    roundtrip();
+
+    if (!_dcm) { throw std::runtime_error("zwlr data control is not available"); }
+    if (!_seat) { throw std::runtime_error("seat is not available"); }
+
+    auto dev = _dcm->getDataDevice(*_seat.get());
+    dev->registerListener(this);
+
+    while (dispatch() != -1) {}
+  }
+};
+
+int main() {
+  Clipman clipman;
+
+  clipman.run();
+}
