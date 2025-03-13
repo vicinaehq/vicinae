@@ -35,7 +35,7 @@ class ClipboardItemDetail : public OmniListView::MetadataDetailModel {
   QWidget *createView() const override {
     auto widget = new QWidget();
 
-    if (entry.mimeType == "text/plain") {
+    if (entry.mimeType.startsWith("text/plain")) {
       auto container = new TextContainer;
       auto viewer = new TextFileViewer();
 
@@ -43,6 +43,20 @@ class ClipboardItemDetail : public OmniListView::MetadataDetailModel {
       viewer->load(entry.filePath);
 
       return container;
+    }
+
+    if (entry.mimeType.startsWith("image/")) {
+      auto w = new QWidget;
+      auto l = new QVBoxLayout;
+      w->setLayout(l);
+
+      auto icon = new OmniIcon;
+
+      icon->setUrl(LocalOmniIconUrl(entry.filePath));
+
+      l->addWidget(icon, 0, Qt::AlignCenter);
+
+      return w;
     }
 
     return widget;
@@ -107,11 +121,17 @@ public:
     return {new CopyTextAction("Copy preview", info.textPreview), pin};
   }
 
+  OmniIconUrl iconForMime(const QString &mime) const {
+    if (info.mimeType.startsWith("text/")) { return BuiltinOmniIconUrl("text"); }
+    if (info.mimeType.startsWith("image/")) { return BuiltinOmniIconUrl("image"); }
+    return BuiltinOmniIconUrl("text");
+  }
+
   const QString &name() const { return info.textPreview; }
 
   void setPinCallback(const std::function<void(int)> &cb) { _pinCallback = cb; }
 
-  ItemData data() const override { return {.iconUrl = BuiltinOmniIconUrl("text"), .name = info.textPreview}; }
+  ItemData data() const override { return {.iconUrl = iconForMime(info.mimeType), .name = info.textPreview}; }
 
   QWidget *generateDetail() const override {
     auto detail = std::make_unique<ClipboardItemDetail>(info);

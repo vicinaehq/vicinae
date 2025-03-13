@@ -34,8 +34,6 @@ struct ClipboardHistoryEntry {
   QString filePath;
 };
 
-enum SelectionPriority { Other, HtmlText, Text, GenericImage, ImageJpeg, ImagePng, ImageSvg };
-
 class ClipboardService : public QObject, public NonAssignable {
   Q_OBJECT
   QSqlDatabase db;
@@ -44,6 +42,7 @@ class ClipboardService : public QObject, public NonAssignable {
   QDir _data_dir;
 
   std::string getSelectionPreferredMimeType(const ClipboardSelection &selection) const;
+  QString createTextPreview(const QByteArray &data, int maxLength = 50) const;
 
 public:
   ClipboardService(const QString &path);

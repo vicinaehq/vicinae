@@ -1,5 +1,7 @@
 #include "clipboard-service.hpp"
 #include "clipboard-manager.hpp"
+#include <algorithm>
+#include <cstdint>
 #include <filesystem>
 #include <numbers>
 #include <qbytearrayview.h>
@@ -16,9 +18,9 @@ bool ClipboardService::setPinned(int id, bool pinned) {
   QSqlQuery query(db);
 
   if (pinned) {
-    query.prepare("UPDATE history SET pinned_at = unixepoch() WHERE id = :id");
+    query.prepare("UPDATE selection SET pinned_at = unixepoch() WHERE id = :id");
   } else {
-    query.prepare("UPDATE history SET pinned_at = NULL WHERE id = :id");
+    query.prepare("UPDATE selection SET pinned_at = NULL WHERE id = :id");
   }
 
   query.bindValue(":id", id);
@@ -153,7 +155,7 @@ std::vector<ClipboardHistoryEntry> ClipboardService::collectedSearch(const QStri
 PaginatedResponse<ClipboardHistoryEntry> ClipboardService::listAll(int limit, int offset) const {
   QSqlQuery query(db);
 
-  if (!query.exec("SELECT COUNT(*) FROM history;") || !query.next()) { return {}; }
+  if (!query.exec("SELECT COUNT(*) FROM selection;") || !query.next()) { return {}; }
 
   PaginatedResponse<ClipboardHistoryEntry> response;
 
@@ -164,9 +166,15 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardService::listAll(int limit, in
 
   query.prepare(R"(
 	  	SELECT
-			id, mime_type, text_preview, pinned_at, content_hash_md5, created_at
+			selection.id, o.mime_type, o.text_preview, pinned_at, o.content_hash_md5, created_at
 		FROM
-			history
+			selection
+		JOIN
+			data_offer o
+		ON 
+			o.selection_id = selection.id
+		AND
+			o.mime_type = selection.preferred_mime_type
 		ORDER BY 
 			pinned_at DESC,
 			created_at DESC
@@ -176,7 +184,10 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardService::listAll(int limit, in
   query.bindValue(":limit", limit);
   query.bindValue(":offset", offset);
 
-  if (!query.exec()) { return {}; }
+  if (!query.exec()) {
+    qDebug() << "Failed to listall clipboard items" << query.lastError();
+    return {};
+  }
 
   while (query.next()) {
     auto sum = query.value(4).toString();
@@ -202,7 +213,16 @@ struct TransformedSelection {
 };
 
 std::string ClipboardService::getSelectionPreferredMimeType(const ClipboardSelection &selection) const {
-  enum SelectionPriority { Other, HtmlText, Text, GenericImage, ImageJpeg, ImagePng, ImageSvg } priority;
+  enum SelectionPriority {
+    Invalid,
+    Other,
+    HtmlText,
+    Text,
+    GenericImage,
+    ImageJpeg,
+    ImagePng,
+    ImageSvg
+  } priority = Invalid;
   std::string preferredMimeType;
 
   for (const auto &offer : selection.offers) {
@@ -237,10 +257,34 @@ std::string ClipboardService::getSelectionPreferredMimeType(const ClipboardSelec
   return preferredMimeType;
 }
 
+QString ClipboardService::createTextPreview(const QByteArray &data, int maxLength) const {
+  auto s = QString(data).trimmed();
+  QString preview;
+
+  preview.reserve(maxLength);
+
+  bool wasSpace = false;
+
+  for (int i = 0; i < s.size() && preview.size() < maxLength; ++i) {
+    auto c = s.at(i);
+
+    if (c.isSpace()) {
+      if (!wasSpace) { preview.append(' '); }
+    } else {
+      preview.append(c);
+    }
+
+    wasSpace = c.isSpace();
+  }
+
+  return preview;
+}
+
 void ClipboardService::saveSelection(const ClipboardSelection &selection) {
   std::vector<TransformedSelection> transformedOffers;
   char buf[1 << 16];
   QCryptographicHash selectionHash(QCryptographicHash::Md5);
+  uint64_t totalLength = 0;
 
   transformedOffers.reserve(selection.offers.size());
 
@@ -258,6 +302,7 @@ void ClipboardService::saveSelection(const ClipboardSelection &selection) {
 
     while ((rc = file.read(buf, sizeof(buf))) > 0) {
       fileHash.addData(QByteArrayView(buf, rc));
+      totalLength += rc;
     }
 
     auto md5sum = fileHash.result();
@@ -277,19 +322,31 @@ void ClipboardService::saveSelection(const ClipboardSelection &selection) {
     transformedOffers.push_back(selection);
   }
 
-  bool isLastSelection = false;
+  // probably a clipboard clear
+  if (totalLength == 0) {
+    qDebug() << "skipped clipboard clear";
+    return;
+  }
 
-  // TODO: check last inserted selection hash, do not go forward if it's identical to the current one
-
-  std::string preferredMimeType = getSelectionPreferredMimeType(selection);
-  std::vector<InsertClipboardHistoryLine> dbOffers;
+  auto selectionSum = selectionHash.result().toHex();
 
   if (!db.transaction()) {
-    qDebug() << "Failed to create transaction";
+    qDebug() << "Failed to create transaction" << db.lastError();
     return;
   }
 
   QSqlQuery query(db);
+
+  query.exec("SELECT hash_md5 FROM selection ORDER BY created_at DESC LIMIT 1");
+
+  if (query.next() && query.value(0).toString() == selectionSum) {
+    qDebug() << "ignored immediate clip duplicate";
+    db.rollback();
+    return;
+  }
+
+  std::string preferredMimeType = getSelectionPreferredMimeType(selection);
+  std::vector<InsertClipboardHistoryLine> dbOffers;
 
   query.prepare(R"(
   	INSERT INTO selection (hash_md5, preferred_mime_type)
@@ -301,11 +358,13 @@ void ClipboardService::saveSelection(const ClipboardSelection &selection) {
 
   if (!query.exec()) {
     qDebug() << "Failed to selection";
+    db.rollback();
     return;
   }
 
   if (!query.next()) {
     qDebug() << "Failed to get row";
+    db.rollback();
     return;
   }
 
@@ -321,7 +380,19 @@ void ClipboardService::saveSelection(const ClipboardSelection &selection) {
 
       auto data = file.readAll();
 
-      textPreview = data.sliced(0, 20);
+      textPreview = createTextPreview(data, 50);
+      query.prepare(R"(
+		INSERT INTO selection_fts (selection_id, content) VALUES (:selection_id, :content);
+	)");
+      query.bindValue(":selection_id", selectionId);
+      query.bindValue(":content", data);
+
+      if (!query.exec()) {
+        qDebug() << "failed to index text" << query.lastError();
+        db.rollback();
+        return;
+      }
+
       // TODO: index text for selection
     }
 
@@ -334,7 +405,7 @@ void ClipboardService::saveSelection(const ClipboardSelection &selection) {
         textPreview = "Image";
       }
     } else {
-      textPreview = "Binary data";
+      textPreview = "Unnamed";
     }
 
     query.prepare(R"(
@@ -344,9 +415,12 @@ void ClipboardService::saveSelection(const ClipboardSelection &selection) {
     query.bindValue(":selection_id", selectionId);
     query.bindValue(":mime_type", offer.mimeType);
     query.bindValue(":text_preview", textPreview);
-    query.bindValue(":content_hash_md5", offer.mimeType);
+    query.bindValue(":content_hash_md5", offer.md5sum);
 
-    if (!query.exec()) { return; }
+    if (!query.exec()) {
+      db.rollback();
+      return;
+    }
 
     qDebug() << "inserted" << offer.mimeType << "for selection" << selectionId;
   }
@@ -390,9 +464,9 @@ ClipboardService::ClipboardService(const QString &path)
   )");
 
   query.exec(R"(
-		CREATE VIRTUAL TABLE history_fts USING fts5(
+		CREATE VIRTUAL TABLE selection_fts USING fts5(
 			content,
-			history_id,
+			selection_id,
 			tokenize='porter'
 		);
 	)");

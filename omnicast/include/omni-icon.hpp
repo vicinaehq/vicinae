@@ -18,6 +18,7 @@
 #include <qwidget.h>
 #include "favicon-fetcher.hpp"
 #include "theme.hpp"
+#include "timer.hpp"
 
 enum OmniIconType { Invalid, Builtin, Favicon, System, Http, Local };
 
@@ -201,10 +202,19 @@ public:
   }
 };
 
+class LocalOmniIconUrl : public OmniIconUrl {
+public:
+  LocalOmniIconUrl(const QString &path) : OmniIconUrl() {
+    setType(OmniIconType::Local);
+    setName(path);
+  }
+};
+
 class OmniIcon : public QWidget {
   Q_OBJECT
 
   QSvgRenderer renderer;
+  QPixmap _filePixmap;
   QPixmap _pixmap;
   OmniIconUrl _url;
 
@@ -217,7 +227,8 @@ class OmniIcon : public QWidget {
   }
 
   void resizeEvent(QResizeEvent *event) override {
-    QWidget::resizeEvent(event);
+    qDebug() << "resize omni icon" << event->size();
+    if (event->size().width() == 0 || event->size().height() == 0) { return; }
     recalculate();
   }
 
@@ -244,7 +255,15 @@ class OmniIcon : public QWidget {
     return {};
   }
 
+  QSize sizeHint() const override {
+    if (auto sz = _url.size(); sz.isValid()) { return sz; }
+    if (auto w = parentWidget(); w) { return w->size(); }
+
+    return {};
+  }
+
   void recalculate() {
+    qDebug() << "recalculate for size" << size();
     auto &theme = ThemeService::instance().theme();
     QPixmap canva(size());
     QPainter cp(&canva);
@@ -307,14 +326,36 @@ class OmniIcon : public QWidget {
 
       cp.drawPixmap(innerRect, svgPix);
       setPixmap(canva);
+      return;
     }
+
+    if (_url.type() == OmniIconType::Local) {
+      auto isz = innerRect.size();
+
+      Timer timer;
+      QPixmap scaled = _filePixmap.scaled(innerRect.size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+
+      int x = (isz.width() - scaled.width()) / 2;
+      int y = (isz.height() - scaled.height()) / 2;
+
+      qDebug() << "drawing" << scaled.size();
+
+      cp.drawPixmap(x, y, scaled);
+      timer.time("scaling pixmap");
+      updateGeometry();
+      setPixmap(canva);
+      return;
+    }
+
+    cp.drawPixmap(innerRect, _pixmap);
+    setPixmap(canva);
   }
 
   void paintEvent(QPaintEvent *event) override {
     QPainter painter(this);
 
     painter.setRenderHint(QPainter::Antialiasing, true);
-    painter.drawPixmap(rect(), _pixmap.scaled(size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    painter.drawPixmap(rect(), _pixmap);
   }
 
 public:
@@ -366,6 +407,23 @@ public:
       } else {
         recalculate();
       }
+      return;
+    }
+
+    if (type == OmniIconType::Local) {
+      Timer timer;
+      auto pix = QPixmap(url.name());
+
+      if (pix.isNull()) {
+        setDefaultIcon(iconSize);
+        return;
+      }
+
+      qDebug() << "loading local image" << url.name() << "size" << pix.size();
+
+      timer.time("create local pixmap");
+      _filePixmap = pix;
+
       return;
     }
 
