@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <fcntl.h>
+#include <filesystem>
 #include <netinet/in.h>
 #include <qlogging.h>
 #include <qobject.h>
@@ -14,7 +15,7 @@
 
 struct ClipboardDataOffer {
   std::string mimeType;
-  std::string data;
+  std::filesystem::path path;
 };
 
 struct ClipboardSelection {
@@ -51,10 +52,10 @@ class WlrClipboardManager : public AbstractClipboardManager {
 
       for (const auto &offer : offers) {
         auto dict = offer.asDict();
-        auto data = dict["data"].asString();
+        auto filePath = dict["file_path"].asString();
         auto mimeType = dict["mime_type"].asString();
 
-        selection.offers.push_back({mimeType, data});
+        selection.offers.push_back({mimeType, filePath});
 
         qDebug() << "WlrClipboardManager got" << mimeType;
       }

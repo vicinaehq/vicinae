@@ -1,6 +1,8 @@
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
+#include <iomanip>
 #include <iostream>
 #include <iostream>
 #include <memory>
@@ -40,13 +42,12 @@ class Clipman : public WaylandDisplay,
   void selection(DataControlManager::DataDevice &device,
                  DataControlManager::DataDevice::DataOffer &offer) override {
     if (isatty(STDOUT_FILENO)) {
-      std::cerr << "********** " << "BEGIN SELECTION" << "**********" << std::endl;
+      std::cout << "********** " << "BEGIN SELECTION" << "**********" << std::endl;
       for (const auto &mime : offer.mimes()) {
-        auto data = offer.receive(*this, mime);
-
-        std::cerr << mime << " (" << data.size() << " bytes)" << std::endl;
+        auto path = offer.receive(*this, mime);
+        std::cout << std::left << std::setw(30) << mime << path << std::endl;
       }
-      std::cerr << "********** " << "END SELECTION" << "**********" << std::endl;
+      std::cout << "********** " << "END SELECTION" << "**********" << std::endl;
     } else {
       Proto::Array args{"selection"};
       Proto::Marshaler marshaler;
@@ -55,7 +56,7 @@ class Clipman : public WaylandDisplay,
       for (const auto &mime : offer.mimes()) {
         Proto::Dict offerData;
 
-        offerData["data"] = offer.receive(*this, mime);
+        offerData["file_path"] = offer.receive(*this, mime).string();
         offerData["mime_type"] = mime;
         offers.push_back(offerData);
       }
@@ -82,7 +83,11 @@ public:
     auto dev = _dcm->getDataDevice(*_seat.get());
     dev->registerListener(this);
 
-    while (dispatch() != -1) {}
+    for (;;) {
+      try {
+        if (dispatch() == -1) { exit(1); }
+      } catch (const std::exception &e) { std::cerr << "Uncaught exception: " << e.what() << std::endl; }
+    }
   }
 };
 

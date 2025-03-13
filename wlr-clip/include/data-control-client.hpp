@@ -5,6 +5,7 @@
 #include "wayland-wlr-data-control-client-protocol.h"
 #include <memory>
 #include <string>
+#include <filesystem>
 #include <vector>
 
 class DataControlManager {
@@ -14,14 +15,21 @@ public:
     class DataOffer {
       zwlr_data_control_offer_v1 *_offer;
       std::vector<std::string> _mimes;
-      char _buf[8096];
+      char _buf[1 << 16];
 
     public:
       static void offer(void *data, zwlr_data_control_offer_v1 *offer, const char *mime);
 
       constexpr static struct zwlr_data_control_offer_v1_listener _listener = {.offer = offer};
 
-      std::vector<uint8_t> receive(const WaylandDisplay &display, const std::string &mime);
+      /**
+       * Receives the data associated with the specified mime type.
+       * The passing of the display is required to properly dispatch the receive request.
+       * Instead of the raw data itself, a path to a temporary file is returned.
+       * The caller is responsible for the cleaning of this file after they are done
+       * processing it.
+       */
+      std::filesystem::path receive(const WaylandDisplay &display, const std::string &mime);
       const std::vector<std::string> &mimes() const;
 
       DataOffer(zwlr_data_control_offer_v1 *offer);

@@ -18,6 +18,7 @@ set(SRCS
 	src/display.cpp
 	src/registry.cpp
 	src/seat.cpp
+	src/utils.cpp
 )
 
 add_executable(${TARGET} ${SRCS})

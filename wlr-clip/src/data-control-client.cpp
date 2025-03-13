@@ -1,9 +1,12 @@
 #include "data-control-client.hpp"
 #include "seat.hpp"
 #include "display.hpp"
+#include "utils.hpp"
 #include "wayland-wlr-data-control-client-protocol.h"
-#include <iostream>
-#include <ostream>
+#include <cstring>
+#include <filesystem>
+#include <fstream>
+#include <stdexcept>
 
 /* DataOffer */
 DataControlManager::DataDevice::DataOffer::DataOffer(zwlr_data_control_offer_v1 *offer) : _offer(offer) {
@@ -19,16 +22,18 @@ void DataControlManager::DataDevice::DataOffer::offer(void *data, zwlr_data_cont
   self->_mimes.push_back(mime);
 }
 
-std::vector<uint8_t>
+std::filesystem::path
 DataControlManager::DataDevice::DataOffer::DataOffer::receive(const WaylandDisplay &display,
                                                               const std::string &mime) {
   int pipefd[2];
-  std::vector<uint8_t> data;
+  auto filePath = std::filesystem::path("/tmp") / ("omni-wlr-clip-" + generateFileId());
+  std::ofstream file(filePath);
 
-  if (pipe(pipefd) == -1) {
-    perror("pipe() failed");
-    return {};
+  if (!file.is_open()) {
+    throw std::runtime_error(std::string("Failed to open file at ") + filePath.c_str());
   }
+
+  if (pipe(pipefd) == -1) { throw std::runtime_error(std::string("Failed to pipe(): ") + strerror(errno)); }
 
   zwlr_data_control_offer_v1_receive(_offer, mime.c_str(), pipefd[1]);
   // Important, otherwise we will block on read forever
@@ -38,14 +43,14 @@ DataControlManager::DataDevice::DataOffer::DataOffer::receive(const WaylandDispl
   int rc = 0;
 
   while ((rc = read(pipefd[0], _buf, sizeof(_buf))) > 0) {
-    data.insert(data.end(), std::begin(_buf), std::begin(_buf) + rc);
+    file.write(_buf, rc);
   }
 
   if (rc == -1) { perror("failed to read read end of the pipe"); }
 
   close(pipefd[0]);
 
-  return data;
+  return filePath;
 }
 
 DataControlManager::DataDevice::DataOffer::~DataOffer() {

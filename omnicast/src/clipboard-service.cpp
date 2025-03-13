@@ -1,4 +1,16 @@
 #include "clipboard-service.hpp"
+#include "clipboard-manager.hpp"
+#include <filesystem>
+#include <numbers>
+#include <qbytearrayview.h>
+#include <qcontainerfwd.h>
+#include <qcryptographichash.h>
+#include <qdir.h>
+#include <qevent.h>
+#include <qimagereader.h>
+#include <qlogging.h>
+#include <qsqlquery.h>
+#include <qtypes.h>
 
 bool ClipboardService::setPinned(int id, bool pinned) {
   QSqlQuery query(db);
@@ -183,12 +195,167 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardService::listAll(int limit, in
   return response;
 }
 
+struct TransformedSelection {
+  QString md5sum;
+  QString mimeType;
+  QString dataPath;
+};
+
+std::string ClipboardService::getSelectionPreferredMimeType(const ClipboardSelection &selection) const {
+  enum SelectionPriority { Other, HtmlText, Text, GenericImage, ImageJpeg, ImagePng, ImageSvg } priority;
+  std::string preferredMimeType;
+
+  for (const auto &offer : selection.offers) {
+    auto mimePriority = SelectionPriority::Other;
+
+    if (offer.mimeType.starts_with("text/")) {
+      if (offer.mimeType == "text/html") {
+        mimePriority = SelectionPriority::HtmlText;
+      } else if (offer.mimeType == "text/svg") {
+        mimePriority = SelectionPriority::ImageSvg;
+      } else {
+        mimePriority = SelectionPriority::Text;
+      }
+    } else if (offer.mimeType.starts_with("image/")) {
+      if (offer.mimeType == "image/jpg" || offer.mimeType == "image/jpeg") {
+        mimePriority = SelectionPriority::ImageJpeg;
+      } else if (offer.mimeType == "image/png") {
+        mimePriority = SelectionPriority::ImagePng;
+      } else {
+        mimePriority = SelectionPriority::GenericImage;
+      }
+    } else {
+      mimePriority = SelectionPriority::Other;
+    }
+
+    if (mimePriority > priority) {
+      priority = mimePriority;
+      preferredMimeType = offer.mimeType;
+    }
+  }
+
+  return preferredMimeType;
+}
+
 void ClipboardService::saveSelection(const ClipboardSelection &selection) {
-  qDebug() << "save selection of size" << selection.offers.size();
+  std::vector<TransformedSelection> transformedOffers;
+  char buf[1 << 16];
+  QCryptographicHash selectionHash(QCryptographicHash::Md5);
+
+  transformedOffers.reserve(selection.offers.size());
+
+  for (const auto &offer : selection.offers) {
+    TransformedSelection selection{.mimeType = offer.mimeType.c_str()};
+    QFile file(offer.path);
+
+    if (!file.open(QIODevice::ReadOnly)) {
+      qDebug() << "Unable to open file" << offer.path;
+      continue;
+    }
+
+    QCryptographicHash fileHash(QCryptographicHash::Md5);
+    quint64 rc = 0;
+
+    while ((rc = file.read(buf, sizeof(buf))) > 0) {
+      fileHash.addData(QByteArrayView(buf, rc));
+    }
+
+    auto md5sum = fileHash.result();
+    QFileInfo targetFile(_data_dir.filePath(md5sum.toHex()));
+
+    if (!targetFile.exists()) {
+      QFile::copy(offer.path.c_str(), targetFile.filePath());
+      qDebug() << "renamed" << offer.path << "to" << targetFile;
+    }
+
+    QFile::remove(offer.path);
+
+    selectionHash.addData(offer.mimeType);
+    selectionHash.addData(md5sum);
+    selection.dataPath = targetFile.filePath();
+    selection.md5sum = md5sum.toHex();
+    transformedOffers.push_back(selection);
+  }
+
+  bool isLastSelection = false;
+
+  // TODO: check last inserted selection hash, do not go forward if it's identical to the current one
+
+  std::string preferredMimeType = getSelectionPreferredMimeType(selection);
+  std::vector<InsertClipboardHistoryLine> dbOffers;
+
+  if (!db.transaction()) {
+    qDebug() << "Failed to create transaction";
+    return;
+  }
+
+  QSqlQuery query(db);
+
+  query.prepare(R"(
+  	INSERT INTO selection (hash_md5, preferred_mime_type)
+	VALUES (:hash_md5, :preferred_mime_type)
+	RETURNING id;
+  )");
+  query.bindValue(":hash_md5", selectionHash.result().toHex());
+  query.bindValue(":preferred_mime_type", preferredMimeType.c_str());
+
+  if (!query.exec()) {
+    qDebug() << "Failed to selection";
+    return;
+  }
+
+  if (!query.next()) {
+    qDebug() << "Failed to get row";
+    return;
+  }
+
+  int selectionId = query.value(0).toInt();
+
+  for (const auto &offer : transformedOffers) {
+    QString textPreview;
+
+    if (offer.mimeType.startsWith("text/")) {
+      QFile file(offer.dataPath);
+
+      if (!file.open(QIODevice::ReadOnly)) { return; }
+
+      auto data = file.readAll();
+
+      textPreview = data.sliced(0, 20);
+      // TODO: index text for selection
+    }
+
+    else if (offer.mimeType.startsWith("image/")) {
+      QImageReader reader(offer.dataPath);
+
+      if (auto size = reader.size(); size.isValid()) {
+        textPreview = QString("Image (%1x%2)").arg(size.width()).arg(size.height());
+      } else {
+        textPreview = "Image";
+      }
+    } else {
+      textPreview = "Binary data";
+    }
+
+    query.prepare(R"(
+		INSERT INTO data_offer (selection_id, mime_type, text_preview, content_hash_md5)
+		VALUES (:selection_id, :mime_type, :text_preview, :content_hash_md5)
+  	)");
+    query.bindValue(":selection_id", selectionId);
+    query.bindValue(":mime_type", offer.mimeType);
+    query.bindValue(":text_preview", textPreview);
+    query.bindValue(":content_hash_md5", offer.mimeType);
+
+    if (!query.exec()) { return; }
+
+    qDebug() << "inserted" << offer.mimeType << "for selection" << selectionId;
+  }
+
+  db.commit();
 }
 
 ClipboardService::ClipboardService(const QString &path)
-    : db(QSqlDatabase::addDatabase("QSQLITE")), _path(path),
+    : db(QSqlDatabase::addDatabase("QSQLITE", "clipboard")), _path(path),
       _data_dir(_path.dir().filePath("clipboard-data")) {
   db.setDatabaseName(path);
 
@@ -198,23 +365,29 @@ ClipboardService::ClipboardService(const QString &path)
 
   QSqlQuery query(db);
 
-  query.exec(R"(
-		CREATE TABLE IF NOT EXISTS selection (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			selection_hash_md5 TEXT NOT NULL,
-			preferred_mime_type TEXT NOT NULL,
-			source TEXT,
-			created_at INTEGER DEFAULT (unixepoch()),
-			pinned_at INTEGER DEFAULT 0
-		);
-
-		CREATE TABLE IF NOT EXISTS data_offer (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			mime_type TEXT NOT NULL,
-			text_preview TEXT,
-			content_hash_md5 TEXT NOT NULL,
-		)
+  bool exec = query.exec(R"(
+	CREATE TABLE IF NOT EXISTS selection (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		hash_md5 TEXT NOT NULL,
+		preferred_mime_type TEXT NOT NULL,
+		source TEXT,
+		created_at INTEGER DEFAULT (unixepoch()),
+		pinned_at INTEGER DEFAULT 0
+	);
 	)");
+
+  if (!exec) { throw std::runtime_error(query.lastError().databaseText().toUtf8().constData()); }
+
+  query.exec(R"(
+   CREATE TABLE IF NOT EXISTS data_offer (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		mime_type TEXT NOT NULL,
+		text_preview TEXT,
+		content_hash_md5 TEXT NOT NULL,
+		selection_id INTEGER,
+		FOREIGN KEY(selection_id) REFERENCES selection(id)
+	);
+  )");
 
   query.exec(R"(
 		CREATE VIRTUAL TABLE history_fts USING fts5(
@@ -223,6 +396,4 @@ ClipboardService::ClipboardService(const QString &path)
 			tokenize='porter'
 		);
 	)");
-
-  if (!query.exec()) { qDebug() << "Failed to execute initial query"; }
 }
