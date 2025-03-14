@@ -47,6 +47,7 @@ class ClipboardService : public QObject, public NonAssignable {
 public:
   ClipboardService(const QString &path);
 
+  bool removeSelection(int id);
   bool setPinned(int id, bool pinned);
   PaginatedResponse<ClipboardHistoryEntry> listAll(int limit = 100, int offset = 0) const;
   bool indexTextDocument(int id, const QByteArray &buf);

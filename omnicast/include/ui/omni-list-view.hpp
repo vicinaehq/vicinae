@@ -115,6 +115,8 @@ public:
         metadata->addItem(child);
       }
     }
+
+    ~SideDetailWidget() { qDebug() << "detail destroyed"; }
   };
 
   class IActionnable {

@@ -206,7 +206,8 @@ int main(int argc, char **argv) {
   auto family = QFontDatabase::applicationFontFamilies(fontId).at(0);
 
   QApplication::setApplicationName("omnicast");
-  QIcon::setThemeName("Papirus-Dark");
+  QIcon::setThemeName("Tela");
+  // QIcon::setThemeName("Colloid");
 
   /*
   qapp.setStyleSheet(QString(defaultStyleSheet)

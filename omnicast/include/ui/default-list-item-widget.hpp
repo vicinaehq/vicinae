@@ -10,10 +10,9 @@ class DefaultListItemWidget : public SelectableOmniListWidget {
 
 public:
   void setName(const QString &name);
-  void setIcon(const QString &name);
   void setCategory(const QString &category);
   void setKind(const QString &kind);
-  void setIconUrl(const OmniIconUrl &url) { _icon->setUrl(url); }
+  void setIconUrl(const OmniIconUrl &url);
 
   DefaultListItemWidget(const OmniIconUrl &iconUrl, const QString &name, const QString &category,
                         const QString &kind, QWidget *parent = nullptr);

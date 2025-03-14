@@ -32,7 +32,7 @@ public:
   std::shared_ptr<DesktopExecutable> app;
   bool isDefault;
 
-  QString icon() const override { return app->iconName(); }
+  OmniIconUrl icon() const override { return app->iconUrl(); }
 
   QString displayName() const override {
     QString name = app->fullyQualifiedName();
@@ -59,27 +59,20 @@ class IconSelectorItem : public AbstractFormDropdownItem {
 public:
   QString name;
   QString dname;
+  OmniIconUrl iconUrl;
 
-  QString icon() const override { return name; }
+  OmniIconUrl icon() const override { return iconUrl; }
 
-  QString displayName() const override {
-    if (!dname.isEmpty()) return dname;
-    auto ss = name.split('/');
+  QString displayName() const override { return iconUrl.name(); }
 
-    return ss.at(ss.size() - 1).split('.').at(0);
-  }
-
-  QString id() const override { return name; }
+  QString id() const override { return iconUrl.toString(); }
 
   void setDisplayName(const QString &name) { this->dname = name; }
 
-  void setIcon(const QString &icon) {
-    qDebug() << "set icon to " << icon << "from" << this->name;
-    this->name = icon;
-  }
+  void setIcon(const OmniIconUrl &url) { this->iconUrl = url; }
 
-  IconSelectorItem(const QString &iconName, const QString &displayName = "")
-      : name(iconName), dname(displayName) {}
+  IconSelectorItem(const OmniIconUrl &url, const QString &displayName = "")
+      : dname(displayName), iconUrl(url) {}
 };
 
 class DefaultIconSelectorItem : public IconSelectorItem {
@@ -87,8 +80,8 @@ class DefaultIconSelectorItem : public IconSelectorItem {
   QString displayName() const override { return "Default"; }
 
 public:
-  DefaultIconSelectorItem(const QString &iconName, const QString &displayName = "")
-      : IconSelectorItem(iconName, displayName) {}
+  DefaultIconSelectorItem(const OmniIconUrl &url, const QString &displayName = "")
+      : IconSelectorItem(url, displayName) {}
 };
 
 class QuicklinkCommandView : public View {
@@ -182,10 +175,10 @@ public:
     appSelector->setValue("default");
 
     iconSelector->beginUpdate();
-    iconSelector->addItem(std::make_unique<DefaultIconSelectorItem>(":icons/link.svg", "Default"));
+    iconSelector->addItem(std::make_unique<DefaultIconSelectorItem>(BuiltinOmniIconUrl("link"), "Default"));
 
     for (const auto &name : BuiltinIconService::icons()) {
-      iconSelector->addItem(std::make_unique<IconSelectorItem>(name));
+      iconSelector->addItem(std::make_unique<IconSelectorItem>(BuiltinOmniIconUrl(name)));
     }
 
     iconSelector->commitUpdate();
@@ -234,7 +227,7 @@ public:
 
     quicklinkDb.insertLink(AddQuicklinkPayload{
         .name = name->text(),
-        .icon = icon->icon(),
+        .icon = icon->icon().toString(),
         .link = link->text(),
         .app = item->app->id,
     });
@@ -279,7 +272,7 @@ public:
     bool updateResult = quicklinkDb.updateLink(UpdateQuicklinkPayload{
         .id = quicklink.id,
         .name = name->text(),
-        .icon = icon->icon(),
+        .icon = icon->icon().toString(),
         .link = link->text(),
         .app = item->app->id,
     });
@@ -334,7 +327,7 @@ public:
 
     bool insertResult = quicklinkDb.insertLink(AddQuicklinkPayload{
         .name = name->text(),
-        .icon = icon->icon(),
+        .icon = icon->icon().toString(),
         .link = link->text(),
         .app = item->app->id,
     });

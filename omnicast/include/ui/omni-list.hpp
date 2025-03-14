@@ -209,10 +209,7 @@ public:
   void setMargins(int left, int top, int right, int bottom);
   void setMargins(int value);
   void clear();
-  void clearSelection() {
-    _selected = -1;
-    _selectedId.clear();
-  }
+  void clearSelection() { setSelectedIndex(-1); }
 
 signals:
   void itemUpdated(const AbstractVirtualItem &item) const;

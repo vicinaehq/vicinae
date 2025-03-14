@@ -3,41 +3,37 @@
 #include "ui/omni-grid-view.hpp"
 #include "ui/omni-grid.hpp"
 #include "ui/omni-list.hpp"
-#include "ui/virtual-list.hpp"
 #include <qlabel.h>
 #include <qnamespace.h>
 
 class IconBrowserView : public OmniGridView {
-
   class IconBrowserItem : public OmniGrid::AbstractGridItem {
-    QString m_name, m_displayName;
+    QString _name;
 
-    QString tooltip() const override { return m_displayName; }
+    QString tooltip() const override { return _name; }
 
     QWidget *centerWidget() const override {
       auto icon = new OmniIcon;
 
       icon->setFixedSize(30, 30);
-      icon->setUrl(BuiltinOmniIconUrl(m_displayName));
+      icon->setUrl(BuiltinOmniIconUrl(_name));
 
       return icon;
     }
 
-    QString id() const override { return m_name; }
+    QString id() const override { return _name; }
 
   public:
-    const QString &name() const { return m_name; }
-    const QString &displayName() const { return m_displayName; }
+    const QString &name() const { return _name; }
 
-    IconBrowserItem(const QString &name, const QString &displayName)
-        : m_name(name), m_displayName(displayName) {}
+    IconBrowserItem(const QString &name) : _name(name) {}
   };
 
   class IconFilter : public OmniList::AbstractItemFilter {
     QString _query;
 
     bool matches(const OmniList::AbstractVirtualItem &item) override {
-      return static_cast<const IconBrowserItem &>(item).displayName().contains(_query, Qt::CaseInsensitive);
+      return static_cast<const IconBrowserItem &>(item).name().contains(_query, Qt::CaseInsensitive);
     }
 
   public:
@@ -53,18 +49,11 @@ class IconBrowserView : public OmniGridView {
     grid->addSection("Icons");
 
     for (const auto &icon : BuiltinIconService::icons()) {
-      auto ss = icon.split(".");
-      ss = ss.at(0).split("/");
-
-      auto displayName = ss.at(ss.size() - 1);
-
-      grid->addItem(std::make_unique<IconBrowserItem>(icon, displayName));
+      grid->addItem(std::make_unique<IconBrowserItem>(icon));
     }
 
-    QTimer::singleShot(0, [this]() {
-      grid->commitUpdate();
-      grid->selectFirst();
-    });
+    grid->commitUpdate();
+    grid->selectFirst();
   }
 
 public:

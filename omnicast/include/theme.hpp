@@ -5,6 +5,8 @@
 #include <QWidget>
 #include <qtmetamacros.h>
 
+enum ColorTint { InvalidTint, Blue, Green, Magenta, Orange, Purple, Red, Yellow };
+
 struct ThemeLinearGradient {
   std::vector<QColor> points;
 };
@@ -77,6 +79,29 @@ public:
     }
 
     return false;
+  }
+
+  ColorLike getTintColor(ColorTint tint) const {
+    switch (tint) {
+    case ColorTint::Blue:
+      return _theme.colors.blue;
+    case ColorTint::Green:
+      return _theme.colors.green;
+    case ColorTint::Magenta:
+      return _theme.colors.magenta;
+    case ColorTint::Orange:
+      return _theme.colors.orange;
+    case ColorTint::Purple:
+      return _theme.colors.purple;
+    case ColorTint::Red:
+      return _theme.colors.red;
+    case ColorTint::Yellow:
+      return _theme.colors.yellow;
+    default:
+      break;
+    }
+
+    return {};
   }
 
   void setTheme(const ThemeInfo &info) {

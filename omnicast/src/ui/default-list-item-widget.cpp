@@ -4,7 +4,7 @@
 
 void DefaultListItemWidget::setName(const QString &name) { this->_name->setText(name); }
 
-void DefaultListItemWidget::setIcon(const QString &name) { _icon->setIcon(name, {25, 25}); }
+void DefaultListItemWidget::setIconUrl(const OmniIconUrl &url) { _icon->setUrl(url); }
 
 void DefaultListItemWidget::setCategory(const QString &category) { _category->setText(category); }
 

@@ -2,9 +2,16 @@
 
 #include "builtin_icon.hpp"
 #include "image-fetcher.hpp"
+#include <QtConcurrent/qtconcurrentrun.h>
 #include <QtSvg/qsvgrenderer.h>
+#include <memory>
+#include <numbers>
 #include <qbrush.h>
 #include <qcolor.h>
+#include <qdir.h>
+#include <qevent.h>
+#include <qfuturewatcher.h>
+#include <qimagereader.h>
 #include <qlabel.h>
 #include <qlogging.h>
 #include <QtSvg/QSvgRenderer>
@@ -12,6 +19,7 @@
 #include <qpainter.h>
 #include <qpixmap.h>
 #include <qpixmapcache.h>
+#include <qsize.h>
 #include <qtmetamacros.h>
 #include <qurl.h>
 #include <qurlquery.h>
@@ -25,8 +33,6 @@ enum OmniIconType { Invalid, Builtin, Favicon, System, Http, Local };
 static std::vector<std::pair<QString, OmniIconType>> iconTypes = {
     {"favicon", Favicon}, {"omnicast", Builtin}, {"system", System}, {"http", Http}, {"local", Local},
 };
-
-enum ColorTint { InvalidTint, Blue, Green, Magenta, Orange, Purple, Red, Yellow };
 
 static std::vector<std::pair<QString, ColorTint>> colorTints = {
     {"blue", ColorTint::Blue},     {"green", ColorTint::Green},   {"magenta", ColorTint::Magenta},
@@ -88,9 +94,9 @@ public:
   bool isValid() { return _isValid; }
   operator bool() { return isValid(); }
 
-  QString toString() { return url().toString(); }
+  QString toString() const { return url().toString(); }
 
-  QUrl url() {
+  QUrl url() const {
     QUrl url;
 
     url.setScheme("icon");
@@ -210,62 +216,44 @@ public:
   }
 };
 
-class OmniIcon : public QWidget {
+class AbstractOmniIconRenderer {
+public:
+  virtual QPixmap render(QSize size) = 0;
+};
+
+class OmniIconWidget : public QWidget {
   Q_OBJECT
 
-  QSvgRenderer renderer;
-  QPixmap _filePixmap;
+public:
+  OmniIconWidget(QWidget *parent = nullptr) : QWidget(parent) {}
+
+signals:
+  void imageLoaded(const QPixmap &data) const;
+  void imageLoadingFailed() const;
+};
+
+class BuiltinOmniIconRenderer : public OmniIconWidget {
+  QString name;
+  ColorTint _backgroundTint = InvalidTint;
+  QColor _fillColor;
+  QSvgRenderer _renderer;
   QPixmap _pixmap;
-  OmniIconUrl _url;
 
-  void setDefaultIcon(QSize size) { setIcon(BuiltinIconService::unknownIcon(), size); }
+  void paintEvent(QPaintEvent *event) override {
+    QPainter painter(this);
 
-  void setPixmap(const QPixmap &pixmap) {
-    emit imageUpdated(pixmap);
-    _pixmap = pixmap;
-    update();
+    painter.drawPixmap(pos(), _pixmap);
   }
 
   void resizeEvent(QResizeEvent *event) override {
-    qDebug() << "resize omni icon" << event->size();
-    if (event->size().width() == 0 || event->size().height() == 0) { return; }
-    recalculate();
+    QWidget::resizeEvent(event);
+    _pixmap = render(event->size());
+    emit imageLoaded(_pixmap);
   }
 
-  ColorLike getThemeTintColor(const ThemeInfo &info, ColorTint tint) {
-    switch (tint) {
-    case ColorTint::Blue:
-      return info.colors.blue;
-    case ColorTint::Green:
-      return info.colors.green;
-    case ColorTint::Magenta:
-      return info.colors.magenta;
-    case ColorTint::Orange:
-      return info.colors.orange;
-    case ColorTint::Purple:
-      return info.colors.purple;
-    case ColorTint::Red:
-      return info.colors.red;
-    case ColorTint::Yellow:
-      return info.colors.yellow;
-    default:
-      break;
-    }
-
-    return {};
-  }
-
-  QSize sizeHint() const override {
-    if (auto sz = _url.size(); sz.isValid()) { return sz; }
-    if (auto w = parentWidget(); w) { return w->size(); }
-
-    return {};
-  }
-
-  void recalculate() {
-    qDebug() << "recalculate for size" << size();
-    auto &theme = ThemeService::instance().theme();
-    QPixmap canva(size());
+  QPixmap render(QSize size) {
+    auto &theme = ThemeService::instance();
+    QPixmap canva(size);
     QPainter cp(&canva);
 
     canva.fill(Qt::transparent);
@@ -273,11 +261,12 @@ class OmniIcon : public QWidget {
     cp.setRenderHint(QPainter::Antialiasing, true);
     cp.setPen(Qt::NoPen);
 
-    if (auto tint = _url.backgroundTint(); tint != InvalidTint) {
-      setContentsMargins(3, 3, 3, 3);
+    QMargins margins(0, 0, 0, 0);
 
+    if (auto tint = _backgroundTint; tint != InvalidTint) {
+      margins = {3, 3, 3, 3};
       int cornerRadius = canva.width() / 4;
-      auto colorLike = getThemeTintColor(theme, tint);
+      auto colorLike = theme.getTintColor(tint);
 
       if (auto color = std::get_if<QColor>(&colorLike)) {
         cp.setBrush(*color);
@@ -306,208 +295,269 @@ class OmniIcon : public QWidget {
       }
     }
 
-    QRect innerRect = canva.rect().marginsRemoved(contentsMargins());
+    QRect innerRect = canva.rect().marginsRemoved(margins);
+    QPixmap svgPix(innerRect.size());
 
-    if (_url.type() == OmniIconType::Builtin) {
-      QPixmap svgPix(innerRect.size());
+    svgPix.fill(Qt::transparent);
 
-      svgPix.fill(Qt::transparent);
+    {
+      QPainter painter(&svgPix);
 
-      {
-        QPainter painter(&svgPix);
+      _renderer.render(&painter);
 
-        renderer.render(&painter);
-
-        if (auto fill = _url.fillColor(); fill.isValid()) {
-          painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
-          painter.fillRect(svgPix.rect(), fill);
-        }
+      if (auto fill = _fillColor; _fillColor.isValid()) {
+        painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
+        painter.fillRect(svgPix.rect(), fill);
       }
-
-      cp.drawPixmap(innerRect, svgPix);
-      setPixmap(canva);
-      return;
     }
 
-    if (_url.type() == OmniIconType::Local) {
-      auto isz = innerRect.size();
-
-      Timer timer;
-      QPixmap scaled = _filePixmap.scaled(innerRect.size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
-
-      int x = (isz.width() - scaled.width()) / 2;
-      int y = (isz.height() - scaled.height()) / 2;
-
-      qDebug() << "drawing" << scaled.size();
-
-      cp.drawPixmap(x, y, scaled);
-      timer.time("scaling pixmap");
-      updateGeometry();
-      setPixmap(canva);
-      return;
-    }
-
-    cp.drawPixmap(innerRect, _pixmap);
-    setPixmap(canva);
+    cp.drawPixmap(innerRect, svgPix);
+    return canva;
   }
+
+  QString constructResource(const QString &name) { return QString(":icons/%1.svg").arg(name); }
+
+public:
+  BuiltinOmniIconRenderer &setFillColor(const QColor &color) {
+    _fillColor = color;
+    return *this;
+  }
+  BuiltinOmniIconRenderer &setBackgroundTaint(ColorTint color) {
+    _backgroundTint = color;
+    return *this;
+  }
+  BuiltinOmniIconRenderer(const QString &name, QWidget *parent = nullptr) : OmniIconWidget(parent) {
+    if (!_renderer.load(constructResource(name))) { emit imageLoadingFailed(); }
+  }
+};
+
+class OmniSystemIconWidget : public OmniIconWidget {
+  QPixmap _pixmap;
+  QIcon _icon;
+  QString _name;
 
   void paintEvent(QPaintEvent *event) override {
     QPainter painter(this);
 
-    painter.setRenderHint(QPainter::Antialiasing, true);
-    painter.drawPixmap(rect(), _pixmap);
+    painter.drawPixmap(0, 0, _pixmap);
+  }
+
+  QSize bestSize() {
+    QSize best = size();
+
+    for (const auto &size : _icon.availableSizes()) {
+      if (size.width() * size.height() > best.width() * best.height()) { best = size; }
+    }
+
+    return best;
+  }
+
+  void recalculate() {
+    if (!size().isValid()) return;
+
+    _pixmap = _icon.pixmap(bestSize()).scaled(size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    update();
+    qDebug() << "pixmap loaded for system icon" << size();
+    emit imageLoaded(_pixmap);
+  }
+
+  void resizeEvent(QResizeEvent *event) override {
+    QWidget::resizeEvent(event);
+    recalculate();
+  }
+
+public:
+  OmniSystemIconWidget(const QString &name, QWidget *parent = nullptr) : OmniIconWidget(parent), _name(name) {
+    _icon = QIcon(name);
+    if (_icon.isNull()) { _icon = QIcon::fromTheme(name); }
+    if (_icon.isNull()) { _icon = QIcon(":icons/question-mark-circle"); }
+    if (_icon.isNull()) { emit imageLoadingFailed(); }
+  }
+};
+
+class LocalOmniIconWidget : public OmniIconWidget {
+  QString _path;
+  QPixmap _pixmap;
+  QFutureWatcher<QPixmap> watcher;
+
+  void paintEvent(QPaintEvent *event) override {
+    QPainter painter(this);
+
+    if (!_pixmap.isNull()) {
+      int x = (width() - _pixmap.width()) / 2;
+      int y = (height() - _pixmap.height()) / 2;
+
+      painter.drawPixmap(x, y, _pixmap);
+    }
+  }
+
+  void resizeEvent(QResizeEvent *event) override {
+    QWidget::resizeEvent(event);
+    recalculate();
+  }
+
+  QPixmap loadImage(const QString &path, QSize size) {
+    QImageReader reader(path);
+    QSize originalSize = reader.size();
+    bool isDownScalable = originalSize.height() > size.height() || originalSize.width() > size.width();
+
+    if (originalSize.isValid() && isDownScalable) {
+      reader.setScaledSize(originalSize.scaled(size, Qt::KeepAspectRatio));
+    }
+
+    return QPixmap::fromImage(reader.read());
+  }
+
+  void handleImageLoaded() {
+    if (watcher.isCanceled()) { return; }
+
+    if (auto pix = watcher.result(); !pix.isNull()) {
+      _pixmap = pix;
+      update();
+      emit imageLoaded(_pixmap);
+    } else {
+      emit imageLoadingFailed();
+    }
+  }
+
+  void recalculate() {
+    if (!size().isValid()) return;
+
+    auto imageSize = size();
+
+    if (watcher.isRunning()) {
+      watcher.cancel();
+      watcher.waitForFinished();
+    }
+
+    auto future = QtConcurrent::run([this, imageSize]() { return loadImage(_path, imageSize); });
+
+    watcher.setFuture(future);
+  }
+
+public:
+  LocalOmniIconWidget(const QString &path, QWidget *parent) : OmniIconWidget(parent), _path(path) {
+    QFileInfo info(path);
+
+    if (!info.exists()) { return; }
+
+    connect(&watcher, &QFutureWatcher<QPixmap>::finished, this, &LocalOmniIconWidget::handleImageLoaded);
+  }
+};
+
+class FaviconOmniIconWidget : public OmniIconWidget {
+  QPixmap _favicon;
+  QPixmap _pixmap;
+
+  void paintEvent(QPaintEvent *event) override {
+    QPainter painter(this);
+
+    painter.drawPixmap(pos(), _pixmap);
+  }
+
+  void resizeEvent(QResizeEvent *event) override {
+    QWidget::resizeEvent(event);
+    recalculate();
+  }
+
+  void recalculate() {
+    if (!size().isValid()) return;
+
+    _pixmap = _favicon.scaled(size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    emit imageLoaded(_pixmap);
+    update();
+  }
+
+public:
+  FaviconOmniIconWidget(const QString &hostname, QWidget *parent) : OmniIconWidget(parent) {
+    if (QPixmapCache::find(hostname, &_favicon)) { return; }
+
+    auto reply = FaviconFetcher::fetchFavicon(hostname, {});
+
+    connect(reply, &FaviconReply::failed, this, [this, reply]() {
+      emit imageLoadingFailed();
+      reply->deleteLater();
+    });
+
+    connect(reply, &FaviconReply::finished, this, [this, reply](QPixmap pixmap) {
+      _favicon = pixmap;
+      reply->deleteLater();
+      recalculate();
+    });
+  }
+};
+
+class OmniIcon : public QWidget {
+  Q_OBJECT
+
+  OmniIconUrl _url;
+  OmniIconWidget *_iconWidget = nullptr;
+
+  void resizeEvent(QResizeEvent *event) override {
+    QWidget::resizeEvent(event);
+    recalculate();
+  }
+
+  QSize sizeHint() const override {
+    if (auto sz = _url.size(); sz.isValid()) { return sz; }
+    if (auto w = parentWidget(); w) { return w->size(); }
+
+    return {};
+  }
+
+  void recalculate() {
+    if (!size().isValid()) return;
+    if (_iconWidget) {
+      _iconWidget->setGeometry(rect());
+      _iconWidget->setFixedSize(size());
+      _iconWidget->move(0, 0);
+
+      qDebug() << "recalculate for size" << size();
+    }
   }
 
 public:
   OmniIcon(const OmniIconUrl &url, QWidget *parent = nullptr) : QWidget(parent) { setUrl(url); }
   OmniIcon(QWidget *parent = nullptr) : QWidget(parent) {
     connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() { recalculate(); });
-    setContentsMargins(0, 0, 0, 0);
   }
   ~OmniIcon() {}
 
   void setUrl(const OmniIconUrl &url) {
+    if (_iconWidget) { _iconWidget->deleteLater(); }
     _url = url;
 
     auto type = url.type();
-    // take widget size if no icon size is specified
-    QSize iconSize = url.size().isValid() ? url.size() : size();
 
     if (type == OmniIconType::Favicon) {
-      QPixmap pm;
-      auto hostname = url.name();
-
-      if (QPixmapCache::find(hostname, &pm)) {
-        setPixmap(pm.scaled(iconSize, Qt::KeepAspectRatio, Qt::SmoothTransformation));
-        return;
-      }
-
-      auto reply = FaviconFetcher::fetchFavicon(hostname, iconSize);
-
-      connect(reply, &FaviconReply::failed, this, [this, iconSize, reply]() {
-        setUrl(OmniIconUrl("icon://omnicast/question-mark-circle"));
-        reply->deleteLater();
-      });
-
-      connect(reply, &FaviconReply::finished, this, [this, iconSize, reply](QPixmap pixmap) {
-        setPixmap(pixmap.scaled(iconSize, Qt::KeepAspectRatio, Qt::SmoothTransformation));
-        reply->deleteLater();
-      });
-
-      return;
+      _iconWidget = new FaviconOmniIconWidget(url.name(), this);
     }
 
-    if (type == OmniIconType::System) { auto icon = QIcon::fromTheme(url.name()); }
-
-    if (type == OmniIconType::Builtin) {
-      auto icon = QString(":icons/%1.svg").arg(url.name());
-
-      if (!renderer.load(icon)) {
-        setDefaultIcon(iconSize);
-      } else {
-        recalculate();
-      }
-      return;
+    else if (type == OmniIconType::System) {
+      _iconWidget = new OmniSystemIconWidget(url.name(), this);
     }
 
-    if (type == OmniIconType::Local) {
-      Timer timer;
-      auto pix = QPixmap(url.name());
+    else if (type == OmniIconType::Builtin) {
+      auto iconWidget = new BuiltinOmniIconRenderer(url.name(), this);
 
-      if (pix.isNull()) {
-        setDefaultIcon(iconSize);
-        return;
-      }
-
-      qDebug() << "loading local image" << url.name() << "size" << pix.size();
-
-      timer.time("create local pixmap");
-      _filePixmap = pix;
-
-      return;
+      iconWidget->setBackgroundTaint(url.backgroundTint()).setFillColor(url.fillColor());
+      _iconWidget = iconWidget;
     }
 
-    auto icon = QIcon::fromTheme(url.name());
-
-    if (icon.isNull()) {
-      setDefaultIcon(iconSize);
-      return;
+    else if (type == OmniIconType::Local) {
+      _iconWidget = new LocalOmniIconWidget(url.name(), this);
     }
 
-    setPixmap(icon.pixmap(iconSize));
-  }
-
-  void setIcon(const QString &id, QSize size, const QString &fallback = "") {
-    if (size.isValid()) setFixedSize(size);
-
-    auto ss = id.split(":");
-    QString type, name;
-
-    if (ss.size() == 2) {
-      type = ss.at(0);
-
-      if (type.isEmpty()) {
-        name = ":" + ss.at(1);
-      } else {
-        name = ss.at(1);
-      }
+    if (_iconWidget) {
+      connect(_iconWidget, &OmniIconWidget::imageLoaded, this, &OmniIcon::imageUpdated);
+      connect(_iconWidget, &OmniIconWidget::imageLoaded, this, []() { qDebug() << "image updated"; });
+      _iconWidget->show();
+      recalculate();
     } else {
-      name = ss.at(0);
+      qDebug() << "no icon widget for " << url.toString();
     }
-
-    if (type == "favicon") {
-      QPixmap pm;
-
-      if (QPixmapCache::find(name, &pm)) {
-        setPixmap(pm.scaled(size, Qt::KeepAspectRatio, Qt::SmoothTransformation));
-        return;
-      }
-
-      auto reply = FaviconFetcher::fetchFavicon(name, size);
-
-      connect(reply, &FaviconReply::failed, this, [this, fallback, size, reply]() {
-        if (!fallback.isEmpty()) {
-          setIcon(fallback, size);
-        } else {
-          setDefaultIcon(size);
-        }
-
-        reply->deleteLater();
-      });
-
-      connect(reply, &FaviconReply::finished, this, [this, size, reply](QPixmap pixmap) {
-        setPixmap(pixmap.scaled(size, Qt::KeepAspectRatio, Qt::SmoothTransformation));
-        reply->deleteLater();
-      });
-
-      return;
-    }
-
-    if (type == "url") {
-      QUrl url(name);
-
-      if (url.isValid()) {
-        auto reply = ImageFetcher::instance().fetch(url.toString(), {});
-
-        connect(reply, &ImageReply::imageLoaded, this,
-                [this, size](QPixmap pixmap) { setPixmap(pixmap.scaled(size)); });
-      }
-
-      return;
-    }
-
-    auto icon = QIcon::fromTheme(name);
-
-    if (icon.isNull()) {
-      if (fallback.isEmpty())
-        return setDefaultIcon(size);
-      else
-        return setIcon(fallback, size);
-    }
-
-    setPixmap(icon.pixmap(size));
   }
 
 signals:
-  void imageUpdated(QPixmap pixmap);
+  void imageUpdated(const QPixmap &pixmap) const;
 };

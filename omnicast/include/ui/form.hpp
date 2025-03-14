@@ -98,11 +98,9 @@ class AbstractFormDropdownItem : public AbstractDefaultListItem {
 public:
   AbstractFormDropdownItem() {}
 
-  virtual QString icon() const = 0;
+  virtual OmniIconUrl icon() const = 0;
   virtual QString displayName() const = 0;
-  ItemData data() const override {
-    return {.iconUrl = OmniIconUrl::makeSystem(icon()), .name = displayName()};
-  }
+  ItemData data() const override { return {.iconUrl = icon(), .name = displayName()}; }
 };
 
 class Popover : public QWidget {
@@ -304,14 +302,19 @@ public:
 
     auto icon = new OmniIcon;
 
+    OmniIconUrl iconUrl = item->icon();
+
+    icon->setFixedSize(32, 32);
+    icon->show();
+
+    QTimer::singleShot(0, [this, icon, iconUrl]() { icon->setUrl(iconUrl); });
+
     connect(icon, &OmniIcon::imageUpdated, this, [this, icon](QPixmap pixmap) {
+      qDebug() << "ICON UPDATED!!!!";
       if (action) inputField->removeAction(action);
       action = inputField->addAction(QIcon(pixmap), QLineEdit::LeadingPosition);
       icon->deleteLater();
     });
-
-    QTimer::singleShot(0,
-                       [icon, item]() { icon->setIcon(item->icon(), {32, 32}, "application-x-executable"); });
   }
 
   QString searchText() { return searchField->text(); }

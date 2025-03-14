@@ -280,6 +280,62 @@ QString ClipboardService::createTextPreview(const QByteArray &data, int maxLengt
   return preview;
 }
 
+bool ClipboardService::removeSelection(int selectionId) {
+  if (!db.transaction()) { return false; }
+
+  QSqlQuery query(db);
+
+  query.prepare(R"(
+  	DELETE FROM 
+		data_offer
+	WHERE 
+		selection_id = :selection_id
+	RETURNING 
+		content_hash_md5,
+		(
+			SELECT
+				COUNT(*)
+			FROM
+				data_offer do_b
+			WHERE
+				do_b.content_hash_md5 = data_offer.content_hash_md5
+		) as remaining;
+  )");
+  query.bindValue(":selection_id", selectionId);
+
+  if (!query.exec()) {
+    qDebug() << "failed to execute data_offer deletion" << query.lastError();
+    db.rollback();
+    return false;
+  }
+
+  std::vector<QString> flaggedForDeletion;
+
+  while (query.next()) {
+    auto sum = query.value(0).toString();
+    auto remaining = query.value(1).toUInt();
+
+    if (remaining == 0) { flaggedForDeletion.push_back(sum); }
+  }
+
+  query.prepare("DELETE FROM selection WHERE id = :selection_id");
+  query.bindValue(":selection_id", selectionId);
+
+  if (!query.exec()) {
+    qDebug() << "failed to execute selecton deletion" << query.lastError();
+    db.rollback();
+    return false;
+  }
+
+  db.commit();
+
+  for (const auto &sum : flaggedForDeletion) {
+    QFile::remove(_data_dir.filePath(sum));
+  }
+
+  return true;
+}
+
 void ClipboardService::saveSelection(const ClipboardSelection &selection) {
   std::vector<TransformedSelection> transformedOffers;
   char buf[1 << 16];
@@ -349,15 +405,19 @@ void ClipboardService::saveSelection(const ClipboardSelection &selection) {
   std::vector<InsertClipboardHistoryLine> dbOffers;
 
   query.prepare(R"(
-  	INSERT INTO selection (hash_md5, preferred_mime_type)
-	VALUES (:hash_md5, :preferred_mime_type)
+  	INSERT INTO selection (offer_count, hash_md5, preferred_mime_type, source)
+	VALUES (:offer_count, :hash_md5, :preferred_mime_type, :source)
 	RETURNING id;
   )");
+  query.bindValue(":offer_count", static_cast<uint>(selection.offers.size()));
   query.bindValue(":hash_md5", selectionHash.result().toHex());
   query.bindValue(":preferred_mime_type", preferredMimeType.c_str());
 
+  // TODO: use window manager integration to figure out what's the currently focused window
+  query.bindValue(":source", {});
+
   if (!query.exec()) {
-    qDebug() << "Failed to selection";
+    qDebug() << "Failed to selection" << query.lastError();
     db.rollback();
     return;
   }
@@ -445,8 +505,9 @@ ClipboardService::ClipboardService(const QString &path)
 		hash_md5 TEXT NOT NULL,
 		preferred_mime_type TEXT NOT NULL,
 		source TEXT,
+		offer_count TEXT,
 		created_at INTEGER DEFAULT (unixepoch()),
-		pinned_at INTEGER DEFAULT 0
+		pinned_at INTEGER
 	);
 	)");
 
@@ -459,7 +520,9 @@ ClipboardService::ClipboardService(const QString &path)
 		text_preview TEXT,
 		content_hash_md5 TEXT NOT NULL,
 		selection_id INTEGER,
-		FOREIGN KEY(selection_id) REFERENCES selection(id)
+		FOREIGN KEY(selection_id) 
+		REFERENCES selection(id)
+		ON DELETE CASCADE
 	);
   )");
 

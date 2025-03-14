@@ -6,8 +6,6 @@ InputCompleter::InputCompleter(const QList<QString> &placeholders, QWidget *pare
     : QWidget(parent), icon(new OmniIcon) {
   auto mainContainer = new QHBoxLayout();
 
-  QIcon::setThemeName("Papirus-Dark");
-
   icon->setFixedSize(25, 25);
 
   mainContainer->setAlignment(Qt::AlignLeft);

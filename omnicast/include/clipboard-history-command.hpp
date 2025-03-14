@@ -17,6 +17,10 @@
 #include <sys/socket.h>
 #include "text-file-viewer.hpp"
 
+class LogWidget : public QWidget {
+  ~LogWidget() { qDebug() << "widget down"; }
+};
+
 class TextContainer : public QWidget {
   QVBoxLayout *_layout;
 
@@ -46,7 +50,7 @@ class ClipboardItemDetail : public OmniListView::MetadataDetailModel {
     }
 
     if (entry.mimeType.startsWith("image/")) {
-      auto w = new QWidget;
+      auto w = new LogWidget;
       auto l = new QVBoxLayout;
       w->setLayout(l);
 
@@ -92,6 +96,22 @@ public:
 class ClipboardHistoryItem : public AbstractDefaultListItem, public OmniListView::IActionnable {
   ClipboardHistoryEntry info;
   std::function<void(int)> _pinCallback;
+  std::function<void(int)> _removeCallback;
+
+  class RemoveSelectionAction : public AbstractAction {
+    int _id;
+
+    void execute(AppWindow &app) override {
+      if (app.clipboardService->removeSelection(_id)) {
+        app.statusBar->setToast("Entry removed");
+      } else {
+        app.statusBar->setToast("Failed to remove entry", ToastPriority::Danger);
+      }
+    }
+
+  public:
+    RemoveSelectionAction(int id) : AbstractAction("Remove entry", BuiltinOmniIconUrl("trash")), _id(id) {}
+  };
 
   class PinClipboardAction : public AbstractAction {
     int _id;
@@ -113,12 +133,16 @@ class ClipboardHistoryItem : public AbstractDefaultListItem, public OmniListView
 public:
   QList<AbstractAction *> generateActions() const override {
     auto pin = new PinClipboardAction(info.id, !info.pinnedAt);
+    auto remove = new RemoveSelectionAction(info.id);
 
     pin->setExecutionCallback([this]() {
       if (_pinCallback) { _pinCallback(info.id); }
     });
+    remove->setExecutionCallback([this]() {
+      if (_removeCallback) { _removeCallback(info.id); }
+    });
 
-    return {new CopyTextAction("Copy preview", info.textPreview), pin};
+    return {new CopyTextAction("Copy preview", info.textPreview), pin, remove};
   }
 
   OmniIconUrl iconForMime(const QString &mime) const {
@@ -130,6 +154,7 @@ public:
   const QString &name() const { return info.textPreview; }
 
   void setPinCallback(const std::function<void(int)> &cb) { _pinCallback = cb; }
+  void setRemoveCallback(const std::function<void(int)> &cb) { _removeCallback = cb; }
 
   ItemData data() const override { return {.iconUrl = iconForMime(info.mimeType), .name = info.textPreview}; }
 
@@ -175,6 +200,7 @@ class ClipboardHistoryCommand : public OmniListView {
         list->invalidateCache(QString::number(id));
         generateList(query);
       });
+      candidate->setRemoveCallback([this, &entry, query](int id) { generateList(query); });
       newList.push_back(std::move(candidate));
       ++i;
     }
@@ -189,6 +215,7 @@ class ClipboardHistoryCommand : public OmniListView {
         list->invalidateCache(QString::number(id));
         generateList(query);
       });
+      candidate->setRemoveCallback([this, &entry, query](int id) { generateList(query); });
 
       newList.push_back(std::move(candidate));
       ++i;
