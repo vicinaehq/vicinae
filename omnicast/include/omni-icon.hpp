@@ -1,6 +1,7 @@
 #pragma once
 
 #include "builtin_icon.hpp"
+#include "favicon-service.hpp"
 #include "image-fetcher.hpp"
 #include <QtConcurrent/qtconcurrentrun.h>
 #include <QtSvg/qsvgrenderer.h>
@@ -456,6 +457,7 @@ public:
 class FaviconOmniIconWidget : public OmniIconWidget {
   QPixmap _favicon;
   QPixmap _pixmap;
+  FaviconRequest *_requester;
 
   void paintEvent(QPaintEvent *event) override {
     QPainter painter(this);
@@ -465,6 +467,12 @@ class FaviconOmniIconWidget : public OmniIconWidget {
 
   void resizeEvent(QResizeEvent *event) override {
     QWidget::resizeEvent(event);
+    recalculate();
+  }
+
+  void iconLoaded(QPixmap pixmap) {
+    _favicon = pixmap;
+
     recalculate();
   }
 
@@ -478,20 +486,10 @@ class FaviconOmniIconWidget : public OmniIconWidget {
 
 public:
   FaviconOmniIconWidget(const QString &hostname, QWidget *parent) : OmniIconWidget(parent) {
-    if (QPixmapCache::find(hostname, &_favicon)) { return; }
-
-    auto reply = FaviconFetcher::fetchFavicon(hostname, {});
-
-    connect(reply, &FaviconReply::failed, this, [this, reply]() {
-      emit imageLoadingFailed();
-      reply->deleteLater();
-    });
-
-    connect(reply, &FaviconReply::finished, this, [this, reply](QPixmap pixmap) {
-      _favicon = pixmap;
-      reply->deleteLater();
-      recalculate();
-    });
+    _requester = FaviconService::instance()->makeRequest(hostname, parent);
+    connect(_requester, &FaviconRequest::finished, this, &FaviconOmniIconWidget::iconLoaded);
+    connect(_requester, &FaviconRequest::failed, this, [this]() { emit imageLoadingFailed(); });
+    _requester->start();
   }
 };
 

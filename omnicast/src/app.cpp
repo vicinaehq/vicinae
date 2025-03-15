@@ -5,6 +5,7 @@
 #include "command.hpp"
 #include "config.hpp"
 #include "extension_manager.hpp"
+#include "favicon-service.hpp"
 #include "image-fetcher.hpp"
 #include "indexer-service.hpp"
 #include "process-manager-service.hpp"
@@ -308,9 +309,9 @@ AppWindow::AppWindow(QWidget *parent)
 
   topBar->setFixedHeight(55);
 
-  ThemeService::instance().setTheme("Catppuccin Mocha");
-
   QDir::root().mkpath(Config::dirPath());
+  ThemeService::instance().setTheme("Catppuccin Mocha");
+  FaviconService::initialize(new FaviconService(Config::dirPath() + QDir::separator() + "favicon.db"));
 
   extensionManager = std::make_unique<ExtensionManager>();
 

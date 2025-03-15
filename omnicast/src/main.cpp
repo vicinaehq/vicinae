@@ -155,36 +155,6 @@ QTextEdit {
 
 int main(int argc, char **argv) {
   QApplication qapp(argc, argv);
-  /*
-  QString socketPath = QDir::temp().absoluteFilePath("spellcastd.sock");
-  QFile socketFile(socketPath);
-
-  if (socketFile.exists()) {
-    QLocalSocket client;
-
-    client.connectToServer(socketPath);
-    if (client.waitForConnected()) {
-      QByteArray packet;
-      quint32 length = 4;
-      QDataStream stream(&packet, QIODevice::WriteOnly);
-
-      stream.setByteOrder(QDataStream::BigEndian);
-      stream << length;
-      stream << "Open";
-      qDebug() << "Opening running instance";
-
-      client.write("open");
-      client.flush();
-      client.waitForDisconnected();
-
-      return 0;
-    }
-
-    qDebug() << "Failed to connect, will attempt to launch app again...";
-  }
-
-  socketFile.remove();
-  */
 
   AppWindow app;
 
