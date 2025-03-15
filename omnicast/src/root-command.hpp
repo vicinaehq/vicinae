@@ -13,6 +13,7 @@
 #include "omni-icon.hpp"
 #include "omnicast.hpp"
 #include "quicklist-database.hpp"
+#include "theme.hpp"
 #include "tinyexpr.hpp"
 #include "ui/action_popover.hpp"
 #include "ui/calculator-list-item-widget.hpp"
@@ -151,8 +152,16 @@ public:
     return {open, edit, duplicate, remove};
   }
 
+  OmniIconUrl iconUrl() const {
+    OmniIconUrl url(link->iconName);
+
+    if (url.type() == OmniIconType::Builtin) { url.setBackgroundTint(ColorTint::Red); }
+
+    return url;
+  }
+
   ItemData data() const override {
-    return {.iconUrl = link->iconName, .name = link->name, .kind = "Quicklink", ._iconColor = "red"};
+    return {.iconUrl = iconUrl(), .name = link->name, .kind = "Quicklink", ._iconColor = "red"};
   }
 
   QString id() const override { return QString("link-%1").arg(link->id); }

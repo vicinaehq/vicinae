@@ -103,7 +103,7 @@ class QuicklinkCommandView : public View {
     if (!url.scheme().startsWith("http")) return;
 
     iconSelector->updateItem("default", [&url](AbstractFormDropdownItem *item) {
-      auto icon = QString("favicon:%1").arg(url.host());
+      auto icon = FaviconOmniIconUrl(url.host());
       auto iconItem = static_cast<IconSelectorItem *>(item);
 
       iconItem->setIcon(icon);

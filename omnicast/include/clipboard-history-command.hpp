@@ -58,7 +58,7 @@ class ClipboardItemDetail : public OmniListView::MetadataDetailModel {
 
       icon->setUrl(LocalOmniIconUrl(entry.filePath));
 
-      l->addWidget(icon, 0, Qt::AlignCenter);
+      l->addWidget(icon, 1, Qt::AlignCenter);
 
       return w;
     }

@@ -6,6 +6,7 @@
 #include <QtSvg/qsvgrenderer.h>
 #include <memory>
 #include <numbers>
+#include <qboxlayout.h>
 #include <qbrush.h>
 #include <qcolor.h>
 #include <qdir.h>
@@ -224,6 +225,11 @@ public:
 class OmniIconWidget : public QWidget {
   Q_OBJECT
 
+  QSize sizeHint() const override {
+    if (parentWidget()) { return parentWidget()->size(); }
+    return {};
+  }
+
 public:
   OmniIconWidget(QWidget *parent = nullptr) : QWidget(parent) {}
 
@@ -363,11 +369,13 @@ class OmniSystemIconWidget : public OmniIconWidget {
 
   void resizeEvent(QResizeEvent *event) override {
     QWidget::resizeEvent(event);
+    qDebug() << "resize system omni icon" << size();
     recalculate();
   }
 
 public:
   OmniSystemIconWidget(const QString &name, QWidget *parent = nullptr) : OmniIconWidget(parent), _name(name) {
+    qDebug() << "init system omni icon" << size();
     _icon = QIcon(name);
     if (_icon.isNull()) { _icon = QIcon::fromTheme(name); }
     if (_icon.isNull()) { _icon = QIcon(":icons/question-mark-circle"); }
@@ -461,7 +469,7 @@ class FaviconOmniIconWidget : public OmniIconWidget {
   }
 
   void recalculate() {
-    if (!size().isValid()) return;
+    if (!size().isValid() || _favicon.isNull()) return;
 
     _pixmap = _favicon.scaled(size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
     emit imageLoaded(_pixmap);
@@ -487,44 +495,65 @@ public:
   }
 };
 
+enum OmniIconSizeMode {
+  SizeModeFill,
+  SizeModeFixed,
+};
+
 class OmniIcon : public QWidget {
   Q_OBJECT
 
   OmniIconUrl _url;
   OmniIconWidget *_iconWidget = nullptr;
+  QSize _fixedSize;
+  OmniIconSizeMode _sizeMode = SizeModeFill;
+  QVBoxLayout *layout;
 
+  /*
   void resizeEvent(QResizeEvent *event) override {
     QWidget::resizeEvent(event);
     recalculate();
   }
-
-  QSize sizeHint() const override {
-    if (auto sz = _url.size(); sz.isValid()) { return sz; }
-    if (auto w = parentWidget(); w) { return w->size(); }
-
-    return {};
-  }
+  */
 
   void recalculate() {
-    if (!size().isValid()) return;
-    if (_iconWidget) {
-      _iconWidget->setGeometry(rect());
-      _iconWidget->setFixedSize(size());
-      _iconWidget->move(0, 0);
-
-      qDebug() << "recalculate for size" << size();
-    }
+    /*
+if (!size().isValid()) return;
+if (_iconWidget) {
+_iconWidget->setGeometry(rect());
+qDebug() << "recalculate for size" << size();
+}
+  */
   }
 
 public:
-  OmniIcon(const OmniIconUrl &url, QWidget *parent = nullptr) : QWidget(parent) { setUrl(url); }
-  OmniIcon(QWidget *parent = nullptr) : QWidget(parent) {
+  OmniIcon(const OmniIconUrl &url, QWidget *parent = nullptr) : QWidget(parent), layout(new QVBoxLayout) {
+    setUrl(url);
+  }
+  OmniIcon(QWidget *parent = nullptr) : QWidget(parent), layout(new QVBoxLayout) {
     connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() { recalculate(); });
+    layout->setSpacing(0);
+    layout->setContentsMargins(0, 0, 0, 0);
+    setLayout(layout);
   }
   ~OmniIcon() {}
 
+  /*
+  void setFixedSize(int width, int height) { setFixedSize({width, height}); }
+
+  void setFixedSize(QSize size) {
+    QWidget::setFixedSize(size);
+    _fixedSize = size;
+    _sizeMode = OmniIconSizeMode::SizeModeFixed;
+  }
+  */
+
   void setUrl(const OmniIconUrl &url) {
-    if (_iconWidget) { _iconWidget->deleteLater(); }
+    if (_iconWidget) {
+      layout->takeAt(0);
+      _iconWidget->deleteLater();
+    }
+
     _url = url;
 
     auto type = url.type();
@@ -551,8 +580,7 @@ public:
     if (_iconWidget) {
       connect(_iconWidget, &OmniIconWidget::imageLoaded, this, &OmniIcon::imageUpdated);
       connect(_iconWidget, &OmniIconWidget::imageLoaded, this, []() { qDebug() << "image updated"; });
-      _iconWidget->show();
-      recalculate();
+      layout->addWidget(_iconWidget, 1);
     } else {
       qDebug() << "no icon widget for " << url.toString();
     }

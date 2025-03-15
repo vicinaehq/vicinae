@@ -305,12 +305,15 @@ public:
     OmniIconUrl iconUrl = item->icon();
 
     icon->setFixedSize(32, 32);
-    icon->show();
 
-    QTimer::singleShot(0, [this, icon, iconUrl]() { icon->setUrl(iconUrl); });
+    QTimer::singleShot(0, [this, icon, iconUrl]() {
+      icon->setUrl(iconUrl);
+      icon->show();
+      icon->hide();
+    });
 
-    connect(icon, &OmniIcon::imageUpdated, this, [this, icon](QPixmap pixmap) {
-      qDebug() << "ICON UPDATED!!!!";
+    connect(icon, &OmniIcon::imageUpdated, this, [this, icon, iconUrl](QPixmap pixmap) {
+      qDebug() << "ICON UPDATED!!!!" << iconUrl.toString();
       if (action) inputField->removeAction(action);
       action = inputField->addAction(QIcon(pixmap), QLineEdit::LeadingPosition);
       icon->deleteLater();
