@@ -1,5 +1,6 @@
 #include "ui/form/selector-input.hpp"
 #include "common.hpp"
+#include <memory>
 
 bool SelectorInput::eventFilter(QObject *obj, QEvent *event) {
   if (obj == popover) {
@@ -112,13 +113,7 @@ void SelectorInput::addSection(const QString &name) { list->addSection(name); }
 
 void SelectorInput::addItem(std::unique_ptr<AbstractItem> item) { list->addItem(std::move(item)); }
 
-const SelectorInput::AbstractItem *SelectorInput::value() const {
-  if (auto selected = list->itemAt(selectedId); selected) {
-    return static_cast<const AbstractItem *>(selected);
-  }
-
-  return nullptr;
-}
+const SelectorInput::AbstractItem *SelectorInput::value() const { return _currentSelection.get(); }
 
 void SelectorInput::setValue(const QString &id) {
   auto selectedItem = list->setSelected(id);
@@ -128,10 +123,9 @@ void SelectorInput::setValue(const QString &id) {
     return;
   }
 
-  selectedId = id;
-
   auto item = static_cast<const AbstractItem *>(selectedItem);
 
+  _currentSelection.reset(item->clone());
   selectionIcon->setUrl(item->icon());
   inputField->setText(item->displayName());
 }
@@ -142,14 +136,14 @@ void SelectorInput::handleTextChanged(const QString &text) {
 }
 
 void SelectorInput::itemUpdated(const OmniList::AbstractVirtualItem &item) {
-  if (item.id() == selectedId) setValue(item.id());
+  if (_currentSelection && _currentSelection->id() == item.id()) setValue(item.id());
 }
 
 void SelectorInput::showPopover() {
   const QPoint globalPos = inputField->mapToGlobal(QPoint(0, inputField->height() + 10));
 
-  if (!selectedId.isEmpty()) {
-    list->setSelected(selectedId);
+  if (_currentSelection) {
+    list->setSelected(_currentSelection->id());
   } else {
     list->selectFirst();
   }
@@ -167,5 +161,5 @@ SelectorInput::~SelectorInput() {
 void SelectorInput::clear() {
   inputField->clear();
   list->clear();
-  selectedId.clear();
+  _currentSelection.reset();
 }

@@ -1,14 +1,13 @@
 #pragma once
 #include "app-database.hpp"
-#include "builtin_icon.hpp"
 #include "omni-icon.hpp"
 #include "quicklist-database.hpp"
 #include "ui/action_popover.hpp"
-#include "ui/form.hpp"
 #include "ui/form/base-input.hpp"
 #include "ui/form/selector-input.hpp"
 #include "ui/toast.hpp"
 #include "view.hpp"
+#include "ui/form/form.hpp"
 #include <functional>
 #include <memory>
 #include <qnamespace.h>
@@ -17,6 +16,7 @@
 #include <qtmetamacros.h>
 #include <qtypes.h>
 #include <qvariant.h>
+#include <sched.h>
 
 class CallbackAction : public AbstractAction {
   using SubmitHandler = std::function<void(AppWindow &app)>;
@@ -41,6 +41,8 @@ public:
 
     return name;
   }
+
+  AbstractItem *clone() const override { return new AppSelectorItem(*this); }
 
   void setApp(const std::shared_ptr<DesktopExecutable> &app) { this->app = app; }
 
@@ -70,6 +72,8 @@ public:
   QString id() const override { return iconUrl.toString(); }
 
   void setDisplayName(const QString &name) { this->dname = name; }
+
+  AbstractItem *clone() const override { return new IconSelectorItem(*this); }
 
   void setIcon(const OmniIconUrl &url) { this->iconUrl = url; }
 
