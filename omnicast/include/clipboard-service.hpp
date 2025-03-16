@@ -16,7 +16,7 @@
 #include <qsqlquery.h>
 #include <qstringview.h>
 #include <qtmetamacros.h>
-#include "clipboard-manager.hpp"
+#include "clipboard/clipboard-server.hpp"
 
 struct InsertClipboardHistoryLine {
   QString mimeType;

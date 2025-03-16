@@ -1,5 +1,5 @@
 #include "clipboard-service.hpp"
-#include "clipboard-manager.hpp"
+#include "clipboard/clipboard-server.hpp"
 #include <algorithm>
 #include <cstdint>
 #include <filesystem>

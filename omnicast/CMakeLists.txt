@@ -39,7 +39,6 @@ qt_add_executable(${TARGET}
 	src/get-wayland-wlr-data-control-client-protocol.cpp
 	include/theme.hpp
 
-	include/clipboard-manager.hpp
 
 	include/favicon/favicon-service.hpp
 	src/favicon/favicon-service.cpp
@@ -63,6 +62,14 @@ qt_add_executable(${TARGET}
 
 	include/ui/popover.hpp
 	src/ui/popover.cpp
+
+	include/clipboard/clipboard-server.hpp
+	include/clipboard/wlr-clipboard-server.hpp
+	src/clipboard/wlr-clipboard-server.cpp
+	include/clipboard/dummy-clipboard-server.hpp
+	src/clipboard/dummy-clipboard-server.cpp
+	include/clipboard/clipboard-server-factory.hpp
+	src/clipboard/clipboard-server-factory.cpp
 
 	#src/commands/index/index-command.hpp
 	#src/commands/index/index-command.cpp

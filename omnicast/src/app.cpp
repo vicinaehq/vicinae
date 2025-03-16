@@ -2,23 +2,22 @@
 #include "clipboard-service.hpp"
 #include "command-database.hpp"
 #include "command-server.hpp"
+#include "clipboard/clipboard-server-factory.hpp"
 #include "command.hpp"
 #include "config.hpp"
 #include "extension_manager.hpp"
 #include "favicon/favicon-service.hpp"
 #include "image-fetcher.hpp"
-#include "indexer-service.hpp"
 #include "process-manager-service.hpp"
 #include "quicklink-seeder.hpp"
 #include "root-command.hpp"
 #include "ui/action_popover.hpp"
-#include "ui/status-bar.hpp"
 #include "theme.hpp"
 #include "ui/top_bar.hpp"
 #include <QLabel>
 #include <QMainWindow>
 #include <QThread>
-#include "clipboard-manager.hpp"
+#include "clipboard/clipboard-server.hpp"
 #include <QVBoxLayout>
 #include <memory>
 #include <qboxlayout.h>
@@ -353,12 +352,12 @@ AppWindow::AppWindow(QWidget *parent)
     if (quicklinkDatabase->list().isEmpty()) { seeder->seed(); }
   }
 
-  auto wlrClip = new WlrClipboardManager;
+  AbstractClipboardServer *clipboardServer = ClipboardServerFactory().createFirstActivatable(this);
 
-  connect(wlrClip, &AbstractClipboardManager::saveSelection, clipboardService.get(),
+  connect(clipboardServer, &AbstractClipboardServer::selection, clipboardService.get(),
           &ClipboardService::saveSelection);
 
-  wlrClip->start();
+  clipboardServer->start();
 
   extensionManager->start();
 
