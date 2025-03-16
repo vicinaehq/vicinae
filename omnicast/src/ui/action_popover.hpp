@@ -1,7 +1,6 @@
 #pragma once
 #include "extend/action-model.hpp"
 #include "extend/image-model.hpp"
-#include "image-viewer.hpp"
 #include "omni-icon.hpp"
 #include "theme.hpp"
 #include "ui/keyboard-shortcut-indicator.hpp"

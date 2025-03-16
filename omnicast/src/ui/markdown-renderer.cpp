@@ -1,5 +1,5 @@
 #include "markdown-renderer.hpp"
-#include "remote-image-viewer.hpp"
+#include <qlabel.h>
 #include <qnamespace.h>
 
 MarkdownImage::MarkdownImage(cmark_node *node) : layout(new QVBoxLayout) {
@@ -8,8 +8,7 @@ MarkdownImage::MarkdownImage(cmark_node *node) : layout(new QVBoxLayout) {
 
   // TODO: handle error better
 
-  if (p)
-    url = p;
+  if (p) url = p;
 
   Resolution res = {640, 360};
   auto altNode = cmark_node_first_child(node);
@@ -19,21 +18,18 @@ MarkdownImage::MarkdownImage(cmark_node *node) : layout(new QVBoxLayout) {
     auto ss = lit.split("|");
     QString alt = ss.at(0);
 
-    if (ss.size() > 1) {
-      res = parseResolution(ss.at(1));
-    }
+    if (ss.size() > 1) { res = parseResolution(ss.at(1)); }
   }
 
   layout->setContentsMargins(0, 0, 0, 0);
 
-  auto remoteImg = new RemoteImageViewer(url, Qt::AlignCenter);
+  // auto remoteImg = new RemoteImageViewer(url, Qt::AlignCenter);
 
-  layout->addWidget(remoteImg, 0);
+  // layout->addWidget(remoteImg, 0);
   setLayout(layout);
 }
 
-MarkdownParagraph::MarkdownParagraph(cmark_node *node)
-    : layout(new QVBoxLayout) {
+MarkdownParagraph::MarkdownParagraph(cmark_node *node) : layout(new QVBoxLayout) {
   cmark_node *child = cmark_node_first_child(node);
 
   while (child) {
@@ -45,8 +41,7 @@ MarkdownParagraph::MarkdownParagraph(cmark_node *node)
       layout->addWidget(new MarkdownImage(child));
       break;
     default:
-      qDebug() << "unhandled paragraph child of type"
-               << cmark_node_first_child(node);
+      qDebug() << "unhandled paragraph child of type" << cmark_node_first_child(node);
       break;
     }
 
@@ -77,9 +72,7 @@ void MarkdownView::setMarkdown(const QString &markdown) {
 
     qDebug() << "markdown type" << cmark_node_get_type_string(currentNode);
 
-    if (type == CMARK_NODE_PARAGRAPH) {
-      layout->addWidget(new MarkdownParagraph(currentNode));
-    }
+    if (type == CMARK_NODE_PARAGRAPH) { layout->addWidget(new MarkdownParagraph(currentNode)); }
 
     if (type == CMARK_NODE_HEADING) {
       auto textNode = cmark_node_first_child(currentNode);

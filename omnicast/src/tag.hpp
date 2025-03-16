@@ -1,6 +1,5 @@
 #pragma once
 #include "extend/tag-model.hpp"
-#include "image-viewer.hpp"
 #include "theme.hpp"
 #include <qboxlayout.h>
 #include <qlabel.h>
@@ -49,9 +48,8 @@ public:
       // setColor(theme.getColor(*model.color));
     }
     if (model.icon) {
-      auto img = ImageViewer::createFromModel(*model.icon, {16, 16});
-
-      addLeftWidget(img);
+      // auto img = ImageViewer::createFromModel(*model.icon, {16, 16});
+      // addLeftWidget(img);
     }
   }
 

@@ -1,7 +1,6 @@
 #pragma once
 #include "extend/action-model.hpp"
 #include "extend/image-model.hpp"
-#include "image-viewer.hpp"
 #include "omni-icon.hpp"
 #include "ui/action_popover.hpp"
 #include "ui/text-label.hpp"

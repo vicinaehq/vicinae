@@ -198,9 +198,6 @@ qt_add_executable(${TARGET}
 	include/markdown-renderer.hpp
 	src/ui/markdown-renderer.cpp
 
-	include/remote-image-viewer.hpp
-	src/ui/remote-image-viewer.cpp
-
 	src/root-command.hpp
 	src/command.hpp
 	src/view.hpp
