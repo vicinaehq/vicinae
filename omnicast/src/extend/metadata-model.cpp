@@ -21,13 +21,9 @@ MetadataModel MetadataModelParser::parse(const QJsonObject &instance) {
       });
     }
 
-    if (type == "metadata-separator") {
-      items.push_back(MetadataSeparator{});
-    }
+    if (type == "metadata-separator") { items.push_back(MetadataSeparator{}); }
 
-    if (type == "tag-list") {
-      items.push_back(TagListParser().parse(child));
-    }
+    if (type == "tag-list") { items.push_back(TagListParser().parse(child)); }
   }
 
   return {items};

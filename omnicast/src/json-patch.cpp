@@ -1,10 +1,9 @@
 #include "json-patch.hpp"
 #include <qhash.h>
 
-static QHash<QString, JsonPatch::OperationType> stringToOp{
-    {"add", JsonPatch::OperationType::Add},
-    {"remove", JsonPatch::OperationType::Remove},
-    {"replace", JsonPatch::OperationType::Replace}};
+static QHash<QString, JsonPatch::OperationType> stringToOp{{"add", JsonPatch::OperationType::Add},
+                                                           {"remove", JsonPatch::OperationType::Remove},
+                                                           {"replace", JsonPatch::OperationType::Replace}};
 
 JsonPatch::OperationType JsonPatch::parseOperationType(const QString &op) {
   return stringToOp.value(op, JsonPatch::OperationType::None);
@@ -20,7 +19,6 @@ JsonPatch::JsonPatch(const QJsonArray &data) {
   }
 }
 
-JsonPatch::OperationType
-JsonPatch::getOperationType(const QString &path) const {
+JsonPatch::OperationType JsonPatch::getOperationType(const QString &path) const {
   return keyToOp.value(path, OperationType::None);
 }

@@ -3,8 +3,7 @@
 #include <qjsonarray.h>
 #include <qjsonobject.h>
 
-KeyboardShortcutModel
-ActionPannelParser::parseKeyboardShortcut(const QJsonObject &shortcut) {
+KeyboardShortcutModel ActionPannelParser::parseKeyboardShortcut(const QJsonObject &shortcut) {
   KeyboardShortcutModel model{.key = shortcut.value("key").toString()};
 
   for (const auto &mod : shortcut.value("modifiers").toArray()) {
@@ -25,15 +24,12 @@ ActionModel ActionPannelParser::parseAction(const QJsonObject &instance) {
     action.shortcut = parseKeyboardShortcut(props.value("shortcut").toObject());
   }
 
-  if (props.contains("icon")) {
-    action.icon = ImageModelParser().parse(props.value("icon").toObject());
-  }
+  if (props.contains("icon")) { action.icon = ImageModelParser().parse(props.value("icon").toObject()); }
 
   return action;
 }
 
-ActionPannelSubmenuModel
-ActionPannelParser::parseActionPannelSubmenu(const QJsonObject &instance) {
+ActionPannelSubmenuModel ActionPannelParser::parseActionPannelSubmenu(const QJsonObject &instance) {
   auto props = instance.value("props").toObject();
   ActionPannelSubmenuModel model;
 
@@ -41,28 +37,21 @@ ActionPannelParser::parseActionPannelSubmenu(const QJsonObject &instance) {
   model.onOpen = props.value("onOpen").toString();
   model.onSearchTextChange = props.value("onSearchTextChange").toString();
 
-  if (props.contains("icon")) {
-    model.icon = ImageModelParser().parse(props.value("icon").toObject());
-  }
+  if (props.contains("icon")) { model.icon = ImageModelParser().parse(props.value("icon").toObject()); }
 
   for (const auto &child : instance.value("children").toArray()) {
     auto obj = child.toObject();
     auto type = obj.value("type").toString();
 
-    if (type == "action-panel-section") {
-      model.children.push_back(parseActionPannelSection(obj));
-    }
+    if (type == "action-panel-section") { model.children.push_back(parseActionPannelSection(obj)); }
 
-    if (type == "action") {
-      model.children.push_back(parseAction(obj));
-    }
+    if (type == "action") { model.children.push_back(parseAction(obj)); }
   }
 
   return model;
 }
 
-ActionPannelSectionModel
-ActionPannelParser::parseActionPannelSection(const QJsonObject &instance) {
+ActionPannelSectionModel ActionPannelParser::parseActionPannelSection(const QJsonObject &instance) {
   auto props = instance.value("props").toObject();
   ActionPannelSectionModel model;
 

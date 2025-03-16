@@ -6,8 +6,7 @@
 #include <qjsonarray.h>
 #include <qjsonobject.h>
 
-ListItemViewModel ListModelParser::parseListItem(const QJsonObject &instance,
-                                                 size_t index) {
+ListItemViewModel ListModelParser::parseListItem(const QJsonObject &instance, size_t index) {
   ListItemViewModel model;
   auto props = instance.value("props").toObject();
   auto children = instance.value("children").toArray();
@@ -23,13 +22,9 @@ ListItemViewModel ListModelParser::parseListItem(const QJsonObject &instance,
     auto obj = child.toObject();
     auto type = obj["type"].toString();
 
-    if (type == "action-panel") {
-      model.actionPannel = ActionPannelParser().parse(obj);
-    }
+    if (type == "action-panel") { model.actionPannel = ActionPannelParser().parse(obj); }
 
-    if (type == "list-item-detail") {
-      model.detail = DetailModelParser().parse(obj);
-    }
+    if (type == "list-item-detail") { model.detail = DetailModelParser().parse(obj); }
 
     i += 1;
   }
@@ -93,9 +88,7 @@ ListModel ListModelParser::parse(const QJsonObject &instance) {
       model.items.push_back(section);
     }
 
-    if (type == "empty-view") {
-      model.emptyView = EmptyViewModelParser().parse(childObj);
-    }
+    if (type == "empty-view") { model.emptyView = EmptyViewModelParser().parse(childObj); }
 
     ++index;
   }

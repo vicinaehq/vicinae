@@ -37,8 +37,7 @@ class IndexWriter : public QObject {
   }
 
 public:
-  IndexWriter(const QString &path)
-      : con(std::make_unique<FilesystemDatabase>(path, "files-writer")) {
+  IndexWriter(const QString &path) : con(std::make_unique<FilesystemDatabase>(path, "files-writer")) {
     connect(this, &IndexWriter::requestWrite, this, &IndexWriter::writeBatch);
   }
 
@@ -68,14 +67,11 @@ class IgnoreFile {
         while (cursor < target.size() && target.at(cursor) != ch)
           ++cursor;
 
-        if (cursor == target.size())
-          return false;
+        if (cursor == target.size()) return false;
 
         starFlag = false;
       } else {
-        if (target.at(cursor) != ch) {
-          return false;
-        }
+        if (target.at(cursor) != ch) { return false; }
 
         ++cursor;
       }
@@ -83,8 +79,7 @@ class IgnoreFile {
 
     auto matches = cursor == target.size();
 
-    if (ignore.negated)
-      matches = !matches;
+    if (ignore.negated) matches = !matches;
     if (target.endsWith("node_modules")) {
       /*
 qDebug() << target << "VS" << ignore.pattern << matches
@@ -100,9 +95,7 @@ public:
   IgnoreFile(const QString &path) {
     QFile file(path);
 
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-      return;
-    }
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) { return; }
 
     QTextStream in(&file);
 
@@ -112,8 +105,7 @@ public:
 
       GitIgnorePattern pattern;
 
-      if (line.isEmpty() || line.startsWith('#'))
-        continue;
+      if (line.isEmpty() || line.startsWith('#')) continue;
 
       if (line.size() > idx && line.at(idx) == '!') {
         pattern.negated = true;
@@ -121,8 +113,7 @@ public:
       }
 
       if (line.size() > idx && line.at(idx) == '/') {
-        pattern.pattern =
-            QFileInfo(path).dir().absolutePath() + line.sliced(idx);
+        pattern.pattern = QFileInfo(path).dir().absolutePath() + line.sliced(idx);
       } else {
         pattern.pattern = line.sliced(idx);
       }
@@ -140,13 +131,9 @@ public:
     }
 
     for (const auto &pattern : list) {
-      QString compared = pattern.pattern.startsWith('/')
-                             ? info.absoluteFilePath()
-                             : info.fileName();
+      QString compared = pattern.pattern.startsWith('/') ? info.absoluteFilePath() : info.fileName();
 
-      if (evaluatePattern(compared, pattern)) {
-        return true;
-      }
+      if (evaluatePattern(compared, pattern)) { return true; }
     }
 
     return false;
@@ -177,28 +164,22 @@ class DirectoryIndexerRunnable : public QObject, public QRunnable {
         QString gitignorePath = parent.absoluteFilePath(".gitignore");
         QFile gitignore(gitignorePath);
 
-        if (gitignore.exists()) {
-          ignoreFile.append(gitignorePath);
-        }
+        if (gitignore.exists()) { ignoreFile.append(gitignorePath); }
 
         parent.cdUp();
       }
 
       for (auto entry : dir.entryList()) {
-        if (entry.startsWith('.'))
-          continue;
+        if (entry.startsWith('.')) continue;
 
         QString path = dir.absoluteFilePath(entry);
         QFileInfo info(path);
 
-        if (ignoreFile.matches(info))
-          continue;
+        if (ignoreFile.matches(info)) continue;
 
-        if (info.isDir())
-          dirs.push_back(path);
+        if (info.isDir()) dirs.push_back(path);
 
-        if (info.isFile())
-          saveFile(info);
+        if (info.isFile()) saveFile(info);
       }
 
       saveFile(dirInfo);
@@ -236,8 +217,7 @@ class DirectoryIndexerRunnable : public QObject, public QRunnable {
   }
 
 public:
-  DirectoryIndexerRunnable(const QString &entrypoint)
-      : entrypoint(entrypoint) {}
+  DirectoryIndexerRunnable(const QString &entrypoint) : entrypoint(entrypoint) {}
 
 signals:
   void batchReady(const QList<FileInfo> &batch);
@@ -258,8 +238,7 @@ public:
   void indexWork(const QString &path) {
     auto task = new DirectoryIndexerRunnable(path);
 
-    connect(task, &DirectoryIndexerRunnable::batchReady, writer,
-            &IndexWriter::requestWrite);
+    connect(task, &DirectoryIndexerRunnable::batchReady, writer, &IndexWriter::requestWrite);
 
     QThreadPool::globalInstance()->start(task);
   }
@@ -271,8 +250,8 @@ public:
   }
 
   IndexManager(const QString &dbPath)
-      : db(std::make_unique<FilesystemDatabase>(dbPath, "files-reader")),
-        writer(new IndexWriter(dbPath)), writerThread(new QThread) {
+      : db(std::make_unique<FilesystemDatabase>(dbPath, "files-reader")), writer(new IndexWriter(dbPath)),
+        writerThread(new QThread) {
 
     writer->moveToThread(writerThread);
     writerThread->start();

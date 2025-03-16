@@ -11,9 +11,7 @@ struct Resolution {
 static Resolution parseResolution(const QString &s) {
   auto ss = s.split("x");
 
-  if (ss.size() != 2) {
-    return {0, 0};
-  }
+  if (ss.size() != 2) { return {0, 0}; }
 
   return {ss.at(0).toInt(), ss.at(1).toInt()};
 }

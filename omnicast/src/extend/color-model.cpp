@@ -4,13 +4,9 @@
 ColorLikeModelParser::ColorLikeModelParser() {}
 
 ColorLikeModel ColorLikeModelParser::parse(const QJsonObject &colorLike) {
-  if (colorLike.contains("themeColor")) {
-    return colorLike.value("themeColor").toString();
-  }
+  if (colorLike.contains("themeColor")) { return colorLike.value("themeColor").toString(); }
 
-  if (colorLike.contains("colorString")) {
-    return colorLike.value("colorString").toString();
-  }
+  if (colorLike.contains("colorString")) { return colorLike.value("colorString").toString(); }
 
   return "primary-text";
 }

@@ -15,8 +15,7 @@ struct ImageUrlModel {
   QString url;
 };
 
-using ImageLikeModel =
-    std::variant<ImageUrlModel, ThemeIconModel, ImageFileModel>;
+using ImageLikeModel = std::variant<ImageUrlModel, ThemeIconModel, ImageFileModel>;
 
 class ImageModelParser {
 public:

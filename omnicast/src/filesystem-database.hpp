@@ -58,12 +58,9 @@ CREATE TRIGGER tbl_ad AFTER DELETE ON files BEGIN
 END;
 )";
 
-static const QList<QString> initScript = {"PRAGMA journal_mode=WAL",
-                                          "PRAGMA synchronous=NORMAL",
-                                          filesTable,
-                                          fts5Tables,
-                                          fts5InsertTrigger,
-                                          fts5DeleteTrigger};
+static const QList<QString> initScript = {
+    "PRAGMA journal_mode=WAL", "PRAGMA synchronous=NORMAL", filesTable, fts5Tables, fts5InsertTrigger,
+    fts5DeleteTrigger};
 
 enum FileType { RegularFile, Directory };
 
@@ -85,8 +82,7 @@ class FilesystemDatabase {
   QSqlDatabase db;
 
 public:
-  FilesystemDatabase(const QString &path,
-                     const QString &connectionName = "files")
+  FilesystemDatabase(const QString &path, const QString &connectionName = "files")
       : db(QSqlDatabase::addDatabase("QSQLITE", connectionName)) {
     db.setDatabaseName(path);
 
@@ -116,8 +112,7 @@ public:
     QSqlQuery query(db);
 
     if (!query.prepare(listDirectoryQuery)) {
-      qDebug() << "listIndexedDirectory: failed to prepare"
-               << query.lastError();
+      qDebug() << "listIndexedDirectory: failed to prepare" << query.lastError();
     }
 
     query.bindValue(":path", directoryPath);
@@ -150,8 +145,7 @@ public:
     QVariantList names, paths, mtimes, types, parentPaths, mime;
 
     if (!db.transaction()) {
-      qDebug() << "FilesystemDatabase::insert: failed to start transaction"
-               << query.lastError();
+      qDebug() << "FilesystemDatabase::insert: failed to start transaction" << query.lastError();
       return false;
     }
 
@@ -174,13 +168,10 @@ public:
     query.bindValue(":mime", mime);
     ok = query.execBatch();
 
-    if (!ok) {
-      qDebug() << "failed to insert" << query.lastError();
-    }
+    if (!ok) { qDebug() << "failed to insert" << query.lastError(); }
 
     if (!db.commit()) {
-      qDebug() << "FilesystemDatabase::insert: failed to commit transaction"
-               << query.lastError();
+      qDebug() << "FilesystemDatabase::insert: failed to commit transaction" << query.lastError();
       return false;
     }
 

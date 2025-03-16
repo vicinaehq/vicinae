@@ -27,8 +27,7 @@ struct ActionPannelSubmenuModel {
   QList<std::variant<ActionPannelSectionModel, ActionModel>> children;
 };
 
-using ActionPannelItem = std::variant<ActionModel, ActionPannelSectionModel,
-                                      ActionPannelSubmenuModel>;
+using ActionPannelItem = std::variant<ActionModel, ActionPannelSectionModel, ActionPannelSubmenuModel>;
 
 struct ActionPannelModel {
   QString title;
@@ -39,10 +38,8 @@ class ActionPannelParser {
   KeyboardShortcutModel parseKeyboardShortcut(const QJsonObject &shortcut);
   ActionModel parseAction(const QJsonObject &instance);
 
-  ActionPannelSectionModel
-  parseActionPannelSection(const QJsonObject &instance);
-  ActionPannelSubmenuModel
-  parseActionPannelSubmenu(const QJsonObject &instance);
+  ActionPannelSectionModel parseActionPannelSection(const QJsonObject &instance);
+  ActionPannelSubmenuModel parseActionPannelSubmenu(const QJsonObject &instance);
 
 public:
   ActionPannelParser();

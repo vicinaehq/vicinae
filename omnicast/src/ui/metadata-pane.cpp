@@ -7,8 +7,7 @@
 #include <qnamespace.h>
 #include <variant>
 
-MetadataPane::MetadataPane(Direction direction)
-    : layout(new QVBoxLayout), direction(direction) {
+MetadataPane::MetadataPane(Direction direction) : layout(new QVBoxLayout), direction(direction) {
   layout->setAlignment(Qt::AlignTop);
 
   if (direction == Vertical) {
@@ -20,8 +19,7 @@ MetadataPane::MetadataPane(Direction direction)
   setLayout(layout);
 }
 
-void MetadataPane::add(const QString &title, QWidget *widget,
-                       Direction direction) {
+void MetadataPane::add(const QString &title, QWidget *widget, Direction direction) {
   auto row = new QWidget();
   QBoxLayout *rowLayout = nullptr;
 

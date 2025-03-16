@@ -13,17 +13,13 @@ EmptyViewModel EmptyViewModelParser::parse(const QJsonObject &instance) {
   model.title = props.value("title").toString();
   model.description = props.value("description").toString();
 
-  if (props.contains("icon")) {
-    model.icon = ImageModelParser().parse(props.value("icon").toObject());
-  }
+  if (props.contains("icon")) { model.icon = ImageModelParser().parse(props.value("icon").toObject()); }
 
   for (const auto &child : instance.value("children").toArray()) {
     auto obj = child.toObject();
     auto type = obj.value("type").toString();
 
-    if (type == "action-panel") {
-      model.actions = ActionPannelParser().parse(obj);
-    }
+    if (type == "action-panel") { model.actions = ActionPannelParser().parse(obj); }
   }
 
   return model;

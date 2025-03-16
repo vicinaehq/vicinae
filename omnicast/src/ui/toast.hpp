@@ -11,8 +11,7 @@ class ToastWidget : public QWidget {
   QTimer fadeOutTimer;
 
 public:
-  ToastWidget(const QString &text,
-              ToastPriority priority = ToastPriority::Success);
+  ToastWidget(const QString &text, ToastPriority priority = ToastPriority::Success);
 
   void start(int duration = 1000);
 

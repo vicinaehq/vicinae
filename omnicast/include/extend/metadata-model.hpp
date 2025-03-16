@@ -9,8 +9,7 @@ struct MetadataLabel {
 
 struct MetadataSeparator {};
 
-using MetadataItem =
-    std::variant<MetadataLabel, MetadataSeparator, TagListModel>;
+using MetadataItem = std::variant<MetadataLabel, MetadataSeparator, TagListModel>;
 
 struct MetadataModel {
   QList<MetadataItem> children;

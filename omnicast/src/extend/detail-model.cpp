@@ -16,9 +16,7 @@ DetailModel DetailModelParser::parse(const QJsonObject &instance) {
     auto obj = child.toObject();
     auto type = obj["type"].toString();
 
-    if (type == "metadata") {
-      detail.metadata = MetadataModelParser().parse(obj);
-    }
+    if (type == "metadata") { detail.metadata = MetadataModelParser().parse(obj); }
   }
 
   return detail;

@@ -20,8 +20,7 @@ public:
 
   bool isSubtreeChanged(const QString &path) const {
     for (const auto key : keyToOp.keys()) {
-      if (key.size() > path.size() && key.startsWith(path))
-        return true;
+      if (key.size() > path.size() && key.startsWith(path)) return true;
     }
 
     return false;

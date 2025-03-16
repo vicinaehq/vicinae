@@ -37,77 +37,71 @@ extern const struct wl_interface zwlr_data_control_offer_v1_interface;
 extern const struct wl_interface zwlr_data_control_source_v1_interface;
 
 static const struct wl_interface *wlr_data_control_unstable_v1_types[] = {
-	NULL,
-	NULL,
-	&zwlr_data_control_source_v1_interface,
-	&zwlr_data_control_device_v1_interface,
-	&wl_seat_interface,
-	&zwlr_data_control_source_v1_interface,
-	&zwlr_data_control_source_v1_interface,
-	&zwlr_data_control_offer_v1_interface,
-	&zwlr_data_control_offer_v1_interface,
-	&zwlr_data_control_offer_v1_interface,
+    NULL,
+    NULL,
+    &zwlr_data_control_source_v1_interface,
+    &zwlr_data_control_device_v1_interface,
+    &wl_seat_interface,
+    &zwlr_data_control_source_v1_interface,
+    &zwlr_data_control_source_v1_interface,
+    &zwlr_data_control_offer_v1_interface,
+    &zwlr_data_control_offer_v1_interface,
+    &zwlr_data_control_offer_v1_interface,
 };
 
 static const struct wl_message zwlr_data_control_manager_v1_requests[] = {
-	{ "create_data_source", "n", wlr_data_control_unstable_v1_types + 2 },
-	{ "get_data_device", "no", wlr_data_control_unstable_v1_types + 3 },
-	{ "destroy", "", wlr_data_control_unstable_v1_types + 0 },
+    {"create_data_source", "n", wlr_data_control_unstable_v1_types + 2},
+    {"get_data_device", "no", wlr_data_control_unstable_v1_types + 3},
+    {"destroy", "", wlr_data_control_unstable_v1_types + 0},
 };
 
 WL_EXPORT const struct wl_interface zwlr_data_control_manager_v1_interface = {
-	"zwlr_data_control_manager_v1", 2,
-	3, zwlr_data_control_manager_v1_requests,
-	0, NULL,
+    "zwlr_data_control_manager_v1", 2, 3, zwlr_data_control_manager_v1_requests, 0, NULL,
 };
 
 static const struct wl_message zwlr_data_control_device_v1_requests[] = {
-	{ "set_selection", "?o", wlr_data_control_unstable_v1_types + 5 },
-	{ "destroy", "", wlr_data_control_unstable_v1_types + 0 },
-	{ "set_primary_selection", "2?o", wlr_data_control_unstable_v1_types + 6 },
+    {"set_selection", "?o", wlr_data_control_unstable_v1_types + 5},
+    {"destroy", "", wlr_data_control_unstable_v1_types + 0},
+    {"set_primary_selection", "2?o", wlr_data_control_unstable_v1_types + 6},
 };
 
 static const struct wl_message zwlr_data_control_device_v1_events[] = {
-	{ "data_offer", "n", wlr_data_control_unstable_v1_types + 7 },
-	{ "selection", "?o", wlr_data_control_unstable_v1_types + 8 },
-	{ "finished", "", wlr_data_control_unstable_v1_types + 0 },
-	{ "primary_selection", "2?o", wlr_data_control_unstable_v1_types + 9 },
+    {"data_offer", "n", wlr_data_control_unstable_v1_types + 7},
+    {"selection", "?o", wlr_data_control_unstable_v1_types + 8},
+    {"finished", "", wlr_data_control_unstable_v1_types + 0},
+    {"primary_selection", "2?o", wlr_data_control_unstable_v1_types + 9},
 };
 
 WL_EXPORT const struct wl_interface zwlr_data_control_device_v1_interface = {
-	"zwlr_data_control_device_v1", 2,
-	3, zwlr_data_control_device_v1_requests,
-	4, zwlr_data_control_device_v1_events,
+    "zwlr_data_control_device_v1",        2, 3,
+    zwlr_data_control_device_v1_requests, 4, zwlr_data_control_device_v1_events,
 };
 
 static const struct wl_message zwlr_data_control_source_v1_requests[] = {
-	{ "offer", "s", wlr_data_control_unstable_v1_types + 0 },
-	{ "destroy", "", wlr_data_control_unstable_v1_types + 0 },
+    {"offer", "s", wlr_data_control_unstable_v1_types + 0},
+    {"destroy", "", wlr_data_control_unstable_v1_types + 0},
 };
 
 static const struct wl_message zwlr_data_control_source_v1_events[] = {
-	{ "send", "sh", wlr_data_control_unstable_v1_types + 0 },
-	{ "cancelled", "", wlr_data_control_unstable_v1_types + 0 },
+    {"send", "sh", wlr_data_control_unstable_v1_types + 0},
+    {"cancelled", "", wlr_data_control_unstable_v1_types + 0},
 };
 
 WL_EXPORT const struct wl_interface zwlr_data_control_source_v1_interface = {
-	"zwlr_data_control_source_v1", 1,
-	2, zwlr_data_control_source_v1_requests,
-	2, zwlr_data_control_source_v1_events,
+    "zwlr_data_control_source_v1",        1, 2,
+    zwlr_data_control_source_v1_requests, 2, zwlr_data_control_source_v1_events,
 };
 
 static const struct wl_message zwlr_data_control_offer_v1_requests[] = {
-	{ "receive", "sh", wlr_data_control_unstable_v1_types + 0 },
-	{ "destroy", "", wlr_data_control_unstable_v1_types + 0 },
+    {"receive", "sh", wlr_data_control_unstable_v1_types + 0},
+    {"destroy", "", wlr_data_control_unstable_v1_types + 0},
 };
 
 static const struct wl_message zwlr_data_control_offer_v1_events[] = {
-	{ "offer", "s", wlr_data_control_unstable_v1_types + 0 },
+    {"offer", "s", wlr_data_control_unstable_v1_types + 0},
 };
 
 WL_EXPORT const struct wl_interface zwlr_data_control_offer_v1_interface = {
-	"zwlr_data_control_offer_v1", 1,
-	2, zwlr_data_control_offer_v1_requests,
-	1, zwlr_data_control_offer_v1_events,
+    "zwlr_data_control_offer_v1",        1, 2,
+    zwlr_data_control_offer_v1_requests, 1, zwlr_data_control_offer_v1_events,
 };
-

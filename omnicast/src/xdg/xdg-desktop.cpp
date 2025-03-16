@@ -1,17 +1,13 @@
 #include "xdg-desktop.hpp"
 #include <qstringview.h>
 
-static bool isGroupHeaderNameChar(QChar c) {
-  return c.isPrint() && c != '[' && c != ']';
-}
+static bool isGroupHeaderNameChar(QChar c) { return c.isPrint() && c != '[' && c != ']'; }
 
 static bool isEntryKey(QChar c) { return c.isLetterOrNumber() || c == '-'; }
 
 static bool isValueKey(QChar c) { return c != '\n'; }
 
-static bool isLocaleKey(QChar c) {
-  return c.isLetter() || c == '_' || c == '@' || c == '-';
-}
+static bool isLocaleKey(QChar c) { return c.isLetter() || c == '_' || c == '@' || c == '-'; }
 
 Locale::Locale(QStringView data) {
   enum State { LANG, COUNTRY, ENC, AT, MOD, DONE };
@@ -118,8 +114,7 @@ Locale::Locale(QStringView data) {
 QString Locale::toString() {
   QString fmt;
 
-  if (!lang.isEmpty())
-    fmt += lang;
+  if (!lang.isEmpty()) fmt += lang;
 
   if (!country.isEmpty()) {
     fmt += "_";
@@ -148,11 +143,8 @@ QString Locale::toString() {
   return fmt;
 }
 
-XdgDesktopEntry::Parser::Parser(QStringView view) noexcept
-    : rawLocale("C"), data(view), cursor(0) {
-  if (auto locale = std::setlocale(LC_MESSAGES, nullptr)) {
-    rawLocale = locale;
-  }
+XdgDesktopEntry::Parser::Parser(QStringView view) noexcept : rawLocale("C"), data(view), cursor(0) {
+  if (auto locale = std::setlocale(LC_MESSAGES, nullptr)) { rawLocale = locale; }
 }
 
 void XdgDesktopEntry::Parser::skipWS() {
@@ -169,8 +161,7 @@ QStringView XdgDesktopEntry::Parser::parseGroupHeader() {
 
   QStringView view = data.sliced(cursor, end - cursor);
 
-  if (data.at(end) != ']')
-    throw std::runtime_error("Invalid group header");
+  if (data.at(end) != ']') throw std::runtime_error("Invalid group header");
 
   cursor = end + 1;
 
@@ -213,9 +204,7 @@ QString XdgDesktopEntry::Parser::parseEntryValue() {
   while (cursor < data.size()) {
     c = data.at(cursor);
 
-    if (!isValueKey(c)) {
-      break;
-    }
+    if (!isValueKey(c)) { break; }
 
     if (c == '\\') {
       cursor++;
@@ -251,9 +240,7 @@ XdgDesktopEntry::Parser::Entry XdgDesktopEntry::Parser::parseEntry() {
 
   skipWS();
 
-  if (data.at(cursor) != '=') {
-    throw std::runtime_error("Invalid key name");
-  }
+  if (data.at(cursor) != '=') { throw std::runtime_error("Invalid key name"); }
 
   cursor++;
   entry.value = parseEntryValue();
@@ -264,8 +251,7 @@ XdgDesktopEntry::Parser::Entry XdgDesktopEntry::Parser::parseEntry() {
 uint XdgDesktopEntry::Parser::computeLocalePriority(Locale lhs, Locale rhs) {
   if (lhs.lang == rhs.lang) {
     if (lhs.country == rhs.country) {
-      if (lhs.modifier == rhs.modifier)
-        return 3;
+      if (lhs.modifier == rhs.modifier) return 3;
       return 2;
     }
     return 1;
@@ -310,8 +296,7 @@ XdgDesktopEntry XdgDesktopEntry::Parser::parse() {
         size_t score = computeLocalePriority(Locale(rawLocale), *entry.locale);
 
         if (previousScore != localePriorities.end() && *previousScore < score) {
-          qDebug() << "out did local score for " << entry.key
-                   << entry.locale->toString() << rawLocale;
+          qDebug() << "out did local score for " << entry.key << entry.locale->toString() << rawLocale;
           *previousScore = score;
 
           currentGroup->insert(entry.key, entry.value);
@@ -331,8 +316,7 @@ XdgDesktopEntry XdgDesktopEntry::Parser::parse() {
 
   auto it = groups.find(QStringLiteral("Desktop Entry"));
 
-  if (it == groups.end())
-    throw std::runtime_error("No Desktop Entry group");
+  if (it == groups.end()) throw std::runtime_error("No Desktop Entry group");
 
   entry.type = (*it)[QStringLiteral("Type")];
   entry.version = (*it)[QStringLiteral("Version")];
@@ -357,8 +341,8 @@ XdgDesktopEntry XdgDesktopEntry::Parser::parse() {
   for (const auto &groupName : groups.keys()) {
     auto parts = groupName.split(' ');
 
-    if (parts.size() == 3 && parts[0] == QStringLiteral("Desktop") &&
-        parts[1] == QStringLiteral("Action") && actions.contains(parts[2])) {
+    if (parts.size() == 3 && parts[0] == QStringLiteral("Desktop") && parts[1] == QStringLiteral("Action") &&
+        actions.contains(parts[2])) {
 
       XdgDesktopEntry::Action action;
 

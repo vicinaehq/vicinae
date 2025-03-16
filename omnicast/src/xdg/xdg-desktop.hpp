@@ -88,8 +88,7 @@ class XdgDesktopEntry {
         ++end;
       }
 
-      if (!token.isEmpty())
-        list << token;
+      if (!token.isEmpty()) list << token;
 
       return list;
     }
