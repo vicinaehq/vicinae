@@ -5,7 +5,7 @@
 #include "command.hpp"
 #include "config.hpp"
 #include "extension_manager.hpp"
-#include "favicon-service.hpp"
+#include "favicon/favicon-service.hpp"
 #include "image-fetcher.hpp"
 #include "indexer-service.hpp"
 #include "process-manager-service.hpp"

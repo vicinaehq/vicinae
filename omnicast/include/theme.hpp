@@ -119,7 +119,9 @@ public:
 			background-color: transparent;
 			border: none;
 		}
-
+		QLineEdit:focus[form-input="true"] {
+			border-color: %2;
+		}
 		QTextEdit {
 			font-family: monospace;
 		}
@@ -132,7 +134,7 @@ public:
 			color: %2;
 		}
 		)")
-                     .arg(info.colors.text.name(), info.colors.subtext.name());
+                     .arg(info.colors.text.name(), info.colors.subtext.name(), info.colors.border.name());
 
     qDebug() << "style" << style;
 

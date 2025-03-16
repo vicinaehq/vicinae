@@ -41,6 +41,17 @@ qt_add_executable(${TARGET}
 
 	include/clipboard-manager.hpp
 
+	include/favicon/favicon-service.hpp
+	src/favicon/favicon-service.cpp
+	include/favicon/favicon-request.hpp
+	src/favicon/favicon-request.cpp
+	include/favicon/google-favicon-request.hpp
+	src/favicon/google-favicon-request.cpp
+	include/favicon/dummy-favicon-request.hpp
+	src/favicon/dummy-favicon-request.cpp
+	include/favicon/cached-favicon-request.hpp
+	src/favicon/cached-favicon-request.cpp
+
 	#src/commands/index/index-command.hpp
 	#src/commands/index/index-command.cpp
 	#src/commands/calculator-history/calculator-history.hpp
@@ -100,7 +111,6 @@ qt_add_executable(${TARGET}
 
 	include/ui/virtual-grid.hpp
 
-	include/favicon-fetcher.hpp
 	include/omni-icon.hpp
 
 	include/quicklink-actions.hpp

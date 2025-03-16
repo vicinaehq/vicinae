@@ -7,6 +7,7 @@
 #include <memory>
 #include <qboxlayout.h>
 #include <QPainterPath>
+#include <qevent.h>
 #include <qjsonvalue.h>
 #include <qlabel.h>
 #include <qlayoutitem.h>
@@ -15,36 +16,45 @@
 #include <qobject.h>
 #include <qpainter.h>
 #include <qsharedpointer.h>
+#include <qtimer.h>
 #include <qtmetamacros.h>
 #include <qtypes.h>
 #include <qwidget.h>
+#include <qwindowdefs.h>
 
 class FormQLineEdit : public QLineEdit {
+  bool _focused;
+
   void paintEvent(QPaintEvent *event) override {
     auto &theme = ThemeService::instance().theme();
-    int borderRadius = 5;
-
+    int borderRadius = 4;
     QPainter painter(this);
 
     painter.setRenderHint(QPainter::Antialiasing, true);
-
-    QPainterPath path;
-    path.addRoundedRect(rect(), borderRadius, borderRadius);
-
-    painter.setClipPath(path);
-
-    painter.fillPath(path, theme.colors.statusBackground);
-
-    // Draw the border
-    QPen pen(theme.colors.border, 1); // Border with a thickness of 2
+    QPen pen(_focused ? theme.colors.subtext : theme.colors.border, 1);
     painter.setPen(pen);
-    painter.drawPath(path);
+    painter.drawRoundedRect(rect(), borderRadius, borderRadius);
 
     QLineEdit::paintEvent(event);
   }
 
+  void focusInEvent(QFocusEvent *event) override {
+    QLineEdit::focusInEvent(event);
+    _focused = true;
+    update();
+  }
+
+  void focusOutEvent(QFocusEvent *event) override {
+    QLineEdit::focusOutEvent(event);
+    _focused = false;
+    update();
+  }
+
 public:
-  FormQLineEdit(QWidget *parent = nullptr) : QLineEdit(parent) { setContentsMargins(8, 8, 8, 8); }
+  FormQLineEdit(QWidget *parent = nullptr) : QLineEdit(parent), _focused(false) {
+    setContentsMargins(8, 8, 8, 8);
+    setProperty("form-input", true);
+  }
 };
 
 class FormItemWidget : public QWidget {
@@ -152,6 +162,57 @@ public:
   DefaultFormDropdownFilter(const QString &query) : query(query) {}
 };
 
+class FormDropdownInput : public FormQLineEdit {
+  QWidget *rightAccessory;
+  QWidget *leftAccessory;
+  bool _collapsed;
+
+  void resizeEvent(QResizeEvent *event) override {
+    FormQLineEdit::resizeEvent(event);
+    recalculate();
+  }
+
+  OmniIconUrl iconUrl() { return BuiltinOmniIconUrl(_collapsed ? "chevron-down" : "chevron-up"); }
+
+  void recalculate() {
+    if (!size().isValid()) return;
+
+    QMargins margins;
+
+    margins.setTop(0);
+    margins.setBottom(0);
+
+    if (leftAccessory) {
+      leftAccessory->move(8, (height() - leftAccessory->height()) / 2);
+      leftAccessory->show();
+      margins.setLeft(leftAccessory->width() + 10);
+    }
+
+    if (rightAccessory) {
+      rightAccessory->move(width() - rightAccessory->width() - 8, (height() - rightAccessory->height()) / 2);
+      rightAccessory->show();
+      margins.setRight(rightAccessory->width() + 10);
+    }
+
+    setTextMargins(margins);
+  }
+
+public:
+  void setLeftAccessory(QWidget *widget) {
+    leftAccessory = widget;
+    leftAccessory->setFixedSize(18, 18);
+    leftAccessory->setParent(this);
+  }
+  void setRightAccessory(QWidget *widget) {
+    rightAccessory = widget;
+    rightAccessory->setFixedSize(18, 18);
+    rightAccessory->setParent(this);
+  }
+
+  FormDropdownInput(QWidget *parent = nullptr)
+      : FormQLineEdit(parent), leftAccessory(new QWidget), rightAccessory(new QWidget), _collapsed(true) {}
+};
+
 class FormDropdown : public FormItemWidget {
   Q_OBJECT
 
@@ -159,12 +220,22 @@ class FormDropdown : public FormItemWidget {
 
 protected:
   OmniList *list;
-  FormQLineEdit *inputField;
+  FormDropdownInput *inputField;
   QLineEdit *searchField;
+  OmniIcon *collapseIcon;
+  OmniIcon *selectionIcon;
   Popover *popover;
   QString selectedId;
 
   bool eventFilter(QObject *obj, QEvent *event) override {
+    if (obj == popover) {
+      if (event->type() == QEvent::Close) {
+        collapseIcon->setUrl(BuiltinOmniIconUrl("chevron-down"));
+      } else if (event->type() == QEvent::Show) {
+        collapseIcon->setUrl(BuiltinOmniIconUrl("chevron-up"));
+      }
+    }
+
     if (obj == searchField) {
       if (event->type() == QEvent::KeyPress) {
         auto key = static_cast<QKeyEvent *>(event)->key();
@@ -204,8 +275,9 @@ protected:
 
 public:
   FormDropdown(const QString &name = "")
-      : FormItemWidget(name), list(new OmniList), inputField(new FormQLineEdit), searchField(new QLineEdit()),
-        popover(new Popover(this)) {
+      : FormItemWidget(name), list(new OmniList), inputField(new FormDropdownInput),
+        searchField(new QLineEdit()), popover(new Popover(this)), collapseIcon(new OmniIcon),
+        selectionIcon(new OmniIcon) {
     auto *layout = new QVBoxLayout();
     layout->setContentsMargins(0, 0, 0, 0);
 
@@ -214,6 +286,9 @@ public:
     // Main input field
     inputField->setPlaceholderText("Select an item...");
     inputField->setReadOnly(true); // Read-only to behave like a combo box
+    collapseIcon->setUrl(BuiltinOmniIconUrl("chevron-down"));
+    inputField->setLeftAccessory(selectionIcon);
+    inputField->setRightAccessory(collapseIcon);
     layout->addWidget(inputField);
 
     // Create the popover
@@ -231,6 +306,7 @@ public:
 
     inputField->installEventFilter(this);
     searchField->installEventFilter(this);
+    popover->installEventFilter(this);
 
     auto listContainerWidget = new QWidget;
     auto listContainerLayout = new QVBoxLayout;
@@ -263,7 +339,6 @@ public:
 
   void clear() {
     inputField->clear();
-    inputField->removeAction(action);
     list->clear();
     selectedId.clear();
   }
@@ -298,26 +373,8 @@ public:
 
     auto item = static_cast<const AbstractFormDropdownItem *>(selectedItem);
 
+    selectionIcon->setUrl(item->icon());
     inputField->setText(item->displayName());
-
-    auto icon = new OmniIcon;
-
-    OmniIconUrl iconUrl = item->icon();
-
-    icon->setFixedSize(32, 32);
-
-    QTimer::singleShot(0, [this, icon, iconUrl]() {
-      icon->setUrl(iconUrl);
-      icon->show();
-      icon->hide();
-    });
-
-    connect(icon, &OmniIcon::imageUpdated, this, [this, icon, iconUrl](QPixmap pixmap) {
-      qDebug() << "ICON UPDATED!!!!" << iconUrl.toString();
-      if (action) inputField->removeAction(action);
-      action = inputField->addAction(QIcon(pixmap), QLineEdit::LeadingPosition);
-      icon->deleteLater();
-    });
   }
 
   QString searchText() { return searchField->text(); }
@@ -325,9 +382,6 @@ public:
 signals:
   void textChanged(const QString &s);
   void selectionChanged(const AbstractFormDropdownItem &item);
-
-protected:
-  QAction *action = nullptr;
 
 private slots:
   void handleTextChanged(const QString &text) {
@@ -338,7 +392,7 @@ private slots:
   void itemActivated(const OmniList::AbstractVirtualItem &vitem) {
     setValue(vitem.id());
     searchField->clear();
-    popover->hide();
+    popover->close();
     emit selectionChanged(static_cast<const AbstractFormDropdownItem &>(vitem));
   }
 

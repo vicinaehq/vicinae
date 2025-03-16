@@ -140,7 +140,7 @@ public:
 
   std::unique_ptr<CompleterData> createCompleter() const override {
     return std::make_unique<CompleterData>(
-        CompleterData{.placeholders = link->placeholders, .iconUrl = link->iconName});
+        CompleterData{.placeholders = link->placeholders, .iconUrl = iconUrl()});
   }
 
   QList<AbstractAction *> generateActions() const override {

@@ -1,12 +1,9 @@
 #pragma once
 
 #include "builtin_icon.hpp"
-#include "favicon-service.hpp"
-#include "image-fetcher.hpp"
+#include "favicon/favicon-service.hpp"
 #include <QtConcurrent/qtconcurrentrun.h>
 #include <QtSvg/qsvgrenderer.h>
-#include <memory>
-#include <numbers>
 #include <qboxlayout.h>
 #include <qbrush.h>
 #include <qcolor.h>
@@ -26,9 +23,7 @@
 #include <qurl.h>
 #include <qurlquery.h>
 #include <qwidget.h>
-#include "favicon-fetcher.hpp"
 #include "theme.hpp"
-#include "timer.hpp"
 
 enum OmniIconType { Invalid, Builtin, Favicon, System, Http, Local };
 
@@ -309,8 +304,10 @@ class BuiltinOmniIconRenderer : public OmniIconWidget {
 
     {
       QPainter painter(&svgPix);
+      auto svgSize = _renderer.defaultSize();
+      QRect targetRect = QRect(QPoint(0, 0), svgSize.scaled(innerRect.size(), Qt::KeepAspectRatio));
 
-      _renderer.render(&painter);
+      _renderer.render(&painter, targetRect);
 
       if (auto fill = _fillColor; _fillColor.isValid()) {
         painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
@@ -457,7 +454,7 @@ public:
 class FaviconOmniIconWidget : public OmniIconWidget {
   QPixmap _favicon;
   QPixmap _pixmap;
-  FaviconRequest *_requester;
+  AbstractFaviconRequest *_requester;
 
   void paintEvent(QPaintEvent *event) override {
     QPainter painter(this);
@@ -487,8 +484,8 @@ class FaviconOmniIconWidget : public OmniIconWidget {
 public:
   FaviconOmniIconWidget(const QString &hostname, QWidget *parent) : OmniIconWidget(parent) {
     _requester = FaviconService::instance()->makeRequest(hostname, parent);
-    connect(_requester, &FaviconRequest::finished, this, &FaviconOmniIconWidget::iconLoaded);
-    connect(_requester, &FaviconRequest::failed, this, [this]() { emit imageLoadingFailed(); });
+    connect(_requester, &AbstractFaviconRequest::finished, this, &FaviconOmniIconWidget::iconLoaded);
+    connect(_requester, &AbstractFaviconRequest::failed, this, [this]() { emit imageLoadingFailed(); });
     _requester->start();
   }
 };
