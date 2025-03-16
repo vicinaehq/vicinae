@@ -3,11 +3,9 @@
 #include "extend/action-model.hpp"
 #include "theme.hpp"
 #include "ui/omni-list.hpp"
-#include "ui/virtual-list.hpp"
 
 #include <QPainterPath>
 #include <cctype>
-#include <memory>
 #include <qapplication.h>
 #include <qboxlayout.h>
 #include <qevent.h>

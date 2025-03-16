@@ -121,8 +121,6 @@ qt_add_executable(${TARGET}
 
 	include/ollama-service.hpp
 
-	include/ui/virtual-grid.hpp
-
 	include/omni-icon.hpp
 
 	include/quicklink-actions.hpp
@@ -140,7 +138,6 @@ qt_add_executable(${TARGET}
 	src/tinyexpr.cpp
 	include/tinyexpr.hpp
 
-	include/ui/virtual-list.hpp
 	include/create-quicklink-command.hpp
 
 	include/builtin_icon.hpp

@@ -1,6 +1,5 @@
 #pragma once
 #include "extend/action-model.hpp"
-#include "extend/image-model.hpp"
 #include "omni-icon.hpp"
 #include "theme.hpp"
 #include "ui/keyboard-shortcut-indicator.hpp"
@@ -8,7 +7,6 @@
 #include "ui/omni-list-item-widget.hpp"
 #include "ui/omni-list.hpp"
 #include "ui/selectable-omni-list-widget.hpp"
-#include "ui/virtual-list.hpp"
 #include <qboxlayout.h>
 #include <qevent.h>
 #include <qhash.h>
@@ -268,16 +266,6 @@ public:
     std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> items;
 
     for (const auto &item : actions) {
-      QString str;
-
-      if (item->shortcut) {
-        QStringList lst;
-
-        lst << item->shortcut->modifiers;
-        lst << item->shortcut->key;
-        str = lst.join(" + ");
-      }
-
       items.push_back(std::make_unique<ActionListItem>(item));
     }
 
