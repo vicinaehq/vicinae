@@ -1,7 +1,7 @@
 #pragma once
 #include "app-database.hpp"
 #include "calculator-database.hpp"
-#include "clipboard-service.hpp"
+#include "clipboard/clipboard-service.hpp"
 #include "command-database.hpp"
 #include "command-server.hpp"
 #include <QScreen>

@@ -70,6 +70,8 @@ qt_add_executable(${TARGET}
 	src/clipboard/dummy-clipboard-server.cpp
 	include/clipboard/clipboard-server-factory.hpp
 	src/clipboard/clipboard-server-factory.cpp
+	include/clipboard/clipboard-service.hpp
+	src/clipboard/clipboard-service.cpp
 
 	#src/commands/index/index-command.hpp
 	#src/commands/index/index-command.cpp
@@ -90,8 +92,6 @@ qt_add_executable(${TARGET}
 	include/ui/button.hpp
 	src/ui/button.cpp
 
-	include/clipboard-service.hpp
-	src/clipboard-service.cpp
 
 	include/ui/icon-button.hpp
 	src/ui/icon-button.cpp

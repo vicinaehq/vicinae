@@ -1,5 +1,5 @@
 #include "app.hpp"
-#include "clipboard-service.hpp"
+#include "clipboard/clipboard-service.hpp"
 #include "command-database.hpp"
 #include "command-server.hpp"
 #include "clipboard/clipboard-server-factory.hpp"
