@@ -5,6 +5,8 @@
 #include "quicklist-database.hpp"
 #include "ui/action_popover.hpp"
 #include "ui/form.hpp"
+#include "ui/form/base-input.hpp"
+#include "ui/form/selector-input.hpp"
 #include "ui/toast.hpp"
 #include "view.hpp"
 #include <functional>
@@ -27,7 +29,7 @@ public:
   void execute(AppWindow &app) override { handler(app); }
 };
 
-class AppSelectorItem : public AbstractFormDropdownItem {
+class AppSelectorItem : public SelectorInput::AbstractItem {
 public:
   std::shared_ptr<DesktopExecutable> app;
   bool isDefault;
@@ -55,7 +57,7 @@ public:
   DefaultAppItem(const std::shared_ptr<DesktopExecutable> &app) : AppSelectorItem(app) {}
 };
 
-class IconSelectorItem : public AbstractFormDropdownItem {
+class IconSelectorItem : public SelectorInput::AbstractItem {
 public:
   QString name;
   QString dname;
@@ -95,14 +97,14 @@ class QuicklinkCommandView : public View {
     if (!url.isValid()) return;
 
     if (auto app = appDb.findBestUrlOpener(url)) {
-      appSelector->updateItem("default", [&app](AbstractFormDropdownItem *item) {
+      appSelector->updateItem("default", [&app](SelectorInput::AbstractItem *item) {
         static_cast<AppSelectorItem *>(item)->setApp(app);
       });
     }
 
     if (!url.scheme().startsWith("http")) return;
 
-    iconSelector->updateItem("default", [&url](AbstractFormDropdownItem *item) {
+    iconSelector->updateItem("default", [&url](SelectorInput::AbstractItem *item) {
       auto icon = FaviconOmniIconUrl(url.host());
       auto iconItem = static_cast<IconSelectorItem *>(item);
 
@@ -111,10 +113,10 @@ class QuicklinkCommandView : public View {
     });
   }
 
-  void appSelectionChanged(const AbstractFormDropdownItem &item) {
+  void appSelectionChanged(const SelectorInput::AbstractItem &item) {
     auto &appItem = static_cast<const AppSelectorItem &>(item);
 
-    iconSelector->updateItem("default", [appItem](AbstractFormDropdownItem *item) {
+    iconSelector->updateItem("default", [appItem](SelectorInput::AbstractItem *item) {
       auto icon = static_cast<IconSelectorItem *>(item);
 
       icon->setIcon(appItem.icon());
@@ -127,34 +129,29 @@ protected:
   Service<QuicklistDatabase> quicklinkDb;
 
   FormWidget *form;
-  FormInputWidget *name;
-  FormInputWidget *link;
-  FormDropdown *appSelector;
-  FormDropdown *iconSelector;
+  BaseInput *name;
+  BaseInput *link;
+  SelectorInput *appSelector;
+  SelectorInput *iconSelector;
 
 public:
   QuicklinkCommandView(AppWindow &app)
       : View(app), appDb(service<AppDatabase>()), quicklinkDb(service<QuicklistDatabase>()),
-        form(new FormWidget), name(new FormInputWidget("name")), link(new FormInputWidget("link")),
-        appSelector(new FormDropdown), iconSelector(new FormDropdown) {
-    name->setFocus();
-    name->setName("Name");
+        form(new FormWidget), name(new BaseInput), link(new BaseInput), appSelector(new SelectorInput),
+        iconSelector(new SelectorInput) {
     name->setPlaceholderText("Quicklink name");
-    form->addInput(name);
-    link->setName("URL");
     link->setPlaceholderText("https://google.com/search?q={argument}");
-    form->addInput(link);
-    form->addInput(appSelector);
-    form->addInput(iconSelector);
-    appSelector->setName("Open with");
-    iconSelector->setName("Icon");
 
-    connect(link, &FormInputWidget::textChanged, this, &QuicklinkCommandView::handleLinkChange);
+    form->addField(new FormField(name, "name"));
+    form->addField(new FormField(link, "URL"));
+    form->addField(new FormField(appSelector, "Open with"));
+    form->addField(new FormField(iconSelector, "Icon"));
 
-    connect(appSelector, &FormDropdown::textChanged, this,
+    connect(link, &BaseInput::textChanged, this, &QuicklinkCommandView::handleLinkChange);
+    connect(appSelector, &SelectorInput::textChanged, this,
             &QuicklinkCommandView::handleAppSelectorTextChanged);
-    connect(iconSelector, &FormDropdown::textChanged, this, &QuicklinkCommandView::iconSelectorTextChanged);
-    connect(appSelector, &FormDropdown::selectionChanged, this, &QuicklinkCommandView::appSelectionChanged);
+    connect(iconSelector, &SelectorInput::textChanged, this, &QuicklinkCommandView::iconSelectorTextChanged);
+    connect(appSelector, &SelectorInput::selectionChanged, this, &QuicklinkCommandView::appSelectionChanged);
 
     appSelector->beginUpdate();
     appSelector->addSection("Apps");
@@ -207,21 +204,26 @@ public:
 
     setSignalActions({submitAction});
 
-    name->focus();
+    form->focusFirst();
   }
 
   virtual void submit(AppWindow &app) {
+    if (link->text().isEmpty()) {
+      form->setError(link, "Required");
+      return;
+    }
+
     auto item = static_cast<const AppSelectorItem *>(appSelector->value());
 
     if (!item) {
-      appSelector->setError("Required");
+      form->setError(appSelector, "Required");
       return;
     }
 
     auto icon = static_cast<const IconSelectorItem *>(iconSelector->value());
 
     if (!icon) {
-      iconSelector->setError("Required");
+      form->setError(iconSelector, "Required");
       return;
     }
 
@@ -258,14 +260,14 @@ public:
     auto item = static_cast<const AppSelectorItem *>(appSelector->value());
 
     if (!item) {
-      appSelector->setError("Required");
+      form->setError(appSelector, "Required");
       return;
     }
 
     auto icon = static_cast<const IconSelectorItem *>(iconSelector->value());
 
     if (!icon) {
-      iconSelector->setError("Required");
+      form->setError(iconSelector, "Required");
       return;
     }
 
@@ -314,14 +316,14 @@ public:
     auto item = static_cast<const AppSelectorItem *>(appSelector->value());
 
     if (!item) {
-      appSelector->setError("Required");
+      form->setError(appSelector, "Required");
       return;
     }
 
     auto icon = static_cast<const IconSelectorItem *>(iconSelector->value());
 
     if (!icon) {
-      iconSelector->setError("Required");
+      form->setError(iconSelector, "Required");
       return;
     }
 

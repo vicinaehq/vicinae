@@ -1,0 +1,20 @@
+#include "ui/form/form-field.hpp"
+#include <qwidget.h>
+
+class FormWidget : public QWidget {
+  std::vector<FormField *> _fields;
+  QVBoxLayout *_layout;
+
+public:
+  FormField *fieldForWidget(QWidget *widget) const;
+  QWidget *widgetForField(FormField *field) const;
+
+  void setError(QWidget *widget, const QString &error);
+  void clearError(QWidget *widget);
+  void clearAllErrors();
+  void focusFirst() const;
+  const std::vector<FormField *> fields() const;
+  void addField(FormField *field);
+
+  FormWidget(QWidget *parent = nullptr);
+};

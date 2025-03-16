@@ -52,6 +52,18 @@ qt_add_executable(${TARGET}
 	include/favicon/cached-favicon-request.hpp
 	src/favicon/cached-favicon-request.cpp
 
+	include/ui/form/base-input.hpp
+	src/ui/form/base-input.cpp
+	include/ui/form/selector-input.hpp
+	src/ui/form/selector-input.cpp
+	include/ui/form/form.hpp
+	src/ui/form/form.cpp
+	include/ui/form/form-field.hpp
+	src/ui/form/form-field.cpp
+
+	include/ui/popover.hpp
+	src/ui/popover.cpp
+
 	#src/commands/index/index-command.hpp
 	#src/commands/index/index-command.cpp
 	#src/commands/calculator-history/calculator-history.hpp
