@@ -44,6 +44,7 @@ public:
   class VirtualSection : public AbstractVirtualItem {
     QString _name;
     int _count;
+    bool _showCount;
 
   public:
     ListRole role() const override { return ListRole::ListSection; }
@@ -69,17 +70,14 @@ public:
 
     OmniListItemWidget *createWidget() const override;
     int calculateHeight(int width) const override;
+    void setShowCount(bool value);
 
-    VirtualSection(const QString &name);
+    VirtualSection(const QString &name, bool showCount = true);
   };
 
-  class FixedCountSection : public VirtualSection {
-    int _count = 0;
-
-    int count() const override { return _count; }
-
+  class SectionWithoutCount : public VirtualSection {
   public:
-    FixedCountSection(const QString &name, int count) : VirtualSection(name), _count(count) {}
+    SectionWithoutCount(const QString &name) : VirtualSection(name) {}
   };
 
   class AbstractItemFilter {
@@ -190,6 +188,9 @@ public:
   void addSection(const QString &name);
   void invalidateCache();
   void invalidateCache(const QString &id);
+  bool insertAtSectionStart(const QString &name, std::unique_ptr<AbstractVirtualItem> item);
+  bool insertAfter(const QString &id, std::unique_ptr<AbstractVirtualItem> item);
+
   void beginUpdate();
   void commitUpdate();
   void addItem(std::unique_ptr<AbstractVirtualItem> item);

@@ -8,7 +8,7 @@
 #include <qnamespace.h>
 #include <qwidget.h>
 
-class OmniListView : public View {
+class DeclarativeOmniListView : public View {
   class DetailSplit : public QWidget {
     QWidget *_base;
     QWidget *_detail;
@@ -192,19 +192,40 @@ protected:
     return View::inputFilter(event);
   }
 
-  virtual void buildSearch(ItemList &list, const QString &s) {}
+  QString query;
+
+  virtual ItemList generateList(const QString &s) = 0;
+
+  void reload() {
+    auto items = generateList(query);
+
+    list->invalidateCache();
+    list->updateFromList(items, OmniList::KeepSelection);
+  }
+
+  void onActionActivated(const AbstractAction *action) override {
+    if (widget->isVisible()) {
+      qDebug() << "action activated!";
+      reload();
+      recreateCurrentActions();
+    } else {
+      qDebug() << "no reload after action, as we are no longer visible!";
+    }
+  }
+
+  void onRestore() override { reload(); }
 
   void onSearchChanged(const QString &s) override {
-    buildSearch(itemList, s);
-    list->updateFromList(itemList, OmniList::SelectFirst);
-    itemList.clear();
+    query = s;
+    auto items = generateList(s);
+    list->updateFromList(items, OmniList::SelectFirst);
   }
 
 public:
-  OmniListView(AppWindow &app) : View(app), list(new OmniList) {
+  DeclarativeOmniListView(AppWindow &app) : View(app), list(new OmniList) {
     split = new DetailSplit(list);
     widget = split;
-    connect(list, &OmniList::selectionChanged, this, &OmniListView::selectionChanged);
-    connect(list, &OmniList::itemActivated, this, &OmniListView::itemActivated);
+    connect(list, &OmniList::selectionChanged, this, &DeclarativeOmniListView::selectionChanged);
+    connect(list, &OmniList::itemActivated, this, &DeclarativeOmniListView::itemActivated);
   }
 };

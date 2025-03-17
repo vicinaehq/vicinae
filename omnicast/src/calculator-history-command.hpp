@@ -71,7 +71,7 @@ class CalculatorHistoryView : public OmniListView {
 
   void handleRemove(const QString &id) { list->removeItem(id); }
 
-  void executeSearch(ItemList &items, const QString &s) override {
+  void buildSearch(ItemList &items, const QString &s) override {
     items.push_back(std::make_unique<OmniList::VirtualSection>("History"));
     for (const auto &history : calculatorDb.listAll()) {
       if (!history.expression.contains(s, Qt::CaseInsensitive)) continue;

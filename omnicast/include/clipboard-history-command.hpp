@@ -4,12 +4,14 @@
 #include "omni-icon.hpp"
 #include "theme.hpp"
 #include "ui/action_popover.hpp"
+#include "ui/declarative-omni-list-view.hpp"
 #include "ui/omni-list-view.hpp"
 #include "ui/omni-list.hpp"
 #include "ui/toast.hpp"
 #include <memory>
 #include <qboxlayout.h>
 #include <qlabel.h>
+#include <qlogging.h>
 #include <qnamespace.h>
 #include <qobject.h>
 #include <qtmetamacros.h>
@@ -126,11 +128,13 @@ class PinClipboardAction : public AbstractAction {
   }
 
 public:
+  int entryId() const { return _id; }
+
   PinClipboardAction(int id, bool value)
       : AbstractAction(value ? "Pin" : "Unpin", BuiltinOmniIconUrl("pin")), _id(id), _value(value) {}
 };
 
-class ClipboardHistoryItem : public AbstractDefaultListItem, public OmniListView::IActionnable {
+class ClipboardHistoryItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
   std::function<void(int)> _pinCallback;
   std::function<void(int)> _removeCallback;
 
@@ -175,28 +179,26 @@ class ClipboardHistoryItemActionGenerator : public ActionGenerator {
     auto pin = new PinClipboardAction(current->info.id, !current->info.pinnedAt);
     auto remove = new RemoveSelectionAction(current->info.id);
     auto copy = new CopyTextAction("Copy preview", current->info.textPreview);
-    int id = current->info.id;
+    auto id = current->id();
 
-    connect(pin, &PinClipboardAction::didExecute, this, [id, this]() { emit pinChanged(id, true); });
+    connect(pin, &PinClipboardAction::didExecute, this, [id, this]() { emit pinChanged(id); });
     connect(remove, &PinClipboardAction::didExecute, this, [id, this] { emit removed(id); });
 
     return {copy, pin, remove};
   }
 
 signals:
-  void pinChanged(int id, bool value) const;
-  void removed(int id) const;
+  void pinChanged(const QString &id) const;
+  void removed(const QString &id) const;
 };
 
-class ClipboardHistoryCommand : public OmniListView {
+class ClipboardHistoryCommand : public DeclarativeOmniListView {
   Service<ClipboardService> _clipboardService;
   ClipboardHistoryItemActionGenerator *_generator = new ClipboardHistoryItemActionGenerator;
-  QString _query;
 
-  void generateList(const QString &query) {
-    _query = query;
-    std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> newList;
+  ItemList generateList(const QString &query) override {
     auto result = _clipboardService.listAll(100, 0, {.query = query});
+    ItemList newList;
 
     newList.push_back(std::make_unique<OmniList::VirtualSection>("Pinned"));
     size_t i = 0;
@@ -210,7 +212,7 @@ class ClipboardHistoryCommand : public OmniListView {
       ++i;
     }
 
-    newList.push_back(std::make_unique<OmniList::FixedCountSection>("History", result.totalCount - i));
+    newList.push_back(std::make_unique<OmniList::VirtualSection>("History", false));
 
     while (i < result.data.size()) {
       auto &entry = result.data[i];
@@ -221,26 +223,17 @@ class ClipboardHistoryCommand : public OmniListView {
       ++i;
     }
 
-    list->updateFromList(newList, OmniList::SelectionPolicy::SelectFirst);
+    return newList;
   }
 
   void onMount() override { setSearchPlaceholderText("Browse clipboard history..."); }
 
-  void onSearchChanged(const QString &s) override { generateList(s); }
-
-  void handlePinChanged(int id, bool value) {
-    list->invalidateCache(QString::number(id));
-    generateList(_query);
-  }
-
-  void handleItemRemoved(int id) { generateList(_query); }
+  void clipboardSelectionInserted(const ClipboardHistoryEntry &entry) { reload(); }
 
 public:
   ClipboardHistoryCommand(AppWindow &app)
-      : OmniListView(app), _clipboardService(service<ClipboardService>()) {
-    connect(_generator, &ClipboardHistoryItemActionGenerator::pinChanged, this,
-            &ClipboardHistoryCommand::handlePinChanged);
-    connect(_generator, &ClipboardHistoryItemActionGenerator::removed, this,
-            &ClipboardHistoryCommand::handleItemRemoved);
+      : DeclarativeOmniListView(app), _clipboardService(service<ClipboardService>()) {
+    connect(&_clipboardService, &ClipboardService::itemInserted, this,
+            &ClipboardHistoryCommand::clipboardSelectionInserted);
   }
 };

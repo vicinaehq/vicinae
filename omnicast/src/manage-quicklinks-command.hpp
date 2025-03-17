@@ -4,6 +4,7 @@
 #include "quicklink-actions.hpp"
 #include "quicklist-database.hpp"
 #include "ui/action_popover.hpp"
+#include "ui/declarative-omni-list-view.hpp"
 #include "ui/omni-list-view.hpp"
 #include "ui/omni-list.hpp"
 #include <memory>
@@ -58,7 +59,7 @@ public:
   QuicklinkItemDetail(const std::shared_ptr<Quicklink> &quicklink) : link(quicklink) {}
 };
 
-class QuicklinkItem : public AbstractDefaultListItem, public OmniListView::IActionnable {
+class QuicklinkItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
   std::shared_ptr<Quicklink> link;
 
 public:
@@ -101,39 +102,29 @@ public:
   QuicklinkItem(const std::shared_ptr<Quicklink> &link) : link(link) {}
 };
 
-class ManageQuicklinksView : public OmniListView {
+class ManageQuicklinksView : public DeclarativeOmniListView {
   Service<QuicklistDatabase> quicklinkDb;
   QString query;
 
-  class QuicklinkItemFilter : public OmniList::AbstractItemFilter {
-    QString query;
+  void onMount() override { setSearchPlaceholderText("Browse quicklinks..."); }
 
-    bool matches(const OmniList::AbstractVirtualItem &item) override {
-      auto &linkItem = static_cast<const QuicklinkItem &>(item);
+  ItemList generateList(const QString &s) override {
+    ItemList list;
+    auto quicklinks = quicklinkDb.list();
 
-      return linkItem.name().contains(query, Qt::CaseInsensitive);
+    list.reserve(quicklinks.size() + 1);
+    list.push_back(std::make_unique<OmniList::VirtualSection>("Quicklinks"));
+
+    for (auto &link : quicklinks) {
+      if (link->name.contains(s, Qt::CaseInsensitive)) {
+        list.push_back(std::make_unique<QuicklinkItem>(link));
+      }
     }
 
-  public:
-    QuicklinkItemFilter(const QString &query) : query(query) {}
-  };
-
-  void onMount() override {
-    setSearchPlaceholderText("Browse quicklinks...");
-
-    list->beginUpdate();
-
-    for (auto &link : quicklinkDb.list()) {
-      list->addItem(std::make_unique<QuicklinkItem>(link));
-    }
-
-    list->commitUpdate();
-  }
-
-  void onSearchChanged(const QString &s) override {
-    list->setFilter(std::make_unique<QuicklinkItemFilter>(s));
+    return list;
   }
 
 public:
-  ManageQuicklinksView(AppWindow &app) : OmniListView(app), quicklinkDb(service<QuicklistDatabase>()) {}
+  ManageQuicklinksView(AppWindow &app)
+      : DeclarativeOmniListView(app), quicklinkDb(service<QuicklistDatabase>()) {}
 };

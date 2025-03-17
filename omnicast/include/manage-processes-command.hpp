@@ -4,7 +4,7 @@
 #include "omni-icon.hpp"
 #include "process-manager-service.hpp"
 #include "ui/action_popover.hpp"
-#include "ui/omni-list-view.hpp"
+#include "ui/declarative-omni-list-view.hpp"
 #include "ui/omni-list.hpp"
 #include "view.hpp"
 #include <csignal>
@@ -20,10 +20,10 @@ public:
   KillProcessAction(int pid) : AbstractAction("Kill process", BuiltinOmniIconUrl("droplets")), pid(pid) {}
 };
 
-class ManageProcessesMainView : public OmniListView, public OmniListView::IActionnable {
+class ManageProcessesMainView : public DeclarativeOmniListView {
   Service<ProcessManagerService> processManager;
 
-  class ProcListItem : public AbstractDefaultListItem, public OmniListView::IActionnable {
+  class ProcListItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
     ProcessInfo info;
     int idx;
 
@@ -48,8 +48,9 @@ class ManageProcessesMainView : public OmniListView, public OmniListView::IActio
     ~ProcListItem() {}
   };
 
-  void executeSearch(ItemList &list, const QString &s) override {
+  ItemList generateList(const QString &s) override {
     auto ps = processManager.list();
+    ItemList list;
 
     list.push_back(std::make_unique<OmniList::VirtualSection>("Running processes"));
 
@@ -60,13 +61,15 @@ class ManageProcessesMainView : public OmniListView, public OmniListView::IActio
 
       list.push_back(std::move(item));
     }
+
+    return list;
   }
 
   void onMount() override { setSearchPlaceholderText("Search processes..."); }
 
 public:
   ManageProcessesMainView(AppWindow &app)
-      : OmniListView(app), processManager(service<ProcessManagerService>()) {}
+      : DeclarativeOmniListView(app), processManager(service<ProcessManagerService>()) {}
 };
 
 class ManageProcessesCommand : public ViewCommand {

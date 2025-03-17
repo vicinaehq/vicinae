@@ -19,6 +19,7 @@
 #include "ui/calculator-list-item-widget.hpp"
 #include "ui/color-transform-widget.hpp"
 #include "ui/color_circle.hpp"
+#include "ui/declarative-omni-list-view.hpp"
 #include "ui/default-list-item-widget.hpp"
 #include "ui/omni-list-item-widget.hpp"
 #include "ui/omni-list-view.hpp"
@@ -74,7 +75,7 @@ struct OpenCommandAction : public AbstractAction {
       : AbstractAction(title, iconName), factory(factory), arg(arg) {}
 };
 
-class ColorListItem : public OmniList::AbstractVirtualItem, public OmniListView::IActionnable {
+class ColorListItem : public OmniList::AbstractVirtualItem, public DeclarativeOmniListView::IActionnable {
   QColor color;
 
   OmniListItemWidget *createWidget() const override {
@@ -104,7 +105,7 @@ public:
   ColorListItem(QColor color) : color(color) {}
 };
 
-class BuiltinCommandListItem : public AbstractDefaultListItem, public OmniListView::IActionnable {
+class BuiltinCommandListItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
 protected:
   BuiltinCommand cmd;
   QString text;
@@ -134,7 +135,7 @@ static BuiltinCommand calculatorHistoryCommand{
     .iconUrl = OmniIconUrl(":assets/icons/calculator.png"),
     .factory = [](AppWindow &app, const QString &s) { return new SingleViewCommand<CalculatorHistoryView>; }};
 
-class QuicklinkRootListItem : public AbstractDefaultListItem, public OmniListView::IActionnable {
+class QuicklinkRootListItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
 public:
   std::shared_ptr<Quicklink> link;
 
@@ -171,14 +172,14 @@ public:
   ~QuicklinkRootListItem() {}
 };
 
-class RootView : public OmniListView {
+class RootView : public DeclarativeOmniListView {
   AppWindow &app;
   Service<AppDatabase> appDb;
   Service<ExtensionManager> extensionManager;
   Service<QuicklistDatabase> quicklinkDb;
   Service<CommandDatabase> commandDb;
 
-  class AppListItem : public AbstractDefaultListItem, public OmniListView::IActionnable {
+  class AppListItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
     std::shared_ptr<DesktopEntry> app;
     Service<AppDatabase> appDb;
 
@@ -218,7 +219,7 @@ class RootView : public OmniListView {
     ~AppListItem() {}
   };
 
-  class FallbackQuicklinkListItem : public AbstractDefaultListItem, OmniListView::IActionnable {
+  class FallbackQuicklinkListItem : public AbstractDefaultListItem, DeclarativeOmniListView::IActionnable {
     QString query;
 
   public:
@@ -259,7 +260,8 @@ class RootView : public OmniListView {
   };
   */
 
-  class BaseCalculatorListItem : public OmniList::AbstractVirtualItem, public OmniListView::IActionnable {
+  class BaseCalculatorListItem : public OmniList::AbstractVirtualItem,
+                                 public DeclarativeOmniListView::IActionnable {
   protected:
     CalculatorItem item;
 
@@ -290,7 +292,8 @@ class RootView : public OmniListView {
 
 public:
   // list without filtering
-  void generateBaseSearch(ItemList &list) {
+  std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> generateBaseSearch() {
+    std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> list;
     list.push_back(std::make_unique<OmniList::VirtualSection>("Commands"));
 
     for (const auto &cmd : commandDb.list()) {
@@ -308,10 +311,14 @@ public:
 
       list.push_back(std::make_unique<AppListItem>(app, appDb));
     }
+
+    return list;
   }
 
-  void executeSearch(ItemList &list, const QString &s) override {
-    if (s.isEmpty()) return generateBaseSearch(list);
+  std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> generateList(const QString &s) override {
+    std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> list;
+
+    if (s.isEmpty()) return generateBaseSearch();
 
     auto start = std::chrono::high_resolution_clock::now();
 
@@ -400,12 +407,14 @@ public:
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
     qDebug() << "root searched in " << duration << "ms";
+
+    return list;
   }
 
   void onMount() override { setSearchPlaceholderText("Search for apps or commands..."); }
 
   RootView(AppWindow &app)
-      : OmniListView(app), app(app), appDb(service<AppDatabase>()),
+      : DeclarativeOmniListView(app), app(app), appDb(service<AppDatabase>()),
         extensionManager(service<ExtensionManager>()), quicklinkDb(service<QuicklistDatabase>()),
         commandDb(service<CommandDatabase>()) {}
 

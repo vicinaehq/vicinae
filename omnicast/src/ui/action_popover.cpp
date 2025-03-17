@@ -53,6 +53,8 @@ void ActionPopover::paintEvent(QPaintEvent *event) {
 
   QColor backgroundColor(theme.colors.mainBackground);
 
+  backgroundColor.setAlphaF(0.98);
+
   painter.fillPath(path, backgroundColor);
 
   // Draw the border

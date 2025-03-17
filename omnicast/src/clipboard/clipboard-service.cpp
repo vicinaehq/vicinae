@@ -286,6 +286,7 @@ void ClipboardService::saveSelection(const ClipboardSelection &selection) {
   char buf[1 << 16];
   QCryptographicHash selectionHash(QCryptographicHash::Md5);
   uint64_t totalLength = 0;
+  ClipboardHistoryEntry insertedEntry;
 
   transformedOffers.reserve(selection.offers.size());
 
@@ -352,7 +353,7 @@ void ClipboardService::saveSelection(const ClipboardSelection &selection) {
   query.prepare(R"(
   	INSERT INTO selection (offer_count, hash_md5, preferred_mime_type, source)
 	VALUES (:offer_count, :hash_md5, :preferred_mime_type, :source)
-	RETURNING id;
+	RETURNING id, created_at;
   )");
   query.bindValue(":offer_count", static_cast<uint>(selection.offers.size()));
   query.bindValue(":hash_md5", selectionHash.result().toHex());
@@ -374,6 +375,7 @@ void ClipboardService::saveSelection(const ClipboardSelection &selection) {
   }
 
   int selectionId = query.value(0).toInt();
+  auto createdAt = query.value(1).toULongLong();
 
   for (const auto &offer : transformedOffers) {
     QString textPreview;
@@ -427,10 +429,19 @@ void ClipboardService::saveSelection(const ClipboardSelection &selection) {
       return;
     }
 
-    qDebug() << "inserted" << offer.mimeType << "for selection" << selectionId;
+    if (offer.mimeType == preferredMimeType) {
+      insertedEntry.id = selectionId;
+      insertedEntry.pinnedAt = 0;
+      insertedEntry.createdAt = createdAt;
+      insertedEntry.mimeType = offer.mimeType;
+      insertedEntry.md5sum = offer.md5sum;
+      insertedEntry.textPreview = textPreview;
+      insertedEntry.filePath = _data_dir.filePath(offer.md5sum);
+    }
   }
 
   db.commit();
+  emit itemInserted(insertedEntry);
 }
 
 ClipboardService::ClipboardService(const QString &path)

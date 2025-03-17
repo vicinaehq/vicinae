@@ -1,6 +1,7 @@
 #pragma once
 #include "app.hpp"
 #include "common.hpp"
+#include "ui/action_popover.hpp"
 #include <qboxlayout.h>
 #include <qcompare.h>
 #include <qevent.h>
@@ -74,12 +75,16 @@ public:
 
   virtual void onMount() {}
 
+  // called when the view is shown again after another view that was pushed on top of it has been poped
+  virtual void onRestore() {}
+
   virtual bool inputFilter(QKeyEvent *event) { return false; }
+
+  virtual void onActionActivated(const AbstractAction *action) {}
 
 public slots:
   virtual void onSearchChanged(const QString &s) {}
   virtual void onAttach() {}
-  virtual void onActionActivated(ActionModel model) {}
 
 signals:
   void activatePrimaryAction();

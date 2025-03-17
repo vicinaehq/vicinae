@@ -123,6 +123,8 @@ void AppWindow::popCurrentView() {
 
   if (navigationStack.size() == 1) { topBar->hideBackButton(); }
 
+  QTimer::singleShot(0, [next]() { next.view->onRestore(); });
+
   qDebug() << "view stack size" << activeCommand.viewStack.size();
 
   if (activeCommand.viewStack.size() == 1) {
@@ -147,7 +149,6 @@ void AppWindow::popToRootView() {
 
 void AppWindow::disconnectView(View &view) {
   disconnect(topBar->input, &SearchBar::debouncedTextEdited, &view, &View::onSearchChanged);
-  disconnect(actionPopover, &ActionPopover::actionPressed, &view, &View::onActionActivated);
 
   // view->app
   disconnect(&view, &View::pushView, this, &AppWindow::pushView);
@@ -163,7 +164,6 @@ void AppWindow::disconnectView(View &view) {
 void AppWindow::connectView(View &view) {
   // app->view
   connect(topBar->input, &SearchBar::debouncedTextEdited, &view, &View::onSearchChanged);
-  connect(actionPopover, &ActionPopover::actionPressed, &view, &View::onActionActivated);
 
   // view->app
   connect(&view, &View::pushView, this, &AppWindow::pushView);
@@ -231,6 +231,7 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
   topBar->input->setFocus();
   topBar->input->setText(opts.searchQuery);
   emit topBar->input->textEdited(opts.searchQuery);
+  qDebug() << "view pushed";
   QTimer::singleShot(0, [view]() { view->onMount(); });
 }
 
@@ -283,10 +284,13 @@ void AppWindow::selectSecondaryAction() {
 }
 
 void AppWindow::executeAction(AbstractAction *action) {
+  auto executor = commandStack.top().viewStack.top().view;
+
   action->execute(*this);
   emit action->didExecute();
+  executor->onActionActivated(action);
+
   if (auto cb = action->executionCallback()) { cb(); }
-  qDebug() << "emitted execute";
 }
 
 void AppWindow::closeWindow(bool withPopToRoot) {

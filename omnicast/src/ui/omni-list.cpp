@@ -3,6 +3,7 @@
 #include "ui/omni-list-item-widget-wrapper.hpp"
 #include "ui/omni-scroll-bar.hpp"
 #include <chrono>
+#include <qabstractitemview.h>
 #include <qapplication.h>
 #include <qevent.h>
 #include <qnamespace.h>
@@ -24,8 +25,10 @@ void OmniList::VirtualSection::setCount(int count) { _count = count; }
 int OmniList::VirtualSection::count() const { return _count; }
 
 OmniListItemWidget *OmniList::VirtualSection::createWidget() const {
-  return new OmniListSectionHeader(_name, "", count());
+  return new OmniListSectionHeader(_name, "", _showCount ? count() : 0);
 }
+
+void OmniList::VirtualSection::setShowCount(bool value) { _showCount = value; }
 
 int OmniList::VirtualSection::calculateHeight(int width) const {
   static OmniListSectionHeader ruler("", "", 0);
@@ -33,7 +36,8 @@ int OmniList::VirtualSection::calculateHeight(int width) const {
   return ruler.sizeHint().height();
 }
 
-OmniList::VirtualSection::VirtualSection(const QString &name) : _name(name), _count(0) {}
+OmniList::VirtualSection::VirtualSection(const QString &name, bool showCount)
+    : _name(name), _count(0), _showCount(showCount) {}
 
 bool OmniList::AbstractVirtualItem::recyclable() const { return false; }
 
@@ -152,6 +156,48 @@ void OmniList::updateVisibleItems() {
 
   setUpdatesEnabled(true);
   update();
+}
+
+bool OmniList::insertAtSectionStart(const QString &name, std::unique_ptr<AbstractVirtualItem> newItem) {
+  // section lookup could be sped up using a static section map, but its rare remain rare enough
+  // so that we don't really have to.
+
+  for (const auto &item : _items) {
+    if (item.item->isSection()) {
+      auto section = static_cast<const VirtualSection *>(item.item.get());
+
+      if (section->name() == name) { return insertAfter(section->id(), std::move(newItem)); }
+    }
+  }
+
+  return false;
+}
+
+bool OmniList::insertAfter(const QString &id, std::unique_ptr<AbstractVirtualItem> item) {
+  int index = indexOfItem(id);
+
+  if (index == -1) return false;
+
+  ListItemInfo info;
+
+  info.filtered = _filter && item->isListItem() && _filter->matches(*item.get());
+  info.cachedHeight = -1;
+  info.id = item->id();
+  info.item = std::move(item);
+
+  int targetIndex = index + 1;
+
+  for (int i = targetIndex; i < _items.size(); ++i) {
+    _idMap[_items[i].item->id()] = i + 1;
+  }
+
+  _idMap[info.item->id()] = targetIndex;
+  _items.insert(_items.begin() + targetIndex, std::move(info));
+
+  if (!_isUpdating) { calculateHeights(); }
+  if (_selected == targetIndex) { setSelectedIndex(targetIndex + 1); }
+
+  return true;
 }
 
 void OmniList::calculateHeights() {
@@ -312,7 +358,12 @@ void OmniList::updateFromList(std::vector<std::unique_ptr<AbstractVirtualItem>> 
     selectFirst();
     break;
   case KeepSelection:
-    setSelectedIndex(_selected);
+    if (auto idx = indexOfItem(_selectedId); idx != -1) {
+      qDebug() << "idx of " << _selectedId << _items[idx].vIndex;
+      setSelectedIndex(_items[idx].vIndex);
+    } else {
+      setSelectedIndex(std::min(_selected, static_cast<int>(_virtual_items.size() - 1)));
+    }
     break;
   case SelectNone:
     setSelectedIndex(-1);
@@ -538,8 +589,6 @@ bool OmniList::event(QEvent *event) {
 void OmniList::resizeEvent(QResizeEvent *event) {
   auto size = event->size();
 
-  qDebug() << "resize event" << event->size();
-
   scrollBar->setPageStep(size.height());
   scrollBar->setFixedHeight(size.height());
   scrollBar->move(size.width() - scrollBar->sizeHint().width(), 0);
@@ -557,7 +606,7 @@ void OmniList::commitUpdate() {
 }
 
 const OmniList::AbstractVirtualItem *OmniList::selected() const {
-  if (_selected >= 0 && _selected < _items.size()) return _items[_selected].item.get();
+  if (_selected >= 0 && _selected < _virtual_items.size()) return vmap(_selected).item.get();
 
   return nullptr;
 }

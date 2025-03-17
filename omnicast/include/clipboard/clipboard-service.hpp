@@ -62,4 +62,5 @@ public:
 
 signals:
   void itemCopied(const InsertClipboardHistoryLine &item) const;
+  void itemInserted(const ClipboardHistoryEntry &entry) const;
 };

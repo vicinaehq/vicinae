@@ -54,6 +54,7 @@ public:
 class DefaultAppItem : public AppSelectorItem {
   QString id() const override { return "default"; }
   QString displayName() const override { return AppSelectorItem::displayName() + " (Default)"; }
+  AbstractItem *clone() const override { return new DefaultAppItem(*this); }
 
 public:
   DefaultAppItem(const std::shared_ptr<DesktopExecutable> &app) : AppSelectorItem(app) {}
@@ -84,6 +85,7 @@ public:
 class DefaultIconSelectorItem : public IconSelectorItem {
   QString id() const override { return "default"; }
   QString displayName() const override { return "Default"; }
+  AbstractItem *clone() const override { return new DefaultIconSelectorItem(*this); }
 
 public:
   DefaultIconSelectorItem(const OmniIconUrl &url, const QString &displayName = "")

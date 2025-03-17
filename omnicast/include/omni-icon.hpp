@@ -361,19 +361,16 @@ class OmniSystemIconWidget : public OmniIconWidget {
 
     _pixmap = _icon.pixmap(bestSize()).scaled(size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
     update();
-    qDebug() << "pixmap loaded for system icon" << size();
     emit imageLoaded(_pixmap);
   }
 
   void resizeEvent(QResizeEvent *event) override {
     QWidget::resizeEvent(event);
-    qDebug() << "resize system omni icon" << size();
     recalculate();
   }
 
 public:
   OmniSystemIconWidget(const QString &name, QWidget *parent = nullptr) : OmniIconWidget(parent), _name(name) {
-    qDebug() << "init system omni icon" << size();
     _icon = QIcon(name);
     if (_icon.isNull()) { _icon = QIcon::fromTheme(name); }
     if (_icon.isNull()) { _icon = QIcon(":icons/question-mark-circle"); }
@@ -504,44 +501,16 @@ class OmniIcon : public QWidget {
   OmniIconSizeMode _sizeMode = SizeModeFill;
   QVBoxLayout *layout;
 
-  /*
-  void resizeEvent(QResizeEvent *event) override {
-    QWidget::resizeEvent(event);
-    recalculate();
-  }
-  */
-
-  void recalculate() {
-    /*
-if (!size().isValid()) return;
-if (_iconWidget) {
-_iconWidget->setGeometry(rect());
-qDebug() << "recalculate for size" << size();
-}
-  */
-  }
-
 public:
   OmniIcon(const OmniIconUrl &url, QWidget *parent = nullptr) : QWidget(parent), layout(new QVBoxLayout) {
     setUrl(url);
   }
   OmniIcon(QWidget *parent = nullptr) : QWidget(parent), layout(new QVBoxLayout) {
-    connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() { recalculate(); });
     layout->setSpacing(0);
     layout->setContentsMargins(0, 0, 0, 0);
     setLayout(layout);
   }
   ~OmniIcon() {}
-
-  /*
-  void setFixedSize(int width, int height) { setFixedSize({width, height}); }
-
-  void setFixedSize(QSize size) {
-    QWidget::setFixedSize(size);
-    _fixedSize = size;
-    _sizeMode = OmniIconSizeMode::SizeModeFixed;
-  }
-  */
 
   void setUrl(const OmniIconUrl &url) {
     if (_iconWidget) {
@@ -574,7 +543,6 @@ public:
 
     if (_iconWidget) {
       connect(_iconWidget, &OmniIconWidget::imageLoaded, this, &OmniIcon::imageUpdated);
-      connect(_iconWidget, &OmniIconWidget::imageLoaded, this, []() { qDebug() << "image updated"; });
       layout->addWidget(_iconWidget, 1);
     } else {
       qDebug() << "no icon widget for " << url.toString();
