@@ -121,9 +121,9 @@ class AppWindow : public QMainWindow, public ICommandHandler {
       auto data = values[0].asString();
       auto options = values[1].asDict();
       auto mimeName = options["mime"].asString();
-      auto copied = clipboardService->copy(QByteArray(data.data(), data.size()));
+      // auto copied = clipboardService->copy(QByteArray(data.data(), data.size()));
 
-      return copied;
+      return {};
     }
 
     if (message.type == "command.list") {

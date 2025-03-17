@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <numbers>
 #include <qbytearrayview.h>
+#include "timer.hpp"
 #include <qcontainerfwd.h>
 #include <qcryptographichash.h>
 #include <qdir.h>
@@ -28,86 +29,10 @@ bool ClipboardService::setPinned(int id, bool pinned) {
   return query.exec();
 }
 
-bool ClipboardService::indexTextDocument(int id, const QByteArray &buf) {
-  QSqlQuery query(db);
-
-  query.prepare(R"(
-		INSERT INTO history_fts (history_id, content) VALUES (:history_id, :content);
-	)");
-  query.bindValue(":history_id", id);
-  query.bindValue(":content", buf);
-
-  if (query.exec()) {
-    qDebug() << "stored" << buf.toStdString();
-    return true;
-  }
-
-  return false;
-}
-
 void ClipboardService::copyText(const QString &text) {
   QClipboard *clipboard = QApplication::clipboard();
 
   clipboard->setText(text);
-}
-
-int ClipboardService::insertHistoryLine(const InsertClipboardHistoryLine &payload) {
-  QSqlQuery query(db);
-
-  query.prepare(R"(
-		INSERT INTO history (mime_type, text_preview, content_hash_md5)
-		VALUES (:mime_type, :text_preview, :content_hash_md5)
-		RETURNING id;
-	)");
-  query.bindValue(":mime_type", payload.mimeType);
-  query.bindValue(":text_preview", payload.textPreview);
-  query.bindValue(":content_hash_md5", payload.md5sum);
-
-  if (!query.exec() || !query.next()) {
-    qDebug() << "Failed to insert clipboard history line";
-    return -1;
-  }
-
-  return query.value(0).toInt();
-}
-
-bool ClipboardService::copy(const QByteArray &data) {
-  auto mime = _mimeDb.mimeTypeForData(data);
-  auto md5sum = QCryptographicHash::hash(data, QCryptographicHash::Md5).toHex();
-
-  {
-    QFile file(_data_dir.filePath(md5sum));
-
-    if (!file.exists()) {
-      if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-        qDebug() << "cannot open file";
-        return false;
-      }
-
-      file.write(data);
-    }
-  }
-
-  bool isText = mime.name() == "text/plain" || mime.inherits("text/plain");
-  QString textPreview = isText ? data.sliced(0, qMin(data.size(), 50)) : "Image";
-  auto entry = InsertClipboardHistoryLine{
-      .mimeType = mime.name(),
-      .textPreview = textPreview,
-      .md5sum = md5sum,
-  };
-
-  qDebug() << "Storing content of type" << mime.name() << data.constData();
-
-  int id = insertHistoryLine(entry);
-
-  if (id == -1) { return false; }
-  if (isText) {
-    if (!indexTextDocument(id, data)) { qDebug() << "Failed to index document"; }
-  }
-
-  emit itemCopied(entry);
-
-  return true;
 }
 
 std::vector<ClipboardHistoryEntry> ClipboardService::collectedSearch(const QString &q) {
@@ -152,7 +77,8 @@ std::vector<ClipboardHistoryEntry> ClipboardService::collectedSearch(const QStri
   return entries;
 }
 
-PaginatedResponse<ClipboardHistoryEntry> ClipboardService::listAll(int limit, int offset) const {
+PaginatedResponse<ClipboardHistoryEntry> ClipboardService::listAll(int limit, int offset,
+                                                                   const ClipboardListSettings &opts) const {
   QSqlQuery query(db);
 
   if (!query.exec("SELECT COUNT(*) FROM selection;") || !query.next()) { return {}; }
@@ -164,7 +90,7 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardService::listAll(int limit, in
   response.currentPage = ceil(static_cast<double>(offset) / limit);
   response.data.reserve(limit);
 
-  query.prepare(R"(
+  QString queryString = R"(
 	  	SELECT
 			selection.id, o.mime_type, o.text_preview, pinned_at, o.content_hash_md5, created_at
 		FROM
@@ -175,14 +101,32 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardService::listAll(int limit, in
 			o.selection_id = selection.id
 		AND
 			o.mime_type = selection.preferred_mime_type
-		ORDER BY 
-			pinned_at DESC,
-			created_at DESC
-		LIMIT :limit
-		OFFSET :offset
-	  )");
+
+	)";
+
+  if (!opts.query.isEmpty()) {
+    queryString += " JOIN selection_fts ON selection_fts.selection_id = selection.id ";
+  }
+
+  if (!opts.query.isEmpty()) { queryString += " WHERE selection_fts MATCH '" + opts.query + "*' "; }
+
+  if (!opts.query.isEmpty()) { queryString += " GROUP BY selection.id "; }
+
+  queryString += R"(
+	ORDER BY
+        pinned_at DESC,
+        created_at DESC
+    LIMIT :limit
+    OFFSET :offset
+  )";
+
+  // qDebug() << "query" << queryString;
+
+  query.prepare(queryString);
   query.bindValue(":limit", limit);
   query.bindValue(":offset", offset);
+
+  Timer timer;
 
   if (!query.exec()) {
     qDebug() << "Failed to listall clipboard items" << query.lastError();
@@ -202,6 +146,7 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardService::listAll(int limit, in
         .filePath = _data_dir.absoluteFilePath(sum),
     });
   }
+  timer.time("clipboard db query listAll");
 
   return response;
 }

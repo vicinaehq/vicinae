@@ -73,6 +73,8 @@ qt_add_executable(${TARGET}
 	include/clipboard/clipboard-service.hpp
 	src/clipboard/clipboard-service.cpp
 
+	include/clipboard-history-command.hpp
+
 	#src/commands/index/index-command.hpp
 	#src/commands/index/index-command.cpp
 	#src/commands/calculator-history/calculator-history.hpp

@@ -93,57 +93,54 @@ public:
   ClipboardItemDetail(const ClipboardHistoryEntry &entry) : entry(entry) {}
 };
 
+class ActionGenerator : public QObject {
+public:
+  virtual QList<AbstractAction *> generateActions(const OmniList::AbstractVirtualItem *item) = 0;
+};
+
+class RemoveSelectionAction : public AbstractAction {
+  int _id;
+
+  void execute(AppWindow &app) override {
+    if (app.clipboardService->removeSelection(_id)) {
+      app.statusBar->setToast("Entry removed");
+    } else {
+      app.statusBar->setToast("Failed to remove entry", ToastPriority::Danger);
+    }
+  }
+
+public:
+  RemoveSelectionAction(int id) : AbstractAction("Remove entry", BuiltinOmniIconUrl("trash")), _id(id) {}
+};
+
+class PinClipboardAction : public AbstractAction {
+  int _id;
+  bool _value;
+
+  void execute(AppWindow &app) override {
+    if (!app.clipboardService->setPinned(_id, _value)) {
+      app.statusBar->setToast("Failed to " + QString(_value ? "pin" : "unpin"), ToastPriority::Danger);
+    } else {
+      app.statusBar->setToast(_value ? "Pinned" : "Unpinned", ToastPriority::Success);
+    }
+  }
+
+public:
+  PinClipboardAction(int id, bool value)
+      : AbstractAction(value ? "Pin" : "Unpin", BuiltinOmniIconUrl("pin")), _id(id), _value(value) {}
+};
+
 class ClipboardHistoryItem : public AbstractDefaultListItem, public OmniListView::IActionnable {
-  ClipboardHistoryEntry info;
   std::function<void(int)> _pinCallback;
   std::function<void(int)> _removeCallback;
 
-  class RemoveSelectionAction : public AbstractAction {
-    int _id;
-
-    void execute(AppWindow &app) override {
-      if (app.clipboardService->removeSelection(_id)) {
-        app.statusBar->setToast("Entry removed");
-      } else {
-        app.statusBar->setToast("Failed to remove entry", ToastPriority::Danger);
-      }
-    }
-
-  public:
-    RemoveSelectionAction(int id) : AbstractAction("Remove entry", BuiltinOmniIconUrl("trash")), _id(id) {}
-  };
-
-  class PinClipboardAction : public AbstractAction {
-    int _id;
-    bool _value;
-
-    void execute(AppWindow &app) override {
-      if (!app.clipboardService->setPinned(_id, _value)) {
-        app.statusBar->setToast("Failed to " + QString(_value ? "pin" : "unpin"), ToastPriority::Danger);
-      } else {
-        app.statusBar->setToast(_value ? "Pinned" : "Unpinned", ToastPriority::Success);
-      }
-    }
-
-  public:
-    PinClipboardAction(int id, bool value)
-        : AbstractAction(value ? "Pin" : "Unpin", BuiltinOmniIconUrl("pin")), _id(id), _value(value) {}
-  };
+  ActionGenerator *_generator = nullptr;
 
 public:
-  QList<AbstractAction *> generateActions() const override {
-    auto pin = new PinClipboardAction(info.id, !info.pinnedAt);
-    auto remove = new RemoveSelectionAction(info.id);
+  ClipboardHistoryEntry info;
+  QList<AbstractAction *> generateActions() const override { return _generator->generateActions(this); }
 
-    pin->setExecutionCallback([this]() {
-      if (_pinCallback) { _pinCallback(info.id); }
-    });
-    remove->setExecutionCallback([this]() {
-      if (_removeCallback) { _removeCallback(info.id); }
-    });
-
-    return {new CopyTextAction("Copy preview", info.textPreview), pin, remove};
-  }
+  void setActionGenerator(ActionGenerator *generator) { _generator = generator; }
 
   OmniIconUrl iconForMime(const QString &mime) const {
     if (info.mimeType.startsWith("text/")) { return BuiltinOmniIconUrl("text"); }
@@ -170,53 +167,56 @@ public:
   ClipboardHistoryItem(const ClipboardHistoryEntry &info) : info(info) {}
 };
 
+class ClipboardHistoryItemActionGenerator : public ActionGenerator {
+  Q_OBJECT
+
+  QList<AbstractAction *> generateActions(const OmniList::AbstractVirtualItem *item) override {
+    auto current = static_cast<const ClipboardHistoryItem *>(item);
+    auto pin = new PinClipboardAction(current->info.id, !current->info.pinnedAt);
+    auto remove = new RemoveSelectionAction(current->info.id);
+    auto copy = new CopyTextAction("Copy preview", current->info.textPreview);
+    int id = current->info.id;
+
+    connect(pin, &PinClipboardAction::didExecute, this, [id, this]() { emit pinChanged(id, true); });
+    connect(remove, &PinClipboardAction::didExecute, this, [id, this] { emit removed(id); });
+
+    return {copy, pin, remove};
+  }
+
+signals:
+  void pinChanged(int id, bool value) const;
+  void removed(int id) const;
+};
+
 class ClipboardHistoryCommand : public OmniListView {
   Service<ClipboardService> _clipboardService;
+  ClipboardHistoryItemActionGenerator *_generator = new ClipboardHistoryItemActionGenerator;
+  QString _query;
 
   void generateList(const QString &query) {
+    _query = query;
     std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> newList;
-    int totalCount = 0;
-    std::vector<ClipboardHistoryEntry> items;
+    auto result = _clipboardService.listAll(100, 0, {.query = query});
 
-    if (query.isEmpty()) {
-      auto page = _clipboardService.listAll();
-
-      totalCount = page.totalCount;
-      items = page.data;
-    } else {
-      items = _clipboardService.collectedSearch(query);
-      totalCount = items.size();
-    }
-
-    list->clearSelection();
     newList.push_back(std::make_unique<OmniList::VirtualSection>("Pinned"));
     size_t i = 0;
 
-    while (i < items.size() && items[i].pinnedAt) {
-      auto &entry = items[i];
+    while (i < result.data.size() && result.data[i].pinnedAt) {
+      auto &entry = result.data[i];
       auto candidate = std::make_unique<ClipboardHistoryItem>(entry);
 
-      candidate->setPinCallback([this, &entry, query](int id) {
-        list->invalidateCache(QString::number(id));
-        generateList(query);
-      });
-      candidate->setRemoveCallback([this, &entry, query](int id) { generateList(query); });
+      candidate->setActionGenerator(_generator);
       newList.push_back(std::move(candidate));
       ++i;
     }
 
-    newList.push_back(std::make_unique<OmniList::FixedCountSection>("History", totalCount - i));
+    newList.push_back(std::make_unique<OmniList::FixedCountSection>("History", result.totalCount - i));
 
-    while (i < items.size()) {
-      auto &entry = items[i];
+    while (i < result.data.size()) {
+      auto &entry = result.data[i];
       auto candidate = std::make_unique<ClipboardHistoryItem>(entry);
 
-      candidate->setPinCallback([this, &entry, query](int id) {
-        list->invalidateCache(QString::number(id));
-        generateList(query);
-      });
-      candidate->setRemoveCallback([this, &entry, query](int id) { generateList(query); });
-
+      candidate->setActionGenerator(_generator);
       newList.push_back(std::move(candidate));
       ++i;
     }
@@ -228,7 +228,19 @@ class ClipboardHistoryCommand : public OmniListView {
 
   void onSearchChanged(const QString &s) override { generateList(s); }
 
+  void handlePinChanged(int id, bool value) {
+    list->invalidateCache(QString::number(id));
+    generateList(_query);
+  }
+
+  void handleItemRemoved(int id) { generateList(_query); }
+
 public:
   ClipboardHistoryCommand(AppWindow &app)
-      : OmniListView(app), _clipboardService(service<ClipboardService>()) {}
+      : OmniListView(app), _clipboardService(service<ClipboardService>()) {
+    connect(_generator, &ClipboardHistoryItemActionGenerator::pinChanged, this,
+            &ClipboardHistoryCommand::handlePinChanged);
+    connect(_generator, &ClipboardHistoryItemActionGenerator::removed, this,
+            &ClipboardHistoryCommand::handleItemRemoved);
+  }
 };

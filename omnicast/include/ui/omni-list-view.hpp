@@ -76,6 +76,7 @@ class OmniListView : public View {
 protected:
   DetailSplit *split;
   OmniList *list;
+  QString lastSelectedId;
 
   using ItemList = std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>>;
 
@@ -137,8 +138,6 @@ protected:
       return;
     }
 
-    qDebug() << "selected id" << next->id();
-
     if (auto nextItem = dynamic_cast<const IActionnable *>(next)) {
       if (auto detail = nextItem->generateDetail()) {
         split->setDetail(detail);
@@ -162,6 +161,8 @@ protected:
       app.topBar->destroyQuicklinkCompleter();
       setSignalActions({});
     }
+
+    lastSelectedId = next->id();
   }
 
   virtual void itemActivated(const OmniList::AbstractVirtualItem &item) {

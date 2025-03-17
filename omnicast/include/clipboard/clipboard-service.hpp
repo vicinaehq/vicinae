@@ -34,8 +34,13 @@ struct ClipboardHistoryEntry {
   QString filePath;
 };
 
+struct ClipboardListSettings {
+  QString query;
+};
+
 class ClipboardService : public QObject, public NonAssignable {
   Q_OBJECT
+
   QSqlDatabase db;
   QMimeDatabase _mimeDb;
   QFileInfo _path;
@@ -49,11 +54,9 @@ public:
 
   bool removeSelection(int id);
   bool setPinned(int id, bool pinned);
-  PaginatedResponse<ClipboardHistoryEntry> listAll(int limit = 100, int offset = 0) const;
-  bool indexTextDocument(int id, const QByteArray &buf);
+  PaginatedResponse<ClipboardHistoryEntry> listAll(int limit = 100, int offset = 0,
+                                                   const ClipboardListSettings &opts = {}) const;
   std::vector<ClipboardHistoryEntry> collectedSearch(const QString &q);
-  bool copy(const QByteArray &data);
-  int insertHistoryLine(const InsertClipboardHistoryLine &payload);
   void copyText(const QString &text);
   void saveSelection(const ClipboardSelection &selection);
 
