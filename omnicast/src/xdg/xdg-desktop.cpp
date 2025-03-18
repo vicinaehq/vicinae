@@ -296,7 +296,7 @@ XdgDesktopEntry XdgDesktopEntry::Parser::parse() {
         size_t score = computeLocalePriority(Locale(rawLocale), *entry.locale);
 
         if (previousScore != localePriorities.end() && *previousScore < score) {
-          qDebug() << "out did local score for " << entry.key << entry.locale->toString() << rawLocale;
+          // qDebug() << "out did local score for " << entry.key << entry.locale->toString() << rawLocale;
           *previousScore = score;
 
           currentGroup->insert(entry.key, entry.value);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "app-database.hpp"
+#include "wm/hyprland/hyprland.hpp"
 #include "app.hpp"
 #include "calculator-history-command.hpp"
 #include "command.hpp"
@@ -46,6 +47,7 @@
 #include <qthreadpool.h>
 #include <qwidget.h>
 #include "command-database.hpp"
+#include "wm/window-manager.hpp"
 
 struct OpenBuiltinCommandAction : public AbstractAction {
   BuiltinCommand cmd;
@@ -411,7 +413,27 @@ public:
     return list;
   }
 
-  void onMount() override { setSearchPlaceholderText("Search for apps or commands..."); }
+  void onMount() override {
+    setSearchPlaceholderText("Search for apps or commands...");
+
+    AbstractWindowManager *wm = new HyprlandWindowManager();
+
+    auto future = wm->listWindows();
+    auto watcher = new QFutureWatcher<AbstractWindowManager::WindowList>(this);
+
+    connect(watcher, &QFutureWatcher<AbstractWindowManager::WindowList>::finished, this, [watcher]() {
+      if (watcher->isCanceled()) {
+        qDebug() << "cancelled fuck";
+        return;
+      }
+
+      for (const auto &s : watcher->result()) {
+        qDebug() << s->title() << s->wmClass();
+      }
+    });
+
+    watcher->setFuture(future);
+  }
 
   RootView(AppWindow &app)
       : DeclarativeOmniListView(app), app(app), appDb(service<AppDatabase>()),

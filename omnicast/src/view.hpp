@@ -55,6 +55,8 @@ public:
   QString navigationTitle() { return app.statusBar->navigationTitle(); }
   void setNavigationTitle(const QString &title) { return app.statusBar->setNavigationTitle(title); }
 
+  QString searchText() const { return app.topBar->input->text(); }
+
   void setSignalActions(const QList<AbstractAction *> &actions) {
     app.actionPopover->setSignalActions(actions);
 

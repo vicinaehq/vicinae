@@ -2,6 +2,7 @@
 #include "clipboard/clipboard-service.hpp"
 #include "command-database.hpp"
 #include "command-server.hpp"
+#include "wm/hyprland/hyprland.hpp"
 #include "clipboard/clipboard-server-factory.hpp"
 #include "command.hpp"
 #include "config.hpp"
@@ -18,6 +19,7 @@
 #include <QMainWindow>
 #include <QThread>
 #include "clipboard/clipboard-server.hpp"
+#include "wm/window-manager.hpp"
 #include <QVBoxLayout>
 #include <memory>
 #include <qboxlayout.h>

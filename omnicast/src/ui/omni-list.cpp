@@ -362,7 +362,7 @@ void OmniList::updateFromList(std::vector<std::unique_ptr<AbstractVirtualItem>> 
       qDebug() << "idx of " << _selectedId << _items[idx].vIndex;
       setSelectedIndex(_items[idx].vIndex);
     } else {
-      setSelectedIndex(std::min(_selected, static_cast<int>(_virtual_items.size() - 1)));
+      setSelectedIndex(std::max(0, std::min(_selected, static_cast<int>(_virtual_items.size() - 1))));
     }
     break;
   case SelectNone:

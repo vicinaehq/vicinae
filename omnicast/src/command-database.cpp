@@ -4,6 +4,7 @@
 #include "emoji-command.hpp"
 #include "icon-browser-command.hpp"
 #include "manage-processes-command.hpp"
+#include "switch-windows-command.hpp"
 #include "manage-quicklinks-command.hpp"
 #include "manage-themes-command.hpp"
 #include "omni-icon.hpp"
@@ -36,6 +37,10 @@ static std::vector<BuiltinCommand> builtinCommands{
      .name = "Import Quicklinks",
      .iconUrl = BuiltinOmniIconUrl("link").setBackgroundTint(ColorTint::Red),
      .factory = [](AppWindow &app, const QString &s) { return new SingleViewCommand<ManageQuicklinksView>; }},
+    {.id = "wm.switch-windows",
+     .name = "Switch windows",
+     .iconUrl = BuiltinOmniIconUrl("app-window-list").setBackgroundTint(ColorTint::Blue),
+     .factory = [](AppWindow &app, const QString &s) { return new SingleViewCommand<SwitchWindowsCommand>; }},
 
     {.id = "emoji.search",
      .name = "Search Emoji & Symbols",

@@ -55,9 +55,7 @@ public:
   DesktopExecutable() {}
 
   DesktopExecutable(const QString &id, const QString &name, const QList<QString> &exec)
-      : id(id), name(name), exec(exec) {
-    qDebug() << "dexecutable" << exec;
-  }
+      : id(id), name(name), exec(exec) {}
 };
 
 class DesktopAction;
@@ -119,8 +117,6 @@ public:
     QFileInfo info(path);
     XdgDesktopEntry ent(path);
 
-    qDebug() << "exec" << ent.exec;
-
     auto entry = std::make_shared<DesktopEntry>(info.filePath(), info.fileName(), ent);
 
     for (const auto &mimeName : ent.mimeType) {
@@ -131,12 +127,8 @@ public:
     apps.push_back(entry);
     appMap.insert(entry->id, entry);
 
-    qDebug() << "add id " << entry->id;
-
     for (const auto &action : ent.actions) {
       auto ac = std::make_shared<DesktopAction>(action, entry);
-
-      qDebug() << "add " << ac->id;
 
       entry->actions.push_back(ac);
       appMap.insert(ac->id, ac);
@@ -159,10 +151,7 @@ public:
   void launch(const DesktopExecutable &executable) { launch(executable, {}); }
 
   bool launch(const DesktopExecutable &executable, const QList<QString> &args) {
-    if (executable.exec.isEmpty()) {
-      qDebug() << "Empty Exec line, nothing to launch";
-      return false;
-    }
+    if (executable.exec.isEmpty()) { return false; }
 
     QString program;
     QStringList argv;
@@ -214,8 +203,22 @@ public:
   }
 
   std::shared_ptr<DesktopEntry> findByWMClass(const QString &wmClass) const {
+    QString normalizedWmClass = wmClass.toLower();
+
     for (const auto &app : apps) {
-      if (app->wmClass() == wmClass) return app;
+      if (app->wmClass().toLower() == normalizedWmClass) return app;
+    }
+
+    return nullptr;
+  }
+
+  /**
+   * Find app by id.
+   * .desktop extension is optional
+   */
+  std::shared_ptr<DesktopEntry> findById(const QString &id) const {
+    for (const auto &app : apps) {
+      if (app->id == id || app->id == id + ".desktop") return app;
     }
 
     return nullptr;
@@ -247,7 +250,6 @@ public:
     mimes << mime.parentMimeTypes();
 
     for (const auto &name : mime.parentMimeTypes()) {
-      qDebug() << "for mime name" << name;
       auto defaultApp = defaultForMime(name);
 
       if (defaultApp && !seen.contains(defaultApp->id)) {
@@ -338,7 +340,6 @@ public:
 
       ini.beginGroup("Default Applications");
       for (const auto &key : ini.allKeys()) {
-        qDebug() << "add default app " << ini.value(key).toString() << " for mime " << key;
         mimeToDefaultApp.insert(key, ini.value(key).toString());
       }
       ini.endGroup();
@@ -374,22 +375,20 @@ public:
         }
       }
       ini.endGroup();
-
-      qDebug() << "scanning mimeapp" << path;
     }
 
     for (const auto &k : mimeToApps.keys()) {
       for (const auto &apps : mimeToApps[k]) {
-        qDebug() << k << apps;
+        // qDebug() << k << apps;
       }
     }
 
     for (const auto &apps : mimeToApps["text/plain"]) {
-      qDebug() << "text/plain" << apps;
+      // qDebug() << "text/plain" << apps;
     }
 
     for (const auto &mime : mimeToDefaultApp.keys()) {
-      qDebug() << mime << mimeToDefaultApp[mime];
+      // qDebug() << mime << mimeToDefaultApp[mime];
     }
   }
 };
