@@ -6,14 +6,17 @@ void DefaultListItemWidget::setName(const QString &name) { this->_name->setText(
 
 void DefaultListItemWidget::setIconUrl(const OmniIconUrl &url) { _icon->setUrl(url); }
 
+void DefaultListItemWidget::setAccessories(const AccessoryList &list) {
+  _accessoryList->setAccessories(list);
+}
+
 void DefaultListItemWidget::setCategory(const QString &category) { _category->setText(category); }
 
-void DefaultListItemWidget::setKind(const QString &kind) { _kind->setText(kind); }
-
 DefaultListItemWidget::DefaultListItemWidget(const OmniIconUrl &iconUrl, const QString &name,
-                                             const QString &category, const QString &kind, QWidget *parent)
+                                             const QString &category, const AccessoryList &accessories,
+                                             QWidget *parent)
     : SelectableOmniListWidget(parent), _icon(new OmniIcon), _name(new QLabel), _category(new QLabel),
-      _kind(new QLabel) {
+      _accessoryList(new AccessoryListWidget(this)) {
 
   _icon->setFixedSize(25, 25);
   _icon->setUrl(iconUrl);
@@ -37,10 +40,9 @@ DefaultListItemWidget::DefaultListItemWidget(const OmniIconUrl &iconUrl, const Q
   leftLayout->addWidget(this->_category);
 
   mainLayout->addWidget(left, 0, Qt::AlignLeft);
+  mainLayout->addWidget(this->_accessoryList, 0, Qt::AlignRight);
 
-  this->_kind->setText(kind);
-  this->_kind->setProperty("subtext", true);
-  mainLayout->addWidget(this->_kind, 0, Qt::AlignRight);
+  this->_accessoryList->setAccessories(accessories);
 
   setLayout(mainLayout);
 }

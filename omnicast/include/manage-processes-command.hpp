@@ -5,6 +5,7 @@
 #include "process-manager-service.hpp"
 #include "ui/action_popover.hpp"
 #include "ui/declarative-omni-list-view.hpp"
+#include "ui/default-list-item-widget.hpp"
 #include "ui/omni-list.hpp"
 #include "view.hpp"
 #include <csignal>
@@ -31,13 +32,33 @@ class ManageProcessesMainView : public DeclarativeOmniListView {
       return {new CopyTextAction("Copy pid", QString::number(info.pid)), new KillProcessAction(info.pid)};
     }
 
+    AccessoryList generateAccessories() const {
+      AccessoryList list;
+
+      if (info.pid > 100) {
+        list.push_back({
+            .text = "O3",
+            .fillBackground = false,
+            .icon = FaviconOmniIconUrl("chat.openai.com"),
+        });
+      }
+      list.push_back({
+          .text = "2.3%",
+          .fillBackground = false,
+          .icon = BuiltinOmniIconUrl("computer-chip"),
+      });
+      list.push_back({.text = "5 MB", .fillBackground = false, .icon = BuiltinOmniIconUrl("memory-stick")});
+
+      return list;
+    }
+
     QString id() const override { return QString::number(info.pid); }
 
     ItemData data() const override {
       return {.iconUrl = BuiltinOmniIconUrl("bar-chart"),
               .name = info.comm,
-              .category = "",
-              .kind = QString::number(info.pid)};
+              .category = QString::number(info.pid),
+              .accessories = generateAccessories()};
     }
 
   public:

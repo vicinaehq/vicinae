@@ -118,7 +118,9 @@ protected:
 
   QString id() const override { return cmd.name; }
 
-  ItemData data() const override { return {.iconUrl = cmd.iconUrl, .name = cmd.name, .kind = "Command"}; }
+  ItemData data() const override {
+    return {.iconUrl = cmd.iconUrl, .name = cmd.name, .accessories = {{.text = "Command"}}};
+  }
 
 public:
   BuiltinCommandListItem(const BuiltinCommand &cmd, const QString &text = "") : cmd(cmd), text(text) {}
@@ -164,7 +166,7 @@ public:
   }
 
   ItemData data() const override {
-    return {.iconUrl = iconUrl(), .name = link->name, .kind = "Quicklink", ._iconColor = "red"};
+    return {.iconUrl = iconUrl(), .name = link->name, .accessories = {{.text = "Quicklink"}}};
   }
 
   QString id() const override { return QString("link-%1").arg(link->id); }
@@ -206,11 +208,7 @@ class RootView : public DeclarativeOmniListView {
     }
 
     ItemData data() const override {
-      return {
-          .iconUrl = app->iconUrl(),
-          .name = app->name,
-          .kind = "Application",
-      };
+      return {.iconUrl = app->iconUrl(), .name = app->name, .accessories = {{.text = "Application"}}};
     }
 
     QString id() const override { return app->id; }
@@ -233,7 +231,7 @@ class RootView : public DeclarativeOmniListView {
     }
 
     ItemData data() const override {
-      return {.iconUrl = link->iconName, .name = link->name, .kind = "Quicklink"};
+      return {.iconUrl = link->iconName, .name = link->name, .accessories = {{.text = "Quicklink"}}};
     }
 
     QString id() const override { return QString("fallback-link-%1").arg(link->id); }

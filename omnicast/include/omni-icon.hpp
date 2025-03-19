@@ -7,6 +7,7 @@
 #include <qboxlayout.h>
 #include <qbrush.h>
 #include <qcolor.h>
+#include <qcoreevent.h>
 #include <qdir.h>
 #include <qevent.h>
 #include <qfuturewatcher.h>
@@ -254,7 +255,10 @@ class BuiltinOmniIconRenderer : public OmniIconWidget {
   }
 
   QPixmap render(QSize size) {
+    if (size.width() * size.height() == 0) return {};
+
     auto &theme = ThemeService::instance();
+
     QPixmap canva(size);
     QPainter cp(&canva);
 
@@ -319,6 +323,8 @@ class BuiltinOmniIconRenderer : public OmniIconWidget {
     return canva;
   }
 
+  int heightForWidth(int w) const override { return w; }
+
   QString constructResource(const QString &name) { return QString(":icons/%1.svg").arg(name); }
 
 public:
@@ -333,6 +339,7 @@ public:
   BuiltinOmniIconRenderer(const QString &name, QWidget *parent = nullptr) : OmniIconWidget(parent) {
     if (!_renderer.load(constructResource(name))) { emit imageLoadingFailed(); }
   }
+  BuiltinOmniIconRenderer() { setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred); }
 };
 
 class OmniSystemIconWidget : public OmniIconWidget {

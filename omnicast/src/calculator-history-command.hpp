@@ -60,7 +60,7 @@ public:
   ItemData data() const override {
     return {.iconUrl = OmniIconUrl::makeSystem(":icons/calculator"),
             .name = _entry.expression,
-            .kind = _entry.result};
+            .category = _entry.result};
   }
 
   CalculatorHistoryListItem(const CalculatorEntry &entry) : _entry(entry) {}

@@ -224,13 +224,12 @@ public:
     OmniIconUrl iconUrl;
     QString name;
     QString category;
-    QString kind;
-    QColor _iconColor;
+    AccessoryList accessories;
   };
   virtual ItemData data() const = 0;
 
   int calculateHeight(int width) const override {
-    static DefaultListItemWidget ruler(OmniIconUrl(""), "", "", "");
+    static DefaultListItemWidget ruler(OmniIconUrl(""), "", "", {});
 
     return ruler.sizeHint().height();
   }
@@ -243,13 +242,13 @@ public:
 
     widget->setName(itemData.name);
     widget->setCategory(itemData.category);
-    widget->setKind(itemData.kind);
     widget->setIconUrl(itemData.iconUrl);
+    widget->setAccessories(itemData.accessories);
   }
 
   OmniListItemWidget *createWidget() const override {
     auto d = data();
-    auto item = new DefaultListItemWidget(d.iconUrl, d.name, d.category, d.kind);
+    auto item = new DefaultListItemWidget(d.iconUrl, d.name, d.category, d.accessories);
 
     return item;
   }
