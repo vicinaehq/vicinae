@@ -70,6 +70,13 @@ public:
   AbstractWindowManager() {}
 
   virtual QFuture<WindowList> listWindows() const { return {}; };
+  virtual WindowList listWindowsSync() const { return listWindows().result(); };
+
+  virtual QFuture<std::shared_ptr<Window>> getActiveWindow() {
+    return QFuture<std::shared_ptr<Window>>(nullptr);
+  };
+  virtual std::shared_ptr<Window> getActiveWindowSync() { return getActiveWindow().result(); };
+
   virtual QFuture<WorkspaceList> listWorkspaces() const { return {}; }
 
   virtual void moveToWorkspace(const Window &window, const Workspace &workspace) {}

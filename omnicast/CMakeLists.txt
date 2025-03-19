@@ -39,7 +39,6 @@ qt_add_executable(${TARGET}
 	src/get-wayland-wlr-data-control-client-protocol.cpp
 	include/theme.hpp
 
-
 	include/favicon/favicon-service.hpp
 	src/favicon/favicon-service.cpp
 	include/favicon/favicon-request.hpp
@@ -75,15 +74,14 @@ qt_add_executable(${TARGET}
 
 	include/clipboard-history-command.hpp
 
+	include/ui/omni-painter.hpp
+	src/ui/omni-painter.cpp
+
 	include/wm/window-manager.hpp
 	include/wm/hyprland/hyprland.hpp
 	include/wm/hyprland/hyprctl.hpp
 
-	#src/commands/index/index-command.hpp
-	#src/commands/index/index-command.cpp
-	#src/commands/calculator-history/calculator-history.hpp
-	#src/commands/calculator-history/calculator-history.cpp
-	#src/commands/create-quicklink/create-quicklink.hpp
+
 
 	include/extend/extension-list-controller.hpp
 	include/extend/extension-view.hpp
@@ -120,6 +118,8 @@ qt_add_executable(${TARGET}
 
 	include/ui/default-list-item-widget.hpp
 	src/ui/default-list-item-widget.cpp
+	include/ui/list-accessory-widget.hpp
+	src/ui/list-accessory-widget.cpp
 
 	include/ui/grid-item-content-widget.hpp
 	src/ui/grid-item-content-widget.cpp

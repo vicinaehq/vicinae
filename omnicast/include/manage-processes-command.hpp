@@ -3,6 +3,7 @@
 #include "command.hpp"
 #include "omni-icon.hpp"
 #include "process-manager-service.hpp"
+#include "theme.hpp"
 #include "ui/action_popover.hpp"
 #include "ui/declarative-omni-list-view.hpp"
 #include "ui/default-list-item-widget.hpp"
@@ -35,13 +36,15 @@ class ManageProcessesMainView : public DeclarativeOmniListView {
     AccessoryList generateAccessories() const {
       AccessoryList list;
 
-      if (info.pid > 100) {
+      if (info.comm.contains("systemd", Qt::CaseInsensitive)) {
         list.push_back({
-            .text = "O3",
-            .fillBackground = false,
-            .icon = FaviconOmniIconUrl("chat.openai.com"),
+            .text = "System",
+            .color = ColorTint::Red,
+            .fillBackground = true,
+            .icon = BuiltinOmniIconUrl("shield-01"),
         });
       }
+
       list.push_back({
           .text = "2.3%",
           .fillBackground = false,
@@ -57,7 +60,7 @@ class ManageProcessesMainView : public DeclarativeOmniListView {
     ItemData data() const override {
       return {.iconUrl = BuiltinOmniIconUrl("bar-chart"),
               .name = info.comm,
-              .category = QString::number(info.pid),
+              .category = "",
               .accessories = generateAccessories()};
     }
 

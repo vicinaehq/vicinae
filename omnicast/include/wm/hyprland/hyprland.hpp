@@ -45,6 +45,23 @@ class HyprlandWindowManager : public AbstractWindowManager::AbstractWindowManage
 
   void moveToWorkspace(const Window &window, const Workspace &workspace) override {}
 
+  QFuture<std::shared_ptr<Window>> getActiveWindow() override {
+    return QtConcurrent::run([this]() {
+      Hyprctl ctl;
+      auto response = ctl.start("-j/clients");
+      auto json = QJsonDocument::fromJson(response);
+
+      if (json.isEmpty()) { return std::shared_ptr<Window>(); }
+
+      auto obj = json.object();
+      auto id = obj.value("address").toString();
+      auto title = obj.value("title").toString();
+      auto wmClass = obj.value("class").toString();
+
+      return std::make_shared<Window>(HyprlandWindow(id, title, wmClass));
+    });
+  }
+
   QFuture<void> focus(const Window &window) const override {
     return QtConcurrent::run([this, window]() {
       Hyprctl ctl;

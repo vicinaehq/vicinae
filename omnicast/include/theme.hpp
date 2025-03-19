@@ -5,7 +5,7 @@
 #include <QWidget>
 #include <qtmetamacros.h>
 
-enum ColorTint { InvalidTint, Blue, Green, Magenta, Orange, Purple, Red, Yellow };
+enum ColorTint { InvalidTint, Blue, Green, Magenta, Orange, Purple, Red, Yellow, TextPrimary, TextSecondary };
 
 struct ThemeLinearGradient {
   std::vector<QColor> points;
@@ -15,7 +15,9 @@ struct ThemeRadialGradient {
   std::vector<QColor> points;
 };
 
-using ColorLike = std::variant<QColor, ThemeLinearGradient, ThemeRadialGradient>;
+using ColorLike = std::variant<QColor, ThemeLinearGradient, ThemeRadialGradient, ColorTint>;
+
+using DeclarativeColor = std::variant<ColorTint, QColor>;
 
 struct ThemeInfo {
   QString name;
@@ -97,6 +99,10 @@ public:
       return _theme.colors.red;
     case ColorTint::Yellow:
       return _theme.colors.yellow;
+    case ColorTint::TextPrimary:
+      return _theme.colors.text;
+    case ColorTint::TextSecondary:
+      return _theme.colors.subtext;
     default:
       break;
     }

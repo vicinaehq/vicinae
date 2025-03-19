@@ -4,6 +4,7 @@
 #include "favicon/favicon-service.hpp"
 #include <QtConcurrent/qtconcurrentrun.h>
 #include <QtSvg/qsvgrenderer.h>
+#include <optional>
 #include <qboxlayout.h>
 #include <qbrush.h>
 #include <qcolor.h>
@@ -25,6 +26,7 @@
 #include <qurlquery.h>
 #include <qwidget.h>
 #include "theme.hpp"
+#include "ui/omni-painter.hpp"
 
 enum OmniIconType { Invalid, Builtin, Favicon, System, Http, Local };
 
@@ -45,7 +47,7 @@ class OmniIconUrl {
   QSize _size;
   ColorTint _bgTint;
   ColorTint _fgTint;
-  QColor _fillColor;
+  std::optional<ColorLike> _fillColor = std::nullopt;
 
 public:
   static OmniIconUrl makeSystem(const QString &name) {
@@ -125,13 +127,13 @@ public:
   QSize size() const { return _size; }
   ColorTint foregroundTint() const { return _fgTint; }
   ColorTint backgroundTint() const { return _bgTint; }
-  const QColor &fillColor() const { return _fillColor; }
+  const std::optional<ColorLike> &fillColor() const { return _fillColor; }
 
   void setType(OmniIconType type) { _type = type; }
   void setName(const QString &name) { _name = name; }
   void setSize(QSize size) { _size = size; }
 
-  OmniIconUrl &setFill(const QColor &color) {
+  OmniIconUrl &setFill(const std::optional<ColorLike> &color) {
     _fillColor = color;
     return *this;
   }
@@ -174,19 +176,12 @@ public:
 };
 
 class BuiltinOmniIconUrl : public OmniIconUrl {
-  QColor _fillColor;
-
 public:
   BuiltinOmniIconUrl(const QString &name, ColorTint tint = InvalidTint) : OmniIconUrl() {
     setType(OmniIconType::Builtin);
     setName(name);
     setForegroundTint(tint);
-    setFill(ThemeService::instance().theme().colors.text);
-  }
-
-  BuiltinOmniIconUrl &setFillColor(const QColor &color) {
-    _fillColor = color;
-    return *this;
+    setFill(ColorTint::TextPrimary);
   }
 };
 
@@ -238,7 +233,7 @@ signals:
 class BuiltinOmniIconRenderer : public OmniIconWidget {
   QString name;
   ColorTint _backgroundTint = InvalidTint;
-  QColor _fillColor;
+  std::optional<ColorLike> _fillColor;
   QSvgRenderer _renderer;
   QPixmap _pixmap;
 
@@ -260,7 +255,7 @@ class BuiltinOmniIconRenderer : public OmniIconWidget {
     auto &theme = ThemeService::instance();
 
     QPixmap canva(size);
-    QPainter cp(&canva);
+    OmniPainter cp(&canva);
 
     canva.fill(Qt::transparent);
     cp.setRenderHint(QPainter::SmoothPixmapTransform, true);
@@ -274,31 +269,7 @@ class BuiltinOmniIconRenderer : public OmniIconWidget {
       int cornerRadius = canva.width() / 4;
       auto colorLike = theme.getTintColor(tint);
 
-      if (auto color = std::get_if<QColor>(&colorLike)) {
-        cp.setBrush(*color);
-        cp.drawRoundedRect(canva.rect(), cornerRadius, cornerRadius);
-      } else if (auto lgrad = std::get_if<ThemeLinearGradient>(&colorLike)) {
-        QLinearGradient gradient;
-
-        for (int i = 0; i != lgrad->points.size(); ++i) {
-          gradient.setColorAt(i, lgrad->points[i]);
-        }
-
-        cp.setBrush(gradient);
-        cp.drawRoundedRect(canva.rect(), cornerRadius, cornerRadius);
-      } else if (auto rgrad = std::get_if<ThemeRadialGradient>(&colorLike)) {
-        QRadialGradient gradient(canva.rect().center(), canva.rect().width() / 2.0);
-
-        gradient.setSpread(QGradient::PadSpread);
-        gradient.setCoordinateMode(QGradient::ObjectBoundingMode);
-
-        for (int i = 0; i != rgrad->points.size(); ++i) {
-          gradient.setColorAt(i, rgrad->points[i]);
-        }
-
-        cp.setBrush(gradient);
-        cp.drawRoundedRect(canva.rect(), cornerRadius, cornerRadius);
-      }
+      cp.fillRect(canva.rect(), colorLike, cornerRadius);
     }
 
     QRect innerRect = canva.rect().marginsRemoved(margins);
@@ -307,15 +278,15 @@ class BuiltinOmniIconRenderer : public OmniIconWidget {
     svgPix.fill(Qt::transparent);
 
     {
-      QPainter painter(&svgPix);
+      OmniPainter painter(&svgPix);
       auto svgSize = _renderer.defaultSize();
       QRect targetRect = QRect(QPoint(0, 0), svgSize.scaled(innerRect.size(), Qt::KeepAspectRatio));
 
       _renderer.render(&painter, targetRect);
 
-      if (auto fill = _fillColor; _fillColor.isValid()) {
+      if (_fillColor) {
         painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
-        painter.fillRect(svgPix.rect(), fill);
+        painter.fillRect(svgPix.rect(), *_fillColor);
       }
     }
 
@@ -328,7 +299,7 @@ class BuiltinOmniIconRenderer : public OmniIconWidget {
   QString constructResource(const QString &name) { return QString(":icons/%1.svg").arg(name); }
 
 public:
-  BuiltinOmniIconRenderer &setFillColor(const QColor &color) {
+  BuiltinOmniIconRenderer &setFillColor(const std::optional<ColorLike> &color) {
     _fillColor = color;
     return *this;
   }
