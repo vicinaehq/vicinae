@@ -37,7 +37,6 @@ public:
     if (auto p = getenv("XDG_RUNTIME_DIR")) rundir = p;
 
     std::filesystem::path sockPath = rundir / "hypr" / his / ".socket.sock";
-    qDebug() << "connecting to" << sockPath.c_str();
     int sock = socket(AF_UNIX, SOCK_STREAM, 0);
 
     if (sock < 0) {
