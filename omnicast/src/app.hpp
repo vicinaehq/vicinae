@@ -2,6 +2,8 @@
 #include "app-database.hpp"
 #include "calculator-database.hpp"
 #include "clipboard/clipboard-service.hpp"
+#include <QGraphicsScene>
+#include <QGraphicsPixmapItem>
 #include "command-database.hpp"
 #include "command-server.hpp"
 #include <QScreen>
@@ -16,10 +18,14 @@
 #include <QtWaylandClient/qwaylandclientextension.h>
 #include <cstring>
 #include <qboxlayout.h>
+#include <qdnslookup.h>
 #include <qevent.h>
+#include <qgraphicseffect.h>
+#include <qgraphicsscene.h>
 #include <qhash.h>
 #include <qlogging.h>
 #include <qobject.h>
+#include <qpixmap.h>
 #include <qscreen_platform.h>
 #include <stack>
 
@@ -89,6 +95,7 @@ class AppWindow : public QMainWindow, public ICommandHandler {
   Q_OBJECT
 
   CommandServer *_commandServer;
+  QPixmap wallpaper;
 
   void paintEvent(QPaintEvent *event) override;
   void resizeEvent(QResizeEvent *event) override;
@@ -104,6 +111,40 @@ class AppWindow : public QMainWindow, public ICommandHandler {
     qDebug() << "showing!!";
 
     QMainWindow::showEvent(event);
+  }
+
+  void recomputeWallpaper() {
+    QPixmap canva(size());
+    QPixmap pix("/home/aurelle/Downloads/magic-deer.png");
+    QPainter cp(&canva);
+
+    cp.drawPixmap(0, 0, pix.scaled(size()));
+  }
+
+  QPixmap blurPixmap(const QPixmap &source) {
+    if (source.isNull()) return {};
+
+    QPixmap result = source;
+    QGraphicsBlurEffect *blur = new QGraphicsBlurEffect;
+
+    blur->setBlurRadius(10); // Adjust radius as needed
+    blur->setBlurHints(QGraphicsBlurEffect::PerformanceHint);
+
+    // Apply the blur using QGraphicsScene
+    QGraphicsScene scene;
+    QGraphicsPixmapItem item;
+    item.setPixmap(source);
+    item.setGraphicsEffect(blur);
+    scene.addItem(&item);
+
+    // Render the result
+    result = QPixmap(source.size());
+    result.fill(Qt::transparent);
+    QPainter painter(&result);
+    scene.render(&painter);
+
+    delete blur;
+    return result;
   }
 
   std::variant<CommandResponse, CommandError> handleCommand(const CommandMessage &message) override {

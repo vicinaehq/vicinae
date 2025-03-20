@@ -282,12 +282,12 @@ class BuiltinOmniIconRenderer : public OmniIconWidget {
       auto svgSize = _renderer.defaultSize();
       QRect targetRect = QRect(QPoint(0, 0), svgSize.scaled(innerRect.size(), Qt::KeepAspectRatio));
 
+      painter.setRenderHint(QPainter::Antialiasing, true);
+      painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
       _renderer.render(&painter, targetRect);
 
-      if (_fillColor) {
-        painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
-        painter.fillRect(svgPix.rect(), *_fillColor);
-      }
+      painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
+      painter.fillRect(svgPix.rect(), _fillColor ? *_fillColor : "#FFFFFF");
     }
 
     cp.drawPixmap(innerRect, svgPix);

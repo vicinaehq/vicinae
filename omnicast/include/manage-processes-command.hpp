@@ -38,10 +38,10 @@ class ManageProcessesMainView : public DeclarativeOmniListView {
 
       if (info.comm.contains("systemd", Qt::CaseInsensitive)) {
         list.push_back({
-            .text = "System",
-            .color = ColorTint::Red,
+            .text = "Cunt",
+            .color = ColorTint::Blue,
             .fillBackground = true,
-            .icon = BuiltinOmniIconUrl("shield-01"),
+            .icon = BuiltinOmniIconUrl("archlinux"),
         });
       }
 
@@ -55,11 +55,15 @@ class ManageProcessesMainView : public DeclarativeOmniListView {
       }
 
       list.push_back({
-          .text = "2.3%",
-          .fillBackground = false,
-          .icon = BuiltinOmniIconUrl("computer-chip"),
+          .text = "Stornijop",
+          .color = ColorTint::Green,
+          .fillBackground = true,
+          .icon = BuiltinOmniIconUrl("cplusplus"),
       });
-      list.push_back({.text = "5 MB", .fillBackground = false, .icon = BuiltinOmniIconUrl("memory-stick")});
+      list.push_back({.text = "Chad",
+                      .color = ColorTint::Yellow,
+                      .fillBackground = true,
+                      .icon = BuiltinOmniIconUrl("zig")});
 
       return list;
     }

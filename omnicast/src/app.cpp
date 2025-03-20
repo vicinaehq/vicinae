@@ -3,6 +3,7 @@
 #include "command-database.hpp"
 #include "command-server.hpp"
 #include "wm/hyprland/hyprland.hpp"
+#include <QGraphicsBlurEffect>
 #include "clipboard/clipboard-server-factory.hpp"
 #include "command.hpp"
 #include "config.hpp"
@@ -24,6 +25,7 @@
 #include <memory>
 #include <qboxlayout.h>
 #include <qevent.h>
+#include <qgraphicseffect.h>
 #include <qlogging.h>
 #include <qmainwindow.h>
 #include <qnamespace.h>
@@ -248,6 +250,27 @@ void AppWindow::launchCommand(ViewCommand *cmd, const LaunchCommandOptions &opts
 void AppWindow::resizeEvent(QResizeEvent *event) { QMainWindow::resizeEvent(event); }
 
 void AppWindow::paintEvent(QPaintEvent *event) {
+  auto &theme = ThemeService::instance().theme();
+
+  QPixmap canva(size());
+
+  {
+    QPixmap pix("/home/aurelle/Downloads/magic-deer.png");
+    QPainter cp(&canva);
+
+    cp.drawPixmap(0, 0, pix.scaled(size()));
+  }
+
+  QPixmap blurred = blurPixmap(canva);
+  QPainter painter(this);
+
+  painter.drawPixmap(0, 0, blurred);
+  QColor finalBgColor = theme.colors.mainBackground;
+
+  finalBgColor.setAlphaF(0.95);
+  painter.fillRect(canva.rect(), finalBgColor);
+
+  /*
   int borderRadius = 10;
   int borderWidth = 1;
 
@@ -271,6 +294,7 @@ void AppWindow::paintEvent(QPaintEvent *event) {
   QPen pen(theme.colors.border, borderWidth); // Border with a thickness of 2
   painter.setPen(pen);
   painter.drawPath(path);
+  */
 }
 
 void AppWindow::selectPrimaryAction() {

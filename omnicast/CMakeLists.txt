@@ -222,7 +222,7 @@ qt_add_executable(${TARGET}
 	src/omnicast.hpp
 
 	./resources.qrc
-	./icons.qrc
+	./icons/icons.qrc
 
 	src/filesystem-database.hpp
 	src/indexer-service.hpp
