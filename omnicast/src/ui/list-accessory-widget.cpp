@@ -1,10 +1,12 @@
 #include "ui/list-accessory-widget.hpp"
+#include "ui/text-label.hpp"
+#include "ui/text-widget.hpp"
 
 void ListAccessoryWidget::paintEvent(QPaintEvent *event) {
   OmniPainter painter(this);
 
   if (_accessory.fillBackground && _accessory.color) {
-    int cornerRadius = 6;
+    int cornerRadius = 4;
 
     painter.setPen(Qt::NoPen);
     painter.setRenderHint(QPainter::Antialiasing, true);
@@ -31,18 +33,19 @@ void ListAccessoryWidget::setAccessory(const ListAccessory &accessory) {
   }
 
   _icon->setVisible(accessory.icon.has_value());
-  _label->setText(accessory.text);
-  _label->setVisible(!accessory.text.isEmpty());
+  _text->setText(accessory.text);
+  _text->setVisible(!accessory.text.isEmpty());
+  _text->setColor(accessory.color);
   _accessory = accessory;
 }
 
 ListAccessoryWidget::ListAccessoryWidget(QWidget *parent)
-    : QWidget(parent), _layout(new QHBoxLayout), _icon(new OmniIcon), _label(new EllidedLabel),
+    : QWidget(parent), _layout(new QHBoxLayout), _icon(new OmniIcon), _text(new TextWidget),
       _tooltip(new Tooltip) {
-  _layout->setContentsMargins(5, 3, 5, 3);
+  _layout->setContentsMargins(6, 3, 6, 3);
   _layout->setAlignment(Qt::AlignVCenter);
   _layout->addWidget(_icon);
-  _layout->addWidget(_label);
+  _layout->addWidget(_text);
 
   setLayout(_layout);
 }

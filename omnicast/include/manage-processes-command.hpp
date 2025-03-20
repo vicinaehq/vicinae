@@ -45,6 +45,24 @@ class ManageProcessesMainView : public DeclarativeOmniListView {
         });
       }
 
+      if (info.comm.contains("systemd", Qt::CaseInsensitive)) {
+        list.push_back({
+            .text = "O3",
+            .color = ColorTint::Green,
+            .fillBackground = true,
+            .icon = FaviconOmniIconUrl("chat.openai.com"),
+        });
+      }
+
+      if (info.comm.contains("systemd", Qt::CaseInsensitive)) {
+        list.push_back({
+            .text = "Magic",
+            .color = ColorTint::Magenta,
+            .fillBackground = true,
+            .icon = BuiltinOmniIconUrl("wand"),
+        });
+      }
+
       list.push_back({
           .text = "2.3%",
           .fillBackground = false,

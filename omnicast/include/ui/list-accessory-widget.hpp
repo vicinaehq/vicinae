@@ -1,7 +1,7 @@
 #pragma once
 #include "omni-icon.hpp"
 #include "theme.hpp"
-#include "ui/ellided-label.hpp"
+#include "ui/text-widget.hpp"
 #include "ui/tooltip.hpp"
 #include <optional>
 #include <qcontainerfwd.h>
@@ -17,9 +17,9 @@ struct ListAccessory {
 class ListAccessoryWidget : public QWidget {
   QHBoxLayout *_layout;
   OmniIcon *_icon = nullptr;
-  EllidedLabel *_label = nullptr;
   Tooltip *_tooltip;
   ListAccessory _accessory;
+  TextWidget *_text;
 
   void paintEvent(QPaintEvent *event) override;
   void resizeEvent(QResizeEvent *event) override;
