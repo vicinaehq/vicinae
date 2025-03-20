@@ -121,6 +121,9 @@ qt_add_executable(${TARGET}
 	include/ui/list-accessory-widget.hpp
 	src/ui/list-accessory-widget.cpp
 
+	include/ui/text-widget.hpp
+	src/ui/text-widget.cpp
+
 	include/ui/grid-item-content-widget.hpp
 	src/ui/grid-item-content-widget.cpp
 
