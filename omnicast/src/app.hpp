@@ -1,5 +1,5 @@
 #pragma once
-#include "app-database.hpp"
+#include "app/app-database.hpp"
 #include "calculator-database.hpp"
 #include "clipboard/clipboard-service.hpp"
 #include <QGraphicsScene>
@@ -24,6 +24,7 @@
 #include <qgraphicsscene.h>
 #include <qhash.h>
 #include <qlogging.h>
+#include <qnamespace.h>
 #include <qobject.h>
 #include <qpixmap.h>
 #include <qscreen_platform.h>
@@ -95,30 +96,18 @@ class AppWindow : public QMainWindow, public ICommandHandler {
   Q_OBJECT
 
   CommandServer *_commandServer;
-  QPixmap wallpaper;
+  QPixmap _wallpaper;
 
   void paintEvent(QPaintEvent *event) override;
   void resizeEvent(QResizeEvent *event) override;
-
-  void showEvent(QShowEvent *event) override {
-    QPoint globalCursorPos = QCursor::pos();
-    QPoint localPos = mapFromGlobal(globalCursorPos);
-
-    // Create and send a mouse move event
-    QMouseEvent mouseEvent(QEvent::MouseMove, localPos, globalCursorPos, Qt::NoButton, Qt::NoButton,
-                           Qt::NoModifier);
-    QApplication::sendEvent(this, &mouseEvent);
-    qDebug() << "showing!!";
-
-    QMainWindow::showEvent(event);
-  }
 
   void recomputeWallpaper() {
     QPixmap canva(size());
     QPixmap pix("/home/aurelle/Downloads/magic-deer.png");
     QPainter cp(&canva);
 
-    cp.drawPixmap(0, 0, pix.scaled(size()));
+    cp.drawPixmap(0, 0, pix.scaled(size(), Qt::KeepAspectRatioByExpanding));
+    _wallpaper = blurPixmap(canva);
   }
 
   QPixmap blurPixmap(const QPixmap &source) {
@@ -147,60 +136,7 @@ class AppWindow : public QMainWindow, public ICommandHandler {
     return result;
   }
 
-  std::variant<CommandResponse, CommandError> handleCommand(const CommandMessage &message) override {
-    if (message.type == "ping") { return "pong"; }
-    if (message.type == "toggle") {
-      setVisible(!isVisible());
-      return true;
-    }
-
-    if (message.type == "clipboard.store") {
-      auto values = message.params.asArray();
-
-      if (values.size() != 2) { return CommandError{"Ill-formed clipboard.store request"}; }
-
-      auto data = values[0].asString();
-      auto options = values[1].asDict();
-      auto mimeName = options["mime"].asString();
-      // auto copied = clipboardService->copy(QByteArray(data.data(), data.size()));
-
-      return {};
-    }
-
-    if (message.type == "command.list") {
-      Proto::Array results;
-
-      for (const auto &cmd : commandDb->list()) {
-        Proto::Dict result;
-
-        result["id"] = cmd.id.toUtf8().constData();
-        result["name"] = cmd.name.toUtf8().constData();
-        results.push_back(result);
-      }
-
-      return results;
-    }
-
-    if (message.type == "command.push") {
-      auto args = message.params.asArray();
-
-      if (args.empty()) { return CommandError{"Ill-formed command.push request"}; }
-
-      auto id = args.at(0).asString();
-
-      if (auto cmd = commandDb->findById(id.c_str())) {
-        emit launchCommand(cmd->factory(*this, ""),
-                           {.navigation = NavigationStatus{.title = cmd->name, .iconUrl = cmd->iconUrl}});
-        setVisible(true);
-
-        return true;
-      }
-
-      return CommandError{"No such command"};
-    }
-
-    return CommandError{"Unknowm command"};
-  }
+  std::variant<CommandResponse, CommandError> handleCommand(const CommandMessage &message) override;
 
 public:
   std::stack<QString> queryStack;
@@ -211,7 +147,7 @@ public:
   std::unique_ptr<QuicklistDatabase> quicklinkDatabase;
   std::unique_ptr<CalculatorDatabase> calculatorDatabase;
   std::unique_ptr<ClipboardService> clipboardService;
-  std::unique_ptr<AppDatabase> appDb;
+  std::unique_ptr<AbstractAppDatabase> appDb;
   std::unique_ptr<ExtensionManager> extensionManager;
   std::unique_ptr<ProcessManagerService> processManagerService;
   std::unique_ptr<CommandDatabase> commandDb;
@@ -251,8 +187,8 @@ signals:
 };
 
 struct OpenAppAction : public AbstractAction {
-  std::shared_ptr<DesktopExecutable> application;
-  QList<QString> args;
+  std::shared_ptr<Application> application;
+  std::vector<QString> args;
 
   void execute(AppWindow &app) override {
     if (!app.appDb->launch(*application.get(), args)) {
@@ -263,8 +199,8 @@ struct OpenAppAction : public AbstractAction {
     app.closeWindow(true);
   }
 
-  OpenAppAction(const std::shared_ptr<DesktopExecutable> &app, const QString &title,
-                const QList<QString> args)
+  OpenAppAction(const std::shared_ptr<Application> &app, const QString &title,
+                const std::vector<QString> args)
       : AbstractAction(title, app->iconUrl()), application(app), args(args) {}
 };
 

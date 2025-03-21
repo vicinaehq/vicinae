@@ -1,5 +1,4 @@
 #pragma once
-
 #include "app.hpp"
 #include "create-quicklink-command.hpp"
 #include "omni-icon.hpp"
@@ -12,7 +11,7 @@ struct OpenQuicklinkAction : public AbstractAction {
   QList<QString> args;
 
   void execute(AppWindow &app) override {
-    auto linkApp = app.appDb->getById(link->app);
+    auto linkApp = app.appDb->findById(link->app);
 
     if (!linkApp) {
       app.statusBar->setToast("No app with id " + link->app, ToastPriority::Danger);

@@ -104,14 +104,14 @@ app.pushView(view);
     if (action == "list-applications") {
       QJsonArray apps;
 
-      for (const auto &app : app.appDb->apps) {
+      for (const auto &app : app.appDb->list()) {
         if (!app->displayable()) continue;
 
         QJsonObject appObj;
 
-        appObj["id"] = app->id;
-        appObj["name"] = app->name;
-        appObj["icon"] = app->iconName();
+        appObj["id"] = app->id();
+        appObj["name"] = app->name();
+        appObj["icon"] = app->iconUrl().toString();
 
         apps.push_back(appObj);
       }

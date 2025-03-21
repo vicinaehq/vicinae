@@ -72,6 +72,14 @@ qt_add_executable(${TARGET}
 	include/clipboard/clipboard-service.hpp
 	src/clipboard/clipboard-service.cpp
 
+	# begin app-database
+	include/app/app-database.hpp
+	include/app/xdg-app-database.hpp
+
+	src/app/xdg-app-database.cpp
+
+	# end app-database
+
 	include/clipboard-history-command.hpp
 
 	include/ui/omni-painter.hpp

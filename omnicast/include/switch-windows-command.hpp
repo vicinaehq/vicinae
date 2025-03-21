@@ -44,15 +44,15 @@ public:
 };
 
 class AppWindowListItem : public WindowItem {
-  std::shared_ptr<DesktopExecutable> _app;
+  std::shared_ptr<Application> _app;
 
   ItemData data() const override {
-    return {.iconUrl = _app->iconUrl(), .name = _window->title(), .category = _app->name};
+    return {.iconUrl = _app->iconUrl(), .name = _window->title(), .category = _app->name()};
   }
 
 public:
   AppWindowListItem(const std::shared_ptr<AbstractWindowManager::Window> &item,
-                    const std::shared_ptr<DesktopExecutable> &app)
+                    const std::shared_ptr<Application> &app)
       : WindowItem(item), _app(app) {}
 };
 
@@ -60,7 +60,7 @@ class SwitchWindowsCommand : public DeclarativeOmniListView {
   AbstractWindowManager::WindowList windows;
   QFutureWatcher<AbstractWindowManager::WindowList> watcher;
   AbstractWindowManager *wm = new HyprlandWindowManager;
-  Service<AppDatabase> appDb;
+  Service<AbstractAppDatabase> appDb;
 
   void handleResolvedWindowList() {
     windows = watcher.result();
@@ -70,7 +70,8 @@ class SwitchWindowsCommand : public DeclarativeOmniListView {
   }
 
 public:
-  SwitchWindowsCommand(AppWindow &app) : DeclarativeOmniListView(app), appDb(service<AppDatabase>()) {}
+  SwitchWindowsCommand(AppWindow &app)
+      : DeclarativeOmniListView(app), appDb(service<AbstractAppDatabase>()) {}
 
   void onSearchChanged(const QString &text) override {
     if (watcher.isRunning()) {
@@ -88,7 +89,7 @@ public:
 
     for (const auto &win : windows) {
       if (win->title().contains(s, Qt::CaseInsensitive)) {
-        if (auto app = appDb.findByWMClass(win->wmClass())) {
+        if (auto app = appDb.findByClass(win->wmClass())) {
           list.push_back(std::make_unique<AppWindowListItem>(win, app));
         } else if (auto app = appDb.findById(win->wmClass())) {
           list.push_back(std::make_unique<AppWindowListItem>(win, app));

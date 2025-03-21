@@ -63,7 +63,7 @@ class PeepobankView : public OmniGridView {
 
   class PeepoItem : public OmniGrid::AbstractGridItem, public OmniGridView::IActionnable {
     PeepoInfo _info;
-    std::shared_ptr<DesktopExecutable> _fileBrowser;
+    std::shared_ptr<Application> _fileBrowser;
 
     QString navigationTitle() const override { return _info.name.split(".").at(0); }
 
@@ -94,7 +94,7 @@ class PeepobankView : public OmniGridView {
 
   public:
     const QString &name() const { return _info.name; }
-    PeepoItem(const PeepoInfo &info, const std::shared_ptr<DesktopExecutable> &fileBrowser)
+    PeepoItem(const PeepoInfo &info, const std::shared_ptr<Application> &fileBrowser)
         : _info(info), _fileBrowser(fileBrowser) {}
   };
 
@@ -112,10 +112,9 @@ class PeepobankView : public OmniGridView {
   };
 
   void onMount() override {
-
     OmniGridView::onMount();
-    auto &appDb = service<AppDatabase>();
-    auto fileBrowser = appDb.defaultFileBrowser();
+    auto &appDb = service<AbstractAppDatabase>();
+    auto fileBrowser = appDb.fileBrowser();
 
     QDir dir(bankPath);
 

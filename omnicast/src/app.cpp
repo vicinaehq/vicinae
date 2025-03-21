@@ -1,4 +1,5 @@
 #include "app.hpp"
+#include "app/xdg-app-database.hpp"
 #include "clipboard/clipboard-service.hpp"
 #include "command-database.hpp"
 #include "command-server.hpp"
@@ -236,6 +237,7 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
   topBar->input->setText(opts.searchQuery);
   emit topBar->input->textEdited(opts.searchQuery);
   qDebug() << "view pushed";
+
   QTimer::singleShot(0, [view]() { view->onMount(); });
 }
 
@@ -247,40 +249,19 @@ void AppWindow::launchCommand(ViewCommand *cmd, const LaunchCommandOptions &opts
   if (view) { pushView(view, {.searchQuery = opts.searchQuery, .navigation = opts.navigation}); }
 }
 
-void AppWindow::resizeEvent(QResizeEvent *event) { QMainWindow::resizeEvent(event); }
+void AppWindow::resizeEvent(QResizeEvent *event) {
+  QMainWindow::resizeEvent(event);
+  recomputeWallpaper();
+}
 
 void AppWindow::paintEvent(QPaintEvent *event) {
   auto &theme = ThemeService::instance().theme();
-
-  QPixmap canva(size());
-
-  {
-    QPixmap pix("/home/aurelle/Downloads/magic-deer.png");
-    QPainter cp(&canva);
-
-    cp.drawPixmap(0, 0, pix.scaled(size()));
-  }
-
-  QPixmap blurred = blurPixmap(canva);
-  QPainter painter(this);
-
-  painter.drawPixmap(0, 0, blurred);
-  QColor finalBgColor = theme.colors.mainBackground;
-
-  finalBgColor.setAlphaF(0.95);
-  painter.fillRect(canva.rect(), finalBgColor);
-
-  /*
   int borderRadius = 10;
   int borderWidth = 1;
-
-  auto &theme = ThemeService::instance().theme();
-
   QColor finalBgColor = theme.colors.mainBackground;
+  QPainter painter(this);
 
   finalBgColor.setAlphaF(0.98);
-
-  QPainter painter(this);
 
   painter.setRenderHint(QPainter::Antialiasing, true);
 
@@ -289,12 +270,68 @@ void AppWindow::paintEvent(QPaintEvent *event) {
 
   painter.setClipPath(path);
 
+  painter.drawPixmap(0, 0, _wallpaper);
   painter.fillPath(path, finalBgColor);
 
   QPen pen(theme.colors.border, borderWidth); // Border with a thickness of 2
   painter.setPen(pen);
+
   painter.drawPath(path);
-  */
+}
+
+std::variant<CommandResponse, CommandError> AppWindow::handleCommand(const CommandMessage &message) {
+  if (message.type == "ping") { return "pong"; }
+  if (message.type == "toggle") {
+    setVisible(!isVisible());
+    return true;
+  }
+
+  if (message.type == "clipboard.store") {
+    auto values = message.params.asArray();
+
+    if (values.size() != 2) { return CommandError{"Ill-formed clipboard.store request"}; }
+
+    auto data = values[0].asString();
+    auto options = values[1].asDict();
+    auto mimeName = options["mime"].asString();
+    // auto copied = clipboardService->copy(QByteArray(data.data(), data.size()));
+
+    return {};
+  }
+
+  if (message.type == "command.list") {
+    Proto::Array results;
+
+    for (const auto &cmd : commandDb->list()) {
+      Proto::Dict result;
+
+      result["id"] = cmd.id.toUtf8().constData();
+      result["name"] = cmd.name.toUtf8().constData();
+      results.push_back(result);
+    }
+
+    return results;
+  }
+
+  if (message.type == "command.push") {
+    auto args = message.params.asArray();
+
+    if (args.empty()) { return CommandError{"Ill-formed command.push request"}; }
+
+    auto id = args.at(0).asString();
+
+    if (auto cmd = commandDb->findById(id.c_str())) {
+      emit launchCommand(cmd->factory(*this, ""),
+                         {.navigation = NavigationStatus{.title = cmd->name, .iconUrl = cmd->iconUrl}});
+      setVisible(true);
+
+      return true;
+    }
+
+    return CommandError{"No such command"};
+  }
+
+  return CommandError{"Unknowm command"};
 }
 
 void AppWindow::selectPrimaryAction() {
@@ -348,7 +385,7 @@ AppWindow::AppWindow(QWidget *parent)
       std::make_unique<QuicklistDatabase>(Config::dirPath() + QDir::separator() + "quicklinks.db");
   calculatorDatabase =
       std::make_unique<CalculatorDatabase>(Config::dirPath() + QDir::separator() + "calculator.db");
-  appDb = std::make_unique<AppDatabase>();
+  appDb = std::make_unique<XdgAppDatabase>();
   clipboardService =
       std::make_unique<ClipboardService>(Config::dirPath() + QDir::separator() + "clipboard.db");
   // indexer = std::make_unique<IndexerService>(Config::dirPath() + QDir::separator() + "files.db");
@@ -427,7 +464,7 @@ template <> Service<CalculatorDatabase> AppWindow::service<CalculatorDatabase>()
   return *calculatorDatabase;
 }
 
-template <> Service<AppDatabase> AppWindow::service<AppDatabase>() const { return *appDb; }
+template <> Service<AbstractAppDatabase> AppWindow::service<AbstractAppDatabase>() const { return *appDb; }
 
 template <> Service<ClipboardService> AppWindow::service<ClipboardService>() const {
   return *clipboardService;

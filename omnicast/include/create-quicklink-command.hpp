@@ -1,5 +1,4 @@
 #pragma once
-#include "app-database.hpp"
 #include "omni-icon.hpp"
 #include "quicklist-database.hpp"
 #include "ui/action_popover.hpp"
@@ -31,7 +30,7 @@ public:
 
 class AppSelectorItem : public SelectorInput::AbstractItem {
 public:
-  std::shared_ptr<DesktopExecutable> app;
+  std::shared_ptr<Application> app;
   bool isDefault;
 
   OmniIconUrl icon() const override { return app->iconUrl(); }
@@ -44,11 +43,11 @@ public:
 
   AbstractItem *clone() const override { return new AppSelectorItem(*this); }
 
-  void setApp(const std::shared_ptr<DesktopExecutable> &app) { this->app = app; }
+  void setApp(const std::shared_ptr<Application> &app) { this->app = app; }
 
-  QString id() const override { return app->id; }
+  QString id() const override { return app->id(); }
 
-  AppSelectorItem(const std::shared_ptr<DesktopExecutable> &app) : app(app) {}
+  AppSelectorItem(const std::shared_ptr<Application> &app) : app(app) {}
 };
 
 class DefaultAppItem : public AppSelectorItem {
@@ -57,7 +56,7 @@ class DefaultAppItem : public AppSelectorItem {
   AbstractItem *clone() const override { return new DefaultAppItem(*this); }
 
 public:
-  DefaultAppItem(const std::shared_ptr<DesktopExecutable> &app) : AppSelectorItem(app) {}
+  DefaultAppItem(const std::shared_ptr<Application> &app) : AppSelectorItem(app) {}
 };
 
 class IconSelectorItem : public SelectorInput::AbstractItem {
@@ -102,7 +101,7 @@ class QuicklinkCommandView : public View {
 
     if (!url.isValid()) return;
 
-    if (auto app = appDb.findBestUrlOpener(url)) {
+    if (auto app = appDb.findBestOpener(url)) {
       appSelector->updateItem("default", [&app](SelectorInput::AbstractItem *item) {
         static_cast<AppSelectorItem *>(item)->setApp(app);
       });
@@ -131,7 +130,7 @@ class QuicklinkCommandView : public View {
   }
 
 protected:
-  Service<AppDatabase> appDb;
+  Service<AbstractAppDatabase> appDb;
   Service<QuicklistDatabase> quicklinkDb;
 
   FormWidget *form;
@@ -142,7 +141,7 @@ protected:
 
 public:
   QuicklinkCommandView(AppWindow &app)
-      : View(app), appDb(service<AppDatabase>()), quicklinkDb(service<QuicklistDatabase>()),
+      : View(app), appDb(service<AbstractAppDatabase>()), quicklinkDb(service<QuicklistDatabase>()),
         form(new FormWidget), name(new BaseInput), link(new BaseInput), appSelector(new SelectorInput),
         iconSelector(new SelectorInput) {
     name->setPlaceholderText("Quicklink name");
@@ -162,14 +161,14 @@ public:
     appSelector->beginUpdate();
     appSelector->addSection("Apps");
 
-    if (auto browser = appDb.defaultBrowser()) {
+    if (auto browser = appDb.webBrowser()) {
       appSelector->addItem(std::make_unique<DefaultAppItem>(browser));
     }
 
-    for (const auto &app : appDb.apps) {
+    for (const auto &app : appDb.list()) {
       appSelector->addItem(std::make_unique<AppSelectorItem>(app));
 
-      for (const auto &action : app->actions) {
+      for (const auto &action : app->actions()) {
         appSelector->addItem(std::make_unique<AppSelectorItem>(action));
       }
     }
@@ -195,7 +194,7 @@ public:
     name->setText(QString("Copy of %1").arg(quicklink.name));
     link->setText(quicklink.rawUrl);
 
-    if (auto app = appDb.getById(quicklink.app)) {
+    if (auto app = appDb.findById(quicklink.app)) {
       // appSelector->setValue(std::make_shared<AppSelectorItem>(app));
     }
 
@@ -237,7 +236,7 @@ public:
         .name = name->text(),
         .icon = icon->icon().toString(),
         .link = link->text(),
-        .app = item->app->id,
+        .app = item->app->id(),
     });
     app.statusBar->setToast("Created new quicklink");
     pop();
@@ -255,7 +254,7 @@ public:
     name->setText(quicklink.name);
     link->setText(quicklink.rawUrl);
 
-    if (auto app = appDb.getById(quicklink.app)) {
+    if (auto app = appDb.findById(quicklink.app)) {
       // appSelector->setValue(std::make_shared<AppSelectorItem>(app));
     }
 
@@ -282,7 +281,7 @@ public:
         .name = name->text(),
         .icon = icon->icon().toString(),
         .link = link->text(),
-        .app = item->app->id,
+        .app = item->app->id(),
     });
 
     if (!updateResult) {
@@ -306,7 +305,7 @@ public:
     name->setText(QString("Copy of %1").arg(quicklink.name));
     link->setText(quicklink.rawUrl);
 
-    if (auto app = appDb.getById(quicklink.app)) {
+    if (auto app = appDb.findById(quicklink.app)) {
       // appSelector->setValue(std::make_shared<AppSelectorItem>(app));
     }
 
@@ -337,7 +336,7 @@ public:
         .name = name->text(),
         .icon = icon->icon().toString(),
         .link = link->text(),
-        .app = item->app->id,
+        .app = item->app->id(),
     });
 
     if (!insertResult) {

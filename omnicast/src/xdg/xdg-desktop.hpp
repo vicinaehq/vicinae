@@ -159,6 +159,7 @@ public:
     QList<QString> exec;
   };
 
+  QString id;
   QString type;
   QString version;
   QString name;

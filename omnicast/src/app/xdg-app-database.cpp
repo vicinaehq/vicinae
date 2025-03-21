@@ -1,0 +1,264 @@
+#include "app/xdg-app-database.hpp"
+#include "app/app-database.hpp"
+#include <qsettings.h>
+
+using AppPtr = XdgAppDatabase::AppPtr;
+
+static const std::vector<QDir> defaultPaths = {QDir("/usr/share/applications"),
+                                               QDir("/usr/local/share/applications"),
+                                               QDir::homePath() + "/.local/share/applications"};
+
+std::shared_ptr<XdgApplication> XdgAppDatabase::defaultForMime(const QString &mime) const {
+  if (auto it = mimeToDefaultApp.find(mime); it != mimeToDefaultApp.end()) {
+    qDebug() << "find default app for " << mime << it->second;
+    if (auto appIt = appMap.find(it->second); appIt != appMap.end()) {
+      qDebug() << "got app";
+      return appIt->second;
+    }
+
+    qDebug() << "Failed to get app";
+  }
+
+  return nullptr;
+}
+
+AppPtr XdgAppDatabase::findBestOpener(const QUrl &url) const {
+  QString mime = "x-scheme-handler/" + url.scheme();
+
+  if (auto it = mimeToDefaultApp.find(url.scheme()); it != mimeToDefaultApp.end()) {
+    if (auto it2 = appMap.find(it->second); it2 != appMap.end()) return it2->second;
+  }
+
+  if (auto it = mimeToApps.find(mime); it != mimeToApps.end()) {
+    for (const auto &appId : it->second) {
+      if (auto it2 = appMap.find(appId); it2 != appMap.end()) return it2->second;
+    }
+  }
+
+  return nullptr;
+}
+
+XdgAppDatabase::AppPtr XdgAppDatabase::findBestOpener(const QString &mimeName) const {
+  if (auto app = defaultForMime(mimeName)) { return app; }
+
+  for (const auto &mime : mimeDb.mimeTypeForName(mimeName).parentMimeTypes()) {
+    if (auto app = defaultForMime(mime)) return app;
+  }
+
+  if (auto it = mimeToApps.find(mimeName); it != mimeToApps.end()) {
+    for (const auto id : it->second) {
+      if (auto app = findById(id)) return app;
+    }
+  }
+
+  return nullptr;
+}
+
+AppPtr XdgAppDatabase::findById(const QString &id) const {
+  for (const auto &app : apps) {
+    if (app->id() == id || app->id() == id + ".desktop") return app;
+  }
+
+  return nullptr;
+}
+
+std::vector<AppPtr> XdgAppDatabase::findOpeners(const QString &mimeName) const {
+  std::vector<AppPtr> apps;
+  std::set<QString> seen;
+  std::vector<QString> mimes = {mimeName};
+  auto mime = mimeDb.mimeTypeForName(mimeName);
+
+  for (const auto &mime : mime.parentMimeTypes()) {
+    mimes.push_back(mime);
+  }
+
+  for (const auto &name : mime.parentMimeTypes()) {
+    auto defaultApp = defaultForMime(name);
+
+    if (defaultApp && !seen.contains(defaultApp->id())) {
+      apps.push_back(defaultApp);
+      seen.insert(defaultApp->id());
+    }
+
+    if (auto it = mimeToApps.find(name); it != mimeToApps.end()) {
+      for (const auto id : it->second) {
+        if (seen.contains(id)) continue;
+        if (auto app = findById(id)) {
+          apps.push_back(app);
+          seen.insert(id);
+        }
+      }
+    }
+  }
+
+  return apps;
+}
+
+bool XdgAppDatabase::launch(const Application &app, const std::vector<QString> &args) const {
+  auto xdgApp = static_cast<const XdgApplication &>(app);
+  auto exec = xdgApp.xdgData().exec;
+
+  if (exec.isEmpty()) { return false; }
+
+  QString program;
+  QStringList argv;
+  size_t offset = 0;
+
+  if (xdgApp.isTerminalApp()) {
+    // TODO: do better!
+    program = "alacritty";
+    argv << "-e";
+  } else {
+    program = exec.at(0);
+    offset = 1;
+  }
+
+  for (size_t i = offset; i != exec.size(); ++i) {
+    auto &part = exec.at(i);
+
+    if (part == "%u" || part == "%f") {
+      if (!args.empty()) argv << args.at(0);
+    } else if (part == "%U" || part == "%F") {
+      for (const auto &arg : args) {
+        argv.push_back(arg);
+      }
+    } else {
+      argv << part;
+    }
+  }
+
+  QProcess process;
+
+  qDebug() << "launch" << program << argv;
+
+  if (!process.startDetached(program, argv)) {
+    qDebug() << xdgApp.name() << "failed to launch";
+    return false;
+  }
+
+  return true;
+}
+
+AppPtr XdgAppDatabase::findByClass(const QString &name) const {
+  QString normalizedWmClass = name.toLower();
+
+  for (const auto &app : apps) {
+    if (app->name().toLower() == normalizedWmClass) return app;
+  }
+
+  return nullptr;
+}
+
+std::vector<AppPtr> XdgAppDatabase::list() const { return {apps.begin(), apps.end()}; }
+
+bool XdgAppDatabase::addDesktopFile(const QString &path) {
+  QFileInfo info(path);
+  XdgDesktopEntry ent(path);
+
+  auto entry = std::make_shared<XdgApplication>(info, ent);
+
+  for (const auto &mimeName : ent.mimeType) {
+    mimeToApps[mimeName].insert(entry->id());
+    appToMimes[entry->id()].insert(mimeName);
+  }
+
+  apps.push_back(entry);
+  qDebug() << "insert for app id " << entry->id();
+  appMap.insert({entry->id(), entry});
+
+  /*
+  for (const auto &action : ent.actions) {
+    auto ac = std::make_shared<DesktopAction>(action, entry);
+
+    entry->actions.push_back(ac);
+    appMap.insert({ac->id, ac});
+  }
+  */
+
+  return true;
+}
+
+XdgAppDatabase::XdgAppDatabase() {
+  auto xdd = qgetenv("XDG_DATA_DIRS");
+
+  if (!xdd.isEmpty()) {
+    for (const auto &path : xdd.split(':')) {
+      paths.push_back(QString(path) + "/applications");
+    }
+  } else {
+    paths = defaultPaths;
+  }
+
+  QList<QDir> traversed;
+
+  // scan dirs
+  for (const auto &dir : paths) {
+    if (traversed.contains(dir)) continue;
+
+    traversed.push_back(dir);
+
+    if (!dir.exists()) continue;
+
+    for (const auto &entry : dir.entryList()) {
+      if (!entry.endsWith(".desktop")) continue;
+
+      QString fullpath = dir.path() + QDir::separator() + entry;
+
+      addDesktopFile(fullpath);
+    }
+  }
+
+  QString configHome = qgetenv("XDG_CONFIG_HOME");
+
+  if (configHome.isEmpty()) configHome = QDir::homePath() + QDir::separator() + ".config";
+
+  QList<QDir> mimeappDirs;
+
+  mimeappDirs.push_back(configHome);
+  mimeappDirs.push_back(QDir("/etc/xdg"));
+
+  for (const auto &dir : mimeappDirs) {
+    QString path = dir.path() + QDir::separator() + "mimeapps.list";
+    QSettings ini(path, QSettings::IniFormat);
+
+    ini.beginGroup("Default Applications");
+    for (const auto &key : ini.allKeys()) {
+      auto appId = ini.value(key).toString();
+
+      mimeToDefaultApp[key] = appId;
+    }
+    ini.endGroup();
+
+    ini.beginGroup("Added Associations");
+    for (const auto &mime : ini.childKeys()) {
+      for (const auto app : ini.value(mime).toString().split(";")) {
+        // add mime -> apps mapping
+        if (auto it = mimeToApps.find(mime); it != mimeToApps.end()) {
+          it->second.insert(app);
+        } else {
+          mimeToApps.insert({mime, {app}});
+        }
+
+        // add app -> mimes mapping
+        if (auto it = appToMimes.find(app); it != appToMimes.end()) {
+          it->second.insert(mime);
+        } else {
+          appToMimes.insert({app, {mime}});
+        }
+      }
+    }
+    ini.endGroup();
+
+    ini.beginGroup("Removed Associations");
+    for (const auto &mime : ini.childKeys()) {
+      for (const auto app : ini.value(mime).toString().split(";")) {
+        // add mime -> apps mapping
+        if (auto it = mimeToApps.find(mime); it != mimeToApps.end()) { mimeToApps.erase(it); }
+
+        // add app -> mimes mapping
+        if (auto it = appToMimes.find(app); it != appToMimes.end()) { appToMimes.erase(it); }
+      }
+    }
+    ini.endGroup();
+  }
+}

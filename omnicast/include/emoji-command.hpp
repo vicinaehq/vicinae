@@ -1,5 +1,5 @@
 #pragma once
-#include "app-database.hpp"
+#include "app/app-database.hpp"
 #include "app.hpp"
 #include "emoji-database.hpp"
 #include "ui/omni-grid-view.hpp"
@@ -49,12 +49,12 @@ public:
 };
 
 class EmojiView : public OmniGridView {
-  Service<AppDatabase> appDb;
+  Service<AbstractAppDatabase> appDb;
   EmojiDatabase emojiDb;
   std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> newItems;
 
 public:
-  EmojiView(AppWindow &app) : OmniGridView(app), appDb(service<AppDatabase>()) {}
+  EmojiView(AppWindow &app) : OmniGridView(app), appDb(service<AbstractAppDatabase>()) {}
 
   void onSearchChanged(const QString &s) override {
     newItems.clear();

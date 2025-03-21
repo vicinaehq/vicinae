@@ -1,6 +1,5 @@
 #pragma once
-
-#include "app-database.hpp"
+#include "app/app-database.hpp"
 #include "wm/hyprland/hyprland.hpp"
 #include "app.hpp"
 #include "calculator-history-command.hpp"
@@ -178,43 +177,43 @@ public:
 
 class RootView : public DeclarativeOmniListView {
   AppWindow &app;
-  Service<AppDatabase> appDb;
+  Service<AbstractAppDatabase> appDb;
   Service<ExtensionManager> extensionManager;
   Service<QuicklistDatabase> quicklinkDb;
   Service<CommandDatabase> commandDb;
 
   class AppListItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
-    std::shared_ptr<DesktopEntry> app;
-    Service<AppDatabase> appDb;
+    std::shared_ptr<Application> app;
+    Service<AbstractAppDatabase> appDb;
 
     QList<AbstractAction *> generateActions() const override {
       QList<AbstractAction *> actions;
-      auto fileBrowser = appDb.defaultFileBrowser();
-      auto textEditor = appDb.defaultTextEditor();
+      auto fileBrowser = appDb.fileBrowser();
+      auto textEditor = appDb.textEditor();
 
       actions << new OpenAppAction(app, "Open Application", {});
 
-      for (const auto &desktopAction : app->actions) {
-        actions << new OpenAppAction(desktopAction, desktopAction->name, {});
+      for (const auto &desktopAction : app->actions()) {
+        actions << new OpenAppAction(desktopAction, desktopAction->name(), {});
       }
 
-      if (fileBrowser) { actions << new OpenAppAction(fileBrowser, "Open in folder", {app->path}); }
+      if (fileBrowser) { actions << new OpenAppAction(fileBrowser, "Open in folder", {app->id()}); }
 
-      if (textEditor) { actions << new OpenAppAction(textEditor, "Open desktop file", {app->path}); }
+      if (textEditor) { actions << new OpenAppAction(textEditor, "Open desktop file", {app->id()}); }
 
-      actions << new CopyTextAction("Copy file path", app->path);
+      actions << new CopyTextAction("Copy file path", app->id());
 
       return actions;
     }
 
     ItemData data() const override {
-      return {.iconUrl = app->iconUrl(), .name = app->name, .accessories = {{.text = "Application"}}};
+      return {.iconUrl = app->iconUrl(), .name = app->name(), .accessories = {{.text = "Application"}}};
     }
 
-    QString id() const override { return app->id; }
+    QString id() const override { return app->id(); }
 
   public:
-    AppListItem(const std::shared_ptr<DesktopEntry> &app, Service<AppDatabase> appDb)
+    AppListItem(const std::shared_ptr<Application> &app, Service<AbstractAppDatabase> appDb)
         : app(app), appDb(appDb) {}
     ~AppListItem() {}
   };
@@ -306,7 +305,7 @@ public:
 
     list.push_back(std::make_unique<OmniList::VirtualSection>("Apps"));
 
-    for (auto &app : appDb.apps) {
+    for (auto &app : appDb.list()) {
       if (!app->displayable()) continue;
 
       list.push_back(std::make_unique<AppListItem>(app, appDb));
@@ -321,8 +320,6 @@ public:
     if (s.isEmpty()) return generateBaseSearch();
 
     auto start = std::chrono::high_resolution_clock::now();
-
-    auto fileBrowser = appDb.defaultFileBrowser();
 
     if (s.size() > 1) {
       list.push_back(std::make_unique<OmniList::VirtualSection>("Calculator"));
@@ -356,10 +353,10 @@ public:
     }
 
     if (!s.isEmpty()) {
-      for (auto &app : appDb.apps) {
+      for (auto &app : appDb.list()) {
         if (!app->displayable()) continue;
 
-        for (const auto &word : app->name.split(" ")) {
+        for (const auto &word : app->name().split(" ")) {
           if (!word.startsWith(s, Qt::CaseInsensitive)) continue;
 
           list.push_back(std::make_unique<AppListItem>(app, appDb));
@@ -389,7 +386,7 @@ public:
     }
 
     if (s.isEmpty()) {
-      for (const auto &app : appDb.apps) {
+      for (const auto &app : appDb.list()) {
         if (app->displayable()) { list.push_back(std::make_unique<AppListItem>(app, appDb)); }
       }
     }
@@ -434,10 +431,9 @@ public:
   }
 
   RootView(AppWindow &app)
-      : DeclarativeOmniListView(app), app(app), appDb(service<AppDatabase>()),
+      : DeclarativeOmniListView(app), app(app), appDb(service<AbstractAppDatabase>()),
         extensionManager(service<ExtensionManager>()), quicklinkDb(service<QuicklistDatabase>()),
         commandDb(service<CommandDatabase>()) {}
-
   ~RootView() {}
 };
 
