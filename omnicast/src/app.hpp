@@ -30,16 +30,14 @@
 #include <qscreen_platform.h>
 #include <stack>
 
-#include "ui/action_popover.hpp"
+#include "ui/action-pannel/action-pannel-widget.hpp"
 #include "ui/calculator-list-item-widget.hpp"
 #include "ui/status_bar.hpp"
 #include "ui/top_bar.hpp"
-#include "wayland-wlr-data-control-client-protocol.h"
 
 #include <qmainwindow.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
-#include <stdexcept>
 #include <wayland-client-protocol.h>
 
 template <class T> using Service = T &;
@@ -68,8 +66,8 @@ struct ViewSnapshot {
   View *view;
   QString query;
   QString placeholderText;
-  QList<AbstractAction *> actions;
   std::optional<CompleterData> completer;
+  ActionPannelWidget::ViewStack actionViewStack;
 };
 
 struct CommandSnapshot {
@@ -103,7 +101,7 @@ class AppWindow : public QMainWindow, public ICommandHandler {
 
   void recomputeWallpaper() {
     QPixmap canva(size());
-    QPixmap pix("/home/aurelle/Downloads/magic-deer.png");
+    QPixmap pix("/home/aurelle/Downloads/sequoia.jpg");
     QPainter cp(&canva);
 
     cp.drawPixmap(0, 0, pix.scaled(size(), Qt::KeepAspectRatioByExpanding));
@@ -139,8 +137,6 @@ class AppWindow : public QMainWindow, public ICommandHandler {
   std::variant<CommandResponse, CommandError> handleCommand(const CommandMessage &message) override;
 
 public:
-  std::stack<QString> queryStack;
-
   std::stack<ViewSnapshot> navigationStack;
   QStack<CommandSnapshot> commandStack;
 
@@ -165,7 +161,7 @@ public:
 
   TopBar *topBar = nullptr;
   StatusBar *statusBar = nullptr;
-  ActionPopover *actionPopover = nullptr;
+  ActionPannelWidget *actionPannel = nullptr;
   QVBoxLayout *layout = nullptr;
   QWidget *defaultWidget = new QWidget();
   ViewDisplayer *viewDisplayer;

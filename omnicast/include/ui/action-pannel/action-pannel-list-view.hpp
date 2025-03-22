@@ -1,0 +1,19 @@
+#pragma once
+#include "ui/action-pannel/action-pannel-view.hpp"
+#include "ui/action-pannel/action-item.hpp"
+#include "ui/action-pannel/action.hpp"
+#include "ui/omni-list.hpp"
+
+class ActionPannelListView : public ActionPannelView {
+  OmniList *_list;
+  std::vector<AbstractAction *> _actions;
+
+  bool eventFilter(QObject *sender, QEvent *event) override;
+
+public:
+  ActionPannelListView();
+
+  std::vector<AbstractAction *> actions() const override;
+  void onItemActivated(const OmniList::AbstractVirtualItem &item);
+  void renderActionPannelModel(const std::vector<ActionItem> &actions);
+};

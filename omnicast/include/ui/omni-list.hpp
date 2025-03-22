@@ -156,17 +156,11 @@ private:
 
   void clearVisibleWidgets();
 
-  bool selectUp();
-  bool selectDown();
-  bool selectLeft();
-  bool selectRight();
-
   OmniListItemWidgetWrapper *takeFromPool(size_t type);
   void moveToPool(size_t type, OmniListItemWidgetWrapper *wrapper);
 
   bool isSelectionValid() const { return _selected >= 0 && _selected < _items.size(); }
 
-  void activateCurrentSelection() const;
   void setSelectedIndex(int index, ScrollBehaviour scrollBehaviour = ScrollRelative);
   int previousRowIndex(int index);
   int nextRowIndex(int index);
@@ -182,6 +176,12 @@ protected:
 public:
   OmniList();
   ~OmniList() { qDebug() << "destroy omnilist"; }
+
+  bool selectUp();
+  bool selectDown();
+  bool selectLeft();
+  bool selectRight();
+  void activateCurrentSelection() const;
 
   void updateFromList(std::vector<std::unique_ptr<AbstractVirtualItem>> &nextList,
                       SelectionPolicy selectionPolicy = SelectionPolicy::KeepSelection);

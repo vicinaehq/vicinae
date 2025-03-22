@@ -80,6 +80,25 @@ qt_add_executable(${TARGET}
 
 	# end app-database
 
+	# begin action-pannel-widget
+	include/ui/action-pannel/action.hpp
+	include/ui/action-pannel/action-pannel-view.hpp
+
+	include/ui/action-pannel/action-pannel-widget.hpp
+	src/ui/action-pannel/action-pannel-widget.cpp
+
+	include/ui/action-pannel/action-pannel-list-view.hpp
+	src/ui/action-pannel/action-pannel-list-view.cpp
+
+	include/ui/action-pannel/action-list-widget.hpp
+	src/ui/action-pannel/action-list-widget.cpp
+
+	include/ui/action-pannel/action-list-item.hpp
+	src/ui/action-pannel/action-list-item.cpp
+
+
+	# end action-pannel-widget
+
 	include/clipboard-history-command.hpp
 
 	include/ui/omni-painter.hpp
@@ -247,8 +266,8 @@ qt_add_executable(${TARGET}
 	src/ui/color_circle.cpp
 	src/ui/toast.hpp
 	src/ui/toast.cpp
-	src/ui/action_popover.hpp
-	src/ui/action_popover.cpp
+	#src/ui/action_popover.hpp
+	#src/ui/action_popover.cpp
 	src/extension_manager.hpp
 )
 

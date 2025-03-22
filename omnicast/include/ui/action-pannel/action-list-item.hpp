@@ -1,0 +1,19 @@
+#pragma once
+#include "ui/omni-list.hpp"
+#include "ui/action-pannel/action.hpp"
+#include "ui/action-pannel/action-list-widget.hpp"
+
+class ActionListItem : public OmniList::AbstractVirtualItem {
+public:
+  AbstractAction *action;
+
+  QString id() const override;
+  OmniListItemWidget *createWidget() const override;
+  int calculateHeight(int width) const override;
+  bool recyclable() const override;
+  void setup(ActionListWidget *widget) const;
+  void recycle(QWidget *base) const override;
+
+public:
+  ActionListItem(AbstractAction *action);
+};

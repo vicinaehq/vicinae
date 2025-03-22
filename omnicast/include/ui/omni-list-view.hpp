@@ -1,6 +1,7 @@
 #pragma once
 #include "extend/metadata-model.hpp"
 #include "theme.hpp"
+#include "ui/action_popover.hpp"
 #include "ui/horizontal-metadata.hpp"
 #include "ui/omni-list.hpp"
 #include "view.hpp"
@@ -123,6 +124,7 @@ public:
   class IActionnable {
   public:
     virtual QList<AbstractAction *> generateActions() const { return {}; };
+    virtual std::vector<ActionItem> generateActionPannel() const { return {}; };
     virtual QWidget *generateDetail() const { return nullptr; }
     virtual std::unique_ptr<CompleterData> createCompleter() const { return nullptr; }
   };
@@ -151,11 +153,19 @@ protected:
         app.topBar->destroyQuicklinkCompleter();
       }
 
-      auto actions = nextItem->generateActions();
+      auto pannel = nextItem->generateActionPannel();
 
-      if (!actions.isEmpty()) { actions.at(0)->setShortcut({.key = "return"}); }
+      if (!pannel.empty()) {
+        setActionPannel(pannel);
 
-      setSignalActions(actions);
+        // if (auto first = app.actionPannel->actionnable(0)) { first->setShortcut({.key = "return"}); }
+      } else {
+        auto actions = nextItem->generateActions();
+
+        if (!actions.isEmpty()) { actions.at(0)->setShortcut({.key = "return"}); }
+
+        setSignalActions(actions);
+      }
     } else {
       split->clearDetail();
       app.topBar->destroyQuicklinkCompleter();

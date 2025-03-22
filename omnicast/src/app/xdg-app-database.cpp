@@ -8,7 +8,7 @@ static const std::vector<QDir> defaultPaths = {QDir("/usr/share/applications"),
                                                QDir("/usr/local/share/applications"),
                                                QDir::homePath() + "/.local/share/applications"};
 
-std::shared_ptr<XdgApplication> XdgAppDatabase::defaultForMime(const QString &mime) const {
+std::shared_ptr<Application> XdgAppDatabase::defaultForMime(const QString &mime) const {
   if (auto it = mimeToDefaultApp.find(mime); it != mimeToDefaultApp.end()) {
     qDebug() << "find default app for " << mime << it->second;
     if (auto appIt = appMap.find(it->second); appIt != appMap.end()) {
@@ -55,9 +55,8 @@ XdgAppDatabase::AppPtr XdgAppDatabase::findBestOpener(const QString &mimeName) c
 }
 
 AppPtr XdgAppDatabase::findById(const QString &id) const {
-  for (const auto &app : apps) {
-    if (app->id() == id || app->id() == id + ".desktop") return app;
-  }
+  if (auto it = appMap.find(id); it != appMap.end()) { return it->second; }
+  if (auto it = appMap.find(id + ".desktop"); it != appMap.end()) { return it->second; }
 
   return nullptr;
 }
@@ -95,10 +94,10 @@ std::vector<AppPtr> XdgAppDatabase::findOpeners(const QString &mimeName) const {
 }
 
 bool XdgAppDatabase::launch(const Application &app, const std::vector<QString> &args) const {
-  auto xdgApp = static_cast<const XdgApplication &>(app);
-  auto exec = xdgApp.xdgData().exec;
+  auto &xdgApp = static_cast<const XdgApplicationBase &>(app);
+  auto exec = xdgApp.exec();
 
-  if (exec.isEmpty()) { return false; }
+  if (exec.empty()) { return false; }
 
   QString program;
   QStringList argv;
@@ -112,6 +111,8 @@ bool XdgAppDatabase::launch(const Application &app, const std::vector<QString> &
     program = exec.at(0);
     offset = 1;
   }
+
+  qDebug() << "args" << args.size();
 
   for (size_t i = offset; i != exec.size(); ++i) {
     auto &part = exec.at(i);
@@ -163,17 +164,12 @@ bool XdgAppDatabase::addDesktopFile(const QString &path) {
   }
 
   apps.push_back(entry);
-  qDebug() << "insert for app id " << entry->id();
   appMap.insert({entry->id(), entry});
 
-  /*
-  for (const auto &action : ent.actions) {
-    auto ac = std::make_shared<DesktopAction>(action, entry);
-
-    entry->actions.push_back(ac);
-    appMap.insert({ac->id, ac});
+  for (const auto &action : entry->actions()) {
+    qDebug() << "insert action id" << action->id();
+    appMap.insert({action->id(), action});
   }
-  */
 
   return true;
 }

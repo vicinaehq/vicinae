@@ -156,6 +156,15 @@ public:
     return {open, edit, duplicate, remove};
   }
 
+  std::vector<ActionItem> generateActionPannel() const override {
+    auto open = new OpenCompletedQuicklinkAction(link);
+    auto edit = new EditQuicklinkAction(link);
+    auto duplicate = new DuplicateQuicklinkAction(link);
+    auto remove = new RemoveQuicklinkAction(link);
+
+    return {ActionLabel("Quicklink"), open, edit, duplicate, remove};
+  }
+
   OmniIconUrl iconUrl() const {
     OmniIconUrl url(link->iconName);
 

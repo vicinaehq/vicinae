@@ -1,0 +1,33 @@
+#include "ui/action-pannel/action-list-item.hpp"
+
+void ActionListItem::setup(ActionListWidget *widget) const {
+  widget->setTitle(action->title).setIconUrl(action->iconUrl);
+
+  if (auto shortcut = action->shortcut) {
+    widget->setShortcut(*shortcut);
+  } else {
+    widget->clearShortcut();
+  }
+}
+
+QString ActionListItem::id() const { return action->title + action->iconUrl.toString(); }
+
+OmniListItemWidget *ActionListItem::createWidget() const {
+  auto widget = new ActionListWidget;
+
+  setup(widget);
+
+  return widget;
+}
+
+int ActionListItem::calculateHeight(int width) const {
+  static ActionListWidget ruler;
+
+  return ruler.sizeHint().height();
+}
+
+bool ActionListItem::recyclable() const { return true; }
+
+void ActionListItem::recycle(QWidget *base) const { setup(static_cast<ActionListWidget *>(base)); }
+
+ActionListItem::ActionListItem(AbstractAction *action) : action(action) {}

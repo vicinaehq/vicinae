@@ -3,7 +3,6 @@
 #include "clipboard/clipboard-service.hpp"
 #include "command-database.hpp"
 #include "command-server.hpp"
-#include "wm/hyprland/hyprland.hpp"
 #include <QGraphicsBlurEffect>
 #include "clipboard/clipboard-server-factory.hpp"
 #include "command.hpp"
@@ -21,7 +20,6 @@
 #include <QMainWindow>
 #include <QThread>
 #include "clipboard/clipboard-server.hpp"
-#include "wm/window-manager.hpp"
 #include <QVBoxLayout>
 #include <memory>
 #include <qboxlayout.h>
@@ -58,10 +56,10 @@ bool AppWindow::event(QEvent *event) {
       return true;
     }
 
-    if (actionPopover->findBoundAction(keyEvent)) return true;
+    if (actionPannel->findBoundAction(keyEvent)) return true;
 
     if (keyEvent->modifiers().testFlag(Qt::ControlModifier) && key == Qt::Key_B) {
-      actionPopover->showActions();
+      actionPannel->showActions();
 
       return true;
     }
@@ -108,12 +106,12 @@ void AppWindow::popCurrentView() {
 
   previous.view->deleteLater();
 
-  actionPopover->setSignalActions(next.actions);
+  actionPannel->restoreViewStack(next.actionViewStack);
 
-  if (next.actions.isEmpty()) {
-    statusBar->clearAction();
+  if (auto action = actionPannel->primaryAction()) {
+    statusBar->setAction(*action);
   } else {
-    statusBar->setAction(*next.actions.at(0));
+    statusBar->clearAction();
   }
 
   topBar->destroyQuicklinkCompleter();
@@ -205,7 +203,7 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
 
     cur.query = topBar->input->text();
     cur.placeholderText = topBar->input->placeholderText();
-    cur.actions = actionPopover->signalActions;
+    cur.actionViewStack = actionPannel->takeViewStack();
     cur.completer.reset();
 
     if (topBar->quickInput && topBar->completerData) {
@@ -225,7 +223,7 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
 
   connectView(*view);
 
-  actionPopover->setSignalActions({});
+  actionPannel->setSignalActions({});
   statusBar->clearAction();
   currentCommand.viewStack.push({.view = view});
   navigationStack.push({.view = view});
@@ -261,7 +259,7 @@ void AppWindow::paintEvent(QPaintEvent *event) {
   QColor finalBgColor = theme.colors.mainBackground;
   QPainter painter(this);
 
-  finalBgColor.setAlphaF(0.98);
+  finalBgColor.setAlphaF(0.95);
 
   painter.setRenderHint(QPainter::Antialiasing, true);
 
@@ -335,15 +333,13 @@ std::variant<CommandResponse, CommandError> AppWindow::handleCommand(const Comma
 }
 
 void AppWindow::selectPrimaryAction() {
-  if (actionPopover->signalActions.isEmpty()) return;
+  if (auto action = actionPannel->primaryAction()) { executeAction(action); }
 
-  executeAction(actionPopover->signalActions.at(0));
+  // if (auto first = actionPannel->actionnable(0)) { executeAction(first); }
 }
 
 void AppWindow::selectSecondaryAction() {
-  if (actionPopover->signalActions.size() > 1) return;
-
-  executeAction(actionPopover->signalActions.at(1));
+  // if (auto second = actionPannel->actionnable(1)) { executeAction(second); }
 }
 
 void AppWindow::executeAction(AbstractAction *action) {
@@ -366,7 +362,7 @@ void AppWindow::closeWindow(bool withPopToRoot) {
 
 AppWindow::AppWindow(QWidget *parent)
     : QMainWindow(parent), topBar(new TopBar()), viewDisplayer(new ViewDisplayer), statusBar(new StatusBar()),
-      actionPopover(new ActionPopover(this)) {
+      actionPannel(new ActionPannelWidget(this)) {
   setWindowFlags(Qt::FramelessWindowHint);
   setAttribute(Qt::WA_TranslucentBackground, true);
 
@@ -403,12 +399,12 @@ AppWindow::AppWindow(QWidget *parent)
   _commandServer->setHandler(this);
 
   connect(topBar->input, &SearchBar::pop, this, &AppWindow::popCurrentView);
-  connect(actionPopover, &ActionPopover::actionExecuted, this, &AppWindow::executeAction);
-  connect(statusBar, &StatusBar::actionButtonClicked, this, [this]() { actionPopover->showActions(); });
+  connect(actionPannel, &ActionPannelWidget::actionExecuted, this, &AppWindow::executeAction);
+  connect(statusBar, &StatusBar::actionButtonClicked, this, [this]() { actionPannel->showActions(); });
   connect(statusBar, &StatusBar::currentActionButtonClicked, this, [this]() { selectPrimaryAction(); });
-  connect(actionPopover, &ActionPopover::closed, this,
+  connect(actionPannel, &ActionPannelWidget::closed, this,
           [this]() { statusBar->setActionButtonHighlight(false); });
-  connect(actionPopover, &ActionPopover::opened, this,
+  connect(actionPannel, &ActionPannelWidget::opened, this,
           [this]() { statusBar->setActionButtonHighlight(true); });
 
   ImageFetcher::instance();

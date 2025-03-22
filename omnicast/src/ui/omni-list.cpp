@@ -396,13 +396,9 @@ bool OmniList::selectDown() {
 
   int endNext = next;
 
-  qDebug() << "next" << next;
-
   while (endNext < _virtual_items.size() && _virtual_items[endNext].y == _virtual_items[next].y) {
     ++endNext;
   }
-
-  qDebug() << "endNext" << endNext - 1;
 
   for (int i = endNext - 1; i >= next; --i) {
     auto &vItem = _virtual_items[i];

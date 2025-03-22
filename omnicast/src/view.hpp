@@ -58,10 +58,20 @@ public:
   QString searchText() const { return app.topBar->input->text(); }
 
   void setSignalActions(const QList<AbstractAction *> &actions) {
-    app.actionPopover->setSignalActions(actions);
+    app.actionPannel->setSignalActions(actions);
 
     if (!actions.isEmpty()) {
       app.statusBar->setAction(*actions.at(0));
+    } else {
+      app.statusBar->clearAction();
+    }
+  }
+
+  void setActionPannel(const std::vector<ActionItem> &actions) {
+    app.actionPannel->setActions(actions);
+
+    if (auto action = app.actionPannel->primaryAction()) {
+      app.statusBar->setAction(*action);
     } else {
       app.statusBar->clearAction();
     }

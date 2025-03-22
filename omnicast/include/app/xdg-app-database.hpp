@@ -8,7 +8,12 @@
 #include <qprocess.h>
 #include <set>
 
-class XdgApplicationAction : public Application {
+class XdgApplicationBase : public Application {
+public:
+  virtual std::vector<QString> exec() const = 0;
+};
+
+class XdgApplicationAction : public XdgApplicationBase {
   QString _id;
   XdgDesktopEntry::Action _data;
   XdgDesktopEntry _parentData;
@@ -17,6 +22,7 @@ class XdgApplicationAction : public Application {
     return _data.icon.isEmpty() ? SystemOmniIconUrl(_parentData.icon) : SystemOmniIconUrl(_data.icon);
   }
 
+  std::vector<QString> exec() const override { return {_data.exec.begin(), _data.exec.end()}; }
   bool displayable() const override { return !_parentData.noDisplay; }
   bool isTerminalApp() const override { return _parentData.terminal; }
   QString fullyQualifiedName() const override { return _parentData.name + ": " + _data.name; }
@@ -29,7 +35,7 @@ public:
       : _id(parentId + "." + action.id), _data(action), _parentData(parentData) {}
 };
 
-class XdgApplication : public Application {
+class XdgApplication : public XdgApplicationBase {
   QString _path;
   QString _id;
   XdgDesktopEntry _data;
@@ -53,20 +59,22 @@ public:
     return list;
   }
 
+  std::vector<QString> exec() const override { return {_data.exec.begin(), _data.exec.end()}; }
+
   XdgApplication(const QFileInfo &info, const XdgDesktopEntry &data)
-      : Application(), _path(info.filePath()), _id(info.fileName()), _data(data) {}
+      : _path(info.filePath()), _id(info.fileName()), _data(data) {}
 };
 
 class XdgAppDatabase : public AbstractAppDatabase {
   std::vector<QDir> paths;
-  std::unordered_map<QString, std::shared_ptr<XdgApplication>> appMap;
+  std::unordered_map<QString, std::shared_ptr<Application>> appMap;
   std::unordered_map<QString, std::set<QString>> mimeToApps;
   std::unordered_map<QString, std::set<QString>> appToMimes;
   std::unordered_map<QString, QString> mimeToDefaultApp;
   QMimeDatabase mimeDb;
   std::vector<std::shared_ptr<XdgApplication>> apps;
 
-  std::shared_ptr<XdgApplication> defaultForMime(const QString &mime) const;
+  std::shared_ptr<Application> defaultForMime(const QString &mime) const;
   bool addDesktopFile(const QString &path);
 
 public:

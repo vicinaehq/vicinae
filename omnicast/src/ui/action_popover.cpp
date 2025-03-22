@@ -15,27 +15,16 @@
 #include <qlogging.h>
 #include <qnamespace.h>
 #include <qpainter.h>
+#include <qstackedlayout.h>
 #include <qstyleoption.h>
 #include <qwidget.h>
+#include <toml++/impl/key.hpp>
 
 void ActionPopover::toggleActions() {
   if (isVisible())
     close();
   else
     showActions();
-}
-
-void ActionPopover::dispatchModel(const ActionPannelModel &model) {
-  menuStack.clear();
-
-  menuStack.push_back(model.children);
-  // renderItems(model.children);
-}
-
-QList<ActionPannelItem> ActionPopover::currentActions() const {
-  if (menuStack.isEmpty()) return {};
-
-  return menuStack.top();
 }
 
 void ActionPopover::paintEvent(QPaintEvent *event) {
@@ -63,14 +52,7 @@ void ActionPopover::paintEvent(QPaintEvent *event) {
   painter.drawPath(path);
 }
 
-void ActionPopover::itemActivated(const OmniList::AbstractVirtualItem &item) {
-  auto actionItem = static_cast<const ActionListItem &>(item);
-
-  emit actionExecuted(actionItem.action);
-  close();
-}
-
-ActionPopover::ActionPopover(QWidget *parent) : QWidget(parent), list(new OmniList) {
+ActionPopover::ActionPopover(QWidget *parent) : QWidget(parent), _viewLayout(new QStackedLayout) {
   setWindowFlags(Qt::FramelessWindowHint | Qt::Popup);
   setAttribute(Qt::WA_TranslucentBackground);
 
@@ -81,26 +63,23 @@ ActionPopover::ActionPopover(QWidget *parent) : QWidget(parent), list(new OmniLi
   input = new QLineEdit();
   input->installEventFilter(this);
 
-  // connect(input, &QLineEdit::textChanged, this, &ActionPopover::filterActions);
+  connect(input, &QLineEdit::textChanged, this, &ActionPopover::textChanged);
 
-  auto listContainer = new QWidget;
-  auto listLayout = new QVBoxLayout;
+  auto viewContainer = new QWidget;
 
-  listLayout->setContentsMargins(0, 0, 0, 0);
-  listLayout->addWidget(list);
-  listContainer->setLayout(listLayout);
+  viewContainer->setLayout(_viewLayout);
 
-  layout->addWidget(listContainer);
+  layout->addWidget(viewContainer);
 
   input->setContentsMargins(15, 15, 15, 15);
 
   layout->setSpacing(0);
 
-  layout->addWidget(listContainer);
+  layout->addWidget(viewContainer);
   layout->addWidget(new HDivider);
   layout->addWidget(input);
 
-  connect(list, &OmniList::itemActivated, this, &ActionPopover::itemActivated);
+  // connect(list, &OmniList::itemActivated, this, &ActionPopover::itemActivated);
 
   input->setPlaceholderText("Search actions");
 
@@ -110,17 +89,33 @@ ActionPopover::ActionPopover(QWidget *parent) : QWidget(parent), list(new OmniLi
 bool ActionPopover::eventFilter(QObject *obj, QEvent *event) {
   if (obj == input && event->type() == QEvent::KeyPress) {
     QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
-    QApplication::sendEvent(list, keyEvent);
+
+    if (keyEvent->key() == Qt::Key_Escape) {
+      if (_viewStack.size() > 1) {
+        popCurrentView();
+      } else {
+        close();
+      }
+
+      return true;
+    }
+
+    if (!_viewStack.empty()) {
+      switch (keyEvent->key()) {
+      case Qt::Key_Up:
+      case Qt::Key_Down:
+      case Qt::Key_Left:
+      case Qt::Key_Right:
+      case Qt::Key_Return:
+        QApplication::sendEvent(_viewStack.top().view, event);
+        return true;
+      }
+    }
 
     return false;
   }
 
   return false;
-}
-
-void ActionPopover::setActions(const QList<ActionPannelItem> &actions) {
-  menuStack.clear();
-  menuStack.push(actions);
 }
 
 void ActionPopover::showActions() {
@@ -134,7 +129,6 @@ void ActionPopover::showActions() {
     return;
   }
 
-  renderSignalItems(signalActions);
   adjustSize();
 
   auto parentGeo = window->geometry();
