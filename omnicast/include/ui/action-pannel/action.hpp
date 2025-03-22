@@ -18,9 +18,13 @@ public:
   void setShortcut(const KeyboardShortcutModel &shortcut) { this->shortcut = shortcut; }
   void setExecutionCallback(const std::function<void(void)> &cb) { _execCallback = cb; }
 
+  virtual QString id() const { return title + iconUrl.toString(); }
+
   std::function<void(void)> executionCallback() const { return _execCallback; }
 
   AbstractAction(const QString &title, const OmniIconUrl &icon) : title(title), iconUrl(icon) {}
+
+  virtual void executePrelude(AppWindow &app);
   virtual void execute(AppWindow &app) = 0;
 
 signals:

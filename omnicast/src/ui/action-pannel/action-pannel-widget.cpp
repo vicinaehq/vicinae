@@ -1,4 +1,5 @@
 #include "ui/action-pannel/action-pannel-widget.hpp"
+#include "common.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/action-pannel/static-action-pannel-list-view.hpp"
 #include "ui/popover.hpp"
@@ -155,13 +156,18 @@ void ActionPannelWidget::disconnectView(ActionPannelView *view) {
 void ActionPannelWidget::pushView(ActionPannelView *view) {
   if (!_viewStack.empty()) { disconnectView(top()->view); }
 
+  qDebug() << "push action pannel view";
+
   connectView(view);
 
   _viewLayout->addWidget(view);
+  _viewLayout->setCurrentWidget(view);
   _viewStack.push_back({
       .text = _input->text(),
       .view = view,
   });
+  _input->clear();
+  emit _input->textEdited("");
 }
 
 AbstractAction *ActionPannelWidget::primaryAction() const {
@@ -180,9 +186,14 @@ ActionPannelWidget::ActionPannelWidget(QWidget *parent)
 
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(_viewLayout);
+  layout->addWidget(new HDivider);
   layout->addWidget(_input);
   _input->installEventFilter(this);
+  _viewLayout->setContentsMargins(0, 0, 0, 0);
+
+  _input->setContentsMargins(10, 10, 10, 10);
+  _input->setPlaceholderText("Filter actions");
 
   setLayout(layout);
-  connect(_input, &QLineEdit::textChanged, this, &ActionPannelWidget::textChanged);
+  connect(_input, &QLineEdit::textEdited, this, &ActionPannelWidget::textChanged);
 }

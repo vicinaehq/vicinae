@@ -1,5 +1,6 @@
 #pragma once
 #include "app/app-database.hpp"
+#include "ui/action-pannel/open-with-action.hpp"
 #include "wm/hyprland/hyprland.hpp"
 #include "app.hpp"
 #include "calculator-history-command.hpp"
@@ -141,6 +142,7 @@ static BuiltinCommand calculatorHistoryCommand{
 class QuicklinkRootListItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
 public:
   std::shared_ptr<Quicklink> link;
+  Service<AbstractAppDatabase> appDb;
 
   std::unique_ptr<CompleterData> createCompleter() const override {
     return std::make_unique<CompleterData>(
@@ -160,9 +162,10 @@ public:
     auto open = new OpenCompletedQuicklinkAction(link);
     auto edit = new EditQuicklinkAction(link);
     auto duplicate = new DuplicateQuicklinkAction(link);
+    auto openWith = new OpenWithAction({}, appDb);
     auto remove = new RemoveQuicklinkAction(link);
 
-    return {ActionLabel("Quicklink"), open, edit, duplicate, remove};
+    return {ActionLabel("Quicklink"), open, edit, duplicate, remove, openWith};
   }
 
   OmniIconUrl iconUrl() const {
@@ -180,7 +183,8 @@ public:
   QString id() const override { return QString("link-%1").arg(link->id); }
 
 public:
-  QuicklinkRootListItem(const std::shared_ptr<Quicklink> &link) : link(link) {}
+  QuicklinkRootListItem(Service<AbstractAppDatabase> appDb, const std::shared_ptr<Quicklink> &link)
+      : appDb(appDb), link(link) {}
   ~QuicklinkRootListItem() {}
 };
 
@@ -309,7 +313,7 @@ public:
     }
 
     for (const auto &link : quicklinkDb.list()) {
-      list.push_back(std::make_unique<QuicklinkRootListItem>(link));
+      list.push_back(std::make_unique<QuicklinkRootListItem>(appDb, link));
     }
 
     list.push_back(std::make_unique<OmniList::VirtualSection>("Apps"));
@@ -355,7 +359,7 @@ public:
       for (const auto &link : quicklinkDb.list()) {
         if (!link->name.startsWith(s, Qt::CaseInsensitive)) continue;
 
-        auto quicklink = std::make_unique<QuicklinkRootListItem>(link);
+        auto quicklink = std::make_unique<QuicklinkRootListItem>(appDb, link);
 
         list.push_back(std::move(quicklink));
       }

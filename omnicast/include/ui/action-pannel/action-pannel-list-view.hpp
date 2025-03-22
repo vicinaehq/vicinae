@@ -5,6 +5,7 @@
 #include "ui/omni-list.hpp"
 
 class ActionPannelListView : public ActionPannelView {
+protected:
   OmniList *_list;
   std::vector<AbstractAction *> _actions;
 

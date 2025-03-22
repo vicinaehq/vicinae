@@ -5,4 +5,4 @@
 class AbstractAction;
 class AbstractActionSection;
 
-using ActionItem = std::variant<ActionLabel, AbstractAction *, AbstractActionSection *>;
+using ActionItem = std::variant<ActionLabel, AbstractAction *>;

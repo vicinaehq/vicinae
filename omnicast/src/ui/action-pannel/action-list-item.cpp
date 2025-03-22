@@ -10,7 +10,7 @@ void ActionListItem::setup(ActionListWidget *widget) const {
   }
 }
 
-QString ActionListItem::id() const { return action->title + action->iconUrl.toString(); }
+QString ActionListItem::id() const { return action->id(); }
 
 OmniListItemWidget *ActionListItem::createWidget() const {
   auto widget = new ActionListWidget;

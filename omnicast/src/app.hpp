@@ -114,7 +114,7 @@ class AppWindow : public QMainWindow, public ICommandHandler {
     QPixmap result = source;
     QGraphicsBlurEffect *blur = new QGraphicsBlurEffect;
 
-    blur->setBlurRadius(10); // Adjust radius as needed
+    blur->setBlurRadius(50); // Adjust radius as needed
     blur->setBlurHints(QGraphicsBlurEffect::PerformanceHint);
 
     // Apply the blur using QGraphicsScene
@@ -194,6 +194,8 @@ struct OpenAppAction : public AbstractAction {
 
     app.closeWindow(true);
   }
+
+  QString id() const override { return application->id(); }
 
   OpenAppAction(const std::shared_ptr<Application> &app, const QString &title,
                 const std::vector<QString> args)

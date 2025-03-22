@@ -13,6 +13,7 @@
 #include "process-manager-service.hpp"
 #include "quicklink-seeder.hpp"
 #include "root-command.hpp"
+#include "ui/action-pannel/action-section.hpp"
 #include "ui/action_popover.hpp"
 #include "theme.hpp"
 #include "ui/top_bar.hpp"
@@ -247,10 +248,7 @@ void AppWindow::launchCommand(ViewCommand *cmd, const LaunchCommandOptions &opts
   if (view) { pushView(view, {.searchQuery = opts.searchQuery, .navigation = opts.navigation}); }
 }
 
-void AppWindow::resizeEvent(QResizeEvent *event) {
-  QMainWindow::resizeEvent(event);
-  recomputeWallpaper();
-}
+void AppWindow::resizeEvent(QResizeEvent *event) { QMainWindow::resizeEvent(event); }
 
 void AppWindow::paintEvent(QPaintEvent *event) {
   auto &theme = ThemeService::instance().theme();
@@ -259,7 +257,7 @@ void AppWindow::paintEvent(QPaintEvent *event) {
   QColor finalBgColor = theme.colors.mainBackground;
   QPainter painter(this);
 
-  finalBgColor.setAlphaF(0.95);
+  finalBgColor.setAlphaF(0.98);
 
   painter.setRenderHint(QPainter::Antialiasing, true);
 
@@ -268,7 +266,6 @@ void AppWindow::paintEvent(QPaintEvent *event) {
 
   painter.setClipPath(path);
 
-  painter.drawPixmap(0, 0, _wallpaper);
   painter.fillPath(path, finalBgColor);
 
   QPen pen(theme.colors.border, borderWidth); // Border with a thickness of 2
@@ -345,7 +342,11 @@ void AppWindow::selectSecondaryAction() {
 void AppWindow::executeAction(AbstractAction *action) {
   auto executor = commandStack.top().viewStack.top().view;
 
+  action->executePrelude(*this);
   action->execute(*this);
+
+  if (auto actionSection = dynamic_cast<AbstractActionSection *>(action)) { return; }
+
   emit action->didExecute();
   executor->onActionActivated(action);
 

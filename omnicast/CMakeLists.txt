@@ -82,6 +82,11 @@ qt_add_executable(${TARGET}
 
 	# begin action-pannel-widget
 	include/ui/action-pannel/action.hpp
+	src/ui/action-pannel/action.cpp
+
+	include/ui/action-pannel/action-section.hpp
+	src/ui/action-pannel/action-section.cpp
+
 	include/ui/action-pannel/action-pannel-view.hpp
 
 	include/ui/action-pannel/action-pannel-widget.hpp
@@ -95,6 +100,9 @@ qt_add_executable(${TARGET}
 
 	include/ui/action-pannel/action-list-item.hpp
 	src/ui/action-pannel/action-list-item.cpp
+
+	include/ui/action-pannel/open-with-action.hpp
+	src/ui/action-pannel/open-with-action.cpp
 
 
 	# end action-pannel-widget

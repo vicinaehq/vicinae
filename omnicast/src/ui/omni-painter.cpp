@@ -1,4 +1,8 @@
 #include "ui/omni-painter.hpp"
+#include <qgraphicseffect.h>
+#include <qgraphicsitem.h>
+#include <qgraphicsscene.h>
+#include <qscopedpointer.h>
 
 void OmniPainter::fillRect(QRect rect, const QColor &color, int radius, float alpha) {
   setBrush(color);
@@ -53,4 +57,20 @@ void OmniPainter::fillRect(QRect rect, const ColorLike &colorLike, int radius, f
 
     fillRect(rect, color, radius, alpha);
   }
+}
+
+void OmniPainter::drawBlurredPixmap(const QPixmap &pixmap, int blurRadius) {
+  auto blur = new QGraphicsBlurEffect;
+
+  blur->setBlurRadius(blurRadius); // Adjust radius as needed
+  blur->setBlurHints(QGraphicsBlurEffect::PerformanceHint);
+
+  // Apply the blur using QGraphicsScene
+  QGraphicsScene scene;
+  QGraphicsPixmapItem item;
+  item.setPixmap(pixmap);
+  item.setGraphicsEffect(blur);
+  scene.addItem(&item);
+  scene.render(this);
+  delete blur;
 }
