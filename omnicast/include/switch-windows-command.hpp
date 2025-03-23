@@ -4,6 +4,7 @@
 #include "ui/declarative-omni-list-view.hpp"
 #include "wm/hyprland/hyprland.hpp"
 #include "wm/window-manager.hpp"
+#include "ui/action-pannel/move-to-workspace-action.hpp"
 #include <qfuturewatcher.h>
 #include <qnamespace.h>
 
@@ -21,11 +22,12 @@ public:
 class WindowItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
 protected:
   std::shared_ptr<AbstractWindowManager::Window> _window;
+  AbstractWindowManager *wm = new HyprlandWindowManager;
 
   QString id() const override { return _window->id(); }
 
   virtual QList<AbstractAction *> generateActions() const override {
-    return {new FocusWindowAction(_window)};
+    return {new FocusWindowAction(_window), new MoveToWorkspaceListAction(*wm)};
   }
 
 public:

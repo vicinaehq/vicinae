@@ -345,15 +345,16 @@ void AppWindow::selectSecondaryAction() {
 void AppWindow::executeAction(AbstractAction *action) {
   auto executor = commandStack.top().viewStack.top().view;
 
-  action->executePrelude(*this);
+  if (!action->isPushView()) { actionPannel->close(); }
+
   action->execute(*this);
 
-  if (auto actionSection = dynamic_cast<AbstractActionSection *>(action)) { return; }
+  if (!action->isPushView()) {
+    emit action->didExecute();
+    executor->onActionActivated(action);
 
-  emit action->didExecute();
-  executor->onActionActivated(action);
-
-  if (auto cb = action->executionCallback()) { cb(); }
+    if (auto cb = action->executionCallback()) { cb(); }
+  }
 }
 
 void AppWindow::closeWindow(bool withPopToRoot) {
