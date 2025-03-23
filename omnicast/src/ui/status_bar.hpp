@@ -1,4 +1,5 @@
 #pragma once
+#include "common.hpp"
 #include "extend/action-model.hpp"
 #include "extend/image-model.hpp"
 #include "omni-icon.hpp"
@@ -27,6 +28,8 @@ class StatusBar : public QWidget {
   QWidget *tmpLeft = nullptr;
   ShortcutButton *_selectedActionButton;
   ShortcutButton *_actionButton;
+  VDivider *_rightDivider;
+  QWidget *right;
 
   class CurrentCommandWidget : public QWidget {
     TextLabel *_title;

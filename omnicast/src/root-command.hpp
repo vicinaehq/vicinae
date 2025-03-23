@@ -1,5 +1,6 @@
 #pragma once
 #include "app/app-database.hpp"
+#include "ui/action-pannel/action-item.hpp"
 #include "ui/action-pannel/open-with-action.hpp"
 #include "wm/hyprland/hyprland.hpp"
 #include "app.hpp"
@@ -159,13 +160,16 @@ public:
   }
 
   std::vector<ActionItem> generateActionPannel() const override {
-    auto open = new OpenCompletedQuicklinkAction(link);
-    auto edit = new EditQuicklinkAction(link);
-    auto duplicate = new DuplicateQuicklinkAction(link);
-    auto openWith = new OpenWithAction({}, appDb);
-    auto remove = new RemoveQuicklinkAction(link);
+    std::vector<ActionItem> items;
 
-    return {ActionLabel("Quicklink"), open, edit, duplicate, remove, openWith};
+    items.push_back(ActionLabel("Quicklink"));
+    items.push_back(std::make_unique<OpenCompletedQuicklinkAction>(link));
+    items.push_back(std::make_unique<EditQuicklinkAction>(link));
+    items.push_back(std::make_unique<DuplicateQuicklinkAction>(link));
+    items.push_back(std::make_unique<OpenWithAction>(std::vector<QString>({}), appDb));
+    items.push_back(std::make_unique<RemoveQuicklinkAction>(link));
+
+    return items;
   }
 
   OmniIconUrl iconUrl() const {

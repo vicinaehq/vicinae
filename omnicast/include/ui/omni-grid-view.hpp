@@ -1,5 +1,6 @@
 #pragma once
 #include "app.hpp"
+#include "ui/action-pannel/action-item.hpp"
 #include "ui/omni-grid.hpp"
 #include "view.hpp"
 
@@ -13,6 +14,7 @@ public:
   class IActionnable {
   public:
     virtual QList<AbstractAction *> generateActions() const { return {}; }
+    virtual std::vector<ActionItem> generateActionPannel() const { return {}; }
     virtual QString navigationTitle() const { return {}; }
   };
 
@@ -33,11 +35,17 @@ public:
         setNavigationTitle(baseNavigationTitle);
       }
 
-      auto actions = nextItem->generateActions();
+      auto actionPannel = nextItem->generateActionPannel();
 
-      if (!actions.isEmpty()) { actions.at(0)->setShortcut({.key = "return"}); }
+      if (!actionPannel.empty()) {
+        setActionPannel(std::move(actionPannel));
+      } else {
 
-      setSignalActions(actions);
+        auto actions = nextItem->generateActions();
+
+        if (!actions.isEmpty()) { actions.at(0)->setShortcut({.key = "return"}); }
+        setSignalActions(actions);
+      }
 
     } else {
       qDebug() << "fuck dynamic cast";

@@ -22,7 +22,7 @@ StatusBar::StatusBar(QWidget *parent) : QWidget(parent), leftWidget(nullptr) {
 
   leftWidget = new DefaultLeftWidget();
 
-  auto right = new QWidget();
+  right = new QWidget();
   auto rightLayout = new QHBoxLayout();
 
   layout->setAlignment(Qt::AlignVCenter);
@@ -34,15 +34,12 @@ StatusBar::StatusBar(QWidget *parent) : QWidget(parent), leftWidget(nullptr) {
   _selectedActionButton = new ShortcutButton();
 
   _selectedActionButton->setMaximumWidth(200);
-  _selectedActionButton->hide();
 
   rightLayout->addWidget(_selectedActionButton);
-  auto divider = new VDivider();
-
-  divider->setContentsMargins(0, 5, 0, 5);
-  divider->setWidth(2);
-
-  rightLayout->addWidget(divider);
+  _rightDivider = new VDivider();
+  _rightDivider->setContentsMargins(0, 5, 0, 5);
+  _rightDivider->setWidth(2);
+  rightLayout->addWidget(_rightDivider);
 
   _actionButton = new ShortcutButton();
   _actionButton->setTextColor("#AAAAAA");
@@ -69,12 +66,12 @@ StatusBar::StatusBar(QWidget *parent) : QWidget(parent), leftWidget(nullptr) {
 void StatusBar::setAction(const AbstractAction &action) {
   _selectedActionButton->setText(action.title);
   if (action.shortcut) { _selectedActionButton->setShortcut(*action.shortcut); }
-  _selectedActionButton->show();
+  right->show();
 }
 
 void StatusBar::setActionButtonHighlight(bool highlight) { _actionButton->hoverChanged(highlight); }
 
-void StatusBar::clearAction() { _selectedActionButton->hide(); }
+void StatusBar::clearAction() { right->hide(); }
 
 void StatusBar::setLeftWidget(QWidget *left) {
   QWidget *oldWidget = leftWidget;

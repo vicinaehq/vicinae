@@ -27,14 +27,15 @@ void ActionPannelListView::onItemActivated(const OmniList::AbstractVirtualItem &
   emit actionActivated(listItem.action);
 }
 
-void ActionPannelListView::renderActionPannelModel(const std::vector<ActionItem> &actions) {
+void ActionPannelListView::renderActionPannelModel(std::vector<ActionItem> actions) {
   std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> items;
 
   _actions.clear();
+  _items.clear();
 
   for (auto &actionLike : actions) {
-    if (auto ptr = std::get_if<AbstractAction *>(&actionLike)) {
-      auto action = *ptr;
+    if (auto ptr = std::get_if<std::unique_ptr<AbstractAction>>(&actionLike)) {
+      auto action = ptr->get();
 
       _actions.push_back(action);
       items.push_back(std::make_unique<ActionListItem>(action));
@@ -45,6 +46,7 @@ void ActionPannelListView::renderActionPannelModel(const std::vector<ActionItem>
     }
   }
 
+  _items = std::move(actions);
   _list->updateFromList(items, OmniList::SelectionPolicy::SelectFirst);
 }
 

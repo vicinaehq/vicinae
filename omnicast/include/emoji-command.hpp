@@ -2,6 +2,7 @@
 #include "app/app-database.hpp"
 #include "app.hpp"
 #include "emoji-database.hpp"
+#include "ui/action-pannel/action-item.hpp"
 #include "ui/omni-grid-view.hpp"
 #include "ui/emoji-viewer.hpp"
 #include "ui/omni-grid.hpp"
@@ -41,6 +42,16 @@ public:
         new CopyTextAction("Copy emoji", info.emoji),
         new CopyTextAction("Copy emoji name", info.description),
     };
+  }
+
+  std::vector<ActionItem> generateActionPannel() const override {
+    std::vector<ActionItem> items;
+
+    items.push_back(QString("Emoji - %1").arg(info.description));
+    items.push_back(std::make_unique<CopyTextAction>("Copy emoji", info.emoji));
+    items.push_back(std::make_unique<CopyTextAction>("Copy emoji name", info.description));
+
+    return items;
   }
 
   QString navigationTitle() const override { return info.description; }

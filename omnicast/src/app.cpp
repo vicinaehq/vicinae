@@ -57,7 +57,10 @@ bool AppWindow::event(QEvent *event) {
       return true;
     }
 
-    if (actionPannel->findBoundAction(keyEvent)) return true;
+    if (auto action = actionPannel->findBoundAction(keyEvent)) {
+      executeAction(action);
+      return true;
+    }
 
     if (keyEvent->modifiers().testFlag(Qt::ControlModifier) && key == Qt::Key_B) {
       actionPannel->showActions();

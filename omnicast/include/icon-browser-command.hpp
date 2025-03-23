@@ -7,10 +7,12 @@
 #include <qnamespace.h>
 
 class IconBrowserView : public OmniGridView {
-  class IconBrowserItem : public OmniGrid::AbstractGridItem {
+  class IconBrowserItem : public OmniGrid::AbstractGridItem, public OmniGridView::IActionnable {
     QString _name;
 
     QString tooltip() const override { return _name; }
+
+    QString navigationTitle() const override { return _name; }
 
     QWidget *centerWidget() const override {
       auto icon = new OmniIcon;
@@ -43,6 +45,8 @@ class IconBrowserView : public OmniGridView {
   void onSearchChanged(const QString &s) override { grid->setFilter(std::make_unique<IconFilter>(s)); }
 
   void onMount() override {
+    OmniGridView::onMount();
+    setSearchPlaceholderText("Search builtin icons...");
     grid->setColumns(8);
     grid->setInset(20);
     grid->beginUpdate();

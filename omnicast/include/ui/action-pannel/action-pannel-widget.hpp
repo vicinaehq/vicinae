@@ -7,7 +7,6 @@
 #include <qstackedlayout.h>
 #include <qtmetamacros.h>
 #include <QStackedWidget>
-#include <stack>
 
 struct ActionPannelViewSnapshot {
   QString text;
@@ -32,7 +31,7 @@ private:
   const ActionPannelViewSnapshot *top() const;
 
 public:
-  bool findBoundAction(QKeyEvent *event);
+  AbstractAction *findBoundAction(QKeyEvent *event);
 
   void showActions();
   void toggleActions();
@@ -43,12 +42,13 @@ public:
   void connectView(ActionPannelView *view);
   void disconnectView(ActionPannelView *view);
   void pushView(ActionPannelView *view);
+  void popToRoot();
 
   ViewStack takeViewStack();
   void restoreViewStack(const ViewStack &stack);
 
   void setSignalActions(const QList<AbstractAction *> &actions);
-  void setActions(const std::vector<ActionItem> &items);
+  void setActions(std::vector<ActionItem> items);
   AbstractAction *primaryAction() const;
 
   ActionPannelWidget(QWidget *parent = 0);

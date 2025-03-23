@@ -67,8 +67,8 @@ public:
     }
   }
 
-  void setActionPannel(const std::vector<ActionItem> &actions) {
-    app.actionPannel->setActions(actions);
+  void setActionPannel(std::vector<ActionItem> actions) {
+    app.actionPannel->setActions(std::move(actions));
 
     if (auto action = app.actionPannel->primaryAction()) {
       app.statusBar->setAction(*action);

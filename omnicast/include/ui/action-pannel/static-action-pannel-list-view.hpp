@@ -20,7 +20,7 @@ class StaticActionPannelListView : public ActionPannelListView {
   };
 
 public:
-  StaticActionPannelListView(const std::vector<ActionItem> &items) { renderActionPannelModel(items); }
+  StaticActionPannelListView(std::vector<ActionItem> items) { renderActionPannelModel(std::move(items)); }
 
   void onSearchChanged(const QString &query) override {
     _list->setFilter(std::make_unique<StaticActionFilter>(query));

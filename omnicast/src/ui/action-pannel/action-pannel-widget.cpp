@@ -1,16 +1,21 @@
 #include "ui/action-pannel/action-pannel-widget.hpp"
 #include "common.hpp"
+#include "ui/action-pannel/action-item.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/action-pannel/static-action-pannel-list-view.hpp"
+#include "ui/keyboard.hpp"
 #include "ui/popover.hpp"
+#include <memory>
 #include <qboxlayout.h>
 #include <qlineedit.h>
+#include <qnamespace.h>
 #include <qstackedlayout.h>
 #include <qstackedwidget.h>
 #include <qwidget.h>
 
 void ActionPannelWidget::closeEvent(QCloseEvent *event) {
   QWidget::closeEvent(event);
+  popToRoot();
   emit closed();
 }
 
@@ -20,12 +25,18 @@ void ActionPannelWidget::showEvent(QShowEvent *event) {
 }
 
 void ActionPannelWidget::setSignalActions(const QList<AbstractAction *> &actions) {
-  setActions({actions.begin(), actions.end()});
+  std::vector<ActionItem> items;
+
+  for (const auto &action : actions) {
+    items.push_back(std::unique_ptr<AbstractAction>(action));
+  }
+
+  setActions(std::move(items));
 }
 
-void ActionPannelWidget::setActions(const std::vector<ActionItem> &items) {
+void ActionPannelWidget::setActions(std::vector<ActionItem> items) {
   clear();
-  pushView(new StaticActionPannelListView(items));
+  pushView(new StaticActionPannelListView(std::move(items)));
 }
 
 void ActionPannelWidget::textChanged(const QString &text) const {
@@ -109,7 +120,8 @@ bool ActionPannelWidget::eventFilter(QObject *obj, QEvent *event) {
   if (obj == _input && event->type() == QEvent::KeyPress) {
     QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
 
-    if (keyEvent->key() == Qt::Key_Escape) {
+    if (keyEvent->key() == Qt::Key_Escape ||
+        (keyEvent->key() == Qt::Key_Backspace && _input->text().isEmpty())) {
       if (_viewStack.size() > 1) {
         popCurrentView();
       } else {
@@ -138,11 +150,26 @@ bool ActionPannelWidget::eventFilter(QObject *obj, QEvent *event) {
   return false;
 }
 
-bool ActionPannelWidget::findBoundAction(QKeyEvent *event) {
+AbstractAction *ActionPannelWidget::findBoundAction(QKeyEvent *event) {
   qDebug() << "find bound action";
-  if (_viewStack.empty()) return false;
+  if (_viewStack.empty()) return nullptr;
 
-  return false;
+  for (auto it = _viewStack.rbegin(); it != _viewStack.rend(); ++it) {
+    for (auto action : it->view->actions()) {
+      if (action->shortcut && KeyboardShortcut(*action->shortcut) == event) { return action; }
+    }
+  }
+
+  return nullptr;
+}
+
+void ActionPannelWidget::popToRoot() {
+  while (_viewStack.size() > 1) {
+    popCurrentView();
+  }
+
+  _input->clear();
+  emit _input->textEdited("");
 }
 
 void ActionPannelWidget::connectView(ActionPannelView *view) {
@@ -155,8 +182,6 @@ void ActionPannelWidget::disconnectView(ActionPannelView *view) {
 
 void ActionPannelWidget::pushView(ActionPannelView *view) {
   if (!_viewStack.empty()) { disconnectView(top()->view); }
-
-  qDebug() << "push action pannel view";
 
   connectView(view);
 
@@ -188,6 +213,7 @@ ActionPannelWidget::ActionPannelWidget(QWidget *parent)
   layout->addWidget(_viewLayout);
   layout->addWidget(new HDivider);
   layout->addWidget(_input);
+  layout->setSpacing(0);
   _input->installEventFilter(this);
   _viewLayout->setContentsMargins(0, 0, 0, 0);
 

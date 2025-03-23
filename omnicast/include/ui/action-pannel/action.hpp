@@ -27,6 +27,8 @@ public:
   virtual void executePrelude(AppWindow &app);
   virtual void execute(AppWindow &app) = 0;
 
+  ~AbstractAction() { qDebug() << "destroy abstract action" << title; }
+
 signals:
   void didExecute();
 };

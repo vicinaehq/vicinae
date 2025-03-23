@@ -10,7 +10,7 @@ std::vector<ActionItem> OpenWithAction::generateItems(const QString &query) cons
 
   for (const auto &app : appDb.list()) {
     if (app->name().contains(query, Qt::CaseInsensitive)) {
-      items.push_back(new OpenAppAction(app, app->name(), args));
+      items.push_back(std::make_unique<OpenAppAction>(app, app->name(), args));
     }
   }
 

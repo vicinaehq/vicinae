@@ -155,7 +155,7 @@ protected:
       auto pannel = nextItem->generateActionPannel();
 
       if (!pannel.empty()) {
-        setActionPannel(pannel);
+        setActionPannel(std::move(pannel));
 
         // if (auto first = app.actionPannel->actionnable(0)) { first->setShortcut({.key = "return"}); }
       } else {
