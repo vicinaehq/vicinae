@@ -9,7 +9,6 @@
 #include <QScreen>
 #include "extend/image-model.hpp"
 #include "extension_manager.hpp"
-#include "get-wayland-wlr-data-control-client-protocol.hpp"
 #include "indexer-service.hpp"
 #include "omni-icon.hpp"
 #include "process-manager-service.hpp"

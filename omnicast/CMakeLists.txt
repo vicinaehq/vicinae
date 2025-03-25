@@ -36,7 +36,6 @@ qt_add_executable(${TARGET}
 	src/app.cpp
 	src/app.hpp
 
-	src/get-wayland-wlr-data-control-client-protocol.cpp
 	include/theme.hpp
 
 	include/favicon/favicon-service.hpp
@@ -126,11 +125,6 @@ qt_add_executable(${TARGET}
 	include/extend/extension-view.hpp
 	include/extend/extension-command.hpp
 	include/extend/extension-detail-view.hpp
-
-	include/wayland-wlr-data-control-client-protocol.h
-	src/wayland-wlr-data-control-client-protocol.c
-
-	include/get-wayland-wlr-data-control-client-protocol.hpp
 
 	include/ui/button.hpp
 	src/ui/button.cpp
