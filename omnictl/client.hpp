@@ -69,7 +69,7 @@ public:
     dirs.push_back("/tmp");
 
     for (const auto &dir : dirs) {
-      auto localPath = dir / "omnicast.sock";
+      auto localPath = dir / "omnicast" / "omnicast.sock";
 
       if (connect(localPath)) { return true; }
     }

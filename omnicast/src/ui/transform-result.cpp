@@ -105,7 +105,7 @@ void TransformResult::setResult(const QString &text, const QString &chip) {
 void TransformResult::setBase(QWidget *widget, const QString &chip) {
   if (_base) { _base->deleteLater(); }
 
-  _base = createVContainer(widget, new Chip(chip));
+  _base = createVContainer(widget, new QLabel(chip));
   _base->setParent(this);
   update();
 }
@@ -113,7 +113,7 @@ void TransformResult::setBase(QWidget *widget, const QString &chip) {
 void TransformResult::setResult(QWidget *widget, const QString &chip) {
   if (_result) { _result->deleteLater(); }
 
-  _result = createVContainer(widget, new Chip(chip));
+  _result = createVContainer(widget, new QLabel(chip));
   _result->setParent(this);
   update();
 }

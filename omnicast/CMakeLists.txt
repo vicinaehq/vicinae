@@ -253,6 +253,7 @@ qt_add_executable(${TARGET}
 	#src/commands/create-quicklink/create-quicklink.cpp
 
 	src/omnicast.hpp
+	src/omnicast.cpp
 
 	./resources.qrc
 	./icons/icons.qrc
