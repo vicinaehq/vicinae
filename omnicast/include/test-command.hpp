@@ -46,7 +46,7 @@ Remember what Antoine de Saint-Exupéry wisely noted: "*Perfection is achieved n
 
 class TestView : public View {
   MarkdownRenderer *_renderer;
-  QList<QString> tokens = text.split(" ");
+  QList<QString> tokens = text.split("");
   QTimer *timer = new QTimer(this);
   size_t i = 0;
 
@@ -61,7 +61,7 @@ public:
       if (i >= tokens.size()) {
         timer->stop();
       } else {
-        if (i > 0) _renderer->appendMarkdown(" ");
+        // if (i > 0) _renderer->appendMarkdown(" ");
         _renderer->appendMarkdown(tokens[i++]);
       }
     });

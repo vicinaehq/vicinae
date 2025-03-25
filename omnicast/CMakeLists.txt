@@ -104,8 +104,12 @@ qt_add_executable(${TARGET}
 	include/ui/action-pannel/open-with-action.hpp
 	src/ui/action-pannel/open-with-action.cpp
 
-
 	# end action-pannel-widget
+
+	# start markdown renderer
+	include/ui/markdown/markdown-renderer.hpp
+	src/ui/markdown/markdown-renderer.cpp
+	# end markdown renderer
 
 	include/clipboard-history-command.hpp
 
