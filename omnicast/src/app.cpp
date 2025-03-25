@@ -377,7 +377,7 @@ AppWindow::AppWindow(QWidget *parent)
   topBar->setFixedHeight(55);
 
   QDir::root().mkpath(Config::dirPath());
-  ThemeService::instance().setTheme("Catppuccin Mocha");
+  ThemeService::instance().setTheme("Ayu Mirage");
   FaviconService::initialize(new FaviconService(Config::dirPath() + QDir::separator() + "favicon.db"));
 
   extensionManager = std::make_unique<ExtensionManager>();

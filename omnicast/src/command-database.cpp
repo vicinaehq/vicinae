@@ -5,6 +5,7 @@
 #include "icon-browser-command.hpp"
 #include "manage-processes-command.hpp"
 #include "switch-windows-command.hpp"
+#include "test-command.hpp"
 #include "manage-quicklinks-command.hpp"
 #include "manage-themes-command.hpp"
 #include "omni-icon.hpp"
@@ -83,7 +84,15 @@ static std::vector<BuiltinCommand> builtinCommands{
         .name = "Peepobank",
         .iconUrl = tintedCommandIcon("emoji", ColorTint::Red),
         .factory = [](AppWindow &app, const QString &s) { return new SingleViewCommand<PeepobankView>; },
-    }};
+    },
+    {
+        .id = "test.test",
+        .name = "Test feature",
+        .iconUrl = tintedCommandIcon("matlab", ColorTint::Magenta),
+        .factory = [](AppWindow &app, const QString &s) { return new SingleViewCommand<TestView>; },
+    }
+
+};
 
 const std::vector<BuiltinCommand> &CommandDatabase::list() { return builtinCommands; }
 
