@@ -1,4 +1,5 @@
 #pragma once
+#include "ai/ai-provider.hpp"
 #include "app/app-database.hpp"
 #include "calculator-database.hpp"
 #include "clipboard/clipboard-service.hpp"
@@ -146,6 +147,7 @@ public:
   std::unique_ptr<ExtensionManager> extensionManager;
   std::unique_ptr<ProcessManagerService> processManagerService;
   std::unique_ptr<CommandDatabase> commandDb;
+  std::unique_ptr<AbstractAiProvider> aiProvider;
 
   void popToRootView();
   void disconnectView(View &view);

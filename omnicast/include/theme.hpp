@@ -136,6 +136,8 @@ public:
 			font-size: 12pt;
 		}
 
+		QScrollArea, QScrollArea > QWidget { background: transparent; }
+
 		QLabel[subtext="true"] {
 			color: %2;
 		}

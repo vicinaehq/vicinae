@@ -428,23 +428,22 @@ public:
   void onMount() override {
     setSearchPlaceholderText("Search for apps or commands...");
 
-    AbstractWindowManager *wm = new HyprlandWindowManager();
+    auto watcher = new QFutureWatcher<std::vector<AiModel>>;
 
-    auto future = wm->listWindows();
-    auto watcher = new QFutureWatcher<AbstractWindowManager::WindowList>(this);
-
-    connect(watcher, &QFutureWatcher<AbstractWindowManager::WindowList>::finished, this, [watcher]() {
+    connect(watcher, &QFutureWatcher<std::vector<AiModel>>::finished, this, [watcher]() {
       if (watcher->isCanceled()) {
-        qDebug() << "cancelled fuck";
+        qDebug() << "cancelled";
         return;
       }
 
-      for (const auto &s : watcher->result()) {
-        qDebug() << s->title() << s->wmClass();
+      if (watcher->isFinished()) {
+        for (const auto &model : watcher->result()) {
+          qDebug() << "MODEL " << model.id;
+        }
       }
     });
 
-    watcher->setFuture(future);
+    watcher->setFuture(app.aiProvider->models());
   }
 
   RootView(AppWindow &app)

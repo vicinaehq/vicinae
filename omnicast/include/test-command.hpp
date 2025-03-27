@@ -2,51 +2,67 @@
 #include "ui/markdown/markdown-renderer.hpp"
 #include "view.hpp"
 
-static const QString text = R"(
-# The Art of Simplicity in Programming
+const static QString text2 =
+    "Certainly! Here's a list of arguments that explain why clean code is great:\n\n1. **Improved "
+    "Maintainability:**\n   - Clean code is easier to maintain and update over time, reducing the effort "
+    "required for bug fixes and feature enhancements.\n\n2. **Enhanced Readability:**\n   - Well-structured "
+    "and well-commented code is more readable, making it easier for other developers (and sometimes even "
+    "yourself) to understand the logic and flow of the program.\n\n3. **Increased Collaboration:**\n   - "
+    "Clean code facilitates better collaboration among team members. When code is easy to read and follow, "
+    "onboarding new developers becomes more straightforward.\n\n4. **Reduced Technical Debt:**\n   - Writing "
+    "clean code from the start helps avoid accumulating technical debt, which can slow down development and "
+    "increase long-term costs.\n\n5. **Faster Debugging:**\n   - Clean and organized code makes it easier to "
+    "identify and fix bugs, reducing the time spent on debugging.\n\n6. **Consistency in Code Style:**\n   - "
+    "Following clean code practices ensures consistency across the project or organization, making it more "
+    "predictable and easier for developers to adapt.\n\n7. **Better Documentation:**\n   - Clean code often "
+    "includes meaningful variable names, clear functions, and concise comments that serve as implicit "
+    "documentation, reducing the need for separate documents.\n\n8. **Higher Developer Productivity:**\n   - "
+    "Developers can work more efficiently with clean code, as they spend less time trying to understand "
+    "complex or poorly written code.\n\n9. **Improved Code Reusability:**\n   - Clean code is modular and "
+    "well-structured, making it easier to reuse components across different projects or within the same "
+    "project.\n\n10. **Easier Testing:**\n    - Clean code with clear functions and methods is more "
+    "testable. Unit tests can be written more easily for well-defined pieces of logic.\n\n11. **Reduced "
+    "Cognitive Load:**\n    - Clean code reduces the cognitive load on developers, allowing them to focus on "
+    "solving problems rather than deciphering complex or convoluted code.\n\n12. **Faster Onboarding:**\n    "
+    "- New team members can get up to speed more quickly with clean code, as it is easier to read and "
+    "understand, reducing the learning curve.\n\n13. **Higher Code Quality:**\n    - Clean code promotes "
+    "better practices such as refactoring, which leads to higher overall code quality and "
+    "maintainability.\n\n14. **Increased Developer Satisfaction:**\n    - Developers tend to feel more "
+    "satisfied and proud of their work when they write clean code, leading to a positive work "
+    "environment.\n\n15. **Long-Term Cost Savings:**\n    - While it might take more time upfront to write "
+    "clean code, the long-term benefits in terms of reduced maintenance costs, faster development cycles, "
+    "and higher code quality make it a worthwhile investment.\n\n16. **Easier Refactoring:**\n    - Clean "
+    "code is easier to refactor, as its structure and organization make changes less risky and more "
+    "predictable.\n\n17. **Better Compliance with Standards:**\n    - Following clean code practices helps "
+    "ensure that the code complies with industry standards and best practices.\n\n18. **Improved Code "
+    "Reviews:**\n    - Clean code makes code reviews more efficient, as reviewers can quickly understand "
+    "what changes are being made and why.\n\nThese arguments highlight the numerous benefits of writing "
+    "clean code, making it a valuable practice for any software development project.";
 
-## Introduction
+const QString text = R"(
+Here's a markdown list:
 
-In the world of software development, complexity often creeps in unnoticed. As codebases grow, they tend to become more intricate, harder to maintain, and increasingly difficult to understand. This essay explores the **profound value of simplicity** in programming and why it should be a guiding principle for developers at all levels.
+- Item 1
+- Item 2
+- Item 3
+- Item 4
+- Item 5
 
-## The Problem with Complexity
+And now some code:
+```c
+int main() {
+	printf("Hello, world!\n");
+}
+```
 
-When we write code, we often fall into the trap of premature optimization or over-engineering. We create elaborate architectures to solve problems we *might* face in the future. As the famous quote by Donald Knuth suggests: `premature optimization is the root of all evil`.
+And some paragraph.
 
-Complex code has several disadvantages:
-
-- It's harder to understand for new team members
-- It's more prone to bugs and edge cases
-- It requires more extensive documentation
-- It takes longer to modify when requirements change
-
-## Embracing Simplicity
-
-Simplicity doesn't mean being simplistic. Rather, it means finding the **most straightforward solution** that fully addresses the current problem. As Leonardo da Vinci once said, "*Simplicity is the ultimate sophistication*."
-
-When writing code, consider these principles:
-
-1. **Write for humans first**, computers second
-2. *Use clear naming* conventions for variables and functions
-3. Break complex functions into **_smaller, focused ones_**
-4. Avoid premature abstraction with `if (isNeeded) { createAbstraction() }`
-
-## The Long-Term Benefits
-
-Code that embraces simplicity pays dividends over time. It's more **maintainable**, *easier to test*, and generally more robust. New team members can onboard faster, and the codebase remains adaptable to changing requirements.
-
-Test the test the test.
-
-## Conclusion
-
-In our pursuit of elegant solutions, we should remember that the most elegant code is often the simplest. As you develop your next project, ask yourself: "*Is there a simpler way to solve this problem?*" The answer might lead you to better, more maintainable code.
-
-Remember what Antoine de Saint-Exupéry wisely noted: "*Perfection is achieved not when there is nothing more to add, but when there is nothing left to take away.*"
+Some `other` paragraph right here. Enjoy please.
 )";
 
 class TestView : public View {
   MarkdownRenderer *_renderer;
-  QList<QString> tokens = text.split("");
+  QList<QString> tokens = text.split(" ");
   QTimer *timer = new QTimer(this);
   size_t i = 0;
 
@@ -55,18 +71,25 @@ public:
 
     //_renderer->setMarkdown("# Test\n\n");
     //_renderer->setMarkdown(text);
+    //
 
-    connect(timer, &QTimer::timeout, this, [this]() {
-      qDebug() << i << "/" << tokens.size();
-      if (i >= tokens.size()) {
-        timer->stop();
-      } else {
-        // if (i > 0) _renderer->appendMarkdown(" ");
-        _renderer->appendMarkdown(tokens[i++]);
-      }
-    });
+    _renderer->setMarkdown(text);
 
-    timer->start(20);
+    /*
+connect(timer, &QTimer::timeout, this, [this]() {
+  qDebug() << i << "/" << tokens.size();
+  if (i >= tokens.size()) {
+    timer->stop();
+  } else {
+    QString s = i > 0 ? " " : "";
+
+    s += tokens[i++];
+    _renderer->appendMarkdown(s);
+  }
+});
+
+timer->start(10);
+    */
 
     widget = _renderer;
   }

@@ -41,6 +41,8 @@ public:
     if (widget) widget->deleteLater();
   }
 
+  void clearSearchText() { app.topBar->input->clear(); }
+
   void forwardInputEvents(QWidget *widget) {
     for (const auto &w : inputFwdTo) {
       if (widget == w) return;
@@ -52,6 +54,7 @@ public:
   template <typename T> Service<T> service() { return app.service<T>(); }
   void setSearchPlaceholderText(const QString &s) { app.topBar->input->setPlaceholderText(s); }
 
+  QString searchText() { return app.topBar->input->text(); }
   QString navigationTitle() { return app.statusBar->navigationTitle(); }
   void setNavigationTitle(const QString &title) { return app.statusBar->setNavigationTitle(title); }
 

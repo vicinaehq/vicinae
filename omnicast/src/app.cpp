@@ -1,4 +1,5 @@
 #include "app.hpp"
+#include "ai/ollama-ai-provider.hpp"
 #include "app/xdg-app-database.hpp"
 #include "clipboard/clipboard-service.hpp"
 #include "command-database.hpp"
@@ -25,6 +26,7 @@
 #include <memory>
 #include <qboxlayout.h>
 #include <qevent.h>
+#include <qfuturewatcher.h>
 #include <qgraphicseffect.h>
 #include <qlogging.h>
 #include <qmainwindow.h>
@@ -427,6 +429,11 @@ AppWindow::AppWindow(QWidget *parent)
           &ClipboardService::saveSelection);
 
   clipboardServer->start();
+
+  auto ollamaProvider = std::make_unique<OllamaAiProvider>();
+
+  ollamaProvider->setInstanceUrl(QUrl("http://localhost:11434"));
+  aiProvider = std::move(ollamaProvider);
 
   extensionManager->start();
 

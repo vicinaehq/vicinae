@@ -1,6 +1,7 @@
 #include "markdown-renderer.hpp"
 #include <qlabel.h>
 #include <qnamespace.h>
+#include <KSyntaxHighlighting/SyntaxHighlighter>
 
 MarkdownImage::MarkdownImage(cmark_node *node) : layout(new QVBoxLayout) {
   const char *p = cmark_node_get_url(node);
@@ -70,7 +71,7 @@ void MarkdownView::setMarkdown(const QString &markdown) {
   while (currentNode) {
     auto type = cmark_node_get_type(currentNode);
 
-    qDebug() << "markdown type" << cmark_node_get_type_string(currentNode);
+    // qDebug() << "markdown type" << cmark_node_get_type_string(currentNode);
 
     if (type == CMARK_NODE_PARAGRAPH) { layout->addWidget(new MarkdownParagraph(currentNode)); }
 

@@ -9,7 +9,12 @@
 #include <qtextdocument.h>
 #include <qtextedit.h>
 #include <qtextformat.h>
+#include <qtextlist.h>
 #include <qwidget.h>
+
+struct TopLevelBlock {
+  int cursorPos;
+};
 
 class MarkdownRenderer : public QWidget {
   constexpr static float HEADING_LEVEL_SCALE_FACTORS[5] = {2, 1.6, 1.3, 1.16, 1};
@@ -20,6 +25,9 @@ class MarkdownRenderer : public QWidget {
   QTextDocument *_document;
   QTextCursor _cursor;
   int _basePointSize;
+  bool _isInCodeBlock = false;
+
+  int _lastNodeType = CMARK_NODE_NONE;
 
   struct {
     int originalMarkdown;
@@ -30,13 +38,13 @@ class MarkdownRenderer : public QWidget {
 
   void insertHeading(const QString &text, int level);
   void insertImage(cmark_node *node);
-  void insertList(cmark_node *list);
+  QTextList *insertList(cmark_node *list, int indent = 1);
   void insertBlockParagraph(cmark_node *node);
   void insertSpan(cmark_node *node, QTextCharFormat &fmt);
   void insertParagraph(cmark_node *node);
+  void insertCodeBlock(cmark_node *node, bool isClosing = false);
   void insertHeading(cmark_node *node);
   void insertTopLevelNode(cmark_node *node);
-  void resizeEvent(QResizeEvent *event) override;
 
 public:
   QTextEdit *textEdit() const;

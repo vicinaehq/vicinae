@@ -1,7 +1,25 @@
 #include "ui/markdown/markdown-renderer.hpp"
+#include "theme.hpp"
 #include "ui/omni-scroll-bar.hpp"
+#include <KSyntaxHighlighting/definition.h>
+#include <KSyntaxHighlighting/syntaxhighlighter.h>
+#include <KSyntaxHighlighting/theme.h>
+#include <KSyntaxHighlighting/repository.h>
 #include <cmark.h>
+#include <qapplication.h>
+#include <qboxlayout.h>
+#include <qfontdatabase.h>
+#include <qnamespace.h>
+#include <qplaintextedit.h>
+#include <qsize.h>
 #include <qstringview.h>
+#include <QTextDocumentFragment>
+#include <QTextList>
+#include <qtextcursor.h>
+#include <qtextdocument.h>
+#include <qtextformat.h>
+#include <qtextlist.h>
+#include <x86gprintrin.h>
 
 int MarkdownRenderer::getHeadingLevelPointSize(int level) const {
   auto factor = HEADING_LEVEL_SCALE_FACTORS[std::clamp(level, 1, 4)];
@@ -10,21 +28,21 @@ int MarkdownRenderer::getHeadingLevelPointSize(int level) const {
 }
 
 void MarkdownRenderer::insertHeading(const QString &text, int level) {
-  if (!_cursor.block().text().isEmpty()) { _cursor.insertBlock(); }
-
   QTextBlockFormat blockFormat;
   QTextCharFormat charFormat;
 
+  if (!_cursor.block().text().isEmpty()) { _cursor.insertBlock(); }
+
   blockFormat.setAlignment(Qt::AlignLeft);
   blockFormat.setTopMargin(level == 1 ? 15 : 10);
-  blockFormat.setTopMargin(level == 1 ? 15 : 10);
+  blockFormat.setBottomMargin(level == 1 ? 15 : 10);
 
   charFormat.setFontPointSize(getHeadingLevelPointSize(level));
   charFormat.setFontWeight(QFont::Bold);
 
   _cursor.setBlockFormat(blockFormat);
-  _cursor.insertText(text, charFormat);
-  _cursor.insertBlock();
+  _cursor.setBlockCharFormat(charFormat);
+  _cursor.insertText(text);
 }
 
 void MarkdownRenderer::insertImage(cmark_node *node) {
@@ -33,11 +51,41 @@ void MarkdownRenderer::insertImage(cmark_node *node) {
   qDebug() << "Render url" << p;
 }
 
-void MarkdownRenderer::insertList(cmark_node *list) {
+void MarkdownRenderer::insertCodeBlock(cmark_node *node, bool isClosing) {
+  auto &theme = ThemeService::instance().theme();
+  QTextFrameFormat format;
+  QTextCharFormat fontFormat;
+
+  fontFormat.setFontFamilies({"monospace"});
+  fontFormat.setFontPointSize(_basePointSize * 0.95);
+
+  format.setBorder(1);
+  format.setBorderBrush(theme.colors.statusBackgroundBorder);
+  format.setBackground(theme.colors.statusBackground);
+  format.setPadding(10);
+  format.setTopMargin(15);
+  format.setBottomMargin(15);
+
+  QString code = cmark_node_get_literal(node);
+  auto frame = _cursor.insertFrame(format);
+
+  if (isClosing && code.size() > 0) {
+    while (code.at(code.size() - 1).isSpace()) {
+      code.removeLast();
+    }
+  }
+
+  _cursor.insertText(code, fontFormat);
+  _cursor.setPosition(frame->lastPosition());
+  _cursor.movePosition(QTextCursor::NextCharacter);
+}
+
+QTextList *MarkdownRenderer::insertList(cmark_node *list, int indent) {
   auto *item = cmark_node_first_child(list);
+
   QTextListFormat listFormat;
 
-  listFormat.setIndent(1);
+  listFormat.setIndent(indent);
 
   switch (cmark_node_get_list_type(list)) {
   case CMARK_BULLET_LIST:
@@ -50,34 +98,57 @@ void MarkdownRenderer::insertList(cmark_node *list) {
     break;
   }
 
-  _cursor.insertList(listFormat);
+  _cursor.insertBlock();
+  QTextCharFormat charFormat;
+  charFormat.setFontWeight(QFont::Normal);
+  charFormat.setFontPointSize(_basePointSize); // Set default size
+
+  QTextBlockFormat blockFormat;
+  blockFormat.setTopMargin(5);
+  blockFormat.setBottomMargin(5);
+
+  _cursor.setCharFormat(charFormat);
+  _cursor.setBlockCharFormat(charFormat);
+  _cursor.setBlockFormat(blockFormat);
+
+  QTextList *textList = _cursor.createList(listFormat);
+
+  size_t i = 0;
 
   while (item) {
-    switch (cmark_node_get_type(item)) {
-    case CMARK_NODE_ITEM: {
-      qDebug() << "LIST ITEM";
+    if (cmark_node_get_type(item) == CMARK_NODE_ITEM) {
       auto *node = cmark_node_first_child(item);
 
-      switch (cmark_node_get_type(node)) {
-      case CMARK_NODE_PARAGRAPH:
-        insertParagraph(node);
-        break;
-      default:
-        break;
+      while (node) {
+        switch (cmark_node_get_type(node)) {
+        case CMARK_NODE_PARAGRAPH:
+          if (i > 0) { _cursor.insertBlock(blockFormat, charFormat); }
+          insertParagraph(node);
+          qDebug() << "inserted paragraph in list at index" << i;
+          textList->add(_cursor.block());
+          break;
+        case CMARK_NODE_LIST: {
+          insertList(node, indent + 1);
+          break;
+        }
+        default:
+          break;
+        }
+        node = cmark_node_next(node);
       }
-      break;
-    }
-    default:
-      qDebug() << "something else item";
-      break;
     }
 
+    ++i;
     item = cmark_node_next(item);
   }
+
+  return textList;
 }
 
 void MarkdownRenderer::insertBlockParagraph(cmark_node *node) {
   QTextBlockFormat blockFormat;
+
+  if (!_cursor.block().text().isEmpty()) { _cursor.insertBlock(); }
 
   blockFormat.setAlignment(Qt::AlignLeft);
   blockFormat.setTopMargin(10);
@@ -90,9 +161,11 @@ void MarkdownRenderer::insertSpan(cmark_node *node, QTextCharFormat &fmt) {
   switch (cmark_node_get_type(node)) {
   case CMARK_NODE_STRONG:
     fmt.setFontWeight(QFont::DemiBold);
+    _cursor.insertText(cmark_node_get_literal(node), fmt);
     break;
   case CMARK_NODE_EMPH:
     fmt.setFontItalic(true);
+    _cursor.insertText(cmark_node_get_literal(node), fmt);
     break;
   case CMARK_NODE_CODE:
     fmt.setFontFamilies({"monospace"});
@@ -104,6 +177,7 @@ void MarkdownRenderer::insertSpan(cmark_node *node, QTextCharFormat &fmt) {
     fmt.setFontUnderline(true);
     fmt.setAnchor(true);
     fmt.setAnchorHref(cmark_node_get_url(node));
+    _cursor.insertText(cmark_node_get_literal(node), fmt);
     break;
   case CMARK_NODE_TEXT:
     _cursor.insertText(cmark_node_get_literal(node), fmt);
@@ -124,24 +198,25 @@ void MarkdownRenderer::insertParagraph(cmark_node *node) {
   cmark_node *child = cmark_node_first_child(node);
   QTextCharFormat defaultFormat;
 
-  if (!_cursor.block().text().isEmpty()) { _cursor.insertBlock(); }
-
-  defaultFormat.setFontPointSize(12);
+  defaultFormat.setFont(QFontDatabase::systemFont(QFontDatabase::GeneralFont));
+  defaultFormat.setFontPointSize(_basePointSize);
 
   while (child) {
     QTextCharFormat fmt = defaultFormat;
 
     switch (cmark_node_get_type(child)) {
     case CMARK_NODE_IMAGE:
-      insertImage(node);
+      insertImage(child);
       break;
     default:
       insertSpan(child, fmt);
+      _cursor.setCharFormat(defaultFormat);
       break;
     }
 
     child = cmark_node_next(child);
   }
+  _cursor.setCharFormat(defaultFormat);
 }
 
 void MarkdownRenderer::insertHeading(cmark_node *node) {
@@ -169,14 +244,12 @@ void MarkdownRenderer::insertTopLevelNode(cmark_node *node) {
   case CMARK_NODE_LIST:
     insertList(node);
     break;
+  case CMARK_NODE_CODE_BLOCK:
+    insertCodeBlock(node, !!cmark_node_next(node));
+    break;
   default:
     break;
   }
-}
-
-void MarkdownRenderer::resizeEvent(QResizeEvent *event) {
-  QWidget::resizeEvent(event);
-  _textEdit->setGeometry(rect().marginsAdded(contentsMargins()));
 }
 
 QTextEdit *MarkdownRenderer::textEdit() const { return _textEdit; }
@@ -191,11 +264,15 @@ void MarkdownRenderer::clear() {
 void MarkdownRenderer::setBasePointSize(int pointSize) { _basePointSize = pointSize; }
 
 void MarkdownRenderer::appendMarkdown(QStringView markdown) {
+  QTextCursor cursor = _textEdit->textCursor();
+  int selectionStart = cursor.selectionStart();
+  int selectionEnd = cursor.selectionEnd();
   QString fragment;
-  QTextCursor userCursor = _textEdit->textCursor();
 
   if (!_markdown.isEmpty()) {
     int clamped = std::clamp(_lastNodePosition.originalMarkdown, 0, (int)_markdown.size() - 1);
+
+    _cursor.setPosition(0);
 
     fragment = _markdown.sliced(clamped) + markdown.toString();
     _cursor.setPosition(_lastNodePosition.renderedText);
@@ -205,23 +282,40 @@ void MarkdownRenderer::appendMarkdown(QStringView markdown) {
     fragment = markdown.toString();
   }
 
-  qDebug() << "new" << markdown << "fragment" << fragment;
+  qDebug() << "fragment" << fragment;
 
   auto buf = fragment.toUtf8();
   cmark_node *root = cmark_parse_document(buf.data(), buf.size(), 0);
   cmark_node *node = cmark_node_first_child(root);
   cmark_node *lastNode = nullptr;
+  std::vector<TopLevelBlock> topLevelBlocks;
 
   while (node) {
+    topLevelBlocks.push_back({.cursorPos = _cursor.position()});
+    //_lastNodePosition.renderedText = _cursor.position();
     lastNode = node;
-    _lastNodePosition.renderedText = _cursor.position();
     insertTopLevelNode(node);
     node = cmark_node_next(node);
   }
 
   _markdown.append(markdown);
 
+  if (!topLevelBlocks.empty()) {
+    _lastNodePosition.renderedText = topLevelBlocks.at(topLevelBlocks.size() - 1).cursorPos;
+  }
+
   if (lastNode) {
+    // do not change uncompleted block if it's only a leading digit (work around for numbered lists)
+    if (_markdown.at(_markdown.size() - 1).isDigit()) {
+      if (auto previous = cmark_node_previous(lastNode)) {
+        if (cmark_node_get_type(previous) == CMARK_NODE_LIST) {
+          lastNode = previous;
+          _lastNodePosition.renderedText = topLevelBlocks.at(topLevelBlocks.size() - 2).cursorPos;
+        }
+      }
+    }
+
+    qDebug() << "last node is of type" << cmark_node_get_type_string(lastNode);
     int localLine = cmark_node_get_start_line(lastNode);
     int localColumn = cmark_node_get_start_column(lastNode);
 
@@ -243,7 +337,14 @@ void MarkdownRenderer::appendMarkdown(QStringView markdown) {
   }
 
   cmark_node_free(root);
-  _textEdit->setTextCursor(userCursor);
+
+  QTextCursor newCursor = _textEdit->textCursor();
+
+  newCursor.setPosition(selectionStart);
+  newCursor.setPosition(selectionEnd, QTextCursor::KeepAnchor);
+  _textEdit->setTextCursor(newCursor);
+
+  qDebug() << "text edit height" << _textEdit->height();
 }
 
 void MarkdownRenderer::setMarkdown(QStringView markdown) {
@@ -255,13 +356,28 @@ void MarkdownRenderer::setMarkdown(QStringView markdown) {
 
 MarkdownRenderer::MarkdownRenderer()
     : _document(new QTextDocument), _textEdit(new QTextEdit(this)), _basePointSize(DEFAULT_BASE_POINT_SIZE) {
+  auto layout = new QVBoxLayout;
+
   _textEdit->setReadOnly(true);
   _textEdit->setFrameShape(QFrame::NoFrame);
   _textEdit->setDocument(_document);
   _textEdit->setVerticalScrollBar(new OmniScrollBar);
   _textEdit->setHorizontalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
-  _textEdit->show();
+  _textEdit->setVerticalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
+  _textEdit->setTabStopDistance(40);
+  _textEdit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+  connect(_document->documentLayout(), &QAbstractTextDocumentLayout::documentSizeChanged, this,
+          [this](const QSizeF &size) { setFixedHeight(size.height()); });
+
   _cursor = QTextCursor(_document);
   _lastNodePosition.renderedText = 0;
   _lastNodePosition.originalMarkdown = 0;
+
+  // setStyleSheet("background-color: blue");
+
+  layout->setContentsMargins(0, 0, 0, 0);
+  layout->addWidget(_textEdit, 1);
+
+  setLayout(layout);
 }

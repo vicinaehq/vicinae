@@ -3,6 +3,7 @@
 #include "clipboard-history-command.hpp"
 #include "emoji-command.hpp"
 #include "icon-browser-command.hpp"
+#include "ask-ai-command.hpp"
 #include "manage-processes-command.hpp"
 #include "switch-windows-command.hpp"
 #include "test-command.hpp"
@@ -11,6 +12,7 @@
 #include "omni-icon.hpp"
 #include "theme.hpp"
 #include "ui/peepobank-command.hpp"
+#include <qfuture.h>
 
 QColor getWashedUpWhite() {
   QColor color("#FFFFFF");
@@ -84,6 +86,12 @@ static std::vector<BuiltinCommand> builtinCommands{
         .name = "Peepobank",
         .iconUrl = tintedCommandIcon("emoji", ColorTint::Red),
         .factory = [](AppWindow &app, const QString &s) { return new SingleViewCommand<PeepobankView>; },
+    },
+    {
+        .id = "ai.quick",
+        .name = "Ask AI",
+        .iconUrl = tintedCommandIcon("stars", ColorTint::Red),
+        .factory = [](AppWindow &app, const QString &s) { return new SingleViewCommand<AskAiCommandView>; },
     },
     {
         .id = "test.test",

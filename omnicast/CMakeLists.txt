@@ -8,14 +8,14 @@ set(LIBS)
 set(TARGET omnicast)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets Sql Network Svg WaylandClient)
-find_package(SQLite3 REQUIRED)
 find_package(cmark REQUIRED)
+find_package(KF6SyntaxHighlighting REQUIRED)
 
 option(WAYLAND_LAYER_SHELL "Enable support for the Wayland layer shell
 protocol, required for proper window positioning on most wlroots-based
 compositors." OFF)
 
-list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::WaylandClient cmark proto)
+list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg KF6::SyntaxHighlighting cmark proto)
 
 if (WAYLAND_LAYER_SHELL)
 	find_package(Qt6 REQUIRED COMPONENTS WaylandClient)
@@ -109,6 +109,11 @@ qt_add_executable(${TARGET}
 	include/ui/markdown/markdown-renderer.hpp
 	src/ui/markdown/markdown-renderer.cpp
 	# end markdown renderer
+
+	# start AI
+	include//ai/ai-provider.hpp
+	include/ai/ollama-ai-provider.hpp
+	# end AI
 
 	include/clipboard-history-command.hpp
 
