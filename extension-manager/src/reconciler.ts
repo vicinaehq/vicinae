@@ -54,6 +54,7 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 
 		createInstance(type, props, root, ctx, handle) {
 			const { children, ...rest } = props;
+			console.log({ instanceProps: props });
 
 			for (const [k, v] of Object.entries(rest)) {
 				if (typeof v == 'function') {
@@ -208,34 +209,33 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 	return hostConfig;
 }
 
+export type RenderTree = {
+	views: Instance[]
+};
+
 export type RendererConfig = {
-	onInitialRender: (tree: Instance) => void
-	onUpdate?: (tree: Instance, changes: Operation[]) => void;
+	onInitialRender: (views: Instance[]) => void
+	onUpdate?: (views: Instance[], changes: Operation[]) => void;
 };
 
 export const createRenderer = (config: RendererConfig) => {
 	const container: Container = { children: [] };
-	let oldTree: Instance | null = null;
+	let oldTree: Instance[] | null = null;
 
 	const hostConfig = createHostConfig({}, () => {
 		if (!oldTree) return ;
 
-		const tree = container.children[container.children.length - 1];
-
-		if (!tree) {
-			console.error('no tree, WTF!!');
-			return ;
-		}
-
+		/*
 		const ops = compare(oldTree ?? {}, tree);
 
 		for (const op of ops) {
 			const unsafeOp = op as any;
 			if (unsafeOp.value) delete unsafeOp.value;
 		}
+		*/
 
-		config.onUpdate?.(tree, ops)
-		oldTree = deepClone(tree);
+		config.onUpdate?.(container.children, [])
+		oldTree = deepClone(container.children);
 	});
 	const reconciler = Reconciler(hostConfig);
 
@@ -246,10 +246,8 @@ export const createRenderer = (config: RendererConfig) => {
 			}
 
 			reconciler.updateContainer(element, container._root, null, () => {
-				const tree = container.children[container.children.length - 1];
-
-				config.onInitialRender(tree)
-				oldTree = deepClone(tree);
+				config.onInitialRender(container.children)
+				oldTree = deepClone(container.children);
 			});
 		}
 	};

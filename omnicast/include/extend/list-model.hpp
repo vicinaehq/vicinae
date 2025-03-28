@@ -29,6 +29,7 @@ struct ListModel {
   bool isShowingDetail;
   QString navigationTitle;
   QString searchPlaceholderText;
+  QString onSelectionChanged;
   QString onSearchTextChange;
   QList<ListChild> items;
   std::optional<EmptyViewModel> emptyView;

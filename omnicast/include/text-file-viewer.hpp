@@ -1,9 +1,13 @@
 #include "theme.hpp"
 #include "ui/omni-scroll-bar.hpp"
+#include <KSyntaxHighlighting/repository.h>
+#include <KSyntaxHighlighting/syntaxhighlighter.h>
+#include <KSyntaxHighlighting/theme.h>
 #include <qboxlayout.h>
 #include <qdir.h>
 #include <qnamespace.h>
 #include <qpainter.h>
+#include <qsyntaxhighlighter.h>
 #include <qtextedit.h>
 #include <qwidget.h>
 #include <QTextEdit>
@@ -31,7 +35,7 @@ public:
   void load(const QString &path) {
     QFile file(path);
 
-    if (file.open(QIODevice::ReadOnly | QIODevice::Text)) { edit->setText(file.readAll()); }
+    if (file.open(QIODevice::ReadOnly | QIODevice::Text)) { edit->setPlainText(file.readAll()); }
   }
 
   TextFileViewer() : edit(new QTextEdit()) {

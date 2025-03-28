@@ -2,8 +2,6 @@
 #include "app.hpp"
 #include "clipboard/clipboard-service.hpp"
 #include "omni-icon.hpp"
-#include "theme.hpp"
-#include "ui/action_popover.hpp"
 #include "ui/declarative-omni-list-view.hpp"
 #include "ui/omni-list-view.hpp"
 #include "ui/omni-list.hpp"

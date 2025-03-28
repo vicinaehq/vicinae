@@ -6,6 +6,8 @@ import { ImageLike, SerializedImageLike } from '../image';
 import { SerializedColorLike } from '../color';
 import { KeyboardShortcut } from '../keyboard';
 
+type HandlerId = string;
+
 declare module 'react' {
 	namespace JSX {
 		interface IntrinsicElements {
@@ -21,8 +23,8 @@ declare module 'react' {
 				isShowingDetail?: boolean;
 				searchBarPlaceholder?: string;
 				navigationTitle?: string;
-				onSearchTextChange?: string;
-				onSelectionChange?: (id: string) => void;
+				onSearchTextChange?: HandlerId;
+				onSelectionChange?: HandlerId;
 			},
 			'list-section': {
 				title?: string;

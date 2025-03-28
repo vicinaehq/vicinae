@@ -69,6 +69,7 @@ ListModel ListModelParser::parse(const QJsonObject &instance) {
   model.navigationTitle = props["navigationTitle"].toString("Command");
   model.searchPlaceholderText = props["searchBarPlaceholder"].toString();
   model.onSearchTextChange = props["onSearchTextChange"].toString();
+  model.onSelectionChanged = props["onSelectionChanged"].toString();
 
   size_t index = 0;
 

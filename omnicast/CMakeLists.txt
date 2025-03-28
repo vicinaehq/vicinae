@@ -7,7 +7,7 @@ set(LIBS)
 
 set(TARGET omnicast)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets Sql Network Svg WaylandClient)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Sql Network Svg)
 find_package(cmark REQUIRED)
 find_package(KF6SyntaxHighlighting REQUIRED)
 
@@ -124,11 +124,14 @@ qt_add_executable(${TARGET}
 	include/wm/hyprland/hyprland.hpp
 	include/wm/hyprland/hyprctl.hpp
 
+	include/extension/extension-command.hpp
+	include/extension/extension-view.hpp
+	include/extension/extension-component.hpp
+	include/extension/extension-list-component.hpp
 
 
 	include/extend/extension-list-controller.hpp
 	include/extend/extension-view.hpp
-	include/extend/extension-command.hpp
 	include/extend/extension-detail-view.hpp
 
 	include/ui/button.hpp

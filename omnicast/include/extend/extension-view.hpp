@@ -37,7 +37,7 @@ public slots:
   void render(RenderModel model) {
     if (auto listModel = std::get_if<ListModel>(&model)) {
       if (componentType != "list") {
-        setRootComponent("list", new ExtensionList(*listModel, *this));
+ -       setRootComponent("list", new ExtensionList(*listModel, *this));
       } else {
         static_cast<ExtensionList *>(component)->dispatchModel(*listModel);
       }

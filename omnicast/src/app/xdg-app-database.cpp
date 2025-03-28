@@ -132,6 +132,10 @@ bool XdgAppDatabase::launch(const Application &app, const std::vector<QString> &
 
   qDebug() << "launch" << program << argv;
 
+  process.setStandardInputFile(QProcess::nullDevice());
+  process.setStandardOutputFile(QProcess::nullDevice());
+  process.setStandardErrorFile(QProcess::nullDevice());
+
   if (!process.startDetached(program, argv)) {
     qDebug() << xdgApp.name() << "failed to launch";
     return false;

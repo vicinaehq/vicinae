@@ -19,11 +19,8 @@
 #include <qlocalsocket.h>
 #include <qlogging.h>
 #include <qobject.h>
-#include <QtWaylandClient/QWaylandClientExtension>
 #include <qprocess.h>
 #include <qtmetamacros.h>
-#include <string>
-#include <wayland-util.h>
 #include "omnicast.hpp"
 
 int main(int argc, char **argv) {

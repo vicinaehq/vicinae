@@ -112,6 +112,7 @@ void AppWindow::popCurrentView() {
 
   previous.view->deleteLater();
 
+  qDebug() << "restored actions" << next.actionViewStack.size();
   actionPannel->restoreViewStack(next.actionViewStack);
 
   if (auto action = actionPannel->primaryAction()) {
@@ -210,6 +211,7 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
     cur.query = topBar->input->text();
     cur.placeholderText = topBar->input->placeholderText();
     cur.actionViewStack = actionPannel->takeViewStack();
+    qDebug() << "pushed " << cur.actionViewStack.size() << "actions";
     cur.completer.reset();
 
     if (topBar->quickInput && topBar->completerData) {

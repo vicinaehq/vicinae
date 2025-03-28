@@ -25,13 +25,15 @@
 #include <qurl.h>
 #include <qurlquery.h>
 #include <qwidget.h>
+#include "image-fetcher.hpp"
 #include "theme.hpp"
 #include "ui/omni-painter.hpp"
 
 enum OmniIconType { Invalid, Builtin, Favicon, System, Http, Local };
 
 static std::vector<std::pair<QString, OmniIconType>> iconTypes = {
-    {"favicon", Favicon}, {"omnicast", Builtin}, {"system", System}, {"http", Http}, {"local", Local},
+    {"favicon", Favicon}, {"omnicast", Builtin}, {"system", System},
+    {"http", Http},       {"https", Http},       {"local", Local},
 };
 
 static std::vector<std::pair<QString, ColorTint>> colorTints = {
@@ -206,6 +208,14 @@ public:
   LocalOmniIconUrl(const QString &path) : OmniIconUrl() {
     setType(OmniIconType::Local);
     setName(path);
+  }
+};
+
+class HttpOmniIconUrl : public OmniIconUrl {
+public:
+  HttpOmniIconUrl(const QUrl &url) : OmniIconUrl() {
+    setType(OmniIconType::Http);
+    setName(url.host() + url.path());
   }
 };
 
@@ -426,6 +436,75 @@ public:
   }
 };
 
+class HttpOmniIconWidget : public OmniIconWidget {
+  QString _path;
+  QPixmap _pixmap;
+  QFutureWatcher<QPixmap> watcher;
+  QUrl url;
+
+  void paintEvent(QPaintEvent *event) override {
+    QPainter painter(this);
+
+    if (!_pixmap.isNull()) {
+      int x = (width() - _pixmap.width()) / 2;
+      int y = (height() - _pixmap.height()) / 2;
+
+      painter.drawPixmap(x, y, _pixmap);
+    }
+  }
+
+  void resizeEvent(QResizeEvent *event) override {
+    QWidget::resizeEvent(event);
+    recalculate();
+  }
+
+  void handleImageLoaded() {
+    if (watcher.isCanceled()) { return; }
+
+    if (auto pix = watcher.result(); !pix.isNull()) {
+      _pixmap = pix;
+      update();
+      emit imageLoaded(_pixmap);
+    } else {
+      emit imageLoadingFailed();
+    }
+  }
+
+  void recalculate() {
+    if (!size().isValid()) return;
+
+    if (watcher.isRunning()) {
+      watcher.cancel();
+      watcher.waitForFinished();
+    }
+
+    auto reply = ImageFetcher::instance().fetch(url.toString());
+
+    qDebug() << "fetch " << url.toString();
+
+    connect(reply, &ImageReply::imageLoaded, this, [this, reply](QPixmap pixmap) {
+      qDebug() << "got reply";
+      auto targetSize = size();
+      auto future = QtConcurrent::run([this, targetSize, pixmap]() {
+        return pixmap.scaled(size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+      });
+
+      watcher.setFuture(future);
+      reply->deleteLater();
+    });
+
+    connect(reply, &ImageReply::loadingError, this, [reply]() {
+      qDebug() << "failed to get image";
+      reply->deleteLater();
+    });
+  }
+
+public:
+  HttpOmniIconWidget(const QUrl &url, QWidget *parent) : OmniIconWidget(parent), url(url) {
+    connect(&watcher, &QFutureWatcher<QPixmap>::finished, this, &HttpOmniIconWidget::handleImageLoaded);
+  }
+};
+
 class FaviconOmniIconWidget : public OmniIconWidget {
   QPixmap _favicon;
   QPixmap _pixmap;
@@ -517,6 +596,12 @@ public:
 
     else if (type == OmniIconType::Local) {
       _iconWidget = new LocalOmniIconWidget(url.name(), this);
+    }
+
+    else if (type == OmniIconType::Http) {
+      QUrl httpUrl("https://" + url.name());
+
+      _iconWidget = new HttpOmniIconWidget(httpUrl, this);
     }
 
     if (_iconWidget) {

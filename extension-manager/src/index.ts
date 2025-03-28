@@ -173,9 +173,13 @@ class Omnicast {
 					data
 				};
 
-				console.log(`from worker`, qualifiedPayload);
+				console.log(`from worker`, { qualifiedPayload });
 
 				this.writePacket(Buffer.from(JSON.stringify(qualifiedPayload)));
+			});
+
+			worker.stdout.on('data', (buf) => {
+				console.log('extension says', buf.toString());
 			});
 
 			worker.on('error', (error) => { 
@@ -253,6 +257,8 @@ class Omnicast {
 				console.error(`Cannot forward message to non existant extension session id ${target.id}`);
 				return ;
 			}
+
+			console.log({ message });
 
 			command.postMessage(message);
 		}

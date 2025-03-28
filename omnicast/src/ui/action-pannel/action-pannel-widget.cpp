@@ -66,6 +66,7 @@ void ActionPannelWidget::restoreViewStack(const ActionPannelWidget::ViewStack &s
   takeViewStack();
 
   for (auto it = stack.begin(); it != stack.end(); ++it) {
+    qDebug() << "restore widget";
     _viewLayout->addWidget(it->view);
   }
 

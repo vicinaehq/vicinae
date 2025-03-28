@@ -37,6 +37,7 @@ class Bus {
 	}
 
 	if (envelope.type == 'event') {
+		console.log('got event in extension', envelope);
 		for (const listener of this.listeners) {
 			if (listener.type != envelope.action) continue ;
 

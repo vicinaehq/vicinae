@@ -217,7 +217,6 @@ protected:
     if (widget->isVisible()) {
       qDebug() << "action activated!";
       reload();
-      recreateCurrentActions();
     } else {
       qDebug() << "no reload after action, as we are no longer visible!";
     }

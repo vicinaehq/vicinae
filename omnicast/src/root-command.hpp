@@ -48,7 +48,7 @@
 #include <qthreadpool.h>
 #include <qwidget.h>
 #include "command-database.hpp"
-#include "wm/window-manager.hpp"
+#include "extension/extension-command.hpp"
 
 struct OpenBuiltinCommandAction : public AbstractAction {
   BuiltinCommand cmd;
@@ -67,15 +67,15 @@ struct OpenBuiltinCommandAction : public AbstractAction {
 
 using CommandFactory = std::function<ViewCommand *(AppWindow &app, const QString &arg)>;
 
-struct OpenCommandAction : public AbstractAction {
-  CommandFactory factory;
-  QString arg;
+struct OpenExtensionCommandAction : public AbstractAction {
+  Extension::Command cmd;
 
-  void execute(AppWindow &app) override { app.launchCommand(factory(app, arg), {}); }
+  void execute(AppWindow &app) override {
+    app.launchCommand(new ExtensionCommand(app, cmd.extensionId, cmd.name));
+  }
 
-  OpenCommandAction(CommandFactory factory, const QString &title, const QString &iconName,
-                    const QString &arg = "")
-      : AbstractAction(title, iconName), factory(factory), arg(arg) {}
+  OpenExtensionCommandAction(const Extension::Command &cmd)
+      : AbstractAction(cmd.title, BuiltinOmniIconUrl("cog")), cmd(cmd) {}
 };
 
 class ColorListItem : public OmniList::AbstractVirtualItem, public DeclarativeOmniListView::IActionnable {
@@ -257,24 +257,26 @@ class RootView : public DeclarativeOmniListView {
         : link(link), query(fallbackQuery) {}
   };
 
-  /*
-  class ExtensionListItem : public StandardListItem {
+  class ExtensionListItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
     Extension::Command cmd;
 
-    QWidget *createItem() const override {
-      return new ListItemWidget(
-          ImageViewer::createFromModel(ThemeIconModel{.iconName = ":icons/cog.svg"}, {25, 25}), cmd.name,
-          cmd.title, "Command");
+    ItemData data() const override {
+      return {.iconUrl = BuiltinOmniIconUrl("cog"), .name = cmd.name, .category = cmd.title};
     }
 
-    QList<AbstractAction *> createActions() const override {}
+    QString id() const override { return cmd.extensionId + cmd.name; }
+
+    std::vector<ActionItem> generateActionPannel() const override {
+      std::vector<ActionItem> items;
+
+      items.push_back(std::make_unique<OpenExtensionCommandAction>(cmd));
+
+      return items;
+    }
 
   public:
-    ExtensionListItem(const Extension::Command &cmd)
-        : StandardListItem(cmd.name, cmd.title, "Command", ThemeIconModel{.iconName = ":icons/cog.svg"}),
-          cmd(cmd) {}
+    ExtensionListItem(const Extension::Command &cmd) : cmd(cmd) {}
   };
-  */
 
   class BaseCalculatorListItem : public OmniList::AbstractVirtualItem,
                                  public DeclarativeOmniListView::IActionnable {
@@ -311,6 +313,12 @@ public:
   std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> generateBaseSearch() {
     std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> list;
     list.push_back(std::make_unique<OmniList::VirtualSection>("Commands"));
+
+    for (const auto &extension : extensionManager.extensions()) {
+      for (const auto &cmd : extension.commands) {
+        list.push_back(std::make_unique<ExtensionListItem>(cmd));
+      }
+    }
 
     for (const auto &cmd : commandDb.list()) {
       list.push_back(std::make_unique<BuiltinCommandListItem>(cmd));
@@ -382,17 +390,13 @@ public:
       }
     }
 
-    /*
-  for (const auto &extension : extensionManager.extensions()) {
-  for (const auto &cmd : extension.commands) {
-    if (!cmd.name.contains(s, Qt::CaseInsensitive)) continue;
+    for (const auto &extension : extensionManager.extensions()) {
+      for (const auto &cmd : extension.commands) {
+        if (!cmd.name.contains(s, Qt::CaseInsensitive)) continue;
 
-    auto item = std::make_shared<ExtensionListItem>(cmd);
-
-    model->addItem(item);
-  }
-  }
-    */
+        list.push_back(std::make_unique<ExtensionListItem>(cmd));
+      }
+    }
 
     auto &commandDb = service<CommandDatabase>();
 

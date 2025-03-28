@@ -1,6 +1,7 @@
 #pragma once
 #include "extend/list-model.hpp"
 #include "extend/root-detail-model.hpp"
+#include <qjsonarray.h>
 #include <qjsonobject.h>
 
 struct InvalidModel {
@@ -14,5 +15,5 @@ class ModelParser {
 public:
   ModelParser();
 
-  RenderModel parse(const QJsonObject &tree);
+  std::vector<RenderModel> parse(const QJsonArray &views);
 };

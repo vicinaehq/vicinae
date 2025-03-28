@@ -24,7 +24,7 @@ cmake -B build
 cmake --build build
 ./build/omnicast daemon
 
-# to open the launcher window once the daemon is running
+# to open the 
 ./build/omnicast launcher
 ```
 

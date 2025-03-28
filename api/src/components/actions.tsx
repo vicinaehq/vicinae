@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-import { AppInfo, useNavigation } from "../hooks";
+import { AppInfo, useNavigation } from "../hooks/index";
 import { Clipboard } from "../clipboard";
 import { ImageLike, serializeImageLike } from "../image";
 import { KeyboardShortcut } from "../keyboard";

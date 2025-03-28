@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common.hpp"
+#include "timer.hpp"
 #include <qlogging.h>
 #include <qnetworkaccessmanager.h>
 #include <qnetworkdiskcache.h>
@@ -25,10 +26,15 @@ class ImageReply : public QObject {
       return;
     }
 
+    Timer timer;
     auto buf = reply->readAll();
+    timer.time("read image");
     QPixmap pix;
 
+    timer.start();
+
     pix.loadFromData(buf);
+    timer.time("image loading");
     emit imageLoaded(pix);
   }
 
@@ -59,6 +65,7 @@ public:
     QString directory =
         QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QLatin1StringView("/omnicast/");
     qDebug() << "cache dir" << directory;
+    diskCache->setCacheDirectory(directory);
     manager->setCache(diskCache);
   }
 

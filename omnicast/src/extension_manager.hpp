@@ -4,6 +4,8 @@
 #include <QJsonArray>
 #include <QString>
 #include <QUuid>
+#include <cstdint>
+#include <netinet/in.h>
 #include <qdebug.h>
 #include <qdir.h>
 #include <qhash.h>
@@ -134,9 +136,10 @@ class DataDecoder : public QObject {
 
 public slots:
   void processData(const QByteArray &data) {
+    qDebug() << "processing packet of size " << data.size();
     auto json = QJsonDocument::fromJson(data);
 
-    QTextStream(stdout) << json.toJson();
+    // QTextStream(stdout) << json.toJson();
     auto msg = parseFullMessage(json.object());
 
     emit messageParsed(msg);
@@ -148,6 +151,13 @@ signals:
 
 class Bus : public QObject {
   Q_OBJECT
+
+  struct MessageBuffer {
+    QByteArray data;
+    uint32_t length;
+  };
+
+  MessageBuffer _message = {.length = 0};
 
   QThread *workerThread = nullptr;
   DataDecoder *worker = nullptr;
@@ -278,6 +288,27 @@ private slots:
   }
 
   void readyRead() {
+    // TODO: optimize to avoid pointless copies
+
+    while (socket->bytesAvailable() > 0) {
+      _message.data.append(socket->readAll());
+
+      if (_message.length == 0 && _message.data.size() >= sizeof(uint32_t)) {
+        _message.length = ntohl(*reinterpret_cast<uint32_t *>(_message.data.data()));
+        _message.data = _message.data.sliced(sizeof(uint32_t));
+      }
+
+      if (_message.length > 0 && _message.data.size() >= _message.length) {
+        auto packet = _message.data.sliced(0, _message.length);
+
+        emit worker->processData(packet);
+        _message.data = _message.data.sliced(_message.length);
+        _message.length = 0;
+      }
+    }
+  }
+
+  void readyRead2() {
     while (socket->bytesAvailable() > 0) {
       auto start = std::chrono::high_resolution_clock::now();
       auto buf = socket->readAll();

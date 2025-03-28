@@ -1,16 +1,30 @@
 #include "extend/model-parser.hpp"
 #include "extend/list-model.hpp"
 #include "extend/root-detail-model.hpp"
+#include <qjsonarray.h>
 #include <qjsonobject.h>
 
 ModelParser::ModelParser() {}
 
-RenderModel ModelParser::parse(const QJsonObject &instance) {
-  auto type = instance.value("type").toString();
+std::vector<RenderModel> ModelParser::parse(const QJsonArray &views) {
+  std::vector<RenderModel> renderedViews;
 
-  if (type == "list") { return ListModelParser().parse(instance); }
+  renderedViews.reserve(views.size());
 
-  if (type == "detail") { return RootDetailModelParser().parse(instance); }
+  for (const auto &viewTree : views) {
+    auto instance = viewTree.toObject();
+    auto type = instance.value("type").toString();
 
-  return InvalidModel{QString("Component of type %1 cannot be used as the root").arg(type)};
+    if (type == "list") {
+      renderedViews.push_back(ListModelParser().parse(instance));
+      qDebug() << "push list model with";
+    } else if (type == "detail") {
+      renderedViews.push_back(RootDetailModelParser().parse(instance));
+    } else {
+      renderedViews.push_back(
+          InvalidModel{QString("Component of type %1 cannot be used as the root").arg(type)});
+    }
+  }
+
+  return renderedViews;
 }

@@ -4,6 +4,7 @@ import { bus } from '../bus';
 import { randomUUID } from 'crypto';
 import { Metadata } from './metadata';
 import { EmptyView } from './empty-view';
+import { useEventListener } from '../hooks';
 
 export type ListProps = {
 	actions?: React.ReactNode;
@@ -32,26 +33,23 @@ export type ListItemDetailProps = {
 	metadata?: React.ReactNode
 };
 
-const ListRoot: React.FC<ListProps> = ({ onSearchTextChange, ...props }) => {
-	const handlerId = useRef<string>(randomUUID());
+const ListRoot: React.FC<ListProps> = ({ onSearchTextChange, onSelectionChange, ...props }) => {
+	const searchTextChangeHandler = useEventListener(onSearchTextChange);
+	const selectionChangeHandler = useEventListener(onSelectionChange);
 
-	useEffect(() => {
-		if (onSearchTextChange) {
-			console.log(`mount handler ${handlerId.current}`);
-			bus!.subscribe(handlerId.current, onSearchTextChange);
-			
-			return () => { bus!.unsubscribe(handlerId.current); }
-		}
-	}, []);
-
-	return <list onSearchTextChange={onSearchTextChange ? handlerId.current : undefined} {...props} />;
+	return <list 
+		onSearchTextChange={searchTextChangeHandler} 
+		onSelectionChange={selectionChangeHandler} 
+		{...props}
+	/>;
 }
 
 const ListItem: React.FC<ListItemProps> = ({ detail, actions, ...props }) => {
+	const id = useRef(props.id ?? randomUUID());
 	const nativeProps: React.JSX.IntrinsicElements['list-item'] = {
 		title: props.title,
 		subtitle: props.subtitle,
-		id: props.id,
+		id: id.current
 	};
 
 	if (props.icon) nativeProps.icon = serializeImageLike(props.icon);
