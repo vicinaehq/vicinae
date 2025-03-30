@@ -45,9 +45,9 @@
 template <class T> using Service = T &;
 
 class View;
-class ViewCommand;
+class ViewCommandContext;
 class ExtensionView;
-class Command;
+class CommandContext;
 
 class ViewDisplayer : public QWidget {
   QVBoxLayout *layout;
@@ -74,7 +74,7 @@ struct ViewSnapshot {
 
 struct CommandSnapshot {
   QStack<ViewSnapshot> viewStack;
-  ViewCommand *command;
+  ViewCommandContext *command;
 };
 
 struct NavigationStatus {
@@ -172,7 +172,7 @@ public:
 
   void popToRoot();
 
-  void launchCommand(ViewCommand *cmd, const LaunchCommandOptions &opts = {});
+  void launchCommand(const std::shared_ptr<AbstractCommand> &cmd, const LaunchCommandOptions &opts = {});
 
   AppWindow(QWidget *parent = 0);
   bool event(QEvent *event) override;

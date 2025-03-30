@@ -1,102 +1,34 @@
 #pragma once
+#include "command-database.hpp"
 #include "omni-icon.hpp"
+#include "preference.hpp"
 #include <qjsonobject.h>
 #include <qstring.h>
 #include <filesystem>
 #include <qstringview.h>
 
-class Extension {
+class Extension : public AbstractCommandRepository {
 public:
-  enum ArgumentType { ArgumentText, ArgumentPassword, ArgumentDropdown };
-
-  struct Argument {
-    QString name;
-    ArgumentType type;
-    QString placeholder;
-    bool required;
-  };
-
-  struct Command {
-    QString name;
+  struct CommandBase : public AbstractCommand {
+    QString _name;
     QString title;
     QString subtitle;
     QString description;
     QString mode;
-    QString extensionId;
   };
-
-  enum PreferenceType {
-    TextFieldPreferenceType,
-    PasswordPreferenceType,
-    CheckboxPreferenceType,
-    DropdownPreferenceType,
-    AppPickerPreferenceType,
-    FilePreferenceType,
-    DirectoryPreferenceType,
-  };
-
-  struct BasePreference {
-    QString name;
-    QString title;
-    QString description;
-    PreferenceType type;
-    bool required;
-    QString placeholder;
-  };
-
-  struct TextFieldPreference : BasePreference {
-    QString defaultValue;
-
-    explicit TextFieldPreference(const BasePreference &base) : BasePreference(base) {}
-  };
-
-  struct PasswordPreference : BasePreference {
-    QString defaultValue;
-  };
-
-  struct CheckboxPreference : BasePreference {
-    QString label;
-    bool defaultValue;
-  };
-
-  struct AppPickerPreference : BasePreference {
-    QString defaultValue;
-  };
-
-  struct FilePreference : BasePreference {
-    std::filesystem::path defaultValue;
-  };
-
-  struct DirectoryPreference : BasePreference {
-    std::filesystem::path defaultValue;
-  };
-
-  struct DropdownPreference : BasePreference {
-    struct DropdownOption {
-      QString title;
-      QString value;
-    };
-
-    std::vector<DropdownOption> data;
-    QString defaultValue;
-  };
-
-  using Preference =
-      std::variant<BasePreference, TextFieldPreference, CheckboxPreference, DropdownPreference,
-                   PasswordPreference, AppPickerPreference, FilePreference, DirectoryPreference>;
-  using PreferenceList = std::vector<Preference>;
-  using ArgumentList = std::vector<Argument>;
 
 private:
   QString _id;
   QString _icon;
   std::filesystem::path _path;
   PreferenceList _preferences;
-  std::vector<Command> _commands;
+  std::vector<std::shared_ptr<AbstractCommand>> _commands;
 
   explicit Extension(const QJsonObject &object);
 
 public:
+  Extension() {}
+
   static Extension fromObject(const QJsonObject &object);
 
   Preference parsePreferenceFromObject(const QJsonObject &obj) {
@@ -171,10 +103,11 @@ public:
     return BasePreference(base);
   }
 
-  QStringView id() const;
-  OmniIconUrl iconUrl() const;
+  QString id() const override;
+  QString name() const override;
+  OmniIconUrl iconUrl() const override;
   std::filesystem::path assetDirectory() const;
   std::filesystem::path installedPath() const;
-  const PreferenceList &preferences() const;
-  const std::vector<Command> &commands() const;
+  std::vector<Preference> preferences() const override;
+  std::vector<std::shared_ptr<AbstractCommand>> commands() const override;
 };

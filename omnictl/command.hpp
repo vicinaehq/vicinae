@@ -39,9 +39,9 @@ struct Flag {
   std::string description;
 };
 
-class Command {
-  const Command *_parent = nullptr;
-  std::vector<std::unique_ptr<Command>> _subcommands;
+class CommandContext {
+  const CommandContext *_parent = nullptr;
+  std::vector<std::unique_ptr<CommandContext>> _subcommands;
   std::vector<Flag> _flags;
   std::string _name;
   std::string _description;
@@ -58,35 +58,35 @@ public:
   void setFlag(const Flag &flag);
   void addAlias(const std::string &alias);
   const std::vector<std::string> &aliases() const;
-  void setParent(const Command &parent);
+  void setParent(const CommandContext &parent);
   void addPositional(const std::string &name);
 
   void start(const std::vector<std::string> &args) const;
 
-  void registerCommand(std::unique_ptr<Command> cmd);
+  void registerCommand(std::unique_ptr<CommandContext> cmd);
   const std::string &name() const;
   const std::string &description() const;
 
 public:
-  Command(const std::string &name, const std::string &description = "");
+  CommandContext(const std::string &name, const std::string &description = "");
 };
 
-class CmdCommand : public Command {
-  class PushCommand : public Command {
+class CmdCommand : public CommandContext {
+  class PushCommand : public CommandContext {
     void execute(const std::vector<std::string> &args) const override {
       std::cout << "argument: " << args.at(0);
       auto res = CommandClient::oneshot("command.push", Proto::Array{args.at(0)});
     }
 
   public:
-    PushCommand() : Command("push", "Push a command on top of the navigation stack") {
+    PushCommand() : CommandContext("push", "Push a command on top of the navigation stack") {
       addPositional("command_id");
     }
   };
 
-  class PopCommand : public Command {
+  class PopCommand : public CommandContext {
   public:
-    PopCommand() : Command("pop", "Pop the command at the top of the navigation stack") {
+    PopCommand() : CommandContext("pop", "Pop the command at the top of the navigation stack") {
       setFlag({
           .longOpt = "all",
           .shortOpt = 'a',
@@ -95,7 +95,7 @@ class CmdCommand : public Command {
     }
   };
 
-  class ListCommand : public Command {
+  class ListCommand : public CommandContext {
     void execute(const std::vector<std::string> &args) const override {
       auto result = CommandClient::oneshot("command.list");
       auto commands = result.value().asArray();
@@ -116,13 +116,13 @@ class CmdCommand : public Command {
     }
 
   public:
-    ListCommand() : Command("list", "List available commands") {}
+    ListCommand() : CommandContext("list", "List available commands") {}
   };
 
   // void execute(const std::vector<std::string> &args) const override { std::cout << "execute"; }
 
 public:
-  CmdCommand() : Command("command", "Interact with omnicast commands") {
+  CmdCommand() : CommandContext("command", "Interact with omnicast commands") {
     addAlias("cmd");
     registerCommand(std::make_unique<PushCommand>());
     registerCommand(std::make_unique<PopCommand>());
@@ -130,8 +130,8 @@ public:
   }
 };
 
-class ClipboardCommand : public Command {
-  class StoreCommand : public Command {
+class ClipboardCommand : public CommandContext {
+  class StoreCommand : public CommandContext {
     void execute(const std::vector<std::string> &args) const override {
       std::string data;
       char buf[8096];
@@ -147,7 +147,7 @@ class ClipboardCommand : public Command {
     }
 
   public:
-    StoreCommand() : Command("store", "Store a new item in clipboard") {
+    StoreCommand() : CommandContext("store", "Store a new item in clipboard") {
       addAlias("add");
       addAlias("push");
     }
@@ -156,13 +156,13 @@ class ClipboardCommand : public Command {
   void execute(const std::vector<std::string> &args) const override { std::cout << "clipboard"; }
 
 public:
-  ClipboardCommand() : Command("clipboard", "Interact with the clipboard managerl") {
+  ClipboardCommand() : CommandContext("clipboard", "Interact with the clipboard managerl") {
     addAlias("clip");
     registerCommand(std::make_unique<StoreCommand>());
   }
 };
 
-class ToogleCommand : public Command {
+class ToogleCommand : public CommandContext {
   void execute(const std::vector<std::string> &args) const override {
     auto res = CommandClient::oneshot("toggle");
 
@@ -170,10 +170,10 @@ class ToogleCommand : public Command {
   }
 
 public:
-  ToogleCommand() : Command("toggle", "Toggle omnicast window") {}
+  ToogleCommand() : CommandContext("toggle", "Toggle omnicast window") {}
 };
 
-class PingCommand : public Command {
+class PingCommand : public CommandContext {
   void execute(const std::vector<std::string> &args) const override {
     auto reply = CommandClient::oneshot("ping");
 
@@ -181,28 +181,28 @@ class PingCommand : public Command {
   }
 
 public:
-  PingCommand() : Command("ping", "Ping omnicast daemon") {}
+  PingCommand() : CommandContext("ping", "Ping omnicast daemon") {}
 };
 
-class VersionCommand : public Command {
+class VersionCommand : public CommandContext {
   void execute(const std::vector<std::string> &args) const override {
     std::cout << OMNICAST_VERSION << std::endl;
   }
 
 public:
-  VersionCommand() : Command("version", "Print omnicast version") { addAlias("ver"); }
+  VersionCommand() : CommandContext("version", "Print omnicast version") { addAlias("ver"); }
 };
 
-class AppCommand : public Command {
+class AppCommand : public CommandContext {
   void execute(const std::vector<std::string> &args) const override { std::cout << "appuh!" << std::endl; }
 
 public:
-  AppCommand() : Command("app", "Interact with the app database") { addAlias("apps"); }
+  AppCommand() : CommandContext("app", "Interact with the app database") { addAlias("apps"); }
 };
 
-class Omnictl : public Command {
+class Omnictl : public CommandContext {
   void execute(const std::vector<std::string> &args) const override { printHelp(); }
 
 public:
-  Omnictl() : Command("omnictl") {}
+  Omnictl() : CommandContext("omnictl") {}
 };

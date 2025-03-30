@@ -4,7 +4,6 @@
 #include "ui/action-pannel/action-item.hpp"
 #include "ui/action-pannel/open-with-action.hpp"
 #include "app.hpp"
-#include "calculator-history-command.hpp"
 #include "command.hpp"
 #include "extension_manager.hpp"
 #include "omni-icon.hpp"
@@ -20,7 +19,6 @@
 #include "quicklink-actions.hpp"
 #include <QtConcurrent/QtConcurrent>
 #include <cmath>
-#include <functional>
 #include <memory>
 #include <qbrush.h>
 #include <qcoreevent.h>
@@ -36,36 +34,16 @@
 #include <qnetworkcookiejar.h>
 #include <qthreadpool.h>
 #include <qwidget.h>
-#include "command-database.hpp"
-#include "extension/extension-command.hpp"
 
 struct OpenBuiltinCommandAction : public AbstractAction {
   std::shared_ptr<AbstractCommand> cmd;
   QString text;
 
-  void execute(AppWindow &app) override {
-    if (cmd->type() == CommandTypeView) {
-      auto viewCommand = static_cast<AbstractViewCommand *>(cmd.get());
-
-      emit app.launchCommand(viewCommand->launch(app, text));
-    }
-  }
+  void execute(AppWindow &app) override { app.launchCommand(cmd, {}); }
 
   OpenBuiltinCommandAction(const std::shared_ptr<AbstractCommand> &cmd, const QString &title = "Open command",
                            const QString &text = "")
       : AbstractAction(title, cmd->iconUrl()), cmd(cmd), text(text) {}
-};
-
-using CommandFactory = std::function<ViewCommand *(AppWindow &app, const QString &arg)>;
-
-struct OpenExtensionCommandAction : public AbstractAction {
-  Extension extension;
-  Extension::Command cmd;
-
-  void execute(AppWindow &app) override { app.launchCommand(new ExtensionCommand(app, extension, cmd)); }
-
-  OpenExtensionCommandAction(const Extension extension, const Extension::Command &cmd)
-      : AbstractAction(cmd.title, BuiltinOmniIconUrl("cog")), extension(extension), cmd(cmd) {}
 };
 
 class ColorListItem : public OmniList::AbstractVirtualItem, public DeclarativeOmniListView::IActionnable {
@@ -238,29 +216,6 @@ class RootView : public DeclarativeOmniListView {
         : link(link), query(fallbackQuery) {}
   };
 
-  class ExtensionListItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
-    Extension extension;
-    Extension::Command cmd;
-
-    ItemData data() const override {
-      return {.iconUrl = extension.iconUrl(), .name = cmd.name, .category = cmd.title};
-    }
-
-    QString id() const override { return cmd.extensionId + cmd.name; }
-
-    std::vector<ActionItem> generateActionPannel() const override {
-      std::vector<ActionItem> items;
-
-      items.push_back(std::make_unique<OpenExtensionCommandAction>(extension, cmd));
-
-      return items;
-    }
-
-  public:
-    ExtensionListItem(const Extension &extension, const Extension::Command &cmd)
-        : extension(extension), cmd(cmd) {}
-  };
-
   class BaseCalculatorListItem : public OmniList::AbstractVirtualItem,
                                  public DeclarativeOmniListView::IActionnable {
   protected:
@@ -299,11 +254,11 @@ public:
 
     for (const auto &extension : extensionManager.extensions()) {
       for (const auto &cmd : extension.commands()) {
-        list.push_back(std::make_unique<ExtensionListItem>(extension, cmd));
+        list.push_back(std::make_unique<BuiltinCommandListItem>(cmd));
       }
     }
 
-    for (const auto &repository : commandDb.list()) {
+    for (const auto &repository : commandDb.repositories()) {
       for (const auto &cmd : repository->commands()) {
         list.push_back(std::make_unique<BuiltinCommandListItem>(cmd));
       }
@@ -377,15 +332,15 @@ public:
 
     for (const auto &extension : extensionManager.extensions()) {
       for (const auto &cmd : extension.commands()) {
-        if (!cmd.name.contains(s, Qt::CaseInsensitive)) continue;
+        if (!cmd->name().contains(s, Qt::CaseInsensitive)) continue;
 
-        list.push_back(std::make_unique<ExtensionListItem>(extension, cmd));
+        list.push_back(std::make_unique<BuiltinCommandListItem>(cmd));
       }
     }
 
     auto &commandDb = service<CommandDatabase>();
 
-    for (const auto &repo : commandDb.list()) {
+    for (const auto &repo : commandDb.repositories()) {
       for (const auto &cmd : repo->commands()) {
         if (!cmd->name().contains(s, Qt::CaseInsensitive)) continue;
 
@@ -416,34 +371,11 @@ public:
     return list;
   }
 
-  void onMount() override {
-    setSearchPlaceholderText("Search for apps or commands...");
-
-    auto watcher = new QFutureWatcher<std::vector<AiModel>>;
-
-    connect(watcher, &QFutureWatcher<std::vector<AiModel>>::finished, this, [watcher]() {
-      if (watcher->isCanceled()) {
-        qDebug() << "cancelled";
-        return;
-      }
-
-      if (watcher->isFinished()) {
-        for (const auto &model : watcher->result()) {
-          qDebug() << "MODEL " << model.id;
-        }
-      }
-    });
-
-    watcher->setFuture(app.aiProvider->models());
-  }
+  void onMount() override { setSearchPlaceholderText("Search for apps or commands..."); }
 
   RootView(AppWindow &app)
       : DeclarativeOmniListView(app), app(app), appDb(service<AbstractAppDatabase>()),
         extensionManager(service<ExtensionManager>()), quicklinkDb(service<QuicklistDatabase>()),
         commandDb(service<CommandDatabase>()) {}
   ~RootView() {}
-};
-
-class RootCommand : public ViewCommand {
-  View *load(AppWindow &app) override { return new RootView(app); }
 };

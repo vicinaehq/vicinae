@@ -1,7 +1,6 @@
 #pragma once
 #include "app.hpp"
 #include "common.hpp"
-#include "ui/action_popover.hpp"
 #include <qboxlayout.h>
 #include <qcompare.h>
 #include <qevent.h>
@@ -105,7 +104,7 @@ public slots:
 
 signals:
   void activatePrimaryAction();
-  void launchCommand(ViewCommand *command, const LaunchCommandOptions &opts = {});
+  void launchCommand(ViewCommandContext *command, const LaunchCommandOptions &opts = {});
   void pushView(View *view, const PushViewOptions &options = {});
   // Pops the view from the navigation stack.
   void pop();

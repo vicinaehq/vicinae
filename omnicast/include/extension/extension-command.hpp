@@ -36,14 +36,12 @@ public:
         _model(model) {}
 };
 
-class ExtensionCommand : public ViewCommand {
+class ExtensionCommandContext : public ViewCommandContext {
   Q_OBJECT
 
   std::vector<ExtensionView *> viewStack;
   Extension extension;
-  Extension::Command command;
   QString sessionId;
-  AppWindow &app;
   QFutureWatcher<std::vector<RenderModel>> modelWatcher;
 
 private slots:
@@ -65,7 +63,7 @@ private slots:
         viewStack.at(i)->render(model);
       } else {
         qDebug() << "creating new view";
-        auto view = new ExtensionView(app);
+        auto view = new ExtensionView(*app());
 
         pushView(view);
         view->render(model);
@@ -84,32 +82,31 @@ private slots:
       }
     }
 
-    app.actionPannel->setActions(std::move(items));
+    app()->actionPannel->setActions(std::move(items));
 
-    if (auto action = app.actionPannel->primaryAction()) {
-      app.statusBar->setAction(*action);
+    if (auto action = app()->actionPannel->primaryAction()) {
+      app()->statusBar->setAction(*action);
     } else {
-      app.statusBar->clearAction();
+      app()->statusBar->clearAction();
     }
   }
 
   void pushView(ExtensionView *view) {
     if (!viewStack.empty()) {
       auto view = viewStack.at(viewStack.size() - 1);
-      disconnect(view, &ExtensionView::notifyEvent, this, &ExtensionCommand::handleNotifiedEvent);
+      disconnect(view, &ExtensionView::notifyEvent, this, &ExtensionCommandContext::handleNotifiedEvent);
     }
 
-    connect(view, &ExtensionView::notifyEvent, this, &ExtensionCommand::handleNotifiedEvent);
-    connect(view, &ExtensionView::updateActionPannel, this, &ExtensionCommand::updateActionPannel);
+    connect(view, &ExtensionView::notifyEvent, this, &ExtensionCommandContext::handleNotifiedEvent);
+    connect(view, &ExtensionView::updateActionPannel, this, &ExtensionCommandContext::updateActionPannel);
 
     viewStack.push_back(view);
-    app.pushView(view,
-                 {.navigation = NavigationStatus{.title = command.name, .iconUrl = extension.iconUrl()}});
+    app()->pushView(view, {.navigation = NavigationStatus{.title = "fixme", .iconUrl = extension.iconUrl()}});
   }
 
   void handlePopViewRequest() {
     viewStack.pop_back();
-    app.popCurrentView();
+    app()->popCurrentView();
   }
 
   void extensionRequest(const QString &sessionId, const QString &id, const QString &action,
@@ -121,7 +118,7 @@ private slots:
     if (action == "list-applications") {
       QJsonArray apps;
 
-      for (const auto &app : app.appDb->list()) {
+      for (const auto &app : app()->appDb->list()) {
         if (!app->displayable()) continue;
 
         QJsonObject appObj;
@@ -137,23 +134,23 @@ private slots:
 
       responseData["apps"] = apps;
 
-      app.extensionManager->respond(id, responseData);
+      app()->extensionManager->respond(id, responseData);
     }
 
     if (action == "clipboard-copy") {
-      app.clipboardService->copyText(payload.value("text").toString());
-      app.statusBar->setToast("Copied into clipboard");
-      app.extensionManager->respond(id, {});
+      app()->clipboardService->copyText(payload.value("text").toString());
+      app()->statusBar->setToast("Copied into clipboard");
+      app()->extensionManager->respond(id, {});
     }
 
     if (action == "push-view") {
-      pushView(new ExtensionView(app));
-      app.extensionManager->respond(id, {});
+      pushView(new ExtensionView(*app()));
+      app()->extensionManager->respond(id, {});
     }
 
     if (action == "pop-view") {
       handlePopViewRequest();
-      app.extensionManager->respond(id, {});
+      app()->extensionManager->respond(id, {});
     }
   }
 
@@ -193,7 +190,7 @@ private slots:
     }
 
     obj["args"] = arr;
-    app.extensionManager->emitExtensionEvent(this->sessionId, handlerId, obj);
+    app()->extensionManager->emitExtensionEvent(this->sessionId, handlerId, obj);
   }
 
   void actionExecuted(AbstractAction *action) {
@@ -205,40 +202,50 @@ private slots:
   }
 
 public:
-  ExtensionCommand(AppWindow &app, const Extension &extension, const Extension::Command &command)
-      : app(app), extension(extension), command(command) {}
+  ExtensionCommandContext(AppWindow &app, const std::shared_ptr<AbstractCommand> &command)
+      : ViewCommandContext(&app, command), extension() {}
 
-  ~ExtensionCommand() {}
+  ~ExtensionCommandContext() {}
 
-  View *load(AppWindow &app) override {
-    connect(&modelWatcher, &QFutureWatcher<RenderModel>::finished, this, &ExtensionCommand::modelCreated);
-    connect(app.extensionManager.get(), &ExtensionManager::commandLoaded, this,
-            &ExtensionCommand::commandLoaded);
-    connect(app.extensionManager.get(), &ExtensionManager::extensionEvent, this,
-            &ExtensionCommand::extensionEvent);
-    connect(app.extensionManager.get(), &ExtensionManager::extensionRequest, this,
-            &ExtensionCommand::extensionRequest);
-    connect(&app, &AppWindow::actionExecuted, this, &ExtensionCommand::actionExecuted);
+  View *view() const override { return viewStack.at(0); }
 
-    connect(&app, &AppWindow::currentViewPoped, this, [this, &app]() {
+  void load() override {
+    viewStack.push_back(new ExtensionView(*app()));
+
+    connect(&modelWatcher, &QFutureWatcher<RenderModel>::finished, this,
+            &ExtensionCommandContext::modelCreated);
+    connect(app()->extensionManager.get(), &ExtensionManager::commandLoaded, this,
+            &ExtensionCommandContext::commandLoaded);
+    connect(app()->extensionManager.get(), &ExtensionManager::extensionEvent, this,
+            &ExtensionCommandContext::extensionEvent);
+    connect(app()->extensionManager.get(), &ExtensionManager::extensionRequest, this,
+            &ExtensionCommandContext::extensionRequest);
+    connect(app(), &AppWindow::actionExecuted, this, &ExtensionCommandContext::actionExecuted);
+    connect(app(), &AppWindow::currentViewPoped, this, [this]() {
       qDebug() << "curent view poped from extension";
       viewStack.pop_back();
 
       if (!viewStack.empty()) {
         auto top = viewStack.at(viewStack.size() - 1);
 
-        connect(top, &ExtensionView::notifyEvent, this, &ExtensionCommand::handleNotifiedEvent);
+        connect(top, &ExtensionView::notifyEvent, this, &ExtensionCommandContext::handleNotifiedEvent);
       }
 
-      app.extensionManager->emitExtensionEvent(sessionId, "pop-view", {});
+      app()->extensionManager->emitExtensionEvent(sessionId, "pop-view", {});
     });
 
-    app.extensionManager->loadCommand(extension.id().toString(), command.name);
-
-    return nullptr;
+    // TODO: fix this
+    // app()->extensionManager->loadCommand(extension.id().toString(), command.name);
   }
 
-  void unload(AppWindow &app) override {
-    if (!sessionId.isEmpty()) app.extensionManager->unloadCommand(sessionId);
+  void unload() override {
+    if (!sessionId.isEmpty()) app()->extensionManager->unloadCommand(sessionId);
+  }
+};
+
+class ExtensionViewCommand : public AbstractViewCommand {
+  ViewCommandContext *createContext(AppWindow &app, const std::shared_ptr<AbstractCommand> &command,
+                                    const QString &query) const override {
+    return new ExtensionCommandContext(app, command);
   }
 };

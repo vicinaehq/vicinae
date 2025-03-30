@@ -140,7 +140,7 @@ void AppWindow::popCurrentView() {
   qDebug() << "view stack size" << activeCommand.viewStack.size();
 
   if (activeCommand.viewStack.size() == 1) {
-    activeCommand.command->unload(*this);
+    activeCommand.command->unload();
     activeCommand.command->deleteLater();
     commandStack.pop();
     qDebug() << "popping cmd stack now" << commandStack.size();
@@ -166,7 +166,6 @@ void AppWindow::disconnectView(View &view) {
   disconnect(&view, &View::pushView, this, &AppWindow::pushView);
   disconnect(&view, &View::pop, this, &AppWindow::popCurrentView);
   disconnect(&view, &View::popToRoot, this, &AppWindow::popToRootView);
-  disconnect(&view, &View::launchCommand, this, &AppWindow::launchCommand);
   disconnect(&view, &View::activatePrimaryAction, this, &AppWindow::selectPrimaryAction);
 
   view.removeEventFilter(this);
@@ -181,7 +180,6 @@ void AppWindow::connectView(View &view) {
   connect(&view, &View::pushView, this, &AppWindow::pushView);
   connect(&view, &View::pop, this, &AppWindow::popCurrentView);
   connect(&view, &View::popToRoot, this, &AppWindow::popToRootView);
-  connect(&view, &View::launchCommand, this, &AppWindow::launchCommand);
   connect(&view, &View::activatePrimaryAction, this, &AppWindow::selectPrimaryAction);
 
   view.onAttach();
@@ -249,12 +247,19 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
   QTimer::singleShot(0, [view]() { view->onMount(); });
 }
 
-void AppWindow::launchCommand(ViewCommand *cmd, const LaunchCommandOptions &opts) {
-  commandStack.push({.command = cmd});
+void AppWindow::launchCommand(const std::shared_ptr<AbstractCommand> &command,
+                              const LaunchCommandOptions &opts) {
+  if (command->type() == CommandModeView) {
+    auto viewCommand = std::static_pointer_cast<AbstractViewCommand>(command);
+    auto ctx = viewCommand->createContext(*this, command, opts.searchQuery);
 
-  auto view = cmd->load(*this);
+    ctx->load();
+    commandStack.push({.command = ctx});
 
-  if (view) { pushView(view, {.searchQuery = opts.searchQuery, .navigation = opts.navigation}); }
+    NavigationStatus navigation{.title = command->name(), .iconUrl = command->iconUrl()};
+
+    pushView(ctx->view(), {.searchQuery = opts.searchQuery, .navigation = navigation});
+  }
 }
 
 void AppWindow::resizeEvent(QResizeEvent *event) { QMainWindow::resizeEvent(event); }
@@ -306,7 +311,7 @@ std::variant<CommandResponse, CommandError> AppWindow::handleCommand(const Comma
   if (message.type == "command.list") {
     Proto::Array results;
 
-    for (const auto &repo : commandDb->list()) {
+    for (const auto &repo : commandDb->repositories()) {
       Proto::Dict result;
 
       for (const auto &cmd : repo->commands()) {
@@ -326,7 +331,7 @@ std::variant<CommandResponse, CommandError> AppWindow::handleCommand(const Comma
 
     auto id = args.at(0).asString();
 
-    if (auto cmd = commandDb->findById(id.c_str())) {
+    if (auto cmd = commandDb->findCommand(id.c_str())) {
       /*
 emit launchCommand(cmd->factory(*this, ""),
                {.navigation = NavigationStatus{.title = cmd->name, .iconUrl = cmd->iconUrl}});
@@ -344,13 +349,9 @@ emit launchCommand(cmd->factory(*this, ""),
 
 void AppWindow::selectPrimaryAction() {
   if (auto action = actionPannel->primaryAction()) { executeAction(action); }
-
-  // if (auto first = actionPannel->actionnable(0)) { executeAction(first); }
 }
 
-void AppWindow::selectSecondaryAction() {
-  // if (auto second = actionPannel->actionnable(1)) { executeAction(second); }
-}
+void AppWindow::selectSecondaryAction() {}
 
 void AppWindow::executeAction(AbstractAction *action) {
   auto executor = commandStack.top().viewStack.top().view;
@@ -470,7 +471,9 @@ AppWindow::AppWindow(QWidget *parent)
 
   setCentralWidget(widget);
 
-  launchCommand(new RootCommand);
+  auto rootCommand = CommandBuilder("root").toView<RootView>();
+
+  launchCommand(rootCommand);
 }
 
 template <> Service<QuicklistDatabase> AppWindow::service<QuicklistDatabase>() const {

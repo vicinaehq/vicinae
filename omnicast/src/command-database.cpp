@@ -1,6 +1,7 @@
 #include "command-database.hpp"
 #include "calculator-history-command.hpp"
 #include "clipboard-history-command.hpp"
+#include "create-quicklink-command.hpp"
 #include "emoji-command.hpp"
 #include "icon-browser-command.hpp"
 #include "ask-ai-command.hpp"
@@ -10,6 +11,7 @@
 #include "manage-themes-command.hpp"
 #include "omni-icon.hpp"
 #include "theme.hpp"
+#include "ui/emoji-viewer.hpp"
 #include "ui/peepobank-command.hpp"
 #include <memory>
 #include <qfuture.h>
@@ -32,11 +34,27 @@ OmniIconUrl tintedCommandIcon(const QString &iconName, ColorTint tint) {
   return url.setFill(color).setBackgroundTint(tint);
 }
 
-const AbstractCommand *CommandDatabase::findById(const QString &id) {
-  for (const auto &repository : list()) {
-    for (const auto &cmd : repository->commands()) {
+const AbstractCommand *CommandDatabase::findCommand(const QString &id) {
+  if (auto repo = findRepository(id)) {
+    for (const auto &cmd : repo->commands()) {
       if (cmd->id() == id) { return cmd.get(); }
     }
+  }
+
+  return nullptr;
+}
+
+const std::vector<std::shared_ptr<AbstractCommandRepository>> &CommandDatabase::repositories() const {
+  return _repositories;
+}
+
+void CommandDatabase::registerRepository(const std::shared_ptr<AbstractCommandRepository> &repo) {
+  _repositories.push_back(repo);
+}
+
+const AbstractCommandRepository *CommandDatabase::findRepository(const QString &id) {
+  for (const auto &repository : repositories()) {
+    if (repository->id() == id) return repository.get();
   }
 
   return nullptr;
@@ -45,23 +63,24 @@ const AbstractCommand *CommandDatabase::findById(const QString &id) {
 CommandDatabase::CommandDatabase() {
 
   {
-    auto emoji = ViewCommandBuilder<EmojiView>("emoji-symbols")
+    auto emoji = CommandBuilder("emoji-symbols")
                      .withName("Search Emojis & Symbols")
                      .withTintedIcon("emoji", ColorTint::Red)
-                     .makeShared();
-    auto clipboardHistory = ViewCommandBuilder<ClipboardHistoryCommand>("clipboard-history")
+                     .toView<EmojiView>();
+
+    auto clipboardHistory = CommandBuilder("clipboard-history")
                                 .withName("Clipboard History")
                                 .withTintedIcon("copy-clipboard", ColorTint::Red)
-                                .makeShared();
-    auto iconSearch = ViewCommandBuilder<IconBrowserView>("")
+                                .toView<ClipboardHistoryCommand>();
+    auto iconSearch = CommandBuilder("browse-icons")
                           .withName("Search Omnicast Icons")
                           .withTintedIcon("omnicast", ColorTint::Red)
-                          .makeShared();
+                          .toView<IconBrowserView>();
 
-    auto peepobank = ViewCommandBuilder<PeepobankView>("peepobank")
+    auto peepobank = CommandBuilder("peepobank")
                          .withName("Peepobank")
                          .withTintedIcon("emoji", ColorTint::Red)
-                         .makeShared();
+                         .toView<PeepobankView>();
 
     auto omnicast = CommandRepositoryBuilder("omnicast")
                         .withName("Omnicast")
@@ -75,8 +94,7 @@ CommandDatabase::CommandDatabase() {
   }
 
   {
-    auto history =
-        ViewCommandBuilder<CalculatorHistoryView>("history").withName("Calculator History").makeShared();
+    auto history = CommandBuilder("history").withName("Calculator History").toView<CalculatorHistoryView>();
     auto calculator = CommandRepositoryBuilder("calculator")
                           .withName("Calculator")
                           .withTintedIcon("calculator", ColorTint::Red)
@@ -87,14 +105,10 @@ CommandDatabase::CommandDatabase() {
   }
 
   {
-    auto create =
-        ViewCommandBuilder<QuicklinkCommandView>("create").withName("Create Quicklink").makeShared();
-    auto manage =
-        ViewCommandBuilder<ManageQuicklinksView>("manage").withName("Manage Quicklinks").makeShared();
-    auto _export =
-        ViewCommandBuilder<ManageQuicklinksView>("export").withName("Export Quicklinks").makeShared();
-    auto _import =
-        ViewCommandBuilder<ManageQuicklinksView>("import").withName("Import Quicklinks").makeShared();
+    auto create = CommandBuilder("create").withName("Create Quicklink").toView<QuicklinkCommandView>();
+    auto manage = CommandBuilder("manage").withName("Manage Quicklinks").toView<ManageQuicklinksView>();
+    auto _export = CommandBuilder("export").withName("Export Quicklinks").toView<ManageQuicklinksView>();
+    auto _import = CommandBuilder("import").withName("Import Quicklinks").toView<ManageQuicklinksView>();
     auto quicklinks = CommandRepositoryBuilder("quicklinks")
                           .withName("Quicklinks")
                           .withTintedIcon("link", ColorTint::Red)
@@ -109,7 +123,7 @@ CommandDatabase::CommandDatabase() {
 
   {
     auto switchWindows =
-        ViewCommandBuilder<SwitchWindowsCommand>("switch-windows").withName("Switch Windows").makeShared();
+        CommandBuilder("switch-windows").withName("Switch Windows").toView<SwitchWindowsCommand>();
     auto wm = CommandRepositoryBuilder("window-management")
                   .withName("Window Management")
                   .withTintedIcon("app-window-list", ColorTint::Blue)
@@ -120,7 +134,7 @@ CommandDatabase::CommandDatabase() {
   }
 
   {
-    auto manage = ViewCommandBuilder<ManageThemesView>("manage").withName("Manage Themes").makeShared();
+    auto manage = CommandBuilder("manage").withName("Manage Themes").toView<ManageThemesView>();
     auto theme = CommandRepositoryBuilder("theme")
                      .withName("Theme")
                      .withTintedIcon("brush", ColorTint::Purple)
@@ -130,7 +144,33 @@ CommandDatabase::CommandDatabase() {
     registerRepository(theme);
   }
 
-  { auto peepobank = ViewCommandBuilder<PeepobankView>("peepobank").withName("Peepobank").makeShared(); }
+  {
+    auto diagnostics =
+        CommandBuilder("extension-diagnostics").withName("Extension Diagnostics").toView<ManageThemesView>();
+    auto create = CommandBuilder("create-extension").withName("Create Extension").toView<ManageThemesView>();
+    auto _import = CommandBuilder("import-extension").withName("Import Extension").toView<ManageThemesView>();
+    auto manage =
+        CommandBuilder("manage-extensions").withName("Manage Extensions").toView<ManageThemesView>();
+    auto developer = CommandRepositoryBuilder("developer")
+                         .withName("Developer")
+                         .withTintedIcon("hammer", ColorTint::Magenta)
+                         .withCommand(diagnostics)
+                         .withCommand(create)
+                         .withCommand(_import)
+                         .withCommand(manage)
+                         .makeShared();
 
-  { auto quickAsk = ViewCommandBuilder<AskAiCommandView>("quick").withName("Quick AI").makeShared(); }
+    registerRepository(developer);
+  }
+
+  {
+    auto quickAsk = CommandBuilder("quick").withName("Quick AI").toView<AskAiCommandView>();
+    auto ai = CommandRepositoryBuilder("ai")
+                  .withName("AI")
+                  .withTintedIcon("stars", ColorTint::Red)
+                  .withCommand(quickAsk)
+                  .makeShared();
+
+    registerRepository(ai);
+  }
 }

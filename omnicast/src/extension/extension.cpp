@@ -1,10 +1,9 @@
 #include "extension/extension.hpp"
+#include "command-database.hpp"
+#include "extension/extension-command.hpp"
 #include "omni-icon.hpp"
 #include <qjsonobject.h>
 #include <qjsonarray.h>
-
-using PreferenceList = Extension::PreferenceList;
-using Command = Extension::Command;
 
 OmniIconUrl Extension::iconUrl() const {
   if (!_icon.isEmpty()) { return LocalOmniIconUrl(assetDirectory() / _icon.toStdString()); }
@@ -12,15 +11,17 @@ OmniIconUrl Extension::iconUrl() const {
   return BuiltinOmniIconUrl("hammer").setBackgroundTint(ColorTint::Blue);
 }
 
-QStringView Extension::id() const { return _id; }
+QString Extension::id() const { return _id; }
+
+QString Extension::name() const { return _id; }
 
 std::filesystem::path Extension::assetDirectory() const { return _path / "assets"; }
 
 std::filesystem::path Extension::installedPath() const { return _path; }
 
-const PreferenceList &Extension::preferences() const { return _preferences; }
+PreferenceList Extension::preferences() const { return _preferences; }
 
-const std::vector<Command> &Extension::commands() const { return _commands; }
+std::vector<std::shared_ptr<AbstractCommand>> Extension::commands() const { return _commands; }
 
 Extension Extension::fromObject(const QJsonObject &obj) { return Extension(obj); }
 
@@ -43,13 +44,16 @@ Extension::Extension(const QJsonObject &obj) {
 
   for (const auto &cmd : commandList) {
     auto cmdObj = cmd.toObject();
-    Extension::Command finalCmd{.name = cmdObj["name"].toString(),
-                                .title = cmdObj["title"].toString(),
-                                .subtitle = cmdObj["subtitle"].toString(),
-                                .description = cmdObj["description"].toString(),
-                                .mode = cmdObj["mode"].toString(),
-                                .extensionId = _id};
+    /*
+Extension::CommandBase base{.name = cmdObj["name"].toString(),
+                            .title = cmdObj["title"].toString(),
+                            .subtitle = cmdObj["subtitle"].toString(),
+                            .description = cmdObj["description"].toString(),
+                            .mode = cmdObj["mode"].toString()};
 
-    _commands.push_back(finalCmd);
+if (base.mode == "view") { _commands.push_back(std::make_shared<ExtensionViewCommand>(base)); }
+
+_commands.push_back(finalCmd);
+    */
   }
 }

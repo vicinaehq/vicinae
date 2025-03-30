@@ -1,29 +1,43 @@
 #pragma once
-
 #include <qobject.h>
 #include <qdebug.h>
+
+class AbstractCommand;
 
 class AppWindow;
 class View;
 
-class Command : public QObject {};
+class CommandContext : public QObject {
+  AppWindow *_app;
+  std::shared_ptr<AbstractCommand> _cmd;
 
-class ViewCommand : public Command {
 public:
-  ViewCommand() {}
+  AppWindow *app() const { return _app; }
+  const AbstractCommand *command() const { return _cmd.get(); }
 
-  virtual View *load(AppWindow &) = 0;
-  virtual void unload(AppWindow &) {}
+  virtual void load() {}
+  virtual void unload() {};
 
-  ~ViewCommand() { qDebug() << "destroyed view"; }
+  CommandContext(AppWindow *app, const std::shared_ptr<AbstractCommand> &command) : _app(app) {}
 };
 
-class HeadlessCommand : public Command {
+class ViewCommandContext : public CommandContext {
+public:
+  ViewCommandContext(AppWindow *app, const std::shared_ptr<AbstractCommand> &command)
+      : CommandContext(app, command) {}
+
+  virtual View *view() const = 0;
+
+  ~ViewCommandContext() { qDebug() << "destroyed view"; }
+};
+
+class HeadlessCommand : public CommandContext {
   virtual void load() = 0;
 };
 
-template <typename T> class SingleViewCommand : public ViewCommand {
-  View *load(AppWindow &app) override { return new T(app); }
-
-  void unload(AppWindow &) override { qDebug() << "Command unloaded"; }
+template <typename T> class SingleViewCommand : public ViewCommandContext {
+public:
+  SingleViewCommand(AppWindow *app, const std::shared_ptr<AbstractCommand> &command)
+      : ViewCommandContext(app, command) {}
+  View *view() const override { return new T(*app()); }
 };

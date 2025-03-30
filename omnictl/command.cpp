@@ -3,7 +3,7 @@
 #include <exception>
 #include <iomanip>
 
-std::string Command::fullStringName() const {
+std::string CommandContext::fullStringName() const {
   std::string s = "";
 
   if (_parent) { s += _parent->fullStringName(); }
@@ -13,14 +13,14 @@ std::string Command::fullStringName() const {
   return s += name();
 }
 
-void Command::registerCommand(std::unique_ptr<Command> cmd) {
+void CommandContext::registerCommand(std::unique_ptr<CommandContext> cmd) {
   cmd->setParent(*this);
   _subcommands.push_back(std::move(cmd));
 }
 
-void Command::execute(const std::vector<std::string> &args) const { printHelp(); }
+void CommandContext::execute(const std::vector<std::string> &args) const { printHelp(); }
 
-void Command::start(const std::vector<std::string> &args) const {
+void CommandContext::start(const std::vector<std::string> &args) const {
   auto pos = _positionals;
   auto &scmds = _subcommands;
 
@@ -53,13 +53,13 @@ void Command::start(const std::vector<std::string> &args) const {
   }
 }
 
-void Command::setFlag(const Flag &flag) { _flags.push_back(flag); }
-void Command::addAlias(const std::string &alias) { _aliases.push_back(alias); }
-const std::vector<std::string> &Command::aliases() const { return _aliases; }
-void Command::setParent(const Command &parent) { _parent = &parent; }
-void Command::addPositional(const std::string &name) { _positionals.push_back(name); }
+void CommandContext::setFlag(const Flag &flag) { _flags.push_back(flag); }
+void CommandContext::addAlias(const std::string &alias) { _aliases.push_back(alias); }
+const std::vector<std::string> &CommandContext::aliases() const { return _aliases; }
+void CommandContext::setParent(const CommandContext &parent) { _parent = &parent; }
+void CommandContext::addPositional(const std::string &name) { _positionals.push_back(name); }
 
-void Command::printHelp(std::ostream &os) const {
+void CommandContext::printHelp(std::ostream &os) const {
   os << Color::YELLOW << "USAGE:\n" << Color::WHITE;
   os << std::string(4, ' ') << fullStringName();
 
@@ -125,11 +125,11 @@ void Command::printHelp(std::ostream &os) const {
   }
 }
 
-const std::string &Command::name() const { return _name; }
+const std::string &CommandContext::name() const { return _name; }
 
-const std::string &Command::description() const { return _description; }
+const std::string &CommandContext::description() const { return _description; }
 
-Command::Command(const std::string &name, const std::string &description)
+CommandContext::CommandContext(const std::string &name, const std::string &description)
     : _name(name), _description(description) {
   setFlag(Flag{.longOpt = "help", .shortOpt = 'c', .description = "Print this help message"});
 }
