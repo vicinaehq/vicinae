@@ -5,6 +5,8 @@
 #include <QString>
 #include <QUuid>
 #include <cstdint>
+#include "extension/extension.hpp"
+#include <filesystem>
 #include <netinet/in.h>
 #include <qdebug.h>
 #include <qdir.h>
@@ -23,36 +25,6 @@
 #include <qtypes.h>
 #include <quuid.h>
 #include <unistd.h>
-
-struct MessageBuilder {
-  QString id;
-  QString type;
-  QJsonObject data;
-
-  static MessageBuilder create(const QString &type, QJsonObject data) {
-    auto id = QUuid::createUuid().toString(QUuid::StringFormat::WithoutBraces);
-
-    return {id, type, data};
-  }
-
-  static MessageBuilder createReply(const MessageBuilder &lhs, QJsonObject data) {
-    return {lhs.id, lhs.type, data};
-  }
-};
-
-struct Extension {
-  struct Command {
-    QString name;
-    QString title;
-    QString subtitle;
-    QString description;
-    QString mode;
-    QString extensionId;
-  };
-
-  QString sessionId;
-  QList<Extension::Command> commands;
-};
 
 struct LoadedCommand {
   QString sessionId;
@@ -308,25 +280,6 @@ private slots:
     }
   }
 
-  void readyRead2() {
-    while (socket->bytesAvailable() > 0) {
-      auto start = std::chrono::high_resolution_clock::now();
-      auto buf = socket->readAll();
-      auto end = std::chrono::high_resolution_clock::now();
-      auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-      qDebug() << "read stuff in" << duration << "ms";
-
-      QDataStream dataStream(&buf, QIODevice::ReadOnly);
-      QByteArray data;
-
-      while (!dataStream.atEnd()) {
-        dataStream >> data;
-
-        emit worker->processData(data);
-      }
-    }
-  }
-
 public:
 signals:
   void managerResponse(const QString &action, QJsonObject &data);
@@ -407,10 +360,10 @@ class ExtensionManager : public QObject {
   QLocalServer ipc;
   QString socketPath = "/tmp/omnicast-extension-manager.sock";
   Bus *bus = nullptr;
-  QList<Extension> loadedExtensions;
+  std::vector<Extension> loadedExtensions;
 
 public:
-  const QList<Extension> &extensions() const { return loadedExtensions; }
+  const std::vector<Extension> &extensions() const { return loadedExtensions; }
 
   bool respond(const QString &id, const QJsonObject &payload) { return bus->respond(id, payload); }
 
@@ -471,28 +424,16 @@ public slots:
   void flush() { bus->flush(); }
 
   void parseListExtensionData(QJsonObject &obj) {
-    QList<Extension> extensions;
+    std::vector<Extension> extensions;
+    auto extensionList = obj["extensions"].toArray();
 
-    for (const auto &ext : obj["extensions"].toArray()) {
-      auto extObj = ext.toObject();
-      Extension extension{.sessionId = extObj["sessionId"].toString()};
+    extensions.reserve(extensionList.size());
 
-      for (const auto &cmd : extObj["commands"].toArray()) {
-        auto cmdObj = cmd.toObject();
-        Extension::Command finalCmd{.name = cmdObj["name"].toString(),
-                                    .title = cmdObj["title"].toString(),
-                                    .subtitle = cmdObj["subtitle"].toString(),
-                                    .description = cmdObj["description"].toString(),
-                                    .mode = cmdObj["mode"].toString(),
-                                    .extensionId = extension.sessionId};
-
-        extension.commands.push_back(finalCmd);
-      }
-
-      extensions.push_back(extension);
+    for (const auto &ext : extensionList) {
+      extensions.push_back(Extension::fromObject((ext.toObject())));
     }
 
-    loadedExtensions = extensions;
+    loadedExtensions = std::move(extensions);
   }
 
   void handleManagerResponse(const QString &action, QJsonObject &data) {

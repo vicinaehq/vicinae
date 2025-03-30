@@ -17,12 +17,14 @@
 #include "ui/action-pannel/action-section.hpp"
 #include "ui/action_popover.hpp"
 #include "theme.hpp"
+#include "ui/horizontal-loading-bar.hpp"
 #include "ui/top_bar.hpp"
 #include <QLabel>
 #include <QMainWindow>
 #include <QThread>
 #include "clipboard/clipboard-server.hpp"
 #include <QVBoxLayout>
+#include <csetjmp>
 #include <memory>
 #include <qboxlayout.h>
 #include <qevent.h>
@@ -304,12 +306,14 @@ std::variant<CommandResponse, CommandError> AppWindow::handleCommand(const Comma
   if (message.type == "command.list") {
     Proto::Array results;
 
-    for (const auto &cmd : commandDb->list()) {
+    for (const auto &repo : commandDb->list()) {
       Proto::Dict result;
 
-      result["id"] = cmd.id.toUtf8().constData();
-      result["name"] = cmd.name.toUtf8().constData();
-      results.push_back(result);
+      for (const auto &cmd : repo->commands()) {
+        result["id"] = cmd->id().toUtf8().constData();
+        result["name"] = cmd->name().toUtf8().constData();
+        results.push_back(result);
+      }
     }
 
     return results;
@@ -323,8 +327,10 @@ std::variant<CommandResponse, CommandError> AppWindow::handleCommand(const Comma
     auto id = args.at(0).asString();
 
     if (auto cmd = commandDb->findById(id.c_str())) {
-      emit launchCommand(cmd->factory(*this, ""),
-                         {.navigation = NavigationStatus{.title = cmd->name, .iconUrl = cmd->iconUrl}});
+      /*
+emit launchCommand(cmd->factory(*this, ""),
+               {.navigation = NavigationStatus{.title = cmd->name, .iconUrl = cmd->iconUrl}});
+      */
       setVisible(true);
 
       return true;
@@ -355,6 +361,7 @@ void AppWindow::executeAction(AbstractAction *action) {
 
   if (!action->isPushView()) {
     emit action->didExecute();
+    emit actionExecuted(action);
     executor->onActionActivated(action);
 
     if (auto cb = action->executionCallback()) { cb(); }
@@ -371,7 +378,7 @@ void AppWindow::closeWindow(bool withPopToRoot) {
 
 AppWindow::AppWindow(QWidget *parent)
     : QMainWindow(parent), topBar(new TopBar()), viewDisplayer(new ViewDisplayer), statusBar(new StatusBar()),
-      actionPannel(new ActionPannelWidget(this)) {
+      actionPannel(new ActionPannelWidget(this)), _loadingBar(new HorizontalLoadingBar(this)) {
   setWindowFlags(Qt::FramelessWindowHint);
   setAttribute(Qt::WA_TranslucentBackground, true);
 
@@ -444,10 +451,13 @@ AppWindow::AppWindow(QWidget *parent)
   layout->setSpacing(0);
   layout->setContentsMargins(0, 0, 0, 0);
 
+  _loadingBar->setFixedHeight(1);
+  _loadingBar->setBarWidth(100);
+
   layout->setAlignment(Qt::AlignTop);
   topBar->input->installEventFilter(this);
   layout->addWidget(topBar);
-  layout->addWidget(new HDivider);
+  layout->addWidget(_loadingBar);
   layout->addWidget(viewDisplayer, 1);
   layout->addWidget(new HDivider);
   layout->addWidget(statusBar);

@@ -51,6 +51,8 @@ public:
       }
 
       connect(component, &AbstractExtensionRootComponent::notifyEvent, this, &ExtensionView::notifyEvent);
+      connect(component, &AbstractExtensionRootComponent::updateActionPannel, this,
+              &ExtensionView::updateActionPannel);
 
       _component = component;
       _modelIndex = model.index();
@@ -61,5 +63,6 @@ public:
   }
 
 signals:
-  void notifyEvent(const QString &handler, const QJsonObject &payload) const;
+  void notifyEvent(const QString &handler, const std::vector<QJsonValue> &args) const;
+  void updateActionPannel(const ActionPannelModel &model) const;
 };

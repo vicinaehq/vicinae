@@ -1,6 +1,7 @@
 #pragma once
 
 #include "builtin_icon.hpp"
+#include "extend/image-model.hpp"
 #include "favicon/favicon-service.hpp"
 #include <QtConcurrent/qtconcurrentrun.h>
 #include <QtSvg/qsvgrenderer.h>
@@ -151,6 +152,17 @@ public:
 
   OmniIconUrl() : _bgTint(InvalidTint), _fgTint(InvalidTint) {}
   OmniIconUrl(const QString &s) noexcept { *this = std::move(QUrl(s)); }
+  OmniIconUrl(const ImageLikeModel &model) {
+    if (auto urlModel = std::get_if<ImageUrlModel>(&model)) {
+      QUrl url(urlModel->url);
+
+      *this = std::move(QUrl(QString("icon://https/%1%2").arg(url.host(), url.path())));
+    } else if (auto themeIcon = std::get_if<ThemeIconModel>(&model)) {
+      *this = std::move(QUrl(QString("icon://system/%1").arg(themeIcon->iconName)));
+    } else if (auto fileModel = std::get_if<ImageFileModel>(&model)) {
+      *this = std::move(QUrl(QString("icon://local/%1").arg(fileModel->path)));
+    }
+  }
   OmniIconUrl(const QUrl &url) : _bgTint(InvalidTint), _fgTint(InvalidTint) {
     if (url.scheme() != "icon") { return; }
 
@@ -208,6 +220,9 @@ public:
   LocalOmniIconUrl(const QString &path) : OmniIconUrl() {
     setType(OmniIconType::Local);
     setName(path);
+  }
+  LocalOmniIconUrl(const std::filesystem::path &path) : OmniIconUrl() {
+    *this = std::move(QString(path.c_str()));
   }
 };
 

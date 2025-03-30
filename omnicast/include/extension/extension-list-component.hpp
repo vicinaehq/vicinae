@@ -1,6 +1,5 @@
 #pragma once
 #include "app.hpp"
-#include "extend/image-model.hpp"
 #include "extend/list-model.hpp"
 #include "extension/extension-component.hpp"
 #include "omni-icon.hpp"
@@ -13,10 +12,8 @@ class ExtensionListItem : public AbstractDefaultListItem {
   ListItemViewModel _item;
 
   ItemData data() const override {
-    auto url = std::get<ImageUrlModel>(_item.icon);
-
     return {
-        .iconUrl = HttpOmniIconUrl(QUrl(url.url)),
+        .iconUrl = OmniIconUrl(_item.icon),
         .name = _item.title,
         .category = _item.subtitle,
     };
@@ -25,7 +22,7 @@ class ExtensionListItem : public AbstractDefaultListItem {
   QString id() const override { return _item.id; }
 
 public:
-  const ListItemViewModel &model() { return _item; }
+  const ListItemViewModel &model() const { return _item; }
 
   ExtensionListItem(const ListItemViewModel &model) : _item(model) {}
 };
@@ -48,30 +45,14 @@ class ExtensionListComponent : public AbstractExtensionRootComponent {
   QVBoxLayout *_layout;
   OmniList *_list;
 
-  void notifyTextChanged(const QString &text) {
-    QJsonObject payload;
-    auto args = QJsonArray();
-
-    args.push_back(text);
-    payload["args"] = args;
-    emit notifyEvent(_model.onSearchTextChange, payload);
-  }
-
-  void notiftySelectionChanged(const QString &text) {
-    QJsonObject payload;
-    auto args = QJsonArray();
-
-    args.push_back(text);
-    payload["args"] = args;
-    emit notifyEvent(_model.onSelectionChanged, payload);
-  }
-
 public:
   void render(const RenderModel &baseModel) override {
     _model = std::get<ListModel>(baseModel);
 
     if (!_model.navigationTitle.isEmpty()) { setNavigationTitle(_model.navigationTitle); }
     if (!_model.searchPlaceholderText.isEmpty()) { setSearchPlaceholderText(_model.searchPlaceholderText); }
+
+    setLoading(_model.isLoading);
 
     std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> items;
 
@@ -98,7 +79,13 @@ public:
                           const OmniList::AbstractVirtualItem *previous) {
     if (!next) return;
 
-    if (auto handler = _model.onSelectionChanged; !handler.isEmpty()) { notiftySelectionChanged(next->id()); }
+    auto item = static_cast<const ExtensionListItem *>(next);
+
+    if (auto pannel = item->model().actionPannel) { emit updateActionPannel(*pannel); }
+
+    if (auto handler = _model.onSelectionChanged; !handler.isEmpty()) {
+      emit notifyEvent(handler, {next->id()});
+    }
   }
 
   void onSearchChanged(const QString &text) override {
@@ -106,7 +93,7 @@ public:
       _list->setFilter(std::make_unique<BuiltinExtensionItemFilter>(text));
     }
 
-    if (!_model.onSearchTextChange.isEmpty()) { notifyTextChanged(text); }
+    if (auto handler = _model.onSearchTextChange; !handler.isEmpty()) { emit notifyEvent(handler, {text}); }
   }
 
   ExtensionListComponent(AppWindow &app)

@@ -106,6 +106,7 @@ class AskAiCommandView : public View {
     if (isGenerating) return;
 
     clearSearchText();
+    setLoading(true);
     setNavigationTitle("Ask AI - Generating...");
 
     isGenerating = true;
@@ -118,11 +119,13 @@ class AskAiCommandView : public View {
     });
     connect(completion, &StreamedChatCompletion::finished, this, [this]() {
       isGenerating = false;
+      setLoading(false);
       setNavigationTitle("Ask AI");
     });
     connect(completion, &StreamedChatCompletion::errorOccured, this, [this](const QString &error) {
       isGenerating = false;
       setNavigationTitle("Ask AI");
+      setLoading(false);
       qDebug() << "Failed to stream" << error;
     });
 

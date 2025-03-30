@@ -1,9 +1,15 @@
 #pragma once
 #include "command.hpp"
+#include "extend/action-model.hpp"
 #include "extend/model-parser.hpp"
 #include "extension/extension-view.hpp"
+#include "extension/extension.hpp"
 #include "extension_manager.hpp"
+#include "omni-icon.hpp"
+#include "ui/action-pannel/action-item.hpp"
+#include "ui/action-pannel/action.hpp"
 #include <iostream>
+#include <memory>
 #include <qboxlayout.h>
 #include <qfuturewatcher.h>
 #include <qjsonarray.h>
@@ -17,12 +23,25 @@
 #include <qtmetamacros.h>
 #include <qwidget.h>
 
+class ExtensionAction : public AbstractAction {
+  ActionModel _model;
+
+public:
+  void execute(AppWindow &app) override {}
+
+  const ActionModel &model() const { return _model; }
+
+  ExtensionAction(const ActionModel &model)
+      : AbstractAction(model.title, model.icon ? OmniIconUrl(*model.icon) : BuiltinOmniIconUrl("pen")),
+        _model(model) {}
+};
+
 class ExtensionCommand : public ViewCommand {
   Q_OBJECT
 
   std::vector<ExtensionView *> viewStack;
-  QString extensionId;
-  QString commandName;
+  Extension extension;
+  Extension::Command command;
   QString sessionId;
   AppWindow &app;
   QFutureWatcher<std::vector<RenderModel>> modelWatcher;
@@ -32,12 +51,6 @@ private slots:
     sessionId = cmd.sessionId;
 
     qDebug() << "Extension command loaded from new extension command" << sessionId;
-  }
-
-  void forwardExtensionEvent(const QString &action, const QJsonObject &obj) {
-
-    qDebug() << "forward action" << action;
-    app.extensionManager->emitExtensionEvent(this->sessionId, action, obj);
   }
 
   void modelCreated() {
@@ -60,16 +73,38 @@ private slots:
     }
   }
 
+  void updateActionPannel(const ActionPannelModel &model) {
+    std::vector<ActionItem> items;
+
+    items.reserve(model.children.size());
+
+    for (const auto &item : model.children) {
+      if (auto actionModel = std::get_if<ActionModel>(&item)) {
+        items.push_back(std::make_unique<ExtensionAction>(*actionModel));
+      }
+    }
+
+    app.actionPannel->setActions(std::move(items));
+
+    if (auto action = app.actionPannel->primaryAction()) {
+      app.statusBar->setAction(*action);
+    } else {
+      app.statusBar->clearAction();
+    }
+  }
+
   void pushView(ExtensionView *view) {
     if (!viewStack.empty()) {
       auto view = viewStack.at(viewStack.size() - 1);
-      disconnect(view, &ExtensionView::notifyEvent, this, &ExtensionCommand::forwardExtensionEvent);
+      disconnect(view, &ExtensionView::notifyEvent, this, &ExtensionCommand::handleNotifiedEvent);
     }
 
-    connect(view, &ExtensionView::notifyEvent, this, &ExtensionCommand::forwardExtensionEvent);
+    connect(view, &ExtensionView::notifyEvent, this, &ExtensionCommand::handleNotifiedEvent);
+    connect(view, &ExtensionView::updateActionPannel, this, &ExtensionCommand::updateActionPannel);
 
     viewStack.push_back(view);
-    app.pushView(view);
+    app.pushView(view,
+                 {.navigation = NavigationStatus{.title = command.name, .iconUrl = extension.iconUrl()}});
   }
 
   void handlePopViewRequest() {
@@ -93,7 +128,7 @@ private slots:
 
         appObj["id"] = app->id();
         appObj["name"] = app->name();
-        appObj["icon"] = app->iconUrl().toString();
+        appObj["icon"] = app->iconUrl().name();
 
         apps.push_back(appObj);
       }
@@ -149,9 +184,29 @@ private slots:
     }
   }
 
+  void handleNotifiedEvent(const QString &handlerId, const std::vector<QJsonValue> &args) {
+    QJsonObject obj;
+    QJsonArray arr;
+
+    for (const auto &arg : args) {
+      arr.push_back(arg);
+    }
+
+    obj["args"] = arr;
+    app.extensionManager->emitExtensionEvent(this->sessionId, handlerId, obj);
+  }
+
+  void actionExecuted(AbstractAction *action) {
+    auto extensionAction = static_cast<ExtensionAction *>(action);
+
+    if (auto handler = extensionAction->model().onAction; !handler.isEmpty()) {
+      handleNotifiedEvent(handler, {});
+    }
+  }
+
 public:
-  ExtensionCommand(AppWindow &app, const QString &extensionId, const QString &commandName)
-      : app(app), extensionId(extensionId), commandName(commandName) {}
+  ExtensionCommand(AppWindow &app, const Extension &extension, const Extension::Command &command)
+      : app(app), extension(extension), command(command) {}
 
   ~ExtensionCommand() {}
 
@@ -163,6 +218,7 @@ public:
             &ExtensionCommand::extensionEvent);
     connect(app.extensionManager.get(), &ExtensionManager::extensionRequest, this,
             &ExtensionCommand::extensionRequest);
+    connect(&app, &AppWindow::actionExecuted, this, &ExtensionCommand::actionExecuted);
 
     connect(&app, &AppWindow::currentViewPoped, this, [this, &app]() {
       qDebug() << "curent view poped from extension";
@@ -171,13 +227,13 @@ public:
       if (!viewStack.empty()) {
         auto top = viewStack.at(viewStack.size() - 1);
 
-        connect(top, &ExtensionView::notifyEvent, this, &ExtensionCommand::forwardExtensionEvent);
+        connect(top, &ExtensionView::notifyEvent, this, &ExtensionCommand::handleNotifiedEvent);
       }
 
       app.extensionManager->emitExtensionEvent(sessionId, "pop-view", {});
     });
 
-    app.extensionManager->loadCommand(extensionId, commandName);
+    app.extensionManager->loadCommand(extension.id().toString(), command.name);
 
     return nullptr;
   }

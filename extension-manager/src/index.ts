@@ -8,19 +8,56 @@ import { renderView } from "./view";
 
 const EXTENSION_DIR = "/home/aurelle/.local/share/omnicast/extensions/installed";
 
+type ExtensionArgumentBase = {
+	name: string;
+	type: 'text' | 'password' | 'dropdown';
+	placeholder: string;
+	required?: boolean;
+};
+
+type ExtensionDropdownArgument = {
+	data: { title: string, value: string };
+};
+
+type ExtensionArgument = ExtensionArgumentBase | ExtensionDropdownArgument;
+
 type ExtensionCommand = {
 	name: string;
 	title: string;
 	subtitle: string;
 	description: string;
+	arguments: ExtensionArgument[];
 	mode: string;
 	componentPath: string;
 };
 
+type ExtensionPreferenceBase = {
+	name: string;
+	title: string;
+	description: string;
+	type: 'textfield' | 'password' | 'checkbox' | 'dropdown' | 'appPicker' |'file' | 'directory';
+	required: boolean;
+	placeholder?: string;
+	default?: string | boolean;
+};
+
+type ExtensionCheckboxPreference = ExtensionPreferenceBase & {
+	label: string;
+};
+
+type ExtensionDropdownPreference = ExtensionPreferenceBase & {
+	data: { title: string, value: string }[];
+};
+
+type ExtensionPreference = ExtensionPreferenceBase | ExtensionDropdownPreference | ExtensionCheckboxPreference;
+
 type Extension = {
 	sessionId: string;
 	name: string;
+	path: string;
+	icon: string;
 	commands: ExtensionCommand[];
+	preferences: ExtensionPreference[];
 };
 
 const extensions: Extension[] = [];
@@ -300,20 +337,20 @@ const main = () => {
 	for (const path of readdirSync(EXTENSION_DIR)) {
 		const extPath = join(EXTENSION_DIR, path);
 		const metadata = JSON.parse(readFileSync(join(extPath, 'package.json'), 'utf-8'));
+		const { name, icon, version, preferences = [] } = metadata;
 
-		console.log(`loading ${metadata.name} v${metadata.version}...`);
-
-		const extension: Extension = { sessionId: randomUUID(), name: metadata.name, commands: [] };
+		const installDir = join(__dirname, 'installed', metadata.name);
+		const extension: Extension = { sessionId: randomUUID(), icon, name, preferences, path: installDir, commands: [] };
 
 		for (const cmd of metadata.commands) {
-			console.log(`${cmd.name}`);
-			const bundle = join(__dirname, 'installed', metadata.name, `${cmd.name}.js`);
+			const bundle = join(installDir, `${cmd.name}.js`);
 			
 			extension.commands.push({ 
 				name: cmd.name, 
 				title: cmd.title,
 				subtitle: cmd.subtitle,
 				description: cmd.description,
+				arguments: cmd.arguments ?? [],
 				mode: cmd.mode,
 				componentPath: bundle 
 			});
@@ -321,13 +358,6 @@ const main = () => {
 
 		extensions.push(extension);
 	}
-
-	for (const extension of extensions) {
-		if (extension.commands.length == 0) return ;
-		const cmd = extension.commands.at(0);
-	}
-
-	console.log(inspect(extensions, { depth: null }));
 }
 
 main();

@@ -60,6 +60,8 @@ public:
 
   QString searchText() const { return app.topBar->input->text(); }
 
+  void setLoading(bool loading) { app._loadingBar->setStarted(loading); }
+
   void setSignalActions(const QList<AbstractAction *> &actions) {
     app.actionPannel->setSignalActions(actions);
 

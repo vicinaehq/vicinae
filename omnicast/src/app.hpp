@@ -31,7 +31,9 @@
 #include <stack>
 
 #include "ui/action-pannel/action-pannel-widget.hpp"
+#include "ui/action-pannel/action.hpp"
 #include "ui/calculator-list-item-widget.hpp"
+#include "ui/horizontal-loading-bar.hpp"
 #include "ui/status_bar.hpp"
 #include "ui/top_bar.hpp"
 
@@ -166,6 +168,7 @@ public:
   QVBoxLayout *layout = nullptr;
   QWidget *defaultWidget = new QWidget();
   ViewDisplayer *viewDisplayer;
+  HorizontalLoadingBar *_loadingBar;
 
   void popToRoot();
 
@@ -181,6 +184,7 @@ public slots:
 
 signals:
   void currentViewPoped();
+  void actionExecuted(AbstractAction *action) const;
 };
 
 struct OpenAppAction : public AbstractAction {

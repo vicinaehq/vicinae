@@ -1,17 +1,10 @@
 #pragma once
-#include "view.hpp"
-#include <qboxlayout.h>
-#include <qjsonobject.h>
-#include <qlabel.h>
-#include <qlistwidget.h>
-#include <qlogging.h>
-#include <qnamespace.h>
+
 #include <qobject.h>
-#include <qthread.h>
-#include <qtmetamacros.h>
-#include <qwidget.h>
+#include <qdebug.h>
 
 class AppWindow;
+class View;
 
 class Command : public QObject {};
 

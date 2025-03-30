@@ -105,6 +105,9 @@ qt_add_executable(${TARGET}
 
 	# end action-pannel-widget
 
+	include/ui/horizontal-loading-bar.hpp
+	src/ui/horizontal-loading-bar.cpp
+
 	# start markdown renderer
 	include/ui/markdown/markdown-renderer.hpp
 	src/ui/markdown/markdown-renderer.cpp
@@ -128,6 +131,8 @@ qt_add_executable(${TARGET}
 	include/extension/extension-view.hpp
 	include/extension/extension-component.hpp
 	include/extension/extension-list-component.hpp
+	include/extension/extension.hpp
+	src/extension/extension.cpp
 
 
 	include/extend/extension-list-controller.hpp
