@@ -489,7 +489,7 @@ void OmniList::setSelectedIndex(int index, ScrollBehaviour scrollBehaviour) {
     return;
   }
 
-  if (_selectedId != next->id()) {
+  if (next && _selectedId != next->id()) {
     _selectedId = next->id();
     emit selectionChanged(next, previous);
   }

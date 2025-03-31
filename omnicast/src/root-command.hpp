@@ -1,5 +1,6 @@
 #pragma once
 #include "app/app-database.hpp"
+#include "command-database.hpp"
 #include "extension/extension.hpp"
 #include "ui/action-pannel/action-item.hpp"
 #include "ui/action-pannel/open-with-action.hpp"
@@ -36,12 +37,12 @@
 #include <qwidget.h>
 
 struct OpenBuiltinCommandAction : public AbstractAction {
-  std::shared_ptr<AbstractCommand> cmd;
+  std::shared_ptr<AbstractCmd> cmd;
   QString text;
 
   void execute(AppWindow &app) override { app.launchCommand(cmd, {}); }
 
-  OpenBuiltinCommandAction(const std::shared_ptr<AbstractCommand> &cmd, const QString &title = "Open command",
+  OpenBuiltinCommandAction(const std::shared_ptr<AbstractCmd> &cmd, const QString &title = "Open command",
                            const QString &text = "")
       : AbstractAction(title, cmd->iconUrl()), cmd(cmd), text(text) {}
 };
@@ -78,7 +79,7 @@ public:
 
 class BuiltinCommandListItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
 protected:
-  std::shared_ptr<AbstractCommand> cmd;
+  std::shared_ptr<AbstractCmd> cmd;
   QString text;
 
   QList<AbstractAction *> generateActions() const override {
@@ -95,7 +96,7 @@ protected:
   }
 
 public:
-  BuiltinCommandListItem(const std::shared_ptr<AbstractCommand> &cmd, const QString &text = "")
+  BuiltinCommandListItem(const std::shared_ptr<AbstractCmd> &cmd, const QString &text = "")
       : cmd(cmd), text(text) {}
 };
 

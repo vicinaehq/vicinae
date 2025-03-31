@@ -1,21 +1,28 @@
 #pragma once
+#include "theme.hpp"
 #include <qjsonobject.h>
+#include <filesystem>
 #include <qstring.h>
+#include <variant>
 
-struct ThemeIconModel {
-  QString iconName;
-  QString theme;
+struct ThemeAwareIconSource {
+  QString light;
+  QString dark;
 };
 
-struct ImageFileModel {
-  QString path;
+struct ExtensionImageModel {
+  QString source;
+  std::optional<QString> fallback;
+  std::optional<ColorTint> tintColor;
 };
 
-struct ImageUrlModel {
-  QString url;
+struct ExtensionFileIconModel {
+  std::filesystem::path file;
 };
 
-using ImageLikeModel = std::variant<ImageUrlModel, ThemeIconModel, ImageFileModel>;
+using InvalidImageModel = std::monostate;
+
+using ImageLikeModel = std::variant<InvalidImageModel, ExtensionImageModel, ExtensionFileIconModel>;
 
 class ImageModelParser {
 public:

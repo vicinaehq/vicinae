@@ -58,9 +58,8 @@ public:
   void setRemoveCallback(const RemoveCallback &cb) { _rmCb = cb; }
 
   ItemData data() const override {
-    return {.iconUrl = OmniIconUrl::makeSystem(":icons/calculator"),
-            .name = _entry.expression,
-            .category = _entry.result};
+    return {
+        .iconUrl = BuiltinOmniIconUrl("calculator"), .name = _entry.expression, .category = _entry.result};
   }
 
   CalculatorHistoryListItem(const CalculatorEntry &entry) : _entry(entry) {}

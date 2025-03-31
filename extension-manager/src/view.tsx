@@ -47,8 +47,8 @@ export const renderView = async () => {
 		onInitialRender: (views) => {
 			bus!.emit('render', { views });
 		},
-		onUpdate: (views, changes) => {
-			bus!.emit('render', { views, changes });
+		onUpdate: (views) => {
+			bus!.emit('render', { views });
 		}
 	});
 

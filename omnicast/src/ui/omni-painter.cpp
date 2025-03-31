@@ -74,3 +74,19 @@ void OmniPainter::drawBlurredPixmap(const QPixmap &pixmap, int blurRadius) {
   scene.render(this);
   delete blur;
 }
+
+void OmniPainter::drawPixmap(const QRect &rect, const QPixmap &pixmap, ImageMaskType mask) {
+  QPainterPath path;
+
+  setRenderHint(QPainter::Antialiasing);
+
+  if (mask == ImageMaskType::CircleMask) {
+    path.addEllipse(rect);
+    setClipPath(path);
+  } else if (mask == ImageMaskType::RoundedRectangleMask) {
+    path.addRoundedRect(rect, 6, 6);
+    setClipPath(path);
+  }
+
+  QPainter::drawPixmap(rect, pixmap);
+}

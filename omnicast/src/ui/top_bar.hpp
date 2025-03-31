@@ -1,5 +1,4 @@
 #pragma once
-#include "extend/image-model.hpp"
 #include "omni-icon.hpp"
 #include "ui/icon-button.hpp"
 #include "ui/input_completer.hpp"

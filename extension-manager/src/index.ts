@@ -54,6 +54,7 @@ type ExtensionPreference = ExtensionPreferenceBase | ExtensionDropdownPreference
 type Extension = {
 	sessionId: string;
 	name: string;
+	title: string;
 	path: string;
 	icon: string;
 	commands: ExtensionCommand[];
@@ -337,10 +338,10 @@ const main = () => {
 	for (const path of readdirSync(EXTENSION_DIR)) {
 		const extPath = join(EXTENSION_DIR, path);
 		const metadata = JSON.parse(readFileSync(join(extPath, 'package.json'), 'utf-8'));
-		const { name, icon, version, preferences = [] } = metadata;
+		const { name, title, icon, version, preferences = [] } = metadata;
 
 		const installDir = join(__dirname, 'installed', metadata.name);
-		const extension: Extension = { sessionId: randomUUID(), icon, name, preferences, path: installDir, commands: [] };
+		const extension: Extension = { sessionId: randomUUID(), icon, title, name, preferences, path: installDir, commands: [] };
 
 		for (const cmd of metadata.commands) {
 			const bundle = join(installDir, `${cmd.name}.js`);

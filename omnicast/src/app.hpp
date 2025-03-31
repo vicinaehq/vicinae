@@ -74,7 +74,7 @@ struct ViewSnapshot {
 
 struct CommandSnapshot {
   QStack<ViewSnapshot> viewStack;
-  ViewCommandContext *command;
+  CommandContext *command;
 };
 
 struct NavigationStatus {
@@ -172,7 +172,7 @@ public:
 
   void popToRoot();
 
-  void launchCommand(const std::shared_ptr<AbstractCommand> &cmd, const LaunchCommandOptions &opts = {});
+  void launchCommand(const std::shared_ptr<AbstractCmd> &cmd, const LaunchCommandOptions &opts = {});
 
   AppWindow(QWidget *parent = 0);
   bool event(QEvent *event) override;

@@ -3,6 +3,7 @@
 #include "extend/detail-model.hpp"
 #include "extend/empty-view-model.hpp"
 #include "extend/image-model.hpp"
+#include "extend/pagination-model.hpp"
 #include <qjsonobject.h>
 
 struct ListItemViewModel {
@@ -25,14 +26,22 @@ using ListChild = std::variant<ListItemViewModel, ListSectionModel>;
 
 struct ListModel {
   bool isLoading;
-  bool isFiltering;
+  bool filtering;
+  bool throttle;
   bool isShowingDetail;
   QString navigationTitle;
   QString searchPlaceholderText;
-  QString onSelectionChanged;
-  QString onSearchTextChange;
-  QList<ListChild> items;
+  std::optional<QString> onSelectionChanged;
+  std::optional<QString> onSearchTextChange;
+  std::optional<QString> searchText;
+  std::vector<ListChild> items;
+  std::optional<ActionPannelModel> actions;
   std::optional<EmptyViewModel> emptyView;
+  std::optional<QString> selectedItemId;
+  std::optional<PaginationModel> pagination;
+
+  // not implemented, placeholder for now
+  std::optional<int> searchBarAccessory;
 };
 
 class ListModelParser {

@@ -6,30 +6,24 @@ ImageModelParser::ImageModelParser() {}
 ImageLikeModel ImageModelParser::parse(const QJsonObject &imageLike) {
   ImageLikeModel model;
 
-  if (imageLike.contains("url")) {
-    ImageUrlModel model;
+  if (imageLike.contains("source")) {
+    ExtensionImageModel model;
+    auto source = imageLike.value("source").toString();
 
-    model.url = imageLike.value("url").toString();
+    model.source = imageLike.value("source").toString();
 
-    return model;
-  }
-
-  if (imageLike.contains("path")) {
-    ImageFileModel model;
-
-    model.path = imageLike.value("path").toString();
+    // TODO: parse fallback, tint and mask
 
     return model;
   }
 
-  if (imageLike.contains("iconName")) {
-    ThemeIconModel model;
+  if (imageLike.contains("fileIcon")) {
+    ExtensionFileIconModel model;
 
-    model.iconName = imageLike.value("iconName").toString();
-    model.theme = imageLike.value("theme").toString();
+    model.file = imageLike.value("fileIcon").toString().toStdString();
 
     return model;
   }
 
-  return ThemeIconModel{.iconName = "application-x-executable"};
+  return InvalidImageModel();
 }

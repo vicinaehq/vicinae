@@ -130,9 +130,18 @@ qt_add_executable(${TARGET}
 	include/extension/extension-command.hpp
 	include/extension/extension-view.hpp
 	include/extension/extension-component.hpp
+
 	include/extension/extension-list-component.hpp
+	src/extension/extension-list-component.cpp
+
 	include/extension/extension.hpp
 	src/extension/extension.cpp
+
+	include/extension/extension-command-context.hpp
+
+	include/extension/extension-command.hpp
+	src/extension/extension-command.cpp
+
 
 
 	include/extend/extension-list-controller.hpp

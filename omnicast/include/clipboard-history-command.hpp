@@ -56,7 +56,7 @@ class ClipboardItemDetail : public OmniListView::MetadataDetailModel {
 
       auto icon = new OmniIcon;
 
-      icon->setUrl(LocalOmniIconUrl(entry.filePath));
+      icon->setUrl(LocalOmniIconUrl(entry.filePath).setMask(OmniPainter::RoundedRectangleMask));
 
       l->addWidget(icon, 1, Qt::AlignCenter);
 

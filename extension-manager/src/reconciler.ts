@@ -3,9 +3,8 @@ import { setTimeout, clearTimeout } from 'node:timers';
 import { DefaultEventPriority } from 'react-reconciler/constants';
 import { ReactElement } from 'react';
 import { bus } from '@omnicast/api';
-import { randomBytes, randomUUID } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 import { deepClone, compare, Operation } from 'fast-json-patch';
-import { inspect } from 'node:util';
 
 type InstanceType = string;
 type InstanceProps = Record<string, any>;
@@ -209,34 +208,34 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 	return hostConfig;
 }
 
-export type RenderTree = {
-	views: Instance[]
+export type ViewData = {
+	root: Instance;
+	changes: Operation[];
 };
 
 export type RendererConfig = {
-	onInitialRender: (views: Instance[]) => void
-	onUpdate?: (views: Instance[], changes: Operation[]) => void;
+	onInitialRender: (views: ViewData[]) => void
+	onUpdate?: (views: ViewData[]) => void;
 };
 
 export const createRenderer = (config: RendererConfig) => {
 	const container: Container = { children: [] };
-	let oldTree: Instance[] | null = null;
+	let oldViews: Instance[] = [];
 
 	const hostConfig = createHostConfig({}, () => {
-		if (!oldTree) return ;
+		const views: ViewData[] = [];
 
-		/*
-		const ops = compare(oldTree ?? {}, tree);
+		for (let i = 0; i != container.children.length; ++i) {
+			const view = container.children[i];
+			const oldView = oldViews[i] ?? {};
 
-		for (const op of ops) {
-			const unsafeOp = op as any;
-			if (unsafeOp.value) delete unsafeOp.value;
+			views.push({ root: view, changes: i < oldViews.length ? compare(oldViews[i], view) : []});
 		}
-		*/
 
-		config.onUpdate?.(container.children, [])
-		oldTree = deepClone(container.children);
+		config.onUpdate?.(views)
+		oldViews = deepClone(container.children);
 	});
+
 	const reconciler = Reconciler(hostConfig);
 
 	return {
@@ -246,8 +245,17 @@ export const createRenderer = (config: RendererConfig) => {
 			}
 
 			reconciler.updateContainer(element, container._root, null, () => {
-				config.onInitialRender(container.children)
-				oldTree = deepClone(container.children);
+				const views: ViewData[] = [];
+
+				for (let i = 0; i != container.children.length; ++i) {
+					const view = container.children[i];
+
+					views.push({ root: view, changes: i < oldViews.length ? compare(oldViews[i], view) : []});
+				}
+
+				config.onInitialRender(views);
+
+				oldViews = deepClone(container.children);
 			});
 		}
 	};

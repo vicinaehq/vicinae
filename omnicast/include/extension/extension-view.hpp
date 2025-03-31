@@ -1,6 +1,5 @@
-#pragma once
-#include "app.hpp"
-#include "extend/model-parser.hpp"
+#pragma once #include "app.hpp" #include "extend/model-parser.hpp"
+#include "extension/extension-command.hpp"
 #include "extension/extension-list-component.hpp"
 #include "view.hpp"
 #include <qboxlayout.h>
@@ -11,6 +10,7 @@
 class ExtensionView : public View {
   Q_OBJECT
 
+  const ExtensionCommand &_command;
   QWidget *_container;
   QVBoxLayout *_layout;
 
@@ -24,13 +24,15 @@ class ExtensionView : public View {
   }
 
 public:
-  ExtensionView(AppWindow &app)
-      : View(app), _container(new QWidget), _layout(new QVBoxLayout), _component(nullptr) {
+  ExtensionView(AppWindow &app, const ExtensionCommand &command)
+      : View(app), _command(command), _container(new QWidget), _layout(new QVBoxLayout), _component(nullptr) {
     _layout->setContentsMargins(0, 0, 0, 0);
     _layout->setSpacing(0);
     _container->setLayout(_layout);
     widget = _container;
   }
+
+  const ExtensionCommand &command() const { return _command; }
 
   void onSearchChanged(const QString &s) override {
     if (_component) { _component->onSearchChanged(s); }

@@ -2,6 +2,7 @@
 #include "command-database.hpp"
 #include "omni-icon.hpp"
 #include "preference.hpp"
+#include <filesystem>
 #include <qjsonobject.h>
 #include <qstring.h>
 #include <filesystem>
@@ -9,7 +10,7 @@
 
 class Extension : public AbstractCommandRepository {
 public:
-  struct CommandBase : public AbstractCommand {
+  struct CommandBase : public BuiltinCommand {
     QString _name;
     QString title;
     QString subtitle;
@@ -19,10 +20,12 @@ public:
 
 private:
   QString _id;
+  QString _sessionId;
+  QString _title;
   QString _icon;
   std::filesystem::path _path;
   PreferenceList _preferences;
-  std::vector<std::shared_ptr<AbstractCommand>> _commands;
+  std::vector<std::shared_ptr<AbstractCmd>> _commands;
 
   explicit Extension(const QJsonObject &object);
 
@@ -109,5 +112,5 @@ public:
   std::filesystem::path assetDirectory() const;
   std::filesystem::path installedPath() const;
   std::vector<Preference> preferences() const override;
-  std::vector<std::shared_ptr<AbstractCommand>> commands() const override;
+  std::vector<std::shared_ptr<AbstractCmd>> commands() const override;
 };

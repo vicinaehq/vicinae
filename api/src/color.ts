@@ -9,16 +9,18 @@ const isThemeColor = (s: string): s is ThemeColorName => themeColors.includes(s 
 
 export type ThemeColor = { themeColor: ThemeColorName };
 
-export const Color: Record<'Blue' | 'Green' | 'Magenta' | 'Orange'| 'Purple' | 'Red' | 'Yellow' | 'PrimaryText' | 'SecondaryText', ThemeColor>  = {
-	Blue: { themeColor: 'blue' },
-	Green: { themeColor: 'green' },
-	Magenta: { themeColor: 'magenta' },
-	Orange: { themeColor: 'orange' },
-	Purple: { themeColor: 'purple' },
-	Red: { themeColor: 'red' },
-	Yellow: { themeColor: 'yellow' },
-	PrimaryText: { themeColor: 'primary-text' },
-	SecondaryText: { themeColor: 'secondary-text' },
+export type Color = typeof themeColors[number];
+
+export const Color: Record<'Blue' | 'Green' | 'Magenta' | 'Orange'| 'Purple' | 'Red' | 'Yellow' | 'PrimaryText' | 'SecondaryText', string>  = {
+	Blue:  'blue',
+	Green: 'green',
+	Magenta: 'magenta',
+	Orange: 'orange',
+	Purple: 'purple',
+	Red: 'red',
+	Yellow: 'yellow',
+	PrimaryText: 'primary-text',
+	SecondaryText: 'secondary-text'
 };
 
 export type SerializedColorLike = ThemeColor | { colorString: string; }

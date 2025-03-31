@@ -11,7 +11,13 @@ class AbstractExtensionRootComponent : public QWidget {
 public:
   AbstractExtensionRootComponent(AppWindow &app) : app(app) {}
 
-  void setSearchText(const QString &text) { app.topBar->input->setText(text); }
+  QString searchText() const { return app.topBar->input->text(); }
+  void setSearchText(const QString &text) {
+    bool changed = app.topBar->input->text() != text;
+
+    app.topBar->input->setText(text);
+    emit app.topBar->input->textEdited(text);
+  }
   void setSearchPlaceholderText(const QString &text) { app.topBar->input->setPlaceholderText(text); }
   void setNavigationTitle(const QString &text) { app.statusBar->setNavigationTitle(text); }
 

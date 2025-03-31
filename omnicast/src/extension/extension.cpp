@@ -2,6 +2,7 @@
 #include "command-database.hpp"
 #include "extension/extension-command.hpp"
 #include "omni-icon.hpp"
+#include "preference.hpp"
 #include <qjsonobject.h>
 #include <qjsonarray.h>
 
@@ -21,14 +22,16 @@ std::filesystem::path Extension::installedPath() const { return _path; }
 
 PreferenceList Extension::preferences() const { return _preferences; }
 
-std::vector<std::shared_ptr<AbstractCommand>> Extension::commands() const { return _commands; }
+std::vector<std::shared_ptr<AbstractCmd>> Extension::commands() const { return _commands; }
 
 Extension Extension::fromObject(const QJsonObject &obj) { return Extension(obj); }
 
 Extension::Extension(const QJsonObject &obj) {
-  _id = obj["sessionId"].toString();
+  _id = obj["name"].toString();
+  _title = obj["title"].toString();
   _path = obj["path"].toString().toStdString();
   _icon = obj["icon"].toString();
+  _sessionId = obj["sessionId"].toString();
 
   QJsonArray commandList = obj["commands"].toArray();
   QJsonArray preferenceList = obj["preferences"].toArray();
@@ -43,17 +46,12 @@ Extension::Extension(const QJsonObject &obj) {
   }
 
   for (const auto &cmd : commandList) {
-    auto cmdObj = cmd.toObject();
-    /*
-Extension::CommandBase base{.name = cmdObj["name"].toString(),
-                            .title = cmdObj["title"].toString(),
-                            .subtitle = cmdObj["subtitle"].toString(),
-                            .description = cmdObj["description"].toString(),
-                            .mode = cmdObj["mode"].toString()};
+    auto command = std::make_shared<ExtensionCommand>(ExtensionCommand::fromJson(cmd.toObject()));
 
-if (base.mode == "view") { _commands.push_back(std::make_shared<ExtensionViewCommand>(base)); }
-
-_commands.push_back(finalCmd);
-    */
+    command->setAssetPath(assetDirectory());
+    command->setExtensionTitle(_title);
+    command->setExtensionIcon(_icon);
+    command->setExtensionSessionId(_sessionId);
+    _commands.push_back(command);
   }
 }

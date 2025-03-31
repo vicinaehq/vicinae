@@ -7,7 +7,7 @@ const View: React.FC<{ children: ReactNode }> = ({ children }) => {
 }
 
 export const NavigationProvider: React.FC<{ root: ReactNode }>= ({ root }) => {
-	const [navStack, setNavStack] = useState<ReactNode[]>([root]);
+	const [navStack, setNavStack] = useState<ReactNode[]>([]);
 
 	const pop = () => {
 		bus!.request('pop-view', {}).then(() => {
@@ -30,6 +30,8 @@ export const NavigationProvider: React.FC<{ root: ReactNode }>= ({ root }) => {
 			console.log('popping from current nav stack of size ' + navStack.length);
 			setNavStack((cur) => cur.slice(0, -1));
 		});
+
+		push(root);
 
 		return () => listener.unsubscribe();
 	}, []);

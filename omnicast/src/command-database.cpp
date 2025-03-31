@@ -11,7 +11,7 @@
 #include "manage-themes-command.hpp"
 #include "omni-icon.hpp"
 #include "theme.hpp"
-#include "ui/emoji-viewer.hpp"
+#include "command-builder.hpp"
 #include "ui/peepobank-command.hpp"
 #include <memory>
 #include <qfuture.h>
@@ -34,7 +34,7 @@ OmniIconUrl tintedCommandIcon(const QString &iconName, ColorTint tint) {
   return url.setFill(color).setBackgroundTint(tint);
 }
 
-const AbstractCommand *CommandDatabase::findCommand(const QString &id) {
+const AbstractCmd *CommandDatabase::findCommand(const QString &id) {
   if (auto repo = findRepository(id)) {
     for (const auto &cmd : repo->commands()) {
       if (cmd->id() == id) { return cmd.get(); }

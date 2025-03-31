@@ -3,6 +3,7 @@
 #include "extend/detail-model.hpp"
 #include "extend/empty-view-model.hpp"
 #include "extend/image-model.hpp"
+#include "extend/pagination-model.hpp"
 #include <qjsonarray.h>
 #include <qjsonobject.h>
 
@@ -62,20 +63,37 @@ ListModelParser::ListModelParser() {}
 ListModel ListModelParser::parse(const QJsonObject &instance) {
   ListModel model;
   auto props = instance.value("props").toObject();
+  // no builtin filtering by default if onSearchTextChange handler is specified
+  bool defaultFiltering = !props.contains("onSearchTextChange");
 
   model.isLoading = props["isLoading"].toBool(false);
-  model.isFiltering = props["isFiltering"].toBool(false);
-  model.isShowingDetail = props["isShowingDetail"].toBool(false);
+  model.throttle = props["throttle"].toBool(false);
+  model.isShowingDetail = props["isShowingDetail"].toBool(true);
   model.navigationTitle = props["navigationTitle"].toString("Command");
   model.searchPlaceholderText = props["searchBarPlaceholder"].toString();
-  model.onSearchTextChange = props["onSearchTextChange"].toString();
-  model.onSelectionChanged = props["onSelectionChanged"].toString();
+  model.filtering = props["filtering"].toBool(defaultFiltering);
+
+  if (props.contains("onSearchTextChange")) {
+    model.onSearchTextChange = props.value("onSearchTextChange").toString();
+  }
+
+  if (props.contains("onSelectionChanged")) {
+    model.onSelectionChanged = props.value("onSelectionChanged").toString();
+  }
+
+  if (props.contains("selectedItemId")) { model.selectedItemId = props.value("selectedItemId").toString(); }
+  if (props.contains("searchText")) { model.searchText = props.value("searchText").toString(); }
+  if (props.contains("pagination")) {
+    model.pagination = PaginationModel::fromJson(props.value("pagination").toObject());
+  }
 
   size_t index = 0;
 
   for (const auto &child : instance.value("children").toArray()) {
     auto childObj = child.toObject();
     auto type = childObj.value("type").toString();
+
+    if (type == "action-panel") { model.actions = ActionPannelParser().parse(childObj); }
 
     if (type == "list-item") {
       auto item = parseListItem(childObj, index);

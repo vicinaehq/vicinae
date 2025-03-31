@@ -2,6 +2,7 @@
 #include "ai/ollama-ai-provider.hpp"
 #include "app/xdg-app-database.hpp"
 #include "clipboard/clipboard-service.hpp"
+#include "command-builder.hpp"
 #include "command-database.hpp"
 #include "command-server.hpp"
 #include <QGraphicsBlurEffect>
@@ -247,18 +248,12 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
   QTimer::singleShot(0, [view]() { view->onMount(); });
 }
 
-void AppWindow::launchCommand(const std::shared_ptr<AbstractCommand> &command,
-                              const LaunchCommandOptions &opts) {
-  if (command->type() == CommandModeView) {
-    auto viewCommand = std::static_pointer_cast<AbstractViewCommand>(command);
-    auto ctx = viewCommand->createContext(*this, command, opts.searchQuery);
+void AppWindow::launchCommand(const std::shared_ptr<AbstractCmd> &command, const LaunchCommandOptions &opts) {
+  if (command->mode() == CommandModeView) {
+    auto ctx = command->createContext(*this, command, opts.searchQuery);
 
-    ctx->load();
     commandStack.push({.command = ctx});
-
-    NavigationStatus navigation{.title = command->name(), .iconUrl = command->iconUrl()};
-
-    pushView(ctx->view(), {.searchQuery = opts.searchQuery, .navigation = navigation});
+    ctx->load();
   }
 }
 
@@ -355,6 +350,7 @@ void AppWindow::selectSecondaryAction() {}
 
 void AppWindow::executeAction(AbstractAction *action) {
   auto executor = commandStack.top().viewStack.top().view;
+  auto executorCommand = commandStack.top().command;
 
   if (!action->isPushView()) { actionPannel->close(); }
 
@@ -364,6 +360,7 @@ void AppWindow::executeAction(AbstractAction *action) {
     emit action->didExecute();
     emit actionExecuted(action);
     executor->onActionActivated(action);
+    executorCommand->onActionExecuted(action);
 
     if (auto cb = action->executionCallback()) { cb(); }
   }

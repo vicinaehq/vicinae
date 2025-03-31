@@ -50,18 +50,10 @@ class OmniIconUrl {
   QSize _size;
   ColorTint _bgTint;
   ColorTint _fgTint;
+  OmniPainter::ImageMaskType _mask;
   std::optional<ColorLike> _fillColor = std::nullopt;
 
 public:
-  static OmniIconUrl makeSystem(const QString &name) {
-    OmniIconUrl url;
-
-    url.setType(OmniIconType::System);
-    url.setName(name);
-
-    return url;
-  }
-
   static ColorTint tintForName(const QString &name) {
     for (const auto &[n, t] : colorTints) {
       if (name == n) return t;
@@ -131,6 +123,7 @@ public:
   ColorTint foregroundTint() const { return _fgTint; }
   ColorTint backgroundTint() const { return _bgTint; }
   const std::optional<ColorLike> &fillColor() const { return _fillColor; }
+  OmniPainter::ImageMaskType mask() const { return _mask; }
 
   void setType(OmniIconType type) { _type = type; }
   void setName(const QString &name) { _name = name; }
@@ -138,6 +131,11 @@ public:
 
   OmniIconUrl &setFill(const std::optional<ColorLike> &color) {
     _fillColor = color;
+    return *this;
+  }
+
+  OmniIconUrl &setMask(OmniPainter::ImageMaskType mask) {
+    _mask = mask;
     return *this;
   }
 
@@ -152,18 +150,49 @@ public:
 
   OmniIconUrl() : _bgTint(InvalidTint), _fgTint(InvalidTint) {}
   OmniIconUrl(const QString &s) noexcept { *this = std::move(QUrl(s)); }
-  OmniIconUrl(const ImageLikeModel &model) {
-    if (auto urlModel = std::get_if<ImageUrlModel>(&model)) {
-      QUrl url(urlModel->url);
+  OmniIconUrl(const ImageLikeModel &imageLike)
+      : _bgTint(InvalidTint), _fgTint(InvalidTint), _mask(OmniPainter::NoMask) {
+    if (auto image = std::get_if<ExtensionImageModel>(&imageLike)) {
+      QUrl url(image->source);
 
-      *this = std::move(QUrl(QString("icon://https/%1%2").arg(url.host(), url.path())));
-    } else if (auto themeIcon = std::get_if<ThemeIconModel>(&model)) {
-      *this = std::move(QUrl(QString("icon://system/%1").arg(themeIcon->iconName)));
-    } else if (auto fileModel = std::get_if<ImageFileModel>(&model)) {
-      *this = std::move(QUrl(QString("icon://local/%1").arg(fileModel->path)));
+      if (url.isValid()) {
+        if (url.scheme() == "file") {
+          setType(OmniIconType::Local);
+          setName(url.host() + url.path());
+          return;
+        }
+
+        if (url.scheme() == "https" || url.scheme() == "http") {
+          setType(OmniIconType::Http);
+          setName(image->source.split("://").at(1));
+          return;
+        }
+      }
+
+      if (QFile(image->source).exists()) {
+        setType(OmniIconType::Local);
+        setName(image->source);
+        return;
+      }
+
+      if (QFile(":icons/" + image->source + ".svg").exists()) {
+        setType(OmniIconType::Builtin);
+        setName(image->source);
+        return;
+      }
+
+      if (!QIcon::fromTheme(image->source).isNull()) {
+        setType(OmniIconType::System);
+        setName(image->source);
+        return;
+      }
     }
+
+    setName("question-mark-circle");
+    setType(OmniIconType::Builtin);
   }
-  OmniIconUrl(const QUrl &url) : _bgTint(InvalidTint), _fgTint(InvalidTint) {
+
+  OmniIconUrl(const QUrl &url) : _bgTint(InvalidTint), _fgTint(InvalidTint), _mask(OmniPainter::NoMask) {
     if (url.scheme() != "icon") { return; }
 
     _type = typeForName(url.host());
@@ -184,6 +213,12 @@ public:
     if (auto fgTint = query.queryItemValue("fg_tint"); !fgTint.isEmpty()) { _fgTint = tintForName(fgTint); }
     if (auto bgTint = query.queryItemValue("bg_tint"); !bgTint.isEmpty()) { _bgTint = tintForName(bgTint); }
     if (auto fill = query.queryItemValue("fill"); !fill.isEmpty()) { _fillColor = fill; }
+    if (auto mask = query.queryItemValue("mask"); !mask.isEmpty()) {
+      if (mask == "circle")
+        _mask = OmniPainter::ImageMaskType::CircleMask;
+      else if (mask == "roundedRectangle")
+        _mask = OmniPainter::ImageMaskType::RoundedRectangleMask;
+    }
 
     _isValid = true;
   }
@@ -384,16 +419,18 @@ public:
 class LocalOmniIconWidget : public OmniIconWidget {
   QString _path;
   QPixmap _pixmap;
+  OmniPainter::ImageMaskType _mask;
   QFutureWatcher<QPixmap> watcher;
 
   void paintEvent(QPaintEvent *event) override {
-    QPainter painter(this);
+    OmniPainter painter(this);
 
     if (!_pixmap.isNull()) {
       int x = (width() - _pixmap.width()) / 2;
       int y = (height() - _pixmap.height()) / 2;
+      QRect rect{x, y, _pixmap.width(), _pixmap.height()};
 
-      painter.drawPixmap(x, y, _pixmap);
+      painter.drawPixmap(rect, _pixmap, _mask);
     }
   }
 
@@ -442,7 +479,10 @@ class LocalOmniIconWidget : public OmniIconWidget {
   }
 
 public:
-  LocalOmniIconWidget(const QString &path, QWidget *parent) : OmniIconWidget(parent), _path(path) {
+  void setMask(OmniPainter::ImageMaskType mask) { _mask = mask; }
+
+  LocalOmniIconWidget(const QString &path, QWidget *parent)
+      : OmniIconWidget(parent), _path(path), _mask(OmniPainter::NoMask) {
     QFileInfo info(path);
 
     if (!info.exists()) { return; }
@@ -610,7 +650,11 @@ public:
     }
 
     else if (type == OmniIconType::Local) {
-      _iconWidget = new LocalOmniIconWidget(url.name(), this);
+      auto widget = new LocalOmniIconWidget(url.name(), this);
+
+      widget->setMask(_url.mask());
+
+      _iconWidget = widget;
     }
 
     else if (type == OmniIconType::Http) {
