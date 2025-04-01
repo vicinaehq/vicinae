@@ -3,9 +3,11 @@
 void GoogleFaviconRequester::loadingFailed() {
   _currentReply->deleteLater();
   _currentReply = nullptr;
+
   currentSizeAttemptIndex += 1;
-  if (currentSizeAttemptIndex > sizes.size()) {
-    emit loadingFailed();
+
+  if (currentSizeAttemptIndex >= sizes.size()) {
+    emit failed();
     return;
   }
 
@@ -25,6 +27,8 @@ void GoogleFaviconRequester::tryForCurrentSize() {
 
   auto serviceUrl = makeUrl(sizes.at(currentSizeAttemptIndex));
   auto reply = ImageFetcher::instance().fetch(serviceUrl, {});
+
+  qDebug() << "request google favicon" << serviceUrl;
 
   connect(reply, &ImageReply::imageLoaded, this, &GoogleFaviconRequester::imageLoaded);
   connect(reply, &ImageReply::loadingError, this, &GoogleFaviconRequester::loadingFailed);

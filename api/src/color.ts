@@ -11,7 +11,7 @@ export type ThemeColor = { themeColor: ThemeColorName };
 
 export type Color = typeof themeColors[number];
 
-export const Color: Record<'Blue' | 'Green' | 'Magenta' | 'Orange'| 'Purple' | 'Red' | 'Yellow' | 'PrimaryText' | 'SecondaryText', string>  = {
+export const Color: Record<'Blue' | 'Green' | 'Magenta' | 'Orange'| 'Purple' | 'Red' | 'Yellow' | 'PrimaryText' | 'SecondaryText',  Color>  = {
 	Blue:  'blue',
 	Green: 'green',
 	Magenta: 'magenta',

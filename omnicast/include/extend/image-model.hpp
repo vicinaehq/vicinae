@@ -1,5 +1,6 @@
 #pragma once
 #include "theme.hpp"
+#include "ui/omni-painter.hpp"
 #include <qjsonobject.h>
 #include <filesystem>
 #include <qstring.h>
@@ -14,6 +15,7 @@ struct ExtensionImageModel {
   QString source;
   std::optional<QString> fallback;
   std::optional<ColorTint> tintColor;
+  std::optional<OmniPainter::ImageMaskType> mask;
 };
 
 struct ExtensionFileIconModel {

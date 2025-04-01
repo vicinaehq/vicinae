@@ -10,15 +10,20 @@ export type Image = {
 	source: Image.Source;
 	fallback?: Image.Fallback;
 	tintColor?: Color
+	mask?: Image.Mask;
 };
 
 export type ImageLike = URL | Image.Asset |  FileIcon | Image;
 
-namespace Image {
+export namespace Image {
 	export type Asset = string;
 	export type ThemedSource = { light: URL | Asset, dark: URL | Asset };
 	export type Fallback = Asset | ThemedSource;
 	export type Source = URL | Asset | ThemedSource;
+	export enum Mask {
+		Circle = 'circle',
+		RoundedRectangle = 'roundedRectangle'
+	};
 };
 
 

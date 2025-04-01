@@ -94,5 +94,11 @@ public:
 int main() {
   Clipman clipman;
 
+  if (isatty(STDIN_FILENO)) {
+    std::cerr << "omni-wlr-clip started directly from TTY. Start interacting with the clipboard and "
+                 "selection events will show up here"
+              << std::endl;
+  }
+
   clipman.run();
 }

@@ -8,6 +8,8 @@ class OmniPainter : public QPainter {
 public:
   enum ImageMaskType { NoMask, CircleMask, RoundedRectangleMask };
 
+  static ImageMaskType maskForName(const QString &name);
+
   void fillRect(QRect rect, const QColor &color, int radius = 0, float alpha = 1.0);
   void fillRect(QRect rect, const ThemeLinearGradient &lgrad, int radius = 0, float alpha = 1.0);
   void fillRect(QRect rect, const ThemeRadialGradient &rgrad, int radius = 0, float alpha = 1.0);

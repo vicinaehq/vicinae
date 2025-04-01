@@ -1,4 +1,6 @@
-#pragma once #include "app.hpp" #include "extend/model-parser.hpp"
+#pragma once
+#include "app.hpp"
+#include "extend/model-parser.hpp"
 #include "extension/extension-command.hpp"
 #include "extension/extension-list-component.hpp"
 #include "view.hpp"

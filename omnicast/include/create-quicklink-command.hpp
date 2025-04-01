@@ -110,7 +110,7 @@ class QuicklinkCommandView : public View {
     if (!url.scheme().startsWith("http")) return;
 
     iconSelector->updateItem("default", [&url](SelectorInput::AbstractItem *item) {
-      auto icon = FaviconOmniIconUrl(url.host());
+      auto icon = FaviconOmniIconUrl(url.host()).withFallback(BuiltinOmniIconUrl("image"));
       auto iconItem = static_cast<IconSelectorItem *>(item);
 
       iconItem->setIcon(icon);

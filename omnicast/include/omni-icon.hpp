@@ -1,5 +1,4 @@
 #pragma once
-
 #include "builtin_icon.hpp"
 #include "extend/image-model.hpp"
 #include "favicon/favicon-service.hpp"
@@ -51,6 +50,7 @@ class OmniIconUrl {
   ColorTint _bgTint;
   ColorTint _fgTint;
   OmniPainter::ImageMaskType _mask;
+  std::optional<QString> _fallback;
   std::optional<ColorLike> _fillColor = std::nullopt;
 
 public:
@@ -90,6 +90,12 @@ public:
   operator bool() { return isValid(); }
 
   QString toString() const { return url().toString(); }
+
+  std::optional<QString> fallback() const { return _fallback; }
+  OmniIconUrl &withFallback(const OmniIconUrl &fallback) {
+    _fallback = fallback.toString();
+    return *this;
+  }
 
   QUrl url() const {
     QUrl url;
@@ -155,6 +161,15 @@ public:
     if (auto image = std::get_if<ExtensionImageModel>(&imageLike)) {
       QUrl url(image->source);
 
+      qDebug() << "image with source" << image->source;
+
+      if (auto fallback = image->fallback) {
+        withFallback(ImageLikeModel(ExtensionImageModel{.source = *fallback}));
+      }
+
+      if (auto tintColor = image->tintColor) { setFill(*tintColor); }
+      if (auto mask = image->mask) { setMask(*mask); }
+
       if (url.isValid()) {
         if (url.scheme() == "file") {
           setType(OmniIconType::Local);
@@ -169,14 +184,14 @@ public:
         }
       }
 
-      if (QFile(image->source).exists()) {
-        setType(OmniIconType::Local);
+      if (QFile(":icons/" + image->source + ".svg").exists()) {
+        setType(OmniIconType::Builtin);
         setName(image->source);
         return;
       }
 
-      if (QFile(":icons/" + image->source + ".svg").exists()) {
-        setType(OmniIconType::Builtin);
+      if (QFile(image->source).exists()) {
+        setType(OmniIconType::Local);
         setName(image->source);
         return;
       }
@@ -213,6 +228,7 @@ public:
     if (auto fgTint = query.queryItemValue("fg_tint"); !fgTint.isEmpty()) { _fgTint = tintForName(fgTint); }
     if (auto bgTint = query.queryItemValue("bg_tint"); !bgTint.isEmpty()) { _bgTint = tintForName(bgTint); }
     if (auto fill = query.queryItemValue("fill"); !fill.isEmpty()) { _fillColor = fill; }
+    if (auto fallback = query.queryItemValue("fallback"); !fallback.isEmpty()) { _fallback = fallback; }
     if (auto mask = query.queryItemValue("mask"); !mask.isEmpty()) {
       if (mask == "circle")
         _mask = OmniPainter::ImageMaskType::CircleMask;
@@ -495,16 +511,18 @@ class HttpOmniIconWidget : public OmniIconWidget {
   QString _path;
   QPixmap _pixmap;
   QFutureWatcher<QPixmap> watcher;
+  OmniPainter::ImageMaskType _mask;
   QUrl url;
 
   void paintEvent(QPaintEvent *event) override {
-    QPainter painter(this);
+    OmniPainter painter(this);
 
     if (!_pixmap.isNull()) {
       int x = (width() - _pixmap.width()) / 2;
       int y = (height() - _pixmap.height()) / 2;
+      QRect rect{x, y, _pixmap.width(), _pixmap.height()};
 
-      painter.drawPixmap(x, y, _pixmap);
+      painter.drawPixmap(rect, _pixmap, _mask);
     }
   }
 
@@ -548,14 +566,18 @@ class HttpOmniIconWidget : public OmniIconWidget {
       reply->deleteLater();
     });
 
-    connect(reply, &ImageReply::loadingError, this, [reply]() {
+    connect(reply, &ImageReply::loadingError, this, [this, reply]() {
       qDebug() << "failed to get image";
       reply->deleteLater();
+      emit imageLoadingFailed();
     });
   }
 
 public:
-  HttpOmniIconWidget(const QUrl &url, QWidget *parent) : OmniIconWidget(parent), url(url) {
+  void setMask(OmniPainter::ImageMaskType type) { _mask = type; }
+
+  HttpOmniIconWidget(const QUrl &url, QWidget *parent)
+      : OmniIconWidget(parent), _mask(OmniPainter::ImageMaskType::NoMask), url(url) {
     connect(&watcher, &QFutureWatcher<QPixmap>::finished, this, &HttpOmniIconWidget::handleImageLoaded);
   }
 };
@@ -592,9 +614,13 @@ class FaviconOmniIconWidget : public OmniIconWidget {
 
 public:
   FaviconOmniIconWidget(const QString &hostname, QWidget *parent) : OmniIconWidget(parent) {
+    qDebug() << "request favicon" << hostname;
     _requester = FaviconService::instance()->makeRequest(hostname, parent);
     connect(_requester, &AbstractFaviconRequest::finished, this, &FaviconOmniIconWidget::iconLoaded);
-    connect(_requester, &AbstractFaviconRequest::failed, this, [this]() { emit imageLoadingFailed(); });
+    connect(_requester, &AbstractFaviconRequest::failed, this, [this]() {
+      qDebug() << "image loading failed";
+      emit imageLoadingFailed();
+    });
     _requester->start();
   }
 };
@@ -623,6 +649,14 @@ public:
     setLayout(layout);
   }
   ~OmniIcon() {}
+
+  void handleFailedLoading() {
+    if (auto fallback = _url.fallback()) {
+      setUrl(*fallback);
+    } else {
+      setUrl(BuiltinOmniIconUrl("question-mark-circle"));
+    }
+  }
 
   void setUrl(const OmniIconUrl &url) {
     if (_iconWidget) {
@@ -659,12 +693,15 @@ public:
 
     else if (type == OmniIconType::Http) {
       QUrl httpUrl("https://" + url.name());
+      auto widget = new HttpOmniIconWidget(httpUrl, this);
 
-      _iconWidget = new HttpOmniIconWidget(httpUrl, this);
+      widget->setMask(url.mask());
+      _iconWidget = widget;
     }
 
     if (_iconWidget) {
       connect(_iconWidget, &OmniIconWidget::imageLoaded, this, &OmniIcon::imageUpdated);
+      connect(_iconWidget, &OmniIconWidget::imageLoadingFailed, this, &OmniIcon::handleFailedLoading);
       layout->addWidget(_iconWidget, 1);
     } else {
       qDebug() << "no icon widget for " << url.toString();

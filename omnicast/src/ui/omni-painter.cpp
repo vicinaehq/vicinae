@@ -2,7 +2,17 @@
 #include <qgraphicseffect.h>
 #include <qgraphicsitem.h>
 #include <qgraphicsscene.h>
-#include <qscopedpointer.h>
+#include <qnamespace.h>
+
+OmniPainter::ImageMaskType OmniPainter::maskForName(const QString &name) {
+  if (name == "circle") {
+    return CircleMask;
+  } else if (name == "roundedRectangle") {
+    return RoundedRectangleMask;
+  }
+
+  return NoMask;
+}
 
 void OmniPainter::fillRect(QRect rect, const QColor &color, int radius, float alpha) {
   setBrush(color);
