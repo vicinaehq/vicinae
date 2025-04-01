@@ -12,3 +12,4 @@ export * from './cache';
 export * from './toast';
 export * from './clipboard.js';
 export * from './utils';
+export * from './local-storage.js';
