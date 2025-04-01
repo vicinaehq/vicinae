@@ -4,6 +4,7 @@
 #include "favicon/favicon-service.hpp"
 #include <QtConcurrent/qtconcurrentrun.h>
 #include <QtSvg/qsvgrenderer.h>
+#include <immintrin.h>
 #include <optional>
 #include <qboxlayout.h>
 #include <qbrush.h>
@@ -26,10 +27,11 @@
 #include <qurlquery.h>
 #include <qwidget.h>
 #include "image-fetcher.hpp"
+#include "lib/emoji-detect.hpp"
 #include "theme.hpp"
 #include "ui/omni-painter.hpp"
 
-enum OmniIconType { Invalid, Builtin, Favicon, System, Http, Local };
+enum OmniIconType { Invalid, Builtin, Favicon, System, Http, Local, Emoji };
 
 static std::vector<std::pair<QString, OmniIconType>> iconTypes = {
     {"favicon", Favicon}, {"omnicast", Builtin}, {"system", System},
@@ -184,6 +186,12 @@ public:
         }
       }
 
+      if (isEmoji(image->source)) {
+        setType(OmniIconType::Emoji);
+        setName(image->source);
+        return;
+      }
+
       if (QFile(":icons/" + image->source + ".svg").exists()) {
         setType(OmniIconType::Builtin);
         setName(image->source);
@@ -304,6 +312,44 @@ public:
 signals:
   void imageLoaded(const QPixmap &data) const;
   void imageLoadingFailed() const;
+};
+
+class EmojiOmniIconRenderer : public OmniIconWidget {
+  QString _emoji;
+  int _pointSize;
+  double _scaleHeight;
+  Qt::AlignmentFlag _align;
+
+protected:
+  void paintEvent(QPaintEvent *event) override {
+    QPainter painter(this);
+    QFont font = painter.font();
+
+    font.setPointSize(qMin(width(), height()) * 0.5);
+    painter.setFont(font);
+    painter.drawText(rect(), Qt::AlignCenter, _emoji);
+  }
+
+  void resizeEvent(QResizeEvent *event) override {
+    QWidget::resizeEvent(event);
+
+    if (_scaleHeight != -1) { _pointSize = height() * _scaleHeight; }
+  }
+
+public:
+  void setEmoji(const QString &emoji) {
+    _emoji = emoji;
+    update();
+  }
+
+  void setPointSize(int size) { _pointSize = size; }
+
+  void setHeightScale(double factor) { _scaleHeight = factor; }
+
+  void setAlignment(Qt::AlignmentFlag align) { _align = align; }
+
+  EmojiOmniIconRenderer(const QString &emoji)
+      : _emoji(emoji), _pointSize(10), _scaleHeight(-1), _align(Qt::AlignTop) {}
 };
 
 class BuiltinOmniIconRenderer : public OmniIconWidget {
@@ -696,6 +742,13 @@ public:
       auto widget = new HttpOmniIconWidget(httpUrl, this);
 
       widget->setMask(url.mask());
+      _iconWidget = widget;
+    }
+
+    else if (type == OmniIconType::Emoji) {
+      auto widget = new EmojiOmniIconRenderer(url.name());
+
+      widget->setHeightScale(0.7);
       _iconWidget = widget;
     }
 

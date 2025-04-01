@@ -5,6 +5,7 @@ import { Socket, createConnection } from 'net';
 import { randomUUID } from 'crypto';
 import { Worker, parentPort } from "worker_threads";
 import { renderView } from "./view";
+import { environment } from '@omnicast/api'
 
 const EXTENSION_DIR = "/home/aurelle/.local/share/omnicast/extensions/installed";
 
@@ -318,6 +319,16 @@ class Omnicast {
 };
 
 const executeView = async () => {
+  environment.textSize = 'medium';
+  environment.appearance = 'dark';
+  environment.canAccess = (api) => false,
+  environment.assetsPath = "";
+  environment.isDevelopment = false;
+  environment.commandMode = 'view';
+  environment.supportPath = '/tmp';
+  environment.raycastVersion = '1.0.0';
+  environment.launchType = {} as any;
+
  await renderView();
 }
 

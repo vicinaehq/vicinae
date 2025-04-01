@@ -18,7 +18,7 @@ class Bus {
   private handleMessage(message: Message) {
 	const { envelope, data } = message;
 	console.log('request map size is ', this.requestMap.size);
-	console.log({ envelope });
+	console.log('got message', { envelope });
 
 	if (envelope.type == 'response') {
 		const request = this.requestMap.get(envelope.id);
@@ -56,6 +56,7 @@ class Bus {
   }
 
   constructor(private readonly port: MessagePort) {
+	  if (!port) return ;
 	  console.error('INSTANCIATE BUS');
 	  port.on('message', this.handleMessage.bind(this));
 	  port.on('messageerror', (error) => {
@@ -98,12 +99,14 @@ class Bus {
 	this.port.postMessage(message);
   }
 
-  request(action: string, data: Record<string, any>): Promise<Message> {
+  request<T = Record<string, any>>(action: string, data: Record<string, any> = {}): Promise<Message<T>> {
 	const id = randomUUID();
 
-	return new Promise<Message>((resolve, reject) => {
+	return new Promise<Message<T>>((resolve, reject) => {
+		const resolver = (message: Message) => resolve(message as Message<T>);
+
 		try {
-			this.requestMap.set(id, { resolve });
+			this.requestMap.set(id, { resolve: resolver });
 			console.log(`add id for message type ${action}` + id);
 
 			const message: Message = {
@@ -123,4 +126,4 @@ class Bus {
   }
 };
 
-export const bus = parentPort ? new Bus(parentPort) : null;
+export const bus = new Bus(parentPort!);

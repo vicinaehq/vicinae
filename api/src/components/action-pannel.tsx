@@ -42,7 +42,7 @@ const ActionPannelSubmenu: React.FC<ActionPanelSubmenuProps> = ({ icon, ...props
 	return <action-panel-submenu {...nativeProps} />
 }
 
-export const ActionPannel = Object.assign(ActionPanelRoot, {
+export const ActionPanel = Object.assign(ActionPanelRoot, {
 	Section: ActionPanelSection,
 	Submenu: ActionPannelSubmenu,
 });

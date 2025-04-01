@@ -1,7 +1,6 @@
-import { useEffect, useId, useRef } from "react"
+import { useEffect, useRef } from "react"
 import { bus } from './bus';
 import { randomUUID } from "crypto";
-
 
 export const useEventListener = (fn: ((...args: any[]) => void) | undefined) => {
 	const id = useRef(randomUUID());

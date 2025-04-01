@@ -4,4 +4,5 @@ export * from './context/index.js';
 export * from './bus';
 export * from './color';
 export * from './image';
+export * from './icon';
 //# sourceMappingURL=index.d.ts.map

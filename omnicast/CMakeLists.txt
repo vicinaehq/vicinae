@@ -113,6 +113,9 @@ qt_add_executable(${TARGET}
 	src/ui/markdown/markdown-renderer.cpp
 	# end markdown renderer
 
+	include/lib/emoji-detect.hpp
+	src/lib/emoji-detect.cpp
+
 	# start AI
 	include//ai/ai-provider.hpp
 	include/ai/ollama-ai-provider.hpp

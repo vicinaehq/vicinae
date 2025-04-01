@@ -73,9 +73,11 @@ export type KeyEquivalent = "a" |
   "enter" |
   "backspace";
 
-export type KeyboardShortcut = {
-	key: KeyEquivalent,
-	modifiers: KeyModifier[],
+export namespace Keyboard {
+	export type Shortcut = {
+		key: KeyEquivalent,
+		modifiers: KeyModifier[],
+	};
 };
 
 export type KeyModifier = "cmd" | "ctrl" | "opt" | "shift";
@@ -83,8 +85,8 @@ export type KeyModifier = "cmd" | "ctrl" | "opt" | "shift";
 export const Keyboard = {
 	Shortcut: {
 		Common: {
-			Copy: { modifiers: ['cmd', 'shift' ], key: 'c' } as KeyboardShortcut,
-			CopyName: { modifiers: ['cmd', 'shift' ], key: '.' } as KeyboardShortcut
+			Copy: { modifiers: ['cmd', 'shift' ], key: 'c' } as Keyboard.Shortcut,
+			CopyName: { modifiers: ['cmd', 'shift' ], key: '.' } as Keyboard.Shortcut
 		}
 	}
 };

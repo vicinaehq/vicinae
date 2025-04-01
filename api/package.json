@@ -6,6 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "files": [
+	  "./dist"
+  ],
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -15,10 +18,10 @@
   "types": "./dist/index.d.ts",
   "devDependencies": {
     "@types/node": "^22.10.1",
-    "@types/react": "^19.0.1",
     "esbuild": "^0.24.0"
   },
-  "peerDependencies": {
-    "react": "^19.0.0"
+  "dependencies": {
+    "react": "^19.1.0",
+    "@types/react": "^19.0.1"
   }
 }

@@ -85,7 +85,7 @@ private slots:
 
     qDebug() << "[ExtensionCommand] extension request" << action;
 
-    if (action == "list-applications") {
+    if (action == "apps.get") {
       QJsonArray apps;
 
       for (const auto &app : app()->appDb->list()) {

@@ -1,30 +1,18 @@
 import { useEffect, useState } from "react"
-import { bus } from '../bus';
+import { Application, getApplications } from "../utils";
 
-export type AppInfo = {
-	id: string;
-	name: string;
-	icon: { iconName: string };
-};
-
-export const useApplications = (): [AppInfo[], boolean] => {
+export const useApplications = (): [Application[], boolean, Error | null] => {
 	const [isLoading, setIsLoading] = useState(true);
-	const [apps, setApps] = useState<AppInfo[]>([]);
+	const [error, setError] = useState<Error | null>(null);
+	const [apps, setApps] = useState<Application[]>([]);
 
 	useEffect(() => {
-		console.log('get apps');
-		bus!.request('list-applications', {})
-		.then(({ data }) => {
-			'got apps'
-			setApps((data.apps as any[]).map<AppInfo>((app: any) => ({
-				id: app.id,
-				name: app.name,
-				icon: { iconName: app.icon }
-			})));
-			setIsLoading(false);
-		})
-		.catch((error) => { console.error(`Failed to get apps`, error); })
+		setIsLoading(true);
+		getApplications()
+		.then(setApps)
+		.catch(setError)
+		.finally(() => setIsLoading(false));
 	}, []);
 
-	return [apps, isLoading];
+	return [apps, isLoading, error];
 } 

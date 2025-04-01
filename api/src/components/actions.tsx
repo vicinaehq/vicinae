@@ -1,13 +1,14 @@
 import React, { ReactNode } from "react";
-import { AppInfo, useNavigation } from "../hooks/index";
+import { useNavigation } from "../hooks/index";
 import { Clipboard } from "../clipboard";
 import { ImageLike, serializeImageLike } from "../image";
-import { KeyboardShortcut } from "../keyboard";
+import { Keyboard } from "../keyboard";
+import { Application, open } from "../utils";
 
 export type BaseActionProps = {
 	title: string;
 	icon?: ImageLike;
-	shortcut?: KeyboardShortcut;
+	shortcut?: Keyboard.Shortcut;
 }
 
 export type ActionProps = BaseActionProps & {
@@ -23,7 +24,8 @@ export type ActionPushProps = BaseActionProps & {
 }
 
 export type ActionOpenProps = BaseActionProps & {
-	app?: AppInfo;
+	target: string;
+	app?: Application;
 };
 
 const ActionRoot: React.FC<ActionProps> = ({ icon, ...props }) => {
@@ -42,8 +44,9 @@ const CopyToClipboard: React.FC<CopyToClipboardProps> = ({ content, ...props }) 
 	}} />
 }
 
-const Open: React.FC<ActionOpenProps> = ({ app, ...props }) => {
+const Open: React.FC<ActionOpenProps> = ({ target, app, ...props }) => {
 	return <ActionRoot {...props} onAction={() => {
+		open(target, app);
 	}} />
 }
 
