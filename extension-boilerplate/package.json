@@ -1,0 +1,26 @@
+{
+  "name": "peepobank",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "build-only": "node build.mjs",
+    "clean": "rimraf dist",
+    "build": "run-s clean build-only",
+    "deploy-only": "node deploy.mjs",
+    "deploy": "run-s build deploy-only"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "commands": [],
+  "devDependencies": {
+    "@types/react": "^19.0.1",
+    "esbuild": "^0.24.0",
+    "npm-run-all": "^4.1.5",
+    "react": "^19.0.0",
+    "rimraf": "^6.0.1"
+  },
+  "dependencies": {
+    "@omnicast/api": "file:../../../omnicast/api"
+  }
+}

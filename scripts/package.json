@@ -8,5 +8,12 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^22.13.17"
+  },
+  "dependencies": {
+    "@omnicast/api": "file:../api/omnicast-api-1.0.0.tgz",
+    "@omnicast/utils": "file:../api-utils/omnicast-utils-1.0.0.tgz"
+  }
 }

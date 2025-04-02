@@ -4,11 +4,15 @@ import { Clipboard } from "../clipboard";
 import { ImageLike, serializeImageLike } from "../image";
 import { Keyboard } from "../keyboard";
 import { Application, open } from "../utils";
+import { useEventListener } from "../hooks";
+import { Form } from "./form";
 
 export type BaseActionProps = {
 	title: string;
 	icon?: ImageLike;
 	shortcut?: Keyboard.Shortcut;
+	autoFocus?: boolean;
+	style?: 'regular' | 'destructive'
 }
 
 export type ActionProps = BaseActionProps & {
@@ -28,8 +32,18 @@ export type ActionOpenProps = BaseActionProps & {
 	app?: Application;
 };
 
+export type ActionSubmitFormProps = Omit<BaseActionProps, 'title'> &  {
+	onSubmit: (input: Form.Values) => boolean | void | Promise<boolean | void> ;
+	title?: string;
+};
+
 const ActionRoot: React.FC<ActionProps> = ({ icon, ...props }) => {
-	const nativeProps: React.JSX.IntrinsicElements['action'] = props;
+	const handler = useEventListener(props.onAction);
+	const nativeProps: React.JSX.IntrinsicElements['action'] = {
+		...props,
+		icon,
+		onAction: handler!
+	};
 
 	if (icon) {
 		nativeProps.icon = serializeImageLike(icon);
@@ -50,6 +64,12 @@ const Open: React.FC<ActionOpenProps> = ({ target, app, ...props }) => {
 	}} />
 }
 
+const OpenInBrowser: React.FC<ActionOpenProps> = ({ target, app, ...props }) => {
+	return <ActionRoot {...props} onAction={() => {
+		open(target, app);
+	}} />
+}
+
 const Push: React.FC<ActionPushProps> = ({ target, ...props }) => {
 	const { push } = useNavigation();
 
@@ -59,9 +79,22 @@ const Push: React.FC<ActionPushProps> = ({ target, ...props }) => {
 	}} />
 }
 
+const SubmitForm: React.FC<ActionSubmitFormProps> = ({ onSubmit, ...props }) => {
+	return <ActionRoot {...props} title="Submit" onAction={() => {
+		onSubmit({});
+		console.log('submit form');
+	}} />
+}
+
 
 export const Action = Object.assign(ActionRoot, {
 	CopyToClipboard,
 	Push,
-	Open
+	Open,
+	SubmitForm,
+	OpenInBrowser,
+	Style: {
+		Regular: 'regular',
+		Destructive: 'destructive'
+	} satisfies { Regular: 'regular', Destructive: 'destructive' }
 });

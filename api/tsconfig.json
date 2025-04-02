@@ -1,7 +1,7 @@
 {
   "include": [
 	"src/components/*",
-	"src/types/*",
+	"types/*",
 	"src/*"
   ],
   "compilerOptions": {
@@ -32,12 +32,10 @@
     "module": "nodenext",                                /* Specify what module code is generated. */
     // "rootDir": "./",                                  /* Specify the root folder within your source files. */
     //"moduleResolution": "Node",                     /* Specify how TypeScript looks up a file from a given module specifier. */
-    //"baseUrl": "src/",                                  /* Specify the base directory to resolve non-relative module names. */
-    "paths": {
-	},                                      			/* Specify a set of entries that re-map imports to additional lookup locations. */
+    //"baseUrl": "./src",                                  /* Specify the base directory to resolve non-relative module names. */
     // "rootDirs": [],                                   /* Allow multiple folders to be treated as one when resolving modules. */
-    // "typeRoots": [],                                  /* Specify multiple folders that act like './node_modules/@types'. */
-    // "types": [],                                      /* Specify type package names to be included without being referenced in a source file. */
+                                      /* Specify multiple folders that act like './node_modules/@types'. */
+    //"types": ["src/types/**"],                                      /* Specify type package names to be included without being referenced in a source file. */
     // "allowUmdGlobalAccess": true,                     /* Allow accessing UMD globals from modules. */
     // "moduleSuffixes": [],                             /* List of file name suffixes to search when resolving a module. */
     // "allowImportingTsExtensions": true,               /* Allow imports to include TypeScript file extensions. Requires '--moduleResolution bundler' and either '--noEmit' or '--emitDeclarationOnly' to be set. */
@@ -55,7 +53,7 @@
 
     /* Emit */
     "declaration": true,                              /* Generate .d.ts files from TypeScript and JavaScript files in your project. */
-    "declarationMap": true,                           /* Create sourcemaps for d.ts files. */
+    "declarationMap": false,                           /* Create sourcemaps for d.ts files. */
     // "emitDeclarationOnly": true,                      /* Only output d.ts files and not JavaScript files. */
     // "sourceMap": true,                                /* Create source map files for emitted JavaScript files. */
     // "inlineSourceMap": true,                          /* Include sourcemap files inside the emitted JavaScript. */

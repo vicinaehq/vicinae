@@ -10,6 +10,10 @@ export type ListProps = {
 	actions?: React.ReactNode;
 	children?: React.ReactNode;
 	filtering?: boolean;
+	/**
+	 * @deprecated use filtering
+	 */
+	enableFiltering?: boolean;
 	isLoading?: boolean;
 	isShowingDetail?: boolean;
 	searchBarPlaceholder?: string;
@@ -37,6 +41,10 @@ const ListRoot: React.FC<ListProps> = ({ onSearchTextChange, onSelectionChange, 
 	const searchTextChangeHandler = useEventListener(onSearchTextChange);
 	const selectionChangeHandler = useEventListener(onSelectionChange);
 
+	if (typeof props.enableFiltering === "boolean" && typeof props.filtering === "undefined") {
+		props.filtering = props.enableFiltering;
+	}
+
 	return <list 
 		onSearchTextChange={searchTextChangeHandler} 
 		onSelectionChange={selectionChangeHandler} 
@@ -49,7 +57,7 @@ const ListItem: React.FC<ListItemProps> = ({ detail, actions, ...props }) => {
 	const nativeProps: React.JSX.IntrinsicElements['list-item'] = {
 		title: props.title,
 		subtitle: props.subtitle,
-		id: id.current
+		id: id.current,
 	};
 
 	if (props.icon) nativeProps.icon = serializeImageLike(props.icon);

@@ -1,5 +1,7 @@
 import { ReactNode } from "react";
-import { ImageLike, serializeImageLike } from "../image";
+import { Image, ImageLike, serializeImageLike } from "../image";
+import { Keyboard } from "../keyboard";
+import { useEventListener } from "../hooks";
 
 export type ActionPanelProps = {
 	title?: string;
@@ -29,17 +31,27 @@ const ActionPanelSection: React.FC<ActionPanelSectionProps> = (props) => {
 
 export type ActionPanelSubmenuProps = {
 	title: string;
-	icon?: ImageLike;
+	icon?: Image.ImageLike;
+	shortcut?: Keyboard.Shortcut;
 	onOpen?: () => void;
-	onSearchTextChange: (text: string) => void
+	onSearchTextChange?: (text: string) => void
+	children: ReactNode;
 };
 
-const ActionPannelSubmenu: React.FC<ActionPanelSubmenuProps> = ({ icon, ...props }) => {
+const ActionPannelSubmenu: React.FC<ActionPanelSubmenuProps> = ({ icon, children, onOpen, onSearchTextChange, ...props }) => {
+	const onSearchTextChangeHandler = useEventListener(onSearchTextChange);
+	const onOpenHandler = useEventListener(onOpen);
 	const nativeProps: React.JSX.IntrinsicElements['action-panel-submenu'] = props;
+
+	nativeProps.onSearchTextChange = onSearchTextChangeHandler; 
+	nativeProps.onOpen = onOpenHandler;
 
 	if (icon) nativeProps.icon = serializeImageLike(icon);
 
-	return <action-panel-submenu {...nativeProps} />
+	return <action-panel-submenu {...nativeProps}>
+		{children}
+	</action-panel-submenu>
+
 }
 
 export const ActionPanel = Object.assign(ActionPanelRoot, {

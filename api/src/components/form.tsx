@@ -2,12 +2,12 @@ import { Ref } from 'react';
 import { useImperativeFormHandle } from '../hooks/use-imperative-form-handle';
 
 type FormProps = {
-	actions: React.ReactNode;
-	children: React.ReactNode,
-	enableDrafts: boolean,
-	isLoading: boolean,
-	navigationTitle: string,
-	searchBarAccessory: React.ReactNode
+	actions?: React.ReactNode;
+	children?: React.ReactNode
+	enableDrafts?: boolean,
+	isLoading?: boolean,
+	navigationTitle?: string,
+	searchBarAccessory?: React.ReactNode
 };
 
 export type FormItemRef = {
@@ -17,7 +17,7 @@ export type FormItemRef = {
 
 interface FormItemProps<T extends Form.Value> {
 	id: string;
-	ttile?: string;
+	title?: string;
 	info?: string;
 	error?: string;
 	storeValue?: boolean;
@@ -76,7 +76,7 @@ const FormRoot: React.FC<Form.Props> = ({ enableDrafts = false, actions, childre
 }
 
 interface WithFormRef<T> {
-	ref: Ref<T>;
+	ref?: Ref<T>;
 };
 
 interface TextFieldProps extends FormItemProps<string>, WithFormRef<Form.TextField> {
@@ -95,7 +95,15 @@ const PasswordField: React.FC<PasswordFieldProps> = () => {
 	return <password-field />
 }
 
+interface DatePickerProps extends FormItemProps<Date | null>, WithFormRef<Form.DatePicker> {
+};
+
+const DatePicker: React.FC<DatePickerProps> = () => {
+	return <date-picker />
+}
+
 export const Form = Object.assign(FormRoot, {
 	TextField,
 	PasswordField,
+	DatePicker,
 })

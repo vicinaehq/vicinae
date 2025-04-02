@@ -7,15 +7,14 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "files": [
-	  "./dist"
+	  "./dist",
+	  "./types"
   ],
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "exports": {
-    ".": "./dist/index.js"
-  },
-  "types": "./dist/index.d.ts",
+  "types": ["./dist/index.d.ts", "./types/jsx.d.ts"],
+  "main": "dist/index.js",
   "devDependencies": {
     "@types/node": "^22.10.1",
     "esbuild": "^0.24.0"
