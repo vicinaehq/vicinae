@@ -2,14 +2,14 @@ import { bus } from './bus';
 
 // Implementation of Raycast's storage API: https://developers.raycast.com/api-reference/storage
 
-export namespace LocalStorage {
+export declare namespace LocalStorage {
 	export type Value = string | number | boolean;
 	export type Values = { [key: string]: Value };
 };
 
-class LocalStorage {
-	static async getItem(key: string): Promise<LocalStorage.Value | undefined> {
-		const res = await bus.request<{ value: LocalStorage.Value | undefined }>('storage.get', {
+export class LocalStorage {
+	static async getItem<T extends LocalStorage.Value>(key: string): Promise<T | undefined> {
+		const res = await bus.request<{ value: T | undefined }>('storage.get', {
 			key
 		});
 

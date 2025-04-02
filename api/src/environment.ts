@@ -1,14 +1,20 @@
+import { Form } from "./components";
+
 export interface LaunchContext {
 	[item: string]: any;
 };
 
+export interface Arguments {
+	[item: string]: any;
+};
+
  export declare type LaunchProps<T extends {
-    //arguments?: Arguments;
-    //draftValues?: Form.Values;
+    arguments?: Arguments;
+    draftValues?: Form.Values;
     launchContext?: LaunchContext;
 } = {
-    //arguments: Arguments;
-    //draftValues: Form.Values;
+    arguments: Arguments;
+    draftValues: Form.Values;
     launchContext?: LaunchContext;
 }> = {
     /**
@@ -18,12 +24,12 @@ export interface LaunchContext {
     /**
      * Use these values to populate the initial state for your command.
      */
-    //arguments: T["arguments"];
+    arguments: T["arguments"];
     /**
      * When a user enters the command via a draft, this object will contain the user inputs that were saved as a draft.
      * Use its values to populate the initial state for your Form.
      */
-    //draftValues?: T["draftValues"];
+    draftValues?: T["draftValues"];
     /**
      * When the command is launched programmatically via `launchCommand`, this object contains the value passed to `context`.
      */

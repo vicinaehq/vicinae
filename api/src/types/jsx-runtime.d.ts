@@ -88,6 +88,23 @@ declare module 'react' {
 				icon?: SerializedImageLike,
 				text?: string;
 				onAction?: () => void;
+			},
+
+			// form
+			'root-form': {
+				enableDrafts: boolean,
+				isLoading: boolean,
+				navigationTitle?: string,
+				children?: ReactNode;
+			},
+
+			'text-field': {
+			}
+
+			'password-field': {
+			},
+
+			'textarea': {
 			}
 		}
 	}
