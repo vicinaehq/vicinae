@@ -32,6 +32,10 @@ export type ActionOpenProps = BaseActionProps & {
 	app?: Application;
 };
 
+export type ActionOpenInBrowserProps = BaseActionProps & {
+	url: string;
+};
+
 export type ActionSubmitFormProps = Omit<BaseActionProps, 'title'> &  {
 	onSubmit: (input: Form.Values) => boolean | void | Promise<boolean | void> ;
 	title?: string;
@@ -64,9 +68,9 @@ const Open: React.FC<ActionOpenProps> = ({ target, app, ...props }) => {
 	}} />
 }
 
-const OpenInBrowser: React.FC<ActionOpenProps> = ({ target, app, ...props }) => {
+const OpenInBrowser: React.FC<ActionOpenInBrowserProps> = ({ url, ...props }) => {
 	return <ActionRoot {...props} onAction={() => {
-		open(target, app);
+		open(url);
 	}} />
 }
 

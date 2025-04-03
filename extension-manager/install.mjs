@@ -9,24 +9,12 @@ const BASE_CFG = join(homedir(), ".local", "share", "omnicast", "extensions");
 
 mkdirSync(BASE_CFG, { recursive: true });
 
-const nmPath = join(BASE_CFG, 'node_modules');
+cpSync(join(OUT_DIR, "runtime.js"), join(BASE_CFG, "manager.js"));
 
-if (existsSync(nmPath)) rmSync(nmPath, { recursive: true });
+const runtimeDir = join(BASE_CFG, "runtime");
 
-copyFileSync(join(OUT_DIR, "runtime.js"), join(BASE_CFG, "runtime.js"));
-copyFileSync(join(OUT_DIR, "package.json"), join(BASE_CFG, "package.json"));
+mkdirSync(runtimeDir, { recursive: true });
 
-const omniNm = join(nmPath, "@omnicast");
-
-mkdirSync(omniNm, { recursive: true });
-
-const old = cwd();
-chdir(BASE_CFG);
-execSync("npm install --omit=dev", { stdio: 'inherit' });
-chdir(old);
-
-cpSync('../api', join(omniNm, "api"), { recursive: true });
-
-const omniApiNpm = join(omniNm, "api", "node_modules");
-
-if (existsSync(omniApiNpm)) rmSync(omniApiNpm, { recursive: true });
+cpSync(join("runtime", "dist", "extension-worker.js"), join(runtimeDir, "extension-worker.js"));
+cpSync(join("runtime", "package.json"), join(runtimeDir, "package.json"));
+cpSync(join("runtime", "omnicast-api-1.0.0.tgz"), join(runtimeDir, "omnicast-api-1.0.0.tgz"));

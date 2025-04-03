@@ -2,25 +2,24 @@
   "name": "@omnicast/api",
   "version": "1.0.0",
   "description": "TypeScript SDK to build omnicast extensions",
-  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "files": [
-	  "./dist",
-	  "./types"
+	  "dist",
+	  "types"
   ],
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "types": ["./dist/index.d.ts", "./types/jsx.d.ts"],
+  "types": ["./dist/index.d.ts"],
   "main": "dist/index.js",
   "devDependencies": {
     "@types/node": "^22.10.1",
     "esbuild": "^0.24.0"
   },
   "dependencies": {
-    "react": "^19.1.0",
-    "@types/react": "^19.0.1"
+    "react": "^18.1.0",
+    "@types/react": "^18.1.0"
   }
 }

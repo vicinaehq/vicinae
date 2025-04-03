@@ -1,13 +1,10 @@
 import { join } from "path"
-import { readFileSync, readdirSync } from 'fs';
-import { inspect } from 'util';
+import { existsSync, readFileSync, readdirSync } from 'fs';
 import { Socket, createConnection } from 'net';
 import { randomUUID } from 'crypto';
-import { Worker, parentPort } from "worker_threads";
-import { renderView } from "./view";
-import { environment } from '@omnicast/api'
+import { Worker } from "worker_threads";
 
-const EXTENSION_DIR = "/home/aurelle/.local/share/omnicast/extensions/installed";
+const EXTENSION_DIR = "/home/aurelle/.local/share/omnicast/extensions/runtime/installed";
 
 type ExtensionArgumentBase = {
 	name: string;
@@ -94,6 +91,7 @@ export type LoadedCommand = {
 };
 
 class Omnicast {
+	private readonly extensionWorkerPath = join(__dirname, "runtime", "extension-worker.js");
 	private readonly workerMap = new Map<string, Worker>;
 	private readonly client: Socket
 	private readonly requestMap = new Map<string, Worker>;
@@ -175,7 +173,7 @@ class Omnicast {
 			console.log('loading command', { extensionId, commandName });
 
 			const sessionId = randomUUID();
-			const worker = new Worker(__filename, {
+			const worker = new Worker(this.extensionWorkerPath, {
 				workerData: {
 					component: command.componentPath
 				}
@@ -214,11 +212,12 @@ class Omnicast {
 
 				console.log(`from worker`, { qualifiedPayload });
 
+				console.log(`[DEBUG] forward event type ${qualifiedPayload.envelope.action}`);
+
 				this.writePacket(Buffer.from(JSON.stringify(qualifiedPayload)));
 			});
 
 			worker.stdout.on('data', (buf) => {
-				console.log('extension says', buf.toString());
 			});
 
 			worker.on('error', (error) => { 
@@ -305,6 +304,10 @@ class Omnicast {
 
 
 	constructor(serverUrl: string) {
+		if (!existsSync(this.extensionWorkerPath)) {
+			throw new Error(`Could not find extension worker at ${this.extensionWorkerPath}`);
+		}
+
 		this.client = createConnection({ path: serverUrl });
 		this.client.on('error', (error) => {
 			throw new Error(`${error}`);
@@ -317,27 +320,7 @@ class Omnicast {
 		});
 	}
 };
-
-const executeView = async () => {
-  environment.textSize = 'medium';
-  environment.appearance = 'dark';
-  environment.canAccess = (api) => false,
-  environment.assetsPath = "";
-  environment.isDevelopment = false;
-  environment.commandMode = 'view';
-  environment.supportPath = '/tmp';
-  environment.raycastVersion = '1.0.0';
-  environment.launchType = {} as any;
-
- await renderView();
-}
-
 const main = () => {
-	// we are in a worker
-	if (parentPort) {
-		return executeView();
-	}
-
 	const url = process.env.OMNICAST_SERVER_URL;
 
 	if (!url) {
@@ -351,7 +334,7 @@ const main = () => {
 		const metadata = JSON.parse(readFileSync(join(extPath, 'package.json'), 'utf-8'));
 		const { name, title, icon, version, preferences = [] } = metadata;
 
-		const installDir = join(__dirname, 'installed', metadata.name);
+		const installDir = join(EXTENSION_DIR, metadata.name);
 		const extension: Extension = { sessionId: randomUUID(), icon, title, name, preferences, path: installDir, commands: [] };
 
 		for (const cmd of metadata.commands) {

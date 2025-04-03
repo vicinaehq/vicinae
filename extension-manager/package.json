@@ -11,13 +11,6 @@
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^22.10.1",
-    "@types/react": "^19.0.1",
-    "@types/react-reconciler": "^0.28.9",
-    "esbuild": "^0.24.0",
-    "fast-json-patch": "^3.1.1",
-    "react-reconciler": "^0.28.0"
-  },
-  "dependencies": {
-    "react": "^18.3.1"
+    "esbuild": "^0.24.0"
   }
 }

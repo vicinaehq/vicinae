@@ -33,7 +33,7 @@ struct LoadedCommand {
   } command;
 };
 
-static const char *exec = "/home/aurelle/prog/perso/omnicast-sdk/extension-manager/dist/index.js";
+static const char *exec = "/home/aurelle/.local/share/omnicast/extensions/manager.js";
 
 enum MessageType { REQUEST, RESPONSE, EVENT };
 
@@ -224,7 +224,7 @@ private slots:
   void handleError(QLocalSocket::LocalSocketError error) { qDebug() << "bus errror" << error; }
 
   void handleMessage(FullMessage msg) {
-    qDebug() << "readyRead: got message of type" << msg.envelope.action;
+    qDebug() << "[DEBUG] readyRead: got message of type" << msg.envelope.action;
 
     if (msg.envelope.type == MessageType::REQUEST) {
       incomingPendingRequests.insert(msg.envelope.id, msg.envelope);
@@ -265,17 +265,23 @@ private slots:
     while (socket->bytesAvailable() > 0) {
       _message.data.append(socket->readAll());
 
-      if (_message.length == 0 && _message.data.size() >= sizeof(uint32_t)) {
-        _message.length = ntohl(*reinterpret_cast<uint32_t *>(_message.data.data()));
-        _message.data = _message.data.sliced(sizeof(uint32_t));
-      }
+      while (true) {
+        if (_message.length == 0 && _message.data.size() >= sizeof(uint32_t)) {
+          _message.length = ntohl(*reinterpret_cast<uint32_t *>(_message.data.data()));
+          _message.data = _message.data.sliced(sizeof(uint32_t));
+        }
 
-      if (_message.length > 0 && _message.data.size() >= _message.length) {
-        auto packet = _message.data.sliced(0, _message.length);
+        if (_message.length > 0 && _message.data.size() >= _message.length) {
+          auto packet = _message.data.sliced(0, _message.length);
 
-        emit worker->processData(packet);
-        _message.data = _message.data.sliced(_message.length);
-        _message.length = 0;
+          qDebug() << "[DEBUG] Processing message of size" << packet.size() << "leftover"
+                   << _message.data.size() - _message.length;
+          emit worker->processData(packet);
+          _message.data = _message.data.sliced(_message.length);
+          _message.length = 0;
+        } else {
+          break;
+        }
       }
     }
   }
@@ -400,7 +406,7 @@ public slots:
     connect(&ipc, &QLocalServer::newConnection, this, &ExtensionManager::newConnection);
 
     process.setEnvironment(environ);
-    process.start("/bin/node", {"runtime.js"});
+    process.start("/bin/node", {"manager.js"});
     qDebug() << "started process";
   }
 

@@ -7,7 +7,10 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
   if (!newModel.navigationTitle.isEmpty()) { setNavigationTitle(newModel.navigationTitle); }
   if (!newModel.searchPlaceholderText.isEmpty()) { setSearchPlaceholderText(newModel.searchPlaceholderText); }
 
-  if (auto text = newModel.searchText) { setSearchText(*text); }
+  if (auto text = newModel.searchText) {
+    qDebug() << "[DEBUG] SET SEARCH TEXT" << text;
+    setSearchText(*text);
+  }
 
   if (newModel.throttle != _model.throttle) {
     _debounce->stop();
@@ -27,6 +30,8 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
 
   qDebug() << "render items from list model" << newModel.items.size();
 
+  if (newModel.items.empty() && newModel.actions) { emit updateActionPannel(*newModel.actions); }
+
   for (const auto &item : newModel.items) {
     if (auto listItem = std::get_if<ListItemViewModel>(&item)) {
       items.push_back(std::make_unique<ExtensionListItem>(*listItem));
@@ -39,11 +44,21 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
     }
   }
 
+  QString oldSelectedId = _list->selected() ? _list->selected()->id() : "";
+
   if (_shouldResetSelection) {
     _shouldResetSelection = false;
     _list->updateFromList(items, OmniList::SelectFirst);
   } else {
     _list->updateFromList(items, OmniList::KeepSelection);
+  }
+
+  if (!newModel.items.empty()) {
+    if (_list->selected()->id() == oldSelectedId) {
+      auto item = static_cast<const ExtensionListItem *>(_list->selected());
+
+      if (auto &pannel = item->model().actionPannel) { emit updateActionPannel(*pannel); }
+    }
   }
 
   _model = newModel;
@@ -73,6 +88,8 @@ void ExtensionListComponent::handleDebouncedSearchNotification() {
   if (auto handler = _model.onSearchTextChange) {
     // flag next render to reset the search selection
     _shouldResetSelection = !_model.filtering;
+
+    qDebug() << "[DEBUG] sending search changed event" << text;
 
     emit notifyEvent(*handler, {text});
   }

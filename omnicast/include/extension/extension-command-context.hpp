@@ -107,6 +107,12 @@ private slots:
       app()->extensionManager->respond(id, responseData);
     }
 
+    if (action == "clear-search-bar") {
+      app()->topBar->input->clear();
+      emit app() -> topBar->input->debouncedTextEdited("");
+      app()->extensionManager->respond(id, {});
+    }
+
     if (action == "clipboard-copy") {
       app()->clipboardService->copyText(payload.value("text").toString());
       app()->statusBar->setToast("Copied into clipboard");

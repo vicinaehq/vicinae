@@ -15,7 +15,6 @@ declare module 'react' {
                 markdown: string;
             };
             list: {
-                actions?: React.ReactNode;
                 children?: React.ReactNode;
                 filtering?: boolean;
                 isLoading?: boolean;
@@ -38,6 +37,8 @@ declare module 'react' {
             };
             'list-item-detail': ListItemDetailProps;
             'list-item-detail-metadata': any;
+			'list-accessory': {
+			}
             'empty-view': {
                 description?: string;
                 title?: string;
@@ -82,7 +83,7 @@ declare module 'react' {
                 color?: SerializedColorLike;
                 icon?: SerializedImageLike;
                 text?: string;
-                onAction?: () => void;
+                onAction: HandlerId;
             };
             'root-form': {
                 enableDrafts: boolean;
@@ -94,6 +95,24 @@ declare module 'react' {
 			'date-picker': {},
             'password-field': {};
             'textarea': {};
+
+			'dropdown': {},
+			'dropdown-section': {
+				title?: string;
+				children: ReactNode;
+			},
+			'dropdown-item': {
+				title: string;
+				value: string;
+				icon?: SerializedImageLike;
+				keywords?: string[];
+			},
+
+			'separator': {},
+			'menu-bar': {},
+			'menu-bar-item': {},
+			'menu-bar-submenu': {},
+			'menu-bar-section': {},
         }
 	}
 }

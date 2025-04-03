@@ -15,8 +15,11 @@ public:
   void setSearchText(const QString &text) {
     bool changed = app.topBar->input->text() != text;
 
-    app.topBar->input->setText(text);
-    emit app.topBar->input->textEdited(text);
+    if (changed) {
+      qDebug() << "changed!!!!" << app.topBar->input->text() << "VS new" << text;
+      app.topBar->input->setText(text);
+      // emit app.topBar->input->textEdited(text);
+    }
   }
   void setSearchPlaceholderText(const QString &text) { app.topBar->input->setPlaceholderText(text); }
   void setNavigationTitle(const QString &text) { app.statusBar->setNavigationTitle(text); }

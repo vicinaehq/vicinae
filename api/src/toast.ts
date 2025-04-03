@@ -67,7 +67,7 @@ export declare class Toast {
     private update;
 }
 
-export declare namespace Toast {
+export namespace Toast {
     /**
      * The options to create a {@link Toast}.
      *

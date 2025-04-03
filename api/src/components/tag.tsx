@@ -1,6 +1,7 @@
 import React, { FC, ReactNode } from 'react';
 import { ImageLike, serializeImageLike } from '../image';
 import { ColorLike, serializeColorLike } from '../color';
+import { useEventListener } from '../hooks';
 
 export type TagListProps = {
 	title: string;
@@ -24,8 +25,9 @@ export type TagItemProps = {
 };
 
 const TagItem: FC<TagItemProps> = ({ color, icon, text, onAction }) => {
+	const onActionHandler = useEventListener(onAction);
 	const nativeProps: React.JSX.IntrinsicElements['tag-item'] = {
-		text, onAction
+		text, onAction: onActionHandler!
 	};
 
 	if (color) nativeProps.color = serializeColorLike(color);

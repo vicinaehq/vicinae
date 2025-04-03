@@ -48,6 +48,7 @@ export const renderView = async () => {
 			bus!.emit('render', { views });
 		},
 		onUpdate: (views) => {
+			console.log('[DEBUG] render');
 			bus!.emit('render', { views });
 		}
 	});

@@ -16,7 +16,6 @@ await esbuild.build({
   outfile: join(OUT_DIR, 'runtime.js'),
   format: 'cjs',
   platform: 'node',
-  external: ["react", '@omnicast/api'],
 })
 
 const end = performance.now();
