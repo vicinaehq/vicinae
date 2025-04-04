@@ -873,18 +873,31 @@ var createHostConfig = (hostCtx, callback) => {
   return hostConfig;
 };
 var createRenderer = (config) => {
+  const { maxRendersPerSecond = 60 } = config;
+  const frameTime = Math.floor(1e3 / maxRendersPerSecond);
   const container = { children: [] };
-  let oldViews = [];
-  const hostConfig = createHostConfig({}, () => {
-    const views = [];
-    for (let i = 0; i != container.children.length; ++i) {
-      const view = container.children[i];
-      const oldView = oldViews[i] ?? {};
-      views.push({ root: view, changes: i < oldViews.length ? (0, import_fast_json_patch.compare)(oldViews[i], view) : [] });
+  let oldTree = [];
+  let debounceTimeout = null;
+  const render = () => {
+    if (debounceTimeout) {
+      return;
     }
-    config.onUpdate?.(views);
-    oldViews = (0, import_fast_json_patch.deepClone)(container.children);
-  });
+    debounceTimeout = (0, import_node_timers.setTimeout)(() => {
+      const views = [];
+      const changes = (0, import_fast_json_patch.compare)(oldTree, container.children);
+      const didTreeChange = changes.length > 0;
+      if (didTreeChange) {
+        for (let i = 0; i != container.children.length; ++i) {
+          const view = container.children[i];
+          views.push({ root: view, changes: [] });
+        }
+        config.onUpdate?.(views);
+        oldTree = (0, import_fast_json_patch.deepClone)(container.children);
+      }
+      debounceTimeout = null;
+    }, frameTime);
+  };
+  const hostConfig = createHostConfig({}, render);
   const reconciler = (0, import_react_reconciler.default)(hostConfig);
   return {
     render(element) {
@@ -893,15 +906,7 @@ var createRenderer = (config) => {
           console.error("recoverable error", error);
         }, null);
       }
-      reconciler.updateContainer(element, container._root, null, () => {
-        const views = [];
-        for (let i = 0; i != container.children.length; ++i) {
-          const view = container.children[i];
-          views.push({ root: view, changes: i < oldViews.length ? (0, import_fast_json_patch.compare)(oldViews[i], view) : [] });
-        }
-        config.onInitialRender(views);
-        oldViews = (0, import_fast_json_patch.deepClone)(container.children);
-      });
+      reconciler.updateContainer(element, container._root, null, render);
     }
   };
 };
@@ -952,12 +957,16 @@ var main = async () => {
   process.on("uncaughtException", (error) => {
     console.error("uncaught exception:", error);
   });
+  let lastRender = performance.now();
   const renderer = createRenderer({
     onInitialRender: (views) => {
       import_api2.bus.emit("render", { views });
     },
     onUpdate: (views) => {
-      console.log("[DEBUG] render");
+      const now = performance.now();
+      const elapsed = now - lastRender;
+      console.log(`[PERF] Render update (last update ${elapsed}ms ago)`);
+      lastRender = now;
       import_api2.bus.emit("render", { views });
     }
   });

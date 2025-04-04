@@ -214,27 +214,43 @@ export type ViewData = {
 };
 
 export type RendererConfig = {
+	maxRendersPerSecond?: number,
 	onInitialRender: (views: ViewData[]) => void
 	onUpdate?: (views: ViewData[]) => void;
 };
 
 export const createRenderer = (config: RendererConfig) => {
+	const { maxRendersPerSecond = 60 } = config;
+	const frameTime = Math.floor(1000 / maxRendersPerSecond);
 	const container: Container = { children: [] };
-	let oldViews: Instance[] = [];
+	let oldTree: Instance[] = [];
+	let debounceTimeout: NodeJS.Timeout | null = null;
 
-	const hostConfig = createHostConfig({}, () => {
-		const views: ViewData[] = [];
+	const render = () => {
+		if (debounceTimeout) { return; }
 
-		for (let i = 0; i != container.children.length; ++i) {
-			const view = container.children[i];
-			const oldView = oldViews[i] ?? {};
+		debounceTimeout = setTimeout(() => {
+			const views: ViewData[] = [];
+			const changes = compare(oldTree, container.children);
+			const didTreeChange = changes.length > 0;
 
-			views.push({ root: view, changes: i < oldViews.length ? compare(oldViews[i], view) : []});
-		}
+			if (didTreeChange) {
+				for (let i = 0; i != container.children.length; ++i) {
+					const view = container.children[i];
 
-		config.onUpdate?.(views)
-		oldViews = deepClone(container.children);
-	});
+					views.push({ root: view, changes: []});
+				}
+
+				config.onUpdate?.(views)
+				oldTree = deepClone(container.children);
+			}
+
+			debounceTimeout = null;
+		}, frameTime);
+
+	}
+
+	const hostConfig = createHostConfig({}, render);
 
 	const reconciler = Reconciler(hostConfig);
 
@@ -244,19 +260,7 @@ export const createRenderer = (config: RendererConfig) => {
 				container._root = reconciler.createContainer(container, 0, null, false, null, '', (error) => {console.error('recoverable error', error)}, null);
 			}
 
-			reconciler.updateContainer(element, container._root, null, () => {
-				const views: ViewData[] = [];
-
-				for (let i = 0; i != container.children.length; ++i) {
-					const view = container.children[i];
-
-					views.push({ root: view, changes: i < oldViews.length ? compare(oldViews[i], view) : []});
-				}
-
-				config.onInitialRender(views);
-
-				oldViews = deepClone(container.children);
-			});
+			reconciler.updateContainer(element, container._root, null, render);
 		}
 	};
 }

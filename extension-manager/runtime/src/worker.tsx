@@ -60,12 +60,20 @@ export const main = async () => {
 		console.error('uncaught exception:', error);
 	});
 
+	let lastRender = performance.now();
+
 	const renderer = createRenderer({
 		onInitialRender: (views) => {
 			bus!.emit('render', { views });
 		},
 		onUpdate: (views) => {
-			console.log('[DEBUG] render');
+			const now = performance.now();
+			const elapsed =  now - lastRender;
+
+			console.log(`[PERF] Render update (last update ${elapsed}ms ago)`);
+
+			lastRender = now;
+			
 			bus!.emit('render', { views });
 		}
 	});
