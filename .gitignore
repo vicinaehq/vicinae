@@ -3,3 +3,4 @@ build
 /home/aurelle/Downloads/wireguard.png
 /src
 .tmp
+extension-manager/runtime/node_modules
