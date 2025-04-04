@@ -7,6 +7,7 @@ export type Message<T = Record<string, any>> = {
 		type: 'request' | 'response' | 'event',
 		action: string,
 	}
+	error: { message?: string } | null;
 	data: T; 
 };
 
@@ -93,17 +94,33 @@ class Bus {
 			action, 
 			id
 		},
-		data
+		data,
+		error: null,
 	};
 	
 	this.port.postMessage(message);
   }
 
-  request<T = Record<string, any>>(action: string, data: Record<string, any> = {}): Promise<Message<T>> {
+  request<T = Record<string, any>>(action: string, data: Record<string, any> = {}, options: { timeout?: number, rejectOnError?: boolean } = {}): Promise<Message<T>> {
 	const id = randomUUID();
+	const { rejectOnError = true } = options;
 
 	return new Promise<Message<T>>((resolve, reject) => {
-		const resolver = (message: Message) => resolve(message as Message<T>);
+		let timeout: NodeJS.Timeout | undefined;
+
+		if (options.timeout) {
+			timeout = setTimeout(() => reject(new Error(`request timed out`)), options.timeout);
+		}
+
+		const resolver = (message: Message) => { 
+			clearTimeout(timeout);
+
+			if (message.error && rejectOnError) {
+				return reject(message.error.message ?? "Unknown error");
+			}
+
+			resolve(message as Message<T>);
+		};
 
 		try {
 			this.requestMap.set(id, { resolve: resolver });
@@ -115,7 +132,8 @@ class Bus {
 					action, 
 					id
 				},
-				data
+				data,
+				error: null
 			};
 
 			this.port.postMessage(message);
@@ -124,6 +142,14 @@ class Bus {
 		}
 	});
   }
+};
+
+export const createHandler = (handler: (...args: any[]) => void): string => {
+	const id = randomUUID();
+
+	bus.subscribe(id, handler);
+
+	return id;
 };
 
 export const bus = new Bus(parentPort!);

@@ -211,11 +211,13 @@ public:
   void setMargins(int value);
   void clear();
   void clearSelection() { setSelectedIndex(-1); }
+  bool isShowingEmptyState() const;
 
 signals:
   void itemUpdated(const AbstractVirtualItem &item) const;
   void itemActivated(const AbstractVirtualItem &item) const;
   void selectionChanged(const AbstractVirtualItem *next, const AbstractVirtualItem *previous) const;
+  void emptyStateChanged(bool empty);
 };
 
 class AbstractDefaultListItem : public OmniList::AbstractVirtualItem {

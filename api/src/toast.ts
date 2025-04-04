@@ -1,4 +1,6 @@
-import { bus } from "./bus";
+import { randomBytes, randomUUID } from "crypto";
+import { HandlerId } from "../types/jsx";
+import { bus, createHandler } from "./bus";
 import { Keyboard } from "./keyboard";
 
 /**
@@ -19,51 +21,114 @@ import { Keyboard } from "./keyboard";
  * };
  * ```
  */
-export declare class Toast {
-    private options;
-    private id;
-    private callbacks;
+export class Toast {
+    private options: {
+		title: string;
+		style: Toast.Style;
+		message?: string;
+		primaryAction?: Toast.ActionOptions;
+		secondaryAction?: Toast.ActionOptions;
+	};
+    private callbacks: {
+		primary?: HandlerId;
+		secondary?: HandlerId;
+	} = {};
+	private id: string;
+
     /**
      * Deprecated - Use `showToast` instead
      */
-    constructor(props: Toast.Options);
+
+    constructor(props: Toast.Options) {
+		this.id = `toast_${randomBytes(16).toString('hex')}`;
+		this.options = {
+			title: props.title,
+			style: props.style ?? Toast.Style.Success,
+			message: props.message
+		}
+
+		if (props.primaryAction) {
+			const { onAction } = props.primaryAction;
+
+			this.options.primaryAction = props.primaryAction;
+			this.callbacks.primary = createHandler(() => onAction(this));
+		}
+
+		if (props.secondaryAction) {
+			const { onAction } = props.secondaryAction;
+
+			this.options.secondaryAction = props.secondaryAction;
+			this.callbacks.secondary = createHandler(() => onAction(this));
+		}
+	}
+
     /**
      * The style of a Toast.
      */
-    get style(): Toast.Style;
-    set style(style: Toast.Style);
+    get style(): Toast.Style { return this.options.style; }
+    set style(style: Toast.Style) { this.options.style = style; }
     /**
      * The title of a Toast. Displayed on the top.
      */
-    get title(): string;
-    set title(title: string);
+    get title(): string { return this.options.title; }
+    set title(title: string) { this.options.title = title; }
     /**
      * An additional message for the Toast. Useful to show more information, e.g. an identifier of a newly created asset.
      */
-    get message(): string | undefined;
-    set message(message: string | undefined);
+    get message(): string | undefined { return this.options.message; }
+    set message(message: string | undefined) { this.options.message = message; }
     /**
      * The primary Action the user can take when hovering on the Toast.
      */
-    get primaryAction(): Toast.ActionOptions | undefined;
-    set primaryAction(action: Toast.ActionOptions | undefined);
+    get primaryAction(): Toast.ActionOptions | undefined { return this.options.primaryAction; }
+    set primaryAction(action: Toast.ActionOptions | undefined) { this.options.primaryAction = action; }
     /**
      * The secondary Action the user can take when hovering on the Toast.
      */
-    get secondaryAction(): Toast.ActionOptions | undefined;
-    set secondaryAction(action: Toast.ActionOptions | undefined);
+    get secondaryAction(): Toast.ActionOptions | undefined { return this.options.secondaryAction; }
+    set secondaryAction(action: Toast.ActionOptions | undefined) { this.options.secondaryAction = action; }
     /**
      * Shows the Toast.
      *
      * @returns A Promise that resolves when the toast is shown.
      */
-    show(): Promise<void>;
+    async show(): Promise<void> {
+		const payload: SerializedShowToastPayload = {
+			title: this.options.title,
+			message: this.options.message,
+			style: this.options.style,
+		};
+
+		if (this.options.primaryAction && this.callbacks.primary) {
+			const { title, shortcut } = this.options.primaryAction;
+
+			payload.primaryAction = {
+				title, shortcut, onAction: this.callbacks.primary
+			};
+		}
+
+		if (this.options.secondaryAction && this.callbacks.secondary) {
+			const { title, shortcut } = this.options.secondaryAction;
+
+			payload.secondaryAction = {
+				title, shortcut, onAction: this.callbacks.secondary
+			};
+		}
+
+		await bus.request("toast.show", payload, { timeout: 1000 });
+	}
+
     /**
      * Hides the Toast.
      *
      * @returns A Promise that resolves when toast is hidden.
      */
-    hide(): Promise<void>;
+    async hide(): Promise<void> {
+		await bus.request("toast.hide", {
+			id: this.id
+		}, { timeout: 1000 });
+	}
+
     private update;
 }
 
@@ -139,9 +204,9 @@ export namespace Toast {
      * You can hide it later by using {@link Toast.hide} or update the properties of an existing Toast.
      */
     export enum Style {
-        Success = "SUCCESS",
-        Failure = "FAILURE",
-        Animated = "ANIMATED"
+        Success = "success",
+        Failure = "failure",
+        Animated = "animated"
     }
 }
 
@@ -162,21 +227,27 @@ export declare interface ToastOptions extends Toast.Options {
  */
 export declare const ToastStyle: typeof Toast.Style;
 
-/*
-export const showToast = (options: Toast.Options): Promise<Toast> => {
-	return {} as any;
-}
-*/
-
-export const showToast = async (init: Toast.Style | Toast.Options, title?: string, message?: string): Promise<Toast> => {
-	// we are dealing with the style (preferred) overload
-	if (typeof init === "string") {
-	} else {
-		const opts = init as Toast.Options;
+type SerializedShowToastPayload = {
+	title: string;
+	message?: string;
+	style?: Toast.Style;
+	primaryAction?: {
+		title: string;
+		shortcut?: Keyboard.Shortcut;
+		onAction: HandlerId;
 	}
+	secondaryAction?: {
+		title: string;
+		shortcut?: Keyboard.Shortcut;
+		onAction: HandlerId;
+	}
+};
 
-	const toast = await bus?.request("show-toast", {});
+export const showToast = async (init: Toast.Style | Toast.Options, title = "", message?: string): Promise<Toast> => {
+	const toast = typeof init === 'string' ? new Toast({ style: init, message, title }) : new Toast(init);
 
-	return {} as any;
+	await toast.show();
+
+	return toast;
 };
 

@@ -38,11 +38,15 @@ static std::vector<std::pair<QString, OmniIconType>> iconTypes = {
     {"http", Http},       {"https", Http},       {"local", Local},
 };
 
-static std::vector<std::pair<QString, ColorTint>> colorTints = {
-    {"blue", ColorTint::Blue},     {"green", ColorTint::Green},   {"magenta", ColorTint::Magenta},
-    {"orange", ColorTint::Orange}, {"purple", ColorTint::Purple}, {"red", ColorTint::Red},
-    {"yellow", ColorTint::Yellow},
-};
+static std::vector<std::pair<QString, ColorTint>> colorTints = {{"blue", ColorTint::Blue},
+                                                                {"green", ColorTint::Green},
+                                                                {"magenta", ColorTint::Magenta},
+                                                                {"orange", ColorTint::Orange},
+                                                                {"purple", ColorTint::Purple},
+                                                                {"red", ColorTint::Red},
+                                                                {"yellow", ColorTint::Yellow},
+                                                                {"primary-text", ColorTint::TextPrimary},
+                                                                {"secondary-text", ColorTint::TextSecondary}};
 
 class OmniIconUrl {
   OmniIconType _type;

@@ -161,7 +161,7 @@ void AppWindow::popToRootView() {
 }
 
 void AppWindow::disconnectView(View &view) {
-  disconnect(topBar->input, &SearchBar::debouncedTextEdited, &view, &View::onSearchChanged);
+  disconnect(topBar->input, &SearchBar::textEdited, &view, &View::onSearchChanged);
 
   // view->app
   disconnect(&view, &View::pushView, this, &AppWindow::pushView);
@@ -175,7 +175,7 @@ void AppWindow::disconnectView(View &view) {
 
 void AppWindow::connectView(View &view) {
   // app->view
-  connect(topBar->input, &SearchBar::debouncedTextEdited, &view, &View::onSearchChanged);
+  connect(topBar->input, &SearchBar::textEdited, &view, &View::onSearchChanged);
 
   // view->app
   connect(&view, &View::pushView, this, &AppWindow::pushView);

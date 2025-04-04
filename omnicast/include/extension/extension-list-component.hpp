@@ -2,8 +2,8 @@
 #include "app.hpp"
 #include "builtin_icon.hpp"
 #include "extend/list-model.hpp"
+#include <qdebug.h>
 #include "extension/extension-component.hpp"
-#include "omni-icon.hpp"
 #include "ui/omni-list.hpp"
 #include <QJsonArray>
 #include <chrono>
@@ -13,38 +13,6 @@
 #include <qtimer.h>
 
 static const std::chrono::milliseconds THROTTLE_DEBOUNCE_DURATION(300);
-
-class ExtensionOmniIconUrl : public OmniIconUrl {
-public:
-  ExtensionOmniIconUrl(const ImageLikeModel &imageLike) {
-    if (auto image = std::get_if<ExtensionImageModel>(&imageLike)) {
-      if (QFile(":icons/" + image->source).exists()) {
-        setType(OmniIconType::Builtin);
-        setName(image->source);
-      }
-
-      if (QFile(image->source).exists()) {
-        setType(OmniIconType::Local);
-        setName(image->source);
-      }
-
-      QUrl url(image->source);
-
-      if (url.isValid()) {
-        if (url.scheme() == "file") {
-          setType(OmniIconType::Local);
-          setName(url.host() + url.path());
-          return;
-        }
-
-        if (url.scheme() == "https" || url.scheme() == "http") {
-          setType(OmniIconType::Http);
-          setName(url.host() + url.path());
-        }
-      }
-    }
-  }
-};
 
 class ExtensionListItem : public AbstractDefaultListItem {
   ListItemViewModel _item;

@@ -200,6 +200,8 @@ bool OmniList::insertAfter(const QString &id, std::unique_ptr<AbstractVirtualIte
   return true;
 }
 
+bool OmniList::isShowingEmptyState() const { return _virtual_items.empty(); }
+
 void OmniList::calculateHeights() {
   auto start = std::chrono::high_resolution_clock::now();
   int yOffset = 0;
@@ -355,10 +357,14 @@ void OmniList::updateFromList(std::vector<std::unique_ptr<AbstractVirtualItem>> 
 
   switch (selectionPolicy) {
   case SelectFirst:
+    qDebug() << "update with select first";
     selectFirst();
     break;
   case KeepSelection:
-    if (auto idx = indexOfItem(_selectedId); idx != -1) {
+    qDebug() << "update with keep selection";
+    if (_selected == -1) {
+      selectFirst();
+    } else if (auto idx = indexOfItem(_selectedId); idx != -1) {
       qDebug() << "idx of " << _selectedId << _items[idx].vIndex;
       setSelectedIndex(_items[idx].vIndex);
     } else {
@@ -608,6 +614,8 @@ const OmniList::AbstractVirtualItem *OmniList::selected() const {
 }
 
 void OmniList::clearFilter() {
+  if (!_filter) return;
+
   _filter.reset();
 
   for (auto &info : _items) {
@@ -743,7 +751,7 @@ void OmniList::invalidateCache() {
   _widgetCache.clear();
   _visibleWidgets.clear();
 
-  if (!_isUpdating) { updateVisibleItems(); }
+  // if (!_isUpdating) { updateVisibleItems(); }
 }
 
 void OmniList::invalidateCache(const QString &id) {
@@ -783,7 +791,7 @@ const OmniList::AbstractVirtualItem *OmniList::setSelected(const QString &id,
 void OmniList::addItem(std::unique_ptr<AbstractVirtualItem> item) {
   ListItemInfo info;
 
-  info.filtered = _filter && item->isListItem() && _filter->matches(*item.get());
+  info.filtered = _filter && item->isListItem() && !_filter->matches(*item.get());
   info.cachedHeight = -1;
   info.id = item->id();
   info.item = std::move(item);

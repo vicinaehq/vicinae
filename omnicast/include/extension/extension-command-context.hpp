@@ -1,6 +1,7 @@
 #include "command.hpp"
 #include "extension/extension-command.hpp"
 #include "extension/extension-view.hpp"
+#include "ui/toast.hpp"
 #include <qtmetamacros.h>
 
 class ExtensionAction : public AbstractAction {
@@ -105,29 +106,64 @@ private slots:
       responseData["apps"] = apps;
 
       app()->extensionManager->respond(id, responseData);
+      return;
+    }
+
+    if (action == "toast.show") {
+      auto title = payload["title"].toString();
+      auto style = payload["style"].toString();
+      ToastPriority priority;
+
+      if (style == "success") {
+        priority = ToastPriority::Success;
+      } else if (style == "failure") {
+        priority = ToastPriority::Danger;
+      }
+
+      app()->statusBar->setToast(title, priority);
+      app()->extensionManager->respond(id, {});
+      return;
+    }
+
+    if (action == "toast.hide") {
+      // TODO: hide it for real!
+      app()->extensionManager->respond(id, {});
+      return;
     }
 
     if (action == "clear-search-bar") {
       app()->topBar->input->clear();
-      emit app() -> topBar->input->debouncedTextEdited("");
+      emit app() -> topBar->input->textEdited("");
       app()->extensionManager->respond(id, {});
+      return;
     }
 
     if (action == "clipboard-copy") {
       app()->clipboardService->copyText(payload.value("text").toString());
       app()->statusBar->setToast("Copied into clipboard");
       app()->extensionManager->respond(id, {});
+      return;
     }
 
     if (action == "push-view") {
       pushView(new ExtensionView(*app(), command));
       app()->extensionManager->respond(id, {});
+      return;
     }
 
     if (action == "pop-view") {
       handlePopViewRequest();
       app()->extensionManager->respond(id, {});
+      return;
     }
+
+    QJsonObject errorRes;
+    QJsonObject err;
+
+    err["message"] = "Unknown command type";
+    errorRes["error"] = err;
+
+    app()->extensionManager->respond(id, errorRes);
   }
 
   void handleRender(const QJsonArray &views) {

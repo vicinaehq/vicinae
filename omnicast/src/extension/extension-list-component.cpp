@@ -30,8 +30,6 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
 
   qDebug() << "render items from list model" << newModel.items.size();
 
-  if (newModel.items.empty() && newModel.actions) { emit updateActionPannel(*newModel.actions); }
-
   for (const auto &item : newModel.items) {
     if (auto listItem = std::get_if<ListItemViewModel>(&item)) {
       items.push_back(std::make_unique<ExtensionListItem>(*listItem));
@@ -44,7 +42,15 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
     }
   }
 
-  QString oldSelectedId = _list->selected() ? _list->selected()->id() : "";
+  if (!newModel.searchText) {
+    if (newModel.filtering) {
+      _list->setFilter(std::make_unique<BuiltinExtensionItemFilter>(searchText()));
+    } else {
+      _list->clearFilter();
+    }
+  }
+
+  _list->invalidateCache();
 
   if (_shouldResetSelection) {
     _shouldResetSelection = false;
@@ -53,8 +59,12 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
     _list->updateFromList(items, OmniList::KeepSelection);
   }
 
-  if (!newModel.items.empty()) {
-    if (_list->selected()->id() == oldSelectedId) {
+  if (_list->isShowingEmptyState()) {
+    if (auto actions = newModel.actions) { emit updateActionPannel(*newModel.actions); }
+  } else {
+    QString oldSelectedId = _list->selected() ? _list->selected()->id() : "";
+
+    if (_list->selected() && _list->selected()->isListItem() && _list->selected()->id() == oldSelectedId) {
       auto item = static_cast<const ExtensionListItem *>(_list->selected());
 
       if (auto &pannel = item->model().actionPannel) { emit updateActionPannel(*pannel); }
@@ -83,7 +93,11 @@ void ExtensionListComponent::onSelectionChanged(const OmniList::AbstractVirtualI
 void ExtensionListComponent::handleDebouncedSearchNotification() {
   auto text = searchText();
 
-  if (_model.filtering) { _list->setFilter(std::make_unique<BuiltinExtensionItemFilter>(text)); }
+  if (_model.filtering) {
+    _list->setFilter(std::make_unique<BuiltinExtensionItemFilter>(text));
+  } else {
+    _list->clearFilter();
+  }
 
   if (auto handler = _model.onSearchTextChange) {
     // flag next render to reset the search selection
