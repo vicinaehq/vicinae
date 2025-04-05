@@ -11,10 +11,20 @@ export type Message<T = Record<string, any>> = {
 	data: T; 
 };
 
+namespace EventListener {
+	export type ArgValue = string | number | Record<any, any> | boolean | null | undefined;
+	export type Callback = (...args: EventListener.ArgValue[]) => void;
+};
+
+type EventListenerInfo = {
+	id: string;
+	callback: EventListener.Callback;
+};
+
 
 class Bus {
   private requestMap = new Map<string, { resolve: (message: Message) => void }>();
-  private listeners: { id: string, type: string, handler: (...args: any[]) => void }[] = [];
+  private eventListeners = new Map<string, EventListenerInfo[]>();
 
   private handleMessage(message: Message) {
 	const { envelope, data } = message;
@@ -38,13 +48,21 @@ class Bus {
 	}
 
 	if (envelope.type == 'event') {
-		console.log('got event in extension', envelope);
-		for (const listener of this.listeners) {
-			if (listener.type != envelope.action) continue ;
+		let start = performance.now();
+		console.log(`[LISTENER] iterating on ${this.eventListeners.size} listeners`);
+		const listeners = this.listEventListeners(envelope.action)
+		let end = performance.now();
+		console.log(`[LISTENER] got ${listeners.length} listeners in ${end - start}ms`);
 
-			listener.handler(...(data.args ?? []))
+		start = performance.now();
+
+		for (const listener of listeners) {
+			listener.callback(...(data.args ?? []))
 		}
 
+		 end = performance.now();
+
+		console.log(`[LISTENER] Invoked listeners in ${end - start}ms`);
 		return ;
 	}
 
@@ -67,22 +85,33 @@ class Bus {
 		  console.error(`Parent port closed prematurely`);
 	  });
   }
-
-  unsubscribe(id: string) {
-	  const idx = this.listeners.findIndex(lstn => lstn.id == id);
-
-	  if (idx == -1) return ;
-
-	  this.listeners.splice(idx, 1);
+  
+  listEventListeners(type: string): EventListenerInfo[] {
+	  return this.eventListeners.get(type) ?? [];
   }
 
-  subscribe(type: string, cb: (...args: any[]) => void) {
-	  const item = { id: randomUUID(), type, handler: cb };
+  subscribe(type: string, cb: EventListenerInfo['callback']) {
+	  const item: EventListenerInfo = { id: randomUUID(), callback: cb };
+	  let listeners = this.eventListeners.get(type)
 
-	  this.listeners.push(item);
+	  if (!listeners) { 
+		  this.eventListeners.set(type, [item]);
+	  } else {
+		  listeners.push(item);
+	  }
 
 	  return {
-		  unsubscribe: () => this.unsubscribe(item.id)
+		  unsubscribe: () => {
+			  const listeners = this.eventListeners.get(type) ?? [];
+			  const index = listeners.indexOf(item);
+
+			  if (index != -1) {
+			  	listeners.splice(index, 1);
+				if (listeners.length === 0) {
+					this.eventListeners.delete(type);
+				}
+			  }
+		  }
 	  }
   }
 

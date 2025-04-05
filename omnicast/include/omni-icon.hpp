@@ -167,8 +167,6 @@ public:
     if (auto image = std::get_if<ExtensionImageModel>(&imageLike)) {
       QUrl url(image->source);
 
-      qDebug() << "image with source" << image->source;
-
       if (auto fallback = image->fallback) {
         withFallback(ImageLikeModel(ExtensionImageModel{.source = *fallback}));
       }

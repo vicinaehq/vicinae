@@ -53,7 +53,6 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 
 		createInstance(type, props, root, ctx, handle) {
 			const { children, ...rest } = props;
-			console.log({ instanceProps: props });
 
 			for (const [k, v] of Object.entries(rest)) {
 				if (typeof v == 'function') {
@@ -230,6 +229,7 @@ export const createRenderer = (config: RendererConfig) => {
 		if (debounceTimeout) { return; }
 
 		debounceTimeout = setTimeout(() => {
+			const start = performance.now();
 			const views: ViewData[] = [];
 			const changes = compare(oldTree, container.children);
 			const didTreeChange = changes.length > 0;
@@ -245,6 +245,9 @@ export const createRenderer = (config: RendererConfig) => {
 				oldTree = deepClone(container.children);
 			}
 
+			const end = performance.now();
+
+			console.log(`[PERF] processed render frame in ${end - start}ms`);
 			debounceTimeout = null;
 		}, frameTime);
 
@@ -262,5 +265,5 @@ export const createRenderer = (config: RendererConfig) => {
 
 			reconciler.updateContainer(element, container._root, null, render);
 		}
-	};
+	}
 }

@@ -14,7 +14,9 @@ public:
 
   ExtensionAction(const ActionModel &model)
       : AbstractAction(model.title, model.icon ? OmniIconUrl(*model.icon) : BuiltinOmniIconUrl("pen")),
-        _model(model) {}
+        _model(model) {
+    shortcut = _model.shortcut;
+  }
 };
 
 class ExtensionCommandContext : public CommandContext {
@@ -187,7 +189,7 @@ private slots:
 
       doc.setObject(payload);
 
-      std::cout << doc.toJson().toStdString();
+      // std::cout << doc.toJson().toStdString();
 
       return handleRender(views);
     }

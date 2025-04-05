@@ -1,5 +1,9 @@
 #include "extension/extension-list-component.hpp"
 #include "app.hpp"
+#include "ui/action-pannel/action-item.hpp"
+
+KeyboardShortcutModel primaryShortcut{.key = "return"};
+KeyboardShortcutModel secondaryShortcut{.key = "return", .modifiers = {"shift"}};
 
 void ExtensionListComponent::render(const RenderModel &baseModel) {
   auto newModel = std::get<ListModel>(baseModel);
@@ -27,8 +31,6 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
   std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> items;
 
   items.reserve(newModel.items.size());
-
-  qDebug() << "render items from list model" << newModel.items.size();
 
   for (const auto &item : newModel.items) {
     if (auto listItem = std::get_if<ListItemViewModel>(&item)) {
@@ -60,14 +62,25 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
   }
 
   if (_list->isShowingEmptyState()) {
-    if (auto actions = newModel.actions) { emit updateActionPannel(*newModel.actions); }
+    size_t i = 0;
+
+    if (auto pannel = newModel.actions) {
+      for (auto &item : pannel->children) {
+        if (auto action = std::get_if<ActionModel>(&item)) {
+          if (i == 0) action->shortcut = primaryShortcut;
+          if (i == 1) action->shortcut = secondaryShortcut;
+
+          ++i;
+        }
+      }
+
+      emit updateActionPannel(*pannel);
+    }
   } else {
     QString oldSelectedId = _list->selected() ? _list->selected()->id() : "";
 
     if (_list->selected() && _list->selected()->isListItem() && _list->selected()->id() == oldSelectedId) {
-      auto item = static_cast<const ExtensionListItem *>(_list->selected());
-
-      if (auto &pannel = item->model().actionPannel) { emit updateActionPannel(*pannel); }
+      onSelectionChanged(_list->selected(), nullptr);
     }
   }
 
@@ -85,8 +98,20 @@ void ExtensionListComponent::onSelectionChanged(const OmniList::AbstractVirtualI
   qDebug() << "selection" << next->id();
 
   auto item = static_cast<const ExtensionListItem *>(next);
+  size_t i = 0;
 
-  if (auto &pannel = item->model().actionPannel) { emit updateActionPannel(*pannel); }
+  if (auto pannel = item->model().actionPannel) {
+    for (auto &item : pannel->children) {
+      if (auto action = std::get_if<ActionModel>(&item)) {
+        if (i == 0) action->shortcut = primaryShortcut;
+        if (i == 1) action->shortcut = secondaryShortcut;
+
+        ++i;
+      }
+    }
+
+    emit updateActionPannel(*pannel);
+  }
   if (auto handler = _model.onSelectionChanged) { emit notifyEvent(*handler, {next->id()}); }
 }
 

@@ -7,12 +7,13 @@ export const useEventListener = (fn: ((...args: any[]) => void) | undefined) => 
 	const callback = useRef<((...args: any[]) => void) | undefined>(fn);
 
 	useEffect(() => {
-		bus?.subscribe(id.current, (...args: any[]) => { callback.current?.(...args) });
+		const { unsubscribe } = bus?.subscribe(id.current, (...args: any[]) => { callback.current?.(...args) });
 
-		return () => { bus?.unsubscribe(id.current); }
+		return unsubscribe;
 	}, []);
 
 	useEffect(() => {
+		console.log('update handler');
 		callback.current = fn;
 	}, [fn]);
 

@@ -746,7 +746,6 @@ var createHostConfig = (hostCtx, callback) => {
     supportsHydration: false,
     createInstance(type, props, root, ctx2, handle) {
       const { children, ...rest } = props;
-      console.log({ instanceProps: props });
       for (const [k, v] of Object.entries(rest)) {
         if (typeof v == "function") {
           const id = createEventHandlerId();
@@ -883,6 +882,7 @@ var createRenderer = (config) => {
       return;
     }
     debounceTimeout = (0, import_node_timers.setTimeout)(() => {
+      const start = performance.now();
       const views = [];
       const changes = (0, import_fast_json_patch.compare)(oldTree, container.children);
       const didTreeChange = changes.length > 0;
@@ -894,6 +894,8 @@ var createRenderer = (config) => {
         config.onUpdate?.(views);
         oldTree = (0, import_fast_json_patch.deepClone)(container.children);
       }
+      const end = performance.now();
+      console.log(`[PERF] processed render frame in ${end - start}ms`);
       debounceTimeout = null;
     }, frameTime);
   };

@@ -210,9 +210,8 @@ class Omnicast {
 					data
 				};
 
-				console.log(`from worker`, { qualifiedPayload });
-
-				console.log(`[DEBUG] forward event type ${qualifiedPayload.envelope.action}`);
+				//console.log(`from worker`, { qualifiedPayload });
+				//console.log(`[DEBUG] forward event type ${qualifiedPayload.envelope.action}`);
 
 				this.writePacket(Buffer.from(JSON.stringify(qualifiedPayload)));
 			});
