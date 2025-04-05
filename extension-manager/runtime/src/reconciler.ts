@@ -2,8 +2,6 @@ import Reconciler, { OpaqueRoot } from 'react-reconciler';
 import { setTimeout, clearTimeout } from 'node:timers';
 import { DefaultEventPriority } from 'react-reconciler/constants';
 import { ReactElement } from 'react';
-import { bus } from '@omnicast/api';
-import { randomBytes } from 'node:crypto';
 import { deepClone, compare, Operation } from 'fast-json-patch';
 
 type InstanceType = string;
@@ -19,7 +17,7 @@ type SuspenseInstance = any;
 type HydratableInstance = any;
 type PublicInstance = Instance;
 type HostContext = {};
-type UpdatePayload = {};
+type UpdatePayload = any[];
 type ChildSet = {};
 type MyTimeoutHandle = number;
 type NoTimeout = number;
@@ -27,8 +25,39 @@ type NoTimeout = number;
 const ctx: HostContext = {
 };
 
-const createEventHandlerId = () => {
-	return `handler-${randomBytes(8).toString('hex')}`;
+const isDeepEqual = (a: Record<any, any>, b: Record<any, any>): boolean => {
+	for (const key in a) {
+		if (typeof b[key] === 'undefined') return false;
+	}
+
+	for (const key in b) {
+		if (typeof a[key] === 'undefined') return false;
+	}
+
+	for (const key in a) {
+		const value = a[key];
+
+		if (typeof b[key] !== typeof value) { return false; }
+
+		if (typeof value === "object") {
+			if (Array.isArray(value) && value.length !== b[key].length) {
+				console.debug(`array shortcircuit optimization`);
+				return false;
+			}
+
+			if (!isDeepEqual(value, b[key])) {
+				return false;
+			}
+
+			continue ;
+		}
+
+		if (a[key] != b[key]) {
+			return false;
+		}
+	}
+
+	return true;
 }
 
 const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
@@ -54,18 +83,6 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 		createInstance(type, props, root, ctx, handle) {
 			const { children, ...rest } = props;
 
-			for (const [k, v] of Object.entries(rest)) {
-				if (typeof v == 'function') {
-					const id = createEventHandlerId();
-
-					bus!.subscribe(id, v);
-					rest[k] = id;
-				}
-				else if (v instanceof URL) {
-					rest[k] = `${v}`;
-				}
-			}
-
 			return {
 				type,
 				props: rest,
@@ -86,7 +103,32 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 		},
 
 		prepareUpdate(instance, type, oldProps, newProps, root, ctx) {
-			return {};
+			const changes = [];
+
+			for (const key in newProps) {
+				if (key === 'children') { continue ; }
+
+				const oldValue = oldProps[key];
+				const newValue = newProps[key];
+
+				if (typeof oldValue !== typeof newValue) {
+					changes.push(key, newValue);
+					continue ;
+				}
+
+				if (typeof newValue === 'object') {
+					if (!isDeepEqual(newValue, oldValue)) {
+						changes.push(key, newValue);
+					}
+					continue ;
+				}
+
+				if (oldValue !== newValue) {
+					changes.push(key, newValue);
+				}
+			}
+
+			return changes.length > 0 ? changes : null;
 		},
 
 		shouldSetTextContent() {
@@ -181,14 +223,14 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 		commitMount() {},
 
 		commitUpdate(instance, payload, type, prevProps, nextProps, handle) {
-			const { children, ...rest } = nextProps;
+			let i = 0;
 
-			for (const [k, v] of Object.entries(rest)) {
-				if (typeof v == 'function') rest[k] = instance.props[k];
-				if (v instanceof URL) rest[k] = instance.props[k];
+			while (i < payload.length) {
+				const key = payload[i++];
+				const value = payload[i++];
+
+				instance.props[key] = value;
 			}
-
-			instance.props = rest;
 		},
 
 		hideInstance() {},

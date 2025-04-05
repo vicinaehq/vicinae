@@ -732,12 +732,35 @@ var import_worker_threads = require("worker_threads");
 var import_react_reconciler = __toESM(require("react-reconciler"));
 var import_node_timers = require("node:timers");
 var import_constants = require("react-reconciler/constants");
-var import_api = require("@omnicast/api");
-var import_node_crypto = require("node:crypto");
 var import_fast_json_patch = __toESM(require_fast_json_patch());
 var ctx = {};
-var createEventHandlerId = () => {
-  return `handler-${(0, import_node_crypto.randomBytes)(8).toString("hex")}`;
+var isDeepEqual = (a, b) => {
+  for (const key in a) {
+    if (typeof b[key] === "undefined") return false;
+  }
+  for (const key in b) {
+    if (typeof a[key] === "undefined") return false;
+  }
+  for (const key in a) {
+    const value = a[key];
+    if (typeof b[key] !== typeof value) {
+      return false;
+    }
+    if (typeof value === "object") {
+      if (Array.isArray(value) && value.length !== b[key].length) {
+        console.debug(`array shortcircuit optimization`);
+        return false;
+      }
+      if (!isDeepEqual(value, b[key])) {
+        return false;
+      }
+      continue;
+    }
+    if (a[key] != b[key]) {
+      return false;
+    }
+  }
+  return true;
 };
 var createHostConfig = (hostCtx, callback) => {
   const hostConfig = {
@@ -746,15 +769,6 @@ var createHostConfig = (hostCtx, callback) => {
     supportsHydration: false,
     createInstance(type, props, root, ctx2, handle) {
       const { children, ...rest } = props;
-      for (const [k, v] of Object.entries(rest)) {
-        if (typeof v == "function") {
-          const id = createEventHandlerId();
-          import_api.bus.subscribe(id, v);
-          rest[k] = id;
-        } else if (v instanceof URL) {
-          rest[k] = `${v}`;
-        }
-      }
       return {
         type,
         props: rest,
@@ -771,7 +785,30 @@ var createHostConfig = (hostCtx, callback) => {
       return false;
     },
     prepareUpdate(instance, type, oldProps, newProps, root, ctx2) {
-      return {};
+      const changes = [];
+      for (const key in newProps) {
+        if (key === "children") {
+          continue;
+        }
+        const oldValue = oldProps[key];
+        const newValue = newProps[key];
+        if (typeof oldValue !== typeof newValue) {
+          changes.push(key, newValue);
+          continue;
+        }
+        if (typeof newValue === "object") {
+          if (!isDeepEqual(newValue, oldValue)) {
+            console.error("not deep equal", newValue, "VS", oldValue);
+            changes.push(key, newValue);
+          }
+          continue;
+        }
+        if (oldValue !== newValue) {
+          changes.push(key, newValue);
+        }
+      }
+      console.log(`prepareUpdate returned ${changes.length} changes`, JSON.stringify(changes, null, 2));
+      return changes.length > 0 ? changes : null;
     },
     shouldSetTextContent() {
       return false;
@@ -850,12 +887,12 @@ var createHostConfig = (hostCtx, callback) => {
     commitMount() {
     },
     commitUpdate(instance, payload, type, prevProps, nextProps, handle) {
-      const { children, ...rest } = nextProps;
-      for (const [k, v] of Object.entries(rest)) {
-        if (typeof v == "function") rest[k] = instance.props[k];
-        if (v instanceof URL) rest[k] = instance.props[k];
+      let i = 0;
+      while (i < payload.length) {
+        const key = payload[i++];
+        const value = payload[i++];
+        instance.props[key] = value;
       }
-      instance.props = rest;
     },
     hideInstance() {
     },
@@ -914,7 +951,7 @@ var createRenderer = (config) => {
 };
 
 // src/worker.tsx
-var import_api2 = require("@omnicast/api");
+var import_api = require("@omnicast/api");
 var import_react = __toESM(require("react"));
 var import_jsx_runtime = require("react/jsx-runtime");
 var ErrorBoundary = class extends import_react.default.Component {
@@ -936,17 +973,17 @@ var ErrorBoundary = class extends import_react.default.Component {
   }
 };
 var App = ({ component: Component }) => {
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ErrorBoundary, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_api2.NavigationProvider, { root: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Component, {}) }) });
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ErrorBoundary, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_api.NavigationProvider, { root: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Component, {}) }) });
 };
 var loadEnviron = () => {
-  import_api2.environment.textSize = "medium";
-  import_api2.environment.appearance = "dark";
-  import_api2.environment.canAccess = (api) => false, import_api2.environment.assetsPath = "";
-  import_api2.environment.isDevelopment = false;
-  import_api2.environment.commandMode = "view";
-  import_api2.environment.supportPath = "/tmp";
-  import_api2.environment.raycastVersion = "1.0.0";
-  import_api2.environment.launchType = {};
+  import_api.environment.textSize = "medium";
+  import_api.environment.appearance = "dark";
+  import_api.environment.canAccess = (api) => false, import_api.environment.assetsPath = "";
+  import_api.environment.isDevelopment = false;
+  import_api.environment.commandMode = "view";
+  import_api.environment.supportPath = "/tmp";
+  import_api.environment.raycastVersion = "1.0.0";
+  import_api.environment.launchType = {};
 };
 var main = async () => {
   if (!import_worker_threads.parentPort) {
@@ -962,14 +999,14 @@ var main = async () => {
   let lastRender = performance.now();
   const renderer = createRenderer({
     onInitialRender: (views) => {
-      import_api2.bus.emit("render", { views });
+      import_api.bus.emit("render", { views });
     },
     onUpdate: (views) => {
       const now = performance.now();
       const elapsed = now - lastRender;
       console.log(`[PERF] Render update (last update ${elapsed}ms ago)`);
       lastRender = now;
-      import_api2.bus.emit("render", { views });
+      import_api.bus.emit("render", { views });
     }
   });
   renderer.render(/* @__PURE__ */ (0, import_jsx_runtime.jsx)(App, { component: Component }));

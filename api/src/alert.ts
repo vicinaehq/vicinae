@@ -1,8 +1,8 @@
 import { bus } from './bus';
 import { Image } from './image';
 
-export declare namespace Alert {
-	type Options = {
+export namespace Alert {
+	export type Options = {
 		title: string;
 		dismissAction?: ActionOptions;
 		icon?: Image.ImageLike;
@@ -11,13 +11,13 @@ export declare namespace Alert {
 		rememberUserChoice?: boolean;
 	};
 
-	enum ActionStyle {
+	export enum ActionStyle {
 		Default = 'default',
 		Destructive = 'destructive',
 		Cancel = 'cancel'
 	}
 
-	type ActionOptions = {
+	export type ActionOptions = {
 		title: string;
 		style?: ActionStyle;
 		onAction?: () => void;

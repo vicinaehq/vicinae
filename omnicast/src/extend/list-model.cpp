@@ -77,8 +77,8 @@ ListModel ListModelParser::parse(const QJsonObject &instance) {
     model.onSearchTextChange = props.value("onSearchTextChange").toString();
   }
 
-  if (props.contains("onSelectionChanged")) {
-    model.onSelectionChanged = props.value("onSelectionChanged").toString();
+  if (props.contains("onSelectionChange")) {
+    model.onSelectionChanged = props.value("onSelectionChange").toString();
   }
 
   if (props.contains("selectedItemId")) { model.selectedItemId = props.value("selectedItemId").toString(); }
