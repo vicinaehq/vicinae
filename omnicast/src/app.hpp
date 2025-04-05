@@ -32,6 +32,7 @@
 
 #include "ui/action-pannel/action-pannel-widget.hpp"
 #include "ui/action-pannel/action.hpp"
+#include "ui/alert.hpp"
 #include "ui/calculator-list-item-widget.hpp"
 #include "ui/horizontal-loading-bar.hpp"
 #include "ui/status_bar.hpp"
@@ -169,6 +170,7 @@ public:
   QWidget *defaultWidget = new QWidget();
   ViewDisplayer *viewDisplayer;
   HorizontalLoadingBar *_loadingBar;
+  AlertWidget *_alert = new AlertWidget(this);
 
   void popToRoot();
 

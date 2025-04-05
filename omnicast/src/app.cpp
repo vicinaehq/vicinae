@@ -460,6 +460,9 @@ AppWindow::AppWindow(QWidget *parent)
   layout->addWidget(new HDivider);
   layout->addWidget(statusBar);
 
+  _alert->setFixedSize(400, 100);
+  _alert->show();
+
   // commandStack.push(index);
 
   auto widget = new QWidget();
