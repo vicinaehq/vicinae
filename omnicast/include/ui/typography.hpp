@@ -5,6 +5,7 @@
 #include <qfont.h>
 #include <qnamespace.h>
 #include <qpainter.h>
+#include <qtextformat.h>
 #include <qwidget.h>
 
 class TypographyWidget : public QWidget {
@@ -12,12 +13,14 @@ class TypographyWidget : public QWidget {
   Qt::Alignment _align = Qt::AlignLeft | Qt::AlignVCenter;
   QString _text;
   QPixmap _pixmap;
+  QFont::Weight _weight = QFont::Weight::Normal;
+  QFont _font;
   ThemeService &theme = ThemeService::instance();
   ColorLike _color = theme.getTintColor(ColorTint::TextPrimary);
 
 protected:
   void paintEvent(QPaintEvent *event) override {
-    if (_pixmap.isNull()) { return; }
+    if (_pixmap.isNull() || _pixmap.size() != size()) { _pixmap = renderToPixmap(); }
 
     QPainter painter(this);
 
@@ -32,11 +35,18 @@ protected:
 
   void resizeEvent(QResizeEvent *event) override {
     QWidget::resizeEvent(event);
+
     recompute();
   }
 
   void recompute() {
     if (!size().isValid()) return;
+
+    auto f = font();
+
+    f.setPointSize(theme.pointSize(_size));
+    f.setWeight(_weight);
+    setFont(f);
 
     _pixmap = renderToPixmap();
     update();
@@ -48,8 +58,6 @@ public:
 
     QPixmap pix(size());
     OmniPainter painter(&pix);
-
-    qDebug() << "drawing pixmap of size" << pix.size();
 
     pix.fill(Qt::transparent);
     painter.setFont(font());
@@ -63,39 +71,26 @@ public:
 
   void setText(const QString &text) {
     _text = text;
-    recompute();
     updateGeometry();
-  }
-
-  void setColor(ColorTint color) {
-    _color = theme.getTintColor(color);
-    recompute();
   }
 
   void setColor(const ColorLike &color) {
     _color = color;
+    update();
+  }
+
+  void setFontWeight(QFont::Weight weight) {
+    _weight = weight;
     recompute();
   }
 
   void setSize(TextSize size) {
     _size = size;
+    updateGeometry();
     recompute();
   }
 
-  TypographyWidget(QWidget *parent = nullptr) : QWidget(parent), _size(TextSize::TextRegular) {
-    auto f = font();
-
-    f.setPointSize(theme.pointSize(_size));
-    setFont(f);
-  }
   TypographyWidget(TextSize size = TextSize::TextRegular, ColorTint color = ColorTint::TextPrimary,
                    QWidget *parent = nullptr)
-      : QWidget(parent), _size(size), _color(color) {
-    auto f = font();
-
-    _color = theme.getTintColor(color);
-
-    f.setPointSize(theme.pointSize(_size));
-    setFont(f);
-  }
+      : QWidget(parent), _size(size), _color(color) {}
 };

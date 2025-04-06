@@ -22,8 +22,6 @@ class DialogWidget : public QWidget {
     painter.fillRect(rect(), finalColor);
 
     QWidget::paintEvent(event);
-
-    qDebug() << "dialog painting" << rect();
   }
 
   bool event(QEvent *event) override {
@@ -50,7 +48,6 @@ public:
   }
 
   DialogWidget(QWidget *parent = nullptr) : QWidget(parent), _layout(new QVBoxLayout), _content(nullptr) {
-    qDebug() << "dialog parent" << parent;
     setWindowFlags(Qt::FramelessWindowHint | Qt::Popup);
     setAttribute(Qt::WA_TranslucentBackground);
 

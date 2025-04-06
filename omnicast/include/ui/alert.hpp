@@ -2,7 +2,9 @@
 #include "theme.hpp"
 #include "ui/button.hpp"
 #include "ui/shortcut-button.hpp"
+#include "ui/typography.hpp"
 #include <qboxlayout.h>
+#include <qdir.h>
 #include <qlabel.h>
 #include <qpainterpath.h>
 #include <qwidget.h>
@@ -20,8 +22,8 @@ public:
 };
 
 class AlertWidget : public QWidget {
-  QLabel *_title;
-  QLabel *_message;
+  TypographyWidget *_title;
+  TypographyWidget *_message;
   ShortcutButton *_cancelBtn;
   ShortcutButton *_actionBtn;
 
@@ -37,7 +39,7 @@ class AlertWidget : public QWidget {
 
     painter.setClipPath(path);
 
-    QColor finalColor(theme.colors.mainBackground);
+    QColor finalColor(theme.colors.statusBackground);
 
     finalColor.setAlphaF(0.98);
     painter.setPen(pen);
@@ -47,8 +49,9 @@ class AlertWidget : public QWidget {
 
 public:
   AlertWidget(QWidget *parent = nullptr)
-      : QWidget(parent), _title(new QLabel), _message(new QLabel), _cancelBtn(new ShortcutButton),
-        _actionBtn(new ShortcutButton) {
+      : QWidget(parent), _title(new TypographyWidget(TextSize::TextTitle, ColorTint::TextPrimary)),
+        _message(new TypographyWidget(TextSize::TextRegular, ColorTint::TextSecondary)),
+        _cancelBtn(new ShortcutButton), _actionBtn(new ShortcutButton) {
     auto layout = new QVBoxLayout;
 
     _title->setText("Are you sure?");
@@ -56,7 +59,7 @@ public:
     _cancelBtn->setText("Cancel");
     _actionBtn->setText("Delete");
 
-    layout->setContentsMargins(15, 15, 15, 15);
+    layout->setContentsMargins(20, 20, 20, 20);
     layout->addWidget(_title);
     layout->addWidget(_message);
     layout->addWidget(new ButtonGroup(_cancelBtn, _actionBtn));

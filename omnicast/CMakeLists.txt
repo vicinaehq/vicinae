@@ -61,6 +61,8 @@ qt_add_executable(${TARGET}
 	include/ui/popover.hpp
 	src/ui/popover.cpp
 
+	include/ui/typography.hpp
+
 	include/clipboard/clipboard-server.hpp
 	include/clipboard/wlr-clipboard-server.hpp
 	src/clipboard/wlr-clipboard-server.cpp
