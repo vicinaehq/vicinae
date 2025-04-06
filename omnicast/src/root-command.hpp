@@ -92,7 +92,7 @@ protected:
     return {.iconUrl = cmd->iconUrl(),
             .name = cmd->name(),
             .category = cmd->repositoryName(),
-            .accessories = {{.text = "Command"}}};
+            .accessories = {{.text = "Command", .color = ColorTint::TextSecondary}}};
   }
 
 public:
@@ -141,7 +141,9 @@ public:
   }
 
   ItemData data() const override {
-    return {.iconUrl = iconUrl(), .name = link->name, .accessories = {{.text = "Quicklink"}}};
+    return {.iconUrl = iconUrl(),
+            .name = link->name,
+            .accessories = {{.text = "Quicklink", .color = ColorTint::TextSecondary}}};
   }
 
   QString id() const override { return QString("link-%1").arg(link->id); }
@@ -184,7 +186,9 @@ class RootView : public DeclarativeOmniListView {
     }
 
     ItemData data() const override {
-      return {.iconUrl = app->iconUrl(), .name = app->name(), .accessories = {{.text = "Application"}}};
+      return {.iconUrl = app->iconUrl(),
+              .name = app->name(),
+              .accessories = {{.text = "Application", .color = ColorTint::TextSecondary}}};
     }
 
     QString id() const override { return app->id(); }
@@ -207,7 +211,9 @@ class RootView : public DeclarativeOmniListView {
     }
 
     ItemData data() const override {
-      return {.iconUrl = link->iconName, .name = link->name, .accessories = {{.text = "Quicklink"}}};
+      return {.iconUrl = link->iconName,
+              .name = link->name,
+              .accessories = {{.text = "Quicklink", .color = ColorTint::TextSecondary}}};
     }
 
     QString id() const override { return QString("fallback-link-%1").arg(link->id); }

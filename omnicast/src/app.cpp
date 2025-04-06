@@ -18,6 +18,7 @@
 #include "ui/action-pannel/action-section.hpp"
 #include "ui/action_popover.hpp"
 #include "theme.hpp"
+#include "ui/dialog.hpp"
 #include "ui/horizontal-loading-bar.hpp"
 #include "ui/top_bar.hpp"
 #include <QLabel>
@@ -64,6 +65,12 @@ bool AppWindow::event(QEvent *event) {
 
     if (auto action = actionPannel->findBoundAction(keyEvent)) {
       executeAction(action);
+      return true;
+    }
+
+    if (keyEvent->modifiers().testFlag(Qt::ControlModifier) && key == Qt::Key_B) {
+      _dialog->showDialog();
+
       return true;
     }
 
@@ -376,7 +383,8 @@ void AppWindow::closeWindow(bool withPopToRoot) {
 
 AppWindow::AppWindow(QWidget *parent)
     : QMainWindow(parent), topBar(new TopBar()), viewDisplayer(new ViewDisplayer), statusBar(new StatusBar()),
-      actionPannel(new ActionPannelWidget(this)), _loadingBar(new HorizontalLoadingBar(this)) {
+      actionPannel(new ActionPannelWidget(this)), _dialog(new DialogWidget(this)),
+      _loadingBar(new HorizontalLoadingBar(this)) {
   setWindowFlags(Qt::FramelessWindowHint);
   setAttribute(Qt::WA_TranslucentBackground, true);
 
@@ -460,8 +468,10 @@ AppWindow::AppWindow(QWidget *parent)
   layout->addWidget(new HDivider);
   layout->addWidget(statusBar);
 
-  _alert->setFixedSize(400, 100);
-  _alert->show();
+  _dialog->setContent(_alert);
+
+  //_alert->setFixedSize(400, 100);
+  //_alert->show();
 
   // commandStack.push(index);
 

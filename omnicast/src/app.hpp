@@ -34,6 +34,7 @@
 #include "ui/action-pannel/action.hpp"
 #include "ui/alert.hpp"
 #include "ui/calculator-list-item-widget.hpp"
+#include "ui/dialog.hpp"
 #include "ui/horizontal-loading-bar.hpp"
 #include "ui/status_bar.hpp"
 #include "ui/top_bar.hpp"
@@ -170,7 +171,8 @@ public:
   QWidget *defaultWidget = new QWidget();
   ViewDisplayer *viewDisplayer;
   HorizontalLoadingBar *_loadingBar;
-  AlertWidget *_alert = new AlertWidget(this);
+  DialogWidget *_dialog = nullptr;
+  AlertWidget *_alert = new AlertWidget;
 
   void popToRoot();
 

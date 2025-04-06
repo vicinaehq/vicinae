@@ -51,10 +51,12 @@ public:
         _actionBtn(new ShortcutButton) {
     auto layout = new QVBoxLayout;
 
-    layout->setContentsMargins(0, 0, 0, 0);
+    _title->setText("Are you sure?");
+    _message->setText("This action cannot be undone");
     _cancelBtn->setText("Cancel");
     _actionBtn->setText("Delete");
 
+    layout->setContentsMargins(15, 15, 15, 15);
     layout->addWidget(_title);
     layout->addWidget(_message);
     layout->addWidget(new ButtonGroup(_cancelBtn, _actionBtn));

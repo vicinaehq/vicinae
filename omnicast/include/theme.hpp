@@ -6,6 +6,7 @@
 #include <qtmetamacros.h>
 
 enum ColorTint { InvalidTint, Blue, Green, Magenta, Orange, Purple, Red, Yellow, TextPrimary, TextSecondary };
+enum TextSize { TextRegular, TextTitle };
 
 struct ThemeLinearGradient {
   std::vector<QColor> points;
@@ -49,6 +50,7 @@ class ThemeService : public QObject {
 
   std::vector<ThemeInfo> _themeDb;
   ThemeInfo _theme;
+  int _baseFontPointSize = 10;
 
   ThemeService(const ThemeService &rhs) = delete;
 
@@ -57,6 +59,17 @@ public:
     static ThemeService _instance;
 
     return _instance;
+  }
+
+  int pointSize(TextSize size) const {
+    switch (size) {
+    case TextSize::TextRegular:
+      return _baseFontPointSize;
+    case TextSize::TextTitle:
+      return _baseFontPointSize * 1.5;
+    }
+
+    return _baseFontPointSize;
   }
 
   /**

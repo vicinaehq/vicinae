@@ -1,7 +1,7 @@
 #pragma once
 #include "omni-icon.hpp"
 #include "theme.hpp"
-#include "ui/text-widget.hpp"
+#include "ui/typography.hpp"
 #include "ui/tooltip.hpp"
 #include <optional>
 #include <qcontainerfwd.h>
@@ -19,7 +19,7 @@ class ListAccessoryWidget : public QWidget {
   OmniIcon *_icon = nullptr;
   Tooltip *_tooltip;
   ListAccessory _accessory;
-  TextWidget *_text;
+  TypographyWidget *_text;
 
   void paintEvent(QPaintEvent *event) override;
   void resizeEvent(QResizeEvent *event) override;

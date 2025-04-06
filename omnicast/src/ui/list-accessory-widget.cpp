@@ -1,6 +1,7 @@
 #include "ui/list-accessory-widget.hpp"
 #include "ui/text-label.hpp"
 #include "ui/text-widget.hpp"
+#include "ui/typography.hpp"
 
 void ListAccessoryWidget::paintEvent(QPaintEvent *event) {
   OmniPainter painter(this);
@@ -35,12 +36,12 @@ void ListAccessoryWidget::setAccessory(const ListAccessory &accessory) {
   _icon->setVisible(accessory.icon.has_value());
   _text->setText(accessory.text);
   _text->setVisible(!accessory.text.isEmpty());
-  _text->setColor(accessory.color);
+  if (accessory.color) { _text->setColor(*accessory.color); }
   _accessory = accessory;
 }
 
 ListAccessoryWidget::ListAccessoryWidget(QWidget *parent)
-    : QWidget(parent), _layout(new QHBoxLayout), _icon(new OmniIcon), _text(new TextWidget),
+    : QWidget(parent), _layout(new QHBoxLayout), _icon(new OmniIcon), _text(new TypographyWidget(this)),
       _tooltip(new Tooltip) {
   _layout->setContentsMargins(6, 3, 6, 3);
   _layout->setAlignment(Qt::AlignVCenter);
