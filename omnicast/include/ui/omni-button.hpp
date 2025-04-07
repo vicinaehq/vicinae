@@ -6,13 +6,17 @@
 #include <qmargins.h>
 #include <qnamespace.h>
 #include <qpainterpath.h>
+#include <qtmetamacros.h>
 #include <qwidget.h>
 
 class OmniButtonWidget : public QWidget {
+  Q_OBJECT
+
   QWidget *leftAccessory = new QWidget;
   QWidget *rightAccessory = new QWidget;
   TypographyWidget *label = new TypographyWidget;
   QHBoxLayout *_layout = new QHBoxLayout;
+  bool _focused = false;
 
 protected:
   void paintEvent(QPaintEvent *event) override {
@@ -20,21 +24,50 @@ protected:
     int borderRadius = 4;
     QPainter painter(this);
     QPainterPath path;
-    QPen pen(theme.colors.statusBackgroundBorder, 1);
+    QPen pen(theme.colors.text, 1);
+    QColor finalColor(theme.colors.mainBackground);
 
     painter.setRenderHint(QPainter::Antialiasing, true);
     path.addRoundedRect(rect(), borderRadius, borderRadius);
-
     painter.setClipPath(path);
-
-    QColor finalColor(theme.colors.mainBackground);
-
-    painter.setPen(Qt::NoPen);
+    painter.setPen(_focused ? pen : Qt::NoPen);
     painter.fillPath(path, finalColor);
     painter.drawPath(path);
   }
 
+  void focusInEvent(QFocusEvent *event) override { setFocused(true); }
+
+  void focusOutEvent(QFocusEvent *event) override { setFocused(false); }
+
+  void mouseDoubleClickEvent(QMouseEvent *event) override {
+    emit doubleClicked();
+    emit activated();
+  }
+
+  void mousePressEvent(QMouseEvent *event) override {
+    emit clicked();
+    emit activated();
+  }
+
+  void keyPressEvent(QKeyEvent *event) override {
+    switch (event->key()) {
+    case Qt::Key_Return:
+    case Qt::Key_Enter:
+      emit activated();
+      return;
+    }
+
+    QWidget::keyPressEvent(event);
+  }
+
 public:
+  void setFocused(bool value) {
+    if (_focused == value) return;
+
+    _focused = value;
+    update();
+  }
+
   void setContentsMargins(int left, int top, int right, int bottom) {
     _layout->setContentsMargins(left, top, right, bottom);
   }
@@ -75,6 +108,7 @@ public:
 
   OmniButtonWidget(QWidget *parent = nullptr) : QWidget(parent) {
     setAttribute(Qt::WA_Hover, true);
+    setFocusPolicy(Qt::StrongFocus);
 
     _layout->setContentsMargins(5, 5, 5, 5);
     _layout->addWidget(leftAccessory);
@@ -83,4 +117,9 @@ public:
 
     setLayout(_layout);
   }
+
+signals:
+  void clicked() const;
+  void doubleClicked() const;
+  void activated() const;
 };

@@ -1,5 +1,7 @@
 #pragma once
+#include "omni-icon.hpp"
 #include "theme.hpp"
+#include "ui/dialog.hpp"
 #include "ui/omni-button.hpp"
 #include "ui/typography.hpp"
 #include <qboxlayout.h>
@@ -7,6 +9,7 @@
 #include <qlabel.h>
 #include <qnamespace.h>
 #include <qpainterpath.h>
+#include <qtmetamacros.h>
 #include <qwidget.h>
 
 class ButtonGroup : public QWidget {
@@ -22,7 +25,10 @@ public:
   }
 };
 
-class AlertWidget : public QWidget {
+class AlertWidget : public DialogContentWidget {
+  Q_OBJECT
+
+  OmniIcon *_icon;
   TypographyWidget *_title;
   TypographyWidget *_message;
   OmniButtonWidget *_cancelBtn;
@@ -30,10 +36,10 @@ class AlertWidget : public QWidget {
 
   void paintEvent(QPaintEvent *event) override {
     auto &theme = ThemeService::instance().theme();
-    int borderRadius = 10;
+    int borderRadius = 6;
     QPainter painter(this);
     QPainterPath path;
-    QPen pen(theme.colors.statusBackgroundBorder, 1);
+    QPen pen(theme.colors.border, 1);
 
     painter.setRenderHint(QPainter::Antialiasing, true);
     path.addRoundedRect(rect(), borderRadius, borderRadius);
@@ -48,13 +54,26 @@ class AlertWidget : public QWidget {
     painter.drawPath(path);
   }
 
+  void handleConfirm() {
+    emit confirmed();
+    emit closeRequested();
+  }
+
+  void handleCancel() {
+    emit canceled();
+    emit closeRequested();
+  }
+
 public:
   AlertWidget(QWidget *parent = nullptr)
-      : QWidget(parent), _title(new TypographyWidget(TextSize::TextRegular, ColorTint::TextPrimary)),
+      : DialogContentWidget(parent), _icon(new OmniIcon),
+        _title(new TypographyWidget(TextSize::TextRegular, ColorTint::TextPrimary)),
         _message(new TypographyWidget(TextSize::TextRegular, ColorTint::TextSecondary)),
         _cancelBtn(new OmniButtonWidget), _actionBtn(new OmniButtonWidget) {
     auto layout = new QVBoxLayout;
 
+    _icon->setFixedSize(25, 25);
+    _icon->setUrl(BuiltinOmniIconUrl("trash").setFill(ColorTint::Red));
     _title->setText("Are you sure?");
     _title->setFontWeight(QFont::Bold);
 
@@ -62,6 +81,7 @@ public:
 
     QMargins btnMargins(50, 8, 50, 8);
 
+    _cancelBtn->setFocus();
     _cancelBtn->setContentsMargins(btnMargins);
     _cancelBtn->setText("Cancel");
     _actionBtn->setContentsMargins(btnMargins);
@@ -70,9 +90,17 @@ public:
 
     layout->setContentsMargins(20, 20, 20, 20);
     layout->setSpacing(10);
+    layout->addWidget(_icon, 0, Qt::AlignCenter);
     layout->addWidget(_title, 0, Qt::AlignCenter);
     layout->addWidget(_message, 0, Qt::AlignCenter);
     layout->addWidget(new ButtonGroup(_cancelBtn, _actionBtn));
     setLayout(layout);
+
+    connect(_cancelBtn, &OmniButtonWidget::activated, this, &AlertWidget::handleCancel);
+    connect(_actionBtn, &OmniButtonWidget::activated, this, &AlertWidget::handleConfirm);
   }
+
+signals:
+  void canceled() const;
+  void confirmed() const;
 };

@@ -5,8 +5,19 @@
 #include <qpainter.h>
 #include <qpainterpath.h>
 #include <qdialog.h>
+#include <qtmetamacros.h>
 #include <qwidget.h>
 #include <qwindowdefs.h>
+
+class DialogContentWidget : public QWidget {
+  Q_OBJECT
+
+public:
+  DialogContentWidget(QWidget *parent = nullptr) : QWidget(parent) {}
+
+signals:
+  void closeRequested() const;
+};
 
 class DialogWidget : public QWidget {
   QVBoxLayout *_layout;
@@ -25,17 +36,21 @@ class DialogWidget : public QWidget {
   }
 
   bool event(QEvent *event) override {
-    if (event->type() == QEvent::MouseButtonPress) {
-      close();
-      return true;
-    }
+    /*
+if (event->type() == QEvent::MouseButtonPress) {
+close();
+return true;
+}
+  */
 
     return QWidget::event(event);
   }
 
 public:
-  void setContent(QWidget *content) {
+  void setContent(DialogContentWidget *content) {
     if (auto item = _layout->takeAt(0)) { item->widget()->deleteLater(); }
+
+    connect(content, &DialogContentWidget::closeRequested, this, &DialogContentWidget::close);
 
     _layout->addWidget(content, 0, Qt::AlignCenter);
   }

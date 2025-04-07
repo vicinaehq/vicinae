@@ -124,8 +124,6 @@ public:
     return {};
   }
 
-  QString colorToStyle(const ColorLike &color) {}
-
   void setTheme(const ThemeInfo &info) {
     _theme = info;
 
