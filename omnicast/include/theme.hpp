@@ -1,4 +1,5 @@
 #pragma once
+#include "extend/color-model.hpp"
 #include <qapplication.h>
 #include <qcolor.h>
 #include <qobject.h>
@@ -123,6 +124,8 @@ public:
     return {};
   }
 
+  QString colorToStyle(const ColorLike &color) {}
+
   void setTheme(const ThemeInfo &info) {
     _theme = info;
 
@@ -132,7 +135,6 @@ public:
 			font-size: 10pt;
 			font-weight: lighter;
 			letter-spacing: -0.5px;
-			color: %1;
 		}
 		QLineEdit, QTextEdit {
 			background-color: transparent;
@@ -155,7 +157,7 @@ public:
 			color: %2;
 		}
 		)")
-                     .arg(info.colors.text.name(), info.colors.subtext.name(), info.colors.border.name());
+                     .arg(info.colors.subtext.name(), info.colors.border.name());
 
     qDebug() << "style" << style;
 

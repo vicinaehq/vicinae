@@ -1,5 +1,6 @@
 #pragma once
 #include "theme.hpp"
+#include <qbrush.h>
 #include <qpainter.h>
 #include <qpixmap.h>
 #include <qwindowdefs.h>
@@ -17,6 +18,8 @@ public:
 
   void drawPixmap(const QRect &rect, const QPixmap &pixmap, ImageMaskType mask = NoMask);
   void drawBlurredPixmap(const QPixmap &pixmap, int blurRadius = 10);
+
+  QBrush colorBrush(const ColorLike &color) const;
 
   using QPainter::QPainter;
 };

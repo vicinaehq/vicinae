@@ -3,12 +3,13 @@
 #include "ui/omni-painter.hpp"
 #include <qevent.h>
 #include <qfont.h>
+#include <qlabel.h>
 #include <qnamespace.h>
 #include <qpainter.h>
 #include <qtextformat.h>
 #include <qwidget.h>
 
-class TypographyWidget : public QWidget {
+class TypographyWidget : public QLabel {
   TextSize _size;
   Qt::Alignment _align = Qt::AlignLeft | Qt::AlignVCenter;
   QString _text;
@@ -20,13 +21,22 @@ class TypographyWidget : public QWidget {
 
 protected:
   void paintEvent(QPaintEvent *event) override {
-    if (_pixmap.isNull() || _pixmap.size() != size()) { _pixmap = renderToPixmap(); }
+    // if (_pixmap.isNull() || _pixmap.size() != size()) { _pixmap = renderToPixmap(); }
 
-    QPainter painter(this);
+    OmniPainter painter(this);
 
-    painter.drawPixmap(rect(), _pixmap);
+    QPalette pal = palette();
+
+    pal.setBrush(QPalette::WindowText, painter.colorBrush(_color));
+
+    setPalette(pal);
+
+    QLabel::paintEvent(event);
+
+    // painter.drawPixmap(rect(), _pixmap);
   }
 
+  /*
   QSize sizeHint() const override {
     auto fm = fontMetrics();
 
@@ -38,6 +48,7 @@ protected:
 
     recompute();
   }
+  */
 
   void recompute() {
     if (!size().isValid()) return;
@@ -69,10 +80,12 @@ public:
     return pix;
   }
 
+  /*
   void setText(const QString &text) {
     _text = text;
     updateGeometry();
   }
+  */
 
   void setColor(const ColorLike &color) {
     _color = color;
@@ -92,5 +105,5 @@ public:
 
   TypographyWidget(TextSize size = TextSize::TextRegular, ColorTint color = ColorTint::TextPrimary,
                    QWidget *parent = nullptr)
-      : QWidget(parent), _size(size), _color(color) {}
+      : QLabel(parent), _size(size), _color(color) {}
 };

@@ -1,4 +1,5 @@
 #include "ui/omni-painter.hpp"
+#include "theme.hpp"
 #include <qgraphicseffect.h>
 #include <qgraphicsitem.h>
 #include <qgraphicsscene.h>
@@ -48,6 +49,48 @@ void OmniPainter::fillRect(QRect rect, const ThemeRadialGradient &rgrad, int rad
 
   setBrush(gradient);
   drawRoundedRect(rect, radius, radius);
+}
+
+QBrush OmniPainter::colorBrush(const ColorLike &colorLike) const {
+  if (auto color = std::get_if<QColor>(&colorLike)) {
+    return *color;
+  } else if (auto lgrad = std::get_if<ThemeLinearGradient>(&colorLike)) {
+    QLinearGradient gradient;
+
+    for (int i = 0; i != lgrad->points.size(); ++i) {
+      QColor finalPoint = lgrad->points[i];
+
+      finalPoint.setAlphaF(1);
+      gradient.setColorAt(i, finalPoint);
+    }
+
+    return gradient;
+  } else if (auto rgrad = std::get_if<ThemeRadialGradient>(&colorLike)) {
+    QRadialGradient gradient;
+
+    gradient.setSpread(QGradient::PadSpread);
+    gradient.setCoordinateMode(QGradient::ObjectBoundingMode);
+
+    for (int i = 0; i != rgrad->points.size(); ++i) {
+      QColor finalPoint = rgrad->points[i];
+
+      finalPoint.setAlphaF(1);
+      gradient.setColorAt(i, finalPoint);
+    }
+
+    return gradient;
+  } else if (auto tint = std::get_if<ColorTint>(&colorLike)) {
+    auto color = ThemeService::instance().getTintColor(*tint);
+
+    if (std::get_if<ColorTint>(&color)) {
+      qWarning() << "Theme color set to color tint, not allowed! No color will be set to avoid loop";
+      return {};
+    }
+
+    return colorBrush(color);
+  }
+
+  return {};
 }
 
 void OmniPainter::fillRect(QRect rect, const ColorLike &colorLike, int radius, float alpha) {
