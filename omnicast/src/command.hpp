@@ -20,5 +20,5 @@ public:
   virtual void load() {}
   virtual void unload() {};
 
-  CommandContext(AppWindow *app, const std::shared_ptr<AbstractCmd> &command) : _app(app) {}
+  CommandContext(AppWindow *app, const std::shared_ptr<AbstractCmd> &command) : _app(app), _cmd(command) {}
 };

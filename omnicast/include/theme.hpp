@@ -4,6 +4,7 @@
 #include <qcolor.h>
 #include <qobject.h>
 #include <QWidget>
+#include <qpalette.h>
 #include <qtmetamacros.h>
 
 enum ColorTint { InvalidTint, Blue, Green, Magenta, Orange, Purple, Red, Yellow, TextPrimary, TextSecondary };
@@ -156,6 +157,19 @@ public:
 		}
 		)")
                      .arg(info.colors.subtext.name(), info.colors.border.name());
+
+    auto palette = QApplication::palette();
+
+    palette.setBrush(QPalette::WindowText, info.colors.text);
+    palette.setBrush(QPalette::Text, info.colors.text);
+
+    QColor placeholderText = info.colors.subtext;
+
+    placeholderText.setAlpha(200);
+
+    palette.setBrush(QPalette::PlaceholderText, placeholderText);
+
+    QApplication::setPalette(palette);
 
     qDebug() << "style" << style;
 

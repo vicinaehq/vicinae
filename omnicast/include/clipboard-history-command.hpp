@@ -2,6 +2,7 @@
 #include "app.hpp"
 #include "clipboard/clipboard-service.hpp"
 #include "omni-icon.hpp"
+#include "ui/alert.hpp"
 #include "ui/declarative-omni-list-view.hpp"
 #include "ui/omni-list-view.hpp"
 #include "ui/omni-list.hpp"
@@ -12,6 +13,7 @@
 #include <qlogging.h>
 #include <qnamespace.h>
 #include <qobject.h>
+#include <qproperty.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
 #include <sys/socket.h>
@@ -99,11 +101,14 @@ public:
 };
 
 class RemoveSelectionAction : public AbstractAction {
+  Q_OBJECT
+
   int _id;
 
   void execute(AppWindow &app) override {
     if (app.clipboardService->removeSelection(_id)) {
       app.statusBar->setToast("Entry removed");
+      emit removed(_id);
     } else {
       app.statusBar->setToast("Failed to remove entry", ToastPriority::Danger);
     }
@@ -111,18 +116,48 @@ class RemoveSelectionAction : public AbstractAction {
 
 public:
   RemoveSelectionAction(int id) : AbstractAction("Remove entry", BuiltinOmniIconUrl("trash")), _id(id) {}
+
+signals:
+  void removed(int id) const;
+};
+
+class PinConfirm : public AlertWidget {
+  Q_OBJECT
+
+  AppWindow &_app;
+  int _id;
+  bool _value;
+
+public:
+  PinConfirm(AppWindow &app, int id, bool value) : _app(app), _id(id), _value(value) {}
+
+  void confirm() const override {
+    if (!_app.clipboardService->setPinned(_id, _value)) {
+      _app.statusBar->setToast("Failed to " + QString(_value ? "pin" : "unpin"), ToastPriority::Danger);
+    } else {
+      _app.statusBar->setToast(_value ? "Pinned" : "Unpinned", ToastPriority::Success);
+      emit pinChanged(_id, _value);
+    }
+  }
+
+  void canceled() const override {}
+
+signals:
+  bool pinChanged(int pid, bool _value) const;
 };
 
 class PinClipboardAction : public AbstractAction {
+  Q_OBJECT
+
   int _id;
   bool _value;
 
   void execute(AppWindow &app) override {
-    if (!app.clipboardService->setPinned(_id, _value)) {
-      app.statusBar->setToast("Failed to " + QString(_value ? "pin" : "unpin"), ToastPriority::Danger);
-    } else {
-      app.statusBar->setToast(_value ? "Pinned" : "Unpinned", ToastPriority::Success);
-    }
+    auto confirm = new PinConfirm(app, _id, _value);
+
+    connect(confirm, &PinConfirm::pinChanged, this, &PinClipboardAction::pinChanged);
+
+    app.confirmAlert(confirm);
   }
 
 public:
@@ -130,12 +165,12 @@ public:
 
   PinClipboardAction(int id, bool value)
       : AbstractAction(value ? "Pin" : "Unpin", BuiltinOmniIconUrl("pin")), _id(id), _value(value) {}
+
+signals:
+  void pinChanged(int id, bool value) const;
 };
 
 class ClipboardHistoryItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
-  std::function<void(int)> _pinCallback;
-  std::function<void(int)> _removeCallback;
-
   ActionGenerator *_generator = nullptr;
 
 public:
@@ -151,9 +186,6 @@ public:
   }
 
   const QString &name() const { return info.textPreview; }
-
-  void setPinCallback(const std::function<void(int)> &cb) { _pinCallback = cb; }
-  void setRemoveCallback(const std::function<void(int)> &cb) { _removeCallback = cb; }
 
   ItemData data() const override { return {.iconUrl = iconForMime(info.mimeType), .name = info.textPreview}; }
 
@@ -177,17 +209,16 @@ class ClipboardHistoryItemActionGenerator : public ActionGenerator {
     auto pin = new PinClipboardAction(current->info.id, !current->info.pinnedAt);
     auto remove = new RemoveSelectionAction(current->info.id);
     auto copy = new CopyTextAction("Copy preview", current->info.textPreview);
-    auto id = current->id();
 
-    connect(pin, &PinClipboardAction::didExecute, this, [id, this]() { emit pinChanged(id); });
-    connect(remove, &PinClipboardAction::didExecute, this, [id, this] { emit removed(id); });
+    connect(pin, &PinClipboardAction::pinChanged, this, &ClipboardHistoryItemActionGenerator::pinChanged);
+    connect(remove, &RemoveSelectionAction::removed, this, &ClipboardHistoryItemActionGenerator::removed);
 
     return {copy, pin, remove};
   }
 
 signals:
-  void pinChanged(const QString &id) const;
-  void removed(const QString &id) const;
+  void pinChanged(int entryId, bool value) const;
+  void removed(int entryId) const;
 };
 
 class ClipboardHistoryCommand : public DeclarativeOmniListView {
@@ -228,9 +259,16 @@ class ClipboardHistoryCommand : public DeclarativeOmniListView {
 
   void clipboardSelectionInserted(const ClipboardHistoryEntry &entry) { reload(); }
 
+  void handlePinChanged(int entryId, bool value) { reload(); }
+  void handleRemoved(int entryId) { reload(); }
+
 public:
   ClipboardHistoryCommand(AppWindow &app)
       : DeclarativeOmniListView(app), _clipboardService(service<ClipboardService>()) {
+    connect(_generator, &ClipboardHistoryItemActionGenerator::pinChanged, this,
+            &ClipboardHistoryCommand::handlePinChanged);
+    connect(_generator, &ClipboardHistoryItemActionGenerator::removed, this,
+            &ClipboardHistoryCommand::handleRemoved);
     connect(&_clipboardService, &ClipboardService::itemInserted, this,
             &ClipboardHistoryCommand::clipboardSelectionInserted);
   }

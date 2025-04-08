@@ -1,13 +1,16 @@
 #pragma once
+#include "app.hpp"
 #include "command-database.hpp"
 
 template <typename T> class SingleViewCommand : public CommandContext {
 public:
   SingleViewCommand(AppWindow *app, const std::shared_ptr<AbstractCmd> &command)
       : CommandContext(app, command) {}
+
   void load() override {
-    qDebug() << "loading single view";
-    return app()->pushView(new T(*app()));
+    qDebug() << "loading single view" << command()->name();
+    return app()->pushView(new T(*app()), {.navigation = NavigationStatus{.title = command()->name(),
+                                                                          .iconUrl = command()->iconUrl()}});
   }
 };
 

@@ -55,16 +55,46 @@ class AlertWidget : public DialogContentWidget {
   }
 
   void handleConfirm() {
-    emit confirmed();
+    confirm();
     emit closeRequested();
   }
 
   void handleCancel() {
-    emit canceled();
+    canceled();
     emit closeRequested();
   }
 
+protected:
+  virtual void confirm() const {}
+  virtual void canceled() const {}
+
 public:
+  void setTitle(const QString &title) { _title->setText(title); }
+
+  void setMessage(const QString &message) {
+    _message->setText(message);
+    _message->setVisible(!message.isEmpty());
+  }
+
+  void setCancelText(const QString &text, const ColorLike &color) {
+    _cancelBtn->setText(text);
+    _cancelBtn->setColor(color);
+  }
+
+  void setIcon(const std::optional<OmniIconUrl> &url) {
+    if (!url) {
+      _icon->hide();
+      return;
+    }
+
+    _icon->setUrl(*url);
+    _icon->show();
+  }
+
+  void setConfirmText(const QString &text, const ColorLike &color) {
+    _actionBtn->setText(text);
+    _actionBtn->setColor(color);
+  }
   AlertWidget(QWidget *parent = nullptr)
       : DialogContentWidget(parent), _icon(new OmniIcon),
         _title(new TypographyWidget(TextSize::TextRegular, ColorTint::TextPrimary)),
@@ -101,6 +131,5 @@ public:
   }
 
 signals:
-  void canceled() const;
   void confirmed() const;
 };

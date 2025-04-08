@@ -30,6 +30,7 @@
 #include <qscreen_platform.h>
 #include <stack>
 
+#include "theme.hpp"
 #include "ui/action-pannel/action-pannel-widget.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/alert.hpp"
@@ -92,6 +93,28 @@ struct LaunchCommandOptions {
 struct PushViewOptions {
   QString searchQuery;
   std::optional<NavigationStatus> navigation;
+};
+
+struct AlertAction {
+  enum Style {
+    Default,
+    Destructive,
+    Cancel,
+  };
+
+  QString title;
+  std::function<void(void)> handler;
+  Style style;
+};
+
+class AlertHandler {};
+
+struct ConfirmAlertOptions {
+  QString title;
+  QString message;
+  std::optional<OmniIconUrl> iconUrl;
+  std::optional<AlertAction> confirmAction;
+  std::optional<AlertAction> cancelAction;
 };
 
 class AppWindow : public QMainWindow, public ICommandHandler {
@@ -179,7 +202,13 @@ public:
   void launchCommand(const std::shared_ptr<AbstractCmd> &cmd, const LaunchCommandOptions &opts = {});
 
   AppWindow(QWidget *parent = 0);
+
   bool event(QEvent *event) override;
+
+  void confirmAlert(AlertWidget *alert) {
+    _dialog->setContent(alert);
+    _dialog->showDialog();
+  }
 
 public slots:
   void pushView(View *view, const PushViewOptions &opts = {});
@@ -203,8 +232,6 @@ struct OpenAppAction : public AbstractAction {
 
     app.closeWindow(true);
   }
-
-  QString id() const override { return application->id(); }
 
   OpenAppAction(const std::shared_ptr<Application> &app, const QString &title,
                 const std::vector<QString> args)

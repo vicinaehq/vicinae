@@ -308,7 +308,7 @@ void OmniList::calculateHeights() {
 
   auto end = std::chrono::high_resolution_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-  qDebug() << "calculateHeights() took" << duration << "ms";
+  // qDebug() << "calculateHeights() took" << duration << "ms";
 
   scrollBar->setMaximum(std::max(0, yOffset - height()));
   scrollBar->setMinimum(0);
@@ -357,7 +357,7 @@ void OmniList::updateFromList(std::vector<std::unique_ptr<AbstractVirtualItem>> 
 
   switch (selectionPolicy) {
   case SelectFirst:
-    qDebug() << "update with select first";
+    qDebug() << "update with select first" << _selectedId;
     selectFirst();
     break;
   case KeepSelection:
@@ -368,6 +368,7 @@ void OmniList::updateFromList(std::vector<std::unique_ptr<AbstractVirtualItem>> 
       qDebug() << "idx of " << _selectedId << _items[idx].vIndex;
       setSelectedIndex(_items[idx].vIndex);
     } else {
+      qDebug() << "no index for" << _selectedId;
       setSelectedIndex(std::max(0, std::min(_selected, static_cast<int>(_virtual_items.size() - 1))));
     }
     break;

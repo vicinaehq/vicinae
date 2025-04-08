@@ -57,7 +57,10 @@ public:
     emit activatePrimaryAction();
   }
 
-  void onMount() override { baseNavigationTitle = navigationTitle(); }
+  void onMount() override {
+    qDebug() << "current navigation title" << navigationTitle();
+    baseNavigationTitle = navigationTitle();
+  }
 
   bool inputFilter(QKeyEvent *event) override {
     switch (event->key()) {

@@ -207,16 +207,23 @@ protected:
   virtual ItemList generateList(const QString &s) = 0;
 
   void reload() {
+    qDebug() << "reload list";
     auto items = generateList(query);
 
     list->invalidateCache();
     list->updateFromList(items, OmniList::KeepSelection);
+
+    if (auto item = list->selected()) {
+      if (auto nextItem = dynamic_cast<const IActionnable *>(item)) {
+        setSignalActions(nextItem->generateActions());
+      }
+    }
   }
 
   void onActionActivated(const AbstractAction *action) override {
     if (widget->isVisible()) {
       qDebug() << "action activated!";
-      reload();
+      // reload();
     } else {
       qDebug() << "no reload after action, as we are no longer visible!";
     }
@@ -225,6 +232,7 @@ protected:
   void onRestore() override { reload(); }
 
   void onSearchChanged(const QString &s) override {
+    qDebug() << "search changed" << s;
     query = s;
     auto items = generateList(s);
     list->updateFromList(items, OmniList::SelectFirst);

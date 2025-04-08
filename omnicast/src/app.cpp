@@ -69,12 +69,6 @@ bool AppWindow::event(QEvent *event) {
     }
 
     if (keyEvent->modifiers().testFlag(Qt::ControlModifier) && key == Qt::Key_B) {
-      _dialog->showDialog();
-
-      return true;
-    }
-
-    if (keyEvent->modifiers().testFlag(Qt::ControlModifier) && key == Qt::Key_B) {
       actionPannel->showActions();
 
       return true;
@@ -250,7 +244,6 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
   topBar->input->setFocus();
   topBar->input->setText(opts.searchQuery);
   emit topBar->input->textEdited(opts.searchQuery);
-  qDebug() << "view pushed";
 
   QTimer::singleShot(0, [view]() { view->onMount(); });
 }
@@ -467,13 +460,6 @@ AppWindow::AppWindow(QWidget *parent)
   layout->addWidget(viewDisplayer, 1);
   layout->addWidget(new HDivider);
   layout->addWidget(statusBar);
-
-  _dialog->setContent(_alert);
-
-  //_alert->setFixedSize(400, 100);
-  //_alert->show();
-
-  // commandStack.push(index);
 
   auto widget = new QWidget();
 

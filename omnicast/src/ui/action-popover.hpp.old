@@ -340,7 +340,7 @@ public:
   std::vector<AbstractAction *> _actionnables;
 
   bool findBoundAction(QKeyEvent *event) {
-    qDebug() << "find bound action";
+    //qDebug() << "find bound action";
     if (_viewStack.empty()) return false;
 
     return _viewStack.top().view->handleKey(event);
