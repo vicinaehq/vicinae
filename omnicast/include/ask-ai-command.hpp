@@ -137,7 +137,11 @@ public:
       : View(app), aiProvider(*app.aiProvider.get()), chatView(new QuickChatScrollView) {
     aiProvider.models().then([this](std::vector<AiModel> models) { this->models = models; });
 
-    widget = chatView;
+    auto layout = new QVBoxLayout;
+
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(chatView);
+    setLayout(layout);
   }
 
   void onMount() override {

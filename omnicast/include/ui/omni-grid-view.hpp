@@ -3,6 +3,7 @@
 #include "ui/action-pannel/action-item.hpp"
 #include "ui/omni-grid.hpp"
 #include "view.hpp"
+#include <qboxlayout.h>
 
 class OmniGridView : public View {
   QString baseNavigationTitle;
@@ -78,9 +79,13 @@ public:
 
 public:
   OmniGridView(AppWindow &app) : View(app), grid(new OmniGrid) {
-    widget = grid;
-
     connect(grid, &OmniGrid::selectionChanged, this, &OmniGridView::selectionChanged);
     connect(grid, &OmniGrid::itemActivated, this, &OmniGridView::itemActivated);
+
+    auto layout = new QVBoxLayout;
+
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(grid);
+    setLayout(layout);
   }
 };

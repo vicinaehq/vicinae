@@ -5,6 +5,7 @@
 #include "ui/horizontal-metadata.hpp"
 #include "ui/omni-list.hpp"
 #include "view.hpp"
+#include <qboxlayout.h>
 #include <qevent.h>
 #include <qnamespace.h>
 #include <qwidget.h>
@@ -213,8 +214,13 @@ protected:
 public:
   OmniListView(AppWindow &app) : View(app), list(new OmniList) {
     split = new DetailSplit(list);
-    widget = split;
     connect(list, &OmniList::selectionChanged, this, &OmniListView::selectionChanged);
     connect(list, &OmniList::itemActivated, this, &OmniListView::itemActivated);
+
+    auto layout = new QVBoxLayout;
+
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(split);
+    setLayout(layout);
   }
 };

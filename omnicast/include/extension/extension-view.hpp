@@ -13,7 +13,6 @@ class ExtensionView : public View {
   Q_OBJECT
 
   const ExtensionCommand &_command;
-  QWidget *_container;
   QVBoxLayout *_layout;
 
   int _modelIndex = -1;
@@ -27,11 +26,10 @@ class ExtensionView : public View {
 
 public:
   ExtensionView(AppWindow &app, const ExtensionCommand &command)
-      : View(app), _command(command), _container(new QWidget), _layout(new QVBoxLayout), _component(nullptr) {
+      : View(app), _command(command), _layout(new QVBoxLayout), _component(nullptr) {
     _layout->setContentsMargins(0, 0, 0, 0);
     _layout->setSpacing(0);
-    _container->setLayout(_layout);
-    widget = _container;
+    setLayout(_layout);
   }
 
   const ExtensionCommand &command() const { return _command; }

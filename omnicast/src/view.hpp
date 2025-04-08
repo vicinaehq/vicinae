@@ -13,7 +13,11 @@
 #include <qtmetamacros.h>
 #include <qwidget.h>
 
-class View : public QObject {
+class AbstractViewFactory {
+  View *createView(AppWindow &app);
+};
+
+class View : public QWidget {
   Q_OBJECT
   QList<QWidget *> inputFwdTo;
 
@@ -33,12 +37,8 @@ protected:
   AppWindow &app;
 
 public:
-  QWidget *widget;
-  View(AppWindow &app) : app(app) {}
-  ~View() {
-    qDebug() << "~View()";
-    if (widget) widget->deleteLater();
-  }
+  View(AppWindow &app) : QWidget(&app), app(app) {}
+  ~View() {}
 
   void clearSearchText() { app.topBar->input->clear(); }
 

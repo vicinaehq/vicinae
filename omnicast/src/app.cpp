@@ -106,13 +106,13 @@ void AppWindow::popCurrentView() {
 
   auto next = navigationStack.top();
 
-  previous.view->widget->setParent(nullptr);
+  previous.view->setParent(nullptr);
   previous.view->setParent(nullptr);
 
   connectView(*next.view);
   next.view->setParent(this);
-  viewDisplayer->setWidget(next.view->widget);
-  next.view->widget->show();
+  viewDisplayer->setWidget(next.view);
+  next.view->show();
 
   previous.view->deleteLater();
 
@@ -206,7 +206,7 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
   if (navigationStack.size() == 1) { topBar->showBackButton(); }
 
   if (navigationStack.empty()) {
-    viewDisplayer->setWidget(view->widget);
+    viewDisplayer->setWidget(view);
   } else {
     auto &cur = navigationStack.top();
 
@@ -224,9 +224,9 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
       };
     }
 
-    cur.view->widget->setParent(nullptr);
-    cur.view->widget->hide();
-    viewDisplayer->setWidget(view->widget);
+    cur.view->setParent(nullptr);
+    cur.view->hide();
+    viewDisplayer->setWidget(view);
 
     if (opts.navigation) statusBar->setNavigation(opts.navigation->title, opts.navigation->iconUrl);
   }

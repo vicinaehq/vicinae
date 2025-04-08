@@ -9,6 +9,7 @@
 #include "ui/form/form.hpp"
 #include <functional>
 #include <memory>
+#include <qboxlayout.h>
 #include <qnamespace.h>
 #include <qpixmap.h>
 #include <qsharedpointer.h>
@@ -187,7 +188,12 @@ public:
     iconSelector->setValue("default");
 
     form->setContentsMargins(0, 10, 0, 0);
-    widget = form;
+
+    auto layout = new QVBoxLayout;
+
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(form);
+    setLayout(layout);
   }
 
   void loadLink(const Quicklink &quicklink) {

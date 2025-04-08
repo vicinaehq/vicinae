@@ -1,6 +1,7 @@
 #include "app.hpp"
 #include "ui/markdown/markdown-renderer.hpp"
 #include "view.hpp"
+#include <qboxlayout.h>
 
 const static QString text2 =
     "Certainly! Here's a list of arguments that explain why clean code is great:\n\n1. **Improved "
@@ -91,6 +92,10 @@ connect(timer, &QTimer::timeout, this, [this]() {
 timer->start(10);
     */
 
-    widget = _renderer;
+    auto layout = new QVBoxLayout;
+
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(_renderer);
+    setLayout(layout);
   }
 };
