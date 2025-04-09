@@ -12,6 +12,7 @@
 #include "extension_manager.hpp"
 #include "favicon/favicon-service.hpp"
 #include "image-fetcher.hpp"
+#include "omnicast.hpp"
 #include "process-manager-service.hpp"
 #include "quicklink-seeder.hpp"
 #include "root-command.hpp"
@@ -106,12 +107,12 @@ void AppWindow::popCurrentView() {
 
   auto next = navigationStack.top();
 
-  previous.view->setParent(nullptr);
-  previous.view->setParent(nullptr);
+  // previous.view->setParent(nullptr);
 
   connectView(*next.view);
-  next.view->setParent(this);
-  viewDisplayer->setWidget(next.view);
+  // next.view->setParent(this);
+  centerView = next.view;
+  next.view->setGeometry(viewGeometry());
   next.view->show();
 
   previous.view->deleteLater();
@@ -205,8 +206,11 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
 
   if (navigationStack.size() == 1) { topBar->showBackButton(); }
 
+  // view->setParent(this);
+  view->setGeometry(viewGeometry());
+  view->lower();
+
   if (navigationStack.empty()) {
-    viewDisplayer->setWidget(view);
   } else {
     auto &cur = navigationStack.top();
 
@@ -224,12 +228,16 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
       };
     }
 
-    cur.view->setParent(nullptr);
+    // cur.view->setParent(nullptr);
     cur.view->hide();
-    viewDisplayer->setWidget(view);
+
+    qDebug() << "VIEW GEOMETRY" << viewGeometry();
 
     if (opts.navigation) statusBar->setNavigation(opts.navigation->title, opts.navigation->iconUrl);
   }
+
+  centerView = view;
+  view->show();
 
   connectView(*view);
 
@@ -257,7 +265,20 @@ void AppWindow::launchCommand(const std::shared_ptr<AbstractCmd> &command, const
   }
 }
 
-void AppWindow::resizeEvent(QResizeEvent *event) { QMainWindow::resizeEvent(event); }
+void AppWindow::resizeEvent(QResizeEvent *event) {
+  QMainWindow::resizeEvent(event);
+  auto windowSize = event->size();
+  auto topHeight = Omnicast::TOP_BAR_HEIGHT;
+  auto statusHeight = Omnicast::STATUS_BAR_HEIGHT;
+
+  topBar->setGeometry({0, 0, windowSize.width(), topHeight});
+  _loadingBar->setGeometry({0, topHeight, windowSize.width(), 1});
+  centerView->setGeometry({0, topHeight, windowSize.width(), windowSize.height() - topHeight - statusHeight});
+  statusBar->setGeometry({0, windowSize.height() - statusHeight, windowSize.width(), statusHeight});
+
+  topBar->show();
+  statusBar->show();
+}
 
 void AppWindow::paintEvent(QPaintEvent *event) {
   auto &theme = ThemeService::instance().theme();
@@ -375,16 +396,15 @@ void AppWindow::closeWindow(bool withPopToRoot) {
 }
 
 AppWindow::AppWindow(QWidget *parent)
-    : QMainWindow(parent), topBar(new TopBar()), viewDisplayer(new ViewDisplayer), statusBar(new StatusBar()),
+    : QMainWindow(parent), topBar(new TopBar(this)), statusBar(new StatusBar(this)),
       actionPannel(new ActionPannelWidget(this)), _dialog(new DialogWidget(this)),
       _loadingBar(new HorizontalLoadingBar(this)) {
   setWindowFlags(Qt::FramelessWindowHint);
   setAttribute(Qt::WA_TranslucentBackground, true);
 
-  setMinimumWidth(850);
-  setMinimumHeight(550);
-
-  topBar->setFixedHeight(55);
+  setMinimumSize(Omnicast::WINDOW_SIZE);
+  topBar->setFixedHeight(Omnicast::TOP_BAR_HEIGHT);
+  statusBar->setFixedHeight(Omnicast::STATUS_BAR_HEIGHT);
 
   QDir::root().mkpath(Config::dirPath());
   ThemeService::instance().setTheme("Ayu Mirage");
@@ -445,27 +465,10 @@ AppWindow::AppWindow(QWidget *parent)
 
   extensionManager->start();
 
-  layout = new QVBoxLayout();
-
-  layout->setSpacing(0);
-  layout->setContentsMargins(0, 0, 0, 0);
-
   _loadingBar->setFixedHeight(1);
   _loadingBar->setBarWidth(100);
 
-  layout->setAlignment(Qt::AlignTop);
   topBar->input->installEventFilter(this);
-  layout->addWidget(topBar);
-  layout->addWidget(_loadingBar);
-  layout->addWidget(viewDisplayer, 1);
-  layout->addWidget(new HDivider);
-  layout->addWidget(statusBar);
-
-  auto widget = new QWidget();
-
-  widget->setLayout(layout);
-
-  setCentralWidget(widget);
 
   auto rootCommand = CommandBuilder("root").toView<RootView>();
 

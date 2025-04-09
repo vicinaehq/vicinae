@@ -8,12 +8,9 @@
 #include "command-database.hpp"
 #include "command-server.hpp"
 #include <QScreen>
-#include "extend/image-model.hpp"
 #include "extension_manager.hpp"
-#include "indexer-service.hpp"
 #include "omni-icon.hpp"
 #include "process-manager-service.hpp"
-#include "proto.hpp"
 #include "quicklist-database.hpp"
 #include <QtWaylandClient/qwaylandclientextension.h>
 #include <cstring>
@@ -30,7 +27,7 @@
 #include <qscreen_platform.h>
 #include <stack>
 
-#include "theme.hpp"
+#include "omnicast.hpp"
 #include "ui/action-pannel/action-pannel-widget.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/alert.hpp"
@@ -51,21 +48,6 @@ class View;
 class ViewCommandContext;
 class ExtensionView;
 class CommandContext;
-
-class ViewDisplayer : public QWidget {
-  QVBoxLayout *layout;
-
-public:
-  ViewDisplayer() : layout(new QVBoxLayout) {
-    layout->setContentsMargins(0, 0, 0, 0);
-    setLayout(layout);
-  }
-
-  void setWidget(QWidget *widget) {
-    layout->takeAt(0);
-    layout->addWidget(widget);
-  }
-};
 
 struct ViewSnapshot {
   View *view;
@@ -163,7 +145,14 @@ class AppWindow : public QMainWindow, public ICommandHandler {
 
   std::variant<CommandResponse, CommandError> handleCommand(const CommandMessage &message) override;
 
+  QRect viewGeometry() {
+    auto windowSize = size();
+
+    return {0, Omnicast::TOP_BAR_HEIGHT, windowSize.width(), windowSize.height() - Omnicast::TOP_BAR_HEIGHT};
+  }
+
 public:
+  QWidget *centerView;
   std::stack<ViewSnapshot> navigationStack;
   QStack<CommandSnapshot> commandStack;
 
@@ -192,7 +181,6 @@ public:
   ActionPannelWidget *actionPannel = nullptr;
   QVBoxLayout *layout = nullptr;
   QWidget *defaultWidget = new QWidget();
-  ViewDisplayer *viewDisplayer;
   HorizontalLoadingBar *_loadingBar;
   DialogWidget *_dialog = nullptr;
   AlertWidget *_alert = new AlertWidget;
