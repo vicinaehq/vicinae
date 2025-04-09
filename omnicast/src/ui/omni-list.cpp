@@ -357,7 +357,6 @@ void OmniList::updateFromList(std::vector<std::unique_ptr<AbstractVirtualItem>> 
 
   switch (selectionPolicy) {
   case SelectFirst:
-    qDebug() << "update with select first" << _selectedId;
     selectFirst();
     break;
   case KeepSelection:

@@ -36,10 +36,7 @@ class PeepobankView : public OmniGridView {
 
   public:
     void setPeepo(PeepoInfo info) {
-      if (auto movie = std::get_if<QMovie *>(&pixmap); movie) {
-        (*movie)->deleteLater();
-        qDebug() << "destroy movie";
-      }
+      if (auto movie = std::get_if<QMovie *>(&pixmap); movie) { (*movie)->deleteLater(); }
 
       if (info.name.endsWith(".gif")) {
         auto newMovie = new QMovie(info.path);

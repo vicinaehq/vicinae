@@ -57,8 +57,10 @@ public:
   void render(const RenderModel &baseModel) override;
   void onSelectionChanged(const OmniList::AbstractVirtualItem *next,
                           const OmniList::AbstractVirtualItem *previous);
+  void onItemActivated(const OmniList::AbstractVirtualItem &item);
   void handleDebouncedSearchNotification();
   void onSearchChanged(const QString &text) override;
+  bool inputFilter(QKeyEvent *event) override;
 
   ExtensionListComponent(AppWindow &app);
 };

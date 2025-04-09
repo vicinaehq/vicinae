@@ -1,9 +1,22 @@
 #include "extension/extension-list-component.hpp"
 #include "app.hpp"
-#include "ui/action-pannel/action-item.hpp"
 
 KeyboardShortcutModel primaryShortcut{.key = "return"};
 KeyboardShortcutModel secondaryShortcut{.key = "return", .modifiers = {"shift"}};
+
+bool ExtensionListComponent::inputFilter(QKeyEvent *event) {
+  switch (event->key()) {
+  case Qt::Key_Left:
+  case Qt::Key_Right:
+  case Qt::Key_Up:
+  case Qt::Key_Down:
+  case Qt::Key_Return:
+    QApplication::sendEvent(_list, event);
+    return true;
+  }
+
+  return AbstractExtensionRootComponent::inputFilter(event);
+}
 
 void ExtensionListComponent::render(const RenderModel &baseModel) {
   auto newModel = std::get<ListModel>(baseModel);
@@ -134,6 +147,10 @@ void ExtensionListComponent::handleDebouncedSearchNotification() {
   }
 }
 
+void ExtensionListComponent::onItemActivated(const OmniList::AbstractVirtualItem &item) {
+  selectPrimaryAction();
+}
+
 void ExtensionListComponent::onSearchChanged(const QString &text) { _debounce->start(); }
 
 ExtensionListComponent::ExtensionListComponent(AppWindow &app)
@@ -147,4 +164,5 @@ ExtensionListComponent::ExtensionListComponent(AppWindow &app)
   _debounce->setSingleShot(true);
   connect(_debounce, &QTimer::timeout, this, &ExtensionListComponent::handleDebouncedSearchNotification);
   connect(_list, &OmniList::selectionChanged, this, &ExtensionListComponent::onSelectionChanged);
+  connect(_list, &OmniList::itemActivated, this, &ExtensionListComponent::onItemActivated);
 }

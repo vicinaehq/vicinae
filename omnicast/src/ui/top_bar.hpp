@@ -1,5 +1,6 @@
 #pragma once
 #include "omni-icon.hpp"
+#include "ui/horizontal-loading-bar.hpp"
 #include "ui/icon-button.hpp"
 #include "ui/input_completer.hpp"
 #include <QKeyEvent>

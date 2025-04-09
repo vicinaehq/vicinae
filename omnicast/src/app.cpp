@@ -16,8 +16,6 @@
 #include "process-manager-service.hpp"
 #include "quicklink-seeder.hpp"
 #include "root-command.hpp"
-#include "ui/action-pannel/action-section.hpp"
-#include "ui/action_popover.hpp"
 #include "theme.hpp"
 #include "ui/dialog.hpp"
 #include "ui/horizontal-loading-bar.hpp"
@@ -75,7 +73,6 @@ bool AppWindow::event(QEvent *event) {
       return true;
     }
 
-    // QApplication::sendEvent(navigationStack.top().view, event);
     return true;
   }
 
@@ -107,10 +104,7 @@ void AppWindow::popCurrentView() {
 
   auto next = navigationStack.top();
 
-  // previous.view->setParent(nullptr);
-
   connectView(*next.view);
-  // next.view->setParent(this);
   centerView = next.view;
   next.view->setGeometry(viewGeometry());
   next.view->show();
@@ -206,12 +200,10 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
 
   if (navigationStack.size() == 1) { topBar->showBackButton(); }
 
-  // view->setParent(this);
   view->setGeometry(viewGeometry());
   view->lower();
 
-  if (navigationStack.empty()) {
-  } else {
+  if (!navigationStack.empty()) {
     auto &cur = navigationStack.top();
 
     cur.query = topBar->input->text();
@@ -228,10 +220,7 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
       };
     }
 
-    // cur.view->setParent(nullptr);
     cur.view->hide();
-
-    qDebug() << "VIEW GEOMETRY" << viewGeometry();
 
     if (opts.navigation) statusBar->setNavigation(opts.navigation->title, opts.navigation->iconUrl);
   }

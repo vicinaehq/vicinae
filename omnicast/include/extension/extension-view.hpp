@@ -24,6 +24,12 @@ class ExtensionView : public View {
     return nullptr;
   }
 
+  bool inputFilter(QKeyEvent *event) override {
+    if (_component) { return _component->inputFilter(event); }
+
+    return false;
+  }
+
 public:
   ExtensionView(AppWindow &app, const ExtensionCommand &command)
       : View(app), _command(command), _layout(new QVBoxLayout), _component(nullptr) {

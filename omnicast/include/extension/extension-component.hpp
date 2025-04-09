@@ -11,6 +11,8 @@ class AbstractExtensionRootComponent : public QWidget {
 public:
   AbstractExtensionRootComponent(AppWindow &app) : app(app) {}
 
+  virtual bool inputFilter(QKeyEvent *event) { return false; }
+
   QString searchText() const { return app.topBar->input->text(); }
   void setSearchText(const QString &text) {
     bool changed = app.topBar->input->text() != text;
@@ -23,6 +25,7 @@ public:
   }
   void setSearchPlaceholderText(const QString &text) { app.topBar->input->setPlaceholderText(text); }
   void setNavigationTitle(const QString &text) { app.statusBar->setNavigationTitle(text); }
+  void selectPrimaryAction() { app.selectPrimaryAction(); }
 
   virtual void onSearchChanged(const QString &text) {}
 

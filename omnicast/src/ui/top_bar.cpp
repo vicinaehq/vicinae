@@ -8,8 +8,6 @@ TopBar::TopBar(QWidget *parent) : QWidget(parent), layout(new QHBoxLayout()), in
   setAttribute(Qt::WA_TranslucentBackground, true);
   backButton = new IconButton;
 
-  // input->setTextMargins(10, 10, 10, 10);
-
   backButton->setFixedSize(25, 25);
 
   connect(&ThemeService::instance(), &ThemeService::themeChanged,
@@ -24,6 +22,7 @@ TopBar::TopBar(QWidget *parent) : QWidget(parent), layout(new QHBoxLayout()), in
   layout->addWidget(backButton, 0, Qt::AlignLeft | Qt::AlignVCenter);
   layout->addWidget(input);
   layout->setSpacing(10);
+
   setLayout(layout);
 
   setProperty("class", "top-bar");
