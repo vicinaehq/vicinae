@@ -67,6 +67,8 @@ qt_add_executable(${TARGET}
 	include/ui/dialog.hpp
 	include/ui/alert.hpp
 
+	include/omni-command-db.hpp
+
 	include/clipboard/clipboard-server.hpp
 	include/clipboard/wlr-clipboard-server.hpp
 	src/clipboard/wlr-clipboard-server.cpp

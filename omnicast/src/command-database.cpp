@@ -5,6 +5,7 @@
 #include "emoji-command.hpp"
 #include "icon-browser-command.hpp"
 #include "ask-ai-command.hpp"
+#include "preference.hpp"
 #include "switch-windows-command.hpp"
 #include "test-command.hpp"
 #include "manage-quicklinks-command.hpp"
@@ -68,10 +69,29 @@ CommandDatabase::CommandDatabase() {
                      .withTintedIcon("emoji", ColorTint::Red)
                      .toView<EmojiView>();
 
+    auto storeAllOfferingsPreference = std::make_shared<CheckboxPreference>();
+
+    storeAllOfferingsPreference->setName("store-all-offerings");
+    storeAllOfferingsPreference->setTitle("Store all clipboard offerings");
+    storeAllOfferingsPreference->setDescription("Store and index alternative mime type offerings. This will "
+                                                "increase total storage size, but will refine the search.");
+    storeAllOfferingsPreference->setLabel("Store all offerings");
+
+    auto maximumClipboardStorageSizePreference = std::make_shared<TextFieldPreference>();
+
+    maximumClipboardStorageSizePreference->setName("maximum-storage-size");
+    maximumClipboardStorageSizePreference->setTitle("Maximum clipboard storage size");
+    maximumClipboardStorageSizePreference->setDescription(
+        "How much storage can be used to store clipboard history data, in MB.");
+    maximumClipboardStorageSizePreference->setDefaultValue("1000");
+
     auto clipboardHistory = CommandBuilder("clipboard-history")
                                 .withName("Clipboard History")
                                 .withTintedIcon("copy-clipboard", ColorTint::Red)
+                                .withPreference(storeAllOfferingsPreference)
+                                .withPreference(maximumClipboardStorageSizePreference)
                                 .toView<ClipboardHistoryCommand>();
+
     auto iconSearch = CommandBuilder("browse-icons")
                           .withName("Search Omnicast Icons")
                           .withTintedIcon("omnicast", ColorTint::Red)
@@ -105,12 +125,20 @@ CommandDatabase::CommandDatabase() {
   }
 
   {
+    auto testExtensionPref = std::make_shared<TextFieldPreference>();
+
+    testExtensionPref->setName("test-extension-pref");
+    testExtensionPref->setTitle("Test Extension Pref");
+    testExtensionPref->setDefaultValue("ting ting");
+    testExtensionPref->setDescription("A simple test, nothing more.");
+
     auto create = CommandBuilder("create").withName("Create Quicklink").toView<QuicklinkCommandView>();
     auto manage = CommandBuilder("manage").withName("Manage Quicklinks").toView<ManageQuicklinksView>();
     auto _export = CommandBuilder("export").withName("Export Quicklinks").toView<ManageQuicklinksView>();
     auto _import = CommandBuilder("import").withName("Import Quicklinks").toView<ManageQuicklinksView>();
     auto quicklinks = CommandRepositoryBuilder("quicklinks")
                           .withName("Quicklinks")
+                          .withPreference(testExtensionPref)
                           .withTintedIcon("link", ColorTint::Red)
                           .withCommand(create)
                           .withCommand(manage)

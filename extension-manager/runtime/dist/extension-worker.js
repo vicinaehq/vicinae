@@ -798,7 +798,6 @@ var createHostConfig = (hostCtx, callback) => {
         }
         if (typeof newValue === "object") {
           if (!isDeepEqual(newValue, oldValue)) {
-            console.error("not deep equal", newValue, "VS", oldValue);
             changes.push(key, newValue);
           }
           continue;
@@ -807,7 +806,6 @@ var createHostConfig = (hostCtx, callback) => {
           changes.push(key, newValue);
         }
       }
-      console.log(`prepareUpdate returned ${changes.length} changes`, JSON.stringify(changes, null, 2));
       return changes.length > 0 ? changes : null;
     },
     shouldSetTextContent() {

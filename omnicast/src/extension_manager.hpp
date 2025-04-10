@@ -366,10 +366,10 @@ class ExtensionManager : public QObject {
   QLocalServer ipc;
   QString socketPath = "/tmp/omnicast-extension-manager.sock";
   Bus *bus = nullptr;
-  std::vector<Extension> loadedExtensions;
+  std::vector<std::shared_ptr<Extension>> loadedExtensions;
 
 public:
-  const std::vector<Extension> &extensions() const { return loadedExtensions; }
+  const std::vector<std::shared_ptr<Extension>> &extensions() const { return loadedExtensions; }
 
   bool respond(const QString &id, const QJsonObject &payload) { return bus->respond(id, payload); }
 
@@ -430,16 +430,17 @@ public slots:
   void flush() { bus->flush(); }
 
   void parseListExtensionData(QJsonObject &obj) {
-    std::vector<Extension> extensions;
+    std::vector<std::shared_ptr<Extension>> extensions;
     auto extensionList = obj["extensions"].toArray();
 
     extensions.reserve(extensionList.size());
 
     for (const auto &ext : extensionList) {
-      extensions.push_back(Extension::fromObject((ext.toObject())));
+      extensions.push_back(std::make_shared<Extension>(Extension::fromObject((ext.toObject()))));
     }
 
-    loadedExtensions = std::move(extensions);
+    loadedExtensions = extensions;
+    emit extensionsListed(loadedExtensions);
   }
 
   void handleManagerResponse(const QString &action, QJsonObject &data) {
@@ -463,6 +464,7 @@ signals:
                         const QJsonObject &payload);
   void managerResponse(const QString &action, QJsonObject &payload);
   void commandLoaded(const LoadedCommand &);
+  void extensionsListed(const std::vector<std::shared_ptr<Extension>> &extensions);
 
 private slots:
   void newConnection() {

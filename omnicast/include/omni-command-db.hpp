@@ -3,16 +3,21 @@
 #include "omni-database.hpp"
 #include <qjsonobject.h>
 #include <qlogging.h>
+#include <qobject.h>
 #include <qsqlquery.h>
+#include <qtmetamacros.h>
 
 struct CommandDbEntry {
   std::shared_ptr<AbstractCmd> command;
   bool disabled;
 };
 
-class OmniCommandDatabase {
+class OmniCommandDatabase : public QObject {
+  Q_OBJECT
+
   OmniDatabase &db;
   std::vector<CommandDbEntry> entries;
+  std::vector<std::shared_ptr<AbstractCommandRepository>> repositories;
 
 public:
   std::vector<CommandDbEntry> commands() const { return entries; }
@@ -43,6 +48,22 @@ public:
     }
   }
 
+  CommandDbEntry *findCommand(const QString &id) {
+    for (auto &cmd : entries) {
+      if (cmd.command->id() == id) return &cmd;
+    }
+
+    return nullptr;
+  }
+
+  const CommandDbEntry *findCommand(const QString &id) const {
+    for (const auto &cmd : entries) {
+      if (cmd.command->id() == id) return &cmd;
+    }
+
+    return nullptr;
+  }
+
   bool hasCommand(const QString &id) const {
     for (const auto &cmd : entries) {
       if (cmd.command->id() == id) return true;
@@ -51,7 +72,52 @@ public:
     return false;
   }
 
-  QJsonObject getPreferenceValues(const QString &id) const { return {}; }
+  QJsonObject getPreferenceValues(const QString &id) const {
+    auto cmdEntry = findCommand(id);
+
+    if (!cmdEntry) {
+      qDebug() << "No command entry with ID" << id;
+      return {};
+    };
+
+    QSqlQuery query(db.db());
+
+    query.prepare(R"(
+		SELECT 
+			json_patch(ext.preference_values, cmd.preference_values) as preference_values 
+		FROM 
+			command cmd 
+		LEFT JOIN
+			extension ext 
+		ON 
+			ext.id = cmd.extension_id
+		WHERE
+			cmd.id = :id
+	)");
+    query.addBindValue(id);
+
+    if (!query.exec()) {
+      qDebug() << "Failed to get preference values for command with ID" << id << query.lastError();
+      return {};
+    }
+
+    if (!query.next()) {
+      qDebug() << "No results";
+      return {};
+    }
+
+    auto preferenceValues = query.value(0).toJsonObject();
+
+    for (auto &pref : cmdEntry->command->preferences()) {
+      auto dflt = pref->defaultValueAsJson();
+
+      if (!preferenceValues.contains(pref->name()) && !dflt.isNull()) {
+        preferenceValues[pref->name()] = dflt;
+      }
+    }
+
+    return preferenceValues;
+  }
 
   void setPreferenceValues(const QString &id, const QJsonObject &preferences) {}
 
@@ -93,7 +159,12 @@ public:
     query.bindValue(":disabled", false);
 
     if (!query.exec()) { qDebug() << "Failed to register command" << cmd->id(); }
-    if (!hasCommand(cmd->id())) { entries.push_back(CommandDbEntry{.command = cmd, .disabled = false}); }
+    if (!hasCommand(cmd->id())) {
+      auto entry = CommandDbEntry{.command = cmd, .disabled = false};
+
+      entries.push_back(entry);
+      emit commandRegistered(entry);
+    }
   }
 
   void registerRepository(const std::shared_ptr<AbstractCommandRepository> &repository) {
@@ -108,4 +179,7 @@ public:
 
     db.db().commit();
   }
+
+signals:
+  void commandRegistered(const CommandDbEntry &entry) const;
 };

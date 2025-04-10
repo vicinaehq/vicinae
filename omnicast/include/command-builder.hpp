@@ -10,6 +10,7 @@ class CommandBuilder {
   QString _id;
   QString _name;
   std::optional<OmniIconUrl> _url;
+  std::vector<std::shared_ptr<BasePreference>> _preferences;
 
 public:
   CommandBuilder(const QString &id) : _id(id) {}
@@ -28,9 +29,12 @@ public:
     return *this;
   }
 
-  CommandBuilder &withPreference(const Preference &preference) {}
+  CommandBuilder &withPreference(const std::shared_ptr<BasePreference> &preference) {
+    _preferences.push_back(preference);
+    return *this;
+  }
 
   template <typename T> std::shared_ptr<BuiltinCommand> toView() {
-    return std::make_shared<BuiltinViewCommand<T>>(_id, _name, _url);
+    return std::make_shared<BuiltinViewCommand<T>>(_id, _name, _url, _preferences);
   }
 };

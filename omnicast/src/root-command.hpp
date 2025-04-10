@@ -2,6 +2,7 @@
 #include "app/app-database.hpp"
 #include "command-database.hpp"
 #include "extension/extension.hpp"
+#include "omni-command-db.hpp"
 #include "ui/action-pannel/action-item.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/action-pannel/open-with-action.hpp"
@@ -277,12 +278,6 @@ public:
     std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> list;
     list.push_back(std::make_unique<OmniList::VirtualSection>("Commands"));
 
-    for (const auto &extension : extensionManager.extensions()) {
-      for (const auto &cmd : extension.commands()) {
-        list.push_back(std::make_unique<BuiltinCommandListItem>(cmd));
-      }
-    }
-
     for (const auto &entry : app.commandDb->commands()) {
       if (entry.disabled) continue;
 
@@ -355,14 +350,6 @@ public:
       }
     }
 
-    for (const auto &extension : extensionManager.extensions()) {
-      for (const auto &cmd : extension.commands()) {
-        if (!cmd->name().contains(s, Qt::CaseInsensitive)) continue;
-
-        list.push_back(std::make_unique<BuiltinCommandListItem>(cmd));
-      }
-    }
-
     for (auto &entry : app.commandDb->commands()) {
       if (entry.disabled || !entry.command->name().contains(s, Qt::CaseInsensitive)) continue;
 
@@ -394,8 +381,13 @@ public:
 
   void onMount() override { setSearchPlaceholderText("Search for apps or commands..."); }
 
+  void handleRegisteredCommand(const CommandDbEntry &entry) { reload(); }
+
   RootView(AppWindow &app)
       : DeclarativeOmniListView(app), app(app), appDb(service<AbstractAppDatabase>()),
-        extensionManager(service<ExtensionManager>()), quicklinkDb(service<QuicklistDatabase>()) {}
+        extensionManager(service<ExtensionManager>()), quicklinkDb(service<QuicklistDatabase>()) {
+    connect(app.commandDb.get(), &OmniCommandDatabase::commandRegistered, this,
+            &RootView::handleRegisteredCommand);
+  }
   ~RootView() {}
 };

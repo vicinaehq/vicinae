@@ -1,6 +1,7 @@
 #pragma once
 #include "app.hpp"
 #include "command-database.hpp"
+#include "preference.hpp"
 
 template <typename T> class SingleViewCommand : public CommandContext {
 public:
@@ -24,6 +25,9 @@ public:
   }
 
   BuiltinViewCommand(const QString &id, const QString &name,
-                     const std::optional<OmniIconUrl> &url = std::nullopt)
-      : BuiltinCommand(id, name, url) {}
+                     const std::optional<OmniIconUrl> &url = std::nullopt,
+                     const PreferenceList &preferences = {})
+      : BuiltinCommand(id, name, url) {
+    setPreferences(preferences);
+  }
 };

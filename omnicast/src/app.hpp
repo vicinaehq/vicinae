@@ -150,7 +150,8 @@ class AppWindow : public QMainWindow, public ICommandHandler {
   QRect viewGeometry() {
     auto windowSize = size();
 
-    return {0, Omnicast::TOP_BAR_HEIGHT, windowSize.width(), windowSize.height() - Omnicast::TOP_BAR_HEIGHT};
+    return {0, Omnicast::TOP_BAR_HEIGHT, windowSize.width(),
+            windowSize.height() - Omnicast::TOP_BAR_HEIGHT - Omnicast::STATUS_BAR_HEIGHT};
   }
 
 public:

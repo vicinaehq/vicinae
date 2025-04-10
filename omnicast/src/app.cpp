@@ -9,6 +9,7 @@
 #include "clipboard/clipboard-server-factory.hpp"
 #include "command.hpp"
 #include "config.hpp"
+#include "extension/extension.hpp"
 #include "extension_manager.hpp"
 #include "favicon/favicon-service.hpp"
 #include "image-fetcher.hpp"
@@ -248,6 +249,11 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
 }
 
 void AppWindow::launchCommand(const std::shared_ptr<AbstractCmd> &command, const LaunchCommandOptions &opts) {
+  auto preferenceValues = commandDb->getPreferenceValues(command->id());
+
+  qDebug() << "preference values for command with" << command->preferences().size() << "preferences"
+           << command->id() << preferenceValues;
+
   if (command->mode() == CommandModeView) {
     auto ctx = command->createContext(*this, command, opts.searchQuery);
 
@@ -262,6 +268,7 @@ void AppWindow::resizeEvent(QResizeEvent *event) {
   auto topHeight = Omnicast::TOP_BAR_HEIGHT;
   auto statusHeight = Omnicast::STATUS_BAR_HEIGHT;
 
+  centerView->setGeometry({0, topHeight, windowSize.width(), windowSize.height() - topHeight - statusHeight});
   topBar->setGeometry({0, 0, windowSize.width(), topHeight});
   _loadingBar->setGeometry({0, topHeight, windowSize.width(), 1});
   centerView->setGeometry({0, topHeight, windowSize.width(), windowSize.height() - topHeight - statusHeight});
@@ -459,6 +466,13 @@ AppWindow::AppWindow(QWidget *parent)
 
   ollamaProvider->setInstanceUrl(QUrl("http://localhost:11434"));
   aiProvider = std::move(ollamaProvider);
+
+  connect(extensionManager.get(), &ExtensionManager::extensionsListed, this,
+          [this](const std::vector<std::shared_ptr<Extension>> &extensions) {
+            for (const auto &extension : extensions) {
+              commandDb->registerRepository(extension);
+            }
+          });
 
   extensionManager->start();
 

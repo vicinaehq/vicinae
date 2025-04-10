@@ -34,76 +34,78 @@ public:
 
   static Extension fromObject(const QJsonObject &object);
 
-  Preference parsePreferenceFromObject(const QJsonObject &obj) {
+  std::shared_ptr<BasePreference> parsePreferenceFromObject(const QJsonObject &obj) {
     auto type = obj["type"].toString();
     BasePreference base;
 
-    base.title = obj["title"].toString();
-    base.description = obj["description"].toString();
-    base.name = obj["name"].toString();
-    base.placeholder = obj["placeholder"].toString();
-    base.required = obj["required"].toBool();
+    base.setTitle(obj["title"].toString());
+    base.setDescription(obj["description"].toString());
+    base.setName(obj["name"].toString());
+    base.setPlaceholder(obj["placeholder"].toString());
+    base.setRequired(obj["required"].toBool());
 
     if (type == "textfield") {
-      TextFieldPreference textField(base);
+      auto textField = std::make_shared<TextFieldPreference>(base);
 
-      textField.defaultValue = obj["default"].toString();
+      textField->setDefaultValue(obj["default"].toString());
 
       return textField;
     }
 
     if (type == "password") {
-      PasswordPreference password(base);
+      auto password = std::make_shared<PasswordPreference>(base);
 
-      password.defaultValue = obj["default"].toString();
+      password->setDefaultValue(obj["default"].toString());
 
       return password;
     }
 
     if (type == "checkbox") {
-      CheckboxPreference preference(base);
+      auto checkbox = std::make_shared<CheckboxPreference>(base);
 
-      preference.label = obj["label"].toString();
-      preference.defaultValue = obj["default"].toBool();
+      checkbox->setLabel(obj["label"].toString());
+      checkbox->setDefaultValue(obj["default"].toBool());
 
-      return preference;
+      return checkbox;
     }
 
     if (type == "dropdown") {
-      DropdownPreference preference(base);
+      auto dropdown = std::make_shared<DropdownPreference>(base);
 
       // TODO: parse data
-      preference.data = {};
-      preference.defaultValue = obj["default"].toString();
+      dropdown->data = {};
+      dropdown->defaultValue = obj["default"].toString();
 
-      return preference;
+      return dropdown;
     }
 
-    if (type == "appPicker") {
-      AppPickerPreference preference(base);
+    /*
+if (type == "appPicker") {
+  AppPickerPreference preference(base);
 
-      preference.defaultValue = obj["default"].toString();
+  preference.defaultValue = obj["default"].toString();
 
-      return preference;
-    }
+  return preference;
+}
 
-    if (type == "file") {
-      FilePreference preference(base);
+if (type == "file") {
+  FilePreference preference(base);
 
-      preference.defaultValue = obj["default"].toString().toStdString();
+  preference.defaultValue = obj["default"].toString().toStdString();
 
-      return preference;
-    }
+  return preference;
+}
 
-    if (type == "directory") {
-      DirectoryPreference preference(base);
+if (type == "directory") {
+  DirectoryPreference preference(base);
 
-      preference.defaultValue = obj["default"].toString().toStdString();
+  preference.defaultValue = obj["default"].toString().toStdString();
 
-      return preference;
-    }
+  return preference;
+}
+    */
 
-    return BasePreference(base);
+    return nullptr;
   }
 
   QString id() const override;
@@ -111,6 +113,6 @@ public:
   OmniIconUrl iconUrl() const override;
   std::filesystem::path assetDirectory() const;
   std::filesystem::path installedPath() const;
-  std::vector<Preference> preferences() const override;
+  PreferenceList preferences() const override;
   std::vector<std::shared_ptr<AbstractCmd>> commands() const override;
 };
