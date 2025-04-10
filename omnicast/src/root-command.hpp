@@ -3,6 +3,7 @@
 #include "command-database.hpp"
 #include "extension/extension.hpp"
 #include "ui/action-pannel/action-item.hpp"
+#include "ui/action-pannel/action.hpp"
 #include "ui/action-pannel/open-with-action.hpp"
 #include "app.hpp"
 #include "command.hpp"
@@ -77,13 +78,31 @@ public:
   ColorListItem(QColor color) : color(color) {}
 };
 
+class DisableCommand : public AbstractAction {
+  QString _id;
+  bool _value;
+
+  void execute(AppWindow &app) override {
+    app.commandDb->setDisable(_id, _value);
+    app.statusBar->setToast("Command updated");
+  }
+
+public:
+  DisableCommand(const QString &id, bool value)
+      : AbstractAction(value ? "Disabled command" : "Enable command",
+                       BuiltinOmniIconUrl(value ? "eye-disabled" : "eye")),
+        _id(id), _value(value) {}
+};
+
 class BuiltinCommandListItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
 protected:
   std::shared_ptr<AbstractCmd> cmd;
   QString text;
 
   QList<AbstractAction *> generateActions() const override {
-    return {new OpenBuiltinCommandAction(cmd, "Open command", text)};
+    auto disable = new DisableCommand(cmd->id(), true);
+
+    return {new OpenBuiltinCommandAction(cmd, "Open command", text), disable};
   }
 
   QString id() const override { return cmd->id(); }
@@ -159,7 +178,6 @@ class RootView : public DeclarativeOmniListView {
   Service<AbstractAppDatabase> appDb;
   Service<ExtensionManager> extensionManager;
   Service<QuicklistDatabase> quicklinkDb;
-  Service<CommandDatabase> commandDb;
 
   class AppListItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
     std::shared_ptr<Application> app;
@@ -265,10 +283,10 @@ public:
       }
     }
 
-    for (const auto &repository : commandDb.repositories()) {
-      for (const auto &cmd : repository->commands()) {
-        list.push_back(std::make_unique<BuiltinCommandListItem>(cmd));
-      }
+    for (const auto &entry : app.commandDb->commands()) {
+      if (entry.disabled) continue;
+
+      list.push_back(std::make_unique<BuiltinCommandListItem>(entry.command));
     }
 
     for (const auto &link : quicklinkDb.list()) {
@@ -345,14 +363,10 @@ public:
       }
     }
 
-    auto &commandDb = service<CommandDatabase>();
+    for (auto &entry : app.commandDb->commands()) {
+      if (entry.disabled || !entry.command->name().contains(s, Qt::CaseInsensitive)) continue;
 
-    for (const auto &repo : commandDb.repositories()) {
-      for (const auto &cmd : repo->commands()) {
-        if (!cmd->name().contains(s, Qt::CaseInsensitive)) continue;
-
-        list.push_back(std::make_unique<BuiltinCommandListItem>(cmd));
-      }
+      list.push_back(std::make_unique<BuiltinCommandListItem>(entry.command));
     }
 
     if (s.isEmpty()) {
@@ -382,7 +396,6 @@ public:
 
   RootView(AppWindow &app)
       : DeclarativeOmniListView(app), app(app), appDb(service<AbstractAppDatabase>()),
-        extensionManager(service<ExtensionManager>()), quicklinkDb(service<QuicklistDatabase>()),
-        commandDb(service<CommandDatabase>()) {}
+        extensionManager(service<ExtensionManager>()), quicklinkDb(service<QuicklistDatabase>()) {}
   ~RootView() {}
 };

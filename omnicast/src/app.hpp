@@ -9,6 +9,8 @@
 #include "command-server.hpp"
 #include <QScreen>
 #include "extension_manager.hpp"
+#include "omni-command-db.hpp"
+#include "omni-database.hpp"
 #include "omni-icon.hpp"
 #include "process-manager-service.hpp"
 #include "quicklist-database.hpp"
@@ -156,13 +158,14 @@ public:
   std::stack<ViewSnapshot> navigationStack;
   QStack<CommandSnapshot> commandStack;
 
+  std::unique_ptr<OmniDatabase> omniDb;
   std::unique_ptr<QuicklistDatabase> quicklinkDatabase;
   std::unique_ptr<CalculatorDatabase> calculatorDatabase;
   std::unique_ptr<ClipboardService> clipboardService;
   std::unique_ptr<AbstractAppDatabase> appDb;
   std::unique_ptr<ExtensionManager> extensionManager;
   std::unique_ptr<ProcessManagerService> processManagerService;
-  std::unique_ptr<CommandDatabase> commandDb;
+  std::unique_ptr<OmniCommandDatabase> commandDb;
   std::unique_ptr<AbstractAiProvider> aiProvider;
 
   void popToRootView();

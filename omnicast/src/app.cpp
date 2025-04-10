@@ -12,6 +12,8 @@
 #include "extension_manager.hpp"
 #include "favicon/favicon-service.hpp"
 #include "image-fetcher.hpp"
+#include "omni-command-db.hpp"
+#include "omni-database.hpp"
 #include "omnicast.hpp"
 #include "process-manager-service.hpp"
 #include "quicklink-seeder.hpp"
@@ -316,14 +318,12 @@ std::variant<CommandResponse, CommandError> AppWindow::handleCommand(const Comma
   if (message.type == "command.list") {
     Proto::Array results;
 
-    for (const auto &repo : commandDb->repositories()) {
+    for (const auto &entry : commandDb->commands()) {
       Proto::Dict result;
 
-      for (const auto &cmd : repo->commands()) {
-        result["id"] = cmd->id().toUtf8().constData();
-        result["name"] = cmd->name().toUtf8().constData();
-        results.push_back(result);
-      }
+      result["id"] = entry.command->id().toUtf8().constData();
+      result["name"] = entry.command->name().toUtf8().constData();
+      results.push_back(result);
     }
 
     return results;
@@ -336,15 +336,15 @@ std::variant<CommandResponse, CommandError> AppWindow::handleCommand(const Comma
 
     auto id = args.at(0).asString();
 
-    if (auto cmd = commandDb->findCommand(id.c_str())) {
-      /*
+    /*
+if (auto cmd = commandDb->findCommand(id.c_str())) {
 emit launchCommand(cmd->factory(*this, ""),
-               {.navigation = NavigationStatus{.title = cmd->name, .iconUrl = cmd->iconUrl}});
-      */
-      setVisible(true);
+           {.navigation = NavigationStatus{.title = cmd->name, .iconUrl = cmd->iconUrl}});
+  setVisible(true);
 
-      return true;
-    }
+  return true;
+}
+    */
 
     return CommandError{"No such command"};
   }
@@ -406,11 +406,19 @@ AppWindow::AppWindow(QWidget *parent)
   calculatorDatabase =
       std::make_unique<CalculatorDatabase>(Config::dirPath() + QDir::separator() + "calculator.db");
   appDb = std::make_unique<XdgAppDatabase>();
+
+  omniDb = std::make_unique<OmniDatabase>(Config::dirPath() + QDir::separator() + "omni.db");
+  commandDb = std::make_unique<OmniCommandDatabase>(*omniDb.get());
+
   clipboardService =
       std::make_unique<ClipboardService>(Config::dirPath() + QDir::separator() + "clipboard.db");
   // indexer = std::make_unique<IndexerService>(Config::dirPath() + QDir::separator() + "files.db");
   processManagerService = std::make_unique<ProcessManagerService>();
-  commandDb = std::make_unique<CommandDatabase>();
+  auto builtinCommandDb = std::make_unique<CommandDatabase>();
+
+  for (const auto &repo : builtinCommandDb->repositories()) {
+    commandDb->registerRepository(repo);
+  }
 
   _commandServer = new CommandServer(this);
 
@@ -490,4 +498,6 @@ template <> Service<ProcessManagerService> AppWindow::service<ProcessManagerServ
   return *processManagerService;
 }
 
-template <> Service<CommandDatabase> AppWindow::service<CommandDatabase>() const { return *commandDb; }
+template <> Service<OmniCommandDatabase> AppWindow::service<OmniCommandDatabase>() const {
+  return *commandDb;
+}
