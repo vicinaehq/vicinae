@@ -16,6 +16,19 @@ GridItemViewModel GridModelParser::parseListItem(const QJsonObject &instance, si
   model.subtitle = props["subtitle"].toString();
   model.content = ImageModelParser().parse((props.value("content").toObject()));
 
+  if (props.contains("keywords")) {
+    auto arr = props.value("keywords").toArray();
+    std::vector<QString> keywords;
+
+    keywords.reserve(arr.size());
+
+    for (const auto &child : arr) {
+      keywords.push_back(child.toString());
+    }
+
+    model.keywords = std::move(keywords);
+  }
+
   size_t i = 0;
 
   for (const auto &child : children) {
@@ -32,14 +45,15 @@ GridItemViewModel GridModelParser::parseListItem(const QJsonObject &instance, si
 
 GridSectionModel GridModelParser::parseSection(const QJsonObject &instance) {
   GridSectionModel model;
+  size_t index = 0;
   auto props = instance.value("props").toObject();
+  auto arr = instance.value("children").toArray();
 
   model.title = props.value("title").toString();
   model.subtitle = props.value("subtitle").toString();
+  model.children.reserve(arr.size());
 
-  size_t index = 0;
-
-  for (const auto &child : instance.value("children").toArray()) {
+  for (const auto &child : arr) {
     auto obj = child.toObject();
     auto type = obj.value("type").toString();
 

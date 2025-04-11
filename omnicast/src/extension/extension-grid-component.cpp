@@ -1,30 +1,34 @@
-#include "extension/extension-list-component.hpp"
+#include "extension/extension-grid-component.hpp"
 #include "app.hpp"
+#include "extension/extension-list-component.hpp"
+#include "ui/omni-grid.hpp"
 
 static const std::chrono::milliseconds THROTTLE_DEBOUNCE_DURATION(300);
-
 static const KeyboardShortcutModel primaryShortcut{.key = "return"};
 static const KeyboardShortcutModel secondaryShortcut{.key = "return", .modifiers = {"shift"}};
 
-bool ExtensionListComponent::inputFilter(QKeyEvent *event) {
+bool ExtensionGridComponent::inputFilter(QKeyEvent *event) {
   switch (event->key()) {
   case Qt::Key_Left:
   case Qt::Key_Right:
   case Qt::Key_Up:
   case Qt::Key_Down:
   case Qt::Key_Return:
-    QApplication::sendEvent(_list, event);
+    QApplication::sendEvent(_grid, event);
     return true;
   }
 
   return AbstractExtensionRootComponent::inputFilter(event);
 }
 
-void ExtensionListComponent::render(const RenderModel &baseModel) {
-  auto newModel = std::get<ListModel>(baseModel);
+void ExtensionGridComponent::render(const RenderModel &baseModel) {
+  auto newModel = std::get<GridModel>(baseModel);
 
   if (!newModel.navigationTitle.isEmpty()) { setNavigationTitle(newModel.navigationTitle); }
   if (!newModel.searchPlaceholderText.isEmpty()) { setSearchPlaceholderText(newModel.searchPlaceholderText); }
+
+  _grid->setColumns(newModel.columns);
+  _grid->setInset(newModel.inset);
 
   if (auto text = newModel.searchText) {
     qDebug() << "[DEBUG] SET SEARCH TEXT" << text;
@@ -43,40 +47,43 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
 
   setLoading(newModel.isLoading);
 
-  std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> items;
+  std::vector<std::unique_ptr<OmniGrid::AbstractVirtualItem>> items;
 
   items.reserve(newModel.items.size());
 
   for (const auto &item : newModel.items) {
-    if (auto listItem = std::get_if<ListItemViewModel>(&item)) {
-      items.push_back(std::make_unique<ExtensionListItem>(*listItem));
-    } else if (auto section = std::get_if<ListSectionModel>(&item)) {
-      items.push_back(std::make_unique<OmniList::VirtualSection>(section->title));
+    if (auto listItem = std::get_if<GridItemViewModel>(&item)) {
+      items.push_back(std::make_unique<ExtensionGridItem>(*listItem));
+    } else if (auto section = std::get_if<GridSectionModel>(&item)) {
+      items.push_back(std::make_unique<OmniGrid::GridSection>(section->title, section->columns, 10));
 
       for (const auto &item : section->children) {
-        items.push_back(std::make_unique<ExtensionListItem>(item));
+        auto extensionItem = std::make_unique<ExtensionGridItem>(item);
+
+        extensionItem->setInset(section->inset);
+        items.push_back(std::move(extensionItem));
       }
     }
   }
 
   if (!newModel.searchText) {
     if (newModel.filtering) {
-      _list->setFilter(std::make_unique<BuiltinExtensionItemFilter>(searchText()));
+      _grid->setFilter(std::make_unique<BuiltinExtensionGridItemFilter>(searchText()));
     } else {
-      _list->clearFilter();
+      _grid->clearFilter();
     }
   }
 
-  _list->invalidateCache();
+  _grid->invalidateCache();
 
   if (_shouldResetSelection) {
     _shouldResetSelection = false;
-    _list->updateFromList(items, OmniList::SelectFirst);
+    _grid->updateFromList(items, OmniGrid::SelectFirst);
   } else {
-    _list->updateFromList(items, OmniList::KeepSelection);
+    _grid->updateFromList(items, OmniGrid::KeepSelection);
   }
 
-  if (_list->isShowingEmptyState()) {
+  if (_grid->isShowingEmptyState()) {
     size_t i = 0;
 
     if (auto pannel = newModel.actions) {
@@ -92,18 +99,18 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
       emit updateActionPannel(*pannel);
     }
   } else {
-    QString oldSelectedId = _list->selected() ? _list->selected()->id() : "";
+    QString oldSelectedId = _grid->selected() ? _grid->selected()->id() : "";
 
-    if (_list->selected() && _list->selected()->isListItem() && _list->selected()->id() == oldSelectedId) {
-      onSelectionChanged(_list->selected(), nullptr);
+    if (_grid->selected() && _grid->selected()->isListItem() && _grid->selected()->id() == oldSelectedId) {
+      onSelectionChanged(_grid->selected(), nullptr);
     }
   }
 
   _model = newModel;
 }
 
-void ExtensionListComponent::onSelectionChanged(const OmniList::AbstractVirtualItem *next,
-                                                const OmniList::AbstractVirtualItem *previous) {
+void ExtensionGridComponent::onSelectionChanged(const OmniGrid::AbstractVirtualItem *next,
+                                                const OmniGrid::AbstractVirtualItem *previous) {
   if (!next) {
     if (auto &pannel = _model.actions) { emit updateActionPannel(*pannel); }
 
@@ -112,7 +119,7 @@ void ExtensionListComponent::onSelectionChanged(const OmniList::AbstractVirtualI
 
   qDebug() << "selection" << next->id();
 
-  auto item = static_cast<const ExtensionListItem *>(next);
+  auto item = static_cast<const ExtensionGridItem *>(next);
   size_t i = 0;
 
   if (auto pannel = item->model().actionPannel) {
@@ -130,13 +137,13 @@ void ExtensionListComponent::onSelectionChanged(const OmniList::AbstractVirtualI
   if (auto handler = _model.onSelectionChanged) { emit notifyEvent(*handler, {next->id()}); }
 }
 
-void ExtensionListComponent::handleDebouncedSearchNotification() {
+void ExtensionGridComponent::handleDebouncedSearchNotification() {
   auto text = searchText();
 
   if (_model.filtering) {
-    _list->setFilter(std::make_unique<BuiltinExtensionItemFilter>(text));
+    _grid->setFilter(std::make_unique<BuiltinExtensionItemFilter>(text));
   } else {
-    _list->clearFilter();
+    _grid->clearFilter();
   }
 
   if (auto handler = _model.onSearchTextChange) {
@@ -149,22 +156,22 @@ void ExtensionListComponent::handleDebouncedSearchNotification() {
   }
 }
 
-void ExtensionListComponent::onItemActivated(const OmniList::AbstractVirtualItem &item) {
+void ExtensionGridComponent::onItemActivated(const OmniGrid::AbstractVirtualItem &item) {
   selectPrimaryAction();
 }
 
-void ExtensionListComponent::onSearchChanged(const QString &text) { _debounce->start(); }
+void ExtensionGridComponent::onSearchChanged(const QString &text) { _debounce->start(); }
 
-ExtensionListComponent::ExtensionListComponent(AppWindow &app)
+ExtensionGridComponent::ExtensionGridComponent(AppWindow &app)
     : AbstractExtensionRootComponent(app), _debounce(new QTimer(this)), _layout(new QVBoxLayout),
-      _list(new OmniList), _shouldResetSelection(true) {
+      _grid(new OmniGrid), _shouldResetSelection(true) {
   _layout->setContentsMargins(0, 0, 0, 0);
   _layout->setSpacing(0);
-  _layout->addWidget(_list);
+  _layout->addWidget(_grid);
   setLayout(_layout);
 
   _debounce->setSingleShot(true);
-  connect(_debounce, &QTimer::timeout, this, &ExtensionListComponent::handleDebouncedSearchNotification);
-  connect(_list, &OmniList::selectionChanged, this, &ExtensionListComponent::onSelectionChanged);
-  connect(_list, &OmniList::itemActivated, this, &ExtensionListComponent::onItemActivated);
+  connect(_debounce, &QTimer::timeout, this, &ExtensionGridComponent::handleDebouncedSearchNotification);
+  connect(_grid, &OmniGrid::selectionChanged, this, &ExtensionGridComponent::onSelectionChanged);
+  connect(_grid, &OmniGrid::itemActivated, this, &ExtensionGridComponent::onItemActivated);
 }

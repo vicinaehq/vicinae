@@ -36,13 +36,14 @@ ListItemViewModel ListModelParser::parseListItem(const QJsonObject &instance, si
 ListSectionModel ListModelParser::parseSection(const QJsonObject &instance) {
   ListSectionModel model;
   auto props = instance.value("props").toObject();
+  auto children = instance.value("children").toArray();
+  size_t index = 0;
 
   model.title = props.value("title").toString();
   model.subtitle = props.value("subtitle").toString();
+  model.children.reserve(children.size());
 
-  size_t index = 0;
-
-  for (const auto &child : instance.value("children").toArray()) {
+  for (const auto &child : children) {
     auto obj = child.toObject();
     auto type = obj.value("type").toString();
 

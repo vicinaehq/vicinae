@@ -479,7 +479,7 @@ bool OmniList::selectRight() {
 void OmniList::setSelectedIndex(int index, ScrollBehaviour scrollBehaviour) {
   scrollTo(index, scrollBehaviour);
 
-  qDebug() << "set selected index" << index;
+  // qDebug() << "set selected index" << index;
 
   auto previous = _selected >= 0 && _selected < _virtual_items.size() ? vmap(_selected).item.get() : nullptr;
   auto next = index >= 0 && index < _virtual_items.size() ? vmap(index).item.get() : nullptr;
@@ -554,8 +554,6 @@ void OmniList::scrollTo(int idx, ScrollBehaviour behaviour) {
 
 void OmniList::activateCurrentSelection() const {
   if (!isSelectionValid()) return;
-
-  qDebug() << "activate selected=" << _selected;
 
   emit itemActivated(*vmap(_selected).item.get());
 }

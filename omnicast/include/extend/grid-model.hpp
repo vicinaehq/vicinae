@@ -5,21 +5,28 @@
 #include "extend/pagination-model.hpp"
 #include <qjsonobject.h>
 
+enum GridFit { GridContain, GridFill };
+
 struct GridItemViewModel {
   QString id;
   QString title;
   QString subtitle;
   ImageLikeModel content;
+  std::optional<std::vector<QString>> keywords;
   std::optional<ActionPannelModel> actionPannel;
 };
 
 struct GridSectionModel {
   QString title;
   QString subtitle;
-  QList<GridItemViewModel> children;
-};
 
-enum GridFit { GridContain, GridFill };
+  double aspectRatio;
+  int columns;
+  GridFit fit;
+  int inset;
+
+  std::vector<GridItemViewModel> children;
+};
 
 using GridChild = std::variant<GridItemViewModel, GridSectionModel>;
 

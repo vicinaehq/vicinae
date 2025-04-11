@@ -1,7 +1,9 @@
 #pragma once
 #include "app.hpp"
+#include "extend/grid-model.hpp"
 #include "extend/model-parser.hpp"
 #include "extension/extension-command.hpp"
+#include "extension/extension-grid-component.hpp"
 #include "extension/extension-list-component.hpp"
 #include "view.hpp"
 #include <qboxlayout.h>
@@ -19,7 +21,11 @@ class ExtensionView : public View {
   AbstractExtensionRootComponent *_component;
 
   AbstractExtensionRootComponent *createRootComponent(const RenderModel &model, QWidget *parent = nullptr) {
-    if (auto listModel = std::get_if<ListModel>(&model)) { return new ExtensionListComponent(app); }
+    if (auto listModel = std::get_if<ListModel>(&model)) {
+      return new ExtensionListComponent(app);
+    } else if (auto gridModel = std::get_if<GridModel>(&model)) {
+      return new ExtensionGridComponent(app);
+    }
 
     return nullptr;
   }

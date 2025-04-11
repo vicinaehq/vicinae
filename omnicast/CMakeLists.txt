@@ -145,6 +145,9 @@ qt_add_executable(${TARGET}
 	include/extension/extension-list-component.hpp
 	src/extension/extension-list-component.cpp
 
+	include/extension/extension-grid-component.hpp
+	src/extension/extension-grid-component.cpp
+
 	include/extension/extension.hpp
 	src/extension/extension.cpp
 
@@ -155,7 +158,6 @@ qt_add_executable(${TARGET}
 
 
 
-	include/extend/extension-list-controller.hpp
 	include/extend/extension-view.hpp
 	include/extend/extension-detail-view.hpp
 

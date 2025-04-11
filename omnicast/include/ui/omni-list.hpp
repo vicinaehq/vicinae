@@ -175,7 +175,6 @@ protected:
 
 public:
   OmniList();
-  ~OmniList() { qDebug() << "destroy omnilist"; }
 
   bool selectUp();
   bool selectDown();

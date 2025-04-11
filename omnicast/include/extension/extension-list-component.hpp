@@ -12,8 +12,6 @@
 #include <qresource.h>
 #include <qtimer.h>
 
-static const std::chrono::milliseconds THROTTLE_DEBOUNCE_DURATION(300);
-
 class ExtensionListItem : public AbstractDefaultListItem {
   ListItemViewModel _item;
 

@@ -19,7 +19,7 @@ struct ListItemViewModel {
 struct ListSectionModel {
   QString title;
   QString subtitle;
-  QList<ListItemViewModel> children;
+  std::vector<ListItemViewModel> children;
 };
 
 using ListChild = std::variant<ListItemViewModel, ListSectionModel>;
