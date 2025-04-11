@@ -101,14 +101,23 @@ struct DirectoryPreference : BasePreference {
   std::filesystem::path defaultValue;
 };
 
-struct DropdownPreference : BasePreference {
-  struct DropdownOption {
+class DropdownPreference : public BasePreference {
+public:
+  struct Option {
     QString title;
     QString value;
   };
 
-  std::vector<DropdownOption> data;
-  QString defaultValue;
+private:
+  std::vector<Option> _options;
+  std::optional<QString> _defaultValue;
+
+public:
+  void setOptions(const std::vector<Option> &options) { _options = options; }
+  const std::vector<Option> &options() const { return _options; }
+  void setDefaultValue(const QString &value) { _defaultValue = value; }
+
+  QJsonValue defaultValueAsJson() const override { return _defaultValue ? *_defaultValue : QJsonValue(); }
 
   DropdownPreference(const BasePreference base = {}) : BasePreference(base) {}
 };

@@ -7,6 +7,7 @@
 #include <qstring.h>
 #include <filesystem>
 #include <qstringview.h>
+#include <qjsonarray.h>
 
 class Extension : public AbstractCommandRepository {
 public:
@@ -34,7 +35,7 @@ public:
 
   static Extension fromObject(const QJsonObject &object);
 
-  std::shared_ptr<BasePreference> parsePreferenceFromObject(const QJsonObject &obj) {
+  static std::shared_ptr<BasePreference> parsePreferenceFromObject(const QJsonObject &obj) {
     auto type = obj["type"].toString();
     BasePreference base;
 
@@ -71,10 +72,20 @@ public:
 
     if (type == "dropdown") {
       auto dropdown = std::make_shared<DropdownPreference>(base);
+      auto data = obj["data"].toArray();
+      std::vector<DropdownPreference::Option> options;
 
-      // TODO: parse data
-      dropdown->data = {};
-      dropdown->defaultValue = obj["default"].toString();
+      options.reserve(data.size());
+
+      for (const auto &child : data) {
+        auto obj = child.toObject();
+
+        options.push_back({.title = obj["title"].toString(), .value = obj["value"].toString()});
+      }
+
+      dropdown->setOptions(options);
+
+      if (obj.contains("default")) { dropdown->setDefaultValue(obj.value("default").toString()); }
 
       return dropdown;
     }
@@ -87,6 +98,7 @@ if (type == "appPicker") {
 
   return preference;
 }
+
 
 if (type == "file") {
   FilePreference preference(base);

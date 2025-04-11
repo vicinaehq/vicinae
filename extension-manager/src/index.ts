@@ -149,7 +149,7 @@ class Omnicast {
 		}
 
 		if (action == "load-command") {
-			const { extensionId, commandName } = data;
+			const { extensionId, commandName, preferenceValues = {} } = data;
 			const extension = extensions.find(ext => ext.sessionId == extensionId);
 
 			if (!extension) {
@@ -175,7 +175,8 @@ class Omnicast {
 			const sessionId = randomUUID();
 			const worker = new Worker(this.extensionWorkerPath, {
 				workerData: {
-					component: command.componentPath
+					component: command.componentPath,
+					preferenceValues
 				}
 			});
 

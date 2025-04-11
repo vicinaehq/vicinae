@@ -2,6 +2,7 @@
 #include "command-database.hpp"
 #include "command.hpp"
 #include "omni-icon.hpp"
+#include "preference.hpp"
 #include "ui/action-pannel/action.hpp"
 #include <memory>
 #include <qboxlayout.h>
@@ -24,6 +25,8 @@ class ExtensionCommand : public AbstractCmd {
   QString _sessionId;
   QString _icon;
   QString _extensionIcon;
+  PreferenceList _extensionPreferences;
+  PreferenceList _preferences;
   std::filesystem::path _assetPath;
   CommandMode _mode;
 
@@ -37,6 +40,18 @@ public:
 
   const QString &extensionIcon() const;
   void setExtensionIcon(const QString &icon);
+
+  void setExtensionPreferences(const PreferenceList &prefs) { _extensionPreferences = prefs; }
+
+  std::vector<std::shared_ptr<BasePreference>> preferences() const override {
+    PreferenceList list;
+
+    list.reserve(_extensionPreferences.size() + _preferences.size());
+    list.insert(list.end(), _extensionPreferences.begin(), _extensionPreferences.end());
+    list.insert(list.end(), _preferences.begin(), _preferences.end());
+
+    return list;
+  }
 
   QString id() const override;
   QString name() const override;

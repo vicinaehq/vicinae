@@ -410,11 +410,12 @@ public slots:
     qDebug() << "started process";
   }
 
-  void loadCommand(const QString &extensionId, const QString &cmd) {
+  void loadCommand(const QString &extensionId, const QString &cmd, const QJsonObject &preferenceValues = {}) {
     QJsonObject payload;
 
     payload["extensionId"] = extensionId;
     payload["commandName"] = cmd;
+    payload["preferenceValues"] = preferenceValues;
 
     bus->requestManager("load-command", payload);
   }

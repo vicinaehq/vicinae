@@ -245,7 +245,9 @@ public:
       app()->extensionManager->emitExtensionEvent(sessionId, "pop-view", {});
     });
 
-    app()->extensionManager->loadCommand(command.extensionSessionId(), command.id());
+    auto preferenceValues = app()->commandDb->getPreferenceValues(command.id());
+
+    app()->extensionManager->loadCommand(command.extensionSessionId(), command.id(), preferenceValues);
   }
 
   void unload() override {

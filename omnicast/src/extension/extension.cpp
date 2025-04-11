@@ -52,6 +52,7 @@ Extension::Extension(const QJsonObject &obj) {
     command->setExtensionTitle(_title);
     command->setExtensionIcon(_icon);
     command->setExtensionSessionId(_sessionId);
+    command->setExtensionPreferences(_preferences);
     _commands.push_back(command);
   }
 }

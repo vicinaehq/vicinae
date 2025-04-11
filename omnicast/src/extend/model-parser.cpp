@@ -1,4 +1,5 @@
 #include "extend/model-parser.hpp"
+#include "extend/grid-model.hpp"
 #include "extend/list-model.hpp"
 #include "extend/root-detail-model.hpp"
 #include <qjsonarray.h>
@@ -20,6 +21,8 @@ std::vector<RenderModel> ModelParser::parse(const QJsonArray &views) {
     if (type == "list") {
       renderedViews.push_back(ListModelParser().parse(root));
       qDebug() << "push list model with";
+    } else if (type == "grid") {
+      renderedViews.push_back(GridModelParser().parse(root));
     } else if (type == "detail") {
       renderedViews.push_back(RootDetailModelParser().parse(root));
     } else {

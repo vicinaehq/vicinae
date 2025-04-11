@@ -13,7 +13,6 @@ export const useEventListener = (fn: ((...args: any[]) => void) | undefined) => 
 	}, []);
 
 	useEffect(() => {
-		console.log('update handler');
 		callback.current = fn;
 	}, [fn]);
 

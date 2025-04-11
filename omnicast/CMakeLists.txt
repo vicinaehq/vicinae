@@ -262,6 +262,7 @@ qt_add_executable(${TARGET}
 	src/extend/color-model.cpp
 	src/extend/detail-model.cpp
 	src/extend/image-model.cpp
+	src/extend/grid-model.cpp
 	src/extend/list-model.cpp
 	src/extend/metadata-model.cpp
 	src/extend/model-parser.cpp

@@ -16,6 +16,14 @@ ExtensionCommand::ExtensionCommand(const QJsonObject &obj) {
   } else if (mode == "no-view") {
     _mode = CommandModeNoView;
   }
+
+  QJsonArray preferenceList = obj["preferences"].toArray();
+
+  _preferences.reserve(preferenceList.size());
+
+  for (const auto &preference : preferenceList) {
+    _preferences.push_back(Extension::parsePreferenceFromObject(preference.toObject()));
+  }
 }
 
 const QString &ExtensionCommand::extensionSessionId() const { return _sessionId; }

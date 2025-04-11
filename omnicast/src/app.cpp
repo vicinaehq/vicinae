@@ -251,6 +251,12 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
 void AppWindow::launchCommand(const std::shared_ptr<AbstractCmd> &command, const LaunchCommandOptions &opts) {
   auto preferenceValues = commandDb->getPreferenceValues(command->id());
 
+  for (const auto &preference : command->preferences()) {
+    if (preference->isRequired() && !preferenceValues.contains(preference->name())) {
+      qDebug() << "MISSING PREFERENCE" << preference->title();
+    }
+  }
+
   qDebug() << "preference values for command with" << command->preferences().size() << "preferences"
            << command->id() << preferenceValues;
 
