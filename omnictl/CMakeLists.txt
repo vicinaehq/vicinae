@@ -3,7 +3,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(LIBS)
 
-set(TARGET omnictl)
+set(TARGET omni)
 
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}/include

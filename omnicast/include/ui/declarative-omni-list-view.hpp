@@ -207,12 +207,12 @@ protected:
 
   virtual ItemList generateList(const QString &s) = 0;
 
-  void reload() {
+  void reload(OmniList::SelectionPolicy policy = OmniList::KeepSelection) {
     qDebug() << "reload list";
     auto items = generateList(query);
 
     list->invalidateCache();
-    list->updateFromList(items, OmniList::KeepSelection);
+    list->updateFromList(items, policy);
 
     if (auto item = list->selected()) {
       if (auto nextItem = dynamic_cast<const IActionnable *>(item)) {

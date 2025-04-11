@@ -1,26 +1,50 @@
 {
-  "name": "peepobank",
-  "version": "1.0.0",
-  "description": "",
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "example-extension",
+  "description": "Manage your todo list quickly by adding items and marking items as completed.",
+  "categories": [
+    "Applications",
+    "Productivity"
+  ],
+  "license": "MIT",
+  "author": "maggie",
+  "contributors": [],
+  "pastContributors": [],
   "scripts": {
-    "build-only": "node build.mjs",
-    "clean": "rimraf dist",
-    "build": "run-s clean build-only",
-    "deploy-only": "node deploy.mjs",
-    "deploy": "run-s build deploy-only"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "commands": [],
-  "devDependencies": {
-    "@types/react": "^19.0.1",
-    "esbuild": "^0.24.0",
-    "npm-run-all": "^4.1.5",
-    "react": "^19.0.0",
-    "rimraf": "^6.0.1"
+    "build": "ray build -e dist",
+    "dev": "ray develop",
+    "fix-lint": "ray lint --fix",
+    "lint": "ray lint",
+    "publish": "npx @raycast/api@latest publish"
   },
   "dependencies": {
-    "@omnicast/api": "file:../../../omnicast/api"
-  }
+    "@omnicast/api": "file:../api/omnicast-api-1.0.0.tgz"
+  },
+  "devDependencies": {
+    "@types/node": "~16.10.0",
+    "@types/react": "^19.0.0",
+    "esbuild": "^0.25.2",
+    "typescript": "^4.4.3"
+  },
+  "icon": "command-icon.png",
+  "commands": [
+    {
+      "name": "index",
+      "title": "My Example Command",
+      "description": "Boilerplate command",
+      "mode": "view"
+    }
+  ],
+  "preferences": [
+    {
+      "name": "examplePreference",
+      "type": "checkbox",
+      "required": false,
+      "title": "Example preference",
+      "description": "Showcases how to use preferences",
+      "default": false,
+      "label": "Showcases how to use preferences"
+    }
+  ],
+  "title": "My Example Extension"
 }

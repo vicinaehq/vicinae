@@ -48,6 +48,11 @@ Extension::Extension(const QJsonObject &obj) {
   for (const auto &cmd : commandList) {
     auto command = std::make_shared<ExtensionCommand>(ExtensionCommand::fromJson(cmd.toObject()));
 
+    if (command->mode() == CommandModeInvalid || command->mode() == CommandModeMenuBar) {
+      qDebug() << "Ignoring unsupported command mode";
+      continue;
+    }
+
     command->setAssetPath(assetDirectory());
     command->setExtensionTitle(_title);
     command->setExtensionIcon(_icon);

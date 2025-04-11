@@ -19,7 +19,7 @@
 class AppWindow;
 class ViewCommandContext;
 
-enum CommandMode { CommandModeView, CommandModeNoView };
+enum CommandMode { CommandModeInvalid, CommandModeView, CommandModeNoView, CommandModeMenuBar };
 enum CommandType { CommandTypeBuiltin, CommandTypeExtension };
 
 class AbstractCmd {

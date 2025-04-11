@@ -1,4 +1,5 @@
 #include "extension/extension-command.hpp"
+#include "command-database.hpp"
 #include "command.hpp"
 #include "extension/extension-command-context.hpp"
 
@@ -15,6 +16,10 @@ ExtensionCommand::ExtensionCommand(const QJsonObject &obj) {
     _mode = CommandModeView;
   } else if (mode == "no-view") {
     _mode = CommandModeNoView;
+  } else if (mode == "menu-bar") {
+    _mode = CommandModeMenuBar;
+  } else {
+    _mode = CommandModeInvalid;
   }
 
   QJsonArray preferenceList = obj["preferences"].toArray();

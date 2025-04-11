@@ -412,8 +412,6 @@ AppWindow::AppWindow(QWidget *parent)
   ThemeService::instance().setTheme("Ayu Mirage");
   FaviconService::initialize(new FaviconService(Config::dirPath() + QDir::separator() + "favicon.db"));
 
-  extensionManager = std::make_unique<ExtensionManager>();
-
   quicklinkDatabase =
       std::make_unique<QuicklistDatabase>(Config::dirPath() + QDir::separator() + "quicklinks.db");
   calculatorDatabase =
@@ -422,6 +420,7 @@ AppWindow::AppWindow(QWidget *parent)
 
   omniDb = std::make_unique<OmniDatabase>(Config::dirPath() + QDir::separator() + "omni.db");
   commandDb = std::make_unique<OmniCommandDatabase>(*omniDb.get());
+  extensionManager = std::make_unique<ExtensionManager>(*commandDb.get());
 
   clipboardService =
       std::make_unique<ClipboardService>(Config::dirPath() + QDir::separator() + "clipboard.db");
@@ -472,13 +471,6 @@ AppWindow::AppWindow(QWidget *parent)
 
   ollamaProvider->setInstanceUrl(QUrl("http://localhost:11434"));
   aiProvider = std::move(ollamaProvider);
-
-  connect(extensionManager.get(), &ExtensionManager::extensionsListed, this,
-          [this](const std::vector<std::shared_ptr<Extension>> &extensions) {
-            for (const auto &extension : extensions) {
-              commandDb->registerRepository(extension);
-            }
-          });
 
   extensionManager->start();
 

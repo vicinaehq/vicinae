@@ -381,7 +381,7 @@ public:
 
   void onMount() override { setSearchPlaceholderText("Search for apps or commands..."); }
 
-  void handleRegisteredCommand(const CommandDbEntry &entry) { reload(); }
+  void handleRegisteredCommand(const CommandDbEntry &entry) { reload(OmniList::SelectFirst); }
 
   RootView(AppWindow &app)
       : DeclarativeOmniListView(app), app(app), appDb(service<AbstractAppDatabase>()),

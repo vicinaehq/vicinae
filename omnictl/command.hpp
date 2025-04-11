@@ -1,5 +1,6 @@
 #pragma once
 #include "client.hpp"
+#include <filesystem>
 #include <iostream>
 #include <memory>
 #include <ostream>
@@ -130,38 +131,6 @@ public:
   }
 };
 
-class ClipboardCommand : public CommandContext {
-  class StoreCommand : public CommandContext {
-    void execute(const std::vector<std::string> &args) const override {
-      std::string data;
-      char buf[8096];
-      int rc = 0;
-
-      while ((rc = read(STDIN_FILENO, buf, sizeof(buf))) > 0) {
-        data += {buf, (size_t)rc};
-      }
-
-      auto res = CommandClient::oneshot("clipboard.store", Proto::Array{data, Proto::Dict{}});
-
-      std::cout << (res.isOk() ? "OK" : "KO") << std::endl;
-    }
-
-  public:
-    StoreCommand() : CommandContext("store", "Store a new item in clipboard") {
-      addAlias("add");
-      addAlias("push");
-    }
-  };
-
-  void execute(const std::vector<std::string> &args) const override { std::cout << "clipboard"; }
-
-public:
-  ClipboardCommand() : CommandContext("clipboard", "Interact with the clipboard managerl") {
-    addAlias("clip");
-    registerCommand(std::make_unique<StoreCommand>());
-  }
-};
-
 class ToogleCommand : public CommandContext {
   void execute(const std::vector<std::string> &args) const override {
     auto res = CommandClient::oneshot("toggle");
@@ -171,6 +140,46 @@ class ToogleCommand : public CommandContext {
 
 public:
   ToogleCommand() : CommandContext("toggle", "Toggle omnicast window") {}
+};
+
+class ExtensionCommand : public CommandContext {
+  class DevelopCommand : public CommandContext {
+    void execute(const std::vector<std::string> &args) const override {
+      // load designated extension bundle in dev mode
+      // auto res = CommandClient::oneshot("clipboard.store", Proto::Array{data, Proto::Dict{}});
+    }
+
+  public:
+    DevelopCommand() : CommandContext("develop", "Start an extension in development mode") {
+      addAlias("dev");
+      addPositional("path_to_extension");
+    }
+  };
+
+  class BuildCommand : public CommandContext {
+    void execute(const std::vector<std::string> &args) const override {
+      std::filesystem::path extensionDir(args.at(0));
+
+      std::cout << "Building" << extensionDir;
+      // TODO: call build tool
+    }
+
+  public:
+    BuildCommand() : CommandContext("build", "Build an extension for production") {
+      addAlias("build");
+      addPositional("path_to_extension");
+      setFlag({.longOpt = "output",
+               .shortOpt = 'o',
+               .description = "Specify an alternative build output directory"});
+    }
+  };
+
+public:
+  ExtensionCommand() : CommandContext("extension", "Interact with omnicast extensions") {
+    addAlias("ext");
+    registerCommand(std::make_unique<DevelopCommand>());
+    registerCommand(std::make_unique<BuildCommand>());
+  }
 };
 
 class PingCommand : public CommandContext {

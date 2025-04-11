@@ -5,21 +5,28 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "bin": {
+    "build": "./dist/bin/build.js",
+	"develop": "./dist/bin/develop.js"
+  },
   "files": [
-	  "dist",
-	  "types"
+    "dist",
+    "types"
   ],
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "types": ["./dist/index.d.ts"],
+  "types": [
+    "./dist/index.d.ts"
+  ],
   "main": "dist/index.js",
   "devDependencies": {
     "@types/node": "^22.10.1",
-    "esbuild": "^0.24.0"
+    "chokidar": "^4.0.3",
+    "esbuild": "^0.25.2"
   },
   "dependencies": {
-    "react": "^18.1.0",
-    "@types/react": "^18.1.0"
+    "@types/react": "^18.1.0",
+    "react": "^18.1.0"
   }
 }

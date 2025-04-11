@@ -162,7 +162,8 @@ public:
     if (!hasCommand(cmd->id())) {
       auto entry = CommandDbEntry{.command = cmd, .disabled = false};
 
-      entries.push_back(entry);
+      // TODO: use something better
+      entries.insert(entries.begin(), entry);
       emit commandRegistered(entry);
     }
   }

@@ -4,7 +4,7 @@ int main(int argc, char **argv) {
   auto cli = std::make_unique<Omnictl>();
 
   cli->registerCommand(std::make_unique<CmdCommand>());
-  cli->registerCommand(std::make_unique<ClipboardCommand>());
+  cli->registerCommand(std::make_unique<ExtensionCommand>());
   cli->registerCommand(std::make_unique<ToogleCommand>());
   cli->registerCommand(std::make_unique<PingCommand>());
   cli->registerCommand(std::make_unique<VersionCommand>());

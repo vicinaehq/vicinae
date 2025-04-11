@@ -6,6 +6,7 @@
 #include <QUuid>
 #include <cstdint>
 #include "extension/extension.hpp"
+#include "omni-command-db.hpp"
 #include <filesystem>
 #include <netinet/in.h>
 #include <qdebug.h>
@@ -367,8 +368,11 @@ class ExtensionManager : public QObject {
   QString socketPath = "/tmp/omnicast-extension-manager.sock";
   Bus *bus = nullptr;
   std::vector<std::shared_ptr<Extension>> loadedExtensions;
+  OmniCommandDatabase &commandDb;
 
 public:
+  ExtensionManager(OmniCommandDatabase &commandDb) : commandDb(commandDb) {}
+
   const std::vector<std::shared_ptr<Extension>> &extensions() const { return loadedExtensions; }
 
   bool respond(const QString &id, const QJsonObject &payload) { return bus->respond(id, payload); }
@@ -437,11 +441,13 @@ public slots:
     extensions.reserve(extensionList.size());
 
     for (const auto &ext : extensionList) {
-      extensions.push_back(std::make_shared<Extension>(Extension::fromObject((ext.toObject()))));
+      auto extension = std::make_shared<Extension>(Extension::fromObject((ext.toObject())));
+
+      commandDb.registerRepository(extension);
+      extensions.push_back(extension);
     }
 
     loadedExtensions = extensions;
-    emit extensionsListed(loadedExtensions);
   }
 
   void handleManagerResponse(const QString &action, QJsonObject &data) {
@@ -465,7 +471,6 @@ signals:
                         const QJsonObject &payload);
   void managerResponse(const QString &action, QJsonObject &payload);
   void commandLoaded(const LoadedCommand &);
-  void extensionsListed(const std::vector<std::shared_ptr<Extension>> &extensions);
 
 private slots:
   void newConnection() {
