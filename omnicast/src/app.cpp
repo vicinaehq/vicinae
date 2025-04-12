@@ -309,10 +309,19 @@ void AppWindow::paintEvent(QPaintEvent *event) {
 }
 
 std::variant<CommandResponse, CommandError> AppWindow::handleCommand(const CommandMessage &message) {
+  qDebug() << "received message type" << message.type;
+
   if (message.type == "ping") { return "pong"; }
   if (message.type == "toggle") {
     setVisible(!isVisible());
     return true;
+  }
+
+  if (message.type == "url-scheme-handler") {
+    QUrl url(message.params.asString().c_str());
+
+    qDebug() << "handling URL in daemon" << url.toString();
+    return {};
   }
 
   if (message.type == "clipboard.store") {

@@ -12,6 +12,7 @@
 #include <csignal>
 #include <filesystem>
 #include <fstream>
+#include <qbuffer.h>
 #include <qdebug.h>
 #include <qfontdatabase.h>
 #include <qlist.h>
@@ -20,26 +21,16 @@
 #include <qlogging.h>
 #include <qobject.h>
 #include <qprocess.h>
+#include <qstringview.h>
 #include <qtmetamacros.h>
 #include "omnicast.hpp"
+#include "proto.hpp"
 
-int main(int argc, char **argv) {
+int startDaemon(int argc, char **argv) {
+  auto pidFile = Omnicast::runtimeDir() / "omnicast.pid";
   QApplication qapp(argc, argv);
 
   {
-    std::filesystem::create_directories(Omnicast::runtimeDir());
-    auto pidFile = Omnicast::runtimeDir() / "omnicast.pid";
-
-    if (std::filesystem::exists(pidFile)) {
-      int pid;
-      std::ifstream ifs(pidFile);
-
-      if (!ifs.is_open()) { qDebug() << "failed to open pid file"; }
-
-      ifs >> pid;
-      kill(pid, SIGINT);
-    }
-
     std::ofstream ofs(pidFile);
 
     if (!ofs.is_open()) {
@@ -47,7 +38,7 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    ofs << QApplication::applicationPid();
+    ofs << qapp.applicationPid();
   }
 
   AppWindow app;
@@ -66,14 +57,68 @@ int main(int argc, char **argv) {
 
   QApplication::setFont(font);
 
-  for (const auto &family : QFontDatabase::applicationFontFamilies(fontId)) {
-    qDebug() << "family=" << family;
-  }
-
   auto family = QFontDatabase::applicationFontFamilies(fontId).at(0);
 
   QApplication::setApplicationName("omnicast");
   QIcon::setThemeName("Tela");
 
   return qapp.exec();
+}
+
+int main(int argc, char **argv) {
+  std::filesystem::create_directories(Omnicast::runtimeDir());
+
+  if (!std::filesystem::exists(Omnicast::pidFile())) { return startDaemon(argc, argv); }
+
+  QLocalSocket socket;
+  Proto::Marshaler marshaler;
+
+  socket.connectToServer(Omnicast::commandSocketPath().c_str());
+
+  if (!socket.waitForConnected(3000)) { return startDaemon(argc, argv); }
+
+  qDebug() << "connected";
+  Proto::Array args{"ping", {}};
+  auto packet = marshaler.marshalSized(args);
+
+  socket.write(reinterpret_cast<const char *>(packet.data()), packet.size());
+
+  if (!socket.waitForBytesWritten(3000)) { return startDaemon(argc, argv); }
+
+  qDebug() << "wait for ready read";
+  socket.waitForReadyRead();
+  qDebug() << "Waited";
+  socket.readAll();
+
+  qDebug() << "socket connected" << (socket.state() == QLocalSocket::ConnectedState);
+
+  if (argc == 1) {
+    Proto::Array args{"toggle", {}};
+    auto packet = marshaler.marshalSized(args);
+
+    qDebug() << "Opening running instance";
+    socket.write(reinterpret_cast<const char *>(packet.data()), packet.size());
+    socket.waitForBytesWritten();
+    return 0;
+  }
+
+  QUrl url(argv[1]);
+
+  if (url.isValid()) {
+    if (url.scheme() != "omnicast") {
+      qDebug() << "Unsupported URL scheme" << url.scheme();
+      return 1;
+    }
+
+    Proto::Array args{"url-scheme-handler", argv[1]};
+    auto packet = marshaler.marshalSized(args);
+
+    qDebug() << "Handling URL" << url;
+    socket.write(reinterpret_cast<const char *>(packet.data()), packet.size());
+    socket.waitForBytesWritten();
+    return 0;
+  }
+
+  qDebug() << "Usage:" << argv[0] << "[url]";
+  return 0;
 }

@@ -133,7 +133,9 @@ class CommandServer : public QObject {
         writeSuccess(client->notifier->socket(), *res);
       }
 
-      _clients.erase(client->notifier->socket());
+      client->messageSize = 0;
+
+      //_clients.erase(client->notifier->socket());
     }
   }
 

@@ -6,3 +6,6 @@ std::filesystem::path Omnicast::runtimeDir() {
 
   return osRundir / "omnicast";
 }
+
+std::filesystem::path Omnicast::commandSocketPath() { return runtimeDir() / "omnicast.sock"; }
+std::filesystem::path Omnicast::pidFile() { return runtimeDir() / "omnicast.pid"; }
