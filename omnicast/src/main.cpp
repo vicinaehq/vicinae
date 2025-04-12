@@ -6,10 +6,10 @@
 #include <QXmlStreamReader>
 #include <QtSql/qsqldatabase.h>
 #include <QtWaylandClient/qwaylandclientextension.h>
-#include <algorithm>
 #include <arpa/inet.h>
 #include <cmark.h>
 #include <csignal>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <qbuffer.h>
@@ -26,9 +26,24 @@
 #include "omnicast.hpp"
 #include "proto.hpp"
 
-int startDaemon(int argc, char **argv) {
+int startDaemon() {
+  std::filesystem::create_directories(Omnicast::runtimeDir());
   auto pidFile = Omnicast::runtimeDir() / "omnicast.pid";
-  QApplication qapp(argc, argv);
+
+  {
+    std::ifstream ifs(pidFile);
+    pid_t pid;
+
+    if (ifs.is_open()) {
+      ifs >> pid;
+
+      qDebug() << "Kill existing omnicast instance with pid" << pid;
+
+      if (kill(pid, SIGKILL) < 0) {
+        qDebug() << "Failed to kill existing omnicast instance with pid" << pid << strerror(errno);
+      }
+    }
+  }
 
   {
     std::ofstream ofs(pidFile);
@@ -38,7 +53,7 @@ int startDaemon(int argc, char **argv) {
       return 1;
     }
 
-    ofs << qapp.applicationPid();
+    ofs << qApp->applicationPid();
   }
 
   AppWindow app;
@@ -62,35 +77,44 @@ int startDaemon(int argc, char **argv) {
   QApplication::setApplicationName("omnicast");
   QIcon::setThemeName("Tela");
 
-  return qapp.exec();
+  return qApp->exec();
 }
 
 int main(int argc, char **argv) {
-  std::filesystem::create_directories(Omnicast::runtimeDir());
+  QApplication qapp(argc, argv);
 
-  if (!std::filesystem::exists(Omnicast::pidFile())) { return startDaemon(argc, argv); }
+  if (qapp.arguments().size() == 2 && qapp.arguments().at(1) == "server") { return startDaemon(); }
 
   QLocalSocket socket;
   Proto::Marshaler marshaler;
 
   socket.connectToServer(Omnicast::commandSocketPath().c_str());
 
-  if (!socket.waitForConnected(3000)) { return startDaemon(argc, argv); }
+  if (!socket.waitForConnected(1000)) {
+    qDebug() << "Failed to connect to omnicast daemon. Is omnicast running? You can start a new omnicast "
+                "instance by runnning 'omnicast server'";
+    return 1;
+  }
 
-  qDebug() << "connected";
   Proto::Array args{"ping", {}};
   auto packet = marshaler.marshalSized(args);
 
   socket.write(reinterpret_cast<const char *>(packet.data()), packet.size());
+  qDebug() << "Ping sent to omnicast daemon";
 
-  if (!socket.waitForBytesWritten(3000)) { return startDaemon(argc, argv); }
+  if (!socket.waitForBytesWritten(1000)) {
+    qDebug() << "Failed to connect to omnicast daemon. Is omnicast running? You can start a new omnicast "
+                "instance by runnning 'omnicast server'";
+    return 1;
+  }
 
-  qDebug() << "wait for ready read";
-  socket.waitForReadyRead();
-  qDebug() << "Waited";
+  if (!socket.waitForReadyRead(1000)) {
+    qDebug() << "Failed to connect to omnicast daemon. Is omnicast running? You can start a new omnicast "
+                "instance by runnning 'omnicast server'";
+    return 1;
+  }
+
   socket.readAll();
-
-  qDebug() << "socket connected" << (socket.state() == QLocalSocket::ConnectedState);
 
   if (argc == 1) {
     Proto::Array args{"toggle", {}};
@@ -105,11 +129,6 @@ int main(int argc, char **argv) {
   QUrl url(argv[1]);
 
   if (url.isValid()) {
-    if (url.scheme() != "omnicast") {
-      qDebug() << "Unsupported URL scheme" << url.scheme();
-      return 1;
-    }
-
     Proto::Array args{"url-scheme-handler", argv[1]};
     auto packet = marshaler.marshalSized(args);
 
@@ -118,7 +137,4 @@ int main(int argc, char **argv) {
     socket.waitForBytesWritten();
     return 0;
   }
-
-  qDebug() << "Usage:" << argv[0] << "[url]";
-  return 0;
 }

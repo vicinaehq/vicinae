@@ -443,9 +443,7 @@ AppWindow::AppWindow(QWidget *parent)
 
   _commandServer = new CommandServer(this);
 
-  auto socketPath = Omnicast::runtimeDir() / "omnicast.sock";
-
-  if (!_commandServer->start(socketPath.c_str())) {
+  if (!_commandServer->start(Omnicast::commandSocketPath())) {
     qDebug() << "could not start the command server";
     return;
   }

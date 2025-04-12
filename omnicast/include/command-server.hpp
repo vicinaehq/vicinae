@@ -1,11 +1,16 @@
 #pragma once
 #include "proto.hpp"
+#include <algorithm>
 #include <cerrno>
 #include <cstdint>
+#include <filesystem>
 #include <memory>
 #include <netinet/in.h>
+#include <qbytearrayview.h>
 #include <qcontainerfwd.h>
 #include <qdebug.h>
+#include <qlocalserver.h>
+#include <qlocalsocket.h>
 #include <qlogging.h>
 #include <qobject.h>
 #include <qsocketnotifier.h>
@@ -21,18 +26,11 @@ struct CommandMessage {
 };
 
 struct ClientInfo {
-  QSocketNotifier *notifier;
-  size_t messageSize;
-  std::vector<uint8_t> buffer;
-  char tmpbuf[8096];
-
-  ClientInfo(QSocketNotifier *notif) : notifier(notif), messageSize(0) {}
-  ~ClientInfo() {
-    int fd = notifier->socket();
-
-    delete notifier;
-    close(fd);
-  }
+  QLocalSocket *conn;
+  struct {
+    QByteArray data;
+    uint32_t length;
+  } frame;
 };
 
 using CommandResponse = Proto::Variant;
@@ -52,176 +50,123 @@ public:
 };
 
 class CommandServer : public QObject {
-  qintptr _serverFd;
-  QSocketNotifier *_notifier;
   ICommandHandler *_handler;
-  std::unordered_map<int, std::unique_ptr<ClientInfo>> _clients;
+  QLocalServer *_server;
+  std::vector<ClientInfo> _clients;
 
-  void writeResponse(int fd, const Proto::Variant &data) {
+  void writeResponse(QLocalSocket *conn, const Proto::Variant &data) {
     Proto::Marshaler marshaler;
-    std::vector<uint8_t> frame;
-    auto message = marshaler.marshal(data);
-    auto length = message.size();
+    std::vector<uint8_t> frame(marshaler.marshalSized(data));
 
-    frame.push_back((length >> 24) & 0xFF);
-    frame.push_back((length >> 16) & 0xFF);
-    frame.push_back((length >> 8) & 0xFF);
-    frame.push_back(length & 0xFF);
-    frame.insert(frame.end(), message.begin(), message.end());
-    send(fd, frame.data(), frame.size(), 0);
+    conn->write(reinterpret_cast<const char *>(frame.data()), frame.size());
   }
 
-  void writeError(int fd, const CommandError &error) {
-    writeResponse(fd, Proto::Array{Proto::Int(CommandErrorStatus), error.error});
+  void writeError(QLocalSocket *conn, const CommandError &error) {
+    writeResponse(conn, Proto::Array{Proto::Int(CommandErrorStatus), error.error});
   }
 
-  void writeSuccess(int fd, const CommandResponse &res) {
-    writeResponse(fd, Proto::Array{Proto::Int(CommandOkStatus), res});
+  void writeSuccess(QLocalSocket *conn, const CommandResponse &res) {
+    writeResponse(conn, Proto::Array{Proto::Int(CommandOkStatus), res});
   }
 
-  void handleClientData(int clientFd) {
-    auto it = _clients.find(clientFd);
+  void processFrame(QLocalSocket *conn, QByteArrayView frame) {
+    Proto::Marshaler marshaler;
+    std::vector<uint8_t> packet(frame.begin(), frame.end());
+    auto result = marshaler.unmarshal<Proto::Array>(packet);
 
-    if (it == _clients.end()) { return; }
-
-    auto &client = it->second;
-    int rc;
-
-    while ((rc = recv(client->notifier->socket(), client->tmpbuf, sizeof(client->tmpbuf), 0)) > 0) {
-      client->buffer.insert(client->buffer.end(), client->tmpbuf, client->tmpbuf + rc);
-    }
-
-    if (client->messageSize == 0 && client->buffer.size() > sizeof(uint32_t)) {
-      client->messageSize = ntohl(*reinterpret_cast<uint32_t *>(&client->buffer[0]));
-      qDebug() << "got message with size" << client->messageSize;
-      client->buffer.erase(client->buffer.begin(), client->buffer.begin() + sizeof(uint32_t));
-    }
-
-    if (client->messageSize > 0 && client->buffer.size() >= client->messageSize) {
-      Proto::Marshaler marshaler;
-      auto result = marshaler.unmarshal<Proto::Array>(
-          {client->buffer.begin(), client->buffer.begin() + client->messageSize});
-
-      client->buffer.erase(client->buffer.begin(), client->buffer.begin() + client->messageSize);
-
-      if (auto err = std::get_if<Proto::Marshaler::Error>(&result)) {
-        qDebug() << "Failed message unmarshaling, message discarded" << err->message;
-        return;
-      }
-
-      auto message = std::get<Proto::Array>(result);
-
-      if (message.size() != 2) {
-        qDebug() << "Invalid message. Expected 2 arguments got" << message.size();
-        return;
-      }
-
-      CommandMessage cmd{.type = message[0].asString(), .params = message[1]};
-
-      if (!_handler) {
-        writeError(client->notifier->socket(), {.error = "No handler configured on the server side"});
-        return;
-      }
-
-      auto handlerResult = _handler->handleCommand(cmd);
-
-      if (auto error = std::get_if<CommandError>(&handlerResult)) {
-        qDebug() << "write error";
-        writeError(client->notifier->socket(), *error);
-      } else if (auto res = std::get_if<CommandResponse>(&handlerResult)) {
-        qDebug() << "write success";
-        writeSuccess(client->notifier->socket(), *res);
-      }
-
-      client->messageSize = 0;
-
-      //_clients.erase(client->notifier->socket());
-    }
-  }
-
-  void handleNewConnection() {
-    struct sockaddr_un clientAddr;
-    socklen_t clientAddrLen = sizeof(clientAddr);
-    int clientFd = accept(_serverFd, (struct sockaddr *)&clientAddr, &clientAddrLen);
-
-    if (clientFd < 0) {
-      qDebug() << "Failed to accept client connection:" << strerror(errno);
+    if (auto err = std::get_if<Proto::Marshaler::Error>(&result)) {
+      qDebug() << "Failed message unmarshaling, message discarded" << err->message;
       return;
     }
 
-    // Set client socket to non-blocking mode
-    int flags = fcntl(clientFd, F_GETFL, 0);
+    auto message = std::get<Proto::Array>(result);
 
-    if (flags < 0 || fcntl(clientFd, F_SETFL, flags | O_NONBLOCK) < 0) {
-      qDebug() << "Failed to set client socket to non-blocking mode:" << strerror(errno);
-      close(clientFd);
+    if (message.size() != 2) {
+      qDebug() << "Invalid message. Expected 2 arguments got" << message.size();
       return;
     }
 
-    qDebug() << "New client connected, fd:" << clientFd;
+    CommandMessage cmd{.type = message[0].asString(), .params = message[1]};
 
-    QSocketNotifier *notifier = new QSocketNotifier(clientFd, QSocketNotifier::Read, this);
+    if (!_handler) {
+      writeError(conn, {.error = "No handler configured on the server side"});
+      return;
+    }
 
-    connect(notifier, &QSocketNotifier::activated, this,
-            [this, clientFd]() { this->handleClientData(clientFd); });
+    auto handlerResult = _handler->handleCommand(cmd);
 
-    _clients.insert({clientFd, std::make_unique<ClientInfo>(notifier)});
+    if (auto error = std::get_if<CommandError>(&handlerResult)) {
+      writeError(conn, *error);
+    } else if (auto res = std::get_if<CommandResponse>(&handlerResult)) {
+      writeSuccess(conn, *res);
+    }
+  }
+
+  void handleRead(QLocalSocket *conn) {
+    auto it = std::find_if(_clients.begin(), _clients.end(),
+                           [conn](const ClientInfo &info) { return info.conn == conn; });
+
+    if (it == _clients.end()) {
+      qDebug() << "CommandServer::handleRead: could not find client info";
+      conn->disconnect();
+      return;
+    }
+
+    while (conn->bytesAvailable() > 0) {
+      it->frame.data.append(conn->readAll());
+
+      while (true) {
+        if (it->frame.length == 0 && it->frame.data.size() >= sizeof(uint32_t)) {
+          it->frame.length = ntohl(*reinterpret_cast<uint32_t *>(it->frame.data.data()));
+          it->frame.data = it->frame.data.sliced(sizeof(uint32_t));
+        }
+
+        if (it->frame.length > 0 && it->frame.data.size() >= it->frame.length) {
+          auto packet = QByteArrayView(it->frame.data).sliced(0, it->frame.length);
+
+          processFrame(conn, packet);
+          it->frame.data = it->frame.data.sliced(it->frame.length);
+          it->frame.length = 0;
+        } else {
+          break;
+        }
+      }
+    }
+
+    QByteArray data = conn->readAll();
+  }
+
+  void handleDisconnection(QLocalSocket *conn) {
+    auto it = std::remove_if(_clients.begin(), _clients.end(),
+                             [conn](const ClientInfo &info) { return info.conn == conn; });
+
+    conn->deleteLater();
+  }
+
+  void handleConnection() {
+    QLocalSocket *conn = _server->nextPendingConnection();
+
+    _clients.push_back({.conn = conn});
+    connect(conn, &QLocalSocket::disconnected, this, [this, conn]() { handleDisconnection(conn); });
+    connect(conn, &QLocalSocket::readyRead, this, [this, conn]() { handleRead(conn); });
   }
 
 public:
-  CommandServer(QWidget *parent = nullptr) : QObject(parent) {}
-  ~CommandServer() {
-    delete _notifier;
-    close(_serverFd);
-  }
+  CommandServer(QWidget *parent = nullptr) : QObject(parent), _server(new QLocalServer(this)) {}
+  ~CommandServer() {}
 
-  bool start(const QString &localPath) {
-    _serverFd = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (_serverFd < 0) {
-      qDebug() << "Failed to create socket:" << strerror(errno);
+  bool start(const std::filesystem::path &localPath) {
+    if (std::filesystem::exists(localPath)) { std::filesystem::remove(localPath); }
+
+    if (!_server->listen(localPath.c_str())) {
+      qDebug() << "CommandServer failed to listen" << _server->errorString();
       return false;
     }
 
-    // Set socket to non-blocking mode
-    int flags = fcntl(_serverFd, F_GETFL, 0);
-    if (flags < 0 || fcntl(_serverFd, F_SETFL, flags | O_NONBLOCK) < 0) {
-      qDebug() << "Failed to set socket to non-blocking mode:" << strerror(errno);
-      close(_serverFd);
-      _serverFd = -1;
-      return false;
-    }
+    connect(_server, &QLocalServer::newConnection, this, &CommandServer::handleConnection);
 
-    // Remove any existing socket file
-    unlink(localPath.toUtf8().constData());
+    qDebug() << "Server started, listening on:" << localPath.c_str();
 
-    // Setup address structure
-    struct sockaddr_un serverAddr;
-    memset(&serverAddr, 0, sizeof(serverAddr));
-    serverAddr.sun_family = AF_UNIX;
-    strncpy(serverAddr.sun_path, localPath.toUtf8().constData(), sizeof(serverAddr.sun_path) - 1);
-
-    // Bind the socket
-    if (bind(_serverFd, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) < 0) {
-      qDebug() << "Failed to bind socket:" << strerror(errno);
-      close(_serverFd);
-      _serverFd = -1;
-      return false;
-    }
-
-    // Start listening
-    if (listen(_serverFd, 5) < 0) {
-      qDebug() << "Failed to listen on socket:" << strerror(errno);
-      close(_serverFd);
-      _serverFd = -1;
-      return false;
-    }
-
-    // Create a QSocketNotifier for the server socket
-    _notifier = new QSocketNotifier(_serverFd, QSocketNotifier::Read, this);
-
-    connect(_notifier, &QSocketNotifier::activated, this, &CommandServer::handleNewConnection);
-
-    qDebug() << "Server started, listening on:" << localPath;
     return true;
   }
 
