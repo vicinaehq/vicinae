@@ -4,13 +4,20 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+	"build": "node scripts/build.mjs",
+	"install": "node scripts/install.mjs"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@omnicast/api": "file:../api",
     "@types/node": "^22.10.1",
-    "esbuild": "^0.24.0"
+    "@types/react-reconciler": "^0.31.0",
+    "esbuild": "^0.24.0",
+    "fast-json-patch": "^3.1.1",
+    "react-reconciler": "^0.28.0",
+    "typescript": "^5.8.2"
   }
 }

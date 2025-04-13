@@ -1,8 +1,10 @@
 import { join } from "path"
-import { existsSync, readFileSync, readdirSync } from 'fs';
+import { readFileSync, readdirSync } from 'fs';
 import { Socket, createConnection } from 'net';
 import { randomUUID } from 'crypto';
-import { Worker } from "worker_threads";
+import { isMainThread, Worker } from "worker_threads";
+import { main as workerMain } from './worker';
+import { Module } from "module";
 
 const EXTENSION_DIR = "/home/aurelle/.local/share/omnicast/extensions/runtime/installed";
 
@@ -56,11 +58,6 @@ export type LoadedCommand = {
 };
 
 class Omnicast {
-	private readonly workers: Record<ExtensionEnvironment, string> = {
-		'development': join(__dirname, 'runtime', 'extension-worker.dev.js'),
-		'production': join(__dirname, 'runtime', 'extension-worker.js'),
-	};
-
 	private readonly workerMap = new Map<string, Worker>;
 	private readonly client: Socket
 	private readonly requestMap = new Map<string, Worker>;
@@ -172,9 +169,8 @@ class Omnicast {
 			console.log('loading command', { extensionId, commandName });
 
 			const sessionId = randomUUID();
-			const workerPath = this.workers[extension.environment];
 
-			const worker = new Worker(workerPath, {
+			const worker = new Worker(__filename, {
 				workerData: {
 					component: command.componentPath,
 					preferenceValues,
@@ -329,7 +325,22 @@ class Omnicast {
 	}
 };
 
+const handleWorker = () => {
+	const Module = require('module');
+	const originalRequire = Module.prototype.require;
+
+	Module.prototype.require = function(id: string) {
+		return originalRequire.call(this, id);
+	}
+
+	workerMain();
+}
+
 const main = async () => {
+	if (!isMainThread) {
+		return handleWorker();
+	}
+
 	const url = process.env.OMNICAST_SERVER_URL;
 
 	if (!url) {

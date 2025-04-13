@@ -1,7 +1,9 @@
 import { parentPort, workerData } from "worker_threads";
 import { createRenderer } from './reconciler';
 import { NavigationProvider, bus, environment } from '@omnicast/api';
-import React, { ComponentType, ReactNode } from "react";
+import type { ComponentType, ReactNode } from "react";
+import * as React from 'react';
+import { patchRequire } from "./patch-require";
 
 class ErrorBoundary extends React.Component<{ children: ReactNode }, { error: string }> {
   constructor(props: { children: ReactNode }) {
@@ -51,6 +53,7 @@ export const main = async () => {
 		return ;
 	}
 
+	patchRequire();
 	loadEnviron();
 
 	const module = await import(workerData.component);
@@ -80,5 +83,3 @@ export const main = async () => {
 
 	renderer.render(<App component={Component} />);
 }
-
-main();

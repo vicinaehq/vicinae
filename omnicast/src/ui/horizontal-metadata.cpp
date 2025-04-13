@@ -2,7 +2,7 @@
 #include "common.hpp"
 #include "tag.hpp"
 #include "theme.hpp"
-#include "ui/text-label.hpp"
+#include "ui/typography.hpp"
 #include <qboxlayout.h>
 #include <qlabel.h>
 
@@ -17,7 +17,10 @@ HorizontalMetadata::HorizontalMetadata() : layout(new QVBoxLayout) {
 void HorizontalMetadata::add(const QString &title, QWidget *widget) {
   auto row = new QWidget();
   auto rowLayout = new QHBoxLayout();
-  auto titleWidget = new TextLabel(title);
+  auto titleWidget = new TypographyWidget;
+
+  titleWidget->setText(title);
+  titleWidget->setColor(ColorTint::TextSecondary);
 
   rowLayout->setContentsMargins(0, 0, 0, 0);
   rowLayout->addWidget(titleWidget, 0, Qt::AlignLeft | Qt::AlignVCenter);
@@ -31,7 +34,11 @@ void HorizontalMetadata::addItem(const MetadataItem &item) {
   ThemeService theme;
 
   if (auto label = std::get_if<MetadataLabel>(&item)) {
-    add(label->title, new QLabel(label->text));
+    auto labelWidget = new TypographyWidget();
+
+    labelWidget->setText(label->text);
+
+    add(label->title, labelWidget);
   } else if (auto separator = std::get_if<MetadataSeparator>(&item)) {
     layout->addWidget(new HDivider);
   } else if (auto tagList = std::get_if<TagListModel>(&item)) {

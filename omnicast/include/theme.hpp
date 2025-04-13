@@ -768,7 +768,7 @@ public:
       theme.name = "Kanagawa Wave";
       theme.colors.text = QColor("#DCD7BA");                   // Foreground
       theme.colors.subtext = QColor("#727169");                // Comment/subtle color
-      theme.colors.border = QColor("#16161D");                 // Border color
+      theme.colors.border = QColor("#252525");                 // Border color
       theme.colors.mainBackground = QColor("#12121B");         // Darker color for main background
       theme.colors.mainSelectedBackground = QColor("#223249"); // Selection background
       theme.colors.mainHoveredBackground = QColor("#16161D");  // Hover background
