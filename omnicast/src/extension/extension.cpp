@@ -27,11 +27,11 @@ std::vector<std::shared_ptr<AbstractCmd>> Extension::commands() const { return _
 Extension Extension::fromObject(const QJsonObject &obj) { return Extension(obj); }
 
 Extension::Extension(const QJsonObject &obj) {
-  _id = obj["name"].toString();
+  _id = obj["id"].toString();
+  _name = obj["name"].toString();
   _title = obj["title"].toString();
   _path = obj["path"].toString().toStdString();
   _icon = obj["icon"].toString();
-  _sessionId = obj["sessionId"].toString();
 
   QJsonArray commandList = obj["commands"].toArray();
   QJsonArray preferenceList = obj["preferences"].toArray();
@@ -53,10 +53,10 @@ Extension::Extension(const QJsonObject &obj) {
       continue;
     }
 
+    command->setExtensionId(_id);
     command->setAssetPath(assetDirectory());
     command->setExtensionTitle(_title);
     command->setExtensionIcon(_icon);
-    command->setExtensionSessionId(_sessionId);
     command->setExtensionPreferences(_preferences);
     _commands.push_back(command);
   }

@@ -1,17 +1,19 @@
 #pragma once
-#include "extend/model-parser.hpp"
 #include <QDebug>
 #include <QJsonArray>
 #include <QString>
 #include <QUuid>
+#include <QtCore>
 #include <cstdint>
 #include "extension/extension.hpp"
 #include "omni-command-db.hpp"
+#include "omnicast.hpp"
 #include <filesystem>
 #include <netinet/in.h>
 #include <qdebug.h>
 #include <qdir.h>
 #include <qhash.h>
+#include <qimage.h>
 #include <qjsondocument.h>
 #include <qjsonobject.h>
 #include <qlocalserver.h>
@@ -149,7 +151,7 @@ class Bus : public QObject {
       {"extension", Messenger::EXTENSION},
   };
 
-  QLocalSocket *socket;
+  QIODevice *device;
 
   QJsonObject serializeMessenger(const Messenger &lhs) {
     QJsonObject obj;
@@ -193,9 +195,9 @@ class Bus : public QObject {
     QDataStream dataStream(&data, QIODevice::WriteOnly);
 
     dataStream << doc.toJson();
-    socket->write(data);
+    device->write(data);
     qDebug() << "waiting for write...";
-    socket->waitForBytesWritten(1000);
+    device->waitForBytesWritten(1000);
     qDebug() << "wrote message";
   }
 
@@ -219,8 +221,6 @@ class Bus : public QObject {
   }
 
 private slots:
-  void handleError(QLocalSocket::LocalSocketError error) { qDebug() << "bus errror" << error; }
-
   void handleMessage(FullMessage msg) {
     qDebug() << "[DEBUG] readyRead: got message of type" << msg.envelope.action;
 
@@ -258,14 +258,15 @@ private slots:
   }
 
   void readyRead() {
-    // TODO: optimize to avoid pointless copies
+    while (device->bytesAvailable() > 0) {
+      auto read = device->readAll();
 
-    while (socket->bytesAvailable() > 0) {
-      _message.data.append(socket->readAll());
+      _message.data.append(read);
 
       while (true) {
         if (_message.length == 0 && _message.data.size() >= sizeof(uint32_t)) {
           _message.length = ntohl(*reinterpret_cast<uint32_t *>(_message.data.data()));
+          qDebug() << "got message of size" << _message.length;
           _message.data = _message.data.sliced(sizeof(uint32_t));
         }
 
@@ -343,72 +344,79 @@ public:
     requestManager("unload-command", data);
   }
 
-  void flush() { emit socket->readyRead(); }
+  void flush() { emit device->readyRead(); }
 
-  Bus(QLocalSocket *socket) : socket(socket), workerThread(new QThread), worker(new DataDecoder) {
-    connect(socket, &QLocalSocket::readyRead, this, &Bus::readyRead);
-    connect(socket, &QLocalSocket::errorOccurred, this, &Bus::handleError);
+  Bus(QIODevice *socket) : device(socket), workerThread(new QThread), worker(new DataDecoder) {
+    connect(socket, &QIODevice::readyRead, this, &Bus::readyRead);
     connect(worker, &DataDecoder::messageParsed, this, &Bus::handleMessage);
 
     worker->moveToThread(workerThread);
     workerThread->start();
   }
 
-  ~Bus() { socket->deleteLater(); }
+  ~Bus() { device->deleteLater(); }
 };
 
 class ExtensionManager : public QObject {
   Q_OBJECT
 
   QProcess process;
-  QLocalServer ipc;
-  QString socketPath = "/tmp/omnicast-extension-manager.sock";
-  Bus *bus = nullptr;
+  Bus bus;
   std::vector<std::shared_ptr<Extension>> loadedExtensions;
   OmniCommandDatabase &commandDb;
 
 public:
-  ExtensionManager(OmniCommandDatabase &commandDb) : commandDb(commandDb) {}
+  ExtensionManager(OmniCommandDatabase &commandDb) : commandDb(commandDb), bus(&process) {
+    connect(&process, &QProcess::readyReadStandardError, this, &ExtensionManager::readError);
+    connect(&process, &QProcess::finished, this, &ExtensionManager::finished);
+    connect(&process, &QProcess::started, this, &ExtensionManager::processStarted);
+
+    connect(&bus, &Bus::managerResponse, this, &ExtensionManager::handleManagerResponse);
+    connect(&bus, &Bus::extensionEvent, this, &ExtensionManager::extensionEvent);
+    connect(&bus, &Bus::extensionRequest, this, &ExtensionManager::extensionRequest);
+  }
 
   const std::vector<std::shared_ptr<Extension>> &extensions() const { return loadedExtensions; }
 
-  bool respond(const QString &id, const QJsonObject &payload) { return bus->respond(id, payload); }
+  bool respond(const QString &id, const QJsonObject &payload) { return bus.respond(id, payload); }
 
   void emitExtensionEvent(const QString &sessionId, const QString &action, const QJsonObject &payload) {
-    return bus->emitExtensionEvent(sessionId, action, payload);
+    return bus.emitExtensionEvent(sessionId, action, payload);
   }
 
   void requestManager(const QString &action, const QJsonObject &payload) {
-    return bus->requestManager(action, payload);
+    return bus.requestManager(action, payload);
   }
 
+  void processStarted() { bus.requestManager("list-extensions", {}); }
+
 public slots:
-  void start() {
-    QFile file(socketPath);
+  bool start() {
+    QFile file(":assets/extension-runtime.js");
 
-    qDebug() << "run file";
-
-    if (file.exists()) file.remove();
-
-    if (!ipc.listen(socketPath)) {
-      qDebug() << "failed to listen on socket path" << socketPath;
-      return;
+    if (!file.exists()) {
+      qCritical("Could not find bundled extension runtime. Cannot start extension_manager.");
+      return false;
     }
 
-    auto environ = QProcess::systemEnvironment();
+    if (!file.open(QIODevice::ReadOnly)) {
+      qCritical("Failed to open bundled extension-runtime for read");
+      return false;
+    }
 
-    environ << "OMNICAST_SERVER_URL=" + socketPath;
+    auto runtimeFile = new QTemporaryFile(this);
 
-    process.setWorkingDirectory("/home/aurelle/.local/share/omnicast/extensions");
+    if (!runtimeFile->open()) {
+      qCritical("Failed to open temporary file to write extension runtime code");
+      return false;
+    }
 
-    connect(&process, &QProcess::readyReadStandardOutput, this, &ExtensionManager::readOutput);
-    connect(&process, &QProcess::readyReadStandardError, this, &ExtensionManager::readError);
-    connect(&process, &QProcess::finished, this, &ExtensionManager::finished);
-    connect(&ipc, &QLocalServer::newConnection, this, &ExtensionManager::newConnection);
+    qDebug() << "Started extension runtime" << runtimeFile->fileName();
 
-    process.setEnvironment(environ);
-    process.start("/bin/node", {"manager.js"});
-    qDebug() << "started process";
+    runtimeFile->write(file.readAll());
+    process.start("/bin/node", {runtimeFile->fileName()});
+
+    return true;
   }
 
   void startDevelopmentSession(const std::filesystem::path &path, const std::filesystem::path &logDir) {
@@ -434,7 +442,7 @@ public slots:
     payload["commandName"] = cmd;
     payload["preferenceValues"] = preferenceValues;
 
-    bus->requestManager("load-command", payload);
+    bus.requestManager("load-command", payload);
   }
 
   void unloadCommand(const QString &sessionId) {
@@ -442,16 +450,18 @@ public slots:
 
     payload["sessionId"] = sessionId;
 
-    bus->requestManager("unload-command", payload);
+    bus.requestManager("unload-command", payload);
   }
 
-  void flush() { bus->flush(); }
+  void flush() { bus.flush(); }
 
   void parseListExtensionData(QJsonObject &obj) {
     std::vector<std::shared_ptr<Extension>> extensions;
     auto extensionList = obj["extensions"].toArray();
 
     extensions.reserve(extensionList.size());
+
+    qDebug() << "parse list extensions" << extensionList.size();
 
     for (const auto &ext : extensionList) {
       auto extension = std::make_shared<Extension>(Extension::fromObject((ext.toObject())));
@@ -486,27 +496,8 @@ signals:
   void commandLoaded(const LoadedCommand &);
 
 private slots:
-  void newConnection() {
-    qDebug() << "new connection";
-    auto socket = ipc.nextPendingConnection();
-
-    bus = new Bus(socket);
-
-    connect(bus, &Bus::managerResponse, this, &ExtensionManager::handleManagerResponse);
-    connect(bus, &Bus::extensionEvent, this, &ExtensionManager::extensionEvent);
-    connect(bus, &Bus::extensionRequest, this, &ExtensionManager::extensionRequest);
-
-    bus->requestManager("list-extensions", {});
-  }
-
   void finished(int exitCode, QProcess::ExitStatus status) {
     qDebug() << "Extension manager exited prematurely. Extensions will not work";
-  }
-
-  void readOutput() {
-    auto buf = process.readAllStandardOutput();
-
-    QTextStream(stdout) << buf;
   }
 
   void readError() {

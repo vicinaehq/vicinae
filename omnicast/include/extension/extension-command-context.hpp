@@ -247,7 +247,7 @@ public:
 
     auto preferenceValues = app()->commandDb->getPreferenceValues(command.id());
 
-    app()->extensionManager->loadCommand(command.extensionSessionId(), command.id(), preferenceValues);
+    app()->extensionManager->loadCommand(command.extensionId(), command.id(), preferenceValues);
   }
 
   void unload() override {

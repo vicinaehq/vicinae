@@ -31,8 +31,8 @@ ExtensionCommand::ExtensionCommand(const QJsonObject &obj) {
   }
 }
 
-const QString &ExtensionCommand::extensionSessionId() const { return _sessionId; }
-void ExtensionCommand::setExtensionSessionId(const QString &text) { _sessionId = text; }
+const QString &ExtensionCommand::extensionId() const { return _extensionId; }
+void ExtensionCommand::setExtensionId(const QString &text) { _extensionId = text; }
 
 const QString &ExtensionCommand::extensionIcon() const { return _extensionIcon; }
 void ExtensionCommand::setExtensionIcon(const QString &icon) { _extensionIcon = icon; }

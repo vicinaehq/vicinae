@@ -302,7 +302,7 @@ void AppWindow::paintEvent(QPaintEvent *event) {
 
   painter.fillPath(path, finalBgColor);
 
-  QPen pen(theme.colors.border, borderWidth); // Border with a thickness of 2
+  QPen pen(theme.colors.border, borderWidth);
   painter.setPen(pen);
 
   painter.drawPath(path);

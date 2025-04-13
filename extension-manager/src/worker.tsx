@@ -73,7 +73,7 @@ export const main = async () => {
 			const now = performance.now();
 			const elapsed =  now - lastRender;
 
-			console.log(`[PERF] Render update (last update ${elapsed}ms ago)`);
+			console.debug(`[PERF] Render update (last update ${elapsed}ms ago)`);
 
 			lastRender = now;
 			

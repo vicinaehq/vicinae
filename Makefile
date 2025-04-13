@@ -5,7 +5,9 @@ omnicast: configure
 .PHONY: omnicast
 
 extension-manager:
-	cd extension-manager && npm run build && npm run install
+	cd extension-manager && npm run build
+	cp extension-manager/dist/runtime.js omnicast/assets/extension-runtime.js
+
 .PHONY: extension-manager
 
 wayland:

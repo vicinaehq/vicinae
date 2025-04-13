@@ -19,10 +19,10 @@
 #include <qwidget.h>
 
 class ExtensionCommand : public AbstractCmd {
+  QString _extensionId;
   QString _id;
   QString _extensionTitle;
   QString _title;
-  QString _sessionId;
   QString _icon;
   QString _extensionIcon;
   PreferenceList _extensionPreferences;
@@ -35,8 +35,8 @@ class ExtensionCommand : public AbstractCmd {
 public:
   static ExtensionCommand fromJson(const QJsonObject &obj);
 
-  const QString &extensionSessionId() const;
-  void setExtensionSessionId(const QString &text);
+  const QString &extensionId() const;
+  void setExtensionId(const QString &text);
 
   const QString &extensionIcon() const;
   void setExtensionIcon(const QString &icon);

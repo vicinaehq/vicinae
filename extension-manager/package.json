@@ -1,23 +1,28 @@
 {
   "name": "extension-manager",
   "version": "1.0.0",
-  "description": "",
+  "description": "Internal extension manager runtime spawned by the omnicast daemon",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-	"build": "node scripts/build.mjs",
-	"install": "node scripts/install.mjs"
+    "typecheck": "tsc --noEmit",
+    "build-only": "node scripts/build.mjs",
+	"build": "run-p typecheck build-only",
+    "install": "node scripts/install.mjs"
   },
-  "keywords": [],
+  "keywords": ["omnicast", "omnicast-extensions"],
   "author": "",
   "license": "ISC",
+  "dependencies": {
+    "fast-json-patch": "^3.1.1",
+    "react-reconciler": "^0.28.0",
+    "@omnicast/api": "file:../api"
+  },
   "devDependencies": {
-    "@omnicast/api": "file:../api",
     "@types/node": "^22.10.1",
     "@types/react-reconciler": "^0.31.0",
     "esbuild": "^0.24.0",
-    "fast-json-patch": "^3.1.1",
-    "react-reconciler": "^0.28.0",
+    "npm-run-all": "^4.1.5",
     "typescript": "^5.8.2"
   }
 }

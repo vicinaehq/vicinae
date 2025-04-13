@@ -289,7 +289,7 @@ export const createRenderer = (config: RendererConfig) => {
 
 			const end = performance.now();
 
-			console.log(`[PERF] processed render frame in ${end - start}ms`);
+			console.error(`[PERF] processed render frame in ${end - start}ms`);
 			debounceTimeout = null;
 		}, frameTime);
 

@@ -5,6 +5,8 @@
     <file>assets/fonts/SF-Pro-Text-Light.otf</file>
 	<file>assets/fonts/SF-Pro-Text-Bold.otf</file>
 
+	<file>assets/extension-runtime.js</file>
+
     <file>assets/icons/hyprland.svg</file>
     <file>assets/icons/sway.svg</file>
     <file>assets/icons/google.svg</file>

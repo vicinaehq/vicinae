@@ -1,12 +1,11 @@
-import { join } from "path"
-import { readFileSync, readdirSync } from 'fs';
-import { Socket, createConnection } from 'net';
+import { basename, join } from "path"
+import { readFileSync } from 'fs';
 import { randomUUID } from 'crypto';
 import { isMainThread, Worker } from "worker_threads";
 import { main as workerMain } from './worker';
-import { Module } from "module";
-
-const EXTENSION_DIR = "/home/aurelle/.local/share/omnicast/extensions/runtime/installed";
+import { isatty } from "tty";
+import { extensionDataDir } from "./utils";
+import { readdir, stat } from "fs/promises";
 
 type ExtensionCommand = {
 	name: string;
@@ -20,7 +19,7 @@ type ExtensionCommand = {
 };
 
 type Extension = {
-	sessionId: string;
+	id: string;
 	name: string;
 	title: string;
 	path: string;
@@ -31,8 +30,6 @@ type Extension = {
 };
 
 export type ExtensionEnvironment = 'development' | 'production';
-
-const extensions: Extension[] = [];
 
 type Messenger = {
 	id?: string;
@@ -59,7 +56,6 @@ export type LoadedCommand = {
 
 class Omnicast {
 	private readonly workerMap = new Map<string, Worker>;
-	private readonly client: Socket
 	private readonly requestMap = new Map<string, Worker>;
 	private readonly selfMessenger: Messenger = {
 		type: 'manager'
@@ -70,7 +66,7 @@ class Omnicast {
 		
 		packet.writeUint32BE(message.length, 0);
 		message.copy(packet, 4, 0);
-		this.client.write(packet);
+		process.stdout.write(packet);
 	}
 
 	private respond(envelope: MessageEnvelope, data: Record<string, any>) {
@@ -103,12 +99,10 @@ class Omnicast {
 	private async parseExtensionBundle(path: string): Promise<Extension> {
 		const metadata = JSON.parse(readFileSync(join(path, 'package.json'), 'utf-8'));
 		const { name, title, icon, version, preferences = [] } = metadata;
-
-		const installDir = join(EXTENSION_DIR, metadata.name);
-		const extension: Extension = { environment: 'production', sessionId: randomUUID(), icon, title, name, preferences, path: installDir, commands: [] };
+		const extension: Extension = { environment: 'production', id: basename(path), icon, title, name, preferences, path, commands: [] };
 
 		for (const cmd of metadata.commands) {
-			const bundle = join(installDir, `${cmd.name}.js`);
+			const bundle = join(path, `${cmd.name}.js`);
 			
 			extension.commands.push({ 
 				name: cmd.name, 
@@ -138,15 +132,19 @@ class Omnicast {
 
 		if (action == "develop.start") {
 			const { path, logDir } = data;
+
+			return this.respond(envelope, data);
 			// TODO: implement develop
 		}
 
 		if (action == "develop.stop") {
+			return this.respond(envelope, data);
 		}
 
 		if (action == "load-command") {
+			const extensions = await this.scanInstallDirectory();
 			const { extensionId, commandName, preferenceValues = {} } = data;
-			const extension = extensions.find(ext => ext.sessionId == extensionId);
+			const extension = extensions.find(ext => ext.id == extensionId);
 
 			if (!extension) {
 				return this.respond(envelope, {
@@ -166,7 +164,7 @@ class Omnicast {
 				});
 			}
 
-			console.log('loading command', { extensionId, commandName });
+			console.error('loading command', { extensionId, commandName });
 
 			const sessionId = randomUUID();
 
@@ -175,6 +173,7 @@ class Omnicast {
 					component: command.componentPath,
 					preferenceValues,
 				},
+				stdout: true,
 				env: {
 					'NODE_ENV': extension.environment,
 				}
@@ -191,7 +190,7 @@ class Omnicast {
 			});
 
 			worker.on('online', () => {
-				console.log(`worker is online`);
+				console.error(`worker is online`);
 			});
 
 			worker.on('message', ({ envelope, data }) => {
@@ -211,8 +210,8 @@ class Omnicast {
 					data
 				};
 
-				//console.log(`from worker`, { qualifiedPayload });
-				//console.log(`[DEBUG] forward event type ${qualifiedPayload.envelope.action}`);
+				//console.error(`from worker`, { qualifiedPayload });
+				//console.error(`[DEBUG] forward event type ${qualifiedPayload.envelope.action}`);
 
 				this.writePacket(Buffer.from(JSON.stringify(qualifiedPayload)));
 			});
@@ -227,7 +226,7 @@ class Omnicast {
 
 			worker.on('exit', (code) => {
 				console.error(`worker exited with code ${code}`)
-				//this.workerMap.delete(sessionId);
+				this.workerMap.delete(sessionId);
 			});
 
 			return this.respond(envelope, {
@@ -261,11 +260,10 @@ class Omnicast {
 		}
 
 		if (action == "list-extensions") {
+			const extensions = await this.scanInstallDirectory();
+
 			return this.respond(envelope, {
-				extensions: extensions.map((extension) => ({
-					...extension,
-					commands: extension.commands.map(cmd => cmd)
-				}))
+				extensions
 			});
 		}
 
@@ -296,27 +294,34 @@ class Omnicast {
 				return ;
 			}
 
-			console.log({ message });
-
 			command.postMessage(message);
 		}
 	}
 
-	async scanInstallDirectory() {
-		for (const path of readdirSync(EXTENSION_DIR)) {
-			const extPath = join(EXTENSION_DIR, path);
-			const extension = await this.parseExtensionBundle(extPath);
+	async scanInstallDirectory(): Promise<Extension[]> {
+		const extensionDir = extensionDataDir();
+		const entries = await readdir(extensionDir);
+		const extensions: Extension[] = [];
+
+		for (const entry of entries) {
+			const path = join(extensionDir, entry);
+			const stats = await stat(path);
+
+			if (!stats.isDirectory()) continue ;
+
+			const extension = await this.parseExtensionBundle(path);
 
 			extensions.push(extension);
 		}
+
+		return extensions;
 	}
 
-	constructor(serverUrl: string) {
-		this.client = createConnection({ path: serverUrl });
-		this.client.on('error', (error) => {
+	constructor() {
+		process.stdin.on('error', (error) => {
 			throw new Error(`${error}`);
 		});
-		this.client.on('data', (buf) => {
+		process.stdin.on('data', (buf) => {
 			const packet = Buffer.from(buf);
 			const message = this.parseMessage(packet);
 
@@ -325,29 +330,15 @@ class Omnicast {
 	}
 };
 
-const handleWorker = () => {
-	const Module = require('module');
-	const originalRequire = Module.prototype.require;
-
-	Module.prototype.require = function(id: string) {
-		return originalRequire.call(this, id);
-	}
-
-	workerMain();
-}
-
 const main = async () => {
-	if (!isMainThread) {
-		return handleWorker();
+	if (!isMainThread) workerMain();
+
+	if (isatty(process.stdout.fd)) {
+		console.error('Running the extension manager from a TTY is not supported.');
+		process.exit(1);
 	}
 
-	const url = process.env.OMNICAST_SERVER_URL;
-
-	if (!url) {
-	 	throw new Error(`OMNICAST_SERVER_URL is not set`);
-	}
-
-	const omnicast = new Omnicast(url)
+	const omnicast = new Omnicast()
 
 	await omnicast.scanInstallDirectory();
 }

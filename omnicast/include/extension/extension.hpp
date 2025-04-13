@@ -21,7 +21,7 @@ public:
 
 private:
   QString _id;
-  QString _sessionId;
+  QString _name;
   QString _title;
   QString _icon;
   std::filesystem::path _path;

@@ -1,6 +1,7 @@
 #pragma once
 #include "app.hpp"
 #include "extend/action-model.hpp"
+#include "extend/model-parser.hpp"
 #include <qjsonvalue.h>
 #include <qtmetamacros.h>
 
