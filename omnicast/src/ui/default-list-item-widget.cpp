@@ -33,7 +33,6 @@ DefaultListItemWidget::DefaultListItemWidget(const OmniIconUrl &iconUrl, const Q
 
   this->_name->setText(name);
   this->_category->setText(category);
-  this->_category->setProperty("subtext", true);
 
   left->setLayout(leftLayout);
   leftLayout->setSpacing(15);

@@ -310,10 +310,7 @@ void ClipboardService::saveSelection(const ClipboardSelection &selection) {
     auto md5sum = fileHash.result();
     QFileInfo targetFile(_data_dir.filePath(md5sum.toHex()));
 
-    if (!targetFile.exists()) {
-      QFile::copy(offer.path.c_str(), targetFile.filePath());
-      qDebug() << "renamed" << offer.path << "to" << targetFile;
-    }
+    if (!targetFile.exists()) { QFile::copy(offer.path.c_str(), targetFile.filePath()); }
 
     QFile::remove(offer.path);
 

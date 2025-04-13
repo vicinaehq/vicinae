@@ -29,10 +29,8 @@ public:
 
     if (auto nextItem = dynamic_cast<const IActionnable *>(next)) {
       if (auto title = nextItem->navigationTitle(); !title.isEmpty()) {
-        qDebug() << "set navigation";
         setNavigationTitle(baseNavigationTitle + " - " + title);
       } else {
-        qDebug() << "set default navigation";
         setNavigationTitle(baseNavigationTitle);
       }
 

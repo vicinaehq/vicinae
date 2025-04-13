@@ -26,6 +26,69 @@
 #include "omnicast.hpp"
 #include "proto.hpp"
 
+void coloredMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg) {
+  // ANSI color codes
+  const char *BLACK = "\033[30m";
+  const char *RED = "\033[31m";
+  const char *GREEN = "\033[32m";
+  const char *YELLOW = "\033[33m";
+  const char *BLUE = "\033[34m";
+  const char *MAGENTA = "\033[35m";
+  const char *CYAN = "\033[36m";
+  const char *WHITE = "\033[37m";
+  const char *RESET = "\033[0m";
+
+  QString timestamp = QDateTime::currentDateTime().toString("hh:mm:ss.zzz");
+  QString contextInfo = "";
+
+  if (context.file) {
+    std::filesystem::path file(context.file);
+
+    contextInfo = QString("(%1%2:%3%4)").arg(BLUE).arg(file.filename().c_str()).arg(context.line).arg(RESET);
+  }
+
+  QString color;
+  QString levelName;
+
+  switch (type) {
+  case QtDebugMsg:
+    color = CYAN;
+    levelName = "debug";
+    break;
+  case QtInfoMsg:
+    color = GREEN;
+    levelName = "info ";
+    break;
+  case QtWarningMsg:
+    color = YELLOW;
+    levelName = "warn ";
+    break;
+  case QtCriticalMsg:
+    color = RED;
+    levelName = "error";
+    break;
+  case QtFatalMsg:
+    color = MAGENTA;
+    levelName = "fatal";
+    break;
+  }
+
+  // Format: [time] LEVEL message (file:line)
+  QString formattedMessage = QString("%1[%2] %3%4%5  -  %6 %7%8\n")
+                                 .arg(WHITE)
+                                 .arg(timestamp)
+                                 .arg(color)
+                                 .arg(levelName)
+                                 .arg(RESET)
+                                 .arg(msg)
+                                 .arg(contextInfo)
+                                 .arg(RESET);
+
+  std::cerr << formattedMessage.toStdString();
+
+  if (type == QtFatalMsg) { abort(); }
+}
+
 int startDaemon() {
   std::filesystem::create_directories(Omnicast::runtimeDir());
   auto pidFile = Omnicast::runtimeDir() / "omnicast.pid";
@@ -82,6 +145,8 @@ int startDaemon() {
 
 int main(int argc, char **argv) {
   QApplication qapp(argc, argv);
+
+  qInstallMessageHandler(coloredMessageHandler);
 
   if (qapp.arguments().size() == 2 && qapp.arguments().at(1) == "server") { return startDaemon(); }
 

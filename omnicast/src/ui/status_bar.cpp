@@ -6,6 +6,7 @@
 #include "omni-icon.hpp"
 #include "theme.hpp"
 #include "ui/shortcut-button.hpp"
+#include "ui/typography.hpp"
 #include <qnamespace.h>
 #include <qpainter.h>
 #include <qtimer.h>
@@ -21,6 +22,7 @@ StatusBar::StatusBar(QWidget *parent) : QWidget(parent), leftWidget(nullptr) {
   setProperty("class", "status-bar");
 
   leftWidget = new DefaultLeftWidget();
+  qDebug() << "set default navigation";
 
   right = new QWidget();
   auto rightLayout = new QHBoxLayout();
@@ -30,7 +32,7 @@ StatusBar::StatusBar(QWidget *parent) : QWidget(parent), leftWidget(nullptr) {
   right->setLayout(rightLayout);
   rightLayout->setContentsMargins(0, 0, 0, 0);
 
-  selectedActionLabel = new QLabel();
+  selectedActionLabel = new TypographyWidget();
   _selectedActionButton = new ShortcutButton();
 
   _selectedActionButton->setMaximumWidth(200);

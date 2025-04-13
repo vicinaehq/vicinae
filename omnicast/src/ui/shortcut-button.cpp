@@ -1,6 +1,6 @@
 #include "ui/shortcut-button.hpp"
 #include "theme.hpp"
-#include "ui/ellided-label.hpp"
+#include "ui/typography.hpp"
 #include <qcolor.h>
 
 void ShortcutButton::hoverChanged(bool hovered) {
@@ -36,11 +36,10 @@ void ShortcutButton::setShortcut(const KeyboardShortcutModel &model) {
 }
 
 ShortcutButton::ShortcutButton()
-    : _label(new EllidedLabel), _shortcut_indicator(new KeyboardShortcutIndicatorWidget) {
+    : _label(new TypographyWidget), _shortcut_indicator(new KeyboardShortcutIndicatorWidget) {
   setAttribute(Qt::WA_Hover);
   auto layout = new QHBoxLayout;
 
-  _label->setProperty("subtext", true);
   layout->setAlignment(Qt::AlignVCenter);
   layout->addWidget(_label, 0, Qt::AlignLeft);
   layout->addWidget(_shortcut_indicator, 0, Qt::AlignRight);

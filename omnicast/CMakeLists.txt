@@ -24,6 +24,8 @@ if (WAYLAND_LAYER_SHELL)
 	list(APPEND LIBS LayerShellQt::Interface)
 endif()
 
+add_compile_definitions(QT_MESSAGELOGCONTEXT)
+
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_SOURCE_DIR}/src

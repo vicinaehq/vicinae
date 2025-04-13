@@ -140,7 +140,7 @@ public:
 			border: none;
 		}
 		QLineEdit:focus[form-input="true"] {
-			border-color: %2;
+			border-color: %1;
 		}
 		QTextEdit {
 			font-family: monospace;
@@ -153,10 +153,10 @@ public:
 		QScrollArea, QScrollArea > QWidget { background: transparent; }
 
 		QLabel[subtext="true"] {
-			color: %2;
+			color: %1;
 		}
 		)")
-                     .arg(info.colors.subtext.name(), info.colors.border.name());
+                     .arg(info.colors.border.name());
 
     auto palette = QApplication::palette();
 
@@ -170,8 +170,6 @@ public:
     palette.setBrush(QPalette::PlaceholderText, placeholderText);
 
     QApplication::setPalette(palette);
-
-    qDebug() << "style" << style;
 
     qApp->setStyleSheet(style);
 

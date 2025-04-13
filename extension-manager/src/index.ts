@@ -6,48 +6,16 @@ import { Worker } from "worker_threads";
 
 const EXTENSION_DIR = "/home/aurelle/.local/share/omnicast/extensions/runtime/installed";
 
-type ExtensionArgumentBase = {
-	name: string;
-	type: 'text' | 'password' | 'dropdown';
-	placeholder: string;
-	required?: boolean;
-};
-
-type ExtensionDropdownArgument = {
-	data: { title: string, value: string };
-};
-
-type ExtensionArgument = ExtensionArgumentBase | ExtensionDropdownArgument;
-
 type ExtensionCommand = {
 	name: string;
 	title: string;
 	subtitle: string;
 	description: string;
-	arguments: ExtensionArgument[];
+	arguments: any[];
+	preferences: any[];
 	mode: string;
 	componentPath: string;
 };
-
-type ExtensionPreferenceBase = {
-	name: string;
-	title: string;
-	description: string;
-	type: 'textfield' | 'password' | 'checkbox' | 'dropdown' | 'appPicker' |'file' | 'directory';
-	required: boolean;
-	placeholder?: string;
-	default?: string | boolean;
-};
-
-type ExtensionCheckboxPreference = ExtensionPreferenceBase & {
-	label: string;
-};
-
-type ExtensionDropdownPreference = ExtensionPreferenceBase & {
-	data: { title: string, value: string }[];
-};
-
-type ExtensionPreference = ExtensionPreferenceBase | ExtensionDropdownPreference | ExtensionCheckboxPreference;
 
 type Extension = {
 	sessionId: string;
@@ -56,16 +24,13 @@ type Extension = {
 	path: string;
 	icon: string;
 	commands: ExtensionCommand[];
-	preferences: ExtensionPreference[];
+	environment: ExtensionEnvironment;
+	preferences: any[];
 };
 
-const extensions: Extension[] = [];
+export type ExtensionEnvironment = 'development' | 'production';
 
-type Message = {
-	id: string;
-	type: string;
-	data: Record<string, any>;
-}
+const extensions: Extension[] = [];
 
 type Messenger = {
 	id?: string;
@@ -91,7 +56,11 @@ export type LoadedCommand = {
 };
 
 class Omnicast {
-	private readonly extensionWorkerPath = join(__dirname, "runtime", "extension-worker.js");
+	private readonly workers: Record<ExtensionEnvironment, string> = {
+		'development': join(__dirname, 'runtime', 'extension-worker.dev.js'),
+		'production': join(__dirname, 'runtime', 'extension-worker.js'),
+	};
+
 	private readonly workerMap = new Map<string, Worker>;
 	private readonly client: Socket
 	private readonly requestMap = new Map<string, Worker>;
@@ -104,10 +73,7 @@ class Omnicast {
 		
 		packet.writeUint32BE(message.length, 0);
 		message.copy(packet, 4, 0);
-
-		const write = this.client.write(packet);
-
-		console.log({ write });
+		this.client.write(packet);
 	}
 
 	private respond(envelope: MessageEnvelope, data: Record<string, any>) {
@@ -137,6 +103,31 @@ class Omnicast {
 		return { envelope, data };
 	}
 
+	private async parseExtensionBundle(path: string): Promise<Extension> {
+		const metadata = JSON.parse(readFileSync(join(path, 'package.json'), 'utf-8'));
+		const { name, title, icon, version, preferences = [] } = metadata;
+
+		const installDir = join(EXTENSION_DIR, metadata.name);
+		const extension: Extension = { environment: 'production', sessionId: randomUUID(), icon, title, name, preferences, path: installDir, commands: [] };
+
+		for (const cmd of metadata.commands) {
+			const bundle = join(installDir, `${cmd.name}.js`);
+			
+			extension.commands.push({ 
+				name: cmd.name, 
+				title: cmd.title,
+				subtitle: cmd.subtitle,
+				description: cmd.description,
+				arguments: cmd.arguments ?? [],
+				preferences: cmd.preferences ?? [],
+				mode: cmd.mode,
+				componentPath: bundle 
+			});
+		}
+
+		return extension;
+	}
+
 	private async handleManagerRequest({ envelope, data }: FullMessage) {
 		const { action } = envelope;
 
@@ -146,6 +137,14 @@ class Omnicast {
 
 		if (action == 'echo') {
 			return this.respond(envelope, data);
+		}
+
+		if (action == "develop.start") {
+			const { path, logDir } = data;
+			// TODO: implement develop
+		}
+
+		if (action == "develop.stop") {
 		}
 
 		if (action == "load-command") {
@@ -173,10 +172,15 @@ class Omnicast {
 			console.log('loading command', { extensionId, commandName });
 
 			const sessionId = randomUUID();
-			const worker = new Worker(this.extensionWorkerPath, {
+			const workerPath = this.workers[extension.environment];
+
+			const worker = new Worker(workerPath, {
 				workerData: {
 					component: command.componentPath,
-					preferenceValues
+					preferenceValues,
+				},
+				env: {
+					'NODE_ENV': extension.environment,
 				}
 			});
 
@@ -302,12 +306,16 @@ class Omnicast {
 		}
 	}
 
+	async scanInstallDirectory() {
+		for (const path of readdirSync(EXTENSION_DIR)) {
+			const extPath = join(EXTENSION_DIR, path);
+			const extension = await this.parseExtensionBundle(extPath);
+
+			extensions.push(extension);
+		}
+	}
 
 	constructor(serverUrl: string) {
-		if (!existsSync(this.extensionWorkerPath)) {
-			throw new Error(`Could not find extension worker at ${this.extensionWorkerPath}`);
-		}
-
 		this.client = createConnection({ path: serverUrl });
 		this.client.on('error', (error) => {
 			throw new Error(`${error}`);
@@ -320,7 +328,8 @@ class Omnicast {
 		});
 	}
 };
-const main = () => {
+
+const main = async () => {
 	const url = process.env.OMNICAST_SERVER_URL;
 
 	if (!url) {
@@ -328,31 +337,8 @@ const main = () => {
 	}
 
 	const omnicast = new Omnicast(url)
-	
-	for (const path of readdirSync(EXTENSION_DIR)) {
-		const extPath = join(EXTENSION_DIR, path);
-		const metadata = JSON.parse(readFileSync(join(extPath, 'package.json'), 'utf-8'));
-		const { name, title, icon, version, preferences = [] } = metadata;
 
-		const installDir = join(EXTENSION_DIR, metadata.name);
-		const extension: Extension = { sessionId: randomUUID(), icon, title, name, preferences, path: installDir, commands: [] };
-
-		for (const cmd of metadata.commands) {
-			const bundle = join(installDir, `${cmd.name}.js`);
-			
-			extension.commands.push({ 
-				name: cmd.name, 
-				title: cmd.title,
-				subtitle: cmd.subtitle,
-				description: cmd.description,
-				arguments: cmd.arguments ?? [],
-				mode: cmd.mode,
-				componentPath: bundle 
-			});
-		}
-
-		extensions.push(extension);
-	}
+	await omnicast.scanInstallDirectory();
 }
 
 main();

@@ -662,7 +662,7 @@ class FaviconOmniIconWidget : public OmniIconWidget {
 
 public:
   FaviconOmniIconWidget(const QString &hostname, QWidget *parent) : OmniIconWidget(parent) {
-    qDebug() << "request favicon" << hostname;
+    // qDebug() << "request favicon" << hostname;
     _requester = FaviconService::instance()->makeRequest(hostname, parent);
     connect(_requester, &AbstractFaviconRequest::finished, this, &FaviconOmniIconWidget::iconLoaded);
     connect(_requester, &AbstractFaviconRequest::failed, this, [this]() {

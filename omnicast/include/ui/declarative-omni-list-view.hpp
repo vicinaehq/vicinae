@@ -233,7 +233,6 @@ protected:
   void onRestore() override { reload(); }
 
   void onSearchChanged(const QString &s) override {
-    qDebug() << "search changed" << s;
     query = s;
     auto items = generateList(s);
     list->updateFromList(items, OmniList::SelectFirst);

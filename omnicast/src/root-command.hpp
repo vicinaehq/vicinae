@@ -374,7 +374,7 @@ public:
 
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-    qDebug() << "root searched in " << duration << "ms";
+    // qDebug() << "root searched in " << duration << "ms";
 
     return list;
   }

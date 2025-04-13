@@ -1,10 +1,10 @@
 #pragma once
 #include "extend/action-model.hpp"
-#include "ui/ellided-label.hpp"
 #include "ui/keyboard-shortcut-indicator.hpp"
 #include <qcoreevent.h>
 #include <qevent.h>
 #include "ui/button.hpp"
+#include "ui/typography.hpp"
 #include <qlabel.h>
 #include <QHBoxLayout>
 #include <qnamespace.h>
@@ -15,7 +15,7 @@
 class ShortcutButton : public Button {
   Q_OBJECT
 
-  EllidedLabel *_label;
+  TypographyWidget *_label;
   KeyboardShortcutIndicatorWidget *_shortcut_indicator;
 
 public:

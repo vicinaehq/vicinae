@@ -19,12 +19,13 @@
 #include <qtmetamacros.h>
 #include <qwidget.h>
 #include "ui/shortcut-button.hpp"
+#include "ui/typography.hpp"
 
 class StatusBar : public QWidget {
   Q_OBJECT
 
   QWidget *leftWidget;
-  QLabel *selectedActionLabel;
+  TypographyWidget *selectedActionLabel;
   QWidget *tmpLeft = nullptr;
   ShortcutButton *_selectedActionButton;
   ShortcutButton *_actionButton;
@@ -32,13 +33,14 @@ class StatusBar : public QWidget {
   QWidget *right;
 
   class CurrentCommandWidget : public QWidget {
-    TextLabel *_title;
+    TypographyWidget *_title;
 
   public:
-    CurrentCommandWidget(const QString &name, const OmniIconUrl &iconUrl) : _title(new TextLabel(name)) {
+    CurrentCommandWidget(const QString &name, const OmniIconUrl &iconUrl) : _title(new TypographyWidget()) {
       auto layout = new QHBoxLayout();
       auto icon = new OmniIcon();
 
+      _title->setText(name);
       icon->setFixedSize(20, 20);
       icon->setUrl(iconUrl);
 

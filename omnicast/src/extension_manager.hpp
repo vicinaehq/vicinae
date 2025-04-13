@@ -88,9 +88,6 @@ class DataDecoder : public QObject {
   MessageEnvelope parseEnvelope(const QJsonObject &lhs) {
     MessageEnvelope envelope;
 
-    qDebug() << "type=" << lhs["type"].toString();
-    qDebug() << "i=" << stringToMessageType[lhs["type"].toString().toUtf8()];
-
     envelope.id = lhs["id"].toString();
     envelope.action = lhs["action"].toString();
     envelope.type = stringToMessageType[lhs["type"].toString()];
@@ -412,6 +409,22 @@ public slots:
     process.setEnvironment(environ);
     process.start("/bin/node", {"manager.js"});
     qDebug() << "started process";
+  }
+
+  void startDevelopmentSession(const std::filesystem::path &path, const std::filesystem::path &logDir) {
+    QJsonObject data;
+
+    data["path"] = path.c_str();
+    data["logDir"] = logDir.c_str();
+    requestManager("develop.start", data);
+  }
+
+  void stopDevelopmentSession(const std::filesystem::path &path) {
+    QJsonObject data;
+
+    data["path"] = path.c_str();
+
+    requestManager("develop.stop", data);
   }
 
   void loadCommand(const QString &extensionId, const QString &cmd, const QJsonObject &preferenceValues = {}) {

@@ -171,7 +171,6 @@ bool XdgAppDatabase::addDesktopFile(const QString &path) {
   appMap.insert({entry->id(), entry});
 
   for (const auto &action : entry->actions()) {
-    qDebug() << "insert action id" << action->id();
     appMap.insert({action->id(), action});
   }
 
