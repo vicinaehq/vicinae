@@ -22,10 +22,6 @@ export const NavigationProvider: React.FC<{ root: ReactNode }>= ({ root }) => {
 	}
 
 	useEffect(() => {
-		console.log('stack is now of size' + navStack.length);
-	}, [navStack])
-
-	useEffect(() => {
 		const listener = bus!.subscribe('pop-view', () => {
 			console.log('popping from current nav stack of size ' + navStack.length);
 			setNavStack((cur) => cur.slice(0, -1));
@@ -36,10 +32,6 @@ export const NavigationProvider: React.FC<{ root: ReactNode }>= ({ root }) => {
 		return () => listener.unsubscribe();
 	}, []);
 
-
-	console.log('stack is now of size' + navStack.length);
-
-	
 	return (
 		<context.Provider
 			value={{

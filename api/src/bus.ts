@@ -28,8 +28,6 @@ class Bus {
 
   private handleMessage(message: Message) {
 	const { envelope, data } = message;
-	console.log('request map size is ', this.requestMap.size);
-	console.log('got message', { envelope });
 
 	if (envelope.type == 'response') {
 		const request = this.requestMap.get(envelope.id);
@@ -42,17 +40,13 @@ class Bus {
 		this.requestMap.delete(envelope.id);
 		request.resolve(message);
 
-		console.log({ resolve: message });
-
 		return ;
 	}
 
 	if (envelope.type == 'event') {
 		let start = performance.now();
-		console.log(`[LISTENER] iterating on ${this.eventListeners.size} listeners`);
 		const listeners = this.listEventListeners(envelope.action)
 		let end = performance.now();
-		console.log(`[LISTENER] got ${listeners.length} listeners in ${end - start}ms`);
 
 		start = performance.now();
 
@@ -60,9 +54,8 @@ class Bus {
 			listener.callback(...(data.args ?? []))
 		}
 
-		 end = performance.now();
+		end = performance.now();
 
-		console.log(`[LISTENER] Invoked listeners in ${end - start}ms`);
 		return ;
 	}
 
@@ -70,8 +63,6 @@ class Bus {
 		console.error(`Direct requests to extensions are not yet supported`);
 		return ;
 	}
-
-	console.log('resolved request', message);
   }
 
   constructor(private readonly port: MessagePort) {
@@ -153,7 +144,6 @@ class Bus {
 
 		try {
 			this.requestMap.set(id, { resolve: resolver });
-			console.log(`add id for message type ${action}` + id);
 
 			const message: Message = {
 				envelope: {

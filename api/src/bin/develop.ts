@@ -1,10 +1,12 @@
 import chokidar from 'chokidar';
 import esbuild from 'esbuild';
 import { basename, join } from 'path';
-import {  mkdtempSync, read, readFileSync, rmSync } from 'fs';
+import {  copyFileSync, cpSync, existsSync, mkdirSync, mkdtempSync, read, readFileSync, rmSync, writeFileSync } from 'fs';
 import { open, stat } from 'fs/promises';
 import { spawnSync } from 'child_process';
 import { tmpdir } from 'os';
+import { extensionDataDir } from './utils';
+import { pid } from 'process';
 
 const OMNICAST_BIN = "/home/aurelle/prog/perso/omnicast/build/omnicast/omnicast";
 
@@ -45,16 +47,15 @@ class Logger {
 
 			if (i === lines.length - 1 && line.length === 0) continue ;
 
-			console.log(`${ts} - ${line}`);
+			console.log(`\x1b[90m${ts.padEnd(20)}\x1b[0m - ${line}`);
 		}
 	}
 };
 
 const logger = new Logger();
 
-const build = async () => {
+const build = async (outDir: string) => {
 	const pkg = JSON.parse(readFileSync("package.json", 'utf-8'));
-	const outdir = "dist";
 	const entryPoints = pkg.commands.map(cmd => join('src', `${cmd.name}.tsx`));
 
 	logger.logInfo(`entrypoints [${entryPoints.join(', ')}]`);
@@ -69,10 +70,21 @@ const build = async () => {
 			  "react",
 			  "@omnicast/api"
 		  ],
-		  outfile: join(outdir, `${cmd.name}.js`),
+		  outfile: join(outDir, `${cmd.name}.js`),
 		  format: 'cjs',
 		  platform: 'node'
 		});
+	}
+
+	const targetPkg = join(outDir, 'package.json');
+	const targetAssets = join(outDir, 'assets');
+
+	cpSync("package.json", targetPkg, { force: true });
+
+	if (existsSync("assets")) {
+		cpSync("assets", targetAssets, { recursive: true, force: true });
+	} else {
+		mkdirSync(targetAssets, { recursive: true });
 	}
 }
 
@@ -81,47 +93,44 @@ type LogFileData = {
 	cursor: number;
 };
 
-export const developExtension = (extensionPath: string, { preserveLogs = false }: { preserveLogs?: boolean } = {}) => {
+export const developExtension = (extensionPath: string) => {
 	process.chdir(extensionPath);
+	const pkg = JSON.parse(readFileSync("package.json", 'utf-8'));
+	const dataDir = extensionDataDir();
+	const id = `${pkg.name}.dev`;
+	const extensionDir = join(dataDir, id);
+	const logFile = join(extensionDir, "dev.log");
+	const pidFile = join(extensionDir, "cli.pid");
 
-	const logDir = mkdtempSync(join(tmpdir(), "omnicast-dev-session-"));
-
-	logger.logInfo(`Development session directory created at ${logDir}`);
+	mkdirSync(extensionDir, { recursive: true });
+	build(extensionDir);
+	logger.logReady('built extension successfully');
+	writeFileSync(pidFile, `${pid}`)
+	writeFileSync(logFile, '');
 
 	process.on('SIGINT', () => {
 		logger.logInfo('Shutting down...');
-
-		if (!preserveLogs) {
-			rmSync(logDir, { recursive: true });
-		}
-
-		invokeOmnicast(`/api/extensions/develop/stop?path=${extensionPath}`);
+		invokeOmnicast(`/api/extensions/develop/stop?id=${id}`);
 		process.exit(0);
 	});
 
-	const error = invokeOmnicast(`/api/extensions/develop/start?path=${extensionPath}&logDir=${logDir}`);
+	const error = invokeOmnicast(`/api/extensions/develop/start?id=${id}`);
 
 	if (error) {
 		console.error(`Failed to invoke omnicast`, error);
+		return ;
 	}
 
 	chokidar.watch('src', { ignoreInitial: true }).on('all', (event, path) => {
 		logger.logEvent(`changed file ${path}: ${event}`);
-		build();
+		build(extensionDir);
 		logger.logReady('built extension successfully');
-		invokeOmnicast(`/api/extensions/develop/reload?path=${extensionPath}`);
+		invokeOmnicast(`/api/extensions/develop/reload?id=${id}`);
 	});
 
 	const logFiles = new Map<string, LogFileData>();
 
-	const logWatcher = chokidar.watch(logDir, { ignoreInitial: true })
-
-	logWatcher.on('ready', () => {
-		console.log('log watcher is ready');
-	});
-
-	logWatcher.on('all', async (event, path) => {
-		console.log({ event, path });
+	chokidar.watch(logFile).on('all', async (event, path) => {
 		const stats = await stat(path);
 
 		if (!stats.isFile()) return ;
@@ -151,5 +160,3 @@ export const developExtension = (extensionPath: string, { preserveLogs = false }
 		});
 	});
 }
-
-developExtension(process.argv[2] ?? process.cwd());

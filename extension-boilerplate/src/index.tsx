@@ -1,4 +1,4 @@
-import { Action, ActionPanel, List } from "@omnicast/api"
+import { Action, ActionPanel, Icon, List } from "@omnicast/api"
 
 type Fruit = {
   emoji: string;
@@ -34,8 +34,6 @@ const FruitList = () => {
 		console.log('custom callback fired with', fruit);
 	}
 
-	console.log('yolo+1');
-
 	return (
 		<List>
 			{fruits.map(fruit => (
@@ -45,8 +43,8 @@ const FruitList = () => {
 					key={fruit.name} 
 					actions={
 						<ActionPanel>
-							<Action.CopyToClipboard content={"Copy emoji"} />
-							<Action title="Custom callback" onAction={() => handleCustomCallback(fruit)} />
+							<Action.CopyToClipboard title={"Copy to clipboard"} content={fruit.emoji} />
+							<Action title="Custom callback" icon={Icon.Pencil} onAction={() => handleCustomCallback(fruit)} />
 						</ActionPanel>
 					}
 				/>

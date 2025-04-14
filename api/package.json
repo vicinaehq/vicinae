@@ -6,8 +6,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
-    "build": "./dist/bin/build.js",
-	"develop": "./dist/bin/develop.js"
+	  "omni": "./dist/bin/main.js"
   },
   "files": [
     "dist",

@@ -1,5 +1,5 @@
 import { basename, join } from "path"
-import { readFileSync } from 'fs';
+import { appendFileSync, readFileSync } from 'fs';
 import { randomUUID } from 'crypto';
 import { isMainThread, Worker } from "worker_threads";
 import { main as workerMain } from './worker';
@@ -217,6 +217,7 @@ class Omnicast {
 			});
 
 			worker.stdout.on('data', (buf) => {
+				appendFileSync(join(extension.path, "dev.log"), buf)
 			});
 
 			worker.on('error', (error) => { 

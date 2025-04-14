@@ -320,6 +320,15 @@ std::variant<CommandResponse, CommandError> AppWindow::handleCommand(const Comma
   if (message.type == "url-scheme-handler") {
     QUrl url(message.params.asString().c_str());
 
+    if (url.path() == "/api/extensions/develop/start") {
+      QUrlQuery query(url.query());
+
+      qDebug() << "start develop id" << query.queryItemValue("id");
+    }
+
+    else if (url.path() == "/api/extensions/develop/reload") {
+    }
+
     qDebug() << "handling URL in daemon" << url.toString();
     return {};
   }
