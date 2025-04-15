@@ -1,4 +1,5 @@
 #include "ui/markdown/markdown-renderer.hpp"
+#include "omni-icon.hpp"
 #include "theme.hpp"
 #include "ui/omni-scroll-bar.hpp"
 #include <KSyntaxHighlighting/definition.h>
@@ -8,9 +9,12 @@
 #include <cmark.h>
 #include <qapplication.h>
 #include <qboxlayout.h>
+#include <qevent.h>
 #include <qfontdatabase.h>
 #include <qnamespace.h>
+#include <qpixmap.h>
 #include <qplaintextedit.h>
+#include <qresource.h>
 #include <qsize.h>
 #include <qstringview.h>
 #include <QTextDocumentFragment>
@@ -47,8 +51,44 @@ void MarkdownRenderer::insertHeading(const QString &text, int level) {
 
 void MarkdownRenderer::insertImage(cmark_node *node) {
   const char *p = cmark_node_get_url(node);
+  QUrl resourceName(QString("doc://%1").arg(QUuid::createUuid().toString()));
+  auto icon = new OmniIcon(this);
+  auto pos = _cursor.position();
 
-  qDebug() << "Render url" << p;
+  QString url(p);
+  auto scrollBar = _textEdit->verticalScrollBar();
+  auto documentMargin = _document->documentMargin();
+  int widthOffset = documentMargin * 4;
+
+  icon->setFixedSize(size().width() - widthOffset, size().height() - documentMargin * 2);
+
+  connect(icon, &OmniIcon::imageUpdated, this, [this, url, pos](const QPixmap &pix) {
+    QTextBlockFormat blockFormat;
+    auto old = _cursor.position();
+
+    _cursor.setPosition(pos);
+    _document->addResource(QTextDocument::ImageResource, url, pix);
+
+    blockFormat.setTopMargin(15);
+    blockFormat.setBottomMargin(15);
+    blockFormat.setAlignment(Qt::AlignCenter);
+
+    if (!_cursor.block().text().isEmpty()) { _cursor.insertBlock(blockFormat); }
+
+    _cursor.insertImage(url);
+    _cursor.setPosition(old);
+  });
+
+  QUrl imageUrl(url);
+
+  if (imageUrl.scheme() == "https") {
+    qDebug() << "loading image" << url;
+    icon->setUrl(HttpOmniIconUrl(imageUrl));
+    icon->show();
+    icon->hide();
+  }
+
+  m_images.push_back({.cursorPos = _cursor.position(), .icon = icon, .name = resourceName});
 }
 
 void MarkdownRenderer::insertCodeBlock(cmark_node *node, bool isClosing) {
@@ -207,6 +247,7 @@ void MarkdownRenderer::insertParagraph(cmark_node *node) {
     switch (cmark_node_get_type(child)) {
     case CMARK_NODE_IMAGE:
       insertImage(child);
+      if (cmark_node_next(child)) { _cursor.insertBlock(); }
       break;
     default:
       insertSpan(child, fmt);
@@ -351,6 +392,7 @@ void MarkdownRenderer::setMarkdown(QStringView markdown) {
   clear();
   appendMarkdown(markdown);
   _cursor.setPosition(0);
+  _textEdit->verticalScrollBar()->setValue(0);
   _textEdit->setTextCursor(_cursor);
 }
 
@@ -358,17 +400,21 @@ MarkdownRenderer::MarkdownRenderer()
     : _document(new QTextDocument), _textEdit(new QTextEdit(this)), _basePointSize(DEFAULT_BASE_POINT_SIZE) {
   auto layout = new QVBoxLayout;
 
+  _document->setDefaultFont(QFontDatabase::systemFont(QFontDatabase::GeneralFont));
+
   _textEdit->setReadOnly(true);
   _textEdit->setFrameShape(QFrame::NoFrame);
   _textEdit->setDocument(_document);
   _textEdit->setVerticalScrollBar(new OmniScrollBar);
+  _document->setDocumentMargin(10);
   _textEdit->setHorizontalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
-  _textEdit->setVerticalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
   _textEdit->setTabStopDistance(40);
   _textEdit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
+  /*j
   connect(_document->documentLayout(), &QAbstractTextDocumentLayout::documentSizeChanged, this,
           [this](const QSizeF &size) { setFixedHeight(size.height()); });
+  */
 
   _cursor = QTextCursor(_document);
   _lastNodePosition.renderedText = 0;
@@ -377,7 +423,7 @@ MarkdownRenderer::MarkdownRenderer()
   // setStyleSheet("background-color: blue");
 
   layout->setContentsMargins(0, 0, 0, 0);
-  layout->addWidget(_textEdit, 1);
+  layout->addWidget(_textEdit);
 
   setLayout(layout);
 }

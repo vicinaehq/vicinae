@@ -322,11 +322,18 @@ std::variant<CommandResponse, CommandError> AppWindow::handleCommand(const Comma
 
     if (url.path() == "/api/extensions/develop/start") {
       QUrlQuery query(url.query());
+      QString id = query.queryItemValue("id");
 
+      extensionManager->startDevelopmentSession(id);
       qDebug() << "start develop id" << query.queryItemValue("id");
     }
 
-    else if (url.path() == "/api/extensions/develop/reload") {
+    else if (url.path() == "/api/extensions/develop/refresh") {
+      QUrlQuery query(url.query());
+      QString id = query.queryItemValue("id");
+
+      extensionManager->refreshDevelopmentSession(id);
+      qDebug() << "refresh develop id" << id;
     }
 
     qDebug() << "handling URL in daemon" << url.toString();
@@ -427,7 +434,7 @@ AppWindow::AppWindow(QWidget *parent)
   statusBar->setFixedHeight(Omnicast::STATUS_BAR_HEIGHT);
 
   QDir::root().mkpath(Config::dirPath());
-  ThemeService::instance().setTheme("Ayu Mirage");
+  ThemeService::instance().setTheme("Kanagawa Wave");
   FaviconService::initialize(new FaviconService(Config::dirPath() + QDir::separator() + "favicon.db"));
 
   quicklinkDatabase =

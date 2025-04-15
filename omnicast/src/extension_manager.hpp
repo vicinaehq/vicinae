@@ -419,19 +419,24 @@ public slots:
     return true;
   }
 
-  void startDevelopmentSession(const std::filesystem::path &path, const std::filesystem::path &logDir) {
+  void startDevelopmentSession(const QString &id) {
     QJsonObject data;
 
-    data["path"] = path.c_str();
-    data["logDir"] = logDir.c_str();
+    data["id"] = id;
     requestManager("develop.start", data);
   }
 
-  void stopDevelopmentSession(const std::filesystem::path &path) {
+  void refreshDevelopmentSession(const QString &id) {
     QJsonObject data;
 
-    data["path"] = path.c_str();
+    data["id"] = id;
+    requestManager("develop.refresh", data);
+  }
 
+  void stopDevelopmentSession(const QString &id) {
+    QJsonObject data;
+
+    data["id"] = id;
     requestManager("develop.stop", data);
   }
 
@@ -475,6 +480,8 @@ public slots:
 
   void handleManagerResponse(const QString &action, QJsonObject &data) {
     if (action == "list-extensions") { return parseListExtensionData(data); }
+
+    if (action == "develop.refresh") { bus.requestManager("list-extensions", {}); }
 
     if (action == "load-command") {
       auto sessionId = data["sessionId"].toString();

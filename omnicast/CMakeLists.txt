@@ -71,6 +71,12 @@ qt_add_executable(${TARGET}
 
 	include/omni-command-db.hpp
 
+	include/ui/split-detail.hpp
+	src/ui/split-detail.cpp
+
+	include/ui/detail-widget.hpp
+	src/ui/detail-widget.cpp
+
 	include/clipboard/clipboard-server.hpp
 	include/clipboard/wlr-clipboard-server.hpp
 	src/clipboard/wlr-clipboard-server.cpp

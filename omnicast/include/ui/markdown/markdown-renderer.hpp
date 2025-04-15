@@ -1,4 +1,5 @@
 #pragma once
+#include "omni-icon.hpp"
 #include <QTextBlock>
 #include <qnamespace.h>
 #include <qplaintextedit.h>
@@ -10,16 +11,24 @@
 #include <qtextedit.h>
 #include <qtextformat.h>
 #include <qtextlist.h>
+#include <qurl.h>
 #include <qwidget.h>
 
 struct TopLevelBlock {
   int cursorPos;
 };
 
+struct ImageResource {
+  int cursorPos;
+  OmniIcon *icon;
+  QUrl name;
+};
+
 class MarkdownRenderer : public QWidget {
   constexpr static float HEADING_LEVEL_SCALE_FACTORS[5] = {2, 1.6, 1.3, 1.16, 1};
   constexpr static int DEFAULT_BASE_POINT_SIZE = 12;
 
+  std::vector<ImageResource> m_images;
   QString _markdown;
   QTextEdit *_textEdit;
   QTextDocument *_document;

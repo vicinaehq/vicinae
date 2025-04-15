@@ -1,10 +1,9 @@
 import chokidar from 'chokidar';
 import esbuild from 'esbuild';
-import { basename, join } from 'path';
-import {  copyFileSync, cpSync, existsSync, mkdirSync, mkdtempSync, read, readFileSync, rmSync, writeFileSync } from 'fs';
+import { join } from 'path';
+import {  cpSync, existsSync, mkdirSync, read, readFileSync, writeFileSync } from 'fs';
 import { open, stat } from 'fs/promises';
-import { spawnSync } from 'child_process';
-import { tmpdir } from 'os';
+import { spawn, spawnSync } from 'child_process';
 import { extensionDataDir } from './utils';
 import { pid } from 'process';
 
@@ -14,7 +13,9 @@ const invokeOmnicast = (endpoint: string): Error | null => {
 	const url = new URL(endpoint, 'omnicast://');
 	const result = spawnSync(OMNICAST_BIN, [url.toString()]);
 
-	return result.error ?? null;
+	if (result.error) return result.error;
+
+	return result.status === 0 ? null : new Error(result.stderr.toString());
 }
 
 class Logger {
@@ -54,7 +55,34 @@ class Logger {
 
 const logger = new Logger();
 
+type TypeCheckResult = {
+	ok: boolean;
+	error: string;
+}
+
+const typeCheck = async (): Promise<TypeCheckResult> => {
+	const spawned = spawn('npx', ['tsc', '--noEmit']);
+	let stderr = Buffer.from('');
+
+	return new Promise<TypeCheckResult>((resolve) => {
+		spawned.stderr.on('data', (buf) => {
+			stderr = Buffer.concat([stderr, buf]);
+		});
+
+		spawned.on('exit', (status) => resolve({ error: stderr.toString(), ok: status === 0 }));
+	});
+}
+
 const build = async (outDir: string) => {
+	logger.logInfo("Started type checking in background thread");
+
+	typeCheck().then(({ ok, error }) => {
+		if (!ok) {
+			logger.logInfo(`Type checking error: ${error}`);
+		}
+		logger.logInfo("Done type checking");
+	});
+
 	const pkg = JSON.parse(readFileSync("package.json", 'utf-8'));
 	const entryPoints = pkg.commands.map(cmd => join('src', `${cmd.name}.tsx`));
 
@@ -72,7 +100,7 @@ const build = async (outDir: string) => {
 		  ],
 		  outfile: join(outDir, `${cmd.name}.js`),
 		  format: 'cjs',
-		  platform: 'node'
+		  platform: 'node',
 		});
 	}
 
@@ -110,7 +138,6 @@ export const developExtension = (extensionPath: string) => {
 
 	process.on('SIGINT', () => {
 		logger.logInfo('Shutting down...');
-		invokeOmnicast(`/api/extensions/develop/stop?id=${id}`);
 		process.exit(0);
 	});
 
@@ -121,11 +148,11 @@ export const developExtension = (extensionPath: string) => {
 		return ;
 	}
 
-	chokidar.watch('src', { ignoreInitial: true }).on('all', (event, path) => {
-		logger.logEvent(`changed file ${path}: ${event}`);
+	chokidar.watch(['src', 'package.json', 'assets'], { ignoreInitial: true, awaitWriteFinish: { stabilityThreshold: 100, pollInterval: 100 } }).on('all', (event, path) => {
+		logger.logEvent(`changed file ${path}:`);
 		build(extensionDir);
 		logger.logReady('built extension successfully');
-		invokeOmnicast(`/api/extensions/develop/reload?id=${id}`);
+		invokeOmnicast(`/api/extensions/develop/refresh?id=${id}`);
 	});
 
 	const logFiles = new Map<string, LogFileData>();

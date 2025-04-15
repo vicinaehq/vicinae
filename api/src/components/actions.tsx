@@ -6,6 +6,7 @@ import { Keyboard } from "../keyboard";
 import { Application, open } from "../utils";
 import { useEventListener } from "../hooks";
 import { Form } from "./form";
+import { Icon } from "../icon";
 
 export type BaseActionProps = {
 	title: string;
@@ -57,7 +58,7 @@ const ActionRoot: React.FC<ActionProps> = ({ icon, ...props }) => {
 }
 
 const CopyToClipboard: React.FC<CopyToClipboardProps> = ({ content, ...props }) => {
-	return <ActionRoot {...props} onAction={() => {
+	return <ActionRoot {...props} icon={Icon.CopyClipboard} onAction={() => {
 		Clipboard.copy(content);
 	}} />
 }

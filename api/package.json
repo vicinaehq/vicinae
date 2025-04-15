@@ -6,7 +6,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
-	  "omni": "./dist/bin/main.js"
+    "omni": "./dist/bin/main.js"
   },
   "files": [
     "dist",
@@ -20,6 +20,7 @@
   ],
   "main": "dist/index.js",
   "devDependencies": {
+    "@jgoz/esbuild-plugin-typecheck": "^4.0.3",
     "@types/node": "^22.10.1",
     "chokidar": "^4.0.3",
     "esbuild": "^0.25.2"

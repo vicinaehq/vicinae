@@ -124,6 +124,15 @@ public:
       }
     }
 
+    if (_fallback) query.addQueryItem("fallback", *_fallback);
+    if (_bgTint != InvalidTint) query.addQueryItem("bg_tint", nameForTint(_bgTint));
+    if (_fillColor) {
+      if (auto tint = std::get_if<ColorTint>(&*_fillColor); tint && *tint != InvalidTint) {
+        qDebug() << "fill" << nameForTint(*tint);
+        query.addQueryItem("fill", nameForTint(*tint));
+      }
+    }
+
     url.setQuery(query);
 
     return url;
@@ -237,7 +246,7 @@ public:
     if (auto height = query.queryItemValue("height"); !height.isEmpty()) { _size.setHeight(height.toInt()); }
     if (auto fgTint = query.queryItemValue("fg_tint"); !fgTint.isEmpty()) { _fgTint = tintForName(fgTint); }
     if (auto bgTint = query.queryItemValue("bg_tint"); !bgTint.isEmpty()) { _bgTint = tintForName(bgTint); }
-    if (auto fill = query.queryItemValue("fill"); !fill.isEmpty()) { _fillColor = fill; }
+    if (auto fill = query.queryItemValue("fill"); !fill.isEmpty()) { _fillColor = tintForName(fill); }
     if (auto fallback = query.queryItemValue("fallback"); !fallback.isEmpty()) { _fallback = fallback; }
     if (auto mask = query.queryItemValue("mask"); !mask.isEmpty()) {
       if (mask == "circle")
@@ -549,7 +558,7 @@ public:
       : OmniIconWidget(parent), _path(path), _mask(OmniPainter::NoMask) {
     QFileInfo info(path);
 
-    if (!info.exists()) { return; }
+    if (!info.exists()) { emit imageLoadingFailed(); }
 
     connect(&watcher, &QFutureWatcher<QPixmap>::finished, this, &LocalOmniIconWidget::handleImageLoaded);
   }
@@ -575,6 +584,7 @@ class HttpOmniIconWidget : public OmniIconWidget {
   }
 
   void resizeEvent(QResizeEvent *event) override {
+    qDebug() << "http image resize" << event->size();
     QWidget::resizeEvent(event);
     recalculate();
   }
@@ -673,18 +683,11 @@ public:
   }
 };
 
-enum OmniIconSizeMode {
-  SizeModeFill,
-  SizeModeFixed,
-};
-
 class OmniIcon : public QWidget {
   Q_OBJECT
 
   OmniIconUrl _url;
   OmniIconWidget *_iconWidget = nullptr;
-  QSize _fixedSize;
-  OmniIconSizeMode _sizeMode = SizeModeFill;
   QVBoxLayout *layout;
 
 public:
@@ -699,6 +702,7 @@ public:
   ~OmniIcon() {}
 
   void handleFailedLoading() {
+    qWarning() << "Failed to load image" << _url.toString();
     if (auto fallback = _url.fallback()) {
       setUrl(*fallback);
     } else {
@@ -708,6 +712,7 @@ public:
 
   void setUrl(const OmniIconUrl &url) {
     if (_iconWidget) {
+      _iconWidget->blockSignals(true);
       layout->takeAt(0);
       _iconWidget->deleteLater();
     }

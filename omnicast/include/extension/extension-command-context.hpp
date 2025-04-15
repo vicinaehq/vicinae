@@ -40,7 +40,10 @@ private slots:
     auto models = modelWatcher.result();
 
     for (int i = 0; i != models.size() && i != viewStack.size(); ++i) {
-      viewStack.at(i)->render(models.at(i));
+      auto view = viewStack.at(i);
+      auto model = models.at(i);
+
+      view->render(model);
     }
   }
 

@@ -109,5 +109,7 @@ public:
     update();
   }
 
-  VDivider(QWidget *parent = nullptr) : _width(1), _color("#222222") { setFixedWidth(_width); }
+  VDivider(QWidget *parent = nullptr) : QFrame(parent), _width(1), _color("#222222") {
+    setFixedWidth(_width);
+  }
 };

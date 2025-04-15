@@ -73,7 +73,7 @@ public:
       _layout->addWidget(_component);
     }
 
-    _component->render(model);
+    QTimer::singleShot(0, [this, model = std::move(model)]() { _component->render(model); });
   }
 
 signals:

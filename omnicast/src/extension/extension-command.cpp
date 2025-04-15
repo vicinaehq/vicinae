@@ -2,6 +2,7 @@
 #include "command-database.hpp"
 #include "command.hpp"
 #include "extension/extension-command-context.hpp"
+#include "omni-icon.hpp"
 
 ExtensionCommand ExtensionCommand::fromJson(const QJsonObject &obj) { return obj; }
 
@@ -57,8 +58,12 @@ void ExtensionCommand::setAssetPath(const std::filesystem::path &path) { _assetP
 void ExtensionCommand::setExtensionTitle(const QString &title) { _extensionTitle = title; }
 
 OmniIconUrl ExtensionCommand::iconUrl() const {
-  if (!_icon.isEmpty()) { return LocalOmniIconUrl(_assetPath / _icon.toStdString()); }
-  if (!_extensionIcon.isEmpty()) { return LocalOmniIconUrl(_assetPath / _extensionIcon.toStdString()); }
+  auto fallback = BuiltinOmniIconUrl("hammer").setBackgroundTint(ColorTint::Blue);
 
-  return BuiltinOmniIconUrl("hammer", ColorTint::Blue);
+  if (!_icon.isEmpty()) { return LocalOmniIconUrl(_assetPath / _icon.toStdString()).withFallback(fallback); }
+  if (!_extensionIcon.isEmpty()) {
+    return LocalOmniIconUrl(_assetPath / _extensionIcon.toStdString()).withFallback(fallback);
+  }
+
+  return fallback;
 }

@@ -4,8 +4,9 @@ import { randomUUID } from 'crypto';
 import { isMainThread, Worker } from "worker_threads";
 import { main as workerMain } from './worker';
 import { isatty } from "tty";
-import { extensionDataDir } from "./utils";
-import { readdir, stat } from "fs/promises";
+import { extensionDataDir, safeKill, testMode } from "./utils";
+import { access, appendFile, readdir, readFile, stat } from "fs/promises";
+import { kill } from "process";
 
 type ExtensionCommand = {
 	name: string;
@@ -130,15 +131,54 @@ class Omnicast {
 			return this.respond(envelope, data);
 		}
 
-		if (action == "develop.start") {
-			const { path, logDir } = data;
+		if (action.startsWith("develop.")) {
+			const { id } = data as { id: string };
+			const path = join(extensionDataDir(), id);
 
-			return this.respond(envelope, data);
-			// TODO: implement develop
-		}
+			if (!await testMode(path)) {
+				return this.respond(envelope, {
+					error: {
+						message: `No extension bundle at ${path}`
+					}
+				});
+			}
 
-		if (action == "develop.stop") {
-			return this.respond(envelope, data);
+			if (!id.endsWith('.dev')) {
+				console.debug(`develop.start: extension bundle has no .dev suffix: ${id}`);
+			}
+
+			if (action == "develop.start") {
+				const extension = this.parseExtensionBundle(path);
+
+				return this.respond(envelope, {
+					extension
+				});
+			}
+
+			if (action == "develop.refresh") {
+				// XXX do something smart here, probably
+				return this.respond(envelope, {
+					message: 'refresh OK'
+				});
+			}
+
+			if (action == "develop.stop") {
+				const cliPidFile = join(path, 'cli.pid');
+
+				if (await testMode(path)) {
+					const pid = parseInt(await readFile(cliPidFile, 'utf-8'));
+
+					if (!safeKill(pid, 'SIGINT')) {
+						console.debug(`Could not kill CLI pid ${pid}. A CLI process may not be running under this pid.`);
+					}
+				} else {
+					console.debug(`Could not find a cli.pid file`);
+				}
+
+				return this.respond(envelope, {
+					message: 'OK'
+				});
+			}
 		}
 
 		if (action == "load-command") {
@@ -216,8 +256,8 @@ class Omnicast {
 				this.writePacket(Buffer.from(JSON.stringify(qualifiedPayload)));
 			});
 
-			worker.stdout.on('data', (buf) => {
-				appendFileSync(join(extension.path, "dev.log"), buf)
+			worker.stdout.on('data', async (buf) => {
+				await appendFile(join(extension.path, "dev.log"), buf)
 			});
 
 			worker.on('error', (error) => { 

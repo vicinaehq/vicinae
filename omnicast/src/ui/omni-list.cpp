@@ -496,6 +496,7 @@ void OmniList::setSelectedIndex(int index, ScrollBehaviour scrollBehaviour) {
   }
 
   if (next && _selectedId != next->id()) {
+    qDebug() << "seletion changed" << next->id() << "previous" << (previous ? previous->id() : "<none>");
     _selectedId = next->id();
     emit selectionChanged(next, previous);
   }

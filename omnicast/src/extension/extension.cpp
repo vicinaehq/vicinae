@@ -7,9 +7,13 @@
 #include <qjsonarray.h>
 
 OmniIconUrl Extension::iconUrl() const {
-  if (!_icon.isEmpty()) { return LocalOmniIconUrl(assetDirectory() / _icon.toStdString()); }
+  auto fallback = BuiltinOmniIconUrl("hammer").setBackgroundTint(ColorTint::Blue);
 
-  return BuiltinOmniIconUrl("hammer").setBackgroundTint(ColorTint::Blue);
+  if (!_icon.isEmpty()) {
+    return LocalOmniIconUrl(assetDirectory() / _icon.toStdString()).withFallback(fallback);
+  }
+
+  return fallback;
 }
 
 QString Extension::id() const { return _id; }

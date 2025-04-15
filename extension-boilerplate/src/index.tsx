@@ -1,33 +1,6 @@
-import { Action, ActionPanel, Icon, List } from "@omnicast/api"
+import { Action, ActionPanel, Detail, Icon, List } from "@omnicast/api"
+import { Fruit, fruits } from "./fruits";
 
-type Fruit = {
-  emoji: string;
-  name: string;
-};
-
-// Create an array of fruits with their emoji and names
-const fruits: Fruit[] = [
-  { emoji: "🍎", name: "Apple" },
-  { emoji: "🍊", name: "Orange" },
-  { emoji: "🍌", name: "Banana" },
-  { emoji: "🍉", name: "Watermelon" },
-  { emoji: "🍇", name: "Grapes" },
-  { emoji: "🍓", name: "Strawberry" },
-  { emoji: "🍍", name: "Pineapple" },
-  { emoji: "🥭", name: "Mango" },
-  { emoji: "🍑", name: "Peach" },
-  { emoji: "🍐", name: "Pear" },
-  { emoji: "🥝", name: "Kiwi" },
-  { emoji: "🍒", name: "Cherries" },
-  { emoji: "🫐", name: "Blueberries" },
-  { emoji: "🥥", name: "Coconut" },
-  { emoji: "🍋", name: "Lemon" },
-  { emoji: "🍈", name: "Melon" },
-  { emoji: "🍏", name: "Green Apple" },
-  { emoji: "🥑", name: "Avocado" },
-  { emoji: "🫒", name: "Olive" },
-  { emoji: "🍅", name: "Tomato" }
-];
 
 const FruitList = () => {
 	const handleCustomCallback = (fruit: Fruit) => {
@@ -35,20 +8,25 @@ const FruitList = () => {
 	}
 
 	return (
-		<List>
-			{fruits.map(fruit => (
-				<List.Item 
-					title={fruit.name}
-					icon={fruit.emoji}
-					key={fruit.name} 
-					actions={
-						<ActionPanel>
-							<Action.CopyToClipboard title={"Copy to clipboard"} content={fruit.emoji} />
-							<Action title="Custom callback" icon={Icon.Pencil} onAction={() => handleCustomCallback(fruit)} />
-						</ActionPanel>
-					}
-				/>
-			))}
+		<List isShowingDetail searchBarPlaceholder={'Search for a fruit'}>
+			<List.Section title={"Fruits"}>
+				{fruits.map(fruit => (
+					<List.Item 
+						title={fruit.name}
+						icon={fruit.emoji}
+						key={fruit.name} 
+						detail={
+							<List.Item.Detail markdown={fruit.description} />
+						}
+						actions={
+							<ActionPanel>
+								<Action.CopyToClipboard title={"Copy to clipboard"} content={fruit.emoji} />
+								<Action title="Custom callback" icon={Icon.Pencil} onAction={() => handleCustomCallback(fruit)} />
+							</ActionPanel>
+						}
+					/>
+				))}
+			</List.Section>
 		</List>
 	);
 }
