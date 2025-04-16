@@ -3,6 +3,7 @@
 #include "ui/detail-widget.hpp"
 #include "ui/markdown/markdown-renderer.hpp"
 #include <qevent.h>
+#include <qnamespace.h>
 
 class ExtensionListDetail : public DetailWidget {
   MarkdownRenderer *markdownRenderer = new MarkdownRenderer;

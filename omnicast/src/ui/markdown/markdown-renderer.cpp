@@ -16,6 +16,7 @@
 #include <qplaintextedit.h>
 #include <qresource.h>
 #include <qsize.h>
+#include <qsqlquery.h>
 #include <qstringview.h>
 #include <QTextDocumentFragment>
 #include <QTextList>
@@ -23,6 +24,8 @@
 #include <qtextdocument.h>
 #include <qtextformat.h>
 #include <qtextlist.h>
+#include <qurl.h>
+#include <qurlquery.h>
 #include <x86gprintrin.h>
 
 int MarkdownRenderer::getHeadingLevelPointSize(int level) const {
@@ -50,17 +53,49 @@ void MarkdownRenderer::insertHeading(const QString &text, int level) {
 }
 
 void MarkdownRenderer::insertImage(cmark_node *node) {
+  static std::vector<const char *> widthAttributes = {"raycast-width", "omnicast-width", "width"};
+  static std::vector<const char *> heightAttributes = {"raycast-height", "omnicast-height", "height"};
+  static std::vector<const char *> tintAttributes = {"raycast-colorTint", "omnicast-colorTint", "colorTint"};
+
   const char *p = cmark_node_get_url(node);
-  QUrl resourceName(QString("doc://%1").arg(QUuid::createUuid().toString()));
+  QUrl url(p);
+  QUrlQuery query(url);
   auto icon = new OmniIcon(this);
   auto pos = _cursor.position();
-
-  QString url(p);
-  auto scrollBar = _textEdit->verticalScrollBar();
   auto documentMargin = _document->documentMargin();
   int widthOffset = documentMargin * 4;
 
   icon->setFixedSize(size().width() - widthOffset, size().height() - documentMargin * 2);
+
+  for (const auto &attr : widthAttributes) {
+    if (auto value = query.queryItemValue(attr); !value.isEmpty()) {
+      icon->setFixedWidth(value.toInt());
+      break;
+    }
+  }
+
+  for (const auto &attr : heightAttributes) {
+    if (auto value = query.queryItemValue(attr); !value.isEmpty()) {
+      icon->setFixedHeight(value.toInt());
+      break;
+    }
+  }
+
+  OmniIconUrl iconUrl;
+
+  for (const auto &attr : tintAttributes) {
+    // implement for tint
+  }
+
+  if (url.scheme() == "https") {
+    iconUrl.setType(OmniIconType::Http);
+    iconUrl.setName(url.host() + url.path());
+  }
+
+  if (url.scheme() == "file") {
+    iconUrl.setType(OmniIconType::Local);
+    iconUrl.setName(url.host() + url.path());
+  }
 
   connect(icon, &OmniIcon::imageUpdated, this, [this, url, pos](const QPixmap &pix) {
     QTextBlockFormat blockFormat;
@@ -75,20 +110,15 @@ void MarkdownRenderer::insertImage(cmark_node *node) {
 
     if (!_cursor.block().text().isEmpty()) { _cursor.insertBlock(blockFormat); }
 
-    _cursor.insertImage(url);
+    _cursor.insertImage(url.toString());
     _cursor.setPosition(old);
   });
 
-  QUrl imageUrl(url);
+  icon->setUrl(iconUrl);
+  icon->show();
+  icon->hide();
 
-  if (imageUrl.scheme() == "https") {
-    qDebug() << "loading image" << url;
-    icon->setUrl(HttpOmniIconUrl(imageUrl));
-    icon->show();
-    icon->hide();
-  }
-
-  m_images.push_back({.cursorPos = _cursor.position(), .icon = icon, .name = resourceName});
+  m_images.push_back({.cursorPos = _cursor.position(), .icon = icon});
 }
 
 void MarkdownRenderer::insertCodeBlock(cmark_node *node, bool isClosing) {
@@ -410,6 +440,7 @@ MarkdownRenderer::MarkdownRenderer()
   _textEdit->setHorizontalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
   _textEdit->setTabStopDistance(40);
   _textEdit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  _textEdit->setFocusPolicy(Qt::FocusPolicy::NoFocus);
 
   /*j
   connect(_document->documentLayout(), &QAbstractTextDocumentLayout::documentSizeChanged, this,
