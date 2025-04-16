@@ -27,83 +27,82 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
   qDebug() << "render";
   auto newModel = std::get<ListModel>(baseModel);
 
-  QTimer::singleShot(0, [this, newModel]() {
-    if (!newModel.navigationTitle.isEmpty()) { setNavigationTitle(newModel.navigationTitle); }
-    if (!newModel.searchPlaceholderText.isEmpty()) {
-      setSearchPlaceholderText(newModel.searchPlaceholderText);
-    }
+  if (!newModel.navigationTitle.isEmpty()) {
+    qDebug() << "set navigation title" << newModel.navigationTitle;
+    setNavigationTitle(newModel.navigationTitle);
+  }
+  if (!newModel.searchPlaceholderText.isEmpty()) { setSearchPlaceholderText(newModel.searchPlaceholderText); }
 
-    if (auto text = newModel.searchText) {
-      qDebug() << "[DEBUG] SET SEARCH TEXT" << text;
-      setSearchText(*text);
-    }
+  if (auto text = newModel.searchText) {
+    qDebug() << "[DEBUG] SET SEARCH TEXT" << text;
+    setSearchText(*text);
+  }
 
-    if (newModel.throttle != _model.throttle) {
-      _debounce->stop();
+  if (newModel.throttle != _model.throttle) {
+    _debounce->stop();
 
-      if (newModel.throttle) {
-        _debounce->setInterval(THROTTLE_DEBOUNCE_DURATION);
-      } else {
-        _debounce->setInterval(0);
-      }
-    }
-
-    setLoading(newModel.isLoading);
-
-    std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> items;
-
-    items.reserve(newModel.items.size());
-
-    for (const auto &item : newModel.items) {
-      if (auto listItem = std::get_if<ListItemViewModel>(&item)) {
-        items.push_back(std::make_unique<ExtensionListItem>(*listItem));
-      } else if (auto section = std::get_if<ListSectionModel>(&item)) {
-        items.push_back(std::make_unique<OmniList::VirtualSection>(section->title));
-
-        for (const auto &item : section->children) {
-          items.push_back(std::make_unique<ExtensionListItem>(item));
-        }
-      }
-    }
-
-    if (!newModel.searchText) {
-      if (newModel.filtering) {
-        _list->setFilter(std::make_unique<BuiltinExtensionItemFilter>(searchText()));
-      } else {
-        _list->clearFilter();
-      }
-    }
-
-    _list->invalidateCache();
-
-    _model = newModel;
-
-    if (_shouldResetSelection) {
-      _shouldResetSelection = false;
-      _list->updateFromList(items, OmniList::SelectFirst);
+    if (newModel.throttle) {
+      _debounce->setInterval(THROTTLE_DEBOUNCE_DURATION);
     } else {
-      _list->updateFromList(items, OmniList::KeepSelection);
+      _debounce->setInterval(0);
     }
+  }
 
-    if (!_list->isShowingEmptyState()) { m_split->setDetailVisibility(newModel.isShowingDetail); }
+  setLoading(newModel.isLoading);
 
-    if (_list->isShowingEmptyState()) {
-      size_t i = 0;
+  std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> items;
 
-      if (auto pannel = newModel.actions) {
-        for (auto &item : pannel->children) {
-          if (auto action = std::get_if<ActionModel>(&item)) {
-            if (i == 0) action->shortcut = primaryShortcut;
-            if (i == 1) action->shortcut = secondaryShortcut;
+  items.reserve(newModel.items.size());
 
-            ++i;
-          }
-        }
+  for (const auto &item : newModel.items) {
+    if (auto listItem = std::get_if<ListItemViewModel>(&item)) {
+      items.push_back(std::make_unique<ExtensionListItem>(*listItem));
+    } else if (auto section = std::get_if<ListSectionModel>(&item)) {
+      items.push_back(std::make_unique<OmniList::VirtualSection>(section->title));
 
-        emit updateActionPannel(*pannel);
+      for (const auto &item : section->children) {
+        items.push_back(std::make_unique<ExtensionListItem>(item));
       }
     }
-  });
+  }
+
+  if (!newModel.searchText) {
+    if (newModel.filtering) {
+      _list->setFilter(std::make_unique<BuiltinExtensionItemFilter>(searchText()));
+    } else {
+      _list->clearFilter();
+    }
+  }
+
+  _list->invalidateCache();
+
+  _model = newModel;
+
+  if (_shouldResetSelection) {
+    _shouldResetSelection = false;
+    _list->updateFromList(items, OmniList::SelectFirst);
+  } else {
+    _list->updateFromList(items, OmniList::KeepSelection);
+  }
+
+  if (!_list->isShowingEmptyState()) { m_split->setDetailVisibility(newModel.isShowingDetail); }
+
+  if (_list->isShowingEmptyState()) {
+    size_t i = 0;
+
+    if (auto pannel = newModel.actions) {
+      for (auto &item : pannel->children) {
+        if (auto action = std::get_if<ActionModel>(&item)) {
+          if (i == 0) action->shortcut = primaryShortcut;
+          if (i == 1) action->shortcut = secondaryShortcut;
+
+          ++i;
+        }
+      }
+
+      emit updateActionPannel(*pannel);
+    }
+  }
 }
 
 void ExtensionListComponent::onSelectionChanged(const OmniList::AbstractVirtualItem *next,

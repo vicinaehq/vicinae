@@ -77,7 +77,8 @@ private slots:
     connect(view, &ExtensionView::updateActionPannel, this, &ExtensionCommandContext::updateActionPannel);
 
     viewStack.push_back(view);
-    app()->pushView(view, {.navigation = NavigationStatus{.title = "fixme", .iconUrl = command.iconUrl()}});
+    app()->pushView(view,
+                    {.navigation = NavigationStatus{.title = command.name(), .iconUrl = command.iconUrl()}});
   }
 
   void handlePopViewRequest() {
@@ -250,6 +251,7 @@ public:
 
     auto preferenceValues = app()->commandDb->getPreferenceValues(command.id());
 
+    pushView(new ExtensionView(*app(), command));
     app()->extensionManager->loadCommand(command.extensionId(), command.id(), preferenceValues);
   }
 

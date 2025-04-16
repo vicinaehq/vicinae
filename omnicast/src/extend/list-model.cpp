@@ -70,9 +70,10 @@ ListModel ListModelParser::parse(const QJsonObject &instance) {
   model.isLoading = props["isLoading"].toBool(false);
   model.throttle = props["throttle"].toBool(false);
   model.isShowingDetail = props["isShowingDetail"].toBool(false);
-  model.navigationTitle = props["navigationTitle"].toString("Command");
   model.searchPlaceholderText = props["searchBarPlaceholder"].toString();
   model.filtering = props["filtering"].toBool(defaultFiltering);
+
+  if (props.contains("navigationTitle")) { model.navigationTitle = props["navigationTitle"].toString(); }
 
   if (props.contains("onSearchTextChange")) {
     model.onSearchTextChange = props.value("onSearchTextChange").toString();

@@ -614,7 +614,6 @@ class HttpOmniIconWidget : public OmniIconWidget {
     qDebug() << "fetch " << url.toString();
 
     connect(reply, &ImageReply::imageLoaded, this, [this, reply](QPixmap pixmap) {
-      qDebug() << "got reply";
       auto targetSize = size();
       auto future = QtConcurrent::run([this, targetSize, pixmap]() {
         return pixmap.scaled(size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
