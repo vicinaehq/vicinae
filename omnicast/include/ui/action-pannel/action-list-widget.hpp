@@ -2,11 +2,12 @@
 #include "omni-icon.hpp"
 #include "ui/keyboard-shortcut-indicator.hpp"
 #include "ui/selectable-omni-list-widget.hpp"
+#include "ui/typography.hpp"
 
 class ActionListWidget : public SelectableOmniListWidget {
-  OmniIcon *_icon;
-  QLabel *_label;
-  KeyboardShortcutIndicatorWidget *_shortcut;
+  OmniIcon *m_icon;
+  TypographyWidget *m_label;
+  KeyboardShortcutIndicatorWidget *m_shortcut;
 
 public:
   ActionListWidget &setIconUrl(const OmniIconUrl &url);

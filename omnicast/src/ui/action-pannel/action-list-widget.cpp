@@ -1,23 +1,24 @@
 #include "ui/action-pannel/action-list-widget.hpp"
+#include "ui/typography.hpp"
 
 ActionListWidget &ActionListWidget::setIconUrl(const OmniIconUrl &url) {
-  _icon->setUrl(url);
+  m_icon->setUrl(url);
   return *this;
 }
 
 ActionListWidget &ActionListWidget::setShortcut(const KeyboardShortcutModel &shortcut) {
-  _shortcut->setShortcut(shortcut);
-  _shortcut->show();
+  m_shortcut->setShortcut(shortcut);
+  m_shortcut->show();
   return *this;
 }
 
 ActionListWidget &ActionListWidget::clearShortcut() {
-  _shortcut->hide();
+  m_shortcut->hide();
   return *this;
 }
 
 ActionListWidget &ActionListWidget::setTitle(const QString &title) {
-  _label->setText(title);
+  m_label->setText(title);
   return *this;
 }
 
@@ -26,26 +27,26 @@ void ActionListWidget::selectionChanged(bool selected) {
   auto &theme = ThemeService::instance().theme();
 
   if (selected) {
-    _shortcut->setBackgroundColor(theme.colors.statusBackground);
+    m_shortcut->setBackgroundColor(theme.colors.statusBackground);
   } else {
-    _shortcut->setBackgroundColor(theme.colors.statusBackground);
+    m_shortcut->setBackgroundColor(theme.colors.statusBackground);
   }
 }
 
 ActionListWidget::ActionListWidget()
-    : _icon(new OmniIcon), _label(new QLabel), _shortcut(new KeyboardShortcutIndicatorWidget) {
+    : m_icon(new OmniIcon), m_label(new TypographyWidget), m_shortcut(new KeyboardShortcutIndicatorWidget) {
   auto &theme = ThemeService::instance().theme();
   auto layout = new QHBoxLayout;
 
-  _shortcut->hide();
-  _shortcut->setBackgroundColor(theme.colors.statusBackground);
+  m_shortcut->hide();
+  m_shortcut->setBackgroundColor(theme.colors.statusBackground);
 
-  _icon->setFixedSize(22, 22);
+  m_icon->setFixedSize(22, 22);
   layout->setAlignment(Qt::AlignVCenter);
   layout->setSpacing(10);
-  layout->addWidget(_icon);
-  layout->addWidget(_label);
-  layout->addWidget(_shortcut, 0, Qt::AlignRight);
+  layout->addWidget(m_icon);
+  layout->addWidget(m_label);
+  layout->addWidget(m_shortcut, 0, Qt::AlignRight);
   layout->setContentsMargins(8, 8, 8, 8);
 
   setLayout(layout);
