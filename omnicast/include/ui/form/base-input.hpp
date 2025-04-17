@@ -1,9 +1,10 @@
 #pragma once
+#include "common.hpp"
 #include <qevent.h>
 #include <qlineedit.h>
 #include <QFocusEvent>
 
-class BaseInput : public QLineEdit {
+class BaseInput : public QLineEdit, public IJsonSerializable {
   QWidget *rightAccessory;
   QWidget *leftAccessory;
   bool _focused;
@@ -13,6 +14,8 @@ class BaseInput : public QLineEdit {
   void resizeEvent(QResizeEvent *event) override;
   void setFocusState(bool value);
   void recalculate();
+
+  QJsonValue asJsonValue() const override;
 
 public:
   void setLeftAccessory(QWidget *widget);

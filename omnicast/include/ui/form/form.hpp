@@ -1,3 +1,4 @@
+#pragma once
 #include "ui/form/form-field.hpp"
 #include <qwidget.h>
 

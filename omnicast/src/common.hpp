@@ -9,6 +9,7 @@
 #include <qevent.h>
 #include <qframe.h>
 #include <qicon.h>
+#include <qjsonvalue.h>
 #include <qlabel.h>
 #include <qnamespace.h>
 #include <qpainter.h>
@@ -112,4 +113,8 @@ public:
   VDivider(QWidget *parent = nullptr) : QFrame(parent), _width(1), _color("#222222") {
     setFixedWidth(_width);
   }
+};
+
+struct IJsonSerializable {
+  virtual QJsonValue asJsonValue() const = 0;
 };

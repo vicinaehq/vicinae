@@ -1,5 +1,4 @@
 #pragma once
-#include "extend/color-model.hpp"
 #include <qapplication.h>
 #include <qcolor.h>
 #include <qobject.h>
@@ -8,7 +7,7 @@
 #include <qtmetamacros.h>
 
 enum ColorTint { InvalidTint, Blue, Green, Magenta, Orange, Purple, Red, Yellow, TextPrimary, TextSecondary };
-enum TextSize { TextRegular, TextTitle };
+enum TextSize { TextHeading, TextRegular, TextTitle };
 
 struct ThemeLinearGradient {
   std::vector<QColor> points;
@@ -128,16 +127,21 @@ public:
   void setTheme(const ThemeInfo &info) {
     _theme = info;
 
+    /*
+     *		QWidget {
+                    font-family: 'SF Pro Text';
+                    font-size: 10pt;
+                    font-weight: lighter;
+                    letter-spacing: -0.5px;
+            }
+            */
+
     auto style = QString(R"(
-		QWidget {
-			font-family: 'SF Pro Text';
-			font-size: 10pt;
-			font-weight: lighter;
-			letter-spacing: -0.5px;
-		}
+
 		QLineEdit, QTextEdit {
 			background-color: transparent;
 			border: none;
+            font-size: 10pt;
 		}
 		QLineEdit:focus[form-input="true"] {
 			border-color: %1;

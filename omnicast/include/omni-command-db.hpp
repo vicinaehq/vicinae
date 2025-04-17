@@ -1,6 +1,7 @@
 #pragma once
 #include "command-database.hpp"
 #include "omni-database.hpp"
+#include <qjsondocument.h>
 #include <qjsonobject.h>
 #include <qlogging.h>
 #include <qobject.h>
@@ -10,6 +11,7 @@
 struct CommandDbEntry {
   std::shared_ptr<AbstractCmd> command;
   bool disabled;
+  QString repositoryId;
 };
 
 class OmniCommandDatabase : public QObject {
@@ -18,6 +20,28 @@ class OmniCommandDatabase : public QObject {
   OmniDatabase &db;
   std::vector<CommandDbEntry> entries;
   std::vector<std::shared_ptr<AbstractCommandRepository>> repositories;
+
+  bool insertRepository(const QString &id) {
+    QSqlQuery query(db.db());
+
+    query.prepare("INSERT INTO extension (id) VALUES (:id) ON CONFLICT DO NOTHING;");
+    query.bindValue(":id", id);
+
+    if (!query.exec()) {
+      qDebug() << "Failed to insertRepository" << query.lastError();
+      return false;
+    }
+
+    return true;
+  }
+
+  const AbstractCommandRepository *findRepository(const QString &id) {
+    for (const auto &repo : repositories) {
+      if (repo->id() == id) return repo.get();
+    }
+
+    return nullptr;
+  }
 
 public:
   std::vector<CommandDbEntry> commands() const { return entries; }
@@ -106,9 +130,10 @@ public:
       return {};
     }
 
-    auto preferenceValues = query.value(0).toJsonObject();
+    auto json = QJsonDocument::fromJson(query.value(0).toString().toUtf8());
+    auto preferenceValues = json.object();
 
-    for (auto &pref : cmdEntry->command->preferences()) {
+    for (auto pref : cmdEntry->command->preferences()) {
       auto dflt = pref->defaultValueAsJson();
 
       if (!preferenceValues.contains(pref->name()) && !dflt.isNull()) {
@@ -119,7 +144,81 @@ public:
     return preferenceValues;
   }
 
-  void setPreferenceValues(const QString &id, const QJsonObject &preferences) {}
+  bool setRepositoryPreferenceValues(const QString &repositoryId, const QJsonObject &preferences) {
+    QSqlQuery query(db.db());
+    QJsonDocument json;
+
+    json.setObject(preferences);
+    query.prepare("UPDATE extension SET preference_values = :preferences WHERE id = :id");
+    query.bindValue(":preferences", json.toJson());
+    query.bindValue(":id", repositoryId);
+
+    if (!query.exec()) {
+      qDebug() << "setRepositoryPreferenceValues:" << query.lastError();
+      return false;
+    }
+
+    return true;
+  }
+
+  bool setCommandPreferenceValues(const QString &id, const QJsonObject &preferences) {
+    QSqlQuery query(db.db());
+    QJsonDocument json;
+
+    if (!query.prepare("UPDATE command SET preference_values = :preferences WHERE id = :id")) {
+      qDebug() << "Failed to prepare update preference query" << query.lastError().driverText();
+      return false;
+    }
+
+    json.setObject(preferences);
+    query.bindValue(":preferences", json.toJson());
+    query.bindValue(":id", id);
+
+    if (!query.exec()) {
+      qDebug() << "setCommandPreferenceValues:" << query.lastError().driverText();
+      return false;
+    }
+
+    return true;
+  }
+
+  void setPreferenceValues(const QString &id, const QJsonObject &preferences) {
+    auto cmdEntry = findCommand(id);
+    QJsonObject extensionPreferences, commandPreferences;
+
+    if (!cmdEntry) {
+      qDebug() << "No command entry with ID" << id;
+      return;
+    };
+
+    auto repository = findRepository(cmdEntry->repositoryId);
+
+    for (const auto &preference : cmdEntry->command->preferences()) {
+      auto &prefId = preference->name();
+      bool isRepositoryPreference = false;
+
+      if (repository) {
+        for (const auto &preference : repository->preferences()) {
+          if (preferences.contains(prefId)) {
+            extensionPreferences[prefId] = preferences.value(prefId);
+            isRepositoryPreference = true;
+            break;
+          }
+        }
+      }
+
+      if (!isRepositoryPreference && preferences.contains(prefId)) {
+        commandPreferences[prefId] = preferences.value(prefId);
+      }
+    }
+
+    db.db().transaction();
+    if (repository) { setRepositoryPreferenceValues(repository->id(), extensionPreferences); }
+    setCommandPreferenceValues(id, commandPreferences);
+    db.db().commit();
+
+    for (const auto &key : preferences.keys()) {}
+  }
 
   bool setDisable(const QString &id, bool value) {
     for (auto &cmd : entries) {
@@ -145,22 +244,23 @@ public:
     return false;
   }
 
-  void registerCommand(const std::shared_ptr<AbstractCmd> &cmd) {
+  void registerCommand(const QString &repositoryId, const std::shared_ptr<AbstractCmd> &cmd) {
     QSqlQuery query(db.db());
 
     qDebug() << "registering command with id" << cmd->id();
 
     query.prepare(R"(
-		INSERT INTO command (id, disabled)
-		VALUES (:id, :disabled)
+		INSERT INTO command (id, extension_id, disabled)
+		VALUES (:id, :extension_id, :disabled)
 		ON CONFLICT DO NOTHING
 	)");
     query.bindValue(":id", cmd->id());
+    query.bindValue(":extension_id", repositoryId);
     query.bindValue(":disabled", false);
 
     if (!query.exec()) { qDebug() << "Failed to register command" << cmd->id(); }
     if (!hasCommand(cmd->id())) {
-      auto entry = CommandDbEntry{.command = cmd, .disabled = false};
+      auto entry = CommandDbEntry{.command = cmd, .disabled = false, .repositoryId = repositoryId};
 
       // TODO: use something better
       entries.insert(entries.begin(), entry);
@@ -174,9 +274,26 @@ public:
       return;
     }
 
-    for (const auto &cmd : repository->commands()) {
-      registerCommand(cmd);
+    if (!insertRepository(repository->id())) {
+      qDebug() << "registerRepository: failed to insert repository";
+      return;
     }
+
+    for (const auto &cmd : repository->commands()) {
+      registerCommand(repository->id(), cmd);
+    }
+
+    int index = -1;
+
+    for (int i = 0; i != repositories.size(); ++i) {
+      if (repositories[i]->id() == repository->id()) {
+        repositories[i] = repository;
+        index = i;
+        break;
+      }
+    }
+
+    if (index == -1) { repositories.push_back(repository); }
 
     db.db().commit();
   }

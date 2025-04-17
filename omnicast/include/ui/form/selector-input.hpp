@@ -1,4 +1,6 @@
 #pragma once
+#include "common.hpp"
+#include "omni-icon.hpp"
 #include "ui/form/base-input.hpp"
 #include "ui/omni-list.hpp"
 #include "ui/popover.hpp"
@@ -7,13 +9,13 @@
 #include <qobject.h>
 #include <qtmetamacros.h>
 
-class SelectorInput : public QWidget {
+class SelectorInput : public QWidget, public IJsonSerializable {
 public:
   class AbstractItem : public AbstractDefaultListItem {
   public:
     AbstractItem() {}
 
-    virtual OmniIconUrl icon() const = 0;
+    virtual OmniIconUrl icon() const { return BuiltinOmniIconUrl("circle"); };
     virtual QString displayName() const = 0;
 
     /**
@@ -39,6 +41,8 @@ public:
   public:
     ItemFilter(const QString &query) : query(query) {}
   };
+
+  QJsonValue asJsonValue() const override;
 
 private:
   Q_OBJECT

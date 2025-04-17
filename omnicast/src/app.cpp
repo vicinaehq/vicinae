@@ -7,6 +7,7 @@
 #include "command-server.hpp"
 #include <QGraphicsBlurEffect>
 #include "clipboard/clipboard-server-factory.hpp"
+#include "extension/missing-extension-preference-view.hpp"
 #include "command.hpp"
 #include "config.hpp"
 #include "extension/extension.hpp"
@@ -253,6 +254,14 @@ void AppWindow::launchCommand(const std::shared_ptr<AbstractCmd> &command, const
 
   for (const auto &preference : command->preferences()) {
     if (preference->isRequired() && !preferenceValues.contains(preference->name())) {
+      if (command->type() == CommandType::CommandTypeExtension) {
+        auto extensionCommand = std::static_pointer_cast<ExtensionCommand>(command);
+
+        pushView(new MissingExtensionPreferenceView(*this, extensionCommand),
+                 {.navigation = NavigationStatus{.title = command->name(), .iconUrl = command->iconUrl()}});
+        return;
+      }
+
       qDebug() << "MISSING PREFERENCE" << preference->title();
     }
   }

@@ -1,6 +1,7 @@
 #include "ui/form/selector-input.hpp"
 #include "common.hpp"
 #include <memory>
+#include <qjsonvalue.h>
 
 bool SelectorInput::eventFilter(QObject *obj, QEvent *event) {
   if (obj == popover) {
@@ -41,6 +42,10 @@ bool SelectorInput::eventFilter(QObject *obj, QEvent *event) {
   }
 
   return false;
+}
+
+QJsonValue SelectorInput::asJsonValue() const {
+  return _currentSelection ? _currentSelection->id() : QJsonValue();
 }
 
 SelectorInput::SelectorInput(const QString &name)

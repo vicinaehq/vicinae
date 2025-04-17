@@ -26,6 +26,9 @@ struct BasePreference {
   const QString &description() const { return _description; }
   const QString &placeholder() const { return _placeholder; }
   PreferenceType type() const { return _type; }
+  bool isDropdownType() const { return _type == DropdownPreferenceType; }
+  bool isTextType() const { return _type == TextFieldPreferenceType || _type == PasswordPreferenceType; }
+  bool isPasswordType() const { return _type == PasswordPreferenceType; }
   bool isRequired() const { return _required; }
 
   auto &setName(const QString &name) {
@@ -66,10 +69,10 @@ struct TextFieldPreference : BasePreference {
 
   void setDefaultValue(const std::optional<QString> &value) { _defaultValue = value; }
 
-  QJsonValue defaultValueAsJson() const override { return _defaultValue ? *_defaultValue : QJsonValue(); }
+  QJsonValue defaultValueAsJson() const override { return _defaultValue ? (*_defaultValue) : QJsonValue(); }
 };
 
-struct PasswordPreference : TextFieldPreference {
+struct PasswordPreference : public TextFieldPreference {
   PasswordPreference(const BasePreference &base) : TextFieldPreference(base) {
     setType(PreferenceType::PasswordPreferenceType);
   }

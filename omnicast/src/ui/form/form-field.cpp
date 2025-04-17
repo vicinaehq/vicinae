@@ -1,7 +1,12 @@
 #include "ui/form/form-field.hpp"
+#include "theme.hpp"
+#include "ui/typography.hpp"
 
 FormField::FormField(QWidget *widget, const QString &name)
-    : _nameLabel(new QLabel(name)), _errorLabel(new QLabel), _widget(widget), _layout(new QHBoxLayout) {
+    : _nameLabel(new TypographyWidget), _errorLabel(new TypographyWidget), _widget(widget),
+      _layout(new QHBoxLayout) {
+  _nameLabel->setText(name);
+  _errorLabel->setColor(ColorTint::Red);
   _layout->setSpacing(20);
   _layout->addWidget(_nameLabel, 1, Qt::AlignVCenter | Qt::AlignRight);
   _layout->addWidget(widget, 4, Qt::AlignVCenter);
@@ -18,3 +23,10 @@ void FormField::clearError() { _errorLabel->clear(); }
 void FormField::focus() const { _widget->setFocus(); }
 
 QWidget *FormField::widget() const { return _widget; }
+
+void FormField::setWidget(QWidget *widget) {
+  auto current = _layout->itemAt(1)->widget();
+
+  _layout->replaceWidget(current, widget);
+  current->deleteLater();
+}

@@ -1,4 +1,5 @@
 #include <qevent.h>
+#include <qjsonvalue.h>
 #include <qlineedit.h>
 #include <qpainter.h>
 #include "ui/form/base-input.hpp"
@@ -75,6 +76,8 @@ void BaseInput::setRightAccessory(QWidget *widget) {
   rightAccessory->setFixedSize(18, 18);
   rightAccessory->setParent(this);
 }
+
+QJsonValue BaseInput::asJsonValue() const { return text(); }
 
 BaseInput::BaseInput(QWidget *parent)
     : QLineEdit(parent), leftAccessory(nullptr), rightAccessory(nullptr), _focused(false) {

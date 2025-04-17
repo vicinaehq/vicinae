@@ -1,4 +1,5 @@
-import { Action, ActionPanel, Detail, Icon, List } from "@omnicast/api"
+import { Action, ActionPanel, Detail, getPreferenceValues, Icon, List } from "@omnicast/api"
+import { useEffect } from "react";
 import { Fruit, fruits } from "./fruits";
 
 
@@ -6,6 +7,10 @@ const FruitList = () => {
 	const handleCustomCallback = (fruit: Fruit) => {
 		console.log('custom callback fired with', fruit);
 	}
+
+	useEffect(() => {
+		console.log({ preferences: getPreferenceValues() });
+	}, []);
 
 	return (
 		<List isShowingDetail searchBarPlaceholder={'Search for a fruit'}>
@@ -34,5 +39,6 @@ const FruitList = () => {
 const ExampleCommand = () => {
 	return <FruitList />
 }
+
 
 export default ExampleCommand;

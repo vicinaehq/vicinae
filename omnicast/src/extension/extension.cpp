@@ -46,7 +46,11 @@ Extension::Extension(const QJsonObject &obj) {
   qDebug() << "preferences" << preferenceList.size();
 
   for (const auto &preference : preferenceList) {
-    _preferences.push_back(parsePreferenceFromObject(preference.toObject()));
+    auto pref = parsePreferenceFromObject(preference.toObject());
+
+    if (!pref) continue;
+
+    _preferences.push_back(pref);
   }
 
   for (const auto &cmd : commandList) {

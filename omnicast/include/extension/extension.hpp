@@ -48,7 +48,7 @@ public:
     if (type == "textfield") {
       auto textField = std::make_shared<TextFieldPreference>(base);
 
-      textField->setDefaultValue(obj["default"].toString());
+      if (obj.contains("default")) { textField->setDefaultValue(obj.value("default").toString()); }
 
       return textField;
     }
@@ -56,7 +56,7 @@ public:
     if (type == "password") {
       auto password = std::make_shared<PasswordPreference>(base);
 
-      password->setDefaultValue(obj["default"].toString());
+      if (obj.contains("default")) { password->setDefaultValue(obj.value("default").toString()); }
 
       return password;
     }
@@ -64,8 +64,9 @@ public:
     if (type == "checkbox") {
       auto checkbox = std::make_shared<CheckboxPreference>(base);
 
+      if (obj.contains("default")) { checkbox->setDefaultValue(obj.value("default").toBool()); }
+
       checkbox->setLabel(obj["label"].toString());
-      checkbox->setDefaultValue(obj["default"].toBool());
 
       return checkbox;
     }

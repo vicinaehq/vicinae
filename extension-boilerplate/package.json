@@ -33,6 +33,22 @@
     }
   ],
   "preferences": [
+	{
+      "name": "apiToken",
+      "type": "password",
+      "required": true,
+      "title": "API Token",
+	  "placeholder": "Your API token",
+      "description": "API token to access the service"
+    },
+	{
+      "name": "baseUrl",
+      "type": "textfield",
+      "required": true,
+      "title": "Base URL",
+	  "placeholder": "http://localhost:3000",
+      "description": "The base URL for the service"
+    },
     {
       "name": "examplePreference",
       "type": "checkbox",

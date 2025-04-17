@@ -21,89 +21,49 @@ class TypographyWidget : public QLabel {
 
 protected:
   void paintEvent(QPaintEvent *event) override {
-    // if (_pixmap.isNull() || _pixmap.size() != size()) { _pixmap = renderToPixmap(); }
-
     OmniPainter painter(this);
-
     QPalette pal = palette();
 
     pal.setBrush(QPalette::WindowText, painter.colorBrush(_color));
 
     setPalette(pal);
-
     QLabel::paintEvent(event);
-
-    // painter.drawPixmap(rect(), _pixmap);
-  }
-
-  /*
-  QSize sizeHint() const override {
-    auto fm = fontMetrics();
-
-    return {fm.horizontalAdvance(_text), fm.height()};
-  }
-
-  void resizeEvent(QResizeEvent *event) override {
-    QWidget::resizeEvent(event);
-
-    recompute();
-  }
-  */
-
-  void recompute() {
-    if (!size().isValid()) return;
-
-    auto f = font();
-
-    f.setPointSize(theme.pointSize(_size));
-    f.setWeight(_weight);
-    setFont(f);
-
-    _pixmap = renderToPixmap();
-    update();
   }
 
 public:
-  QPixmap renderToPixmap() {
-    if (size().isEmpty()) return {};
-
-    QPixmap pix(size());
-    OmniPainter painter(&pix);
-
-    pix.fill(Qt::transparent);
-    painter.setFont(font());
-    painter.drawText(rect(), _align, _text);
-    painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
-    painter.setPen(Qt::NoPen);
-    painter.fillRect(rect(), _color);
-
-    return pix;
-  }
-
-  /*
-  void setText(const QString &text) {
-    _text = text;
-    updateGeometry();
-  }
-  */
-
   void setColor(const ColorLike &color) {
     _color = color;
     update();
   }
 
   void setFontWeight(QFont::Weight weight) {
+    QFont _font = font();
+
+    _font.setPointSize(theme.pointSize(_size));
+    _font.setWeight(weight);
+    setFont(_font);
+
     _weight = weight;
-    recompute();
+    updateGeometry();
   }
 
   void setSize(TextSize size) {
+    QFont _font = font();
+
+    _font.setPointSize(theme.pointSize(size));
+    _font.setWeight(_weight);
+
+    setFont(_font);
+
     _size = size;
     updateGeometry();
-    recompute();
   }
+
+  bool hasHeightForWidth() const override { return false; }
 
   TypographyWidget(TextSize size = TextSize::TextRegular, ColorTint color = ColorTint::TextPrimary,
                    QWidget *parent = nullptr)
-      : QLabel(parent), _size(size), _color(color) {}
+      : QLabel(parent), _size(size), _color(color) {
+    setSize(size);
+  }
 };
