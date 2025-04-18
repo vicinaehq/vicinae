@@ -5,11 +5,12 @@
 #include "ui/omni-list.hpp"
 #include "ui/popover.hpp"
 #include <memory>
+#include <qjsonvalue.h>
 #include <qlineedit.h>
 #include <qobject.h>
 #include <qtmetamacros.h>
 
-class SelectorInput : public QWidget, public IJsonSerializable {
+class SelectorInput : public QWidget, public IJsonFormField {
 public:
   class AbstractItem : public AbstractDefaultListItem {
   public:
@@ -80,6 +81,7 @@ public:
   void updateItem(const QString &id, const UpdateItemCallback &cb);
   const AbstractItem *value() const;
   void setValue(const QString &id);
+  void setValueAsJson(const QJsonValue &value) override;
   QString searchText();
 
 signals:

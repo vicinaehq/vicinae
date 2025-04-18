@@ -8,8 +8,8 @@ FormField::FormField(QWidget *widget, const QString &name)
   _nameLabel->setText(name);
   _errorLabel->setColor(ColorTint::Red);
   _layout->setSpacing(20);
-  _layout->addWidget(_nameLabel, 1, Qt::AlignVCenter | Qt::AlignRight);
-  _layout->addWidget(widget, 4, Qt::AlignVCenter);
+  _layout->addWidget(_nameLabel, 2, Qt::AlignVCenter | Qt::AlignRight);
+  _layout->addWidget(widget, 5, Qt::AlignVCenter);
   _layout->addWidget(_errorLabel, 2, Qt::AlignVCenter);
   setLayout(_layout);
 }

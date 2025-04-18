@@ -122,7 +122,9 @@ public:
 
   QJsonValue defaultValueAsJson() const override { return _defaultValue ? *_defaultValue : QJsonValue(); }
 
-  DropdownPreference(const BasePreference base = {}) : BasePreference(base) {}
+  DropdownPreference(const BasePreference base = {}) : BasePreference(base) {
+    setType(DropdownPreferenceType);
+  }
 };
 
 using PreferenceList = std::vector<std::shared_ptr<BasePreference>>;

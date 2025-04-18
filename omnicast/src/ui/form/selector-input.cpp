@@ -48,6 +48,8 @@ QJsonValue SelectorInput::asJsonValue() const {
   return _currentSelection ? _currentSelection->id() : QJsonValue();
 }
 
+void SelectorInput::setValueAsJson(const QJsonValue &value) { setValue(value.toString()); }
+
 SelectorInput::SelectorInput(const QString &name)
     : list(new OmniList), inputField(new BaseInput), searchField(new QLineEdit()), popover(new Popover(this)),
       collapseIcon(new OmniIcon), selectionIcon(new OmniIcon) {

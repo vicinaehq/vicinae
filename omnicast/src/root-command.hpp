@@ -1,6 +1,7 @@
 #pragma once
 #include "app/app-database.hpp"
 #include "command-database.hpp"
+#include "edit-command-preferences-view.hpp"
 #include "extension/extension.hpp"
 #include "omni-command-db.hpp"
 #include "ui/action-pannel/action-item.hpp"
@@ -47,6 +48,16 @@ struct OpenBuiltinCommandAction : public AbstractAction {
   OpenBuiltinCommandAction(const std::shared_ptr<AbstractCmd> &cmd, const QString &title = "Open command",
                            const QString &text = "")
       : AbstractAction(title, cmd->iconUrl()), cmd(cmd), text(text) {}
+};
+
+class OpenCommandPreferencesAction : public AbstractAction {
+  std::shared_ptr<AbstractCmd> m_command;
+
+  void execute(AppWindow &app) override { app.pushView(new EditCommandPreferencesView(app, m_command)); }
+
+public:
+  OpenCommandPreferencesAction(const std::shared_ptr<AbstractCmd> &command)
+      : AbstractAction("Edit preferences", BuiltinOmniIconUrl("pencil")), m_command(command) {}
 };
 
 class ColorListItem : public OmniList::AbstractVirtualItem, public DeclarativeOmniListView::IActionnable {
@@ -102,8 +113,11 @@ protected:
 
   QList<AbstractAction *> generateActions() const override {
     auto disable = new DisableCommand(cmd->id(), true);
+    QList<AbstractAction *> actions{new OpenBuiltinCommandAction(cmd, "Open command", text), disable};
 
-    return {new OpenBuiltinCommandAction(cmd, "Open command", text), disable};
+    if (!cmd->preferences().empty()) { actions << new OpenCommandPreferencesAction(cmd); }
+
+    return actions;
   }
 
   QString id() const override { return cmd->id(); }

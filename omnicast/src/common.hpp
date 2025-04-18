@@ -115,6 +115,7 @@ public:
   }
 };
 
-struct IJsonSerializable {
+struct IJsonFormField {
   virtual QJsonValue asJsonValue() const = 0;
+  virtual void setValueAsJson(const QJsonValue &value) = 0;
 };

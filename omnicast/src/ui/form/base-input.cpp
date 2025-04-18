@@ -65,6 +65,8 @@ void BaseInput::recalculate() {
   setTextMargins(margins);
 }
 
+void BaseInput::setValueAsJson(const QJsonValue &value) { setText(value.toString()); }
+
 void BaseInput::setLeftAccessory(QWidget *widget) {
   leftAccessory = widget;
   leftAccessory->setFixedSize(18, 18);

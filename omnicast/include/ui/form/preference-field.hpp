@@ -1,10 +1,13 @@
+#pragma once
 #include "common.hpp"
 #include "preference.hpp"
 #include "ui/form/base-input.hpp"
 #include "ui/form/form-field.hpp"
 #include "ui/form/selector-input.hpp"
 #include <memory>
+#include <qjsonvalue.h>
 #include <qlineedit.h>
+#include <qlogging.h>
 #include <qwidget.h>
 
 class PreferenceDropdownItem : public SelectorInput::AbstractItem {
@@ -22,12 +25,12 @@ public:
       : m_id(option.value), m_displayName(option.title) {}
 };
 
-class PreferenceField : public FormField, public IJsonSerializable {
-  IJsonSerializable *m_serializable = nullptr;
+class PreferenceField : public FormField, public IJsonFormField {
+  IJsonFormField *m_serializable = nullptr;
 
   std::shared_ptr<BasePreference> m_preference;
 
-  void setWidget(QWidget *widget, IJsonSerializable *serializable) {
+  void setWidget(QWidget *widget, IJsonFormField *serializable) {
     m_serializable = serializable;
     FormField::setWidget(widget);
   }
@@ -36,6 +39,10 @@ public:
   const auto &preference() const { return m_preference; }
   QJsonValue asJsonValue() const override {
     return m_serializable ? m_serializable->asJsonValue() : QJsonValue();
+  }
+
+  void setValueAsJson(const QJsonValue &value) override {
+    if (m_serializable) m_serializable->setValueAsJson(value);
   }
 
   PreferenceField(const std::shared_ptr<BasePreference> &preference) : m_preference(preference) {
@@ -54,6 +61,7 @@ public:
       if (preference->isPasswordType()) { input->setEchoMode(QLineEdit::Password); }
 
       setWidget(input, input);
+      return;
     }
 
     if (preference->isDropdownType()) {
@@ -73,6 +81,9 @@ public:
       }
 
       setWidget(input, input);
+      return;
     }
+
+    qCritical() << "preference" << preference->name() << "has unknown type";
   }
 };

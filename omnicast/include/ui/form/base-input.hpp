@@ -1,10 +1,11 @@
 #pragma once
 #include "common.hpp"
 #include <qevent.h>
+#include <qjsonobject.h>
 #include <qlineedit.h>
 #include <QFocusEvent>
 
-class BaseInput : public QLineEdit, public IJsonSerializable {
+class BaseInput : public QLineEdit, public IJsonFormField {
   QWidget *rightAccessory;
   QWidget *leftAccessory;
   bool _focused;
@@ -16,6 +17,7 @@ class BaseInput : public QLineEdit, public IJsonSerializable {
   void recalculate();
 
   QJsonValue asJsonValue() const override;
+  void setValueAsJson(const QJsonValue &value) override;
 
 public:
   void setLeftAccessory(QWidget *widget);
