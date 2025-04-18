@@ -1,8 +1,9 @@
-- add view to edit command preferences
 - accessory widget top bar
 - accessories from extensions
 - handle confirm alert for extension
 - test grid component from extension
 - start trying to port more extensions
-- checkbox widget
+- [DONE] checkbox widget
+- [DONE] add view to edit command preferences
 - AI API
+- replace view

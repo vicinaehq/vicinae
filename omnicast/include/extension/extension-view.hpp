@@ -52,6 +52,7 @@ public:
 
   void render(const RenderModel &model) {
     if (model.index() != _modelIndex) {
+      qDebug() << "CREATING NEW COMPONENT";
       _layout->takeAt(0);
 
       if (_component) { _component->deleteLater(); }

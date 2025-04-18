@@ -1,11 +1,24 @@
-import { Action, ActionPanel, Detail, getPreferenceValues, Icon, List } from "@omnicast/api"
-import { useEffect } from "react";
+import { Action, ActionPanel, AI, getPreferenceValues, Icon, List } from "@omnicast/api"
+import { useEffect, useState } from "react";
 import { Fruit, fruits } from "./fruits";
 
 
 const FruitList = () => {
+	const [isLoading, setIsLoading] = useState(false);
+
 	const handleCustomCallback = (fruit: Fruit) => {
 		console.log('custom callback fired with', fruit);
+	}
+
+	const handleGenerateAI = async () => {
+		setIsLoading(true);
+		const stream = AI.ask(`Tell me who you are`);
+
+		stream.on('data', (token) => {
+			console.log({ token });
+		});
+
+		stream.finally(() => setIsLoading(false));
 	}
 
 	useEffect(() => {
@@ -13,7 +26,7 @@ const FruitList = () => {
 	}, []);
 
 	return (
-		<List isShowingDetail searchBarPlaceholder={'Search for a fruit'}>
+		<List isShowingDetail isLoading={isLoading} searchBarPlaceholder={'Search for a fruit'}>
 			<List.Section title={"Fruits"}>
 				{fruits.map(fruit => (
 					<List.Item 
@@ -27,6 +40,7 @@ const FruitList = () => {
 							<ActionPanel>
 								<Action.CopyToClipboard title={"Copy to clipboard"} content={fruit.emoji} />
 								<Action title="Custom callback" icon={Icon.Pencil} onAction={() => handleCustomCallback(fruit)} />
+								<Action title="Generate AI text" icon={Icon.Dna} onAction={() => handleGenerateAI() } />
 							</ActionPanel>
 						}
 					/>

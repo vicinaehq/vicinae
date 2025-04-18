@@ -135,8 +135,7 @@ class AskAiCommandView : public View {
 public:
   AskAiCommandView(AppWindow &app)
       : View(app), aiProvider(*app.aiProvider.get()), chatView(new QuickChatScrollView) {
-    aiProvider.models().then([this](std::vector<AiModel> models) { this->models = models; });
-
+    this->models = aiProvider.listModels();
     auto layout = new QVBoxLayout;
 
     layout->setContentsMargins(0, 0, 0, 0);

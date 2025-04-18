@@ -254,6 +254,11 @@ void OmniList::calculateHeights() {
 
       if (item.vIndex >= visibleIndexRange.lower && item.vIndex <= visibleIndexRange.upper) {
         if (auto it = _widgetCache.find(item.id); it != _widgetCache.end()) {
+          if (item.item->hasPartialUpdates()) {
+            qDebug() << "Refreshing" << it->first;
+            item.item->refresh(it->second.widget->widget());
+          }
+
           updatedCache[item.id] = it->second;
         }
       }

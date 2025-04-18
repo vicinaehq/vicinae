@@ -1,6 +1,7 @@
 #pragma once
 #include "ai/ai-provider.hpp"
 #include <exception>
+#include <immintrin.h>
 #include <iterator>
 #include <qjsonarray.h>
 #include <qjsondocument.h>
@@ -9,6 +10,7 @@
 #include <qnetworkreply.h>
 #include <qnetworkrequest.h>
 #include <qstringview.h>
+#include <qtimer.h>
 #include <qurl.h>
 #include <stdexcept>
 
@@ -64,8 +66,10 @@ public:
 };
 
 class OllamaAiProvider : public AbstractAiProvider {
+  QTimer *m_listModelRefreshTimer;
   QNetworkAccessManager *_networkManager;
   QUrl _instanceUrl;
+  std::vector<AiModel> m_models;
 
   QUrl makeEndpoint(const QString &path) const {
     qDebug() << _instanceUrl;
@@ -132,7 +136,7 @@ class OllamaAiProvider : public AbstractAiProvider {
     return models;
   }
 
-  QFuture<std::vector<AiModel>> fetchModels() const {
+  QFuture<std::vector<AiModel>> fetchModels() {
     auto endpoint = makeEndpoint("api/tags");
     auto promise = std::make_unique<QPromise<std::vector<AiModel>>>();
     auto future = promise->future();
@@ -149,6 +153,7 @@ class OllamaAiProvider : public AbstractAiProvider {
         auto models = parseModels(obj.value("models").toArray());
 
         qDebug() << "got " << models.size() << "models";
+        m_models = models;
         promise->addResult(models);
       } else {
         qDebug() << "exception";
@@ -165,7 +170,7 @@ public:
   QString name() const override { return "ollama"; }
   bool isAlive() const override { return true; }
 
-  QFuture<std::vector<AiModel>> models() const override { return fetchModels(); }
+  std::vector<AiModel> listModels() const override { return m_models; }
 
   StreamedChatCompletion *createStreamedCompletion(const CompletionPayload &payload) const override {
     QJsonObject obj;
@@ -191,7 +196,17 @@ public:
 
   ChatCompletionToken createCompletion(const CompletionPayload &payload) const override { return {}; }
 
-  void setInstanceUrl(const QUrl &url) { _instanceUrl = url; }
+  QString defaultModel() const override { return m_models.empty() ? "" : m_models.at(0).id; }
 
-  OllamaAiProvider() : _networkManager(new QNetworkAccessManager(this)) {}
+  void setInstanceUrl(const QUrl &url) {
+    _instanceUrl = url;
+    fetchModels();
+  }
+
+  OllamaAiProvider()
+      : _networkManager(new QNetworkAccessManager(this)), m_listModelRefreshTimer(new QTimer(this)) {
+    m_listModelRefreshTimer->setInterval(std::chrono::minutes(1));
+    m_listModelRefreshTimer->start();
+    connect(m_listModelRefreshTimer, &QTimer::timeout, this, [this]() { fetchModels(); });
+  }
 };

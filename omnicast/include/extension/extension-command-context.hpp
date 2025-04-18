@@ -1,3 +1,4 @@
+#include "ai/ai-provider.hpp"
 #include "command.hpp"
 #include "extension/extension-command.hpp"
 #include "extension/extension-view.hpp"
@@ -91,6 +92,51 @@ private slots:
     if (this->sessionId != sessionId) return;
 
     qDebug() << "[ExtensionCommand] extension request" << action;
+
+    if (action == "ai.create-completion") {
+      auto &provider = app()->aiProvider;
+      auto prompt = payload.value("prompt").toString();
+      auto callback = payload.value("callback").toString();
+
+      CompletionPayload payload{
+          .modelId = provider->defaultModel(),
+          .messages = {ChatMessage(prompt)},
+      };
+
+      auto completion = provider->createStreamedCompletion(payload);
+
+      connect(completion, &StreamedChatCompletion::tokenReady, this,
+              [this, sessionId, callback](const ChatCompletionToken &token) {
+                QJsonObject payload;
+
+                payload["token"] = token.message.content().toString();
+                payload["done"] = false;
+
+                handleNotifiedEvent(callback, {payload});
+              });
+      connect(completion, &StreamedChatCompletion::finished, this, [this, completion, callback]() {
+        QJsonObject payload;
+
+        payload["token"] = "";
+        payload["done"] = true;
+        handleNotifiedEvent(callback, {payload});
+        completion->deleteLater();
+      });
+      connect(completion, &StreamedChatCompletion::errorOccured, this, [this, completion, callback]() {
+        QJsonObject payload;
+
+        payload["token"] = "";
+        payload["done"] = true;
+        handleNotifiedEvent(callback, {payload});
+        completion->deleteLater();
+      });
+
+      QJsonObject res;
+
+      res["started"] = true;
+
+      app()->extensionManager->respond(id, res);
+    }
 
     if (action == "apps.get") {
       QJsonArray apps;

@@ -5,7 +5,11 @@
 
 void DefaultListItemWidget::setName(const QString &name) { this->_name->setText(name); }
 
-void DefaultListItemWidget::setIconUrl(const OmniIconUrl &url) { _icon->setUrl(url); }
+void DefaultListItemWidget::setIconUrl(const OmniIconUrl &url) {
+  if (_icon->url() == url) return;
+
+  _icon->setUrl(url);
+}
 
 void DefaultListItemWidget::setAccessories(const AccessoryList &list) {
   _accessoryList->setAccessories(list);

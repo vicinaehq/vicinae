@@ -226,6 +226,8 @@ public:
     setType(OmniIconType::Builtin);
   }
 
+  bool operator==(const OmniIconUrl &rhs) const { return toString() == rhs.toString(); }
+
   OmniIconUrl(const QUrl &url) : _bgTint(InvalidTint), _fgTint(InvalidTint), _mask(OmniPainter::NoMask) {
     if (url.scheme() != "icon") { return; }
 
@@ -766,6 +768,8 @@ public:
       qDebug() << "no icon widget for " << url.toString();
     }
   }
+
+  const OmniIconUrl &url() const { return _url; }
 
 signals:
   void imageUpdated(const QPixmap &pixmap) const;

@@ -10,6 +10,7 @@
 #include <qboxlayout.h>
 #include <qlabel.h>
 #include <qnamespace.h>
+#include <qobject.h>
 #include <qscrollbar.h>
 #include <qtmetamacros.h>
 #include <qtpreprocessorsupport.h>
@@ -32,6 +33,18 @@ public:
     virtual OmniListItemWidget *createWidget() const = 0;
     virtual void recycle(QWidget *base) const;
     virtual bool recyclable() const;
+    /**
+     * Whether this item can have some of its content changed while
+     * still keeping the same ID.
+     *
+     * This will call `refresh` on the cached widget instead of leaving
+     * it fully untouched.
+     *
+     * This is usually unneeded for native items. This is mostly used
+     * to handle items constructed by extensions.
+     */
+    virtual bool hasPartialUpdates() const { return false; }
+    virtual void refresh(QWidget *widget) const {}
     virtual QString id() const = 0;
     virtual size_t typeId() const;
     virtual bool selectable() const;
@@ -233,6 +246,20 @@ public:
     static DefaultListItemWidget ruler(OmniIconUrl(""), "", "", {});
 
     return ruler.sizeHint().height();
+  }
+
+  void refresh(QWidget *w) const override {
+    if (auto widget = dynamic_cast<DefaultListItemWidget *>(w)) {
+      auto itemData = data();
+
+      widget->setName(itemData.name);
+      widget->setCategory(itemData.category);
+      widget->setIconUrl(itemData.iconUrl);
+      widget->setAccessories(itemData.accessories);
+    } else {
+      qDebug() << "not a defaut list itemw widget" << typeid(*w).name();
+    }
+    auto widget = static_cast<DefaultListItemWidget *>(w);
   }
 
   bool recyclable() const override { return true; }

@@ -55,7 +55,8 @@ public:
   virtual QString name() const = 0;
   virtual bool isAlive() const = 0;
 
-  virtual QFuture<std::vector<AiModel>> models() const = 0;
+  virtual std::vector<AiModel> listModels() const = 0;
+  virtual QString defaultModel() const = 0;
   virtual ChatCompletionToken createCompletion(const CompletionPayload &payload) const = 0;
   virtual StreamedChatCompletion *createStreamedCompletion(const CompletionPayload &payload) const = 0;
 };

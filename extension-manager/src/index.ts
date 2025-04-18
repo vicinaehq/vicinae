@@ -61,6 +61,9 @@ class Omnicast {
 	private readonly selfMessenger: Messenger = {
 		type: 'manager'
 	};
+	private currentMessage: { data: Buffer }= {
+		data: Buffer.from(''),
+	};
 
 	private async writePacket(message: Buffer) {
 		const packet = Buffer.allocUnsafe(message.length + 4);
@@ -85,14 +88,7 @@ class Omnicast {
 	}
 
 	private parseMessage(packet: Buffer): FullMessage {
-		const n = packet.readUint32BE();
-
-		if (n < packet.length - 4) {
-			console.error(`size mismatch: ${n} < ${packet.length - 4}`);
-		}
-			
-		const dat = packet.subarray(4, n + 4);
-		const { envelope, data } = JSON.parse(dat.toString());
+		const { envelope, data } = JSON.parse(packet.toString());
 
 		return { envelope, data };
 	}
@@ -358,16 +354,28 @@ class Omnicast {
 		return extensions;
 	}
 
+	handleRead(data: Buffer) {
+		this.currentMessage.data = Buffer.concat([this.currentMessage.data, data]);
+
+		while (this.currentMessage.data.length >= 4) {
+			const length = this.currentMessage.data.readUInt32BE();
+			const isComplete = this.currentMessage.data.length - 4 >= length;
+
+			if (!isComplete) return ;
+
+			const packet = this.currentMessage.data.subarray(4, length + 4);
+			const message = this.parseMessage(packet);
+
+			this.routeMessage(message);
+			this.currentMessage.data = this.currentMessage.data.subarray(length + 4);
+		}
+	}
+
 	constructor() {
 		process.stdin.on('error', (error) => {
 			throw new Error(`${error}`);
 		});
-		process.stdin.on('data', (buf) => {
-			const packet = Buffer.from(buf);
-			const message = this.parseMessage(packet);
-
-			this.routeMessage(message);
-		});
+		process.stdin.on('data', (buf) => this.handleRead(buf));
 	}
 };
 

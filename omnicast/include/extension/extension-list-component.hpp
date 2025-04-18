@@ -5,11 +5,9 @@
 #include <qdebug.h>
 #include "extension/extension-component.hpp"
 #include "extension/extension-list-detail.hpp"
-#include "ui/detail-widget.hpp"
 #include "ui/omni-list.hpp"
 #include "ui/split-detail.hpp"
 #include <QJsonArray>
-#include <chrono>
 #include <qboxlayout.h>
 #include <qevent.h>
 #include <qnamespace.h>
@@ -26,6 +24,8 @@ class ExtensionListItem : public AbstractDefaultListItem {
         .category = _item.subtitle,
     };
   }
+
+  bool hasPartialUpdates() const override { return true; }
 
   QString id() const override { return _item.id; }
 
@@ -56,6 +56,7 @@ class ExtensionListComponent : public AbstractExtensionRootComponent {
   OmniList *_list;
   bool _shouldResetSelection;
   QTimer *_debounce;
+  int m_renderCount = 0;
 
   void resizeEvent(QResizeEvent *event) override {
     AbstractExtensionRootComponent::resizeEvent(event);

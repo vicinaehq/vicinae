@@ -1,7 +1,7 @@
 #include "extension/extension-list-component.hpp"
 #include "app.hpp"
 #include "extension/extension-list-detail.hpp"
-#include "ui/typography.hpp"
+#include <qlogging.h>
 #include <qnamespace.h>
 
 static const std::chrono::milliseconds THROTTLE_DEBOUNCE_DURATION(300);
@@ -24,7 +24,8 @@ bool ExtensionListComponent::inputFilter(QKeyEvent *event) {
 }
 
 void ExtensionListComponent::render(const RenderModel &baseModel) {
-  qDebug() << "render";
+  ++m_renderCount;
+  qCritical() << "render" << "count" << m_renderCount;
   auto newModel = std::get<ListModel>(baseModel);
 
   if (!newModel.navigationTitle.isEmpty()) {
@@ -67,18 +68,19 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
   }
 
   if (!newModel.searchText) {
-    if (newModel.filtering) {
-      _list->setFilter(std::make_unique<BuiltinExtensionItemFilter>(searchText()));
-    } else {
-      _list->clearFilter();
+    if (_shouldResetSelection) {
+      if (newModel.filtering) {
+        _list->setFilter(std::make_unique<BuiltinExtensionItemFilter>(searchText()));
+      } else {
+        _list->clearFilter();
+      }
     }
   }
-
-  _list->invalidateCache();
 
   _model = newModel;
 
   if (_shouldResetSelection) {
+    qDebug() << "should reset selection";
     _shouldResetSelection = false;
     _list->updateFromList(items, OmniList::SelectFirst);
   } else {
