@@ -16,6 +16,8 @@ FormField::FormField(QWidget *widget, const QString &name)
 
 void FormField::setName(const QString &name) { _nameLabel->setText(name); }
 
+QString FormField::errorText() const { return _errorLabel->text(); }
+
 void FormField::setError(const QString &error) { _errorLabel->setText(error); }
 
 void FormField::clearError() { _errorLabel->clear(); }

@@ -15,6 +15,7 @@ public:
 
   void setName(const QString &name);
   void setError(const QString &error);
+  QString errorText() const;
   void setWidget(QWidget *widget);
   void clearError();
 

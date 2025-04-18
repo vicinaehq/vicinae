@@ -59,6 +59,10 @@ qt_add_executable(${TARGET}
 	src/ui/form/form.cpp
 	include/ui/form/form-field.hpp
 	src/ui/form/form-field.cpp
+	include/ui/form/checkbox.hpp
+	src/ui/form/checkbox.cpp
+	include/ui/form/app-picker-input.hpp
+	src/ui/form/app-picker-input.cpp
 
 	include/ui/popover.hpp
 	src/ui/popover.cpp

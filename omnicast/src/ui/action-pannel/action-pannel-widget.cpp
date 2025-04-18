@@ -152,7 +152,6 @@ bool ActionPannelWidget::eventFilter(QObject *obj, QEvent *event) {
 }
 
 AbstractAction *ActionPannelWidget::findBoundAction(QKeyEvent *event) {
-  qDebug() << "find bound action";
   if (_viewStack.empty()) return nullptr;
 
   for (auto it = _viewStack.rbegin(); it != _viewStack.rend(); ++it) {

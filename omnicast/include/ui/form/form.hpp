@@ -13,6 +13,7 @@ public:
   void setError(QWidget *widget, const QString &error);
   void clearError(QWidget *widget);
   void clearAllErrors();
+  bool isValid() const;
   void focusFirst() const;
   const std::vector<FormField *> fields() const;
   void addField(FormField *field);

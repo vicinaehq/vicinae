@@ -71,6 +71,10 @@ public:
       return checkbox;
     }
 
+    if (type == "appPicker") {
+      // XXX: implement later - if we really need it
+    }
+
     if (type == "dropdown") {
       auto dropdown = std::make_shared<DropdownPreference>(base);
       auto data = obj["data"].toArray();

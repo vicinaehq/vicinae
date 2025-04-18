@@ -53,7 +53,11 @@ struct OpenBuiltinCommandAction : public AbstractAction {
 class OpenCommandPreferencesAction : public AbstractAction {
   std::shared_ptr<AbstractCmd> m_command;
 
-  void execute(AppWindow &app) override { app.pushView(new EditCommandPreferencesView(app, m_command)); }
+  void execute(AppWindow &app) override {
+    app.pushView(new EditCommandPreferencesView(app, m_command),
+                 {.navigation = NavigationStatus{.title = QString("%1 - Preferences").arg(m_command->name()),
+                                                 .iconUrl = m_command->iconUrl()}});
+  }
 
 public:
   OpenCommandPreferencesAction(const std::shared_ptr<AbstractCmd> &command)

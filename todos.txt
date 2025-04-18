@@ -4,3 +4,5 @@
 - handle confirm alert for extension
 - test grid component from extension
 - start trying to port more extensions
+- checkbox widget
+- AI API

@@ -27,6 +27,7 @@ struct BasePreference {
   const QString &placeholder() const { return _placeholder; }
   PreferenceType type() const { return _type; }
   bool isDropdownType() const { return _type == DropdownPreferenceType; }
+  bool isCheckboxType() const { return _type == CheckboxPreferenceType; }
   bool isTextType() const { return _type == TextFieldPreferenceType || _type == PasswordPreferenceType; }
   bool isPasswordType() const { return _type == PasswordPreferenceType; }
   bool isRequired() const { return _required; }

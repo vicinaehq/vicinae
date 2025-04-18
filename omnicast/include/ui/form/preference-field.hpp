@@ -2,6 +2,7 @@
 #include "common.hpp"
 #include "preference.hpp"
 #include "ui/form/base-input.hpp"
+#include "ui/form/checkbox-input.hpp"
 #include "ui/form/form-field.hpp"
 #include "ui/form/selector-input.hpp"
 #include <memory>
@@ -82,6 +83,12 @@ public:
 
       setWidget(input, input);
       return;
+    }
+
+    if (preference->isCheckboxType()) {
+      auto preference = new CheckboxInput;
+
+      setWidget(preference, preference);
     }
 
     qCritical() << "preference" << preference->name() << "has unknown type";

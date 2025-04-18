@@ -22,6 +22,14 @@ void FormWidget::addField(FormField *field) {
   _layout->addWidget(field);
 }
 
+bool FormWidget::isValid() const {
+  for (const auto field : _fields) {
+    if (auto error = field->errorText(); !error.isEmpty()) { return false; }
+  }
+
+  return true;
+}
+
 void FormWidget::setError(QWidget *widget, const QString &error) {
   if (auto field = fieldForWidget(widget)) {
     field->setError(error);
