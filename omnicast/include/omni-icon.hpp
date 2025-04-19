@@ -128,7 +128,6 @@ public:
     if (_bgTint != InvalidTint) query.addQueryItem("bg_tint", nameForTint(_bgTint));
     if (_fillColor) {
       if (auto tint = std::get_if<ColorTint>(&*_fillColor); tint && *tint != InvalidTint) {
-        qDebug() << "fill" << nameForTint(*tint);
         query.addQueryItem("fill", nameForTint(*tint));
       }
     }

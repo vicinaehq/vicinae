@@ -1,7 +1,7 @@
 #pragma once
-
 #include <chrono>
-#include <iostream>
+#include <qdebug.h>
+
 class Timer {
   std::chrono::time_point<std::chrono::system_clock> _start;
 
@@ -12,7 +12,7 @@ public:
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - _start).count();
 
-    std::cout << name << " " << duration << "ms" << std::endl;
+    qDebug() << QString("TIMER => %1 %2ms").arg(name.c_str()).arg(duration);
   }
 
   Timer() { start(); }

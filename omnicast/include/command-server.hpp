@@ -115,25 +115,19 @@ class CommandServer : public QObject {
     while (conn->bytesAvailable() > 0) {
       it->frame.data.append(conn->readAll());
 
-      while (true) {
-        if (it->frame.length == 0 && it->frame.data.size() >= sizeof(uint32_t)) {
-          it->frame.length = ntohl(*reinterpret_cast<uint32_t *>(it->frame.data.data()));
-          it->frame.data = it->frame.data.sliced(sizeof(uint32_t));
-        }
+      while (it->frame.data.size() >= sizeof(uint32_t)) {
+        uint32_t length = ntohl(*reinterpret_cast<uint32_t *>(it->frame.data.data()));
+        bool isComplete = it->frame.data.size() - sizeof(uint32_t) >= length;
 
-        if (it->frame.length > 0 && it->frame.data.size() >= it->frame.length) {
-          auto packet = QByteArrayView(it->frame.data).sliced(0, it->frame.length);
+        if (!isComplete) break;
 
-          processFrame(conn, packet);
-          it->frame.data = it->frame.data.sliced(it->frame.length);
-          it->frame.length = 0;
-        } else {
-          break;
-        }
+        auto packet = QByteArrayView(it->frame.data).sliced(sizeof(uint32_t), length);
+
+        processFrame(conn, packet);
+
+        it->frame.data = it->frame.data.sliced(sizeof(uint32_t) + length);
       }
     }
-
-    QByteArray data = conn->readAll();
   }
 
   void handleDisconnection(QLocalSocket *conn) {

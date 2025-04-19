@@ -263,24 +263,16 @@ private slots:
 
       _message.data.append(read);
 
-      while (true) {
-        if (_message.length == 0 && _message.data.size() >= sizeof(uint32_t)) {
-          _message.length = ntohl(*reinterpret_cast<uint32_t *>(_message.data.data()));
-          qDebug() << "got message of size" << _message.length;
-          _message.data = _message.data.sliced(sizeof(uint32_t));
-        }
+      while (_message.data.size() >= sizeof(uint32_t)) {
+        uint32_t length = ntohl(*reinterpret_cast<uint32_t *>(_message.data.data()));
+        bool isComplete = _message.data.size() - sizeof(uint32_t) >= length;
 
-        if (_message.length > 0 && _message.data.size() >= _message.length) {
-          auto packet = _message.data.sliced(0, _message.length);
+        if (!isComplete) break;
 
-          qDebug() << "[DEBUG] Processing message of size" << packet.size() << "leftover"
-                   << _message.data.size() - _message.length;
-          emit worker->processData(packet);
-          _message.data = _message.data.sliced(_message.length);
-          _message.length = 0;
-        } else {
-          break;
-        }
+        auto packet = _message.data.sliced(sizeof(uint32_t), length);
+
+        emit worker->processData(packet);
+        _message.data = _message.data.sliced(sizeof(uint32_t) + length);
       }
     }
   }

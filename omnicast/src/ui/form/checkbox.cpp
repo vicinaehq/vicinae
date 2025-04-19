@@ -21,7 +21,11 @@ void Checkbox::paintEvent(QPaintEvent *event) {
 
   painter.drawRoundedRect(rect(), 4, 4);
 
-  if (m_value) { m_svg->render(&painter, rect().marginsAdded(contentsMargins())); }
+  if (m_value) {
+    auto check = rect().marginsRemoved(contentsMargins());
+
+    m_svg->render(&painter, check);
+  }
 }
 
 void Checkbox::keyPressEvent(QKeyEvent *event) {
@@ -55,7 +59,7 @@ void Checkbox::setValue(bool v) {
 bool Checkbox::value() const { return m_value; }
 
 Checkbox::Checkbox(QWidget *parent) : QWidget(parent) {
-  setContentsMargins(2, 2, 2, 2);
+  setContentsMargins(1, 1, 1, 1);
   setFocusPolicy(Qt::StrongFocus);
   m_svg->load(QString(":icons/checkmark.svg"));
 }

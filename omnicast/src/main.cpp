@@ -12,6 +12,7 @@
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <qbuffer.h>
 #include <qdebug.h>
 #include <qfontdatabase.h>
