@@ -56,6 +56,20 @@ const FruitGen = () => {
 	);
 };
 
+const ModeSelector = () => (
+	<List.Dropdown 
+		tooltip="Change mode" 
+		onChange={(id) => { console.log({ changed: id }); }}
+		onSearchTextChange={(text) => { console.log({ search: text }); }}
+	>
+		<List.Dropdown.Section title="Available modes">
+			<List.Dropdown.Item title="Mode 1" value="1" icon={Icon.Circle} />
+			<List.Dropdown.Item title="Mode 2" value="2" icon={Icon.Circle} />
+			<List.Dropdown.Item title="Mode 3" value="3" icon={Icon.Circle} />
+		</List.Dropdown.Section>
+	</List.Dropdown>
+)
+
 const FruitList = () => {
 	const handleCustomCallback = (fruit: Fruit) => {
 		console.log('custom callback fired with', fruit);
@@ -66,7 +80,7 @@ const FruitList = () => {
 	}, []);
 
 	return (
-		<List isShowingDetail searchBarPlaceholder={'Search for a fruit'}>
+		<List isShowingDetail searchBarPlaceholder={'Search for a fruit'} searchBarAccessory={<ModeSelector />}>
 			<List.Section title={"Fruits"}>
 				{fruits.map(fruit => (
 					<List.Item 

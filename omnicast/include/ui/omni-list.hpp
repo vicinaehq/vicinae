@@ -194,6 +194,7 @@ public:
   bool selectDown();
   bool selectLeft();
   bool selectRight();
+  const AbstractVirtualItem *firstSelectableItem() const;
   void activateCurrentSelection() const;
 
   void updateFromList(std::vector<std::unique_ptr<AbstractVirtualItem>> &nextList,

@@ -59,11 +59,15 @@ struct TopBar : public QWidget {
   IconButton *backButton = nullptr;
   QHBoxLayout *layout;
   SearchBar *input;
+  QWidget *m_accessory = new QWidget(this);
   InputCompleter *quickInput = nullptr;
   std::optional<CompleterData> completerData;
 
 public:
   TopBar(QWidget *parent = nullptr);
+
+  void setAccessoryWidget(QWidget *widget);
+  QWidget *accessoryWidget() const;
 
   bool eventFilter(QObject *obj, QEvent *event) override;
   void showBackButton();

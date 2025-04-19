@@ -130,7 +130,11 @@ declare module 'react' {
             'password-field': {};
             'textarea': {};
 
-			'dropdown': {},
+			'dropdown': {
+				onChange?: EventHandler;
+				onSearchTextChange?: EventHandler,
+				children?: React.Node;
+			},
 			'dropdown-section': {
 				title?: string;
 				children: ReactNode;

@@ -55,6 +55,7 @@ struct ViewSnapshot {
   View *view;
   QString query;
   QString placeholderText;
+  QWidget *searchAccessory;
   std::optional<CompleterData> completer;
   ActionPannelWidget::ViewStack actionViewStack;
 };

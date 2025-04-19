@@ -51,7 +51,7 @@ private:
   int POPOVER_HEIGHT = 300;
 
 protected:
-  OmniList *list;
+  OmniList *m_list;
   BaseInput *inputField;
   QLineEdit *searchField;
   OmniIcon *collapseIcon;
@@ -77,6 +77,7 @@ public:
   void clear();
   void addItem(std::unique_ptr<AbstractItem> item);
   void addSection(const QString &name);
+  OmniList *list() const { return m_list; }
 
   void updateItem(const QString &id, const UpdateItemCallback &cb);
   const AbstractItem *value() const;

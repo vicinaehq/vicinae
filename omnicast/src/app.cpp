@@ -130,6 +130,13 @@ void AppWindow::popCurrentView() {
   topBar->input->setFocus();
   topBar->input->setText(next.query);
   topBar->input->setPlaceholderText(next.placeholderText);
+
+  if (QWidget *accessory = topBar->accessoryWidget(); accessory && accessory != next.searchAccessory) {
+    accessory->deleteLater();
+  }
+
+  qDebug() << "setting accessory widget to" << next.searchAccessory;
+  topBar->setAccessoryWidget(next.searchAccessory);
   topBar->input->selectAll();
 
   if (next.completer) { topBar->activateQuicklinkCompleter(*next.completer); }
@@ -213,6 +220,10 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
     cur.query = topBar->input->text();
     cur.placeholderText = topBar->input->placeholderText();
     cur.actionViewStack = actionPannel->takeViewStack();
+    cur.searchAccessory = topBar->accessoryWidget();
+
+    topBar->accessoryWidget()->hide();
+
     qDebug() << "pushed " << cur.actionViewStack.size() << "actions";
     cur.completer.reset();
 

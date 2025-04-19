@@ -344,6 +344,16 @@ int OmniList::indexOfItem(const QString &id) const {
   return -1;
 }
 
+const OmniList::AbstractVirtualItem *OmniList::firstSelectableItem() const {
+  for (int i = 0; i < _virtual_items.size(); ++i) {
+    auto &item = vmap(i).item;
+
+    if (item->selectable()) { return item.get(); }
+  }
+
+  return nullptr;
+}
+
 void OmniList::updateFromList(std::vector<std::unique_ptr<AbstractVirtualItem>> &nextList,
                               SelectionPolicy selectionPolicy) {
   _items.clear();

@@ -3,6 +3,7 @@
 #include "extend/detail-model.hpp"
 #include "extend/empty-view-model.hpp"
 #include "extend/image-model.hpp"
+#include "extend/dropdown-model.hpp"
 #include "extend/pagination-model.hpp"
 #include <qjsonobject.h>
 
@@ -24,6 +25,8 @@ struct ListSectionModel {
 
 using ListChild = std::variant<ListItemViewModel, ListSectionModel>;
 
+using ListSearchBarAccessory = std::variant<DropdownModel>;
+
 struct ListModel {
   bool isLoading;
   bool filtering;
@@ -39,9 +42,7 @@ struct ListModel {
   std::optional<EmptyViewModel> emptyView;
   std::optional<QString> selectedItemId;
   std::optional<PaginationModel> pagination;
-
-  // not implemented, placeholder for now
-  std::optional<int> searchBarAccessory;
+  std::optional<ListSearchBarAccessory> searchBarAccessory;
 };
 
 class ListModelParser {

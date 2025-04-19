@@ -3,6 +3,7 @@
 #include "theme.hpp"
 #include "ui/icon-button.hpp"
 #include <qnamespace.h>
+#include <qwidget.h>
 
 TopBar::TopBar(QWidget *parent) : QWidget(parent), layout(new QHBoxLayout()), input(new SearchBar(this)) {
   setAttribute(Qt::WA_TranslucentBackground, true);
@@ -22,6 +23,7 @@ TopBar::TopBar(QWidget *parent) : QWidget(parent), layout(new QHBoxLayout()), in
   layout->addWidget(backButton, 0, Qt::AlignLeft | Qt::AlignVCenter);
   layout->addWidget(input);
   layout->setSpacing(10);
+  layout->addWidget(m_accessory, 0, Qt::AlignRight | Qt::AlignVCenter);
 
   setLayout(layout);
 
@@ -34,6 +36,14 @@ TopBar::TopBar(QWidget *parent) : QWidget(parent), layout(new QHBoxLayout()), in
     }
   });
 }
+
+void TopBar::setAccessoryWidget(QWidget *accessory) {
+  accessory->show();
+  layout->replaceWidget(m_accessory, accessory);
+  m_accessory = accessory;
+}
+
+QWidget *TopBar::accessoryWidget() const { return m_accessory; }
 
 bool TopBar::eventFilter(QObject *obj, QEvent *event) {
   if (event->type() == QEvent::KeyPress) {

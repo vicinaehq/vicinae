@@ -19,7 +19,7 @@ bool SelectorInput::eventFilter(QObject *obj, QEvent *event) {
       auto key = static_cast<QKeyEvent *>(event)->key();
 
       if (key == Qt::Key_Up || key == Qt::Key_Down || key == Qt::Key_Return || key == Qt::Key_Enter) {
-        QApplication::sendEvent(list, event);
+        QApplication::sendEvent(m_list, event);
         return true;
       }
     }
@@ -51,8 +51,8 @@ QJsonValue SelectorInput::asJsonValue() const {
 void SelectorInput::setValueAsJson(const QJsonValue &value) { setValue(value.toString()); }
 
 SelectorInput::SelectorInput(const QString &name)
-    : list(new OmniList), inputField(new BaseInput), searchField(new QLineEdit()), popover(new Popover(this)),
-      collapseIcon(new OmniIcon), selectionIcon(new OmniIcon) {
+    : m_list(new OmniList), inputField(new BaseInput), searchField(new QLineEdit()),
+      popover(new Popover(this)), collapseIcon(new OmniIcon), selectionIcon(new OmniIcon) {
   auto *layout = new QVBoxLayout();
   layout->setContentsMargins(0, 0, 0, 0);
 
@@ -87,14 +87,14 @@ SelectorInput::SelectorInput(const QString &name)
   auto listContainerLayout = new QVBoxLayout;
 
   listContainerLayout->setContentsMargins(0, 0, 0, 0);
-  listContainerLayout->addWidget(list);
+  listContainerLayout->addWidget(m_list);
   listContainerWidget->setLayout(listContainerLayout);
 
   popoverLayout->addWidget(listContainerWidget);
 
   connect(searchField, &QLineEdit::textChanged, this, &SelectorInput::handleTextChanged);
-  connect(list, &OmniList::itemActivated, this, &SelectorInput::itemActivated);
-  connect(list, &OmniList::itemUpdated, this, &SelectorInput::itemUpdated);
+  connect(m_list, &OmniList::itemActivated, this, &SelectorInput::itemActivated);
+  connect(m_list, &OmniList::itemUpdated, this, &SelectorInput::itemUpdated);
 
   setLayout(layout);
 }
@@ -108,22 +108,23 @@ void SelectorInput::itemActivated(const OmniList::AbstractVirtualItem &vitem) {
 
 QString SelectorInput::searchText() { return searchField->text(); }
 
-void SelectorInput::beginUpdate() { list->beginUpdate(); }
+void SelectorInput::beginUpdate() { m_list->beginUpdate(); }
 
-void SelectorInput::commitUpdate() { list->commitUpdate(); }
+void SelectorInput::commitUpdate() { m_list->commitUpdate(); }
 
 void SelectorInput::updateItem(const QString &id, const UpdateItemCallback &cb) {
-  list->updateItem(id, [&cb](OmniList::AbstractVirtualItem *item) { cb(static_cast<AbstractItem *>(item)); });
+  m_list->updateItem(id,
+                     [&cb](OmniList::AbstractVirtualItem *item) { cb(static_cast<AbstractItem *>(item)); });
 }
 
-void SelectorInput::addSection(const QString &name) { list->addSection(name); }
+void SelectorInput::addSection(const QString &name) { m_list->addSection(name); }
 
-void SelectorInput::addItem(std::unique_ptr<AbstractItem> item) { list->addItem(std::move(item)); }
+void SelectorInput::addItem(std::unique_ptr<AbstractItem> item) { m_list->addItem(std::move(item)); }
 
 const SelectorInput::AbstractItem *SelectorInput::value() const { return _currentSelection.get(); }
 
 void SelectorInput::setValue(const QString &id) {
-  auto selectedItem = list->setSelected(id);
+  auto selectedItem = m_list->setSelected(id);
 
   if (!selectedItem) {
     qDebug() << "selectValue: no item with ID:" << id;
@@ -138,7 +139,7 @@ void SelectorInput::setValue(const QString &id) {
 }
 
 void SelectorInput::handleTextChanged(const QString &text) {
-  list->setFilter(std::make_unique<ItemFilter>(text));
+  m_list->setFilter(std::make_unique<ItemFilter>(text));
   emit textChanged(text);
 }
 
@@ -150,9 +151,9 @@ void SelectorInput::showPopover() {
   const QPoint globalPos = inputField->mapToGlobal(QPoint(0, inputField->height() + 10));
 
   if (_currentSelection) {
-    list->setSelected(_currentSelection->id());
+    m_list->setSelected(_currentSelection->id());
   } else {
-    list->selectFirst();
+    m_list->selectFirst();
   }
 
   popover->move(globalPos);
@@ -167,6 +168,6 @@ SelectorInput::~SelectorInput() {
 
 void SelectorInput::clear() {
   inputField->clear();
-  list->clear();
+  m_list->clear();
   _currentSelection.reset();
 }

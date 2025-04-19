@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { Image } from "../image";
+import { useEventListener } from "../hooks";
 
 export declare namespace Dropdown {
 	type Props = DropdownProps;
@@ -34,9 +35,15 @@ type DropdownSectionProps = {
 	children?: ReactNode;
 };
 
-const DropdownRoot: React.FC<DropdownProps> = ({ children }) => {
+const DropdownRoot: React.FC<DropdownProps> = ({ children, ...props }) => {
+	const onSearchTextChange = useEventListener(props.onSearchTextChange);
+	const onChange = useEventListener(props.onChange);
+
 	return (
-		<dropdown>
+		<dropdown 
+			onSearchTextChange={onSearchTextChange}
+			onChange={onChange}
+		>
 			{children}
 		</dropdown>
 	);

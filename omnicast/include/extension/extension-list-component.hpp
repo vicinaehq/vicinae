@@ -5,6 +5,7 @@
 #include <qdebug.h>
 #include "extension/extension-component.hpp"
 #include "extension/extension-list-detail.hpp"
+#include "ui/form/selector-input.hpp"
 #include "ui/omni-list.hpp"
 #include "ui/split-detail.hpp"
 #include <QJsonArray>
@@ -49,6 +50,8 @@ public:
 };
 
 class ExtensionListComponent : public AbstractExtensionRootComponent {
+  AppWindow *m_app;
+  SelectorInput *m_selector = new SelectorInput;
   SplitDetailWidget *m_split = new SplitDetailWidget(this);
   ExtensionListDetail *m_detail = new ExtensionListDetail;
   ListModel _model;
@@ -56,6 +59,7 @@ class ExtensionListComponent : public AbstractExtensionRootComponent {
   OmniList *_list;
   bool _shouldResetSelection;
   QTimer *_debounce;
+  QTimer *m_dropdownDebounce = new QTimer(this);
   int m_renderCount = 0;
 
   void resizeEvent(QResizeEvent *event) override {
@@ -64,7 +68,12 @@ class ExtensionListComponent : public AbstractExtensionRootComponent {
     m_split->setFixedSize(event->size());
   }
 
+  void renderDropdown(const DropdownModel &dropdown);
+  void handleDropdownSelectionChanged(const SelectorInput::AbstractItem &item);
+  void handleDropdownSearchChanged(const QString &text);
+
 public:
+  AppWindow *app() const { return m_app; }
   void render(const RenderModel &baseModel) override;
   void onSelectionChanged(const OmniList::AbstractVirtualItem *next,
                           const OmniList::AbstractVirtualItem *previous);

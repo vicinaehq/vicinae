@@ -5,6 +5,7 @@
 #include <qjsonvalue.h>
 #include <qlogging.h>
 #include <qtmetamacros.h>
+#include <qwidget.h>
 
 class AbstractExtensionRootComponent : public QWidget {
   Q_OBJECT
@@ -36,6 +37,7 @@ public:
     if (!isVisible()) return;
     app.statusBar->setNavigationTitle(text);
   }
+  void setSearchAccessory(QWidget *accessory) { app.topBar->setAccessoryWidget(accessory); }
   void selectPrimaryAction() { app.selectPrimaryAction(); }
 
   virtual void onSearchChanged(const QString &text) {}
