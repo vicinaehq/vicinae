@@ -124,66 +124,11 @@ public:
     return {};
   }
 
-  void setTheme(const ThemeInfo &info) {
-    _theme = info;
-
-    /*
-     *		QWidget {
-                    font-family: 'SF Pro Text';
-                    font-size: 10pt;
-                    font-weight: lighter;
-                    letter-spacing: -0.5px;
-            }
-            */
-
-    auto style = QString(R"(
-
-		QLineEdit, QTextEdit {
-			background-color: transparent;
-			border: none;
-            font-size: 10pt;
-		}
-		QLineEdit:focus[form-input="true"] {
-			border-color: %1;
-		}
-		QTextEdit {
-			font-family: monospace;
-		}
-
-		.top-bar QLineEdit {
-			font-size: 12pt;
-		}
-
-		QScrollArea, QScrollArea > QWidget { background: transparent; }
-
-		QLabel[subtext="true"] {
-			color: %1;
-		}
-		)")
-                     .arg(info.colors.border.name());
-
-    auto palette = QApplication::palette();
-
-    palette.setBrush(QPalette::WindowText, info.colors.text);
-    palette.setBrush(QPalette::Text, info.colors.text);
-
-    QColor placeholderText = info.colors.subtext;
-
-    placeholderText.setAlpha(200);
-
-    palette.setBrush(QPalette::PlaceholderText, placeholderText);
-
-    QApplication::setPalette(palette);
-
-    qApp->setStyleSheet(style);
-
-    emit themeChanged(info);
-  }
+  void setTheme(const ThemeInfo &info);
 
   void registerTheme(const ThemeInfo &info) { _themeDb.push_back(info); }
 
   const std::vector<ThemeInfo> &themes() const { return _themeDb; }
-#include <QLinearGradient>
 
   void registerBuiltinThemes() {
     {

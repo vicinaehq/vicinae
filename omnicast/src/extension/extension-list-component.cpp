@@ -84,10 +84,24 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
     _shouldResetSelection = false;
     _list->updateFromList(items, OmniList::SelectFirst);
   } else {
-    _list->updateFromList(items, OmniList::KeepSelection);
+    _list->updateFromList(items, OmniList::PreserveSelection);
   }
 
-  if (!_list->isShowingEmptyState()) { m_split->setDetailVisibility(newModel.isShowingDetail); }
+  if (auto selected = _list->selected()) {
+    auto item = static_cast<const ExtensionListItem *>(selected);
+
+    m_split->setDetailVisibility(item->model().detail.has_value());
+
+    if (auto detail = item->model().detail) {
+      if (m_split->isDetailVisible()) {
+        qDebug() << "update detail for" << selected->id();
+        m_detail->updateDetail(*detail);
+      } else {
+        qDebug() << "create detail";
+        m_detail->setDetail(*detail);
+      }
+    }
+  }
 
   if (_list->isShowingEmptyState()) {
     size_t i = 0;
@@ -117,12 +131,12 @@ void ExtensionListComponent::onSelectionChanged(const OmniList::AbstractVirtualI
     return;
   }
 
-  m_split->setDetailVisibility(_model.isShowingDetail);
-
   qDebug() << "set visibility of" << next->id() << _model.isShowingDetail;
 
   auto item = static_cast<const ExtensionListItem *>(next);
   size_t i = 0;
+
+  m_split->setDetailVisibility(_model.isShowingDetail && item->model().detail);
 
   if (auto detail = item->model().detail) {
     qDebug() << "set markdown for" << next->id();
@@ -176,11 +190,14 @@ ExtensionListComponent::ExtensionListComponent(AppWindow &app)
 
   m_split->setMainWidget(_list);
   m_split->setDetailWidget(m_detail);
+  m_split->show();
 
+  /*
   _layout->setContentsMargins(0, 0, 0, 0);
   _layout->setSpacing(0);
   _layout->addWidget(m_split);
   setLayout(_layout);
+  */
 
   _debounce->setSingleShot(true);
   connect(_debounce, &QTimer::timeout, this, &ExtensionListComponent::handleDebouncedSearchNotification);

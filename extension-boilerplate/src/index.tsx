@@ -1,24 +1,64 @@
 import { Action, ActionPanel, AI, getPreferenceValues, Icon, List } from "@omnicast/api"
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Fruit, fruits } from "./fruits";
 
-
-const FruitList = () => {
+const FruitGen = () => {
 	const [isLoading, setIsLoading] = useState(false);
+	const [generations, setGenerations] = useState<{[key: string]: string}>({});
+	const abortController = useRef<AbortController>(new AbortController);
+	const currentGen = useRef('');
 
-	const handleCustomCallback = (fruit: Fruit) => {
-		console.log('custom callback fired with', fruit);
-	}
+	const handleGeneration = (fruit: Fruit) => {
+		const stream = AI.ask(`Write an essay about this fruit: ${fruit.name}. Include images if possible`, { signal: abortController.current.signal });
 
-	const handleGenerateAI = async () => {
 		setIsLoading(true);
-		const stream = AI.ask(`Tell me who you are`);
+		currentGen.current = '';
 
 		stream.on('data', (token) => {
-			console.log({ token });
+			currentGen.current += token;
+			setGenerations({
+				...generations,
+				[fruit.name]: currentGen.current
+			});
 		});
 
 		stream.finally(() => setIsLoading(false));
+	}
+
+	useEffect(() => {
+		return () => {
+			abortController.current.abort();
+		}
+	}, []);
+
+	useEffect(() => {
+		console.log({generations});
+	}, [generations]);
+
+	return (
+		<List isShowingDetail isLoading={isLoading} searchBarPlaceholder={'Search for a fruit'}>
+			<List.Section title={"Fruits"}>
+				{fruits.map((fruit) => (
+					<List.Item 
+						title={fruit.name}
+						icon={fruit.emoji}
+						key={fruit.name} 
+						detail={generations[fruit.name] && <List.Item.Detail markdown={generations[fruit.name]} />}
+						actions={
+							<ActionPanel>
+								<Action title="Generate AI" icon={Icon.Dna} onAction={() => handleGeneration(fruit)} />
+							</ActionPanel>
+						}
+					/>
+				))}
+			</List.Section>
+		</List>
+	);
+};
+
+const FruitList = () => {
+	const handleCustomCallback = (fruit: Fruit) => {
+		console.log('custom callback fired with', fruit);
 	}
 
 	useEffect(() => {
@@ -26,7 +66,7 @@ const FruitList = () => {
 	}, []);
 
 	return (
-		<List isShowingDetail isLoading={isLoading} searchBarPlaceholder={'Search for a fruit'}>
+		<List isShowingDetail searchBarPlaceholder={'Search for a fruit'}>
 			<List.Section title={"Fruits"}>
 				{fruits.map(fruit => (
 					<List.Item 
@@ -40,7 +80,7 @@ const FruitList = () => {
 							<ActionPanel>
 								<Action.CopyToClipboard title={"Copy to clipboard"} content={fruit.emoji} />
 								<Action title="Custom callback" icon={Icon.Pencil} onAction={() => handleCustomCallback(fruit)} />
-								<Action title="Generate AI text" icon={Icon.Dna} onAction={() => handleGenerateAI() } />
+								<Action.Push title="Switch to AI gen" icon={Icon.Dna} target={<FruitGen />} />
 							</ActionPanel>
 						}
 					/>

@@ -7,6 +7,7 @@
 #include "extension/extension-list-component.hpp"
 #include "view.hpp"
 #include <qboxlayout.h>
+#include <qevent.h>
 #include <qjsonobject.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
@@ -19,6 +20,11 @@ class ExtensionView : public View {
 
   int _modelIndex = -1;
   AbstractExtensionRootComponent *_component;
+
+  void resizeEvent(QResizeEvent *event) override {
+    QWidget::resizeEvent(event);
+    if (_component) _component->setFixedSize(event->size());
+  }
 
   AbstractExtensionRootComponent *createRootComponent(const RenderModel &model, QWidget *parent = nullptr) {
     if (auto listModel = std::get_if<ListModel>(&model)) {
@@ -38,11 +44,7 @@ class ExtensionView : public View {
 
 public:
   ExtensionView(AppWindow &app, const ExtensionCommand &command)
-      : View(app), _command(command), _layout(new QVBoxLayout), _component(nullptr) {
-    _layout->setContentsMargins(0, 0, 0, 0);
-    _layout->setSpacing(0);
-    setLayout(_layout);
-  }
+      : View(app), _command(command), _layout(new QVBoxLayout), _component(nullptr) {}
 
   const ExtensionCommand &command() const { return _command; }
 
@@ -58,6 +60,12 @@ public:
       if (_component) { _component->deleteLater(); }
 
       auto component = createRootComponent(model);
+
+      component->setParent(this);
+      component->setFixedSize(size());
+      component->show();
+
+      qDebug() << "set fixed size" << size();
 
       if (!component) {
         qDebug() << "No component could be created for model!";

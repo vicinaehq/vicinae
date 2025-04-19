@@ -158,6 +158,7 @@
 		<file>circle.svg</file>
 		<file>circleci.svg</file>
 		<file>clarity.svg</file>
+		<file>claude.svg</file>
 		<file>clear-formatting.svg</file>
 		<file>clion.svg</file>
 		<file>clock.svg</file>
@@ -211,6 +212,7 @@
 		<file>dataspell.svg</file>
 		<file>dbeaver.svg</file>
 		<file>debian.svg</file>
+		<file>deepseek.svg</file>
 		<file>delete-document.svg</file>
 		<file>denojs.svg</file>
 		<file>desktop.svg</file>
@@ -296,6 +298,8 @@
 		<file>gauge.svg</file>
 		<file>gazebo.svg</file>
 		<file>gcc.svg</file>
+		<file>gemini.svg</file>
+		<file>gemma.svg</file>
 		<file>gentoo.svg</file>
 		<file>geopin.svg</file>
 		<file>germ.svg</file>
@@ -416,6 +420,7 @@
 		<file>livestream-01.svg</file>
 		<file>livestream-disabled-01.svg</file>
 		<file>livewire.svg</file>
+		<file>llava.svg</file>
 		<file>llvm.svg</file>
 		<file>lock-disabled.svg</file>
 		<file>lock-unlocked.svg</file>
@@ -453,6 +458,7 @@
 		<file>minus-circle-filled.svg</file>
 		<file>minus-circle.svg</file>
 		<file>minus.svg</file>
+		<file>mistral.svg</file>
 		<file>mithril.svg</file>
 		<file>mobile.svg</file>
 		<file>mobx.svg</file>
@@ -507,7 +513,9 @@
 		<file>ocaml.svg</file>
 		<file>ohmyzsh.svg</file>
 		<file>okta.svg</file>
+		<file>ollama.svg</file>
 		<file>omnicast.svg</file>
+		<file>openai.svg</file>
 		<file>openal.svg</file>
 		<file>openapi.svg</file>
 		<file>opencl.svg</file>
@@ -591,6 +599,7 @@
 		<file>question-mark-circle.svg</file>
 		<file>quotation-marks.svg</file>
 		<file>quote-block.svg</file>
+		<file>qwen.svg</file>
 		<file>qwik.svg</file>
 		<file>r.svg</file>
 		<file>rabbitmq.svg</file>

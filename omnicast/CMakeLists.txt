@@ -39,6 +39,7 @@ qt_add_executable(${TARGET}
 	src/app.hpp
 
 	include/theme.hpp
+	src/theme.cpp
 
 	include/favicon/favicon-service.hpp
 	src/favicon/favicon-service.cpp
@@ -170,7 +171,7 @@ qt_add_executable(${TARGET}
 
 
 
-	include/extend/extension-view.hpp
+
 	include/extend/extension-detail-view.hpp
 
 	include/ui/button.hpp

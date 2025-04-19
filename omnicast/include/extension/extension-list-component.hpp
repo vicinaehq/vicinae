@@ -49,7 +49,7 @@ public:
 };
 
 class ExtensionListComponent : public AbstractExtensionRootComponent {
-  SplitDetailWidget *m_split = new SplitDetailWidget;
+  SplitDetailWidget *m_split = new SplitDetailWidget(this);
   ExtensionListDetail *m_detail = new ExtensionListDetail;
   ListModel _model;
   QVBoxLayout *_layout;
@@ -60,7 +60,8 @@ class ExtensionListComponent : public AbstractExtensionRootComponent {
 
   void resizeEvent(QResizeEvent *event) override {
     AbstractExtensionRootComponent::resizeEvent(event);
-    qDebug() << "extension list component resize" << event->size();
+    qDebug() << "split size" << event->size();
+    m_split->setFixedSize(event->size());
   }
 
 public:

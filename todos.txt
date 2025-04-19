@@ -7,3 +7,4 @@
 - [DONE] add view to edit command preferences
 - AI API
 - replace view
+- handle empty views

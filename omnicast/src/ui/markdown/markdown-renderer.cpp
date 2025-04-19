@@ -11,6 +11,7 @@
 #include <qboxlayout.h>
 #include <qevent.h>
 #include <qfontdatabase.h>
+#include <qlogging.h>
 #include <qnamespace.h>
 #include <qpixmap.h>
 #include <qplaintextedit.h>
@@ -98,6 +99,7 @@ void MarkdownRenderer::insertImage(cmark_node *node) {
   }
 
   connect(icon, &OmniIcon::imageUpdated, this, [this, url, pos](const QPixmap &pix) {
+    qDebug() << "loaded image";
     QTextBlockFormat blockFormat;
     auto old = _cursor.position();
 
@@ -112,9 +114,11 @@ void MarkdownRenderer::insertImage(cmark_node *node) {
 
     _cursor.insertImage(url.toString());
     _cursor.setPosition(old);
+    _document->markContentsDirty(0, _document->characterCount());
   });
 
   icon->setUrl(iconUrl);
+  qWarning() << "isVisible" << isVisible();
   icon->show();
   icon->hide();
 
@@ -328,6 +332,8 @@ QTextEdit *MarkdownRenderer::textEdit() const { return _textEdit; }
 QStringView MarkdownRenderer::markdown() const { return _markdown; }
 
 void MarkdownRenderer::clear() {
+  _lastNodePosition.renderedText = 0;
+  _lastNodePosition.originalMarkdown = 0;
   _document->clear();
   _markdown.clear();
 }
@@ -335,6 +341,10 @@ void MarkdownRenderer::clear() {
 void MarkdownRenderer::setBasePointSize(int pointSize) { _basePointSize = pointSize; }
 
 void MarkdownRenderer::appendMarkdown(QStringView markdown) {
+  auto oldScroll = _textEdit->verticalScrollBar()->value();
+  bool isBottomScrolled =
+      _textEdit->verticalScrollBar()->value() == _textEdit->verticalScrollBar()->maximum();
+
   QTextCursor cursor = _textEdit->textCursor();
   int selectionStart = cursor.selectionStart();
   int selectionEnd = cursor.selectionEnd();
@@ -415,10 +425,17 @@ void MarkdownRenderer::appendMarkdown(QStringView markdown) {
   newCursor.setPosition(selectionEnd, QTextCursor::KeepAnchor);
   _textEdit->setTextCursor(newCursor);
 
+  if (isBottomScrolled) {
+    _textEdit->verticalScrollBar()->setValue(_textEdit->verticalScrollBar()->maximum());
+  } else {
+    _textEdit->verticalScrollBar()->setValue(oldScroll);
+  }
+
   qDebug() << "text edit height" << _textEdit->height();
 }
 
 void MarkdownRenderer::setMarkdown(QStringView markdown) {
+  qCritical() << "setMarkdown, size is" << size();
   clear();
   appendMarkdown(markdown);
   _cursor.setPosition(0);
@@ -429,6 +446,9 @@ void MarkdownRenderer::setMarkdown(QStringView markdown) {
 MarkdownRenderer::MarkdownRenderer()
     : _document(new QTextDocument), _textEdit(new QTextEdit(this)), _basePointSize(DEFAULT_BASE_POINT_SIZE) {
   auto layout = new QVBoxLayout;
+
+  _lastNodePosition.renderedText = 0;
+  _lastNodePosition.originalMarkdown = 0;
 
   _document->setDefaultFont(QFontDatabase::systemFont(QFontDatabase::GeneralFont));
 
@@ -442,19 +462,5 @@ MarkdownRenderer::MarkdownRenderer()
   _textEdit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   _textEdit->setFocusPolicy(Qt::FocusPolicy::NoFocus);
 
-  /*j
-  connect(_document->documentLayout(), &QAbstractTextDocumentLayout::documentSizeChanged, this,
-          [this](const QSizeF &size) { setFixedHeight(size.height()); });
-  */
-
   _cursor = QTextCursor(_document);
-  _lastNodePosition.renderedText = 0;
-  _lastNodePosition.originalMarkdown = 0;
-
-  // setStyleSheet("background-color: blue");
-
-  layout->setContentsMargins(0, 0, 0, 0);
-  layout->addWidget(_textEdit);
-
-  setLayout(layout);
 }

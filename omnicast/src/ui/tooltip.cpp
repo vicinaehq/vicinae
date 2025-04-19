@@ -1,8 +1,10 @@
 #include "ui/tooltip.hpp"
+#include "theme.hpp"
+#include "ui/typography.hpp"
 
 void Tooltip::paintEvent(QPaintEvent *event) {
+  auto &theme = ThemeService::instance().theme();
   int borderRadius = 10;
-  QColor borderColor("#444444");
 
   QPainter painter(this);
 
@@ -13,26 +15,24 @@ void Tooltip::paintEvent(QPaintEvent *event) {
 
   painter.setClipPath(path);
 
-  QColor backgroundColor("#171615");
-
-  painter.fillPath(path, backgroundColor);
+  painter.fillPath(path, theme.colors.mainBackground);
 
   // Draw the border
-  QPen pen(borderColor, 1); // Border with a thickness of 2
+  QPen pen(theme.colors.border, 1); // Border with a thickness of 2
   painter.setPen(pen);
   painter.drawPath(path);
 }
 
-void Tooltip::setText(const QString &s) { label->setText(s); }
+void Tooltip::setText(const QString &s) { m_label->setText(s); }
 
-QString Tooltip::text() { return label->text(); }
+QString Tooltip::text() { return m_label->text(); }
 
-Tooltip::Tooltip(QWidget *parent) : QWidget(parent), label(new QLabel) {
+Tooltip::Tooltip(QWidget *parent) : QWidget(parent), m_label(new TypographyWidget) {
   setWindowFlags(Qt::FramelessWindowHint | Qt::ToolTip);
   setAttribute(Qt::WA_TranslucentBackground);
 
   auto layout = new QVBoxLayout;
 
-  layout->addWidget(label);
+  layout->addWidget(m_label);
   setLayout(layout);
 }

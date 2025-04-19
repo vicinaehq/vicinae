@@ -3,11 +3,18 @@
 #include "extend/action-model.hpp"
 #include "extend/model-parser.hpp"
 #include <qjsonvalue.h>
+#include <qlogging.h>
 #include <qtmetamacros.h>
 
 class AbstractExtensionRootComponent : public QWidget {
   Q_OBJECT
   AppWindow &app;
+
+  void showEvent(QShowEvent *event) override {
+    QWidget::showEvent(event);
+    emit componentShown();
+    qCritical() << "show event component";
+  }
 
 public:
   AbstractExtensionRootComponent(AppWindow &app) : app(app) {}
@@ -25,12 +32,18 @@ public:
     }
   }
   void setSearchPlaceholderText(const QString &text) { app.topBar->input->setPlaceholderText(text); }
-  void setNavigationTitle(const QString &text) { app.statusBar->setNavigationTitle(text); }
+  void setNavigationTitle(const QString &text) {
+    if (!isVisible()) return;
+    app.statusBar->setNavigationTitle(text);
+  }
   void selectPrimaryAction() { app.selectPrimaryAction(); }
 
   virtual void onSearchChanged(const QString &text) {}
 
-  void setLoading(bool loading) { app._loadingBar->setStarted(loading); }
+  void setLoading(bool loading) {
+    if (!isVisible()) return;
+    app._loadingBar->setStarted(loading);
+  }
 
   ActionPannelWidget *actionPannel() const { return app.actionPannel; }
 
@@ -39,4 +52,5 @@ public:
 signals:
   void notifyEvent(const QString &handler, const std::vector<QJsonValue> &args) const;
   void updateActionPannel(const ActionPannelModel &model) const;
+  void componentShown() const;
 };

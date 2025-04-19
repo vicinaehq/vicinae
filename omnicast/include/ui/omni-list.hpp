@@ -102,6 +102,7 @@ public:
   enum SelectionPolicy {
     SelectFirst,
     KeepSelection,
+    PreserveSelection,
     SelectNone,
   };
 

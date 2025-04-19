@@ -67,6 +67,11 @@ public:
    */
   void setBasePointSize(int pointSize);
 
+  void resizeEvent(QResizeEvent *event) override {
+    QWidget::resizeEvent(event);
+    _textEdit->setFixedSize(event->size());
+  }
+
   /**
    * Appends markdown text to the existing formmated markdown content.
    *

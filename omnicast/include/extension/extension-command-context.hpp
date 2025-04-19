@@ -3,6 +3,8 @@
 #include "extension/extension-command.hpp"
 #include "extension/extension-view.hpp"
 #include "ui/toast.hpp"
+#include <qjsonobject.h>
+#include <qnamespace.h>
 #include <qtmetamacros.h>
 
 class ExtensionAction : public AbstractAction {
@@ -92,6 +94,28 @@ private slots:
     if (this->sessionId != sessionId) return;
 
     qDebug() << "[ExtensionCommand] extension request" << action;
+
+    if (action == "ai.list-models") {
+      auto &provider = app()->aiProvider;
+      QJsonArray items;
+
+      for (const auto &model : provider->listModels()) {
+        QJsonObject obj;
+
+        obj["id"] = model.id;
+        obj["name"] = model.displayName;
+        obj["icon"] = model.iconUrl ? model.iconUrl->name() : QJsonValue();
+
+        items.push_back(obj);
+      }
+
+      QJsonObject responseData;
+
+      responseData["models"] = items;
+
+      app()->extensionManager->respond(id, responseData);
+      return;
+    }
 
     if (action == "ai.create-completion") {
       auto &provider = app()->aiProvider;

@@ -17,7 +17,23 @@ public:
   ExtensionListDetail() { setContentWidget(markdownRenderer); }
 
   void setDetail(const DetailModel &model) {
+    qDebug() << "render markdown" << model.markdown;
     markdownRenderer->setMarkdown(model.markdown);
+    if (!model.metadata.children.isEmpty()) { setMetadata(model.metadata); }
+  }
+
+  void updateDetail(const DetailModel &model) {
+    // optimization to append markdown, particularily useful when content is streamed
+    if (model.markdown.startsWith(markdownRenderer->markdown())) {
+      auto appended = QStringView(model.markdown).sliced(markdownRenderer->markdown().size());
+
+      qDebug() << "append" << appended;
+
+      if (!appended.isEmpty()) { markdownRenderer->appendMarkdown(appended); }
+    } else {
+      qDebug() << "set markdown" << model.markdown;
+      markdownRenderer->setMarkdown(model.markdown);
+    }
 
     if (!model.metadata.children.isEmpty()) { setMetadata(model.metadata); }
   }
