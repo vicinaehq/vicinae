@@ -18,6 +18,8 @@ void DetailWidget::clearMetadata() {
 void DetailWidget::setMetadata(const MetadataModel &model) {
   m_layout->itemAt(1)->widget()->show();
 
+  m_metadata->clear();
+
   for (const auto &item : model.children)
     m_metadata->addItem(item);
 

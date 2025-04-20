@@ -15,4 +15,5 @@ public:
   HorizontalMetadata();
 
   void addItem(const MetadataItem &item);
+  void clear();
 };

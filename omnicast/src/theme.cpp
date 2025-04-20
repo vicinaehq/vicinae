@@ -28,7 +28,7 @@ void ThemeService::setTheme(const ThemeInfo &info) {
 			font-family: monospace;
 		}
 
-		.top-bar QLineEdit {
+	   QLineEdit[search-input="true"] {
 			font-size: 12pt;
 		}
 

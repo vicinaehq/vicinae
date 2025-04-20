@@ -54,3 +54,9 @@ void HorizontalMetadata::addItem(const MetadataItem &item) {
     add(tagList->title, widget);
   }
 }
+
+void HorizontalMetadata::clear() {
+  while (auto item = layout->takeAt(0)) {
+    if (auto widget = item->widget()) widget->deleteLater();
+  }
+}

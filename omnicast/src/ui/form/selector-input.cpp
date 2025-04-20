@@ -66,6 +66,7 @@ SelectorInput::SelectorInput(const QString &name)
   collapseIcon->setUrl(BuiltinOmniIconUrl("chevron-down"));
   inputField->setLeftAccessory(selectionIcon);
   inputField->setRightAccessory(collapseIcon);
+
   layout->addWidget(inputField);
 
   // Create the popover
