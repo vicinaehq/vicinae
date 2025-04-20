@@ -138,6 +138,7 @@ qt_add_executable(${TARGET}
 	src/lib/emoji-detect.cpp
 
 	# start AI
+	include/ai/ai-service.hpp
 	include//ai/ai-provider.hpp
 	include/ai/ollama-ai-provider.hpp
 	# end AI

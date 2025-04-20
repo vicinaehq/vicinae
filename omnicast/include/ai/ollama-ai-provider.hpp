@@ -2,7 +2,7 @@
 #include "ai/ai-provider.hpp"
 #include <exception>
 #include <immintrin.h>
-#include <iterator>
+#include <optional>
 #include <qjsonarray.h>
 #include <qjsondocument.h>
 #include <qjsonobject.h>
@@ -105,6 +105,17 @@ class OllamaAiProvider : public AbstractAiProvider {
     return obj;
   }
 
+  // Returned icon names map to bundled icon names (:icons/<name>.svg)
+  QString iconFromModelName(const QString &name) const {
+    if (name.startsWith("gemma")) return "gemini"; // gemma icon doesn't render well at small sizes
+    if (name.startsWith("mistral")) return "mistral";
+    if (name.startsWith("deepseek")) return "deepseek";
+    if (name.startsWith("llava")) return "llava";
+    if (name.startsWith("qwq")) return "qwen";
+
+    return "ollama";
+  }
+
   QJsonArray serializeChatMessageHistory(const std::vector<ChatMessage> messages) const {
     QJsonArray history;
 
@@ -117,9 +128,19 @@ class OllamaAiProvider : public AbstractAiProvider {
 
   AiModel parseModel(const QJsonObject &obj) const {
     AiModel model;
+    auto details = obj.value("details").toObject();
+    auto families = details.value("families").toArray();
 
     model.id = obj.value("model").toString();
     model.displayName = obj.value("name").toString();
+    model.capabilities = AiModel::Capability::Reasoning | AiModel::Capability::Embedding;
+    model.iconName = iconFromModelName(obj.value("model").toString());
+
+    for (const auto &value : families) {
+      auto family = value.toString();
+
+      if (family == "clip") model.capabilities |= AiModel::Capability::Vision;
+    }
 
     return model;
   }
@@ -166,11 +187,31 @@ class OllamaAiProvider : public AbstractAiProvider {
     return future;
   }
 
+  std::optional<AiModel> findFirstWithCap(AiModel::Capability cap) const {
+    for (const auto &model : m_models) {
+      if (model.capabilities & cap) { return model; }
+    }
+
+    return std::nullopt;
+  }
+
 public:
   QString name() const override { return "ollama"; }
   bool isAlive() const override { return true; }
 
   std::vector<AiModel> listModels() const override { return m_models; }
+
+  std::optional<AiModel> findBestForTask(AiTaskType type) const override {
+    switch (type) {
+    case AiTaskType::ReasoningTask:
+    case AiTaskType::QuickReasoningTask:
+      return findFirstWithCap(AiModel::Capability::Reasoning);
+    case AiTaskType::EmbeddingTask:
+      return findFirstWithCap(AiModel::Capability::Embedding);
+    }
+
+    return std::nullopt;
+  }
 
   StreamedChatCompletion *createStreamedCompletion(const CompletionPayload &payload) const override {
     QJsonObject obj;
@@ -193,10 +234,6 @@ public:
 
     return new OllamaStreamedCompletion(reply);
   }
-
-  ChatCompletionToken createCompletion(const CompletionPayload &payload) const override { return {}; }
-
-  QString defaultModel() const override { return m_models.empty() ? "" : m_models.at(0).id; }
 
   void setInstanceUrl(const QUrl &url) {
     _instanceUrl = url;

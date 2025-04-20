@@ -1,15 +1,20 @@
-import { Action, ActionPanel, AI, getPreferenceValues, Icon, List } from "@omnicast/api"
-import { useEffect, useRef, useState } from "react";
+import { Action, ActionPanel, AI, getPreferenceValues, Icon, List, showToast, Toast } from "@omnicast/api"
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Fruit, fruits } from "./fruits";
 
 const FruitGen = () => {
 	const [isLoading, setIsLoading] = useState(false);
 	const [generations, setGenerations] = useState<{[key: string]: string}>({});
+	const [model, setModel] = useState<AI.ModelInfo | undefined>();
 	const abortController = useRef<AbortController>(new AbortController);
 	const currentGen = useRef('');
 
 	const handleGeneration = (fruit: Fruit) => {
-		const stream = AI.ask(`Write an essay about this fruit: ${fruit.name}. Include images if possible`, { signal: abortController.current.signal });
+		const stream = AI.ask(`Write an essay about this fruit: ${fruit.name}. Include images if possible`, { signal: abortController.current.signal, model: model?.id });
+
+		if (model) {
+			showToast(Toast.Style.Success, `Generating with ${model.name}`);
+		}
 
 		setIsLoading(true);
 		currentGen.current = '';
@@ -36,7 +41,7 @@ const FruitGen = () => {
 	}, [generations]);
 
 	return (
-		<List isShowingDetail isLoading={isLoading} searchBarPlaceholder={'Search for a fruit'}>
+		<List isShowingDetail isLoading={isLoading} searchBarAccessory={<AiModelSelector onChange={setModel} />} searchBarPlaceholder={'Search for a fruit'}>
 			<List.Section title={"Fruits"}>
 				{fruits.map((fruit) => (
 					<List.Item 
@@ -56,19 +61,60 @@ const FruitGen = () => {
 	);
 };
 
-const ModeSelector = () => (
-	<List.Dropdown 
-		tooltip="Change mode" 
-		onChange={(id) => { console.log({ changed: id }); }}
-		onSearchTextChange={(text) => { console.log({ search: text }); }}
-	>
-		<List.Dropdown.Section title="Available modes">
-			<List.Dropdown.Item title="Mode 1" value="1" icon={Icon.Circle} />
-			<List.Dropdown.Item title="Mode 2" value="2" icon={Icon.Circle} />
-			<List.Dropdown.Item title="Mode 3" value="3" icon={Icon.Circle} />
-		</List.Dropdown.Section>
-	</List.Dropdown>
-)
+const ControlledModeSelector = () => {
+	const [search, setSearch] = useState('');
+	const modes = useRef<string[]>([
+		'Mode 1',
+		'Mode 2',
+		'Mode 3'
+	]);
+	const [value, setValue] = useState(modes.current[0]);
+	const filteredModes = useMemo(() => modes.current.filter(mode => mode.includes(search)), [search]);
+
+	return (
+		<List.Dropdown 
+			tooltip="Change mode" 
+			onChange={setValue}
+			onSearchTextChange={setSearch}
+			value={value}
+		>
+			<List.Dropdown.Section title="Available modes">
+				{filteredModes.map((mode, idx) => (
+					<List.Dropdown.Item key={mode} title={mode} value={`${idx}`} icon={Icon.Circle} />
+				))}
+			</List.Dropdown.Section>
+		</List.Dropdown>
+	)
+}
+
+const AiModelSelector: React.FC<{ onChange?: (model: AI.ModelInfo) => void }> = ({ onChange }) => {
+	const [models, setModels] = useState<AI.ModelInfo[]>([]);
+
+	useEffect(() => {
+		AI.getModels().then((models) => {
+			setModels(models);
+		});
+	}, []);
+
+	const handleChange = (id: string) => {
+		const model = models.find(m => m.id === id);
+
+		if (model) onChange?.(model);
+	}
+
+	return (
+		<List.Dropdown 
+			tooltip="Select model" 
+			onChange={handleChange}
+		>
+			<List.Dropdown.Section title="Models">
+				{models.map((model) => (
+					<List.Dropdown.Item key={model.id} title={model.name} value={model.id} icon={model.icon} />
+				))}
+			</List.Dropdown.Section>
+		</List.Dropdown>
+	)
+}
 
 const FruitList = () => {
 	const handleCustomCallback = (fruit: Fruit) => {
@@ -76,11 +122,15 @@ const FruitList = () => {
 	}
 
 	useEffect(() => {
+		AI.getModels().then((models) => {
+			console.log({ models });
+		});
+
 		console.log({ preferences: getPreferenceValues() });
 	}, []);
 
 	return (
-		<List isShowingDetail searchBarPlaceholder={'Search for a fruit'} searchBarAccessory={<ModeSelector />}>
+		<List isShowingDetail searchBarPlaceholder={'Search for a fruit'} searchBarAccessory={<ControlledModeSelector />}>
 			<List.Section title={"Fruits"}>
 				{fruits.map(fruit => (
 					<List.Item 

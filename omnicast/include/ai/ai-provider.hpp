@@ -1,14 +1,17 @@
 #pragma once
-#include "omni-icon.hpp"
 #include <qobject.h>
 #include <qstring.h>
 #include <qstringview.h>
 #include <qtmetamacros.h>
 
 struct AiModel {
+  enum Capability { Reasoning = 1, Embedding = 1 << 1, Vision = 1 << 2 };
+
   QString id;
   QString displayName;
-  std::optional<OmniIconUrl> iconUrl;
+  std::optional<QString> iconName;
+  int capabilities;
+  QString provider;
 };
 
 class ChatMessage {
@@ -33,7 +36,10 @@ public:
 struct CompletionPayload {
   QString modelId;
   std::vector<ChatMessage> messages;
+  std::optional<float> temperature;
 };
+
+enum AiTaskType { EmbeddingTask, QuickReasoningTask, ReasoningTask };
 
 struct ChatCompletionToken {
   QString modelId;
@@ -56,7 +62,6 @@ public:
   virtual bool isAlive() const = 0;
 
   virtual std::vector<AiModel> listModels() const = 0;
-  virtual QString defaultModel() const = 0;
-  virtual ChatCompletionToken createCompletion(const CompletionPayload &payload) const = 0;
+  virtual std::optional<AiModel> findBestForTask(AiTaskType type) const = 0;
   virtual StreamedChatCompletion *createStreamedCompletion(const CompletionPayload &payload) const = 0;
 };

@@ -2,6 +2,7 @@
 #include "ai/ai-provider.hpp"
 #include "app/app-database.hpp"
 #include "calculator-database.hpp"
+#include "ai/ai-service.hpp"
 #include "clipboard/clipboard-service.hpp"
 #include <QGraphicsScene>
 #include <QGraphicsPixmapItem>
@@ -168,7 +169,7 @@ public:
   std::unique_ptr<ExtensionManager> extensionManager;
   std::unique_ptr<ProcessManagerService> processManagerService;
   std::unique_ptr<OmniCommandDatabase> commandDb;
-  std::unique_ptr<AbstractAiProvider> aiProvider;
+  std::unique_ptr<AI::Manager> aiProvider;
 
   void popToRootView();
   void disconnectView(View &view);

@@ -92,7 +92,7 @@ public:
 };
 
 class AskAiCommandView : public View {
-  Service<AbstractAiProvider> aiProvider;
+  Service<AI::Manager> aiProvider;
   std::vector<AiModel> models;
   bool isGenerating = false;
   QuickChatScrollView *chatView;
@@ -110,9 +110,7 @@ class AskAiCommandView : public View {
     setNavigationTitle("Ask AI - Generating...");
 
     isGenerating = true;
-    ChatMessage prompt(text);
-    auto completion =
-        aiProvider.createStreamedCompletion({.modelId = "mistral:latest", .messages = {prompt}});
+    auto completion = aiProvider.createCompletion(text);
 
     connect(completion, &StreamedChatCompletion::tokenReady, this, [this](const ChatCompletionToken &token) {
       chatView->view->bubble->appendMarkdown(token.message.content().toString());

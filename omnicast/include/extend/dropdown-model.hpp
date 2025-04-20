@@ -1,5 +1,4 @@
 #include "extend/image-model.hpp"
-#include <numbers>
 #include <optional>
 #include <qjsonobject.h>
 #include <qlogging.h>

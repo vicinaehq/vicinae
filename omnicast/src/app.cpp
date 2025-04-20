@@ -513,7 +513,9 @@ AppWindow::AppWindow(QWidget *parent)
   auto ollamaProvider = std::make_unique<OllamaAiProvider>();
 
   ollamaProvider->setInstanceUrl(QUrl("http://localhost:11434"));
-  aiProvider = std::move(ollamaProvider);
+
+  aiProvider = std::make_unique<AI::Manager>();
+  aiProvider->registerProvider(std::move(ollamaProvider), 1);
 
   extensionManager->start();
 

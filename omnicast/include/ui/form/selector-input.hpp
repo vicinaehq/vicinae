@@ -18,6 +18,7 @@ public:
 
     virtual OmniIconUrl icon() const { return BuiltinOmniIconUrl("circle"); };
     virtual QString displayName() const = 0;
+    virtual bool hasPartialUpdates() const override { return true; }
 
     /**
      * Once an item is selected a copy of it is stored as the current selection.
@@ -48,12 +49,13 @@ public:
 private:
   Q_OBJECT
 
+  bool m_defaultFilterEnabled = true;
   int POPOVER_HEIGHT = 300;
 
 protected:
   OmniList *m_list;
   BaseInput *inputField;
-  QLineEdit *searchField;
+  QLineEdit *m_searchField;
   OmniIcon *collapseIcon;
   OmniIcon *selectionIcon;
   Popover *popover;
@@ -77,6 +79,7 @@ public:
   void clear();
   void addItem(std::unique_ptr<AbstractItem> item);
   void addSection(const QString &name);
+  void clearFilter() const;
   OmniList *list() const { return m_list; }
 
   void updateItem(const QString &id, const UpdateItemCallback &cb);
@@ -84,6 +87,7 @@ public:
   void setValue(const QString &id);
   void setValueAsJson(const QJsonValue &value) override;
   QString searchText();
+  void setEnableDefaultFilter(bool value);
 
 signals:
   void textChanged(const QString &s);

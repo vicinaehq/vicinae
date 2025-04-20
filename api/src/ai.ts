@@ -1,6 +1,7 @@
 import { EventEmitter } from "stream";
 import { bus, createHandler } from "./bus";
 import { randomUUID } from "crypto";
+import { ImageLike } from "./image";
 
 export namespace AI {
     /**
@@ -51,7 +52,7 @@ export namespace AI {
 				}
 
 				const { unsubscribe } = bus.subscribe(handlerId, (...args) => {
-					const data = args[0] as TokenData;
+					const data = args[0] as { token: string, done: boolean };
 
 					answer += data.token;
 					emitter.emit('data', data.token);
@@ -87,7 +88,7 @@ export namespace AI {
         /**
          * The AI model to use to answer to the prompt.
          */
-        model?: Model | __DeprecatedModelUnion;
+        model?: Model | string | __DeprecatedModelUnion;
         /**
          * Abort signal to cancel the request.
          */
@@ -152,6 +153,7 @@ export namespace AI {
 	export type ModelInfo = {
 		id: string;
 		name: string;
+		icon?: ImageLike;
 	};
 
 	export const getModels = async (): Promise<AI.ModelInfo[]> => {

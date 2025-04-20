@@ -95,16 +95,18 @@ private slots:
 
     qDebug() << "[ExtensionCommand] extension request" << action;
 
-    if (action == "ai.list-models") {
+    if (action == "ai.get-models") {
       auto &provider = app()->aiProvider;
       QJsonArray items;
 
       for (const auto &model : provider->listModels()) {
+        if (!(model.capabilities & AiModel::Capability::Reasoning)) continue;
+
         QJsonObject obj;
 
         obj["id"] = model.id;
         obj["name"] = model.displayName;
-        obj["icon"] = model.iconUrl ? model.iconUrl->name() : QJsonValue();
+        obj["icon"] = model.iconName ? *model.iconName : QJsonValue();
 
         items.push_back(obj);
       }
@@ -121,13 +123,7 @@ private slots:
       auto &provider = app()->aiProvider;
       auto prompt = payload.value("prompt").toString();
       auto callback = payload.value("callback").toString();
-
-      CompletionPayload payload{
-          .modelId = provider->defaultModel(),
-          .messages = {ChatMessage(prompt)},
-      };
-
-      auto completion = provider->createStreamedCompletion(payload);
+      auto completion = provider->createCompletion(prompt);
 
       connect(completion, &StreamedChatCompletion::tokenReady, this,
               [this, sessionId, callback](const ChatCompletionToken &token) {
@@ -314,9 +310,8 @@ public:
         auto top = viewStack.at(viewStack.size() - 1);
 
         connect(top, &ExtensionView::notifyEvent, this, &ExtensionCommandContext::handleNotifiedEvent);
+        app()->extensionManager->emitExtensionEvent(sessionId, "pop-view", {});
       }
-
-      app()->extensionManager->emitExtensionEvent(sessionId, "pop-view", {});
     });
 
     auto preferenceValues = app()->commandDb->getPreferenceValues(command.id());

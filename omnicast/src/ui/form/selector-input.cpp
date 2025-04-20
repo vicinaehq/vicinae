@@ -7,14 +7,14 @@ bool SelectorInput::eventFilter(QObject *obj, QEvent *event) {
   if (obj == popover) {
     if (event->type() == QEvent::Close) {
       collapseIcon->setUrl(BuiltinOmniIconUrl("chevron-down"));
-      searchField->clear();
+      m_searchField->clear();
     } else if (event->type() == QEvent::Show) {
       collapseIcon->setUrl(BuiltinOmniIconUrl("chevron-up"));
-      searchField->setFocus();
+      m_searchField->setFocus();
     }
   }
 
-  if (obj == searchField) {
+  if (obj == m_searchField) {
     if (event->type() == QEvent::KeyPress) {
       auto key = static_cast<QKeyEvent *>(event)->key();
 
@@ -44,6 +44,8 @@ bool SelectorInput::eventFilter(QObject *obj, QEvent *event) {
   return false;
 }
 
+void SelectorInput::clearFilter() const { m_list->clearFilter(); }
+
 QJsonValue SelectorInput::asJsonValue() const {
   return _currentSelection ? _currentSelection->id() : QJsonValue();
 }
@@ -51,7 +53,7 @@ QJsonValue SelectorInput::asJsonValue() const {
 void SelectorInput::setValueAsJson(const QJsonValue &value) { setValue(value.toString()); }
 
 SelectorInput::SelectorInput(const QString &name)
-    : m_list(new OmniList), inputField(new BaseInput), searchField(new QLineEdit()),
+    : m_list(new OmniList), inputField(new BaseInput), m_searchField(new QLineEdit()),
       popover(new Popover(this)), collapseIcon(new OmniIcon), selectionIcon(new OmniIcon) {
   auto *layout = new QVBoxLayout();
   layout->setContentsMargins(0, 0, 0, 0);
@@ -72,15 +74,15 @@ SelectorInput::SelectorInput(const QString &name)
   popoverLayout->setContentsMargins(1, 1, 1, 1);
   popoverLayout->setSpacing(0);
 
-  searchField = new QLineEdit(popover);
-  searchField->setContentsMargins(15, 15, 15, 15);
-  searchField->setPlaceholderText("Search...");
-  popoverLayout->addWidget(searchField);
+  m_searchField = new QLineEdit(popover);
+  m_searchField->setContentsMargins(15, 15, 15, 15);
+  m_searchField->setPlaceholderText("Search...");
+  popoverLayout->addWidget(m_searchField);
 
   popoverLayout->addWidget(new HDivider);
 
   inputField->installEventFilter(this);
-  searchField->installEventFilter(this);
+  m_searchField->installEventFilter(this);
   popover->installEventFilter(this);
 
   auto listContainerWidget = new QWidget;
@@ -92,7 +94,7 @@ SelectorInput::SelectorInput(const QString &name)
 
   popoverLayout->addWidget(listContainerWidget);
 
-  connect(searchField, &QLineEdit::textChanged, this, &SelectorInput::handleTextChanged);
+  connect(m_searchField, &QLineEdit::textChanged, this, &SelectorInput::handleTextChanged);
   connect(m_list, &OmniList::itemActivated, this, &SelectorInput::itemActivated);
   connect(m_list, &OmniList::itemUpdated, this, &SelectorInput::itemUpdated);
 
@@ -101,12 +103,12 @@ SelectorInput::SelectorInput(const QString &name)
 
 void SelectorInput::itemActivated(const OmniList::AbstractVirtualItem &vitem) {
   setValue(vitem.id());
-  searchField->clear();
+  m_searchField->clear();
   popover->close();
   emit selectionChanged(static_cast<const AbstractItem &>(vitem));
 }
 
-QString SelectorInput::searchText() { return searchField->text(); }
+QString SelectorInput::searchText() { return m_searchField->text(); }
 
 void SelectorInput::beginUpdate() { m_list->beginUpdate(); }
 
@@ -138,8 +140,20 @@ void SelectorInput::setValue(const QString &id) {
   inputField->setText(item->displayName());
 }
 
+void SelectorInput::setEnableDefaultFilter(bool value) {
+  if (value == m_defaultFilterEnabled) return;
+
+  if (!value) {
+    m_list->clearFilter();
+  } else {
+    m_list->setFilter(std::make_unique<ItemFilter>(m_searchField->text()));
+  }
+
+  m_defaultFilterEnabled = value;
+}
+
 void SelectorInput::handleTextChanged(const QString &text) {
-  m_list->setFilter(std::make_unique<ItemFilter>(text));
+  if (m_defaultFilterEnabled) { m_list->setFilter(std::make_unique<ItemFilter>(text)); }
   emit textChanged(text);
 }
 

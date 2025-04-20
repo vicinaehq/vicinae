@@ -66,12 +66,21 @@ void ExtensionListComponent::renderDropdown(const DropdownModel &dropdown) {
       items.push_back(std::make_unique<OmniList::VirtualSection>(section->title));
 
       for (const auto &item : section->items) {
+        qWarning() << "dropdown item" << item.value;
         items.push_back(std::make_unique<DropdownSelectorItem>(item));
       }
     }
   }
 
-  m_selector->list()->updateFromList(items, OmniList::PreserveSelection);
+  OmniList::SelectionPolicy selectionPolicy = OmniList::PreserveSelection;
+
+  if (m_dropdownShouldResetSelection) {
+    m_dropdownShouldResetSelection = false;
+    selectionPolicy = OmniList::SelectFirst;
+  }
+
+  m_selector->list()->updateFromList(items, selectionPolicy);
+  m_selector->setEnableDefaultFilter(dropdown.filtering.enabled);
 
   if (auto controlledValue = dropdown.value) {
     m_selector->setValue(*controlledValue);
@@ -84,14 +93,6 @@ void ExtensionListComponent::renderDropdown(const DropdownModel &dropdown) {
   }
 
   m_selector->setVisible(isVisible());
-
-  /*
-  if (dropdown.filtering.enabled) {
-    m_selector->setFilter(std::make_unique<BuiltinExtensionItemFilter>(searchText()));
-  } else {
-    _list->clearFilter();
-  }
-  */
 }
 
 void ExtensionListComponent::render(const RenderModel &baseModel) {
@@ -245,8 +246,11 @@ void ExtensionListComponent::handleDropdownSelectionChanged(const SelectorInput:
 }
 
 void ExtensionListComponent::handleDropdownSearchChanged(const QString &text) {
+
   if (auto accessory = _model.searchBarAccessory) {
     if (auto dropdown = std::get_if<DropdownModel>(&*accessory)) {
+      m_dropdownShouldResetSelection = !dropdown->filtering.enabled;
+
       if (auto onChange = dropdown->onSearchTextChange) { emit notifyEvent(*onChange, {text}); }
     }
   }
@@ -281,6 +285,7 @@ ExtensionListComponent::ExtensionListComponent(AppWindow &app)
     : AbstractExtensionRootComponent(app), m_app(&app), _debounce(new QTimer(this)), _layout(new QVBoxLayout),
       _list(new OmniList), _shouldResetSelection(true) {
   m_selector->setMinimumWidth(400);
+  m_selector->setEnableDefaultFilter(false);
   setSearchAccessory(m_selector);
   m_selector->hide();
 

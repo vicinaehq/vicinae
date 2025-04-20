@@ -6,8 +6,17 @@ project(${PROJECT_NAME} VERSION 1.0.0 LANGUAGES C CXX)
 
 add_compile_definitions(OMNICAST_VERSION="${OMNICAST_VERSION}")
 
-add_compile_options(-march=native -g3)
-#add_compile_options(-march=x86-64)
+find_program(CCACHE ccache)
+
+if (CCACHE AND NOT DEFINED "$ENV{NOCACHE}") 
+	#set(CMAKE_CXX_COMPILER_LAUNCHER "ccache")
+endif()
+
+if ("$ENV{DIST_TYPE}" STREQUAL "generic")
+	message(STATUS "DIST_TYPE=generic, won't apply local optimizations")
+else()
+	add_compile_options(-march=native -g3)
+endif()
 
 add_subdirectory(omnictl)
 add_subdirectory(omnicast)

@@ -60,6 +60,7 @@ class ExtensionListComponent : public AbstractExtensionRootComponent {
   bool _shouldResetSelection;
   QTimer *_debounce;
   QTimer *m_dropdownDebounce = new QTimer(this);
+  bool m_dropdownShouldResetSelection = false;
   int m_renderCount = 0;
 
   void resizeEvent(QResizeEvent *event) override {

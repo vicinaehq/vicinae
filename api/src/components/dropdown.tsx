@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { Image } from "../image";
+import { Image, serializeImageLike } from "../image";
 import { useEventListener } from "../hooks";
 
 export declare namespace Dropdown {
@@ -49,8 +49,8 @@ const DropdownRoot: React.FC<DropdownProps> = ({ children, ...props }) => {
 	);
 }
 
-const Item: React.FC<DropdownItemProps> = ({ title, value }) => {
-	return <dropdown-item title={title} value={value} />
+const Item: React.FC<DropdownItemProps> = ({ title, value, icon }) => {
+	return <dropdown-item title={title} value={value} icon={icon && serializeImageLike(icon)} />
 }
 
 const Section: React.FC<DropdownSectionProps> = ({ title, children }) => {
