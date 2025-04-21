@@ -125,6 +125,7 @@ void AppWindow::popCurrentView() {
   }
 
   topBar->destroyQuicklinkCompleter();
+  _loadingBar->setStarted(false);
   topBar->input->setReadOnly(false);
   topBar->input->show();
   topBar->input->setFocus();
@@ -143,7 +144,7 @@ void AppWindow::popCurrentView() {
 
   if (navigationStack.size() == 1) { topBar->hideBackButton(); }
 
-  QTimer::singleShot(0, [next]() { next.view->onRestore(); });
+  next.view->onRestore();
 
   qDebug() << "view stack size" << activeCommand.viewStack.size();
 
@@ -156,12 +157,17 @@ void AppWindow::popCurrentView() {
     activeCommand.viewStack.pop();
   }
 
-  if (navigationStack.size() == 1) { statusBar->reset(); }
+  if (navigationStack.size() == 1) {
+    statusBar->reset();
+  } else {
+    statusBar->setNavigationTitle(next.navigation.title);
+    statusBar->setNavigationIcon(next.navigation.icon);
+  }
 
   emit currentViewPoped();
 }
 
-void AppWindow::popToRootView() {
+void AppWindow::popToRoot() {
   while (navigationStack.size() > 1) {
     popCurrentView();
   }
@@ -173,7 +179,7 @@ void AppWindow::disconnectView(View &view) {
   // view->app
   disconnect(&view, &View::pushView, this, &AppWindow::pushView);
   disconnect(&view, &View::pop, this, &AppWindow::popCurrentView);
-  disconnect(&view, &View::popToRoot, this, &AppWindow::popToRootView);
+  disconnect(&view, &View::popToRoot, this, &AppWindow::popToRoot);
   disconnect(&view, &View::activatePrimaryAction, this, &AppWindow::selectPrimaryAction);
 
   view.removeEventFilter(this);
@@ -187,7 +193,7 @@ void AppWindow::connectView(View &view) {
   // view->app
   connect(&view, &View::pushView, this, &AppWindow::pushView);
   connect(&view, &View::pop, this, &AppWindow::popCurrentView);
-  connect(&view, &View::popToRoot, this, &AppWindow::popToRootView);
+  connect(&view, &View::popToRoot, this, &AppWindow::popToRoot);
   connect(&view, &View::activatePrimaryAction, this, &AppWindow::selectPrimaryAction);
 
   view.onAttach();
@@ -221,6 +227,10 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
     cur.placeholderText = topBar->input->placeholderText();
     cur.actionViewStack = actionPannel->takeViewStack();
     cur.searchAccessory = topBar->accessoryWidget();
+    cur.navigation = {
+        .icon = statusBar->navigationIcon(),
+        .title = statusBar->navigationTitle(),
+    };
 
     topBar->accessoryWidget()->hide();
 
@@ -249,6 +259,7 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
   statusBar->clearAction();
   currentCommand.viewStack.push({.view = view});
   navigationStack.push({.view = view});
+  _loadingBar->setStarted(false);
 
   topBar->destroyQuicklinkCompleter();
   topBar->input->setReadOnly(false);
@@ -257,7 +268,7 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
   topBar->input->setText(opts.searchQuery);
   emit topBar->input->textEdited(opts.searchQuery);
 
-  QTimer::singleShot(0, [view]() { view->onMount(); });
+  view->onMount();
 }
 
 void AppWindow::launchCommand(const std::shared_ptr<AbstractCmd> &command, const LaunchCommandOptions &opts) {
@@ -286,6 +297,10 @@ void AppWindow::launchCommand(const std::shared_ptr<AbstractCmd> &command, const
     commandStack.push({.command = ctx});
     ctx->load();
   }
+}
+
+void AppWindow::launchCommand(const QString &id, const LaunchCommandOptions &opts) {
+  if (auto command = commandDb->findCommand(id)) { launchCommand(command->command, opts); }
 }
 
 void AppWindow::resizeEvent(QResizeEvent *event) {
@@ -439,7 +454,7 @@ void AppWindow::closeWindow(bool withPopToRoot) {
   clearSearch();
   topBar->destroyQuicklinkCompleter();
 
-  if (withPopToRoot) popToRootView();
+  if (withPopToRoot) popToRoot();
 }
 
 AppWindow::AppWindow(QWidget *parent)
@@ -514,7 +529,7 @@ AppWindow::AppWindow(QWidget *parent)
 
   ollamaProvider->setInstanceUrl(QUrl("http://localhost:11434"));
 
-  aiProvider = std::make_unique<AI::Manager>();
+  aiProvider = std::make_unique<AI::Manager>(*omniDb.get());
   aiProvider->registerProvider(std::move(ollamaProvider), 1);
 
   extensionManager->start();
@@ -524,7 +539,7 @@ AppWindow::AppWindow(QWidget *parent)
 
   topBar->input->installEventFilter(this);
 
-  auto rootCommand = CommandBuilder("root").toView<RootView>();
+  auto rootCommand = CommandBuilder("root").toSingleView<RootView>();
 
   launchCommand(rootCommand);
 }

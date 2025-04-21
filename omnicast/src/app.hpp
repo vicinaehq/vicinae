@@ -52,6 +52,11 @@ class ViewCommandContext;
 class ExtensionView;
 class CommandContext;
 
+struct NavigationStatus {
+  QString title;
+  OmniIconUrl iconUrl;
+};
+
 struct ViewSnapshot {
   View *view;
   QString query;
@@ -59,16 +64,17 @@ struct ViewSnapshot {
   QWidget *searchAccessory;
   std::optional<CompleterData> completer;
   ActionPannelWidget::ViewStack actionViewStack;
+  std::optional<NavigationStatus> navigationStatus;
+
+  struct {
+    OmniIconUrl icon;
+    QString title;
+  } navigation;
 };
 
 struct CommandSnapshot {
   QStack<ViewSnapshot> viewStack;
   CommandContext *command;
-};
-
-struct NavigationStatus {
-  QString title;
-  OmniIconUrl iconUrl;
 };
 
 struct LaunchCommandOptions {
@@ -171,7 +177,7 @@ public:
   std::unique_ptr<OmniCommandDatabase> commandDb;
   std::unique_ptr<AI::Manager> aiProvider;
 
-  void popToRootView();
+  void popToRoot();
   void disconnectView(View &view);
   void connectView(View &view);
   void closeWindow(bool popToRoot = false);
@@ -191,9 +197,8 @@ public:
   DialogWidget *_dialog = nullptr;
   AlertWidget *_alert = new AlertWidget;
 
-  void popToRoot();
-
   void launchCommand(const std::shared_ptr<AbstractCmd> &cmd, const LaunchCommandOptions &opts = {});
+  void launchCommand(const QString &id, const LaunchCommandOptions &opts = {});
 
   AppWindow(QWidget *parent = 0);
 

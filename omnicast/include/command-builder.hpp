@@ -34,7 +34,11 @@ public:
     return *this;
   }
 
-  template <typename T> std::shared_ptr<BuiltinCommand> toView() {
+  template <typename T> std::shared_ptr<BuiltinCommand> toSingleView() {
     return std::make_shared<BuiltinViewCommand<T>>(_id, _name, _url, _preferences);
+  }
+
+  template <typename T> std::shared_ptr<BuiltinCommand> toContext() {
+    return std::make_shared<BuiltinCommandContext<T>>(_id, _name, _url, _preferences);
   }
 };

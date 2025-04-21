@@ -1,9 +1,10 @@
 #pragma once
+#include "theme.hpp"
 #include <QPainter>
 #include <QWidget>
 
 class ColorCircle : public QWidget {
-  QColor color;
+  ColorLike color;
   QSize size;
   QColor strokeColor;
   size_t strokeWidth;
@@ -14,7 +15,7 @@ protected:
   QSize sizeHint() const override;
 
 public:
-  ColorCircle(QColor color, QSize size, QWidget *parent = nullptr);
+  ColorCircle(const ColorLike &color, QSize size, QWidget *parent = nullptr);
 
   ColorCircle &setStroke(QColor color, size_t width = 3);
 };

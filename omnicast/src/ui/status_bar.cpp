@@ -104,6 +104,16 @@ QString StatusBar::navigationTitle() const {
   return "";
 }
 
+OmniIconUrl StatusBar::navigationIcon() const {
+  if (auto left = dynamic_cast<CurrentCommandWidget *>(leftWidget)) { return left->icon(); }
+
+  return OmniIconUrl("");
+}
+
+void StatusBar::setNavigationIcon(const OmniIconUrl &icon) {
+  if (auto left = dynamic_cast<CurrentCommandWidget *>(leftWidget)) { left->setIcon(icon); }
+}
+
 void StatusBar::reset() { setLeftWidget(new DefaultLeftWidget()); }
 
 void StatusBar::paintEvent(QPaintEvent *event) {

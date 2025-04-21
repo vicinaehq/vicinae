@@ -10,21 +10,17 @@
 #include <qwidget.h>
 
 class TypographyWidget : public QLabel {
-  TextSize _size;
-  Qt::Alignment _align = Qt::AlignLeft | Qt::AlignVCenter;
-  QString _text;
-  QPixmap _pixmap;
-  QFont::Weight _weight = QFont::Weight::Normal;
-  QFont _font;
-  ThemeService &theme = ThemeService::instance();
-  ColorLike _color = theme.getTintColor(ColorTint::TextPrimary);
+  TextSize m_size = TextSize::TextRegular;
+  QFont::Weight m_weight = QFont::Weight::Normal;
+  ThemeService &m_theme = ThemeService::instance();
+  ColorLike m_color = ColorTint::TextPrimary;
 
 protected:
   void paintEvent(QPaintEvent *event) override {
     OmniPainter painter(this);
     QPalette pal = palette();
 
-    pal.setBrush(QPalette::WindowText, painter.colorBrush(_color));
+    pal.setBrush(QPalette::WindowText, painter.colorBrush(m_color));
 
     setPalette(pal);
     QLabel::paintEvent(event);
@@ -32,38 +28,39 @@ protected:
 
 public:
   void setColor(const ColorLike &color) {
-    _color = color;
+    m_color = color;
     update();
   }
 
   void setFontWeight(QFont::Weight weight) {
     QFont _font = font();
 
-    _font.setPointSize(theme.pointSize(_size));
+    _font.setPointSize(m_theme.pointSize(m_size));
     _font.setWeight(weight);
     setFont(_font);
 
-    _weight = weight;
+    m_weight = weight;
     updateGeometry();
   }
 
   void setSize(TextSize size) {
     QFont _font = font();
 
-    _font.setPointSize(theme.pointSize(size));
-    _font.setWeight(_weight);
+    _font.setPointSize(m_theme.pointSize(size));
+    _font.setWeight(m_weight);
 
     setFont(_font);
 
-    _size = size;
+    m_size = size;
     updateGeometry();
   }
 
   bool hasHeightForWidth() const override { return false; }
 
-  TypographyWidget(TextSize size = TextSize::TextRegular, ColorTint color = ColorTint::TextPrimary,
-                   QWidget *parent = nullptr)
-      : QLabel(parent), _size(size), _color(color) {
+  TypographyWidget(QWidget *parent = nullptr) : QLabel(parent) { setSize(TextSize::TextRegular); }
+
+  TypographyWidget(TextSize size, ColorTint color = ColorTint::TextPrimary, QWidget *parent = nullptr)
+      : QLabel(parent), m_size(size), m_color(color) {
     setSize(size);
   }
 };

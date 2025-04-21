@@ -1,4 +1,6 @@
 #pragma once
+#include <qjsonobject.h>
+#include <qjsonvalue.h>
 #include <qobject.h>
 #include <qstring.h>
 #include <qstringview.h>
@@ -54,14 +56,4 @@ signals:
   void errorOccured(const QString &error);
   void tokenReady(const ChatCompletionToken &token);
   void finished();
-};
-
-class AbstractAiProvider : public QObject {
-public:
-  virtual QString name() const = 0;
-  virtual bool isAlive() const = 0;
-
-  virtual std::vector<AiModel> listModels() const = 0;
-  virtual std::optional<AiModel> findBestForTask(AiTaskType type) const = 0;
-  virtual StreamedChatCompletion *createStreamedCompletion(const CompletionPayload &payload) const = 0;
 };

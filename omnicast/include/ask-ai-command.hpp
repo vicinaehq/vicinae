@@ -1,10 +1,13 @@
 #include "ai/ai-provider.hpp"
 #include "app.hpp"
+#include "command.hpp"
 #include "create-quicklink-command.hpp"
 #include "ui/action-pannel/action-item.hpp"
+#include "require-ai-config-empty-view.hpp"
 #include "QScrollArea"
 #include "ui/markdown/markdown-renderer.hpp"
 #include "ui/omni-scroll-bar.hpp"
+#include "ui/toast.hpp"
 #include "view.hpp"
 #include <qboxlayout.h>
 #include <qcoreevent.h>
@@ -105,12 +108,18 @@ class AskAiCommandView : public View {
 
     if (isGenerating) return;
 
+    auto completion = aiProvider.createCompletion(text);
+
+    if (!completion) {
+      app.statusBar->setToast("Completion couldn't be created", ToastPriority::Danger);
+      return;
+    }
+
     clearSearchText();
     setLoading(true);
     setNavigationTitle("Ask AI - Generating...");
 
     isGenerating = true;
-    auto completion = aiProvider.createCompletion(text);
 
     connect(completion, &StreamedChatCompletion::tokenReady, this, [this](const ChatCompletionToken &token) {
       chatView->view->bubble->appendMarkdown(token.message.content().toString());
@@ -142,6 +151,11 @@ public:
   }
 
   void onMount() override {
+    if (!app.aiProvider->isAvailable()) {
+      pushView(new RequireAiConfigEmptyView(app));
+      return;
+    }
+
     auto cb = [this](AppWindow &app) { messageSubmission(searchText()); };
     auto action = std::make_unique<CallbackAction>(cb);
     action->setShortcut({.key = "return"});
@@ -151,4 +165,19 @@ public:
     items.push_back(std::move(action));
     setActionPannel(std::move(items));
   }
+};
+
+class AskAiCommand : public CommandContext {
+  void load() override {
+    NavigationStatus nav{.title = command()->name(), .iconUrl = command()->iconUrl()};
+
+    if (app()->aiProvider->isAvailable()) {
+      return app()->pushView(new AskAiCommandView(*app()), {.navigation = nav});
+    }
+
+    app()->pushView(new RequireAiConfigEmptyView(*app()), {.navigation = nav});
+  }
+
+public:
+  AskAiCommand(AppWindow *app, const std::shared_ptr<AbstractCmd> &command) : CommandContext(app, command) {}
 };

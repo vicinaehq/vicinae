@@ -1,6 +1,7 @@
 #pragma once
 #include "extend/metadata-model.hpp"
 #include "theme.hpp"
+#include "ui/action-pannel/action-item.hpp"
 #include "ui/horizontal-metadata.hpp"
 #include "ui/omni-list.hpp"
 #include "view.hpp"
@@ -156,6 +157,15 @@ protected:
       auto pannel = nextItem->generateActionPannel();
 
       if (!pannel.empty()) {
+        int idx = 0;
+
+        for (const auto &item : pannel) {
+          if (auto action = std::get_if<std::unique_ptr<AbstractAction>>(&item)) {
+            if (idx == 0) (*action)->setShortcut({.key = "return", .modifiers = {}});
+            if (idx == 1) (*action)->setShortcut({.key = "return", .modifiers = {"shift"}});
+          }
+        }
+
         setActionPannel(std::move(pannel));
 
         // if (auto first = app.actionPannel->actionnable(0)) { first->setShortcut({.key = "return"}); }
@@ -214,17 +224,19 @@ protected:
     list->invalidateCache();
     list->updateFromList(items, policy);
 
-    if (auto item = list->selected()) {
-      if (auto nextItem = dynamic_cast<const IActionnable *>(item)) {
-        setSignalActions(nextItem->generateActions());
-      }
-    }
+    /*
+if (auto item = list->selected()) {
+  if (auto nextItem = dynamic_cast<const IActionnable *>(item)) {
+    setSignalActions(nextItem->generateActions());
+  }
+}
+    */
   }
 
   void onActionActivated(const AbstractAction *action) override {
     if (isVisible()) {
       qDebug() << "action activated!";
-      // reload();
+      reload();
     } else {
       qDebug() << "no reload after action, as we are no longer visible!";
     }

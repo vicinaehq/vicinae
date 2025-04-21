@@ -1,12 +1,14 @@
 #include "ui/color_circle.hpp"
+#include "theme.hpp"
+#include "ui/omni-painter.hpp"
 
-ColorCircle::ColorCircle(QColor color, QSize size, QWidget *parent)
+ColorCircle::ColorCircle(const ColorLike &color, QSize size, QWidget *parent)
     : QWidget(parent), color(color), size(size), strokeWidth(0) {
   setFixedSize(size);
 }
 
 void ColorCircle::paintEvent(QPaintEvent *event) {
-  QPainter painter(this);
+  OmniPainter painter(this);
 
   painter.setRenderHint(QPainter::Antialiasing);
 
@@ -22,7 +24,7 @@ void ColorCircle::paintEvent(QPaintEvent *event) {
     painter.drawEllipse(0, 0, w, h);
   }
 
-  painter.setBrush(color);
+  painter.setBrush(painter.colorBrush(color));
   painter.drawEllipse(strokeWidth, strokeWidth, w - diam, h - diam);
 }
 

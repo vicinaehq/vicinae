@@ -34,26 +34,28 @@ class StatusBar : public QWidget {
 
   class CurrentCommandWidget : public QWidget {
     TypographyWidget *_title;
+    OmniIcon *m_icon = new OmniIcon(this);
 
   public:
     CurrentCommandWidget(const QString &name, const OmniIconUrl &iconUrl) : _title(new TypographyWidget()) {
       auto layout = new QHBoxLayout();
-      auto icon = new OmniIcon();
 
       _title->setText(name);
-      icon->setFixedSize(20, 20);
-      icon->setUrl(iconUrl);
+      m_icon->setFixedSize(20, 20);
+      m_icon->setUrl(iconUrl);
 
       layout->setContentsMargins(0, 0, 0, 0);
       layout->setSpacing(10);
-      layout->addWidget(icon);
+      layout->addWidget(m_icon);
       layout->addWidget(_title);
 
       setLayout(layout);
     }
 
+    const OmniIconUrl &icon() { return m_icon->url(); }
     QString title() const { return _title->text(); }
     void setTitle(const QString &title) const { _title->setText(title); }
+    void setIcon(const OmniIconUrl &icon) { m_icon->setUrl(icon); }
   };
 
   class DefaultLeftWidget : public QWidget {
@@ -80,7 +82,9 @@ public:
   void setToast(const QString &text, ToastPriority priority = ToastPriority::Success);
   void setNavigation(const QString &name, const OmniIconUrl &iconUrl);
   QString navigationTitle() const;
+  OmniIconUrl navigationIcon() const;
   void setNavigationTitle(const QString &name);
+  void setNavigationIcon(const OmniIconUrl &icon);
   void reset();
 
   StatusBar(QWidget *parent = nullptr);

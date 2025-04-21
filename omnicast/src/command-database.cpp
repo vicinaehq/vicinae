@@ -2,6 +2,7 @@
 #include "calculator-history-command.hpp"
 #include "clipboard-history-command.hpp"
 #include "create-quicklink-command.hpp"
+#include "configure-ai-providers-command.hpp"
 #include "emoji-command.hpp"
 #include "icon-browser-command.hpp"
 #include "ask-ai-command.hpp"
@@ -67,7 +68,7 @@ CommandDatabase::CommandDatabase() {
     auto emoji = CommandBuilder("emoji-symbols")
                      .withName("Search Emojis & Symbols")
                      .withTintedIcon("emoji", ColorTint::Red)
-                     .toView<EmojiView>();
+                     .toSingleView<EmojiView>();
 
     auto storeAllOfferingsPreference = std::make_shared<CheckboxPreference>();
 
@@ -90,17 +91,17 @@ CommandDatabase::CommandDatabase() {
                                 .withTintedIcon("copy-clipboard", ColorTint::Red)
                                 .withPreference(storeAllOfferingsPreference)
                                 .withPreference(maximumClipboardStorageSizePreference)
-                                .toView<ClipboardHistoryCommand>();
+                                .toSingleView<ClipboardHistoryCommand>();
 
     auto iconSearch = CommandBuilder("browse-icons")
                           .withName("Search Omnicast Icons")
                           .withTintedIcon("omnicast", ColorTint::Red)
-                          .toView<IconBrowserView>();
+                          .toSingleView<IconBrowserView>();
 
     auto peepobank = CommandBuilder("peepobank")
                          .withName("Peepobank")
                          .withTintedIcon("emoji", ColorTint::Red)
-                         .toView<PeepobankView>();
+                         .toSingleView<PeepobankView>();
 
     auto omnicast = CommandRepositoryBuilder("omnicast")
                         .withName("Omnicast")
@@ -114,7 +115,8 @@ CommandDatabase::CommandDatabase() {
   }
 
   {
-    auto history = CommandBuilder("history").withName("Calculator History").toView<CalculatorHistoryView>();
+    auto history =
+        CommandBuilder("history").withName("Calculator History").toSingleView<CalculatorHistoryView>();
     auto calculator = CommandRepositoryBuilder("calculator")
                           .withName("Calculator")
                           .withTintedIcon("calculator", ColorTint::Red)
@@ -132,10 +134,12 @@ CommandDatabase::CommandDatabase() {
     testExtensionPref->setDefaultValue("ting ting");
     testExtensionPref->setDescription("A simple test, nothing more.");
 
-    auto create = CommandBuilder("create").withName("Create Quicklink").toView<QuicklinkCommandView>();
-    auto manage = CommandBuilder("manage").withName("Manage Quicklinks").toView<ManageQuicklinksView>();
-    auto _export = CommandBuilder("export").withName("Export Quicklinks").toView<ManageQuicklinksView>();
-    auto _import = CommandBuilder("import").withName("Import Quicklinks").toView<ManageQuicklinksView>();
+    auto create = CommandBuilder("create").withName("Create Quicklink").toSingleView<QuicklinkCommandView>();
+    auto manage = CommandBuilder("manage").withName("Manage Quicklinks").toSingleView<ManageQuicklinksView>();
+    auto _export =
+        CommandBuilder("export").withName("Export Quicklinks").toSingleView<ManageQuicklinksView>();
+    auto _import =
+        CommandBuilder("import").withName("Import Quicklinks").toSingleView<ManageQuicklinksView>();
     auto quicklinks = CommandRepositoryBuilder("quicklinks")
                           .withName("Quicklinks")
                           .withPreference(testExtensionPref)
@@ -151,7 +155,7 @@ CommandDatabase::CommandDatabase() {
 
   {
     auto switchWindows =
-        CommandBuilder("switch-windows").withName("Switch Windows").toView<SwitchWindowsCommand>();
+        CommandBuilder("switch-windows").withName("Switch Windows").toSingleView<SwitchWindowsCommand>();
     auto wm = CommandRepositoryBuilder("window-management")
                   .withName("Window Management")
                   .withTintedIcon("app-window-list", ColorTint::Blue)
@@ -162,7 +166,7 @@ CommandDatabase::CommandDatabase() {
   }
 
   {
-    auto manage = CommandBuilder("manage").withName("Manage Themes").toView<ManageThemesView>();
+    auto manage = CommandBuilder("manage").withName("Manage Themes").toSingleView<ManageThemesView>();
     auto theme = CommandRepositoryBuilder("theme")
                      .withName("Theme")
                      .withTintedIcon("brush", ColorTint::Purple)
@@ -173,12 +177,15 @@ CommandDatabase::CommandDatabase() {
   }
 
   {
-    auto diagnostics =
-        CommandBuilder("extension-diagnostics").withName("Extension Diagnostics").toView<ManageThemesView>();
-    auto create = CommandBuilder("create-extension").withName("Create Extension").toView<ManageThemesView>();
-    auto _import = CommandBuilder("import-extension").withName("Import Extension").toView<ManageThemesView>();
+    auto diagnostics = CommandBuilder("extension-diagnostics")
+                           .withName("Extension Diagnostics")
+                           .toSingleView<ManageThemesView>();
+    auto create =
+        CommandBuilder("create-extension").withName("Create Extension").toSingleView<ManageThemesView>();
+    auto _import =
+        CommandBuilder("import-extension").withName("Import Extension").toSingleView<ManageThemesView>();
     auto manage =
-        CommandBuilder("manage-extensions").withName("Manage Extensions").toView<ManageThemesView>();
+        CommandBuilder("manage-extensions").withName("Manage Extensions").toSingleView<ManageThemesView>();
     auto developer = CommandRepositoryBuilder("developer")
                          .withName("Developer")
                          .withTintedIcon("hammer", ColorTint::Magenta)
@@ -192,11 +199,16 @@ CommandDatabase::CommandDatabase() {
   }
 
   {
-    auto quickAsk = CommandBuilder("quick").withName("Quick AI").toView<AskAiCommandView>();
+    auto quickAsk = CommandBuilder("quick").withName("Quick AI").toContext<AskAiCommand>();
+    auto configureProviders = CommandBuilder("configure-providers")
+                                  .withName("Configure AI providers")
+                                  .toSingleView<ConfigureAIProvidersView>();
+
     auto ai = CommandRepositoryBuilder("ai")
                   .withName("AI")
                   .withTintedIcon("stars", ColorTint::Red)
                   .withCommand(quickAsk)
+                  .withCommand(configureProviders)
                   .makeShared();
 
     registerRepository(ai);

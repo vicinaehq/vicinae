@@ -1,8 +1,11 @@
 #pragma once
-#include "ai/ai-provider.hpp"
+#include "ai/ai-service.hpp"
 #include <exception>
 #include <immintrin.h>
 #include <optional>
+#include "app.hpp"
+#include "ollama-config-view.hpp"
+#include <qfuture.h>
 #include <qjsonarray.h>
 #include <qjsondocument.h>
 #include <qjsonobject.h>
@@ -65,11 +68,12 @@ public:
   }
 };
 
-class OllamaAiProvider : public AbstractAiProvider {
+class OllamaAiProvider : public AI::AbstractProvider {
   QTimer *m_listModelRefreshTimer;
   QNetworkAccessManager *_networkManager;
   QUrl _instanceUrl;
   std::vector<AiModel> m_models;
+  bool m_isAlive = false;
 
   QUrl makeEndpoint(const QString &path) const {
     qDebug() << _instanceUrl;
@@ -176,9 +180,11 @@ class OllamaAiProvider : public AbstractAiProvider {
         qDebug() << "got " << models.size() << "models";
         m_models = models;
         promise->addResult(models);
+        m_isAlive = true;
       } else {
         qDebug() << "exception";
         promise->setException(std::make_exception_ptr(std::runtime_error("Error getting models")));
+        m_isAlive = false;
       }
       promise->finish();
       reply->deleteLater();
@@ -196,8 +202,10 @@ class OllamaAiProvider : public AbstractAiProvider {
   }
 
 public:
-  QString name() const override { return "ollama"; }
-  bool isAlive() const override { return true; }
+  QString id() const override { return "ollama"; }
+  QString displayName() const override { return "Ollama"; }
+  bool isAlive() const override { return m_isAlive; }
+  QString iconName() const override { return "ollama"; }
 
   std::vector<AiModel> listModels() const override { return m_models; }
 
@@ -213,7 +221,7 @@ public:
     return std::nullopt;
   }
 
-  StreamedChatCompletion *createStreamedCompletion(const CompletionPayload &payload) const override {
+  StreamedChatCompletion *createCompletion(const CompletionPayload &payload) const override {
     QJsonObject obj;
 
     obj["model"] = payload.modelId;
@@ -238,6 +246,16 @@ public:
   void setInstanceUrl(const QUrl &url) {
     _instanceUrl = url;
     fetchModels();
+  }
+
+  static QString defaultInstanceUrl() { return "http://localhost:11434"; }
+
+  View *configView(AppWindow &app) override { return new OllamaConfigView(app); }
+
+  bool loadConfig(const QJsonObject &config) override {
+    setInstanceUrl(config.value("instanceUrl").toString(defaultInstanceUrl()));
+
+    return true;
   }
 
   OllamaAiProvider()
