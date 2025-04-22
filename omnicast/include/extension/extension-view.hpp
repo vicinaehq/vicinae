@@ -1,10 +1,12 @@
 #pragma once
 #include "app.hpp"
+#include "extend/form-model.hpp"
 #include "extend/grid-model.hpp"
 #include "extend/model-parser.hpp"
 #include "extension/extension-command.hpp"
 #include "extension/extension-grid-component.hpp"
 #include "extension/extension-list-component.hpp"
+#include "extension/extension-form-component.hpp"
 #include "view.hpp"
 #include <qboxlayout.h>
 #include <qevent.h>
@@ -31,6 +33,8 @@ class ExtensionView : public View {
       return new ExtensionListComponent(app);
     } else if (auto gridModel = std::get_if<GridModel>(&model)) {
       return new ExtensionGridComponent(app);
+    } else if (auto formModel = std::get_if<FormModel>(&model)) {
+      return new ExtensionFormComponent(app);
     }
 
     return nullptr;

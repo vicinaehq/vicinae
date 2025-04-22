@@ -200,7 +200,10 @@ bool OmniList::insertAfter(const QString &id, std::unique_ptr<AbstractVirtualIte
   return true;
 }
 
-bool OmniList::isShowingEmptyState() const { return _virtual_items.empty(); }
+bool OmniList::isShowingEmptyState() const {
+  qDebug() << "vcount" << _virtual_items.size();
+  return _virtual_items.empty();
+}
 
 void OmniList::calculateHeights() {
   auto start = std::chrono::high_resolution_clock::now();

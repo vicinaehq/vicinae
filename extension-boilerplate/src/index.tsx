@@ -1,6 +1,25 @@
-import { Action, ActionPanel, AI, getPreferenceValues, Icon, List, showToast, Toast } from "@omnicast/api"
+import { Action, ActionPanel, AI, Form, getPreferenceValues, Icon, List, showToast, Toast } from "@omnicast/api"
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Fruit, fruits } from "./fruits";
+
+const CreateFruit = () => {
+	const handleSubmit = (values: Form.Values) => {
+		console.log({ values });
+	}
+
+	return (
+		<Form
+			actions={
+				<ActionPanel>
+					<Action.SubmitForm onSubmit={handleSubmit} />
+				</ActionPanel>
+			}
+		>
+			<Form.TextField id="name" title="Name" />
+			<Form.TextField id="description" title="Name" />
+		</Form>
+	);
+}
 
 const FruitGen = () => {
 	const [isLoading, setIsLoading] = useState(false);
@@ -130,7 +149,16 @@ const FruitList = () => {
 	}, []);
 
 	return (
-		<List isShowingDetail searchBarPlaceholder={'Search for a fruit'} searchBarAccessory={<ControlledModeSelector />}>
+		<List 
+			isShowingDetail 
+			searchBarPlaceholder={'Search for a fruit'} 
+			searchBarAccessory={<ControlledModeSelector />}
+			actions={
+				<ActionPanel>
+					<Action.Push title="Create new fruit" icon={Icon.Plus} target={<CreateFruit />} />
+				</ActionPanel>
+			}
+		>
 			<List.Section title={"Fruits"}>
 				{fruits.map(fruit => (
 					<List.Item 

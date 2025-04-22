@@ -119,16 +119,16 @@ declare module 'react' {
                 text?: string;
                 onAction: HandlerId;
             };
-            'root-form': {
+            'form': {
                 enableDrafts: boolean;
                 isLoading: boolean;
                 navigationTitle?: string;
                 children?: React.ReactNode;
             };
             'text-field': {};
-			'date-picker': {},
+			'date-picker-field': {},
             'password-field': {};
-            'textarea': {};
+            'textarea-field': {};
 
 			'dropdown': {
 				onChange?: EventHandler;

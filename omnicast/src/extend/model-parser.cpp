@@ -1,4 +1,5 @@
 #include "extend/model-parser.hpp"
+#include "extend/form-model.hpp"
 #include "extend/grid-model.hpp"
 #include "extend/list-model.hpp"
 #include "extend/root-detail-model.hpp"
@@ -25,6 +26,8 @@ std::vector<RenderModel> ModelParser::parse(const QJsonArray &views) {
       renderedViews.push_back(GridModelParser().parse(root));
     } else if (type == "detail") {
       renderedViews.push_back(RootDetailModelParser().parse(root));
+    } else if (type == "form") {
+      renderedViews.push_back(FormModel::fromJson(root));
     } else {
       renderedViews.push_back(
           InvalidModel{QString("Component of type %1 cannot be used as the root").arg(type)});

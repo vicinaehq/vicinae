@@ -285,6 +285,7 @@ qt_add_executable(${TARGET}
 	src/extend/tag-list.cpp
 	src/extend/root-detail-model.cpp
 	src/extend/empty-view-model.cpp
+	src/extend/form-model.cpp
 
 	include/image-fetcher.hpp
 

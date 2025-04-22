@@ -63,7 +63,7 @@ export declare namespace Form {
 
 const FormRoot: React.FC<Form.Props> = ({ enableDrafts = false, actions, children, isLoading = false, navigationTitle, searchBarAccessory }) => {
 	return (
-		<root-form 
+		<form 
 		enableDrafts={enableDrafts}
 		isLoading={isLoading}
 		navigationTitle={navigationTitle}
@@ -71,7 +71,7 @@ const FormRoot: React.FC<Form.Props> = ({ enableDrafts = false, actions, childre
 			{searchBarAccessory}
 			{children}
 			{actions}
-		</root-form>
+		</form>
 	)
 }
 
@@ -82,28 +82,29 @@ interface WithFormRef<T> {
 interface TextFieldProps extends FormItemProps<string>, WithFormRef<Form.TextField> {
 };
 
-const TextField: React.FC<TextFieldProps> = ({ ref }) => {
+const TextField: React.FC<TextFieldProps> = ({ ref , ...props }) => {
 	useImperativeFormHandle(ref);
 
-	return <text-field />
+	return <text-field {...props} />
 }
 
 interface PasswordFieldProps extends FormItemProps<string>, WithFormRef<Form.PasswordField> {
 };
 
-const PasswordField: React.FC<PasswordFieldProps> = () => {
-	return <password-field />
+const PasswordField: React.FC<PasswordFieldProps> = ({ ...props }) => {
+	return <password-field {...props} />
 }
 
 interface DatePickerProps extends FormItemProps<Date | null>, WithFormRef<Form.DatePicker> {
 };
 
-const DatePicker: React.FC<DatePickerProps> = () => {
-	return <date-picker />
+const DatePicker: React.FC<DatePickerProps> = ({ ...props }) => {
+	return <date-picker-field {...props} />
 }
 
 export const Form = Object.assign(FormRoot, {
 	TextField,
 	PasswordField,
 	DatePicker,
+	Separator: () => <separator />
 })

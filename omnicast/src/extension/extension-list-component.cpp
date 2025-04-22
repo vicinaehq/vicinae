@@ -92,7 +92,7 @@ void ExtensionListComponent::renderDropdown(const DropdownModel &dropdown) {
     }
   }
 
-  m_selector->setVisible(isVisible());
+  setLoading(dropdown.isLoading);
 }
 
 void ExtensionListComponent::render(const RenderModel &baseModel) {
@@ -105,6 +105,8 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
 
     renderDropdown(dropdown);
   }
+
+  m_selector->setVisible(newModel.searchBarAccessory.has_value() && isVisible());
 
   if (!newModel.navigationTitle.isEmpty()) {
     qDebug() << "set navigation title" << newModel.navigationTitle;
@@ -182,6 +184,7 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
   }
 
   if (_list->isShowingEmptyState()) {
+    qDebug() << "is empty!";
     size_t i = 0;
 
     if (auto pannel = newModel.actions) {
@@ -202,10 +205,14 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
 void ExtensionListComponent::onSelectionChanged(const OmniList::AbstractVirtualItem *next,
                                                 const OmniList::AbstractVirtualItem *previous) {
   if (!next) {
+    qDebug() << "nore visibiliy breaux";
     m_split->setDetailVisibility(false);
 
-    if (auto &pannel = _model.actions) { emit updateActionPannel(*pannel); }
-
+    if (auto &pannel = _model.actions) {
+      emit updateActionPannel(*pannel);
+    } else {
+      emit updateActionPannel({});
+    }
     return;
   }
 
