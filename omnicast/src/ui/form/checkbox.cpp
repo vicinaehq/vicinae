@@ -33,6 +33,7 @@ void Checkbox::keyPressEvent(QKeyEvent *event) {
   case Qt::Key_Return:
   case Qt::Key_Enter:
     toggle();
+    return;
   }
 
   QWidget::keyPressEvent(event);
@@ -52,8 +53,11 @@ void Checkbox::setValueAsJson(const QJsonValue &value) { return setValue(value.t
 void Checkbox::toggle() { setValue(!m_value); }
 
 void Checkbox::setValue(bool v) {
+  if (v == m_value) return;
+
   m_value = v;
   update();
+  emit valueChanged(v);
 }
 
 bool Checkbox::value() const { return m_value; }

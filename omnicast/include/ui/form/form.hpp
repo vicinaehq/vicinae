@@ -16,6 +16,8 @@ public:
   bool isValid() const;
   void focusFirst() const;
   const std::vector<FormField *> fields() const;
+
+  std::optional<FormField *> fieldAt(int index) const;
   void addField(FormField *field);
 
   FormWidget(QWidget *parent = nullptr);

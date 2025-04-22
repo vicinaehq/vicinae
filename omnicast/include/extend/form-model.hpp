@@ -31,6 +31,7 @@ struct FormModel {
   };
   struct CheckboxFieldModel : public FieldBase {};
   struct DatePickerFieldModel : public FieldBase {};
+  struct InvalidField : public FieldBase {};
 
   struct Separator {};
   struct Description {
@@ -40,7 +41,7 @@ struct FormModel {
 
   using SearchAccessory = std::variant<DropdownModel>;
   using Field = std::variant<TextFieldModel, PasswordFieldModel, TextAreaFieldModel, CheckboxFieldModel,
-                             DatePickerFieldModel>;
+                             DatePickerFieldModel, InvalidField>;
   using Item = std::variant<Field, Description, Separator>;
 
   bool isLoading;

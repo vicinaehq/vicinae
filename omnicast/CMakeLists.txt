@@ -62,6 +62,7 @@ qt_add_executable(${TARGET}
 	src/ui/form/form-field.cpp
 	include/ui/form/checkbox.hpp
 	src/ui/form/checkbox.cpp
+	include/ui/form/checkbox-input.hpp
 	include/ui/form/app-picker-input.hpp
 	src/ui/form/app-picker-input.cpp
 
@@ -155,6 +156,8 @@ qt_add_executable(${TARGET}
 	include/extension/extension-command.hpp
 	include/extension/extension-view.hpp
 	include/extension/extension-component.hpp
+
+	include/extension/extension-form-component.hpp
 
 	include/extension/extension-list-component.hpp
 	src/extension/extension-list-component.cpp
@@ -286,6 +289,7 @@ qt_add_executable(${TARGET}
 	src/extend/root-detail-model.cpp
 	src/extend/empty-view-model.cpp
 	src/extend/form-model.cpp
+
 
 	include/image-fetcher.hpp
 

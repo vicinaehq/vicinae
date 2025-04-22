@@ -281,9 +281,15 @@ private slots:
 
   void onActionExecuted(AbstractAction *action) override {
     auto extensionAction = static_cast<ExtensionAction *>(action);
+    auto &model = extensionAction->model();
 
-    if (auto handler = extensionAction->model().onAction; !handler.isEmpty()) {
-      handleNotifiedEvent(handler, {});
+    if (auto handler = model.onAction; !handler.isEmpty()) { handleNotifiedEvent(handler, {}); }
+
+    if (auto onSubmit = model.onSubmit) {
+      if (!viewStack.empty()) {
+        viewStack[viewStack.size() - 1]->submitForm(*onSubmit);
+        return;
+      }
     }
   }
 

@@ -20,6 +20,10 @@ ActionModel ActionPannelParser::parseAction(const QJsonObject &instance) {
   action.title = props.value("title").toString();
   action.onAction = props.value("onAction").toString();
 
+  if (props.contains("onSubmit")) { action.onSubmit = props.value("onSubmit").toString(); }
+
+  auto type = props.value("type").toString("callback");
+
   if (props.contains("shortcut")) {
     action.shortcut = parseKeyboardShortcut(props.value("shortcut").toObject());
   }

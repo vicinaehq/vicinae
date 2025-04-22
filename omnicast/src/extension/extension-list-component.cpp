@@ -92,7 +92,7 @@ void ExtensionListComponent::renderDropdown(const DropdownModel &dropdown) {
     }
   }
 
-  setLoading(dropdown.isLoading);
+  if (!_model.isLoading && dropdown.isLoading) { setLoading(true); }
 }
 
 void ExtensionListComponent::render(const RenderModel &baseModel) {

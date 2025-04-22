@@ -84,11 +84,22 @@ const Push: React.FC<ActionPushProps> = ({ target, ...props }) => {
 	}} />
 }
 
-const SubmitForm: React.FC<ActionSubmitFormProps> = ({ onSubmit, ...props }) => {
-	return <ActionRoot {...props} title="Submit" onAction={() => {
-		onSubmit({});
-		console.log('submit form');
-	}} />
+const SubmitForm: React.FC<ActionSubmitFormProps> = ({ onSubmit, icon, title = "Submit", ...props }) => {
+	const submitHandler = useEventListener(onSubmit);
+	const handler = useEventListener(() => {});
+	const nativeProps: React.JSX.IntrinsicElements['action'] = {
+		...props,
+		title,
+		icon,
+		onSubmit: submitHandler,
+		onAction: handler!
+	};
+
+	if (icon) {
+		nativeProps.icon = serializeImageLike(icon);
+	}
+
+	return <action {...nativeProps} />
 }
 
 

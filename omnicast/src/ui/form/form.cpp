@@ -49,6 +49,12 @@ void FormWidget::clearAllErrors() {
   }
 }
 
+std::optional<FormField *> FormWidget::fieldAt(int index) const {
+  if (_fields.size() < index) return std::nullopt;
+
+  return _fields.at(index);
+}
+
 void FormWidget::focusFirst() const {
   if (_fields.empty()) {
     qWarning() << "FormWidget::focusFirst() called on a form with no fields";

@@ -22,6 +22,8 @@ public:
 
   virtual bool inputFilter(QKeyEvent *event) { return false; }
 
+  virtual void onMount() {}
+
   QString searchText() const { return app.topBar->input->text(); }
   void setSearchText(const QString &text) {
     bool changed = app.topBar->input->text() != text;

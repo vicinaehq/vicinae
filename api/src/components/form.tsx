@@ -1,5 +1,6 @@
 import { Ref } from 'react';
 import { useImperativeFormHandle } from '../hooks/use-imperative-form-handle';
+import { useEventListener } from '../hooks';
 
 type FormProps = {
 	actions?: React.ReactNode;
@@ -38,6 +39,8 @@ interface FormEvent<T extends Form.Value> {
 };
 
 type FormEventType = 'focus' | 'blur';
+
+
 
 export declare namespace Form {
 	export type Props = FormProps;
@@ -82,10 +85,13 @@ interface WithFormRef<T> {
 interface TextFieldProps extends FormItemProps<string>, WithFormRef<Form.TextField> {
 };
 
-const TextField: React.FC<TextFieldProps> = ({ ref , ...props }) => {
+const TextField: React.FC<TextFieldProps> = ({ ref , onChange, onBlur, onFocus, ...props }) => {
 	useImperativeFormHandle(ref);
+	const blur = useEventListener(onBlur);
+	const focus = useEventListener(onFocus);
+	const change = useEventListener(onChange);
 
-	return <text-field {...props} />
+	return <text-field  onBlur={blur} onFocus={focus} onChange={change} {...props} />
 }
 
 interface PasswordFieldProps extends FormItemProps<string>, WithFormRef<Form.PasswordField> {
@@ -102,9 +108,24 @@ const DatePicker: React.FC<DatePickerProps> = ({ ...props }) => {
 	return <date-picker-field {...props} />
 }
 
+interface CheckboxProps extends FormItemProps<boolean>, WithFormRef<Form.Checkbox> {
+	label?: string;
+};
+
+const Checkbox: React.FC<CheckboxProps> = ({ ref, onBlur, onFocus, onChange, ...props }) => {
+	useImperativeFormHandle(ref);
+
+	const blur = useEventListener(onBlur);
+	const focus = useEventListener(onFocus);
+	const change = useEventListener(onChange);
+
+	return <checkbox-field onBlur={blur} onFocus={focus} onChange={change} {...props} />
+}
+
 export const Form = Object.assign(FormRoot, {
 	TextField,
 	PasswordField,
 	DatePicker,
+	Checkbox,
 	Separator: () => <separator />
 })

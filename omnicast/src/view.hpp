@@ -89,6 +89,11 @@ public:
     app.topBar->input->setText("");
   }
 
+  void showInput() {
+    app.topBar->input->show();
+    app.topBar->input->setReadOnly(false);
+  }
+
   virtual void onMount() {}
 
   // called when the view is shown again after another view that was pushed on top of it has been poped

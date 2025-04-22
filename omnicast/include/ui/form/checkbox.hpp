@@ -1,9 +1,12 @@
 #pragma once
 #include "common.hpp"
 #include <qsvgrenderer.h>
+#include <qtmetamacros.h>
 #include <qwidget.h>
 
 class Checkbox : public QWidget, public IJsonFormField {
+  Q_OBJECT
+
   bool m_value = false;
   QSvgRenderer *m_svg = new QSvgRenderer;
 
@@ -21,4 +24,7 @@ public:
   void setValue(bool value);
 
   Checkbox(QWidget *parent = nullptr);
+
+signals:
+  bool valueChanged(bool value) const;
 };

@@ -3,8 +3,21 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Fruit, fruits } from "./fruits";
 
 const CreateFruit = () => {
-	const handleSubmit = (values: Form.Values) => {
-		console.log({ values });
+	const [name, setName] = useState('');
+	const [nameError, setNameError] = useState("");
+	const [useProxy, setUseProxy] = useState(false);
+
+	const handleSubmit = async (values: Form.Values) => {
+		console.log('submitting...');
+		const annesoeur = await AI.ask(`Does this form submission look valid? Respond with a simple yes or no. If no explain quickly: ${JSON.stringify(values)}`);
+
+		if (annesoeur.includes("yes")) {
+			console.log(`AI says it's ongit: ${annesoeur}`);
+			console.log({ values });
+		} else {
+			console.log(`AI says it aint passin: ${annesoeur}`);
+			setNameError("nuh uh!");
+		}
 	}
 
 	return (
@@ -15,8 +28,15 @@ const CreateFruit = () => {
 				</ActionPanel>
 			}
 		>
-			<Form.TextField id="name" title="Name" />
+			<Form.TextField id="name" title="Name" error={nameError} onChange={(value) => { console.log({ value }); setName(value); }} value={name} />
 			<Form.TextField id="description" title="Name" />
+			<Form.Checkbox autoFocus id="use-proxy" title="Use proxy" value={useProxy} onChange={setUseProxy} />
+			{useProxy && (
+				<>
+					<Form.TextField id="proxy-user" title="Username" />
+					<Form.TextField id="proxy-password" title="Password" />
+				</>
+			)}
 		</Form>
 	);
 }

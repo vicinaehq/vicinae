@@ -18,7 +18,12 @@ public:
   QString errorText() const;
   void setWidget(QWidget *widget);
   void clearError();
+  bool hasError() const;
 
   QWidget *widget() const;
   void focus() const;
+
+signals:
+  void blurred() const;
+  void focused() const;
 };

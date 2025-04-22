@@ -11,6 +11,7 @@ struct KeyboardShortcutModel {
 struct ActionModel {
   QString title;
   QString onAction;
+  std::optional<QString> onSubmit;
   std::optional<ImageLikeModel> icon;
   std::optional<KeyboardShortcutModel> shortcut;
 };

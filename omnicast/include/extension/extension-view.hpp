@@ -3,6 +3,7 @@
 #include "extend/form-model.hpp"
 #include "extend/grid-model.hpp"
 #include "extend/model-parser.hpp"
+#include "extend/model.hpp"
 #include "extension/extension-command.hpp"
 #include "extension/extension-grid-component.hpp"
 #include "extension/extension-list-component.hpp"
@@ -30,10 +31,13 @@ class ExtensionView : public View {
 
   AbstractExtensionRootComponent *createRootComponent(const RenderModel &model, QWidget *parent = nullptr) {
     if (auto listModel = std::get_if<ListModel>(&model)) {
+      showInput();
       return new ExtensionListComponent(app);
     } else if (auto gridModel = std::get_if<GridModel>(&model)) {
+      showInput();
       return new ExtensionGridComponent(app);
     } else if (auto formModel = std::get_if<FormModel>(&model)) {
+      hideInput();
       return new ExtensionFormComponent(app);
     }
 
@@ -54,6 +58,16 @@ public:
 
   void onSearchChanged(const QString &s) override {
     if (_component) { _component->onSearchChanged(s); }
+  }
+
+  bool submitForm(const EventHandler &callback) {
+    if (_component && _modelIndex == RenderModel(FormModel()).index()) {
+      qDebug() << "forwarding callback";
+      static_cast<ExtensionFormComponent *>(_component)->handleSubmit(callback);
+      return true;
+    }
+
+    return false;
   }
 
   void render(const RenderModel &model) {
@@ -82,6 +96,7 @@ public:
               &ExtensionView::updateActionPannel);
 
       _component = component;
+      _component->onMount();
       _modelIndex = model.index();
       _layout->addWidget(_component);
     }

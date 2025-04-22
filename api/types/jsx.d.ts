@@ -105,6 +105,7 @@ declare module 'react' {
             'action': {
                 title: string;
                 onAction: HandlerId;
+				onSubmit?: HandlerId;
                 shortcut?: Keyboard.Shortcut;
                 icon?: SerializedImageLike;
 				autoFocus?: boolean;
@@ -125,8 +126,17 @@ declare module 'react' {
                 navigationTitle?: string;
                 children?: React.ReactNode;
             };
-            'text-field': {};
+            'text-field': {
+				onBlur: EventHandler;
+				onFocus: EventHandler;
+				onChange: EventHandler;
+			};
 			'date-picker-field': {},
+			'checkbox-field': {
+				onBlur: EventHandler;
+				onFocus: EventHandler;
+				onChange: EventHandler;
+			},
             'password-field': {};
             'textarea-field': {};
 
