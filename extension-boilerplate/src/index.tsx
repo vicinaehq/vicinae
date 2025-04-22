@@ -28,7 +28,7 @@ const CreateFruit = () => {
 				</ActionPanel>
 			}
 		>
-			<Form.TextField id="name" title="Name" error={nameError} onChange={(value) => { console.log({ value }); setName(value); }} value={name} />
+			<Form.TextField id="name" title="Name" error={nameError} onBlur={() => console.log('blurred')} onFocus={() => console.log('focused')} onChange={(value) => { console.log({ value }); setName(value); }} value={name} />
 			<Form.TextField id="description" title="Name" />
 			<Form.Checkbox autoFocus id="use-proxy" title="Use proxy" value={useProxy} onChange={setUseProxy} />
 			{useProxy && (

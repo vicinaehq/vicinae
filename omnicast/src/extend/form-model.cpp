@@ -56,6 +56,8 @@ FormModel FormModel::fromJson(const QJsonObject &json) {
       if (props.contains("onChange")) base.onChange = props.value("onChange").toString();
       if (props.contains("defaultValue")) base.defaultValue = props.value("defaultValue").toString();
 
+      qDebug() << "registered" << base.id << base.onChange;
+
       if (*it == "text-field") {
         model.items.emplace_back(TextFieldModel(base));
       } else if (*it == "password-field") {

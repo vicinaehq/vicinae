@@ -8,8 +8,6 @@
 #include "ui/form/checkbox-input.hpp"
 #include "ui/form/form-field.hpp"
 #include "ui/form/form.hpp"
-#include <functional>
-#include <numbers>
 #include <qboxlayout.h>
 #include <qjsonvalue.h>
 #include <qnamespace.h>
@@ -21,42 +19,32 @@ class ExtensionFormField : public FormField {
 
   IJsonFormField *m_jsonField = nullptr;
   FormModel::Field m_model = FormModel::InvalidField();
-  bool m_autoFocusable;
-  QString m_id;
-
-  void setupBase(const FormModel::FieldBase &base) {
-    if (base.onChange) { qDebug() << "has on Change" << base.id; }
-    if (base.title) { setName(base.id); }
-    if (base.error) { setError(*base.error); }
-
-    m_id = base.id;
-    m_autoFocusable = base.autoFocus;
-  }
+  const FormModel::FieldBase *m_model_base;
 
 public:
   const FormModel::Field model() const { return m_model; }
 
-  QString id() const { return m_id; }
-  bool autoFocusable() const { return m_autoFocusable; }
+  QString id() const { return m_model_base->id; }
+  bool autoFocusable() const { return m_model_base->autoFocus; }
   QJsonValue valueAsJson() const { return m_jsonField ? m_jsonField->asJsonValue() : QJsonValue(); }
 
   void setModel(const FormModel::Field &model) {
-    std::visit(std::bind_front(&ExtensionFormField::setupBase, this), model);
+    bool isSameType = model.index() == m_model.index();
+
+    m_model = model;
+    m_model_base = std::visit([](const FormModel::FieldBase &base) { return &base; }, m_model);
+    setName(m_model_base->id);
+
+    if (m_model_base->error) { setError(*m_model_base->error); }
 
     if (auto textField = std::get_if<FormModel::TextFieldModel>(&model)) {
-      if (model.index() != m_model.index()) {
+      if (!isSameType) {
         auto input = new BaseInput;
 
         m_jsonField = input;
 
         connect(input, &BaseInput::textChanged, this, [this](const QString &text) {
-          qDebug() << "text changed";
-          std::visit(
-              [this, text](const FormModel::FieldBase &base) {
-                qDebug() << "iterating";
-                if (base.onChange) { emit notifyEvent(*base.onChange, {text}); }
-              },
-              m_model);
+          if (auto onChange = m_model_base->onChange) { emit notifyEvent(*onChange, {text}); }
         });
 
         if (auto w = widget()) { w->deleteLater(); }
@@ -70,18 +58,15 @@ public:
     }
 
     if (auto checkboxField = std::get_if<FormModel::CheckboxFieldModel>(&model)) {
-      if (model.index() != m_model.index()) {
+      if (!isSameType) {
         auto input = new CheckboxInput;
 
         m_jsonField = input;
         connect(input, &CheckboxInput::valueChanged, this, [this](bool value) {
-          qDebug() << "value changed";
-          std::visit(
-              [this, value](const FormModel::FieldBase &base) {
-                qDebug() << "iterating";
-                if (base.onChange) { emit notifyEvent(*base.onChange, {value}); }
-              },
-              m_model);
+          qDebug() << "onChange" << m_model_base->id;
+          qDebug() << "onChange value" << m_model_base->onChange;
+
+          if (auto onChange = m_model_base->onChange) { emit notifyEvent(*onChange, {value}); }
         });
 
         if (auto w = widget()) { w->deleteLater(); }
@@ -92,11 +77,16 @@ public:
 
       if (auto value = checkboxField->value) { checkbox->setValueAsJson(value->toBool()); }
     }
-
-    m_model = model;
   }
 
-  ExtensionFormField() : m_model(FormModel::InvalidField{}) {}
+  void handleFocusChanged(bool value) {
+    if (!value && m_model_base->onBlur) { emit notifyEvent(*m_model_base->onBlur, {}); }
+    if (value && m_model_base->onFocus) { emit notifyEvent(*m_model_base->onFocus, {}); }
+  }
+
+  ExtensionFormField() : m_model(FormModel::InvalidField{}) {
+    connect(this, &ExtensionFormField::focusChanged, this, &ExtensionFormField::handleFocusChanged);
+  }
 
 signals:
   void notifyEvent(const QString &handler, const std::vector<QJsonValue> &args) const;

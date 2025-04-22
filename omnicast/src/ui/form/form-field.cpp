@@ -33,6 +33,7 @@ QWidget *FormField::widget() const { return _widget; }
 void FormField::setWidget(QWidget *widget) {
   auto current = _layout->itemAt(1)->widget();
 
+  widget->installEventFilter(this);
   setFocusProxy(widget);
   _layout->replaceWidget(current, widget);
   current->deleteLater();
