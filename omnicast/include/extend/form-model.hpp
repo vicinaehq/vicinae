@@ -55,7 +55,8 @@ struct FormModel {
     FocusNotifier *m_focusNotifier = nullptr;
     std::shared_ptr<IField> m_field;
 
-  protected:
+    virtual void render(const std::shared_ptr<FormModel::IField> &field) {}
+
   public:
     ExtensionEventNotifier *m_extensionNotifier = new ExtensionEventNotifier(this);
 
@@ -94,32 +95,26 @@ struct FormModel {
       m_field = field;
       render(m_field);
     }
-
-    virtual void render(const std::shared_ptr<FormModel::IField> &field) {}
   };
 
   class IField : public FieldBase {
   public:
-    virtual void refresh(JsonFormField *widget) const {
-      if (value) widget->setJsonValue(*value);
-    }
-
     size_t fieldTypeId() const { return typeid(*this).hash_code(); }
 
-    IField(const FieldBase &base) : FieldBase(base) { qDebug() << "onBlur" << onBlur << id; }
+    virtual ~IField() {}
+
+    IField(const FieldBase &base) : FieldBase(base) {}
   };
 
   struct TextField : public IField {
     std::optional<QString> m_placeholder;
 
   public:
-    void refresh(JsonFormField *widget) const override {}
-
     TextField(const FieldBase &base) : IField(base) {}
   };
 
   class JsonInputField : public JsonFormField {
-    BaseInput *m_input = new BaseInput;
+    BaseInput *m_input = new BaseInput(this);
     std::shared_ptr<TextField> m_model;
 
   public:
@@ -197,11 +192,7 @@ struct FormModel {
     DropdownSelectorItem(const DropdownModel::Item &model) : m_model(model) {}
   };
 
-  class DropdownField : public IField {
-
-  public:
-    DropdownField(const FieldBase &base) : IField(base) {}
-
+  struct DropdownField : public IField {
     std::vector<DropdownModel::Child> m_items;
     std::optional<QString> onSearchTextChange;
     std::optional<QString> placeholder;
@@ -209,12 +200,13 @@ struct FormModel {
     bool throttle;
     std::optional<QString> tooltip;
 
-    void refresh(JsonFormField *widget) const override {}
+    DropdownField(const FieldBase &base) : IField(base) {}
   };
 
   class JsonDropdownField : public JsonFormField {
-    SelectorInput *m_input = new SelectorInput;
+    SelectorInput *m_input = new SelectorInput(this);
     std::shared_ptr<DropdownField> m_model;
+    bool m_hasPendingResetSelection = false;
 
     void handleSelectionChanged(const SelectorInput::AbstractItem &item) {
       if (auto onChange = m_model->onChange) { m_extensionNotifier->notify(*onChange, item.id()); }
@@ -225,8 +217,6 @@ struct FormModel {
 
     void handleTextChanged(const QString &text) {
       if (auto change = m_model->onSearchTextChange) { m_extensionNotifier->notify(*change, text); }
-      // XXX - implement text changed notification
-      qDebug() << "handle text" << text;
     }
 
   public:

@@ -3,6 +3,7 @@
 #include "ui/focus-notifier.hpp"
 #include <memory>
 #include <qjsonvalue.h>
+#include <qwidget.h>
 
 bool SelectorInput::eventFilter(QObject *obj, QEvent *event) {
   if (obj == popover) {
@@ -57,8 +58,8 @@ void SelectorInput::setValueAsJson(const QJsonValue &value) { setValue(value.toS
 
 FocusNotifier *SelectorInput::focusNotifier() const { return m_focusNotifier; }
 
-SelectorInput::SelectorInput(const QString &name)
-    : m_list(new OmniList), inputField(new BaseInput), m_searchField(new QLineEdit()),
+SelectorInput::SelectorInput(QWidget *parent)
+    : QWidget(parent), m_list(new OmniList), inputField(new BaseInput), m_searchField(new QLineEdit()),
       popover(new Popover(this)), collapseIcon(new OmniIcon), selectionIcon(new OmniIcon) {
   auto *layout = new QVBoxLayout();
   layout->setContentsMargins(0, 0, 0, 0);

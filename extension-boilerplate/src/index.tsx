@@ -20,7 +20,7 @@ const CreateFruit = () => {
 				</ActionPanel>
 			}
 		>
-			<Form.TextField id="name" title="Name" error={nameError} onBlur={() => console.log('blurred')} onFocus={() => console.log('focused')} onChange={(value) => { console.log({ value }); setName(value); }} value={name} />
+			<Form.TextField autoFocus id="name" title="Name" error={nameError} onBlur={() => console.log('blurred')} onFocus={() => console.log('focused')} onChange={(value) => { console.log({ value }); setName(value); }} value={name} />
 			<Form.TextField id="description" title="Name" />
 			<Form.Dropdown 
 			isLoading
@@ -31,7 +31,7 @@ const CreateFruit = () => {
 				<List.Dropdown.Item title={'choice2'} value={'1'} icon={'https://i.pinimg.com/474x/1e/59/67/1e5967f624fb617984dbc46c8c9ff328.jpg'} />
 				<List.Dropdown.Item title={'choice3'} value={'2'} icon={Icon.Circle} />
 			</Form.Dropdown>
-			<Form.Checkbox storeValue autoFocus id="use-proxy" title="Use proxy" value={useProxy} onChange={setUseProxy} />
+			<Form.Checkbox storeValue  id="use-proxy" title="Use proxy" value={useProxy} onChange={setUseProxy} />
 			{useProxy && (
 				<>
 					<Form.TextField id="proxy-user" title="Username" />

@@ -11,6 +11,7 @@
 #include <qlineedit.h>
 #include <qobject.h>
 #include <qtmetamacros.h>
+#include <qwidget.h>
 
 class SelectorInput : public QWidget, public IJsonFormField {
 public:
@@ -76,7 +77,7 @@ protected:
   };
 
 public:
-  SelectorInput(const QString &name = "");
+  SelectorInput(QWidget *parent = nullptr);
   ~SelectorInput();
 
   FocusNotifier *focusNotifier() const;

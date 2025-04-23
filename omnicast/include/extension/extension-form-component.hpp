@@ -6,9 +6,11 @@
 #include "extension/extension-component.hpp"
 #include "ui/form/form-field.hpp"
 #include "ui/form/form.hpp"
+#include "ui/omni-scroll-bar.hpp"
 #include <qboxlayout.h>
 #include <qjsonvalue.h>
 #include <qnamespace.h>
+#include <qscrollarea.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
 
@@ -82,7 +84,7 @@ signals:
 };
 
 class ExtensionFormComponent : public AbstractExtensionRootComponent {
-  FormWidget *m_form = new FormWidget;
+  QScrollArea *m_scrollArea = new QScrollArea(this);
   std::unordered_map<QString, ExtensionFormField *> m_fieldMap;
   std::vector<ExtensionFormField *> m_fields;
   QVBoxLayout *m_layout = new QVBoxLayout;
@@ -190,7 +192,22 @@ public:
   }
 
   ExtensionFormComponent(AppWindow &app) : AbstractExtensionRootComponent(app) {
+    auto layout = new QVBoxLayout;
+    auto form = new QWidget;
+
     m_layout->setAlignment(Qt::AlignTop);
-    setLayout(m_layout);
+    form->setLayout(m_layout);
+
+    m_scrollArea->setVerticalScrollBar(new OmniScrollBar);
+    m_scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_scrollArea->setWidget(form);
+    m_scrollArea->setWidgetResizable(true);
+    m_scrollArea->setAutoFillBackground(false);
+    form->setAutoFillBackground(false);
+    m_scrollArea->setAttribute(Qt::WA_TranslucentBackground);
+
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(m_scrollArea);
+    setLayout(layout);
   }
 };
