@@ -11,27 +11,20 @@ void BaseInput::paintEvent(QPaintEvent *event) {
   QPainter painter(this);
 
   painter.setRenderHint(QPainter::Antialiasing, true);
-  QPen pen(_focused ? theme.colors.subtext : theme.colors.border, 1);
+  QPen pen(hasFocus() ? theme.colors.subtext : theme.colors.border, 1);
   painter.setPen(pen);
   painter.drawRoundedRect(rect(), borderRadius, borderRadius);
 
   QLineEdit::paintEvent(event);
 }
 
-void BaseInput::setFocusState(bool value) {
-  if (_focused == value) return;
-
-  _focused = value;
-  update();
-}
-
 bool BaseInput::event(QEvent *event) {
   switch (event->type()) {
   case QFocusEvent::FocusIn:
-    setFocusState(true);
+    m_focusNotifier->focusChanged(true);
     break;
   case QFocusEvent::FocusOut:
-    setFocusState(false);
+    m_focusNotifier->focusChanged(false);
     break;
   default:
     break;
@@ -81,7 +74,6 @@ void BaseInput::setRightAccessory(QWidget *widget) {
 
 QJsonValue BaseInput::asJsonValue() const { return text(); }
 
-BaseInput::BaseInput(QWidget *parent)
-    : QLineEdit(parent), leftAccessory(nullptr), rightAccessory(nullptr), _focused(false) {
+BaseInput::BaseInput(QWidget *parent) : QLineEdit(parent), leftAccessory(nullptr), rightAccessory(nullptr) {
   setContentsMargins(8, 8, 8, 8);
 }

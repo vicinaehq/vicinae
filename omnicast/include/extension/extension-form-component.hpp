@@ -4,8 +4,6 @@
 #include "extend/form-model.hpp"
 #include "extend/model.hpp"
 #include "extension/extension-component.hpp"
-#include "ui/form/base-input.hpp"
-#include "ui/form/checkbox-input.hpp"
 #include "ui/form/form-field.hpp"
 #include "ui/form/form.hpp"
 #include <qboxlayout.h>
@@ -17,74 +15,65 @@
 class ExtensionFormField : public FormField {
   Q_OBJECT
 
-  IJsonFormField *m_jsonField = nullptr;
-  FormModel::Field m_model = FormModel::InvalidField();
-  const FormModel::FieldBase *m_model_base;
+  std::shared_ptr<FormModel::IField> m_model;
+  FormModel::JsonFormField *m_widget = nullptr;
+
+  static FormModel::JsonFormField *createFieldWidget(const FormModel::IField *field) {
+    if (auto f = dynamic_cast<const FormModel::CheckboxField *>(field)) {
+      return new FormModel::JsonCheckboxField();
+    }
+    if (auto f = dynamic_cast<const FormModel::TextField *>(field)) {
+      return new FormModel::JsonInputField();
+    }
+    if (auto f = dynamic_cast<const FormModel::DropdownField *>(field)) {
+      return new FormModel::JsonDropdownField();
+    }
+
+    return nullptr;
+  }
 
 public:
-  const FormModel::Field model() const { return m_model; }
+  const FormModel::IField *model() const { return m_model.get(); }
 
-  QString id() const { return m_model_base->id; }
-  bool autoFocusable() const { return m_model_base->autoFocus; }
-  QJsonValue valueAsJson() const { return m_jsonField ? m_jsonField->asJsonValue() : QJsonValue(); }
+  QString id() const { return m_model->id; }
+  bool autoFocusable() const { return m_model->autoFocus; }
+  QJsonValue valueAsJson() const { return m_widget ? m_widget->jsonValue() : QJsonValue(); }
 
-  void setModel(const FormModel::Field &model) {
-    bool isSameType = model.index() == m_model.index();
+  void reset() {
+    if (m_widget) { m_widget->reset(); }
+  };
+
+  void setModel(const std::shared_ptr<FormModel::IField> &model) {
+    bool isSameType = m_model && m_model->fieldTypeId() == model->fieldTypeId();
 
     m_model = model;
-    m_model_base = std::visit([](const FormModel::FieldBase &base) { return &base; }, m_model);
-    setName(m_model_base->id);
 
-    if (m_model_base->error) { setError(*m_model_base->error); }
+    if (!isSameType) {
+      m_widget = createFieldWidget(model.get());
 
-    if (auto textField = std::get_if<FormModel::TextFieldModel>(&model)) {
-      if (!isSameType) {
-        auto input = new BaseInput;
+      connect(m_widget->m_extensionNotifier, &ExtensionEventNotifier::eventNotified, this,
+              &ExtensionFormField::notifyEvent);
 
-        m_jsonField = input;
+      if (auto old = widget()) old->deleteLater();
 
-        connect(input, &BaseInput::textChanged, this, [this](const QString &text) {
-          if (auto onChange = m_model_base->onChange) { emit notifyEvent(*onChange, {text}); }
-        });
-
-        if (auto w = widget()) { w->deleteLater(); }
-        setWidget(input);
-      }
-
-      auto input = static_cast<BaseInput *>(widget());
-
-      if (auto placeholder = textField->placeholder) { input->setPlaceholderText(*placeholder); }
-      if (auto value = textField->value) { input->setText(value->toString()); }
+      setWidget(m_widget, m_widget->focusNotifier());
     }
 
-    if (auto checkboxField = std::get_if<FormModel::CheckboxFieldModel>(&model)) {
-      if (!isSameType) {
-        auto input = new CheckboxInput;
+    if (model->title) { setName(*model->title); }
+    if (model->error) { setError(*model->error); }
 
-        m_jsonField = input;
-        connect(input, &CheckboxInput::valueChanged, this, [this](bool value) {
-          qDebug() << "onChange" << m_model_base->id;
-          qDebug() << "onChange value" << m_model_base->onChange;
-
-          if (auto onChange = m_model_base->onChange) { emit notifyEvent(*onChange, {value}); }
-        });
-
-        if (auto w = widget()) { w->deleteLater(); }
-        setWidget(input);
-      }
-
-      auto checkbox = static_cast<CheckboxInput *>(widget());
-
-      if (auto value = checkboxField->value) { checkbox->setValueAsJson(value->toBool()); }
-    }
+    m_widget->dispatchRender(model);
   }
 
   void handleFocusChanged(bool value) {
-    if (!value && m_model_base->onBlur) { emit notifyEvent(*m_model_base->onBlur, {}); }
-    if (value && m_model_base->onFocus) { emit notifyEvent(*m_model_base->onFocus, {}); }
+    qDebug() << "Focus changed" << m_model->id << value << "blur" << m_model->onBlur << "focus"
+             << m_model->onFocus;
+
+    if (!value && m_model->onBlur) { emit notifyEvent(*m_model->onBlur, {}); }
+    if (value && m_model->onFocus) { emit notifyEvent(*m_model->onFocus, {}); }
   }
 
-  ExtensionFormField() : m_model(FormModel::InvalidField{}) {
+  ExtensionFormField() {
     connect(this, &ExtensionFormField::focusChanged, this, &ExtensionFormField::handleFocusChanged);
   }
 
@@ -100,7 +89,7 @@ class ExtensionFormComponent : public AbstractExtensionRootComponent {
   bool autoFocused = false;
 
 public:
-  void handleSubmit(const EventHandler &handler) const {
+  void handleSubmit(const EventHandler &handler) {
     QJsonObject payload;
 
     for (const auto &field : m_fields) {
@@ -112,11 +101,12 @@ public:
     }
 
     notifyEvent(handler, {payload});
+    reset();
   }
 
-  void clear() {
-    while (m_layout->count() > 0) {
-      if (auto item = m_layout->takeAt(0)) {}
+  void reset() {
+    for (const auto &field : m_fields) {
+      field->reset();
     }
   }
 
@@ -144,32 +134,28 @@ public:
     bool hasFocus = false;
 
     for (int i = 0; i != formModel.items.size(); ++i) {
-      if (auto field = std::get_if<FormModel::Field>(&formModel.items.at(i))) {
-        std::visit(
-            [this, field, i, &lastAutoFocusable, &visibleIds](const FormModel::FieldBase &base) {
-              ExtensionFormField *formField = nullptr;
+      if (auto f = std::get_if<std::shared_ptr<FormModel::IField>>(&formModel.items.at(i))) {
+        auto &field = *f;
+        ExtensionFormField *formField = nullptr;
 
-              visibleIds.push_back(base.id);
+        visibleIds.push_back(field->id);
 
-              if (auto it = m_fieldMap.find(base.id); it != m_fieldMap.end()) {
-                formField = it->second;
-              } else {
-                formField = new ExtensionFormField();
-                m_fieldMap.insert({base.id, formField});
-                connect(formField, &ExtensionFormField::notifyEvent, this,
-                        &ExtensionFormComponent::notifyEvent);
-              }
+        if (auto it = m_fieldMap.find(field->id); it != m_fieldMap.end()) {
+          formField = it->second;
+        } else {
+          formField = new ExtensionFormField();
+          m_fieldMap.insert({field->id, formField});
+          connect(formField, &ExtensionFormField::notifyEvent, this, &ExtensionFormComponent::notifyEvent);
+        }
 
-              formField->setModel(*field);
-              m_fields.emplace_back(formField);
+        formField->setModel(field);
+        m_fields.emplace_back(formField);
 
-              if (m_layout->count() > i) {
-                m_layout->replaceWidget(m_layout->itemAt(i)->widget(), formField);
-              } else {
-                m_layout->addWidget(formField, 0, Qt::AlignTop);
-              }
-            },
-            *field);
+        if (m_layout->count() > i) {
+          m_layout->replaceWidget(m_layout->itemAt(i)->widget(), formField);
+        } else {
+          m_layout->addWidget(formField, 0, Qt::AlignTop);
+        }
       }
     }
 

@@ -570,6 +570,7 @@ class HttpOmniIconWidget : public OmniIconWidget {
   QPixmap _pixmap;
   QFutureWatcher<QPixmap> watcher;
   OmniPainter::ImageMaskType _mask;
+  QSize m_lastLoadedForSize;
   QUrl url;
 
   void paintEvent(QPaintEvent *event) override {
@@ -586,12 +587,19 @@ class HttpOmniIconWidget : public OmniIconWidget {
 
   void resizeEvent(QResizeEvent *event) override {
     qDebug() << "http image resize" << event->size();
+    if (event->size() == m_lastLoadedForSize) {
+      qDebug() << "same size, not doing anything";
+      return;
+    }
+
     QWidget::resizeEvent(event);
     recalculate();
   }
 
   void handleImageLoaded() {
     if (watcher.isCanceled()) { return; }
+
+    m_lastLoadedForSize = size();
 
     if (auto pix = watcher.result(); !pix.isNull()) {
       _pixmap = pix;
@@ -636,6 +644,7 @@ public:
 
   HttpOmniIconWidget(const QUrl &url, QWidget *parent)
       : OmniIconWidget(parent), _mask(OmniPainter::ImageMaskType::NoMask), url(url) {
+    qDebug() << "init http image for" << url;
     connect(&watcher, &QFutureWatcher<QPixmap>::finished, this, &HttpOmniIconWidget::handleImageLoaded);
   }
 };
@@ -711,6 +720,8 @@ public:
   }
 
   void setUrl(const OmniIconUrl &url) {
+    if (url == _url) return;
+
     if (_iconWidget) {
       _iconWidget->blockSignals(true);
       layout->takeAt(0);

@@ -1,5 +1,6 @@
 #include "ui/form/form-field.hpp"
 #include "theme.hpp"
+#include "ui/focus-notifier.hpp"
 #include "ui/typography.hpp"
 #include <qnamespace.h>
 
@@ -30,10 +31,11 @@ void FormField::focus() const { _widget->setFocus(); }
 
 QWidget *FormField::widget() const { return _widget; }
 
-void FormField::setWidget(QWidget *widget) {
+void FormField::setWidget(QWidget *widget, FocusNotifier *notifier) {
   auto current = _layout->itemAt(1)->widget();
 
-  widget->installEventFilter(this);
+  if (notifier) { connect(notifier, &FocusNotifier::focusChanged, this, &FormField::focusChanged); }
+
   setFocusProxy(widget);
   _layout->replaceWidget(current, widget);
   current->deleteLater();

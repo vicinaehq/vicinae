@@ -23,6 +23,7 @@ class CheckboxInput : public QWidget, public IJsonFormField {
 
 public:
   void setValueAsJson(const QJsonValue &value) override { m_checkbox->setValue(value.toBool(false)); }
+  bool value() const { return m_checkbox->value(); }
 
   CheckboxInput(QWidget *parent = nullptr) {
     setFocusProxy(m_checkbox);

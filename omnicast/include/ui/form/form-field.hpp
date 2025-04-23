@@ -1,4 +1,5 @@
 #pragma once
+#include "ui/focus-notifier.hpp"
 #include "ui/typography.hpp"
 #include <qboxlayout.h>
 #include <qcoreevent.h>
@@ -27,8 +28,6 @@ protected:
   }
 
   bool eventFilter(QObject *obj, QEvent *event) override {
-    if (obj != _widget) return false;
-
     if (event->type() == QEvent::FocusIn) {
       emit focusChanged(true);
     } else if (event->type() == QEvent::FocusOut) {
@@ -44,7 +43,7 @@ public:
   void setName(const QString &name);
   void setError(const QString &error);
   QString errorText() const;
-  void setWidget(QWidget *widget);
+  void setWidget(QWidget *widget, FocusNotifier *focusNotifier = nullptr);
   void clearError();
   bool hasError() const;
 

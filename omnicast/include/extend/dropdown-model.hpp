@@ -77,6 +77,20 @@ struct DropdownModel {
   Filtering filtering;
   bool isLoading;
 
+  static Child childFromJson(const QJsonObject &json) {
+    auto type = json.value("type").toString();
+
+    if (type == "dropdown-item") {
+      return Item::fromJson(json);
+    } else if (type == "dropdown-section") {
+      return Section::fromJson(json);
+    } else {
+      qWarning() << "DropdownModel: unhandled child type" << type;
+    }
+
+    return {};
+  }
+
   static DropdownModel fromJson(const QJsonObject &json) {
     DropdownModel model;
     auto props = json.value("props").toObject();

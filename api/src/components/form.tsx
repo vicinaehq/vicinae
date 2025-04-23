@@ -1,4 +1,4 @@
-import { Ref } from 'react';
+import { ReactNode, Ref } from 'react';
 import { useImperativeFormHandle } from '../hooks/use-imperative-form-handle';
 import { useEventListener } from '../hooks';
 
@@ -122,10 +122,40 @@ const Checkbox: React.FC<CheckboxProps> = ({ ref, onBlur, onFocus, onChange, ...
 	return <checkbox-field onBlur={blur} onFocus={focus} onChange={change} {...props} />
 }
 
+
+interface DropdownProps extends FormItemProps<string>, WithFormRef<Form.Dropdown> {tooltip?: string;
+	children?: ReactNode;
+	filtering?: boolean;
+	isLoading?: boolean;
+	placeholder?: string;
+	throttle?: boolean;
+	onSearchTextChange?: (text: string) => void;
+};
+
+const Dropdown: React.FC<DropdownProps> = ({ children, onBlur, onFocus, onChange,  ...props }) => {
+	const onSearchTextChange = useEventListener(props.onSearchTextChange);
+	const blur = useEventListener(onBlur);
+	const focus = useEventListener(onFocus);
+	const change = useEventListener(onChange);
+	const rest = { ...props, onSearchTextChange };
+
+	return (
+		<dropdown-field
+			onBlur={blur}
+			onFocus={focus}
+			onChange={change}
+			{...rest}
+		>
+			{children}
+		</dropdown-field>
+	);
+}
+
 export const Form = Object.assign(FormRoot, {
 	TextField,
 	PasswordField,
 	DatePicker,
 	Checkbox,
+	Dropdown,
 	Separator: () => <separator />
 })

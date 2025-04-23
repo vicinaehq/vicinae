@@ -131,6 +131,12 @@ declare module 'react' {
 				onFocus: EventHandler;
 				onChange: EventHandler;
 			};
+            'dropdown-field': {
+				onBlur?: EventHandler;
+				onFocus?: EventHandler;
+				onChange?: EventHandler;
+				children?: ReactNode;
+			};
 			'date-picker-field': {},
 			'checkbox-field': {
 				onBlur: EventHandler;

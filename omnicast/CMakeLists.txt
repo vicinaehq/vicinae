@@ -288,7 +288,10 @@ qt_add_executable(${TARGET}
 	src/extend/tag-list.cpp
 	src/extend/root-detail-model.cpp
 	src/extend/empty-view-model.cpp
+	include/extend/form-model.hpp
 	src/extend/form-model.cpp
+
+	include/ui/focus-notifier.hpp
 
 
 	include/image-fetcher.hpp

@@ -1,5 +1,6 @@
 #include "ui/form/selector-input.hpp"
 #include "common.hpp"
+#include "ui/focus-notifier.hpp"
 #include <memory>
 #include <qjsonvalue.h>
 
@@ -50,13 +51,31 @@ QJsonValue SelectorInput::asJsonValue() const {
   return _currentSelection ? _currentSelection->id() : QJsonValue();
 }
 
+void SelectorInput::setIsLoading(bool value) { m_loadingBar->setStarted(value); }
+
 void SelectorInput::setValueAsJson(const QJsonValue &value) { setValue(value.toString()); }
+
+FocusNotifier *SelectorInput::focusNotifier() const { return m_focusNotifier; }
 
 SelectorInput::SelectorInput(const QString &name)
     : m_list(new OmniList), inputField(new BaseInput), m_searchField(new QLineEdit()),
       popover(new Popover(this)), collapseIcon(new OmniIcon), selectionIcon(new OmniIcon) {
   auto *layout = new QVBoxLayout();
   layout->setContentsMargins(0, 0, 0, 0);
+
+  m_loadingBar->setPositionStep(5);
+
+  setFocusProxy(inputField);
+
+  connect(inputField->focusNotifier(), &FocusNotifier::focusChanged, this, [this](bool value) {
+    // we don't consider opening the selection menu a focus change
+    if (!popover->isVisible()) {
+      if (m_focused != value) {
+        m_focusNotifier->focusChanged(value);
+        m_focused = value;
+      }
+    }
+  });
 
   popover->setProperty("class", "popover");
 
@@ -80,7 +99,7 @@ SelectorInput::SelectorInput(const QString &name)
   m_searchField->setPlaceholderText("Search...");
   popoverLayout->addWidget(m_searchField);
 
-  popoverLayout->addWidget(new HDivider);
+  popoverLayout->addWidget(m_loadingBar);
 
   inputField->installEventFilter(this);
   m_searchField->installEventFilter(this);
@@ -183,6 +202,5 @@ SelectorInput::~SelectorInput() {
 
 void SelectorInput::clear() {
   inputField->clear();
-  m_list->clear();
   _currentSelection.reset();
 }

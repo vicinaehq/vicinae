@@ -1,7 +1,9 @@
 #pragma once
 #include "common.hpp"
 #include "omni-icon.hpp"
+#include "ui/focus-notifier.hpp"
 #include "ui/form/base-input.hpp"
+#include "ui/horizontal-loading-bar.hpp"
 #include "ui/omni-list.hpp"
 #include "ui/popover.hpp"
 #include <memory>
@@ -49,6 +51,8 @@ public:
 private:
   Q_OBJECT
 
+  FocusNotifier *m_focusNotifier = new FocusNotifier(this);
+  bool m_focused = false;
   bool m_defaultFilterEnabled = true;
   int POPOVER_HEIGHT = 300;
 
@@ -57,6 +61,7 @@ protected:
   BaseInput *inputField;
   QLineEdit *m_searchField;
   OmniIcon *collapseIcon;
+  HorizontalLoadingBar *m_loadingBar = new HorizontalLoadingBar(this);
   OmniIcon *selectionIcon;
   Popover *popover;
   std::unique_ptr<AbstractItem> _currentSelection;
@@ -74,8 +79,10 @@ public:
   SelectorInput(const QString &name = "");
   ~SelectorInput();
 
+  FocusNotifier *focusNotifier() const;
   void beginUpdate();
   void commitUpdate();
+  void setIsLoading(bool value);
   void clear();
   void addItem(std::unique_ptr<AbstractItem> item);
   void addSection(const QString &name);

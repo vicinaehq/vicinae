@@ -22,6 +22,7 @@ FormModel FormModel::fromJson(const QJsonObject &json) {
     auto obj = child.toObject();
     auto type = obj.value("type").toString();
     auto props = obj.value("props").toObject();
+    auto children = obj.value("children").toArray();
 
     if (type == "action-panel") {
       model.actions = ActionPannelParser().parse(obj);
@@ -59,15 +60,29 @@ FormModel FormModel::fromJson(const QJsonObject &json) {
       qDebug() << "registered" << base.id << base.onChange;
 
       if (*it == "text-field") {
-        model.items.emplace_back(TextFieldModel(base));
+        model.items.emplace_back(std::make_shared<TextField>(base));
       } else if (*it == "password-field") {
-        model.items.emplace_back(PasswordFieldModel(base));
       } else if (*it == "checkbox-field") {
-        model.items.emplace_back(CheckboxFieldModel(base));
+        model.items.emplace_back(std::make_shared<CheckboxField>(base));
       } else if (*it == "date-picker-field") {
-        model.items.emplace_back(DatePickerFieldModel(base));
       } else if (*it == "text-area-field") {
-        model.items.emplace_back(TextAreaFieldModel(base));
+      } else if (*it == "dropdown-field") {
+        auto dropdown = std::make_shared<DropdownField>(base);
+
+        dropdown->m_items.reserve(children.size());
+        dropdown->throttle = props.value("throttle").toBool(false);
+        dropdown->isLoading = props.value("isLoading").toBool(false);
+
+        if (props.contains("tooltip")) { dropdown->tooltip = props.value("tooltip").toString(); }
+
+        if (props.contains("onSearchTextChange"))
+          dropdown->onSearchTextChange = props.value("onSearchTextChange").toString();
+
+        for (const auto &child : children) {
+          dropdown->m_items.emplace_back(DropdownModel::childFromJson(child.toObject()));
+        }
+
+        model.items.emplace_back(dropdown);
       }
     } else {
       qWarning() << "Unknown form children of type" << type;

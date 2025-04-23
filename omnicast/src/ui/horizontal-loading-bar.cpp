@@ -66,5 +66,6 @@ void HorizontalLoadingBar::setBarWidth(int width) {
 HorizontalLoadingBar::HorizontalLoadingBar(QWidget *parent)
     : QWidget(parent), _isAnimationStarted(false), _timer(new QTimer(this)), _barWidth(DEFAULT_BAR_WIDTH),
       _tick(DEFAULT_TICK), _positionStep(DEFAULT_STEP) {
+  setFixedHeight(1);
   connect(_timer, &QTimer::timeout, this, &HorizontalLoadingBar::updateAnimation);
 }

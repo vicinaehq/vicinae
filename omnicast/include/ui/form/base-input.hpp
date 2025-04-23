@@ -1,14 +1,15 @@
 #pragma once
 #include "common.hpp"
+#include "ui/focus-notifier.hpp"
 #include <qevent.h>
 #include <qjsonobject.h>
 #include <qlineedit.h>
 #include <QFocusEvent>
 
 class BaseInput : public QLineEdit, public IJsonFormField {
+  FocusNotifier *m_focusNotifier = new FocusNotifier(this);
   QWidget *rightAccessory;
   QWidget *leftAccessory;
-  bool _focused;
 
   void paintEvent(QPaintEvent *event) override;
   bool event(QEvent *) override;
@@ -22,6 +23,7 @@ class BaseInput : public QLineEdit, public IJsonFormField {
 public:
   void setLeftAccessory(QWidget *widget);
   void setRightAccessory(QWidget *widget);
+  FocusNotifier *focusNotifier() const { return m_focusNotifier; }
 
   BaseInput(QWidget *parent = nullptr);
 };
