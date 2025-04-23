@@ -24,9 +24,10 @@ const CreateFruit = () => {
 			<Form.TextField id="description" title="Name" />
 			<Form.Dropdown 
 			isLoading
+			filtering
 			onSearchTextChange={(text) => { console.log(`dropdown search: ${text}`)}}
 			id="Select model" 
-			value={'1'} title="Select choice" onBlur={() => console.log('blur dropdown')} onFocus={() => console.log(`focus dropdown`)}>
+			defaultValue={'1'} title="Select choice" onBlur={() => console.log('blur dropdown')} onFocus={() => console.log(`focus dropdown`)}>
 				<List.Dropdown.Item title={'choice1'} value={'0'} icon={Icon.Circle} />
 				<List.Dropdown.Item title={'choice2'} value={'1'} icon={'https://i.pinimg.com/474x/1e/59/67/1e5967f624fb617984dbc46c8c9ff328.jpg'} />
 				<List.Dropdown.Item title={'choice3'} value={'2'} icon={Icon.Circle} />
@@ -35,7 +36,7 @@ const CreateFruit = () => {
 			{useProxy && (
 				<>
 					<Form.TextField id="proxy-user" title="Username" />
-					<Form.TextField id="proxy-password" title="Password" />
+					<Form.PasswordField id="proxy-password" title="Password" />
 				</>
 			)}
 		</Form>

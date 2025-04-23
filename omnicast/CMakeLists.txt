@@ -173,8 +173,11 @@ qt_add_executable(${TARGET}
 	include/extension/extension-command.hpp
 	src/extension/extension-command.cpp
 
-
-
+	include/extension/form/extension-form-input.hpp
+	include/extension/form/extension-text-field.hpp
+	include/extension/form/extension-password-field.hpp
+	include/extension/form/extension-checkbox-field.hpp
+	include/extension/form/extension-dropdown.hpp
 
 	include/extend/extension-detail-view.hpp
 

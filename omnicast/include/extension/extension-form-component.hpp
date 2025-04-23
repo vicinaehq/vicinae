@@ -4,32 +4,33 @@
 #include "extend/form-model.hpp"
 #include "extend/model.hpp"
 #include "extension/extension-component.hpp"
+#include "extension/form/extension-checkbox-field.hpp"
+#include "extension/form/extension-text-field.hpp"
 #include "ui/form/form-field.hpp"
-#include "ui/form/form.hpp"
 #include "ui/omni-scroll-bar.hpp"
 #include <qboxlayout.h>
 #include <qjsonvalue.h>
 #include <qnamespace.h>
 #include <qscrollarea.h>
 #include <qtmetamacros.h>
+#include "extension/form/extension-form-input.hpp"
+#include "extension/form/extension-form-input.hpp"
+#include "extension/form/extension-dropdown.hpp"
+#include "extension/form/extension-password-field.hpp"
 #include <qwidget.h>
 
 class ExtensionFormField : public FormField {
   Q_OBJECT
 
   std::shared_ptr<FormModel::IField> m_model;
-  FormModel::JsonFormField *m_widget = nullptr;
+  ExtensionFormInput *m_widget = nullptr;
 
-  static FormModel::JsonFormField *createFieldWidget(const FormModel::IField *field) {
-    if (auto f = dynamic_cast<const FormModel::CheckboxField *>(field)) {
-      return new FormModel::JsonCheckboxField();
-    }
-    if (auto f = dynamic_cast<const FormModel::TextField *>(field)) {
-      return new FormModel::JsonInputField();
-    }
-    if (auto f = dynamic_cast<const FormModel::DropdownField *>(field)) {
-      return new FormModel::JsonDropdownField();
-    }
+  static ExtensionFormInput *createFieldWidget(const FormModel::IField *field) {
+    // XXX awful, we will fix this very soon
+    if (auto f = dynamic_cast<const FormModel::CheckboxField *>(field)) { return new ExtensionCheckboxField; }
+    if (auto f = dynamic_cast<const FormModel::TextField *>(field)) { return new ExtensionTextField; }
+    if (auto f = dynamic_cast<const FormModel::DropdownField *>(field)) { return new ExtensionDropdown; }
+    if (auto f = dynamic_cast<const FormModel::PasswordField *>(field)) { return new ExtensionPasswordField; }
 
     return nullptr;
   }
@@ -65,6 +66,9 @@ public:
     if (model->error) { setError(*model->error); }
 
     m_widget->dispatchRender(model);
+
+    // initialize default value the first time
+    if (auto value = m_model->defaultValue; value && !isSameType) { m_widget->setJsonValue(*value); }
   }
 
   void handleFocusChanged(bool value) {

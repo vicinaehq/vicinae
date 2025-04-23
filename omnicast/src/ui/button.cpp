@@ -19,7 +19,10 @@ bool Button::event(QEvent *event) {
 }
 
 void Button::mousePressEvent(QMouseEvent *event) {
-  if (event->button() == Qt::LeftButton) { emit clicked(); }
+  if (event->button() == Qt::LeftButton) {
+    emit clicked();
+    return;
+  }
   QWidget::mousePressEvent(event);
 }
 

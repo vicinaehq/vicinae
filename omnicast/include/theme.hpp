@@ -175,6 +175,49 @@ public:
       registerTheme(theme);
     }
 
+    {
+      ThemeInfo theme;
+      theme.name = "Solarized Osaka";
+      theme.colors.text = QColor("#9eabac");    // Light gray for text
+      theme.colors.subtext = QColor("#839395"); // Medium gray for secondary text
+
+      // cyan = "0x29a298"
+      theme.colors.blue = "#268bd3";
+      theme.colors.green = "#849900";
+      theme.colors.purple = "#d23681";
+      theme.colors.magenta = "#d23681";
+      theme.colors.red = "#db302d";
+      theme.colors.yellow = "#b28500";
+      theme.colors.orange = "#b28500";
+
+      theme.colors.mainBackground = QColor("#001419"); // Darker color for main background
+
+      QColor border(theme.colors.mainBackground);
+      border.setAlpha(25);
+
+      theme.colors.border = theme.colors.mainBackground.lighter(170); // Border color
+                                                                      //
+      QColor selectionBackground(theme.colors.mainBackground.lighter(135));
+      QColor statusBg(theme.colors.mainBackground.lighter(140));
+
+      theme.colors.mainSelectedBackground = selectionBackground; // Lighter for selection
+      theme.colors.mainHoveredBackground = selectionBackground;  // Hover color
+      theme.colors.statusBackground = QColor(statusBg); // Original color from screenshot for status bar
+      theme.colors.statusBackgroundBorder = border;     // Border for status bar
+
+      /*
+  theme.colors.red = redGradient;
+  theme.colors.blue = blueGradient;
+  theme.colors.green = greenGradient;
+  theme.colors.purple = purpleGradient;
+  theme.colors.orange = orangeGradient;
+  theme.colors.yellow = yellowGradient;
+  theme.colors.magenta = magentaGradient;
+      */
+
+      registerTheme(theme);
+    }
+
     // 2. Dark Mode (Neutral)
     {
       ThemeInfo theme;

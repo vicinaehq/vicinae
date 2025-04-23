@@ -62,6 +62,7 @@ FormModel FormModel::fromJson(const QJsonObject &json) {
       if (*it == "text-field") {
         model.items.emplace_back(std::make_shared<TextField>(base));
       } else if (*it == "password-field") {
+        model.items.emplace_back(std::make_shared<PasswordField>(base));
       } else if (*it == "checkbox-field") {
         model.items.emplace_back(std::make_shared<CheckboxField>(base));
       } else if (*it == "date-picker-field") {
@@ -77,6 +78,8 @@ FormModel FormModel::fromJson(const QJsonObject &json) {
 
         if (props.contains("onSearchTextChange"))
           dropdown->onSearchTextChange = props.value("onSearchTextChange").toString();
+
+        dropdown->filtering = props.value("filtering").toBool(!dropdown->onSearchTextChange.has_value());
 
         for (const auto &child : children) {
           dropdown->m_items.emplace_back(DropdownModel::childFromJson(child.toObject()));
