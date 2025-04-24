@@ -3,6 +3,7 @@ import { setTimeout, clearTimeout } from 'node:timers';
 import { DefaultEventPriority } from 'react-reconciler/constants';
 import { ReactElement } from 'react';
 import { deepClone, compare, Operation } from 'fast-json-patch';
+import { writeFileSync } from 'node:fs';
 
 type InstanceType = string;
 type InstanceProps = Record<string, any>;
@@ -11,6 +12,9 @@ type Instance = {
 	type: InstanceType,
 	props: InstanceProps;
 	children: Instance[];
+	dirty: boolean;
+	propsDirty: boolean;
+	parent?: Instance;
 };
 type TextInstance = any;
 type SuspenseInstance = any;
@@ -60,6 +64,15 @@ const isDeepEqual = (a: Record<any, any>, b: Record<any, any>): boolean => {
 	return true;
 }
 
+const emitDirty = (instance?: Instance) => {
+	let current: Instance | undefined = instance;
+
+	while (current && !current.dirty) {
+		current.dirty = true;
+		current = current.parent;
+	}
+}
+
 const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 	const hostConfig: Reconciler.HostConfig<
 		InstanceType,
@@ -86,7 +99,9 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 			return {
 				type,
 				props: rest,
-				children: []
+				children: [],
+				dirty: true,
+				propsDirty: true,
 			}
 		},
 
@@ -181,15 +196,22 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 		},
 
 		// mutation methods
-		appendChild(parent, child) {
+		appendChild(parent: Instance, child: Instance) {
+			child.parent = parent;
+			emitDirty(parent);
 			parent.children.push(child);
 		},
 
-		appendChildToContainer(container, child) {
+		appendChildToContainer(container: Instance, child: Instance) {
+			child.parent = container;
+			emitDirty(container);
 			container.children.push(child);
 		},
 
 		insertBefore(parent, child, beforeChild) {
+			child.parent = parent;
+			emitDirty(parent);
+
 			const beforeIdx = parent.children.indexOf(beforeChild);
 
 			if (beforeIdx == -1) {
@@ -204,15 +226,19 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 			throw new Error(`root container can only have one child`);
 		},
 
-		removeChild(parent, child) {
+		removeChild(parent: Instance, child: Instance) {
 			const childIdx = parent.children.indexOf(child);
 
+			emitDirty(child.parent);
+			delete child.parent;
 			parent.children.splice(childIdx, 1);
 		},
 
-		removeChildFromContainer(container, child) {
+		removeChildFromContainer(container: Instance, child: Instance) {
 			const childIdx = container.children.indexOf(child);
 
+			emitDirty(child.parent);
+			delete child.parent;
 			container.children.splice(childIdx, 1);
 		},
 
@@ -222,8 +248,13 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 
 		commitMount() {},
 
-		commitUpdate(instance, payload, type, prevProps, nextProps, handle) {
+		commitUpdate(instance: Instance, payload, type, prevProps, nextProps, handle) {
 			let i = 0;
+			
+			if (payload.length > 0) {
+				instance.propsDirty = true;
+				emitDirty(instance.parent);
+			}
 
 			while (i < payload.length) {
 				const key = payload[i++];
@@ -260,6 +291,25 @@ export type RendererConfig = {
 	onUpdate?: (views: ViewData[]) => void;
 };
 
+const stripParent = (instance: Instance): Instance => {
+	const obj: Instance = {
+		props: instance.props,
+		type: instance.type,
+		dirty: instance.dirty,
+		propsDirty: instance.propsDirty,
+		children: [],
+	};
+
+	instance.dirty = false;
+	instance.propsDirty = false;
+
+	for (const child of instance.children) {
+		obj.children.push(stripParent(child));
+	}
+	
+	return obj;
+}
+
 export const createRenderer = (config: RendererConfig) => {
 	const { maxRendersPerSecond = 60 } = config;
 	const frameTime = Math.floor(1000 / maxRendersPerSecond);
@@ -273,18 +323,21 @@ export const createRenderer = (config: RendererConfig) => {
 		debounceTimeout = setTimeout(() => {
 			const start = performance.now();
 			const views: ViewData[] = [];
-			const changes = compare(oldTree, container.children);
+			const rootNodes = container.children.map(stripParent);
+			const changes = compare(oldTree, rootNodes);
 			const didTreeChange = changes.length > 0;
 
+			writeFileSync('/tmp/render.txt', JSON.stringify(rootNodes, null, 2));
+
 			if (didTreeChange) {
-				for (let i = 0; i != container.children.length; ++i) {
-					const view = container.children[i];
+				for (let i = 0; i != rootNodes.length; ++i) {
+					const view = rootNodes[i];
 
 					views.push({ root: view, changes: []});
 				}
 
 				config.onUpdate?.(views)
-				oldTree = deepClone(container.children);
+				oldTree = deepClone(rootNodes);
 			}
 
 			const end = performance.now();

@@ -6,6 +6,7 @@
 #include "extend/pagination-model.hpp"
 #include <qjsonarray.h>
 #include <qjsonobject.h>
+#include <qlogging.h>
 
 ListItemViewModel ListModelParser::parseListItem(const QJsonObject &instance, size_t index) {
   ListItemViewModel model;
@@ -67,6 +68,7 @@ ListModel ListModelParser::parse(const QJsonObject &instance) {
   // no builtin filtering by default if onSearchTextChange handler is specified
   bool defaultFiltering = !props.contains("onSearchTextChange");
 
+  model.dirty = instance.value("dirty").toBool(false);
   model.isLoading = props["isLoading"].toBool(false);
   model.throttle = props["throttle"].toBool(false);
   model.isShowingDetail = props["isShowingDetail"].toBool(false);

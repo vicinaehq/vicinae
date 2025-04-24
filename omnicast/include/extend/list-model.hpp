@@ -31,6 +31,7 @@ struct ListModel {
   bool isLoading;
   bool filtering;
   bool throttle;
+  bool dirty;
   bool isShowingDetail;
   QString navigationTitle;
   QString searchPlaceholderText;

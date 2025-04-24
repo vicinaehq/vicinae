@@ -106,6 +106,8 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
     renderDropdown(dropdown);
   }
 
+  qCritical() << "list dirty" << newModel.dirty;
+
   m_selector->setVisible(newModel.searchBarAccessory.has_value() && isVisible());
 
   if (!newModel.navigationTitle.isEmpty()) {
@@ -131,41 +133,49 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
 
   setLoading(newModel.isLoading);
 
-  std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> items;
+  if (newModel.dirty) {
+    std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> items;
 
-  items.reserve(newModel.items.size());
+    items.reserve(newModel.items.size());
 
-  for (const auto &item : newModel.items) {
-    if (auto listItem = std::get_if<ListItemViewModel>(&item)) {
-      items.push_back(std::make_unique<ExtensionListItem>(*listItem));
-    } else if (auto section = std::get_if<ListSectionModel>(&item)) {
-      items.push_back(std::make_unique<OmniList::VirtualSection>(section->title));
+    int i = 0;
 
-      for (const auto &item : section->children) {
-        items.push_back(std::make_unique<ExtensionListItem>(item));
+    for (const auto &item : newModel.items) {
+      if (auto listItem = std::get_if<ListItemViewModel>(&item)) {
+        items.push_back(std::make_unique<ExtensionListItem>(*listItem));
+      } else if (auto section = std::get_if<ListSectionModel>(&item)) {
+        items.push_back(std::make_unique<OmniList::VirtualSection>(section->title));
+
+        for (const auto &item : section->children) {
+          if (i < 10) {
+            qDebug() << "render at" << i << item.id;
+            ++i;
+          }
+          items.push_back(std::make_unique<ExtensionListItem>(item));
+        }
       }
     }
-  }
 
-  if (!newModel.searchText) {
-    if (_shouldResetSelection) {
-      if (newModel.filtering) {
-        _list->setFilter(std::make_unique<BuiltinExtensionItemFilter>(searchText()));
-      } else {
-        _list->clearFilter();
+    if (!newModel.searchText) {
+      if (_shouldResetSelection) {
+        if (newModel.filtering) {
+          _list->setFilter(std::make_unique<BuiltinExtensionItemFilter>(searchText()));
+        } else {
+          _list->clearFilter();
+        }
       }
+    }
+
+    if (_shouldResetSelection) {
+      qDebug() << "should reset selection";
+      _shouldResetSelection = false;
+      _list->updateFromList(items, OmniList::SelectFirst);
+    } else {
+      _list->updateFromList(items, OmniList::PreserveSelection);
     }
   }
 
   _model = newModel;
-
-  if (_shouldResetSelection) {
-    qDebug() << "should reset selection";
-    _shouldResetSelection = false;
-    _list->updateFromList(items, OmniList::SelectFirst);
-  } else {
-    _list->updateFromList(items, OmniList::PreserveSelection);
-  }
 
   if (auto selected = _list->selected()) {
     auto item = static_cast<const ExtensionListItem *>(selected);
