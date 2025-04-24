@@ -1,8 +1,10 @@
 #include "ui/transform-result.hpp"
+#include "omni-icon.hpp"
 #include "omnicast.hpp"
 #include "theme.hpp"
 #include "ui/ellided-label.hpp"
 #include "ui/selectable-omni-list-widget.hpp"
+#include "ui/typography.hpp"
 #include <qboxlayout.h>
 #include <qfont.h>
 #include <qlabel.h>
@@ -28,11 +30,10 @@ QWidget *TransformResult::createVContainer(QWidget *left, QWidget *right) const 
   return container;
 }
 
-QLabel *TransformResult::createLabel(const QString &text, QWidget *parent) const {
-  auto label = new EllidedLabel(text, parent);
+TypographyWidget *TransformResult::createLabel(const QString &text, QWidget *parent) const {
+  auto label = new TypographyWidget(parent);
 
-  // Not pretty, but programatically setting the font does not work in this case, probably getting overwritten
-  // somewhere...
+  label->setText(text);
   label->setStyleSheet("font-size: 16pt; font-weight: bold;");
 
   return label;
@@ -70,7 +71,7 @@ void TransformResult::paintEvent(QPaintEvent *event) {
   auto margins = contentsMargins();
 
   painter.setPen(Qt::NoPen);
-  painter.setBrush(theme.colors.subtext);
+  painter.setBrush(theme.colors.border);
 
   _base->setFixedSize({midW, availableHeight()});
   _base->move(0, margins.top());
@@ -83,7 +84,7 @@ void TransformResult::paintEvent(QPaintEvent *event) {
     painter.drawRect(midW, midH + _arrowMid.width(), 1, midH - _arrowMid.height());
   }
 
-  painter.drawPixmap(midW - _arrowMid.width(), midH - _arrowMid.height(), _arrowIcon);
+  m_arrowIcon->move(midW - _arrowMid.width(), midH - _arrowMid.height());
 }
 
 void TransformResult::setDividerVisible(bool visible) {
@@ -103,17 +104,23 @@ void TransformResult::setResult(const QString &text, const QString &chip) {
 }
 
 void TransformResult::setBase(QWidget *widget, const QString &chip) {
+  auto label = new TypographyWidget;
+
   if (_base) { _base->deleteLater(); }
 
-  _base = createVContainer(widget, new QLabel(chip));
+  label->setText(chip);
+  _base = createVContainer(widget, label);
   _base->setParent(this);
   update();
 }
 
 void TransformResult::setResult(QWidget *widget, const QString &chip) {
+  auto label = new TypographyWidget;
+
   if (_result) { _result->deleteLater(); }
 
-  _result = createVContainer(widget, new QLabel(chip));
+  label->setText(chip);
+  _result = createVContainer(widget, label);
   _result->setParent(this);
   update();
 }
@@ -122,6 +129,7 @@ TransformResult::TransformResult()
     : _isDividerVisible(true), _dividerColor("#666666"), _base(nullptr), _result(nullptr) {
   auto icon = QIcon(":icons/arrow-right.svg");
 
+  m_arrowIcon->setUrl(BuiltinOmniIconUrl("arrow-right"));
   setContentsMargins(10, 10, 10, 10);
   _arrowIcon = icon.pixmap(32, 32).scaledToWidth(32, Qt::SmoothTransformation);
   _arrowMid = {_arrowIcon.width() / 2, _arrowIcon.height() / 2};

@@ -12,7 +12,7 @@ void Popover::paintEvent(QPaintEvent *event) {
   int borderRadius = 10;
   QPainter painter(this);
   QPainterPath path;
-  QPen pen(theme.colors.statusBackgroundBorder, 1);
+  QPen pen(theme.colors.border, 1);
 
   painter.setRenderHint(QPainter::Antialiasing, true);
   path.addRoundedRect(rect(), borderRadius, borderRadius);

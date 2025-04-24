@@ -469,7 +469,7 @@ AppWindow::AppWindow(QWidget *parent)
   statusBar->setFixedHeight(Omnicast::STATUS_BAR_HEIGHT);
 
   QDir::root().mkpath(Config::dirPath());
-  ThemeService::instance().setTheme("Kanagawa Wave");
+  ThemeService::instance().setTheme("Solarized Osaka");
   FaviconService::initialize(new FaviconService(Config::dirPath() + QDir::separator() + "favicon.db"));
 
   quicklinkDatabase =

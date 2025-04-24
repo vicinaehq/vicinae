@@ -7,6 +7,9 @@ class BuiltinIconService {
 public:
   static const QList<QString> &icons();
   static QString unknownIcon() { return ":icons/question-mark-circle.svg"; }
+
+  static QString pathForName(const QString &name) { return QString(":icons/%1").arg(name); }
+
   static QPixmap loadTinted(const QString &name, const QColor &newColor) {
     QPixmap pixmap;
 

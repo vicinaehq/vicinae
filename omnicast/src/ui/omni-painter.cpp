@@ -3,7 +3,9 @@
 #include <qgraphicseffect.h>
 #include <qgraphicsitem.h>
 #include <qgraphicsscene.h>
+#include <qlogging.h>
 #include <qnamespace.h>
+#include <qsvgrenderer.h>
 
 OmniPainter::ImageMaskType OmniPainter::maskForName(const QString &name) {
   if (name == "circle") {
@@ -16,7 +18,10 @@ OmniPainter::ImageMaskType OmniPainter::maskForName(const QString &name) {
 }
 
 void OmniPainter::fillRect(QRect rect, const QColor &color, int radius, float alpha) {
-  setBrush(color);
+  QColor final(color);
+
+  final.setAlphaF(alpha);
+  setBrush(final);
   drawRoundedRect(rect, radius, radius);
 }
 
