@@ -1,5 +1,6 @@
 #pragma once
 #include "ai/ai-provider.hpp"
+#include "local-storage-service.hpp"
 #include "app/app-database.hpp"
 #include "calculator-database.hpp"
 #include "ai/ai-service.hpp"
@@ -176,6 +177,7 @@ public:
   std::unique_ptr<ProcessManagerService> processManagerService;
   std::unique_ptr<OmniCommandDatabase> commandDb;
   std::unique_ptr<AI::Manager> aiProvider;
+  std::unique_ptr<LocalStorageService> localStorage;
 
   void popToRoot();
   void disconnectView(View &view);

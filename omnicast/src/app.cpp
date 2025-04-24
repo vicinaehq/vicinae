@@ -480,6 +480,7 @@ AppWindow::AppWindow(QWidget *parent)
 
   omniDb = std::make_unique<OmniDatabase>(Config::dirPath() + QDir::separator() + "omni.db");
   commandDb = std::make_unique<OmniCommandDatabase>(*omniDb.get());
+  localStorage = std::make_unique<LocalStorageService>(*omniDb.get());
   extensionManager = std::make_unique<ExtensionManager>(*commandDb.get());
 
   clipboardService =

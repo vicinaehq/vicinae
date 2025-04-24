@@ -13,6 +13,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <qapplication.h>
 #include <qbuffer.h>
 #include <qdebug.h>
 #include <qfontdatabase.h>
@@ -130,13 +131,11 @@ int startDaemon() {
   fontId = QFontDatabase::addApplicationFont(":assets/fonts/SF-Pro-Text-Light.otf");
   fontId = QFontDatabase::addApplicationFont(":assets/fonts/SF-Pro-Text-Bold.otf");
 
-  QFont font("SF Pro Text");
+  QFont font("SF Pro Text Display");
 
   font.setHintingPreference(QFont::HintingPreference::PreferNoHinting);
 
   QApplication::setFont(font);
-
-  auto family = QFontDatabase::applicationFontFamilies(fontId).at(0);
 
   QApplication::setApplicationName("omnicast");
   QIcon::setThemeName("Tela");

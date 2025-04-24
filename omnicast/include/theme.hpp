@@ -195,7 +195,7 @@ public:
       QColor border(theme.colors.mainBackground);
       border.setAlpha(25);
 
-      theme.colors.border = theme.colors.mainBackground.lighter(170); // Border color
+      theme.colors.border = theme.colors.mainBackground.lighter(180); // Border color
                                                                       //
       QColor selectionBackground(theme.colors.mainBackground.lighter(135));
       QColor statusBg(theme.colors.mainBackground.lighter(140));

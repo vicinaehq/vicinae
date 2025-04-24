@@ -389,6 +389,35 @@ void OmniList::updateFromList(std::vector<std::unique_ptr<AbstractVirtualItem>> 
       setSelectedIndex(std::max(0, std::min(_selected, static_cast<int>(_virtual_items.size() - 1))));
     }
     break;
+  case PreserveSelection: {
+    int targetIndex = std::clamp(_selected, 0, (int)_virtual_items.size() - 1);
+    int distance = 0;
+
+    for (;;) {
+      int lowTarget = targetIndex - distance;
+      int highTarget = targetIndex + distance;
+      bool hasLower = lowTarget >= 0 && lowTarget < _virtual_items.size();
+      bool hasUpper = highTarget >= 0 && highTarget < _virtual_items.size();
+
+      if (!hasLower && !hasUpper) {
+        setSelectedIndex(-1);
+        return;
+      }
+
+      if (hasLower && vmap(lowTarget).item->selectable()) {
+        setSelectedIndex(lowTarget);
+        return;
+      }
+
+      if (hasUpper && vmap(hasUpper).item->selectable()) {
+        setSelectedIndex(highTarget);
+        return;
+      }
+
+      ++distance;
+    }
+    break;
+  }
   case SelectNone:
     setSelectedIndex(-1);
     break;
@@ -495,7 +524,7 @@ bool OmniList::selectRight() {
 }
 
 void OmniList::setSelectedIndex(int index, ScrollBehaviour scrollBehaviour) {
-  scrollTo(index, scrollBehaviour);
+  if (index != _selected) { scrollTo(index, scrollBehaviour); }
 
   // qDebug() << "set selected index" << index;
 
@@ -514,7 +543,7 @@ void OmniList::setSelectedIndex(int index, ScrollBehaviour scrollBehaviour) {
   }
 
   if (next && _selectedId != next->id()) {
-    qDebug() << "seletion changed" << next->id() << "previous" << (previous ? previous->id() : "<none>");
+    // qDebug() << "seletion changed" << next->id() << "previous" << (previous ? previous->id() : "<none>");
     _selectedId = next->id();
     emit selectionChanged(next, previous);
   }

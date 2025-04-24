@@ -52,7 +52,7 @@ public:
     query.exec(R"(
 		CREATE TABLE IF NOT EXISTS extension (
 			id TEXT PRIMARY KEY,
-			preference_values JSON
+			preference_values JSON DEFAULT '{}'
 		);
 	)");
 
@@ -60,7 +60,7 @@ public:
 		CREATE TABLE IF NOT EXISTS command (
 			id TEXT PRIMARY KEY,
 			extension_id TEXT,
-			preference_values JSON,
+			preference_values JSON DEFAULT '{}',
 			disabled INT DEFAULT 0,
 			activation_count INT DEFAULT 0,
 			FOREIGN KEY(extension_id) 
@@ -129,8 +129,11 @@ public:
       qDebug() << "No results";
       return {};
     }
+    auto rawJson = query.value(0).toString();
 
-    auto json = QJsonDocument::fromJson(query.value(0).toString().toUtf8());
+    qDebug() << "raw preferences json" << rawJson;
+
+    auto json = QJsonDocument::fromJson(rawJson.toUtf8());
     auto preferenceValues = json.object();
 
     for (auto pref : cmdEntry->command->preferences()) {

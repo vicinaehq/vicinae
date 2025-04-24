@@ -8,8 +8,6 @@ void DefaultListItemWidget::setName(const QString &name) { this->_name->setText(
 void DefaultListItemWidget::setIconUrl(const OmniIconUrl &url) {
   if (_icon->url() == url) return;
 
-  qDebug() << "url diff" << _icon->url().toString() << "!=" << url.toString();
-
   _icon->setUrl(url);
 }
 

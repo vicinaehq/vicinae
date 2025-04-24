@@ -30,6 +30,22 @@
       "title": "My Example Command",
       "description": "Boilerplate command",
       "mode": "view"
+    },
+	{
+      "name": "local-storage",
+      "title": "Test Local Storage",
+      "description": "Test Local Storage feature",
+      "mode": "view",
+	  "preferences": [
+		{
+		  "name": "localToken",
+		  "type": "password",
+		  "required": true,
+		  "title": "Local Token",
+		  "placeholder": "Your Local Token",
+		  "description": "Local token to access the service"
+		}
+	  ]
     }
   ],
   "preferences": [

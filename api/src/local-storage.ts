@@ -25,7 +25,7 @@ export class LocalStorage {
 	}
 
 	static async allItems(): Promise<LocalStorage.Values> {
-		const res = await bus.request<{ values: LocalStorage.Values }>('storage.all');
+		const res = await bus.request<{ values: LocalStorage.Values }>('storage.list');
 
 		return res.data.values;
 	}

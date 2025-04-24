@@ -5,6 +5,6 @@
 - start trying to port more extensions
 - [DONE] checkbox widget
 - [DONE] add view to edit command preferences
-- AI API
-- replace view
+- [DONE] AI API
+- replace view (kind of done, using pop + push for now);
 - handle empty views

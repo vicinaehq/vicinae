@@ -12,6 +12,7 @@
 #include <qnamespace.h>
 
 class MissingExtensionPreferenceView : public View {
+
   class ContinueAction : public AbstractAction {
     std::shared_ptr<ExtensionCommand> m_command;
 
@@ -22,6 +23,7 @@ class MissingExtensionPreferenceView : public View {
         : m_command(command), AbstractAction("Continue", command->iconUrl()) {}
   };
 
+  QJsonObject m_existingPreferenceValues;
   QVBoxLayout *m_layout = new QVBoxLayout;
   std::shared_ptr<ExtensionCommand> m_command;
   std::vector<PreferenceField *> m_preferenceFields;
@@ -30,7 +32,7 @@ public:
   MissingExtensionPreferenceView(AppWindow &app, const std::shared_ptr<ExtensionCommand> &command)
       : View(app), m_command(command) {
 
-    auto preferences = app.commandDb->getPreferenceValues(command->id());
+    m_existingPreferenceValues = app.commandDb->getPreferenceValues(command->id());
     auto icon = new OmniIcon();
 
     icon->setFixedSize(32, 32);
@@ -64,7 +66,8 @@ public:
     auto form = new FormWidget();
 
     for (const auto &preference : command->preferences()) {
-      if (preference->isRequired() && preference->defaultValueAsJson().isNull()) {
+      if (preference->isRequired() && preference->defaultValueAsJson().isNull() &&
+          !m_existingPreferenceValues.contains(preference->name())) {
         auto field = new PreferenceField(preference);
 
         form->addField(field);
@@ -80,7 +83,7 @@ public:
 
   void handleSubmit() {
     bool validated = true;
-    QJsonObject obj;
+    QJsonObject obj(m_existingPreferenceValues);
 
     for (const auto &field : m_preferenceFields) {
       auto value = field->asJsonValue();
@@ -104,6 +107,7 @@ public:
 
     app.commandDb->setPreferenceValues(m_command->id(), obj);
 
+    pop();
     app.launchCommand(m_command, {});
   }
 

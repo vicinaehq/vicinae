@@ -95,6 +95,48 @@ private slots:
 
     qDebug() << "[ExtensionCommand] extension request" << action;
 
+    if (action == "storage.clear") {
+      app()->localStorage->clearNamespace(command.extensionId());
+      app()->extensionManager->respond(id, {});
+    }
+
+    if (action == "storage.get") {
+      auto key = payload.value("key").toString();
+      QJsonValue value = app()->localStorage->getItem(command.extensionId(), key);
+      QJsonObject response;
+
+      response["value"] = value;
+
+      app()->extensionManager->respond(id, response);
+      return;
+    }
+
+    if (action == "storage.set") {
+      auto key = payload.value("key").toString();
+      auto value = payload.value("key");
+
+      app()->localStorage->setItem(command.extensionId(), key, value);
+      app()->extensionManager->respond(id, QJsonObject());
+      return;
+    }
+
+    if (action == "storage.remove") {
+      auto key = payload.value("key").toString();
+
+      app()->localStorage->removeItem(command.extensionId(), key);
+      app()->extensionManager->respond(id, QJsonObject());
+      return;
+    }
+
+    if (action == "storage.list") {
+      QJsonObject response;
+
+      response["values"] = app()->localStorage->listNamespaceItems(command.extensionId());
+
+      app()->extensionManager->respond(id, response);
+      return;
+    }
+
     if (action == "ai.get-models") {
       auto &provider = app()->aiProvider;
       QJsonArray items;

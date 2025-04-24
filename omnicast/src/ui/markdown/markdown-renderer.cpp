@@ -118,7 +118,6 @@ void MarkdownRenderer::insertImage(cmark_node *node) {
   });
 
   icon->setUrl(iconUrl);
-  qWarning() << "isVisible" << isVisible();
   icon->show();
   icon->hide();
 
@@ -198,7 +197,6 @@ QTextList *MarkdownRenderer::insertList(cmark_node *list, int indent) {
         case CMARK_NODE_PARAGRAPH:
           if (i > 0) { _cursor.insertBlock(blockFormat, charFormat); }
           insertParagraph(node);
-          qDebug() << "inserted paragraph in list at index" << i;
           textList->add(_cursor.block());
           break;
         case CMARK_NODE_LIST: {
