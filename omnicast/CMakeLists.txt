@@ -181,6 +181,9 @@ qt_add_executable(${TARGET}
 
 	include/extend/extension-detail-view.hpp
 
+	include/local-storage-service.hpp
+	src/local-storage.cpp
+
 	include/ui/button.hpp
 	src/ui/button.cpp
 
