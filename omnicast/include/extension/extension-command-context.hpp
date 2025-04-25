@@ -1,4 +1,5 @@
 #include "ai/ai-provider.hpp"
+#include "clipboard/clipboard-service.hpp"
 #include "command.hpp"
 #include "extension/extension-command.hpp"
 #include "extension/extension-view.hpp"
@@ -252,8 +253,13 @@ private slots:
       return;
     }
 
-    if (action == "clipboard-copy") {
-      app()->clipboardService->copyText(payload.value("text").toString());
+    if (action == "clipboard.copy") {
+      auto content = Clipboard::fromJson(payload.value("content").toObject());
+      auto options = payload.value("options").toObject();
+      Clipboard::CopyOptions copyActions;
+
+      copyActions.concealed = options.value("concealed").toBool(false);
+      app()->clipboardService->copyContent(content, copyActions);
       app()->statusBar->setToast("Copied into clipboard");
       app()->extensionManager->respond(id, {});
       return;

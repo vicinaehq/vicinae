@@ -4,11 +4,14 @@
 #include <QSqlError>
 #include <cmath>
 #include <cstdint>
+#include <filesystem>
 #include <qapplication.h>
 #include <qclipboard.h>
 #include <qcryptographichash.h>
 #include <qdir.h>
 #include <qfileinfo.h>
+#include <qjsonobject.h>
+#include <qjsonvalue.h>
 #include <qlogging.h>
 #include <qmimedatabase.h>
 #include <qobject.h>
@@ -17,6 +20,42 @@
 #include <qstringview.h>
 #include <qtmetamacros.h>
 #include "clipboard/clipboard-server.hpp"
+
+namespace Clipboard {
+struct File {
+  std::filesystem::path path;
+};
+struct Text {
+  QString text;
+};
+struct Html {
+  QString html;
+  std::optional<QString> text;
+};
+
+struct CopyOptions {
+  bool concealed;
+};
+
+using Content = std::variant<File, Text, Html>;
+
+static Content fromJson(const QJsonObject &obj) {
+  if (obj.contains("path")) { return File{.path = obj.value("path").toString().toStdString()}; }
+  if (obj.contains("html")) {
+    Html html;
+
+    html.html = obj.value("html").toString();
+
+    if (obj.contains("text")) { html.text = obj.value("text").toString(); }
+
+    return html;
+  }
+  if (obj.contains("text")) { return Text{obj.value("text").toString()}; }
+
+  return Text{};
+}
+
+}; // namespace Clipboard
 
 struct InsertClipboardHistoryLine {
   QString mimeType;
@@ -57,7 +96,12 @@ public:
   PaginatedResponse<ClipboardHistoryEntry> listAll(int limit = 100, int offset = 0,
                                                    const ClipboardListSettings &opts = {}) const;
   std::vector<ClipboardHistoryEntry> collectedSearch(const QString &q);
-  void copyText(const QString &text);
+  bool copyText(const QString &text, const Clipboard::CopyOptions &options = {.concealed = true});
+  bool copyHtml(const Clipboard::Html &data, const Clipboard::CopyOptions &options = {.concealed = false});
+  bool copyFile(const std::filesystem::path &path,
+                const Clipboard::CopyOptions &options = {.concealed = false});
+  bool copyContent(const Clipboard::Content &content,
+                   const Clipboard::CopyOptions options = {.concealed = false});
   void saveSelection(const ClipboardSelection &selection);
 
 signals:

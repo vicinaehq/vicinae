@@ -10,8 +10,10 @@
 #include <qcryptographichash.h>
 #include <qdir.h>
 #include <qevent.h>
+#include <qimage.h>
 #include <qimagereader.h>
 #include <qlogging.h>
+#include <qmimedata.h>
 #include <qsqlquery.h>
 #include <qtypes.h>
 
@@ -29,10 +31,63 @@ bool ClipboardService::setPinned(int id, bool pinned) {
   return query.exec();
 }
 
-void ClipboardService::copyText(const QString &text) {
-  QClipboard *clipboard = QApplication::clipboard();
+bool ClipboardService::copyContent(const Clipboard::Content &content, const Clipboard::CopyOptions options) {
+  if (auto html = std::get_if<Clipboard::Html>(&content)) {
+    return copyHtml(*html, options);
+  } else if (auto file = std::get_if<Clipboard::File>(&content)) {
+    return copyFile(file->path, options);
+  } else if (auto text = std::get_if<Clipboard::Text>(&content)) {
+    return copyText(text->text, options);
+  }
 
-  clipboard->setText(text);
+  return false;
+}
+
+bool ClipboardService::copyFile(const std::filesystem::path &path, const Clipboard::CopyOptions &options) {
+  QMimeType mime = _mimeDb.mimeTypeForFile(path.c_str());
+  QClipboard *clipboard = QApplication::clipboard();
+  auto data = new QMimeData;
+  QFile file(path.c_str());
+
+  if (!file.open(QIODevice::ReadOnly)) {
+    qCritical() << "Cannot copy file to clipboard as it doesn't exist" << path;
+    return false;
+  }
+
+  data->setData(mime.name(), file.readAll());
+
+  if (options.concealed) data->setData("omnicast/concealed", "1");
+
+  clipboard->setMimeData(data);
+
+  return true;
+}
+
+bool ClipboardService::copyHtml(const Clipboard::Html &data, const Clipboard::CopyOptions &options) {
+  QClipboard *clipboard = QApplication::clipboard();
+  auto mimeData = new QMimeData;
+
+  mimeData->setData("text/html", data.html.toUtf8());
+
+  if (auto text = data.text) mimeData->setData("text/plain", text->toUtf8());
+  if (options.concealed) mimeData->setData("omnicast/concealed", "1");
+
+  clipboard->setMimeData(mimeData);
+
+  return true;
+}
+
+bool ClipboardService::copyText(const QString &text, const Clipboard::CopyOptions &options) {
+  QClipboard *clipboard = QApplication::clipboard();
+  auto mimeData = new QMimeData;
+
+  mimeData->setData("text/plain", text.toUtf8());
+
+  if (options.concealed) mimeData->setData("omnicast/concealed", "1");
+
+  clipboard->setMimeData(mimeData);
+
+  return true;
 }
 
 std::vector<ClipboardHistoryEntry> ClipboardService::collectedSearch(const QString &q) {
@@ -291,6 +346,11 @@ void ClipboardService::saveSelection(const ClipboardSelection &selection) {
   transformedOffers.reserve(selection.offers.size());
 
   for (const auto &offer : selection.offers) {
+    if (offer.mimeType == "omnicast/concealed") {
+      qDebug() << "Ignoring selection because it offers mime type omnicast/concealed";
+      return;
+    }
+
     TransformedSelection selection{.mimeType = offer.mimeType.c_str()};
     QFile file(offer.path);
 

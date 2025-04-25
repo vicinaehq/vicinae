@@ -20,8 +20,11 @@ export type ActionProps = BaseActionProps & {
 	onAction: () => void;
 };
 
-export type CopyToClipboardProps = BaseActionProps & {
+export type CopyToClipboardProps = Omit<BaseActionProps, 'title'> & {
 	content: string;
+	concealed?: boolean;
+	onCopy?: (content: string | number | Clipboard.Content) => void,
+	title?: string;
 };
 
 export type ActionPushProps = BaseActionProps & {
@@ -57,9 +60,17 @@ const ActionRoot: React.FC<ActionProps> = ({ icon, ...props }) => {
 	return <action {...nativeProps} />
 }
 
-const CopyToClipboard: React.FC<CopyToClipboardProps> = ({ content, ...props }) => {
-	return <ActionRoot {...props} icon={Icon.CopyClipboard} onAction={() => {
-		Clipboard.copy(content);
+const CopyToClipboard: React.FC<CopyToClipboardProps> = ({ 
+	title = "Copy to clipboard", 
+	icon = Icon.CopyClipboard,
+	content, 
+	concealed = false,
+	onCopy,
+	...props 
+}) => {
+	return <ActionRoot title={title} {...props} icon={Icon.CopyClipboard} onAction={async () => {
+		await Clipboard.copy(content, { concealed });
+		onCopy?.(content);
 	}} />
 }
 
