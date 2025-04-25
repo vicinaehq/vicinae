@@ -54,9 +54,9 @@ void MarkdownRenderer::insertHeading(const QString &text, int level) {
 }
 
 void MarkdownRenderer::insertImage(cmark_node *node) {
-  static std::vector<const char *> widthAttributes = {"raycast-width", "omnicast-width", "width"};
-  static std::vector<const char *> heightAttributes = {"raycast-height", "omnicast-height", "height"};
-  static std::vector<const char *> tintAttributes = {"raycast-colorTint", "omnicast-colorTint", "colorTint"};
+  static std::vector<const char *> widthAttributes = {"raycast-width", "omnicast-width"};
+  static std::vector<const char *> heightAttributes = {"raycast-height", "omnicast-height"};
+  static std::vector<const char *> tintAttributes = {"raycast-colorTint", "omnicast-colorTint"};
 
   const char *p = cmark_node_get_url(node);
   QUrl url(p);
@@ -110,7 +110,11 @@ void MarkdownRenderer::insertImage(cmark_node *node) {
     blockFormat.setBottomMargin(15);
     blockFormat.setAlignment(Qt::AlignCenter);
 
-    if (!_cursor.block().text().isEmpty()) { _cursor.insertBlock(blockFormat); }
+    if (!_cursor.block().text().isEmpty()) {
+      _cursor.insertBlock(blockFormat);
+    } else {
+      _cursor.setBlockFormat(blockFormat);
+    }
 
     _cursor.insertImage(url.toString());
     _cursor.setPosition(old);

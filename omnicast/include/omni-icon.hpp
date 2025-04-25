@@ -18,6 +18,9 @@
 #include <qlogging.h>
 #include <QtSvg/QSvgRenderer>
 #include <qnamespace.h>
+#include <qnetworkaccessmanager.h>
+#include <qnetworkreply.h>
+#include <qnetworkrequest.h>
 #include <qpainter.h>
 #include <qpixmap.h>
 #include <qpixmapcache.h>
@@ -28,6 +31,7 @@
 #include <qwidget.h>
 #include "image-fetcher.hpp"
 #include "lib/emoji-detect.hpp"
+#include "network-manager.hpp"
 #include "theme.hpp"
 #include "ui/omni-painter.hpp"
 
@@ -568,6 +572,7 @@ public:
 class HttpOmniIconWidget : public OmniIconWidget {
   QString _path;
   QPixmap _pixmap;
+  QNetworkReply *m_reply = nullptr;
   QFutureWatcher<QPixmap> watcher;
   OmniPainter::ImageMaskType _mask;
   QSize m_lastLoadedForSize;
@@ -606,8 +611,29 @@ class HttpOmniIconWidget : public OmniIconWidget {
       update();
       emit imageLoaded(_pixmap);
     } else {
+      qDebug() << "pixmap is null!";
       emit imageLoadingFailed();
     }
+  }
+
+  static QPixmap loadImage(QByteArray data, QSize size) {
+    qDebug() << "got image of size" << data.size() << "target size" << size;
+    QBuffer buffer(&data);
+
+    buffer.open(QIODevice::ReadOnly);
+
+    QImageReader reader(&buffer);
+
+    if (!reader.canRead()) { return {}; }
+
+    QSize originalSize = reader.size();
+    bool isDownScalable = originalSize.height() > size.height() || originalSize.width() > size.width();
+
+    if (originalSize.isValid() && isDownScalable) {
+      reader.setScaledSize(originalSize.scaled(size, Qt::KeepAspectRatio));
+    }
+
+    return QPixmap::fromImage(reader.read());
   }
 
   void recalculate() {
@@ -618,25 +644,30 @@ class HttpOmniIconWidget : public OmniIconWidget {
       watcher.waitForFinished();
     }
 
-    auto reply = ImageFetcher::instance().fetch(url.toString());
+    QNetworkRequest request(url);
+
+    request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
+
+    if (m_reply) m_reply->deleteLater();
+
+    m_reply = NetworkManager::instance()->manager()->get(request);
+
+    connect(m_reply, &QNetworkReply::finished, this, [this]() {
+      if (m_reply->error() == QNetworkReply::NoError) {
+        auto data = m_reply->readAll();
+        auto future = QtConcurrent::run(&HttpOmniIconWidget::loadImage, std::move(data), size());
+
+        watcher.setFuture(future);
+      } else {
+        // NetworkManager::instance()->manager()->cache()->remove(url);
+        qCritical() << "Failed to load image" << m_reply->errorString();
+      }
+
+      m_reply->deleteLater();
+      m_reply = nullptr;
+    });
 
     qDebug() << "fetch " << url.toString();
-
-    connect(reply, &ImageReply::imageLoaded, this, [this, reply](QPixmap pixmap) {
-      auto targetSize = size();
-      auto future = QtConcurrent::run([this, targetSize, pixmap]() {
-        return pixmap.scaled(size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
-      });
-
-      watcher.setFuture(future);
-      reply->deleteLater();
-    });
-
-    connect(reply, &ImageReply::loadingError, this, [this, reply]() {
-      qDebug() << "failed to get image";
-      reply->deleteLater();
-      emit imageLoadingFailed();
-    });
   }
 
 public:
@@ -646,6 +677,10 @@ public:
       : OmniIconWidget(parent), _mask(OmniPainter::ImageMaskType::NoMask), url(url) {
     qDebug() << "init http image for" << url;
     connect(&watcher, &QFutureWatcher<QPixmap>::finished, this, &HttpOmniIconWidget::handleImageLoaded);
+  }
+
+  ~HttpOmniIconWidget() {
+    if (m_reply) m_reply->deleteLater();
   }
 };
 

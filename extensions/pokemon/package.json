@@ -1,0 +1,136 @@
+{
+  "name": "pokemon",
+  "title": "Pokemon",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "build-only": "node build.mjs",
+    "clean": "rimraf dist",
+    "build": "run-s clean build-only",
+    "deploy-only": "node deploy.mjs",
+    "deploy": "run-s build deploy-only"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "icon": "icon.png",
+  "commands": [
+    {
+      "name": "pokemon",
+      "title": "pokemon",
+      "subtitle": "Pokemon",
+      "description": "Pokedex viewer",
+      "mode": "view"
+    }
+  ],
+  "preferences": [
+    {
+      "name": "language",
+      "title": "Preferred Language",
+      "description": "Select your preferred language for Pokémon-related commands.",
+      "required": false,
+      "type": "dropdown",
+      "default": "9",
+      "data": [
+        {
+          "title": "Simplified Chinese",
+          "value": "12"
+        },
+        {
+          "title": "Traditional Chinese",
+          "value": "4"
+        },
+        {
+          "title": "English",
+          "value": "9"
+        },
+        {
+          "title": "French",
+          "value": "5"
+        },
+        {
+          "title": "German",
+          "value": "6"
+        },
+        {
+          "title": "Italian",
+          "value": "8"
+        },
+        {
+          "title": "Japanese",
+          "value": "1"
+        },
+        {
+          "title": "Korean",
+          "value": "3"
+        },
+        {
+          "title": "Spanish",
+          "value": "7"
+        }
+      ]
+    },
+    {
+      "name": "duration",
+      "title": "Data Cache Duration",
+      "description": "Set the duration for caching Pokémon details. A value of 0 disables caching.",
+      "required": false,
+      "type": "dropdown",
+      "default": "7",
+      "data": [
+        {
+          "title": "No Caching",
+          "value": "0"
+        },
+        {
+          "title": "1 Day",
+          "value": "1"
+        },
+        {
+          "title": "3 Days",
+          "value": "3"
+        },
+        {
+          "title": "1 Week",
+          "value": "7"
+        },
+        {
+          "title": "2 Weeks",
+          "value": "14"
+        },
+        {
+          "title": "1 Month",
+          "value": "30"
+        }
+      ]
+    },
+    {
+      "name": "artwork",
+      "title": "Artwork Style",
+      "description": "Choose the preferred artwork style for Pokémon.",
+      "required": false,
+      "type": "dropdown",
+      "default": "official",
+      "data": [
+        {
+          "title": "Official Artwork",
+          "value": "official"
+        },
+        {
+          "title": "Pixel Art",
+          "value": "pixel"
+        }
+      ]
+    }
+  ],
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/react": "^18.0.0",
+    "esbuild": "^0.24.0",
+    "npm-run-all": "^4.1.5",
+    "rimraf": "^6.0.1"
+  },
+  "dependencies": {
+    "@omnicast/api": "file:../../api"
+  }
+}
