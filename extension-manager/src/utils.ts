@@ -27,3 +27,38 @@ export const safeKill = (pid: number, signal: string): boolean => {
 	try { kill(pid, signal); return true; }
 	catch { return false; }
 }
+
+export const isDeepEqual = (a: Record<any, any>, b: Record<any, any>): boolean => {
+	for (const key in a) {
+		if (typeof b[key] === 'undefined') return false;
+	}
+
+	for (const key in b) {
+		if (typeof a[key] === 'undefined') return false;
+	}
+
+	for (const key in a) {
+		const value = a[key];
+
+		if (typeof b[key] !== typeof value) { return false; }
+
+		if (typeof value === "object") {
+			if (Array.isArray(value) && value.length !== b[key].length) {
+				console.debug(`array shortcircuit optimization`);
+				return false;
+			}
+
+			if (!isDeepEqual(value, b[key])) {
+				return false;
+			}
+
+			continue ;
+		}
+
+		if (a[key] != b[key]) {
+			return false;
+		}
+	}
+
+	return true;
+}

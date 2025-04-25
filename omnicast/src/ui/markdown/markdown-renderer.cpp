@@ -433,7 +433,6 @@ void MarkdownRenderer::appendMarkdown(QStringView markdown) {
 }
 
 void MarkdownRenderer::setMarkdown(QStringView markdown) {
-  qCritical() << "setMarkdown, size is" << size();
   clear();
   appendMarkdown(markdown);
   _cursor.setPosition(0);

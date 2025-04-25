@@ -17,7 +17,6 @@ namespace EventListener {
 };
 
 type EventListenerInfo = {
-	id: string;
 	callback: EventListener.Callback;
 };
 
@@ -82,7 +81,7 @@ class Bus {
   }
 
   subscribe(type: string, cb: EventListenerInfo['callback']) {
-	  const item: EventListenerInfo = { id: randomUUID(), callback: cb };
+	  const item: EventListenerInfo = { callback: cb };
 	  let listeners = this.eventListeners.get(type)
 
 	  if (!listeners) { 

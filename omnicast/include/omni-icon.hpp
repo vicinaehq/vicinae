@@ -711,7 +711,7 @@ public:
   ~OmniIcon() {}
 
   void handleFailedLoading() {
-    qWarning() << "Failed to load image" << _url.toString();
+    // qWarning() << "Failed to load image" << _url.toString();
     if (auto fallback = _url.fallback()) {
       setUrl(*fallback);
     } else {

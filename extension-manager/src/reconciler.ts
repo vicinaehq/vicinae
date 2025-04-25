@@ -2,20 +2,122 @@ import Reconciler, { OpaqueRoot } from 'react-reconciler';
 import { setTimeout, clearTimeout } from 'node:timers';
 import { DefaultEventPriority } from 'react-reconciler/constants';
 import { ReactElement } from 'react';
-import { deepClone, compare, Operation } from 'fast-json-patch';
-import { writeFileSync } from 'node:fs';
+import { isDeepEqual } from './utils';
+
+type LinkNode = {
+	next: LinkNode | null;
+	prev: LinkNode | null;
+	data: Instance;
+};
+
+class ChildList {
+	private m_size: number = 0;
+	private m_front: LinkNode | null = null;
+	private m_indexMap = new Map<Symbol, LinkNode>;
+	private m_rear: LinkNode | null = null;
+
+	insertBefore(before: Instance, data: Instance) {
+		const beforeNode = this.m_indexMap.get(before.id);
+
+		if (!beforeNode) return ;
+
+		const node: LinkNode = { data, next: beforeNode, prev: null };
+
+		if (!beforeNode.prev) {
+			this.pushFront(data);
+			return ;
+		}
+
+		node.prev = beforeNode.prev;
+		node.next = beforeNode;
+		beforeNode.prev = node;
+		node.prev.next = node;
+		this.m_indexMap.set(data.id, node);
+		this.m_size += 1;
+	}
+
+	remove(data: Instance): boolean {
+		const node = this.m_indexMap.get(data.id);
+
+		if (!node) return false;
+		if (node.prev) node.prev.next = node.next;
+		if (node.next) node.next.prev = node.prev;
+
+		if (node == this.m_rear) this.m_rear = node.prev;
+		if (node == this.m_front) this.m_front = node.next;
+
+		this.m_indexMap.delete(data.id);
+		this.m_size -= 1;
+
+		return true;
+	}
+
+	size() { return this.m_size; }
+
+	rear(): Instance | undefined { return this.m_rear?.data;  } 
+
+	front(): Instance | undefined { return this.m_front?.data;  } 
+
+	toArray(): Instance[] {
+		let instances = new Array<Instance>(this.m_size);
+		let current = this.m_front;
+		let i = 0;
+
+		while (current) {
+			instances[i++] = current.data;
+			current = current.next;
+		}
+
+		return instances;
+	}
+
+	clear() {
+		this.m_indexMap.clear();
+		this.m_size = 0;
+		this.m_front = null;
+		this.m_rear = null;
+	}
+
+	pushFront(data: Instance) {
+		const node = {data, next: this.m_front, prev: null};
+
+		if (this.m_front) this.m_front.prev = node;
+
+		this.m_front = node;
+
+		if (!this.m_rear) this.m_rear = this.m_front;
+
+		this.m_indexMap.set(node.data.id, node);
+		++this.m_size;
+	}
+
+	pushBack(data: Instance) {
+		const node = {data, next: null, prev: this.m_rear};
+
+		if (this.m_rear) this.m_rear.next = node;
+
+		this.m_rear = node;
+
+		if (!this.m_front) this.m_front = this.m_rear; 
+
+		this.m_indexMap.set(node.data.id, node);
+		++this.m_size;
+	}
+};
+
 
 type InstanceType = string;
 type InstanceProps = Record<string, any>;
-type Container = { _root?: OpaqueRoot, children: Instance[] };
 type Instance = {
+	id: Symbol,
 	type: InstanceType,
 	props: InstanceProps;
-	children: Instance[];
 	dirty: boolean;
 	propsDirty: boolean;
 	parent?: Instance;
+	childList: ChildList;
 };
+type Container = Instance & { _root?: OpaqueRoot };
 type TextInstance = any;
 type SuspenseInstance = any;
 type HydratableInstance = any;
@@ -28,41 +130,6 @@ type NoTimeout = number;
 
 const ctx: HostContext = {
 };
-
-const isDeepEqual = (a: Record<any, any>, b: Record<any, any>): boolean => {
-	for (const key in a) {
-		if (typeof b[key] === 'undefined') return false;
-	}
-
-	for (const key in b) {
-		if (typeof a[key] === 'undefined') return false;
-	}
-
-	for (const key in a) {
-		const value = a[key];
-
-		if (typeof b[key] !== typeof value) { return false; }
-
-		if (typeof value === "object") {
-			if (Array.isArray(value) && value.length !== b[key].length) {
-				console.debug(`array shortcircuit optimization`);
-				return false;
-			}
-
-			if (!isDeepEqual(value, b[key])) {
-				return false;
-			}
-
-			continue ;
-		}
-
-		if (a[key] != b[key]) {
-			return false;
-		}
-	}
-
-	return true;
-}
 
 const emitDirty = (instance?: Instance) => {
 	let current: Instance | undefined = instance;
@@ -93,13 +160,14 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 		supportsPersistence: false,
 		supportsHydration: false,
 
-		createInstance(type, props, root, ctx, handle) {
-			const { children, ...rest } = props;
+		createInstance(type, props, root, ctx, handle): Instance {
+			const { children, key, ...rest } = props;
 
 			return {
+				id: Symbol(type),
 				type,
 				props: rest,
-				children: [],
+				childList: new ChildList,
 				dirty: true,
 				propsDirty: true,
 			}
@@ -199,47 +267,32 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 		appendChild(parent: Instance, child: Instance) {
 			child.parent = parent;
 			emitDirty(parent);
-			parent.children.push(child);
+			parent.childList.pushBack(child);
 		},
 
 		appendChildToContainer(container: Instance, child: Instance) {
-			child.parent = container;
-			emitDirty(container);
-			container.children.push(child);
+			hostConfig.appendChild?.(container, child);
 		},
 
 		insertBefore(parent, child, beforeChild) {
 			child.parent = parent;
 			emitDirty(parent);
-
-			const beforeIdx = parent.children.indexOf(beforeChild);
-
-			if (beforeIdx == -1) {
-				throw new Error(`insertBefore: beforeChild not found `);
-			}
-
-			if (beforeIdx == 0) parent.children.unshift(child);
-			else parent.children.splice(beforeIdx - 1, 0, child);
+			parent.childList.insertBefore(beforeChild, child);
 		},
 
 		insertInContainerBefore(container, child) {
+			// XXX - We may want something better here
 			throw new Error(`root container can only have one child`);
 		},
 
 		removeChild(parent: Instance, child: Instance) {
-			const childIdx = parent.children.indexOf(child);
-
 			emitDirty(child.parent);
+			parent.childList.remove(child);
 			delete child.parent;
-			parent.children.splice(childIdx, 1);
 		},
 
 		removeChildFromContainer(container: Instance, child: Instance) {
-			const childIdx = container.children.indexOf(child);
-
-			emitDirty(child.parent);
-			delete child.parent;
-			container.children.splice(childIdx, 1);
+			hostConfig.removeChild?.(container, child);
 		},
 
 		resetTextContent() {},
@@ -273,7 +326,7 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 		unhideTextInstance() {},
 
 		clearContainer(container) {
-			container.children = [];
+			container.childList.clear();
 		},
 	};
 
@@ -281,8 +334,7 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 }
 
 export type ViewData = {
-	root: Instance;
-	changes: Operation[];
+	root: SerializedInstance;
 };
 
 export type RendererConfig = {
@@ -291,65 +343,72 @@ export type RendererConfig = {
 	onUpdate?: (views: ViewData[]) => void;
 };
 
-const stripParent = (instance: Instance): Instance => {
-	const obj: Instance = {
+type SerializedInstance = {
+	props: InstanceProps;
+	type: string;
+	dirty: boolean;
+	propsDirty: boolean;
+	children: SerializedInstance[];
+};
+
+const serializeInstance = (instance: Instance): SerializedInstance => {
+	const obj: SerializedInstance = {
 		props: instance.props,
 		type: instance.type,
 		dirty: instance.dirty,
 		propsDirty: instance.propsDirty,
-		children: [],
+		children: new Array<SerializedInstance>(instance.childList.size())
 	};
 
 	instance.dirty = false;
 	instance.propsDirty = false;
 
-	for (const child of instance.children) {
-		obj.children.push(stripParent(child));
+	let i = 0;
+
+	for (const child of instance.childList.toArray()) {
+		obj.children[i++] = serializeInstance(child);
 	}
 	
 	return obj;
 }
 
+const createContainer = (): Container => {
+	return {
+		id: Symbol('root'),
+		type: 'root',
+		dirty: true,
+		propsDirty: false,
+		props: {},
+		childList: new ChildList
+	}
+}
+
 export const createRenderer = (config: RendererConfig) => {
-	const { maxRendersPerSecond = 60 } = config;
-	const frameTime = Math.floor(1000 / maxRendersPerSecond);
-	const container: Container = { children: [] };
-	let oldTree: Instance[] = [];
-	let debounceTimeout: NodeJS.Timeout | null = null;
+	const container = createContainer(); 
 
-	const render = () => {
-		if (debounceTimeout) { return; }
+	const renderImpl = () => {
+		if (!container.dirty) return ;
 
-		debounceTimeout = setTimeout(() => {
-			const start = performance.now();
-			const views: ViewData[] = [];
-			const rootNodes = container.children.map(stripParent);
-			const changes = compare(oldTree, rootNodes);
-			const didTreeChange = changes.length > 0;
+		const start = performance.now();
+		const views: ViewData[] = [];
+		const root = serializeInstance(container);
 
-			writeFileSync('/tmp/render.txt', JSON.stringify(rootNodes, null, 2));
+		//writeFileSync('/tmp/render.txt', JSON.stringify(root, null, 2));
 
-			if (didTreeChange) {
-				for (let i = 0; i != rootNodes.length; ++i) {
-					const view = rootNodes[i];
+		for (let i = 0; i != root.children.length; ++i) {
+			const view = root.children[i];
 
-					views.push({ root: view, changes: []});
-				}
+			views.push({ root: view });
+		}
 
-				config.onUpdate?.(views)
-				oldTree = deepClone(rootNodes);
-			}
+		config.onUpdate?.(views)
 
-			const end = performance.now();
+		const end = performance.now();
 
-			console.error(`[PERF] processed render frame in ${end - start}ms`);
-			debounceTimeout = null;
-		}, frameTime);
-
+		console.error(`[PERF] processed render frame in ${end - start}ms`);
 	}
 
-	const hostConfig = createHostConfig({}, render);
-
+	const hostConfig = createHostConfig({}, renderImpl);
 	const reconciler = Reconciler(hostConfig);
 
 	return {
@@ -358,7 +417,7 @@ export const createRenderer = (config: RendererConfig) => {
 				container._root = reconciler.createContainer(container, 0, null, false, null, '', (error) => {console.error('recoverable error', error)}, null);
 			}
 
-			reconciler.updateContainer(element, container._root, null, render);
+			reconciler.updateContainer(element, container._root, null, renderImpl);
 		}
 	}
 }
