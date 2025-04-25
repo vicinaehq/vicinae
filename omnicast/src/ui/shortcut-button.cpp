@@ -6,18 +6,18 @@
 void ShortcutButton::hoverChanged(bool hovered) {
   auto &theme = ThemeService::instance().theme();
 
-  _shortcut_indicator->setBackgroundColor(hovered ? theme.colors.mainSelectedBackground
-                                                  : theme.colors.mainHoveredBackground);
-  setBackgroundColor(hovered ? theme.colors.mainHoveredBackground : QColor::Invalid);
+  _shortcut_indicator->setBackgroundColor(hovered ? theme.colors.statusBackgroundLighter
+                                                  : theme.colors.statusBackgroundLighter);
+  setBackgroundColor(hovered ? theme.colors.statusBackgroundHover : QColor::Invalid);
   update();
 }
 
 void ShortcutButton::resetColor() {
   auto &theme = ThemeService::instance().theme();
 
-  _shortcut_indicator->setBackgroundColor(hovered() ? theme.colors.mainSelectedBackground
-                                                    : theme.colors.mainHoveredBackground);
-  setBackgroundColor(hovered() ? theme.colors.mainHoveredBackground : QColor::Invalid);
+  _shortcut_indicator->setBackgroundColor(hovered() ? theme.colors.statusBackgroundLighter
+                                                    : theme.colors.statusBackgroundLighter);
+  setBackgroundColor(hovered() ? theme.colors.statusBackgroundHover : QColor::Invalid);
 }
 
 void ShortcutButton::setText(const QString &text) {

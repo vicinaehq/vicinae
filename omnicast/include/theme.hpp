@@ -35,6 +35,8 @@ struct ThemeInfo {
 
     QColor statusBackground;
     QColor statusBackgroundBorder;
+    QColor statusBackgroundHover;
+    QColor statusBackgroundLighter;
 
     ColorLike blue;
     ColorLike green;
@@ -203,7 +205,9 @@ public:
       theme.colors.mainSelectedBackground = selectionBackground; // Lighter for selection
       theme.colors.mainHoveredBackground = selectionBackground;  // Hover color
       theme.colors.statusBackground = QColor(statusBg); // Original color from screenshot for status bar
-      theme.colors.statusBackgroundBorder = border;     // Border for status bar
+      theme.colors.statusBackgroundLighter = statusBg.lighter(150);
+      theme.colors.statusBackgroundHover = statusBg.lighter(120);
+      theme.colors.statusBackgroundBorder = border; // Border for status bar
 
       /*
   theme.colors.red = redGradient;

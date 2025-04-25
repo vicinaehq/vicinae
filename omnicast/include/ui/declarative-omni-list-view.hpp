@@ -173,7 +173,8 @@ protected:
 
         auto actions = nextItem->generateActions();
 
-        // if (!actions.isEmpty()) { actions.at(0)->setShortcut({.key = "return"}); }
+        if (!actions.isEmpty()) { actions.at(0)->setShortcut({.key = "return"}); }
+        if (actions.size() > 1) { actions.at(1)->setShortcut({.key = "return", .modifiers = {"shift"}}); }
 
         setSignalActions(actions);
       }
