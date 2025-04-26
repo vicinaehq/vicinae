@@ -15,7 +15,7 @@ export const trash = async (path: PathLike | PathLike[]): Promise<void> => {
 	await Promise.all(promises);
 }
 
-export const open = (target: string, app?: Application | string) => {
+export const open = async (target: string, app?: Application | string) => {
 	let appId: string | undefined;
 
 	if (app) {
@@ -26,7 +26,7 @@ export const open = (target: string, app?: Application | string) => {
 		}
 	}
 
-	bus?.request('open-target', {
+	await bus?.request('apps.open', {
 		target,
 		appId
 	});
@@ -53,7 +53,7 @@ export const getFrontmostApplication = async (): Promise<Application> => {
 }
 
 export const getApplications = async (path?: PathLike): Promise<Application[]> => {
-	const res = await bus.request<{ apps: MessageApp[] }>('apps.get', {
+	const res = await bus.request<{ apps: MessageApp[] }>('apps.list', {
 		target: path?.toString()
 	});
 

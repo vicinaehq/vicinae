@@ -105,6 +105,6 @@ public:
   }
 
 signals:
-  void notifyEvent(const QString &handler, const std::vector<QJsonValue> &args) const;
+  void notifyEvent(const QString &handler, const QJsonArray &args) const;
   void updateActionPannel(const ActionPannelModel &model) const;
 };

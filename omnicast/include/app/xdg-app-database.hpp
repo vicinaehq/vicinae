@@ -79,8 +79,8 @@ class XdgAppDatabase : public AbstractAppDatabase {
 
 public:
   AppPtr findByClass(const QString &name) const override;
-  AppPtr findBestOpener(const QUrl &url) const override;
-  AppPtr findBestOpener(const QString &mimeName) const override;
+  AppPtr findBestOpener(const QString &target) const override;
+  AppPtr findBestOpenerForMime(const QString &target) const override;
   std::vector<AppPtr> findOpeners(const QString &mime) const override;
   AppPtr findById(const QString &id) const override;
   std::vector<AppPtr> list() const override;

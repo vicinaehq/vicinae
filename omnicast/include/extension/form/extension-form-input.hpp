@@ -2,6 +2,7 @@
 #include "extend/form-model.hpp"
 #include "ui/focus-notifier.hpp"
 #include <qboxlayout.h>
+#include <qjsonarray.h>
 #include <qwidget.h>
 
 class ExtensionEventNotifier : public QObject {
@@ -13,7 +14,7 @@ public:
   void notify(const QString &id, const QJsonValue &value) { emit eventNotified(id, {value}); }
 
 signals:
-  void eventNotified(const QString &id, const std::vector<QJsonValue> &value) const;
+  void eventNotified(const QString &id, const QJsonArray &value) const;
 };
 
 class ExtensionFormInput : public QWidget {

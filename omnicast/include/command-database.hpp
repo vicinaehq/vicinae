@@ -34,6 +34,9 @@ public:
   virtual std::vector<QString> keywords() const { return {}; }
   virtual QString repositoryName() const { return ""; }
 
+  bool isView() const { return mode() == CommandModeView; }
+  bool isNoView() const { return mode() == CommandModeNoView; }
+
   virtual CommandContext *createContext(AppWindow &app, const std::shared_ptr<AbstractCmd> &command,
                                         const QString &query) const {
     return nullptr;

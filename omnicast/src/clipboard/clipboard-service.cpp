@@ -546,4 +546,9 @@ ClipboardService::ClipboardService(const QString &path)
 			tokenize='porter'
 		);
 	)");
+
+  query.exec("CREATE INDEX IF NOT EXISTS idx_selection_pinned_created ON selection(pinned_at DESC, "
+             "created_at DESC)");
+  query.exec("CREATE INDEX IF NOT EXISTS idx_data_offer_selection_id ON data_offer(selection_id, mime_type)");
+  query.exec("CREATE INDEX IF NOT EXISTS idx_selection_preferred_mime ON selection(preferred_mime_type)");
 }

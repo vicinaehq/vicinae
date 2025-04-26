@@ -206,8 +206,9 @@ class Omnicast {
 
 			const worker = new Worker(__filename, {
 				workerData: {
-					component: command.componentPath,
+					entrypoint: command.componentPath,
 					preferenceValues,
+					commandMode: command.mode,
 				},
 				stdout: true,
 				env: {

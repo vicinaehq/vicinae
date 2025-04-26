@@ -23,6 +23,7 @@
 #include "theme.hpp"
 #include "ui/dialog.hpp"
 #include "ui/horizontal-loading-bar.hpp"
+#include "ui/toast.hpp"
 #include "ui/top_bar.hpp"
 #include <QLabel>
 #include <QMainWindow>
@@ -271,6 +272,8 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
   view->onMount();
 }
 
+void AppWindow::unloadCurrentCommand() { popToRoot(); }
+
 void AppWindow::launchCommand(const std::shared_ptr<AbstractCmd> &command, const LaunchCommandOptions &opts) {
   auto preferenceValues = commandDb->getPreferenceValues(command->id());
 
@@ -291,12 +294,22 @@ void AppWindow::launchCommand(const std::shared_ptr<AbstractCmd> &command, const
   qDebug() << "preference values for command with" << command->preferences().size() << "preferences"
            << command->id() << preferenceValues;
 
-  if (command->mode() == CommandModeView) {
-    auto ctx = command->createContext(*this, command, opts.searchQuery);
-
-    commandStack.push({.command = ctx});
-    ctx->load();
+  if (commandStack.size() > 1 && commandStack.top().viewStack.empty()) {
+    qWarning() << "unloading hanging command";
+    commandStack.top().command->unload();
+    commandStack.top().command->deleteLater();
+    commandStack.pop();
   }
+
+  auto ctx = command->createContext(*this, command, opts.searchQuery);
+
+  if (!ctx) {
+    statusBar->setToast("No context returned by command", ToastPriority::Danger);
+    return;
+  }
+
+  commandStack.push({.command = ctx});
+  ctx->load();
 }
 
 void AppWindow::launchCommand(const QString &id, const LaunchCommandOptions &opts) {
@@ -432,7 +445,17 @@ void AppWindow::selectPrimaryAction() {
 void AppWindow::selectSecondaryAction() {}
 
 void AppWindow::executeAction(AbstractAction *action) {
-  auto executor = commandStack.top().viewStack.top().view;
+  if (commandStack.size() > 1 && commandStack.top().viewStack.empty()) {
+    qWarning() << "unloading hanging command";
+    commandStack.top().command->unload();
+    commandStack.top().command->deleteLater();
+    commandStack.pop();
+  }
+
+  auto &command = commandStack.top();
+  auto executor = command.viewStack.empty() ? nullptr : &command.viewStack.at(0);
+
+  qDebug() << "executing" << action->title;
   auto executorCommand = commandStack.top().command;
 
   if (!action->isPushView()) { actionPannel->close(); }
@@ -442,7 +465,6 @@ void AppWindow::executeAction(AbstractAction *action) {
   if (!action->isPushView()) {
     emit action->didExecute();
     emit actionExecuted(action);
-    executor->onActionActivated(action);
     executorCommand->onActionExecuted(action);
 
     if (auto cb = action->executionCallback()) { cb(); }

@@ -22,30 +22,50 @@ std::shared_ptr<Application> XdgAppDatabase::defaultForMime(const QString &mime)
   return nullptr;
 }
 
-AppPtr XdgAppDatabase::findBestOpener(const QUrl &url) const {
-  QString mime = "x-scheme-handler/" + url.scheme();
+AppPtr XdgAppDatabase::findBestOpenerForMime(const QString &mimeName) const {
+  QMimeType mime = mimeDb.mimeTypeForName(mimeName);
 
-  if (auto it = mimeToDefaultApp.find(url.scheme()); it != mimeToDefaultApp.end()) {
-    if (auto it2 = appMap.find(it->second); it2 != appMap.end()) return it2->second;
+  if (auto app = defaultForMime(mime.name())) { return app; }
+
+  for (const auto &mime : mime.parentMimeTypes()) {
+    if (auto app = defaultForMime(mime)) return app;
   }
 
-  if (auto it = mimeToApps.find(mime); it != mimeToApps.end()) {
-    for (const auto &appId : it->second) {
-      if (auto it2 = appMap.find(appId); it2 != appMap.end()) return it2->second;
+  if (auto it = mimeToApps.find(mime.name()); it != mimeToApps.end()) {
+    for (const auto id : it->second) {
+      if (auto app = findById(id)) return app;
     }
   }
 
   return nullptr;
 }
 
-XdgAppDatabase::AppPtr XdgAppDatabase::findBestOpener(const QString &mimeName) const {
-  if (auto app = defaultForMime(mimeName)) { return app; }
+XdgAppDatabase::AppPtr XdgAppDatabase::findBestOpener(const QString &target) const {
+  QUrl url(target);
 
-  for (const auto &mime : mimeDb.mimeTypeForName(mimeName).parentMimeTypes()) {
+  if (!url.scheme().isEmpty()) {
+    QString mime = "x-scheme-handler/" + url.scheme();
+
+    if (auto it = mimeToDefaultApp.find(mime); it != mimeToDefaultApp.end()) {
+      if (auto it2 = appMap.find(it->second); it2 != appMap.end()) return it2->second;
+    }
+
+    if (auto it = mimeToApps.find(mime); it != mimeToApps.end()) {
+      for (const auto &appId : it->second) {
+        if (auto it2 = appMap.find(appId); it2 != appMap.end()) return it2->second;
+      }
+    }
+  }
+
+  QMimeType mime = mimeDb.mimeTypeForFile(target);
+
+  if (auto app = defaultForMime(mime.name())) { return app; }
+
+  for (const auto &mime : mime.parentMimeTypes()) {
     if (auto app = defaultForMime(mime)) return app;
   }
 
-  if (auto it = mimeToApps.find(mimeName); it != mimeToApps.end()) {
+  if (auto it = mimeToApps.find(mime.name()); it != mimeToApps.end()) {
     for (const auto id : it->second) {
       if (auto app = findById(id)) return app;
     }

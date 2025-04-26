@@ -41,22 +41,14 @@ const loadEnviron = () => {
 	environment.canAccess = (api) => false,
 	environment.assetsPath = "";
 	environment.isDevelopment = false;
-	environment.commandMode = 'view';
+	environment.commandMode = workerData.commandMode;
 	environment.supportPath = '/tmp';
 	environment.raycastVersion = '1.0.0';
 	environment.launchType = {} as any;
 }
 
-export const main = async () => {
-	if (!parentPort) {
-		console.error(`Unable to get workerData. Is this code running inside a NodeJS worker? Manually invoking this runtime is not supported.`)
-		return ;
-	}
-
-	patchRequire();
-	loadEnviron();
-
-	const module = await import(workerData.component);
+const loadView = async () => {
+	const module = await import(workerData.entrypoint);
 	const Component = module.default.default;
 
 	process.on('uncaughtException', (error) => {
@@ -77,9 +69,40 @@ export const main = async () => {
 
 			lastRender = now;
 			
-			bus!.emit('render', { views });
+			bus!.emit('ui.render', { views });
 		}
 	});
 
 	renderer.render(<App component={Component} />);
+}
+
+const loadNoView = async () => {
+	const module = await import(workerData.entrypoint);
+	const entrypoint = module.default.default;
+
+	if (typeof entrypoint !== 'function') {
+		throw new Error(`no-view command does not export a function as its default export`);
+	}
+
+	await entrypoint();
+}
+
+export const main = async () => {
+	if (!parentPort) {
+		console.error(`Unable to get workerData. Is this code running inside a NodeJS worker? Manually invoking this runtime is not supported.`)
+		return ;
+	}
+
+	patchRequire();
+	loadEnviron();
+
+	if (environment.commandMode == 'view') {
+		await loadView();
+	}
+
+	else if (environment.commandMode == 'no-view') {
+		await loadNoView();
+	}
+
+	bus.emit('exit', {});
 }

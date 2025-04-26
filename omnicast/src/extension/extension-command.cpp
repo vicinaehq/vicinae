@@ -2,6 +2,7 @@
 #include "command-database.hpp"
 #include "command.hpp"
 #include "extension/extension-command-context.hpp"
+#include "extension/extension-command-runtime.hpp"
 #include "omni-icon.hpp"
 
 ExtensionCommand ExtensionCommand::fromJson(const QJsonObject &obj) { return obj; }
@@ -40,7 +41,7 @@ void ExtensionCommand::setExtensionIcon(const QString &icon) { _extensionIcon = 
 
 CommandContext *ExtensionCommand::createContext(AppWindow &app, const std::shared_ptr<AbstractCmd> &command,
                                                 const QString &query) const {
-  return new ExtensionCommandContext(app, command);
+  return new ExtensionCommandRuntime(app, static_pointer_cast<ExtensionCommand>(command));
 }
 
 CommandType ExtensionCommand::type() const { return CommandType::CommandTypeExtension; }

@@ -28,24 +28,26 @@ public:
   using AppPtr = std::shared_ptr<Application>;
 
   virtual bool launch(const Application &exec, const std::vector<QString> &args = {}) const = 0;
-  virtual AppPtr findBestOpener(const QUrl &url) const = 0;
-  virtual AppPtr findBestOpener(const QString &mime) const = 0;
+  /**
+   * Returns the best app to open the passed target.
+   * Target can be any string, including an URL or a simple filename/path.
+   * It is up to the implementation to properly handle those different target
+   * formats.
+   */
+  virtual AppPtr findBestOpener(const QString &target) const = 0;
+  virtual AppPtr findBestOpenerForMime(const QString &target) const = 0;
   virtual std::vector<AppPtr> findOpeners(const QString &mime) const = 0;
   virtual AppPtr findById(const QString &id) const = 0;
   virtual std::vector<AppPtr> list() const = 0;
   virtual AppPtr findByClass(const QString &name) const = 0;
 
-  AppPtr fileBrowser() const { return findBestOpener("inode/directory"); }
-  AppPtr textEditor() const { return findBestOpener("text/plain"); }
+  AppPtr fileBrowser() const { return findBestOpenerForMime("inode/directory"); }
+  AppPtr textEditor() const { return findBestOpenerForMime("text/plain"); }
   AppPtr webBrowser() const {
     static std::vector<QString> mimes{
         "x-scheme-handler/https", "x-scheme-handler/http", "text/html", "text/css", "text/javascript",
     };
 
-    for (const auto &mime : mimes) {
-      if (auto app = findBestOpener(mime)) return app;
-    }
-
-    return nullptr;
+    return findBestOpener("https://example.com");
   }
 };

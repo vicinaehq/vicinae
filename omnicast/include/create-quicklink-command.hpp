@@ -3,6 +3,7 @@
 #include "quicklist-database.hpp"
 #include "ui/action_popover.hpp"
 #include "ui/form/base-input.hpp"
+#include "ui/form/form-field.hpp"
 #include "ui/form/selector-input.hpp"
 #include "ui/toast.hpp"
 #include "view.hpp"
@@ -100,9 +101,7 @@ class QuicklinkCommandView : public View {
   void handleLinkChange(const QString &text) {
     QUrl url(text);
 
-    if (!url.isValid()) return;
-
-    if (auto app = appDb.findBestOpener(url)) {
+    if (auto app = appDb.findBestOpener(text)) {
       appSelector->updateItem("default", [&app](SelectorInput::AbstractItem *item) {
         static_cast<AppSelectorItem *>(item)->setApp(app);
       });
@@ -148,10 +147,24 @@ public:
     name->setPlaceholderText("Quicklink name");
     link->setPlaceholderText("https://google.com/search?q={argument}");
 
-    form->addField(new FormField(name, "name"));
-    form->addField(new FormField(link, "URL"));
-    form->addField(new FormField(appSelector, "Open with"));
-    form->addField(new FormField(iconSelector, "Icon"));
+    auto nameField = new FormField;
+    auto linkField = new FormField;
+    auto openField = new FormField;
+    auto iconField = new FormField;
+
+    nameField->setName("Name");
+    nameField->setWidget(name, name->focusNotifier());
+    linkField->setName("URL");
+    linkField->setWidget(link, link->focusNotifier());
+    openField->setName("Open with");
+    openField->setWidget(appSelector, appSelector->focusNotifier());
+    iconField->setName("Icon");
+    iconField->setWidget(iconSelector, iconSelector->focusNotifier());
+
+    form->addField(nameField);
+    form->addField(linkField);
+    form->addField(openField);
+    form->addField(iconField);
 
     connect(link, &BaseInput::textChanged, this, &QuicklinkCommandView::handleLinkChange);
     connect(appSelector, &SelectorInput::textChanged, this,

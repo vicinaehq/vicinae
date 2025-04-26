@@ -2,6 +2,7 @@
 #include "app.hpp"
 #include "extend/action-model.hpp"
 #include "extend/model-parser.hpp"
+#include <qjsonarray.h>
 #include <qjsonvalue.h>
 #include <qlogging.h>
 #include <qtmetamacros.h>
@@ -54,7 +55,7 @@ public:
   virtual void render(const RenderModel &model) = 0;
 
 signals:
-  void notifyEvent(const QString &handler, const std::vector<QJsonValue> &args) const;
+  void notifyEvent(const QString &handler, const QJsonArray &args) const;
   void updateActionPannel(const ActionPannelModel &model) const;
   void componentShown() const;
 };

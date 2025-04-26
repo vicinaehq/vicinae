@@ -1,25 +1,99 @@
 #include "ai/ai-provider.hpp"
 #include "clipboard/clipboard-service.hpp"
 #include "command.hpp"
+#include "extension/extension-command-runtime.hpp"
 #include "extension/extension-command.hpp"
 #include "extension/extension-view.hpp"
 #include "ui/toast.hpp"
+#include <qjsonarray.h>
 #include <qjsonobject.h>
 #include <qnamespace.h>
 #include <qtmetamacros.h>
 
-class ExtensionAction : public AbstractAction {
-  ActionModel _model;
+class ExtensionNoViewCommandContext : public CommandContext {
+  Q_OBJECT
+  QString sessionId;
+  const ExtensionCommand &command;
+
+private slots:
+  void commandLoaded(const LoadedCommand &cmd) {
+    sessionId = cmd.sessionId;
+
+    qDebug() << "Extension command loaded from new extension command" << sessionId;
+  }
+
+  void extensionRequest(const QString &sessionId, const QString &id, const QString &action,
+                        const QJsonObject &payload) {
+    if (this->sessionId != sessionId) return;
+
+    qDebug() << "[ExtensionCommand] extension request" << action;
+
+    if (action == "clear-search-bar") {
+      app()->topBar->input->clear();
+      emit app() -> topBar->input->textEdited("");
+      app()->extensionManager->respond(id, {});
+      return;
+    }
+
+    if (action == "push-view") {
+      app()->extensionManager->respond(id, {});
+      return;
+    }
+
+    if (action == "pop-view") {
+      app()->extensionManager->respond(id, {});
+      return;
+    }
+
+    QJsonObject errorRes;
+    QJsonObject err;
+
+    err["message"] = "Unknown command type";
+    errorRes["error"] = err;
+
+    app()->extensionManager->respond(id, errorRes);
+  }
+
+  void extensionEvent(const QString &sessionId, const QString &action, const QJsonObject &payload) {
+    qDebug() << "event" << action << "for " << sessionId;
+    if (this->sessionId != sessionId) return;
+  }
+
+  void handleNotifiedEvent(const QString &handlerId, const std::vector<QJsonValue> &args) {
+    QJsonObject obj;
+    QJsonArray arr;
+
+    qDebug() << "send event to" << handlerId;
+
+    for (const auto &arg : args) {
+      arr.push_back(arg);
+    }
+
+    obj["args"] = arr;
+    app()->extensionManager->emitExtensionEvent(this->sessionId, handlerId, obj);
+  }
 
 public:
-  void execute(AppWindow &app) override {}
+  ExtensionNoViewCommandContext(AppWindow &app, const std::shared_ptr<AbstractCmd> &command)
+      : CommandContext(&app, command), command(static_cast<ExtensionCommand &>(*command.get())) {}
 
-  const ActionModel &model() const { return _model; }
+  ~ExtensionNoViewCommandContext() {}
 
-  ExtensionAction(const ActionModel &model)
-      : AbstractAction(model.title, model.icon ? OmniIconUrl(*model.icon) : BuiltinOmniIconUrl("pen")),
-        _model(model) {
-    shortcut = _model.shortcut;
+  void load() override {
+    connect(app()->extensionManager.get(), &ExtensionManager::commandLoaded, this,
+            &ExtensionNoViewCommandContext::commandLoaded);
+    connect(app()->extensionManager.get(), &ExtensionManager::extensionEvent, this,
+            &ExtensionNoViewCommandContext::extensionEvent);
+    connect(app()->extensionManager.get(), &ExtensionManager::extensionRequest, this,
+            &ExtensionNoViewCommandContext::extensionRequest);
+
+    auto preferenceValues = app()->commandDb->getPreferenceValues(command.id());
+
+    app()->extensionManager->loadCommand(command.extensionId(), command.id(), preferenceValues);
+  }
+
+  void unload() override {
+    if (!sessionId.isEmpty()) app()->extensionManager->unloadCommand(sessionId);
   }
 };
 
@@ -313,7 +387,7 @@ private slots:
     }
   }
 
-  void handleNotifiedEvent(const QString &handlerId, const std::vector<QJsonValue> &args) {
+  void handleNotifiedEvent(const QString &handlerId, const QJsonArray &args) {
     QJsonObject obj;
     QJsonArray arr;
 

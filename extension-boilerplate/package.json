@@ -46,6 +46,13 @@
 		  "description": "Local token to access the service"
 		}
 	  ]
+    },
+	{
+      "name": "no-view",
+      "title": "Test No View",
+      "description": "Test No View Feature",
+      "mode": "no-view",
+	  "preferences": []
     }
   ],
   "preferences": [

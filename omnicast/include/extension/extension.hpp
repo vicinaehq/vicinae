@@ -9,6 +9,21 @@
 #include <qstringview.h>
 #include <qjsonarray.h>
 
+class ExtensionAction : public AbstractAction {
+  ActionModel _model;
+
+public:
+  void execute(AppWindow &app) override {}
+
+  const ActionModel &model() const { return _model; }
+
+  ExtensionAction(const ActionModel &model)
+      : AbstractAction(model.title, model.icon ? OmniIconUrl(*model.icon) : BuiltinOmniIconUrl("pen")),
+        _model(model) {
+    shortcut = _model.shortcut;
+  }
+};
+
 class Extension : public AbstractCommandRepository {
 public:
   struct CommandBase : public BuiltinCommand {

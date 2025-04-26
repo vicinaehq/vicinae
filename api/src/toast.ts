@@ -251,3 +251,13 @@ export const showToast = async (init: Toast.Style | Toast.Options, title = "", m
 	return toast;
 };
 
+
+export enum PopToRootType {
+	Default = 'default',
+	Immediate = 'immediate',
+	Suspended = 'suspended'
+};
+
+export const showHUD = async (title: string, options?: { clearRootSearch?: boolean, popToRootType?: PopToRootType}) => {
+	await bus.request('ui.show-hud', { title, options });
+}

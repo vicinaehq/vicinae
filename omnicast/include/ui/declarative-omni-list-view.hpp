@@ -163,6 +163,7 @@ protected:
           if (auto action = std::get_if<std::unique_ptr<AbstractAction>>(&item)) {
             if (idx == 0) (*action)->setShortcut({.key = "return", .modifiers = {}});
             if (idx == 1) (*action)->setShortcut({.key = "return", .modifiers = {"shift"}});
+            ++idx;
           }
         }
 

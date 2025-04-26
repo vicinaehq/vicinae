@@ -9,6 +9,7 @@
 #include "ui/form/form-field.hpp"
 #include "ui/omni-scroll-bar.hpp"
 #include <qboxlayout.h>
+#include <qjsonarray.h>
 #include <qjsonvalue.h>
 #include <qnamespace.h>
 #include <qscrollarea.h>
@@ -84,7 +85,7 @@ public:
   }
 
 signals:
-  void notifyEvent(const QString &handler, const std::vector<QJsonValue> &args) const;
+  void notifyEvent(const QString &handler, const QJsonArray &args) const;
 };
 
 class ExtensionFormComponent : public AbstractExtensionRootComponent {

@@ -733,6 +733,7 @@ class OmniIcon : public QWidget {
   OmniIconUrl _url;
   OmniIconWidget *_iconWidget = nullptr;
   QVBoxLayout *layout;
+  bool m_failedToLoad = false;
 
 public:
   OmniIcon(const OmniIconUrl &url, QWidget *parent = nullptr) : QWidget(parent), layout(new QVBoxLayout) {
@@ -745,6 +746,8 @@ public:
   }
   ~OmniIcon() {}
 
+  bool didFailToLoad() const { return m_failedToLoad; }
+
   void handleFailedLoading() {
     // qWarning() << "Failed to load image" << _url.toString();
     if (auto fallback = _url.fallback()) {
@@ -752,10 +755,14 @@ public:
     } else {
       setUrl(BuiltinOmniIconUrl("question-mark-circle"));
     }
+
+    m_failedToLoad = true;
   }
 
   void setUrl(const OmniIconUrl &url) {
     if (url == _url) return;
+
+    m_failedToLoad = false;
 
     if (_iconWidget) {
       _iconWidget->blockSignals(true);

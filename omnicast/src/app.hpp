@@ -201,6 +201,7 @@ public:
 
   void launchCommand(const std::shared_ptr<AbstractCmd> &cmd, const LaunchCommandOptions &opts = {});
   void launchCommand(const QString &id, const LaunchCommandOptions &opts = {});
+  void unloadCurrentCommand();
 
   AppWindow(QWidget *parent = 0);
 
