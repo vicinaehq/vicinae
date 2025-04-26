@@ -21,6 +21,7 @@
 #include "ui/omni-list-item-widget.hpp"
 #include "ui/omni-list.hpp"
 #include "quicklink-actions.hpp"
+#include "ui/top_bar.hpp"
 #include <QtConcurrent/QtConcurrent>
 #include <cmath>
 #include <memory>
@@ -43,7 +44,15 @@ struct OpenBuiltinCommandAction : public AbstractAction {
   std::shared_ptr<AbstractCmd> cmd;
   QString text;
 
-  void execute(AppWindow &app) override { app.launchCommand(cmd, {}); }
+  void execute(AppWindow &app) override {
+    auto args = app.topBar->m_completer->collect();
+
+    for (const auto &[k, v] : args) {
+      qDebug() << k << "=>" << v;
+    }
+
+    app.launchCommand(cmd, {});
+  }
 
   OpenBuiltinCommandAction(const std::shared_ptr<AbstractCmd> &cmd, const QString &title = "Open command",
                            const QString &text = "")
@@ -122,6 +131,13 @@ protected:
     if (!cmd->preferences().empty()) { actions << new OpenCommandPreferencesAction(cmd); }
 
     return actions;
+  }
+
+  std::unique_ptr<CompleterData> createCompleter() const override {
+    if (cmd->arguments().empty()) return nullptr;
+
+    return std::make_unique<CompleterData>(
+        CompleterData{.iconUrl = cmd->iconUrl(), .arguments = cmd->arguments()});
   }
 
   QString id() const override { return cmd->id(); }

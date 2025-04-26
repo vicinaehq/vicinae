@@ -50,6 +50,36 @@ public:
 
   static Extension fromObject(const QJsonObject &object);
 
+  static Argument parseArgumentFromObject(const QJsonObject &obj) {
+    Argument arg;
+    QString type = obj.value("type").toString();
+
+    if (type == "text") arg.type = Argument::Text;
+    if (type == "password") arg.type = Argument::Password;
+    if (type == "dropdown") arg.type = Argument::Dropdown;
+
+    arg.name = obj.value("name").toString();
+    arg.placeholder = obj.value("placeholder").toString();
+    arg.required = obj.value("required").toBool(false);
+
+    if (type == "dropdown") {
+      auto data = obj.value("data").toArray();
+      std::vector<Argument::DropdownData> options;
+
+      options.reserve(data.size());
+
+      for (const auto &child : data) {
+        auto obj = child.toObject();
+
+        options.push_back({.title = obj["title"].toString(), .value = obj["value"].toString()});
+      }
+
+      arg.data = options;
+    }
+
+    return arg;
+  }
+
   static std::shared_ptr<BasePreference> parsePreferenceFromObject(const QJsonObject &obj) {
     auto type = obj["type"].toString();
     BasePreference base;

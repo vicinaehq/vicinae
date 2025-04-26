@@ -22,15 +22,32 @@ TopBar::TopBar(QWidget *parent) : QWidget(parent), layout(new QHBoxLayout()), in
   layout->setContentsMargins(15, 10, 15, 10);
   layout->addWidget(backButton, 0, Qt::AlignLeft | Qt::AlignVCenter);
   layout->addWidget(input);
+  layout->addWidget(m_completer);
   layout->setSpacing(10);
   layout->addWidget(m_accessory, 0, Qt::AlignRight | Qt::AlignVCenter);
+
+  m_completer->hide();
 
   setLayout(layout);
 
   setProperty("class", "top-bar");
 
+  connect(m_completer, &ArgumentCompleterWidget::activated, this, [this]() {
+    auto fm = input->fontMetrics();
+    QString text = input->text();
+
+    if (text.isEmpty()) text = input->placeholderText();
+
+    input->setFixedWidth(fm.boundingRect(text).width() + 35);
+  });
+
+  connect(m_completer, &ArgumentCompleterWidget::destroyed, this, [this]() {
+    input->setFocus();
+    input->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+  });
+
   connect(input, &QLineEdit::textChanged, this, [this]() {
-    if (completerData) {
+    if (m_completer->isVisible()) {
       auto fm = input->fontMetrics();
       input->setFixedWidth(fm.boundingRect(input->text()).width() + 35);
     }

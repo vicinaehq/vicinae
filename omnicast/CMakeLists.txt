@@ -184,6 +184,8 @@ qt_add_executable(${TARGET}
 	include/local-storage-service.hpp
 	src/local-storage.cpp
 
+	include/ui/argument-completer-widget.hpp
+
 	include/ui/button.hpp
 	src/ui/button.cpp
 

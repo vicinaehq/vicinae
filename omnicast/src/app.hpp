@@ -83,6 +83,8 @@ struct LaunchCommandOptions {
   std::optional<NavigationStatus> navigation;
 };
 
+struct LaunchProps {};
+
 struct PushViewOptions {
   QString searchQuery;
   std::optional<NavigationStatus> navigation;

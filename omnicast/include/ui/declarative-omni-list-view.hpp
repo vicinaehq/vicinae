@@ -148,10 +148,13 @@ protected:
         split->clearDetail();
       }
 
-      if (auto completer = nextItem->createCompleter()) {
-        app.topBar->activateQuicklinkCompleter(*completer);
+      if (auto completer = nextItem->createCompleter(); completer && completer->arguments.size() > 0) {
+        app.topBar->m_completer->setArguments(completer->arguments);
+        app.topBar->m_completer->setIconUrl(completer->iconUrl);
+        // app.topBar->activateQuicklinkCompleter(*completer);
       } else {
-        app.topBar->destroyQuicklinkCompleter();
+        app.topBar->m_completer->clear();
+        // app.topBar->destroyQuicklinkCompleter();
       }
 
       auto pannel = nextItem->generateActionPannel();
@@ -181,7 +184,7 @@ protected:
       }
     } else {
       split->clearDetail();
-      app.topBar->destroyQuicklinkCompleter();
+      app.topBar->m_completer->clear();
       setSignalActions({});
     }
 

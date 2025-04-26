@@ -52,7 +52,21 @@
       "title": "Test No View",
       "description": "Test No View Feature",
       "mode": "no-view",
-	  "preferences": []
+	  "preferences": [],
+	  "arguments": [
+		  {
+			  "name": "username",
+			  "type": "text",
+			  "required": true,
+			  "placeholder": "Username"
+		  },
+		  {
+			  "name": "password",
+			  "type": "password",
+			  "required": true,
+			  "placeholder": "Password"
+		  }
+	  ]
     }
   ],
   "preferences": [

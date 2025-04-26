@@ -1,7 +1,9 @@
 #pragma once
+#include "argument.hpp"
 #include "omni-icon.hpp"
 #include "ui/horizontal-loading-bar.hpp"
 #include "ui/icon-button.hpp"
+#include "ui/argument-completer-widget.hpp"
 #include "ui/input_completer.hpp"
 #include <QKeyEvent>
 #include <QLabel>
@@ -54,6 +56,7 @@ struct CompleterData {
   QList<QString> placeholders;
   QList<QString> values;
   OmniIconUrl iconUrl;
+  ArgumentList arguments;
 };
 
 struct TopBar : public QWidget {
@@ -61,6 +64,7 @@ struct TopBar : public QWidget {
   QHBoxLayout *layout;
   SearchBar *input;
   QWidget *m_accessory = new QWidget(this);
+  ArgumentCompleterWidget *m_completer = new ArgumentCompleterWidget(this);
   InputCompleter *quickInput = nullptr;
   std::optional<CompleterData> completerData;
 

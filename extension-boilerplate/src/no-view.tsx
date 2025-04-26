@@ -1,6 +1,6 @@
-import { open, showToast, LocalStorage } from "@omnicast/api";
+import { open, showToast, LocalStorage, LaunchProps } from "@omnicast/api";
 
-export default async function Command() {
+export default async function Command(props: LaunchProps) {
     open('/etc/passwd');
 
 	await LocalStorage.setItem('something', 'hello');

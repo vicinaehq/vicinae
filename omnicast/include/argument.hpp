@@ -1,13 +1,19 @@
 #pragma once
 #include <qstring.h>
 
-enum ArgumentType { ArgumentText, ArgumentPassword, ArgumentDropdown };
-
 struct Argument {
+  enum Type { Text, Password, Dropdown };
+
+  struct DropdownData {
+    QString title;
+    QString value;
+  };
+
   QString name;
-  ArgumentType type;
+  Type type;
   QString placeholder;
   bool required;
+  std::optional<std::vector<DropdownData>> data;
 };
 
 using ArgumentList = std::vector<Argument>;

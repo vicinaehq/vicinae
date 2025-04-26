@@ -3,6 +3,7 @@
 #include "command.hpp"
 #include "extension/extension-command-context.hpp"
 #include "extension/extension-command-runtime.hpp"
+#include "extension/extension.hpp"
 #include "omni-icon.hpp"
 
 ExtensionCommand ExtensionCommand::fromJson(const QJsonObject &obj) { return obj; }
@@ -29,7 +30,15 @@ ExtensionCommand::ExtensionCommand(const QJsonObject &obj) {
   _preferences.reserve(preferenceList.size());
 
   for (const auto &preference : preferenceList) {
-    _preferences.push_back(Extension::parsePreferenceFromObject(preference.toObject()));
+    _preferences.emplace_back(Extension::parsePreferenceFromObject(preference.toObject()));
+  }
+
+  QJsonArray argList = obj.value("arguments").toArray();
+
+  m_arguments.reserve(argList.size());
+
+  for (const auto &argument : argList) {
+    m_arguments.emplace_back(Extension::parseArgumentFromObject(argument.toObject()));
   }
 }
 

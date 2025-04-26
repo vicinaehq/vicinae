@@ -1,4 +1,5 @@
 #pragma once
+#include "argument.hpp"
 #include "command-database.hpp"
 #include "command.hpp"
 #include "omni-icon.hpp"
@@ -27,6 +28,7 @@ class ExtensionCommand : public AbstractCmd {
   QString _extensionIcon;
   PreferenceList _extensionPreferences;
   PreferenceList _preferences;
+  ArgumentList m_arguments;
   std::filesystem::path _assetPath;
   CommandMode _mode;
 
@@ -43,6 +45,7 @@ public:
 
   void setExtensionPreferences(const PreferenceList &prefs) { _extensionPreferences = prefs; }
 
+  std::vector<Argument> arguments() const override { return m_arguments; }
   std::vector<std::shared_ptr<BasePreference>> preferences() const override {
     PreferenceList list;
 
