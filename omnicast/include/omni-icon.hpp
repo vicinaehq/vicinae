@@ -393,11 +393,11 @@ class BuiltinOmniIconRenderer : public OmniIconWidget {
 
     qreal devicePixelRatio = qApp->devicePixelRatio();
     QSize deviceSize = size * devicePixelRatio;
-    QPixmap canva(size);
+    QPixmap canva(deviceSize);
     auto &theme = ThemeService::instance();
 
     canva.fill(Qt::transparent);
-    canva.setDevicePixelRatio(devicePixelRatio);
+    // canva.setDevicePixelRatio(devicePixelRatio);
 
     OmniPainter cp(&canva);
 
@@ -408,7 +408,9 @@ class BuiltinOmniIconRenderer : public OmniIconWidget {
     QMargins margins(0, 0, 0, 0);
 
     if (auto tint = _backgroundTint; tint != InvalidTint) {
-      margins = {3, 3, 3, 3};
+      int margin = qRound(3 * devicePixelRatio);
+
+      margins = {margin, margin, margin, margin};
       int cornerRadius = canva.width() / 4;
       auto colorLike = theme.getTintColor(tint);
 
@@ -419,7 +421,6 @@ class BuiltinOmniIconRenderer : public OmniIconWidget {
     QPixmap svgPix(innerRect.size());
 
     svgPix.fill(Qt::transparent);
-    svgPix.setDevicePixelRatio(devicePixelRatio);
 
     {
       OmniPainter painter(&svgPix);
@@ -433,6 +434,8 @@ class BuiltinOmniIconRenderer : public OmniIconWidget {
       painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
       painter.fillRect(svgPix.rect(), _fillColor ? *_fillColor : "#FFFFFF");
     }
+
+    svgPix.setDevicePixelRatio(devicePixelRatio);
 
     cp.drawPixmap(innerRect, svgPix);
     return canva;

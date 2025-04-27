@@ -143,6 +143,7 @@ int startDaemon() {
 }
 
 int main(int argc, char **argv) {
+  QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
   QApplication qapp(argc, argv);
 
   qInstallMessageHandler(coloredMessageHandler);
