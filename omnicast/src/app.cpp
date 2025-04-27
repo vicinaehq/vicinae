@@ -10,6 +10,7 @@
 #include "extension/missing-extension-preference-view.hpp"
 #include "command.hpp"
 #include "config.hpp"
+#include "wm/window-manager-factory.hpp"
 #include "extension/extension.hpp"
 #include "extension_manager.hpp"
 #include "favicon/favicon-service.hpp"
@@ -29,6 +30,7 @@
 #include <QMainWindow>
 #include <QThread>
 #include "clipboard/clipboard-server.hpp"
+#include "wm/window-manager.hpp"
 #include <QVBoxLayout>
 #include <csetjmp>
 #include <memory>
@@ -519,6 +521,7 @@ AppWindow::AppWindow(QWidget *parent)
   commandDb = std::make_unique<OmniCommandDatabase>(*omniDb.get());
   localStorage = std::make_unique<LocalStorageService>(*omniDb.get());
   extensionManager = std::make_unique<ExtensionManager>(*commandDb.get());
+  windowManager = WindowManagerFactory().create();
 
   clipboardService =
       std::make_unique<ClipboardService>(Config::dirPath() + QDir::separator() + "clipboard.db");

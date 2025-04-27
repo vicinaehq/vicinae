@@ -5,6 +5,7 @@
 #include "wm/hyprland/hyprland.hpp"
 #include "wm/window-manager.hpp"
 #include "ui/action-pannel/move-to-workspace-action.hpp"
+#include <chrono>
 #include <qfuturewatcher.h>
 #include <qnamespace.h>
 
@@ -12,7 +13,7 @@ class FocusWindowAction : public AbstractAction {
   std::shared_ptr<AbstractWindowManager::Window> _window;
   AbstractWindowManager *wm = new HyprlandWindowManager;
 
-  void execute(AppWindow &app) override { wm->focus(*_window.get()); }
+  void execute(AppWindow &app) override { wm->focusWindowSync(*_window.get()); }
 
 public:
   FocusWindowAction(const std::shared_ptr<AbstractWindowManager::Window> &window)
@@ -63,6 +64,8 @@ class SwitchWindowsCommand : public DeclarativeOmniListView {
   QFutureWatcher<AbstractWindowManager::WindowList> watcher;
   AbstractWindowManager *wm = new HyprlandWindowManager;
   Service<AbstractAppDatabase> appDb;
+  std::chrono::time_point<std::chrono::high_resolution_clock> m_lastWindowFetch =
+      std::chrono::high_resolution_clock::now();
 
   void handleResolvedWindowList() {
     windows = watcher.result();
@@ -75,18 +78,14 @@ public:
   SwitchWindowsCommand(AppWindow &app)
       : DeclarativeOmniListView(app), appDb(service<AbstractAppDatabase>()) {}
 
-  void onSearchChanged(const QString &text) override {
-    if (watcher.isRunning()) {
-      watcher.cancel();
-      watcher.waitForFinished();
-    }
-
-    watcher.setFuture(wm->listWindows());
-  }
-
   ItemList generateList(const QString &s) override {
     ItemList list;
+    auto now = std::chrono::high_resolution_clock::now();
+    auto elapsedSeconds = std::chrono::duration_cast<std::chrono::seconds>(now - m_lastWindowFetch).count();
 
+    if (windows.empty() || elapsedSeconds > 1) { windows = wm->listWindowsSync(); }
+
+    list.reserve(windows.size());
     list.push_back(std::make_unique<OmniList::VirtualSection>("Open windows"));
 
     for (const auto &win : windows) {
@@ -107,7 +106,5 @@ public:
   void onMount() override {
     DeclarativeOmniListView::onMount();
     setSearchPlaceholderText("Search open window...");
-    connect(&watcher, &QFutureWatcher<AbstractWindowManager::WindowList>::finished, this,
-            &SwitchWindowsCommand::handleResolvedWindowList);
   }
 };

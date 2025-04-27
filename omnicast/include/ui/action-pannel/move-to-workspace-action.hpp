@@ -20,8 +20,6 @@ public:
 
 class MoveToWorkspaceView : public ActionPannelListView {
   AbstractWindowManager &wm;
-  using Watcher = QFutureWatcher<AbstractWindowManager::WindowList>;
-  Watcher watcher;
   std::vector<std::unique_ptr<MoveWorkspaceAction>> _actions;
 
   std::vector<AbstractAction *> actions() const override {
@@ -34,12 +32,13 @@ class MoveToWorkspaceView : public ActionPannelListView {
     return actions;
   }
 
-  void finished() {
-    auto windows = watcher.result();
+  void finished() {}
 
+public:
+  MoveToWorkspaceView(AbstractWindowManager &wm) : wm(wm) {
     _list->beginUpdate();
 
-    for (auto window : windows) {
+    for (auto window : wm.listWindowsSync()) {
       auto waction = std::make_unique<MoveWorkspaceAction>(*window.get(), wm);
 
       _list->addItem(std::make_unique<ActionListItem>(waction.get()));
@@ -47,12 +46,6 @@ class MoveToWorkspaceView : public ActionPannelListView {
     }
 
     _list->commitUpdate();
-  }
-
-public:
-  MoveToWorkspaceView(AbstractWindowManager &wm) : wm(wm) {
-    connect(&watcher, &Watcher::finished, this, &MoveToWorkspaceView::finished);
-    watcher.setFuture(wm.listWindows());
   }
 };
 

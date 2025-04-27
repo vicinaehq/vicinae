@@ -159,8 +159,19 @@ public:
   Service<AbstractAppDatabase> appDb;
 
   std::unique_ptr<CompleterData> createCompleter() const override {
-    return std::make_unique<CompleterData>(
-        CompleterData{.placeholders = link->placeholders, .iconUrl = iconUrl()});
+    ArgumentList args;
+
+    for (const auto &placeholder : link->placeholders) {
+      Argument arg;
+
+      arg.type = Argument::Text;
+      arg.required = true;
+      arg.placeholder = placeholder;
+      arg.name = placeholder;
+      args.emplace_back(arg);
+    }
+
+    return std::make_unique<CompleterData>(CompleterData{.iconUrl = iconUrl(), .arguments = args});
   }
 
   QList<AbstractAction *> generateActions() const override {

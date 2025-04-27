@@ -11,6 +11,7 @@
 #include <qtimer.h>
 #include <qtmetamacros.h>
 #include <string>
+#include <string_view>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <qdebug.h>
@@ -23,6 +24,8 @@ class Hyprctl : public QObject {
   char _buf[1 << 13];
 
 public:
+  static QByteArray oneshot(std::string_view command) { return Hyprctl().start(std::string(command)); }
+
   Hyprctl() {}
   ~Hyprctl() {}
 

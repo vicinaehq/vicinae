@@ -269,7 +269,7 @@ public:
     setType(OmniIconType::Builtin);
     setName(name);
     setForegroundTint(tint);
-    setFill(ColorTint::TextPrimary);
+    setFill(Qt::white);
   }
 };
 

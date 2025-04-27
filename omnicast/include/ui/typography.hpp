@@ -46,7 +46,7 @@ public:
   void setSize(TextSize size) {
     QFont _font = font();
 
-    _font.setPointSize(m_theme.pointSize(size));
+    _font.setPointSizeF(m_theme.pointSize(size));
     _font.setWeight(m_weight);
 
     setFont(_font);

@@ -69,19 +69,15 @@ public:
 public:
   AbstractWindowManager() {}
 
-  virtual QFuture<WindowList> listWindows() const { return {}; };
-  virtual WindowList listWindowsSync() const { return listWindows().result(); };
+  virtual QString name() const = 0;
+  virtual WindowList listWindowsSync() const { return {}; };
+  virtual std::shared_ptr<Window> getActiveWindowSync() const { return nullptr; }
+  virtual std::shared_ptr<Workspace> getActiveWorkspaceSync() const { return nullptr; }
+  virtual WorkspaceList listWorkspacesSync() const { return {}; }
+  virtual void moveToWorkspaceSync(const Window &window, const Workspace &workspace) {}
+  virtual void focusWindowSync(const Window &window) const {};
 
-  virtual QFuture<std::shared_ptr<Window>> getActiveWindow() {
-    return QFuture<std::shared_ptr<Window>>(nullptr);
-  };
-  virtual std::shared_ptr<Window> getActiveWindowSync() { return getActiveWindow().result(); };
-
-  virtual QFuture<WorkspaceList> listWorkspaces() const { return {}; }
-
-  virtual void moveToWorkspace(const Window &window, const Workspace &workspace) {}
-  virtual QFuture<void> focus(const Window &window) const {};
-
+  virtual bool ping() const = 0;
   virtual bool isActivatable() const = 0;
   virtual void start() const = 0;
 };

@@ -39,6 +39,7 @@
 #include "ui/horizontal-loading-bar.hpp"
 #include "ui/status_bar.hpp"
 #include "ui/top_bar.hpp"
+#include "wm/window-manager.hpp"
 
 #include <qmainwindow.h>
 #include <qtmetamacros.h>
@@ -176,6 +177,7 @@ public:
   std::unique_ptr<OmniCommandDatabase> commandDb;
   std::unique_ptr<AI::Manager> aiProvider;
   std::unique_ptr<LocalStorageService> localStorage;
+  std::unique_ptr<AbstractWindowManager> windowManager;
 
   void popToRoot();
   void disconnectView(View &view);

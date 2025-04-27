@@ -110,7 +110,13 @@ signals:
 
 struct OpenCompletedQuicklinkAction : public OpenQuicklinkAction {
   void execute(AppWindow &app) {
-    if (app.topBar->quickInput) { setArgs(app.topBar->quickInput->collectArgs()); }
+    if (app.topBar->m_completer->isVisible()) {
+      args.clear();
+
+      for (const auto &[k, v] : app.topBar->m_completer->collect()) {
+        args << v;
+      }
+    }
 
     OpenQuicklinkAction::execute(app);
   }
