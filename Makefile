@@ -1,7 +1,7 @@
 BUILD_DIR := build
 
 omnicast: configure
-	cmake --build $(BUILD_DIR) -j$(shell nproc)
+	cmake --build $(BUILD_DIR) -j1
 .PHONY: omnicast
 
 extension-manager:

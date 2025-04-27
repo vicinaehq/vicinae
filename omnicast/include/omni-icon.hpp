@@ -392,9 +392,11 @@ class BuiltinOmniIconRenderer : public OmniIconWidget {
     auto &theme = ThemeService::instance();
 
     QPixmap canva(size);
-    OmniPainter cp(&canva);
 
     canva.fill(Qt::transparent);
+
+    OmniPainter cp(&canva);
+
     cp.setRenderHint(QPainter::SmoothPixmapTransform, true);
     cp.setRenderHint(QPainter::Antialiasing, true);
     cp.setPen(Qt::NoPen);

@@ -3,7 +3,7 @@
 #include <qdebug.h>
 
 class Timer {
-  std::chrono::time_point<std::chrono::system_clock> _start;
+  std::chrono::time_point<std::chrono::steady_clock> _start;
 
 public:
   void start() { _start = std::chrono::high_resolution_clock::now(); }

@@ -5,7 +5,6 @@
 #include <QtSql/QtSql>
 #include <QXmlStreamReader>
 #include <QtSql/qsqldatabase.h>
-#include <QtWaylandClient/qwaylandclientextension.h>
 #include <arpa/inet.h>
 #include <cmark.h>
 #include <csignal>

@@ -1,7 +1,6 @@
 #pragma once
 #include "ai/ai-service.hpp"
 #include <exception>
-#include <immintrin.h>
 #include <optional>
 #include "app.hpp"
 #include "ollama-config-view.hpp"

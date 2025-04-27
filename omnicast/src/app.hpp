@@ -16,7 +16,6 @@
 #include "omni-icon.hpp"
 #include "process-manager-service.hpp"
 #include "quicklist-database.hpp"
-#include <QtWaylandClient/qwaylandclientextension.h>
 #include <cstring>
 #include <qboxlayout.h>
 #include <qdnslookup.h>
@@ -44,7 +43,6 @@
 #include <qmainwindow.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
-#include <wayland-client-protocol.h>
 
 template <class T> using Service = T &;
 
