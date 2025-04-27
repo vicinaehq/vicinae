@@ -1,7 +1,8 @@
 BUILD_DIR := build
 
 omnicast: configure
-	cmake --build $(BUILD_DIR) -j1
+	cmake --build $(BUILD_DIR) -j64
+
 .PHONY: omnicast
 
 extension-manager:
@@ -15,7 +16,7 @@ wayland:
 	wayland-scanner public-code ./wlr-clipman/protocols/wlr-data-control-unstable-v1.xml wlr-clipman/src/wayland-wlr-data-control-client-protocol.c
 
 all: omnicast extension-manager
-	cmake --build $(BUILD_DIR) -j$(shell nproc)
+	cmake --build $(BUILD_DIR)
 .PHONY: all
 
 format:

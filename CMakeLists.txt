@@ -1,3 +1,5 @@
+include(ProcessorCount)
+
 cmake_minimum_required(VERSION 3.16)
 set(OMNICAST_VERSION v1.0.0)
 
@@ -7,6 +9,16 @@ project(${PROJECT_NAME} VERSION 1.0.0 LANGUAGES C CXX)
 add_compile_definitions(OMNICAST_VERSION="${OMNICAST_VERSION}")
 
 find_program(CCACHE ccache)
+
+ProcessorCount(N)
+
+if(NOT N EQUAL 0)
+  message(STATUS "Number of processors: ${N}")
+  set(CMAKE_BUILD_PARALLEL_LEVEL ${N})
+else()
+  message(STATUS "Unable to determine processor count, defaulting to 1")
+  set(CMAKE_BUILD_PARALLEL_LEVEL 1)
+endif()
 
 if (CCACHE) 
 	set(CMAKE_CXX_COMPILER_LAUNCHER "ccache")

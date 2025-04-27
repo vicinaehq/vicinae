@@ -393,18 +393,11 @@ class BuiltinOmniIconRenderer : public OmniIconWidget {
 
     qreal devicePixelRatio = qApp->devicePixelRatio();
     QSize deviceSize = size * devicePixelRatio;
-
-<<<<<<< Updated upstream
     QPixmap canva(size);
-
-    canva.fill(Qt::transparent);
-=======
     auto &theme = ThemeService::instance();
-    QPixmap canva(deviceSize);
 
     canva.fill(Qt::transparent);
     canva.setDevicePixelRatio(devicePixelRatio);
->>>>>>> Stashed changes
 
     OmniPainter cp(&canva);
 
