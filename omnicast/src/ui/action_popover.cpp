@@ -18,7 +18,6 @@
 #include <qstackedlayout.h>
 #include <qstyleoption.h>
 #include <qwidget.h>
-#include <toml++/impl/key.hpp>
 
 void ActionPopover::toggleActions() {
   if (isVisible())

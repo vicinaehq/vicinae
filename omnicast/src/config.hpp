@@ -3,7 +3,6 @@
 #include <qdir.h>
 #include <qtenvironmentvariables.h>
 #include <string>
-#include <toml++/toml.h>
 #include <vector>
 
 struct ConfigExtension {
