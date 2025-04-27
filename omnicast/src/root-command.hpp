@@ -45,13 +45,12 @@ struct OpenBuiltinCommandAction : public AbstractAction {
   QString text;
 
   void execute(AppWindow &app) override {
-    auto args = app.topBar->m_completer->collect();
+    LaunchProps props;
+    props.arguments = app.topBar->m_completer->collect();
 
-    for (const auto &[k, v] : args) {
-      qDebug() << k << "=>" << v;
-    }
+    qCritical() << "execute launch with" << props.arguments.size();
 
-    app.launchCommand(cmd, {});
+    app.launchCommand(cmd, {}, props);
   }
 
   OpenBuiltinCommandAction(const std::shared_ptr<AbstractCmd> &cmd, const QString &title = "Open command",

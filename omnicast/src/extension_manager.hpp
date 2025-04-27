@@ -5,6 +5,7 @@
 #include <QUuid>
 #include <QtCore>
 #include <cstdint>
+#include "common.hpp"
 #include "extension/extension.hpp"
 #include "omni-command-db.hpp"
 #include "omnicast.hpp"
@@ -35,8 +36,6 @@ struct LoadedCommand {
     QString name;
   } command;
 };
-
-static const char *exec = "/home/aurelle/.local/share/omnicast/extensions/manager.js";
 
 enum MessageType { REQUEST, RESPONSE, EVENT };
 
@@ -382,6 +381,20 @@ public:
 
   void processStarted() { bus.requestManager("list-extensions", {}); }
 
+  static QJsonObject serializeLaunchProps(const LaunchProps &props) {
+    QJsonObject obj;
+    QJsonObject arguments;
+
+    for (const auto &[k, v] : props.arguments) {
+      qDebug() << "argument" << k;
+      arguments[k] = v;
+    }
+
+    obj["arguments"] = arguments;
+
+    return obj;
+  }
+
 public slots:
   bool start() {
     QFile file(":assets/extension-runtime.js");
@@ -432,12 +445,14 @@ public slots:
     requestManager("develop.stop", data);
   }
 
-  void loadCommand(const QString &extensionId, const QString &cmd, const QJsonObject &preferenceValues = {}) {
+  void loadCommand(const QString &extensionId, const QString &cmd, const QJsonObject &preferenceValues = {},
+                   const LaunchProps &launchProps = {}) {
     QJsonObject payload;
 
     payload["extensionId"] = extensionId;
     payload["commandName"] = cmd;
     payload["preferenceValues"] = preferenceValues;
+    payload["launchProps"] = serializeLaunchProps(launchProps);
 
     bus.requestManager("load-command", payload);
   }

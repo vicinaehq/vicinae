@@ -119,3 +119,7 @@ struct IJsonFormField {
   virtual QJsonValue asJsonValue() const = 0;
   virtual void setValueAsJson(const QJsonValue &value) = 0;
 };
+
+struct LaunchProps {
+  std::vector<std::pair<QString, QString>> arguments;
+};

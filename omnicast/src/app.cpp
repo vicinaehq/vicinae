@@ -274,7 +274,8 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
 
 void AppWindow::unloadCurrentCommand() { popToRoot(); }
 
-void AppWindow::launchCommand(const std::shared_ptr<AbstractCmd> &command, const LaunchCommandOptions &opts) {
+void AppWindow::launchCommand(const std::shared_ptr<AbstractCmd> &command, const LaunchCommandOptions &opts,
+                              const LaunchProps &props) {
   auto preferenceValues = commandDb->getPreferenceValues(command->id());
 
   for (const auto &preference : command->preferences()) {
@@ -309,7 +310,7 @@ void AppWindow::launchCommand(const std::shared_ptr<AbstractCmd> &command, const
   }
 
   commandStack.push({.command = ctx});
-  ctx->load();
+  ctx->load(props);
 }
 
 void AppWindow::launchCommand(const QString &id, const LaunchCommandOptions &opts) {
@@ -560,7 +561,7 @@ AppWindow::AppWindow(QWidget *parent)
   _loadingBar->setFixedHeight(1);
   _loadingBar->setBarWidth(100);
 
-  topBar->input->installEventFilter(this);
+  // topBar->input->installEventFilter(this);
 
   auto rootCommand = CommandBuilder("root").toSingleView<RootView>();
 

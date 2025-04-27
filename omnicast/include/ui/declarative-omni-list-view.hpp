@@ -149,12 +149,9 @@ protected:
       }
 
       if (auto completer = nextItem->createCompleter(); completer && completer->arguments.size() > 0) {
-        app.topBar->m_completer->setArguments(completer->arguments);
-        app.topBar->m_completer->setIconUrl(completer->iconUrl);
-        // app.topBar->activateQuicklinkCompleter(*completer);
+        app.topBar->activateCompleter(*completer);
       } else {
-        app.topBar->m_completer->clear();
-        // app.topBar->destroyQuicklinkCompleter();
+        app.topBar->destroyCompleter();
       }
 
       auto pannel = nextItem->generateActionPannel();
@@ -184,7 +181,7 @@ protected:
       }
     } else {
       split->clearDetail();
-      app.topBar->m_completer->clear();
+      app.topBar->destroyCompleter();
       setSignalActions({});
     }
 

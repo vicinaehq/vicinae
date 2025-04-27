@@ -1,7 +1,7 @@
 #pragma once
-#include "app.hpp"
 #include "command-database.hpp"
 #include "command.hpp"
+#include "common.hpp"
 #include "extension/extension-command.hpp"
 #include "extension/extension-view.hpp"
 #include "extension_manager.hpp"
@@ -383,7 +383,7 @@ class ExtensionCommandRuntime : public CommandContext {
   void commandLoaded(const LoadedCommand &command) { m_sessionId = command.sessionId; }
 
 public:
-  void load() override {
+  void load(const LaunchProps &props) override {
     auto preferenceValues = m_app->commandDb->getPreferenceValues(m_command->id());
 
     if (m_command->mode() == CommandModeView) {
@@ -403,7 +403,7 @@ public:
       });
     }
 
-    m_manager->loadCommand(m_command->extensionId(), m_command->id(), preferenceValues);
+    m_manager->loadCommand(m_command->extensionId(), m_command->id(), preferenceValues, props);
   }
 
   ExtensionCommandRuntime(AppWindow &app, const std::shared_ptr<ExtensionCommand> &command)

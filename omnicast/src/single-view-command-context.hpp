@@ -8,7 +8,7 @@ public:
   SingleViewCommand(AppWindow *app, const std::shared_ptr<AbstractCmd> &command)
       : CommandContext(app, command) {}
 
-  void load() override {
+  void load(const LaunchProps &props) override {
     qDebug() << "loading single view" << command()->name();
     return app()->pushView(new T(*app()), {.navigation = NavigationStatus{.title = command()->name(),
                                                                           .iconUrl = command()->iconUrl()}});

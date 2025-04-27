@@ -179,7 +179,7 @@ class Omnicast {
 
 		if (action == "load-command") {
 			const extensions = await this.scanInstallDirectory();
-			const { extensionId, commandName, preferenceValues = {} } = data;
+			const { extensionId, commandName, preferenceValues = {}, launchProps = {} } = data;
 			const extension = extensions.find(ext => ext.id == extensionId);
 
 			if (!extension) {
@@ -208,6 +208,7 @@ class Omnicast {
 				workerData: {
 					entrypoint: command.componentPath,
 					preferenceValues,
+					launchProps,
 					commandMode: command.mode,
 				},
 				stdout: true,

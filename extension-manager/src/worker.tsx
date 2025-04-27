@@ -27,10 +27,10 @@ class ErrorBoundary extends React.Component<{ children: ReactNode }, { error: st
   }
 }
 
-const App: React.FC<{ component: ComponentType }> = ({ component: Component }) => {
+const App: React.FC<{ component: ComponentType, launchProps: any }> = ({ component: Component, launchProps }) => {
 	return (
 		<ErrorBoundary>
-			<NavigationProvider root={<Component />} />
+			<NavigationProvider root={<Component {...launchProps} />} />
 		</ErrorBoundary>
 	)
 }
@@ -73,7 +73,7 @@ const loadView = async () => {
 		}
 	});
 
-	renderer.render(<App component={Component} />);
+	renderer.render(<App launchProps={workerData.launchProps} component={Component} />);
 }
 
 const loadNoView = async () => {
@@ -84,7 +84,7 @@ const loadNoView = async () => {
 		throw new Error(`no-view command does not export a function as its default export`);
 	}
 
-	await entrypoint();
+	await entrypoint(workerData.launchProps);
 }
 
 export const main = async () => {

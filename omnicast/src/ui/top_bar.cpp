@@ -2,6 +2,7 @@
 #include "omni-icon.hpp"
 #include "theme.hpp"
 #include "ui/icon-button.hpp"
+#include <qlogging.h>
 #include <qnamespace.h>
 #include <qwidget.h>
 
@@ -17,40 +18,31 @@ TopBar::TopBar(QWidget *parent) : QWidget(parent), layout(new QHBoxLayout()), in
   backButton->setUrl(BuiltinOmniIconUrl("arrow-left"));
   backButton->hide();
 
+  m_backButtonSpacer->setFixedWidth(5);
+  m_backButtonSpacer->hide();
+
   connect(backButton, &IconButton::clicked, input, &SearchBar::pop);
 
+  layout->setSpacing(0);
   layout->setContentsMargins(15, 10, 15, 10);
   layout->addWidget(backButton, 0, Qt::AlignLeft | Qt::AlignVCenter);
+  layout->addWidget(m_backButtonSpacer);
   layout->addWidget(input);
+  layout->addSpacing(5);
   layout->addWidget(m_completer);
-  layout->setSpacing(10);
+  // layout->setSpacing(10);
   layout->addWidget(m_accessory, 0, Qt::AlignRight | Qt::AlignVCenter);
 
   m_completer->hide();
+
+  input->installEventFilter(this);
 
   setLayout(layout);
 
   setProperty("class", "top-bar");
 
-  connect(m_completer, &ArgumentCompleterWidget::activated, this, [this]() {
-    auto fm = input->fontMetrics();
-    QString text = input->text();
-
-    if (text.isEmpty()) text = input->placeholderText();
-
-    input->setFixedWidth(fm.boundingRect(text).width() + 35);
-  });
-
-  connect(m_completer, &ArgumentCompleterWidget::destroyed, this, [this]() {
-    input->setFocus();
-    input->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
-  });
-
   connect(input, &QLineEdit::textChanged, this, [this]() {
-    if (m_completer->isVisible()) {
-      auto fm = input->fontMetrics();
-      input->setFixedWidth(fm.boundingRect(input->text()).width() + 35);
-    }
+    if (m_completer->isVisible()) { input->setInline(true); }
   });
 }
 
@@ -68,7 +60,29 @@ bool TopBar::eventFilter(QObject *obj, QEvent *event) {
     auto key = keyEvent->key();
 
     // forward completer return keys to main input
+    if ((key == Qt::Key_Up || key == Qt::Key_Down) && obj != input) {
+      QApplication::sendEvent(input, event);
+      return true;
+    }
+
     if (key == Qt::Key_Return || key == Qt::Key_Enter) {
+      if (m_completer->isVisible()) {
+        for (int i = 0; i != m_completer->m_args.size(); ++i) {
+          auto &arg = m_completer->m_args.at(i);
+          auto input = m_completer->m_inputs.at(i);
+
+          qCritical() << "required" << arg.required << input->text();
+
+          if (arg.required && input->text().isEmpty()) {
+            input->setFocus();
+            return true;
+          }
+        }
+      }
+
+      // do not send a new event to the input itself!
+      if (obj == input) { return false; }
+
       QApplication::sendEvent(input, event);
       return true;
     }
@@ -111,6 +125,12 @@ void TopBar::activateQuicklinkCompleter(const CompleterData &data) {
   layout->addWidget(completion, 1);
 }
 
-void TopBar::showBackButton() { backButton->show(); }
+void TopBar::showBackButton() {
+  backButton->show();
+  m_backButtonSpacer->show();
+}
 
-void TopBar::hideBackButton() { backButton->hide(); }
+void TopBar::hideBackButton() {
+  backButton->hide();
+  m_backButtonSpacer->hide();
+}

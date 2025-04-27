@@ -8,9 +8,10 @@
 #include <qtmetamacros.h>
 #include <qwidget.h>
 
-class ArgumentCompleterWidget : public QWidget {
+struct ArgumentCompleterWidget : public QWidget {
   Q_OBJECT
 
+public:
   ArgumentList m_args;
   QHBoxLayout *m_layout = new QHBoxLayout;
   OmniIcon *m_icon = new OmniIcon(this);

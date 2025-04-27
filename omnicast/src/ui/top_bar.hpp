@@ -4,6 +4,7 @@
 #include "ui/horizontal-loading-bar.hpp"
 #include "ui/icon-button.hpp"
 #include "ui/argument-completer-widget.hpp"
+#include "ui/inline_qline_edit.hpp"
 #include "ui/input_completer.hpp"
 #include <QKeyEvent>
 #include <QLabel>
@@ -11,6 +12,7 @@
 #include <qapplication.h>
 #include <qboxlayout.h>
 #include <qevent.h>
+#include <qlayoutitem.h>
 #include <qlineedit.h>
 #include <qnamespace.h>
 #include <qtimer.h>
@@ -45,6 +47,22 @@ public:
     connect(this, &QLineEdit::textEdited, debounce, [debounce]() { debounce->start(); });
   }
 
+  void setInline(bool isInline) {
+    if (isInline) {
+      auto fm = fontMetrics();
+      QString sizedText = text();
+
+      if (sizedText.isEmpty()) sizedText = placeholderText();
+
+      int width = fm.horizontalAdvance(sizedText) + 10;
+
+      setFixedWidth(width);
+      return;
+    }
+
+    setFixedWidth(QWIDGETSIZE_MAX);
+  }
+
   void debounce() { emit debouncedTextEdited(text()); }
 
 signals:
@@ -63,6 +81,7 @@ struct TopBar : public QWidget {
   IconButton *backButton = nullptr;
   QHBoxLayout *layout;
   SearchBar *input;
+  QWidget *m_backButtonSpacer = new QWidget(this);
   QWidget *m_accessory = new QWidget(this);
   ArgumentCompleterWidget *m_completer = new ArgumentCompleterWidget(this);
   InputCompleter *quickInput = nullptr;
@@ -79,4 +98,37 @@ public:
   void hideBackButton();
   void destroyQuicklinkCompleter();
   void activateQuicklinkCompleter(const CompleterData &data);
+
+  void destroyCompleter() {
+    m_completer->hide();
+    input->setInline(false);
+  }
+
+  void activateCompleter(const CompleterData &data) {
+    while (m_completer->m_layout->count() > 1) {
+      auto item = m_completer->m_layout->takeAt(1);
+      if (auto w = item->widget()) w->deleteLater();
+    }
+
+    m_completer->m_icon->setUrl(data.iconUrl);
+    m_completer->m_inputs.clear();
+    m_completer->m_args.clear();
+    m_completer->m_inputs.reserve(data.arguments.size());
+
+    for (const auto &arg : data.arguments) {
+      auto input = new InlineQLineEdit(arg.placeholder);
+
+      input->installEventFilter(this);
+      m_completer->m_layout->addWidget(input);
+      m_completer->m_inputs.emplace_back(input);
+      m_completer->m_args.emplace_back(arg);
+    }
+
+    m_completer->m_layout->addStretch();
+
+    auto fm = input->fontMetrics();
+
+    input->setInline(true);
+    m_completer->show();
+  }
 };

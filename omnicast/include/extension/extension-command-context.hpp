@@ -79,7 +79,7 @@ public:
 
   ~ExtensionNoViewCommandContext() {}
 
-  void load() override {
+  void load(const LaunchProps &props) override {
     connect(app()->extensionManager.get(), &ExtensionManager::commandLoaded, this,
             &ExtensionNoViewCommandContext::commandLoaded);
     connect(app()->extensionManager.get(), &ExtensionManager::extensionEvent, this,
@@ -421,7 +421,7 @@ public:
 
   ~ExtensionCommandContext() {}
 
-  void load() override {
+  void load(const LaunchProps &props) override {
     connect(&modelWatcher, &QFutureWatcher<RenderModel>::finished, this,
             &ExtensionCommandContext::modelCreated);
     connect(app()->extensionManager.get(), &ExtensionManager::commandLoaded, this,
@@ -445,7 +445,7 @@ public:
     auto preferenceValues = app()->commandDb->getPreferenceValues(command.id());
 
     pushView(new ExtensionView(*app(), command));
-    app()->extensionManager->loadCommand(command.extensionId(), command.id(), preferenceValues);
+    app()->extensionManager->loadCommand(command.extensionId(), command.id(), preferenceValues, props);
   }
 
   void unload() override {

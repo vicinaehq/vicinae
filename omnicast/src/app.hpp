@@ -83,8 +83,6 @@ struct LaunchCommandOptions {
   std::optional<NavigationStatus> navigation;
 };
 
-struct LaunchProps {};
-
 struct PushViewOptions {
   QString searchQuery;
   std::optional<NavigationStatus> navigation;
@@ -201,7 +199,8 @@ public:
   DialogWidget *_dialog = nullptr;
   AlertWidget *_alert = new AlertWidget;
 
-  void launchCommand(const std::shared_ptr<AbstractCmd> &cmd, const LaunchCommandOptions &opts = {});
+  void launchCommand(const std::shared_ptr<AbstractCmd> &cmd, const LaunchCommandOptions &opts = {},
+                     const LaunchProps &props = {});
   void launchCommand(const QString &id, const LaunchCommandOptions &opts = {});
   void unloadCurrentCommand();
 

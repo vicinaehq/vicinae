@@ -168,7 +168,7 @@ public:
 };
 
 class AskAiCommand : public CommandContext {
-  void load() override {
+  void load(const LaunchProps &props) override {
     NavigationStatus nav{.title = command()->name(), .iconUrl = command()->iconUrl()};
 
     if (app()->aiProvider->isAvailable()) {
