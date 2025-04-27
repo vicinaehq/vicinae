@@ -7,7 +7,6 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
-#include <endian.h>
 
 namespace Proto {
 class Variant;
