@@ -1,8 +1,5 @@
 #include "theme.hpp"
 #include "ui/omni-scroll-bar.hpp"
-#include <KSyntaxHighlighting/repository.h>
-#include <KSyntaxHighlighting/syntaxhighlighter.h>
-#include <KSyntaxHighlighting/theme.h>
 #include <qboxlayout.h>
 #include <qdir.h>
 #include <qnamespace.h>

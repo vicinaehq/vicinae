@@ -7,15 +7,15 @@ set(LIBS)
 
 set(TARGET omnicast)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets Sql Network Svg)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Sql Network Svg Bluetooth)
 find_package(cmark REQUIRED)
-find_package(KF6SyntaxHighlighting REQUIRED)
 
 option(WAYLAND_LAYER_SHELL "Enable support for the Wayland layer shell
 protocol, required for proper window positioning on most wlroots-based
 compositors." OFF)
 
-list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg KF6::SyntaxHighlighting cmark proto)
+
+list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::Bluetooth cmark proto)
 
 if (WAYLAND_LAYER_SHELL)
 	find_package(Qt6 REQUIRED COMPONENTS WaylandClient)
@@ -33,7 +33,7 @@ include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}/../proto
 )
 
-qt_add_executable(${TARGET}
+set(SRCS
 	src/main.cpp
 	src/app.cpp
 	src/app.hpp
@@ -343,6 +343,8 @@ qt_add_executable(${TARGET}
 	#src/ui/action_popover.cpp
 	src/extension_manager.hpp
 )
+
+qt_add_executable(${TARGET} ${SRCS})
 
 target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(${TARGET} PRIVATE ${LIBS})

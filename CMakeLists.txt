@@ -21,4 +21,7 @@ endif()
 add_subdirectory(omnictl)
 add_subdirectory(omnicast)
 add_subdirectory(proto)
-add_subdirectory(wlr-clip)
+
+if (UNIX AND NOT APPLE)
+	add_subdirectory(wlr-clip)
+endif()

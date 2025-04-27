@@ -2,10 +2,6 @@
 #include "omni-icon.hpp"
 #include "theme.hpp"
 #include "ui/omni-scroll-bar.hpp"
-#include <KSyntaxHighlighting/definition.h>
-#include <KSyntaxHighlighting/syntaxhighlighter.h>
-#include <KSyntaxHighlighting/theme.h>
-#include <KSyntaxHighlighting/repository.h>
 #include <cmark.h>
 #include <qapplication.h>
 #include <qboxlayout.h>

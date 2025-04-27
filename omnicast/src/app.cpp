@@ -276,6 +276,20 @@ void AppWindow::unloadCurrentCommand() { popToRoot(); }
 
 void AppWindow::launchCommand(const std::shared_ptr<AbstractCmd> &command, const LaunchCommandOptions &opts,
                               const LaunchProps &props) {
+  if (topBar->m_completer->isVisible()) {
+    for (int i = 0; i != topBar->m_completer->m_args.size(); ++i) {
+      auto &arg = topBar->m_completer->m_args.at(i);
+      auto input = topBar->m_completer->m_inputs.at(i);
+
+      qCritical() << "required" << arg.required << input->text();
+
+      if (arg.required && input->text().isEmpty()) {
+        input->setFocus();
+        return;
+      }
+    }
+  }
+
   auto preferenceValues = commandDb->getPreferenceValues(command->id());
 
   for (const auto &preference : command->preferences()) {

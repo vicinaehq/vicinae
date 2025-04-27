@@ -230,13 +230,13 @@ class ExtensionCommandRuntime : public CommandContext {
     }
 
     if (action == "ui.show-hud") {
-      m_app->close();
+      m_app->hide();
       m_app->popToRoot();
       return {};
     }
 
     if (action == "ui.close-main-window") {
-      m_app->close();
+      m_app->hide();
       return {};
     }
 

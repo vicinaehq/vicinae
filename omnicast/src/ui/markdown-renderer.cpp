@@ -1,7 +1,6 @@
 #include "markdown-renderer.hpp"
 #include <qlabel.h>
 #include <qnamespace.h>
-#include <KSyntaxHighlighting/SyntaxHighlighter>
 
 MarkdownImage::MarkdownImage(cmark_node *node) : layout(new QVBoxLayout) {
   const char *p = cmark_node_get_url(node);
