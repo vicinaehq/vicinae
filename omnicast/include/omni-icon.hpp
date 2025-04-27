@@ -4,7 +4,6 @@
 #include "favicon/favicon-service.hpp"
 #include <QtConcurrent/qtconcurrentrun.h>
 #include <QtSvg/qsvgrenderer.h>
-#include <immintrin.h>
 #include <optional>
 #include <qboxlayout.h>
 #include <qbrush.h>
