@@ -377,7 +377,9 @@ class BuiltinOmniIconRenderer : public OmniIconWidget {
   void paintEvent(QPaintEvent *event) override {
     QPainter painter(this);
 
-    painter.drawPixmap(pos(), _pixmap);
+    painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    painter.drawPixmap(rect(), _pixmap);
   }
 
   void resizeEvent(QResizeEvent *event) override {
@@ -389,11 +391,20 @@ class BuiltinOmniIconRenderer : public OmniIconWidget {
   QPixmap render(QSize size) {
     if (size.width() * size.height() == 0) return {};
 
-    auto &theme = ThemeService::instance();
+    qreal devicePixelRatio = qApp->devicePixelRatio();
+    QSize deviceSize = size * devicePixelRatio;
 
+<<<<<<< Updated upstream
     QPixmap canva(size);
 
     canva.fill(Qt::transparent);
+=======
+    auto &theme = ThemeService::instance();
+    QPixmap canva(deviceSize);
+
+    canva.fill(Qt::transparent);
+    canva.setDevicePixelRatio(devicePixelRatio);
+>>>>>>> Stashed changes
 
     OmniPainter cp(&canva);
 
@@ -415,6 +426,7 @@ class BuiltinOmniIconRenderer : public OmniIconWidget {
     QPixmap svgPix(innerRect.size());
 
     svgPix.fill(Qt::transparent);
+    svgPix.setDevicePixelRatio(devicePixelRatio);
 
     {
       OmniPainter painter(&svgPix);
