@@ -3,7 +3,7 @@
 #include "extend/metadata-model.hpp"
 #include "quicklink-actions.hpp"
 #include "quicklist-database.hpp"
-#include "ui/action_popover.hpp"
+#include "service-registry.hpp"
 #include "ui/declarative-omni-list-view.hpp"
 #include "ui/omni-list-view.hpp"
 #include "ui/omni-list.hpp"
@@ -103,14 +103,14 @@ public:
 };
 
 class ManageQuicklinksView : public DeclarativeOmniListView {
-  Service<QuicklistDatabase> quicklinkDb;
   QString query;
 
   void onMount() override { setSearchPlaceholderText("Browse quicklinks..."); }
 
   ItemList generateList(const QString &s) override {
+    auto db = ServiceRegistry::instance()->quicklinks();
     ItemList list;
-    auto quicklinks = quicklinkDb.list();
+    auto quicklinks = db->list();
 
     list.reserve(quicklinks.size() + 1);
     list.push_back(std::make_unique<OmniList::VirtualSection>("Quicklinks"));
@@ -125,6 +125,5 @@ class ManageQuicklinksView : public DeclarativeOmniListView {
   }
 
 public:
-  ManageQuicklinksView(AppWindow &app)
-      : DeclarativeOmniListView(app), quicklinkDb(service<QuicklistDatabase>()) {}
+  ManageQuicklinksView(AppWindow &app) : DeclarativeOmniListView(app) {}
 };

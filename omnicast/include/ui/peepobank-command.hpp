@@ -1,5 +1,7 @@
 #pragma once
 #include "app.hpp"
+#include "common-actions.hpp"
+#include "service-registry.hpp"
 #include "ui/omni-grid-view.hpp"
 #include "ui/omni-grid.hpp"
 #include <qevent.h>
@@ -71,7 +73,7 @@ class PeepobankView : public OmniGridView {
     bool centerWidgetRecyclable() const override { return true; }
 
     QList<AbstractAction *> generateActions() const override {
-      return {new CopyTextAction("Copy peepo path", _info.path),
+      return {new PasteAction(Clipboard::File{_info.path.toStdString()}),
               new OpenAppAction(_fileBrowser, "Open in file browser", {_info.path})};
     }
 
@@ -110,9 +112,7 @@ class PeepobankView : public OmniGridView {
 
   void onMount() override {
     OmniGridView::onMount();
-    auto &appDb = service<AbstractAppDatabase>();
-    auto fileBrowser = appDb.fileBrowser();
-
+    auto fileBrowser = ServiceRegistry::instance()->appDb()->fileBrowser();
     QDir dir(bankPath);
 
     grid->beginUpdate();

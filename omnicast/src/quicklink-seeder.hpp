@@ -2,10 +2,11 @@
 #include "app.hpp"
 #include "app/app-database.hpp"
 #include "omni-icon.hpp"
+#include "quicklist-database.hpp"
 
 class QuickLinkSeeder {
-  Service<AbstractAppDatabase> appDb;
-  Service<QuicklistDatabase> linkDb;
+  AbstractAppDatabase &appDb;
+  QuicklistDatabase &linkDb;
 
 public:
   QuickLinkSeeder(Service<AbstractAppDatabase> appDb, Service<QuicklistDatabase> quicklinkDb)

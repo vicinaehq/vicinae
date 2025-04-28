@@ -1,7 +1,9 @@
+#include "ai/ollama-ai-provider.hpp"
 #include "app.hpp"
 #include <QApplication>
 #include <QFontDatabase>
 #include <QSurfaceFormat>
+#include <wm/window-manager-factory.hpp>
 #include <QtSql/QtSql>
 #include <QXmlStreamReader>
 #include <QtSql/qsqldatabase.h>
@@ -25,8 +27,15 @@
 #include <qprocess.h>
 #include <qstringview.h>
 #include <qtmetamacros.h>
+#include "app/xdg-app-database.hpp"
+#include "extension_manager.hpp"
+#include "local-storage-service.hpp"
 #include "omnicast.hpp"
+#include "process-manager-service.hpp"
 #include "proto.hpp"
+#include "quicklink-seeder.hpp"
+#include "quicklist-database.hpp"
+#include "service-registry.hpp"
 
 #ifdef WAYLAND_LAYER_SHELL
 #include <LayerShellQt/window.h>
@@ -124,6 +133,53 @@ int startDaemon() {
     }
 
     ofs << qApp->applicationPid();
+  }
+
+  {
+    auto registry = ServiceRegistry::instance();
+    auto quicklinkService =
+        std::make_unique<QuicklistDatabase>(Config::dirPath() + QDir::separator() + "quicklinks.db");
+    auto calculatorService =
+        std::make_unique<CalculatorDatabase>(Config::dirPath() + QDir::separator() + "calculator.db");
+    auto appDb = std::make_unique<XdgAppDatabase>();
+    auto omniDb = std::make_unique<OmniDatabase>(Config::dirPath() + QDir::separator() + "omni.db");
+    auto commandDb = std::make_unique<OmniCommandDatabase>(*omniDb);
+    auto localStorage = std::make_unique<LocalStorageService>(*omniDb);
+    auto extensionManager = std::make_unique<ExtensionManager>(*commandDb);
+    auto clipboardManager =
+        std::make_unique<ClipboardService>(Config::dirPath() + QDir::separator() + "clipboard.db");
+    auto processManager = std::make_unique<ProcessManagerService>();
+    auto builtinCommandDb = std::make_unique<CommandDatabase>();
+    auto windowManager = WindowManagerFactory().create();
+    auto aiManager = std::make_unique<AI::Manager>(*omniDb);
+    auto ollamaProvider = std::make_unique<OllamaAiProvider>();
+
+    aiManager->registerProvider(std::move(ollamaProvider));
+
+    for (const auto &repo : builtinCommandDb->repositories()) {
+      commandDb->registerRepository(repo);
+    }
+
+    if (!extensionManager->start()) {
+      qCritical() << "Failed to load extension manager. Extensions will not work";
+    }
+
+    {
+      auto seeder = std::make_unique<QuickLinkSeeder>(*appDb, *quicklinkService);
+
+      if (quicklinkService->list().isEmpty()) { seeder->seed(); }
+    }
+
+    registry->setQuicklinks(std::move(quicklinkService));
+    registry->setCalculatorDb(std::move(calculatorService));
+    registry->setAppDb(std::move(appDb));
+    registry->setOmniDb(std::move(omniDb));
+    registry->setAI(std::move(aiManager));
+    registry->setCommandDb(std::move(commandDb));
+    registry->setLocalStorage(std::move(localStorage));
+    registry->setExtensionManager(std::move(extensionManager));
+    registry->setClipman(std::move(clipboardManager));
+    registry->setWindowManager(std::move(windowManager));
   }
 
   AppWindow app;

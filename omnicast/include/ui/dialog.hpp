@@ -50,6 +50,7 @@ public:
   void setContent(DialogContentWidget *content) {
     if (auto item = _layout->takeAt(0)) { item->widget()->deleteLater(); }
 
+    setFocusProxy(content);
     connect(content, &DialogContentWidget::closeRequested, this, &DialogContentWidget::close);
 
     _layout->addWidget(content, 0, Qt::AlignCenter);

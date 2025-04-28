@@ -1,7 +1,6 @@
 #include "extension/extension-command.hpp"
 #include "command-database.hpp"
 #include "command.hpp"
-#include "extension/extension-command-context.hpp"
 #include "extension/extension-command-runtime.hpp"
 #include "extension/extension.hpp"
 #include "omni-icon.hpp"

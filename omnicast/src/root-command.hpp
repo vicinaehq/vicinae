@@ -2,16 +2,14 @@
 #include "app/app-database.hpp"
 #include "command-database.hpp"
 #include "edit-command-preferences-view.hpp"
-#include "extension/extension.hpp"
 #include "omni-command-db.hpp"
+#include "service-registry.hpp"
 #include "ui/action-pannel/action-item.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/action-pannel/open-with-action.hpp"
 #include "app.hpp"
 #include "command.hpp"
-#include "extension_manager.hpp"
 #include "omni-icon.hpp"
-#include "omnicast.hpp"
 #include "quicklist-database.hpp"
 #include "theme.hpp"
 #include "tinyexpr.hpp"
@@ -107,7 +105,9 @@ class DisableCommand : public AbstractAction {
   bool _value;
 
   void execute(AppWindow &app) override {
-    app.commandDb->setDisable(_id, _value);
+    auto commandDb = ServiceRegistry::instance()->commandDb();
+
+    commandDb->setDisable(_id, _value);
     app.statusBar->setToast("Command updated");
   }
 
@@ -156,7 +156,6 @@ public:
 class QuicklinkRootListItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
 public:
   std::shared_ptr<Quicklink> link;
-  Service<AbstractAppDatabase> appDb;
 
   std::unique_ptr<CompleterData> createCompleter() const override {
     ArgumentList args;
@@ -190,7 +189,7 @@ public:
     items.push_back(std::make_unique<OpenCompletedQuicklinkAction>(link));
     items.push_back(std::make_unique<EditQuicklinkAction>(link));
     items.push_back(std::make_unique<DuplicateQuicklinkAction>(link));
-    items.push_back(std::make_unique<OpenWithAction>(std::vector<QString>({}), appDb));
+    items.push_back(std::make_unique<OpenWithAction>(std::vector<QString>({})));
     items.push_back(std::make_unique<RemoveQuicklinkAction>(link));
 
     return items;
@@ -213,25 +212,21 @@ public:
   QString id() const override { return QString("link-%1").arg(link->id); }
 
 public:
-  QuicklinkRootListItem(Service<AbstractAppDatabase> appDb, const std::shared_ptr<Quicklink> &link)
-      : appDb(appDb), link(link) {}
+  QuicklinkRootListItem(const std::shared_ptr<Quicklink> &link) : link(link) {}
   ~QuicklinkRootListItem() {}
 };
 
 class RootView : public DeclarativeOmniListView {
   AppWindow &app;
-  Service<AbstractAppDatabase> appDb;
-  Service<ExtensionManager> extensionManager;
-  Service<QuicklistDatabase> quicklinkDb;
 
   class AppListItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
     std::shared_ptr<Application> app;
-    Service<AbstractAppDatabase> appDb;
 
     QList<AbstractAction *> generateActions() const override {
+      auto appDb = ServiceRegistry::instance()->appDb();
       QList<AbstractAction *> actions;
-      auto fileBrowser = appDb.fileBrowser();
-      auto textEditor = appDb.textEditor();
+      auto fileBrowser = appDb->fileBrowser();
+      auto textEditor = appDb->textEditor();
 
       actions << new OpenAppAction(app, "Open Application", {});
 
@@ -257,8 +252,7 @@ class RootView : public DeclarativeOmniListView {
     QString id() const override { return app->id(); }
 
   public:
-    AppListItem(const std::shared_ptr<Application> &app, Service<AbstractAppDatabase> appDb)
-        : app(app), appDb(appDb) {}
+    AppListItem(const std::shared_ptr<Application> &app) : app(app) {}
     ~AppListItem() {}
   };
 
@@ -319,31 +313,40 @@ class RootView : public DeclarativeOmniListView {
 public:
   // list without filtering
   std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> generateBaseSearch() {
+    auto commandDb = ServiceRegistry::instance()->commandDb();
+    auto quicklinkDb = ServiceRegistry::instance()->quicklinks();
+    auto appDb = ServiceRegistry::instance()->appDb();
+
     std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> list;
     list.push_back(std::make_unique<OmniList::VirtualSection>("Commands"));
 
-    for (const auto &entry : app.commandDb->commands()) {
+    list.reserve(100);
+
+    for (const auto &entry : commandDb->commands()) {
       if (entry.disabled) continue;
 
       list.push_back(std::make_unique<BuiltinCommandListItem>(entry.command));
     }
 
-    for (const auto &link : quicklinkDb.list()) {
-      list.push_back(std::make_unique<QuicklinkRootListItem>(appDb, link));
+    for (const auto &link : quicklinkDb->list()) {
+      list.push_back(std::make_unique<QuicklinkRootListItem>(link));
     }
 
     list.push_back(std::make_unique<OmniList::VirtualSection>("Apps"));
 
-    for (auto &app : appDb.list()) {
+    for (auto &app : appDb->list()) {
       if (!app->displayable()) continue;
 
-      list.push_back(std::make_unique<AppListItem>(app, appDb));
+      list.push_back(std::make_unique<AppListItem>(app));
     }
 
     return list;
   }
 
   std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> generateList(const QString &s) override {
+    auto commandDb = ServiceRegistry::instance()->commandDb();
+    auto quicklinkDb = ServiceRegistry::instance()->quicklinks();
+    auto appDb = ServiceRegistry::instance()->appDb();
     std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> list;
 
     if (s.isEmpty()) return generateBaseSearch();
@@ -372,44 +375,44 @@ public:
     list.push_back(std::make_unique<OmniList::VirtualSection>("Results"));
 
     if (!s.isEmpty()) {
-      for (const auto &link : quicklinkDb.list()) {
+      for (const auto &link : quicklinkDb->list()) {
         if (!link->name.startsWith(s, Qt::CaseInsensitive)) continue;
 
-        auto quicklink = std::make_unique<QuicklinkRootListItem>(appDb, link);
+        auto quicklink = std::make_unique<QuicklinkRootListItem>(link);
 
         list.push_back(std::move(quicklink));
       }
     }
 
     if (!s.isEmpty()) {
-      for (auto &app : appDb.list()) {
+      for (auto &app : appDb->list()) {
         if (!app->displayable()) continue;
 
         for (const auto &word : app->name().split(" ")) {
           if (!word.startsWith(s, Qt::CaseInsensitive)) continue;
 
-          list.push_back(std::make_unique<AppListItem>(app, appDb));
+          list.push_back(std::make_unique<AppListItem>(app));
           break;
         }
       }
     }
 
-    for (auto &entry : app.commandDb->commands()) {
+    for (auto &entry : commandDb->commands()) {
       if (entry.disabled || !entry.command->name().contains(s, Qt::CaseInsensitive)) continue;
 
       list.push_back(std::make_unique<BuiltinCommandListItem>(entry.command));
     }
 
     if (s.isEmpty()) {
-      for (const auto &app : appDb.list()) {
-        if (app->displayable()) { list.push_back(std::make_unique<AppListItem>(app, appDb)); }
+      for (const auto &app : appDb->list()) {
+        if (app->displayable()) { list.push_back(std::make_unique<AppListItem>(app)); }
       }
     }
 
     list.push_back(std::make_unique<OmniList::VirtualSection>(QString("Use \"%1\" with...").arg(s)));
 
     if (!s.isEmpty()) {
-      for (const auto &link : quicklinkDb.list()) {
+      for (const auto &link : quicklinkDb->list()) {
         if (link->placeholders.size() != 1) continue;
 
         list.push_back(std::make_unique<FallbackQuicklinkListItem>(link, s));
@@ -423,15 +426,15 @@ public:
     return list;
   }
 
-  void onMount() override { setSearchPlaceholderText("Search for apps or commands..."); }
+  void onMount() override {
+    auto commandDb = ServiceRegistry::instance()->commandDb();
+
+    setSearchPlaceholderText("Search for apps or commands...");
+    connect(commandDb, &OmniCommandDatabase::commandRegistered, this, &RootView::handleRegisteredCommand);
+  }
 
   void handleRegisteredCommand(const CommandDbEntry &entry) { reload(OmniList::SelectFirst); }
 
-  RootView(AppWindow &app)
-      : DeclarativeOmniListView(app), app(app), appDb(service<AbstractAppDatabase>()),
-        extensionManager(service<ExtensionManager>()), quicklinkDb(service<QuicklistDatabase>()) {
-    connect(app.commandDb.get(), &OmniCommandDatabase::commandRegistered, this,
-            &RootView::handleRegisteredCommand);
-  }
+  RootView(AppWindow &app) : DeclarativeOmniListView(app), app(app) {}
   ~RootView() {}
 };

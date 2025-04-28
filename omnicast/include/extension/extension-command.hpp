@@ -1,11 +1,12 @@
 #pragma once
 #include "argument.hpp"
+#include "argument.hpp"
 #include "command-database.hpp"
 #include "command.hpp"
 #include "omni-icon.hpp"
 #include "preference.hpp"
 #include "ui/action-pannel/action.hpp"
-#include <memory>
+#include <qstring.h>
 #include <qboxlayout.h>
 #include <qfuturewatcher.h>
 #include <qjsonarray.h>

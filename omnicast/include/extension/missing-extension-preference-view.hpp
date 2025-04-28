@@ -1,6 +1,8 @@
 #include "app.hpp"
 #include "extension/extension-command.hpp"
+#include "omni-command-db.hpp"
 #include "omni-icon.hpp"
+#include "service-registry.hpp"
 #include "theme.hpp"
 #include "ui/form/preference-field.hpp"
 #include "ui/form/form.hpp"
@@ -31,8 +33,9 @@ class MissingExtensionPreferenceView : public View {
 public:
   MissingExtensionPreferenceView(AppWindow &app, const std::shared_ptr<ExtensionCommand> &command)
       : View(app), m_command(command) {
+    auto db = ServiceRegistry::instance()->commandDb();
 
-    m_existingPreferenceValues = app.commandDb->getPreferenceValues(command->id());
+    m_existingPreferenceValues = db->getPreferenceValues(command->id());
     auto icon = new OmniIcon();
 
     icon->setFixedSize(32, 32);
@@ -82,6 +85,7 @@ public:
   }
 
   void handleSubmit() {
+    auto db = ServiceRegistry::instance()->commandDb();
     bool validated = true;
     QJsonObject obj(m_existingPreferenceValues);
 
@@ -105,7 +109,7 @@ public:
 
     if (!validated) return;
 
-    app.commandDb->setPreferenceValues(m_command->id(), obj);
+    db->setPreferenceValues(m_command->id(), obj);
 
     pop();
     app.launchCommand(m_command, {});

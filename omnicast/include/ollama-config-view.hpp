@@ -2,6 +2,7 @@
 #include "ai/ollama-ai-provider.hpp"
 #include "app.hpp"
 #include "omni-icon.hpp"
+#include "service-registry.hpp"
 #include "ui/action-pannel/action-item.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/form/base-input.hpp"
@@ -23,6 +24,7 @@ class OllamaConfigView : public View {
   FormWidget *m_form = new FormWidget(this);
 
   void handleSubmit() {
+    auto aiManager = ServiceRegistry::instance()->AI();
     QUrl instanceUrl(m_input->text());
 
     m_form->clearAllErrors();
@@ -38,7 +40,7 @@ class OllamaConfigView : public View {
 
     data["instanceUrl"] = instanceUrl.toString();
 
-    bool configSaved = app.aiProvider->setProviderConfig("ollama", data);
+    bool configSaved = aiManager->setProviderConfig("ollama", data);
 
     if (!configSaved) {
       app.statusBar->setToast("Failed to save provider config", ToastPriority::Danger);
@@ -61,14 +63,16 @@ public:
   }
 
   OllamaConfigView(AppWindow &app) : View(app) {
+    auto aiManager = ServiceRegistry::instance()->AI();
     auto layout = new QVBoxLayout;
 
-    if (auto existingConfig = app.aiProvider->getProviderConfig("ollama")) {
+    if (auto existingConfig = aiManager->getProviderConfig("ollama")) {
       m_input->setText(existingConfig->data.value("instanceUrl").toString());
     }
 
     m_input->setPlaceholderText("http://localhost:11434");
     m_form->addField(new FormField(m_input, "Instance URL"));
+    m_form->focusFirst();
     layout->addWidget(m_form);
     setLayout(layout);
   }

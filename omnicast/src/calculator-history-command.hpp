@@ -2,7 +2,7 @@
 #include "app.hpp"
 #include "calculator-database.hpp"
 #include "omni-icon.hpp"
-#include "ui/action_popover.hpp"
+#include "service-registry.hpp"
 #include "ui/omni-list-view.hpp"
 #include "ui/omni-list.hpp"
 #include <memory>
@@ -20,7 +20,8 @@ public:
       : AbstractAction("Remove entry", BuiltinOmniIconUrl("trash")), id(id) {}
 
   void execute(AppWindow &app) override {
-    bool removed = app.calculatorDatabase->removeById(id);
+    auto calc = ServiceRegistry::instance()->calculatorDb();
+    bool removed = calc->removeById(id);
 
     if (removed) {
       app.statusBar->setToast("Entry removed");
@@ -66,13 +67,13 @@ public:
 };
 
 class CalculatorHistoryView : public OmniListView {
-  Service<CalculatorDatabase> calculatorDb;
-
   void handleRemove(const QString &id) { list->removeItem(id); }
 
   void buildSearch(ItemList &items, const QString &s) override {
+    auto calc = ServiceRegistry::instance()->calculatorDb();
+
     items.push_back(std::make_unique<OmniList::VirtualSection>("History"));
-    for (const auto &history : calculatorDb.listAll()) {
+    for (const auto &history : calc->listAll()) {
       if (!history.expression.contains(s, Qt::CaseInsensitive)) continue;
 
       auto item = std::make_unique<CalculatorHistoryListItem>(history);
@@ -87,5 +88,5 @@ class CalculatorHistoryView : public OmniListView {
   }
 
 public:
-  CalculatorHistoryView(AppWindow &app) : OmniListView(app), calculatorDb(service<CalculatorDatabase>()) {}
+  CalculatorHistoryView(AppWindow &app) : OmniListView(app) {}
 };

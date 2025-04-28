@@ -2,6 +2,7 @@
 #include "app.hpp"
 #include "command.hpp"
 #include "create-quicklink-command.hpp"
+#include "service-registry.hpp"
 #include "ui/action-pannel/action-item.hpp"
 #include "require-ai-config-empty-view.hpp"
 #include "QScrollArea"
@@ -95,20 +96,16 @@ public:
 };
 
 class AskAiCommandView : public View {
-  Service<AI::Manager> aiProvider;
-  std::vector<AiModel> models;
   bool isGenerating = false;
   QuickChatScrollView *chatView;
 
   void messageSubmission(const QString &text) {
-    if (models.empty()) {
-      qDebug() << "empty list of models";
-      return;
-    }
+    auto aiManager = ServiceRegistry::instance()->AI();
+    auto models = aiManager->listModels();
 
     if (isGenerating) return;
 
-    auto completion = aiProvider.createCompletion(text);
+    auto completion = aiManager->createCompletion(text);
 
     if (!completion) {
       app.statusBar->setToast("Completion couldn't be created", ToastPriority::Danger);
@@ -140,9 +137,7 @@ class AskAiCommandView : public View {
   }
 
 public:
-  AskAiCommandView(AppWindow &app)
-      : View(app), aiProvider(*app.aiProvider.get()), chatView(new QuickChatScrollView) {
-    this->models = aiProvider.listModels();
+  AskAiCommandView(AppWindow &app) : View(app), chatView(new QuickChatScrollView) {
     auto layout = new QVBoxLayout;
 
     layout->setContentsMargins(0, 0, 0, 0);
@@ -151,7 +146,9 @@ public:
   }
 
   void onMount() override {
-    if (!app.aiProvider->isAvailable()) {
+    auto aiManager = ServiceRegistry::instance()->AI();
+
+    if (aiManager->isAvailable()) {
       pushView(new RequireAiConfigEmptyView(app));
       return;
     }
@@ -169,9 +166,10 @@ public:
 
 class AskAiCommand : public CommandContext {
   void load(const LaunchProps &props) override {
+    auto aiManager = ServiceRegistry::instance()->AI();
     NavigationStatus nav{.title = command()->name(), .iconUrl = command()->iconUrl()};
 
-    if (app()->aiProvider->isAvailable()) {
+    if (aiManager->isAvailable()) {
       return app()->pushView(new AskAiCommandView(*app()), {.navigation = nav});
     }
 

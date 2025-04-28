@@ -6,6 +6,7 @@
 #include "ui/typography.hpp"
 #include <qboxlayout.h>
 #include <qdir.h>
+#include <qevent.h>
 #include <qlabel.h>
 #include <qnamespace.h>
 #include <qpainterpath.h>
@@ -33,6 +34,11 @@ class AlertWidget : public DialogContentWidget {
   TypographyWidget *_message;
   OmniButtonWidget *_cancelBtn;
   OmniButtonWidget *_actionBtn;
+
+  void focusInEvent(QFocusEvent *event) override {
+    _cancelBtn->setFocus();
+    DialogContentWidget::focusInEvent(event);
+  }
 
   void paintEvent(QPaintEvent *event) override {
     auto &theme = ThemeService::instance().theme();
@@ -101,6 +107,8 @@ public:
         _message(new TypographyWidget(TextSize::TextRegular, ColorTint::TextSecondary)),
         _cancelBtn(new OmniButtonWidget), _actionBtn(new OmniButtonWidget) {
     auto layout = new QVBoxLayout;
+
+    setFocusPolicy(Qt::StrongFocus);
 
     _icon->setFixedSize(25, 25);
     _icon->setUrl(BuiltinOmniIconUrl("trash").setFill(ColorTint::Red));

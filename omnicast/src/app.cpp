@@ -1,7 +1,4 @@
 #include "app.hpp"
-#include "ai/ollama-ai-provider.hpp"
-#include "app/xdg-app-database.hpp"
-#include "clipboard/clipboard-service.hpp"
 #include "command-builder.hpp"
 #include "command-database.hpp"
 #include "command-server.hpp"
@@ -10,16 +7,13 @@
 #include "extension/missing-extension-preference-view.hpp"
 #include "command.hpp"
 #include "config.hpp"
+#include "service-registry.hpp"
 #include "wm/window-manager-factory.hpp"
-#include "extension/extension.hpp"
 #include "extension_manager.hpp"
 #include "favicon/favicon-service.hpp"
 #include "image-fetcher.hpp"
 #include "omni-command-db.hpp"
-#include "omni-database.hpp"
 #include "omnicast.hpp"
-#include "process-manager-service.hpp"
-#include "quicklink-seeder.hpp"
 #include "root-command.hpp"
 #include "theme.hpp"
 #include "ui/dialog.hpp"
@@ -29,8 +23,6 @@
 #include <QLabel>
 #include <QMainWindow>
 #include <QThread>
-#include "clipboard/clipboard-server.hpp"
-#include "wm/window-manager.hpp"
 #include <QVBoxLayout>
 #include <csetjmp>
 #include <memory>
@@ -292,6 +284,7 @@ void AppWindow::launchCommand(const std::shared_ptr<AbstractCmd> &command, const
     }
   }
 
+  auto commandDb = ServiceRegistry::instance()->commandDb();
   auto preferenceValues = commandDb->getPreferenceValues(command->id());
 
   for (const auto &preference : command->preferences()) {
@@ -330,6 +323,8 @@ void AppWindow::launchCommand(const std::shared_ptr<AbstractCmd> &command, const
 }
 
 void AppWindow::launchCommand(const QString &id, const LaunchCommandOptions &opts) {
+  auto commandDb = ServiceRegistry::instance()->commandDb();
+
   if (auto command = commandDb->findCommand(id)) { launchCommand(command->command, opts); }
 }
 
@@ -375,6 +370,8 @@ void AppWindow::paintEvent(QPaintEvent *event) {
 
 std::variant<CommandResponse, CommandError> AppWindow::handleCommand(const CommandMessage &message) {
   qDebug() << "received message type" << message.type;
+  auto commandDb = ServiceRegistry::instance()->commandDb();
+  auto extensionManager = ServiceRegistry::instance()->extensionManager();
 
   if (message.type == "ping") { return "pong"; }
   if (message.type == "toggle") {
@@ -439,16 +436,6 @@ std::variant<CommandResponse, CommandError> AppWindow::handleCommand(const Comma
 
     auto id = args.at(0).asString();
 
-    /*
-if (auto cmd = commandDb->findCommand(id.c_str())) {
-emit launchCommand(cmd->factory(*this, ""),
-           {.navigation = NavigationStatus{.title = cmd->name, .iconUrl = cmd->iconUrl}});
-  setVisible(true);
-
-  return true;
-}
-    */
-
     return CommandError{"No such command"};
   }
 
@@ -511,28 +498,6 @@ AppWindow::AppWindow(QWidget *parent)
   ThemeService::instance().setTheme("Solarized Osaka");
   FaviconService::initialize(new FaviconService(Config::dirPath() + QDir::separator() + "favicon.db"));
 
-  quicklinkDatabase =
-      std::make_unique<QuicklistDatabase>(Config::dirPath() + QDir::separator() + "quicklinks.db");
-  calculatorDatabase =
-      std::make_unique<CalculatorDatabase>(Config::dirPath() + QDir::separator() + "calculator.db");
-  appDb = std::make_unique<XdgAppDatabase>();
-
-  omniDb = std::make_unique<OmniDatabase>(Config::dirPath() + QDir::separator() + "omni.db");
-  commandDb = std::make_unique<OmniCommandDatabase>(*omniDb.get());
-  localStorage = std::make_unique<LocalStorageService>(*omniDb.get());
-  extensionManager = std::make_unique<ExtensionManager>(*commandDb.get());
-  windowManager = WindowManagerFactory().create();
-
-  clipboardService =
-      std::make_unique<ClipboardService>(Config::dirPath() + QDir::separator() + "clipboard.db");
-  // indexer = std::make_unique<IndexerService>(Config::dirPath() + QDir::separator() + "files.db");
-  processManagerService = std::make_unique<ProcessManagerService>();
-  auto builtinCommandDb = std::make_unique<CommandDatabase>();
-
-  for (const auto &repo : builtinCommandDb->repositories()) {
-    commandDb->registerRepository(repo);
-  }
-
   _commandServer = new CommandServer(this);
 
   if (!_commandServer->start(Omnicast::commandSocketPath())) {
@@ -553,27 +518,14 @@ AppWindow::AppWindow(QWidget *parent)
 
   ImageFetcher::instance();
 
-  {
-    auto seeder = std::make_unique<QuickLinkSeeder>(*appDb, *quicklinkDatabase);
-
-    if (quicklinkDatabase->list().isEmpty()) { seeder->seed(); }
-  }
-
+  /*
   AbstractClipboardServer *clipboardServer = ClipboardServerFactory().createFirstActivatable(this);
 
   connect(clipboardServer, &AbstractClipboardServer::selection, clipboardService.get(),
           &ClipboardService::saveSelection);
 
   clipboardServer->start();
-
-  auto ollamaProvider = std::make_unique<OllamaAiProvider>();
-
-  ollamaProvider->setInstanceUrl(QUrl("http://localhost:11434"));
-
-  aiProvider = std::make_unique<AI::Manager>(*omniDb.get());
-  aiProvider->registerProvider(std::move(ollamaProvider), 1);
-
-  extensionManager->start();
+  */
 
   _loadingBar->setFixedHeight(1);
   _loadingBar->setBarWidth(100);
@@ -583,34 +535,4 @@ AppWindow::AppWindow(QWidget *parent)
   auto rootCommand = CommandBuilder("root").toSingleView<RootView>();
 
   launchCommand(rootCommand);
-}
-
-template <> Service<QuicklistDatabase> AppWindow::service<QuicklistDatabase>() const {
-  return *quicklinkDatabase;
-}
-
-/*
-template <> Service<IndexerService> AppWindow::service<IndexerService>() const { return *indexer; }
-*/
-
-template <> Service<CalculatorDatabase> AppWindow::service<CalculatorDatabase>() const {
-  return *calculatorDatabase;
-}
-
-template <> Service<AbstractAppDatabase> AppWindow::service<AbstractAppDatabase>() const { return *appDb; }
-
-template <> Service<ClipboardService> AppWindow::service<ClipboardService>() const {
-  return *clipboardService;
-}
-
-template <> Service<ExtensionManager> AppWindow::service<ExtensionManager>() const {
-  return *extensionManager;
-}
-
-template <> Service<ProcessManagerService> AppWindow::service<ProcessManagerService>() const {
-  return *processManagerService;
-}
-
-template <> Service<OmniCommandDatabase> AppWindow::service<OmniCommandDatabase>() const {
-  return *commandDb;
 }

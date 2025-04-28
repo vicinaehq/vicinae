@@ -6,12 +6,12 @@
 #include "extension/extension-view.hpp"
 #include "extension_manager.hpp"
 #include "local-storage-service.hpp"
+#include "service-registry.hpp"
 #include <qjsonarray.h>
 #include <qjsonobject.h>
 #include <qjsonvalue.h>
 #include <qlogging.h>
 #include <qobject.h>
-#include <qthread.h>
 
 class ExtensionCommandRuntime : public CommandContext {
   std::shared_ptr<ExtensionCommand> m_command;
@@ -19,28 +19,28 @@ class ExtensionCommandRuntime : public CommandContext {
   QFutureWatcher<std::vector<RenderModel>> m_modelWatcher;
 
   AppWindow *m_app;
-  ExtensionManager *m_manager;
   QString m_sessionId;
 
   void sendEvent(const QString &handlerId, const QJsonArray &args) {
+    auto manager = ServiceRegistry::instance()->extensionManager();
     QJsonObject payload;
 
     payload["args"] = args;
-    m_manager->emitExtensionEvent(m_sessionId, handlerId, payload);
+    manager->emitExtensionEvent(m_sessionId, handlerId, payload);
   }
 
   QJsonObject handleStorage(const QString &action, const QJsonObject &payload) {
-    LocalStorageService *m_storage = m_app->localStorage.get();
+    auto storage = ServiceRegistry::instance()->localStorage();
 
     if (action == "storage.clear") {
-      m_storage->clearNamespace(m_command->extensionId());
+      storage->clearNamespace(m_command->extensionId());
 
       return {};
     }
 
     if (action == "storage.get") {
       auto key = payload.value("key").toString();
-      QJsonValue value = m_storage->getItem(m_command->extensionId(), key);
+      QJsonValue value = storage->getItem(m_command->extensionId(), key);
       QJsonObject response;
 
       response["value"] = value;
@@ -52,7 +52,7 @@ class ExtensionCommandRuntime : public CommandContext {
       auto key = payload.value("key").toString();
       auto value = payload.value("value");
 
-      m_storage->setItem(m_command->extensionId(), key, value);
+      storage->setItem(m_command->extensionId(), key, value);
 
       return {};
     }
@@ -60,14 +60,14 @@ class ExtensionCommandRuntime : public CommandContext {
     if (action == "storage.remove") {
       auto key = payload.value("key").toString();
 
-      m_storage->removeItem(m_command->extensionId(), key);
+      storage->removeItem(m_command->extensionId(), key);
       return {};
     }
 
     if (action == "storage.list") {
       QJsonObject response;
 
-      response["values"] = m_storage->listNamespaceItems(m_command->extensionId());
+      response["values"] = storage->listNamespaceItems(m_command->extensionId());
 
       return response;
     }
@@ -76,7 +76,7 @@ class ExtensionCommandRuntime : public CommandContext {
   }
 
   QJsonObject handleAI(const QString &action, const QJsonObject &payload) {
-    auto manager = m_app->aiProvider.get();
+    auto manager = ServiceRegistry::instance()->AI();
 
     if (action == "ai.get-models") {
       QJsonArray items;
@@ -134,7 +134,7 @@ class ExtensionCommandRuntime : public CommandContext {
   }
 
   QJsonObject handleAppRequest(const QString &action, const QJsonObject &payload) {
-    AbstractAppDatabase *appDb = m_app->appDb.get();
+    auto appDb = ServiceRegistry::instance()->appDb();
 
     if (action == "apps.list") {
       QJsonArray apps;
@@ -203,7 +203,7 @@ class ExtensionCommandRuntime : public CommandContext {
   }
 
   QJsonObject handleClipboard(const QString &action, const QJsonObject &payload) {
-    auto clipboardService = m_app->clipboardService.get();
+    auto clipman = ServiceRegistry::instance()->clipman();
 
     if (action == "clipboard.copy") {
       auto content = Clipboard::fromJson(payload.value("content").toObject());
@@ -211,7 +211,7 @@ class ExtensionCommandRuntime : public CommandContext {
       Clipboard::CopyOptions copyActions;
 
       copyActions.concealed = options.value("concealed").toBool(false);
-      clipboardService->copyContent(content, copyActions);
+      clipman->copyContent(content, copyActions);
       return {};
     }
 
@@ -236,7 +236,7 @@ class ExtensionCommandRuntime : public CommandContext {
     }
 
     if (action == "ui.close-main-window") {
-      m_app->hide();
+      m_app->closeWindow(true);
       return {};
     }
 
@@ -313,37 +313,39 @@ class ExtensionCommandRuntime : public CommandContext {
 
   void handleRequest(const QString &sessionId, const QString &requestId, const QString &action,
                      const QJsonObject &payload) {
+    auto manager = ServiceRegistry::instance()->extensionManager();
+
     if (sessionId != m_sessionId) return;
 
     qDebug() << "extension request" << requestId;
 
     if (action.startsWith("storage.")) {
-      m_manager->respond(requestId, handleStorage(action, payload));
+      manager->respond(requestId, handleStorage(action, payload));
       return;
     }
 
     if (action.startsWith("ai.")) {
-      m_manager->respond(requestId, handleAI(action, payload));
+      manager->respond(requestId, handleAI(action, payload));
       return;
     }
 
     if (action.startsWith("apps.")) {
-      m_manager->respond(requestId, handleAppRequest(action, payload));
+      manager->respond(requestId, handleAppRequest(action, payload));
       return;
     }
 
     if (action.startsWith("toast.")) {
-      m_manager->respond(requestId, handleToastRequest(action, payload));
+      manager->respond(requestId, handleToastRequest(action, payload));
       return;
     }
 
     if (action.startsWith("clipboard.")) {
-      m_manager->respond(requestId, handleClipboard(action, payload));
+      manager->respond(requestId, handleClipboard(action, payload));
       return;
     }
 
     if (action.startsWith("ui.")) {
-      m_manager->respond(requestId, handleUI(action, payload));
+      manager->respond(requestId, handleUI(action, payload));
       return;
     }
   }
@@ -384,7 +386,9 @@ class ExtensionCommandRuntime : public CommandContext {
 
 public:
   void load(const LaunchProps &props) override {
-    auto preferenceValues = m_app->commandDb->getPreferenceValues(m_command->id());
+    auto commandDb = ServiceRegistry::instance()->commandDb();
+    auto preferenceValues = commandDb->getPreferenceValues(m_command->id());
+    auto manager = ServiceRegistry::instance()->extensionManager();
 
     if (m_command->mode() == CommandModeView) {
       // We push the first view immediately, waiting for the initial render to come
@@ -403,18 +407,16 @@ public:
       });
     }
 
-    m_manager->loadCommand(m_command->extensionId(), m_command->id(), preferenceValues, props);
+    manager->loadCommand(m_command->extensionId(), m_command->id(), preferenceValues, props);
   }
 
   ExtensionCommandRuntime(AppWindow &app, const std::shared_ptr<ExtensionCommand> &command)
-      : CommandContext(&app, command), m_command(command), m_app(&app),
-        m_manager(app.extensionManager.get()) {
-    connect(app.extensionManager.get(), &ExtensionManager::extensionRequest, this,
-            &ExtensionCommandRuntime::handleRequest);
-    connect(app.extensionManager.get(), &ExtensionManager::extensionEvent, this,
-            &ExtensionCommandRuntime::handleEvent);
-    connect(app.extensionManager.get(), &ExtensionManager::commandLoaded, this,
-            &ExtensionCommandRuntime::commandLoaded);
+      : CommandContext(&app, command), m_command(command), m_app(&app) {
+    auto manager = ServiceRegistry::instance()->extensionManager();
+
+    connect(manager, &ExtensionManager::extensionRequest, this, &ExtensionCommandRuntime::handleRequest);
+    connect(manager, &ExtensionManager::extensionEvent, this, &ExtensionCommandRuntime::handleEvent);
+    connect(manager, &ExtensionManager::commandLoaded, this, &ExtensionCommandRuntime::commandLoaded);
     connect(&m_modelWatcher, &QFutureWatcher<RenderModel>::finished, this,
             &ExtensionCommandRuntime::modelCreated);
   }

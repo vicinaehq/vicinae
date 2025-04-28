@@ -1,5 +1,6 @@
 #include "app.hpp"
 #include "omni-icon.hpp"
+#include "service-registry.hpp"
 #include "theme.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/declarative-omni-list-view.hpp"
@@ -40,7 +41,8 @@ class ToggleAIProviderAction : public AbstractAction {
 
 public:
   void execute(AppWindow &app) override {
-    bool success = app.aiProvider->setProviderEnabled(m_info.provider->id(), !m_info.enabled);
+    auto aiManager = ServiceRegistry::instance()->AI();
+    bool success = aiManager->setProviderEnabled(m_info.provider->id(), !m_info.enabled);
 
     if (success) {
       app.statusBar->setToast("Provider status changed");
@@ -99,12 +101,13 @@ public:
 class ConfigureAIProvidersView : public DeclarativeOmniListView {
 public:
   ItemList generateList(const QString &s) override {
+    auto aiManager = ServiceRegistry::instance()->AI();
     ItemList list;
 
-    list.reserve(app.aiProvider->providers().size() + 2);
+    list.reserve(aiManager->providers().size() + 2);
     list.emplace_back(std::make_unique<OmniList::VirtualSection>("Enabled"));
 
-    for (const auto &provider : app.aiProvider->providers()) {
+    for (const auto &provider : aiManager->providers()) {
       if (!(provider.configured && provider.enabled)) continue;
       if (!provider.provider->displayName().contains(s, Qt::CaseInsensitive)) { continue; }
 
@@ -113,7 +116,7 @@ public:
 
     list.emplace_back(std::make_unique<OmniList::VirtualSection>("Available"));
 
-    for (const auto &provider : app.aiProvider->providers()) {
+    for (const auto &provider : aiManager->providers()) {
       if (!provider.provider->displayName().contains(s, Qt::CaseInsensitive)) { continue; }
       if (!provider.enabled) { list.emplace_back(std::make_unique<AiProviderListItem>(provider)); }
     }

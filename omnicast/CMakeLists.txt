@@ -167,8 +167,6 @@ set(SRCS
 	include/extension/extension.hpp
 	src/extension/extension.cpp
 
-	include/extension/extension-command-context.hpp
-
 	include/extension/extension-command.hpp
 	src/extension/extension-command.cpp
 

@@ -1,7 +1,7 @@
 #include "app.hpp"
 #include "omni-icon.hpp"
+#include "service-registry.hpp"
 #include "ui/declarative-omni-list-view.hpp"
-#include "wm/hyprland/hyprland.hpp"
 #include "wm/window-manager.hpp"
 #include "ui/action-pannel/move-to-workspace-action.hpp"
 #include <chrono>
@@ -10,9 +10,12 @@
 
 class FocusWindowAction : public AbstractAction {
   std::shared_ptr<AbstractWindowManager::Window> _window;
-  AbstractWindowManager *wm = new HyprlandWindowManager;
 
-  void execute(AppWindow &app) override { wm->focusWindowSync(*_window.get()); }
+  void execute(AppWindow &app) override {
+    auto wm = ServiceRegistry::instance()->windowManager();
+
+    wm->focusWindowSync(*_window.get());
+  }
 
 public:
   FocusWindowAction(const std::shared_ptr<AbstractWindowManager::Window> &window)
@@ -60,7 +63,6 @@ public:
 class SwitchWindowsCommand : public DeclarativeOmniListView {
   AbstractWindowManager::WindowList windows;
   QFutureWatcher<AbstractWindowManager::WindowList> watcher;
-  Service<AbstractAppDatabase> appDb;
   std::chrono::time_point<std::chrono::high_resolution_clock> m_lastWindowFetch =
       std::chrono::high_resolution_clock::now();
 
@@ -72,16 +74,18 @@ class SwitchWindowsCommand : public DeclarativeOmniListView {
   }
 
 public:
-  SwitchWindowsCommand(AppWindow &app)
-      : DeclarativeOmniListView(app), appDb(service<AbstractAppDatabase>()) {}
+  SwitchWindowsCommand(AppWindow &app) : DeclarativeOmniListView(app) {}
 
   ItemList generateList(const QString &s) override {
+    auto wm = ServiceRegistry::instance()->windowManager();
+    auto appDb = ServiceRegistry::instance()->appDb();
+
     ItemList list;
     auto now = std::chrono::high_resolution_clock::now();
     auto elapsedSeconds = std::chrono::duration_cast<std::chrono::seconds>(now - m_lastWindowFetch).count();
 
     if (windows.empty() || elapsedSeconds > 1) {
-      windows = app.windowManager->listWindowsSync();
+      windows = wm->listWindowsSync();
       m_lastWindowFetch = now;
     }
 
@@ -90,9 +94,9 @@ public:
 
     for (const auto &win : windows) {
       if (win->title().contains(s, Qt::CaseInsensitive)) {
-        if (auto app = appDb.findByClass(win->wmClass())) {
+        if (auto app = appDb->findByClass(win->wmClass())) {
           list.push_back(std::make_unique<AppWindowListItem>(win, app));
-        } else if (auto app = appDb.findById(win->wmClass())) {
+        } else if (auto app = appDb->findById(win->wmClass())) {
           list.push_back(std::make_unique<AppWindowListItem>(win, app));
         } else {
           list.push_back(std::make_unique<UnamedWindowListItem>(win));
@@ -105,8 +109,6 @@ public:
 
   void onMount() override {
     DeclarativeOmniListView::onMount();
-    app.windowManager->sendShortcutSync({}, KeyboardShortcut::paste());
-
     setSearchPlaceholderText("Search open window...");
   }
 };

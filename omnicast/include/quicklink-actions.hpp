@@ -3,7 +3,7 @@
 #include "create-quicklink-command.hpp"
 #include "omni-icon.hpp"
 #include "quicklist-database.hpp"
-#include "ui/action_popover.hpp"
+#include "service-registry.hpp"
 #include <qtmetamacros.h>
 
 struct OpenQuicklinkAction : public AbstractAction {
@@ -11,7 +11,8 @@ struct OpenQuicklinkAction : public AbstractAction {
   QList<QString> args;
 
   void execute(AppWindow &app) override {
-    auto linkApp = app.appDb->findById(link->app);
+    auto appDb = ServiceRegistry::instance()->appDb();
+    auto linkApp = appDb->findById(link->app);
 
     if (!linkApp) {
       app.statusBar->setToast("No app with id " + link->app, ToastPriority::Danger);
@@ -23,7 +24,7 @@ struct OpenQuicklinkAction : public AbstractAction {
     for (const auto &arg : args)
       url = url.arg(arg);
 
-    if (!app.appDb->launch(*linkApp.get(), {url})) {
+    if (!appDb->launch(*linkApp.get(), {url})) {
       app.statusBar->setToast("Failed to launch app", ToastPriority::Danger);
       return;
     }
@@ -69,7 +70,8 @@ struct RemoveQuicklinkAction : public AbstractAction {
 
 public:
   void execute(AppWindow &app) override {
-    bool removeResult = app.quicklinkDatabase->removeOne(link->id);
+    auto quicklinkDb = ServiceRegistry::instance()->quicklinks();
+    bool removeResult = quicklinkDb->removeOne(link->id);
 
     if (removeResult) {
       app.statusBar->setToast("Removed link");

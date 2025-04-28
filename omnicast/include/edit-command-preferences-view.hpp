@@ -1,7 +1,7 @@
 #pragma once
 #include "app.hpp"
-#include "extend/action-model.hpp"
 #include "omni-icon.hpp"
+#include "service-registry.hpp"
 #include "ui/action-pannel/action-item.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/form/form.hpp"
@@ -52,15 +52,12 @@ class EditCommandPreferencesView : public View {
       return;
     }
 
+    auto commandDb = ServiceRegistry::instance()->commandDb();
     QJsonDocument doc;
 
     doc.setObject(values);
-
-    qDebug() << "values" << doc.toJson();
-
-    app.commandDb->setPreferenceValues(m_command->id(), values);
+    commandDb->setPreferenceValues(m_command->id(), values);
     app.statusBar->setToast("Preferences changed", ToastPriority::Success);
-
     pop();
   }
 
@@ -81,8 +78,9 @@ public:
 
   EditCommandPreferencesView(AppWindow &app, const std::shared_ptr<AbstractCmd> &command)
       : View(app), m_command(command) {
+    auto commandDb = ServiceRegistry::instance()->commandDb();
     auto preferences = m_command->preferences();
-    auto preferenceValues = app.commandDb->getPreferenceValues(m_command->id());
+    auto preferenceValues = commandDb->getPreferenceValues(m_command->id());
 
     m_layout->setContentsMargins(0, 20, 0, 20);
     m_layout->addWidget(m_form);

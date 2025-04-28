@@ -1,7 +1,7 @@
 #pragma once
 #include "omni-icon.hpp"
 #include "quicklist-database.hpp"
-#include "ui/action_popover.hpp"
+#include "service-registry.hpp"
 #include "ui/form/base-input.hpp"
 #include "ui/form/form-field.hpp"
 #include "ui/form/selector-input.hpp"
@@ -99,9 +99,10 @@ class QuicklinkCommandView : public View {
   void iconSelectorTextChanged(const QString &text) {}
 
   void handleLinkChange(const QString &text) {
+    auto appDb = ServiceRegistry::instance()->appDb();
     QUrl url(text);
 
-    if (auto app = appDb.findBestOpener(text)) {
+    if (auto app = appDb->findBestOpener(text)) {
       appSelector->updateItem("default", [&app](SelectorInput::AbstractItem *item) {
         static_cast<AppSelectorItem *>(item)->setApp(app);
       });
@@ -130,9 +131,6 @@ class QuicklinkCommandView : public View {
   }
 
 protected:
-  Service<AbstractAppDatabase> appDb;
-  Service<QuicklistDatabase> quicklinkDb;
-
   FormWidget *form;
   BaseInput *name;
   BaseInput *link;
@@ -141,9 +139,11 @@ protected:
 
 public:
   QuicklinkCommandView(AppWindow &app)
-      : View(app), appDb(service<AbstractAppDatabase>()), quicklinkDb(service<QuicklistDatabase>()),
-        form(new FormWidget), name(new BaseInput), link(new BaseInput), appSelector(new SelectorInput),
-        iconSelector(new SelectorInput) {
+      : View(app), form(new FormWidget), name(new BaseInput), link(new BaseInput),
+        appSelector(new SelectorInput), iconSelector(new SelectorInput) {
+    auto appDb = ServiceRegistry::instance()->appDb();
+    auto quicklinkDb = ServiceRegistry::instance()->quicklinks();
+
     name->setPlaceholderText("Quicklink name");
     link->setPlaceholderText("https://google.com/search?q={argument}");
 
@@ -175,11 +175,11 @@ public:
     appSelector->beginUpdate();
     appSelector->addSection("Apps");
 
-    if (auto browser = appDb.webBrowser()) {
+    if (auto browser = appDb->webBrowser()) {
       appSelector->addItem(std::make_unique<DefaultAppItem>(browser));
     }
 
-    for (const auto &app : appDb.list()) {
+    for (const auto &app : appDb->list()) {
       appSelector->addItem(std::make_unique<AppSelectorItem>(app));
 
       for (const auto &action : app->actions()) {
@@ -210,10 +210,12 @@ public:
   }
 
   void loadLink(const Quicklink &quicklink) {
+    auto appDb = ServiceRegistry::instance()->appDb();
+
     name->setText(QString("Copy of %1").arg(quicklink.name));
     link->setText(quicklink.rawUrl);
 
-    if (auto app = appDb.findById(quicklink.app)) {
+    if (auto app = appDb->findById(quicklink.app)) {
       // appSelector->setValue(std::make_shared<AppSelectorItem>(app));
     }
 
@@ -232,6 +234,8 @@ public:
   }
 
   virtual void submit(AppWindow &app) {
+    auto quicklinkDb = ServiceRegistry::instance()->quicklinks();
+
     if (link->text().isEmpty()) {
       form->setError(link, "Required");
       return;
@@ -251,7 +255,7 @@ public:
       return;
     }
 
-    quicklinkDb.insertLink(AddQuicklinkPayload{
+    quicklinkDb->insertLink(AddQuicklinkPayload{
         .name = name->text(),
         .icon = icon->icon().toString(),
         .link = link->text(),
@@ -270,10 +274,12 @@ class EditCommandQuicklinkView : public QuicklinkCommandView {
 public:
   EditCommandQuicklinkView(AppWindow &app, const Quicklink &quicklink)
       : QuicklinkCommandView(app), quicklink(quicklink) {
+    auto appDb = ServiceRegistry::instance()->appDb();
+
     name->setText(quicklink.name);
     link->setText(quicklink.rawUrl);
 
-    if (auto app = appDb.findById(quicklink.app)) {
+    if (auto app = appDb->findById(quicklink.app)) {
       // appSelector->setValue(std::make_shared<AppSelectorItem>(app));
     }
 
@@ -281,6 +287,7 @@ public:
   }
 
   void submit(AppWindow &app) override {
+    auto quicklinkDb = ServiceRegistry::instance()->quicklinks();
     auto item = static_cast<const AppSelectorItem *>(appSelector->value());
 
     if (!item) {
@@ -295,7 +302,7 @@ public:
       return;
     }
 
-    bool updateResult = quicklinkDb.updateLink(UpdateQuicklinkPayload{
+    bool updateResult = quicklinkDb->updateLink(UpdateQuicklinkPayload{
         .id = quicklink.id,
         .name = name->text(),
         .icon = icon->icon().toString(),
@@ -321,10 +328,12 @@ class DuplicateQuicklinkCommandView : public QuicklinkCommandView {
 
 public:
   DuplicateQuicklinkCommandView(AppWindow &app, const Quicklink &quicklink) : QuicklinkCommandView(app) {
+    auto appDb = ServiceRegistry::instance()->appDb();
+
     name->setText(QString("Copy of %1").arg(quicklink.name));
     link->setText(quicklink.rawUrl);
 
-    if (auto app = appDb.findById(quicklink.app)) {
+    if (auto app = appDb->findById(quicklink.app)) {
       // appSelector->setValue(std::make_shared<AppSelectorItem>(app));
     }
 
@@ -337,6 +346,7 @@ public:
   }
 
   void submit(AppWindow &app) override {
+    auto quicklinkDb = ServiceRegistry::instance()->quicklinks();
     auto item = static_cast<const AppSelectorItem *>(appSelector->value());
 
     if (!item) {
@@ -351,7 +361,7 @@ public:
       return;
     }
 
-    bool insertResult = quicklinkDb.insertLink(AddQuicklinkPayload{
+    bool insertResult = quicklinkDb->insertLink(AddQuicklinkPayload{
         .name = name->text(),
         .icon = icon->icon().toString(),
         .link = link->text(),

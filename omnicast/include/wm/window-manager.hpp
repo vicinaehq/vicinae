@@ -78,6 +78,10 @@ public:
   virtual void moveToWorkspaceSync(const Window &window, const Workspace &workspace) {}
   virtual void focusWindowSync(const Window &window) const {};
   virtual bool sendShortcutSync(const Window &window, const KeyboardShortcut &shortcut) { return false; }
+  bool pasteToFocusedWindow() {
+    auto window = getActiveWindowSync();
+    return sendShortcutSync(*window.get(), KeyboardShortcut::paste());
+  }
 
   virtual bool ping() const = 0;
   virtual bool isActivatable() const = 0;

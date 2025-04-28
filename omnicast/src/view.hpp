@@ -25,8 +25,6 @@ class View : public QWidget {
     if (event->type() == QEvent::KeyPress && obj == app.topBar->input) {
       auto keyEvent = static_cast<QKeyEvent *>(event);
 
-      if (keyEvent->key() == Qt::Key_Return) return false;
-
       return inputFilter(keyEvent);
     }
 
@@ -52,7 +50,6 @@ public:
     inputFwdTo.push_back(widget);
   }
 
-  template <typename T> Service<T> service() { return app.service<T>(); }
   void setSearchPlaceholderText(const QString &s) { app.topBar->input->setPlaceholderText(s); }
 
   QString searchText() { return app.topBar->input->text(); }

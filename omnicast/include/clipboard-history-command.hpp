@@ -2,6 +2,7 @@
 #include "app.hpp"
 #include "clipboard/clipboard-service.hpp"
 #include "omni-icon.hpp"
+#include "service-registry.hpp"
 #include "ui/alert.hpp"
 #include "ui/declarative-omni-list-view.hpp"
 #include "ui/omni-list-view.hpp"
@@ -106,7 +107,9 @@ class RemoveSelectionAction : public AbstractAction {
   int _id;
 
   void execute(AppWindow &app) override {
-    if (app.clipboardService->removeSelection(_id)) {
+    auto clipman = ServiceRegistry::instance()->clipman();
+
+    if (clipman->removeSelection(_id)) {
       app.statusBar->setToast("Entry removed");
       emit removed(_id);
     } else {
@@ -132,7 +135,9 @@ public:
   PinConfirm(AppWindow &app, int id, bool value) : _app(app), _id(id), _value(value) {}
 
   void confirm() const override {
-    if (!_app.clipboardService->setPinned(_id, _value)) {
+    auto clipman = ServiceRegistry::instance()->clipman();
+
+    if (!clipman->setPinned(_id, _value)) {
       _app.statusBar->setToast("Failed to " + QString(_value ? "pin" : "unpin"), ToastPriority::Danger);
     } else {
       _app.statusBar->setToast(_value ? "Pinned" : "Unpinned", ToastPriority::Success);
@@ -222,14 +227,15 @@ signals:
 };
 
 class ClipboardHistoryCommand : public DeclarativeOmniListView {
-  Service<ClipboardService> _clipboardService;
   ClipboardHistoryItemActionGenerator *_generator = new ClipboardHistoryItemActionGenerator;
 
   ItemList generateList(const QString &query) override {
-    auto result = _clipboardService.listAll(100, 0, {.query = query});
+    auto clipman = ServiceRegistry::instance()->clipman();
+    auto result = clipman->listAll(100, 0, {.query = query});
     ItemList newList;
 
-    newList.push_back(std::make_unique<OmniList::VirtualSection>("Pinned"));
+    newList.reserve(result.data.size() + 2);
+    newList.emplace_back(std::make_unique<OmniList::VirtualSection>("Pinned"));
     size_t i = 0;
 
     while (i < result.data.size() && result.data[i].pinnedAt) {
@@ -237,18 +243,18 @@ class ClipboardHistoryCommand : public DeclarativeOmniListView {
       auto candidate = std::make_unique<ClipboardHistoryItem>(entry);
 
       candidate->setActionGenerator(_generator);
-      newList.push_back(std::move(candidate));
+      newList.emplace_back(std::move(candidate));
       ++i;
     }
 
-    newList.push_back(std::make_unique<OmniList::VirtualSection>("History", false));
+    newList.emplace_back(std::make_unique<OmniList::VirtualSection>("History", false));
 
     while (i < result.data.size()) {
       auto &entry = result.data[i];
       auto candidate = std::make_unique<ClipboardHistoryItem>(entry);
 
       candidate->setActionGenerator(_generator);
-      newList.push_back(std::move(candidate));
+      newList.emplace_back(std::move(candidate));
       ++i;
     }
 
@@ -263,13 +269,14 @@ class ClipboardHistoryCommand : public DeclarativeOmniListView {
   void handleRemoved(int entryId) { reload(); }
 
 public:
-  ClipboardHistoryCommand(AppWindow &app)
-      : DeclarativeOmniListView(app), _clipboardService(service<ClipboardService>()) {
+  ClipboardHistoryCommand(AppWindow &app) : DeclarativeOmniListView(app) {
+    auto clipman = ServiceRegistry::instance()->clipman();
+
     connect(_generator, &ClipboardHistoryItemActionGenerator::pinChanged, this,
             &ClipboardHistoryCommand::handlePinChanged);
     connect(_generator, &ClipboardHistoryItemActionGenerator::removed, this,
             &ClipboardHistoryCommand::handleRemoved);
-    connect(&_clipboardService, &ClipboardService::itemInserted, this,
+    connect(clipman, &ClipboardService::itemInserted, this,
             &ClipboardHistoryCommand::clipboardSelectionInserted);
   }
 };

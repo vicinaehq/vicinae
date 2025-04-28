@@ -78,9 +78,15 @@ public:
   }
 
   bool sendShortcutSync(const Window &window, const KeyboardShortcut &shortcut) override {
-    auto cmd = QString("dispatch sendshortcut %1,code:%2")
+    // focusWindowSync(window);
+
+    // Hyprctl::oneshot("dispatch sendshortcut ,mouse:272");
+
+    auto cmd = QString("dispatch sendshortcut %1,V,address:%2")
                    .arg(stringifyModifiers(shortcut.modifiers))
-                   .arg(XKBCommon::fromQtKey(shortcut.key));
+                   .arg(window.id());
+
+    //.arg(XKBCommon::fromQtKey(shortcut.key));
 
     qWarning() << "send dispatcher" << cmd;
     Hyprctl::oneshot(cmd.toStdString());

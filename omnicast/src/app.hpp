@@ -1,6 +1,4 @@
 #pragma once
-#include "ai/ai-provider.hpp"
-#include "local-storage-service.hpp"
 #include "app/app-database.hpp"
 #include "calculator-database.hpp"
 #include "ai/ai-service.hpp"
@@ -10,12 +8,7 @@
 #include "command-database.hpp"
 #include "command-server.hpp"
 #include <QScreen>
-#include "extension_manager.hpp"
-#include "omni-command-db.hpp"
-#include "omni-database.hpp"
 #include "omni-icon.hpp"
-#include "process-manager-service.hpp"
-#include "quicklist-database.hpp"
 #include <cstring>
 #include <qboxlayout.h>
 #include <qdnslookup.h>
@@ -32,6 +25,7 @@
 #include <stack>
 
 #include "omnicast.hpp"
+#include "service-registry.hpp"
 #include "ui/action-pannel/action-pannel-widget.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/alert.hpp"
@@ -40,7 +34,6 @@
 #include "ui/horizontal-loading-bar.hpp"
 #include "ui/status_bar.hpp"
 #include "ui/top_bar.hpp"
-#include "wm/window-manager.hpp"
 
 #include <qmainwindow.h>
 #include <qtmetamacros.h>
@@ -168,18 +161,6 @@ public:
   std::stack<ViewSnapshot> navigationStack;
   QStack<CommandSnapshot> commandStack;
 
-  std::unique_ptr<OmniDatabase> omniDb;
-  std::unique_ptr<QuicklistDatabase> quicklinkDatabase;
-  std::unique_ptr<CalculatorDatabase> calculatorDatabase;
-  std::unique_ptr<ClipboardService> clipboardService;
-  std::unique_ptr<AbstractAppDatabase> appDb;
-  std::unique_ptr<ExtensionManager> extensionManager;
-  std::unique_ptr<ProcessManagerService> processManagerService;
-  std::unique_ptr<OmniCommandDatabase> commandDb;
-  std::unique_ptr<AI::Manager> aiProvider;
-  std::unique_ptr<LocalStorageService> localStorage;
-  std::unique_ptr<AbstractWindowManager> windowManager;
-
   void popToRoot();
   void disconnectView(View &view);
   void connectView(View &view);
@@ -188,8 +169,6 @@ public:
   void selectPrimaryAction();
   void selectSecondaryAction();
   void clearSearch();
-
-  template <typename T> Service<T> service() const;
 
   TopBar *topBar = nullptr;
   StatusBar *statusBar = nullptr;
@@ -212,6 +191,7 @@ public:
   void confirmAlert(AlertWidget *alert) {
     _dialog->setContent(alert);
     _dialog->showDialog();
+    _dialog->setFocus();
   }
 
 public slots:
@@ -229,7 +209,9 @@ struct OpenAppAction : public AbstractAction {
   std::vector<QString> args;
 
   void execute(AppWindow &app) override {
-    if (!app.appDb->launch(*application.get(), args)) {
+    auto appDb = ServiceRegistry::instance()->appDb();
+
+    if (!appDb->launch(*application.get(), args)) {
       app.statusBar->setToast("Failed to start app", ToastPriority::Danger);
       return;
     }
@@ -247,7 +229,9 @@ class CopyTextAction : public AbstractAction {
 
 public:
   void execute(AppWindow &app) override {
-    app.clipboardService->copyText(text);
+    auto clip = ServiceRegistry::instance()->clipman();
+
+    clip->copyText(text);
     app.closeWindow();
     app.statusBar->setToast("Copied in clipboard");
   }
@@ -261,7 +245,9 @@ class CopyCalculatorResultAction : public CopyTextAction {
 
 public:
   void execute(AppWindow &app) override {
-    app.calculatorDatabase->insertComputation(item.expression, QString::number(item.result));
+    auto calc = ServiceRegistry::instance()->calculatorDb();
+
+    calc->insertComputation(item.expression, QString::number(item.result));
     CopyTextAction::execute(app);
   }
 

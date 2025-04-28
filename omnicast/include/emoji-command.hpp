@@ -60,12 +60,11 @@ public:
 };
 
 class EmojiView : public OmniGridView {
-  Service<AbstractAppDatabase> appDb;
   EmojiDatabase emojiDb;
   std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> newItems;
 
 public:
-  EmojiView(AppWindow &app) : OmniGridView(app), appDb(service<AbstractAppDatabase>()) {}
+  EmojiView(AppWindow &app) : OmniGridView(app) {}
 
   void onSearchChanged(const QString &s) override {
     newItems.clear();
