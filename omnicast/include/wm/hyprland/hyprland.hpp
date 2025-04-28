@@ -2,10 +2,14 @@
 #include "wm/hyprland/hyprctl.hpp"
 #include "wm/window-manager.hpp"
 #include <QtConcurrent/qtconcurrentrun.h>
+#include <lib/xkbcommon-utils.hpp>
+
 #include <format>
 #include <qapplication.h>
 #include <qfuture.h>
 #include <qjsondocument.h>
+#include <qlogging.h>
+#include <qnamespace.h>
 #include <qprocess.h>
 #include <QJsonArray>
 #include <QJsonObject>
@@ -23,6 +27,17 @@ public:
 };
 
 class HyprlandWindowManager : public AbstractWindowManager {
+  QString stringifyModifiers(QFlags<Qt::KeyboardModifier> mods) {
+    if (mods.testFlag(Qt::KeyboardModifier::MetaModifier)) {
+      if (mods.testFlag(Qt::KeyboardModifier::AltModifier)) return "SUPER_ALT";
+      return "SUPER";
+    }
+
+    if (mods.testFlag(Qt::KeyboardModifier::ControlModifier)) { return "CONTROL"; }
+
+    return "";
+  }
+
 public:
   WindowList listWindowsSync() const override {
     auto response = Hyprctl::oneshot("-j/clients");
@@ -60,6 +75,17 @@ public:
     auto wmClass = obj.value("class").toString();
 
     return std::make_shared<Window>(HyprlandWindow(id, title, wmClass));
+  }
+
+  bool sendShortcutSync(const Window &window, const KeyboardShortcut &shortcut) override {
+    auto cmd = QString("dispatch sendshortcut %1,code:%2")
+                   .arg(stringifyModifiers(shortcut.modifiers))
+                   .arg(XKBCommon::fromQtKey(shortcut.key));
+
+    qWarning() << "send dispatcher" << cmd;
+    Hyprctl::oneshot(cmd.toStdString());
+
+    return true;
   }
 
   void focusWindowSync(const Window &window) const override {

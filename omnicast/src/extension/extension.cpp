@@ -5,6 +5,7 @@
 #include "preference.hpp"
 #include <qjsonobject.h>
 #include <qjsonarray.h>
+#include <qlogging.h>
 
 OmniIconUrl Extension::iconUrl() const {
   auto fallback = BuiltinOmniIconUrl("hammer").setBackgroundTint(ColorTint::Blue);

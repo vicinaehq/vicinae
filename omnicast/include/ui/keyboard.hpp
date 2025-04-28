@@ -96,10 +96,25 @@ struct KeyboardShortcut {
   Qt::KeyboardModifiers modifiers;
 
 public:
+  static KeyboardShortcut copy() {
+    return KeyboardShortcut(Qt::Key_C).withModifier(Qt::KeyboardModifier::ControlModifier);
+  }
+
+  static KeyboardShortcut paste() {
+    return KeyboardShortcut(Qt::Key_V).withModifier(Qt::KeyboardModifier::ControlModifier);
+  }
+
   KeyboardShortcut(const KeyboardShortcutModel &model) : key(keyMap.value(model.key)) {
     for (const auto &mod : model.modifiers) {
       modifiers.setFlag(modifierMap.value(mod));
     }
+  }
+
+  KeyboardShortcut(Qt::Key key) : key(key) {}
+
+  KeyboardShortcut &withModifier(Qt::KeyboardModifier mod) {
+    modifiers.setFlag(mod);
+    return *this;
   }
 
   KeyboardShortcut() {}

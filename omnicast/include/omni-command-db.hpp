@@ -201,8 +201,8 @@ public:
       bool isRepositoryPreference = false;
 
       if (repository) {
-        for (const auto &preference : repository->preferences()) {
-          if (preferences.contains(prefId)) {
+        for (const auto &repoPref : repository->preferences()) {
+          if (repoPref->name() == prefId) {
             extensionPreferences[prefId] = preferences.value(prefId);
             isRepositoryPreference = true;
             break;
@@ -218,6 +218,7 @@ public:
     db.db().transaction();
     if (repository) { setRepositoryPreferenceValues(repository->id(), extensionPreferences); }
     setCommandPreferenceValues(id, commandPreferences);
+    qDebug() << "set command prefs for" << id;
     db.db().commit();
 
     for (const auto &key : preferences.keys()) {}

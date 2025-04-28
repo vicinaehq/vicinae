@@ -1,6 +1,5 @@
 #include "app.hpp"
 #include "omni-icon.hpp"
-#include "ui/action_popover.hpp"
 #include "ui/declarative-omni-list-view.hpp"
 #include "wm/hyprland/hyprland.hpp"
 #include "wm/window-manager.hpp"
@@ -23,12 +22,11 @@ public:
 class WindowItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
 protected:
   std::shared_ptr<AbstractWindowManager::Window> _window;
-  AbstractWindowManager *wm = new HyprlandWindowManager;
 
   QString id() const override { return _window->id(); }
 
   virtual QList<AbstractAction *> generateActions() const override {
-    return {new FocusWindowAction(_window), new MoveToWorkspaceListAction(*wm)};
+    return {new FocusWindowAction(_window)};
   }
 
 public:
@@ -62,7 +60,6 @@ public:
 class SwitchWindowsCommand : public DeclarativeOmniListView {
   AbstractWindowManager::WindowList windows;
   QFutureWatcher<AbstractWindowManager::WindowList> watcher;
-  AbstractWindowManager *wm = new HyprlandWindowManager;
   Service<AbstractAppDatabase> appDb;
   std::chrono::time_point<std::chrono::high_resolution_clock> m_lastWindowFetch =
       std::chrono::high_resolution_clock::now();
@@ -83,7 +80,10 @@ public:
     auto now = std::chrono::high_resolution_clock::now();
     auto elapsedSeconds = std::chrono::duration_cast<std::chrono::seconds>(now - m_lastWindowFetch).count();
 
-    if (windows.empty() || elapsedSeconds > 1) { windows = wm->listWindowsSync(); }
+    if (windows.empty() || elapsedSeconds > 1) {
+      windows = app.windowManager->listWindowsSync();
+      m_lastWindowFetch = now;
+    }
 
     list.reserve(windows.size());
     list.push_back(std::make_unique<OmniList::VirtualSection>("Open windows"));
@@ -105,6 +105,8 @@ public:
 
   void onMount() override {
     DeclarativeOmniListView::onMount();
+    app.windowManager->sendShortcutSync({}, KeyboardShortcut::paste());
+
     setSearchPlaceholderText("Search open window...");
   }
 };

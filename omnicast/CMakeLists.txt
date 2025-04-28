@@ -151,9 +151,7 @@ set(SRCS
 	src/ui/omni-painter.cpp
 
 	include/wm/window-manager.hpp
-	include/wm/hyprland/hyprland.hpp
-	include/wm/hyprland/hyprctl.hpp
-
+	
 	include/extension/extension-command.hpp
 	include/extension/extension-view.hpp
 	include/extension/extension-component.hpp
@@ -344,6 +342,19 @@ set(SRCS
 	#src/ui/action_popover.cpp
 	src/extension_manager.hpp
 )
+
+
+if (UNIX AND NOT APPLE)
+	list(APPEND SRCS
+		src/lib/xkbcommon-utils.cpp
+
+		# Hyprland
+		include/wm/hyprland/hyprland.hpp
+		include/wm/hyprland/hyprctl.hpp
+		# End Hyprland
+	)
+endif()
+	
 
 qt_add_executable(${TARGET} ${SRCS})
 

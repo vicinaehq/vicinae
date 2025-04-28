@@ -1,4 +1,5 @@
 #pragma once
+#include "ui/keyboard.hpp"
 #include <qfuture.h>
 #include <qobject.h>
 #include <qpromise.h>
@@ -76,6 +77,7 @@ public:
   virtual WorkspaceList listWorkspacesSync() const { return {}; }
   virtual void moveToWorkspaceSync(const Window &window, const Workspace &workspace) {}
   virtual void focusWindowSync(const Window &window) const {};
+  virtual bool sendShortcutSync(const Window &window, const KeyboardShortcut &shortcut) { return false; }
 
   virtual bool ping() const = 0;
   virtual bool isActivatable() const = 0;

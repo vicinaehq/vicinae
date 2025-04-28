@@ -7,7 +7,11 @@
 class WindowManagerFactory {
 public:
   std::unique_ptr<AbstractWindowManager> create() const {
-    if (QGuiApplication::platformName() == "cocoa") return std::make_unique<MacOSWindowManager>();
+#if defined Q_OS_DARWIN
+    return std::make_unique<MacOSWindowManager>();
+#endif
+
+#if defined(Q_OS_UNIX) && not defined(Q_OS_DARWIN)
     if (QGuiApplication::platformName() == "wayland") {
       {
         auto candidate = std::make_unique<HyprlandWindowManager>();
@@ -15,6 +19,7 @@ public:
         if (candidate->isActivatable()) return candidate;
       }
     }
+#endif
 
     return std::make_unique<DummyWindowManager>();
   }
