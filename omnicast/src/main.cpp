@@ -20,12 +20,18 @@
 #include <qlocalserver.h>
 #include <qlocalsocket.h>
 #include <qlogging.h>
+#include <qnamespace.h>
 #include <qobject.h>
 #include <qprocess.h>
 #include <qstringview.h>
 #include <qtmetamacros.h>
 #include "omnicast.hpp"
 #include "proto.hpp"
+
+#ifdef WAYLAND_LAYER_SHELL
+#include <LayerShellQt/window.h>
+#include <LayerShellQt/shell.h>
+#endif
 
 void coloredMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg) {
   // ANSI color codes
@@ -122,6 +128,22 @@ int startDaemon() {
 
   AppWindow app;
 
+  app.createWinId();
+
+#ifdef WAYLAND_LAYER_SHELL
+  qDebug() << "Initializing layer shell surface";
+  if (auto lshell = LayerShellQt::Window::get(app.windowHandle())) {
+    lshell->setLayer(LayerShellQt::Window::LayerOverlay);
+    lshell->setScope("omnicast");
+    lshell->setKeyboardInteractivity(LayerShellQt::Window::KeyboardInteractivityExclusive);
+    lshell->setExclusiveZone(-1);
+    lshell->setAnchors(LayerShellQt::Window::AnchorNone);
+  } else {
+    qCritical() << "Unable apply layer shell rules to main window: LayerShellQt::Window::get() returned null";
+  }
+#endif
+
+  app.setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
   app.show();
 
   // Print it

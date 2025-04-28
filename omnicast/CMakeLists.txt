@@ -12,12 +12,13 @@ find_package(cmark REQUIRED)
 
 option(WAYLAND_LAYER_SHELL "Enable support for the Wayland layer shell
 protocol, required for proper window positioning on most wlroots-based
-compositors." OFF)
+compositors." ON)
 
 
 list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::Bluetooth cmark proto)
 
-if (WAYLAND_LAYER_SHELL)
+if (UNIX AND NOT APPLE)
+	message(STATUS "Compiling with wayland layer shell support (for wlroots-like compositors)")
 	find_package(Qt6 REQUIRED COMPONENTS WaylandClient)
 	find_package(LayerShellQt REQUIRED)
 	add_compile_definitions(-DWAYLAND_LAYER_SHELL)

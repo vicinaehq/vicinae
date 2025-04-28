@@ -28,6 +28,7 @@
 #include <qobject.h>
 #include <qpixmap.h>
 #include <qscreen_platform.h>
+#include <qwindow.h>
 #include <stack>
 
 #include "omnicast.hpp"

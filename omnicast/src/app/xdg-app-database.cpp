@@ -1,5 +1,6 @@
 #include "app/xdg-app-database.hpp"
 #include "app/app-database.hpp"
+#include <qlogging.h>
 #include <qsettings.h>
 
 using AppPtr = XdgAppDatabase::AppPtr;
@@ -150,16 +151,17 @@ bool XdgAppDatabase::launch(const Application &app, const std::vector<QString> &
 
   QProcess process;
 
-  qDebug() << "launch" << program << argv;
+  process.setProgram(program);
+  process.setArguments(argv);
+  process.setStandardOutputFile(QProcess::nullDevice());
+  process.setStandardErrorFile(QProcess::nullDevice());
 
-  if (!process.startDetached(program, argv)) {
+  if (!process.startDetached()) {
     qDebug() << xdgApp.name() << "failed to launch";
     return false;
   }
 
-  process.setStandardInputFile(QProcess::nullDevice());
-  process.setStandardOutputFile(QProcess::nullDevice());
-  process.setStandardErrorFile(QProcess::nullDevice());
+  qCritical() << "closing read channel for process";
 
   return true;
 }
