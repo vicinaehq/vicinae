@@ -88,9 +88,12 @@ void MarkdownRenderer::insertImage(cmark_node *node) {
     iconUrl.setName(url.host() + url.path());
   }
 
-  if (url.scheme() == "file") {
+  else if (url.scheme() == "file") {
     iconUrl.setType(OmniIconType::Local);
     iconUrl.setName(url.host() + url.path());
+  } else {
+    iconUrl.setType(OmniIconType::Local);
+    iconUrl.setName(p);
   }
 
   connect(icon, &OmniIcon::imageUpdated, this, [this, url, pos](const QPixmap &pix) {

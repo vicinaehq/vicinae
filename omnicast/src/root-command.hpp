@@ -13,7 +13,6 @@
 #include "omni-icon.hpp"
 #include "quicklist-database.hpp"
 #include "theme.hpp"
-#include "tinyexpr.hpp"
 #include "ui/calculator-list-item-widget.hpp"
 #include "ui/color-transform-widget.hpp"
 #include "ui/declarative-omni-list-view.hpp"
@@ -41,6 +40,12 @@
 #include <qnetworkcookiejar.h>
 #include <qthreadpool.h>
 #include <qwidget.h>
+
+static constexpr size_t RECENCY_WEIGHT = 2;
+static constexpr size_t FREQUENCY_WEIGHT = 1;
+
+// after more than 100 uses, the frequency is a differentiating factor no more
+static constexpr size_t FREQUENCY_CAP = 100;
 
 struct OpenBuiltinCommandAction : public AbstractAction {
   std::shared_ptr<AbstractCmd> cmd;
@@ -148,16 +153,22 @@ protected:
   }
 
   double rankingScore() const override {
-    if (!m_entry.lastOpenedAt) return 0;
+    using namespace std::chrono;
 
-    auto now = std::chrono::high_resolution_clock::now();
-    double secondsSinceLastUse =
-        std::chrono::duration_cast<std::chrono::seconds>(now - m_entry.lastOpenedAt.value_or(now)).count();
-    double recencyScore = std::exp(-0.1 * secondsSinceLastUse);
+    double recencyScore = 0;
 
-    qDebug() << "recency score" << m_entry.command->id() << recencyScore << "secs" << secondsSinceLastUse;
+    if (m_entry.lastOpenedAt) {
+      auto now = high_resolution_clock::now();
+      double secondsSinceLastUse = duration_cast<seconds>(now - *m_entry.lastOpenedAt).count();
 
-    return recencyScore;
+      recencyScore = std::exp(-0.1 * secondsSinceLastUse);
+    }
+
+    double frequencyScore = std::min(1.0, static_cast<double>(m_entry.openCount) / FREQUENCY_CAP);
+
+    // qDebug() << "recency score" << m_entry.command->id() << recencyScore << "secs" << secondsSinceLastUse;
+
+    return (recencyScore * RECENCY_WEIGHT) + (frequencyScore * FREQUENCY_WEIGHT);
   }
 
   QString id() const override { return m_entry.command->id(); }

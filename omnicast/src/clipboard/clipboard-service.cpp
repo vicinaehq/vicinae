@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <filesystem>
-#include <numbers>
+#include <fstream>
 #include <qbytearrayview.h>
 #include "timer.hpp"
 #include <qcontainerfwd.h>
@@ -17,6 +17,10 @@
 #include <qmimedata.h>
 #include <qsqlquery.h>
 #include <qtypes.h>
+#include <sstream>
+
+static const char *retrieveSelectionByIdQuery =
+    "SELECT mime_type, content_hash_md5 from data_offer where selection_id = :id";
 
 bool ClipboardService::setPinned(int id, bool pinned) {
   QSqlQuery query(db);
@@ -33,6 +37,8 @@ bool ClipboardService::setPinned(int id, bool pinned) {
 }
 
 bool ClipboardService::copyContent(const Clipboard::Content &content, const Clipboard::CopyOptions options) {
+  struct ContentVistor {};
+
   if (auto html = std::get_if<Clipboard::Html>(&content)) {
     return copyHtml(*html, options);
   } else if (auto file = std::get_if<Clipboard::File>(&content)) {
@@ -57,7 +63,7 @@ bool ClipboardService::copyFile(const std::filesystem::path &path, const Clipboa
 
   data->setData(mime.name(), file.readAll());
 
-  if (options.concealed) data->setData("omnicast/concealed", "1");
+  if (options.concealed) data->setData(Clipboard::CONCEALED_MIME_TYPE, "1");
 
   clipboard->setMimeData(data);
 
@@ -71,7 +77,7 @@ bool ClipboardService::copyHtml(const Clipboard::Html &data, const Clipboard::Co
   mimeData->setData("text/html", data.html.toUtf8());
 
   if (auto text = data.text) mimeData->setData("text/plain", text->toUtf8());
-  if (options.concealed) mimeData->setData("omnicast/concealed", "1");
+  if (options.concealed) mimeData->setData(Clipboard::CONCEALED_MIME_TYPE, "1");
 
   clipboard->setMimeData(mimeData);
 
@@ -84,7 +90,7 @@ bool ClipboardService::copyText(const QString &text, const Clipboard::CopyOption
 
   mimeData->setData("text/plain", text.toUtf8());
 
-  if (options.concealed) mimeData->setData("omnicast/concealed", "1");
+  if (options.concealed) mimeData->setData(Clipboard::CONCEALED_MIME_TYPE, "1");
 
   clipboard->setMimeData(mimeData);
 
@@ -503,14 +509,70 @@ void ClipboardService::saveSelection(const ClipboardSelection &selection) {
   emit itemInserted(insertedEntry);
 }
 
+std::optional<ClipboardSelection> ClipboardService::retrieveSelectionById(int id) {
+  ClipboardSelection selection;
+
+  m_retrieveSelectionByIdQuery.bindValue(":id", id);
+
+  if (!m_retrieveSelectionByIdQuery.exec()) {
+    qCritical() << "Failed to execute retrieveSelectionById query"
+                << m_retrieveSelectionByIdQuery.lastError();
+    return {};
+  }
+
+  while (m_retrieveSelectionByIdQuery.next()) {
+    ClipboardDataOffer offer;
+    QString mimeType = m_retrieveSelectionByIdQuery.value(0).toString();
+    QString checksum = m_retrieveSelectionByIdQuery.value(1).toString();
+
+    offer.path = _data_dir.filePath(checksum).toStdString();
+    offer.mimeType = mimeType.toStdString();
+    selection.offers.emplace_back(offer);
+  }
+
+  return selection;
+}
+
+bool ClipboardService::copySelection(const ClipboardSelection &selection) {
+  if (selection.offers.empty()) {
+    qWarning() << "Not copying selection with no offers";
+    return false;
+  }
+
+  QClipboard *clipboard = QApplication::clipboard();
+  QMimeData *mimeData = new QMimeData;
+  auto appendOffer = [mimeData](const ClipboardDataOffer &offer) {
+    if (!std::filesystem::exists(offer.path)) {
+      qWarning() << "Cannot copy offer of type" << offer.mimeType << "contents do not exist at location"
+                 << offer.path;
+      return;
+    }
+
+    std::ifstream ifs(offer.path);
+    std::stringstream ss;
+
+    if (!ifs) {
+      qWarning() << "Could not open" << offer.path << "for reading";
+      return;
+    }
+
+    ss << ifs.rdbuf();
+    mimeData->setData(QString::fromStdString(offer.mimeType), ss.str().c_str());
+  };
+
+  std::ranges::for_each(selection.offers, appendOffer);
+  clipboard->setMimeData(mimeData);
+
+  return true;
+}
+
+AbstractClipboardServer *ClipboardService::clipboardServer() const { return m_clipboardServer.get(); }
+
 ClipboardService::ClipboardService(const QString &path)
     : db(QSqlDatabase::addDatabase("QSQLITE", "clipboard")), _path(path),
       _data_dir(_path.dir().filePath("clipboard-data")) {
-  ClipboardServerFactory factory;
-
-  m_clipboardServer = factory.createFirstActivatable();
-
-  connect(m_clipboardServer, &AbstractClipboardServer::selection, this, &ClipboardService::saveSelection);
+  m_clipboardServer =
+      std::unique_ptr<AbstractClipboardServer>(ClipboardServerFactory().createFirstActivatable());
 
   db.setDatabaseName(path);
 
@@ -559,4 +621,17 @@ ClipboardService::ClipboardService(const QString &path)
              "created_at DESC)");
   query.exec("CREATE INDEX IF NOT EXISTS idx_data_offer_selection_id ON data_offer(selection_id, mime_type)");
   query.exec("CREATE INDEX IF NOT EXISTS idx_selection_preferred_mime ON selection(preferred_mime_type)");
+
+  query.prepare(retrieveSelectionByIdQuery);
+
+  if (!m_clipboardServer->start()) {
+    qCritical() << "Failed to start clipboard server, clipboard monitoring will not work";
+  }
+
+  m_retrieveSelectionByIdQuery = QSqlQuery(db);
+  m_retrieveSelectionByIdQuery.prepare(
+      "SELECT mime_type, content_hash_md5 from data_offer where selection_id = :id");
+
+  connect(m_clipboardServer.get(), &AbstractClipboardServer::selection, this,
+          &ClipboardService::saveSelection);
 }

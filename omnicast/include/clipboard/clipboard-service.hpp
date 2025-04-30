@@ -22,6 +22,7 @@
 #include "clipboard/clipboard-server.hpp"
 
 namespace Clipboard {
+static const char *CONCEALED_MIME_TYPE = "omnicast/concealed";
 struct File {
   std::filesystem::path path;
 };
@@ -80,11 +81,16 @@ struct ClipboardListSettings {
 class ClipboardService : public QObject, public NonAssignable {
   Q_OBJECT
 
+  // prepared statements
+  QSqlQuery m_retrieveSelectionByIdQuery;
+
+  // end prepare statements
+
   QSqlDatabase db;
   QMimeDatabase _mimeDb;
   QFileInfo _path;
   QDir _data_dir;
-  AbstractClipboardServer *m_clipboardServer;
+  std::unique_ptr<AbstractClipboardServer> m_clipboardServer;
 
   std::string getSelectionPreferredMimeType(const ClipboardSelection &selection) const;
   QString createTextPreview(const QByteArray &data, int maxLength = 50) const;
@@ -92,6 +98,7 @@ class ClipboardService : public QObject, public NonAssignable {
 public:
   ClipboardService(const QString &path);
 
+  AbstractClipboardServer *clipboardServer() const;
   bool removeSelection(int id);
   bool setPinned(int id, bool pinned);
   PaginatedResponse<ClipboardHistoryEntry> listAll(int limit = 100, int offset = 0,
@@ -104,6 +111,9 @@ public:
   bool copyContent(const Clipboard::Content &content,
                    const Clipboard::CopyOptions options = {.concealed = false});
   void saveSelection(const ClipboardSelection &selection);
+  ClipboardSelection retrieveSelection(int offset = 0);
+  std::optional<ClipboardSelection> retrieveSelectionById(int id);
+  bool copySelection(const ClipboardSelection &selection);
 
 signals:
   void itemCopied(const InsertClipboardHistoryLine &item) const;

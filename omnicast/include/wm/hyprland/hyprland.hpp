@@ -104,7 +104,10 @@ public:
     return isWayland && QProcessEnvironment::systemEnvironment().contains("HYPRLAND_INSTANCE_SIGNATURE");
   }
 
-  bool ping() const override {}
+  bool ping() const override {
+    // XXX - Implement actual ping
+    return true;
+  }
 
   QString name() const override { return "Hyprland"; }
 

@@ -241,7 +241,6 @@ class ClipboardHistoryCommand : public DeclarativeOmniListView {
     while (i < result.data.size() && result.data[i].pinnedAt) {
       auto &entry = result.data[i];
       auto candidate = std::make_unique<ClipboardHistoryItem>(entry);
-      qCritical() << "register PINNED ID" << candidate->id();
 
       candidate->setActionGenerator(_generator);
       newList.emplace_back(std::move(candidate));
@@ -253,7 +252,6 @@ class ClipboardHistoryCommand : public DeclarativeOmniListView {
     while (i < result.data.size()) {
       auto &entry = result.data[i];
       auto candidate = std::make_unique<ClipboardHistoryItem>(entry);
-      qCritical() << "register ID" << candidate->id();
 
       candidate->setActionGenerator(_generator);
       newList.emplace_back(std::move(candidate));

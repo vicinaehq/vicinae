@@ -304,9 +304,6 @@ set(SRCS
 
 	src/json-patch.cpp
 
-	include/markdown-renderer.hpp
-	src/ui/markdown-renderer.cpp
-
 	src/root-command.hpp
 	src/command.hpp
 	src/view.hpp
