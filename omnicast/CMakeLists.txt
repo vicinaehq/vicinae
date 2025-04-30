@@ -43,6 +43,9 @@ set(SRCS
 	include/theme.hpp
 	src/theme.cpp
 
+	include/font-service.hpp
+	src/font-service.cpp
+
 	include/favicon/favicon-service.hpp
 	src/favicon/favicon-service.cpp
 	include/favicon/favicon-request.hpp

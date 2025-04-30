@@ -4,6 +4,7 @@
 #include "calculator-database.hpp"
 #include "clipboard/clipboard-service.hpp"
 #include "extension_manager.hpp"
+#include "font-service.hpp"
 #include "local-storage-service.hpp"
 #include "omni-command-db.hpp"
 #include "omni-database.hpp"
@@ -23,6 +24,7 @@ class ServiceRegistry : public QObject {
   std::unique_ptr<ExtensionManager> m_extensionManager;
   std::unique_ptr<ClipboardService> m_clipman;
   std::unique_ptr<AI::Manager> m_aiManager;
+  std::unique_ptr<FontService> m_fontService;
 
 public:
   static ServiceRegistry *instance() {
@@ -34,6 +36,7 @@ public:
   auto omniDb() const { return m_omniDb.get(); }
   auto quicklinks() const { return m_quickinkDb.get(); }
   auto windowManager() const { return m_windowManager.get(); }
+  auto fontService() const { return m_fontService.get(); }
   auto calculatorDb() const { return m_calculatorDb.get(); }
   auto commandDb() const { return m_omniCommandDb.get(); }
   auto localStorage() const { return m_localStorage.get(); }
@@ -42,7 +45,7 @@ public:
   auto appDb() const { return m_appDb.get(); }
 
   void setAI(std::unique_ptr<AI::Manager> manager) { m_aiManager = std::move(manager); }
-  void setAI(std::unique_ptr<OmniDatabase> manager) { m_omniDb = std::move(manager); }
+  void setFontService(std::unique_ptr<FontService> font) { m_fontService = std::move(font); }
   void setOmniDb(std::unique_ptr<OmniDatabase> service) { m_omniDb = std::move(service); }
   void setQuicklinks(std::unique_ptr<QuicklistDatabase> service) { m_quickinkDb = std::move(service); }
   void setWindowManager(std::unique_ptr<AbstractWindowManager> service) {

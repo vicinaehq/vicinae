@@ -535,7 +535,7 @@ class LocalOmniIconWidget : public OmniIconWidget {
       reader.setScaledSize(originalSize.scaled(size, Qt::KeepAspectRatio));
     }
 
-    return QPixmap::fromImage(reader.read());
+    return QPixmap::fromImageReader(&reader);
   }
 
   void handleImageLoaded() {
@@ -746,6 +746,7 @@ class OmniIcon : public QWidget {
 
 public:
   OmniIcon(const OmniIconUrl &url, QWidget *parent = nullptr) : QWidget(parent), layout(new QVBoxLayout) {
+    qCritical() << "Ding ding!!!";
     setUrl(url);
   }
   OmniIcon(QWidget *parent = nullptr) : QWidget(parent), layout(new QVBoxLayout) {

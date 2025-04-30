@@ -1,4 +1,5 @@
 #include "ui/emoji-viewer.hpp"
+#include "service-registry.hpp"
 #include <qevent.h>
 #include <qnamespace.h>
 #include <qwidget.h>
@@ -20,7 +21,7 @@ void EmojiViewer::setPointSize(int size) { _pointSize = size; }
 
 void EmojiViewer::paintEvent(QPaintEvent *event) {
   QPainter painter(this);
-  QFont font = painter.font();
+  QFont font = ServiceRegistry::instance()->fontService()->emojiFont();
 
   font.setPointSize(_pointSize);
   painter.setFont(font);

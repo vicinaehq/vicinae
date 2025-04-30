@@ -1,6 +1,7 @@
 #include "ai/ollama-ai-provider.hpp"
 #include "app.hpp"
 #include <QApplication>
+#include "font-service.hpp"
 #include <QFontDatabase>
 #include <QSurfaceFormat>
 #include <wm/window-manager-factory.hpp>
@@ -153,6 +154,7 @@ int startDaemon() {
     auto windowManager = WindowManagerFactory().create();
     auto aiManager = std::make_unique<AI::Manager>(*omniDb);
     auto ollamaProvider = std::make_unique<OllamaAiProvider>();
+    auto fontService = std::make_unique<FontService>();
 
     aiManager->registerProvider(std::move(ollamaProvider));
 
@@ -180,7 +182,12 @@ int startDaemon() {
     registry->setExtensionManager(std::move(extensionManager));
     registry->setClipman(std::move(clipboardManager));
     registry->setWindowManager(std::move(windowManager));
+    registry->setFontService(std::move(fontService));
   }
+
+  FontService service;
+
+  qWarning() << "emoji font" << service.emojiFont();
 
   AppWindow app;
 
