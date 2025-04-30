@@ -244,7 +244,7 @@ if (auto item = list->selected()) {
     }
   }
 
-  void onRestore() override { reload(); }
+  void onRestore() override { /*reload(OmniList::KeepSelection);*/ }
 
   void onSearchChanged(const QString &s) override {
     query = s;

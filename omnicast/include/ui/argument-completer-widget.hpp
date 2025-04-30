@@ -44,7 +44,7 @@ public:
     for (const auto &arg : args) {
       auto edit = new InlineQLineEdit(arg.placeholder, this);
 
-      if (arg.type == Argument::Password) edit->setEchoMode(QLineEdit::EchoMode::Password);
+      if (arg.type == CommandArgument::Password) edit->setEchoMode(QLineEdit::EchoMode::Password);
 
       m_inputs.emplace_back(edit);
       m_layout->addWidget(edit, 0, Qt::AlignLeft);

@@ -1,5 +1,6 @@
 #pragma once
 #include "app/app-database.hpp"
+#include "argument.hpp"
 #include "command-database.hpp"
 #include "edit-command-preferences-view.hpp"
 #include "omni-command-db.hpp"
@@ -21,6 +22,8 @@
 #include "quicklink-actions.hpp"
 #include "ui/top_bar.hpp"
 #include <QtConcurrent/QtConcurrent>
+#include <cfloat>
+#include <chrono>
 #include <cmath>
 #include <memory>
 #include <qbrush.h>
@@ -31,6 +34,7 @@
 #include <qlabel.h>
 #include <qlist.h>
 #include <qlistwidget.h>
+#include <qlogging.h>
 #include <qmap.h>
 #include <qmimedatabase.h>
 #include <qnamespace.h>
@@ -119,38 +123,55 @@ public:
 };
 
 class BuiltinCommandListItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
+  CommandDbEntry m_entry;
+
 protected:
-  std::shared_ptr<AbstractCmd> cmd;
   QString text;
 
   QList<AbstractAction *> generateActions() const override {
-    auto disable = new DisableCommand(cmd->id(), true);
-    QList<AbstractAction *> actions{new OpenBuiltinCommandAction(cmd, "Open command", text), disable};
+    auto disable = new DisableCommand(m_entry.command->id(), true);
+    QList<AbstractAction *> actions{new OpenBuiltinCommandAction(m_entry.command, "Open command", text),
+                                    disable};
 
-    if (!cmd->preferences().empty()) { actions << new OpenCommandPreferencesAction(cmd); }
+    if (!m_entry.command->preferences().empty()) {
+      actions << new OpenCommandPreferencesAction(m_entry.command);
+    }
 
     return actions;
   }
 
   std::unique_ptr<CompleterData> createCompleter() const override {
-    if (cmd->arguments().empty()) return nullptr;
+    if (m_entry.command->arguments().empty()) return nullptr;
 
     return std::make_unique<CompleterData>(
-        CompleterData{.iconUrl = cmd->iconUrl(), .arguments = cmd->arguments()});
+        CompleterData{.iconUrl = m_entry.command->iconUrl(), .arguments = m_entry.command->arguments()});
   }
 
-  QString id() const override { return cmd->id(); }
+  double rankingScore() const override {
+    if (!m_entry.lastOpenedAt) return 0;
+
+    auto now = std::chrono::high_resolution_clock::now();
+    double secondsSinceLastUse =
+        std::chrono::duration_cast<std::chrono::seconds>(now - m_entry.lastOpenedAt.value_or(now)).count();
+    double recencyScore = std::exp(-0.1 * secondsSinceLastUse);
+
+    qDebug() << "recency score" << m_entry.command->id() << recencyScore << "secs" << secondsSinceLastUse;
+
+    return recencyScore;
+  }
+
+  QString id() const override { return m_entry.command->id(); }
 
   ItemData data() const override {
-    return {.iconUrl = cmd->iconUrl(),
-            .name = cmd->name(),
-            .category = cmd->repositoryName(),
+    return {.iconUrl = m_entry.command->iconUrl(),
+            .name = m_entry.command->name(),
+            .category = m_entry.command->repositoryName(),
             .accessories = {{.text = "Command", .color = ColorTint::TextSecondary}}};
   }
 
 public:
-  BuiltinCommandListItem(const std::shared_ptr<AbstractCmd> &cmd, const QString &text = "")
-      : cmd(cmd), text(text) {}
+  BuiltinCommandListItem(const CommandDbEntry &entry, const QString &text = "")
+      : m_entry(entry), text(text) {}
 };
 
 class QuicklinkRootListItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
@@ -161,9 +182,9 @@ public:
     ArgumentList args;
 
     for (const auto &placeholder : link->placeholders) {
-      Argument arg;
+      CommandArgument arg;
 
-      arg.type = Argument::Text;
+      arg.type = CommandArgument::Text;
       arg.required = true;
       arg.placeholder = placeholder;
       arg.name = placeholder;
@@ -249,6 +270,11 @@ class RootView : public DeclarativeOmniListView {
               .accessories = {{.text = "Application", .color = ColorTint::TextSecondary}}};
     }
 
+    double rankingScore() const override {
+      if (app->name().contains("Alacritty")) return 100;
+      return 0;
+    }
+
     QString id() const override { return app->id(); }
 
   public:
@@ -293,10 +319,12 @@ class RootView : public DeclarativeOmniListView {
       return ruler.sizeHint().height();
     }
 
+    double rankingScore() const override { return DBL_MAX; }
+
     QString id() const override { return item.expression; }
 
     QList<AbstractAction *> generateActions() const override {
-      QString sresult = QString::number(item.result);
+      QString sresult = item.result;
 
       return {
           new CopyCalculatorResultAction(item, "Copy result", sresult),
@@ -311,6 +339,9 @@ class RootView : public DeclarativeOmniListView {
   };
 
 public:
+  QTimer *m_calcDebounce = new QTimer(this);
+  std::optional<CalculatorItem> m_currentCalculatorEntry;
+
   // list without filtering
   std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> generateBaseSearch() {
     auto commandDb = ServiceRegistry::instance()->commandDb();
@@ -325,7 +356,7 @@ public:
     for (const auto &entry : commandDb->commands()) {
       if (entry.disabled) continue;
 
-      list.push_back(std::make_unique<BuiltinCommandListItem>(entry.command));
+      list.push_back(std::make_unique<BuiltinCommandListItem>(entry));
     }
 
     for (const auto &link : quicklinkDb->list()) {
@@ -343,28 +374,30 @@ public:
     return list;
   }
 
+  void onSearchChanged(const QString &s) override {
+    DeclarativeOmniListView::onSearchChanged(s);
+    m_calcDebounce->start();
+  }
+
   std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> generateList(const QString &s) override {
     auto commandDb = ServiceRegistry::instance()->commandDb();
     auto quicklinkDb = ServiceRegistry::instance()->quicklinks();
     auto appDb = ServiceRegistry::instance()->appDb();
+    auto calculator = ServiceRegistry::instance()->calculatorDb();
     std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> list;
 
     if (s.isEmpty()) return generateBaseSearch();
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    if (s.size() > 1) {
-      list.push_back(std::make_unique<OmniList::VirtualSection>("Calculator"));
+    list.push_back(std::make_unique<OmniList::VirtualSection>("Calculator"));
 
-      te_parser parser;
-      double result = parser.evaluate(s.toLatin1().data());
+    if (m_currentCalculatorEntry) {
+      qDebug() << "calculator" << m_currentCalculatorEntry->expression << "="
+               << m_currentCalculatorEntry->result;
+      auto item = std::make_unique<BaseCalculatorListItem>(*m_currentCalculatorEntry);
 
-      if (!std::isnan(result)) {
-        auto data = CalculatorItem{.expression = s, .result = result};
-        auto item = std::make_unique<BaseCalculatorListItem>(data);
-
-        list.push_back(std::move(item));
-      }
+      list.push_back(std::move(item));
     }
 
     if (QColor(s).isValid()) {
@@ -400,7 +433,7 @@ public:
     for (auto &entry : commandDb->commands()) {
       if (entry.disabled || !entry.command->name().contains(s, Qt::CaseInsensitive)) continue;
 
-      list.push_back(std::make_unique<BuiltinCommandListItem>(entry.command));
+      list.push_back(std::make_unique<BuiltinCommandListItem>(entry));
     }
 
     if (s.isEmpty()) {
@@ -435,6 +468,38 @@ public:
 
   void handleRegisteredCommand(const CommandDbEntry &entry) { reload(OmniList::SelectFirst); }
 
-  RootView(AppWindow &app) : DeclarativeOmniListView(app), app(app) {}
+  RootView(AppWindow &app) : DeclarativeOmniListView(app), app(app) {
+    m_calcDebounce->setInterval(100);
+    m_calcDebounce->setSingleShot(true);
+
+    connect(m_calcDebounce, &QTimer::timeout, this, [this]() {
+      auto calculator = ServiceRegistry::instance()->calculatorDb();
+      QString expression = searchText().trimmed();
+      bool isComputable = false;
+
+      for (const auto &ch : expression) {
+        if (!ch.isLetterOrNumber() || ch.isSpace()) {
+          isComputable = true;
+          break;
+        }
+      }
+
+      if (!isComputable) {
+        m_currentCalculatorEntry.reset();
+        return;
+      }
+
+      auto [result, ok] = calculator->quickCalculate(expression.toLatin1().data());
+
+      if (ok) {
+        m_currentCalculatorEntry = CalculatorItem{.expression = expression, .result = result.c_str()};
+      } else {
+        m_currentCalculatorEntry.reset();
+      }
+      reload(OmniList::SelectFirst);
+    });
+
+    list->setSorting({.enabled = true, .preserveSectionOrder = false});
+  }
   ~RootView() {}
 };

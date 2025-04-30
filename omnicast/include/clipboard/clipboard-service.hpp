@@ -84,6 +84,7 @@ class ClipboardService : public QObject, public NonAssignable {
   QMimeDatabase _mimeDb;
   QFileInfo _path;
   QDir _data_dir;
+  AbstractClipboardServer *m_clipboardServer;
 
   std::string getSelectionPreferredMimeType(const ClipboardSelection &selection) const;
   QString createTextPreview(const QByteArray &data, int maxLength = 50) const;

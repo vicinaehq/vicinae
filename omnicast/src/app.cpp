@@ -311,6 +311,8 @@ void AppWindow::launchCommand(const std::shared_ptr<AbstractCmd> &command, const
     commandStack.pop();
   }
 
+  commandDb->registerCommandOpen(command->id());
+
   auto ctx = command->createContext(*this, command, opts.searchQuery);
 
   if (!ctx) {
@@ -460,7 +462,7 @@ void AppWindow::executeAction(AbstractAction *action) {
   auto executor = command.viewStack.empty() ? nullptr : &command.viewStack.at(0);
 
   qDebug() << "executing" << action->title;
-  auto executorCommand = commandStack.top().command;
+  auto executorCommand = commandStack.top();
 
   if (!action->isPushView()) { actionPannel->close(); }
 
@@ -469,7 +471,11 @@ void AppWindow::executeAction(AbstractAction *action) {
   if (!action->isPushView()) {
     emit action->didExecute();
     emit actionExecuted(action);
-    executorCommand->onActionExecuted(action);
+    executorCommand.command->onActionExecuted(action);
+
+    if (!executorCommand.viewStack.empty()) {
+      executorCommand.viewStack.top().view->onActionActivated(action);
+    }
 
     if (auto cb = action->executionCallback()) { cb(); }
   }

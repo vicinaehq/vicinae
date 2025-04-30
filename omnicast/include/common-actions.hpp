@@ -13,8 +13,8 @@ class PasteAction : public AbstractAction {
     auto clipman = ServiceRegistry::instance()->clipman();
 
     clipman->copyContent(m_content);
-    wm->pasteToFocusedWindow();
     app.hide();
+    QTimer::singleShot(10, [wm]() { wm->pasteToFocusedWindow(); });
   }
 
 public:

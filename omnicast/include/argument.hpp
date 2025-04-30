@@ -1,7 +1,7 @@
 #pragma once
 #include <qstring.h>
 
-struct Argument {
+struct CommandArgument {
   enum Type { Text, Password, Dropdown };
 
   struct DropdownData {
@@ -16,4 +16,4 @@ struct Argument {
   std::optional<std::vector<DropdownData>> data;
 };
 
-using ArgumentList = std::vector<Argument>;
+using ArgumentList = std::vector<CommandArgument>;

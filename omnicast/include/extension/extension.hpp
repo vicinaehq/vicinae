@@ -50,13 +50,13 @@ public:
 
   static Extension fromObject(const QJsonObject &object);
 
-  static Argument parseArgumentFromObject(const QJsonObject &obj) {
-    Argument arg;
+  static CommandArgument parseArgumentFromObject(const QJsonObject &obj) {
+    CommandArgument arg;
     QString type = obj.value("type").toString();
 
-    if (type == "text") arg.type = Argument::Text;
-    if (type == "password") arg.type = Argument::Password;
-    if (type == "dropdown") arg.type = Argument::Dropdown;
+    if (type == "text") arg.type = CommandArgument::Text;
+    if (type == "password") arg.type = CommandArgument::Password;
+    if (type == "dropdown") arg.type = CommandArgument::Dropdown;
 
     arg.name = obj.value("name").toString();
     arg.placeholder = obj.value("placeholder").toString();
@@ -64,7 +64,7 @@ public:
 
     if (type == "dropdown") {
       auto data = obj.value("data").toArray();
-      std::vector<Argument::DropdownData> options;
+      std::vector<CommandArgument::DropdownData> options;
 
       options.reserve(data.size());
 

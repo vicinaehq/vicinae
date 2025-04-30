@@ -247,7 +247,7 @@ public:
   void execute(AppWindow &app) override {
     auto calc = ServiceRegistry::instance()->calculatorDb();
 
-    calc->insertComputation(item.expression, QString::number(item.result));
+    calc->insertComputation(item.expression, item.result);
     CopyTextAction::execute(app);
   }
 

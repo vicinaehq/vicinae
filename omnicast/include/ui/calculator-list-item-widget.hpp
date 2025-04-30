@@ -6,7 +6,7 @@
 
 struct CalculatorItem {
   QString expression;
-  double result;
+  QString result;
 };
 
 class CalculatorListItemWidget : public TransformResult {
@@ -15,7 +15,7 @@ class CalculatorListItemWidget : public TransformResult {
 
   void setupUi() {
     setBase(item.expression, "Expression");
-    setResult(QString::number(item.result), "Answer");
+    setResult(item.result, "Answer");
   }
 
 public:

@@ -8,8 +8,6 @@
 #include "common.hpp"
 #include "extension/extension.hpp"
 #include "omni-command-db.hpp"
-#include "omnicast.hpp"
-#include <filesystem>
 #include <netinet/in.h>
 #include <qdebug.h>
 #include <qdir.h>
@@ -37,12 +35,12 @@ struct LoadedCommand {
   } command;
 };
 
-enum MessageType { REQUEST, RESPONSE, EVENT };
+enum ExtensionMessageType { REQUEST, RESPONSE, EVENT };
 
-static QHash<MessageType, QString> messageTypeToString = {
-    {MessageType::REQUEST, "request"},
-    {MessageType::RESPONSE, "response"},
-    {MessageType::EVENT, "event"},
+static QHash<ExtensionMessageType, QString> messageTypeToString = {
+    {ExtensionMessageType::REQUEST, "request"},
+    {ExtensionMessageType::RESPONSE, "response"},
+    {ExtensionMessageType::EVENT, "event"},
 };
 
 struct Messenger {
@@ -54,7 +52,7 @@ struct Messenger {
 
 struct MessageEnvelope {
   QString id;
-  MessageType type;
+  ExtensionMessageType type;
   Messenger sender;
   Messenger target;
   QString action;
@@ -68,10 +66,10 @@ struct FullMessage {
 class DataDecoder : public QObject {
   Q_OBJECT
 
-  QHash<QString, MessageType> stringToMessageType = {
-      {"request", MessageType::REQUEST},
-      {"response", MessageType::RESPONSE},
-      {"event", MessageType::EVENT},
+  QHash<QString, ExtensionMessageType> stringToExtensionMessageType = {
+      {"request", ExtensionMessageType::REQUEST},
+      {"response", ExtensionMessageType::RESPONSE},
+      {"event", ExtensionMessageType::EVENT},
   };
 
   QHash<QString, Messenger::Type> stringToMessengerType = {
@@ -91,7 +89,7 @@ class DataDecoder : public QObject {
 
     envelope.id = lhs["id"].toString();
     envelope.action = lhs["action"].toString();
-    envelope.type = stringToMessageType[lhs["type"].toString()];
+    envelope.type = stringToExtensionMessageType[lhs["type"].toString()];
     envelope.target = parseMessenger(lhs["target"].toObject());
     envelope.sender = parseMessenger(lhs["sender"].toObject());
 
@@ -161,7 +159,7 @@ class Bus : public QObject {
     return obj;
   }
 
-  MessageEnvelope makeEnvelope(MessageType type, const Messenger &target, const QString &action) {
+  MessageEnvelope makeEnvelope(ExtensionMessageType type, const Messenger &target, const QString &action) {
     auto id = QUuid::createUuid().toString(QUuid::StringFormat::WithoutBraces);
     MessageEnvelope envelope{
         .id = id,
@@ -201,14 +199,14 @@ class Bus : public QObject {
   }
 
   void request(const Messenger &target, const QString &action, const QJsonObject &payload) {
-    auto envelope = makeEnvelope(MessageType::REQUEST, target, action);
+    auto envelope = makeEnvelope(ExtensionMessageType::REQUEST, target, action);
 
     outgoingPendingRequests.insert(envelope.id, envelope);
     sendMessage(envelope, payload);
   }
 
   void emitEvent(const Messenger &target, const QString &action, const QJsonObject &payload) {
-    auto envelope = makeEnvelope(MessageType::EVENT, target, action);
+    auto envelope = makeEnvelope(ExtensionMessageType::EVENT, target, action);
 
     sendMessage(envelope, payload);
   }
@@ -223,17 +221,17 @@ private slots:
   void handleMessage(FullMessage msg) {
     qDebug() << "[DEBUG] readyRead: got message of type" << msg.envelope.action;
 
-    if (msg.envelope.type == MessageType::REQUEST) {
+    if (msg.envelope.type == ExtensionMessageType::REQUEST) {
       incomingPendingRequests.insert(msg.envelope.id, msg.envelope);
     }
 
     if (msg.envelope.sender.type == Messenger::Type::MANAGER) {
-      if (msg.envelope.type == MessageType::REQUEST) {
+      if (msg.envelope.type == ExtensionMessageType::REQUEST) {
         qDebug() << "manager->main is not supported";
         return;
       }
 
-      if (msg.envelope.type == MessageType::RESPONSE) {
+      if (msg.envelope.type == ExtensionMessageType::RESPONSE) {
         auto it = outgoingPendingRequests.find(msg.envelope.id);
 
         if (it == outgoingPendingRequests.end()) {
@@ -247,10 +245,10 @@ private slots:
     }
 
     if (msg.envelope.sender.type == Messenger::Type::EXTENSION) {
-      if (msg.envelope.type == MessageType::EVENT) {
+      if (msg.envelope.type == ExtensionMessageType::EVENT) {
         emit extensionEvent(msg.envelope.sender.id, msg.envelope.action, msg.data);
       }
-      if (msg.envelope.type == MessageType::REQUEST) {
+      if (msg.envelope.type == ExtensionMessageType::REQUEST) {
         emit extensionRequest(msg.envelope.sender.id, msg.envelope.id, msg.envelope.action, msg.data);
       }
     }
@@ -303,7 +301,7 @@ public:
     incomingPendingRequests.remove(id);
     envelope.target = envelope.sender;
     envelope.sender = selfMessenger;
-    envelope.type = MessageType::RESPONSE;
+    envelope.type = ExtensionMessageType::RESPONSE;
     sendMessage(envelope, payload);
 
     return true;
@@ -311,7 +309,7 @@ public:
 
   void emitExtensionEvent(const QString &sessionId, const QString &action, const QJsonObject &payload) {
     Messenger target{.id = sessionId, .type = Messenger::Type::EXTENSION};
-    auto envelope = makeEnvelope(MessageType::EVENT, target, action);
+    auto envelope = makeEnvelope(ExtensionMessageType::EVENT, target, action);
 
     sendMessage(envelope, payload);
   }

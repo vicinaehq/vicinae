@@ -7,6 +7,8 @@
 #include <QtSql/QSql>
 #include <QtSql/qsqldatabase.h>
 #include <QtSql/qsqlquery.h>
+#include <libqalculate/Calculator.h>
+#include <libqalculate/includes.h>
 #include <qdatetime.h>
 #include <qdir.h>
 #include <qlogging.h>
@@ -25,6 +27,7 @@ struct CalculatorEntry {
 
 class CalculatorDatabase : public QObject {
   QSqlDatabase db;
+  Calculator m_qcalc;
 
 public:
   static CalculatorDatabase &get() {
@@ -90,10 +93,51 @@ public:
 
     if (!query.exec()) { qDebug() << "Failed to execute initial query"; }
 
+    m_qcalc.checkExchangeRatesDate(1);
+    m_qcalc.loadExchangeRates();
+    m_qcalc.loadGlobalDefinitions();
+    m_qcalc.loadLocalDefinitions();
+
     entries = queryAll();
   }
 
-  void updateExchangeRate(const QList<QString> &symbols = {"USD", "EUR"}) {}
+  /**
+   * high level function to evaluate a math expression
+   */
+  std::pair<std::string, bool> quickCalculate(const std::string &expression) {
+
+    EvaluationOptions evalOpts;
+
+    evalOpts.auto_post_conversion = POST_CONVERSION_BEST;
+    evalOpts.structuring = STRUCTURING_SIMPLIFY;
+    evalOpts.parse_options.limit_implicit_multiplication = true;
+    evalOpts.parse_options.parsing_mode = PARSING_MODE_CONVENTIONAL;
+    evalOpts.parse_options.units_enabled = true;
+    evalOpts.parse_options.unknowns_enabled = false;
+
+    MathStructure result = m_qcalc.calculate(expression, evalOpts);
+
+    if (result.containsUnknowns()) { return {"", false}; }
+
+    bool error = false;
+
+    for (auto msg = m_qcalc.message(); msg; msg = m_qcalc.nextMessage()) {
+      qCritical() << "Calculator Error" << msg->message();
+      error = true;
+    }
+
+    if (error) return {"", false};
+
+    PrintOptions printOpts;
+
+    printOpts.indicate_infinite_series = true;
+    printOpts.interval_display = INTERVAL_DISPLAY_SIGNIFICANT_DIGITS;
+    printOpts.use_unicode_signs = true;
+
+    std::string res = result.print(printOpts);
+
+    return {res, true};
+  }
 
   void insertComputation(const QString &expression, const QString &result) {
     QSqlQuery query(db);

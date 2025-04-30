@@ -3,6 +3,7 @@
 #include "ui/omni-list-item-widget-wrapper.hpp"
 #include "ui/omni-list-item-widget.hpp"
 #include "ui/default-list-item-widget.hpp"
+#include <cmath>
 #include <cstdio>
 #include <QPainterPath>
 #include <functional>
@@ -31,6 +32,8 @@ public:
 
     virtual int calculateHeight(int width) const = 0;
     virtual OmniListItemWidget *createWidget() const = 0;
+    virtual double rankingScore() const { return NAN; }
+    virtual bool queryFilter(const QString &query) { return true; }
     virtual void recycle(QWidget *base) const;
     virtual bool recyclable() const;
     /**
@@ -127,6 +130,7 @@ private:
     int vIndex;
     int cachedHeight;
     QString id;
+    int sectionIndex;
   };
   struct VirtualListWidgetInfo {
     int x;
@@ -134,6 +138,13 @@ private:
     int width;
     int height;
     int index;
+    const AbstractVirtualItem *item;
+  };
+  struct VirtualSectionInfo {
+    int index;
+    int visibleCount;
+    std::unique_ptr<AbstractVirtualItem> section;
+    std::vector<ListItemInfo> items;
   };
   struct SectionCalculationContext {
     VirtualSection *section;
@@ -147,14 +158,21 @@ private:
   };
   struct NavigationBehaviour {};
 
+  struct SortingConfig {
+    bool enabled = false;
+    bool preserveSectionOrder = false;
+  };
+
   QScrollBar *scrollBar;
-  std::vector<ListItemInfo> _items;
   std::vector<VirtualListWidgetInfo> _virtual_items;
   std::unordered_map<size_t, OmniListItemWidgetWrapper *> _visibleWidgets;
   std::unordered_map<QString, CachedWidget> _widgetCache;
   std::unordered_map<size_t, std::stack<OmniListItemWidgetWrapper *>> _widgetPools;
-  std::unordered_map<QString, size_t> _idMap;
+  std::unordered_map<QString, AbstractVirtualItem *> _idItemMap;
   std::unique_ptr<AbstractItemFilter> _filter;
+  std::vector<VirtualSectionInfo> m_sections;
+  SortingConfig m_sortingConfig;
+
   int _selected;
   QString _selectedId;
   bool _isUpdating;
@@ -173,15 +191,15 @@ private:
   OmniListItemWidgetWrapper *takeFromPool(size_t type);
   void moveToPool(size_t type, OmniListItemWidgetWrapper *wrapper);
 
-  bool isSelectionValid() const { return _selected >= 0 && _selected < _items.size(); }
+  bool isSelectionValid() const { return _selected >= 0 && _selected < _virtual_items.size(); }
 
   void setSelectedIndex(int index, ScrollBehaviour scrollBehaviour = ScrollRelative);
   int previousRowIndex(int index);
   int nextRowIndex(int index);
 
+  void applySorting();
+
   void scrollTo(int idx, ScrollBehaviour behaviour = ScrollBehaviour::ScrollAbsolute);
-  ListItemInfo &vmap(int vindex);
-  const ListItemInfo &vmap(int vindex) const;
 
 protected:
   bool event(QEvent *event) override;
@@ -190,6 +208,7 @@ protected:
 public:
   OmniList();
 
+  void setSorting(const SortingConfig &config);
   bool selectUp();
   bool selectDown();
   bool selectLeft();
@@ -202,8 +221,6 @@ public:
   void addSection(const QString &name);
   void invalidateCache();
   void invalidateCache(const QString &id);
-  bool insertAtSectionStart(const QString &name, std::unique_ptr<AbstractVirtualItem> item);
-  bool insertAfter(const QString &id, std::unique_ptr<AbstractVirtualItem> item);
 
   void beginUpdate();
   void commitUpdate();
@@ -232,6 +249,14 @@ signals:
   void itemActivated(const AbstractVirtualItem &item) const;
   void selectionChanged(const AbstractVirtualItem *next, const AbstractVirtualItem *previous) const;
   void emptyStateChanged(bool empty);
+};
+
+class DefaultVirtualSection : public OmniList::VirtualSection {
+  bool showHeader() override { return false; }
+  QString id() const override { return "omnicast.default-section"; }
+
+public:
+  DefaultVirtualSection() : OmniList::VirtualSection("unamed") {}
 };
 
 class AbstractDefaultListItem : public OmniList::AbstractVirtualItem {

@@ -30,7 +30,7 @@ public:
   virtual CommandType type() const = 0;
   virtual CommandMode mode() const = 0;
   virtual std::vector<std::shared_ptr<BasePreference>> preferences() const { return {}; }
-  virtual std::vector<Argument> arguments() const { return {}; }
+  virtual std::vector<CommandArgument> arguments() const { return {}; }
   virtual std::vector<QString> keywords() const { return {}; }
   virtual QString repositoryName() const { return ""; }
 
@@ -54,7 +54,7 @@ class BuiltinCommand : public AbstractCmd {
   QString _repositoryName;
   std::vector<std::shared_ptr<BasePreference>> _preferences;
   std::vector<std::shared_ptr<BasePreference>> _repositoryPreferences;
-  std::vector<Argument> _arguments;
+  std::vector<CommandArgument> _arguments;
 
 public:
   QString id() const override { return _repositoryId + "." + _id; }
@@ -76,14 +76,14 @@ public:
 
     return list;
   }
-  std::vector<Argument> arguments() const override { return _arguments; }
+  std::vector<CommandArgument> arguments() const override { return _arguments; }
 
   void setIconUrl(const OmniIconUrl &url) { _url = url; }
 
   void setPreferences(const std::vector<std::shared_ptr<BasePreference>> &preferences) {
     _preferences = preferences;
   }
-  void setArguments(const std::vector<Argument> &arguments) { _arguments = arguments; }
+  void setArguments(const std::vector<CommandArgument> &arguments) { _arguments = arguments; }
 
   QString repositoryName() const override { return _repositoryName; }
   const QString &repositoryId() { return _repositoryId; }

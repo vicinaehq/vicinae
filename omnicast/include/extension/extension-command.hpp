@@ -46,7 +46,7 @@ public:
 
   void setExtensionPreferences(const PreferenceList &prefs) { _extensionPreferences = prefs; }
 
-  std::vector<Argument> arguments() const override { return m_arguments; }
+  std::vector<CommandArgument> arguments() const override { return m_arguments; }
   std::vector<std::shared_ptr<BasePreference>> preferences() const override {
     PreferenceList list;
 

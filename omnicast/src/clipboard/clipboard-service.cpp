@@ -1,5 +1,6 @@
 #include "clipboard/clipboard-service.hpp"
 #include "clipboard/clipboard-server.hpp"
+#include "clipboard/clipboard-server-factory.hpp"
 #include <algorithm>
 #include <cstdint>
 #include <filesystem>
@@ -165,7 +166,8 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardService::listAll(int limit, in
 
   if (!opts.query.isEmpty()) { queryString += " WHERE selection_fts MATCH '" + opts.query + "*' "; }
 
-  if (!opts.query.isEmpty()) { queryString += " GROUP BY selection.id "; }
+  if (!opts.query.isEmpty()) {}
+  queryString += " GROUP BY selection.id ";
 
   queryString += R"(
 	ORDER BY
@@ -504,6 +506,12 @@ void ClipboardService::saveSelection(const ClipboardSelection &selection) {
 ClipboardService::ClipboardService(const QString &path)
     : db(QSqlDatabase::addDatabase("QSQLITE", "clipboard")), _path(path),
       _data_dir(_path.dir().filePath("clipboard-data")) {
+  ClipboardServerFactory factory;
+
+  m_clipboardServer = factory.createFirstActivatable();
+
+  connect(m_clipboardServer, &AbstractClipboardServer::selection, this, &ClipboardService::saveSelection);
+
   db.setDatabaseName(path);
 
   if (!db.open()) { throw std::runtime_error("Failed to open clipboard db"); }
