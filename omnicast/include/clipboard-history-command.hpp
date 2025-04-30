@@ -1,5 +1,6 @@
 #pragma once
 #include "app.hpp"
+#include "calculator-history-command.hpp"
 #include "clipboard/clipboard-service.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
@@ -34,6 +35,30 @@ public:
     _layout = new QVBoxLayout;
     setLayout(_layout);
   }
+};
+
+class CopyClipboardSelection : public AbstractAction {
+  int m_id;
+
+  void execute(AppWindow &app) override {
+    auto clipman = ServiceRegistry::instance()->clipman();
+    auto wm = ServiceRegistry::instance()->windowManager();
+
+    if (auto selection = clipman->retrieveSelectionById(m_id)) {
+      // XXX - We may want to update the update time of this selection to make
+      // it appear on top in subsequent searches.
+      clipman->copySelection(*selection, {.concealed = true});
+      app.statusBar->setToast("Selection copied");
+      app.closeWindow(true);
+      QTimer::singleShot(10, [wm]() { wm->pasteToFocusedWindow(); });
+    } else {
+      app.statusBar->setToast(QString("No selection with ID %1").arg(m_id));
+    }
+  }
+
+public:
+  CopyClipboardSelection(int id)
+      : AbstractAction("Copy selection", BuiltinOmniIconUrl("clipboard")), m_id(id) {}
 };
 
 class ClipboardItemDetail : public OmniListView::MetadataDetailModel {
@@ -213,7 +238,7 @@ class ClipboardHistoryItemActionGenerator : public ActionGenerator {
     auto current = static_cast<const ClipboardHistoryItem *>(item);
     auto pin = new PinClipboardAction(current->info.id, !current->info.pinnedAt);
     auto remove = new RemoveSelectionAction(current->info.id);
-    auto copy = new CopyTextAction("Copy preview", current->info.textPreview);
+    auto copy = new CopyClipboardSelection(current->info.id);
 
     connect(pin, &PinClipboardAction::pinChanged, this, &ClipboardHistoryItemActionGenerator::pinChanged);
     connect(remove, &RemoveSelectionAction::removed, this, &ClipboardHistoryItemActionGenerator::removed);

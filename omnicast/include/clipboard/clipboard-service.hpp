@@ -35,10 +35,10 @@ struct Html {
 };
 
 struct CopyOptions {
-  bool concealed;
+  bool concealed = false;
 };
 
-using Content = std::variant<File, Text, Html>;
+using Content = std::variant<File, Text, Html, ClipboardSelection>;
 
 static Content fromJson(const QJsonObject &obj) {
   if (obj.contains("path")) { return File{.path = obj.value("path").toString().toStdString()}; }
@@ -103,7 +103,6 @@ public:
   bool setPinned(int id, bool pinned);
   PaginatedResponse<ClipboardHistoryEntry> listAll(int limit = 100, int offset = 0,
                                                    const ClipboardListSettings &opts = {}) const;
-  std::vector<ClipboardHistoryEntry> collectedSearch(const QString &q);
   bool copyText(const QString &text, const Clipboard::CopyOptions &options = {.concealed = true});
   bool copyHtml(const Clipboard::Html &data, const Clipboard::CopyOptions &options = {.concealed = false});
   bool copyFile(const std::filesystem::path &path,
@@ -113,7 +112,7 @@ public:
   void saveSelection(const ClipboardSelection &selection);
   ClipboardSelection retrieveSelection(int offset = 0);
   std::optional<ClipboardSelection> retrieveSelectionById(int id);
-  bool copySelection(const ClipboardSelection &selection);
+  bool copySelection(const ClipboardSelection &selection, const Clipboard::CopyOptions &options);
 
 signals:
   void itemCopied(const InsertClipboardHistoryLine &item) const;

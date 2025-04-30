@@ -3,6 +3,7 @@
 #include "calculator-database.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
+#include "ui/action-pannel/action.hpp"
 #include "ui/omni-list-view.hpp"
 #include "ui/omni-list.hpp"
 #include <memory>

@@ -38,8 +38,11 @@ void SelectableOmniListWidget::mousePressEvent(QMouseEvent *event) {
 }
 
 void SelectableOmniListWidget::mouseDoubleClickEvent(QMouseEvent *event) {
+  if (event->button() == Qt::LeftButton) {
+    emit doubleClicked();
+    return;
+  }
   OmniListItemWidget::mouseDoubleClickEvent(event);
-  if (event->button() == Qt::LeftButton) { emit doubleClicked(); }
 }
 
 void SelectableOmniListWidget::setHovered(bool hovered) {

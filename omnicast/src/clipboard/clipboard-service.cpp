@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <ios>
 #include <qbytearrayview.h>
 #include "timer.hpp"
 #include <qcontainerfwd.h>
@@ -18,6 +19,7 @@
 #include <qsqlquery.h>
 #include <qtypes.h>
 #include <sstream>
+#include <variant>
 
 static const char *retrieveSelectionByIdQuery =
     "SELECT mime_type, content_hash_md5 from data_offer where selection_id = :id";
@@ -37,33 +39,44 @@ bool ClipboardService::setPinned(int id, bool pinned) {
 }
 
 bool ClipboardService::copyContent(const Clipboard::Content &content, const Clipboard::CopyOptions options) {
-  struct ContentVistor {};
+  struct ContentVisitor {
+    ClipboardService &service;
+    const Clipboard::CopyOptions &options;
 
-  if (auto html = std::get_if<Clipboard::Html>(&content)) {
-    return copyHtml(*html, options);
-  } else if (auto file = std::get_if<Clipboard::File>(&content)) {
-    return copyFile(file->path, options);
-  } else if (auto text = std::get_if<Clipboard::Text>(&content)) {
-    return copyText(text->text, options);
-  }
+    bool operator()(const Clipboard::Html &html) const { return service.copyHtml(html, options); }
+    bool operator()(const Clipboard::File &file) const { return service.copyFile(file.path, options); }
+    bool operator()(const Clipboard::Text &text) const { return service.copyText(text.text, options); }
+    bool operator()(const ClipboardSelection &selection) const {
+      return service.copySelection(selection, options);
+    }
 
-  return false;
+    ContentVisitor(ClipboardService &service, const Clipboard::CopyOptions &options)
+        : service(service), options(options) {}
+  };
+
+  ContentVisitor visitor(*this, options);
+
+  return std::visit(visitor, content);
 }
 
 bool ClipboardService::copyFile(const std::filesystem::path &path, const Clipboard::CopyOptions &options) {
   QMimeType mime = _mimeDb.mimeTypeForFile(path.c_str());
   QClipboard *clipboard = QApplication::clipboard();
-  auto data = new QMimeData;
-  QFile file(path.c_str());
+  std::ifstream ifs(path, std::ios_base::binary);
 
-  if (!file.open(QIODevice::ReadOnly)) {
+  if (!ifs) {
     qCritical() << "Cannot copy file to clipboard as it doesn't exist" << path;
     return false;
   }
 
-  data->setData(mime.name(), file.readAll());
+  QMimeData *data = new QMimeData;
+  std::stringstream ss;
 
-  if (options.concealed) data->setData(Clipboard::CONCEALED_MIME_TYPE, "1");
+  ss << ifs.rdbuf();
+  const std::string &str = ss.str();
+  data->setData(mime.name(), {str.data(), static_cast<qsizetype>(str.size())});
+
+  if (options.concealed) { data->setData(Clipboard::CONCEALED_MIME_TYPE, "1"); }
 
   clipboard->setMimeData(data);
 
@@ -95,48 +108,6 @@ bool ClipboardService::copyText(const QString &text, const Clipboard::CopyOption
   clipboard->setMimeData(mimeData);
 
   return true;
-}
-
-std::vector<ClipboardHistoryEntry> ClipboardService::collectedSearch(const QString &q) {
-  std::vector<ClipboardHistoryEntry> entries;
-  QSqlQuery query(db);
-  auto qstring = QString(R"(
-		SELECT
-			h.id, h.mime_type, h.text_preview, h.pinned_at, h.content_hash_md5, h.created_at
-		FROM
-			history as h
-		JOIN 
-			history_fts fts ON h.id = fts.history_id
-		WHERE
-			history_fts MATCH '%1'
-		ORDER BY 
-			h.pinned_at DESC,
-			h.created_at DESC
-	)")
-                     .arg(q);
-
-  if (!query.exec(qstring)) {
-    qDebug() << "query failed" << query.lastError();
-    return {};
-  }
-
-  while (query.next()) {
-    auto sum = query.value(4).toString();
-
-    entries.push_back(ClipboardHistoryEntry{
-        .id = query.value(0).toInt(),
-        .mimeType = query.value(1).toString(),
-        .textPreview = query.value(2).toString(),
-        .pinnedAt = query.value(3).toULongLong(),
-        .md5sum = sum,
-        .createdAt = query.value(5).toULongLong(),
-        .filePath = _data_dir.absoluteFilePath(sum),
-    });
-  }
-
-  qDebug() << "found" << entries.size();
-
-  return entries;
 }
 
 PaginatedResponse<ClipboardHistoryEntry> ClipboardService::listAll(int limit, int offset,
@@ -533,7 +504,8 @@ std::optional<ClipboardSelection> ClipboardService::retrieveSelectionById(int id
   return selection;
 }
 
-bool ClipboardService::copySelection(const ClipboardSelection &selection) {
+bool ClipboardService::copySelection(const ClipboardSelection &selection,
+                                     const Clipboard::CopyOptions &options) {
   if (selection.offers.empty()) {
     qWarning() << "Not copying selection with no offers";
     return false;
@@ -548,7 +520,7 @@ bool ClipboardService::copySelection(const ClipboardSelection &selection) {
       return;
     }
 
-    std::ifstream ifs(offer.path);
+    std::ifstream ifs(offer.path, std::ios_base::binary);
     std::stringstream ss;
 
     if (!ifs) {
@@ -557,7 +529,8 @@ bool ClipboardService::copySelection(const ClipboardSelection &selection) {
     }
 
     ss << ifs.rdbuf();
-    mimeData->setData(QString::fromStdString(offer.mimeType), ss.str().c_str());
+    QByteArray buf(ss.str().data(), ss.str().size());
+    mimeData->setData(QString::fromStdString(offer.mimeType), buf);
   };
 
   std::ranges::for_each(selection.offers, appendOffer);

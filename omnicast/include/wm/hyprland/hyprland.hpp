@@ -3,7 +3,6 @@
 #include "wm/window-manager.hpp"
 #include <QtConcurrent/qtconcurrentrun.h>
 #include <lib/xkbcommon-utils.hpp>
-
 #include <format>
 #include <qapplication.h>
 #include <qfuture.h>
@@ -78,15 +77,9 @@ public:
   }
 
   bool sendShortcutSync(const Window &window, const KeyboardShortcut &shortcut) override {
-    // focusWindowSync(window);
-
-    // Hyprctl::oneshot("dispatch sendshortcut ,mouse:272");
-
     auto cmd = QString("dispatch sendshortcut %1,V,address:%2")
                    .arg(stringifyModifiers(shortcut.modifiers))
                    .arg(window.id());
-
-    //.arg(XKBCommon::fromQtKey(shortcut.key));
 
     qWarning() << "send dispatcher" << cmd;
     Hyprctl::oneshot(cmd.toStdString());
