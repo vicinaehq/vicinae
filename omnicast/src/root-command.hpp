@@ -41,14 +41,9 @@
 #include <qnamespace.h>
 #include <qnetworkcookiejar.h>
 #include <qthreadpool.h>
+#include <quuid.h>
 #include <qwidget.h>
 #include <ranges>
-
-static constexpr size_t RECENCY_WEIGHT = 2;
-static constexpr size_t FREQUENCY_WEIGHT = 1;
-
-// after more than 100 uses, the frequency is a differentiating factor no more
-static constexpr size_t FREQUENCY_CAP = 100;
 
 struct OpenBuiltinCommandAction : public AbstractAction {
   std::shared_ptr<AbstractCmd> cmd;
@@ -151,25 +146,6 @@ protected:
 
     return std::make_unique<CompleterData>(
         CompleterData{.iconUrl = m_entry.command->iconUrl(), .arguments = m_entry.command->arguments()});
-  }
-
-  double rankingScore() const override {
-    using namespace std::chrono;
-
-    double recencyScore = 0;
-
-    if (m_entry.lastOpenedAt) {
-      auto now = high_resolution_clock::now();
-      double secondsSinceLastUse = duration_cast<seconds>(now - *m_entry.lastOpenedAt).count();
-
-      recencyScore = std::exp(-0.1 * secondsSinceLastUse);
-    }
-
-    double frequencyScore = std::min(1.0, static_cast<double>(m_entry.openCount) / FREQUENCY_CAP);
-
-    // qDebug() << "recency score" << m_entry.command->id() << recencyScore << "secs" << secondsSinceLastUse;
-
-    return (recencyScore * RECENCY_WEIGHT) + (frequencyScore * FREQUENCY_WEIGHT);
   }
 
   QString id() const override { return m_entry.command->id(); }
@@ -282,11 +258,6 @@ class RootView : public DeclarativeOmniListView {
               .accessories = {{.text = "Application", .color = ColorTint::TextSecondary}}};
     }
 
-    double rankingScore() const override {
-      if (app->name().contains("Alacritty")) return 100;
-      return 0;
-    }
-
     QString id() const override { return app->id(); }
 
   public:
@@ -331,8 +302,6 @@ class RootView : public DeclarativeOmniListView {
       return ruler.sizeHint().height();
     }
 
-    double rankingScore() const override { return DBL_MAX; }
-
     QString id() const override { return item.expression; }
 
     QList<AbstractAction *> generateActions() const override {
@@ -355,35 +324,36 @@ public:
   std::optional<CalculatorItem> m_currentCalculatorEntry;
 
   // list without filtering
-  std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> generateBaseSearch() {
+  void renderBlankSearch() {
     auto commandDb = ServiceRegistry::instance()->commandDb();
     auto quicklinkDb = ServiceRegistry::instance()->quicklinks();
     auto appDb = ServiceRegistry::instance()->appDb();
 
-    std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> list;
-    list.push_back(std::make_unique<OmniList::VirtualSection>("Commands"));
+    {
+      auto &commandSection = list->addSection("Commands");
+      const auto &commands = commandDb->commands();
+      const auto &links = quicklinkDb->list();
 
-    list.reserve(100);
-
-    for (const auto &entry : commandDb->commands()) {
-      if (entry.disabled) continue;
-
-      list.push_back(std::make_unique<BuiltinCommandListItem>(entry));
+      commandSection.withCapacity(commands.size() + links.size());
+      std::ranges::for_each(commands, [&commandSection](const auto entry) {
+        commandSection.addItem(std::make_unique<BuiltinCommandListItem>(entry));
+      });
+      std::ranges::for_each(links, [&commandSection](const auto link) {
+        commandSection.addItem(std::make_unique<QuicklinkRootListItem>(link));
+      });
     }
 
-    for (const auto &link : quicklinkDb->list()) {
-      list.push_back(std::make_unique<QuicklinkRootListItem>(link));
+    {
+      const auto &appEntries = appDb->listEntries();
+      auto &appSection = list->addSection("Apps").withCapacity(appEntries.size());
+      auto filteredEntries = appEntries | std::views::filter([](const auto &entry) {
+                               return !entry.disabled && entry.app->displayable();
+                             });
+
+      std::ranges::for_each(filteredEntries, [&appSection](const auto &entry) {
+        appSection.addItem(std::make_unique<AppListItem>(entry.app));
+      });
     }
-
-    list.push_back(std::make_unique<OmniList::VirtualSection>("Apps"));
-
-    for (auto &entry : appDb->listEntries()) {
-      if (!entry.app->displayable()) continue;
-
-      list.push_back(std::make_unique<AppListItem>(entry.app));
-    }
-
-    return list;
   }
 
   void onSearchChanged(const QString &s) override {
@@ -391,78 +361,97 @@ public:
     m_calcDebounce->start();
   }
 
-  std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> generateList(const QString &s) override {
+  struct RankedListItem {
+    std::unique_ptr<OmniList::AbstractVirtualItem> item;
+    double rank;
+  };
+
+  bool doesUseNewModel() const override { return true; }
+
+  ItemList generateList(const QString &s) override { return {}; }
+
+  void render(const QString &s) override {
+    if (s.isEmpty()) return renderBlankSearch();
+
     auto commandDb = ServiceRegistry::instance()->commandDb();
     auto quicklinkDb = ServiceRegistry::instance()->quicklinks();
     auto appDb = ServiceRegistry::instance()->appDb();
     auto calculator = ServiceRegistry::instance()->calculatorDb();
-    std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> list;
+    const auto &quicklinks = quicklinkDb->list();
+    const auto &appEntries = appDb->listEntries();
+    const auto &commandEntries = commandDb->commands();
+    size_t maxReserve = appEntries.size() + commandEntries.size() + quicklinks.size();
 
     auto isWordStart = [&s](const QString &text) -> bool {
+      if (text.startsWith(s, Qt::CaseInsensitive)) { return true; }
+
       return std::ranges::any_of(
           text.split(" "), [&s](const QString &word) { return word.startsWith(s, Qt::CaseInsensitive); });
     };
 
-    if (s.isEmpty()) return generateBaseSearch();
-
-    const auto &quicklinks = quicklinkDb->list();
     auto start = std::chrono::high_resolution_clock::now();
-
-    list.push_back(std::make_unique<OmniList::VirtualSection>("Calculator"));
 
     if (m_currentCalculatorEntry) {
       qDebug() << "calculator" << m_currentCalculatorEntry->expression << "="
                << m_currentCalculatorEntry->result;
-      auto item = std::make_unique<BaseCalculatorListItem>(*m_currentCalculatorEntry);
-
-      list.push_back(std::move(item));
+      list->addSection("Calculator")
+          .addItem(std::make_unique<BaseCalculatorListItem>(*m_currentCalculatorEntry));
     }
 
-    if (QColor(s).isValid()) {
-      list.push_back(std::make_unique<OmniList::VirtualSection>("Color"));
-      list.push_back(std::make_unique<ColorListItem>(s));
-    }
+    if (QColor(s).isValid()) { list->addSection("Color").addItem(std::make_unique<ColorListItem>(s)); }
 
-    list.push_back(std::make_unique<OmniList::VirtualSection>("Results"));
-
-    auto filteredLinks = quicklinks | std::views::filter([isWordStart](const auto &quicklink) {
-                           return isWordStart(quicklink->name);
-                         });
-
-    std::ranges::transform(filteredLinks, std::back_inserter(list),
-                           [](const auto &entry) { return std::make_unique<QuicklinkRootListItem>(entry); });
-
-    const auto &appEntries = appDb->listEntries();
+    auto filteredLinks =
+        quicklinks |
+        std::views::filter([isWordStart](const auto &quicklink) { return isWordStart(quicklink->name); }) |
+        std::views::transform([](const auto &entry) {
+          auto item = std::make_unique<QuicklinkRootListItem>(entry);
+          return RankedListItem{.item = std::move(item), .rank = 0};
+        });
 
     auto filteredApps =
         appEntries | std::views::filter([](const auto &entry) { return entry.app->displayable(); }) |
         std::views::filter([&isWordStart](const auto &entry) { return isWordStart(entry.app->name()); }) |
-        std::ranges::to<std::vector>();
-    std::ranges::transform(filteredApps, std::back_inserter(list),
-                           [](const auto &entry) { return std::make_unique<AppListItem>(entry.app); });
+        std::views::transform([](const auto &entry) {
+          auto item = std::make_unique<AppListItem>(entry.app);
 
-    const auto &commandEntries = commandDb->commands();
+          return RankedListItem{.item = std::move(item), .rank = entry.frecency};
+        });
+
     auto filteredCommands =
         commandEntries | std::views::filter([](const auto &entry) { return !entry.disabled; }) |
-        std::views::filter([&isWordStart](const auto &entry) { return isWordStart(entry.command->name()); });
-    std::ranges::transform(filteredCommands, std::back_inserter(list),
-                           [](const auto &entry) { return std::make_unique<BuiltinCommandListItem>(entry); });
+        std::views::filter([&isWordStart](const auto &entry) { return isWordStart(entry.command->name()); }) |
+        std::views::transform([](const auto &entry) {
+          auto item = std::make_unique<BuiltinCommandListItem>(entry);
+          return RankedListItem{.item = std::move(item), .rank = 0};
+        });
 
-    list.push_back(std::make_unique<OmniList::VirtualSection>(QString("Use \"%1\" with...").arg(s)));
+    std::vector<RankedListItem> rankedResults;
 
+    {
+
+      rankedResults.reserve(maxReserve);
+      std::ranges::copy(filteredApps, std::back_inserter(rankedResults));
+      std::ranges::copy(filteredCommands, std::back_inserter(rankedResults));
+      std::ranges::copy(filteredLinks, std::back_inserter(rankedResults));
+      std::ranges::sort(rankedResults, [](const auto &a, const auto &b) { return a.rank > b.rank; });
+
+      auto &results = list->addSection("Results", QString::number(rankedResults.size()))
+                          .withCapacity(rankedResults.size());
+
+      std::ranges::for_each(rankedResults, [&results](auto &item) { results.addItem(std::move(item.item)); });
+    }
+
+    auto &fallbackCommands = list->addSection(QString("Use \"%1\" with...").arg(s));
     auto fallbackLinks = quicklinks | std::views::filter([&s](const auto &quicklink) {
                            return quicklink->placeholders.size() == 1;
                          });
-
-    std::ranges::transform(fallbackLinks, std::back_inserter(list), [&s](const auto &link) {
-      return std::make_unique<FallbackQuicklinkListItem>(link, s);
+    std::ranges::for_each(fallbackLinks, [&fallbackCommands, &s](const auto &link) {
+      fallbackCommands.addItem(std::make_unique<FallbackQuicklinkListItem>(link, s));
     });
 
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
     // qDebug() << "root searched in " << duration << "ms";
-
-    return list;
   }
 
   void onMount() override {
@@ -505,7 +494,7 @@ public:
       reload(OmniList::SelectFirst);
     });
 
-    list->setSorting({.enabled = true, .preserveSectionOrder = false});
+    // list->setSorting({.enabled = true, .preserveSectionOrder = false});
   }
   ~RootView() {}
 };

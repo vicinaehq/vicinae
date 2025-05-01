@@ -3,6 +3,8 @@
 #include "ui/omni-list-item-widget-wrapper.hpp"
 #include "ui/omni-list-item-widget.hpp"
 #include "ui/default-list-item-widget.hpp"
+#include <algorithm>
+#include <bits/ranges_algo.h>
 #include <cmath>
 #include <cstdio>
 #include <QPainterPath>
@@ -16,6 +18,7 @@
 #include <qtmetamacros.h>
 #include <qtpreprocessorsupport.h>
 #include <qwidget.h>
+#include <ranges>
 #include <stack>
 #include <unordered_map>
 
@@ -55,6 +58,7 @@ public:
 
     bool isListItem() const;
     bool isSection() const;
+    virtual ~AbstractVirtualItem() {}
   };
 
   class VirtualSection : public AbstractVirtualItem {
@@ -89,6 +93,7 @@ public:
     void setShowCount(bool value);
 
     VirtualSection(const QString &name, bool showCount = true);
+    ~VirtualSection() {}
   };
 
   class SectionWithoutCount : public VirtualSection {
@@ -108,6 +113,50 @@ public:
     PreserveSelection,
     SelectNone,
   };
+
+  class Section {
+    std::vector<std::unique_ptr<AbstractVirtualItem>> m_items;
+    std::unique_ptr<VirtualSection> m_headerItem;
+    QString m_title;
+    QString m_subtitle;
+
+  public:
+    Section(const QString &title = "", const QString &subtitle = "") : m_title(title), m_subtitle(subtitle) {
+      m_headerItem = std::make_unique<VirtualSection>(title);
+    }
+
+    Section &withTitle(const QString &title) {
+      m_title = title;
+      return *this;
+    }
+    Section &withSubtitle(const QString &subtitle) {
+      m_subtitle = subtitle;
+      return *this;
+    }
+
+    Section &withCapacity(size_t n) {
+      m_items.reserve(n);
+      return *this;
+    }
+
+    Section &withHeaderItem(std::unique_ptr<VirtualSection> item) {
+      m_headerItem = std::move(item);
+      return *this;
+    }
+
+    VirtualSection *headerItem() { return m_headerItem.get(); }
+
+    const std::vector<std::unique_ptr<AbstractVirtualItem>> &items() const { return m_items; }
+
+    Section &addItem(std::unique_ptr<AbstractVirtualItem> item) {
+      m_items.emplace_back(std::move(item));
+      return *this;
+    }
+  };
+
+  using RootListItem = std::variant<std::unique_ptr<Section>, std::unique_ptr<AbstractVirtualItem>>;
+
+  std::vector<std::unique_ptr<Section>> m_model;
 
 private:
   Q_OBJECT
@@ -184,6 +233,118 @@ private:
   void updateVisibleItems();
   void calculateHeights();
 
+  void calculateHeightsFromModel() {
+    _virtual_items.clear();
+
+    int yOffset = 0;
+    int availableWidth = width() - margins.left - margins.right;
+    std::optional<SectionCalculationContext> sctx;
+    std::unordered_map<QString, CachedWidget> updatedCache;
+
+    auto view = m_model | std::views::transform([](const auto &section) { return section->items().size(); });
+    auto totalSize = std::ranges::fold_left(view, 0, std::plus<size_t>());
+
+    _virtual_items.reserve(totalSize);
+
+    for (const auto &section : m_model) {
+      auto &items = section->items();
+
+      if (items.empty()) continue;
+
+      if (auto header = section->headerItem()) {
+        header->setCount(items.size());
+        header->initWidth(availableWidth);
+
+        if (header->showHeader()) {
+          VirtualListWidgetInfo vinfo{.x = margins.left,
+                                      .y = yOffset,
+                                      .width = availableWidth,
+                                      .height = header->calculateHeight(availableWidth),
+                                      .item = header};
+
+          _virtual_items.push_back(vinfo);
+          yOffset += vinfo.height;
+        }
+
+        sctx = {.section = header, .x = margins.left};
+      }
+
+      for (auto &item : items) {
+        int vIndex = _virtual_items.size();
+        int height = 0;
+        int width = availableWidth;
+        int x = margins.left;
+        int y = yOffset;
+
+        if (vIndex >= visibleIndexRange.lower && vIndex <= visibleIndexRange.upper) {
+          if (auto it = _widgetCache.find(item->id()); it != _widgetCache.end()) {
+            if (item->hasPartialUpdates()) {
+              qDebug() << "Refreshing" << it->first;
+              item->refresh(it->second.widget->widget());
+            }
+
+            updatedCache[item->id()] = it->second;
+          }
+        }
+
+        if (sctx) {
+          width = sctx->section->calculateItemWidth(width, sctx->index);
+          // x = sctx->section->calculateItemX(sctx->x, sctx->index);
+          if (sctx->x == margins.left && sctx->index > 0) {
+            yOffset += sctx->section->spacing();
+            y = yOffset;
+          }
+
+          x = sctx->x;
+          sctx->x = sctx->x + width + sctx->section->spacing();
+          height = item->calculateHeight(width);
+          sctx->maxHeight = std::max(sctx->maxHeight, height);
+
+          if (sctx->x >= availableWidth) {
+            yOffset += sctx->maxHeight;
+            sctx->x = margins.left;
+            sctx->maxHeight = 0;
+          }
+
+          ++sctx->index;
+        } else {
+          height = item->calculateHeight(width);
+          yOffset += height;
+        }
+
+        VirtualListWidgetInfo vinfo{.x = x, .y = y, .width = width, .height = height, .item = item.get()};
+
+        _virtual_items.push_back(vinfo);
+      }
+    }
+
+    if (sctx) { yOffset += sctx->maxHeight; }
+
+    yOffset += margins.bottom;
+
+    for (auto &[key, cache] : _widgetCache) {
+      if (auto it = updatedCache.find(key); it == updatedCache.end()) {
+        if (cache.recyclingId) {
+          moveToPool(cache.recyclingId, cache.widget);
+        } else {
+          cache.widget->deleteLater();
+        }
+      }
+    }
+
+    _visibleWidgets.clear();
+    _widgetCache = updatedCache;
+
+    auto end = std::chrono::high_resolution_clock::now();
+    // auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    //  qDebug() << "calculateHeights() took" << duration << "ms";
+
+    scrollBar->setMaximum(std::max(0, yOffset - height()));
+    scrollBar->setMinimum(0);
+    _virtualHeight = yOffset;
+    updateVisibleItems();
+  }
+
   int indexOfItem(const QString &id) const;
 
   void clearVisibleWidgets();
@@ -216,9 +377,87 @@ public:
   const AbstractVirtualItem *firstSelectableItem() const;
   void activateCurrentSelection() const;
 
+  void beginResetModel() {
+    m_model.clear();
+    m_model.reserve(0xF);
+    _idItemMap.clear();
+  }
+
+  Section &addSection(const QString &title = "", const QString &subtitle = "") {
+    auto section = std::make_unique<Section>(title, subtitle);
+    auto ptr = section.get();
+
+    m_model.emplace_back(std::move(section));
+
+    return *ptr;
+  }
+
+  void endResetModel(OmniList::SelectionPolicy selectionPolicy) {
+    std::ranges::for_each(m_model, [this](const auto &section) {
+      if (auto header = section->headerItem()) { _idItemMap.insert({header->id(), header}); }
+
+      std::ranges::for_each(section->items(),
+                            [this](const auto &item) { _idItemMap.insert({item->id(), item.get()}); });
+    });
+
+    calculateHeightsFromModel();
+
+    switch (selectionPolicy) {
+    case SelectFirst:
+      selectFirst();
+      break;
+    case KeepSelection:
+      qDebug() << "update with keep selection";
+      if (_selected == -1) {
+        selectFirst();
+      } else if (auto idx = indexOfItem(_selectedId); idx != -1) {
+        qCritical() << "not implemented yet";
+        // qDebug() << "idx of " << _selectedId << _items[idx].vIndex;
+        // setSelectedIndex(_items[idx].vIndex);
+      } else {
+        qDebug() << "no index for" << _selectedId;
+        setSelectedIndex(std::max(0, std::min(_selected, static_cast<int>(_virtual_items.size() - 1))));
+      }
+      break;
+    case PreserveSelection: {
+      int targetIndex = std::clamp(_selected, 0, (int)_virtual_items.size() - 1);
+      int distance = 0;
+
+      for (;;) {
+        int lowTarget = targetIndex - distance;
+        int highTarget = targetIndex + distance;
+        bool hasLower = lowTarget >= 0 && lowTarget < _virtual_items.size();
+        bool hasUpper = highTarget >= 0 && highTarget < _virtual_items.size();
+
+        if (!hasLower && !hasUpper) {
+          setSelectedIndex(-1);
+          return;
+        }
+
+        if (hasLower && _virtual_items[lowTarget].item->selectable()) {
+          setSelectedIndex(lowTarget);
+          return;
+        }
+
+        if (hasUpper && _virtual_items[highTarget].item->selectable()) {
+          setSelectedIndex(highTarget);
+          return;
+        }
+
+        ++distance;
+      }
+      break;
+    }
+    case SelectNone:
+      setSelectedIndex(-1);
+      break;
+    }
+  }
+
+  void newAddItem() {}
+
   void updateFromList(std::vector<std::unique_ptr<AbstractVirtualItem>> &nextList,
                       SelectionPolicy selectionPolicy = SelectionPolicy::KeepSelection);
-  void addSection(const QString &name);
   void invalidateCache();
   void invalidateCache(const QString &id);
 

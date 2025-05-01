@@ -7,6 +7,7 @@
 #include "extension_manager.hpp"
 #include "local-storage-service.hpp"
 #include "service-registry.hpp"
+#include <algorithm>
 #include <qjsonarray.h>
 #include <qjsonobject.h>
 #include <qjsonvalue.h>
@@ -137,19 +138,22 @@ class ExtensionCommandRuntime : public CommandContext {
     auto appDb = ServiceRegistry::instance()->appDb();
 
     if (action == "apps.list") {
+      auto baseApps = appDb->list();
       QJsonArray apps;
 
-      for (const auto &app : appDb->list()) {
-        if (!app->displayable()) continue;
+      auto serializedApps = baseApps |
+                            std::views::filter([](const auto &app) { return app->displayable(); }) |
+                            std::views::transform([](const auto &app) {
+                              QJsonObject appObj;
 
-        QJsonObject appObj;
+                              appObj["id"] = app->id();
+                              appObj["name"] = app->name();
+                              appObj["icon"] = app->iconUrl().name();
 
-        appObj["id"] = app->id();
-        appObj["name"] = app->name();
-        appObj["icon"] = app->iconUrl().name();
+                              return appObj;
+                            });
 
-        apps.push_back(appObj);
-      }
+      std::ranges::for_each(serializedApps, [&apps](const auto &a) { apps.push_back(a); });
 
       return {{"apps", apps}};
     }

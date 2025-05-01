@@ -217,6 +217,7 @@ struct OpenAppAction : public AbstractAction {
     }
 
     app.closeWindow(true);
+    appDb->registerVisit(application->id());
   }
 
   OpenAppAction(const std::shared_ptr<Application> &app, const QString &title,

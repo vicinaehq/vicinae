@@ -2,6 +2,7 @@
 #include "app/app-database.hpp"
 #include "app/xdg-app-database.hpp"
 #include "omni-database.hpp"
+#include "ranking-service.hpp"
 #include <iterator>
 #include <qlogging.h>
 #include <qobject.h>
@@ -14,11 +15,15 @@ public:
     std::shared_ptr<Application> app;
     int openCount;
     bool disabled;
+    bool hidden;
+    double frecency;
     std::optional<std::chrono::time_point<std::chrono::high_resolution_clock>> lastOpenedAt;
   };
 
 private:
   OmniDatabase &m_db;
+  RankingService &m_ranking;
+  QSqlQuery m_syncAppQuery;
   std::unique_ptr<AbstractAppDatabase> m_provider;
   std::vector<AppEntry> m_entries;
 
@@ -38,9 +43,7 @@ private:
     if (!query.exec(R"(
 	  	CREATE TABLE IF NOT EXISTS app_metadata (
 			id TEXT PRIMARY KEY,
-			open_count INT DEFAULT 0,
-			disabled INT DEFAULT 0,
-			last_opened_at INT
+			disabled INT DEFAULT 0
 		);
 	  )")) {
       qCritical() << "Failed to write table";
@@ -48,36 +51,21 @@ private:
   }
 
   std::optional<AppEntry> syncApp(std::shared_ptr<Application> app) {
-    auto query = m_db.createQuery();
+    m_syncAppQuery.bindValue(":id", app->id());
 
-    query.prepare(R"(
-	  	INSERT INTO app_metadata (id) 
-		VALUES (:id)
-		ON CONFLICT (id)
-		DO UPDATE SET open_count = open_count, disabled = disabled, last_opened_at = last_opened_at
-		RETURNING open_count, disabled, last_opened_at
-	  )");
-    query.bindValue(":id", app->id());
-
-    if (!query.exec() || !query.next()) {
-      qCritical() << "Failed to sync app" << app->id() << query.lastError();
+    if (!m_syncAppQuery.exec() || !m_syncAppQuery.next()) {
+      qCritical() << "Failed to sync app" << app->id() << m_syncAppQuery.lastError();
       return {};
     }
 
+    auto &record = m_ranking.findRecord(QString("application:%1").arg(app->id()));
     AppEntry entry;
 
-    entry.openCount = query.value(0).toInt();
-    entry.disabled = query.value(1).toBool();
+    entry.openCount = record.visitedCount;
+    entry.lastOpenedAt = record.lastVisitedAt;
+    entry.frecency = m_ranking.computeFrecency(record);
+    entry.disabled = m_syncAppQuery.value(0).toBool();
     entry.app = app;
-
-    QVariant lastOpenedAtField = query.value(2).toInt();
-
-    if (!lastOpenedAtField.isNull()) {
-      std::time_t epoch = lastOpenedAtField.toULongLong();
-      entry.lastOpenedAt = std::chrono::system_clock::from_time_t(epoch);
-    }
-
-    qDebug() << "registered" << entry.app->id();
 
     return entry;
   }
@@ -93,7 +81,13 @@ private:
                    std::views::transform([](const auto &a) { return a.value(); });
     std::ranges::copy(entries, std::back_inserter(m_entries));
     qDebug() << "Transformed" << m_entries.size() << "apps";
-    m_db.db().commit();
+
+    m_syncAppQuery.finish();
+
+    if (!m_db.db().commit()) {
+      qCritical() << "Failed to commit to DB" << m_db.db().lastError();
+      m_db.db().rollback();
+    }
   }
 
 public:
@@ -104,6 +98,19 @@ public:
 
   bool launch(const Application &app, const std::vector<QString> &args = {}) const {
     return m_provider->launch(app, args);
+  }
+
+  void registerVisit(const std::shared_ptr<Application> &app) { registerVisit(app->id()); }
+
+  void registerVisit(const QString &appId) {
+    auto record = m_ranking.registerVisit("application", appId);
+    auto it =
+        std::ranges::find_if(m_entries, [&appId](const AppEntry &entry) { return entry.app->id() == appId; });
+
+    if (it != m_entries.end()) {
+      it->lastOpenedAt = record.lastVisitedAt;
+      it->openCount = record.visitedCount;
+    }
   }
 
   std::shared_ptr<Application> webBrowser() const { return m_provider->webBrowser(); }
@@ -119,8 +126,17 @@ public:
     return m_provider->findBestOpener(target);
   }
 
-  AppService(OmniDatabase &db) : m_db(db) {
+  AppService(OmniDatabase &db, RankingService &ranking) : m_db(db), m_ranking(ranking) {
     createTables();
+    m_ranking.loadRecords("application");
+    m_syncAppQuery = db.createQuery();
+    m_syncAppQuery.prepare(R"(
+	  	INSERT INTO app_metadata (id) 
+		VALUES (:id)
+		ON CONFLICT (id)
+		DO UPDATE SET disabled = disabled 
+		RETURNING disabled
+	)");
     m_provider = createLocalProvider();
     syncApps();
   }

@@ -148,11 +148,6 @@ public:
   void onMount() override {
     auto aiManager = ServiceRegistry::instance()->AI();
 
-    if (aiManager->isAvailable()) {
-      pushView(new RequireAiConfigEmptyView(app));
-      return;
-    }
-
     auto cb = [this](AppWindow &app) { messageSubmission(searchText()); };
     auto action = std::make_unique<CallbackAction>(cb);
     action->setShortcut({.key = "return"});

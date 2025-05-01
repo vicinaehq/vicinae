@@ -219,12 +219,22 @@ protected:
 
   virtual ItemList generateList(const QString &s) = 0;
 
+  virtual void render(const QString &s) {}
+  virtual bool doesUseNewModel() const { return false; }
+
   void reload(OmniList::SelectionPolicy policy = OmniList::KeepSelection) {
     qDebug() << "reload list";
-    auto items = generateList(query);
 
     list->invalidateCache();
-    list->updateFromList(items, policy);
+
+    if (doesUseNewModel()) {
+      list->beginResetModel();
+      render(query);
+      list->endResetModel(policy);
+    } else {
+      auto items = generateList(query);
+      list->updateFromList(items, policy);
+    }
 
     /*
 if (auto item = list->selected()) {
@@ -248,8 +258,15 @@ if (auto item = list->selected()) {
 
   void onSearchChanged(const QString &s) override {
     query = s;
-    auto items = generateList(s);
-    list->updateFromList(items, OmniList::SelectFirst);
+
+    if (doesUseNewModel()) {
+      list->beginResetModel();
+      render(s);
+      list->endResetModel(OmniList::SelectFirst);
+    } else {
+      auto items = generateList(s);
+      list->updateFromList(items, OmniList::SelectFirst);
+    }
   }
 
 public:

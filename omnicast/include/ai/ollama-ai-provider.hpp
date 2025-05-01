@@ -181,7 +181,7 @@ class OllamaAiProvider : public AI::AbstractProvider {
         promise->addResult(models);
         m_isAlive = true;
       } else {
-        qDebug() << "exception";
+        qCritical() << "exception while refreshing ollama model list";
         promise->setException(std::make_exception_ptr(std::runtime_error("Error getting models")));
         m_isAlive = false;
       }

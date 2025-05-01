@@ -96,7 +96,7 @@ void MarkdownRenderer::insertImage(cmark_node *node) {
     iconUrl.setName(p);
   }
 
-  connect(icon, &OmniIcon::imageUpdated, this, [this, url, pos](const QPixmap &pix) {
+  connect(icon, &OmniIcon::imageUpdated, this, [this, url, pos, icon](const QPixmap &pix) {
     qDebug() << "loaded image";
     QTextBlockFormat blockFormat;
     auto old = _cursor.position();
@@ -117,6 +117,7 @@ void MarkdownRenderer::insertImage(cmark_node *node) {
     _cursor.insertImage(url.toString());
     _cursor.setPosition(old);
     _document->markContentsDirty(0, _document->characterCount());
+    icon->deleteLater();
   });
 
   icon->setUrl(iconUrl);

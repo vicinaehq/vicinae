@@ -178,6 +178,8 @@ void OmniList::applySorting() {
 }
 
 void OmniList::calculateHeights() {
+  if (!m_model.empty()) return calculateHeightsFromModel();
+
   auto start = std::chrono::high_resolution_clock::now();
   int yOffset = 0;
   int availableWidth = width() - margins.left - margins.right;
@@ -608,8 +610,6 @@ void OmniList::resizeEvent(QResizeEvent *event) {
   QWidget::resizeEvent(event);
 }
 
-void OmniList::addSection(const QString &name) { addItem(std::make_unique<OmniList::VirtualSection>(name)); }
-
 void OmniList::beginUpdate() { _isUpdating = true; }
 
 void OmniList::commitUpdate() {
@@ -740,6 +740,8 @@ void OmniList::invalidateCache() {
   for (const auto &[id, cached] : _widgetCache) {
     auto item = itemAt(id);
 
+    qDebug() << "looking for id" << id;
+
     if (item->recyclable()) {
       moveToPool(item->typeId(), cached.widget);
     } else {
@@ -850,7 +852,6 @@ OmniList::OmniList()
   int scrollBarWidth = scrollBar->sizeHint().width();
 
   setMargins(5, 5, 5, 5);
-  _virtual_items.reserve(100);
-  _visibleWidgets.reserve(100);
-  _widgetCache.reserve(100);
+  _visibleWidgets.reserve(20);
+  _widgetCache.reserve(20);
 }

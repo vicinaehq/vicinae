@@ -10,6 +10,7 @@
 #include "omni-command-db.hpp"
 #include "omni-database.hpp"
 #include "quicklist-database.hpp"
+#include "ranking-service.hpp"
 #include "wm/window-manager.hpp"
 #include <memory>
 #include <qobject.h>
@@ -26,6 +27,7 @@ class ServiceRegistry : public QObject {
   std::unique_ptr<ClipboardService> m_clipman;
   std::unique_ptr<AI::Manager> m_aiManager;
   std::unique_ptr<FontService> m_fontService;
+  std::unique_ptr<RankingService> m_rankingService;
 
 public:
   static ServiceRegistry *instance() {
@@ -44,8 +46,10 @@ public:
   auto extensionManager() const { return m_extensionManager.get(); }
   auto clipman() const { return m_clipman.get(); }
   auto appDb() const { return m_appDb.get(); }
+  auto rankingService() const { return m_rankingService.get(); }
 
   void setAI(std::unique_ptr<AI::Manager> manager) { m_aiManager = std::move(manager); }
+  void setRankingService(std::unique_ptr<RankingService> service) { m_rankingService = std::move(service); }
   void setFontService(std::unique_ptr<FontService> font) { m_fontService = std::move(font); }
   void setOmniDb(std::unique_ptr<OmniDatabase> service) { m_omniDb = std::move(service); }
   void setQuicklinks(std::unique_ptr<QuicklistDatabase> service) { m_quickinkDb = std::move(service); }

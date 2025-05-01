@@ -37,6 +37,7 @@
 #include "proto.hpp"
 #include "quicklink-seeder.hpp"
 #include "quicklist-database.hpp"
+#include "ranking-service.hpp"
 #include "service-registry.hpp"
 
 #ifdef WAYLAND_LAYER_SHELL
@@ -155,13 +156,16 @@ int startDaemon() {
     auto aiManager = std::make_unique<AI::Manager>(*omniDb);
     auto ollamaProvider = std::make_unique<OllamaAiProvider>();
     auto fontService = std::make_unique<FontService>();
-    auto appService = std::make_unique<AppService>(*omniDb.get());
+    auto rankingService = std::make_unique<RankingService>(*omniDb);
+    auto appService = std::make_unique<AppService>(*omniDb.get(), *rankingService.get());
 
     aiManager->registerProvider(std::move(ollamaProvider));
 
+    commandDb->blockSignals(true);
     for (const auto &repo : builtinCommandDb->repositories()) {
       commandDb->registerRepository(repo);
     }
+    commandDb->blockSignals(false);
 
     if (!extensionManager->start()) {
       qCritical() << "Failed to load extension manager. Extensions will not work";
@@ -175,6 +179,7 @@ int startDaemon() {
 
     registry->setQuicklinks(std::move(quicklinkService));
     registry->setCalculatorDb(std::move(calculatorService));
+    registry->setRankingService(std::move(rankingService));
     registry->setAppDb(std::move(appService));
     registry->setOmniDb(std::move(omniDb));
     registry->setAI(std::move(aiManager));
@@ -186,9 +191,7 @@ int startDaemon() {
     registry->setFontService(std::move(fontService));
   }
 
-  FontService service;
-
-  qWarning() << "emoji font" << service.emojiFont();
+  QIcon::setThemeName("Tela");
 
   AppWindow app;
 
@@ -223,7 +226,6 @@ int startDaemon() {
   QApplication::setFont(font);
 
   QApplication::setApplicationName("omnicast");
-  QIcon::setThemeName("Tela");
 
   return qApp->exec();
 }
