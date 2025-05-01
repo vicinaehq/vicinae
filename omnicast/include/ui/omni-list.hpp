@@ -514,6 +514,8 @@ public:
     return ruler.sizeHint().height();
   }
 
+  bool hasPartialUpdates() const override { return true; }
+
   void refresh(QWidget *w) const override {
     if (auto widget = dynamic_cast<DefaultListItemWidget *>(w)) {
       auto itemData = data();

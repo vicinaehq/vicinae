@@ -9,6 +9,7 @@ set(TARGET omnicast)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets Sql Network Svg Bluetooth)
 find_package(cmark REQUIRED)
+find_package(TBB REQUIRED)
 
 option(WAYLAND_LAYER_SHELL "Enable support for the Wayland layer shell
 protocol, required for proper window positioning on most wlroots-based

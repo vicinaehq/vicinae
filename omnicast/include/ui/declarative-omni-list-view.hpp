@@ -225,8 +225,6 @@ protected:
   void reload(OmniList::SelectionPolicy policy = OmniList::KeepSelection) {
     qDebug() << "reload list";
 
-    list->invalidateCache();
-
     if (doesUseNewModel()) {
       list->beginResetModel();
       render(query);

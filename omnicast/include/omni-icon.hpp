@@ -4,6 +4,7 @@
 #include "favicon/favicon-service.hpp"
 #include <QtConcurrent/qtconcurrentrun.h>
 #include <QtSvg/qsvgrenderer.h>
+#include <libqalculate/Number.h>
 #include <optional>
 #include <qboxlayout.h>
 #include <qbrush.h>
@@ -740,13 +741,13 @@ class OmniIcon : public QWidget {
   Q_OBJECT
 
   OmniIconUrl _url;
+  OmniIconUrl m_originalUrl;
   OmniIconWidget *_iconWidget = nullptr;
   QVBoxLayout *layout;
   bool m_failedToLoad = false;
 
 public:
   OmniIcon(const OmniIconUrl &url, QWidget *parent = nullptr) : QWidget(parent), layout(new QVBoxLayout) {
-    qCritical() << "Ding ding!!!";
     setUrl(url);
   }
   OmniIcon(QWidget *parent = nullptr) : QWidget(parent), layout(new QVBoxLayout) {
@@ -759,20 +760,18 @@ public:
   bool didFailToLoad() const { return m_failedToLoad; }
 
   void handleFailedLoading() {
-    // qWarning() << "Failed to load image" << _url.toString();
+    qWarning() << "Failed to load image" << _url.toString();
     if (auto fallback = _url.fallback()) {
-      setUrl(*fallback);
+      setUrl(*fallback, true);
     } else {
-      setUrl(BuiltinOmniIconUrl("question-mark-circle"));
+      setUrl(BuiltinOmniIconUrl("question-mark-circle"), true);
     }
 
     m_failedToLoad = true;
   }
 
-  void setUrl(const OmniIconUrl &url) {
-    if (url == _url) return;
-
-    m_failedToLoad = false;
+  void setUrl(const OmniIconUrl &url, bool forceFallback = false) {
+    if (!forceFallback && url == m_originalUrl) return;
 
     if (_iconWidget) {
       _iconWidget->blockSignals(true);
@@ -781,6 +780,11 @@ public:
     }
 
     _url = url;
+
+    if (!forceFallback) {
+      m_originalUrl = url;
+      m_failedToLoad = false;
+    }
 
     auto type = url.type();
 

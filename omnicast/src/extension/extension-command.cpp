@@ -4,6 +4,7 @@
 #include "extension/extension-command-runtime.hpp"
 #include "extension/extension.hpp"
 #include "omni-icon.hpp"
+#include <filesystem>
 
 ExtensionCommand ExtensionCommand::fromJson(const QJsonObject &obj) { return obj; }
 
@@ -68,11 +69,14 @@ void ExtensionCommand::setExtensionTitle(const QString &title) { _extensionTitle
 
 OmniIconUrl ExtensionCommand::iconUrl() const {
   auto fallback = BuiltinOmniIconUrl("hammer").setBackgroundTint(ColorTint::Blue);
+  auto extensionIconUrl = LocalOmniIconUrl(_assetPath / _extensionIcon.toStdString()).withFallback(fallback);
 
-  if (!_icon.isEmpty()) { return LocalOmniIconUrl(_assetPath / _icon.toStdString()).withFallback(fallback); }
-  if (!_extensionIcon.isEmpty()) {
-    return LocalOmniIconUrl(_assetPath / _extensionIcon.toStdString()).withFallback(fallback);
+  if (!_icon.isEmpty()) {
+    auto path = _assetPath / _icon.toStdString();
+
+    auto url = LocalOmniIconUrl(path).withFallback(extensionIconUrl);
+    return url;
   }
 
-  return fallback;
+  return extensionIconUrl;
 }

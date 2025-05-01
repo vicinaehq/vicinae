@@ -80,7 +80,7 @@ bool AppWindow::event(QEvent *event) {
 
 void AppWindow::clearSearch() {
   topBar->input->clear();
-  emit topBar->input->textEdited("");
+  topBar->input->textEdited("");
 }
 
 void AppWindow::popCurrentView() {
@@ -159,7 +159,7 @@ void AppWindow::popCurrentView() {
     statusBar->setNavigationIcon(next.navigation.icon);
   }
 
-  emit currentViewPoped();
+  currentViewPoped();
 }
 
 void AppWindow::popToRoot() {
@@ -261,7 +261,7 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
   topBar->input->show();
   topBar->input->setFocus();
   topBar->input->setText(opts.searchQuery);
-  emit topBar->input->textEdited(opts.searchQuery);
+  topBar->input->textEdited(opts.searchQuery);
 
   view->onMount();
 }
@@ -469,8 +469,8 @@ void AppWindow::executeAction(AbstractAction *action) {
   action->execute(*this);
 
   if (!action->isPushView()) {
-    emit action->didExecute();
-    emit actionExecuted(action);
+    action->didExecute();
+    actionExecuted(action);
     executorCommand.command->onActionExecuted(action);
 
     if (!executorCommand.viewStack.empty()) {

@@ -173,7 +173,6 @@ public:
     connect(appSelector, &SelectorInput::selectionChanged, this, &QuicklinkCommandView::appSelectionChanged);
 
     appSelector->beginUpdate();
-    appSelector->addSection("Apps");
 
     if (auto browser = appDb->webBrowser()) {
       appSelector->addItem(std::make_unique<DefaultAppItem>(browser));

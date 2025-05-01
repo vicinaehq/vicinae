@@ -328,6 +328,49 @@ public:
     auto commandDb = ServiceRegistry::instance()->commandDb();
     auto quicklinkDb = ServiceRegistry::instance()->quicklinks();
     auto appDb = ServiceRegistry::instance()->appDb();
+    const auto &quicklinks = quicklinkDb->list();
+    const auto &appEntries = appDb->listEntries();
+    const auto &commandEntries = commandDb->commands();
+    size_t maxReserve = appEntries.size() + commandEntries.size() + quicklinks.size();
+
+    auto filteredLinks =
+        quicklinks | std::views::transform([](const auto &entry) {
+          auto factory = [&entry]() { return std::make_unique<QuicklinkRootListItem>(entry); };
+          return ShallowRankedListItem{.factory = factory, .rank = 0};
+        });
+
+    auto filteredApps = appEntries |
+                        std::views::filter([](const auto &entry) { return entry.app->displayable(); }) |
+                        std::views::transform([](const auto &entry) {
+                          auto factory = [&entry]() { return std::make_unique<AppListItem>(entry.app); };
+
+                          return ShallowRankedListItem{.factory = factory, .rank = entry.frecency};
+                        });
+
+    auto filteredCommands =
+        commandEntries | std::views::filter([](const auto &entry) { return !entry.disabled; }) |
+        std::views::transform([](const auto &entry) {
+          auto factory = [&entry]() { return std::make_unique<BuiltinCommandListItem>(entry); };
+
+          return ShallowRankedListItem{.factory = factory, .rank = 0};
+        });
+
+    {
+
+      std::vector<ShallowRankedListItem> rankedResults;
+
+      rankedResults.reserve(maxReserve);
+      std::ranges::copy(filteredApps, std::back_inserter(rankedResults));
+      std::ranges::copy(filteredCommands, std::back_inserter(rankedResults));
+      std::ranges::copy(filteredLinks, std::back_inserter(rankedResults));
+      std::ranges::sort(rankedResults, [](const auto &a, const auto &b) { return a.rank > b.rank; });
+
+      auto &suggestions = list->addSection("Suggestions").withCapacity(5);
+      auto topResults = rankedResults | std::views::take(5);
+
+      std::ranges::for_each(topResults,
+                            [&suggestions](const auto &ranked) { suggestions.addItem(ranked.factory()); });
+    }
 
     {
       auto &commandSection = list->addSection("Commands");
@@ -363,6 +406,11 @@ public:
 
   struct RankedListItem {
     std::unique_ptr<OmniList::AbstractVirtualItem> item;
+    double rank;
+  };
+
+  struct ShallowRankedListItem {
+    std::function<std::unique_ptr<OmniList::AbstractVirtualItem>(void)> factory;
     double rank;
   };
 
@@ -433,7 +481,10 @@ public:
       std::ranges::copy(filteredApps, std::back_inserter(rankedResults));
       std::ranges::copy(filteredCommands, std::back_inserter(rankedResults));
       std::ranges::copy(filteredLinks, std::back_inserter(rankedResults));
-      std::ranges::sort(rankedResults, [](const auto &a, const auto &b) { return a.rank > b.rank; });
+
+      auto sortRanked = [](const auto &a, const auto &b) { return a.rank > b.rank; };
+
+      std::ranges::sort(rankedResults, sortRanked);
 
       auto &results = list->addSection("Results", QString::number(rankedResults.size()))
                           .withCapacity(rankedResults.size());
