@@ -73,7 +73,7 @@ CommandDatabase::CommandDatabase() {
     auto storeAllOfferingsPreference = std::make_shared<CheckboxPreference>();
 
     storeAllOfferingsPreference->setName("store-all-offerings");
-    storeAllOfferingsPreference->setTitle("Store all clipboard offerings");
+    storeAllOfferingsPreference->setTitle("Store all offerings");
     storeAllOfferingsPreference->setDescription("Store and index alternative mime type offerings. This will "
                                                 "increase total storage size, but will refine the search.");
     storeAllOfferingsPreference->setLabel("Store all offerings");
@@ -81,7 +81,7 @@ CommandDatabase::CommandDatabase() {
     auto maximumClipboardStorageSizePreference = std::make_shared<TextFieldPreference>();
 
     maximumClipboardStorageSizePreference->setName("maximum-storage-size");
-    maximumClipboardStorageSizePreference->setTitle("Maximum clipboard storage size");
+    maximumClipboardStorageSizePreference->setTitle("Maximum storage size");
     maximumClipboardStorageSizePreference->setDescription(
         "How much storage can be used to store clipboard history data, in MB.");
     maximumClipboardStorageSizePreference->setDefaultValue("1000");

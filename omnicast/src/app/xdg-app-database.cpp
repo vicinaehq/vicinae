@@ -161,8 +161,6 @@ bool XdgAppDatabase::launch(const Application &app, const std::vector<QString> &
     return false;
   }
 
-  qCritical() << "closing read channel for process";
-
   return true;
 }
 

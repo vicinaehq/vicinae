@@ -410,6 +410,12 @@ public:
     manager->loadCommand(m_command->extensionId(), m_command->id(), preferenceValues, props);
   }
 
+  void unload() override {
+    auto manager = ServiceRegistry::instance()->extensionManager();
+
+    manager->unloadCommand(m_sessionId);
+  }
+
   ExtensionCommandRuntime(AppWindow &app, const std::shared_ptr<ExtensionCommand> &command)
       : CommandContext(&app, command), m_command(command), m_app(&app) {
     auto manager = ServiceRegistry::instance()->extensionManager();

@@ -670,6 +670,7 @@ bool OmniList::selectFirst() {
 
     if (item->selectable()) {
       setSelectedIndex(i);
+      scrollTo(i);
       return true;
     }
   }

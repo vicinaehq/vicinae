@@ -1,5 +1,6 @@
 #pragma once
 #include "ai/ai-service.hpp"
+#include "app-service.hpp"
 #include "app/app-database.hpp"
 #include "calculator-database.hpp"
 #include "clipboard/clipboard-service.hpp"
@@ -17,7 +18,7 @@ class ServiceRegistry : public QObject {
   std::unique_ptr<QuicklistDatabase> m_quickinkDb;
   std::unique_ptr<AbstractWindowManager> m_windowManager;
   std::unique_ptr<CalculatorDatabase> m_calculatorDb;
-  std::unique_ptr<AbstractAppDatabase> m_appDb;
+  std::unique_ptr<AppService> m_appDb;
   std::unique_ptr<OmniDatabase> m_omniDb;
   std::unique_ptr<OmniCommandDatabase> m_omniCommandDb;
   std::unique_ptr<LocalStorageService> m_localStorage;
@@ -60,5 +61,5 @@ public:
     m_extensionManager = std::move(service);
   }
   void setClipman(std::unique_ptr<ClipboardService> service) { m_clipman = std::move(service); }
-  void setAppDb(std::unique_ptr<AbstractAppDatabase> service) { m_appDb = std::move(service); }
+  void setAppDb(std::unique_ptr<AppService> service) { m_appDb = std::move(service); }
 };

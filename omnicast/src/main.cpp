@@ -1,4 +1,5 @@
 #include "ai/ollama-ai-provider.hpp"
+#include "app-service.hpp"
 #include "app.hpp"
 #include <QApplication>
 #include "font-service.hpp"
@@ -142,7 +143,6 @@ int startDaemon() {
         std::make_unique<QuicklistDatabase>(Config::dirPath() + QDir::separator() + "quicklinks.db");
     auto calculatorService =
         std::make_unique<CalculatorDatabase>(Config::dirPath() + QDir::separator() + "calculator.db");
-    auto appDb = std::make_unique<XdgAppDatabase>();
     auto omniDb = std::make_unique<OmniDatabase>(Config::dirPath() + QDir::separator() + "omni.db");
     auto commandDb = std::make_unique<OmniCommandDatabase>(*omniDb);
     auto localStorage = std::make_unique<LocalStorageService>(*omniDb);
@@ -155,6 +155,7 @@ int startDaemon() {
     auto aiManager = std::make_unique<AI::Manager>(*omniDb);
     auto ollamaProvider = std::make_unique<OllamaAiProvider>();
     auto fontService = std::make_unique<FontService>();
+    auto appService = std::make_unique<AppService>(*omniDb.get());
 
     aiManager->registerProvider(std::move(ollamaProvider));
 
@@ -167,14 +168,14 @@ int startDaemon() {
     }
 
     {
-      auto seeder = std::make_unique<QuickLinkSeeder>(*appDb, *quicklinkService);
+      auto seeder = std::make_unique<QuickLinkSeeder>(*appService->appProvider(), *quicklinkService);
 
       if (quicklinkService->list().isEmpty()) { seeder->seed(); }
     }
 
     registry->setQuicklinks(std::move(quicklinkService));
     registry->setCalculatorDb(std::move(calculatorService));
-    registry->setAppDb(std::move(appDb));
+    registry->setAppDb(std::move(appService));
     registry->setOmniDb(std::move(omniDb));
     registry->setAI(std::move(aiManager));
     registry->setCommandDb(std::move(commandDb));

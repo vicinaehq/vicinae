@@ -21,9 +21,11 @@
 #include "quicklink-actions.hpp"
 #include "ui/top_bar.hpp"
 #include <QtConcurrent/QtConcurrent>
+#include <algorithm>
 #include <cfloat>
 #include <chrono>
 #include <cmath>
+#include <iterator>
 #include <memory>
 #include <qbrush.h>
 #include <qcoreevent.h>
@@ -40,6 +42,7 @@
 #include <qnetworkcookiejar.h>
 #include <qthreadpool.h>
 #include <qwidget.h>
+#include <ranges>
 
 static constexpr size_t RECENCY_WEIGHT = 2;
 static constexpr size_t FREQUENCY_WEIGHT = 1;
@@ -54,8 +57,6 @@ struct OpenBuiltinCommandAction : public AbstractAction {
   void execute(AppWindow &app) override {
     LaunchProps props;
     props.arguments = app.topBar->m_completer->collect();
-
-    qCritical() << "execute launch with" << props.arguments.size();
 
     app.launchCommand(cmd, {}, props);
   }
@@ -257,8 +258,8 @@ class RootView : public DeclarativeOmniListView {
     QList<AbstractAction *> generateActions() const override {
       auto appDb = ServiceRegistry::instance()->appDb();
       QList<AbstractAction *> actions;
-      auto fileBrowser = appDb->fileBrowser();
-      auto textEditor = appDb->textEditor();
+      auto fileBrowser = appDb->appProvider()->fileBrowser();
+      auto textEditor = appDb->appProvider()->textEditor();
 
       actions << new OpenAppAction(app, "Open Application", {});
 
@@ -376,10 +377,10 @@ public:
 
     list.push_back(std::make_unique<OmniList::VirtualSection>("Apps"));
 
-    for (auto &app : appDb->list()) {
-      if (!app->displayable()) continue;
+    for (auto &entry : appDb->listEntries()) {
+      if (!entry.app->displayable()) continue;
 
-      list.push_back(std::make_unique<AppListItem>(app));
+      list.push_back(std::make_unique<AppListItem>(entry.app));
     }
 
     return list;
@@ -397,8 +398,14 @@ public:
     auto calculator = ServiceRegistry::instance()->calculatorDb();
     std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> list;
 
+    auto isWordStart = [&s](const QString &text) -> bool {
+      return std::ranges::any_of(
+          text.split(" "), [&s](const QString &word) { return word.startsWith(s, Qt::CaseInsensitive); });
+    };
+
     if (s.isEmpty()) return generateBaseSearch();
 
+    const auto &quicklinks = quicklinkDb->list();
     auto start = std::chrono::high_resolution_clock::now();
 
     list.push_back(std::make_unique<OmniList::VirtualSection>("Calculator"));
@@ -418,50 +425,38 @@ public:
 
     list.push_back(std::make_unique<OmniList::VirtualSection>("Results"));
 
-    if (!s.isEmpty()) {
-      for (const auto &link : quicklinkDb->list()) {
-        if (!link->name.startsWith(s, Qt::CaseInsensitive)) continue;
+    auto filteredLinks = quicklinks | std::views::filter([isWordStart](const auto &quicklink) {
+                           return isWordStart(quicklink->name);
+                         });
 
-        auto quicklink = std::make_unique<QuicklinkRootListItem>(link);
+    std::ranges::transform(filteredLinks, std::back_inserter(list),
+                           [](const auto &entry) { return std::make_unique<QuicklinkRootListItem>(entry); });
 
-        list.push_back(std::move(quicklink));
-      }
-    }
+    const auto &appEntries = appDb->listEntries();
 
-    if (!s.isEmpty()) {
-      for (auto &app : appDb->list()) {
-        if (!app->displayable()) continue;
+    auto filteredApps =
+        appEntries | std::views::filter([](const auto &entry) { return entry.app->displayable(); }) |
+        std::views::filter([&isWordStart](const auto &entry) { return isWordStart(entry.app->name()); }) |
+        std::ranges::to<std::vector>();
+    std::ranges::transform(filteredApps, std::back_inserter(list),
+                           [](const auto &entry) { return std::make_unique<AppListItem>(entry.app); });
 
-        for (const auto &word : app->name().split(" ")) {
-          if (!word.startsWith(s, Qt::CaseInsensitive)) continue;
-
-          list.push_back(std::make_unique<AppListItem>(app));
-          break;
-        }
-      }
-    }
-
-    for (auto &entry : commandDb->commands()) {
-      if (entry.disabled || !entry.command->name().contains(s, Qt::CaseInsensitive)) continue;
-
-      list.push_back(std::make_unique<BuiltinCommandListItem>(entry));
-    }
-
-    if (s.isEmpty()) {
-      for (const auto &app : appDb->list()) {
-        if (app->displayable()) { list.push_back(std::make_unique<AppListItem>(app)); }
-      }
-    }
+    const auto &commandEntries = commandDb->commands();
+    auto filteredCommands =
+        commandEntries | std::views::filter([](const auto &entry) { return !entry.disabled; }) |
+        std::views::filter([&isWordStart](const auto &entry) { return isWordStart(entry.command->name()); });
+    std::ranges::transform(filteredCommands, std::back_inserter(list),
+                           [](const auto &entry) { return std::make_unique<BuiltinCommandListItem>(entry); });
 
     list.push_back(std::make_unique<OmniList::VirtualSection>(QString("Use \"%1\" with...").arg(s)));
 
-    if (!s.isEmpty()) {
-      for (const auto &link : quicklinkDb->list()) {
-        if (link->placeholders.size() != 1) continue;
+    auto fallbackLinks = quicklinks | std::views::filter([&s](const auto &quicklink) {
+                           return quicklink->placeholders.size() == 1;
+                         });
 
-        list.push_back(std::make_unique<FallbackQuicklinkListItem>(link, s));
-      }
-    }
+    std::ranges::transform(fallbackLinks, std::back_inserter(list), [&s](const auto &link) {
+      return std::make_unique<FallbackQuicklinkListItem>(link, s);
+    });
 
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
