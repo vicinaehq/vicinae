@@ -1,0 +1,289 @@
+#pragma once
+#include <algorithm>
+#include <cstdint>
+#include <functional>
+#include <memory>
+#include <stack>
+#include <string_view>
+#include <unordered_map>
+#include <unordered_set>
+#include <variant>
+#include <vector>
+#define TRIE_LINEAR_CAP 32
+
+template <typename T, typename Hash = std::hash<T>> class Trie {
+  // XXX - Implement compression later on
+  struct CompressedNode {};
+
+  struct Node {
+    struct CharNode {
+      uint8_t ch;
+      std::unique_ptr<Node> node;
+
+      static CharNode fromChar(uint8_t ch) {
+        CharNode node;
+
+        node.ch = ch;
+        node.node = std::make_unique<Node>();
+
+        return node;
+      }
+    };
+
+    using NodeMap = std::unordered_map<uint8_t, std::unique_ptr<Node>>;
+    using NodeList = std::vector<CharNode>;
+    using Empty = std::monostate;
+    using Data = std::variant<Empty, CharNode, NodeList, NodeMap>;
+
+    Data data;
+    std::vector<T> matches;
+    uint8_t npath = 0;
+  };
+
+  size_t memUsage = 0;
+  Node m_root;
+
+  /**
+   * Tokenizes a string based on:
+   * - Whitespace boundaries
+   * - Case changes (camelCase -> camel Case)
+   * - Non-alphanumeric boundaries
+   */
+  std::vector<std::string_view> splitWords(std::string_view view) {
+    // Define character types for our state machine
+    enum TrieCharType { CharTypeLower, CharTypeUpper, CharTypeDigit, CharTypeSpace, CharTypeOther };
+
+    std::vector<std::string_view> words;
+    words.reserve(view.size() / 4); // Estimate average word length of 4
+
+    if (view.empty()) { return words; }
+
+    size_t wordStart = 0;
+    TrieCharType prevType = CharTypeSpace;
+
+    for (size_t i = 0; i < view.size(); ++i) {
+      char ch = view[i];
+      TrieCharType currentType;
+
+      // Determine current character type
+      if (std::islower(ch))
+        currentType = CharTypeLower;
+      else if (std::isupper(ch))
+        currentType = CharTypeUpper;
+      else if (std::isdigit(ch))
+        currentType = CharTypeDigit;
+      else if (std::isspace(ch))
+        currentType = CharTypeSpace;
+      else
+        currentType = CharTypeOther;
+
+      // Check for word boundaries based on state transitions
+      bool isWordBoundary = false;
+
+      if (currentType == CharTypeSpace && prevType == CharTypeSpace) {
+        wordStart += 1;
+        continue;
+      }
+
+      if (currentType == CharTypeSpace) {
+        // Space after non-space creates a boundary
+        isWordBoundary = (prevType != CharTypeSpace);
+      } else if (currentType == CharTypeOther) {
+        // Non-alphanumeric creates a boundary
+        isWordBoundary = (prevType != CharTypeSpace && prevType != CharTypeOther);
+      } else if (currentType == CharTypeUpper && prevType == CharTypeLower) {
+        // camelCase transition creates a boundary
+        isWordBoundary = true;
+      }
+
+      // Handle word boundary
+      if (isWordBoundary) {
+        // Add word if it has content
+        if (i > wordStart) { words.emplace_back(view.substr(wordStart, i - wordStart)); }
+
+        // Skip consecutive spaces or non-alphanumeric chars
+        if (currentType == CharTypeSpace || currentType == CharTypeOther) {
+          wordStart = i + 1;
+        } else {
+          wordStart = i;
+        }
+      } else {
+      }
+
+      prevType = currentType;
+    }
+
+    // Add the last word if needed
+    if (wordStart < view.size()) { words.emplace_back(view.substr(wordStart)); }
+
+    return words;
+  }
+
+public:
+  using UnorderedSet = std::unordered_set<T, Hash>;
+
+  Trie() {}
+
+  size_t memoryUsage() const { return memUsage; }
+
+  void clear() { m_root = {}; }
+
+  UnorderedSet prefixSearch(std::string_view prefix) const {
+    const Node *cur = &m_root;
+
+    for (char ch : prefix) {
+      auto index = static_cast<uint8_t>(tolower(ch));
+
+      if (auto charNode = std::get_if<typename Node::CharNode>(&cur->data)) {
+        if (charNode->ch == index) {
+          cur = charNode->node.get();
+          continue;
+        }
+      }
+
+      if (auto list = std::get_if<typename Node::NodeList>(&cur->data)) {
+        auto it = std::ranges::find_if(*list, [index](const auto &charNode) { return charNode.ch == index; });
+
+        if (it != list->end()) {
+          cur = it->node.get();
+          continue;
+        }
+      }
+
+      if (auto map = std::get_if<typename Node::NodeMap>(&cur->data)) {
+        if (auto it = map->find(index); it != map->end()) {
+          cur = it->second.get();
+          continue;
+        }
+      }
+
+      return {};
+    }
+
+    std::stack<const Node *> paths;
+    UnorderedSet m_results;
+
+    paths.push(cur);
+
+    while (!paths.empty()) {
+      const Node *node = paths.top();
+      paths.pop();
+
+      for (const auto &match : node->matches) {
+        m_results.insert(match);
+      }
+
+      if (auto charNode = std::get_if<typename Node::CharNode>(&node->data)) {
+        paths.push(charNode->node.get());
+      } else if (auto list = std::get_if<typename Node::NodeList>(&node->data)) {
+        for (const auto &charNode : *list) {
+          paths.push(charNode.node.get());
+        }
+      } else if (auto map = std::get_if<typename Node::NodeMap>(&node->data)) {
+        for (const auto &[ch, node] : *map) {
+          paths.push(node.get());
+        }
+      }
+    }
+
+    return m_results;
+  }
+
+  /**
+   * Splits the text into words and then index each one separately.
+   */
+  void indexLatinText(std::string_view s, const T &data) {
+    for (const auto &word : splitWords(s)) {
+      index(word, data);
+    }
+  }
+
+  void index(std::string_view s, const T &data) {
+    Node *cur = &m_root;
+
+    for (char ch : s) {
+      uint8_t idx = static_cast<uint8_t>(tolower(ch));
+
+      if (std::holds_alternative<std::monostate>(cur->data)) {
+        auto charNode = Node::CharNode::fromChar(idx);
+        auto ptr = charNode.node.get();
+
+        cur->data = std::move(charNode);
+        cur->npath = 1;
+        cur = ptr;
+        memUsage += sizeof(Node);
+      }
+
+      if (auto charNode = std::get_if<typename Node::CharNode>(&cur->data)) {
+        if (idx == charNode->ch) {
+          cur = charNode->node.get();
+          continue;
+        }
+
+        typename Node::NodeList list;
+        auto newNode = Node::CharNode::fromChar(idx);
+        auto newCur = newNode.node.get();
+
+        list.reserve(2);
+        list.emplace_back(std::move(*charNode));
+        list.emplace_back(std::move(newNode));
+        cur->data = std::move(list);
+        cur->npath++;
+
+        cur = newCur;
+      }
+
+      if (auto list = std::get_if<typename Node::NodeList>(&cur->data)) {
+        auto it = std::ranges::find_if(*list, [idx](const auto &charNode) { return charNode.ch == idx; });
+
+        if (it != list->end()) {
+          cur = it->node.get();
+          continue;
+        }
+
+        if (list->size() < TRIE_LINEAR_CAP) {
+          auto newNode = Node::CharNode::fromChar(idx);
+          auto newCur = newNode.node.get();
+
+          list->emplace_back(std::move(newNode));
+          cur->npath++;
+          cur = newCur;
+          continue;
+        }
+
+        typename Node::NodeMap map;
+        memUsage += sizeof(map);
+
+        auto newNode = std::make_unique<Node>();
+        auto nodePtr = newNode.get();
+
+        for (auto &charNode : *list) {
+          map[charNode.ch] = std::move(charNode.node);
+        }
+
+        map[idx] = std::move(newNode);
+        cur->data = std::move(map);
+        cur->npath++;
+        cur = nodePtr;
+        continue;
+      }
+
+      if (auto map = std::get_if<typename Node::NodeMap>(&cur->data)) {
+        if (auto it = map->find(idx); it != map->end()) {
+          cur = it->second.get();
+          continue;
+        }
+
+        auto newNode = std::make_unique<Node>();
+        auto nodePtr = newNode.get();
+
+        map->insert({idx, std::move(newNode)});
+        cur->npath++;
+        cur = nodePtr;
+      }
+    }
+
+    cur->matches.emplace_back(data);
+    memUsage += sizeof(T) * cur->matches.capacity();
+  }
+};

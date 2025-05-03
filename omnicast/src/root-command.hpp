@@ -1,8 +1,7 @@
 #pragma once
-#include "app/app-database.hpp"
 #include "argument.hpp"
 #include "command-database.hpp"
-#include "edit-command-preferences-view.hpp"
+#include "root-item-manager.hpp"
 #include "omni-command-db.hpp"
 #include "service-registry.hpp"
 #include "ui/action-pannel/action-item.hpp"
@@ -25,7 +24,6 @@
 #include <cfloat>
 #include <chrono>
 #include <cmath>
-#include <iterator>
 #include <memory>
 #include <qbrush.h>
 #include <qcoreevent.h>
@@ -44,36 +42,6 @@
 #include <quuid.h>
 #include <qwidget.h>
 #include <ranges>
-
-struct OpenBuiltinCommandAction : public AbstractAction {
-  std::shared_ptr<AbstractCmd> cmd;
-  QString text;
-
-  void execute(AppWindow &app) override {
-    LaunchProps props;
-    props.arguments = app.topBar->m_completer->collect();
-
-    app.launchCommand(cmd, {}, props);
-  }
-
-  OpenBuiltinCommandAction(const std::shared_ptr<AbstractCmd> &cmd, const QString &title = "Open command",
-                           const QString &text = "")
-      : AbstractAction(title, cmd->iconUrl()), cmd(cmd), text(text) {}
-};
-
-class OpenCommandPreferencesAction : public AbstractAction {
-  std::shared_ptr<AbstractCmd> m_command;
-
-  void execute(AppWindow &app) override {
-    app.pushView(new EditCommandPreferencesView(app, m_command),
-                 {.navigation = NavigationStatus{.title = QString("%1 - Preferences").arg(m_command->name()),
-                                                 .iconUrl = m_command->iconUrl()}});
-  }
-
-public:
-  OpenCommandPreferencesAction(const std::shared_ptr<AbstractCmd> &command)
-      : AbstractAction("Edit preferences", BuiltinOmniIconUrl("pencil")), m_command(command) {}
-};
 
 class ColorListItem : public OmniList::AbstractVirtualItem, public DeclarativeOmniListView::IActionnable {
   QColor color;
@@ -103,63 +71,6 @@ class ColorListItem : public OmniList::AbstractVirtualItem, public DeclarativeOm
 
 public:
   ColorListItem(QColor color) : color(color) {}
-};
-
-class DisableCommand : public AbstractAction {
-  QString _id;
-  bool _value;
-
-  void execute(AppWindow &app) override {
-    auto commandDb = ServiceRegistry::instance()->commandDb();
-
-    commandDb->setDisable(_id, _value);
-    app.statusBar->setToast("Command updated");
-  }
-
-public:
-  DisableCommand(const QString &id, bool value)
-      : AbstractAction(value ? "Disabled command" : "Enable command",
-                       BuiltinOmniIconUrl(value ? "eye-disabled" : "eye")),
-        _id(id), _value(value) {}
-};
-
-class BuiltinCommandListItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
-  CommandDbEntry m_entry;
-
-protected:
-  QString text;
-
-  QList<AbstractAction *> generateActions() const override {
-    auto disable = new DisableCommand(m_entry.command->id(), true);
-    QList<AbstractAction *> actions{new OpenBuiltinCommandAction(m_entry.command, "Open command", text),
-                                    disable};
-
-    if (!m_entry.command->preferences().empty()) {
-      actions << new OpenCommandPreferencesAction(m_entry.command);
-    }
-
-    return actions;
-  }
-
-  std::unique_ptr<CompleterData> createCompleter() const override {
-    if (m_entry.command->arguments().empty()) return nullptr;
-
-    return std::make_unique<CompleterData>(
-        CompleterData{.iconUrl = m_entry.command->iconUrl(), .arguments = m_entry.command->arguments()});
-  }
-
-  QString id() const override { return m_entry.command->id(); }
-
-  ItemData data() const override {
-    return {.iconUrl = m_entry.command->iconUrl(),
-            .name = m_entry.command->name(),
-            .category = m_entry.command->repositoryName(),
-            .accessories = {{.text = "Command", .color = ColorTint::TextSecondary}}};
-  }
-
-public:
-  BuiltinCommandListItem(const CommandDbEntry &entry, const QString &text = "")
-      : m_entry(entry), text(text) {}
 };
 
 class QuicklinkRootListItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
@@ -228,41 +139,31 @@ public:
 class RootView : public DeclarativeOmniListView {
   AppWindow &app;
 
-  class AppListItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
-    std::shared_ptr<Application> app;
+  class RootSearchItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
+    const std::shared_ptr<RootItem> m_item;
 
-    QList<AbstractAction *> generateActions() const override {
-      auto appDb = ServiceRegistry::instance()->appDb();
-      QList<AbstractAction *> actions;
-      auto fileBrowser = appDb->appProvider()->fileBrowser();
-      auto textEditor = appDb->appProvider()->textEditor();
-
-      actions << new OpenAppAction(app, "Open Application", {});
-
-      for (const auto &desktopAction : app->actions()) {
-        actions << new OpenAppAction(desktopAction, desktopAction->name(), {});
-      }
-
-      if (fileBrowser) { actions << new OpenAppAction(fileBrowser, "Open in folder", {app->id()}); }
-
-      if (textEditor) { actions << new OpenAppAction(textEditor, "Open desktop file", {app->id()}); }
-
-      actions << new CopyTextAction("Copy file path", app->id());
-
-      return actions;
-    }
+    QList<AbstractAction *> generateActions() const override { return m_item->actions(); }
 
     ItemData data() const override {
-      return {.iconUrl = app->iconUrl(),
-              .name = app->name(),
-              .accessories = {{.text = "Application", .color = ColorTint::TextSecondary}}};
+      return {
+          .iconUrl = m_item->iconUrl(),
+          .name = m_item->displayName(),
+          .accessories = m_item->accessories(),
+      };
     }
 
-    QString id() const override { return app->id(); }
+    std::unique_ptr<CompleterData> createCompleter() const override {
+      return std::make_unique<CompleterData>(CompleterData{
+          .iconUrl = m_item->iconUrl(),
+          .arguments = m_item->arguments(),
+      });
+    }
+
+    QString id() const override { return m_item->uniqueId(); }
 
   public:
-    AppListItem(const std::shared_ptr<Application> &app) : app(app) {}
-    ~AppListItem() {}
+    RootSearchItem(const std::shared_ptr<RootItem> &item) : m_item(item) {}
+    ~RootSearchItem() {}
   };
 
   class FallbackQuicklinkListItem : public AbstractDefaultListItem, DeclarativeOmniListView::IActionnable {
@@ -333,19 +234,20 @@ public:
     const auto &commandEntries = commandDb->commands();
     size_t maxReserve = appEntries.size() + commandEntries.size() + quicklinks.size();
 
-    auto filteredLinks =
-        quicklinks | std::views::transform([](const auto &entry) {
-          auto factory = [&entry]() { return std::make_unique<QuicklinkRootListItem>(entry); };
-          return ShallowRankedListItem{.factory = factory, .rank = 0};
-        });
+    /*
+auto filteredLinks =
+    quicklinks | std::views::transform([](const auto &entry) {
+      auto factory = [&entry]() { return std::make_unique<QuicklinkRootListItem>(entry); };
+      return ShallowRankedListItem{.factory = factory, .rank = 0};
+    });
 
-    auto filteredApps = appEntries |
-                        std::views::filter([](const auto &entry) { return entry.app->displayable(); }) |
-                        std::views::transform([](const auto &entry) {
-                          auto factory = [&entry]() { return std::make_unique<AppListItem>(entry.app); };
+auto filteredApps = appEntries |
+                    std::views::filter([](const auto &entry) { return entry->app->displayable(); }) |
+                    std::views::transform([](const auto &entry) {
+                      auto factory = [&entry]() { return std::make_unique<AppListItem>(entry->app); };
 
-                          return ShallowRankedListItem{.factory = factory, .rank = entry.frecency};
-                        });
+                      return ShallowRankedListItem{.factory = factory, .rank = entry->frecency};
+                    });
 
     auto filteredCommands =
         commandEntries | std::views::filter([](const auto &entry) { return !entry.disabled; }) |
@@ -371,6 +273,7 @@ public:
       std::ranges::for_each(topResults,
                             [&suggestions](const auto &ranked) { suggestions.addItem(ranked.factory()); });
     }
+        */
 
     {
       auto &commandSection = list->addSection("Commands");
@@ -378,9 +281,6 @@ public:
       const auto &links = quicklinkDb->list();
 
       commandSection.withCapacity(commands.size() + links.size());
-      std::ranges::for_each(commands, [&commandSection](const auto entry) {
-        commandSection.addItem(std::make_unique<BuiltinCommandListItem>(entry));
-      });
       std::ranges::for_each(links, [&commandSection](const auto link) {
         commandSection.addItem(std::make_unique<QuicklinkRootListItem>(link));
       });
@@ -390,11 +290,11 @@ public:
       const auto &appEntries = appDb->listEntries();
       auto &appSection = list->addSection("Apps").withCapacity(appEntries.size());
       auto filteredEntries = appEntries | std::views::filter([](const auto &entry) {
-                               return !entry.disabled && entry.app->displayable();
+                               return !entry->disabled && entry->app->displayable();
                              });
 
       std::ranges::for_each(filteredEntries, [&appSection](const auto &entry) {
-        appSection.addItem(std::make_unique<AppListItem>(entry.app));
+        // appSection.addItem(std::make_unique<AppListItem>(entry->app));
       });
     }
   }
@@ -419,8 +319,7 @@ public:
   ItemList generateList(const QString &s) override { return {}; }
 
   void render(const QString &s) override {
-    if (s.isEmpty()) return renderBlankSearch();
-
+    auto rootItemManager = ServiceRegistry::instance()->rootItemManager();
     auto commandDb = ServiceRegistry::instance()->commandDb();
     auto quicklinkDb = ServiceRegistry::instance()->quicklinks();
     auto appDb = ServiceRegistry::instance()->appDb();
@@ -448,49 +347,59 @@ public:
 
     if (QColor(s).isValid()) { list->addSection("Color").addItem(std::make_unique<ColorListItem>(s)); }
 
-    auto filteredLinks =
-        quicklinks |
-        std::views::filter([isWordStart](const auto &quicklink) { return isWordStart(quicklink->name); }) |
-        std::views::transform([](const auto &entry) {
-          auto item = std::make_unique<QuicklinkRootListItem>(entry);
-          return RankedListItem{.item = std::move(item), .rank = 0};
-        });
+    auto &results = list->addSection("Results");
 
-    auto filteredApps =
-        appEntries | std::views::filter([](const auto &entry) { return entry.app->displayable(); }) |
-        std::views::filter([&isWordStart](const auto &entry) { return isWordStart(entry.app->name()); }) |
-        std::views::transform([](const auto &entry) {
-          auto item = std::make_unique<AppListItem>(entry.app);
-
-          return RankedListItem{.item = std::move(item), .rank = entry.frecency};
-        });
-
-    auto filteredCommands =
-        commandEntries | std::views::filter([](const auto &entry) { return !entry.disabled; }) |
-        std::views::filter([&isWordStart](const auto &entry) { return isWordStart(entry.command->name()); }) |
-        std::views::transform([](const auto &entry) {
-          auto item = std::make_unique<BuiltinCommandListItem>(entry);
-          return RankedListItem{.item = std::move(item), .rank = 0};
-        });
-
-    std::vector<RankedListItem> rankedResults;
-
-    {
-
-      rankedResults.reserve(maxReserve);
-      std::ranges::copy(filteredApps, std::back_inserter(rankedResults));
-      std::ranges::copy(filteredCommands, std::back_inserter(rankedResults));
-      std::ranges::copy(filteredLinks, std::back_inserter(rankedResults));
-
-      auto sortRanked = [](const auto &a, const auto &b) { return a.rank > b.rank; };
-
-      std::ranges::sort(rankedResults, sortRanked);
-
-      auto &results = list->addSection("Results", QString::number(rankedResults.size()))
-                          .withCapacity(rankedResults.size());
-
-      std::ranges::for_each(rankedResults, [&results](auto &item) { results.addItem(std::move(item.item)); });
+    for (const auto &item : rootItemManager->prefixSearch(s)) {
+      results.addItem(std::make_unique<RootSearchItem>(item));
     }
+
+    /*
+auto filteredLinks =
+    quicklinks |
+    std::views::filter([isWordStart](const auto &quicklink) { return isWordStart(quicklink->name); }) |
+    std::views::transform([](const auto &entry) {
+      auto item = std::make_unique<QuicklinkRootListItem>(entry);
+      return RankedListItem{.item = std::move(item), .rank = 0};
+    });
+
+auto newAppEntries = appDb->prefixSearch(s);
+
+auto filteredApps =
+    newAppEntries |
+    std::views::filter([](const auto &entry) { return !entry->disabled && entry->app->displayable(); }) |
+    std::views::transform([](const auto &entry) {
+      auto item = std::make_unique<AppListItem>(entry->app);
+
+      return RankedListItem{.item = std::move(item), .rank = entry->frecency};
+    });
+
+auto filteredCommands =
+    commandEntries | std::views::filter([](const auto &entry) { return !entry.disabled; }) |
+    std::views::filter([&isWordStart](const auto &entry) { return isWordStart(entry.command->name()); }) |
+    std::views::transform([](const auto &entry) {
+      auto item = std::make_unique<BuiltinCommandListItem>(entry);
+      return RankedListItem{.item = std::move(item), .rank = 0};
+    });
+
+std::vector<RankedListItem> rankedResults;
+
+{
+
+  rankedResults.reserve(maxReserve);
+  std::ranges::copy(filteredApps, std::back_inserter(rankedResults));
+  std::ranges::copy(filteredCommands, std::back_inserter(rankedResults));
+  std::ranges::copy(filteredLinks, std::back_inserter(rankedResults));
+
+  auto sortRanked = [](const auto &a, const auto &b) { return a.rank > b.rank; };
+
+  std::ranges::sort(rankedResults, sortRanked);
+
+  auto &results = list->addSection("Results", QString::number(rankedResults.size()))
+                      .withCapacity(rankedResults.size());
+
+  std::ranges::for_each(rankedResults, [&results](auto &item) { results.addItem(std::move(item.item)); });
+}
+    */
 
     auto &fallbackCommands = list->addSection(QString("Use \"%1\" with...").arg(s));
     auto fallbackLinks = quicklinks | std::views::filter([&s](const auto &quicklink) {

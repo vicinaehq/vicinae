@@ -1,4 +1,5 @@
 #pragma once
+#include "app-root-provider.hpp"
 #include "app.hpp"
 #include "common-actions.hpp"
 #include "service-registry.hpp"

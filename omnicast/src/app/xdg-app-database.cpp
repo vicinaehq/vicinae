@@ -11,13 +11,7 @@ static const std::vector<QDir> defaultPaths = {QDir("/usr/share/applications"),
 
 std::shared_ptr<Application> XdgAppDatabase::defaultForMime(const QString &mime) const {
   if (auto it = mimeToDefaultApp.find(mime); it != mimeToDefaultApp.end()) {
-    qDebug() << "find default app for " << mime << it->second;
-    if (auto appIt = appMap.find(it->second); appIt != appMap.end()) {
-      qDebug() << "got app";
-      return appIt->second;
-    }
-
-    qDebug() << "Failed to get app";
+    if (auto appIt = appMap.find(it->second); appIt != appMap.end()) { return appIt->second; }
   }
 
   return nullptr;

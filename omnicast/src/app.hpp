@@ -204,27 +204,6 @@ signals:
   void actionExecuted(AbstractAction *action) const;
 };
 
-struct OpenAppAction : public AbstractAction {
-  std::shared_ptr<Application> application;
-  std::vector<QString> args;
-
-  void execute(AppWindow &app) override {
-    auto appDb = ServiceRegistry::instance()->appDb();
-
-    if (!appDb->launch(*application.get(), args)) {
-      app.statusBar->setToast("Failed to start app", ToastPriority::Danger);
-      return;
-    }
-
-    app.closeWindow(true);
-    appDb->registerVisit(application->id());
-  }
-
-  OpenAppAction(const std::shared_ptr<Application> &app, const QString &title,
-                const std::vector<QString> args)
-      : AbstractAction(title, app->iconUrl()), application(app), args(args) {}
-};
-
 class CopyTextAction : public AbstractAction {
   QString text;
 

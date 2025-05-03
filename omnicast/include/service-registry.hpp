@@ -11,6 +11,7 @@
 #include "omni-database.hpp"
 #include "quicklist-database.hpp"
 #include "ranking-service.hpp"
+#include "root-item-manager.hpp"
 #include "wm/window-manager.hpp"
 #include <memory>
 #include <qobject.h>
@@ -28,6 +29,7 @@ class ServiceRegistry : public QObject {
   std::unique_ptr<AI::Manager> m_aiManager;
   std::unique_ptr<FontService> m_fontService;
   std::unique_ptr<RankingService> m_rankingService;
+  std::unique_ptr<RootItemManager> m_rootItemManager;
 
 public:
   static ServiceRegistry *instance() {
@@ -35,6 +37,7 @@ public:
     return &instance;
   }
 
+  auto rootItemManager() const { return m_rootItemManager.get(); }
   auto AI() const { return m_aiManager.get(); }
   auto omniDb() const { return m_omniDb.get(); }
   auto quicklinks() const { return m_quickinkDb.get(); }
@@ -48,6 +51,9 @@ public:
   auto appDb() const { return m_appDb.get(); }
   auto rankingService() const { return m_rankingService.get(); }
 
+  auto setRootItemManager(std::unique_ptr<RootItemManager> manager) {
+    m_rootItemManager = std::move(manager);
+  }
   void setAI(std::unique_ptr<AI::Manager> manager) { m_aiManager = std::move(manager); }
   void setRankingService(std::unique_ptr<RankingService> service) { m_rankingService = std::move(service); }
   void setFontService(std::unique_ptr<FontService> font) { m_fontService = std::move(font); }

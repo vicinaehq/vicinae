@@ -46,6 +46,7 @@ public:
   QString name() const override { return _data.name; }
   bool displayable() const override { return !_data.noDisplay; }
   bool isTerminalApp() const override { return _data.terminal; }
+  std::vector<QString> keywords() const override { return {_data.keywords.begin(), _data.keywords.end()}; }
   OmniIconUrl iconUrl() const override { return SystemOmniIconUrl(_data.icon); }
   std::vector<std::shared_ptr<Application>> actions() const override {
     std::vector<std::shared_ptr<Application>> list;

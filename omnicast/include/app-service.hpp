@@ -1,31 +1,41 @@
 #pragma once
 #include "app/app-database.hpp"
 #include "app/xdg-app-database.hpp"
+#include "common.hpp"
+#include "libtrie/trie.hpp"
 #include "omni-database.hpp"
 #include "ranking-service.hpp"
-#include <iterator>
+#include <memory>
 #include <qlogging.h>
 #include <qobject.h>
 #include <qsqlquery.h>
-#include <ranges>
 
-class AppService : public QObject {
+class AppService : public QObject, public NonAssignable {
 public:
   struct AppEntry {
     std::shared_ptr<Application> app;
+    QList<QString> searchTokens;
     int openCount;
     bool disabled;
     bool hidden;
     double frecency;
     std::optional<std::chrono::time_point<std::chrono::high_resolution_clock>> lastOpenedAt;
+
+    bool operator==(const AppEntry &rhs) const { return app->id() == rhs.app->id(); }
   };
+
+  struct AppEntryHash {
+    size_t operator()(const std::shared_ptr<AppEntry> &app) const { return qHash(app->app->id()); }
+  };
+
+  Trie<std::shared_ptr<AppEntry>, AppEntryHash> m_trie;
 
 private:
   OmniDatabase &m_db;
   RankingService &m_ranking;
   QSqlQuery m_syncAppQuery;
   std::unique_ptr<AbstractAppDatabase> m_provider;
-  std::vector<AppEntry> m_entries;
+  std::vector<std::shared_ptr<AppEntry>> m_entries;
 
   static std::unique_ptr<AbstractAppDatabase> createLocalProvider() {
 #ifdef Q_OS_DARWIN
@@ -50,7 +60,7 @@ private:
     }
   }
 
-  std::optional<AppEntry> syncApp(std::shared_ptr<Application> app) {
+  std::optional<std::shared_ptr<AppEntry>> syncApp(std::shared_ptr<Application> app) {
     m_syncAppQuery.bindValue(":id", app->id());
 
     if (!m_syncAppQuery.exec() || !m_syncAppQuery.next()) {
@@ -65,9 +75,18 @@ private:
     entry.lastOpenedAt = record.lastVisitedAt;
     entry.frecency = m_ranking.computeFrecency(record);
     entry.disabled = m_syncAppQuery.value(0).toBool();
+    entry.searchTokens = app->name().split(' ');
     entry.app = app;
 
-    return entry;
+    auto ptr = std::make_shared<AppEntry>(entry);
+
+    m_trie.indexLatinText(entry.app->name().toStdString(), ptr);
+
+    for (const auto &keyword : app->keywords()) {
+      m_trie.index(keyword.toStdString(), ptr);
+    }
+
+    return ptr;
   }
 
   void syncApps() {
@@ -76,10 +95,11 @@ private:
     m_entries.reserve(apps.size());
     m_entries.clear();
     m_db.db().transaction();
-    auto entries = apps | std::views::transform([this](auto app) { return syncApp(app); }) |
-                   std::views::filter([](const auto &a) { return a.has_value(); }) |
-                   std::views::transform([](const auto &a) { return a.value(); });
-    std::ranges::copy(entries, std::back_inserter(m_entries));
+
+    for (const auto &app : apps) {
+      if (auto entry = syncApp(app)) { m_entries.emplace_back(*entry); }
+    }
+
     qDebug() << "Transformed" << m_entries.size() << "apps";
 
     m_syncAppQuery.finish();
@@ -93,23 +113,25 @@ private:
 public:
   AbstractAppDatabase *appProvider() const { return m_provider.get(); }
 
-  const std::vector<AppEntry> &listEntries() const { return m_entries; }
+  const std::vector<std::shared_ptr<AppEntry>> &listEntries() const { return m_entries; }
   std::vector<std::shared_ptr<Application>> list() const { return m_provider->list(); }
 
   bool launch(const Application &app, const std::vector<QString> &args = {}) const {
     return m_provider->launch(app, args);
   }
 
+  auto prefixSearch(const QString &query) const { return m_trie.prefixSearch(query.toStdString()); }
+
   void registerVisit(const std::shared_ptr<Application> &app) { registerVisit(app->id()); }
 
   void registerVisit(const QString &appId) {
     auto record = m_ranking.registerVisit("application", appId);
     auto it =
-        std::ranges::find_if(m_entries, [&appId](const AppEntry &entry) { return entry.app->id() == appId; });
+        std::ranges::find_if(m_entries, [&appId](const auto &entry) { return entry->app->id() == appId; });
 
     if (it != m_entries.end()) {
-      it->lastOpenedAt = record.lastVisitedAt;
-      it->openCount = record.visitedCount;
+      (*it)->lastOpenedAt = record.lastVisitedAt;
+      (*it)->openCount = record.visitedCount;
     }
   }
 

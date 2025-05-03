@@ -1,5 +1,5 @@
 #include "ui/action-pannel/open-with-action.hpp"
-#include "app.hpp"
+#include "app-root-provider.hpp"
 #include "service-registry.hpp"
 #include "ui/action-pannel/action-item.hpp"
 #include <qnamespace.h>

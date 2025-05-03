@@ -34,6 +34,7 @@ include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}/src
 	${CMAKE_CURRENT_SOURCE_DIR}/src/lib
 	${CMAKE_CURRENT_SOURCE_DIR}/../proto
+	${CMAKE_CURRENT_SOURCE_DIR}/..
 )
 
 set(SRCS
@@ -171,6 +172,8 @@ set(SRCS
 
 	include/extension/extension.hpp
 	src/extension/extension.cpp
+
+	include/root-item-manager.hpp
 
 	include/extension/extension-command.hpp
 	src/extension/extension-command.cpp

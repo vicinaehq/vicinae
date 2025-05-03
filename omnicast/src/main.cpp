@@ -1,10 +1,12 @@
 #include "ai/ollama-ai-provider.hpp"
 #include "app-service.hpp"
+#include "app-root-provider.hpp"
 #include "app.hpp"
 #include <QApplication>
 #include "font-service.hpp"
 #include <QFontDatabase>
 #include <QSurfaceFormat>
+#include <cstdio>
 #include <wm/window-manager-factory.hpp>
 #include <QtSql/QtSql>
 #include <QXmlStreamReader>
@@ -29,7 +31,6 @@
 #include <qprocess.h>
 #include <qstringview.h>
 #include <qtmetamacros.h>
-#include "app/xdg-app-database.hpp"
 #include "extension_manager.hpp"
 #include "local-storage-service.hpp"
 #include "omnicast.hpp"
@@ -38,7 +39,9 @@
 #include "quicklink-seeder.hpp"
 #include "quicklist-database.hpp"
 #include "ranking-service.hpp"
+#include "root-item-manager.hpp"
 #include "service-registry.hpp"
+#include "command-root-provider.hpp"
 
 #ifdef WAYLAND_LAYER_SHELL
 #include <LayerShellQt/window.h>
@@ -140,6 +143,7 @@ int startDaemon() {
 
   {
     auto registry = ServiceRegistry::instance();
+    auto rootItemManager = std::make_unique<RootItemManager>();
     auto quicklinkService =
         std::make_unique<QuicklistDatabase>(Config::dirPath() + QDir::separator() + "quicklinks.db");
     auto calculatorService =
@@ -177,6 +181,10 @@ int startDaemon() {
       if (quicklinkService->list().isEmpty()) { seeder->seed(); }
     }
 
+    rootItemManager->addProvider(std::make_unique<AppRootProvider>(*appService.get()));
+    rootItemManager->addProvider(std::make_unique<CommandRootProvider>(*commandDb.get()));
+
+    registry->setRootItemManager(std::move(rootItemManager));
     registry->setQuicklinks(std::move(quicklinkService));
     registry->setCalculatorDb(std::move(calculatorService));
     registry->setRankingService(std::move(rankingService));

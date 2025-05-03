@@ -11,6 +11,12 @@ static constexpr size_t FREQUENCY_WEIGHT = 1;
 static constexpr size_t FREQUENCY_CAP = 100;
 
 class RankingService : public NonAssignable {
+  struct RootSearchableItem {
+    int visitedCount;
+    std::optional<std::chrono::time_point<std::chrono::high_resolution_clock>> lastVisitedAt;
+    QString alias;
+  };
+
   struct FrecencyRecord {
     int visitedCount;
     std::optional<std::chrono::time_point<std::chrono::high_resolution_clock>> lastVisitedAt;
