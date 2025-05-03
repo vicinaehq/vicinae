@@ -2,6 +2,7 @@
 #include "argument.hpp"
 #include "libtrie/trie.hpp"
 #include "omni-icon.hpp"
+#include "preference.hpp"
 #include "timer.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/default-list-item-widget.hpp"
@@ -53,6 +54,14 @@ public:
   virtual ArgumentList arguments() const { return {}; };
 
   /**
+   * An optional list of preferences that can be set in the settings to
+   * customize the behaviour of this item.
+   */
+  virtual PreferenceList preferences() const { return {}; }
+
+  virtual double baseScoreWeight() const { return 1; }
+
+  /**
    * An optional subtitle shown to the left of the `displayName`.
    * Indexed the same as the `displayName`.
    */
@@ -93,6 +102,7 @@ public:
   virtual QString uniqueId() const = 0;
   virtual QString displayName() const = 0;
   virtual std::vector<std::shared_ptr<RootItem>> loadItems() const = 0;
+  virtual PreferenceList preferences() const { return {}; }
 
 signals:
   void itemsChanged() const;
