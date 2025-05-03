@@ -81,8 +81,8 @@ struct UpdateQuicklinkPayload {
 
 class QuicklistDatabase {
   QSqlDatabase db;
-  QList<std::shared_ptr<Quicklink>> links;
-  using List = QList<std::shared_ptr<Quicklink>>;
+  std::vector<std::shared_ptr<Quicklink>> links;
+  using List = std::vector<std::shared_ptr<Quicklink>>;
 
   Quicklink *findMutableById(uint id) {
     for (auto &link : links) {
@@ -106,7 +106,7 @@ public:
       return false;
     }
 
-    links.removeIf([id](auto &link) { return link->id == id; });
+    std::ranges::remove_if(links, [id](auto &link) { return link->id == id; });
 
     return true;
   }

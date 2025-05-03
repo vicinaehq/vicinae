@@ -2,6 +2,7 @@
 #include "argument.hpp"
 #include "libtrie/trie.hpp"
 #include "omni-icon.hpp"
+#include "timer.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/default-list-item-widget.hpp"
 #include <algorithm>
@@ -89,11 +90,13 @@ public:
   RootProvider() {}
   virtual ~RootProvider() = default;
 
+  virtual QString uniqueId() const = 0;
   virtual QString displayName() const = 0;
   virtual std::vector<std::shared_ptr<RootItem>> loadItems() const = 0;
 
 signals:
   void itemsChanged() const;
+  void itemRemoved(const QString &id) const;
 };
 
 class RootItemManager : public QObject {
@@ -118,24 +121,26 @@ private:
   std::unordered_map<QString, RootItemMetadata> m_metadata;
   std::vector<std::unique_ptr<RootProvider>> m_providers;
 
+  void indexItem(const std::shared_ptr<RootItem> &item) {
+    auto metadata = itemMetadata(item->uniqueId());
+    std::string name = item->displayName().toStdString();
+    std::string subtitle = item->subtitle().toStdString();
+
+    m_trie.index(name, item);
+    m_trie.indexLatinText(name, item);
+    m_trie.indexLatinText(subtitle, item);
+
+    std::ranges::for_each(metadata.aliases,
+                          [&](const QString &alias) { m_trie.index(alias.toStdString(), item); });
+    std::ranges::for_each(item->keywords(),
+                          [&](const QString &keyword) { m_trie.index(keyword.toStdString(), item); });
+  }
+
   void rebuildTrie() {
+    Timer timer;
     m_trie.clear();
-
-    for (const auto &item : m_items) {
-      auto metadata = itemMetadata(item->uniqueId());
-      std::string name = item->displayName().toStdString();
-
-      m_trie.index(name, item);
-      m_trie.indexLatinText(name, item);
-
-      for (const auto &alias : metadata.aliases) {
-        m_trie.index(alias.toStdString(), item);
-      }
-
-      for (const auto &keyword : item->keywords()) {
-        m_trie.index(keyword.toStdString(), item);
-      }
-    }
+    std::ranges::for_each(m_items, std::bind_front(&RootItemManager::indexItem, this));
+    timer.time("trie rebuild");
   }
 
   void reloadProviders() {
@@ -165,12 +170,16 @@ public:
     rebuildTrie();
   }
 
+  RootProvider *provider(const QString &id) const {
+    auto it = std::ranges::find_if(m_providers, [&id](const auto &p) { return id == p->uniqueId(); });
+
+    if (it != m_providers.end()) return it->get();
+
+    return nullptr;
+  }
+
   std::vector<std::shared_ptr<RootItem>> prefixSearch(const QString &query) {
-    auto items = m_trie.prefixSearch(query.toStdString()) | std::views::filter([this](const auto &a) {
-                   return true;
-                   return itemMetadata(a->uniqueId()).isEnabled;
-                 }) |
-                 std::ranges::to<std::vector>();
+    auto items = m_trie.prefixSearch(query.toStdString());
 
     std::ranges::sort(items, [this](const auto &a, const auto &b) {
       auto ameta = itemMetadata(a->uniqueId());

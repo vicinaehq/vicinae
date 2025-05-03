@@ -18,5 +18,5 @@ set(SRCS
 add_library(${TARGET} ${SRCS})
 target_compile_options(${TARGET} PUBLIC -g3)
 
-add_executable(trietest main.cpp)
-target_link_libraries(trietest PRIVATE proto)
+#add_executable(trietest main.cpp)
+#target_link_libraries(trietest PRIVATE proto)

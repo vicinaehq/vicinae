@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <wm/window-manager-factory.hpp>
 #include <QtSql/QtSql>
+#include "root-quicklink-provider.hpp"
 #include <QXmlStreamReader>
 #include <QtSql/qsqldatabase.h>
 #include <arpa/inet.h>
@@ -178,11 +179,12 @@ int startDaemon() {
     {
       auto seeder = std::make_unique<QuickLinkSeeder>(*appService->appProvider(), *quicklinkService);
 
-      if (quicklinkService->list().isEmpty()) { seeder->seed(); }
+      if (quicklinkService->list().empty()) { seeder->seed(); }
     }
 
     rootItemManager->addProvider(std::make_unique<AppRootProvider>(*appService.get()));
     rootItemManager->addProvider(std::make_unique<CommandRootProvider>(*commandDb.get()));
+    rootItemManager->addProvider(std::make_unique<RootQuicklinkProvider>(*quicklinkService.get()));
 
     registry->setRootItemManager(std::move(rootItemManager));
     registry->setQuicklinks(std::move(quicklinkService));

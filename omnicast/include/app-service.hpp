@@ -120,8 +120,6 @@ public:
     return m_provider->launch(app, args);
   }
 
-  auto prefixSearch(const QString &query) const { return m_trie.prefixSearch(query.toStdString()); }
-
   void registerVisit(const std::shared_ptr<Application> &app) { registerVisit(app->id()); }
 
   void registerVisit(const QString &appId) {

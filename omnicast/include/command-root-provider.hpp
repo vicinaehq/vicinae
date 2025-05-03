@@ -72,6 +72,8 @@ class CommandRootProvider : public RootProvider {
 public:
   QString displayName() const override { return "Commands"; }
 
+  QString uniqueId() const override { return "commands"; }
+
   std::vector<std::shared_ptr<RootItem>> loadItems() const override {
     return m_db.commands() | std::views::transform([](const auto &entry) {
              return std::static_pointer_cast<RootItem>(std::make_shared<CommandRootItem>(entry.command));

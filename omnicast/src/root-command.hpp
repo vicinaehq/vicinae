@@ -232,70 +232,26 @@ public:
     const auto &quicklinks = quicklinkDb->list();
     const auto &appEntries = appDb->listEntries();
     const auto &commandEntries = commandDb->commands();
-    size_t maxReserve = appEntries.size() + commandEntries.size() + quicklinks.size();
+    auto rootManager = ServiceRegistry::instance()->rootItemManager();
 
-    /*
-auto filteredLinks =
-    quicklinks | std::views::transform([](const auto &entry) {
-      auto factory = [&entry]() { return std::make_unique<QuicklinkRootListItem>(entry); };
-      return ShallowRankedListItem{.factory = factory, .rank = 0};
-    });
+    if (auto provider = rootManager->provider("commands")) {
+      auto &section = list->addSection("Commands");
+      auto items = provider->loadItems() | std::views::transform([](const auto &item) {
+                     return std::make_unique<RootSearchItem>(item);
+                   });
 
-auto filteredApps = appEntries |
-                    std::views::filter([](const auto &entry) { return entry->app->displayable(); }) |
-                    std::views::transform([](const auto &entry) {
-                      auto factory = [&entry]() { return std::make_unique<AppListItem>(entry->app); };
-
-                      return ShallowRankedListItem{.factory = factory, .rank = entry->frecency};
-                    });
-
-    auto filteredCommands =
-        commandEntries | std::views::filter([](const auto &entry) { return !entry.disabled; }) |
-        std::views::transform([](const auto &entry) {
-          auto factory = [&entry]() { return std::make_unique<BuiltinCommandListItem>(entry); };
-
-          return ShallowRankedListItem{.factory = factory, .rank = 0};
-        });
-
-    {
-
-      std::vector<ShallowRankedListItem> rankedResults;
-
-      rankedResults.reserve(maxReserve);
-      std::ranges::copy(filteredApps, std::back_inserter(rankedResults));
-      std::ranges::copy(filteredCommands, std::back_inserter(rankedResults));
-      std::ranges::copy(filteredLinks, std::back_inserter(rankedResults));
-      std::ranges::sort(rankedResults, [](const auto &a, const auto &b) { return a.rank > b.rank; });
-
-      auto &suggestions = list->addSection("Suggestions").withCapacity(5);
-      auto topResults = rankedResults | std::views::take(5);
-
-      std::ranges::for_each(topResults,
-                            [&suggestions](const auto &ranked) { suggestions.addItem(ranked.factory()); });
-    }
-        */
-
-    {
-      auto &commandSection = list->addSection("Commands");
-      const auto &commands = commandDb->commands();
-      const auto &links = quicklinkDb->list();
-
-      commandSection.withCapacity(commands.size() + links.size());
-      std::ranges::for_each(links, [&commandSection](const auto link) {
-        commandSection.addItem(std::make_unique<QuicklinkRootListItem>(link));
-      });
+      for (auto item : items)
+        section.addItem(std::move(item));
     }
 
-    {
-      const auto &appEntries = appDb->listEntries();
-      auto &appSection = list->addSection("Apps").withCapacity(appEntries.size());
-      auto filteredEntries = appEntries | std::views::filter([](const auto &entry) {
-                               return !entry->disabled && entry->app->displayable();
-                             });
+    if (auto provider = rootManager->provider("apps")) {
+      auto &section = list->addSection("Apps");
+      auto items = provider->loadItems() | std::views::transform([](const auto &item) {
+                     return std::make_unique<RootSearchItem>(item);
+                   });
 
-      std::ranges::for_each(filteredEntries, [&appSection](const auto &entry) {
-        // appSection.addItem(std::make_unique<AppListItem>(entry->app));
-      });
+      for (auto item : items)
+        section.addItem(std::move(item));
     }
   }
 
@@ -304,21 +260,13 @@ auto filteredApps = appEntries |
     m_calcDebounce->start();
   }
 
-  struct RankedListItem {
-    std::unique_ptr<OmniList::AbstractVirtualItem> item;
-    double rank;
-  };
-
-  struct ShallowRankedListItem {
-    std::function<std::unique_ptr<OmniList::AbstractVirtualItem>(void)> factory;
-    double rank;
-  };
-
   bool doesUseNewModel() const override { return true; }
 
   ItemList generateList(const QString &s) override { return {}; }
 
   void render(const QString &s) override {
+    if (s.isEmpty()) return renderBlankSearch();
+
     auto rootItemManager = ServiceRegistry::instance()->rootItemManager();
     auto commandDb = ServiceRegistry::instance()->commandDb();
     auto quicklinkDb = ServiceRegistry::instance()->quicklinks();

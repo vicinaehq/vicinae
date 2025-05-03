@@ -72,6 +72,8 @@ class AppRootProvider : public RootProvider {
 
   QString displayName() const override { return "Applications"; }
 
+  QString uniqueId() const override { return "apps"; }
+
 public:
   AppRootProvider(AppService &appService) : m_appService(appService) {}
 };

@@ -2,8 +2,8 @@
 #include <algorithm>
 #include <cstdint>
 #include <functional>
+#include <libqalculate/includes.h>
 #include <memory>
-#include <stack>
 #include <string_view>
 #include <unordered_map>
 #include <unordered_set>
@@ -119,16 +119,7 @@ template <typename T, typename Hash = std::hash<T>> class Trie {
     return words;
   }
 
-public:
-  using UnorderedSet = std::unordered_set<T, Hash>;
-
-  Trie() {}
-
-  size_t memoryUsage() const { return memUsage; }
-
-  void clear() { m_root = {}; }
-
-  UnorderedSet prefixSearch(std::string_view prefix) const {
+  const Node *findStartNode(std::string_view prefix) const {
     const Node *cur = &m_root;
 
     for (char ch : prefix) {
@@ -160,33 +151,83 @@ public:
       return {};
     }
 
-    std::stack<const Node *> paths;
-    UnorderedSet m_results;
+    return cur;
+  }
 
-    paths.push(cur);
+  void traversePaths(const Node *node, const std::function<void(const Node *)> &fn) const {
+    std::vector<const Node *> paths;
+
+    paths.push_back(node);
 
     while (!paths.empty()) {
-      const Node *node = paths.top();
-      paths.pop();
+      const Node *node = paths[paths.size() - 1];
 
-      for (const auto &match : node->matches) {
-        m_results.insert(match);
-      }
+      paths.pop_back();
+      paths.reserve(paths.size() + node->npath);
+      fn(node);
 
       if (auto charNode = std::get_if<typename Node::CharNode>(&node->data)) {
-        paths.push(charNode->node.get());
+        paths.push_back(charNode->node.get());
       } else if (auto list = std::get_if<typename Node::NodeList>(&node->data)) {
         for (const auto &charNode : *list) {
-          paths.push(charNode.node.get());
+          paths.push_back(charNode.node.get());
         }
       } else if (auto map = std::get_if<typename Node::NodeMap>(&node->data)) {
         for (const auto &[ch, node] : *map) {
-          paths.push(node.get());
+          paths.push_back(node.get());
         }
       }
     }
+  }
 
-    return m_results;
+public:
+  using UnorderedSet = std::unordered_set<T, Hash>;
+
+  Trie() {}
+
+  void clear() { m_root = {}; }
+
+  bool exactMatch(std::string_view query) const {
+    const Node *cur = findStartNode(query);
+
+    return cur && !cur->matches.empty();
+  }
+
+  void prefixTraverse(std::string_view prefix, const std::function<void(const T &)> &fn) const {
+    const Node *start = findStartNode(prefix);
+
+    if (!start) return;
+
+    std::unordered_set<size_t> m_visited;
+
+    traversePaths(start, [&](const Node *node) {
+      std::ranges::for_each(node->matches, [&](const T &match) {
+        size_t key = Hash()(match);
+        bool exists = std::ranges::find(m_visited, key) != m_visited.end();
+
+        if (!exists) {
+          fn(match);
+          m_visited.insert(key);
+        }
+      });
+    });
+  }
+
+  /**
+   * Erase value from the trie.
+   * This operation is quite expensive and only suitable for very sparse removals.
+   * If you have a lot to remove, rebuilding the trie anew is probably best.
+   */
+  void erase(const T &value) {
+    traversePaths(m_root, [&](const Node *node) { std::ranges::remove(node->matches, value); });
+  }
+
+  std::vector<T> prefixSearch(std::string_view prefix) const {
+    std::vector<T> items;
+
+    prefixTraverse(prefix, [&](const T &match) { items.emplace_back(match); });
+
+    return items;
   }
 
   /**
@@ -199,6 +240,8 @@ public:
   }
 
   void index(std::string_view s, const T &data) {
+    if (s.empty()) return;
+
     Node *cur = &m_root;
 
     for (char ch : s) {
@@ -283,7 +326,8 @@ public:
       }
     }
 
-    cur->matches.emplace_back(data);
+    if (std::ranges::find(cur->matches, data) == cur->matches.end()) { cur->matches.emplace_back(data); }
+
     memUsage += sizeof(T) * cur->matches.capacity();
   }
 };
