@@ -42,6 +42,7 @@ template <typename T, typename Hash = std::hash<T>> class Trie {
 
   size_t memUsage = 0;
   Node m_root;
+  bool m_compression;
 
   /**
    * Tokenizes a string based on:
@@ -193,6 +194,9 @@ public:
     return cur && !cur->matches.empty();
   }
 
+  /**
+   * Call `fn` for each unique item matching the provided prefix.
+   */
   void prefixTraverse(std::string_view prefix, const std::function<void(const T &)> &fn) const {
     const Node *start = findStartNode(prefix);
 
@@ -257,7 +261,7 @@ public:
         memUsage += sizeof(Node);
       }
 
-      if (auto charNode = std::get_if<typename Node::CharNode>(&cur->data)) {
+      else if (auto charNode = std::get_if<typename Node::CharNode>(&cur->data)) {
         if (idx == charNode->ch) {
           cur = charNode->node.get();
           continue;
@@ -276,7 +280,7 @@ public:
         cur = newCur;
       }
 
-      if (auto list = std::get_if<typename Node::NodeList>(&cur->data)) {
+      else if (auto list = std::get_if<typename Node::NodeList>(&cur->data)) {
         auto it = std::ranges::find_if(*list, [idx](const auto &charNode) { return charNode.ch == idx; });
 
         if (it != list->end()) {
@@ -311,7 +315,7 @@ public:
         continue;
       }
 
-      if (auto map = std::get_if<typename Node::NodeMap>(&cur->data)) {
+      else if (auto map = std::get_if<typename Node::NodeMap>(&cur->data)) {
         if (auto it = map->find(idx); it != map->end()) {
           cur = it->second.get();
           continue;

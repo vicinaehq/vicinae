@@ -2,13 +2,17 @@
 #include "app/app-database.hpp"
 #include "app.hpp"
 #include "emoji-database.hpp"
+#include "libtrie/trie.hpp"
+#include "timer.hpp"
 #include "ui/action-pannel/action-item.hpp"
 #include "ui/omni-grid-view.hpp"
 #include "ui/emoji-viewer.hpp"
 #include "ui/omni-grid.hpp"
 #include "ui/omni-list.hpp"
+#include <QtConcurrent/qtconcurrentrun.h>
 #include <memory>
 #include <qevent.h>
+#include <qfuturewatcher.h>
 #include <qlabel.h>
 #include <qnamespace.h>
 #include <qwidget.h>
@@ -59,11 +63,51 @@ public:
   EmojiGridItem(const EmojiInfo &info) : info(info) {}
 };
 
+struct EmojiInfoHash {
+  size_t operator()(const EmojiInfo *const &info) { return std::hash<const char *>{}(info->emoji); }
+};
+
 class EmojiView : public OmniGridView {
   EmojiDatabase emojiDb;
   std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> newItems;
+  using TrieType = Trie<const EmojiInfo *, EmojiInfoHash>;
+  std::unique_ptr<TrieType> m_searchTrie;
 
 public:
+  std::unique_ptr<TrieType> buildTrie() const {
+    Timer timer;
+    auto trie = std::make_unique<TrieType>();
+
+    for (auto &item : emojiDb.list()) {
+      trie->indexLatinText(item.description, &item);
+
+      for (int i = 0; item.aliases[i]; ++i) {
+        trie->index(item.aliases[i], &item);
+      }
+
+      for (int i = 0; item.tags[i]; ++i) {
+        trie->index(item.tags[i], &item);
+      }
+
+      trie->indexLatinText(item.category, &item);
+    }
+    timer.time("emoji trie index");
+
+    return trie;
+  }
+
+  void onMount() override {
+    auto watcher = new QFutureWatcher<std::unique_ptr<TrieType>>;
+    auto future = QtConcurrent::run([this]() { return buildTrie(); });
+
+    watcher->setFuture(future);
+    connect(watcher, &QFutureWatcher<TrieType>::finished, this, [this, watcher]() {
+      m_searchTrie.reset(watcher->future().takeResult().release());
+      watcher->deleteLater();
+      onSearchChanged(searchText());
+    });
+  }
+
   EmojiView(AppWindow &app) : OmniGridView(app) {}
 
   void onSearchChanged(const QString &s) override {
@@ -89,14 +133,16 @@ public:
           newItems.push_back(std::make_unique<EmojiGridItem>(*item));
         }
       }
-    } else {
+    } else if (m_searchTrie) {
       newItems.push_back(
           std::make_unique<OmniGrid::GridSection>("Results", grid->columns(), grid->spacing()));
 
-      for (auto &item : emojiDb.list()) {
-        if (QString(item.description).contains(s, Qt::CaseInsensitive)) {
-          newItems.push_back(std::make_unique<EmojiGridItem>(item));
-        }
+      Timer timer;
+      auto results = m_searchTrie->prefixSearch(s.toStdString());
+      timer.time("emoji searched");
+
+      for (const auto &info : results) {
+        newItems.push_back(std::make_unique<EmojiGridItem>(*info));
       }
     }
 

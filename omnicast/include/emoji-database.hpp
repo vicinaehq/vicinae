@@ -13,5 +13,5 @@ extern const std::vector<EmojiInfo> EMOJI_LIST;
 
 class EmojiDatabase {
 public:
-  const std::vector<EmojiInfo> &list() { return EMOJI_LIST; }
+  const std::vector<EmojiInfo> &list() const { return EMOJI_LIST; }
 };
