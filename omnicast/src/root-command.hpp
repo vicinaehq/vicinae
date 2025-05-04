@@ -18,6 +18,7 @@
 #include "ui/omni-list-item-widget.hpp"
 #include "ui/omni-list.hpp"
 #include "quicklink-actions.hpp"
+#include "ui/toast.hpp"
 #include "ui/top_bar.hpp"
 #include <QtConcurrent/QtConcurrent>
 #include <algorithm>
@@ -42,6 +43,23 @@
 #include <quuid.h>
 #include <qwidget.h>
 #include <ranges>
+
+/*
+class CopyCalculatorResultAction : public CopyTextAction {
+  CalculatorItem item;
+
+public:
+  void execute(AppWindow &app) override {
+    auto calc = ServiceRegistry::instance()->calculatorDb();
+
+    calc->insertComputation(item.expression, item.result);
+    CopyTextAction::execute(app);
+  }
+
+  CopyCalculatorResultAction(const CalculatorItem &item, const QString &title, const QString &copyText)
+      : CopyTextAction(title, copyText), item(item) {}
+};
+*/
 
 class ColorListItem : public OmniList::AbstractVirtualItem, public DeclarativeOmniListView::IActionnable {
   QColor color;
@@ -73,76 +91,36 @@ public:
   ColorListItem(QColor color) : color(color) {}
 };
 
-class QuicklinkRootListItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
-public:
-  std::shared_ptr<Quicklink> link;
-
-  std::unique_ptr<CompleterData> createCompleter() const override {
-    ArgumentList args;
-
-    for (const auto &placeholder : link->placeholders) {
-      CommandArgument arg;
-
-      arg.type = CommandArgument::Text;
-      arg.required = true;
-      arg.placeholder = placeholder;
-      arg.name = placeholder;
-      args.emplace_back(arg);
-    }
-
-    return std::make_unique<CompleterData>(CompleterData{.iconUrl = iconUrl(), .arguments = args});
-  }
-
-  QList<AbstractAction *> generateActions() const override {
-    auto open = new OpenCompletedQuicklinkAction(link);
-    auto edit = new EditQuicklinkAction(link);
-    auto duplicate = new DuplicateQuicklinkAction(link);
-    auto remove = new RemoveQuicklinkAction(link);
-
-    return {open, edit, duplicate, remove};
-  }
-
-  std::vector<ActionItem> generateActionPannel() const override {
-    std::vector<ActionItem> items;
-
-    items.push_back(ActionLabel("Quicklink"));
-    items.push_back(std::make_unique<OpenCompletedQuicklinkAction>(link));
-    items.push_back(std::make_unique<EditQuicklinkAction>(link));
-    items.push_back(std::make_unique<DuplicateQuicklinkAction>(link));
-    items.push_back(std::make_unique<OpenWithAction>(std::vector<QString>({})));
-    items.push_back(std::make_unique<RemoveQuicklinkAction>(link));
-
-    return items;
-  }
-
-  OmniIconUrl iconUrl() const {
-    OmniIconUrl url(link->iconName);
-
-    if (url.type() == OmniIconType::Builtin) { url.setBackgroundTint(ColorTint::Red); }
-
-    return url;
-  }
-
-  ItemData data() const override {
-    return {.iconUrl = iconUrl(),
-            .name = link->name,
-            .accessories = {{.text = "Quicklink", .color = ColorTint::TextSecondary}}};
-  }
-
-  QString id() const override { return QString("link-%1").arg(link->id); }
-
-public:
-  QuicklinkRootListItem(const std::shared_ptr<Quicklink> &link) : link(link) {}
-  ~QuicklinkRootListItem() {}
-};
-
 class RootView : public DeclarativeOmniListView {
   AppWindow &app;
 
-  class RootSearchItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
-    const std::shared_ptr<RootItem> m_item;
+  class DisableItemAction : public AbstractAction {
+    std::shared_ptr<RootItem> m_item;
+    void execute(AppWindow &app) override {
+      auto manager = ServiceRegistry::instance()->rootItemManager();
 
-    QList<AbstractAction *> generateActions() const override { return m_item->actions(); }
+      if (manager->disableItem(m_item->uniqueId())) {
+        app.statusBar->setToast("Item disabled", ToastPriority::Success);
+      } else {
+        app.statusBar->setToast("Failed to disabled item", ToastPriority::Danger);
+      }
+    }
+
+  public:
+    DisableItemAction(const std::shared_ptr<RootItem> &item)
+        : AbstractAction("Disable item", BuiltinOmniIconUrl("trash")), m_item(item) {}
+  };
+
+  class RootSearchItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
+    std::shared_ptr<RootItem> m_item;
+
+    QList<AbstractAction *> generateActions() const override {
+      auto itemActions = m_item->actions();
+
+      itemActions << new DisableItemAction(m_item);
+
+      return itemActions;
+    }
 
     ItemData data() const override {
       return {
@@ -209,9 +187,11 @@ class RootView : public DeclarativeOmniListView {
       QString sresult = item.result;
 
       return {
-          new CopyCalculatorResultAction(item, "Copy result", sresult),
-          new CopyCalculatorResultAction(item, "Copy expression",
-                                         QString("%1 = %2").arg(item.expression).arg(sresult)),
+          /*
+  new CopyCalculatorResultAction(item, "Copy result", sresult),
+  new CopyCalculatorResultAction(item, "Copy expression",
+                                 QString("%1 = %2").arg(item.expression).arg(sresult)),
+          */
 
       };
     }
@@ -234,15 +214,17 @@ public:
     const auto &commandEntries = commandDb->commands();
     auto rootManager = ServiceRegistry::instance()->rootItemManager();
 
-    if (auto provider = rootManager->provider("commands")) {
-      auto &section = list->addSection("Commands");
-      auto items = provider->loadItems() | std::views::transform([](const auto &item) {
-                     return std::make_unique<RootSearchItem>(item);
-                   });
+    auto commandItems =
+        rootManager->providers() | std::views::filter([](const auto &provider) {
+          return provider->type() == RootProvider::Type::ExtensionProvider;
+        }) |
+        std::views::transform([](const auto &provider) { return provider->loadItems(); }) | std::views::join |
+        std::views::transform([](const auto &item) { return std::make_unique<RootSearchItem>(item); });
 
-      for (auto item : items)
-        section.addItem(std::move(item));
-    }
+    auto &section = list->addSection("Commands");
+
+    for (auto item : commandItems)
+      section.addItem(std::move(item));
 
     if (auto provider = rootManager->provider("apps")) {
       auto &section = list->addSection("Apps");
@@ -297,7 +279,7 @@ public:
 
     auto &results = list->addSection("Results");
 
-    for (const auto &item : rootItemManager->prefixSearch(s)) {
+    for (const auto &item : rootItemManager->prefixSearch(s.trimmed())) {
       results.addItem(std::make_unique<RootSearchItem>(item));
     }
 

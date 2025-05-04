@@ -29,6 +29,8 @@ class AppRootProvider : public RootProvider {
   class AppRootItem : public RootItem {
     std::shared_ptr<Application> m_app;
 
+    double baseScoreWeight() const override { return 1; }
+
     QString displayName() const override { return m_app->name(); }
     QList<AbstractAction *> actions() const override {
       auto appDb = ServiceRegistry::instance()->appDb();
@@ -69,6 +71,8 @@ class AppRootProvider : public RootProvider {
            }) |
            std::ranges::to<std::vector>();
   }
+
+  Type type() const override { return RootProvider::Type::GroupProvider; }
 
   QString displayName() const override { return "Applications"; }
 

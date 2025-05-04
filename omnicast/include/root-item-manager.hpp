@@ -1,6 +1,7 @@
 #pragma once
 #include "argument.hpp"
 #include "libtrie/trie.hpp"
+#include "omni-database.hpp"
 #include "omni-icon.hpp"
 #include "preference.hpp"
 #include "timer.hpp"
@@ -8,8 +9,10 @@
 #include "ui/default-list-item-widget.hpp"
 #include <algorithm>
 #include <qdnslookup.h>
+#include <qlogging.h>
 #include <qnamespace.h>
 #include <qobject.h>
+#include <qsqlquery.h>
 #include <qstring.h>
 #include <qhash.h>
 #include <qtmetamacros.h>
@@ -96,11 +99,18 @@ class RootProvider : public QObject {
   Q_OBJECT
 
 public:
+  enum Type {
+    ExtensionProvider, // a collection of commands
+    GroupProvider,     // a collection of other things
+  };
+
   RootProvider() {}
   virtual ~RootProvider() = default;
 
   virtual QString uniqueId() const = 0;
   virtual QString displayName() const = 0;
+  virtual Type type() const = 0;
+
   virtual std::vector<std::shared_ptr<RootItem>> loadItems() const = 0;
   virtual PreferenceList preferences() const { return {}; }
 
@@ -112,24 +122,129 @@ signals:
 class RootItemManager : public QObject {
 public:
 private:
-  using ItemPtr = std::shared_ptr<RootItem>;
-  using ItemList = std::vector<ItemPtr>;
-
   struct RootItemHash {
     size_t operator()(const std::shared_ptr<RootItem> &item) const { return qHash(item->uniqueId()); }
   };
 
   struct RootItemMetadata {
-    int openCount;
+    int visitCount;
     bool isEnabled;
-    std::optional<std::chrono::time_point<std::chrono::high_resolution_clock>> lastOpenedAt;
+    std::optional<std::chrono::time_point<std::chrono::high_resolution_clock>> lastVisitedAt;
     std::vector<QString> aliases;
+    bool isFallback;
   };
+
+  struct RootProviderMetadata {};
 
   Trie<std::shared_ptr<RootItem>, RootItemHash> m_trie;
   std::vector<std::shared_ptr<RootItem>> m_items;
   std::unordered_map<QString, RootItemMetadata> m_metadata;
   std::vector<std::unique_ptr<RootProvider>> m_providers;
+  OmniDatabase &m_db;
+
+  void loadMetadata(const QString &id) {
+    QSqlQuery query = m_db.createQuery();
+
+    query.prepare(R"(
+		SELECT
+			provider_id, enabled, fallback, aliases, visit_count, last_visited_at
+		FROM
+			root_provider_item
+	)");
+  }
+
+  void createTables() {
+    QSqlQuery query = m_db.createQuery();
+
+    query.exec(R"(
+		CREATE TABLE IF NOT EXISTS root_provider (
+			id TEXT PRIMARY KEY,
+			preference_values JSON DEFAULT '{}'
+		);
+	)");
+
+    if (!query.exec(R"(
+		CREATE TABLE IF NOT EXISTS root_provider_item (
+			id TEXT PRIMARY KEY,
+			provider_id TEXT,
+			preference_values JSON DEFAULT '{}',
+			enabled INT DEFAULT 1,
+			fallback INT DEFAULT 0,
+			aliases JSON DEFAULT '{}',
+			visit_count INT DEFAULT 0,
+			last_visited_at INT,
+			FOREIGN KEY(provider_id) 
+			REFERENCES root_provider(id)
+			ON DELETE CASCADE
+		);
+	)")) {
+      qDebug() << "Failed to create command table" << query.lastError();
+    }
+  }
+
+  bool upsertProvider(const RootProvider &provider) {
+    QSqlQuery query = m_db.createQuery();
+
+    query.prepare(R"(
+		INSERT INTO 
+			root_provider (id) 
+		VALUES (:id) 
+		ON CONFLICT(id) 
+		DO NOTHING 
+	)");
+    query.bindValue(":id", provider.uniqueId());
+
+    if (!query.exec()) {
+      qCritical() << "Failed to upsert provider with id" << provider.uniqueId() << query.lastError();
+      return false;
+    }
+
+    return true;
+  }
+
+  bool setItemEnabled(const QString &id, bool value) {
+    auto it = std::ranges::find_if(m_items, [&id](const auto &item) { return item->uniqueId() == id; });
+
+    if (it == m_items.end()) {
+      qCritical() << "No such item to enable" << id;
+      return false;
+    }
+
+    QSqlQuery query = m_db.createQuery();
+
+    query.prepare("UPDATE root_provider_item SET enabled = :enabled WHERE id = :id");
+    query.bindValue(":enabled", value);
+    query.bindValue(":id", id);
+
+    if (!query.exec()) {
+      qDebug() << "Failed to update item" << query.lastError();
+      return false;
+    }
+
+    return true;
+  }
+
+  bool upsertItem(const QString &providerId, const RootItem &item) {
+    QSqlQuery query = m_db.createQuery();
+
+    query.prepare(R"(
+		INSERT INTO 
+			root_provider_item (id, provider_id, enabled, fallback) 
+		VALUES (:id, :provider_id, :enabled, :fallback) 
+		ON CONFLICT(id) DO NOTHING
+	)");
+    query.bindValue(":id", item.uniqueId());
+    query.bindValue(":provider_id", providerId);
+    query.bindValue(":enabled", 1);
+    query.bindValue(":fallback", item.isDefaultFallback());
+
+    if (!query.exec()) {
+      qCritical() << "Failed to upsert provider with id" << item.uniqueId() << query.lastError();
+      return false;
+    }
+
+    return true;
+  }
 
   void indexItem(const std::shared_ptr<RootItem> &item) {
     auto metadata = itemMetadata(item->uniqueId());
@@ -166,6 +281,11 @@ private:
   }
 
 public:
+  RootItemManager(OmniDatabase &db) : m_db(db) { createTables(); }
+
+  bool disableItem(const QString &id) { return setItemEnabled(id, false); }
+  bool enableItem(const QString &id) { return setItemEnabled(id, true); }
+
   std::vector<RootProvider *> providers() const {
     return m_providers | std::views::transform([](const auto &p) { return p.get(); }) |
            std::ranges::to<std::vector>();
@@ -173,6 +293,10 @@ public:
 
   void addProvider(std::unique_ptr<RootProvider> provider) {
     auto items = provider->loadItems();
+
+    if (!upsertProvider(*provider.get())) return;
+
+    std::ranges::for_each(items, [&](const auto &item) { upsertItem(provider->uniqueId(), *item.get()); });
 
     m_items.insert(m_items.end(), items.begin(), items.end());
     connect(provider.get(), &RootProvider::itemsChanged, this, &RootItemManager::reloadProviders);
@@ -195,7 +319,8 @@ public:
       auto ameta = itemMetadata(a->uniqueId());
       auto bmeta = itemMetadata(b->uniqueId());
 
-      return bmeta.openCount > ameta.openCount;
+      return std::max(bmeta.visitCount, 1) * a->baseScoreWeight() >
+             std::max(ameta.visitCount, 1) * b->baseScoreWeight();
     });
 
     return items;

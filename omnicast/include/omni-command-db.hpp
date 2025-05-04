@@ -1,6 +1,7 @@
 #pragma once
-#include "command-database.hpp"
+#include "common.hpp"
 #include "omni-database.hpp"
+#include "root-item-manager.hpp"
 #include <chrono>
 #include <qjsondocument.h>
 #include <qjsonobject.h>
@@ -49,7 +50,7 @@ class OmniCommandDatabase : public QObject {
 public:
   std::vector<CommandDbEntry> commands() const { return entries; }
 
-  OmniCommandDatabase(OmniDatabase &db) : db(db) {
+  OmniCommandDatabase(OmniDatabase &db, RootItemManager &rootItemManager) : db(db) {
     QSqlQuery query(db.db());
 
     query.exec(R"(
@@ -369,8 +370,10 @@ public:
     if (index == -1) { repositories.push_back(repository); }
 
     db.db().commit();
+    emit registryAdded(repository);
   }
 
 signals:
   void commandRegistered(const CommandDbEntry &entry) const;
+  void registryAdded(const std::shared_ptr<AbstractCommandRepository> &registry) const;
 };

@@ -1,6 +1,7 @@
 #pragma once
-#include "app/app-database.hpp"
 #include "app.hpp"
+#include "clipboard-actions.hpp"
+#include "clipboard/clipboard-service.hpp"
 #include "emoji-database.hpp"
 #include "libtrie/trie.hpp"
 #include "timer.hpp"
@@ -43,19 +44,9 @@ public:
 
   QList<AbstractAction *> generateActions() const override {
     return {
-        new CopyTextAction("Copy emoji", info.emoji),
-        new CopyTextAction("Copy emoji name", info.description),
+        new CopyToClipboardAction(Clipboard::Text(info.emoji), "Copy emoji"),
+        new CopyToClipboardAction(Clipboard::Text(info.description), "Copy emoji description"),
     };
-  }
-
-  std::vector<ActionItem> generateActionPannel() const override {
-    std::vector<ActionItem> items;
-
-    items.push_back(QString("Emoji - %1").arg(info.description));
-    items.push_back(std::make_unique<CopyTextAction>("Copy emoji", info.emoji));
-    items.push_back(std::make_unique<CopyTextAction>("Copy emoji name", info.description));
-
-    return items;
   }
 
   QString navigationTitle() const override { return info.description; }

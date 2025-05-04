@@ -15,35 +15,10 @@
 #include <qlist.h>
 #include <qlogging.h>
 #include <qwidget.h>
+#include "common.hpp"
 
 class AppWindow;
 class ViewCommandContext;
-
-enum CommandMode { CommandModeInvalid, CommandModeView, CommandModeNoView, CommandModeMenuBar };
-enum CommandType { CommandTypeBuiltin, CommandTypeExtension };
-
-class AbstractCmd {
-public:
-  virtual QString id() const = 0;
-  virtual QString name() const = 0;
-  virtual OmniIconUrl iconUrl() const = 0;
-  virtual CommandType type() const = 0;
-  virtual CommandMode mode() const = 0;
-  virtual std::vector<std::shared_ptr<BasePreference>> preferences() const { return {}; }
-  virtual std::vector<CommandArgument> arguments() const { return {}; }
-  virtual std::vector<QString> keywords() const { return {}; }
-  virtual QString repositoryName() const { return ""; }
-
-  bool isView() const { return mode() == CommandModeView; }
-  bool isNoView() const { return mode() == CommandModeNoView; }
-
-  virtual CommandContext *createContext(AppWindow &app, const std::shared_ptr<AbstractCmd> &command,
-                                        const QString &query) const {
-    return nullptr;
-  }
-
-  virtual void exec(AppWindow &app) {}
-};
 
 class BuiltinCommand : public AbstractCmd {
   QString _id;
@@ -92,15 +67,6 @@ public:
 
   BuiltinCommand(const QString &id, const QString &name, const std::optional<OmniIconUrl> &url)
       : _id(id), _name(name), _url(url) {}
-};
-
-class AbstractCommandRepository {
-public:
-  virtual QString id() const = 0;
-  virtual QString name() const = 0;
-  virtual std::vector<std::shared_ptr<AbstractCmd>> commands() const = 0;
-  virtual OmniIconUrl iconUrl() const = 0;
-  virtual std::vector<std::shared_ptr<BasePreference>> preferences() const { return {}; }
 };
 
 class BuiltinCommandRepository : public AbstractCommandRepository {

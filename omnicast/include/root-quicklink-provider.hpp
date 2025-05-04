@@ -11,6 +11,8 @@ class RootQuicklinkProvider : public RootProvider {
 
     QString displayName() const override { return m_link->name; }
 
+    double baseScoreWeight() const override { return 1.4; }
+
     ArgumentList arguments() const override {
       ArgumentList args;
 
@@ -55,6 +57,7 @@ class RootQuicklinkProvider : public RootProvider {
 public:
   QString displayName() const override { return "Quicklinks"; }
   QString uniqueId() const override { return "quicklinks"; }
+  Type type() const override { return RootProvider::Type::GroupProvider; }
 
   std::vector<std::shared_ptr<RootItem>> loadItems() const override {
     return m_db.list() | std::views::transform([](const auto &a) {

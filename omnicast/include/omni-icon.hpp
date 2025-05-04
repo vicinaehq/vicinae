@@ -29,7 +29,6 @@
 #include <qurl.h>
 #include <qurlquery.h>
 #include <qwidget.h>
-#include "image-fetcher.hpp"
 #include "lib/emoji-detect.hpp"
 #include "network-manager.hpp"
 #include "theme.hpp"

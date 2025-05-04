@@ -1,6 +1,4 @@
 #pragma once
-#include "app.hpp"
-#include "builtin_icon.hpp"
 #include "extend/list-model.hpp"
 #include <qdebug.h>
 #include "extension/extension-component.hpp"
@@ -14,6 +12,8 @@
 #include <qnamespace.h>
 #include <qresource.h>
 #include <qtimer.h>
+
+class AppWindow;
 
 class ExtensionListItem : public AbstractDefaultListItem {
   ListItemViewModel _item;

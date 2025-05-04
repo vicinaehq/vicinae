@@ -1,4 +1,7 @@
 #pragma once
+#include "argument.hpp"
+#include "omni-icon.hpp"
+#include "preference.hpp"
 #include "theme.hpp"
 #include <QHBoxLayout>
 #include <QString>
@@ -14,6 +17,7 @@
 #include <qnamespace.h>
 #include <qpainter.h>
 #include <qprocess.h>
+#include <qstack.h>
 #include <qwidget.h>
 #include <qwindowdefs.h>
 
@@ -32,28 +36,6 @@ public:
 };
 
 template <class T> using OptionalRef = std::optional<std::reference_wrapper<T>>;
-
-class CommandObject;
-class ExecutionContext;
-
-static void xdgOpen(const QString &url) {
-  QProcess process;
-
-  process.startDetached("xdg-open", QStringList() << url);
-}
-
-class CommandObject;
-class AppWindow;
-
-class ICommandFactory {
-public:
-  virtual CommandObject *operator()(AppWindow *app) = 0;
-};
-
-template <typename T> class BasicCommandFactory : public ICommandFactory {
-public:
-  CommandObject *operator()(AppWindow *app) { return new T(app); }
-};
 
 class HDivider : public QFrame {
   QColor _color;
@@ -122,4 +104,57 @@ struct IJsonFormField {
 
 struct LaunchProps {
   std::vector<std::pair<QString, QString>> arguments;
+};
+
+struct NavigationStatus {
+  QString title;
+  OmniIconUrl iconUrl;
+};
+
+struct LaunchCommandOptions {
+  QString searchQuery;
+  std::optional<NavigationStatus> navigation;
+};
+
+struct PushViewOptions {
+  QString searchQuery;
+  std::optional<NavigationStatus> navigation;
+};
+
+class AppWindow;
+class CommandContext;
+
+enum CommandMode { CommandModeInvalid, CommandModeView, CommandModeNoView, CommandModeMenuBar };
+enum CommandType { CommandTypeBuiltin, CommandTypeExtension };
+
+class AbstractCmd {
+public:
+  virtual QString id() const = 0;
+  virtual QString name() const = 0;
+  virtual OmniIconUrl iconUrl() const = 0;
+  virtual CommandType type() const = 0;
+  virtual CommandMode mode() const = 0;
+  virtual std::vector<std::shared_ptr<BasePreference>> preferences() const { return {}; }
+  virtual std::vector<CommandArgument> arguments() const { return {}; }
+  virtual std::vector<QString> keywords() const { return {}; }
+  virtual QString repositoryName() const { return ""; }
+
+  bool isView() const { return mode() == CommandModeView; }
+  bool isNoView() const { return mode() == CommandModeNoView; }
+
+  virtual CommandContext *createContext(AppWindow &app, const std::shared_ptr<AbstractCmd> &command,
+                                        const QString &query) const {
+    return nullptr;
+  }
+
+  virtual void exec(AppWindow &app) {}
+};
+
+class AbstractCommandRepository {
+public:
+  virtual QString id() const = 0;
+  virtual QString name() const = 0;
+  virtual std::vector<std::shared_ptr<AbstractCmd>> commands() const = 0;
+  virtual OmniIconUrl iconUrl() const = 0;
+  virtual std::vector<std::shared_ptr<BasePreference>> preferences() const { return {}; }
 };

@@ -1,11 +1,6 @@
 #pragma once
-#include "app/app-database.hpp"
-#include "calculator-database.hpp"
-#include "ai/ai-service.hpp"
-#include "clipboard/clipboard-service.hpp"
 #include <QGraphicsScene>
 #include <QGraphicsPixmapItem>
-#include "command-database.hpp"
 #include "command-server.hpp"
 #include <QScreen>
 #include "omni-icon.hpp"
@@ -23,13 +18,10 @@
 #include <qscreen_platform.h>
 #include <qwindow.h>
 #include <stack>
-
 #include "omnicast.hpp"
-#include "service-registry.hpp"
 #include "ui/action-pannel/action-pannel-widget.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/alert.hpp"
-#include "ui/calculator-list-item-widget.hpp"
 #include "ui/dialog.hpp"
 #include "ui/horizontal-loading-bar.hpp"
 #include "ui/status_bar.hpp"
@@ -39,17 +31,10 @@
 #include <qtmetamacros.h>
 #include <qwidget.h>
 
-template <class T> using Service = T &;
-
 class View;
 class ViewCommandContext;
 class ExtensionView;
 class CommandContext;
-
-struct NavigationStatus {
-  QString title;
-  OmniIconUrl iconUrl;
-};
 
 struct ViewSnapshot {
   View *view;
@@ -69,16 +54,6 @@ struct ViewSnapshot {
 struct CommandSnapshot {
   QStack<ViewSnapshot> viewStack;
   CommandContext *command;
-};
-
-struct LaunchCommandOptions {
-  QString searchQuery;
-  std::optional<NavigationStatus> navigation;
-};
-
-struct PushViewOptions {
-  QString searchQuery;
-  std::optional<NavigationStatus> navigation;
 };
 
 struct AlertAction {
@@ -111,41 +86,6 @@ class AppWindow : public QMainWindow, public ICommandHandler {
 
   void paintEvent(QPaintEvent *event) override;
   void resizeEvent(QResizeEvent *event) override;
-
-  void recomputeWallpaper() {
-    QPixmap canva(size());
-    QPixmap pix("/home/aurelle/Downloads/sequoia.jpg");
-    QPainter cp(&canva);
-
-    cp.drawPixmap(0, 0, pix.scaled(size(), Qt::KeepAspectRatioByExpanding));
-    _wallpaper = blurPixmap(canva);
-  }
-
-  QPixmap blurPixmap(const QPixmap &source) {
-    if (source.isNull()) return {};
-
-    QPixmap result = source;
-    QGraphicsBlurEffect *blur = new QGraphicsBlurEffect;
-
-    blur->setBlurRadius(50); // Adjust radius as needed
-    blur->setBlurHints(QGraphicsBlurEffect::PerformanceHint);
-
-    // Apply the blur using QGraphicsScene
-    QGraphicsScene scene;
-    QGraphicsPixmapItem item;
-    item.setPixmap(source);
-    item.setGraphicsEffect(blur);
-    scene.addItem(&item);
-
-    // Render the result
-    result = QPixmap(source.size());
-    result.fill(Qt::transparent);
-    QPainter painter(&result);
-    scene.render(&painter);
-
-    delete blur;
-    return result;
-  }
 
   std::variant<CommandResponse, CommandError> handleCommand(const CommandMessage &message) override;
 
@@ -202,35 +142,4 @@ public slots:
 signals:
   void currentViewPoped();
   void actionExecuted(AbstractAction *action) const;
-};
-
-class CopyTextAction : public AbstractAction {
-  QString text;
-
-public:
-  void execute(AppWindow &app) override {
-    auto clip = ServiceRegistry::instance()->clipman();
-
-    clip->copyText(text);
-    app.closeWindow();
-    app.statusBar->setToast("Copied in clipboard");
-  }
-
-  CopyTextAction(const QString &title, const QString &text)
-      : AbstractAction(title, BuiltinOmniIconUrl("copy-clipboard")), text(text) {}
-};
-
-class CopyCalculatorResultAction : public CopyTextAction {
-  CalculatorItem item;
-
-public:
-  void execute(AppWindow &app) override {
-    auto calc = ServiceRegistry::instance()->calculatorDb();
-
-    calc->insertComputation(item.expression, item.result);
-    CopyTextAction::execute(app);
-  }
-
-  CopyCalculatorResultAction(const CalculatorItem &item, const QString &title, const QString &copyText)
-      : CopyTextAction(title, copyText), item(item) {}
 };

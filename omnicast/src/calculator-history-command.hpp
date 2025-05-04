@@ -51,8 +51,8 @@ public:
     });
 
     return {
-        new CopyTextAction("Copy result", _entry.result),
-        new CopyTextAction("Copy expression", _entry.expression),
+        // new CopyTextAction("Copy result", _entry.result),
+        // new CopyTextAction("Copy expression", _entry.expression),
         removeAction,
     };
   }

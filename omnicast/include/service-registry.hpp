@@ -1,7 +1,6 @@
 #pragma once
 #include "ai/ai-service.hpp"
 #include "app-service.hpp"
-#include "app/app-database.hpp"
 #include "calculator-database.hpp"
 #include "clipboard/clipboard-service.hpp"
 #include "extension_manager.hpp"
@@ -11,6 +10,7 @@
 #include "omni-database.hpp"
 #include "quicklist-database.hpp"
 #include "ranking-service.hpp"
+#include "root-extension-manager.hpp"
 #include "root-item-manager.hpp"
 #include "wm/window-manager.hpp"
 #include <memory>
@@ -30,6 +30,7 @@ class ServiceRegistry : public QObject {
   std::unique_ptr<FontService> m_fontService;
   std::unique_ptr<RankingService> m_rankingService;
   std::unique_ptr<RootItemManager> m_rootItemManager;
+  std::unique_ptr<RootExtensionManager> m_rootExtMan;
 
 public:
   static ServiceRegistry *instance() {
@@ -54,6 +55,7 @@ public:
   auto setRootItemManager(std::unique_ptr<RootItemManager> manager) {
     m_rootItemManager = std::move(manager);
   }
+  void setRootExtMan(std::unique_ptr<RootExtensionManager> man) { m_rootExtMan = std::move(man); }
   void setAI(std::unique_ptr<AI::Manager> manager) { m_aiManager = std::move(manager); }
   void setRankingService(std::unique_ptr<RankingService> service) { m_rankingService = std::move(service); }
   void setFontService(std::unique_ptr<FontService> font) { m_fontService = std::move(font); }

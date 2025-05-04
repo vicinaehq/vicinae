@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <wm/window-manager-factory.hpp>
 #include <QtSql/QtSql>
+#include "root-extension-manager.hpp"
 #include "root-quicklink-provider.hpp"
 #include <QXmlStreamReader>
 #include <QtSql/qsqldatabase.h>
@@ -42,7 +43,6 @@
 #include "ranking-service.hpp"
 #include "root-item-manager.hpp"
 #include "service-registry.hpp"
-#include "command-root-provider.hpp"
 
 #ifdef WAYLAND_LAYER_SHELL
 #include <LayerShellQt/window.h>
@@ -144,14 +144,14 @@ int startDaemon() {
 
   {
     auto registry = ServiceRegistry::instance();
-    auto rootItemManager = std::make_unique<RootItemManager>();
     auto quicklinkService =
         std::make_unique<QuicklistDatabase>(Config::dirPath() + QDir::separator() + "quicklinks.db");
     auto calculatorService =
         std::make_unique<CalculatorDatabase>(Config::dirPath() + QDir::separator() + "calculator.db");
     auto omniDb = std::make_unique<OmniDatabase>(Config::dirPath() + QDir::separator() + "omni.db");
-    auto commandDb = std::make_unique<OmniCommandDatabase>(*omniDb);
     auto localStorage = std::make_unique<LocalStorageService>(*omniDb);
+    auto rootItemManager = std::make_unique<RootItemManager>(*omniDb.get());
+    auto commandDb = std::make_unique<OmniCommandDatabase>(*omniDb, *rootItemManager.get());
     auto extensionManager = std::make_unique<ExtensionManager>(*commandDb);
     auto clipboardManager =
         std::make_unique<ClipboardService>(Config::dirPath() + QDir::separator() + "clipboard.db");
@@ -163,14 +163,13 @@ int startDaemon() {
     auto fontService = std::make_unique<FontService>();
     auto rankingService = std::make_unique<RankingService>(*omniDb);
     auto appService = std::make_unique<AppService>(*omniDb.get(), *rankingService.get());
+    auto rootExtMan = std::make_unique<RootExtensionManager>(*rootItemManager.get(), *commandDb.get());
 
     aiManager->registerProvider(std::move(ollamaProvider));
 
-    commandDb->blockSignals(true);
     for (const auto &repo : builtinCommandDb->repositories()) {
       commandDb->registerRepository(repo);
     }
-    commandDb->blockSignals(false);
 
     if (!extensionManager->start()) {
       qCritical() << "Failed to load extension manager. Extensions will not work";
@@ -183,9 +182,9 @@ int startDaemon() {
     }
 
     rootItemManager->addProvider(std::make_unique<AppRootProvider>(*appService.get()));
-    rootItemManager->addProvider(std::make_unique<CommandRootProvider>(*commandDb.get()));
     rootItemManager->addProvider(std::make_unique<RootQuicklinkProvider>(*quicklinkService.get()));
 
+    registry->setRootExtMan(std::move(rootExtMan));
     registry->setRootItemManager(std::move(rootItemManager));
     registry->setQuicklinks(std::move(quicklinkService));
     registry->setCalculatorDb(std::move(calculatorService));
