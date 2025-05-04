@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <iomanip>
+#include <ranges>
 #include <iostream>
 #include <iostream>
 #include <memory>
@@ -18,6 +19,8 @@
 #include "display.hpp"
 #include "proto.hpp"
 #include "wayland-wlr-data-control-client-protocol.h"
+
+constexpr const char *CONCEALED_MIME = "omnicast/concealed";
 
 class Clipman : public WaylandDisplay,
                 public WaylandRegistry::Listener,
@@ -51,15 +54,19 @@ class Clipman : public WaylandDisplay,
     } else {
       Proto::Array args{"selection"};
       Proto::Marshaler marshaler;
-      Proto::Array offers;
 
-      for (const auto &mime : offer.mimes()) {
+      auto transformOffer = [&](const std::string &mime) -> Proto::Dict {
         Proto::Dict offerData;
 
         offerData["file_path"] = offer.receive(*this, mime).string();
         offerData["mime_type"] = mime;
-        offers.push_back(offerData);
-      }
+
+        return offerData;
+      };
+
+      auto offers = offer.mimes() |
+                    std::views::filter([](const auto &mime) { return mime != CONCEALED_MIME; }) |
+                    std::views::transform(transformOffer) | std::ranges::to<Proto::Array>();
 
       args.push_back(offers);
       auto message = marshaler.marshalSized(args);
@@ -74,7 +81,7 @@ public:
     _registry->addListener(this);
   }
 
-  void run() {
+  void start() {
     roundtrip();
 
     if (!_dcm) { throw std::runtime_error("zwlr data control is not available"); }
@@ -100,5 +107,5 @@ int main() {
               << std::endl;
   }
 
-  clipman.run();
+  clipman.start();
 }

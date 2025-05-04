@@ -38,11 +38,21 @@ bool ClipboardService::setPinned(int id, bool pinned) {
   return query.exec();
 }
 
+bool ClipboardService::clear() {
+  QApplication::clipboard()->clear();
+
+  return true;
+}
+
 bool ClipboardService::copyContent(const Clipboard::Content &content, const Clipboard::CopyOptions options) {
   struct ContentVisitor {
     ClipboardService &service;
     const Clipboard::CopyOptions &options;
 
+    bool operator()(const Clipboard::NoData &dummy) const {
+      qWarning() << "attempt to copy NoData content";
+      return false;
+    }
     bool operator()(const Clipboard::Html &html) const { return service.copyHtml(html, options); }
     bool operator()(const Clipboard::File &file) const { return service.copyFile(file.path, options); }
     bool operator()(const Clipboard::Text &text) const { return service.copyText(text.text, options); }
@@ -61,7 +71,6 @@ bool ClipboardService::copyContent(const Clipboard::Content &content, const Clip
 
 bool ClipboardService::copyFile(const std::filesystem::path &path, const Clipboard::CopyOptions &options) {
   QMimeType mime = _mimeDb.mimeTypeForFile(path.c_str());
-  QClipboard *clipboard = QApplication::clipboard();
   std::ifstream ifs(path, std::ios_base::binary);
 
   if (!ifs) {
@@ -76,25 +85,17 @@ bool ClipboardService::copyFile(const std::filesystem::path &path, const Clipboa
   const std::string &str = ss.str();
   data->setData(mime.name(), {str.data(), static_cast<qsizetype>(str.size())});
 
-  if (options.concealed) { data->setData(Clipboard::CONCEALED_MIME_TYPE, "1"); }
-
-  clipboard->setMimeData(data);
-
-  return true;
+  return copyQMimeData(data, options);
 }
 
 bool ClipboardService::copyHtml(const Clipboard::Html &data, const Clipboard::CopyOptions &options) {
-  QClipboard *clipboard = QApplication::clipboard();
   auto mimeData = new QMimeData;
 
   mimeData->setData("text/html", data.html.toUtf8());
 
   if (auto text = data.text) mimeData->setData("text/plain", text->toUtf8());
-  if (options.concealed) mimeData->setData(Clipboard::CONCEALED_MIME_TYPE, "1");
 
-  clipboard->setMimeData(mimeData);
-
-  return true;
+  return copyQMimeData(mimeData, options);
 }
 
 bool ClipboardService::copyText(const QString &text, const Clipboard::CopyOptions &options) {
@@ -504,6 +505,16 @@ std::optional<ClipboardSelection> ClipboardService::retrieveSelectionById(int id
   return selection;
 }
 
+bool ClipboardService::copyQMimeData(QMimeData *data, const Clipboard::CopyOptions &options) {
+  QClipboard *clipboard = QApplication::clipboard();
+
+  if (options.concealed) { data->setData(Clipboard::CONCEALED_MIME_TYPE, "1"); }
+
+  clipboard->setMimeData(data);
+
+  return true;
+}
+
 bool ClipboardService::copySelection(const ClipboardSelection &selection,
                                      const Clipboard::CopyOptions &options) {
   if (selection.offers.empty()) {
@@ -511,7 +522,6 @@ bool ClipboardService::copySelection(const ClipboardSelection &selection,
     return false;
   }
 
-  QClipboard *clipboard = QApplication::clipboard();
   QMimeData *mimeData = new QMimeData;
   auto appendOffer = [mimeData](const ClipboardDataOffer &offer) {
     if (!std::filesystem::exists(offer.path)) {
@@ -534,9 +544,8 @@ bool ClipboardService::copySelection(const ClipboardSelection &selection,
   };
 
   std::ranges::for_each(selection.offers, appendOffer);
-  clipboard->setMimeData(mimeData);
 
-  return true;
+  return copyQMimeData(mimeData, options);
 }
 
 AbstractClipboardServer *ClipboardService::clipboardServer() const { return m_clipboardServer.get(); }

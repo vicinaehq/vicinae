@@ -66,7 +66,7 @@ StatusBar::StatusBar(QWidget *parent) : QWidget(parent), leftWidget(nullptr) {
 }
 
 void StatusBar::setAction(const AbstractAction &action) {
-  _selectedActionButton->setText(action.title);
+  _selectedActionButton->setText(action.title());
   if (action.shortcut) { _selectedActionButton->setShortcut(*action.shortcut); }
   right->show();
 }

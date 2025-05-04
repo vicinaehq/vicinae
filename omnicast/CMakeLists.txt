@@ -18,14 +18,14 @@ compositors." ON)
 
 list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::Bluetooth cmark proto qalculate)
 
-#
-#if (UNIX AND NOT APPLE)
-#	message(STATUS "Compiling with wayland layer shell support (for wlroots-like compositors)")
-#	find_package(Qt6 REQUIRED COMPONENTS WaylandClient)
-#	find_package(LayerShellQt REQUIRED)
-#	add_compile_definitions(-DWAYLAND_LAYER_SHELL)
-#	list(APPEND LIBS LayerShellQt::Interface)
-#endif()
+
+if (UNIX AND NOT APPLE)
+	message(STATUS "Compiling with wayland layer shell support (for wlroots-like compositors)")
+	find_package(Qt6 REQUIRED COMPONENTS WaylandClient)
+	find_package(LayerShellQt REQUIRED)
+	add_compile_definitions(-DWAYLAND_LAYER_SHELL)
+	list(APPEND LIBS LayerShellQt::Interface)
+endif()
 
 add_compile_definitions(QT_MESSAGELOGCONTEXT)
 

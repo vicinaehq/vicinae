@@ -1,7 +1,7 @@
 #include "ui/action-pannel/action-list-item.hpp"
 
 void ActionListItem::setup(ActionListWidget *widget) const {
-  widget->setTitle(action->title).setIconUrl(action->iconUrl);
+  widget->setTitle(action->title()).setIconUrl(action->iconUrl);
 
   if (auto shortcut = action->shortcut) {
     widget->setShortcut(*shortcut);

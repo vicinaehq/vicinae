@@ -13,16 +13,19 @@
 #include <qjsonobject.h>
 #include <qjsonvalue.h>
 #include <qlogging.h>
+#include <qmimedata.h>
 #include <qmimedatabase.h>
 #include <qobject.h>
 #include <qsqldatabase.h>
 #include <qsqlquery.h>
 #include <qstringview.h>
 #include <qtmetamacros.h>
+#include <variant>
 #include "clipboard/clipboard-server.hpp"
 
 namespace Clipboard {
 static const char *CONCEALED_MIME_TYPE = "omnicast/concealed";
+using NoData = std::monostate;
 struct File {
   std::filesystem::path path;
 };
@@ -38,7 +41,7 @@ struct CopyOptions {
   bool concealed = false;
 };
 
-using Content = std::variant<File, Text, Html, ClipboardSelection>;
+using Content = std::variant<NoData, File, Text, Html, ClipboardSelection>;
 
 static Content fromJson(const QJsonObject &obj) {
   if (obj.contains("path")) { return File{.path = obj.value("path").toString().toStdString()}; }
@@ -109,10 +112,12 @@ public:
                 const Clipboard::CopyOptions &options = {.concealed = false});
   bool copyContent(const Clipboard::Content &content,
                    const Clipboard::CopyOptions options = {.concealed = false});
+  bool clear();
   void saveSelection(const ClipboardSelection &selection);
   ClipboardSelection retrieveSelection(int offset = 0);
   std::optional<ClipboardSelection> retrieveSelectionById(int id);
   bool copySelection(const ClipboardSelection &selection, const Clipboard::CopyOptions &options);
+  bool copyQMimeData(QMimeData *data, const Clipboard::CopyOptions &options = {});
 
 signals:
   void itemCopied(const InsertClipboardHistoryLine &item) const;

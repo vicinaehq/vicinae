@@ -1,6 +1,7 @@
 #pragma once
 #include "app.hpp"
 #include "calculator-history-command.hpp"
+#include "clipboard-actions.hpp"
 #include "clipboard/clipboard-service.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
@@ -37,28 +38,23 @@ public:
   }
 };
 
-class CopyClipboardSelection : public AbstractAction {
+class CopyClipboardSelection : public CopyToFocusedWindowAction {
   int m_id;
 
   void execute(AppWindow &app) override {
     auto clipman = ServiceRegistry::instance()->clipman();
-    auto wm = ServiceRegistry::instance()->windowManager();
 
     if (auto selection = clipman->retrieveSelectionById(m_id)) {
-      // XXX - We may want to update the update time of this selection to make
-      // it appear on top in subsequent searches.
-      clipman->copySelection(*selection, {.concealed = true});
-      app.statusBar->setToast("Selection copied");
-      app.closeWindow(true);
-      QTimer::singleShot(10, [wm]() { wm->pasteToFocusedWindow(); });
-    } else {
-      app.statusBar->setToast(QString("No selection with ID %1").arg(m_id));
+      loadClipboardData(*selection);
+      CopyToFocusedWindowAction::execute(app);
+      return;
     }
+
+    app.statusBar->setToast(QString("No selection with ID %1").arg(m_id));
   }
 
 public:
-  CopyClipboardSelection(int id)
-      : AbstractAction("Copy selection", BuiltinOmniIconUrl("clipboard")), m_id(id) {}
+  CopyClipboardSelection(int id) : CopyToFocusedWindowAction(), m_id(id) {}
 };
 
 class ClipboardItemDetail : public OmniListView::MetadataDetailModel {

@@ -461,7 +461,7 @@ void AppWindow::executeAction(AbstractAction *action) {
   auto &command = commandStack.top();
   auto executor = command.viewStack.empty() ? nullptr : &command.viewStack.at(0);
 
-  qDebug() << "executing" << action->title;
+  qDebug() << "executing" << action->_title;
   auto executorCommand = commandStack.top();
 
   if (!action->isPushView()) { actionPannel->close(); }
