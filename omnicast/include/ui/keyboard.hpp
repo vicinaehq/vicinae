@@ -104,6 +104,12 @@ public:
     return KeyboardShortcut(Qt::Key_V).withModifier(Qt::KeyboardModifier::ControlModifier);
   }
 
+  static KeyboardShortcut shiftPaste() {
+    return KeyboardShortcut(Qt::Key_V)
+        .withModifier(Qt::KeyboardModifier::ControlModifier)
+        .withModifier(Qt::KeyboardModifier::ShiftModifier);
+  }
+
   KeyboardShortcut(const KeyboardShortcutModel &model) : key(keyMap.value(model.key)) {
     for (const auto &mod : model.modifiers) {
       modifiers.setFlag(modifierMap.value(mod));

@@ -3,6 +3,7 @@
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
 #include "ui/action-pannel/action.hpp"
+#include "ui/keyboard.hpp"
 #include "ui/toast.hpp"
 #include <qdnslookup.h>
 
@@ -36,19 +37,34 @@ class CopyToFocusedWindowAction : public AbstractAction {
 
     if (!wm->ping()) return _title;
 
+    auto appDb = ServiceRegistry::instance()->appDb();
     auto window = wm->getActiveWindowSync();
+    QString name;
 
-    return QString("Copy to %1").arg(window->title());
+    if (auto app = appDb->find(window->wmClass())) {
+      name = QString("Copy to %1").arg(app->name());
+    } else {
+      name = QString("Copy to %1").arg(window->title());
+    }
+
+    return name;
   }
 
 protected:
   void execute(AppWindow &app) override {
     auto wm = ServiceRegistry::instance()->windowManager();
     auto clipman = ServiceRegistry::instance()->clipman();
+    auto appDb = ServiceRegistry::instance()->appDb();
+    auto window = wm->getActiveWindowSync();
+    KeyboardShortcut shortcut = KeyboardShortcut::paste();
+
+    if (auto app = appDb->find(window->wmClass())) {
+      if (app->isTerminalEmulator()) { shortcut = KeyboardShortcut::shiftPaste(); }
+    }
 
     app.closeWindow();
     clipman->copyContent(m_content, {.concealed = true});
-    QTimer::singleShot(10, [wm, clipman]() { wm->pasteToFocusedWindow(); });
+    QTimer::singleShot(10, [wm, window, shortcut]() { wm->sendShortcutSync(*window.get(), shortcut); });
   }
 
   void loadClipboardData(const Clipboard::Content &content) { m_content = content; }

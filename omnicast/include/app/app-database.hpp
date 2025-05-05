@@ -13,6 +13,7 @@ public:
   virtual QString name() const = 0;
   virtual bool displayable() const = 0;
   virtual bool isTerminalApp() const = 0;
+  virtual bool isTerminalEmulator() const { return false; }
   virtual QString fullyQualifiedName() const { return name(); }
   virtual OmniIconUrl iconUrl() const = 0;
   virtual std::vector<std::shared_ptr<Application>> actions() const { return {}; }

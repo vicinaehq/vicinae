@@ -142,6 +142,19 @@ public:
     return m_provider->findByClass(wmClass);
   }
 
+  /**
+   * Attempts to find an application from the provided string
+   * The following fields are searched, in order:
+   * - application id (for non-apple UNIXes, with or without the .desktop extension)
+   * - window manager class, if applicable
+   */
+  std::shared_ptr<Application> find(const QString &target) const {
+    if (auto app = m_provider->findById(target)) { return app; }
+    if (auto app = m_provider->findByClass(target)) { return app; }
+
+    return nullptr;
+  }
+
   std::shared_ptr<Application> findBestOpener(const QString &target) const {
     return m_provider->findBestOpener(target);
   }
