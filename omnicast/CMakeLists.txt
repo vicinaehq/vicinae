@@ -48,6 +48,8 @@ set(SRCS
 	include/font-service.hpp
 	src/font-service.cpp
 
+	include/root-item-manager.hpp
+
 	include/favicon/favicon-service.hpp
 	src/favicon/favicon-service.cpp
 	include/favicon/favicon-request.hpp

@@ -126,6 +126,7 @@ class RootView : public DeclarativeOmniListView {
       return {
           .iconUrl = m_item->iconUrl(),
           .name = m_item->displayName(),
+          .category = m_item->subtitle(),
           .accessories = m_item->accessories(),
       };
     }
@@ -137,7 +138,10 @@ class RootView : public DeclarativeOmniListView {
       });
     }
 
-    QString id() const override { return m_item->uniqueId(); }
+    QString id() const override {
+      qDebug() << "item with id" << m_item->uniqueId();
+      return m_item->uniqueId();
+    }
 
   public:
     RootSearchItem(const std::shared_ptr<RootItem> &item) : m_item(item) {}
@@ -283,54 +287,6 @@ public:
       results.addItem(std::make_unique<RootSearchItem>(item));
     }
 
-    /*
-auto filteredLinks =
-    quicklinks |
-    std::views::filter([isWordStart](const auto &quicklink) { return isWordStart(quicklink->name); }) |
-    std::views::transform([](const auto &entry) {
-      auto item = std::make_unique<QuicklinkRootListItem>(entry);
-      return RankedListItem{.item = std::move(item), .rank = 0};
-    });
-
-auto newAppEntries = appDb->prefixSearch(s);
-
-auto filteredApps =
-    newAppEntries |
-    std::views::filter([](const auto &entry) { return !entry->disabled && entry->app->displayable(); }) |
-    std::views::transform([](const auto &entry) {
-      auto item = std::make_unique<AppListItem>(entry->app);
-
-      return RankedListItem{.item = std::move(item), .rank = entry->frecency};
-    });
-
-auto filteredCommands =
-    commandEntries | std::views::filter([](const auto &entry) { return !entry.disabled; }) |
-    std::views::filter([&isWordStart](const auto &entry) { return isWordStart(entry.command->name()); }) |
-    std::views::transform([](const auto &entry) {
-      auto item = std::make_unique<BuiltinCommandListItem>(entry);
-      return RankedListItem{.item = std::move(item), .rank = 0};
-    });
-
-std::vector<RankedListItem> rankedResults;
-
-{
-
-  rankedResults.reserve(maxReserve);
-  std::ranges::copy(filteredApps, std::back_inserter(rankedResults));
-  std::ranges::copy(filteredCommands, std::back_inserter(rankedResults));
-  std::ranges::copy(filteredLinks, std::back_inserter(rankedResults));
-
-  auto sortRanked = [](const auto &a, const auto &b) { return a.rank > b.rank; };
-
-  std::ranges::sort(rankedResults, sortRanked);
-
-  auto &results = list->addSection("Results", QString::number(rankedResults.size()))
-                      .withCapacity(rankedResults.size());
-
-  std::ranges::for_each(rankedResults, [&results](auto &item) { results.addItem(std::move(item.item)); });
-}
-    */
-
     auto &fallbackCommands = list->addSection(QString("Use \"%1\" with...").arg(s));
     auto fallbackLinks = quicklinks | std::views::filter([&s](const auto &quicklink) {
                            return quicklink->placeholders.size() == 1;
@@ -345,13 +301,11 @@ std::vector<RankedListItem> rankedResults;
   }
 
   void onMount() override {
-    auto commandDb = ServiceRegistry::instance()->commandDb();
+    auto manager = ServiceRegistry::instance()->rootItemManager();
 
     setSearchPlaceholderText("Search for apps or commands...");
-    connect(commandDb, &OmniCommandDatabase::commandRegistered, this, &RootView::handleRegisteredCommand);
+    connect(manager, &RootItemManager::itemsChanged, this, [&]() { reload(OmniList::PreserveSelection); });
   }
-
-  void handleRegisteredCommand(const CommandDbEntry &entry) { reload(OmniList::SelectFirst); }
 
   RootView(AppWindow &app) : DeclarativeOmniListView(app), app(app) {
     m_calcDebounce->setInterval(100);

@@ -120,8 +120,9 @@ signals:
 };
 
 class RootItemManager : public QObject {
-public:
 private:
+  Q_OBJECT
+
   struct RootItemHash {
     size_t operator()(const std::shared_ptr<RootItem> &item) const { return qHash(item->uniqueId()); }
   };
@@ -159,7 +160,8 @@ private:
     query.exec(R"(
 		CREATE TABLE IF NOT EXISTS root_provider (
 			id TEXT PRIMARY KEY,
-			preference_values JSON DEFAULT '{}'
+			preference_values JSON DEFAULT '{}',
+			enabled INT DEFAULT 1
 		);
 	)");
 
@@ -272,6 +274,7 @@ private:
     m_items = m_providers | std::views::transform([](const auto &p) { return p->loadItems(); }) |
               std::views::join | std::ranges::to<std::vector>();
     rebuildTrie();
+    emit itemsChanged();
   }
 
   RootItemMetadata itemMetadata(const QString &id) const {
@@ -302,6 +305,7 @@ public:
     connect(provider.get(), &RootProvider::itemsChanged, this, &RootItemManager::reloadProviders);
     m_providers.emplace_back(std::move(provider));
     rebuildTrie();
+    emit itemsChanged();
   }
 
   RootProvider *provider(const QString &id) const {
@@ -325,4 +329,7 @@ public:
 
     return items;
   }
+
+signals:
+  void itemsChanged() const;
 };

@@ -424,8 +424,6 @@ bool OmniList::selectDown() {
   for (int i = endNext - 1; i >= next; --i) {
     auto &vItem = _virtual_items[i];
 
-    qDebug() << "Trying item" << vItem.item->id() << "selectable" << vItem.item->selectable();
-
     if (vItem.x <= current.x && vItem.item->selectable()) {
       setSelectedIndex(i, ScrollBehaviour::ScrollRelative);
       return true;
