@@ -166,11 +166,14 @@ CommandDatabase::CommandDatabase() {
   }
 
   {
-    auto manage = CommandBuilder("manage").withName("Manage Themes").toSingleView<ManageThemesView>();
+    auto manageThemes = CommandBuilder("manage").withName("Manage Themes").toSingleView<ManageThemesView>();
+    auto setAppearance =
+        CommandBuilder("appearance").withName("Set omnicast appearance").toSingleView<ManageThemesView>();
     auto theme = CommandRepositoryBuilder("theme")
                      .withName("Theme")
                      .withTintedIcon("brush", ColorTint::Purple)
-                     .withCommand(manage)
+                     .withCommand(manageThemes)
+                     .withCommand(setAppearance)
                      .makeShared();
 
     registerRepository(theme);

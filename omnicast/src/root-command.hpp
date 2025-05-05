@@ -111,15 +111,51 @@ class RootView : public DeclarativeOmniListView {
         : AbstractAction("Disable item", BuiltinOmniIconUrl("trash")), m_item(item) {}
   };
 
+  class DefaultActionWrapper : public AbstractAction {
+    AbstractAction *m_action = nullptr;
+    QString m_id;
+
+    void execute(AppWindow &app) override {
+      auto manager = ServiceRegistry::instance()->rootItemManager();
+
+      if (manager->registerVisit(m_id)) {
+        qDebug() << "Visit registered";
+      } else {
+        qCritical() << "Failed to register visit";
+      }
+
+      m_action->execute(app);
+    }
+
+  public:
+    QString title() const override { return m_action->title(); }
+
+    DefaultActionWrapper(const QString &id, AbstractAction *action)
+        : AbstractAction(action->title(), action->iconUrl), m_id(id), m_action(action) {}
+    ~DefaultActionWrapper() { m_action->deleteLater(); }
+  };
+
   class RootSearchItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
     std::shared_ptr<RootItem> m_item;
 
     QList<AbstractAction *> generateActions() const override {
-      auto itemActions = m_item->actions();
+      auto baseActions = m_item->actions();
+      QList<AbstractAction *> finalActions;
 
-      itemActions << new DisableItemAction(m_item);
+      finalActions.reserve(baseActions.size() + 2);
 
-      return itemActions;
+      for (int i = 0; i < baseActions.size(); ++i) {
+        AbstractAction *action = baseActions.at(i);
+
+        if (i == 0)
+          finalActions.emplace_back(new DefaultActionWrapper(m_item->uniqueId(), action));
+        else
+          finalActions.emplace_back(action);
+      }
+
+      finalActions.emplace_back(new DisableItemAction(m_item));
+
+      return finalActions;
     }
 
     ItemData data() const override {

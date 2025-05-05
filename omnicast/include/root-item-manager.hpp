@@ -1,5 +1,6 @@
 #pragma once
 #include "argument.hpp"
+#include "extend/metadata-model.hpp"
 #include "libtrie/trie.hpp"
 #include "omni-database.hpp"
 #include "omni-icon.hpp"
@@ -128,11 +129,11 @@ private:
   };
 
   struct RootItemMetadata {
-    int visitCount;
-    bool isEnabled;
+    int visitCount = 0;
+    bool isEnabled = true;
     std::optional<std::chrono::time_point<std::chrono::high_resolution_clock>> lastVisitedAt;
     std::vector<QString> aliases;
-    bool isFallback;
+    bool isFallback = false;
   };
 
   struct RootProviderMetadata {};
@@ -286,6 +287,32 @@ private:
 public:
   RootItemManager(OmniDatabase &db) : m_db(db) { createTables(); }
 
+  bool registerVisit(const QString &id) {
+    QSqlQuery query = m_db.createQuery();
+
+    query.prepare(R"(
+		UPDATE root_provider_item 
+		SET 
+			visit_count = visit_count + 1, 
+			last_visited_at = unixepoch() 
+		WHERE id = :id
+		RETURNING visit_count, last_visited_at
+	)");
+    query.bindValue(":id", id);
+
+    if (!query.exec() || !query.next()) {
+      qDebug() << "Failed to update item" << query.lastError();
+      return false;
+    }
+
+    RootItemMetadata &meta = m_metadata[id];
+
+    meta.visitCount = query.value(0).toInt();
+    meta.lastVisitedAt = std::chrono::system_clock::from_time_t(query.value(1).toULongLong());
+
+    return true;
+  }
+
   bool disableItem(const QString &id) { return setItemEnabled(id, false); }
   bool enableItem(const QString &id) { return setItemEnabled(id, true); }
 
@@ -323,8 +350,8 @@ public:
       auto ameta = itemMetadata(a->uniqueId());
       auto bmeta = itemMetadata(b->uniqueId());
 
-      return std::max(bmeta.visitCount, 1) * a->baseScoreWeight() >
-             std::max(ameta.visitCount, 1) * b->baseScoreWeight();
+      return std::max(ameta.visitCount, 1) * a->baseScoreWeight() >
+             std::max(bmeta.visitCount, 1) * b->baseScoreWeight();
     });
 
     return items;

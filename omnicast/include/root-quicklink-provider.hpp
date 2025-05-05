@@ -37,7 +37,7 @@ class RootQuicklinkProvider : public RootProvider {
       return url;
     }
 
-    QString uniqueId() const override { return QString("quicklink:%1").arg(m_link->id); }
+    QString uniqueId() const override { return QString("links.%1").arg(m_link->id); }
 
     QList<AbstractAction *> actions() const override {
       QList<AbstractAction *> list;
@@ -56,7 +56,7 @@ class RootQuicklinkProvider : public RootProvider {
 
 public:
   QString displayName() const override { return "Quicklinks"; }
-  QString uniqueId() const override { return "quicklinks"; }
+  QString uniqueId() const override { return "links"; }
   Type type() const override { return RootProvider::Type::GroupProvider; }
 
   std::vector<std::shared_ptr<RootItem>> loadItems() const override {

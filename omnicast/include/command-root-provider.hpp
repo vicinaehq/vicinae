@@ -21,7 +21,7 @@ class CommandRootItem : public RootItem {
     return actions;
   }
 
-  QString uniqueId() const override { return m_command->uniqueId(); }
+  QString uniqueId() const override { return QString("extension.%1").arg(m_command->uniqueId()); }
 
   AccessoryList accessories() const override {
     return {{.text = "Command", .color = ColorTint::TextSecondary}};
@@ -37,7 +37,7 @@ class ExtensionRootProvider : public RootProvider {
 public:
   QString displayName() const override { return m_repo->name(); }
 
-  QString uniqueId() const override { return m_repo->id(); }
+  QString uniqueId() const override { return QString("extension.%1").arg(m_repo->id()); }
 
   Type type() const override { return RootProvider::Type::ExtensionProvider; }
 

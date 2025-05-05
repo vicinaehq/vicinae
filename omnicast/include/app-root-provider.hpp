@@ -54,7 +54,7 @@ class AppRootProvider : public RootProvider {
     AccessoryList accessories() const override {
       return {{.text = "Application", .color = ColorTint::TextSecondary}};
     }
-    QString uniqueId() const override { return m_app->id(); }
+    QString uniqueId() const override { return QString("apps.%1").arg(m_app->id()); }
     OmniIconUrl iconUrl() const override { return m_app->iconUrl(); }
     std::vector<QString> keywords() const override { return m_app->keywords(); }
 
