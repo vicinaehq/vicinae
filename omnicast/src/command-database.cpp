@@ -39,7 +39,7 @@ OmniIconUrl tintedCommandIcon(const QString &iconName, ColorTint tint) {
 const AbstractCmd *CommandDatabase::findCommand(const QString &id) {
   if (auto repo = findRepository(id)) {
     for (const auto &cmd : repo->commands()) {
-      if (cmd->id() == id) { return cmd.get(); }
+      if (cmd->uniqueId() == id) { return cmd.get(); }
     }
   }
 

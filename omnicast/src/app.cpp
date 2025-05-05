@@ -285,7 +285,7 @@ void AppWindow::launchCommand(const std::shared_ptr<AbstractCmd> &command, const
   }
 
   auto commandDb = ServiceRegistry::instance()->commandDb();
-  auto preferenceValues = commandDb->getPreferenceValues(command->id());
+  auto preferenceValues = commandDb->getPreferenceValues(command->uniqueId());
 
   for (const auto &preference : command->preferences()) {
     if (preference->isRequired() && !preferenceValues.contains(preference->name())) {
@@ -302,7 +302,7 @@ void AppWindow::launchCommand(const std::shared_ptr<AbstractCmd> &command, const
   }
 
   qDebug() << "preference values for command with" << command->preferences().size() << "preferences"
-           << command->id() << preferenceValues;
+           << command->uniqueId() << preferenceValues;
 
   if (commandStack.size() > 1 && commandStack.top().viewStack.empty()) {
     qWarning() << "unloading hanging command";
@@ -311,7 +311,7 @@ void AppWindow::launchCommand(const std::shared_ptr<AbstractCmd> &command, const
     commandStack.pop();
   }
 
-  commandDb->registerCommandOpen(command->id());
+  commandDb->registerCommandOpen(command->uniqueId());
 
   auto ctx = command->createContext(*this, command, opts.searchQuery);
 
@@ -423,7 +423,7 @@ std::variant<CommandResponse, CommandError> AppWindow::handleCommand(const Comma
     for (const auto &entry : commandDb->commands()) {
       Proto::Dict result;
 
-      result["id"] = entry.command->id().toUtf8().constData();
+      result["id"] = entry.command->uniqueId().toUtf8().constData();
       result["name"] = entry.command->name().toUtf8().constData();
       results.push_back(result);
     }

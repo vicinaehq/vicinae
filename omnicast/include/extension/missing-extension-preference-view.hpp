@@ -35,7 +35,7 @@ public:
       : View(app), m_command(command) {
     auto db = ServiceRegistry::instance()->commandDb();
 
-    m_existingPreferenceValues = db->getPreferenceValues(command->id());
+    m_existingPreferenceValues = db->getPreferenceValues(command->uniqueId());
     auto icon = new OmniIcon();
 
     icon->setFixedSize(32, 32);
@@ -109,7 +109,7 @@ public:
 
     if (!validated) return;
 
-    db->setPreferenceValues(m_command->id(), obj);
+    db->setPreferenceValues(m_command->uniqueId(), obj);
 
     pop();
     app.launchCommand(m_command, {});

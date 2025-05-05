@@ -2,16 +2,83 @@
 #include "app.hpp"
 #include "omni-icon.hpp"
 #include "theme.hpp"
-#include "ui/action_popover.hpp"
+#include "ui/color_circle.hpp"
+#include "ui/default-list-item-widget.hpp"
 #include "ui/omni-list-view.hpp"
 #include "ui/omni-list.hpp"
+#include "ui/selectable-omni-list-widget.hpp"
+#include "ui/typography.hpp"
+#include <algorithm>
 #include <memory>
+#include <qboxlayout.h>
 #include <qlabel.h>
 #include <qnamespace.h>
 #include <qobject.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
 #include <sys/socket.h>
+
+class HorizontalColorPaletteWidget : public QWidget {
+  QHBoxLayout *m_layout = new QHBoxLayout;
+  std::vector<ColorCircle *> m_colors;
+  QColor m_strokeColor = "#CCCCCC";
+
+public:
+  HorizontalColorPaletteWidget() {
+    m_layout->setContentsMargins(0, 0, 0, 0);
+    setLayout(m_layout);
+  }
+
+  void setStrokeColor(const QColor &color) { m_strokeColor = color; }
+
+  void setColors(const std::vector<ColorLike> &colors) {
+    while (m_layout->count() > 0) {
+      m_layout->takeAt(0)->widget()->deleteLater();
+    }
+
+    std::ranges::for_each(colors, [&](const ColorLike &color) {
+      auto circle = new ColorCircle(color, {16, 16});
+
+      circle->setStroke(m_strokeColor, 2);
+      m_layout->addWidget(circle);
+    });
+  }
+};
+
+class ThemeItemWidget : public SelectableOmniListWidget {
+  QHBoxLayout *m_layout = new QHBoxLayout(this);
+  OmniIcon *m_icon = new OmniIcon(this);
+  TypographyWidget *m_title = new TypographyWidget();
+  TypographyWidget *m_description = new TypographyWidget();
+  AccessoryListWidget *m_accessories = new AccessoryListWidget(this);
+  QWidget *m_textWidget = new QWidget(this);
+  QVBoxLayout *m_textLayout = new QVBoxLayout(m_textWidget);
+  HorizontalColorPaletteWidget *m_palette = new HorizontalColorPaletteWidget();
+
+public:
+  void setIcon(const OmniIconUrl &url) { m_icon->setUrl(url); }
+  void setTitle(const QString &title) { m_title->setText(title); }
+  void setDescription(const QString &description) { m_description->setText(description); }
+  void setColors(const std::vector<ColorLike> &colors) { m_palette->setColors(colors); }
+  void setStrokeColor(const QColor &color) { m_palette->setStrokeColor(color); }
+
+  ThemeItemWidget(QWidget *parent = nullptr) : SelectableOmniListWidget(parent) {
+    m_description->setColor(ColorTint::TextSecondary);
+    m_textLayout->addWidget(m_title);
+    m_textLayout->setContentsMargins(0, 0, 0, 0);
+    m_textLayout->addWidget(m_description);
+    m_textWidget->setLayout(m_textLayout);
+
+    m_icon->setFixedSize(30, 30);
+
+    m_layout->setSpacing(10);
+    m_layout->addWidget(m_icon);
+    m_layout->addWidget(m_textWidget);
+    m_layout->addWidget(m_palette, 0, Qt::AlignRight);
+    m_layout->setContentsMargins(10, 10, 10, 10);
+    setLayout(m_layout);
+  }
+};
 
 class SetThemeAction : public AbstractAction {
   QString _themeName;
@@ -26,38 +93,61 @@ public:
       : AbstractAction("Set theme", BuiltinOmniIconUrl("brush")), _themeName(themeName) {}
 };
 
-class ThemeItem : public AbstractDefaultListItem, public OmniListView::IActionnable {
-  const ThemeInfo &info;
+class ThemeItem : public OmniList::AbstractVirtualItem, public OmniListView::IActionnable {
+  ThemeInfo m_theme;
   std::function<void(const QString &name)> _themeSelectedCallback;
 
 public:
-  QList<AbstractAction *> generateActions() const override {
-    auto set = new SetThemeAction(info.name);
+  int calculateHeight(int width) const override {
+    static std::unique_ptr<ThemeItemWidget> ruler;
 
-    if (_themeSelectedCallback) {
-      set->setExecutionCallback([this]() { _themeSelectedCallback(info.name); });
+    if (!ruler) {
+      ruler = std::make_unique<ThemeItemWidget>();
+      ruler->setTitle("dummy title");
+      ruler->setDescription("dummy description");
     }
 
-    return {set};
+    return ruler->sizeHint().height();
   }
-
-  const QString &name() const { return info.name; }
 
   void setSelectedCallback(const std::function<void(const QString &name)> &cb) {
     _themeSelectedCallback = cb;
   }
 
-  ItemData data() const override {
-    return {
-        .iconUrl = BuiltinOmniIconUrl("brush"),
-        .name = info.name,
-    };
+  QList<AbstractAction *> generateActions() const override {
+    auto set = new SetThemeAction(m_theme.name);
+
+    if (_themeSelectedCallback) {
+      set->setExecutionCallback([this]() { _themeSelectedCallback(m_theme.name); });
+    }
+
+    return {set};
   }
 
-  QString id() const override { return info.name; }
+  QString id() const override { return m_theme.name; }
 
-public:
-  ThemeItem(const ThemeInfo &info) : info(info) {}
+  bool recyclable() const override { return false; }
+
+  OmniListItemWidget *createWidget() const override {
+    auto item = new ThemeItemWidget;
+
+    item->setTitle(m_theme.name);
+    item->setDescription("A big, beautiful theme");
+    // item->setIcon(BuiltinOmniIconUrl("brush"));
+    item->setIcon(
+        HttpOmniIconUrl(QUrl("https://github.com/rebelot/kanagawa.nvim/raw/master/kanagawa@2x.png")));
+
+    std::vector<ColorLike> colors{m_theme.colors.red,     m_theme.colors.blue,   m_theme.colors.green,
+                                  m_theme.colors.magenta, m_theme.colors.purple, m_theme.colors.orange,
+                                  m_theme.colors.text,    m_theme.colors.subtext};
+
+    item->setColors(colors);
+    item->setStrokeColor(m_theme.colors.text);
+
+    return item;
+  }
+
+  ThemeItem(const ThemeInfo &theme) : m_theme(theme) {}
 };
 
 class ManageThemesView : public OmniListView {

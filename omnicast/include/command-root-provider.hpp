@@ -21,7 +21,7 @@ class CommandRootItem : public RootItem {
     return actions;
   }
 
-  QString uniqueId() const override { return m_command->id(); }
+  QString uniqueId() const override { return m_command->uniqueId(); }
 
   AccessoryList accessories() const override {
     return {{.text = "Command", .color = ColorTint::TextSecondary}};

@@ -317,6 +317,7 @@ class ExtensionCommandRuntime : public CommandContext {
 
   void handleRequest(const QString &sessionId, const QString &requestId, const QString &action,
                      const QJsonObject &payload) {
+    qDebug() << "request" << action;
     auto manager = ServiceRegistry::instance()->extensionManager();
 
     if (sessionId != m_sessionId) return;
@@ -391,7 +392,7 @@ class ExtensionCommandRuntime : public CommandContext {
 public:
   void load(const LaunchProps &props) override {
     auto commandDb = ServiceRegistry::instance()->commandDb();
-    auto preferenceValues = commandDb->getPreferenceValues(m_command->id());
+    auto preferenceValues = commandDb->getPreferenceValues(m_command->uniqueId());
     auto manager = ServiceRegistry::instance()->extensionManager();
 
     if (m_command->mode() == CommandModeView) {
@@ -411,7 +412,7 @@ public:
       });
     }
 
-    manager->loadCommand(m_command->extensionId(), m_command->id(), preferenceValues, props);
+    manager->loadCommand(m_command->extensionId(), m_command->commandId(), preferenceValues, props);
   }
 
   void unload() override {

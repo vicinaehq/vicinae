@@ -128,7 +128,7 @@ public:
 
   CommandDbEntry *findCommand(const QString &id) {
     for (auto &cmd : entries) {
-      if (cmd.command->id() == id) return &cmd;
+      if (cmd.command->uniqueId() == id) return &cmd;
     }
 
     return nullptr;
@@ -136,7 +136,7 @@ public:
 
   const CommandDbEntry *findCommand(const QString &id) const {
     for (const auto &cmd : entries) {
-      if (cmd.command->id() == id) return &cmd;
+      if (cmd.command->uniqueId() == id) return &cmd;
     }
 
     return nullptr;
@@ -144,7 +144,7 @@ public:
 
   bool hasCommand(const QString &id) const {
     for (const auto &cmd : entries) {
-      if (cmd.command->id() == id) return true;
+      if (cmd.command->uniqueId() == id) return true;
     }
 
     return false;
@@ -280,7 +280,7 @@ public:
 
   bool setDisable(const QString &id, bool value) {
     for (auto &cmd : entries) {
-      if (cmd.command->id() == id) {
+      if (cmd.command->uniqueId() == id) {
         qDebug() << "found command";
         QSqlQuery query(db.db());
 
@@ -305,7 +305,7 @@ public:
   void registerCommand(const QString &repositoryId, const std::shared_ptr<AbstractCmd> &cmd) {
     QSqlQuery query(db.db());
 
-    qDebug() << "registering command with id" << cmd->id();
+    qDebug() << "registering command with id" << cmd->uniqueId();
 
     query.prepare(R"(
 		INSERT INTO command (id, extension_id, disabled)
@@ -313,12 +313,12 @@ public:
 		ON CONFLICT(id) DO UPDATE SET open_count = open_count, last_opened_at = last_opened_at
 		RETURNING open_count, last_opened_at
 	)");
-    query.bindValue(":id", cmd->id());
+    query.bindValue(":id", cmd->uniqueId());
     query.bindValue(":extension_id", repositoryId);
     query.bindValue(":disabled", false);
 
-    if (!query.exec() || !query.next()) { qDebug() << "Failed to register command" << cmd->id(); }
-    if (!hasCommand(cmd->id())) {
+    if (!query.exec() || !query.next()) { qDebug() << "Failed to register command" << cmd->uniqueId(); }
+    if (!hasCommand(cmd->uniqueId())) {
       CommandDbEntry entry;
 
       entry.command = cmd;
@@ -326,7 +326,7 @@ public:
       entry.repositoryId = repositoryId;
       entry.openCount = query.value(0).toInt();
 
-      qDebug() << "command" << cmd->id() << "open count" << entry.openCount;
+      qDebug() << "command" << cmd->uniqueId() << "open count" << entry.openCount;
 
       auto lastOpenedAtField = query.value(1);
 

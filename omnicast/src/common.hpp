@@ -129,7 +129,7 @@ enum CommandType { CommandTypeBuiltin, CommandTypeExtension };
 
 class AbstractCmd {
 public:
-  virtual QString id() const = 0;
+  virtual QString uniqueId() const = 0;
   virtual QString name() const = 0;
   virtual OmniIconUrl iconUrl() const = 0;
   virtual CommandType type() const = 0;

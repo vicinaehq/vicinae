@@ -32,7 +32,7 @@ class BuiltinCommand : public AbstractCmd {
   std::vector<CommandArgument> _arguments;
 
 public:
-  QString id() const override { return _repositoryId + "." + _id; }
+  QString uniqueId() const override { return _repositoryId + "." + _id; }
   QString name() const override { return _name; }
   OmniIconUrl iconUrl() const override { return _url.value_or(_repositoryIcon); }
   virtual CommandType type() const override { return CommandTypeBuiltin; }

@@ -57,7 +57,9 @@ CommandType ExtensionCommand::type() const { return CommandType::CommandTypeExte
 
 CommandMode ExtensionCommand::mode() const { return _mode; }
 
-QString ExtensionCommand::id() const { return QString("%1.%2").arg(_extensionId).arg(_id); }
+QString ExtensionCommand::uniqueId() const { return QString("%1.%2").arg(_extensionId).arg(_id); }
+
+QString ExtensionCommand::commandId() const { return _id; }
 
 QString ExtensionCommand::name() const { return _title; }
 

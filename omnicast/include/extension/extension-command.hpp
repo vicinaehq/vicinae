@@ -57,8 +57,9 @@ public:
     return list;
   }
 
-  QString id() const override;
+  QString uniqueId() const override;
   QString name() const override;
+  QString commandId() const;
 
   OmniIconUrl iconUrl() const override;
   QString repositoryName() const override;

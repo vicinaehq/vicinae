@@ -138,10 +138,7 @@ class RootView : public DeclarativeOmniListView {
       });
     }
 
-    QString id() const override {
-      qDebug() << "item with id" << m_item->uniqueId();
-      return m_item->uniqueId();
-    }
+    QString id() const override { return m_item->uniqueId(); }
 
   public:
     RootSearchItem(const std::shared_ptr<RootItem> &item) : m_item(item) {}
