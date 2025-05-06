@@ -32,6 +32,14 @@ public:
     update();
   }
 
+  void setFont(const QFont &f) {
+    QFont font(f);
+
+    font.setPointSize(m_theme.pointSize(m_size));
+    font.setWeight(m_weight);
+    QLabel::setFont(font);
+  }
+
   void setFontWeight(QFont::Weight weight) {
     QFont _font = font();
 

@@ -3,6 +3,7 @@
 #include "app-service.hpp"
 #include "calculator-database.hpp"
 #include "clipboard/clipboard-service.hpp"
+#include "config-service.hpp"
 #include "extension_manager.hpp"
 #include "font-service.hpp"
 #include "local-storage-service.hpp"
@@ -31,6 +32,7 @@ class ServiceRegistry : public QObject {
   std::unique_ptr<RankingService> m_rankingService;
   std::unique_ptr<RootItemManager> m_rootItemManager;
   std::unique_ptr<RootExtensionManager> m_rootExtMan;
+  std::unique_ptr<ConfigService> m_config;
 
 public:
   static ServiceRegistry *instance() {
@@ -39,6 +41,7 @@ public:
   }
 
   auto rootItemManager() const { return m_rootItemManager.get(); }
+  auto config() const { return m_config.get(); }
   auto AI() const { return m_aiManager.get(); }
   auto omniDb() const { return m_omniDb.get(); }
   auto quicklinks() const { return m_quickinkDb.get(); }
@@ -55,6 +58,7 @@ public:
   auto setRootItemManager(std::unique_ptr<RootItemManager> manager) {
     m_rootItemManager = std::move(manager);
   }
+  void setConfig(std::unique_ptr<ConfigService> cfg) { m_config = std::move(cfg); }
   void setRootExtMan(std::unique_ptr<RootExtensionManager> man) { m_rootExtMan = std::move(man); }
   void setAI(std::unique_ptr<AI::Manager> manager) { m_aiManager = std::move(manager); }
   void setRankingService(std::unique_ptr<RankingService> service) { m_rankingService = std::move(service); }

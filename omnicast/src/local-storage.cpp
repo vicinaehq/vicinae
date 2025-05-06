@@ -1,4 +1,5 @@
 #include "local-storage-service.hpp"
+#include <qjsondocument.h>
 
 using ValueType = LocalStorageService::ValueType;
 
@@ -36,6 +37,14 @@ QJsonValue LocalStorageService::deserializeValue(const QString &value, ValueType
   case ValueType::Number:
     return value.toDouble();
   }
+}
+
+QJsonObject LocalStorageService::getItemAsJson(const QString &namespaceId, const QString &key) {
+  QJsonValue json = getItem(namespaceId, key);
+
+  if (!json.isString()) return {};
+
+  return QJsonDocument::fromJson(json.toString().toUtf8()).object();
 }
 
 QJsonValue LocalStorageService::getItem(const QString &namespaceId, const QString &key) {

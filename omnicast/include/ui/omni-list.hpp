@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <QPainterPath>
 #include <functional>
+#include <iterator>
 #include <memory>
 #include <qboxlayout.h>
 #include <qlabel.h>
@@ -150,6 +151,12 @@ public:
 
     Section &addItem(std::unique_ptr<AbstractVirtualItem> item) {
       m_items.emplace_back(std::move(item));
+      return *this;
+    }
+
+    Section &addItems(std::vector<std::unique_ptr<AbstractVirtualItem>> items) {
+      m_items.insert(m_items.end(), std::make_move_iterator(items.begin()),
+                     std::make_move_iterator(items.end()));
       return *this;
     }
   };

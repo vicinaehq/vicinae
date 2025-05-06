@@ -21,7 +21,9 @@ void SplitDetailWidget::relayout() {
   if (m_detailWidget) { m_detailWidget->setGeometry({mainWidth, 0, ratioWidth, currentSize.height()}); }
 
   m_divider->setGeometry({mainWidth, 0, 1, currentSize.height()});
-  m_detailWidget->setVisible(m_detailVisible);
+
+  if (m_detailWidget) { m_detailWidget->setVisible(m_detailVisible); }
+
   m_divider->setVisible(m_detailVisible);
 }
 

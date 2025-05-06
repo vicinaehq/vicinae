@@ -6,6 +6,7 @@
 #include "emoji-command.hpp"
 #include "icon-browser-command.hpp"
 #include "ask-ai-command.hpp"
+#include "omnicast/browse-fonts-view.hpp"
 #include "preference.hpp"
 #include "switch-windows-command.hpp"
 #include "test-command.hpp"
@@ -16,6 +17,7 @@
 #include "command-builder.hpp"
 #include "ui/peepobank-command.hpp"
 #include <memory>
+#include <qdnslookup.h>
 #include <qfuture.h>
 #include <qlocale.h>
 
@@ -98,6 +100,11 @@ CommandDatabase::CommandDatabase() {
                           .withTintedIcon("omnicast", ColorTint::Red)
                           .toSingleView<IconBrowserView>();
 
+    auto openConfigFile = CommandBuilder("open-config")
+                              .withName("Open Omnicast Configuration File")
+                              .withTintedIcon("cog", ColorTint::Green)
+                              .toSingleView<IconBrowserView>();
+
     auto peepobank = CommandBuilder("peepobank")
                          .withName("Peepobank")
                          .withTintedIcon("emoji", ColorTint::Red)
@@ -109,6 +116,7 @@ CommandDatabase::CommandDatabase() {
                         .withCommand(emoji)
                         .withCommand(iconSearch)
                         .withCommand(peepobank)
+                        .withCommand(openConfigFile)
                         .makeShared();
 
     registerRepository(omnicast);
@@ -177,6 +185,17 @@ CommandDatabase::CommandDatabase() {
                      .makeShared();
 
     registerRepository(theme);
+  }
+
+  {
+    auto browseFonts = CommandBuilder("browser").withName("Browse Fonts").toSingleView<BrowseFontsView>();
+    auto fonts = CommandRepositoryBuilder("fonts")
+                     .withName("Font")
+                     .withTintedIcon("text", ColorTint::Orange)
+                     .withCommand(browseFonts)
+                     .makeShared();
+
+    registerRepository(fonts);
   }
 
   {

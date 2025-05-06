@@ -57,6 +57,7 @@ class MarkdownRenderer : public QWidget {
 
 public:
   QTextEdit *textEdit() const;
+  void setFont(const QFont &font);
   QStringView markdown() const;
   void clear();
 

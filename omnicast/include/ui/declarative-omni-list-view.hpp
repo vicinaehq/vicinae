@@ -1,157 +1,63 @@
 #pragma once
-#include "extend/metadata-model.hpp"
-#include "theme.hpp"
 #include "ui/action-pannel/action-item.hpp"
-#include "ui/horizontal-metadata.hpp"
 #include "ui/omni-list.hpp"
+#include "ui/split-detail.hpp"
 #include "view.hpp"
 #include <qboxlayout.h>
 #include <qevent.h>
+#include <qlogging.h>
 #include <qnamespace.h>
 #include <qwidget.h>
 
 class DeclarativeOmniListView : public View {
-  class DetailSplit : public QWidget {
-    QWidget *_base;
-    QWidget *_detail;
-    bool _isPaneOpened;
-    bool _dividerStrokeWidth = 1;
-
-  protected:
-    void recalculate() {
-      double factor = _isPaneOpened ? 0.35 : 1;
-      int baseWidth = width() * factor;
-      int detailWidth = width() - baseWidth;
-
-      _base->setFixedSize({baseWidth, height()});
-      _base->move(0, 0);
-
-      if (_detail) {
-        _detail->setFixedSize({detailWidth, height()});
-        _detail->move(baseWidth, 0);
-        _detail->show();
-      }
-    }
-
-    void resizeEvent(QResizeEvent *event) override {
-      recalculate();
-      QWidget::resizeEvent(event);
-    }
-
-    void paintEvent(QPaintEvent *event) override {
-      auto &theme = ThemeService::instance().theme();
-      QPainter painter(this);
-
-      if (_isPaneOpened) {
-        painter.setPen(theme.colors.border);
-        painter.setBrush(theme.colors.border);
-        painter.drawRect(_base->width(), 0, 1, height());
-      }
-
-      QWidget::paintEvent(event);
-    }
-
-  public:
-    void setDetail(QWidget *detail) {
-      if (_detail) { _detail->deleteLater(); }
-      detail->setParent(this);
-      _detail = detail;
-      _isPaneOpened = true;
-      recalculate();
-    }
-
-    void clearDetail() {
-      _isPaneOpened = false;
-      recalculate();
-      if (_detail) {
-        _detail->deleteLater();
-        _detail = nullptr;
-      }
-    }
-
-    DetailSplit(QWidget *base, QWidget *parent = nullptr)
-        : QWidget(parent), _base(base), _detail(nullptr), _isPaneOpened(false) {
-      base->setParent(this);
-    }
-  };
-
 protected:
-  DetailSplit *split;
   OmniList *list;
   QString lastSelectedId;
+  QString m_baseNavigationTitle;
+  SplitDetailWidget *m_split = new SplitDetailWidget(this);
 
   using ItemList = std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>>;
 
-  ItemList itemList;
-
 public:
-  class MetadataDetailModel {
-  public:
-    virtual QWidget *createView() const { return new QWidget; }
-    virtual MetadataModel createMetadata() const { return {}; }
-  };
-
-  class SideDetailWidget : public QWidget {
-    QVBoxLayout *layout;
-    QWidget *view;
-    HorizontalMetadata *metadata;
-    HDivider *divider;
-
-  public:
-    SideDetailWidget(const MetadataDetailModel &detail)
-        : layout(new QVBoxLayout), view(detail.createView()), metadata(new HorizontalMetadata()),
-          divider(new HDivider) {
-      layout->addWidget(view, 1);
-      layout->addWidget(divider);
-      layout->addWidget(metadata);
-      layout->setContentsMargins(0, 0, 0, 0);
-      layout->setSpacing(0);
-
-      view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-      metadata->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-
-      setLayout(layout);
-
-      auto detailMetadata = detail.createMetadata();
-
-      for (const auto &child : detailMetadata.children) {
-        metadata->addItem(child);
-      }
-    }
-
-    ~SideDetailWidget() { qDebug() << "detail destroyed"; }
-  };
-
   class IActionnable {
   public:
     virtual QList<AbstractAction *> generateActions() const { return {}; };
     virtual QWidget *generateDetail() const { return nullptr; }
     virtual std::unique_ptr<CompleterData> createCompleter() const { return nullptr; }
     virtual std::vector<ActionItem> generateActionPannel() const { return {}; };
+    virtual QString navigationTitle() const { return {}; }
   };
 
 protected:
   virtual void selectionChanged(const OmniList::AbstractVirtualItem *next,
                                 const OmniList::AbstractVirtualItem *previous) {
     if (!next) {
-      split->clearDetail();
+      m_split->setDetailVisibility(false);
       app.topBar->destroyQuicklinkCompleter();
       setSignalActions({});
+      app.statusBar->setNavigationTitle(QString("%1").arg(m_baseNavigationTitle));
 
       return;
     }
 
     if (auto nextItem = dynamic_cast<const IActionnable *>(next)) {
       if (auto detail = nextItem->generateDetail()) {
-        split->setDetail(detail);
+        if (auto current = m_split->detailWidget()) { current->deleteLater(); }
+        m_split->setDetailWidget(detail);
+        m_split->setDetailVisibility(true);
       } else {
-        split->clearDetail();
+        m_split->setDetailVisibility(false);
       }
 
       if (auto completer = nextItem->createCompleter(); completer && completer->arguments.size() > 0) {
         app.topBar->activateCompleter(*completer);
       } else {
         app.topBar->destroyCompleter();
+      }
+
+      // TODO: only expect suffix and automatically use command name from prefix
+      if (auto navigation = nextItem->navigationTitle(); !navigation.isEmpty()) {
+        app.statusBar->setNavigationTitle(QString("%1 - %2").arg(m_baseNavigationTitle).arg(navigation));
       }
 
       auto pannel = nextItem->generateActionPannel();
@@ -180,7 +86,7 @@ protected:
         setSignalActions(actions);
       }
     } else {
-      split->clearDetail();
+      m_split->setDetailVisibility(false);
       app.topBar->destroyCompleter();
       setSignalActions({});
     }
@@ -217,7 +123,7 @@ protected:
 
   QString query;
 
-  virtual ItemList generateList(const QString &s) = 0;
+  virtual ItemList generateList(const QString &s) { return {}; }
 
   virtual void render(const QString &s) {}
   virtual bool doesUseNewModel() const { return false; }
@@ -233,14 +139,6 @@ protected:
       auto items = generateList(query);
       list->updateFromList(items, policy);
     }
-
-    /*
-if (auto item = list->selected()) {
-  if (auto nextItem = dynamic_cast<const IActionnable *>(item)) {
-    setSignalActions(nextItem->generateActions());
-  }
-}
-    */
   }
 
   void onActionActivated(const AbstractAction *action) override {
@@ -253,6 +151,10 @@ if (auto item = list->selected()) {
   }
 
   void onRestore() override { /*reload(OmniList::KeepSelection);*/ }
+
+  void onMount() override { setBaseNavigationTitle(navigationTitle()); }
+
+  void setBaseNavigationTitle(const QString &value) { m_baseNavigationTitle = value; }
 
   void onSearchChanged(const QString &s) override {
     query = s;
@@ -267,16 +169,19 @@ if (auto item = list->selected()) {
     }
   }
 
+  void setDetailWidget(QWidget *widget) { m_split->setDetailWidget(widget); }
+
 public:
   DeclarativeOmniListView(AppWindow &app) : View(app), list(new OmniList) {
-    split = new DetailSplit(list);
+    m_split->setMainWidget(list);
+
     connect(list, &OmniList::selectionChanged, this, &DeclarativeOmniListView::selectionChanged);
     connect(list, &OmniList::itemActivated, this, &DeclarativeOmniListView::itemActivated);
 
     auto layout = new QVBoxLayout;
 
     layout->setContentsMargins(0, 0, 0, 0);
-    layout->addWidget(split);
+    layout->addWidget(m_split);
     setLayout(layout);
   }
 };

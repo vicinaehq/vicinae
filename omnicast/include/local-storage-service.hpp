@@ -32,6 +32,7 @@ public:
   bool removeItem(const QString &namespaceId, const QString &key);
   bool setItem(const QString &namespaceId, const QString &key, const QJsonValue &json);
   QJsonValue getItem(const QString &namespaceId, const QString &key);
+  QJsonObject getItemAsJson(const QString &namespaceId, const QString &key);
 
   LocalStorageService(OmniDatabase &db);
 };

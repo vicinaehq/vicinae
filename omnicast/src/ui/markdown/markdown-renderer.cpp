@@ -40,6 +40,7 @@ void MarkdownRenderer::insertHeading(const QString &text, int level) {
   blockFormat.setTopMargin(level == 1 ? 15 : 10);
   blockFormat.setBottomMargin(level == 1 ? 15 : 10);
 
+  charFormat.setFont(_document->defaultFont());
   charFormat.setFontPointSize(getHeadingLevelPointSize(level));
   charFormat.setFontWeight(QFont::Bold);
 
@@ -273,7 +274,7 @@ void MarkdownRenderer::insertParagraph(cmark_node *node) {
   cmark_node *child = cmark_node_first_child(node);
   QTextCharFormat defaultFormat;
 
-  defaultFormat.setFont(QFontDatabase::systemFont(QFontDatabase::GeneralFont));
+  defaultFormat.setFont(_document->defaultFont());
   defaultFormat.setFontPointSize(_basePointSize);
 
   while (child) {
@@ -364,8 +365,6 @@ void MarkdownRenderer::appendMarkdown(QStringView markdown) {
     fragment = markdown.toString();
   }
 
-  qDebug() << "fragment" << fragment;
-
   auto buf = fragment.toUtf8();
   cmark_node *root = cmark_parse_document(buf.data(), buf.size(), 0);
   cmark_node *node = cmark_node_first_child(root);
@@ -431,8 +430,6 @@ void MarkdownRenderer::appendMarkdown(QStringView markdown) {
   } else {
     _textEdit->verticalScrollBar()->setValue(oldScroll);
   }
-
-  qDebug() << "text edit height" << _textEdit->height();
 }
 
 void MarkdownRenderer::setMarkdown(QStringView markdown) {
@@ -443,6 +440,8 @@ void MarkdownRenderer::setMarkdown(QStringView markdown) {
   _textEdit->setTextCursor(_cursor);
 }
 
+void MarkdownRenderer::setFont(const QFont &font) { _document->setDefaultFont(font); }
+
 MarkdownRenderer::MarkdownRenderer()
     : _document(new QTextDocument), _textEdit(new QTextEdit(this)), _basePointSize(DEFAULT_BASE_POINT_SIZE) {
   auto layout = new QVBoxLayout;
@@ -451,6 +450,7 @@ MarkdownRenderer::MarkdownRenderer()
   _lastNodePosition.originalMarkdown = 0;
 
   _document->setDefaultFont(QFontDatabase::systemFont(QFontDatabase::GeneralFont));
+  _document->setUseDesignMetrics(true);
 
   _textEdit->setReadOnly(true);
   _textEdit->setFrameShape(QFrame::NoFrame);

@@ -196,25 +196,48 @@ public:
 
   /**
    * Call `fn` for each unique item matching the provided prefix.
+   * Stops after having collected at least `limit` unique results.
    */
-  void prefixTraverse(std::string_view prefix, const std::function<void(const T &)> &fn) const {
+  void prefixTraverse(std::string_view prefix, const std::function<void(const T &)> &fn,
+                      int limit = 1000) const {
     const Node *start = findStartNode(prefix);
 
     if (!start) return;
 
     std::unordered_set<size_t> m_visited;
+    std::vector<const Node *> paths;
 
-    traversePaths(start, [&](const Node *node) {
-      std::ranges::for_each(node->matches, [&](const T &match) {
+    paths.push_back(start);
+
+    while (!paths.empty()) {
+      const Node *node = paths[paths.size() - 1];
+
+      paths.pop_back();
+      paths.reserve(paths.size() + node->npath);
+
+      for (const auto &match : node->matches) {
         size_t key = Hash()(match);
         bool exists = std::ranges::find(m_visited, key) != m_visited.end();
 
         if (!exists) {
           fn(match);
           m_visited.insert(key);
+          if (m_visited.size() >= limit) return;
         }
-      });
-    });
+      }
+
+      if (auto charNode = std::get_if<typename Node::CharNode>(&node->data)) {
+        paths.push_back(charNode->node.get());
+      } else if (auto list = std::get_if<typename Node::NodeList>(&node->data)) {
+        for (const auto &charNode : *list) {
+          paths.push_back(charNode.node.get());
+        }
+      } else if (auto map = std::get_if<typename Node::NodeMap>(&node->data)) {
+        for (const auto &[ch, node] : *map) {
+          paths.push_back(node.get());
+        }
+      }
+    }
   }
 
   /**
@@ -226,10 +249,10 @@ public:
     traversePaths(m_root, [&](const Node *node) { std::ranges::remove(node->matches, value); });
   }
 
-  std::vector<T> prefixSearch(std::string_view prefix) const {
+  std::vector<T> prefixSearch(std::string_view prefix, int limit = 1000) const {
     std::vector<T> items;
 
-    prefixTraverse(prefix, [&](const T &match) { items.emplace_back(match); });
+    prefixTraverse(prefix, [&](const T &match) { items.emplace_back(match); }, limit);
 
     return items;
   }

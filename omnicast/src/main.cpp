@@ -3,10 +3,12 @@
 #include "app-root-provider.hpp"
 #include "app.hpp"
 #include <QApplication>
+#include "config-service.hpp"
 #include "font-service.hpp"
 #include <QFontDatabase>
 #include <QSurfaceFormat>
 #include <cstdio>
+#include <memory>
 #include <wm/window-manager-factory.hpp>
 #include <QtSql/QtSql>
 #include "root-extension-manager.hpp"
@@ -164,6 +166,7 @@ int startDaemon() {
     auto rankingService = std::make_unique<RankingService>(*omniDb);
     auto appService = std::make_unique<AppService>(*omniDb.get(), *rankingService.get());
     auto rootExtMan = std::make_unique<RootExtensionManager>(*rootItemManager.get(), *commandDb.get());
+    auto configService = std::make_unique<ConfigService>(*localStorage.get());
 
     aiManager->registerProvider(std::move(ollamaProvider));
 
@@ -184,6 +187,7 @@ int startDaemon() {
     rootItemManager->addProvider(std::make_unique<AppRootProvider>(*appService.get()));
     rootItemManager->addProvider(std::make_unique<RootQuicklinkProvider>(*quicklinkService.get()));
 
+    registry->setConfig(std::move(configService));
     registry->setRootExtMan(std::move(rootExtMan));
     registry->setRootItemManager(std::move(rootItemManager));
     registry->setQuicklinks(std::move(quicklinkService));

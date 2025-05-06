@@ -4,6 +4,7 @@
 #include "command-server.hpp"
 #include <QGraphicsBlurEffect>
 #include "clipboard/clipboard-server-factory.hpp"
+#include "config-service.hpp"
 #include "extension/missing-extension-preference-view.hpp"
 #include "command.hpp"
 #include "config.hpp"
@@ -261,9 +262,8 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
   topBar->input->show();
   topBar->input->setFocus();
   topBar->input->setText(opts.searchQuery);
-  topBar->input->textEdited(opts.searchQuery);
-
   view->onMount();
+  topBar->input->textEdited(opts.searchQuery);
 }
 
 void AppWindow::unloadCurrentCommand() { popToRoot(); }
@@ -347,18 +347,18 @@ void AppWindow::resizeEvent(QResizeEvent *event) {
 }
 
 void AppWindow::paintEvent(QPaintEvent *event) {
+  auto &config = ServiceRegistry::instance()->config()->value();
   auto &theme = ThemeService::instance().theme();
-  int borderRadius = 10;
   int borderWidth = 1;
   QColor finalBgColor = theme.colors.mainBackground;
   QPainter painter(this);
 
-  finalBgColor.setAlphaF(0.98);
+  finalBgColor.setAlphaF(config.window.opacity);
 
   painter.setRenderHint(QPainter::Antialiasing, true);
 
   QPainterPath path;
-  path.addRoundedRect(rect(), borderRadius, borderRadius);
+  path.addRoundedRect(rect(), config.window.rounding, config.window.rounding);
 
   painter.setClipPath(path);
 
@@ -523,6 +523,16 @@ AppWindow::AppWindow(QWidget *parent)
           [this]() { statusBar->setActionButtonHighlight(true); });
 
   ImageFetcher::instance();
+
+  qCritical() << "data dir" << Omnicast::dataDir();
+
+  connect(ServiceRegistry::instance()->config(), &ConfigService::configChanged, this,
+          [](const ConfigService::Value &next, const ConfigService::Value &prev) {
+            if (next.font.normal && *next.font.normal != prev.font.normal.value_or("")) {
+              QApplication::setFont(*next.font.normal);
+              qApp->setStyleSheet(qApp->styleSheet());
+            }
+          });
 
   /*
   AbstractClipboardServer *clipboardServer = ClipboardServerFactory().createFirstActivatable(this);
