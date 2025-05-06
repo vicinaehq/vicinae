@@ -135,6 +135,7 @@ public:
 
   std::shared_ptr<Application> webBrowser() const { return m_provider->webBrowser(); }
   std::shared_ptr<Application> fileBrowser() const { return m_provider->fileBrowser(); }
+  std::shared_ptr<Application> textEditor() const { return m_provider->textEditor(); }
 
   std::shared_ptr<Application> findById(const QString &id) const { return m_provider->findById(id); }
 

@@ -10,6 +10,7 @@
 #include "preference.hpp"
 #include "switch-windows-command.hpp"
 #include "test-command.hpp"
+#include "open-configuration-file-command.hpp"
 #include "manage-quicklinks-command.hpp"
 #include "manage-themes-command.hpp"
 #include "omni-icon.hpp"
@@ -102,8 +103,8 @@ CommandDatabase::CommandDatabase() {
 
     auto openConfigFile = CommandBuilder("open-config")
                               .withName("Open Omnicast Configuration File")
-                              .withTintedIcon("cog", ColorTint::Green)
-                              .toSingleView<IconBrowserView>();
+                              .withTintedIcon("cog", ColorTint::Red)
+                              .toNoViewContext<OpenConfigurationFileCommand>();
 
     auto peepobank = CommandBuilder("peepobank")
                          .withName("Peepobank")

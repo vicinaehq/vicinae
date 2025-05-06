@@ -4,6 +4,7 @@
 #include "command-server.hpp"
 #include <QGraphicsBlurEffect>
 #include "clipboard/clipboard-server-factory.hpp"
+#include "common.hpp"
 #include "config-service.hpp"
 #include "extension/missing-extension-preference-view.hpp"
 #include "command.hpp"
@@ -17,7 +18,6 @@
 #include "omnicast.hpp"
 #include "root-command.hpp"
 #include "theme.hpp"
-#include "ui/dialog.hpp"
 #include "ui/horizontal-loading-bar.hpp"
 #include "ui/toast.hpp"
 #include "ui/top_bar.hpp"
@@ -85,14 +85,14 @@ void AppWindow::clearSearch() {
 }
 
 void AppWindow::popCurrentView() {
-  if (commandStack.isEmpty()) {
+  if (commandStack.empty()) {
     qDebug() << "AppWindow::popCurrentView: commandStack is empty";
     return;
   }
 
-  auto &activeCommand = commandStack.top();
+  auto &activeCommand = commandStack.at(commandStack.size() - 1);
 
-  if (activeCommand.viewStack.isEmpty()) return;
+  if (activeCommand.viewStack.empty()) return;
 
   if (navigationStack.size() == 1) return;
 
@@ -100,7 +100,6 @@ void AppWindow::popCurrentView() {
   navigationStack.pop();
 
   disconnectView(*previous.view);
-  previous.view->deleteLater();
 
   auto next = navigationStack.top();
 
@@ -147,7 +146,7 @@ void AppWindow::popCurrentView() {
   if (activeCommand.viewStack.size() == 1) {
     activeCommand.command->unload();
     activeCommand.command->deleteLater();
-    commandStack.pop();
+    commandStack.pop_back();
     qDebug() << "popping cmd stack now" << commandStack.size();
   } else {
     activeCommand.viewStack.pop();
@@ -177,6 +176,8 @@ void AppWindow::disconnectView(View &view) {
   disconnect(&view, &View::pop, this, &AppWindow::popCurrentView);
   disconnect(&view, &View::popToRoot, this, &AppWindow::popToRoot);
   disconnect(&view, &View::activatePrimaryAction, this, &AppWindow::selectPrimaryAction);
+  disconnect(&view, &View::setSignalActions, this, &AppWindow::handleSignalActions);
+  disconnect(&view, &View::setActionPannel, this, &AppWindow::handleSetActions);
 
   view.removeEventFilter(this);
   topBar->input->removeEventFilter(&view);
@@ -191,6 +192,9 @@ void AppWindow::connectView(View &view) {
   connect(&view, &View::pop, this, &AppWindow::popCurrentView);
   connect(&view, &View::popToRoot, this, &AppWindow::popToRoot);
   connect(&view, &View::activatePrimaryAction, this, &AppWindow::selectPrimaryAction);
+  connect(&view, &View::setLoading, _loadingBar, &HorizontalLoadingBar::setStarted);
+  connect(&view, &View::setSignalActions, this, &AppWindow::handleSignalActions);
+  connect(&view, &View::setActionPannel, this, &AppWindow::handleSetActions);
 
   view.onAttach();
   view.installEventFilter(this);
@@ -203,7 +207,7 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
     return;
   }
 
-  auto &currentCommand = commandStack.top();
+  auto &currentCommand = commandStack.at(commandStack.size() - 1);
 
   if (navigationStack.size() > 0) {
     auto &old = navigationStack.top();
@@ -268,6 +272,18 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
 
 void AppWindow::unloadCurrentCommand() { popToRoot(); }
 
+void AppWindow::unloadHangingCommand() {
+  if (commandStack.size() > 1) {
+    auto &command = commandStack.at(commandStack.size() - 1);
+
+    if (command.viewStack.empty()) {
+      command.command->unload();
+      commandStack.pop_back();
+      qWarning() << "unloading hanging command";
+    }
+  }
+}
+
 void AppWindow::launchCommand(const std::shared_ptr<AbstractCmd> &command, const LaunchCommandOptions &opts,
                               const LaunchProps &props) {
   if (topBar->m_completer->isVisible()) {
@@ -304,14 +320,7 @@ void AppWindow::launchCommand(const std::shared_ptr<AbstractCmd> &command, const
   qDebug() << "preference values for command with" << command->preferences().size() << "preferences"
            << command->uniqueId() << preferenceValues;
 
-  if (commandStack.size() > 1 && commandStack.top().viewStack.empty()) {
-    qWarning() << "unloading hanging command";
-    commandStack.top().command->unload();
-    commandStack.top().command->deleteLater();
-    commandStack.pop();
-  }
-
-  commandDb->registerCommandOpen(command->uniqueId());
+  unloadHangingCommand();
 
   auto ctx = command->createContext(*this, command, opts.searchQuery);
 
@@ -320,8 +329,24 @@ void AppWindow::launchCommand(const std::shared_ptr<AbstractCmd> &command, const
     return;
   }
 
-  commandStack.push({.command = ctx});
-  ctx->load(props);
+  connect(ctx, &CommandContext::requestPopToRoot, this, [this]() { popToRoot(); });
+  connect(ctx, &CommandContext::requestPopView, this, [this]() { popCurrentView(); });
+  connect(ctx, &CommandContext::requestPushView, this, [this](View *view) { pushView(view); });
+  connect(ctx, &CommandContext::requestToast, statusBar, &StatusBar::setToast);
+  connect(ctx, &CommandContext::requestTitleChange, this,
+          [this](const QString &title) { statusBar->setNavigationTitle(title); });
+  connect(ctx, &CommandContext::requestSearchTextChange, this, [this](const QString &text) {
+    topBar->input->setText(text);
+    emit topBar->input->textEdited(text);
+  });
+
+  if (command->isNoView() && command->type() == CommandType::CommandTypeBuiltin) {
+    qCritical() << "Running no view command";
+    ctx->load(props);
+  } else {
+    commandStack.push_back({.command = std::unique_ptr<CommandContext>(ctx)});
+    ctx->load(props);
+  }
 }
 
 void AppWindow::launchCommand(const QString &id, const LaunchCommandOptions &opts) {
@@ -451,34 +476,24 @@ void AppWindow::selectPrimaryAction() {
 void AppWindow::selectSecondaryAction() {}
 
 void AppWindow::executeAction(AbstractAction *action) {
-  if (commandStack.size() > 1 && commandStack.top().viewStack.empty()) {
-    qWarning() << "unloading hanging command";
-    commandStack.top().command->unload();
-    commandStack.top().command->deleteLater();
-    commandStack.pop();
-  }
+  unloadHangingCommand();
 
-  auto &command = commandStack.top();
-  auto executor = command.viewStack.empty() ? nullptr : &command.viewStack.at(0);
+  auto oldCommandStackSize = commandStack.size();
+  auto oldViewStackSize = commandStack.at(commandStack.size() - 1).viewStack.size();
 
-  qDebug() << "executing" << action->_title;
-  auto executorCommand = commandStack.top();
-
-  if (!action->isPushView()) { actionPannel->close(); }
-
+  actionPannel->close();
   action->execute(*this);
 
-  if (!action->isPushView()) {
-    action->didExecute();
-    actionExecuted(action);
-    executorCommand.command->onActionExecuted(action);
+  // the executor may no longer be valid
+  if (commandStack.size() < oldCommandStackSize) return;
 
-    if (!executorCommand.viewStack.empty()) {
-      executorCommand.viewStack.top().view->onActionActivated(action);
-    }
+  auto &executor = commandStack.at(oldCommandStackSize - 1);
 
-    if (auto cb = action->executionCallback()) { cb(); }
-  }
+  executor.command->onActionExecuted(action);
+
+  if (oldViewStackSize > 0 && executor.viewStack.size() < oldViewStackSize) return;
+
+  executor.viewStack.at(oldViewStackSize - 1).view->onActionActivated(action);
 }
 
 void AppWindow::closeWindow(bool withPopToRoot) {
@@ -491,8 +506,7 @@ void AppWindow::closeWindow(bool withPopToRoot) {
 
 AppWindow::AppWindow(QWidget *parent)
     : QMainWindow(parent), topBar(new TopBar(this)), statusBar(new StatusBar(this)),
-      actionPannel(new ActionPannelWidget(this)), _dialog(new DialogWidget(this)),
-      _loadingBar(new HorizontalLoadingBar(this)) {
+      actionPannel(new ActionPannelWidget(this)), _loadingBar(new HorizontalLoadingBar(this)) {
   setWindowFlags(Qt::FramelessWindowHint);
   setAttribute(Qt::WA_TranslucentBackground, true);
 
@@ -524,29 +538,20 @@ AppWindow::AppWindow(QWidget *parent)
 
   ImageFetcher::instance();
 
-  qCritical() << "data dir" << Omnicast::dataDir();
-
   connect(ServiceRegistry::instance()->config(), &ConfigService::configChanged, this,
           [](const ConfigService::Value &next, const ConfigService::Value &prev) {
             if (next.font.normal && *next.font.normal != prev.font.normal.value_or("")) {
               QApplication::setFont(*next.font.normal);
               qApp->setStyleSheet(qApp->styleSheet());
             }
+
+            if (next.theme.name.value_or("") != prev.theme.name.value_or("")) {
+              ThemeService::instance().setTheme(*next.theme.name);
+            }
           });
-
-  /*
-  AbstractClipboardServer *clipboardServer = ClipboardServerFactory().createFirstActivatable(this);
-
-  connect(clipboardServer, &AbstractClipboardServer::selection, clipboardService.get(),
-          &ClipboardService::saveSelection);
-
-  clipboardServer->start();
-  */
 
   _loadingBar->setFixedHeight(1);
   _loadingBar->setBarWidth(100);
-
-  // topBar->input->installEventFilter(this);
 
   auto rootCommand = CommandBuilder("root").toSingleView<RootView>();
 

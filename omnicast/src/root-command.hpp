@@ -132,7 +132,7 @@ class RootView : public DeclarativeOmniListView {
 
     DefaultActionWrapper(const QString &id, AbstractAction *action)
         : AbstractAction(action->title(), action->iconUrl), m_id(id), m_action(action) {}
-    ~DefaultActionWrapper() { m_action->deleteLater(); }
+    ~DefaultActionWrapper() { /*m_action->deleteLater();*/ }
   };
 
   class RootSearchItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {

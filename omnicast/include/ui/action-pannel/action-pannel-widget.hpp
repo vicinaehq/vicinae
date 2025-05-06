@@ -11,6 +11,8 @@
 struct ActionPannelViewSnapshot {
   QString text;
   ActionPannelView *view;
+
+  ~ActionPannelViewSnapshot() {}
 };
 
 class ActionPannelWidget : public Popover {

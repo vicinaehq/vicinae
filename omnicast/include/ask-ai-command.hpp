@@ -149,13 +149,13 @@ public:
     auto aiManager = ServiceRegistry::instance()->AI();
 
     auto cb = [this](AppWindow &app) { messageSubmission(searchText()); };
-    auto action = std::make_unique<CallbackAction>(cb);
+    auto action = std::make_shared<CallbackAction>(cb);
     action->setShortcut({.key = "return"});
 
     std::vector<ActionItem> items;
 
     items.push_back(std::move(action));
-    setActionPannel(std::move(items));
+    setActionPannel(items);
   }
 };
 

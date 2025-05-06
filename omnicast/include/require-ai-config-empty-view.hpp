@@ -27,11 +27,11 @@ public:
     emptyView->setIcon(BuiltinOmniIconUrl("stars").setBackgroundTint(ColorTint::Red));
 
     std::vector<ActionItem> items;
-    auto action = std::make_unique<ConfigureAction>();
+    auto action = std::make_shared<ConfigureAction>();
 
     action->setShortcut({.key = "return"});
     items.emplace_back(std::move(action));
-    setActionPannel(std::move(items));
+    setActionPannel(items);
   }
 
   RequireAiConfigEmptyView(AppWindow &app) : View(app) {

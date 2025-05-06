@@ -34,11 +34,9 @@ void ActionPannelListView::renderActionPannelModel(std::vector<ActionItem> actio
   _items.clear();
 
   for (auto &actionLike : actions) {
-    if (auto ptr = std::get_if<std::unique_ptr<AbstractAction>>(&actionLike)) {
-      auto action = ptr->get();
-
-      _actions.push_back(action);
-      items.push_back(std::make_unique<ActionListItem>(action));
+    if (auto ptr = std::get_if<std::shared_ptr<AbstractAction>>(&actionLike)) {
+      _actions.push_back(*ptr);
+      items.push_back(std::make_unique<ActionListItem>(ptr->get()));
     }
 
     else if (auto ptr = std::get_if<ActionLabel>(&actionLike)) {
@@ -46,11 +44,11 @@ void ActionPannelListView::renderActionPannelModel(std::vector<ActionItem> actio
     }
   }
 
-  _items = std::move(actions);
+  _items = actions;
   _list->updateFromList(items, OmniList::SelectionPolicy::SelectFirst);
 }
 
-std::vector<AbstractAction *> ActionPannelListView::actions() const { return _actions; }
+std::vector<std::shared_ptr<AbstractAction>> ActionPannelListView::actions() const { return _actions; }
 
 ActionPannelListView::ActionPannelListView() : _list(new OmniList()) {
   auto layout = new QVBoxLayout;

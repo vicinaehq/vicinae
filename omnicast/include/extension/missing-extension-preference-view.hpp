@@ -127,6 +127,6 @@ public:
     continueAction->setShortcut({.key = "return", .modifiers = {"shift"}});
 
     items.push_back(std::move(continueAction));
-    setActionPannel(std::move(items));
+    setActionPannel(items);
   }
 };

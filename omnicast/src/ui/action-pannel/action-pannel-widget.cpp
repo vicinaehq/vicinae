@@ -8,6 +8,7 @@
 #include <memory>
 #include <qboxlayout.h>
 #include <qlineedit.h>
+#include <qlogging.h>
 #include <qnamespace.h>
 #include <qstackedlayout.h>
 #include <qstackedwidget.h>
@@ -27,16 +28,18 @@ void ActionPannelWidget::showEvent(QShowEvent *event) {
 void ActionPannelWidget::setSignalActions(const QList<AbstractAction *> &actions) {
   std::vector<ActionItem> items;
 
+  items.reserve(actions.size());
+
   for (const auto &action : actions) {
-    items.push_back(std::unique_ptr<AbstractAction>(action));
+    items.push_back(std::shared_ptr<AbstractAction>(action));
   }
 
-  setActions(std::move(items));
+  setActions(items);
 }
 
 void ActionPannelWidget::setActions(std::vector<ActionItem> items) {
   clear();
-  pushView(new StaticActionPannelListView(std::move(items)));
+  pushView(new StaticActionPannelListView(items));
 }
 
 void ActionPannelWidget::textChanged(const QString &text) const {
@@ -66,7 +69,6 @@ void ActionPannelWidget::restoreViewStack(const ActionPannelWidget::ViewStack &s
   takeViewStack();
 
   for (auto it = stack.begin(); it != stack.end(); ++it) {
-    qDebug() << "restore widget";
     _viewLayout->addWidget(it->view);
   }
 
@@ -156,7 +158,7 @@ AbstractAction *ActionPannelWidget::findBoundAction(QKeyEvent *event) {
 
   for (auto it = _viewStack.rbegin(); it != _viewStack.rend(); ++it) {
     for (auto action : it->view->actions()) {
-      if (action->shortcut && KeyboardShortcut(*action->shortcut) == event) { return action; }
+      if (action->shortcut && KeyboardShortcut(*action->shortcut) == event) { return action.get(); }
     }
   }
 
@@ -202,7 +204,7 @@ AbstractAction *ActionPannelWidget::primaryAction() const {
 
   if (actions.empty()) return nullptr;
 
-  return actions.at(0);
+  return actions.at(0).get();
 }
 
 ActionPannelWidget::ActionPannelWidget(QWidget *parent)

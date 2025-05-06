@@ -19,6 +19,9 @@ class ConfigService : public QObject {
 public:
   struct Value {
     struct {
+      std::optional<QString> name;
+    } theme;
+    struct {
       int rounding = 10;
       float opacity = 1;
     } window;
@@ -60,6 +63,12 @@ private:
     }
 
     {
+      auto theme = obj.value("theme").toObject();
+
+      cfg.theme.name = theme.value("name").toString();
+    }
+
+    {
       auto window = obj.value("window").toObject();
 
       cfg.window.rounding = window.value("rounding").toInt(10);
@@ -93,6 +102,20 @@ public:
    */
   void previewConfig(const Value &config) { emit configChanged(config, m_config); }
 
+  void updatePreviewConfig(const std::function<void(Value &value)> &updater) {
+    Value newValue = m_config;
+
+    updater(newValue);
+    previewConfig(newValue);
+  }
+
+  void updateConfig(const std::function<void(Value &value)> &updater) {
+    Value newValue = m_config;
+
+    updater(newValue);
+    saveConfig(newValue);
+  }
+
   void saveConfig(const Value &value) {
     QJsonDocument doc;
     QJsonObject obj;
@@ -104,6 +127,14 @@ public:
 
       font["size"] = value.font.baseSize;
       obj["font"] = font;
+    }
+
+    {
+      QJsonObject theme;
+
+      if (value.theme.name) { theme["name"] = *value.theme.name; }
+
+      obj["theme"] = theme;
     }
 
     {

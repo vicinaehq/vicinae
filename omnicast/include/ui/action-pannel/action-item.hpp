@@ -6,4 +6,4 @@
 class AbstractAction;
 class AbstractActionSection;
 
-using ActionItem = std::variant<ActionLabel, std::unique_ptr<AbstractAction>>;
+using ActionItem = std::variant<ActionLabel, std::shared_ptr<AbstractAction>>;

@@ -37,7 +37,7 @@ public:
       auto actionPannel = nextItem->generateActionPannel();
 
       if (!actionPannel.empty()) {
-        setActionPannel(std::move(actionPannel));
+        setActionPannel(actionPannel);
       } else {
 
         auto actions = nextItem->generateActions();

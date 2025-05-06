@@ -1,6 +1,7 @@
 #pragma once
 #include "app.hpp"
 #include "clipboard-actions.hpp"
+#include "config-service.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
 #include "timer.hpp"
@@ -110,10 +111,8 @@ class FontListItem : public AbstractDefaultListItem, public DeclarativeOmniListV
 
     void execute(AppWindow &app) override {
       auto configService = ServiceRegistry::instance()->config();
-      auto newConfig = configService->value();
 
-      newConfig.font.normal = m_font.family();
-      configService->saveConfig(newConfig);
+      configService->updateConfig([&](ConfigService::Value &value) { value.font.normal = m_font.family(); });
     }
 
   public:

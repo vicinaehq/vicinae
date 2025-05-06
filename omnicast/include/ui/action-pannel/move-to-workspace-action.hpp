@@ -20,13 +20,13 @@ public:
 
 class MoveToWorkspaceView : public ActionPannelListView {
   AbstractWindowManager &wm;
-  std::vector<std::unique_ptr<MoveWorkspaceAction>> _actions;
+  std::vector<std::shared_ptr<MoveWorkspaceAction>> _actions;
 
-  std::vector<AbstractAction *> actions() const override {
-    std::vector<AbstractAction *> actions;
+  std::vector<std::shared_ptr<AbstractAction>> actions() const override {
+    std::vector<std::shared_ptr<AbstractAction>> actions;
 
     for (const auto &ac : _actions) {
-      actions.push_back(ac.get());
+      actions.push_back(ac);
     }
 
     return actions;
@@ -39,7 +39,7 @@ public:
     _list->beginUpdate();
 
     for (auto window : wm.listWindowsSync()) {
-      auto waction = std::make_unique<MoveWorkspaceAction>(*window.get(), wm);
+      auto waction = std::make_shared<MoveWorkspaceAction>(*window.get(), wm);
 
       _list->addItem(std::make_unique<ActionListItem>(waction.get()));
       _actions.push_back(std::move(waction));

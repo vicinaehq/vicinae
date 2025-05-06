@@ -54,12 +54,12 @@ public:
   void onMount() override {
     hideInput();
 
-    auto action = std::make_unique<SubmitAction>();
+    auto action = std::make_shared<SubmitAction>();
     std::vector<ActionItem> items;
 
     connect(action.get(), &SubmitAction::didExecute, this, &OllamaConfigView::handleSubmit);
     items.emplace_back(std::move(action));
-    setActionPannel(std::move(items));
+    setActionPannel(items);
   }
 
   OllamaConfigView(AppWindow &app) : View(app) {

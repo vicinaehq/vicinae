@@ -19,6 +19,7 @@
 #include <qwindow.h>
 #include <stack>
 #include "omnicast.hpp"
+#include "ui/action-pannel/action-item.hpp"
 #include "ui/action-pannel/action-pannel-widget.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/alert.hpp"
@@ -49,40 +50,19 @@ struct ViewSnapshot {
     OmniIconUrl icon;
     QString title;
   } navigation;
+
+  ~ViewSnapshot() { qCritical() << "Removed snapshot for" << placeholderText; }
 };
 
 struct CommandSnapshot {
   QStack<ViewSnapshot> viewStack;
-  CommandContext *command;
-};
-
-struct AlertAction {
-  enum Style {
-    Default,
-    Destructive,
-    Cancel,
-  };
-
-  QString title;
-  std::function<void(void)> handler;
-  Style style;
-};
-
-class AlertHandler {};
-
-struct ConfirmAlertOptions {
-  QString title;
-  QString message;
-  std::optional<OmniIconUrl> iconUrl;
-  std::optional<AlertAction> confirmAction;
-  std::optional<AlertAction> cancelAction;
+  std::unique_ptr<CommandContext> command;
 };
 
 class AppWindow : public QMainWindow, public ICommandHandler {
   Q_OBJECT
 
   CommandServer *_commandServer;
-  QPixmap _wallpaper;
 
   void paintEvent(QPaintEvent *event) override;
   void resizeEvent(QResizeEvent *event) override;
@@ -96,10 +76,32 @@ class AppWindow : public QMainWindow, public ICommandHandler {
             windowSize.height() - Omnicast::TOP_BAR_HEIGHT - Omnicast::STATUS_BAR_HEIGHT};
   }
 
+  void handleSignalActions(const QList<AbstractAction *> &actions) {
+    actionPannel->setSignalActions(actions);
+
+    if (!actions.isEmpty()) {
+      statusBar->setAction(*actions.at(0));
+    } else {
+      statusBar->clearAction();
+    }
+  }
+
+  void handleSetActions(const std::vector<ActionItem> &actions) {
+    actionPannel->setActions(actions);
+
+    if (auto action = actionPannel->primaryAction()) {
+      statusBar->setAction(*action);
+    } else {
+      statusBar->clearAction();
+    }
+  }
+
+  void unloadHangingCommand();
+
 public:
   QWidget *centerView;
   std::stack<ViewSnapshot> navigationStack;
-  QStack<CommandSnapshot> commandStack;
+  std::vector<CommandSnapshot> commandStack;
 
   void popToRoot();
   void disconnectView(View &view);
@@ -116,7 +118,7 @@ public:
   QVBoxLayout *layout = nullptr;
   QWidget *defaultWidget = new QWidget();
   HorizontalLoadingBar *_loadingBar;
-  DialogWidget *_dialog = nullptr;
+  DialogWidget *_dialog = new DialogWidget(this);
   AlertWidget *_alert = new AlertWidget;
 
   void launchCommand(const std::shared_ptr<AbstractCmd> &cmd, const LaunchCommandOptions &opts = {},

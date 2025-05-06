@@ -66,14 +66,14 @@ protected:
         int idx = 0;
 
         for (const auto &item : pannel) {
-          if (auto action = std::get_if<std::unique_ptr<AbstractAction>>(&item)) {
+          if (auto action = std::get_if<std::shared_ptr<AbstractAction>>(&item)) {
             if (idx == 0) (*action)->setShortcut({.key = "return", .modifiers = {}});
             if (idx == 1) (*action)->setShortcut({.key = "return", .modifiers = {"shift"}});
             ++idx;
           }
         }
 
-        setActionPannel(std::move(pannel));
+        setActionPannel(pannel);
 
         // if (auto first = app.actionPannel->actionnable(0)) { first->setShortcut({.key = "return"}); }
       } else {

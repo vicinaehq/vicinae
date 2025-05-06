@@ -7,7 +7,7 @@
 class ActionPannelListView : public ActionPannelView {
 protected:
   OmniList *_list;
-  std::vector<AbstractAction *> _actions;
+  std::vector<std::shared_ptr<AbstractAction>> _actions;
   std::vector<ActionItem> _items;
 
   bool eventFilter(QObject *sender, QEvent *event) override;
@@ -15,7 +15,7 @@ protected:
 public:
   ActionPannelListView();
 
-  std::vector<AbstractAction *> actions() const override;
+  std::vector<std::shared_ptr<AbstractAction>> actions() const override;
   void onItemActivated(const OmniList::AbstractVirtualItem &item);
   void renderActionPannelModel(std::vector<ActionItem> actions);
 };

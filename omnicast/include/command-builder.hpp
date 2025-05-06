@@ -38,6 +38,10 @@ public:
     return std::make_shared<BuiltinViewCommand<T>>(_id, _name, _url, _preferences);
   }
 
+  template <typename T> std::shared_ptr<BuiltinCommand> toNoViewContext() {
+    return std::make_shared<BuiltinNoViewCommandContext<T>>(_id, _name, _url, _preferences);
+  }
+
   template <typename T> std::shared_ptr<BuiltinCommand> toContext() {
     return std::make_shared<BuiltinCommandContext<T>>(_id, _name, _url, _preferences);
   }

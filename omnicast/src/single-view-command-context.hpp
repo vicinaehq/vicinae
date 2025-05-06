@@ -31,6 +31,22 @@ public:
   }
 };
 
+template <typename T> class BuiltinNoViewCommandContext : public BuiltinCommand {
+public:
+  CommandMode mode() const override { return CommandMode::CommandModeNoView; }
+  CommandContext *createContext(AppWindow &app, const std::shared_ptr<AbstractCmd> &command,
+                                const QString &query) const override {
+    return new T(&app, command);
+  }
+
+  BuiltinNoViewCommandContext(const QString &id, const QString &name,
+                              const std::optional<OmniIconUrl> &url = std::nullopt,
+                              const PreferenceList &preferences = {})
+      : BuiltinCommand(id, name, url) {
+    setPreferences(preferences);
+  }
+};
+
 template <typename T> class BuiltinViewCommand : public BuiltinCommand {
 public:
   CommandMode mode() const override { return CommandMode::CommandModeView; }

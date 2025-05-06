@@ -1,7 +1,6 @@
 #pragma once
 #include "extend/metadata-model.hpp"
 #include "theme.hpp"
-#include "ui/action_popover.hpp"
 #include "ui/horizontal-metadata.hpp"
 #include "ui/omni-list.hpp"
 #include "view.hpp"
@@ -157,7 +156,7 @@ protected:
       auto pannel = nextItem->generateActionPannel();
 
       if (!pannel.empty()) {
-        setActionPannel(std::move(pannel));
+        setActionPannel(pannel);
 
         // if (auto first = app.actionPannel->actionnable(0)) { first->setShortcut({.key = "return"}); }
       } else {

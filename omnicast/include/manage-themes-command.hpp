@@ -1,6 +1,7 @@
 #pragma once
 #include "app.hpp"
 #include "omni-icon.hpp"
+#include "service-registry.hpp"
 #include "theme.hpp"
 #include "ui/color_circle.hpp"
 #include "ui/default-list-item-widget.hpp"
@@ -84,6 +85,10 @@ class SetThemeAction : public AbstractAction {
   QString _themeName;
 
   void execute(AppWindow &app) override {
+    auto configService = ServiceRegistry::instance()->config();
+
+    configService->updateConfig([&](ConfigService::Value &value) { value.theme.name = _themeName; });
+
     ThemeService::instance().setTheme(_themeName);
     app.statusBar->setToast("Theme set to " + _themeName);
   }

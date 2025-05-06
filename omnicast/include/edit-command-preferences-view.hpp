@@ -56,7 +56,7 @@ class EditCommandPreferencesView : public View {
     QJsonDocument doc;
 
     doc.setObject(values);
-    commandDb->setPreferenceValues(m_command->id(), values);
+    commandDb->setPreferenceValues(m_command->uniqueId(), values);
     app.statusBar->setToast("Preferences changed", ToastPriority::Success);
     pop();
   }
@@ -66,21 +66,21 @@ public:
     hideInput();
 
     std::vector<ActionItem> items;
-    auto action = std::make_unique<SubmitAction>();
+    auto action = std::make_shared<SubmitAction>();
 
     action->setShortcut({.key = "return", .modifiers = {"shift"}});
 
     connect(action.get(), &AbstractAction::didExecute, this, &EditCommandPreferencesView::handleSubmit);
 
     items.push_back(std::move(action));
-    setActionPannel(std::move(items));
+    setActionPannel(items);
   }
 
   EditCommandPreferencesView(AppWindow &app, const std::shared_ptr<AbstractCmd> &command)
       : View(app), m_command(command) {
     auto commandDb = ServiceRegistry::instance()->commandDb();
     auto preferences = m_command->preferences();
-    auto preferenceValues = commandDb->getPreferenceValues(m_command->id());
+    auto preferenceValues = commandDb->getPreferenceValues(m_command->uniqueId());
 
     m_layout->setContentsMargins(0, 20, 0, 20);
     m_layout->addWidget(m_form);
