@@ -16,7 +16,7 @@ void LocalStorageService::createTables() {
 			UNIQUE(namespace_id, key)
 		);
 	  )")) {
-    qCritical() << "Failed to initialize storage table";
+    qCritical() << "Failed to initialize storage table" << query.lastError();
   }
 }
 

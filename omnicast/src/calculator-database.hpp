@@ -68,7 +68,7 @@ public:
 public:
   CalculatorDatabase(const CalculatorDatabase &rhs) = delete;
 
-  CalculatorDatabase(const QString &path) : db(QSqlDatabase::addDatabase("QSQLITE")) {
+  CalculatorDatabase(const QString &path) : db(QSqlDatabase::addDatabase("QSQLITE", "calculator")) {
     db.setDatabaseName(path);
 
     if (!db.open()) { qDebug() << "Failed to open calculator db"; }

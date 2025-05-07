@@ -1,4 +1,5 @@
 #pragma once
+#include <qlogging.h>
 #include <qsqldatabase.h>
 #include <qsqlquery.h>
 
@@ -12,6 +13,6 @@ public:
 
   OmniDatabase(const QString &path) : _db(QSqlDatabase::addDatabase("QSQLITE", "omni")) {
     _db.setDatabaseName(path);
-    _db.open();
+    if (!_db.open()) { qFatal() << "Could not open main omnicast SQLite database."; }
   }
 };
