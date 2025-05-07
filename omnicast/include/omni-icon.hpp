@@ -468,7 +468,9 @@ class OmniSystemIconWidget : public OmniIconWidget {
   void paintEvent(QPaintEvent *event) override {
     QPainter painter(this);
 
-    painter.drawPixmap(0, 0, _pixmap);
+    painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    painter.drawPixmap(rect(), _pixmap);
   }
 
   QSize bestSize() {
@@ -484,8 +486,23 @@ class OmniSystemIconWidget : public OmniIconWidget {
   void recalculate() {
     if (!size().isValid()) return;
 
-    _pixmap = _icon.pixmap(bestSize()).scaled(size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
-    _pixmap.setDevicePixelRatio(qApp->devicePixelRatio());
+    QPixmap canva(size() * qApp->devicePixelRatio());
+    QPixmap icon =
+        _icon.pixmap(bestSize()).scaled(canva.rect().size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+
+    icon.setDevicePixelRatio(1);
+
+    qDebug() << "icon" << icon;
+    qDebug() << "canva" << canva;
+
+    // icon.setDevicePixelRatio(qApp->devicePixelRatio());
+    canva.fill(Qt::transparent);
+
+    QPainter cp(&canva);
+
+    cp.drawPixmap(canva.rect(), icon);
+    _pixmap = canva;
+
     update();
     emit imageLoaded(_pixmap);
   }
@@ -513,12 +530,17 @@ class LocalOmniIconWidget : public OmniIconWidget {
   void paintEvent(QPaintEvent *event) override {
     OmniPainter painter(this);
 
+    painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+    painter.setRenderHint(QPainter::Antialiasing, true);
+
+    qDebug() << "render local image" << _pixmap;
+
     if (!_pixmap.isNull()) {
       int x = (width() - _pixmap.width()) / 2;
       int y = (height() - _pixmap.height()) / 2;
-      QRect rect{x, y, _pixmap.width(), _pixmap.height()};
+      // QRect rect{x, y, _pixmap.width(), _pixmap.height()};
 
-      painter.drawPixmap(rect, _pixmap, _mask);
+      painter.drawPixmap(rect(), _pixmap, _mask);
     }
   }
 
@@ -536,7 +558,11 @@ class LocalOmniIconWidget : public OmniIconWidget {
       reader.setScaledSize(originalSize.scaled(size, Qt::KeepAspectRatio));
     }
 
-    return QPixmap::fromImageReader(&reader);
+    auto pix = QPixmap::fromImageReader(&reader);
+
+    pix.setDevicePixelRatio(1);
+
+    return pix;
   }
 
   void handleImageLoaded() {
@@ -561,7 +587,8 @@ class LocalOmniIconWidget : public OmniIconWidget {
       watcher.waitForFinished();
     }
 
-    auto future = QtConcurrent::run([this, imageSize]() { return loadImage(_path, imageSize); });
+    QSize deviceSize = size() * qApp->devicePixelRatio();
+    auto future = QtConcurrent::run([this, deviceSize]() { return loadImage(_path, deviceSize); });
 
     watcher.setFuture(future);
   }
@@ -591,12 +618,15 @@ class HttpOmniIconWidget : public OmniIconWidget {
   void paintEvent(QPaintEvent *event) override {
     OmniPainter painter(this);
 
+    painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+    painter.setRenderHint(QPainter::Antialiasing, true);
+
     if (!_pixmap.isNull()) {
       int x = (width() - _pixmap.width()) / 2;
       int y = (height() - _pixmap.height()) / 2;
-      QRect rect{x, y, _pixmap.width(), _pixmap.height()};
+      // QRect rect{x, y, _pixmap.width(), _pixmap.height()};
 
-      painter.drawPixmap(rect, _pixmap, _mask);
+      painter.drawPixmap(rect(), _pixmap, _mask);
     }
   }
 
@@ -617,6 +647,7 @@ class HttpOmniIconWidget : public OmniIconWidget {
     m_lastLoadedForSize = size();
 
     if (auto pix = watcher.result(); !pix.isNull()) {
+      pix.setDevicePixelRatio(1);
       _pixmap = pix;
       update();
       emit imageLoaded(_pixmap);
@@ -668,7 +699,8 @@ class HttpOmniIconWidget : public OmniIconWidget {
     connect(m_reply, &QNetworkReply::finished, this, [this]() {
       if (m_reply->error() == QNetworkReply::NoError) {
         auto data = m_reply->readAll();
-        auto future = QtConcurrent::run(&HttpOmniIconWidget::loadImage, std::move(data), size());
+        QSize deviceSize = size() * qApp->devicePixelRatio();
+        auto future = QtConcurrent::run(&HttpOmniIconWidget::loadImage, std::move(data), deviceSize);
 
         watcher.setFuture(future);
       } else {
@@ -706,7 +738,9 @@ class FaviconOmniIconWidget : public OmniIconWidget {
   void paintEvent(QPaintEvent *event) override {
     QPainter painter(this);
 
-    painter.drawPixmap(pos(), _pixmap);
+    painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    painter.drawPixmap(rect(), _pixmap);
   }
 
   void resizeEvent(QResizeEvent *event) override {
@@ -723,7 +757,11 @@ class FaviconOmniIconWidget : public OmniIconWidget {
   void recalculate() {
     if (!size().isValid() || _favicon.isNull()) return;
 
-    _pixmap = _favicon.scaled(size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    QSize deviceSize = size() * qApp->devicePixelRatio();
+
+    _pixmap = _favicon.scaled(deviceSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    _pixmap.setDevicePixelRatio(1);
+
     emit imageLoaded(_pixmap);
     update();
   }
