@@ -146,17 +146,14 @@ int startDaemon() {
 
   {
     auto registry = ServiceRegistry::instance();
-    auto quicklinkService =
-        std::make_unique<QuicklistDatabase>(Config::dirPath() + QDir::separator() + "quicklinks.db");
-    auto calculatorService =
-        std::make_unique<CalculatorDatabase>(Config::dirPath() + QDir::separator() + "calculator.db");
-    auto omniDb = std::make_unique<OmniDatabase>(Config::dirPath() + QDir::separator() + "omni.db");
+    auto omniDb = std::make_unique<OmniDatabase>(Omnicast::dataDir() / "omnicast.db");
+    auto calculatorService = std::make_unique<CalculatorDatabase>(*omniDb.get());
+    auto quicklinkService = std::make_unique<QuicklistDatabase>(*omniDb.get());
     auto localStorage = std::make_unique<LocalStorageService>(*omniDb);
     auto rootItemManager = std::make_unique<RootItemManager>(*omniDb.get());
     auto commandDb = std::make_unique<OmniCommandDatabase>(*omniDb, *rootItemManager.get());
     auto extensionManager = std::make_unique<ExtensionManager>(*commandDb);
-    auto clipboardManager =
-        std::make_unique<ClipboardService>(Config::dirPath() + QDir::separator() + "clipboard.db");
+    auto clipboardManager = std::make_unique<ClipboardService>(Omnicast::dataDir() / "clipboard.db");
     auto processManager = std::make_unique<ProcessManagerService>();
     auto builtinCommandDb = std::make_unique<CommandDatabase>();
     auto windowManager = WindowManagerFactory().create();

@@ -99,7 +99,7 @@ class ClipboardService : public QObject, public NonAssignable {
   QString createTextPreview(const QByteArray &data, int maxLength = 50) const;
 
 public:
-  ClipboardService(const QString &path);
+  ClipboardService(const std::filesystem::path &path);
 
   AbstractClipboardServer *clipboardServer() const;
   bool removeSelection(int id);

@@ -550,13 +550,13 @@ bool ClipboardService::copySelection(const ClipboardSelection &selection,
 
 AbstractClipboardServer *ClipboardService::clipboardServer() const { return m_clipboardServer.get(); }
 
-ClipboardService::ClipboardService(const QString &path)
+ClipboardService::ClipboardService(const std::filesystem::path &path)
     : db(QSqlDatabase::addDatabase("QSQLITE", "clipboard")), _path(path),
       _data_dir(_path.dir().filePath("clipboard-data")) {
   m_clipboardServer =
       std::unique_ptr<AbstractClipboardServer>(ClipboardServerFactory().createFirstActivatable());
 
-  db.setDatabaseName(path);
+  db.setDatabaseName(path.c_str());
 
   if (!db.open()) { throw std::runtime_error("Failed to open clipboard db"); }
 

@@ -6,3 +6,4 @@ build
 extension-manager/runtime/node_modules
 /cmake-build-debug
 /.idea
+/vgcore*

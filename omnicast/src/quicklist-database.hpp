@@ -1,4 +1,5 @@
 #pragma once
+#include "omni-database.hpp"
 #include <QLineEdit>
 #include <QSqlError>
 #include <QString>
@@ -80,7 +81,8 @@ struct UpdateQuicklinkPayload {
 };
 
 class QuicklistDatabase {
-  QSqlDatabase db;
+  OmniDatabase &m_db;
+
   std::vector<std::shared_ptr<Quicklink>> links;
   using List = std::vector<std::shared_ptr<Quicklink>>;
 
@@ -96,7 +98,7 @@ public:
   const List &list() { return links; }
 
   bool removeOne(uint id) {
-    QSqlQuery query(db);
+    QSqlQuery query(m_db.db());
 
     query.prepare("DELETE FROM links WHERE id = ?");
     query.addBindValue(id);
@@ -113,7 +115,7 @@ public:
 
   List reloadAll() {
     List links;
-    QSqlQuery query(db);
+    QSqlQuery query(m_db.db());
 
     query.prepare(R"(
 		SELECT id, name, link, icon, app, open_count, last_used_at 
@@ -152,7 +154,7 @@ public:
 
     if (!link) return false;
 
-    QSqlQuery query(db);
+    QSqlQuery query(m_db.db());
 
     query.prepare(R"(
 		UPDATE links 
@@ -176,7 +178,7 @@ public:
   }
 
   bool insertLink(const AddQuicklinkPayload &payload) {
-    QSqlQuery query(db);
+    QSqlQuery query(m_db.db());
 
     query.prepare(R"(
 		INSERT INTO links (name, icon, link, app) 
@@ -216,7 +218,7 @@ public:
 
     if (!quicklink) return false;
 
-    QSqlQuery query(db);
+    QSqlQuery query(m_db.db());
 
     query.prepare(R"(
 		UPDATE links
@@ -247,17 +249,8 @@ public:
     return true;
   }
 
-  QuicklistDatabase(const QString &path) : db(QSqlDatabase::addDatabase("QSQLITE", "quicklinks")) {
-
-    QFile file(path);
-
-    bool isFirstInit = !file.exists();
-
-    db.setDatabaseName(path);
-
-    if (!db.open()) { qDebug() << "Failed to open quicklinks db"; }
-
-    QSqlQuery query(db);
+  QuicklistDatabase(OmniDatabase &omniDb) : m_db(omniDb) {
+    QSqlQuery query(m_db.db());
 
     query.prepare(R"(
 		CREATE TABLE IF NOT EXISTS links (

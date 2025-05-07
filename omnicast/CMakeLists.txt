@@ -7,7 +7,7 @@ set(LIBS)
 
 set(TARGET omnicast)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets Sql Network Svg Bluetooth)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Sql Network Svg)
 find_package(cmark REQUIRED)
 
 option(WAYLAND_LAYER_SHELL "Enable support for the Wayland layer shell
@@ -15,7 +15,7 @@ protocol, required for proper window positioning on most wlroots-based
 compositors." ON)
 
 
-list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::Bluetooth cmark proto qalculate)
+list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg cmark proto qalculate)
 
 
 if (UNIX AND NOT APPLE)

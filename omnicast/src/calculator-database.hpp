@@ -1,5 +1,5 @@
 #pragma once
-#include "config.hpp"
+#include "omni-database.hpp"
 #include <QtNetwork/QtNetwork>
 #include <QtNetwork/qnetworkaccessmanager.h>
 #include <QtNetwork/qnetworkreply.h>
@@ -26,20 +26,14 @@ struct CalculatorEntry {
 };
 
 class CalculatorDatabase : public QObject {
-  QSqlDatabase db;
   Calculator m_qcalc;
+  OmniDatabase &m_db;
 
 public:
-  static CalculatorDatabase &get() {
-    static CalculatorDatabase cdb(Config::dirPath() + QDir::separator() + "calculator.db");
-
-    return cdb;
-  }
-
   QList<CalculatorEntry> entries;
 
   QList<CalculatorEntry> queryAll() {
-    QSqlQuery query(db);
+    QSqlQuery query(m_db.db());
 
     query.exec(R"(
 	  	SELECT
@@ -68,12 +62,8 @@ public:
 public:
   CalculatorDatabase(const CalculatorDatabase &rhs) = delete;
 
-  CalculatorDatabase(const QString &path) : db(QSqlDatabase::addDatabase("QSQLITE", "calculator")) {
-    db.setDatabaseName(path);
-
-    if (!db.open()) { qDebug() << "Failed to open calculator db"; }
-
-    QSqlQuery query(db);
+  CalculatorDatabase(OmniDatabase &db) : m_db(db) {
+    QSqlQuery query = m_db.createQuery();
 
     query.prepare(R"(
 		CREATE TABLE IF NOT EXISTS history (
@@ -140,7 +130,7 @@ public:
   }
 
   void insertComputation(const QString &expression, const QString &result) {
-    QSqlQuery query(db);
+    QSqlQuery query(m_db.db());
 
     query.prepare("INSERT INTO history (expression, result) VALUES "
                   "(:expression, :result) RETURNING id, expression, result, created_at");
@@ -165,7 +155,7 @@ public:
   QList<CalculatorEntry> listAll() { return entries; }
 
   bool removeById(int id) {
-    QSqlQuery query(db);
+    QSqlQuery query(m_db.db());
 
     for (int i = 0; i != entries.size(); ++i) {
       if (entries.at(i).id == id) {
