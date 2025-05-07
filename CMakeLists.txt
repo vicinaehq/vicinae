@@ -27,7 +27,7 @@ endif()
 if ("$ENV{DIST_TYPE}" STREQUAL "generic")
 	message(STATUS "DIST_TYPE=generic, won't apply local optimizations")
 else()
-	add_compile_options(-march=native -g3)
+	add_compile_options(-g3 -march=x86-64-v2)
 endif()
 
 add_subdirectory(omnictl)

@@ -4,6 +4,7 @@
 #include <cstring>
 #include <fcntl.h>
 #include <filesystem>
+#include <qlocalsocket.h>
 #include <qlogging.h>
 #include <qobject.h>
 #include <qsocketnotifier.h>
@@ -19,14 +20,10 @@
 #include <expected>
 
 class Hyprctl : public QObject {
-  Q_OBJECT
-
-  char _buf[1 << 13];
-
 public:
   static QByteArray oneshot(std::string_view command) { return Hyprctl().start(std::string(command)); }
 
-  Hyprctl() {}
+  Hyprctl() { QLocalSocket client; }
   ~Hyprctl() {}
 
   QByteArray start(const std::string &command) {
@@ -71,6 +68,8 @@ public:
     while ((rc = recv(sock, _buf, sizeof(_buf), 0)) > 0) {
       data += QByteArrayView{_buf, rc};
     }
+
+    close(sock);
 
     if (rc == -1) return {};
 

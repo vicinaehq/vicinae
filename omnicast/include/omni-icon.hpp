@@ -485,6 +485,7 @@ class OmniSystemIconWidget : public OmniIconWidget {
     if (!size().isValid()) return;
 
     _pixmap = _icon.pixmap(bestSize()).scaled(size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    _pixmap.setDevicePixelRatio(qApp->devicePixelRatio());
     update();
     emit imageLoaded(_pixmap);
   }
