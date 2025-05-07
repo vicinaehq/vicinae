@@ -653,11 +653,14 @@ class HttpOmniIconWidget : public OmniIconWidget {
       watcher.waitForFinished();
     }
 
+    if (m_reply) {
+      disconnect(m_reply, nullptr, this, nullptr);
+      m_reply->abort();
+    }
+
     QNetworkRequest request(url);
 
     request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
-
-    if (m_reply) m_reply->deleteLater();
 
     m_reply = NetworkManager::instance()->manager()->get(request);
 
@@ -672,6 +675,7 @@ class HttpOmniIconWidget : public OmniIconWidget {
         qCritical() << "Failed to load image" << m_reply->errorString();
       }
 
+      qCritical() << "destroy network request";
       m_reply->deleteLater();
       m_reply = nullptr;
     });
@@ -689,7 +693,7 @@ public:
   }
 
   ~HttpOmniIconWidget() {
-    if (m_reply) m_reply->deleteLater();
+    if (m_reply) { m_reply->abort(); }
   }
 };
 

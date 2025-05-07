@@ -51,7 +51,7 @@ struct ViewSnapshot {
     QString title;
   } navigation;
 
-  ~ViewSnapshot() { qCritical() << "Removed snapshot for" << placeholderText; }
+  ~ViewSnapshot() {}
 };
 
 struct CommandSnapshot {
@@ -66,6 +66,7 @@ class AppWindow : public QMainWindow, public ICommandHandler {
 
   void paintEvent(QPaintEvent *event) override;
   void resizeEvent(QResizeEvent *event) override;
+  void showEvent(QShowEvent *event) override;
 
   std::variant<CommandResponse, CommandError> handleCommand(const CommandMessage &message) override;
 
@@ -99,7 +100,7 @@ class AppWindow : public QMainWindow, public ICommandHandler {
   void unloadHangingCommand();
 
 public:
-  QWidget *centerView;
+  QWidget *centerView = nullptr;
   std::stack<ViewSnapshot> navigationStack;
   std::vector<CommandSnapshot> commandStack;
 
@@ -116,7 +117,6 @@ public:
   StatusBar *statusBar = nullptr;
   ActionPannelWidget *actionPannel = nullptr;
   QVBoxLayout *layout = nullptr;
-  QWidget *defaultWidget = new QWidget();
   HorizontalLoadingBar *_loadingBar;
   DialogWidget *_dialog = new DialogWidget(this);
   AlertWidget *_alert = new AlertWidget;

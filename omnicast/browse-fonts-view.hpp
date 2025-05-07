@@ -205,4 +205,6 @@ public:
       reload();
     });
   }
+
+  void onPop() override { qDebug() << "Pop browse!"; }
 };

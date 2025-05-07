@@ -174,6 +174,7 @@ protected:
 public:
   DeclarativeOmniListView(AppWindow &app) : View(app), list(new OmniList) {
     m_split->setMainWidget(list);
+    list->setObjectName("DECL_LIST");
 
     connect(list, &OmniList::selectionChanged, this, &DeclarativeOmniListView::selectionChanged);
     connect(list, &OmniList::itemActivated, this, &DeclarativeOmniListView::itemActivated);
@@ -184,4 +185,6 @@ public:
     layout->addWidget(m_split);
     setLayout(layout);
   }
+
+  ~DeclarativeOmniListView() { qCritical() << "~DeclarativeOmniListView"; }
 };

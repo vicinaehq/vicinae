@@ -853,3 +853,5 @@ OmniList::OmniList()
   _visibleWidgets.reserve(20);
   _widgetCache.reserve(20);
 }
+
+OmniList::~OmniList() { qCritical() << "Delete omnilist" << objectName(); }

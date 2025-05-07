@@ -75,6 +75,13 @@ public slots:
   virtual void onSearchChanged(const QString &s) {}
   virtual void onAttach() {}
 
+  /**
+   * Received when the view is poped from the navigation stack, no matter the reason.
+   * This is executed synchronously during the pop operation. For this reason, this function
+   * should be made as fast as possible to not block the UI.
+   */
+  virtual void onPop() {}
+
 signals:
   void activatePrimaryAction();
   void launchCommand(ViewCommandContext *command, const LaunchCommandOptions &opts = {});

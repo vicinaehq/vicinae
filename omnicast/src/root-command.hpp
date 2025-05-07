@@ -1,5 +1,7 @@
 #pragma once
 #include "argument.hpp"
+#include "clipboard-actions.hpp"
+#include "clipboard-history-command.hpp"
 #include "command-database.hpp"
 #include "root-item-manager.hpp"
 #include "omni-command-db.hpp"
@@ -153,6 +155,7 @@ class RootView : public DeclarativeOmniListView {
           finalActions.emplace_back(action);
       }
 
+      finalActions.emplace_back(new CopyToClipboardAction({}, "Reset ranking"));
       finalActions.emplace_back(new DisableItemAction(m_item));
 
       return finalActions;

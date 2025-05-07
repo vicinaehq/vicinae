@@ -31,7 +31,7 @@ public:
 
   virtual bool isPushView() const { return false; }
 
-  ~AbstractAction() { qDebug() << "destroy abstract action" << title(); }
+  ~AbstractAction() {}
 
 signals:
   void didExecute();

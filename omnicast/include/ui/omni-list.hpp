@@ -375,6 +375,7 @@ protected:
 
 public:
   OmniList();
+  ~OmniList();
 
   void setSorting(const SortingConfig &config);
   bool selectUp();

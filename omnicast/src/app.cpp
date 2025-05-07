@@ -84,6 +84,16 @@ void AppWindow::clearSearch() {
   topBar->input->textEdited("");
 }
 
+void AppWindow::showEvent(QShowEvent *event) {
+  if (auto action = actionPannel->primaryAction()) {
+    statusBar->setAction(*action);
+  } else {
+    statusBar->clearAction();
+  }
+
+  QMainWindow::showEvent(event);
+}
+
 void AppWindow::popCurrentView() {
   if (commandStack.empty()) {
     qDebug() << "AppWindow::popCurrentView: commandStack is empty";
@@ -99,6 +109,7 @@ void AppWindow::popCurrentView() {
   auto previous = navigationStack.top();
   navigationStack.pop();
 
+  previous.view->onPop();
   disconnectView(*previous.view);
 
   auto next = navigationStack.top();
