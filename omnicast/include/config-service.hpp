@@ -157,11 +157,9 @@ public:
   }
 
   ConfigService(LocalStorageService &storage) : m_storage(storage) {
+    std::filesystem::create_directories(Omnicast::configDir());
+
     {
-      QFileInfo configDirInfo(Omnicast::configDir());
-
-      if (!configDirInfo.exists()) configDirInfo.dir().mkpath(configDirInfo.path());
-
       QFile file(m_configFile);
 
       if (!file.exists()) { saveConfig({}); }
