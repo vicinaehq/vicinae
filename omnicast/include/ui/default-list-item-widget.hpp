@@ -1,6 +1,7 @@
 #pragma once
 #include "omni-icon.hpp"
 #include "typography.hpp"
+#include "ui/image/omnimg.hpp"
 #include "ui/selectable-omni-list-widget.hpp"
 #include <qboxlayout.h>
 #include <qcolor.h>
@@ -45,7 +46,7 @@ public:
 using AccessoryList = std::vector<ListAccessory>;
 
 class DefaultListItemWidget : public SelectableOmniListWidget {
-  OmniIcon *_icon;
+  Omnimg::ImageWidget *_icon;
   TypographyWidget *_name;
   TypographyWidget *_category;
   AccessoryListWidget *_accessoryList;

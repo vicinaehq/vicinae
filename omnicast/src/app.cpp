@@ -35,6 +35,7 @@
 #include <qmainwindow.h>
 #include <qnamespace.h>
 #include <qobject.h>
+#include <qpixmapcache.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
 
@@ -99,6 +100,8 @@ void AppWindow::popCurrentView() {
     qDebug() << "AppWindow::popCurrentView: commandStack is empty";
     return;
   }
+
+  QPixmapCache::clear();
 
   auto &activeCommand = commandStack.at(commandStack.size() - 1);
 

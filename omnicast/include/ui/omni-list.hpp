@@ -171,46 +171,46 @@ private:
   const size_t DEFAULT_SELECTION_INDEX = -1;
 
   struct {
-    int lower;
-    int upper;
+    int lower = -1;
+    int upper = -1;
   } visibleIndexRange;
   struct {
-    int left;
-    int top;
-    int right;
-    int bottom;
+    int left = 0;
+    int top = 0;
+    int right = 0;
+    int bottom = 0;
   } margins;
   struct ListItemInfo {
     std::unique_ptr<AbstractVirtualItem> item;
-    bool filtered;
-    int vIndex;
-    int cachedHeight;
+    bool filtered = false;
+    int vIndex = -1;
+    int cachedHeight = 0;
     QString id;
-    int sectionIndex;
+    int sectionIndex = 0;
   };
   struct VirtualListWidgetInfo {
-    int x;
-    int y;
-    int width;
-    int height;
-    int index;
-    const AbstractVirtualItem *item;
+    int x = 0;
+    int y = 0;
+    int width = 0;
+    int height = 0;
+    int index = 0;
+    const AbstractVirtualItem *item = nullptr;
   };
   struct VirtualSectionInfo {
-    int index;
-    int visibleCount;
+    int index = 0;
+    int visibleCount = 0;
     std::unique_ptr<AbstractVirtualItem> section;
     std::vector<ListItemInfo> items;
   };
   struct SectionCalculationContext {
-    VirtualSection *section;
-    int index;
-    int x;
-    int maxHeight;
+    VirtualSection *section = nullptr;
+    int index = 0;
+    int x = 0;
+    int maxHeight = 0;
   };
   struct CachedWidget {
-    OmniListItemWidgetWrapper *widget;
-    size_t recyclingId;
+    OmniListItemWidgetWrapper *widget = nullptr;
+    size_t recyclingId = -1;
   };
   struct NavigationBehaviour {};
 

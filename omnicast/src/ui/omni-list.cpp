@@ -69,6 +69,7 @@ void OmniList::updateVisibleItems() {
   int scrollHeight = scrollBar->value();
   int startIndex = 0;
 
+  // XXX - use binsearch to figure out starting point, or infer using last update and scroll direction
   while (startIndex < _virtual_items.size() &&
          _virtual_items[startIndex].y + _virtual_items[startIndex].height < scrollHeight) {
     ++startIndex;
@@ -95,11 +96,14 @@ void OmniList::updateVisibleItems() {
     if (cacheIt == _widgetCache.end()) {
       if (auto wrapper = takeFromPool(vinfo.item->typeId())) {
         vinfo.item->recycle(wrapper->widget());
+        wrapper->blockSignals(false);
         widget = wrapper;
       } else {
         widget = new OmniListItemWidgetWrapper(this);
-        connect(widget, &OmniListItemWidgetWrapper::clicked, this, &OmniList::itemClicked);
-        connect(widget, &OmniListItemWidgetWrapper::doubleClicked, this, &OmniList::itemDoubleClicked);
+        connect(widget, &OmniListItemWidgetWrapper::clicked, this, &OmniList::itemClicked,
+                Qt::UniqueConnection);
+        connect(widget, &OmniListItemWidgetWrapper::doubleClicked, this, &OmniList::itemDoubleClicked,
+                Qt::UniqueConnection);
         widget->stackUnder(scrollBar);
         widget->setWidget(vinfo.item->createWidget());
       }
@@ -305,6 +309,7 @@ OmniListItemWidgetWrapper *OmniList::takeFromPool(size_t type) {
 
 void OmniList::moveToPool(size_t type, OmniListItemWidgetWrapper *widget) {
   widget->hide();
+  widget->blockSignals(true);
   _widgetPools[type].push(widget);
 }
 

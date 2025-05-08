@@ -1,4 +1,6 @@
 #pragma once
+#include "omni-icon.hpp"
+#include "ui/image/omnimg.hpp"
 #include "app-root-provider.hpp"
 #include "app.hpp"
 #include "common-actions.hpp"
@@ -71,7 +73,7 @@ class PeepobankView : public OmniGridView {
 
     QString tooltip() const override { return _info.name; }
 
-    bool centerWidgetRecyclable() const override { return true; }
+    bool centerWidgetRecyclable() const override { return false; }
 
     QList<AbstractAction *> generateActions() const override {
       return {new PasteAction(Clipboard::File{_info.path.toStdString()}),
@@ -79,15 +81,16 @@ class PeepobankView : public OmniGridView {
     }
 
     void recycleCenterWidget(QWidget *base) const override {
-      auto label = static_cast<PeepoLabel *>(base);
+      auto label = static_cast<Omnimg::ImageWidget *>(base);
 
-      label->setPeepo(_info);
+      label->setUrl(BuiltinOmniIconUrl(_info.path));
     }
 
     QWidget *centerWidget() const override {
-      auto label = new PeepoLabel;
+      auto label = new Omnimg::ImageWidget();
 
-      label->setPeepo(_info);
+      label->setUrl(BuiltinOmniIconUrl(_info.path));
+      label->setObjectFit(Omnimg::ObjectFitContain);
 
       return label;
     }

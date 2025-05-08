@@ -7,6 +7,7 @@
 #include "service-registry.hpp"
 #include "ui/alert.hpp"
 #include "ui/declarative-omni-list-view.hpp"
+#include "ui/image/omnimg.hpp"
 #include "ui/omni-list-view.hpp"
 #include "ui/omni-list.hpp"
 #include "ui/toast.hpp"
@@ -78,9 +79,10 @@ class ClipboardItemDetail : public OmniListView::MetadataDetailModel {
       auto l = new QVBoxLayout;
       w->setLayout(l);
 
-      auto icon = new OmniIcon;
+      auto icon = new Omnimg::ImageWidget;
 
-      icon->setUrl(LocalOmniIconUrl(entry.filePath).setMask(OmniPainter::RoundedRectangleMask));
+      // icon->setUrl(LocalOmniIconUrl(entry.filePath).setMask(OmniPainter::RoundedRectangleMask));
+      icon->setUrl(LocalOmniIconUrl(entry.filePath));
 
       l->addWidget(icon, 1, Qt::AlignCenter);
 

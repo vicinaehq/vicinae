@@ -15,6 +15,7 @@
 #include <qjsonvalue.h>
 #include <qlabel.h>
 #include <qnamespace.h>
+#include <qobject.h>
 #include <qpainter.h>
 #include <qprocess.h>
 #include <qstack.h>
@@ -158,3 +159,9 @@ public:
   virtual OmniIconUrl iconUrl() const = 0;
   virtual std::vector<std::shared_ptr<BasePreference>> preferences() const { return {}; }
 };
+
+struct QObjectDeleter {
+  void operator()(QObject *obj) { obj->deleteLater(); }
+};
+
+template <typename T = QObject> using QObjectUniquePtr = std::unique_ptr<T, QObjectDeleter>;

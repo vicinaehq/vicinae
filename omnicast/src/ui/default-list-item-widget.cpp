@@ -1,15 +1,12 @@
 #include "ui/default-list-item-widget.hpp"
 #include "omni-icon.hpp"
 #include "theme.hpp"
+#include "ui/image/omnimg.hpp"
 #include <qwidget.h>
 
 void DefaultListItemWidget::setName(const QString &name) { this->_name->setText(name); }
 
-void DefaultListItemWidget::setIconUrl(const OmniIconUrl &url) {
-  if (_icon->url() == url) return;
-
-  _icon->setUrl(url);
-}
+void DefaultListItemWidget::setIconUrl(const OmniIconUrl &url) { _icon->setUrl(url); }
 
 void DefaultListItemWidget::setAccessories(const AccessoryList &list) {
   _accessoryList->setAccessories(list);
@@ -20,7 +17,7 @@ void DefaultListItemWidget::setCategory(const QString &category) { _category->se
 DefaultListItemWidget::DefaultListItemWidget(const OmniIconUrl &iconUrl, const QString &name,
                                              const QString &category, const AccessoryList &accessories,
                                              QWidget *parent)
-    : SelectableOmniListWidget(parent), _icon(new OmniIcon),
+    : SelectableOmniListWidget(parent), _icon(new Omnimg::ImageWidget),
       _name(new TypographyWidget(TextSize::TextRegular)),
       _category(new TypographyWidget(TextSize::TextRegular, ColorTint::TextSecondary)),
       _accessoryList(new AccessoryListWidget(this)) {

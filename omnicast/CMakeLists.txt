@@ -51,6 +51,8 @@ set(SRCS
 
 	include/root-item-manager.hpp
 
+	include/ui/image/omnimg.hpp
+
 	include/favicon/favicon-service.hpp
 	src/favicon/favicon-service.cpp
 	include/favicon/favicon-request.hpp
