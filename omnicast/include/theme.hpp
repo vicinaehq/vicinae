@@ -26,21 +26,6 @@ struct ThemeRadialGradient {
 
 using ColorLike = std::variant<QColor, ThemeLinearGradient, ThemeRadialGradient, ColorTint>;
 
-using DeclarativeColor = std::variant<ColorTint, QColor>;
-
-struct ColorScheme {
-  QString name;
-  QColor background;
-  QColor foreground;
-  QColor blue;
-  QColor green;
-  QColor magenta;
-  QColor orange;
-  QColor purple;
-  QColor red;
-  QColor yellow;
-};
-
 struct ColorPalette {
   QColor background;
   QColor foreground;
@@ -94,30 +79,31 @@ struct ThemeInfo {
     ColorLike yellow;
   } colors;
 
-  static ThemeInfo fromColorScheme(const ColorScheme &scheme) {
-    ThemeInfo info;
+  ColorLike resolveTint(ColorTint tint) const {
+    switch (tint) {
+    case ColorTint::Blue:
+      return colors.blue;
+    case ColorTint::Green:
+      return colors.green;
+    case ColorTint::Magenta:
+      return colors.magenta;
+    case ColorTint::Orange:
+      return colors.orange;
+    case ColorTint::Purple:
+      return colors.purple;
+    case ColorTint::Red:
+      return colors.red;
+    case ColorTint::Yellow:
+      return colors.yellow;
+    case ColorTint::TextPrimary:
+      return colors.text;
+    case ColorTint::TextSecondary:
+      return colors.subtext;
+    default:
+      break;
+    }
 
-    info.id = scheme.name;
-    info.name = scheme.name;
-    info.colors.blue = scheme.blue;
-    info.colors.green = scheme.green;
-    info.colors.magenta = scheme.magenta;
-    info.colors.orange = scheme.orange;
-    info.colors.purple = scheme.purple;
-    info.colors.red = scheme.red;
-    info.colors.yellow = scheme.yellow;
-    info.colors.mainBackground = scheme.background;
-    info.colors.border = info.colors.mainBackground.lighter(180);
-    info.colors.mainSelectedBackground = info.colors.mainBackground.lighter(135);
-    info.colors.mainHoveredBackground = info.colors.mainBackground.lighter(140);
-    info.colors.statusBackground = info.colors.mainBackground.lighter(140);
-    info.colors.statusBackgroundLighter = info.colors.statusBackground.lighter(150);
-    info.colors.statusBackgroundHover = info.colors.statusBackground.lighter(120);
-    info.colors.statusBackgroundBorder = info.colors.statusBackground.lighter(180);
-    info.colors.text = scheme.foreground;
-    info.colors.subtext = scheme.foreground.darker(150);
-
-    return info;
+    return {};
   }
 
   static ThemeInfo fromParsed(const ParsedThemeData &scheme) {
@@ -225,32 +211,7 @@ public:
     return false;
   }
 
-  ColorLike getTintColor(ColorTint tint) const {
-    switch (tint) {
-    case ColorTint::Blue:
-      return m_theme.colors.blue;
-    case ColorTint::Green:
-      return m_theme.colors.green;
-    case ColorTint::Magenta:
-      return m_theme.colors.magenta;
-    case ColorTint::Orange:
-      return m_theme.colors.orange;
-    case ColorTint::Purple:
-      return m_theme.colors.purple;
-    case ColorTint::Red:
-      return m_theme.colors.red;
-    case ColorTint::Yellow:
-      return m_theme.colors.yellow;
-    case ColorTint::TextPrimary:
-      return m_theme.colors.text;
-    case ColorTint::TextSecondary:
-      return m_theme.colors.subtext;
-    default:
-      break;
-    }
-
-    return {};
-  }
+  ColorLike getTintColor(ColorTint tint) const { return m_theme.resolveTint(tint); }
 
   void setTheme(const ThemeInfo &info);
 
@@ -263,6 +224,7 @@ public:
   void scanThemeDirectory(const std::filesystem::path &path);
   void handleDirectoryChanged(const QString &directory);
   void scanThemeDirectories();
+  void setDefaultTheme();
 
 signals:
   bool themeChanged(const ThemeInfo &info) const;

@@ -169,15 +169,13 @@ int startDaemon() {
     auto currentConfig = configService->value();
 
     if (auto name = currentConfig.theme.name) {
-      ThemeService::instance().setTheme(*name);
+      if (!ThemeService::instance().setTheme(*name)) {
+        qCritical() << "Could not set theme with id" << *name
+                    << "as it does not exist. Falling back to default theme instead.";
+        ThemeService::instance().setDefaultTheme();
+      }
     } else {
-      QString defaultTheme = "omnicast-dark";
-
-      if (qApp->styleHints()->colorScheme() == Qt::ColorScheme::Light) { defaultTheme = "omnicast-light"; }
-
-      qCritical() << "set default theme" << defaultTheme;
-
-      ThemeService::instance().setTheme(defaultTheme);
+      ThemeService::instance().setDefaultTheme();
     }
 
     aiManager->registerProvider(std::move(ollamaProvider));

@@ -1,6 +1,7 @@
 #include "theme.hpp"
 #include "ui/omni-painter.hpp"
 #include <QLinearGradient>
+#include <QStyleHints>
 
 void ThemeService::setTheme(const ThemeInfo &info) {
   m_theme = info;
@@ -161,6 +162,14 @@ void ThemeService::scanThemeDirectory(const std::filesystem::path &path) {
       // use default
     }
   }
+}
+
+void ThemeService::setDefaultTheme() {
+  QString defaultTheme = "omnicast-dark";
+
+  if (qApp->styleHints()->colorScheme() == Qt::ColorScheme::Light) { defaultTheme = "omnicast-light"; }
+
+  setTheme(defaultTheme);
 }
 
 std::vector<ParsedThemeData> ThemeService::loadColorSchemes() const {
