@@ -6,9 +6,7 @@
 #include "theme.hpp"
 #include <QtConcurrent/qtconcurrentiteratekernel.h>
 #include <algorithm>
-#include <iterator>
 #include <memory>
-#include <numbers>
 #include <qbuffer.h>
 #include <qdir.h>
 #include <qevent.h>
@@ -38,6 +36,7 @@ enum ObjectFit { ObjectFitContain, ObjectFitFill };
 struct RenderConfig {
   QSize size;
   ObjectFit fit = ObjectFitContain;
+  qreal devicePixelRatio = 1;
 };
 
 class AbstractImageLoader : public QObject {
@@ -62,11 +61,17 @@ class AnimatedIODeviceImageLoader : public AbstractImageLoader {
 
 public:
   void render(const RenderConfig &cfg) override {
+    QSize deviceSize = cfg.size * cfg.devicePixelRatio;
     m_movie = std::make_unique<QMovie>();
     m_movie->setDevice(m_device.get());
-    m_movie->setScaledSize(cfg.size);
+    // m_movie->setScaledSize({deviceSize.width(), -1});
     m_movie->setCacheMode(QMovie::CacheAll);
-    connect(m_movie.get(), &QMovie::updated, this, [this]() { emit dataUpdated(m_movie->currentPixmap()); });
+    connect(m_movie.get(), &QMovie::updated, this, [this, deviceSize, cfg]() {
+      auto pix = m_movie->currentPixmap();
+
+      // pix.setDevicePixelRatio(cfg.devicePixelRatio);
+      emit dataUpdated(pix);
+    });
     m_movie->start();
   }
 
@@ -79,17 +84,22 @@ class StaticIODeviceImageLoader : public AbstractImageLoader {
   std::unique_ptr<QIODevice> m_device = nullptr;
 
   static QImage loadStatic(std::unique_ptr<QIODevice> device, const RenderConfig &cfg) {
+    QSize deviceSize = cfg.size * cfg.devicePixelRatio;
     QImageReader reader(device.get());
     QSize originalSize = reader.size();
     bool isDownScalable =
-        originalSize.height() > cfg.size.height() || originalSize.width() > cfg.size.width();
+        originalSize.height() > deviceSize.height() || originalSize.width() > deviceSize.width();
 
     if (originalSize.isValid() && isDownScalable) {
-      reader.setScaledSize(originalSize.scaled(cfg.size, cfg.fit == ObjectFitFill ? Qt::IgnoreAspectRatio
-                                                                                  : Qt::KeepAspectRatio));
+      reader.setScaledSize(originalSize.scaled(deviceSize, cfg.fit == ObjectFitFill ? Qt::IgnoreAspectRatio
+                                                                                    : Qt::KeepAspectRatio));
     }
 
-    return reader.read();
+    auto image = reader.read();
+
+    image.setDevicePixelRatio(cfg.devicePixelRatio);
+
+    return image;
   }
 
 public:
@@ -196,19 +206,23 @@ class SvgImageLoader : public AbstractImageLoader {
   std::optional<ColorLike> m_fill;
 
   void render(const RenderConfig &config) override {
-    QPixmap pixmap(config.size);
+    QPixmap pixmap(config.size * config.devicePixelRatio);
+    auto svgSize = m_renderer.defaultSize();
+    QRect targetRect = QRect(QPoint(0, 0), svgSize.scaled(pixmap.size(), Qt::KeepAspectRatio));
 
     pixmap.fill(Qt::transparent);
     OmniPainter painter(&pixmap);
 
-    m_renderer.render(&painter);
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+    m_renderer.render(&painter, targetRect);
 
     if (m_fill) {
       painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
       painter.fillRect(pixmap.rect(), *m_fill);
     }
 
-    pixmap.setDevicePixelRatio(1);
+    pixmap.setDevicePixelRatio(config.devicePixelRatio);
 
     emit dataUpdated(pixmap);
   }
@@ -229,7 +243,11 @@ class FaviconImageLoader : public AbstractImageLoader {
     m_requester = QSharedPointer<AbstractFaviconRequest>(reply);
     connect(m_requester.get(), &AbstractFaviconRequest::finished, this,
             [this, config](const QPixmap &pixmap) {
-              emit dataUpdated(pixmap.scaled(config.size, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+              auto scaled = pixmap.scaled(config.size * config.devicePixelRatio, Qt::KeepAspectRatio,
+                                          Qt::SmoothTransformation);
+
+              scaled.setDevicePixelRatio(config.devicePixelRatio);
+              emit dataUpdated(scaled);
             });
     connect(m_requester.get(), &AbstractFaviconRequest::failed, this,
             [this]() { emit errorOccured("Failed to load image"); });
@@ -260,9 +278,12 @@ public:
       return;
     }
 
-    auto scaled = m_icon.pixmap(*it).scaled(config.size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    auto pix = m_icon.pixmap(*it).scaled(config.size * config.devicePixelRatio, Qt::KeepAspectRatio,
+                                         Qt::SmoothTransformation);
 
-    emit dataUpdated(scaled);
+    pix.setDevicePixelRatio(config.devicePixelRatio);
+
+    emit dataUpdated(pix);
   }
 
   QIconImageLoader(const QString &name) {
@@ -282,14 +303,18 @@ class ImageWidget : public QWidget {
   QFlags<Qt::AlignmentFlag> m_alignment = Qt::AlignCenter;
   std::optional<ColorLike> m_backgroundColor;
   int m_borderRadius = 4;
+  qreal m_lastDevicePixelRatio = 0;
 
   void paintEvent(QPaintEvent *event) override {
     if (m_data.isNull()) return;
 
-    auto dataLogicalSize = m_data.size() / devicePixelRatio();
+    // auto dataLogicalSize = m_data.size() / devicePixelRatio();
+    auto dataLogicalSize = m_data.size() / m_data.devicePixelRatio();
     int horizontalMargins = width() - dataLogicalSize.width();
     int verticalMargins = height() - dataLogicalSize.height();
     QPoint pos(0, 0);
+
+    qDebug() << "pixmap" << m_data;
 
     if (m_alignment.testFlag(Qt::AlignRight)) { pos.setX(horizontalMargins); }
     if (m_alignment.testFlag(Qt::AlignBottom)) { pos.setY(verticalMargins); }
@@ -423,11 +448,12 @@ public:
 
     // we always provide the renderer with the scaled size, so that loading can be
     // optimized properly for highDPI.
-    auto drawingRect = rect().marginsRemoved(contentsMargins());
-    auto deviceSize = drawingRect.size() * devicePixelRatio();
+    QSize drawableSize = rect().marginsRemoved(contentsMargins()).size();
 
+    qDebug() << "rect" << rect() << "drawing" << drawableSize;
     m_renderCount += 1;
-    m_loader->render(RenderConfig{.size = deviceSize, .fit = m_fit});
+    m_loader->render(
+        RenderConfig{.size = drawableSize, .fit = m_fit, .devicePixelRatio = qApp->devicePixelRatio()});
   }
 
   void setAlignment(Qt::Alignment alignment) {
