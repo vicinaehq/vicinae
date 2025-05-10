@@ -4,8 +4,10 @@
 #include "clipboard/clipboard-service.hpp"
 #include "emoji-database.hpp"
 #include "libtrie/trie.hpp"
+#include "omni-icon.hpp"
 #include "timer.hpp"
 #include "ui/action-pannel/action-item.hpp"
+#include "ui/image/omnimg.hpp"
 #include "ui/omni-grid-view.hpp"
 #include "ui/emoji-viewer.hpp"
 #include "ui/omni-grid.hpp"
@@ -25,19 +27,27 @@ public:
   QString tooltip() const override { return info.description; }
 
   QWidget *centerWidget() const override {
-    auto emoji = new EmojiViewer(info.emoji);
+    auto icon = new Omnimg::ImageWidget();
+    OmniIconUrl url;
 
-    emoji->setHeightScale(0.4);
+    url.setType(OmniIconType::Emoji);
+    url.setName(info.emoji);
+    icon->setUrl(url);
+    icon->setContentsMargins(10, 10, 10, 10);
 
-    return emoji;
+    return icon;
   }
 
   bool centerWidgetRecyclable() const override { return true; }
 
   void recycleCenterWidget(QWidget *widget) const override {
-    auto label = static_cast<EmojiViewer *>(widget);
+    auto icon = static_cast<Omnimg::ImageWidget *>(widget);
+    OmniIconUrl url;
 
-    label->setEmoji(info.emoji);
+    url.setType(OmniIconType::Emoji);
+    url.setName(info.emoji);
+    icon->setUrl(url);
+    icon->setContentsMargins(10, 10, 10, 10);
   }
 
   QString id() const override { return info.description; }

@@ -207,6 +207,7 @@ public:
 
       if (QFile(":icons/" + image->source + ".svg").exists()) {
         setType(OmniIconType::Builtin);
+        setFill(ColorTint::TextPrimary);
         setName(image->source);
         return;
       }
@@ -226,6 +227,7 @@ public:
 
     setName("question-mark-circle");
     setType(OmniIconType::Builtin);
+    setFill(ColorTint::TextPrimary);
   }
 
   bool operator==(const OmniIconUrl &rhs) const { return toString() == rhs.toString(); }

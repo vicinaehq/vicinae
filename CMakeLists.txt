@@ -8,7 +8,7 @@ project(${PROJECT_NAME} VERSION 1.0.0 LANGUAGES C CXX)
 
 add_compile_definitions(OMNICAST_VERSION="${OMNICAST_VERSION}")
 
-find_program(CCACHE ccache)
+#find_program(CCACHE ccache)
 
 ProcessorCount(N)
 

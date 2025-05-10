@@ -49,6 +49,7 @@ public:
    */
   void virtual render(const RenderConfig &config) = 0;
   void virtual abort() const {};
+  virtual ~AbstractImageLoader() {}
 
 signals:
   void dataUpdated(const QPixmap &data) const;
@@ -62,14 +63,28 @@ class AnimatedIODeviceImageLoader : public AbstractImageLoader {
 public:
   void render(const RenderConfig &cfg) override {
     QSize deviceSize = cfg.size * cfg.devicePixelRatio;
+
     m_movie = std::make_unique<QMovie>();
     m_movie->setDevice(m_device.get());
+
     // m_movie->setScaledSize({deviceSize.width(), -1});
     m_movie->setCacheMode(QMovie::CacheAll);
     connect(m_movie.get(), &QMovie::updated, this, [this, deviceSize, cfg]() {
       auto pix = m_movie->currentPixmap();
 
-      // pix.setDevicePixelRatio(cfg.devicePixelRatio);
+      QSize originalSize = pix.size();
+      bool isDownScalable =
+          originalSize.height() > deviceSize.height() || originalSize.width() > deviceSize.width();
+
+      if (isDownScalable) {
+        Qt::AspectRatioMode ar = cfg.fit == ObjectFitFill ? Qt::IgnoreAspectRatio : Qt::KeepAspectRatio;
+
+        m_movie->setScaledSize(originalSize.scaled(deviceSize, ar));
+        emit dataUpdated(pix.scaled(deviceSize, ar));
+        return;
+      }
+
+      pix.setDevicePixelRatio(cfg.devicePixelRatio);
       emit dataUpdated(pix);
     });
     m_movie->start();
@@ -103,7 +118,9 @@ class StaticIODeviceImageLoader : public AbstractImageLoader {
   }
 
 public:
-  void abort() const override { m_watcher->cancel(); }
+  void abort() const override {
+    if (m_watcher) m_watcher->cancel();
+  }
 
   void render(const RenderConfig &cfg) override {
     auto watcher = QSharedPointer<ImageWatcher>::create();
@@ -179,8 +196,6 @@ class HttpImageLoader : public AbstractImageLoader {
 
 public:
   HttpImageLoader(const QUrl &url) : m_url(url) {}
-
-  ~HttpImageLoader() {}
 };
 
 class LocalImageLoader : public AbstractImageLoader {
@@ -197,40 +212,52 @@ class LocalImageLoader : public AbstractImageLoader {
 
 public:
   LocalImageLoader(const std::filesystem::path &path) { m_path = path; }
-
-  ~LocalImageLoader() {}
 };
 
 class SvgImageLoader : public AbstractImageLoader {
   QSvgRenderer m_renderer;
   std::optional<ColorLike> m_fill;
 
-  void render(const RenderConfig &config) override {
-    QPixmap pixmap(config.size * config.devicePixelRatio);
+public:
+  void render(QPixmap &pixmap, const QRect &bounds) {
     auto svgSize = m_renderer.defaultSize();
-    QRect targetRect = QRect(QPoint(0, 0), svgSize.scaled(pixmap.size(), Qt::KeepAspectRatio));
+    // QRect targetRect = QRect(QPoint(0, 0), svgSize.scaled(bounds.size(), Qt::KeepAspectRatio));
 
-    pixmap.fill(Qt::transparent);
-    OmniPainter painter(&pixmap);
+    QPixmap filledSvg(bounds.size());
+
+    filledSvg.fill(Qt::transparent);
+
+    // first, we paint the filled svg on a separate pixmap
+    {
+      OmniPainter painter(&filledSvg);
+
+      m_renderer.render(&painter, filledSvg.rect());
+
+      if (m_fill) {
+        painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
+        painter.fillRect(filledSvg.rect(), *m_fill);
+      }
+    }
+
+    QPainter painter(&pixmap);
 
     painter.setRenderHint(QPainter::Antialiasing, true);
     painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
-    m_renderer.render(&painter, targetRect);
+    painter.drawPixmap(bounds, filledSvg);
+  }
 
-    if (m_fill) {
-      painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
-      painter.fillRect(pixmap.rect(), *m_fill);
-    }
+  void render(const RenderConfig &config) override {
+    QPixmap pixmap(config.size * config.devicePixelRatio);
 
+    render(pixmap, pixmap.rect());
     pixmap.setDevicePixelRatio(config.devicePixelRatio);
-
     emit dataUpdated(pixmap);
   }
 
-public:
   void setFillColor(const std::optional<ColorLike> &color) { m_fill = color; }
 
   SvgImageLoader(const QByteArray &data) { m_renderer.load(data); }
+  SvgImageLoader(const QString &filename) { m_renderer.load(filename); }
 };
 
 class FaviconImageLoader : public AbstractImageLoader {
@@ -256,6 +283,29 @@ class FaviconImageLoader : public AbstractImageLoader {
 
 public:
   FaviconImageLoader(const QString &hostname) : m_domain(hostname) {}
+};
+
+class EmojiImageLoader : public AbstractImageLoader {
+  QString m_emoji;
+
+  void render(const RenderConfig &config) override {
+    auto font = QFont("Twemoji");
+    QPixmap canva(config.size * config.devicePixelRatio);
+
+    canva.fill(Qt::transparent);
+    font.setPixelSize(canva.height() * 0.8);
+
+    QPainter painter(&canva);
+
+    painter.setFont(font);
+    painter.drawText(canva.rect(), Qt::AlignCenter, m_emoji);
+    canva.setDevicePixelRatio(config.devicePixelRatio);
+
+    emit dataUpdated(canva);
+  }
+
+public:
+  EmojiImageLoader(const QString &emoji) : m_emoji(emoji) {}
 };
 
 class QIconImageLoader : public AbstractImageLoader {
@@ -292,6 +342,45 @@ public:
   }
 };
 
+class BuiltinIconLoader : public AbstractImageLoader {
+  std::optional<ColorLike> m_backgroundColor;
+  std::optional<ColorLike> m_fillColor;
+  QString m_iconName;
+
+  void render(const RenderConfig &config) override {
+    QPixmap canva(config.size * config.devicePixelRatio);
+    int margin = 0;
+
+    canva.setDevicePixelRatio(config.devicePixelRatio);
+    canva.fill(Qt::transparent);
+
+    if (m_backgroundColor) {
+      OmniPainter painter(&canva);
+      qreal radius = qRound(4 * config.devicePixelRatio);
+
+      painter.setRenderHint(QPainter::Antialiasing, true);
+      margin = qRound(3 * config.devicePixelRatio);
+      painter.setBrush(painter.colorBrush(*m_backgroundColor));
+      painter.setPen(Qt::NoPen);
+      painter.drawRoundedRect(canva.rect(), radius, radius);
+    }
+
+    QMargins margins{margin, margin, margin, margin};
+    QRect iconRect = canva.rect().marginsRemoved(margins);
+    SvgImageLoader loader(m_iconName);
+
+    loader.setFillColor(m_fillColor);
+    loader.render(canva, iconRect);
+    emit dataUpdated(canva);
+  }
+
+public:
+  void setFillColor(const std::optional<ColorLike> &color) { m_fillColor = color; }
+  void setBackgroundColor(const std::optional<ColorLike> &color) { m_backgroundColor = color; }
+
+  BuiltinIconLoader(const QString &iconName) : m_iconName(iconName) {}
+};
+
 // for now, hardcoded to only work with local images, will expand later on, no worries
 class ImageWidget : public QWidget {
   std::unique_ptr<AbstractImageLoader> m_loader;
@@ -303,18 +392,14 @@ class ImageWidget : public QWidget {
   QFlags<Qt::AlignmentFlag> m_alignment = Qt::AlignCenter;
   std::optional<ColorLike> m_backgroundColor;
   int m_borderRadius = 4;
-  qreal m_lastDevicePixelRatio = 0;
 
   void paintEvent(QPaintEvent *event) override {
     if (m_data.isNull()) return;
 
-    // auto dataLogicalSize = m_data.size() / devicePixelRatio();
-    auto dataLogicalSize = m_data.size() / m_data.devicePixelRatio();
-    int horizontalMargins = width() - dataLogicalSize.width();
-    int verticalMargins = height() - dataLogicalSize.height();
+    auto logicalDataSize = m_data.size() / m_data.devicePixelRatio();
+    int horizontalMargins = width() - logicalDataSize.width();
+    int verticalMargins = height() - logicalDataSize.height();
     QPoint pos(0, 0);
-
-    qDebug() << "pixmap" << m_data;
 
     if (m_alignment.testFlag(Qt::AlignRight)) { pos.setX(horizontalMargins); }
     if (m_alignment.testFlag(Qt::AlignBottom)) { pos.setY(verticalMargins); }
@@ -362,15 +447,8 @@ class ImageWidget : public QWidget {
     auto type = url.type();
 
     m_source = url;
-    m_backgroundColor = {};
     m_data = {};
     m_loader.reset();
-    setContentsMargins(0, 0, 0, 0);
-
-    if (url.backgroundTint() != ColorTint::InvalidTint) {
-      m_backgroundColor = url.backgroundTint();
-      setContentsMargins(3, 3, 3, 3);
-    }
 
     if (type == OmniIconType::Favicon) {
       m_loader = std::make_unique<FaviconImageLoader>(url.name());
@@ -381,21 +459,17 @@ class ImageWidget : public QWidget {
     }
 
     else if (type == OmniIconType::Builtin) {
-      QFile file(QString(":icons/%1.svg").arg(url.name()));
+      QString icon = QString(":icons/%1.svg").arg(url.name());
+      auto loader = std::make_unique<BuiltinIconLoader>(icon);
 
-      file.open(QIODevice::ReadOnly);
-
-      auto svgLoader = std::make_unique<SvgImageLoader>(file.readAll());
-
-      if (m_backgroundColor) {
-        QColor color = OmniPainter::textColorForBackground(*m_backgroundColor);
-
-        svgLoader->setFillColor(OmniPainter::textColorForBackground(*m_backgroundColor));
+      if (url.backgroundTint()) {
+        loader->setBackgroundColor(url.backgroundTint());
+        loader->setFillColor(OmniPainter::textColorForBackground(url.backgroundTint()));
       } else {
-        svgLoader->setFillColor(url.fillColor());
+        loader->setFillColor(url.fillColor());
       }
 
-      m_loader = std::move(svgLoader);
+      m_loader = std::move(loader);
     }
 
     else if (type == OmniIconType::Local) {
@@ -425,7 +499,7 @@ class ImageWidget : public QWidget {
     }
 
     else if (type == OmniIconType::Emoji) {
-      // XXX - TBD
+      m_loader = std::make_unique<EmojiImageLoader>(url.name());
     }
 
     if (!m_loader) { return handleLoadingError("No loader"); }
@@ -433,7 +507,7 @@ class ImageWidget : public QWidget {
     if (m_loader) {
       connect(m_loader.get(), &AbstractImageLoader::dataUpdated, this, &ImageWidget::handleDataUpdated);
       connect(m_loader.get(), &AbstractImageLoader::errorOccured, this, &ImageWidget::handleLoadingError);
-      if (m_renderCount > 0) render();
+      if (m_renderCount > 0) QTimer::singleShot(0, [this]() { render(); });
     }
   }
 
@@ -441,16 +515,10 @@ public:
   void render() {
     if (size().isNull() || size().isEmpty() || !size().isValid()) return;
 
-    if (!m_loader) {
-      qWarning() << "No loader set for Image";
-      return;
-    }
+    if (!m_loader) { return; }
 
-    // we always provide the renderer with the scaled size, so that loading can be
-    // optimized properly for highDPI.
     QSize drawableSize = rect().marginsRemoved(contentsMargins()).size();
 
-    qDebug() << "rect" << rect() << "drawing" << drawableSize;
     m_renderCount += 1;
     m_loader->render(
         RenderConfig{.size = drawableSize, .fit = m_fit, .devicePixelRatio = qApp->devicePixelRatio()});
@@ -478,7 +546,10 @@ public:
   }
 
   ~ImageWidget() {
-    if (m_loader) m_loader->abort();
+    if (m_loader) {
+      disconnect(m_loader.get());
+      m_loader->abort();
+    }
   }
 };
 
