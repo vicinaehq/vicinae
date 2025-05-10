@@ -23,6 +23,7 @@ public:
   void drawBlurredPixmap(const QPixmap &pixmap, int blurRadius = 10);
 
   QBrush colorBrush(const ColorLike &color) const;
+  static QColor textColorForBackground(const ColorLike &colorLike);
 
   using QPainter::QPainter;
 };

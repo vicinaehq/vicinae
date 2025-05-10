@@ -1,7 +1,6 @@
 #include "ui/vertical-metadata.hpp"
 #include "common.hpp"
 #include "tag.hpp"
-#include "theme.hpp"
 #include "ui/text-label.hpp"
 #include <qboxlayout.h>
 #include <qlabel.h>
@@ -42,8 +41,6 @@ void VerticalMetadata::add(const QString &title, QWidget *widget) {
 }
 
 void VerticalMetadata::addItem(const MetadataItem &item) {
-  ThemeService theme;
-
   if (auto label = std::get_if<MetadataLabel>(&item)) {
     add(label->title, new QLabel(label->text));
   } else if (auto separator = std::get_if<MetadataSeparator>(&item)) {

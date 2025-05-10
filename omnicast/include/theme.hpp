@@ -1,6 +1,13 @@
 #pragma once
+#include "omnicast.hpp"
+#include <filesystem>
+#include <libqalculate/includes.h>
 #include <qapplication.h>
 #include <qcolor.h>
+#include <qfilesystemwatcher.h>
+#include <qjsondocument.h>
+#include <qjsonobject.h>
+#include <qlogging.h>
 #include <qobject.h>
 #include <QWidget>
 #include <qpalette.h>
@@ -34,8 +41,35 @@ struct ColorScheme {
   QColor yellow;
 };
 
-struct ThemeInfo {
+struct ColorPalette {
+  QColor background;
+  QColor foreground;
+  QColor blue;
+  QColor green;
+  QColor magenta;
+  QColor orange;
+  QColor purple;
+  QColor red;
+  QColor yellow;
+  QColor cyan;
+};
+
+struct ParsedThemeData {
+  QString id;
+  QString appearance;
   QString name;
+  QString description;
+  std::optional<std::filesystem::path> icon;
+  ColorPalette palette;
+};
+
+struct ThemeInfo {
+  QString appearance;
+  QString id;
+  QString name;
+  QString description;
+  std::optional<std::filesystem::path> icon;
+  std::optional<std::filesystem::path> path;
 
   struct {
     QColor text;
@@ -63,6 +97,7 @@ struct ThemeInfo {
   static ThemeInfo fromColorScheme(const ColorScheme &scheme) {
     ThemeInfo info;
 
+    info.id = scheme.name;
     info.name = scheme.name;
     info.colors.blue = scheme.blue;
     info.colors.green = scheme.green;
@@ -84,16 +119,67 @@ struct ThemeInfo {
 
     return info;
   }
+
+  static ThemeInfo fromParsed(const ParsedThemeData &scheme) {
+    ThemeInfo info;
+
+    info.id = scheme.id;
+    info.name = scheme.name;
+    info.appearance = scheme.appearance;
+    info.icon = scheme.icon;
+    info.description = scheme.description;
+    info.colors.blue = scheme.palette.blue;
+    info.colors.green = scheme.palette.green;
+    info.colors.magenta = scheme.palette.magenta;
+    info.colors.orange = scheme.palette.orange;
+    info.colors.purple = scheme.palette.purple;
+    info.colors.red = scheme.palette.red;
+    info.colors.yellow = scheme.palette.yellow;
+    info.colors.mainBackground = scheme.palette.background;
+
+    if (scheme.appearance == "dark") {
+      info.colors.border = info.colors.mainBackground.lighter(180);
+      info.colors.mainSelectedBackground = info.colors.mainBackground.lighter(135);
+      info.colors.mainHoveredBackground = info.colors.mainBackground.lighter(140);
+      info.colors.statusBackground = info.colors.mainBackground.lighter(140);
+      info.colors.statusBackgroundLighter = info.colors.statusBackground.lighter(150);
+      info.colors.statusBackgroundHover = info.colors.statusBackground.lighter(120);
+      info.colors.statusBackgroundBorder = info.colors.statusBackground.lighter(180);
+      info.colors.text = scheme.palette.foreground;
+      info.colors.subtext = scheme.palette.foreground.darker(150);
+    } else {
+      info.colors.border = info.colors.mainBackground.darker(130);
+      info.colors.mainSelectedBackground = info.colors.mainBackground.darker(110);
+      info.colors.mainHoveredBackground = info.colors.mainBackground.darker(115);
+      info.colors.statusBackground = info.colors.mainBackground.darker(110);
+      info.colors.statusBackgroundLighter = info.colors.statusBackground.darker(130);
+      info.colors.statusBackgroundHover = info.colors.statusBackground.darker(100);
+      info.colors.statusBackgroundBorder = info.colors.statusBackground.darker(160);
+      info.colors.text = scheme.palette.foreground;
+      info.colors.subtext = scheme.palette.foreground.lighter(130);
+    }
+
+    return info;
+  }
 };
 
 class ThemeService : public QObject {
   Q_OBJECT
 
-  std::vector<ThemeInfo> _themeDb;
-  ThemeInfo _theme;
-  int _baseFontPointSize = 10;
+  std::vector<ThemeInfo> m_themes;
+  ThemeInfo m_theme;
+  int m_baseFontPointSize = 10;
+  std::filesystem::path m_configDir = Omnicast::configDir();
+  std::filesystem::path m_userThemeDir = m_configDir / "themes";
+  std::filesystem::path m_dataThemeDir = Omnicast::dataDir() / "themes";
 
   ThemeService(const ThemeService &rhs) = delete;
+  ThemeService &operator=(const ThemeService &rhs) = delete;
+
+  ThemeService() {
+    registerBuiltinThemes();
+    scanThemeDirectories();
+  }
 
 public:
   static ThemeService &instance() {
@@ -105,23 +191,23 @@ public:
   int pointSize(TextSize size) const {
     switch (size) {
     case TextSize::TextRegular:
-      return _baseFontPointSize;
+      return m_baseFontPointSize;
     case TextSize::TextTitle:
-      return _baseFontPointSize * 1.5;
+      return m_baseFontPointSize * 1.5;
     }
 
-    return _baseFontPointSize;
+    return m_baseFontPointSize;
   }
 
   /**
    * Returns the theme that is currently in use
    */
-  const ThemeInfo &theme() const { return _theme; }
+  const ThemeInfo &theme() const { return m_theme; }
 
-  std::vector<ColorScheme> loadColorSchemes() const;
+  std::vector<ParsedThemeData> loadColorSchemes() const;
 
   std::optional<ThemeInfo> theme(const QString &name) const {
-    for (const auto &info : _themeDb) {
+    for (const auto &info : m_themes) {
       if (info.name == name) { return info; }
     }
 
@@ -129,8 +215,8 @@ public:
   }
 
   bool setTheme(const QString &name) {
-    for (const auto &info : _themeDb) {
-      if (info.name == name) {
+    for (const auto &info : m_themes) {
+      if (info.id == name) {
         setTheme(info);
         return true;
       }
@@ -142,23 +228,23 @@ public:
   ColorLike getTintColor(ColorTint tint) const {
     switch (tint) {
     case ColorTint::Blue:
-      return _theme.colors.blue;
+      return m_theme.colors.blue;
     case ColorTint::Green:
-      return _theme.colors.green;
+      return m_theme.colors.green;
     case ColorTint::Magenta:
-      return _theme.colors.magenta;
+      return m_theme.colors.magenta;
     case ColorTint::Orange:
-      return _theme.colors.orange;
+      return m_theme.colors.orange;
     case ColorTint::Purple:
-      return _theme.colors.purple;
+      return m_theme.colors.purple;
     case ColorTint::Red:
-      return _theme.colors.red;
+      return m_theme.colors.red;
     case ColorTint::Yellow:
-      return _theme.colors.yellow;
+      return m_theme.colors.yellow;
     case ColorTint::TextPrimary:
-      return _theme.colors.text;
+      return m_theme.colors.text;
     case ColorTint::TextSecondary:
-      return _theme.colors.subtext;
+      return m_theme.colors.subtext;
     default:
       break;
     }
@@ -168,17 +254,15 @@ public:
 
   void setTheme(const ThemeInfo &info);
 
-  void registerTheme(const ThemeInfo &info) { _themeDb.emplace_back(info); }
+  void registerTheme(const ThemeInfo &info) { m_themes.emplace_back(info); }
+  const std::vector<ThemeInfo> &themes() const { return m_themes; }
 
-  const std::vector<ThemeInfo> &themes() const { return _themeDb; }
-
-  void registerBuiltinThemes() {
-    for (const auto &scheme : loadColorSchemes()) {
-      registerTheme(ThemeInfo::fromColorScheme(scheme));
-    }
-  }
-
-  ThemeService() { registerBuiltinThemes(); }
+  void registerBuiltinThemes();
+  std::optional<ThemeInfo> findTheme(const QString &name);
+  void upsertTheme(const ParsedThemeData &data);
+  void scanThemeDirectory(const std::filesystem::path &path);
+  void handleDirectoryChanged(const QString &directory);
+  void scanThemeDirectories();
 
 signals:
   bool themeChanged(const ThemeInfo &info) const;

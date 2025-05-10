@@ -3,16 +3,7 @@
 #include <QLinearGradient>
 
 void ThemeService::setTheme(const ThemeInfo &info) {
-  _theme = info;
-
-  /*
-   *		QWidget {
-                  font-family: 'SF Pro Text';
-                  font-size: 10pt;
-                  font-weight: lighter;
-                  letter-spacing: -0.5px;
-          }
-          */
+  m_theme = info;
 
   auto style = QString(R"(
 
@@ -62,153 +53,158 @@ void ThemeService::setTheme(const ThemeInfo &info) {
   emit themeChanged(info);
 }
 
-std::vector<ColorScheme> ThemeService::loadColorSchemes() const {
+void ThemeService::registerBuiltinThemes() {
+  for (const auto &scheme : loadColorSchemes()) {
+    registerTheme(ThemeInfo::fromParsed(scheme));
+  }
+}
+
+std::optional<ThemeInfo> ThemeService::findTheme(const QString &name) {
+  auto it = std::ranges::find_if(m_themes, [&](const ThemeInfo &model) { return model.name == name; });
+
+  if (it == m_themes.end()) return std::nullopt;
+
+  return *it;
+}
+
+void ThemeService::upsertTheme(const ParsedThemeData &data) {
+  auto info = ThemeInfo::fromParsed(data);
+  auto it = std::ranges::find_if(m_themes, [&](const ThemeInfo &model) { return info.id == model.id; });
+
+  if (it == m_themes.end()) {
+    m_themes.emplace_back(info);
+    return;
+  }
+
+  *it = ThemeInfo::fromParsed(data);
+}
+
+void ThemeService::scanThemeDirectories() { scanThemeDirectory(m_userThemeDir); }
+
+void ThemeService::scanThemeDirectory(const std::filesystem::path &path) {
+  std::error_code ec;
+  std::stack<std::filesystem::path> dirs;
+
+  dirs.push(path);
+
+  while (!dirs.empty()) {
+    auto dir = dirs.top();
+    dirs.pop();
+    auto it = std::filesystem::directory_iterator(dir, ec);
+
+    for (const auto &entry : it) {
+      if (entry.is_directory()) {
+        dirs.push(entry.path());
+        continue;
+      }
+
+      bool isJson = entry.path().string().ends_with(".json");
+
+      if (!isJson) continue;
+
+      QFile file(entry.path());
+
+      if (!file.open(QIODevice::ReadOnly)) {
+        qCritical() << "Theme: failed to open" << entry.path() << "for reading";
+        continue;
+      }
+
+      QJsonParseError error;
+      auto json = QJsonDocument::fromJson(file.readAll(), &error);
+
+      if (error.error != QJsonParseError::NoError) {
+        qCritical() << "Failed to parse" << entry.path() << "as JSON: " << error.errorString();
+        continue;
+      }
+
+      QJsonObject obj = json.object();
+      ParsedThemeData theme;
+
+      theme.id = QString::fromStdString(entry.path().filename().string());
+      theme.appearance = obj.value("appearance").toString();
+      theme.name = obj.value("name").toString();
+      theme.description = obj.value("description").toString();
+
+      if (theme.name.isEmpty()) {
+        qCritical() << "Ignoring theme" << entry.path() << "=> missing name field";
+        continue;
+      }
+
+      if (obj.contains("icon")) {
+        QString rawIcon = obj.value("icon").toString();
+
+        if (rawIcon.isEmpty()) { qWarning() << "'icon' field specified but empty"; }
+
+        // assuming absolute path
+        if (rawIcon.startsWith("/")) {
+          theme.icon = rawIcon.toStdString();
+        } else {
+          theme.icon = dir / rawIcon.toStdString();
+        }
+      }
+
+      auto colors = obj.value("palette").toObject();
+
+      // TODO: use default value for missing colors
+      theme.palette.background = colors.value("background").toString();
+      theme.palette.foreground = colors.value("foreground").toString();
+      theme.palette.blue = colors.value("blue").toString();
+      theme.palette.green = colors.value("green").toString();
+      theme.palette.magenta = colors.value("magenta").toString();
+      theme.palette.orange = colors.value("orange").toString();
+      theme.palette.purple = colors.value("purple").toString();
+      theme.palette.red = colors.value("red").toString();
+      theme.palette.yellow = colors.value("yellow").toString();
+
+      upsertTheme(theme);
+
+      // use default
+    }
+  }
+}
+
+std::vector<ParsedThemeData> ThemeService::loadColorSchemes() const {
   // XXX - Later on we may want to load those from somewhere on the filesystem (I guess)
-  std::vector<ColorScheme> schemes;
+  std::vector<ParsedThemeData> schemes;
 
-  schemes.reserve(10);
+  schemes.reserve(2);
 
-  ColorScheme solarizedOsaka;
+  ParsedThemeData lightTheme;
 
-  // cyan = "0x29a298"
-  solarizedOsaka.name = "Solarized Osaka";
-  solarizedOsaka.blue = "#268bd3";
-  solarizedOsaka.green = "#849900";
-  solarizedOsaka.purple = "#d23681";
-  solarizedOsaka.magenta = "#d23681";
-  solarizedOsaka.red = "#db302d";
-  solarizedOsaka.yellow = "#b28500";
-  solarizedOsaka.orange = "#b28500";
-  solarizedOsaka.background = "#001419";
-  solarizedOsaka.foreground = "#9eabac";
+  lightTheme.name = "Omnicast Light";
+  lightTheme.description = "Default light theme";
+  lightTheme.id = "omnicast-light";
+  lightTheme.appearance = "light";
+  lightTheme.palette = ColorPalette{.background = "#FAFAFA",
+                                    .foreground = "#2D3142",
+                                    .blue = "#277FBF",
+                                    .green = "#5A8F00",
+                                    .magenta = "#9F4FD4",
+                                    .orange = "#E16100",
+                                    .purple = "#7F3FBF",
+                                    .red = "#D63031",
+                                    .yellow = "#D68000",
+                                    .cyan = "#008B94"};
 
-  schemes.emplace_back(solarizedOsaka);
+  schemes.emplace_back(lightTheme);
 
-  // 2. Monokai
-  schemes.emplace_back(ColorScheme{
-      "Monokai",
-      QColor("#272822"), // Background
-      QColor("#f8f8f2"), // Foreground
-      QColor("#66d9ef"), // Blue
-      QColor("#a6e22e"), // Green
-      QColor("#f92672"), // Magenta
-      QColor("#fd971f"), // Orange
-      QColor("#ae81ff"), // Purple
-      QColor("#f92672"), // Red
-      QColor("#e6db74")  // Yellow
-  });
+  ParsedThemeData darkTheme;
 
-  // 3. Dracula
-  schemes.emplace_back(ColorScheme{
-      "Dracula",
-      QColor("#282a36"), // Background
-      QColor("#f8f8f2"), // Foreground
-      QColor("#8be9fd"), // Blue
-      QColor("#50fa7b"), // Green
-      QColor("#ff79c6"), // Magenta
-      QColor("#ffb86c"), // Orange
-      QColor("#bd93f9"), // Purple
-      QColor("#ff5555"), // Red
-      QColor("#f1fa8c")  // Yellow
-  });
-
-  // 4. Nord
-  schemes.emplace_back(ColorScheme{
-      "Nord",
-      QColor("#2e3440"), // Background
-      QColor("#d8dee9"), // Foreground
-      QColor("#81a1c1"), // Blue
-      QColor("#a3be8c"), // Green
-      QColor("#b48ead"), // Magenta
-      QColor("#d08770"), // Orange
-      QColor("#b48ead"), // Purple
-      QColor("#bf616a"), // Red
-      QColor("#ebcb8b")  // Yellow
-  });
-
-  // 5. Gruvbox Dark
-  schemes.emplace_back(ColorScheme{
-      "Gruvbox Dark",
-      QColor("#282828"), // Background
-      QColor("#ebdbb2"), // Foreground
-      QColor("#83a598"), // Blue
-      QColor("#b8bb26"), // Green
-      QColor("#d3869b"), // Magenta
-      QColor("#fe8019"), // Orange
-      QColor("#d3869b"), // Purple
-      QColor("#fb4934"), // Red
-      QColor("#fabd2f")  // Yellow
-  });
-
-  // 6. One Dark
-  schemes.emplace_back(ColorScheme{
-      "One Dark",
-      QColor("#282c34"), // Background
-      QColor("#abb2bf"), // Foreground
-      QColor("#61afef"), // Blue
-      QColor("#98c379"), // Green
-      QColor("#c678dd"), // Magenta
-      QColor("#d19a66"), // Orange
-      QColor("#c678dd"), // Purple
-      QColor("#e06c75"), // Red
-      QColor("#e5c07b")  // Yellow
-  });
-
-  // 7. Tokyo Night
-  schemes.emplace_back(ColorScheme{
-      "Tokyo Night",
-      QColor("#1a1b26"), // Background
-      QColor("#a9b1d6"), // Foreground
-      QColor("#7aa2f7"), // Blue
-      QColor("#9ece6a"), // Green
-      QColor("#bb9af7"), // Magenta
-      QColor("#ff9e64"), // Orange
-      QColor("#9d7cd8"), // Purple
-      QColor("#f7768e"), // Red
-      QColor("#e0af68")  // Yellow
-  });
-
-  // 8. Catppuccin
-  schemes.emplace_back(ColorScheme{
-      "Catppuccin",
-      QColor("#1e1e2e"), // Background
-      QColor("#cdd6f4"), // Foreground
-      QColor("#89b4fa"), // Blue
-      QColor("#a6e3a1"), // Green
-      QColor("#f5c2e7"), // Magenta
-      QColor("#fab387"), // Orange
-      QColor("#cba6f7"), // Purple
-      QColor("#f38ba8"), // Red
-      QColor("#f9e2af")  // Yellow
-  });
-
-  // 9. Github Dark
-  schemes.emplace_back(ColorScheme{
-      "Github Dark",
-      QColor("#0d1117"), // Background
-      QColor("#c9d1d9"), // Foreground
-      QColor("#58a6ff"), // Blue
-      QColor("#3fb950"), // Green
-      QColor("#d2a8ff"), // Magenta
-      QColor("#f0883e"), // Orange
-      QColor("#bc8cff"), // Purple
-      QColor("#f85149"), // Red
-      QColor("#e3b341")  // Yellow
-  });
-
-  // 10. Material Deep Ocean
-  schemes.emplace_back(ColorScheme{
-      "Material Deep Ocean",
-      QColor("#0f111a"), // Background
-      QColor("#8f93a2"), // Foreground
-      QColor("#82aaff"), // Blue
-      QColor("#c3e88d"), // Green
-      QColor("#ff9cac"), // Magenta
-      QColor("#f78c6c"), // Orange
-      QColor("#c792ea"), // Purple
-      QColor("#ff5370"), // Red
-      QColor("#ffcb6b")  // Yellow
-  });
+  darkTheme.name = "Omnicast Dark";
+  darkTheme.description = "Default dark theme";
+  darkTheme.id = "omnicast-dark";
+  darkTheme.appearance = "dark";
+  darkTheme.palette = ColorPalette{.background = "#1C1C1C",
+                                   .foreground = "#D0D0D0",
+                                   .blue = "#6CA0F7",
+                                   .green = "#7ECB6A",
+                                   .magenta = "#C678DD",
+                                   .orange = "#F4A460",
+                                   .purple = "#B19CD9",
+                                   .red = "#F85E5E",
+                                   .yellow = "#FFCC66",
+                                   .cyan = "#66D9EF"};
+  schemes.emplace_back(darkTheme);
 
   return schemes;
 }

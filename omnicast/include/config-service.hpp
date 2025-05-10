@@ -65,7 +65,7 @@ private:
     {
       auto theme = obj.value("theme").toObject();
 
-      cfg.theme.name = theme.value("name").toString();
+      if (theme.contains("name")) { cfg.theme.name = theme.value("name").toString(); }
     }
 
     {

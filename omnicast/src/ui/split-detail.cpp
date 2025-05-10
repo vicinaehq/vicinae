@@ -38,7 +38,7 @@ QWidget *SplitDetailWidget::detailWidget() const { return m_detailWidget; }
 
 void SplitDetailWidget::setMainWidget(QWidget *widget) {
   if (m_mainWidget) {
-    m_mainWidget->setParent(nullptr);
+    // m_mainWidget->setParent(nullptr);
     m_mainWidget->hide();
   }
 
@@ -48,7 +48,7 @@ void SplitDetailWidget::setMainWidget(QWidget *widget) {
 
 void SplitDetailWidget::setDetailWidget(QWidget *widget) {
   if (m_detailWidget) {
-    m_detailWidget->setParent(nullptr);
+    // m_detailWidget->setParent(nullptr);
     m_detailWidget->hide();
   }
 

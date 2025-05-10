@@ -18,6 +18,7 @@ void ShortcutButton::resetColor() {
   _shortcut_indicator->setBackgroundColor(hovered() ? theme.colors.statusBackgroundLighter
                                                     : theme.colors.statusBackgroundLighter);
   setBackgroundColor(hovered() ? theme.colors.statusBackgroundHover : QColor::Invalid);
+  setTextColor(theme.colors.text);
 }
 
 void ShortcutButton::setText(const QString &text) {

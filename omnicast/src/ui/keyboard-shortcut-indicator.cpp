@@ -30,12 +30,12 @@ void KeyboardShortcutIndicatorWidget::drawKey(const QString &key, QRect rect, QP
                     rect.height() - padding * 2);
 
   if (auto it = keyToIcon.find(key); it != keyToIcon.end()) {
-    auto controlIcon = BuiltinIconService::loadTinted(it->second, theme.colors.subtext);
+    auto controlIcon = BuiltinIconService::loadTinted(it->second, theme.colors.text);
 
     painter.drawPixmap(contentRect,
                        controlIcon.scaled(contentRect.size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
   } else {
-    painter.setPen(theme.colors.subtext);
+    painter.setPen(theme.colors.text);
     painter.drawText(contentRect, Qt::AlignCenter, _shortcutModel.key);
   }
 }

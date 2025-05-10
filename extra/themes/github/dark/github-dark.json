@@ -1,0 +1,19 @@
+{
+	"version": "1.0.0",
+	"appearance": "dark",
+	"icon": "../github.svg",
+	"name": "Github Dark",
+	"description": "The official Github dark color palette",
+	"palette": {
+	  "background": "#0D1117",
+	  "foreground": "#C9D1D9",
+	  "blue": "#58A6FF",
+	  "green": "#3FB950",
+	  "magenta": "#D2A8FF",
+	  "orange": "#F0883E",
+	  "purple": "#BC8CFF",
+	  "red": "#F85149",
+	  "yellow": "#E3B341",
+	  "cyan": "#76E3EA"
+	}
+}

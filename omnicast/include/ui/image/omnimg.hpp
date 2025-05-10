@@ -5,8 +5,10 @@
 #include "omni-icon.hpp"
 #include "theme.hpp"
 #include <QtConcurrent/qtconcurrentiteratekernel.h>
+#include <algorithm>
 #include <iterator>
 #include <memory>
+#include <numbers>
 #include <qbuffer.h>
 #include <qdir.h>
 #include <qevent.h>
@@ -122,8 +124,6 @@ public:
       if (!m_device->open(QIODevice::ReadOnly)) {
         emit errorOccured(QString("IODevice could not be opened for reading"));
         return;
-      } else {
-        qWarning() << "Opened device";
       }
     }
 
@@ -179,7 +179,6 @@ class LocalImageLoader : public AbstractImageLoader {
 
   void render(const RenderConfig &cfg) override {
     auto file = std::make_unique<QFile>(m_path);
-    qDebug() << "render with" << file->fileName();
     m_loader = std::make_unique<IODeviceImageLoader>(std::move(file));
     connect(m_loader.get(), &IODeviceImageLoader::dataUpdated, this, &LocalImageLoader::dataUpdated);
     connect(m_loader.get(), &IODeviceImageLoader::errorOccured, this, &LocalImageLoader::errorOccured);
@@ -218,6 +217,58 @@ public:
   void setFillColor(const std::optional<ColorLike> &color) { m_fill = color; }
 
   SvgImageLoader(const QByteArray &data) { m_renderer.load(data); }
+};
+
+class FaviconImageLoader : public AbstractImageLoader {
+  QSharedPointer<AbstractFaviconRequest> m_requester;
+  QString m_domain;
+
+  void render(const RenderConfig &config) override {
+    auto reply = FaviconService::instance()->makeRequest(m_domain);
+
+    m_requester = QSharedPointer<AbstractFaviconRequest>(reply);
+    connect(m_requester.get(), &AbstractFaviconRequest::finished, this,
+            [this, config](const QPixmap &pixmap) {
+              emit dataUpdated(pixmap.scaled(config.size, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+            });
+    connect(m_requester.get(), &AbstractFaviconRequest::failed, this,
+            [this]() { emit errorOccured("Failed to load image"); });
+    m_requester->start();
+  }
+
+public:
+  FaviconImageLoader(const QString &hostname) : m_domain(hostname) {}
+};
+
+class QIconImageLoader : public AbstractImageLoader {
+  QIcon m_icon;
+
+public:
+  void render(const RenderConfig &config) override {
+    if (m_icon.isNull()) {
+      emit errorOccured("No icon for this name" + m_icon.name());
+      return;
+    }
+
+    auto sizes = m_icon.availableSizes();
+    auto it = std::ranges::max_element(
+        sizes, [](QSize a, QSize b) { return a.width() * a.height() < b.width() * b.height(); });
+
+    // most likely SVG, we can request the size we want
+    if (it == sizes.end()) {
+      emit dataUpdated(m_icon.pixmap(config.size));
+      return;
+    }
+
+    auto scaled = m_icon.pixmap(*it).scaled(config.size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+
+    emit dataUpdated(scaled);
+  }
+
+  QIconImageLoader(const QString &name) {
+    m_icon = QIcon(name);
+    if (m_icon.isNull()) { m_icon = QIcon::fromTheme(name); }
+  }
 };
 
 // for now, hardcoded to only work with local images, will expand later on, no worries
@@ -267,10 +318,7 @@ class ImageWidget : public QWidget {
 
   void handleLoadingError(const QString &reason) {
     qCritical() << "Failed to load" << reason;
-    if (auto fallback = m_source.fallback()) {
-      qDebug() << "Fall back on" << *fallback;
-      return setUrl(*fallback);
-    }
+    if (auto fallback = m_source.fallback()) { return setUrl(*fallback); }
     return setUrl(BuiltinOmniIconUrl("question-mark-circle"));
   }
 
@@ -284,40 +332,9 @@ class ImageWidget : public QWidget {
     return {25, 25};
   }
 
-public:
-  void render() {
-    if (size().isNull() || size().isEmpty() || !size().isValid()) return;
-
-    if (!m_loader) {
-      qWarning() << "No loader set for Image";
-      return;
-    }
-
-    qDebug() << "Rendering for size" << size();
-    // we always provide the renderer with the scaled size, so that loading can be
-    // optimized properly for highDPI.
-    auto drawingRect = rect().marginsRemoved(contentsMargins());
-    auto deviceSize = drawingRect.size() * devicePixelRatio();
-
-    m_renderCount += 1;
-    m_loader->render(RenderConfig{.size = deviceSize, .fit = m_fit});
-  }
-
-  void setAlignment(Qt::Alignment alignment) {
-    m_alignment = alignment;
-    update();
-  }
-
-  void setObjectFit(ObjectFit fit) {
-    m_fit = fit;
-    update();
-  }
-
-  void setUrl(const OmniIconUrl &url) {
-    if (url == m_source) return;
+  void setUrlImpl(const OmniIconUrl &url) {
+    auto &theme = ThemeService::instance().theme();
     auto type = url.type();
-
-    qDebug() << "loading" << url.toString();
 
     m_source = url;
     m_backgroundColor = {};
@@ -331,11 +348,11 @@ public:
     }
 
     if (type == OmniIconType::Favicon) {
-      // XXX - TBD
+      m_loader = std::make_unique<FaviconImageLoader>(url.name());
     }
 
     else if (type == OmniIconType::System) {
-      // XXX - TBD
+      m_loader = std::make_unique<QIconImageLoader>(url.name());
     }
 
     else if (type == OmniIconType::Builtin) {
@@ -345,13 +362,35 @@ public:
 
       auto svgLoader = std::make_unique<SvgImageLoader>(file.readAll());
 
-      svgLoader->setFillColor(url.fillColor());
+      if (m_backgroundColor) {
+        QColor color = OmniPainter::textColorForBackground(*m_backgroundColor);
+
+        svgLoader->setFillColor(OmniPainter::textColorForBackground(*m_backgroundColor));
+      } else {
+        svgLoader->setFillColor(url.fillColor());
+      }
+
       m_loader = std::move(svgLoader);
     }
 
     else if (type == OmniIconType::Local) {
-      qDebug() << "local icon" << url.name();
-      m_loader = std::make_unique<LocalImageLoader>(url.name().toStdString());
+      std::filesystem::path path = url.name().toStdString();
+      auto filename = path.filename().string();
+      auto pos = filename.find('.');
+      std::string suffixed;
+      std::string suffix = "@" + theme.appearance.toStdString();
+
+      if (pos != std::string::npos) {
+        suffixed = filename.substr(0, pos) + suffix + filename.substr(pos);
+      } else {
+        suffixed = filename + "@dark";
+      }
+
+      std::filesystem::path suffixedPath = path.parent_path() / suffixed;
+
+      if (std::filesystem::is_regular_file(suffixedPath)) { path = suffixedPath; }
+
+      m_loader = std::make_unique<LocalImageLoader>(path);
     }
 
     else if (type == OmniIconType::Http) {
@@ -373,9 +412,47 @@ public:
     }
   }
 
+public:
+  void render() {
+    if (size().isNull() || size().isEmpty() || !size().isValid()) return;
+
+    if (!m_loader) {
+      qWarning() << "No loader set for Image";
+      return;
+    }
+
+    // we always provide the renderer with the scaled size, so that loading can be
+    // optimized properly for highDPI.
+    auto drawingRect = rect().marginsRemoved(contentsMargins());
+    auto deviceSize = drawingRect.size() * devicePixelRatio();
+
+    m_renderCount += 1;
+    m_loader->render(RenderConfig{.size = deviceSize, .fit = m_fit});
+  }
+
+  void setAlignment(Qt::Alignment alignment) {
+    m_alignment = alignment;
+    update();
+  }
+
+  void setObjectFit(ObjectFit fit) {
+    m_fit = fit;
+    update();
+  }
+
+  const OmniIconUrl &url() const { return m_source; }
+
+  void setUrl(const OmniIconUrl &url) {
+    if (url == m_source) return;
+    setUrlImpl(url);
+  }
+
+  ImageWidget(QWidget *parent = nullptr) : QWidget(parent) {
+    connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() { setUrlImpl(m_source); });
+  }
+
   ~ImageWidget() {
     if (m_loader) m_loader->abort();
-    qCritical() << "Remove image!" << m_source;
   }
 };
 

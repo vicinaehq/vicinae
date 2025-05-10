@@ -48,8 +48,6 @@ void MetadataPane::add(const QString &title, QWidget *widget, Direction directio
 }
 
 void MetadataPane::addItem(const MetadataItem &item, Direction direction) {
-  ThemeService theme;
-
   if (auto label = std::get_if<MetadataLabel>(&item)) {
     add(label->title, new QLabel(label->text), direction);
   } else if (auto separator = std::get_if<MetadataSeparator>(&item)) {

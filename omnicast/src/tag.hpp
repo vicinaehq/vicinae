@@ -1,6 +1,5 @@
 #pragma once
 #include "extend/tag-model.hpp"
-#include "theme.hpp"
 #include <qboxlayout.h>
 #include <qlabel.h>
 #include <qnamespace.h>
@@ -40,8 +39,6 @@ public:
   }
 
   void applyModel(const TagItemModel &model) {
-    ThemeService theme;
-
     setText(model.text);
 
     if (model.color) {

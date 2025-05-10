@@ -1,0 +1,19 @@
+{
+	"version": "1.0.0",
+	"appearance": "dark",
+	"icon": "icon.svg",
+	"name": "Nord",
+	"description": "Arctic, north-bluish clean and elegant theme",
+	"palette": {
+	  "background": "#2E3440",
+	  "foreground": "#D8DEE9",
+	  "blue": "#81A1C1",
+	  "green": "#A3BE8C",
+	  "magenta": "#B48EAD",
+	  "orange": "#D08770",
+	  "purple": "#B48EAD",
+	  "red": "#BF616A",
+	  "yellow": "#EBCB8B",
+	  "cyan": "#88C0D0"
+	}
+}

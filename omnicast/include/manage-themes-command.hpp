@@ -5,6 +5,7 @@
 #include "theme.hpp"
 #include "ui/color_circle.hpp"
 #include "ui/default-list-item-widget.hpp"
+#include "ui/image/omnimg.hpp"
 #include "ui/omni-list-view.hpp"
 #include "ui/omni-list.hpp"
 #include "ui/selectable-omni-list-widget.hpp"
@@ -48,7 +49,7 @@ public:
 
 class ThemeItemWidget : public SelectableOmniListWidget {
   QHBoxLayout *m_layout = new QHBoxLayout(this);
-  OmniIcon *m_icon = new OmniIcon(this);
+  Omnimg::ImageWidget *m_icon = new Omnimg::ImageWidget();
   TypographyWidget *m_title = new TypographyWidget();
   TypographyWidget *m_description = new TypographyWidget();
   AccessoryListWidget *m_accessories = new AccessoryListWidget(this);
@@ -90,7 +91,7 @@ class SetThemeAction : public AbstractAction {
     configService->updateConfig([&](ConfigService::Value &value) { value.theme.name = _themeName; });
 
     ThemeService::instance().setTheme(_themeName);
-    app.statusBar->setToast("Theme set to " + _themeName);
+    app.statusBar->setToast("Theme successfully updated");
   }
 
 public:
@@ -120,7 +121,7 @@ public:
   }
 
   QList<AbstractAction *> generateActions() const override {
-    auto set = new SetThemeAction(m_theme.name);
+    auto set = new SetThemeAction(m_theme.id);
 
     if (_themeSelectedCallback) {
       set->setExecutionCallback([this]() { _themeSelectedCallback(m_theme.name); });
@@ -129,7 +130,7 @@ public:
     return {set};
   }
 
-  QString id() const override { return m_theme.name; }
+  QString id() const override { return m_theme.id; }
 
   bool recyclable() const override { return false; }
 
@@ -137,10 +138,13 @@ public:
     auto item = new ThemeItemWidget;
 
     item->setTitle(m_theme.name);
-    item->setDescription("A big, beautiful theme");
-    // item->setIcon(BuiltinOmniIconUrl("brush"));
-    item->setIcon(
-        HttpOmniIconUrl(QUrl("https://github.com/rebelot/kanagawa.nvim/raw/master/kanagawa@2x.png")));
+    item->setDescription(m_theme.description.isEmpty() ? "Default theme description" : m_theme.description);
+
+    if (m_theme.icon) {
+      item->setIcon(LocalOmniIconUrl(*m_theme.icon).withFallback(BuiltinOmniIconUrl("omnicast")));
+    } else {
+      item->setIcon(BuiltinOmniIconUrl("omnicast"));
+    }
 
     std::vector<ColorLike> colors{m_theme.colors.red,     m_theme.colors.blue,   m_theme.colors.green,
                                   m_theme.colors.magenta, m_theme.colors.purple, m_theme.colors.orange,
@@ -185,7 +189,11 @@ class ManageThemesView : public OmniListView {
     list->updateFromList(items, OmniList::SelectionPolicy::SelectFirst);
   }
 
-  void onMount() override { setSearchPlaceholderText("Manage themes..."); }
+  void onMount() override {
+    setSearchPlaceholderText("Manage themes...");
+    // for now, blocking on this is okay
+    ThemeService::instance().scanThemeDirectories();
+  }
 
   void onSearchChanged(const QString &s) override { generateList(s); }
 

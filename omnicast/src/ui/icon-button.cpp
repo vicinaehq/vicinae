@@ -1,4 +1,5 @@
 #include "ui/icon-button.hpp"
+#include "ui/image/omnimg.hpp"
 
 void IconButton::resizeEvent(QResizeEvent *event) {
   auto margins = contentsMargins();
@@ -9,7 +10,7 @@ void IconButton::resizeEvent(QResizeEvent *event) {
   Button::resizeEvent(event);
 }
 
-IconButton::IconButton() : _icon(new OmniIcon(this)) {
+IconButton::IconButton() : _icon(new Omnimg::ImageWidget(this)) {
   setContentsMargins(3, 3, 3, 3);
   _icon->show();
 }

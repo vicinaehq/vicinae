@@ -1,4 +1,5 @@
 #include "ai/ollama-ai-provider.hpp"
+#include <QStyleHints>
 #include "app-service.hpp"
 #include "app-root-provider.hpp"
 #include "app.hpp"
@@ -45,6 +46,7 @@
 #include "ranking-service.hpp"
 #include "root-item-manager.hpp"
 #include "service-registry.hpp"
+#include "theme.hpp"
 
 #ifdef WAYLAND_LAYER_SHELL
 #include <LayerShellQt/window.h>
@@ -164,6 +166,19 @@ int startDaemon() {
     auto appService = std::make_unique<AppService>(*omniDb.get(), *rankingService.get());
     auto rootExtMan = std::make_unique<RootExtensionManager>(*rootItemManager.get(), *commandDb.get());
     auto configService = std::make_unique<ConfigService>(*localStorage.get());
+    auto currentConfig = configService->value();
+
+    if (auto name = currentConfig.theme.name) {
+      ThemeService::instance().setTheme(*name);
+    } else {
+      QString defaultTheme = "omnicast-dark";
+
+      if (qApp->styleHints()->colorScheme() == Qt::ColorScheme::Light) { defaultTheme = "omnicast-light"; }
+
+      qCritical() << "set default theme" << defaultTheme;
+
+      ThemeService::instance().setTheme(defaultTheme);
+    }
 
     aiManager->registerProvider(std::move(ollamaProvider));
 

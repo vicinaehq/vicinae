@@ -83,13 +83,13 @@ class PeepobankView : public OmniGridView {
     void recycleCenterWidget(QWidget *base) const override {
       auto label = static_cast<Omnimg::ImageWidget *>(base);
 
-      label->setUrl(BuiltinOmniIconUrl(_info.path));
+      label->setUrl(LocalOmniIconUrl(_info.path));
     }
 
     QWidget *centerWidget() const override {
       auto label = new Omnimg::ImageWidget();
 
-      label->setUrl(BuiltinOmniIconUrl(_info.path));
+      label->setUrl(LocalOmniIconUrl(_info.path));
       label->setObjectFit(Omnimg::ObjectFitContain);
 
       return label;

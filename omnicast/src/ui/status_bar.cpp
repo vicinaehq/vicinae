@@ -124,12 +124,16 @@ void StatusBar::paintEvent(QPaintEvent *event) {
   QPen pen(theme.colors.statusBackgroundBorder, borderWidth);
 
   painter.setRenderHint(QPainter::Antialiasing, true);
+
   painter.setBrush(theme.colors.statusBackground);
-  painter.setPen(pen);
+  painter.setPen(QPen(theme.colors.border));
   painter.drawRoundedRect(rect(), radius, radius);
   painter.setPen(Qt::NoPen);
   // fill top to get rid of the top border
   painter.drawRect(borderWidth, 0, width() - borderWidth * 2, height() - radius);
+
+  painter.setBrush(theme.colors.border);
+  painter.drawRect(0, 0, width(), 1);
 }
 
 void StatusBar::setToast(const QString &text, ToastPriority priority) {

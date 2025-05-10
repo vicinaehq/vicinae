@@ -118,6 +118,20 @@ class RootView : public DeclarativeOmniListView {
     QString m_id;
 
     void execute(AppWindow &app) override {
+      if (app.topBar->m_completer->isVisible()) {
+        for (int i = 0; i != app.topBar->m_completer->m_args.size(); ++i) {
+          auto &arg = app.topBar->m_completer->m_args.at(i);
+          auto input = app.topBar->m_completer->m_inputs.at(i);
+
+          qCritical() << "required" << arg.required << input->text();
+
+          if (arg.required && input->text().isEmpty()) {
+            input->setFocus();
+            return;
+          }
+        }
+      }
+
       auto manager = ServiceRegistry::instance()->rootItemManager();
 
       if (manager->registerVisit(m_id)) {
@@ -287,7 +301,9 @@ public:
   ItemList generateList(const QString &s) override { return {}; }
 
   void render(const QString &s) override {
-    if (s.isEmpty()) return renderBlankSearch();
+    QString query = s.trimmed();
+
+    if (query.isEmpty()) return renderBlankSearch();
 
     auto rootItemManager = ServiceRegistry::instance()->rootItemManager();
     auto commandDb = ServiceRegistry::instance()->commandDb();
@@ -298,13 +314,6 @@ public:
     const auto &appEntries = appDb->listEntries();
     const auto &commandEntries = commandDb->commands();
     size_t maxReserve = appEntries.size() + commandEntries.size() + quicklinks.size();
-
-    auto isWordStart = [&s](const QString &text) -> bool {
-      if (text.startsWith(s, Qt::CaseInsensitive)) { return true; }
-
-      return std::ranges::any_of(
-          text.split(" "), [&s](const QString &word) { return word.startsWith(s, Qt::CaseInsensitive); });
-    };
 
     auto start = std::chrono::high_resolution_clock::now();
 

@@ -101,8 +101,6 @@ void AppWindow::popCurrentView() {
     return;
   }
 
-  QPixmapCache::clear();
-
   auto &activeCommand = commandStack.at(commandStack.size() - 1);
 
   if (activeCommand.viewStack.empty()) return;
@@ -300,19 +298,6 @@ void AppWindow::unloadHangingCommand() {
 
 void AppWindow::launchCommand(const std::shared_ptr<AbstractCmd> &command, const LaunchCommandOptions &opts,
                               const LaunchProps &props) {
-  if (topBar->m_completer->isVisible()) {
-    for (int i = 0; i != topBar->m_completer->m_args.size(); ++i) {
-      auto &arg = topBar->m_completer->m_args.at(i);
-      auto input = topBar->m_completer->m_inputs.at(i);
-
-      qCritical() << "required" << arg.required << input->text();
-
-      if (arg.required && input->text().isEmpty()) {
-        input->setFocus();
-        return;
-      }
-    }
-  }
 
   auto commandDb = ServiceRegistry::instance()->commandDb();
   auto preferenceValues = commandDb->getPreferenceValues(command->uniqueId());
@@ -505,6 +490,8 @@ void AppWindow::executeAction(AbstractAction *action) {
 
   executor.command->onActionExecuted(action);
 
+  if (auto cb = action->executionCallback()) cb();
+
   if (oldViewStackSize > 0 && executor.viewStack.size() < oldViewStackSize) return;
 
   executor.viewStack.at(oldViewStackSize - 1).view->onActionActivated(action);
@@ -529,7 +516,6 @@ AppWindow::AppWindow(QWidget *parent)
   statusBar->setFixedHeight(Omnicast::STATUS_BAR_HEIGHT);
 
   QDir::root().mkpath(Config::dirPath());
-  ThemeService::instance().setTheme("Solarized Osaka");
   FaviconService::initialize(new FaviconService(Config::dirPath() + QDir::separator() + "favicon.db"));
 
   _commandServer = new CommandServer(this);
@@ -554,13 +540,13 @@ AppWindow::AppWindow(QWidget *parent)
 
   connect(ServiceRegistry::instance()->config(), &ConfigService::configChanged, this,
           [](const ConfigService::Value &next, const ConfigService::Value &prev) {
+            if (next.theme.name.value_or("") != prev.theme.name.value_or("")) {
+              ThemeService::instance().setTheme(*next.theme.name);
+            }
+
             if (next.font.normal && *next.font.normal != prev.font.normal.value_or("")) {
               QApplication::setFont(*next.font.normal);
               qApp->setStyleSheet(qApp->styleSheet());
-            }
-
-            if (next.theme.name.value_or("") != prev.theme.name.value_or("")) {
-              ThemeService::instance().setTheme(*next.theme.name);
             }
           });
 

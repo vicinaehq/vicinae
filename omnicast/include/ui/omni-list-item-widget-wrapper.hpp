@@ -15,7 +15,7 @@ class OmniListItemWidgetWrapper : public QWidget {
 
 public:
   OmniListItemWidgetWrapper(QWidget *parent = nullptr);
-  ~OmniListItemWidgetWrapper() { qDebug() << "delete item widget wrapper"; }
+  ~OmniListItemWidgetWrapper() { /*qDebug() << "delete item widget wrapper";*/ }
 
   QWidget *widget() const;
   int index() const;

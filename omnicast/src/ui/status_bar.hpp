@@ -4,6 +4,7 @@
 #include "extend/image-model.hpp"
 #include "omni-icon.hpp"
 #include "ui/action_popover.hpp"
+#include "ui/image/omnimg.hpp"
 #include "ui/text-label.hpp"
 #include "ui/toast.hpp"
 #include <QBoxLayout>
@@ -34,7 +35,7 @@ class StatusBar : public QWidget {
 
   class CurrentCommandWidget : public QWidget {
     TypographyWidget *_title;
-    OmniIcon *m_icon = new OmniIcon(this);
+    Omnimg::ImageWidget *m_icon = new Omnimg::ImageWidget();
 
   public:
     CurrentCommandWidget(const QString &name, const OmniIconUrl &iconUrl) : _title(new TypographyWidget()) {
