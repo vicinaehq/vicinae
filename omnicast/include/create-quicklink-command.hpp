@@ -3,6 +3,7 @@
 #include "quicklist-database.hpp"
 #include "service-registry.hpp"
 #include "ui/form/base-input.hpp"
+#include "ui/form/completed-input.hpp"
 #include "ui/form/form-field.hpp"
 #include "ui/form/selector-input.hpp"
 #include "ui/toast.hpp"
@@ -11,6 +12,7 @@
 #include <functional>
 #include <memory>
 #include <qboxlayout.h>
+#include <qlocale.h>
 #include <qnamespace.h>
 #include <qpixmap.h>
 #include <qsharedpointer.h>
@@ -93,6 +95,22 @@ public:
       : IconSelectorItem(url, displayName) {}
 };
 
+class LinkCompleter : public CompletedInput::Completer {
+  std::vector<CompletionData> generateCompletions(const QString &query) const override {
+    qDebug() << "completions for" << query;
+    if (query.endsWith("{")) {
+      return {
+          CompletionData{},
+          CompletionData{},
+          CompletionData{},
+          CompletionData{},
+      };
+    }
+
+    return {};
+  }
+};
+
 class QuicklinkCommandView : public View {
   void handleAppSelectorTextChanged(const QString &text) {}
 
@@ -133,19 +151,20 @@ class QuicklinkCommandView : public View {
 protected:
   FormWidget *form;
   BaseInput *name;
-  BaseInput *link;
+  CompletedInput *link;
   SelectorInput *appSelector;
   SelectorInput *iconSelector;
 
 public:
   QuicklinkCommandView(AppWindow &app)
-      : View(app), form(new FormWidget), name(new BaseInput), link(new BaseInput),
+      : View(app), form(new FormWidget), name(new BaseInput), link(new CompletedInput),
         appSelector(new SelectorInput), iconSelector(new SelectorInput) {
     auto appDb = ServiceRegistry::instance()->appDb();
     auto quicklinkDb = ServiceRegistry::instance()->quicklinks();
 
     name->setPlaceholderText("Quicklink name");
     link->setPlaceholderText("https://google.com/search?q={argument}");
+    link->setCompleter(std::make_unique<LinkCompleter>());
 
     auto nameField = new FormField;
     auto linkField = new FormField;
@@ -169,7 +188,7 @@ public:
     form->addField(openField);
     form->addField(iconField);
 
-    connect(link, &BaseInput::textChanged, this, &QuicklinkCommandView::handleLinkChange);
+    connect(link, &CompletedInput::textChanged, this, &QuicklinkCommandView::handleLinkChange);
     connect(appSelector, &SelectorInput::textChanged, this,
             &QuicklinkCommandView::handleAppSelectorTextChanged);
     connect(iconSelector, &SelectorInput::textChanged, this, &QuicklinkCommandView::iconSelectorTextChanged);

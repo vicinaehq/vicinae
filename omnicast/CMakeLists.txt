@@ -68,6 +68,8 @@ set(SRCS
 	src/ui/form/base-input.cpp
 	include/ui/form/selector-input.hpp
 	src/ui/form/selector-input.cpp
+	include/ui/form/completed-input.hpp
+	src/ui/form/completed-input.cpp
 	include/ui/form/form.hpp
 	src/ui/form/form.cpp
 	include/ui/form/form-field.hpp
