@@ -1,5 +1,6 @@
 #include "ui/markdown/markdown-renderer.hpp"
 #include "omni-icon.hpp"
+#include "service-registry.hpp"
 #include "theme.hpp"
 #include "ui/omni-scroll-bar.hpp"
 #include <cmark.h>
@@ -234,6 +235,9 @@ void MarkdownRenderer::insertBlockParagraph(cmark_node *node) {
 }
 
 void MarkdownRenderer::insertSpan(cmark_node *node, QTextCharFormat &fmt) {
+  auto &theme = ThemeService::instance().theme();
+  OmniPainter painter;
+
   switch (cmark_node_get_type(node)) {
   case CMARK_NODE_STRONG:
     fmt.setFontWeight(QFont::DemiBold);
@@ -245,7 +249,8 @@ void MarkdownRenderer::insertSpan(cmark_node *node, QTextCharFormat &fmt) {
     break;
   case CMARK_NODE_CODE:
     fmt.setFontFamilies({"monospace"});
-    fmt.setBackground(QColor(50, 50, 50));
+    fmt.setForeground(painter.colorBrush(theme.resolveTint(ColorTint::Red)));
+    fmt.setBackground(painter.colorBrush(theme.colors.statusBackground));
     _cursor.insertText(cmark_node_get_literal(node), fmt);
     break;
   case CMARK_NODE_LINK:
@@ -271,10 +276,16 @@ void MarkdownRenderer::insertSpan(cmark_node *node, QTextCharFormat &fmt) {
 }
 
 void MarkdownRenderer::insertParagraph(cmark_node *node) {
+  auto &theme = ThemeService::instance().theme();
+  OmniPainter painter;
   cmark_node *child = cmark_node_first_child(node);
   QTextCharFormat defaultFormat;
 
   defaultFormat.setFont(_document->defaultFont());
+  defaultFormat.setForeground(painter.colorBrush(*m_baseTextColor));
+
+  qDebug() << "render paragraph with font" << _document->defaultFont();
+
   defaultFormat.setFontPointSize(_basePointSize);
 
   while (child) {
@@ -295,6 +306,8 @@ void MarkdownRenderer::insertParagraph(cmark_node *node) {
   }
   _cursor.setCharFormat(defaultFormat);
 }
+
+void MarkdownRenderer::setBaseTextColor(const ColorLike &color) { m_baseTextColor = color; }
 
 void MarkdownRenderer::insertHeading(cmark_node *node) {
   auto textNode = cmark_node_first_child(node);
@@ -338,6 +351,7 @@ void MarkdownRenderer::clear() {
   _lastNodePosition.originalMarkdown = 0;
   _document->clear();
   _markdown.clear();
+  _document->setDefaultFont(m_font);
 }
 
 void MarkdownRenderer::setBasePointSize(int pointSize) { _basePointSize = pointSize; }
@@ -438,9 +452,41 @@ void MarkdownRenderer::setMarkdown(QStringView markdown) {
   _cursor.setPosition(0);
   _textEdit->verticalScrollBar()->setValue(0);
   _textEdit->setTextCursor(_cursor);
+  qreal height = _document->size().height();
+
+  /*
+  QFont font = _document->defaultFont();
+  QFontMetrics metrics(font);
+
+  qDebug() << "Font point size:" << font.pointSize();
+  qDebug() << "Font pixel size:" << font.pixelSize();
+  qDebug() << "Line spacing:" << metrics.lineSpacing();
+  qDebug() << "Height (ascent + descent):" << metrics.height();
+  qDebug() << "Ascent:" << metrics.ascent();
+  qDebug() << "Descent:" << metrics.descent();
+  qDebug() << "Leading:" << metrics.leading();
+  qDebug() << "Document margin:" << _document->documentMargin();
+  qCritical() << "text edit height" << _textEdit->height();
+  qCritical() << "set height to" << height;
+
+  QTextCursor cursor(_document);
+  do {
+    QTextBlockFormat format = cursor.blockFormat();
+    qDebug() << "Block" << cursor.blockNumber() << "top margin:" << format.topMargin()
+             << "bottom margin:" << format.bottomMargin();
+  } while (cursor.movePosition(QTextCursor::NextBlock));
+  */
+
+  if (m_growAsRequired) { setFixedHeight(_document->size().height()); }
 }
 
-void MarkdownRenderer::setFont(const QFont &font) { _document->setDefaultFont(font); }
+void MarkdownRenderer::setFont(const QFont &font) {
+  qDebug() << "font" << font;
+  _document->setDefaultFont(font);
+  m_font = font;
+}
+
+void MarkdownRenderer::setGrowAsRequired(bool value) { m_growAsRequired = value; }
 
 MarkdownRenderer::MarkdownRenderer()
     : _document(new QTextDocument), _textEdit(new QTextEdit(this)), _basePointSize(DEFAULT_BASE_POINT_SIZE) {
@@ -449,9 +495,7 @@ MarkdownRenderer::MarkdownRenderer()
   _lastNodePosition.renderedText = 0;
   _lastNodePosition.originalMarkdown = 0;
 
-  _document->setDefaultFont(QFontDatabase::systemFont(QFontDatabase::GeneralFont));
   _document->setUseDesignMetrics(true);
-
   _textEdit->setReadOnly(true);
   _textEdit->setFrameShape(QFrame::NoFrame);
   _textEdit->setDocument(_document);
@@ -459,8 +503,16 @@ MarkdownRenderer::MarkdownRenderer()
   _document->setDocumentMargin(10);
   _textEdit->setHorizontalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
   _textEdit->setTabStopDistance(40);
-  _textEdit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  //_textEdit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   _textEdit->setFocusPolicy(Qt::FocusPolicy::NoFocus);
+  setFont(QApplication::font());
+
+  auto config = ServiceRegistry::instance()->config();
+
+  _basePointSize = config->value().font.baseSize;
+
+  connect(config, &ConfigService::configChanged, this,
+          [this, config]() { _basePointSize = config->value().font.baseSize; });
 
   _cursor = QTextCursor(_document);
 }

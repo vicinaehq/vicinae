@@ -1,5 +1,6 @@
 #pragma once
 #include "ui/focus-notifier.hpp"
+#include "ui/markdown/markdown-renderer.hpp"
 #include "ui/typography.hpp"
 #include <qboxlayout.h>
 #include <qcoreevent.h>
@@ -13,8 +14,12 @@ class FormField : public QWidget {
 
   TypographyWidget *_nameLabel;
   TypographyWidget *_errorLabel;
+  MarkdownRenderer *m_info = new MarkdownRenderer;
   QWidget *_widget;
   QHBoxLayout *_layout;
+  QWidget *m_infoContainer = new QWidget;
+  QVBoxLayout *m_mainLayout = new QVBoxLayout(this);
+  QHBoxLayout *m_infoLayout = new QHBoxLayout();
 
 protected:
   void focusInEvent(QFocusEvent *event) override {
@@ -42,6 +47,7 @@ public:
 
   void setName(const QString &name);
   void setError(const QString &error);
+  void setInfo(const QString &info);
   QString errorText() const;
   void setWidget(QWidget *widget, FocusNotifier *focusNotifier = nullptr);
   void clearError();

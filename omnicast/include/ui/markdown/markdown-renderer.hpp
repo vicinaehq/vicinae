@@ -1,6 +1,7 @@
 #pragma once
 #include "omni-icon.hpp"
 #include <QTextBlock>
+#include <qlogging.h>
 #include <qnamespace.h>
 #include <qplaintextedit.h>
 #include <qstring.h>
@@ -30,11 +31,13 @@ class MarkdownRenderer : public QWidget {
 
   std::vector<ImageResource> m_images;
   QString _markdown;
+  QFont m_font;
   QTextEdit *_textEdit;
   QTextDocument *_document;
   QTextCursor _cursor;
   int _basePointSize;
-  bool _isInCodeBlock = false;
+  bool m_growAsRequired = false;
+  std::optional<ColorLike> m_baseTextColor = ColorTint::TextPrimary;
 
   int _lastNodeType = CMARK_NODE_NONE;
 
@@ -56,6 +59,8 @@ class MarkdownRenderer : public QWidget {
   void insertTopLevelNode(cmark_node *node);
 
 public:
+  void setGrowAsRequired(bool value);
+  void setDocumentMargin(int margin) { _document->setDocumentMargin(margin); }
   QTextEdit *textEdit() const;
   void setFont(const QFont &font);
   QStringView markdown() const;
@@ -70,8 +75,12 @@ public:
 
   void resizeEvent(QResizeEvent *event) override {
     QWidget::resizeEvent(event);
+    qCritical() << "document size on resize of" << event->size() << _document->size().toSize();
     _textEdit->setFixedSize(event->size());
+    setMarkdown(QString(_markdown));
   }
+
+  void setBaseTextColor(const ColorLike &color);
 
   /**
    * Appends markdown text to the existing formmated markdown content.

@@ -156,8 +156,11 @@ public:
     nameField->setWidget(name, name->focusNotifier());
     linkField->setName("URL");
     linkField->setWidget(link, link->focusNotifier());
+    linkField->setInfo("This is a rather long description talking about what you can do with this wonderful "
+                       "item. And wait, there is even `more`. **Amazing**, isn't it.");
     openField->setName("Open with");
     openField->setWidget(appSelector, appSelector->focusNotifier());
+    openField->setInfo("The *application* with which the link will be opened");
     iconField->setName("Icon");
     iconField->setWidget(iconSelector, iconSelector->focusNotifier());
 
