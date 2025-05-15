@@ -13,6 +13,7 @@
 #include <memory>
 #include <qboxlayout.h>
 #include <qlabel.h>
+#include <qlogging.h>
 #include <qnamespace.h>
 #include <qobject.h>
 #include <qscrollbar.h>
@@ -253,6 +254,8 @@ private:
 
     _virtual_items.reserve(totalSize);
 
+    qDebug() << "sections" << m_model.size();
+
     for (const auto &section : m_model) {
       auto &items = section->items();
 
@@ -369,6 +372,10 @@ private:
 protected:
   bool event(QEvent *event) override;
   void resizeEvent(QResizeEvent *event) override;
+  void showEvent(QShowEvent *event) override {
+    qCritical() << "list shown" << size() << "vitems=" << _virtual_items.size();
+    QWidget::showEvent(event);
+  }
 
 public:
   OmniList();

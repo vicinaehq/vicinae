@@ -6,20 +6,25 @@
 #include "ui/form/completed-input.hpp"
 #include "ui/form/form-field.hpp"
 #include "ui/form/selector-input.hpp"
+#include "ui/omni-list.hpp"
 #include "ui/toast.hpp"
 #include "view.hpp"
 #include "ui/form/form.hpp"
+#include <algorithm>
 #include <functional>
 #include <memory>
 #include <qboxlayout.h>
 #include <qlocale.h>
 #include <qnamespace.h>
+#include <qobjectdefs.h>
 #include <qpixmap.h>
 #include <qsharedpointer.h>
 #include <qtmetamacros.h>
 #include <qtypes.h>
 #include <qvariant.h>
+#include <ranges>
 #include <sched.h>
+#include <unistd.h>
 
 class CallbackAction : public AbstractAction {
   using SubmitHandler = std::function<void(AppWindow &app)>;
@@ -96,27 +101,145 @@ public:
 };
 
 class LinkCompleter : public CompletedInput::Completer {
-  std::vector<CompletionData> generateCompletions(const QString &query) const override {
-    qDebug() << "completions for" << query;
-    if (query.endsWith("{")) {
-      return {
-          CompletionData{},
-          CompletionData{},
-          CompletionData{},
-          CompletionData{},
-      };
-    }
+  struct LinkChoice : public CompletionChoice {};
+
+  std::vector<CompletionItem> generateCompletions(const QString &query) const override {
+    CompletionSection section("Date & Time");
+
+    if (query.endsWith("{")) { return {}; }
 
     return {};
   }
 };
 
+struct LinkDynamicPlaceholder {
+  OmniIconUrl icon;
+  QString title;
+  QString value;
+  QString id;
+  std::vector<std::pair<QString, QString>> arguments;
+};
+
+class CompletionListItem : public AbstractDefaultListItem {
+  LinkDynamicPlaceholder m_data;
+
+  ItemData data() const override { return {.iconUrl = m_data.icon, .name = m_data.title, .accessories = {}}; }
+
+  QString id() const override { return m_data.title; }
+
+public:
+  const LinkDynamicPlaceholder &argument() const { return m_data; }
+
+  CompletionListItem(const LinkDynamicPlaceholder &data) : m_data(data) {}
+};
+
 class QuicklinkCommandView : public View {
+  std::vector<LinkDynamicPlaceholder> mainLinkArguments{
+      LinkDynamicPlaceholder{
+          .icon = BuiltinOmniIconUrl("text-cursor"), .title = "Selected Text", .id = "selected"},
+      LinkDynamicPlaceholder{
+          .icon = BuiltinOmniIconUrl("copy-clipboard"), .title = "Clipboard Text", .id = "clipboard"},
+      LinkDynamicPlaceholder{.icon = BuiltinOmniIconUrl("text-cursor"),
+                             .title = "Argument",
+                             .id = "argument",
+                             .arguments = {{"name", "Argument"}}},
+      LinkDynamicPlaceholder{.icon = BuiltinOmniIconUrl("fingerprint"), .title = "UUID", .id = "uuid"},
+  };
+
   void handleAppSelectorTextChanged(const QString &text) {}
 
   void iconSelectorTextChanged(const QString &text) {}
 
+  int getCurrentPlaceholderStartIndex(const QString &text) {
+    for (int cursor = link->cursorPosition() - 1; cursor >= 0; --cursor) {
+      QChar c = text.at(cursor);
+
+      if (c == '}') { break; }
+      if (c == '{') { return cursor; }
+    }
+
+    return -1;
+  }
+
+  void insertLinkPlaceholder(const LinkDynamicPlaceholder &placeholder) {
+    QString value = link->text();
+    int startIdx = getCurrentPlaceholderStartIndex(link->text());
+    QString formatted = value.sliced(0, startIdx) + '{' + placeholder.id;
+    int startSelection = -1;
+    int selectionSize = 0;
+
+    for (const auto &[k, v] : placeholder.arguments) {
+      if (startSelection == -1) {
+        startSelection = formatted.size() + k.size() + 3;
+        selectionSize = v.size();
+      }
+
+      formatted += QString(" %1=\"%2\"").arg(k).arg(v);
+    }
+
+    int endIdx = startIdx + 1;
+
+    while (endIdx < value.size() && value.at(endIdx) != '}' && value.at(endIdx) != '{') {
+      ++endIdx;
+    }
+
+    if (endIdx < value.size() && value.at(endIdx) == '}') endIdx += 1;
+
+    formatted += '}' + value.sliced(endIdx);
+
+    link->setText(formatted);
+
+    if (startSelection != -1) { link->input()->setSelection(startSelection, selectionSize); }
+  }
+
   void handleLinkChange(const QString &text) {
+    int openIdx = getCurrentPlaceholderStartIndex(text);
+
+    if (openIdx != -1) {
+      int closeIdx = -1;
+
+      for (int i = openIdx + 1; i < text.size(); ++i) {
+        if (text.at(i) == '}' || text.at(i) == '{') {
+          closeIdx = i;
+          break;
+        }
+      }
+
+      QString base;
+
+      if (closeIdx != -1) {
+        base = text.sliced(openIdx + 1, closeIdx - openIdx - 1);
+      } else {
+        base = text.sliced(openIdx + 1);
+      }
+
+      qDebug() << "base" << base;
+
+      auto completer = link->completer();
+
+      completer->beginResetModel();
+
+      auto mainItems = mainLinkArguments | std::views::filter([base](const LinkDynamicPlaceholder &arg) {
+                         return arg.title.contains(base, Qt::CaseInsensitive);
+                       }) |
+                       std::views::transform([](const LinkDynamicPlaceholder &arg) {
+                         qDebug() << "title" << arg.title;
+                         return std::make_unique<CompletionListItem>(arg);
+                       });
+      auto &mainSection = completer->addSection("");
+
+      for (auto item : mainItems) {
+        mainSection.addItem(std::move(item));
+      }
+
+      // auto &dateTimeSection = completer->addSection("Date & Time");
+
+      completer->endResetModel(OmniList::SelectFirst);
+      link->showCompleter();
+    } else {
+      link->hideCompleter();
+    }
+
     auto appDb = ServiceRegistry::instance()->appDb();
     QUrl url(text);
 
@@ -164,7 +287,6 @@ public:
 
     name->setPlaceholderText("Quicklink name");
     link->setPlaceholderText("https://google.com/search?q={argument}");
-    link->setCompleter(std::make_unique<LinkCompleter>());
 
     auto nameField = new FormField;
     auto linkField = new FormField;
@@ -193,6 +315,14 @@ public:
             &QuicklinkCommandView::handleAppSelectorTextChanged);
     connect(iconSelector, &SelectorInput::textChanged, this, &QuicklinkCommandView::iconSelectorTextChanged);
     connect(appSelector, &SelectorInput::selectionChanged, this, &QuicklinkCommandView::appSelectionChanged);
+    connect(link, &CompletedInput::completionActivated, this,
+            [this](const OmniList::AbstractVirtualItem &item) {
+              auto completion = static_cast<const CompletionListItem &>(item);
+
+              insertLinkPlaceholder(completion.argument());
+
+              qDebug() << "completion" << completion.argument().title;
+            });
 
     appSelector->beginUpdate();
 

@@ -12,16 +12,23 @@ bool CompletedInput::eventFilter(QObject *obj, QEvent *event) {
     if (event->type() == QEvent::KeyPress) {
       auto kv = static_cast<QKeyEvent *>(event);
 
-      if (kv->modifiers() == Qt::Modifiers{} && kv->key() == Qt::Key_Escape) {
-        if (popover->isVisible()) {
-          popover->close();
-          return true;
+      if (popover->isVisible()) {
+        if (kv->modifiers() == Qt::Modifiers{}) {
+          switch (kv->key()) {
+          case Qt::Key_Escape: {
+            if (popover->isVisible()) {
+              popover->close();
+              return true;
+            }
+          }
+          case Qt::Key_Up:
+          case Qt::Key_Down:
+          case Qt::Key_Return:
+          case Qt::Key_Enter:
+            QApplication::sendEvent(m_completerList, event);
+            return true;
+          }
         }
-      }
-
-      if (kv->modifiers() == Qt::Modifiers{} && kv->key() == Qt::Key_Return) {
-        showPopover();
-        return true;
       }
     }
   }
@@ -33,19 +40,15 @@ QJsonValue CompletedInput::asJsonValue() const {
   return _currentSelection ? _currentSelection->id() : QJsonValue();
 }
 
-void CompletedInput::setIsLoading(bool value) { m_loadingBar->setStarted(value); }
-
 void CompletedInput::setValueAsJson(const QJsonValue &value) { setText(value.toString()); }
 
 FocusNotifier *CompletedInput::focusNotifier() const { return m_focusNotifier; }
 
 CompletedInput::CompletedInput(QWidget *parent)
-    : QWidget(parent), m_list(new OmniList), inputField(new BaseInput), popover(new Popover(this)),
+    : QWidget(parent), m_completerList(new OmniList), inputField(new BaseInput), popover(new Popover(this)),
       selectionIcon(new OmniIcon) {
   auto *layout = new QVBoxLayout();
   layout->setContentsMargins(0, 0, 0, 0);
-
-  m_loadingBar->setPositionStep(5);
 
   setFocusProxy(inputField);
 
@@ -73,8 +76,6 @@ CompletedInput::CompletedInput(QWidget *parent)
   popoverLayout->setContentsMargins(1, 1, 1, 1);
   popoverLayout->setSpacing(0);
 
-  popoverLayout->addWidget(m_loadingBar);
-
   inputField->installEventFilter(this);
   popover->installEventFilter(this);
 
@@ -82,39 +83,23 @@ CompletedInput::CompletedInput(QWidget *parent)
   auto listContainerLayout = new QVBoxLayout;
 
   listContainerLayout->setContentsMargins(0, 0, 0, 0);
-  listContainerLayout->addWidget(m_list);
+  listContainerLayout->addWidget(m_completerList);
   listContainerWidget->setLayout(listContainerLayout);
 
   popoverLayout->addWidget(listContainerWidget);
 
   popover->setWindowFlags(Qt::FramelessWindowHint | Qt::ToolTip);
 
-  connect(m_list, &OmniList::itemActivated, this, &CompletedInput::itemActivated);
-  connect(inputField, &BaseInput::textChanged, this, &CompletedInput::handleTextChanged);
+  connect(m_completerList, &OmniList::itemActivated, this, [this](const auto &item) {
+    popover->close();
+    emit completionActivated(item);
+  });
+  connect(inputField, &BaseInput::textChanged, this, [this](const QString &text) { emit textChanged(text); });
 
   setLayout(layout);
 }
 
-void CompletedInput::handleTextChanged(const QString &text) {
-  if (m_completer) {
-    auto completions = m_completer->generateCompletions(text);
-
-    if (!completions.empty()) {
-      qDebug() << "Completion popup not yet implemented";
-      showPopover();
-    } else {
-      popover->close();
-    }
-  }
-
-  emit textChanged(text);
-}
-
-void CompletedInput::itemActivated(const OmniList::AbstractVirtualItem &vitem) {
-  // TODO: insert completion
-  popover->close();
-  emit selectionChanged(static_cast<const AbstractItem &>(vitem));
-}
+void CompletedInput::handleTextChanged(const QString &text) { emit textChanged(text); }
 
 void CompletedInput::setPlaceholderText(const QString &text) { inputField->setPlaceholderText(text); }
 
@@ -127,6 +112,11 @@ QString CompletedInput::text() const { return inputField->text(); }
 void CompletedInput::setText(const QString &value) { inputField->setText(value); }
 
 void CompletedInput::showPopover() {
+  if (m_completerList->isShowingEmptyState()) {
+    popover->close();
+    return;
+  }
+
   const QPoint globalPos = inputField->mapToGlobal(QPoint(0, inputField->height() + 10));
 
   popover->move(globalPos);

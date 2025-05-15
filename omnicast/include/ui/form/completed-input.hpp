@@ -2,22 +2,34 @@
 #include "common.hpp"
 #include "ui/focus-notifier.hpp"
 #include "ui/form/base-input.hpp"
-#include "ui/horizontal-loading-bar.hpp"
 #include "ui/omni-list.hpp"
 #include "ui/popover.hpp"
+#include <qlineedit.h>
 #include <qwidget.h>
 
 class CompletedInput : public QWidget, public IJsonFormField {
 public:
   class Completer {
   public:
-    struct CompletionData {
+    struct CompletionChoice {
       OmniIconUrl url;
       QString title;
       QString subtitle;
     };
 
-    virtual std::vector<CompletionData> generateCompletions(const QString &query) const = 0;
+    class CompletionSection {
+      QString m_title;
+      std::vector<CompletionChoice> m_items;
+
+    public:
+      void addItem(const CompletionChoice &data) { m_items.emplace_back(data); }
+
+      CompletionSection(const QString &title) : m_title(title) {}
+    };
+
+    using CompletionItem = std::variant<CompletionSection, CompletionChoice>;
+
+    virtual std::vector<CompletionItem> generateCompletions(const QString &query) const = 0;
     virtual ~Completer() {}
   };
   class AbstractItem : public AbstractDefaultListItem {
@@ -39,6 +51,19 @@ public:
     ItemData data() const override { return {.iconUrl = icon(), .name = displayName()}; }
   };
 
+  class CompletionListItem : public AbstractDefaultListItem {
+    Completer::CompletionChoice m_data;
+
+    ItemData data() const override {
+      return {.iconUrl = m_data.url, .name = m_data.title, .accessories = {}};
+    }
+
+    QString id() const override { return m_data.title; }
+
+  public:
+    CompletionListItem(const Completer::CompletionChoice &data) : m_data(data) {}
+  };
+
   QJsonValue asJsonValue() const override;
 
 private:
@@ -51,9 +76,8 @@ private:
   int POPOVER_HEIGHT = 300;
 
 protected:
-  OmniList *m_list;
+  OmniList *m_completerList;
   BaseInput *inputField;
-  HorizontalLoadingBar *m_loadingBar = new HorizontalLoadingBar(this);
   OmniIcon *selectionIcon;
   Popover *popover;
   std::unique_ptr<AbstractItem> _currentSelection;
@@ -66,7 +90,6 @@ public:
   ~CompletedInput();
 
   FocusNotifier *focusNotifier() const;
-  void setIsLoading(bool value);
   void clear();
 
   void setPlaceholderText(const QString &text);
@@ -76,12 +99,16 @@ public:
 
   void setValue(const QString &id);
   void setValueAsJson(const QJsonValue &value) override;
+  OmniList *completer() { return m_completerList; }
+  QLineEdit *input() { return inputField; }
+  void showCompleter() { showPopover(); }
+  void hideCompleter() { popover->close(); }
+  int cursorPosition() const { return inputField->cursorPosition(); }
 
 signals:
   void textChanged(const QString &s);
-  void selectionChanged(const AbstractItem &item);
+  void completionActivated(const OmniList::AbstractVirtualItem &item);
 
 private slots:
-  void itemActivated(const OmniList::AbstractVirtualItem &vitem);
   void showPopover();
 };

@@ -405,7 +405,7 @@ void OmniList::clearVisibleWidgets() {
 bool OmniList::selectDown() {
   if (_virtual_items.empty()) return false;
   if (_selected == -1) {
-    _selected = 0;
+    setSelectedIndex(0, ScrollBehaviour::ScrollRelative);
     return true;
   }
 
