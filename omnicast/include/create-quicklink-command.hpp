@@ -208,9 +208,9 @@ class QuicklinkCommandView : public View {
       QString base;
 
       if (closeIdx != -1) {
-        base = text.sliced(openIdx + 1, closeIdx - openIdx - 1);
+        base = text.sliced(openIdx + 1, closeIdx - openIdx - 1).trimmed();
       } else {
-        base = text.sliced(openIdx + 1);
+        base = text.sliced(openIdx + 1).trimmed();
       }
 
       qDebug() << "base" << base;
@@ -231,8 +231,6 @@ class QuicklinkCommandView : public View {
       for (auto item : mainItems) {
         mainSection.addItem(std::move(item));
       }
-
-      // auto &dateTimeSection = completer->addSection("Date & Time");
 
       completer->endResetModel(OmniList::SelectFirst);
       link->showCompleter();
@@ -297,11 +295,10 @@ public:
     nameField->setWidget(name, name->focusNotifier());
     linkField->setName("URL");
     linkField->setWidget(link, link->focusNotifier());
-    linkField->setInfo("This is a rather long description talking about what you can do with this wonderful "
-                       "item. And wait, there is even `more`. **Amazing**, isn't it.");
+    linkField->setInfo("The URL that will be opened by the specified app. You can make it dynamic by using "
+                       "dynamic placeholders such as `{argument}`");
     openField->setName("Open with");
     openField->setWidget(appSelector, appSelector->focusNotifier());
-    openField->setInfo("The *application* with which the link will be opened");
     iconField->setName("Icon");
     iconField->setWidget(iconSelector, iconSelector->focusNotifier());
 
@@ -320,8 +317,6 @@ public:
               auto completion = static_cast<const CompletionListItem &>(item);
 
               insertLinkPlaceholder(completion.argument());
-
-              qDebug() << "completion" << completion.argument().title;
             });
 
     appSelector->beginUpdate();

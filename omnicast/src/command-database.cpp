@@ -143,16 +143,14 @@ CommandDatabase::CommandDatabase() {
     testExtensionPref->setDefaultValue("ting ting");
     testExtensionPref->setDescription("A simple test, nothing more.");
 
-    auto create = CommandBuilder("create").withName("Create Quicklink").toSingleView<QuicklinkCommandView>();
-    auto manage = CommandBuilder("manage").withName("Manage Quicklinks").toSingleView<ManageQuicklinksView>();
-    auto _export =
-        CommandBuilder("export").withName("Export Quicklinks").toSingleView<ManageQuicklinksView>();
-    auto _import =
-        CommandBuilder("import").withName("Import Quicklinks").toSingleView<ManageQuicklinksView>();
-    auto quicklinks = CommandRepositoryBuilder("quicklinks")
-                          .withName("Quicklinks")
+    auto create = CommandBuilder("create").withName("Create Bookmark").toSingleView<QuicklinkCommandView>();
+    auto manage = CommandBuilder("manage").withName("Manage Bookmarks").toSingleView<ManageQuicklinksView>();
+    auto _export = CommandBuilder("export").withName("Export Bookmarks").toSingleView<ManageQuicklinksView>();
+    auto _import = CommandBuilder("import").withName("Import Bookmarks").toSingleView<ManageQuicklinksView>();
+    auto quicklinks = CommandRepositoryBuilder("bookmarks")
+                          .withName("Bookmarks")
                           .withPreference(testExtensionPref)
-                          .withTintedIcon("link", ColorTint::Red)
+                          .withTintedIcon("bookmark", ColorTint::Red)
                           .withCommand(create)
                           .withCommand(manage)
                           .withCommand(_export)
