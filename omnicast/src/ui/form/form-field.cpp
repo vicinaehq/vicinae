@@ -64,7 +64,15 @@ QWidget *FormField::widget() const { return _widget; }
 void FormField::setWidget(QWidget *widget, FocusNotifier *notifier) {
   auto current = _layout->itemAt(1)->widget();
 
-  if (notifier) { connect(notifier, &FocusNotifier::focusChanged, this, &FormField::focusChanged); }
+  if (notifier) {
+    connect(notifier, &FocusNotifier::focusChanged, this, [this](bool focus) {
+      if (focus)
+        emit focused();
+      else
+        emit blurred();
+      emit focusChanged(focus);
+    });
+  }
 
   setFocusProxy(widget);
   _layout->replaceWidget(current, widget);

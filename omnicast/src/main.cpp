@@ -4,6 +4,7 @@
 #include "app-root-provider.hpp"
 #include "app.hpp"
 #include <QApplication>
+#include "bookmark-service.hpp"
 #include "config-service.hpp"
 #include "font-service.hpp"
 #include <QFontDatabase>
@@ -12,6 +13,7 @@
 #include <memory>
 #include <wm/window-manager-factory.hpp>
 #include <QtSql/QtSql>
+#include "root-bookmark-provider.hpp"
 #include "root-extension-manager.hpp"
 #include "root-quicklink-provider.hpp"
 #include <QXmlStreamReader>
@@ -166,6 +168,7 @@ int startDaemon() {
     auto appService = std::make_unique<AppService>(*omniDb.get(), *rankingService.get());
     auto rootExtMan = std::make_unique<RootExtensionManager>(*rootItemManager.get(), *commandDb.get());
     auto configService = std::make_unique<ConfigService>(*localStorage.get());
+    auto bookmarkService = std::make_unique<BookmarkService>(*omniDb.get());
     auto currentConfig = configService->value();
 
     if (auto name = currentConfig.theme.name) {
@@ -195,8 +198,10 @@ int startDaemon() {
     }
 
     rootItemManager->addProvider(std::make_unique<AppRootProvider>(*appService.get()));
+    rootItemManager->addProvider(std::make_unique<RootBookmarkProvider>(*bookmarkService.get()));
     rootItemManager->addProvider(std::make_unique<RootQuicklinkProvider>(*quicklinkService.get()));
 
+    registry->setBookmarkService(std::move(bookmarkService));
     registry->setConfig(std::move(configService));
     registry->setRootExtMan(std::move(rootExtMan));
     registry->setRootItemManager(std::move(rootItemManager));

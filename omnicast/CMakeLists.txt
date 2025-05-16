@@ -191,6 +191,10 @@ set(SRCS
 	include/extension/form/extension-checkbox-field.hpp
 	include/extension/form/extension-dropdown.hpp
 
+	include/bookmark-service.hpp
+	include/root-bookmark-provider.hpp
+
+
 	include/extend/extension-detail-view.hpp
 
 	include/local-storage-service.hpp

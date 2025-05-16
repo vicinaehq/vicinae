@@ -283,9 +283,6 @@ void MarkdownRenderer::insertParagraph(cmark_node *node) {
 
   defaultFormat.setFont(_document->defaultFont());
   defaultFormat.setForeground(painter.colorBrush(*m_baseTextColor));
-
-  qDebug() << "render paragraph with font" << _document->defaultFont();
-
   defaultFormat.setFontPointSize(_basePointSize);
 
   while (child) {

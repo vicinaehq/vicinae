@@ -372,10 +372,7 @@ private:
 protected:
   bool event(QEvent *event) override;
   void resizeEvent(QResizeEvent *event) override;
-  void showEvent(QShowEvent *event) override {
-    qCritical() << "list shown" << size() << "vitems=" << _virtual_items.size();
-    QWidget::showEvent(event);
-  }
+  void showEvent(QShowEvent *event) override { QWidget::showEvent(event); }
 
 public:
   OmniList();

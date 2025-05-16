@@ -57,5 +57,7 @@ public:
   void focus() const;
 
 signals:
-  void focusChanged(bool value);
+  void focusChanged(bool value) const;
+  void blurred() const;
+  void focused() const;
 };

@@ -1,6 +1,7 @@
 #pragma once
 #include "ai/ai-service.hpp"
 #include "app-service.hpp"
+#include "bookmark-service.hpp"
 #include "calculator-database.hpp"
 #include "clipboard/clipboard-service.hpp"
 #include "config-service.hpp"
@@ -33,6 +34,7 @@ class ServiceRegistry : public QObject {
   std::unique_ptr<RootItemManager> m_rootItemManager;
   std::unique_ptr<RootExtensionManager> m_rootExtMan;
   std::unique_ptr<ConfigService> m_config;
+  std::unique_ptr<BookmarkService> m_bookmarkService;
 
 public:
   static ServiceRegistry *instance() {
@@ -54,11 +56,15 @@ public:
   auto clipman() const { return m_clipman.get(); }
   auto appDb() const { return m_appDb.get(); }
   auto rankingService() const { return m_rankingService.get(); }
+  auto bookmarks() const { return m_bookmarkService.get(); }
 
   auto setRootItemManager(std::unique_ptr<RootItemManager> manager) {
     m_rootItemManager = std::move(manager);
   }
   void setConfig(std::unique_ptr<ConfigService> cfg) { m_config = std::move(cfg); }
+  void setBookmarkService(std::unique_ptr<BookmarkService> service) {
+    m_bookmarkService = std::move(service);
+  }
   void setRootExtMan(std::unique_ptr<RootExtensionManager> man) { m_rootExtMan = std::move(man); }
   void setAI(std::unique_ptr<AI::Manager> manager) { m_aiManager = std::move(manager); }
   void setRankingService(std::unique_ptr<RankingService> service) { m_rankingService = std::move(service); }

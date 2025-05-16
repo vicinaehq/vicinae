@@ -138,6 +138,7 @@ void SelectorInput::commitUpdate() { m_list->commitUpdate(); }
 void SelectorInput::updateItem(const QString &id, const UpdateItemCallback &cb) {
   m_list->updateItem(id,
                      [&cb](OmniList::AbstractVirtualItem *item) { cb(static_cast<AbstractItem *>(item)); });
+  if (_currentSelection->id() == id) { setValue(id); }
 }
 
 void SelectorInput::addSection(const QString &name) { m_list->addSection(name); }

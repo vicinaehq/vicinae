@@ -1,4 +1,5 @@
 #pragma once
+#include "bookmark-service.hpp"
 #include "omni-icon.hpp"
 #include "quicklist-database.hpp"
 #include "service-registry.hpp"
@@ -15,7 +16,9 @@
 #include <memory>
 #include <qboxlayout.h>
 #include <qlocale.h>
+#include <qlogging.h>
 #include <qnamespace.h>
+#include <qobject.h>
 #include <qobjectdefs.h>
 #include <qpixmap.h>
 #include <qsharedpointer.h>
@@ -192,6 +195,37 @@ class QuicklinkCommandView : public View {
     if (startSelection != -1) { link->input()->setSelection(startSelection, selectionSize); }
   }
 
+  void handleLinkBlurred() {
+    qDebug() << "link blurred";
+    QString text = link->text();
+    auto appDb = ServiceRegistry::instance()->appDb();
+    QUrl url(text);
+
+    if (auto app = appDb->findBestOpener(text)) {
+      appSelector->updateItem("default", [&app](SelectorInput::AbstractItem *item) {
+        static_cast<AppSelectorItem *>(item)->setApp(app);
+      });
+      iconSelector->updateItem("default", [app](SelectorInput::AbstractItem *item) {
+        auto icon = static_cast<IconSelectorItem *>(item);
+
+        icon->setIcon(app->iconUrl());
+        icon->setDisplayName(app->name());
+      });
+    }
+
+    if (url.scheme().startsWith("http")) {
+      iconSelector->updateItem("default", [&url](SelectorInput::AbstractItem *item) {
+        auto icon = FaviconOmniIconUrl(url.host()).withFallback(BuiltinOmniIconUrl("image"));
+        auto iconItem = static_cast<IconSelectorItem *>(item);
+
+        iconItem->setIcon(icon);
+        iconItem->setDisplayName(url.host());
+      });
+
+      return;
+    }
+  }
+
   void handleLinkChange(const QString &text) {
     int openIdx = getCurrentPlaceholderStartIndex(text);
 
@@ -237,25 +271,6 @@ class QuicklinkCommandView : public View {
     } else {
       link->hideCompleter();
     }
-
-    auto appDb = ServiceRegistry::instance()->appDb();
-    QUrl url(text);
-
-    if (auto app = appDb->findBestOpener(text)) {
-      appSelector->updateItem("default", [&app](SelectorInput::AbstractItem *item) {
-        static_cast<AppSelectorItem *>(item)->setApp(app);
-      });
-    }
-
-    if (!url.scheme().startsWith("http")) return;
-
-    iconSelector->updateItem("default", [&url](SelectorInput::AbstractItem *item) {
-      auto icon = FaviconOmniIconUrl(url.host()).withFallback(BuiltinOmniIconUrl("image"));
-      auto iconItem = static_cast<IconSelectorItem *>(item);
-
-      iconItem->setIcon(icon);
-      iconItem->setDisplayName(url.host());
-    });
   }
 
   void appSelectionChanged(const SelectorInput::AbstractItem &item) {
@@ -283,7 +298,7 @@ public:
     auto appDb = ServiceRegistry::instance()->appDb();
     auto quicklinkDb = ServiceRegistry::instance()->quicklinks();
 
-    name->setPlaceholderText("Quicklink name");
+    name->setPlaceholderText("Bookmark name");
     link->setPlaceholderText("https://google.com/search?q={argument}");
 
     auto nameField = new FormField;
@@ -296,7 +311,7 @@ public:
     linkField->setName("URL");
     linkField->setWidget(link, link->focusNotifier());
     linkField->setInfo("The URL that will be opened by the specified app. You can make it dynamic by using "
-                       "dynamic placeholders such as `{argument}`");
+                       "placeholders such as `{argument}`");
     openField->setName("Open with");
     openField->setWidget(appSelector, appSelector->focusNotifier());
     iconField->setName("Icon");
@@ -308,6 +323,7 @@ public:
     form->addField(iconField);
 
     connect(link, &CompletedInput::textChanged, this, &QuicklinkCommandView::handleLinkChange);
+    connect(linkField, &FormField::blurred, this, &QuicklinkCommandView::handleLinkBlurred);
     connect(appSelector, &SelectorInput::textChanged, this,
             &QuicklinkCommandView::handleAppSelectorTextChanged);
     connect(iconSelector, &SelectorInput::textChanged, this, &QuicklinkCommandView::iconSelectorTextChanged);
@@ -381,6 +397,7 @@ public:
 
   virtual void submit(AppWindow &app) {
     auto quicklinkDb = ServiceRegistry::instance()->quicklinks();
+    auto bookmarkDb = ServiceRegistry::instance()->bookmarks();
 
     if (link->text().isEmpty()) {
       form->setError(link, "Required");
@@ -401,13 +418,15 @@ public:
       return;
     }
 
-    quicklinkDb->insertLink(AddQuicklinkPayload{
-        .name = name->text(),
-        .icon = icon->icon().toString(),
-        .link = link->text(),
-        .app = item->app->id(),
-    });
-    app.statusBar->setToast("Created new quicklink");
+    Bookmark bookmark;
+
+    bookmark.setName(name->text());
+    bookmark.setIcon(icon->icon().toString());
+    bookmark.setLink(link->text());
+    bookmark.setApp(item->app->id());
+    bookmarkDb->save(bookmark);
+
+    app.statusBar->setToast("Created bookmark");
     pop();
   }
 };
@@ -424,10 +443,7 @@ public:
 
     name->setText(quicklink.name);
     link->setText(quicklink.rawUrl);
-
-    if (auto app = appDb->findById(quicklink.app)) {
-      // appSelector->setValue(std::make_shared<AppSelectorItem>(app));
-    }
+    appSelector->setValue(quicklink.app);
 
     // iconSelector->setValue(std::make_shared<IconSelectorItem>(quicklink.iconName, quicklink.iconName));
   }
@@ -479,9 +495,7 @@ public:
     name->setText(QString("Copy of %1").arg(quicklink.name));
     link->setText(quicklink.rawUrl);
 
-    if (auto app = appDb->findById(quicklink.app)) {
-      // appSelector->setValue(std::make_shared<AppSelectorItem>(app));
-    }
+    if (auto app = appDb->findById(quicklink.app)) { appSelector->setValue(quicklink.app); }
 
     // iconSelector->setValue(std::make_shared<IconSelectorItem>(quicklink.iconName));
   }

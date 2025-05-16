@@ -272,6 +272,7 @@ private:
   }
 
   void reloadProviders() {
+    qDebug() << "reloaded providers!";
     m_items = m_providers | std::views::transform([](const auto &p) { return p->loadItems(); }) |
               std::views::join | std::ranges::to<std::vector>();
     rebuildTrie();

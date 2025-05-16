@@ -704,7 +704,18 @@ bool OmniList::removeItem(const QString &id) {
 }
 
 bool OmniList::updateItem(const QString &id, const UpdateItemCallback &cb) {
-  qCritical() << "updateItem not implemented";
+  if (auto it = _idItemMap.find(id); it != _idItemMap.end()) {
+    cb(it->second);
+
+    if (it->second->recyclable()) {
+      if (auto it2 = _widgetCache.find(id); it2 != _widgetCache.end()) {
+        it->second->recycle(it2->second.widget->widget());
+      }
+    }
+
+    return true;
+  }
+
   return false;
   /*
 int idx = indexOfItem(id);
