@@ -21,10 +21,6 @@ class Bookmark {
 public:
   struct ParsedPlaceholder {
     QString id;
-    struct {
-      int start;
-      int end;
-    } pos;
     std::map<QString, QString> args;
   };
 
@@ -241,39 +237,55 @@ class BookmarkService : public QObject {
 public:
   std::vector<std::shared_ptr<Bookmark>> bookmarks() const { return m_bookmarks; }
 
-  bool save(const Bookmark &bookmark) {
+  bool removeBookmark(int id) {
+    QSqlQuery query = m_db.createQuery();
+
+    query.prepare("DELETE FROM bookmarks WHERE id = :id");
+    query.bindValue(":id", id);
+
+    if (!query.exec()) {
+      qCritical() << "Failed to remove bookmark" << query.lastError();
+      return false;
+    }
+
+    return query.numRowsAffected() > 0;
+  }
+
+  bool createBookmark(const QString &name, const QString &icon, const QString &url, const QString &app) {
     QSqlQuery query = m_db.createQuery();
 
     query.prepare(R"(
 		INSERT INTO bookmarks (name, icon, url, app) VALUES (:name, :icon, :url, :app)
-		ON CONFLICT (id) 
-		DO UPDATE SET name = :name, icon = :icon, url = :url, app = :app
+		RETURNING id, name, icon, url, app
 	)");
-    query.bindValue(":name", bookmark.name());
-    query.bindValue(":icon", bookmark.icon());
-    query.bindValue(":url", bookmark.url());
-    query.bindValue(":app", bookmark.app());
+    query.bindValue(":name", name);
+    query.bindValue(":icon", icon);
+    query.bindValue(":url", url);
+    query.bindValue(":app", app);
 
     if (!query.exec()) {
       qCritical() << "Failed to save bookmark" << query.lastError();
       return false;
     }
 
-    bool isLoaded =
-        std::ranges::any_of(m_bookmarks, [&](const auto &item) { return item->id() == bookmark.id(); });
+    if (!query.next()) { return false; }
 
-    if (!isLoaded) { m_bookmarks.emplace_back(std::make_shared<Bookmark>(bookmark)); }
+    Bookmark bookmark;
 
+    bookmark.setId(query.value(0).toInt());
+    bookmark.setName(query.value(1).toString());
+    bookmark.setIcon(query.value(2).toString());
+    bookmark.setLink(query.value(3).toString());
+    bookmark.setApp(query.value(4).toString());
+    m_bookmarks.emplace_back(std::make_shared<Bookmark>(bookmark));
     emit bookmarkSaved(bookmark);
+
     return true;
   }
 
   BookmarkService(OmniDatabase &db) : m_db(db) {
     createTables();
     m_bookmarks = loadAll();
-    for (const auto &bookmark : m_bookmarks) {
-      qCritical() << "book" << bookmark->name();
-    }
     qCritical() << "loaded" << m_bookmarks.size() << "bookmarks";
   }
 

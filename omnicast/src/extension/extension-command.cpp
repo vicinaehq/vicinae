@@ -70,15 +70,15 @@ void ExtensionCommand::setAssetPath(const std::filesystem::path &path) { _assetP
 void ExtensionCommand::setExtensionTitle(const QString &title) { _extensionTitle = title; }
 
 OmniIconUrl ExtensionCommand::iconUrl() const {
-  auto fallback = BuiltinOmniIconUrl("hammer").setBackgroundTint(ColorTint::Blue);
-  auto extensionIconUrl = LocalOmniIconUrl(_assetPath / _extensionIcon.toStdString()).withFallback(fallback);
-
   if (!_icon.isEmpty()) {
-    auto path = _assetPath / _icon.toStdString();
+    auto commandIconPath = _assetPath / _icon.toStdString();
 
-    auto url = LocalOmniIconUrl(path).withFallback(extensionIconUrl);
-    return url;
+    if (std::filesystem::exists(commandIconPath)) { return LocalOmniIconUrl(commandIconPath); }
   }
 
-  return extensionIconUrl;
+  auto extensionIconUrl = _assetPath / _extensionIcon.toStdString();
+
+  if (std::filesystem::exists(extensionIconUrl)) { return LocalOmniIconUrl(extensionIconUrl); }
+
+  return BuiltinOmniIconUrl("hammer").setBackgroundTint(ColorTint::Blue);
 }

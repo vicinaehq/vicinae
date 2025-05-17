@@ -205,11 +205,12 @@ class QuicklinkCommandView : public View {
       appSelector->updateItem("default", [&app](SelectorInput::AbstractItem *item) {
         static_cast<AppSelectorItem *>(item)->setApp(app);
       });
-      iconSelector->updateItem("default", [app](SelectorInput::AbstractItem *item) {
+      iconSelector->updateItem("default", [this](SelectorInput::AbstractItem *item) {
         auto icon = static_cast<IconSelectorItem *>(item);
+        auto appItem = static_cast<const AppSelectorItem *>(appSelector->value());
 
-        icon->setIcon(app->iconUrl());
-        icon->setDisplayName(app->name());
+        icon->setIcon(appItem->icon());
+        icon->setDisplayName("Default");
       });
     }
 
@@ -275,6 +276,8 @@ class QuicklinkCommandView : public View {
 
   void appSelectionChanged(const SelectorInput::AbstractItem &item) {
     auto &appItem = static_cast<const AppSelectorItem &>(item);
+
+    if (link->text().isEmpty()) return;
 
     iconSelector->updateItem("default", [appItem](SelectorInput::AbstractItem *item) {
       auto icon = static_cast<IconSelectorItem *>(item);
@@ -353,7 +356,8 @@ public:
     appSelector->setValue("default");
 
     iconSelector->beginUpdate();
-    iconSelector->addItem(std::make_unique<DefaultIconSelectorItem>(BuiltinOmniIconUrl("link"), "Default"));
+    iconSelector->addItem(
+        std::make_unique<DefaultIconSelectorItem>(BuiltinOmniIconUrl("bookmark"), "Default"));
 
     for (const auto &name : BuiltinIconService::icons()) {
       iconSelector->addItem(std::make_unique<IconSelectorItem>(BuiltinOmniIconUrl(name)));
@@ -418,16 +422,12 @@ public:
       return;
     }
 
-    Bookmark bookmark;
-
-    bookmark.setName(name->text());
-    bookmark.setIcon(icon->icon().toString());
-    bookmark.setLink(link->text());
-    bookmark.setApp(item->app->id());
-    bookmarkDb->save(bookmark);
-
-    app.statusBar->setToast("Created bookmark");
-    pop();
+    if (bookmarkDb->createBookmark(name->text(), icon->icon().toString(), link->text(), item->app->id())) {
+      app.statusBar->setToast("Created bookmark");
+      pop();
+    } else {
+      app.statusBar->setToast("Failed to create bookmark", ToastPriority::Danger);
+    }
   }
 };
 
