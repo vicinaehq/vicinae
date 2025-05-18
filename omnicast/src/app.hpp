@@ -19,13 +19,13 @@
 #include <qwindow.h>
 #include <stack>
 #include "omnicast.hpp"
-#include "ui/action-pannel/action-item.hpp"
 #include "ui/action-pannel/action-pannel-widget.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/alert.hpp"
 #include "ui/dialog.hpp"
 #include "ui/horizontal-loading-bar.hpp"
 #include "ui/status_bar.hpp"
+#include "ui/toast.hpp"
 #include "ui/top_bar.hpp"
 
 #include <qmainwindow.h>
@@ -36,14 +36,14 @@ class View;
 class ViewCommandContext;
 class ExtensionView;
 class CommandContext;
+class BaseView;
 
 struct ViewSnapshot {
-  View *view;
+  BaseView *view;
   QString query;
   QString placeholderText;
   QWidget *searchAccessory;
   std::optional<CompleterData> completer;
-  ActionPannelWidget::ViewStack actionViewStack;
   std::optional<NavigationStatus> navigationStatus;
 
   struct {
@@ -70,13 +70,7 @@ class AppWindow : public QMainWindow, public ICommandHandler {
 
   std::variant<CommandResponse, CommandError> handleCommand(const CommandMessage &message) override;
 
-  QRect viewGeometry() {
-    auto windowSize = size();
-
-    return {0, Omnicast::TOP_BAR_HEIGHT, windowSize.width(),
-            windowSize.height() - Omnicast::TOP_BAR_HEIGHT - Omnicast::STATUS_BAR_HEIGHT};
-  }
-
+  /*
   void handleSignalActions(const QList<AbstractAction *> &actions) {
     actionPannel->setSignalActions(actions);
 
@@ -96,28 +90,30 @@ class AppWindow : public QMainWindow, public ICommandHandler {
       statusBar->clearAction();
     }
   }
+  */
 
   void unloadHangingCommand();
 
 public:
-  QWidget *centerView = nullptr;
+  // to compile
+  TopBar *topBar = nullptr;
+  StatusBar *statusBar = nullptr;
+  HorizontalLoadingBar *_loadingBar = nullptr;
+  ActionPannelWidget *actionPannel = nullptr;
+  void setToast(const QString &title, ToastPriority priority = ToastPriority::Success) {}
+
   std::stack<ViewSnapshot> navigationStack;
   std::vector<CommandSnapshot> commandStack;
 
   void popToRoot();
-  void disconnectView(View &view);
-  void connectView(View &view);
+  void disconnectView(BaseView &view);
+  void connectView(BaseView &view);
   void closeWindow(bool popToRoot = false);
 
   void selectPrimaryAction();
   void selectSecondaryAction();
   void clearSearch();
 
-  TopBar *topBar = nullptr;
-  StatusBar *statusBar = nullptr;
-  ActionPannelWidget *actionPannel = nullptr;
-  QVBoxLayout *layout = nullptr;
-  HorizontalLoadingBar *_loadingBar;
   DialogWidget *_dialog = new DialogWidget(this);
   AlertWidget *_alert = new AlertWidget;
 
@@ -137,11 +133,12 @@ public:
   }
 
 public slots:
-  void pushView(View *view, const PushViewOptions &opts = {});
+  void pushView(BaseView *view, const PushViewOptions &opts = {});
+  void pushView(View *view, const PushViewOptions &opts = {}) {
+    qWarning() << "Not implemented, to make it compile, to be removed very soon";
+  }
   void popCurrentView();
-  void executeAction(AbstractAction *action);
 
 signals:
   void currentViewPoped();
-  void actionExecuted(AbstractAction *action) const;
 };

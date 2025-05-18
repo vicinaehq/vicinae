@@ -1,5 +1,6 @@
 #pragma once
 #include "argument.hpp"
+#include "base-view.hpp"
 #include "clipboard-actions.hpp"
 #include "command-database.hpp"
 #include "root-item-manager.hpp"
@@ -11,7 +12,6 @@
 #include "command.hpp"
 #include "omni-icon.hpp"
 #include "quicklist-database.hpp"
-#include "theme.hpp"
 #include "ui/calculator-list-item-widget.hpp"
 #include "ui/color-transform-widget.hpp"
 #include "ui/declarative-omni-list-view.hpp"
@@ -20,7 +20,6 @@
 #include "ui/toast.hpp"
 #include "ui/top_bar.hpp"
 #include <QtConcurrent/QtConcurrent>
-#include <algorithm>
 #include <cfloat>
 #include <chrono>
 #include <cmath>
@@ -60,39 +59,7 @@ public:
 };
 */
 
-class ColorListItem : public OmniList::AbstractVirtualItem, public DeclarativeOmniListView::IActionnable {
-  QColor color;
-
-  OmniListItemWidget *createWidget() const override {
-    auto widget = new ColorTransformWidget();
-
-    widget->setColor(color.name(), color);
-
-    return widget;
-  }
-
-  QString id() const override { return color.name(); }
-
-  int calculateHeight(int width) const override {
-    static ColorTransformWidget *widget = nullptr;
-
-    if (!widget) {
-      widget = new ColorTransformWidget;
-      widget->setColor("", "blue");
-    }
-
-    return widget->sizeHint().height();
-  }
-
-  QList<AbstractAction *> generateActions() const override { return {}; }
-
-public:
-  ColorListItem(QColor color) : color(color) {}
-};
-
-class RootView : public DeclarativeOmniListView {
-  AppWindow &app;
-
+class RootSearchItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
   class DisableItemAction : public AbstractAction {
     std::shared_ptr<RootItem> m_item;
     void execute(AppWindow &app) override {
@@ -148,84 +115,116 @@ class RootView : public DeclarativeOmniListView {
     ~DefaultActionWrapper() { /*m_action->deleteLater();*/ }
   };
 
-  class RootSearchItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
-    std::shared_ptr<RootItem> m_item;
+  std::shared_ptr<RootItem> m_item;
 
-    QList<AbstractAction *> generateActions() const override {
-      auto baseActions = m_item->actions();
-      QList<AbstractAction *> finalActions;
+  QList<AbstractAction *> generateActions() const override {
+    auto baseActions = m_item->actions();
+    QList<AbstractAction *> finalActions;
 
-      finalActions.reserve(baseActions.size() + 2);
+    finalActions.reserve(baseActions.size() + 2);
 
-      for (int i = 0; i < baseActions.size(); ++i) {
-        AbstractAction *action = baseActions.at(i);
+    for (int i = 0; i < baseActions.size(); ++i) {
+      AbstractAction *action = baseActions.at(i);
 
-        if (i == 0)
-          finalActions.emplace_back(new DefaultActionWrapper(m_item->uniqueId(), action));
-        else
-          finalActions.emplace_back(action);
-      }
-
-      finalActions.emplace_back(new CopyToClipboardAction({}, "Reset ranking"));
-      finalActions.emplace_back(new DisableItemAction(m_item));
-
-      return finalActions;
+      if (i == 0)
+        finalActions.emplace_back(new DefaultActionWrapper(m_item->uniqueId(), action));
+      else
+        finalActions.emplace_back(action);
     }
 
-    ItemData data() const override {
-      return {
-          .iconUrl = m_item->iconUrl(),
-          .name = m_item->displayName(),
-          .category = m_item->subtitle(),
-          .accessories = m_item->accessories(),
-      };
+    finalActions.emplace_back(new CopyToClipboardAction({}, "Reset ranking"));
+    finalActions.emplace_back(new DisableItemAction(m_item));
+
+    return finalActions;
+  }
+
+  ItemData data() const override {
+    return {
+        .iconUrl = m_item->iconUrl(),
+        .name = m_item->displayName(),
+        .category = m_item->subtitle(),
+        .accessories = m_item->accessories(),
+    };
+  }
+
+  std::unique_ptr<CompleterData> createCompleter() const override {
+    return std::make_unique<CompleterData>(CompleterData{
+        .iconUrl = m_item->iconUrl(),
+        .arguments = m_item->arguments(),
+    });
+  }
+
+  QString id() const override { return m_item->uniqueId(); }
+
+public:
+  RootSearchItem(const std::shared_ptr<RootItem> &item) : m_item(item) {}
+  ~RootSearchItem() {}
+};
+
+class ColorListItem : public OmniList::AbstractVirtualItem, public DeclarativeOmniListView::IActionnable {
+  QColor color;
+
+  OmniListItemWidget *createWidget() const override {
+    auto widget = new ColorTransformWidget();
+
+    widget->setColor(color.name(), color);
+
+    return widget;
+  }
+
+  QString id() const override { return color.name(); }
+
+  int calculateHeight(int width) const override {
+    static ColorTransformWidget *widget = nullptr;
+
+    if (!widget) {
+      widget = new ColorTransformWidget;
+      widget->setColor("", "blue");
     }
 
-    std::unique_ptr<CompleterData> createCompleter() const override {
-      return std::make_unique<CompleterData>(CompleterData{
-          .iconUrl = m_item->iconUrl(),
-          .arguments = m_item->arguments(),
-      });
-    }
+    return widget->sizeHint().height();
+  }
 
-    QString id() const override { return m_item->uniqueId(); }
+  QList<AbstractAction *> generateActions() const override { return {}; }
 
-  public:
-    RootSearchItem(const std::shared_ptr<RootItem> &item) : m_item(item) {}
-    ~RootSearchItem() {}
-  };
+public:
+  ColorListItem(QColor color) : color(color) {}
+};
 
-  class BaseCalculatorListItem : public OmniList::AbstractVirtualItem,
-                                 public DeclarativeOmniListView::IActionnable {
-  protected:
-    CalculatorItem item;
+class BaseCalculatorListItem : public OmniList::AbstractVirtualItem,
+                               public DeclarativeOmniListView::IActionnable {
+protected:
+  CalculatorItem item;
 
-    OmniListItemWidget *createWidget() const override { return new CalculatorListItemWidget(item); }
+  OmniListItemWidget *createWidget() const override { return new CalculatorListItemWidget(item); }
 
-    int calculateHeight(int width) const override {
-      static CalculatorListItemWidget ruler({});
+  int calculateHeight(int width) const override {
+    static CalculatorListItemWidget ruler({});
 
-      return ruler.sizeHint().height();
-    }
+    return ruler.sizeHint().height();
+  }
 
-    QString id() const override { return item.expression; }
+  QString id() const override { return item.expression; }
 
-    QList<AbstractAction *> generateActions() const override {
-      QString sresult = item.result;
+  QList<AbstractAction *> generateActions() const override {
+    QString sresult = item.result;
 
-      return {
-          /*
-  new CopyCalculatorResultAction(item, "Copy result", sresult),
-  new CopyCalculatorResultAction(item, "Copy expression",
-                                 QString("%1 = %2").arg(item.expression).arg(sresult)),
-          */
+    return {
+        /*
+new CopyCalculatorResultAction(item, "Copy result", sresult),
+new CopyCalculatorResultAction(item, "Copy expression",
+                               QString("%1 = %2").arg(item.expression).arg(sresult)),
+        */
 
-      };
-    }
+    };
+  }
 
-  public:
-    BaseCalculatorListItem(const CalculatorItem &item) : item(item) {}
-  };
+public:
+  BaseCalculatorListItem(const CalculatorItem &item) : item(item) {}
+};
+
+class RootView : public DeclarativeOmniListView {
+  AppWindow &app;
 
 public:
   QTimer *m_calcDebounce = new QTimer(this);
@@ -365,4 +364,174 @@ public:
     // list->setSorting({.enabled = true, .preserveSectionOrder = false});
   }
   ~RootView() {}
+};
+
+class RootCommandV2 : public SimpleView {
+  OmniList *m_list = new OmniList();
+  QTimer *m_calcDebounce = new QTimer(this);
+  std::optional<CalculatorItem> m_currentCalculatorEntry;
+
+  QWidget *centerWidget() const override { return m_list; }
+
+  void renderEmpty() {
+    m_list->beginResetModel();
+    auto commandDb = ServiceRegistry::instance()->commandDb();
+    auto quicklinkDb = ServiceRegistry::instance()->quicklinks();
+    auto appDb = ServiceRegistry::instance()->appDb();
+    const auto &quicklinks = quicklinkDb->list();
+    const auto &appEntries = appDb->listEntries();
+    const auto &commandEntries = commandDb->commands();
+    auto rootManager = ServiceRegistry::instance()->rootItemManager();
+    qCritical() << "RENDER ROOT!";
+
+    auto commandItems =
+        rootManager->providers() | std::views::filter([](const auto &provider) {
+          return provider->type() == RootProvider::Type::ExtensionProvider;
+        }) |
+        std::views::transform([](const auto &provider) { return provider->loadItems(); }) | std::views::join |
+        std::views::transform([](const auto &item) { return std::make_unique<RootSearchItem>(item); });
+
+    auto &section = m_list->addSection("Commands");
+
+    for (auto item : commandItems)
+      section.addItem(std::move(item));
+
+    if (auto provider = rootManager->provider("apps")) {
+      auto &section = m_list->addSection("Apps");
+      auto items = provider->loadItems() | std::views::transform([](const auto &item) {
+                     return std::make_unique<RootSearchItem>(item);
+                   });
+
+      for (auto item : items)
+        section.addItem(std::move(item));
+    }
+
+    if (auto provider = rootManager->provider("bookmarks")) {
+      auto &section = m_list->addSection("Bookmarks");
+      auto items = provider->loadItems() | std::views::transform([](const auto &item) {
+                     return std::make_unique<RootSearchItem>(item);
+                   });
+
+      for (auto item : items)
+        section.addItem(std::move(item));
+    }
+
+    m_list->endResetModel(OmniList::SelectFirst);
+  }
+
+  void render(const QString &text) {
+    auto rootItemManager = ServiceRegistry::instance()->rootItemManager();
+    auto commandDb = ServiceRegistry::instance()->commandDb();
+    auto quicklinkDb = ServiceRegistry::instance()->quicklinks();
+    auto appDb = ServiceRegistry::instance()->appDb();
+    auto calculator = ServiceRegistry::instance()->calculatorDb();
+    const auto &quicklinks = quicklinkDb->list();
+    const auto &appEntries = appDb->listEntries();
+    const auto &commandEntries = commandDb->commands();
+    size_t maxReserve = appEntries.size() + commandEntries.size() + quicklinks.size();
+
+    qCritical() << "RENDER!";
+
+    m_list->beginResetModel();
+
+    auto start = std::chrono::high_resolution_clock::now();
+
+    if (m_currentCalculatorEntry) {
+      qDebug() << "calculator" << m_currentCalculatorEntry->expression << "="
+               << m_currentCalculatorEntry->result;
+      m_list->addSection("Calculator")
+          .addItem(std::make_unique<BaseCalculatorListItem>(*m_currentCalculatorEntry));
+    }
+
+    if (QColor(text).isValid()) {
+      m_list->addSection("Color").addItem(std::make_unique<ColorListItem>(text));
+    }
+
+    auto &results = m_list->addSection("Results");
+
+    for (const auto &item : rootItemManager->prefixSearch(text.trimmed())) {
+      results.addItem(std::make_unique<RootSearchItem>(item));
+    }
+
+    auto &fallbackCommands = m_list->addSection(QString("Use \"%1\" with...").arg(text));
+
+    // TODO: use fallback commands
+
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
+    m_list->endResetModel(OmniList::SelectFirst);
+    // qDebug() << "root searched in " << duration << "ms";
+  }
+
+  void onSearchChanged(const QString &text) override {
+    QString query = text.trimmed();
+
+    qCritical() << "search" << query;
+
+    if (query.isEmpty()) return renderEmpty();
+
+    m_calcDebounce->start();
+
+    return render(text);
+  }
+
+  void itemSelected(const OmniList::AbstractVirtualItem *next,
+                    const OmniList::AbstractVirtualItem *previous) {
+    if (!next) return;
+
+    if (auto item = dynamic_cast<const DeclarativeOmniListView::IActionnable *>(next)) {
+      setActions(item->generateActions());
+    }
+
+    if (next) { qDebug() << "item selected" << next->id(); }
+  }
+
+  void handleCalculatorTimeout() {
+    auto calculator = ServiceRegistry::instance()->calculatorDb();
+    QString expression = searchText().trimmed();
+    bool isComputable = false;
+
+    for (const auto &ch : expression) {
+      if (!ch.isLetterOrNumber() || ch.isSpace()) {
+        isComputable = true;
+        break;
+      }
+    }
+
+    if (!isComputable) {
+      m_currentCalculatorEntry.reset();
+      return;
+    }
+
+    auto [result, ok] = calculator->quickCalculate(expression.toLatin1().data());
+
+    if (ok) {
+      m_currentCalculatorEntry = CalculatorItem{.expression = expression, .result = result.c_str()};
+    } else {
+      m_currentCalculatorEntry.reset();
+    }
+    qCritical() << "calculator rerender";
+    render(searchText());
+  }
+
+  void onActionExecuted(AbstractAction *action) override { qCritical() << "action title" << action->title(); }
+
+  void itemActivated(const OmniList::AbstractVirtualItem &item) { activatePrimaryAction(); }
+
+  void initialize() override {
+    auto manager = ServiceRegistry::instance()->rootItemManager();
+    connect(manager, &RootItemManager::itemsChanged, this, [this]() { onSearchChanged(searchText()); });
+    connect(m_list, &OmniList::selectionChanged, this, &RootCommandV2::itemSelected);
+    connect(m_list, &OmniList::itemActivated, this, &RootCommandV2::itemActivated);
+    connect(m_calcDebounce, &QTimer::timeout, this, &RootCommandV2::handleCalculatorTimeout);
+    SimpleView::initialize();
+  }
+
+public:
+  RootCommandV2() {
+    setSearchPlaceholderText("Search for apps or commands...");
+    m_calcDebounce->setInterval(100);
+    m_calcDebounce->setSingleShot(true);
+  }
 };

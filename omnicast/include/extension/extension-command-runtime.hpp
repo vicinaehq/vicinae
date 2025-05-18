@@ -284,8 +284,8 @@ class ExtensionCommandRuntime : public CommandContext {
     connect(view, &ExtensionView::updateActionPannel, this, &ExtensionCommandRuntime::updateActionPannel);
 
     m_viewStack.push_back(view);
-    m_app->pushView(
-        view, {.navigation = NavigationStatus{.title = m_command->name(), .iconUrl = m_command->iconUrl()}});
+    // m_app->pushView(
+    // view, {.navigation = NavigationStatus{.title = m_command->name(), .iconUrl = m_command->iconUrl()}});
   }
 
   void handlePopViewRequest() {

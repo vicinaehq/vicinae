@@ -36,3 +36,13 @@ public:
 signals:
   void didExecute();
 };
+
+struct StaticAction : public AbstractAction {
+  std::function<void(void)> m_fn;
+
+  void execute(AppWindow &app) override { m_fn(); }
+
+public:
+  StaticAction(const QString &title, const BuiltinOmniIconUrl &url, const std::function<void(void)> &fn)
+      : AbstractAction(title, url), m_fn(fn) {}
+};

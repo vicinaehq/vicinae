@@ -41,7 +41,7 @@ public:
     app.statusBar->setNavigationTitle(text);
   }
   void setSearchAccessory(QWidget *accessory) { app.topBar->setAccessoryWidget(accessory); }
-  void selectPrimaryAction() { app.selectPrimaryAction(); }
+  void selectPrimaryAction() { /*app.selectPrimaryAction();*/ }
 
   virtual void onSearchChanged(const QString &text) {}
 

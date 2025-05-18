@@ -19,11 +19,13 @@ public:
     if (auto view = m_info.provider->configView(app)) {
       auto navTitle = QString("Configure %1 AI provider").arg(m_info.provider->displayName());
 
-      app.pushView(
-          view, {.navigation = NavigationStatus{
-                     .title = navTitle,
-                     .iconUrl =
-                         BuiltinOmniIconUrl(m_info.provider->iconName()).setBackgroundTint(ColorTint::Red)}});
+      /*
+  app.pushView(
+      view, {.navigation = NavigationStatus{
+                 .title = navTitle,
+                 .iconUrl =
+                     BuiltinOmniIconUrl(m_info.provider->iconName()).setBackgroundTint(ColorTint::Red)}});
+      */
     } else {
       app.statusBar->setToast("This provider has no config view! This should not be the case.",
                               ToastPriority::Danger);

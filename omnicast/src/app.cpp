@@ -1,4 +1,5 @@
 #include "app.hpp"
+#include "base-view.hpp"
 #include "command-builder.hpp"
 #include "command-database.hpp"
 #include "command-server.hpp"
@@ -18,9 +19,6 @@
 #include "omnicast.hpp"
 #include "root-command.hpp"
 #include "theme.hpp"
-#include "ui/horizontal-loading-bar.hpp"
-#include "ui/toast.hpp"
-#include "ui/top_bar.hpp"
 #include <QLabel>
 #include <QMainWindow>
 #include <QThread>
@@ -46,7 +44,7 @@ bool AppWindow::event(QEvent *event) {
     bool isEsc = keyEvent->key() == Qt::Key_Escape;
 
     if (navigationStack.size() > 1) {
-      if (isEsc || (keyEvent->key() == Qt::Key_Backspace && topBar->input->text().isEmpty())) {
+      if (isEsc || (keyEvent->key() == Qt::Key_Backspace)) {
         popCurrentView();
         return true;
       }
@@ -54,25 +52,23 @@ bool AppWindow::event(QEvent *event) {
 
     if (isEsc) {
       qDebug() << "esc";
-      if (topBar->input->text().isEmpty()) {
-        hide();
-      } else {
-        qDebug() << "reset text";
-        clearSearch();
-      }
+
+      hide();
       return true;
     }
 
-    if (auto action = actionPannel->findBoundAction(keyEvent)) {
-      executeAction(action);
-      return true;
-    }
+    /*
+if (auto action = actionPannel->findBoundAction(keyEvent)) {
+  executeAction(action);
+  return true;
+}
 
-    if (keyEvent->modifiers().testFlag(Qt::ControlModifier) && key == Qt::Key_B) {
-      actionPannel->showActions();
+if (keyEvent->modifiers().testFlag(Qt::ControlModifier) && key == Qt::Key_B) {
+  actionPannel->showActions();
 
-      return true;
-    }
+  return true;
+}
+    */
 
     return true;
   }
@@ -80,81 +76,35 @@ bool AppWindow::event(QEvent *event) {
   return QWidget::event(event);
 }
 
-void AppWindow::clearSearch() {
-  topBar->input->clear();
-  topBar->input->textEdited("");
-}
+void AppWindow::clearSearch() {}
 
-void AppWindow::showEvent(QShowEvent *event) {
-  if (auto action = actionPannel->primaryAction()) {
-    statusBar->setAction(*action);
-  } else {
-    statusBar->clearAction();
-  }
-
-  QMainWindow::showEvent(event);
-}
+void AppWindow::showEvent(QShowEvent *event) { QMainWindow::showEvent(event); }
 
 void AppWindow::popCurrentView() {
-  if (commandStack.empty()) {
-    qDebug() << "AppWindow::popCurrentView: commandStack is empty";
-    return;
-  }
+  /*
+auto &activeCommand = commandStack.at(commandStack.size() - 1);
 
-  auto &activeCommand = commandStack.at(commandStack.size() - 1);
-
-  if (activeCommand.viewStack.empty()) return;
+if (activeCommand.viewStack.empty()) return;
+*/
 
   if (navigationStack.size() == 1) return;
 
   auto previous = navigationStack.top();
   navigationStack.pop();
 
-  previous.view->onPop();
+  previous.view->deactivate();
   disconnectView(*previous.view);
 
   auto next = navigationStack.top();
 
   connectView(*next.view);
-  centerView = next.view;
-  next.view->setGeometry(viewGeometry());
+  next.view->activate();
+  next.view->setGeometry(geometry());
   next.view->show();
 
   previous.view->deleteLater();
 
-  qDebug() << "restored actions" << next.actionViewStack.size();
-  actionPannel->restoreViewStack(next.actionViewStack);
-
-  if (auto action = actionPannel->primaryAction()) {
-    statusBar->setAction(*action);
-  } else {
-    statusBar->clearAction();
-  }
-
-  topBar->destroyQuicklinkCompleter();
-  _loadingBar->setStarted(false);
-  topBar->input->setReadOnly(false);
-  topBar->input->show();
-  topBar->input->setFocus();
-  topBar->input->setText(next.query);
-  topBar->input->setPlaceholderText(next.placeholderText);
-
-  if (QWidget *accessory = topBar->accessoryWidget(); accessory && accessory != next.searchAccessory) {
-    accessory->deleteLater();
-  }
-
-  qDebug() << "setting accessory widget to" << next.searchAccessory;
-  topBar->setAccessoryWidget(next.searchAccessory);
-  topBar->input->selectAll();
-
-  if (next.completer) { topBar->activateQuicklinkCompleter(*next.completer); }
-
-  if (navigationStack.size() == 1) { topBar->hideBackButton(); }
-
-  next.view->onRestore();
-
-  qDebug() << "view stack size" << activeCommand.viewStack.size();
-
+  /*
   if (activeCommand.viewStack.size() == 1) {
     activeCommand.command->unload();
     activeCommand.command->deleteLater();
@@ -163,13 +113,7 @@ void AppWindow::popCurrentView() {
   } else {
     activeCommand.viewStack.pop();
   }
-
-  if (navigationStack.size() == 1) {
-    statusBar->reset();
-  } else {
-    statusBar->setNavigationTitle(next.navigation.title);
-    statusBar->setNavigationIcon(next.navigation.icon);
-  }
+  */
 
   currentViewPoped();
 }
@@ -180,44 +124,17 @@ void AppWindow::popToRoot() {
   }
 }
 
-void AppWindow::disconnectView(View &view) {
-  disconnect(topBar->input, &SearchBar::textEdited, &view, &View::onSearchChanged);
+void AppWindow::disconnectView(BaseView &view) { view.removeEventFilter(this); }
 
-  // view->app
-  disconnect(&view, &View::pushView, this, &AppWindow::pushView);
-  disconnect(&view, &View::pop, this, &AppWindow::popCurrentView);
-  disconnect(&view, &View::popToRoot, this, &AppWindow::popToRoot);
-  disconnect(&view, &View::activatePrimaryAction, this, &AppWindow::selectPrimaryAction);
-  disconnect(&view, &View::setSignalActions, this, &AppWindow::handleSignalActions);
-  disconnect(&view, &View::setActionPannel, this, &AppWindow::handleSetActions);
+void AppWindow::connectView(BaseView &view) { view.installEventFilter(this); }
 
-  view.removeEventFilter(this);
-  topBar->input->removeEventFilter(&view);
+void AppWindow::pushView(BaseView *view, const PushViewOptions &opts) {
+  /*
+if (commandStack.empty()) {
+qDebug() << "AppWindow::pushView called with empty command stack";
+return;
 }
 
-void AppWindow::connectView(View &view) {
-  // app->view
-  connect(topBar->input, &SearchBar::textEdited, &view, &View::onSearchChanged);
-
-  // view->app
-  connect(&view, &View::pushView, this, &AppWindow::pushView);
-  connect(&view, &View::pop, this, &AppWindow::popCurrentView);
-  connect(&view, &View::popToRoot, this, &AppWindow::popToRoot);
-  connect(&view, &View::activatePrimaryAction, this, &AppWindow::selectPrimaryAction);
-  connect(&view, &View::setLoading, _loadingBar, &HorizontalLoadingBar::setStarted);
-  connect(&view, &View::setSignalActions, this, &AppWindow::handleSignalActions);
-  connect(&view, &View::setActionPannel, this, &AppWindow::handleSetActions);
-
-  view.onAttach();
-  view.installEventFilter(this);
-  topBar->input->installEventFilter(&view);
-}
-
-void AppWindow::pushView(View *view, const PushViewOptions &opts) {
-  if (commandStack.empty()) {
-    qDebug() << "AppWindow::pushView called with empty command stack";
-    return;
-  }
 
   auto &currentCommand = commandStack.at(commandStack.size() - 1);
 
@@ -226,59 +143,19 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
 
     disconnectView(*old.view);
   }
+*/
 
-  if (navigationStack.size() == 1) { topBar->showBackButton(); }
-
-  view->setGeometry(viewGeometry());
-  view->lower();
-
-  if (!navigationStack.empty()) {
-    auto &cur = navigationStack.top();
-
-    cur.query = topBar->input->text();
-    cur.placeholderText = topBar->input->placeholderText();
-    cur.actionViewStack = actionPannel->takeViewStack();
-    cur.searchAccessory = topBar->accessoryWidget();
-    cur.navigation = {
-        .icon = statusBar->navigationIcon(),
-        .title = statusBar->navigationTitle(),
-    };
-
-    topBar->accessoryWidget()->hide();
-
-    qDebug() << "pushed " << cur.actionViewStack.size() << "actions";
-    cur.completer.reset();
-
-    if (topBar->m_completer->isVisible()) {
-      cur.completer = CompleterData{
-          .iconUrl = topBar->completerData->iconUrl,
-          .arguments = topBar->completerData->arguments,
-      };
-    }
-
-    cur.view->hide();
-
-    if (opts.navigation) statusBar->setNavigation(opts.navigation->title, opts.navigation->iconUrl);
-  }
-
-  centerView = view;
+  view->setParent(this);
+  view->setFixedSize(size());
+  view->initialize();
+  view->onActivate();
+  qCritical() << "show view";
   view->show();
 
   connectView(*view);
 
-  actionPannel->setSignalActions({});
-  statusBar->clearAction();
-  currentCommand.viewStack.push({.view = view});
+  // currentCommand.viewStack.push({.view = view});
   navigationStack.push({.view = view});
-  _loadingBar->setStarted(false);
-
-  topBar->destroyQuicklinkCompleter();
-  topBar->input->setReadOnly(false);
-  topBar->input->show();
-  topBar->input->setFocus();
-  topBar->input->setText(opts.searchQuery);
-  view->onMount();
-  topBar->input->textEdited(opts.searchQuery);
 }
 
 void AppWindow::unloadCurrentCommand() { popToRoot(); }
@@ -306,8 +183,10 @@ void AppWindow::launchCommand(const std::shared_ptr<AbstractCmd> &command, const
       if (command->type() == CommandType::CommandTypeExtension) {
         auto extensionCommand = std::static_pointer_cast<ExtensionCommand>(command);
 
-        pushView(new MissingExtensionPreferenceView(*this, extensionCommand),
-                 {.navigation = NavigationStatus{.title = command->name(), .iconUrl = command->iconUrl()}});
+        /*
+pushView(new MissingExtensionPreferenceView(*this, extensionCommand),
+         {.navigation = NavigationStatus{.title = command->name(), .iconUrl = command->iconUrl()}});
+        */
         return;
       }
 
@@ -322,21 +201,11 @@ void AppWindow::launchCommand(const std::shared_ptr<AbstractCmd> &command, const
 
   auto ctx = command->createContext(*this, command, opts.searchQuery);
 
-  if (!ctx) {
-    statusBar->setToast("No context returned by command", ToastPriority::Danger);
-    return;
-  }
+  if (!ctx) { return; }
 
   connect(ctx, &CommandContext::requestPopToRoot, this, [this]() { popToRoot(); });
   connect(ctx, &CommandContext::requestPopView, this, [this]() { popCurrentView(); });
-  connect(ctx, &CommandContext::requestPushView, this, [this](View *view) { pushView(view); });
-  connect(ctx, &CommandContext::requestToast, statusBar, &StatusBar::setToast);
-  connect(ctx, &CommandContext::requestTitleChange, this,
-          [this](const QString &title) { statusBar->setNavigationTitle(title); });
-  connect(ctx, &CommandContext::requestSearchTextChange, this, [this](const QString &text) {
-    topBar->input->setText(text);
-    emit topBar->input->textEdited(text);
-  });
+  // connect(ctx, &CommandContext::requestPushView, this, [this](View *view) { pushView(view); });
 
   if (command->isNoView() && command->type() == CommandType::CommandTypeBuiltin) {
     qCritical() << "Running no view command";
@@ -353,21 +222,7 @@ void AppWindow::launchCommand(const QString &id, const LaunchCommandOptions &opt
   if (auto command = commandDb->findCommand(id)) { launchCommand(command->command, opts); }
 }
 
-void AppWindow::resizeEvent(QResizeEvent *event) {
-  QMainWindow::resizeEvent(event);
-  auto windowSize = event->size();
-  auto topHeight = Omnicast::TOP_BAR_HEIGHT;
-  auto statusHeight = Omnicast::STATUS_BAR_HEIGHT;
-
-  centerView->setGeometry({0, topHeight, windowSize.width(), windowSize.height() - topHeight - statusHeight});
-  topBar->setGeometry({0, 0, windowSize.width(), topHeight});
-  _loadingBar->setGeometry({0, topHeight, windowSize.width(), 1});
-  centerView->setGeometry({0, topHeight, windowSize.width(), windowSize.height() - topHeight - statusHeight});
-  statusBar->setGeometry({0, windowSize.height() - statusHeight, windowSize.width(), statusHeight});
-
-  topBar->show();
-  statusBar->show();
-}
+void AppWindow::resizeEvent(QResizeEvent *event) { QMainWindow::resizeEvent(event); }
 
 void AppWindow::paintEvent(QPaintEvent *event) {
   auto &config = ServiceRegistry::instance()->config()->value();
@@ -427,19 +282,6 @@ std::variant<CommandResponse, CommandError> AppWindow::handleCommand(const Comma
     return {};
   }
 
-  if (message.type == "clipboard.store") {
-    auto values = message.params.asArray();
-
-    if (values.size() != 2) { return CommandError{"Ill-formed clipboard.store request"}; }
-
-    auto data = values[0].asString();
-    auto options = values[1].asDict();
-    auto mimeName = options["mime"].asString();
-    // auto copied = clipboardService->copy(QByteArray(data.data(), data.size()));
-
-    return {};
-  }
-
   if (message.type == "command.list") {
     Proto::Array results;
 
@@ -467,52 +309,15 @@ std::variant<CommandResponse, CommandError> AppWindow::handleCommand(const Comma
   return CommandError{"Unknowm command"};
 }
 
-void AppWindow::selectPrimaryAction() {
-  if (auto action = actionPannel->primaryAction()) { executeAction(action); }
-}
-
-void AppWindow::selectSecondaryAction() {}
-
-void AppWindow::executeAction(AbstractAction *action) {
-  unloadHangingCommand();
-
-  auto oldCommandStackSize = commandStack.size();
-  auto oldViewStackSize = commandStack.at(commandStack.size() - 1).viewStack.size();
-
-  actionPannel->close();
-  action->execute(*this);
-
-  // the executor may no longer be valid
-  if (commandStack.size() < oldCommandStackSize) return;
-
-  auto &executor = commandStack.at(oldCommandStackSize - 1);
-
-  executor.command->onActionExecuted(action);
-
-  if (auto cb = action->executionCallback()) cb();
-
-  if (oldViewStackSize > 0 && executor.viewStack.size() < oldViewStackSize) return;
-
-  executor.viewStack.at(oldViewStackSize - 1).view->onActionActivated(action);
-}
-
 void AppWindow::closeWindow(bool withPopToRoot) {
   hide();
-  clearSearch();
-  topBar->destroyQuicklinkCompleter();
-
   if (withPopToRoot) popToRoot();
 }
 
-AppWindow::AppWindow(QWidget *parent)
-    : QMainWindow(parent), topBar(new TopBar(this)), statusBar(new StatusBar(this)),
-      actionPannel(new ActionPannelWidget(this)), _loadingBar(new HorizontalLoadingBar(this)) {
+AppWindow::AppWindow(QWidget *parent) : QMainWindow(parent) {
   setWindowFlags(Qt::FramelessWindowHint);
   setAttribute(Qt::WA_TranslucentBackground, true);
-
   setMinimumSize(Omnicast::WINDOW_SIZE);
-  topBar->setFixedHeight(Omnicast::TOP_BAR_HEIGHT);
-  statusBar->setFixedHeight(Omnicast::STATUS_BAR_HEIGHT);
 
   QDir::root().mkpath(Config::dirPath());
   FaviconService::initialize(new FaviconService(Config::dirPath() + QDir::separator() + "favicon.db"));
@@ -525,15 +330,6 @@ AppWindow::AppWindow(QWidget *parent)
   }
 
   _commandServer->setHandler(this);
-
-  connect(topBar->input, &SearchBar::pop, this, &AppWindow::popCurrentView);
-  connect(actionPannel, &ActionPannelWidget::actionExecuted, this, &AppWindow::executeAction);
-  connect(statusBar, &StatusBar::actionButtonClicked, this, [this]() { actionPannel->showActions(); });
-  connect(statusBar, &StatusBar::currentActionButtonClicked, this, [this]() { selectPrimaryAction(); });
-  connect(actionPannel, &ActionPannelWidget::closed, this,
-          [this]() { statusBar->setActionButtonHighlight(false); });
-  connect(actionPannel, &ActionPannelWidget::opened, this,
-          [this]() { statusBar->setActionButtonHighlight(true); });
 
   ImageFetcher::instance();
 
@@ -549,10 +345,9 @@ AppWindow::AppWindow(QWidget *parent)
             }
           });
 
-  _loadingBar->setFixedHeight(1);
-  _loadingBar->setBarWidth(100);
+  // auto rootCommand = CommandBuilder("root").toSingleView<RootView>();
 
-  auto rootCommand = CommandBuilder("root").toSingleView<RootView>();
+  pushView(new RootCommandV2());
 
-  launchCommand(rootCommand);
+  // launchCommand(rootCommand);
 }
