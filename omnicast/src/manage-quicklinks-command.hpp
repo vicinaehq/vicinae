@@ -1,8 +1,8 @@
 #pragma once
 #include "app.hpp"
+#include "bookmark-actions.hpp"
+#include "bookmark-service.hpp"
 #include "extend/metadata-model.hpp"
-#include "quicklink-actions.hpp"
-#include "quicklist-database.hpp"
 #include "service-registry.hpp"
 #include "ui/declarative-omni-list-view.hpp"
 #include "ui/omni-list-view.hpp"
@@ -13,17 +13,18 @@
 #include <qobject.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
+#include <ranges>
 #include <sys/socket.h>
 
 class QuicklinkItemDetail : public OmniListView::MetadataDetailModel {
-  std::shared_ptr<Quicklink> link;
+  std::shared_ptr<Bookmark> link;
 
   QWidget *createView() const override {
     auto widget = new QWidget();
     auto layout = new QHBoxLayout();
 
     layout->setAlignment(Qt::AlignTop);
-    layout->addWidget(new QLabel(link->rawUrl));
+    layout->addWidget(new QLabel(link->url()));
     widget->setLayout(layout);
 
     return widget;
@@ -33,60 +34,66 @@ class QuicklinkItemDetail : public OmniListView::MetadataDetailModel {
     QList<MetadataItem> items;
 
     items << MetadataLabel{
-        .text = link->name,
+        .text = link->name(),
         .title = "Name",
     };
     items << MetadataLabel{
-        .text = link->app,
+        .text = link->app(),
         .title = "Application",
     };
     items << MetadataLabel{
-        .text = QString::number(link->openCount),
+        .text = QString::number(0),
         .title = "Opened",
     };
 
-    if (link->lastUsedAt) {
-      items << MetadataLabel{
-          .text = link->lastUsedAt->toString(),
-          .title = "Last used at",
-      };
-    }
+    /*
+if (link->lastUsedAt) {
+  items << MetadataLabel{
+      .text = link->lastUsedAt->toString(),
+      .title = "Last used at",
+  };
+}
+    */
 
     return {.children = items};
   }
 
 public:
-  QuicklinkItemDetail(const std::shared_ptr<Quicklink> &quicklink) : link(quicklink) {}
+  QuicklinkItemDetail(const std::shared_ptr<Bookmark> &quicklink) : link(quicklink) {}
 };
 
 class QuicklinkItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
-  std::shared_ptr<Quicklink> link;
+  std::shared_ptr<Bookmark> link;
 
 public:
   QList<AbstractAction *> generateActions() const override {
-    auto open = new OpenCompletedQuicklinkAction(link);
-    auto edit = new EditQuicklinkAction(link);
-    auto duplicate = new DuplicateQuicklinkAction(link);
-    auto remove = new RemoveQuicklinkAction(link);
-
-    // connect(edit, &EditQuicklinkAction::edited, this, &QuicklinkItem::edited);
-    // connect(duplicate, &DuplicateQuicklinkAction::duplicated, this, &QuicklinkItem::duplicated);
-    // connect(remove, &RemoveQuicklinkAction::didExecute, this, &QuicklinkItem::removed);
+    auto open = new OpenBookmarkAction(link);
+    auto edit = new EditBookmarkAction(link);
+    auto duplicate = new DuplicateBookmarkAction(link);
+    auto remove = new RemoveBookmarkAction(link);
 
     return {open, edit, duplicate, remove};
   }
 
-  const QString &name() const { return link->name; }
-
   std::unique_ptr<CompleterData> createCompleter() const override {
-    return std::make_unique<CompleterData>(
-        CompleterData{.placeholders = link->placeholders, .iconUrl = link->iconName});
+    ArgumentList args;
+
+    for (const auto &barg : link->arguments()) {
+      CommandArgument cmdArg;
+
+      cmdArg.type = CommandArgument::Text;
+      cmdArg.required = barg.defaultValue.isEmpty();
+      cmdArg.placeholder = barg.name;
+      args.emplace_back(cmdArg);
+    }
+
+    return std::make_unique<CompleterData>(CompleterData{.arguments = args});
   }
 
   ItemData data() const override {
     return {
-        .iconUrl = link->iconName,
-        .name = link->name,
+        .iconUrl = link->icon(),
+        .name = link->name(),
     };
   }
 
@@ -96,10 +103,10 @@ public:
     return new OmniListView::SideDetailWidget(*detailModel.get());
   }
 
-  QString id() const override { return QString::number(link->id); }
+  QString id() const override { return QString::number(link->id()); }
 
 public:
-  QuicklinkItem(const std::shared_ptr<Quicklink> &link) : link(link) {}
+  QuicklinkItem(const std::shared_ptr<Bookmark> &link) : link(link) {}
 };
 
 class ManageQuicklinksView : public DeclarativeOmniListView {
@@ -107,21 +114,25 @@ class ManageQuicklinksView : public DeclarativeOmniListView {
 
   void onMount() override { setSearchPlaceholderText("Browse quicklinks..."); }
 
-  ItemList generateList(const QString &s) override {
-    auto db = ServiceRegistry::instance()->quicklinks();
-    ItemList list;
-    auto quicklinks = db->list();
+  bool doesUseNewModel() const override { return true; }
 
-    list.reserve(quicklinks.size() + 1);
-    list.push_back(std::make_unique<OmniList::VirtualSection>("Quicklinks"));
+  void render(const QString &s) override {
+    auto rootItemManager = ServiceRegistry::instance()->rootItemManager();
+    auto bookmarkService = ServiceRegistry::instance()->bookmarks();
+    auto bookmarkProvider = rootItemManager->provider("bookmarks");
 
-    for (auto &link : quicklinks) {
-      if (link->name.contains(s, Qt::CaseInsensitive)) {
-        list.push_back(std::make_unique<QuicklinkItem>(link));
-      }
+    if (!bookmarkProvider) { return; }
+
+    auto bookmarks =
+        bookmarkService->bookmarks() |
+        std::views::filter([s](auto bk) { return bk->name().contains(s, Qt::CaseInsensitive); }) |
+        std::views::transform([](auto bk) { return std::make_unique<QuicklinkItem>(bk); });
+
+    auto &section = list->addSection("Bookmarks");
+
+    for (auto bk : bookmarks) {
+      section.addItem(std::move(bk));
     }
-
-    return list;
   }
 
 public:

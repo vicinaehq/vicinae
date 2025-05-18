@@ -1,14 +1,12 @@
 #pragma once
 #include "argument.hpp"
 #include "clipboard-actions.hpp"
-#include "clipboard-history-command.hpp"
 #include "command-database.hpp"
 #include "root-item-manager.hpp"
 #include "omni-command-db.hpp"
 #include "service-registry.hpp"
 #include "ui/action-pannel/action-item.hpp"
 #include "ui/action-pannel/action.hpp"
-#include "ui/action-pannel/open-with-action.hpp"
 #include "app.hpp"
 #include "command.hpp"
 #include "omni-icon.hpp"
@@ -19,7 +17,6 @@
 #include "ui/declarative-omni-list-view.hpp"
 #include "ui/omni-list-item-widget.hpp"
 #include "ui/omni-list.hpp"
-#include "quicklink-actions.hpp"
 #include "ui/toast.hpp"
 #include "ui/top_bar.hpp"
 #include <QtConcurrent/QtConcurrent>
@@ -198,30 +195,6 @@ class RootView : public DeclarativeOmniListView {
     ~RootSearchItem() {}
   };
 
-  class FallbackQuicklinkListItem : public AbstractDefaultListItem, DeclarativeOmniListView::IActionnable {
-    QString query;
-
-  public:
-    std::shared_ptr<Quicklink> link;
-
-    QList<AbstractAction *> generateActions() const override {
-      return {new OpenQuicklinkAction(link, {query}), new EditQuicklinkAction(link),
-              new DuplicateQuicklinkAction(link)};
-    }
-
-    ItemData data() const override {
-      return {.iconUrl = link->iconName,
-              .name = link->name,
-              .accessories = {{.text = "Quicklink", .color = ColorTint::TextSecondary}}};
-    }
-
-    QString id() const override { return QString("fallback-link-%1").arg(link->id); }
-
-  public:
-    FallbackQuicklinkListItem(const std::shared_ptr<Quicklink> &link, const QString &fallbackQuery)
-        : link(link), query(fallbackQuery) {}
-  };
-
   class BaseCalculatorListItem : public OmniList::AbstractVirtualItem,
                                  public DeclarativeOmniListView::IActionnable {
   protected:
@@ -289,6 +262,16 @@ public:
       for (auto item : items)
         section.addItem(std::move(item));
     }
+
+    if (auto provider = rootManager->provider("bookmarks")) {
+      auto &section = list->addSection("Bookmarks");
+      auto items = provider->loadItems() | std::views::transform([](const auto &item) {
+                     return std::make_unique<RootSearchItem>(item);
+                   });
+
+      for (auto item : items)
+        section.addItem(std::move(item));
+    }
   }
 
   void onSearchChanged(const QString &s) override {
@@ -333,12 +316,8 @@ public:
     }
 
     auto &fallbackCommands = list->addSection(QString("Use \"%1\" with...").arg(s));
-    auto fallbackLinks = quicklinks | std::views::filter([&s](const auto &quicklink) {
-                           return quicklink->placeholders.size() == 1;
-                         });
-    std::ranges::for_each(fallbackLinks, [&fallbackCommands, &s](const auto &link) {
-      fallbackCommands.addItem(std::make_unique<FallbackQuicklinkListItem>(link, s));
-    });
+
+    // TODO: use fallback commands
 
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();

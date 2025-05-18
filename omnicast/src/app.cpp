@@ -249,11 +249,10 @@ void AppWindow::pushView(View *view, const PushViewOptions &opts) {
     qDebug() << "pushed " << cur.actionViewStack.size() << "actions";
     cur.completer.reset();
 
-    if (topBar->quickInput && topBar->completerData) {
+    if (topBar->m_completer->isVisible()) {
       cur.completer = CompleterData{
-          .placeholders = topBar->completerData->placeholders,
-          .values = topBar->quickInput->collectArgs(),
           .iconUrl = topBar->completerData->iconUrl,
+          .arguments = topBar->completerData->arguments,
       };
     }
 

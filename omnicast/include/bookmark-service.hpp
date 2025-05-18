@@ -1,6 +1,6 @@
 #pragma once
 #include "omni-database.hpp"
-#include <qcborcommon.h>
+#include <ranges>
 #include <qlogging.h>
 #include <qdebug.h>
 #include <qobject.h>
@@ -248,8 +248,21 @@ public:
       return false;
     }
 
+    auto it = std::ranges::remove_if(m_bookmarks, [id](const auto &mark) { return mark->id() == id; });
+
+    m_bookmarks.erase(it.begin(), it.end());
+
     return query.numRowsAffected() > 0;
   }
+
+  /*
+  void registerOpen(int id) {
+    QSqlQuery query = m_db.createQuery();
+
+    query.prepare("UPDATE bookmarks SET open_count = open_count + 1, last_used_at = (unixepoch()) WHERE id =
+  :id RETURNING open_count, last_used_at"); query.bindValue(":id", id);
+  }
+  */
 
   bool createBookmark(const QString &name, const QString &icon, const QString &url, const QString &app) {
     QSqlQuery query = m_db.createQuery();
@@ -291,4 +304,5 @@ public:
 
 signals:
   void bookmarkSaved(const Bookmark &bookmark) const;
+  void bookmarkRemoved(const Bookmark &bookmark);
 };

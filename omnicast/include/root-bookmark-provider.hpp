@@ -1,6 +1,8 @@
 #pragma once
 #include "bookmark-actions.hpp"
 #include "bookmark-service.hpp"
+#include "common-actions.hpp"
+#include "create-quicklink-command.hpp"
 #include "root-item-manager.hpp"
 
 class RootBookmarkProvider : public RootProvider {
@@ -12,6 +14,10 @@ class RootBookmarkProvider : public RootProvider {
     QString displayName() const override { return m_link->name(); }
 
     double baseScoreWeight() const override { return 1.4; }
+
+    AccessoryList accessories() const override {
+      return {{.text = "Bookmark", .color = ColorTint::TextSecondary}};
+    }
 
     ArgumentList arguments() const override {
       ArgumentList args;
@@ -42,9 +48,11 @@ class RootBookmarkProvider : public RootProvider {
       QList<AbstractAction *> list;
 
       list << new OpenBookmarkAction(m_link);
+      list << new EditBookmarkAction(m_link);
+      list << new DuplicateBookmarkAction(m_link);
+      list << new RemoveBookmarkAction(m_link);
 
       // list << new OpenCompletedBookmarkAction(m_link);
-      // list << new EditBookmarkAction(m_link);
       // list << new DuplicateBookmarkAction(m_link);
       // list << new RemoveBookmarkAction(m_link);
 
@@ -57,7 +65,7 @@ class RootBookmarkProvider : public RootProvider {
 
 public:
   QString displayName() const override { return "Bookmarks"; }
-  QString uniqueId() const override { return "links"; }
+  QString uniqueId() const override { return "bookmarks"; }
   Type type() const override { return RootProvider::Type::GroupProvider; }
 
   std::vector<std::shared_ptr<RootItem>> loadItems() const override {

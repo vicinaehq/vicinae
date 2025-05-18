@@ -143,7 +143,7 @@ CommandDatabase::CommandDatabase() {
     testExtensionPref->setDefaultValue("ting ting");
     testExtensionPref->setDescription("A simple test, nothing more.");
 
-    auto create = CommandBuilder("create").withName("Create Bookmark").toSingleView<QuicklinkCommandView>();
+    auto create = CommandBuilder("create").withName("Create Bookmark").toSingleView<BookmarkFormView>();
     auto manage = CommandBuilder("manage").withName("Manage Bookmarks").toSingleView<ManageQuicklinksView>();
     auto _export = CommandBuilder("export").withName("Export Bookmarks").toSingleView<ManageQuicklinksView>();
     auto _import = CommandBuilder("import").withName("Import Bookmarks").toSingleView<ManageQuicklinksView>();

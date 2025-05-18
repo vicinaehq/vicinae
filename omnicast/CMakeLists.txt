@@ -248,8 +248,6 @@ set(SRCS
 
 	include/omni-icon.hpp
 
-	include/quicklink-actions.hpp
-
 	include/ui/omni-scroll-bar.hpp
 	src/ui/omni-scroll-bar.cpp
 

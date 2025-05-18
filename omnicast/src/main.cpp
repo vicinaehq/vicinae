@@ -15,7 +15,6 @@
 #include <QtSql/QtSql>
 #include "root-bookmark-provider.hpp"
 #include "root-extension-manager.hpp"
-#include "root-quicklink-provider.hpp"
 #include <QXmlStreamReader>
 #include <QtSql/qsqldatabase.h>
 #include <arpa/inet.h>
@@ -199,7 +198,6 @@ int startDaemon() {
 
     rootItemManager->addProvider(std::make_unique<AppRootProvider>(*appService.get()));
     rootItemManager->addProvider(std::make_unique<RootBookmarkProvider>(*bookmarkService.get()));
-    rootItemManager->addProvider(std::make_unique<RootQuicklinkProvider>(*quicklinkService.get()));
 
     registry->setBookmarkService(std::move(bookmarkService));
     registry->setConfig(std::move(configService));
