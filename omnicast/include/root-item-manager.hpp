@@ -23,6 +23,8 @@ class RootItem {
 public:
   virtual ~RootItem() = default;
 
+  virtual QString providerId() const = 0;
+
   virtual QString uniqueId() const = 0;
 
   /**

@@ -349,5 +349,12 @@ AppWindow::AppWindow(QWidget *parent) : QMainWindow(parent) {
 
   pushView(new RootCommandV2());
 
+  connect(ServiceRegistry::instance()->UI(), &UIController::popToRootRequested, this, [this]() {
+    popToRoot();
+    navigationStack.top().view->clearSearchBar();
+  });
+  connect(ServiceRegistry::instance()->UI(), &UIController::closeWindowRequested, this,
+          [this]() { closeWindow(false); });
+
   // launchCommand(rootCommand);
 }

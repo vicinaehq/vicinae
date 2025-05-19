@@ -250,6 +250,8 @@ set(SRCS
 
 	include/base-view.hpp
 
+	include/ui/ui-controller.hpp
+
 	include/ui/omni-scroll-bar.hpp
 	src/ui/omni-scroll-bar.cpp
 

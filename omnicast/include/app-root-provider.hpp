@@ -25,10 +25,13 @@ struct OpenAppAction : public AbstractAction {
 };
 
 class AppRootProvider : public RootProvider {
+public:
   class AppRootItem : public RootItem {
     std::shared_ptr<Application> m_app;
 
     double baseScoreWeight() const override { return 1; }
+
+    QString providerId() const override { return "app"; }
 
     QString displayName() const override { return m_app->name(); }
     QList<AbstractAction *> actions() const override {
@@ -58,6 +61,7 @@ class AppRootProvider : public RootProvider {
     std::vector<QString> keywords() const override { return m_app->keywords(); }
 
   public:
+    const Application &app() const { return *m_app.get(); }
     AppRootItem(const std::shared_ptr<Application> &app) : m_app(app) {}
   };
 

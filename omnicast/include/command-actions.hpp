@@ -6,6 +6,8 @@ struct OpenBuiltinCommandAction : public AbstractAction {
   std::shared_ptr<AbstractCmd> cmd;
   QString text;
 
+  void execute() override {}
+
   void execute(AppWindow &app) override {
     LaunchProps props;
     props.arguments = app.topBar->m_completer->collect();

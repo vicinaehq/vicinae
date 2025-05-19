@@ -10,6 +10,7 @@
 #include "view.hpp"
 #include <memory>
 #include <qboxlayout.h>
+#include <qlogging.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
 
@@ -44,6 +45,12 @@ public:
    */
   virtual void setToast(const QString &title, ToastPriority priority) {}
 
+  /**
+   * Clear the content of the search bar. If this is not applicable to the view
+   * (for instance, a form view doesn't have a search field) this method should not be overriden.
+   */
+  virtual void clearSearchBar() { qWarning() << "clearSearchBar() is not implemented for this view"; }
+
   BaseView(QWidget *parent = nullptr) : QWidget(parent) {}
 
 signals:
@@ -53,6 +60,7 @@ signals:
 };
 
 class SimpleView : public BaseView {
+protected:
   QVBoxLayout *m_layout = new QVBoxLayout(this);
   TopBar *m_topBar = new TopBar(this);
   StatusBar *m_statusBar = new StatusBar(this);
@@ -71,6 +79,7 @@ class SimpleView : public BaseView {
 
   void executeAction(AbstractAction *action) {
     m_actionPannel->close();
+    action->execute();
     // TODO: execute action
     onActionExecuted(action);
   }
@@ -81,11 +90,12 @@ class SimpleView : public BaseView {
     if (auto action = m_actionPannel->primaryAction()) { executeAction(action); }
   }
 
-protected:
   virtual QWidget *centerWidget() const {
     qCritical() << "default centerWidget()";
     return new QWidget;
   }
+
+  void clearSearchBar() override { m_topBar->input->clear(); }
 
   void setToast(const QString &title, ToastPriority priority) override {
     m_statusBar->setToast(title, priority);
@@ -95,6 +105,12 @@ protected:
   virtual void onActionPanelClosed() {}
   virtual void onActionPanelOpened() {}
   virtual void onActionExecuted(AbstractAction *action) {}
+
+  void onActivate() override {
+    if (!m_topBar->input->text().isEmpty()) { m_topBar->input->selectAll(); }
+
+    m_topBar->input->setFocus();
+  }
 
   void activatePrimaryAction() {
     if (auto action = m_actionPannel->primaryAction()) { executeAction(action); }

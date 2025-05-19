@@ -165,3 +165,7 @@ struct QObjectDeleter {
 };
 
 template <typename T = QObject> using QObjectUniquePtr = std::unique_ptr<T, QObjectDeleter>;
+
+class AbstractArgumentProvider {
+  virtual std::vector<std::pair<QString, QString>> args() const = 0;
+};

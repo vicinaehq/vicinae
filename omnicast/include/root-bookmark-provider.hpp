@@ -1,19 +1,20 @@
 #pragma once
 #include "bookmark-actions.hpp"
 #include "bookmark-service.hpp"
-#include "common-actions.hpp"
-#include "create-quicklink-command.hpp"
 #include "root-item-manager.hpp"
 
 class RootBookmarkProvider : public RootProvider {
   BookmarkService &m_db;
 
+public:
   class RootBookmarkItem : public RootItem {
     std::shared_ptr<Bookmark> m_link;
 
     QString displayName() const override { return m_link->name(); }
 
     double baseScoreWeight() const override { return 1.4; }
+
+    QString providerId() const override { return "bookmark"; }
 
     AccessoryList accessories() const override {
       return {{.text = "Bookmark", .color = ColorTint::TextSecondary}};
@@ -60,6 +61,8 @@ class RootBookmarkProvider : public RootProvider {
     }
 
   public:
+    const Bookmark &bookmark() const { return *m_link.get(); }
+
     RootBookmarkItem(const std::shared_ptr<Bookmark> &link) : m_link(link) {}
   };
 

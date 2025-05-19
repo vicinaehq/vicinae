@@ -48,6 +48,7 @@
 #include "root-item-manager.hpp"
 #include "service-registry.hpp"
 #include "theme.hpp"
+#include "ui/ui-controller.hpp"
 
 #ifdef WAYLAND_LAYER_SHELL
 #include <LayerShellQt/window.h>
@@ -199,6 +200,7 @@ int startDaemon() {
     rootItemManager->addProvider(std::make_unique<AppRootProvider>(*appService.get()));
     rootItemManager->addProvider(std::make_unique<RootBookmarkProvider>(*bookmarkService.get()));
 
+    registry->setUI(std::make_unique<UIController>());
     registry->setBookmarkService(std::move(bookmarkService));
     registry->setConfig(std::move(configService));
     registry->setRootExtMan(std::move(rootExtMan));

@@ -1,8 +1,15 @@
 #pragma once
+#include "app-root-provider.hpp"
+#include "app/app-database.hpp"
 #include "argument.hpp"
 #include "base-view.hpp"
+#include "bookmark-actions.hpp"
+#include "bookmark-service.hpp"
 #include "clipboard-actions.hpp"
+#include "command-actions.hpp"
 #include "command-database.hpp"
+#include "command-root-provider.hpp"
+#include "root-bookmark-provider.hpp"
 #include "root-item-manager.hpp"
 #include "omni-command-db.hpp"
 #include "service-registry.hpp"
@@ -157,6 +164,7 @@ class RootSearchItem : public AbstractDefaultListItem, public DeclarativeOmniLis
   QString id() const override { return m_item->uniqueId(); }
 
 public:
+  const RootItem &item() const { return *m_item.get(); }
   RootSearchItem(const std::shared_ptr<RootItem> &item) : m_item(item) {}
   ~RootSearchItem() {}
 };
@@ -478,13 +486,83 @@ class RootCommandV2 : public SimpleView {
 
   void itemSelected(const OmniList::AbstractVirtualItem *next,
                     const OmniList::AbstractVirtualItem *previous) {
-    if (!next) return;
-
-    if (auto item = dynamic_cast<const DeclarativeOmniListView::IActionnable *>(next)) {
-      setActions(item->generateActions());
+    if (!next) {
+      setActions({});
+      return;
     }
 
-    if (next) { qDebug() << "item selected" << next->id(); }
+    auto rootSearchItem = static_cast<const RootSearchItem *>(next);
+
+    qDebug() << "item selected" << next->id();
+    if (typeid(*next) == typeid(RootSearchItem)) { setActions(generateActions(rootSearchItem->item())); }
+  }
+
+  void openCommand(const CommandRootItem &item) { ServiceRegistry::instance()->UI()->closeWindow(); }
+
+  void openBookmark(const Bookmark &bookmark) {
+    auto appDb = ServiceRegistry::instance()->appDb();
+    QString expanded;
+    std::vector<std::pair<QString, QString>> args = m_topBar->m_completer->collect();
+    size_t argumentIndex = 0;
+
+    for (const auto &part : bookmark.parts()) {
+      if (auto s = std::get_if<QString>(&part)) {
+        expanded += *s;
+      } else if (auto placeholder = std::get_if<Bookmark::ParsedPlaceholder>(&part)) {
+        if (placeholder->id == "clipboard") {
+          expanded += QApplication::clipboard()->text();
+        } else if (placeholder->id == "selected") {
+          // TODO: selected text
+        } else if (placeholder->id == "uuid") {
+          expanded += QUuid::createUuid().toString(QUuid::StringFormat::WithoutBraces);
+        } else {
+          if (argumentIndex < args.size()) { expanded += args.at(argumentIndex++).second; }
+        }
+      }
+    }
+
+    qDebug() << "opening link" << expanded;
+
+    if (auto app = appDb->findById(bookmark.app())) { appDb->launch(*app, {expanded}); }
+  }
+
+  void openApplication(const Application &app) {
+    auto ui = ServiceRegistry::instance()->UI();
+    auto appDb = ServiceRegistry::instance()->appDb();
+
+    appDb->launch(app);
+    ui->popToRoot();
+    ui->closeWindow();
+  }
+
+  QList<AbstractAction *> generateActions(const RootItem &item) {
+    QList<AbstractAction *> actions;
+
+    if (item.providerId() == "command") {
+      auto rootItem = static_cast<const CommandRootItem &>(item);
+
+      actions << new StaticAction("Open command", item.iconUrl(),
+                                  [&rootItem, this]() { openCommand(rootItem); });
+    }
+
+    if (item.providerId() == "bookmark") {
+      auto rootItem = static_cast<const RootBookmarkProvider::RootBookmarkItem &>(item);
+      const auto &bookmark = rootItem.bookmark();
+
+      actions << new StaticAction("Open bookmark", item.iconUrl(),
+                                  [bookmark, this]() { openBookmark(bookmark); });
+    }
+
+    if (item.providerId() == "app") {
+      auto rootItem = static_cast<const AppRootProvider::AppRootItem *>(&item);
+
+      qDebug() << "hello app" << rootItem->app().id();
+
+      actions << new StaticAction("Open application", item.iconUrl(),
+                                  [rootItem, this]() { openApplication(rootItem->app()); });
+    }
+
+    return actions;
   }
 
   void handleCalculatorTimeout() {

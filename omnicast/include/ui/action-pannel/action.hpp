@@ -28,6 +28,7 @@ public:
 
   virtual void executePrelude(AppWindow &app);
   virtual void execute(AppWindow &app) = 0;
+  virtual void execute() {}
 
   virtual bool isPushView() const { return false; }
 
@@ -41,8 +42,9 @@ struct StaticAction : public AbstractAction {
   std::function<void(void)> m_fn;
 
   void execute(AppWindow &app) override { m_fn(); }
+  void execute() override { m_fn(); }
 
 public:
-  StaticAction(const QString &title, const BuiltinOmniIconUrl &url, const std::function<void(void)> &fn)
+  StaticAction(const QString &title, const OmniIconUrl &url, const std::function<void(void)> &fn)
       : AbstractAction(title, url), m_fn(fn) {}
 };

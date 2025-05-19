@@ -14,6 +14,7 @@
 #include "ranking-service.hpp"
 #include "root-extension-manager.hpp"
 #include "root-item-manager.hpp"
+#include "ui/ui-controller.hpp"
 #include "wm/window-manager.hpp"
 #include <memory>
 #include <qobject.h>
@@ -35,6 +36,7 @@ class ServiceRegistry : public QObject {
   std::unique_ptr<RootExtensionManager> m_rootExtMan;
   std::unique_ptr<ConfigService> m_config;
   std::unique_ptr<BookmarkService> m_bookmarkService;
+  std::unique_ptr<UIController> m_uiController;
 
 public:
   static ServiceRegistry *instance() {
@@ -57,7 +59,9 @@ public:
   auto appDb() const { return m_appDb.get(); }
   auto rankingService() const { return m_rankingService.get(); }
   auto bookmarks() const { return m_bookmarkService.get(); }
+  auto UI() const { return m_uiController.get(); }
 
+  auto setUI(std::unique_ptr<UIController> controller) { m_uiController = std::move(controller); }
   auto setRootItemManager(std::unique_ptr<RootItemManager> manager) {
     m_rootItemManager = std::move(manager);
   }

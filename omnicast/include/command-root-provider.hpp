@@ -8,6 +8,7 @@ class CommandRootItem : public RootItem {
   QString subtitle() const override { return m_command->repositoryName(); }
   OmniIconUrl iconUrl() const override { return m_command->iconUrl(); }
   ArgumentList arguments() const override { return m_command->arguments(); }
+  QString providerId() const override { return "command"; }
 
   double baseScoreWeight() const override { return 1.1; }
 
