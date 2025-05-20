@@ -3,9 +3,13 @@
 #include "service-registry.hpp"
 #include "ui/action-pannel/action-pannel-widget.hpp"
 #include <qevent.h>
+#include <qnamespace.h>
 #include <ranges>
 #include "ui/action-pannel/action.hpp"
 #include "ui/horizontal-loading-bar.hpp"
+#include "ui/omni-grid.hpp"
+#include "ui/omni-list.hpp"
+#include "ui/split-detail.hpp"
 #include "ui/status_bar.hpp"
 #include "ui/toast.hpp"
 #include "ui/top_bar.hpp"
@@ -229,4 +233,163 @@ protected:
 
 public:
   SimpleView(QWidget *parent = nullptr) : BaseView(parent) {}
+};
+
+class ListView : public SimpleView {
+  SplitDetailWidget *m_split = new SplitDetailWidget(this);
+
+  void keyPressEvent(QKeyEvent *event) override {
+    switch (event->key()) {
+    case Qt::Key_Up:
+      m_list->selectUp();
+      break;
+    case Qt::Key_Down:
+      m_list->selectDown();
+      break;
+    }
+  }
+
+public:
+  struct Actionnable {
+    virtual QList<AbstractAction *> generateActions() const { return {}; };
+    virtual QWidget *generateDetail() const { return nullptr; }
+    virtual std::unique_ptr<CompleterData> createCompleter() const { return nullptr; }
+    virtual QString navigationTitle() const { return {}; }
+  };
+
+protected:
+  OmniList *m_list = new OmniList();
+
+  virtual void selectionChanged(const OmniList::AbstractVirtualItem *next,
+                                const OmniList::AbstractVirtualItem *previous) {
+    if (!next) {
+      m_split->setDetailVisibility(false);
+      m_topBar->destroyCompleter();
+      setActions({});
+      // setNavigationTitle(QString("%1").arg(m_baseNavigationTitle));
+
+      return;
+    }
+
+    if (auto nextItem = dynamic_cast<const Actionnable *>(next)) {
+      if (auto detail = nextItem->generateDetail()) {
+        if (auto current = m_split->detailWidget()) { current->deleteLater(); }
+        m_split->setDetailWidget(detail);
+        m_split->setDetailVisibility(true);
+      } else {
+        m_split->setDetailVisibility(false);
+      }
+
+      if (auto completer = nextItem->createCompleter(); completer && completer->arguments.size() > 0) {
+        m_topBar->activateCompleter(*completer);
+      } else {
+        m_topBar->destroyCompleter();
+      }
+
+      // TODO: only expect suffix and automatically use command name from prefix
+      if (auto navigation = nextItem->navigationTitle(); !navigation.isEmpty()) {
+        // setNavigationTitle(QString("%1 - %2").arg(m_baseNavigationTitle).arg(navigation));
+      }
+
+      auto actions = nextItem->generateActions();
+
+      if (!actions.isEmpty()) { actions.at(0)->setShortcut({.key = "return"}); }
+      if (actions.size() > 1) { actions.at(1)->setShortcut({.key = "return", .modifiers = {"shift"}}); }
+
+      setActions(actions);
+    } else {
+      m_split->setDetailVisibility(false);
+      m_topBar->destroyCompleter();
+      setActions({});
+    }
+  }
+
+  virtual void itemActivated(const OmniList::AbstractVirtualItem &item) { activatePrimaryAction(); }
+
+  QWidget *centerWidget() const override { return m_split; }
+
+public:
+  ListView(QWidget *parent = nullptr) : SimpleView(parent) {
+    m_split->setMainWidget(m_list);
+    connect(m_list, &OmniList::selectionChanged, this, &ListView::selectionChanged);
+    connect(m_list, &OmniList::itemActivated, this, &ListView::itemActivated);
+  }
+};
+
+class GridView : public SimpleView {
+  void keyPressEvent(QKeyEvent *event) override {}
+
+  bool inputFilter(QKeyEvent *event) override {
+    switch (event->key()) {
+    case Qt::Key_Up:
+      return m_grid->selectUp();
+    case Qt::Key_Down:
+      return m_grid->selectDown();
+    case Qt::Key_Left:
+      return m_grid->selectLeft();
+    case Qt::Key_Right:
+      return m_grid->selectRight();
+    }
+
+    return false;
+  }
+
+public:
+  struct Actionnable {
+    virtual QList<AbstractAction *> generateActions() const { return {}; };
+    virtual std::unique_ptr<CompleterData> createCompleter() const { return nullptr; }
+    virtual QString navigationTitle() const { return {}; }
+  };
+
+protected:
+  OmniList *m_grid = new OmniGrid();
+
+  virtual void selectionChanged(const OmniList::AbstractVirtualItem *next,
+                                const OmniList::AbstractVirtualItem *previous) {
+    if (!next) {
+      m_topBar->destroyCompleter();
+      setActions({});
+      // setNavigationTitle(QString("%1").arg(m_baseNavigationTitle));
+
+      return;
+    }
+
+    if (auto nextItem = dynamic_cast<const Actionnable *>(next)) {
+      if (auto completer = nextItem->createCompleter(); completer && completer->arguments.size() > 0) {
+        m_topBar->activateCompleter(*completer);
+      } else {
+        m_topBar->destroyCompleter();
+      }
+
+      // TODO: only expect suffix and automatically use command name from prefix
+      if (auto navigation = nextItem->navigationTitle(); !navigation.isEmpty()) {
+        // setNavigationTitle(QString("%1 - %2").arg(m_baseNavigationTitle).arg(navigation));
+      }
+
+      auto actions = nextItem->generateActions();
+
+      if (!actions.isEmpty()) { actions.at(0)->setShortcut({.key = "return"}); }
+      if (actions.size() > 1) { actions.at(1)->setShortcut({.key = "return", .modifiers = {"shift"}}); }
+
+      setActions(actions);
+    } else {
+      m_topBar->destroyCompleter();
+      setActions({});
+    }
+  }
+
+  virtual void itemActivated(const OmniList::AbstractVirtualItem &item) { activatePrimaryAction(); }
+
+  QWidget *centerWidget() const override { return m_grid; }
+
+public:
+  GridView(QWidget *parent = nullptr) : SimpleView(parent) {
+    connect(m_grid, &OmniList::selectionChanged, this, &GridView::selectionChanged);
+    connect(m_grid, &OmniList::itemActivated, this, &GridView::itemActivated);
+  }
+};
+
+class FormView : public SimpleView {
+public:
+  FormView(QWidget *parent = nullptr) : SimpleView(parent) { m_topBar->input->hide(); }
 };

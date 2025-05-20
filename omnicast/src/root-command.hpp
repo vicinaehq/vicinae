@@ -67,7 +67,7 @@ public:
 };
 */
 
-class RootSearchItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
+class RootSearchItem : public AbstractDefaultListItem, public ListView::Actionnable {
   class DisableItemAction : public AbstractAction {
     std::shared_ptr<RootItem> m_item;
     void execute(AppWindow &app) override {
@@ -244,12 +244,9 @@ public:
   BaseCalculatorListItem(const CalculatorItem &item) : item(item) {}
 };
 
-class RootCommandV2 : public SimpleView {
-  OmniList *m_list = new OmniList();
+class RootCommandV2 : public ListView {
   QTimer *m_calcDebounce = new QTimer(this);
   std::optional<CalculatorItem> m_currentCalculatorEntry;
-
-  QWidget *centerWidget() const override { return m_list; }
 
   void renderEmpty() {
     m_list->beginResetModel();
@@ -353,26 +350,6 @@ class RootCommandV2 : public SimpleView {
     return render(text);
   }
 
-  void itemSelected(const OmniList::AbstractVirtualItem *next,
-                    const OmniList::AbstractVirtualItem *previous) {
-    if (!next) {
-      setActions({});
-      return;
-    }
-
-    if (auto actionnable = dynamic_cast<const DeclarativeOmniListView::IActionnable *>(next)) {
-      setActions(actionnable->generateActions());
-
-      if (auto completer = actionnable->createCompleter(); completer && !completer->arguments.empty()) {
-        m_topBar->activateCompleter(*completer);
-      } else {
-        m_topBar->destroyCompleter();
-      }
-    }
-
-    qDebug() << "item selected" << next->id();
-  }
-
   void handleCalculatorTimeout() {
     auto calculator = ServiceRegistry::instance()->calculatorDb();
     QString expression = searchText().trimmed();
@@ -403,22 +380,11 @@ class RootCommandV2 : public SimpleView {
 
   void onActionExecuted(AbstractAction *action) override { qCritical() << "action title" << action->title(); }
 
-  void itemActivated(const OmniList::AbstractVirtualItem &item) { activatePrimaryAction(); }
-
   void initialize() override {
     auto manager = ServiceRegistry::instance()->rootItemManager();
     connect(manager, &RootItemManager::itemsChanged, this, [this]() { onSearchChanged(searchText()); });
-    connect(m_list, &OmniList::selectionChanged, this, &RootCommandV2::itemSelected);
-    connect(m_list, &OmniList::itemActivated, this, &RootCommandV2::itemActivated);
     connect(m_calcDebounce, &QTimer::timeout, this, &RootCommandV2::handleCalculatorTimeout);
     SimpleView::initialize();
-  }
-
-  void keyPressEvent(QKeyEvent *event) override {
-    if (event->key() == Qt::Key_Up) m_list->selectUp();
-    if (event->key() == Qt::Key_Down) m_list->selectDown();
-
-    qDebug() << "key" << QKeySequence(event->key()).toString();
   }
 
   void escapePressed() override {
