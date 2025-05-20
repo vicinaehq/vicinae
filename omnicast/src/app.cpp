@@ -100,6 +100,7 @@ if (activeCommand.viewStack.empty()) return;
   connectView(*next.view);
   next.view->activate();
   next.view->setGeometry(geometry());
+  ServiceRegistry::instance()->UI()->setTopView(next.view);
   next.view->show();
 
   previous.view->deleteLater();
@@ -155,6 +156,7 @@ return;
   connectView(*view);
 
   // currentCommand.viewStack.push({.view = view});
+  ServiceRegistry::instance()->UI()->setTopView(view);
   navigationStack.push({.view = view});
 }
 
@@ -222,7 +224,10 @@ void AppWindow::launchCommand(const QString &id, const LaunchCommandOptions &opt
   if (auto command = commandDb->findCommand(id)) { launchCommand(command->command, opts); }
 }
 
-void AppWindow::resizeEvent(QResizeEvent *event) { QMainWindow::resizeEvent(event); }
+void AppWindow::resizeEvent(QResizeEvent *event) {
+  QMainWindow::resizeEvent(event);
+  if (!navigationStack.empty()) { navigationStack.top().view->setFixedSize(event->size()); }
+}
 
 void AppWindow::paintEvent(QPaintEvent *event) {
   auto &config = ServiceRegistry::instance()->config()->value();
@@ -353,6 +358,8 @@ AppWindow::AppWindow(QWidget *parent) : QMainWindow(parent) {
     popToRoot();
     navigationStack.top().view->clearSearchBar();
   });
+  connect(ServiceRegistry::instance()->UI(), &UIController::popViewRequested, this,
+          [this]() { popCurrentView(); });
   connect(ServiceRegistry::instance()->UI(), &UIController::closeWindowRequested, this,
           [this]() { closeWindow(false); });
 

@@ -33,6 +33,7 @@
 #include <memory>
 #include <qbrush.h>
 #include <qcoreevent.h>
+#include <qevent.h>
 #include <qfuture.h>
 #include <qfuturewatcher.h>
 #include <qhash.h>
@@ -87,6 +88,18 @@ class RootSearchItem : public AbstractDefaultListItem, public DeclarativeOmniLis
   class DefaultActionWrapper : public AbstractAction {
     AbstractAction *m_action = nullptr;
     QString m_id;
+
+    void execute() override {
+      auto manager = ServiceRegistry::instance()->rootItemManager();
+
+      if (manager->registerVisit(m_id)) {
+        qDebug() << "Visit registered";
+      } else {
+        qCritical() << "Failed to register visit";
+      }
+
+      m_action->execute();
+    }
 
     void execute(AppWindow &app) override {
       if (app.topBar->m_completer->isVisible()) {
@@ -231,149 +244,6 @@ public:
   BaseCalculatorListItem(const CalculatorItem &item) : item(item) {}
 };
 
-class RootView : public DeclarativeOmniListView {
-  AppWindow &app;
-
-public:
-  QTimer *m_calcDebounce = new QTimer(this);
-  std::optional<CalculatorItem> m_currentCalculatorEntry;
-
-  // list without filtering
-  void renderBlankSearch() {
-    auto commandDb = ServiceRegistry::instance()->commandDb();
-    auto quicklinkDb = ServiceRegistry::instance()->quicklinks();
-    auto appDb = ServiceRegistry::instance()->appDb();
-    const auto &quicklinks = quicklinkDb->list();
-    const auto &appEntries = appDb->listEntries();
-    const auto &commandEntries = commandDb->commands();
-    auto rootManager = ServiceRegistry::instance()->rootItemManager();
-
-    auto commandItems =
-        rootManager->providers() | std::views::filter([](const auto &provider) {
-          return provider->type() == RootProvider::Type::ExtensionProvider;
-        }) |
-        std::views::transform([](const auto &provider) { return provider->loadItems(); }) | std::views::join |
-        std::views::transform([](const auto &item) { return std::make_unique<RootSearchItem>(item); });
-
-    auto &section = list->addSection("Commands");
-
-    for (auto item : commandItems)
-      section.addItem(std::move(item));
-
-    if (auto provider = rootManager->provider("apps")) {
-      auto &section = list->addSection("Apps");
-      auto items = provider->loadItems() | std::views::transform([](const auto &item) {
-                     return std::make_unique<RootSearchItem>(item);
-                   });
-
-      for (auto item : items)
-        section.addItem(std::move(item));
-    }
-
-    if (auto provider = rootManager->provider("bookmarks")) {
-      auto &section = list->addSection("Bookmarks");
-      auto items = provider->loadItems() | std::views::transform([](const auto &item) {
-                     return std::make_unique<RootSearchItem>(item);
-                   });
-
-      for (auto item : items)
-        section.addItem(std::move(item));
-    }
-  }
-
-  void onSearchChanged(const QString &s) override {
-    DeclarativeOmniListView::onSearchChanged(s);
-    m_calcDebounce->start();
-  }
-
-  bool doesUseNewModel() const override { return true; }
-
-  ItemList generateList(const QString &s) override { return {}; }
-
-  void render(const QString &s) override {
-    QString query = s.trimmed();
-
-    if (query.isEmpty()) return renderBlankSearch();
-
-    auto rootItemManager = ServiceRegistry::instance()->rootItemManager();
-    auto commandDb = ServiceRegistry::instance()->commandDb();
-    auto quicklinkDb = ServiceRegistry::instance()->quicklinks();
-    auto appDb = ServiceRegistry::instance()->appDb();
-    auto calculator = ServiceRegistry::instance()->calculatorDb();
-    const auto &quicklinks = quicklinkDb->list();
-    const auto &appEntries = appDb->listEntries();
-    const auto &commandEntries = commandDb->commands();
-    size_t maxReserve = appEntries.size() + commandEntries.size() + quicklinks.size();
-
-    auto start = std::chrono::high_resolution_clock::now();
-
-    if (m_currentCalculatorEntry) {
-      qDebug() << "calculator" << m_currentCalculatorEntry->expression << "="
-               << m_currentCalculatorEntry->result;
-      list->addSection("Calculator")
-          .addItem(std::make_unique<BaseCalculatorListItem>(*m_currentCalculatorEntry));
-    }
-
-    if (QColor(s).isValid()) { list->addSection("Color").addItem(std::make_unique<ColorListItem>(s)); }
-
-    auto &results = list->addSection("Results");
-
-    for (const auto &item : rootItemManager->prefixSearch(s.trimmed())) {
-      results.addItem(std::make_unique<RootSearchItem>(item));
-    }
-
-    auto &fallbackCommands = list->addSection(QString("Use \"%1\" with...").arg(s));
-
-    // TODO: use fallback commands
-
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-    // qDebug() << "root searched in " << duration << "ms";
-  }
-
-  void onMount() override {
-    auto manager = ServiceRegistry::instance()->rootItemManager();
-
-    setSearchPlaceholderText("Search for apps or commands...");
-    connect(manager, &RootItemManager::itemsChanged, this, [&]() { reload(OmniList::PreserveSelection); });
-  }
-
-  RootView(AppWindow &app) : DeclarativeOmniListView(app), app(app) {
-    m_calcDebounce->setInterval(100);
-    m_calcDebounce->setSingleShot(true);
-
-    connect(m_calcDebounce, &QTimer::timeout, this, [this]() {
-      auto calculator = ServiceRegistry::instance()->calculatorDb();
-      QString expression = searchText().trimmed();
-      bool isComputable = false;
-
-      for (const auto &ch : expression) {
-        if (!ch.isLetterOrNumber() || ch.isSpace()) {
-          isComputable = true;
-          break;
-        }
-      }
-
-      if (!isComputable) {
-        m_currentCalculatorEntry.reset();
-        return;
-      }
-
-      auto [result, ok] = calculator->quickCalculate(expression.toLatin1().data());
-
-      if (ok) {
-        m_currentCalculatorEntry = CalculatorItem{.expression = expression, .result = result.c_str()};
-      } else {
-        m_currentCalculatorEntry.reset();
-      }
-      reload(OmniList::SelectFirst);
-    });
-
-    // list->setSorting({.enabled = true, .preserveSectionOrder = false});
-  }
-  ~RootView() {}
-};
-
 class RootCommandV2 : public SimpleView {
   OmniList *m_list = new OmniList();
   QTimer *m_calcDebounce = new QTimer(this);
@@ -390,7 +260,6 @@ class RootCommandV2 : public SimpleView {
     const auto &appEntries = appDb->listEntries();
     const auto &commandEntries = commandDb->commands();
     auto rootManager = ServiceRegistry::instance()->rootItemManager();
-    qCritical() << "RENDER ROOT!";
 
     auto commandItems =
         rootManager->providers() | std::views::filter([](const auto &provider) {
@@ -491,78 +360,17 @@ class RootCommandV2 : public SimpleView {
       return;
     }
 
-    auto rootSearchItem = static_cast<const RootSearchItem *>(next);
+    if (auto actionnable = dynamic_cast<const DeclarativeOmniListView::IActionnable *>(next)) {
+      setActions(actionnable->generateActions());
 
-    qDebug() << "item selected" << next->id();
-    if (typeid(*next) == typeid(RootSearchItem)) { setActions(generateActions(rootSearchItem->item())); }
-  }
-
-  void openCommand(const CommandRootItem &item) { ServiceRegistry::instance()->UI()->closeWindow(); }
-
-  void openBookmark(const Bookmark &bookmark) {
-    auto appDb = ServiceRegistry::instance()->appDb();
-    QString expanded;
-    std::vector<std::pair<QString, QString>> args = m_topBar->m_completer->collect();
-    size_t argumentIndex = 0;
-
-    for (const auto &part : bookmark.parts()) {
-      if (auto s = std::get_if<QString>(&part)) {
-        expanded += *s;
-      } else if (auto placeholder = std::get_if<Bookmark::ParsedPlaceholder>(&part)) {
-        if (placeholder->id == "clipboard") {
-          expanded += QApplication::clipboard()->text();
-        } else if (placeholder->id == "selected") {
-          // TODO: selected text
-        } else if (placeholder->id == "uuid") {
-          expanded += QUuid::createUuid().toString(QUuid::StringFormat::WithoutBraces);
-        } else {
-          if (argumentIndex < args.size()) { expanded += args.at(argumentIndex++).second; }
-        }
+      if (auto completer = actionnable->createCompleter(); completer && !completer->arguments.empty()) {
+        m_topBar->activateCompleter(*completer);
+      } else {
+        m_topBar->destroyCompleter();
       }
     }
 
-    qDebug() << "opening link" << expanded;
-
-    if (auto app = appDb->findById(bookmark.app())) { appDb->launch(*app, {expanded}); }
-  }
-
-  void openApplication(const Application &app) {
-    auto ui = ServiceRegistry::instance()->UI();
-    auto appDb = ServiceRegistry::instance()->appDb();
-
-    appDb->launch(app);
-    ui->popToRoot();
-    ui->closeWindow();
-  }
-
-  QList<AbstractAction *> generateActions(const RootItem &item) {
-    QList<AbstractAction *> actions;
-
-    if (item.providerId() == "command") {
-      auto rootItem = static_cast<const CommandRootItem &>(item);
-
-      actions << new StaticAction("Open command", item.iconUrl(),
-                                  [&rootItem, this]() { openCommand(rootItem); });
-    }
-
-    if (item.providerId() == "bookmark") {
-      auto rootItem = static_cast<const RootBookmarkProvider::RootBookmarkItem &>(item);
-      const auto &bookmark = rootItem.bookmark();
-
-      actions << new StaticAction("Open bookmark", item.iconUrl(),
-                                  [bookmark, this]() { openBookmark(bookmark); });
-    }
-
-    if (item.providerId() == "app") {
-      auto rootItem = static_cast<const AppRootProvider::AppRootItem *>(&item);
-
-      qDebug() << "hello app" << rootItem->app().id();
-
-      actions << new StaticAction("Open application", item.iconUrl(),
-                                  [rootItem, this]() { openApplication(rootItem->app()); });
-    }
-
-    return actions;
+    qDebug() << "item selected" << next->id();
   }
 
   void handleCalculatorTimeout() {
@@ -604,6 +412,24 @@ class RootCommandV2 : public SimpleView {
     connect(m_list, &OmniList::itemActivated, this, &RootCommandV2::itemActivated);
     connect(m_calcDebounce, &QTimer::timeout, this, &RootCommandV2::handleCalculatorTimeout);
     SimpleView::initialize();
+  }
+
+  void keyPressEvent(QKeyEvent *event) override {
+    if (event->key() == Qt::Key_Up) m_list->selectUp();
+    if (event->key() == Qt::Key_Down) m_list->selectDown();
+
+    qDebug() << "key" << QKeySequence(event->key()).toString();
+  }
+
+  void escapePressed() override {
+    auto ui = ServiceRegistry::instance()->UI();
+
+    if (searchText().isEmpty()) {
+      ui->closeWindow();
+      return;
+    }
+
+    clearSearchBar();
   }
 
 public:

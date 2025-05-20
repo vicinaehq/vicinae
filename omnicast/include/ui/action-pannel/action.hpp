@@ -1,12 +1,14 @@
 #pragma once
+#include "common.hpp"
 #include "extend/action-model.hpp"
 #include "omni-icon.hpp"
 #include <qcontainerfwd.h>
+#include <qlogging.h>
 #include <qtmetamacros.h>
 
 class AppWindow;
 
-class AbstractAction : public QObject {
+class AbstractAction : public QObject, public NonAssignable {
   Q_OBJECT
 
 public:
@@ -26,9 +28,8 @@ public:
 
   AbstractAction(const QString &title, const OmniIconUrl &icon) : _title(title), iconUrl(icon) {}
 
-  virtual void executePrelude(AppWindow &app);
   virtual void execute(AppWindow &app) = 0;
-  virtual void execute() {}
+  virtual void execute() { qWarning() << "Default execute"; }
 
   virtual bool isPushView() const { return false; }
 

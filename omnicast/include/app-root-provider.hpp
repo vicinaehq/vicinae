@@ -4,24 +4,34 @@
 #include "root-item-manager.hpp"
 #include "service-registry.hpp"
 
-struct OpenAppAction : public AbstractAction {
+class OpenAppAction : public AbstractAction {
   std::shared_ptr<Application> application;
   std::vector<QString> args;
 
-  void execute(AppWindow &app) override {
+  void execute(AppWindow &app) override {}
+
+  void execute() override {
+    qDebug() << "execute app";
     auto appDb = ServiceRegistry::instance()->appDb();
+    auto ui = ServiceRegistry::instance()->UI();
 
     if (!appDb->launch(*application.get(), args)) {
-      app.statusBar->setToast("Failed to start app", ToastPriority::Danger);
+      qDebug() << "Failed to launch app";
+      ui->setToast("Failed to start app", ToastPriority::Danger);
       return;
     }
 
-    app.closeWindow(true);
+    ui->popToRoot();
+    ui->closeWindow();
   }
 
+public:
   OpenAppAction(const std::shared_ptr<Application> &app, const QString &title,
                 const std::vector<QString> args)
-      : AbstractAction(title, app->iconUrl()), application(app), args(args) {}
+      : AbstractAction(title, app->iconUrl()), application(app), args(args) {
+    qDebug() << "open app for" << app->name();
+  }
+  virtual ~OpenAppAction() {}
 };
 
 class AppRootProvider : public RootProvider {
@@ -48,7 +58,6 @@ public:
       }
 
       if (fileBrowser) { actions << new OpenAppAction(fileBrowser, "Open in folder", {m_app->id()}); }
-
       if (textEditor) { actions << new OpenAppAction(textEditor, "Open desktop file", {m_app->id()}); }
 
       return actions;

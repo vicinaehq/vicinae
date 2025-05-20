@@ -1,13 +1,14 @@
 #pragma once
 #include "common.hpp"
-#include "omnicast.hpp"
+#include "service-registry.hpp"
 #include "ui/action-pannel/action-pannel-widget.hpp"
+#include <qevent.h>
+#include <ranges>
 #include "ui/action-pannel/action.hpp"
 #include "ui/horizontal-loading-bar.hpp"
 #include "ui/status_bar.hpp"
 #include "ui/toast.hpp"
 #include "ui/top_bar.hpp"
-#include "view.hpp"
 #include <memory>
 #include <qboxlayout.h>
 #include <qlogging.h>
@@ -51,6 +52,16 @@ public:
    */
   virtual void clearSearchBar() { qWarning() << "clearSearchBar() is not implemented for this view"; }
 
+  /**
+   * The current search text for this view. If not applicable, do not implement.
+   */
+  virtual QString searchText() const { return {}; }
+
+  /**
+   * The dynamic arguments for this view. Used by some actions.
+   */
+  virtual std::vector<QString> argumentValues() const { return {}; }
+
   BaseView(QWidget *parent = nullptr) : QWidget(parent) {}
 
 signals:
@@ -67,9 +78,54 @@ protected:
   HorizontalLoadingBar *m_loadingBar = new HorizontalLoadingBar(this);
   ActionPannelWidget *m_actionPannel = new ActionPannelWidget(this);
 
+  bool eventFilter(QObject *obj, QEvent *event) override {
+    if (event->type() == QEvent::KeyPress) {
+      auto keyEvent = static_cast<QKeyEvent *>(event);
+      bool isEsc = keyEvent->key() == Qt::Key_Escape;
+
+      if (obj == m_topBar->input) { return inputFilter(keyEvent); }
+    }
+
+    return false;
+  }
+
+  virtual bool inputFilter(QKeyEvent *event) { return false; }
+
+  bool event(QEvent *event) override {
+    if (event->type() == QEvent::KeyPress) {
+      auto keyEvent = static_cast<QKeyEvent *>(event);
+      auto key = keyEvent->key();
+
+      bool isEsc = keyEvent->key() == Qt::Key_Escape;
+
+      if (isEsc) {
+        escapePressed();
+        return true;
+      }
+
+      if (keyEvent->modifiers().testFlag(Qt::ControlModifier) && keyEvent->key() == Qt::Key_B) {
+        m_actionPannel->showActions();
+
+        return true;
+      }
+
+      if (auto action = m_actionPannel->findBoundAction(keyEvent)) {
+        executeAction(action);
+        return true;
+      }
+    }
+
+    return QWidget::event(event);
+  }
+
   void actionPannelOpened() {
     m_statusBar->setActionButtonHighlight(true);
     onActionPanelOpened();
+  }
+
+  virtual void escapePressed() {
+    qDebug() << "escape pressed";
+    ServiceRegistry::instance()->UI()->popView();
   }
 
   void actionPannelClosed() {
@@ -80,7 +136,6 @@ protected:
   void executeAction(AbstractAction *action) {
     m_actionPannel->close();
     action->execute();
-    // TODO: execute action
     onActionExecuted(action);
   }
 
@@ -93,6 +148,11 @@ protected:
   virtual QWidget *centerWidget() const {
     qCritical() << "default centerWidget()";
     return new QWidget;
+  }
+
+  std::vector<QString> argumentValues() const override {
+    return m_topBar->m_completer->collect() | std::views::transform([](const auto &p) { return p.second; }) |
+           std::ranges::to<std::vector>();
   }
 
   void clearSearchBar() override { m_topBar->input->clear(); }
@@ -116,7 +176,8 @@ protected:
     if (auto action = m_actionPannel->primaryAction()) { executeAction(action); }
   }
 
-  QString searchText() const { return m_topBar->input->text(); }
+  QString searchText() const override { return m_topBar->input->text(); }
+
   void setSearchText(const QString &text) { m_topBar->input->setText(text); }
   QString searchPlaceholderText() const { return m_topBar->input->placeholderText(); }
   void setSearchPlaceholderText(const QString &value) const {
@@ -147,6 +208,7 @@ protected:
 
     m_loadingBar->setFixedHeight(1);
     m_loadingBar->setBarWidth(100);
+    m_topBar->input->installEventFilter(this);
 
     m_layout->setContentsMargins(0, 0, 0, 0);
     m_layout->setSpacing(0);
@@ -159,8 +221,8 @@ protected:
     connect(m_topBar->input, &SearchBar::textChanged, this, &SimpleView::onSearchChanged);
     connect(m_actionPannel, &ActionPannelWidget::opened, this, &SimpleView::actionPannelOpened);
     connect(m_actionPannel, &ActionPannelWidget::closed, this, &SimpleView::actionPannelClosed);
+    connect(m_actionPannel, &ActionPannelWidget::actionExecuted, this, &SimpleView::executeAction);
     connect(m_statusBar, &StatusBar::actionButtonClicked, this, &SimpleView::actionButtonClicked);
-    onSearchChanged("");
   }
 
   void initialize() override { setupUI(); }

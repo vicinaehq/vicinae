@@ -4,16 +4,21 @@
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
 #include "ui/action-pannel/action.hpp"
+#include "base-view.hpp"
 #include <memory>
 #include <qclipboard.h>
+#include <qlogging.h>
 
 class OpenBookmarkAction : public AbstractAction {
   std::shared_ptr<Bookmark> m_bookmark;
 
-  void execute(AppWindow &app) override {
+  void execute(AppWindow &app) override {}
+
+  void execute() override {
+    auto ui = ServiceRegistry::instance()->UI();
     auto appDb = ServiceRegistry::instance()->appDb();
     QString expanded;
-    std::vector<std::pair<QString, QString>> args = app.topBar->m_completer->collect();
+    auto args = ui->topView()->argumentValues();
     size_t argumentIndex = 0;
 
     for (const auto &part : m_bookmark->parts()) {
@@ -27,7 +32,7 @@ class OpenBookmarkAction : public AbstractAction {
         } else if (placeholder->id == "uuid") {
           expanded += QUuid::createUuid().toString(QUuid::StringFormat::WithoutBraces);
         } else {
-          if (argumentIndex < args.size()) { expanded += args.at(argumentIndex++).second; }
+          if (argumentIndex < args.size()) { expanded += args.at(argumentIndex++); }
         }
       }
     }
@@ -36,7 +41,7 @@ class OpenBookmarkAction : public AbstractAction {
 
     if (auto app = appDb->findById(m_bookmark->app())) { appDb->launch(*app, {expanded}); }
 
-    app.closeWindow(true);
+    ui->closeWindow();
   }
 
   QString title() const override { return "Open bookmark"; }
@@ -60,6 +65,8 @@ public:
                            .iconUrl = BuiltinOmniIconUrl("bookmark").setBackgroundTint(ColorTint::Red)}});
   }
 
+  void execute() override { qCritical() << "EditBookmarkAction not implemented"; }
+
   void setArgs(const QList<QString> &args) { this->args = args; }
 
   EditBookmarkAction(const std::shared_ptr<Bookmark> &bookmark, const QList<QString> &args = {})
@@ -81,6 +88,8 @@ public:
     }
   }
 
+  void execute() override { qCritical() << "RemoveBookmarkAction not implemented"; }
+
   RemoveBookmarkAction(const std::shared_ptr<Bookmark> &link)
       : AbstractAction("Remove link", BuiltinOmniIconUrl("trash")), m_bookmark(link) {}
 };
@@ -96,6 +105,8 @@ public:
                                  .title = "Duplicate link",
                                  .iconUrl = BuiltinOmniIconUrl("link").setBackgroundTint(ColorTint::Red)}});
   }
+
+  void execute() override { qCritical() << "DuplicateBookmarkAction not implemented"; }
 
   DuplicateBookmarkAction(const std::shared_ptr<Bookmark> &link)
       : AbstractAction("Duplicate link", BuiltinOmniIconUrl("duplicate")), link(link) {}

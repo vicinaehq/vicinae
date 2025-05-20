@@ -1,10 +1,12 @@
 #pragma once
-#include "base-view.hpp"
 #include "ui/toast.hpp"
 #include <qobject.h>
 
+class BaseView;
+
 class UIController : public QObject {
   Q_OBJECT
+  BaseView *m_view = nullptr;
 
 public:
   UIController() {}
@@ -18,6 +20,8 @@ public:
     emit showToastRequested(title, priority);
   }
   void popView() const { emit popViewRequested(); }
+  void setTopView(BaseView *view) { m_view = view; }
+  BaseView *topView() const { return m_view; }
 
 signals:
   void pushViewRequested(BaseView *view) const;
