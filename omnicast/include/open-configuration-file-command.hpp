@@ -8,6 +8,7 @@
 class OpenConfigurationFileCommand : public CommandContext {
 public:
   void load(const LaunchProps &props) override {
+    auto ui = ServiceRegistry::instance()->UI();
     auto appDb = ServiceRegistry::instance()->appDb();
     auto configFile = Omnicast::configDir() / "omnicast.json";
 
@@ -19,13 +20,12 @@ public:
 
     if (auto browser = appDb->textEditor()) {
       appDb->launch(*browser, {configFile.c_str()});
-      app()->closeWindow();
+      ui->closeWindow();
       return;
     }
 
     requestToast("No opener available for this file", ToastPriority::Danger);
   }
 
-  OpenConfigurationFileCommand(AppWindow *app, const std::shared_ptr<AbstractCmd> &command)
-      : CommandContext(app, command) {}
+  OpenConfigurationFileCommand(const std::shared_ptr<AbstractCmd> &command) : CommandContext(command) {}
 };

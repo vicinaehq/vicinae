@@ -1,4 +1,5 @@
 #include "app.hpp"
+#include "base-view.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
 #include "theme.hpp"
@@ -100,33 +101,30 @@ public:
   AiProviderListItem(const AIProvider &info) : m_info(info) {}
 };
 
-class ConfigureAIProvidersView : public DeclarativeOmniListView {
+class ConfigureAIProvidersView : public ListView {
 public:
-  ItemList generateList(const QString &s) override {
+  void onSearchChanged(const QString &s) override {
     auto aiManager = ServiceRegistry::instance()->AI();
-    ItemList list;
+    m_list->beginResetModel();
 
-    list.reserve(aiManager->providers().size() + 2);
-    list.emplace_back(std::make_unique<OmniList::VirtualSection>("Enabled"));
+    auto &enabled = m_list->addSection("Enabled");
 
     for (const auto &provider : aiManager->providers()) {
       if (!(provider.configured && provider.enabled)) continue;
       if (!provider.provider->displayName().contains(s, Qt::CaseInsensitive)) { continue; }
 
-      list.emplace_back(std::make_unique<AiProviderListItem>(provider));
+      enabled.addItem(std::make_unique<AiProviderListItem>(provider));
     }
 
-    list.emplace_back(std::make_unique<OmniList::VirtualSection>("Available"));
+    auto &available = m_list->addSection("Available");
 
     for (const auto &provider : aiManager->providers()) {
       if (!provider.provider->displayName().contains(s, Qt::CaseInsensitive)) { continue; }
-      if (!provider.enabled) { list.emplace_back(std::make_unique<AiProviderListItem>(provider)); }
+      if (!provider.enabled) { available.addItem(std::make_unique<AiProviderListItem>(provider)); }
     }
 
-    return list;
+    m_list->endResetModel(OmniList::SelectFirst);
   }
 
-  void onMount() override { setSearchPlaceholderText("Search AI providers..."); }
-
-  ConfigureAIProvidersView(AppWindow &app) : DeclarativeOmniListView(app) {}
+  ConfigureAIProvidersView() { setSearchPlaceholderText("Search AI providers..."); }
 };

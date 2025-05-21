@@ -1,19 +1,12 @@
 #pragma once
-#include "app.hpp"
-#include "service-registry.hpp"
+#include "ui/action-pannel/action.hpp"
 
 struct OpenBuiltinCommandAction : public AbstractAction {
   std::shared_ptr<AbstractCmd> cmd;
   QString text;
 
-  void execute() override {}
-
-  void execute(AppWindow &app) override {
-    LaunchProps props;
-    props.arguments = app.topBar->m_completer->collect();
-
-    app.launchCommand(cmd, {}, props);
-  }
+  void execute() override;
+  void execute(AppWindow &app) override {}
 
   OpenBuiltinCommandAction(const std::shared_ptr<AbstractCmd> &cmd, const QString &title = "Open command",
                            const QString &text = "")

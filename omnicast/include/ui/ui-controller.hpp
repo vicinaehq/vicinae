@@ -1,4 +1,5 @@
 #pragma once
+#include "common.hpp"
 #include "ui/toast.hpp"
 #include <qobject.h>
 
@@ -16,6 +17,8 @@ public:
   void popToRoot() { emit popToRootRequested(); }
   void showHUD(const QString &title) { emit showHUDRequested(title); }
   void pushView(BaseView *view) const { emit pushViewRequested(view); }
+  void launchCommand(const std::shared_ptr<AbstractCmd> &cmd) const { emit launchCommandRequested(cmd); }
+  void launchCommand(const QString &cmdId) const { /*emit launchCommandRequested(cmdId);*/ }
   void setToast(const QString &title, ToastPriority priority = ToastPriority::Success) const {
     emit showToastRequested(title, priority);
   }
@@ -28,6 +31,8 @@ signals:
   void popViewRequested() const;
   void popToRootRequested() const;
   void closeWindowRequested() const;
+  void launchCommandRequested(const std::shared_ptr<AbstractCmd> &cmd) const;
+  // void launchCommandRequested(const QString &commandId) const;
   void showHUDRequested(const QString &title) const;
   void showToastRequested(const QString &title, ToastPriority priority) const;
 };

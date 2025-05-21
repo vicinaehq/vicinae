@@ -143,12 +143,7 @@ public:
   bool isView() const { return mode() == CommandModeView; }
   bool isNoView() const { return mode() == CommandModeNoView; }
 
-  virtual CommandContext *createContext(AppWindow &app, const std::shared_ptr<AbstractCmd> &command,
-                                        const QString &query) const {
-    return nullptr;
-  }
-
-  virtual void exec(AppWindow &app) {}
+  virtual CommandContext *createContext(const std::shared_ptr<AbstractCmd> &command) const { return nullptr; }
 };
 
 class AbstractCommandRepository {

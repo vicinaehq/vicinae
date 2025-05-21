@@ -1,15 +1,14 @@
 #include "ai/ai-provider.hpp"
 #include "app.hpp"
 #include "command.hpp"
-#include "create-quicklink-command.hpp"
+#include "omni-icon.hpp"
 #include "service-registry.hpp"
-#include "ui/action-pannel/action-item.hpp"
 #include "require-ai-config-empty-view.hpp"
 #include "QScrollArea"
+#include "ui/action-pannel/action.hpp"
 #include "ui/markdown/markdown-renderer.hpp"
 #include "ui/omni-scroll-bar.hpp"
-#include "ui/toast.hpp"
-#include "view.hpp"
+#include "base-view.hpp"
 #include <qboxlayout.h>
 #include <qcoreevent.h>
 #include <qevent.h>
@@ -95,11 +94,12 @@ public:
   }
 };
 
-class AskAiCommandView : public View {
+class AskAiCommandView : public SimpleView {
   bool isGenerating = false;
   QuickChatScrollView *chatView;
 
   void messageSubmission(const QString &text) {
+    auto ui = ServiceRegistry::instance()->UI();
     auto aiManager = ServiceRegistry::instance()->AI();
     auto models = aiManager->listModels();
 
@@ -108,11 +108,11 @@ class AskAiCommandView : public View {
     auto completion = aiManager->createCompletion(text);
 
     if (!completion) {
-      app.statusBar->setToast("Completion couldn't be created", ToastPriority::Danger);
+      ui->setToast("Completion couldn't be created", ToastPriority::Danger);
       return;
     }
 
-    clearSearchText();
+    clearSearchBar();
     setLoading(true);
     setNavigationTitle("Ask AI - Generating...");
 
@@ -137,7 +137,7 @@ class AskAiCommandView : public View {
   }
 
 public:
-  AskAiCommandView(AppWindow &app) : View(app), chatView(new QuickChatScrollView) {
+  AskAiCommandView() : chatView(new QuickChatScrollView) {
     auto layout = new QVBoxLayout;
 
     layout->setContentsMargins(0, 0, 0, 0);
@@ -145,17 +145,13 @@ public:
     setLayout(layout);
   }
 
-  void onMount() override {
+  void onActivate() override {
     auto aiManager = ServiceRegistry::instance()->AI();
+    auto cb = [this]() { messageSubmission(searchText()); };
+    auto action = new StaticAction("Generate", BuiltinOmniIconUrl("stars"), cb);
 
-    auto cb = [this](AppWindow &app) { messageSubmission(searchText()); };
-    auto action = std::make_shared<CallbackAction>(cb);
     action->setShortcut({.key = "return"});
-
-    std::vector<ActionItem> items;
-
-    items.push_back(std::move(action));
-    setActionPannel(items);
+    setActions({action});
   }
 };
 
@@ -163,14 +159,13 @@ class AskAiCommand : public CommandContext {
   void load(const LaunchProps &props) override {
     auto aiManager = ServiceRegistry::instance()->AI();
     NavigationStatus nav{.title = command()->name(), .iconUrl = command()->iconUrl()};
+    auto ui = ServiceRegistry::instance()->UI();
 
-    if (aiManager->isAvailable()) {
-      return app()->pushView(new AskAiCommandView(*app()), {.navigation = nav});
-    }
+    if (aiManager->isAvailable()) { return ui->pushView(new AskAiCommandView()); }
 
-    app()->pushView(new RequireAiConfigEmptyView(*app()), {.navigation = nav});
+    ui->pushView(new RequireAiConfigEmptyView());
   }
 
 public:
-  AskAiCommand(AppWindow *app, const std::shared_ptr<AbstractCmd> &command) : CommandContext(app, command) {}
+  AskAiCommand(const std::shared_ptr<AbstractCmd> &command) : CommandContext(command) {}
 };

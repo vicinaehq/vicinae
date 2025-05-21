@@ -1,8 +1,8 @@
 #pragma once
+#include "base-view.hpp"
 #include "omni-icon.hpp"
 #include "ui/image/omnimg.hpp"
 #include "app-root-provider.hpp"
-#include "app.hpp"
 #include "common-actions.hpp"
 #include "service-registry.hpp"
 #include "ui/omni-grid-view.hpp"
@@ -15,7 +15,7 @@
 #include <qwindowdefs.h>
 #include <variant>
 
-class PeepobankView : public OmniGridView {
+class PeepobankView : public GridView {
   QString bankPath = "/home/aurelle/Pictures/peepobank/";
   struct PeepoInfo {
     QString name;
@@ -114,18 +114,23 @@ class PeepobankView : public OmniGridView {
     PeepoFilter(const QString &query) : query(query) {}
   };
 
-  void onMount() override {
-    OmniGridView::onMount();
+  void onSearchChanged(const QString &text) override {
+    m_grid->setFilter(std::make_unique<PeepoFilter>(text));
+  }
+
+public:
+  PeepobankView() {
     auto fileBrowser = ServiceRegistry::instance()->appDb()->fileBrowser();
     QDir dir(bankPath);
 
-    grid->beginUpdate();
-    grid->addSection("Results");
+    m_grid->setColumns(8);
+    m_grid->beginUpdate();
+    m_grid->addSection("Results");
 
     for (auto entry : dir.entryList()) {
       if (entry.startsWith(".")) continue;
 
-      grid->addItem(std::make_unique<PeepoItem>(
+      m_grid->addItem(std::make_unique<PeepoItem>(
           PeepoInfo{
               .name = entry,
               .path = dir.filePath(entry),
@@ -133,12 +138,7 @@ class PeepobankView : public OmniGridView {
           fileBrowser));
     }
 
-    grid->commitUpdate();
-    grid->selectFirst();
+    m_grid->commitUpdate();
+    m_grid->selectFirst();
   }
-
-  void onSearchChanged(const QString &text) override { grid->setFilter(std::make_unique<PeepoFilter>(text)); }
-
-public:
-  PeepobankView(AppWindow &app) : OmniGridView(app) { grid->setColumns(8); }
 };

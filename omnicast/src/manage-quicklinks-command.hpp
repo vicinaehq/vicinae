@@ -1,5 +1,5 @@
 #pragma once
-#include "app.hpp"
+#include "base-view.hpp"
 #include "bookmark-actions.hpp"
 #include "bookmark-service.hpp"
 #include "extend/metadata-model.hpp"
@@ -109,26 +109,16 @@ public:
   QuicklinkItem(const std::shared_ptr<Bookmark> &link) : link(link) {}
 };
 
-class ManageQuicklinksView : public DeclarativeOmniListView {
-  QString query;
-
-  void onMount() override { setSearchPlaceholderText("Browse quicklinks..."); }
-
-  bool doesUseNewModel() const override { return true; }
-
-  void render(const QString &s) override {
-    auto rootItemManager = ServiceRegistry::instance()->rootItemManager();
+class ManageQuicklinksView : public ListView {
+  void onSearchChanged(const QString &s) override {
     auto bookmarkService = ServiceRegistry::instance()->bookmarks();
-    auto bookmarkProvider = rootItemManager->provider("bookmarks");
-
-    if (!bookmarkProvider) { return; }
 
     auto bookmarks =
         bookmarkService->bookmarks() |
         std::views::filter([s](auto bk) { return bk->name().contains(s, Qt::CaseInsensitive); }) |
         std::views::transform([](auto bk) { return std::make_unique<QuicklinkItem>(bk); });
 
-    auto &section = list->addSection("Bookmarks");
+    auto &section = m_list->addSection("Bookmarks");
 
     for (auto bk : bookmarks) {
       section.addItem(std::move(bk));
@@ -136,5 +126,8 @@ class ManageQuicklinksView : public DeclarativeOmniListView {
   }
 
 public:
-  ManageQuicklinksView(AppWindow &app) : DeclarativeOmniListView(app) {}
+  ManageQuicklinksView() {
+    setSearchPlaceholderText("Browse quicklinks...");
+    setNavigationTitle("Manage Bookmarks");
+  }
 };

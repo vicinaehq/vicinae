@@ -1,5 +1,6 @@
 #pragma once
 #include "app.hpp"
+#include "base-view.hpp"
 #include "calculator-database.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
@@ -67,27 +68,25 @@ public:
   CalculatorHistoryListItem(const CalculatorEntry &entry) : _entry(entry) {}
 };
 
-class CalculatorHistoryView : public OmniListView {
-  void handleRemove(const QString &id) { list->removeItem(id); }
+class CalculatorHistoryView : public ListView {
+  void handleRemove(const QString &id) { m_list->removeItem(id); }
 
-  void buildSearch(ItemList &items, const QString &s) override {
+  void onSearchChanged(const QString &text) override {
     auto calc = ServiceRegistry::instance()->calculatorDb();
+    auto &section = m_list->addSection("History");
 
-    items.push_back(std::make_unique<OmniList::VirtualSection>("History"));
     for (const auto &history : calc->listAll()) {
-      if (!history.expression.contains(s, Qt::CaseInsensitive)) continue;
+      if (!history.expression.contains(text, Qt::CaseInsensitive)) continue;
 
       auto item = std::make_unique<CalculatorHistoryListItem>(history);
 
       item->setRemoveCallback(std::bind_front(&CalculatorHistoryView::handleRemove, this));
-      items.push_back(std::move(item));
+      section.addItem(std::move(item));
     }
   }
 
-  void onMount() override {
+public:
+  CalculatorHistoryView() {
     setSearchPlaceholderText("Do maths, convert units or search past calculations...");
   }
-
-public:
-  CalculatorHistoryView(AppWindow &app) : OmniListView(app) {}
 };

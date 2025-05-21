@@ -232,7 +232,7 @@ protected:
   void initialize() override { setupUI(); }
 
 public:
-  SimpleView(QWidget *parent = nullptr) : BaseView(parent) {}
+  SimpleView(QWidget *parent = nullptr) : BaseView(parent) { m_topBar->showBackButton(); }
 };
 
 class ListView : public SimpleView {
@@ -317,8 +317,6 @@ public:
 };
 
 class GridView : public SimpleView {
-  void keyPressEvent(QKeyEvent *event) override {}
-
   bool inputFilter(QKeyEvent *event) override {
     switch (event->key()) {
     case Qt::Key_Up:
@@ -342,7 +340,7 @@ public:
   };
 
 protected:
-  OmniList *m_grid = new OmniGrid();
+  OmniGrid *m_grid = new OmniGrid();
 
   virtual void selectionChanged(const OmniList::AbstractVirtualItem *next,
                                 const OmniList::AbstractVirtualItem *previous) {

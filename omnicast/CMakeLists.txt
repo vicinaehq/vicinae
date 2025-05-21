@@ -80,6 +80,8 @@ set(SRCS
 	include/ui/form/app-picker-input.hpp
 	src/ui/form/app-picker-input.cpp
 
+	src/command-actions.cpp
+
 	include/ui/popover.hpp
 	src/ui/popover.cpp
 

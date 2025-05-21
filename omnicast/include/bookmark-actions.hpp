@@ -57,7 +57,7 @@ public:
   QList<QString> args;
 
   void execute(AppWindow &app) override {
-    auto view = new EditBookmarkView(app, m_bookmark);
+    auto view = new EditBookmarkView(m_bookmark);
 
     emit app.pushView(view,
                       {.navigation = NavigationStatus{
@@ -99,7 +99,7 @@ public:
   std::shared_ptr<Bookmark> link;
 
   void execute(AppWindow &app) override {
-    auto view = new DuplicateBookmarkView(app, link);
+    auto view = new DuplicateBookmarkView(link);
 
     emit app.pushView(view, {.navigation = NavigationStatus{
                                  .title = "Duplicate link",

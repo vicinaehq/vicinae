@@ -1,12 +1,13 @@
 #include "app.hpp"
+#include "base-view.hpp"
 #include "omni-icon.hpp"
+#include "service-registry.hpp"
 #include "ui/action-pannel/action-item.hpp"
 #include "ui/action-pannel/action.hpp"
-#include "view.hpp"
 #include "ui/empty-view.hpp"
 #include <qboxlayout.h>
 
-class RequireAiConfigEmptyView : public View {
+class RequireAiConfigEmptyView : public FormView {
   class ConfigureAction : public AbstractAction {
   public:
     void execute(AppWindow &app) override {
@@ -19,22 +20,29 @@ class RequireAiConfigEmptyView : public View {
 
   EmptyViewWidget *emptyView = new EmptyViewWidget(this);
 
+  void configure() {
+    auto ui = ServiceRegistry::instance()->UI();
+
+    ui->popToRoot();
+    // TODO: launch command
+    // app.launchCommand("ai.configure-providers");
+  }
+
 public:
-  void onMount() override {
-    hideInput();
+  void onActivate() override {
     emptyView->setTitle("No AI provider configured");
     emptyView->setDescription("To make use of AI features, you need to enable at least one AI provider");
     emptyView->setIcon(BuiltinOmniIconUrl("stars").setBackgroundTint(ColorTint::Red));
 
     std::vector<ActionItem> items;
-    auto action = std::make_shared<ConfigureAction>();
+    auto action =
+        new StaticAction("Configure providers", BuiltinOmniIconUrl("cog"), [this]() { configure(); });
 
     action->setShortcut({.key = "return"});
-    items.emplace_back(std::move(action));
-    setActionPannel(items);
+    setActions({action});
   }
 
-  RequireAiConfigEmptyView(AppWindow &app) : View(app) {
+  RequireAiConfigEmptyView() {
     auto layout = new QVBoxLayout;
 
     layout->setContentsMargins(0, 0, 0, 0);

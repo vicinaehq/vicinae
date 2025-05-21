@@ -1,5 +1,6 @@
 #pragma once
 #include "app.hpp"
+#include "base-view.hpp"
 #include "clipboard-actions.hpp"
 #include "config-service.hpp"
 #include "omni-icon.hpp"
@@ -146,10 +147,8 @@ public:
   FontListItem(const QString &family) : m_family(family) {}
 };
 
-class BrowseFontsView : public DeclarativeOmniListView {
+class BrowseFontsView : public ListView {
   std::unique_ptr<Trie<QString>> m_trie;
-
-  bool doesUseNewModel() const override { return true; }
 
   QFuture<std::unique_ptr<Trie<QString>>> buildTrieAsync() {
     auto fontService = ServiceRegistry::instance()->fontService();
@@ -159,12 +158,10 @@ class BrowseFontsView : public DeclarativeOmniListView {
   }
 
 public:
-  BrowseFontsView(AppWindow &app) : DeclarativeOmniListView(app) {}
-
   void renderEmptySearch() {
     for (const auto &system : QFontDatabase::writingSystems()) {
       QString sname = QFontDatabase::writingSystemName(system);
-      auto &section = list->addSection(QString("%1 Fonts").arg(sname));
+      auto &section = m_list->addSection(QString("%1 Fonts").arg(sname));
       auto items = QFontDatabase::families(system) | std::views::transform([](const QString &family) {
                      return std::make_unique<FontListItem>(family);
                    });
@@ -175,7 +172,7 @@ public:
     }
   }
 
-  void render(const QString &s) override {
+  void render(const QString &s) {
     QString query = s.trimmed();
 
     if (query.isEmpty()) return renderEmptySearch();
@@ -185,7 +182,7 @@ public:
     auto results = m_trie->prefixSearch(query.toStdString(), 500);
     timer.time("font search");
 
-    auto &section = list->addSection("Fonts");
+    auto &section = m_list->addSection("Fonts");
     auto items = results | std::views::transform(
                                [](const QString &family) { return std::make_unique<FontListItem>(family); });
 
@@ -194,17 +191,14 @@ public:
     }
   }
 
-  void onMount() override {
-    DeclarativeOmniListView::onMount();
+  BrowseFontsView() {
+    setSearchPlaceholderText("Browse fonts to preview...");
     auto watcher = QSharedPointer<QFutureWatcher<std::unique_ptr<Trie<QString>>>>::create();
 
-    setSearchPlaceholderText("Browse fonts to preview...");
     watcher->setFuture(buildTrieAsync());
     connect(watcher.get(), &QFutureWatcher<Trie<QString>>::finished, this, [this, watcher]() {
       m_trie = watcher->future().takeResult();
-      reload();
+      render(searchText());
     });
   }
-
-  void onPop() override { qDebug() << "Pop browse!"; }
 };

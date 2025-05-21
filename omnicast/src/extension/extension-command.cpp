@@ -1,5 +1,4 @@
 #include "extension/extension-command.hpp"
-#include "command-database.hpp"
 #include "command.hpp"
 #include "extension/extension-command-runtime.hpp"
 #include "extension/extension.hpp"
@@ -48,9 +47,8 @@ void ExtensionCommand::setExtensionId(const QString &text) { _extensionId = text
 const QString &ExtensionCommand::extensionIcon() const { return _extensionIcon; }
 void ExtensionCommand::setExtensionIcon(const QString &icon) { _extensionIcon = icon; }
 
-CommandContext *ExtensionCommand::createContext(AppWindow &app, const std::shared_ptr<AbstractCmd> &command,
-                                                const QString &query) const {
-  return new ExtensionCommandRuntime(app, static_pointer_cast<ExtensionCommand>(command));
+CommandContext *ExtensionCommand::createContext(const std::shared_ptr<AbstractCmd> &command) const {
+  return new ExtensionCommandRuntime(static_pointer_cast<ExtensionCommand>(command));
 }
 
 CommandType ExtensionCommand::type() const { return CommandType::CommandTypeExtension; }

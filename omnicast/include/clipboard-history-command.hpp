@@ -1,6 +1,6 @@
 #pragma once
 #include "app.hpp"
-#include "calculator-history-command.hpp"
+#include "base-view.hpp"
 #include "clipboard-actions.hpp"
 #include "clipboard/clipboard-service.hpp"
 #include "omni-icon.hpp"
@@ -198,7 +198,7 @@ signals:
   void pinChanged(int id, bool value) const;
 };
 
-class ClipboardHistoryItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
+class ClipboardHistoryItem : public AbstractDefaultListItem, public ListView::Actionnable {
   ActionGenerator *_generator = nullptr;
 
 public:
@@ -249,52 +249,53 @@ signals:
   void removed(int entryId) const;
 };
 
-class ClipboardHistoryCommand : public DeclarativeOmniListView {
+class ClipboardHistoryCommand : public ListView {
   ClipboardHistoryItemActionGenerator *_generator = new ClipboardHistoryItemActionGenerator;
 
-  ItemList generateList(const QString &query) override {
+  void generateList(const QString &query) {
     auto clipman = ServiceRegistry::instance()->clipman();
     auto result = clipman->listAll(100, 0, {.query = query});
-    ItemList newList;
-
-    newList.reserve(result.data.size() + 2);
-    newList.emplace_back(std::make_unique<OmniList::VirtualSection>("Pinned"));
     size_t i = 0;
+
+    m_list->beginResetModel();
+
+    auto &pinnedSection = m_list->addSection("Pinned");
 
     while (i < result.data.size() && result.data[i].pinnedAt) {
       auto &entry = result.data[i];
       auto candidate = std::make_unique<ClipboardHistoryItem>(entry);
 
       candidate->setActionGenerator(_generator);
-      newList.emplace_back(std::move(candidate));
+      pinnedSection.addItem(std::move(candidate));
       ++i;
     }
 
-    newList.emplace_back(std::make_unique<OmniList::VirtualSection>("History", false));
+    auto &historySection = m_list->addSection("History");
 
     while (i < result.data.size()) {
       auto &entry = result.data[i];
       auto candidate = std::make_unique<ClipboardHistoryItem>(entry);
 
       candidate->setActionGenerator(_generator);
-      newList.emplace_back(std::move(candidate));
+      historySection.addItem(std::move(candidate));
       ++i;
     }
 
-    return newList;
+    m_list->endResetModel(OmniList::SelectFirst);
   }
 
-  void onMount() override { setSearchPlaceholderText("Browse clipboard history..."); }
+  void onSearchChanged(const QString &value) override { generateList(value); }
 
-  void clipboardSelectionInserted(const ClipboardHistoryEntry &entry) { reload(); }
+  void clipboardSelectionInserted(const ClipboardHistoryEntry &entry) {}
 
-  void handlePinChanged(int entryId, bool value) { reload(); }
-  void handleRemoved(int entryId) { reload(); }
+  void handlePinChanged(int entryId, bool value) { generateList(searchText()); }
+  void handleRemoved(int entryId) { generateList(searchText()); }
 
 public:
-  ClipboardHistoryCommand(AppWindow &app) : DeclarativeOmniListView(app) {
+  ClipboardHistoryCommand() {
     auto clipman = ServiceRegistry::instance()->clipman();
 
+    setSearchPlaceholderText("Browse clipboard history...");
     connect(_generator, &ClipboardHistoryItemActionGenerator::pinChanged, this,
             &ClipboardHistoryCommand::handlePinChanged);
     connect(_generator, &ClipboardHistoryItemActionGenerator::removed, this,

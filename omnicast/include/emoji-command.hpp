@@ -1,5 +1,5 @@
 #pragma once
-#include "app.hpp"
+#include "base-view.hpp"
 #include "clipboard-actions.hpp"
 #include "clipboard/clipboard-service.hpp"
 #include "emoji-database.hpp"
@@ -8,8 +8,6 @@
 #include "timer.hpp"
 #include "ui/action-pannel/action-item.hpp"
 #include "ui/image/omnimg.hpp"
-#include "ui/omni-grid-view.hpp"
-#include "ui/emoji-viewer.hpp"
 #include "ui/omni-grid.hpp"
 #include "ui/omni-list.hpp"
 #include <QtConcurrent/qtconcurrentrun.h>
@@ -20,7 +18,7 @@
 #include <qnamespace.h>
 #include <qwidget.h>
 
-class EmojiGridItem : public OmniGrid::AbstractGridItem, public OmniGridView::IActionnable {
+class EmojiGridItem : public OmniGrid::AbstractGridItem, public GridView::Actionnable {
 public:
   const EmojiInfo &info;
 
@@ -68,7 +66,7 @@ struct EmojiInfoHash {
   size_t operator()(const EmojiInfo *const &info) { return std::hash<const char *>{}(info->emoji); }
 };
 
-class EmojiView : public OmniGridView {
+class EmojiView : public GridView {
   EmojiDatabase emojiDb;
   std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> newItems;
   using TrieType = Trie<const EmojiInfo *, EmojiInfoHash>;
@@ -97,9 +95,11 @@ public:
     return trie;
   }
 
-  void onMount() override {
+  EmojiView() {
     auto watcher = new QFutureWatcher<std::unique_ptr<TrieType>>;
     auto future = QtConcurrent::run([this]() { return buildTrie(); });
+
+    setSearchPlaceholderText("Search for emojis...");
 
     watcher->setFuture(future);
     connect(watcher, &QFutureWatcher<TrieType>::finished, this, [this, watcher]() {
@@ -108,8 +108,6 @@ public:
       onSearchChanged(searchText());
     });
   }
-
-  EmojiView(AppWindow &app) : OmniGridView(app) {}
 
   void onSearchChanged(const QString &s) override {
     newItems.clear();
@@ -128,7 +126,8 @@ public:
       }
 
       for (const auto &name : sectionNames) {
-        newItems.push_back(std::make_unique<OmniGrid::GridSection>(name, grid->columns(), grid->spacing()));
+        newItems.push_back(
+            std::make_unique<OmniGrid::GridSection>(name, m_grid->columns(), m_grid->spacing()));
 
         for (auto item : sectionMap[name]) {
           newItems.push_back(std::make_unique<EmojiGridItem>(*item));
@@ -136,7 +135,7 @@ public:
       }
     } else if (m_searchTrie) {
       newItems.push_back(
-          std::make_unique<OmniGrid::GridSection>("Results", grid->columns(), grid->spacing()));
+          std::make_unique<OmniGrid::GridSection>("Results", m_grid->columns(), m_grid->spacing()));
 
       Timer timer;
       auto results = m_searchTrie->prefixSearch(s.toStdString());
@@ -147,6 +146,6 @@ public:
       }
     }
 
-    grid->updateFromList(newItems, OmniGrid::SelectFirst);
+    m_grid->updateFromList(newItems, OmniGrid::SelectFirst);
   }
 };

@@ -69,8 +69,7 @@ public:
   CommandType type() const override;
   CommandMode mode() const override;
 
-  CommandContext *createContext(AppWindow &app, const std::shared_ptr<AbstractCmd> &command,
-                                const QString &query) const override;
+  CommandContext *createContext(const std::shared_ptr<AbstractCmd> &command) const override;
 
   ExtensionCommand() {}
 };

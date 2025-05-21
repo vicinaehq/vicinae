@@ -1,5 +1,4 @@
 #pragma once
-#include "command-database.hpp"
 #include "command.hpp"
 #include "common.hpp"
 #include "extension/extension-command.hpp"
@@ -19,7 +18,6 @@ class ExtensionCommandRuntime : public CommandContext {
   std::vector<ExtensionView *> m_viewStack;
   QFutureWatcher<std::vector<RenderModel>> m_modelWatcher;
 
-  AppWindow *m_app;
   QString m_sessionId;
 
   void sendEvent(const QString &handlerId, const QJsonArray &args) {
@@ -178,6 +176,8 @@ class ExtensionCommandRuntime : public CommandContext {
   }
 
   QJsonObject handleToastRequest(const QString &action, const QJsonObject &payload) {
+    auto ui = ServiceRegistry::instance()->UI();
+
     if (action == "toast.show") {
       auto title = payload["title"].toString();
       auto style = payload["style"].toString();
@@ -189,7 +189,7 @@ class ExtensionCommandRuntime : public CommandContext {
         priority = ToastPriority::Danger;
       }
 
-      m_app->statusBar->setToast(title, priority);
+      ui->setToast(title, priority);
       return {};
     }
 
@@ -223,8 +223,11 @@ class ExtensionCommandRuntime : public CommandContext {
   }
 
   QJsonObject handleUI(const QString &action, const QJsonObject &payload) {
+    auto ui = ServiceRegistry::instance()->UI();
+
     if (m_command->isView() && action == "ui.push-view") {
-      pushView(new ExtensionView(*m_app, *m_command.get()));
+      // TODO: push extension view
+      // ui->pushView(new ExtensionView(*m_command.get()));
       return {};
     }
 
@@ -234,20 +237,19 @@ class ExtensionCommandRuntime : public CommandContext {
     }
 
     if (action == "ui.show-hud") {
-      m_app->hide();
-      m_app->popToRoot();
+      ui->popToRoot();
+      ui->closeWindow();
       return {};
     }
 
     if (action == "ui.close-main-window") {
-      m_app->closeWindow(true);
+      ui->closeWindow();
       return {};
     }
 
     if (action == "ui.clear-search-bar") {
-      m_app->topBar->input->clear();
-      emit m_app->topBar->input->textEdited("");
-
+      // m_app->topBar->input->clear();
+      // emit m_app->topBar->input->textEdited("");
       return {};
     }
 
@@ -265,13 +267,15 @@ class ExtensionCommandRuntime : public CommandContext {
       }
     }
 
-    app()->actionPannel->setActions(std::move(items));
+    /*
+app()->actionPannel->setActions(std::move(items));
 
-    if (auto action = app()->actionPannel->primaryAction()) {
-      app()->statusBar->setAction(*action);
-    } else {
-      app()->statusBar->clearAction();
-    }
+if (auto action = app()->actionPannel->primaryAction()) {
+  app()->statusBar->setAction(*action);
+} else {
+  app()->statusBar->clearAction();
+}
+    */
   }
 
   void pushView(ExtensionView *view) {
@@ -289,8 +293,10 @@ class ExtensionCommandRuntime : public CommandContext {
   }
 
   void handlePopViewRequest() {
+    auto ui = ServiceRegistry::instance()->UI();
+
     m_viewStack.pop_back();
-    m_app->popCurrentView();
+    ui->popView();
   }
 
   void modelCreated() {
@@ -398,18 +404,20 @@ public:
     if (m_command->mode() == CommandModeView) {
       // We push the first view immediately, waiting for the initial render to come
       // in and "hydrate" it.
-      pushView(new ExtensionView(*m_app, *m_command.get()));
-      connect(m_app, &AppWindow::currentViewPoped, this, [this]() {
-        qDebug() << "curent view poped from extension";
-        m_viewStack.pop_back();
+      // pushView(new ExtensionView(*m_app, *m_command.get()));
+      /*
+  connect(m_app, &AppWindow::currentViewPoped, this, [this]() {
+    qDebug() << "curent view poped from extension";
+    m_viewStack.pop_back();
 
-        if (!m_viewStack.empty()) {
-          auto top = m_viewStack.at(m_viewStack.size() - 1);
+    if (!m_viewStack.empty()) {
+      auto top = m_viewStack.at(m_viewStack.size() - 1);
 
-          connect(top, &ExtensionView::notifyEvent, this, &ExtensionCommandRuntime::sendEvent);
-          sendEvent("pop-view", {});
-        }
-      });
+      connect(top, &ExtensionView::notifyEvent, this, &ExtensionCommandRuntime::sendEvent);
+      sendEvent("pop-view", {});
+    }
+  });
+      */
     }
 
     manager->loadCommand(m_command->extensionId(), m_command->commandId(), preferenceValues, props);
@@ -421,8 +429,8 @@ public:
     manager->unloadCommand(m_sessionId);
   }
 
-  ExtensionCommandRuntime(AppWindow &app, const std::shared_ptr<ExtensionCommand> &command)
-      : CommandContext(&app, command), m_command(command), m_app(&app) {
+  ExtensionCommandRuntime(const std::shared_ptr<ExtensionCommand> &command)
+      : CommandContext(command), m_command(command) {
     auto manager = ServiceRegistry::instance()->extensionManager();
 
     connect(manager, &ExtensionManager::extensionRequest, this, &ExtensionCommandRuntime::handleRequest);

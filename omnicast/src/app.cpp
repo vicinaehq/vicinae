@@ -146,6 +146,8 @@ return;
   }
 */
 
+  if (navigationStack.size() > 0) { navigationStack.top().view->hide(); }
+
   view->setParent(this);
   view->setFixedSize(size());
   view->initialize();
@@ -201,7 +203,7 @@ pushView(new MissingExtensionPreferenceView(*this, extensionCommand),
 
   unloadHangingCommand();
 
-  auto ctx = command->createContext(*this, command, opts.searchQuery);
+  auto ctx = command->createContext(command);
 
   if (!ctx) { return; }
 
@@ -350,18 +352,20 @@ AppWindow::AppWindow(QWidget *parent) : QMainWindow(parent) {
             }
           });
 
-  // auto rootCommand = CommandBuilder("root").toSingleView<RootView>();
-
-  pushView(new RootCommandV2());
+  auto rootCommand = CommandBuilder("root").toSingleView<RootCommandV2>();
 
   connect(ServiceRegistry::instance()->UI(), &UIController::popToRootRequested, this, [this]() {
     popToRoot();
     navigationStack.top().view->clearSearchBar();
   });
+  connect(ServiceRegistry::instance()->UI(), &UIController::launchCommandRequested, this,
+          [this](const auto &cmd) { launchCommand(cmd, {}, {}); });
   connect(ServiceRegistry::instance()->UI(), &UIController::popViewRequested, this,
           [this]() { popCurrentView(); });
+  connect(ServiceRegistry::instance()->UI(), &UIController::pushViewRequested, this,
+          [this](BaseView *view) { pushView(view); });
   connect(ServiceRegistry::instance()->UI(), &UIController::closeWindowRequested, this,
           [this]() { closeWindow(false); });
 
-  // launchCommand(rootCommand);
+  launchCommand(rootCommand);
 }

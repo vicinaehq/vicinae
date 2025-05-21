@@ -1,13 +1,13 @@
 #pragma once
+#include "base-view.hpp"
 #include "omni-icon.hpp"
-#include "ui/omni-grid-view.hpp"
 #include "ui/omni-grid.hpp"
 #include "ui/omni-list.hpp"
 #include <qlabel.h>
 #include <qnamespace.h>
 
-class IconBrowserView : public OmniGridView {
-  class IconBrowserItem : public OmniGrid::AbstractGridItem, public OmniGridView::IActionnable {
+class IconBrowserView : public GridView {
+  class IconBrowserItem : public OmniGrid::AbstractGridItem, public GridView::Actionnable {
     QString _name;
 
     QString tooltip() const override { return _name; }
@@ -42,25 +42,22 @@ class IconBrowserView : public OmniGridView {
     IconFilter(const QString &query) : _query(query) {}
   };
 
-  void onSearchChanged(const QString &s) override { grid->setFilter(std::make_unique<IconFilter>(s)); }
-
-  void onMount() override {
-    OmniGridView::onMount();
-    setSearchPlaceholderText("Search builtin icons...");
-    grid->setColumns(8);
-    grid->setInset(20);
-    grid->beginUpdate();
-    grid->addSection("Icons");
-
-    for (const auto &icon : BuiltinIconService::icons()) {
-      grid->addItem(std::make_unique<IconBrowserItem>(icon));
-    }
-
-    grid->commitUpdate();
-    grid->selectFirst();
-  }
+  void onSearchChanged(const QString &s) override { m_grid->setFilter(std::make_unique<IconFilter>(s)); }
 
 public:
-  IconBrowserView(AppWindow &app) : OmniGridView(app) {}
+  IconBrowserView() {
+    setSearchPlaceholderText("Search builtin icons...");
+    m_grid->setColumns(8);
+    m_grid->setInset(20);
+    m_grid->beginUpdate();
+    m_grid->addSection("Icons");
+
+    for (const auto &icon : BuiltinIconService::icons()) {
+      m_grid->addItem(std::make_unique<IconBrowserItem>(icon));
+    }
+
+    m_grid->commitUpdate();
+    m_grid->selectFirst();
+  }
   ~IconBrowserView() {}
 };

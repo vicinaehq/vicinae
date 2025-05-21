@@ -1,18 +1,18 @@
 #pragma once
+#include "base-view.hpp"
 #include "bookmark-service.hpp"
 #include "favicon/favicon-service.hpp"
 #include "omni-icon.hpp"
 #include "quicklist-database.hpp"
 #include "service-registry.hpp"
+#include "ui/action-pannel/action.hpp"
 #include "ui/form/base-input.hpp"
 #include "ui/form/completed-input.hpp"
 #include "ui/form/form-field.hpp"
 #include "ui/form/selector-input.hpp"
 #include "ui/omni-list.hpp"
 #include "ui/toast.hpp"
-#include "view.hpp"
 #include "ui/form/form.hpp"
-#include <algorithm>
 #include <functional>
 #include <memory>
 #include <qboxlayout.h>
@@ -29,17 +29,6 @@
 #include <ranges>
 #include <sched.h>
 #include <unistd.h>
-
-class CallbackAction : public AbstractAction {
-  using SubmitHandler = std::function<void(AppWindow &app)>;
-  SubmitHandler handler;
-
-public:
-  CallbackAction(const SubmitHandler &localHandler)
-      : AbstractAction("Submit", BuiltinOmniIconUrl("submit")), handler(localHandler) {}
-
-  void execute(AppWindow &app) override { handler(app); }
-};
 
 class AppSelectorItem : public SelectorInput::AbstractItem {
 public:
@@ -137,7 +126,7 @@ public:
   CompletionListItem(const LinkDynamicPlaceholder &data) : m_data(data) {}
 };
 
-class BookmarkFormView : public View {
+class BookmarkFormView : public FormView {
   std::vector<LinkDynamicPlaceholder> mainLinkArguments{
       LinkDynamicPlaceholder{
           .icon = BuiltinOmniIconUrl("text-cursor"), .title = "Selected Text", .id = "selected"},
@@ -301,9 +290,9 @@ protected:
   SelectorInput *iconSelector;
 
 public:
-  BookmarkFormView(AppWindow &app)
-      : View(app), form(new FormWidget), name(new BaseInput), link(new CompletedInput),
-        appSelector(new SelectorInput), iconSelector(new SelectorInput) {
+  BookmarkFormView()
+      : form(new FormWidget), name(new BaseInput), link(new CompletedInput), appSelector(new SelectorInput),
+        iconSelector(new SelectorInput) {
     auto appDb = ServiceRegistry::instance()->appDb();
     auto quicklinkDb = ServiceRegistry::instance()->quicklinks();
 
@@ -393,18 +382,18 @@ public:
     // iconSelector->setValue(std::make_shared<IconSelectorItem>(quicklink.iconName));
   }
 
-  void onMount() override {
-    hideInput();
-    auto submitAction = new CallbackAction([this](AppWindow &app) { submit(app); });
+  void onActivate() override {
+    auto submitAction = new StaticAction("Submit", BuiltinOmniIconUrl("enter-key"), [this]() { submit(); });
 
     submitAction->setShortcut(KeyboardShortcutModel{.key = "return", .modifiers = {"ctrl"}});
 
-    setSignalActions({submitAction});
+    setActions({submitAction});
 
     form->focusFirst();
   }
 
-  virtual void submit(AppWindow &app) {
+  virtual void submit() {
+    auto ui = ServiceRegistry::instance()->UI();
     auto quicklinkDb = ServiceRegistry::instance()->quicklinks();
     auto bookmarkDb = ServiceRegistry::instance()->bookmarks();
 
@@ -428,21 +417,19 @@ public:
     }
 
     if (bookmarkDb->createBookmark(name->text(), icon->icon().toString(), link->text(), item->app->id())) {
-      app.statusBar->setToast("Created bookmark");
-      pop();
+      ui->setToast("Created bookmark");
+      ServiceRegistry::instance()->UI()->popView();
     } else {
-      app.statusBar->setToast("Failed to create bookmark", ToastPriority::Danger);
+      ui->setToast("Failed to create bookmark", ToastPriority::Danger);
     }
   }
 };
 
 class EditBookmarkView : public BookmarkFormView {
-  Q_OBJECT
   std::shared_ptr<Bookmark> m_bookmark;
 
 public:
-  EditBookmarkView(AppWindow &app, const std::shared_ptr<Bookmark> &bookmark)
-      : BookmarkFormView(app), m_bookmark(bookmark) {
+  EditBookmarkView(const std::shared_ptr<Bookmark> &bookmark) : m_bookmark(bookmark) {
     auto appDb = ServiceRegistry::instance()->appDb();
 
     name->setText(m_bookmark->name());
@@ -452,7 +439,8 @@ public:
     // iconSelector->setValue(std::make_shared<IconSelectorItem>(quicklink.iconName, quicklink.iconName));
   }
 
-  void submit(AppWindow &app) override {
+  void submit() override {
+    auto ui = ServiceRegistry::instance()->UI();
     auto quicklinkDb = ServiceRegistry::instance()->quicklinks();
     auto bookmarkDb = ServiceRegistry::instance()->bookmarks();
     auto item = static_cast<const AppSelectorItem *>(appSelector->value());
@@ -469,28 +457,13 @@ public:
       return;
     }
 
-    // implement update
-    /*
-
-if (!updateResult) {
-  app.statusBar->setToast("Failed to update result", ToastPriority::Danger);
-  return;
-}
-    */
-
-    pop();
-    emit quicklinkEdited();
+    ServiceRegistry::instance()->UI()->popView();
   }
-
-signals:
-  void quicklinkEdited();
 };
 
 class DuplicateBookmarkView : public BookmarkFormView {
-  Q_OBJECT
-
 public:
-  DuplicateBookmarkView(AppWindow &app, const std::shared_ptr<Bookmark> &bookmark) : BookmarkFormView(app) {
+  DuplicateBookmarkView(const std::shared_ptr<Bookmark> &bookmark) {
     auto appDb = ServiceRegistry::instance()->appDb();
 
     name->setText(QString("Copy of %1").arg(bookmark->name()));
@@ -501,12 +474,10 @@ public:
     // iconSelector->setValue(std::make_shared<IconSelectorItem>(quicklink.iconName));
   }
 
-  void onMount() override {
-    BookmarkFormView::onMount();
-    name->selectAll();
-  }
+  void onActivate() override { name->selectAll(); }
 
-  void submit(AppWindow &app) override {
+  void submit() override {
+    auto ui = ServiceRegistry::instance()->UI();
     auto bookmarkDb = ServiceRegistry::instance()->bookmarks();
     auto item = static_cast<const AppSelectorItem *>(appSelector->value());
 
@@ -523,14 +494,10 @@ public:
     }
 
     if (bookmarkDb->createBookmark(name->text(), icon->icon().toString(), link->text(), item->app->id())) {
-      app.statusBar->setToast("Created bookmark");
-      emit duplicated();
-      pop();
+      ui->setToast("Created bookmark");
+      ui->popView();
     } else {
-      app.statusBar->setToast("Failed to create bookmark", ToastPriority::Danger);
+      ui->setToast("Failed to create bookmark", ToastPriority::Danger);
     }
   }
-
-signals:
-  void duplicated();
 };

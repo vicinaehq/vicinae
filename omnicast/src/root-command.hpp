@@ -400,6 +400,7 @@ class RootCommandV2 : public ListView {
 
 public:
   RootCommandV2() {
+    m_topBar->hideBackButton();
     setSearchPlaceholderText("Search for apps or commands...");
     m_calcDebounce->setInterval(100);
     m_calcDebounce->setSingleShot(true);

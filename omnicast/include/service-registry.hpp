@@ -20,6 +20,7 @@
 #include <qobject.h>
 
 class ServiceRegistry : public QObject {
+
   std::unique_ptr<QuicklistDatabase> m_quickinkDb;
   std::unique_ptr<AbstractWindowManager> m_windowManager;
   std::unique_ptr<CalculatorDatabase> m_calculatorDb;

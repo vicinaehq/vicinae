@@ -14,18 +14,16 @@ class LaunchProps;
 class CommandContext : public QObject {
   Q_OBJECT
 
-  AppWindow *_app;
   std::shared_ptr<AbstractCmd> _cmd;
 
 public:
-  AppWindow *app() const { return _app; }
   const AbstractCmd *command() const { return _cmd.get(); }
   virtual void onActionExecuted(AbstractAction *action) {}
 
   virtual void load(const LaunchProps &props) {}
   virtual void unload() {};
 
-  CommandContext(AppWindow *app, const std::shared_ptr<AbstractCmd> &command) : _app(app), _cmd(command) {}
+  CommandContext(const std::shared_ptr<AbstractCmd> &command) : _cmd(command) {}
 
 signals:
   void requestPushView(View *view) const;

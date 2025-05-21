@@ -1,5 +1,6 @@
 #pragma once
 #include "app.hpp"
+#include "base-view.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
 #include "theme.hpp"
@@ -159,13 +160,13 @@ public:
   ThemeItem(const ThemeInfo &theme) : m_theme(theme) {}
 };
 
-class ManageThemesView : public OmniListView {
+class ManageThemesView : public ListView {
   void generateList(const QString &query) {
     auto &themeService = ThemeService::instance();
     std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> items;
     auto &current = themeService.theme();
 
-    list->clearSelection();
+    m_list->clearSelection();
 
     if (current.name.contains(query, Qt::CaseInsensitive)) {
       items.push_back(std::make_unique<OmniList::VirtualSection>("Current Theme"));
@@ -179,24 +180,21 @@ class ManageThemesView : public OmniListView {
       auto candidate = std::make_unique<ThemeItem>(theme);
 
       candidate->setSelectedCallback([this, query](const QString &name) {
-        list->clearSelection();
+        m_list->clearSelection();
         generateList(query);
       });
 
       items.push_back(std::move(candidate));
     }
 
-    list->updateFromList(items, OmniList::SelectionPolicy::SelectFirst);
-  }
-
-  void onMount() override {
-    setSearchPlaceholderText("Manage themes...");
-    // for now, blocking on this is okay
-    ThemeService::instance().scanThemeDirectories();
+    m_list->updateFromList(items, OmniList::SelectionPolicy::SelectFirst);
   }
 
   void onSearchChanged(const QString &s) override { generateList(s); }
 
 public:
-  ManageThemesView(AppWindow &app) : OmniListView(app) {}
+  ManageThemesView() {
+    setSearchPlaceholderText("Manage themes...");
+    ThemeService::instance().scanThemeDirectories();
+  }
 };

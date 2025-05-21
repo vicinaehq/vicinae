@@ -2,25 +2,25 @@
 #include "app.hpp"
 #include "command-database.hpp"
 #include "preference.hpp"
+#include "service-registry.hpp"
 
 template <typename T> class SingleViewCommand : public CommandContext {
 public:
-  SingleViewCommand(AppWindow *app, const std::shared_ptr<AbstractCmd> &command)
-      : CommandContext(app, command) {}
+  SingleViewCommand(const std::shared_ptr<AbstractCmd> &command) : CommandContext(command) {}
 
   void load(const LaunchProps &props) override {
     qDebug() << "loading single view" << command()->name();
-    return app()->pushView(new T(*app()), {.navigation = NavigationStatus{.title = command()->name(),
-                                                                          .iconUrl = command()->iconUrl()}});
+    auto ui = ServiceRegistry::instance()->UI();
+
+    ui->pushView(new T());
   }
 };
 
 template <typename T> class BuiltinCommandContext : public BuiltinCommand {
 public:
   CommandMode mode() const override { return CommandMode::CommandModeView; }
-  CommandContext *createContext(AppWindow &app, const std::shared_ptr<AbstractCmd> &command,
-                                const QString &query) const override {
-    return new T(&app, command);
+  CommandContext *createContext(const std::shared_ptr<AbstractCmd> &command) const override {
+    return new T(command);
   }
 
   BuiltinCommandContext(const QString &id, const QString &name,
@@ -34,9 +34,8 @@ public:
 template <typename T> class BuiltinNoViewCommandContext : public BuiltinCommand {
 public:
   CommandMode mode() const override { return CommandMode::CommandModeNoView; }
-  CommandContext *createContext(AppWindow &app, const std::shared_ptr<AbstractCmd> &command,
-                                const QString &query) const override {
-    return new T(&app, command);
+  CommandContext *createContext(const std::shared_ptr<AbstractCmd> &command) const override {
+    return new T(command);
   }
 
   BuiltinNoViewCommandContext(const QString &id, const QString &name,
@@ -51,9 +50,8 @@ template <typename T> class BuiltinViewCommand : public BuiltinCommand {
 public:
   CommandMode mode() const override { return CommandMode::CommandModeView; }
 
-  CommandContext *createContext(AppWindow &app, const std::shared_ptr<AbstractCmd> &command,
-                                const QString &query) const override {
-    return new SingleViewCommand<T>(&app, command);
+  CommandContext *createContext(const std::shared_ptr<AbstractCmd> &command) const override {
+    return new SingleViewCommand<T>(command);
   }
 
   BuiltinViewCommand(const QString &id, const QString &name,
