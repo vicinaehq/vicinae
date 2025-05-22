@@ -41,7 +41,7 @@ public:
   /**
    * Whether the item can be selected as a fallback command or not
    */
-  virtual bool isSuitableForFallback() const { return true; }
+  virtual bool isSuitableForFallback() const { return false; }
 
   /**
    * Whether this item should be marked as a fallback command
@@ -281,14 +281,14 @@ private:
     emit itemsChanged();
   }
 
+public:
+  RootItemManager(OmniDatabase &db) : m_db(db) { createTables(); }
+
   RootItemMetadata itemMetadata(const QString &id) const {
     if (auto it = m_metadata.find(id); it != m_metadata.end()) { return it->second; }
 
     return {};
   }
-
-public:
-  RootItemManager(OmniDatabase &db) : m_db(db) { createTables(); }
 
   bool registerVisit(const QString &id) {
     QSqlQuery query = m_db.createQuery();

@@ -139,6 +139,7 @@ public:
   virtual std::vector<CommandArgument> arguments() const { return {}; }
   virtual std::vector<QString> keywords() const { return {}; }
   virtual QString repositoryName() const { return ""; }
+  virtual bool isFallback() const { return false; }
 
   bool isView() const { return mode() == CommandModeView; }
   bool isNoView() const { return mode() == CommandModeNoView; }

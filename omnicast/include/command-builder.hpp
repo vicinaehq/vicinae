@@ -11,6 +11,7 @@ class CommandBuilder {
   QString _name;
   std::optional<OmniIconUrl> _url;
   std::vector<std::shared_ptr<BasePreference>> _preferences;
+  bool m_fallback = false;
 
 public:
   CommandBuilder(const QString &id) : _id(id) {}
@@ -21,6 +22,11 @@ public:
   }
   CommandBuilder &withIcon(const OmniIconUrl &url) {
     _url = url;
+    return *this;
+  }
+
+  CommandBuilder &asFallback() {
+    m_fallback = true;
     return *this;
   }
 
@@ -35,7 +41,10 @@ public:
   }
 
   template <typename T> std::shared_ptr<BuiltinCommand> toSingleView() {
-    return std::make_shared<BuiltinViewCommand<T>>(_id, _name, _url, _preferences);
+    auto cmd = std::make_shared<BuiltinViewCommand<T>>(_id, _name, _url, _preferences);
+
+    cmd->setIsFallback(m_fallback);
+    return cmd;
   }
 
   template <typename T> std::shared_ptr<BuiltinCommand> toNoViewContext() {

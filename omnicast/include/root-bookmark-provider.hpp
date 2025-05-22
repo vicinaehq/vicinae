@@ -20,6 +20,11 @@ public:
       return {{.text = "Bookmark", .color = ColorTint::TextSecondary}};
     }
 
+    bool isSuitableForFallback() const override {
+      // TODO: handle default arguments properly
+      return m_link->arguments().size() == 1;
+    }
+
     ArgumentList arguments() const override {
       ArgumentList args;
 

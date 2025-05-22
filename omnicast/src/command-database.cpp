@@ -6,6 +6,7 @@
 #include "emoji-command.hpp"
 #include "icon-browser-command.hpp"
 #include "ask-ai-command.hpp"
+#include "manage-fallback-commands.hpp"
 #include "omnicast/browse-fonts-view.hpp"
 #include "preference.hpp"
 #include "switch-windows-command.hpp"
@@ -111,6 +112,11 @@ CommandDatabase::CommandDatabase() {
                          .withTintedIcon("emoji", ColorTint::Red)
                          .toSingleView<PeepobankView>();
 
+    auto configureFallbackCommands = CommandBuilder("configure-fallback-commands")
+                                         .withName("Configure Fallback Commands")
+                                         .withTintedIcon("arrow-counter-clockwise", ColorTint::Red)
+                                         .toSingleView<ManageFallbackCommands>();
+
     auto omnicast = CommandRepositoryBuilder("omnicast")
                         .withName("Omnicast")
                         .withCommand(clipboardHistory)
@@ -118,6 +124,7 @@ CommandDatabase::CommandDatabase() {
                         .withCommand(iconSearch)
                         .withCommand(peepobank)
                         .withCommand(openConfigFile)
+                        .withCommand(configureFallbackCommands)
                         .makeShared();
 
     registerRepository(omnicast);

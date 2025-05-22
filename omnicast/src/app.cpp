@@ -57,19 +57,6 @@ bool AppWindow::event(QEvent *event) {
       return true;
     }
 
-    /*
-if (auto action = actionPannel->findBoundAction(keyEvent)) {
-  executeAction(action);
-  return true;
-}
-
-if (keyEvent->modifiers().testFlag(Qt::ControlModifier) && key == Qt::Key_B) {
-  actionPannel->showActions();
-
-  return true;
-}
-    */
-
     return true;
   }
 
@@ -81,11 +68,9 @@ void AppWindow::clearSearch() {}
 void AppWindow::showEvent(QShowEvent *event) { QMainWindow::showEvent(event); }
 
 void AppWindow::popCurrentView() {
-  /*
-auto &activeCommand = commandStack.at(commandStack.size() - 1);
+  auto &activeCommand = commandStack.at(commandStack.size() - 1);
 
-if (activeCommand.viewStack.empty()) return;
-*/
+  if (activeCommand.viewStack.empty()) return;
 
   if (navigationStack.size() == 1) return;
 
@@ -99,13 +84,12 @@ if (activeCommand.viewStack.empty()) return;
 
   connectView(*next.view);
   next.view->activate();
-  next.view->setGeometry(geometry());
+  next.view->setFixedSize(size());
   ServiceRegistry::instance()->UI()->setTopView(next.view);
   next.view->show();
 
   previous.view->deleteLater();
 
-  /*
   if (activeCommand.viewStack.size() == 1) {
     activeCommand.command->unload();
     activeCommand.command->deleteLater();
@@ -114,7 +98,6 @@ if (activeCommand.viewStack.empty()) return;
   } else {
     activeCommand.viewStack.pop();
   }
-  */
 
   currentViewPoped();
 }
@@ -130,12 +113,10 @@ void AppWindow::disconnectView(BaseView &view) { view.removeEventFilter(this); }
 void AppWindow::connectView(BaseView &view) { view.installEventFilter(this); }
 
 void AppWindow::pushView(BaseView *view, const PushViewOptions &opts) {
-  /*
-if (commandStack.empty()) {
-qDebug() << "AppWindow::pushView called with empty command stack";
-return;
-}
-
+  if (commandStack.empty()) {
+    qDebug() << "AppWindow::pushView called with empty command stack";
+    return;
+  }
 
   auto &currentCommand = commandStack.at(commandStack.size() - 1);
 
@@ -144,7 +125,6 @@ return;
 
     disconnectView(*old.view);
   }
-*/
 
   if (navigationStack.size() > 0) { navigationStack.top().view->hide(); }
 
@@ -157,7 +137,7 @@ return;
 
   connectView(*view);
 
-  // currentCommand.viewStack.push({.view = view});
+  currentCommand.viewStack.push({.view = view});
   ServiceRegistry::instance()->UI()->setTopView(view);
   navigationStack.push({.view = view});
 }

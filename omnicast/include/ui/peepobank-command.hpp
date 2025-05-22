@@ -5,7 +5,6 @@
 #include "app-root-provider.hpp"
 #include "common-actions.hpp"
 #include "service-registry.hpp"
-#include "ui/omni-grid-view.hpp"
 #include "ui/omni-grid.hpp"
 #include <qevent.h>
 #include <qlabel.h>
@@ -13,7 +12,6 @@
 #include <qpixmap.h>
 #include <qmovie.h>
 #include <qwindowdefs.h>
-#include <variant>
 
 class PeepobankView : public GridView {
   QString bankPath = "/home/aurelle/Pictures/peepobank/";
@@ -22,48 +20,7 @@ class PeepobankView : public GridView {
     QString path;
   };
 
-  class PeepoLabel : public QLabel {
-    std::variant<std::monostate, QPixmap, QMovie *> pixmap;
-
-    void resizeEvent(QResizeEvent *event) override {
-      QLabel::resizeEvent(event);
-      recalculate();
-    }
-
-    void recalculate() {
-      if (auto pix = std::get_if<QPixmap>(&pixmap); pix) {
-        setPixmap(pix->scaled(width(), height(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
-      }
-      if (auto movie = std::get_if<QMovie *>(&pixmap); movie) {
-        (*movie)->setScaledSize(QSize{width(), height()});
-      }
-    }
-
-  public:
-    void setPeepo(PeepoInfo info) {
-      if (auto movie = std::get_if<QMovie *>(&pixmap); movie) { (*movie)->deleteLater(); }
-
-      if (info.name.endsWith(".gif")) {
-        auto newMovie = new QMovie(info.path);
-
-        newMovie->start();
-        setMovie(newMovie);
-        pixmap = newMovie;
-      } else {
-        pixmap = QPixmap(info.path);
-      }
-
-      recalculate();
-    }
-
-    ~PeepoLabel() {
-      if (auto movie = std::get_if<QMovie *>(&pixmap); movie) { (*movie)->deleteLater(); }
-    }
-
-    PeepoLabel() : pixmap(std::monostate{}) { setAlignment(Qt::AlignCenter); }
-  };
-
-  class PeepoItem : public OmniGrid::AbstractGridItem, public OmniGridView::IActionnable {
+  class PeepoItem : public OmniGrid::AbstractGridItem, public GridView::Actionnable {
     PeepoInfo _info;
     std::shared_ptr<Application> _fileBrowser;
 
@@ -118,27 +75,31 @@ class PeepobankView : public GridView {
     m_grid->setFilter(std::make_unique<PeepoFilter>(text));
   }
 
-public:
-  PeepobankView() {
-    auto fileBrowser = ServiceRegistry::instance()->appDb()->fileBrowser();
-    QDir dir(bankPath);
+  void initialize() override {
+    QTimer::singleShot(0, [this]() {
+      auto fileBrowser = ServiceRegistry::instance()->appDb()->fileBrowser();
+      QDir dir(bankPath);
 
-    m_grid->setColumns(8);
-    m_grid->beginUpdate();
-    m_grid->addSection("Results");
+      m_grid->setColumns(8);
+      m_grid->beginUpdate();
+      m_grid->addSection("Results");
 
-    for (auto entry : dir.entryList()) {
-      if (entry.startsWith(".")) continue;
+      for (auto entry : dir.entryList()) {
+        if (entry.startsWith(".")) continue;
 
-      m_grid->addItem(std::make_unique<PeepoItem>(
-          PeepoInfo{
-              .name = entry,
-              .path = dir.filePath(entry),
-          },
-          fileBrowser));
-    }
+        m_grid->addItem(std::make_unique<PeepoItem>(
+            PeepoInfo{
+                .name = entry,
+                .path = dir.filePath(entry),
+            },
+            fileBrowser));
+      }
 
-    m_grid->commitUpdate();
-    m_grid->selectFirst();
+      m_grid->commitUpdate();
+      m_grid->selectFirst();
+    });
   }
+
+public:
+  PeepobankView() {}
 };

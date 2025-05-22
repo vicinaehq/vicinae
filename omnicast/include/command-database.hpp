@@ -30,6 +30,7 @@ class BuiltinCommand : public AbstractCmd {
   std::vector<std::shared_ptr<BasePreference>> _preferences;
   std::vector<std::shared_ptr<BasePreference>> _repositoryPreferences;
   std::vector<CommandArgument> _arguments;
+  bool m_fallback = false;
 
 public:
   QString uniqueId() const override { return _repositoryId + "." + _id; }
@@ -41,6 +42,8 @@ public:
   void setRepositoryId(const QString &id) { _repositoryId = id; }
   void setRepositoryName(const QString &name) { _repositoryName = name; }
   void setRepositoryPreferences(const PreferenceList &prefs) { _repositoryPreferences = prefs; }
+  bool isFallback() const override { return m_fallback; }
+  void setIsFallback(bool value) { m_fallback = value; }
 
   std::vector<std::shared_ptr<BasePreference>> preferences() const override {
     PreferenceList list;

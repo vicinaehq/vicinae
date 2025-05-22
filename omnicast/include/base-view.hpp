@@ -206,7 +206,7 @@ protected:
     }
   }
 
-  void setupUI() {
+  void setupUI(QWidget *centerWidget) {
     m_topBar->setFixedHeight(Omnicast::TOP_BAR_HEIGHT);
     m_statusBar->setFixedHeight(Omnicast::STATUS_BAR_HEIGHT);
 
@@ -218,7 +218,7 @@ protected:
     m_layout->setSpacing(0);
     m_layout->addWidget(m_topBar);
     m_layout->addWidget(m_loadingBar);
-    m_layout->addWidget(centerWidget(), 1);
+    m_layout->addWidget(centerWidget, 1);
     m_layout->addWidget(m_statusBar);
     setLayout(m_layout);
 
@@ -229,7 +229,7 @@ protected:
     connect(m_statusBar, &StatusBar::actionButtonClicked, this, &SimpleView::actionButtonClicked);
   }
 
-  void initialize() override { setupUI(); }
+  void initialize() override {}
 
 public:
   SimpleView(QWidget *parent = nullptr) : BaseView(parent) { m_topBar->showBackButton(); }
@@ -306,11 +306,10 @@ protected:
 
   virtual void itemActivated(const OmniList::AbstractVirtualItem &item) { activatePrimaryAction(); }
 
-  QWidget *centerWidget() const override { return m_split; }
-
 public:
   ListView(QWidget *parent = nullptr) : SimpleView(parent) {
     m_split->setMainWidget(m_list);
+    setupUI(m_split);
     connect(m_list, &OmniList::selectionChanged, this, &ListView::selectionChanged);
     connect(m_list, &OmniList::itemActivated, this, &ListView::itemActivated);
   }
@@ -378,10 +377,9 @@ protected:
 
   virtual void itemActivated(const OmniList::AbstractVirtualItem &item) { activatePrimaryAction(); }
 
-  QWidget *centerWidget() const override { return m_grid; }
-
 public:
   GridView(QWidget *parent = nullptr) : SimpleView(parent) {
+    setupUI(m_grid);
     connect(m_grid, &OmniList::selectionChanged, this, &GridView::selectionChanged);
     connect(m_grid, &OmniList::itemActivated, this, &GridView::itemActivated);
   }

@@ -26,6 +26,7 @@
 #include <qtmetamacros.h>
 #include <qtypes.h>
 #include <qvariant.h>
+#include <qwidget.h>
 #include <ranges>
 #include <sched.h>
 #include <unistd.h>
@@ -361,12 +362,7 @@ public:
     iconSelector->setValue("default");
 
     form->setContentsMargins(0, 10, 0, 0);
-
-    auto layout = new QVBoxLayout;
-
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->addWidget(form);
-    setLayout(layout);
+    setupUI(form);
   }
 
   void loadLink(const Quicklink &quicklink) {

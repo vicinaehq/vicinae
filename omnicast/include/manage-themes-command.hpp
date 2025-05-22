@@ -100,9 +100,8 @@ public:
       : AbstractAction("Set theme", BuiltinOmniIconUrl("brush")), _themeName(themeName) {}
 };
 
-class ThemeItem : public OmniList::AbstractVirtualItem, public OmniListView::IActionnable {
+class ThemeItem : public OmniList::AbstractVirtualItem, public ListView::Actionnable {
   ThemeInfo m_theme;
-  std::function<void(const QString &name)> _themeSelectedCallback;
 
 public:
   int calculateHeight(int width) const override {
@@ -117,16 +116,8 @@ public:
     return ruler->sizeHint().height();
   }
 
-  void setSelectedCallback(const std::function<void(const QString &name)> &cb) {
-    _themeSelectedCallback = cb;
-  }
-
   QList<AbstractAction *> generateActions() const override {
     auto set = new SetThemeAction(m_theme.id);
-
-    if (_themeSelectedCallback) {
-      set->setExecutionCallback([this]() { _themeSelectedCallback(m_theme.name); });
-    }
 
     return {set};
   }
@@ -177,14 +168,7 @@ class ManageThemesView : public ListView {
 
     for (const auto &theme : themeService.themes()) {
       if (theme.name == current.name || !theme.name.contains(query, Qt::CaseInsensitive)) continue;
-      auto candidate = std::make_unique<ThemeItem>(theme);
-
-      candidate->setSelectedCallback([this, query](const QString &name) {
-        m_list->clearSelection();
-        generateList(query);
-      });
-
-      items.push_back(std::move(candidate));
+      items.push_back(std::make_unique<ThemeItem>(theme));
     }
 
     m_list->updateFromList(items, OmniList::SelectionPolicy::SelectFirst);
@@ -196,5 +180,9 @@ public:
   ManageThemesView() {
     setSearchPlaceholderText("Manage themes...");
     ThemeService::instance().scanThemeDirectories();
+    connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this](const auto &info) {
+      m_list->clearSelection();
+      generateList(searchText());
+    });
   }
 };

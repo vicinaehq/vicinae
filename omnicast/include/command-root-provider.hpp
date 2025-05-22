@@ -1,5 +1,6 @@
 #pragma once
 #include "command-actions.hpp"
+#include "root-item-manager.hpp"
 
 class CommandRootItem : public RootItem {
   std::shared_ptr<AbstractCmd> m_command;
@@ -9,6 +10,8 @@ class CommandRootItem : public RootItem {
   OmniIconUrl iconUrl() const override { return m_command->iconUrl(); }
   ArgumentList arguments() const override { return m_command->arguments(); }
   QString providerId() const override { return "command"; }
+
+  bool isSuitableForFallback() const override { return m_command->isFallback(); }
 
   double baseScoreWeight() const override { return 1.1; }
 

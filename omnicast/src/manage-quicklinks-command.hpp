@@ -62,7 +62,7 @@ public:
   QuicklinkItemDetail(const std::shared_ptr<Bookmark> &quicklink) : link(quicklink) {}
 };
 
-class QuicklinkItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
+class QuicklinkItem : public AbstractDefaultListItem, public ListView::Actionnable {
   std::shared_ptr<Bookmark> link;
 
 public:
@@ -112,18 +112,23 @@ public:
 class ManageQuicklinksView : public ListView {
   void onSearchChanged(const QString &s) override {
     auto bookmarkService = ServiceRegistry::instance()->bookmarks();
-
     auto bookmarks =
         bookmarkService->bookmarks() |
         std::views::filter([s](auto bk) { return bk->name().contains(s, Qt::CaseInsensitive); }) |
         std::views::transform([](auto bk) { return std::make_unique<QuicklinkItem>(bk); });
+
+    m_list->beginResetModel();
 
     auto &section = m_list->addSection("Bookmarks");
 
     for (auto bk : bookmarks) {
       section.addItem(std::move(bk));
     }
+
+    m_list->endResetModel(OmniList::SelectFirst);
   }
+
+  void initialize() override { onSearchChanged(""); }
 
 public:
   ManageQuicklinksView() {
