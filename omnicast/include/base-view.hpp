@@ -1,5 +1,6 @@
 #pragma once
 #include "common.hpp"
+#include "omni-icon.hpp"
 #include "service-registry.hpp"
 #include "ui/action-pannel/action-pannel-widget.hpp"
 #include <qevent.h>
@@ -195,6 +196,7 @@ protected:
 
   QString navigationTitle() const { return m_statusBar->navigationTitle(); }
   void setNavigationTitle(const QString &title) { m_statusBar->setNavigationTitle(title); }
+  void setNavigationIcon(const OmniIconUrl &url) { m_statusBar->setNavigationIcon(url); }
 
   void setLoading(bool value) { m_loadingBar->setStarted(value); }
 

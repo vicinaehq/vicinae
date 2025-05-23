@@ -4,6 +4,7 @@
 #include "root-item-manager.hpp"
 #include "service-registry.hpp"
 #include "ui/action-pannel/action.hpp"
+#include "ui/omni-list.hpp"
 #include <qobjectdefs.h>
 #include <ranges>
 
@@ -32,14 +33,14 @@ class ManageFallbackCommands : public ListView {
     auto itemManager = ServiceRegistry::instance()->rootItemManager();
 
     itemManager->setFallback(id);
-    onSearchChanged(searchText());
+    renderList(searchText(), OmniList::PreserveSelection);
   }
 
   void disableFallback(const QString &id) {
     auto itemManager = ServiceRegistry::instance()->rootItemManager();
 
     itemManager->disableFallback(id);
-    onSearchChanged(searchText());
+    renderList(searchText(), OmniList::PreserveSelection);
   }
 
   void moveFallbackUp(const QString &id) {
@@ -93,7 +94,8 @@ class ManageFallbackCommands : public ListView {
     setActions(actions);
   }
 
-  void onSearchChanged(const QString &text) override {
+  void renderList(const QString &text, OmniList::SelectionPolicy selectionPolicy = OmniList::SelectFirst) {
+    qDebug() << "render list";
     QString query = text.trimmed();
     auto itemManager = ServiceRegistry::instance()->rootItemManager();
     auto results = query.isEmpty() ? itemManager->allItems() : itemManager->prefixSearch(query);
@@ -127,13 +129,19 @@ class ManageFallbackCommands : public ListView {
     for (const auto &item : available) {
       availableSection.addItem(std::make_unique<FallbackListItem>(item));
     }
-    m_list->endResetModel(OmniList::SelectFirst);
+    m_list->endResetModel(selectionPolicy);
 
     if (auto item = m_list->selected()) { onItemSelected(*item); }
   }
 
+  void onSearchChanged(const QString &text) override { renderList(text); }
+
   void initialize() override { onSearchChanged(""); }
 
 public:
-  ManageFallbackCommands() { setSearchPlaceholderText("Manage fallback commands..."); }
+  ManageFallbackCommands() {
+    setSearchPlaceholderText("Manage fallback commands...");
+    setNavigationTitle("Manage Fallback Commands");
+    setNavigationIcon(BuiltinOmniIconUrl("arrow-counter-clockwise").setBackgroundTint(ColorTint::Red));
+  }
 };

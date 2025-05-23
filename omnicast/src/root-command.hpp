@@ -327,9 +327,16 @@ class RootCommandV2 : public ListView {
       results.addItem(std::make_unique<RootSearchItem>(item));
     }
 
-    auto &fallbackCommands = m_list->addSection(QString("Use \"%1\" with...").arg(text));
+    auto &fallbackSection = m_list->addSection(QString("Use \"%1\" with...").arg(text));
 
-    // TODO: use fallback commands
+    auto fallbackItems =
+        rootItemManager->allItems() | std::views::filter([rootItemManager](const auto &item) {
+          return rootItemManager->isFallback(item->uniqueId());
+        });
+
+    for (const auto &fallback : fallbackItems) {
+      fallbackSection.addItem(std::make_unique<RootSearchItem>(fallback));
+    }
 
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();

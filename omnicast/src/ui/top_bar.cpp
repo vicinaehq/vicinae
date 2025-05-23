@@ -15,6 +15,7 @@ TopBar::TopBar(QWidget *parent) : QWidget(parent), layout(new QHBoxLayout()), in
   connect(&ThemeService::instance(), &ThemeService::themeChanged, this,
           [this](const ThemeInfo &info) { backButton->setBackgroundColor(info.colors.statusBackground); });
 
+  backButton->setBackgroundColor(ThemeService::instance().theme().colors.statusBackground);
   backButton->setUrl(BuiltinOmniIconUrl("arrow-left"));
   backButton->hide();
 

@@ -21,7 +21,7 @@ StatusBar::StatusBar(QWidget *parent) : QWidget(parent), leftWidget(nullptr) {
 
   setProperty("class", "status-bar");
 
-  leftWidget = new DefaultLeftWidget();
+  leftWidget = new CurrentCommandWidget("", BuiltinOmniIconUrl("omnicast"));
   qDebug() << "set default navigation";
 
   right = new QWidget();
@@ -53,6 +53,9 @@ StatusBar::StatusBar(QWidget *parent) : QWidget(parent), leftWidget(nullptr) {
     _selectedActionButton->resetColor();
     _actionButton->resetColor();
   });
+
+  _selectedActionButton->resetColor();
+  _actionButton->resetColor();
 
   rightLayout->addWidget(_actionButton, 0, Qt::AlignRight);
 
