@@ -12,7 +12,7 @@ TopBar::TopBar(QWidget *parent) : QWidget(parent), layout(new QHBoxLayout()), in
 
   backButton->setFixedSize(25, 25);
 
-  connect(&ThemeService::instance(), &ThemeService::themeChanged,
+  connect(&ThemeService::instance(), &ThemeService::themeChanged, this,
           [this](const ThemeInfo &info) { backButton->setBackgroundColor(info.colors.statusBackground); });
 
   backButton->setUrl(BuiltinOmniIconUrl("arrow-left"));

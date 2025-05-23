@@ -136,6 +136,7 @@ private:
     std::optional<std::chrono::time_point<std::chrono::high_resolution_clock>> lastVisitedAt;
     std::vector<QString> aliases;
     bool isFallback = false;
+    int fallbackPosition = -1;
   };
 
   struct RootProviderMetadata {};
@@ -146,15 +147,34 @@ private:
   std::vector<std::unique_ptr<RootProvider>> m_providers;
   OmniDatabase &m_db;
 
-  void loadMetadata(const QString &id) {
+  RootItemMetadata loadMetadata(const QString &id) {
+    RootItemMetadata item;
     QSqlQuery query = m_db.createQuery();
 
     query.prepare(R"(
 		SELECT
-			provider_id, enabled, fallback, aliases, visit_count, last_visited_at
+			enabled, fallback, fallback_position, aliases, visit_count, last_visited_at
 		FROM
 			root_provider_item
+		WHERE id = :id
 	)");
+    query.bindValue(":id", id);
+
+    if (!query.exec()) {
+      qCritical() << "Failed to load item metadata for" << id << query.lastError();
+      return {};
+    }
+
+    if (!query.next()) { return {}; };
+
+    item.isEnabled = query.value(0).toBool();
+    item.isFallback = query.value(1).toBool();
+    item.fallbackPosition = query.value(2).toInt();
+    item.aliases = {};
+    item.visitCount = query.value(4).toInt();
+    item.lastVisitedAt = std::chrono::system_clock::from_time_t(query.value(5).toULongLong());
+
+    return item;
   }
 
   void createTables() {
@@ -175,6 +195,7 @@ private:
 			preference_values JSON DEFAULT '{}',
 			enabled INT DEFAULT 1,
 			fallback INT DEFAULT 0,
+			fallback_position INT DEFAULT -1,
 			aliases JSON DEFAULT '{}',
 			visit_count INT DEFAULT 0,
 			last_visited_at INT,
@@ -248,6 +269,8 @@ private:
       return false;
     }
 
+    m_metadata[item.uniqueId()] = loadMetadata(item.uniqueId());
+
     return true;
   }
 
@@ -288,6 +311,77 @@ public:
     if (auto it = m_metadata.find(id); it != m_metadata.end()) { return it->second; }
 
     return {};
+  }
+
+  bool isFallback(const QString &id) { return itemMetadata(id).isFallback; }
+
+  bool disableFallback(const QString &id) {
+    QSqlQuery query = m_db.createQuery();
+
+    query.prepare("UPDATE root_provider_item SET fallback = 0 WHERE id = :id");
+    query.bindValue(":id", id);
+
+    if (!query.exec()) {
+      qCritical() << "Failed to disable fallback for id" << id;
+      return false;
+    }
+
+    auto meta = itemMetadata(id);
+
+    meta.isFallback = false;
+    m_metadata[id] = meta;
+
+    return true;
+  }
+
+  bool setFallback(const QString &id, int position = 0) {
+    if (!m_db.db().transaction()) { return false; }
+
+    QSqlQuery query = m_db.createQuery();
+
+    query.prepare(R"(
+		UPDATE root_provider_item
+		SET fallback_position = fallback_position + 1
+		WHERE fallback_position >= :position
+	)");
+    query.bindValue(":id", id);
+    query.bindValue(":position", position);
+
+    if (!query.exec()) {
+      qCritical() << "Failed to set fallback" << query.lastError();
+      m_db.db().rollback();
+      return false;
+    }
+
+    query.prepare(R"(
+		UPDATE root_provider_item 
+		SET fallback = 1, fallback_position = :position 
+		WHERE id = :id
+	)");
+    query.bindValue(":id", id);
+    query.bindValue(":position", position);
+
+    if (!query.exec()) {
+      qCritical() << "Failed to set fallback" << query.lastError();
+      m_db.db().rollback();
+      return false;
+    }
+
+    if (!m_db.db().commit()) { return false; }
+
+    qDebug() << "updated fallback pos for" << id << position;
+
+    for (auto &pair : m_metadata) {
+      if (pair.second.fallbackPosition >= position) pair.second.fallbackPosition += 1;
+    }
+
+    auto metadata = itemMetadata(id);
+
+    metadata.isFallback = true;
+    metadata.fallbackPosition = position;
+    m_metadata[id] = metadata;
+
+    return true;
   }
 
   bool registerVisit(const QString &id) {
@@ -345,6 +439,8 @@ public:
 
     return nullptr;
   }
+
+  std::vector<std::shared_ptr<RootItem>> allItems() const { return m_items; }
 
   std::vector<std::shared_ptr<RootItem>> prefixSearch(const QString &query) {
     auto items = m_trie.prefixSearch(query.toStdString());

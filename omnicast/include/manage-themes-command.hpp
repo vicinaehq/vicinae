@@ -4,10 +4,10 @@
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
 #include "theme.hpp"
+#include "ui/action-pannel/action.hpp"
 #include "ui/color_circle.hpp"
 #include "ui/default-list-item-widget.hpp"
 #include "ui/image/omnimg.hpp"
-#include "ui/omni-list-view.hpp"
 #include "ui/omni-list.hpp"
 #include "ui/selectable-omni-list-widget.hpp"
 #include "ui/typography.hpp"
@@ -116,12 +116,6 @@ public:
     return ruler->sizeHint().height();
   }
 
-  QList<AbstractAction *> generateActions() const override {
-    auto set = new SetThemeAction(m_theme.id);
-
-    return {set};
-  }
-
   QString id() const override { return m_theme.id; }
 
   bool recyclable() const override { return false; }
@@ -148,10 +142,27 @@ public:
     return item;
   }
 
+  const ThemeInfo &theme() const { return m_theme; }
+
   ThemeItem(const ThemeInfo &theme) : m_theme(theme) {}
 };
 
 class ManageThemesView : public ListView {
+  void applyTheme(const QString &id) {
+    auto configService = ServiceRegistry::instance()->config();
+
+    configService->updateConfig([&](ConfigService::Value &value) { value.theme.name = id; });
+    ThemeService::instance().setTheme(id);
+  }
+
+  void onItemSelected(const OmniList::AbstractVirtualItem &item) override {
+    auto themeId = item.id();
+    auto setTheme = new StaticAction("Apply theme", BuiltinOmniIconUrl("brush"),
+                                     [this, themeId]() { applyTheme(themeId); });
+
+    setActions({setTheme});
+  }
+
   void generateList(const QString &query) {
     auto &themeService = ThemeService::instance();
     std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> items;
@@ -174,15 +185,19 @@ class ManageThemesView : public ListView {
     m_list->updateFromList(items, OmniList::SelectionPolicy::SelectFirst);
   }
 
+  void initialize() override { onSearchChanged(""); }
+
   void onSearchChanged(const QString &s) override { generateList(s); }
 
 public:
   ManageThemesView() {
     setSearchPlaceholderText("Manage themes...");
     ThemeService::instance().scanThemeDirectories();
-    connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this](const auto &info) {
-      m_list->clearSelection();
-      generateList(searchText());
-    });
+    /*
+connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this](const auto &info) {
+  m_list->clearSelection();
+  generateList(searchText());
+});
+    */
   }
 };

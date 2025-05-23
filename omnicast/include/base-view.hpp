@@ -132,6 +132,11 @@ protected:
     ServiceRegistry::instance()->UI()->popView();
   }
 
+  /**
+   * Called when backspace is pressed on an empty search input
+   */
+  virtual void backspacePressed() { ServiceRegistry::instance()->UI()->popView(); }
+
   void actionPannelClosed() {
     m_statusBar->setActionButtonHighlight(false);
     onActionPanelClosed();
@@ -223,6 +228,7 @@ protected:
     setLayout(m_layout);
 
     connect(m_topBar->input, &SearchBar::textChanged, this, &SimpleView::onSearchChanged);
+    connect(m_topBar->input, &SearchBar::pop, this, &SimpleView::backspacePressed);
     connect(m_actionPannel, &ActionPannelWidget::opened, this, &SimpleView::actionPannelOpened);
     connect(m_actionPannel, &ActionPannelWidget::closed, this, &SimpleView::actionPannelClosed);
     connect(m_actionPannel, &ActionPannelWidget::actionExecuted, this, &SimpleView::executeAction);
@@ -259,6 +265,8 @@ public:
 
 protected:
   OmniList *m_list = new OmniList();
+
+  virtual void onItemSelected(const OmniList::AbstractVirtualItem &item) {}
 
   virtual void selectionChanged(const OmniList::AbstractVirtualItem *next,
                                 const OmniList::AbstractVirtualItem *previous) {
@@ -302,6 +310,8 @@ protected:
       m_topBar->destroyCompleter();
       setActions({});
     }
+
+    onItemSelected(*next);
   }
 
   virtual void itemActivated(const OmniList::AbstractVirtualItem &item) { activatePrimaryAction(); }
