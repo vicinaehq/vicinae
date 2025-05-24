@@ -1,10 +1,9 @@
 #pragma once
 #include "base-view.hpp"
-#include "bookmark-actions.hpp"
+#include "actions/bookmark/bookmark-actions.hpp"
 #include "bookmark-service.hpp"
 #include "extend/metadata-model.hpp"
 #include "service-registry.hpp"
-#include "ui/declarative-omni-list-view.hpp"
 #include "ui/omni-list-view.hpp"
 #include "ui/omni-list.hpp"
 #include <memory>
@@ -67,7 +66,7 @@ class QuicklinkItem : public AbstractDefaultListItem, public ListView::Actionnab
 
 public:
   QList<AbstractAction *> generateActions() const override {
-    auto open = new OpenBookmarkAction(link);
+    auto open = new OpenCompletedBookmarkAction(link);
     auto edit = new EditBookmarkAction(link);
     auto duplicate = new DuplicateBookmarkAction(link);
     auto remove = new RemoveBookmarkAction(link);
@@ -110,7 +109,7 @@ public:
 };
 
 class ManageQuicklinksView : public ListView {
-  void onSearchChanged(const QString &s) override {
+  void renderList(const QString &s, OmniList::SelectionPolicy policy = OmniList::SelectFirst) {
     auto bookmarkService = ServiceRegistry::instance()->bookmarks();
     auto bookmarks =
         bookmarkService->bookmarks() |
@@ -125,14 +124,26 @@ class ManageQuicklinksView : public ListView {
       section.addItem(std::move(bk));
     }
 
-    m_list->endResetModel(OmniList::SelectFirst);
+    m_list->endResetModel(policy);
   }
+
+  void onBookmarkRemoved() { renderList(searchText(), OmniList::PreserveSelection); }
+
+  void onBookmarkSaved() { renderList(searchText(), OmniList::PreserveSelection); }
+
+  void onSearchChanged(const QString &s) override { renderList(s); }
 
   void initialize() override { onSearchChanged(""); }
 
 public:
   ManageQuicklinksView() {
+    auto bookmarkService = ServiceRegistry::instance()->bookmarks();
+
     setSearchPlaceholderText("Browse quicklinks...");
     setNavigationTitle("Manage Bookmarks");
+
+    connect(bookmarkService, &BookmarkService::bookmarkSaved, this, &ManageQuicklinksView::onBookmarkSaved);
+    connect(bookmarkService, &BookmarkService::bookmarkRemoved, this,
+            &ManageQuicklinksView::onBookmarkRemoved);
   }
 };

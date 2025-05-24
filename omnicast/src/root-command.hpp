@@ -1,14 +1,16 @@
 #pragma once
+#include "actions/fallback-actions.hpp"
 #include "app-root-provider.hpp"
 #include "app/app-database.hpp"
 #include "argument.hpp"
 #include "base-view.hpp"
-#include "bookmark-actions.hpp"
+#include "actions/bookmark/bookmark-actions.hpp"
 #include "bookmark-service.hpp"
 #include "clipboard-actions.hpp"
 #include "command-actions.hpp"
 #include "command-database.hpp"
 #include "command-root-provider.hpp"
+#include "manage-fallback-commands.hpp"
 #include "root-bookmark-provider.hpp"
 #include "root-item-manager.hpp"
 #include "omni-command-db.hpp"
@@ -185,7 +187,14 @@ public:
 class FallbackRootSearchItem : public AbstractDefaultListItem, public ListView::Actionnable {
   std::shared_ptr<RootItem> m_item;
 
-  QList<AbstractAction *> generateActions() const override { return m_item->fallbackActions(); }
+  QList<AbstractAction *> generateActions() const override {
+    auto actions = m_item->fallbackActions();
+    auto manage = new ManageFallbackActions();
+
+    actions << manage;
+
+    return actions;
+  }
 
   QString id() const override { return QString("fallback.%1").arg(m_item->uniqueId()); }
 

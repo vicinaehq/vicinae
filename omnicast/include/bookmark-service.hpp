@@ -251,8 +251,9 @@ public:
     auto it = std::ranges::remove_if(m_bookmarks, [id](const auto &mark) { return mark->id() == id; });
 
     m_bookmarks.erase(it.begin(), it.end());
+    emit bookmarkRemoved(id);
 
-    return query.numRowsAffected() > 0;
+    return true;
   }
 
   /*
@@ -304,5 +305,5 @@ public:
 
 signals:
   void bookmarkSaved(const Bookmark &bookmark) const;
-  void bookmarkRemoved(const Bookmark &bookmark);
+  void bookmarkRemoved(int id);
 };

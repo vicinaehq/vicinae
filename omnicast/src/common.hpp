@@ -104,6 +104,7 @@ struct IJsonFormField {
 };
 
 struct LaunchProps {
+  QString query;
   std::vector<std::pair<QString, QString>> arguments;
 };
 

@@ -1,5 +1,6 @@
 #pragma once
-#include "bookmark-actions.hpp"
+#include "actions/bookmark/bookmark-actions.hpp"
+#include "actions/fallback-actions.hpp"
 #include "bookmark-service.hpp"
 #include "root-item-manager.hpp"
 
@@ -50,17 +51,19 @@ public:
 
     QString uniqueId() const override { return QString("bookmarks.%1").arg(m_link->id()); }
 
+    QList<AbstractAction *> fallbackActions() const override {
+      auto open = new OpenBookmarkFromSearchText(m_link);
+
+      return {open};
+    }
+
     QList<AbstractAction *> actions() const override {
       QList<AbstractAction *> list;
 
-      list << new OpenBookmarkAction(m_link);
+      list << new OpenCompletedBookmarkAction(m_link);
       list << new EditBookmarkAction(m_link);
       list << new DuplicateBookmarkAction(m_link);
       list << new RemoveBookmarkAction(m_link);
-
-      // list << new OpenCompletedBookmarkAction(m_link);
-      // list << new DuplicateBookmarkAction(m_link);
-      // list << new RemoveBookmarkAction(m_link);
 
       return list;
     }
@@ -85,5 +88,6 @@ public:
 
   RootBookmarkProvider(BookmarkService &db) : m_db(db) {
     connect(&db, &BookmarkService::bookmarkSaved, this, [this]() { emit itemsChanged(); });
+    connect(&db, &BookmarkService::bookmarkRemoved, this, [this]() { emit itemsChanged(); });
   }
 };

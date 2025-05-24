@@ -12,7 +12,8 @@ public:
     qDebug() << "loading single view" << command()->name();
     auto ui = ServiceRegistry::instance()->UI();
 
-    ui->pushView(new T());
+    ui->pushView(new T(), {.navigation = NavigationStatus{.title = command()->name(),
+                                                          .iconUrl = command()->iconUrl()}});
   }
 };
 

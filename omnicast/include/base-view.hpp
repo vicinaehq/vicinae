@@ -63,6 +63,21 @@ public:
   virtual QString searchText() const { return {}; }
 
   /**
+   * Set the search text for the current view, if applicable
+   */
+  virtual void setSearchText(const QString &value) const {}
+
+  /**
+   * Set the navigation title, if applicable.
+   */
+  virtual void setNavigationTitle(const QString &title) {}
+
+  /**
+   * Set the navigation icon, if applicable
+   */
+  virtual void setNavigationIcon(const OmniIconUrl &icon) {}
+
+  /**
    * The dynamic arguments for this view. Used by some actions.
    */
   virtual std::vector<QString> argumentValues() const { return {}; }
@@ -187,6 +202,8 @@ protected:
   }
 
   QString searchText() const override { return m_topBar->input->text(); }
+
+  void setSearchText(const QString &value) const override { m_topBar->input->setText(value); }
 
   void setSearchText(const QString &text) { m_topBar->input->setText(text); }
   QString searchPlaceholderText() const { return m_topBar->input->placeholderText(); }

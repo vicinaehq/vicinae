@@ -16,7 +16,9 @@ public:
   void closeWindow() { emit closeWindowRequested(); }
   void popToRoot() { emit popToRootRequested(); }
   void showHUD(const QString &title) { emit showHUDRequested(title); }
-  void pushView(BaseView *view) const { emit pushViewRequested(view); }
+  void pushView(BaseView *view, const PushViewOptions &opts = {}) const {
+    emit pushViewRequested(view, opts);
+  }
   void launchCommand(const std::shared_ptr<AbstractCmd> &cmd) const { emit launchCommandRequested(cmd); }
   void launchCommand(const QString &cmdId) const { /*emit launchCommandRequested(cmdId);*/ }
   void setToast(const QString &title, ToastPriority priority = ToastPriority::Success) const {
@@ -27,7 +29,7 @@ public:
   BaseView *topView() const { return m_view; }
 
 signals:
-  void pushViewRequested(BaseView *view) const;
+  void pushViewRequested(BaseView *view, const PushViewOptions &opts) const;
   void popViewRequested() const;
   void popToRootRequested() const;
   void closeWindowRequested() const;

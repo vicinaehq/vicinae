@@ -131,6 +131,13 @@ void AppWindow::pushView(BaseView *view, const PushViewOptions &opts) {
   view->setParent(this);
   view->setFixedSize(size());
   view->initialize();
+  view->setSearchText(opts.searchQuery);
+
+  if (auto navigation = opts.navigation) {
+    view->setNavigationTitle(navigation->title);
+    view->setNavigationIcon(navigation->iconUrl);
+  }
+
   view->onActivate();
   qCritical() << "show view";
   view->show();
@@ -186,10 +193,6 @@ pushView(new MissingExtensionPreferenceView(*this, extensionCommand),
   auto ctx = command->createContext(command);
 
   if (!ctx) { return; }
-
-  connect(ctx, &CommandContext::requestPopToRoot, this, [this]() { popToRoot(); });
-  connect(ctx, &CommandContext::requestPopView, this, [this]() { popCurrentView(); });
-  // connect(ctx, &CommandContext::requestPushView, this, [this](View *view) { pushView(view); });
 
   if (command->isNoView() && command->type() == CommandType::CommandTypeBuiltin) {
     qCritical() << "Running no view command";
@@ -332,7 +335,8 @@ AppWindow::AppWindow(QWidget *parent) : QMainWindow(parent) {
             }
           });
 
-  auto rootCommand = CommandBuilder("root").toSingleView<RootCommandV2>();
+  auto rootCommand =
+      CommandBuilder("root").withIcon(BuiltinOmniIconUrl("omnicast")).toSingleView<RootCommandV2>();
 
   connect(ServiceRegistry::instance()->UI(), &UIController::popToRootRequested, this, [this]() {
     popToRoot();
@@ -343,7 +347,7 @@ AppWindow::AppWindow(QWidget *parent) : QMainWindow(parent) {
   connect(ServiceRegistry::instance()->UI(), &UIController::popViewRequested, this,
           [this]() { popCurrentView(); });
   connect(ServiceRegistry::instance()->UI(), &UIController::pushViewRequested, this,
-          [this](BaseView *view) { pushView(view); });
+          [this](BaseView *view, const PushViewOptions &opts) { pushView(view, opts); });
   connect(ServiceRegistry::instance()->UI(), &UIController::closeWindowRequested, this,
           [this]() { closeWindow(false); });
 
