@@ -381,7 +381,6 @@ public:
   BuiltinIconLoader(const QString &iconName) : m_iconName(iconName) {}
 };
 
-// for now, hardcoded to only work with local images, will expand later on, no worries
 class ImageWidget : public QWidget {
   std::unique_ptr<AbstractImageLoader> m_loader;
   QPixmap m_data;
@@ -507,9 +506,11 @@ class ImageWidget : public QWidget {
     if (m_loader) {
       connect(m_loader.get(), &AbstractImageLoader::dataUpdated, this, &ImageWidget::handleDataUpdated);
       connect(m_loader.get(), &AbstractImageLoader::errorOccured, this, &ImageWidget::handleLoadingError);
-      if (m_renderCount > 0) QTimer::singleShot(0, [this]() { render(); });
+      if (m_renderCount > 0) render();
     }
   }
+
+  void refreshTheme(const ThemeInfo &theme) { setUrlImpl(m_source); }
 
 public:
   void render() {
@@ -542,7 +543,7 @@ public:
   }
 
   ImageWidget(QWidget *parent = nullptr) : QWidget(parent) {
-    connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() { setUrlImpl(m_source); });
+    connect(&ThemeService::instance(), &ThemeService::themeChanged, this, &ImageWidget::refreshTheme);
   }
 
   ~ImageWidget() {

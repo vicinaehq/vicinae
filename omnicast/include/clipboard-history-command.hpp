@@ -284,6 +284,8 @@ class ClipboardHistoryCommand : public ListView {
     m_list->endResetModel(OmniList::SelectFirst);
   }
 
+  void initialize() override { onSearchChanged(""); }
+
   void onSearchChanged(const QString &value) override { generateList(value); }
 
   void clipboardSelectionInserted(const ClipboardHistoryEntry &entry) {}

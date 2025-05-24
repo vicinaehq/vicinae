@@ -82,6 +82,9 @@ set(SRCS
 
 	src/command-actions.cpp
 
+	src/actions/theme/theme-actions.hpp
+	src/actions/theme/theme-actions.cpp
+
 	include/ui/popover.hpp
 	src/ui/popover.cpp
 

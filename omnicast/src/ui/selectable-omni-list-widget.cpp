@@ -23,6 +23,7 @@ void SelectableOmniListWidget::paintEvent(QPaintEvent *event) {
     QColor backgroundColor(isSelected ? theme.colors.mainSelectedBackground
                                       : theme.colors.mainHoveredBackground);
 
+    backgroundColor.setAlphaF(0.8);
     painter.fillPath(path, backgroundColor);
   }
 }

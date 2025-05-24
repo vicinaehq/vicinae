@@ -268,7 +268,18 @@ public:
 protected:
   OmniList *m_list = new OmniList();
 
-  virtual void onItemSelected(const OmniList::AbstractVirtualItem &item) {}
+  void rowChanged(int row) {
+    if (auto item = m_list->selected()) {
+      if (auto nextItem = dynamic_cast<const Actionnable *>(item)) {
+        auto actions = nextItem->generateActions();
+
+        if (!actions.isEmpty()) { actions.at(0)->setShortcut({.key = "return"}); }
+        if (actions.size() > 1) { actions.at(1)->setShortcut({.key = "return", .modifiers = {"shift"}}); }
+
+        setActions(actions);
+      }
+    }
+  }
 
   virtual void selectionChanged(const OmniList::AbstractVirtualItem *next,
                                 const OmniList::AbstractVirtualItem *previous) {
@@ -312,8 +323,6 @@ protected:
       m_topBar->destroyCompleter();
       setActions({});
     }
-
-    onItemSelected(*next);
   }
 
   virtual void itemActivated(const OmniList::AbstractVirtualItem &item) { activatePrimaryAction(); }
@@ -324,6 +333,7 @@ public:
     setupUI(m_split);
     connect(m_list, &OmniList::selectionChanged, this, &ListView::selectionChanged);
     connect(m_list, &OmniList::itemActivated, this, &ListView::itemActivated);
+    connect(m_list, &OmniList::rowChanged, this, &ListView::rowChanged);
   }
 };
 

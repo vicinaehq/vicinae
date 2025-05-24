@@ -5,6 +5,7 @@
 class CommandRootItem : public RootItem {
   std::shared_ptr<AbstractCmd> m_command;
 
+public:
   QString displayName() const override { return m_command->name(); }
   QString subtitle() const override { return m_command->repositoryName(); }
   OmniIconUrl iconUrl() const override { return m_command->iconUrl(); }
@@ -32,6 +33,7 @@ class CommandRootItem : public RootItem {
   }
 
 public:
+  auto command() const { return m_command; }
   CommandRootItem(const std::shared_ptr<AbstractCmd> &command) : m_command(command) {}
 };
 

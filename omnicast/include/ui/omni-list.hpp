@@ -493,6 +493,7 @@ public:
   bool isShowingEmptyState() const;
 
 signals:
+  void rowChanged(int n) const;
   void itemUpdated(const AbstractVirtualItem &item) const;
   void itemActivated(const AbstractVirtualItem &item) const;
   void selectionChanged(const AbstractVirtualItem *next, const AbstractVirtualItem *previous) const;

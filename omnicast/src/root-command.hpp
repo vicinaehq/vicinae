@@ -182,6 +182,26 @@ public:
   ~RootSearchItem() {}
 };
 
+class FallbackRootSearchItem : public AbstractDefaultListItem, public ListView::Actionnable {
+  std::shared_ptr<RootItem> m_item;
+
+  QList<AbstractAction *> generateActions() const override { return m_item->fallbackActions(); }
+
+  QString id() const override { return QString("fallback.%1").arg(m_item->uniqueId()); }
+
+  ItemData data() const override {
+    return {
+        .iconUrl = m_item->iconUrl(),
+        .name = m_item->displayName(),
+        .category = m_item->subtitle(),
+        .accessories = m_item->accessories(),
+    };
+  }
+
+public:
+  FallbackRootSearchItem(const std::shared_ptr<RootItem> &item) : m_item(item) {}
+};
+
 class ColorListItem : public OmniList::AbstractVirtualItem, public DeclarativeOmniListView::IActionnable {
   QColor color;
 
@@ -335,7 +355,7 @@ class RootCommandV2 : public ListView {
         });
 
     for (const auto &fallback : fallbackItems) {
-      fallbackSection.addItem(std::make_unique<RootSearchItem>(fallback));
+      fallbackSection.addItem(std::make_unique<FallbackRootSearchItem>(fallback));
     }
 
     auto end = std::chrono::high_resolution_clock::now();
@@ -347,8 +367,6 @@ class RootCommandV2 : public ListView {
 
   void onSearchChanged(const QString &text) override {
     QString query = text.trimmed();
-
-    qCritical() << "search" << query;
 
     if (query.isEmpty()) return renderEmpty();
 

@@ -106,11 +106,13 @@ public:
   }
 };
 
-class FontListItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
+class FontListItem : public AbstractDefaultListItem, public ListView::Actionnable {
   class SetAppFont : public AbstractAction {
     QFont m_font;
 
-    void execute(AppWindow &app) override {
+    void execute(AppWindow &app) override {}
+
+    void execute() override {
       auto configService = ServiceRegistry::instance()->config();
 
       configService->updateConfig([&](ConfigService::Value &value) { value.font.normal = m_font.family(); });
@@ -159,6 +161,8 @@ class BrowseFontsView : public ListView {
 
 public:
   void renderEmptySearch() {
+    m_list->beginResetModel();
+
     for (const auto &system : QFontDatabase::writingSystems()) {
       QString sname = QFontDatabase::writingSystemName(system);
       auto &section = m_list->addSection(QString("%1 Fonts").arg(sname));
@@ -170,6 +174,8 @@ public:
         section.addItem(std::move(item));
       }
     }
+
+    m_list->endResetModel(OmniList::SelectFirst);
   }
 
   void render(const QString &s) {
@@ -178,6 +184,7 @@ public:
     if (query.isEmpty()) return renderEmptySearch();
     if (!m_trie) return;
 
+    m_list->beginResetModel();
     Timer timer;
     auto results = m_trie->prefixSearch(query.toStdString(), 500);
     timer.time("font search");
@@ -189,7 +196,10 @@ public:
     for (auto item : items) {
       section.addItem(std::move(item));
     }
+    m_list->endResetModel(OmniList::SelectFirst);
   }
+
+  void onSearchChanged(const QString &text) override { render(text); }
 
   BrowseFontsView() {
     setSearchPlaceholderText("Browse fonts to preview...");

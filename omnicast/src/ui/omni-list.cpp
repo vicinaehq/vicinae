@@ -492,6 +492,8 @@ bool OmniList::selectRight() {
 }
 
 void OmniList::setSelectedIndex(int index, ScrollBehaviour scrollBehaviour) {
+  int oldIndex = _selected;
+
   if (index != _selected) { scrollTo(index, scrollBehaviour); }
 
   // qDebug() << "set selected index" << index;
@@ -516,6 +518,8 @@ void OmniList::setSelectedIndex(int index, ScrollBehaviour scrollBehaviour) {
     _selectedId = next->id();
     emit selectionChanged(next, previous);
   }
+
+  if (oldIndex != index) emit rowChanged(index);
 }
 
 int OmniList::previousRowIndex(int index) {

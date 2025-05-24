@@ -1,5 +1,5 @@
 #pragma once
-#include "app.hpp"
+#include "actions/theme/theme-actions.hpp"
 #include "base-view.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
@@ -83,23 +83,6 @@ public:
   }
 };
 
-class SetThemeAction : public AbstractAction {
-  QString _themeName;
-
-  void execute(AppWindow &app) override {
-    auto configService = ServiceRegistry::instance()->config();
-
-    configService->updateConfig([&](ConfigService::Value &value) { value.theme.name = _themeName; });
-
-    ThemeService::instance().setTheme(_themeName);
-    app.statusBar->setToast("Theme successfully updated");
-  }
-
-public:
-  SetThemeAction(const QString &themeName)
-      : AbstractAction("Set theme", BuiltinOmniIconUrl("brush")), _themeName(themeName) {}
-};
-
 class ThemeItem : public OmniList::AbstractVirtualItem, public ListView::Actionnable {
   ThemeInfo m_theme;
 
@@ -142,6 +125,8 @@ public:
     return item;
   }
 
+  QList<AbstractAction *> generateActions() const override { return {new SetThemeAction(m_theme.id)}; }
+
   const ThemeInfo &theme() const { return m_theme; }
 
   ThemeItem(const ThemeInfo &theme) : m_theme(theme) {}
@@ -153,14 +138,6 @@ class ManageThemesView : public ListView {
 
     configService->updateConfig([&](ConfigService::Value &value) { value.theme.name = id; });
     ThemeService::instance().setTheme(id);
-  }
-
-  void onItemSelected(const OmniList::AbstractVirtualItem &item) override {
-    auto themeId = item.id();
-    auto setTheme = new StaticAction("Apply theme", BuiltinOmniIconUrl("brush"),
-                                     [this, themeId]() { applyTheme(themeId); });
-
-    setActions({setTheme});
   }
 
   void generateList(const QString &query) {
@@ -193,11 +170,7 @@ public:
   ManageThemesView() {
     setSearchPlaceholderText("Manage themes...");
     ThemeService::instance().scanThemeDirectories();
-    /*
-connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this](const auto &info) {
-  m_list->clearSelection();
-  generateList(searchText());
-});
-    */
+    connect(&ThemeService::instance(), &ThemeService::themeChanged, this,
+            [this](const auto &info) { generateList(searchText()); });
   }
 };

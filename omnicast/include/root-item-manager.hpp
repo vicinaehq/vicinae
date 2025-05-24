@@ -313,12 +313,22 @@ public:
     return {};
   }
 
+  int maxFallbackPosition() {
+    int max = -1;
+
+    for (const auto &[k, v] : m_metadata) {
+      if (v.fallbackPosition > max) max = v.fallbackPosition;
+    }
+
+    return max;
+  }
+
   bool isFallback(const QString &id) { return itemMetadata(id).isFallback; }
 
   bool disableFallback(const QString &id) {
     QSqlQuery query = m_db.createQuery();
 
-    query.prepare("UPDATE root_provider_item SET fallback = 0 WHERE id = :id");
+    query.prepare("UPDATE root_provider_item SET fallback = 0, fallback_position = -1 WHERE id = :id");
     query.bindValue(":id", id);
 
     if (!query.exec()) {
@@ -330,6 +340,7 @@ public:
 
     meta.isFallback = false;
     m_metadata[id] = meta;
+    emit fallbackDisabled(id);
 
     return true;
   }
@@ -380,6 +391,7 @@ public:
     metadata.isFallback = true;
     metadata.fallbackPosition = position;
     m_metadata[id] = metadata;
+    emit fallbackEnabled(id);
 
     return true;
   }
@@ -458,4 +470,6 @@ public:
 
 signals:
   void itemsChanged() const;
+  void fallbackEnabled(const QString &id) const;
+  void fallbackDisabled(const QString &id) const;
 };
