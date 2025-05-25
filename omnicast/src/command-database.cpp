@@ -117,6 +117,11 @@ CommandDatabase::CommandDatabase() {
                                          .withTintedIcon("arrow-counter-clockwise", ColorTint::Red)
                                          .toSingleView<ManageFallbackCommands>();
 
+    auto setDefaultTerminal = CommandBuilder("set-default-terminal")
+                                  .withName("Set Default Terminal Emulator")
+                                  .withTintedIcon("terminal", ColorTint::Red)
+                                  .toSingleView<ManageFallbackCommands>();
+
     auto omnicast = CommandRepositoryBuilder("omnicast")
                         .withName("Omnicast")
                         .withCommand(clipboardHistory)
@@ -125,6 +130,7 @@ CommandDatabase::CommandDatabase() {
                         .withCommand(peepobank)
                         .withCommand(openConfigFile)
                         .withCommand(configureFallbackCommands)
+                        .withCommand(setDefaultTerminal)
                         .makeShared();
 
     registerRepository(omnicast);

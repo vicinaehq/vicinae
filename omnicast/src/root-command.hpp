@@ -1,17 +1,10 @@
 #pragma once
 #include "actions/fallback-actions.hpp"
-#include "app-root-provider.hpp"
-#include "app/app-database.hpp"
 #include "argument.hpp"
 #include "base-view.hpp"
-#include "actions/bookmark/bookmark-actions.hpp"
-#include "bookmark-service.hpp"
 #include "clipboard-actions.hpp"
-#include "command-actions.hpp"
 #include "command-database.hpp"
-#include "command-root-provider.hpp"
-#include "manage-fallback-commands.hpp"
-#include "root-bookmark-provider.hpp"
+#include "actions/calculator/calculator-actions.hpp"
 #include "root-item-manager.hpp"
 #include "omni-command-db.hpp"
 #include "service-registry.hpp"
@@ -51,23 +44,6 @@
 #include <quuid.h>
 #include <qwidget.h>
 #include <ranges>
-
-/*
-class CopyCalculatorResultAction : public CopyTextAction {
-  CalculatorItem item;
-
-public:
-  void execute(AppWindow &app) override {
-    auto calc = ServiceRegistry::instance()->calculatorDb();
-
-    calc->insertComputation(item.expression, item.result);
-    CopyTextAction::execute(app);
-  }
-
-  CopyCalculatorResultAction(const CalculatorItem &item, const QString &title, const QString &copyText)
-      : CopyTextAction(title, copyText), item(item) {}
-};
-*/
 
 class RootSearchItem : public AbstractDefaultListItem, public ListView::Actionnable {
   class DisableItemAction : public AbstractAction {
@@ -241,8 +217,7 @@ public:
   ColorListItem(QColor color) : color(color) {}
 };
 
-class BaseCalculatorListItem : public OmniList::AbstractVirtualItem,
-                               public DeclarativeOmniListView::IActionnable {
+class BaseCalculatorListItem : public OmniList::AbstractVirtualItem, public ListView::Actionnable {
 protected:
   CalculatorItem item;
 
@@ -258,15 +233,12 @@ protected:
 
   QList<AbstractAction *> generateActions() const override {
     QString sresult = item.result;
+    auto copyAnswer = new CopyCalculatorAnswerAction(item);
+    auto copyQA = new CopyCalculatorQuestionAndAnswerAction(item);
+    auto putAnswerInSearchBar = new PutCalculatorAnswerInSearchBar(item);
+    auto openHistory = new OpenCalculatorHistoryAction();
 
-    return {
-        /*
-new CopyCalculatorResultAction(item, "Copy result", sresult),
-new CopyCalculatorResultAction(item, "Copy expression",
-                               QString("%1 = %2").arg(item.expression).arg(sresult)),
-        */
-
-    };
+    return {copyAnswer, copyQA, putAnswerInSearchBar, openHistory};
   }
 
 public:

@@ -69,10 +69,10 @@ public:
 };
 
 class CalculatorHistoryView : public ListView {
-  void handleRemove(const QString &id) { m_list->removeItem(id); }
-
   void onSearchChanged(const QString &text) override {
     auto calc = ServiceRegistry::instance()->calculatorDb();
+
+    m_list->beginResetModel();
     auto &section = m_list->addSection("History");
 
     for (const auto &history : calc->listAll()) {
@@ -80,9 +80,10 @@ class CalculatorHistoryView : public ListView {
 
       auto item = std::make_unique<CalculatorHistoryListItem>(history);
 
-      item->setRemoveCallback(std::bind_front(&CalculatorHistoryView::handleRemove, this));
       section.addItem(std::move(item));
     }
+
+    m_list->endResetModel(OmniList::SelectFirst);
   }
 
 public:

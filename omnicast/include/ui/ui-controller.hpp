@@ -34,7 +34,6 @@ signals:
   void popToRootRequested() const;
   void closeWindowRequested() const;
   void launchCommandRequested(const std::shared_ptr<AbstractCmd> &cmd) const;
-  // void launchCommandRequested(const QString &commandId) const;
   void showHUDRequested(const QString &title) const;
   void showToastRequested(const QString &title, ToastPriority priority) const;
 };

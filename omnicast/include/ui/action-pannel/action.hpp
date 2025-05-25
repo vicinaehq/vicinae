@@ -28,7 +28,7 @@ public:
 
   AbstractAction(const QString &title, const OmniIconUrl &icon) : _title(title), iconUrl(icon) {}
 
-  virtual void execute(AppWindow &app) = 0;
+  virtual void execute(AppWindow &app) {}
   virtual void execute() { qWarning() << "Default execute"; }
 
   virtual bool isPushView() const { return false; }
