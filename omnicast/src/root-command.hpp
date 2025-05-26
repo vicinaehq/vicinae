@@ -34,6 +34,7 @@
 #include <memory>
 #include <qbrush.h>
 #include <qcoreevent.h>
+#include <qdebug.h>
 #include <qevent.h>
 #include <qfuture.h>
 #include <qfuturewatcher.h>
@@ -95,8 +96,6 @@ class RootSearchItem : public AbstractDefaultListItem, public ListView::Actionna
 
   std::shared_ptr<RootItem> m_item;
 
-  ActionPanelView *actionPanel() const override { return new ActionPanelStaticListView(generateActions()); }
-
   QList<AbstractAction *> generateActions() const override {
     auto baseActions = m_item->actions();
     QList<AbstractAction *> finalActions;
@@ -119,6 +118,33 @@ class RootSearchItem : public AbstractDefaultListItem, public ListView::Actionna
     finalActions.emplace_back(new DisableItemAction(m_item));
 
     return finalActions;
+  }
+
+  ActionPanelView *actionPanel() const override {
+    auto panel = new ActionPanelStaticListView;
+    auto baseActions = m_item->actions();
+
+    if (!baseActions.empty()) {
+      AbstractAction *action = baseActions.at(0);
+      auto dflt = new DefaultActionWrapper(m_item->uniqueId(), action);
+
+      dflt->setPrimary(true);
+      panel->addAction(dflt);
+    }
+
+    for (int i = 1; i < baseActions.size(); ++i) {
+      panel->addAction(baseActions.at(i));
+    }
+
+    panel->addSection();
+
+    auto resetRanking = new CopyToClipboardAction({}, "Reset ranking");
+    auto disable = new DisableItemAction(m_item);
+
+    panel->addAction(resetRanking);
+    panel->addAction(disable);
+
+    return panel;
   }
 
   ItemData data() const override {
@@ -311,8 +337,6 @@ class RootCommandV2 : public ListView {
     const auto &appEntries = appDb->listEntries();
     const auto &commandEntries = commandDb->commands();
     size_t maxReserve = appEntries.size() + commandEntries.size() + quicklinks.size();
-
-    qCritical() << "RENDER!";
 
     m_list->beginResetModel();
 

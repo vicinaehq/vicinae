@@ -7,14 +7,11 @@ void SplitDetailWidget::relayout() {
 
   if (currentSize.isNull()) return;
 
-  qDebug() << "relayout size" << currentSize;
-
   int ratioWidth = currentSize.width() * m_ratio;
   int mainWidth = currentSize.width() - ratioWidth;
 
   if (m_mainWidget) {
     QRect geo{0, 0, m_detailVisible ? mainWidth : currentSize.width(), currentSize.height()};
-    qDebug() << "main geometry" << geo;
     m_mainWidget->setGeometry(geo);
     m_mainWidget->show();
   }

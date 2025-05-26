@@ -133,7 +133,7 @@ protected:
 
       if (KeyboardShortcut(m_statusBar->actionButtonShortcut()) == keyEvent) {
         // m_actionPannel->showActions();
-        m_actionPannel->show();
+        m_actionPannelV2->show();
 
         return true;
       }
@@ -168,7 +168,7 @@ protected:
   }
 
   void executeAction(AbstractAction *action) {
-    m_actionPannel->close();
+    m_actionPannelV2->close();
     action->execute();
     onActionExecuted(action);
   }
@@ -176,7 +176,7 @@ protected:
   void actionButtonClicked() { m_actionPannelV2->show(); }
 
   void currentActionButtonClicked() {
-    if (auto action = m_actionPannel->primaryAction()) { executeAction(action); }
+    if (auto action = m_actionPannelV2->primaryAction()) { executeAction(action); }
   }
 
   virtual QWidget *centerWidget() const {
@@ -261,6 +261,7 @@ protected:
     connect(m_actionPannel, &ActionPannelWidget::opened, this, &SimpleView::actionPannelOpened);
     connect(m_actionPannel, &ActionPannelWidget::closed, this, &SimpleView::actionPannelClosed);
     connect(m_actionPannel, &ActionPannelWidget::actionExecuted, this, &SimpleView::executeAction);
+    connect(m_actionPannelV2, &ActionPanelV2Widget::actionActivated, this, &SimpleView::executeAction);
     connect(m_statusBar, &StatusBar::actionButtonClicked, this, &SimpleView::actionButtonClicked);
   }
 
@@ -294,7 +295,15 @@ public:
     virtual std::unique_ptr<CompleterData> createCompleter() const { return nullptr; }
     virtual QString navigationTitle() const { return {}; }
 
-    virtual ActionPanelView *actionPanel() const { return new ActionPanelStaticListView(generateActions()); }
+    virtual ActionPanelView *actionPanel() const {
+      auto panel = new ActionPanelStaticListView;
+
+      for (const auto &action : generateActions()) {
+        panel->addAction(action);
+      }
+
+      return panel;
+    }
 
     /**
      * Current action title to show in the status bar. Only shown if no primary action has been set.
@@ -341,8 +350,6 @@ protected:
         // setNavigationTitle(QString("%1 - %2").arg(m_baseNavigationTitle).arg(navigation));
       }
 
-      auto actions = nextItem->generateActions();
-
       if (auto panel = nextItem->actionPanel()) {
         m_actionPannelV2->setView(panel);
       } else {
@@ -352,20 +359,18 @@ protected:
 
       m_statusBar->setActionButton(nextItem->actionPanelTitle(), KeyboardShortcutModel{.key = "return"});
 
-      /*
+      auto actions = m_actionPannelV2->actions();
 
-  setActions(actions);
-  m_statusBar->setActionButtonVisibility(actions.size() > 1);
-  m_statusBar->setCurrentActionButtonVisibility(m_actionPannel->primaryAction());
+      m_statusBar->setActionButtonVisibility(actions.size() > 1);
+      m_statusBar->setCurrentActionButtonVisibility(m_actionPannelV2->primaryAction());
 
-  if (auto action = m_actionPannel->primaryAction()) {
-    m_statusBar->setCurrentAction(action->title(),
-                                  action->shortcut.value_or(KeyboardShortcutModel{.key = "return"}));
-    m_statusBar->setActionButton("Actions", defaultActionPanelShortcut());
-  } else {
-    m_statusBar->setActionButton(nextItem->actionPanelTitle(), KeyboardShortcutModel{.key = "return"});
-  }
-      */
+      if (auto action = m_actionPannelV2->primaryAction()) {
+        m_statusBar->setCurrentAction(action->title(),
+                                      action->shortcut.value_or(KeyboardShortcutModel{.key = "return"}));
+        m_statusBar->setActionButton("Actions", defaultActionPanelShortcut());
+      } else {
+        m_statusBar->setActionButton(nextItem->actionPanelTitle(), KeyboardShortcutModel{.key = "return"});
+      }
 
     } else {
       m_split->setDetailVisibility(false);

@@ -1,4 +1,5 @@
 #pragma once
+#include "common.hpp"
 #include "omni-icon.hpp"
 #include "ui/omni-list-item-widget-wrapper.hpp"
 #include "ui/omni-list-item-widget.hpp"
@@ -12,6 +13,7 @@
 #include <iterator>
 #include <memory>
 #include <qboxlayout.h>
+#include <qfuture.h>
 #include <qlabel.h>
 #include <qlogging.h>
 #include <qnamespace.h>
@@ -23,6 +25,7 @@
 #include <ranges>
 #include <stack>
 #include <unordered_map>
+#include <variant>
 
 class OmniList : public QWidget {
 public:
@@ -61,6 +64,35 @@ public:
     bool isListItem() const;
     bool isSection() const;
     virtual ~AbstractVirtualItem() {}
+  };
+
+  class DividerItem : public AbstractVirtualItem {
+    QString m_id;
+
+    class DividerWidget : public OmniListItemWidget {
+      HDivider *divider = new HDivider(this);
+
+    public:
+      DividerWidget() {
+        auto layout = new QVBoxLayout;
+
+        layout->setContentsMargins(0, 5, 0, 5);
+        layout->addWidget(divider);
+        setLayout(layout);
+      }
+    };
+
+  public:
+    int calculateHeight(int width) const override {
+      static DividerWidget widget;
+      return widget.sizeHint().height();
+    }
+    OmniListItemWidget *createWidget() const override { return new DividerWidget; }
+    QString id() const override { return m_id; }
+    bool selectable() const override { return false; }
+    ListRole role() const override { return ListRole::ListDivider; }
+
+    DividerItem() : m_id(QUuid::createUuid().toString()) {}
   };
 
   class VirtualSection : public AbstractVirtualItem {
@@ -116,6 +148,14 @@ public:
     SelectNone,
   };
 
+  class Divider {
+    std::unique_ptr<AbstractVirtualItem> m_item;
+
+  public:
+    AbstractVirtualItem *item() const { return m_item.get(); }
+    Divider() { m_item = std::make_unique<DividerItem>(); }
+  };
+
   class Section {
     std::vector<std::unique_ptr<AbstractVirtualItem>> m_items;
     std::unique_ptr<VirtualSection> m_headerItem;
@@ -155,6 +195,11 @@ public:
       return *this;
     }
 
+    Section &addDivider() {
+      m_items.emplace_back(std::make_unique<DividerItem>());
+      return *this;
+    }
+
     Section &addItems(std::vector<std::unique_ptr<AbstractVirtualItem>> items) {
       m_items.insert(m_items.end(), std::make_move_iterator(items.begin()),
                      std::make_move_iterator(items.end()));
@@ -164,7 +209,9 @@ public:
 
   using RootListItem = std::variant<std::unique_ptr<Section>, std::unique_ptr<AbstractVirtualItem>>;
 
-  std::vector<std::unique_ptr<Section>> m_model;
+  using ModelItem = std::variant<std::unique_ptr<Section>, Divider>;
+
+  std::vector<ModelItem> m_model;
 
 private:
   Q_OBJECT
@@ -241,6 +288,14 @@ private:
   void updateVisibleItems();
   void calculateHeights();
 
+  bool isDividableContent(const ModelItem &item) {
+    if (auto section = std::get_if<std::unique_ptr<Section>>(&item)) {
+      return (*section)->items().size() > 0;
+    }
+
+    return false;
+  }
+
   void calculateHeightsFromModel() {
     _virtual_items.clear();
 
@@ -249,88 +304,112 @@ private:
     std::optional<SectionCalculationContext> sctx;
     std::unordered_map<QString, CachedWidget> updatedCache;
 
-    auto view = m_model | std::views::transform([](const auto &section) { return section->items().size(); });
+    auto view = m_model | std::views::filter([](const auto &item) {
+                  return std::holds_alternative<std::unique_ptr<Section>>(item);
+                }) |
+                std::views::transform([](const auto &section) {
+                  return std::get<std::unique_ptr<Section>>(section)->items().size();
+                });
     auto totalSize = std::ranges::fold_left(view, 0, std::plus<size_t>());
 
     _virtual_items.reserve(totalSize);
 
     qDebug() << "sections" << m_model.size();
 
-    for (const auto &section : m_model) {
-      auto &items = section->items();
+    size_t i = -1;
 
-      if (items.empty()) continue;
+    for (const auto &item : m_model) {
+      ++i;
+      if (auto divider = std::get_if<Divider>(&item)) {
+        if (yOffset == 0) continue;
+        if (i + 1 == m_model.size() || !isDividableContent(m_model.at(i + 1))) continue;
 
-      if (auto header = section->headerItem()) {
-        header->setCount(items.size());
-        header->initWidth(availableWidth);
-
-        if (header->showHeader()) {
-          VirtualListWidgetInfo vinfo{.x = margins.left,
-                                      .y = yOffset,
-                                      .width = availableWidth,
-                                      .height = header->calculateHeight(availableWidth),
-                                      .item = header};
-
-          _virtual_items.push_back(vinfo);
-          yOffset += vinfo.height;
-        }
-
-        sctx = {.section = header, .x = margins.left, .maxHeight = 0};
-      }
-
-      for (auto &item : items) {
-        int vIndex = _virtual_items.size();
-        int height = 0;
-        int width = availableWidth;
-        int x = margins.left;
-        int y = yOffset;
-
-        if (vIndex >= visibleIndexRange.lower && vIndex <= visibleIndexRange.upper) {
-          if (auto it = _widgetCache.find(item->id()); it != _widgetCache.end()) {
-            if (item->hasPartialUpdates()) { item->refresh(it->second.widget->widget()); }
-
-            updatedCache[item->id()] = it->second;
-          }
-        }
-
-        if (sctx) {
-          width = sctx->section->calculateItemWidth(width, sctx->index);
-          // x = sctx->section->calculateItemX(sctx->x, sctx->index);
-          if (sctx->x > margins.left && sctx->index > 0) {
-            yOffset += sctx->section->spacing();
-            y = yOffset;
-          }
-
-          x = sctx->x;
-          sctx->x = sctx->x + width + sctx->section->spacing();
-          height = item->calculateHeight(width);
-          sctx->maxHeight = std::max(sctx->maxHeight, height);
-
-          qDebug() << "item height +" << height;
-          qDebug() << "max height" << sctx->maxHeight;
-
-          if (sctx->x >= availableWidth) {
-            yOffset += sctx->maxHeight;
-            sctx->x = margins.left;
-            sctx->maxHeight = 0;
-          }
-
-          ++sctx->index;
-        } else {
-          height = item->calculateHeight(width);
-          yOffset += height;
-        }
-
-        VirtualListWidgetInfo vinfo{.x = x, .y = y, .width = width, .height = height, .item = item.get()};
+        VirtualListWidgetInfo vinfo{.x = 0,
+                                    .y = yOffset,
+                                    .width = width(),
+                                    .height = divider->item()->calculateHeight(availableWidth),
+                                    .item = divider->item()};
 
         _virtual_items.push_back(vinfo);
+        yOffset += vinfo.height;
+
+      } else if (auto section = std::get_if<std::unique_ptr<Section>>(&item)) {
+        auto &items = (*section)->items();
+
+        auto hasContent = std::ranges::any_of(items, [](const auto &item) {
+          return item->role() != AbstractVirtualItem::ListRole::ListDivider;
+        });
+
+        if (!hasContent) continue;
+
+        if (auto header = (*section)->headerItem()) {
+          header->setCount(items.size());
+          header->initWidth(availableWidth);
+
+          if (header->showHeader()) {
+            VirtualListWidgetInfo vinfo{.x = margins.left,
+                                        .y = yOffset,
+                                        .width = availableWidth,
+                                        .height = header->calculateHeight(availableWidth),
+                                        .item = header};
+
+            _virtual_items.push_back(vinfo);
+            yOffset += vinfo.height;
+          }
+
+          sctx = {.section = header, .x = margins.left, .maxHeight = 0};
+        }
+
+        for (auto &item : items) {
+          int vIndex = _virtual_items.size();
+          int height = 0;
+          int width = availableWidth;
+          int x = margins.left;
+          int y = yOffset;
+
+          if (vIndex >= visibleIndexRange.lower && vIndex <= visibleIndexRange.upper) {
+            if (auto it = _widgetCache.find(item->id()); it != _widgetCache.end()) {
+              if (item->hasPartialUpdates()) { item->refresh(it->second.widget->widget()); }
+
+              updatedCache[item->id()] = it->second;
+            }
+          }
+
+          if (sctx) {
+            width = sctx->section->calculateItemWidth(width, sctx->index);
+            // x = sctx->section->calculateItemX(sctx->x, sctx->index);
+            if (sctx->x > margins.left && sctx->index > 0) {
+              yOffset += sctx->section->spacing();
+              y = yOffset;
+            }
+
+            x = sctx->x;
+            sctx->x = sctx->x + width + sctx->section->spacing();
+            height = item->calculateHeight(width);
+            sctx->maxHeight = std::max(sctx->maxHeight, height);
+
+            if (sctx->x >= availableWidth) {
+              yOffset += sctx->maxHeight;
+              sctx->x = margins.left;
+              sctx->maxHeight = 0;
+            }
+
+            ++sctx->index;
+          } else {
+            height = item->calculateHeight(width);
+            yOffset += height;
+          }
+
+          VirtualListWidgetInfo vinfo{.x = x, .y = y, .width = width, .height = height, .item = item.get()};
+
+          _virtual_items.push_back(vinfo);
+        }
       }
     }
 
     if (sctx) { yOffset += sctx->maxHeight; }
 
-    yOffset += margins.bottom + margins.top;
+    if (!_virtual_items.empty()) { yOffset += margins.bottom + margins.top; }
 
     for (auto &[key, cache] : _widgetCache) {
       if (auto it = updatedCache.find(key); it == updatedCache.end()) {
@@ -351,9 +430,11 @@ private:
 
     scrollBar->setMaximum(std::max(0, yOffset - height()));
     scrollBar->setMinimum(0);
+    bool vchanged = _virtualHeight != yOffset;
     _virtualHeight = yOffset;
     updateVisibleItems();
-    emit virtualHeightChanged(_virtualHeight);
+
+    if (vchanged) { emit virtualHeightChanged(_virtualHeight); }
   }
 
   int indexOfItem(const QString &id) const;
@@ -382,6 +463,8 @@ public:
   OmniList();
   ~OmniList();
 
+  void addDivider() { m_model.emplace_back(Divider{}); }
+
   void setSorting(const SortingConfig &config);
   bool selectUp();
   bool selectDown();
@@ -406,11 +489,13 @@ public:
   }
 
   void endResetModel(OmniList::SelectionPolicy selectionPolicy) {
-    std::ranges::for_each(m_model, [this](const auto &section) {
-      if (auto header = section->headerItem()) { _idItemMap.insert({header->id(), header}); }
+    std::ranges::for_each(m_model, [this](const auto &item) {
+      if (auto section = std::get_if<std::unique_ptr<Section>>(&item)) {
+        if (auto header = (*section)->headerItem()) { _idItemMap.insert({header->id(), header}); }
 
-      std::ranges::for_each(section->items(),
-                            [this](const auto &item) { _idItemMap.insert({item->id(), item.get()}); });
+        std::ranges::for_each((*section)->items(),
+                              [this](const auto &item) { _idItemMap.insert({item->id(), item.get()}); });
+      }
     });
 
     calculateHeightsFromModel();

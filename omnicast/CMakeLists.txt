@@ -93,6 +93,8 @@ set(SRCS
 
 	include/ui/typography.hpp
 
+	src/action-panel/action-panel.hpp
+
 	include/ui/omni-button.hpp
 	include/ui/dialog.hpp
 	include/ui/alert.hpp

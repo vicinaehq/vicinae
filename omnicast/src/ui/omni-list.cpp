@@ -608,11 +608,13 @@ bool OmniList::event(QEvent *event) {
 void OmniList::resizeEvent(QResizeEvent *event) {
   auto size = event->size();
 
+  qDebug() << "LIST RESIZED =>" << size;
+
+  QWidget::resizeEvent(event);
   scrollBar->setPageStep(size.height());
   scrollBar->setFixedHeight(size.height());
   scrollBar->move(size.width() - scrollBar->sizeHint().width(), 0);
   calculateHeights();
-  QWidget::resizeEvent(event);
 }
 
 void OmniList::beginUpdate() { _isUpdating = true; }
