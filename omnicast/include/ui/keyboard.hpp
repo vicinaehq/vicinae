@@ -2,6 +2,7 @@
 
 #include "extend/action-model.hpp"
 #include <qevent.h>
+#include <qlogging.h>
 #include <qnamespace.h>
 
 // clang-format off
@@ -83,10 +84,10 @@ static QHash<QString, Qt::Key> keyMap = {
 };
 
 static QHash<QString, Qt::KeyboardModifier> modifierMap = {
-	{"cmd", Qt::KeyboardModifier::MetaModifier},
-	{"ctrl", Qt::KeyboardModifier::ControlModifier},
-	{"opt", Qt::KeyboardModifier::AltModifier},
-	{"shift", Qt::KeyboardModifier::ShiftModifier},
+	{"cmd", Qt::MetaModifier},
+	{"ctrl", Qt::ControlModifier},
+	{"opt", Qt::AltModifier},
+	{"shift", Qt::ShiftModifier},
 };
 
 // clang-format on
@@ -110,8 +111,10 @@ public:
         .withModifier(Qt::KeyboardModifier::ShiftModifier);
   }
 
-  KeyboardShortcut(const KeyboardShortcutModel &model) : key(keyMap.value(model.key)) {
+  KeyboardShortcut(const KeyboardShortcutModel &model) : key(keyMap.value(model.key.toLower())) {
+    qDebug() << "key" << model.key;
     for (const auto &mod : model.modifiers) {
+      qWarning() << "set value for modifier" << mod;
       modifiers.setFlag(modifierMap.value(mod));
     }
   }
@@ -125,5 +128,5 @@ public:
 
   KeyboardShortcut() {}
 
-  bool operator==(QKeyEvent *event) { return event->key() == key && event->modifiers() == modifiers; }
+  bool operator==(QKeyEvent *event) { return event->key() == key && event->modifiers().testFlags(modifiers); }
 };

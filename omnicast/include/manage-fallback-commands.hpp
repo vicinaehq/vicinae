@@ -101,10 +101,16 @@ protected:
     if (manager->isFallback(m_item->uniqueId())) {
       auto disable = new DisableFallbackAction(m_item->uniqueId());
 
+      disable->setPrimary(true);
+      disable->setShortcut({.key = "return"});
+
       return {disable};
     }
 
     auto enable = new EnableFallbackAction(m_item->uniqueId());
+
+    enable->setPrimary(true);
+    enable->setShortcut({.key = "return"});
 
     return {enable};
   }
@@ -124,15 +130,22 @@ class RootFallbackListItem : public FallbackListItem {
     int maxFallbackPosition = manager->maxFallbackPosition();
 
     if (metadata.isFallback) {
-      actions << new DisableFallbackAction(m_item->uniqueId());
+      auto disableFallback = new DisableFallbackAction(m_item->uniqueId());
+
+      disableFallback->setPrimary(true);
+      disableFallback->setShortcut({.key = "return"});
+      actions << disableFallback;
 
       if (metadata.fallbackPosition > 0) { actions << new MoveFallbackUpAction(m_item->uniqueId()); }
       if (metadata.fallbackPosition < maxFallbackPosition) {
         actions << new MoveFallbackDownAction(m_item->uniqueId());
       }
-
     } else {
-      actions << new EnableFallbackAction(m_item->uniqueId());
+      auto enableFallback = new EnableFallbackAction(m_item->uniqueId());
+
+      enableFallback->setPrimary(true);
+      enableFallback->setShortcut({.key = "return"});
+      actions << enableFallback;
     }
 
     return actions;

@@ -110,7 +110,7 @@ void ActionPannelWidget::showActions() {
   auto parentGeo = window->geometry();
 
   setMinimumWidth(window->width() * 0.5);
-  setFixedHeight(window->height() * 0.45);
+  // setFixedHeight(window->height() * 0.45);
   auto x = parentGeo.width() - width() - 10;
   auto y = parentGeo.height() - height() - 50;
   QPoint global = window->mapToGlobal(QPoint(x, y));
@@ -202,9 +202,11 @@ AbstractAction *ActionPannelWidget::primaryAction() const {
 
   auto actions = top()->view->actions();
 
-  if (actions.empty()) return nullptr;
+  for (const auto &action : actions) {
+    if (action->isPrimary()) return action.get();
+  }
 
-  return actions.at(0).get();
+  return nullptr;
 }
 
 ActionPannelWidget::ActionPannelWidget(QWidget *parent)

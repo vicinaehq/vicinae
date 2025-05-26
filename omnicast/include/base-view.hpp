@@ -1,5 +1,7 @@
 #pragma once
+#include "action-panel/action-panel.hpp"
 #include "common.hpp"
+#include "extend/action-model.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
 #include "ui/action-pannel/action-pannel-widget.hpp"
@@ -8,6 +10,7 @@
 #include <ranges>
 #include "ui/action-pannel/action.hpp"
 #include "ui/horizontal-loading-bar.hpp"
+#include "ui/keyboard.hpp"
 #include "ui/omni-grid.hpp"
 #include "ui/omni-list.hpp"
 #include "ui/split-detail.hpp"
@@ -91,12 +94,17 @@ signals:
 };
 
 class SimpleView : public BaseView {
+  KeyboardShortcutModel DEFAULT_ACTION_PANEL_SHORTCUT = {.key = "B", .modifiers = {"ctrl"}};
+
 protected:
   QVBoxLayout *m_layout = new QVBoxLayout(this);
   TopBar *m_topBar = new TopBar(this);
   StatusBar *m_statusBar = new StatusBar(this);
   HorizontalLoadingBar *m_loadingBar = new HorizontalLoadingBar(this);
   ActionPannelWidget *m_actionPannel = new ActionPannelWidget(this);
+  ActionPanelV2Widget *m_actionPannelV2 = new ActionPanelV2Widget(this);
+
+  KeyboardShortcutModel defaultActionPanelShortcut() { return DEFAULT_ACTION_PANEL_SHORTCUT; }
 
   bool eventFilter(QObject *obj, QEvent *event) override {
     if (event->type() == QEvent::KeyPress) {
@@ -123,8 +131,9 @@ protected:
         return true;
       }
 
-      if (keyEvent->modifiers().testFlag(Qt::ControlModifier) && keyEvent->key() == Qt::Key_B) {
-        m_actionPannel->showActions();
+      if (KeyboardShortcut(m_statusBar->actionButtonShortcut()) == keyEvent) {
+        // m_actionPannel->showActions();
+        m_actionPannel->show();
 
         return true;
       }
@@ -164,7 +173,7 @@ protected:
     onActionExecuted(action);
   }
 
-  void actionButtonClicked() { m_actionPannel->showActions(); }
+  void actionButtonClicked() { m_actionPannelV2->show(); }
 
   void currentActionButtonClicked() {
     if (auto action = m_actionPannel->primaryAction()) { executeAction(action); }
@@ -198,7 +207,11 @@ protected:
   }
 
   void activatePrimaryAction() {
-    if (auto action = m_actionPannel->primaryAction()) { executeAction(action); }
+    if (auto action = m_actionPannel->primaryAction()) {
+      executeAction(action);
+    } else {
+      m_actionPannelV2->show();
+    }
   }
 
   QString searchText() const override { return m_topBar->input->text(); }
@@ -212,15 +225,12 @@ protected:
   }
 
   QString navigationTitle() const { return m_statusBar->navigationTitle(); }
-  void setNavigationTitle(const QString &title) { m_statusBar->setNavigationTitle(title); }
-  void setNavigationIcon(const OmniIconUrl &url) { m_statusBar->setNavigationIcon(url); }
+  void setNavigationTitle(const QString &title) override { m_statusBar->setNavigationTitle(title); }
+  void setNavigationIcon(const OmniIconUrl &url) override { m_statusBar->setNavigationIcon(url); }
 
   void setLoading(bool value) { m_loadingBar->setStarted(value); }
 
   void setActions(const QList<AbstractAction *> &actions) {
-    if (!actions.isEmpty()) { actions.at(0)->setShortcut({.key = "return"}); }
-    if (actions.size() > 1) { actions.at(1)->setShortcut({.key = "return", .modifiers = {"shift"}}); }
-
     m_actionPannel->setSignalActions(actions);
 
     if (!actions.isEmpty()) {
@@ -271,6 +281,9 @@ class ListView : public SimpleView {
     case Qt::Key_Down:
       m_list->selectDown();
       break;
+    case Qt::Key_Return:
+      m_list->activateCurrentSelection();
+      break;
     }
   }
 
@@ -280,23 +293,22 @@ public:
     virtual QWidget *generateDetail() const { return nullptr; }
     virtual std::unique_ptr<CompleterData> createCompleter() const { return nullptr; }
     virtual QString navigationTitle() const { return {}; }
+
+    virtual ActionPanelView *actionPanel() const { return new ActionPanelStaticListView(generateActions()); }
+
+    /**
+     * Current action title to show in the status bar. Only shown if no primary action has been set.
+     */
+    virtual QString actionPanelTitle() const { return "Actions"; }
+
+    // Whether to show the "Actions <action_shortcut>" next to the current action title
+    bool showActionButton() const { return true; }
   };
 
 protected:
   OmniList *m_list = new OmniList();
 
-  void rowChanged(int row) {
-    if (auto item = m_list->selected()) {
-      if (auto nextItem = dynamic_cast<const Actionnable *>(item)) {
-        auto actions = nextItem->generateActions();
-
-        if (!actions.isEmpty()) { actions.at(0)->setShortcut({.key = "return"}); }
-        if (actions.size() > 1) { actions.at(1)->setShortcut({.key = "return", .modifiers = {"shift"}}); }
-
-        setActions(actions);
-      }
-    }
-  }
+  virtual void modelChanged() {}
 
   virtual void selectionChanged(const OmniList::AbstractVirtualItem *next,
                                 const OmniList::AbstractVirtualItem *previous) {
@@ -331,10 +343,30 @@ protected:
 
       auto actions = nextItem->generateActions();
 
-      if (!actions.isEmpty()) { actions.at(0)->setShortcut({.key = "return"}); }
-      if (actions.size() > 1) { actions.at(1)->setShortcut({.key = "return", .modifiers = {"shift"}}); }
+      if (auto panel = nextItem->actionPanel()) {
+        m_actionPannelV2->setView(panel);
+      } else {
+        m_actionPannelV2->hide();
+        m_actionPannelV2->popToRoot();
+      }
 
-      setActions(actions);
+      m_statusBar->setActionButton(nextItem->actionPanelTitle(), KeyboardShortcutModel{.key = "return"});
+
+      /*
+
+  setActions(actions);
+  m_statusBar->setActionButtonVisibility(actions.size() > 1);
+  m_statusBar->setCurrentActionButtonVisibility(m_actionPannel->primaryAction());
+
+  if (auto action = m_actionPannel->primaryAction()) {
+    m_statusBar->setCurrentAction(action->title(),
+                                  action->shortcut.value_or(KeyboardShortcutModel{.key = "return"}));
+    m_statusBar->setActionButton("Actions", defaultActionPanelShortcut());
+  } else {
+    m_statusBar->setActionButton(nextItem->actionPanelTitle(), KeyboardShortcutModel{.key = "return"});
+  }
+      */
+
     } else {
       m_split->setDetailVisibility(false);
       m_topBar->destroyCompleter();
@@ -348,9 +380,9 @@ public:
   ListView(QWidget *parent = nullptr) : SimpleView(parent) {
     m_split->setMainWidget(m_list);
     setupUI(m_split);
+    connect(m_list, &OmniList::modelChanged, this, &ListView::modelChanged);
     connect(m_list, &OmniList::selectionChanged, this, &ListView::selectionChanged);
     connect(m_list, &OmniList::itemActivated, this, &ListView::itemActivated);
-    connect(m_list, &OmniList::rowChanged, this, &ListView::rowChanged);
   }
 };
 

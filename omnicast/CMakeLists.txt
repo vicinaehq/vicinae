@@ -85,6 +85,9 @@ set(SRCS
 	src/actions/theme/theme-actions.hpp
 	src/actions/theme/theme-actions.cpp
 
+	src/color-formatter.hpp
+	src/color-formatter.cpp
+
 	include/ui/popover.hpp
 	src/ui/popover.cpp
 

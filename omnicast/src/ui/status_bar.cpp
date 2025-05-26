@@ -68,10 +68,33 @@ StatusBar::StatusBar(QWidget *parent) : QWidget(parent), leftWidget(nullptr) {
   connect(_selectedActionButton, &ShortcutButton::clicked, this, &StatusBar::currentActionButtonClicked);
 }
 
+void StatusBar::setCurrentAction(const QString &action, const KeyboardShortcutModel &shortcut) {
+  _selectedActionButton->setText(action);
+  _selectedActionButton->setShortcut(shortcut);
+  right->show();
+}
+
+void StatusBar::setActionButtonVisibility(bool value) {
+  _actionButton->setVisible(value);
+  _rightDivider->setVisible(value && _selectedActionButton->isVisible());
+}
+
 void StatusBar::setAction(const AbstractAction &action) {
   _selectedActionButton->setText(action.title());
   if (action.shortcut) { _selectedActionButton->setShortcut(*action.shortcut); }
   right->show();
+}
+
+void StatusBar::setCurrentActionButtonVisibility(bool value) {
+  _selectedActionButton->setVisible(value);
+  _rightDivider->setVisible(value && _actionButton->isVisible());
+}
+
+KeyboardShortcutModel StatusBar::actionButtonShortcut() const { return _actionButton->shortcut(); }
+
+void StatusBar::setActionButton(const QString &title, const KeyboardShortcutModel &shortcut) {
+  _actionButton->setText(title);
+  _actionButton->setShortcut(shortcut);
 }
 
 void StatusBar::setActionButtonHighlight(bool highlight) { _actionButton->hoverChanged(highlight); }

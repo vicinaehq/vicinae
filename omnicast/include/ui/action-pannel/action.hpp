@@ -11,6 +11,8 @@ class AppWindow;
 class AbstractAction : public QObject, public NonAssignable {
   Q_OBJECT
 
+  bool m_primary = false;
+
 public:
   QString _title;
   OmniIconUrl iconUrl;
@@ -19,6 +21,15 @@ public:
 
   void setShortcut(const KeyboardShortcutModel &shortcut) { this->shortcut = shortcut; }
   void setExecutionCallback(const std::function<void(void)> &cb) { _execCallback = cb; }
+
+  /**
+   * Whether this action is a candidate to be primary action.
+   * The first primary action found (in order) is usually used as THE
+   * primary action.
+   */
+  bool isPrimary() const { return m_primary; }
+
+  void setPrimary(bool value) { m_primary = value; }
 
   virtual QString id() const { return _title + iconUrl.toString(); }
 

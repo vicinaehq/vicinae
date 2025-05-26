@@ -290,6 +290,7 @@ void OmniList::calculateHeights() {
   scrollBar->setMinimum(0);
   _virtualHeight = yOffset;
   updateVisibleItems();
+  emit virtualHeightChanged(_virtualHeight);
 }
 
 OmniListItemWidgetWrapper *OmniList::takeFromPool(size_t type) {

@@ -23,6 +23,7 @@ public:
   void setText(const QString &text);
   void setTextColor(const QColor &color);
   void setShortcut(const KeyboardShortcutModel &model);
+  KeyboardShortcutModel shortcut() const;
   void resetColor();
 
   ShortcutButton();

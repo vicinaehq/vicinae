@@ -12,7 +12,7 @@ class StaticActionPannelListView : public ActionPannelListView {
     bool matches(const OmniList::AbstractVirtualItem &item) override {
       auto &actionItem = static_cast<const ActionListItem &>(item);
 
-      return actionItem.action->_title.contains(_query, Qt::CaseInsensitive);
+      return actionItem.action->title().contains(_query, Qt::CaseInsensitive);
     }
 
   public:

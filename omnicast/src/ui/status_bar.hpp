@@ -78,7 +78,13 @@ class StatusBar : public QWidget {
 
 public:
   void setAction(const AbstractAction &action);
+  void setCurrentAction(const QString &action, const KeyboardShortcutModel &shortcut);
+  void setActionButtonVisibility(bool value);
+  void setCurrentActionButtonVisibility(bool value);
+  void setActionButton(const QString &title, const KeyboardShortcutModel &shortcut);
+
   void clearAction();
+  KeyboardShortcutModel actionButtonShortcut() const;
   void setActionButtonHighlight(bool highlight);
   void setToast(const QString &text, ToastPriority priority = ToastPriority::Success);
   void setNavigation(const QString &name, const OmniIconUrl &iconUrl);

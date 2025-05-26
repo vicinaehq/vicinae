@@ -59,4 +59,9 @@ ActionPannelListView::ActionPannelListView() : _list(new OmniList()) {
   setLayout(layout);
   installEventFilter(this);
   connect(_list, &OmniList::itemActivated, this, &ActionPannelListView::onItemActivated);
+  connect(_list, &OmniList::virtualHeightChanged, this, [this](int height) {
+    qDebug() << "virtual height changed" << height;
+    _list->setFixedHeight(height);
+    updateGeometry();
+  });
 }

@@ -36,6 +36,8 @@ void ShortcutButton::setShortcut(const KeyboardShortcutModel &model) {
   updateGeometry();
 }
 
+KeyboardShortcutModel ShortcutButton::shortcut() const { return _shortcut_indicator->shortcut(); }
+
 ShortcutButton::ShortcutButton()
     : _label(new TypographyWidget), _shortcut_indicator(new KeyboardShortcutIndicatorWidget) {
   setAttribute(Qt::WA_Hover);

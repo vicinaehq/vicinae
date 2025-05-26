@@ -276,7 +276,7 @@ private:
           yOffset += vinfo.height;
         }
 
-        sctx = {.section = header, .x = margins.left};
+        sctx = {.section = header, .x = margins.left, .maxHeight = 0};
       }
 
       for (auto &item : items) {
@@ -297,7 +297,7 @@ private:
         if (sctx) {
           width = sctx->section->calculateItemWidth(width, sctx->index);
           // x = sctx->section->calculateItemX(sctx->x, sctx->index);
-          if (sctx->x == margins.left && sctx->index > 0) {
+          if (sctx->x > margins.left && sctx->index > 0) {
             yOffset += sctx->section->spacing();
             y = yOffset;
           }
@@ -306,6 +306,9 @@ private:
           sctx->x = sctx->x + width + sctx->section->spacing();
           height = item->calculateHeight(width);
           sctx->maxHeight = std::max(sctx->maxHeight, height);
+
+          qDebug() << "item height +" << height;
+          qDebug() << "max height" << sctx->maxHeight;
 
           if (sctx->x >= availableWidth) {
             yOffset += sctx->maxHeight;
@@ -327,7 +330,7 @@ private:
 
     if (sctx) { yOffset += sctx->maxHeight; }
 
-    yOffset += margins.bottom;
+    yOffset += margins.bottom + margins.top;
 
     for (auto &[key, cache] : _widgetCache) {
       if (auto it = updatedCache.find(key); it == updatedCache.end()) {
@@ -350,6 +353,7 @@ private:
     scrollBar->setMinimum(0);
     _virtualHeight = yOffset;
     updateVisibleItems();
+    emit virtualHeightChanged(_virtualHeight);
   }
 
   int indexOfItem(const QString &id) const;
@@ -410,6 +414,8 @@ public:
     });
 
     calculateHeightsFromModel();
+
+    emit modelChanged();
 
     switch (selectionPolicy) {
     case SelectFirst:
@@ -493,11 +499,13 @@ public:
   bool isShowingEmptyState() const;
 
 signals:
+  void modelChanged() const;
   void rowChanged(int n) const;
   void itemUpdated(const AbstractVirtualItem &item) const;
   void itemActivated(const AbstractVirtualItem &item) const;
   void selectionChanged(const AbstractVirtualItem *next, const AbstractVirtualItem *previous) const;
   void emptyStateChanged(bool empty);
+  void virtualHeightChanged(int height) const;
 };
 
 class DefaultVirtualSection : public OmniList::VirtualSection {

@@ -16,6 +16,7 @@ public:
   QSize sizeHint() const override;
   void setShortcut(const KeyboardShortcutModel &model);
   void setBackgroundColor(QColor color);
+  KeyboardShortcutModel shortcut() const { return _shortcutModel; }
 
   KeyboardShortcutIndicatorWidget(QWidget *parent = nullptr);
 };

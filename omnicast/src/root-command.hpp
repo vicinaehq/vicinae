@@ -1,8 +1,10 @@
 #pragma once
 #include "actions/fallback-actions.hpp"
+#include "app-root-provider.hpp"
 #include "argument.hpp"
 #include "base-view.hpp"
 #include "clipboard-actions.hpp"
+#include "color-formatter.hpp"
 #include "command-database.hpp"
 #include "actions/calculator/calculator-actions.hpp"
 #include "root-item-manager.hpp"
@@ -22,9 +24,13 @@
 #include "ui/toast.hpp"
 #include "ui/top_bar.hpp"
 #include <QtConcurrent/QtConcurrent>
+#include <algorithm>
 #include <cfloat>
 #include <chrono>
 #include <cmath>
+#include <iterator>
+#include "action-panel/action-panel.hpp"
+#include "actions/color/color-actions.hpp"
 #include <memory>
 #include <qbrush.h>
 #include <qcoreevent.h>
@@ -79,32 +85,6 @@ class RootSearchItem : public AbstractDefaultListItem, public ListView::Actionna
       m_action->execute();
     }
 
-    void execute(AppWindow &app) override {
-      if (app.topBar->m_completer->isVisible()) {
-        for (int i = 0; i != app.topBar->m_completer->m_args.size(); ++i) {
-          auto &arg = app.topBar->m_completer->m_args.at(i);
-          auto input = app.topBar->m_completer->m_inputs.at(i);
-
-          qCritical() << "required" << arg.required << input->text();
-
-          if (arg.required && input->text().isEmpty()) {
-            input->setFocus();
-            return;
-          }
-        }
-      }
-
-      auto manager = ServiceRegistry::instance()->rootItemManager();
-
-      if (manager->registerVisit(m_id)) {
-        qDebug() << "Visit registered";
-      } else {
-        qCritical() << "Failed to register visit";
-      }
-
-      m_action->execute(app);
-    }
-
   public:
     QString title() const override { return m_action->title(); }
 
@@ -115,19 +95,24 @@ class RootSearchItem : public AbstractDefaultListItem, public ListView::Actionna
 
   std::shared_ptr<RootItem> m_item;
 
+  ActionPanelView *actionPanel() const override { return new ActionPanelStaticListView(generateActions()); }
+
   QList<AbstractAction *> generateActions() const override {
     auto baseActions = m_item->actions();
     QList<AbstractAction *> finalActions;
 
     finalActions.reserve(baseActions.size() + 2);
 
-    for (int i = 0; i < baseActions.size(); ++i) {
-      AbstractAction *action = baseActions.at(i);
+    if (!baseActions.empty()) {
+      AbstractAction *action = baseActions.at(0);
+      auto dflt = new DefaultActionWrapper(m_item->uniqueId(), action);
 
-      if (i == 0)
-        finalActions.emplace_back(new DefaultActionWrapper(m_item->uniqueId(), action));
-      else
-        finalActions.emplace_back(action);
+      dflt->setPrimary(true);
+      finalActions.emplace_back(dflt);
+    }
+
+    for (int i = 1; i < baseActions.size(); ++i) {
+      finalActions.emplace_back(baseActions.at(i));
     }
 
     finalActions.emplace_back(new CopyToClipboardAction({}, "Reset ranking"));
@@ -169,6 +154,17 @@ class FallbackRootSearchItem : public AbstractDefaultListItem, public ListView::
 
     actions << manage;
 
+    if (actions.size() > 0) {
+      auto action = actions.at(0);
+      action->setShortcut({.key = "return"});
+      action->setPrimary(true);
+    }
+
+    if (actions.size() > 1) {
+      auto action = actions.at(1);
+      action->setShortcut({.key = "return", .modifiers = {"shift"}});
+    }
+
     return actions;
   }
 
@@ -187,18 +183,19 @@ public:
   FallbackRootSearchItem(const std::shared_ptr<RootItem> &item) : m_item(item) {}
 };
 
-class ColorListItem : public OmniList::AbstractVirtualItem, public DeclarativeOmniListView::IActionnable {
-  QColor color;
+class ColorListItem : public OmniList::AbstractVirtualItem, public ListView::Actionnable {
+  QString m_name;
+  ColorFormatter::ParsedColor m_color;
 
   OmniListItemWidget *createWidget() const override {
     auto widget = new ColorTransformWidget();
 
-    widget->setColor(color.name(), color);
+    widget->setColor(m_name, m_color.color);
 
     return widget;
   }
 
-  QString id() const override { return color.name(); }
+  QString id() const override { return m_name; }
 
   int calculateHeight(int width) const override {
     static ColorTransformWidget *widget = nullptr;
@@ -211,10 +208,18 @@ class ColorListItem : public OmniList::AbstractVirtualItem, public DeclarativeOm
     return widget->sizeHint().height();
   }
 
-  QList<AbstractAction *> generateActions() const override { return {}; }
+  QString actionPanelTitle() const override { return "Copy color as"; }
+
+  QList<AbstractAction *> generateActions() const override {
+    return ColorFormatter().formats() | std::views::transform([&](auto format) {
+             return static_cast<AbstractAction *>(new CopyColorAs(m_color.color, format));
+           }) |
+           std::ranges::to<QList>();
+  }
 
 public:
-  ColorListItem(QColor color) : color(color) {}
+  ColorListItem(const QString &name, const ColorFormatter::ParsedColor &color)
+      : m_name(name), m_color(color) {}
 };
 
 class BaseCalculatorListItem : public OmniList::AbstractVirtualItem, public ListView::Actionnable {
@@ -237,6 +242,8 @@ protected:
     auto copyQA = new CopyCalculatorQuestionAndAnswerAction(item);
     auto putAnswerInSearchBar = new PutCalculatorAnswerInSearchBar(item);
     auto openHistory = new OpenCalculatorHistoryAction();
+
+    copyAnswer->setPrimary(true);
 
     return {copyAnswer, copyQA, putAnswerInSearchBar, openHistory};
   }
@@ -318,8 +325,11 @@ class RootCommandV2 : public ListView {
           .addItem(std::make_unique<BaseCalculatorListItem>(*m_currentCalculatorEntry));
     }
 
-    if (QColor(text).isValid()) {
-      m_list->addSection("Color").addItem(std::make_unique<ColorListItem>(text));
+    auto parsedColor = ColorFormatter().parse(text);
+
+    if (parsedColor.has_value()) {
+      qDebug() << "color=" << parsedColor.value().color << text;
+      m_list->addSection("Color").addItem(std::make_unique<ColorListItem>(text, parsedColor.value()));
     }
 
     auto &results = m_list->addSection("Results");
