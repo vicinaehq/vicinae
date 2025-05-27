@@ -1,5 +1,8 @@
 #include "ui/action-pannel/action-list-widget.hpp"
+#include "theme.hpp"
+#include "ui/action-pannel/action.hpp"
 #include "ui/typography.hpp"
+#include <qlogging.h>
 
 ActionListWidget &ActionListWidget::setIconUrl(const OmniIconUrl &url) {
   m_icon->setUrl(url);
@@ -30,6 +33,32 @@ void ActionListWidget::selectionChanged(bool selected) {
     m_shortcut->setBackgroundColor(theme.colors.statusBackground);
   } else {
     m_shortcut->setBackgroundColor(theme.colors.statusBackground);
+  }
+}
+
+void ActionListWidget::setAction(const AbstractAction *action) {
+  m_label->setText(action->title());
+
+  switch (action->style()) {
+  case AbstractAction::Style::Normal:
+    m_label->setColor(ColorTint::TextPrimary);
+    m_icon->setUrl(action->iconUrl);
+    break;
+  case AbstractAction::Style::Danger: {
+    m_label->setColor(ColorTint::Red);
+    auto url = action->iconUrl;
+
+    url.setFill(ColorTint::Red);
+    m_icon->setUrl(url);
+    break;
+  }
+  }
+
+  if (auto shortcut = action->shortcut) {
+    m_shortcut->setShortcut(*shortcut);
+    m_shortcut->show();
+  } else {
+    m_shortcut->hide();
   }
 }
 

@@ -110,8 +110,6 @@ class FontListItem : public AbstractDefaultListItem, public ListView::Actionnabl
   class SetAppFont : public AbstractAction {
     QFont m_font;
 
-    void execute(AppWindow &app) override {}
-
     void execute() override {
       auto configService = ServiceRegistry::instance()->config();
 

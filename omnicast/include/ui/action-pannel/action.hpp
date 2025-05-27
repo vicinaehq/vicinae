@@ -9,9 +9,15 @@
 class AppWindow;
 
 class AbstractAction : public QObject, public NonAssignable {
+public:
+  enum Style { Normal, Danger };
+
+private:
   Q_OBJECT
 
   bool m_primary = false;
+
+  Style m_style = Normal;
 
 public:
   QString _title;
@@ -30,6 +36,9 @@ public:
   bool isPrimary() const { return m_primary; }
 
   void setPrimary(bool value) { m_primary = value; }
+  void setStyle(AbstractAction::Style style) { m_style = style; }
+
+  Style style() const { return m_style; }
 
   virtual QString id() const { return _title + iconUrl.toString(); }
 

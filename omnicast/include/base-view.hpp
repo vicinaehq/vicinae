@@ -207,7 +207,7 @@ protected:
   }
 
   void activatePrimaryAction() {
-    if (auto action = m_actionPannel->primaryAction()) {
+    if (auto action = m_actionPannelV2->primaryAction()) {
       executeAction(action);
     } else {
       m_actionPannelV2->show();
@@ -360,9 +360,10 @@ protected:
       m_statusBar->setActionButton(nextItem->actionPanelTitle(), KeyboardShortcutModel{.key = "return"});
 
       auto actions = m_actionPannelV2->actions();
+      auto primaryAction = m_actionPannelV2->primaryAction();
 
-      m_statusBar->setActionButtonVisibility(actions.size() > 1);
-      m_statusBar->setCurrentActionButtonVisibility(m_actionPannelV2->primaryAction());
+      m_statusBar->setActionButtonVisibility(!primaryAction || actions.size() > 1);
+      m_statusBar->setCurrentActionButtonVisibility(primaryAction);
 
       if (auto action = m_actionPannelV2->primaryAction()) {
         m_statusBar->setCurrentAction(action->title(),
@@ -375,7 +376,8 @@ protected:
     } else {
       m_split->setDetailVisibility(false);
       m_topBar->destroyCompleter();
-      setActions({});
+      m_actionPannelV2->popToRoot();
+      m_actionPannelV2->close();
     }
   }
 

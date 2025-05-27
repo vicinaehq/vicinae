@@ -1,14 +1,6 @@
 #include "ui/action-pannel/action-list-item.hpp"
 
-void ActionListItem::setup(ActionListWidget *widget) const {
-  widget->setTitle(action->title()).setIconUrl(action->iconUrl);
-
-  if (auto shortcut = action->shortcut) {
-    widget->setShortcut(*shortcut);
-  } else {
-    widget->clearShortcut();
-  }
-}
+void ActionListItem::setup(ActionListWidget *widget) const { widget->setAction(action); }
 
 QString ActionListItem::id() const { return action->id(); }
 

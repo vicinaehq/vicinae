@@ -52,7 +52,7 @@ public:
 
   QList<AbstractAction *> generateActions() const override {
     return {
-        new CopyToFocusedWindowAction(Clipboard::Text(info.emoji)),
+        new PasteToFocusedWindowAction(Clipboard::Text(info.emoji)),
         new CopyToClipboardAction(Clipboard::Text(info.description), "Copy emoji description"),
     };
   }

@@ -75,6 +75,8 @@ void StatusBar::setCurrentAction(const QString &action, const KeyboardShortcutMo
 }
 
 void StatusBar::setActionButtonVisibility(bool value) {
+  qDebug() << "action button set visible" << value;
+  right->setVisible(value);
   _actionButton->setVisible(value);
   _rightDivider->setVisible(value && _selectedActionButton->isVisible());
 }

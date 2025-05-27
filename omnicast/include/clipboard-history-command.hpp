@@ -2,6 +2,7 @@
 #include "app.hpp"
 #include "base-view.hpp"
 #include "clipboard-actions.hpp"
+#include "clipboard/clipboard-server.hpp"
 #include "clipboard/clipboard-service.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
@@ -39,23 +40,46 @@ public:
   }
 };
 
-class CopyClipboardSelection : public CopyToFocusedWindowAction {
+class PasteClipboardSelection : public PasteToFocusedWindowAction {
   int m_id;
 
-  void execute(AppWindow &app) override {
+  void execute() override {
+    auto ui = ServiceRegistry::instance()->UI();
     auto clipman = ServiceRegistry::instance()->clipman();
 
     if (auto selection = clipman->retrieveSelectionById(m_id)) {
       loadClipboardData(*selection);
-      CopyToFocusedWindowAction::execute(app);
+      PasteToFocusedWindowAction::execute();
       return;
     }
 
-    app.statusBar->setToast(QString("No selection with ID %1").arg(m_id));
+    ui->setToast(QString("No selection with ID %1").arg(m_id));
   }
 
 public:
-  CopyClipboardSelection(int id) : CopyToFocusedWindowAction(), m_id(id) {}
+  PasteClipboardSelection(int id) : PasteToFocusedWindowAction(), m_id(id) {}
+};
+
+class CopyClipboardSelection : public AbstractAction {
+  int m_id;
+
+  void execute() override {
+    auto clipman = ServiceRegistry::instance()->clipman();
+    auto ui = ServiceRegistry::instance()->UI();
+
+    if (auto selection = clipman->retrieveSelectionById(m_id)) {
+      clipman->copySelection(*selection, {.concealed = true});
+      ui->setToast("Selection copied to clipboard");
+      ui->closeWindow();
+      return;
+    }
+
+    ui->setToast("Failed to copy to clipboard", ToastPriority::Danger);
+  }
+
+public:
+  CopyClipboardSelection(int id)
+      : AbstractAction("Copy to clipboard", BuiltinOmniIconUrl("copy-clipboard")), m_id(id) {}
 };
 
 class ClipboardItemDetail : public OmniListView::MetadataDetailModel {
@@ -119,73 +143,32 @@ public:
   ClipboardItemDetail(const ClipboardHistoryEntry &entry) : entry(entry) {}
 };
 
-class ActionGenerator : public QObject {
-public:
-  virtual QList<AbstractAction *> generateActions(const OmniList::AbstractVirtualItem *item) = 0;
-};
-
 class RemoveSelectionAction : public AbstractAction {
-  Q_OBJECT
-
   int _id;
 
-  void execute(AppWindow &app) override {
+  void execute() override {
+    auto ui = ServiceRegistry::instance()->UI();
     auto clipman = ServiceRegistry::instance()->clipman();
 
     if (clipman->removeSelection(_id)) {
-      app.statusBar->setToast("Entry removed");
-      emit removed(_id);
+      ui->setToast("Entry removed");
     } else {
-      app.statusBar->setToast("Failed to remove entry", ToastPriority::Danger);
+      ui->setToast("Failed to remove entry", ToastPriority::Danger);
     }
   }
 
 public:
-  RemoveSelectionAction(int id) : AbstractAction("Remove entry", BuiltinOmniIconUrl("trash")), _id(id) {}
-
-signals:
-  void removed(int id) const;
-};
-
-class PinConfirm : public AlertWidget {
-  Q_OBJECT
-
-  AppWindow &_app;
-  int _id;
-  bool _value;
-
-public:
-  PinConfirm(AppWindow &app, int id, bool value) : _app(app), _id(id), _value(value) {}
-
-  void confirm() const override {
-    auto clipman = ServiceRegistry::instance()->clipman();
-
-    if (!clipman->setPinned(_id, _value)) {
-      _app.statusBar->setToast("Failed to " + QString(_value ? "pin" : "unpin"), ToastPriority::Danger);
-    } else {
-      _app.statusBar->setToast(_value ? "Pinned" : "Unpinned", ToastPriority::Success);
-      emit pinChanged(_id, _value);
-    }
+  RemoveSelectionAction(int id) : AbstractAction("Remove entry", BuiltinOmniIconUrl("trash")), _id(id) {
+    setStyle(AbstractAction::Danger);
   }
-
-  void canceled() const override {}
-
-signals:
-  bool pinChanged(int pid, bool _value) const;
 };
 
 class PinClipboardAction : public AbstractAction {
-  Q_OBJECT
-
   int _id;
   bool _value;
 
-  void execute(AppWindow &app) override {
-    auto confirm = new PinConfirm(app, _id, _value);
-
-    connect(confirm, &PinConfirm::pinChanged, this, &PinClipboardAction::pinChanged);
-
-    app.confirmAlert(confirm);
+  void execute() override {
+    // To implement
   }
 
 public:
@@ -193,19 +176,38 @@ public:
 
   PinClipboardAction(int id, bool value)
       : AbstractAction(value ? "Pin" : "Unpin", BuiltinOmniIconUrl("pin")), _id(id), _value(value) {}
-
-signals:
-  void pinChanged(int id, bool value) const;
 };
 
 class ClipboardHistoryItem : public AbstractDefaultListItem, public ListView::Actionnable {
-  ActionGenerator *_generator = nullptr;
-
 public:
   ClipboardHistoryEntry info;
-  QList<AbstractAction *> generateActions() const override { return _generator->generateActions(this); }
 
-  void setActionGenerator(ActionGenerator *generator) { _generator = generator; }
+  ActionPanelView *actionPanel() const override {
+    auto panel = new ActionPanelStaticListView;
+    auto pin = new PinClipboardAction(info.id, !info.pinnedAt);
+    auto paste = new PasteClipboardSelection(info.id);
+    auto copyToClipboard = new CopyClipboardSelection(info.id);
+    auto remove = new RemoveSelectionAction(info.id);
+
+    remove->setStyle(AbstractAction::Danger);
+    remove->setShortcut({.key = "X", .modifiers = {"ctrl"}});
+
+    paste->setPrimary(true);
+    paste->setShortcut({.key = "return"});
+
+    copyToClipboard->setShortcut({.key = "return", .modifiers = {"shift"}});
+
+    pin->setShortcut({.key = "P", .modifiers = {"shift", "ctrl"}});
+
+    panel->addAction(paste);
+    panel->addAction(copyToClipboard);
+    panel->addSection();
+    panel->addAction(pin);
+    panel->addSection();
+    panel->addAction(remove);
+
+    return panel;
+  }
 
   OmniIconUrl iconForMime(const QString &mime) const {
     if (info.mimeType.startsWith("text/")) { return BuiltinOmniIconUrl("text"); }
@@ -229,29 +231,7 @@ public:
   ClipboardHistoryItem(const ClipboardHistoryEntry &info) : info(info) {}
 };
 
-class ClipboardHistoryItemActionGenerator : public ActionGenerator {
-  Q_OBJECT
-
-  QList<AbstractAction *> generateActions(const OmniList::AbstractVirtualItem *item) override {
-    auto current = static_cast<const ClipboardHistoryItem *>(item);
-    auto pin = new PinClipboardAction(current->info.id, !current->info.pinnedAt);
-    auto remove = new RemoveSelectionAction(current->info.id);
-    auto copy = new CopyClipboardSelection(current->info.id);
-
-    connect(pin, &PinClipboardAction::pinChanged, this, &ClipboardHistoryItemActionGenerator::pinChanged);
-    connect(remove, &RemoveSelectionAction::removed, this, &ClipboardHistoryItemActionGenerator::removed);
-
-    return {copy, pin, remove};
-  }
-
-signals:
-  void pinChanged(int entryId, bool value) const;
-  void removed(int entryId) const;
-};
-
 class ClipboardHistoryCommand : public ListView {
-  ClipboardHistoryItemActionGenerator *_generator = new ClipboardHistoryItemActionGenerator;
-
   void generateList(const QString &query) {
     auto clipman = ServiceRegistry::instance()->clipman();
     auto result = clipman->listAll(100, 0, {.query = query});
@@ -265,7 +245,6 @@ class ClipboardHistoryCommand : public ListView {
       auto &entry = result.data[i];
       auto candidate = std::make_unique<ClipboardHistoryItem>(entry);
 
-      candidate->setActionGenerator(_generator);
       pinnedSection.addItem(std::move(candidate));
       ++i;
     }
@@ -276,7 +255,6 @@ class ClipboardHistoryCommand : public ListView {
       auto &entry = result.data[i];
       auto candidate = std::make_unique<ClipboardHistoryItem>(entry);
 
-      candidate->setActionGenerator(_generator);
       historySection.addItem(std::move(candidate));
       ++i;
     }
@@ -298,10 +276,6 @@ public:
     auto clipman = ServiceRegistry::instance()->clipman();
 
     setSearchPlaceholderText("Browse clipboard history...");
-    connect(_generator, &ClipboardHistoryItemActionGenerator::pinChanged, this,
-            &ClipboardHistoryCommand::handlePinChanged);
-    connect(_generator, &ClipboardHistoryItemActionGenerator::removed, this,
-            &ClipboardHistoryCommand::handleRemoved);
     connect(clipman, &ClipboardService::itemInserted, this,
             &ClipboardHistoryCommand::clipboardSelectionInserted);
   }

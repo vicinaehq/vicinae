@@ -1,5 +1,6 @@
 #pragma once
 #include "omni-icon.hpp"
+#include "ui/action-pannel/action.hpp"
 #include "ui/keyboard-shortcut-indicator.hpp"
 #include "ui/selectable-omni-list-widget.hpp"
 #include "ui/typography.hpp"
@@ -15,6 +16,7 @@ public:
   ActionListWidget &clearShortcut();
   ActionListWidget &setTitle(const QString &title);
   void selectionChanged(bool selected) override;
+  void setAction(const AbstractAction *action);
 
   ActionListWidget();
 };
