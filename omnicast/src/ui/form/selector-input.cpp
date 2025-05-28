@@ -49,7 +49,7 @@ bool SelectorInput::eventFilter(QObject *obj, QEvent *event) {
 void SelectorInput::clearFilter() const { m_list->clearFilter(); }
 
 QJsonValue SelectorInput::asJsonValue() const {
-  return _currentSelection ? _currentSelection->id() : QJsonValue();
+  return _currentSelection ? _currentSelection->generateId() : QJsonValue();
 }
 
 void SelectorInput::setIsLoading(bool value) { m_loadingBar->setStarted(value); }
@@ -123,7 +123,7 @@ SelectorInput::SelectorInput(QWidget *parent)
 }
 
 void SelectorInput::itemActivated(const OmniList::AbstractVirtualItem &vitem) {
-  setValue(vitem.id());
+  setValue(vitem.generateId());
   m_searchField->clear();
   popover->close();
   emit selectionChanged(static_cast<const AbstractItem &>(vitem));
@@ -138,7 +138,7 @@ void SelectorInput::commitUpdate() { m_list->commitUpdate(); }
 void SelectorInput::updateItem(const QString &id, const UpdateItemCallback &cb) {
   m_list->updateItem(id,
                      [&cb](OmniList::AbstractVirtualItem *item) { cb(static_cast<AbstractItem *>(item)); });
-  if (_currentSelection->id() == id) { setValue(id); }
+  if (_currentSelection->generateId() == id) { setValue(id); }
 }
 
 void SelectorInput::addSection(const QString &name) { m_list->addSection(name); }
@@ -180,14 +180,14 @@ void SelectorInput::handleTextChanged(const QString &text) {
 }
 
 void SelectorInput::itemUpdated(const OmniList::AbstractVirtualItem &item) {
-  if (_currentSelection && _currentSelection->id() == item.id()) setValue(item.id());
+  if (_currentSelection && _currentSelection->generateId() == item.generateId()) setValue(item.generateId());
 }
 
 void SelectorInput::showPopover() {
   const QPoint globalPos = inputField->mapToGlobal(QPoint(0, inputField->height() + 10));
 
   if (_currentSelection) {
-    m_list->setSelected(_currentSelection->id());
+    m_list->setSelected(_currentSelection->generateId());
   } else {
     m_list->selectFirst();
   }

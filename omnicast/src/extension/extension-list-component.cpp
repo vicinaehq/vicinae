@@ -19,7 +19,7 @@ static const KeyboardShortcutModel secondaryShortcut{.key = "return", .modifiers
 class DropdownSelectorItem : public SelectorInput::AbstractItem {
   DropdownModel::Item m_model;
 
-  QString id() const override { return m_model.value; }
+  QString generateId() const override { return m_model.value; }
 
   OmniIconUrl icon() const override {
     return m_model.icon ? OmniIconUrl(*m_model.icon) : BuiltinOmniIconUrl("circle");
@@ -88,7 +88,7 @@ void ExtensionListComponent::renderDropdown(const DropdownModel &dropdown) {
     if (dropdown.defaultValue) {
       m_selector->setValue(*dropdown.defaultValue);
     } else if (auto item = m_selector->list()->firstSelectableItem()) {
-      m_selector->setValue(item->id());
+      m_selector->setValue(item->generateId());
     }
   }
 
@@ -184,7 +184,7 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
 
     if (auto detail = item->model().detail) {
       if (m_split->isDetailVisible()) {
-        qDebug() << "update detail for" << selected->id();
+        qDebug() << "update detail for" << selected->generateId();
         m_detail->updateDetail(*detail);
       } else {
         qDebug() << "create detail";
@@ -226,7 +226,7 @@ void ExtensionListComponent::onSelectionChanged(const OmniList::AbstractVirtualI
     return;
   }
 
-  qDebug() << "set visibility of" << next->id() << _model.isShowingDetail;
+  qDebug() << "set visibility of" << next->generateId() << _model.isShowingDetail;
 
   auto item = static_cast<const ExtensionListItem *>(next);
   size_t i = 0;
@@ -234,7 +234,7 @@ void ExtensionListComponent::onSelectionChanged(const OmniList::AbstractVirtualI
   m_split->setDetailVisibility(_model.isShowingDetail && item->model().detail);
 
   if (auto detail = item->model().detail) {
-    qDebug() << "set markdown for" << next->id();
+    qDebug() << "set markdown for" << next->generateId();
     m_detail->setDetail(*detail);
   }
 
@@ -251,13 +251,13 @@ void ExtensionListComponent::onSelectionChanged(const OmniList::AbstractVirtualI
     emit updateActionPannel(*pannel);
   }
 
-  if (auto handler = _model.onSelectionChanged) { emit notifyEvent(*handler, {next->id()}); }
+  if (auto handler = _model.onSelectionChanged) { emit notifyEvent(*handler, {next->generateId()}); }
 }
 
 void ExtensionListComponent::handleDropdownSelectionChanged(const SelectorInput::AbstractItem &item) {
   if (auto accessory = _model.searchBarAccessory) {
     if (auto dropdown = std::get_if<DropdownModel>(&*accessory)) {
-      if (auto onChange = dropdown->onChange) { emit notifyEvent(*onChange, {item.id()}); }
+      if (auto onChange = dropdown->onChange) { emit notifyEvent(*onChange, {item.generateId()}); }
     }
   }
 }

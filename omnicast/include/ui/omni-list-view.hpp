@@ -172,7 +172,7 @@ protected:
       setSignalActions({});
     }
 
-    lastSelectedId = next->id();
+    lastSelectedId = next->generateId();
   }
 
   virtual void itemActivated(const OmniList::AbstractVirtualItem &item) {

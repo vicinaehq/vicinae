@@ -28,6 +28,7 @@
 #include <variant>
 
 class OmniList : public QWidget {
+
 public:
   enum ScrollBehaviour {
     ScrollRelative,
@@ -35,31 +36,48 @@ public:
   };
 
   class AbstractVirtualItem {
+    mutable QString m_id;
+
   public:
     enum ListRole { ListItem, ListSection, ListDivider };
 
-    virtual int calculateHeight(int width) const = 0;
+    /**
+     * Default implementation creates a widget to calculate height.
+     * This is inefficient and should be overidden for items that are very
+     * often used.
+     */
+    virtual int calculateHeight(int width) const {
+      QWidget *ruler = createWidget();
+
+      if (ruler) {
+        ruler->deleteLater();
+        return ruler->sizeHint().height();
+      }
+
+      return 0;
+    }
     virtual OmniListItemWidget *createWidget() const = 0;
-    virtual double rankingScore() const { return NAN; }
-    virtual bool queryFilter(const QString &query) { return true; }
     virtual void recycle(QWidget *base) const;
     virtual bool recyclable() const;
-    /**
-     * Whether this item can have some of its content changed while
-     * still keeping the same ID.
-     *
-     * This will call `refresh` on the cached widget instead of leaving
-     * it fully untouched.
-     *
-     * This is usually unneeded for native items. This is mostly used
-     * to handle items constructed by extensions.
-     */
     virtual bool hasPartialUpdates() const { return false; }
     virtual void refresh(QWidget *widget) const {}
-    virtual QString id() const = 0;
+    virtual QString generateId() const = 0;
+
+    QString id() const {
+      if (m_id.isEmpty()) { m_id = generateId(); }
+      return m_id;
+    }
+
     virtual size_t typeId() const;
     virtual bool selectable() const;
     virtual ListRole role() const;
+
+    /**
+     * Whether this item provides context for the item right below it.
+     * If set to true, the list will scroll to this item if the item right below it is selected and this item
+     * is not in the viewport.
+     */
+    virtual bool isContextProvider() const { return false; }
 
     bool isListItem() const;
     bool isSection() const;
@@ -88,7 +106,7 @@ public:
       return widget.sizeHint().height();
     }
     OmniListItemWidget *createWidget() const override { return new DividerWidget; }
-    QString id() const override { return m_id; }
+    QString generateId() const override { return m_id; }
     bool selectable() const override { return false; }
     ListRole role() const override { return ListRole::ListDivider; }
 
@@ -107,7 +125,7 @@ public:
     virtual int spacing() const { return 0; }
 
     const QString &name() const;
-    QString id() const override;
+    QString generateId() const override;
 
     /**
      * Whether or not this header itself should be displayed.
@@ -156,9 +174,14 @@ public:
     Divider() { m_item = std::make_unique<DividerItem>(); }
   };
 
+  /**
+   * A structured list of items.
+   * A section can have a specific header item that will only be shown if the section is not
+   * otherwise empty.
+   */
   class Section {
     std::vector<std::unique_ptr<AbstractVirtualItem>> m_items;
-    std::unique_ptr<VirtualSection> m_headerItem;
+    std::unique_ptr<AbstractVirtualItem> m_headerItem;
     QString m_title;
     QString m_subtitle;
 
@@ -181,12 +204,14 @@ public:
       return *this;
     }
 
-    Section &withHeaderItem(std::unique_ptr<VirtualSection> item) {
+    Section &withHeaderItem(std::unique_ptr<AbstractVirtualItem> item) {
       m_headerItem = std::move(item);
       return *this;
     }
 
-    VirtualSection *headerItem() { return m_headerItem.get(); }
+    const QString &title() const { return m_title; }
+
+    AbstractVirtualItem *headerItem() { return m_headerItem.get(); }
 
     const std::vector<std::unique_ptr<AbstractVirtualItem>> &items() const { return m_items; }
 
@@ -336,28 +361,19 @@ private:
       } else if (auto section = std::get_if<std::unique_ptr<Section>>(&item)) {
         auto &items = (*section)->items();
 
-        auto hasContent = std::ranges::any_of(items, [](const auto &item) {
-          return item->role() != AbstractVirtualItem::ListRole::ListDivider;
-        });
+        if (items.empty()) continue;
 
-        if (!hasContent) continue;
+        if (auto header = (*section)->headerItem(); header && !(*section)->title().isEmpty()) {
+          VirtualListWidgetInfo vinfo{.x = margins.left,
+                                      .y = yOffset,
+                                      .width = availableWidth,
+                                      .height = header->calculateHeight(availableWidth),
+                                      .item = header};
 
-        if (auto header = (*section)->headerItem()) {
-          header->setCount(items.size());
-          header->initWidth(availableWidth);
+          _virtual_items.push_back(vinfo);
+          yOffset += vinfo.height;
 
-          if (header->showHeader()) {
-            VirtualListWidgetInfo vinfo{.x = margins.left,
-                                        .y = yOffset,
-                                        .width = availableWidth,
-                                        .height = header->calculateHeight(availableWidth),
-                                        .item = header};
-
-            _virtual_items.push_back(vinfo);
-            yOffset += vinfo.height;
-          }
-
-          sctx = {.section = header, .x = margins.left, .maxHeight = 0};
+          sctx = {.section = nullptr, .x = margins.left, .maxHeight = 0};
         }
 
         for (auto &item : items) {
@@ -366,6 +382,9 @@ private:
           int width = availableWidth;
           int x = margins.left;
           int y = yOffset;
+
+          qWarning() << "height for item" << item->id() << item->calculateHeight(width) << "offset"
+                     << yOffset;
 
           if (vIndex >= visibleIndexRange.lower && vIndex <= visibleIndexRange.upper) {
             if (auto it = _widgetCache.find(item->id()); it != _widgetCache.end()) {
@@ -376,15 +395,16 @@ private:
           }
 
           if (sctx) {
-            width = sctx->section->calculateItemWidth(width, sctx->index);
-            // x = sctx->section->calculateItemX(sctx->x, sctx->index);
+            int spacing = 0;
+            // width = sctx->section->calculateItemWidth(width, sctx->index);
+            //  x = sctx->section->calculateItemX(sctx->x, sctx->index);
             if (sctx->x > margins.left && sctx->index > 0) {
-              yOffset += sctx->section->spacing();
+              yOffset += spacing;
               y = yOffset;
             }
 
             x = sctx->x;
-            sctx->x = sctx->x + width + sctx->section->spacing();
+            sctx->x = sctx->x + width + spacing;
             height = item->calculateHeight(width);
             sctx->maxHeight = std::max(sctx->maxHeight, height);
 
@@ -595,7 +615,7 @@ signals:
 
 class DefaultVirtualSection : public OmniList::VirtualSection {
   bool showHeader() override { return false; }
-  QString id() const override { return "omnicast.default-section"; }
+  QString generateId() const override { return "omnicast.default-section"; }
 
 public:
   DefaultVirtualSection() : OmniList::VirtualSection("unamed") {}

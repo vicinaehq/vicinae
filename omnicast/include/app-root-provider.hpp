@@ -1,14 +1,13 @@
 #pragma once
-#include "app.hpp"
+#include "actions/root-search/root-search-actions.hpp"
 #include "app/app-database.hpp"
 #include "root-item-manager.hpp"
 #include "service-registry.hpp"
+#include <ranges>
 
 class OpenAppAction : public AbstractAction {
   std::shared_ptr<Application> application;
   std::vector<QString> args;
-
-  void execute(AppWindow &app) override {}
 
   void execute() override {
     qDebug() << "execute app";
@@ -44,24 +43,54 @@ public:
     QString providerId() const override { return "app"; }
 
     QString displayName() const override { return m_app->name(); }
-    QList<AbstractAction *> actions() const override {
-      auto appDb = ServiceRegistry::instance()->appDb();
 
-      QList<AbstractAction *> actions;
+    ActionPanelView *actionPanel() const override {
+      auto panel = new ActionPanelStaticListView;
+      auto appDb = ServiceRegistry::instance()->appDb();
       auto fileBrowser = appDb->appProvider()->fileBrowser();
       auto textEditor = appDb->appProvider()->textEditor();
+      auto open = new OpenAppAction(m_app, "Open Application", {});
+      auto actions = m_app->actions();
 
-      actions << new OpenAppAction(m_app, "Open Application", {});
+      panel->setTitle(m_app->name());
+      panel->addAction(new DefaultActionWrapper(uniqueId(), open));
 
-      for (const auto &desktopAction : m_app->actions()) {
-        actions << new OpenAppAction(desktopAction, desktopAction->name(), {});
+      auto makeAction = [](auto &&pair) -> OpenAppAction * {
+        const auto &[index, appAction] = pair;
+        auto openAction = new OpenAppAction(appAction, appAction->name(), {});
+
+        if (index < 9) {
+          openAction->setShortcut({.key = QString::number(index + 1), .modifiers = {"ctrl", "shift"}});
+        }
+
+        return openAction;
+      };
+
+      std::ranges::for_each(m_app->actions() | std::views::enumerate | std::views::transform(makeAction),
+                            [&](auto &&action) { panel->addAction(action); });
+
+      if (fileBrowser) {
+        auto openLocation = new OpenAppAction(fileBrowser, "Open Location", {m_app->path().c_str()});
+
+        openLocation->setShortcut({.key = "O", .modifiers = {"ctrl"}});
+        panel->addAction(openLocation);
       }
 
-      if (fileBrowser) { actions << new OpenAppAction(fileBrowser, "Open in folder", {m_app->id()}); }
-      if (textEditor) { actions << new OpenAppAction(textEditor, "Open desktop file", {m_app->id()}); }
+      auto resetRanking = new ResetItemRanking(uniqueId());
+      auto markAsFavorite = new MarkItemAsFavorite(uniqueId());
 
-      return actions;
+      panel->addSection();
+      panel->addAction(resetRanking);
+      panel->addAction(markAsFavorite);
+      panel->addSection();
+
+      auto disable = new DisableApplication(uniqueId());
+
+      panel->addAction(disable);
+
+      return panel;
     }
+
     AccessoryList accessories() const override {
       return {{.text = "Application", .color = ColorTint::TextSecondary}};
     }

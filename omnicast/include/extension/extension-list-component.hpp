@@ -28,7 +28,7 @@ class ExtensionListItem : public AbstractDefaultListItem {
 
   bool hasPartialUpdates() const override { return true; }
 
-  QString id() const override { return _item.id; }
+  QString generateId() const override { return _item.id; }
 
 public:
   const ListItemViewModel &model() const { return _item; }

@@ -7,7 +7,7 @@ class ActionListItem : public OmniList::AbstractVirtualItem {
 public:
   AbstractAction *action;
 
-  QString id() const override;
+  QString generateId() const override;
   OmniListItemWidget *createWidget() const override;
   int calculateHeight(int width) const override;
   bool recyclable() const override;

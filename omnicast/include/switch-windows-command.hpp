@@ -27,7 +27,7 @@ class WindowItem : public AbstractDefaultListItem, public DeclarativeOmniListVie
 protected:
   std::shared_ptr<AbstractWindowManager::Window> _window;
 
-  QString id() const override { return _window->id(); }
+  QString generateId() const override { return _window->id(); }
 
   virtual QList<AbstractAction *> generateActions() const override {
     return {new FocusWindowAction(_window)};

@@ -17,7 +17,7 @@ class PreferenceDropdownItem : public SelectorInput::AbstractItem {
 
   QString displayName() const override { return m_displayName; }
 
-  QString id() const override { return m_id; }
+  QString generateId() const override { return m_id; }
 
   AbstractItem *clone() const override { return new PreferenceDropdownItem(*this); }
 

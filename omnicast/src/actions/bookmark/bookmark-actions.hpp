@@ -122,7 +122,10 @@ public:
   }
 
   RemoveBookmarkAction(const std::shared_ptr<Bookmark> &link)
-      : AbstractAction("Remove link", BuiltinOmniIconUrl("trash")), m_bookmark(link) {}
+      : AbstractAction("Remove link", BuiltinOmniIconUrl("trash")), m_bookmark(link) {
+    setStyle(AbstractAction::Danger);
+    setShortcut({.key = "X", .modifiers = {"ctrl", "shift"}});
+  }
 };
 
 struct DuplicateBookmarkAction : public AbstractAction {

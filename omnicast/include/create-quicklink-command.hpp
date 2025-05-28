@@ -48,13 +48,13 @@ public:
 
   void setApp(const std::shared_ptr<Application> &app) { this->app = app; }
 
-  QString id() const override { return app->id(); }
+  QString generateId() const override { return app->id(); }
 
   AppSelectorItem(const std::shared_ptr<Application> &app) : app(app) {}
 };
 
 class DefaultAppItem : public AppSelectorItem {
-  QString id() const override { return "default"; }
+  QString generateId() const override { return "default"; }
   QString displayName() const override { return AppSelectorItem::displayName() + " (Default)"; }
   AbstractItem *clone() const override { return new DefaultAppItem(*this); }
 
@@ -72,7 +72,7 @@ public:
 
   QString displayName() const override { return iconUrl.name(); }
 
-  QString id() const override { return iconUrl.toString(); }
+  QString generateId() const override { return iconUrl.toString(); }
 
   void setDisplayName(const QString &name) { this->dname = name; }
 
@@ -85,7 +85,7 @@ public:
 };
 
 class DefaultIconSelectorItem : public IconSelectorItem {
-  QString id() const override { return "default"; }
+  QString generateId() const override { return "default"; }
   QString displayName() const override { return "Default"; }
   AbstractItem *clone() const override { return new DefaultIconSelectorItem(*this); }
 
@@ -119,7 +119,7 @@ class CompletionListItem : public AbstractDefaultListItem {
 
   ItemData data() const override { return {.iconUrl = m_data.icon, .name = m_data.title, .accessories = {}}; }
 
-  QString id() const override { return m_data.title; }
+  QString generateId() const override { return m_data.title; }
 
 public:
   const LinkDynamicPlaceholder &argument() const { return m_data; }

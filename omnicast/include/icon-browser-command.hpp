@@ -23,7 +23,7 @@ class IconBrowserView : public GridView {
       return icon;
     }
 
-    QString id() const override { return _name; }
+    QString generateId() const override { return _name; }
 
   public:
     const QString &name() const { return _name; }

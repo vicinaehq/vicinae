@@ -26,7 +26,7 @@ class PeepobankView : public GridView {
 
     QString navigationTitle() const override { return _info.name.split(".").at(0); }
 
-    QString id() const override { return _info.path; }
+    QString generateId() const override { return _info.path; }
 
     QString tooltip() const override { return _info.name; }
 

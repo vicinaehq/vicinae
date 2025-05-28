@@ -40,7 +40,7 @@ class CalculatorHistoryListItem : public AbstractDefaultListItem, public OmniLis
   CalculatorEntry _entry;
 
 public:
-  QString id() const override { return QString("history-entry-%1").arg(_entry.id); };
+  QString generateId() const override { return QString("history-entry-%1").arg(_entry.id); };
 
   const CalculatorEntry &entry() const { return _entry; }
 
@@ -48,7 +48,7 @@ public:
     auto removeAction = new RemoveCalculatorHistoryEntryAction(_entry.id);
 
     QObject::connect(removeAction, &RemoveCalculatorHistoryEntryAction::didExecute, [this]() {
-      if (_rmCb) _rmCb(id());
+      if (_rmCb) _rmCb(generateId());
     });
 
     return {

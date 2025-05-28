@@ -18,6 +18,7 @@ public:
   virtual OmniIconUrl iconUrl() const = 0;
   virtual std::vector<std::shared_ptr<Application>> actions() const { return {}; }
   virtual std::vector<QString> keywords() const { return {}; }
+  virtual std::filesystem::path path() const = 0;
 
   // whether the executable can open url(s) or file(s)
   virtual bool isOpener() { return true; }

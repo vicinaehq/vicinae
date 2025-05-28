@@ -16,7 +16,7 @@
 class ExtensionGridItem : public OmniGrid::AbstractGridItem {
   GridItemViewModel _item;
 
-  QString id() const override { return _item.id; }
+  QString generateId() const override { return _item.id; }
 
   QWidget *centerWidget() const override {
     auto icon = new OmniIcon;

@@ -91,7 +91,7 @@ public:
     return items;
   }
 
-  QString id() const override { return m_info.provider->id(); }
+  QString generateId() const override { return m_info.provider->id(); }
   ItemData data() const override {
     return {.iconUrl = BuiltinOmniIconUrl(m_info.provider->iconName()),
             .name = m_info.provider->displayName(),

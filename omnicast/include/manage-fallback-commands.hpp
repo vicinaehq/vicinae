@@ -89,7 +89,7 @@ protected:
     };
   }
 
-  QString id() const override {
+  QString generateId() const override {
     auto manager = ServiceRegistry::instance()->rootItemManager();
     if (manager->isFallback(m_item->uniqueId())) { return QString("fallback.%1").arg(m_item->uniqueId()); }
     return QString("available.%1").arg(m_item->uniqueId());

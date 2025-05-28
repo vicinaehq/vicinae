@@ -48,7 +48,7 @@ public:
     icon->setContentsMargins(10, 10, 10, 10);
   }
 
-  QString id() const override { return info.description; }
+  QString generateId() const override { return info.description; }
 
   QList<AbstractAction *> generateActions() const override {
     return {

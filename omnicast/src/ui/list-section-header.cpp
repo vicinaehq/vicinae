@@ -18,11 +18,15 @@ OmniListSectionHeader::OmniListSectionHeader(const QString &title, const QString
   titleLabel->setColor(ColorTint::TextSecondary);
   titleLabel->setText(title);
   titleLabel->setFontWeight(QFont::Bold);
+  titleLabel->setSize(TextSize::TextSmaller);
+  // titleLabel->setVisible(!title.isEmpty());
 
   auto subtitleLabel = new TypographyWidget(TextSize::TextRegular);
 
   subtitleLabel->setColor(ColorTint::TextSecondary);
-  subtitleLabel->setText(QString::number(count));
+  subtitleLabel->setText(subtitle);
+  subtitleLabel->setSize(TextSize::TextSmaller);
+  // subtitleLabel->setVisible(!subtitle.isEmpty());
 
   leftLayout->setContentsMargins(0, 0, 0, 0);
   leftLayout->setSpacing(10);
@@ -31,7 +35,7 @@ OmniListSectionHeader::OmniListSectionHeader(const QString &title, const QString
   leftWidget->setLayout(leftLayout);
 
   layout->addWidget(leftWidget, 0, Qt::AlignLeft | Qt::AlignVCenter);
-  layout->addWidget(new TextLabel(subtitle), 0, Qt::AlignRight | Qt::AlignVCenter);
+  // layout->addWidget(new TextLabel(subtitle), 0, Qt::AlignRight | Qt::AlignVCenter);
 
   setLayout(layout);
 }

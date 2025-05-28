@@ -6,7 +6,7 @@
 class DropdownSelectorItem : public SelectorInput::AbstractItem {
   DropdownModel::Item m_model;
 
-  QString id() const override { return m_model.value; }
+  QString generateId() const override { return m_model.value; }
 
   OmniIconUrl icon() const override {
     return m_model.icon ? OmniIconUrl(*m_model.icon) : BuiltinOmniIconUrl("circle");

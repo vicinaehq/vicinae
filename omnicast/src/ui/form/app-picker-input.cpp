@@ -18,7 +18,7 @@ public:
 
   void setApp(const std::shared_ptr<Application> &app) { this->app = app; }
 
-  QString id() const override { return app->id(); }
+  QString generateId() const override { return app->id(); }
 
   AppItem(const std::shared_ptr<Application> &app) : app(app) {}
 };

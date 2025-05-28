@@ -3,14 +3,13 @@
 #include "theme.hpp"
 #include "ui/action-pannel/action-list-item.hpp"
 #include "ui/action-pannel/action.hpp"
-#include "ui/empty-view.hpp"
 #include "ui/omni-list-item-widget.hpp"
 #include "ui/omni-list.hpp"
 #include "ui/popover.hpp"
 #include "ui/top_bar.hpp"
 #include "ui/typography.hpp"
-#include <atomic>
 #include <qboxlayout.h>
+#include <qcoreevent.h>
 #include <qdnslookup.h>
 #include <qevent.h>
 #include <qlineedit.h>
@@ -21,6 +20,7 @@
 #include <qstackedwidget.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
+#include <ranges>
 
 class NoResultListItem : public OmniList::AbstractVirtualItem {
   class NoResultWidget : public OmniListItemWidget {
@@ -32,6 +32,7 @@ class NoResultListItem : public OmniList::AbstractVirtualItem {
 
       m_text->setText("No Results");
       m_text->setColor(ColorTint::TextSecondary);
+      m_text->setAlignment(Qt::AlignCenter);
       layout->addWidget(m_text, Qt::AlignCenter);
       setLayout(layout);
     }
@@ -41,7 +42,37 @@ class NoResultListItem : public OmniList::AbstractVirtualItem {
 
   int calculateHeight(int width) const override { return 40; }
 
-  QString id() const override { return "empty-view"; }
+  QString generateId() const override { return "empty-view"; }
+};
+
+class ActionSectionTitleListItem : public OmniList::AbstractVirtualItem {
+  QString m_title;
+  class HeaderWidget : public OmniListItemWidget {
+    TypographyWidget *m_text = new TypographyWidget(this);
+
+  public:
+    HeaderWidget(const QString &title) {
+      auto layout = new QVBoxLayout(this);
+
+      layout->setContentsMargins(10, 5, 5, 5);
+      layout->addWidget(m_text);
+      m_text->setColor(ColorTint::TextSecondary);
+      m_text->setText(title);
+      m_text->setSize(TextSize::TextSmaller);
+      setLayout(layout);
+    }
+  };
+
+  OmniListItemWidget *createWidget() const override { return new HeaderWidget(m_title); }
+
+  QString generateId() const override { return m_title; }
+
+  bool selectable() const override { return false; }
+
+  ListRole role() const override { return AbstractVirtualItem::ListSection; }
+
+public:
+  ActionSectionTitleListItem(const QString &title) : m_title(title) {}
 };
 
 class ActionPanelView : public QWidget {
@@ -51,6 +82,8 @@ protected:
   virtual void onActivate() {}
   virtual void onDeactivate() {}
   virtual void onInitialize() {}
+  void pop() { emit popCurrentViewRequested(); }
+  void pushView(ActionPanelView *view) { emit pushViewRequested(view); }
 
 public:
   virtual QList<AbstractAction *> actions() const { return {}; }
@@ -62,6 +95,8 @@ public:
 
 signals:
   void actionActivated(AbstractAction *action) const;
+  void pushViewRequested(ActionPanelView *view) const;
+  void popCurrentViewRequested() const;
 };
 
 class ActionPanelListView : public ActionPanelView {
@@ -96,6 +131,25 @@ protected:
     }
   }
 
+  void keyPressEvent(QKeyEvent *event) override {
+    switch (event->key()) {
+    case Qt::Key_Up:
+      m_list->selectUp();
+      break;
+    case Qt::Key_Down:
+      m_list->selectDown();
+      break;
+    case Qt::Key_Return:
+      m_list->activateCurrentSelection();
+      break;
+    case Qt::Key_Backspace:
+      pop();
+      break;
+    }
+
+    return ActionPanelView::keyPressEvent(event);
+  }
+
 public:
   ActionPanelListView() {
     m_layout->setContentsMargins(0, 0, 0, 0);
@@ -104,6 +158,7 @@ public:
     m_layout->addWidget(new HDivider);
     m_layout->addWidget(m_input);
     m_input->setContentsMargins(10, 10, 10, 10);
+    m_list->setMargins(5, 5, 5, 5);
 
     setLayout(m_layout);
     connect(m_input, &SearchBar::textChanged, this, &ActionPanelListView::onSearchChanged);
@@ -143,29 +198,77 @@ public:
 
   void setTitle(const QString &title) { m_title = title; }
 
-  void addSection(const QString &title = "") { m_sections.emplace_back(ActionSection{.title = title}); }
+  void addSection(const QString &title = "") { m_sections.emplace_back(ActionSection{}); }
 
   void addAction(AbstractAction *action) {
     if (m_sections.empty()) { addSection(m_title); }
     m_sections.at(m_sections.size() - 1).actions.emplace_back(std::shared_ptr<AbstractAction>(action));
   }
 
-  void onSearchChanged(const QString &text) override {
+  std::vector<AbstractAction *> filterActions(const QString &text) {
+    auto filterAction = [&](const std::shared_ptr<AbstractAction> &action) -> bool {
+      auto words = action->title().split(" ");
+      return std::ranges::any_of(
+          words, [&](const QString &word) { return word.startsWith(text, Qt::CaseInsensitive); });
+    };
+
+    auto filteredActions = m_sections |
+                           std::views::transform([](const auto &section) { return section.actions; }) |
+                           std::views::join | std::views::filter(filterAction) |
+                           std::views::transform([](const auto &action) { return action.get(); }) |
+                           std::ranges::to<std::vector>();
+
+    return filteredActions;
+  }
+
+  void buildEmpty() {
     m_list->beginResetModel();
 
+    if (!m_title.isEmpty()) {
+      auto &section = m_list->addSection();
+
+      section.addItem(std::make_unique<ActionSectionTitleListItem>(m_title));
+    }
+
     for (const auto &actionSection : m_sections) {
-      auto &section = m_list->addSection(actionSection.title);
+      auto &section = m_list->addSection();
+
+      if (!actionSection.title.isEmpty() && !actionSection.actions.empty()) {
+        section.addItem(std::make_unique<ActionSectionTitleListItem>(actionSection.title));
+      }
 
       for (const auto &action : actionSection.actions) {
-        if (action->title().contains(text, Qt::CaseInsensitive)) {
-          section.addItem(std::make_unique<ActionListItem>(action.get()));
-        }
+        section.addItem(std::make_unique<ActionListItem>(action.get()));
       }
 
       m_list->addDivider();
     }
 
     m_list->endResetModel(OmniList::SelectFirst);
+  }
+
+  void buildFiltered(const QString &query) {
+    m_list->beginResetModel();
+    auto actions = filterActions(query);
+    auto &titleSection = m_list->addSection();
+
+    if (!m_title.isEmpty()) { titleSection.addItem(std::make_unique<ActionSectionTitleListItem>(m_title)); }
+    if (actions.empty()) {
+      titleSection.addItem(std::make_unique<NoResultListItem>());
+    } else {
+      std::ranges::for_each(filterActions(query), [&](AbstractAction *action) {
+        titleSection.addItem(std::make_unique<ActionListItem>(action));
+      });
+    }
+
+    m_list->endResetModel(OmniList::SelectFirst);
+  }
+
+  void onSearchChanged(const QString &text) override {
+    QString query = text.trimmed();
+
+    if (query.isEmpty()) return buildEmpty();
+    return buildFiltered(text);
   }
 
   ActionPanelStaticListView() {}
@@ -269,6 +372,8 @@ public:
     if (!m_viewStack.empty()) {
       auto next = m_viewStack.top();
       next->show();
+    } else {
+      close();
     }
 
     view->deleteLater();
@@ -283,6 +388,9 @@ public:
 
     view->installEventFilter(this);
     connect(view, &ActionPanelView::actionActivated, this, &ActionPanelV2Widget::actionActivated);
+    connect(view, &ActionPanelView::popCurrentViewRequested, this, &ActionPanelV2Widget::popCurrentView);
+    connect(view, &ActionPanelView::pushViewRequested, this, &ActionPanelV2Widget::pushView);
+
     m_layout->addWidget(view);
     m_viewStack.push(view);
     view->initialize();

@@ -7,6 +7,7 @@
 #include <qmimetype.h>
 #include <qprocess.h>
 #include <set>
+#include <ranges>
 
 class XdgApplicationBase : public Application {
 public:
@@ -17,6 +18,7 @@ class XdgApplicationAction : public XdgApplicationBase {
   QString _id;
   XdgDesktopEntry::Action _data;
   XdgDesktopEntry _parentData;
+  QString m_parentPath;
 
   OmniIconUrl iconUrl() const override {
     return _data.icon.isEmpty() ? SystemOmniIconUrl(_parentData.icon) : SystemOmniIconUrl(_data.icon);
@@ -28,11 +30,12 @@ class XdgApplicationAction : public XdgApplicationBase {
   QString fullyQualifiedName() const override { return _parentData.name + ": " + _data.name; }
   QString name() const override { return _data.name; }
   QString id() const override { return _id; };
+  std::filesystem::path path() const override { return m_parentPath.toStdString(); };
 
 public:
   XdgApplicationAction(const XdgDesktopEntry::Action &action, const XdgDesktopEntry &parentData,
-                       const QString &parentId)
-      : _id(parentId + "." + action.id), _data(action), _parentData(parentData) {}
+                       const QString &parentPath, const QString &parentId)
+      : _id(parentId + "." + action.id), _data(action), _parentData(parentData), m_parentPath(parentPath) {}
 };
 
 class XdgApplication : public XdgApplicationBase {
@@ -47,18 +50,16 @@ public:
   bool displayable() const override { return !_data.noDisplay; }
   bool isTerminalApp() const override { return _data.terminal; }
   bool isTerminalEmulator() const override { return _data.categories.contains("TerminalEmulator"); }
+  std::filesystem::path path() const override { return _path.toStdString(); };
+
   std::vector<QString> keywords() const override { return {_data.keywords.begin(), _data.keywords.end()}; }
   OmniIconUrl iconUrl() const override { return SystemOmniIconUrl(_data.icon); }
   std::vector<std::shared_ptr<Application>> actions() const override {
-    std::vector<std::shared_ptr<Application>> list;
+    auto makeAction = [&](const XdgDesktopEntry::Action action) -> std::shared_ptr<Application> {
+      return std::shared_ptr<Application>(new XdgApplicationAction(action, _data, _path, id()));
+    };
 
-    list.reserve(_data.actions.size());
-
-    for (const auto &action : _data.actions) {
-      list.push_back(std::make_shared<XdgApplicationAction>(action, _data, id()));
-    }
-
-    return list;
+    return _data.actions | std::views::transform(makeAction) | std::ranges::to<std::vector>();
   }
 
   std::vector<QString> exec() const override { return {_data.exec.begin(), _data.exec.end()}; }

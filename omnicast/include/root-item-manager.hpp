@@ -1,4 +1,5 @@
 #pragma once
+#include "action-panel/action-panel.hpp"
 #include "argument.hpp"
 #include "extend/metadata-model.hpp"
 #include "libtrie/trie.hpp"
@@ -85,6 +86,8 @@ public:
    * action.
    */
   virtual QList<AbstractAction *> actions() const { return {}; }
+
+  virtual ActionPanelView *actionPanel() const { return nullptr; }
 
   /**
    * Alternative list of actions to display in fallback mode.

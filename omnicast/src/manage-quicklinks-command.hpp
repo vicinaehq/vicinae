@@ -65,13 +65,21 @@ class QuicklinkItem : public AbstractDefaultListItem, public ListView::Actionnab
   std::shared_ptr<Bookmark> link;
 
 public:
-  QList<AbstractAction *> generateActions() const override {
+  ActionPanelView *actionPanel() const override {
+    auto panel = new ActionPanelStaticListView;
+
     auto open = new OpenCompletedBookmarkAction(link);
     auto edit = new EditBookmarkAction(link);
     auto duplicate = new DuplicateBookmarkAction(link);
     auto remove = new RemoveBookmarkAction(link);
 
-    return {open, edit, duplicate, remove};
+    panel->addAction(open);
+    panel->addAction(edit);
+    panel->addAction(duplicate);
+    panel->addSection();
+    panel->addAction(remove);
+
+    return panel;
   }
 
   std::unique_ptr<CompleterData> createCompleter() const override {
@@ -102,7 +110,7 @@ public:
     return new OmniListView::SideDetailWidget(*detailModel.get());
   }
 
-  QString id() const override { return QString::number(link->id()); }
+  QString generateId() const override { return QString::number(link->id()); }
 
 public:
   QuicklinkItem(const std::shared_ptr<Bookmark> &link) : link(link) {}

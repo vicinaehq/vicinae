@@ -12,7 +12,7 @@
 
 const QString &OmniList::VirtualSection::name() const { return _name; }
 
-QString OmniList::VirtualSection::id() const { return name(); }
+QString OmniList::VirtualSection::generateId() const { return name(); }
 
 bool OmniList::VirtualSection::showHeader() { return count() > 0 && !_name.isEmpty(); }
 
@@ -76,6 +76,8 @@ void OmniList::updateVisibleItems() {
   }
 
   if (startIndex >= _virtual_items.size()) return;
+
+  qDebug() << "margin top" << margins.top;
 
   int marginOffset = std::max(0, margins.top - scrollHeight);
   int viewportY = marginOffset + _virtual_items[startIndex].y - scrollHeight;
@@ -170,15 +172,6 @@ bool OmniList::isShowingEmptyState() const {
 
 void OmniList::applySorting() {
   if (!m_sortingConfig.enabled) return;
-
-  auto compareItems = [](const ListItemInfo &a, const ListItemInfo &b) {
-    return a.item->rankingScore() > b.item->rankingScore();
-  };
-  auto sortItems = [compareItems](VirtualSectionInfo &info) {
-    std::ranges::stable_sort(info.items, compareItems);
-  };
-
-  std::ranges::for_each(m_sections, sortItems);
 }
 
 void OmniList::calculateHeights() {

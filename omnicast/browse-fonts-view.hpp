@@ -124,7 +124,7 @@ class FontListItem : public AbstractDefaultListItem, public ListView::Actionnabl
   QString m_family;
 
 public:
-  QString id() const override { return m_family; }
+  QString generateId() const override { return m_family; }
   ItemData data() const override { return {.iconUrl = BuiltinOmniIconUrl("text"), .name = m_family}; }
 
   QList<AbstractAction *> generateActions() const override {

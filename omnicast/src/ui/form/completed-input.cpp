@@ -37,7 +37,7 @@ bool CompletedInput::eventFilter(QObject *obj, QEvent *event) {
 }
 
 QJsonValue CompletedInput::asJsonValue() const {
-  return _currentSelection ? _currentSelection->id() : QJsonValue();
+  return _currentSelection ? _currentSelection->generateId() : QJsonValue();
 }
 
 void CompletedInput::setValueAsJson(const QJsonValue &value) { setText(value.toString()); }

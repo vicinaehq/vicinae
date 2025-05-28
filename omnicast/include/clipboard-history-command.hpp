@@ -225,7 +225,7 @@ public:
     return new OmniListView::SideDetailWidget(*detail.get());
   }
 
-  QString id() const override { return QString::number(info.id); }
+  QString generateId() const override { return QString::number(info.id); }
 
 public:
   ClipboardHistoryItem(const ClipboardHistoryEntry &info) : info(info) {}

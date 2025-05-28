@@ -99,7 +99,7 @@ public:
     return ruler->sizeHint().height();
   }
 
-  QString id() const override { return m_theme.id; }
+  QString generateId() const override { return m_theme.id; }
 
   bool recyclable() const override { return false; }
 

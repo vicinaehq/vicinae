@@ -99,9 +99,10 @@ void ExtensionGridComponent::render(const RenderModel &baseModel) {
       emit updateActionPannel(*pannel);
     }
   } else {
-    QString oldSelectedId = _grid->selected() ? _grid->selected()->id() : "";
+    QString oldSelectedId = _grid->selected() ? _grid->selected()->generateId() : "";
 
-    if (_grid->selected() && _grid->selected()->isListItem() && _grid->selected()->id() == oldSelectedId) {
+    if (_grid->selected() && _grid->selected()->isListItem() &&
+        _grid->selected()->generateId() == oldSelectedId) {
       onSelectionChanged(_grid->selected(), nullptr);
     }
   }
@@ -117,7 +118,7 @@ void ExtensionGridComponent::onSelectionChanged(const OmniGrid::AbstractVirtualI
     return;
   }
 
-  qDebug() << "selection" << next->id();
+  qDebug() << "selection" << next->generateId();
 
   auto item = static_cast<const ExtensionGridItem *>(next);
   size_t i = 0;
@@ -134,7 +135,7 @@ void ExtensionGridComponent::onSelectionChanged(const OmniGrid::AbstractVirtualI
 
     emit updateActionPannel(*pannel);
   }
-  if (auto handler = _model.onSelectionChanged) { emit notifyEvent(*handler, {next->id()}); }
+  if (auto handler = _model.onSelectionChanged) { emit notifyEvent(*handler, {next->generateId()}); }
 }
 
 void ExtensionGridComponent::handleDebouncedSearchNotification() {

@@ -53,99 +53,10 @@
 #include <ranges>
 
 class RootSearchItem : public AbstractDefaultListItem, public ListView::Actionnable {
-  class DisableItemAction : public AbstractAction {
-    std::shared_ptr<RootItem> m_item;
-    void execute(AppWindow &app) override {
-      auto manager = ServiceRegistry::instance()->rootItemManager();
-
-      if (manager->disableItem(m_item->uniqueId())) {
-        app.statusBar->setToast("Item disabled", ToastPriority::Success);
-      } else {
-        app.statusBar->setToast("Failed to disabled item", ToastPriority::Danger);
-      }
-    }
-
-  public:
-    DisableItemAction(const std::shared_ptr<RootItem> &item)
-        : AbstractAction("Disable item", BuiltinOmniIconUrl("trash")), m_item(item) {}
-  };
-
-  class DefaultActionWrapper : public AbstractAction {
-    AbstractAction *m_action = nullptr;
-    QString m_id;
-
-    void execute() override {
-      auto manager = ServiceRegistry::instance()->rootItemManager();
-
-      if (manager->registerVisit(m_id)) {
-        qDebug() << "Visit registered";
-      } else {
-        qCritical() << "Failed to register visit";
-      }
-
-      m_action->execute();
-    }
-
-  public:
-    QString title() const override { return m_action->title(); }
-
-    DefaultActionWrapper(const QString &id, AbstractAction *action)
-        : AbstractAction(action->title(), action->iconUrl), m_id(id), m_action(action) {}
-    ~DefaultActionWrapper() { /*m_action->deleteLater();*/ }
-  };
 
   std::shared_ptr<RootItem> m_item;
 
-  QList<AbstractAction *> generateActions() const override {
-    auto baseActions = m_item->actions();
-    QList<AbstractAction *> finalActions;
-
-    finalActions.reserve(baseActions.size() + 2);
-
-    if (!baseActions.empty()) {
-      AbstractAction *action = baseActions.at(0);
-      auto dflt = new DefaultActionWrapper(m_item->uniqueId(), action);
-
-      dflt->setPrimary(true);
-      finalActions.emplace_back(dflt);
-    }
-
-    for (int i = 1; i < baseActions.size(); ++i) {
-      finalActions.emplace_back(baseActions.at(i));
-    }
-
-    finalActions.emplace_back(new CopyToClipboardAction({}, "Reset ranking"));
-    finalActions.emplace_back(new DisableItemAction(m_item));
-
-    return finalActions;
-  }
-
-  ActionPanelView *actionPanel() const override {
-    auto panel = new ActionPanelStaticListView;
-    auto baseActions = m_item->actions();
-
-    if (!baseActions.empty()) {
-      AbstractAction *action = baseActions.at(0);
-      auto dflt = new DefaultActionWrapper(m_item->uniqueId(), action);
-
-      dflt->setPrimary(true);
-      panel->addAction(dflt);
-    }
-
-    for (int i = 1; i < baseActions.size(); ++i) {
-      panel->addAction(baseActions.at(i));
-    }
-
-    panel->addSection();
-
-    auto resetRanking = new CopyToClipboardAction({}, "Reset ranking");
-    auto disable = new DisableItemAction(m_item);
-
-    panel->addAction(resetRanking);
-    panel->addAction(disable);
-
-    return panel;
-  }
+  ActionPanelView *actionPanel() const override { return m_item->actionPanel(); }
 
   ItemData data() const override {
     return {
@@ -163,38 +74,35 @@ class RootSearchItem : public AbstractDefaultListItem, public ListView::Actionna
     });
   }
 
-  QString id() const override { return m_item->uniqueId(); }
+  QString generateId() const override { return m_item->uniqueId(); }
 
 public:
   const RootItem &item() const { return *m_item.get(); }
   RootSearchItem(const std::shared_ptr<RootItem> &item) : m_item(item) {}
-  ~RootSearchItem() {}
 };
 
 class FallbackRootSearchItem : public AbstractDefaultListItem, public ListView::Actionnable {
   std::shared_ptr<RootItem> m_item;
 
-  QList<AbstractAction *> generateActions() const override {
-    auto actions = m_item->fallbackActions();
+  ActionPanelView *actionPanel() const override {
+    auto panel = new ActionPanelStaticListView();
     auto manage = new ManageFallbackActions();
+    auto actions = m_item->fallbackActions();
 
-    actions << manage;
-
-    if (actions.size() > 0) {
-      auto action = actions.at(0);
-      action->setShortcut({.key = "return"});
-      action->setPrimary(true);
+    if (!actions.empty()) {
+      actions.at(0)->setPrimary(true);
+      actions.at(0)->setShortcut({.key = "return"});
     }
 
-    if (actions.size() > 1) {
-      auto action = actions.at(1);
-      action->setShortcut({.key = "return", .modifiers = {"shift"}});
-    }
+    if (actions.size() > 1) { actions.at(1)->setShortcut({.key = "return", .modifiers = {"shift"}}); }
 
-    return actions;
+    std::ranges::for_each(m_item->fallbackActions(), [&](const auto &action) { panel->addAction(action); });
+    panel->addAction(manage);
+
+    return panel;
   }
 
-  QString id() const override { return QString("fallback.%1").arg(m_item->uniqueId()); }
+  QString generateId() const override { return QString("fallback.%1").arg(m_item->uniqueId()); }
 
   ItemData data() const override {
     return {
@@ -221,7 +129,7 @@ class ColorListItem : public OmniList::AbstractVirtualItem, public ListView::Act
     return widget;
   }
 
-  QString id() const override { return m_name; }
+  QString generateId() const override { return m_name; }
 
   int calculateHeight(int width) const override {
     static ColorTransformWidget *widget = nullptr;
@@ -260,7 +168,7 @@ protected:
     return ruler.sizeHint().height();
   }
 
-  QString id() const override { return item.expression; }
+  QString generateId() const override { return item.expression; }
 
   QList<AbstractAction *> generateActions() const override {
     QString sresult = item.result;

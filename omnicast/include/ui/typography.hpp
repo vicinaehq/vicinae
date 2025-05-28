@@ -54,12 +54,13 @@ public:
   void setSize(TextSize size) {
     QFont _font = font();
 
-    _font.setPointSizeF(m_theme.pointSize(size));
+    _font.setPointSize(m_theme.pointSize(size));
     _font.setWeight(m_weight);
 
-    setFont(_font);
+    qDebug() << text() << "point size" << m_theme.pointSize(size);
 
     m_size = size;
+    setFont(_font);
     updateGeometry();
   }
 

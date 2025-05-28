@@ -2,7 +2,7 @@
 
 void ActionListItem::setup(ActionListWidget *widget) const { widget->setAction(action); }
 
-QString ActionListItem::id() const { return action->id(); }
+QString ActionListItem::generateId() const { return action->id(); }
 
 OmniListItemWidget *ActionListItem::createWidget() const {
   auto widget = new ActionListWidget;

@@ -58,7 +58,7 @@ public:
       return {.iconUrl = m_data.url, .name = m_data.title, .accessories = {}};
     }
 
-    QString id() const override { return m_data.title; }
+    QString generateId() const override { return m_data.title; }
 
   public:
     CompletionListItem(const Completer::CompletionChoice &data) : m_data(data) {}
