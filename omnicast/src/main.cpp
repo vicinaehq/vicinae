@@ -1,7 +1,7 @@
 #include "ai/ollama-ai-provider.hpp"
 #include <QStyleHints>
 #include "app-service.hpp"
-#include "app-root-provider.hpp"
+#include "root-search/apps/app-root-provider.hpp"
 #include "app.hpp"
 #include <QApplication>
 #include "bookmark-service.hpp"
@@ -45,6 +45,7 @@
 #include "quicklist-database.hpp"
 #include "ranking-service.hpp"
 #include "root-item-manager.hpp"
+#include "root-search/apps/app-root-provider.hpp"
 #include "root-search/bookmarks/bookmark-root-provider.hpp"
 #include "service-registry.hpp"
 #include "theme.hpp"

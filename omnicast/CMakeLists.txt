@@ -86,12 +86,18 @@ set(SRCS
 	src/root-search/extensions/extension-root-provider.cpp
 	src/root-search/bookmarks/bookmark-root-provider.hpp
 	src/root-search/bookmarks/bookmark-root-provider.cpp
+	src/root-search/apps/app-root-provider.hpp
+	src/root-search/apps/app-root-provider.cpp
 
 	src/actions/theme/theme-actions.hpp
 	src/actions/theme/theme-actions.cpp
 
 	src/actions/root-search/root-search-actions.hpp
 	src/actions/root-search/root-search-actions.cpp
+
+	src/actions/app/app-actions.hpp
+	src/actions/app/app-actions.cpp
+
 
 	src/color-formatter.hpp
 	src/color-formatter.cpp
@@ -153,9 +159,6 @@ set(SRCS
 
 	include/ui/action-pannel/action-list-item.hpp
 	src/ui/action-pannel/action-list-item.cpp
-
-	include/ui/action-pannel/open-with-action.hpp
-	src/ui/action-pannel/open-with-action.cpp
 
 	# end action-pannel-widget
 

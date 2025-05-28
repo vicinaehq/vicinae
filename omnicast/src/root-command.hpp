@@ -1,6 +1,5 @@
 #pragma once
 #include "actions/fallback-actions.hpp"
-#include "app-root-provider.hpp"
 #include "argument.hpp"
 #include "base-view.hpp"
 #include "clipboard-actions.hpp"

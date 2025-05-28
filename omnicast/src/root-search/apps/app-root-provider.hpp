@@ -1,0 +1,35 @@
+#pragma once
+#include "app-service.hpp"
+#include "app/app-database.hpp"
+#include "root-item-manager.hpp"
+
+class AppRootItem : public RootItem {
+  std::shared_ptr<Application> m_app;
+
+  double baseScoreWeight() const override;
+  QString providerId() const override;
+  QString displayName() const override;
+  ActionPanelView *actionPanel() const override;
+  AccessoryList accessories() const override;
+  QString uniqueId() const override;
+  OmniIconUrl iconUrl() const override;
+  std::vector<QString> keywords() const override;
+
+public:
+  const Application &app() const { return *m_app.get(); }
+  AppRootItem(const std::shared_ptr<Application> &app) : m_app(app) {}
+};
+
+class AppRootProvider : public RootProvider {
+public:
+  AppService &m_appService;
+
+  std::vector<std::shared_ptr<RootItem>> loadItems() const override;
+
+  Type type() const override;
+  QString displayName() const override;
+  QString uniqueId() const override;
+
+public:
+  AppRootProvider(AppService &appService);
+};

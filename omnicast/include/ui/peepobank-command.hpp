@@ -1,8 +1,8 @@
 #pragma once
+#include "actions/app/app-actions.hpp"
 #include "base-view.hpp"
 #include "omni-icon.hpp"
 #include "ui/image/omnimg.hpp"
-#include "app-root-provider.hpp"
 #include "common-actions.hpp"
 #include "service-registry.hpp"
 #include "ui/omni-grid.hpp"
