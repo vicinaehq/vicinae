@@ -175,7 +175,6 @@ public:
   }
 
   int pointSize(TextSize size) const {
-    qDebug() << "point size" << size;
     switch (size) {
     case TextSize::TextRegular:
       return m_baseFontPointSize;

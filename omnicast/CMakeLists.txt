@@ -88,6 +88,15 @@ set(SRCS
 	src/root-search/bookmarks/bookmark-root-provider.cpp
 	src/root-search/apps/app-root-provider.hpp
 	src/root-search/apps/app-root-provider.cpp
+	
+	src/extension/manager/extension-manager.hpp
+	src/extension/manager/extension-manager.cpp
+
+	# Bookmark - Start
+	src/services/bookmark/bookmark-service.hpp
+	src/services/bookmark/bookmark-service.cpp
+	src/services/bookmark/bookmark.hpp
+	src/services/bookmark/bookmark.cpp
 
 	src/actions/theme/theme-actions.hpp
 	src/actions/theme/theme-actions.cpp
@@ -142,17 +151,6 @@ set(SRCS
 	# begin action-pannel-widget
 	include/ui/action-pannel/action.hpp
 	src/ui/action-pannel/action.cpp
-
-	include/ui/action-pannel/action-section.hpp
-	src/ui/action-pannel/action-section.cpp
-
-	include/ui/action-pannel/action-pannel-view.hpp
-
-	include/ui/action-pannel/action-pannel-widget.hpp
-	src/ui/action-pannel/action-pannel-widget.cpp
-
-	include/ui/action-pannel/action-pannel-list-view.hpp
-	src/ui/action-pannel/action-pannel-list-view.cpp
 
 	include/ui/action-pannel/action-list-widget.hpp
 	src/ui/action-pannel/action-list-widget.cpp
@@ -211,8 +209,6 @@ set(SRCS
 	include/extension/form/extension-password-field.hpp
 	include/extension/form/extension-checkbox-field.hpp
 	include/extension/form/extension-dropdown.hpp
-
-	include/bookmark-service.hpp
 
 	include/extend/extension-detail-view.hpp
 
@@ -358,9 +354,6 @@ set(SRCS
 	./resources.qrc
 	./icons/icons.qrc
 
-	src/filesystem-database.hpp
-	src/indexer-service.hpp
-
 	src/ui/status_bar.hpp
 	src/ui/status_bar.cpp
 	src/ui/input_completer.hpp
@@ -375,7 +368,6 @@ set(SRCS
 	src/ui/toast.cpp
 	#src/ui/action_popover.hpp
 	#src/ui/action_popover.cpp
-	src/extension_manager.hpp
 )
 
 

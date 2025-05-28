@@ -1,7 +1,6 @@
 #pragma once
 #include "action-panel/action-panel.hpp"
 #include "argument.hpp"
-#include "extend/metadata-model.hpp"
 #include "libtrie/trie.hpp"
 #include "omni-database.hpp"
 #include "omni-icon.hpp"

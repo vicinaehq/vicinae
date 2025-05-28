@@ -4,7 +4,7 @@
 #include "extend/action-model.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
-#include "ui/action-pannel/action-pannel-widget.hpp"
+#include <algorithm>
 #include <qevent.h>
 #include <qnamespace.h>
 #include <ranges>
@@ -101,7 +101,6 @@ protected:
   TopBar *m_topBar = new TopBar(this);
   StatusBar *m_statusBar = new StatusBar(this);
   HorizontalLoadingBar *m_loadingBar = new HorizontalLoadingBar(this);
-  ActionPannelWidget *m_actionPannel = new ActionPannelWidget(this);
   ActionPanelV2Widget *m_actionPannelV2 = new ActionPanelV2Widget(this);
 
   KeyboardShortcutModel defaultActionPanelShortcut() { return DEFAULT_ACTION_PANEL_SHORTCUT; }
@@ -138,8 +137,13 @@ protected:
         return true;
       }
 
-      if (auto action = m_actionPannel->findBoundAction(keyEvent)) {
-        executeAction(action);
+      auto actions = m_actionPannelV2->actions();
+      auto bound = std::ranges::find_if(actions, [&](const AbstractAction *action) {
+        return action->shortcut && KeyboardShortcut(*action->shortcut) == keyEvent;
+      });
+
+      if (bound != actions.end()) {
+        executeAction(*bound);
         return true;
       }
     }
@@ -168,9 +172,15 @@ protected:
   }
 
   void executeAction(AbstractAction *action) {
-    m_actionPannelV2->close();
     action->execute();
     onActionExecuted(action);
+    if (action->isSubmenu()) {
+      if (auto panel = action->createSubmenu()) {
+        m_actionPannelV2->pushView(panel);
+        return;
+      }
+    }
+    m_actionPannelV2->close();
   }
 
   void actionButtonClicked() { m_actionPannelV2->show(); }
@@ -230,16 +240,6 @@ protected:
 
   void setLoading(bool value) { m_loadingBar->setStarted(value); }
 
-  void setActions(const QList<AbstractAction *> &actions) {
-    m_actionPannel->setSignalActions(actions);
-
-    if (!actions.isEmpty()) {
-      m_statusBar->setAction(*actions.at(0));
-    } else {
-      m_statusBar->clearAction();
-    }
-  }
-
   void setupUI(QWidget *centerWidget) {
     m_topBar->setFixedHeight(Omnicast::TOP_BAR_HEIGHT);
     m_statusBar->setFixedHeight(Omnicast::STATUS_BAR_HEIGHT);
@@ -258,9 +258,9 @@ protected:
 
     connect(m_topBar->input, &SearchBar::textChanged, this, &SimpleView::onSearchChanged);
     connect(m_topBar->input, &SearchBar::pop, this, &SimpleView::backspacePressed);
-    connect(m_actionPannel, &ActionPannelWidget::opened, this, &SimpleView::actionPannelOpened);
-    connect(m_actionPannel, &ActionPannelWidget::closed, this, &SimpleView::actionPannelClosed);
-    connect(m_actionPannel, &ActionPannelWidget::actionExecuted, this, &SimpleView::executeAction);
+    // connect(m_actionPannel, &ActionPannelWidget::opened, this, &SimpleView::actionPannelOpened);
+    // connect(m_actionPannel, &ActionPannelWidget::closed, this, &SimpleView::actionPannelClosed);
+    // connect(m_actionPannel, &ActionPannelWidget::actionExecuted, this, &SimpleView::executeAction);
     connect(m_actionPannelV2, &ActionPanelV2Widget::actionActivated, this, &SimpleView::executeAction);
     connect(m_statusBar, &StatusBar::actionButtonClicked, this, &SimpleView::actionButtonClicked);
   }
@@ -324,7 +324,6 @@ protected:
     if (!next) {
       m_split->setDetailVisibility(false);
       m_topBar->destroyCompleter();
-      setActions({});
       // setNavigationTitle(QString("%1").arg(m_baseNavigationTitle));
 
       return;
@@ -423,7 +422,6 @@ protected:
                                 const OmniList::AbstractVirtualItem *previous) {
     if (!next) {
       m_topBar->destroyCompleter();
-      setActions({});
       // setNavigationTitle(QString("%1").arg(m_baseNavigationTitle));
 
       return;
@@ -446,10 +444,10 @@ protected:
       if (!actions.isEmpty()) { actions.at(0)->setShortcut({.key = "return"}); }
       if (actions.size() > 1) { actions.at(1)->setShortcut({.key = "return", .modifiers = {"shift"}}); }
 
-      setActions(actions);
+      // setActions(actions);
     } else {
       m_topBar->destroyCompleter();
-      setActions({});
+      // setActions({});
     }
   }
 

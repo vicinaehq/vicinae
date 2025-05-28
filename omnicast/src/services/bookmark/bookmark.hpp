@@ -1,0 +1,66 @@
+#pragma once
+#include <qlogging.h>
+#include <qdebug.h>
+#include <qobject.h>
+#include <qsqlquery.h>
+#include <qstring.h>
+#include <qsqlerror.h>
+#include <qtmetamacros.h>
+
+class Bookmark {
+  /**
+   * A list of reserved placeholder IDs. Each ID is meant to implement its own expansion rules.
+   * A placeholder with an ID not present in the list is assumed to be an argument placeholder with the
+   * unknown ID as a name. For instance, one can use `https://example.com/search?q={query}` instead of the
+   * longer `https://example.com/search?q={argument name="query"}`.
+   */
+  const std::vector<QString> m_reservedPlaceholderIds = {"clipboard", "selected", "uuid", "date"};
+
+public:
+  struct ParsedPlaceholder {
+    QString id;
+    std::map<QString, QString> args;
+  };
+
+  using UrlPart = std::variant<QString, ParsedPlaceholder>;
+
+  struct Argument {
+    QString name;
+    QString defaultValue;
+  };
+
+private:
+  std::vector<ParsedPlaceholder> m_placeholders;
+  std::vector<Argument> m_args;
+  std::vector<UrlPart> m_parts;
+  QString m_raw;
+  int m_id;
+  QString m_name;
+  QString m_app;
+  QString m_icon;
+
+  void insertPlaceholder(const ParsedPlaceholder &placeholder);
+
+public:
+  const std::vector<ParsedPlaceholder> &placeholders() const;
+  const std::vector<Argument> &arguments() const;
+
+  int id() const;
+  QString url() const;
+
+  /**
+   * The ID of the application that is configured to open this url.
+   */
+  QString app() const;
+  QString name() const;
+  QString icon() const;
+  std::vector<UrlPart> parts() const;
+
+  void setApp(const QString &app);
+  void setName(const QString &name);
+  void setIcon(const QString &icon);
+  void setId(int id);
+  void setLink(const QString &link);
+
+  Bookmark() {}
+};

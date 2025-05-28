@@ -1,5 +1,5 @@
 #pragma once
-#include "bookmark-service.hpp"
+#include "services/bookmark/bookmark-service.hpp"
 #include "create-quicklink-command.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"

@@ -5,7 +5,6 @@
 #include "configure-ai-providers-command.hpp"
 #include "emoji-command.hpp"
 #include "icon-browser-command.hpp"
-#include "ask-ai-command.hpp"
 #include "manage-fallback-commands.hpp"
 #include "omnicast/browse-fonts-view.hpp"
 #include "preference.hpp"
@@ -233,7 +232,7 @@ CommandDatabase::CommandDatabase() {
   }
 
   {
-    auto quickAsk = CommandBuilder("quick").withName("Quick AI").toContext<AskAiCommand>();
+    // auto quickAsk = CommandBuilder("quick").withName("Quick AI").toContext<AskAiCommand>();
     auto configureProviders = CommandBuilder("configure-providers")
                                   .withName("Configure AI providers")
                                   .toSingleView<ConfigureAIProvidersView>();
@@ -241,7 +240,6 @@ CommandDatabase::CommandDatabase() {
     auto ai = CommandRepositoryBuilder("ai")
                   .withName("AI")
                   .withTintedIcon("stars", ColorTint::Red)
-                  .withCommand(quickAsk)
                   .withCommand(configureProviders)
                   .makeShared();
 

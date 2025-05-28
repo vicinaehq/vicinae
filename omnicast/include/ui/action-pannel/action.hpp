@@ -7,6 +7,7 @@
 #include <qtmetamacros.h>
 
 class AppWindow;
+class ActionPanelView;
 
 class AbstractAction : public QObject, public NonAssignable {
 public:
@@ -27,6 +28,9 @@ public:
 
   void setShortcut(const KeyboardShortcutModel &shortcut) { this->shortcut = shortcut; }
   void setExecutionCallback(const std::function<void(void)> &cb) { _execCallback = cb; }
+
+  virtual bool isSubmenu() const { return false; }
+  virtual ActionPanelView *createSubmenu() const { return nullptr; }
 
   /**
    * Whether this action is a candidate to be primary action.

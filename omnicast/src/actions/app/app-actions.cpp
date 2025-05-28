@@ -18,3 +18,18 @@ void OpenAppAction::execute() {
 OpenAppAction::OpenAppAction(const std::shared_ptr<Application> &app, const QString &title,
                              const std::vector<QString> args)
     : AbstractAction(title, app->iconUrl()), application(app), args(args) {}
+
+ActionPanelView *OpenWithAppAction::createSubmenu() const {
+  auto panel = new ActionPanelStaticListView;
+  auto appDb = ServiceRegistry::instance()->appDb();
+  auto filterApp = [](const std::shared_ptr<Application> &app) -> bool { return app->displayable(); };
+  auto makeAction = [&](const std::shared_ptr<Application> &app) {
+    return new OpenAppAction(app, app->name(), {m_arguments});
+  };
+
+  panel->setTitle("Open with...");
+  auto actions = appDb->list() | std::views::filter(filterApp) | std::views::transform(makeAction);
+  std::ranges::for_each(actions, [&](AbstractAction *action) { panel->addAction(action); });
+
+  return panel;
+}

@@ -12,7 +12,7 @@
 #include "config.hpp"
 #include "service-registry.hpp"
 #include "wm/window-manager-factory.hpp"
-#include "extension_manager.hpp"
+#include "extension/manager/extension-manager.hpp"
 #include "favicon/favicon-service.hpp"
 #include "image-fetcher.hpp"
 #include "omni-command-db.hpp"

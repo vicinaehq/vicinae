@@ -3,7 +3,6 @@
 #include "common.hpp"
 #include "extension/extension-command.hpp"
 #include "extension/extension-view.hpp"
-#include "extension_manager.hpp"
 #include "local-storage-service.hpp"
 #include "service-registry.hpp"
 #include <algorithm>

@@ -3,5 +3,5 @@
 #include "ui/action-pannel/dynamic-action-pannel-list-view.hpp"
 
 void AbstractActionSection::execute(AppWindow &app) {
-  app.actionPannel->pushView(new DynamicActionPannelListView(this));
+  // app.actionPannel->pushView(new DynamicActionPannelListView(this));
 }

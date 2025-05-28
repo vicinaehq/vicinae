@@ -1,5 +1,4 @@
 #pragma once
-#include "common.hpp"
 #include "root-item-manager.hpp"
 
 class CommandRootItem : public RootItem {

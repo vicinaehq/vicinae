@@ -2,9 +2,9 @@
 #include <QStyleHints>
 #include "app-service.hpp"
 #include "root-search/apps/app-root-provider.hpp"
+#include "services/bookmark/bookmark-service.hpp"
 #include "app.hpp"
 #include <QApplication>
-#include "bookmark-service.hpp"
 #include "config-service.hpp"
 #include "font-service.hpp"
 #include <QFontDatabase>
@@ -36,7 +36,7 @@
 #include <qprocess.h>
 #include <qstringview.h>
 #include <qtmetamacros.h>
-#include "extension_manager.hpp"
+#include "extension/manager/extension-manager.hpp"
 #include "local-storage-service.hpp"
 #include "omnicast.hpp"
 #include "process-manager-service.hpp"

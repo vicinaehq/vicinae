@@ -18,9 +18,6 @@
 #include <qscreen_platform.h>
 #include <qwindow.h>
 #include <stack>
-#include "omnicast.hpp"
-#include "ui/action-pannel/action-pannel-widget.hpp"
-#include "ui/action-pannel/action.hpp"
 #include "ui/alert.hpp"
 #include "ui/dialog.hpp"
 #include "ui/horizontal-loading-bar.hpp"
@@ -99,7 +96,6 @@ public:
   TopBar *topBar = nullptr;
   StatusBar *statusBar = nullptr;
   HorizontalLoadingBar *_loadingBar = nullptr;
-  ActionPannelWidget *actionPannel = nullptr;
   void setToast(const QString &title, ToastPriority priority = ToastPriority::Success) {}
 
   std::stack<ViewSnapshot> navigationStack;

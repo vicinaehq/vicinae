@@ -57,8 +57,6 @@ public:
     _font.setPointSize(m_theme.pointSize(size));
     _font.setWeight(m_weight);
 
-    qDebug() << text() << "point size" << m_theme.pointSize(size);
-
     m_size = size;
     setFont(_font);
     updateGeometry();

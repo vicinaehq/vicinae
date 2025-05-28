@@ -8,6 +8,8 @@
 #include <qtmetamacros.h>
 #include <qwidget.h>
 
+class ActionPannelWidget;
+
 class AbstractExtensionRootComponent : public QWidget {
   Q_OBJECT
   AppWindow &app;
@@ -50,7 +52,7 @@ public:
     app._loadingBar->setStarted(loading);
   }
 
-  ActionPannelWidget *actionPannel() const { return app.actionPannel; }
+  ActionPannelWidget *actionPannel() const { return nullptr; }
 
   virtual void render(const RenderModel &model) = 0;
 

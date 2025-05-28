@@ -1,6 +1,7 @@
 #pragma once
 #include "app.hpp"
 #include "common.hpp"
+#include "ui/action-pannel/action-item.hpp"
 #include <qboxlayout.h>
 #include <qcompare.h>
 #include <qdnslookup.h>

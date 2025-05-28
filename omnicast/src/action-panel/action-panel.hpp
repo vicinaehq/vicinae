@@ -131,24 +131,28 @@ protected:
     }
   }
 
-  void keyPressEvent(QKeyEvent *event) override {
-    switch (event->key()) {
-    case Qt::Key_Up:
-      m_list->selectUp();
-      break;
-    case Qt::Key_Down:
-      m_list->selectDown();
-      break;
-    case Qt::Key_Return:
-      m_list->activateCurrentSelection();
-      break;
-    case Qt::Key_Backspace:
-      pop();
-      break;
+  bool eventFilter(QObject *watched, QEvent *event) override {
+    if (watched == m_input && event->type() == QEvent::KeyPress) {
+      auto keyEvent = static_cast<QKeyEvent *>(event);
+
+      switch (keyEvent->key()) {
+      case Qt::Key_Up:
+        return m_list->selectUp();
+      case Qt::Key_Down:
+        return m_list->selectDown();
+      case Qt::Key_Return:
+        m_list->activateCurrentSelection();
+        return true;
+      case Qt::Key_Escape:
+        pop();
+        return true;
+      }
     }
 
-    return ActionPanelView::keyPressEvent(event);
+    return ActionPanelView::eventFilter(watched, event);
   }
+
+  void keyPressEvent(QKeyEvent *event) override { return ActionPanelView::keyPressEvent(event); }
 
 public:
   ActionPanelListView() {
@@ -159,6 +163,7 @@ public:
     m_layout->addWidget(m_input);
     m_input->setContentsMargins(10, 10, 10, 10);
     m_list->setMargins(5, 5, 5, 5);
+    m_input->installEventFilter(this);
 
     setLayout(m_layout);
     connect(m_input, &SearchBar::textChanged, this, &ActionPanelListView::onSearchChanged);
@@ -362,6 +367,15 @@ public:
     pushView(view);
   }
 
+  void handlePop() {
+    if (m_viewStack.size() == 1) {
+      close();
+      return;
+    }
+
+    popCurrentView();
+  }
+
   void popCurrentView() {
     if (m_viewStack.empty()) return;
 
@@ -372,6 +386,10 @@ public:
     if (!m_viewStack.empty()) {
       auto next = m_viewStack.top();
       next->show();
+      next->activate();
+      QSize contentSize = next->sizeHint();
+      setFixedHeight(contentSize.height());
+      resizeView();
     } else {
       close();
     }
@@ -388,13 +406,15 @@ public:
 
     view->installEventFilter(this);
     connect(view, &ActionPanelView::actionActivated, this, &ActionPanelV2Widget::actionActivated);
-    connect(view, &ActionPanelView::popCurrentViewRequested, this, &ActionPanelV2Widget::popCurrentView);
+    connect(view, &ActionPanelView::popCurrentViewRequested, this, &ActionPanelV2Widget::handlePop);
     connect(view, &ActionPanelView::pushViewRequested, this, &ActionPanelV2Widget::pushView);
 
     m_layout->addWidget(view);
+    m_layout->setCurrentWidget(view);
     m_viewStack.push(view);
     view->initialize();
     view->activate();
+    resizeView();
   }
 
   ActionPanelV2Widget(QWidget *parent = nullptr) : Popover(parent) {

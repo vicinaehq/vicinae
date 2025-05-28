@@ -1,11 +1,11 @@
 #pragma once
 #include "ai/ai-service.hpp"
 #include "app-service.hpp"
-#include "bookmark-service.hpp"
+#include "services/bookmark/bookmark-service.hpp"
 #include "calculator-database.hpp"
 #include "clipboard/clipboard-service.hpp"
 #include "config-service.hpp"
-#include "extension_manager.hpp"
+#include "extension/manager/extension-manager.hpp"
 #include "font-service.hpp"
 #include "local-storage-service.hpp"
 #include "omni-command-db.hpp"

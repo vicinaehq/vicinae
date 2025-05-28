@@ -1,9 +1,10 @@
 #include "root-search/bookmarks/bookmark-root-provider.hpp"
 #include "action-panel/action-panel.hpp"
+#include "actions/app/app-actions.hpp"
 #include "actions/bookmark/bookmark-actions.hpp"
 #include "actions/fallback-actions.hpp"
 #include "argument.hpp"
-#include "bookmark-service.hpp"
+#include "services/bookmark/bookmark-service.hpp"
 #include "root-item-manager.hpp"
 #include <memory>
 #include <ranges>
@@ -13,6 +14,7 @@ ActionPanelView *RootBookmarkItem::actionPanel() const {
 
   panel->setTitle(m_link->name());
   panel->addAction(new OpenCompletedBookmarkAction(m_link));
+  panel->addAction(new OpenWithAppAction({m_link->url()}));
   panel->addAction(new EditBookmarkAction(m_link));
   panel->addAction(new DuplicateBookmarkAction(m_link));
   panel->addAction(new RemoveBookmarkAction(m_link));

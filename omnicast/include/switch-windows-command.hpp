@@ -4,7 +4,6 @@
 #include "service-registry.hpp"
 #include "ui/declarative-omni-list-view.hpp"
 #include "wm/window-manager.hpp"
-#include "ui/action-pannel/move-to-workspace-action.hpp"
 #include <chrono>
 #include <qfuturewatcher.h>
 #include <qnamespace.h>

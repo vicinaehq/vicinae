@@ -383,9 +383,6 @@ private:
           int x = margins.left;
           int y = yOffset;
 
-          qWarning() << "height for item" << item->id() << item->calculateHeight(width) << "offset"
-                     << yOffset;
-
           if (vIndex >= visibleIndexRange.lower && vIndex <= visibleIndexRange.upper) {
             if (auto it = _widgetCache.find(item->id()); it != _widgetCache.end()) {
               if (item->hasPartialUpdates()) { item->refresh(it->second.widget->widget()); }

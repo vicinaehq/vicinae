@@ -174,15 +174,15 @@ void ActionPannelWidget::popToRoot() {
   emit _input->textEdited("");
 }
 
-void ActionPannelWidget::connectView(ActionPannelView *view) {
-  connect(view, &ActionPannelView::actionActivated, this, &ActionPannelWidget::actionExecuted);
+void ActionPannelWidget::connectView(ActionPanelView *view) {
+  connect(view, &ActionPanelView::actionActivated, this, &ActionPannelWidget::actionExecuted);
 }
 
-void ActionPannelWidget::disconnectView(ActionPannelView *view) {
-  disconnect(view, &ActionPannelView::actionActivated, this, &ActionPannelWidget::actionExecuted);
+void ActionPannelWidget::disconnectView(ActionPanelView *view) {
+  disconnect(view, &ActionPanelView::actionActivated, this, &ActionPannelWidget::actionExecuted);
 }
 
-void ActionPannelWidget::pushView(ActionPannelView *view) {
+void ActionPannelWidget::pushView(ActionPanelView *view) {
   if (!_viewStack.empty()) { disconnectView(top()->view); }
 
   connectView(view);

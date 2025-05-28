@@ -1,7 +1,8 @@
 #pragma once
 #include "base-view.hpp"
-#include "bookmark-service.hpp"
+#include "services/bookmark/bookmark-service.hpp"
 #include "favicon/favicon-service.hpp"
+#include "action-panel/action-panel.hpp"
 #include "omni-icon.hpp"
 #include "quicklist-database.hpp"
 #include "service-registry.hpp"
@@ -379,12 +380,13 @@ public:
   }
 
   void onActivate() override {
+    auto panel = new ActionPanelStaticListView;
     auto submitAction = new StaticAction("Submit", BuiltinOmniIconUrl("enter-key"), [this]() { submit(); });
 
     submitAction->setShortcut(KeyboardShortcutModel{.key = "return", .modifiers = {"ctrl"}});
 
-    setActions({submitAction});
-
+    panel->addAction(submitAction);
+    m_actionPannelV2->setView(panel);
     form->focusFirst();
   }
 

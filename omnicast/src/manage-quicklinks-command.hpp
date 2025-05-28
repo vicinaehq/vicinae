@@ -1,7 +1,7 @@
 #pragma once
 #include "base-view.hpp"
 #include "actions/bookmark/bookmark-actions.hpp"
-#include "bookmark-service.hpp"
+#include "services/bookmark/bookmark-service.hpp"
 #include "extend/metadata-model.hpp"
 #include "service-registry.hpp"
 #include "ui/omni-list-view.hpp"

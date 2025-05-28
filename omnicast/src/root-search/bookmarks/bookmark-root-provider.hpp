@@ -1,5 +1,5 @@
 #pragma once
-#include "bookmark-service.hpp"
+#include "services/bookmark/bookmark-service.hpp"
 #include "root-item-manager.hpp"
 
 class RootBookmarkItem : public RootItem {
