@@ -90,6 +90,11 @@ public:
   virtual ActionPanelView *actionPanel() const { return nullptr; }
 
   /**
+   * Action panel shown when this item is used as a fallback command.
+   */
+  virtual ActionPanelView *fallbackActionPanel() const { return nullptr; }
+
+  /**
    * Alternative list of actions to display in fallback mode.
    * Calls actions() as its default implementation.
    */

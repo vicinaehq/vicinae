@@ -3,7 +3,7 @@
 // Messy class whichs role is to keep the command db in sync with the root item manager
 // Eventually we will refactor most of this to have less moving parts.
 
-#include "command-root-provider.hpp"
+#include "root-search/extensions/extension-root-provider.hpp"
 #include "omni-command-db.hpp"
 #include "root-item-manager.hpp"
 #include <qobject.h>

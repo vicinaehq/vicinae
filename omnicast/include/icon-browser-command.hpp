@@ -44,9 +44,7 @@ class IconBrowserView : public GridView {
 
   void onSearchChanged(const QString &s) override { m_grid->setFilter(std::make_unique<IconFilter>(s)); }
 
-public:
-  IconBrowserView() {
-    setSearchPlaceholderText("Search builtin icons...");
+  void initialize() override {
     m_grid->setColumns(8);
     m_grid->setInset(20);
     m_grid->beginUpdate();
@@ -59,5 +57,8 @@ public:
     m_grid->commitUpdate();
     m_grid->selectFirst();
   }
+
+public:
+  IconBrowserView() { setSearchPlaceholderText("Search builtin icons..."); }
   ~IconBrowserView() {}
 };

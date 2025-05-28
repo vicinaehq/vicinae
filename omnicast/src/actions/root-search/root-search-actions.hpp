@@ -1,57 +1,30 @@
 #pragma once
-#include "root-item-manager.hpp"
-#include "service-registry.hpp"
 #include "ui/action-pannel/action.hpp"
 
 class DisableItemAction : public AbstractAction {
   QString m_id;
 
-  void execute() override {
-    auto manager = ServiceRegistry::instance()->rootItemManager();
-    auto ui = ServiceRegistry::instance()->UI();
-
-    if (manager->disableItem(m_id)) {
-      ui->setToast("Item disabled", ToastPriority::Success);
-    } else {
-      ui->setToast("Failed to disable", ToastPriority::Danger);
-    }
-  }
+  void execute() override;
 
 public:
-  DisableItemAction(const QString &id)
-      : AbstractAction("Disable item", BuiltinOmniIconUrl("trash")), m_id(id) {
-    setStyle(AbstractAction::Danger);
-  }
+  DisableItemAction(const QString &id);
 };
 
 class ResetItemRanking : public AbstractAction {
   QString m_id;
-
-  void execute() override {
-    auto manager = ServiceRegistry::instance()->rootItemManager();
-    auto ui = ServiceRegistry::instance()->UI();
-
-    // TODO: reset ranking
-  }
+  void execute() override;
 
 public:
-  ResetItemRanking(const QString &id)
-      : AbstractAction("Reset ranking", BuiltinOmniIconUrl("arrow-counter-clockwise")), m_id(id) {}
+  ResetItemRanking(const QString &id);
 };
 
 class MarkItemAsFavorite : public AbstractAction {
   QString m_id;
 
-  void execute() override {
-    auto manager = ServiceRegistry::instance()->rootItemManager();
-    auto ui = ServiceRegistry::instance()->UI();
-
-    // TODO: mark as favorite
-  }
+  void execute() override;
 
 public:
-  MarkItemAsFavorite(const QString &id)
-      : AbstractAction("Mark as favorite", BuiltinOmniIconUrl("stars")), m_id(id) {}
+  MarkItemAsFavorite(const QString &id);
 };
 
 class DisableApplication : public DisableItemAction {
@@ -62,28 +35,13 @@ public:
 };
 
 class DefaultActionWrapper : public AbstractAction {
-  AbstractAction *m_action = nullptr;
+  std::unique_ptr<AbstractAction> m_action;
   QString m_id;
 
-  void execute() override {
-    auto manager = ServiceRegistry::instance()->rootItemManager();
-
-    if (manager->registerVisit(m_id)) {
-      qDebug() << "Visit registered";
-    } else {
-      qCritical() << "Failed to register visit";
-    }
-
-    m_action->execute();
-  }
+  void execute() override;
 
 public:
-  QString title() const override { return m_action->title(); }
+  QString title() const override;
 
-  DefaultActionWrapper(const QString &id, AbstractAction *action)
-      : AbstractAction(action->title(), action->iconUrl), m_id(id), m_action(action) {
-    setPrimary(true);
-    setShortcut({.key = "return"});
-  }
-  ~DefaultActionWrapper() { m_action->deleteLater(); }
+  DefaultActionWrapper(const QString &id, AbstractAction *action);
 };

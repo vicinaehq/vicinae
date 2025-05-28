@@ -84,23 +84,7 @@ public:
 class FallbackRootSearchItem : public AbstractDefaultListItem, public ListView::Actionnable {
   std::shared_ptr<RootItem> m_item;
 
-  ActionPanelView *actionPanel() const override {
-    auto panel = new ActionPanelStaticListView();
-    auto manage = new ManageFallbackActions();
-    auto actions = m_item->fallbackActions();
-
-    if (!actions.empty()) {
-      actions.at(0)->setPrimary(true);
-      actions.at(0)->setShortcut({.key = "return"});
-    }
-
-    if (actions.size() > 1) { actions.at(1)->setShortcut({.key = "return", .modifiers = {"shift"}}); }
-
-    std::ranges::for_each(m_item->fallbackActions(), [&](const auto &action) { panel->addAction(action); });
-    panel->addAction(manage);
-
-    return panel;
-  }
+  ActionPanelView *actionPanel() const override { return m_item->fallbackActionPanel(); }
 
   QString generateId() const override { return QString("fallback.%1").arg(m_item->uniqueId()); }
 

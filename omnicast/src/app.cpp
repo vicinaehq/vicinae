@@ -128,25 +128,22 @@ void AppWindow::pushView(BaseView *view, const PushViewOptions &opts) {
 
   if (navigationStack.size() > 0) { navigationStack.top().view->hide(); }
 
+  connectView(*view);
   view->setParent(this);
   view->setFixedSize(size());
-  view->initialize();
-  view->setSearchText(opts.searchQuery);
 
+  currentCommand.viewStack.push({.view = view});
+  ServiceRegistry::instance()->UI()->setTopView(view);
+  navigationStack.push({.view = view});
   if (auto navigation = opts.navigation) {
     view->setNavigationTitle(navigation->title);
     view->setNavigationIcon(navigation->iconUrl);
   }
 
-  view->onActivate();
-  qCritical() << "show view";
   view->show();
-
-  connectView(*view);
-
-  currentCommand.viewStack.push({.view = view});
-  ServiceRegistry::instance()->UI()->setTopView(view);
-  navigationStack.push({.view = view});
+  view->initialize();
+  view->setSearchText(opts.searchQuery);
+  view->onActivate();
 }
 
 void AppWindow::unloadCurrentCommand() { popToRoot(); }

@@ -13,7 +13,6 @@
 #include <memory>
 #include <wm/window-manager-factory.hpp>
 #include <QtSql/QtSql>
-#include "root-bookmark-provider.hpp"
 #include "root-extension-manager.hpp"
 #include <QXmlStreamReader>
 #include <QtSql/qsqldatabase.h>
@@ -46,6 +45,7 @@
 #include "quicklist-database.hpp"
 #include "ranking-service.hpp"
 #include "root-item-manager.hpp"
+#include "root-search/bookmarks/bookmark-root-provider.hpp"
 #include "service-registry.hpp"
 #include "theme.hpp"
 #include "ui/ui-controller.hpp"
@@ -198,7 +198,7 @@ int startDaemon() {
     }
 
     rootItemManager->addProvider(std::make_unique<AppRootProvider>(*appService.get()));
-    rootItemManager->addProvider(std::make_unique<RootBookmarkProvider>(*bookmarkService.get()));
+    rootItemManager->addProvider(std::make_unique<BookmarkRootProvider>(*bookmarkService.get()));
 
     registry->setUI(std::make_unique<UIController>());
     registry->setBookmarkService(std::move(bookmarkService));

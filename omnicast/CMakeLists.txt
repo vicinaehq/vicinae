@@ -82,8 +82,16 @@ set(SRCS
 
 	src/command-actions.cpp
 
+	src/root-search/extensions/extension-root-provider.hpp
+	src/root-search/extensions/extension-root-provider.cpp
+	src/root-search/bookmarks/bookmark-root-provider.hpp
+	src/root-search/bookmarks/bookmark-root-provider.cpp
+
 	src/actions/theme/theme-actions.hpp
 	src/actions/theme/theme-actions.cpp
+
+	src/actions/root-search/root-search-actions.hpp
+	src/actions/root-search/root-search-actions.cpp
 
 	src/color-formatter.hpp
 	src/color-formatter.cpp
@@ -202,8 +210,6 @@ set(SRCS
 	include/extension/form/extension-dropdown.hpp
 
 	include/bookmark-service.hpp
-	include/root-bookmark-provider.hpp
-
 
 	include/extend/extension-detail-view.hpp
 
