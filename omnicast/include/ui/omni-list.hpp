@@ -56,6 +56,14 @@ public:
 
       return 0;
     }
+
+    /**
+     * Whether the virtual height of this item type can change across many items.
+     * If set to true, the height returned by the `calculateHeight`	method is cached
+     * until the width allocation for the widget changes.
+     */
+    virtual bool hasUniformHeight() const { return false; }
+
     virtual OmniListItemWidget *createWidget() const = 0;
     virtual void recycle(QWidget *base) const;
     virtual bool recyclable() const;
@@ -174,20 +182,42 @@ public:
     Divider() { m_item = std::make_unique<DividerItem>(); }
   };
 
+  struct Spacer {
+    int value;
+
+  public:
+    Spacer(int n) : value(n) {}
+  };
+
   /**
    * A structured list of items.
    * A section can have a specific header item that will only be shown if the section is not
    * otherwise empty.
    */
   class Section {
-    std::vector<std::unique_ptr<AbstractVirtualItem>> m_items;
+  public:
+    using VirtualWidget = std::unique_ptr<AbstractVirtualItem>;
+    using LayoutItem = std::variant<VirtualWidget, Spacer>;
+
+  private:
+    std::vector<LayoutItem> m_items;
     std::unique_ptr<AbstractVirtualItem> m_headerItem;
     QString m_title;
     QString m_subtitle;
+    int m_spacing = 0;
 
   public:
     Section(const QString &title = "", const QString &subtitle = "") : m_title(title), m_subtitle(subtitle) {
       m_headerItem = std::make_unique<VirtualSection>(title);
+    }
+
+    /**
+     * Set spacing for this section's items.
+     * This equally applies to horizontally and vertically laid out items.
+     */
+    Section &setSpacing(int n) {
+      m_spacing = n;
+      return *this;
     }
 
     Section &withTitle(const QString &title) {
@@ -211,12 +241,19 @@ public:
 
     const QString &title() const { return m_title; }
 
+    int spacing() const { return m_spacing; }
+
     AbstractVirtualItem *headerItem() { return m_headerItem.get(); }
 
-    const std::vector<std::unique_ptr<AbstractVirtualItem>> &items() const { return m_items; }
+    const std::vector<LayoutItem> &items() const { return m_items; }
 
     Section &addItem(std::unique_ptr<AbstractVirtualItem> item) {
       m_items.emplace_back(std::move(item));
+      return *this;
+    }
+
+    Section &addSpacing(int value) {
+      m_items.emplace_back(Spacer(value));
       return *this;
     }
 
@@ -300,7 +337,10 @@ private:
   std::unordered_map<QString, AbstractVirtualItem *> _idItemMap;
   std::unique_ptr<AbstractItemFilter> _filter;
   std::vector<VirtualSectionInfo> m_sections;
+
   SortingConfig m_sortingConfig;
+
+  std::vector<std::pair<size_t, int>> m_cachedHeights;
 
   int _selected;
   QString _selectedId;
@@ -321,6 +361,32 @@ private:
     return false;
   }
 
+  bool isInViewport(const QRect &bounds) {
+    int low = scrollBar->value();
+    int high = low + height();
+
+    return bounds.y() >= low && bounds.y() <= high;
+  }
+
+  int calculateItemHeight(const AbstractVirtualItem *item, int width) {
+    if (!item->hasUniformHeight()) { return item->calculateHeight(width); }
+
+    auto pred = [&](auto &&pair) { return pair.first == item->typeId(); };
+    auto match = std::ranges::find_if(m_cachedHeights, pred);
+    size_t typeId = item->typeId();
+
+    if (match != m_cachedHeights.end()) {
+      qWarning() << "Used cached height for id " << item->id();
+      return match->second;
+    }
+
+    int height = item->calculateHeight(width);
+
+    m_cachedHeights.push_back({typeId, height});
+
+    return height;
+  }
+
   void calculateHeightsFromModel() {
     _virtual_items.clear();
 
@@ -339,8 +405,6 @@ private:
 
     _virtual_items.reserve(totalSize);
 
-    qDebug() << "sections" << m_model.size();
-
     size_t i = -1;
 
     for (const auto &item : m_model) {
@@ -358,12 +422,13 @@ private:
         _virtual_items.push_back(vinfo);
         yOffset += vinfo.height;
 
-      } else if (auto section = std::get_if<std::unique_ptr<Section>>(&item)) {
-        auto &items = (*section)->items();
+      } else if (auto p = std::get_if<std::unique_ptr<Section>>(&item)) {
+        auto &section = *p;
+        auto &items = section->items();
 
         if (items.empty()) continue;
 
-        if (auto header = (*section)->headerItem(); header && !(*section)->title().isEmpty()) {
+        if (auto header = section->headerItem(); header && !section->title().isEmpty()) {
           VirtualListWidgetInfo vinfo{.x = margins.left,
                                       .y = yOffset,
                                       .width = availableWidth,
@@ -376,50 +441,61 @@ private:
           sctx = {.section = nullptr, .x = margins.left, .maxHeight = 0};
         }
 
-        for (auto &item : items) {
-          int vIndex = _virtual_items.size();
-          int height = 0;
-          int width = availableWidth;
-          int x = margins.left;
-          int y = yOffset;
-
-          if (vIndex >= visibleIndexRange.lower && vIndex <= visibleIndexRange.upper) {
-            if (auto it = _widgetCache.find(item->id()); it != _widgetCache.end()) {
-              if (item->hasPartialUpdates()) { item->refresh(it->second.widget->widget()); }
-
-              updatedCache[item->id()] = it->second;
-            }
+        for (auto &sectionItem : items) {
+          if (auto spacer = std::get_if<Spacer>(&sectionItem)) {
+            yOffset += spacer->value;
+            continue;
           }
 
-          if (sctx) {
-            int spacing = 0;
-            // width = sctx->section->calculateItemWidth(width, sctx->index);
-            //  x = sctx->section->calculateItemX(sctx->x, sctx->index);
-            if (sctx->x > margins.left && sctx->index > 0) {
-              yOffset += spacing;
-              y = yOffset;
+          if (auto p = std::get_if<Section::VirtualWidget>(&sectionItem)) {
+            auto &item = *p;
+            int vIndex = _virtual_items.size();
+            int height = 0;
+            int width = availableWidth;
+            int x = margins.left;
+            int y = yOffset;
+
+            if (sctx) {
+              // width = sctx->section->calculateItemWidth(width, sctx->index);
+              //  x = sctx->section->calculateItemX(sctx->x, sctx->index);
+              if (sctx->x == margins.left && sctx->index > 0) {
+                yOffset += section->spacing();
+                y = yOffset;
+              }
+
+              x = sctx->x;
+              sctx->x = sctx->x + width + section->spacing();
+              height = calculateItemHeight(item.get(), width);
+              sctx->maxHeight = std::max(sctx->maxHeight, height);
+
+              if (sctx->x >= availableWidth) {
+                yOffset += sctx->maxHeight;
+                sctx->x = margins.left;
+                sctx->maxHeight = 0;
+              }
+
+              ++sctx->index;
+            } else {
+              height = item->calculateHeight(width);
+              yOffset += height;
             }
 
-            x = sctx->x;
-            sctx->x = sctx->x + width + spacing;
-            height = item->calculateHeight(width);
-            sctx->maxHeight = std::max(sctx->maxHeight, height);
+            VirtualListWidgetInfo vinfo{.x = x, .y = y, .width = width, .height = height, .item = item.get()};
+            QRect rect{x, y, width, height};
 
-            if (sctx->x >= availableWidth) {
-              yOffset += sctx->maxHeight;
-              sctx->x = margins.left;
-              sctx->maxHeight = 0;
+            if (isInViewport(rect)) {
+              qDebug() << "in viewport" << item->id();
+              if (auto it = _widgetCache.find(item->id()); it != _widgetCache.end()) {
+                if (item->hasPartialUpdates()) { item->refresh(it->second.widget->widget()); }
+
+                updatedCache[item->id()] = it->second;
+              }
             }
 
-            ++sctx->index;
-          } else {
-            height = item->calculateHeight(width);
-            yOffset += height;
+            // TODO: if in viewport, look for cached entry
+
+            _virtual_items.push_back(vinfo);
           }
-
-          VirtualListWidgetInfo vinfo{.x = x, .y = y, .width = width, .height = height, .item = item.get()};
-
-          _virtual_items.push_back(vinfo);
         }
       }
     }
@@ -510,8 +586,14 @@ public:
       if (auto section = std::get_if<std::unique_ptr<Section>>(&item)) {
         if (auto header = (*section)->headerItem()) { _idItemMap.insert({header->id(), header}); }
 
-        std::ranges::for_each((*section)->items(),
-                              [this](const auto &item) { _idItemMap.insert({item->id(), item.get()}); });
+        auto items = (*section)->items() | std::views::filter([](auto &&item) {
+                       return std::holds_alternative<std::unique_ptr<AbstractVirtualItem>>(item);
+                     });
+
+        std::ranges::for_each(items, [this](auto &&variant) {
+          auto &item = std::get<std::unique_ptr<AbstractVirtualItem>>(variant);
+          _idItemMap.insert({item->id(), item.get()});
+        });
       }
     });
 
@@ -628,11 +710,7 @@ public:
   };
   virtual ItemData data() const = 0;
 
-  int calculateHeight(int width) const override {
-    static DefaultListItemWidget ruler(OmniIconUrl(""), "", "", {});
-
-    return ruler.sizeHint().height();
-  }
+  bool hasUniformHeight() const override { return true; }
 
   bool hasPartialUpdates() const override { return true; }
 

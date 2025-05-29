@@ -192,6 +192,8 @@ class RootCommandV2 : public ListView {
 
     auto &section = m_list->addSection("Commands");
 
+    section.setSpacing(20);
+
     for (auto item : commandItems)
       section.addItem(std::move(item));
 
@@ -207,6 +209,7 @@ class RootCommandV2 : public ListView {
 
     if (auto provider = rootManager->provider("bookmarks")) {
       auto &section = m_list->addSection("Bookmarks");
+
       auto items = provider->loadItems() | std::views::transform([](const auto &item) {
                      return std::make_unique<RootSearchItem>(item);
                    });

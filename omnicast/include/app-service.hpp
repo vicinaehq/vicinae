@@ -160,6 +160,10 @@ public:
     return m_provider->findBestOpener(target);
   }
 
+  std::vector<std::shared_ptr<Application>> findOpeners(const QString &target) const {
+    return m_provider->findOpeners(target);
+  }
+
   AppService(OmniDatabase &db, RankingService &ranking) : m_db(db), m_ranking(ranking) {
     createTables();
     m_ranking.loadRecords("application");

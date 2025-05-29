@@ -120,10 +120,7 @@ protected:
     m_input->setFocus();
   }
 
-  void resizeEvent(QResizeEvent *event) override {
-    qWarning() << "list view resize" << event->size();
-    ActionPanelView::resizeEvent(event);
-  }
+  void resizeEvent(QResizeEvent *event) override { ActionPanelView::resizeEvent(event); }
 
   void itemActivated(const OmniList::AbstractVirtualItem &item) {
     if (auto actionItem = dynamic_cast<const ActionListItem *>(&item)) {
@@ -170,8 +167,6 @@ public:
     connect(m_list, &OmniList::itemActivated, this, &ActionPanelListView::itemActivated);
     connect(m_list, &OmniList::virtualHeightChanged, this, [this](int height) {
       m_list->setFixedHeight(std::min(height, 180));
-
-      // qCritical() << "vheight" << height;
       updateGeometry();
     });
   }
@@ -313,8 +308,6 @@ class ActionPanelV2Widget : public Popover {
       return;
     }
 
-    qWarning() << "Resize view";
-
     auto parentGeo = window->geometry();
 
     auto x = parentGeo.width() - width() - 10;
@@ -325,19 +318,11 @@ class ActionPanelV2Widget : public Popover {
   }
 
   void showEvent(QShowEvent *event) override {
-    qWarning() << "show ActionPanelV2Widget";
     resizeView();
     QWidget::showEvent(event);
   }
 
-  void resizeEvent(QResizeEvent *event) override {
-    qCritical() << "panel resize" << event->size();
-    qCritical() << "minimum size" << minimumSize();
-    qCritical() << "maximum size" << maximumSize();
-    qCritical() << "minimum size hint" << minimumSizeHint();
-
-    QWidget::resizeEvent(event);
-  }
+  void resizeEvent(QResizeEvent *event) override { QWidget::resizeEvent(event); }
 
 public:
   void popToRoot() {

@@ -77,6 +77,28 @@ AppPtr XdgAppDatabase::findById(const QString &id) const {
 }
 
 std::vector<AppPtr> XdgAppDatabase::findOpeners(const QString &mimeName) const {
+  QUrl url(mimeName);
+
+  if (!url.scheme().isEmpty()) {
+    std::vector<AppPtr> apps;
+    QString mime = "x-scheme-handler/" + url.scheme();
+
+    if (auto it = mimeToDefaultApp.find(mime); it != mimeToDefaultApp.end()) {
+      if (auto it2 = appMap.find(it->second); it2 != appMap.end()) { apps.emplace_back(it2->second); }
+    }
+
+    if (auto it = mimeToApps.find(mime); it != mimeToApps.end()) {
+      for (const auto &appId : it->second) {
+        if (auto it2 = appMap.find(appId); it2 != appMap.end()) {
+          bool alreadyIn = std::ranges::any_of(apps, [&](auto &&app) { return app->id() == appId; });
+          if (!alreadyIn) { apps.emplace_back(it2->second); }
+        }
+      }
+    }
+
+    return apps;
+  }
+
   std::vector<AppPtr> apps;
   std::set<QString> seen;
   std::vector<QString> mimes = {mimeName};

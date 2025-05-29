@@ -4,13 +4,16 @@
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
 #include "ui/action-pannel/action.hpp"
+#include "ui/toast.hpp"
 #include <memory>
 #include <qclipboard.h>
 #include <qlogging.h>
+#include <ranges>
 
 class OpenBookmarkAction : public AbstractAction {
   std::shared_ptr<Bookmark> m_bookmark;
   std::vector<QString> m_arguments;
+  std::shared_ptr<Application> m_app;
 
   void execute(AppWindow &app) override {}
 
@@ -39,7 +42,14 @@ public:
 
     qDebug() << "opening link" << expanded;
 
-    if (auto app = appDb->findById(m_bookmark->app())) { appDb->launch(*app, {expanded}); }
+    if (m_app) {
+      appDb->launch(*m_app, {expanded});
+    } else if (auto app = appDb->findById(m_bookmark->app())) {
+      appDb->launch(*app, {expanded});
+    } else {
+      ui->setToast("No app with id " + m_bookmark->app(), ToastPriority::Danger);
+      return;
+    }
 
     ui->popToRoot();
     ui->closeWindow();
@@ -48,25 +58,27 @@ public:
   QString title() const override { return "Open bookmark"; }
 
 public:
-  OpenBookmarkAction(const std::shared_ptr<Bookmark> &bookmark, const std::vector<QString> &arguments)
-      : AbstractAction("Open bookmark", bookmark->icon()), m_bookmark(bookmark), m_arguments(arguments) {}
+  OpenBookmarkAction(const std::shared_ptr<Bookmark> &bookmark, const std::vector<QString> &arguments,
+                     const std::shared_ptr<Application> &app = nullptr)
+      : AbstractAction("Open bookmark", bookmark->icon()), m_bookmark(bookmark), m_arguments(arguments),
+        m_app(app) {}
 };
 
 class OpenCompletedBookmarkAction : public AbstractAction {
   std::shared_ptr<Bookmark> m_bookmark;
+  std::shared_ptr<Application> m_app;
 
-  void execute(AppWindow &app) override {}
-
+public:
   void execute() override {
     auto ui = ServiceRegistry::instance()->UI();
-    OpenBookmarkAction open(m_bookmark, ui->topView()->argumentValues());
+    OpenBookmarkAction open(m_bookmark, ui->topView()->argumentValues(), m_app);
 
     open.execute();
   }
 
-public:
-  OpenCompletedBookmarkAction(const std::shared_ptr<Bookmark> &bookmark)
-      : AbstractAction("Open bookmark", bookmark->icon()), m_bookmark(bookmark) {}
+  OpenCompletedBookmarkAction(const std::shared_ptr<Bookmark> &bookmark,
+                              const std::shared_ptr<Application> &app = nullptr)
+      : AbstractAction("Open bookmark", bookmark->icon()), m_bookmark(bookmark), m_app(app) {}
 };
 
 class OpenBookmarkFromSearchText : public AbstractAction {
@@ -132,8 +144,6 @@ struct DuplicateBookmarkAction : public AbstractAction {
 public:
   std::shared_ptr<Bookmark> link;
 
-  void execute(AppWindow &app) override {}
-
   void execute() override {
     auto ui = ServiceRegistry::instance()->UI();
     auto view = new DuplicateBookmarkView(link);
@@ -145,4 +155,51 @@ public:
 
   DuplicateBookmarkAction(const std::shared_ptr<Bookmark> &link)
       : AbstractAction("Duplicate link", BuiltinOmniIconUrl("duplicate")), link(link) {}
+};
+
+/**
+ * Submenu action to let the user select which app to open the bookmark
+ * with. The list of available apps depends on the bookmark url.
+ */
+class OpenCompletedBookmarkWithAction : public AbstractAction {
+  class OpenAction : public AbstractAction {
+    std::shared_ptr<Bookmark> m_bookmark;
+    std::shared_ptr<Application> m_app;
+
+    void execute() override { OpenCompletedBookmarkAction(m_bookmark, m_app).execute(); }
+
+    QString id() const override { return m_app->id(); }
+
+  public:
+    OpenAction(const std::shared_ptr<Bookmark> &bookmark, const std::shared_ptr<Application> &app)
+        : AbstractAction(app->name(), app->iconUrl()), m_bookmark(bookmark), m_app(app) {}
+  };
+
+  std::shared_ptr<Bookmark> m_bookmark;
+
+  bool isSubmenu() const override { return true; }
+
+  ActionPanelView *createSubmenu() const override {
+    auto appDb = ServiceRegistry::instance()->appDb();
+    auto apps = appDb->findOpeners(m_bookmark->url());
+    auto mapAction = [&](auto &&app) { return new OpenAction(m_bookmark, app); };
+    auto panel = new ActionPanelStaticListView();
+    bool hasBookmarkAction =
+        std::ranges::any_of(apps, [&](auto &&app) { return m_bookmark->app() == app->id(); });
+
+    panel->setTitle("Open with...");
+
+    if (!hasBookmarkAction) {
+      if (auto app = appDb->findById(m_bookmark->app())) { panel->addAction(mapAction(app)); }
+    }
+
+    std::ranges::for_each(apps | std::views::transform(mapAction),
+                          [&](auto &&action) { panel->addAction(action); });
+
+    return panel;
+  }
+
+public:
+  OpenCompletedBookmarkWithAction(const std::shared_ptr<Bookmark> &bookmark)
+      : AbstractAction("Open with...", BuiltinOmniIconUrl("arrow-clockwise")), m_bookmark(bookmark) {}
 };

@@ -77,8 +77,6 @@ void OmniList::updateVisibleItems() {
 
   if (startIndex >= _virtual_items.size()) return;
 
-  qDebug() << "margin top" << margins.top;
-
   int marginOffset = std::max(0, margins.top - scrollHeight);
   int viewportY = marginOffset + _virtual_items[startIndex].y - scrollHeight;
   QSize viewportSize = size();
@@ -607,6 +605,7 @@ void OmniList::resizeEvent(QResizeEvent *event) {
   scrollBar->setPageStep(size.height());
   scrollBar->setFixedHeight(size.height());
   scrollBar->move(size.width() - scrollBar->sizeHint().width(), 0);
+  m_cachedHeights.clear();
   calculateHeights();
 }
 

@@ -411,8 +411,21 @@ class GridView : public SimpleView {
 public:
   struct Actionnable {
     virtual QList<AbstractAction *> generateActions() const { return {}; };
-    virtual std::unique_ptr<CompleterData> createCompleter() const { return nullptr; }
     virtual QString navigationTitle() const { return {}; }
+    virtual ActionPanelView *actionPanel() const {
+      auto panel = new ActionPanelStaticListView;
+
+      for (const auto &action : generateActions()) {
+        panel->addAction(action);
+      }
+
+      return panel;
+    }
+
+    /**
+     * Current action title to show in the status bar. Only shown if no primary action has been set.
+     */
+    virtual QString actionPanelTitle() const { return "Actions"; }
   };
 
 protected:
@@ -420,6 +433,7 @@ protected:
 
   virtual void selectionChanged(const OmniList::AbstractVirtualItem *next,
                                 const OmniList::AbstractVirtualItem *previous) {
+
     if (!next) {
       m_topBar->destroyCompleter();
       // setNavigationTitle(QString("%1").arg(m_baseNavigationTitle));
@@ -428,26 +442,38 @@ protected:
     }
 
     if (auto nextItem = dynamic_cast<const Actionnable *>(next)) {
-      if (auto completer = nextItem->createCompleter(); completer && completer->arguments.size() > 0) {
-        m_topBar->activateCompleter(*completer);
-      } else {
-        m_topBar->destroyCompleter();
-      }
-
       // TODO: only expect suffix and automatically use command name from prefix
       if (auto navigation = nextItem->navigationTitle(); !navigation.isEmpty()) {
         // setNavigationTitle(QString("%1 - %2").arg(m_baseNavigationTitle).arg(navigation));
       }
 
-      auto actions = nextItem->generateActions();
+      if (auto panel = nextItem->actionPanel()) {
+        m_actionPannelV2->setView(panel);
+      } else {
+        m_actionPannelV2->hide();
+        m_actionPannelV2->popToRoot();
+      }
 
-      if (!actions.isEmpty()) { actions.at(0)->setShortcut({.key = "return"}); }
-      if (actions.size() > 1) { actions.at(1)->setShortcut({.key = "return", .modifiers = {"shift"}}); }
+      m_statusBar->setActionButton(nextItem->actionPanelTitle(), KeyboardShortcutModel{.key = "return"});
 
-      // setActions(actions);
+      auto actions = m_actionPannelV2->actions();
+      auto primaryAction = m_actionPannelV2->primaryAction();
+
+      m_statusBar->setActionButtonVisibility(!primaryAction || actions.size() > 1);
+      m_statusBar->setCurrentActionButtonVisibility(primaryAction);
+
+      if (auto action = m_actionPannelV2->primaryAction()) {
+        m_statusBar->setCurrentAction(action->title(),
+                                      action->shortcut.value_or(KeyboardShortcutModel{.key = "return"}));
+        m_statusBar->setActionButton("Actions", defaultActionPanelShortcut());
+      } else {
+        m_statusBar->setActionButton(nextItem->actionPanelTitle(), KeyboardShortcutModel{.key = "return"});
+      }
+
     } else {
       m_topBar->destroyCompleter();
-      // setActions({});
+      m_actionPannelV2->popToRoot();
+      m_actionPannelV2->close();
     }
   }
 

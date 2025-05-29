@@ -1,8 +1,8 @@
 #include "root-search/bookmarks/bookmark-root-provider.hpp"
 #include "action-panel/action-panel.hpp"
-#include "actions/app/app-actions.hpp"
 #include "actions/bookmark/bookmark-actions.hpp"
 #include "actions/fallback-actions.hpp"
+#include "actions/root-search/root-search-actions.hpp"
 #include "argument.hpp"
 #include "services/bookmark/bookmark-service.hpp"
 #include "root-item-manager.hpp"
@@ -11,13 +11,30 @@
 
 ActionPanelView *RootBookmarkItem::actionPanel() const {
   auto panel = new ActionPanelStaticListView;
+  auto open = new OpenCompletedBookmarkAction(m_link);
+  auto openWith = new OpenCompletedBookmarkWithAction(m_link);
+  auto edit = new EditBookmarkAction(m_link);
+  auto duplicate = new DuplicateBookmarkAction(m_link);
+  auto remove = new RemoveBookmarkAction(m_link);
+  auto markAsFavorite = new MarkItemAsFavorite(uniqueId());
+  auto disable = new DisableItemAction(uniqueId());
+
+  open->setPrimary(true);
+  open->setShortcut({.key = "return"});
+  openWith->setShortcut({.key = "return", .modifiers = {"shift"}});
+  duplicate->setShortcut({.key = "N", .modifiers = {"ctrl"}});
+  edit->setShortcut({.key = "E", .modifiers = {"ctrl"}});
+  remove->setShortcut({.key = "X", .modifiers = {"ctrl"}});
+  disable->setShortcut({.key = "X", .modifiers = {"ctrl", "shift"}});
 
   panel->setTitle(m_link->name());
-  panel->addAction(new OpenCompletedBookmarkAction(m_link));
-  panel->addAction(new OpenWithAppAction({m_link->url()}));
-  panel->addAction(new EditBookmarkAction(m_link));
-  panel->addAction(new DuplicateBookmarkAction(m_link));
-  panel->addAction(new RemoveBookmarkAction(m_link));
+  panel->addAction(open);
+  panel->addAction(openWith);
+  panel->addAction(edit);
+  panel->addAction(duplicate);
+  panel->addSection();
+  panel->addAction(remove);
+  panel->addAction(disable);
 
   return panel;
 };
@@ -27,6 +44,8 @@ ActionPanelView *RootBookmarkItem::fallbackActionPanel() const {
   auto open = new OpenBookmarkFromSearchText(m_link);
   auto manage = new ManageFallbackActions;
 
+  open->setShortcut({.key = "return"});
+  manage->setShortcut({.key = "return", .modifiers = {"shift"}});
   open->setPrimary(true);
   panel->setTitle(m_link->name());
   panel->addAction(open);
