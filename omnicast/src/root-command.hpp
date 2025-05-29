@@ -192,8 +192,6 @@ class RootCommandV2 : public ListView {
 
     auto &section = m_list->addSection("Commands");
 
-    section.setSpacing(20);
-
     for (auto item : commandItems)
       section.addItem(std::move(item));
 
