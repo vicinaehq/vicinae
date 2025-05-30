@@ -158,6 +158,8 @@ set(SRCS
 	include/ui/action-pannel/action-list-item.hpp
 	src/ui/action-pannel/action-list-item.cpp
 
+	include/ui/argument-completer-widget.hpp
+
 	# end action-pannel-widget
 
 	include/ui/horizontal-loading-bar.hpp

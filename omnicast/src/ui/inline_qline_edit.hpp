@@ -13,6 +13,5 @@ protected:
 public:
   InlineQLineEdit(const QString &placeholder, QWidget *parent = nullptr);
 
-protected slots:
-  void textChanged(const QString &s);
+  void handleTextChanged(const QString &s);
 };

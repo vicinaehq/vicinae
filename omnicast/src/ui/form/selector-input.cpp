@@ -1,9 +1,24 @@
 #include "ui/form/selector-input.hpp"
-#include "common.hpp"
 #include "ui/focus-notifier.hpp"
+#include "ui/typography.hpp"
 #include <memory>
+#include <qboxlayout.h>
 #include <qjsonvalue.h>
+#include <qnamespace.h>
 #include <qwidget.h>
+
+void SelectorInput::listHeightChanged(int height) {
+
+  if (height > 0) {
+    m_content->setCurrentIndex(0);
+    popover->setFixedHeight(std::min(POPOVER_HEIGHT, m_searchField->sizeHint().height() + 1 + height));
+    return;
+  }
+
+  m_content->setCurrentIndex(1);
+  popover->setFixedHeight(
+      std::min(POPOVER_HEIGHT, m_searchField->sizeHint().height() + 1 + m_content->sizeHint().height()));
+}
 
 bool SelectorInput::eventFilter(QObject *obj, QEvent *event) {
   if (obj == popover) {
@@ -92,7 +107,7 @@ SelectorInput::SelectorInput(QWidget *parent)
   // Create the popover
   popover->setWindowFlags(Qt::Popup);
   auto *popoverLayout = new QVBoxLayout(popover);
-  popoverLayout->setContentsMargins(1, 1, 1, 1);
+  popoverLayout->setContentsMargins(0, 0, 0, 0);
   popoverLayout->setSpacing(0);
 
   m_searchField = new QLineEdit(popover);
@@ -106,18 +121,33 @@ SelectorInput::SelectorInput(QWidget *parent)
   m_searchField->installEventFilter(this);
   popover->installEventFilter(this);
 
-  auto listContainerWidget = new QWidget;
-  auto listContainerLayout = new QVBoxLayout;
+  // auto listContainerWidget = new QWidget;
+  // auto listContainerLayout = new QVBoxLayout;
 
-  listContainerLayout->setContentsMargins(0, 0, 0, 0);
-  listContainerLayout->addWidget(m_list);
-  listContainerWidget->setLayout(listContainerLayout);
+  // listContainerLayout->setContentsMargins(0, 0, 0, 0);
+  // listContainerLayout->addWidget(m_list);
+  // listContainerWidget->setLayout(listContainerLayout);
 
-  popoverLayout->addWidget(listContainerWidget);
+  auto emptyLayout = new QVBoxLayout;
+  auto emptyTypography = new TypographyWidget();
+
+  emptyTypography->setContentsMargins(10, 10, 10, 10);
+  emptyTypography->setText("No results");
+  emptyTypography->setColor(ColorTint::TextSecondary);
+  emptyTypography->setAlignment(Qt::AlignCenter);
+  emptyLayout->addWidget(emptyTypography);
+  m_emptyView->setLayout(emptyLayout);
+
+  m_content->addWidget(m_list);
+  m_content->addWidget(m_emptyView);
+  m_content->setCurrentIndex(0);
+
+  popoverLayout->addWidget(m_content);
 
   connect(m_searchField, &QLineEdit::textChanged, this, &SelectorInput::handleTextChanged);
   connect(m_list, &OmniList::itemActivated, this, &SelectorInput::itemActivated);
   connect(m_list, &OmniList::itemUpdated, this, &SelectorInput::itemUpdated);
+  connect(m_list, &OmniList::virtualHeightChanged, this, &SelectorInput::listHeightChanged);
 
   setLayout(layout);
 }

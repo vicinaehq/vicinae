@@ -73,7 +73,7 @@ CompletedInput::CompletedInput(QWidget *parent)
   // Create the popover
   popover->setWindowFlags(Qt::Popup);
   auto *popoverLayout = new QVBoxLayout(popover);
-  popoverLayout->setContentsMargins(1, 1, 1, 1);
+  popoverLayout->setContentsMargins(0, 0, 0, 0);
   popoverLayout->setSpacing(0);
 
   inputField->installEventFilter(this);
@@ -94,6 +94,8 @@ CompletedInput::CompletedInput(QWidget *parent)
     popover->close();
     emit completionActivated(item);
   });
+  connect(m_completerList, &OmniList::virtualHeightChanged, this,
+          [this](int height) { popover->setFixedHeight(height); });
   connect(inputField, &BaseInput::textChanged, this, [this](const QString &text) { emit textChanged(text); });
 
   setLayout(layout);

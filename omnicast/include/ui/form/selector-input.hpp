@@ -10,6 +10,7 @@
 #include <qjsonvalue.h>
 #include <qlineedit.h>
 #include <qobject.h>
+#include <qstackedwidget.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
 
@@ -57,6 +58,8 @@ private:
   bool m_defaultFilterEnabled = true;
   int POPOVER_HEIGHT = 300;
 
+  void listHeightChanged(int height);
+
 protected:
   OmniList *m_list;
   BaseInput *inputField;
@@ -65,6 +68,9 @@ protected:
   HorizontalLoadingBar *m_loadingBar = new HorizontalLoadingBar(this);
   OmniIcon *selectionIcon;
   Popover *popover;
+  QStackedWidget *m_content = new QStackedWidget(popover);
+  QWidget *m_emptyView = new QWidget(m_content);
+
   std::unique_ptr<AbstractItem> _currentSelection;
 
   bool eventFilter(QObject *obj, QEvent *event) override;

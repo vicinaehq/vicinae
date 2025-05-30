@@ -371,7 +371,7 @@ private:
     int low = scrollBar->value();
     int high = low + height();
 
-    return bounds.y() >= low && bounds.y() <= high;
+    return isVisible() && bounds.y() >= low && bounds.y() <= high;
   }
 
   int calculateItemHeight(const AbstractVirtualItem *item, int width) {
@@ -384,8 +384,6 @@ private:
     if (match != m_cachedHeights.end()) { return match->second; }
 
     int height = item->calculateHeight(width);
-
-    qCritical() << "calculate height" << height;
 
     m_cachedHeights.push_back({typeId, height});
 
@@ -449,8 +447,6 @@ private:
 
         sctx = {.section = nullptr, .x = margins.left, .maxHeight = 0};
 
-        qDebug() << "rendering" << items.size() << "items";
-
         for (auto &sectionItem : items) {
           if (auto spacer = std::get_if<Spacer>(&sectionItem)) {
             yOffset += spacer->value;
@@ -497,7 +493,6 @@ private:
             QRect rect{x, y, width, height};
 
             if (isInViewport(rect)) {
-              qWarning() << "in viewport" << item->id();
               if (auto it = _widgetCache.find(item->id()); it != _widgetCache.end()) {
                 if (item->hasPartialUpdates()) { item->refresh(it->second.widget->widget()); }
 

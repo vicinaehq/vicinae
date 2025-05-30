@@ -45,6 +45,11 @@ public:
     for (const auto &arg : args) {
       auto edit = new InlineQLineEdit(arg.placeholder, this);
 
+      connect(edit, &InlineQLineEdit::textChanged, this, [this]() {
+        qDebug() << "text changed";
+        emit valueChanged(collect());
+      });
+
       if (arg.type == CommandArgument::Password) edit->setEchoMode(QLineEdit::EchoMode::Password);
 
       m_inputs.emplace_back(edit);
@@ -74,4 +79,5 @@ public:
 signals:
   void activated() const;
   void destroyed() const;
+  void valueChanged(const std::vector<std::pair<QString, QString>> &arguments);
 };

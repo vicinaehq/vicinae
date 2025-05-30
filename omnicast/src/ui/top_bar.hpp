@@ -1,7 +1,6 @@
 #pragma once
 #include "argument.hpp"
 #include "omni-icon.hpp"
-#include "ui/horizontal-loading-bar.hpp"
 #include "ui/icon-button.hpp"
 #include "ui/argument-completer-widget.hpp"
 #include "ui/inline_qline_edit.hpp"
@@ -78,6 +77,9 @@ struct CompleterData {
 };
 
 struct TopBar : public QWidget {
+  Q_OBJECT
+
+public:
   IconButton *backButton = nullptr;
   QHBoxLayout *layout;
   SearchBar *input;
@@ -118,6 +120,9 @@ public:
     for (const auto &arg : data.arguments) {
       auto input = new InlineQLineEdit(arg.placeholder);
 
+      connect(input, &InlineQLineEdit::textChanged, this,
+              [this]() { emit argumentsChanged(m_completer->collect()); });
+
       input->installEventFilter(this);
       m_completer->m_layout->addWidget(input);
       m_completer->m_inputs.emplace_back(input);
@@ -131,4 +136,7 @@ public:
     input->setInline(true);
     m_completer->show();
   }
+
+signals:
+  void argumentsChanged(const std::vector<std::pair<QString, QString>> &values) const;
 };

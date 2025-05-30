@@ -5,6 +5,7 @@
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
 #include <algorithm>
+#include <libqalculate/Calculator.h>
 #include <qevent.h>
 #include <qnamespace.h>
 #include <ranges>
@@ -320,6 +321,8 @@ protected:
 
   virtual void modelChanged() {}
 
+  virtual void itemSelected(const OmniList::AbstractVirtualItem *item) {}
+
   virtual void selectionChanged(const OmniList::AbstractVirtualItem *next,
                                 const OmniList::AbstractVirtualItem *previous) {
     if (!next) {
@@ -379,9 +382,18 @@ protected:
       m_actionPannelV2->popToRoot();
       m_actionPannelV2->close();
     }
+
+    itemSelected(next);
   }
 
   virtual void itemActivated(const OmniList::AbstractVirtualItem &item) { activatePrimaryAction(); }
+
+  QWidget *detail() const { return m_split->detailWidget(); }
+
+  void setDetail(QWidget *widget) {
+    m_split->setDetailWidget(widget);
+    m_split->setDetailVisibility(true);
+  }
 
 public:
   ListView(QWidget *parent = nullptr) : SimpleView(parent) {

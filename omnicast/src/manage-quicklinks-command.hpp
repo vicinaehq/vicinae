@@ -1,12 +1,20 @@
 #pragma once
 #include "base-view.hpp"
 #include "actions/bookmark/bookmark-actions.hpp"
+#include "common.hpp"
 #include "services/bookmark/bookmark-service.hpp"
 #include "extend/metadata-model.hpp"
 #include "service-registry.hpp"
+#include "services/bookmark/bookmark.hpp"
+#include "ui/horizontal-metadata.hpp"
 #include "ui/omni-list-view.hpp"
 #include "ui/omni-list.hpp"
+#include "ui/omni-scroll-bar.hpp"
+#include "ui/typography.hpp"
+#include "ui/vertical-metadata.hpp"
+#include <algorithm>
 #include <memory>
+#include <qboxlayout.h>
 #include <qlabel.h>
 #include <qnamespace.h>
 #include <qobject.h>
@@ -14,6 +22,84 @@
 #include <qwidget.h>
 #include <ranges>
 #include <sys/socket.h>
+#include <qscrollarea.h>
+
+class BookmarkDetailWidget : public QWidget {
+  TypographyWidget *m_expandedLink = new TypographyWidget(this);
+  HorizontalMetadata *m_metadata = new HorizontalMetadata;
+  QScrollArea *m_contentScrollArea = new QScrollArea(this);
+  std::shared_ptr<Bookmark> m_bookmark;
+
+  QString expandLink(const Bookmark &bookmark, const std::vector<QString> &arguments) {
+    auto appDb = ServiceRegistry::instance()->appDb();
+    QString expanded;
+    size_t argumentIndex = 0;
+
+    for (const auto &part : m_bookmark->parts()) {
+      if (auto s = std::get_if<QString>(&part)) {
+        expanded += *s;
+      } else if (auto placeholder = std::get_if<Bookmark::ParsedPlaceholder>(&part)) {
+        if (placeholder->id == "clipboard") {
+          expanded += QApplication::clipboard()->text();
+        } else if (placeholder->id == "selected") {
+          // TODO: selected text
+        } else if (placeholder->id == "uuid") {
+          expanded += QUuid::createUuid().toString(QUuid::StringFormat::WithoutBraces);
+        } else {
+          if (argumentIndex < arguments.size()) { expanded += arguments.at(argumentIndex++); }
+        }
+      }
+    }
+
+    return expanded;
+  }
+
+public:
+  void setBookmark(const std::shared_ptr<Bookmark> &bookmark) {
+    m_bookmark = bookmark;
+
+    QList<MetadataItem> items;
+
+    items << MetadataLabel{
+        .text = m_bookmark->name(),
+        .title = "Name",
+    };
+    items << MetadataLabel{
+        .text = m_bookmark->app(),
+        .title = "Application",
+    };
+    items << MetadataLabel{
+        .text = QString::number(0),
+        .title = "Opened",
+    };
+
+    m_metadata->clear();
+    std::ranges::for_each(items, [&](auto &&item) { m_metadata->addItem(item); });
+    m_expandedLink->setText(expandLink(*m_bookmark.get(), {}));
+  }
+
+  void updateArguments(const std::vector<QString> &arguments) {
+    m_expandedLink->setText(expandLink(*m_bookmark.get(), arguments));
+  }
+
+  BookmarkDetailWidget(QWidget *parent = nullptr) : QWidget(parent) {
+    auto layout = new QVBoxLayout;
+
+    m_contentScrollArea->setWidget(m_expandedLink);
+    m_contentScrollArea->setWidgetResizable(true);
+    m_contentScrollArea->setVerticalScrollBar(new OmniScrollBar);
+    m_contentScrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
+
+    m_expandedLink->setWordWrap(true);
+    m_expandedLink->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(m_contentScrollArea, 1);
+    m_contentScrollArea->setFocusPolicy(Qt::NoFocus);
+    layout->addWidget(new HDivider);
+    layout->addWidget(m_metadata);
+    setLayout(layout);
+  }
+};
 
 class QuicklinkItemDetail : public OmniListView::MetadataDetailModel {
   std::shared_ptr<Bookmark> link;
@@ -65,6 +151,8 @@ class QuicklinkItem : public AbstractDefaultListItem, public ListView::Actionnab
   std::shared_ptr<Bookmark> link;
 
 public:
+  const std::shared_ptr<Bookmark> &bookmark() const { return link; }
+
   ActionPanelView *actionPanel() const override {
     auto panel = new ActionPanelStaticListView;
 
@@ -94,7 +182,10 @@ public:
       args.emplace_back(cmdArg);
     }
 
-    return std::make_unique<CompleterData>(CompleterData{.arguments = args});
+    return std::make_unique<CompleterData>(CompleterData{
+        .iconUrl = link->icon(),
+        .arguments = args,
+    });
   }
 
   ItemData data() const override {
@@ -105,9 +196,11 @@ public:
   }
 
   QWidget *generateDetail() const override {
-    auto detailModel = std::make_unique<QuicklinkItemDetail>(link);
+    auto widget = new BookmarkDetailWidget;
 
-    return new OmniListView::SideDetailWidget(*detailModel.get());
+    widget->setBookmark(link);
+
+    return widget;
   }
 
   QString generateId() const override { return QString::number(link->id()); }
@@ -116,24 +209,27 @@ public:
   QuicklinkItem(const std::shared_ptr<Bookmark> &link) : link(link) {}
 };
 
-class ManageQuicklinksView : public ListView {
+class ManageBookmarksView : public ListView {
   void renderList(const QString &s, OmniList::SelectionPolicy policy = OmniList::SelectFirst) {
     auto bookmarkService = ServiceRegistry::instance()->bookmarks();
     auto bookmarks =
         bookmarkService->bookmarks() |
         std::views::filter([s](auto bk) { return bk->name().contains(s, Qt::CaseInsensitive); }) |
-        std::views::transform([](auto bk) { return std::make_unique<QuicklinkItem>(bk); });
+        std::views::transform([](auto bk) -> std::unique_ptr<OmniList::AbstractVirtualItem> {
+          return std::make_unique<QuicklinkItem>(bk);
+        }) |
+        std::ranges::to<std::vector>();
 
-    m_list->beginResetModel();
+    m_list->updateModel(
+        [&]() {
+          auto &section = m_list->addSection("Bookmarks");
 
-    auto &section = m_list->addSection("Bookmarks");
-
-    for (auto bk : bookmarks) {
-      section.addItem(std::move(bk));
-    }
-
-    m_list->endResetModel(policy);
+          section.addItems(std::move(bookmarks));
+        },
+        policy);
   }
+
+  void itemSelected(const OmniList::AbstractVirtualItem *item) override {}
 
   void onBookmarkRemoved() { renderList(searchText(), OmniList::PreserveSelection); }
 
@@ -143,15 +239,24 @@ class ManageQuicklinksView : public ListView {
 
   void initialize() override { onSearchChanged(""); }
 
+  void handleArgumentChange(const std::vector<std::pair<QString, QString>> &args) {
+    auto values = args | std::views::transform([](auto &&pair) { return pair.second; }) |
+                  std::ranges::to<std::vector>();
+    if (auto bookmarkDetail = dynamic_cast<BookmarkDetailWidget *>(detail())) {
+      bookmarkDetail->updateArguments(values);
+    }
+  }
+
 public:
-  ManageQuicklinksView() {
+  ManageBookmarksView() {
     auto bookmarkService = ServiceRegistry::instance()->bookmarks();
 
-    setSearchPlaceholderText("Browse quicklinks...");
-    setNavigationTitle("Manage Bookmarks");
+    setSearchPlaceholderText("Search bookmarks...");
+    setNavigationTitle("Search Bookmarks");
 
-    connect(bookmarkService, &BookmarkService::bookmarkSaved, this, &ManageQuicklinksView::onBookmarkSaved);
+    connect(bookmarkService, &BookmarkService::bookmarkSaved, this, &ManageBookmarksView::onBookmarkSaved);
     connect(bookmarkService, &BookmarkService::bookmarkRemoved, this,
-            &ManageQuicklinksView::onBookmarkRemoved);
+            &ManageBookmarksView::onBookmarkRemoved);
+    connect(m_topBar, &TopBar::argumentsChanged, this, &ManageBookmarksView::handleArgumentChange);
   }
 };
