@@ -1,8 +1,8 @@
 #pragma once
-#include "local-storage-service.hpp"
 #include "omnicast.hpp"
 #include <filesystem>
 #include <optional>
+#include <qdir.h>
 #include <qfilesystemwatcher.h>
 #include <qjsondocument.h>
 #include <qjsonobject.h>
@@ -35,7 +35,6 @@ public:
   };
 
 private:
-  LocalStorageService &m_storage;
   QFileSystemWatcher m_watcher;
   Value m_config;
   std::filesystem::path m_configFile = Omnicast::configDir() / "omnicast.json";
@@ -156,7 +155,7 @@ public:
     m_config = value;
   }
 
-  ConfigService(LocalStorageService &storage) : m_storage(storage) {
+  ConfigService() {
     std::filesystem::create_directories(Omnicast::configDir());
 
     {

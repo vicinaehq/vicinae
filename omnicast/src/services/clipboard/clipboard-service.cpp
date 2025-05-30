@@ -1,6 +1,7 @@
-#include "clipboard/clipboard-service.hpp"
-#include "clipboard/clipboard-server.hpp"
-#include "clipboard/clipboard-server-factory.hpp"
+#include "services/clipboard/clipboard-service.hpp"
+#include "services/clipboard/clipboard-service.hpp"
+#include "services/clipboard/clipboard-server.hpp"
+#include "services/clipboard/clipboard-server-factory.hpp"
 #include <algorithm>
 #include <cstdint>
 #include <filesystem>

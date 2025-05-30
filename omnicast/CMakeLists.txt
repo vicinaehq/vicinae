@@ -47,7 +47,6 @@ set(SRCS
 	include/font-service.hpp
 	src/font-service.cpp
 
-	include/config-service.hpp
 
 	include/root-item-manager.hpp
 
@@ -130,15 +129,20 @@ set(SRCS
 	include/ui/detail-widget.hpp
 	src/ui/detail-widget.cpp
 
-	include/clipboard/clipboard-server.hpp
-	include/clipboard/wlr-clipboard-server.hpp
-	src/clipboard/wlr-clipboard-server.cpp
-	include/clipboard/dummy-clipboard-server.hpp
-	src/clipboard/dummy-clipboard-server.cpp
-	include/clipboard/clipboard-server-factory.hpp
-	src/clipboard/clipboard-server-factory.cpp
-	include/clipboard/clipboard-service.hpp
-	src/clipboard/clipboard-service.cpp
+	src/services/clipboard/clipboard-server.hpp
+	src/services/clipboard/wlr-clipboard-server.hpp
+	src/services/clipboard/wlr-clipboard-server.cpp
+	src/services/clipboard/dummy-clipboard-server.hpp
+	src/services/clipboard/dummy-clipboard-server.cpp
+	src/services/clipboard/clipboard-server-factory.hpp
+	src/services/clipboard/clipboard-server-factory.cpp
+	src/services/clipboard/clipboard-service.hpp
+	src/services/clipboard/clipboard-service.cpp
+
+	src/services/local-storage/local-storage-service.hpp
+	src/services/local-storage/local-storage.cpp
+
+	src/services/config/config-service.hpp
 
 	# begin app-database
 	include/app/app-database.hpp
@@ -214,8 +218,6 @@ set(SRCS
 
 	include/extend/extension-detail-view.hpp
 
-	include/local-storage-service.hpp
-	src/local-storage.cpp
 
 	include/ui/argument-completer-widget.hpp
 

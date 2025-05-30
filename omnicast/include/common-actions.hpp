@@ -1,5 +1,5 @@
 #pragma once
-#include "clipboard/clipboard-service.hpp"
+#include "services/clipboard/clipboard-service.hpp"
 #include "omni-icon.hpp"
 #include "app.hpp"
 #include "service-registry.hpp"

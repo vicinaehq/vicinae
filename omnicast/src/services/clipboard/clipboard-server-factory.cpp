@@ -1,7 +1,7 @@
-#include "clipboard/clipboard-server-factory.hpp"
-#include "clipboard/clipboard-server.hpp"
-#include "clipboard/wlr-clipboard-server.hpp"
-#include "clipboard/dummy-clipboard-server.hpp"
+#include "services/clipboard/clipboard-server-factory.hpp"
+#include "services/clipboard/clipboard-server.hpp"
+#include "services/clipboard/wlr-clipboard-server.hpp"
+#include "services/clipboard/dummy-clipboard-server.hpp"
 
 AbstractClipboardServer *ClipboardServerFactory::create(ClipboardServerType type, QObject *parent) const {
   switch (type) {

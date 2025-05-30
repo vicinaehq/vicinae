@@ -1,4 +1,4 @@
-#include "clipboard/clipboard-server.hpp"
+#include "services/clipboard/clipboard-server.hpp"
 #include <qobject.h>
 
 class ClipboardServerFactory {

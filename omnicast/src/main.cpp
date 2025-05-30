@@ -5,7 +5,7 @@
 #include "services/bookmark/bookmark-service.hpp"
 #include "app.hpp"
 #include <QApplication>
-#include "config-service.hpp"
+#include "services/config/config-service.hpp"
 #include "font-service.hpp"
 #include <QFontDatabase>
 #include <QSurfaceFormat>
@@ -37,7 +37,7 @@
 #include <qstringview.h>
 #include <qtmetamacros.h>
 #include "extension/manager/extension-manager.hpp"
-#include "local-storage-service.hpp"
+#include "services/local-storage/local-storage-service.hpp"
 #include "omnicast.hpp"
 #include "process-manager-service.hpp"
 #include "proto.hpp"
@@ -168,7 +168,7 @@ int startDaemon() {
     auto rankingService = std::make_unique<RankingService>(*omniDb);
     auto appService = std::make_unique<AppService>(*omniDb.get(), *rankingService.get());
     auto rootExtMan = std::make_unique<RootExtensionManager>(*rootItemManager.get(), *commandDb.get());
-    auto configService = std::make_unique<ConfigService>(*localStorage.get());
+    auto configService = std::make_unique<ConfigService>();
     auto bookmarkService = std::make_unique<BookmarkService>(*omniDb.get());
     auto currentConfig = configService->value();
 

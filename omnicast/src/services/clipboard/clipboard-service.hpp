@@ -21,7 +21,7 @@
 #include <qstringview.h>
 #include <qtmetamacros.h>
 #include <variant>
-#include "clipboard/clipboard-server.hpp"
+#include "services/clipboard/clipboard-server.hpp"
 
 namespace Clipboard {
 static const char *CONCEALED_MIME_TYPE = "omnicast/concealed";

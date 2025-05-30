@@ -1,7 +1,7 @@
 #pragma once
 #include "base-view.hpp"
 #include "clipboard-actions.hpp"
-#include "clipboard/clipboard-service.hpp"
+#include "services/clipboard/clipboard-service.hpp"
 #include "emoji-database.hpp"
 #include "libtrie/trie.hpp"
 #include "omni-icon.hpp"

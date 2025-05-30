@@ -1,13 +1,11 @@
 #pragma once
-#include "app.hpp"
 #include "base-view.hpp"
 #include "clipboard-actions.hpp"
-#include "config-service.hpp"
+#include "services/config/config-service.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
 #include "timer.hpp"
 #include "ui/action-pannel/action.hpp"
-#include "ui/declarative-omni-list-view.hpp"
 #include "ui/markdown/markdown-renderer.hpp"
 #include "ui/omni-list.hpp"
 #include <memory>
@@ -111,6 +109,7 @@ class FontListItem : public AbstractDefaultListItem, public ListView::Actionnabl
     QFont m_font;
 
     void execute() override {
+#include "app.hpp"
       auto configService = ServiceRegistry::instance()->config();
 
       configService->updateConfig([&](ConfigService::Value &value) { value.font.normal = m_font.family(); });

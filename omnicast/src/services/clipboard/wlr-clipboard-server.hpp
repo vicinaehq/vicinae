@@ -1,5 +1,5 @@
 #pragma once
-#include "clipboard/clipboard-server.hpp"
+#include "services/clipboard/clipboard-server.hpp"
 #include "proto.hpp"
 #include <qprocess.h>
 

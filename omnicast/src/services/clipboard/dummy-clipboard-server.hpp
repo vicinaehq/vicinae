@@ -1,4 +1,4 @@
-#include "clipboard/clipboard-server.hpp"
+#include "services/clipboard/clipboard-server.hpp"
 
 class DummyClipboardServer : public AbstractClipboardServer {
 public:

@@ -4,16 +4,14 @@
 #include "command-database.hpp"
 #include "command-server.hpp"
 #include <QGraphicsBlurEffect>
-#include "clipboard/clipboard-server-factory.hpp"
+#include "services/clipboard/clipboard-server-factory.hpp"
 #include "common.hpp"
-#include "config-service.hpp"
+#include "services/config/config-service.hpp"
 #include "extension/missing-extension-preference-view.hpp"
 #include "command.hpp"
-#include "config.hpp"
 #include "service-registry.hpp"
 #include "wm/window-manager-factory.hpp"
 #include "extension/manager/extension-manager.hpp"
-#include "favicon/favicon-service.hpp"
 #include "image-fetcher.hpp"
 #include "omni-command-db.hpp"
 #include "omnicast.hpp"
@@ -306,8 +304,7 @@ AppWindow::AppWindow(QWidget *parent) : QMainWindow(parent) {
   setAttribute(Qt::WA_TranslucentBackground, true);
   setMinimumSize(Omnicast::WINDOW_SIZE);
 
-  QDir::root().mkpath(Config::dirPath());
-  FaviconService::initialize(new FaviconService(Config::dirPath() + QDir::separator() + "favicon.db"));
+  FaviconService::initialize(new FaviconService((Omnicast::dataDir() / "favicon.db").c_str()));
 
   _commandServer = new CommandServer(this);
 
