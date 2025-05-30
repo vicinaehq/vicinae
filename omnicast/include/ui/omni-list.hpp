@@ -1,6 +1,7 @@
 #pragma once
 #include "common.hpp"
 #include "omni-icon.hpp"
+#include "timer.hpp"
 #include "ui/omni-list-item-widget-wrapper.hpp"
 #include "ui/omni-list-item-widget.hpp"
 #include "ui/default-list-item-widget.hpp"
@@ -204,6 +205,7 @@ public:
     std::unique_ptr<AbstractVirtualItem> m_headerItem;
     QString m_title;
     QString m_subtitle;
+    int m_columns = 1;
     int m_spacing = 0;
 
   public:
@@ -216,9 +218,13 @@ public:
      * This equally applies to horizontally and vertically laid out items.
      */
     Section &setSpacing(int n) {
-      m_spacing = n;
+      m_spacing = std::max(0, n);
       return *this;
     }
+
+    int columns() const { return m_columns; }
+
+    void setColumns(int n) { m_columns = std::max(1, n); }
 
     Section &withTitle(const QString &title) {
       m_title = title;
@@ -375,12 +381,11 @@ private:
     auto match = std::ranges::find_if(m_cachedHeights, pred);
     size_t typeId = item->typeId();
 
-    if (match != m_cachedHeights.end()) {
-      qWarning() << "Used cached height for id " << item->id();
-      return match->second;
-    }
+    if (match != m_cachedHeights.end()) { return match->second; }
 
     int height = item->calculateHeight(width);
+
+    qCritical() << "calculate height" << height;
 
     m_cachedHeights.push_back({typeId, height});
 
@@ -388,6 +393,7 @@ private:
   }
 
   void calculateHeightsFromModel() {
+    Timer timer;
     _virtual_items.clear();
 
     int yOffset = 0;
@@ -425,6 +431,8 @@ private:
       } else if (auto p = std::get_if<std::unique_ptr<Section>>(&item)) {
         auto &section = *p;
         auto &items = section->items();
+        int spaceWidth = section->spacing() * (section->columns() - 1);
+        int columnWidth = (availableWidth - spaceWidth) / section->columns();
 
         if (items.empty()) continue;
 
@@ -437,9 +445,11 @@ private:
 
           _virtual_items.push_back(vinfo);
           yOffset += vinfo.height;
-
-          sctx = {.section = nullptr, .x = margins.left, .maxHeight = 0};
         }
+
+        sctx = {.section = nullptr, .x = margins.left, .maxHeight = 0};
+
+        qDebug() << "rendering" << items.size() << "items";
 
         for (auto &sectionItem : items) {
           if (auto spacer = std::get_if<Spacer>(&sectionItem)) {
@@ -449,9 +459,12 @@ private:
 
           if (auto p = std::get_if<Section::VirtualWidget>(&sectionItem)) {
             auto &item = *p;
+
+            if (_filter && !_filter->matches(*p->get())) continue;
+
             int vIndex = _virtual_items.size();
             int height = 0;
-            int width = availableWidth;
+            int width = columnWidth;
             int x = margins.left;
             int y = yOffset;
 
@@ -484,7 +497,7 @@ private:
             QRect rect{x, y, width, height};
 
             if (isInViewport(rect)) {
-              qDebug() << "in viewport" << item->id();
+              qWarning() << "in viewport" << item->id();
               if (auto it = _widgetCache.find(item->id()); it != _widgetCache.end()) {
                 if (item->hasPartialUpdates()) { item->refresh(it->second.widget->widget()); }
 
@@ -497,10 +510,10 @@ private:
             _virtual_items.push_back(vinfo);
           }
         }
+
+        if (sctx) { yOffset += sctx->maxHeight; }
       }
     }
-
-    if (sctx) { yOffset += sctx->maxHeight; }
 
     if (!_virtual_items.empty()) { yOffset += margins.bottom + margins.top; }
 
@@ -516,6 +529,8 @@ private:
 
     _visibleWidgets.clear();
     _widgetCache = updatedCache;
+
+    timer.time("calculateHeightsFromModel");
 
     auto end = std::chrono::high_resolution_clock::now();
     // auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
@@ -565,6 +580,13 @@ public:
   bool selectRight();
   const AbstractVirtualItem *firstSelectableItem() const;
   void activateCurrentSelection() const;
+
+  void updateModel(const std::function<void()> &updater,
+                   OmniList::SelectionPolicy policy = OmniList::SelectionPolicy::SelectFirst) {
+    beginResetModel();
+    updater();
+    endResetModel(policy);
+  }
 
   void beginResetModel() {
     m_model.clear();

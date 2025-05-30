@@ -105,14 +105,5 @@ public:
   void setInset(int inset) { _inset = inset; }
   void setSpacing(int n) { _spacing = n; }
 
-  void addSection(const QString &name) {
-    OmniList::addItem(std::make_unique<GridSection>(name, _ncols, _spacing));
-  }
-
-  void addItem(std::unique_ptr<AbstractGridItem> item) {
-    item->setInset(_inset);
-    OmniList::addItem(std::move(item));
-  }
-
   OmniGrid() : _ncols(8), _spacing(10), _inset(10) { setMargins(20, 10, 20, 10); }
 };

@@ -5,6 +5,7 @@
 #include "ui/omni-list.hpp"
 #include <qlabel.h>
 #include <qnamespace.h>
+#include <ranges>
 
 class IconBrowserView : public GridView {
   class IconBrowserItem : public OmniGrid::AbstractGridItem, public GridView::Actionnable {
@@ -45,17 +46,26 @@ class IconBrowserView : public GridView {
   void onSearchChanged(const QString &s) override { m_grid->setFilter(std::make_unique<IconFilter>(s)); }
 
   void initialize() override {
-    m_grid->setColumns(8);
-    m_grid->setInset(20);
-    m_grid->beginUpdate();
-    m_grid->addSection("Icons");
+    int inset = 20;
+    auto makeIcon = [&](auto &&icon) -> std::unique_ptr<OmniList::AbstractVirtualItem> {
+      auto item = std::make_unique<IconBrowserItem>(icon);
 
-    for (const auto &icon : BuiltinIconService::icons()) {
-      m_grid->addItem(std::make_unique<IconBrowserItem>(icon));
-    }
+      item->setInset(inset);
+      return item;
+    };
 
-    m_grid->commitUpdate();
-    m_grid->selectFirst();
+    m_grid->updateModel([&]() {
+      auto &section = m_grid->addSection("Icons");
+
+      section.setColumns(8);
+      section.setSpacing(10);
+      m_grid->setInset(20);
+
+      auto items =
+          BuiltinIconService::icons() | std::views::transform(makeIcon) | std::ranges::to<std::vector>();
+
+      section.addItems(std::move(items));
+    });
   }
 
 public:

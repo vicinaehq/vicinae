@@ -407,7 +407,6 @@ void MarkdownRenderer::appendMarkdown(QStringView markdown) {
       }
     }
 
-    qDebug() << "last node is of type" << cmark_node_get_type_string(lastNode);
     int localLine = cmark_node_get_start_line(lastNode);
     int localColumn = cmark_node_get_start_column(lastNode);
 
@@ -478,7 +477,6 @@ void MarkdownRenderer::setMarkdown(QStringView markdown) {
 }
 
 void MarkdownRenderer::setFont(const QFont &font) {
-  qDebug() << "font" << font;
   _document->setDefaultFont(font);
   m_font = font;
 }

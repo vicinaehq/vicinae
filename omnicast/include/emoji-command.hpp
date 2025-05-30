@@ -16,7 +16,9 @@
 #include <qfuturewatcher.h>
 #include <qlabel.h>
 #include <qnamespace.h>
+#include <qtmetamacros.h>
 #include <qwidget.h>
+#include <ranges>
 
 class EmojiGridItem : public OmniGrid::AbstractGridItem, public GridView::Actionnable {
 public:
@@ -110,7 +112,11 @@ public:
   }
 
   void onSearchChanged(const QString &s) override {
-    newItems.clear();
+    m_grid->beginResetModel();
+
+    auto makeEmojiItem = [](auto &&item) -> std::unique_ptr<OmniList::AbstractVirtualItem> {
+      return std::make_unique<EmojiGridItem>(*item);
+    };
 
     if (s.isEmpty()) {
       std::unordered_map<QString, std::vector<const EmojiInfo *>> sectionMap;
@@ -126,26 +132,42 @@ public:
       }
 
       for (const auto &name : sectionNames) {
-        newItems.push_back(
-            std::make_unique<OmniGrid::GridSection>(name, m_grid->columns(), m_grid->spacing()));
+        auto &section = m_grid->addSection(name);
 
-        for (auto item : sectionMap[name]) {
-          newItems.push_back(std::make_unique<EmojiGridItem>(*item));
-        }
+        section.setColumns(8);
+        section.setSpacing(10);
+        section.addSpacing(5);
+
+        auto items = sectionMap[name] | std::views::transform(makeEmojiItem) | std::ranges::to<std::vector>();
+
+        section.addItems(std::move(items));
       }
-    } else if (m_searchTrie) {
-      newItems.push_back(
-          std::make_unique<OmniGrid::GridSection>("Results", m_grid->columns(), m_grid->spacing()));
 
-      Timer timer;
-      auto results = m_searchTrie->prefixSearch(s.toStdString());
-      timer.time("emoji searched");
-
-      for (const auto &info : results) {
-        newItems.push_back(std::make_unique<EmojiGridItem>(*info));
-      }
+      m_grid->endResetModel(OmniList::SelectFirst);
+      return;
     }
 
-    m_grid->updateFromList(newItems, OmniGrid::SelectFirst);
+    if (m_searchTrie) {
+      auto matches = m_searchTrie->prefixSearch(s.toStdString());
+
+      if (matches.empty()) {
+        // TODO: show empty state
+        m_grid->endResetModel(OmniList::SelectFirst);
+        return;
+      }
+
+      auto &results = m_grid->addSection("Results");
+
+      results.setColumns(8);
+      results.setSpacing(10);
+      results.addSpacing(5);
+
+      auto items = m_searchTrie->prefixSearch(s.toStdString()) | std::views::transform(makeEmojiItem) |
+                   std::ranges::to<std::vector>();
+
+      results.addItems(std::move(items));
+    }
+
+    m_grid->endResetModel(OmniList::SelectFirst);
   }
 };

@@ -638,6 +638,15 @@ void OmniList::clearFilter() {
 const OmniList::AbstractItemFilter *OmniList::filter() const { return _filter.get(); }
 
 void OmniList::setFilter(std::unique_ptr<AbstractItemFilter> filter) {
+  if (!m_model.empty()) {
+    _selected = -1;
+    _filter = std::move(filter);
+    calculateHeightsFromModel();
+    selectFirst();
+    scrollBar->setValue(0);
+    return;
+  }
+
   for (auto &section : m_sections) {
     for (auto &item : section.items) {
       bool tmp = item.filtered;

@@ -197,10 +197,7 @@ void SelectorInput::showPopover() {
   popover->show();
 }
 
-SelectorInput::~SelectorInput() {
-  qDebug() << "~FormDropdown2";
-  popover->deleteLater();
-}
+SelectorInput::~SelectorInput() { popover->deleteLater(); }
 
 void SelectorInput::clear() {
   inputField->clear();

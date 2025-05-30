@@ -426,7 +426,7 @@ class ImageWidget : public QWidget {
   }
 
   void handleLoadingError(const QString &reason) {
-    qCritical() << "Failed to load" << reason;
+    // qCritical() << "Failed to load" << reason;
     if (auto fallback = m_source.fallback()) { return setUrl(*fallback); }
     return setUrl(BuiltinOmniIconUrl("question-mark-circle"));
   }

@@ -1,3 +1,4 @@
+#include "action-panel/action-panel.hpp"
 #include "app.hpp"
 #include "base-view.hpp"
 #include "omni-icon.hpp"
@@ -58,7 +59,7 @@ public:
       : AbstractAction("Toggle status", BuiltinOmniIconUrl("stars")), m_info(info) {}
 };
 
-class AiProviderListItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
+class AiProviderListItem : public AbstractDefaultListItem, public ListView::Actionnable {
   const AIProvider &m_info;
 
   AccessoryList generateAccessories() const {
@@ -81,14 +82,20 @@ class AiProviderListItem : public AbstractDefaultListItem, public DeclarativeOmn
   }
 
 public:
-  std::vector<ActionItem> generateActionPannel() const override {
-    std::vector<ActionItem> items;
+  ActionPanelView *actionPanel() const override {
+    auto panel = new ActionPanelStaticListView;
+    auto configure = new ConfigureProviderAction(m_info);
+    auto toggle = new ToggleAIProviderAction(m_info);
 
-    items.push_back(ActionLabel(m_info.provider->displayName()));
-    items.push_back(std::make_unique<ConfigureProviderAction>(m_info));
-    items.push_back(std::make_unique<ToggleAIProviderAction>(m_info));
+    configure->setPrimary(true);
+    configure->setShortcut({.key = "return"});
+    toggle->setShortcut({.key = "return", .modifiers = {"shift"}});
 
-    return items;
+    panel->setTitle(m_info.provider->displayName());
+    panel->addAction(configure);
+    panel->addAction(toggle);
+
+    return panel;
   }
 
   QString generateId() const override { return m_info.provider->id(); }
@@ -103,6 +110,8 @@ public:
 
 class ConfigureAIProvidersView : public ListView {
 public:
+  void initialize() override { onSearchChanged(""); }
+
   void onSearchChanged(const QString &s) override {
     auto aiManager = ServiceRegistry::instance()->AI();
     m_list->beginResetModel();

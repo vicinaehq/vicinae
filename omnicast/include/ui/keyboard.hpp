@@ -112,9 +112,7 @@ public:
   }
 
   KeyboardShortcut(const KeyboardShortcutModel &model) : key(keyMap.value(model.key.toLower())) {
-    qDebug() << "key" << model.key;
     for (const auto &mod : model.modifiers) {
-      qWarning() << "set value for modifier" << mod;
       modifiers.setFlag(modifierMap.value(mod));
     }
   }

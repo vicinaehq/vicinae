@@ -494,9 +494,6 @@ class OmniSystemIconWidget : public OmniIconWidget {
 
     icon.setDevicePixelRatio(1);
 
-    qDebug() << "icon" << icon;
-    qDebug() << "canva" << canva;
-
     // icon.setDevicePixelRatio(qApp->devicePixelRatio());
     canva.fill(Qt::transparent);
 

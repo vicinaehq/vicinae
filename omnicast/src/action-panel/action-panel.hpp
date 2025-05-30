@@ -110,7 +110,7 @@ protected:
   QSize sizeHint() const override {
     QSize size = ActionPanelView::sizeHint();
 
-    qDebug() << "sizeHint" << size;
+    // qDebug() << "sizeHint" << size;
 
     return ActionPanelView::sizeHint();
   }

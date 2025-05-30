@@ -1,4 +1,5 @@
 #pragma once
+#include "action-panel/action-panel.hpp"
 #include "actions/theme/theme-actions.hpp"
 #include "base-view.hpp"
 #include "omni-icon.hpp"
@@ -19,6 +20,7 @@
 #include <qobject.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
+#include <ranges>
 #include <sys/socket.h>
 
 class HorizontalColorPaletteWidget : public QWidget {
@@ -125,7 +127,17 @@ public:
     return item;
   }
 
-  QList<AbstractAction *> generateActions() const override { return {new SetThemeAction(m_theme.id)}; }
+  ActionPanelView *actionPanel() const override {
+    auto panel = new ActionPanelStaticListView;
+    auto setTheme = new SetThemeAction(m_theme.id);
+
+    setTheme->setPrimary(true);
+    setTheme->setShortcut({.key = "return"});
+    panel->setTitle(m_theme.name);
+    panel->addAction(setTheme);
+
+    return panel;
+  }
 
   const ThemeInfo &theme() const { return m_theme; }
 
@@ -142,24 +154,31 @@ class ManageThemesView : public ListView {
 
   void generateList(const QString &query) {
     auto &themeService = ThemeService::instance();
-    std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> items;
-    auto &current = themeService.theme();
 
-    m_list->clearSelection();
+    m_list->updateModel([&]() {
+      auto &current = themeService.theme();
 
-    if (current.name.contains(query, Qt::CaseInsensitive)) {
-      items.push_back(std::make_unique<OmniList::VirtualSection>("Current Theme"));
-      items.push_back(std::make_unique<ThemeItem>(current));
-    }
+      if (current.name.contains(query, Qt::CaseInsensitive)) {
+        auto &section = m_list->addSection("Current Theme");
 
-    items.push_back(std::make_unique<OmniList::VirtualSection>("Available Themes"));
+        section.addItem(std::make_unique<ThemeItem>(current));
+      }
 
-    for (const auto &theme : themeService.themes()) {
-      if (theme.name == current.name || !theme.name.contains(query, Qt::CaseInsensitive)) continue;
-      items.push_back(std::make_unique<ThemeItem>(theme));
-    }
+      if (!themeService.themes().empty()) {
+        auto &section = m_list->addSection("Available Themes");
 
-    m_list->updateFromList(items, OmniList::SelectionPolicy::SelectFirst);
+        auto filterTheme = [&](auto &&theme) {
+          return theme.name != current.name && theme.name.startsWith(query, Qt::CaseInsensitive);
+        };
+        auto mapTheme = [](auto &&theme) -> std::unique_ptr<OmniList::AbstractVirtualItem> {
+          return std::make_unique<ThemeItem>(theme);
+        };
+        auto items = themeService.themes() | std::views::filter(filterTheme) |
+                     std::views::transform(mapTheme) | std::ranges::to<std::vector>();
+
+        section.addItems(std::move(items));
+      }
+    });
   }
 
   void initialize() override { onSearchChanged(""); }

@@ -177,6 +177,7 @@ protected:
     if (action->isSubmenu()) {
       if (auto panel = action->createSubmenu()) {
         m_actionPannelV2->pushView(panel);
+        m_actionPannelV2->show();
         return;
       }
     }

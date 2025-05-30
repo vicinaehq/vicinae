@@ -46,6 +46,7 @@ ListAccessoryWidget::ListAccessoryWidget(QWidget *parent)
   _layout->setAlignment(Qt::AlignVCenter);
   _layout->addWidget(_icon);
   _layout->addWidget(_text);
+  _icon->setFixedSize(16, 16);
 
   setLayout(_layout);
 }

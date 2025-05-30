@@ -1,11 +1,13 @@
 #pragma once
 #include "base-view.hpp"
+#include "builtin_icon.hpp"
 #include "services/bookmark/bookmark-service.hpp"
 #include "favicon/favicon-service.hpp"
 #include "action-panel/action-panel.hpp"
 #include "omni-icon.hpp"
 #include "quicklist-database.hpp"
 #include "service-registry.hpp"
+#include "timer.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/form/base-input.hpp"
 #include "ui/form/completed-input.hpp"
@@ -24,6 +26,7 @@
 #include <qobjectdefs.h>
 #include <qpixmap.h>
 #include <qsharedpointer.h>
+#include <qtimer.h>
 #include <qtmetamacros.h>
 #include <qtypes.h>
 #include <qvariant.h>
@@ -93,18 +96,6 @@ class DefaultIconSelectorItem : public IconSelectorItem {
 public:
   DefaultIconSelectorItem(const OmniIconUrl &url, const QString &displayName = "")
       : IconSelectorItem(url, displayName) {}
-};
-
-class LinkCompleter : public CompletedInput::Completer {
-  struct LinkChoice : public CompletionChoice {};
-
-  std::vector<CompletionItem> generateCompletions(const QString &query) const override {
-    CompletionSection section("Date & Time");
-
-    if (query.endsWith("{")) { return {}; }
-
-    return {};
-  }
 };
 
 struct LinkDynamicPlaceholder {
@@ -295,6 +286,7 @@ public:
   BookmarkFormView()
       : form(new FormWidget), name(new BaseInput), link(new CompletedInput), appSelector(new SelectorInput),
         iconSelector(new SelectorInput) {
+    Timer timer;
     auto appDb = ServiceRegistry::instance()->appDb();
     auto quicklinkDb = ServiceRegistry::instance()->quicklinks();
 
@@ -334,36 +326,38 @@ public:
               insertLinkPlaceholder(completion.argument());
             });
 
-    appSelector->beginUpdate();
+    appSelector->list()->updateModel([&]() {
+      auto &section = appSelector->list()->addSection();
+      if (auto browser = appDb->webBrowser()) { section.addItem(std::make_unique<DefaultAppItem>(browser)); }
 
-    if (auto browser = appDb->webBrowser()) {
-      appSelector->addItem(std::make_unique<DefaultAppItem>(browser));
-    }
+      for (const auto &app : appDb->list()) {
+        section.addItem(std::make_unique<AppSelectorItem>(app));
 
-    for (const auto &app : appDb->list()) {
-      appSelector->addItem(std::make_unique<AppSelectorItem>(app));
-
-      for (const auto &action : app->actions()) {
-        appSelector->addItem(std::make_unique<AppSelectorItem>(action));
+        for (const auto &action : app->actions()) {
+          section.addItem(std::make_unique<AppSelectorItem>(action));
+        }
       }
-    }
-
-    appSelector->commitUpdate();
+    });
     appSelector->setValue("default");
 
-    iconSelector->beginUpdate();
-    iconSelector->addItem(
-        std::make_unique<DefaultIconSelectorItem>(BuiltinOmniIconUrl("bookmark"), "Default"));
+    iconSelector->list()->updateModel([&]() {
+      auto &section = iconSelector->list()->addSection();
 
-    for (const auto &name : BuiltinIconService::icons()) {
-      iconSelector->addItem(std::make_unique<IconSelectorItem>(BuiltinOmniIconUrl(name)));
-    }
+      section.addItem(std::make_unique<DefaultIconSelectorItem>(BuiltinOmniIconUrl("bookmark"), "Default"));
 
-    iconSelector->commitUpdate();
+      auto mapItem = [](auto &&name) -> std::unique_ptr<OmniList::AbstractVirtualItem> {
+        return std::make_unique<IconSelectorItem>(BuiltinOmniIconUrl(name));
+      };
+      auto items =
+          BuiltinIconService::icons() | std::views::transform(mapItem) | std::ranges::to<std::vector>();
+
+      section.addItems(std::move(items));
+    });
     iconSelector->setValue("default");
 
     form->setContentsMargins(0, 10, 0, 0);
     setupUI(form);
+    timer.time("Build form");
   }
 
   void loadLink(const Quicklink &quicklink) {
