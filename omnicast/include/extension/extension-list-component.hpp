@@ -1,8 +1,8 @@
 #pragma once
 #include "extend/list-model.hpp"
 #include <qdebug.h>
-#include "extension/extension-component.hpp"
 #include "extension/extension-list-detail.hpp"
+#include "extension/extension-view.hpp"
 #include "ui/form/selector-input.hpp"
 #include "ui/omni-list.hpp"
 #include "ui/split-detail.hpp"
@@ -49,8 +49,7 @@ public:
   BuiltinExtensionItemFilter(const QString &filterText) : _filterText(filterText) {}
 };
 
-class ExtensionListComponent : public AbstractExtensionRootComponent {
-  AppWindow *m_app;
+class ExtensionListComponent : public ExtensionSimpleView {
   SelectorInput *m_selector = new SelectorInput;
   SplitDetailWidget *m_split = new SplitDetailWidget(this);
   ExtensionListDetail *m_detail = new ExtensionListDetail;
@@ -63,18 +62,11 @@ class ExtensionListComponent : public AbstractExtensionRootComponent {
   bool m_dropdownShouldResetSelection = false;
   int m_renderCount = 0;
 
-  void resizeEvent(QResizeEvent *event) override {
-    AbstractExtensionRootComponent::resizeEvent(event);
-    qDebug() << "split size" << event->size();
-    m_split->setFixedSize(event->size());
-  }
-
   void renderDropdown(const DropdownModel &dropdown);
   void handleDropdownSelectionChanged(const SelectorInput::AbstractItem &item);
   void handleDropdownSearchChanged(const QString &text);
 
 public:
-  AppWindow *app() const { return m_app; }
   void render(const RenderModel &baseModel) override;
   void onSelectionChanged(const OmniList::AbstractVirtualItem *next,
                           const OmniList::AbstractVirtualItem *previous);
@@ -83,5 +75,5 @@ public:
   void onSearchChanged(const QString &text) override;
   bool inputFilter(QKeyEvent *event) override;
 
-  ExtensionListComponent(AppWindow &app);
+  ExtensionListComponent();
 };

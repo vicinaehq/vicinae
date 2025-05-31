@@ -27,7 +27,17 @@
 class BaseView : public QWidget {
   Q_OBJECT
 
+  bool m_initialized = false;
+
 public:
+  void createInitialize() {
+    if (m_initialized) return;
+
+    initialize();
+    m_initialized = true;
+  }
+  bool isInitialized() { return m_initialized; }
+
   /**
    * Called before the view is first shown on screen.
    * You can use this hook to setup UI.
@@ -226,22 +236,6 @@ protected:
     }
   }
 
-  QString searchText() const override { return m_topBar->input->text(); }
-
-  void setSearchText(const QString &value) const override { m_topBar->input->setText(value); }
-
-  void setSearchText(const QString &text) { m_topBar->input->setText(text); }
-  QString searchPlaceholderText() const { return m_topBar->input->placeholderText(); }
-  void setSearchPlaceholderText(const QString &value) const {
-    return m_topBar->input->setPlaceholderText(value);
-  }
-
-  QString navigationTitle() const { return m_statusBar->navigationTitle(); }
-  void setNavigationTitle(const QString &title) override { m_statusBar->setNavigationTitle(title); }
-  void setNavigationIcon(const OmniIconUrl &url) override { m_statusBar->setNavigationIcon(url); }
-
-  void setLoading(bool value) { m_loadingBar->setStarted(value); }
-
   void setupUI(QWidget *centerWidget) {
     m_topBar->setFixedHeight(Omnicast::TOP_BAR_HEIGHT);
     m_statusBar->setFixedHeight(Omnicast::STATUS_BAR_HEIGHT);
@@ -266,6 +260,23 @@ protected:
     connect(m_actionPannelV2, &ActionPanelV2Widget::actionActivated, this, &SimpleView::executeAction);
     connect(m_statusBar, &StatusBar::actionButtonClicked, this, &SimpleView::actionButtonClicked);
   }
+
+public:
+  QString searchText() const override { return m_topBar->input->text(); }
+
+  void setSearchText(const QString &value) const override { m_topBar->input->setText(value); }
+
+  void setSearchText(const QString &text) { m_topBar->input->setText(text); }
+  QString searchPlaceholderText() const { return m_topBar->input->placeholderText(); }
+  void setSearchPlaceholderText(const QString &value) const {
+    return m_topBar->input->setPlaceholderText(value);
+  }
+
+  QString navigationTitle() const { return m_statusBar->navigationTitle(); }
+  void setNavigationTitle(const QString &title) override { m_statusBar->setNavigationTitle(title); }
+  void setNavigationIcon(const OmniIconUrl &url) override { m_statusBar->setNavigationIcon(url); }
+
+  void setLoading(bool value) { m_loadingBar->setStarted(value); }
 
   void initialize() override {}
 

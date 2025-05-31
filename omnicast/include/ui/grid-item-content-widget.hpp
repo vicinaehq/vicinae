@@ -23,6 +23,7 @@ protected:
   void paintEvent(QPaintEvent *event) override;
   void enterEvent(QEnterEvent *event) override { setHovered(true); }
   void leaveEvent(QEvent *event) override { setHovered(false); }
+  void hideEvent(QHideEvent *event) override;
   void moveEvent(QMoveEvent *event) override {
     QWidget::moveEvent(event);
     // reposition the tooltip relative to the widget
@@ -36,7 +37,7 @@ protected:
 
 public:
   GridItemContentWidget();
-  ~GridItemContentWidget();
+  virtual ~GridItemContentWidget() override;
 
   void setTooltipText(const QString &text);
   void showTooltip();

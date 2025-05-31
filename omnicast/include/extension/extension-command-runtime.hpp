@@ -1,21 +1,53 @@
 #pragma once
+#include "base-view.hpp"
 #include "command.hpp"
 #include "common.hpp"
+#include "extend/form-model.hpp"
+#include "extend/grid-model.hpp"
+#include "extend/list-model.hpp"
+#include "extend/model-parser.hpp"
+#include "extend/root-detail-model.hpp"
 #include "extension/extension-command.hpp"
+#include "extension/extension-list-component.hpp"
 #include "extension/extension-view.hpp"
-#include "local-storage-service.hpp"
+#include "services/local-storage/local-storage-service.hpp"
 #include "service-registry.hpp"
 #include <algorithm>
+#include <memory>
 #include <qjsonarray.h>
 #include <qjsonobject.h>
 #include <qjsonvalue.h>
 #include <qlogging.h>
 #include <qobject.h>
+#include <qwidget.h>
+#include <variant>
+
+struct ExtensionViewInfo {
+  size_t index;
+  ExtensionSimpleView *view;
+};
+
+struct ViewVisitor {
+  ExtensionSimpleView *operator()(const ListModel &model) const { return new ExtensionListComponent; }
+  ExtensionSimpleView *operator()(const GridModel &model) const { return nullptr; }
+  ExtensionSimpleView *operator()(const FormModel &model) const { return nullptr; }
+  ExtensionSimpleView *operator()(const InvalidModel &model) const { return nullptr; }
+  ExtensionSimpleView *operator()(const RootDetailModel &model) const { return nullptr; }
+};
+
+class PlaceholderExtensionView : public SimpleView {
+public:
+  PlaceholderExtensionView() {
+    m_topBar->input->hide();
+    setupUI(new QWidget);
+  }
+};
 
 class ExtensionCommandRuntime : public CommandContext {
   std::shared_ptr<ExtensionCommand> m_command;
-  std::vector<ExtensionView *> m_viewStack;
+  std::vector<ExtensionViewInfo> m_viewStack;
   QFutureWatcher<std::vector<RenderModel>> m_modelWatcher;
+  PlaceholderExtensionView *placeholderView = new PlaceholderExtensionView;
 
   QString m_sessionId;
 
@@ -25,6 +57,16 @@ class ExtensionCommandRuntime : public CommandContext {
 
     payload["args"] = args;
     manager->emitExtensionEvent(m_sessionId, handlerId, payload);
+  }
+
+  ExtensionSimpleView *createViewFromModel(const RenderModel &model) {
+    auto view = std::visit(ViewVisitor(), model);
+
+    view->setNavigationTitle(m_command->name());
+    view->setNavigationIcon(m_command->iconUrl());
+    connect(view, &ExtensionSimpleView::notificationRequested, this, &ExtensionCommandRuntime::sendEvent);
+
+    return view;
   }
 
   QJsonObject handleStorage(const QString &action, const QJsonObject &payload) {
@@ -225,8 +267,7 @@ class ExtensionCommandRuntime : public CommandContext {
     auto ui = ServiceRegistry::instance()->UI();
 
     if (m_command->isView() && action == "ui.push-view") {
-      // TODO: push extension view
-      // ui->pushView(new ExtensionView(*m_command.get()));
+      // we create a new view on render
       return {};
     }
 
@@ -255,42 +296,6 @@ class ExtensionCommandRuntime : public CommandContext {
     return {};
   }
 
-  void updateActionPannel(const ActionPannelModel &model) {
-    std::vector<ActionItem> items;
-
-    items.reserve(model.children.size());
-
-    for (const auto &item : model.children) {
-      if (auto actionModel = std::get_if<ActionModel>(&item)) {
-        items.push_back(std::make_unique<ExtensionAction>(*actionModel));
-      }
-    }
-
-    /*
-app()->actionPannel->setActions(std::move(items));
-
-if (auto action = app()->actionPannel->primaryAction()) {
-  app()->statusBar->setAction(*action);
-} else {
-  app()->statusBar->clearAction();
-}
-    */
-  }
-
-  void pushView(ExtensionView *view) {
-    if (!m_viewStack.empty()) {
-      auto view = m_viewStack.at(m_viewStack.size() - 1);
-      disconnect(view, &ExtensionView::notifyEvent, this, &ExtensionCommandRuntime::sendEvent);
-    }
-
-    connect(view, &ExtensionView::notifyEvent, this, &ExtensionCommandRuntime::sendEvent);
-    connect(view, &ExtensionView::updateActionPannel, this, &ExtensionCommandRuntime::updateActionPannel);
-
-    m_viewStack.push_back(view);
-    // m_app->pushView(
-    // view, {.navigation = NavigationStatus{.title = m_command->name(), .iconUrl = m_command->iconUrl()}});
-  }
-
   void handlePopViewRequest() {
     auto ui = ServiceRegistry::instance()->UI();
 
@@ -301,13 +306,35 @@ if (auto action = app()->actionPannel->primaryAction()) {
   void modelCreated() {
     if (m_modelWatcher.isCanceled()) return;
 
-    auto models = m_modelWatcher.result();
+    auto ui = ServiceRegistry::instance()->UI();
 
-    for (int i = 0; i != models.size() && i != m_viewStack.size(); ++i) {
-      auto view = m_viewStack.at(i);
+    auto models = m_modelWatcher.result();
+    qCritical() << "RENDER EXTENSION!!";
+
+    for (int i = 0; i != models.size(); ++i) {
       auto model = models.at(i);
 
-      view->render(model);
+      if (i >= m_viewStack.size()) {
+        auto next = createViewFromModel(model);
+        if (ui->topView() == placeholderView) {
+          ui->replaceView(placeholderView, next);
+        } else {
+          ui->pushView(next);
+        }
+        m_viewStack.push_back({.index = model.index(), .view = next});
+      } else {
+        auto &view = m_viewStack.at(i);
+
+        if (view.index != model.index()) {
+          auto next = createViewFromModel(model);
+
+          ui->replaceView(view.view, next);
+          view.view = next;
+          view.index = model.index();
+        }
+      }
+
+      m_viewStack.at(i).view->render(model);
     }
   }
 
@@ -360,20 +387,6 @@ if (auto action = app()->actionPannel->primaryAction()) {
     }
   }
 
-  void onActionExecuted(AbstractAction *action) override {
-    auto extensionAction = static_cast<ExtensionAction *>(action);
-    auto &model = extensionAction->model();
-
-    if (auto handler = model.onAction; !handler.isEmpty()) { sendEvent(handler, {}); }
-
-    if (auto onSubmit = model.onSubmit) {
-      if (!m_viewStack.empty()) {
-        m_viewStack[m_viewStack.size() - 1]->submitForm(*onSubmit);
-        return;
-      }
-    }
-  }
-
   void handleEvent(const QString &sessionId, const QString &action, const QJsonObject &payload) {
     qDebug() << "event" << action << "for " << sessionId;
     if (m_sessionId != sessionId) return;
@@ -399,24 +412,20 @@ public:
     auto commandDb = ServiceRegistry::instance()->commandDb();
     auto preferenceValues = commandDb->getPreferenceValues(m_command->uniqueId());
     auto manager = ServiceRegistry::instance()->extensionManager();
+    auto ui = ServiceRegistry::instance()->UI();
 
     if (m_command->mode() == CommandModeView) {
       // We push the first view immediately, waiting for the initial render to come
       // in and "hydrate" it.
-      // pushView(new ExtensionView(*m_app, *m_command.get()));
-      /*
-  connect(m_app, &AppWindow::currentViewPoped, this, [this]() {
-    qDebug() << "curent view poped from extension";
-    m_viewStack.pop_back();
+      placeholderView->setNavigationTitle(m_command->name());
+      placeholderView->setNavigationIcon(m_command->iconUrl());
+      ui->pushView(placeholderView);
 
-    if (!m_viewStack.empty()) {
-      auto top = m_viewStack.at(m_viewStack.size() - 1);
+      connect(ui, &UIController::popViewRequested, this, [this]() {
+        m_viewStack.pop_back();
 
-      connect(top, &ExtensionView::notifyEvent, this, &ExtensionCommandRuntime::sendEvent);
-      sendEvent("pop-view", {});
-    }
-  });
-      */
+        if (!m_viewStack.empty()) { sendEvent("pop-view", {}); }
+      });
     }
 
     manager->loadCommand(m_command->extensionId(), m_command->commandId(), preferenceValues, props);

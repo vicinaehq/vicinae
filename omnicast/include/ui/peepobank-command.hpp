@@ -1,6 +1,8 @@
 #pragma once
 #include "actions/app/app-actions.hpp"
 #include "base-view.hpp"
+#include "common.hpp"
+#include "icon-browser-command.hpp"
 #include "omni-icon.hpp"
 #include "ui/image/omnimg.hpp"
 #include "common-actions.hpp"
@@ -14,6 +16,13 @@
 #include <qwindowdefs.h>
 
 class PeepobankView : public GridView {
+  class ReplaceAction : public AbstractAction {
+    void execute() override { ServiceRegistry::instance()->UI()->replaceCurrentView(new IconBrowserView); }
+
+  public:
+    ReplaceAction() : AbstractAction("Replace with icons", BuiltinOmniIconUrl("stars")) {}
+  };
+
   QString bankPath = "/home/aurelle/Pictures/peepobank/";
   struct PeepoInfo {
     QString name;
@@ -34,7 +43,7 @@ class PeepobankView : public GridView {
 
     QList<AbstractAction *> generateActions() const override {
       return {new PasteAction(Clipboard::File{_info.path.toStdString()}),
-              new OpenAppAction(_fileBrowser, "Open in file browser", {_info.path})};
+              new OpenAppAction(_fileBrowser, "Open in file browser", {_info.path}), new ReplaceAction};
     }
 
     void recycleCenterWidget(QWidget *base) const override {
@@ -80,20 +89,23 @@ class PeepobankView : public GridView {
       auto fileBrowser = ServiceRegistry::instance()->appDb()->fileBrowser();
       QDir dir(bankPath);
 
-      m_grid->setColumns(8);
-      m_grid->beginUpdate();
-      m_grid->addSection("Results");
+      m_grid->updateModel([&]() {
+        auto &section = m_grid->addSection("Results");
 
-      for (auto entry : dir.entryList()) {
-        if (entry.startsWith(".")) continue;
+        section.setColumns(8);
+        section.setSpacing(10);
 
-        m_grid->addItem(std::make_unique<PeepoItem>(
-            PeepoInfo{
-                .name = entry,
-                .path = dir.filePath(entry),
-            },
-            fileBrowser));
-      }
+        for (auto entry : dir.entryList()) {
+          if (entry.startsWith(".")) continue;
+
+          section.addItem(std::make_unique<PeepoItem>(
+              PeepoInfo{
+                  .name = entry,
+                  .path = dir.filePath(entry),
+              },
+              fileBrowser));
+        }
+      });
 
       m_grid->commitUpdate();
       m_grid->selectFirst();

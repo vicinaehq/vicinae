@@ -1,6 +1,7 @@
 #include "extension/extension-command.hpp"
 #include "command.hpp"
 // #include "extension/extension-command-runtime.hpp"
+#include "extension/extension-command-runtime.hpp"
 #include "extension/extension.hpp"
 #include "omni-icon.hpp"
 #include <filesystem>
@@ -48,8 +49,7 @@ const QString &ExtensionCommand::extensionIcon() const { return _extensionIcon; 
 void ExtensionCommand::setExtensionIcon(const QString &icon) { _extensionIcon = icon; }
 
 CommandContext *ExtensionCommand::createContext(const std::shared_ptr<AbstractCmd> &command) const {
-  // return new ExtensionCommandRuntime(static_pointer_cast<ExtensionCommand>(command));
-  return nullptr;
+  return new ExtensionCommandRuntime(static_pointer_cast<ExtensionCommand>(command));
 }
 
 CommandType ExtensionCommand::type() const { return CommandType::CommandTypeExtension; }

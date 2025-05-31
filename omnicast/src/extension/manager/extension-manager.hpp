@@ -79,7 +79,7 @@ class Bus : public QObject {
   void request(const Messenger &target, const QString &action, const QJsonObject &payload);
   void emitEvent(const Messenger &target, const QString &action, const QJsonObject &payload);
   void requestExtension(const QString &sessionId, const QString &action, const QJsonObject &payload);
-  void handleMessage();
+  void handleMessage(FullMessage &message);
   void readyRead();
 
   static Messenger parseMessenger(const QJsonObject &lhs);

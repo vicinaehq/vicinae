@@ -1,21 +1,44 @@
 #pragma once
 #include "app.hpp"
-#include "extend/form-model.hpp"
-#include "extend/grid-model.hpp"
+#include "base-view.hpp"
 #include "extend/model-parser.hpp"
 #include "extend/model.hpp"
 #include "extension/extension-command.hpp"
-#include "extension/extension-grid-component.hpp"
-#include "extension/extension-list-component.hpp"
 #include "extension/extension-form-component.hpp"
-#include "view.hpp"
 #include <qboxlayout.h>
 #include <qevent.h>
+#include <qjsonarray.h>
 #include <qjsonobject.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
 
-class ExtensionView : public View {
+template <typename T>
+concept RequiresViewBase = std::derived_from<T, BaseView>;
+
+class ExtensionViewV2 : public SimpleView {
+  Q_OBJECT
+
+public:
+  virtual void render(const RenderModel &model) {}
+
+  /**
+   * Send a notification to the extension.
+   * The extension manager will forward the notification accordingly.
+   */
+  void notify(const QString &handler, const QJsonArray &args) const {
+    emit notificationRequested(handler, args);
+  }
+
+signals:
+  void notificationRequested(const QString &handler, const QJsonArray &args) const;
+};
+
+class ExtensionSimpleView : public ExtensionViewV2 {
+public:
+  void setActionPanel(const ActionPannelModel &model) {}
+};
+
+class ExtensionView : public SimpleView {
   Q_OBJECT
 
   const ExtensionCommand &_command;
@@ -30,16 +53,18 @@ class ExtensionView : public View {
   }
 
   AbstractExtensionRootComponent *createRootComponent(const RenderModel &model, QWidget *parent = nullptr) {
-    if (auto listModel = std::get_if<ListModel>(&model)) {
-      showInput();
-      return new ExtensionListComponent(app);
-    } else if (auto gridModel = std::get_if<GridModel>(&model)) {
-      showInput();
-      return new ExtensionGridComponent(app);
-    } else if (auto formModel = std::get_if<FormModel>(&model)) {
-      hideInput();
-      return new ExtensionFormComponent(app);
-    }
+    /*
+if (auto listModel = std::get_if<ListModel>(&model)) {
+// showInput();
+return new ExtensionListComponent(*this);
+} else if (auto gridModel = std::get_if<GridModel>(&model)) {
+// showInput();
+return new ExtensionGridComponent(app);
+} else if (auto formModel = std::get_if<FormModel>(&model)) {
+// hideInput();
+return new ExtensionFormComponent(app);
+}
+  */
 
     return nullptr;
   }
@@ -51,8 +76,12 @@ class ExtensionView : public View {
   }
 
 public:
-  ExtensionView(AppWindow &app, const ExtensionCommand &command)
-      : View(app), _command(command), _layout(new QVBoxLayout), _component(nullptr) {}
+  ExtensionView(const ExtensionCommand &command)
+      : SimpleView(), _command(command), _layout(new QVBoxLayout), _component(nullptr) {
+    setNavigationTitle(_command.name());
+    setNavigationIcon(_command.iconUrl());
+    setupUI(new QWidget);
+  }
 
   const ExtensionCommand &command() const { return _command; }
 
@@ -61,9 +90,8 @@ public:
   }
 
   bool submitForm(const EventHandler &callback) {
-    if (_component && _modelIndex == RenderModel(FormModel()).index()) {
-      qDebug() << "forwarding callback";
-      static_cast<ExtensionFormComponent *>(_component)->handleSubmit(callback);
+    if (auto form = dynamic_cast<ExtensionFormComponent *>(_component)) {
+      form->handleSubmit(callback);
       return true;
     }
 

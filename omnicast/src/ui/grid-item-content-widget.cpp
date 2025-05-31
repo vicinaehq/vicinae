@@ -44,6 +44,8 @@ void GridItemContentWidget::paintEvent(QPaintEvent *event) {
 void GridItemContentWidget::mousePressEvent(QMouseEvent *event) { emit clicked(); }
 void GridItemContentWidget::mouseDoubleClickEvent(QMouseEvent *event) { emit doubleClicked(); }
 
+void GridItemContentWidget::hideEvent(QHideEvent *event) { tooltip->hide(); }
+
 QSize GridItemContentWidget::innerWidgetSize() const { return {width() - _inset * 2, height() - _inset * 2}; }
 
 void GridItemContentWidget::setWidget(QWidget *widget) {

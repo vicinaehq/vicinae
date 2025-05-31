@@ -144,9 +144,7 @@ void Bus::requestExtension(const QString &sessionId, const QString &action, cons
   request(target, action, payload);
 }
 
-void Bus::handleMessage() {
-  FullMessage msg = m_parseMessageTask.result();
-
+void Bus::handleMessage(FullMessage &msg) {
   qDebug() << "[DEBUG] readyRead: got message of type" << msg.envelope.action;
 
   if (msg.envelope.type == ExtensionMessageType::REQUEST) {
@@ -199,9 +197,13 @@ void Bus::readyRead() {
       // TODO: find a better way that does not block while still preserving order
       if (m_parseMessageTask.isRunning()) { m_parseMessageTask.waitForFinished(); }
 
-      auto task = QtConcurrent::run([this, packet = std::move(packet)]() { return parseRawMessage(packet); });
+      // auto task = QtConcurrent::run([this, packet = std::move(packet)]() { return parseRawMessage(packet);
+      // });
+      auto message = parseRawMessage(packet);
 
-      m_parseMessageTask.setFuture(task);
+      handleMessage(message);
+
+      // m_parseMessageTask.setFuture(task);
       _message.data = _message.data.sliced(sizeof(uint32_t) + length);
     }
   }
@@ -260,7 +262,7 @@ void Bus::unloadCommand(const QString &sessionId) {
 
 Bus::Bus(QIODevice *socket) : device(socket) {
   connect(socket, &QIODevice::readyRead, this, &Bus::readyRead);
-  connect(&m_parseMessageTask, &QFutureWatcher<FullMessage>::finished, this, &Bus::handleMessage);
+  // connect(&m_parseMessageTask, &QFutureWatcher<FullMessage>::finished, this, &Bus::handleMessage);
 }
 
 // Extension Manager

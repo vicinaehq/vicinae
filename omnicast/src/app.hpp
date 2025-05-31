@@ -4,6 +4,7 @@
 #include "command-server.hpp"
 #include <QScreen>
 #include "omni-icon.hpp"
+#include <algorithm>
 #include <cstring>
 #include <qboxlayout.h>
 #include <qdnslookup.h>
@@ -60,6 +61,7 @@ class AppWindow : public QMainWindow, public ICommandHandler {
   Q_OBJECT
 
   CommandServer *_commandServer;
+  std::vector<BaseView *> m_viewStack;
 
   void paintEvent(QPaintEvent *event) override;
   void resizeEvent(QResizeEvent *event) override;
@@ -105,6 +107,11 @@ public:
   void disconnectView(BaseView &view);
   void connectView(BaseView &view);
   void closeWindow(bool popToRoot = false);
+
+  bool replaceView(BaseView *previous, BaseView *next);
+
+  BaseView *frontView() const;
+  void presentFrontView();
 
   void selectPrimaryAction();
   void selectSecondaryAction();

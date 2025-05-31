@@ -4,6 +4,8 @@
 #include "command-database.hpp"
 #include "command-server.hpp"
 #include <QGraphicsBlurEffect>
+#include "emoji-command.hpp"
+#include "manage-fallback-commands.hpp"
 #include "services/clipboard/clipboard-server-factory.hpp"
 #include "common.hpp"
 #include "services/config/config-service.hpp"
@@ -65,6 +67,15 @@ void AppWindow::clearSearch() {}
 
 void AppWindow::showEvent(QShowEvent *event) { QMainWindow::showEvent(event); }
 
+BaseView *AppWindow::frontView() const {
+  if (m_viewStack.empty()) return nullptr;
+  return m_viewStack.back();
+}
+
+void AppWindow::presentFrontView() {
+  if (auto view = frontView()) { view->show(); }
+}
+
 void AppWindow::popCurrentView() {
   auto &activeCommand = commandStack.at(commandStack.size() - 1);
 
@@ -72,11 +83,12 @@ void AppWindow::popCurrentView() {
 
   if (navigationStack.size() == 1) return;
 
-  auto previous = navigationStack.top();
+  auto previous = frontView();
   navigationStack.pop();
+  m_viewStack.pop_back();
 
-  previous.view->deactivate();
-  disconnectView(*previous.view);
+  previous->deactivate();
+  disconnectView(*previous);
 
   auto next = navigationStack.top();
 
@@ -86,7 +98,7 @@ void AppWindow::popCurrentView() {
   ServiceRegistry::instance()->UI()->setTopView(next.view);
   next.view->show();
 
-  previous.view->deleteLater();
+  previous->deleteLater();
 
   if (activeCommand.viewStack.size() == 1) {
     activeCommand.command->unload();
@@ -98,6 +110,34 @@ void AppWindow::popCurrentView() {
   }
 
   currentViewPoped();
+}
+
+bool AppWindow::replaceView(BaseView *previous, BaseView *next) {
+  if (auto it = std::ranges::find(m_viewStack, previous); it != m_viewStack.end()) {
+    if (it == m_viewStack.begin()) {
+      qCritical() << "Cannot call replaceView on root view";
+      return false;
+    }
+
+    bool isOldFront = previous == frontView();
+
+    *it = next;
+    next->setParent(this);
+
+    if (isOldFront) {
+      ServiceRegistry::instance()->UI()->setTopView(next);
+      next->setFixedSize(size());
+      next->show();
+      next->createInitialize();
+      next->activate();
+    }
+
+    previous->deleteLater();
+
+    return true;
+  }
+
+  return false;
 }
 
 void AppWindow::popToRoot() {
@@ -133,13 +173,14 @@ void AppWindow::pushView(BaseView *view, const PushViewOptions &opts) {
   currentCommand.viewStack.push({.view = view});
   ServiceRegistry::instance()->UI()->setTopView(view);
   navigationStack.push({.view = view});
+  m_viewStack.emplace_back(view);
   if (auto navigation = opts.navigation) {
     view->setNavigationTitle(navigation->title);
     view->setNavigationIcon(navigation->iconUrl);
   }
 
   view->show();
-  view->initialize();
+  view->createInitialize();
   view->setSearchText(opts.searchQuery);
   view->onActivate();
 }
@@ -173,7 +214,6 @@ void AppWindow::launchCommand(const std::shared_ptr<AbstractCmd> &command, const
 pushView(new MissingExtensionPreferenceView(*this, extensionCommand),
          {.navigation = NavigationStatus{.title = command->name(), .iconUrl = command->iconUrl()}});
         */
-        return;
       }
 
       qDebug() << "MISSING PREFERENCE" << preference->title();
@@ -344,6 +384,11 @@ AppWindow::AppWindow(QWidget *parent) : QMainWindow(parent) {
           [this](BaseView *view, const PushViewOptions &opts) { pushView(view, opts); });
   connect(ServiceRegistry::instance()->UI(), &UIController::closeWindowRequested, this,
           [this]() { closeWindow(false); });
+  connect(ServiceRegistry::instance()->UI(), &UIController::replaceViewRequested, this,
+          &AppWindow::replaceView);
 
   launchCommand(rootCommand);
+
+  pushView(new ManageFallbackCommands);
+  replaceView(frontView(), new EmojiView);
 }
