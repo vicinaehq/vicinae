@@ -12,15 +12,12 @@
 #include <qtmetamacros.h>
 #include <qwidget.h>
 
-template <typename T>
-concept RequiresViewBase = std::derived_from<T, BaseView>;
-
-class ExtensionViewV2 : public SimpleView {
+class ExtensionSimpleView : public SimpleView {
   Q_OBJECT
 
 public:
   virtual void render(const RenderModel &model) {}
-
+  void setActionPanel(const ActionPannelModel &model) {}
   /**
    * Send a notification to the extension.
    * The extension manager will forward the notification accordingly.
@@ -31,11 +28,6 @@ public:
 
 signals:
   void notificationRequested(const QString &handler, const QJsonArray &args) const;
-};
-
-class ExtensionSimpleView : public ExtensionViewV2 {
-public:
-  void setActionPanel(const ActionPannelModel &model) {}
 };
 
 class ExtensionView : public SimpleView {

@@ -11,27 +11,6 @@
 
 class ActionPannelWidget;
 
-template <typename T, typename Variant>
-concept VariantMember = requires { std::get<T>(std::declval<Variant>()); };
-
-template <typename T>
-  requires VariantMember<T, RenderModel>
-class RenderableExtensionView {
-  virtual void render(const T &model) = 0;
-  virtual int modelIndex() const { return RenderModel(T{}).index(); }
-};
-
-template <typename T>
-concept RequiresView = std::derived_from<T, BaseView>;
-
-template <RequiresView T> class ExtensionRootView : public T {
-  void hello() {
-    BaseView *e = new T();
-
-    ExtensionRootView *extended = e;
-  }
-};
-
 class AbstractExtensionRootComponent : public QWidget {
   Q_OBJECT
   AppWindow &app;
