@@ -43,15 +43,17 @@ public:
   }
 };
 
+class ActionDispatcher {};
+
 class ExtensionCommandRuntime : public CommandContext {
   std::shared_ptr<ExtensionCommand> m_command;
   std::vector<ExtensionViewInfo> m_viewStack;
   QFutureWatcher<std::vector<RenderModel>> m_modelWatcher;
-  PlaceholderExtensionView *placeholderView = new PlaceholderExtensionView;
+  PlaceholderExtensionView *placeholderView = nullptr;
 
   QString m_sessionId;
 
-  void sendEvent(const QString &handlerId, const QJsonArray &args) {
+  void notify(const QString &handlerId, const QJsonArray &args) {
     auto manager = ServiceRegistry::instance()->extensionManager();
     QJsonObject payload;
 
@@ -64,7 +66,7 @@ class ExtensionCommandRuntime : public CommandContext {
 
     view->setNavigationTitle(m_command->name());
     view->setNavigationIcon(m_command->iconUrl());
-    connect(view, &ExtensionSimpleView::notificationRequested, this, &ExtensionCommandRuntime::sendEvent);
+    connect(view, &ExtensionSimpleView::notificationRequested, this, &ExtensionCommandRuntime::notify);
 
     return view;
   }
@@ -148,14 +150,14 @@ class ExtensionCommandRuntime : public CommandContext {
                 payload["token"] = token.message.content().toString();
                 payload["done"] = false;
 
-                sendEvent(callback, {payload});
+                notify(callback, {payload});
               });
       connect(completion, &StreamedChatCompletion::finished, this, [this, completion, callback]() {
         QJsonObject payload;
 
         payload["token"] = "";
         payload["done"] = true;
-        sendEvent(callback, {payload});
+        notify(callback, {payload});
         completion->deleteLater();
       });
       connect(completion, &StreamedChatCompletion::errorOccured, this, [this, completion, callback]() {
@@ -163,7 +165,7 @@ class ExtensionCommandRuntime : public CommandContext {
 
         payload["token"] = "";
         payload["done"] = true;
-        sendEvent(callback, {payload});
+        notify(callback, {payload});
         completion->deleteLater();
       });
 
@@ -290,6 +292,7 @@ class ExtensionCommandRuntime : public CommandContext {
     if (action == "ui.clear-search-bar") {
       // m_app->topBar->input->clear();
       // emit m_app->topBar->input->textEdited("");
+      ui->topView()->clearSearchBar();
       return {};
     }
 
@@ -393,6 +396,8 @@ class ExtensionCommandRuntime : public CommandContext {
 
     if (action == "unload") {}
 
+    if (action == "error") { return handleError(payload); }
+
     if (action == "ui.render") {
       auto views = payload.value("views").toArray();
       QJsonDocument doc;
@@ -407,6 +412,18 @@ class ExtensionCommandRuntime : public CommandContext {
 
   void commandLoaded(const LoadedCommand &command) { m_sessionId = command.sessionId; }
 
+  void handleError(const QJsonObject &payload) {
+    auto message = payload.value("message").toString();
+
+    // push error view
+  }
+
+  void handleViewPoped() {
+    if (m_viewStack.size() > 1) { notify("pop-view", {}); }
+
+    m_viewStack.pop_back();
+  }
+
 public:
   void load(const LaunchProps &props) override {
     auto commandDb = ServiceRegistry::instance()->commandDb();
@@ -417,15 +434,11 @@ public:
     if (m_command->mode() == CommandModeView) {
       // We push the first view immediately, waiting for the initial render to come
       // in and "hydrate" it.
+      placeholderView = new PlaceholderExtensionView;
       placeholderView->setNavigationTitle(m_command->name());
       placeholderView->setNavigationIcon(m_command->iconUrl());
       ui->pushView(placeholderView);
-
-      connect(ui, &UIController::popViewRequested, this, [this]() {
-        m_viewStack.pop_back();
-
-        if (!m_viewStack.empty()) { sendEvent("pop-view", {}); }
-      });
+      connect(ui, &UIController::popViewRequested, this, &ExtensionCommandRuntime::handleViewPoped);
     }
 
     manager->loadCommand(m_command->extensionId(), m_command->commandId(), preferenceValues, props);
