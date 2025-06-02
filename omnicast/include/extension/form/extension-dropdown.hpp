@@ -50,31 +50,39 @@ public:
   void setJsonValue(const QJsonValue &value) const override { m_input->setValue(value.toString()); }
 
   void render(const std::shared_ptr<FormModel::IField> &field) override {
-    m_model = std::static_pointer_cast<FormModel::DropdownField>(field);
-
-    std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> items;
-
-    for (const auto &item : m_model->m_items) {
-      if (auto listItem = std::get_if<DropdownModel::Item>(&item)) {
-        items.push_back(std::make_unique<DropdownSelectorItem>(*listItem));
-      } else if (auto section = std::get_if<DropdownModel::Section>(&item)) {
-        items.push_back(std::make_unique<OmniList::VirtualSection>(section->title));
-
-        for (const auto &item : section->items) {
-          qWarning() << "dropdown item" << item.value;
-          items.push_back(std::make_unique<DropdownSelectorItem>(item));
-        }
-      }
-    }
-
     OmniList::SelectionPolicy selectionPolicy = OmniList::PreserveSelection;
+
+    m_model = std::static_pointer_cast<FormModel::DropdownField>(field);
 
     if (m_hasPendingResetSelection) {
       m_hasPendingResetSelection = false;
       selectionPolicy = OmniList::SelectFirst;
     }
 
-    m_input->list()->updateFromList(items, selectionPolicy);
+    m_input->list()->updateModel(
+        [&]() {
+          OmniList::Section *currentSection = nullptr;
+
+          for (const auto &item : m_model->m_items) {
+            if (auto listItem = std::get_if<DropdownModel::Item>(&item)) {
+              if (!currentSection) { currentSection = &m_input->list()->addSection(); }
+
+              currentSection->addItem(std::make_unique<DropdownSelectorItem>(*listItem));
+            } else if (auto section = std::get_if<DropdownModel::Section>(&item)) {
+              auto &sec = m_input->list()->addSection(section->title);
+              auto items =
+                  section->items |
+                  std::views::transform([](auto &&item) -> std::unique_ptr<OmniList::AbstractVirtualItem> {
+                    return std::make_unique<DropdownSelectorItem>(item);
+                  }) |
+                  std::ranges::to<std::vector>();
+
+              sec.addItems(std::move(items));
+            }
+          }
+        },
+        selectionPolicy);
+
     m_input->setIsLoading(m_model->isLoading);
     m_input->setEnableDefaultFilter(m_model->filtering);
 

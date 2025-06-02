@@ -13,7 +13,9 @@
 #include "services/local-storage/local-storage-service.hpp"
 #include "service-registry.hpp"
 #include <algorithm>
+#include <functional>
 #include <memory>
+#include <optional>
 #include <qjsonarray.h>
 #include <qjsonobject.h>
 #include <qjsonvalue.h>
@@ -43,12 +45,37 @@ public:
   }
 };
 
-class ActionDispatcher {};
+class RequestDispatcher {
+public:
+  using HandlerCallback =
+      std::function<std::optional<QJsonObject>(const QString &action, const QJsonObject &data)>;
+  struct HandlerData {
+    QString prefix;
+    HandlerCallback callback;
+  };
+
+private:
+  std::vector<HandlerData> m_handlers;
+
+public:
+  std::optional<QJsonObject> dispatch(const QString &action, const QJsonObject &data) const {
+    auto it = std::ranges::find_if(m_handlers, [&](auto &&lhs) { return action.startsWith(lhs.prefix); });
+
+    if (it == m_handlers.end()) return std::nullopt;
+
+    return it->callback(action, data);
+  }
+
+  void registerHandler(const QString &prefix, const HandlerCallback &handler) {
+    m_handlers.emplace_back(HandlerData{prefix, handler});
+  }
+};
 
 class ExtensionCommandRuntime : public CommandContext {
   std::shared_ptr<ExtensionCommand> m_command;
   std::vector<ExtensionViewInfo> m_viewStack;
   QFutureWatcher<std::vector<RenderModel>> m_modelWatcher;
+  RequestDispatcher m_actionDispatcher;
   PlaceholderExtensionView *placeholderView = nullptr;
 
   QString m_sessionId;
@@ -357,37 +384,9 @@ class ExtensionCommandRuntime : public CommandContext {
 
     if (sessionId != m_sessionId) return;
 
-    qDebug() << "extension request" << requestId;
+    auto res = m_actionDispatcher.dispatch(action, payload);
 
-    if (action.startsWith("storage.")) {
-      manager->respond(requestId, handleStorage(action, payload));
-      return;
-    }
-
-    if (action.startsWith("ai.")) {
-      manager->respond(requestId, handleAI(action, payload));
-      return;
-    }
-
-    if (action.startsWith("apps.")) {
-      manager->respond(requestId, handleAppRequest(action, payload));
-      return;
-    }
-
-    if (action.startsWith("toast.")) {
-      manager->respond(requestId, handleToastRequest(action, payload));
-      return;
-    }
-
-    if (action.startsWith("clipboard.")) {
-      manager->respond(requestId, handleClipboard(action, payload));
-      return;
-    }
-
-    if (action.startsWith("ui.")) {
-      manager->respond(requestId, handleUI(action, payload));
-      return;
-    }
+    manager->respond(requestId, res.value_or(QJsonObject{}));
   }
 
   void handleEvent(const QString &sessionId, const QString &action, const QJsonObject &payload) {
@@ -453,6 +452,17 @@ public:
   ExtensionCommandRuntime(const std::shared_ptr<ExtensionCommand> &command)
       : CommandContext(command), m_command(command) {
     auto manager = ServiceRegistry::instance()->extensionManager();
+
+    m_actionDispatcher.registerHandler("storage.",
+                                       std::bind_front(&ExtensionCommandRuntime::handleStorage, this));
+    m_actionDispatcher.registerHandler("ai.", std::bind_front(&ExtensionCommandRuntime::handleAI, this));
+    m_actionDispatcher.registerHandler("apps.",
+                                       std::bind_front(&ExtensionCommandRuntime::handleAppRequest, this));
+    m_actionDispatcher.registerHandler("clipboard.",
+                                       std::bind_front(&ExtensionCommandRuntime::handleClipboard, this));
+    m_actionDispatcher.registerHandler("clipboard.",
+                                       std::bind_front(&ExtensionCommandRuntime::handleClipboard, this));
+    m_actionDispatcher.registerHandler("ui.", std::bind_front(&ExtensionCommandRuntime::handleUI, this));
 
     connect(manager, &ExtensionManager::extensionRequest, this, &ExtensionCommandRuntime::handleRequest);
     connect(manager, &ExtensionManager::extensionEvent, this, &ExtensionCommandRuntime::handleEvent);

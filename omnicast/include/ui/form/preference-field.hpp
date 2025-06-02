@@ -10,6 +10,7 @@
 #include <qlineedit.h>
 #include <qlogging.h>
 #include <qwidget.h>
+#include <ranges>
 
 class PreferenceDropdownItem : public SelectorInput::AbstractItem {
   QString m_id;
@@ -69,13 +70,16 @@ public:
       auto dropdownPreference = std::static_pointer_cast<DropdownPreference>(preference);
       auto input = new SelectorInput;
 
-      input->beginUpdate();
+      input->list()->updateModel([&]() {
+        auto map = [](auto &&option) -> std::unique_ptr<OmniList::AbstractVirtualItem> {
+          return std::make_unique<PreferenceDropdownItem>(option);
+        };
+        auto items =
+            dropdownPreference->options() | std::views::transform(map) | std::ranges::to<std::vector>();
+        auto &section = input->list()->addSection();
 
-      for (const auto &option : dropdownPreference->options()) {
-        input->addItem(std::make_unique<PreferenceDropdownItem>(option));
-      }
-
-      input->commitUpdate();
+        section.addItems(std::move(items));
+      });
 
       if (auto dflt = dropdownPreference->defaultValueAsJson(); !dflt.isNull()) {
         input->setValue(dflt.toString());

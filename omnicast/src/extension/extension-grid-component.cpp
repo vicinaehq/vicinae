@@ -2,6 +2,8 @@
 #include "app.hpp"
 #include "extension/extension-list-component.hpp"
 #include "ui/omni-grid.hpp"
+#include "ui/omni-list.hpp"
+#include <ranges>
 
 static const std::chrono::milliseconds THROTTLE_DEBOUNCE_DURATION(300);
 static const KeyboardShortcutModel primaryShortcut{.key = "return"};
@@ -47,24 +49,33 @@ void ExtensionGridComponent::render(const RenderModel &baseModel) {
 
   setLoading(newModel.isLoading);
 
-  std::vector<std::unique_ptr<OmniGrid::AbstractVirtualItem>> items;
+  OmniList::SelectionPolicy policy = OmniList::KeepSelection;
 
-  items.reserve(newModel.items.size());
+  if (_shouldResetSelection) {
+    _shouldResetSelection = false;
+    policy = OmniGrid::SelectFirst;
+  }
 
-  for (const auto &item : newModel.items) {
-    if (auto listItem = std::get_if<GridItemViewModel>(&item)) {
-      items.push_back(std::make_unique<ExtensionGridItem>(*listItem));
-    } else if (auto section = std::get_if<GridSectionModel>(&item)) {
-      items.push_back(std::make_unique<OmniGrid::GridSection>(section->title, section->columns, 10));
+  _grid->updateModel([&]() {
+    OmniList::Section *topLevelSection = nullptr;
 
-      for (const auto &item : section->children) {
-        auto extensionItem = std::make_unique<ExtensionGridItem>(item);
+    for (const auto &item : newModel.items) {
+      if (auto listItem = std::get_if<GridItemViewModel>(&item)) {
+        if (!topLevelSection) { topLevelSection = &_grid->addSection(); }
+        topLevelSection->addItem(std::make_unique<ExtensionGridItem>(*listItem));
+      } else if (auto section = std::get_if<GridSectionModel>(&item)) {
+        auto &sec = _grid->addSection(section->title);
+        auto mapItem = [](auto &&item) -> std::unique_ptr<OmniList::AbstractVirtualItem> {
+          return std::make_unique<ExtensionGridItem>(item);
+        };
+        auto items = section->children | std::views::transform(mapItem) | std::ranges::to<std::vector>();
 
-        extensionItem->setInset(section->inset);
-        items.push_back(std::move(extensionItem));
+        sec.setColumns(section->columns);
+        sec.setSpacing(10);
+        sec.addItems(std::move(items));
       }
     }
-  }
+  });
 
   if (!newModel.searchText) {
     if (newModel.filtering) {
@@ -74,16 +85,7 @@ void ExtensionGridComponent::render(const RenderModel &baseModel) {
     }
   }
 
-  _grid->invalidateCache();
-
-  if (_shouldResetSelection) {
-    _shouldResetSelection = false;
-    _grid->updateFromList(items, OmniGrid::SelectFirst);
-  } else {
-    _grid->updateFromList(items, OmniGrid::KeepSelection);
-  }
-
-  if (_grid->isShowingEmptyState()) {
+  if (_grid->virtualHeight() == 0) {
     size_t i = 0;
 
     if (auto pannel = newModel.actions) {

@@ -5,7 +5,6 @@
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
 #include "ui/action-pannel/action.hpp"
-#include "ui/omni-list-view.hpp"
 #include "ui/omni-list.hpp"
 #include <memory>
 #include <qnamespace.h>
@@ -33,7 +32,7 @@ public:
   }
 };
 
-class CalculatorHistoryListItem : public AbstractDefaultListItem, public OmniListView::IActionnable {
+class CalculatorHistoryListItem : public AbstractDefaultListItem, public ListView::Actionnable {
   using RemoveCallback = std::function<void(const QString &id)>;
 
   RemoveCallback _rmCb;

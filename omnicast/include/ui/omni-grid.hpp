@@ -69,33 +69,6 @@ public:
     AbstractGridItem() : _inset(10) {}
   };
 
-  class GridSection : public OmniList::VirtualSection {
-    int _columns;
-    int _spacing;
-
-    int spaceWidth() const { return _spacing * (_columns - 1); }
-
-    virtual int spacing() const override { return _spacing; }
-
-    int calculateItemWidth(int width, int index) const override {
-      int availableWidth = width - spaceWidth();
-
-      return availableWidth / _columns;
-    }
-
-    int calculateItemX(int x, int index) const override {
-      if (index % _columns) { return x + _spacing; }
-
-      return x;
-    }
-
-  public:
-    GridSection(const QString &name, int columns, int spacing)
-        : VirtualSection(name), _columns(columns), _spacing(spacing) {}
-  };
-
-  void recalculateFull() { invalidateCache(); }
-
 public:
   int columns() const { return _ncols; }
   int inset() const { return _inset; }

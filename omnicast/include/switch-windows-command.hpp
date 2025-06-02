@@ -2,7 +2,6 @@
 #include "base-view.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
-#include "ui/declarative-omni-list-view.hpp"
 #include "wm/window-manager.hpp"
 #include <chrono>
 #include <qfuturewatcher.h>
@@ -22,7 +21,7 @@ public:
       : AbstractAction("Focus window", BuiltinOmniIconUrl("app-window")), _window(window) {}
 };
 
-class WindowItem : public AbstractDefaultListItem, public DeclarativeOmniListView::IActionnable {
+class WindowItem : public AbstractDefaultListItem, public ListView::Actionnable {
 protected:
   std::shared_ptr<AbstractWindowManager::Window> _window;
 

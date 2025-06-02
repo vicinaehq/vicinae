@@ -4,8 +4,6 @@
 #include "services/clipboard/clipboard-service.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
-#include "ui/image/omnimg.hpp"
-#include "ui/omni-list-view.hpp"
 #include "ui/omni-list.hpp"
 #include "ui/toast.hpp"
 #include <memory>
@@ -78,6 +76,7 @@ public:
       : AbstractAction("Copy to clipboard", BuiltinOmniIconUrl("copy-clipboard")), m_id(id) {}
 };
 
+/*
 class ClipboardItemDetail : public OmniListView::MetadataDetailModel {
   ClipboardHistoryEntry entry;
 
@@ -138,6 +137,7 @@ class ClipboardItemDetail : public OmniListView::MetadataDetailModel {
 public:
   ClipboardItemDetail(const ClipboardHistoryEntry &entry) : entry(entry) {}
 };
+*/
 
 class RemoveSelectionAction : public AbstractAction {
   int _id;
@@ -216,9 +216,9 @@ public:
   ItemData data() const override { return {.iconUrl = iconForMime(info.mimeType), .name = info.textPreview}; }
 
   QWidget *generateDetail() const override {
-    auto detail = std::make_unique<ClipboardItemDetail>(info);
+    // auto detail = std::make_unique<ClipboardItemDetail>(info);
 
-    return new OmniListView::SideDetailWidget(*detail.get());
+    return nullptr;
   }
 
   QString generateId() const override { return QString::number(info.id); }
@@ -233,29 +233,27 @@ class ClipboardHistoryCommand : public ListView {
     auto result = clipman->listAll(100, 0, {.query = query});
     size_t i = 0;
 
-    m_list->beginResetModel();
+    m_list->updateModel([&]() {
+      auto &pinnedSection = m_list->addSection("Pinned");
 
-    auto &pinnedSection = m_list->addSection("Pinned");
+      while (i < result.data.size() && result.data[i].pinnedAt) {
+        auto &entry = result.data[i];
+        auto candidate = std::make_unique<ClipboardHistoryItem>(entry);
 
-    while (i < result.data.size() && result.data[i].pinnedAt) {
-      auto &entry = result.data[i];
-      auto candidate = std::make_unique<ClipboardHistoryItem>(entry);
+        pinnedSection.addItem(std::move(candidate));
+        ++i;
+      }
 
-      pinnedSection.addItem(std::move(candidate));
-      ++i;
-    }
+      auto &historySection = m_list->addSection("History");
 
-    auto &historySection = m_list->addSection("History");
+      while (i < result.data.size()) {
+        auto &entry = result.data[i];
+        auto candidate = std::make_unique<ClipboardHistoryItem>(entry);
 
-    while (i < result.data.size()) {
-      auto &entry = result.data[i];
-      auto candidate = std::make_unique<ClipboardHistoryItem>(entry);
-
-      historySection.addItem(std::move(candidate));
-      ++i;
-    }
-
-    m_list->endResetModel(OmniList::SelectFirst);
+        historySection.addItem(std::move(candidate));
+        ++i;
+      }
+    });
   }
 
   void initialize() override { onSearchChanged(""); }

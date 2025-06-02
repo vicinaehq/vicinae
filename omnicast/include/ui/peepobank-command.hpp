@@ -106,8 +106,6 @@ class PeepobankView : public GridView {
               fileBrowser));
         }
       });
-
-      m_grid->commitUpdate();
       m_grid->selectFirst();
     });
   }

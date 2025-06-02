@@ -24,7 +24,10 @@ void ThemeService::setTheme(const ThemeInfo &info) {
 			font-size: 12pt;
 		}
 
-		QScrollArea, QScrollArea > QWidget { background: transparent; }
+		QScrollArea, 
+		QScrollArea > QWidget,
+		QScrollArea > QWidget > QWidget
+		{ background: transparent; }
 
 		QLabel[subtext="true"] {
 			color: %1;

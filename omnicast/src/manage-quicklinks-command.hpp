@@ -7,11 +7,9 @@
 #include "service-registry.hpp"
 #include "services/bookmark/bookmark.hpp"
 #include "ui/horizontal-metadata.hpp"
-#include "ui/omni-list-view.hpp"
 #include "ui/omni-list.hpp"
 #include "ui/omni-scroll-bar.hpp"
 #include "ui/typography.hpp"
-#include "ui/vertical-metadata.hpp"
 #include <algorithm>
 #include <memory>
 #include <qboxlayout.h>
@@ -85,10 +83,13 @@ public:
   BookmarkDetailWidget(QWidget *parent = nullptr) : QWidget(parent) {
     auto layout = new QVBoxLayout;
 
+    m_contentScrollArea->setVerticalScrollBar(new OmniScrollBar);
+    m_contentScrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_contentScrollArea->setWidget(m_expandedLink);
     m_contentScrollArea->setWidgetResizable(true);
-    m_contentScrollArea->setVerticalScrollBar(new OmniScrollBar);
-    m_contentScrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
+    m_contentScrollArea->setAutoFillBackground(false);
+    setAutoFillBackground(false);
+    m_contentScrollArea->setAttribute(Qt::WA_TranslucentBackground);
 
     m_expandedLink->setWordWrap(true);
     m_expandedLink->setAlignment(Qt::AlignLeft | Qt::AlignTop);
@@ -99,52 +100,6 @@ public:
     layout->addWidget(m_metadata);
     setLayout(layout);
   }
-};
-
-class QuicklinkItemDetail : public OmniListView::MetadataDetailModel {
-  std::shared_ptr<Bookmark> link;
-
-  QWidget *createView() const override {
-    auto widget = new QWidget();
-    auto layout = new QHBoxLayout();
-
-    layout->setAlignment(Qt::AlignTop);
-    layout->addWidget(new QLabel(link->url()));
-    widget->setLayout(layout);
-
-    return widget;
-  }
-
-  MetadataModel createMetadata() const override {
-    QList<MetadataItem> items;
-
-    items << MetadataLabel{
-        .text = link->name(),
-        .title = "Name",
-    };
-    items << MetadataLabel{
-        .text = link->app(),
-        .title = "Application",
-    };
-    items << MetadataLabel{
-        .text = QString::number(0),
-        .title = "Opened",
-    };
-
-    /*
-if (link->lastUsedAt) {
-  items << MetadataLabel{
-      .text = link->lastUsedAt->toString(),
-      .title = "Last used at",
-  };
-}
-    */
-
-    return {.children = items};
-  }
-
-public:
-  QuicklinkItemDetail(const std::shared_ptr<Bookmark> &quicklink) : link(quicklink) {}
 };
 
 class QuicklinkItem : public AbstractDefaultListItem, public ListView::Actionnable {

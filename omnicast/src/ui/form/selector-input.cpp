@@ -161,19 +161,11 @@ void SelectorInput::itemActivated(const OmniList::AbstractVirtualItem &vitem) {
 
 QString SelectorInput::searchText() { return m_searchField->text(); }
 
-void SelectorInput::beginUpdate() { m_list->beginUpdate(); }
-
-void SelectorInput::commitUpdate() { m_list->commitUpdate(); }
-
 void SelectorInput::updateItem(const QString &id, const UpdateItemCallback &cb) {
   m_list->updateItem(id,
                      [&cb](OmniList::AbstractVirtualItem *item) { cb(static_cast<AbstractItem *>(item)); });
   if (_currentSelection->generateId() == id) { setValue(id); }
 }
-
-void SelectorInput::addSection(const QString &name) { m_list->addSection(name); }
-
-void SelectorInput::addItem(std::unique_ptr<AbstractItem> item) { m_list->addItem(std::move(item)); }
 
 const SelectorInput::AbstractItem *SelectorInput::value() const { return _currentSelection.get(); }
 

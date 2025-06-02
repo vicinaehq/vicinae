@@ -87,12 +87,8 @@ public:
   ~SelectorInput();
 
   FocusNotifier *focusNotifier() const;
-  void beginUpdate();
-  void commitUpdate();
   void setIsLoading(bool value);
   void clear();
-  void addItem(std::unique_ptr<AbstractItem> item);
-  void addSection(const QString &name);
   void clearFilter() const;
   OmniList *list() const { return m_list; }
 

@@ -5,7 +5,6 @@
 #include "service-registry.hpp"
 #include "theme.hpp"
 #include "ui/action-pannel/action.hpp"
-#include "ui/declarative-omni-list-view.hpp"
 #include "ui/default-list-item-widget.hpp"
 #include "ui/omni-list.hpp"
 #include "ui/toast.hpp"

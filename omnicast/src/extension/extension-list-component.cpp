@@ -10,6 +10,7 @@
 #include "extension/extension-view.hpp"
 #include "ui/form/app-picker-input.hpp"
 #include "ui/form/selector-input.hpp"
+#include "ui/omni-list.hpp"
 
 static const std::chrono::milliseconds THROTTLE_DEBOUNCE_DURATION(300);
 
@@ -53,35 +54,39 @@ bool ExtensionListComponent::inputFilter(QKeyEvent *event) {
 
 void ExtensionListComponent::renderDropdown(const DropdownModel &dropdown) {
   qWarning() << "RENDERING DROPDOWN!";
+  OmniList::SelectionPolicy selectionPolicy = OmniList::PreserveSelection;
 
   m_dropdownDebounce->setInterval(dropdown.throttle ? THROTTLE_DEBOUNCE_DURATION
                                                     : std::chrono::milliseconds(0));
-
-  std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> items;
-
-  items.reserve(dropdown.children.size());
-
-  for (const auto &item : dropdown.children) {
-    if (auto listItem = std::get_if<DropdownModel::Item>(&item)) {
-      items.push_back(std::make_unique<DropdownSelectorItem>(*listItem));
-    } else if (auto section = std::get_if<DropdownModel::Section>(&item)) {
-      items.push_back(std::make_unique<OmniList::VirtualSection>(section->title));
-
-      for (const auto &item : section->items) {
-        qWarning() << "dropdown item" << item.value;
-        items.push_back(std::make_unique<DropdownSelectorItem>(item));
-      }
-    }
-  }
-
-  OmniList::SelectionPolicy selectionPolicy = OmniList::PreserveSelection;
 
   if (m_dropdownShouldResetSelection) {
     m_dropdownShouldResetSelection = false;
     selectionPolicy = OmniList::SelectFirst;
   }
 
-  m_selector->list()->updateFromList(items, selectionPolicy);
+  auto list = m_selector->list();
+
+  list->updateModel(
+      [&]() {
+        OmniList::Section *currentSection = nullptr;
+
+        for (const auto &item : dropdown.children) {
+          if (auto listItem = std::get_if<DropdownModel::Item>(&item)) {
+            if (!currentSection) { currentSection = &list->addSection(); }
+            currentSection->addItem(std::make_unique<DropdownSelectorItem>(*listItem));
+          } else if (auto section = std::get_if<DropdownModel::Section>(&item)) {
+            auto mapItem = [](auto &&item) -> std::unique_ptr<OmniList::AbstractVirtualItem> {
+              return std::make_unique<DropdownSelectorItem>(item);
+            };
+            auto items = section->items | std::views::transform(mapItem) | std::ranges::to<std::vector>();
+            auto &sec = list->addSection(section->title);
+
+            sec.addItems(std::move(items));
+          }
+        }
+      },
+      selectionPolicy);
+
   m_selector->setEnableDefaultFilter(dropdown.filtering.enabled);
 
   if (auto controlledValue = dropdown.value) {
@@ -158,6 +163,8 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
             if (auto listItem = std::get_if<ListItemViewModel>(&item)) {
               // items.push_back(std::make_unique<ExtensionListItem>(*listItem));
             } else if (auto section = std::get_if<ListSectionModel>(&item)) {
+              if (section->children.empty()) continue;
+
               auto &sec = _list->addSection(section->title);
               auto items =
                   section->children |
@@ -201,7 +208,7 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
     }
   }
 
-  if (_list->isShowingEmptyState()) {
+  if (_list->virtualHeight() == 0) {
     qDebug() << "is empty!";
     size_t i = 0;
 

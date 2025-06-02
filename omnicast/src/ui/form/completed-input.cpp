@@ -114,7 +114,7 @@ QString CompletedInput::text() const { return inputField->text(); }
 void CompletedInput::setText(const QString &value) { inputField->setText(value); }
 
 void CompletedInput::showPopover() {
-  if (m_completerList->isShowingEmptyState()) {
+  if (m_completerList->virtualHeight() == 0) {
     popover->close();
     return;
   }
