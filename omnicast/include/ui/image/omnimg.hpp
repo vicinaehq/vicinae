@@ -351,7 +351,6 @@ class BuiltinIconLoader : public AbstractImageLoader {
     QPixmap canva(config.size * config.devicePixelRatio);
     int margin = 0;
 
-    canva.setDevicePixelRatio(config.devicePixelRatio);
     canva.fill(Qt::transparent);
 
     if (m_backgroundColor) {
@@ -371,6 +370,7 @@ class BuiltinIconLoader : public AbstractImageLoader {
 
     loader.setFillColor(m_fillColor);
     loader.render(canva, iconRect);
+    canva.setDevicePixelRatio(config.devicePixelRatio);
     emit dataUpdated(canva);
   }
 
