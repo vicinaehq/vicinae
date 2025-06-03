@@ -48,24 +48,28 @@ void OmniList::updateVisibleItems() {
 
   // XXX - use binsearch to figure out starting point, or infer using last update and scroll direction
   while (startIndex < _virtual_items.size() &&
-         _virtual_items[startIndex].y + _virtual_items[startIndex].height < scrollHeight) {
+         _virtual_items[startIndex].geometry.y() + _virtual_items[startIndex].geometry.height() <
+             scrollHeight) {
     ++startIndex;
   }
 
   if (startIndex >= _virtual_items.size()) return;
 
+  auto &cell = _virtual_items[startIndex];
   int marginOffset = std::max(0, margins.top - scrollHeight);
-  int viewportY = marginOffset + _virtual_items[startIndex].y - scrollHeight;
+  int viewportY = marginOffset + cell.geometry.y() - scrollHeight;
   QSize viewportSize = size();
   int endIndex = startIndex;
   int lastY = -1;
 
-  for (; endIndex < _virtual_items.size() && viewportY < viewportSize.height(); ++endIndex) {
+  while (endIndex < _virtual_items.size()) {
     auto &vinfo = _virtual_items[endIndex];
     auto cacheIt = _widgetCache.find(vinfo.item->id());
     OmniListItemWidgetWrapper *widget = nullptr;
 
-    if (lastY != -1 && lastY != vinfo.y) { viewportY += vinfo.y - lastY; }
+    if (lastY != -1 && lastY != vinfo.geometry.y()) { viewportY += vinfo.geometry.y() - lastY; }
+
+    if (viewportY >= viewportSize.height()) break;
 
     bool isWidgetCreated = false;
 
@@ -95,10 +99,10 @@ void OmniList::updateVisibleItems() {
       widget = cacheIt->second.widget;
     }
 
-    QPoint pos(vinfo.x, viewportY);
-    QSize size(vinfo.width, vinfo.height);
+    QPoint pos(vinfo.geometry.x(), viewportY);
+    QSize size(vinfo.geometry.width(), vinfo.geometry.height());
 
-    // qDebug() << "pos" << pos << "size" << size << "index" << endIndex << vinfo.item->id();
+    qDebug() << "pos" << pos << "size" << size << "index" << endIndex << vinfo.item->id();
 
     widget->blockSignals(true);
     widget->setIndex(endIndex);
@@ -109,11 +113,12 @@ void OmniList::updateVisibleItems() {
     widget->show();
     widget->blockSignals(false);
 
-    lastY = vinfo.y;
+    lastY = vinfo.geometry.y();
     _visibleWidgets[endIndex] = widget;
 
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() / 1e6;
+    ++endIndex;
   }
 
   visibleIndexRange = {startIndex, endIndex - 1};
@@ -192,21 +197,22 @@ bool OmniList::selectDown() {
   auto &current = _virtual_items[_selected];
   int next = _selected;
 
-  while (next < _virtual_items.size() &&
-         (_virtual_items[next].y == current.y || !_virtual_items[next].item->selectable())) {
+  while (next < _virtual_items.size() && (_virtual_items[next].geometry.y() == current.geometry.y() ||
+                                          !_virtual_items[next].item->selectable())) {
     ++next;
   }
 
   int endNext = next;
 
-  while (endNext < _virtual_items.size() && _virtual_items[endNext].y == _virtual_items[next].y) {
+  while (endNext < _virtual_items.size() &&
+         _virtual_items[endNext].geometry.y() == _virtual_items[next].geometry.y()) {
     ++endNext;
   }
 
   for (int i = endNext - 1; i >= next; --i) {
     auto &vItem = _virtual_items[i];
 
-    if (vItem.x <= current.x && vItem.item->selectable()) {
+    if (vItem.geometry.x() <= current.geometry.x() && vItem.item->selectable()) {
       setSelectedIndex(i, ScrollBehaviour::ScrollRelative);
       return true;
     }
@@ -227,7 +233,8 @@ bool OmniList::selectUp() {
   for (int i = _selected - 1; i >= 0; --i) {
     auto &vitem = _virtual_items[i];
 
-    if (vitem.y < current.y && vitem.x <= current.x && vitem.item->selectable()) {
+    if (vitem.geometry.y() < current.geometry.y() && vitem.geometry.x() <= current.geometry.x() &&
+        vitem.item->selectable()) {
       setSelectedIndex(i, ScrollBehaviour::ScrollRelative);
       return true;
     }
@@ -244,7 +251,10 @@ bool OmniList::selectLeft() {
     auto &vItem = _virtual_items[i];
 
     if (!vItem.item->selectable()) { continue; }
-    if (vItem.y < base.y && vItem.width == base.width && base.width == availableWidth) { return false; }
+    if (vItem.geometry.y() < base.geometry.y() && vItem.geometry.width() == base.geometry.width() &&
+        base.geometry.width() == availableWidth) {
+      return false;
+    }
 
     setSelectedIndex(i, ScrollBehaviour::ScrollRelative);
     return true;
@@ -262,7 +272,9 @@ bool OmniList::selectRight() {
 
     if (!vItem.item->selectable()) { continue; }
 
-    if (vItem.y > base.y && vItem.width == base.width && base.width == availableWidth) return false;
+    if (vItem.geometry.y() > base.geometry.y() && vItem.geometry.width() == base.geometry.width() &&
+        base.geometry.width() == availableWidth)
+      return false;
 
     setSelectedIndex(i, ScrollBehaviour::ScrollRelative);
     return true;
@@ -308,7 +320,7 @@ int OmniList::previousRowIndex(int index) {
   for (int i = index - 1; i >= 0; --i) {
     auto &info = _virtual_items[i];
 
-    if (info.y < base.y) { return i; }
+    if (info.geometry.y() < base.geometry.y()) { return i; }
   }
 
   return -1;
@@ -320,7 +332,7 @@ int OmniList::nextRowIndex(int index) {
   for (int i = index + 1; i < _virtual_items.size(); ++i) {
     auto &info = _virtual_items[i];
 
-    if (info.y > base.y) { return i; }
+    if (info.geometry.y() > base.geometry.y()) { return i; }
   }
 
   return -1;
@@ -330,6 +342,7 @@ void OmniList::scrollTo(int idx, ScrollBehaviour behaviour) {
   if (idx < 0 || idx >= _virtual_items.size()) return;
 
   auto &item = _virtual_items[idx];
+  auto &bounds = item.geometry;
 
   int previousIdx = previousRowIndex(idx);
 
@@ -340,14 +353,14 @@ void OmniList::scrollTo(int idx, ScrollBehaviour behaviour) {
   if (behaviour == ScrollBehaviour::ScrollRelative) {
     int scrollHeight = scrollBar->value();
 
-    if (item.y + item.height - scrollHeight > height()) {
-      scrollBar->setValue(item.y + item.height - height());
-    } else if (item.y - scrollHeight < 0) {
-      scrollBar->setValue(scrollHeight - (scrollHeight - item.y));
+    if (bounds.y() + bounds.height() - scrollHeight > height()) {
+      scrollBar->setValue(bounds.y() + bounds.height() - height());
+    } else if (bounds.y() - scrollHeight < 0) {
+      scrollBar->setValue(scrollHeight - (scrollHeight - bounds.y()));
     }
   }
 
-  if (behaviour == ScrollBehaviour::ScrollAbsolute) { scrollBar->setValue(item.y); }
+  if (behaviour == ScrollBehaviour::ScrollAbsolute) { scrollBar->setValue(bounds.y()); }
 }
 
 void OmniList::activateCurrentSelection() const {
@@ -484,34 +497,6 @@ bool OmniList::updateItem(const QString &id, const UpdateItemCallback &cb) {
   }
 
   return false;
-  /*
-int idx = indexOfItem(id);
-
-if (idx == -1) { return false; }
-
-auto &info = _items[idx];
-
-qDebug() << "idx update" << idx;
-
-auto it = _idItemMap.find(id);
-
-if (it == _idItemMap.end()) return false;
-
-cb(it->second);
-
-if (auto it = _visibleWidgets.find(info.vIndex); it != _visibleWidgets.end()) { _visibleWidgets.erase(it); }
-
-if (auto it = _widgetCache.find(info.id); it != _widgetCache.end()) {
-it->second.widget->deleteLater();
-_widgetCache.erase(it);
-}
-
-if (!_isUpdating) { updateVisibleItems(); };
-
-emit itemUpdated(*info.item.get());
-
-return true;
-*/
 }
 
 void OmniList::invalidateCache() {

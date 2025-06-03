@@ -279,12 +279,9 @@ private:
     int sectionIndex = 0;
   };
   struct VirtualListWidgetInfo {
-    int x = 0;
-    int y = 0;
-    int width = 0;
-    int height = 0;
-    int index = 0;
+    QRect geometry;
     const AbstractVirtualItem *item = nullptr;
+    bool enumerable = false;
   };
   struct SectionCalculationContext {
     int index = 0;
@@ -376,15 +373,12 @@ private:
         if (yOffset == 0) continue;
         if (i + 1 == m_model.size() || !isDividableContent(m_model.at(i + 1))) continue;
 
-        VirtualListWidgetInfo vinfo{.x = 0,
-                                    .y = yOffset,
-                                    .width = width(),
-                                    .height = divider->item()->calculateHeight(availableWidth),
-                                    .item = divider->item()};
+        int height = divider->item()->calculateHeight(availableWidth);
+        QRect bounds(0, yOffset, width(), height);
+        VirtualListWidgetInfo vinfo{.geometry = bounds, .item = divider->item()};
 
         _virtual_items.push_back(vinfo);
-        yOffset += vinfo.height;
-
+        yOffset += height;
       } else if (auto p = std::get_if<std::unique_ptr<Section>>(&item)) {
         auto &section = *p;
         auto &items = section->items();
@@ -412,14 +406,13 @@ private:
             // considered)
             if (shownCount == 0) {
               if (auto header = section->headerItem(); header && !section->title().isEmpty()) {
-                VirtualListWidgetInfo vinfo{.x = margins.left,
-                                            .y = yOffset,
-                                            .width = availableWidth,
-                                            .height = header->calculateHeight(availableWidth),
-                                            .item = header};
+                int height = header->calculateHeight(availableWidth);
+                QRect geometry(margins.left, yOffset, availableWidth, height);
+
+                VirtualListWidgetInfo vinfo{.geometry = geometry, .item = header};
 
                 _virtual_items.push_back(vinfo);
-                yOffset += vinfo.height;
+                yOffset += height;
               }
             }
 
@@ -456,11 +449,11 @@ private:
               yOffset += height;
             }
 
-            VirtualListWidgetInfo vinfo{.x = x, .y = y, .width = width, .height = height, .item = item.get()};
-            QRect rect{x, y, width, height};
+            QRect geometry(x, y, width, height);
+            VirtualListWidgetInfo vinfo{.geometry = geometry, .item = item.get(), .enumerable = true};
 
             // TODO: if in viewport, look for cached entry
-            if (isInViewport(rect)) {
+            if (isInViewport(geometry)) {
               if (auto it = _widgetCache.find(item->id()); it != _widgetCache.end()) {
                 if (item->hasPartialUpdates()) { item->refresh(it->second.widget->widget()); }
 
@@ -530,6 +523,24 @@ protected:
   void showEvent(QShowEvent *event) override { QWidget::showEvent(event); }
 
 public:
+  /**
+   * The list of items that are currently in the viewport. This does _NOT_
+   * include section headers.
+   */
+  std::vector<const AbstractVirtualItem *> visibleItems() const {
+    std::vector<const AbstractVirtualItem *> results;
+
+    results.reserve(visibleIndexRange.upper - visibleIndexRange.lower);
+
+    for (size_t i = visibleIndexRange.lower; i < _virtual_items.size() && i <= visibleIndexRange.upper; ++i) {
+      auto &item = _virtual_items[i];
+
+      if (item.enumerable) results.emplace_back(item.item);
+    }
+
+    return results;
+  }
+
   OmniList();
   ~OmniList();
 
