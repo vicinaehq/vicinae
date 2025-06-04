@@ -6,6 +6,7 @@
 #include <qjsonvalue.h>
 #include <qnamespace.h>
 #include <qwidget.h>
+#include <ranges>
 
 void SelectorInput::listHeightChanged(int height) {
 
@@ -197,7 +198,21 @@ void SelectorInput::setEnableDefaultFilter(bool value) {
 }
 
 void SelectorInput::handleTextChanged(const QString &text) {
-  if (m_defaultFilterEnabled) { m_list->setFilter(std::make_unique<ItemFilter>(text)); }
+  if (m_defaultFilterEnabled) {
+    m_list->updateModel([&]() {
+      for (const auto &section : m_sections) {
+        auto results = section.search(text);
+
+        if (results.empty()) continue;
+
+        auto &listSection = m_list->addSection(section.title);
+
+        listSection.addItems(results);
+      }
+    });
+
+    // m_list->setFilter(std::make_unique<ItemFilter>(text));
+  }
   emit textChanged(text);
 }
 

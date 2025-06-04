@@ -211,9 +211,7 @@ class RootCommandV2 : public ListView {
     m_list->endResetModel(OmniList::SelectFirst);
   }
 
-  void itemSelected(const OmniList::AbstractVirtualItem *item) override {
-    std::ranges::for_each(m_list->visibleItems(), [&](auto &item) { qDebug() << "visible" << item->id(); });
-  }
+  void itemSelected(const OmniList::AbstractVirtualItem *item) override {}
 
   void render(const QString &text) {
     auto rootItemManager = ServiceRegistry::instance()->rootItemManager();

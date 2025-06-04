@@ -1,11 +1,13 @@
 #pragma once
 #include "common.hpp"
+#include "libtrie/trie.hpp"
 #include "omni-icon.hpp"
 #include "ui/focus-notifier.hpp"
 #include "ui/form/base-input.hpp"
 #include "ui/horizontal-loading-bar.hpp"
 #include "ui/omni-list.hpp"
 #include "ui/popover.hpp"
+#include <algorithm>
 #include <memory>
 #include <qjsonvalue.h>
 #include <qlineedit.h>
@@ -50,6 +52,26 @@ public:
 
   QJsonValue asJsonValue() const override;
 
+  struct DropdownSection {
+    QString title;
+    std::vector<std::shared_ptr<AbstractItem>> items;
+    Trie<std::shared_ptr<OmniList::AbstractVirtualItem>> index;
+
+    void buildIndex() {
+      std::ranges::for_each(
+          items, [&](auto &&item) { index.indexLatinText(item->displayName().toStdString(), item); });
+    }
+
+    std::vector<std::shared_ptr<OmniList::AbstractVirtualItem>> search(const QString &query) const {
+      return index.prefixSearch(query.toStdString());
+    }
+
+    DropdownSection(const QString &title, const std::vector<std::shared_ptr<AbstractItem>> &items)
+        : title(title), items(items) {
+      buildIndex();
+    }
+  };
+
 private:
   Q_OBJECT
 
@@ -59,6 +81,8 @@ private:
   int POPOVER_HEIGHT = 300;
 
   void listHeightChanged(int height);
+
+  std::vector<DropdownSection> m_sections;
 
 protected:
   OmniList *m_list;
@@ -85,6 +109,23 @@ protected:
 public:
   SelectorInput(QWidget *parent = nullptr);
   ~SelectorInput();
+
+  void addSection(const QString &title, const std::vector<std::shared_ptr<AbstractItem>> &items) {
+    m_sections.emplace_back(DropdownSection(title, items));
+  }
+
+  void updateModel() {
+    m_list->updateModel([&]() {
+      for (const auto &section : m_sections) {
+        auto &sec = m_list->addSection(section.title);
+
+        sec.addItems(section.items |
+                     std::views::transform(
+                         [](auto &&v) -> std::shared_ptr<OmniList::AbstractVirtualItem> { return v; }) |
+                     std::ranges::to<std::vector>());
+      }
+    });
+  }
 
   FocusNotifier *focusNotifier() const;
   void setIsLoading(bool value);

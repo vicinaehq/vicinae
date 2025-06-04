@@ -79,9 +79,9 @@ void ExtensionGridComponent::render(const RenderModel &baseModel) {
 
   if (!newModel.searchText) {
     if (newModel.filtering) {
-      _grid->setFilter(std::make_unique<BuiltinExtensionGridItemFilter>(searchText()));
+      //_grid->setFilter(std::make_unique<BuiltinExtensionGridItemFilter>(searchText()));
     } else {
-      _grid->clearFilter();
+      //_grid->clearFilter();
     }
   }
 
@@ -144,9 +144,9 @@ void ExtensionGridComponent::handleDebouncedSearchNotification() {
   auto text = searchText();
 
   if (_model.filtering) {
-    _grid->setFilter(std::make_unique<BuiltinExtensionItemFilter>(text));
+    //_grid->setFilter(std::make_unique<BuiltinExtensionItemFilter>(text));
   } else {
-    _grid->clearFilter();
+    //_grid->clearFilter();
   }
 
   if (auto handler = _model.onSearchTextChange) {

@@ -88,15 +88,13 @@ void AppWindow::popCurrentView() {
   m_viewStack.pop_back();
 
   previous->deactivate();
-  disconnectView(*previous);
 
-  auto next = navigationStack.top();
+  auto next = frontView();
 
-  connectView(*next.view);
-  next.view->activate();
-  next.view->setFixedSize(size());
-  ServiceRegistry::instance()->UI()->setTopView(next.view);
-  next.view->show();
+  next->activate();
+  next->setFixedSize(size());
+  ServiceRegistry::instance()->UI()->setTopView(next);
+  next->show();
 
   previous->deleteLater();
 
@@ -132,7 +130,7 @@ bool AppWindow::replaceView(BaseView *previous, BaseView *next) {
       next->activate();
     }
 
-    previous->deleteLater();
+    // previous->deleteLater();
 
     return true;
   }
@@ -146,7 +144,9 @@ void AppWindow::popToRoot() {
   }
 }
 
-void AppWindow::disconnectView(BaseView &view) { view.removeEventFilter(this); }
+void AppWindow::disconnectView(BaseView &view) {
+  // view.removeEventFilter(this);
+}
 
 void AppWindow::connectView(BaseView &view) { view.installEventFilter(this); }
 
@@ -158,15 +158,9 @@ void AppWindow::pushView(BaseView *view, const PushViewOptions &opts) {
 
   auto &currentCommand = commandStack.at(commandStack.size() - 1);
 
-  if (navigationStack.size() > 0) {
-    auto &old = navigationStack.top();
+  if (auto front = frontView()) front->hide();
 
-    disconnectView(*old.view);
-  }
-
-  if (navigationStack.size() > 0) { navigationStack.top().view->hide(); }
-
-  connectView(*view);
+  // connectView(*view);
   view->setParent(this);
   view->setFixedSize(size());
 
@@ -388,7 +382,4 @@ AppWindow::AppWindow(QWidget *parent) : QMainWindow(parent) {
           &AppWindow::replaceView);
 
   launchCommand(rootCommand);
-
-  pushView(new ManageFallbackCommands);
-  replaceView(frontView(), new EmojiView);
 }

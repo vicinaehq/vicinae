@@ -17,6 +17,7 @@ struct ActionModel {
 };
 
 struct ActionPannelSectionModel {
+  QString title;
   QList<ActionModel> actions;
 };
 

@@ -171,14 +171,15 @@ public:
    */
   class Section {
   public:
-    using VirtualWidget = std::unique_ptr<AbstractVirtualItem>;
+    using VirtualWidget = std::shared_ptr<AbstractVirtualItem>;
     using LayoutItem = std::variant<VirtualWidget, Spacer>;
 
   private:
-    std::vector<LayoutItem> m_items;
+    std::vector<LayoutItem> m_layoutItems;
     std::unique_ptr<AbstractVirtualItem> m_headerItem;
     QString m_title;
     QString m_subtitle;
+    size_t m_itemCount = 0;
     int m_columns = 1;
     int m_spacing = 0;
 
@@ -198,6 +199,8 @@ public:
 
     int columns() const { return m_columns; }
 
+    size_t itemCount() { return m_itemCount; }
+
     void setColumns(int n) { m_columns = std::max(1, n); }
 
     Section &withTitle(const QString &title) {
@@ -210,7 +213,7 @@ public:
     }
 
     Section &withCapacity(size_t n) {
-      m_items.reserve(n);
+      m_layoutItems.reserve(n);
       return *this;
     }
 
@@ -225,26 +228,35 @@ public:
 
     AbstractVirtualItem *headerItem() { return m_headerItem.get(); }
 
-    const std::vector<LayoutItem> &items() const { return m_items; }
+    const std::vector<LayoutItem> &layoutItems() const { return m_layoutItems; }
 
-    Section &addItem(std::unique_ptr<AbstractVirtualItem> item) {
-      m_items.emplace_back(std::move(item));
+    Section &addItem(std::shared_ptr<AbstractVirtualItem> item) {
+      m_layoutItems.emplace_back(std::move(item));
+      ++m_itemCount;
       return *this;
     }
 
     Section &addSpacing(int value) {
-      m_items.emplace_back(Spacer(value));
+      m_layoutItems.emplace_back(Spacer(value));
       return *this;
     }
 
     Section &addDivider() {
-      m_items.emplace_back(std::make_unique<DividerItem>());
+      m_layoutItems.emplace_back(std::make_unique<DividerItem>());
       return *this;
     }
 
     Section &addItems(std::vector<std::unique_ptr<AbstractVirtualItem>> items) {
-      m_items.insert(m_items.end(), std::make_move_iterator(items.begin()),
-                     std::make_move_iterator(items.end()));
+      m_layoutItems.insert(m_layoutItems.end(), std::make_move_iterator(items.begin()),
+                           std::make_move_iterator(items.end()));
+      m_itemCount += items.size();
+      return *this;
+    }
+
+    Section &addItems(std::vector<std::shared_ptr<AbstractVirtualItem>> items) {
+      m_layoutItems.insert(m_layoutItems.end(), std::make_move_iterator(items.begin()),
+                           std::make_move_iterator(items.end()));
+      m_itemCount += items.size();
       return *this;
     }
   };
@@ -278,8 +290,8 @@ private:
     QString id;
     int sectionIndex = 0;
   };
-  struct VirtualListWidgetInfo {
-    QRect geometry;
+  struct VirtualWidgetInfo {
+    QRect bounds;
     const AbstractVirtualItem *item = nullptr;
     bool enumerable = false;
   };
@@ -293,8 +305,8 @@ private:
     size_t recyclingId = -1;
   };
 
-  QScrollBar *scrollBar;
-  std::vector<VirtualListWidgetInfo> _virtual_items;
+  QScrollBar *scrollBar = nullptr;
+  std::vector<VirtualWidgetInfo> m_items;
   std::unordered_map<size_t, OmniListItemWidgetWrapper *> _visibleWidgets;
   std::unordered_map<QString, CachedWidget> _widgetCache;
   std::unordered_map<size_t, std::stack<OmniListItemWidgetWrapper *>> _widgetPools;
@@ -313,7 +325,7 @@ private:
 
   bool isDividableContent(const ModelItem &item) {
     if (auto section = std::get_if<std::unique_ptr<Section>>(&item)) {
-      return (*section)->items().size() > 0;
+      return (*section)->layoutItems().size() > 0;
     }
 
     return false;
@@ -323,7 +335,7 @@ private:
     int low = scrollBar->value();
     int high = low + height();
 
-    return isVisible() && bounds.y() >= low && bounds.y() <= high;
+    return bounds.y() + bounds.height() >= low && bounds.y() <= high;
   }
 
   /**
@@ -348,7 +360,6 @@ private:
 
   void calculateHeights() {
     Timer timer;
-    _virtual_items.clear();
 
     int yOffset = 0;
     int availableWidth = width() - margins.left - margins.right;
@@ -359,11 +370,12 @@ private:
                   return std::holds_alternative<std::unique_ptr<Section>>(item);
                 }) |
                 std::views::transform([](const auto &section) {
-                  return std::get<std::unique_ptr<Section>>(section)->items().size();
+                  return std::get<std::unique_ptr<Section>>(section)->itemCount();
                 });
     auto totalSize = std::ranges::fold_left(view, 0, std::plus<size_t>());
 
-    _virtual_items.reserve(totalSize);
+    m_items.reserve(totalSize);
+    m_items.clear();
 
     size_t i = -1;
 
@@ -375,13 +387,14 @@ private:
 
         int height = divider->item()->calculateHeight(availableWidth);
         QRect bounds(0, yOffset, width(), height);
-        VirtualListWidgetInfo vinfo{.geometry = bounds, .item = divider->item()};
+        VirtualWidgetInfo vinfo{.bounds = bounds, .item = divider->item()};
 
-        _virtual_items.push_back(vinfo);
+        m_items.push_back(vinfo);
         yOffset += height;
       } else if (auto p = std::get_if<std::unique_ptr<Section>>(&item)) {
         auto &section = *p;
-        auto &items = section->items();
+
+        auto &items = section->layoutItems();
         int spaceWidth = section->spacing() * (section->columns() - 1);
         int columnWidth = (availableWidth - spaceWidth) / section->columns();
 
@@ -400,8 +413,6 @@ private:
           if (auto p = std::get_if<Section::VirtualWidget>(&sectionItem)) {
             auto &item = *p;
 
-            if (_filter && !_filter->matches(*p->get())) continue;
-
             // Show section header above the first actually displayed item (after filtering has been
             // considered)
             if (shownCount == 0) {
@@ -409,16 +420,16 @@ private:
                 int height = header->calculateHeight(availableWidth);
                 QRect geometry(margins.left, yOffset, availableWidth, height);
 
-                VirtualListWidgetInfo vinfo{.geometry = geometry, .item = header};
+                VirtualWidgetInfo vinfo{.bounds = geometry, .item = header};
 
-                _virtual_items.push_back(vinfo);
+                m_items.push_back(vinfo);
                 yOffset += height;
               }
             }
 
             ++shownCount;
 
-            int vIndex = _virtual_items.size();
+            int vIndex = m_items.size();
             int height = 0;
             int width = columnWidth;
             int x = margins.left;
@@ -450,7 +461,7 @@ private:
             }
 
             QRect geometry(x, y, width, height);
-            VirtualListWidgetInfo vinfo{.geometry = geometry, .item = item.get(), .enumerable = true};
+            VirtualWidgetInfo vinfo{.bounds = geometry, .item = item.get(), .enumerable = true};
 
             // TODO: if in viewport, look for cached entry
             if (isInViewport(geometry)) {
@@ -462,7 +473,7 @@ private:
             }
 
             ++shownCount;
-            _virtual_items.push_back(vinfo);
+            m_items.push_back(vinfo);
           }
         }
 
@@ -470,7 +481,7 @@ private:
       }
     }
 
-    if (!_virtual_items.empty()) { yOffset += margins.bottom + margins.top; }
+    if (!m_items.empty()) { yOffset += margins.bottom + margins.top; }
 
     for (auto &[key, cache] : _widgetCache) {
       if (auto it = updatedCache.find(key); it == updatedCache.end()) {
@@ -507,13 +518,11 @@ private:
   OmniListItemWidgetWrapper *takeFromPool(size_t type);
   void moveToPool(size_t type, OmniListItemWidgetWrapper *wrapper);
 
-  bool isSelectionValid() const { return _selected >= 0 && _selected < _virtual_items.size(); }
+  bool isSelectionValid() const { return _selected >= 0 && _selected < m_items.size(); }
 
   void setSelectedIndex(int index, ScrollBehaviour scrollBehaviour = ScrollRelative);
   int previousRowIndex(int index);
   int nextRowIndex(int index);
-
-  void applySorting();
 
   void scrollTo(int idx, ScrollBehaviour behaviour = ScrollBehaviour::ScrollAbsolute);
 
@@ -525,20 +534,26 @@ protected:
 public:
   /**
    * The list of items that are currently in the viewport. This does _NOT_
-   * include section headers.
+   * include section headers or other layout items.
    */
   std::vector<const AbstractVirtualItem *> visibleItems() const {
-    std::vector<const AbstractVirtualItem *> results;
+    return m_items | std::views::drop(visibleIndexRange.lower) |
+           std::views::take(std::max(0, visibleIndexRange.upper - visibleIndexRange.lower + 1)) |
+           std::views::filter([](auto &&v) { return v.enumerable; }) |
+           std::views::transform([](auto &&v) { return v.item; }) | std::ranges::to<std::vector>();
+  }
 
-    results.reserve(visibleIndexRange.upper - visibleIndexRange.lower);
+  std::vector<const AbstractVirtualItem *> items() const {
+    return m_items | std::views::filter([](auto &&v) { return v.enumerable; }) |
+           std::views::transform([](auto &&v) { return v.item; }) | std::ranges::to<std::vector>();
+  }
 
-    for (size_t i = visibleIndexRange.lower; i < _virtual_items.size() && i <= visibleIndexRange.upper; ++i) {
-      auto &item = _virtual_items[i];
-
-      if (item.enumerable) results.emplace_back(item.item);
-    }
-
-    return results;
+  std::vector<Section const *> sections() const {
+    return m_model |
+           std::views::filter([](auto &&v) { return std::holds_alternative<std::unique_ptr<Section>>(v); }) |
+           std::views::transform(
+               [](auto &v) -> Section const * { return std::get<std::unique_ptr<Section>>(v).get(); }) |
+           std::ranges::to<std::vector>();
   }
 
   OmniList();
@@ -582,12 +597,12 @@ public:
       if (auto section = std::get_if<std::unique_ptr<Section>>(&item)) {
         if (auto header = (*section)->headerItem()) { _idItemMap.insert({header->id(), header}); }
 
-        auto items = (*section)->items() | std::views::filter([](auto &&item) {
-                       return std::holds_alternative<std::unique_ptr<AbstractVirtualItem>>(item);
+        auto items = (*section)->layoutItems() | std::views::filter([](auto &&item) {
+                       return std::holds_alternative<std::shared_ptr<AbstractVirtualItem>>(item);
                      });
 
         std::ranges::for_each(items, [this](auto &&variant) {
-          auto &item = std::get<std::unique_ptr<AbstractVirtualItem>>(variant);
+          auto &item = std::get<std::shared_ptr<AbstractVirtualItem>>(variant);
           _idItemMap.insert({item->id(), item.get()});
         });
       }
@@ -611,30 +626,30 @@ public:
         // setSelectedIndex(_items[idx].vIndex);
       } else {
         qDebug() << "no index for" << _selectedId;
-        setSelectedIndex(std::max(0, std::min(_selected, static_cast<int>(_virtual_items.size() - 1))));
+        setSelectedIndex(std::max(0, std::min(_selected, static_cast<int>(m_items.size() - 1))));
       }
       break;
     case PreserveSelection: {
-      int targetIndex = std::clamp(_selected, 0, (int)_virtual_items.size() - 1);
+      int targetIndex = std::clamp(_selected, 0, (int)m_items.size() - 1);
       int distance = 0;
 
       for (;;) {
         int lowTarget = targetIndex - distance;
         int highTarget = targetIndex + distance;
-        bool hasLower = lowTarget >= 0 && lowTarget < _virtual_items.size();
-        bool hasUpper = highTarget >= 0 && highTarget < _virtual_items.size();
+        bool hasLower = lowTarget >= 0 && lowTarget < m_items.size();
+        bool hasUpper = highTarget >= 0 && highTarget < m_items.size();
 
         if (!hasLower && !hasUpper) {
           setSelectedIndex(-1);
           return;
         }
 
-        if (hasLower && _virtual_items[lowTarget].item->selectable()) {
+        if (hasLower && m_items[lowTarget].item->selectable()) {
           setSelectedIndex(lowTarget);
           return;
         }
 
-        if (hasUpper && _virtual_items[highTarget].item->selectable()) {
+        if (hasUpper && m_items[highTarget].item->selectable()) {
           setSelectedIndex(highTarget);
           return;
         }

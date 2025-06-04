@@ -40,12 +40,12 @@ public:
 
 bool ExtensionListComponent::inputFilter(QKeyEvent *event) {
   switch (event->key()) {
-  case Qt::Key_Left:
-  case Qt::Key_Right:
   case Qt::Key_Up:
+    return m_list->selectUp();
   case Qt::Key_Down:
+    return m_list->selectDown();
   case Qt::Key_Return:
-    QApplication::sendEvent(_list, event);
+    m_list->activateCurrentSelection();
     return true;
   }
 
@@ -141,12 +141,6 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
   setLoading(newModel.isLoading);
 
   if (newModel.dirty) {
-    std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> items;
-
-    items.reserve(newModel.items.size());
-
-    int i = 0;
-
     OmniList::SelectionPolicy policy = OmniList::SelectFirst;
 
     if (_shouldResetSelection) {
@@ -157,49 +151,28 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
       policy = OmniList::PreserveSelection;
     }
 
-    _list->updateModel(
-        [&]() {
-          for (const auto &item : newModel.items) {
-            if (auto listItem = std::get_if<ListItemViewModel>(&item)) {
-              // items.push_back(std::make_unique<ExtensionListItem>(*listItem));
-            } else if (auto section = std::get_if<ListSectionModel>(&item)) {
-              if (section->children.empty()) continue;
-
-              auto &sec = _list->addSection(section->title);
-              auto items =
-                  section->children |
-                  std::views::transform([](auto &&item) -> std::unique_ptr<OmniList::AbstractVirtualItem> {
-                    return std::make_unique<ExtensionListItem>(item);
-                  }) |
-                  std::ranges::to<std::vector>();
-
-              sec.addItems(std::move(items));
-            }
-          }
-        },
-        policy);
+    m_list->setModel(newModel.items, policy);
   }
 
   if (!newModel.searchText) {
     if (_shouldResetSelection) {
       if (newModel.filtering) {
-        _list->setFilter(std::make_unique<BuiltinExtensionItemFilter>(searchText()));
+        m_list->setFilter(searchText());
+        //_list->setFilter(std::make_unique<BuiltinExtensionItemFilter>(searchText()));
       } else {
-        _list->clearFilter();
+        m_list->setFilter("");
       }
     }
   }
 
   _model = newModel;
 
-  if (auto selected = _list->selected()) {
-    auto item = static_cast<const ExtensionListItem *>(selected);
+  if (auto selected = m_list->selected()) {
+    m_split->setDetailVisibility(selected->detail.has_value() && _model.isShowingDetail);
 
-    m_split->setDetailVisibility(item->model().detail.has_value() && _model.isShowingDetail);
-
-    if (auto detail = item->model().detail) {
+    if (auto detail = selected->detail) {
       if (m_split->isDetailVisible()) {
-        qDebug() << "update detail for" << selected->generateId();
+        qDebug() << "update detail for" << selected->id;
         m_detail->updateDetail(*detail);
       } else {
         qDebug() << "create detail";
@@ -208,7 +181,7 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
     }
   }
 
-  if (_list->virtualHeight() == 0) {
+  if (m_list->empty()) {
     qDebug() << "is empty!";
     size_t i = 0;
 
@@ -227,8 +200,7 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
   }
 }
 
-void ExtensionListComponent::onSelectionChanged(const OmniList::AbstractVirtualItem *next,
-                                                const OmniList::AbstractVirtualItem *previous) {
+void ExtensionListComponent::onSelectionChanged(const ListItemViewModel *next) {
   if (!next) {
     qDebug() << "nore visibiliy breaux";
     m_split->setDetailVisibility(false);
@@ -241,19 +213,18 @@ void ExtensionListComponent::onSelectionChanged(const OmniList::AbstractVirtualI
     return;
   }
 
-  qDebug() << "set visibility of" << next->generateId() << _model.isShowingDetail;
+  qDebug() << "set visibility of" << next->id << _model.isShowingDetail;
 
-  auto item = static_cast<const ExtensionListItem *>(next);
   size_t i = 0;
 
-  m_split->setDetailVisibility(_model.isShowingDetail && item->model().detail);
+  m_split->setDetailVisibility(_model.isShowingDetail && next->detail);
 
-  if (auto detail = item->model().detail) {
-    qDebug() << "set markdown for" << next->generateId();
+  if (auto detail = next->detail) {
+    qDebug() << "set markdown for" << next->id;
     m_detail->setDetail(*detail);
   }
 
-  if (auto pannel = item->model().actionPannel) {
+  if (auto pannel = next->actionPannel) {
     for (auto &item : pannel->children) {
       if (auto action = std::get_if<ActionModel>(&item)) {
         if (i == 0) action->shortcut = primaryShortcut;
@@ -266,7 +237,7 @@ void ExtensionListComponent::onSelectionChanged(const OmniList::AbstractVirtualI
     setActionPanel(*pannel);
   }
 
-  if (auto handler = _model.onSelectionChanged) { notify(*handler, {next->generateId()}); }
+  if (auto handler = _model.onSelectionChanged) { notify(*handler, {next->id}); }
 }
 
 void ExtensionListComponent::handleDropdownSelectionChanged(const SelectorInput::AbstractItem &item) {
@@ -290,11 +261,14 @@ void ExtensionListComponent::handleDropdownSearchChanged(const QString &text) {
 
 void ExtensionListComponent::handleDebouncedSearchNotification() {
   auto text = searchText();
+  auto itemMatches = [&](const ListItemViewModel &model) -> bool {
+    return model.title.contains(searchText(), Qt::CaseInsensitive);
+  };
 
   if (_model.filtering) {
-    _list->setFilter(std::make_unique<BuiltinExtensionItemFilter>(text));
+    m_list->setFilter(searchText());
   } else {
-    _list->clearFilter();
+    m_list->setFilter("");
   }
 
   if (auto handler = _model.onSearchTextChange) {
@@ -307,7 +281,7 @@ void ExtensionListComponent::handleDebouncedSearchNotification() {
   }
 }
 
-void ExtensionListComponent::onItemActivated(const OmniList::AbstractVirtualItem &item) {
+void ExtensionListComponent::onItemActivated(const ListItemViewModel &item) {
   // TODO: activate item
   // selectPrimaryAction();
 }
@@ -315,21 +289,20 @@ void ExtensionListComponent::onItemActivated(const OmniList::AbstractVirtualItem
 void ExtensionListComponent::onSearchChanged(const QString &text) { _debounce->start(); }
 
 ExtensionListComponent::ExtensionListComponent()
-    : _debounce(new QTimer(this)), _layout(new QVBoxLayout), _list(new OmniList),
-      _shouldResetSelection(true) {
+    : _debounce(new QTimer(this)), _layout(new QVBoxLayout), _shouldResetSelection(true) {
   m_selector->setMinimumWidth(400);
   m_selector->setEnableDefaultFilter(false);
   m_topBar->setAccessoryWidget(m_selector);
   m_selector->hide();
 
-  m_split->setMainWidget(_list);
+  m_split->setMainWidget(m_list);
   m_split->setDetailWidget(m_detail);
   setupUI(m_split);
 
   _debounce->setSingleShot(true);
   connect(_debounce, &QTimer::timeout, this, &ExtensionListComponent::handleDebouncedSearchNotification);
-  connect(_list, &OmniList::selectionChanged, this, &ExtensionListComponent::onSelectionChanged);
-  connect(_list, &OmniList::itemActivated, this, &ExtensionListComponent::onItemActivated);
+  connect(m_list, &ExtensionList::selectionChanged, this, &ExtensionListComponent::onSelectionChanged);
+  connect(m_list, &ExtensionList::itemActivated, this, &ExtensionListComponent::onItemActivated);
   connect(m_selector, &SelectorInput::selectionChanged, this,
           &ExtensionListComponent::handleDropdownSelectionChanged);
   connect(m_selector, &SelectorInput::textChanged, this,

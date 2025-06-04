@@ -1,23 +1,118 @@
 #pragma once
+#include "action-panel/action-panel.hpp"
 #include "app.hpp"
 #include "base-view.hpp"
+#include "extend/action-model.hpp"
 #include "extend/model-parser.hpp"
 #include "extend/model.hpp"
 #include "extension/extension-command.hpp"
 #include "extension/extension-form-component.hpp"
+#include "omni-icon.hpp"
+#include "ui/action-pannel/action-list-item.hpp"
+#include "ui/action-pannel/action.hpp"
+#include <memory>
 #include <qboxlayout.h>
 #include <qevent.h>
 #include <qjsonarray.h>
 #include <qjsonobject.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
+#include <ranges>
+
+class ExtensionActionV2 : public AbstractAction {
+  ActionModel m_model;
+
+  void execute() override {}
+
+public:
+  const ActionModel &model() const { return m_model; }
+  ExtensionActionV2(const ActionModel &model)
+      : AbstractAction(model.title, OmniIconUrl(model.icon.value_or(std::monostate{}))), m_model(model) {}
+};
+
+class ExtensionActionPanelView : public ActionPanelListView {
+  Q_OBJECT
+  ActionPannelModel m_model;
+  std::vector<std::shared_ptr<AbstractAction>> m_actions;
+
+  void onSearchChanged(const QString &text) override { emit textChanged(text); }
+
+  QList<AbstractAction *> actions() const override {
+    return m_actions | std::views::transform([](auto &&v) { return v.get(); }) | std::ranges::to<QList>();
+  }
+
+  void render() {
+    m_actions.clear();
+    m_list->updateModel([&]() {
+      OmniList::Section *currentSection = nullptr;
+
+      for (const auto &item : m_model.children) {
+        if (auto section = std::get_if<ActionPannelSectionModel>(&item)) {
+          auto &listSection = m_list->addSection(section->title);
+
+          for (const auto &model : section->actions) {
+            auto action = std::make_shared<ExtensionActionV2>(model);
+
+            listSection.addItem(std::make_shared<ActionListItem>(action.get()));
+            m_actions.emplace_back(action);
+          }
+        }
+        if (auto actionModel = std::get_if<ActionModel>(&item)) {
+          auto action = std::make_shared<ExtensionActionV2>(*actionModel);
+
+          if (!currentSection) { currentSection = &m_list->addSection(); }
+
+          currentSection->addItem(std::make_shared<ActionListItem>(action.get()));
+          m_actions.emplace_back(action);
+        }
+      }
+    });
+  }
+
+public:
+  void setModel(const ActionPannelModel &model) {
+    m_model = model;
+    render();
+  }
+
+  ExtensionActionPanelView() {}
+
+signals:
+  void textChanged(const QString &text) const;
+};
 
 class ExtensionSimpleView : public SimpleView {
   Q_OBJECT
 
+  std::vector<ExtensionActionPanelView> m_actionPanelViewStack;
+
 public:
   virtual void render(const RenderModel &model) {}
-  void setActionPanel(const ActionPannelModel &model) {}
+
+  void onActionExecuted(AbstractAction *action) override {
+    if (auto extAction = dynamic_cast<const ExtensionActionV2 *>(action)) {
+      qDebug() << "extension action!";
+      notify(extAction->model().onAction, {});
+    }
+  }
+
+  void setActionPanel(const ActionPannelModel &model) {
+    auto panel = new ExtensionActionPanelView();
+
+    panel->setModel(model);
+    m_actionPannelV2->setView(panel);
+
+    if (auto action = m_actionPannelV2->primaryAction()) {
+      m_statusBar->setCurrentAction(action->title(), action->shortcut.value_or(KeyboardShortcutModel{}));
+    }
+  }
+
+  void clearActionPanel() {
+    m_actionPannelV2->popToRoot();
+    m_actionPanelViewStack.clear();
+    m_statusBar->clearAction();
+  }
+
   /**
    * Send a notification to the extension.
    * The extension manager will forward the notification accordingly.

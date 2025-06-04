@@ -151,6 +151,8 @@ protected:
 
   void keyPressEvent(QKeyEvent *event) override { return ActionPanelView::keyPressEvent(event); }
 
+  QString searchText() const override { return m_input->text(); }
+
 public:
   ActionPanelListView() {
     m_layout->setContentsMargins(0, 0, 0, 0);

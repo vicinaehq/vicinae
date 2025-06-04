@@ -287,7 +287,6 @@ public:
       : form(new FormWidget), name(new BaseInput), link(new CompletedInput), appSelector(new SelectorInput),
         iconSelector(new SelectorInput) {
     Timer timer;
-    auto appDb = ServiceRegistry::instance()->appDb();
     auto quicklinkDb = ServiceRegistry::instance()->quicklinks();
 
     name->setPlaceholderText("Bookmark name");
@@ -326,38 +325,54 @@ public:
               insertLinkPlaceholder(completion.argument());
             });
 
-    appSelector->list()->updateModel([&]() {
-      auto &section = appSelector->list()->addSection();
-      if (auto browser = appDb->webBrowser()) { section.addItem(std::make_unique<DefaultAppItem>(browser)); }
-
-      for (const auto &app : appDb->list()) {
-        section.addItem(std::make_unique<AppSelectorItem>(app));
-
-        for (const auto &action : app->actions()) {
-          section.addItem(std::make_unique<AppSelectorItem>(action));
-        }
-      }
-    });
-    appSelector->setValue("default");
-
-    iconSelector->list()->updateModel([&]() {
-      auto &section = iconSelector->list()->addSection();
-
-      section.addItem(std::make_unique<DefaultIconSelectorItem>(BuiltinOmniIconUrl("bookmark"), "Default"));
-
-      auto mapItem = [](auto &&name) -> std::unique_ptr<OmniList::AbstractVirtualItem> {
-        return std::make_unique<IconSelectorItem>(BuiltinOmniIconUrl(name));
-      };
-      auto items =
-          BuiltinIconService::icons() | std::views::transform(mapItem) | std::ranges::to<std::vector>();
-
-      section.addItems(std::move(items));
-    });
-    iconSelector->setValue("default");
-
     form->setContentsMargins(0, 10, 0, 0);
     setupUI(form);
     timer.time("Build form");
+  }
+
+  void initializeIconSelector() {
+    std::vector<std::shared_ptr<SelectorInput::AbstractItem>> iconItems;
+    auto mapItem = [](auto &&name) -> std::shared_ptr<SelectorInput::AbstractItem> {
+      return std::make_shared<IconSelectorItem>(BuiltinOmniIconUrl(name));
+    };
+
+    iconItems.reserve(BuiltinIconService::icons().size() + 1);
+    auto items = BuiltinIconService::icons() | std::views::transform(mapItem);
+
+    iconItems.emplace_back(
+        std::make_shared<DefaultIconSelectorItem>(BuiltinOmniIconUrl("bookmark"), "Default"));
+    std::ranges::for_each(items, [&](auto item) { iconItems.emplace_back(item); });
+
+    iconSelector->addSection("", iconItems);
+    iconSelector->updateModel();
+    iconSelector->setValue("default");
+  }
+
+  void initializeAppSelector() {
+    auto appDb = ServiceRegistry::instance()->appDb();
+    std::vector<std::shared_ptr<SelectorInput::AbstractItem>> appItems;
+    auto appCandidates = appDb->list() | std::views::filter([](auto &&app) { return app->displayable(); });
+
+    if (auto browser = appDb->webBrowser()) {
+      appItems.emplace_back(std::make_unique<DefaultAppItem>(browser));
+    }
+
+    for (const auto &app : appCandidates) {
+      appItems.emplace_back(std::make_unique<AppSelectorItem>(app));
+
+      for (const auto &action : app->actions()) {
+        appItems.emplace_back(std::make_unique<AppSelectorItem>(action));
+      }
+    }
+
+    appSelector->addSection("", appItems);
+    appSelector->updateModel();
+    appSelector->setValue("default");
+  }
+
+  void initialize() override {
+    initializeAppSelector();
+    initializeIconSelector();
   }
 
   void loadLink(const Quicklink &quicklink) {
