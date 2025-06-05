@@ -7,6 +7,7 @@ import { Application, open } from "../utils";
 import { useEventListener } from "../hooks";
 import { Form } from "./form";
 import { Icon } from "../icon";
+import { closeMainWindow } from "../controls";
 
 export type BaseActionProps = {
 	title: string;
@@ -70,6 +71,7 @@ const CopyToClipboard: React.FC<CopyToClipboardProps> = ({
 }) => {
 	return <ActionRoot title={title} {...props} icon={Icon.CopyClipboard} onAction={async () => {
 		await Clipboard.copy(content, { concealed });
+		closeMainWindow();
 		onCopy?.(content);
 	}} />
 }

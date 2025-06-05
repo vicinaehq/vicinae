@@ -163,17 +163,17 @@ void StatusBar::paintEvent(QPaintEvent *event) {
   painter.drawRect(0, 0, width(), 1);
 }
 
+void StatusBar::clearToast() {
+  auto old = tmpLeft;
+
+  tmpLeft = nullptr;
+  old->setParent(this);
+  old->show();
+  setLeftWidget(old);
+}
+
 void StatusBar::setToast(const QString &text, ToastPriority priority) {
   auto toast = new ToastWidget(text, priority);
-
-  connect(toast, &ToastWidget::fadeOut, [this]() {
-    auto old = tmpLeft;
-
-    tmpLeft = nullptr;
-    old->setParent(this);
-    old->show();
-    setLeftWidget(old);
-  });
 
   layout()->replaceWidget(leftWidget, toast);
 

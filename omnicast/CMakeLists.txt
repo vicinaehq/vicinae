@@ -144,6 +144,8 @@ set(SRCS
 
 	src/services/config/config-service.hpp
 
+	src/services/toast/toast-service.hpp
+
 	# begin app-database
 	include/app/app-database.hpp
 	include/app/xdg-app-database.hpp

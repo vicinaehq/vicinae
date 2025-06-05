@@ -85,6 +85,7 @@ public:
   KeyboardShortcutModel actionButtonShortcut() const;
   void setActionButtonHighlight(bool highlight);
   void setToast(const QString &text, ToastPriority priority = ToastPriority::Success);
+  void clearToast();
   void setNavigation(const QString &name, const OmniIconUrl &iconUrl);
   QString navigationTitle() const;
   OmniIconUrl navigationIcon() const;

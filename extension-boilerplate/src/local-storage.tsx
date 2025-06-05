@@ -39,21 +39,23 @@ export const LocalStorageList = () => {
 				</ActionPanel>
 			}
 		>
+			<List.Section title={`Items (${Object.values(items).length})`}>
 			{Object.entries(items).map(([k, v]) => (
-				<List.Item 
-					key={k}
-					title={k}
-					icon={Icon.CodeBlock}
-					actions={
-						<ActionPanel>
-							<Action title="Clear item" icon={Icon.Trash} onAction={() => clearItem(k)} />
-						</ActionPanel>
-					}
-					detail={
-						<List.Item.Detail markdown={`${v}`} />
-					}
-				/>
+					<List.Item 
+						key={k}
+						title={k}
+						icon={Icon.CodeBlock}
+						actions={
+							<ActionPanel>
+								<Action title="Clear item" icon={Icon.Trash} onAction={() => clearItem(k)} />
+							</ActionPanel>
+						}
+						detail={
+							<List.Item.Detail markdown={`${v}`} />
+						}
+					/>
 			))}
+			</List.Section>
 		</List>
 	);
 };

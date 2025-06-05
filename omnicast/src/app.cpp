@@ -12,6 +12,8 @@
 #include "extension/missing-extension-preference-view.hpp"
 #include "command.hpp"
 #include "service-registry.hpp"
+#include "services/toast/toast-service.hpp"
+#include "ui/toast.hpp"
 #include "wm/window-manager-factory.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "image-fetcher.hpp"
@@ -43,7 +45,7 @@ bool AppWindow::event(QEvent *event) {
     auto key = keyEvent->key();
     bool isEsc = keyEvent->key() == Qt::Key_Escape;
 
-    if (navigationStack.size() > 1) {
+    if (m_viewStack.size() > 1) {
       if (isEsc || (keyEvent->key() == Qt::Key_Backspace)) {
         popCurrentView();
         return true;
@@ -81,10 +83,9 @@ void AppWindow::popCurrentView() {
 
   if (activeCommand.viewStack.empty()) return;
 
-  if (navigationStack.size() == 1) return;
+  if (m_viewStack.size() == 1) return;
 
   auto previous = frontView();
-  navigationStack.pop();
   m_viewStack.pop_back();
 
   previous->deactivate();
@@ -130,7 +131,7 @@ bool AppWindow::replaceView(BaseView *previous, BaseView *next) {
       next->activate();
     }
 
-    // previous->deleteLater();
+    previous->deleteLater();
 
     return true;
   }
@@ -139,7 +140,7 @@ bool AppWindow::replaceView(BaseView *previous, BaseView *next) {
 }
 
 void AppWindow::popToRoot() {
-  while (navigationStack.size() > 1) {
+  while (m_viewStack.size() > 1) {
     popCurrentView();
   }
 }
@@ -166,7 +167,6 @@ void AppWindow::pushView(BaseView *view, const PushViewOptions &opts) {
 
   currentCommand.viewStack.push({.view = view});
   ServiceRegistry::instance()->UI()->setTopView(view);
-  navigationStack.push({.view = view});
   m_viewStack.emplace_back(view);
   if (auto navigation = opts.navigation) {
     view->setNavigationTitle(navigation->title);
@@ -240,7 +240,7 @@ void AppWindow::launchCommand(const QString &id, const LaunchCommandOptions &opt
 
 void AppWindow::resizeEvent(QResizeEvent *event) {
   QMainWindow::resizeEvent(event);
-  if (!navigationStack.empty()) { navigationStack.top().view->setFixedSize(event->size()); }
+  if (auto front = frontView()) { front->setFixedSize(event->size()); }
 }
 
 void AppWindow::paintEvent(QPaintEvent *event) {
@@ -365,10 +365,11 @@ AppWindow::AppWindow(QWidget *parent) : QMainWindow(parent) {
 
   auto rootCommand =
       CommandBuilder("root").withIcon(BuiltinOmniIconUrl("omnicast")).toSingleView<RootCommandV2>();
+  auto ui = ServiceRegistry::instance()->UI();
 
   connect(ServiceRegistry::instance()->UI(), &UIController::popToRootRequested, this, [this]() {
     popToRoot();
-    navigationStack.top().view->clearSearchBar();
+    if (auto front = frontView()) { front->clearSearchBar(); }
   });
   connect(ServiceRegistry::instance()->UI(), &UIController::launchCommandRequested, this,
           [this](const auto &cmd) { launchCommand(cmd, {}, {}); });
@@ -380,6 +381,23 @@ AppWindow::AppWindow(QWidget *parent) : QMainWindow(parent) {
           [this]() { closeWindow(false); });
   connect(ServiceRegistry::instance()->UI(), &UIController::replaceViewRequested, this,
           &AppWindow::replaceView);
+
+  auto toast = ServiceRegistry::instance()->toastService();
+
+  connect(ui, &UIController::showToastRequested, toast,
+          [this, toast](const QString &title, ToastPriority priority) { toast->setToast(title, priority); });
+
+  connect(toast, &ToastService::toastUpdated, this, [this](const Toast *toast) {
+    for (const auto &view : m_viewStack) {
+      view->setToast(toast->title(), toast->priority());
+    }
+  });
+
+  connect(toast, &ToastService::toastDestroyed, this, [this](const Toast *toast) {
+    for (const auto &view : m_viewStack) {
+      view->clearToast();
+    }
+  });
 
   launchCommand(rootCommand);
 }

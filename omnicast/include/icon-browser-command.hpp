@@ -4,6 +4,7 @@
 #include "ui/omni-grid.hpp"
 #include "ui/omni-list.hpp"
 #include <qlabel.h>
+#include <qlogging.h>
 #include <qnamespace.h>
 #include <ranges>
 
@@ -43,10 +44,11 @@ class IconBrowserView : public GridView {
     IconFilter(const QString &query) : _query(query) {}
   };
 
-  void onSearchChanged(const QString &s) override { m_grid->setFilter(std::make_unique<IconFilter>(s)); }
+  void onSearchChanged(const QString &s) override {
+    qCritical() << "onSearchChanged" << s;
 
-  void initialize() override {
     int inset = 20;
+    auto filter = [&](const QString &name) { return name.contains(s, Qt::CaseInsensitive); };
     auto makeIcon = [&](auto &&icon) -> std::unique_ptr<OmniList::AbstractVirtualItem> {
       auto item = std::make_unique<IconBrowserItem>(icon);
 
@@ -61,12 +63,14 @@ class IconBrowserView : public GridView {
       section.setSpacing(10);
       m_grid->setInset(20);
 
-      auto items =
-          BuiltinIconService::icons() | std::views::transform(makeIcon) | std::ranges::to<std::vector>();
+      auto items = BuiltinIconService::icons() | std::views::filter(filter) |
+                   std::views::transform(makeIcon) | std::ranges::to<std::vector>();
 
       section.addItems(std::move(items));
     });
   }
+
+  void initialize() override {}
 
 public:
   IconBrowserView() { setSearchPlaceholderText("Search builtin icons..."); }

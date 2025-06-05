@@ -2,6 +2,7 @@
 #include "extend/list-model.hpp"
 #include "extension/extension-list-detail.hpp"
 #include <chrono>
+#include <memory>
 #include <qcoreevent.h>
 #include <qlogging.h>
 #include <qnamespace.h>
@@ -38,20 +39,6 @@ public:
 };
 */
 
-bool ExtensionListComponent::inputFilter(QKeyEvent *event) {
-  switch (event->key()) {
-  case Qt::Key_Up:
-    return m_list->selectUp();
-  case Qt::Key_Down:
-    return m_list->selectDown();
-  case Qt::Key_Return:
-    m_list->activateCurrentSelection();
-    return true;
-  }
-
-  return ExtensionSimpleView::inputFilter(event);
-}
-
 void ExtensionListComponent::renderDropdown(const DropdownModel &dropdown) {
   qWarning() << "RENDERING DROPDOWN!";
   OmniList::SelectionPolicy selectionPolicy = OmniList::PreserveSelection;
@@ -59,13 +46,43 @@ void ExtensionListComponent::renderDropdown(const DropdownModel &dropdown) {
   m_dropdownDebounce->setInterval(dropdown.throttle ? THROTTLE_DEBOUNCE_DURATION
                                                     : std::chrono::milliseconds(0));
 
-  if (m_dropdownShouldResetSelection) {
-    m_dropdownShouldResetSelection = false;
-    selectionPolicy = OmniList::SelectFirst;
+  if (dropdown.dirty) {
+    if (m_dropdownShouldResetSelection) {
+      m_dropdownShouldResetSelection = false;
+      selectionPolicy = OmniList::SelectFirst;
+    }
+
+    m_selector->resetModel();
+
+    std::vector<std::shared_ptr<SelectorInput::AbstractItem>> freeSectionItems;
+
+    for (const auto &item : dropdown.children) {
+      if (auto listItem = std::get_if<DropdownModel::Item>(&item)) {
+        freeSectionItems.emplace_back(std::make_shared<DropdownSelectorItem>(*listItem));
+      } else if (auto section = std::get_if<DropdownModel::Section>(&item)) {
+        if (!freeSectionItems.empty()) {
+          m_selector->addSection("", freeSectionItems);
+          freeSectionItems.clear();
+        }
+
+        auto mapItem = [](auto &&item) -> std::shared_ptr<SelectorInput::AbstractItem> {
+          return std::make_unique<DropdownSelectorItem>(item);
+        };
+        auto items = section->items | std::views::transform(mapItem) | std::ranges::to<std::vector>();
+
+        m_selector->addSection(section->title, items);
+      }
+    }
+
+    if (!freeSectionItems.empty()) {
+      m_selector->addSection("", freeSectionItems);
+      freeSectionItems.clear();
+    }
+
+    m_selector->updateModel();
   }
 
-  auto list = m_selector->list();
-
+  /*
   list->updateModel(
       [&]() {
         OmniList::Section *currentSection = nullptr;
@@ -86,6 +103,7 @@ void ExtensionListComponent::renderDropdown(const DropdownModel &dropdown) {
         }
       },
       selectionPolicy);
+          */
 
   m_selector->setEnableDefaultFilter(dropdown.filtering.enabled);
 
@@ -158,7 +176,6 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
     if (_shouldResetSelection) {
       if (newModel.filtering) {
         m_list->setFilter(searchText());
-        //_list->setFilter(std::make_unique<BuiltinExtensionItemFilter>(searchText()));
       } else {
         m_list->setFilter("");
       }
@@ -182,21 +199,7 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
   }
 
   if (m_list->empty()) {
-    qDebug() << "is empty!";
-    size_t i = 0;
-
-    if (auto pannel = newModel.actions) {
-      for (auto &item : pannel->children) {
-        if (auto action = std::get_if<ActionModel>(&item)) {
-          if (i == 0) action->shortcut = primaryShortcut;
-          if (i == 1) action->shortcut = secondaryShortcut;
-
-          ++i;
-        }
-      }
-
-      setActionPanel(*pannel);
-    }
+    if (auto pannel = newModel.actions) { setActionPanel(*pannel); }
   }
 }
 
@@ -215,8 +218,6 @@ void ExtensionListComponent::onSelectionChanged(const ListItemViewModel *next) {
 
   qDebug() << "set visibility of" << next->id << _model.isShowingDetail;
 
-  size_t i = 0;
-
   m_split->setDetailVisibility(_model.isShowingDetail && next->detail);
 
   if (auto detail = next->detail) {
@@ -224,19 +225,7 @@ void ExtensionListComponent::onSelectionChanged(const ListItemViewModel *next) {
     m_detail->setDetail(*detail);
   }
 
-  if (auto pannel = next->actionPannel) {
-    for (auto &item : pannel->children) {
-      if (auto action = std::get_if<ActionModel>(&item)) {
-        if (i == 0) action->shortcut = primaryShortcut;
-        if (i == 1) action->shortcut = secondaryShortcut;
-
-        ++i;
-      }
-    }
-
-    setActionPanel(*pannel);
-  }
-
+  if (auto pannel = next->actionPannel) { setActionPanel(*pannel); }
   if (auto handler = _model.onSelectionChanged) { notify(*handler, {next->id}); }
 }
 
@@ -294,7 +283,7 @@ ExtensionListComponent::ExtensionListComponent()
   m_selector->setEnableDefaultFilter(false);
   m_topBar->setAccessoryWidget(m_selector);
   m_selector->hide();
-
+  setDefaultActionShortcuts({primaryShortcut, secondaryShortcut});
   m_split->setMainWidget(m_list);
   m_split->setDetailWidget(m_detail);
   setupUI(m_split);

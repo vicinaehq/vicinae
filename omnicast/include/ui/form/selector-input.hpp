@@ -114,6 +114,8 @@ public:
     m_sections.emplace_back(DropdownSection(title, items));
   }
 
+  void resetModel() { m_sections.clear(); }
+
   void updateModel() {
     m_list->updateModel([&]() {
       for (const auto &section : m_sections) {

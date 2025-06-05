@@ -48,6 +48,7 @@
 #include "root-search/apps/app-root-provider.hpp"
 #include "root-search/bookmarks/bookmark-root-provider.hpp"
 #include "service-registry.hpp"
+#include "services/toast/toast-service.hpp"
 #include "theme.hpp"
 #include "ui/ui-controller.hpp"
 
@@ -170,6 +171,7 @@ int startDaemon() {
     auto rootExtMan = std::make_unique<RootExtensionManager>(*rootItemManager.get(), *commandDb.get());
     auto configService = std::make_unique<ConfigService>();
     auto bookmarkService = std::make_unique<BookmarkService>(*omniDb.get());
+    auto toastService = std::make_unique<ToastService>();
     auto currentConfig = configService->value();
 
     if (auto name = currentConfig.theme.name) {
@@ -202,6 +204,7 @@ int startDaemon() {
     rootItemManager->addProvider(std::make_unique<BookmarkRootProvider>(*bookmarkService.get()));
 
     registry->setUI(std::make_unique<UIController>());
+    registry->setToastService(std::move(toastService));
     registry->setBookmarkService(std::move(bookmarkService));
     registry->setConfig(std::move(configService));
     registry->setRootExtMan(std::move(rootExtMan));

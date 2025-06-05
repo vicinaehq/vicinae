@@ -34,6 +34,7 @@ class ExtensionActionPanelView : public ActionPanelListView {
   Q_OBJECT
   ActionPannelModel m_model;
   std::vector<std::shared_ptr<AbstractAction>> m_actions;
+  std::vector<KeyboardShortcutModel> m_defaultActionShortcuts;
 
   void onSearchChanged(const QString &text) override { emit textChanged(text); }
 
@@ -42,6 +43,8 @@ class ExtensionActionPanelView : public ActionPanelListView {
   }
 
   void render() {
+    int idx = 0;
+
     m_actions.clear();
     m_list->updateModel([&]() {
       OmniList::Section *currentSection = nullptr;
@@ -53,12 +56,26 @@ class ExtensionActionPanelView : public ActionPanelListView {
           for (const auto &model : section->actions) {
             auto action = std::make_shared<ExtensionActionV2>(model);
 
+            if (idx == 0) { action->setPrimary(true); }
+
+            if (idx < m_defaultActionShortcuts.size()) {
+              action->setShortcut(m_defaultActionShortcuts.at(idx));
+              ++idx;
+            }
+
             listSection.addItem(std::make_shared<ActionListItem>(action.get()));
             m_actions.emplace_back(action);
           }
         }
         if (auto actionModel = std::get_if<ActionModel>(&item)) {
           auto action = std::make_shared<ExtensionActionV2>(*actionModel);
+
+          if (idx == 0) { action->setPrimary(true); }
+
+          if (idx < m_defaultActionShortcuts.size()) {
+            action->setShortcut(m_defaultActionShortcuts.at(idx));
+            ++idx;
+          }
 
           if (!currentSection) { currentSection = &m_list->addSection(); }
 
@@ -70,6 +87,9 @@ class ExtensionActionPanelView : public ActionPanelListView {
   }
 
 public:
+  void setDefaultActionShortcuts(const std::vector<KeyboardShortcutModel> &models) {
+    m_defaultActionShortcuts = models;
+  }
   void setModel(const ActionPannelModel &model) {
     m_model = model;
     render();
@@ -85,9 +105,14 @@ class ExtensionSimpleView : public SimpleView {
   Q_OBJECT
 
   std::vector<ExtensionActionPanelView> m_actionPanelViewStack;
+  std::vector<KeyboardShortcutModel> m_defaultActionShortcuts;
 
 public:
   virtual void render(const RenderModel &model) {}
+
+  void setDefaultActionShortcuts(const std::vector<KeyboardShortcutModel> &models) {
+    m_defaultActionShortcuts = models;
+  }
 
   void onActionExecuted(AbstractAction *action) override {
     if (auto extAction = dynamic_cast<const ExtensionActionV2 *>(action)) {
@@ -99,11 +124,22 @@ public:
   void setActionPanel(const ActionPannelModel &model) {
     auto panel = new ExtensionActionPanelView();
 
+    panel->setDefaultActionShortcuts(m_defaultActionShortcuts);
     panel->setModel(model);
     m_actionPannelV2->setView(panel);
 
+    auto actions = m_actionPannelV2->actions();
+    auto primaryAction = m_actionPannelV2->primaryAction();
+
+    m_statusBar->setActionButtonVisibility(!actions.empty() && (!primaryAction || actions.size() > 1));
+    m_statusBar->setCurrentActionButtonVisibility(primaryAction);
+
     if (auto action = m_actionPannelV2->primaryAction()) {
-      m_statusBar->setCurrentAction(action->title(), action->shortcut.value_or(KeyboardShortcutModel{}));
+      m_statusBar->setCurrentAction(action->title(),
+                                    action->shortcut.value_or(KeyboardShortcutModel{.key = "return"}));
+      m_statusBar->setActionButton("Actions", defaultActionPanelShortcut());
+    } else {
+      m_statusBar->setActionButton("Actions", KeyboardShortcutModel{.key = "return"});
     }
   }
 

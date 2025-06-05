@@ -64,6 +64,7 @@ struct DropdownModel {
     bool enabled;
   };
 
+  bool dirty;
   std::optional<QString> tooltip;
   std::optional<QString> defaultValue;
   std::optional<QString> id;
@@ -95,6 +96,8 @@ struct DropdownModel {
     DropdownModel model;
     auto props = json.value("props").toObject();
     auto children = json.value("children").toArray();
+
+    model.dirty = json.value("dirty").toBool(false);
 
     if (props.contains("tooltip")) model.tooltip = props.value("tooltip").toString();
     if (props.contains("defaultValue")) model.defaultValue = props.value("defaultValue").toString();

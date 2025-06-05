@@ -1,5 +1,4 @@
 #include "action-panel/action-panel.hpp"
-#include "app.hpp"
 #include "base-view.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
@@ -16,20 +15,14 @@ class ConfigureProviderAction : public AbstractAction {
   const AIProvider &m_info;
 
 public:
-  void execute(AppWindow &app) override {
-    if (auto view = m_info.provider->configView(app)) {
+  void execute() override {
+    auto ui = ServiceRegistry::instance()->UI();
+    if (auto view = m_info.provider->configView()) {
       auto navTitle = QString("Configure %1 AI provider").arg(m_info.provider->displayName());
 
-      /*
-  app.pushView(
-      view, {.navigation = NavigationStatus{
-                 .title = navTitle,
-                 .iconUrl =
-                     BuiltinOmniIconUrl(m_info.provider->iconName()).setBackgroundTint(ColorTint::Red)}});
-      */
+      ui->pushView(view);
     } else {
-      app.statusBar->setToast("This provider has no config view! This should not be the case.",
-                              ToastPriority::Danger);
+      ui->setToast("This provider has no config view! This should not be the case.", ToastPriority::Danger);
     }
   }
 
@@ -43,14 +36,15 @@ class ToggleAIProviderAction : public AbstractAction {
   QString getActionText() { return m_info.enabled ? "Disable provider" : "Enable provider"; }
 
 public:
-  void execute(AppWindow &app) override {
+  void execute() override {
+    auto ui = ServiceRegistry::instance()->UI();
     auto aiManager = ServiceRegistry::instance()->AI();
     bool success = aiManager->setProviderEnabled(m_info.provider->id(), !m_info.enabled);
 
     if (success) {
-      app.statusBar->setToast("Provider status changed");
+      ui->setToast("Provider status changed");
     } else {
-      app.statusBar->setToast("Failed to change provider status");
+      ui->setToast("Failed to change provider status");
     }
   }
 

@@ -4,7 +4,6 @@
 #include "command-server.hpp"
 #include <QScreen>
 #include "omni-icon.hpp"
-#include <algorithm>
 #include <cstring>
 #include <qboxlayout.h>
 #include <qdnslookup.h>
@@ -18,7 +17,6 @@
 #include <qpixmap.h>
 #include <qscreen_platform.h>
 #include <qwindow.h>
-#include <stack>
 #include "ui/alert.hpp"
 #include "ui/dialog.hpp"
 #include "ui/horizontal-loading-bar.hpp"
@@ -69,28 +67,6 @@ class AppWindow : public QMainWindow, public ICommandHandler {
 
   std::variant<CommandResponse, CommandError> handleCommand(const CommandMessage &message) override;
 
-  /*
-  void handleSignalActions(const QList<AbstractAction *> &actions) {
-    actionPannel->setSignalActions(actions);
-
-    if (!actions.isEmpty()) {
-      statusBar->setAction(*actions.at(0));
-    } else {
-      statusBar->clearAction();
-    }
-  }
-
-  void handleSetActions(const std::vector<ActionItem> &actions) {
-    actionPannel->setActions(actions);
-
-    if (auto action = actionPannel->primaryAction()) {
-      statusBar->setAction(*action);
-    } else {
-      statusBar->clearAction();
-    }
-  }
-  */
-
   void unloadHangingCommand();
 
 public:
@@ -100,7 +76,6 @@ public:
   HorizontalLoadingBar *_loadingBar = nullptr;
   void setToast(const QString &title, ToastPriority priority = ToastPriority::Success) {}
 
-  std::stack<ViewSnapshot> navigationStack;
   std::vector<CommandSnapshot> commandStack;
 
   void popToRoot();
@@ -137,9 +112,6 @@ public:
 
 public slots:
   void pushView(BaseView *view, const PushViewOptions &opts = {});
-  void pushView(View *view, const PushViewOptions &opts = {}) {
-    qWarning() << "Not implemented, to make it compile, to be removed very soon";
-  }
   void popCurrentView();
 
 signals:

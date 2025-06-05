@@ -11,8 +11,7 @@
 #include <qobject.h>
 #include <qsqlquery.h>
 
-class View;
-class AppWindow;
+class BaseView;
 
 namespace AI {
 
@@ -53,7 +52,7 @@ public:
    * The view is responsible for calling the AI manager and updating
    * the configuration on submission.
    */
-  virtual View *configView(AppWindow &app) = 0;
+  virtual BaseView *configView() = 0;
 };
 
 class Manager {
@@ -234,8 +233,9 @@ public:
 
   StreamedChatCompletion *createCompletion(const std::vector<ChatMessage> &context,
                                            const QString &modelId = "") {
+    qDebug() << "requesting completion for" << modelId;
     for (const auto &entry : m_providers) {
-      if (!entry.enabled || !entry.configured) continue;
+      // if (!entry.enabled || !entry.configured) continue;
 
       if (!entry.provider->isAlive()) {
         qWarning() << "Not considering AI provider" << entry.provider->id() << "isAlive() returned false";
@@ -243,6 +243,7 @@ public:
       }
 
       if (modelId.isEmpty()) {
+        qDebug() << "finding best for" << entry.provider->id();
         if (auto best = entry.provider->findBestForTask(AiTaskType::QuickReasoningTask)) {
           return entry.provider->createCompletion({.modelId = best->id, .messages = context});
         }

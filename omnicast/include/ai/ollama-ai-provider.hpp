@@ -2,6 +2,7 @@
 #include "ai/ai-service.hpp"
 #include <exception>
 #include <optional>
+#include "base-view.hpp"
 #include "app.hpp"
 #include "ollama-config-view.hpp"
 #include <qfuture.h>
@@ -194,6 +195,7 @@ class OllamaAiProvider : public AI::AbstractProvider {
 
   std::optional<AiModel> findFirstWithCap(AiModel::Capability cap) const {
     for (const auto &model : m_models) {
+      qDebug() << "considering" << model.id;
       if (model.capabilities & cap) { return model; }
     }
 
@@ -249,7 +251,7 @@ public:
 
   static QString defaultInstanceUrl() { return "http://localhost:11434"; }
 
-  View *configView(AppWindow &app) override { return new OllamaConfigView(app); }
+  BaseView *configView() override { return new OllamaConfigView(); }
 
   bool loadConfig(const QJsonObject &config) override {
     setInstanceUrl(config.value("instanceUrl").toString(defaultInstanceUrl()));

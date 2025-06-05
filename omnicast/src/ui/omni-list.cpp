@@ -10,7 +10,7 @@
 #include <qlogging.h>
 #include <qnamespace.h>
 
-QString OmniList::VirtualSection::generateId() const { return _name; }
+QString OmniList::VirtualSection::generateId() const { return QUuid::createUuid().toString(); }
 
 OmniListItemWidget *OmniList::VirtualSection::createWidget() const {
   return new OmniListSectionHeader(_name, "", 0);
