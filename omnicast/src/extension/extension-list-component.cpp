@@ -147,7 +147,7 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
       }
     }
 
-    if (auto panel = selected->actionPannel; panel && panel->dirty) {
+    if (auto panel = selected->actionPannel; panel && _model.dirty) {
       qDebug() << "panel dirty" << panel->dirty;
       setActionPanel(*panel);
     }
