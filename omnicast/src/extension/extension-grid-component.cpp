@@ -36,8 +36,6 @@ void ExtensionGridComponent::render(const RenderModel &baseModel) {
 
   qDebug() << "Rendering grid with" << newModel.items.size() << "items";
 
-  qCritical() << "grid dirty" << newModel.dirty;
-
   // m_selector->setVisible(newModel.searchBarAccessory.has_value() && isVisible());
 
   if (!newModel.navigationTitle.isEmpty()) {

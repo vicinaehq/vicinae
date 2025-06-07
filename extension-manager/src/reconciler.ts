@@ -411,12 +411,14 @@ export const createRenderer = (config: RendererConfig) => {
 					views.push({ root: view });
 				}
 
+				console.error(JSON.stringify({ views }, null, 2));
+
 				config.onUpdate?.(views)
 
 				const end = performance.now();
 
-				console.error(`[PERF] processed render frame in ${end - start}ms`);
-				console.error(`[PERF] last render ${end - lastRender}ms`);
+				//console.error(`[PERF] processed render frame in ${end - start}ms`);
+				//console.error(`[PERF] last render ${end - lastRender}ms`);
 				lastRender = end;
 			}, debounceInterval);
 		}

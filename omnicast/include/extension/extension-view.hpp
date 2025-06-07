@@ -15,6 +15,7 @@
 #include <qevent.h>
 #include <qjsonarray.h>
 #include <qjsonobject.h>
+#include <qlogging.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
 #include <ranges>

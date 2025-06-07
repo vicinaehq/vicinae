@@ -350,8 +350,9 @@ void OmniList::scrollTo(int idx, ScrollBehaviour behaviour) {
   if (behaviour == ScrollBehaviour::ScrollRelative) {
     int scrollHeight = scrollBar->value();
 
-    qDebug()
-        << QString("%1 + %2 - %3 > %4").arg(bounds.y()).arg(bounds.height()).arg(scrollHeight).arg(height());
+    // qDebug()
+    //    << QString("%1 + %2 - %3 >
+    //    %4").arg(bounds.y()).arg(bounds.height()).arg(scrollHeight).arg(height());
 
     if (bounds.y() + bounds.height() - scrollHeight > height()) {
       newScroll = (bounds.y() + bounds.height() - height());
@@ -367,8 +368,6 @@ void OmniList::scrollTo(int idx, ScrollBehaviour behaviour) {
     int low = newScroll;
     int high = low + height();
     bool isAnchorVisible = anchor.bounds.y() >= low && anchor.bounds.y() <= high;
-
-    qDebug() << "anchor visible" << isAnchorVisible;
 
     if (!isAnchorVisible) { return scrollTo(previousIdx, behaviour); }
   }
@@ -412,8 +411,6 @@ bool OmniList::event(QEvent *event) {
 
 void OmniList::resizeEvent(QResizeEvent *event) {
   auto size = event->size();
-
-  qDebug() << "LIST RESIZED =>" << size;
 
   QWidget::resizeEvent(event);
   scrollBar->setPageStep(size.height());

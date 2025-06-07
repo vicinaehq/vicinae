@@ -83,6 +83,7 @@ void AppWindow::presentFrontView() {
 void AppWindow::popCurrentView() {
   auto &activeCommand = commandStack.at(commandStack.size() - 1);
   auto toastService = ServiceRegistry::instance()->toastService();
+  auto ui = ServiceRegistry::instance()->UI();
 
   if (activeCommand.viewStack.empty()) return;
 
@@ -113,7 +114,7 @@ void AppWindow::popCurrentView() {
     activeCommand.viewStack.pop();
   }
 
-  currentViewPoped();
+  emit ui->popViewCompleted();
 }
 
 bool AppWindow::replaceView(BaseView *previous, BaseView *next) {

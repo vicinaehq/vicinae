@@ -51,8 +51,6 @@ class ExtensionGridList : public QWidget {
     bool keywordMatches = std::ranges::any_of(
         item.keywords, [&](auto &&keyword) { return keyword.contains(query, Qt::CaseInsensitive); });
 
-    qDebug() << "keywords" << item.keywords.size();
-
     return keywordMatches || item.title.contains(query, Qt::CaseInsensitive);
   }
 
@@ -80,8 +78,6 @@ class ExtensionGridList : public QWidget {
             } else if (auto section = std::get_if<GridSectionModel>(&item)) {
               appendSectionLess();
 
-              qDebug() << "rendering grid section with " << section->children.size();
-
               auto items =
                   section->children | std::views::filter(matches) |
                   std::views::transform([&](auto &&item) -> std::unique_ptr<OmniList::AbstractVirtualItem> {
@@ -94,8 +90,6 @@ class ExtensionGridList : public QWidget {
               auto &sec = m_list->addSection(section->title);
 
               if (section->title.isEmpty()) { sec.addSpacing(10); }
-
-              qDebug() << "columns" << section->columns;
 
               sec.setSpacing(10);
               sec.setColumns(section->columns);

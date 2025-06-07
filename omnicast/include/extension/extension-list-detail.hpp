@@ -8,10 +8,7 @@
 class ExtensionListDetail : public DetailWidget {
   MarkdownRenderer *markdownRenderer = new MarkdownRenderer;
 
-  void resizeEvent(QResizeEvent *event) override {
-    DetailWidget::resizeEvent(event);
-    qDebug() << "detail resize event" << event->size();
-  }
+  void resizeEvent(QResizeEvent *event) override { DetailWidget::resizeEvent(event); }
 
 public:
   ExtensionListDetail() { setContentWidget(markdownRenderer); }

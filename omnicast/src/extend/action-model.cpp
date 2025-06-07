@@ -75,6 +75,7 @@ ActionPannelModel ActionPannelParser::parse(const QJsonObject &instance) {
   auto props = instance["props"].toObject();
   auto children = instance["children"].toArray();
 
+  pannel.dirty = instance.value("dirty").toBool(false);
   pannel.title = props["title"].toString();
 
   for (const auto &ref : children) {

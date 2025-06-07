@@ -17,7 +17,6 @@ static const KeyboardShortcutModel primaryShortcut{.key = "return"};
 static const KeyboardShortcutModel secondaryShortcut{.key = "return", .modifiers = {"shift"}};
 
 void ExtensionListComponent::renderDropdown(const DropdownModel &dropdown) {
-  qWarning() << "RENDERING DROPDOWN!";
   OmniList::SelectionPolicy selectionPolicy = OmniList::PreserveSelection;
 
   m_dropdownDebounce->setInterval(dropdown.throttle ? THROTTLE_DEBOUNCE_DURATION
@@ -76,7 +75,6 @@ void ExtensionListComponent::renderDropdown(const DropdownModel &dropdown) {
 
 void ExtensionListComponent::render(const RenderModel &baseModel) {
   ++m_renderCount;
-  qCritical() << "render" << "count" << m_renderCount;
   auto newModel = std::get<ListModel>(baseModel);
 
   if (auto accessory = newModel.searchBarAccessory) {
@@ -84,8 +82,6 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
 
     renderDropdown(dropdown);
   }
-
-  qCritical() << "list dirty" << newModel.dirty;
 
   m_selector->setVisible(newModel.searchBarAccessory.has_value() && isVisible());
 
@@ -143,7 +139,7 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
 
     if (auto detail = selected->detail) {
       if (m_split->isDetailVisible()) {
-        qDebug() << "update detail for" << selected->id;
+        // qDebug() << "update detail for" << selected->id;
         m_detail->updateDetail(*detail);
       } else {
         qDebug() << "create detail";
@@ -151,7 +147,10 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
       }
     }
 
-    if (auto panel = selected->actionPannel) { setActionPanel(*panel); }
+    if (auto panel = selected->actionPannel; panel && panel->dirty) {
+      qDebug() << "panel dirty" << panel->dirty;
+      setActionPanel(*panel);
+    }
   }
 
   if (m_list->empty()) {

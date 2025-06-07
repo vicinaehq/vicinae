@@ -77,6 +77,7 @@ public:
 class ExtensionCommandRuntime : public CommandContext {
   std::shared_ptr<ExtensionCommand> m_command;
   std::vector<ExtensionViewInfo> m_viewStack;
+  int viewStackSize = 0;
   QFutureWatcher<std::vector<RenderModel>> m_modelWatcher;
   RequestDispatcher m_actionDispatcher;
   PlaceholderExtensionView *placeholderView = nullptr;
@@ -307,6 +308,7 @@ class ExtensionCommandRuntime : public CommandContext {
     auto ui = ServiceRegistry::instance()->UI();
 
     if (m_command->isView() && action == "ui.push-view") {
+      ++viewStackSize;
       // we create a new view on render
       return {};
     }
@@ -340,6 +342,7 @@ class ExtensionCommandRuntime : public CommandContext {
   void handlePopViewRequest() {
     auto ui = ServiceRegistry::instance()->UI();
 
+    --viewStackSize;
     m_viewStack.pop_back();
     ui->popView();
   }
@@ -350,20 +353,21 @@ class ExtensionCommandRuntime : public CommandContext {
     auto ui = ServiceRegistry::instance()->UI();
 
     auto models = m_modelWatcher.result();
-    qCritical() << "RENDER EXTENSION!!";
 
     for (int i = 0; i != models.size(); ++i) {
       auto model = models.at(i);
 
       if (i >= m_viewStack.size()) {
-        auto next = createViewFromModel(model);
+        if (i <= viewStackSize) {
+          auto next = createViewFromModel(model);
 
-        if (ui->topView() == placeholderView) {
-          ui->replaceView(placeholderView, next);
-        } else {
-          ui->pushView(next);
+          if (ui->topView() == placeholderView) {
+            ui->replaceView(placeholderView, next);
+          } else {
+            ui->pushView(next);
+          }
+          m_viewStack.push_back({.index = model.index(), .view = next});
         }
-        m_viewStack.push_back({.index = model.index(), .view = next});
       } else {
         auto &view = m_viewStack.at(i);
 
@@ -376,7 +380,7 @@ class ExtensionCommandRuntime : public CommandContext {
         }
       }
 
-      m_viewStack.at(i).view->render(model);
+      if (i < m_viewStack.size()) { m_viewStack.at(i).view->render(model); }
     }
   }
 
@@ -410,7 +414,7 @@ class ExtensionCommandRuntime : public CommandContext {
   }
 
   void handleEvent(const QString &sessionId, const QString &action, const QJsonObject &payload) {
-    qDebug() << "event" << action << "for " << sessionId;
+    // qDebug() << "event" << action << "for " << sessionId;
     if (m_sessionId != sessionId) return;
 
     if (action == "unload") {}
@@ -442,8 +446,12 @@ class ExtensionCommandRuntime : public CommandContext {
   }
 
   void handleViewPoped() {
-    if (m_viewStack.size() > 1) { notify("pop-view", {}); }
+    if (m_viewStack.size() > 1) {
+      notify("pop-view", {});
+      qCritical() << "send pop!!!";
+    }
 
+    --viewStackSize;
     m_viewStack.pop_back();
   }
 
@@ -461,7 +469,7 @@ public:
       placeholderView->setNavigationTitle(m_command->name());
       placeholderView->setNavigationIcon(m_command->iconUrl());
       ui->pushView(placeholderView);
-      connect(ui, &UIController::popViewRequested, this, &ExtensionCommandRuntime::handleViewPoped);
+      connect(ui, &UIController::popViewCompleted, this, &ExtensionCommandRuntime::handleViewPoped);
     }
 
     manager->loadCommand(m_command->extensionId(), m_command->commandId(), preferenceValues, props);

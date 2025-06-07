@@ -28,7 +28,7 @@ static const std::unordered_map<QString, ExtensionMessageType> stringToExtension
 };
 
 FullMessage Bus::parseRawMessage(const QByteArray &data) {
-  qDebug() << "processing packet of size " << data.size();
+  // qDebug() << "processing packet of size " << data.size();
   auto json = QJsonDocument::fromJson(data);
 
   return parseFullMessage(json.object());
@@ -120,9 +120,9 @@ void Bus::sendMessage(const MessageEnvelope &envelope, const QJsonObject &payloa
 
   dataStream << doc.toJson();
   device->write(data);
-  qDebug() << "waiting for write...";
+  // qDebug() << "waiting for write...";
   device->waitForBytesWritten(1000);
-  qDebug() << "wrote message";
+  // qDebug() << "wrote message";
 }
 
 void Bus::request(const Messenger &target, const QString &action, const QJsonObject &payload) {
@@ -145,7 +145,7 @@ void Bus::requestExtension(const QString &sessionId, const QString &action, cons
 }
 
 void Bus::handleMessage(FullMessage &msg) {
-  qDebug() << "[DEBUG] readyRead: got message of type" << msg.envelope.action;
+  // qDebug() << "[DEBUG] readyRead: got message of type" << msg.envelope.action;
 
   if (msg.envelope.type == ExtensionMessageType::REQUEST) {
     m_incomingPendingRequests.insert({msg.envelope.id, msg.envelope});

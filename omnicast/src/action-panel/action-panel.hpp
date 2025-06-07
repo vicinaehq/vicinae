@@ -168,7 +168,6 @@ public:
     connect(m_input, &SearchBar::textChanged, this, &ActionPanelListView::onSearchChanged);
     connect(m_list, &OmniList::itemActivated, this, &ActionPanelListView::itemActivated);
     connect(m_list, &OmniList::virtualHeightChanged, this, [this](int height) {
-      qDebug() << "HEIGHT CHANGED TO" << height;
       m_list->setFixedHeight(std::min(height, 180));
       updateGeometry();
     });
@@ -307,7 +306,7 @@ class ActionPanelV2Widget : public Popover {
     auto window = QApplication::activeWindow();
 
     if (!window) {
-      qDebug() << "showActions: no active window, won't show popover";
+      // qDebug() << "showActions: no active window, won't show popover";
       return;
     }
 
@@ -378,8 +377,6 @@ public:
       QSize contentSize = next->sizeHint();
       setFixedHeight(contentSize.height());
       resizeView();
-    } else {
-      close();
     }
 
     view->deleteLater();

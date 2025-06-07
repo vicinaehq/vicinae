@@ -141,7 +141,6 @@ protected:
       bool isEsc = keyEvent->key() == Qt::Key_Escape;
 
       if (isEsc) {
-        qCritical() << "ESCAPE!";
         escapePressed();
         return true;
       }

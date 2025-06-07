@@ -32,8 +32,9 @@ struct ActionPannelSubmenuModel {
 using ActionPannelItem = std::variant<ActionModel, ActionPannelSectionModel, ActionPannelSubmenuModel>;
 
 struct ActionPannelModel {
+  bool dirty;
   QString title;
-  QList<ActionPannelItem> children;
+  std::vector<ActionPannelItem> children;
 };
 
 class ActionPannelParser {

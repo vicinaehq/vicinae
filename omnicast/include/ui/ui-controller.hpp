@@ -41,4 +41,6 @@ signals:
   void showHUDRequested(const QString &title) const;
   void showToastRequested(const QString &title, ToastPriority priority) const;
   void replaceViewRequested(BaseView *previous, BaseView *next) const;
+
+  void popViewCompleted() const;
 };

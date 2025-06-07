@@ -21,7 +21,7 @@ std::vector<RenderModel> ModelParser::parse(const QJsonArray &views) {
 
     if (type == "list") {
       renderedViews.push_back(ListModelParser().parse(root));
-      qDebug() << "push list model with";
+      // qDebug() << "push list model with";
     } else if (type == "grid") {
       renderedViews.push_back(GridModelParser().parse(root));
     } else if (type == "detail") {
