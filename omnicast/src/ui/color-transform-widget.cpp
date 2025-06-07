@@ -2,8 +2,9 @@
 #include "ui/color_circle.hpp"
 
 void ColorTransformWidget::setColor(const QString &base, QColor color) {
-  auto circle = new ColorCircle(base, {60, 60});
+  auto circle = new ColorCircle({60, 60});
 
+  circle->setColor(color);
   circle->setStroke("#BBB", 3);
   setBase(base, "color");
   setResult(circle, color.name());

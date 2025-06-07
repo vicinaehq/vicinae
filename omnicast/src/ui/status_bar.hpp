@@ -2,6 +2,7 @@
 #include "common.hpp"
 #include "extend/action-model.hpp"
 #include "omni-icon.hpp"
+#include "services/toast/toast-service.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/image/omnimg.hpp"
 #include "ui/toast.hpp"
@@ -14,6 +15,7 @@
 #include <qicon.h>
 #include <qlabel.h>
 #include <qlogging.h>
+#include <qstackedwidget.h>
 #include <qtimer.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
@@ -22,14 +24,6 @@
 
 class StatusBar : public QWidget {
   Q_OBJECT
-
-  QWidget *leftWidget;
-  TypographyWidget *selectedActionLabel;
-  QWidget *tmpLeft = nullptr;
-  ShortcutButton *_selectedActionButton;
-  ShortcutButton *_actionButton;
-  VDivider *_rightDivider;
-  QWidget *right;
 
   class CurrentCommandWidget : public QWidget {
     TypographyWidget *_title;
@@ -56,6 +50,19 @@ class StatusBar : public QWidget {
     void setTitle(const QString &title) const { _title->setText(title); }
     void setIcon(const OmniIconUrl &icon) { m_icon->setUrl(icon); }
   };
+
+  QStackedWidget *leftSideWidget = new QStackedWidget();
+  ToastWidget *m_toastWidget = new ToastWidget;
+  CurrentCommandWidget *m_navigation = new CurrentCommandWidget("", BuiltinOmniIconUrl("omnicast"));
+
+  QWidget *leftWidget;
+  TypographyWidget *selectedActionLabel;
+  QWidget *tmpLeft = nullptr;
+  ShortcutButton *_selectedActionButton;
+  ShortcutButton *_actionButton;
+  VDivider *_rightDivider;
+  QWidget *right;
+  const Toast *m_toast = nullptr;
 
   class DefaultLeftWidget : public QWidget {
   public:
@@ -84,7 +91,7 @@ public:
   void clearAction();
   KeyboardShortcutModel actionButtonShortcut() const;
   void setActionButtonHighlight(bool highlight);
-  void setToast(const QString &text, ToastPriority priority = ToastPriority::Success);
+  void setToast(Toast const *toast);
   void clearToast();
   void setNavigation(const QString &name, const OmniIconUrl &iconUrl);
   QString navigationTitle() const;

@@ -4,8 +4,10 @@
 #include <qlogging.h>
 #include <QPainterPath>
 #include "omni-icon.hpp"
+#include "services/toast/toast-service.hpp"
 #include "theme.hpp"
 #include "ui/shortcut-button.hpp"
+#include "ui/toast.hpp"
 #include "ui/typography.hpp"
 #include <qnamespace.h>
 #include <qpainter.h>
@@ -16,6 +18,10 @@ StatusBar::StatusBar(QWidget *parent) : QWidget(parent), leftWidget(nullptr) {
   auto layout = new QHBoxLayout();
 
   setFixedHeight(40);
+
+  leftSideWidget->addWidget(m_navigation);
+  leftSideWidget->addWidget(m_toastWidget);
+  leftSideWidget->setCurrentIndex(0);
 
   layout->setContentsMargins(15, 5, 15, 5);
 
@@ -59,7 +65,7 @@ StatusBar::StatusBar(QWidget *parent) : QWidget(parent), leftWidget(nullptr) {
 
   rightLayout->addWidget(_actionButton, 0, Qt::AlignRight);
 
-  layout->addWidget(leftWidget, 0, Qt::AlignLeft);
+  layout->addWidget(leftSideWidget, 0, Qt::AlignLeft);
   layout->addWidget(right, 0, Qt::AlignRight);
 
   setLayout(layout);
@@ -121,25 +127,13 @@ void StatusBar::setNavigation(const QString &name, const OmniIconUrl &icon) {
   setLeftWidget(new CurrentCommandWidget(name, icon));
 }
 
-void StatusBar::setNavigationTitle(const QString &title) {
-  if (auto left = dynamic_cast<CurrentCommandWidget *>(leftWidget)) { left->setTitle(title); }
-}
+void StatusBar::setNavigationTitle(const QString &title) { m_navigation->setTitle(title); }
 
-QString StatusBar::navigationTitle() const {
-  if (auto left = dynamic_cast<CurrentCommandWidget *>(leftWidget)) { return left->title(); }
+QString StatusBar::navigationTitle() const { return m_navigation->title(); }
 
-  return "";
-}
+OmniIconUrl StatusBar::navigationIcon() const { return m_navigation->icon(); }
 
-OmniIconUrl StatusBar::navigationIcon() const {
-  if (auto left = dynamic_cast<CurrentCommandWidget *>(leftWidget)) { return left->icon(); }
-
-  return OmniIconUrl("");
-}
-
-void StatusBar::setNavigationIcon(const OmniIconUrl &icon) {
-  if (auto left = dynamic_cast<CurrentCommandWidget *>(leftWidget)) { left->setIcon(icon); }
-}
+void StatusBar::setNavigationIcon(const OmniIconUrl &icon) { m_navigation->setIcon(icon); }
 
 void StatusBar::reset() { setLeftWidget(new DefaultLeftWidget()); }
 
@@ -163,29 +157,12 @@ void StatusBar::paintEvent(QPaintEvent *event) {
   painter.drawRect(0, 0, width(), 1);
 }
 
-void StatusBar::clearToast() {
-  auto old = tmpLeft;
+void StatusBar::clearToast() { leftSideWidget->setCurrentIndex(0); }
 
-  tmpLeft = nullptr;
-  old->setParent(this);
-  old->show();
-  setLeftWidget(old);
-}
+void StatusBar::setToast(Toast const *toast) {
+  m_toast = toast;
+  m_toastWidget->setToast(toast);
+  leftSideWidget->setCurrentIndex(1);
 
-void StatusBar::setToast(const QString &text, ToastPriority priority) {
-  auto toast = new ToastWidget(text, priority);
-
-  layout()->replaceWidget(leftWidget, toast);
-
-  if (!tmpLeft) {
-    tmpLeft = leftWidget;
-    tmpLeft->setParent(nullptr);
-    tmpLeft->hide();
-  } else {
-    // delete previous toast
-    leftWidget->deleteLater();
-  }
-
-  leftWidget = toast;
-  toast->start(2000);
+  connect(toast, &Toast::updated, this, [this, toast]() { m_toastWidget->setToast(toast); });
 }

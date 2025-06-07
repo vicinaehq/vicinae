@@ -1,10 +1,9 @@
 #pragma once
-#include "app.hpp"
-#include "builtin_icon.hpp"
 #include "extend/grid-model.hpp"
 #include <qdebug.h>
-#include "extension/extension-component.hpp"
+#include "extension/extension-view.hpp"
 #include "omni-icon.hpp"
+#include "ui/image/omnimg.hpp"
 #include "ui/omni-grid.hpp"
 #include "ui/omni-list.hpp"
 #include <QJsonArray>
@@ -15,13 +14,13 @@
 
 class ExtensionGridItem : public OmniGrid::AbstractGridItem {
   GridItemViewModel _item;
+  double m_aspectRatio = 1;
 
   QString generateId() const override { return _item.id; }
 
   QWidget *centerWidget() const override {
-    auto icon = new OmniIcon;
+    auto icon = new Omnimg::ImageWidget;
 
-    icon->setFixedSize(32, 32);
     icon->setUrl(_item.content);
 
     return icon;
@@ -29,48 +28,168 @@ class ExtensionGridItem : public OmniGrid::AbstractGridItem {
 
   const QString &name() const { return _item.title; }
 
+  double aspectRatio() const override { return m_aspectRatio; }
+
 public:
   const GridItemViewModel &model() const { return _item; }
 
-  ExtensionGridItem(const GridItemViewModel &model) : _item(model) {}
+  ExtensionGridItem(const GridItemViewModel &model, double aspectRatio = 1)
+      : _item(model), m_aspectRatio(aspectRatio) {
+    qDebug() << "aspect ratio" << aspectRatio;
+  }
 };
 
-class BuiltinExtensionGridItemFilter : public OmniList::AbstractItemFilter {
-  QString _filterText;
+class ExtensionGridList : public QWidget {
+  Q_OBJECT
 
-  bool matches(const OmniList::AbstractVirtualItem &base) override {
-    auto item = static_cast<const ExtensionGridItem &>(base);
+  OmniList *m_list = new OmniList;
+  std::vector<GridChild> m_model;
+  int m_columns = 1;
+  QString m_filter;
 
-    if (item.model().title.contains(_filterText, Qt::CaseInsensitive)) return true;
+  bool matchesFilter(const GridItemViewModel &item, const QString &query) {
+    bool keywordMatches = std::ranges::any_of(
+        item.keywords, [&](auto &&keyword) { return keyword.contains(query, Qt::CaseInsensitive); });
 
-    if (auto keywords = item.model().keywords) {
-      for (const auto &keyword : *keywords) {
-        if (keyword.contains(_filterText, Qt::CaseInsensitive)) return true;
+    qDebug() << "keywords" << item.keywords.size();
+
+    return keywordMatches || item.title.contains(query, Qt::CaseInsensitive);
+  }
+
+  void render(OmniList::SelectionPolicy selectionPolicy) {
+    auto matches = [&](const GridItemViewModel &item) { return matchesFilter(item, m_filter); };
+    std::vector<std::shared_ptr<OmniList::AbstractVirtualItem>> currentSectionItems;
+    auto appendSectionLess = [&]() {
+      if (!currentSectionItems.empty()) {
+        auto &listSection = m_list->addSection();
+
+        listSection.setColumns(m_columns);
+        listSection.addItems(currentSectionItems);
+        currentSectionItems.clear();
       }
+    };
+
+    m_list->updateModel(
+        [&]() {
+          for (const auto &item : m_model) {
+            if (auto listItem = std::get_if<GridItemViewModel>(&item)) {
+              if (!matches(*listItem)) continue;
+              currentSectionItems.emplace_back(std::static_pointer_cast<OmniList::AbstractVirtualItem>(
+                  std::make_shared<ExtensionGridItem>(*listItem)));
+
+            } else if (auto section = std::get_if<GridSectionModel>(&item)) {
+              appendSectionLess();
+
+              qDebug() << "rendering grid section with " << section->children.size();
+
+              auto items =
+                  section->children | std::views::filter(matches) |
+                  std::views::transform([&](auto &&item) -> std::unique_ptr<OmniList::AbstractVirtualItem> {
+                    return std::make_unique<ExtensionGridItem>(item, section->aspectRatio);
+                  }) |
+                  std::ranges::to<std::vector>();
+
+              if (items.empty()) continue;
+
+              auto &sec = m_list->addSection(section->title);
+
+              if (section->title.isEmpty()) { sec.addSpacing(10); }
+
+              qDebug() << "columns" << section->columns;
+
+              sec.setSpacing(10);
+              sec.setColumns(section->columns);
+              sec.addItems(std::move(items));
+            }
+          }
+          appendSectionLess();
+        },
+        selectionPolicy);
+  }
+
+  void handleSelectionChanged(const OmniList::AbstractVirtualItem *next,
+                              const OmniList::AbstractVirtualItem *previous) {
+    if (!next) {
+      emit selectionChanged(nullptr);
+      return;
     }
 
-    return false;
+    if (auto qualifiedNext = dynamic_cast<const ExtensionGridItem *>(next)) {
+      emit selectionChanged(&qualifiedNext->model());
+    }
+  }
+
+  void handleItemActivated(const OmniList::AbstractVirtualItem &item) {
+    if (auto qualified = dynamic_cast<const ExtensionGridItem *>(&item)) {
+      emit itemActivated(qualified->model());
+    }
   }
 
 public:
-  BuiltinExtensionGridItemFilter(const QString &filterText) : _filterText(filterText) {}
+  ExtensionGridList() {
+    auto layout = new QVBoxLayout;
+
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(m_list);
+    setLayout(layout);
+    m_list->setMargins(20, 10, 20, 10);
+
+    connect(m_list, &OmniList::selectionChanged, this, &ExtensionGridList::handleSelectionChanged);
+    connect(m_list, &OmniList::itemActivated, this, &ExtensionGridList::handleItemActivated);
+  }
+
+  void setColumns(int cols) {
+    if (m_columns == cols) return;
+    m_columns = cols;
+    render(OmniList::PreserveSelection);
+  }
+
+  bool selectUp() { return m_list->selectUp(); }
+  bool selectDown() { return m_list->selectDown(); }
+  bool selectLeft() { return m_list->selectLeft(); }
+  bool selectRight() { return m_list->selectRight(); }
+  void activateCurrentSelection() const { m_list->activateCurrentSelection(); }
+
+  GridItemViewModel const *selected() const {
+    if (auto selected = m_list->selected()) {
+      if (auto qualified = dynamic_cast<ExtensionGridItem const *>(selected)) { return &qualified->model(); }
+    }
+
+    return nullptr;
+  }
+
+  bool empty() const { return m_list->virtualHeight() == 0; }
+
+  void setModel(const std::vector<GridChild> &model,
+                OmniList::SelectionPolicy selection = OmniList::SelectFirst) {
+    m_model = model;
+    render(selection);
+  }
+  void setFilter(const QString &query) {
+    if (m_filter == query) return;
+
+    m_filter = query;
+    render(OmniList::SelectFirst);
+  }
+
+signals:
+  void selectionChanged(const GridItemViewModel *);
+  void itemActivated(const GridItemViewModel &);
 };
 
-class ExtensionGridComponent : public AbstractExtensionRootComponent {
+class ExtensionGridComponent : public ExtensionSimpleView {
   GridModel _model;
-  QVBoxLayout *_layout;
-  OmniGrid *_grid;
+  ExtensionGridList *m_list = new ExtensionGridList;
   bool _shouldResetSelection;
   QTimer *_debounce;
 
 public:
   void render(const RenderModel &baseModel) override;
-  void onSelectionChanged(const OmniList::AbstractVirtualItem *next,
-                          const OmniList::AbstractVirtualItem *previous);
-  void onItemActivated(const OmniList::AbstractVirtualItem &item);
+  void onSelectionChanged(const GridItemViewModel *item);
+  void onItemActivated(const GridItemViewModel &item);
   void handleDebouncedSearchNotification();
   void onSearchChanged(const QString &text) override;
   bool inputFilter(QKeyEvent *event) override;
 
-  ExtensionGridComponent(AppWindow &app);
+  ExtensionGridComponent();
 };

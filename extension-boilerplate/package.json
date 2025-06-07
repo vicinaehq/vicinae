@@ -48,6 +48,12 @@
 	  ]
     },
 	{
+      "name": "heavy-duty",
+      "title": "Heavy Duty Stuff",
+      "description": "Heavy Duty",
+      "mode": "view"
+    },
+	{
       "name": "no-view",
       "title": "Test No View",
       "description": "Test No View Feature",

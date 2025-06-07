@@ -3,6 +3,8 @@
 #include "extend/empty-view-model.hpp"
 #include "extend/image-model.hpp"
 #include "extend/pagination-model.hpp"
+#include <qjsonvalue.h>
+#include <ranges>
 #include <qjsonarray.h>
 #include <qjsonobject.h>
 
@@ -17,27 +19,16 @@ GridItemViewModel GridModelParser::parseListItem(const QJsonObject &instance, si
   model.content = ImageModelParser().parse((props.value("content").toObject()));
 
   if (props.contains("keywords")) {
-    auto arr = props.value("keywords").toArray();
-    std::vector<QString> keywords;
-
-    keywords.reserve(arr.size());
-
-    for (const auto &child : arr) {
-      keywords.push_back(child.toString());
-    }
-
-    model.keywords = std::move(keywords);
+    model.keywords = props.value("keywords").toArray() |
+                     std::views::transform([](const QJsonValue &&a) { return a.toString(); }) |
+                     std::ranges::to<std::vector>();
   }
-
-  size_t i = 0;
 
   for (const auto &child : children) {
     auto obj = child.toObject();
     auto type = obj["type"].toString();
 
     if (type == "action-panel") { model.actionPannel = ActionPannelParser().parse(obj); }
-
-    i += 1;
   }
 
   return model;
@@ -51,13 +42,16 @@ GridSectionModel GridModelParser::parseSection(const QJsonObject &instance) {
 
   model.title = props.value("title").toString();
   model.subtitle = props.value("subtitle").toString();
+  model.aspectRatio = props.value("aspectRatio").toDouble(1);
+  model.columns = props.value("columns").toInt(1);
+  model.inset = props.value("inset").toInt(0);
   model.children.reserve(arr.size());
 
   for (const auto &child : arr) {
     auto obj = child.toObject();
     auto type = obj.value("type").toString();
 
-    if (type == "list-item") {
+    if (type == "grid-item") {
       auto item = parseListItem(obj, index);
 
       model.children.push_back(item);
@@ -75,15 +69,19 @@ GridModel GridModelParser::parse(const QJsonObject &instance) {
   // no builtin filtering by default if onSearchTextChange handler is specified
   bool defaultFiltering = !props.contains("onSearchTextChange");
 
+  model.dirty = instance.value("dirty").toBool(true);
   model.isLoading = props["isLoading"].toBool(false);
   model.throttle = props["throttle"].toBool(false);
   model.inset = props["inset"].toInt(10);
   model.columns = props["columns"].toInt(8);
   model.fit = GridFit::GridContain;
   model.aspectRatio = 1;
-  model.navigationTitle = props["navigationTitle"].toString("Command");
   model.searchPlaceholderText = props["searchBarPlaceholder"].toString();
   model.filtering = props["filtering"].toBool(defaultFiltering);
+
+  if (props.contains("navigationTitle")) {
+    model.navigationTitle = props.value("navigationTitle").toString();
+  }
 
   if (props.contains("onSearchTextChange")) {
     model.onSearchTextChange = props.value("onSearchTextChange").toString();

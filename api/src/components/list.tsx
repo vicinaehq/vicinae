@@ -19,9 +19,11 @@ export declare namespace List {
 				tooltip?: string | null;
 		};
 	}
+
+
 };
 
-export type ListProps = {
+type ListProps = {
 	actions?: React.ReactNode;
 	children?: React.ReactNode;
 	filtering?: boolean;
@@ -41,6 +43,7 @@ export type ListProps = {
 
 export type ListItemProps = {
 	title: string;
+	keywords?: string[];
 	detail?: React.ReactNode;
 	icon?: ImageLike;
 	id?: string;

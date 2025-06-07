@@ -35,6 +35,7 @@ declare module 'react' {
                 id?: string;
                 subtitle?: string;
                 icon?: SerializedImageLike;
+				keywords?: string[];
             };
             'list-item-detail': ListItemDetailProps;
             'list-item-detail-metadata': any;
@@ -67,10 +68,11 @@ declare module 'react' {
                 children?: React.ReactNode;
             };
             'grid-item': {
-                title: string;
+                title?: string;
                 id?: string;
                 subtitle?: string;
-                icon?: SerializedImageLike;
+                content?: SerializedImageLike | { color: ColorLike };
+				keywords?: string[];
             };
 
             'empty-view': {

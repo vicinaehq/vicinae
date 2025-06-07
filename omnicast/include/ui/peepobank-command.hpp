@@ -39,6 +39,8 @@ class PeepobankView : public GridView {
 
     QString tooltip() const override { return _info.name; }
 
+    double aspectRatio() const override { return 2.0 / 3.0; }
+
     bool centerWidgetRecyclable() const override { return false; }
 
     QList<AbstractAction *> generateActions() const override {
@@ -81,33 +83,31 @@ class PeepobankView : public GridView {
   };
 
   void onSearchChanged(const QString &text) override {
-    m_grid->setFilter(std::make_unique<PeepoFilter>(text));
+    auto fileBrowser = ServiceRegistry::instance()->appDb()->fileBrowser();
+    QDir dir(bankPath);
+
+    m_grid->updateModel([&]() {
+      auto &section = m_grid->addSection("Results");
+
+      section.setColumns(6);
+      section.setSpacing(10);
+
+      for (auto entry : dir.entryList()) {
+        if (entry.startsWith(".")) continue;
+        if (!entry.contains(text, Qt::CaseInsensitive)) { continue; }
+
+        section.addItem(std::make_unique<PeepoItem>(
+            PeepoInfo{
+                .name = entry,
+                .path = dir.filePath(entry),
+            },
+            fileBrowser));
+      }
+    });
   }
 
   void initialize() override {
-    QTimer::singleShot(0, [this]() {
-      auto fileBrowser = ServiceRegistry::instance()->appDb()->fileBrowser();
-      QDir dir(bankPath);
-
-      m_grid->updateModel([&]() {
-        auto &section = m_grid->addSection("Results");
-
-        section.setColumns(8);
-        section.setSpacing(10);
-
-        for (auto entry : dir.entryList()) {
-          if (entry.startsWith(".")) continue;
-
-          section.addItem(std::make_unique<PeepoItem>(
-              PeepoInfo{
-                  .name = entry,
-                  .path = dir.filePath(entry),
-              },
-              fileBrowser));
-        }
-      });
-      m_grid->selectFirst();
-    });
+    QTimer::singleShot(0, [this]() { onSearchChanged(searchText()); });
   }
 
 public:

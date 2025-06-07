@@ -1,9 +1,7 @@
 #include "ui/color_circle.hpp"
-#include "theme.hpp"
 #include "ui/omni-painter.hpp"
 
-ColorCircle::ColorCircle(const ColorLike &color, QSize size, QWidget *parent)
-    : QWidget(parent), color(color), size(size), strokeWidth(0) {
+ColorCircle::ColorCircle(QSize size, QWidget *parent) : QWidget(parent), size(size), strokeWidth(0) {
   setFixedSize(size);
 }
 

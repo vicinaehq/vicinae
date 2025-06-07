@@ -11,6 +11,7 @@ class GridItemWidget2 : public OmniListItemWidget {
   EllidedLabel *titleLabel;
   EllidedLabel *subtitleLabel;
   void resizeEvent(QResizeEvent *event) override;
+  double m_aspectRatio = 1;
 
 public:
   GridItemContentWidget *main;
@@ -23,6 +24,12 @@ public:
   void setTooltipText(const QString &tooltip);
 
   void setInset(int inset) { main->setInset(inset); }
+  void setAspectRatio(double ratio) {
+    if (ratio == m_aspectRatio) return;
+
+    m_aspectRatio = ratio;
+    main->setFixedSize(width(), width() / ratio);
+  }
   void setWidget(QWidget *widget);
   QWidget *widget() const;
   size_t spacing();

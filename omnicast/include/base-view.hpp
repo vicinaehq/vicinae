@@ -63,7 +63,7 @@ public:
    * Called on the view when a toast needs to be displayed. It's up to the specific view to decide
    * how the toast should be shown.
    */
-  virtual void setToast(const QString &title, ToastPriority priority) {}
+  virtual void setToast(const Toast *toast) {}
 
   virtual void clearToast() {}
 
@@ -141,6 +141,7 @@ protected:
       bool isEsc = keyEvent->key() == Qt::Key_Escape;
 
       if (isEsc) {
+        qCritical() << "ESCAPE!";
         escapePressed();
         return true;
       }
@@ -220,9 +221,7 @@ protected:
     onSearchChanged("");
   }
 
-  void setToast(const QString &title, ToastPriority priority) override {
-    m_statusBar->setToast(title, priority);
-  }
+  void setToast(Toast const *toast) override { m_statusBar->setToast(toast); }
 
   virtual void onSearchChanged(const QString &text) {}
   virtual void onActionPanelClosed() {}
@@ -246,6 +245,8 @@ protected:
   void setupUI(QWidget *centerWidget) {
     m_topBar->setFixedHeight(Omnicast::TOP_BAR_HEIGHT);
     m_statusBar->setFixedHeight(Omnicast::STATUS_BAR_HEIGHT);
+    m_statusBar->setActionButtonVisibility(false);
+    m_statusBar->setCurrentActionButtonVisibility(false);
 
     m_loadingBar->setFixedHeight(1);
     m_loadingBar->setBarWidth(100);
@@ -261,9 +262,6 @@ protected:
 
     connect(m_topBar->input, &SearchBar::textEdited, this, &SimpleView::onSearchChanged);
     connect(m_topBar->input, &SearchBar::pop, this, &SimpleView::backspacePressed);
-    // connect(m_actionPannel, &ActionPannelWidget::opened, this, &SimpleView::actionPannelOpened);
-    // connect(m_actionPannel, &ActionPannelWidget::closed, this, &SimpleView::actionPannelClosed);
-    // connect(m_actionPannel, &ActionPannelWidget::actionExecuted, this, &SimpleView::executeAction);
     connect(m_actionPannelV2, &ActionPanelV2Widget::actionActivated, this, &SimpleView::executeAction);
     connect(m_statusBar, &StatusBar::actionButtonClicked, this, &SimpleView::actionButtonClicked);
   }
@@ -271,10 +269,7 @@ protected:
 public:
   QString searchText() const override { return m_topBar->input->text(); }
 
-  void setSearchText(const QString &value) override {
-    m_topBar->input->setText(value);
-    onSearchChanged(value);
-  }
+  void setSearchText(const QString &value) override { m_topBar->input->setText(value); }
 
   QString searchPlaceholderText() const { return m_topBar->input->placeholderText(); }
   void setSearchPlaceholderText(const QString &value) const {

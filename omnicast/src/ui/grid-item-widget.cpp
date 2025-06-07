@@ -5,8 +5,9 @@
 
 void GridItemWidget2::resizeEvent(QResizeEvent *event) {
   auto size = event->size();
+  int height = size.width() / m_aspectRatio;
 
-  main->setFixedSize({size.width(), size.width()});
+  main->setFixedSize({size.width(), height});
   OmniListItemWidget::resizeEvent(event);
 }
 

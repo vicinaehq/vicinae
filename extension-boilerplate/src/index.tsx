@@ -1,6 +1,29 @@
-import { Action, ActionPanel, AI, Form, getPreferenceValues, Icon, List, showToast, Toast, useNavigation } from "@omnicast/api"
+import { Action, ActionPanel, AI,  Form, getPreferenceValues, Grid, Icon, List, showToast, Toast, useNavigation } from "@omnicast/api"
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Fruit, fruits } from "./fruits";
+
+const wallpapers = [
+	'https://images.unsplash.com/photo-1505852679233-d9fd70aff56d?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxleHBsb3JlLWZlZWR8Mnx8fGVufDB8fHx8fA%3D%3D',
+	'https://images.unsplash.com/photo-1542641734-3b824eaabad0?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxleHBsb3JlLWZlZWR8NHx8fGVufDB8fHx8fA%3D%3D',
+	'https://images.unsplash.com/photo-1541753236788-b0ac1fc5009d?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxleHBsb3JlLWZlZWR8Nnx8fGVufDB8fHx8fA%3D%3D'
+];
+
+const FruitGrid = () => {
+	return (
+		<Grid>
+			<Grid.Section title="Fruits" columns={8}>
+			{fruits.map(fruit => (
+				<Grid.Item content={fruit.emoji} keywords={[fruit.name, fruit.description]} />
+			))}
+			</Grid.Section>
+			<Grid.Section title="wallpapers" columns={5} aspectRatio="2/3">
+				{wallpapers.map(url => (
+					<Grid.Item content={url} />
+				))}
+			</Grid.Section>
+		</Grid>
+	);
+}
 
 const CreateFruit = () => {
 	const [name, setName] = useState('');
@@ -71,6 +94,8 @@ const FruitGen = () => {
 		stream.finally(() => setIsLoading(false));
 	}
 
+	const { push } = useNavigation();
+
 	useEffect(() => {
 		return () => {
 			abortController.current.abort();
@@ -93,6 +118,9 @@ const FruitGen = () => {
 						actions={
 							<ActionPanel>
 								<Action title="Generate AI" icon={Icon.Dna} onAction={() => handleGeneration(fruit)} />
+								<Action title="Use grid view" icon={Icon.AppWindowGrid2x2} onAction={() => {
+									push(<FruitGrid />)
+								}} />
 							</ActionPanel>
 						}
 					/>

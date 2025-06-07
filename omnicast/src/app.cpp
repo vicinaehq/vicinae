@@ -40,27 +40,29 @@
 #include <qwidget.h>
 
 bool AppWindow::event(QEvent *event) {
-  if (event->type() == QEvent::KeyPress) {
-    auto keyEvent = static_cast<QKeyEvent *>(event);
-    auto key = keyEvent->key();
-    bool isEsc = keyEvent->key() == Qt::Key_Escape;
+  /*
+if (event->type() == QEvent::KeyPress) {
+auto keyEvent = static_cast<QKeyEvent *>(event);
+auto key = keyEvent->key();
+bool isEsc = keyEvent->key() == Qt::Key_Escape;
 
-    if (m_viewStack.size() > 1) {
-      if (isEsc || (keyEvent->key() == Qt::Key_Backspace)) {
-        popCurrentView();
-        return true;
-      }
-    }
+if (m_viewStack.size() > 1) {
+if (isEsc || (keyEvent->key() == Qt::Key_Backspace)) {
+  popCurrentView();
+  return true;
+}
+}
 
-    if (isEsc) {
-      qDebug() << "esc";
+if (isEsc) {
+qDebug() << "esc";
 
-      hide();
-      return true;
-    }
+hide();
+return true;
+}
 
-    return true;
-  }
+return true;
+}
+*/
 
   return QWidget::event(event);
 }
@@ -80,6 +82,7 @@ void AppWindow::presentFrontView() {
 
 void AppWindow::popCurrentView() {
   auto &activeCommand = commandStack.at(commandStack.size() - 1);
+  auto toastService = ServiceRegistry::instance()->toastService();
 
   if (activeCommand.viewStack.empty()) return;
 
@@ -97,6 +100,8 @@ void AppWindow::popCurrentView() {
   ServiceRegistry::instance()->UI()->setTopView(next);
   next->show();
 
+  // if (auto toast = toastService->currentToast()) { next->setToast(toast); }
+
   previous->deleteLater();
 
   if (activeCommand.viewStack.size() == 1) {
@@ -112,6 +117,8 @@ void AppWindow::popCurrentView() {
 }
 
 bool AppWindow::replaceView(BaseView *previous, BaseView *next) {
+  auto toastService = ServiceRegistry::instance()->toastService();
+
   if (auto it = std::ranges::find(m_viewStack, previous); it != m_viewStack.end()) {
     if (it == m_viewStack.begin()) {
       qCritical() << "Cannot call replaceView on root view";
@@ -127,6 +134,7 @@ bool AppWindow::replaceView(BaseView *previous, BaseView *next) {
       ServiceRegistry::instance()->UI()->setTopView(next);
       next->setFixedSize(size());
       next->show();
+      if (auto toast = toastService->currentToast()) { next->setToast(toast); }
       next->createInitialize();
       next->activate();
     }
@@ -152,6 +160,8 @@ void AppWindow::disconnectView(BaseView &view) {
 void AppWindow::connectView(BaseView &view) { view.installEventFilter(this); }
 
 void AppWindow::pushView(BaseView *view, const PushViewOptions &opts) {
+  auto toastService = ServiceRegistry::instance()->toastService();
+
   if (commandStack.empty()) {
     qDebug() << "AppWindow::pushView called with empty command stack";
     return;
@@ -159,7 +169,11 @@ void AppWindow::pushView(BaseView *view, const PushViewOptions &opts) {
 
   auto &currentCommand = commandStack.at(commandStack.size() - 1);
 
-  if (auto front = frontView()) front->hide();
+  if (auto front = frontView()) {
+    front->hide();
+    front->clearFocus();
+    // front->clearToast();
+  }
 
   // connectView(*view);
   view->setParent(this);
@@ -174,6 +188,10 @@ void AppWindow::pushView(BaseView *view, const PushViewOptions &opts) {
   }
 
   view->show();
+  view->setFocus();
+
+  if (auto toast = toastService->currentToast()) { frontView()->setToast(toast); }
+
   view->createInitialize();
   view->setSearchText(opts.searchQuery);
   view->onActivate();
@@ -387,13 +405,13 @@ AppWindow::AppWindow(QWidget *parent) : QMainWindow(parent) {
   connect(ui, &UIController::showToastRequested, toast,
           [this, toast](const QString &title, ToastPriority priority) { toast->setToast(title, priority); });
 
-  connect(toast, &ToastService::toastUpdated, this, [this](const Toast *toast) {
+  connect(toast, &ToastService::toastActivated, this, [this](const Toast *toast) {
     for (const auto &view : m_viewStack) {
-      view->setToast(toast->title(), toast->priority());
+      view->setToast(toast);
     }
   });
 
-  connect(toast, &ToastService::toastDestroyed, this, [this](const Toast *toast) {
+  connect(toast, &ToastService::toastHidden, this, [this](const Toast *toast) {
     for (const auto &view : m_viewStack) {
       view->clearToast();
     }

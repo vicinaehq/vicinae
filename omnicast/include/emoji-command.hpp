@@ -1,15 +1,19 @@
 #pragma once
 #include "base-view.hpp"
 #include "clipboard-actions.hpp"
+#include "service-registry.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "emoji-database.hpp"
 #include "libtrie/trie.hpp"
 #include "omni-icon.hpp"
+#include "services/toast/toast-service.hpp"
 #include "timer.hpp"
 #include "ui/action-pannel/action-item.hpp"
+#include "ui/action-pannel/action.hpp"
 #include "ui/image/omnimg.hpp"
 #include "ui/omni-grid.hpp"
 #include "ui/omni-list.hpp"
+#include "ui/toast.hpp"
 #include <QtConcurrent/qtconcurrentrun.h>
 #include <memory>
 #include <qevent.h>
@@ -19,6 +23,31 @@
 #include <qtmetamacros.h>
 #include <qwidget.h>
 #include <ranges>
+#include <unistd.h>
+
+class TestLongToast : public AbstractAction {
+public:
+  void execute() override {
+    auto toastService = ServiceRegistry::instance()->toastService();
+    auto toast = new Toast("Doing the thing...", ToastPriority::Info);
+
+    toastService->registerToast(toast);
+    auto fut = QtConcurrent::run([toast]() {
+      for (int i = 0; i != 100; ++i) {
+        QThread::msleep(200);
+        toast->setTitle(QString("Running (%1%)").arg(i));
+      }
+      toast->setTitle("Done!");
+      toast->setPriority(ToastPriority::Success);
+      toast->update();
+      QThread::msleep(2000);
+      toast->close();
+      toast->deleteLater();
+    });
+  }
+
+  TestLongToast() : AbstractAction("Test long toast", BuiltinOmniIconUrl("copy-clipboard")) {}
+};
 
 class EmojiGridItem : public OmniGrid::AbstractGridItem, public GridView::Actionnable {
 public:
@@ -53,10 +82,9 @@ public:
   QString generateId() const override { return info.description; }
 
   QList<AbstractAction *> generateActions() const override {
-    return {
-        new PasteToFocusedWindowAction(Clipboard::Text(info.emoji)),
-        new CopyToClipboardAction(Clipboard::Text(info.description), "Copy emoji description"),
-    };
+    return {new PasteToFocusedWindowAction(Clipboard::Text(info.emoji)),
+            new CopyToClipboardAction(Clipboard::Text(info.description), "Copy emoji description"),
+            new TestLongToast()};
   }
 
   QString navigationTitle() const override { return info.description; }

@@ -18,12 +18,13 @@ public:
     virtual QString tooltip() const { return {}; }
     virtual QWidget *centerWidget() const = 0;
 
-    void recycle(QWidget *base) const override {
+    void recycle(QWidget *base) const override final {
       auto widget = static_cast<GridItemWidget2 *>(base);
 
       widget->setTitle(title());
       widget->setSubtitle(subtitle());
       widget->setTooltipText(tooltip());
+      widget->setAspectRatio(aspectRatio());
 
       if (centerWidgetRecyclable()) {
         recycleCenterWidget(widget->widget());
@@ -36,14 +37,16 @@ public:
 
     virtual void recycleCenterWidget(QWidget *widget) const {}
 
+    virtual double aspectRatio() const { return 1; }
+
     bool recyclable() const override { return true; }
 
-    int calculateHeight(int width) const override {
+    int calculateHeight(int width) const final override {
       static GridItemWidget2 ruler;
 
       auto fm = ruler.fontMetrics();
       auto spacing = ruler.spacing();
-      int height = width;
+      int height = width / aspectRatio();
 
       if (!title().isEmpty()) { height += fm.ascent() + spacing; }
       if (!subtitle().isEmpty()) { height += fm.ascent() + spacing; }
@@ -51,9 +54,10 @@ public:
       return height;
     }
 
-    OmniListItemWidget *createWidget() const override {
+    OmniListItemWidget *createWidget() const final override {
       auto widget = new GridItemWidget2();
 
+      widget->setAspectRatio(aspectRatio());
       widget->setInset(_inset);
       widget->setTitle(title());
       widget->setSubtitle(subtitle());

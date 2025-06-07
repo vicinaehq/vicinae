@@ -207,7 +207,7 @@ public:
 
       if (QFile(":icons/" + image->source + ".svg").exists()) {
         setType(OmniIconType::Builtin);
-        setFill(ColorTint::TextPrimary);
+        setFill(image->tintColor.value_or(ColorTint::TextPrimary));
         setName(image->source);
         return;
       }

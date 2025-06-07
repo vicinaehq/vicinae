@@ -6,57 +6,42 @@ import { useEventListener } from '../hooks';
 import { Color, ColorLike } from '../color';
 import { Dropdown } from './dropdown';
 
+enum GridInset {
+	Small = 'small',
+	Medium = 'medium',
+	Large = 'large',
+}
+
+type SectionConfig = {
+	inset?: GridInset;
+	columns?: number;
+	fit?: GridFit;
+	aspectRatio?: GridAspectRatio;
+}
+
+type GridAspectRatio = '1' | '3/2' | '2/3' | '4/3' | '3/4' | '16/9' | '9/16';
+
+enum GridFit {
+	Contain = 'contain',
+	Fill = 'fill'
+}
+
 export declare namespace Grid {
-	enum Fit {
-		Contain = 'contain',
-		Fill = 'fill'
-	}
-
-	export type AspectRatio = '1' | '3/2' | '2/3' | '4/3' | '3/4' | '16/9' | '9/16';
-
-	enum Inset {
-		Small = 'small',
-		Medium = 'medium',
-		Large = 'large',
-	}
-
 	export namespace Section {
-		type SectionConfig = {
-			inset?: Inset;
-			columns?: number;
-			fit?: Grid.Fit;
-			aspectRatio?: AspectRatio;
-		}
-
-		export type Props = SectionConfig & {
-			title?: string;
-			subtitle?: string;
-			children?: ReactNode;
-		};
+		export type Props = GridSectionProps; 
 	}
 
-	export type Props = Grid.Section.SectionConfig & {
-		actions?: React.ReactNode;
-		children?: React.ReactNode;
-		filtering?: boolean;
-		/**
-		 * @deprecated use filtering
-		 */
-		enableFiltering?: boolean;
-		isLoading?: boolean;
-		searchText?: string;
-		searchBarPlaceholder?: string;
-		navigationTitle?: string;
-		searchBarAccessory?: ReactNode;
-		onSearchTextChange?: (text: string) => void;
-		onSelectionChange?: (id: string) => void;
-	};
+	export type Props = GridProps;
+	export type Inset = GridInset;
+	export type AspectRatio = GridAspectRatio;
 
 	export namespace Item {
 		export type Props = {
-			title: string;
+			title?: string;
 			detail?: React.ReactNode;
+			keywords?: string[];
 			icon?: ImageLike;
+			content: Image.ImageLike | { color: ColorLike };
 			id?: string;
 			subtitle?: string;
 			actions?: ReactNode;
@@ -73,8 +58,32 @@ export declare namespace Grid {
 	}
 };
 
-const GridRoot: React.FC<Grid.Props> = 
-	({ onSearchTextChange, searchBarAccessory, onSelectionChange, children, actions, inset = Grid.Inset.Small, fit = Grid.Fit.Contain, aspectRatio = '1', ...props }) => {
+type GridProps = SectionConfig & {
+	actions?: React.ReactNode;
+	children?: React.ReactNode;
+	filtering?: boolean;
+	/**
+	 * @deprecated use filtering
+	 */
+	enableFiltering?: boolean;
+	isLoading?: boolean;
+	searchText?: string;
+	searchBarPlaceholder?: string;
+	navigationTitle?: string;
+	searchBarAccessory?: ReactNode;
+	onSearchTextChange?: (text: string) => void;
+	onSelectionChange?: (id: string) => void;
+};
+
+
+type GridSectionProps = SectionConfig & {
+		title?: string;
+		subtitle?: string;
+		children?: ReactNode;
+};
+
+const GridRoot: React.FC<GridProps> = 
+	({ onSearchTextChange, searchBarAccessory, onSelectionChange, children, actions, inset = GridInset.Small, fit = GridFit.Contain, aspectRatio = '1', ...props }) => {
 	const searchTextChangeHandler = useEventListener(onSearchTextChange);
 	const selectionChangeHandler = useEventListener(onSelectionChange);
 
@@ -96,15 +105,23 @@ const GridRoot: React.FC<Grid.Props> =
 	</grid>
 }
 
-const GridItem: React.FC<Grid.Item.Props> = ({ detail, actions, ...props }) => {
+const GridItem: React.FC<Grid.Item.Props> = ({ detail, actions, keywords, ...props }) => {
 	const id = useRef(props.id ?? randomUUID());
 	const nativeProps: React.JSX.IntrinsicElements['grid-item'] = {
 		title: props.title,
 		subtitle: props.subtitle,
 		id: id.current,
+		keywords,
 	};
+	const isColor = (content: Grid.Item.Props['content']): content is { color: ColorLike } => {
+		return !!content['color'];
+	}
 
-	if (props.icon) nativeProps.icon = serializeImageLike(props.icon);
+	if (isColor(props.content)) {
+		nativeProps.content = { color: props.content.color };
+	} else {
+		nativeProps.content = serializeImageLike(props.content);
+	}
 
 	return (
 		<grid-item {...nativeProps}>
@@ -114,7 +131,7 @@ const GridItem: React.FC<Grid.Item.Props> = ({ detail, actions, ...props }) => {
 	);
 }
 
-const GridSection: React.FC<Grid.Section.Props> = ({ fit = Grid.Fit.Contain, aspectRatio = '1', inset = Grid.Inset.Small, ...props }) => {
+const GridSection: React.FC<Grid.Section.Props> = ({ fit = GridFit.Contain, aspectRatio = '1', inset = GridInset.Small, ...props }) => {
 	const nativeProps: React.JSX.IntrinsicElements['grid-section'] = {
 		fit,
 		aspectRatio,
@@ -124,15 +141,15 @@ const GridSection: React.FC<Grid.Section.Props> = ({ fit = Grid.Fit.Contain, asp
 	return <grid-section {...nativeProps} />
 }
 
-export const ListAccessory: React.FC<Grid.Item.Accessory> = (props) => {
+export const GridAccessory: React.FC<Grid.Item.Accessory> = (props) => {
 	return <list-accessory />
 }
 
-export const List = Object.assign(GridRoot, {
+export const Grid = Object.assign(GridRoot, {
 	Section: GridSection,
 	EmptyView,
 	Dropdown,
 	Item: Object.assign(GridItem, {
-		Accessory: ListAccessory
+		Accessory: GridAccessory
 	}),
 });

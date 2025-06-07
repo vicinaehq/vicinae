@@ -11,8 +11,9 @@ struct GridItemViewModel {
   QString id;
   QString title;
   QString subtitle;
+  // Handle color display
   ImageLikeModel content;
-  std::optional<std::vector<QString>> keywords;
+  std::vector<QString> keywords;
   std::optional<ActionPannelModel> actionPannel;
 };
 
@@ -35,6 +36,7 @@ struct GridModel {
   bool filtering;
   bool throttle;
   double aspectRatio;
+  bool dirty;
   int columns;
   int inset;
   GridFit fit;

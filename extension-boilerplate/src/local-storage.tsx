@@ -1,4 +1,4 @@
-import { Action, ActionPanel, Icon, List, LocalStorage, clearSearchBar, getPreferenceValues } from '@omnicast/api';
+import { Action, ActionPanel, Icon, List, LocalStorage, clearSearchBar, getPreferenceValues, showToast, Toast } from '@omnicast/api';
 import { randomUUID } from 'crypto';
 import React, { useEffect, useState } from 'react';
 
@@ -18,6 +18,7 @@ export const LocalStorageList = () => {
 
 	const clearItem = async (key: string) => {
 		await LocalStorage.removeItem(key);
+		await showToast(Toast.Style.Success, "Removed");
 		await refetchStorage();
 	}
 

@@ -143,6 +143,8 @@ public:
     render(selection);
   }
   void setFilter(const QString &query) {
+    if (m_filter == query) return;
+
     m_filter = query;
     render(OmniList::SelectFirst);
   }

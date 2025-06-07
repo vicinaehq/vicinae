@@ -8,10 +8,12 @@
 #include "extend/model-parser.hpp"
 #include "extend/root-detail-model.hpp"
 #include "extension/extension-command.hpp"
+#include "extension/extension-grid-component.hpp"
 #include "extension/extension-list-component.hpp"
 #include "extension/extension-view.hpp"
 #include "services/local-storage/local-storage-service.hpp"
 #include "service-registry.hpp"
+#include "timer.hpp"
 #include <algorithm>
 #include <functional>
 #include <memory>
@@ -31,18 +33,19 @@ struct ExtensionViewInfo {
 
 struct ViewVisitor {
   ExtensionSimpleView *operator()(const ListModel &model) const { return new ExtensionListComponent; }
-  ExtensionSimpleView *operator()(const GridModel &model) const { return nullptr; }
+  ExtensionSimpleView *operator()(const GridModel &model) const { return new ExtensionGridComponent; }
   ExtensionSimpleView *operator()(const FormModel &model) const { return nullptr; }
   ExtensionSimpleView *operator()(const InvalidModel &model) const { return nullptr; }
   ExtensionSimpleView *operator()(const RootDetailModel &model) const { return nullptr; }
 };
 
-class PlaceholderExtensionView : public SimpleView {
+class PlaceholderExtensionView : public ExtensionSimpleView {
 public:
   PlaceholderExtensionView() {
     m_topBar->input->hide();
     setupUI(new QWidget);
   }
+  void render(const RenderModel &model) override {}
 };
 
 class RequestDispatcher {
@@ -77,6 +80,7 @@ class ExtensionCommandRuntime : public CommandContext {
   QFutureWatcher<std::vector<RenderModel>> m_modelWatcher;
   RequestDispatcher m_actionDispatcher;
   PlaceholderExtensionView *placeholderView = nullptr;
+  Timer m_timer;
 
   QString m_sessionId;
 
@@ -90,6 +94,11 @@ class ExtensionCommandRuntime : public CommandContext {
 
   ExtensionSimpleView *createViewFromModel(const RenderModel &model) {
     auto view = std::visit(ViewVisitor(), model);
+
+    if (!view) {
+      view = new PlaceholderExtensionView;
+      qCritical() << "Unsupported view type for model index" << model.index();
+    }
 
     view->setNavigationTitle(m_command->name());
     view->setNavigationIcon(m_command->iconUrl());
@@ -264,6 +273,8 @@ class ExtensionCommandRuntime : public CommandContext {
     }
 
     if (action == "toast.hide") {
+      if (auto view = ui->topView()) { view->clearToast(); }
+
       // XXX - Implement actual toast hide
       return {};
     }
@@ -346,6 +357,7 @@ class ExtensionCommandRuntime : public CommandContext {
 
       if (i >= m_viewStack.size()) {
         auto next = createViewFromModel(model);
+
         if (ui->topView() == placeholderView) {
           ui->replaceView(placeholderView, next);
         } else {
@@ -369,12 +381,20 @@ class ExtensionCommandRuntime : public CommandContext {
   }
 
   void handleRender(const QJsonArray &views) {
+    if (m_viewStack.empty()) { m_timer.time("Got Initial render"); }
+
     if (m_modelWatcher.isRunning()) {
       m_modelWatcher.cancel();
       m_modelWatcher.waitForFinished();
     }
 
-    m_modelWatcher.setFuture(QtConcurrent::run([views]() { return ModelParser().parse(views); }));
+    m_modelWatcher.setFuture(QtConcurrent::run([views]() {
+      Timer timer;
+      auto model = ModelParser().parse(views);
+
+      timer.time("Model parsed");
+      return model;
+    }));
   }
 
   void handleRequest(const QString &sessionId, const QString &requestId, const QString &action,
@@ -409,7 +429,11 @@ class ExtensionCommandRuntime : public CommandContext {
     }
   }
 
-  void commandLoaded(const LoadedCommand &command) { m_sessionId = command.sessionId; }
+  void commandLoaded(const LoadedCommand &command) {
+    m_sessionId = command.sessionId;
+    m_timer.time("Extension loaded");
+    m_timer.start();
+  }
 
   void handleError(const QJsonObject &payload) {
     auto message = payload.value("message").toString();
@@ -460,8 +484,8 @@ public:
                                        std::bind_front(&ExtensionCommandRuntime::handleAppRequest, this));
     m_actionDispatcher.registerHandler("clipboard.",
                                        std::bind_front(&ExtensionCommandRuntime::handleClipboard, this));
-    m_actionDispatcher.registerHandler("clipboard.",
-                                       std::bind_front(&ExtensionCommandRuntime::handleClipboard, this));
+    m_actionDispatcher.registerHandler("toast.",
+                                       std::bind_front(&ExtensionCommandRuntime::handleToastRequest, this));
     m_actionDispatcher.registerHandler("ui.", std::bind_front(&ExtensionCommandRuntime::handleUI, this));
 
     connect(manager, &ExtensionManager::extensionRequest, this, &ExtensionCommandRuntime::handleRequest);

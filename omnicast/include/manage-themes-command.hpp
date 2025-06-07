@@ -42,8 +42,9 @@ public:
     }
 
     std::ranges::for_each(colors, [&](const ColorLike &color) {
-      auto circle = new ColorCircle(color, {16, 16});
+      auto circle = new ColorCircle({16, 16});
 
+      circle->setColor(color);
       circle->setStroke(m_strokeColor, 2);
       m_layout->addWidget(circle);
     });

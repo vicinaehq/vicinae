@@ -45,6 +45,7 @@ public:
   void setHovered(bool hovered);
   void setSelected(bool selected);
   void setInset(int inset);
+
   void setWidget(QWidget *widget);
   QWidget *widget() const;
 

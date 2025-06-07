@@ -317,6 +317,9 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 			}
 		},
 
+		replaceContainerChildren() {
+		},
+
 		hideInstance() {},
 
 		hideTextInstance() {},
@@ -385,27 +388,38 @@ const createContainer = (): Container => {
 
 export const createRenderer = (config: RendererConfig) => {
 	const container = createContainer(); 
+	let debounce: NodeJS.Timer | null = null;
+	// 60 renders per second at most
+	let debounceInterval = 1000 / 60;
+	let lastRender = performance.now();
 
 	const renderImpl = () => {
-		if (!container.dirty) return ;
+		if (!debounce) {
+			debounce = setTimeout(() => {
+				debounce = null;
+				if (!container.dirty) return ;
 
-		const start = performance.now();
-		const views: ViewData[] = [];
-		const root = serializeInstance(container);
+				const start = performance.now();
+				const views: ViewData[] = [];
+				const root = serializeInstance(container);
 
-		//writeFileSync('/tmp/render.txt', JSON.stringify(root, null, 2));
+				//writeFileSync('/tmp/render.txt', JSON.stringify(root, null, 2));
 
-		for (let i = 0; i != root.children.length; ++i) {
-			const view = root.children[i];
+				for (let i = 0; i != root.children.length; ++i) {
+					const view = root.children[i];
 
-			views.push({ root: view });
+					views.push({ root: view });
+				}
+
+				config.onUpdate?.(views)
+
+				const end = performance.now();
+
+				console.error(`[PERF] processed render frame in ${end - start}ms`);
+				console.error(`[PERF] last render ${end - lastRender}ms`);
+				lastRender = end;
+			}, debounceInterval);
 		}
-
-		config.onUpdate?.(views)
-
-		const end = performance.now();
-
-		console.error(`[PERF] processed render frame in ${end - start}ms`);
 	}
 
 	const hostConfig = createHostConfig({}, renderImpl);

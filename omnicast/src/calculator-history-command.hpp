@@ -20,14 +20,15 @@ public:
   RemoveCalculatorHistoryEntryAction(uint id)
       : AbstractAction("Remove entry", BuiltinOmniIconUrl("trash")), id(id) {}
 
-  void execute(AppWindow &app) override {
+  void execute() override {
+    auto ui = ServiceRegistry::instance()->UI();
     auto calc = ServiceRegistry::instance()->calculatorDb();
     bool removed = calc->removeById(id);
 
     if (removed) {
-      app.statusBar->setToast("Entry removed");
+      ui->setToast("Entry removed");
     } else {
-      app.statusBar->setToast("Failed to remove entry");
+      ui->setToast("Failed to remove entry");
     }
   }
 };

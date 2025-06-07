@@ -15,7 +15,12 @@ protected:
   QSize sizeHint() const override;
 
 public:
-  ColorCircle(const ColorLike &color, QSize size, QWidget *parent = nullptr);
+  void setColor(const ColorLike &c) {
+    color = c;
+    update();
+  }
+
+  ColorCircle(QSize size, QWidget *parent = nullptr);
 
   ColorCircle &setStroke(QColor color, size_t width = 3);
 };
