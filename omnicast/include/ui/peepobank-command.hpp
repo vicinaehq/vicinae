@@ -69,19 +69,6 @@ class PeepobankView : public GridView {
         : _info(info), _fileBrowser(fileBrowser) {}
   };
 
-  class PeepoFilter : public OmniList::AbstractItemFilter {
-    QString query;
-
-    bool matches(const OmniList::AbstractVirtualItem &item) override {
-      auto &peepo = static_cast<const PeepoItem &>(item);
-
-      return peepo.name().contains(query, Qt::CaseInsensitive);
-    }
-
-  public:
-    PeepoFilter(const QString &query) : query(query) {}
-  };
-
   void onSearchChanged(const QString &text) override {
     auto fileBrowser = ServiceRegistry::instance()->appDb()->fileBrowser();
     QDir dir(bankPath);

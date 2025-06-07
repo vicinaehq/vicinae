@@ -168,6 +168,7 @@ public:
     connect(m_input, &SearchBar::textChanged, this, &ActionPanelListView::onSearchChanged);
     connect(m_list, &OmniList::itemActivated, this, &ActionPanelListView::itemActivated);
     connect(m_list, &OmniList::virtualHeightChanged, this, [this](int height) {
+      qDebug() << "HEIGHT CHANGED TO" << height;
       m_list->setFixedHeight(std::min(height, 180));
       updateGeometry();
     });

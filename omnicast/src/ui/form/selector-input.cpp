@@ -6,7 +6,6 @@
 #include <qjsonvalue.h>
 #include <qnamespace.h>
 #include <qwidget.h>
-#include <ranges>
 
 void SelectorInput::listHeightChanged(int height) {
 
@@ -61,8 +60,6 @@ bool SelectorInput::eventFilter(QObject *obj, QEvent *event) {
 
   return false;
 }
-
-void SelectorInput::clearFilter() const { m_list->clearFilter(); }
 
 QJsonValue SelectorInput::asJsonValue() const {
   return _currentSelection ? _currentSelection->generateId() : QJsonValue();
@@ -187,12 +184,6 @@ void SelectorInput::setValue(const QString &id) {
 
 void SelectorInput::setEnableDefaultFilter(bool value) {
   if (value == m_defaultFilterEnabled) return;
-
-  if (!value) {
-    m_list->clearFilter();
-  } else {
-    m_list->setFilter(std::make_unique<ItemFilter>(m_searchField->text()));
-  }
 
   m_defaultFilterEnabled = value;
 }

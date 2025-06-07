@@ -33,17 +33,6 @@ class IconBrowserView : public GridView {
     IconBrowserItem(const QString &name) : _name(name) {}
   };
 
-  class IconFilter : public OmniList::AbstractItemFilter {
-    QString _query;
-
-    bool matches(const OmniList::AbstractVirtualItem &item) override {
-      return static_cast<const IconBrowserItem &>(item).name().contains(_query, Qt::CaseInsensitive);
-    }
-
-  public:
-    IconFilter(const QString &query) : _query(query) {}
-  };
-
   void onSearchChanged(const QString &s) override {
     qCritical() << "onSearchChanged" << s;
 

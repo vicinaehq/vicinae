@@ -125,8 +125,8 @@ public:
     auto panel = new ExtensionActionPanelView();
 
     panel->setDefaultActionShortcuts(m_defaultActionShortcuts);
-    panel->setModel(model);
     m_actionPannelV2->setView(panel);
+    panel->setModel(model);
 
     auto actions = m_actionPannelV2->actions();
     auto primaryAction = m_actionPannelV2->primaryAction();

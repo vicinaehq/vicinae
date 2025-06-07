@@ -136,11 +136,6 @@ public:
     ~VirtualSection() {}
   };
 
-  class AbstractItemFilter {
-  public:
-    virtual bool matches(const AbstractVirtualItem &item) = 0;
-  };
-
   using UpdateItemCallback = std::function<void(AbstractVirtualItem *)>;
   enum SelectionPolicy {
     SelectFirst,
@@ -311,7 +306,6 @@ private:
   std::unordered_map<QString, CachedWidget> _widgetCache;
   std::unordered_map<size_t, std::stack<OmniListItemWidgetWrapper *>> _widgetPools;
   std::unordered_map<QString, AbstractVirtualItem *> _idItemMap;
-  std::unique_ptr<AbstractItemFilter> _filter;
   std::vector<std::pair<size_t, int>> m_cachedHeights;
 
   int _selected;
@@ -508,7 +502,7 @@ private:
     _virtualHeight = yOffset;
     updateVisibleItems();
 
-    if (vchanged) { emit virtualHeightChanged(_virtualHeight); }
+    emit virtualHeightChanged(_virtualHeight);
   }
 
   int indexOfItem(const QString &id) const;
@@ -671,9 +665,6 @@ public:
   const AbstractVirtualItem *setSelected(const QString &id,
                                          ScrollBehaviour scrollBehaviour = ScrollBehaviour::ScrollAbsolute);
 
-  void clearFilter();
-  void setFilter(std::unique_ptr<AbstractItemFilter> filter);
-  const AbstractItemFilter *filter() const;
   const AbstractVirtualItem *itemAt(const QString &id) const;
   bool selectFirst();
   bool updateItem(const QString &id, const UpdateItemCallback &cb);

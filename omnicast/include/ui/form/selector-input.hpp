@@ -37,19 +37,6 @@ public:
     ItemData data() const override { return {.iconUrl = icon(), .name = displayName()}; }
   };
 
-  class ItemFilter : public OmniList::AbstractItemFilter {
-    QString query;
-
-    bool matches(const OmniList::AbstractVirtualItem &item) override {
-      auto &dropdowmItem = static_cast<const SelectorInput::AbstractItem &>(item);
-
-      return dropdowmItem.displayName().contains(query, Qt::CaseInsensitive);
-    }
-
-  public:
-    ItemFilter(const QString &query) : query(query) {}
-  };
-
   QJsonValue asJsonValue() const override;
 
   struct DropdownSection {
@@ -132,7 +119,6 @@ public:
   FocusNotifier *focusNotifier() const;
   void setIsLoading(bool value);
   void clear();
-  void clearFilter() const;
   OmniList *list() const { return m_list; }
 
   void updateItem(const QString &id, const UpdateItemCallback &cb);

@@ -339,21 +339,41 @@ void OmniList::scrollTo(int idx, ScrollBehaviour behaviour) {
 
   int previousIdx = previousRowIndex(idx);
 
+  /*
   if (previousIdx != -1 && m_items[previousIdx].item->isSection()) {
     return scrollTo(previousIdx, behaviour);
   }
+  */
+
+  int newScroll = scrollBar->value();
 
   if (behaviour == ScrollBehaviour::ScrollRelative) {
     int scrollHeight = scrollBar->value();
 
+    qDebug()
+        << QString("%1 + %2 - %3 > %4").arg(bounds.y()).arg(bounds.height()).arg(scrollHeight).arg(height());
+
     if (bounds.y() + bounds.height() - scrollHeight > height()) {
-      scrollBar->setValue(bounds.y() + bounds.height() - height());
+      newScroll = (bounds.y() + bounds.height() - height());
     } else if (bounds.y() - scrollHeight < 0) {
-      scrollBar->setValue(scrollHeight - (scrollHeight - bounds.y()));
+      newScroll = (scrollHeight - (scrollHeight - bounds.y()));
     }
   }
 
-  if (behaviour == ScrollBehaviour::ScrollAbsolute) { scrollBar->setValue(bounds.y()); }
+  if (behaviour == ScrollBehaviour::ScrollAbsolute) { newScroll = bounds.y(); }
+
+  if (previousIdx != -1 && m_items[previousIdx].item->isSection()) {
+    auto &anchor = m_items[previousIdx];
+    int low = newScroll;
+    int high = low + height();
+    bool isAnchorVisible = anchor.bounds.y() >= low && anchor.bounds.y() <= high;
+
+    qDebug() << "anchor visible" << isAnchorVisible;
+
+    if (!isAnchorVisible) { return scrollTo(previousIdx, behaviour); }
+  }
+
+  scrollBar->setValue(newScroll);
 }
 
 void OmniList::activateCurrentSelection() const {
@@ -409,32 +429,6 @@ const OmniList::AbstractVirtualItem *OmniList::selected() const {
   return nullptr;
 }
 
-void OmniList::clearFilter() {
-  if (!_filter) return;
-
-  _filter.reset();
-  calculateHeights();
-}
-
-const OmniList::AbstractItemFilter *OmniList::filter() const { return _filter.get(); }
-
-void OmniList::setFilter(std::unique_ptr<AbstractItemFilter> filter) {
-  if (!m_model.empty()) {
-    _selected = -1;
-    _filter = std::move(filter);
-    calculateHeights();
-    selectFirst();
-    scrollBar->setValue(0);
-    return;
-  }
-
-  _selected = -1;
-  _filter = std::move(filter);
-  calculateHeights();
-  selectFirst();
-  scrollBar->setValue(0);
-}
-
 const OmniList::AbstractVirtualItem *OmniList::itemAt(const QString &id) const {
   if (auto it = _idItemMap.find(id); it != _idItemMap.end()) return it->second;
 
@@ -447,7 +441,7 @@ bool OmniList::selectFirst() {
 
     if (item->selectable()) {
       setSelectedIndex(i);
-      scrollTo(i);
+      scrollTo(i, ScrollBehaviour::ScrollAbsolute);
       return true;
     }
   }
@@ -463,7 +457,6 @@ void OmniList::setMargins(int value) { setMargins(value, value, value, value); }
 void OmniList::clear() {
   _idItemMap.clear();
   m_model.clear();
-  _filter.reset();
   _selected = DEFAULT_SELECTION_INDEX;
   _virtualHeight = 0;
 
