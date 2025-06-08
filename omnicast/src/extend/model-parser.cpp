@@ -5,34 +5,39 @@
 #include "extend/root-detail-model.hpp"
 #include <qjsonarray.h>
 #include <qjsonobject.h>
+#include <qlogging.h>
 
 ModelParser::ModelParser() {}
 
-std::vector<RenderModel> ModelParser::parse(const QJsonArray &views) {
-  std::vector<RenderModel> renderedViews;
+ParsedRenderData ModelParser::parse(const QJsonArray &views) {
+  ParsedRenderData render;
 
-  renderedViews.reserve(views.size());
+  render.items.reserve(views.size());
 
   for (const auto &viewTree : views) {
+    RenderRoot rootData;
     auto instance = viewTree.toObject();
     auto root = instance.value("root").toObject();
-    auto changes = instance.value("changes").toArray();
     auto type = root.value("type").toString();
 
+    rootData.dirty = root.value("dirty").toBool(true);
+    rootData.propsDirty = root.value("propsDirty").toBool(true);
+
     if (type == "list") {
-      renderedViews.push_back(ListModelParser().parse(root));
+      rootData.root = ListModelParser().parse(root);
       // qDebug() << "push list model with";
     } else if (type == "grid") {
-      renderedViews.push_back(GridModelParser().parse(root));
+      rootData.root = GridModelParser().parse(root);
     } else if (type == "detail") {
-      renderedViews.push_back(RootDetailModelParser().parse(root));
+      rootData.root = RootDetailModelParser().parse(root);
     } else if (type == "form") {
-      renderedViews.push_back(FormModel::fromJson(root));
+      rootData.root = FormModel::fromJson(root);
     } else {
-      renderedViews.push_back(
-          InvalidModel{QString("Component of type %1 cannot be used as the root").arg(type)});
+      rootData.root = InvalidModel{QString("Component of type %1 cannot be used as the root").arg(type)};
     }
+
+    render.items.emplace_back(rootData);
   }
 
-  return renderedViews;
+  return render;
 }

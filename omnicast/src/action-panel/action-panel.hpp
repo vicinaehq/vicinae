@@ -202,6 +202,8 @@ public:
 
   void addSection(const QString &title = "") { m_sections.emplace_back(ActionSection{}); }
 
+  void clear() { m_sections.clear(); }
+
   void addAction(AbstractAction *action) {
     if (m_sections.empty()) { addSection(m_title); }
     m_sections.at(m_sections.size() - 1).actions.emplace_back(std::shared_ptr<AbstractAction>(action));
@@ -263,6 +265,8 @@ public:
       });
     }
 
+    qDebug() << "build filtered";
+
     m_list->endResetModel(OmniList::SelectFirst);
   }
 
@@ -320,6 +324,7 @@ class ActionPanelV2Widget : public Popover {
   }
 
   void showEvent(QShowEvent *event) override {
+    qCritical() << "SHOW EVENT";
     resizeView();
     QWidget::showEvent(event);
   }
@@ -376,7 +381,7 @@ public:
       next->activate();
       QSize contentSize = next->sizeHint();
       setFixedHeight(contentSize.height());
-      resizeView();
+      // resizeView();
     }
 
     view->deleteLater();
@@ -399,7 +404,7 @@ public:
     m_viewStack.push(view);
     view->initialize();
     view->activate();
-    resizeView();
+    // resizeView();
   }
 
   ActionPanelV2Widget(QWidget *parent = nullptr) : Popover(parent) {

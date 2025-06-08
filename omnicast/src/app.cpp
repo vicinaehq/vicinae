@@ -96,8 +96,9 @@ void AppWindow::popCurrentView() {
 
   auto next = frontView();
 
-  next->activate();
+  next->setParent(this);
   next->setFixedSize(size());
+  next->activate();
   ServiceRegistry::instance()->UI()->setTopView(next);
   next->show();
 
@@ -129,10 +130,11 @@ bool AppWindow::replaceView(BaseView *previous, BaseView *next) {
     bool isOldFront = previous == frontView();
 
     *it = next;
-    next->setParent(this);
 
     if (isOldFront) {
+      qCritical() << "replace existing view";
       ServiceRegistry::instance()->UI()->setTopView(next);
+      next->setParent(this);
       next->setFixedSize(size());
       next->show();
       if (auto toast = toastService->currentToast()) { next->setToast(toast); }
@@ -173,6 +175,7 @@ void AppWindow::pushView(BaseView *view, const PushViewOptions &opts) {
   if (auto front = frontView()) {
     front->hide();
     front->clearFocus();
+    front->setParent(nullptr);
     // front->clearToast();
   }
 

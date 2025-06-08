@@ -5,7 +5,8 @@ import { Fruit, fruits } from "./fruits";
 const wallpapers = [
 	'https://images.unsplash.com/photo-1505852679233-d9fd70aff56d?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxleHBsb3JlLWZlZWR8Mnx8fGVufDB8fHx8fA%3D%3D',
 	'https://images.unsplash.com/photo-1542641734-3b824eaabad0?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxleHBsb3JlLWZlZWR8NHx8fGVufDB8fHx8fA%3D%3D',
-	'https://images.unsplash.com/photo-1541753236788-b0ac1fc5009d?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxleHBsb3JlLWZlZWR8Nnx8fGVufDB8fHx8fA%3D%3D'
+	'https://images.unsplash.com/photo-1541753236788-b0ac1fc5009d?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxleHBsb3JlLWZlZWR8Nnx8fGVufDB8fHx8fA%3D%3D',
+	'https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxleHBsb3JlLWZlZWR8N3x8fGVufDB8fHx8fA%3D%3Ddirty'
 ];
 
 const FruitGrid = () => {
@@ -143,8 +144,14 @@ const ControlledModeSelector = () => {
 	return (
 		<List.Dropdown 
 			tooltip="Change mode" 
-			onChange={setValue}
-			onSearchTextChange={setSearch}
+			onChange={(value) => { 
+				console.log('new value', { value });
+				setValue(value); 
+			}}
+			onSearchTextChange={(value) => { 
+				console.log({ value });
+				setSearch(value); 
+			}}
 			value={value}
 		>
 			<List.Dropdown.Section title="Available modes">
@@ -186,6 +193,7 @@ const AiModelSelector: React.FC<{ onChange?: (model: AI.ModelInfo) => void }> = 
 }
 
 const FruitList = () => {
+	const [count, setCount] = useState(0);
 	const handleCustomCallback = (fruit: Fruit) => {
 		console.log('custom callback fired with', fruit);
 	}
@@ -195,8 +203,18 @@ const FruitList = () => {
 			console.log({ models });
 		});
 
+		setInterval(() => {
+			setCount((c) => c + 1);
+		}, 1000);
+
 		console.log({ preferences: getPreferenceValues() });
 	}, []);
+
+	/*
+	if (count % 2) {
+		return <FruitGrid />;
+	}
+	*/
 
 	return (
 		<List 
@@ -219,9 +237,10 @@ const FruitList = () => {
 							<List.Item.Detail markdown={fruit.description} />
 						}
 						actions={
-							<ActionPanel>
+							<ActionPanel title="Fruits">
 								<Action.CopyToClipboard title={"Copy to clipboard"} content={fruit.emoji} />
 								<Action title="Custom callback" icon={Icon.Pencil} onAction={() => handleCustomCallback(fruit)} />
+								{count % 2 == 0 && <Action title="blinking 2" icon={Icon.Cog} onAction={() => { console.log('blink') }} />}
 								<Action.Push title="Switch to AI gen" icon={Icon.Dna} target={<FruitGen />} />
 							</ActionPanel>
 						}

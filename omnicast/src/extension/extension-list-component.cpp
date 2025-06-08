@@ -134,7 +134,7 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
 
   _model = newModel;
 
-  if (auto selected = m_list->selected()) {
+  if (auto selected = m_list->selected(); selected && newModel.dirty) {
     m_split->setDetailVisibility(selected->detail.has_value() && _model.isShowingDetail);
 
     if (auto detail = selected->detail) {
@@ -147,14 +147,14 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
       }
     }
 
-    if (auto panel = selected->actionPannel; panel && _model.dirty) {
+    if (auto panel = selected->actionPannel; panel && _model.dirty && panel->dirty) {
       qDebug() << "panel dirty" << panel->dirty;
       setActionPanel(*panel);
     }
   }
 
   if (m_list->empty()) {
-    if (auto pannel = newModel.actions) { setActionPanel(*pannel); }
+    if (auto panel = newModel.actions; panel && panel->dirty) { setActionPanel(*panel); }
   }
 }
 

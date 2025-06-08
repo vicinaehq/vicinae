@@ -69,6 +69,7 @@ ListModel ListModelParser::parse(const QJsonObject &instance) {
   bool defaultFiltering = !props.contains("onSearchTextChange");
 
   model.dirty = instance.value("dirty").toBool(false);
+  model.propsDirty = instance.value("propsDirty").toBool(false);
   model.isLoading = props["isLoading"].toBool(false);
   model.throttle = props["throttle"].toBool(false);
   model.isShowingDetail = props["isShowingDetail"].toBool(false);

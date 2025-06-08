@@ -134,7 +134,8 @@ const ctx: HostContext = {
 const emitDirty = (instance?: Instance) => {
 	let current: Instance | undefined = instance;
 
-	while (current && !current.dirty) {
+	//while (current && !current.dirty) {
+	while (current) {
 		current.dirty = true;
 		current = current.parent;
 	}
@@ -280,9 +281,8 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 			parent.childList.insertBefore(beforeChild, child);
 		},
 
-		insertInContainerBefore(container, child) {
-			// XXX - We may want something better here
-			throw new Error(`root container can only have one child`);
+		insertInContainerBefore(container, child, beforeChild) {
+			hostConfig.insertBefore?.(container, child, beforeChild);
 		},
 
 		removeChild(parent: Instance, child: Instance) {
@@ -386,11 +386,13 @@ const createContainer = (): Container => {
 	}
 }
 
+const MAX_RENDER_PER_SECOND = 60;
+
 export const createRenderer = (config: RendererConfig) => {
 	const container = createContainer(); 
 	let debounce: NodeJS.Timer | null = null;
 	// 60 renders per second at most
-	let debounceInterval = 1000 / 60;
+	let debounceInterval = 1000 / MAX_RENDER_PER_SECOND;
 	let lastRender = performance.now();
 
 	const renderImpl = () => {
@@ -411,14 +413,14 @@ export const createRenderer = (config: RendererConfig) => {
 					views.push({ root: view });
 				}
 
-				console.error(JSON.stringify({ views }, null, 2));
+				//console.error(JSON.stringify({ views }, null, 2));
 
 				config.onUpdate?.(views)
 
 				const end = performance.now();
 
-				//console.error(`[PERF] processed render frame in ${end - start}ms`);
-				//console.error(`[PERF] last render ${end - lastRender}ms`);
+				console.error(`[PERF] processed render frame in ${end - start}ms`);
+				console.error(`[PERF] last render ${end - lastRender}ms`);
 				lastRender = end;
 			}, debounceInterval);
 		}

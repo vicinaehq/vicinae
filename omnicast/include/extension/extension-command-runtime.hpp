@@ -78,7 +78,7 @@ class ExtensionCommandRuntime : public CommandContext {
   std::shared_ptr<ExtensionCommand> m_command;
   std::vector<ExtensionViewInfo> m_viewStack;
   int viewStackSize = 0;
-  QFutureWatcher<std::vector<RenderModel>> m_modelWatcher;
+  QFutureWatcher<ParsedRenderData> m_modelWatcher;
   RequestDispatcher m_actionDispatcher;
   PlaceholderExtensionView *placeholderView = nullptr;
   Timer m_timer;
@@ -354,33 +354,39 @@ class ExtensionCommandRuntime : public CommandContext {
 
     auto models = m_modelWatcher.result();
 
-    for (int i = 0; i != models.size(); ++i) {
-      auto model = models.at(i);
+    for (int i = 0; i != models.items.size(); ++i) {
+      auto model = models.items.at(i);
+      bool shouldSkipRender = !model.dirty && !model.propsDirty;
+
+      if (shouldSkipRender) {
+        qDebug() << "view" << i << "is not dirty, skipping render";
+        continue;
+      }
 
       if (i >= m_viewStack.size()) {
         if (i <= viewStackSize) {
-          auto next = createViewFromModel(model);
+          auto next = createViewFromModel(model.root);
 
           if (ui->topView() == placeholderView) {
             ui->replaceView(placeholderView, next);
           } else {
             ui->pushView(next);
           }
-          m_viewStack.push_back({.index = model.index(), .view = next});
+          m_viewStack.push_back({.index = model.root.index(), .view = next});
         }
       } else {
         auto &view = m_viewStack.at(i);
 
-        if (view.index != model.index()) {
-          auto next = createViewFromModel(model);
+        if (view.index != model.root.index()) {
+          auto next = createViewFromModel(model.root);
 
           ui->replaceView(view.view, next);
           view.view = next;
-          view.index = model.index();
+          view.index = model.root.index();
         }
       }
 
-      if (i < m_viewStack.size()) { m_viewStack.at(i).view->render(model); }
+      if (i < m_viewStack.size()) { m_viewStack.at(i).view->render(model.root); }
     }
   }
 

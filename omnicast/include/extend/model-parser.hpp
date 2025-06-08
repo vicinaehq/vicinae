@@ -13,9 +13,19 @@ struct InvalidModel {
 using RenderTree = QJsonObject;
 using RenderModel = std::variant<ListModel, GridModel, FormModel, RootDetailModel, InvalidModel>;
 
+struct RenderRoot {
+  bool dirty;
+  bool propsDirty;
+  RenderModel root;
+};
+
+struct ParsedRenderData {
+  std::vector<RenderRoot> items;
+};
+
 class ModelParser {
 public:
   ModelParser();
 
-  std::vector<RenderModel> parse(const QJsonArray &views);
+  ParsedRenderData parse(const QJsonArray &views);
 };

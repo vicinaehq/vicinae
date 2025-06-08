@@ -31,45 +31,23 @@ public:
       : AbstractAction(model.title, OmniIconUrl(model.icon.value_or(std::monostate{}))), m_model(model) {}
 };
 
-class ExtensionActionPanelView : public ActionPanelListView {
+class ExtensionActionPanelView : public ActionPanelStaticListView {
   Q_OBJECT
   ActionPannelModel m_model;
-  std::vector<std::shared_ptr<AbstractAction>> m_actions;
   std::vector<KeyboardShortcutModel> m_defaultActionShortcuts;
-
-  void onSearchChanged(const QString &text) override { emit textChanged(text); }
-
-  QList<AbstractAction *> actions() const override {
-    return m_actions | std::views::transform([](auto &&v) { return v.get(); }) | std::ranges::to<QList>();
-  }
 
   void render() {
     int idx = 0;
 
-    m_actions.clear();
-    m_list->updateModel([&]() {
-      OmniList::Section *currentSection = nullptr;
+    clear();
+    setTitle(m_model.title);
 
-      for (const auto &item : m_model.children) {
-        if (auto section = std::get_if<ActionPannelSectionModel>(&item)) {
-          auto &listSection = m_list->addSection(section->title);
+    for (const auto &item : m_model.children) {
+      if (auto section = std::get_if<ActionPannelSectionModel>(&item)) {
+        addSection(section->title);
 
-          for (const auto &model : section->actions) {
-            auto action = std::make_shared<ExtensionActionV2>(model);
-
-            if (idx == 0) { action->setPrimary(true); }
-
-            if (idx < m_defaultActionShortcuts.size()) {
-              action->setShortcut(m_defaultActionShortcuts.at(idx));
-              ++idx;
-            }
-
-            listSection.addItem(std::make_shared<ActionListItem>(action.get()));
-            m_actions.emplace_back(action);
-          }
-        }
-        if (auto actionModel = std::get_if<ActionModel>(&item)) {
-          auto action = std::make_shared<ExtensionActionV2>(*actionModel);
+        for (const auto &model : section->actions) {
+          auto action = new ExtensionActionV2(model);
 
           if (idx == 0) { action->setPrimary(true); }
 
@@ -78,13 +56,25 @@ class ExtensionActionPanelView : public ActionPanelListView {
             ++idx;
           }
 
-          if (!currentSection) { currentSection = &m_list->addSection(); }
-
-          currentSection->addItem(std::make_shared<ActionListItem>(action.get()));
-          m_actions.emplace_back(action);
+          addAction(action);
         }
       }
-    });
+
+      if (auto actionModel = std::get_if<ActionModel>(&item)) {
+        auto action = new ExtensionActionV2(*actionModel);
+
+        if (idx == 0) { action->setPrimary(true); }
+
+        if (idx < m_defaultActionShortcuts.size()) {
+          action->setShortcut(m_defaultActionShortcuts.at(idx));
+          ++idx;
+        }
+
+        addAction(action);
+      }
+    }
+
+    qDebug() << "Rendered";
   }
 
 public:
@@ -123,11 +113,13 @@ public:
   }
 
   void setActionPanel(const ActionPannelModel &model) {
+    if (!isVisible()) return;
     auto panel = new ExtensionActionPanelView();
 
     panel->setDefaultActionShortcuts(m_defaultActionShortcuts);
-    m_actionPannelV2->setView(panel);
     panel->setModel(model);
+
+    m_actionPannelV2->setView(panel);
 
     auto actions = m_actionPannelV2->actions();
     auto primaryAction = m_actionPannelV2->primaryAction();
