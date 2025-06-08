@@ -229,7 +229,6 @@ protected:
 
   void onActivate() override {
     if (!m_topBar->input->text().isEmpty()) { m_topBar->input->selectAll(); }
-
     m_topBar->input->setFocus();
   }
 

@@ -194,6 +194,7 @@ set(SRCS
 	
 	include/extension/extension-command.hpp
 	include/extension/extension-view.hpp
+	include/extension/extension-view-wrapper.hpp
 	include/extension/extension-component.hpp
 
 	include/extension/extension-form-component.hpp

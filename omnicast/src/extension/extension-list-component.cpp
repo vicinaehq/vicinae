@@ -135,7 +135,7 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
   _model = newModel;
 
   if (auto selected = m_list->selected(); selected && newModel.dirty) {
-    m_split->setDetailVisibility(selected->detail.has_value() && _model.isShowingDetail);
+    // m_split->setDetailVisibility(selected->detail.has_value() && _model.isShowingDetail);
 
     if (auto detail = selected->detail) {
       if (m_split->isDetailVisible()) {

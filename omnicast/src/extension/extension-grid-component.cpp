@@ -130,9 +130,9 @@ void ExtensionGridComponent::onItemActivated(const GridItemViewModel &item) { ac
 void ExtensionGridComponent::onSearchChanged(const QString &text) { _debounce->start(); }
 
 ExtensionGridComponent::ExtensionGridComponent() : _debounce(new QTimer(this)), _shouldResetSelection(true) {
-  setupUI(m_list);
   setDefaultActionShortcuts({primaryShortcut, secondaryShortcut});
   _debounce->setSingleShot(true);
+  setupUI(m_list);
   connect(_debounce, &QTimer::timeout, this, &ExtensionGridComponent::handleDebouncedSearchNotification);
   connect(m_list, &ExtensionGridList::selectionChanged, this, &ExtensionGridComponent::onSelectionChanged);
   connect(m_list, &ExtensionGridList::itemActivated, this, &ExtensionGridComponent::onItemActivated);

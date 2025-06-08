@@ -10,7 +10,9 @@
 #include "extension/extension-command.hpp"
 #include "extension/extension-grid-component.hpp"
 #include "extension/extension-list-component.hpp"
+#include "extension/extension-view-wrapper.hpp"
 #include "extension/extension-view.hpp"
+#include "root-item-manager.hpp"
 #include "services/local-storage/local-storage-service.hpp"
 #include "service-registry.hpp"
 #include "timer.hpp"
@@ -24,28 +26,12 @@
 #include <qlogging.h>
 #include <qobject.h>
 #include <qwidget.h>
+#include <ranges>
 #include <variant>
 
 struct ExtensionViewInfo {
   size_t index;
   ExtensionSimpleView *view;
-};
-
-struct ViewVisitor {
-  ExtensionSimpleView *operator()(const ListModel &model) const { return new ExtensionListComponent; }
-  ExtensionSimpleView *operator()(const GridModel &model) const { return new ExtensionGridComponent; }
-  ExtensionSimpleView *operator()(const FormModel &model) const { return nullptr; }
-  ExtensionSimpleView *operator()(const InvalidModel &model) const { return nullptr; }
-  ExtensionSimpleView *operator()(const RootDetailModel &model) const { return nullptr; }
-};
-
-class PlaceholderExtensionView : public ExtensionSimpleView {
-public:
-  PlaceholderExtensionView() {
-    m_topBar->input->hide();
-    setupUI(new QWidget);
-  }
-  void render(const RenderModel &model) override {}
 };
 
 class RequestDispatcher {
@@ -76,7 +62,7 @@ public:
 
 class ExtensionCommandRuntime : public CommandContext {
   std::shared_ptr<ExtensionCommand> m_command;
-  std::vector<ExtensionViewInfo> m_viewStack;
+  std::vector<ExtensionViewWrapper *> m_viewStack;
   int viewStackSize = 0;
   QFutureWatcher<ParsedRenderData> m_modelWatcher;
   RequestDispatcher m_actionDispatcher;
@@ -93,6 +79,7 @@ class ExtensionCommandRuntime : public CommandContext {
     manager->emitExtensionEvent(m_sessionId, handlerId, payload);
   }
 
+  /*
   ExtensionSimpleView *createViewFromModel(const RenderModel &model) {
     auto view = std::visit(ViewVisitor(), model);
 
@@ -107,6 +94,7 @@ class ExtensionCommandRuntime : public CommandContext {
 
     return view;
   }
+  */
 
   QJsonObject handleStorage(const QString &action, const QJsonObject &payload) {
     auto storage = ServiceRegistry::instance()->localStorage();
@@ -308,7 +296,7 @@ class ExtensionCommandRuntime : public CommandContext {
     auto ui = ServiceRegistry::instance()->UI();
 
     if (m_command->isView() && action == "ui.push-view") {
-      ++viewStackSize;
+      pushView();
       // we create a new view on render
       return {};
     }
@@ -351,42 +339,18 @@ class ExtensionCommandRuntime : public CommandContext {
     if (m_modelWatcher.isCanceled()) return;
 
     auto ui = ServiceRegistry::instance()->UI();
-
     auto models = m_modelWatcher.result();
+    auto items = models.items | std::views::take(m_viewStack.size()) | std::views::enumerate;
 
-    for (int i = 0; i != models.items.size(); ++i) {
-      auto model = models.items.at(i);
+    for (const auto &[n, model] : items) {
       bool shouldSkipRender = !model.dirty && !model.propsDirty;
 
       if (shouldSkipRender) {
-        qDebug() << "view" << i << "is not dirty, skipping render";
+        qDebug() << "view" << n << "is not dirty, skipping render";
         continue;
       }
 
-      if (i >= m_viewStack.size()) {
-        if (i <= viewStackSize) {
-          auto next = createViewFromModel(model.root);
-
-          if (ui->topView() == placeholderView) {
-            ui->replaceView(placeholderView, next);
-          } else {
-            ui->pushView(next);
-          }
-          m_viewStack.push_back({.index = model.root.index(), .view = next});
-        }
-      } else {
-        auto &view = m_viewStack.at(i);
-
-        if (view.index != model.root.index()) {
-          auto next = createViewFromModel(model.root);
-
-          ui->replaceView(view.view, next);
-          view.view = next;
-          view.index = model.root.index();
-        }
-      }
-
-      if (i < m_viewStack.size()) { m_viewStack.at(i).view->render(model.root); }
+      m_viewStack.at(n)->render(model.root);
     }
   }
 
@@ -461,6 +425,18 @@ class ExtensionCommandRuntime : public CommandContext {
     m_viewStack.pop_back();
   }
 
+  /**
+   * Push an empty extension view ready to be rendered on
+   */
+  void pushView() {
+    auto ui = ServiceRegistry::instance()->UI();
+    auto view = new ExtensionViewWrapper;
+
+    m_viewStack.emplace_back(view);
+    connect(view, &ExtensionViewWrapper::notificationRequested, this, &ExtensionCommandRuntime::notify);
+    ui->pushView(view);
+  }
+
 public:
   void load(const LaunchProps &props) override {
     auto commandDb = ServiceRegistry::instance()->commandDb();
@@ -471,10 +447,7 @@ public:
     if (m_command->mode() == CommandModeView) {
       // We push the first view immediately, waiting for the initial render to come
       // in and "hydrate" it.
-      placeholderView = new PlaceholderExtensionView;
-      placeholderView->setNavigationTitle(m_command->name());
-      placeholderView->setNavigationIcon(m_command->iconUrl());
-      ui->pushView(placeholderView);
+      pushView();
       connect(ui, &UIController::popViewCompleted, this, &ExtensionCommandRuntime::handleViewPoped);
     }
 

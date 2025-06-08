@@ -8,17 +8,15 @@
 #include "extension/extension-command.hpp"
 #include "extension/extension-form-component.hpp"
 #include "omni-icon.hpp"
-#include "ui/action-pannel/action-list-item.hpp"
 #include "ui/action-pannel/action.hpp"
-#include <memory>
 #include <qboxlayout.h>
 #include <qevent.h>
 #include <qjsonarray.h>
 #include <qjsonobject.h>
 #include <qlogging.h>
+#include <qstackedlayout.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
-#include <ranges>
 
 class ExtensionActionV2 : public AbstractAction {
   ActionModel m_model;
@@ -113,7 +111,10 @@ public:
   }
 
   void setActionPanel(const ActionPannelModel &model) {
-    if (!isVisible()) return;
+    if (!isVisible()) {
+      qCritical() << "locked action panel update";
+      return;
+    }
     auto panel = new ExtensionActionPanelView();
 
     panel->setDefaultActionShortcuts(m_defaultActionShortcuts);
@@ -137,6 +138,7 @@ public:
   }
 
   void clearActionPanel() {
+    qCritical() << "clear action panel";
     m_actionPannelV2->popToRoot();
     m_actionPanelViewStack.clear();
     m_statusBar->clearAction();
