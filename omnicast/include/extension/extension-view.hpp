@@ -111,10 +111,6 @@ public:
   }
 
   void setActionPanel(const ActionPannelModel &model) {
-    if (!isVisible()) {
-      qCritical() << "locked action panel update";
-      return;
-    }
     auto panel = new ExtensionActionPanelView();
 
     panel->setDefaultActionShortcuts(m_defaultActionShortcuts);

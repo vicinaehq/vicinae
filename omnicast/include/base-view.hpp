@@ -118,8 +118,6 @@ protected:
 
   KeyboardShortcutModel defaultActionPanelShortcut() { return DEFAULT_ACTION_PANEL_SHORTCUT; }
 
-  void clearToast() override { m_statusBar->clearToast(); }
-
   bool eventFilter(QObject *obj, QEvent *event) override {
     if (event->type() == QEvent::KeyPress) {
       auto keyEvent = static_cast<QKeyEvent *>(event);
@@ -210,18 +208,6 @@ protected:
     return new QWidget;
   }
 
-  std::vector<QString> argumentValues() const override {
-    return m_topBar->m_completer->collect() | std::views::transform([](const auto &p) { return p.second; }) |
-           std::ranges::to<std::vector>();
-  }
-
-  void clearSearchBar() override {
-    m_topBar->input->clear();
-    onSearchChanged("");
-  }
-
-  void setToast(Toast const *toast) override { m_statusBar->setToast(toast); }
-
   virtual void onSearchChanged(const QString &text) {}
   virtual void onActionPanelClosed() {}
   virtual void onActionPanelOpened() {}
@@ -268,6 +254,20 @@ public:
   QString searchText() const override { return m_topBar->input->text(); }
 
   void setSearchText(const QString &value) override { m_topBar->input->setText(value); }
+
+  std::vector<QString> argumentValues() const override {
+    return m_topBar->m_completer->collect() | std::views::transform([](const auto &p) { return p.second; }) |
+           std::ranges::to<std::vector>();
+  }
+
+  void clearToast() override { m_statusBar->clearToast(); }
+
+  void clearSearchBar() override {
+    m_topBar->input->clear();
+    onSearchChanged("");
+  }
+
+  void setToast(Toast const *toast) override { m_statusBar->setToast(toast); }
 
   QString searchPlaceholderText() const { return m_topBar->input->placeholderText(); }
   void setSearchPlaceholderText(const QString &value) const {

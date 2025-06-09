@@ -135,11 +135,10 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
   _model = newModel;
 
   if (auto selected = m_list->selected(); selected && newModel.dirty) {
-    // m_split->setDetailVisibility(selected->detail.has_value() && _model.isShowingDetail);
+    m_split->setDetailVisibility(selected->detail.has_value() && _model.isShowingDetail);
 
     if (auto detail = selected->detail) {
       if (m_split->isDetailVisible()) {
-        // qDebug() << "update detail for" << selected->id;
         m_detail->updateDetail(*detail);
       } else {
         qDebug() << "create detail";
@@ -225,7 +224,31 @@ void ExtensionListComponent::handleDebouncedSearchNotification() {
 
 void ExtensionListComponent::onItemActivated(const ListItemViewModel &item) { activatePrimaryAction(); }
 
-void ExtensionListComponent::onSearchChanged(const QString &text) { _debounce->start(); }
+void ExtensionListComponent::onSearchChanged(const QString &text) {
+  if (_model.searchText) { m_topBar->input->setText(*_model.searchText); }
+
+  auto itemMatches = [&](const ListItemViewModel &model) -> bool {
+    return model.title.contains(searchText(), Qt::CaseInsensitive);
+  };
+
+  if (_model.filtering) {
+    m_list->setFilter(searchText());
+  } else {
+    m_list->setFilter("");
+  }
+
+  if (auto handler = _model.onSearchTextChange) {
+    // flag next render to reset the search selection
+    _shouldResetSelection = !_model.filtering;
+
+    qDebug() << "[DEBUG] sending search changed event" << text;
+
+    notify(*handler, {text});
+  }
+
+  qCritical() << "text changed";
+  //_debounce->start();
+}
 
 ExtensionListComponent::ExtensionListComponent()
     : _debounce(new QTimer(this)), _layout(new QVBoxLayout), _shouldResetSelection(true) {

@@ -24,6 +24,7 @@ public:
 class ExtensionViewWrapper : public BaseView {
   Q_OBJECT
   ExtensionSimpleView *m_current = nullptr;
+  QString m_searchText;
   QStackedLayout *m_layout = new QStackedLayout;
   int m_index = -1;
 
@@ -32,6 +33,19 @@ class ExtensionViewWrapper : public BaseView {
   }
   void onActivate() override {
     if (m_current) m_current->activate();
+  }
+
+  void setSearchText(const QString &value) override {
+    if (m_current) {
+      m_current->setSearchText(value);
+      return;
+    }
+
+    m_searchText = value;
+  }
+
+  void setToast(const Toast *toast) override {
+    if (m_current) m_current->setToast(toast);
   }
 
 public:
@@ -48,11 +62,17 @@ public:
         m_current = view;
         m_current->initialize();
         m_current->activate();
+
+        if (m_searchText.isEmpty()) {
+          m_current->setSearchText(m_searchText);
+          m_searchText.clear();
+        }
+
         m_index = model.index();
       }
     }
 
-    QTimer::singleShot(100, m_current, [model, this]() { m_current->render(model); });
+    m_current->render(model);
   }
 
   ExtensionViewWrapper() {
