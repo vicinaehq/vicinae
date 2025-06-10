@@ -97,6 +97,7 @@ public:
 
   bool eventFilter(QObject *obj, QEvent *event) override;
   void showBackButton();
+  void setBackButtonVisiblity(bool value);
   void hideBackButton();
   void destroyQuicklinkCompleter();
   void activateQuicklinkCompleter(const CompleterData &data);

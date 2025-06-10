@@ -9,7 +9,6 @@
 #include "omnicast/browse-fonts-view.hpp"
 #include "preference.hpp"
 #include "switch-windows-command.hpp"
-#include "test-command.hpp"
 #include "open-configuration-file-command.hpp"
 #include "manage-quicklinks-command.hpp"
 #include "manage-themes-command.hpp"

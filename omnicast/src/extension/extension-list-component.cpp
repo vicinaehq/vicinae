@@ -225,7 +225,8 @@ void ExtensionListComponent::handleDebouncedSearchNotification() {
 void ExtensionListComponent::onItemActivated(const ListItemViewModel &item) { activatePrimaryAction(); }
 
 void ExtensionListComponent::onSearchChanged(const QString &text) {
-  if (_model.searchText) { m_topBar->input->setText(*_model.searchText); }
+  if (_model.searchText) { /*m_topBar->input->setText(*_model.searchText);*/
+  }
 
   auto itemMatches = [&](const ListItemViewModel &model) -> bool {
     return model.title.contains(searchText(), Qt::CaseInsensitive);
@@ -254,7 +255,7 @@ ExtensionListComponent::ExtensionListComponent()
     : _debounce(new QTimer(this)), _layout(new QVBoxLayout), _shouldResetSelection(true) {
   m_selector->setMinimumWidth(400);
   m_selector->setEnableDefaultFilter(false);
-  m_topBar->setAccessoryWidget(m_selector);
+  // m_topBar->setAccessoryWidget(m_selector);
   m_selector->hide();
   setDefaultActionShortcuts({primaryShortcut, secondaryShortcut});
   m_split->setMainWidget(m_list);

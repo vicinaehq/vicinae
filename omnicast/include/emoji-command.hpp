@@ -125,11 +125,14 @@ public:
     return trie;
   }
 
+  void initialize() override {
+    setSearchPlaceholderText("Search for emojis...");
+    textChanged(searchText());
+  }
+
   EmojiView() {
     auto watcher = new QFutureWatcher<std::unique_ptr<TrieType>>;
     auto future = QtConcurrent::run([this]() { return buildTrie(); });
-
-    setSearchPlaceholderText("Search for emojis...");
 
     watcher->setFuture(future);
     connect(watcher, &QFutureWatcher<TrieType>::finished, this, [this, watcher]() {
@@ -139,7 +142,7 @@ public:
     });
   }
 
-  void onSearchChanged(const QString &s) override {
+  void textChanged(const QString &s) override {
     m_grid->beginResetModel();
 
     auto makeEmojiItem = [](auto &&item) -> std::unique_ptr<OmniList::AbstractVirtualItem> {

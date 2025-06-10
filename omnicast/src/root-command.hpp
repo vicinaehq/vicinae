@@ -264,7 +264,7 @@ class RootCommandV2 : public ListView {
     // qDebug() << "root searched in " << duration << "ms";
   }
 
-  void onSearchChanged(const QString &text) override {
+  void textChanged(const QString &text) override {
     QString query = text.trimmed();
 
     if (query.isEmpty()) return renderEmpty();
@@ -305,6 +305,9 @@ class RootCommandV2 : public ListView {
   void onActionExecuted(AbstractAction *action) override { qCritical() << "action title" << action->title(); }
 
   void initialize() override {
+    m_calcDebounce->setInterval(100);
+    m_calcDebounce->setSingleShot(true);
+    setSearchPlaceholderText("Search for apps or commands...");
     auto manager = ServiceRegistry::instance()->rootItemManager();
     connect(manager, &RootItemManager::itemsChanged, this, [this]() { onSearchChanged(searchText()); });
     connect(m_calcDebounce, &QTimer::timeout, this, &RootCommandV2::handleCalculatorTimeout);
@@ -323,10 +326,5 @@ class RootCommandV2 : public ListView {
   }
 
 public:
-  RootCommandV2() {
-    m_topBar->hideBackButton();
-    setSearchPlaceholderText("Search for apps or commands...");
-    m_calcDebounce->setInterval(100);
-    m_calcDebounce->setSingleShot(true);
-  }
+  RootCommandV2() {}
 };

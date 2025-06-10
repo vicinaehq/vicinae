@@ -325,8 +325,16 @@ class ActionPanelV2Widget : public Popover {
 
   void showEvent(QShowEvent *event) override {
     qCritical() << "SHOW EVENT";
+    emit opened();
+    emit openChanged(true);
     resizeView();
     QWidget::showEvent(event);
+  }
+
+  void closeEvent(QCloseEvent *event) override {
+    emit closed();
+    emit openChanged(false);
+    QWidget::closeEvent(event);
   }
 
   void resizeEvent(QResizeEvent *event) override { QWidget::resizeEvent(event); }
@@ -384,7 +392,8 @@ public:
       // resizeView();
     }
 
-    view->deleteLater();
+    view->hide();
+    view->setParent(nullptr);
   }
 
   void pushView(ActionPanelView *view) {
@@ -415,4 +424,7 @@ public:
 
 signals:
   void actionActivated(AbstractAction *action) const;
+  void opened() const;
+  void closed() const;
+  void openChanged(bool value);
 };

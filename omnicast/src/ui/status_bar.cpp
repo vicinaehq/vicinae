@@ -124,7 +124,8 @@ void StatusBar::setLeftWidget(QWidget *left) {
 }
 
 void StatusBar::setNavigation(const QString &name, const OmniIconUrl &icon) {
-  setLeftWidget(new CurrentCommandWidget(name, icon));
+  setNavigationTitle(name);
+  setNavigationIcon(icon);
 }
 
 void StatusBar::setNavigationTitle(const QString &title) { m_navigation->setTitle(title); }

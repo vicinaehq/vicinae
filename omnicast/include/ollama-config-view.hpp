@@ -1,6 +1,5 @@
 #pragma once
 #include "action-panel/action-panel.hpp"
-#include "ai/ollama-ai-provider.hpp"
 #include "app.hpp"
 #include "base-view.hpp"
 #include "omni-icon.hpp"
@@ -10,7 +9,6 @@
 #include "ui/form/base-input.hpp"
 #include "ui/form/form-field.hpp"
 #include "ui/form/form.hpp"
-#include "view.hpp"
 
 class OllamaConfigView : public FormView {
   class SubmitAction : public AbstractAction {

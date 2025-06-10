@@ -1,6 +1,7 @@
 #pragma once
 #include <QGraphicsScene>
 #include <QGraphicsPixmapItem>
+#include "action-panel/action-panel.hpp"
 #include "command-server.hpp"
 #include <QScreen>
 #include "omni-icon.hpp"
@@ -16,6 +17,7 @@
 #include <qobject.h>
 #include <qpixmap.h>
 #include <qscreen_platform.h>
+#include <qstackedwidget.h>
 #include <qwindow.h>
 #include "ui/alert.hpp"
 #include "ui/dialog.hpp"
@@ -61,6 +63,9 @@ class AppWindow : public QMainWindow, public ICommandHandler {
   CommandServer *_commandServer;
   std::vector<BaseView *> m_viewStack;
 
+  QVBoxLayout *m_layout = new QVBoxLayout(this);
+  QStackedWidget *m_viewContainer = new QStackedWidget(this);
+
   void paintEvent(QPaintEvent *event) override;
   void resizeEvent(QResizeEvent *event) override;
   void showEvent(QShowEvent *event) override;
@@ -70,9 +75,11 @@ class AppWindow : public QMainWindow, public ICommandHandler {
   void unloadHangingCommand();
 
 public:
+  StatusBar *m_statusBar = new StatusBar();
   // to compile
-  TopBar *topBar = nullptr;
-  StatusBar *statusBar = nullptr;
+  TopBar *topBar = new TopBar(this);
+  ActionPanelV2Widget *m_actionPanel = new ActionPanelV2Widget(this);
+
   HorizontalLoadingBar *_loadingBar = nullptr;
   void setToast(const QString &title, ToastPriority priority = ToastPriority::Success) {}
 

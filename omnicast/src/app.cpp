@@ -93,14 +93,14 @@ void AppWindow::popCurrentView() {
   m_viewStack.pop_back();
 
   previous->deactivate();
+  m_viewContainer->removeWidget(previous);
 
   auto next = frontView();
 
-  next->setParent(this);
-  next->setFixedSize(size());
   next->activate();
   ServiceRegistry::instance()->UI()->setTopView(next);
   next->show();
+  m_viewContainer->setCurrentWidget(next);
 
   // if (auto toast = toastService->currentToast()) { next->setToast(toast); }
 
@@ -164,6 +164,7 @@ void AppWindow::connectView(BaseView &view) { view.installEventFilter(this); }
 
 void AppWindow::pushView(BaseView *view, const PushViewOptions &opts) {
   auto toastService = ServiceRegistry::instance()->toastService();
+  auto ui = ServiceRegistry::instance()->UI();
 
   if (commandStack.empty()) {
     qDebug() << "AppWindow::pushView called with empty command stack";
@@ -175,29 +176,21 @@ void AppWindow::pushView(BaseView *view, const PushViewOptions &opts) {
   if (auto front = frontView()) {
     front->hide();
     front->clearFocus();
-    front->setParent(nullptr);
     // front->clearToast();
   }
 
   // connectView(*view);
-  view->setParent(this);
-  view->setFixedSize(size());
 
   currentCommand.viewStack.push({.view = view});
-  ServiceRegistry::instance()->UI()->setTopView(view);
   m_viewStack.emplace_back(view);
-  if (auto navigation = opts.navigation) {
-    view->setNavigationTitle(navigation->title);
-    view->setNavigationIcon(navigation->iconUrl);
-  }
+  if (auto navigation = opts.navigation) { ui->setNavigation(navigation->title, navigation->iconUrl); }
 
+  m_viewContainer->addWidget(view);
+  m_viewContainer->setCurrentWidget(view);
   view->show();
   view->setFocus();
 
-  if (auto toast = toastService->currentToast()) { frontView()->setToast(toast); }
-
   view->createInitialize();
-  view->setSearchText(opts.searchQuery);
   view->onActivate();
 }
 
@@ -262,7 +255,7 @@ void AppWindow::launchCommand(const QString &id, const LaunchCommandOptions &opt
 
 void AppWindow::resizeEvent(QResizeEvent *event) {
   QMainWindow::resizeEvent(event);
-  if (auto front = frontView()) { front->setFixedSize(event->size()); }
+  // if (auto front = frontView()) { front->setFixedSize(event->size()); }
 }
 
 void AppWindow::paintEvent(QPaintEvent *event) {
@@ -389,9 +382,14 @@ AppWindow::AppWindow(QWidget *parent) : QMainWindow(parent) {
       CommandBuilder("root").withIcon(BuiltinOmniIconUrl("omnicast")).toSingleView<RootCommandV2>();
   auto ui = ServiceRegistry::instance()->UI();
 
+  connect(m_actionPanel, &ActionPanelV2Widget::opened, this,
+          [this]() { m_statusBar->setActionButtonHighlight(true); });
+  connect(m_actionPanel, &ActionPanelV2Widget::closed, this,
+          [this]() { m_statusBar->setActionButtonHighlight(false); });
+
   connect(ServiceRegistry::instance()->UI(), &UIController::popToRootRequested, this, [this]() {
-    popToRoot();
-    if (auto front = frontView()) { front->clearSearchBar(); }
+    // popToRoot();
+    // if (auto front = frontView()) { front->clearSearchBar(); }
   });
   connect(ServiceRegistry::instance()->UI(), &UIController::launchCommandRequested, this,
           [this](const auto &cmd) { launchCommand(cmd, {}, {}); });
@@ -409,17 +407,29 @@ AppWindow::AppWindow(QWidget *parent) : QMainWindow(parent) {
   connect(ui, &UIController::showToastRequested, toast,
           [this, toast](const QString &title, ToastPriority priority) { toast->setToast(title, priority); });
 
-  connect(toast, &ToastService::toastActivated, this, [this](const Toast *toast) {
-    for (const auto &view : m_viewStack) {
-      view->setToast(toast);
-    }
-  });
+  connect(toast, &ToastService::toastActivated, this,
+          [this](const Toast *toast) { m_statusBar->setToast(toast); });
 
-  connect(toast, &ToastService::toastHidden, this, [this](const Toast *toast) {
-    for (const auto &view : m_viewStack) {
-      view->clearToast();
-    }
-  });
+  connect(toast, &ToastService::toastHidden, this, [this](const Toast *toast) { m_statusBar->clearToast(); });
+
+  m_statusBar->setFixedHeight(Omnicast::STATUS_BAR_HEIGHT);
+  m_statusBar->setActionButtonVisibility(false);
+  m_statusBar->setCurrentActionButtonVisibility(false);
+  topBar->setFixedHeight(Omnicast::TOP_BAR_HEIGHT);
+
+  ui->setActionPanelWidget(m_actionPanel);
+  ui->setStatusBar(m_statusBar);
+  ui->setTopBar(topBar);
+  m_layout->setSpacing(0);
+  m_layout->setContentsMargins(0, 0, 0, 0);
+  m_layout->addWidget(topBar);
+  m_layout->addWidget(m_viewContainer, 1);
+  m_layout->addWidget(m_statusBar);
+
+  QWidget *m_widget = new QWidget;
+
+  m_widget->setLayout(m_layout);
+  setCentralWidget(m_widget);
 
   launchCommand(rootCommand);
 }

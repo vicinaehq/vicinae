@@ -348,8 +348,8 @@ set(SRCS
 
 	src/root-command.hpp
 	src/command.hpp
-	src/view.hpp
 	
+	src/ui-controller.cpp
 
 	src/xdg/xdg-desktop.cpp
 

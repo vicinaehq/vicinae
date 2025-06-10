@@ -131,6 +131,11 @@ void TopBar::showBackButton() {
   m_backButtonSpacer->show();
 }
 
+void TopBar::setBackButtonVisiblity(bool value) {
+  backButton->setVisible(value);
+  m_backButtonSpacer->setVisible(value);
+}
+
 void TopBar::hideBackButton() {
   backButton->hide();
   m_backButtonSpacer->hide();

@@ -15,7 +15,7 @@ struct ViewVisitor {
 class PlaceholderExtensionView : public ExtensionSimpleView {
 public:
   PlaceholderExtensionView() {
-    m_topBar->input->hide();
+    // m_topBar->input->hide();
     setupUI(new QWidget);
   }
   void render(const RenderModel &model) override {}
@@ -35,7 +35,7 @@ class ExtensionViewWrapper : public BaseView {
     if (m_current) m_current->activate();
   }
 
-  void setSearchText(const QString &value) override {
+  void setSearchText(const QString &value) {
     if (m_current) {
       m_current->setSearchText(value);
       return;

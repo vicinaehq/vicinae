@@ -9,10 +9,10 @@
 #include "ui/action-pannel/action-item.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/typography.hpp"
-#include "view.hpp"
 #include <qboxlayout.h>
 #include <qnamespace.h>
 
+/*
 class MissingExtensionPreferenceView : public View {
 
   class ContinueAction : public AbstractAction {
@@ -130,3 +130,4 @@ public:
     setActionPannel(items);
   }
 };
+*/

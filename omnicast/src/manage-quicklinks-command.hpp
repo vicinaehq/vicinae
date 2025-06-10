@@ -212,6 +212,6 @@ public:
     connect(bookmarkService, &BookmarkService::bookmarkSaved, this, &ManageBookmarksView::onBookmarkSaved);
     connect(bookmarkService, &BookmarkService::bookmarkRemoved, this,
             &ManageBookmarksView::onBookmarkRemoved);
-    connect(m_topBar, &TopBar::argumentsChanged, this, &ManageBookmarksView::handleArgumentChange);
+    // connect(m_topBar, &TopBar::argumentsChanged, this, &ManageBookmarksView::handleArgumentChange);
   }
 };

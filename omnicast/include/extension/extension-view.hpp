@@ -121,23 +121,25 @@ public:
     auto actions = m_actionPannelV2->actions();
     auto primaryAction = m_actionPannelV2->primaryAction();
 
-    m_statusBar->setActionButtonVisibility(!actions.empty() && (!primaryAction || actions.size() > 1));
-    m_statusBar->setCurrentActionButtonVisibility(primaryAction);
+    /*
+m_statusBar->setActionButtonVisibility(!actions.empty() && (!primaryAction || actions.size() > 1));
+m_statusBar->setCurrentActionButtonVisibility(primaryAction);
 
-    if (auto action = m_actionPannelV2->primaryAction()) {
-      m_statusBar->setCurrentAction(action->title(),
-                                    action->shortcut.value_or(KeyboardShortcutModel{.key = "return"}));
-      m_statusBar->setActionButton("Actions", defaultActionPanelShortcut());
-    } else {
-      m_statusBar->setActionButton("Actions", KeyboardShortcutModel{.key = "return"});
-    }
+if (auto action = m_actionPannelV2->primaryAction()) {
+  m_statusBar->setCurrentAction(action->title(),
+                                action->shortcut.value_or(KeyboardShortcutModel{.key = "return"}));
+  m_statusBar->setActionButton("Actions", defaultActionPanelShortcut());
+} else {
+  m_statusBar->setActionButton("Actions", KeyboardShortcutModel{.key = "return"});
+}
+    */
   }
 
   void clearActionPanel() {
     qCritical() << "clear action panel";
     m_actionPannelV2->popToRoot();
     m_actionPanelViewStack.clear();
-    m_statusBar->clearAction();
+    // m_statusBar->clearAction();
   }
 
   /**
