@@ -194,7 +194,7 @@ class ManageBookmarksView : public ListView {
 
   void initialize() override { onSearchChanged(""); }
 
-  void handleArgumentChange(const std::vector<std::pair<QString, QString>> &args) {
+  void argumentValuesChanged(const std::vector<std::pair<QString, QString>> &args) override {
     auto values = args | std::views::transform([](auto &&pair) { return pair.second; }) |
                   std::ranges::to<std::vector>();
     if (auto bookmarkDetail = dynamic_cast<BookmarkDetailWidget *>(detail())) {
@@ -212,6 +212,5 @@ public:
     connect(bookmarkService, &BookmarkService::bookmarkSaved, this, &ManageBookmarksView::onBookmarkSaved);
     connect(bookmarkService, &BookmarkService::bookmarkRemoved, this,
             &ManageBookmarksView::onBookmarkRemoved);
-    // connect(m_topBar, &TopBar::argumentsChanged, this, &ManageBookmarksView::handleArgumentChange);
   }
 };

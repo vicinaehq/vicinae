@@ -40,29 +40,17 @@
 #include <qwidget.h>
 
 bool AppWindow::event(QEvent *event) {
-  /*
-if (event->type() == QEvent::KeyPress) {
-auto keyEvent = static_cast<QKeyEvent *>(event);
-auto key = keyEvent->key();
-bool isEsc = keyEvent->key() == Qt::Key_Escape;
+  if (event->type() == QEvent::KeyPress) {
+    auto keyEvent = static_cast<QKeyEvent *>(event);
+    auto key = keyEvent->key();
+    bool isEsc = keyEvent->key() == Qt::Key_Escape;
 
-if (m_viewStack.size() > 1) {
-if (isEsc || (keyEvent->key() == Qt::Key_Backspace)) {
-  popCurrentView();
-  return true;
-}
-}
-
-if (isEsc) {
-qDebug() << "esc";
-
-hide();
-return true;
-}
-
-return true;
-}
-*/
+    if (isEsc || (keyEvent->key() == Qt::Key_Backspace)) {
+      qDebug() << "Escape";
+      ServiceRegistry::instance()->UI()->popView();
+      return true;
+    }
+  }
 
   return QWidget::event(event);
 }

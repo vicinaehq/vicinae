@@ -123,7 +123,11 @@ void UIController::handleActionButtonClick() {
 }
 
 void UIController::popView() {
-  if (m_stateStack.size() == 1) return;
+  if (m_stateStack.size() == 1) {
+    m_topBar->input->setText("");
+    emit m_topBar->input->textEdited("");
+    return;
+  }
 
   if (auto view = topView()) {
     if (auto accessory = view->searchBarAccessory()) {
