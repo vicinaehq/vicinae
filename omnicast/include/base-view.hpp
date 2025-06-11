@@ -1,5 +1,6 @@
 #pragma once
 #include "action-panel/action-panel.hpp"
+#include "argument.hpp"
 #include "common.hpp"
 #include "extend/action-model.hpp"
 #include "omni-icon.hpp"
@@ -20,6 +21,7 @@
 #include <memory>
 #include <qboxlayout.h>
 #include <qlogging.h>
+#include <qobjectdefs.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
 
@@ -56,6 +58,8 @@ public:
   void activate() { onActivate(); }
   void deactivate() { onDeactivate(); }
 
+  virtual void argumentValuesChanged(const std::vector<std::pair<QString, QString>> &arguments) {}
+
   /**
    * Received when the global text search bar updates.
    */
@@ -81,6 +85,14 @@ public:
 
   virtual void clearToast() {}
 
+  void activateCompleter(const ArgumentList &args, const OmniIconUrl &icon) {
+    m_uiController->activateCompleter(args, icon);
+  }
+
+  void destroyCompleter() { m_uiController->destroyCompleter(); }
+
+  virtual QWidget *searchBarAccessory() const { return nullptr; }
+
   QString searchPlaceholderText() const { return ""; }
   void setSearchPlaceholderText(const QString &value) const {
     m_uiController->setSearchPlaceholderText(value);
@@ -95,12 +107,14 @@ public:
   /**
    * The current search text for this view. If not applicable, do not implement.
    */
-  QString searchText() const { return {}; }
+  QString searchText() const { return m_uiController->searchText(); }
 
   /**
    * Set the search text for the current view, if applicable
    */
   void setSearchText(const QString &value) { m_uiController->setSearchText(value); }
+
+  virtual ActionPanelV2Widget *actionPanel() const { return nullptr; }
 
   /**
    * Set the navigation title, if applicable.
@@ -151,9 +165,7 @@ class SimpleView : public BaseView {
 
 protected:
   QVBoxLayout *m_layout = new QVBoxLayout(this);
-  // StatusBar *m_statusBar = new StatusBar(this);
   HorizontalLoadingBar *m_loadingBar = new HorizontalLoadingBar(this);
-  // TopBar *m_topBar = new TopBar(this);
   ActionPanelV2Widget *m_actionPannelV2 = new ActionPanelV2Widget(this);
 
   KeyboardShortcutModel defaultActionPanelShortcut() { return DEFAULT_ACTION_PANEL_SHORTCUT; }
@@ -166,6 +178,8 @@ protected:
 
     return false;
   }
+
+  ActionPanelV2Widget *actionPanel() const override { return m_actionPannelV2; }
 
   bool event(QEvent *event) override {
     if (event->type() == QEvent::KeyPress) {
@@ -288,10 +302,7 @@ public:
     // | std::ranges::to<std::vector>();
   }
 
-  void clearSearchBar() override {
-    // m_topBar->input->clear();
-    onSearchChanged("");
-  }
+  void clearSearchBar() override { setSearchText(""); }
 
   void setLoading(bool value) { m_loadingBar->setStarted(value); }
 
@@ -375,9 +386,9 @@ protected:
       }
 
       if (auto completer = nextItem->createCompleter(); completer && completer->arguments.size() > 0) {
-        // m_topBar->activateCompleter(*completer);
+        activateCompleter(completer->arguments, completer->iconUrl);
       } else {
-        // m_topBar->destroyCompleter();
+        destroyCompleter();
       }
 
       // TODO: only expect suffix and automatically use command name from prefix
@@ -389,10 +400,10 @@ protected:
       auto ui = ServiceRegistry::instance()->UI();
 
       if (auto panel = nextItem->actionPanel()) {
-        ui->setActionPanel(panel);
+        m_actionPannelV2->setView(panel);
       } else {
-        // m_actionPannelV2->hide();
-        // m_actionPannelV2->popToRoot();
+        m_actionPannelV2->hide();
+        m_actionPannelV2->popToRoot();
       }
 
       /*
@@ -415,7 +426,7 @@ protected:
 
     } else {
       m_split->setDetailVisibility(false);
-      // m_topBar->destroyCompleter();
+      destroyCompleter();
       m_actionPannelV2->popToRoot();
       m_actionPannelV2->close();
     }
@@ -444,6 +455,7 @@ public:
 
 class GridView : public SimpleView {
   bool inputFilter(QKeyEvent *event) override {
+    qDebug() << "grid input";
     switch (event->key()) {
     case Qt::Key_Up:
       return m_grid->selectUp();
@@ -453,7 +465,7 @@ class GridView : public SimpleView {
       return m_grid->selectLeft();
     case Qt::Key_Right:
       return m_grid->selectRight();
-    case Qt::Key_Enter:
+    case Qt::Key_Return:
       m_grid->activateCurrentSelection();
       return true;
     }
@@ -502,7 +514,7 @@ protected:
       }
 
       if (auto panel = nextItem->actionPanel()) {
-        ui->setActionPanel(panel);
+        m_actionPannelV2->setView(panel);
       } else {
         // m_actionPannelV2->hide();
         // m_actionPannelV2->popToRoot();

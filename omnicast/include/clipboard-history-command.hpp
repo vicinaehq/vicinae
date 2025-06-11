@@ -17,6 +17,7 @@
 #include <qwidget.h>
 #include <sys/socket.h>
 #include "text-file-viewer.hpp"
+#include "ui/typography.hpp"
 
 class LogWidget : public QWidget {
   ~LogWidget() { qDebug() << "widget down"; }
@@ -228,6 +229,10 @@ public:
 };
 
 class ClipboardHistoryCommand : public ListView {
+  TypographyWidget *m_accessory = new TypographyWidget;
+
+  QWidget *searchBarAccessory() const override { return m_accessory; }
+
   void generateList(const QString &query) {
     auto clipman = ServiceRegistry::instance()->clipman();
     auto result = clipman->listAll(100, 0, {.query = query});
@@ -256,7 +261,10 @@ class ClipboardHistoryCommand : public ListView {
     });
   }
 
-  void initialize() override { onSearchChanged(""); }
+  void initialize() override {
+    setSearchPlaceholderText("Browse clipboard history...");
+    onSearchChanged("");
+  }
 
   void onSearchChanged(const QString &value) override { generateList(value); }
 
@@ -269,7 +277,8 @@ public:
   ClipboardHistoryCommand() {
     auto clipman = ServiceRegistry::instance()->clipman();
 
-    setSearchPlaceholderText("Browse clipboard history...");
+    m_accessory->setText("Search accessory");
+
     connect(clipman, &ClipboardService::itemInserted, this,
             &ClipboardHistoryCommand::clipboardSelectionInserted);
   }

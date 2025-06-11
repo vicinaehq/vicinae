@@ -78,6 +78,12 @@ class StatusBar : public QWidget {
     }
   };
 
+  void hideEvent(QHideEvent *event) override {
+    _actionButton->hoverChanged(false);
+    _selectedActionButton->hoverChanged(false);
+    QWidget::hideEvent(event);
+  }
+
   void paintEvent(QPaintEvent *event) override;
   void setLeftWidget(QWidget *left);
 

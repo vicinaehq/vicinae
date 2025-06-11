@@ -435,6 +435,7 @@ class ExtensionCommandRuntime : public CommandContext {
     m_viewStack.emplace_back(view);
     connect(view, &ExtensionViewWrapper::notificationRequested, this, &ExtensionCommandRuntime::notify);
     ui->pushView(view);
+    view->setNavigation(m_command->name(), m_command->iconUrl());
   }
 
 public:

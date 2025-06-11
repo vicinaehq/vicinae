@@ -95,6 +95,7 @@ public:
 
 signals:
   void actionActivated(AbstractAction *action) const;
+  void actionsChanged() const;
   void pushViewRequested(ActionPanelView *view) const;
   void popCurrentViewRequested() const;
 };
@@ -405,6 +406,7 @@ public:
 
     view->installEventFilter(this);
     connect(view, &ActionPanelView::actionActivated, this, &ActionPanelV2Widget::actionActivated);
+    connect(view, &ActionPanelView::actionsChanged, this, &ActionPanelV2Widget::actionsChanged);
     connect(view, &ActionPanelView::popCurrentViewRequested, this, &ActionPanelV2Widget::handlePop);
     connect(view, &ActionPanelView::pushViewRequested, this, &ActionPanelV2Widget::pushView);
 
@@ -413,6 +415,7 @@ public:
     m_viewStack.push(view);
     view->initialize();
     view->activate();
+    emit actionsChanged();
     // resizeView();
   }
 
@@ -427,4 +430,5 @@ signals:
   void opened() const;
   void closed() const;
   void openChanged(bool value);
+  void actionsChanged() const;
 };

@@ -127,17 +127,16 @@ bool AppWindow::replaceView(BaseView *previous, BaseView *next) {
       return false;
     }
 
+    m_viewContainer->addWidget(next);
+
     bool isOldFront = previous == frontView();
 
     *it = next;
 
     if (isOldFront) {
       qCritical() << "replace existing view";
-      ServiceRegistry::instance()->UI()->setTopView(next);
-      next->setParent(this);
-      next->setFixedSize(size());
+      m_viewContainer->setCurrentWidget(next);
       next->show();
-      if (auto toast = toastService->currentToast()) { next->setToast(toast); }
       next->createInitialize();
       next->activate();
     }
@@ -417,7 +416,6 @@ AppWindow::AppWindow(QWidget *parent) : QMainWindow(parent) {
   m_statusBar->setCurrentActionButtonVisibility(false);
   topBar->setFixedHeight(Omnicast::TOP_BAR_HEIGHT);
 
-  ui->setActionPanelWidget(m_actionPanel);
   ui->setStatusBar(m_statusBar);
   ui->setTopBar(topBar);
   m_layout->setSpacing(0);

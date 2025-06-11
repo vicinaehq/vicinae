@@ -93,6 +93,7 @@ public:
   TopBar(QWidget *parent = nullptr);
 
   void setAccessoryWidget(QWidget *widget);
+  void clearAccessoryWidget();
   QWidget *accessoryWidget() const;
 
   bool eventFilter(QObject *obj, QEvent *event) override;
@@ -107,7 +108,8 @@ public:
     input->setInline(false);
   }
 
-  void activateCompleter(const CompleterData &data) {
+  void activateCompleter(const CompleterData &data,
+                         const std::vector<std::pair<QString, QString>> &values = {}) {
     while (m_completer->m_layout->count() > 1) {
       auto item = m_completer->m_layout->takeAt(1);
       if (auto w = item->widget()) w->deleteLater();
@@ -118,13 +120,17 @@ public:
     m_completer->m_args.clear();
     m_completer->m_inputs.reserve(data.arguments.size());
 
-    for (const auto &arg : data.arguments) {
+    for (int i = 0; i != data.arguments.size(); ++i) {
+      auto &arg = data.arguments.at(i);
       auto input = new InlineQLineEdit(arg.placeholder);
+
+      if (i < values.size()) { input->setText(values.at(i).second); }
 
       connect(input, &InlineQLineEdit::textChanged, this,
               [this]() { emit argumentsChanged(m_completer->collect()); });
 
       input->installEventFilter(this);
+
       m_completer->m_layout->addWidget(input);
       m_completer->m_inputs.emplace_back(input);
       m_completer->m_args.emplace_back(arg);

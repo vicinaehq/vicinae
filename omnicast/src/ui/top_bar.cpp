@@ -53,6 +53,14 @@ void TopBar::setAccessoryWidget(QWidget *accessory) {
   m_accessory = accessory;
 }
 
+void TopBar::clearAccessoryWidget() {
+  auto widget = new QWidget();
+
+  m_accessory->hide();
+  layout->replaceWidget(m_accessory, widget);
+  m_accessory = widget;
+}
+
 QWidget *TopBar::accessoryWidget() const { return m_accessory; }
 
 bool TopBar::eventFilter(QObject *obj, QEvent *event) {

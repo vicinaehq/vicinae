@@ -33,7 +33,7 @@ class IconBrowserView : public GridView {
     IconBrowserItem(const QString &name) : _name(name) {}
   };
 
-  void onSearchChanged(const QString &s) override {
+  void textChanged(const QString &s) override {
     qCritical() << "onSearchChanged" << s;
 
     int inset = 20;
@@ -59,7 +59,7 @@ class IconBrowserView : public GridView {
     });
   }
 
-  void initialize() override {}
+  void initialize() override { textChanged(searchText()); }
 
 public:
   IconBrowserView() { setSearchPlaceholderText("Search builtin icons..."); }
