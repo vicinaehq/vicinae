@@ -1,6 +1,7 @@
 #pragma once
 #include "argument.hpp"
 #include "omni-icon.hpp"
+#include "ui/horizontal-loading-bar.hpp"
 #include "ui/icon-button.hpp"
 #include "ui/argument-completer-widget.hpp"
 #include "ui/inline_qline_edit.hpp"
@@ -81,8 +82,10 @@ struct TopBar : public QWidget {
 
 public:
   IconButton *backButton = nullptr;
+  QVBoxLayout *m_vlayout = new QVBoxLayout();
   QHBoxLayout *layout;
   SearchBar *input;
+  HorizontalLoadingBar *m_loadingBar = new HorizontalLoadingBar;
   QWidget *m_backButtonSpacer = new QWidget(this);
   QWidget *m_accessory = new QWidget(this);
   ArgumentCompleterWidget *m_completer = new ArgumentCompleterWidget(this);
@@ -100,13 +103,13 @@ public:
   void showBackButton();
   void setBackButtonVisiblity(bool value);
   void hideBackButton();
-  void destroyQuicklinkCompleter();
-  void activateQuicklinkCompleter(const CompleterData &data);
 
   void destroyCompleter() {
     m_completer->hide();
     input->setInline(false);
   }
+
+  void setLoading(bool value);
 
   void activateCompleter(const CompleterData &data,
                          const std::vector<std::pair<QString, QString>> &values = {}) {
@@ -126,8 +129,10 @@ public:
 
       if (i < values.size()) { input->setText(values.at(i).second); }
 
-      connect(input, &InlineQLineEdit::textChanged, this,
-              [this]() { emit argumentsChanged(m_completer->collect()); });
+      connect(input, &InlineQLineEdit::textChanged, this, [this, input]() {
+        input->clearError();
+        emit argumentsChanged(m_completer->collect());
+      });
 
       input->installEventFilter(this);
 

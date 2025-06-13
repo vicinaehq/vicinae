@@ -72,7 +72,7 @@ void GridItemContentWidget::setInset(int inset) {
 void GridItemContentWidget::setHovered(bool hovered) {
   this->hovered = hovered;
 
-  if (hovered && !tooltip->text().isEmpty()) {
+  if (hovered) {
     showTooltip();
   } else {
     hideTooltip();
@@ -83,19 +83,25 @@ void GridItemContentWidget::setHovered(bool hovered) {
 
 void GridItemContentWidget::hideTooltip() { tooltip->hide(); }
 
-void GridItemContentWidget::showTooltip() {
-  const QPoint globalPos = mapToGlobal(QPoint(0, height() + 5));
-
-  tooltip->adjustSize();
-  tooltip->move(globalPos);
-  tooltip->show();
-}
+void GridItemContentWidget::showTooltip() {}
 
 void GridItemContentWidget::setTooltipText(const QString &text) { tooltip->setText(text); }
 
+bool GridItemContentWidget::event(QEvent *event) {
+  if (event->type() == QEvent::HoverEnter) {
+    setHovered(true);
+  } else if (event->type() == QEvent::HoverLeave) {
+    setHovered(false);
+  }
+
+  return QWidget::event(event);
+}
+
 GridItemContentWidget::GridItemContentWidget()
-    : _widget(nullptr), selected(false), hovered(false), tooltip(new Tooltip), _inset(10) {
+    : _widget(nullptr), selected(false), hovered(false), tooltip(new Tooltip(this)), _inset(10) {
+  setAttribute(Qt::WA_Hover);
   tooltip->hide();
+  tooltip->setTarget(this);
 }
 
 GridItemContentWidget::~GridItemContentWidget() { tooltip->deleteLater(); }

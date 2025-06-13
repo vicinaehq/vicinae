@@ -38,6 +38,7 @@ class UIController : public QObject {
       std::optional<CompleterData> data;
     } completer;
     ActionPanelV2Widget *actionPanel = nullptr;
+    bool isLoading = false;
   };
 
   KeyboardShortcutModel defaultActionPanelShortcut() { return DEFAULT_ACTION_PANEL_SHORTCUT; }
@@ -173,7 +174,7 @@ public:
     auto actions = panel->actions();
     auto primaryAction = panel->primaryAction();
 
-    m_statusBar->setActionButtonVisibility(!primaryAction || actions.size() > 1);
+    m_statusBar->setActionButtonVisibility(!actions.empty() && (!primaryAction || actions.size() > 1));
     m_statusBar->setCurrentActionButtonVisibility(primaryAction);
 
     if (auto action = panel->primaryAction()) {
@@ -186,6 +187,11 @@ public:
   }
 
   void handleTextEdited(const QString &text);
+
+  void setLoading(BaseView *sender, bool value) {
+    updateViewState(sender, [&](ViewState &state) { state.isLoading = value; });
+    if (sender == topView()) { m_topBar->setLoading(value); }
+  }
 
   void setTopBar(TopBar *bar) {
     m_topBar = bar;
@@ -233,6 +239,7 @@ public:
   void setSearchAccessory(QWidget *widget) {
     // m_controller.setS(widget);
   }
+  void setLoading(bool value) { m_controller.setLoading(&m_view, value); }
 
   UIViewController(UIController *controller, BaseView *view) : m_view(*view), m_controller(*controller) {}
 };

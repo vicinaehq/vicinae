@@ -1,4 +1,6 @@
 #include "ui/omni-list-item-widget-wrapper.hpp"
+#include "ui/omni-list-item-widget.hpp"
+#include <qnamespace.h>
 
 void OmniListItemWidgetWrapper::handleDoubleClicked() const { emit doubleClicked(_index); }
 
@@ -22,7 +24,9 @@ void OmniListItemWidgetWrapper::setSelected(bool selected) {
   if (_widget) _widget->selectionChanged(selected);
 }
 
-QWidget *OmniListItemWidgetWrapper::widget() const { return _widget; }
+OmniListItemWidget *OmniListItemWidgetWrapper::widget() const { return _widget; }
 int OmniListItemWidgetWrapper::index() const { return _index; }
 
-OmniListItemWidgetWrapper::OmniListItemWidgetWrapper(QWidget *parent) : QWidget(parent), _widget(nullptr) {}
+OmniListItemWidgetWrapper::OmniListItemWidgetWrapper(QWidget *parent) : QWidget(parent), _widget(nullptr) {
+  setAttribute(Qt::WA_Hover);
+}

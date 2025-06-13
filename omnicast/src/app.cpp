@@ -13,6 +13,7 @@
 #include "command.hpp"
 #include "service-registry.hpp"
 #include "services/toast/toast-service.hpp"
+#include "ui/keyboard.hpp"
 #include "ui/toast.hpp"
 #include "wm/window-manager-factory.hpp"
 #include "extension/manager/extension-manager.hpp"
@@ -46,9 +47,16 @@ bool AppWindow::event(QEvent *event) {
     bool isEsc = keyEvent->key() == Qt::Key_Escape;
 
     if (isEsc || (keyEvent->key() == Qt::Key_Backspace)) {
-      qDebug() << "Escape";
+      qDebug() << "Root Escape";
       ServiceRegistry::instance()->UI()->popView();
       return true;
+    }
+
+    if (keyEvent == KeyboardShortcut(m_statusBar->actionButtonShortcut())) {
+      if (auto panel = m_viewStack.back()->actionPanel()) {
+        panel->show();
+        return true;
+      }
     }
   }
 
@@ -73,9 +81,17 @@ void AppWindow::popCurrentView() {
   auto toastService = ServiceRegistry::instance()->toastService();
   auto ui = ServiceRegistry::instance()->UI();
 
-  if (activeCommand.viewStack.empty()) return;
+  qDebug() << "pop requested";
 
-  if (m_viewStack.size() == 1) return;
+  if (activeCommand.viewStack.empty()) {
+    qDebug() << "active command view stack empty";
+    return;
+  }
+
+  if (m_viewStack.size() == 1) {
+    qDebug() << "can't pop base view";
+    return;
+  }
 
   auto previous = frontView();
   m_viewStack.pop_back();
@@ -86,13 +102,12 @@ void AppWindow::popCurrentView() {
   auto next = frontView();
 
   next->activate();
-  ServiceRegistry::instance()->UI()->setTopView(next);
-  next->show();
   m_viewContainer->setCurrentWidget(next);
 
   // if (auto toast = toastService->currentToast()) { next->setToast(toast); }
 
   previous->deleteLater();
+  previous->hide();
 
   if (activeCommand.viewStack.size() == 1) {
     activeCommand.command->unload();

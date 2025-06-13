@@ -24,6 +24,9 @@ TopBar::TopBar(QWidget *parent) : QWidget(parent), layout(new QHBoxLayout()), in
 
   connect(backButton, &IconButton::clicked, input, &SearchBar::pop);
 
+  m_loadingBar->setFixedHeight(1);
+  m_loadingBar->setBarWidth(100);
+
   layout->setSpacing(0);
   layout->setContentsMargins(15, 10, 15, 10);
   layout->addWidget(backButton, 0, Qt::AlignLeft | Qt::AlignVCenter);
@@ -38,7 +41,15 @@ TopBar::TopBar(QWidget *parent) : QWidget(parent), layout(new QHBoxLayout()), in
 
   input->installEventFilter(this);
 
-  setLayout(layout);
+  auto horizontal = new QWidget;
+
+  horizontal->setLayout(layout);
+  m_vlayout->setContentsMargins(0, 0, 0, 0);
+  m_vlayout->setSpacing(0);
+  m_vlayout->addWidget(horizontal);
+  m_vlayout->addWidget(m_loadingBar);
+
+  setLayout(m_vlayout);
 
   setProperty("class", "top-bar");
 
@@ -75,19 +86,21 @@ bool TopBar::eventFilter(QObject *obj, QEvent *event) {
     }
 
     if (key == Qt::Key_Return || key == Qt::Key_Enter) {
-      if (m_completer->isVisible()) {
-        for (int i = 0; i != m_completer->m_args.size(); ++i) {
-          auto &arg = m_completer->m_args.at(i);
-          auto input = m_completer->m_inputs.at(i);
+      /*
+  if (m_completer->isVisible()) {
+    for (int i = 0; i != m_completer->m_args.size(); ++i) {
+      auto &arg = m_completer->m_args.at(i);
+      auto input = m_completer->m_inputs.at(i);
 
-          qCritical() << "required" << arg.required << input->text();
+      qCritical() << "required" << arg.required << input->text();
 
-          if (arg.required && input->text().isEmpty()) {
-            input->setFocus();
-            return true;
-          }
-        }
+      if (arg.required && input->text().isEmpty()) {
+        input->setFocus();
+        return true;
       }
+    }
+  }
+      */
 
       // do not send a new event to the input itself!
       if (obj == input) { return false; }
@@ -100,39 +113,7 @@ bool TopBar::eventFilter(QObject *obj, QEvent *event) {
   return false;
 }
 
-void TopBar::destroyQuicklinkCompleter() {
-  if (quickInput) {
-    layout->removeWidget(quickInput);
-    quickInput->deleteLater();
-    quickInput = nullptr;
-    input->setFocus();
-    input->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
-  }
-
-  completerData.reset();
-}
-
-void TopBar::activateQuicklinkCompleter(const CompleterData &data) {
-  destroyQuicklinkCompleter();
-
-  completerData = data;
-
-  auto completion = new InputCompleter(data.placeholders);
-
-  if (!data.placeholders.isEmpty()) { completion->setIcon(data.iconUrl); }
-
-  for (size_t i = 0; i != completion->inputs.size(); ++i) {
-    auto input = completion->inputs.at(i);
-
-    input->installEventFilter(this);
-    if (i < data.values.size()) input->setText(data.values.at(i));
-  }
-
-  quickInput = completion;
-  auto fm = input->fontMetrics();
-  input->setFixedWidth(fm.boundingRect(input->text()).width() + 35);
-  layout->addWidget(completion, 1);
-}
+void TopBar::setLoading(bool value) { m_loadingBar->setStarted(value); }
 
 void TopBar::showBackButton() {
   backButton->show();

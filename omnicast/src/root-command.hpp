@@ -308,10 +308,11 @@ class RootCommandV2 : public ListView {
     m_calcDebounce->setInterval(100);
     m_calcDebounce->setSingleShot(true);
     setSearchPlaceholderText("Search for apps or commands...");
+    textChanged(searchText());
+
     auto manager = ServiceRegistry::instance()->rootItemManager();
     connect(manager, &RootItemManager::itemsChanged, this, [this]() { onSearchChanged(searchText()); });
     connect(m_calcDebounce, &QTimer::timeout, this, &RootCommandV2::handleCalculatorTimeout);
-    SimpleView::initialize();
   }
 
   void escapePressed() override {

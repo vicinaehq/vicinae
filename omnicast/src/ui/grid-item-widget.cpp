@@ -42,3 +42,5 @@ void GridItemWidget2::setWidget(QWidget *widget) { main->setWidget(widget); }
 QWidget *GridItemWidget2::widget() const { return main->widget(); }
 
 size_t GridItemWidget2::spacing() { return layout->spacing(); }
+
+void GridItemWidget2::clearTransientState() { main->setHovered(false); }

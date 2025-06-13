@@ -60,6 +60,8 @@ public:
 
   virtual void argumentValuesChanged(const std::vector<std::pair<QString, QString>> &arguments) {}
 
+  virtual void executeAction(AbstractAction *action) {}
+
   /**
    * Received when the global text search bar updates.
    */
@@ -143,6 +145,8 @@ public:
     m_uiController->setNavigation(title, icon);
   }
 
+  void setLoading(bool value) { m_uiController->setLoading(value); }
+
   /**
    * The dynamic arguments for this view. Used by some actions.
    */
@@ -165,7 +169,6 @@ class SimpleView : public BaseView {
 
 protected:
   QVBoxLayout *m_layout = new QVBoxLayout(this);
-  HorizontalLoadingBar *m_loadingBar = new HorizontalLoadingBar(this);
   ActionPanelV2Widget *m_actionPannelV2 = new ActionPanelV2Widget(this);
 
   KeyboardShortcutModel defaultActionPanelShortcut() { return DEFAULT_ACTION_PANEL_SHORTCUT; }
@@ -181,46 +184,6 @@ protected:
 
   ActionPanelV2Widget *actionPanel() const override { return m_actionPannelV2; }
 
-  bool event(QEvent *event) override {
-    if (event->type() == QEvent::KeyPress) {
-      auto keyEvent = static_cast<QKeyEvent *>(event);
-      auto key = keyEvent->key();
-
-      bool isEsc = keyEvent->key() == Qt::Key_Escape;
-
-      if (isEsc) {
-        escapePressed();
-        return true;
-      }
-
-      /*
-  if (KeyboardShortcut(m_statusBar->actionButtonShortcut()) == keyEvent) {
-    // m_actionPannel->showActions();
-    m_actionPannelV2->show();
-
-    return true;
-  }
-      */
-
-      auto actions = m_actionPannelV2->actions();
-      auto bound = std::ranges::find_if(actions, [&](const AbstractAction *action) {
-        return action->shortcut && KeyboardShortcut(*action->shortcut) == keyEvent;
-      });
-
-      if (bound != actions.end()) {
-        executeAction(*bound);
-        return true;
-      }
-    }
-
-    return QWidget::event(event);
-  }
-
-  void actionPannelOpened() {
-    // m_statusBar->setActionButtonHighlight(true);
-    onActionPanelOpened();
-  }
-
   virtual void escapePressed() {
     qDebug() << "escape pressed";
     ServiceRegistry::instance()->UI()->popView();
@@ -231,12 +194,7 @@ protected:
    */
   virtual void backspacePressed() { ServiceRegistry::instance()->UI()->popView(); }
 
-  void actionPannelClosed() {
-    // m_statusBar->setActionButtonHighlight(false);
-    onActionPanelClosed();
-  }
-
-  void executeAction(AbstractAction *action) {
+  void executeAction(AbstractAction *action) override {
     action->execute();
     onActionExecuted(action);
     if (action->isSubmenu()) {
@@ -247,12 +205,6 @@ protected:
       }
     }
     m_actionPannelV2->close();
-  }
-
-  void actionButtonClicked() { m_actionPannelV2->show(); }
-
-  void currentActionButtonClicked() {
-    if (auto action = m_actionPannelV2->primaryAction()) { executeAction(action); }
   }
 
   virtual QWidget *centerWidget() const {
@@ -276,23 +228,11 @@ protected:
   }
 
   void setupUI(QWidget *centerWidget) {
-    // m_statusBar->setFixedHeight(Omnicast::STATUS_BAR_HEIGHT);
-    // m_statusBar->setActionButtonVisibility(false);
-    // m_statusBar->setCurrentActionButtonVisibility(false);
-
-    m_loadingBar->setFixedHeight(1);
-    m_loadingBar->setBarWidth(100);
-
     m_layout->setContentsMargins(0, 0, 0, 0);
     m_layout->setSpacing(0);
     // m_layout->addWidget(m_topBar);
-    m_layout->addWidget(m_loadingBar);
     m_layout->addWidget(centerWidget, 1);
     setLayout(m_layout);
-
-    // connect(m_topBar->input, &SearchBar::pop, this, &SimpleView::backspacePressed);
-    connect(m_actionPannelV2, &ActionPanelV2Widget::actionActivated, this, &SimpleView::executeAction);
-    // connect(m_statusBar, &StatusBar::actionButtonClicked, this, &SimpleView::actionButtonClicked);
   }
 
 public:
@@ -303,8 +243,6 @@ public:
   }
 
   void clearSearchBar() override { setSearchText(""); }
-
-  void setLoading(bool value) { m_loadingBar->setStarted(value); }
 
   void initialize() override {}
 
@@ -327,7 +265,7 @@ class ListView : public SimpleView {
       break;
     case Qt::Key_Return:
       m_list->activateCurrentSelection();
-      break;
+      return true;
     }
 
     return SimpleView::inputFilter(event);
@@ -406,24 +344,6 @@ protected:
         m_actionPannelV2->popToRoot();
       }
 
-      /*
-  m_statusBar->setActionButton(nextItem->actionPanelTitle(), KeyboardShortcutModel{.key = "return"});
-
-  auto actions = m_actionPannelV2->actions();
-  auto primaryAction = m_actionPannelV2->primaryAction();
-
-  m_statusBar->setActionButtonVisibility(!primaryAction || actions.size() > 1);
-  m_statusBar->setCurrentActionButtonVisibility(primaryAction);
-
-  if (auto action = m_actionPannelV2->primaryAction()) {
-    m_statusBar->setCurrentAction(action->title(),
-                                  action->shortcut.value_or(KeyboardShortcutModel{.key = "return"}));
-    m_statusBar->setActionButton("Actions", defaultActionPanelShortcut());
-  } else {
-    m_statusBar->setActionButton(nextItem->actionPanelTitle(), KeyboardShortcutModel{.key = "return"});
-  }
-      */
-
     } else {
       m_split->setDetailVisibility(false);
       destroyCompleter();
@@ -455,7 +375,6 @@ public:
 
 class GridView : public SimpleView {
   bool inputFilter(QKeyEvent *event) override {
-    qDebug() << "grid input";
     switch (event->key()) {
     case Qt::Key_Up:
       return m_grid->selectUp();
@@ -562,8 +481,8 @@ public:
 
 class FormView : public SimpleView {
 public:
-  FormView(QWidget *parent = nullptr) : SimpleView(parent) { /*m_topBar->input->hide();*/ }
+  FormView(QWidget *parent = nullptr) : SimpleView(parent) {}
 
-  bool needsGlobalStatusBar() const override { return false; }
+  bool needsGlobalStatusBar() const override { return true; }
   bool supportsSearch() const override { return false; }
 };

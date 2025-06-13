@@ -86,8 +86,11 @@ class CalculatorHistoryView : public ListView {
     m_list->endResetModel(OmniList::SelectFirst);
   }
 
-public:
-  CalculatorHistoryView() {
+  void initialize() override {
     setSearchPlaceholderText("Do maths, convert units or search past calculations...");
+    setLoading(true);
   }
+
+public:
+  CalculatorHistoryView() {}
 };

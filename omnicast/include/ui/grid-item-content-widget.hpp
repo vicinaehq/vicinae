@@ -21,14 +21,13 @@ class GridItemContentWidget : public QWidget {
 protected:
   int borderWidth() const;
   void paintEvent(QPaintEvent *event) override;
-  void enterEvent(QEnterEvent *event) override { setHovered(true); }
-  void leaveEvent(QEvent *event) override { setHovered(false); }
   void hideEvent(QHideEvent *event) override;
   void moveEvent(QMoveEvent *event) override {
     QWidget::moveEvent(event);
     // reposition the tooltip relative to the widget
     if (tooltip->isVisible()) { showTooltip(); }
   }
+  bool event(QEvent *event) override;
 
   void resizeEvent(QResizeEvent *event) override;
   void mousePressEvent(QMouseEvent *event) override;

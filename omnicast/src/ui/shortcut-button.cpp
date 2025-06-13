@@ -40,7 +40,6 @@ KeyboardShortcutModel ShortcutButton::shortcut() const { return _shortcut_indica
 
 ShortcutButton::ShortcutButton()
     : _label(new TypographyWidget), _shortcut_indicator(new KeyboardShortcutIndicatorWidget) {
-  setAttribute(Qt::WA_Hover);
   auto layout = new QHBoxLayout;
 
   layout->setAlignment(Qt::AlignVCenter);

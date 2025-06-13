@@ -25,6 +25,8 @@ DefaultListItemWidget::DefaultListItemWidget(const OmniIconUrl &iconUrl, const Q
   _icon->setFixedSize(25, 25);
   _icon->setUrl(iconUrl);
 
+  setAttribute(Qt::WA_Hover);
+
   auto mainLayout = new QHBoxLayout();
 
   mainLayout->setContentsMargins(10, 8, 10, 8);

@@ -1,6 +1,32 @@
 #include "ui/tooltip.hpp"
 #include "theme.hpp"
 #include "ui/typography.hpp"
+#include <qevent.h>
+#include <qnamespace.h>
+#include <qwidget.h>
+
+bool Tooltip::eventFilter(QObject *watched, QEvent *event) {
+  if (watched != m_target) return QWidget::eventFilter(watched, event);
+
+  if (event->type() == QEvent::HoverEnter) {
+    qDebug() << "enter tooltip";
+    if (m_target->isVisible()) { show(); }
+  }
+  if (event->type() == QEvent::HoverLeave) {
+    hide();
+    qDebug() << "leave tooltip";
+  }
+  if (event->type() == QEvent::Hide) { hide(); }
+  if (event->type() == QEvent::HideToParent) { hide(); }
+  if (event->type() == QEvent::Resize) {
+    if (isVisible()) position();
+  }
+  if (event->type() == QEvent::Move) {
+    if (isVisible()) position();
+  }
+
+  return QWidget::eventFilter(watched, event);
+}
 
 void Tooltip::paintEvent(QPaintEvent *event) {
   auto &theme = ThemeService::instance().theme();
@@ -23,16 +49,80 @@ void Tooltip::paintEvent(QPaintEvent *event) {
   painter.drawPath(path);
 }
 
-void Tooltip::setText(const QString &s) { m_label->setText(s); }
+QPoint Tooltip::calculatePosition(Qt::Alignment align) const {
+  if (!m_target) { return {}; }
 
-QString Tooltip::text() { return m_label->text(); }
+  QPoint baseTargetPos;
+  int yOffset = 0;
 
-Tooltip::Tooltip(QWidget *parent) : QWidget(parent), m_label(new TypographyWidget) {
-  setWindowFlags(Qt::FramelessWindowHint | Qt::ToolTip);
+  if (align.testFlag(Qt::AlignTop)) {
+    baseTargetPos = m_target->geometry().topLeft();
+    yOffset = -10;
+  } else if (align.testFlag(Qt::AlignBottom)) {
+    baseTargetPos = m_target->geometry().bottomLeft();
+    yOffset = 10;
+  }
+
+  auto pos = m_target->mapToGlobal(baseTargetPos);
+  auto ypos = pos.y() + yOffset;
+
+  int gap = width() - m_target->width();
+  auto xpos = pos.x() - gap / 2;
+
+  return {xpos, ypos};
+}
+
+void Tooltip::position() {
+  auto pos = calculatePosition(m_alignment);
+  move(pos);
+}
+
+void Tooltip::showEvent(QShowEvent *event) {
+  position();
+  QWidget::showEvent(event);
+}
+
+void Tooltip::setWidget(QWidget *widget) {
+  if (auto item = m_layout->itemAt(0)) {
+    if (auto previous = item->widget()) {
+      m_layout->replaceWidget(previous, widget);
+      previous->deleteLater();
+    }
+  }
+}
+
+void Tooltip::setText(const QString &s) {
+  auto typography = new TypographyWidget();
+
+  typography->setText(s);
+  setWidget(typography);
+}
+
+void Tooltip::setTarget(QWidget *target) {
+  if (m_target) { m_target->removeEventFilter(this); }
+
+  m_target = target;
+  m_target->setAttribute(Qt::WA_Hover);
+  m_target->installEventFilter(this);
+}
+
+Tooltip::Tooltip(QWidget *parent) {
+  qDebug() << "tooltip parent" << parent;
+  if (parent) setParent(parent->window());
+  setWindowFlags(Qt::ToolTip | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
   setAttribute(Qt::WA_TranslucentBackground);
+  setAttribute(Qt::WA_ShowWithoutActivating);
+  setAttribute(Qt::WA_X11DoNotAcceptFocus); // X11 specific focus prevention
+  setAttribute(Qt::WA_AlwaysStackOnTop);    // Stay on top without stealing focus
+  setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
-  auto layout = new QVBoxLayout;
+  m_layout->setContentsMargins(5, 5, 5, 5);
+  m_layout->setSpacing(0);
+  m_layout->addWidget(new QWidget);
+  setLayout(m_layout);
+}
 
-  layout->addWidget(m_label);
-  setLayout(layout);
+void Tooltip::setAlignment(Qt::Alignment align) {
+  m_alignment = align;
+  position();
 }

@@ -167,7 +167,6 @@ public:
 
         section.setColumns(8);
         section.setSpacing(10);
-        section.addSpacing(5);
 
         auto items = sectionMap[name] | std::views::transform(makeEmojiItem) | std::ranges::to<std::vector>();
 
@@ -191,7 +190,6 @@ public:
 
       results.setColumns(8);
       results.setSpacing(10);
-      results.addSpacing(5);
 
       auto items = m_searchTrie->prefixSearch(s.toStdString()) | std::views::transform(makeEmojiItem) |
                    std::ranges::to<std::vector>();

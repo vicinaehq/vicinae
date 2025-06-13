@@ -17,7 +17,7 @@ public:
   OmniListItemWidgetWrapper(QWidget *parent = nullptr);
   ~OmniListItemWidgetWrapper() { /*qDebug() << "delete item widget wrapper";*/ }
 
-  QWidget *widget() const;
+  OmniListItemWidget *widget() const;
   int index() const;
 
   void setSelected(bool selected);

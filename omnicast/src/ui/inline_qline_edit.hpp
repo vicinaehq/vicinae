@@ -3,6 +3,7 @@
 
 class InlineQLineEdit : public QLineEdit {
   Q_OBJECT
+  QString m_error;
 
 private:
   void resizeFromText(const QString &s);
@@ -13,5 +14,7 @@ protected:
 public:
   InlineQLineEdit(const QString &placeholder, QWidget *parent = nullptr);
 
+  void setError(const QString &error);
+  void clearError();
   void handleTextChanged(const QString &s);
 };

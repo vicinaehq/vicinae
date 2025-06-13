@@ -56,7 +56,7 @@ void UIController::pushView(BaseView *view, const PushViewOptions &opts) {
 
   if (auto view = topView()) {
     if (auto panel = view->actionPanel()) {
-      disconnect(panel);
+      panel->disconnect();
       panel->close();
     }
 
@@ -73,6 +73,7 @@ void UIController::pushView(BaseView *view, const PushViewOptions &opts) {
 void UIController::handleCurrentActionButtonClick() { executeDefaultAction(); }
 
 void UIController::executeAction(AbstractAction *action) {
+  qCritical() << "execute action" << action->title();
   if (action->isPrimary()) {
     if (m_topBar->m_completer->isVisible()) {
       for (int i = 0; i != m_topBar->m_completer->m_args.size(); ++i) {
@@ -82,26 +83,18 @@ void UIController::executeAction(AbstractAction *action) {
         qCritical() << "required" << arg.required << input->text();
 
         if (arg.required && input->text().isEmpty()) {
+          input->setError("Required");
           input->setFocus();
+          if (auto view = topView()) {
+            if (auto panel = view->actionPanel()) { panel->close(); }
+          }
           return;
         }
       }
     }
   }
 
-  if (auto view = topView()) {
-    if (auto panel = view->actionPanel()) {
-      action->execute();
-      if (action->isSubmenu()) {
-        if (auto submenu = action->createSubmenu()) {
-          panel->pushView(submenu);
-          panel->show();
-          return;
-        }
-      }
-      panel->close();
-    }
-  }
+  if (auto view = topView()) { view->executeAction(action); }
 }
 
 void UIController::executeDefaultAction() {
@@ -124,6 +117,7 @@ void UIController::handleActionButtonClick() {
 
 void UIController::popView() {
   if (m_stateStack.size() == 1) {
+    qDebug() << "state stack == 0";
     m_topBar->input->setText("");
     emit m_topBar->input->textEdited("");
     return;
@@ -136,18 +130,20 @@ void UIController::popView() {
     }
   }
 
-  if (!m_stateStack.empty()) { m_stateStack.pop_back(); }
+  if (!m_stateStack.empty()) {
+    qCritical() << "Pop view";
+    m_stateStack.pop_back();
+  }
 
-  qCritical() << "Pop view";
   m_topBar->setBackButtonVisiblity(m_stateStack.size() > 1);
+
+  emit popViewRequested();
 
   if (!m_stateStack.empty()) {
     auto &state = m_stateStack.back();
 
     applyViewState(state);
   }
-
-  emit popViewRequested();
 }
 
 void UIController::handleCompleterArgumentsChanged(const std::vector<std::pair<QString, QString>> &values) {
@@ -165,6 +161,7 @@ void UIController::applyViewState(const ViewState &state) {
   m_topBar->input->setPlaceholderText(state.placeholderText);
   m_topBar->input->setVisible(state.sender->supportsSearch());
   m_topBar->setVisible(state.sender->needsGlobalTopBar());
+  m_topBar->setLoading(state.isLoading);
   m_statusBar->setVisible(state.sender->needsGlobalStatusBar());
 
   if (auto data = state.completer.data) {
@@ -183,6 +180,7 @@ void UIController::applyViewState(const ViewState &state) {
             [this](bool value) { m_statusBar->setActionButtonHighlight(value); });
     connect(panel, &ActionPanelV2Widget::actionsChanged, this,
             [this]() { setActionPanel(topView()->actionPanel()); });
+    connect(panel, &ActionPanelV2Widget::actionActivated, this, &UIController::executeAction);
 
     setActionPanel(panel);
   } else {
@@ -192,11 +190,4 @@ void UIController::applyViewState(const ViewState &state) {
   if (auto accessory = state.searchAccessory) { m_topBar->setAccessoryWidget(accessory); }
 }
 
-void UIController::setActionPanelWidget(BaseView *sender, ActionPanelV2Widget *panel) {
-  updateViewState(sender, [&](ViewState &state) { state.actionPanel = panel; });
-
-  if (topView() == sender) {
-    connect(panel, &ActionPanelV2Widget::openChanged, this,
-            [this](bool value) { m_statusBar->setActionButtonHighlight(value); });
-  }
-}
+void UIController::setActionPanelWidget(BaseView *sender, ActionPanelV2Widget *panel) {}

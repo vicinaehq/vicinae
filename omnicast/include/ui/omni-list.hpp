@@ -520,10 +520,19 @@ private:
 
   void scrollTo(int idx, ScrollBehaviour behaviour = ScrollBehaviour::ScrollAbsolute);
 
+  /**
+   * Moving widgets around doesn't properly keep track of the hover state, so we need
+   * to recalculate it manually here.
+   */
+  void recalculateMousePosition();
+
 protected:
   bool event(QEvent *event) override;
   void resizeEvent(QResizeEvent *event) override;
-  void showEvent(QShowEvent *event) override { QWidget::showEvent(event); }
+  void showEvent(QShowEvent *event) override {
+    recalculateMousePosition();
+    QWidget::showEvent(event);
+  }
 
 public:
   /**
@@ -552,6 +561,13 @@ public:
 
   OmniList();
   ~OmniList();
+
+  void mouseMoveEvent(QMouseEvent *event) override { QWidget::mouseMoveEvent(event); }
+
+  void enterEvent(QEnterEvent *event) override {
+    qDebug() << "enter list";
+    QWidget::enterEvent(event);
+  }
 
   void addDivider() { m_model.emplace_back(Divider{}); }
 

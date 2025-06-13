@@ -140,6 +140,7 @@ void OmniList::updateVisibleItems() {
 
   setUpdatesEnabled(true);
   update();
+  QTimer::singleShot(0, this, [this]() { recalculateMousePosition(); });
 }
 
 OmniListItemWidgetWrapper *OmniList::takeFromPool(size_t type) {
@@ -409,6 +410,22 @@ bool OmniList::event(QEvent *event) {
   return QWidget::event(event);
 }
 
+void OmniList::recalculateMousePosition() {
+  QPoint globalPos = QCursor::pos();
+
+  for (const auto &[idx, wrapper] : _visibleWidgets) {
+    QPoint localPos = wrapper->mapFromGlobal(globalPos);
+    bool isUnderCursor = wrapper->rect().contains(localPos);
+
+    if (!isUnderCursor) { wrapper->widget()->clearTransientState(); }
+
+    if (!wrapper->underMouse()) {
+      wrapper->hide();
+      wrapper->show();
+    }
+  }
+}
+
 void OmniList::resizeEvent(QResizeEvent *event) {
   auto size = event->size();
 
@@ -546,6 +563,7 @@ OmniList::OmniList()
   setMargins(5, 5, 5, 5);
   _visibleWidgets.reserve(20);
   _widgetCache.reserve(20);
+  setMouseTracking(true);
 }
 
 OmniList::~OmniList() {}

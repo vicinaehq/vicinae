@@ -190,7 +190,7 @@ class ManageBookmarksView : public ListView {
 
   void onBookmarkSaved() { renderList(searchText(), OmniList::PreserveSelection); }
 
-  void onSearchChanged(const QString &s) override { renderList(s); }
+  void textChanged(const QString &s) override { renderList(s); }
 
   void initialize() override { onSearchChanged(""); }
 

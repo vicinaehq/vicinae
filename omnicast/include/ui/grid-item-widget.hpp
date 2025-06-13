@@ -16,12 +16,19 @@ class GridItemWidget2 : public OmniListItemWidget {
 public:
   GridItemContentWidget *main;
 
+  void enterEvent(QEnterEvent *event) override {
+    qDebug() << "enter event";
+    OmniListItemWidget::enterEvent(event);
+  }
+
   GridItemWidget2(QWidget *parent = nullptr);
   void selectionChanged(bool selected) override;
 
   void setTitle(const QString &title);
   void setSubtitle(const QString &subtitle);
   void setTooltipText(const QString &tooltip);
+
+  void clearTransientState() override;
 
   void setInset(int inset) { main->setInset(inset); }
   void setAspectRatio(double ratio) {
