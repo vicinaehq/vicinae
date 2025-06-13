@@ -107,7 +107,6 @@ void Tooltip::setTarget(QWidget *target) {
 }
 
 Tooltip::Tooltip(QWidget *parent) {
-  qDebug() << "tooltip parent" << parent;
   if (parent) setParent(parent->window());
   setWindowFlags(Qt::ToolTip | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
   setAttribute(Qt::WA_TranslucentBackground);

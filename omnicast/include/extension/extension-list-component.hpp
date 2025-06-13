@@ -171,18 +171,20 @@ class ExtensionListComponent : public ExtensionSimpleView {
   void handleDropdownSelectionChanged(const SelectorInput::AbstractItem &item);
   void handleDropdownSearchChanged(const QString &text);
 
-  void keyPressEvent(QKeyEvent *event) override {
+  QWidget *searchBarAccessory() const override { return m_selector; }
+
+  bool inputFilter(QKeyEvent *event) override {
     switch (event->key()) {
     case Qt::Key_Up:
-      m_list->selectUp();
-      break;
+      return m_list->selectUp();
     case Qt::Key_Down:
-      m_list->selectDown();
-      break;
+      return m_list->selectDown();
     case Qt::Key_Return:
       m_list->activateCurrentSelection();
-      break;
+      return true;
     }
+
+    return ExtensionSimpleView::inputFilter(event);
   }
 
 public:
@@ -190,7 +192,7 @@ public:
   void onSelectionChanged(const ListItemViewModel *next);
   void onItemActivated(const ListItemViewModel &item);
   void handleDebouncedSearchNotification();
-  void onSearchChanged(const QString &text) override;
+  void textChanged(const QString &text) override;
 
   ExtensionListComponent();
 };

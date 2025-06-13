@@ -1,8 +1,11 @@
 #pragma once
+#include "clipboard-history-command.hpp"
+#include "extend/model-parser.hpp"
 #include "extension/extension-grid-component.hpp"
 #include "extension/extension-list-component.hpp"
 #include "extension/extension-view.hpp"
 #include <qtmetamacros.h>
+#include <sys/un.h>
 
 struct ViewVisitor {
   ExtensionSimpleView *operator()(const ListModel &model) const { return new ExtensionListComponent; }
@@ -18,6 +21,8 @@ public:
     // m_topBar->input->hide();
     setupUI(new QWidget);
   }
+
+  virtual bool supportsSearch() const override { return false; }
   void render(const RenderModel &model) override {}
 };
 
@@ -35,18 +40,22 @@ class ExtensionViewWrapper : public BaseView {
     if (m_current) m_current->activate();
   }
 
-  void setSearchText(const QString &value) {
-    if (m_current) {
-      m_current->setSearchText(value);
-      return;
-    }
-
-    m_searchText = value;
+  void executeAction(AbstractAction *action) override {
+    qDebug() << "Execute action" << action->title();
+    if (auto view = m_current) return static_cast<BaseView *>(view)->executeAction(action);
   }
 
-  void setToast(const Toast *toast) override {
-    if (m_current) m_current->setToast(toast);
+  bool inputFilter(QKeyEvent *event) override {
+    if (auto view = m_current) return view->inputFilter(event);
+
+    return false;
   }
+
+  void textChanged(const QString &text) override {
+    if (auto view = m_current) view->textChanged(text);
+  }
+
+  bool supportsSearch() const override { return false; }
 
 public:
   void render(const RenderModel &model) {
@@ -57,28 +66,25 @@ public:
               &ExtensionViewWrapper::notificationRequested);
 
       if (auto previous = m_layout->widget(0)) {
-        m_layout->replaceWidget(previous, view);
+        m_layout->removeWidget(previous);
         previous->deleteLater();
-        m_current = view;
-        m_current->initialize();
-        m_current->activate();
-
-        if (m_searchText.isEmpty()) {
-          m_current->setSearchText(m_searchText);
-          m_searchText.clear();
-        }
-
-        m_index = model.index();
       }
+
+      m_layout->addWidget(view);
+      m_layout->setCurrentWidget(view);
+
+      m_current = view;
+      setActionPanelWidget(m_current->actionPanel());
+      setSearchVisiblity(m_current->supportsSearch());
+      m_current->initialize();
+      m_current->activate();
+      m_index = model.index();
     }
 
     m_current->render(model);
   }
 
-  ExtensionViewWrapper() {
-    m_layout->addWidget(new PlaceholderExtensionView);
-    setLayout(m_layout);
-  }
+  ExtensionViewWrapper() { setLayout(m_layout); }
 
 signals:
   void notificationRequested(const QString &handler, const QJsonArray &args) const;

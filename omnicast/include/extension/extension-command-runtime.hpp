@@ -2,17 +2,10 @@
 #include "base-view.hpp"
 #include "command.hpp"
 #include "common.hpp"
-#include "extend/form-model.hpp"
-#include "extend/grid-model.hpp"
-#include "extend/list-model.hpp"
 #include "extend/model-parser.hpp"
-#include "extend/root-detail-model.hpp"
 #include "extension/extension-command.hpp"
-#include "extension/extension-grid-component.hpp"
-#include "extension/extension-list-component.hpp"
 #include "extension/extension-view-wrapper.hpp"
 #include "extension/extension-view.hpp"
-#include "root-item-manager.hpp"
 #include "services/local-storage/local-storage-service.hpp"
 #include "service-registry.hpp"
 #include "timer.hpp"
@@ -27,7 +20,6 @@
 #include <qobject.h>
 #include <qwidget.h>
 #include <ranges>
-#include <variant>
 
 struct ExtensionViewInfo {
   size_t index;
@@ -60,10 +52,14 @@ public:
   }
 };
 
+struct PushedViewInfo {
+  ExtensionSimpleView *view = nullptr;
+  size_t index = -1;
+};
+
 class ExtensionCommandRuntime : public CommandContext {
   std::shared_ptr<ExtensionCommand> m_command;
   std::vector<ExtensionViewWrapper *> m_viewStack;
-  int viewStackSize = 0;
   QFutureWatcher<ParsedRenderData> m_modelWatcher;
   RequestDispatcher m_actionDispatcher;
   PlaceholderExtensionView *placeholderView = nullptr;
@@ -79,7 +75,6 @@ class ExtensionCommandRuntime : public CommandContext {
     manager->emitExtensionEvent(m_sessionId, handlerId, payload);
   }
 
-  /*
   ExtensionSimpleView *createViewFromModel(const RenderModel &model) {
     auto view = std::visit(ViewVisitor(), model);
 
@@ -88,13 +83,10 @@ class ExtensionCommandRuntime : public CommandContext {
       qCritical() << "Unsupported view type for model index" << model.index();
     }
 
-    view->setNavigationTitle(m_command->name());
-    view->setNavigationIcon(m_command->iconUrl());
     connect(view, &ExtensionSimpleView::notificationRequested, this, &ExtensionCommandRuntime::notify);
 
     return view;
   }
-  */
 
   QJsonObject handleStorage(const QString &action, const QJsonObject &payload) {
     auto storage = ServiceRegistry::instance()->localStorage();
@@ -297,7 +289,6 @@ class ExtensionCommandRuntime : public CommandContext {
 
     if (m_command->isView() && action == "ui.push-view") {
       pushView();
-      // we create a new view on render
       return {};
     }
 
@@ -318,8 +309,6 @@ class ExtensionCommandRuntime : public CommandContext {
     }
 
     if (action == "ui.clear-search-bar") {
-      // m_app->topBar->input->clear();
-      // emit m_app->topBar->input->textEdited("");
       ui->topView()->clearSearchBar();
       return {};
     }
@@ -330,19 +319,29 @@ class ExtensionCommandRuntime : public CommandContext {
   void handlePopViewRequest() {
     auto ui = ServiceRegistry::instance()->UI();
 
-    --viewStackSize;
     m_viewStack.pop_back();
     ui->popView();
+  }
+
+  void pushView() {
+    auto ui = ServiceRegistry::instance()->UI();
+    auto view = new ExtensionViewWrapper();
+
+    connect(view, &ExtensionViewWrapper::notificationRequested, this, &ExtensionCommandRuntime::notify);
+
+    ui->pushView(view);
+    view->setNavigation(m_command->name(), m_command->iconUrl());
+    m_viewStack.emplace_back(view);
   }
 
   void modelCreated() {
     if (m_modelWatcher.isCanceled()) return;
 
-    auto ui = ServiceRegistry::instance()->UI();
     auto models = m_modelWatcher.result();
     auto items = models.items | std::views::take(m_viewStack.size()) | std::views::enumerate;
 
     for (const auto &[n, model] : items) {
+      auto view = m_viewStack.at(n);
       bool shouldSkipRender = !model.dirty && !model.propsDirty;
 
       if (shouldSkipRender) {
@@ -350,8 +349,15 @@ class ExtensionCommandRuntime : public CommandContext {
         continue;
       }
 
-      m_viewStack.at(n)->render(model.root);
+      view->render(model.root);
     }
+  }
+
+  void replaceView(BaseView *previous, BaseView *next) {
+    auto ui = ServiceRegistry::instance()->UI();
+
+    ui->replaceView(previous, next);
+    ui->setNavigation(m_command->name(), m_command->iconUrl());
   }
 
   void handleRender(const QJsonArray &views) {
@@ -421,21 +427,7 @@ class ExtensionCommandRuntime : public CommandContext {
       qCritical() << "send pop!!!";
     }
 
-    --viewStackSize;
     m_viewStack.pop_back();
-  }
-
-  /**
-   * Push an empty extension view ready to be rendered on
-   */
-  void pushView() {
-    auto ui = ServiceRegistry::instance()->UI();
-    auto view = new ExtensionViewWrapper;
-
-    m_viewStack.emplace_back(view);
-    connect(view, &ExtensionViewWrapper::notificationRequested, this, &ExtensionCommandRuntime::notify);
-    ui->pushView(view);
-    view->setNavigation(m_command->name(), m_command->iconUrl());
   }
 
 public:

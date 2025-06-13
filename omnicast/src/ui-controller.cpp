@@ -46,8 +46,12 @@ void UIController::replaceView(BaseView *previous, BaseView *next) {
     return;
   }
 
+  if (auto accessory = previous->searchBarAccessory()) { accessory->deleteLater(); }
+
   *it = ViewState{.sender = next};
-  applyViewState(*it);
+
+  if (topView() == next) { applyViewState(*it); }
+
   emit replaceViewRequested(previous, next);
 }
 
@@ -55,19 +59,36 @@ void UIController::pushView(BaseView *view, const PushViewOptions &opts) {
   qCritical() << "push view";
 
   if (auto view = topView()) {
-    if (auto panel = view->actionPanel()) {
+    auto &state = m_stateStack.back();
+
+    if (auto panel = state.actionPanel) {
       panel->disconnect();
       panel->close();
+    }
+
+    if (auto accessory = view->searchBarAccessory()) {
+      m_topBar->clearAccessoryWidget();
+      accessory->hide();
     }
 
     m_topBar->destroyCompleter();
   }
 
-  m_stateStack.emplace_back(ViewState{.sender = view});
+  ViewState state;
+
+  state.sender = view;
+  state.supportsSearch = view->supportsSearch();
+  state.needsTopBar = view->needsGlobalTopBar();
+  state.needsStatusBar = view->needsGlobalStatusBar();
+  state.actionPanel = view->actionPanel();
+  state.searchAccessory = view->searchBarAccessory();
+  m_stateStack.emplace_back(state);
+  qCritical() << "search accessory" << state.searchAccessory;
+
   m_topBar->setBackButtonVisiblity(m_stateStack.size() > 1);
   applyViewState(m_stateStack.back());
   emit pushViewRequested(view, opts);
-  if (view->supportsSearch()) { m_topBar->input->setFocus(); }
+  if (state.supportsSearch) { m_topBar->input->setFocus(); }
 }
 
 void UIController::handleCurrentActionButtonClick() { executeDefaultAction(); }
@@ -94,25 +115,31 @@ void UIController::executeAction(AbstractAction *action) {
     }
   }
 
-  if (auto view = topView()) { view->executeAction(action); }
+  if (m_stateStack.empty()) return;
+
+  m_stateStack.back().sender->executeAction(action);
 }
 
 void UIController::executeDefaultAction() {
-  if (auto view = topView()) {
-    if (auto panel = view->actionPanel()) {
-      if (auto action = panel->primaryAction()) {
-        executeAction(action);
-      } else {
-        panel->show();
-      }
+  if (m_stateStack.empty()) return;
+
+  auto &state = m_stateStack.back();
+
+  if (auto panel = state.actionPanel) {
+    if (auto action = panel->primaryAction()) {
+      executeAction(action);
+    } else {
+      panel->show();
     }
   }
 }
 
 void UIController::handleActionButtonClick() {
-  if (auto view = topView()) {
-    if (auto panel = view->actionPanel()) { panel->show(); }
-  }
+  if (m_stateStack.empty()) return;
+
+  auto &state = m_stateStack.back();
+
+  if (auto panel = state.actionPanel) { panel->show(); }
 }
 
 void UIController::popView() {
@@ -124,7 +151,9 @@ void UIController::popView() {
   }
 
   if (auto view = topView()) {
-    if (auto accessory = view->searchBarAccessory()) {
+    auto &state = m_stateStack.back();
+
+    if (auto accessory = state.searchAccessory) {
       m_topBar->clearAccessoryWidget();
       accessory->deleteLater();
     }
@@ -159,10 +188,10 @@ void UIController::applyViewState(const ViewState &state) {
 
   m_topBar->input->setText(state.text);
   m_topBar->input->setPlaceholderText(state.placeholderText);
-  m_topBar->input->setVisible(state.sender->supportsSearch());
-  m_topBar->setVisible(state.sender->needsGlobalTopBar());
+  m_topBar->input->setVisible(state.supportsSearch);
+  m_topBar->setVisible(state.needsTopBar);
   m_topBar->setLoading(state.isLoading);
-  m_statusBar->setVisible(state.sender->needsGlobalStatusBar());
+  m_statusBar->setVisible(state.needsStatusBar);
 
   if (auto data = state.completer.data) {
     m_topBar->activateCompleter(*data, state.completer.values);
@@ -173,21 +202,41 @@ void UIController::applyViewState(const ViewState &state) {
   m_topBar->input->setFocus();
   m_topBar->input->selectAll();
 
-  if (auto accessory = state.sender->searchBarAccessory()) { m_topBar->setAccessoryWidget(accessory); }
+  /*
+  if (auto accessory = state.searchAccessory) {
+    qDebug() << "set accessory" << accessory;
+    m_topBar->setAccessoryWidget(accessory);
+  } else {
+    m_topBar->clearAccessoryWidget();
+  }
+  */
 
-  if (auto panel = state.sender->actionPanel()) {
+  if (auto panel = state.actionPanel) {
     connect(panel, &ActionPanelV2Widget::openChanged, this,
             [this](bool value) { m_statusBar->setActionButtonHighlight(value); });
-    connect(panel, &ActionPanelV2Widget::actionsChanged, this,
-            [this]() { setActionPanel(topView()->actionPanel()); });
+    connect(panel, &ActionPanelV2Widget::actionsChanged, this, [this, panel]() { setActionPanel(panel); });
     connect(panel, &ActionPanelV2Widget::actionActivated, this, &UIController::executeAction);
 
     setActionPanel(panel);
   } else {
     clearActionPanel();
   }
-
-  if (auto accessory = state.searchAccessory) { m_topBar->setAccessoryWidget(accessory); }
 }
 
-void UIController::setActionPanelWidget(BaseView *sender, ActionPanelV2Widget *panel) {}
+void UIController::setActionPanelWidget(BaseView *sender, ActionPanelV2Widget *panel) {
+  auto state = findViewState(sender);
+
+  if (!state) return;
+  if (auto panel = state->actionPanel) { panel->disconnect(); }
+
+  updateViewState(sender, [&](ViewState &state) { state.actionPanel = panel; });
+
+  if (topView() == sender) {
+    connect(panel, &ActionPanelV2Widget::openChanged, this,
+            [this](bool value) { m_statusBar->setActionButtonHighlight(value); });
+    connect(panel, &ActionPanelV2Widget::actionsChanged, this, [this, panel]() { setActionPanel(panel); });
+    connect(panel, &ActionPanelV2Widget::actionActivated, this, &UIController::executeAction);
+
+    setActionPanel(panel);
+  }
+}

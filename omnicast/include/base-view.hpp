@@ -49,6 +49,8 @@ public:
   virtual bool needsGlobalStatusBar() const { return true; }
   virtual bool needsGlobalTopBar() const { return true; }
 
+  void setActionPanelWidget(ActionPanelV2Widget *widget) { m_uiController->setActionPanelWidget(widget); }
+
   /**
    * Called before the view is first shown on screen.
    * You can use this hook to setup UI.
@@ -145,6 +147,8 @@ public:
     m_uiController->setNavigation(title, icon);
   }
 
+  void setSearchVisiblity(bool value) { m_uiController->setSearchVisiblity(value); }
+
   void setLoading(bool value) { m_uiController->setLoading(value); }
 
   /**
@@ -181,8 +185,6 @@ protected:
 
     return false;
   }
-
-  ActionPanelV2Widget *actionPanel() const override { return m_actionPannelV2; }
 
   virtual void escapePressed() {
     qDebug() << "escape pressed";
@@ -247,6 +249,8 @@ public:
   void initialize() override {}
 
 public:
+  ActionPanelV2Widget *actionPanel() const override { return m_actionPannelV2; }
+
   SimpleView(QWidget *parent = nullptr) : BaseView(parent) {
     // m_topBar->showBackButton();
   }

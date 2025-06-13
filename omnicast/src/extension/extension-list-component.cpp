@@ -83,7 +83,8 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
     renderDropdown(dropdown);
   }
 
-  m_selector->setVisible(newModel.searchBarAccessory.has_value() && isVisible());
+  // m_selector->setVisible(newModel.searchBarAccessory.has_value() && isVisible());
+  m_selector->hide();
 
   if (!newModel.navigationTitle.isEmpty()) {
     qDebug() << "set navigation title" << newModel.navigationTitle;
@@ -122,6 +123,7 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
     m_list->setModel(newModel.items, policy);
   }
 
+  /*
   if (!newModel.searchText) {
     if (_shouldResetSelection) {
       if (newModel.filtering) {
@@ -131,6 +133,7 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
       }
     }
   }
+  */
 
   _model = newModel;
 
@@ -224,16 +227,13 @@ void ExtensionListComponent::handleDebouncedSearchNotification() {
 
 void ExtensionListComponent::onItemActivated(const ListItemViewModel &item) { activatePrimaryAction(); }
 
-void ExtensionListComponent::onSearchChanged(const QString &text) {
-  if (_model.searchText) { /*m_topBar->input->setText(*_model.searchText);*/
+void ExtensionListComponent::textChanged(const QString &text) {
+  if (text == _model.searchText) { /*m_topBar->input->setText(*_model.searchText);*/
+    return;
   }
 
-  auto itemMatches = [&](const ListItemViewModel &model) -> bool {
-    return model.title.contains(searchText(), Qt::CaseInsensitive);
-  };
-
   if (_model.filtering) {
-    m_list->setFilter(searchText());
+    m_list->setFilter(text);
   } else {
     m_list->setFilter("");
   }

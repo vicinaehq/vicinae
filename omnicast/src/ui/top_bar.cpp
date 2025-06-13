@@ -35,7 +35,7 @@ TopBar::TopBar(QWidget *parent) : QWidget(parent), layout(new QHBoxLayout()), in
   layout->addSpacing(5);
   layout->addWidget(m_completer);
   // layout->setSpacing(10);
-  layout->addWidget(m_accessory, 0, Qt::AlignRight | Qt::AlignVCenter);
+  layout->addWidget(m_accessoryContainer, 0, Qt::AlignRight | Qt::AlignVCenter);
 
   m_completer->hide();
 
@@ -59,17 +59,16 @@ TopBar::TopBar(QWidget *parent) : QWidget(parent), layout(new QHBoxLayout()), in
 }
 
 void TopBar::setAccessoryWidget(QWidget *accessory) {
-  accessory->show();
-  layout->replaceWidget(m_accessory, accessory);
+  m_accessoryContainer->addWidget(accessory);
+  m_accessoryContainer->setCurrentWidget(accessory);
   m_accessory = accessory;
 }
 
 void TopBar::clearAccessoryWidget() {
   auto widget = new QWidget();
-
+  m_accessoryContainer->removeWidget(m_accessory);
   m_accessory->hide();
-  layout->replaceWidget(m_accessory, widget);
-  m_accessory = widget;
+  setAccessoryWidget(widget);
 }
 
 QWidget *TopBar::accessoryWidget() const { return m_accessory; }

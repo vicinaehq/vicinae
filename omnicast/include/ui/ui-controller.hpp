@@ -39,6 +39,9 @@ class UIController : public QObject {
     } completer;
     ActionPanelV2Widget *actionPanel = nullptr;
     bool isLoading = false;
+    bool supportsSearch = true;
+    bool needsTopBar = true;
+    bool needsStatusBar = true;
   };
 
   KeyboardShortcutModel defaultActionPanelShortcut() { return DEFAULT_ACTION_PANEL_SHORTCUT; }
@@ -201,6 +204,16 @@ public:
     connect(m_topBar, &TopBar::argumentsChanged, this, &UIController::handleCompleterArgumentsChanged);
   }
 
+  void setSearchVisibility(BaseView *view, bool value) {
+    updateViewState(view, [&](ViewState &state) { state.supportsSearch = value; });
+    if (topView() == view) {
+      m_topBar->input->setVisible(value);
+      m_topBar->input->setFocus();
+    }
+  }
+
+  void setSearchVisibility(bool value) { setSearchVisibility(topView(), value); }
+
   void setActionPanelWidget(BaseView *sender, ActionPanelV2Widget *panel);
 
 signals:
@@ -236,10 +249,13 @@ public:
     m_controller.activateCompleter(args, url);
   }
   void destroyCompleter() { m_controller.destroyCompleter(); }
-  void setSearchAccessory(QWidget *widget) {
-    // m_controller.setS(widget);
-  }
+  void setSearchAccessory(QWidget *widget) {}
   void setLoading(bool value) { m_controller.setLoading(&m_view, value); }
+  void setSearchVisiblity(bool value) { m_controller.setSearchVisibility(&m_view, value); }
+  void setActionPanelWidget(ActionPanelV2Widget *widget) {
+    m_controller.setActionPanelWidget(&m_view, widget);
+  }
+  void hideSearch() {}
 
   UIViewController(UIController *controller, BaseView *view) : m_view(*view), m_controller(*controller) {}
 };

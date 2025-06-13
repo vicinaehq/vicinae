@@ -34,9 +34,7 @@ public:
   const GridItemViewModel &model() const { return _item; }
 
   ExtensionGridItem(const GridItemViewModel &model, double aspectRatio = 1)
-      : _item(model), m_aspectRatio(aspectRatio) {
-    qDebug() << "aspect ratio" << aspectRatio;
-  }
+      : _item(model), m_aspectRatio(aspectRatio) {}
 };
 
 class ExtensionGridList : public QWidget {

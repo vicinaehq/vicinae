@@ -15,6 +15,7 @@
 #include <qlayoutitem.h>
 #include <qlineedit.h>
 #include <qnamespace.h>
+#include <qstackedwidget.h>
 #include <qtimer.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
@@ -88,6 +89,7 @@ public:
   HorizontalLoadingBar *m_loadingBar = new HorizontalLoadingBar;
   QWidget *m_backButtonSpacer = new QWidget(this);
   QWidget *m_accessory = new QWidget(this);
+  QStackedWidget *m_accessoryContainer = new QStackedWidget(this);
   ArgumentCompleterWidget *m_completer = new ArgumentCompleterWidget(this);
   InputCompleter *quickInput = nullptr;
   std::optional<CompleterData> completerData;
