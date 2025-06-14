@@ -136,6 +136,8 @@ OmniIconUrl StatusBar::navigationIcon() const { return m_navigation->icon(); }
 
 void StatusBar::setNavigationIcon(const OmniIconUrl &icon) { m_navigation->setIcon(icon); }
 
+bool StatusBar::isActionButtonVisible() const { return _actionButton->isVisible(); }
+
 void StatusBar::reset() { setLeftWidget(new DefaultLeftWidget()); }
 
 void StatusBar::paintEvent(QPaintEvent *event) {

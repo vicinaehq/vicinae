@@ -70,7 +70,7 @@ public:
     virtual bool recyclable() const;
     virtual bool hasPartialUpdates() const { return false; }
     virtual void refresh(QWidget *widget) const {}
-    virtual QString generateId() const = 0;
+    virtual QString generateId() const { return QUuid::createUuid().toString(); }
 
     QString id() const {
       if (m_id.isEmpty()) { m_id = generateId(); }
@@ -460,9 +460,10 @@ private:
             // TODO: if in viewport, look for cached entry
             if (isInViewport(geometry)) {
               if (auto it = _widgetCache.find(item->id()); it != _widgetCache.end()) {
-                if (item->hasPartialUpdates()) { item->refresh(it->second.widget->widget()); }
-
+                item->refresh(it->second.widget->widget());
                 updatedCache[item->id()] = it->second;
+
+                qDebug() << "refresh in cache" << item->id();
               }
             }
 
@@ -490,7 +491,7 @@ private:
     _visibleWidgets.clear();
     _widgetCache = updatedCache;
 
-    // timer.time("calculateHeightsFromModel");
+    timer.time("calculateHeightsFromModel");
 
     auto end = std::chrono::high_resolution_clock::now();
     // auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();

@@ -26,6 +26,16 @@ class ExtensionGridItem : public OmniGrid::AbstractGridItem {
     return icon;
   }
 
+  void recycleCenterWidget(QWidget *widget) const override { refreshCenterWidget(widget); }
+
+  bool centerWidgetRecyclable() const override { return true; }
+
+  void refreshCenterWidget(QWidget *widget) const override {
+    auto icon = static_cast<Omnimg::ImageWidget *>(widget);
+
+    icon->setUrl(_item.content);
+  }
+
   const QString &name() const { return _item.title; }
 
   double aspectRatio() const override { return m_aspectRatio; }
@@ -65,6 +75,7 @@ class ExtensionGridList : public QWidget {
       }
     };
 
+    qDebug() << "UPDATED MODEL";
     m_list->updateModel(
         [&]() {
           for (const auto &item : m_model) {
@@ -180,7 +191,7 @@ public:
   void onSelectionChanged(const GridItemViewModel *item);
   void onItemActivated(const GridItemViewModel &item);
   void handleDebouncedSearchNotification();
-  void onSearchChanged(const QString &text) override;
+  void textChanged(const QString &text) override;
   bool inputFilter(QKeyEvent *event) override;
 
   ExtensionGridComponent();

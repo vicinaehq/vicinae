@@ -7,6 +7,7 @@
 #include <qlogging.h>
 #include <qnamespace.h>
 #include <ranges>
+#include "service-registry.hpp"
 #include "ui/form/app-picker-input.hpp"
 #include "ui/form/selector-input.hpp"
 #include "ui/omni-list.hpp"
@@ -74,6 +75,7 @@ void ExtensionListComponent::renderDropdown(const DropdownModel &dropdown) {
 }
 
 void ExtensionListComponent::render(const RenderModel &baseModel) {
+  auto ui = ServiceRegistry::instance()->UI();
   ++m_renderCount;
   auto newModel = std::get<ListModel>(baseModel);
 
@@ -83,18 +85,21 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
     renderDropdown(dropdown);
   }
 
-  // m_selector->setVisible(newModel.searchBarAccessory.has_value() && isVisible());
-  m_selector->hide();
+  m_selector->setVisible(newModel.searchBarAccessory.has_value() && isVisible());
 
   if (!newModel.navigationTitle.isEmpty()) {
     qDebug() << "set navigation title" << newModel.navigationTitle;
-    setNavigationTitle(newModel.navigationTitle);
+    if (isVisible()) ui->setNavigationTitle(newModel.navigationTitle);
   }
-  if (!newModel.searchPlaceholderText.isEmpty()) { setSearchPlaceholderText(newModel.searchPlaceholderText); }
+  if (!newModel.searchPlaceholderText.isEmpty()) {
+    if (isVisible()) {
+      ServiceRegistry::instance()->UI()->setSearchPlaceholderText(newModel.searchPlaceholderText);
+    }
+  }
 
   if (auto text = newModel.searchText) {
     qDebug() << "[DEBUG] SET SEARCH TEXT" << text;
-    setSearchText(*text);
+    if (isVisible()) { ServiceRegistry::instance()->UI()->setSearchText(*text); }
   }
 
   if (newModel.throttle != _model.throttle) {
@@ -271,3 +276,5 @@ ExtensionListComponent::ExtensionListComponent()
   connect(m_selector, &SelectorInput::textChanged, this,
           &ExtensionListComponent::handleDropdownSearchChanged);
 }
+
+ExtensionListComponent::~ExtensionListComponent() { m_selector->deleteLater(); }

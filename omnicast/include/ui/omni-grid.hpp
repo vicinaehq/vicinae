@@ -37,6 +37,8 @@ public:
 
     virtual void recycleCenterWidget(QWidget *widget) const {}
 
+    virtual void refreshCenterWidget(QWidget *widget) const {}
+
     virtual double aspectRatio() const { return 1; }
 
     bool recyclable() const override { return true; }
@@ -65,6 +67,17 @@ public:
       widget->setWidget(centerWidget());
 
       return widget;
+    }
+
+    void refresh(QWidget *widget) const override {
+      auto itemWidget = static_cast<GridItemWidget2 *>(widget);
+
+      itemWidget->setAspectRatio(aspectRatio());
+      itemWidget->setInset(_inset);
+      itemWidget->setTitle(title());
+      itemWidget->setSubtitle(subtitle());
+      itemWidget->setTooltipText(tooltip());
+      refreshCenterWidget(itemWidget->widget());
     }
 
   public:

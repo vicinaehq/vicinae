@@ -153,10 +153,7 @@ void UIController::popView() {
   if (auto view = topView()) {
     auto &state = m_stateStack.back();
 
-    if (auto accessory = state.searchAccessory) {
-      m_topBar->clearAccessoryWidget();
-      accessory->deleteLater();
-    }
+    if (auto accessory = state.searchAccessory) { m_topBar->clearAccessoryWidget(); }
   }
 
   if (!m_stateStack.empty()) {
@@ -202,14 +199,14 @@ void UIController::applyViewState(const ViewState &state) {
   m_topBar->input->setFocus();
   m_topBar->input->selectAll();
 
-  /*
   if (auto accessory = state.searchAccessory) {
     qDebug() << "set accessory" << accessory;
     m_topBar->setAccessoryWidget(accessory);
   } else {
     m_topBar->clearAccessoryWidget();
   }
-  */
+
+  qDebug() << "accessory set";
 
   if (auto panel = state.actionPanel) {
     connect(panel, &ActionPanelV2Widget::openChanged, this,
@@ -221,6 +218,8 @@ void UIController::applyViewState(const ViewState &state) {
   } else {
     clearActionPanel();
   }
+
+  qDebug() << "action set";
 }
 
 void UIController::setActionPanelWidget(BaseView *sender, ActionPanelV2Widget *panel) {

@@ -36,6 +36,7 @@ const App: React.FC<{ component: ComponentType, launchProps: any }> = ({ compone
 }
 
 const loadEnviron = () => {
+	process.env.NODE_ENV = 'development';
 	environment.textSize = 'medium';
 	environment.appearance = 'dark';
 	environment.canAccess = (api) => false,

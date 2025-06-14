@@ -3,6 +3,7 @@ import { setTimeout, clearTimeout } from 'node:timers';
 import { DefaultEventPriority } from 'react-reconciler/constants';
 import { ReactElement } from 'react';
 import { isDeepEqual } from './utils';
+import { writeFileSync } from 'node:fs';
 
 type LinkNode = {
 	next: LinkNode | null;
@@ -21,12 +22,12 @@ class ChildList {
 
 		if (!beforeNode) return ;
 
-		const node: LinkNode = { data, next: beforeNode, prev: null };
-
 		if (!beforeNode.prev) {
 			this.pushFront(data);
 			return ;
 		}
+
+		const node: LinkNode = { data, next: beforeNode, prev: null };
 
 		node.prev = beforeNode.prev;
 		node.next = beforeNode;
@@ -266,6 +267,10 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 
 		// mutation methods
 		appendChild(parent: Instance, child: Instance) {
+			if (child.parent && child.parent !== parent) {
+				child.parent.childList.remove(child);
+			}
+
 			child.parent = parent;
 			emitDirty(parent);
 			parent.childList.pushBack(child);
@@ -276,6 +281,10 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 		},
 
 		insertBefore(parent, child, beforeChild) {
+			if (child.parent && child.parent !== parent) {
+				child.parent.childList.remove(child);
+			}
+
 			child.parent = parent;
 			emitDirty(parent);
 			parent.childList.insertBefore(beforeChild, child);
@@ -286,7 +295,7 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 		},
 
 		removeChild(parent: Instance, child: Instance) {
-			emitDirty(child.parent);
+			emitDirty(parent);
 			parent.childList.remove(child);
 			delete child.parent;
 		},
@@ -405,7 +414,7 @@ export const createRenderer = (config: RendererConfig) => {
 				const views: ViewData[] = [];
 				const root = serializeInstance(container);
 
-				//writeFileSync('/tmp/render.txt', JSON.stringify(root, null, 2));
+				writeFileSync('/tmp/render.txt', JSON.stringify(root, null, 2));
 
 				for (let i = 0; i != root.children.length; ++i) {
 					const view = root.children[i];

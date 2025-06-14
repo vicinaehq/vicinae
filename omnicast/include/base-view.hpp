@@ -69,6 +69,8 @@ public:
    */
   virtual void textChanged(const QString &text) {}
 
+  void setSearchAccessory(QWidget *accessory) { m_uiController->setSearchAccessory(accessory); }
+
   /**
    * Called when the view becomes visible. This is called the first time the view is shown
    * (right after `initialize`) but also after a view that was pushed on top of it was poped.

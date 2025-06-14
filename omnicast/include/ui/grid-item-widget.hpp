@@ -16,10 +16,7 @@ class GridItemWidget2 : public OmniListItemWidget {
 public:
   GridItemContentWidget *main;
 
-  void enterEvent(QEnterEvent *event) override {
-    qDebug() << "enter event";
-    OmniListItemWidget::enterEvent(event);
-  }
+  void enterEvent(QEnterEvent *event) override { OmniListItemWidget::enterEvent(event); }
 
   GridItemWidget2(QWidget *parent = nullptr);
   void selectionChanged(bool selected) override;

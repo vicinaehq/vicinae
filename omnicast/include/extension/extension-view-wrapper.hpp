@@ -57,6 +57,8 @@ class ExtensionViewWrapper : public BaseView {
 
   bool supportsSearch() const override { return false; }
 
+  ActionPanelV2Widget *actionPanel() const override { return m_current ? m_current->actionPanel() : nullptr; }
+
 public:
   void render(const RenderModel &model) {
     if (m_index != model.index()) {
@@ -76,6 +78,7 @@ public:
       m_current = view;
       setActionPanelWidget(m_current->actionPanel());
       setSearchVisiblity(m_current->supportsSearch());
+      setSearchAccessory(m_current->searchBarAccessory());
       m_current->initialize();
       m_current->activate();
       m_index = model.index();

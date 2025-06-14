@@ -309,7 +309,7 @@ class ExtensionCommandRuntime : public CommandContext {
     }
 
     if (action == "ui.clear-search-bar") {
-      ui->topView()->clearSearchBar();
+      ui->setSearchText("");
       return {};
     }
 

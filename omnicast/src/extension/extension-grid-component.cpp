@@ -1,6 +1,7 @@
 #include "extension/extension-grid-component.hpp"
 #include "extend/grid-model.hpp"
 #include "extension/extension-view.hpp"
+#include "service-registry.hpp"
 #include "ui/omni-list.hpp"
 
 static const std::chrono::milliseconds THROTTLE_DEBOUNCE_DURATION(300);
@@ -26,6 +27,8 @@ bool ExtensionGridComponent::inputFilter(QKeyEvent *event) {
 }
 
 void ExtensionGridComponent::render(const RenderModel &baseModel) {
+  qDebug() << "render!";
+  auto ui = ServiceRegistry::instance()->UI();
   auto newModel = std::get<GridModel>(baseModel);
 
   if (auto accessory = newModel.searchBarAccessory) {
@@ -40,13 +43,16 @@ void ExtensionGridComponent::render(const RenderModel &baseModel) {
 
   if (!newModel.navigationTitle.isEmpty()) {
     qDebug() << "set navigation title" << newModel.navigationTitle;
-    setNavigationTitle(newModel.navigationTitle);
+    if (isVisible()) { ui->setNavigationTitle(newModel.navigationTitle); }
   }
-  if (!newModel.searchPlaceholderText.isEmpty()) { setSearchPlaceholderText(newModel.searchPlaceholderText); }
+  if (!newModel.searchPlaceholderText.isEmpty()) {
+    if (isVisible()) { ui->setSearchPlaceholderText(newModel.searchPlaceholderText); }
+    setSearchPlaceholderText(newModel.searchPlaceholderText);
+  }
 
   if (auto text = newModel.searchText) {
     qDebug() << "[DEBUG] SET SEARCH TEXT" << text;
-    setSearchText(*text);
+    if (isVisible()) { ui->setSearchText(*text); }
   }
 
   if (newModel.throttle != _model.throttle) {
@@ -59,21 +65,20 @@ void ExtensionGridComponent::render(const RenderModel &baseModel) {
     }
   }
 
-  setLoading(newModel.isLoading);
+  if (isVisible()) ui->setLoading(newModel.isLoading);
 
-  if (newModel.dirty) {
-    OmniList::SelectionPolicy policy = OmniList::SelectFirst;
+  // if (newModel.dirty) {
+  OmniList::SelectionPolicy policy = OmniList::SelectFirst;
 
-    if (_shouldResetSelection) {
-      qDebug() << "should reset selection";
-      _shouldResetSelection = false;
-      policy = OmniList::SelectFirst;
-    } else {
-      policy = OmniList::PreserveSelection;
-    }
-
-    m_list->setModel(newModel.items, policy);
+  if (_shouldResetSelection) {
+    qDebug() << "should reset selection";
+    _shouldResetSelection = false;
+    policy = OmniList::SelectFirst;
+  } else {
+    policy = OmniList::PreserveSelection;
   }
+
+  m_list->setModel(newModel.items, policy);
 
   if (!newModel.searchText) {
     if (_shouldResetSelection) {
@@ -102,13 +107,17 @@ void ExtensionGridComponent::onSelectionChanged(const GridItemViewModel *next) {
     return;
   }
 
+  qDebug() << "item" << next->id;
+
   if (auto &panel = next->actionPannel) { setActionPanel(*panel); }
   if (auto handler = _model.onSelectionChanged) { notify(*handler, {next->id}); }
 }
 
-void ExtensionGridComponent::handleDebouncedSearchNotification() {
-  auto text = searchText();
+void ExtensionGridComponent::handleDebouncedSearchNotification() { auto text = searchText(); }
 
+void ExtensionGridComponent::onItemActivated(const GridItemViewModel &item) { activatePrimaryAction(); }
+
+void ExtensionGridComponent::textChanged(const QString &text) {
   if (_model.filtering) {
     m_list->setFilter(text);
   } else {
@@ -124,10 +133,6 @@ void ExtensionGridComponent::handleDebouncedSearchNotification() {
     notify(*handler, {text});
   }
 }
-
-void ExtensionGridComponent::onItemActivated(const GridItemViewModel &item) { activatePrimaryAction(); }
-
-void ExtensionGridComponent::onSearchChanged(const QString &text) { _debounce->start(); }
 
 ExtensionGridComponent::ExtensionGridComponent() : _debounce(new QTimer(this)), _shouldResetSelection(true) {
   setDefaultActionShortcuts({primaryShortcut, secondaryShortcut});

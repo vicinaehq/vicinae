@@ -52,7 +52,8 @@ bool AppWindow::event(QEvent *event) {
       return true;
     }
 
-    if (keyEvent == KeyboardShortcut(m_statusBar->actionButtonShortcut())) {
+    if (m_statusBar->isActionButtonVisible() &&
+        keyEvent == KeyboardShortcut(m_statusBar->actionButtonShortcut())) {
       if (auto panel = m_viewStack.back()->actionPanel()) {
         panel->show();
         return true;

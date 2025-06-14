@@ -9,13 +9,9 @@ bool Tooltip::eventFilter(QObject *watched, QEvent *event) {
   if (watched != m_target) return QWidget::eventFilter(watched, event);
 
   if (event->type() == QEvent::HoverEnter) {
-    qDebug() << "enter tooltip";
     if (m_target->isVisible()) { show(); }
   }
-  if (event->type() == QEvent::HoverLeave) {
-    hide();
-    qDebug() << "leave tooltip";
-  }
+  if (event->type() == QEvent::HoverLeave) { hide(); }
   if (event->type() == QEvent::Hide) { hide(); }
   if (event->type() == QEvent::HideToParent) { hide(); }
   if (event->type() == QEvent::Resize) {

@@ -538,7 +538,7 @@ public:
   const OmniIconUrl &url() const { return m_source; }
 
   void setUrl(const OmniIconUrl &url) {
-    if (url == m_source) return;
+    if (url == m_source) { return; }
     setUrlImpl(url);
   }
 

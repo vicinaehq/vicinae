@@ -125,6 +125,7 @@ public:
     return view;
   }
 
+  void setNavigationTitle(const QString &title) { m_statusBar->setNavigationTitle(title); }
   void setNavigation(const QString &title, const OmniIconUrl &icon) { setNavigation(topView(), title, icon); }
   void setSearchText(const QString &text) { setSearchText(topView(), text); }
   void setSearchPlaceholderText(const QString &placeholderText) {
@@ -204,6 +205,20 @@ public:
     connect(m_topBar, &TopBar::argumentsChanged, this, &UIController::handleCompleterArgumentsChanged);
   }
 
+  void setLoading(bool loading) { m_topBar->setLoading(loading); }
+
+  void setSearchAccessory(BaseView *view, QWidget *accessory) {
+    updateViewState(view, [&](ViewState &state) { state.searchAccessory = accessory; });
+    if (topView() == view) {
+      if (accessory) {
+        qDebug() << "set accessory" << accessory;
+        m_topBar->setAccessoryWidget(accessory);
+      } else {
+        m_topBar->clearAccessoryWidget();
+      }
+    }
+  }
+
   void setSearchVisibility(BaseView *view, bool value) {
     updateViewState(view, [&](ViewState &state) { state.supportsSearch = value; });
     if (topView() == view) {
@@ -249,7 +264,7 @@ public:
     m_controller.activateCompleter(args, url);
   }
   void destroyCompleter() { m_controller.destroyCompleter(); }
-  void setSearchAccessory(QWidget *widget) {}
+  void setSearchAccessory(QWidget *widget) { m_controller.setSearchAccessory(&m_view, widget); }
   void setLoading(bool value) { m_controller.setLoading(&m_view, value); }
   void setSearchVisiblity(bool value) { m_controller.setSearchVisibility(&m_view, value); }
   void setActionPanelWidget(ActionPanelV2Widget *widget) {

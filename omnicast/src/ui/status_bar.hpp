@@ -93,6 +93,7 @@ public:
   void setActionButtonVisibility(bool value);
   void setCurrentActionButtonVisibility(bool value);
   void setActionButton(const QString &title, const KeyboardShortcutModel &shortcut);
+  bool isActionButtonVisible() const;
 
   void clearAction();
   KeyboardShortcutModel actionButtonShortcut() const;
