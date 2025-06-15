@@ -353,6 +353,8 @@ set(SRCS
 
 	src/xdg/xdg-desktop.cpp
 
+	include/network-manager.hpp
+
 	#src/commands/create-quicklink/create-quicklink.cpp
 
 	src/omnicast.hpp

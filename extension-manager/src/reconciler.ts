@@ -116,7 +116,7 @@ type Instance = {
 	dirty: boolean;
 	propsDirty: boolean;
 	parent?: Instance;
-	childList: ChildList;
+	children: Instance[];
 };
 type Container = Instance & { _root?: OpaqueRoot };
 type TextInstance = any;
@@ -169,7 +169,7 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 				id: Symbol(type),
 				type,
 				props: rest,
-				childList: new ChildList,
+				children: [],
 				dirty: true,
 				propsDirty: true,
 			}
@@ -267,13 +267,9 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 
 		// mutation methods
 		appendChild(parent: Instance, child: Instance) {
-			if (child.parent && child.parent !== parent) {
-				child.parent.childList.remove(child);
-			}
-
 			child.parent = parent;
 			emitDirty(parent);
-			parent.childList.pushBack(child);
+			parent.children.push(child);
 		},
 
 		appendChildToContainer(container: Instance, child: Instance) {
@@ -287,7 +283,10 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 
 			child.parent = parent;
 			emitDirty(parent);
-			parent.childList.insertBefore(beforeChild, child);
+
+			const beforeIndex = parent.children.indexOf(beforeChild);
+
+			parent.children.splice(beforeIndex, 0, child);
 		},
 
 		insertInContainerBefore(container, child, beforeChild) {
@@ -296,7 +295,8 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 
 		removeChild(parent: Instance, child: Instance) {
 			emitDirty(parent);
-			parent.childList.remove(child);
+			const idx = parent.children.indexOf(child);
+			parent.children.splice(idx, 1);
 			delete child.parent;
 		},
 
@@ -338,7 +338,7 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 		unhideTextInstance() {},
 
 		clearContainer(container) {
-			container.childList.clear();
+			container.children = [];
 		},
 	};
 
@@ -369,7 +369,7 @@ const serializeInstance = (instance: Instance): SerializedInstance => {
 		type: instance.type,
 		dirty: instance.dirty,
 		propsDirty: instance.propsDirty,
-		children: new Array<SerializedInstance>(instance.childList.size())
+		children: new Array<SerializedInstance>(instance.children.length)
 	};
 
 	instance.dirty = false;
@@ -377,7 +377,7 @@ const serializeInstance = (instance: Instance): SerializedInstance => {
 
 	let i = 0;
 
-	for (const child of instance.childList.toArray()) {
+	for (const child of instance.children) {
 		obj.children[i++] = serializeInstance(child);
 	}
 	
@@ -391,7 +391,7 @@ const createContainer = (): Container => {
 		dirty: true,
 		propsDirty: false,
 		props: {},
-		childList: new ChildList
+		children: []
 	}
 }
 

@@ -1,17 +1,6 @@
-import { List, Color,  Detail, Action, useApplications, Keyboard } from '@omnicast/api';
+import { List,  Detail, Action, useApplications, Keyboard, Grid, ActionPanel, showToast } from '@omnicast/api';
 import React, { useState } from 'react';
 import pokemons from './pokemons';
-
-const typeToColor: Record<string, Color> = {
-	'grass': Color.Green,
-	'water': Color.Blue,
-	'fire': Color.Red,
-	'ground': Color.Orange,
-	'psy': Color.Magenta,
-	'bug': Color.Green,
-	'dragon': Color.Purple,
-	'electric': Color.Yellow,
-};
 
 
 const makeMarkdown = (pokemon: any) => {
@@ -71,28 +60,30 @@ const Command = () => {
 
 
 	return (
-		<List 
+		<Grid
 			onSelectionChange={(id) => { setActivePokemon(id); }}
 			navigationTitle={`Select pokemon - ${activePokemon}`}
 			searchBarPlaceholder={'Select pokemon'}
 			isLoading={false}
 			onSearchTextChange={handleFilter}
-			isShowingDetail
 		>
-			<List.Section title="Pokemons">
-				{filteredPokemons.map((pokemon) => (
-					<List.Item 
-						detail={
-							<List.Item.Detail markdown={makeMarkdown(pokemon)} />
-						}
+			<Grid.Section title={`Pokemons ${pokemons.length}`} columns={8}>
+				{filteredPokemons.filter((p) => !!p.artworkUrl).map((pokemon) => (
+					<Grid.Item 
 						key={pokemon.name}
 						id={pokemon.name}
 						title={pokemon.name} 
-						icon={pokemon.artworkUrl!}
+						content={pokemon.artworkUrl!}
+						actions={
+							<ActionPanel>
+								<Action title="file" onAction={() => { showToast({ title: `selected: ${pokemon.name}` }); }}>
+								</Action>
+							</ActionPanel>
+						}
 					/>
 				))}
-			</List.Section>
-		</List>
+			</Grid.Section>
+		</Grid>
 	);
 }
 

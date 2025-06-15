@@ -462,8 +462,6 @@ private:
               if (auto it = _widgetCache.find(item->id()); it != _widgetCache.end()) {
                 item->refresh(it->second.widget->widget());
                 updatedCache[item->id()] = it->second;
-
-                qDebug() << "refresh in cache" << item->id();
               }
             }
 

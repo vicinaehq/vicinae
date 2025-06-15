@@ -12,7 +12,7 @@ public:
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - _start).count();
 
-    // qDebug() << QString("TIMER => %1 %2ms").arg(name.c_str()).arg(duration);
+    qDebug() << QString("TIMER => %1 %2ms").arg(name.c_str()).arg(duration);
   }
 
   Timer() { start(); }

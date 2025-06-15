@@ -4,6 +4,7 @@
 #include "network-manager.hpp"
 #include "omni-icon.hpp"
 #include "theme.hpp"
+#include "timer.hpp"
 #include <QtConcurrent/qtconcurrentiteratekernel.h>
 #include <algorithm>
 #include <memory>
@@ -173,20 +174,22 @@ public:
 
 class HttpImageLoader : public AbstractImageLoader {
   std::unique_ptr<IODeviceImageLoader> m_loader;
-  QObjectUniquePtr<QNetworkReply> m_reply;
+  QNetworkReply *m_reply;
   QUrl m_url;
 
   void handleReplyFinished() {}
 
   void render(const RenderConfig &cfg) override {
-    QNetworkRequest m_request(m_url);
-    auto reply = NetworkManager::instance()->manager()->get(m_request);
+    QNetworkRequest request(m_url);
+    auto reply = NetworkManager::instance()->manager()->get(request);
 
-    m_reply = QObjectUniquePtr<QNetworkReply>(reply);
-    connect(m_reply.get(), &QNetworkReply::finished, this, [this, cfg]() {
+    m_reply = reply;
+    connect(m_reply, &QNetworkReply::finished, this, [this, cfg]() {
       auto buffer = std::make_unique<QBuffer>();
 
+      Timer timer;
       buffer->setData(m_reply->readAll());
+      timer.time("read http image network data");
       m_loader = std::make_unique<IODeviceImageLoader>(std::move(buffer));
       connect(m_loader.get(), &IODeviceImageLoader::dataUpdated, this, &HttpImageLoader::dataUpdated);
       connect(m_loader.get(), &IODeviceImageLoader::errorOccured, this, &HttpImageLoader::errorOccured);
@@ -196,6 +199,13 @@ class HttpImageLoader : public AbstractImageLoader {
 
 public:
   HttpImageLoader(const QUrl &url) : m_url(url) {}
+  ~HttpImageLoader() {
+    if (m_reply) {
+      m_reply->blockSignals(true);
+      m_reply->abort();
+      m_reply->deleteLater();
+    }
+  }
 };
 
 class LocalImageLoader : public AbstractImageLoader {
