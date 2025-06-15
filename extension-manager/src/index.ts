@@ -1,12 +1,11 @@
 import { basename, join } from "path"
-import { appendFileSync, readFileSync } from 'fs';
+import { readFileSync } from 'fs';
 import { randomUUID } from 'crypto';
 import { isMainThread, Worker } from "worker_threads";
 import { main as workerMain } from './worker';
 import { isatty } from "tty";
 import { extensionDataDir, safeKill, testMode } from "./utils";
-import { access, appendFile, readdir, readFile, stat } from "fs/promises";
-import { kill } from "process";
+import { appendFile, readdir, readFile, stat } from "fs/promises";
 
 type ExtensionCommand = {
 	name: string;

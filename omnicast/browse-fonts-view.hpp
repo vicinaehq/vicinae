@@ -109,7 +109,6 @@ class FontListItem : public AbstractDefaultListItem, public ListView::Actionnabl
     QFont m_font;
 
     void execute() override {
-#include "app.hpp"
       auto configService = ServiceRegistry::instance()->config();
 
       configService->updateConfig([&](ConfigService::Value &value) { value.font.normal = m_font.family(); });
@@ -196,7 +195,7 @@ public:
     m_list->endResetModel(OmniList::SelectFirst);
   }
 
-  void onSearchChanged(const QString &text) override { render(text); }
+  void textChanged(const QString &text) override { render(text); }
 
   BrowseFontsView() {
     setSearchPlaceholderText("Browse fonts to preview...");
