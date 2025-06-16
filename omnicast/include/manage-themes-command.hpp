@@ -146,13 +146,6 @@ public:
 };
 
 class ManageThemesView : public ListView {
-  void applyTheme(const QString &id) {
-    auto configService = ServiceRegistry::instance()->config();
-
-    configService->updateConfig([&](ConfigService::Value &value) { value.theme.name = id; });
-    ThemeService::instance().setTheme(id);
-  }
-
   void generateList(const QString &query) {
     auto &themeService = ThemeService::instance();
 
@@ -184,13 +177,15 @@ class ManageThemesView : public ListView {
 
   void initialize() override { onSearchChanged(""); }
 
-  void onSearchChanged(const QString &s) override { generateList(s); }
+  void textChanged(const QString &s) override { generateList(s); }
 
 public:
   ManageThemesView() {
     setSearchPlaceholderText("Manage themes...");
     ThemeService::instance().scanThemeDirectories();
-    connect(&ThemeService::instance(), &ThemeService::themeChanged, this,
-            [this](const auto &info) { generateList(searchText()); });
+    /*
+connect(&ThemeService::instance(), &ThemeService::themeChanged, this,
+        [this](const auto &info) { generateList(searchText()); });
+    */
   }
 };

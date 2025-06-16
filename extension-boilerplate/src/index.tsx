@@ -240,7 +240,6 @@ const FruitList = () => {
 							<ActionPanel title="Fruits">
 								<Action.CopyToClipboard title={"Copy to clipboard"} content={fruit.emoji} />
 								<Action title="Custom callback" icon={Icon.Pencil} onAction={() => handleCustomCallback(fruit)} />
-								{count % 2 == 0 && <Action title="blinking 2" icon={Icon.Cog} onAction={() => { console.log('blink') }} />}
 								<Action.Push title="Switch to AI gen" icon={Icon.Dna} target={<FruitGen />} />
 							</ActionPanel>
 						}

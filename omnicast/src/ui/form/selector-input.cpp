@@ -225,7 +225,7 @@ void SelectorInput::showPopover() {
   popover->show();
 }
 
-SelectorInput::~SelectorInput() { popover->deleteLater(); }
+SelectorInput::~SelectorInput() {}
 
 void SelectorInput::clear() {
   inputField->clear();

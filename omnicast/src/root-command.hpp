@@ -315,17 +315,6 @@ class RootCommandV2 : public ListView {
     connect(m_calcDebounce, &QTimer::timeout, this, &RootCommandV2::handleCalculatorTimeout);
   }
 
-  void escapePressed() override {
-    auto ui = ServiceRegistry::instance()->UI();
-
-    if (searchText().isEmpty()) {
-      ui->closeWindow();
-      return;
-    }
-
-    clearSearchBar();
-  }
-
 public:
   RootCommandV2() {}
 };

@@ -62,7 +62,6 @@ class ExtensionCommandRuntime : public CommandContext {
   std::vector<ExtensionViewWrapper *> m_viewStack;
   QFutureWatcher<ParsedRenderData> m_modelWatcher;
   RequestDispatcher m_actionDispatcher;
-  PlaceholderExtensionView *placeholderView = nullptr;
   Timer m_timer;
 
   QString m_sessionId;
@@ -73,19 +72,6 @@ class ExtensionCommandRuntime : public CommandContext {
 
     payload["args"] = args;
     manager->emitExtensionEvent(m_sessionId, handlerId, payload);
-  }
-
-  ExtensionSimpleView *createViewFromModel(const RenderModel &model) {
-    auto view = std::visit(ViewVisitor(), model);
-
-    if (!view) {
-      view = new PlaceholderExtensionView;
-      qCritical() << "Unsupported view type for model index" << model.index();
-    }
-
-    connect(view, &ExtensionSimpleView::notificationRequested, this, &ExtensionCommandRuntime::notify);
-
-    return view;
   }
 
   QJsonObject handleStorage(const QString &action, const QJsonObject &payload) {

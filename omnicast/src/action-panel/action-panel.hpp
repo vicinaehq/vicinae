@@ -394,7 +394,7 @@ public:
     }
 
     view->hide();
-    view->setParent(nullptr);
+    view->deleteLater();
   }
 
   void pushView(ActionPanelView *view) {
@@ -423,6 +423,11 @@ public:
     setFixedWidth(400);
     m_layout->setContentsMargins(0, 0, 0, 0);
     setLayout(m_layout);
+  }
+
+  ~ActionPanelV2Widget() {
+    popToRoot();
+    qDebug() << "~ActionPanelV2Widget";
   }
 
 signals:

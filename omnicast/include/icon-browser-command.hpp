@@ -1,4 +1,5 @@
 #pragma once
+#include "actions/theme/theme-actions.hpp"
 #include "base-view.hpp"
 #include "omni-icon.hpp"
 #include "ui/omni-grid.hpp"
@@ -26,6 +27,10 @@ class IconBrowserView : public GridView {
     }
 
     QString generateId() const override { return _name; }
+
+    QList<AbstractAction *> generateActions() const override {
+      return {new SetThemeAction("omnicast-light")};
+    }
 
   public:
     const QString &name() const { return _name; }

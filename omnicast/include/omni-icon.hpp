@@ -52,8 +52,8 @@ static std::vector<std::pair<QString, ColorTint>> colorTints = {{"blue", ColorTi
                                                                 {"secondary-text", ColorTint::TextSecondary}};
 
 class OmniIconUrl {
-  OmniIconType _type;
-  bool _isValid;
+  OmniIconType _type = OmniIconType::Invalid;
+  bool _isValid = false;
   QString _name;
   QSize _size;
   ColorTint _bgTint;

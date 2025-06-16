@@ -163,13 +163,13 @@ void UIController::popView() {
 
   m_topBar->setBackButtonVisiblity(m_stateStack.size() > 1);
 
-  emit popViewRequested();
-
   if (!m_stateStack.empty()) {
     auto &state = m_stateStack.back();
 
     applyViewState(state);
   }
+
+  emit popViewRequested();
 }
 
 void UIController::handleCompleterArgumentsChanged(const std::vector<std::pair<QString, QString>> &values) {
@@ -199,12 +199,14 @@ void UIController::applyViewState(const ViewState &state) {
   m_topBar->input->setFocus();
   m_topBar->input->selectAll();
 
+  /*
   if (auto accessory = state.searchAccessory) {
     qDebug() << "set accessory" << accessory;
     m_topBar->setAccessoryWidget(accessory);
   } else {
     m_topBar->clearAccessoryWidget();
   }
+  */
 
   qDebug() << "accessory set";
 

@@ -28,12 +28,12 @@ using ListChild = std::variant<ListItemViewModel, ListSectionModel>;
 using ListSearchBarAccessory = std::variant<DropdownModel>;
 
 struct ListModel {
-  bool isLoading;
-  bool filtering;
-  bool throttle;
-  bool dirty;
-  bool propsDirty;
-  bool isShowingDetail;
+  bool isLoading = false;
+  bool filtering = false;
+  bool throttle = false;
+  bool dirty = false;
+  bool propsDirty = false;
+  bool isShowingDetail = false;
   QString navigationTitle;
   QString searchPlaceholderText;
   std::optional<QString> onSelectionChanged;

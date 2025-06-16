@@ -29,7 +29,7 @@ void ExtensionListComponent::renderDropdown(const DropdownModel &dropdown) {
       selectionPolicy = OmniList::SelectFirst;
     }
 
-    m_selector->resetModel();
+    // m_selector->resetModel();
 
     std::vector<std::shared_ptr<SelectorInput::AbstractItem>> freeSectionItems;
 
@@ -38,7 +38,7 @@ void ExtensionListComponent::renderDropdown(const DropdownModel &dropdown) {
         freeSectionItems.emplace_back(std::make_shared<DropdownSelectorItem>(*listItem));
       } else if (auto section = std::get_if<DropdownModel::Section>(&item)) {
         if (!freeSectionItems.empty()) {
-          m_selector->addSection("", freeSectionItems);
+          // m_selector->addSection("", freeSectionItems);
           freeSectionItems.clear();
         }
 
@@ -47,31 +47,33 @@ void ExtensionListComponent::renderDropdown(const DropdownModel &dropdown) {
         };
         auto items = section->items | std::views::transform(mapItem) | std::ranges::to<std::vector>();
 
-        m_selector->addSection(section->title, items);
+        // m_selector->addSection(section->title, items);
       }
     }
 
     if (!freeSectionItems.empty()) {
-      m_selector->addSection("", freeSectionItems);
+      // m_selector->addSection("", freeSectionItems);
       freeSectionItems.clear();
     }
 
-    m_selector->updateModel();
+    // m_selector->updateModel();
   }
 
-  m_selector->setEnableDefaultFilter(dropdown.filtering.enabled);
+  // m_selector->setEnableDefaultFilter(dropdown.filtering.enabled);
 
+  /*
   if (auto controlledValue = dropdown.value) {
-    m_selector->setValue(*controlledValue);
+    //m_selector->setValue(*controlledValue);
   } else if (!m_selector->value()) {
     if (dropdown.defaultValue) {
-      m_selector->setValue(*dropdown.defaultValue);
+      //m_selector->setValue(*dropdown.defaultValue);
     } else if (auto item = m_selector->list()->firstSelectableItem()) {
-      m_selector->setValue(item->generateId());
+      //m_selector->setValue(item->generateId());
     }
   }
 
   m_selector->setIsLoading(dropdown.isLoading);
+  */
 }
 
 void ExtensionListComponent::render(const RenderModel &baseModel) {
@@ -85,7 +87,7 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
     renderDropdown(dropdown);
   }
 
-  m_selector->setVisible(newModel.searchBarAccessory.has_value() && isVisible());
+  // m_selector->setVisible(newModel.searchBarAccessory.has_value() && isVisible());
 
   if (!newModel.navigationTitle.isEmpty()) {
     qDebug() << "set navigation title" << newModel.navigationTitle;
@@ -256,12 +258,11 @@ void ExtensionListComponent::textChanged(const QString &text) {
   //_debounce->start();
 }
 
-ExtensionListComponent::ExtensionListComponent()
-    : _debounce(new QTimer(this)), _layout(new QVBoxLayout), _shouldResetSelection(true) {
-  m_selector->setMinimumWidth(400);
-  m_selector->setEnableDefaultFilter(false);
-  // m_topBar->setAccessoryWidget(m_selector);
-  m_selector->hide();
+ExtensionListComponent::ExtensionListComponent() : _debounce(new QTimer(this)), _shouldResetSelection(true) {
+  // m_selector->setMinimumWidth(400);
+  // m_selector->setEnableDefaultFilter(false);
+  //  m_topBar->setAccessoryWidget(m_selector);
+  // m_selector->hide();
   setDefaultActionShortcuts({primaryShortcut, secondaryShortcut});
   m_split->setMainWidget(m_list);
   m_split->setDetailWidget(m_detail);
@@ -271,10 +272,12 @@ ExtensionListComponent::ExtensionListComponent()
   connect(_debounce, &QTimer::timeout, this, &ExtensionListComponent::handleDebouncedSearchNotification);
   connect(m_list, &ExtensionList::selectionChanged, this, &ExtensionListComponent::onSelectionChanged);
   connect(m_list, &ExtensionList::itemActivated, this, &ExtensionListComponent::onItemActivated);
+  /*
   connect(m_selector, &SelectorInput::selectionChanged, this,
           &ExtensionListComponent::handleDropdownSelectionChanged);
   connect(m_selector, &SelectorInput::textChanged, this,
           &ExtensionListComponent::handleDropdownSearchChanged);
+   */
 }
 
-ExtensionListComponent::~ExtensionListComponent() { m_selector->deleteLater(); }
+ExtensionListComponent::~ExtensionListComponent() { qDebug() << "~ExtensionListComponent"; }

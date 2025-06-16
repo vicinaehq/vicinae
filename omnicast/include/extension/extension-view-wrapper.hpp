@@ -57,7 +57,7 @@ class ExtensionViewWrapper : public BaseView {
 
   bool supportsSearch() const override { return false; }
 
-  ActionPanelV2Widget *actionPanel() const override { return m_current ? m_current->actionPanel() : nullptr; }
+  ActionPanelV2Widget *actionPanel() const override { return nullptr; }
 
 public:
   void render(const RenderModel &model) {

@@ -6,8 +6,6 @@ void SetThemeAction::execute() {
   auto configService = ServiceRegistry::instance()->config();
 
   configService->updateConfig([&](ConfigService::Value &value) { value.theme.name = m_themeId; });
-
-  ThemeService::instance().setTheme(m_themeId);
   ui->setToast("Theme successfully updated");
 }
 

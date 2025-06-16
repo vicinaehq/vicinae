@@ -168,6 +168,7 @@ public:
   void executeDefaultAction();
 
   void clearActionPanel() {
+    qCritical() << "clear action panel";
     m_statusBar->setActionButtonVisibility(false);
     m_statusBar->setCurrentActionButtonVisibility(false);
   }
@@ -208,15 +209,17 @@ public:
   void setLoading(bool loading) { m_topBar->setLoading(loading); }
 
   void setSearchAccessory(BaseView *view, QWidget *accessory) {
-    updateViewState(view, [&](ViewState &state) { state.searchAccessory = accessory; });
-    if (topView() == view) {
-      if (accessory) {
-        qDebug() << "set accessory" << accessory;
-        m_topBar->setAccessoryWidget(accessory);
-      } else {
-        m_topBar->clearAccessoryWidget();
-      }
-    }
+    /*
+updateViewState(view, [&](ViewState &state) { state.searchAccessory = accessory; });
+if (topView() == view) {
+if (accessory) {
+  qDebug() << "set accessory" << accessory;
+  m_topBar->setAccessoryWidget(accessory);
+} else {
+  m_topBar->clearAccessoryWidget();
+}
+}
+  */
   }
 
   void setSearchVisibility(BaseView *view, bool value) {

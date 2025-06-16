@@ -105,10 +105,7 @@ void AppWindow::popCurrentView() {
   next->activate();
   m_viewContainer->setCurrentWidget(next);
 
-  // if (auto toast = toastService->currentToast()) { next->setToast(toast); }
-
   previous->deleteLater();
-  previous->hide();
 
   if (activeCommand.viewStack.size() == 1) {
     activeCommand.command->unload();
@@ -163,7 +160,7 @@ void AppWindow::disconnectView(BaseView &view) {
   // view.removeEventFilter(this);
 }
 
-void AppWindow::connectView(BaseView &view) { view.installEventFilter(this); }
+void AppWindow::connectView(BaseView &view) {}
 
 void AppWindow::pushView(BaseView *view, const PushViewOptions &opts) {
   auto toastService = ServiceRegistry::instance()->toastService();

@@ -1,4 +1,5 @@
 #include "theme.hpp"
+#include "timer.hpp"
 #include "ui/omni-painter.hpp"
 #include <QLinearGradient>
 #include <QStyleHints>
@@ -52,7 +53,10 @@ void ThemeService::setTheme(const ThemeInfo &info) {
 
   QApplication::setPalette(palette);
 
+  Timer timer;
+  qDebug() << "widgets" << qApp->allWidgets().size();
   qApp->setStyleSheet(style);
+  timer.time("set app style sheet");
 
   emit themeChanged(info);
 }

@@ -566,4 +566,10 @@ OmniList::OmniList()
   setMouseTracking(true);
 }
 
-OmniList::~OmniList() {}
+OmniList::~OmniList() {
+  qDebug() << "Destroy list";
+  qDebug() << "widget cache size" << _widgetCache.size();
+  for (auto &[typeId, pool] : _widgetPools) {
+    qDebug() << "  Type" << typeId << ":" << pool.size() << "widgets";
+  }
+}

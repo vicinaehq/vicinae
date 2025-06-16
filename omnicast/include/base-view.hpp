@@ -171,32 +171,9 @@ signals:
 };
 
 class SimpleView : public BaseView {
-  KeyboardShortcutModel DEFAULT_ACTION_PANEL_SHORTCUT = {.key = "B", .modifiers = {"ctrl"}};
-
 protected:
   QVBoxLayout *m_layout = new QVBoxLayout(this);
   ActionPanelV2Widget *m_actionPannelV2 = new ActionPanelV2Widget(this);
-
-  KeyboardShortcutModel defaultActionPanelShortcut() { return DEFAULT_ACTION_PANEL_SHORTCUT; }
-
-  bool eventFilter(QObject *obj, QEvent *event) override {
-    if (event->type() == QEvent::KeyPress) {
-      auto keyEvent = static_cast<QKeyEvent *>(event);
-      bool isEsc = keyEvent->key() == Qt::Key_Escape;
-    }
-
-    return false;
-  }
-
-  virtual void escapePressed() {
-    qDebug() << "escape pressed";
-    ServiceRegistry::instance()->UI()->popView();
-  }
-
-  /**
-   * Called when backspace is pressed on an empty search input
-   */
-  virtual void backspacePressed() { ServiceRegistry::instance()->UI()->popView(); }
 
   void executeAction(AbstractAction *action) override {
     action->execute();

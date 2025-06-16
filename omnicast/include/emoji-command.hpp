@@ -1,6 +1,7 @@
 #pragma once
 #include "base-view.hpp"
 #include "clipboard-actions.hpp"
+#include "icon-browser-command.hpp"
 #include "service-registry.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "emoji-database.hpp"
@@ -49,6 +50,19 @@ public:
   TestLongToast() : AbstractAction("Test long toast", BuiltinOmniIconUrl("copy-clipboard")) {}
 };
 
+class PushSelf : public AbstractAction {
+  void execute() override {
+    auto ui = ServiceRegistry::instance()->UI();
+
+    ui->pushView(new IconBrowserView);
+  }
+
+  QString title() const override { return "Push icons"; }
+
+public:
+  PushSelf() : AbstractAction("Push icons", BuiltinOmniIconUrl("plus")) {}
+};
+
 class EmojiGridItem : public OmniGrid::AbstractGridItem, public GridView::Actionnable {
 public:
   const EmojiInfo &info;
@@ -84,7 +98,7 @@ public:
   QList<AbstractAction *> generateActions() const override {
     return {new PasteToFocusedWindowAction(Clipboard::Text(info.emoji)),
             new CopyToClipboardAction(Clipboard::Text(info.description), "Copy emoji description"),
-            new TestLongToast()};
+            new TestLongToast(), new PushSelf};
   }
 
   QString navigationTitle() const override { return info.description; }
