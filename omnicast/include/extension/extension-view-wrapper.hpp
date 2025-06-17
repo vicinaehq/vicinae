@@ -15,17 +15,6 @@ struct ViewVisitor {
   ExtensionSimpleView *operator()(const RootDetailModel &model) const { return nullptr; }
 };
 
-class PlaceholderExtensionView : public ExtensionSimpleView {
-public:
-  PlaceholderExtensionView() {
-    // m_topBar->input->hide();
-    setupUI(new QWidget);
-  }
-
-  virtual bool supportsSearch() const override { return false; }
-  void render(const RenderModel &model) override {}
-};
-
 class ExtensionViewWrapper : public BaseView {
   Q_OBJECT
   ExtensionSimpleView *m_current = nullptr;
@@ -57,20 +46,22 @@ class ExtensionViewWrapper : public BaseView {
 
   bool supportsSearch() const override { return false; }
 
-  ActionPanelV2Widget *actionPanel() const override { return nullptr; }
+  ActionPanelV2Widget *actionPanel() const override { return m_current ? m_current->actionPanel() : nullptr; }
 
 public:
   void render(const RenderModel &model) {
     if (m_index != model.index()) {
       auto view = std::visit(ViewVisitor(), model);
 
-      connect(view, &ExtensionSimpleView::notificationRequested, this,
-              &ExtensionViewWrapper::notificationRequested);
-
       if (auto previous = m_layout->widget(0)) {
         m_layout->removeWidget(previous);
         previous->deleteLater();
       }
+
+      if (!view) return;
+
+      connect(view, &ExtensionSimpleView::notificationRequested, this,
+              &ExtensionViewWrapper::notificationRequested);
 
       m_layout->addWidget(view);
       m_layout->setCurrentWidget(view);
@@ -82,6 +73,13 @@ public:
       m_current->initialize();
       m_current->activate();
       m_index = model.index();
+
+      auto text = searchText();
+
+      m_current->render(model);
+
+      if (!text.isEmpty()) { view->textChanged(text); }
+      return;
     }
 
     m_current->render(model);

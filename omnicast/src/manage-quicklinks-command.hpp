@@ -10,7 +10,6 @@
 #include "ui/omni-list.hpp"
 #include "ui/omni-scroll-bar.hpp"
 #include "ui/typography.hpp"
-#include <algorithm>
 #include <memory>
 #include <qboxlayout.h>
 #include <qlabel.h>
@@ -22,10 +21,65 @@
 #include <sys/socket.h>
 #include <qscrollarea.h>
 
-class BookmarkDetailWidget : public QWidget {
-  TypographyWidget *m_expandedLink = new TypographyWidget(this);
+class DetailWithMetadataWidget : public QWidget {
   HorizontalMetadata *m_metadata = new HorizontalMetadata;
   QScrollArea *m_contentScrollArea = new QScrollArea(this);
+  HDivider *hdivider = new HDivider;
+
+public:
+  void setMetadata(const std::vector<MetadataItem> &items) {
+    m_metadata->clear();
+
+    for (const auto &item : items) {
+      m_metadata->addItem(item);
+    }
+
+    hdivider->show();
+    m_metadata->show();
+  }
+
+  void clearMetadata() {
+    m_metadata->clear();
+    hdivider->hide();
+    m_metadata->hide();
+  }
+
+  QWidget *content() const { return m_contentScrollArea->widget(); }
+
+  void setContent(QWidget *widget) {
+    m_contentScrollArea->setWidget(widget);
+    m_contentScrollArea->setWidgetResizable(true);
+    m_contentScrollArea->setAutoFillBackground(false);
+    setAutoFillBackground(false);
+  }
+
+  void setupUI() {
+    auto layout = new QVBoxLayout;
+
+    m_contentScrollArea->setVerticalScrollBar(new OmniScrollBar);
+    m_contentScrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_contentScrollArea->setWidgetResizable(true);
+    m_contentScrollArea->setAutoFillBackground(false);
+    setAutoFillBackground(false);
+    m_contentScrollArea->setAttribute(Qt::WA_TranslucentBackground);
+
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(m_contentScrollArea, 1);
+    m_contentScrollArea->setFocusPolicy(Qt::NoFocus);
+    layout->addWidget(hdivider);
+    layout->addWidget(m_metadata);
+    setLayout(layout);
+
+    hdivider->hide();
+    m_metadata->hide();
+  }
+
+public:
+  DetailWithMetadataWidget(QWidget *parent = nullptr) : QWidget(parent) { setupUI(); }
+};
+
+class BookmarkDetailWidget : public DetailWithMetadataWidget {
+  TypographyWidget *m_expandedLink = new TypographyWidget(this);
   std::shared_ptr<Bookmark> m_bookmark;
 
   QString expandLink(const Bookmark &bookmark, const std::vector<QString> &arguments) {
@@ -56,23 +110,20 @@ public:
   void setBookmark(const std::shared_ptr<Bookmark> &bookmark) {
     m_bookmark = bookmark;
 
-    QList<MetadataItem> items;
-
-    items << MetadataLabel{
+    auto name = MetadataLabel{
         .text = m_bookmark->name(),
         .title = "Name",
     };
-    items << MetadataLabel{
+    auto app = MetadataLabel{
         .text = m_bookmark->app(),
         .title = "Application",
     };
-    items << MetadataLabel{
+    auto opened = MetadataLabel{
         .text = QString::number(0),
         .title = "Opened",
     };
 
-    m_metadata->clear();
-    std::ranges::for_each(items, [&](auto &&item) { m_metadata->addItem(item); });
+    setMetadata({name, app, opened});
     m_expandedLink->setText(expandLink(*m_bookmark.get(), {}));
   }
 
@@ -80,25 +131,10 @@ public:
     m_expandedLink->setText(expandLink(*m_bookmark.get(), arguments));
   }
 
-  BookmarkDetailWidget(QWidget *parent = nullptr) : QWidget(parent) {
-    auto layout = new QVBoxLayout;
-
-    m_contentScrollArea->setVerticalScrollBar(new OmniScrollBar);
-    m_contentScrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    m_contentScrollArea->setWidget(m_expandedLink);
-    m_contentScrollArea->setWidgetResizable(true);
-    m_contentScrollArea->setAutoFillBackground(false);
-    setAutoFillBackground(false);
-    m_contentScrollArea->setAttribute(Qt::WA_TranslucentBackground);
-
+  BookmarkDetailWidget(QWidget *parent = nullptr) {
     m_expandedLink->setWordWrap(true);
     m_expandedLink->setAlignment(Qt::AlignLeft | Qt::AlignTop);
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->addWidget(m_contentScrollArea, 1);
-    m_contentScrollArea->setFocusPolicy(Qt::NoFocus);
-    layout->addWidget(new HDivider);
-    layout->addWidget(m_metadata);
-    setLayout(layout);
+    setContent(m_expandedLink);
   }
 };
 
@@ -192,7 +228,7 @@ class ManageBookmarksView : public ListView {
 
   void textChanged(const QString &s) override { renderList(s); }
 
-  void initialize() override { onSearchChanged(""); }
+  void initialize() override { textChanged(""); }
 
   void argumentValuesChanged(const std::vector<std::pair<QString, QString>> &args) override {
     auto values = args | std::views::transform([](auto &&pair) { return pair.second; }) |

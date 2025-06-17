@@ -62,7 +62,7 @@ void UIController::pushView(BaseView *view, const PushViewOptions &opts) {
     auto &state = m_stateStack.back();
 
     if (auto panel = state.actionPanel) {
-      panel->disconnect();
+      disconnect(panel, nullptr, this, nullptr);
       panel->close();
     }
 
@@ -228,7 +228,7 @@ void UIController::setActionPanelWidget(BaseView *sender, ActionPanelV2Widget *p
   auto state = findViewState(sender);
 
   if (!state) return;
-  if (auto panel = state->actionPanel) { panel->disconnect(); }
+  if (auto panel = state->actionPanel) { disconnect(panel); }
 
   updateViewState(sender, [&](ViewState &state) { state.actionPanel = panel; });
 

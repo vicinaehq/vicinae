@@ -1,6 +1,8 @@
 #pragma once
 #include "base-view.hpp"
 #include "clipboard-actions.hpp"
+#include "extend/metadata-model.hpp"
+#include "manage-quicklinks-command.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
@@ -75,6 +77,72 @@ class CopyClipboardSelection : public AbstractAction {
 public:
   CopyClipboardSelection(int id)
       : AbstractAction("Copy to clipboard", BuiltinOmniIconUrl("copy-clipboard")), m_id(id) {}
+};
+
+class ClipboardHistoryDetail : public DetailWithMetadataWidget {
+  std::vector<MetadataItem> createEntryMetadata(const ClipboardHistoryEntry &entry) const {
+    auto mime = MetadataLabel{
+        .text = entry.mimeType,
+        .title = "Mime",
+    };
+    auto id = MetadataLabel{
+        .text = QString::number(entry.id),
+        .title = "ID",
+    };
+    auto copiedAt = MetadataLabel{
+        .text = QDateTime::fromSecsSinceEpoch(entry.createdAt).toString(),
+        .title = "Copied at",
+    };
+    auto checksum = MetadataLabel{
+        .text = entry.md5sum,
+        .title = "Checksum (MD5)",
+    };
+
+    return {mime, id, copiedAt, checksum};
+  }
+
+  QWidget *createEntryWidget(const ClipboardHistoryEntry &entry) {
+
+    if (entry.mimeType.startsWith("text/plain")) {
+      auto container = new TextContainer;
+      auto viewer = new TextFileViewer();
+
+      container->setWidget(viewer);
+      viewer->load(entry.filePath);
+
+      return container;
+    }
+
+    if (entry.mimeType.startsWith("image/")) {
+      /*
+auto w = new LogWidget;
+auto l = new QVBoxLayout;
+w->setLayout(l);
+*/
+
+      auto icon = new Omnimg::ImageWidget;
+
+      // icon->setUrl(LocalOmniIconUrl(entry.filePath).setMask(OmniPainter::RoundedRectangleMask));
+      icon->setUrl(LocalOmniIconUrl(entry.filePath));
+
+      // l->addWidget(icon, 1, Qt::AlignCenter);
+
+      return icon;
+    }
+
+    return new QWidget();
+  }
+
+public:
+  void setEntry(const ClipboardHistoryEntry &entry) {
+    if (auto previous = content()) { previous->deleteLater(); }
+
+    auto widget = createEntryWidget(entry);
+    auto metadata = createEntryMetadata(entry);
+
+    setContent(widget);
+    setMetadata(metadata);
+  }
 };
 
 /*
@@ -217,9 +285,11 @@ public:
   ItemData data() const override { return {.iconUrl = iconForMime(info.mimeType), .name = info.textPreview}; }
 
   QWidget *generateDetail() const override {
-    // auto detail = std::make_unique<ClipboardItemDetail>(info);
+    auto detail = new ClipboardHistoryDetail();
 
-    return nullptr;
+    detail->setEntry(info);
+
+    return detail;
   }
 
   QString generateId() const override { return QString::number(info.id); }
@@ -263,10 +333,10 @@ class ClipboardHistoryCommand : public ListView {
 
   void initialize() override {
     setSearchPlaceholderText("Browse clipboard history...");
-    onSearchChanged("");
+    textChanged("");
   }
 
-  void onSearchChanged(const QString &value) override { generateList(value); }
+  void textChanged(const QString &value) override { generateList(value); }
 
   void clipboardSelectionInserted(const ClipboardHistoryEntry &entry) {}
 

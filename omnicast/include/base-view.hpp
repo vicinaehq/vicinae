@@ -346,6 +346,11 @@ protected:
     m_split->setDetailVisibility(true);
   }
 
+  void itemRightClicked(const OmniList::AbstractVirtualItem &item) {
+    m_list->setSelected(item.id(), OmniList::ScrollBehaviour::ScrollRelative);
+    m_actionPannelV2->show();
+  }
+
 public:
   ListView(QWidget *parent = nullptr) : SimpleView(parent) {
     m_split->setMainWidget(m_list);
@@ -353,6 +358,7 @@ public:
     connect(m_list, &OmniList::modelChanged, this, &ListView::modelChanged);
     connect(m_list, &OmniList::selectionChanged, this, &ListView::selectionChanged);
     connect(m_list, &OmniList::itemActivated, this, &ListView::itemActivated);
+    connect(m_list, &OmniList::itemRightClicked, this, &ListView::itemRightClicked);
   }
 };
 

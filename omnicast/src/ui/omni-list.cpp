@@ -38,6 +38,8 @@ void OmniList::itemClicked(int index) { setSelectedIndex(index); }
 
 void OmniList::itemDoubleClicked(int index) const { emit itemActivated(*m_items[index].item); }
 
+void OmniList::rightClicked(int index) const { emit itemRightClicked(*m_items[index].item); }
+
 void OmniList::updateVisibleItems() {
   auto start = std::chrono::high_resolution_clock::now();
   if (m_items.empty()) return;
@@ -81,6 +83,8 @@ void OmniList::updateVisibleItems() {
         connect(widget, &OmniListItemWidgetWrapper::clicked, this, &OmniList::itemClicked,
                 Qt::UniqueConnection);
         connect(widget, &OmniListItemWidgetWrapper::doubleClicked, this, &OmniList::itemDoubleClicked,
+                Qt::UniqueConnection);
+        connect(widget, &OmniListItemWidgetWrapper::rightClicked, this, &OmniList::rightClicked,
                 Qt::UniqueConnection);
         widget->stackUnder(scrollBar);
         widget->setWidget(vinfo.item->createWidget());

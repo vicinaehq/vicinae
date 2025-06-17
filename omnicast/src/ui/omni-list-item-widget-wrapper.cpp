@@ -2,6 +2,8 @@
 #include "ui/omni-list-item-widget.hpp"
 #include <qnamespace.h>
 
+void OmniListItemWidgetWrapper::handleRightClicked() const { emit rightClicked(_index); }
+
 void OmniListItemWidgetWrapper::handleDoubleClicked() const { emit doubleClicked(_index); }
 
 void OmniListItemWidgetWrapper::handleClicked() const { emit clicked(_index); }
@@ -15,6 +17,7 @@ void OmniListItemWidgetWrapper::setWidget(OmniListItemWidget *widget) {
   widget->setParent(this);
   connect(widget, &OmniListItemWidget::clicked, this, &OmniListItemWidgetWrapper::handleClicked);
   connect(widget, &OmniListItemWidget::doubleClicked, this, &OmniListItemWidgetWrapper::handleDoubleClicked);
+  connect(widget, &OmniListItemWidget::rightClicked, this, &OmniListItemWidgetWrapper::handleRightClicked);
   _widget = widget;
 }
 

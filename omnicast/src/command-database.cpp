@@ -15,7 +15,6 @@
 #include "omni-icon.hpp"
 #include "theme.hpp"
 #include "command-builder.hpp"
-#include "ui/peepobank-command.hpp"
 #include <memory>
 #include <qdnslookup.h>
 #include <qfuture.h>
@@ -105,11 +104,6 @@ CommandDatabase::CommandDatabase() {
                               .withTintedIcon("cog", ColorTint::Red)
                               .toNoViewContext<OpenConfigurationFileCommand>();
 
-    auto peepobank = CommandBuilder("peepobank")
-                         .withName("Peepobank")
-                         .withTintedIcon("emoji", ColorTint::Red)
-                         .toSingleView<PeepobankView>();
-
     auto configureFallbackCommands = CommandBuilder("configure-fallback-commands")
                                          .withName("Configure Fallback Commands")
                                          .withTintedIcon("arrow-counter-clockwise", ColorTint::Red)
@@ -125,7 +119,6 @@ CommandDatabase::CommandDatabase() {
                         .withCommand(clipboardHistory)
                         .withCommand(emoji)
                         .withCommand(iconSearch)
-                        .withCommand(peepobank)
                         .withCommand(openConfigFile)
                         .withCommand(configureFallbackCommands)
                         .withCommand(setDefaultTerminal)

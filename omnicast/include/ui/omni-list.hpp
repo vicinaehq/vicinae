@@ -314,6 +314,7 @@ private:
 
   void itemClicked(int index);
   void itemDoubleClicked(int index) const;
+  void rightClicked(int index) const;
 
   void updateVisibleItems();
 
@@ -696,6 +697,7 @@ signals:
   void itemUpdated(const AbstractVirtualItem &item) const;
   void itemActivated(const AbstractVirtualItem &item) const;
   void selectionChanged(const AbstractVirtualItem *next, const AbstractVirtualItem *previous) const;
+  void itemRightClicked(const AbstractVirtualItem &item) const;
   void virtualHeightChanged(int height) const;
 };
 

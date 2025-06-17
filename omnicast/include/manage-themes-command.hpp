@@ -162,7 +162,7 @@ class ManageThemesView : public ListView {
         auto &section = m_list->addSection("Available Themes");
 
         auto filterTheme = [&](auto &&theme) {
-          return theme.name != current.name && theme.name.startsWith(query, Qt::CaseInsensitive);
+          return theme.name != current.name && theme.name.contains(query, Qt::CaseInsensitive);
         };
         auto mapTheme = [](auto &&theme) -> std::unique_ptr<OmniList::AbstractVirtualItem> {
           return std::make_unique<ThemeItem>(theme);
@@ -175,7 +175,7 @@ class ManageThemesView : public ListView {
     });
   }
 
-  void initialize() override { onSearchChanged(""); }
+  void initialize() override { textChanged(""); }
 
   void textChanged(const QString &s) override { generateList(s); }
 

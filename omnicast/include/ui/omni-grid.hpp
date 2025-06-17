@@ -33,7 +33,7 @@ public:
       }
     }
 
-    virtual bool centerWidgetRecyclable() const { return false; }
+    virtual bool centerWidgetRecyclable() const { return true; }
 
     virtual void recycleCenterWidget(QWidget *widget) const {}
 

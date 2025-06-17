@@ -12,6 +12,7 @@ class OmniListItemWidgetWrapper : public QWidget {
   void resizeEvent(QResizeEvent *event) override;
   void handleClicked() const;
   void handleDoubleClicked() const;
+  void handleRightClicked() const;
 
 public:
   OmniListItemWidgetWrapper(QWidget *parent = nullptr);
@@ -27,4 +28,5 @@ public:
 signals:
   void clicked(int index) const;
   void doubleClicked(int index) const;
+  void rightClicked(int index) const;
 };

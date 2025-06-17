@@ -198,7 +198,7 @@ class ManageFallbackCommands : public ListView {
     m_list->endResetModel(selectionPolicy);
   }
 
-  void onSearchChanged(const QString &text) override { renderList(text); }
+  void textChanged(const QString &text) override { renderList(text); }
 
   void initialize() override {
     auto manager = ServiceRegistry::instance()->rootItemManager();

@@ -392,7 +392,8 @@ public:
     auto panel = new ActionPanelStaticListView;
     auto submitAction = new StaticAction("Submit", BuiltinOmniIconUrl("enter-key"), [this]() { submit(); });
 
-    submitAction->setShortcut(KeyboardShortcutModel{.key = "return", .modifiers = {"ctrl"}});
+    submitAction->setShortcut(KeyboardShortcutModel{.key = "return", .modifiers = {"shift"}});
+    submitAction->setPrimary(true);
 
     panel->addAction(submitAction);
     m_actionPannelV2->setView(panel);

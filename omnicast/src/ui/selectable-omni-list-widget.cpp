@@ -2,6 +2,7 @@
 #include "theme.hpp"
 #include "ui/omni-list-item-widget.hpp"
 #include <qevent.h>
+#include <qnamespace.h>
 
 void SelectableOmniListWidget::paintEvent(QPaintEvent *event) {
   QPainter painter(this);
@@ -34,8 +35,15 @@ void SelectableOmniListWidget::selectionChanged(bool selected) {
 }
 
 void SelectableOmniListWidget::mousePressEvent(QMouseEvent *event) {
+  if (event->button() == Qt::LeftButton) {
+    emit clicked();
+    return;
+  }
+  if (event->button() == Qt::RightButton) {
+    emit rightClicked();
+    return;
+  }
   OmniListItemWidget::mousePressEvent(event);
-  if (event->button() == Qt::LeftButton) { emit clicked(); }
 }
 
 void SelectableOmniListWidget::mouseDoubleClickEvent(QMouseEvent *event) {
@@ -43,6 +51,7 @@ void SelectableOmniListWidget::mouseDoubleClickEvent(QMouseEvent *event) {
     emit doubleClicked();
     return;
   }
+
   OmniListItemWidget::mouseDoubleClickEvent(event);
 }
 

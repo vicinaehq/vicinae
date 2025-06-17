@@ -21,4 +21,5 @@ public:
 signals:
   void clicked();
   void doubleClicked();
+  void rightClicked();
 };
