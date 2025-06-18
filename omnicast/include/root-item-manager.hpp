@@ -10,6 +10,7 @@
 #include "ui/default-list-item-widget.hpp"
 #include <algorithm>
 #include <qdnslookup.h>
+#include <qjsonobject.h>
 #include <qlogging.h>
 #include <qnamespace.h>
 #include <qobject.h>
@@ -144,6 +145,7 @@ private:
     std::vector<QString> aliases;
     bool isFallback = false;
     int fallbackPosition = -1;
+    QString providerId;
   };
 
   struct RootProviderMetadata {};
@@ -160,7 +162,7 @@ private:
 
     query.prepare(R"(
 		SELECT
-			enabled, fallback, fallback_position, aliases, visit_count, last_visited_at
+			enabled, fallback, fallback_position, aliases, visit_count, last_visited_at, provider_id
 		FROM
 			root_provider_item
 		WHERE id = :id
@@ -180,6 +182,7 @@ private:
     item.aliases = {};
     item.visitCount = query.value(4).toInt();
     item.lastVisitedAt = std::chrono::system_clock::from_time_t(query.value(5).toULongLong());
+    item.providerId = query.value(6).toString();
 
     return item;
   }
@@ -311,8 +314,159 @@ private:
     emit itemsChanged();
   }
 
+  bool setProviderPreferenceValues(const QString &id, const QJsonObject &preferences) {
+    auto query = m_db.createQuery();
+    QJsonDocument json;
+
+    json.setObject(preferences);
+    query.prepare("UPDATE root_provider SET preference_values = :preferences WHERE id = :id");
+    query.bindValue(":preferences", json.toJson());
+    query.bindValue(":id", id);
+
+    if (!query.exec()) {
+      qDebug() << "setRepositoryPreferenceValues:" << query.lastError();
+      return false;
+    }
+
+    return true;
+  }
+
+  bool setItemPreferenceValues(const QString &id, const QJsonObject &preferences) {
+    auto query = m_db.createQuery();
+    QJsonDocument json;
+
+    if (!query.prepare("UPDATE root_provider_item SET preference_values = :preferences WHERE id = :id")) {
+      qDebug() << "Failed to prepare update preference query" << query.lastError().driverText();
+      return false;
+    }
+
+    json.setObject(preferences);
+    query.bindValue(":preferences", json.toJson());
+    query.bindValue(":id", id);
+
+    if (!query.exec()) {
+      qDebug() << "setCommandPreferenceValues:" << query.lastError().driverText();
+      return false;
+    }
+
+    return true;
+  }
+
+  RootItem *findItemById(const QString &id) {
+    auto it = std::ranges::find_if(m_items, [&](auto &&v) { return v->uniqueId() == id; });
+
+    if (it != m_items.end()) return it->get();
+
+    return nullptr;
+  }
+
+  RootProvider *findProviderById(const QString &id) {
+    auto it = std::ranges::find_if(m_providers, [&](auto &&provider) { return provider->uniqueId() == id; });
+
+    if (it == m_providers.end()) return nullptr;
+
+    return it->get();
+  }
+
 public:
   RootItemManager(OmniDatabase &db) : m_db(db) { createTables(); }
+
+  void setPreferenceValues(const QString &id, const QJsonObject &preferences) {
+    auto item = findItemById(id);
+
+    if (!item) {
+      qCritical() << "setPreferenceValues: no item with id" << id;
+      return;
+    }
+
+    QJsonObject extensionPreferences, commandPreferences;
+    auto metadata = itemMetadata(id);
+    auto provider = findProviderById(metadata.providerId);
+
+    if (!provider) {
+      qCritical() << "no provider for id" << metadata.providerId;
+      return;
+    }
+
+    for (const auto &preference : item->preferences()) {
+      auto &prefId = preference->name();
+      bool isRepositoryPreference = false;
+
+      if (provider) {
+        for (const auto &repoPref : provider->preferences()) {
+          if (repoPref->name() == prefId) {
+            extensionPreferences[prefId] = preferences.value(prefId);
+            isRepositoryPreference = true;
+            break;
+          }
+        }
+      }
+
+      if (!isRepositoryPreference && preferences.contains(prefId)) {
+        commandPreferences[prefId] = preferences.value(prefId);
+      }
+    }
+
+    m_db.db().transaction();
+    if (provider) { setProviderPreferenceValues(provider->uniqueId(), extensionPreferences); }
+    setItemPreferenceValues(id, commandPreferences);
+    qDebug() << "set command prefs for" << id;
+    m_db.db().commit();
+
+    for (const auto &key : preferences.keys()) {}
+  }
+
+  QJsonObject getPreferenceValues(const QString &id) const {
+    auto query = m_db.createQuery();
+    auto it = std::ranges::find_if(m_items, [&](auto &&item) { return item->uniqueId() == id; });
+
+    if (it == m_items.end()) {
+      qCritical() << "No item with id" << id;
+      return {};
+    }
+
+    auto &item = *it;
+
+    query.prepare(R"(
+		SELECT 
+			json_patch(provider.preference_values, item.preference_values) as preference_values 
+		FROM 
+			root_provider_item as item
+		LEFT JOIN
+			root_provider as provider
+		ON 
+			provider.id = item.provider_id
+		WHERE
+			item.id = :id
+	)");
+    query.addBindValue(id);
+
+    if (!query.exec()) {
+      qDebug() << "Failed to get preference values for command with ID" << id << query.lastError();
+      return {};
+    }
+
+    if (!query.next()) {
+      qDebug() << "No results";
+      return {};
+    }
+    auto rawJson = query.value(0).toString();
+
+    qDebug() << "raw preferences json" << rawJson;
+
+    auto json = QJsonDocument::fromJson(rawJson.toUtf8());
+    auto preferenceValues = json.object();
+
+    for (auto pref : item->preferences()) {
+      auto dflt = pref->defaultValueAsJson();
+
+      if (!preferenceValues.contains(pref->name()) && !dflt.isNull()) {
+        preferenceValues[pref->name()] = dflt;
+      }
+    }
+
+    return preferenceValues;
+  }
 
   RootItemMetadata itemMetadata(const QString &id) const {
     if (auto it = m_metadata.find(id); it != m_metadata.end()) { return it->second; }

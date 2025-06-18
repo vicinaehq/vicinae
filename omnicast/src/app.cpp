@@ -211,18 +211,20 @@ void AppWindow::unloadHangingCommand() {
 void AppWindow::launchCommand(const std::shared_ptr<AbstractCmd> &command, const LaunchCommandOptions &opts,
                               const LaunchProps &props) {
 
-  auto commandDb = ServiceRegistry::instance()->commandDb();
-  auto preferenceValues = commandDb->getPreferenceValues(command->uniqueId());
+  auto ui = ServiceRegistry::instance()->UI();
+  auto itemId = QString("extension.%1").arg(command->uniqueId());
+  auto manager = ServiceRegistry::instance()->rootItemManager();
+  auto preferenceValues = manager->getPreferenceValues(itemId);
 
   for (const auto &preference : command->preferences()) {
     if (preference->isRequired() && !preferenceValues.contains(preference->name())) {
       if (command->type() == CommandType::CommandTypeExtension) {
         auto extensionCommand = std::static_pointer_cast<ExtensionCommand>(command);
 
-        /*
-pushView(new MissingExtensionPreferenceView(*this, extensionCommand),
-         {.navigation = NavigationStatus{.title = command->name(), .iconUrl = command->iconUrl()}});
-        */
+        ui->pushView(
+            new MissingExtensionPreferenceView(*this, extensionCommand),
+            {.navigation = NavigationStatus{.title = command->name(), .iconUrl = command->iconUrl()}});
+        return;
       }
 
       qDebug() << "MISSING PREFERENCE" << preference->title();
@@ -286,6 +288,7 @@ std::variant<CommandResponse, CommandError> AppWindow::handleCommand(const Comma
   qDebug() << "received message type" << message.type;
   auto commandDb = ServiceRegistry::instance()->commandDb();
   auto extensionManager = ServiceRegistry::instance()->extensionManager();
+  auto ui = ServiceRegistry::instance()->UI();
 
   if (message.type == "ping") { return "pong"; }
   if (message.type == "toggle") {
@@ -295,6 +298,31 @@ std::variant<CommandResponse, CommandError> AppWindow::handleCommand(const Comma
 
   if (message.type == "url-scheme-handler") {
     QUrl url(message.params.asString().c_str());
+
+    // omnicast://extensions/<extension_id>/<command_id>
+    if (url.host() == "extensions") {
+      auto commandDb = ServiceRegistry::instance()->commandDb();
+      auto ss = url.path().slice(1).split('/');
+
+      if (ss.size() < 2) {
+        qCritical() << "Malformed extensions request";
+        return false;
+      }
+
+      auto cmdId = QString("%1.%2").arg(ss.at(0)).arg(ss.at(1));
+
+      for (auto &entry : commandDb->commands()) {
+        qDebug() << entry.command->uniqueId();
+        if (entry.command->uniqueId() == cmdId) {
+          ui->popToRoot();
+          launchCommand(entry.command);
+          show();
+          return true;
+        }
+      }
+
+      qCritical() << "No command id" << cmdId;
+    }
 
     if (url.path() == "/api/extensions/develop/start") {
       QUrlQuery query(url.query());

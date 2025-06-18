@@ -16,6 +16,7 @@ public:
   ActionPanelView *fallbackActionPanel() const override;
   QString uniqueId() const override;
   AccessoryList accessories() const override;
+  PreferenceList preferences() const override { return m_command->preferences(); }
 
 public:
   auto command() const { return m_command; }
@@ -26,12 +27,10 @@ class ExtensionRootProvider : public RootProvider {
   std::shared_ptr<AbstractCommandRepository> m_repo;
 
 public:
+  PreferenceList preferences() const override { return m_repo->preferences(); }
   QString displayName() const override { return m_repo->name(); }
-
   QString uniqueId() const override { return QString("extension.%1").arg(m_repo->id()); }
-
   Type type() const override { return RootProvider::Type::ExtensionProvider; }
-
   std::vector<std::shared_ptr<RootItem>> loadItems() const override;
 
   ExtensionRootProvider(const std::shared_ptr<AbstractCommandRepository> &repo) : m_repo(repo) {}

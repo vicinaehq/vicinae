@@ -1,6 +1,7 @@
 #include "root-search/apps/app-root-provider.hpp"
 #include "actions/app/app-actions.hpp"
 #include "actions/root-search/root-search-actions.hpp"
+#include "omnicast.hpp"
 #include "root-item-manager.hpp"
 #include "service-registry.hpp"
 
@@ -42,8 +43,11 @@ ActionPanelView *AppRootItem::actionPanel() const {
     return openAction;
   };
 
-  std::ranges::for_each(m_app->actions() | std::views::enumerate | std::views::transform(makeAction),
-                        [&](auto &&action) { panel->addAction(action); });
+  panel->addSection();
+
+  for (const auto &action : m_app->actions() | std::views::enumerate | std::views::transform(makeAction)) {
+    panel->addAction(action);
+  }
 
   if (fileBrowser) {
     auto openLocation = new OpenAppAction(fileBrowser, "Open Location", {m_app->path().c_str()});

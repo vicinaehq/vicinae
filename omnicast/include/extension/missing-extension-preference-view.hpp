@@ -1,4 +1,6 @@
+#include "action-panel/action-panel.hpp"
 #include "app.hpp"
+#include "base-view.hpp"
 #include "extension/extension-command.hpp"
 #include "omni-command-db.hpp"
 #include "omni-icon.hpp"
@@ -6,24 +8,14 @@
 #include "theme.hpp"
 #include "ui/form/preference-field.hpp"
 #include "ui/form/form.hpp"
-#include "ui/action-pannel/action-item.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/typography.hpp"
 #include <qboxlayout.h>
 #include <qnamespace.h>
+#include <qwidget.h>
 
-/*
-class MissingExtensionPreferenceView : public View {
-
-  class ContinueAction : public AbstractAction {
-    std::shared_ptr<ExtensionCommand> m_command;
-
-    void execute(AppWindow &app) override {}
-
-  public:
-    ContinueAction(const std::shared_ptr<ExtensionCommand> &command)
-        : m_command(command), AbstractAction("Continue", command->iconUrl()) {}
-  };
+class MissingExtensionPreferenceView : public FormView {
+  FormWidget *m_form = new FormWidget;
 
   QJsonObject m_existingPreferenceValues;
   QVBoxLayout *m_layout = new QVBoxLayout;
@@ -32,10 +24,12 @@ class MissingExtensionPreferenceView : public View {
 
 public:
   MissingExtensionPreferenceView(AppWindow &app, const std::shared_ptr<ExtensionCommand> &command)
-      : View(app), m_command(command) {
-    auto db = ServiceRegistry::instance()->commandDb();
+      : m_command(command) {
+    auto manager = ServiceRegistry::instance()->rootItemManager();
+    QWidget *widget = new QWidget;
 
-    m_existingPreferenceValues = db->getPreferenceValues(command->uniqueId());
+    m_existingPreferenceValues =
+        manager->getPreferenceValues(QString("extension.%1").arg(command->uniqueId()));
     auto icon = new OmniIcon();
 
     icon->setFixedSize(32, 32);
@@ -66,26 +60,25 @@ public:
     m_layout->addWidget(title);
     m_layout->addWidget(paragraph, 0, Qt::AlignHCenter);
 
-    auto form = new FormWidget();
-
     for (const auto &preference : command->preferences()) {
       if (preference->isRequired() && preference->defaultValueAsJson().isNull() &&
           !m_existingPreferenceValues.contains(preference->name())) {
         auto field = new PreferenceField(preference);
 
-        form->addField(field);
+        m_form->addField(field);
         m_preferenceFields.push_back(field);
       }
     }
 
-    m_layout->addWidget(form);
+    m_layout->addWidget(m_form);
     m_layout->addStretch();
-
-    setLayout(m_layout);
+    widget->setLayout(m_layout);
+    setupUI(widget);
   }
 
   void handleSubmit() {
-    auto db = ServiceRegistry::instance()->commandDb();
+    auto manager = ServiceRegistry::instance()->rootItemManager();
+    auto ui = ServiceRegistry::instance()->UI();
     bool validated = true;
     QJsonObject obj(m_existingPreferenceValues);
 
@@ -109,25 +102,21 @@ public:
 
     if (!validated) return;
 
-    db->setPreferenceValues(m_command->uniqueId(), obj);
-
-    pop();
-    app.launchCommand(m_command, {});
+    manager->setPreferenceValues(QString("extension.%1").arg(m_command->uniqueId()), obj);
+    ui->popView();
+    ui->launchCommand(m_command);
   }
 
-  void onMount() override {
-    hideInput();
+  void onActivate() override { m_form->focusFirst(); }
 
-    std::vector<ActionItem> items;
-    auto continueAction = std::make_unique<ContinueAction>(m_command);
-
-    connect(continueAction.get(), &ContinueAction::didExecute, this,
-            &MissingExtensionPreferenceView::handleSubmit);
+  void initialize() override {
+    auto panel = new ActionPanelStaticListView;
+    auto continueAction =
+        new StaticAction("Save preferences", m_command->iconUrl(), [this]() { handleSubmit(); });
 
     continueAction->setShortcut({.key = "return", .modifiers = {"shift"}});
-
-    items.push_back(std::move(continueAction));
-    setActionPannel(items);
+    continueAction->setPrimary(true);
+    panel->addAction(continueAction);
+    m_actionPannelV2->setView(panel);
   }
 };
-*/

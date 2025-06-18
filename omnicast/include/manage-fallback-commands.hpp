@@ -203,7 +203,7 @@ class ManageFallbackCommands : public ListView {
   void initialize() override {
     auto manager = ServiceRegistry::instance()->rootItemManager();
 
-    onSearchChanged("");
+    textChanged("");
     connect(manager, &RootItemManager::fallbackEnabled, this,
             [this]() { renderList(searchText(), OmniList::PreserveSelection); });
     connect(manager, &RootItemManager::fallbackDisabled, this,

@@ -2,6 +2,7 @@
 #include "action-panel/action-panel.hpp"
 #include "actions/fallback-actions.hpp"
 #include "actions/root-search/root-search-actions.hpp"
+#include "clipboard-actions.hpp"
 #include "command-actions.hpp"
 #include "service-registry.hpp"
 #include "base-view.hpp"
@@ -25,6 +26,16 @@ ActionPanelView *CommandRootItem::actionPanel() const {
   panel->addSection();
   panel->addAction(resetRanking);
   panel->addAction(markAsFavorite);
+
+  auto ss = m_command->uniqueId().split(".");
+
+  if (ss.size() >= 2) {
+    auto deeplink = QString("omnicast://extensions/%1/%2").arg(ss.at(0)).arg(ss.at(1));
+    auto action = new CopyToClipboardAction(Clipboard::Text(deeplink), "Copy to deeplink");
+
+    panel->addAction(action);
+  }
+
   panel->addSection();
   panel->addAction(new DisableApplication(uniqueId()));
 
