@@ -202,6 +202,8 @@ protected:
     // m_topBar->input->setFocus();
   }
 
+  void onDeactivate() override { m_actionPannelV2->reset(); }
+
   void activatePrimaryAction() {
     auto ui = ServiceRegistry::instance()->UI();
 

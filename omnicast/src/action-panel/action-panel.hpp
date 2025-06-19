@@ -89,6 +89,7 @@ public:
   virtual QList<AbstractAction *> actions() const { return {}; }
   virtual QString searchText() const { return {}; };
   virtual void setSearchText(const QString &text) {}
+  virtual void reset() {}
   void activate() { onActivate(); }
   void deactivate() { onDeactivate(); }
   void initialize() { onInitialize(); }
@@ -107,6 +108,8 @@ class ActionPanelListView : public ActionPanelView {
 protected:
   OmniList *m_list = new OmniList;
   virtual void onSearchChanged(const QString &text) {}
+
+  void reset() override { m_input->clear(); }
 
   QSize sizeHint() const override {
     QSize size = ActionPanelView::sizeHint();
@@ -333,6 +336,7 @@ class ActionPanelV2Widget : public Popover {
   }
 
   void closeEvent(QCloseEvent *event) override {
+    reset();
     emit closed();
     emit openChanged(false);
     QWidget::closeEvent(event);
@@ -368,6 +372,14 @@ public:
     pushView(view);
   }
 
+  void reset() {
+    while (m_viewStack.size() > 1) {
+      popCurrentView();
+    }
+
+    if (!m_viewStack.empty()) { m_viewStack.top()->reset(); }
+  }
+
   void handlePop() {
     if (m_viewStack.size() == 1) {
       close();
@@ -390,7 +402,7 @@ public:
       next->activate();
       QSize contentSize = next->sizeHint();
       setFixedHeight(contentSize.height());
-      // resizeView();
+      resizeView();
     }
 
     view->hide();
@@ -406,7 +418,6 @@ public:
 
     view->installEventFilter(this);
     connect(view, &ActionPanelView::actionActivated, this, &ActionPanelV2Widget::actionActivated);
-    connect(view, &ActionPanelView::actionsChanged, this, &ActionPanelV2Widget::actionsChanged);
     connect(view, &ActionPanelView::popCurrentViewRequested, this, &ActionPanelV2Widget::handlePop);
     connect(view, &ActionPanelView::pushViewRequested, this, &ActionPanelV2Widget::pushView);
 
@@ -415,8 +426,13 @@ public:
     m_viewStack.push(view);
     view->initialize();
     view->activate();
-    emit actionsChanged();
-    // resizeView();
+
+    if (m_viewStack.size() == 1) {
+      connect(view, &ActionPanelView::actionsChanged, this, &ActionPanelV2Widget::actionsChanged);
+      emit actionsChanged();
+    }
+
+    resizeView();
   }
 
   ActionPanelV2Widget(QWidget *parent = nullptr) : Popover(parent) {

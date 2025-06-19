@@ -1,6 +1,5 @@
 #include "extension/extension-command.hpp"
 #include "command.hpp"
-// #include "extension/extension-command-runtime.hpp"
 #include "extension/extension-command-runtime.hpp"
 #include "extension/extension.hpp"
 #include "omni-icon.hpp"
@@ -42,7 +41,7 @@ ExtensionCommand::ExtensionCommand(const QJsonObject &obj) {
   }
 }
 
-const QString &ExtensionCommand::extensionId() const { return _extensionId; }
+QString ExtensionCommand::extensionId() const { return _extensionId; }
 void ExtensionCommand::setExtensionId(const QString &text) { _extensionId = text; }
 
 const QString &ExtensionCommand::extensionIcon() const { return _extensionIcon; }

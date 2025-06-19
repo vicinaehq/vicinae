@@ -37,6 +37,8 @@ public:
   QString name() const override { return _name; }
   OmniIconUrl iconUrl() const override { return _url.value_or(_repositoryIcon); }
   virtual CommandType type() const override { return CommandTypeBuiltin; }
+  QString extensionId() const override { return _repositoryId; }
+  QString commandId() const override { return _id; }
 
   void setRepositoryIconUrl(const OmniIconUrl &icon) { _repositoryIcon = icon; }
   void setRepositoryId(const QString &id) { _repositoryId = id; }

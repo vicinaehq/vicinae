@@ -27,14 +27,11 @@ ActionPanelView *CommandRootItem::actionPanel() const {
   panel->addAction(resetRanking);
   panel->addAction(markAsFavorite);
 
-  auto ss = m_command->uniqueId().split(".");
+  auto deeplink =
+      QString("omnicast://extensions/%1/%2").arg(m_command->extensionId()).arg(m_command->commandId());
+  auto action = new CopyToClipboardAction(Clipboard::Text(deeplink), "Copy to deeplink");
 
-  if (ss.size() >= 2) {
-    auto deeplink = QString("omnicast://extensions/%1/%2").arg(ss.at(0)).arg(ss.at(1));
-    auto action = new CopyToClipboardAction(Clipboard::Text(deeplink), "Copy to deeplink");
-
-    panel->addAction(action);
-  }
+  panel->addAction(action);
 
   panel->addSection();
   panel->addAction(new DisableApplication(uniqueId()));

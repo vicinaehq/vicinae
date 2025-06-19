@@ -38,7 +38,7 @@ class ExtensionCommand : public AbstractCmd {
 public:
   static ExtensionCommand fromJson(const QJsonObject &obj);
 
-  const QString &extensionId() const;
+  QString extensionId() const override;
   void setExtensionId(const QString &text);
 
   const QString &extensionIcon() const;
@@ -61,7 +61,7 @@ public:
 
   QString uniqueId() const override;
   QString name() const override;
-  QString commandId() const;
+  QString commandId() const override;
 
   OmniIconUrl iconUrl() const override;
   QString repositoryName() const override;

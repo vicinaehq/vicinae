@@ -174,6 +174,7 @@ void AppWindow::pushView(BaseView *view, const PushViewOptions &opts) {
   auto &currentCommand = commandStack.at(commandStack.size() - 1);
 
   if (auto front = frontView()) {
+    front->deactivate();
     front->hide();
     front->clearFocus();
     // front->clearToast();
@@ -303,17 +304,16 @@ std::variant<CommandResponse, CommandError> AppWindow::handleCommand(const Comma
     if (url.host() == "extensions") {
       auto commandDb = ServiceRegistry::instance()->commandDb();
       auto ss = url.path().slice(1).split('/');
+      auto extId = ss.at(0);
+      auto commandId = ss.at(1);
 
       if (ss.size() < 2) {
         qCritical() << "Malformed extensions request";
         return false;
       }
 
-      auto cmdId = QString("%1.%2").arg(ss.at(0)).arg(ss.at(1));
-
       for (auto &entry : commandDb->commands()) {
-        qDebug() << entry.command->uniqueId();
-        if (entry.command->uniqueId() == cmdId) {
+        if (entry.command->extensionId() == extId && entry.command->commandId() == commandId) {
           ui->popToRoot();
           launchCommand(entry.command);
           show();
@@ -321,7 +321,7 @@ std::variant<CommandResponse, CommandError> AppWindow::handleCommand(const Comma
         }
       }
 
-      qCritical() << "No command id" << cmdId;
+      qCritical() << "No command id" << extId << commandId;
     }
 
     if (url.path() == "/api/extensions/develop/start") {

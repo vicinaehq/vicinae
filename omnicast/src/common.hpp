@@ -142,6 +142,9 @@ public:
   virtual QString repositoryName() const { return ""; }
   virtual bool isFallback() const { return false; }
 
+  virtual QString extensionId() const = 0;
+  virtual QString commandId() const = 0;
+
   bool isView() const { return mode() == CommandModeView; }
   bool isNoView() const { return mode() == CommandModeNoView; }
 
