@@ -557,10 +557,20 @@ const OmniList::AbstractVirtualItem *OmniList::setSelected(const QString &id,
   return nullptr;
 }
 
+void OmniList::handleDebouncedScroll() {
+  if (m_scrollBarElapsedTimer.elapsed() >= SCROLL_FRAME_TIME) {
+    updateVisibleItems();
+    m_scrollBarElapsedTimer.restart();
+  }
+}
+
 OmniList::OmniList()
     : scrollBar(new OmniScrollBar(this)), _selected(DEFAULT_SELECTION_INDEX), margins({0, 0, 0, 0}) {
+
+  m_scrollBarElapsedTimer.start();
   scrollBar->setSingleStep(40);
-  connect(scrollBar, &QScrollBar::valueChanged, this, [this]() { updateVisibleItems(); });
+  connect(scrollBar, &QScrollBar::valueChanged, this, &OmniList::handleDebouncedScroll);
+  connect(scrollBar, &QScrollBar::sliderReleased, this, [this]() { updateVisibleItems(); });
 
   int scrollBarWidth = scrollBar->sizeHint().width();
 

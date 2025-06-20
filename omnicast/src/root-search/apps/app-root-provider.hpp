@@ -27,6 +27,7 @@ public:
   std::vector<std::shared_ptr<RootItem>> loadItems() const override;
 
   Type type() const override;
+  OmniIconUrl icon() const override;
   QString displayName() const override;
   QString uniqueId() const override;
 

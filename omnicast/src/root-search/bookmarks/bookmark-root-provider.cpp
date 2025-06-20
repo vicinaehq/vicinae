@@ -4,6 +4,7 @@
 #include "actions/fallback-actions.hpp"
 #include "actions/root-search/root-search-actions.hpp"
 #include "argument.hpp"
+#include "omni-icon.hpp"
 #include "services/bookmark/bookmark-service.hpp"
 #include "root-item-manager.hpp"
 #include <memory>
@@ -101,6 +102,15 @@ std::vector<std::shared_ptr<RootItem>> BookmarkRootProvider::loadItems() const {
 };
 
 QString BookmarkRootProvider::displayName() const { return "Bookmarks"; }
+
+OmniIconUrl BookmarkRootProvider::icon() const {
+  auto icon = BuiltinOmniIconUrl("bookmark");
+
+  icon.setBackgroundTint(ColorTint::Red);
+
+  return icon;
+}
+
 QString BookmarkRootProvider::uniqueId() const { return "bookmarks"; }
 RootProvider::Type BookmarkRootProvider::type() const { return RootProvider::Type::GroupProvider; }
 

@@ -28,6 +28,7 @@ class BookmarkRootProvider : public RootProvider {
 public:
   QString displayName() const override;
   QString uniqueId() const override;
+  OmniIconUrl icon() const override;
   Type type() const override;
   std::vector<std::shared_ptr<RootItem>> loadItems() const override;
 

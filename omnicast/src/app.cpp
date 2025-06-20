@@ -52,6 +52,12 @@ bool AppWindow::event(QEvent *event) {
       return true;
     }
 
+    if (keyEvent->keyCombination() == QKeyCombination(Qt::ControlModifier, Qt::Key_Comma)) {
+      qCritical() << "show settings!";
+      settings->show();
+      return true;
+    }
+
     if (m_statusBar->isActionButtonVisible() &&
         keyEvent == KeyboardShortcut(m_statusBar->actionButtonShortcut())) {
       if (auto panel = m_viewStack.back()->actionPanel()) {

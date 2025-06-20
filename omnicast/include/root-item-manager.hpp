@@ -120,7 +120,16 @@ public:
 
   virtual QString uniqueId() const = 0;
   virtual QString displayName() const = 0;
+  virtual OmniIconUrl icon() const = 0;
   virtual Type type() const = 0;
+  QString typeAsString() {
+    switch (type()) {
+    case ExtensionProvider:
+      return "Extension";
+    case GroupProvider:
+      return "Group";
+    }
+  }
 
   virtual std::vector<std::shared_ptr<RootItem>> loadItems() const = 0;
   virtual PreferenceList preferences() const { return {}; }

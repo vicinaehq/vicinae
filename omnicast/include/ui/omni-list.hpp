@@ -14,6 +14,7 @@
 #include <iterator>
 #include <memory>
 #include <qboxlayout.h>
+#include <qelapsedtimer.h>
 #include <qfuture.h>
 #include <qlabel.h>
 #include <qlogging.h>
@@ -29,6 +30,8 @@
 #include <variant>
 
 class OmniList : public QWidget {
+  static constexpr const double SCROLL_FRAME_TIME = 1000 / 120.0;
+  QElapsedTimer m_scrollBarElapsedTimer;
 
 public:
   enum ScrollBehaviour {
@@ -135,6 +138,8 @@ public:
     VirtualSection(const QString &name);
     ~VirtualSection() {}
   };
+
+  void handleDebouncedScroll();
 
   using UpdateItemCallback = std::function<void(AbstractVirtualItem *)>;
   enum SelectionPolicy {

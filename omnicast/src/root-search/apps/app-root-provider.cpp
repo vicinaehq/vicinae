@@ -1,6 +1,7 @@
 #include "root-search/apps/app-root-provider.hpp"
 #include "actions/app/app-actions.hpp"
 #include "actions/root-search/root-search-actions.hpp"
+#include "omni-icon.hpp"
 #include "omnicast.hpp"
 #include "root-item-manager.hpp"
 #include "service-registry.hpp"
@@ -72,6 +73,8 @@ ActionPanelView *AppRootItem::actionPanel() const {
 }
 
 RootProvider::Type AppRootProvider::type() const { return RootProvider::Type::GroupProvider; }
+
+OmniIconUrl AppRootProvider::icon() const { return BuiltinOmniIconUrl("folder"); }
 
 QString AppRootProvider::displayName() const { return "Applications"; }
 

@@ -3,6 +3,7 @@
 #include <QGraphicsPixmapItem>
 #include "action-panel/action-panel.hpp"
 #include "command-server.hpp"
+#include "settings/settings-window.hpp"
 #include <QScreen>
 #include "omni-icon.hpp"
 #include <cstring>
@@ -60,6 +61,7 @@ struct CommandSnapshot {
 class AppWindow : public QMainWindow, public ICommandHandler {
   Q_OBJECT
 
+  SettingsWindow *settings = new SettingsWindow();
   CommandServer *_commandServer;
   std::vector<BaseView *> m_viewStack;
 

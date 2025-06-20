@@ -30,6 +30,7 @@ public:
   PreferenceList preferences() const override { return m_repo->preferences(); }
   QString displayName() const override { return m_repo->name(); }
   QString uniqueId() const override { return QString("extension.%1").arg(m_repo->id()); }
+  OmniIconUrl icon() const override { return m_repo->iconUrl(); };
   Type type() const override { return RootProvider::Type::ExtensionProvider; }
   std::vector<std::shared_ptr<RootItem>> loadItems() const override;
 

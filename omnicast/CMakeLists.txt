@@ -377,6 +377,10 @@ set(SRCS
 	src/ui/toast.cpp
 	#src/ui/action_popover.hpp
 	#src/ui/action_popover.cpp
+
+	# settings
+	src/settings/settings-window.hpp
+	src/settings/settings-window.cpp
 )
 
 
