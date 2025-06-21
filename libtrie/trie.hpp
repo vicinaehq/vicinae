@@ -155,6 +155,41 @@ template <typename T, typename Hash = std::hash<T>> class Trie {
     return cur;
   }
 
+  Node *findStartNode(std::string_view prefix) {
+    Node *cur = &m_root;
+
+    for (char ch : prefix) {
+      auto index = static_cast<uint8_t>(tolower(ch));
+
+      if (auto charNode = std::get_if<typename Node::CharNode>(&cur->data)) {
+        if (charNode->ch == index) {
+          cur = charNode->node.get();
+          continue;
+        }
+      }
+
+      if (auto list = std::get_if<typename Node::NodeList>(&cur->data)) {
+        auto it = std::ranges::find_if(*list, [index](const auto &charNode) { return charNode.ch == index; });
+
+        if (it != list->end()) {
+          cur = it->node.get();
+          continue;
+        }
+      }
+
+      if (auto map = std::get_if<typename Node::NodeMap>(&cur->data)) {
+        if (auto it = map->find(index); it != map->end()) {
+          cur = it->second.get();
+          continue;
+        }
+      }
+
+      return {};
+    }
+
+    return cur;
+  }
+
   void traversePaths(const Node *node, const std::function<void(const Node *)> &fn) const {
     std::vector<const Node *> paths;
 
@@ -263,6 +298,22 @@ public:
   void indexLatinText(std::string_view s, const T &data) {
     for (const auto &word : splitWords(s)) {
       index(word, data);
+    }
+  }
+
+  void removeLatinTextItem(std::string_view s, const T &data) {
+    for (const auto &word : splitWords(s)) {
+      removeItem(word, data);
+    }
+  }
+
+  void removeItem(std::string_view s, const T &data) {
+    Node *target = findStartNode(s);
+
+    if (!target) return;
+
+    if (auto it = std::ranges::find(target->matches, data); it != target->matches.end()) {
+      target->matches.erase(it);
     }
   }
 

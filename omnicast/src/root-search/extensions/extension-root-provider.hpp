@@ -14,6 +14,7 @@ public:
   double baseScoreWeight() const override;
   ActionPanelView *actionPanel() const override;
   ActionPanelView *fallbackActionPanel() const override;
+  QString typeDisplayName() const override;
   QString uniqueId() const override;
   AccessoryList accessories() const override;
   PreferenceList preferences() const override { return m_command->preferences(); }

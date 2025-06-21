@@ -1,11 +1,15 @@
 #pragma once
+#include "common.hpp"
 #include "omni-icon.hpp"
 #include "ui/image/omnimg.hpp"
 #include "ui/omni-list.hpp"
 #include "ui/selectable-omni-list-widget.hpp"
+#include "ui/typography.hpp"
 #include <memory>
 #include <qboxlayout.h>
 #include <qmargins.h>
+#include <qnamespace.h>
+#include <qobjectdefs.h>
 #include <qwidget.h>
 #include <ranges>
 
@@ -55,6 +59,60 @@ public:
       col.width = width;
     }
   }
+};
+
+class HeaderWidget : public QWidget {
+  QHBoxLayout *m_layout = new QHBoxLayout;
+
+  class HeaderColumn : public QWidget {
+    TypographyWidget *m_typography = new TypographyWidget;
+
+  public:
+    void setText(const QString &text) { m_typography->setText(text); }
+    HeaderColumn() {
+      auto layout = new QHBoxLayout;
+      layout->setContentsMargins(5, 0, 0, 0);
+      layout->addWidget(m_typography);
+      setLayout(layout);
+    }
+  };
+
+  void paintEvent(QPaintEvent *event) override {
+    auto &theme = ThemeService::instance().theme();
+    int borderWidth = 1;
+    QPainter painter(this);
+
+    QPen pen(theme.colors.border, borderWidth);
+    painter.setPen(pen);
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    painter.setBrush(Qt::transparent);
+    painter.drawRect(rect());
+  }
+
+  void setupUI(HeaderInfo *info) {
+    m_layout->setContentsMargins(5, 5, 5, 5);
+
+    for (const auto [idx, col] : info->columns() | std::views::enumerate) {
+      HeaderColumn *column = new HeaderColumn;
+
+      if (idx > 0) { m_layout->addWidget(new VDivider); }
+
+      if (col.sizePolicy == HeaderInfo::ColumnSizePolicy::Fixed) {
+        column->setFixedWidth(col.width);
+        qDebug() << "width" << col.width;
+        m_layout->addWidget(column);
+      } else {
+        m_layout->addWidget(column, 1);
+      }
+
+      column->setText(col.name);
+    }
+
+    setLayout(m_layout);
+  }
+
+public:
+  HeaderWidget(HeaderInfo *info) { setupUI(info); }
 };
 
 class LeftTableWidget : public QWidget {
@@ -158,22 +216,40 @@ class OmniTree : public QWidget {
   OmniList *m_list = new OmniList;
   std::vector<VirtualTreeItemDelegate *> m_model;
   HeaderInfo m_header;
+  QWidget *m_widget = new QWidget;
+  QVBoxLayout *layout = new QVBoxLayout;
 
 public:
   OmniTree(QWidget *parent = nullptr) : QWidget(parent) {
-    auto layout = new QVBoxLayout;
 
     layout->setContentsMargins(0, 0, 0, 0);
-    layout->addWidget(m_list);
+    layout->addWidget(m_widget);
+    layout->addWidget(m_list, 1);
     setLayout(layout);
     connect(m_list, &OmniList::itemActivated, this, &OmniTree::activateDelegate);
   }
 
-  void setColumns(const std::vector<QString> &columns) { m_header.setColumns(columns); }
+  void setHeader(HeaderWidget *widget) {
+    if (auto item = layout->itemAt(0)) {
+      if (auto previous = item->widget()) {
+        layout->replaceWidget(previous, widget);
+        previous->deleteLater();
+      }
+    }
+  }
+
+  void setColumns(const std::vector<QString> &columns) {
+    m_header.setColumns(columns);
+    setHeader(new HeaderWidget(&m_header));
+  }
   void setColumnSizePolicy(int idx, HeaderInfo::ColumnSizePolicy policy) {
     m_header.setColumnSizePolicy(idx, policy);
+    setHeader(new HeaderWidget(&m_header));
   }
-  void setColumnWidth(int index, int width) { m_header.setColumnWidth(index, width); }
+  void setColumnWidth(int index, int width) {
+    m_header.setColumnWidth(index, width);
+    setHeader(new HeaderWidget(&m_header));
+  }
 
   void activateDelegate(const OmniList::AbstractVirtualItem &item) {
     auto &row = static_cast<const VirtualTreeItemRow &>(item);

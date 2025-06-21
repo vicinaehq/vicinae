@@ -272,10 +272,12 @@ private:
 
   const size_t DEFAULT_SELECTION_INDEX = -1;
 
-  struct {
+  struct VisibleRange {
     int lower = -1;
     int upper = -1;
-  } visibleIndexRange;
+  };
+
+  VisibleRange visibleIndexRange;
   struct {
     int left = 0;
     int top = 0;
@@ -305,9 +307,15 @@ private:
     size_t recyclingId = -1;
   };
 
+  struct VisibleWidget {
+    size_t idx = -1;
+    OmniListItemWidgetWrapper *widget = nullptr;
+  };
+
   QScrollBar *scrollBar = nullptr;
   std::vector<VirtualWidgetInfo> m_items;
-  std::unordered_map<size_t, OmniListItemWidgetWrapper *> _visibleWidgets;
+  std::vector<OmniListItemWidgetWrapper *> m_visibleWidgets;
+  std::map<size_t, OmniListItemWidgetWrapper *> _visibleWidgets;
   std::unordered_map<QString, CachedWidget> _widgetCache;
   std::unordered_map<size_t, std::stack<OmniListItemWidgetWrapper *>> _widgetPools;
   std::unordered_map<QString, AbstractVirtualItem *> _idItemMap;
@@ -530,6 +538,7 @@ private:
    * to recalculate it manually here.
    */
   void recalculateMousePosition();
+  void updateFocusChain();
 
 protected:
   bool event(QEvent *event) override;

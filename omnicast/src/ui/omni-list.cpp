@@ -40,8 +40,28 @@ void OmniList::itemDoubleClicked(int index) const { emit itemActivated(*m_items[
 
 void OmniList::rightClicked(int index) const { emit itemRightClicked(*m_items[index].item); }
 
+void OmniList::updateFocusChain() {
+  if (m_visibleWidgets.empty()) return;
+
+  for (QWidget *widget : m_visibleWidgets) {
+    setTabOrder(widget, nullptr);
+  }
+
+  for (int i = 0; i != m_visibleWidgets.size() - 1; ++i) {
+    QWidget *current = m_visibleWidgets[i];
+    QWidget *next = m_visibleWidgets[i + 1];
+
+    setTabOrder(current, next);
+  }
+
+  for (int i = visibleIndexRange.lower; i <= visibleIndexRange.upper; ++i) {
+    if (i >= m_items.size()) continue;
+  }
+}
+
 void OmniList::updateVisibleItems() {
   auto start = std::chrono::high_resolution_clock::now();
+  m_visibleWidgets.clear();
   if (m_items.empty()) return;
   setUpdatesEnabled(false);
 
@@ -52,7 +72,10 @@ void OmniList::updateVisibleItems() {
     ++startIndex;
   }
 
-  if (startIndex >= m_items.size()) return;
+  if (startIndex >= m_items.size()) {
+    visibleIndexRange = {-1, -1};
+    return;
+  }
 
   auto &cell = m_items[startIndex];
   int marginOffset = std::max(0, margins.top - scrollHeight);
@@ -115,15 +138,42 @@ void OmniList::updateVisibleItems() {
     widget->blockSignals(false);
 
     lastY = vinfo.bounds.y();
-    _visibleWidgets[endIndex] = widget;
+    //_visibleWidgets[endIndex] = widget;
+    m_visibleWidgets.emplace_back(widget);
 
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() / 1e6;
     ++endIndex;
   }
 
-  visibleIndexRange = {startIndex, endIndex - 1};
+  VisibleRange range = {startIndex, endIndex - 1};
 
+  // get rid of widgets that went out of range
+
+  if (visibleIndexRange.lower != -1) {
+    for (int i = visibleIndexRange.lower; i <= visibleIndexRange.upper; ++i) {
+      bool isStillVisible = i >= range.lower && i <= range.upper;
+
+      if (isStillVisible) continue;
+      if (i >= m_items.size()) continue;
+
+      auto &item = m_items.at(i).item;
+
+      if (auto it = _widgetCache.find(item->id()); it != _widgetCache.end()) {
+        OmniListItemWidgetWrapper *widget = it->second.widget;
+
+        if (item->recyclable()) {
+          moveToPool(item->typeId(), widget);
+        } else {
+          widget->deleteLater();
+        }
+
+        _widgetCache.erase(it);
+      }
+    }
+  }
+
+  /*
   for (auto it = _visibleWidgets.begin(); it != _visibleWidgets.end();) {
     auto current = it++;
 
@@ -141,10 +191,13 @@ void OmniList::updateVisibleItems() {
       _widgetCache.erase(item->id());
     }
   }
+  */
 
   setUpdatesEnabled(true);
   update();
-  QTimer::singleShot(0, this, [this]() { recalculateMousePosition(); });
+  recalculateMousePosition();
+  updateFocusChain();
+  this->visibleIndexRange = range;
 }
 
 OmniListItemWidgetWrapper *OmniList::takeFromPool(size_t type) {
@@ -575,7 +628,6 @@ OmniList::OmniList()
   int scrollBarWidth = scrollBar->sizeHint().width();
 
   setMargins(5, 5, 5, 5);
-  _visibleWidgets.reserve(20);
   _widgetCache.reserve(20);
   setMouseTracking(true);
 }

@@ -4,7 +4,9 @@
 #include "root-item-manager.hpp"
 #include "service-registry.hpp"
 #include "theme.hpp"
+#include "ui/form/base-input.hpp"
 #include "ui/form/checkbox.hpp"
+#include "ui/icon-button.hpp"
 #include "ui/image/omnimg.hpp"
 #include "qheaderview.h"
 #include "ui/omni-scroll-bar.hpp"
@@ -15,157 +17,16 @@
 #include <qabstractitemmodel.h>
 #include <qboxlayout.h>
 #include <qdnslookup.h>
+#include <qevent.h>
 #include <qnamespace.h>
+#include <qobject.h>
+#include <qobjectdefs.h>
+#include <qtmetamacros.h>
 #include <qtreeview.h>
 #include <qtreewidget.h>
 #include <qlineedit.h>
 #include <qwidget.h>
 #include <qtreeview.h>
-#include <ranges>
-
-class ExtensionSettingRenderable {
-public:
-  virtual QString title() const = 0;
-  virtual OmniIcon icon() const = 0;
-  virtual ExtensionSettingRenderable *parent() const = 0;
-  virtual std::vector<std::shared_ptr<ExtensionSettingRenderable>> children() const = 0;
-  int row() const {
-    if (auto p = parent()) {
-      auto children = p->children();
-      auto it = std::ranges::find_if(children, [&](auto &&child) { return child.get() == this; });
-
-      return it - children.begin();
-    }
-
-    return 0;
-  }
-};
-
-class ExtensionSettingItem : public ExtensionSettingRenderable {
-  std::shared_ptr<RootItem> m_item;
-
-  OmniIcon icon() const override { return m_item->iconUrl(); }
-  QString title() const override { return m_item->displayName(); }
-  ExtensionSettingRenderable *parent() const override { return nullptr; }
-  std::vector<std::shared_ptr<ExtensionSettingRenderable>> children() const override { return {}; }
-
-public:
-  ExtensionSettingItem(const std::shared_ptr<RootItem> &item) : m_item(item) {}
-};
-
-class ExtensionSettingProviderItem : public ExtensionSettingRenderable {
-  const RootProvider *m_provider = nullptr;
-  std::vector<std::shared_ptr<ExtensionSettingRenderable>> m_items;
-
-  OmniIcon icon() const override { return m_provider->icon(); }
-  QString title() const override { return m_provider->displayName(); }
-  ExtensionSettingRenderable *parent() const override { return nullptr; }
-  std::vector<std::shared_ptr<ExtensionSettingRenderable>> children() const override { return m_items; }
-
-public:
-  ExtensionSettingProviderItem(const RootProvider *provider) : m_provider(provider) {
-    for (const auto &item : provider->loadItems()) {
-      auto shared = std::shared_ptr<ExtensionSettingRenderable>(new ExtensionSettingItem(item));
-
-      m_items.emplace_back(shared);
-    }
-  }
-};
-
-class SettingsModel : public QAbstractItemModel {
-  RootItemManager &m_manager;
-  std::vector<std::shared_ptr<ExtensionSettingRenderable>> m_providers;
-  std::unordered_map<QString, std::vector<std::shared_ptr<RootItem>>> m_items;
-
-  QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override {
-    if (!index.isValid()) return {};
-    if (role != Qt::DisplayRole) return {};
-    auto setting = static_cast<ExtensionSettingRenderable *>(index.internalPointer());
-
-    switch (index.column()) {
-    case 0:
-      return "Name";
-    case 1:
-      return "Type";
-    case 2:
-      return "Alias";
-    case 3:
-      return "Enabled";
-    }
-
-    return {};
-  }
-
-  Qt::ItemFlags flags(const QModelIndex &index) const override { return {}; }
-
-  QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override {
-    if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
-      switch (section) {
-      case 0:
-        return "Name";
-      case 1:
-        return "Type";
-      case 2:
-        return "Alias";
-      case 3:
-        return "Enabled";
-      }
-    }
-
-    return QVariant();
-  }
-
-  QModelIndex parent(const QModelIndex &child) const override {
-    auto renderable = static_cast<ExtensionSettingRenderable *>(child.internalPointer());
-    auto parent = renderable->parent();
-
-    if (!parent) return QModelIndex();
-
-    return createIndex(parent->row(), 0, parent);
-  }
-
-  int rowCount(const QModelIndex &parent = QModelIndex()) const override {
-    if (parent.isValid()) {
-      auto provider = static_cast<ExtensionSettingRenderable *>(parent.internalPointer());
-
-      return provider->children().size();
-    }
-
-    return m_providers.size();
-  }
-
-  int columnCount(const QModelIndex &parent = QModelIndex()) const override { return 4; }
-
-  QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const override {
-    if (!hasIndex(row, column, parent)) { return QModelIndex(); }
-
-    if (parent.isValid()) {
-      auto provider = static_cast<ExtensionSettingRenderable *>(parent.internalPointer());
-      auto children = provider->children();
-
-      if (row < children.size()) {
-        return createIndex(row, column, children.at(row).get());
-      } else {
-        return QModelIndex();
-      }
-    }
-
-    auto provider = m_providers.at(row);
-
-    return createIndex(row, column, provider.get());
-  }
-
-  void populate() {
-    for (const auto &provider : m_manager.providers()) {
-      auto ptr = std::make_shared<ExtensionSettingProviderItem>(provider);
-
-      m_providers.emplace_back(ptr);
-    }
-  }
-
-public:
-  SettingsModel(RootItemManager &manager) : m_manager(manager) { populate(); }
-};
 
 class NameTreeWidget : public QWidget {
   QHBoxLayout *m_layout = new QHBoxLayout;
@@ -190,16 +51,20 @@ public:
 
 class ExtensionSettingsToolbar : public QWidget {
   QHBoxLayout *m_layout = new QHBoxLayout;
-  QLineEdit *m_input = new QLineEdit;
+  BaseInput *m_input = new BaseInput;
+  Omnimg::ImageWidget *m_searchIcon = new Omnimg::ImageWidget;
 
 public:
   QLineEdit *input() const { return m_input; }
 
   ExtensionSettingsToolbar() {
-    m_layout->setContentsMargins(5, 5, 5, 5);
+    m_searchIcon->setFixedSize({20, 20});
+    m_searchIcon->setUrl(BuiltinOmniIconUrl("magnifying-glass"));
+    m_layout->setContentsMargins(10, 10, 10, 10);
     m_layout->setSpacing(0);
     m_layout->addWidget(m_input);
     m_input->setPlaceholderText("Search...");
+    m_input->setRightAccessory(m_searchIcon);
     setLayout(m_layout);
   }
 };
@@ -213,7 +78,54 @@ public:
   }
 };
 
-class RootItemDelegate : public VirtualTreeItemDelegate {
+class CheckboxContainer : public QWidget {
+  Checkbox *m_checkbox = new Checkbox;
+
+public:
+  Checkbox *checkbox() const { return m_checkbox; }
+
+  CheckboxContainer() {
+    auto layout = new QHBoxLayout;
+
+    m_checkbox->setFixedSize(20, 20);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(m_checkbox, 0, Qt::AlignCenter);
+    setLayout(layout);
+  }
+};
+
+class AliasInput : public BaseInput {
+  QString m_id;
+
+  void showEvent(QShowEvent *event) override {
+    refreshAlias();
+    BaseInput::showEvent(event);
+  }
+
+public:
+  void refreshAlias() {
+    auto manager = ServiceRegistry::instance()->rootItemManager();
+    auto metadata = manager->itemMetadata(m_id);
+
+    setText(metadata.alias);
+  }
+
+  void focusOutEvent(QFocusEvent *event) override {
+    auto manager = ServiceRegistry::instance()->rootItemManager();
+
+    manager->setAlias(m_id, text());
+    BaseInput::focusOutEvent(event);
+  }
+
+  AliasInput(const QString &rootItemId) : m_id(rootItemId) {
+    setContentsMargins(2, 2, 2, 2);
+    setPlaceholderText("Add alias");
+  }
+};
+
+class RootItemDelegate : public QObject, public VirtualTreeItemDelegate {
+  Q_OBJECT
+
   std::shared_ptr<RootItem> m_item = nullptr;
 
   bool expandable() const override { return false; }
@@ -230,16 +142,25 @@ class RootItemDelegate : public VirtualTreeItemDelegate {
 
     if (column == 1) {
       auto widget = new TypographyWidget;
-      widget->setText("Command");
+      widget->setText(m_item->typeDisplayName());
       return widget;
     }
 
-    if (column == 2) { return new NonApplicableTextPlaceholder; }
+    if (column == 2) { return new AliasInput(m_item->uniqueId()); }
 
     if (column == 3) {
-      auto checkbox = new Checkbox;
+      auto manager = ServiceRegistry::instance()->rootItemManager();
+      auto checkbox = new CheckboxContainer;
+      auto metadata = manager->itemMetadata(m_item->uniqueId());
 
-      checkbox->setFixedSize(20, 20);
+      checkbox->checkbox()->setValue(metadata.isEnabled);
+
+      connect(checkbox->checkbox(), &Checkbox::valueChanged, this, [this, manager](bool value) {
+        manager->setItemEnabled(m_item->uniqueId(), value);
+        qDebug() << "value changed";
+        emit itemEnabledChanged(m_item.get(), value);
+      });
+
       return checkbox;
     }
 
@@ -248,10 +169,16 @@ class RootItemDelegate : public VirtualTreeItemDelegate {
 
 public:
   RootItemDelegate(const std::shared_ptr<RootItem> &item) : m_item(item) {}
+
+signals:
+  void itemEnabledChanged(const RootItem *item, bool value) const;
 };
 
-class ProviderItemDelegate : public VirtualTreeItemDelegate {
+class ProviderItemDelegate : public QObject, public VirtualTreeItemDelegate {
+  Q_OBJECT
+
   RootProvider *m_provider = nullptr;
+  std::vector<std::shared_ptr<RootItem>> items;
 
   bool expandable() const override { return true; }
 
@@ -274,9 +201,8 @@ class ProviderItemDelegate : public VirtualTreeItemDelegate {
     if (column == 2) { return new NonApplicableTextPlaceholder; }
 
     if (column == 3) {
-      auto checkbox = new Checkbox;
+      auto checkbox = new CheckboxContainer;
 
-      checkbox->setFixedSize(20, 20);
       return checkbox;
     }
 
@@ -286,15 +212,24 @@ class ProviderItemDelegate : public VirtualTreeItemDelegate {
   std::vector<VirtualTreeItemDelegate *> children() const override {
     std::vector<VirtualTreeItemDelegate *> child;
 
-    for (const auto &item : m_provider->loadItems()) {
-      child.emplace_back(new RootItemDelegate(item));
+    for (const auto &item : items) {
+      auto delegate = new RootItemDelegate(item);
+
+      connect(delegate, &RootItemDelegate::itemEnabledChanged, this,
+              &ProviderItemDelegate::itemEnabledChanged);
+
+      child.emplace_back(delegate);
     }
 
     return child;
   }
 
 public:
-  ProviderItemDelegate(RootProvider *provider) : m_provider(provider) {}
+  ProviderItemDelegate(RootProvider *provider, const std::vector<std::shared_ptr<RootItem>> &items)
+      : m_provider(provider), items(items) {}
+
+signals:
+  void itemEnabledChanged(const RootItem *item, bool value) const;
 };
 
 class ExtensionSettingsContextLeftPane : public QWidget {
@@ -304,63 +239,45 @@ class ExtensionSettingsContextLeftPane : public QWidget {
 
   void handleTextChange(const QString &text) { m_searchDebounce.start(); }
 
-  /*
-  void populateTree() {
+  void populateTreeFromQuery(const QString &query) {
     auto manager = ServiceRegistry::instance()->rootItemManager();
-    m_tree->clear();
+    RootItemPrefixSearchOptions opts;
+    std::map<QString, std::vector<std::shared_ptr<RootItem>>> map;
 
-    for (const auto &[idx, provider] : manager->providers() | std::views::enumerate) {
-      auto rootItem = new QTreeWidgetItem(m_tree);
-      auto widget = new NameTreeWidget();
-      auto typeWidget = new TypographyWidget;
-      auto aliasWidget = new NonApplicableTextPlaceholder;
-      auto checkbox = new NonApplicableTextPlaceholder;
+    opts.includeDisabled = true;
 
-      widget->setText(provider->displayName());
-      widget->setIcon(provider->icon());
-      m_tree->setItemWidget(rootItem, 0, widget);
-      m_tree->setItemWidget(rootItem, 1, typeWidget);
-      m_tree->setItemWidget(rootItem, 2, aliasWidget);
-      m_tree->setItemWidget(rootItem, 3, checkbox);
+    for (const auto &item : manager->prefixSearch(query, opts)) {
+      QString providerId = manager->getItemProviderId(item->uniqueId());
 
-      for (const auto &item : provider->loadItems()) {
-        auto childItem = new QTreeWidgetItem(rootItem);
-        auto metadata = manager->itemMetadata(item->uniqueId());
-        auto name = new NameTreeWidget;
-        auto type = new TypographyWidget;
-        auto alias = new NonApplicableTextPlaceholder;
-        auto checkbox = new Checkbox;
+      if (providerId.isEmpty()) continue;
 
-        checkbox->setFixedSize(20, 20);
-        name->setText(item->displayName());
-        name->setIcon(item->iconUrl());
-        type->setText("Command");
-        type->setAlignment(Qt::AlignCenter);
-
-        checkbox->setValue(metadata.isEnabled);
-        m_tree->setItemWidget(childItem, 0, name);
-        m_tree->setItemWidget(childItem, 1, type);
-        m_tree->setItemWidget(childItem, 2, alias);
-        m_tree->setItemWidget(childItem, 3, checkbox);
-      }
+      map[providerId].emplace_back(item);
     }
-  }
-  */
 
-  void populateTree() {
-    auto manager = ServiceRegistry::instance()->rootItemManager();
+    std::vector<VirtualTreeItemDelegate *> delegates;
+
+    delegates.reserve(map.size());
+
+    for (const auto &[providerId, items] : map) {
+      auto provider = manager->provider(providerId);
+
+      if (!provider) continue;
+
+      auto delegate = new ProviderItemDelegate(provider, items);
+
+      delegate->setExpandable(!query.isEmpty());
+
+      connect(delegate, &ProviderItemDelegate::itemEnabledChanged, this,
+              [](const RootItem *item, bool value) { qDebug() << "enabled" << item->uniqueId() << value; });
+
+      delegates.emplace_back(delegate);
+    }
 
     m_tree->setColumns({"Name", "Type", "Alias", "Enabled"});
-    m_tree->setColumnWidth(1, 80);
-    m_tree->setColumnWidth(2, 80);
+    m_tree->setColumnWidth(1, 100);
+    m_tree->setColumnWidth(2, 100);
     m_tree->setColumnWidth(3, 80);
-
-    auto rows = manager->providers() |
-                std::views::transform([](auto &&provider) -> VirtualTreeItemDelegate * {
-                  return new ProviderItemDelegate(provider);
-                }) |
-                std::ranges::to<std::vector>();
-    m_tree->addRows(rows);
+    m_tree->addRows(delegates);
   }
 
   void applyTheme() {
@@ -404,13 +321,13 @@ class ExtensionSettingsContextLeftPane : public QWidget {
   void handleDebouncedSearch() {
     QString text = m_toolbar->input()->text();
 
-    populateTree();
+    populateTreeFromQuery(text);
   }
 
   void setupUI() {
     auto layout = new QVBoxLayout;
     // m_tree->setHeaderLabels({"Name", "Type", "Alias", "Enabled"});
-    m_searchDebounce.setInterval(500);
+    m_searchDebounce.setInterval(50);
     m_searchDebounce.setSingleShot(true);
 
     layout->setSpacing(0);
@@ -426,7 +343,7 @@ class ExtensionSettingsContextLeftPane : public QWidget {
 
     setLayout(layout);
     applyTheme();
-    populateTree();
+    populateTreeFromQuery("");
   }
 
 public:

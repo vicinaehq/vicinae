@@ -381,6 +381,8 @@ set(SRCS
 	# settings
 	src/settings/settings-window.hpp
 	src/settings/settings-window.cpp
+
+	src/settings/extension-settings.hpp
 )
 
 

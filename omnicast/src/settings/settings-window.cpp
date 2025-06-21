@@ -4,7 +4,7 @@
 #include "common.hpp"
 #include "service-registry.hpp"
 
-static constexpr QSize windowSize(900, 600);
+static constexpr QSize windowSize(1000, 600);
 
 void SettingsWindow::paintEvent(QPaintEvent *event) {
   auto &config = ServiceRegistry::instance()->config()->value();

@@ -2,11 +2,12 @@
 #include "actions/app/app-actions.hpp"
 #include "actions/root-search/root-search-actions.hpp"
 #include "omni-icon.hpp"
-#include "omnicast.hpp"
 #include "root-item-manager.hpp"
 #include "service-registry.hpp"
 
 double AppRootItem::baseScoreWeight() const { return 1; }
+
+QString AppRootItem::typeDisplayName() const { return "Application"; }
 
 std::vector<QString> AppRootItem::keywords() const { return m_app->keywords(); }
 

@@ -41,7 +41,7 @@ void Checkbox::keyPressEvent(QKeyEvent *event) {
 
 void Checkbox::mousePressEvent(QMouseEvent *event) {
   toggle();
-  QWidget::mousePressEvent(event);
+  // QWidget::mousePressEvent(event);
 }
 
 QSize Checkbox::sizeHint() const { return {20, 20}; }

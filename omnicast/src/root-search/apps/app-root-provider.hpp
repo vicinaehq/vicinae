@@ -8,6 +8,7 @@ class AppRootItem : public RootItem {
 
   double baseScoreWeight() const override;
   QString providerId() const override;
+  QString typeDisplayName() const override;
   QString displayName() const override;
   ActionPanelView *actionPanel() const override;
   AccessoryList accessories() const override;

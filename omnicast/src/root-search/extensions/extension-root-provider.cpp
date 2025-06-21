@@ -14,6 +14,7 @@ ArgumentList CommandRootItem::arguments() const { return m_command->arguments();
 QString CommandRootItem::providerId() const { return "command"; }
 bool CommandRootItem::isSuitableForFallback() const { return m_command->isFallback(); }
 double CommandRootItem::baseScoreWeight() const { return 1.1; }
+QString CommandRootItem::typeDisplayName() const { return "Command"; }
 
 ActionPanelView *CommandRootItem::actionPanel() const {
   auto panel = new ActionPanelStaticListView;

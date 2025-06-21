@@ -55,6 +55,8 @@ ActionPanelView *RootBookmarkItem::fallbackActionPanel() const {
   return panel;
 }
 
+QString RootBookmarkItem::typeDisplayName() const { return "Bookmark"; }
+
 QString RootBookmarkItem::uniqueId() const { return QString("bookmarks.%1").arg(m_link->id()); }
 
 QString RootBookmarkItem::displayName() const { return m_link->name(); }

@@ -20,6 +20,10 @@
 #include <qtmetamacros.h>
 #include <ranges>
 
+struct RootItemPrefixSearchOptions {
+  bool includeDisabled = false;
+};
+
 class RootItem {
 public:
   virtual ~RootItem() = default;
@@ -50,6 +54,12 @@ public:
    * Only affects the first time the command is loaded.
    */
   virtual bool isDefaultFallback() const { return false; }
+
+  /**
+   * What type of item this is. For instance an application will return
+   * "Application". This is used in the settings view.
+   */
+  virtual QString typeDisplayName() const = 0;
 
   /**
    * An optional list of arguments to be filled in before launching the command.
@@ -151,7 +161,8 @@ private:
     int visitCount = 0;
     bool isEnabled = true;
     std::optional<std::chrono::time_point<std::chrono::high_resolution_clock>> lastVisitedAt;
-    std::vector<QString> aliases;
+    // Alias can be made of multiple words, in which case each word is indexed separately
+    QString alias;
     bool isFallback = false;
     int fallbackPosition = -1;
     QString providerId;
@@ -171,7 +182,7 @@ private:
 
     query.prepare(R"(
 		SELECT
-			enabled, fallback, fallback_position, aliases, visit_count, last_visited_at, provider_id
+			enabled, fallback, fallback_position, alias, visit_count, last_visited_at, provider_id
 		FROM
 			root_provider_item
 		WHERE id = :id
@@ -188,7 +199,7 @@ private:
     item.isEnabled = query.value(0).toBool();
     item.isFallback = query.value(1).toBool();
     item.fallbackPosition = query.value(2).toInt();
-    item.aliases = {};
+    item.alias = query.value(3).toString();
     item.visitCount = query.value(4).toInt();
     item.lastVisitedAt = std::chrono::system_clock::from_time_t(query.value(5).toULongLong());
     item.providerId = query.value(6).toString();
@@ -215,7 +226,7 @@ private:
 			enabled INT DEFAULT 1,
 			fallback INT DEFAULT 0,
 			fallback_position INT DEFAULT -1,
-			aliases JSON DEFAULT '{}',
+			alias TEXT DEFAULT '',
 			visit_count INT DEFAULT 0,
 			last_visited_at INT,
 			FOREIGN KEY(provider_id) 
@@ -241,28 +252,6 @@ private:
 
     if (!query.exec()) {
       qCritical() << "Failed to upsert provider with id" << provider.uniqueId() << query.lastError();
-      return false;
-    }
-
-    return true;
-  }
-
-  bool setItemEnabled(const QString &id, bool value) {
-    auto it = std::ranges::find_if(m_items, [&id](const auto &item) { return item->uniqueId() == id; });
-
-    if (it == m_items.end()) {
-      qCritical() << "No such item to enable" << id;
-      return false;
-    }
-
-    QSqlQuery query = m_db.createQuery();
-
-    query.prepare("UPDATE root_provider_item SET enabled = :enabled WHERE id = :id");
-    query.bindValue(":enabled", value);
-    query.bindValue(":id", id);
-
-    if (!query.exec()) {
-      qDebug() << "Failed to update item" << query.lastError();
       return false;
     }
 
@@ -301,11 +290,11 @@ private:
     m_trie.index(name, item);
     m_trie.indexLatinText(name, item);
     m_trie.indexLatinText(subtitle, item);
+    m_trie.indexLatinText(metadata.alias.toStdString(), item);
 
-    std::ranges::for_each(metadata.aliases,
-                          [&](const QString &alias) { m_trie.index(alias.toStdString(), item); });
-    std::ranges::for_each(item->keywords(),
-                          [&](const QString &keyword) { m_trie.index(keyword.toStdString(), item); });
+    for (const auto &keyword : item->keywords()) {
+      m_trie.index(keyword.toStdString(), item);
+    }
   }
 
   void rebuildTrie() {
@@ -380,6 +369,33 @@ private:
 public:
   RootItemManager(OmniDatabase &db) : m_db(db) { createTables(); }
 
+  bool setItemEnabled(const QString &id, bool value) {
+    auto it = std::ranges::find_if(m_items, [&id](const auto &item) { return item->uniqueId() == id; });
+
+    if (it == m_items.end()) {
+      qCritical() << "No such item to enable" << id;
+      return false;
+    }
+
+    QSqlQuery query = m_db.createQuery();
+
+    query.prepare("UPDATE root_provider_item SET enabled = :enabled WHERE id = :id");
+    query.bindValue(":enabled", value);
+    query.bindValue(":id", id);
+
+    if (!query.exec()) {
+      qDebug() << "Failed to update item" << query.lastError();
+      return false;
+    }
+
+    auto metadata = itemMetadata((*it)->uniqueId());
+
+    metadata.isEnabled = value;
+    m_metadata[(*it)->uniqueId()] = metadata;
+
+    return true;
+  }
+
   void setPreferenceValues(const QString &id, const QJsonObject &preferences) {
     auto item = findItemById(id);
 
@@ -421,9 +437,41 @@ public:
     setItemPreferenceValues(id, commandPreferences);
     qDebug() << "set command prefs for" << id;
     m_db.db().commit();
-
-    for (const auto &key : preferences.keys()) {}
   }
+
+  bool setAlias(const QString &id, const QString &alias) {
+    auto it = std::ranges::find_if(m_items, [&id](const auto &item) { return item->uniqueId() == id; });
+
+    if (it == m_items.end()) {
+      qCritical() << "setAlias: no item with id " << id;
+      return false;
+    }
+
+    QSqlQuery query = m_db.createQuery();
+
+    query.prepare("UPDATE root_provider_item SET alias = :alias WHERE id = :id");
+    query.bindValue(":alias", alias);
+    query.bindValue(":id", id);
+
+    if (!query.exec()) {
+      qDebug() << "Failed to update item" << query.lastError();
+      return false;
+    }
+
+    auto metadata = itemMetadata(id);
+
+    m_trie.removeLatinTextItem(metadata.alias.toStdString(), *it);
+    m_trie.removeLatinTextItem(metadata.alias.toStdString(), *it);
+    m_trie.indexLatinText(alias.toStdString(), *it);
+    metadata.alias = alias;
+    m_metadata[id] = metadata;
+
+    qDebug() << "Set alias";
+
+    return true;
+  }
+
+  bool clearAlias(const QString &id) { return setAlias(id, ""); }
 
   QJsonObject getPreferenceValues(const QString &id) const {
     auto query = m_db.createQuery();
@@ -592,6 +640,12 @@ public:
     return true;
   }
 
+  QString getItemProviderId(const QString &id) {
+    auto metadata = itemMetadata(id);
+
+    return metadata.providerId;
+  }
+
   bool disableItem(const QString &id) { return setItemEnabled(id, false); }
   bool enableItem(const QString &id) { return setItemEnabled(id, true); }
 
@@ -624,8 +678,19 @@ public:
 
   std::vector<std::shared_ptr<RootItem>> allItems() const { return m_items; }
 
-  std::vector<std::shared_ptr<RootItem>> prefixSearch(const QString &query) {
-    auto items = m_trie.prefixSearch(query.toStdString());
+  std::vector<std::shared_ptr<RootItem>> prefixSearch(const QString &query,
+                                                      const RootItemPrefixSearchOptions &opts = {}) {
+    std::vector<std::shared_ptr<RootItem>> items;
+
+    for (const auto &item : m_trie.prefixSearch(query.toStdString())) {
+      if (!opts.includeDisabled) {
+        auto meta = itemMetadata(item->uniqueId());
+
+        if (meta.isEnabled) { items.emplace_back(item); }
+      } else {
+        items.emplace_back(item);
+      }
+    }
 
     std::ranges::sort(items, [this](const auto &a, const auto &b) {
       auto ameta = itemMetadata(a->uniqueId());

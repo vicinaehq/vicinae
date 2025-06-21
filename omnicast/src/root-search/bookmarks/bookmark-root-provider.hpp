@@ -15,6 +15,7 @@ class RootBookmarkItem : public RootItem {
   QString uniqueId() const override;
   ActionPanelView *actionPanel() const override;
   ActionPanelView *fallbackActionPanel() const override;
+  QString typeDisplayName() const override;
 
 public:
   const Bookmark &bookmark() const { return *m_link.get(); }
