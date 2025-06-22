@@ -68,6 +68,19 @@ public:
      */
     virtual bool hasUniformHeight() const { return false; }
 
+    // Hook fired when the virtual item is attached to a widget. This can be a new widget
+    // it created itself or an existing one that could be repurposed.
+    virtual void attached(QWidget *) {}
+
+    /**
+     * Hook fired when the virtual item is detached from a widget. If the widget is recyclable, it could
+     * be that it was repurposed to display another item as this one went out of sight.
+     * This is where you should think about disconnecting any link you might have between your
+     * virtual item and the concrete widget it's associated to.
+     * Note that the widget can be destroyed right after this function is called.
+     */
+    virtual void detached(QWidget *) {}
+
     virtual OmniListItemWidget *createWidget() const = 0;
     virtual void recycle(QWidget *base) const;
     virtual bool recyclable() const;
@@ -294,7 +307,7 @@ private:
   };
   struct VirtualWidgetInfo {
     QRect bounds;
-    const AbstractVirtualItem *item = nullptr;
+    AbstractVirtualItem *item = nullptr;
     bool enumerable = false;
   };
   struct SectionCalculationContext {
@@ -474,6 +487,9 @@ private:
             // TODO: if in viewport, look for cached entry
             if (isInViewport(geometry)) {
               if (auto it = _widgetCache.find(item->id()); it != _widgetCache.end()) {
+                QWidget *widget = it->second.widget->widget();
+
+                item->attached(widget);
                 item->refresh(it->second.widget->widget());
                 updatedCache[item->id()] = it->second;
               }
@@ -557,12 +573,14 @@ public:
     return m_items | std::views::drop(visibleIndexRange.lower) |
            std::views::take(std::max(0, visibleIndexRange.upper - visibleIndexRange.lower + 1)) |
            std::views::filter([](auto &&v) { return v.enumerable; }) |
-           std::views::transform([](auto &&v) { return v.item; }) | std::ranges::to<std::vector>();
+           std::views::transform([](auto &&v) -> const AbstractVirtualItem * { return v.item; }) |
+           std::ranges::to<std::vector>();
   }
 
   std::vector<const AbstractVirtualItem *> items() const {
     return m_items | std::views::filter([](auto &&v) { return v.enumerable; }) |
-           std::views::transform([](auto &&v) { return v.item; }) | std::ranges::to<std::vector>();
+           std::views::transform([](auto &&v) -> const AbstractVirtualItem * { return v.item; }) |
+           std::ranges::to<std::vector>();
   }
 
   std::vector<Section const *> sections() const {
@@ -704,6 +722,7 @@ public:
   void setMargins(int value);
   void clear();
   void clearSelection() { setSelectedIndex(-1); }
+  void refresh() const;
 
 signals:
   void modelChanged() const;
@@ -722,6 +741,7 @@ public:
     QString name;
     QString category;
     AccessoryList accessories;
+    QString alias;
   };
   virtual ItemData data() const = 0;
 
@@ -737,6 +757,7 @@ public:
       widget->setCategory(itemData.category);
       widget->setIconUrl(itemData.iconUrl);
       widget->setAccessories(itemData.accessories);
+      widget->setAlias(itemData.alias);
     } else {
       qDebug() << "not a defaut list itemw widget" << typeid(*w).name();
     }
@@ -753,6 +774,7 @@ public:
     widget->setCategory(itemData.category);
     widget->setIconUrl(itemData.iconUrl);
     widget->setAccessories(itemData.accessories);
+    widget->setAlias(itemData.alias);
   }
 
   OmniListItemWidget *createWidget() const override {

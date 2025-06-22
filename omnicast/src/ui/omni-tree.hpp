@@ -1,15 +1,21 @@
 #pragma once
 #include "common.hpp"
 #include "omni-icon.hpp"
+#include "theme.hpp"
 #include "ui/image/omnimg.hpp"
 #include "ui/omni-list.hpp"
 #include "ui/selectable-omni-list-widget.hpp"
 #include "ui/typography.hpp"
+#include <QtConcurrent/qtconcurrentiteratekernel.h>
 #include <memory>
 #include <qboxlayout.h>
+#include <qevent.h>
+#include <qgraphicseffect.h>
 #include <qmargins.h>
 #include <qnamespace.h>
 #include <qobjectdefs.h>
+#include <qstackedlayout.h>
+#include <qtmetamacros.h>
 #include <qwidget.h>
 #include <ranges>
 
@@ -17,13 +23,18 @@ class VirtualTreeItemDelegate {
   bool m_expanded = false;
 
 public:
-  virtual std::vector<VirtualTreeItemDelegate *> children() const { return {}; }
+  virtual std::vector<std::shared_ptr<VirtualTreeItemDelegate>> children() const { return {}; }
 
+  virtual QString id() const = 0;
   virtual bool expandable() const { return false; }
   virtual QMargins contentMargins() const { return {5, 5, 5, 5}; }
   void setExpandable(bool value) { m_expanded = value; }
   bool expanded() const { return m_expanded; }
   virtual QWidget *widgetForColumn(int column) const { return nullptr; }
+  virtual void refreshForColumn(QWidget *widget, int column) const {}
+  virtual bool disabled() const { return false; }
+  virtual void attached(QWidget *widget, int column) {}
+  virtual void detached(QWidget *widget, int column) {}
   virtual int colspan(int column) const { return 1; }
 };
 
@@ -83,9 +94,10 @@ class HeaderWidget : public QWidget {
     QPainter painter(this);
 
     QPen pen(theme.colors.border, borderWidth);
+    QBrush brush(theme.colors.mainHoveredBackground);
     painter.setPen(pen);
+    painter.setBrush(brush);
     painter.setRenderHint(QPainter::Antialiasing, true);
-    painter.setBrush(Qt::transparent);
     painter.drawRect(rect());
   }
 
@@ -147,64 +159,189 @@ public:
   }
 };
 
-class VirtualTreeItemRow : public OmniList::AbstractVirtualItem {
-  VirtualTreeItemDelegate *m_delegate;
-  HeaderInfo *m_header;
+class OmniTreeRowWidget : public OmniListItemWidget {
+  QGraphicsOpacityEffect *m_opacityEffect = new QGraphicsOpacityEffect(this);
+  std::vector<QWidget *> m_columns;
+  LeftTableWidget *m_left = new LeftTableWidget();
+  QWidget *m_scene = new QWidget;
+  QHBoxLayout *m_sceneLayout = new QHBoxLayout;
   int m_indent = 0;
+  bool m_expandable = false;
+  bool m_expanded = false;
+  std::optional<ColorLike> m_color;
+  bool m_selected = false;
+
+  void selectionChanged(bool selected) override {
+    m_selected = selected;
+    update();
+  }
+
+  void paintEvent(QPaintEvent *event) override {
+    OmniPainter painter(this);
+
+    if (m_color || m_selected) {
+      painter.setRenderHint(QPainter::Antialiasing);
+
+      if (m_selected) {
+        painter.setBrush(painter.colorBrush(ColorTint::Blue));
+      } else {
+        painter.setBrush(painter.colorBrush(*m_color));
+      }
+
+      painter.setPen(Qt::NoPen);
+      painter.drawRoundedRect(rect(), 6, 6);
+    }
+  }
+
+  void mouseDoubleClickEvent(QMouseEvent *event) override { emit doubleClicked(); }
+  void mousePressEvent(QMouseEvent *event) override {
+    if (event->button() == Qt::LeftButton) {
+      emit clicked();
+      return;
+    }
+
+    return OmniListItemWidget::mousePressEvent(event);
+  }
 
 public:
-  void setIndentLevel(int indent) { m_indent = indent; }
+  void setBackgroundColor(const std::optional<ColorLike> &color) {
+    m_color = color;
+    update();
+  }
+  void setOpacity(qreal opacity) { m_opacityEffect->setOpacity(opacity); }
+  void setIndent(int value) { m_indent = value; }
+  void setExpanded(bool value) {
+    m_expanded = value;
+    m_left->setFoldIconVisiblity(value);
+  }
+  void setExpandable(bool value) {
+    m_expandable = value;
+    m_left->setFoldIconVisiblity(value);
+  }
 
-  VirtualTreeItemDelegate *delegate() const { return m_delegate; }
+  auto widgets() const { return m_columns; }
 
   int computeLeftSpacing() const {
     int spacing = 0;
 
-    if (!m_delegate->expandable()) spacing += 20;
+    if (!m_expandable) spacing += 20; // account for missing icon
     spacing += m_indent * 15;
 
     return spacing;
   }
 
-  bool hasUniformHeight() const override { return true; }
+  void setColumnWidgets(HeaderInfo *header, const std::vector<QWidget *> &widgets) {
+    while (m_sceneLayout->count() > 0) {
+      m_sceneLayout->takeAt(0);
+    }
 
-  OmniListItemWidget *createWidget() const override {
-    auto widget = new SelectableOmniListWidget;
-    auto layout = new QHBoxLayout;
+    m_sceneLayout->addSpacing(computeLeftSpacing());
 
-    layout->setContentsMargins(m_delegate->contentMargins());
-    layout->addSpacing(computeLeftSpacing());
-
-    auto cols = m_header->columns();
-
-    for (int i = 0; i != cols.size(); ++i) {
-      auto &column = cols.at(i);
+    for (const auto &[i, col] : header->columns() | std::views::enumerate) {
       QWidget *widget = nullptr;
       int stretch = 1;
 
       if (i == 0) {
-        auto left = new LeftTableWidget;
-        QWidget *column = m_delegate->widgetForColumn(i);
+        QWidget *column = widgets.at(i);
 
-        left->setFoldIconVisiblity(m_delegate->expandable());
-        left->setFolded(m_delegate->expanded());
-        left->setWidget(column);
-        widget = left;
+        m_left->setWidget(column);
+        widget = m_left;
       } else {
-        widget = m_delegate->widgetForColumn(i);
+        widget = widgets.at(i);
       }
 
-      if (column.sizePolicy == HeaderInfo::ColumnSizePolicy::Fixed) {
-        widget->setFixedWidth(column.width);
+      if (col.sizePolicy == HeaderInfo::ColumnSizePolicy::Fixed) {
+        widget->setFixedWidth(col.width);
         stretch = 0;
       }
-
-      layout->addWidget(widget, stretch);
+      m_sceneLayout->addWidget(widget, stretch);
     }
 
-    widget->setLayout(layout);
+    for (const auto &widget : m_columns)
+      widget->deleteLater();
+
+    m_columns = widgets;
+  }
+
+public:
+  OmniTreeRowWidget() {
+    auto layout = new QStackedLayout;
+
+    m_scene->setLayout(m_sceneLayout);
+    m_scene->setGraphicsEffect(m_opacityEffect);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(m_scene);
+
+    m_opacityEffect->setOpacity(1);
+    setLayout(layout);
+  }
+};
+
+class VirtualTreeItemRow : public OmniList::AbstractVirtualItem {
+  VirtualTreeItemDelegate *m_delegate;
+  HeaderInfo *m_header;
+  std::optional<ColorLike> m_backgroundColor;
+  int m_indent = 0;
+
+  void forEachColumn(QWidget *widget, const std::function<void(QWidget *, size_t)> &fn) const {
+    auto omniWidget = static_cast<OmniTreeRowWidget *>(widget);
+
+    for (const auto &[idx, widget] : omniWidget->widgets() | std::views::enumerate) {
+      fn(widget, idx);
+    }
+  }
+
+public:
+  void setIndentLevel(int indent) { m_indent = indent; }
+  void setBackgroundColor(const std::optional<ColorLike> &color) { m_backgroundColor = color; }
+
+  VirtualTreeItemDelegate *delegate() const { return m_delegate; }
+
+  bool hasUniformHeight() const override { return true; }
+
+  virtual void styleRow(OmniTreeRowWidget *widget) const {
+    widget->setOpacity(m_delegate->disabled() ? 0.50 : 1);
+    widget->setBackgroundColor(m_backgroundColor);
+  }
+
+  void refresh(QWidget *widget) const override {
+    auto row = static_cast<OmniTreeRowWidget *>(widget);
+    styleRow(row);
+    forEachColumn(widget, [this](QWidget *widget, int idx) { m_delegate->refreshForColumn(widget, idx); });
+  }
+
+  void attached(QWidget *widget) override {
+    forEachColumn(widget, [this](QWidget *widget, int idx) { m_delegate->attached(widget, idx); });
+  }
+
+  void detached(QWidget *widget) override {
+    forEachColumn(widget, [this](QWidget *widget, int idx) { m_delegate->detached(widget, idx); });
+  }
+
+  OmniListItemWidget *createWidget() const override {
+    auto widget = new OmniTreeRowWidget;
+
+    styleRow(widget);
+
+    widget->layout()->setContentsMargins(m_delegate->contentMargins());
+    widget->setExpanded(m_delegate->expanded());
+    widget->setIndent(m_indent);
+    widget->setExpandable(m_delegate->expandable());
+
+    auto cols = m_header->columns();
+    std::vector<QWidget *> widgets;
+
+    for (int i = 0; i != cols.size(); ++i) {
+      auto &column = cols.at(i);
+      widgets.emplace_back(m_delegate->widgetForColumn(i));
+    }
+
+    widget->setColumnWidgets(m_header, widgets);
+
     return widget;
   }
+
+  QString generateId() const override { return m_delegate->id(); }
 
   VirtualTreeItemRow(VirtualTreeItemDelegate *delegate, HeaderInfo *header) {
     m_delegate = delegate;
@@ -213,20 +350,24 @@ public:
 };
 
 class OmniTree : public QWidget {
+  Q_OBJECT
+
   OmniList *m_list = new OmniList;
-  std::vector<VirtualTreeItemDelegate *> m_model;
+  std::vector<std::shared_ptr<VirtualTreeItemDelegate>> m_model;
   HeaderInfo m_header;
   QWidget *m_widget = new QWidget;
   QVBoxLayout *layout = new QVBoxLayout;
+  std::optional<ColorLike> m_alternateBackgroundColor;
 
 public:
   OmniTree(QWidget *parent = nullptr) : QWidget(parent) {
-
+    m_list->setMargins(5, 0, 5, 0);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(m_widget);
     layout->addWidget(m_list, 1);
     setLayout(layout);
     connect(m_list, &OmniList::itemActivated, this, &OmniTree::activateDelegate);
+    connect(m_list, &OmniList::selectionChanged, this, &OmniTree::handleSelectionChanged);
   }
 
   void setHeader(HeaderWidget *widget) {
@@ -251,6 +392,10 @@ public:
     setHeader(new HeaderWidget(&m_header));
   }
 
+  void setAlternateBackgroundColor(const std::optional<ColorLike> &color) {
+    m_alternateBackgroundColor = color;
+  }
+
   void activateDelegate(const OmniList::AbstractVirtualItem &item) {
     auto &row = static_cast<const VirtualTreeItemRow &>(item);
 
@@ -258,29 +403,63 @@ public:
     renderModel();
   }
 
-  void renderModel() {
+  void handleSelectionChanged(const OmniList::AbstractVirtualItem *next,
+                              const OmniList::AbstractVirtualItem *previous) {
+    VirtualTreeItemDelegate *nextDelegate = nullptr;
+    VirtualTreeItemDelegate *previousDelegate = nullptr;
+
+    if (next) nextDelegate = static_cast<const VirtualTreeItemRow *>(next)->delegate();
+    if (previous) previousDelegate = static_cast<const VirtualTreeItemRow *>(previous)->delegate();
+
+    emit selectionUpdated(nextDelegate, previousDelegate);
+  }
+
+  auto model() const { return m_model; }
+
+  void refresh() { m_list->refresh(); }
+
+  VirtualTreeItemDelegate *itemAt(const QString &id) {
+    auto item = m_list->itemAt(id);
+
+    if (!item) return nullptr;
+
+    return static_cast<const VirtualTreeItemRow *>(item)->delegate();
+  }
+
+  void renderModel(OmniList::SelectionPolicy policy = OmniList::PreserveSelection) {
     m_list->updateModel(
         [&]() {
           auto &section = m_list->addSection();
+          size_t idx = 0;
 
           for (const auto &row : m_model) {
-            section.addItem(std::make_shared<VirtualTreeItemRow>(row, &m_header));
+            auto item = std::make_shared<VirtualTreeItemRow>(row.get(), &m_header);
+
+            if (idx % 2) item->setBackgroundColor(m_alternateBackgroundColor);
+
+            section.addItem(item);
+            ++idx;
 
             if (row->expanded()) {
               for (const auto &row2 : row->children()) {
-                auto item = std::make_shared<VirtualTreeItemRow>(row2, &m_header);
+                auto item = std::make_shared<VirtualTreeItemRow>(row2.get(), &m_header);
 
+                if (idx % 2) item->setBackgroundColor(m_alternateBackgroundColor);
                 item->setIndentLevel(1);
                 section.addItem(item);
+                ++idx;
               }
             }
           }
         },
-        OmniList::PreserveSelection);
+        policy);
   }
 
-  void addRows(std::vector<VirtualTreeItemDelegate *> rows) {
+  void addRows(std::vector<std::shared_ptr<VirtualTreeItemDelegate>> rows) {
     m_model = rows;
-    renderModel();
+    renderModel(OmniList::SelectionPolicy::SelectNone);
   }
+
+signals:
+  void selectionUpdated(VirtualTreeItemDelegate *next, VirtualTreeItemDelegate *previous) const;
 };

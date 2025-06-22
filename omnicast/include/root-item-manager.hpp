@@ -168,11 +168,14 @@ private:
     QString providerId;
   };
 
-  struct RootProviderMetadata {};
+  struct RootProviderMetadata {
+    bool enabled;
+  };
 
   Trie<std::shared_ptr<RootItem>, RootItemHash> m_trie;
   std::vector<std::shared_ptr<RootItem>> m_items;
   std::unordered_map<QString, RootItemMetadata> m_metadata;
+  std::unordered_map<QString, RootProviderMetadata> m_provider_metadata;
   std::vector<std::unique_ptr<RootProvider>> m_providers;
   OmniDatabase &m_db;
 
@@ -644,6 +647,31 @@ public:
     auto metadata = itemMetadata(id);
 
     return metadata.providerId;
+  }
+
+  bool setProviderEnabled(const QString &providerId, bool value) {
+    QSqlQuery query = m_db.createQuery();
+
+    query.prepare(R"(
+		UPDATE root_provider_item
+		SET enabled = :enabled
+		WHERE provider_id = :provider_id
+	)");
+    query.bindValue(":enabled", value);
+    query.bindValue(":provider_id", providerId);
+
+    if (!query.exec()) {
+      qDebug() << "Failed to update item" << query.lastError();
+      return false;
+    }
+
+    for (auto &[id, metadata] : m_metadata) {
+      if (providerId == metadata.providerId) { metadata.isEnabled = value; }
+    }
+
+    m_provider_metadata[providerId].enabled = value;
+
+    return true;
   }
 
   bool disableItem(const QString &id) { return setItemEnabled(id, false); }

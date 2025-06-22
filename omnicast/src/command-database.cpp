@@ -87,12 +87,22 @@ CommandDatabase::CommandDatabase() {
         "How much storage can be used to store clipboard history data, in MB.");
     maximumClipboardStorageSizePreference->setDefaultValue("1000");
 
-    auto clipboardHistory = CommandBuilder("clipboard-history")
-                                .withName("Clipboard History")
-                                .withTintedIcon("copy-clipboard", ColorTint::Red)
-                                .withPreference(storeAllOfferingsPreference)
-                                .withPreference(maximumClipboardStorageSizePreference)
-                                .toSingleView<ClipboardHistoryCommand>();
+    {
+      auto clipboardHistory = CommandBuilder("clipboard-history")
+                                  .withName("Clipboard History")
+                                  .withTintedIcon("copy-clipboard", ColorTint::Red)
+                                  .withPreference(storeAllOfferingsPreference)
+                                  .withPreference(maximumClipboardStorageSizePreference)
+                                  .toSingleView<ClipboardHistoryCommand>();
+
+      auto clipboard = CommandRepositoryBuilder("clipboard")
+                           .withName("Clipboard")
+                           .withTintedIcon("copy-clipboard", ColorTint::Red)
+                           .withCommand(clipboardHistory)
+                           .makeShared();
+
+      registerRepository(clipboard);
+    }
 
     auto iconSearch = CommandBuilder("browse-icons")
                           .withName("Search Omnicast Icons")
@@ -116,7 +126,6 @@ CommandDatabase::CommandDatabase() {
 
     auto omnicast = CommandRepositoryBuilder("omnicast")
                         .withName("Omnicast")
-                        .withCommand(clipboardHistory)
                         .withCommand(emoji)
                         .withCommand(iconSearch)
                         .withCommand(openConfigFile)

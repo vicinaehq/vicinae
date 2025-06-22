@@ -1,5 +1,6 @@
 #pragma once
 #include "common.hpp"
+#include "theme.hpp"
 #include <qsvgrenderer.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
@@ -8,7 +9,8 @@ class Checkbox : public QWidget, public IJsonFormField {
   Q_OBJECT
 
   bool m_value = false;
-  QSvgRenderer *m_svg = new QSvgRenderer;
+  QSvgRenderer *m_svg = new QSvgRenderer(this);
+  ColorLike m_fillColor = ColorTint::Blue;
 
 protected:
   void paintEvent(QPaintEvent *event) override;
@@ -22,6 +24,10 @@ public:
   bool value() const;
   void toggle();
   void setValue(bool value);
+  void setFillColor(const ColorLike &color);
+
+  // setValue but does not notify
+  void stealthySetValue(bool value);
 
   Checkbox(QWidget *parent = nullptr);
 

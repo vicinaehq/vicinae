@@ -14,7 +14,7 @@ void Checkbox::paintEvent(QPaintEvent *event) {
   painter.setPen(hasFocus() ? theme.colors.subtext : theme.colors.border);
 
   if (m_value) {
-    painter.setBrush(painter.colorBrush(ColorTint::Blue));
+    painter.setBrush(painter.colorBrush(m_fillColor));
   } else {
     painter.setBrush(Qt::transparent);
   }
@@ -41,6 +41,7 @@ void Checkbox::keyPressEvent(QKeyEvent *event) {
 
 void Checkbox::mousePressEvent(QMouseEvent *event) {
   toggle();
+  qDebug() << "toggled to" << m_value;
   // QWidget::mousePressEvent(event);
 }
 
@@ -52,12 +53,26 @@ void Checkbox::setValueAsJson(const QJsonValue &value) { return setValue(value.t
 
 void Checkbox::toggle() { setValue(!m_value); }
 
+void Checkbox::setFillColor(const ColorLike &color) {
+  m_fillColor = color;
+  update();
+}
+
 void Checkbox::setValue(bool v) {
   if (v == m_value) return;
+
+  qDebug() << "setting value to" << v;
 
   m_value = v;
   update();
   emit valueChanged(v);
+}
+
+void Checkbox::stealthySetValue(bool v) {
+  if (v == m_value) return;
+
+  m_value = v;
+  update();
 }
 
 bool Checkbox::value() const { return m_value; }

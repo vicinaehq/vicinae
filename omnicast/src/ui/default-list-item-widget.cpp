@@ -2,6 +2,7 @@
 #include "omni-icon.hpp"
 #include "theme.hpp"
 #include "ui/image/omnimg.hpp"
+#include "ui/list-accessory-widget.hpp"
 #include <qwidget.h>
 
 void DefaultListItemWidget::setName(const QString &name) { this->_name->setText(name); }
@@ -14,13 +15,24 @@ void DefaultListItemWidget::setAccessories(const AccessoryList &list) {
 
 void DefaultListItemWidget::setCategory(const QString &category) { _category->setText(category); }
 
+void DefaultListItemWidget::setAlias(const QString &alias) {
+  if (!alias.isEmpty()) {
+    m_alias->setAccessory(ListAccessory{
+        .text = alias,
+        .color = ColorTint::TextPrimary,
+        .fillBackground = true,
+    });
+  }
+  m_alias->setVisible(!alias.isEmpty());
+}
+
 DefaultListItemWidget::DefaultListItemWidget(const OmniIconUrl &iconUrl, const QString &name,
                                              const QString &category, const AccessoryList &accessories,
                                              QWidget *parent)
     : SelectableOmniListWidget(parent), _icon(new Omnimg::ImageWidget),
       _name(new TypographyWidget(TextSize::TextRegular)),
       _category(new TypographyWidget(TextSize::TextRegular, ColorTint::TextSecondary)),
-      _accessoryList(new AccessoryListWidget(this)) {
+      _accessoryList(new AccessoryListWidget(this)), m_alias(new ListAccessoryWidget) {
 
   _icon->setFixedSize(25, 25);
   _icon->setUrl(iconUrl);
@@ -43,6 +55,9 @@ DefaultListItemWidget::DefaultListItemWidget(const OmniIconUrl &iconUrl, const Q
   leftLayout->addWidget(this->_icon);
   leftLayout->addWidget(this->_name);
   leftLayout->addWidget(this->_category);
+  leftLayout->addWidget(this->m_alias);
+
+  m_alias->hide();
 
   mainLayout->addWidget(left, 0, Qt::AlignLeft);
   mainLayout->addWidget(this->_accessoryList, 0, Qt::AlignRight);

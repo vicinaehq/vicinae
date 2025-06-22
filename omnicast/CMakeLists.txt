@@ -383,6 +383,8 @@ set(SRCS
 	src/settings/settings-window.cpp
 
 	src/settings/extension-settings.hpp
+
+	src/ui/omni-tree.hpp
 )
 
 

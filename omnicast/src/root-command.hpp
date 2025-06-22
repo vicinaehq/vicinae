@@ -48,12 +48,14 @@ class RootSearchItem : public AbstractDefaultListItem, public ListView::Actionna
   ActionPanelView *actionPanel() const override { return m_item->actionPanel(); }
 
   ItemData data() const override {
-    return {
-        .iconUrl = m_item->iconUrl(),
-        .name = m_item->displayName(),
-        .category = m_item->subtitle(),
-        .accessories = m_item->accessories(),
-    };
+    auto manager = ServiceRegistry::instance()->rootItemManager();
+    auto metadata = manager->itemMetadata(m_item->uniqueId());
+
+    return {.iconUrl = m_item->iconUrl(),
+            .name = m_item->displayName(),
+            .category = m_item->subtitle(),
+            .accessories = m_item->accessories(),
+            .alias = metadata.alias};
   }
 
   std::unique_ptr<CompleterData> createCompleter() const override {

@@ -50,12 +50,14 @@ class DefaultListItemWidget : public SelectableOmniListWidget {
   TypographyWidget *_name;
   TypographyWidget *_category;
   AccessoryListWidget *_accessoryList;
+  ListAccessoryWidget *m_alias;
 
 public:
   void setAccessories(const AccessoryList &list);
   void setName(const QString &name);
   void setCategory(const QString &category);
   void setIconUrl(const OmniIconUrl &url);
+  void setAlias(const QString &title);
 
   DefaultListItemWidget(const OmniIconUrl &iconUrl, const QString &name, const QString &category,
                         const AccessoryList &accessories, QWidget *parent = nullptr);

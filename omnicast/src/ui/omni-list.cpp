@@ -100,6 +100,7 @@ void OmniList::updateVisibleItems() {
       if (auto wrapper = takeFromPool(vinfo.item->typeId())) {
         vinfo.item->recycle(wrapper->widget());
         wrapper->blockSignals(false);
+        vinfo.item->attached(wrapper->widget());
         widget = wrapper;
       } else {
         widget = new OmniListItemWidgetWrapper(this);
@@ -110,7 +111,9 @@ void OmniList::updateVisibleItems() {
         connect(widget, &OmniListItemWidgetWrapper::rightClicked, this, &OmniList::rightClicked,
                 Qt::UniqueConnection);
         widget->stackUnder(scrollBar);
-        widget->setWidget(vinfo.item->createWidget());
+        OmniListItemWidget *w = vinfo.item->createWidget();
+        widget->setWidget(w);
+        vinfo.item->attached(w);
       }
 
       CachedWidget cache{.widget = widget, .recyclingId = 0};
@@ -168,6 +171,7 @@ void OmniList::updateVisibleItems() {
           widget->deleteLater();
         }
 
+        item->detached(widget->widget());
         _widgetCache.erase(it);
       }
     }
@@ -498,6 +502,14 @@ const OmniList::AbstractVirtualItem *OmniList::selected() const {
   if (_selected >= 0 && _selected < m_items.size()) return m_items[_selected].item;
 
   return nullptr;
+}
+
+void OmniList::refresh() const {
+  for (const auto &[id, cache] : _widgetCache) {
+    if (auto it = _idItemMap.find(id); it != _idItemMap.end()) {
+      it->second->refresh(cache.widget->widget());
+    }
+  }
 }
 
 const OmniList::AbstractVirtualItem *OmniList::itemAt(const QString &id) const {
