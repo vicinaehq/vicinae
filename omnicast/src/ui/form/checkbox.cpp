@@ -41,7 +41,6 @@ void Checkbox::keyPressEvent(QKeyEvent *event) {
 
 void Checkbox::mousePressEvent(QMouseEvent *event) {
   toggle();
-  qDebug() << "toggled to" << m_value;
   // QWidget::mousePressEvent(event);
 }
 
@@ -60,8 +59,6 @@ void Checkbox::setFillColor(const ColorLike &color) {
 
 void Checkbox::setValue(bool v) {
   if (v == m_value) return;
-
-  qDebug() << "setting value to" << v;
 
   m_value = v;
   update();

@@ -18,6 +18,8 @@
 #include <qboxlayout.h>
 #include <qdnslookup.h>
 #include <qevent.h>
+#include <qjsonobject.h>
+#include <qlogging.h>
 #include <qnamespace.h>
 #include <qobject.h>
 #include <qobjectdefs.h>
@@ -152,7 +154,12 @@ class RootDetailPaneItem : public AbstractSettingsDetailPaneItem {
 public:
   OmniIconUrl icon() const override { return m_item->iconUrl(); }
   QString title() const override { return m_item->displayName(); }
-  QWidget *content() const override { return m_item->settingsDetail(); }
+  QWidget *content() const override {
+    auto manager = ServiceRegistry::instance()->rootItemManager();
+    QJsonObject preferences = manager->getItemPreferenceValues(m_item->uniqueId());
+
+    return m_item->settingsDetail(preferences);
+  }
 
   RootDetailPaneItem(const std::shared_ptr<RootItem> &item) : m_item(item) {}
 };
@@ -193,6 +200,7 @@ public:
   }
 
   void attached(QWidget *widget, int column) override {
+
     if (column == 3) {
       auto manager = ServiceRegistry::instance()->rootItemManager();
       Checkbox *checkbox = static_cast<CheckboxContainer *>(widget)->checkbox();
@@ -372,11 +380,22 @@ signals:
   void providerEnabledChanged(const RootProvider *provider, bool value) const;
 };
 
-class ExtensionSettingsDetailHeader {
-  Omnimg::ImageWidget *m_icon = new Omnimg::ImageWidget;
-
+class VerticalScrollArea : public QScrollArea {
 public:
-  ExtensionSettingsDetailHeader() {}
+  bool eventFilter(QObject *o, QEvent *e) override {
+    if (o == widget() && e->type() == QEvent::Resize) {
+      qCritical() << "set maximum width" << width();
+      widget()->setMaximumWidth(width());
+    }
+
+    return false;
+  }
+
+  VerticalScrollArea(QWidget *parent = nullptr) : QScrollArea(parent) {
+    setWidgetResizable(true);
+    setVerticalScrollBar(new OmniScrollBar);
+    setHorizontalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
+  }
 };
 
 class ExtensionSettingsDetailPane : public QWidget {
@@ -384,7 +403,7 @@ class ExtensionSettingsDetailPane : public QWidget {
   QVBoxLayout *m_layout = new QVBoxLayout;
   TypographyWidget *m_title = new TypographyWidget;
   QWidget *m_header = new QWidget;
-  QScrollArea *m_content = new QScrollArea(this);
+  QScrollArea *m_content = new VerticalScrollArea(this);
   HDivider *m_divider = new HDivider;
 
 public:
@@ -398,6 +417,7 @@ public:
 
     m_content->setWidget(content);
     m_divider->show();
+    m_content->show();
     m_header->show();
     updateGeometry();
   }
@@ -413,6 +433,8 @@ public:
     auto icon = BuiltinOmniIconUrl("stars");
 
     m_content->setWidgetResizable(true);
+    m_content->setVerticalScrollBar(new OmniScrollBar);
+    m_content->setHorizontalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
 
     headerLayout->setContentsMargins(20, 20, 20, 20);
 

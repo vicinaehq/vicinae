@@ -17,7 +17,9 @@ QString AppRootItem::providerId() const { return "app"; }
 
 QString AppRootItem::displayName() const { return m_app->name(); }
 
-QWidget *AppRootItem::settingsDetail() const { return new AppMetadataSettingsDetail(m_app); }
+QWidget *AppRootItem::settingsDetail(const QJsonObject &preferences) const {
+  return new AppMetadataSettingsDetail(m_app);
+}
 
 AccessoryList AppRootItem::accessories() const {
   return {{.text = "Application", .color = ColorTint::TextSecondary}};

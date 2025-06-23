@@ -1,5 +1,6 @@
 #pragma once
 #include "root-item-manager.hpp"
+#include <qwidget.h>
 
 class CommandRootItem : public RootItem {
   std::shared_ptr<AbstractCmd> m_command;
@@ -18,6 +19,13 @@ public:
   QString uniqueId() const override;
   AccessoryList accessories() const override;
   PreferenceList preferences() const override { return m_command->preferences(); }
+  QWidget *settingsDetail(const QJsonObject &preferences) const override {
+    QJsonDocument doc;
+
+    doc.setObject(preferences);
+    qDebug() << "setting preferences" << doc.toJson();
+    return new QWidget;
+  }
 
 public:
   auto command() const { return m_command; }

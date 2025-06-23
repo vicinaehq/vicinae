@@ -16,7 +16,7 @@ class AppRootItem : public RootItem {
   AccessoryList accessories() const override;
   QString uniqueId() const override;
   OmniIconUrl iconUrl() const override;
-  QWidget *settingsDetail() const override;
+  QWidget *settingsDetail(const QJsonObject &preferences) const override;
   std::vector<QString> keywords() const override;
 
 public:

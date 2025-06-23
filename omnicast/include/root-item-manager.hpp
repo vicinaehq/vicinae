@@ -45,7 +45,7 @@ public:
 
   virtual OmniIconUrl iconUrl() const = 0;
 
-  virtual QWidget *settingsDetail() const { return new QWidget; }
+  virtual QWidget *settingsDetail(const QJsonObject &preferences) const { return new QWidget; }
 
   /**
    * Whether the item can be selected as a fallback command or not
@@ -528,6 +528,51 @@ public:
     auto json = QJsonDocument::fromJson(rawJson.toUtf8());
 
     return json.object();
+  }
+
+  QJsonObject getItemPreferenceValues(const QString &id) const {
+    auto query = m_db.createQuery();
+    auto it = std::ranges::find_if(m_items, [&id](const auto &item) { return item->uniqueId() == id; });
+
+    if (it == m_items.end()) {
+      qCritical() << "setAlias: no item with id " << id;
+      return {};
+    }
+
+    auto &item = *it;
+
+    query.prepare(R"(
+		SELECT 
+			item.preference_values as preference_values 
+		FROM 
+			root_provider_item as item
+		WHERE
+			item.id = :id
+	)");
+    query.addBindValue(id);
+
+    if (!query.exec()) {
+      qDebug() << "Failed to get preference values for provider with ID" << id << query.lastError();
+      return {};
+    }
+
+    if (!query.next()) {
+      qDebug() << "No results";
+      return {};
+    }
+    auto rawJson = query.value(0).toString();
+    qDebug() << "raw preferences json" << rawJson;
+    auto json = QJsonDocument::fromJson(rawJson.toUtf8());
+    QJsonObject values = json.object();
+
+    for (const auto &preference : item->preferences()) {
+      QJsonValue defaultValue = preference->defaultValueAsJson();
+      if (!values.contains(preference->name()) && !defaultValue.isNull()) {
+        values[preference->name()] = defaultValue;
+      }
+    }
+
+    return values;
   }
 
   QJsonObject getPreferenceValues(const QString &id) const {

@@ -23,6 +23,7 @@ class ViewCommandContext;
 class BuiltinCommand : public AbstractCmd {
   QString _id;
   QString _name;
+  QString m_description;
   std::optional<OmniIconUrl> _url;
   OmniIconUrl _repositoryIcon;
   QString _repositoryId;
@@ -35,6 +36,7 @@ class BuiltinCommand : public AbstractCmd {
 public:
   QString uniqueId() const override { return _repositoryId + "." + _id; }
   QString name() const override { return _name; }
+  QString description() const { return m_description; }
   OmniIconUrl iconUrl() const override { return _url.value_or(_repositoryIcon); }
   virtual CommandType type() const override { return CommandTypeBuiltin; }
   QString extensionId() const override { return _repositoryId; }
@@ -64,6 +66,8 @@ public:
     _preferences = preferences;
   }
   void setArguments(const std::vector<CommandArgument> &arguments) { _arguments = arguments; }
+
+  void setDescription(const QString &description) { m_description = description; }
 
   QString repositoryName() const override { return _repositoryName; }
   const QString &repositoryId() { return _repositoryId; }

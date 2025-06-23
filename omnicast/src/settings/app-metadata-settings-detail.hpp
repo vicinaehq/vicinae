@@ -50,7 +50,6 @@ class AppMetadataSettingsDetail : public QWidget {
   MetadataRowWidget *m_id = new MetadataRowWidget(this);
   MetadataRowWidget *m_name = new MetadataRowWidget(this);
   MetadataRowWidget *m_where = new MetadataRowWidget(this);
-  MetadataRowWidget *m_version = new MetadataRowWidget(this);
   MetadataRowWidget *m_terminal = new MetadataRowWidget(this);
 
   void resizeEvent(QResizeEvent *event) override {
@@ -62,7 +61,6 @@ class AppMetadataSettingsDetail : public QWidget {
     auto layout = new QVBoxLayout;
 
     m_descriptionParagraph->setWordWrap(true);
-    m_descriptionParagraph->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
     m_id->setLabel("ID");
     m_id->setText(app->id());
@@ -85,19 +83,10 @@ class AppMetadataSettingsDetail : public QWidget {
     layout->addWidget(new HDivider);
     layout->addWidget(m_where);
 
-    if (auto version = app->version(); !version.isEmpty()) {
-      m_version->setLabel("Version");
-      m_version->setText(version);
-      layout->addWidget(new HDivider);
-      layout->addWidget(m_version);
-    }
-
     m_terminal->setLabel("Opens in terminal");
     m_terminal->setText(app->isTerminalApp() ? "Yes" : "No");
     layout->addWidget(new HDivider);
     layout->addWidget(m_terminal);
-
-    // show version if applicable
 
     layout->addStretch();
     setLayout(layout);

@@ -109,28 +109,17 @@ CommandDatabase::CommandDatabase() {
                           .withTintedIcon("omnicast", ColorTint::Red)
                           .toSingleView<IconBrowserView>();
 
-    auto openConfigFile = CommandBuilder("open-config")
-                              .withName("Open Omnicast Configuration File")
-                              .withTintedIcon("cog", ColorTint::Red)
-                              .toNoViewContext<OpenConfigurationFileCommand>();
-
     auto configureFallbackCommands = CommandBuilder("configure-fallback-commands")
                                          .withName("Configure Fallback Commands")
                                          .withTintedIcon("arrow-counter-clockwise", ColorTint::Red)
                                          .toSingleView<ManageFallbackCommands>();
 
-    auto setDefaultTerminal = CommandBuilder("set-default-terminal")
-                                  .withName("Set Default Terminal Emulator")
-                                  .withTintedIcon("terminal", ColorTint::Red)
-                                  .toSingleView<ManageFallbackCommands>();
-
     auto omnicast = CommandRepositoryBuilder("omnicast")
+                        .withTintedIcon("omnicast", ColorTint::Red)
                         .withName("Omnicast")
                         .withCommand(emoji)
                         .withCommand(iconSearch)
-                        .withCommand(openConfigFile)
                         .withCommand(configureFallbackCommands)
-                        .withCommand(setDefaultTerminal)
                         .makeShared();
 
     registerRepository(omnicast);
