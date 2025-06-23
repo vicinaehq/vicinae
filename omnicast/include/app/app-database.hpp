@@ -20,6 +20,17 @@ public:
   virtual std::vector<QString> keywords() const { return {}; }
   virtual std::filesystem::path path() const = 0;
 
+  /**
+   * Current version of the installed application (if applicable)
+   * The empty string is interpreted as no version being available
+   */
+  virtual QString version() const { return {}; }
+
+  /**
+   * A short multiline description that explains what the app does.
+   */
+  virtual QString description() const = 0;
+
   // whether the executable can open url(s) or file(s)
   virtual bool isOpener() { return true; }
 
@@ -29,6 +40,8 @@ public:
 class AbstractAppDatabase : public QObject {
 public:
   using AppPtr = std::shared_ptr<Application>;
+
+  virtual std::vector<std::filesystem::path> defaultSearchPaths() const = 0;
 
   virtual bool launch(const Application &exec, const std::vector<QString> &args = {}) const = 0;
   /**

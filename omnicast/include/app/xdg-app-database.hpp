@@ -24,6 +24,8 @@ class XdgApplicationAction : public XdgApplicationBase {
     return _data.icon.isEmpty() ? SystemOmniIconUrl(_parentData.icon) : SystemOmniIconUrl(_data.icon);
   }
 
+  QString description() const override { return _parentData.comment; }
+
   std::vector<QString> exec() const override { return {_data.exec.begin(), _data.exec.end()}; }
   bool displayable() const override { return !_parentData.noDisplay; }
   bool isTerminalApp() const override { return _parentData.terminal; }
@@ -31,6 +33,7 @@ class XdgApplicationAction : public XdgApplicationBase {
   QString name() const override { return _data.name; }
   QString id() const override { return _id; };
   std::filesystem::path path() const override { return m_parentPath.toStdString(); };
+  QString version() const override { return _parentData.version; }
 
 public:
   XdgApplicationAction(const XdgDesktopEntry::Action &action, const XdgDesktopEntry &parentData,
@@ -51,6 +54,8 @@ public:
   bool isTerminalApp() const override { return _data.terminal; }
   bool isTerminalEmulator() const override { return _data.categories.contains("TerminalEmulator"); }
   std::filesystem::path path() const override { return _path.toStdString(); };
+  QString description() const override { return _data.comment; }
+  QString version() const override { return _data.version; }
 
   std::vector<QString> keywords() const override { return {_data.keywords.begin(), _data.keywords.end()}; }
   OmniIconUrl iconUrl() const override { return SystemOmniIconUrl(_data.icon); }
@@ -81,6 +86,7 @@ class XdgAppDatabase : public AbstractAppDatabase {
   bool addDesktopFile(const QString &path);
 
 public:
+  std::vector<std::filesystem::path> defaultSearchPaths() const override;
   AppPtr findByClass(const QString &name) const override;
   AppPtr findBestOpener(const QString &target) const override;
   AppPtr findBestOpenerForMime(const QString &target) const override;

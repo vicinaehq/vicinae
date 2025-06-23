@@ -26,6 +26,10 @@ protected:
     QLabel::paintEvent(event);
   }
 
+  QSize minimumSizeHint() const override { return sizeHint(); }
+
+  QSize sizeHint() const override { return QLabel::sizeHint(); }
+
 public:
   void setColor(const ColorLike &color) {
     m_color = color;
@@ -38,6 +42,7 @@ public:
     font.setPointSize(m_theme.pointSize(m_size));
     font.setWeight(m_weight);
     QLabel::setFont(font);
+    updateGeometry();
   }
 
   void setFontWeight(QFont::Weight weight) {
@@ -62,7 +67,7 @@ public:
     updateGeometry();
   }
 
-  bool hasHeightForWidth() const override { return false; }
+  // bool hasHeightForWidth() const override { return false; }
 
   TypographyWidget(QWidget *parent = nullptr) : QLabel(parent) { setSize(TextSize::TextRegular); }
 

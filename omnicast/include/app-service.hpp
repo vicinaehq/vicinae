@@ -8,6 +8,7 @@
 #include <memory>
 #include <qlogging.h>
 #include <qobject.h>
+#include <qobjectdefs.h>
 #include <qsqlquery.h>
 
 class AppService : public QObject, public NonAssignable {
@@ -119,6 +120,8 @@ public:
   bool launch(const Application &app, const std::vector<QString> &args = {}) const {
     return m_provider->launch(app, args);
   }
+
+  auto defaultSearchPaths() const { return m_provider->defaultSearchPaths(); }
 
   void registerVisit(const std::shared_ptr<Application> &app) { registerVisit(app->id()); }
 

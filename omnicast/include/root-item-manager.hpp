@@ -14,10 +14,12 @@
 #include <qlogging.h>
 #include <qnamespace.h>
 #include <qobject.h>
+#include <qobjectdefs.h>
 #include <qsqlquery.h>
 #include <qstring.h>
 #include <qhash.h>
 #include <qtmetamacros.h>
+#include <qwidget.h>
 #include <ranges>
 
 struct RootItemPrefixSearchOptions {
@@ -42,6 +44,8 @@ public:
   virtual QString displayName() const = 0;
 
   virtual OmniIconUrl iconUrl() const = 0;
+
+  virtual QWidget *settingsDetail() const { return new QWidget; }
 
   /**
    * Whether the item can be selected as a fallback command or not
@@ -140,6 +144,25 @@ public:
       return "Group";
     }
   }
+
+  /**
+   * Generate the default set of preferences for this item.
+   * This function is called on _each_ startup and diffed against the existing preference values.
+   * Existing keys are untouched but new ones can be added.
+   */
+  virtual QJsonObject generateDefaultPreferences() const { return {}; }
+
+  /**
+   * Called when the provider preferences are changed.
+   */
+  virtual void preferencesChanged(const QJsonObject &preferences) {}
+
+  virtual void itemPreferencesChanged(const QString &itemId, const QJsonObject &preferences) {}
+
+  // Called the first time the root provider is loaded by the root item manager
+  // The preference object can be mutated and will be saved on disk not long after this
+  // function is called.
+  void intialize(QJsonObject &preference) {}
 
   virtual std::vector<std::shared_ptr<RootItem>> loadItems() const = 0;
   virtual PreferenceList preferences() const { return {}; }
@@ -476,6 +499,37 @@ public:
 
   bool clearAlias(const QString &id) { return setAlias(id, ""); }
 
+  QJsonObject getProviderPreferenceValues(const QString &id) const {
+    auto query = m_db.createQuery();
+
+    query.prepare(R"(
+		SELECT 
+			provider.preference_values as preference_values 
+		FROM 
+			root_provider as provider
+		WHERE
+			provider.id = :id
+	)");
+    query.addBindValue(id);
+
+    if (!query.exec()) {
+      qDebug() << "Failed to get preference values for provider with ID" << id << query.lastError();
+      return {};
+    }
+
+    if (!query.next()) {
+      qDebug() << "No results";
+      return {};
+    }
+    auto rawJson = query.value(0).toString();
+
+    qDebug() << "raw preferences json" << rawJson;
+
+    auto json = QJsonDocument::fromJson(rawJson.toUtf8());
+
+    return json.object();
+  }
+
   QJsonObject getPreferenceValues(const QString &id) const {
     auto query = m_db.createQuery();
     auto it = std::ranges::find_if(m_items, [&](auto &&item) { return item->uniqueId() == id; });
@@ -690,6 +744,18 @@ public:
     std::ranges::for_each(items, [&](const auto &item) { upsertItem(provider->uniqueId(), *item.get()); });
 
     m_items.insert(m_items.end(), items.begin(), items.end());
+
+    auto existingPreferences = getProviderPreferenceValues(provider->uniqueId());
+
+    if (existingPreferences.empty()) {
+      QJsonObject defaultPreferences = provider->generateDefaultPreferences();
+
+      if (!defaultPreferences.empty()) {
+        qCritical() << "set default preferences for app" << provider->uniqueId();
+        setProviderPreferenceValues(provider->uniqueId(), defaultPreferences);
+      }
+    }
+
     connect(provider.get(), &RootProvider::itemsChanged, this, &RootItemManager::reloadProviders);
     m_providers.emplace_back(std::move(provider));
     rebuildTrie();

@@ -1,13 +1,18 @@
 #include "app/xdg-app-database.hpp"
 #include "app/app-database.hpp"
+#include <filesystem>
 #include <qlogging.h>
 #include <qsettings.h>
+#include <ranges>
+
+namespace fs = std::filesystem;
 
 using AppPtr = XdgAppDatabase::AppPtr;
 
-static const std::vector<QDir> defaultPaths = {QDir("/usr/share/applications"),
-                                               QDir("/usr/local/share/applications"),
-                                               QDir::homePath() + "/.local/share/applications"};
+static const std::vector<fs::path> wellKnownPaths = {"/usr/share/applications",
+                                                     "/usr/local/share/applications"};
+
+// QDir::homePath() + "/.local/share/applications"};
 
 std::shared_ptr<Application> XdgAppDatabase::defaultForMime(const QString &mime) const {
   if (auto it = mimeToDefaultApp.find(mime); it != mimeToDefaultApp.end()) {
@@ -33,6 +38,23 @@ AppPtr XdgAppDatabase::findBestOpenerForMime(const QString &mimeName) const {
   }
 
   return nullptr;
+}
+
+std::vector<fs::path> XdgAppDatabase::defaultSearchPaths() const {
+  char *ddir = std::getenv("XDG_DATA_DIRS");
+
+  if (!ddir) { return wellKnownPaths; }
+
+  std::string s = ddir;
+  std::vector<fs::path> paths;
+
+  for (const auto p : std::views::split(s, std::string_view(":"))) {
+    fs::path appDir = fs::path(std::string_view(p)) / "applications";
+
+    paths.emplace_back(appDir);
+  }
+
+  return paths;
 }
 
 XdgAppDatabase::AppPtr XdgAppDatabase::findBestOpener(const QString &target) const {
@@ -214,32 +236,25 @@ bool XdgAppDatabase::addDesktopFile(const QString &path) {
 }
 
 XdgAppDatabase::XdgAppDatabase() {
-  auto xdd = qgetenv("XDG_DATA_DIRS");
-
-  if (!xdd.isEmpty()) {
-    for (const auto &path : xdd.split(':')) {
-      paths.push_back(QString(path) + "/applications");
-    }
-  } else {
-    paths = defaultPaths;
-  }
-
-  QList<QDir> traversed;
+  std::vector<fs::path> paths = defaultSearchPaths();
+  std::vector<fs::path> traversed;
 
   // scan dirs
   for (const auto &dir : paths) {
-    if (traversed.contains(dir)) continue;
+    if (std::ranges::any_of(traversed, [&](auto &&path) { return path == dir; })) continue;
 
-    traversed.push_back(dir);
+    traversed.emplace_back(dir);
 
-    if (!dir.exists()) continue;
+    if (!fs::is_directory(dir)) continue;
 
-    for (const auto &entry : dir.entryList()) {
-      if (!entry.endsWith(".desktop")) continue;
+    std::error_code ec;
 
-      QString fullpath = dir.path() + QDir::separator() + entry;
+    for (const auto &entry : fs::directory_iterator(dir, ec)) {
+      if (ec) continue;
+      std::string filename = entry.path().filename().string();
+      if (!filename.ends_with(".desktop")) continue;
 
-      addDesktopFile(fullpath);
+      addDesktopFile(entry.path().c_str());
     }
   }
 

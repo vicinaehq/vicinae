@@ -21,6 +21,7 @@
 #include <qnamespace.h>
 #include <qobject.h>
 #include <qobjectdefs.h>
+#include <qscrollarea.h>
 #include <qstackedwidget.h>
 #include <qtmetamacros.h>
 #include <qtreeview.h>
@@ -151,7 +152,7 @@ class RootDetailPaneItem : public AbstractSettingsDetailPaneItem {
 public:
   OmniIconUrl icon() const override { return m_item->iconUrl(); }
   QString title() const override { return m_item->displayName(); }
-  QWidget *content() const override { return new QWidget; }
+  QWidget *content() const override { return m_item->settingsDetail(); }
 
   RootDetailPaneItem(const std::shared_ptr<RootItem> &item) : m_item(item) {}
 };
@@ -380,9 +381,10 @@ public:
 
 class ExtensionSettingsDetailPane : public QWidget {
   Omnimg::ImageWidget *m_icon = new Omnimg::ImageWidget;
+  QVBoxLayout *m_layout = new QVBoxLayout;
   TypographyWidget *m_title = new TypographyWidget;
   QWidget *m_header = new QWidget;
-  QStackedWidget *m_content = new QStackedWidget;
+  QScrollArea *m_content = new QScrollArea(this);
   HDivider *m_divider = new HDivider;
 
 public:
@@ -390,23 +392,27 @@ public:
     m_title->setText(data->title());
     m_icon->setUrl(data->icon());
 
-    if (auto widget = m_content->widget(0)) { widget->deleteLater(); }
+    QWidget *content = data->content();
 
-    m_content->addWidget(data->content());
+    if (auto previous = m_content->widget()) { previous->deleteLater(); }
+
+    m_content->setWidget(content);
     m_divider->show();
     m_header->show();
+    updateGeometry();
   }
 
   void clearData() {
-    if (auto widget = m_content->widget(0)) widget->deleteLater();
+    m_content->hide();
     m_divider->hide();
     m_header->hide();
   }
 
   void setupUI() {
     QHBoxLayout *headerLayout = new QHBoxLayout;
-    QVBoxLayout *layout = new QVBoxLayout;
     auto icon = BuiltinOmniIconUrl("stars");
+
+    m_content->setWidgetResizable(true);
 
     headerLayout->setContentsMargins(20, 20, 20, 20);
 
@@ -421,11 +427,11 @@ public:
     m_header->setLayout(headerLayout);
     m_header->setFixedHeight(76);
 
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->addWidget(m_header);
-    layout->addWidget(m_divider);
-    layout->addWidget(m_content);
-    setLayout(layout);
+    m_layout->setContentsMargins(0, 0, 0, 0);
+    m_layout->addWidget(m_header);
+    m_layout->addWidget(m_divider);
+    m_layout->addWidget(m_content, 1);
+    setLayout(m_layout);
   }
 
   ExtensionSettingsDetailPane() { setupUI(); }
@@ -559,6 +565,14 @@ class ExtensionSettingsContent : public QWidget {
   ExtensionSettingsContextLeftPane *m_left = new ExtensionSettingsContextLeftPane;
   ExtensionSettingsDetailPane *m_detail = new ExtensionSettingsDetailPane;
 
+  void resizeEvent(QResizeEvent *event) override {
+    QWidget::resizeEvent(event);
+    QSize size = event->size();
+
+    m_left->setFixedWidth(width() * 0.60);
+    m_detail->setFixedWidth(width() * 0.40);
+  }
+
   void itemSelectionChanged(AbstractRootItemDelegate *next, AbstractRootItemDelegate *previous) {
     if (next)
       m_detail->setData(next->generateDetail());
@@ -570,9 +584,9 @@ public:
   void setupUI() {
     m_layout->setContentsMargins(0, 0, 0, 0);
     m_layout->setSpacing(0);
-    m_layout->addWidget(m_left, 2);
+    m_layout->addWidget(m_left);
     m_layout->addWidget(new VDivider);
-    m_layout->addWidget(m_detail, 1);
+    m_layout->addWidget(m_detail);
     setLayout(m_layout);
 
     connect(m_left, &ExtensionSettingsContextLeftPane::itemSelectionChanged, this,

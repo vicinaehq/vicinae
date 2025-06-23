@@ -1,7 +1,6 @@
 #include "ui/metadata-pane.hpp"
 #include "common.hpp"
 #include "tag.hpp"
-#include "theme.hpp"
 #include <qboxlayout.h>
 #include <qlabel.h>
 #include <qnamespace.h>

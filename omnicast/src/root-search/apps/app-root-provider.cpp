@@ -4,6 +4,8 @@
 #include "omni-icon.hpp"
 #include "root-item-manager.hpp"
 #include "service-registry.hpp"
+#include "settings/app-metadata-settings-detail.hpp"
+#include <qwidget.h>
 
 double AppRootItem::baseScoreWeight() const { return 1; }
 
@@ -14,6 +16,8 @@ std::vector<QString> AppRootItem::keywords() const { return m_app->keywords(); }
 QString AppRootItem::providerId() const { return "app"; }
 
 QString AppRootItem::displayName() const { return m_app->name(); }
+
+QWidget *AppRootItem::settingsDetail() const { return new AppMetadataSettingsDetail(m_app); }
 
 AccessoryList AppRootItem::accessories() const {
   return {{.text = "Application", .color = ColorTint::TextSecondary}};
@@ -78,6 +82,19 @@ RootProvider::Type AppRootProvider::type() const { return RootProvider::Type::Gr
 OmniIconUrl AppRootProvider::icon() const { return BuiltinOmniIconUrl("folder"); }
 
 QString AppRootProvider::displayName() const { return "Applications"; }
+
+QJsonObject AppRootProvider::generateDefaultPreferences() const {
+  QJsonObject preferences;
+  QJsonArray paths;
+
+  for (const auto &searchPath : m_appService.defaultSearchPaths()) {
+    paths.push_back(QString::fromStdString(searchPath));
+  }
+
+  preferences["paths"] = paths;
+
+  return preferences;
+}
 
 QString AppRootProvider::uniqueId() const { return "apps"; }
 
