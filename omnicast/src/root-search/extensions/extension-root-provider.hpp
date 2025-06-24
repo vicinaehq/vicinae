@@ -1,6 +1,7 @@
 #pragma once
 #include "root-item-manager.hpp"
 #include <qwidget.h>
+#include "settings/command-metadata-settings-detail.hpp"
 
 class CommandRootItem : public RootItem {
   std::shared_ptr<AbstractCmd> m_command;
@@ -20,11 +21,7 @@ public:
   AccessoryList accessories() const override;
   PreferenceList preferences() const override { return m_command->preferences(); }
   QWidget *settingsDetail(const QJsonObject &preferences) const override {
-    QJsonDocument doc;
-
-    doc.setObject(preferences);
-    qDebug() << "setting preferences" << doc.toJson();
-    return new QWidget;
+    return new CommandMetadataSettingsDetailWidget(uniqueId(), m_command);
   }
 
 public:

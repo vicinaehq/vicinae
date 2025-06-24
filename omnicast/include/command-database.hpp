@@ -36,7 +36,7 @@ class BuiltinCommand : public AbstractCmd {
 public:
   QString uniqueId() const override { return _repositoryId + "." + _id; }
   QString name() const override { return _name; }
-  QString description() const { return m_description; }
+  QString description() const override { return m_description; }
   OmniIconUrl iconUrl() const override { return _url.value_or(_repositoryIcon); }
   virtual CommandType type() const override { return CommandTypeBuiltin; }
   QString extensionId() const override { return _repositoryId; }

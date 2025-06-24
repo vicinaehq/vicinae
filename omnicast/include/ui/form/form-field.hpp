@@ -14,6 +14,7 @@ class FormField : public QWidget {
 
   TypographyWidget *_nameLabel;
   TypographyWidget *_errorLabel;
+  bool m_vertical = false;
   MarkdownRenderer *m_info = new MarkdownRenderer;
   QWidget *_widget;
   QHBoxLayout *_layout;
@@ -45,6 +46,7 @@ protected:
 public:
   FormField(QWidget *widget = new QWidget, const QString &name = "");
 
+  void setVerticalDirection(bool value);
   void setName(const QString &name);
   void setError(const QString &error);
   void setInfo(const QString &info);

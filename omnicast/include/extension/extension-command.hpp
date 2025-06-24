@@ -44,6 +44,8 @@ public:
   const QString &extensionIcon() const;
   void setExtensionIcon(const QString &icon);
 
+  QString description() const override { return ""; }
+
   void setExtensionPreferences(const PreferenceList &prefs) { _extensionPreferences = prefs; }
 
   bool isFallback() const override { return true; }

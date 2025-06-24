@@ -42,6 +42,26 @@ FormField::FormField(QWidget *widget, const QString &name)
   setLayout(m_mainLayout);
 }
 
+void FormField::setVerticalDirection(bool value) {
+  m_vertical = value;
+
+  _errorLabel->setVisible(!value);
+
+  if (value) {
+    while (m_infoLayout->count() > 0) {
+      m_infoLayout->takeAt(0);
+    }
+
+    m_infoLayout->addWidget(m_info);
+  }
+
+  _layout->setStretch(0, 0);
+  _layout->itemAt(0)->setAlignment(Qt::AlignLeft);
+  _layout->setStretch(1, 0);
+  _layout->setStretch(2, 0);
+  _layout->setDirection(value ? QBoxLayout::TopToBottom : QBoxLayout::LeftToRight);
+}
+
 void FormField::setName(const QString &name) { _nameLabel->setText(name); }
 
 void FormField::setInfo(const QString &info) {

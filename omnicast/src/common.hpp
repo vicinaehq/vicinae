@@ -133,6 +133,7 @@ class AbstractCmd {
 public:
   virtual QString uniqueId() const = 0;
   virtual QString name() const = 0;
+  virtual QString description() const = 0;
   virtual OmniIconUrl iconUrl() const = 0;
   virtual CommandType type() const = 0;
   virtual CommandMode mode() const = 0;
