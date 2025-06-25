@@ -71,29 +71,30 @@ CommandDatabase::CommandDatabase() {
                      .withTintedIcon("emoji", ColorTint::Red)
                      .toSingleView<EmojiView>();
 
-    auto storeAllOfferingsPreference = std::make_shared<CheckboxPreference>();
+    auto storeAllOfferingsPreference = Preference::makeCheckbox();
 
-    storeAllOfferingsPreference->setName("store-all-offerings");
-    storeAllOfferingsPreference->setTitle("Store all offerings");
-    storeAllOfferingsPreference->setDescription("Store and index alternative mime type offerings. This will "
-                                                "increase total storage size, but will refine the search.");
-    storeAllOfferingsPreference->setLabel("Store all offerings");
+    storeAllOfferingsPreference.setName("store-all-offerings");
+    storeAllOfferingsPreference.setTitle("Store all offerings");
+    storeAllOfferingsPreference.setDescription("Store and index alternative mime type offerings. This will "
+                                               "increase total storage size, but will refine the search.");
 
-    auto maximumClipboardStorageSizePreference = std::make_shared<TextFieldPreference>();
+    auto maximumClipboardStorageSizePreference = Preference::makeText();
 
-    maximumClipboardStorageSizePreference->setName("maximum-storage-size");
-    maximumClipboardStorageSizePreference->setTitle("Maximum storage size");
-    maximumClipboardStorageSizePreference->setDescription(
+    maximumClipboardStorageSizePreference.setName("maximum-storage-size");
+    maximumClipboardStorageSizePreference.setTitle("Maximum storage size");
+    maximumClipboardStorageSizePreference.setDescription(
         "How much storage can be used to store clipboard history data, in MB.");
-    maximumClipboardStorageSizePreference->setDefaultValue("1000");
+    maximumClipboardStorageSizePreference.setDefaultValue("1000");
 
     {
-      auto clipboardHistory = CommandBuilder("clipboard-history")
-                                  .withName("Clipboard History")
-                                  .withTintedIcon("copy-clipboard", ColorTint::Red)
-                                  .withPreference(storeAllOfferingsPreference)
-                                  .withPreference(maximumClipboardStorageSizePreference)
-                                  .toSingleView<ClipboardHistoryCommand>();
+      auto clipboardHistory =
+          CommandBuilder("clipboard-history")
+              .withName("Clipboard History")
+              .withDescription("Browse your clipboard's history, pin, edit and remove entries.")
+              .withTintedIcon("copy-clipboard", ColorTint::Red)
+              .withPreference(storeAllOfferingsPreference)
+              .withPreference(maximumClipboardStorageSizePreference)
+              .toSingleView<ClipboardHistoryCommand>();
 
       auto clipboard = CommandRepositoryBuilder("clipboard")
                            .withName("Clipboard")
@@ -138,12 +139,12 @@ CommandDatabase::CommandDatabase() {
   }
 
   {
-    auto testExtensionPref = std::make_shared<TextFieldPreference>();
+    auto textExtensionPref = Preference::makeText();
 
-    testExtensionPref->setName("test-extension-pref");
-    testExtensionPref->setTitle("Test Extension Pref");
-    testExtensionPref->setDefaultValue("ting ting");
-    testExtensionPref->setDescription("A simple test, nothing more.");
+    textExtensionPref.setName("test-extension-pref");
+    textExtensionPref.setTitle("Test Extension Pref");
+    textExtensionPref.setDefaultValue("ting ting");
+    textExtensionPref.setDescription("A simple test, nothing more.");
 
     auto create = CommandBuilder("create").withName("Create Bookmark").toSingleView<BookmarkFormView>();
     auto manage = CommandBuilder("manage").withName("Manage Bookmarks").toSingleView<ManageBookmarksView>();
@@ -151,7 +152,7 @@ CommandDatabase::CommandDatabase() {
     auto _import = CommandBuilder("import").withName("Import Bookmarks").toSingleView<ManageBookmarksView>();
     auto quicklinks = CommandRepositoryBuilder("bookmarks")
                           .withName("Bookmarks")
-                          .withPreference(testExtensionPref)
+                          .withPreference(textExtensionPref)
                           .withTintedIcon("bookmark", ColorTint::Red)
                           .withCommand(create)
                           .withCommand(manage)

@@ -7,7 +7,7 @@
 #include <qlineedit.h>
 #include <qwidget.h>
 
-class CompletedInput : public QWidget, public IJsonFormField {
+class CompletedInput : public JsonFormItemWidget {
 public:
   class Completer {
   public:
@@ -100,10 +100,10 @@ public:
   void setValue(const QString &id);
   void setValueAsJson(const QJsonValue &value) override;
   OmniList *completer() { return m_completerList; }
-  QLineEdit *input() { return inputField; }
+  QLineEdit *input() { return inputField->input(); }
   void showCompleter() { showPopover(); }
   void hideCompleter() { popover->close(); }
-  int cursorPosition() const { return inputField->cursorPosition(); }
+  int cursorPosition() const { return inputField->input()->cursorPosition(); }
 
 signals:
   void textChanged(const QString &s);

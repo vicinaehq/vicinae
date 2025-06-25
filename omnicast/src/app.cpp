@@ -221,20 +221,21 @@ void AppWindow::launchCommand(const std::shared_ptr<AbstractCmd> &command, const
   auto ui = ServiceRegistry::instance()->UI();
   auto itemId = QString("extension.%1").arg(command->uniqueId());
   auto manager = ServiceRegistry::instance()->rootItemManager();
+  auto preferences = manager->getMergedItemPreferences(itemId);
   auto preferenceValues = manager->getPreferenceValues(itemId);
 
   for (const auto &preference : command->preferences()) {
-    if (preference->isRequired() && !preferenceValues.contains(preference->name())) {
+    if (preference.required() && !preferenceValues.contains(preference.name())) {
       if (command->type() == CommandType::CommandTypeExtension) {
         auto extensionCommand = std::static_pointer_cast<ExtensionCommand>(command);
 
         ui->pushView(
-            new MissingExtensionPreferenceView(*this, extensionCommand),
+            new MissingExtensionPreferenceView(extensionCommand, preferences, preferenceValues),
             {.navigation = NavigationStatus{.title = command->name(), .iconUrl = command->iconUrl()}});
         return;
       }
 
-      qDebug() << "MISSING PREFERENCE" << preference->title();
+      qDebug() << "MISSING PREFERENCE" << preference.title();
     }
   }
 

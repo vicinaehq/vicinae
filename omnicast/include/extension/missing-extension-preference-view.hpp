@@ -1,8 +1,6 @@
 #include "action-panel/action-panel.hpp"
-#include "app.hpp"
 #include "base-view.hpp"
 #include "extension/extension-command.hpp"
-#include "omni-command-db.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
 #include "theme.hpp"
@@ -11,6 +9,8 @@
 #include "ui/action-pannel/action.hpp"
 #include "ui/typography.hpp"
 #include <qboxlayout.h>
+#include <qjsonobject.h>
+#include <qjsonvalue.h>
 #include <qnamespace.h>
 #include <qwidget.h>
 
@@ -23,13 +23,12 @@ class MissingExtensionPreferenceView : public FormView {
   std::vector<PreferenceField *> m_preferenceFields;
 
 public:
-  MissingExtensionPreferenceView(AppWindow &app, const std::shared_ptr<ExtensionCommand> &command)
-      : m_command(command) {
-    auto manager = ServiceRegistry::instance()->rootItemManager();
+  MissingExtensionPreferenceView(const std::shared_ptr<ExtensionCommand> &command,
+                                 const std::vector<Preference> &preferences,
+                                 const QJsonObject &preferenceValues)
+      : m_command(command), m_existingPreferenceValues(preferenceValues) {
     QWidget *widget = new QWidget;
 
-    m_existingPreferenceValues =
-        manager->getPreferenceValues(QString("extension.%1").arg(command->uniqueId()));
     auto icon = new OmniIcon();
 
     icon->setFixedSize(32, 32);
@@ -60,13 +59,15 @@ public:
     m_layout->addWidget(title);
     m_layout->addWidget(paragraph, 0, Qt::AlignHCenter);
 
-    for (const auto &preference : command->preferences()) {
-      if (preference->isRequired() && preference->defaultValueAsJson().isNull() &&
-          !m_existingPreferenceValues.contains(preference->name())) {
-        auto field = new PreferenceField(preference);
+    for (const auto &preference : preferences) {
+      if (preference.required() && preference.defaultValue().isNull() &&
+          !m_existingPreferenceValues.contains(preference.name())) {
+        /*
+auto field = new PreferenceField(preference);
 
-        m_form->addField(field);
-        m_preferenceFields.push_back(field);
+m_form->addField(field);
+m_preferenceFields.push_back(field);
+      */
       }
     }
 
@@ -92,7 +93,7 @@ public:
       }
 
       field->clearError();
-      obj[field->preference()->name()] = value;
+      obj[field->preference().name()] = value;
     }
 
     QJsonDocument doc;

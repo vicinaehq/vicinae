@@ -1,4 +1,5 @@
 #include "ui/form/selector-input.hpp"
+#include "common.hpp"
 #include "ui/focus-notifier.hpp"
 #include "ui/typography.hpp"
 #include <memory>
@@ -42,7 +43,7 @@ bool SelectorInput::eventFilter(QObject *obj, QEvent *event) {
     }
   }
 
-  if (obj == inputField) {
+  if (obj == inputField->input()) {
     if (event->type() == QEvent::KeyPress) {
       auto kv = static_cast<QKeyEvent *>(event);
 
@@ -72,8 +73,9 @@ void SelectorInput::setValueAsJson(const QJsonValue &value) { setValue(value.toS
 FocusNotifier *SelectorInput::focusNotifier() const { return m_focusNotifier; }
 
 SelectorInput::SelectorInput(QWidget *parent)
-    : QWidget(parent), m_list(new OmniList), inputField(new BaseInput), m_searchField(new QLineEdit()),
-      popover(new Popover(this)), collapseIcon(new OmniIcon), selectionIcon(new OmniIcon) {
+    : JsonFormItemWidget(parent), m_list(new OmniList), inputField(new BaseInput),
+      m_searchField(new QLineEdit()), popover(new Popover(this)), collapseIcon(new OmniIcon),
+      selectionIcon(new OmniIcon) {
   auto *layout = new QVBoxLayout();
   layout->setContentsMargins(0, 0, 0, 0);
 
@@ -115,7 +117,7 @@ SelectorInput::SelectorInput(QWidget *parent)
 
   popoverLayout->addWidget(m_loadingBar);
 
-  inputField->installEventFilter(this);
+  inputField->input()->installEventFilter(this);
   m_searchField->installEventFilter(this);
   popover->installEventFilter(this);
 

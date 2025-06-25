@@ -28,8 +28,8 @@ class BuiltinCommand : public AbstractCmd {
   OmniIconUrl _repositoryIcon;
   QString _repositoryId;
   QString _repositoryName;
-  std::vector<std::shared_ptr<BasePreference>> _preferences;
-  std::vector<std::shared_ptr<BasePreference>> _repositoryPreferences;
+  std::vector<Preference> _preferences;
+  std::vector<Preference> _repositoryPreferences;
   std::vector<CommandArgument> _arguments;
   bool m_fallback = false;
 
@@ -49,22 +49,12 @@ public:
   bool isFallback() const override { return m_fallback; }
   void setIsFallback(bool value) { m_fallback = value; }
 
-  std::vector<std::shared_ptr<BasePreference>> preferences() const override {
-    PreferenceList list;
-
-    list.reserve(_repositoryPreferences.size() + _preferences.size());
-    list.insert(list.end(), _repositoryPreferences.begin(), _repositoryPreferences.end());
-    list.insert(list.end(), _preferences.begin(), _preferences.end());
-
-    return list;
-  }
+  std::vector<Preference> preferences() const override { return _preferences; }
   std::vector<CommandArgument> arguments() const override { return _arguments; }
 
   void setIconUrl(const OmniIconUrl &url) { _url = url; }
 
-  void setPreferences(const std::vector<std::shared_ptr<BasePreference>> &preferences) {
-    _preferences = preferences;
-  }
+  void setPreferences(const std::vector<Preference> &preferences) { _preferences = preferences; }
   void setArguments(const std::vector<CommandArgument> &arguments) { _arguments = arguments; }
 
   void setDescription(const QString &description) { m_description = description; }
@@ -83,18 +73,18 @@ class BuiltinCommandRepository : public AbstractCommandRepository {
   QString _name;
   std::vector<std::shared_ptr<AbstractCmd>> _commands;
   OmniIconUrl _icon;
-  std::vector<std::shared_ptr<BasePreference>> _preferences;
+  std::vector<Preference> _preferences;
 
   QString id() const override { return _id; }
   QString name() const override { return _name; }
   std::vector<std::shared_ptr<AbstractCmd>> commands() const override { return _commands; }
   OmniIconUrl iconUrl() const override { return _icon; }
-  std::vector<std::shared_ptr<BasePreference>> preferences() const override { return _preferences; }
+  std::vector<Preference> preferences() const override { return _preferences; }
 
 public:
   BuiltinCommandRepository(const QString &id, const QString &name,
                            const std::vector<std::shared_ptr<AbstractCmd>> &commands, const OmniIconUrl &url,
-                           const std::vector<std::shared_ptr<BasePreference>> &preferences)
+                           const std::vector<Preference> &preferences)
       : _id(id), _name(name), _commands(commands), _icon(url), _preferences(preferences) {}
 };
 
@@ -103,7 +93,7 @@ class CommandRepositoryBuilder {
   QString _name;
   OmniIconUrl _icon;
   std::vector<std::shared_ptr<AbstractCmd>> _commands;
-  std::vector<std::shared_ptr<BasePreference>> _preferences;
+  std::vector<Preference> _preferences;
 
 public:
   CommandRepositoryBuilder(const QString &id) : _id(id) {}
@@ -120,7 +110,7 @@ public:
     _icon = icon;
     return *this;
   }
-  CommandRepositoryBuilder &withPreference(const std::shared_ptr<BasePreference> &preference) {
+  CommandRepositoryBuilder &withPreference(const Preference &preference) {
     _preferences.push_back(preference);
     return *this;
   }

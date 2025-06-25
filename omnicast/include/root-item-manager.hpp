@@ -355,27 +355,6 @@ private:
     return true;
   }
 
-  bool setItemPreferenceValues(const QString &id, const QJsonObject &preferences) {
-    auto query = m_db.createQuery();
-    QJsonDocument json;
-
-    if (!query.prepare("UPDATE root_provider_item SET preference_values = :preferences WHERE id = :id")) {
-      qDebug() << "Failed to prepare update preference query" << query.lastError().driverText();
-      return false;
-    }
-
-    json.setObject(preferences);
-    query.bindValue(":preferences", json.toJson());
-    query.bindValue(":id", id);
-
-    if (!query.exec()) {
-      qDebug() << "setCommandPreferenceValues:" << query.lastError().driverText();
-      return false;
-    }
-
-    return true;
-  }
-
   RootItem *findItemById(const QString &id) {
     auto it = std::ranges::find_if(m_items, [&](auto &&v) { return v->uniqueId() == id; });
 
@@ -422,6 +401,27 @@ public:
     return true;
   }
 
+  bool setItemPreferenceValues(const QString &id, const QJsonObject &preferences) {
+    auto query = m_db.createQuery();
+    QJsonDocument json;
+
+    if (!query.prepare("UPDATE root_provider_item SET preference_values = :preferences WHERE id = :id")) {
+      qDebug() << "Failed to prepare update preference query" << query.lastError().driverText();
+      return false;
+    }
+
+    json.setObject(preferences);
+    query.bindValue(":preferences", json.toJson());
+    query.bindValue(":id", id);
+
+    if (!query.exec()) {
+      qDebug() << "setCommandPreferenceValues:" << query.lastError().driverText();
+      return false;
+    }
+
+    return true;
+  }
+
   void setPreferenceValues(const QString &id, const QJsonObject &preferences) {
     auto item = findItemById(id);
 
@@ -440,12 +440,12 @@ public:
     }
 
     for (const auto &preference : item->preferences()) {
-      auto &prefId = preference->name();
+      auto prefId = preference.name();
       bool isRepositoryPreference = false;
 
       if (provider) {
         for (const auto &repoPref : provider->preferences()) {
-          if (repoPref->name() == prefId) {
+          if (repoPref.name() == prefId) {
             extensionPreferences[prefId] = preferences.value(prefId);
             isRepositoryPreference = true;
             break;
@@ -566,13 +566,31 @@ public:
     QJsonObject values = json.object();
 
     for (const auto &preference : item->preferences()) {
-      QJsonValue defaultValue = preference->defaultValueAsJson();
-      if (!values.contains(preference->name()) && !defaultValue.isNull()) {
-        values[preference->name()] = defaultValue;
+      QJsonValue defaultValue = preference.defaultValue();
+      if (!values.contains(preference.name()) && !defaultValue.isNull()) {
+        values[preference.name()] = defaultValue;
       }
     }
 
     return values;
+  }
+
+  /**
+   * Merge the item preferences with the provider preferences.
+   */
+  std::vector<Preference> getMergedItemPreferences(const QString &rootItemId) {
+    auto metadata = itemMetadata(rootItemId);
+    auto provider = findProviderById(metadata.providerId);
+    auto item = findItemById(rootItemId);
+
+    if (!provider || !item) return {};
+
+    auto pprefs = provider->preferences();
+    auto iprefs = item->preferences();
+
+    pprefs.insert(pprefs.end(), iprefs.begin(), iprefs.end());
+
+    return pprefs;
   }
 
   QJsonObject getPreferenceValues(const QString &id) const {
@@ -617,11 +635,9 @@ public:
     auto preferenceValues = json.object();
 
     for (auto pref : item->preferences()) {
-      auto dflt = pref->defaultValueAsJson();
+      auto dflt = pref.defaultValue();
 
-      if (!preferenceValues.contains(pref->name()) && !dflt.isNull()) {
-        preferenceValues[pref->name()] = dflt;
-      }
+      if (!preferenceValues.contains(pref.name()) && !dflt.isNull()) { preferenceValues[pref.name()] = dflt; }
     }
 
     return preferenceValues;

@@ -11,7 +11,7 @@ class CommandBuilder {
   QString _name;
   QString m_description;
   std::optional<OmniIconUrl> _url;
-  std::vector<std::shared_ptr<BasePreference>> _preferences;
+  std::vector<Preference> _preferences;
   bool m_fallback = false;
 
 public:
@@ -36,7 +36,7 @@ public:
     return *this;
   }
 
-  CommandBuilder &withPreference(const std::shared_ptr<BasePreference> &preference) {
+  CommandBuilder &withPreference(const Preference &preference) {
     _preferences.push_back(preference);
     return *this;
   }

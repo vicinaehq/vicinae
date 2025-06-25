@@ -1,4 +1,5 @@
 #include "ui/form/checkbox.hpp"
+#include "common.hpp"
 #include "theme.hpp"
 #include "ui/omni-painter.hpp"
 #include <qevent.h>
@@ -26,6 +27,21 @@ void Checkbox::paintEvent(QPaintEvent *event) {
 
     m_svg->render(&painter, check);
   }
+}
+
+bool Checkbox::event(QEvent *event) {
+  switch (event->type()) {
+  case QEvent::FocusIn:
+    m_focusNotifier->focusChanged(true);
+    break;
+  case QEvent::FocusOut:
+    m_focusNotifier->focusChanged(false);
+    break;
+  default:
+    break;
+  }
+
+  return JsonFormItemWidget::event(event);
 }
 
 void Checkbox::keyPressEvent(QKeyEvent *event) {
@@ -74,7 +90,9 @@ void Checkbox::stealthySetValue(bool v) {
 
 bool Checkbox::value() const { return m_value; }
 
-Checkbox::Checkbox(QWidget *parent) : QWidget(parent) {
+FocusNotifier *Checkbox::focusNotifier() const { return m_focusNotifier; }
+
+Checkbox::Checkbox(QWidget *parent) : JsonFormItemWidget(parent) {
   setContentsMargins(1, 1, 1, 1);
   setFocusPolicy(Qt::StrongFocus);
   m_svg->load(QString(":icons/checkmark.svg"));

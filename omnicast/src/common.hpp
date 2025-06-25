@@ -3,6 +3,7 @@
 #include "omni-icon.hpp"
 #include "preference.hpp"
 #include "theme.hpp"
+#include "ui/focus-notifier.hpp"
 #include <QHBoxLayout>
 #include <QString>
 #include <cmath>
@@ -98,9 +99,12 @@ public:
   }
 };
 
-struct IJsonFormField {
+struct JsonFormItemWidget : public QWidget {
   virtual QJsonValue asJsonValue() const = 0;
   virtual void setValueAsJson(const QJsonValue &value) = 0;
+  virtual FocusNotifier *focusNotifier() const = 0;
+
+  JsonFormItemWidget(QWidget *parent = nullptr) : QWidget(parent) {}
 };
 
 struct LaunchProps {
@@ -137,7 +141,7 @@ public:
   virtual OmniIconUrl iconUrl() const = 0;
   virtual CommandType type() const = 0;
   virtual CommandMode mode() const = 0;
-  virtual std::vector<std::shared_ptr<BasePreference>> preferences() const { return {}; }
+  virtual std::vector<Preference> preferences() const { return {}; }
   virtual std::vector<CommandArgument> arguments() const { return {}; }
   virtual std::vector<QString> keywords() const { return {}; }
   virtual QString repositoryName() const { return ""; }
@@ -158,7 +162,7 @@ public:
   virtual QString name() const = 0;
   virtual std::vector<std::shared_ptr<AbstractCmd>> commands() const = 0;
   virtual OmniIconUrl iconUrl() const = 0;
-  virtual std::vector<std::shared_ptr<BasePreference>> preferences() const { return {}; }
+  virtual std::vector<Preference> preferences() const { return {}; }
 };
 
 struct QObjectDeleter {

@@ -7,7 +7,7 @@
 #include <qtmetamacros.h>
 #include <qwidget.h>
 
-class CheckboxInput : public QWidget, public IJsonFormField {
+class CheckboxInput : public JsonFormItemWidget {
   Q_OBJECT
 
   QHBoxLayout *m_layout = new QHBoxLayout;
@@ -24,8 +24,9 @@ class CheckboxInput : public QWidget, public IJsonFormField {
 public:
   void setValueAsJson(const QJsonValue &value) override { m_checkbox->setValue(value.toBool(false)); }
   bool value() const { return m_checkbox->value(); }
+  FocusNotifier *focusNotifier() const override { return m_checkbox->focusNotifier(); }
 
-  CheckboxInput(QWidget *parent = nullptr) {
+  CheckboxInput(QWidget *parent = nullptr) : JsonFormItemWidget(parent) {
     setFocusProxy(m_checkbox);
     setFocusPolicy(Qt::StrongFocus);
     m_checkbox->setFixedSize(20, 20);

@@ -16,7 +16,7 @@
 #include <qtmetamacros.h>
 #include <qwidget.h>
 
-class SelectorInput : public QWidget, public IJsonFormField {
+class SelectorInput : public JsonFormItemWidget {
 public:
   class AbstractItem : public AbstractDefaultListItem {
   public:
@@ -116,7 +116,7 @@ public:
     });
   }
 
-  FocusNotifier *focusNotifier() const;
+  FocusNotifier *focusNotifier() const override;
   void setIsLoading(bool value);
   void clear();
   OmniList *list() const { return m_list; }

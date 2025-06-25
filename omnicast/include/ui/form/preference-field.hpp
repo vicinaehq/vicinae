@@ -1,16 +1,12 @@
 #pragma once
 #include "common.hpp"
 #include "preference.hpp"
-#include "ui/form/base-input.hpp"
-#include "ui/form/checkbox-input.hpp"
 #include "ui/form/form-field.hpp"
 #include "ui/form/selector-input.hpp"
-#include <memory>
 #include <qjsonvalue.h>
 #include <qlineedit.h>
 #include <qlogging.h>
 #include <qwidget.h>
-#include <ranges>
 
 class PreferenceDropdownItem : public SelectorInput::AbstractItem {
   QString m_id;
@@ -23,16 +19,22 @@ class PreferenceDropdownItem : public SelectorInput::AbstractItem {
   AbstractItem *clone() const override { return new PreferenceDropdownItem(*this); }
 
 public:
-  PreferenceDropdownItem(const DropdownPreference::Option &option)
+  PreferenceDropdownItem(const Preference::DropdownData::Option &option)
       : m_id(option.value), m_displayName(option.title) {}
 };
 
-class PreferenceField : public FormField, public IJsonFormField {
-  IJsonFormField *m_serializable = nullptr;
+struct PreferenceVisitor {
+  Preference m_preference;
 
-  std::shared_ptr<BasePreference> m_preference;
+  PreferenceVisitor(const Preference &preference) : m_preference(preference) {}
+};
 
-  void setWidget(QWidget *widget, IJsonFormField *serializable) {
+class PreferenceField : public FormField, public JsonFormItemWidget {
+  JsonFormItemWidget *m_serializable = nullptr;
+
+  Preference m_preference;
+
+  void setWidget(QWidget *widget, JsonFormItemWidget *serializable) {
     m_serializable = serializable;
     FormField::setWidget(widget);
   }
@@ -47,54 +49,56 @@ public:
     if (m_serializable) m_serializable->setValueAsJson(value);
   }
 
-  PreferenceField(const std::shared_ptr<BasePreference> &preference) : m_preference(preference) {
-    setName(preference->title());
+  PreferenceField(const Preference &preference) : m_preference(preference) {
+    /*
+setName(preference->title());
 
-    if (preference->isTextType()) {
-      auto textPreference = std::static_pointer_cast<TextFieldPreference>(preference);
-      auto input = new BaseInput;
+if (preference->isTextType()) {
+auto textPreference = std::static_pointer_cast<TextFieldPreference>(preference);
+auto input = new BaseInput;
 
-      input->setPlaceholderText(textPreference->placeholder());
+input->setPlaceholderText(textPreference->placeholder());
 
-      if (auto dflt = textPreference->defaultValueAsJson(); !dflt.isNull()) {
-        input->setText(dflt.toString());
-      }
+if (auto dflt = textPreference->defaultValueAsJson(); !dflt.isNull()) {
+  input->setText(dflt.toString());
+}
 
-      if (preference->isPasswordType()) { input->setEchoMode(QLineEdit::Password); }
+if (preference->isPasswordType()) { input->setEchoMode(QLineEdit::Password); }
 
-      setWidget(input, input);
-      return;
-    }
+setWidget(input, input);
+return;
+}
 
-    if (preference->isDropdownType()) {
-      auto dropdownPreference = std::static_pointer_cast<DropdownPreference>(preference);
-      auto input = new SelectorInput;
+if (preference->isDropdownType()) {
+auto dropdownPreference = std::static_pointer_cast<DropdownPreference>(preference);
+auto input = new SelectorInput;
 
-      input->list()->updateModel([&]() {
-        auto map = [](auto &&option) -> std::unique_ptr<OmniList::AbstractVirtualItem> {
-          return std::make_unique<PreferenceDropdownItem>(option);
-        };
-        auto items =
-            dropdownPreference->options() | std::views::transform(map) | std::ranges::to<std::vector>();
-        auto &section = input->list()->addSection();
+input->list()->updateModel([&]() {
+  auto map = [](auto &&option) -> std::unique_ptr<OmniList::AbstractVirtualItem> {
+    return std::make_unique<PreferenceDropdownItem>(option);
+  };
+  auto items =
+      dropdownPreference->options() | std::views::transform(map) | std::ranges::to<std::vector>();
+  auto &section = input->list()->addSection();
 
-        section.addItems(std::move(items));
-      });
+  section.addItems(std::move(items));
+});
 
-      if (auto dflt = dropdownPreference->defaultValueAsJson(); !dflt.isNull()) {
-        input->setValue(dflt.toString());
-      }
+if (auto dflt = dropdownPreference->defaultValueAsJson(); !dflt.isNull()) {
+  input->setValue(dflt.toString());
+}
 
-      setWidget(input, input);
-      return;
-    }
+setWidget(input, input);
+return;
+}
 
-    if (preference->isCheckboxType()) {
-      auto preference = new CheckboxInput;
+if (preference->isCheckboxType()) {
+auto preference = new CheckboxInput;
 
-      setWidget(preference, preference);
-    }
+setWidget(preference, preference);
+}
+  */
 
-    qCritical() << "preference" << preference->name() << "has unknown type";
+    qCritical() << "preference" << preference.name() << "has unknown type";
   }
 };

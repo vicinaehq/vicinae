@@ -1,11 +1,9 @@
 #pragma once
 #include "argument.hpp"
 #include "argument.hpp"
-#include "command-database.hpp"
 #include "command.hpp"
 #include "omni-icon.hpp"
 #include "preference.hpp"
-#include "ui/action-pannel/action.hpp"
 #include <qstring.h>
 #include <qboxlayout.h>
 #include <qfuturewatcher.h>
@@ -51,15 +49,7 @@ public:
   bool isFallback() const override { return true; }
 
   std::vector<CommandArgument> arguments() const override { return m_arguments; }
-  std::vector<std::shared_ptr<BasePreference>> preferences() const override {
-    PreferenceList list;
-
-    list.reserve(_extensionPreferences.size() + _preferences.size());
-    list.insert(list.end(), _extensionPreferences.begin(), _extensionPreferences.end());
-    list.insert(list.end(), _preferences.begin(), _preferences.end());
-
-    return list;
-  }
+  std::vector<Preference> preferences() const override { return _preferences; }
 
   QString uniqueId() const override;
   QString name() const override;

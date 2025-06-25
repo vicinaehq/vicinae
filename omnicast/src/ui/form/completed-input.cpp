@@ -1,4 +1,5 @@
 #include "ui/form/completed-input.hpp"
+#include "common.hpp"
 #include "ui/focus-notifier.hpp"
 #include "ui/form/base-input.hpp"
 #include <memory>
@@ -45,12 +46,12 @@ void CompletedInput::setValueAsJson(const QJsonValue &value) { setText(value.toS
 FocusNotifier *CompletedInput::focusNotifier() const { return m_focusNotifier; }
 
 CompletedInput::CompletedInput(QWidget *parent)
-    : QWidget(parent), m_completerList(new OmniList), inputField(new BaseInput), popover(new Popover(this)),
-      selectionIcon(new OmniIcon) {
+    : JsonFormItemWidget(parent), m_completerList(new OmniList), inputField(new BaseInput),
+      popover(new Popover(this)), selectionIcon(new OmniIcon) {
   auto *layout = new QVBoxLayout();
   layout->setContentsMargins(0, 0, 0, 0);
 
-  setFocusProxy(inputField);
+  setFocusProxy(inputField->input());
 
   connect(inputField->focusNotifier(), &FocusNotifier::focusChanged, this, [this](bool value) {
     // we don't consider opening the selection menu a focus change

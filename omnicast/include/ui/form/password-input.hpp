@@ -2,15 +2,16 @@
 #include "omni-icon.hpp"
 #include "ui/form/base-input.hpp"
 #include "ui/icon-button.hpp"
+#include <qlineedit.h>
 #include <qwidget.h>
 
 class PasswordInput : public BaseInput {
   IconButton *toggleVisiblityIcon = new IconButton();
 
-  void setEchoMode(EchoMode mode) {
-    if (mode == EchoMode::Password) {
+  void setEchoMode(QLineEdit::EchoMode mode) {
+    if (mode == QLineEdit::EchoMode::Password) {
       toggleVisiblityIcon->setUrl(BuiltinOmniIconUrl("eye"));
-    } else if (mode == EchoMode::Normal) {
+    } else if (mode == QLineEdit::EchoMode::Normal) {
       toggleVisiblityIcon->setUrl(BuiltinOmniIconUrl("eye-disabled"));
     }
 
@@ -18,14 +19,15 @@ class PasswordInput : public BaseInput {
   }
 
   void toggleVisiblity() {
-    setEchoMode(echoMode() == EchoMode::Password ? EchoMode::Normal : EchoMode::Password);
+    setEchoMode(echoMode() == QLineEdit::EchoMode::Password ? QLineEdit::EchoMode::Normal
+                                                            : QLineEdit::EchoMode::Password);
   }
 
 public:
   PasswordInput(QWidget *parent = nullptr) : BaseInput(parent) {
     toggleVisiblityIcon->setFixedSize(30, 30);
     toggleVisiblityIcon->setUrl(BuiltinOmniIconUrl("eye"));
-    setEchoMode(EchoMode::Password);
+    setEchoMode(QLineEdit::EchoMode::Password);
     setRightAccessory(toggleVisiblityIcon);
     connect(toggleVisiblityIcon, &IconButton::clicked, this, &PasswordInput::toggleVisiblity);
   }

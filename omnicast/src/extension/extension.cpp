@@ -1,5 +1,4 @@
 #include "extension/extension.hpp"
-#include "command-database.hpp"
 #include "extension/extension-command.hpp"
 #include "omni-icon.hpp"
 #include "preference.hpp"
@@ -49,7 +48,7 @@ Extension::Extension(const QJsonObject &obj) {
   for (const auto &preference : preferenceList) {
     auto pref = parsePreferenceFromObject(preference.toObject());
 
-    if (!pref) continue;
+    if (!pref.isValid()) continue;
 
     _preferences.push_back(pref);
   }

@@ -418,8 +418,9 @@ class ExtensionCommandRuntime : public CommandContext {
 
 public:
   void load(const LaunchProps &props) override {
-    auto commandDb = ServiceRegistry::instance()->commandDb();
-    auto preferenceValues = commandDb->getPreferenceValues(m_command->uniqueId());
+    auto rootItemManager = ServiceRegistry::instance()->rootItemManager();
+    auto preferenceValues =
+        rootItemManager->getPreferenceValues(QString("extension.%1").arg(m_command->uniqueId()));
     auto manager = ServiceRegistry::instance()->extensionManager();
     auto ui = ServiceRegistry::instance()->UI();
 

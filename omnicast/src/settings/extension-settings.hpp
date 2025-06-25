@@ -6,9 +6,7 @@
 #include "theme.hpp"
 #include "ui/form/base-input.hpp"
 #include "ui/form/checkbox.hpp"
-#include "ui/icon-button.hpp"
 #include "ui/image/omnimg.hpp"
-#include "qheaderview.h"
 #include "ui/omni-scroll-bar.hpp"
 #include "ui/omni-tree.hpp"
 #include "ui/typography.hpp"
@@ -59,7 +57,7 @@ class ExtensionSettingsToolbar : public QWidget {
   Omnimg::ImageWidget *m_searchIcon = new Omnimg::ImageWidget;
 
 public:
-  QLineEdit *input() const { return m_input; }
+  QLineEdit *input() const { return m_input->input(); }
 
   ExtensionSettingsToolbar() {
     m_searchIcon->setFixedSize({20, 20});
@@ -123,8 +121,8 @@ public:
   }
 
   AliasInput(const QString &rootItemId) : m_id(rootItemId) {
-    setContentsMargins(2, 2, 2, 2);
     setPlaceholderText("Add alias");
+    input()->setContentsMargins(2, 2, 2, 2);
   }
 };
 

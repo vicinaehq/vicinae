@@ -80,40 +80,24 @@ public:
     return arg;
   }
 
-  static std::shared_ptr<BasePreference> parsePreferenceFromObject(const QJsonObject &obj) {
+  static Preference parsePreferenceFromObject(const QJsonObject &obj) {
     auto type = obj["type"].toString();
-    BasePreference base;
+    Preference base;
 
     base.setTitle(obj["title"].toString());
     base.setDescription(obj["description"].toString());
     base.setName(obj["name"].toString());
     base.setPlaceholder(obj["placeholder"].toString());
     base.setRequired(obj["required"].toBool());
+    base.setDefaultValue(obj.value("default").toString());
 
-    if (type == "textfield") {
-      auto textField = std::make_shared<TextFieldPreference>(base);
-
-      if (obj.contains("default")) { textField->setDefaultValue(obj.value("default").toString()); }
-
-      return textField;
-    }
-
-    if (type == "password") {
-      auto password = std::make_shared<PasswordPreference>(base);
-
-      if (obj.contains("default")) { password->setDefaultValue(obj.value("default").toString()); }
-
-      return password;
-    }
+    if (type == "textfield") { base.setData(Preference::TextData()); }
+    if (type == "password") { base.setData(Preference::PasswordData()); }
 
     if (type == "checkbox") {
-      auto checkbox = std::make_shared<CheckboxPreference>(base);
+      auto checkbox = Preference::CheckboxData(obj["label"].toString());
 
-      if (obj.contains("default")) { checkbox->setDefaultValue(obj.value("default").toBool()); }
-
-      checkbox->setLabel(obj["label"].toString());
-
-      return checkbox;
+      base.setData(checkbox);
     }
 
     if (type == "appPicker") {
@@ -121,9 +105,8 @@ public:
     }
 
     if (type == "dropdown") {
-      auto dropdown = std::make_shared<DropdownPreference>(base);
       auto data = obj["data"].toArray();
-      std::vector<DropdownPreference::Option> options;
+      std::vector<Preference::DropdownData::Option> options;
 
       options.reserve(data.size());
 
@@ -133,41 +116,10 @@ public:
         options.push_back({.title = obj["title"].toString(), .value = obj["value"].toString()});
       }
 
-      dropdown->setOptions(options);
-
-      if (obj.contains("default")) { dropdown->setDefaultValue(obj.value("default").toString()); }
-
-      return dropdown;
+      base.setData(Preference::DropdownData{options});
     }
 
-    /*
-if (type == "appPicker") {
-  AppPickerPreference preference(base);
-
-  preference.defaultValue = obj["default"].toString();
-
-  return preference;
-}
-
-
-if (type == "file") {
-  FilePreference preference(base);
-
-  preference.defaultValue = obj["default"].toString().toStdString();
-
-  return preference;
-}
-
-if (type == "directory") {
-  DirectoryPreference preference(base);
-
-  preference.defaultValue = obj["default"].toString().toStdString();
-
-  return preference;
-}
-    */
-
-    return nullptr;
+    return base;
   }
 
   QString id() const override;
