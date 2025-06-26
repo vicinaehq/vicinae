@@ -113,8 +113,6 @@ set(SRCS
 	include/ui/popover.hpp
 	src/ui/popover.cpp
 
-	include/ui/typography.hpp
-
 	src/action-panel/action-panel.hpp
 
 	include/ui/omni-button.hpp
@@ -185,7 +183,7 @@ set(SRCS
 	include/ai/ollama-ai-provider.hpp
 	# end AI
 
-	include/clipboard-history-command.hpp
+	include/clipboard-history-view.hpp
 
 	include/ui/omni-painter.hpp
 	src/ui/omni-painter.cpp
@@ -386,6 +384,14 @@ set(SRCS
 	src/settings/command-metadata-settings-detail.cpp
 
 	src/ui/omni-tree.hpp
+
+	src/extensions/clipboard/clipboard-history-command.cpp
+
+	src/ui/switch/switch.hpp
+	src/ui/switch/switch.cpp
+
+	src/ui/typography/typography.hpp
+	src/ui/typography/typography.cpp
 )
 
 

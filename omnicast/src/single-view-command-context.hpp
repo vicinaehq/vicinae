@@ -1,5 +1,4 @@
 #pragma once
-#include "app.hpp"
 #include "command-database.hpp"
 #include "preference.hpp"
 #include "service-registry.hpp"

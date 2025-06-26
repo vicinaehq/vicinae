@@ -146,6 +146,7 @@ public:
   virtual std::vector<QString> keywords() const { return {}; }
   virtual QString repositoryName() const { return ""; }
   virtual bool isFallback() const { return false; }
+  virtual void preferenceValuesChanged(const QJsonValue &value) {}
 
   virtual QString extensionId() const = 0;
   virtual QString commandId() const = 0;

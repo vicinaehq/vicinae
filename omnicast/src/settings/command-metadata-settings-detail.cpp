@@ -78,3 +78,5 @@ CommandMetadataSettingsDetailWidget::CommandMetadataSettingsDetailWidget(
   m_preferenceValues = manager->getItemPreferenceValues(rootItemId);
   setupUI();
 }
+
+CommandMetadataSettingsDetailWidget::~CommandMetadataSettingsDetailWidget() { savePendingPreferences(); }

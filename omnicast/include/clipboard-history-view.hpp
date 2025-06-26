@@ -298,7 +298,7 @@ public:
   ClipboardHistoryItem(const ClipboardHistoryEntry &info) : info(info) {}
 };
 
-class ClipboardHistoryCommand : public ListView {
+class ClipboardHistoryView : public ListView {
   TypographyWidget *m_accessory = new TypographyWidget;
 
   QWidget *searchBarAccessory() const override { return m_accessory; }
@@ -344,12 +344,12 @@ class ClipboardHistoryCommand : public ListView {
   void handleRemoved(int entryId) { generateList(searchText()); }
 
 public:
-  ClipboardHistoryCommand() {
+  ClipboardHistoryView() {
     auto clipman = ServiceRegistry::instance()->clipman();
 
     m_accessory->setText("Search accessory");
 
     connect(clipman, &ClipboardService::itemInserted, this,
-            &ClipboardHistoryCommand::clipboardSelectionInserted);
+            &ClipboardHistoryView::clipboardSelectionInserted);
   }
 };

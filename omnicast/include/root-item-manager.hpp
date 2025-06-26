@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <qdnslookup.h>
 #include <qjsonobject.h>
+#include <qjsonvalue.h>
 #include <qlogging.h>
 #include <qnamespace.h>
 #include <qobject.h>
@@ -118,6 +119,8 @@ public:
    * Additional strings that will be indexed and prefix searchable.
    */
   virtual std::vector<QString> keywords() const { return {}; }
+
+  virtual void preferenceValuesChanged(const QJsonValue &values) {}
 };
 
 class RootProvider : public QObject {
@@ -404,6 +407,9 @@ public:
   bool setItemPreferenceValues(const QString &id, const QJsonObject &preferences) {
     auto query = m_db.createQuery();
     QJsonDocument json;
+    RootItem *item = findItemById(id);
+
+    if (!item) return false;
 
     if (!query.prepare("UPDATE root_provider_item SET preference_values = :preferences WHERE id = :id")) {
       qDebug() << "Failed to prepare update preference query" << query.lastError().driverText();
@@ -418,6 +424,8 @@ public:
       qDebug() << "setCommandPreferenceValues:" << query.lastError().driverText();
       return false;
     }
+
+    item->preferenceValuesChanged(preferences);
 
     return true;
   }

@@ -1,6 +1,5 @@
 #include "command-database.hpp"
 #include "calculator-history-command.hpp"
-#include "clipboard-history-command.hpp"
 #include "create-quicklink-command.hpp"
 #include "configure-ai-providers-command.hpp"
 #include "emoji-command.hpp"
@@ -9,8 +8,8 @@
 #include "omnicast/browse-fonts-view.hpp"
 #include "preference.hpp"
 #include "switch-windows-command.hpp"
-#include "open-configuration-file-command.hpp"
 #include "manage-quicklinks-command.hpp"
+#include "extensions/clipboard/clipboard-history-command.hpp"
 #include "manage-themes-command.hpp"
 #include "omni-icon.hpp"
 #include "theme.hpp"
@@ -71,39 +70,15 @@ CommandDatabase::CommandDatabase() {
                      .withTintedIcon("emoji", ColorTint::Red)
                      .toSingleView<EmojiView>();
 
-    auto storeAllOfferingsPreference = Preference::makeCheckbox();
+    auto history = std::make_shared<ClipboardHistoryCommand>();
 
-    storeAllOfferingsPreference.setName("store-all-offerings");
-    storeAllOfferingsPreference.setTitle("Store all offerings");
-    storeAllOfferingsPreference.setDescription("Store and index alternative mime type offerings. This will "
-                                               "increase total storage size, but will refine the search.");
+    auto clipboard = CommandRepositoryBuilder("clipboard")
+                         .withName("Clipboard")
+                         .withTintedIcon("copy-clipboard", ColorTint::Red)
+                         .withCommand(history)
+                         .makeShared();
 
-    auto maximumClipboardStorageSizePreference = Preference::makeText();
-
-    maximumClipboardStorageSizePreference.setName("maximum-storage-size");
-    maximumClipboardStorageSizePreference.setTitle("Maximum storage size");
-    maximumClipboardStorageSizePreference.setDescription(
-        "How much storage can be used to store clipboard history data, in MB.");
-    maximumClipboardStorageSizePreference.setDefaultValue("1000");
-
-    {
-      auto clipboardHistory =
-          CommandBuilder("clipboard-history")
-              .withName("Clipboard History")
-              .withDescription("Browse your clipboard's history, pin, edit and remove entries.")
-              .withTintedIcon("copy-clipboard", ColorTint::Red)
-              .withPreference(storeAllOfferingsPreference)
-              .withPreference(maximumClipboardStorageSizePreference)
-              .toSingleView<ClipboardHistoryCommand>();
-
-      auto clipboard = CommandRepositoryBuilder("clipboard")
-                           .withName("Clipboard")
-                           .withTintedIcon("copy-clipboard", ColorTint::Red)
-                           .withCommand(clipboardHistory)
-                           .makeShared();
-
-      registerRepository(clipboard);
-    }
+    registerRepository(clipboard);
 
     auto iconSearch = CommandBuilder("browse-icons")
                           .withName("Search Omnicast Icons")

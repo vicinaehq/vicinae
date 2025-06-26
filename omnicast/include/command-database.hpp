@@ -114,6 +114,10 @@ public:
     _preferences.push_back(preference);
     return *this;
   }
+  CommandRepositoryBuilder &withCommand(const std::shared_ptr<AbstractCmd> &cmd) {
+    _commands.push_back(cmd);
+    return *this;
+  }
   CommandRepositoryBuilder &withCommand(const std::shared_ptr<BuiltinCommand> &cmd) {
     cmd->setRepositoryIconUrl(_icon);
     cmd->setRepositoryId(_id);

@@ -279,7 +279,6 @@ public:
 
   void styleCheckbox(Checkbox *checkbox) const {
     checkbox->blockSignals(true);
-    qDebug() << "style with checkbox state" << m_checkboxState;
     checkbox->setValue(m_checkboxState == CHECKED || m_checkboxState == PARTIAL);
     checkbox->blockSignals(false);
   }

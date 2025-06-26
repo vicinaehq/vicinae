@@ -5,11 +5,13 @@
 #include "ui/form/base-input.hpp"
 #include "ui/form/form.hpp"
 #include "ui/form/password-input.hpp"
+#include "ui/switch/switch.hpp"
 #include "ui/typography.hpp"
 #include <libqalculate/Number.h>
 #include <qboxlayout.h>
 #include <qjsonobject.h>
 #include <qjsonvalue.h>
+#include <qnamespace.h>
 #include <qwidget.h>
 #include <unistd.h>
 
@@ -18,6 +20,40 @@ public:
   AbstractPreferenceFormItem(QWidget *parent = nullptr) : QWidget(parent) {}
 
   virtual JsonFormItemWidget *formItem() const = 0;
+};
+
+class PreferenceSwitchFormItem : public AbstractPreferenceFormItem {
+  QVBoxLayout *m_vlayout = new QVBoxLayout;
+  QHBoxLayout *m_hlayout = new QHBoxLayout;
+  QWidget *m_labelContainer = new QWidget;
+  TypographyWidget *m_label = new TypographyWidget;
+  TypographyWidget *m_description = new TypographyWidget;
+  Switch *m_switch = new Switch;
+
+  void setupUI() {
+    m_labelContainer->setLayout(m_hlayout);
+
+    m_label->setColor(ColorTint::TextSecondary);
+    m_description->setWordWrap(true);
+    m_vlayout->setContentsMargins(0, 0, 0, 0);
+    m_vlayout->setSpacing(10);
+
+    m_hlayout->setContentsMargins(0, 0, 0, 0);
+    m_hlayout->addWidget(m_label, Qt::AlignLeft | Qt::AlignVCenter);
+    m_hlayout->addWidget(m_switch, Qt::AlignRight | Qt::AlignVCenter);
+
+    m_vlayout->addWidget(m_labelContainer);
+    m_vlayout->addWidget(m_description);
+    setLayout(m_vlayout);
+  }
+
+  JsonFormItemWidget *formItem() const override { return m_switch; }
+
+public:
+  void setLabel(const QString &title) { m_label->setText(title); }
+  void setDescription(const QString &title) { m_description->setText(title); }
+
+  PreferenceSwitchFormItem(QWidget *parent = nullptr) : AbstractPreferenceFormItem(parent) { setupUI(); }
 };
 
 class VerticalFormItem : public AbstractPreferenceFormItem {
@@ -29,7 +65,6 @@ class VerticalFormItem : public AbstractPreferenceFormItem {
 
   void setupUI() {
     m_label->setColor(ColorTint::TextSecondary);
-    m_description->setColor(ColorTint::TextSecondary);
     m_description->setWordWrap(true);
     m_vlayout->setContentsMargins(0, 0, 0, 0);
     m_vlayout->setSpacing(10);
@@ -76,7 +111,14 @@ struct PreferenceWidgetVisitor {
     return item;
   }
   AbstractPreferenceFormItem *operator()(const Preference::DropdownData &data) { return nullptr; }
-  AbstractPreferenceFormItem *operator()(const Preference::CheckboxData &data) { return nullptr; }
+  AbstractPreferenceFormItem *operator()(const Preference::CheckboxData &data) {
+    auto item = new PreferenceSwitchFormItem;
+
+    item->setLabel(m_preference.title());
+    item->setDescription(m_preference.description());
+
+    return item;
+  }
   AbstractPreferenceFormItem *operator()(const Preference::UnknownData &data) { return nullptr; }
 
 public:
@@ -96,4 +138,5 @@ class CommandMetadataSettingsDetailWidget : public QWidget {
 
 public:
   CommandMetadataSettingsDetailWidget(const QString &rootItemId, const std::shared_ptr<AbstractCmd> &cmd);
+  ~CommandMetadataSettingsDetailWidget();
 };

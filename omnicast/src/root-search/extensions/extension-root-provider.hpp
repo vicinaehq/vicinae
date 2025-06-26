@@ -24,6 +24,10 @@ public:
     return new CommandMetadataSettingsDetailWidget(uniqueId(), m_command);
   }
 
+  void preferenceValuesChanged(const QJsonValue &values) override {
+    m_command->preferenceValuesChanged(values);
+  }
+
 public:
   auto command() const { return m_command; }
   CommandRootItem(const std::shared_ptr<AbstractCmd> &command) : m_command(command) {}
