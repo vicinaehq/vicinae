@@ -1,7 +1,6 @@
 #include "ui/list-section-header.hpp"
 #include "theme.hpp"
-#include "ui/text-label.hpp"
-#include "ui/typography.hpp"
+#include "ui/typography/typography.hpp"
 
 OmniListSectionHeader::OmniListSectionHeader(const QString &title, const QString &subtitle, size_t count) {
   setAttribute(Qt::WA_StyledBackground);
@@ -13,7 +12,7 @@ OmniListSectionHeader::OmniListSectionHeader(const QString &title, const QString
   auto leftWidget = new QWidget();
   auto leftLayout = new QHBoxLayout();
 
-  auto titleLabel = new TypographyWidget(TextSize::TextRegular);
+  auto titleLabel = new TypographyWidget();
 
   titleLabel->setColor(ColorTint::TextSecondary);
   titleLabel->setText(title);
@@ -21,7 +20,7 @@ OmniListSectionHeader::OmniListSectionHeader(const QString &title, const QString
   titleLabel->setSize(TextSize::TextSmaller);
   // titleLabel->setVisible(!title.isEmpty());
 
-  auto subtitleLabel = new TypographyWidget(TextSize::TextRegular);
+  auto subtitleLabel = new TypographyWidget();
 
   subtitleLabel->setColor(ColorTint::TextSecondary);
   subtitleLabel->setText(subtitle);

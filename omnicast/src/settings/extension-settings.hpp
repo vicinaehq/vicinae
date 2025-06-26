@@ -9,7 +9,7 @@
 #include "ui/image/omnimg.hpp"
 #include "ui/omni-scroll-bar.hpp"
 #include "ui/omni-tree.hpp"
-#include "ui/typography.hpp"
+#include "ui/typography/typography.hpp"
 #include <libqalculate/Number.h>
 #include <memory>
 #include <qabstractitemmodel.h>
@@ -141,7 +141,7 @@ class ProviderDetailPaneItem : public AbstractSettingsDetailPaneItem {
 public:
   OmniIconUrl icon() const override { return m_provider->icon(); }
   QString title() const override { return m_provider->displayName(); }
-  QWidget *content() const override { return new QWidget; }
+  QWidget *content() const override { return m_provider->settingsDetail(); }
 
   ProviderDetailPaneItem(RootProvider *provider) : m_provider(provider) {}
 };
@@ -440,6 +440,7 @@ public:
     icon.setBackgroundTint(ColorTint::Red);
     m_icon->setUrl(icon);
     m_icon->setFixedSize(30, 30);
+    headerLayout->setSpacing(10);
     headerLayout->addWidget(m_icon);
     headerLayout->addWidget(m_title);
     headerLayout->addStretch();

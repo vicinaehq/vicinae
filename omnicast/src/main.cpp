@@ -161,18 +161,17 @@ int startDaemon() {
     auto extensionManager = std::make_unique<ExtensionManager>(*commandDb);
     auto clipboardManager = std::make_unique<ClipboardService>(Omnicast::dataDir() / "clipboard.db");
     auto processManager = std::make_unique<ProcessManagerService>();
-    auto builtinCommandDb = std::make_unique<CommandDatabase>();
     auto windowManager = WindowManagerFactory().create();
     auto aiManager = std::make_unique<AI::Manager>(*omniDb);
     auto ollamaProvider = std::make_unique<OllamaAiProvider>();
     auto fontService = std::make_unique<FontService>();
     auto rankingService = std::make_unique<RankingService>(*omniDb);
     auto appService = std::make_unique<AppService>(*omniDb.get(), *rankingService.get());
-    auto rootExtMan = std::make_unique<RootExtensionManager>(*rootItemManager.get(), *commandDb.get());
     auto configService = std::make_unique<ConfigService>();
     auto bookmarkService = std::make_unique<BookmarkService>(*omniDb.get());
     auto toastService = std::make_unique<ToastService>();
     auto currentConfig = configService->value();
+    auto rootExtMan = std::make_unique<RootExtensionManager>(*rootItemManager.get(), *commandDb.get());
 
     if (auto name = currentConfig.theme.name) {
       if (!ThemeService::instance().setTheme(*name)) {
@@ -186,10 +185,6 @@ int startDaemon() {
 
     aiManager->registerProvider(std::move(ollamaProvider));
 
-    for (const auto &repo : builtinCommandDb->repositories()) {
-      commandDb->registerRepository(repo);
-    }
-
     if (!extensionManager->start()) {
       qCritical() << "Failed to load extension manager. Extensions will not work";
     }
@@ -200,14 +195,10 @@ int startDaemon() {
       if (quicklinkService->list().empty()) { seeder->seed(); }
     }
 
-    rootItemManager->addProvider(std::make_unique<AppRootProvider>(*appService.get()));
-    rootItemManager->addProvider(std::make_unique<BookmarkRootProvider>(*bookmarkService.get()));
-
     registry->setUI(std::make_unique<UIController>());
     registry->setToastService(std::move(toastService));
     registry->setBookmarkService(std::move(bookmarkService));
     registry->setConfig(std::move(configService));
-    registry->setRootExtMan(std::move(rootExtMan));
     registry->setRootItemManager(std::move(rootItemManager));
     registry->setQuicklinks(std::move(quicklinkService));
     registry->setCalculatorDb(std::move(calculatorService));
@@ -221,6 +212,23 @@ int startDaemon() {
     registry->setClipman(std::move(clipboardManager));
     registry->setWindowManager(std::move(windowManager));
     registry->setFontService(std::move(fontService));
+
+    auto p = rootExtMan.get();
+
+    registry->setRootExtMan(std::move(rootExtMan));
+
+    p->start();
+
+    auto builtinCommandDb = std::make_unique<CommandDatabase>();
+
+    for (const auto &repo : builtinCommandDb->repositories()) {
+      registry->commandDb()->registerRepository(repo);
+    }
+
+    // this one needs to be set last
+
+    registry->rootItemManager()->addProvider(std::make_unique<AppRootProvider>(*registry->appDb()));
+    registry->rootItemManager()->addProvider(std::make_unique<BookmarkRootProvider>(*registry->bookmarks()));
   }
 
   QIcon::setThemeName("Tela");

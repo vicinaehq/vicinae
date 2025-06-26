@@ -1,7 +1,7 @@
 #pragma once
 #include "common.hpp"
 #include "ui/form/checkbox.hpp"
-#include "ui/typography.hpp"
+#include "ui/typography/typography.hpp"
 #include <qboxlayout.h>
 #include <qnamespace.h>
 #include <qtmetamacros.h>

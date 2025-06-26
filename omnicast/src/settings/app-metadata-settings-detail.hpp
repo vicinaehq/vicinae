@@ -1,7 +1,8 @@
 #pragma once
 #include "app/app-database.hpp"
 #include "common.hpp"
-#include "ui/typography.hpp"
+#include "ui/typography/typography.hpp"
+#include "utils/utils.hpp"
 #include <qboxlayout.h>
 #include <qevent.h>
 #include <qlogging.h>
@@ -68,7 +69,7 @@ class AppMetadataSettingsDetail : public QWidget {
     m_name->setLabel("Name");
     m_name->setText(app->name());
     m_where->setLabel("Where");
-    m_where->setText(app->path().parent_path().c_str());
+    m_where->setText(compressPath(app->path().parent_path()).c_str());
 
     if (auto description = app->description(); !description.isEmpty()) {
       m_description->setLabel("Description");

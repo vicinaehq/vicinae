@@ -4,7 +4,7 @@
 #include <qcoreevent.h>
 #include <qevent.h>
 #include "ui/button.hpp"
-#include "ui/typography.hpp"
+#include "ui/typography/typography.hpp"
 #include <qlabel.h>
 #include <QHBoxLayout>
 #include <qnamespace.h>

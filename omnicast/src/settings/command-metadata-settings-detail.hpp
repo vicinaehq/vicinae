@@ -6,7 +6,7 @@
 #include "ui/form/form.hpp"
 #include "ui/form/password-input.hpp"
 #include "ui/switch/switch.hpp"
-#include "ui/typography.hpp"
+#include "ui/typography/typography.hpp"
 #include <libqalculate/Number.h>
 #include <qboxlayout.h>
 #include <qjsonobject.h>

@@ -5,7 +5,7 @@
 #include <qevent.h>
 #include <ranges>
 #include "settings-category.hpp"
-#include "ui/typography.hpp"
+#include "ui/typography/typography.hpp"
 #include <qboxlayout.h>
 #include <qlocale.h>
 #include <qmainwindow.h>

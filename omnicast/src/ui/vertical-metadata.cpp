@@ -1,7 +1,7 @@
 #include "ui/vertical-metadata.hpp"
 #include "common.hpp"
 #include "tag.hpp"
-#include "ui/text-label.hpp"
+#include "ui/typography/typography.hpp"
 #include <qboxlayout.h>
 #include <qlabel.h>
 
@@ -29,7 +29,9 @@ VerticalMetadata::VerticalMetadata() : layout(new QVBoxLayout) {
 void VerticalMetadata::add(const QString &title, QWidget *widget) {
   auto row = new QWidget();
   auto rowLayout = new QVBoxLayout();
-  auto titleWidget = new TextLabel(title);
+  auto titleWidget = new TypographyWidget();
+
+  titleWidget->setText(title);
 
   rowLayout->setContentsMargins(0, 0, 0, 0);
   rowLayout->setSpacing(10);

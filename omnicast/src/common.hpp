@@ -13,6 +13,7 @@
 #include <qevent.h>
 #include <qframe.h>
 #include <qicon.h>
+#include <qjsonobject.h>
 #include <qjsonvalue.h>
 #include <qlabel.h>
 #include <qnamespace.h>
@@ -146,7 +147,7 @@ public:
   virtual std::vector<QString> keywords() const { return {}; }
   virtual QString repositoryName() const { return ""; }
   virtual bool isFallback() const { return false; }
-  virtual void preferenceValuesChanged(const QJsonValue &value) {}
+  virtual void preferenceValuesChanged(const QJsonObject &value) const {}
 
   virtual QString extensionId() const = 0;
   virtual QString commandId() const = 0;
@@ -161,9 +162,11 @@ class AbstractCommandRepository {
 public:
   virtual QString id() const = 0;
   virtual QString name() const = 0;
+  virtual QString description() const { return ""; }
   virtual std::vector<std::shared_ptr<AbstractCmd>> commands() const = 0;
   virtual OmniIconUrl iconUrl() const = 0;
   virtual std::vector<Preference> preferences() const { return {}; }
+  virtual QWidget *settingsDetail() const { return new QWidget; }
 };
 
 struct QObjectDeleter {

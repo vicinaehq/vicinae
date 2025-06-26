@@ -32,6 +32,9 @@ public:
   void setFont(const QFont &f);
   void setFontWeight(QFont::Weight weight);
   void setSize(TextSize size);
+  void clear();
+  void setAlignment(Qt::Alignment);
+  void setWordWrap(bool wrap);
 
   TypographyWidget(QWidget *parent = nullptr);
 };

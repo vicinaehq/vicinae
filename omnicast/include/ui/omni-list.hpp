@@ -596,11 +596,6 @@ public:
 
   void mouseMoveEvent(QMouseEvent *event) override { QWidget::mouseMoveEvent(event); }
 
-  void enterEvent(QEnterEvent *event) override {
-    qDebug() << "enter list";
-    QWidget::enterEvent(event);
-  }
-
   void addDivider() { m_model.emplace_back(Divider{}); }
 
   int virtualHeight() const { return _virtualHeight; }

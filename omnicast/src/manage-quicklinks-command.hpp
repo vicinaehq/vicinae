@@ -9,7 +9,7 @@
 #include "ui/horizontal-metadata.hpp"
 #include "ui/omni-list.hpp"
 #include "ui/omni-scroll-bar.hpp"
-#include "ui/typography.hpp"
+#include "ui/typography/typography.hpp"
 #include <memory>
 #include <qboxlayout.h>
 #include <qlabel.h>

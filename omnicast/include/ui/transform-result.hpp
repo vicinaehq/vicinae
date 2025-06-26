@@ -1,7 +1,7 @@
 #pragma once
 #include "omni-icon.hpp"
 #include "ui/selectable-omni-list-widget.hpp"
-#include "ui/typography.hpp"
+#include "ui/typography/typography.hpp"
 #include <qboxlayout.h>
 #include <qlabel.h>
 #include <qpixmap.h>

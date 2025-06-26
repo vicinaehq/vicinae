@@ -11,7 +11,7 @@
 #include "ui/image/omnimg.hpp"
 #include "ui/omni-list.hpp"
 #include "ui/selectable-omni-list-widget.hpp"
-#include "ui/typography.hpp"
+#include "ui/typography/typography.hpp"
 #include <algorithm>
 #include <memory>
 #include <qboxlayout.h>

@@ -1,7 +1,7 @@
 #pragma once
 #include "ui/focus-notifier.hpp"
 #include "ui/markdown/markdown-renderer.hpp"
-#include "ui/typography.hpp"
+#include "ui/typography/typography.hpp"
 #include <qboxlayout.h>
 #include <qcoreevent.h>
 #include <qlabel.h>

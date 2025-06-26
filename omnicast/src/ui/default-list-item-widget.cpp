@@ -5,7 +5,10 @@
 #include "ui/list-accessory-widget.hpp"
 #include <qwidget.h>
 
-void DefaultListItemWidget::setName(const QString &name) { this->_name->setText(name); }
+void DefaultListItemWidget::setName(const QString &name) {
+  _name->setText(name);
+  _name->setVisible(!name.isEmpty());
+}
 
 void DefaultListItemWidget::setIconUrl(const OmniIconUrl &url) { _icon->setUrl(url); }
 
@@ -13,7 +16,10 @@ void DefaultListItemWidget::setAccessories(const AccessoryList &list) {
   _accessoryList->setAccessories(list);
 }
 
-void DefaultListItemWidget::setCategory(const QString &category) { _category->setText(category); }
+void DefaultListItemWidget::setCategory(const QString &category) {
+  _category->setText(category);
+  _category->setVisible(!category.isEmpty());
+}
 
 void DefaultListItemWidget::setAlias(const QString &alias) {
   if (!alias.isEmpty()) {
@@ -29,11 +35,11 @@ void DefaultListItemWidget::setAlias(const QString &alias) {
 DefaultListItemWidget::DefaultListItemWidget(const OmniIconUrl &iconUrl, const QString &name,
                                              const QString &category, const AccessoryList &accessories,
                                              QWidget *parent)
-    : SelectableOmniListWidget(parent), _icon(new Omnimg::ImageWidget),
-      _name(new TypographyWidget(TextSize::TextRegular)),
-      _category(new TypographyWidget(TextSize::TextRegular, ColorTint::TextSecondary)),
-      _accessoryList(new AccessoryListWidget(this)), m_alias(new ListAccessoryWidget) {
+    : SelectableOmniListWidget(parent), _icon(new Omnimg::ImageWidget), _name(new TypographyWidget),
+      _category(new TypographyWidget()), _accessoryList(new AccessoryListWidget(this)),
+      m_alias(new ListAccessoryWidget) {
 
+  _category->setColor(ColorTint::TextSecondary);
   _icon->setFixedSize(25, 25);
   _icon->setUrl(iconUrl);
 

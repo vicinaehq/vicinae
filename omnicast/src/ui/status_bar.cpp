@@ -8,7 +8,7 @@
 #include "theme.hpp"
 #include "ui/shortcut-button.hpp"
 #include "ui/toast.hpp"
-#include "ui/typography.hpp"
+#include "ui/typography/typography.hpp"
 #include <qnamespace.h>
 #include <qpainter.h>
 #include <qtimer.h>

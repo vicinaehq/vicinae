@@ -19,7 +19,7 @@
 #include <qwidget.h>
 #include <sys/socket.h>
 #include "text-file-viewer.hpp"
-#include "ui/typography.hpp"
+#include "ui/typography/typography.hpp"
 
 class LogWidget : public QWidget {
   ~LogWidget() { qDebug() << "widget down"; }

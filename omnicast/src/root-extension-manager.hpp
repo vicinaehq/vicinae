@@ -13,10 +13,12 @@ class RootExtensionManager : public QObject {
   OmniCommandDatabase &m_commandDb;
 
 public:
-  RootExtensionManager(RootItemManager &manager, OmniCommandDatabase &commandDb)
-      : m_manager(manager), m_commandDb(commandDb) {
-    connect(&commandDb, &OmniCommandDatabase::registryAdded, this, [this](const auto &registry) {
+  void start() {
+    connect(&m_commandDb, &OmniCommandDatabase::registryAdded, this, [this](const auto &registry) {
       m_manager.addProvider(std::make_unique<ExtensionRootProvider>(registry));
     });
   }
+
+  RootExtensionManager(RootItemManager &manager, OmniCommandDatabase &commandDb)
+      : m_manager(manager), m_commandDb(commandDb) {}
 };

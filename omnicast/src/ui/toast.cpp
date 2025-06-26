@@ -2,7 +2,7 @@
 #include "services/toast/toast-service.hpp"
 #include "theme.hpp"
 #include "ui/color_circle.hpp"
-#include "ui/typography.hpp"
+#include "ui/typography/typography.hpp"
 #include <qnamespace.h>
 
 static QHash<ToastPriority, ColorLike> toastPriorityToColor{

@@ -2,7 +2,7 @@
 #include "extend/empty-view-model.hpp"
 #include "omni-icon.hpp"
 #include "theme.hpp"
-#include "ui/typography.hpp"
+#include "ui/typography/typography.hpp"
 #include <qboxlayout.h>
 #include <qnamespace.h>
 #include <qwidget.h>

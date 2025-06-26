@@ -1,7 +1,7 @@
 #pragma once
 #include "omni-icon.hpp"
 #include "theme.hpp"
-#include "ui/typography.hpp"
+#include "ui/typography/typography.hpp"
 #include <qboxlayout.h>
 #include <qmargins.h>
 #include <qnamespace.h>

@@ -1,7 +1,7 @@
 #include "ui/horizontal-metadata.hpp"
 #include "common.hpp"
 #include "tag.hpp"
-#include "ui/typography.hpp"
+#include "ui/typography/typography.hpp"
 #include <qboxlayout.h>
 #include <qlabel.h>
 

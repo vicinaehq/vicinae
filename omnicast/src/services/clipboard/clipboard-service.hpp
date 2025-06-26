@@ -86,6 +86,7 @@ class ClipboardService : public QObject, public NonAssignable {
 
   // prepared statements
   QSqlQuery m_retrieveSelectionByIdQuery;
+  bool m_recordAllOffers = true;
 
   // end prepare statements
 
@@ -112,6 +113,7 @@ public:
                 const Clipboard::CopyOptions &options = {.concealed = false});
   bool copyContent(const Clipboard::Content &content,
                    const Clipboard::CopyOptions options = {.concealed = false});
+  void setRecordAllOffers(bool value);
   bool clear();
   void saveSelection(const ClipboardSelection &selection);
   ClipboardSelection retrieveSelection(int offset = 0);

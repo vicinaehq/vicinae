@@ -20,7 +20,7 @@
 #include <qtmetamacros.h>
 #include <qwidget.h>
 #include "ui/shortcut-button.hpp"
-#include "ui/typography.hpp"
+#include "ui/typography/typography.hpp"
 
 class StatusBar : public QWidget {
   Q_OBJECT

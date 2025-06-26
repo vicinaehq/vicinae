@@ -5,7 +5,7 @@
 #include "ui/image/omnimg.hpp"
 #include "ui/omni-list.hpp"
 #include "ui/selectable-omni-list-widget.hpp"
-#include "ui/typography.hpp"
+#include "ui/typography/typography.hpp"
 #include <QtConcurrent/qtconcurrentiteratekernel.h>
 #include <memory>
 #include <qboxlayout.h>
@@ -111,7 +111,6 @@ class HeaderWidget : public QWidget {
 
       if (col.sizePolicy == HeaderInfo::ColumnSizePolicy::Fixed) {
         column->setFixedWidth(col.width);
-        qDebug() << "width" << col.width;
         m_layout->addWidget(column);
       } else {
         m_layout->addWidget(column, 1);

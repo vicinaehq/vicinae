@@ -320,9 +320,6 @@ set(SRCS
 	include/ui/vertical-metadata.hpp
 	src/ui/vertical-metadata.cpp
 
-	include/ui/text-label.hpp
-	src/ui/text-label.cpp
-
 	src/extend/action-model.cpp
 	src/extend/color-model.cpp
 	src/extend/detail-model.cpp
@@ -382,6 +379,7 @@ set(SRCS
 
 	src/settings/extension-settings.hpp
 	src/settings/command-metadata-settings-detail.cpp
+	src/settings/extension-settings-detail.cpp
 
 	src/ui/omni-tree.hpp
 
@@ -392,6 +390,8 @@ set(SRCS
 
 	src/ui/typography/typography.hpp
 	src/ui/typography/typography.cpp
+
+	src/utils/utils.cpp
 )
 
 

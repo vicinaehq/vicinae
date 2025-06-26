@@ -20,7 +20,7 @@ void Switch::paintEvent(QPaintEvent *event) {
   painter.setBrush(Qt::white);
 
   QRect geometry;
-  int padding = 5;
+  int padding = 2;
   int availableHeight = height() - padding * 2;
 
   if (m_value) {

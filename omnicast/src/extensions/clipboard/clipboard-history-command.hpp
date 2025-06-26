@@ -1,5 +1,6 @@
 #pragma once
 #include "common.hpp"
+#include <qjsonobject.h>
 
 class ClipboardHistoryCommand : public AbstractCmd {
   QString uniqueId() const override { return "clipboard.clipboard-history"; }
@@ -33,6 +34,6 @@ class ClipboardHistoryCommand : public AbstractCmd {
 
     return {storeAllOfferings, maxStorageSize};
   }
-  void preferenceValuesChanged(const QJsonValue &value) override;
+  void preferenceValuesChanged(const QJsonObject &value) const override;
   CommandContext *createContext(const std::shared_ptr<AbstractCmd> &command) const override;
 };

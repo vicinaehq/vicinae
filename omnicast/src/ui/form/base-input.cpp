@@ -93,8 +93,6 @@ bool BaseInput::eventFilter(QObject *watched, QEvent *event) {
 BaseInput::BaseInput(QWidget *parent) : leftAccessory(nullptr), rightAccessory(nullptr) {
   auto layout = new QVBoxLayout;
 
-  qDebug() << "init base input";
-
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(m_input);
   m_input->installEventFilter(this);

@@ -7,7 +7,7 @@
 #include "ui/form/preference-field.hpp"
 #include "ui/form/form.hpp"
 #include "ui/action-pannel/action.hpp"
-#include "ui/typography.hpp"
+#include "ui/typography/typography.hpp"
 #include <qboxlayout.h>
 #include <qjsonobject.h>
 #include <qjsonvalue.h>

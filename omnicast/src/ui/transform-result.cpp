@@ -4,7 +4,7 @@
 #include "theme.hpp"
 #include "ui/ellided-label.hpp"
 #include "ui/selectable-omni-list-widget.hpp"
-#include "ui/typography.hpp"
+#include "ui/typography/typography.hpp"
 #include <qboxlayout.h>
 #include <qfont.h>
 #include <qlabel.h>

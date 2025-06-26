@@ -1,6 +1,6 @@
 #pragma once
 #include "ui/color_circle.hpp"
-#include "ui/typography.hpp"
+#include "ui/typography/typography.hpp"
 #include <QColor>
 #include <QHBoxLayout>
 #include <QLabel>

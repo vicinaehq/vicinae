@@ -1,6 +1,6 @@
 #include "ui/shortcut-button.hpp"
 #include "theme.hpp"
-#include "ui/typography.hpp"
+#include "ui/typography/typography.hpp"
 #include <qcolor.h>
 
 void ShortcutButton::hoverChanged(bool hovered) {

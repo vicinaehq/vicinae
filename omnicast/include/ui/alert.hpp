@@ -3,7 +3,7 @@
 #include "theme.hpp"
 #include "ui/dialog.hpp"
 #include "ui/omni-button.hpp"
-#include "ui/typography.hpp"
+#include "ui/typography/typography.hpp"
 #include <qboxlayout.h>
 #include <qdir.h>
 #include <qevent.h>
@@ -102,12 +102,11 @@ public:
     _actionBtn->setColor(color);
   }
   AlertWidget(QWidget *parent = nullptr)
-      : DialogContentWidget(parent), _icon(new OmniIcon),
-        _title(new TypographyWidget(TextSize::TextRegular, ColorTint::TextPrimary)),
-        _message(new TypographyWidget(TextSize::TextRegular, ColorTint::TextSecondary)),
-        _cancelBtn(new OmniButtonWidget), _actionBtn(new OmniButtonWidget) {
+      : DialogContentWidget(parent), _icon(new OmniIcon), _title(new TypographyWidget),
+        _message(new TypographyWidget), _cancelBtn(new OmniButtonWidget), _actionBtn(new OmniButtonWidget) {
     auto layout = new QVBoxLayout;
 
+    _message->setColor(ColorTint::TextSecondary);
     setFocusPolicy(Qt::StrongFocus);
 
     _icon->setFixedSize(25, 25);

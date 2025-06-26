@@ -1,6 +1,6 @@
 #pragma once
 #include "omni-icon.hpp"
-#include "typography.hpp"
+#include "ui/typography/typography.hpp"
 #include "ui/image/omnimg.hpp"
 #include "ui/selectable-omni-list-widget.hpp"
 #include <qboxlayout.h>

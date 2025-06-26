@@ -7,7 +7,7 @@
 #include "ui/omni-list.hpp"
 #include "ui/popover.hpp"
 #include "ui/top_bar.hpp"
-#include "ui/typography.hpp"
+#include "ui/typography/typography.hpp"
 #include <qboxlayout.h>
 #include <qcoreevent.h>
 #include <qdnslookup.h>

@@ -89,6 +89,11 @@ bool ClipboardService::copyFile(const std::filesystem::path &path, const Clipboa
   return copyQMimeData(data, options);
 }
 
+void ClipboardService::setRecordAllOffers(bool value) {
+  m_recordAllOffers = value;
+  qCritical() << "set record all offers" << value;
+}
+
 bool ClipboardService::copyHtml(const Clipboard::Html &data, const Clipboard::CopyOptions &options) {
   auto mimeData = new QMimeData;
 

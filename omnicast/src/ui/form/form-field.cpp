@@ -1,7 +1,7 @@
 #include "ui/form/form-field.hpp"
 #include "theme.hpp"
 #include "ui/focus-notifier.hpp"
-#include "ui/typography.hpp"
+#include "ui/typography/typography.hpp"
 #include <qnamespace.h>
 #include <qwidget.h>
 

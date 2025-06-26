@@ -3,7 +3,7 @@
 #include "ui/action-pannel/action.hpp"
 #include "ui/keyboard-shortcut-indicator.hpp"
 #include "ui/selectable-omni-list-widget.hpp"
-#include "ui/typography.hpp"
+#include "ui/typography/typography.hpp"
 
 class ActionListWidget : public SelectableOmniListWidget {
   OmniIcon *m_icon;

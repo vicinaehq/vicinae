@@ -1,7 +1,7 @@
 #include "ui/action-pannel/action-list-widget.hpp"
 #include "theme.hpp"
 #include "ui/action-pannel/action.hpp"
-#include "ui/typography.hpp"
+#include "ui/typography/typography.hpp"
 #include <qlogging.h>
 
 ActionListWidget &ActionListWidget::setIconUrl(const OmniIconUrl &url) {

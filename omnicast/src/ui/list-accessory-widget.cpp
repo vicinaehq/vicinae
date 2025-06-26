@@ -1,6 +1,6 @@
 #include "ui/list-accessory-widget.hpp"
 #include "theme.hpp"
-#include "ui/typography.hpp"
+#include "ui/typography/typography.hpp"
 
 void ListAccessoryWidget::paintEvent(QPaintEvent *event) {
   OmniPainter painter(this);
@@ -40,8 +40,8 @@ void ListAccessoryWidget::setAccessory(const ListAccessory &accessory) {
 }
 
 ListAccessoryWidget::ListAccessoryWidget(QWidget *parent)
-    : QWidget(parent), _layout(new QHBoxLayout), _icon(new OmniIcon),
-      _text(new TypographyWidget(TextSize::TextRegular)), _tooltip(new Tooltip) {
+    : QWidget(parent), _layout(new QHBoxLayout), _icon(new OmniIcon), _text(new TypographyWidget()),
+      _tooltip(new Tooltip) {
   _layout->setContentsMargins(6, 3, 6, 3);
   _layout->setAlignment(Qt::AlignVCenter);
   _layout->addWidget(_icon);

@@ -1,7 +1,7 @@
 #include "ui/form/selector-input.hpp"
 #include "common.hpp"
 #include "ui/focus-notifier.hpp"
-#include "ui/typography.hpp"
+#include "ui/typography/typography.hpp"
 #include <memory>
 #include <qboxlayout.h>
 #include <qjsonvalue.h>

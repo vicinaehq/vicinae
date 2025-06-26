@@ -1,7 +1,9 @@
 #pragma once
 #include "root-item-manager.hpp"
+#include <qjsonobject.h>
 #include <qwidget.h>
 #include "settings/command-metadata-settings-detail.hpp"
+#include "settings/extension-settings-detail.hpp"
 
 class CommandRootItem : public RootItem {
   std::shared_ptr<AbstractCmd> m_command;
@@ -24,7 +26,7 @@ public:
     return new CommandMetadataSettingsDetailWidget(uniqueId(), m_command);
   }
 
-  void preferenceValuesChanged(const QJsonValue &values) override {
+  void preferenceValuesChanged(const QJsonObject &values) const override {
     m_command->preferenceValuesChanged(values);
   }
 
@@ -43,6 +45,7 @@ public:
   OmniIconUrl icon() const override { return m_repo->iconUrl(); };
   Type type() const override { return RootProvider::Type::ExtensionProvider; }
   std::vector<std::shared_ptr<RootItem>> loadItems() const override;
+  QWidget *settingsDetail() const override { return new ExtensionSettingsDetail(uniqueId(), m_repo); }
 
   ExtensionRootProvider(const std::shared_ptr<AbstractCommandRepository> &repo) : m_repo(repo) {}
 };

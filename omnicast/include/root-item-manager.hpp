@@ -120,7 +120,7 @@ public:
    */
   virtual std::vector<QString> keywords() const { return {}; }
 
-  virtual void preferenceValuesChanged(const QJsonValue &values) {}
+  virtual void preferenceValuesChanged(const QJsonObject &values) const {}
 };
 
 class RootProvider : public QObject {
@@ -161,6 +161,8 @@ public:
   virtual void preferencesChanged(const QJsonObject &preferences) {}
 
   virtual void itemPreferencesChanged(const QString &itemId, const QJsonObject &preferences) {}
+
+  virtual QWidget *settingsDetail() const { return new QWidget; }
 
   // Called the first time the root provider is loaded by the root item manager
   // The preference object can be mutated and will be saved on disk not long after this
@@ -308,6 +310,8 @@ private:
 
     m_metadata[item.uniqueId()] = loadMetadata(item.uniqueId());
 
+    item.preferenceValuesChanged(getItemPreferenceValues(item.uniqueId()));
+
     return true;
   }
 
@@ -341,23 +345,6 @@ private:
     emit itemsChanged();
   }
 
-  bool setProviderPreferenceValues(const QString &id, const QJsonObject &preferences) {
-    auto query = m_db.createQuery();
-    QJsonDocument json;
-
-    json.setObject(preferences);
-    query.prepare("UPDATE root_provider SET preference_values = :preferences WHERE id = :id");
-    query.bindValue(":preferences", json.toJson());
-    query.bindValue(":id", id);
-
-    if (!query.exec()) {
-      qDebug() << "setRepositoryPreferenceValues:" << query.lastError();
-      return false;
-    }
-
-    return true;
-  }
-
   RootItem *findItemById(const QString &id) {
     auto it = std::ranges::find_if(m_items, [&](auto &&v) { return v->uniqueId() == id; });
 
@@ -376,6 +363,23 @@ private:
 
 public:
   RootItemManager(OmniDatabase &db) : m_db(db) { createTables(); }
+
+  bool setProviderPreferenceValues(const QString &id, const QJsonObject &preferences) {
+    auto query = m_db.createQuery();
+    QJsonDocument json;
+
+    json.setObject(preferences);
+    query.prepare("UPDATE root_provider SET preference_values = :preferences WHERE id = :id");
+    query.bindValue(":preferences", json.toJson());
+    query.bindValue(":id", id);
+
+    if (!query.exec()) {
+      qDebug() << "setRepositoryPreferenceValues:" << query.lastError();
+      return false;
+    }
+
+    return true;
+  }
 
   bool setItemEnabled(const QString &id, bool value) {
     auto it = std::ranges::find_if(m_items, [&id](const auto &item) { return item->uniqueId() == id; });
@@ -530,9 +534,6 @@ public:
       return {};
     }
     auto rawJson = query.value(0).toString();
-
-    qDebug() << "raw preferences json" << rawJson;
-
     auto json = QJsonDocument::fromJson(rawJson.toUtf8());
 
     return json.object();
@@ -542,10 +543,7 @@ public:
     auto query = m_db.createQuery();
     auto it = std::ranges::find_if(m_items, [&id](const auto &item) { return item->uniqueId() == id; });
 
-    if (it == m_items.end()) {
-      qCritical() << "setAlias: no item with id " << id;
-      return {};
-    }
+    if (it == m_items.end()) { return {}; }
 
     auto &item = *it;
 
@@ -810,9 +808,9 @@ public:
 
     if (!upsertProvider(*provider.get())) return;
 
-    std::ranges::for_each(items, [&](const auto &item) { upsertItem(provider->uniqueId(), *item.get()); });
-
     m_items.insert(m_items.end(), items.begin(), items.end());
+
+    std::ranges::for_each(items, [&](const auto &item) { upsertItem(provider->uniqueId(), *item.get()); });
 
     auto existingPreferences = getProviderPreferenceValues(provider->uniqueId());
 

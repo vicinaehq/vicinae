@@ -1,6 +1,7 @@
 #include "ui/typography/typography.hpp"
 #include "ui/omni-painter.hpp"
 #include <qboxlayout.h>
+#include <qnamespace.h>
 #include <qwidget.h>
 
 void TypographyWidget::updateText() {
@@ -9,7 +10,7 @@ void TypographyWidget::updateText() {
     return;
   }
 
-  QFontMetrics metrics = fontMetrics();
+  QFontMetrics metrics = m_label->fontMetrics();
   QString text = metrics.elidedText(m_text, Qt::ElideRight, width());
   m_label->setText(text);
   updateGeometry();
@@ -17,7 +18,7 @@ void TypographyWidget::updateText() {
 
 void TypographyWidget::resizeEvent(QResizeEvent *event) {
   QWidget::resizeEvent(event);
-  qCritical() << "size" << event->size() << "hint" << sizeHint() << m_text;
+  // qCritical() << "size" << event->size() << "hint" << sizeHint() << m_text;
   updateText();
 }
 
@@ -38,12 +39,12 @@ QSize TypographyWidget::minimumSizeHint() const {
 
 QSize TypographyWidget::sizeHint() const {
   if (!m_label->wordWrap()) {
-    QLabel label;
+    QLabel ruler;
 
-    label.setFont(font());
-    label.setText(m_text);
+    ruler.setFont(m_label->font());
+    ruler.setText(m_text);
 
-    return label.sizeHint();
+    return ruler.sizeHint();
   }
 
   return m_label->sizeHint();
@@ -62,6 +63,7 @@ void TypographyWidget::setSize(TextSize size) {
 
 void TypographyWidget::setText(const QString &text) {
   m_text = text;
+  updateGeometry();
   updateText();
 }
 
@@ -82,6 +84,10 @@ void TypographyWidget::setFont(const QFont &f) {
   updateGeometry();
 }
 
+void TypographyWidget::setAlignment(Qt::Alignment align) { m_label->setAlignment(align); }
+
+void TypographyWidget::setWordWrap(bool wrap) { m_label->setWordWrap(wrap); }
+
 void TypographyWidget::setFontWeight(QFont::Weight weight) {
   QFont _font = font();
 
@@ -93,9 +99,12 @@ void TypographyWidget::setFontWeight(QFont::Weight weight) {
   updateGeometry();
 }
 
+void TypographyWidget::clear() { setText(""); }
+
 TypographyWidget::TypographyWidget(QWidget *parent) : QWidget(parent) {
   QVBoxLayout *layout = new QVBoxLayout;
 
+  layout->setSpacing(0);
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(m_label);
   setLayout(layout);

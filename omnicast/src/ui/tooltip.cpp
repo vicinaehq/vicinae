@@ -1,6 +1,6 @@
 #include "ui/tooltip.hpp"
 #include "theme.hpp"
-#include "ui/typography.hpp"
+#include "ui/typography/typography.hpp"
 #include <qevent.h>
 #include <qnamespace.h>
 #include <qwidget.h>
