@@ -1,6 +1,7 @@
 #include "ai/ollama-ai-provider.hpp"
 #include <QStyleHints>
 #include "app-service.hpp"
+#include "command-database.hpp"
 #include "root-search/apps/app-root-provider.hpp"
 #include "services/bookmark/bookmark-service.hpp"
 #include "app.hpp"

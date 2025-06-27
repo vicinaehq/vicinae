@@ -21,6 +21,7 @@ type ExtensionCommand = {
 type Extension = {
 	id: string;
 	name: string;
+	description: string;
 	title: string;
 	path: string;
 	icon: string;
@@ -94,8 +95,8 @@ class Omnicast {
 
 	private async parseExtensionBundle(path: string): Promise<Extension> {
 		const metadata = JSON.parse(readFileSync(join(path, 'package.json'), 'utf-8'));
-		const { name, title, icon, version, preferences = [] } = metadata;
-		const extension: Extension = { environment: 'production', id: basename(path), icon, title, name, preferences, path, commands: [] };
+		const { name, title, icon, version, description, preferences = [] } = metadata;
+		const extension: Extension = { environment: 'production', id: basename(path), description, icon, title, name, preferences, path, commands: [] };
 
 		for (const cmd of metadata.commands) {
 			const bundle = join(path, `${cmd.name}.js`);

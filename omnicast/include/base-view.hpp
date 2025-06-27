@@ -2,16 +2,12 @@
 #include "action-panel/action-panel.hpp"
 #include "argument.hpp"
 #include "common.hpp"
-#include "extend/action-model.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
-#include <algorithm>
 #include <libqalculate/Calculator.h>
 #include <qevent.h>
 #include <qnamespace.h>
 #include "ui/action-pannel/action.hpp"
-#include "ui/horizontal-loading-bar.hpp"
-#include "ui/keyboard.hpp"
 #include "ui/omni-grid.hpp"
 #include "ui/omni-list.hpp"
 #include "ui/split-detail.hpp"
@@ -26,8 +22,6 @@
 #include <qwidget.h>
 
 class BaseView : public QWidget {
-  Q_OBJECT
-
   bool m_initialized = false;
   std::unique_ptr<UIViewController> m_uiController;
 
@@ -163,11 +157,6 @@ public:
 
     m_uiController = std::make_unique<UIViewController>(ui, this);
   }
-
-signals:
-  void requestLaunchCommand(const std::shared_ptr<AbstractCmd> &command, const LaunchCommandOptions &opts,
-                            const LaunchProps &props) const;
-  void requestViewPush(View *view, const PushViewOptions &options) const;
 };
 
 class SimpleView : public BaseView {

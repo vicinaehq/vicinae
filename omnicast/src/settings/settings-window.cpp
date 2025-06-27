@@ -40,7 +40,6 @@ QWidget *SettingsWindow::createWidget() {
   }
 
   connect(m_navigation, &SettingsNavWidget::rowChanged, this, [this](int idx) {
-    qDebug() << "set to index" << idx;
     content->setCurrentIndex(idx);
     m_navigation->setSelected(m_categories.at(idx)->title());
   });
