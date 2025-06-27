@@ -2,6 +2,7 @@
 #include "common.hpp"
 #include "preference.hpp"
 #include "theme.hpp"
+#include "ui/preference-dropdown/preference-dropdown.hpp"
 #include "ui/form/base-input.hpp"
 #include "ui/form/form.hpp"
 #include "ui/form/password-input.hpp"
@@ -66,6 +67,7 @@ class VerticalFormItem : public AbstractPreferenceFormItem {
   void setupUI() {
     m_label->setColor(ColorTint::TextSecondary);
     m_description->setWordWrap(true);
+    m_description->setSize(TextSize::TextSmaller);
     m_vlayout->setContentsMargins(0, 0, 0, 0);
     m_vlayout->setSpacing(10);
     m_vlayout->addWidget(m_label);
@@ -110,7 +112,17 @@ struct PreferenceWidgetVisitor {
     item->setDescription(m_preference.description());
     return item;
   }
-  AbstractPreferenceFormItem *operator()(const Preference::DropdownData &data) { return nullptr; }
+  AbstractPreferenceFormItem *operator()(const Preference::DropdownData &data) {
+    auto item = new VerticalFormItem;
+    auto selector = new PreferenceDropdown;
+
+    item->setLabel(m_preference.title());
+    item->setContent(selector);
+    item->setDescription(m_preference.description());
+    selector->setOptions(data.options);
+
+    return item;
+  }
   AbstractPreferenceFormItem *operator()(const Preference::CheckboxData &data) {
     auto item = new PreferenceSwitchFormItem;
 

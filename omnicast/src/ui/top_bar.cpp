@@ -34,7 +34,6 @@ TopBar::TopBar(QWidget *parent) : QWidget(parent), layout(new QHBoxLayout()), in
   layout->addWidget(input);
   layout->addSpacing(5);
   layout->addWidget(m_completer);
-  // layout->setSpacing(10);
   layout->addWidget(m_accessoryContainer, 0, Qt::AlignRight | Qt::AlignVCenter);
 
   m_completer->hide();

@@ -380,6 +380,7 @@ set(SRCS
 	src/settings/extension-settings.hpp
 	src/settings/command-metadata-settings-detail.cpp
 	src/settings/extension-settings-detail.cpp
+	src/settings/app-settings-detail.cpp
 
 	src/ui/omni-tree.hpp
 
@@ -390,6 +391,9 @@ set(SRCS
 
 	src/ui/typography/typography.hpp
 	src/ui/typography/typography.cpp
+
+	src/ui/preference-dropdown/preference-dropdown.hpp
+	src/ui/preference-dropdown/preference-dropdown.cpp
 
 	src/utils/utils.cpp
 )

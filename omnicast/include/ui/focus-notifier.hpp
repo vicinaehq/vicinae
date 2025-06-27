@@ -1,5 +1,7 @@
 #pragma once
+#include <qlogging.h>
 #include <qobject.h>
+#include <qdebug.h>
 #include <qtmetamacros.h>
 
 class FocusNotifier : public QObject {

@@ -410,7 +410,10 @@ public:
 
     QWidget *content = data->content();
 
-    if (auto previous = m_content->widget()) { previous->deleteLater(); }
+    if (auto previous = m_content->widget()) {
+      // previous->deleteLater();
+      previous->hide();
+    }
 
     m_content->setWidget(content);
     m_divider->show();

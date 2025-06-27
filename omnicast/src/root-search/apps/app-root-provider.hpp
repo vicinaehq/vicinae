@@ -35,6 +35,7 @@ public:
   OmniIconUrl icon() const override;
   QString displayName() const override;
   QString uniqueId() const override;
+  QWidget *settingsDetail() const override;
 
 public:
   AppRootProvider(AppService &appService);

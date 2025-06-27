@@ -5,7 +5,15 @@
 #include "settings/extension-settings-detail.hpp"
 #include <qboxlayout.h>
 #include <qlogging.h>
+#include <qnamespace.h>
 #include <qwidget.h>
+
+void ExtensionSettingsDetail::handleFocusChanged(bool focused) {
+  if (!focused) {
+    qCritical() << "lost focus saving" << this;
+    savePendingPreferences();
+  }
+}
 
 void ExtensionSettingsDetail::setupUI() {
   if (auto description = m_command->description(); !description.isEmpty()) {
@@ -43,9 +51,8 @@ void ExtensionSettingsDetail::setupUI() {
       widget->formItem()->setValueAsJson(defaultValue);
     }
 
-    connect(widget->formItem()->focusNotifier(), &FocusNotifier::focusChanged, this, [this](bool focused) {
-      if (!focused) savePendingPreferences();
-    });
+    connect(widget->formItem()->focusNotifier(), &FocusNotifier::focusChanged, this,
+            &ExtensionSettingsDetail::handleFocusChanged, Qt::DirectConnection);
 
     m_preferenceFields[preference.name()] = widget;
     m_formLayout->addWidget(widget);
@@ -61,9 +68,8 @@ void ExtensionSettingsDetail::savePendingPreferences() {
   QJsonObject obj;
 
   for (const auto &[preferenceId, widget] : m_preferenceFields) {
-    QJsonValue value = widget->formItem()->asJsonValue();
-
     qDebug() << "set preference" << preferenceId;
+    QJsonValue value = widget->formItem()->asJsonValue();
 
     obj[preferenceId] = value;
   }
@@ -81,4 +87,8 @@ ExtensionSettingsDetail::ExtensionSettingsDetail(const QString &providerId,
   setupUI();
 }
 
-ExtensionSettingsDetail::~ExtensionSettingsDetail() { savePendingPreferences(); }
+ExtensionSettingsDetail::~ExtensionSettingsDetail() {
+  // disconnect(this, nullptr, nullptr, nullptr);
+  qCritical() << "~ExtensionSettingsDetail" << this;
+  // savePendingPreferences();
+}

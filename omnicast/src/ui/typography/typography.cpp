@@ -43,6 +43,8 @@ QSize TypographyWidget::sizeHint() const {
 
     ruler.setFont(m_label->font());
     ruler.setText(m_text);
+    ruler.setAlignment(m_label->alignment());
+    ruler.setContentsMargins(contentsMargins());
 
     return ruler.sizeHint();
   }

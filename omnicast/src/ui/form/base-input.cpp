@@ -3,6 +3,7 @@
 #include <qevent.h>
 #include <qjsonvalue.h>
 #include <qlineedit.h>
+#include <qlogging.h>
 #include <qpainter.h>
 #include "ui/form/base-input.hpp"
 #include "theme.hpp"
@@ -12,9 +13,9 @@ void BaseInput::paintEvent(QPaintEvent *event) {
   int borderRadius = 4;
   QPainter painter(this);
 
-  painter.setRenderHint(QPainter::Antialiasing, true);
   QPen pen(hasFocus() ? theme.colors.subtext : theme.colors.border, 1);
   painter.setPen(pen);
+  painter.setRenderHint(QPainter::Antialiasing, true);
   painter.drawRoundedRect(rect(), borderRadius, borderRadius);
 
   QWidget::paintEvent(event);
@@ -101,3 +102,5 @@ BaseInput::BaseInput(QWidget *parent) : leftAccessory(nullptr), rightAccessory(n
   setFocusProxy(m_input);
   connect(m_input, &QLineEdit::textChanged, this, &BaseInput::textChanged);
 }
+
+BaseInput::~BaseInput() {}

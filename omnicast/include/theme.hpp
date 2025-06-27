@@ -70,16 +70,16 @@ struct ThemeInfo {
     QColor statusBackgroundHover;
     QColor statusBackgroundLighter;
 
-    ColorLike blue;
-    ColorLike green;
-    ColorLike magenta;
-    ColorLike orange;
-    ColorLike purple;
-    ColorLike red;
-    ColorLike yellow;
+    QColor blue;
+    QColor green;
+    QColor magenta;
+    QColor orange;
+    QColor purple;
+    QColor red;
+    QColor yellow;
   } colors;
 
-  ColorLike resolveTint(ColorTint tint) const {
+  QColor resolveTint(ColorTint tint) const {
     switch (tint) {
     case ColorTint::Blue:
       return colors.blue;

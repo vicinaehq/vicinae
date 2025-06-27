@@ -47,13 +47,11 @@ bool AppWindow::event(QEvent *event) {
     bool isEsc = keyEvent->key() == Qt::Key_Escape;
 
     if (isEsc || (keyEvent->key() == Qt::Key_Backspace)) {
-      qDebug() << "Root Escape";
       ServiceRegistry::instance()->UI()->popView();
       return true;
     }
 
     if (keyEvent->keyCombination() == QKeyCombination(Qt::ControlModifier, Qt::Key_Comma)) {
-      qCritical() << "show settings!";
       settings->show();
       return true;
     }
@@ -271,7 +269,7 @@ void AppWindow::resizeEvent(QResizeEvent *event) {
 void AppWindow::paintEvent(QPaintEvent *event) {
   auto &config = ServiceRegistry::instance()->config()->value();
   auto &theme = ThemeService::instance().theme();
-  int borderWidth = 1;
+  int borderWidth = 2;
   QColor finalBgColor = theme.colors.mainBackground;
   QPainter painter(this);
 

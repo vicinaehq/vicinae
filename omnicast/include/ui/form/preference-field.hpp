@@ -2,32 +2,10 @@
 #include "common.hpp"
 #include "preference.hpp"
 #include "ui/form/form-field.hpp"
-#include "ui/form/selector-input.hpp"
 #include <qjsonvalue.h>
 #include <qlineedit.h>
 #include <qlogging.h>
 #include <qwidget.h>
-
-class PreferenceDropdownItem : public SelectorInput::AbstractItem {
-  QString m_id;
-  QString m_displayName;
-
-  QString displayName() const override { return m_displayName; }
-
-  QString generateId() const override { return m_id; }
-
-  AbstractItem *clone() const override { return new PreferenceDropdownItem(*this); }
-
-public:
-  PreferenceDropdownItem(const Preference::DropdownData::Option &option)
-      : m_id(option.value), m_displayName(option.title) {}
-};
-
-struct PreferenceVisitor {
-  Preference m_preference;
-
-  PreferenceVisitor(const Preference &preference) : m_preference(preference) {}
-};
 
 class PreferenceField : public FormField, public JsonFormItemWidget {
   JsonFormItemWidget *m_serializable = nullptr;

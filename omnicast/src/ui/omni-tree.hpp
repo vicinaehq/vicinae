@@ -177,12 +177,16 @@ class OmniTreeRowWidget : public OmniListItemWidget {
 
   void paintEvent(QPaintEvent *event) override {
     OmniPainter painter(this);
+    auto &theme = ThemeService::instance().theme();
 
     if (m_color || m_selected) {
       painter.setRenderHint(QPainter::Antialiasing);
 
       if (m_selected) {
-        painter.setBrush(painter.colorBrush(ColorTint::Blue));
+        QColor color = theme.resolveTint(ColorTint::Blue);
+
+        color.setAlphaF(0.5);
+        painter.setBrush(color);
       } else {
         painter.setBrush(painter.colorBrush(*m_color));
       }

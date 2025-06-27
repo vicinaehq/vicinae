@@ -4,6 +4,7 @@
 #include "ui/horizontal-loading-bar.hpp"
 #include "ui/icon-button.hpp"
 #include "ui/argument-completer-widget.hpp"
+#include "ui/image/omnimg.hpp"
 #include "ui/inline_qline_edit.hpp"
 #include "ui/input_completer.hpp"
 #include <QKeyEvent>

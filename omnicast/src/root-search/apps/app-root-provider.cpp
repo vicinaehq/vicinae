@@ -5,6 +5,7 @@
 #include "root-item-manager.hpp"
 #include "service-registry.hpp"
 #include "settings/app-metadata-settings-detail.hpp"
+#include "settings/app-settings-detail.hpp"
 #include <qwidget.h>
 
 double AppRootItem::baseScoreWeight() const { return 1; }
@@ -97,6 +98,8 @@ QJsonObject AppRootProvider::generateDefaultPreferences() const {
 
   return preferences;
 }
+
+QWidget *AppRootProvider::settingsDetail() const { return new AppSettingsDetail; }
 
 QString AppRootProvider::uniqueId() const { return "apps"; }
 

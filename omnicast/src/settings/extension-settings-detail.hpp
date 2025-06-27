@@ -12,6 +12,7 @@ class ExtensionSettingsDetail : public QWidget {
 
   void setupUI();
   void savePendingPreferences();
+  void handleFocusChanged(bool focused);
 
 public:
   ExtensionSettingsDetail(const QString &rootItemId,

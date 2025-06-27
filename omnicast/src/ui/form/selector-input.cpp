@@ -5,6 +5,7 @@
 #include <memory>
 #include <qboxlayout.h>
 #include <qjsonvalue.h>
+#include <qlogging.h>
 #include <qnamespace.h>
 #include <qwidget.h>
 
@@ -59,11 +60,11 @@ bool SelectorInput::eventFilter(QObject *obj, QEvent *event) {
     }
   }
 
-  return false;
+  return QWidget::eventFilter(obj, event);
 }
 
 QJsonValue SelectorInput::asJsonValue() const {
-  return _currentSelection ? _currentSelection->generateId() : QJsonValue();
+  return _currentSelection ? _currentSelection->id() : QJsonValue();
 }
 
 void SelectorInput::setIsLoading(bool value) { m_loadingBar->setStarted(value); }
@@ -87,7 +88,8 @@ SelectorInput::SelectorInput(QWidget *parent)
     // we don't consider opening the selection menu a focus change
     if (!popover->isVisible()) {
       if (m_focused != value) {
-        m_focusNotifier->focusChanged(value);
+        qDebug() << "input field focus notifier" << value;
+        emit m_focusNotifier->focusChanged(value);
         m_focused = value;
       }
     }
@@ -133,7 +135,7 @@ SelectorInput::SelectorInput(QWidget *parent)
 
   emptyTypography->setContentsMargins(10, 10, 10, 10);
   emptyTypography->setText("No results");
-  emptyTypography->setColor(ColorTint::TextSecondary);
+  emptyTypography->setColor(ColorTint::TextPrimary);
   emptyTypography->setAlignment(Qt::AlignCenter);
   emptyLayout->addWidget(emptyTypography);
   m_emptyView->setLayout(emptyLayout);

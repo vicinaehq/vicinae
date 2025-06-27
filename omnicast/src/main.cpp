@@ -268,8 +268,8 @@ int startDaemon() {
   font.setHintingPreference(QFont::HintingPreference::PreferNoHinting);
 
   QApplication::setFont(font);
-
   QApplication::setApplicationName("omnicast");
+  QApplication::setQuitOnLastWindowClosed(false);
 
   return qApp->exec();
 }

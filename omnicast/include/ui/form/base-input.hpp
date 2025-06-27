@@ -44,6 +44,7 @@ public:
   QLineEdit *input() const;
 
   BaseInput(QWidget *parent = nullptr);
+  ~BaseInput();
 
 signals:
   void textChanged(const QString &);
