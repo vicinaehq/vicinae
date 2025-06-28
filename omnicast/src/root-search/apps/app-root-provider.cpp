@@ -8,6 +8,8 @@
 #include "settings/app-settings-detail.hpp"
 #include <qwidget.h>
 
+namespace fs = std::filesystem;
+
 double AppRootItem::baseScoreWeight() const { return 1; }
 
 QString AppRootItem::typeDisplayName() const { return "Application"; }
@@ -114,3 +116,21 @@ std::vector<std::shared_ptr<RootItem>> AppRootProvider::loadItems() const {
 }
 
 AppRootProvider::AppRootProvider(AppService &appService) : m_appService(appService) {}
+
+void AppRootProvider::preferencesChanged(const QJsonObject &preferences) {
+  QJsonArray jsonPaths = preferences.value("paths").toArray();
+
+  qCritical() << "app root provider preference hook!";
+
+  if (!jsonPaths.empty()) {
+    std::vector<fs::path> paths;
+    paths.reserve(jsonPaths.size());
+
+    for (const auto &jsonPath : jsonPaths) {
+      paths.emplace_back(jsonPath.toString().toStdString());
+    }
+
+    m_appService.setAdditionalSearchPaths(paths);
+    m_appService.scanSync();
+  }
+}

@@ -2,7 +2,6 @@
 #include "app/app-database.hpp"
 #include "app/xdg-app-database.hpp"
 #include "common.hpp"
-#include "libtrie/trie.hpp"
 #include "omni-database.hpp"
 #include "ranking-service.hpp"
 #include <memory>
@@ -29,7 +28,7 @@ public:
     size_t operator()(const std::shared_ptr<AppEntry> &app) const { return qHash(app->app->id()); }
   };
 
-  Trie<std::shared_ptr<AppEntry>, AppEntryHash> m_trie;
+  std::vector<std::filesystem::path> m_additionalSearchPaths;
 
 private:
   OmniDatabase &m_db;
@@ -46,69 +45,6 @@ private:
 #if defined(Q_OS_UNIX) && not defined(Q_OS_DARWIN)
     return std::make_unique<XdgAppDatabase>();
 #endif
-  }
-
-  void createTables() {
-    auto query = m_db.createQuery();
-
-    if (!query.exec(R"(
-	  	CREATE TABLE IF NOT EXISTS app_metadata (
-			id TEXT PRIMARY KEY,
-			disabled INT DEFAULT 0
-		);
-	  )")) {
-      qCritical() << "Failed to write table";
-    }
-  }
-
-  std::optional<std::shared_ptr<AppEntry>> syncApp(std::shared_ptr<Application> app) {
-    m_syncAppQuery.bindValue(":id", app->id());
-
-    if (!m_syncAppQuery.exec() || !m_syncAppQuery.next()) {
-      qCritical() << "Failed to sync app" << app->id() << m_syncAppQuery.lastError();
-      return {};
-    }
-
-    auto &record = m_ranking.findRecord(QString("application:%1").arg(app->id()));
-    AppEntry entry;
-
-    entry.openCount = record.visitedCount;
-    entry.lastOpenedAt = record.lastVisitedAt;
-    entry.frecency = m_ranking.computeFrecency(record);
-    entry.disabled = m_syncAppQuery.value(0).toBool();
-    entry.searchTokens = app->name().split(' ');
-    entry.app = app;
-
-    auto ptr = std::make_shared<AppEntry>(entry);
-
-    m_trie.indexLatinText(entry.app->name().toStdString(), ptr);
-
-    for (const auto &keyword : app->keywords()) {
-      m_trie.index(keyword.toStdString(), ptr);
-    }
-
-    return ptr;
-  }
-
-  void syncApps() {
-    auto apps = m_provider->list();
-
-    m_entries.reserve(apps.size());
-    m_entries.clear();
-    m_db.db().transaction();
-
-    for (const auto &app : apps) {
-      if (auto entry = syncApp(app)) { m_entries.emplace_back(*entry); }
-    }
-
-    qDebug() << "Transformed" << m_entries.size() << "apps";
-
-    m_syncAppQuery.finish();
-
-    if (!m_db.db().commit()) {
-      qCritical() << "Failed to commit to DB" << m_db.db().lastError();
-      m_db.db().rollback();
-    }
   }
 
 public:
@@ -163,22 +99,27 @@ public:
     return m_provider->findBestOpener(target);
   }
 
+  void setAdditionalSearchPaths(const std::vector<std::filesystem::path> &paths) {
+    m_additionalSearchPaths = paths;
+  }
+
+  /**
+   * Scan application directories synchronously.
+   * This is usually very fast.
+   */
+  bool scanSync() {
+    std::vector<std::filesystem::path> paths = m_provider->defaultSearchPaths();
+
+    paths.insert(paths.end(), m_additionalSearchPaths.begin(), m_additionalSearchPaths.end());
+
+    return m_provider->scan(paths);
+  }
+
   std::vector<std::shared_ptr<Application>> findOpeners(const QString &target) const {
     return m_provider->findOpeners(target);
   }
 
   AppService(OmniDatabase &db, RankingService &ranking) : m_db(db), m_ranking(ranking) {
-    createTables();
-    m_ranking.loadRecords("application");
-    m_syncAppQuery = db.createQuery();
-    m_syncAppQuery.prepare(R"(
-	  	INSERT INTO app_metadata (id) 
-		VALUES (:id)
-		ON CONFLICT (id)
-		DO UPDATE SET disabled = disabled 
-		RETURNING disabled
-	)");
     m_provider = createLocalProvider();
-    syncApps();
   }
 };

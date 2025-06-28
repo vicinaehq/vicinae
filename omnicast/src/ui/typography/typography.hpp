@@ -17,6 +17,7 @@ class TypographyWidget : public QWidget {
   ColorLike m_color = ColorTint::TextPrimary;
   QString m_text;
   QLabel *m_label = new QLabel(this);
+  Qt::TextElideMode m_elideMode = Qt::ElideRight;
 
 protected:
   void updateText();
@@ -28,6 +29,7 @@ protected:
 public:
   void setText(const QString &text);
   QString text() const;
+  void setEllideMode(Qt::TextElideMode mode);
   void setColor(const ColorLike &color);
   void setFont(const QFont &f);
   void setFontWeight(QFont::Weight weight);

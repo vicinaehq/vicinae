@@ -43,6 +43,8 @@ public:
 
   virtual std::vector<std::filesystem::path> defaultSearchPaths() const = 0;
 
+  virtual bool scan(const std::vector<std::filesystem::path> &paths) = 0;
+
   virtual bool launch(const Application &exec, const std::vector<QString> &args = {}) const = 0;
   /**
    * Returns the best app to open the passed target.

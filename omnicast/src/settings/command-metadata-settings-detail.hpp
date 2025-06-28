@@ -2,6 +2,7 @@
 #include "common.hpp"
 #include "preference.hpp"
 #include "theme.hpp"
+#include "ui/file-picker/file-picker.hpp"
 #include "ui/preference-dropdown/preference-dropdown.hpp"
 #include "ui/form/base-input.hpp"
 #include "ui/form/form.hpp"
@@ -55,6 +56,34 @@ public:
   void setDescription(const QString &title) { m_description->setText(title); }
 
   PreferenceSwitchFormItem(QWidget *parent = nullptr) : AbstractPreferenceFormItem(parent) { setupUI(); }
+};
+
+class FilePickerPreferenceFormItem : public AbstractPreferenceFormItem {
+  QVBoxLayout *m_vlayout = new QVBoxLayout;
+  FilePicker *m_filePicker = new FilePicker(this);
+  TypographyWidget *m_label = new TypographyWidget;
+  TypographyWidget *m_description = new TypographyWidget;
+
+  void setupUI() {
+    m_label->setColor(ColorTint::TextSecondary);
+    m_description->setWordWrap(true);
+    m_description->setSize(TextSize::TextSmaller);
+    m_vlayout->setContentsMargins(0, 0, 0, 0);
+    m_vlayout->setSpacing(10);
+    m_vlayout->addWidget(m_label);
+    m_vlayout->addWidget(m_description);
+    m_vlayout->addWidget(m_filePicker);
+    setLayout(m_vlayout);
+  }
+
+  JsonFormItemWidget *formItem() const override { return m_filePicker; }
+
+public:
+  void setLabel(const QString &title) { m_label->setText(title); }
+  void setDescription(const QString &title) { m_description->setText(title); }
+  FilePicker *filerPicker() const { return m_filePicker; }
+
+  FilePickerPreferenceFormItem(QWidget *parent = nullptr) : AbstractPreferenceFormItem(parent) { setupUI(); }
 };
 
 class VerticalFormItem : public AbstractPreferenceFormItem {

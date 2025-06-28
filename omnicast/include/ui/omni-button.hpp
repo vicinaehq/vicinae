@@ -3,6 +3,7 @@
 #include "theme.hpp"
 #include "ui/typography/typography.hpp"
 #include <qboxlayout.h>
+#include <qcoreevent.h>
 #include <qmargins.h>
 #include <qnamespace.h>
 #include <qpainterpath.h>
@@ -17,21 +18,30 @@ class OmniButtonWidget : public QWidget {
   TypographyWidget *label = new TypographyWidget;
   QHBoxLayout *_layout = new QHBoxLayout;
   bool _focused = false;
+  bool m_hovered = false;
+  ColorLike m_color = Qt::transparent;
+  ColorLike m_hoverColor = Qt::transparent;
 
 protected:
   void paintEvent(QPaintEvent *event) override {
     auto &theme = ThemeService::instance().theme();
     int borderRadius = 4;
-    QPainter painter(this);
+    OmniPainter painter(this);
     QPainterPath path;
     QPen pen(theme.colors.text, 1);
-    QColor finalColor(theme.colors.mainBackground);
+    QBrush brush;
+
+    if (underMouse()) {
+      brush = painter.colorBrush(m_hoverColor);
+    } else {
+      brush = painter.colorBrush(m_color);
+    }
 
     painter.setRenderHint(QPainter::Antialiasing, true);
     path.addRoundedRect(rect(), borderRadius, borderRadius);
     painter.setClipPath(path);
     painter.setPen(_focused ? pen : Qt::NoPen);
-    painter.fillPath(path, finalColor);
+    painter.fillPath(path, brush);
     painter.drawPath(path);
   }
 
@@ -49,6 +59,8 @@ protected:
     emit activated();
   }
 
+  bool event(QEvent *event) override { return QWidget::event(event); }
+
   void keyPressEvent(QKeyEvent *event) override {
     switch (event->key()) {
     case Qt::Key_Return:
@@ -61,6 +73,16 @@ protected:
   }
 
 public:
+  void setBackgroundColor(const ColorLike &color) {
+    m_color = color;
+    update();
+  }
+
+  void setHoverBackgroundColor(const ColorLike &color) {
+    m_hoverColor = color;
+    update();
+  }
+
   void setFocused(bool value) {
     if (_focused == value) return;
 

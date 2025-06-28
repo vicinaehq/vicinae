@@ -17,6 +17,7 @@
 #include <qimagereader.h>
 #include <qlogging.h>
 #include <qmimedatabase.h>
+#include <qmimetype.h>
 #include <qmovie.h>
 #include <qnamespace.h>
 #include <qnetworkreply.h>

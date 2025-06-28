@@ -86,6 +86,7 @@ class XdgAppDatabase : public AbstractAppDatabase {
   bool addDesktopFile(const QString &path);
 
 public:
+  bool scan(const std::vector<std::filesystem::path> &paths) override;
   std::vector<std::filesystem::path> defaultSearchPaths() const override;
   AppPtr findByClass(const QString &name) const override;
   AppPtr findBestOpener(const QString &target) const override;

@@ -11,7 +11,7 @@ void TypographyWidget::updateText() {
   }
 
   QFontMetrics metrics = m_label->fontMetrics();
-  QString text = metrics.elidedText(m_text, Qt::ElideRight, width());
+  QString text = metrics.elidedText(m_text, m_elideMode, width());
   m_label->setText(text);
   updateGeometry();
 }
@@ -21,6 +21,8 @@ void TypographyWidget::resizeEvent(QResizeEvent *event) {
   // qCritical() << "size" << event->size() << "hint" << sizeHint() << m_text;
   updateText();
 }
+
+void TypographyWidget::setEllideMode(Qt::TextElideMode mode) { m_elideMode = mode; }
 
 void TypographyWidget::paintEvent(QPaintEvent *event) {
   OmniPainter painter(this);

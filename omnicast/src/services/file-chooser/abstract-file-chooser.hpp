@@ -1,0 +1,29 @@
+#pragma once
+#include <qobject.h>
+#include <qstringliteral.h>
+#include <qstringlist.h>
+#include <filesystem>
+#include <qtmetamacros.h>
+
+/**
+ * Generic FileChooser interface used to accomodate different file choosing methods.
+ */
+
+class AbstractFileChooser : public QObject {
+  Q_OBJECT
+
+public:
+  /**
+   * Open the file chooser.
+   * Return whether the operation succeeded or not.
+   */
+  virtual bool openFile() = 0;
+
+  virtual void setMimeTypeFilters(const QStringList &filters) {}
+  virtual void setMultipleSelection(bool value) {}
+  virtual void setAcceptLabel(const QString &value) {}
+  virtual void setCurrentFolder(const std::filesystem::path &path) {}
+
+signals:
+  void filesChosen(const std::vector<std::filesystem::path> &paths);
+};

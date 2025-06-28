@@ -365,6 +365,10 @@ public:
   RootItemManager(OmniDatabase &db) : m_db(db) { createTables(); }
 
   bool setProviderPreferenceValues(const QString &id, const QJsonObject &preferences) {
+    auto provider = findProviderById(id);
+
+    if (!provider) return false;
+
     auto query = m_db.createQuery();
     QJsonDocument json;
 
@@ -377,6 +381,8 @@ public:
       qDebug() << "setRepositoryPreferenceValues:" << query.lastError();
       return false;
     }
+
+    provider->preferencesChanged(preferences);
 
     return true;
   }
@@ -567,7 +573,6 @@ public:
       return {};
     }
     auto rawJson = query.value(0).toString();
-    qDebug() << "raw preferences json" << rawJson;
     auto json = QJsonDocument::fromJson(rawJson.toUtf8());
     QJsonObject values = json.object();
 
@@ -812,16 +817,18 @@ public:
 
     std::ranges::for_each(items, [&](const auto &item) { upsertItem(provider->uniqueId(), *item.get()); });
 
-    auto existingPreferences = getProviderPreferenceValues(provider->uniqueId());
+    auto preferences = getProviderPreferenceValues(provider->uniqueId());
 
-    if (existingPreferences.empty()) {
-      QJsonObject defaultPreferences = provider->generateDefaultPreferences();
+    if (preferences.empty()) {
+      preferences = provider->generateDefaultPreferences();
 
-      if (!defaultPreferences.empty()) {
+      if (!preferences.empty()) {
         qCritical() << "set default preferences for app" << provider->uniqueId();
-        setProviderPreferenceValues(provider->uniqueId(), defaultPreferences);
+        setProviderPreferenceValues(provider->uniqueId(), preferences);
       }
     }
+
+    provider->preferencesChanged(preferences);
 
     connect(provider.get(), &RootProvider::itemsChanged, this, &RootItemManager::reloadProviders);
     m_providers.emplace_back(std::move(provider));

@@ -40,6 +40,85 @@ AppPtr XdgAppDatabase::findBestOpenerForMime(const QString &mimeName) const {
   return nullptr;
 }
 
+bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
+  std::vector<fs::path> traversed;
+
+  // scan dirs
+  for (const auto &dir : paths) {
+    if (std::ranges::any_of(traversed, [&](auto &&path) { return path == dir; })) continue;
+
+    traversed.emplace_back(dir);
+
+    if (!fs::is_directory(dir)) continue;
+
+    std::error_code ec;
+
+    for (const auto &entry : fs::directory_iterator(dir, ec)) {
+      if (ec) continue;
+      std::string filename = entry.path().filename().string();
+      if (!filename.ends_with(".desktop")) continue;
+
+      addDesktopFile(entry.path().c_str());
+    }
+  }
+
+  QString configHome = qgetenv("XDG_CONFIG_HOME");
+
+  if (configHome.isEmpty()) configHome = QDir::homePath() + QDir::separator() + ".config";
+
+  QList<QDir> mimeappDirs;
+
+  mimeappDirs.push_back(configHome);
+  mimeappDirs.push_back(QDir("/etc/xdg"));
+
+  for (const auto &dir : mimeappDirs) {
+    QString path = dir.path() + QDir::separator() + "mimeapps.list";
+    QSettings ini(path, QSettings::IniFormat);
+
+    ini.beginGroup("Default Applications");
+    for (const auto &key : ini.allKeys()) {
+      auto appId = ini.value(key).toString();
+
+      mimeToDefaultApp[key] = appId;
+    }
+    ini.endGroup();
+
+    ini.beginGroup("Added Associations");
+    for (const auto &mime : ini.childKeys()) {
+      for (const auto app : ini.value(mime).toString().split(";")) {
+        // add mime -> apps mapping
+        if (auto it = mimeToApps.find(mime); it != mimeToApps.end()) {
+          it->second.insert(app);
+        } else {
+          mimeToApps.insert({mime, {app}});
+        }
+
+        // add app -> mimes mapping
+        if (auto it = appToMimes.find(app); it != appToMimes.end()) {
+          it->second.insert(mime);
+        } else {
+          appToMimes.insert({app, {mime}});
+        }
+      }
+    }
+    ini.endGroup();
+
+    ini.beginGroup("Removed Associations");
+    for (const auto &mime : ini.childKeys()) {
+      for (const auto app : ini.value(mime).toString().split(";")) {
+        // add mime -> apps mapping
+        if (auto it = mimeToApps.find(mime); it != mimeToApps.end()) { mimeToApps.erase(it); }
+
+        // add app -> mimes mapping
+        if (auto it = appToMimes.find(app); it != appToMimes.end()) { appToMimes.erase(it); }
+      }
+    }
+    ini.endGroup();
+  }
+
+  return true;
+}
+
 std::vector<fs::path> XdgAppDatabase::defaultSearchPaths() const {
   char *ddir = std::getenv("XDG_DATA_DIRS");
 
@@ -235,80 +314,4 @@ bool XdgAppDatabase::addDesktopFile(const QString &path) {
   return true;
 }
 
-XdgAppDatabase::XdgAppDatabase() {
-  std::vector<fs::path> paths = defaultSearchPaths();
-  std::vector<fs::path> traversed;
-
-  // scan dirs
-  for (const auto &dir : paths) {
-    if (std::ranges::any_of(traversed, [&](auto &&path) { return path == dir; })) continue;
-
-    traversed.emplace_back(dir);
-
-    if (!fs::is_directory(dir)) continue;
-
-    std::error_code ec;
-
-    for (const auto &entry : fs::directory_iterator(dir, ec)) {
-      if (ec) continue;
-      std::string filename = entry.path().filename().string();
-      if (!filename.ends_with(".desktop")) continue;
-
-      addDesktopFile(entry.path().c_str());
-    }
-  }
-
-  QString configHome = qgetenv("XDG_CONFIG_HOME");
-
-  if (configHome.isEmpty()) configHome = QDir::homePath() + QDir::separator() + ".config";
-
-  QList<QDir> mimeappDirs;
-
-  mimeappDirs.push_back(configHome);
-  mimeappDirs.push_back(QDir("/etc/xdg"));
-
-  for (const auto &dir : mimeappDirs) {
-    QString path = dir.path() + QDir::separator() + "mimeapps.list";
-    QSettings ini(path, QSettings::IniFormat);
-
-    ini.beginGroup("Default Applications");
-    for (const auto &key : ini.allKeys()) {
-      auto appId = ini.value(key).toString();
-
-      mimeToDefaultApp[key] = appId;
-    }
-    ini.endGroup();
-
-    ini.beginGroup("Added Associations");
-    for (const auto &mime : ini.childKeys()) {
-      for (const auto app : ini.value(mime).toString().split(";")) {
-        // add mime -> apps mapping
-        if (auto it = mimeToApps.find(mime); it != mimeToApps.end()) {
-          it->second.insert(app);
-        } else {
-          mimeToApps.insert({mime, {app}});
-        }
-
-        // add app -> mimes mapping
-        if (auto it = appToMimes.find(app); it != appToMimes.end()) {
-          it->second.insert(mime);
-        } else {
-          appToMimes.insert({app, {mime}});
-        }
-      }
-    }
-    ini.endGroup();
-
-    ini.beginGroup("Removed Associations");
-    for (const auto &mime : ini.childKeys()) {
-      for (const auto app : ini.value(mime).toString().split(";")) {
-        // add mime -> apps mapping
-        if (auto it = mimeToApps.find(mime); it != mimeToApps.end()) { mimeToApps.erase(it); }
-
-        // add app -> mimes mapping
-        if (auto it = appToMimes.find(app); it != appToMimes.end()) { appToMimes.erase(it); }
-      }
-    }
-    ini.endGroup();
-  }
-}
+XdgAppDatabase::XdgAppDatabase() { scan(defaultSearchPaths()); }

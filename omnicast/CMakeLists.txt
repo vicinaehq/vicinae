@@ -7,7 +7,7 @@ set(LIBS)
 
 set(TARGET omnicast)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets Sql Network Svg)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Sql Network Svg DBus)
 find_package(cmark REQUIRED)
 
 option(WAYLAND_LAYER_SHELL "Enable support for the Wayland layer shell
@@ -15,7 +15,7 @@ protocol, required for proper window positioning on most wlroots-based
 compositors." ON)
 
 
-list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg cmark proto qalculate)
+list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus cmark proto qalculate)
 
 
 if (UNIX AND NOT APPLE)
@@ -388,6 +388,10 @@ set(SRCS
 
 	src/ui/switch/switch.hpp
 	src/ui/switch/switch.cpp
+	src/ui/file-picker/file-picker.hpp
+	src/ui/file-picker/file-picker.cpp
+	src/ui/file-picker/file-picker-default-item-delegate.hpp
+	src/ui/file-picker/file-picker-default-item-delegate.cpp
 
 	src/ui/typography/typography.hpp
 	src/ui/typography/typography.cpp
@@ -396,6 +400,10 @@ set(SRCS
 	src/ui/preference-dropdown/preference-dropdown.cpp
 
 	src/utils/utils.cpp
+
+	src/services/file-chooser/abstract-file-chooser.hpp
+	src/services/file-chooser/xdp-file-chooser/xdp-file-chooser.hpp
+	src/services/file-chooser/xdp-file-chooser/xdp-file-chooser.cpp
 )
 
 

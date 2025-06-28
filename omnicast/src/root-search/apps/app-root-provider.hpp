@@ -36,6 +36,7 @@ public:
   QString displayName() const override;
   QString uniqueId() const override;
   QWidget *settingsDetail() const override;
+  void preferencesChanged(const QJsonObject &preferences) override;
 
 public:
   AppRootProvider(AppService &appService);
