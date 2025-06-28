@@ -2,6 +2,7 @@
 #include "service-registry.hpp"
 #include "settings/command-metadata-settings-detail.hpp"
 #include "ui/file-picker/file-picker-default-item-delegate.hpp"
+#include "ui/app-selector/app-selector.hpp"
 #include "ui/file-picker/file-picker.hpp"
 #include <qwidget.h>
 

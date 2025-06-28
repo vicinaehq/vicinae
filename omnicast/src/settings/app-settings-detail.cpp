@@ -34,6 +34,7 @@ void AppSettingsDetail::setupUI() {
       "search paths are computed at runtime and cannot be removed.");
 
   layout->addWidget(m_filePickerItem);
+  layout->setSpacing(20);
   layout->addStretch();
   setLayout(layout);
 }

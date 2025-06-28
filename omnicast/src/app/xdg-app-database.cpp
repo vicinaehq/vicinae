@@ -25,7 +25,7 @@ std::shared_ptr<Application> XdgAppDatabase::defaultForMime(const QString &mime)
 AppPtr XdgAppDatabase::findBestOpenerForMime(const QString &mimeName) const {
   QMimeType mime = mimeDb.mimeTypeForName(mimeName);
 
-  if (auto app = defaultForMime(mime.name())) { return app; }
+  if (auto app = defaultForMime(mimeName)) { return app; }
 
   for (const auto &mime : mime.parentMimeTypes()) {
     if (auto app = defaultForMime(mime)) return app;
@@ -41,6 +41,14 @@ AppPtr XdgAppDatabase::findBestOpenerForMime(const QString &mimeName) const {
 }
 
 bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
+  appMap.clear();
+  mimeToApps.clear();
+  appToMimes.clear();
+  mimeToDefaultApp.clear();
+  apps.clear();
+
+  qCritical() << "XdgAppDatabase::scan";
+
   std::vector<fs::path> traversed;
 
   // scan dirs
@@ -242,8 +250,16 @@ bool XdgAppDatabase::launch(const Application &app, const std::vector<QString> &
   size_t offset = 0;
 
   if (xdgApp.isTerminalApp()) {
-    // TODO: do better!
-    program = "alacritty";
+    if (auto emulator = findBestOpenerForMime("x-scheme-handler/terminal")) {
+      auto xdgEmulator = static_cast<const XdgApplicationBase *>(emulator.get());
+      if (auto exec = xdgEmulator->exec(); !exec.empty()) { program = exec.at(0); }
+    }
+
+    if (program.isEmpty()) {
+      qWarning() << "XdgAppDatabase::launch: no default terminal could be found, we will default on the "
+                    "generic 'xterm'";
+      program = "xterm";
+    }
     argv << "-e";
   } else {
     program = exec.at(0);

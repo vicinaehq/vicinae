@@ -3,6 +3,8 @@
 #include "create-quicklink-command.hpp"
 #include "configure-ai-providers-command.hpp"
 #include "emoji-command.hpp"
+#include "extensions/omnicast/open-documentation-command.hpp"
+#include "extensions/omnicast/refresh-apps-command.hpp"
 #include "icon-browser-command.hpp"
 #include "manage-fallback-commands.hpp"
 #include "omnicast/browse-fonts-view.hpp"
@@ -18,14 +20,6 @@
 #include <qdnslookup.h>
 #include <qfuture.h>
 #include <qlocale.h>
-
-QColor getWashedUpWhite() {
-  QColor color("#FFFFFF");
-
-  color.setAlphaF(0.6);
-
-  return color;
-}
 
 OmniIconUrl tintedCommandIcon(const QString &iconName, ColorTint tint) {
   BuiltinOmniIconUrl url(iconName);
@@ -80,15 +74,35 @@ CommandDatabase::CommandDatabase() {
 
     registerRepository(clipboard);
 
-    auto iconSearch = CommandBuilder("browse-icons")
-                          .withName("Search Omnicast Icons")
-                          .withTintedIcon("omnicast", ColorTint::Red)
-                          .toSingleView<IconBrowserView>();
+    auto iconSearch =
+        CommandBuilder("browse-icons")
+            .withName("Search Omnicast Icons")
+            .withDescription(
+                R"("Browse the list of icons that are built into Omnicast. Useful when building extensions.")")
+            .withTintedIcon("omnicast", ColorTint::Red)
+            .toSingleView<IconBrowserView>();
 
-    auto configureFallbackCommands = CommandBuilder("configure-fallback-commands")
-                                         .withName("Configure Fallback Commands")
-                                         .withTintedIcon("arrow-counter-clockwise", ColorTint::Red)
-                                         .toSingleView<ManageFallbackCommands>();
+    auto configureFallbackCommands =
+        CommandBuilder("configure-fallback-commands")
+            .withName("Configure Fallback Commands")
+            .withDescription(
+                R"("Configure what commands are to be presented as fallback options when nothing matches the search in the root search.)")
+            .withTintedIcon("magnifying-glass", ColorTint::Red)
+            .toSingleView<ManageFallbackCommands>();
+
+    auto refreshApps =
+        CommandBuilder("refresh-apps")
+            .withName("Refresh Applications")
+            .withDescription(
+                R"(Refresh applications installed on the system and update the root search index accordingly. Running this command manually is usually not needed but can help work around some quirks.)")
+            .withTintedIcon("redo", ColorTint::Red)
+            .toContext<RefreshAppsCommandContext>();
+
+    auto openDocumentation = CommandBuilder("open-documentation")
+                                 .withName("Open Documentation")
+                                 .withDescription(R"(Open the Omnicast documentation in the default browser)")
+                                 .withTintedIcon("book", ColorTint::Red)
+                                 .toContext<OpenDocumentationCommand>();
 
     auto omnicast = CommandRepositoryBuilder("omnicast")
                         .withTintedIcon("omnicast", ColorTint::Red)
@@ -96,6 +110,8 @@ CommandDatabase::CommandDatabase() {
                         .withCommand(emoji)
                         .withCommand(iconSearch)
                         .withCommand(configureFallbackCommands)
+                        .withCommand(refreshApps)
+                        .withCommand(openDocumentation)
                         .makeShared();
 
     registerRepository(omnicast);
@@ -151,21 +167,26 @@ CommandDatabase::CommandDatabase() {
   }
 
   {
-    auto manageThemes = CommandBuilder("manage").withName("Manage Themes").toSingleView<ManageThemesView>();
-    auto setAppearance =
-        CommandBuilder("appearance").withName("Set omnicast appearance").toSingleView<ManageThemesView>();
+    auto manageThemes =
+        CommandBuilder("manage")
+            .withName("Manage Themes")
+            .withDescription(
+                "Change the theme of the entire application. <a href=\"#\">Learn more about theming</a>")
+            .toSingleView<ManageThemesView>();
     auto theme = CommandRepositoryBuilder("theme")
                      .withName("Theme")
                      .withTintedIcon("brush", ColorTint::Purple)
                      .withCommand(manageThemes)
-                     .withCommand(setAppearance)
                      .makeShared();
 
     registerRepository(theme);
   }
 
   {
-    auto browseFonts = CommandBuilder("browser").withName("Browse Fonts").toSingleView<BrowseFontsView>();
+    auto browseFonts = CommandBuilder("browser")
+                           .withName("Browse Fonts")
+                           .withDescription(R"("Browse system fonts and set the Omnicast default font.")")
+                           .toSingleView<BrowseFontsView>();
     auto fonts = CommandRepositoryBuilder("fonts")
                      .withName("Font")
                      .withTintedIcon("text", ColorTint::Orange)

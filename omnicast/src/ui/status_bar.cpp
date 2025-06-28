@@ -149,7 +149,9 @@ void StatusBar::paintEvent(QPaintEvent *event) {
 
   painter.setRenderHint(QPainter::Antialiasing, true);
 
-  painter.setBrush(theme.colors.statusBackground);
+  QColor color = theme.colors.statusBackground;
+
+  painter.setBrush(color);
   painter.setPen(QPen(theme.colors.border));
   painter.drawRoundedRect(rect(), radius, radius);
   painter.setPen(Qt::NoPen);

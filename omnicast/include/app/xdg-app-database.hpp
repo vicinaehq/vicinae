@@ -3,6 +3,7 @@
 #include "omni-icon.hpp"
 #include "xdg/xdg-desktop.hpp"
 #include <qfileinfo.h>
+#include <qlogging.h>
 #include <qmimedatabase.h>
 #include <qmimetype.h>
 #include <qprocess.h>

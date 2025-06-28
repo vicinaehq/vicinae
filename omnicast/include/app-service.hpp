@@ -74,6 +74,9 @@ public:
 
   std::shared_ptr<Application> webBrowser() const { return m_provider->webBrowser(); }
   std::shared_ptr<Application> fileBrowser() const { return m_provider->fileBrowser(); }
+  std::shared_ptr<Application> terminalEmulator() const {
+    return m_provider->findBestOpenerForMime("x-scheme-handler/terminal");
+  }
   std::shared_ptr<Application> textEditor() const { return m_provider->textEditor(); }
 
   std::shared_ptr<Application> findById(const QString &id) const { return m_provider->findById(id); }
@@ -101,6 +104,14 @@ public:
 
   void setAdditionalSearchPaths(const std::vector<std::filesystem::path> &paths) {
     m_additionalSearchPaths = paths;
+  }
+
+  /**
+   * Returns all the apps that are marked as being terminal emulators.
+   */
+  std::vector<std::shared_ptr<Application>> terminalEmulators() const {
+    return m_provider->list() | std::views::filter([&](auto &&app) { return app->isTerminalEmulator(); }) |
+           std::ranges::to<std::vector>();
   }
 
   /**

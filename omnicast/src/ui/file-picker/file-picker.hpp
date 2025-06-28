@@ -72,7 +72,11 @@ class SelectedFileWidget : public OmniListItemWidget {
 public:
   void setRemovable(bool removable) {
     m_removeButton->setVisible(removable);
-    ;
+    if (!removable) {
+      m_title->setColor(ColorTint::TextSecondary);
+    } else {
+      m_title->setColor(ColorTint::TextPrimary);
+    }
   }
 
   void setFile(const File &file) {

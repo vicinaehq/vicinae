@@ -132,5 +132,6 @@ void AppRootProvider::preferencesChanged(const QJsonObject &preferences) {
 
     m_appService.setAdditionalSearchPaths(paths);
     m_appService.scanSync();
+    emit itemsChanged();
   }
 }

@@ -380,10 +380,7 @@ signals:
 class VerticalScrollArea : public QScrollArea {
 public:
   bool eventFilter(QObject *o, QEvent *e) override {
-    if (o == widget() && e->type() == QEvent::Resize) {
-      qCritical() << "set maximum width" << width();
-      widget()->setMaximumWidth(width());
-    }
+    if (o == widget() && e->type() == QEvent::Resize) { widget()->setMaximumWidth(width()); }
 
     return false;
   }

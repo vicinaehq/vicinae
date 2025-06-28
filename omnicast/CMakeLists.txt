@@ -386,6 +386,11 @@ set(SRCS
 
 	src/extensions/clipboard/clipboard-history-command.cpp
 
+	src/extensions/omnicast/refresh-apps-command.hpp
+	src/extensions/omnicast/refresh-apps-command.cpp
+	src/extensions/omnicast/open-documentation-command.hpp
+	src/extensions/omnicast/open-documentation-command.cpp
+
 	src/ui/switch/switch.hpp
 	src/ui/switch/switch.cpp
 	src/ui/file-picker/file-picker.hpp
@@ -398,6 +403,8 @@ set(SRCS
 
 	src/ui/preference-dropdown/preference-dropdown.hpp
 	src/ui/preference-dropdown/preference-dropdown.cpp
+	src/ui/app-selector/app-selector.hpp
+	src/ui/app-selector/app-selector.cpp
 
 	src/utils/utils.cpp
 

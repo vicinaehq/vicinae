@@ -63,6 +63,11 @@ public:
   }
 
   template <typename T> std::shared_ptr<BuiltinCommand> toContext() {
-    return std::make_shared<BuiltinCommandContext<T>>(_id, _name, _url, _preferences);
+    auto cmd = std::make_shared<BuiltinCommandContext<T>>(_id, _name, _url, _preferences);
+
+    cmd->setIsFallback(m_fallback);
+    cmd->setDescription(m_description);
+
+    return cmd;
   }
 };
