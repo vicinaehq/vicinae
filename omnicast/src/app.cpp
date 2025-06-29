@@ -420,20 +420,18 @@ AppWindow::AppWindow(QWidget *parent) : QMainWindow(parent) {
   connect(m_actionPanel, &ActionPanelV2Widget::closed, this,
           [this]() { m_statusBar->setActionButtonHighlight(false); });
 
-  connect(ServiceRegistry::instance()->UI(), &UIController::popToRootRequested, this, [this]() {
+  connect(ui, &UIController::popToRootRequested, this, [this]() {
     // popToRoot();
     // if (auto front = frontView()) { front->clearSearchBar(); }
   });
-  connect(ServiceRegistry::instance()->UI(), &UIController::launchCommandRequested, this,
+  connect(ui, &UIController::launchCommandRequested, this,
           [this](const auto &cmd) { launchCommand(cmd, {}, {}); });
-  connect(ServiceRegistry::instance()->UI(), &UIController::popViewRequested, this,
-          [this]() { popCurrentView(); });
-  connect(ServiceRegistry::instance()->UI(), &UIController::pushViewRequested, this,
+  connect(ui, &UIController::popViewRequested, this, [this]() { popCurrentView(); });
+  connect(ui, &UIController::pushViewRequested, this,
           [this](BaseView *view, const PushViewOptions &opts) { pushView(view, opts); });
-  connect(ServiceRegistry::instance()->UI(), &UIController::closeWindowRequested, this,
-          [this]() { closeWindow(false); });
-  connect(ServiceRegistry::instance()->UI(), &UIController::replaceViewRequested, this,
-          &AppWindow::replaceView);
+  connect(ui, &UIController::closeWindowRequested, this, [this]() { closeWindow(false); });
+  connect(ui, &UIController::replaceViewRequested, this, &AppWindow::replaceView);
+  connect(ui, &UIController::openSettingsRequested, this, [this]() { settings->show(); });
 
   auto toast = ServiceRegistry::instance()->toastService();
 

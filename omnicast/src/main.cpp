@@ -1,6 +1,6 @@
 #include "ai/ollama-ai-provider.hpp"
 #include <QStyleHints>
-#include "app-service.hpp"
+#include "services/app-service/app-service.hpp"
 #include "command-database.hpp"
 #include "root-search/apps/app-root-provider.hpp"
 #include "services/bookmark/bookmark-service.hpp"
@@ -167,7 +167,7 @@ int startDaemon() {
     auto ollamaProvider = std::make_unique<OllamaAiProvider>();
     auto fontService = std::make_unique<FontService>();
     auto rankingService = std::make_unique<RankingService>(*omniDb);
-    auto appService = std::make_unique<AppService>(*omniDb.get(), *rankingService.get());
+    auto appService = std::make_unique<AppService>(*omniDb.get());
     auto configService = std::make_unique<ConfigService>();
     auto bookmarkService = std::make_unique<BookmarkService>(*omniDb.get());
     auto toastService = std::make_unique<ToastService>();
@@ -191,7 +191,7 @@ int startDaemon() {
     }
 
     {
-      auto seeder = std::make_unique<QuickLinkSeeder>(*appService->appProvider(), *quicklinkService);
+      auto seeder = std::make_unique<QuickLinkSeeder>(*appService->provider(), *quicklinkService);
 
       if (quicklinkService->list().empty()) { seeder->seed(); }
     }

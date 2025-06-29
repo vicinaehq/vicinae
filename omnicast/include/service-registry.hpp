@@ -1,6 +1,6 @@
 #pragma once
 #include "ai/ai-service.hpp"
-#include "app-service.hpp"
+#include "services/app-service/app-service.hpp"
 #include "services/bookmark/bookmark-service.hpp"
 #include "calculator-database.hpp"
 #include "services/clipboard/clipboard-service.hpp"

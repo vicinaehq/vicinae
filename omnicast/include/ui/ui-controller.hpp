@@ -233,9 +233,11 @@ if (accessory) {
   void setSearchVisibility(bool value) { setSearchVisibility(topView(), value); }
 
   void setActionPanelWidget(BaseView *sender, ActionPanelV2Widget *panel);
+  void openSettings() const { emit openSettingsRequested(); }
 
 signals:
   void pushViewRequested(BaseView *view, const PushViewOptions &opts) const;
+  void openSettingsRequested() const;
   void popViewRequested() const;
   void popToRootRequested() const;
   void closeWindowRequested() const;

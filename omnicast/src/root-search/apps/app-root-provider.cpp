@@ -35,8 +35,8 @@ OmniIconUrl AppRootItem::iconUrl() const { return m_app->iconUrl(); }
 ActionPanelView *AppRootItem::actionPanel() const {
   auto panel = new ActionPanelStaticListView;
   auto appDb = ServiceRegistry::instance()->appDb();
-  auto fileBrowser = appDb->appProvider()->fileBrowser();
-  auto textEditor = appDb->appProvider()->textEditor();
+  auto fileBrowser = appDb->fileBrowser();
+  auto textEditor = appDb->textEditor();
   auto open = new OpenAppAction(m_app, "Open Application", {});
   auto actions = m_app->actions();
 

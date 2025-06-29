@@ -171,7 +171,7 @@ class RootCommandV2 : public ListView {
     auto quicklinkDb = ServiceRegistry::instance()->quicklinks();
     auto appDb = ServiceRegistry::instance()->appDb();
     const auto &quicklinks = quicklinkDb->list();
-    const auto &appEntries = appDb->listEntries();
+    const auto &appEntries = appDb->list();
     const auto &commandEntries = commandDb->commands();
     auto rootManager = ServiceRegistry::instance()->rootItemManager();
 
@@ -220,7 +220,7 @@ class RootCommandV2 : public ListView {
     auto appDb = ServiceRegistry::instance()->appDb();
     auto calculator = ServiceRegistry::instance()->calculatorDb();
     const auto &quicklinks = quicklinkDb->list();
-    const auto &appEntries = appDb->listEntries();
+    const auto &appEntries = appDb->list();
     const auto &commandEntries = commandDb->commands();
     size_t maxReserve = appEntries.size() + commandEntries.size() + quicklinks.size();
 
