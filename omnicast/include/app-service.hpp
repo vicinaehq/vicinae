@@ -9,8 +9,11 @@
 #include <qobject.h>
 #include <qobjectdefs.h>
 #include <qsqlquery.h>
+#include <qtmetamacros.h>
 
 class AppService : public QObject, public NonAssignable {
+  Q_OBJECT
+
 public:
   struct AppEntry {
     std::shared_ptr<Application> app;
@@ -58,19 +61,6 @@ public:
   }
 
   auto defaultSearchPaths() const { return m_provider->defaultSearchPaths(); }
-
-  void registerVisit(const std::shared_ptr<Application> &app) { registerVisit(app->id()); }
-
-  void registerVisit(const QString &appId) {
-    auto record = m_ranking.registerVisit("application", appId);
-    auto it =
-        std::ranges::find_if(m_entries, [&appId](const auto &entry) { return entry->app->id() == appId; });
-
-    if (it != m_entries.end()) {
-      (*it)->lastOpenedAt = record.lastVisitedAt;
-      (*it)->openCount = record.visitedCount;
-    }
-  }
 
   std::shared_ptr<Application> webBrowser() const { return m_provider->webBrowser(); }
   std::shared_ptr<Application> fileBrowser() const { return m_provider->fileBrowser(); }
@@ -122,6 +112,7 @@ public:
     std::vector<std::filesystem::path> paths = m_provider->defaultSearchPaths();
 
     paths.insert(paths.end(), m_additionalSearchPaths.begin(), m_additionalSearchPaths.end());
+    emit appsChanged();
 
     return m_provider->scan(paths);
   }
@@ -133,4 +124,7 @@ public:
   AppService(OmniDatabase &db, RankingService &ranking) : m_db(db), m_ranking(ranking) {
     m_provider = createLocalProvider();
   }
+
+signals:
+  void appsChanged() const;
 };

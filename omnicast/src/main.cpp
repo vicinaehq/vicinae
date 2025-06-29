@@ -232,7 +232,7 @@ int startDaemon() {
     registry->rootItemManager()->addProvider(std::make_unique<BookmarkRootProvider>(*registry->bookmarks()));
   }
 
-  QIcon::setThemeName("Tela");
+  // QIcon::setThemeName("Tela");
 
   AppWindow app;
 

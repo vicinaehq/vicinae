@@ -304,7 +304,7 @@ class RootCommandV2 : public ListView {
     render(searchText());
   }
 
-  void onActionExecuted(AbstractAction *action) override { qCritical() << "action title" << action->title(); }
+  void onActionExecuted(AbstractAction *action) override {}
 
   void initialize() override {
     m_calcDebounce->setInterval(100);

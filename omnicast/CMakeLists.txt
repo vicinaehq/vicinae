@@ -411,6 +411,8 @@ set(SRCS
 	src/services/file-chooser/abstract-file-chooser.hpp
 	src/services/file-chooser/xdp-file-chooser/xdp-file-chooser.hpp
 	src/services/file-chooser/xdp-file-chooser/xdp-file-chooser.cpp
+	
+	include/app-service.hpp
 )
 
 

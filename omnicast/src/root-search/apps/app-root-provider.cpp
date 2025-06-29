@@ -115,7 +115,9 @@ std::vector<std::shared_ptr<RootItem>> AppRootProvider::loadItems() const {
          std::ranges::to<std::vector>();
 }
 
-AppRootProvider::AppRootProvider(AppService &appService) : m_appService(appService) {}
+AppRootProvider::AppRootProvider(AppService &appService) : m_appService(appService) {
+  connect(&m_appService, &AppService::appsChanged, this, &AppRootProvider::itemsChanged);
+}
 
 void AppRootProvider::preferencesChanged(const QJsonObject &preferences) {
   QJsonArray jsonPaths = preferences.value("paths").toArray();
