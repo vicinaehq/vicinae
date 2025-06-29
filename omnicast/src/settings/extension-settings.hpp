@@ -113,16 +113,19 @@ public:
     setText(metadata.alias);
   }
 
-  void focusOutEvent(QFocusEvent *event) override {
+  // TODO: we need to move that logic a few level above I think, as that's not pretty
+  void handleSave() {
     auto manager = ServiceRegistry::instance()->rootItemManager();
 
     manager->setAlias(m_id, text());
-    BaseInput::focusOutEvent(event);
   }
 
   AliasInput(const QString &rootItemId) : m_id(rootItemId) {
     setPlaceholderText("Add alias");
     input()->setContentsMargins(2, 2, 2, 2);
+    connect(focusNotifier(), &FocusNotifier::focusChanged, this, [this](bool value) {
+      if (!value) handleSave();
+    });
   }
 };
 

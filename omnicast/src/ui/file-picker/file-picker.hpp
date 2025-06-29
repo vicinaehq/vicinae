@@ -86,9 +86,17 @@ public:
 
     if (!icon.isNull()) {
       m_icon->setUrl(SystemOmniIconUrl(file.mime.iconName()));
-    } else {
-      m_icon->setUrl(SystemOmniIconUrl(file.mime.genericIconName()));
+      return;
     }
+
+    icon = QIcon::fromTheme(file.mime.genericIconName());
+
+    if (!icon.isNull()) {
+      m_icon->setUrl(SystemOmniIconUrl(file.mime.iconName()));
+      return;
+    }
+
+    m_icon->setUrl(BuiltinOmniIconUrl("blank-document"));
   }
 
 public:
