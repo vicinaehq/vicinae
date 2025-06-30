@@ -57,7 +57,6 @@ void OmniList::updateFocusChain() {
 void OmniList::updateVisibleItems() {
   Timer timer;
 
-  auto start = std::chrono::high_resolution_clock::now();
   m_visibleWidgets.clear();
   if (m_items.empty()) return;
   setUpdatesEnabled(false);
@@ -81,7 +80,6 @@ void OmniList::updateVisibleItems() {
   size_t endIndex = startIndex;
   int lastY = -1;
 
-  Timer loopTimer;
   while (endIndex < m_items.size()) {
     auto &vinfo = m_items[endIndex];
     auto cacheIt = _widgetCache.find(vinfo.item->id());
@@ -96,16 +94,13 @@ void OmniList::updateVisibleItems() {
     auto start = std::chrono::high_resolution_clock::now();
     if (cacheIt == _widgetCache.end()) {
       if (auto wrapper = takeFromPool(vinfo.item->typeId())) {
-        Timer timer;
         wrapper->setParent(this);
         vinfo.item->recycle(wrapper->widget());
         vinfo.item->attached(wrapper->widget());
         wrapper->blockSignals(false);
         wrapper->setUpdatesEnabled(true);
-        timer.time("Recycle from pool");
         widget = wrapper;
       } else {
-        Timer timer;
         widget = new OmniListItemWidgetWrapper(this);
         connect(widget, &OmniListItemWidgetWrapper::clicked, this, &OmniList::itemClicked,
                 Qt::UniqueConnection);
@@ -117,7 +112,6 @@ void OmniList::updateVisibleItems() {
         OmniListItemWidget *w = vinfo.item->createWidget();
         widget->setWidget(w);
         vinfo.item->attached(w);
-        timer.time("Create new widget");
       }
 
       Timer timer;
@@ -153,19 +147,15 @@ void OmniList::updateVisibleItems() {
     auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() / 1e6;
     ++endIndex;
   }
-  loopTimer.time("loop list");
 
-  Timer visibleTimer;
   for (const auto &widget : m_visibleWidgets) {
     widget->show();
   }
-  visibleTimer.time("SHOW WIDGETS");
 
   VisibleRangeV2 range = {startIndex, endIndex - startIndex};
 
   // get rid of widgets that went out of range
 
-  Timer viewport;
   for (int i = 0; i != visibleIndexRange.size; ++i) {
     int index = visibleIndexRange.start + i;
     bool isStillVisible = range.size > 0 && index >= range.start && index < (range.start + range.size);
@@ -189,15 +179,10 @@ void OmniList::updateVisibleItems() {
     }
   }
 
-  viewport.time("Viewport cleanup");
-
-  Timer recalculations;
   recalculateMousePosition();
   updateFocusChain();
   setUpdatesEnabled(true);
-  recalculations.time("Recalculations");
   this->visibleIndexRange = range;
-  timer.time("updateVisibleItems");
 }
 
 bool OmniList::isDividableContent(const ModelItem &item) {
@@ -315,15 +300,30 @@ void OmniList::calculateHeights() {
           VirtualWidgetInfo vinfo{.bounds = geometry, .item = item.get(), .enumerable = true};
 
           // TODO: if in viewport, look for cached entry
-          if (isInViewport(geometry)) {
+          if (isInViewport(geometry) && item->recyclable()) {
             if (auto it = _widgetCache.find(item->id()); it != _widgetCache.end()) {
               QWidget *widget = it->second.widget->widget();
 
               widget->setUpdatesEnabled(false);
               item->attached(widget);
-              item->refresh(widget);
+              item->recycle(widget);
               widget->setUpdatesEnabled(true);
               updatedCache[item->id()] = it->second;
+              _widgetCache.erase(it->first);
+            } else {
+              for (const auto &[key, cache] : _widgetCache) {
+                if (cache.recyclingId == item->typeId()) {
+                  QWidget *widget = cache.widget->widget();
+
+                  widget->setUpdatesEnabled(false);
+                  item->attached(widget);
+                  item->recycle(widget);
+                  widget->setUpdatesEnabled(true);
+                  updatedCache[item->id()] = cache;
+                  _widgetCache.erase(key);
+                  break;
+                }
+              }
             }
           }
 
@@ -339,24 +339,15 @@ void OmniList::calculateHeights() {
   if (!m_items.empty()) { yOffset += margins.bottom + margins.top; }
 
   for (auto &[key, cache] : _widgetCache) {
-    if (auto it = updatedCache.find(key); it == updatedCache.end()) {
-      if (cache.recyclingId) {
-        moveToPool(cache.recyclingId, cache.widget);
-      } else {
-        cache.widget->deleteLater();
-      }
+    if (cache.recyclingId) {
+      moveToPool(cache.recyclingId, cache.widget);
+    } else {
+      cache.widget->deleteLater();
     }
   }
 
   _visibleWidgets.clear();
   _widgetCache = updatedCache;
-
-  // timer.time("calculateHeightsFromModel");
-
-  auto end = std::chrono::high_resolution_clock::now();
-  // auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-  //  qDebug() << "calculateHeights() took" << duration << "ms";
-
   scrollBar->setMaximum(std::max(0, yOffset - height()));
   scrollBar->setMinimum(0);
   m_virtualHeight = yOffset;

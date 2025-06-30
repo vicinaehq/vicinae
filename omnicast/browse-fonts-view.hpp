@@ -162,9 +162,10 @@ public:
     for (const auto &system : QFontDatabase::writingSystems()) {
       QString sname = QFontDatabase::writingSystemName(system);
       auto &section = m_list->addSection(QString("%1 Fonts").arg(sname));
-      auto items = QFontDatabase::families(system) | std::views::transform([](const QString &family) {
-                     return std::make_unique<FontListItem>(family);
-                   });
+      auto nonWide = [](const QString &name) { return !name.contains("wide", Qt::CaseInsensitive); };
+      auto items =
+          QFontDatabase::families(system) | std::views::filter(nonWide) |
+          std::views::transform([](const QString &family) { return std::make_unique<FontListItem>(family); });
 
       for (auto item : items) {
         section.addItem(std::move(item));
@@ -183,11 +184,13 @@ public:
     m_list->beginResetModel();
     Timer timer;
     auto results = m_trie->prefixSearch(query.toStdString(), 500);
+    auto nonWide = [](const QString &name) { return !name.contains("wide", Qt::CaseInsensitive); };
     timer.time("font search");
 
     auto &section = m_list->addSection("Fonts");
-    auto items = results | std::views::transform(
-                               [](const QString &family) { return std::make_unique<FontListItem>(family); });
+    auto items = results | std::views::filter(nonWide) | std::views::transform([](const QString &family) {
+                   return std::make_unique<FontListItem>(family);
+                 });
 
     for (auto item : items) {
       section.addItem(std::move(item));

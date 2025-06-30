@@ -71,6 +71,12 @@ std::vector<std::shared_ptr<Application>> AppService::findOpeners(const QString 
   return m_provider->findOpeners(target);
 }
 
-bool AppService::scanSync() { return m_provider->scan(mergedPaths()); }
+bool AppService::scanSync() {
+  bool result = m_provider->scan(mergedPaths());
+
+  emit appsChanged();
+
+  return result;
+}
 
 AppService::AppService(OmniDatabase &db) : m_db(db), m_provider(createLocalProvider()) {}

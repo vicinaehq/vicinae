@@ -2,7 +2,6 @@
 #include "app/app-database.hpp"
 #include "common.hpp"
 #include "omni-database.hpp"
-#include <fstream>
 #include <memory>
 #include <qlogging.h>
 #include <qobject.h>
