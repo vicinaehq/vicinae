@@ -12,6 +12,7 @@ void ClipboardHistoryCommand::preferenceValuesChanged(const QJsonObject &value) 
   auto clipman = ServiceRegistry::instance()->clipman();
 
   clipman->setRecordAllOffers(value.value("store-all-offerings").toBool());
+  clipman->setMonitoring(value.value("monitoring").toBool());
 
   qDebug() << "clipboard history preference changes";
 }

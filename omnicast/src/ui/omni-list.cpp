@@ -114,16 +114,12 @@ void OmniList::updateVisibleItems() {
         vinfo.item->attached(w);
       }
 
-      Timer timer;
-
       CachedWidget cache{.widget = widget, .recyclingId = 0};
 
       if (vinfo.item->recyclable()) { cache.recyclingId = vinfo.item->typeId(); }
 
       isWidgetCreated = true;
       _widgetCache[vinfo.item->id()] = cache;
-
-      timer.time("Caching widget");
     } else {
       widget = cacheIt->second.widget;
     }

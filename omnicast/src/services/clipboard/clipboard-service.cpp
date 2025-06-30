@@ -94,6 +94,15 @@ void ClipboardService::setRecordAllOffers(bool value) {
   qCritical() << "set record all offers" << value;
 }
 
+void ClipboardService::setMonitoring(bool value) {
+  m_monitoring = value;
+  emit monitoringChanged(value);
+}
+
+bool ClipboardService::isServerRunning() const { return m_clipboardServer->isAlive(); }
+
+bool ClipboardService::monitoring() const { return m_monitoring; }
+
 bool ClipboardService::copyHtml(const Clipboard::Html &data, const Clipboard::CopyOptions &options) {
   auto mimeData = new QMimeData;
 
@@ -323,6 +332,8 @@ bool ClipboardService::removeSelection(int selectionId) {
 }
 
 void ClipboardService::saveSelection(const ClipboardSelection &selection) {
+  if (!m_monitoring) return;
+
   std::vector<TransformedSelection> transformedOffers;
   char buf[1 << 16];
   QCryptographicHash selectionHash(QCryptographicHash::Md5);

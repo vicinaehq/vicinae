@@ -161,7 +161,6 @@ public:
 
 class SimpleView : public BaseView {
 protected:
-  QVBoxLayout *m_layout = new QVBoxLayout(this);
   ActionPanelV2Widget *m_actionPannelV2 = new ActionPanelV2Widget(this);
 
   void executeAction(AbstractAction *action) override {
@@ -200,6 +199,7 @@ protected:
   }
 
   void setupUI(QWidget *centerWidget) {
+    QVBoxLayout *m_layout = new QVBoxLayout;
     m_layout->setContentsMargins(0, 0, 0, 0);
     m_layout->setSpacing(0);
     // m_layout->addWidget(m_topBar);

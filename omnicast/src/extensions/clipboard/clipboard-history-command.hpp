@@ -18,12 +18,21 @@ class ClipboardHistoryCommand : public AbstractCmd {
     return icon;
   }
   std::vector<Preference> preferences() const override {
+    auto monitoring = Preference::makeCheckbox();
+
+    monitoring.setName("monitoring");
+    monitoring.setTitle("Clipboard monitoring");
+    monitoring.setDescription("Whether clipboard activity is recorded in the history. Every clipboard action "
+                              "performed while this is turned off will not be recorded.");
+    monitoring.setDefaultValue(true);
+
     auto storeAllOfferings = Preference::makeCheckbox();
 
     storeAllOfferings.setName("store-all-offerings");
     storeAllOfferings.setTitle("Store all offerings");
     storeAllOfferings.setDescription("Store and index alternative mime type offerings. This will "
                                      "increase total storage size, but will refine the search.");
+    storeAllOfferings.setDefaultValue(true);
 
     auto maxStorageSize = Preference::makeText();
 
@@ -32,7 +41,7 @@ class ClipboardHistoryCommand : public AbstractCmd {
     maxStorageSize.setDescription("How much storage can be used to store clipboard history data, in MB.");
     maxStorageSize.setDefaultValue("1000");
 
-    return {storeAllOfferings, maxStorageSize};
+    return {monitoring, storeAllOfferings, maxStorageSize};
   }
   void preferenceValuesChanged(const QJsonObject &value) const override;
   CommandContext *createContext(const std::shared_ptr<AbstractCmd> &command) const override;

@@ -1,15 +1,21 @@
 #pragma once
 #include "base-view.hpp"
 #include "clipboard-actions.hpp"
+#include "common.hpp"
 #include "extend/metadata-model.hpp"
 #include "manage-quicklinks-command.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
+#include "ui/icon-button.hpp"
+#include "ui/image/omnimg.hpp"
 #include "ui/omni-list.hpp"
+#include "ui/split-detail.hpp"
 #include "ui/toast.hpp"
+#include <libqalculate/Number.h>
 #include <memory>
 #include <qboxlayout.h>
+#include <qevent.h>
 #include <qlabel.h>
 #include <qlogging.h>
 #include <qnamespace.h>
@@ -114,18 +120,10 @@ class ClipboardHistoryDetail : public DetailWithMetadataWidget {
     }
 
     if (entry.mimeType.startsWith("image/")) {
-      /*
-auto w = new LogWidget;
-auto l = new QVBoxLayout;
-w->setLayout(l);
-*/
-
       auto icon = new Omnimg::ImageWidget;
 
-      // icon->setUrl(LocalOmniIconUrl(entry.filePath).setMask(OmniPainter::RoundedRectangleMask));
+      icon->setContentsMargins(10, 10, 10, 10);
       icon->setUrl(LocalOmniIconUrl(entry.filePath));
-
-      // l->addWidget(icon, 1, Qt::AlignCenter);
 
       return icon;
     }
@@ -138,75 +136,12 @@ public:
     if (auto previous = content()) { previous->deleteLater(); }
 
     auto widget = createEntryWidget(entry);
-    auto metadata = createEntryMetadata(entry);
+    // auto metadata = createEntryMetadata(entry);
 
     setContent(widget);
-    setMetadata(metadata);
+    // setMetadata({});
   }
 };
-
-/*
-class ClipboardItemDetail : public OmniListView::MetadataDetailModel {
-  ClipboardHistoryEntry entry;
-
-  QWidget *createView() const override {
-    auto widget = new QWidget();
-
-    if (entry.mimeType.startsWith("text/plain")) {
-      auto container = new TextContainer;
-      auto viewer = new TextFileViewer();
-
-      container->setWidget(viewer);
-      viewer->load(entry.filePath);
-
-      return container;
-    }
-
-    if (entry.mimeType.startsWith("image/")) {
-      auto w = new LogWidget;
-      auto l = new QVBoxLayout;
-      w->setLayout(l);
-
-      auto icon = new Omnimg::ImageWidget;
-
-      // icon->setUrl(LocalOmniIconUrl(entry.filePath).setMask(OmniPainter::RoundedRectangleMask));
-      icon->setUrl(LocalOmniIconUrl(entry.filePath));
-
-      l->addWidget(icon, 1, Qt::AlignCenter);
-
-      return w;
-    }
-
-    return widget;
-  }
-
-  MetadataModel createMetadata() const override {
-    QList<MetadataItem> items;
-
-    items << MetadataLabel{
-        .text = entry.mimeType,
-        .title = "Mime",
-    };
-    items << MetadataLabel{
-        .text = QString::number(entry.id),
-        .title = "ID",
-    };
-    items << MetadataLabel{
-        .text = QDateTime::fromSecsSinceEpoch(entry.createdAt).toString(),
-        .title = "Copied at",
-    };
-    items << MetadataLabel{
-        .text = entry.md5sum,
-        .title = "Checksum (MD5)",
-    };
-
-    return {.children = items};
-  }
-
-public:
-  ClipboardItemDetail(const ClipboardHistoryEntry &entry) : entry(entry) {}
-};
-*/
 
 class RemoveSelectionAction : public AbstractAction {
   int _id;
@@ -298,15 +233,90 @@ public:
   ClipboardHistoryItem(const ClipboardHistoryEntry &info) : info(info) {}
 };
 
-class ClipboardHistoryView : public ListView {
-  TypographyWidget *m_accessory = new TypographyWidget;
+class ClipboardStatusToobar : public QWidget {
+  Q_OBJECT
 
-  QWidget *searchBarAccessory() const override { return m_accessory; }
+public:
+  enum ClipboardStatus { Monitoring, Paused, Unavailable };
+
+  TypographyWidget *m_text = new TypographyWidget;
+
+  QWidget *m_right = new QWidget;
+  TypographyWidget *m_rightText = new TypographyWidget;
+  IconButton *m_rightIcon = new IconButton;
+  ClipboardStatus m_status = ClipboardStatus::Unavailable;
+
+  QString statusText(ClipboardStatus status) {
+    switch (status) {
+    case Monitoring:
+      return "Pause clipboard";
+    case Paused:
+      return "Resume clipboard";
+    case Unavailable:
+      return "Clipboard monitoring unavailable";
+    }
+  }
+
+  OmniIconUrl statusIcon(ClipboardStatus status) {
+    switch (status) {
+    case Monitoring:
+      return BuiltinOmniIconUrl("pause-filled").setFill(ColorTint::Orange);
+    case Paused:
+      return BuiltinOmniIconUrl("play-filled").setFill(ColorTint::Green);
+    case Unavailable:
+      return BuiltinOmniIconUrl("warning").setFill(ColorTint::Red);
+    }
+  }
+
+public:
+  ClipboardStatus clipboardStatus() const { return m_status; }
+
+  void setLeftText(const QString &text) { m_text->setText(text); }
+
+  void setClipboardStatus(ClipboardStatus status) {
+    m_rightText->setText(statusText(status));
+    m_rightIcon->setUrl(statusIcon(status));
+    m_status = status;
+  }
+
+  ClipboardStatusToobar(QWidget *parent = nullptr) : QWidget(parent) {
+    auto rightLayout = new QHBoxLayout;
+
+    rightLayout->addWidget(m_rightText);
+    rightLayout->addWidget(m_rightIcon);
+    rightLayout->setContentsMargins(0, 0, 0, 0);
+    m_rightIcon->setFixedSize(25, 25);
+    m_rightIcon->setUrl(BuiltinOmniIconUrl("pause-filled"));
+    m_right->setLayout(rightLayout);
+    m_rightText->setText("Pause clipboard");
+
+    auto layout = new QHBoxLayout;
+
+    layout->setContentsMargins(15, 8, 15, 8);
+    m_text->setText("323 Items");
+
+    layout->addWidget(m_text);
+    layout->addWidget(m_right, 0, Qt::AlignRight | Qt::AlignVCenter);
+    setLayout(layout);
+
+    connect(m_rightIcon, &IconButton::clicked, this, &ClipboardStatusToobar::statusIconClicked);
+  }
+
+signals:
+  void statusIconClicked();
+};
+
+class ClipboardHistoryView : public SimpleView {
+  OmniList *m_list = new OmniList();
+  ClipboardStatusToobar *m_statusToolbar = new ClipboardStatusToobar;
+  SplitDetailWidget *m_split = new SplitDetailWidget(this);
 
   void generateList(const QString &query) {
     auto clipman = ServiceRegistry::instance()->clipman();
     auto result = clipman->listAll(100, 0, {.query = query});
     size_t i = 0;
+
+    m_statusToolbar->setLeftText(QString("%1 Items").arg(result.data.size()));
 
     m_list->updateModel([&]() {
       auto &pinnedSection = m_list->addSection("Pinned");
@@ -336,6 +346,23 @@ class ClipboardHistoryView : public ListView {
     textChanged("");
   }
 
+  void selectionChanged(const OmniList::AbstractVirtualItem *next,
+                        const OmniList::AbstractVirtualItem *previous) const {
+    if (!next) {
+      m_split->setDetailVisibility(false);
+      m_actionPannelV2->popToRoot();
+      return;
+    }
+
+    auto entry = static_cast<const ClipboardHistoryItem *>(next);
+
+    if (auto detail = entry->generateDetail()) {
+      m_split->setDetailWidget(detail);
+      m_split->setDetailVisibility(true);
+    }
+    if (auto panel = entry->actionPanel()) { m_actionPannelV2->setView(panel); }
+  }
+
   void textChanged(const QString &value) override { generateList(value); }
 
   void clipboardSelectionInserted(const ClipboardHistoryEntry &entry) {}
@@ -343,13 +370,69 @@ class ClipboardHistoryView : public ListView {
   void handlePinChanged(int entryId, bool value) { generateList(searchText()); }
   void handleRemoved(int entryId) { generateList(searchText()); }
 
+  void handleMonitoringChanged(bool monitor) {
+    if (monitor) {
+      m_statusToolbar->setClipboardStatus(ClipboardStatusToobar::ClipboardStatus::Monitoring);
+      return;
+    }
+
+    m_statusToolbar->setClipboardStatus(ClipboardStatusToobar::ClipboardStatus::Paused);
+  }
+
+  void handleStatusClipboard() {
+    qCritical() << "status changed, click";
+    auto manager = ServiceRegistry::instance()->rootItemManager();
+    QString rootItemId = "extension.clipboard.clipboard-history";
+    auto preferences = manager->getItemPreferenceValues(rootItemId);
+
+    if (m_statusToolbar->clipboardStatus() == ClipboardStatusToobar::Paused) {
+      preferences["monitoring"] = true;
+    } else {
+      preferences["monitoring"] = false;
+    }
+
+    manager->setItemPreferenceValues(rootItemId, preferences);
+  }
+
+  bool inputFilter(QKeyEvent *event) override {
+    switch (event->key()) {
+    case Qt::Key_Up:
+      return m_list->selectUp();
+    case Qt::Key_Down:
+      return m_list->selectDown();
+    case Qt::Key_Return:
+      m_list->activateCurrentSelection();
+    }
+
+    return SimpleView::inputFilter(event);
+  }
+
 public:
   ClipboardHistoryView() {
     auto clipman = ServiceRegistry::instance()->clipman();
+    auto layout = new QVBoxLayout;
 
-    m_accessory->setText("Search accessory");
+    if (!clipman->isServerRunning()) {
+      m_statusToolbar->setClipboardStatus(ClipboardStatusToobar::ClipboardStatus::Unavailable);
+    } else {
+      handleMonitoringChanged(clipman->monitoring());
+    }
 
+    m_split->setMainWidget(m_list);
+    m_split->setDetailVisibility(false);
+    layout->setSpacing(0);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(m_statusToolbar);
+    layout->addWidget(new HDivider);
+    layout->addWidget(m_split, 1);
+    setLayout(layout);
+
+    connect(m_list, &OmniList::selectionChanged, this, &ClipboardHistoryView::selectionChanged);
     connect(clipman, &ClipboardService::itemInserted, this,
             &ClipboardHistoryView::clipboardSelectionInserted);
+    connect(clipman, &ClipboardService::monitoringChanged, this,
+            &ClipboardHistoryView::handleMonitoringChanged);
+    connect(m_statusToolbar, &ClipboardStatusToobar::statusIconClicked, this,
+            &ClipboardHistoryView::handleStatusClipboard);
   }
 };

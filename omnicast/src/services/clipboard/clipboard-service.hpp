@@ -87,6 +87,7 @@ class ClipboardService : public QObject, public NonAssignable {
   // prepared statements
   QSqlQuery m_retrieveSelectionByIdQuery;
   bool m_recordAllOffers = true;
+  bool m_monitoring = true;
 
   // end prepare statements
 
@@ -121,7 +122,12 @@ public:
   bool copySelection(const ClipboardSelection &selection, const Clipboard::CopyOptions &options);
   bool copyQMimeData(QMimeData *data, const Clipboard::CopyOptions &options = {});
 
+  bool isServerRunning() const;
+  bool monitoring() const;
+  void setMonitoring(bool value);
+
 signals:
   void itemCopied(const InsertClipboardHistoryLine &item) const;
   void itemInserted(const ClipboardHistoryEntry &entry) const;
+  void monitoringChanged(bool value) const;
 };
