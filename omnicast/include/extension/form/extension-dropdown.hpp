@@ -8,9 +8,7 @@ class DropdownSelectorItem : public SelectorInput::AbstractItem {
 
   QString generateId() const override { return m_model.value; }
 
-  OmniIconUrl icon() const override {
-    return m_model.icon ? OmniIconUrl(*m_model.icon) : BuiltinOmniIconUrl("circle");
-  }
+  std::optional<OmniIconUrl> icon() const override { return m_model.icon; }
 
   QString displayName() const override { return m_model.title; }
 

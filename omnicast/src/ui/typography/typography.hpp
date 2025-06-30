@@ -20,6 +20,8 @@ class TypographyWidget : public QWidget {
   Qt::TextElideMode m_elideMode = Qt::ElideRight;
 
 protected:
+  QLabel *measurementLabel() const;
+
   void updateText();
   void resizeEvent(QResizeEvent *event) override;
   void paintEvent(QPaintEvent *event) override;

@@ -9,10 +9,7 @@
 #include <qwidget.h>
 
 void ExtensionSettingsDetail::handleFocusChanged(bool focused) {
-  if (!focused) {
-    qCritical() << "lost focus saving" << this;
-    savePendingPreferences();
-  }
+  if (!focused) { savePendingPreferences(); }
 }
 
 void ExtensionSettingsDetail::setupUI() {
@@ -88,7 +85,6 @@ ExtensionSettingsDetail::ExtensionSettingsDetail(const QString &providerId,
 }
 
 ExtensionSettingsDetail::~ExtensionSettingsDetail() {
-  // disconnect(this, nullptr, nullptr, nullptr);
   qCritical() << "~ExtensionSettingsDetail" << this;
-  // savePendingPreferences();
+  savePendingPreferences();
 }

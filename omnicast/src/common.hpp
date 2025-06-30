@@ -167,6 +167,7 @@ public:
   virtual OmniIconUrl iconUrl() const = 0;
   virtual std::vector<Preference> preferences() const { return {}; }
   virtual QWidget *settingsDetail() const { return new QWidget; }
+  virtual void preferenceValuesChanged(const QJsonObject &value) const {}
 };
 
 struct QObjectDeleter {

@@ -29,6 +29,12 @@ class BaseInput : public JsonFormItemWidget {
 
   bool eventFilter(QObject *sender, QEvent *event) override;
 
+protected:
+  void showEvent(QShowEvent *event) override {
+    recalculate();
+    QWidget::showEvent(event);
+  }
+
 public:
   void setLeftAccessory(QWidget *widget);
   void setRightAccessory(QWidget *widget);

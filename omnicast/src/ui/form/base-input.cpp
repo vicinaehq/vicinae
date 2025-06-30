@@ -34,13 +34,13 @@ void BaseInput::recalculate() {
 
   QMargins margins{5, 0, 5, 0};
 
-  if (leftAccessory) {
+  if (leftAccessory && leftAccessory->isVisible()) {
     leftAccessory->move(8, (height() - leftAccessory->height()) / 2);
     leftAccessory->show();
     margins.setLeft(leftAccessory->width() + 10);
   }
 
-  if (rightAccessory) {
+  if (rightAccessory && rightAccessory->isVisible()) {
     rightAccessory->move(width() - rightAccessory->width() - 8, (height() - rightAccessory->height()) / 2);
     rightAccessory->show();
     margins.setRight(rightAccessory->width() + 10);

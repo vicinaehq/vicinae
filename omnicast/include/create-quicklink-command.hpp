@@ -40,7 +40,7 @@ public:
   std::shared_ptr<Application> app;
   bool isDefault;
 
-  OmniIconUrl icon() const override { return app->iconUrl(); }
+  std::optional<OmniIconUrl> icon() const override { return app->iconUrl(); }
 
   QString displayName() const override {
     QString name = app->fullyQualifiedName();
@@ -72,7 +72,7 @@ public:
   QString dname;
   OmniIconUrl iconUrl;
 
-  OmniIconUrl icon() const override { return iconUrl; }
+  std::optional<OmniIconUrl> icon() const override { return iconUrl; }
 
   QString displayName() const override { return iconUrl.name(); }
 
@@ -191,7 +191,7 @@ class BookmarkFormView : public FormView {
         auto icon = static_cast<IconSelectorItem *>(item);
         auto appItem = static_cast<const AppSelectorItem *>(appSelector->value());
 
-        icon->setIcon(appItem->icon());
+        if (auto ico = appItem->icon()) { icon->setIcon(*ico); }
         icon->setDisplayName("Default");
       });
     }
@@ -270,7 +270,7 @@ class BookmarkFormView : public FormView {
     iconSelector->updateItem("default", [appItem](SelectorInput::AbstractItem *item) {
       auto icon = static_cast<IconSelectorItem *>(item);
 
-      icon->setIcon(appItem.icon());
+      icon->setIcon(appItem.app->iconUrl());
       icon->setDisplayName(appItem.displayName());
     });
   }
@@ -424,7 +424,7 @@ public:
       return;
     }
 
-    if (bookmarkDb->createBookmark(name->text(), icon->icon().toString(), link->text(), item->app->id())) {
+    if (bookmarkDb->createBookmark(name->text(), icon->icon()->toString(), link->text(), item->app->id())) {
       ui->setToast("Created bookmark");
       ServiceRegistry::instance()->UI()->popView();
     } else {
@@ -501,7 +501,7 @@ public:
       return;
     }
 
-    if (bookmarkDb->createBookmark(name->text(), icon->icon().toString(), link->text(), item->app->id())) {
+    if (bookmarkDb->createBookmark(name->text(), icon->icon()->toString(), link->text(), item->app->id())) {
       ui->setToast("Created bookmark");
       ui->popView();
     } else {

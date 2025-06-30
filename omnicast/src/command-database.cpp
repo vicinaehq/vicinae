@@ -1,7 +1,8 @@
 #include "command-database.hpp"
-#include "calculator-history-command.hpp"
 #include "create-quicklink-command.hpp"
 #include "configure-ai-providers-command.hpp"
+#include "extensions/clipboard/clipboard-extension.hpp"
+#include "extensions/calculator/calculator-extension.hpp"
 #include "emoji-command.hpp"
 #include "extensions/omnicast/open-documentation-command.hpp"
 #include "extensions/omnicast/refresh-apps-command.hpp"
@@ -11,7 +12,6 @@
 #include "preference.hpp"
 #include "switch-windows-command.hpp"
 #include "manage-quicklinks-command.hpp"
-#include "extensions/clipboard/clipboard-history-command.hpp"
 #include "manage-themes-command.hpp"
 #include "omni-icon.hpp"
 #include "theme.hpp"
@@ -64,13 +64,7 @@ CommandDatabase::CommandDatabase() {
                      .withTintedIcon("emoji", ColorTint::Red)
                      .toSingleView<EmojiView>();
 
-    auto history = std::make_shared<ClipboardHistoryCommand>();
-
-    auto clipboard = CommandRepositoryBuilder("clipboard")
-                         .withName("Clipboard")
-                         .withTintedIcon("copy-clipboard", ColorTint::Red)
-                         .withCommand(history)
-                         .makeShared();
+    auto clipboard = std::make_shared<ClipboardExtension>();
 
     registerRepository(clipboard);
 
@@ -118,13 +112,7 @@ CommandDatabase::CommandDatabase() {
   }
 
   {
-    auto history =
-        CommandBuilder("history").withName("Calculator History").toSingleView<CalculatorHistoryView>();
-    auto calculator = CommandRepositoryBuilder("calculator")
-                          .withName("Calculator")
-                          .withTintedIcon("calculator", ColorTint::Red)
-                          .withCommand(history)
-                          .makeShared();
+    auto calculator = std::make_shared<CalculatorExtension>();
 
     registerRepository(calculator);
   }

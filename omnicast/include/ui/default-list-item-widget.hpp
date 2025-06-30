@@ -46,19 +46,18 @@ public:
 using AccessoryList = std::vector<ListAccessory>;
 
 class DefaultListItemWidget : public SelectableOmniListWidget {
-  Omnimg::ImageWidget *_icon;
-  TypographyWidget *_name;
-  TypographyWidget *_category;
-  AccessoryListWidget *_accessoryList;
-  ListAccessoryWidget *m_alias;
+  Omnimg::ImageWidget *_icon = new Omnimg::ImageWidget(this);
+  TypographyWidget *_name = new TypographyWidget(this);
+  TypographyWidget *_category = new TypographyWidget(this);
+  AccessoryListWidget *_accessoryList = new AccessoryListWidget(this);
+  ListAccessoryWidget *m_alias = new ListAccessoryWidget(this);
 
 public:
   void setAccessories(const AccessoryList &list);
   void setName(const QString &name);
   void setCategory(const QString &category);
-  void setIconUrl(const OmniIconUrl &url);
+  void setIconUrl(const std::optional<OmniIconUrl> &url);
   void setAlias(const QString &title);
 
-  DefaultListItemWidget(const OmniIconUrl &iconUrl, const QString &name, const QString &category,
-                        const AccessoryList &accessories, QWidget *parent = nullptr);
+  DefaultListItemWidget(QWidget *parent = nullptr);
 };

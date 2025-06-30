@@ -1,6 +1,7 @@
 #include "ui/typography/typography.hpp"
 #include "ui/omni-painter.hpp"
 #include <qboxlayout.h>
+#include <qlabel.h>
 #include <qnamespace.h>
 #include <qwidget.h>
 
@@ -39,16 +40,29 @@ QSize TypographyWidget::minimumSizeHint() const {
   return m_label->minimumSizeHint();
 }
 
+QLabel *TypographyWidget::measurementLabel() const {
+  static QLabel *label = nullptr;
+
+  if (!label) {
+    label = new QLabel;
+    label->hide();
+    label->blockSignals(true);
+    label->setUpdatesEnabled(false);
+  }
+
+  return label;
+}
+
 QSize TypographyWidget::sizeHint() const {
   if (!m_label->wordWrap()) {
-    QLabel ruler;
+    auto ruler = measurementLabel();
 
-    ruler.setFont(m_label->font());
-    ruler.setText(m_text);
-    ruler.setAlignment(m_label->alignment());
-    ruler.setContentsMargins(contentsMargins());
+    ruler->setFont(m_label->font());
+    ruler->setText(m_text);
+    ruler->setAlignment(m_label->alignment());
+    ruler->setContentsMargins(contentsMargins());
 
-    return ruler.sizeHint();
+    return ruler->sizeHint();
   }
 
   return m_label->sizeHint();

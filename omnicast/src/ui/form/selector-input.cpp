@@ -155,7 +155,7 @@ SelectorInput::SelectorInput(QWidget *parent)
 }
 
 void SelectorInput::itemActivated(const OmniList::AbstractVirtualItem &vitem) {
-  setValue(vitem.generateId());
+  setValue(vitem.id());
   m_searchField->clear();
   popover->close();
   emit selectionChanged(static_cast<const AbstractItem &>(vitem));
@@ -180,10 +180,15 @@ void SelectorInput::setValue(const QString &id) {
   }
 
   auto item = static_cast<const AbstractItem *>(selectedItem);
+  auto icon = item->icon();
 
   _currentSelection.reset(item->clone());
-  selectionIcon->setUrl(item->icon());
+  selectionIcon->setVisible(icon.has_value());
+
   inputField->setText(item->displayName());
+  inputField->update();
+
+  if (icon) { selectionIcon->setUrl(*icon); }
 }
 
 void SelectorInput::setEnableDefaultFilter(bool value) {

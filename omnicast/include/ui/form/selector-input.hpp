@@ -22,7 +22,7 @@ public:
   public:
     AbstractItem() {}
 
-    virtual OmniIconUrl icon() const { return BuiltinOmniIconUrl("circle"); };
+    virtual std::optional<OmniIconUrl> icon() const { return std::nullopt; };
     virtual QString displayName() const = 0;
     virtual bool hasPartialUpdates() const override { return true; }
 

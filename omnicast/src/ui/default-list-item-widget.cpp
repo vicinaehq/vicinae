@@ -10,7 +10,11 @@ void DefaultListItemWidget::setName(const QString &name) {
   _name->setVisible(!name.isEmpty());
 }
 
-void DefaultListItemWidget::setIconUrl(const OmniIconUrl &url) { _icon->setUrl(url); }
+void DefaultListItemWidget::setIconUrl(const std::optional<OmniIconUrl> &url) {
+  if (url) { _icon->setUrl(*url); }
+
+  _icon->setVisible(url.has_value());
+}
 
 void DefaultListItemWidget::setAccessories(const AccessoryList &list) {
   _accessoryList->setAccessories(list);
@@ -32,16 +36,10 @@ void DefaultListItemWidget::setAlias(const QString &alias) {
   m_alias->setVisible(!alias.isEmpty());
 }
 
-DefaultListItemWidget::DefaultListItemWidget(const OmniIconUrl &iconUrl, const QString &name,
-                                             const QString &category, const AccessoryList &accessories,
-                                             QWidget *parent)
-    : SelectableOmniListWidget(parent), _icon(new Omnimg::ImageWidget), _name(new TypographyWidget),
-      _category(new TypographyWidget()), _accessoryList(new AccessoryListWidget(this)),
-      m_alias(new ListAccessoryWidget) {
+DefaultListItemWidget::DefaultListItemWidget(QWidget *parent) : SelectableOmniListWidget(parent) {
 
   _category->setColor(ColorTint::TextSecondary);
   _icon->setFixedSize(25, 25);
-  _icon->setUrl(iconUrl);
 
   setAttribute(Qt::WA_Hover);
 
@@ -51,9 +49,6 @@ DefaultListItemWidget::DefaultListItemWidget(const OmniIconUrl &iconUrl, const Q
 
   auto left = new QWidget();
   auto leftLayout = new QHBoxLayout();
-
-  this->_name->setText(name);
-  this->_category->setText(category);
 
   left->setLayout(leftLayout);
   leftLayout->setSpacing(15);
@@ -67,8 +62,6 @@ DefaultListItemWidget::DefaultListItemWidget(const OmniIconUrl &iconUrl, const Q
 
   mainLayout->addWidget(left, 0, Qt::AlignLeft);
   mainLayout->addWidget(this->_accessoryList, 0, Qt::AlignRight);
-
-  this->_accessoryList->setAccessories(accessories);
 
   setLayout(mainLayout);
 }

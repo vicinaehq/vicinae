@@ -489,8 +489,10 @@ private:
               if (auto it = _widgetCache.find(item->id()); it != _widgetCache.end()) {
                 QWidget *widget = it->second.widget->widget();
 
+                widget->setUpdatesEnabled(false);
                 item->attached(widget);
-                item->refresh(it->second.widget->widget());
+                item->refresh(widget);
+                widget->setUpdatesEnabled(true);
                 updatedCache[item->id()] = it->second;
               }
             }
@@ -732,7 +734,7 @@ signals:
 class AbstractDefaultListItem : public OmniList::AbstractVirtualItem {
 public:
   struct ItemData {
-    OmniIconUrl iconUrl;
+    std::optional<OmniIconUrl> iconUrl;
     QString name;
     QString category;
     AccessoryList accessories;
@@ -773,8 +775,9 @@ public:
   }
 
   OmniListItemWidget *createWidget() const override {
-    auto d = data();
-    auto item = new DefaultListItemWidget(d.iconUrl, d.name, d.category, d.accessories);
+    auto item = new DefaultListItemWidget;
+
+    refresh(item);
 
     return item;
   }
