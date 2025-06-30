@@ -41,7 +41,7 @@ public:
 
     virtual double aspectRatio() const { return 1; }
 
-    bool recyclable() const override { return false; }
+    bool recyclable() const override { return true; }
 
     int calculateHeight(int width) const final override {
       static GridItemWidget2 ruler;

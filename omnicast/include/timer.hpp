@@ -10,9 +10,10 @@ public:
 
   void time(const std::string &name) const {
     auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - _start).count();
+    double duration = std::chrono::duration_cast<std::chrono::microseconds>(end - _start).count();
+    auto msDuration = duration / 1000;
 
-    qDebug() << QString("TIMER => %1 %2ms").arg(name.c_str()).arg(duration);
+    qDebug() << QString("TIMER => %1 %2ms").arg(name.c_str()).arg(msDuration);
   }
 
   Timer() { start(); }

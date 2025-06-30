@@ -1,7 +1,6 @@
 #include "ui/omni-list.hpp"
 #include "ui/list-section-header.hpp"
 #include "ui/omni-list-item-widget-wrapper.hpp"
-#include "ui/omni-scroll-bar.hpp"
 #include <algorithm>
 #include <chrono>
 #include <qabstractitemview.h>
@@ -53,27 +52,25 @@ void OmniList::updateFocusChain() {
 
     setTabOrder(current, next);
   }
-
-  for (int i = visibleIndexRange.lower; i <= visibleIndexRange.upper; ++i) {
-    if (i >= m_items.size()) continue;
-  }
 }
 
 void OmniList::updateVisibleItems() {
+  Timer timer;
+
   auto start = std::chrono::high_resolution_clock::now();
   m_visibleWidgets.clear();
   if (m_items.empty()) return;
   setUpdatesEnabled(false);
 
   int scrollHeight = scrollBar->value();
-  int startIndex = 0;
+  size_t startIndex = 0;
 
   while (startIndex < m_items.size() && !isInViewport(m_items.at(startIndex).bounds)) {
     ++startIndex;
   }
 
   if (startIndex >= m_items.size()) {
-    visibleIndexRange = {-1, -1};
+    visibleIndexRange = VisibleRangeV2::empty();
     return;
   }
 
@@ -81,9 +78,10 @@ void OmniList::updateVisibleItems() {
   int marginOffset = std::max(0, margins.top - scrollHeight);
   int viewportY = marginOffset + cell.bounds.y() - scrollHeight;
   QSize viewportSize = size();
-  int endIndex = startIndex;
+  size_t endIndex = startIndex;
   int lastY = -1;
 
+  Timer loopTimer;
   while (endIndex < m_items.size()) {
     auto &vinfo = m_items[endIndex];
     auto cacheIt = _widgetCache.find(vinfo.item->id());
@@ -98,11 +96,16 @@ void OmniList::updateVisibleItems() {
     auto start = std::chrono::high_resolution_clock::now();
     if (cacheIt == _widgetCache.end()) {
       if (auto wrapper = takeFromPool(vinfo.item->typeId())) {
+        Timer timer;
+        wrapper->setParent(this);
         vinfo.item->recycle(wrapper->widget());
-        wrapper->blockSignals(false);
         vinfo.item->attached(wrapper->widget());
+        wrapper->blockSignals(false);
+        wrapper->setUpdatesEnabled(true);
+        timer.time("Recycle from pool");
         widget = wrapper;
       } else {
+        Timer timer;
         widget = new OmniListItemWidgetWrapper(this);
         connect(widget, &OmniListItemWidgetWrapper::clicked, this, &OmniList::itemClicked,
                 Qt::UniqueConnection);
@@ -114,7 +117,10 @@ void OmniList::updateVisibleItems() {
         OmniListItemWidget *w = vinfo.item->createWidget();
         widget->setWidget(w);
         vinfo.item->attached(w);
+        timer.time("Create new widget");
       }
+
+      Timer timer;
 
       CachedWidget cache{.widget = widget, .recyclingId = 0};
 
@@ -122,6 +128,8 @@ void OmniList::updateVisibleItems() {
 
       isWidgetCreated = true;
       _widgetCache[vinfo.item->id()] = cache;
+
+      timer.time("Caching widget");
     } else {
       widget = cacheIt->second.widget;
     }
@@ -133,75 +141,329 @@ void OmniList::updateVisibleItems() {
 
     widget->blockSignals(true);
     widget->setIndex(endIndex);
-    widget->setSelected(endIndex == _selected);
+    widget->setSelected(endIndex == m_selected);
     if (widget->size() != size) { widget->resize(size); }
-    // widget->setFixedSize(size);
     widget->move(pos);
-    widget->show();
     widget->blockSignals(false);
 
     lastY = vinfo.bounds.y();
-    //_visibleWidgets[endIndex] = widget;
     m_visibleWidgets.emplace_back(widget);
 
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() / 1e6;
     ++endIndex;
   }
+  loopTimer.time("loop list");
 
-  VisibleRange range = {startIndex, endIndex - 1};
+  Timer visibleTimer;
+  for (const auto &widget : m_visibleWidgets) {
+    widget->show();
+  }
+  visibleTimer.time("SHOW WIDGETS");
+
+  VisibleRangeV2 range = {startIndex, endIndex - startIndex};
 
   // get rid of widgets that went out of range
 
-  if (visibleIndexRange.lower != -1) {
-    for (int i = visibleIndexRange.lower; i <= visibleIndexRange.upper; ++i) {
-      bool isStillVisible = i >= range.lower && i <= range.upper;
+  Timer viewport;
+  for (int i = 0; i != visibleIndexRange.size; ++i) {
+    int index = visibleIndexRange.start + i;
+    bool isStillVisible = range.size > 0 && index >= range.start && index < (range.start + range.size);
 
-      if (isStillVisible) continue;
-      if (i >= m_items.size()) continue;
+    if (isStillVisible) continue;
 
-      auto &item = m_items.at(i).item;
+    auto &item = m_items.at(index).item;
 
-      if (auto it = _widgetCache.find(item->id()); it != _widgetCache.end()) {
-        OmniListItemWidgetWrapper *widget = it->second.widget;
-
-        if (item->recyclable()) {
-          moveToPool(item->typeId(), widget);
-        } else {
-          widget->deleteLater();
-        }
-
-        item->detached(widget->widget());
-        _widgetCache.erase(it);
-      }
-    }
-  }
-
-  /*
-  for (auto it = _visibleWidgets.begin(); it != _visibleWidgets.end();) {
-    auto current = it++;
-
-    if (current->first < visibleIndexRange.lower || current->first > visibleIndexRange.upper) {
-      auto item = m_items[current->first].item;
-      auto widget = current->second;
+    if (auto it = _widgetCache.find(item->id()); it != _widgetCache.end()) {
+      OmniListItemWidgetWrapper *widget = it->second.widget;
 
       if (item->recyclable()) {
         moveToPool(item->typeId(), widget);
       } else {
+        // TODO: we might want to keep them cached for some time
         widget->deleteLater();
       }
 
-      _visibleWidgets.erase(current);
-      _widgetCache.erase(item->id());
+      item->detached(widget->widget());
+      _widgetCache.erase(it);
     }
   }
-  */
 
-  setUpdatesEnabled(true);
-  update();
+  viewport.time("Viewport cleanup");
+
+  Timer recalculations;
   recalculateMousePosition();
   updateFocusChain();
+  setUpdatesEnabled(true);
+  recalculations.time("Recalculations");
   this->visibleIndexRange = range;
+  timer.time("updateVisibleItems");
+}
+
+bool OmniList::isDividableContent(const ModelItem &item) {
+  if (auto section = std::get_if<std::unique_ptr<Section>>(&item)) {
+    return (*section)->layoutItems().size() > 0;
+  }
+
+  return false;
+}
+
+void OmniList::calculateHeights() {
+  Timer timer;
+
+  int yOffset = 0;
+  int availableWidth = width() - margins.left - margins.right;
+  std::optional<SectionCalculationContext> sctx;
+  std::unordered_map<QString, CachedWidget> updatedCache;
+
+  auto view = m_model | std::views::filter([](const auto &item) {
+                return std::holds_alternative<std::unique_ptr<Section>>(item);
+              }) |
+              std::views::transform([](const auto &section) {
+                return std::get<std::unique_ptr<Section>>(section)->itemCount();
+              });
+  auto totalSize = std::ranges::fold_left(view, 0, std::plus<size_t>());
+
+  m_items.reserve(totalSize);
+  m_items.clear();
+  visibleIndexRange = VisibleRangeV2::empty();
+
+  size_t i = -1;
+
+  for (const auto &item : m_model) {
+    ++i;
+    if (auto divider = std::get_if<Divider>(&item)) {
+      if (yOffset == 0) continue;
+      if (i + 1 == m_model.size() || !isDividableContent(m_model.at(i + 1))) continue;
+
+      int height = divider->item()->calculateHeight(availableWidth);
+      QRect bounds(0, yOffset, width(), height);
+      VirtualWidgetInfo vinfo{.bounds = bounds, .item = divider->item()};
+
+      m_items.push_back(vinfo);
+      yOffset += height;
+    } else if (auto p = std::get_if<std::unique_ptr<Section>>(&item)) {
+      auto &section = *p;
+
+      auto &items = section->layoutItems();
+      int spaceWidth = section->spacing() * (section->columns() - 1);
+      int columnWidth = (availableWidth - spaceWidth) / section->columns();
+
+      if (items.empty()) continue;
+
+      sctx = {.x = margins.left, .maxHeight = 0};
+
+      size_t shownCount = 0;
+
+      for (auto &sectionItem : items) {
+        if (auto spacer = std::get_if<Spacer>(&sectionItem)) {
+          yOffset += spacer->value;
+          continue;
+        }
+
+        if (auto p = std::get_if<Section::VirtualWidget>(&sectionItem)) {
+          auto &item = *p;
+
+          // Show section header above the first actually displayed item (after filtering has been
+          // considered)
+          if (shownCount == 0) {
+            if (auto header = section->headerItem(); header && !section->title().isEmpty()) {
+              int height = header->calculateHeight(availableWidth);
+              QRect geometry(margins.left, yOffset, availableWidth, height);
+
+              VirtualWidgetInfo vinfo{.bounds = geometry, .item = header};
+
+              m_items.push_back(vinfo);
+              yOffset += height;
+            }
+          }
+
+          ++shownCount;
+
+          int vIndex = m_items.size();
+          int height = 0;
+          int width = columnWidth;
+          int x = margins.left;
+          int y = yOffset;
+
+          if (sctx) {
+            // width = sctx->section->calculateItemWidth(width, sctx->index);
+            //  x = sctx->section->calculateItemX(sctx->x, sctx->index);
+            if (sctx->x == margins.left && sctx->index > 0) {
+              yOffset += section->spacing();
+              y = yOffset;
+            }
+
+            x = sctx->x;
+            sctx->x = sctx->x + width + section->spacing();
+            height = calculateItemHeight(item.get(), width);
+            sctx->maxHeight = std::max(sctx->maxHeight, height);
+
+            if (sctx->x >= availableWidth) {
+              yOffset += sctx->maxHeight;
+              sctx->x = margins.left;
+              sctx->maxHeight = 0;
+            }
+
+            ++sctx->index;
+          } else {
+            height = item->calculateHeight(width);
+            yOffset += height;
+          }
+
+          QRect geometry(x, y, width, height);
+          VirtualWidgetInfo vinfo{.bounds = geometry, .item = item.get(), .enumerable = true};
+
+          // TODO: if in viewport, look for cached entry
+          if (isInViewport(geometry)) {
+            if (auto it = _widgetCache.find(item->id()); it != _widgetCache.end()) {
+              QWidget *widget = it->second.widget->widget();
+
+              widget->setUpdatesEnabled(false);
+              item->attached(widget);
+              item->refresh(widget);
+              widget->setUpdatesEnabled(true);
+              updatedCache[item->id()] = it->second;
+            }
+          }
+
+          ++shownCount;
+          m_items.push_back(vinfo);
+        }
+      }
+
+      if (sctx) { yOffset += sctx->maxHeight; }
+    }
+  }
+
+  if (!m_items.empty()) { yOffset += margins.bottom + margins.top; }
+
+  for (auto &[key, cache] : _widgetCache) {
+    if (auto it = updatedCache.find(key); it == updatedCache.end()) {
+      if (cache.recyclingId) {
+        moveToPool(cache.recyclingId, cache.widget);
+      } else {
+        cache.widget->deleteLater();
+      }
+    }
+  }
+
+  _visibleWidgets.clear();
+  _widgetCache = updatedCache;
+
+  // timer.time("calculateHeightsFromModel");
+
+  auto end = std::chrono::high_resolution_clock::now();
+  // auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+  //  qDebug() << "calculateHeights() took" << duration << "ms";
+
+  scrollBar->setMaximum(std::max(0, yOffset - height()));
+  scrollBar->setMinimum(0);
+  m_virtualHeight = yOffset;
+  updateVisibleItems();
+
+  emit virtualHeightChanged(m_virtualHeight);
+}
+
+bool OmniList::isInViewport(const QRect &bounds) {
+  int low = scrollBar->value();
+  int high = low + height();
+
+  return bounds.y() + bounds.height() >= low && bounds.y() <= high;
+}
+
+int OmniList::calculateItemHeight(const AbstractVirtualItem *item, int width) {
+  if (!item->hasUniformHeight()) { return item->calculateHeight(width); }
+
+  auto pred = [&](auto &&pair) { return pair.first == item->typeId(); };
+  auto match = std::ranges::find_if(m_cachedHeights, pred);
+  size_t typeId = item->typeId();
+
+  if (match != m_cachedHeights.end()) { return match->second; }
+
+  int height = item->calculateHeight(width);
+
+  m_cachedHeights.push_back({typeId, height});
+
+  return height;
+}
+
+std::vector<const OmniList::AbstractVirtualItem *> OmniList::items() const {
+  std::vector<const AbstractVirtualItem *> items;
+
+  items.reserve(m_items.size());
+
+  for (const auto &item : m_items) {
+    if (item.enumerable) items.emplace_back(item.item);
+  }
+
+  return items;
+}
+
+std::vector<const OmniList::AbstractVirtualItem *> OmniList::visibleItems() const {
+  return m_items | std::views::drop(visibleIndexRange.start) | std::views::take(visibleIndexRange.size) |
+         std::views::filter([](auto &&v) { return v.enumerable; }) |
+         std::views::transform([](auto &&v) -> const AbstractVirtualItem * { return v.item; }) |
+         std::ranges::to<std::vector>();
+}
+
+void OmniList::setSelected(SelectionPolicy policy) {
+  switch (policy) {
+  case SelectFirst:
+    selectFirst();
+    break;
+  case KeepSelection:
+    qDebug() << "update with keep selection";
+    if (m_selected == -1) {
+      selectFirst();
+    } else if (auto idx = indexOfItem(m_selectedId); idx != -1) {
+      qCritical() << "not implemented yet";
+      // qDebug() << "idx of " << _selectedId << _items[idx].vIndex;
+      // setSelectedIndex(_items[idx].vIndex);
+    } else {
+      qDebug() << "no index for" << m_selectedId;
+      setSelectedIndex(std::max(0, std::min(m_selected, static_cast<int>(m_items.size() - 1))));
+    }
+    break;
+  case PreserveSelection: {
+    int targetIndex = std::clamp(m_selected, 0, (int)m_items.size() - 1);
+    int distance = 0;
+
+    for (;;) {
+      int lowTarget = targetIndex - distance;
+      int highTarget = targetIndex + distance;
+      bool hasLower = lowTarget >= 0 && lowTarget < m_items.size();
+      bool hasUpper = highTarget >= 0 && highTarget < m_items.size();
+
+      if (!hasLower && !hasUpper) {
+        setSelectedIndex(-1);
+        return;
+      }
+
+      if (hasLower && m_items[lowTarget].item->selectable()) {
+        setSelectedIndex(lowTarget);
+        return;
+      }
+
+      if (hasUpper && m_items[highTarget].item->selectable()) {
+        setSelectedIndex(highTarget);
+        return;
+      }
+
+      ++distance;
+    }
+    break;
+  }
+  case SelectNone:
+    setSelectedIndex(-1);
+    break;
+  }
+}
+
+void OmniList::endResetModel(OmniList::SelectionPolicy selectionPolicy) {
+  calculateHeights();
+  setSelected(selectionPolicy);
+  emit modelChanged();
 }
 
 OmniListItemWidgetWrapper *OmniList::takeFromPool(size_t type) {
@@ -218,7 +480,9 @@ OmniListItemWidgetWrapper *OmniList::takeFromPool(size_t type) {
 
 void OmniList::moveToPool(size_t type, OmniListItemWidgetWrapper *widget) {
   widget->hide();
+  widget->setParent(nullptr);
   widget->blockSignals(true);
+  widget->setUpdatesEnabled(false);
   _widgetPools[type].push(widget);
 }
 
@@ -248,13 +512,13 @@ void OmniList::clearVisibleWidgets() {
 
 bool OmniList::selectDown() {
   if (m_items.empty()) return false;
-  if (_selected == -1) {
+  if (m_selected == -1) {
     setSelectedIndex(0, ScrollBehaviour::ScrollRelative);
     return true;
   }
 
-  auto &current = m_items[_selected];
-  int next = _selected;
+  auto &current = m_items[m_selected];
+  int next = m_selected;
 
   while (next < m_items.size() &&
          (m_items[next].bounds.y() == current.bounds.y() || !m_items[next].item->selectable())) {
@@ -281,14 +545,14 @@ bool OmniList::selectDown() {
 
 bool OmniList::selectUp() {
   if (m_items.empty()) return false;
-  if (_selected == -1) {
-    _selected = 0;
+  if (m_selected == -1) {
+    m_selected = 0;
     return true;
   }
 
-  auto &current = m_items[_selected];
+  auto &current = m_items[m_selected];
 
-  for (int i = _selected - 1; i >= 0; --i) {
+  for (int i = m_selected - 1; i >= 0; --i) {
     auto &vitem = m_items[i];
 
     if (vitem.bounds.y() < current.bounds.y() && vitem.bounds.x() <= current.bounds.x() &&
@@ -302,10 +566,10 @@ bool OmniList::selectUp() {
 }
 
 bool OmniList::selectLeft() {
-  auto base = m_items[_selected];
+  auto base = m_items[m_selected];
   int availableWidth = width() - margins.left - margins.right;
 
-  for (int i = _selected - 1; i >= 0; --i) {
+  for (int i = m_selected - 1; i >= 0; --i) {
     auto &vItem = m_items[i];
 
     if (!vItem.item->selectable()) { continue; }
@@ -322,10 +586,10 @@ bool OmniList::selectLeft() {
 }
 
 bool OmniList::selectRight() {
-  auto base = m_items[_selected];
+  auto base = m_items[m_selected];
   int availableWidth = width() - margins.left - margins.right;
 
-  for (int i = _selected + 1; i < m_items.size(); ++i) {
+  for (int i = m_selected + 1; i < m_items.size(); ++i) {
     auto &vItem = m_items[i];
 
     if (!vItem.item->selectable()) { continue; }
@@ -342,27 +606,27 @@ bool OmniList::selectRight() {
 }
 
 void OmniList::setSelectedIndex(int index, ScrollBehaviour scrollBehaviour) {
-  int oldIndex = _selected;
+  int oldIndex = m_selected;
 
-  if (index != _selected) { scrollTo(index, scrollBehaviour); }
+  if (index != m_selected) { scrollTo(index, scrollBehaviour); }
 
-  auto previous = _selected >= 0 && _selected < m_items.size() ? m_items.at(_selected).item : nullptr;
+  auto previous = m_selected >= 0 && m_selected < m_items.size() ? m_items.at(m_selected).item : nullptr;
   auto next = index >= 0 && index < m_items.size() ? m_items.at(index).item : nullptr;
 
-  _selected = index;
+  m_selected = index;
   updateVisibleItems();
 
   if (index == -1) {
-    if (!_selectedId.isEmpty()) {
-      _selectedId.clear();
+    if (!m_selectedId.isEmpty()) {
+      m_selectedId.clear();
       emit selectionChanged(next, previous);
     }
     return;
   }
 
-  if (next && _selectedId != next->id()) {
+  if (next && m_selectedId != next->id()) {
     // qDebug() << "seletion changed" << next->id() << "previous" << (previous ? previous->id() : "<none>");
-    _selectedId = next->id();
+    m_selectedId = next->id();
     emit selectionChanged(next, previous);
   }
 
@@ -440,7 +704,7 @@ void OmniList::scrollTo(int idx, ScrollBehaviour behaviour) {
 void OmniList::activateCurrentSelection() const {
   if (!isSelectionValid()) return;
 
-  emit itemActivated(*m_items[_selected].item);
+  emit itemActivated(*m_items[m_selected].item);
 }
 
 bool OmniList::event(QEvent *event) {
@@ -499,21 +763,34 @@ void OmniList::resizeEvent(QResizeEvent *event) {
 }
 
 const OmniList::AbstractVirtualItem *OmniList::selected() const {
-  if (_selected >= 0 && _selected < m_items.size()) return m_items[_selected].item;
+  if (m_selected >= 0 && m_selected < m_items.size()) return m_items[m_selected].item;
 
   return nullptr;
 }
 
 void OmniList::refresh() const {
-  for (const auto &[id, cache] : _widgetCache) {
-    if (auto it = _idItemMap.find(id); it != _idItemMap.end()) {
-      it->second->refresh(cache.widget->widget());
+  for (int i = 0; i != visibleIndexRange.size; ++i) {
+    int index = visibleIndexRange.start + i;
+    auto item = m_items.at(index).item;
+
+    if (auto it = _widgetCache.find(item->id()); it != _widgetCache.end()) {
+      item->refresh(it->second.widget->widget());
     }
   }
 }
 
 const OmniList::AbstractVirtualItem *OmniList::itemAt(const QString &id) const {
-  if (auto it = _idItemMap.find(id); it != _idItemMap.end()) return it->second;
+  for (const auto &entry : m_items) {
+    if (entry.item->id() == id) return entry.item;
+  }
+
+  return nullptr;
+}
+
+OmniList::AbstractVirtualItem *OmniList::itemAt(const QString &id) {
+  for (const auto &entry : m_items) {
+    if (entry.item->id() == id) return entry.item;
+  }
 
   return nullptr;
 }
@@ -538,10 +815,9 @@ void OmniList::setMargins(int left, int top, int right, int bottom) { margins = 
 void OmniList::setMargins(int value) { setMargins(value, value, value, value); }
 
 void OmniList::clear() {
-  _idItemMap.clear();
   m_model.clear();
-  _selected = DEFAULT_SELECTION_INDEX;
-  _virtualHeight = 0;
+  m_selected = DEFAULT_SELECTION_INDEX;
+  m_virtualHeight = 0;
 
   calculateHeights();
 }
@@ -553,19 +829,19 @@ bool OmniList::removeItem(const QString &id) {
 }
 
 bool OmniList::updateItem(const QString &id, const UpdateItemCallback &cb) {
-  if (auto it = _idItemMap.find(id); it != _idItemMap.end()) {
-    cb(it->second);
+  auto item = itemAt(id);
 
-    if (it->second->recyclable()) {
-      if (auto it2 = _widgetCache.find(id); it2 != _widgetCache.end()) {
-        it->second->recycle(it2->second.widget->widget());
-      }
+  if (!item) return false;
+
+  cb(item);
+
+  if (item->recyclable()) {
+    if (auto it2 = _widgetCache.find(id); it2 != _widgetCache.end()) {
+      item->recycle(it2->second.widget->widget());
     }
-
-    return true;
   }
 
-  return false;
+  return true;
 }
 
 void OmniList::invalidateCache() {
@@ -592,11 +868,7 @@ void OmniList::invalidateCache(const QString &id) {
 
   if (it == _widgetCache.end()) { return; }
 
-  auto itemIt = _idItemMap.find(id);
-
-  if (itemIt == _idItemMap.end()) return;
-
-  auto item = itemIt->second;
+  auto item = itemAt(id);
 
   if (item->recyclable()) {
     moveToPool(item->typeId(), it->second.widget);
@@ -605,8 +877,6 @@ void OmniList::invalidateCache(const QString &id) {
   }
 
   _widgetCache.erase(it);
-
-  // if (info.vIndex != -1) { _visibleWidgets.erase(info.vIndex); }
 }
 
 const OmniList::AbstractVirtualItem *OmniList::setSelected(const QString &id,
@@ -622,6 +892,15 @@ const OmniList::AbstractVirtualItem *OmniList::setSelected(const QString &id,
   return nullptr;
 }
 
+void OmniList::clearWidgetPools() {
+  for (auto [type, stack] : _widgetPools) {
+    while (!stack.empty()) {
+      stack.top()->deleteLater();
+      stack.pop();
+    }
+  }
+}
+
 void OmniList::handleDebouncedScroll() {
   if (m_scrollBarElapsedTimer.elapsed() >= SCROLL_FRAME_TIME) {
     updateVisibleItems();
@@ -629,9 +908,7 @@ void OmniList::handleDebouncedScroll() {
   }
 }
 
-OmniList::OmniList()
-    : scrollBar(new OmniScrollBar(this)), _selected(DEFAULT_SELECTION_INDEX), margins({0, 0, 0, 0}) {
-
+OmniList::OmniList() {
   m_scrollBarElapsedTimer.start();
   scrollBar->setSingleStep(40);
   connect(scrollBar, &QScrollBar::valueChanged, this, &OmniList::handleDebouncedScroll);
@@ -644,10 +921,4 @@ OmniList::OmniList()
   setMouseTracking(true);
 }
 
-OmniList::~OmniList() {
-  qDebug() << "Destroy list";
-  qDebug() << "widget cache size" << _widgetCache.size();
-  for (auto &[typeId, pool] : _widgetPools) {
-    qDebug() << "  Type" << typeId << ":" << pool.size() << "widgets";
-  }
-}
+OmniList::~OmniList() { clearWidgetPools(); }
