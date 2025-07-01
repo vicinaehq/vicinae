@@ -21,7 +21,7 @@ else()
 endif()
 
 if (CCACHE) 
-	#set(CMAKE_CXX_COMPILER_LAUNCHER "ccache")
+	set(CMAKE_CXX_COMPILER_LAUNCHER "ccache")
 endif()
 
 if ("$ENV{DIST_TYPE}" STREQUAL "generic")

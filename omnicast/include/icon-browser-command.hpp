@@ -48,8 +48,6 @@ class IconBrowserView : public GridView {
   };
 
   void textChanged(const QString &s) override {
-    qCritical() << "onSearchChanged" << s;
-
     int inset = 20;
     auto filter = [&](const QString &name) { return name.contains(s, Qt::CaseInsensitive); };
     auto makeIcon = [&](auto &&icon) -> std::unique_ptr<OmniList::AbstractVirtualItem> {

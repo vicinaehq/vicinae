@@ -15,7 +15,6 @@ class BookmarkService : public QObject {
   OmniDatabase &m_db;
   std::vector<std::shared_ptr<Bookmark>> m_bookmarks;
   std::vector<std::shared_ptr<Bookmark>> loadAll();
-  void createTables();
 
 public:
   std::vector<std::shared_ptr<Bookmark>> bookmarks() const;

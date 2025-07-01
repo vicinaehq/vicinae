@@ -45,3 +45,11 @@ CREATE TABLE IF NOT EXISTS calculator_history (
 	result TEXT NOT NULL,
 	created_at INTEGER DEFAULT (unixepoch())
 );
+
+CREATE TABLE IF NOT EXISTS ai_provider_config (
+	id TEXT PRIMARY KEY,
+	data JSON,
+	enabled INT DEFAULT 1,
+	created_at INTEGER DEFAULT (unixepoch()),
+	updated_at INTEGER
+);

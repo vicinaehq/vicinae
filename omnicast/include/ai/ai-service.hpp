@@ -75,19 +75,7 @@ private:
   std::vector<ManagedProvider> m_providers;
 
 public:
-  Manager(OmniDatabase &db) : m_db(db) {
-    QSqlQuery query(db.db());
-
-    query.exec(R"(
-	  	CREATE TABLE IF NOT EXISTS ai_provider_config (
-			id TEXT PRIMARY KEY,
-			data JSON,
-			enabled INT DEFAULT 1,
-			created_at INTEGER DEFAULT (unixepoch()),
-			updated_at INTEGER
-		);
-	  )");
-  }
+  Manager(OmniDatabase &db) : m_db(db) {}
 
   std::optional<ManagedProvider::Config> getProviderConfig(const QString &id) const {
     QSqlQuery query(m_db.db());

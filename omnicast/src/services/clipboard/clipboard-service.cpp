@@ -596,46 +596,6 @@ ClipboardService::ClipboardService(const std::filesystem::path &path)
 
   manager.runMigrations();
 
-  bool exec = query.exec(R"(
-	CREATE TABLE IF NOT EXISTS selection (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		hash_md5 TEXT NOT NULL,
-		preferred_mime_type TEXT NOT NULL,
-		source TEXT,
-		offer_count TEXT,
-		created_at INTEGER DEFAULT (unixepoch()),
-		pinned_at INTEGER
-	);
-	)");
-
-  if (!exec) { throw std::runtime_error(query.lastError().databaseText().toUtf8().constData()); }
-
-  query.exec(R"(
-   CREATE TABLE IF NOT EXISTS data_offer (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		mime_type TEXT NOT NULL,
-		text_preview TEXT,
-		content_hash_md5 TEXT NOT NULL,
-		selection_id INTEGER,
-		FOREIGN KEY(selection_id) 
-		REFERENCES selection(id)
-		ON DELETE CASCADE
-	);
-  )");
-
-  query.exec(R"(
-		CREATE VIRTUAL TABLE selection_fts USING fts5(
-			content,
-			selection_id,
-			tokenize='porter'
-		);
-	)");
-
-  query.exec("CREATE INDEX IF NOT EXISTS idx_selection_pinned_created ON selection(pinned_at DESC, "
-             "created_at DESC)");
-  query.exec("CREATE INDEX IF NOT EXISTS idx_data_offer_selection_id ON data_offer(selection_id, mime_type)");
-  query.exec("CREATE INDEX IF NOT EXISTS idx_selection_preferred_mime ON selection(preferred_mime_type)");
-
   query.prepare(retrieveSelectionByIdQuery);
 
   if (!m_clipboardServer->start()) {

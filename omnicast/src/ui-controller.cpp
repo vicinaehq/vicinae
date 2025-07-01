@@ -144,7 +144,6 @@ void UIController::handleActionButtonClick() {
 
 void UIController::popView() {
   if (m_stateStack.size() == 1) {
-    qDebug() << "state stack == 0";
     m_topBar->input->setText("");
     emit m_topBar->input->textEdited("");
     return;

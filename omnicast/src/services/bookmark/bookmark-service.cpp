@@ -29,28 +29,6 @@ std::vector<std::shared_ptr<Bookmark>> BookmarkService::loadAll() {
   return bookmarks;
 }
 
-void BookmarkService::createTables() {
-  auto query = m_db.createQuery();
-
-  query.prepare(R"(
-		CREATE TABLE IF NOT EXISTS bookmarks (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			name TEXT NOT NULL,
-			icon TEXT NOT NULL,
-			url TEXT NOT NULL,
-			app TEXT NOT NULL,
-			open_count INTEGER DEFAULT 0,
-			created_at INTEGER DEFAULT (unixepoch()),
-			last_used_at INTEGER
-		);
-	)");
-
-  if (!query.exec()) {
-    qDebug() << "Failed to execute initial query: " << query.lastError();
-    return;
-  }
-}
-
 std::vector<std::shared_ptr<Bookmark>> BookmarkService::bookmarks() const { return m_bookmarks; }
 
 bool BookmarkService::removeBookmark(int id) {
@@ -106,7 +84,6 @@ bool BookmarkService::createBookmark(const QString &name, const QString &icon, c
 }
 
 BookmarkService::BookmarkService(OmniDatabase &db) : m_db(db) {
-  createTables();
   m_bookmarks = loadAll();
   qCritical() << "loaded" << m_bookmarks.size() << "bookmarks";
 }
