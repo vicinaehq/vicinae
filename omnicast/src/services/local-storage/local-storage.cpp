@@ -3,23 +3,6 @@
 
 using ValueType = LocalStorageService::ValueType;
 
-void LocalStorageService::createTables() {
-  auto query = db.createQuery();
-
-  if (!query.exec(R"(
-	  	CREATE TABLE IF NOT EXISTS storage_data_item (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			namespace_id TEXT NOT NULL,
-			value_type INT NOT NULL,
-			key TEXT NOT NULL,
-			value TEXT NOT NULL,
-			UNIQUE(namespace_id, key)
-		);
-	  )")) {
-    qCritical() << "Failed to initialize storage table" << query.lastError();
-  }
-}
-
 std::pair<QString, ValueType> LocalStorageService::serializeValue(const QJsonValue &value) const {
   if (value.isString()) { return {value.toString(), ValueType::String}; }
   if (value.isDouble()) { return {QString::number(value.toDouble()), ValueType::Number}; }
@@ -125,7 +108,6 @@ bool LocalStorageService::clearNamespace(const QString &namespaceId) {
 }
 
 LocalStorageService::LocalStorageService(OmniDatabase &db) : db(db) {
-  createTables();
   m_clearQuery.prepare("DELETE FROM storage_data_item WHERE namespace_id = :namespace_id");
   m_listQuery.prepare("SELECT key, value FROM storage_data_item WHERE namespace_id = :namespace_id");
   m_removeQuery.prepare("DELETE FROM storage_data_item WHERE namespace_id = :namespace_id AND key = :key");

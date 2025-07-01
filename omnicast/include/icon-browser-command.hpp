@@ -2,6 +2,7 @@
 #include "actions/theme/theme-actions.hpp"
 #include "base-view.hpp"
 #include "omni-icon.hpp"
+#include "ui/image/omnimg.hpp"
 #include "ui/omni-grid.hpp"
 #include "ui/omni-list.hpp"
 #include <qlabel.h>
@@ -18,7 +19,7 @@ class IconBrowserView : public GridView {
     QString navigationTitle() const override { return _name; }
 
     QWidget *centerWidget() const override {
-      auto icon = new OmniIcon;
+      auto icon = new Omnimg::ImageWidget;
 
       icon->setFixedSize(30, 30);
       icon->setUrl(BuiltinOmniIconUrl(_name));
@@ -31,6 +32,14 @@ class IconBrowserView : public GridView {
     QList<AbstractAction *> generateActions() const override {
       return {new SetThemeAction("omnicast-light")};
     }
+
+    void recycleCenterWidget(QWidget *widget) const override {
+      auto icon = static_cast<Omnimg::ImageWidget *>(widget);
+
+      icon->setUrl(BuiltinOmniIconUrl(_name));
+    }
+
+    bool centerWidgetRecyclable() const override { return true; }
 
   public:
     const QString &name() const { return _name; }

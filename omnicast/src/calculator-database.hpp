@@ -63,26 +63,6 @@ public:
   CalculatorDatabase(const CalculatorDatabase &rhs) = delete;
 
   CalculatorDatabase(OmniDatabase &db) : m_db(db) {
-    QSqlQuery query = m_db.createQuery();
-
-    query.prepare(R"(
-		CREATE TABLE IF NOT EXISTS history (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			expression TEXT NOT NULL,
-			result TEXT NOT NULL,
-			created_at INTEGER DEFAULT (unixepoch())
-		);
-
-		CREATE TABLE IF NOT EXISTS currency_exchange_rates (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			base_symbol TEXT NOT NULL,
-			quote_symbol TEXT NOT NULL,
-			rate REAL
-		);
-	)");
-
-    if (!query.exec()) { qDebug() << "Failed to execute initial query"; }
-
     m_qcalc.checkExchangeRatesDate(1);
     m_qcalc.loadExchangeRates();
     m_qcalc.loadGlobalDefinitions();

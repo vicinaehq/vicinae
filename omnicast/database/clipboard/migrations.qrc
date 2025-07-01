@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="database/clipboard">
+        <file>migrations/001_init.sql</file>
+    </qresource>
+</RCC>

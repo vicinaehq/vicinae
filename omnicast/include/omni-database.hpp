@@ -1,4 +1,5 @@
 #pragma once
+#include "utils/migration-manager/migration-manager.hpp"
 #include <qlogging.h>
 #include <qsqldatabase.h>
 #include <qsqlquery.h>
@@ -17,5 +18,9 @@ public:
     _db.setDatabaseName(path.c_str());
 
     if (!_db.open()) { qFatal() << "Could not open main omnicast SQLite database."; }
+
+    MigrationManager manager(_db, "omnicast");
+
+    manager.runMigrations();
   }
 };

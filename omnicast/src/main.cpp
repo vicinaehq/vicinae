@@ -44,7 +44,6 @@
 #include "proto.hpp"
 #include "quicklink-seeder.hpp"
 #include "quicklist-database.hpp"
-#include "ranking-service.hpp"
 #include "root-item-manager.hpp"
 #include "root-search/apps/app-root-provider.hpp"
 #include "root-search/bookmarks/bookmark-root-provider.hpp"
@@ -158,7 +157,7 @@ int startDaemon() {
     auto quicklinkService = std::make_unique<QuicklistDatabase>(*omniDb.get());
     auto localStorage = std::make_unique<LocalStorageService>(*omniDb);
     auto rootItemManager = std::make_unique<RootItemManager>(*omniDb.get());
-    auto commandDb = std::make_unique<OmniCommandDatabase>(*omniDb, *rootItemManager.get());
+    auto commandDb = std::make_unique<OmniCommandDatabase>();
     auto extensionManager = std::make_unique<ExtensionManager>(*commandDb);
     auto clipboardManager = std::make_unique<ClipboardService>(Omnicast::dataDir() / "clipboard.db");
     auto processManager = std::make_unique<ProcessManagerService>();
@@ -166,7 +165,6 @@ int startDaemon() {
     auto aiManager = std::make_unique<AI::Manager>(*omniDb);
     auto ollamaProvider = std::make_unique<OllamaAiProvider>();
     auto fontService = std::make_unique<FontService>();
-    auto rankingService = std::make_unique<RankingService>(*omniDb);
     auto appService = std::make_unique<AppService>(*omniDb.get());
     auto configService = std::make_unique<ConfigService>();
     auto bookmarkService = std::make_unique<BookmarkService>(*omniDb.get());
@@ -203,7 +201,6 @@ int startDaemon() {
     registry->setRootItemManager(std::move(rootItemManager));
     registry->setQuicklinks(std::move(quicklinkService));
     registry->setCalculatorDb(std::move(calculatorService));
-    registry->setRankingService(std::move(rankingService));
     registry->setAppDb(std::move(appService));
     registry->setOmniDb(std::move(omniDb));
     registry->setAI(std::move(aiManager));

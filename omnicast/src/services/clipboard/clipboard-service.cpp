@@ -9,6 +9,7 @@
 #include <ios>
 #include <qbytearrayview.h>
 #include "timer.hpp"
+#include "utils/migration-manager/migration-manager.hpp"
 #include <qcontainerfwd.h>
 #include <qcryptographichash.h>
 #include <qdir.h>
@@ -573,13 +574,27 @@ ClipboardService::ClipboardService(const std::filesystem::path &path)
   m_clipboardServer =
       std::unique_ptr<AbstractClipboardServer>(ClipboardServerFactory().createFirstActivatable());
 
+  // pragmas cannot be ran inside a transaction
+  std::vector<QString> pragmas = {"PRAGMA journal_mode = WAL", "PRAGMA synchronous = normal",
+                                  "PRAGMA journal_size_limit = 6144000"};
+
   db.setDatabaseName(path.c_str());
 
   if (!db.open()) { throw std::runtime_error("Failed to open clipboard db"); }
 
+  for (const auto &pragma : pragmas) {
+    QSqlQuery query(db);
+
+    if (!query.exec(pragma)) { qCritical() << "Failed to run pragma" << pragma << query.lastError(); }
+  }
+
   _data_dir.mkpath(_data_dir.path());
 
   QSqlQuery query(db);
+
+  MigrationManager manager(db, "clipboard");
+
+  manager.runMigrations();
 
   bool exec = query.exec(R"(
 	CREATE TABLE IF NOT EXISTS selection (

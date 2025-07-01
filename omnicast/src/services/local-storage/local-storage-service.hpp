@@ -20,8 +20,6 @@ private:
   QSqlQuery m_setItemQuery = db.createQuery();
   QSqlQuery m_getQuery = db.createQuery();
 
-  void createTables();
-
   std::pair<QString, ValueType> serializeValue(const QJsonValue &value) const;
 
   QJsonValue deserializeValue(const QString &value, ValueType type);

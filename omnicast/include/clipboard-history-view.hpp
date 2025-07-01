@@ -1,6 +1,7 @@
 #pragma once
 #include "base-view.hpp"
 #include "clipboard-actions.hpp"
+#include "ui/empty-view.hpp"
 #include "common.hpp"
 #include "extend/metadata-model.hpp"
 #include "manage-quicklinks-command.hpp"
@@ -13,6 +14,7 @@
 #include "ui/split-detail.hpp"
 #include "ui/toast.hpp"
 #include <libqalculate/Number.h>
+#include <libqalculate/includes.h>
 #include <memory>
 #include <qboxlayout.h>
 #include <qevent.h>
@@ -21,6 +23,7 @@
 #include <qnamespace.h>
 #include <qobject.h>
 #include <qproperty.h>
+#include <qstackedwidget.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
 #include <sys/socket.h>
@@ -310,11 +313,19 @@ class ClipboardHistoryView : public SimpleView {
   OmniList *m_list = new OmniList();
   ClipboardStatusToobar *m_statusToolbar = new ClipboardStatusToobar;
   SplitDetailWidget *m_split = new SplitDetailWidget(this);
+  EmptyViewWidget *m_emptyView = new EmptyViewWidget;
+  QStackedWidget *m_content = new QStackedWidget(this);
 
   void generateList(const QString &query) {
     auto clipman = ServiceRegistry::instance()->clipman();
     auto result = clipman->listAll(100, 0, {.query = query});
     size_t i = 0;
+
+    if (result.data.empty()) {
+      m_content->setCurrentWidget(m_emptyView);
+    } else {
+      m_content->setCurrentWidget(m_split);
+    }
 
     m_statusToolbar->setLeftText(QString("%1 Items").arg(result.data.size()));
 
@@ -418,13 +429,21 @@ public:
       handleMonitoringChanged(clipman->monitoring());
     }
 
+    m_content->addWidget(m_split);
+    m_content->addWidget(m_emptyView);
+    m_content->setCurrentWidget(m_split);
+
+    m_emptyView->setTitle("No clipboard entries");
+    m_emptyView->setDescription("No results matching your search. You can try to refine your search.");
+    m_emptyView->setIcon(BuiltinOmniIconUrl("magnifying-glass"));
+
     m_split->setMainWidget(m_list);
     m_split->setDetailVisibility(false);
     layout->setSpacing(0);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(m_statusToolbar);
     layout->addWidget(new HDivider);
-    layout->addWidget(m_split, 1);
+    layout->addWidget(m_content, 1);
     setLayout(layout);
 
     connect(m_list, &OmniList::selectionChanged, this, &ClipboardHistoryView::selectionChanged);

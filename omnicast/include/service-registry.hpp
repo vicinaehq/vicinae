@@ -11,7 +11,6 @@
 #include "omni-command-db.hpp"
 #include "omni-database.hpp"
 #include "quicklist-database.hpp"
-#include "ranking-service.hpp"
 #include "root-extension-manager.hpp"
 #include "root-item-manager.hpp"
 #include "services/toast/toast-service.hpp"
@@ -33,7 +32,6 @@ class ServiceRegistry : public QObject {
   std::unique_ptr<ClipboardService> m_clipman;
   std::unique_ptr<AI::Manager> m_aiManager;
   std::unique_ptr<FontService> m_fontService;
-  std::unique_ptr<RankingService> m_rankingService;
   std::unique_ptr<RootItemManager> m_rootItemManager;
   std::unique_ptr<RootExtensionManager> m_rootExtMan;
   std::unique_ptr<ConfigService> m_config;
@@ -61,7 +59,6 @@ public:
   auto clipman() const { return m_clipman.get(); }
   auto appDb() const { return m_appDb.get(); }
   auto toastService() const { return m_toastService.get(); }
-  auto rankingService() const { return m_rankingService.get(); }
   auto bookmarks() const { return m_bookmarkService.get(); }
   auto UI() const { return m_uiController.get(); }
 
@@ -76,7 +73,6 @@ public:
   void setToastService(std::unique_ptr<ToastService> service) { m_toastService = std::move(service); }
   void setRootExtMan(std::unique_ptr<RootExtensionManager> man) { m_rootExtMan = std::move(man); }
   void setAI(std::unique_ptr<AI::Manager> manager) { m_aiManager = std::move(manager); }
-  void setRankingService(std::unique_ptr<RankingService> service) { m_rankingService = std::move(service); }
   void setFontService(std::unique_ptr<FontService> font) { m_fontService = std::move(font); }
   void setOmniDb(std::unique_ptr<OmniDatabase> service) { m_omniDb = std::move(service); }
   void setQuicklinks(std::unique_ptr<QuicklistDatabase> service) { m_quickinkDb = std::move(service); }

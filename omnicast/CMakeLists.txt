@@ -358,6 +358,9 @@ set(SRCS
 	./resources.qrc
 	./icons/icons.qrc
 
+	./database/omnicast/migrations.qrc
+	./database/clipboard/migrations.qrc
+
 	src/ui/status_bar.hpp
 	src/ui/status_bar.cpp
 	src/ui/input_completer.hpp
@@ -414,6 +417,9 @@ set(SRCS
 	
 	src/services/app-service/app-service.hpp
 	src/services/app-service/app-service.cpp
+
+	src/utils/migration-manager/migration-manager.hpp
+	src/utils/migration-manager/migration-manager.cpp
 	
 )
 
