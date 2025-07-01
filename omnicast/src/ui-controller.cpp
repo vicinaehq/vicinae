@@ -198,14 +198,12 @@ void UIController::applyViewState(const ViewState &state) {
   m_topBar->input->setFocus();
   m_topBar->input->selectAll();
 
-  /*
   if (auto accessory = state.searchAccessory) {
     qDebug() << "set accessory" << accessory;
     m_topBar->setAccessoryWidget(accessory);
   } else {
     m_topBar->clearAccessoryWidget();
   }
-  */
 
   qDebug() << "accessory set";
 

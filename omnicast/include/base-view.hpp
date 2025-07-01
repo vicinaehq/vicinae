@@ -8,16 +8,19 @@
 #include <qevent.h>
 #include <qnamespace.h>
 #include "ui/action-pannel/action.hpp"
+#include "ui/empty-view.hpp"
 #include "ui/omni-grid.hpp"
 #include "ui/omni-list.hpp"
 #include "ui/split-detail.hpp"
 #include "ui/toast.hpp"
 #include "ui/top_bar.hpp"
 #include "ui/ui-controller.hpp"
+#include "utils/layout.hpp"
 #include <memory>
 #include <qboxlayout.h>
 #include <qlogging.h>
 #include <qobjectdefs.h>
+#include <qstackedwidget.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
 
@@ -228,6 +231,8 @@ public:
 
 class ListView : public SimpleView {
   SplitDetailWidget *m_split = new SplitDetailWidget(this);
+  QStackedWidget *m_content = new QStackedWidget(this);
+  EmptyViewWidget *m_emptyView = new EmptyViewWidget(this);
 
   virtual bool inputFilter(QKeyEvent *event) override {
     switch (event->key()) {
@@ -344,12 +349,28 @@ protected:
 
 public:
   ListView(QWidget *parent = nullptr) : SimpleView(parent) {
+    m_content->addWidget(m_split);
+    m_content->addWidget(m_emptyView);
+    m_content->setCurrentWidget(m_list);
+
+    m_emptyView->setTitle("No results");
+    m_emptyView->setDescription("No results matching your search. You can try to refine your search.");
+    m_emptyView->setIcon(BuiltinOmniIconUrl("magnifying-glass"));
+
     m_split->setMainWidget(m_list);
-    setupUI(m_split);
+    setupUI(m_content);
     connect(m_list, &OmniList::modelChanged, this, &ListView::modelChanged);
     connect(m_list, &OmniList::selectionChanged, this, &ListView::selectionChanged);
     connect(m_list, &OmniList::itemActivated, this, &ListView::itemActivated);
     connect(m_list, &OmniList::itemRightClicked, this, &ListView::itemRightClicked);
+    connect(m_list, &OmniList::virtualHeightChanged, this, [this](int height) {
+      if (m_list->items().empty()) {
+        m_content->setCurrentWidget(m_emptyView);
+        return;
+      }
+
+      m_content->setCurrentWidget(m_split);
+    });
   }
 };
 
@@ -394,6 +415,8 @@ public:
 
 protected:
   OmniGrid *m_grid = new OmniGrid();
+  QStackedWidget *m_content = new QStackedWidget(this);
+  EmptyViewWidget *m_emptyView = new EmptyViewWidget(this);
 
   virtual void selectionChanged(const OmniList::AbstractVirtualItem *next,
                                 const OmniList::AbstractVirtualItem *previous) {
@@ -419,27 +442,9 @@ protected:
         // m_actionPannelV2->popToRoot();
       }
 
-      /*
-  m_statusBar->setActionButton(nextItem->actionPanelTitle(), KeyboardShortcutModel{.key = "return"});
-
-  auto actions = m_actionPannelV2->actions();
-  auto primaryAction = m_actionPannelV2->primaryAction();
-
-  m_statusBar->setActionButtonVisibility(!primaryAction || actions.size() > 1);
-  m_statusBar->setCurrentActionButtonVisibility(primaryAction);
-
-  if (auto action = m_actionPannelV2->primaryAction()) {
-    m_statusBar->setCurrentAction(action->title(),
-                                  action->shortcut.value_or(KeyboardShortcutModel{.key = "return"}));
-    m_statusBar->setActionButton("Actions", defaultActionPanelShortcut());
-  } else {
-    m_statusBar->setActionButton(nextItem->actionPanelTitle(), KeyboardShortcutModel{.key = "return"});
-  }
-      */
-
     } else {
       ui->clearActionPanel();
-      // m_topBar->destroyCompleter();
+      ui->destroyCompleter();
     }
   }
 
@@ -453,9 +458,24 @@ protected:
 
 public:
   GridView(QWidget *parent = nullptr) : SimpleView(parent) {
-    setupUI(m_grid);
+    m_content->addWidget(m_grid);
+    m_content->addWidget(m_emptyView);
+    m_content->setCurrentWidget(m_grid);
+    m_emptyView->setTitle("No results");
+    m_emptyView->setDescription("No results matching your search. You can try to refine your search.");
+    m_emptyView->setIcon(BuiltinOmniIconUrl("magnifying-glass"));
+
+    setupUI(m_content);
     connect(m_grid, &OmniList::selectionChanged, this, &GridView::selectionChanged);
     connect(m_grid, &OmniList::itemActivated, this, &GridView::itemActivated);
+    connect(m_grid, &OmniList::virtualHeightChanged, this, [this](int height) {
+      if (m_grid->items().empty()) {
+        m_content->setCurrentWidget(m_emptyView);
+        return;
+      }
+
+      m_content->setCurrentWidget(m_grid);
+    });
   }
 };
 

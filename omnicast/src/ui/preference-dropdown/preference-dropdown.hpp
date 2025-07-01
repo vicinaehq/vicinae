@@ -5,7 +5,7 @@ class PreferenceDropdown : public SelectorInput {
 public:
   void setOptions(const std::vector<Preference::DropdownData::Option> &opts);
 
-  PreferenceDropdown();
+  PreferenceDropdown(QWidget *parent = nullptr);
 };
 
 class PreferenceDropdownItem : public SelectorInput::AbstractItem {

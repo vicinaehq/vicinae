@@ -127,6 +127,7 @@ public:
   void setValueAsJson(const QJsonValue &value) override;
   QString searchText();
   void setEnableDefaultFilter(bool value);
+  void openSelector() { showPopover(); }
 
 signals:
   void textChanged(const QString &s);

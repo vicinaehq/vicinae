@@ -1,4 +1,6 @@
 #include "preference-dropdown.hpp"
+#include "ui/form/selector-input.hpp"
+#include <qwidget.h>
 #include <ranges>
 
 void PreferenceDropdown::setOptions(const std::vector<Preference::DropdownData::Option> &opts) {
@@ -12,4 +14,4 @@ void PreferenceDropdown::setOptions(const std::vector<Preference::DropdownData::
   updateModel();
 }
 
-PreferenceDropdown::PreferenceDropdown() {}
+PreferenceDropdown::PreferenceDropdown(QWidget *parent) : SelectorInput(parent) {}

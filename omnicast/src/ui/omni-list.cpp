@@ -898,7 +898,7 @@ void OmniList::handleDebouncedScroll() {
 OmniList::OmniList() {
   m_scrollBarElapsedTimer.start();
   scrollBar->setSingleStep(40);
-  connect(scrollBar, &QScrollBar::valueChanged, this, &OmniList::handleDebouncedScroll);
+  connect(scrollBar, &QScrollBar::valueChanged, this, &OmniList::updateVisibleItems);
   connect(scrollBar, &QScrollBar::sliderReleased, this, [this]() { updateVisibleItems(); });
 
   int scrollBarWidth = scrollBar->sizeHint().width();

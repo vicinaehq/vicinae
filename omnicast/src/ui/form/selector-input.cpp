@@ -80,6 +80,7 @@ SelectorInput::SelectorInput(QWidget *parent)
   auto *layout = new QVBoxLayout();
   layout->setContentsMargins(0, 0, 0, 0);
 
+  selectionIcon->hide();
   m_loadingBar->setPositionStep(5);
 
   setFocusProxy(inputField);

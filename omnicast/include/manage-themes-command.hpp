@@ -82,6 +82,7 @@ public:
     m_layout->addWidget(m_textWidget);
     m_layout->addWidget(m_palette, 0, Qt::AlignRight);
     m_layout->setContentsMargins(10, 10, 10, 10);
+
     setLayout(m_layout);
   }
 };

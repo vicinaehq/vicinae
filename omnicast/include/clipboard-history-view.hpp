@@ -1,6 +1,11 @@
 #pragma once
 #include "base-view.hpp"
 #include "clipboard-actions.hpp"
+#include "settings/command-metadata-settings-detail.hpp"
+#include "theme.hpp"
+#include "ui/form/selector-input.hpp"
+#include "ui/selectable-omni-list-widget.hpp"
+#include "utils/layout.hpp"
 #include "ui/empty-view.hpp"
 #include "common.hpp"
 #include "extend/metadata-model.hpp"
@@ -29,6 +34,7 @@
 #include <sys/socket.h>
 #include "text-file-viewer.hpp"
 #include "ui/typography/typography.hpp"
+#include "utils/utils.hpp"
 
 class LogWidget : public QWidget {
   ~LogWidget() { qDebug() << "widget down"; }
@@ -86,6 +92,44 @@ class CopyClipboardSelection : public AbstractAction {
 public:
   CopyClipboardSelection(int id)
       : AbstractAction("Copy to clipboard", BuiltinOmniIconUrl("copy-clipboard")), m_id(id) {}
+};
+
+class ClipboardHistoryItemWidget : public SelectableOmniListWidget {
+  TypographyWidget *m_title = new TypographyWidget;
+  TypographyWidget *m_description = new TypographyWidget;
+  Omnimg::ImageWidget *m_icon = new Omnimg::ImageWidget;
+  Omnimg::ImageWidget *m_pinIcon = new Omnimg::ImageWidget;
+
+  OmniIconUrl iconForMime(const ClipboardHistoryEntry &entry) const {
+    if (entry.mimeType.startsWith("text/")) { return BuiltinOmniIconUrl("text"); }
+    if (entry.mimeType.startsWith("image/")) { return BuiltinOmniIconUrl("image"); }
+    return BuiltinOmniIconUrl("text");
+  }
+
+  void setupUI() {
+    m_pinIcon->setUrl(BuiltinOmniIconUrl("pin").setFill(ColorTint::Red));
+    m_pinIcon->setFixedSize(16, 16);
+    m_description->setColor(ColorTint::TextSecondary);
+    m_description->setSize(TextSize::TextSmaller);
+
+    auto layout = HStack().margins(5).spacing(10).add(m_icon).add(
+        VStack().add(m_title).add(HStack().add(m_pinIcon).add(m_description).spacing(5)));
+
+    setLayout(layout.buildLayout());
+  }
+
+public:
+  void setEntry(const ClipboardHistoryEntry &entry) {
+    auto createdAt = QDateTime::fromSecsSinceEpoch(entry.createdAt);
+    m_title->setText(entry.textPreview);
+    m_pinIcon->setVisible(entry.pinnedAt);
+    // TODO: add char count / size
+    m_description->setText(QString("%1").arg(getRelativeTimeString(createdAt)));
+    m_icon->setFixedSize(25, 25);
+    m_icon->setUrl(iconForMime(entry));
+  }
+
+  ClipboardHistoryItemWidget() { setupUI(); }
 };
 
 class ClipboardHistoryDetail : public DetailWithMetadataWidget {
@@ -181,7 +225,7 @@ public:
       : AbstractAction(value ? "Pin" : "Unpin", BuiltinOmniIconUrl("pin")), _id(id), _value(value) {}
 };
 
-class ClipboardHistoryItem : public AbstractDefaultListItem, public ListView::Actionnable {
+class ClipboardHistoryItem : public OmniList::AbstractVirtualItem, public ListView::Actionnable {
 public:
   ClipboardHistoryEntry info;
 
@@ -212,6 +256,26 @@ public:
     return panel;
   }
 
+  OmniListItemWidget *createWidget() const override {
+    auto widget = new ClipboardHistoryItemWidget();
+
+    widget->setEntry(info);
+
+    return widget;
+  }
+
+  void refresh(QWidget *widget) const override {
+    static_cast<ClipboardHistoryItemWidget *>(widget)->setEntry(info);
+  }
+
+  bool recyclable() const override { return true; }
+
+  void recycle(QWidget *widget) const override {
+    static_cast<ClipboardHistoryItemWidget *>(widget)->setEntry(info);
+  }
+
+  bool hasUniformHeight() const override { return true; }
+
   OmniIconUrl iconForMime(const QString &mime) const {
     if (info.mimeType.startsWith("text/")) { return BuiltinOmniIconUrl("text"); }
     if (info.mimeType.startsWith("image/")) { return BuiltinOmniIconUrl("image"); }
@@ -219,8 +283,6 @@ public:
   }
 
   const QString &name() const { return info.textPreview; }
-
-  ItemData data() const override { return {.iconUrl = iconForMime(info.mimeType), .name = info.textPreview}; }
 
   QWidget *generateDetail() const override {
     auto detail = new ClipboardHistoryDetail();
@@ -309,16 +371,33 @@ signals:
   void statusIconClicked();
 };
 
+static const std::vector<Preference::DropdownData::Option> filterSelectorOptions = {
+    {"All", "all"},
+    {"Files", "file"},
+    {"Images", "image"},
+    {"Links", "link"},
+};
+
 class ClipboardHistoryView : public SimpleView {
   OmniList *m_list = new OmniList();
   ClipboardStatusToobar *m_statusToolbar = new ClipboardStatusToobar;
   SplitDetailWidget *m_split = new SplitDetailWidget(this);
   EmptyViewWidget *m_emptyView = new EmptyViewWidget;
   QStackedWidget *m_content = new QStackedWidget(this);
+  QTimer m_searchDebounce;
+  PreferenceDropdown *m_filterInput = new PreferenceDropdown(this);
+
+  void handleDebounce() {
+    auto ui = ServiceRegistry::instance()->UI();
+
+    generateList(ui->searchText());
+  }
+
+  QWidget *searchBarAccessory() const override { return m_filterInput; }
 
   void generateList(const QString &query) {
     auto clipman = ServiceRegistry::instance()->clipman();
-    auto result = clipman->listAll(100, 0, {.query = query});
+    auto result = clipman->listAll(1000, 0, {.query = query});
     size_t i = 0;
 
     if (result.data.empty()) {
@@ -330,7 +409,7 @@ class ClipboardHistoryView : public SimpleView {
     m_statusToolbar->setLeftText(QString("%1 Items").arg(result.data.size()));
 
     m_list->updateModel([&]() {
-      auto &pinnedSection = m_list->addSection("Pinned");
+      auto &pinnedSection = m_list->addSection();
 
       while (i < result.data.size() && result.data[i].pinnedAt) {
         auto &entry = result.data[i];
@@ -340,13 +419,11 @@ class ClipboardHistoryView : public SimpleView {
         ++i;
       }
 
-      auto &historySection = m_list->addSection("History");
-
       while (i < result.data.size()) {
         auto &entry = result.data[i];
         auto candidate = std::make_unique<ClipboardHistoryItem>(entry);
 
-        historySection.addItem(std::move(candidate));
+        pinnedSection.addItem(std::move(candidate));
         ++i;
       }
     });
@@ -354,7 +431,7 @@ class ClipboardHistoryView : public SimpleView {
 
   void initialize() override {
     setSearchPlaceholderText("Browse clipboard history...");
-    textChanged("");
+    generateList("");
   }
 
   void selectionChanged(const OmniList::AbstractVirtualItem *next,
@@ -374,7 +451,7 @@ class ClipboardHistoryView : public SimpleView {
     if (auto panel = entry->actionPanel()) { m_actionPannelV2->setView(panel); }
   }
 
-  void textChanged(const QString &value) override { generateList(value); }
+  void textChanged(const QString &value) override { m_searchDebounce.start(200); }
 
   void clipboardSelectionInserted(const ClipboardHistoryEntry &entry) {}
 
@@ -415,7 +492,16 @@ class ClipboardHistoryView : public SimpleView {
       m_list->activateCurrentSelection();
     }
 
+    if (event->keyCombination() == QKeyCombination(Qt::ControlModifier, Qt::Key_P)) {
+      m_filterInput->openSelector();
+      return true;
+    }
+
     return SimpleView::inputFilter(event);
+  }
+
+  void handleFilterChange(const SelectorInput::AbstractItem &item) {
+    qDebug() << "filter changed" << item.id();
   }
 
 public:
@@ -429,6 +515,11 @@ public:
       handleMonitoringChanged(clipman->monitoring());
     }
 
+    m_filterInput->setMinimumWidth(300);
+    m_filterInput->setFocusPolicy(Qt::NoFocus);
+    m_filterInput->setOptions(filterSelectorOptions);
+    m_filterInput->setValue("all");
+
     m_content->addWidget(m_split);
     m_content->addWidget(m_emptyView);
     m_content->setCurrentWidget(m_split);
@@ -436,6 +527,8 @@ public:
     m_emptyView->setTitle("No clipboard entries");
     m_emptyView->setDescription("No results matching your search. You can try to refine your search.");
     m_emptyView->setIcon(BuiltinOmniIconUrl("magnifying-glass"));
+
+    m_searchDebounce.setSingleShot(true);
 
     m_split->setMainWidget(m_list);
     m_split->setDetailVisibility(false);
@@ -453,5 +546,7 @@ public:
             &ClipboardHistoryView::handleMonitoringChanged);
     connect(m_statusToolbar, &ClipboardStatusToobar::statusIconClicked, this,
             &ClipboardHistoryView::handleStatusClipboard);
+    connect(&m_searchDebounce, &QTimer::timeout, this, &ClipboardHistoryView::handleDebounce);
+    connect(m_filterInput, &SelectorInput::selectionChanged, this, &ClipboardHistoryView::handleFilterChange);
   }
 };

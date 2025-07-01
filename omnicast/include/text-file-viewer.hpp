@@ -1,4 +1,3 @@
-#include "theme.hpp"
 #include "ui/omni-scroll-bar.hpp"
 #include <qboxlayout.h>
 #include <qdir.h>
@@ -12,22 +11,6 @@
 class TextFileViewer : public QWidget {
   QTextEdit *edit;
 
-protected:
-  void paintEvent(QPaintEvent *event) override {
-    auto &theme = ThemeService::instance().theme();
-
-    {
-      QPainter painter(this);
-
-      painter.setRenderHint(QPainter::Antialiasing);
-      painter.setBrush(theme.colors.mainHoveredBackground);
-      painter.setPen(QPen(theme.colors.border, 1));
-      painter.drawRoundedRect(rect(), 4, 4);
-    }
-
-    QWidget::paintEvent(event);
-  }
-
 public:
   void load(const QString &path) {
     QFile file(path);
@@ -35,12 +18,30 @@ public:
     if (file.open(QIODevice::ReadOnly | QIODevice::Text)) { edit->setPlainText(file.readAll()); }
   }
 
+  void resizeEvent(QResizeEvent *event) override {
+    QWidget::resizeEvent(event);
+    /*
+int docHeight = edit->document()->size().toSize().height();
+qDebug() << "resize" << docHeight;
+edit->setFixedHeight(docHeight);
+    */
+  }
+
   TextFileViewer() : edit(new QTextEdit()) {
     setAttribute(Qt::WA_TranslucentBackground, true);
     auto layout = new QVBoxLayout;
 
+    connect(edit, &QTextEdit::textChanged, this, [this]() {
+      // int docHeight = edit->document()->size().toSize().height();
+      // qDebug() << "resize" << docHeight;
+      // edit->setFixedHeight(docHeight);
+    });
+
+    edit->setFocusPolicy(Qt::FocusPolicy::NoFocus);
+
+    edit->setReadOnly(true);
     edit->setVerticalScrollBar(new OmniScrollBar);
-    layout->addWidget(edit);
+    layout->addWidget(edit, 1);
     setLayout(layout);
   }
 };

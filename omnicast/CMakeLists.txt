@@ -420,6 +420,9 @@ set(SRCS
 
 	src/utils/migration-manager/migration-manager.hpp
 	src/utils/migration-manager/migration-manager.cpp
+
+	src/utils/layout.hpp
+	src/utils/layout.cpp
 	
 )
 
