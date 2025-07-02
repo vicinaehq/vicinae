@@ -191,6 +191,7 @@ private:
     std::optional<std::chrono::time_point<std::chrono::high_resolution_clock>> lastVisitedAt;
     // Alias can be made of multiple words, in which case each word is indexed separately
     QString alias;
+    bool favorite;
     bool isFallback = false;
     int fallbackPosition = -1;
     QString providerId;
@@ -213,7 +214,7 @@ private:
 
     query.prepare(R"(
 		SELECT
-			enabled, fallback, fallback_position, alias, visit_count, last_visited_at, provider_id
+			enabled, fallback, fallback_position, alias, rank_visit_count, rank_last_visited_at, provider_id
 		FROM
 			root_provider_item
 		WHERE id = :id
@@ -712,16 +713,94 @@ public:
     return true;
   }
 
+  double computeScore(const RootItemMetadata &meta, int weight) {
+    return std::max(meta.visitCount, 1) * weight;
+  }
+
+  std::vector<std::shared_ptr<RootItem>> queryFavorites(int limit = 5) {
+    auto items = m_items | std::views::transform([this](const std::shared_ptr<RootItem> &item) {
+                   RootItemMetadata meta = itemMetadata(item->uniqueId());
+                   return std::pair<std::shared_ptr<RootItem>, RootItemMetadata>(item, meta);
+                 }) |
+                 std::views::filter([](auto &&item) { return item.second.favorite; }) |
+                 std::ranges::to<std::vector>();
+
+    std::ranges::sort(items, [this](const auto &a, const auto &b) {
+      const auto &[aitem, ameta] = a;
+      const auto &[bitem, bmeta] = b;
+
+      auto ascore = computeScore(ameta, aitem->baseScoreWeight());
+      auto bscore = computeScore(ameta, bitem->baseScoreWeight());
+
+      return ameta.visitCount > bmeta.visitCount;
+    });
+
+    return items | std::views::take(limit) | std::views::transform([](auto &&a) { return a.first; }) |
+           std::ranges::to<std::vector>();
+  }
+
+  std::vector<std::shared_ptr<RootItem>> querySuggestions(int limit = 5) {
+    auto items = m_items | std::views::transform([this](const std::shared_ptr<RootItem> &item) {
+                   RootItemMetadata meta = itemMetadata(item->uniqueId());
+                   return std::pair<std::shared_ptr<RootItem>, RootItemMetadata>(item, meta);
+                 }) |
+                 std::views::filter([](auto &&item) { return item.second.visitCount > 0; }) |
+                 std::ranges::to<std::vector>();
+
+    std::ranges::sort(items, [this](const auto &a, const auto &b) {
+      const auto &[aitem, ameta] = a;
+      const auto &[bitem, bmeta] = b;
+
+      auto ascore = computeScore(ameta, aitem->baseScoreWeight());
+      auto bscore = computeScore(ameta, bitem->baseScoreWeight());
+
+      return ameta.visitCount > bmeta.visitCount;
+    });
+
+    return items | std::views::take(limit) | std::views::transform([](auto &&a) {
+             qDebug() << a.first->uniqueId() << "has visit count" << a.second.visitCount;
+             return a.first;
+           }) |
+           std::ranges::to<std::vector>();
+  }
+
+  bool resetRanking(const QString &id) {
+    QSqlQuery query = m_db.createQuery();
+
+    query.prepare(R"(
+		UPDATE root_provider_item 
+		SET 
+			rank_visit_count = 0,
+			rank_last_visited_at = NULL
+		WHERE id = :id
+	)");
+    query.addBindValue(id);
+
+    if (!query.exec()) {
+      qCritical() << "Failed to reset ranking" << query.lastError();
+      return false;
+    }
+
+    RootItemMetadata &metadata = m_metadata[id];
+
+    metadata.lastVisitedAt = std::nullopt;
+    metadata.visitCount = 0;
+
+    return true;
+  }
+
   bool registerVisit(const QString &id) {
     QSqlQuery query = m_db.createQuery();
 
     query.prepare(R"(
 		UPDATE root_provider_item 
 		SET 
-			visit_count = visit_count + 1, 
-			last_visited_at = unixepoch() 
+			visit_count = visit_count + 1,
+			rank_visit_count = rank_visit_count + 1,
+			last_visited_at = unixepoch(),
+			rank_last_visited_at = unixepoch()
 		WHERE id = :id
-		RETURNING visit_count, last_visited_at
+		RETURNING rank_visit_count, rank_last_visited_at, visit_count, last_visited_at
 	)");
     query.bindValue(":id", id);
 
@@ -833,8 +912,10 @@ public:
       auto ameta = itemMetadata(a->uniqueId());
       auto bmeta = itemMetadata(b->uniqueId());
 
-      return std::max(ameta.visitCount, 1) * a->baseScoreWeight() >
-             std::max(bmeta.visitCount, 1) * b->baseScoreWeight();
+      auto ascore = computeScore(ameta, a->baseScoreWeight());
+      auto bscore = computeScore(ameta, b->baseScoreWeight());
+
+      return ascore > bscore;
     });
 
     return items;

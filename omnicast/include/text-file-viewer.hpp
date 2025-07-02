@@ -18,30 +18,19 @@ public:
     if (file.open(QIODevice::ReadOnly | QIODevice::Text)) { edit->setPlainText(file.readAll()); }
   }
 
-  void resizeEvent(QResizeEvent *event) override {
-    QWidget::resizeEvent(event);
-    /*
-int docHeight = edit->document()->size().toSize().height();
-qDebug() << "resize" << docHeight;
-edit->setFixedHeight(docHeight);
-    */
-  }
+  void resizeEvent(QResizeEvent *event) override { QWidget::resizeEvent(event); }
 
   TextFileViewer() : edit(new QTextEdit()) {
     setAttribute(Qt::WA_TranslucentBackground, true);
     auto layout = new QVBoxLayout;
 
-    connect(edit, &QTextEdit::textChanged, this, [this]() {
-      // int docHeight = edit->document()->size().toSize().height();
-      // qDebug() << "resize" << docHeight;
-      // edit->setFixedHeight(docHeight);
-    });
-
     edit->setFocusPolicy(Qt::FocusPolicy::NoFocus);
-
+    edit->document()->setDocumentMargin(10);
+    edit->setTabStopDistance(40);
     edit->setReadOnly(true);
     edit->setVerticalScrollBar(new OmniScrollBar);
-    layout->addWidget(edit, 1);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(edit);
     setLayout(layout);
   }
 };

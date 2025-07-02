@@ -58,19 +58,17 @@ TopBar::TopBar(QWidget *parent) : QWidget(parent), layout(new QHBoxLayout()), in
 }
 
 void TopBar::setAccessoryWidget(QWidget *accessory) {
-  if (auto current = m_accessoryContainer->widget(0)) { m_accessoryContainer->removeWidget(current); }
+  if (auto current = m_accessoryContainer->widget(0)) {
+    m_accessoryContainer->removeWidget(current);
+    current->deleteLater();
+  }
 
   m_accessoryContainer->addWidget(accessory);
   m_accessoryContainer->setCurrentWidget(accessory);
   m_accessory = accessory;
 }
 
-void TopBar::clearAccessoryWidget() {
-  auto widget = new QWidget();
-  m_accessoryContainer->removeWidget(m_accessory);
-  m_accessory->hide();
-  setAccessoryWidget(widget);
-}
+void TopBar::clearAccessoryWidget() { setAccessoryWidget(new QWidget); }
 
 QWidget *TopBar::accessoryWidget() const { return m_accessory; }
 

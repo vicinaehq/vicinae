@@ -1,5 +1,6 @@
 #include "services/bookmark/bookmark-service.hpp"
 #include "bookmark-service.hpp"
+#include <qlogging.h>
 
 std::vector<std::shared_ptr<Bookmark>> BookmarkService::loadAll() {
   std::vector<std::shared_ptr<Bookmark>> bookmarks;
@@ -30,6 +31,43 @@ std::vector<std::shared_ptr<Bookmark>> BookmarkService::loadAll() {
 }
 
 std::vector<std::shared_ptr<Bookmark>> BookmarkService::bookmarks() const { return m_bookmarks; }
+
+bool BookmarkService::updateBookmark(int id, const QString &name, const QString &icon, const QString &url,
+                                     const QString &app) {
+  auto it = std::ranges::find_if(m_bookmarks, [&](auto &&bk) { return bk->id() == id; });
+
+  if (it == m_bookmarks.end()) {
+    qCritical() << "No bookmark with id" << id;
+    return false;
+  }
+
+  auto &bookmark = *it;
+  QSqlQuery query = m_db.createQuery();
+
+  query.prepare(R"(
+		UPDATE bookmarks
+		SET name = :name, icon = :icon, url = :url, app = :app
+		WHERE id = :id
+	)");
+  query.addBindValue(name);
+  query.addBindValue(icon);
+  query.addBindValue(url);
+  query.addBindValue(app);
+  query.addBindValue(id);
+
+  if (!query.exec()) {
+    qCritical() << "Failed to update bookmark" << query.lastError();
+    return false;
+  }
+
+  bookmark->setName(name);
+  bookmark->setIcon(icon);
+  bookmark->setLink(url);
+  bookmark->setApp(app);
+  emit bookmarkUpdated(id);
+
+  return true;
+}
 
 bool BookmarkService::removeBookmark(int id) {
   QSqlQuery query = m_db.createQuery();

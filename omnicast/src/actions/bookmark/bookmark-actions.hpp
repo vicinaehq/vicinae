@@ -71,7 +71,7 @@ class OpenCompletedBookmarkAction : public AbstractAction {
 public:
   void execute() override {
     auto ui = ServiceRegistry::instance()->UI();
-    OpenBookmarkAction open(m_bookmark, ui->topView()->argumentValues(), m_app);
+    OpenBookmarkAction open(m_bookmark, ui->argumentValues(), m_app);
 
     open.execute();
   }
@@ -88,7 +88,7 @@ class OpenBookmarkFromSearchText : public AbstractAction {
 
   void execute() override {
     auto ui = ServiceRegistry::instance()->UI();
-    OpenBookmarkAction open(m_bookmark, {ui->topView()->searchText()});
+    OpenBookmarkAction open(m_bookmark, {ui->searchText()});
 
     open.execute();
   }

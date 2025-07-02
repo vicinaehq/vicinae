@@ -123,7 +123,7 @@ public:
 
   void updateItem(const QString &id, const UpdateItemCallback &cb);
   const AbstractItem *value() const;
-  void setValue(const QString &id);
+  bool setValue(const QString &id);
   void setValueAsJson(const QJsonValue &value) override;
   QString searchText();
   void setEnableDefaultFilter(bool value);

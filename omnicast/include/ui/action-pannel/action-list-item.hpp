@@ -13,6 +13,7 @@ public:
   bool recyclable() const override;
   void setup(ActionListWidget *widget) const;
   void recycle(QWidget *base) const override;
+  size_t recyclingId() const override;
 
 public:
   ActionListItem(AbstractAction *action);

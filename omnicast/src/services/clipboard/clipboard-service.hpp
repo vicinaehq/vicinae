@@ -100,6 +100,8 @@ class ClipboardService : public QObject, public NonAssignable {
   std::string getSelectionPreferredMimeType(const ClipboardSelection &selection) const;
   QString createTextPreview(const QByteArray &data, int maxLength = 50) const;
 
+  PaginatedResponse<ClipboardHistoryEntry> query(const QString &text);
+
 public:
   ClipboardService(const std::filesystem::path &path);
 

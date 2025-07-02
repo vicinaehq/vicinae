@@ -23,8 +23,13 @@ CREATE TABLE IF NOT EXISTS root_provider_item (
 	fallback INT DEFAULT 0,
 	fallback_position INT DEFAULT -1,
 	alias TEXT DEFAULT '',
+	favorite INT DEFAULT 0,
 	visit_count INT DEFAULT 0,
 	last_visited_at INT,
+	-- ranking variants are used for frecency sorting and can be reset
+	-- at the user's demand
+	rank_visit_count INT DEFAULT 0,
+	rank_last_visited_at INT,
 	FOREIGN KEY(provider_id)
 	REFERENCES root_provider(id)
 	ON DELETE CASCADE

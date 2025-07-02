@@ -119,4 +119,8 @@ RootProvider::Type BookmarkRootProvider::type() const { return RootProvider::Typ
 BookmarkRootProvider::BookmarkRootProvider(BookmarkService &db) : m_db(db) {
   connect(&db, &BookmarkService::bookmarkSaved, this, [this]() { emit itemsChanged(); });
   connect(&db, &BookmarkService::bookmarkRemoved, this, [this]() { emit itemsChanged(); });
+  connect(&db, &BookmarkService::bookmarkUpdated, this, [this]() {
+    qDebug() << "bookmark updated";
+    emit itemsChanged();
+  });
 }

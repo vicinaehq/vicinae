@@ -80,7 +80,6 @@ SelectorInput::SelectorInput(QWidget *parent)
   auto *layout = new QVBoxLayout();
   layout->setContentsMargins(0, 0, 0, 0);
 
-  selectionIcon->hide();
   m_loadingBar->setPositionStep(5);
 
   setFocusProxy(inputField);
@@ -172,12 +171,12 @@ void SelectorInput::updateItem(const QString &id, const UpdateItemCallback &cb) 
 
 const SelectorInput::AbstractItem *SelectorInput::value() const { return _currentSelection.get(); }
 
-void SelectorInput::setValue(const QString &id) {
+bool SelectorInput::setValue(const QString &id) {
   auto selectedItem = m_list->setSelected(id);
 
   if (!selectedItem) {
     qDebug() << "selectValue: no item with ID:" << id;
-    return;
+    return false;
   }
 
   auto item = static_cast<const AbstractItem *>(selectedItem);
@@ -190,6 +189,8 @@ void SelectorInput::setValue(const QString &id) {
   inputField->update();
 
   if (icon) { selectionIcon->setUrl(*icon); }
+
+  return true;
 }
 
 void SelectorInput::setEnableDefaultFilter(bool value) {

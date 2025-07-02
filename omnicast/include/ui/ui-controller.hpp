@@ -11,6 +11,7 @@
 #include <qlogging.h>
 #include <qobject.h>
 #include <qwidget.h>
+#include <ranges>
 
 class BaseView;
 
@@ -106,6 +107,12 @@ public:
   void destroyCompleter() {
     m_topBar->destroyCompleter();
     m_stateStack.back().completer = {};
+  }
+
+  auto arguments() { return m_topBar->m_completer->collect(); }
+  auto argumentValues() {
+    return arguments() | std::views::transform([](auto &&pair) { return pair.second; }) |
+           std::ranges::to<std::vector>();
   }
 
   void replaceView(BaseView *previous, BaseView *next);

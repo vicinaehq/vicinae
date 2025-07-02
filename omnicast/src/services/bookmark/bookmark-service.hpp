@@ -21,10 +21,13 @@ public:
 
   bool removeBookmark(int id);
   bool createBookmark(const QString &name, const QString &icon, const QString &url, const QString &app);
+  bool updateBookmark(int id, const QString &name, const QString &icon, const QString &url,
+                      const QString &app);
 
   BookmarkService(OmniDatabase &db);
 
 signals:
   void bookmarkSaved(const Bookmark &bookmark) const;
   void bookmarkRemoved(int id);
+  void bookmarkUpdated(int id);
 };

@@ -41,6 +41,8 @@ public:
 
     virtual double aspectRatio() const { return 1; }
 
+    size_t recyclingId() const override { return typeid(AbstractGridItem).hash_code(); }
+
     bool recyclable() const override { return true; }
 
     int calculateHeight(int width) const final override {

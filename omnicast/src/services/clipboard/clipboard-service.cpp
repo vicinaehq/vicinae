@@ -1,4 +1,5 @@
 #include "services/clipboard/clipboard-service.hpp"
+#include "common.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "services/clipboard/clipboard-server.hpp"
 #include "services/clipboard/clipboard-server-factory.hpp"
@@ -126,6 +127,8 @@ bool ClipboardService::copyText(const QString &text, const Clipboard::CopyOption
 
   return true;
 }
+
+PaginatedResponse<ClipboardHistoryEntry> ClipboardService::query(const QString &text) {}
 
 PaginatedResponse<ClipboardHistoryEntry> ClipboardService::listAll(int limit, int offset,
                                                                    const ClipboardListSettings &opts) const {

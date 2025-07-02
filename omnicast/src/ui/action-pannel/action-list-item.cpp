@@ -22,4 +22,6 @@ bool ActionListItem::recyclable() const { return true; }
 
 void ActionListItem::recycle(QWidget *base) const { setup(static_cast<ActionListWidget *>(base)); }
 
+size_t ActionListItem::recyclingId() const { return typeid(ActionListItem).hash_code(); }
+
 ActionListItem::ActionListItem(AbstractAction *action) : action(action) {}

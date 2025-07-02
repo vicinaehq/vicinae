@@ -442,9 +442,22 @@ public:
 
     name->setText(m_bookmark->name());
     link->setText(m_bookmark->url());
-    appSelector->setValue(m_bookmark->app());
 
     // iconSelector->setValue(std::make_shared<IconSelectorItem>(quicklink.iconName, quicklink.iconName));
+  }
+
+  void initialize() override {
+    BookmarkFormView::initialize();
+
+    if (!iconSelector->setValue(m_bookmark->icon())) {
+      iconSelector->updateItem("default", [&](SelectorInput::AbstractItem *item) {
+        auto icon = static_cast<IconSelectorItem *>(item);
+
+        icon->setIcon(m_bookmark->icon());
+        icon->setDisplayName("Default");
+      });
+    }
+    appSelector->setValue(m_bookmark->app());
   }
 
   void submit() override {
@@ -465,7 +478,15 @@ public:
       return;
     }
 
-    ServiceRegistry::instance()->UI()->popView();
+    bool updated = bookmarkDb->updateBookmark(m_bookmark->id(), name->text(), icon->icon().value().toString(),
+                                              link->text(), item->app->id());
+
+    if (!updated) {
+      ui->setToast("Failed to update bookmark");
+      return;
+    }
+
+    ui->popView();
   }
 };
 

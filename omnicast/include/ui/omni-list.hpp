@@ -1,7 +1,6 @@
 #pragma once
 #include "common.hpp"
 #include "omni-icon.hpp"
-#include "timer.hpp"
 #include "ui/omni-list-item-widget-wrapper.hpp"
 #include "ui/omni-list-item-widget.hpp"
 #include "ui/default-list-item-widget.hpp"
@@ -22,6 +21,7 @@
 #include <qnamespace.h>
 #include <qobject.h>
 #include <qscrollbar.h>
+#include <qtimer.h>
 #include <qtmetamacros.h>
 #include <qtpreprocessorsupport.h>
 #include <qwidget.h>
@@ -32,7 +32,7 @@
 
 class OmniList : public QWidget {
   static constexpr const double SCROLL_FRAME_TIME = 1000 / 120.0;
-  QElapsedTimer m_scrollBarElapsedTimer;
+  QTimer *m_scrollTimer = new QTimer;
 
 public:
   enum ScrollBehaviour {
@@ -97,6 +97,8 @@ public:
     virtual size_t typeId() const;
     virtual bool selectable() const;
     virtual ListRole role() const;
+
+    virtual size_t recyclingId() const { return -1; }
 
     /**
      * Whether this item provides context for the item right below it.
@@ -479,6 +481,8 @@ public:
   bool hasUniformHeight() const override { return true; }
 
   bool hasPartialUpdates() const override { return true; }
+
+  size_t recyclingId() const override { return typeid(AbstractDefaultListItem).hash_code(); }
 
   void refresh(QWidget *w) const override {
     if (auto widget = dynamic_cast<DefaultListItemWidget *>(w)) {

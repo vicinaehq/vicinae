@@ -6,6 +6,7 @@
 #include "root-item-manager.hpp"
 #include "omni-command-db.hpp"
 #include "service-registry.hpp"
+#include "timer.hpp"
 #include "ui/action-pannel/action-item.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "quicklist-database.hpp"
@@ -43,6 +44,7 @@
 
 class RootSearchItem : public AbstractDefaultListItem, public ListView::Actionnable {
 
+protected:
   std::shared_ptr<RootItem> m_item;
 
   ActionPanelView *actionPanel() const override { return m_item->actionPanel(); }
@@ -70,6 +72,20 @@ class RootSearchItem : public AbstractDefaultListItem, public ListView::Actionna
 public:
   const RootItem &item() const { return *m_item.get(); }
   RootSearchItem(const std::shared_ptr<RootItem> &item) : m_item(item) {}
+};
+
+class SuggestionRootSearchItem : public RootSearchItem {
+  QString generateId() const override { return QString("suggestion.%1").arg(m_item->uniqueId()); }
+
+public:
+  SuggestionRootSearchItem(const std::shared_ptr<RootItem> &item) : RootSearchItem(item) {}
+};
+
+class FavoriteRootSearchItem : public RootSearchItem {
+  QString generateId() const override { return QString("favorite.%1").arg(m_item->uniqueId()); }
+
+public:
+  FavoriteRootSearchItem(const std::shared_ptr<RootItem> &item) : RootSearchItem(item) {}
 };
 
 class FallbackRootSearchItem : public AbstractDefaultListItem, public ListView::Actionnable {
@@ -175,6 +191,22 @@ class RootCommandV2 : public ListView {
     const auto &commandEntries = commandDb->commands();
     auto rootManager = ServiceRegistry::instance()->rootItemManager();
 
+    {
+      auto &favorites = m_list->addSection("Favorites");
+
+      for (const auto &item : rootManager->queryFavorites()) {
+        favorites.addItem(std::make_unique<FavoriteRootSearchItem>(item));
+      }
+    }
+
+    {
+      auto &suggestions = m_list->addSection("Suggestions");
+
+      for (const auto &item : rootManager->querySuggestions()) {
+        suggestions.addItem(std::make_unique<SuggestionRootSearchItem>(item));
+      }
+    }
+
     auto commandItems =
         rootManager->providers() | std::views::filter([](const auto &provider) {
           return provider->type() == RootProvider::Type::ExtensionProvider;
@@ -235,16 +267,22 @@ class RootCommandV2 : public ListView {
           .addItem(std::make_unique<BaseCalculatorListItem>(*m_currentCalculatorEntry));
     }
 
-    auto parsedColor = ColorFormatter().parse(text);
+    {
+      /*
+  auto parsedColor = ColorFormatter().parse(text);
 
-    if (parsedColor.has_value()) {
-      qDebug() << "color=" << parsedColor.value().color << text;
-      m_list->addSection("Color").addItem(std::make_unique<ColorListItem>(text, parsedColor.value()));
+  if (parsedColor.has_value()) {
+    qDebug() << "color=" << parsedColor.value().color << text;
+    m_list->addSection("Color").addItem(std::make_unique<ColorListItem>(text, parsedColor.value()));
+  }
+      */
     }
 
     auto &results = m_list->addSection("Results");
 
-    for (const auto &item : rootItemManager->prefixSearch(text.trimmed())) {
+    auto searchResults = rootItemManager->prefixSearch(text.trimmed());
+
+    for (const auto &item : searchResults) {
       results.addItem(std::make_unique<RootSearchItem>(item));
     }
 
@@ -266,7 +304,11 @@ class RootCommandV2 : public ListView {
     // qDebug() << "root searched in " << duration << "ms";
   }
 
+  Timer timer;
+
   void textChanged(const QString &text) override {
+    timer.time("time since last text changed");
+    timer.start();
     QString query = text.trimmed();
 
     if (query.isEmpty()) return renderEmpty();
@@ -313,7 +355,7 @@ class RootCommandV2 : public ListView {
     textChanged(searchText());
 
     auto manager = ServiceRegistry::instance()->rootItemManager();
-    connect(manager, &RootItemManager::itemsChanged, this, [this]() { onSearchChanged(searchText()); });
+    connect(manager, &RootItemManager::itemsChanged, this, [this]() { textChanged(searchText()); });
     connect(m_calcDebounce, &QTimer::timeout, this, &RootCommandV2::handleCalculatorTimeout);
   }
 

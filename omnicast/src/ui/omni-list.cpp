@@ -93,33 +93,53 @@ void OmniList::updateVisibleItems() {
 
     auto start = std::chrono::high_resolution_clock::now();
     if (cacheIt == _widgetCache.end()) {
-      if (auto wrapper = takeFromPool(vinfo.item->typeId())) {
-        wrapper->setParent(this);
-        vinfo.item->recycle(wrapper->widget());
-        vinfo.item->attached(wrapper->widget());
-        wrapper->blockSignals(false);
-        wrapper->setUpdatesEnabled(true);
-        widget = wrapper;
-      } else {
-        widget = new OmniListItemWidgetWrapper(this);
-        connect(widget, &OmniListItemWidgetWrapper::clicked, this, &OmniList::itemClicked,
-                Qt::UniqueConnection);
-        connect(widget, &OmniListItemWidgetWrapper::doubleClicked, this, &OmniList::itemDoubleClicked,
-                Qt::UniqueConnection);
-        connect(widget, &OmniListItemWidgetWrapper::rightClicked, this, &OmniList::rightClicked,
-                Qt::UniqueConnection);
-        widget->stackUnder(scrollBar);
-        OmniListItemWidget *w = vinfo.item->createWidget();
-        widget->setWidget(w);
-        vinfo.item->attached(w);
+      bool recycled = false;
+      for (const auto &[key, cache] : _widgetCache) {
+        bool alreadyUsed =
+            std::ranges::any_of(m_visibleWidgets, [&](auto &&widget) { return widget == cache.widget; });
+
+        if (!alreadyUsed && vinfo.item->recyclable() && vinfo.item->recyclingId() == cache.recyclingId) {
+          vinfo.item->recycle(cache.widget->widget());
+          vinfo.item->attached(cache.widget->widget());
+          widget = cache.widget;
+          _widgetCache[vinfo.item->id()] = cache;
+          _widgetCache.erase(key);
+
+          // qInfo() << "recycled in place" << vinfo.item->id();
+          recycled = true;
+          break;
+        }
       }
 
-      CachedWidget cache{.widget = widget, .recyclingId = 0};
+      if (!recycled) {
+        if (auto wrapper = takeFromPool(vinfo.item->recyclingId())) {
+          wrapper->setParent(this);
+          vinfo.item->recycle(wrapper->widget());
+          vinfo.item->attached(wrapper->widget());
+          wrapper->blockSignals(false);
+          wrapper->setUpdatesEnabled(true);
+          widget = wrapper;
+        } else {
+          widget = new OmniListItemWidgetWrapper(this);
+          connect(widget, &OmniListItemWidgetWrapper::clicked, this, &OmniList::itemClicked,
+                  Qt::UniqueConnection);
+          connect(widget, &OmniListItemWidgetWrapper::doubleClicked, this, &OmniList::itemDoubleClicked,
+                  Qt::UniqueConnection);
+          connect(widget, &OmniListItemWidgetWrapper::rightClicked, this, &OmniList::rightClicked,
+                  Qt::UniqueConnection);
+          widget->stackUnder(scrollBar);
+          OmniListItemWidget *w = vinfo.item->createWidget();
+          widget->setWidget(w);
+          vinfo.item->attached(w);
+        }
 
-      if (vinfo.item->recyclable()) { cache.recyclingId = vinfo.item->typeId(); }
+        CachedWidget cache{.widget = widget, .recyclingId = 0};
 
-      isWidgetCreated = true;
-      _widgetCache[vinfo.item->id()] = cache;
+        if (vinfo.item->recyclable()) { cache.recyclingId = vinfo.item->recyclingId(); }
+
+        isWidgetCreated = true;
+        _widgetCache[vinfo.item->id()] = cache;
+      }
     } else {
       widget = cacheIt->second.widget;
     }
@@ -134,6 +154,13 @@ void OmniList::updateVisibleItems() {
     widget->setSelected(endIndex == m_selected);
     if (widget->size() != size) { widget->resize(size); }
     widget->move(pos);
+    widget->show();
+
+    /*
+qDebug() << "Widget" << vinfo.item->id() << "visible:" << widget->isVisible()
+         << "parent:" << widget->parent() << "geometry:" << widget->geometry()
+         << "enabled:" << widget->isEnabled();
+    */
     widget->blockSignals(false);
 
     lastY = vinfo.bounds.y();
@@ -164,7 +191,7 @@ void OmniList::updateVisibleItems() {
       OmniListItemWidgetWrapper *widget = it->second.widget;
 
       if (item->recyclable()) {
-        moveToPool(item->typeId(), widget);
+        moveToPool(item->recyclingId(), widget);
       } else {
         // TODO: we might want to keep them cached for some time
         widget->deleteLater();
@@ -174,6 +201,8 @@ void OmniList::updateVisibleItems() {
       _widgetCache.erase(it);
     }
   }
+
+  // timer.time("updateVisibleItems");
 
   recalculateMousePosition();
   updateFocusChain();
@@ -308,7 +337,7 @@ void OmniList::calculateHeights() {
               _widgetCache.erase(it->first);
             } else {
               for (const auto &[key, cache] : _widgetCache) {
-                if (cache.recyclingId == item->typeId()) {
+                if (cache.recyclingId == item->recyclingId()) {
                   QWidget *widget = cache.widget->widget();
 
                   widget->setUpdatesEnabled(false);
@@ -347,6 +376,9 @@ void OmniList::calculateHeights() {
   scrollBar->setMaximum(std::max(0, yOffset - height()));
   scrollBar->setMinimum(0);
   m_virtualHeight = yOffset;
+
+  timer.time("calculateHeights");
+
   updateVisibleItems();
 
   emit virtualHeightChanged(m_virtualHeight);
@@ -362,9 +394,9 @@ bool OmniList::isInViewport(const QRect &bounds) {
 int OmniList::calculateItemHeight(const AbstractVirtualItem *item, int width) {
   if (!item->hasUniformHeight()) { return item->calculateHeight(width); }
 
-  auto pred = [&](auto &&pair) { return pair.first == item->typeId(); };
+  auto pred = [&](auto &&pair) { return pair.first == item->recyclingId(); };
   auto match = std::ranges::find_if(m_cachedHeights, pred);
-  size_t typeId = item->typeId();
+  size_t typeId = item->recyclingId();
 
   if (match != m_cachedHeights.end()) { return match->second; }
 
@@ -838,7 +870,7 @@ void OmniList::invalidateCache() {
     qDebug() << "looking for id" << id;
 
     if (item->recyclable()) {
-      moveToPool(item->typeId(), cached.widget);
+      moveToPool(item->recyclingId(), cached.widget);
     } else {
       cached.widget->deleteLater();
     }
@@ -858,7 +890,7 @@ void OmniList::invalidateCache(const QString &id) {
   auto item = itemAt(id);
 
   if (item->recyclable()) {
-    moveToPool(item->typeId(), it->second.widget);
+    moveToPool(item->recyclingId(), it->second.widget);
   } else {
     it->second.widget->deleteLater();
   }
@@ -888,18 +920,16 @@ void OmniList::clearWidgetPools() {
   }
 }
 
-void OmniList::handleDebouncedScroll() {
-  if (m_scrollBarElapsedTimer.elapsed() >= SCROLL_FRAME_TIME) {
-    updateVisibleItems();
-    m_scrollBarElapsedTimer.restart();
-  }
-}
+void OmniList::handleDebouncedScroll() { updateVisibleItems(); }
 
 OmniList::OmniList() {
-  m_scrollBarElapsedTimer.start();
   scrollBar->setSingleStep(40);
-  connect(scrollBar, &QScrollBar::valueChanged, this, &OmniList::updateVisibleItems);
+  m_scrollTimer->setSingleShot(true);
+  connect(scrollBar, &QScrollBar::valueChanged, this, [this]() {
+    if (!m_scrollTimer->isActive()) { m_scrollTimer->start(16); }
+  });
   connect(scrollBar, &QScrollBar::sliderReleased, this, [this]() { updateVisibleItems(); });
+  connect(m_scrollTimer, &QTimer::timeout, this, [this]() { updateVisibleItems(); });
 
   int scrollBarWidth = scrollBar->sizeHint().width();
 
