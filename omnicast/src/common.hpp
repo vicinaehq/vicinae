@@ -23,6 +23,7 @@
 #include <qstack.h>
 #include <qwidget.h>
 #include <qwindowdefs.h>
+#include <type_traits>
 
 template <typename T> struct PaginatedResponse {
   int totalCount;

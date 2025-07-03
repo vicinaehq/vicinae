@@ -1,12 +1,6 @@
 #include "clipboard-history-command.hpp"
-#include "clipboard-history-view.hpp"
 #include "service-registry.hpp"
-#include "single-view-command-context.hpp"
 #include <qjsonobject.h>
-
-CommandContext *ClipboardHistoryCommand::createContext(const std::shared_ptr<AbstractCmd> &command) const {
-  return new SingleViewCommand<ClipboardHistoryView>(command);
-}
 
 void ClipboardHistoryCommand::preferenceValuesChanged(const QJsonObject &value) const {
   auto clipman = ServiceRegistry::instance()->clipman();
@@ -15,4 +9,29 @@ void ClipboardHistoryCommand::preferenceValuesChanged(const QJsonObject &value) 
   clipman->setMonitoring(value.value("monitoring").toBool());
 
   qDebug() << "clipboard history preference changes";
+}
+
+std::vector<Preference> ClipboardHistoryCommand::preferences() const {
+  auto monitoring = Preference::makeCheckbox("monitoring");
+
+  monitoring.setTitle("Clipboard monitoring");
+  monitoring.setDescription("Whether clipboard activity is recorded in the history. Every clipboard action "
+                            "performed while this is turned off will not be recorded.");
+  monitoring.setDefaultValue(true);
+
+  auto storeAllOfferings = Preference::makeCheckbox("store-all-offerings");
+
+  storeAllOfferings.setTitle("Store all offerings");
+  storeAllOfferings.setDescription("Store and index alternative mime type offerings. This will "
+                                   "increase total storage size, but will refine the search.");
+  storeAllOfferings.setDefaultValue(true);
+
+  auto maxStorageSize = Preference::makeText("maximum-storage-size");
+
+  maxStorageSize.setName("maximum-storage-size");
+  maxStorageSize.setTitle("Maximum storage size");
+  maxStorageSize.setDescription("How much storage can be used to store clipboard history data, in MB.");
+  maxStorageSize.setDefaultValue("1000");
+
+  return {monitoring, storeAllOfferings, maxStorageSize};
 }

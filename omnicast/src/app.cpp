@@ -222,8 +222,9 @@ void AppWindow::launchCommand(const std::shared_ptr<AbstractCmd> &command, const
   auto preferences = manager->getMergedItemPreferences(itemId);
   auto preferenceValues = manager->getPreferenceValues(itemId);
 
-  for (const auto &preference : command->preferences()) {
-    if (preference.required() && !preferenceValues.contains(preference.name())) {
+  for (const auto &preference : preferences) {
+    if (preference.required() && !preferenceValues.contains(preference.name()) &&
+        preference.defaultValue().isUndefined()) {
       if (command->type() == CommandType::CommandTypeExtension) {
         auto extensionCommand = std::static_pointer_cast<ExtensionCommand>(command);
 

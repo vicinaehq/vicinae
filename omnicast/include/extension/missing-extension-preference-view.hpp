@@ -29,6 +29,8 @@ public:
       : m_command(command), m_existingPreferenceValues(preferenceValues) {
     QWidget *widget = new QWidget;
 
+    auto centeringLayout = new QHBoxLayout;
+
     auto icon = new OmniIcon();
 
     icon->setFixedSize(32, 32);
@@ -43,38 +45,48 @@ public:
 
     auto paragraph = new TypographyWidget;
 
-    paragraph->setWordWrap(true);
-    paragraph->setMaximumWidth(800);
-    paragraph->setAlignment(Qt::AlignCenter);
+    // paragraph->setAlignment(Qt::AlignCenter);
     paragraph->setColor(ColorTint::TextSecondary);
-    paragraph->setText("Before you can start using this command, you will need to add a few things to the "
-                       "settings, listed below");
-
-    // paragraph->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
+    paragraph->setText(
+        "Before you can use this command, you need to fill in the required preference fields below.");
+    paragraph->setWordWrap(true);
 
     m_layout->setContentsMargins(20, 20, 20, 20);
-    m_layout->setAlignment(Qt::AlignTop);
-    m_layout->setSpacing(10);
     m_layout->addWidget(icon, 0, Qt::AlignHCenter);
     m_layout->addWidget(title);
-    m_layout->addWidget(paragraph, 0, Qt::AlignHCenter);
+    m_layout->addWidget(paragraph);
+    m_layout->addWidget(m_form);
+    m_layout->addStretch();
 
     for (const auto &preference : preferences) {
-      if (preference.required() && preference.defaultValue().isNull() &&
+      if (preference.required() && !preference.hasDefaultValue() &&
           !m_existingPreferenceValues.contains(preference.name())) {
-        /*
-auto field = new PreferenceField(preference);
+        auto field = new PreferenceField(preference);
 
-m_form->addField(field);
-m_preferenceFields.push_back(field);
-      */
+        m_form->addField(field);
+        m_preferenceFields.push_back(field);
       }
     }
 
-    m_layout->addWidget(m_form);
-    m_layout->addStretch();
-    widget->setLayout(m_layout);
-    setupUI(widget);
+    QWidget *m_centeredInfo = new QWidget;
+    QWidget *m_centeredContainer = new QWidget;
+
+    m_centeredInfo->setLayout(m_layout);
+    centeringLayout->setContentsMargins(0, 0, 0, 0);
+    centeringLayout->addStretch();
+    centeringLayout->addWidget(m_centeredInfo);
+    centeringLayout->addStretch();
+    m_centeredContainer->setLayout(centeringLayout);
+
+    QWidget *w = new QWidget;
+    auto layout = new QVBoxLayout;
+
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(m_centeredContainer);
+    layout->addWidget(m_form, 1);
+    w->setLayout(layout);
+
+    setupUI(w);
   }
 
   void handleSubmit() {
@@ -84,7 +96,7 @@ m_preferenceFields.push_back(field);
     QJsonObject obj(m_existingPreferenceValues);
 
     for (const auto &field : m_preferenceFields) {
-      auto value = field->asJsonValue();
+      auto value = field->widget()->asJsonValue();
 
       if (value.isNull() || value.toString().isEmpty()) {
         field->setError("Should not be empty");

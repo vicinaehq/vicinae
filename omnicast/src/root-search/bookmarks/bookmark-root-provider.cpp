@@ -10,14 +10,14 @@
 #include <memory>
 #include <ranges>
 
-ActionPanelView *RootBookmarkItem::actionPanel() const {
+ActionPanelView *RootBookmarkItem::actionPanel(const RootItemMetadata &metadata) const {
   auto panel = new ActionPanelStaticListView;
   auto open = new OpenCompletedBookmarkAction(m_link);
   auto openWith = new OpenCompletedBookmarkWithAction(m_link);
   auto edit = new EditBookmarkAction(m_link);
   auto duplicate = new DuplicateBookmarkAction(m_link);
   auto remove = new RemoveBookmarkAction(m_link);
-  auto markAsFavorite = new MarkItemAsFavorite(uniqueId());
+  auto markAsFavorite = new ToggleItemAsFavorite(uniqueId(), metadata.favorite);
   auto disable = new DisableItemAction(uniqueId());
 
   open->setPrimary(true);

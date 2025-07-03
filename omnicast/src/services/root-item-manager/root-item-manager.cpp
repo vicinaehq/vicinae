@@ -1,12 +1,14 @@
 #include "root-item-manager.hpp"
+#include <bits/chrono.h>
+#include <qlogging.h>
 
-RootItemManager::RootItemMetadata RootItemManager::loadMetadata(const QString &id) {
+RootItemMetadata RootItemManager::loadMetadata(const QString &id) {
   RootItemMetadata item;
   QSqlQuery query = m_db.createQuery();
 
   query.prepare(R"(
 		SELECT
-			enabled, fallback, fallback_position, alias, rank_visit_count, rank_last_visited_at, provider_id
+			enabled, fallback, fallback_position, alias, rank_visit_count, rank_last_visited_at, provider_id, favorite
 		FROM
 			root_provider_item
 		WHERE id = :id
@@ -27,6 +29,7 @@ RootItemManager::RootItemMetadata RootItemManager::loadMetadata(const QString &i
   item.visitCount = query.value(4).toInt();
   item.lastVisitedAt = std::chrono::system_clock::from_time_t(query.value(5).toULongLong());
   item.providerId = query.value(6).toString();
+  item.favorite = query.value(7).toBool();
 
   return item;
 }
@@ -142,7 +145,7 @@ RootItemManager::prefixSearch(const QString &query, const RootItemPrefixSearchOp
     auto bmeta = itemMetadata(b->uniqueId());
 
     auto ascore = computeScore(ameta, a->baseScoreWeight());
-    auto bscore = computeScore(ameta, b->baseScoreWeight());
+    auto bscore = computeScore(bmeta, b->baseScoreWeight());
 
     return ascore > bscore;
   });
@@ -243,7 +246,7 @@ void RootItemManager::setPreferenceValues(const QString &id, const QJsonObject &
     return;
   }
 
-  for (const auto &preference : item->preferences()) {
+  for (const auto &preference : getMergedItemPreferences(id)) {
     auto prefId = preference.name();
     bool isRepositoryPreference = false;
 
@@ -437,7 +440,7 @@ QJsonObject RootItemManager::getPreferenceValues(const QString &id) const {
   return preferenceValues;
 }
 
-RootItemManager::RootItemMetadata RootItemManager::itemMetadata(const QString &id) const {
+RootItemMetadata RootItemManager::itemMetadata(const QString &id) const {
   if (auto it = m_metadata.find(id); it != m_metadata.end()) { return it->second; }
 
   return {};
@@ -526,8 +529,46 @@ bool RootItemManager::setFallback(const QString &id, int position) {
   return true;
 }
 
-double RootItemManager::computeScore(const RootItemMetadata &meta, int weight) {
-  return std::max(meta.visitCount, 1) * weight;
+bool RootItemManager::setItemAsFavorite(const QString &itemId, bool value) {
+  auto query = m_db.createQuery();
+
+  query.prepare(R"(
+		UPDATE root_provider_item 
+		SET favorite = :favorite
+		WHERE id = :id
+	)");
+  query.addBindValue(value);
+  query.addBindValue(itemId);
+
+  if (!query.exec()) {
+    qCritical() << "Failed to set item as favorite" << itemId << value;
+    return false;
+  }
+
+  m_metadata[itemId].favorite = value;
+  emit itemFavoriteChanged(itemId, value);
+
+  return true;
+}
+
+double RootItemManager::computeRecencyScore(const RootItemMetadata &meta) const {
+  if (!meta.lastVisitedAt) return 0.1;
+
+  auto now = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::days>(now - *meta.lastVisitedAt).count();
+  auto hoursSince = std::chrono::duration_cast<std::chrono::hours>(now - *meta.lastVisitedAt).count() / 24.0;
+
+  if (hoursSince < 1) return 2.0;
+  if (hoursSince < 6) return 1.5;
+
+  return std::exp(-hoursSince / 30.0);
+}
+
+double RootItemManager::computeScore(const RootItemMetadata &meta, int weight) const {
+  double frequencyScore = std::log(meta.visitCount + 1);
+  double recencyScore = computeRecencyScore(meta);
+
+  return (frequencyScore + recencyScore) * weight;
 }
 
 std::vector<std::shared_ptr<RootItem>> RootItemManager::queryFavorites(int limit) {
@@ -535,7 +576,7 @@ std::vector<std::shared_ptr<RootItem>> RootItemManager::queryFavorites(int limit
                  RootItemMetadata meta = itemMetadata(item->uniqueId());
                  return std::pair<std::shared_ptr<RootItem>, RootItemMetadata>(item, meta);
                }) |
-               std::views::filter([](auto &&item) { return item.second.favorite; }) |
+               std::views::filter([](auto &&item) { return item.second.isEnabled && item.second.favorite; }) |
                std::ranges::to<std::vector>();
 
   std::ranges::sort(items, [this](const auto &a, const auto &b) {
@@ -553,21 +594,22 @@ std::vector<std::shared_ptr<RootItem>> RootItemManager::queryFavorites(int limit
 }
 
 std::vector<std::shared_ptr<RootItem>> RootItemManager::querySuggestions(int limit) {
-  auto items = m_items | std::views::transform([this](const std::shared_ptr<RootItem> &item) {
-                 RootItemMetadata meta = itemMetadata(item->uniqueId());
-                 return std::pair<std::shared_ptr<RootItem>, RootItemMetadata>(item, meta);
-               }) |
-               std::views::filter([](auto &&item) { return item.second.visitCount > 0; }) |
-               std::ranges::to<std::vector>();
+  auto items =
+      m_items | std::views::transform([this](const std::shared_ptr<RootItem> &item) {
+        RootItemMetadata meta = itemMetadata(item->uniqueId());
+        return std::pair<std::shared_ptr<RootItem>, RootItemMetadata>(item, meta);
+      }) |
+      std::views::filter([](auto &&item) { return item.second.isEnabled && item.second.visitCount > 0; }) |
+      std::ranges::to<std::vector>();
 
   std::ranges::sort(items, [this](const auto &a, const auto &b) {
     const auto &[aitem, ameta] = a;
     const auto &[bitem, bmeta] = b;
 
     auto ascore = computeScore(ameta, aitem->baseScoreWeight());
-    auto bscore = computeScore(ameta, bitem->baseScoreWeight());
+    auto bscore = computeScore(bmeta, bitem->baseScoreWeight());
 
-    return ameta.visitCount > bmeta.visitCount;
+    return ascore > bscore;
   });
 
   return items | std::views::take(limit) | std::views::transform([](auto &&a) { return a.first; }) |
@@ -595,6 +637,7 @@ bool RootItemManager::resetRanking(const QString &id) {
 
   metadata.lastVisitedAt = std::nullopt;
   metadata.visitCount = 0;
+  emit itemRankingReset(id);
 
   return true;
 }

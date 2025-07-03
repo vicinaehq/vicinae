@@ -49,7 +49,9 @@ public:
   std::function<void(void)> executionCallback() const { return _execCallback; }
 
   virtual QString title() const { return _title; }
+  virtual OmniIconUrl icon() const { return iconUrl; }
 
+  AbstractAction() {}
   AbstractAction(const QString &title, const OmniIconUrl &icon) : _title(title), iconUrl(icon) {}
 
   virtual void execute(AppWindow &app) {}

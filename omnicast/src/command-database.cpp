@@ -118,7 +118,7 @@ CommandDatabase::CommandDatabase() {
   }
 
   {
-    auto textExtensionPref = Preference::makeText();
+    auto textExtensionPref = Preference::makeText("test-extension-pref");
 
     textExtensionPref.setName("test-extension-pref");
     textExtensionPref.setTitle("Test Extension Pref");

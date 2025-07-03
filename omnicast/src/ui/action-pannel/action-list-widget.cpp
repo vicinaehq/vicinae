@@ -42,11 +42,11 @@ void ActionListWidget::setAction(const AbstractAction *action) {
   switch (action->style()) {
   case AbstractAction::Style::Normal:
     m_label->setColor(ColorTint::TextPrimary);
-    m_icon->setUrl(action->iconUrl);
+    m_icon->setUrl(action->icon());
     break;
   case AbstractAction::Style::Danger: {
     m_label->setColor(ColorTint::Red);
-    auto url = action->iconUrl;
+    auto url = action->icon();
 
     url.setFill(ColorTint::Red);
     m_icon->setUrl(url);

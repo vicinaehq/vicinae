@@ -23,6 +23,8 @@
 #include <qwidget.h>
 #include <ranges>
 
+class RootItemMetadata;
+
 struct RootItemPrefixSearchOptions {
   bool includeDisabled = false;
 };
@@ -102,7 +104,7 @@ public:
    */
   virtual QList<AbstractAction *> actions() const { return {}; }
 
-  virtual ActionPanelView *actionPanel() const { return nullptr; }
+  virtual ActionPanelView *actionPanel(const RootItemMetadata &metadata) const { return nullptr; }
 
   /**
    * Action panel shown when this item is used as a fallback command.
@@ -177,24 +179,24 @@ signals:
   void itemRemoved(const QString &id) const;
 };
 
+struct RootItemMetadata {
+  int visitCount = 0;
+  bool isEnabled = true;
+  std::optional<std::chrono::time_point<std::chrono::high_resolution_clock>> lastVisitedAt;
+  // Alias can be made of multiple words, in which case each word is indexed separately
+  QString alias;
+  bool favorite = false;
+  bool isFallback = false;
+  int fallbackPosition = -1;
+  QString providerId;
+};
+
 class RootItemManager : public QObject {
 private:
   Q_OBJECT
 
   struct RootItemHash {
     size_t operator()(const std::shared_ptr<RootItem> &item) const { return qHash(item->uniqueId()); }
-  };
-
-  struct RootItemMetadata {
-    int visitCount = 0;
-    bool isEnabled = true;
-    std::optional<std::chrono::time_point<std::chrono::high_resolution_clock>> lastVisitedAt;
-    // Alias can be made of multiple words, in which case each word is indexed separately
-    QString alias;
-    bool favorite;
-    bool isFallback = false;
-    int fallbackPosition = -1;
-    QString providerId;
   };
 
   struct RootProviderMetadata {
@@ -224,6 +226,12 @@ public:
 
   bool setItemEnabled(const QString &id, bool value);
   bool setItemPreferenceValues(const QString &id, const QJsonObject &preferences);
+
+  /**
+   * Set preference values for the item with _id_.
+   * This method dissociates preference values that belong to the provider's preferences from
+   * those that belong to the item with _id_.
+   */
   void setPreferenceValues(const QString &id, const QJsonObject &preferences);
 
   bool setAlias(const QString &id, const QString &alias);
@@ -242,11 +250,13 @@ public:
   bool isFallback(const QString &id);
   bool disableFallback(const QString &id);
   bool setFallback(const QString &id, int position = 0);
-  double computeScore(const RootItemMetadata &meta, int weight);
+  double computeScore(const RootItemMetadata &meta, int weight) const;
+  double computeRecencyScore(const RootItemMetadata &meta) const;
   std::vector<std::shared_ptr<RootItem>> queryFavorites(int limit = 5);
   std::vector<std::shared_ptr<RootItem>> querySuggestions(int limit = 5);
   bool resetRanking(const QString &id);
   bool registerVisit(const QString &id);
+  bool setItemAsFavorite(const QString &item, bool value = true);
   QString getItemProviderId(const QString &id);
   bool setProviderEnabled(const QString &providerId, bool value);
   bool disableItem(const QString &id);
@@ -261,6 +271,8 @@ public:
 
 signals:
   void itemsChanged() const;
+  void itemRankingReset(const QString &id) const;
+  void itemFavoriteChanged(const QString &id, bool favorite);
   void fallbackEnabled(const QString &id) const;
   void fallbackDisabled(const QString &id) const;
 };

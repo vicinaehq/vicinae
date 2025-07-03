@@ -31,7 +31,7 @@ QString AppRootItem::uniqueId() const { return QString("apps.%1").arg(m_app->id(
 
 OmniIconUrl AppRootItem::iconUrl() const { return m_app->iconUrl(); }
 
-ActionPanelView *AppRootItem::actionPanel() const {
+ActionPanelView *AppRootItem::actionPanel(const RootItemMetadata &metadata) const {
   auto panel = new ActionPanelStaticListView;
   auto appDb = ServiceRegistry::instance()->appDb();
   auto fileBrowser = appDb->fileBrowser();
@@ -67,7 +67,7 @@ ActionPanelView *AppRootItem::actionPanel() const {
   }
 
   auto resetRanking = new ResetItemRanking(uniqueId());
-  auto markAsFavorite = new MarkItemAsFavorite(uniqueId());
+  auto markAsFavorite = new ToggleItemAsFavorite(uniqueId(), metadata.favorite);
 
   panel->addSection();
   panel->addAction(resetRanking);

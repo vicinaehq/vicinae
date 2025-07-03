@@ -6,6 +6,7 @@
 #include "command-actions.hpp"
 #include "service-registry.hpp"
 #include "base-view.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
 
 QString CommandRootItem::displayName() const { return m_command->name(); }
 QString CommandRootItem::subtitle() const { return m_command->repositoryName(); }
@@ -16,11 +17,11 @@ bool CommandRootItem::isSuitableForFallback() const { return m_command->isFallba
 double CommandRootItem::baseScoreWeight() const { return 1.1; }
 QString CommandRootItem::typeDisplayName() const { return "Command"; }
 
-ActionPanelView *CommandRootItem::actionPanel() const {
+ActionPanelView *CommandRootItem::actionPanel(const RootItemMetadata &metadata) const {
   auto panel = new ActionPanelStaticListView;
   auto open = new OpenBuiltinCommandAction(m_command, "Open command");
   auto resetRanking = new ResetItemRanking(uniqueId());
-  auto markAsFavorite = new MarkItemAsFavorite(uniqueId());
+  auto markAsFavorite = new ToggleItemAsFavorite(uniqueId(), metadata.favorite);
 
   panel->setTitle(m_command->name());
   panel->addAction(new DefaultActionWrapper(uniqueId(), open));

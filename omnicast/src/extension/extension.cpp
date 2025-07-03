@@ -71,7 +71,7 @@ Preference Extension::parsePreferenceFromObject(const QJsonObject &obj) {
   base.setName(obj["name"].toString());
   base.setPlaceholder(obj["placeholder"].toString());
   base.setRequired(obj["required"].toBool());
-  base.setDefaultValue(obj.value("default").toString());
+  base.setDefaultValue(obj.value("default"));
 
   if (type == "textfield") { base.setData(Preference::TextData()); }
   if (type == "password") { base.setData(Preference::PasswordData()); }

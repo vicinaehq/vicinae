@@ -13,7 +13,7 @@ class RootBookmarkItem : public RootItem {
   ArgumentList arguments() const override;
   OmniIconUrl iconUrl() const override;
   QString uniqueId() const override;
-  ActionPanelView *actionPanel() const override;
+  ActionPanelView *actionPanel(const RootItemMetadata &metadata) const override;
   ActionPanelView *fallbackActionPanel() const override;
   QString typeDisplayName() const override;
 

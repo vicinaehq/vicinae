@@ -36,14 +36,16 @@ private:
   bool m_required;
   Data m_data = UnknownData();
 
-  Preference(const Data &data) : m_data(data) {}
+  Preference(const QString &id, const Data &data) : m_name(id), m_data(data) {}
 
 public:
-  static Preference makeCheckbox(const QString &label = "") { return {CheckboxData{.label = label}}; }
-  static Preference makeText() { return {TextData{}}; }
-  static Preference makePassword() { return {PasswordData{}}; }
-  static Preference makeDropdown(const std::vector<DropdownData::Option> &options = {}) {
-    return {DropdownData{options}};
+  static Preference makeCheckbox(const QString &id, const QString &label = "") {
+    return {id, CheckboxData{.label = label}};
+  }
+  static Preference makeText(const QString &id) { return {id, TextData{}}; }
+  static Preference makePassword(const QString &id) { return {id, PasswordData{}}; }
+  static Preference makeDropdown(const QString &id, const std::vector<DropdownData::Option> &options = {}) {
+    return {id, DropdownData{options}};
   }
 
   void setName(const QString &name) { m_name = name; }
@@ -53,6 +55,7 @@ public:
   void setRequired(bool required) { m_required = required; }
   void setData(const Data &data) { m_data = data; }
   void setDefaultValue(const QJsonValue &value) { m_value = value; }
+  bool hasDefaultValue() const { return !m_value.isUndefined(); }
   bool isValid() const { return !std::holds_alternative<UnknownData>(m_data); }
 
   QString name() const { return m_name; }

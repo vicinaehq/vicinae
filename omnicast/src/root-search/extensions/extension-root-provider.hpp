@@ -16,7 +16,7 @@ public:
   QString providerId() const override;
   bool isSuitableForFallback() const override;
   double baseScoreWeight() const override;
-  ActionPanelView *actionPanel() const override;
+  ActionPanelView *actionPanel(const RootItemMetadata &metadata) const override;
   ActionPanelView *fallbackActionPanel() const override;
   QString typeDisplayName() const override;
   QString uniqueId() const override;

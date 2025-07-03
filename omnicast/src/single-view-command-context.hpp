@@ -2,6 +2,7 @@
 #include "command-database.hpp"
 #include "preference.hpp"
 #include "service-registry.hpp"
+#include <concepts>
 
 template <typename T> class SingleViewCommand : public CommandContext {
 public:
@@ -13,6 +14,17 @@ public:
 
     ui->pushView(new T(), {.navigation = NavigationStatus{.title = command()->name(),
                                                           .iconUrl = command()->iconUrl()}});
+  }
+};
+
+template <typename T>
+concept DerivedFromView = std::derived_from<T, BaseView>;
+
+template <DerivedFromView T> class AbstractViewCommand : public AbstractCmd {
+public:
+  CommandMode mode() const override { return CommandMode::CommandModeView; }
+  CommandContext *createContext(const std::shared_ptr<AbstractCmd> &command) const override {
+    return new SingleViewCommand<T>(command);
   }
 };
 

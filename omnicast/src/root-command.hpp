@@ -3,6 +3,7 @@
 #include "base-view.hpp"
 #include "color-formatter.hpp"
 #include "actions/calculator/calculator-actions.hpp"
+#include "omni-icon.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "omni-command-db.hpp"
 #include "service-registry.hpp"
@@ -47,11 +48,17 @@ class RootSearchItem : public AbstractDefaultListItem, public ListView::Actionna
 protected:
   std::shared_ptr<RootItem> m_item;
 
-  ActionPanelView *actionPanel() const override { return m_item->actionPanel(); }
+  ActionPanelView *actionPanel() const override {
+    auto manager = ServiceRegistry::instance()->rootItemManager();
+    auto metadata = manager->itemMetadata(m_item->uniqueId());
+
+    return m_item->actionPanel(metadata);
+  }
 
   ItemData data() const override {
     auto manager = ServiceRegistry::instance()->rootItemManager();
     auto metadata = manager->itemMetadata(m_item->uniqueId());
+    auto accessories = m_item->accessories();
 
     return {.iconUrl = m_item->iconUrl(),
             .name = m_item->displayName(),
@@ -348,6 +355,14 @@ class RootCommandV2 : public ListView {
 
   void onActionExecuted(AbstractAction *action) override {}
 
+  void handleFavoriteChanged(const QString &itemId, bool value) {
+    if (isVisible()) textChanged(searchText());
+  }
+
+  void handleItemChange() {
+    if (isVisible()) textChanged(searchText());
+  }
+
   void initialize() override {
     m_calcDebounce->setInterval(100);
     m_calcDebounce->setSingleShot(true);
@@ -355,7 +370,8 @@ class RootCommandV2 : public ListView {
     textChanged(searchText());
 
     auto manager = ServiceRegistry::instance()->rootItemManager();
-    connect(manager, &RootItemManager::itemsChanged, this, [this]() { textChanged(searchText()); });
+    connect(manager, &RootItemManager::itemsChanged, this, &RootCommandV2::handleItemChange);
+    connect(manager, &RootItemManager::itemFavoriteChanged, this, &RootCommandV2::handleFavoriteChanged);
     connect(m_calcDebounce, &QTimer::timeout, this, &RootCommandV2::handleCalculatorTimeout);
   }
 

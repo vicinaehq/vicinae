@@ -12,7 +12,7 @@ class AppRootItem : public RootItem {
   QString providerId() const override;
   QString typeDisplayName() const override;
   QString displayName() const override;
-  ActionPanelView *actionPanel() const override;
+  ActionPanelView *actionPanel(const RootItemMetadata &metadata) const override;
   AccessoryList accessories() const override;
   QString uniqueId() const override;
   OmniIconUrl iconUrl() const override;

@@ -27,6 +27,18 @@ public:
   MarkItemAsFavorite(const QString &id);
 };
 
+class ToggleItemAsFavorite : public AbstractAction {
+  QString m_id;
+  bool m_value;
+
+  void execute() override;
+  QString title() const override;
+  OmniIconUrl icon() const override;
+
+public:
+  ToggleItemAsFavorite(const QString &id, bool currentValue);
+};
+
 class DisableApplication : public DisableItemAction {
   QString title() const override { return "Disable Application"; }
 

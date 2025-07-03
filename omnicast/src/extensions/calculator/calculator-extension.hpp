@@ -31,28 +31,27 @@ public:
                        .withIcon(iconUrl())
                        .toSingleView<CalculatorHistoryView>();
 
+    history->setRepositoryId(id());
+
     return {history};
   }
 
   std::vector<Preference> preferences() const override {
-    auto backendPref = Preference::makeDropdown(backendOptions);
+    auto backendPref = Preference::makeDropdown("backend", backendOptions);
 
-    backendPref.setName("backend");
     backendPref.setTitle("Calculator Backend");
     backendPref.setDescription("Which backend to use to perform calculations");
     backendPref.setDefaultValue("libqalculate");
 
-    auto refreshRates = Preference::makeDropdown(refreshRatesOptions);
+    auto refreshRates = Preference::makeDropdown("rate-refresh-interval", refreshRatesOptions);
 
-    refreshRates.setName("rate-refresh-interval");
     refreshRates.setTitle("Refresh exchange rates");
     refreshRates.setDescription("How often the exchange rates should be refreshed. This assumes the selected "
                                 "backend supports currency conversions.");
     refreshRates.setDefaultValue("hourly");
 
-    auto updatePast = Preference::makeCheckbox();
+    auto updatePast = Preference::makeCheckbox("update-past");
 
-    updatePast.setName("update-past");
     updatePast.setDefaultValue(true);
     updatePast.setTitle("Update past calculations");
     updatePast.setDescription("Update past calculations when the exchange rates are refreshed. This may "
