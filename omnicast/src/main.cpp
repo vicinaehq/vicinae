@@ -44,7 +44,7 @@
 #include "proto.hpp"
 #include "quicklink-seeder.hpp"
 #include "quicklist-database.hpp"
-#include "root-item-manager.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
 #include "root-search/apps/app-root-provider.hpp"
 #include "root-search/bookmarks/bookmark-root-provider.hpp"
 #include "service-registry.hpp"

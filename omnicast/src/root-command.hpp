@@ -3,7 +3,7 @@
 #include "base-view.hpp"
 #include "color-formatter.hpp"
 #include "actions/calculator/calculator-actions.hpp"
-#include "root-item-manager.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
 #include "omni-command-db.hpp"
 #include "service-registry.hpp"
 #include "timer.hpp"

@@ -1,7 +1,7 @@
 BUILD_DIR := build
 
 omnicast: configure
-	cmake --build $(BUILD_DIR) -j16
+	cmake --build $(BUILD_DIR) -j64
 
 .PHONY: omnicast
 

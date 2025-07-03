@@ -6,7 +6,7 @@
 #include "argument.hpp"
 #include "omni-icon.hpp"
 #include "services/bookmark/bookmark-service.hpp"
-#include "root-item-manager.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
 #include <memory>
 #include <ranges>
 

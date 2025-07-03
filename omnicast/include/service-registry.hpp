@@ -12,7 +12,7 @@
 #include "omni-database.hpp"
 #include "quicklist-database.hpp"
 #include "root-extension-manager.hpp"
-#include "root-item-manager.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
 #include "services/toast/toast-service.hpp"
 #include "ui/ui-controller.hpp"
 #include "wm/window-manager.hpp"

@@ -1,7 +1,7 @@
 #pragma once
 #include "common.hpp"
 #include "omni-icon.hpp"
-#include "root-item-manager.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
 #include "service-registry.hpp"
 #include "theme.hpp"
 #include "ui/form/base-input.hpp"

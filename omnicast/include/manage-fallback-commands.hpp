@@ -1,7 +1,7 @@
 #pragma once
 #include "base-view.hpp"
 #include "omni-icon.hpp"
-#include "root-item-manager.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
 #include "service-registry.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/omni-list.hpp"

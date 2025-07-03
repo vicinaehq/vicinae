@@ -5,7 +5,7 @@
 
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "omni-command-db.hpp"
-#include "root-item-manager.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
 #include <qobject.h>
 
 class RootExtensionManager : public QObject {

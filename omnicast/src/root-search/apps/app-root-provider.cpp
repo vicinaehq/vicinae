@@ -2,8 +2,7 @@
 #include "actions/app/app-actions.hpp"
 #include "actions/root-search/root-search-actions.hpp"
 #include "omni-icon.hpp"
-#include "root-item-manager.hpp"
-#include "service-registry.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
 #include "settings/app-metadata-settings-detail.hpp"
 #include "settings/app-settings-detail.hpp"
 #include <qwidget.h>

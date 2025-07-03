@@ -1,5 +1,5 @@
 #pragma once
-#include "root-item-manager.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
 #include <qjsonobject.h>
 #include <qwidget.h>
 #include "settings/command-metadata-settings-detail.hpp"

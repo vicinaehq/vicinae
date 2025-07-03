@@ -48,8 +48,6 @@ set(SRCS
 	src/font-service.cpp
 
 
-	include/root-item-manager.hpp
-
 	include/ui/image/omnimg.hpp
 
 	include/favicon/favicon-service.hpp
@@ -205,8 +203,6 @@ set(SRCS
 
 	include/extension/extension.hpp
 	src/extension/extension.cpp
-
-	include/root-item-manager.hpp
 
 	include/extension/extension-command.hpp
 	src/extension/extension-command.cpp
@@ -414,6 +410,8 @@ set(SRCS
 	src/services/file-chooser/abstract-file-chooser.hpp
 	src/services/file-chooser/xdp-file-chooser/xdp-file-chooser.hpp
 	src/services/file-chooser/xdp-file-chooser/xdp-file-chooser.cpp
+	src/services/root-item-manager/root-item-manager.hpp
+	src/services/root-item-manager/root-item-manager.cpp
 	
 	src/services/app-service/app-service.hpp
 	src/services/app-service/app-service.cpp

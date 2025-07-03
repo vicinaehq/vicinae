@@ -1,0 +1,266 @@
+#pragma once
+#include "action-panel/action-panel.hpp"
+#include "argument.hpp"
+#include "libtrie/trie.hpp"
+#include "omni-database.hpp"
+#include "omni-icon.hpp"
+#include "preference.hpp"
+#include "timer.hpp"
+#include "ui/action-pannel/action.hpp"
+#include "ui/default-list-item-widget.hpp"
+#include <algorithm>
+#include <qdnslookup.h>
+#include <qjsonobject.h>
+#include <qjsonvalue.h>
+#include <qlogging.h>
+#include <qnamespace.h>
+#include <qobject.h>
+#include <qobjectdefs.h>
+#include <qsqlquery.h>
+#include <qstring.h>
+#include <qhash.h>
+#include <qtmetamacros.h>
+#include <qwidget.h>
+#include <ranges>
+
+struct RootItemPrefixSearchOptions {
+  bool includeDisabled = false;
+};
+
+class RootItem {
+public:
+  virtual ~RootItem() = default;
+
+  virtual QString providerId() const = 0;
+
+  virtual QString uniqueId() const = 0;
+
+  /**
+   * The name of the item as it will be shown in the root menu.
+   * This name is indexed by splitting it in multiple tokens at
+   * word boundaries (assuming latin text).
+   *
+   * Note that camel case names are indexed as multiple tokens and not a single word.
+   */
+  virtual QString displayName() const = 0;
+
+  virtual OmniIconUrl iconUrl() const = 0;
+
+  virtual QWidget *settingsDetail(const QJsonObject &preferences) const { return new QWidget; }
+
+  /**
+   * Whether the item can be selected as a fallback command or not
+   */
+  virtual bool isSuitableForFallback() const { return false; }
+
+  /**
+   * Whether this item should be marked as a fallback command
+   * the first time it is ever made available.
+   * Only affects the first time the command is loaded.
+   */
+  virtual bool isDefaultFallback() const { return false; }
+
+  /**
+   * What type of item this is. For instance an application will return
+   * "Application". This is used in the settings view.
+   */
+  virtual QString typeDisplayName() const = 0;
+
+  /**
+   * An optional list of arguments to be filled in before launching the command.
+   * For each argument, a small input field appears next to the search query.
+   * Arguments can either be marked as required or optional.
+   * The primary action defined for the item will only activate if all the required
+   * arguments have been provided.
+   */
+  virtual ArgumentList arguments() const { return {}; };
+
+  /**
+   * An optional list of preferences that can be set in the settings to
+   * customize the behaviour of this item.
+   */
+  virtual PreferenceList preferences() const { return {}; }
+
+  virtual double baseScoreWeight() const { return 1; }
+
+  /**
+   * An optional subtitle shown to the left of the `displayName`.
+   * Indexed the same as the `displayName`.
+   */
+  virtual QString subtitle() const { return {}; }
+
+  /**
+   * A list of accessories that are shown to the right of
+   * the list item.
+   */
+  virtual AccessoryList accessories() const { return {}; }
+
+  /**
+   * List of item-specific actions to display in the action pannel
+   * when selected. The first action returned will become the default
+   * action.
+   */
+  virtual QList<AbstractAction *> actions() const { return {}; }
+
+  virtual ActionPanelView *actionPanel() const { return nullptr; }
+
+  /**
+   * Action panel shown when this item is used as a fallback command.
+   */
+  virtual ActionPanelView *fallbackActionPanel() const { return nullptr; }
+
+  /**
+   * Alternative list of actions to display in fallback mode.
+   * Calls actions() as its default implementation.
+   */
+  virtual QList<AbstractAction *> fallbackActions() const { return actions(); }
+
+  /**
+   * Additional strings that will be indexed and prefix searchable.
+   */
+  virtual std::vector<QString> keywords() const { return {}; }
+
+  virtual void preferenceValuesChanged(const QJsonObject &values) const {}
+};
+
+class RootProvider : public QObject {
+  Q_OBJECT
+
+public:
+  enum Type {
+    ExtensionProvider, // a collection of commands
+    GroupProvider,     // a collection of other things
+  };
+
+  RootProvider() {}
+  virtual ~RootProvider() = default;
+
+  virtual QString uniqueId() const = 0;
+  virtual QString displayName() const = 0;
+  virtual OmniIconUrl icon() const = 0;
+  virtual Type type() const = 0;
+  QString typeAsString() {
+    switch (type()) {
+    case ExtensionProvider:
+      return "Extension";
+    case GroupProvider:
+      return "Group";
+    }
+  }
+
+  /**
+   * Generate the default set of preferences for this item.
+   * This function is called on _each_ startup and diffed against the existing preference values.
+   * Existing keys are untouched but new ones can be added.
+   */
+  virtual QJsonObject generateDefaultPreferences() const { return {}; }
+
+  /**
+   * Called when the provider preferences are changed.
+   */
+  virtual void preferencesChanged(const QJsonObject &preferences) {}
+
+  virtual void itemPreferencesChanged(const QString &itemId, const QJsonObject &preferences) {}
+
+  virtual QWidget *settingsDetail() const { return new QWidget; }
+
+  // Called the first time the root provider is loaded by the root item manager
+  // The preference object can be mutated and will be saved on disk not long after this
+  // function is called.
+  void intialize(QJsonObject &preference) {}
+
+  virtual std::vector<std::shared_ptr<RootItem>> loadItems() const = 0;
+  virtual PreferenceList preferences() const { return {}; }
+
+signals:
+  void itemsChanged() const;
+  void itemRemoved(const QString &id) const;
+};
+
+class RootItemManager : public QObject {
+private:
+  Q_OBJECT
+
+  struct RootItemHash {
+    size_t operator()(const std::shared_ptr<RootItem> &item) const { return qHash(item->uniqueId()); }
+  };
+
+  struct RootItemMetadata {
+    int visitCount = 0;
+    bool isEnabled = true;
+    std::optional<std::chrono::time_point<std::chrono::high_resolution_clock>> lastVisitedAt;
+    // Alias can be made of multiple words, in which case each word is indexed separately
+    QString alias;
+    bool favorite;
+    bool isFallback = false;
+    int fallbackPosition = -1;
+    QString providerId;
+  };
+
+  struct RootProviderMetadata {
+    bool enabled;
+  };
+
+  Trie<std::shared_ptr<RootItem>, RootItemHash> m_trie;
+  std::vector<std::shared_ptr<RootItem>> m_items;
+  std::unordered_map<QString, RootItemMetadata> m_metadata;
+  std::unordered_map<QString, RootProviderMetadata> m_provider_metadata;
+  std::vector<std::unique_ptr<RootProvider>> m_providers;
+  OmniDatabase &m_db;
+
+  RootItemMetadata loadMetadata(const QString &id);
+  bool upsertProvider(const RootProvider &provider);
+  bool upsertItem(const QString &providerId, const RootItem &item);
+  void indexItem(const std::shared_ptr<RootItem> &item);
+  void rebuildTrie();
+  void reloadProviders();
+  RootItem *findItemById(const QString &id);
+  RootProvider *findProviderById(const QString &id);
+
+public:
+  RootItemManager(OmniDatabase &db) : m_db(db) {}
+
+  bool setProviderPreferenceValues(const QString &id, const QJsonObject &preferences);
+
+  bool setItemEnabled(const QString &id, bool value);
+  bool setItemPreferenceValues(const QString &id, const QJsonObject &preferences);
+  void setPreferenceValues(const QString &id, const QJsonObject &preferences);
+
+  bool setAlias(const QString &id, const QString &alias);
+  bool clearAlias(const QString &id);
+
+  QJsonObject getProviderPreferenceValues(const QString &id) const;
+  QJsonObject getItemPreferenceValues(const QString &id) const;
+
+  /**
+   * Merge the item preferences with the provider preferences.
+   */
+  std::vector<Preference> getMergedItemPreferences(const QString &rootItemId);
+  QJsonObject getPreferenceValues(const QString &id) const;
+  RootItemMetadata itemMetadata(const QString &id) const;
+  int maxFallbackPosition();
+  bool isFallback(const QString &id);
+  bool disableFallback(const QString &id);
+  bool setFallback(const QString &id, int position = 0);
+  double computeScore(const RootItemMetadata &meta, int weight);
+  std::vector<std::shared_ptr<RootItem>> queryFavorites(int limit = 5);
+  std::vector<std::shared_ptr<RootItem>> querySuggestions(int limit = 5);
+  bool resetRanking(const QString &id);
+  bool registerVisit(const QString &id);
+  QString getItemProviderId(const QString &id);
+  bool setProviderEnabled(const QString &providerId, bool value);
+  bool disableItem(const QString &id);
+  bool enableItem(const QString &id);
+
+  std::vector<RootProvider *> providers() const;
+  void addProvider(std::unique_ptr<RootProvider> provider);
+  RootProvider *provider(const QString &id) const;
+  std::vector<std::shared_ptr<RootItem>> allItems() const { return m_items; }
+  std::vector<std::shared_ptr<RootItem>> prefixSearch(const QString &query,
+                                                      const RootItemPrefixSearchOptions &opts = {});
+
+signals:
+  void itemsChanged() const;
+  void fallbackEnabled(const QString &id) const;
+  void fallbackDisabled(const QString &id) const;
+};

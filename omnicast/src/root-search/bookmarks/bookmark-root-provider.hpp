@@ -1,6 +1,6 @@
 #pragma once
 #include "services/bookmark/bookmark-service.hpp"
-#include "root-item-manager.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
 
 class RootBookmarkItem : public RootItem {
   std::shared_ptr<Bookmark> m_link;

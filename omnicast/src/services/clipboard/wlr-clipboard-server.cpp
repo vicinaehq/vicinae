@@ -1,6 +1,7 @@
 #include "services/clipboard/wlr-clipboard-server.hpp"
 #include "services/clipboard/clipboard-server.hpp"
 #include "proto.hpp"
+#include <algorithm>
 #include <qprocess.h>
 #include <qdebug.h>
 
@@ -17,13 +18,9 @@ bool WlrClipboardServer::isActivatable() const {
 
   auto nameFlags = {"wlroots", "sway", "river", "wayfire", "hyprland"};
 
-  for (const auto &var : namedVars) {
-    for (const auto &flag : nameFlags) {
-      if (var.contains(flag)) { return true; }
-    }
-  }
-
-  return false;
+  return std::ranges::any_of(namedVars, [&](auto &&var) {
+    return std::ranges::any_of(nameFlags, [&](auto &&flag) { return var.contains(flag); });
+  });
 }
 
 void WlrClipboardServer::handleMessage(const std::string &message, const Proto::Variant &data) {
