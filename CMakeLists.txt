@@ -30,6 +30,7 @@ else()
 	add_compile_options(-g3 -march=native)
 endif()
 
+add_subdirectory(qsqlbuilder)
 add_subdirectory(omnictl)
 add_subdirectory(omnicast)
 add_subdirectory(proto)

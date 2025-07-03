@@ -15,7 +15,7 @@ protocol, required for proper window positioning on most wlroots-based
 compositors." ON)
 
 
-list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus cmark proto qalculate)
+list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus cmark proto qalculate qsqlbuilder)
 
 
 if (UNIX AND NOT APPLE)
@@ -33,6 +33,7 @@ include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}/src
 	${CMAKE_CURRENT_SOURCE_DIR}/src/lib
 	${CMAKE_CURRENT_SOURCE_DIR}/../proto
+	${CMAKE_CURRENT_SOURCE_DIR}/../qsqlbuilder/sqlbuilder
 	${CMAKE_CURRENT_SOURCE_DIR}/..
 )
 
