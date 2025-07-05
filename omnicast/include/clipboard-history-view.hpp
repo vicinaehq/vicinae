@@ -156,7 +156,7 @@ class ClipboardHistoryDetail : public DetailWithMetadataWidget {
 
   QWidget *createEntryWidget(const ClipboardHistoryEntry &entry) {
 
-    if (entry.mimeType.startsWith("text/plain")) {
+    if (entry.mimeType.startsWith("text/")) {
       auto container = new TextContainer;
       auto viewer = new TextFileViewer();
 
@@ -400,6 +400,8 @@ class ClipboardHistoryView : public SimpleView {
     auto result = clipman->listAll(1000, 0, {.query = query});
     size_t i = 0;
 
+    qDebug() << "results" << result.totalCount;
+
     if (result.data.empty()) {
       m_content->setCurrentWidget(m_emptyView);
     } else {
@@ -540,6 +542,8 @@ public:
     setLayout(layout);
 
     connect(m_list, &OmniList::selectionChanged, this, &ClipboardHistoryView::selectionChanged);
+    connect(m_list, &OmniList::itemActivated, this,
+            [this]() { ServiceRegistry::instance()->UI()->executeDefaultAction(); });
     connect(clipman, &ClipboardService::itemInserted, this,
             &ClipboardHistoryView::clipboardSelectionInserted);
     connect(clipman, &ClipboardService::monitoringChanged, this,

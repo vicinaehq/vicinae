@@ -207,17 +207,19 @@ CommandDatabase::CommandDatabase() {
   }
 
   {
-    // auto quickAsk = CommandBuilder("quick").withName("Quick AI").toContext<AskAiCommand>();
-    auto configureProviders = CommandBuilder("configure-providers")
-                                  .withName("Configure AI providers")
-                                  .toSingleView<ConfigureAIProvidersView>();
+    /*
+auto quickAsk = CommandBuilder("quick").withName("Quick AI").toContext<AskAiCommand>();
+auto configureProviders = CommandBuilder("configure-providers")
+                            .withName("Configure AI providers")
+                            .toSingleView<ConfigureAIProvidersView>();
 
-    auto ai = CommandRepositoryBuilder("ai")
-                  .withName("AI")
-                  .withTintedIcon("stars", ColorTint::Red)
-                  .withCommand(configureProviders)
-                  .makeShared();
+auto ai = CommandRepositoryBuilder("ai")
+            .withName("AI")
+            .withTintedIcon("stars", ColorTint::Red)
+            .withCommand(configureProviders)
+            .makeShared();
 
-    registerRepository(ai);
+registerRepository(ai);
+  */
   }
 }

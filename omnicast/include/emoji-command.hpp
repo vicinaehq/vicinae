@@ -96,8 +96,11 @@ public:
   QString generateId() const override { return info.description; }
 
   QList<AbstractAction *> generateActions() const override {
-    return {new PasteToFocusedWindowAction(Clipboard::Text(info.emoji)),
-            new CopyToClipboardAction(Clipboard::Text(info.description), "Copy emoji description"),
+    auto paste = new PasteToFocusedWindowAction(Clipboard::Text(info.emoji));
+
+    paste->setPrimary(true);
+
+    return {paste, new CopyToClipboardAction(Clipboard::Text(info.description), "Copy emoji description"),
             new TestLongToast(), new PushSelf};
   }
 

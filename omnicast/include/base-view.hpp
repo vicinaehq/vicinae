@@ -365,6 +365,9 @@ public:
     connect(m_list, &OmniList::itemRightClicked, this, &ListView::itemRightClicked);
     connect(m_list, &OmniList::virtualHeightChanged, this, [this](int height) {
       if (m_list->items().empty()) {
+        auto ui = ServiceRegistry::instance()->UI();
+
+        ui->destroyCompleter();
         m_content->setCurrentWidget(m_emptyView);
         return;
       }
