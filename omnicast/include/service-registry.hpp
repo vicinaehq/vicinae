@@ -7,6 +7,7 @@
 #include "services/config/config-service.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "font-service.hpp"
+#include "services/emoji-service/emoji-service.hpp"
 #include "services/local-storage/local-storage-service.hpp"
 #include "omni-command-db.hpp"
 #include "omni-database.hpp"
@@ -38,6 +39,7 @@ class ServiceRegistry : public QObject {
   std::unique_ptr<BookmarkService> m_bookmarkService;
   std::unique_ptr<UIController> m_uiController;
   std::unique_ptr<ToastService> m_toastService;
+  std::unique_ptr<EmojiService> m_emojiService;
 
 public:
   static ServiceRegistry *instance() {
@@ -51,6 +53,7 @@ public:
   auto omniDb() const { return m_omniDb.get(); }
   auto quicklinks() const { return m_quickinkDb.get(); }
   auto windowManager() const { return m_windowManager.get(); }
+  auto emojiService() const { return m_emojiService.get(); }
   auto fontService() const { return m_fontService.get(); }
   auto calculatorDb() const { return m_calculatorDb.get(); }
   auto commandDb() const { return m_omniCommandDb.get(); }
@@ -70,6 +73,7 @@ public:
   void setBookmarkService(std::unique_ptr<BookmarkService> service) {
     m_bookmarkService = std::move(service);
   }
+  void setEmojiService(std::unique_ptr<EmojiService> service) { m_emojiService = std::move(service); }
   void setToastService(std::unique_ptr<ToastService> service) { m_toastService = std::move(service); }
   void setRootExtMan(std::unique_ptr<RootExtensionManager> man) { m_rootExtMan = std::move(man); }
   void setAI(std::unique_ptr<AI::Manager> manager) { m_aiManager = std::move(manager); }

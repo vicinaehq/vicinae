@@ -272,8 +272,6 @@ set(SRCS
 	include/ui/omni-scroll-bar.hpp
 	src/ui/omni-scroll-bar.cpp
 
-	src/emoji-list.cpp
-
 	src/calculator-history-command.hpp
 
 	src/ui/ellided-label.cpp
@@ -416,6 +414,11 @@ set(SRCS
 	
 	src/services/app-service/app-service.hpp
 	src/services/app-service/app-service.cpp
+
+	src/services/emoji-service/emoji.hpp
+	src/services/emoji-service/emoji.cpp
+	src/services/emoji-service/emoji-service.hpp
+	src/services/emoji-service/emoji-service.cpp
 
 	src/utils/migration-manager/migration-manager.hpp
 	src/utils/migration-manager/migration-manager.cpp

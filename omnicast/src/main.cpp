@@ -38,6 +38,7 @@
 #include <qstringview.h>
 #include <qtmetamacros.h>
 #include "extension/manager/extension-manager.hpp"
+#include "services/emoji-service/emoji-service.hpp"
 #include "services/local-storage/local-storage-service.hpp"
 #include "omnicast.hpp"
 #include "process-manager-service.hpp"
@@ -210,6 +211,7 @@ int startDaemon() {
     registry->setClipman(std::move(clipboardManager));
     registry->setWindowManager(std::move(windowManager));
     registry->setFontService(std::move(fontService));
+    registry->setEmojiService(std::make_unique<EmojiService>());
 
     auto p = rootExtMan.get();
 

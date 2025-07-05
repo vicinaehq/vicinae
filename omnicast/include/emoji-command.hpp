@@ -4,11 +4,9 @@
 #include "icon-browser-command.hpp"
 #include "service-registry.hpp"
 #include "services/clipboard/clipboard-service.hpp"
-#include "emoji-database.hpp"
-#include "libtrie/trie.hpp"
 #include "omni-icon.hpp"
+#include "services/emoji-service/emoji.hpp"
 #include "services/toast/toast-service.hpp"
-#include "timer.hpp"
 #include "ui/action-pannel/action-item.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/image/omnimg.hpp"
@@ -65,16 +63,16 @@ public:
 
 class EmojiGridItem : public OmniGrid::AbstractGridItem, public GridView::Actionnable {
 public:
-  const EmojiInfo &info;
+  const EmojiData &info;
 
-  QString tooltip() const override { return info.description; }
+  QString tooltip() const override { return ""; }
 
   QWidget *centerWidget() const override {
     auto icon = new Omnimg::ImageWidget();
     OmniIconUrl url;
 
     url.setType(OmniIconType::Emoji);
-    url.setName(info.emoji);
+    url.setName(QString::fromStdString(std::string(info.emoji)));
     icon->setUrl(url);
     icon->setContentsMargins(10, 10, 10, 10);
 
@@ -88,76 +86,36 @@ public:
     OmniIconUrl url;
 
     url.setType(OmniIconType::Emoji);
-    url.setName(info.emoji);
+    url.setName(QString::fromStdString(std::string(info.emoji)));
     icon->setUrl(url);
     icon->setContentsMargins(10, 10, 10, 10);
   }
 
-  QString generateId() const override { return info.description; }
+  QString generateId() const override { return QString::fromStdString(std::string(info.emoji)); }
 
   QList<AbstractAction *> generateActions() const override {
-    auto paste = new PasteToFocusedWindowAction(Clipboard::Text(info.emoji));
+    auto emoji = QString::fromStdString(std::string(info.emoji));
+    auto paste = new PasteToFocusedWindowAction(Clipboard::Text(emoji));
 
     paste->setPrimary(true);
 
-    return {paste, new CopyToClipboardAction(Clipboard::Text(info.description), "Copy emoji description"),
+    return {paste, new CopyToClipboardAction(Clipboard::Text(""), "Copy emoji description"),
             new TestLongToast(), new PushSelf};
   }
 
-  QString navigationTitle() const override { return info.description; }
+  QString navigationTitle() const override { return ""; }
 
-  EmojiGridItem(const EmojiInfo &info) : info(info) {}
-};
-
-struct EmojiInfoHash {
-  size_t operator()(const EmojiInfo *const &info) { return std::hash<const char *>{}(info->emoji); }
+  EmojiGridItem(const EmojiData &info) : info(info) {}
 };
 
 class EmojiView : public GridView {
-  EmojiDatabase emojiDb;
-  std::vector<std::unique_ptr<OmniList::AbstractVirtualItem>> newItems;
-  using TrieType = Trie<const EmojiInfo *, EmojiInfoHash>;
-  std::unique_ptr<TrieType> m_searchTrie;
-
 public:
-  std::unique_ptr<TrieType> buildTrie() const {
-    Timer timer;
-    auto trie = std::make_unique<TrieType>();
-
-    for (auto &item : emojiDb.list()) {
-      trie->indexLatinText(item.description, &item);
-
-      for (int i = 0; item.aliases[i]; ++i) {
-        trie->index(item.aliases[i], &item);
-      }
-
-      for (int i = 0; item.tags[i]; ++i) {
-        trie->index(item.tags[i], &item);
-      }
-
-      trie->indexLatinText(item.category, &item);
-    }
-    timer.time("emoji trie index");
-
-    return trie;
-  }
-
   void initialize() override {
     setSearchPlaceholderText("Search for emojis...");
     textChanged(searchText());
   }
 
-  EmojiView() {
-    auto watcher = new QFutureWatcher<std::unique_ptr<TrieType>>;
-    auto future = QtConcurrent::run([this]() { return buildTrie(); });
-
-    watcher->setFuture(future);
-    connect(watcher, &QFutureWatcher<TrieType>::finished, this, [this, watcher]() {
-      m_searchTrie.reset(watcher->future().takeResult().release());
-      watcher->deleteLater();
-      onSearchChanged(searchText());
-    });
-  }
+  EmojiView() {}
 
   void textChanged(const QString &s) override {
     m_grid->beginResetModel();
@@ -167,20 +125,20 @@ public:
     };
 
     if (s.isEmpty()) {
-      std::unordered_map<QString, std::vector<const EmojiInfo *>> sectionMap;
-      std::vector<QString> sectionNames;
+      std::unordered_map<std::string_view, std::vector<const EmojiData *>> sectionMap;
+      std::vector<std::string_view> sectionNames;
 
-      for (auto &item : emojiDb.list()) {
-        if (auto it = sectionMap.find(item.category); it == sectionMap.end()) {
-          sectionMap.insert({item.category, {}});
-          sectionNames.push_back(item.category);
+      for (auto &item : StaticEmojiDatabase::orderedList()) {
+        if (auto it = sectionMap.find(item.group); it == sectionMap.end()) {
+          sectionMap.insert({item.group, {}});
+          sectionNames.push_back(item.group);
         }
 
-        sectionMap[item.category].push_back(&item);
+        sectionMap[item.group].push_back(&item);
       }
 
       for (const auto &name : sectionNames) {
-        auto &section = m_grid->addSection(name);
+        auto &section = m_grid->addSection(QString::fromStdString(std::string(name)));
 
         section.setColumns(8);
         section.setSpacing(10);
@@ -194,25 +152,23 @@ public:
       return;
     }
 
-    if (m_searchTrie) {
-      auto matches = m_searchTrie->prefixSearch(s.toStdString());
+    auto emojiService = ServiceRegistry::instance()->emojiService();
+    auto matches = emojiService->search(s.toStdString());
 
-      if (matches.empty()) {
-        // TODO: show empty state
-        m_grid->endResetModel(OmniList::SelectFirst);
-        return;
-      }
-
-      auto &results = m_grid->addSection("Results");
-
-      results.setColumns(8);
-      results.setSpacing(10);
-
-      auto items = m_searchTrie->prefixSearch(s.toStdString()) | std::views::transform(makeEmojiItem) |
-                   std::ranges::to<std::vector>();
-
-      results.addItems(std::move(items));
+    if (matches.empty()) {
+      // TODO: show empty state
+      m_grid->endResetModel(OmniList::SelectFirst);
+      return;
     }
+
+    auto &results = m_grid->addSection("Results");
+
+    results.setColumns(8);
+    results.setSpacing(10);
+
+    auto items = matches | std::views::transform(makeEmojiItem) | std::ranges::to<std::vector>();
+
+    results.addItems(std::move(items));
 
     m_grid->endResetModel(OmniList::SelectFirst);
   }

@@ -27,6 +27,11 @@ configure:
 	PARALLEL_LEVEL=$(shell nproc) cmake -B $(BUILD_DIR)
 .PHONY: configure
 
+gen-emoji:
+	cd ./scripts/emoji && npm install && tsc --outDir dist && node dist/main.js
+	cp ./scripts/emoji/dist/emoji.{cpp,hpp} omnicast/src/services/emoji-service/
+.PHONY: gen-emoji
+
 clean:
 	rm -rf $(BUILD_DIR)
 .PHONY: clean
