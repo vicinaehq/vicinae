@@ -1,5 +1,6 @@
 #pragma once
 #include "libtrie/trie.hpp"
+#include "omni-database.hpp"
 #include "services/emoji-service/emoji.hpp"
 #include <string_view>
 
@@ -13,8 +14,17 @@ struct EmojiDataHash {
   size_t operator()(const EmojiData *data) { return std::hash<std::string_view>()(data->emoji); }
 };
 
+struct EmojiWithMetadata {
+  const EmojiData *data = nullptr;
+  uint32_t visitCount = 0;
+  std::optional<QDateTime> pinnedAt;
+};
+
 class EmojiService {
   Trie<const EmojiData *, EmojiDataHash> m_index;
+  OmniDatabase &m_db;
+
+  void createDbEntry(std::string_view emoji);
 
 public:
   /**
@@ -23,5 +33,10 @@ public:
   void buildIndex();
   std::vector<const EmojiData *> search(std::string_view query) const;
 
-  EmojiService();
+  std::vector<EmojiWithMetadata> getVisited() const;
+  bool pin(std::string_view emoji);
+  bool unpin(std::string_view emoji);
+  bool registerVisit(std::string_view emoji);
+
+  EmojiService(OmniDatabase &db);
 };

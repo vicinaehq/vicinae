@@ -11,6 +11,7 @@
 #include <qbuffer.h>
 #include <qdir.h>
 #include <qevent.h>
+#include <qfont.h>
 #include <qfuturewatcher.h>
 #include <qimage.h>
 #include <QtConcurrent/QtConcurrent>
@@ -26,6 +27,7 @@
 #include <qpainter.h>
 #include <qpixmap.h>
 #include <filesystem>
+#include <qrawfont.h>
 #include <qsharedpointer.h>
 #include <qstringview.h>
 #include <qsvgrenderer.h>
@@ -302,6 +304,8 @@ class EmojiImageLoader : public AbstractImageLoader {
   void render(const RenderConfig &config) override {
     auto font = QFont("Twemoji");
     QPixmap canva(config.size * config.devicePixelRatio);
+
+    font.setStyleStrategy(QFont::StyleStrategy::NoFontMerging);
 
     canva.fill(Qt::transparent);
     font.setPixelSize(canva.height() * 0.8);

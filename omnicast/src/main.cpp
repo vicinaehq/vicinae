@@ -172,6 +172,7 @@ int startDaemon() {
     auto toastService = std::make_unique<ToastService>();
     auto currentConfig = configService->value();
     auto rootExtMan = std::make_unique<RootExtensionManager>(*rootItemManager.get(), *commandDb.get());
+    auto emojiService = std::make_unique<EmojiService>(*omniDb.get());
 
     if (auto name = currentConfig.theme.name) {
       if (!ThemeService::instance().setTheme(*name)) {
@@ -211,7 +212,7 @@ int startDaemon() {
     registry->setClipman(std::move(clipboardManager));
     registry->setWindowManager(std::move(windowManager));
     registry->setFontService(std::move(fontService));
-    registry->setEmojiService(std::make_unique<EmojiService>());
+    registry->setEmojiService(std::move(emojiService));
 
     auto p = rootExtMan.get();
 

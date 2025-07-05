@@ -51,6 +51,13 @@ CREATE TABLE IF NOT EXISTS calculator_history (
 	created_at INTEGER DEFAULT (unixepoch())
 );
 
+CREATE TABLE IF NOT EXISTS visited_emoji (
+	emoji TEXT PRIMARY KEY,
+	pinned_at INTEGER, -- if NULL, not pinned
+	last_visited_at INTEGER,
+	visit_count INTEGER DEFAULT 0
+);
+
 CREATE TABLE IF NOT EXISTS ai_provider_config (
 	id TEXT PRIMARY KEY,
 	data JSON,

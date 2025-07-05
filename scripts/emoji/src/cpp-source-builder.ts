@@ -42,7 +42,7 @@ class StaticEmojiDatabase {
 	public:
 		StaticEmojiDatabase() = delete;
 		static const std::array<EmojiData, ${this.m_emojis.length}>& orderedList();
-		static const std::unordered_map<std::string, const EmojiData*>& mapping();
+		static const std::unordered_map<std::string_view, const EmojiData*>& mapping();
 };
 `
 
@@ -54,7 +54,7 @@ class StaticEmojiDatabase {
 	}
 	
 	private buildSource() {
-		return `// clang-format off\n\n#include "emoji.hpp"\n#include <string_view>\n#include <array>\n\n${this.buildCategories()}\n\n${this.buildKeywords()}\n\n${this.buildStaticArray()}\n\nconst std::array<EmojiData, ${this.m_emojis.length}>& StaticEmojiDatabase::orderedList() { return EMOJI_LIST; }\n${this.buildMap()}`;
+		return `// clang-format off\n\n#include "emoji.hpp"\n#include <string_view>\n#include <array>\n\n${this.buildCategories()}\n\n${this.buildKeywords()}\n\n${this.buildStaticArray()}\n\nconst std::array<EmojiData, ${this.m_emojis.length}>& StaticEmojiDatabase::orderedList() { return EMOJI_LIST; }\n${this.buildMap()} const std::unordered_map<std::string_view, const EmojiData*>& StaticEmojiDatabase::mapping() { return MAPPING; }`;
 	}
 
 	private buildCategories() {

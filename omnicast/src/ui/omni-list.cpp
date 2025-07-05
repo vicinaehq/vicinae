@@ -55,7 +55,6 @@ void OmniList::updateFocusChain() {
 }
 
 void OmniList::updateVisibleItems() {
-  Timer timer;
 
   m_visibleWidgets.clear();
   if (m_items.empty()) return;

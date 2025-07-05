@@ -3834,3 +3834,4 @@ const std::unordered_map<std::string_view, const EmojiData*> MAPPING = {
 { "🏴󠁧󠁢󠁳󠁣󠁴󠁿", &EMOJI_LIST[1904] },
 { "🏴󠁧󠁢󠁷󠁬󠁳󠁿", &EMOJI_LIST[1905] }
 };
+ const std::unordered_map<std::string_view, const EmojiData*>& StaticEmojiDatabase::mapping() { return MAPPING; }
