@@ -86,6 +86,7 @@ class StatusBar : public QWidget {
 
   void paintEvent(QPaintEvent *event) override;
   void setLeftWidget(QWidget *left);
+  void resizeEvent(QResizeEvent *event) override;
 
 public:
   void setAction(const AbstractAction &action);

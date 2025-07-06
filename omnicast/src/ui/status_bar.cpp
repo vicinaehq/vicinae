@@ -74,6 +74,12 @@ StatusBar::StatusBar(QWidget *parent) : QWidget(parent), leftWidget(nullptr) {
   connect(_selectedActionButton, &ShortcutButton::clicked, this, &StatusBar::currentActionButtonClicked);
 }
 
+void StatusBar::resizeEvent(QResizeEvent *event) {
+  QWidget::resizeEvent(event);
+  leftSideWidget->setMaximumWidth(event->size().width() * 0.5);
+  right->setMaximumWidth(event->size().width() * 0.5);
+}
+
 void StatusBar::setCurrentAction(const QString &action, const KeyboardShortcutModel &shortcut) {
   _selectedActionButton->setText(action);
   _selectedActionButton->setShortcut(shortcut);

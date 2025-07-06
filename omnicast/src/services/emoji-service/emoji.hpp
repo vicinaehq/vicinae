@@ -17,4 +17,5 @@ class StaticEmojiDatabase {
 		StaticEmojiDatabase() = delete;
 		static const std::array<EmojiData, 1906>& orderedList();
 		static const std::unordered_map<std::string_view, const EmojiData*>& mapping();
+		static const std::array<std::string_view, 9>& groups();
 };

@@ -43,6 +43,7 @@ class StaticEmojiDatabase {
 		StaticEmojiDatabase() = delete;
 		static const std::array<EmojiData, ${this.m_emojis.length}>& orderedList();
 		static const std::unordered_map<std::string_view, const EmojiData*>& mapping();
+		static const std::array<std::string_view, ${this.m_groups.length}>& groups();
 };
 `
 
@@ -50,19 +51,19 @@ class StaticEmojiDatabase {
 	}
 
 	private buildStaticArray() {
-		return `const std::array<EmojiData, ${this.m_emojis.length}> EMOJI_LIST = {\n${this.m_emojis.map(this.buildItemStruct).join(',\n')}\n};`;
+		return `static const std::array<EmojiData, ${this.m_emojis.length}> EMOJI_LIST = {\n${this.m_emojis.map(this.buildItemStruct).join(',\n')}\n};`;
 	}
 	
 	private buildSource() {
-		return `// clang-format off\n\n#include "emoji.hpp"\n#include <string_view>\n#include <array>\n\n${this.buildCategories()}\n\n${this.buildKeywords()}\n\n${this.buildStaticArray()}\n\nconst std::array<EmojiData, ${this.m_emojis.length}>& StaticEmojiDatabase::orderedList() { return EMOJI_LIST; }\n${this.buildMap()} const std::unordered_map<std::string_view, const EmojiData*>& StaticEmojiDatabase::mapping() { return MAPPING; }`;
+		return `// clang-format off\n\n#include "emoji.hpp"\n#include <string_view>\n#include <array>\n\n${this.buildCategories()}\n\n${this.buildKeywords()}\n\n${this.buildStaticArray()}\n\nconst std::array<EmojiData, ${this.m_emojis.length}>& StaticEmojiDatabase::orderedList() { return EMOJI_LIST; }\n${this.buildMap()} const std::unordered_map<std::string_view, const EmojiData*>& StaticEmojiDatabase::mapping() { return MAPPING; }\n\nconst std::array<std::string_view, ${this.m_groups.length}>& StaticEmojiDatabase::groups() { return GROUPS; }`;
 	}
 
 	private buildCategories() {
-		return `#define GRP(idx) GROUPS[idx]\n\nconstexpr std::array<std::string_view, ${this.m_groups.length}> GROUPS = {\n${this.m_groups.map(quoted).join(',')}\n};`;
+		return `#define GRP(idx) GROUPS[idx]\n\nstatic constexpr std::array<std::string_view, ${this.m_groups.length}> GROUPS = {\n${this.m_groups.map(quoted).join(',')}\n};`;
 	}
 
 	private buildKeywords() {
-		return `#define KW(idx) KEYWORDS[idx]\n\nconstexpr std::array<std::string_view, ${this.m_keywords.length}> KEYWORDS = {\n${this.m_keywords.map(quoted).join(',')}\n};`;
+		return `#define KW(idx) KEYWORDS[idx]\n\nstatic constexpr std::array<std::string_view, ${this.m_keywords.length}> KEYWORDS = {\n${this.m_keywords.map(quoted).join(',')}\n};`;
 	}
 
 	private buildMap() {

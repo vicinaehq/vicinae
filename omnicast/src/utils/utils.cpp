@@ -46,3 +46,5 @@ QString getRelativeTimeString(const QDateTime &pastTime) {
     return "just now";
   }
 }
+
+QString qStringFromStdView(std::string_view view) { return QString::fromUtf8(view.data(), view.size()); }

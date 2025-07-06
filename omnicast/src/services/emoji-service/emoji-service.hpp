@@ -2,6 +2,8 @@
 #include "libtrie/trie.hpp"
 #include "omni-database.hpp"
 #include "services/emoji-service/emoji.hpp"
+#include <qobject.h>
+#include <qtmetamacros.h>
 #include <string_view>
 
 /**
@@ -18,9 +20,12 @@ struct EmojiWithMetadata {
   const EmojiData *data = nullptr;
   uint32_t visitCount = 0;
   std::optional<QDateTime> pinnedAt;
+  QString keywords;
 };
 
-class EmojiService {
+class EmojiService : public QObject {
+  Q_OBJECT
+
   Trie<const EmojiData *, EmojiDataHash> m_index;
   OmniDatabase &m_db;
 
@@ -33,10 +38,34 @@ public:
   void buildIndex();
   std::vector<const EmojiData *> search(std::string_view query) const;
 
+  /**
+   * List of emojis, ordered and grouped.
+   */
+  std::vector<std::pair<std::string_view, std::vector<const EmojiData *>>> grouped();
+
+  /**
+   * Map metadata to the provided list of emojis.
+   */
+  std::vector<EmojiWithMetadata> mapMetadata(const std::vector<const EmojiData *> &items);
+  EmojiWithMetadata mapMetadata(std::string_view emoji);
+
   std::vector<EmojiWithMetadata> getVisited() const;
   bool pin(std::string_view emoji);
   bool unpin(std::string_view emoji);
   bool registerVisit(std::string_view emoji);
+  bool resetRanking(std::string_view emoji);
+
+  /**
+   * Set custom list of keywords to be searched in addition to the existing list.
+   * It is provided as a single string which is then tokenized internally.
+   */
+  bool setCustomKeywords(std::string_view emoji, const QString &keywords);
 
   EmojiService(OmniDatabase &db);
+
+signals:
+  void pinned(std::string_view emoji) const;
+  void unpinned(std::string_view emoji) const;
+  void visited(std::string_view emoji) const;
+  void rankingReset(std::string_view emoji) const;
 };

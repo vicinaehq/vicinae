@@ -76,6 +76,16 @@ class AppWindow : public QMainWindow, public ICommandHandler {
 
   void unloadHangingCommand();
 
+  void changeEvent(QEvent *event) override {
+    if (event->type() == QEvent::WindowActivate) {
+      qDebug() << "App Window activated";
+    } else if (event->type() == QEvent::WindowDeactivate) {
+      qDebug() << "Window deactivated";
+    }
+
+    QMainWindow::changeEvent(event);
+  }
+
 public:
   StatusBar *m_statusBar = new StatusBar();
   // to compile

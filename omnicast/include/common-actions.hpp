@@ -27,13 +27,13 @@ class PushViewAction : public AbstractAction {
   BaseView *m_view;
   OmniIconUrl m_icon;
 
+public:
   void execute() override {
     auto ui = ServiceRegistry::instance()->UI();
 
     ui->pushView(m_view, {.navigation = NavigationStatus{.title = title(), .iconUrl = m_icon}});
   }
 
-public:
   PushViewAction(const QString &title, BaseView *view, const OmniIconUrl &icon)
       : AbstractAction(title, icon), m_view(view), m_icon(icon) {}
 };

@@ -44,7 +44,7 @@ public:
 
   Style style() const { return m_style; }
 
-  virtual QString id() const { return _title + iconUrl.toString(); }
+  virtual QString id() const { return title() + icon().toString(); }
 
   std::function<void(void)> executionCallback() const { return _execCallback; }
 
@@ -74,4 +74,15 @@ struct StaticAction : public AbstractAction {
 public:
   StaticAction(const QString &title, const OmniIconUrl &url, const std::function<void(void)> &fn)
       : AbstractAction(title, url), m_fn(fn) {}
+};
+
+class SubmitAction : public AbstractAction {
+  std::function<void(void)> m_fn;
+
+  void execute() override {
+    if (m_fn) m_fn();
+  }
+
+public:
+  SubmitAction(const std::function<void(void)> &fn) { m_fn = fn; }
 };

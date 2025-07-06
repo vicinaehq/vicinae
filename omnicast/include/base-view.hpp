@@ -416,6 +416,26 @@ public:
     virtual QString actionPanelTitle() const { return "Actions"; }
   };
 
+  virtual QString rootNavigationTitle() const { return ""; }
+
+  void onActivate() override {
+    if (auto selection = m_grid->selected()) {
+      if (auto nextItem = dynamic_cast<const Actionnable *>(selection)) { applyActionnable(nextItem); }
+    }
+  }
+
+  void applyActionnable(const Actionnable *actionnable) {
+    auto ui = ServiceRegistry::instance()->UI();
+
+    if (auto navigation = actionnable->navigationTitle(); !navigation.isEmpty()) {
+      if (isVisible()) {
+        ui->setNavigationTitle(QString("%1 - %2").arg(rootNavigationTitle()).arg(navigation));
+      }
+    }
+
+    if (auto panel = actionnable->actionPanel()) { m_actionPannelV2->setView(panel); }
+  }
+
 protected:
   OmniGrid *m_grid = new OmniGrid();
   QStackedWidget *m_content = new QStackedWidget(this);
@@ -426,25 +446,12 @@ protected:
     auto ui = ServiceRegistry::instance()->UI();
 
     if (!next) {
-      // m_topBar->destroyCompleter();
-      //  setNavigationTitle(QString("%1").arg(m_baseNavigationTitle));
-
+      if (isVisible()) { ui->setNavigationTitle(QString("%1").arg(rootNavigationTitle())); }
       return;
     }
 
     if (auto nextItem = dynamic_cast<const Actionnable *>(next)) {
-      // TODO: only expect suffix and automatically use command name from prefix
-      if (auto navigation = nextItem->navigationTitle(); !navigation.isEmpty()) {
-        // setNavigationTitle(QString("%1 - %2").arg(m_baseNavigationTitle).arg(navigation));
-      }
-
-      if (auto panel = nextItem->actionPanel()) {
-        m_actionPannelV2->setView(panel);
-      } else {
-        // m_actionPannelV2->hide();
-        // m_actionPannelV2->popToRoot();
-      }
-
+      applyActionnable(nextItem);
     } else {
       ui->clearActionPanel();
       ui->destroyCompleter();
@@ -453,8 +460,6 @@ protected:
 
   virtual void itemActivated(const OmniList::AbstractVirtualItem &item) {
     auto ui = ServiceRegistry::instance()->UI();
-
-    qDebug() << "actionnable";
 
     ui->executeDefaultAction();
   }

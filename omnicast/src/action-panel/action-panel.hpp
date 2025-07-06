@@ -328,7 +328,7 @@ class ActionPanelV2Widget : public Popover {
   }
 
   void showEvent(QShowEvent *event) override {
-    qCritical() << "SHOW EVENT";
+    qCritical() << "SHOW EVENT" << windowHandle()->objectName();
     emit opened();
     emit openChanged(true);
     resizeView();
@@ -339,7 +339,7 @@ class ActionPanelV2Widget : public Popover {
     reset();
     emit closed();
     emit openChanged(false);
-    QWidget::closeEvent(event);
+    Popover::closeEvent(event);
   }
 
   void resizeEvent(QResizeEvent *event) override { QWidget::resizeEvent(event); }

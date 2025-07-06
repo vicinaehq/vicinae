@@ -153,7 +153,6 @@ void OmniList::updateVisibleItems() {
     widget->setSelected(endIndex == m_selected);
     if (widget->size() != size) { widget->resize(size); }
     widget->move(pos);
-    widget->show();
 
     /*
 qDebug() << "Widget" << vinfo.item->id() << "visible:" << widget->isVisible()
@@ -203,9 +202,10 @@ qDebug() << "Widget" << vinfo.item->id() << "visible:" << widget->isVisible()
 
   // timer.time("updateVisibleItems");
 
+  setUpdatesEnabled(true);
+
   recalculateMousePosition();
   updateFocusChain();
-  setUpdatesEnabled(true);
   this->visibleIndexRange = range;
 }
 
@@ -756,13 +756,13 @@ bool OmniList::event(QEvent *event) {
 void OmniList::recalculateMousePosition() {
   QPoint globalPos = QCursor::pos();
 
-  for (const auto &[idx, wrapper] : _visibleWidgets) {
+  for (const auto &wrapper : m_visibleWidgets) {
     QPoint localPos = wrapper->mapFromGlobal(globalPos);
     bool isUnderCursor = wrapper->rect().contains(localPos);
 
     if (!isUnderCursor) { wrapper->widget()->clearTransientState(); }
 
-    if (!wrapper->underMouse()) {
+    if (wrapper->underMouse()) {
       wrapper->hide();
       wrapper->show();
     }

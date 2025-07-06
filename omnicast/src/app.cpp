@@ -463,4 +463,6 @@ AppWindow::AppWindow(QWidget *parent) : QMainWindow(parent) {
   setCentralWidget(m_widget);
 
   launchCommand(rootCommand);
+
+  connect(qApp, &QApplication::applicationStateChanged, this, []() { qDebug() << "app state changed"; });
 }

@@ -55,7 +55,8 @@ CREATE TABLE IF NOT EXISTS visited_emoji (
 	emoji TEXT PRIMARY KEY,
 	pinned_at INTEGER, -- if NULL, not pinned
 	last_visited_at INTEGER,
-	visit_count INTEGER DEFAULT 0
+	visit_count INTEGER DEFAULT 0,
+	custom_keywords TEXT
 );
 
 CREATE TABLE IF NOT EXISTS ai_provider_config (
