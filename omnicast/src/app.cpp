@@ -13,6 +13,7 @@
 #include "command.hpp"
 #include "service-registry.hpp"
 #include "services/toast/toast-service.hpp"
+#include "ui/alert.hpp"
 #include "ui/keyboard.hpp"
 #include "ui/toast.hpp"
 #include "wm/window-manager-factory.hpp"
@@ -188,7 +189,10 @@ void AppWindow::pushView(BaseView *view, const PushViewOptions &opts) {
 
   currentCommand.viewStack.push({.view = view});
   m_viewStack.emplace_back(view);
-  if (auto navigation = opts.navigation) { ui->setNavigation(navigation->title, navigation->iconUrl); }
+  if (auto navigation = opts.navigation) {
+    qDebug() << "set navigation";
+    ui->setNavigation(navigation->title, navigation->iconUrl);
+  }
 
   m_viewContainer->addWidget(view);
   m_viewContainer->setCurrentWidget(view);
@@ -427,6 +431,8 @@ AppWindow::AppWindow(QWidget *parent) : QMainWindow(parent) {
   });
   connect(ui, &UIController::launchCommandRequested, this,
           [this](const auto &cmd) { launchCommand(cmd, {}, {}); });
+  connect(ui, &UIController::launchCommandRequestedById, this,
+          [this](const QString &id) { launchCommand(id); });
   connect(ui, &UIController::popViewRequested, this, [this]() { popCurrentView(); });
   connect(ui, &UIController::pushViewRequested, this,
           [this](BaseView *view, const PushViewOptions &opts) { pushView(view, opts); });
@@ -441,6 +447,11 @@ AppWindow::AppWindow(QWidget *parent) : QMainWindow(parent) {
 
   connect(toast, &ToastService::toastActivated, this,
           [this](const Toast *toast) { m_statusBar->setToast(toast); });
+
+  connect(ui, &UIController::alertRequested, this, [this, ui](AlertWidget *widget) {
+    if (auto panel = ui->topView()->actionPanel()) panel->close();
+    confirmAlert(widget);
+  });
 
   connect(toast, &ToastService::toastHidden, this, [this](const Toast *toast) { m_statusBar->clearToast(); });
 

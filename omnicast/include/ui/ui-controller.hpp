@@ -4,6 +4,7 @@
 #include "common.hpp"
 #include "omni-icon.hpp"
 #include "ui/action-pannel/action.hpp"
+#include "ui/alert.hpp"
 #include "ui/status_bar.hpp"
 #include "ui/toast.hpp"
 #include "ui/top_bar.hpp"
@@ -118,7 +119,7 @@ public:
   void replaceView(BaseView *previous, BaseView *next);
   void replaceCurrentView(BaseView *next) { replaceView(topView(), next); }
   void launchCommand(const std::shared_ptr<AbstractCmd> &cmd) const { emit launchCommandRequested(cmd); }
-  void launchCommand(const QString &cmdId) const { /*emit launchCommandRequested(cmdId);*/ }
+  void launchCommand(const QString &cmdId) const { emit launchCommandRequestedById(cmdId); }
   void setToast(const QString &title, ToastPriority priority = ToastPriority::Success) const {
     emit showToastRequested(title, priority);
   }
@@ -205,6 +206,8 @@ public:
     if (sender == topView()) { m_topBar->setLoading(value); }
   }
 
+  void setAlert(AlertWidget *alert) { emit alertRequested(alert); }
+
   void setTopBar(TopBar *bar) {
     m_topBar = bar;
     m_topBar->input->installEventFilter(this);
@@ -247,11 +250,13 @@ signals:
   void popToRootRequested() const;
   void closeWindowRequested() const;
   void launchCommandRequested(const std::shared_ptr<AbstractCmd> &cmd) const;
+  void launchCommandRequestedById(const QString &id) const;
   void showHUDRequested(const QString &title) const;
   void showToastRequested(const QString &title, ToastPriority priority) const;
   void replaceViewRequested(BaseView *previous, BaseView *next) const;
 
   void popViewCompleted() const;
+  void alertRequested(AlertWidget *alert) const;
 };
 
 /**

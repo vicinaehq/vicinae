@@ -172,17 +172,14 @@ protected:
   QString generateId() const override { return item.question; }
 
   QList<AbstractAction *> generateActions() const override {
-    QString sresult = item.answer;
-    ;
     auto copyAnswer = new CopyCalculatorAnswerAction(item);
-    // auto copyQA = new CopyCalculatorQuestionAndAnswerAction(item);
-    // auto putAnswerInSearchBar = new PutCalculatorAnswerInSearchBar(item);
+    auto copyQA = new CopyCalculatorQuestionAndAnswerAction(item);
+    auto putAnswerInSearchBar = new PutCalculatorAnswerInSearchBar(item);
     auto openHistory = new OpenCalculatorHistoryAction();
 
     copyAnswer->setPrimary(true);
 
-    // return {copyAnswer, copyQA, putAnswerInSearchBar, openHistory};
-    return {copyAnswer, openHistory};
+    return {copyAnswer, copyQA, putAnswerInSearchBar, openHistory};
   }
 
 public:

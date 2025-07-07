@@ -99,6 +99,9 @@ set(SRCS
 	src/actions/theme/theme-actions.hpp
 	src/actions/theme/theme-actions.cpp
 
+	src/actions/calculator/calculator-actions.hpp
+	src/actions/calculator/calculator-actions.cpp
+
 	src/actions/root-search/root-search-actions.hpp
 	src/actions/root-search/root-search-actions.cpp
 

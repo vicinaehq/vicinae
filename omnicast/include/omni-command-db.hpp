@@ -37,16 +37,22 @@ public:
 
   CommandDbEntry *findCommand(const QString &id) {
     for (auto &cmd : entries) {
-      if (cmd.command->uniqueId() == id) return &cmd;
+      QString fullId = QString("%1.%2").arg(cmd.command->extensionId()).arg(cmd.command->commandId());
+
+      if (fullId == id) return &cmd;
     }
 
     return nullptr;
   }
 
   const CommandDbEntry *findCommand(const QString &id) const {
-    for (const auto &cmd : entries) {
-      if (cmd.command->uniqueId() == id) return &cmd;
+    for (auto &cmd : entries) {
+      QString fullId = QString("%1.%2").arg(cmd.command->extensionId()).arg(cmd.command->commandId());
+
+      if (fullId == id) return &cmd;
     }
+
+    return nullptr;
 
     return nullptr;
   }

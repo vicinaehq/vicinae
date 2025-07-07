@@ -1,7 +1,6 @@
 #pragma once
 #include "action-panel/action-panel.hpp"
 #include "argument.hpp"
-#include "common.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
 #include <libqalculate/Calculator.h>
@@ -15,7 +14,6 @@
 #include "ui/toast.hpp"
 #include "ui/top_bar.hpp"
 #include "ui/ui-controller.hpp"
-#include "utils/layout.hpp"
 #include <memory>
 #include <qboxlayout.h>
 #include <qlogging.h>
@@ -65,6 +63,9 @@ public:
    * Received when the global text search bar updates.
    */
   virtual void textChanged(const QString &text) {}
+
+  virtual OmniIconUrl navigationIcon() const { return BuiltinOmniIconUrl("question-mark-circle"); }
+  virtual QString navigationTitle() const { return ""; }
 
   void setSearchAccessory(QWidget *accessory) { m_uiController->setSearchAccessory(accessory); }
 
@@ -331,6 +332,14 @@ protected:
     }
 
     itemSelected(next);
+  }
+
+  void regenerateActions() {
+    if (auto selected = m_list->selected()) {
+      if (auto nextItem = dynamic_cast<const Actionnable *>(selected)) {
+        if (auto panel = nextItem->actionPanel()) { m_actionPannelV2->setView(panel); }
+      }
+    }
   }
 
   virtual void itemActivated(const OmniList::AbstractVirtualItem &item) { activatePrimaryAction(); }

@@ -34,6 +34,8 @@ class AlertWidget : public DialogContentWidget {
   TypographyWidget *_message;
   OmniButtonWidget *_cancelBtn;
   OmniButtonWidget *_actionBtn;
+  std::function<void(void)> m_confirmCallback;
+  std::function<void(void)> m_cancelCallback;
 
   void focusInEvent(QFocusEvent *event) override {
     _cancelBtn->setFocus();
@@ -76,6 +78,8 @@ protected:
 
 public:
   void setTitle(const QString &title) { _title->setText(title); }
+  void setConfirmCallback(const std::function<void(void)> &fn) {}
+  void setCancelCallback(const std::function<void(void)> &fn) {}
 
   void setMessage(const QString &message) {
     _message->setText(message);
@@ -115,6 +119,7 @@ public:
     _title->setFontWeight(QFont::Bold);
 
     _message->setText("This action cannot be undone");
+    _message->setWordWrap(true);
 
     QMargins btnMargins(50, 8, 50, 8);
 
