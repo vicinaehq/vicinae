@@ -57,6 +57,8 @@ class CalculatorHistoryListItem : public AbstractDefaultListItem, public ListVie
       return BuiltinOmniIconUrl("calculator");
     case AbstractCalculatorBackend::CONVERSION:
       return BuiltinOmniIconUrl("switch");
+    default:
+      return BuiltinOmniIconUrl("calculator");
     }
   }
 

@@ -147,6 +147,8 @@ public:
       return "Extension";
     case GroupProvider:
       return "Group";
+    default:
+      return "Unknown";
     }
   }
 

@@ -417,7 +417,7 @@ AppWindow::AppWindow(QWidget *parent) : QMainWindow(parent) {
           });
 
   auto rootCommand =
-      CommandBuilder("root").withIcon(BuiltinOmniIconUrl("omnicast")).toSingleView<RootCommandV2>();
+      CommandBuilder("root").withIcon(BuiltinOmniIconUrl("omnicast")).toSingleView<RootSearchView>();
   auto ui = ServiceRegistry::instance()->UI();
 
   connect(m_actionPanel, &ActionPanelV2Widget::opened, this,

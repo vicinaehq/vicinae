@@ -2,7 +2,6 @@
 #include "ai/ai-service.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/bookmark/bookmark-service.hpp"
-#include "calculator-database.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "services/config/config-service.hpp"
 #include "services/calculator-service/calculator-service.hpp"
@@ -25,7 +24,6 @@ class ServiceRegistry : public QObject {
 
   std::unique_ptr<QuicklistDatabase> m_quickinkDb;
   std::unique_ptr<AbstractWindowManager> m_windowManager;
-  std::unique_ptr<CalculatorDatabase> m_calculatorDb;
   std::unique_ptr<AppService> m_appDb;
   std::unique_ptr<OmniDatabase> m_omniDb;
   std::unique_ptr<OmniCommandDatabase> m_omniCommandDb;
@@ -58,7 +56,6 @@ public:
   auto windowManager() const { return m_windowManager.get(); }
   auto emojiService() const { return m_emojiService.get(); }
   auto fontService() const { return m_fontService.get(); }
-  auto calculatorDb() const { return m_calculatorDb.get(); }
   auto commandDb() const { return m_omniCommandDb.get(); }
   auto localStorage() const { return m_localStorage.get(); }
   auto extensionManager() const { return m_extensionManager.get(); }
@@ -89,7 +86,6 @@ public:
   void setWindowManager(std::unique_ptr<AbstractWindowManager> service) {
     m_windowManager = std::move(service);
   }
-  void setCalculatorDb(std::unique_ptr<CalculatorDatabase> service) { m_calculatorDb = std::move(service); }
   void setCommandDb(std::unique_ptr<OmniCommandDatabase> commandDb) {
     m_omniCommandDb = std::move(commandDb);
   }

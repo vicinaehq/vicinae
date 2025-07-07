@@ -317,7 +317,7 @@ public:
       return "Pause clipboard";
     case Paused:
       return "Resume clipboard";
-    case Unavailable:
+    default:
       return "Clipboard monitoring unavailable";
     }
   }
@@ -328,7 +328,7 @@ public:
       return BuiltinOmniIconUrl("pause-filled").setFill(ColorTint::Orange);
     case Paused:
       return BuiltinOmniIconUrl("play-filled").setFill(ColorTint::Green);
-    case Unavailable:
+    default:
       return BuiltinOmniIconUrl("warning").setFill(ColorTint::Red);
     }
   }

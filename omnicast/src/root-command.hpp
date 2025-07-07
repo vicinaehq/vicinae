@@ -3,7 +3,6 @@
 #include "base-view.hpp"
 #include "color-formatter.hpp"
 #include "actions/calculator/calculator-actions.hpp"
-#include "omni-icon.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "omni-command-db.hpp"
@@ -186,7 +185,7 @@ public:
   BaseCalculatorListItem(const AbstractCalculatorBackend::CalculatorResult &item) : item(item) {}
 };
 
-class RootCommandV2 : public ListView {
+class RootSearchView : public ListView {
   QTimer *m_calcDebounce = new QTimer(this);
   std::optional<AbstractCalculatorBackend::CalculatorResult> m_currentCalculatorEntry;
 
@@ -259,7 +258,6 @@ class RootCommandV2 : public ListView {
     auto commandDb = ServiceRegistry::instance()->commandDb();
     auto quicklinkDb = ServiceRegistry::instance()->quicklinks();
     auto appDb = ServiceRegistry::instance()->appDb();
-    auto calculator = ServiceRegistry::instance()->calculatorDb();
     const auto &quicklinks = quicklinkDb->list();
     const auto &appEntries = appDb->list();
     const auto &commandEntries = commandDb->commands();
@@ -370,11 +368,11 @@ class RootCommandV2 : public ListView {
     textChanged(searchText());
 
     auto manager = ServiceRegistry::instance()->rootItemManager();
-    connect(manager, &RootItemManager::itemsChanged, this, &RootCommandV2::handleItemChange);
-    connect(manager, &RootItemManager::itemFavoriteChanged, this, &RootCommandV2::handleFavoriteChanged);
-    connect(m_calcDebounce, &QTimer::timeout, this, &RootCommandV2::handleCalculatorTimeout);
+    connect(manager, &RootItemManager::itemsChanged, this, &RootSearchView::handleItemChange);
+    connect(manager, &RootItemManager::itemFavoriteChanged, this, &RootSearchView::handleFavoriteChanged);
+    connect(m_calcDebounce, &QTimer::timeout, this, &RootSearchView::handleCalculatorTimeout);
   }
 
 public:
-  RootCommandV2() {}
+  RootSearchView() {}
 };
