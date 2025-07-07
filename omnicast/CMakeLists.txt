@@ -420,6 +420,11 @@ set(SRCS
 	src/services/emoji-service/emoji-service.hpp
 	src/services/emoji-service/emoji-service.cpp
 
+	src/services/calculator-service/qalculate/qalculate-backend.hpp
+	src/services/calculator-service/qalculate/qalculate-backend.cpp
+	src/services/calculator-service/calculator-service.hpp
+	src/services/calculator-service/calculator-service.cpp
+
 	src/utils/migration-manager/migration-manager.hpp
 	src/utils/migration-manager/migration-manager.cpp
 

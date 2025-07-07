@@ -4,6 +4,7 @@
 #include "color-formatter.hpp"
 #include "actions/calculator/calculator-actions.hpp"
 #include "omni-icon.hpp"
+#include "services/calculator-service/abstract-calculator-backend.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "omni-command-db.hpp"
 #include "service-registry.hpp"
@@ -156,9 +157,11 @@ public:
 
 class BaseCalculatorListItem : public OmniList::AbstractVirtualItem, public ListView::Actionnable {
 protected:
-  CalculatorItem item;
+  const AbstractCalculatorBackend::CalculatorResult item;
 
-  OmniListItemWidget *createWidget() const override { return new CalculatorListItemWidget(item); }
+  OmniListItemWidget *createWidget() const override {
+    return new CalculatorListItemWidget(CalculatorItem{.expression = item.question, .result = item.answer});
+  }
 
   int calculateHeight(int width) const override {
     static CalculatorListItemWidget ruler({});
@@ -166,27 +169,29 @@ protected:
     return ruler.sizeHint().height();
   }
 
-  QString generateId() const override { return item.expression; }
+  QString generateId() const override { return item.question; }
 
   QList<AbstractAction *> generateActions() const override {
-    QString sresult = item.result;
+    QString sresult = item.answer;
+    ;
     auto copyAnswer = new CopyCalculatorAnswerAction(item);
-    auto copyQA = new CopyCalculatorQuestionAndAnswerAction(item);
-    auto putAnswerInSearchBar = new PutCalculatorAnswerInSearchBar(item);
+    // auto copyQA = new CopyCalculatorQuestionAndAnswerAction(item);
+    // auto putAnswerInSearchBar = new PutCalculatorAnswerInSearchBar(item);
     auto openHistory = new OpenCalculatorHistoryAction();
 
     copyAnswer->setPrimary(true);
 
-    return {copyAnswer, copyQA, putAnswerInSearchBar, openHistory};
+    // return {copyAnswer, copyQA, putAnswerInSearchBar, openHistory};
+    return {copyAnswer, openHistory};
   }
 
 public:
-  BaseCalculatorListItem(const CalculatorItem &item) : item(item) {}
+  BaseCalculatorListItem(const AbstractCalculatorBackend::CalculatorResult &item) : item(item) {}
 };
 
 class RootCommandV2 : public ListView {
   QTimer *m_calcDebounce = new QTimer(this);
-  std::optional<CalculatorItem> m_currentCalculatorEntry;
+  std::optional<AbstractCalculatorBackend::CalculatorResult> m_currentCalculatorEntry;
 
   void renderEmpty() {
     m_list->beginResetModel();
@@ -268,8 +273,6 @@ class RootCommandV2 : public ListView {
     auto start = std::chrono::high_resolution_clock::now();
 
     if (m_currentCalculatorEntry) {
-      qDebug() << "calculator" << m_currentCalculatorEntry->expression << "="
-               << m_currentCalculatorEntry->result;
       m_list->addSection("Calculator")
           .addItem(std::make_unique<BaseCalculatorListItem>(*m_currentCalculatorEntry));
     }
@@ -326,7 +329,7 @@ class RootCommandV2 : public ListView {
   }
 
   void handleCalculatorTimeout() {
-    auto calculator = ServiceRegistry::instance()->calculatorDb();
+    auto calculator = ServiceRegistry::instance()->calculatorService();
     QString expression = searchText().trimmed();
     bool isComputable = false;
 
@@ -342,10 +345,10 @@ class RootCommandV2 : public ListView {
       return;
     }
 
-    auto [result, ok] = calculator->quickCalculate(expression.toLatin1().data());
+    auto result = calculator->backend()->compute(expression);
 
-    if (ok) {
-      m_currentCalculatorEntry = CalculatorItem{.expression = expression, .result = result.c_str()};
+    if (result) {
+      m_currentCalculatorEntry = *result;
     } else {
       m_currentCalculatorEntry.reset();
     }

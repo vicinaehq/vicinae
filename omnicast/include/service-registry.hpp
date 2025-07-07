@@ -5,6 +5,7 @@
 #include "calculator-database.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "services/config/config-service.hpp"
+#include "services/calculator-service/calculator-service.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "font-service.hpp"
 #include "services/emoji-service/emoji-service.hpp"
@@ -40,6 +41,7 @@ class ServiceRegistry : public QObject {
   std::unique_ptr<UIController> m_uiController;
   std::unique_ptr<ToastService> m_toastService;
   std::unique_ptr<EmojiService> m_emojiService;
+  std::unique_ptr<CalculatorService> m_calculatorService;
 
 public:
   static ServiceRegistry *instance() {
@@ -51,6 +53,7 @@ public:
   auto config() const { return m_config.get(); }
   auto AI() const { return m_aiManager.get(); }
   auto omniDb() const { return m_omniDb.get(); }
+  auto calculatorService() const { return m_calculatorService.get(); }
   auto quicklinks() const { return m_quickinkDb.get(); }
   auto windowManager() const { return m_windowManager.get(); }
   auto emojiService() const { return m_emojiService.get(); }
@@ -72,6 +75,9 @@ public:
   void setConfig(std::unique_ptr<ConfigService> cfg) { m_config = std::move(cfg); }
   void setBookmarkService(std::unique_ptr<BookmarkService> service) {
     m_bookmarkService = std::move(service);
+  }
+  auto setCalculatorService(std::unique_ptr<CalculatorService> service) {
+    m_calculatorService = std::move(service);
   }
   void setEmojiService(std::unique_ptr<EmojiService> service) { m_emojiService = std::move(service); }
   void setToastService(std::unique_ptr<ToastService> service) { m_toastService = std::move(service); }

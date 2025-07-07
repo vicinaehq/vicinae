@@ -154,7 +154,7 @@ int startDaemon() {
   {
     auto registry = ServiceRegistry::instance();
     auto omniDb = std::make_unique<OmniDatabase>(Omnicast::dataDir() / "omnicast.db");
-    auto calculatorService = std::make_unique<CalculatorDatabase>(*omniDb.get());
+    auto calculatorDb = std::make_unique<CalculatorDatabase>(*omniDb.get());
     auto quicklinkService = std::make_unique<QuicklistDatabase>(*omniDb.get());
     auto localStorage = std::make_unique<LocalStorageService>(*omniDb);
     auto rootItemManager = std::make_unique<RootItemManager>(*omniDb.get());
@@ -173,6 +173,7 @@ int startDaemon() {
     auto currentConfig = configService->value();
     auto rootExtMan = std::make_unique<RootExtensionManager>(*rootItemManager.get(), *commandDb.get());
     auto emojiService = std::make_unique<EmojiService>(*omniDb.get());
+    auto calculatorService = std::make_unique<CalculatorService>(*omniDb.get());
 
     if (auto name = currentConfig.theme.name) {
       if (!ThemeService::instance().setTheme(*name)) {
@@ -202,7 +203,8 @@ int startDaemon() {
     registry->setConfig(std::move(configService));
     registry->setRootItemManager(std::move(rootItemManager));
     registry->setQuicklinks(std::move(quicklinkService));
-    registry->setCalculatorDb(std::move(calculatorService));
+    registry->setCalculatorDb(std::move(calculatorDb));
+    registry->setCalculatorService(std::move(calculatorService));
     registry->setAppDb(std::move(appService));
     registry->setOmniDb(std::move(omniDb));
     registry->setAI(std::move(aiManager));

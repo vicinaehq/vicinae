@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS root_provider_item (
 	ON DELETE CASCADE
 );
 
+-- local storage
 CREATE TABLE IF NOT EXISTS storage_data_item (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	namespace_id TEXT NOT NULL,
@@ -46,9 +47,11 @@ CREATE TABLE IF NOT EXISTS storage_data_item (
 
 CREATE TABLE IF NOT EXISTS calculator_history (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	expression TEXT NOT NULL,
-	result TEXT NOT NULL,
-	created_at INTEGER DEFAULT (unixepoch())
+	type_hint INTEGER NOT NULL, -- unit conversion / regular arithmetic
+	question TEXT NOT NULL,
+	answer TEXT NOT NULL,
+	created_at INTEGER DEFAULT (unixepoch()),
+	pinned_at INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS visited_emoji (
