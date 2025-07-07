@@ -139,7 +139,7 @@ public:
     }
   }
 
-  QString title() const override { return "Remove entry"; }
+  QString title() const override { return "Delete entry"; }
   OmniIconUrl icon() const override { return BuiltinOmniIconUrl("trash"); }
 
   RemoveCalculatorHistoryRecordAction(int id) : m_id(id) { setStyle(AbstractAction::Style::Danger); }

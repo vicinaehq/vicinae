@@ -2,17 +2,33 @@
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
 #include "ui/action-pannel/action.hpp"
+#include "ui/alert.hpp"
 #include "ui/toast.hpp"
 
 void ResetItemRanking::execute() {
-  auto manager = ServiceRegistry::instance()->rootItemManager();
   auto ui = ServiceRegistry::instance()->UI();
+  auto id = m_id;
 
-  if (manager->resetRanking(m_id)) {
-    ui->setToast("Ranking was successfuly reset");
-  } else {
-    ui->setToast("Unable to reset ranking");
-  }
+  auto callback = [ui, id](bool confirmed) {
+    if (!confirmed) return;
+
+    auto manager = ServiceRegistry::instance()->rootItemManager();
+    if (manager->resetRanking(id)) {
+      ui->setToast("Ranking was successfuly reset");
+    } else {
+      ui->setToast("Unable to reset ranking");
+    }
+  };
+
+  auto alert = new CallbackAlertWidget();
+
+  alert->setTitle("Are you sure?");
+  alert->setMessage(
+      "You will have to rebuild search history for this item in order for it to reappear on top of the "
+      "root search results.");
+  alert->setConfirmText("Reset", ColorTint::Red);
+  alert->setCallback(callback);
+  ui->setAlert(alert);
 }
 
 ResetItemRanking::ResetItemRanking(const QString &id)

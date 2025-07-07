@@ -145,3 +145,24 @@ public:
 signals:
   void confirmed() const;
 };
+
+class CallbackAlertWidget : public AlertWidget {
+  std::function<void(bool confirmed)> m_fn;
+
+  void confirm() const override {
+    if (m_fn) m_fn(true);
+  }
+
+  void canceled() const override {
+    if (m_fn) m_fn(false);
+  }
+
+public:
+  /**
+   * Careful when using this inside the execute() method of an action.
+   * There are rare scenarios in which the alert widget may live longer than the action it's triggered
+   * in. To be on the safe side, make sure you do not capture reference to action members and do all the
+   * capturing by value only.
+   */
+  void setCallback(const std::function<void(bool confirmed)> &fn) { m_fn = fn; }
+};
