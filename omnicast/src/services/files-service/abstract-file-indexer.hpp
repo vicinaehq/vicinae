@@ -20,18 +20,19 @@
  * environments.
  */
 
+struct IndexerFileResult {
+  std::filesystem::path path;
+};
+
+struct IndexerAsyncQuery : public QObject {
+  Q_OBJECT
+
+signals:
+  void finished(const std::vector<IndexerFileResult> &results) const;
+};
+
 class AbstractFileIndexer : public QObject {
 public:
-  struct FileResult {
-    std::filesystem::path path;
-  };
-
-  struct AsyncQuery : public QObject {
-    Q_OBJECT
-
-  signals:
-  };
-
   /**
    * An indexing entrypoint.
    */
@@ -42,7 +43,8 @@ public:
 public:
   virtual void start() = 0;
   virtual void setEntrypoints(const std::vector<Entrypoint> &entrypoints) = 0;
-  virtual std::vector<FileResult> query(std::string_view view) const = 0;
+  virtual std::vector<IndexerFileResult> query(std::string_view view) const = 0;
+  virtual IndexerAsyncQuery *queryAsync(std::string_view view) const = 0;
 
   virtual ~AbstractFileIndexer() = default;
 };

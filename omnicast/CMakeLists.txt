@@ -429,6 +429,7 @@ set(SRCS
 	src/services/calculator-service/calculator-service.hpp
 	src/services/calculator-service/calculator-service.cpp
 
+	src/services/files-service/abstract-file-indexer.hpp
 	src/services/files-service/file-service.hpp
 	src/services/files-service/file-service.cpp
 	src/services/files-service/file-indexer/file-indexer.hpp

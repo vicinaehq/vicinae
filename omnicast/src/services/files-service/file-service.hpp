@@ -6,7 +6,7 @@ class FileService {
 
 public:
   AbstractFileIndexer *indexer() const;
-  std::vector<AbstractFileIndexer::FileResult> search(std::string_view query) const;
+  std::vector<IndexerFileResult> search(std::string_view query) const;
 
   FileService();
 };

@@ -1,6 +1,7 @@
 #include <mutex>
 #include <xapian.h>
 #include "file-indexer.hpp"
+#include <QtConcurrent/QtConcurrent>
 #include "omnicast.hpp"
 #include "services/files-service/abstract-file-indexer.hpp"
 #include "utils/migration-manager/migration-manager.hpp"
@@ -230,8 +231,8 @@ void IndexerScanner::run() {
 
 void FileIndexer::start() {}
 
-std::vector<AbstractFileIndexer::FileResult> FileIndexer::query(std::string_view view) const {
-  std::vector<AbstractFileIndexer::FileResult> results;
+std::vector<IndexerFileResult> FileIndexer::query(std::string_view view) const {
+  std::vector<IndexerFileResult> results;
   QSqlQuery query(m_db);
 
   // QSQLITE doesn't support binding values for MATCH, sadly we are forced to inject like this
@@ -251,7 +252,7 @@ std::vector<AbstractFileIndexer::FileResult> FileIndexer::query(std::string_view
   }
 
   while (query.next()) {
-    AbstractFileIndexer::FileResult result{.path = query.value(0).toString().toStdString()};
+    IndexerFileResult result{.path = query.value(0).toString().toStdString()};
 
     results.emplace_back(result);
   }
@@ -276,6 +277,56 @@ void FileIndexer::setEntrypoints(const std::vector<Entrypoint> &entrypoints) {
   }
 
   // perform incremental scan based on existing data
+}
+
+IndexerAsyncQuery *FileIndexer::queryAsync(std::string_view view) const {
+  auto asyncQuery = new IndexerAsyncQuery();
+  auto searchQuery = qStringFromStdView(view);
+
+  QThreadPool::globalInstance()->start([asyncQuery, searchQuery]() {
+    QSqlDatabase db;
+    std::filesystem::path dbPath = Omnicast::dataDir() / "file-indexer.db";
+    QString connectionName = QString("file-indexer-reader-%1").arg(QUuid::createUuid().toString());
+
+    db = QSqlDatabase::addDatabase("QSQLITE", connectionName);
+    db.setDatabaseName(dbPath.c_str());
+
+    if (!db.open()) { qCritical() << "Failed to open file indexer database at" << dbPath; }
+
+    QSqlQuery query(db);
+
+    for (const auto &pragma : sqlitePragmas) {
+      if (!query.exec(pragma.c_str())) { qCritical() << "Failed to run file-indexer pragma" << pragma; }
+    }
+
+    auto queryString = QString(R"(
+  	SELECT path, unicode_idx.rank FROM indexed_file f 
+	JOIN unicode_idx ON unicode_idx.rowid = f.id 
+	WHERE 
+	    unicode_idx MATCH '"%1"*'
+	ORDER BY bm25(unicode_idx)
+	LIMIT 50
+  )")
+                           .arg(searchQuery);
+
+    if (!query.exec(queryString)) { qCritical() << "Search query failed" << query.lastError(); }
+
+    std::vector<IndexerFileResult> results;
+    while (query.next()) {
+      IndexerFileResult result{.path = query.value(0).toString().toStdString()};
+
+      results.emplace_back(result);
+    }
+
+    std::ranges::sort(results,
+                      [](auto &&a, auto &&b) { return a.path.string().size() > b.path.string().size(); });
+
+    emit asyncQuery->finished(results);
+
+    QSqlDatabase::removeDatabase(connectionName);
+  });
+
+  return asyncQuery;
 }
 
 FileIndexer::FileIndexer() : m_db(QSqlDatabase::addDatabase("QSQLITE", "file-indexer")) {

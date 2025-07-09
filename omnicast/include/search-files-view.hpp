@@ -6,6 +6,7 @@
 #include "manage-quicklinks-command.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
+#include "services/files-service/abstract-file-indexer.hpp"
 #include "timer.hpp"
 #include "ui/omni-list.hpp"
 #include "utils/utils.hpp"
@@ -136,6 +137,9 @@ public:
 };
 
 class SearchFilesView : public ListView {
+
+  QString currentQuery;
+
   void initialize() override {
     auto ui = ServiceRegistry::instance()->UI();
     ui->setSearchPlaceholderText("Search for files...");
@@ -144,14 +148,22 @@ class SearchFilesView : public ListView {
   void generateFilteredList(const QString &query) {
     auto fileService = ServiceRegistry::instance()->fileService();
     Timer timer;
-    auto items = fileService->search(query.toStdString());
+    // auto items = fileService->search(query.toStdString());
     timer.time("search");
 
-    m_list->updateModel([&]() {
-      auto &section = m_list->addSection("Files");
-      for (const auto &result : items) {
-        section.addItem(std::make_unique<FileListItem>(result.path));
-      }
+    currentQuery = query;
+
+    auto asyncQuery = fileService->indexer()->queryAsync(query.toStdString());
+
+    connect(asyncQuery, &IndexerAsyncQuery::finished, this, [this, query, asyncQuery](auto &&files) {
+      asyncQuery->deleteLater();
+      if (currentQuery != query) return;
+      m_list->updateModel([&]() {
+        auto &section = m_list->addSection("Files");
+        for (const auto &result : files) {
+          section.addItem(std::make_unique<FileListItem>(result.path));
+        }
+      });
     });
   }
 

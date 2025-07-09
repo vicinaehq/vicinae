@@ -3,7 +3,7 @@
 
 AbstractFileIndexer *FileService::indexer() const { return m_indexer.get(); }
 
-std::vector<AbstractFileIndexer::FileResult> FileService::search(std::string_view query) const {
+std::vector<IndexerFileResult> FileService::search(std::string_view query) const {
   return m_indexer->query(query);
 }
 
