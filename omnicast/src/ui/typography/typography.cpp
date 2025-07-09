@@ -6,7 +6,7 @@
 #include <qwidget.h>
 
 void TypographyWidget::updateText() {
-  if (m_label->wordWrap()) {
+  if (m_label->wordWrap() || !m_autoEllide) {
     m_label->setText(m_text);
     return;
   }
@@ -53,8 +53,13 @@ QLabel *TypographyWidget::measurementLabel() const {
   return label;
 }
 
+void TypographyWidget::setAutoEllide(bool autoEllide) {
+  m_autoEllide = autoEllide;
+  updateText();
+}
+
 QSize TypographyWidget::sizeHint() const {
-  if (!m_label->wordWrap()) {
+  if (!m_label->wordWrap() && m_autoEllide) {
     auto ruler = measurementLabel();
 
     ruler->setFont(m_label->font());
@@ -62,7 +67,9 @@ QSize TypographyWidget::sizeHint() const {
     ruler->setAlignment(m_label->alignment());
     ruler->setContentsMargins(contentsMargins());
 
-    return ruler->sizeHint();
+    auto hint = ruler->sizeHint();
+
+    return hint;
   }
 
   return m_label->sizeHint();

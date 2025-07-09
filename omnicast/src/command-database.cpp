@@ -4,6 +4,7 @@
 #include "extensions/clipboard/clipboard-extension.hpp"
 #include "extensions/calculator/calculator-extension.hpp"
 #include "emoji-command.hpp"
+#include "extensions/file/file-extension.hpp"
 #include "extensions/omnicast/open-documentation-command.hpp"
 #include "extensions/omnicast/refresh-apps-command.hpp"
 #include "icon-browser-command.hpp"
@@ -67,6 +68,8 @@ CommandDatabase::CommandDatabase() {
     auto clipboard = std::make_shared<ClipboardExtension>();
 
     registerRepository(clipboard);
+
+    registerRepository(std::make_shared<FileExtension>());
 
     auto iconSearch =
         CommandBuilder("browse-icons")

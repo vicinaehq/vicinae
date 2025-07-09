@@ -15,7 +15,7 @@ protocol, required for proper window positioning on most wlroots-based
 compositors." ON)
 
 
-list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus cmark proto qalculate qsqlbuilder)
+list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus cmark proto qalculate qsqlbuilder xapian)
 
 
 if (UNIX AND NOT APPLE)
@@ -358,6 +358,7 @@ set(SRCS
 
 	./database/omnicast/migrations.qrc
 	./database/clipboard/migrations.qrc
+	./database/file-indexer//migrations.qrc
 
 	src/ui/status_bar.hpp
 	src/ui/status_bar.cpp
@@ -427,6 +428,11 @@ set(SRCS
 	src/services/calculator-service/qalculate/qalculate-backend.cpp
 	src/services/calculator-service/calculator-service.hpp
 	src/services/calculator-service/calculator-service.cpp
+
+	src/services/files-service/file-service.hpp
+	src/services/files-service/file-service.cpp
+	src/services/files-service/file-indexer/file-indexer.hpp
+	src/services/files-service/file-indexer/file-indexer.cpp
 
 	src/utils/migration-manager/migration-manager.hpp
 	src/utils/migration-manager/migration-manager.cpp

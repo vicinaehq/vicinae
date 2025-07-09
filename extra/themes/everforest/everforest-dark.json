@@ -1,0 +1,19 @@
+{
+  "version": "1.0.0",
+  "appearance": "dark",
+  "icon": "../everforest.svg",
+  "name": "Everforest Dark",
+  "description": "A green-based color scheme inspired by the forest",
+  "palette": {
+    "background": "#2D353B",
+    "foreground": "#D3C6AA",
+    "blue": "#7FBBB3",
+    "green": "#A7C080",
+    "magenta": "#D699B6",
+    "orange": "#E69875",
+    "purple": "#D699B6",
+    "red": "#E67E80",
+    "yellow": "#DBBC7F",
+    "cyan": "#83C092"
+  }
+}

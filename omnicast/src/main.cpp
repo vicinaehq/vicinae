@@ -39,6 +39,7 @@
 #include <qtmetamacros.h>
 #include "extension/manager/extension-manager.hpp"
 #include "services/emoji-service/emoji-service.hpp"
+#include "services/files-service/file-service.hpp"
 #include "services/local-storage/local-storage-service.hpp"
 #include "omnicast.hpp"
 #include "process-manager-service.hpp"
@@ -52,6 +53,7 @@
 #include "services/toast/toast-service.hpp"
 #include "theme.hpp"
 #include "ui/ui-controller.hpp"
+#include "utils/utils.hpp"
 
 #ifdef WAYLAND_LAYER_SHELL
 #include <LayerShellQt/window.h>
@@ -173,6 +175,7 @@ int startDaemon() {
     auto rootExtMan = std::make_unique<RootExtensionManager>(*rootItemManager.get(), *commandDb.get());
     auto emojiService = std::make_unique<EmojiService>(*omniDb.get());
     auto calculatorService = std::make_unique<CalculatorService>(*omniDb.get());
+    auto fileService = std::make_unique<FileService>();
 
     if (auto name = currentConfig.theme.name) {
       if (!ThemeService::instance().setTheme(*name)) {
@@ -196,6 +199,10 @@ int startDaemon() {
       if (quicklinkService->list().empty()) { seeder->seed(); }
     }
 
+    // fileService->indexer()->setEntrypoints({{.root = "/home/aurelle/Downloads"}});
+    fileService->indexer()->setEntrypoints({{.root = homeDir()}});
+
+    registry->setFileService(std::move(fileService));
     registry->setUI(std::make_unique<UIController>());
     registry->setToastService(std::move(toastService));
     registry->setBookmarkService(std::move(bookmarkService));
@@ -232,7 +239,7 @@ int startDaemon() {
     registry->rootItemManager()->addProvider(std::make_unique<BookmarkRootProvider>(*registry->bookmarks()));
   }
 
-  // QIcon::setThemeName("Tela");
+  QIcon::setThemeName("Tela");
 
   AppWindow app;
 

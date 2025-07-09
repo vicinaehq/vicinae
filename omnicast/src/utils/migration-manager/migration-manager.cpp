@@ -84,6 +84,8 @@ void MigrationManager::executeMigration(const Migration &migration) {
     QString trimmed = statement.trimmed();
     if (trimmed.isEmpty() || trimmed.startsWith("--")) { continue; }
 
+    qDebug() << "executing" << statement;
+
     QSqlQuery query(m_db);
     if (!query.exec(trimmed)) {
       auto error = std::format("Failed to execute statement in migration {}: {}", migration.version,

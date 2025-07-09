@@ -1,5 +1,7 @@
 #include "utils.hpp"
 #include <cstdlib>
+#include <qmimedatabase.h>
+#include <qmimetype.h>
 
 namespace fs = std::filesystem;
 
@@ -48,3 +50,10 @@ QString getRelativeTimeString(const QDateTime &pastTime) {
 }
 
 QString qStringFromStdView(std::string_view view) { return QString::fromUtf8(view.data(), view.size()); }
+
+bool isTextMimeType(const QMimeType &mime) {
+  QMimeDatabase db;
+  QMimeType textPlain = db.mimeTypeForName("text/plain");
+
+  return mime.inherits(textPlain.name());
+}

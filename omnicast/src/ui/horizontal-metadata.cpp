@@ -4,6 +4,7 @@
 #include "ui/typography/typography.hpp"
 #include <qboxlayout.h>
 #include <qlabel.h>
+#include <qnamespace.h>
 
 HorizontalMetadata::HorizontalMetadata() : layout(new QVBoxLayout) {
   layout->setAlignment(Qt::AlignTop);
@@ -20,10 +21,14 @@ void HorizontalMetadata::add(const QString &title, QWidget *widget) {
 
   titleWidget->setText(title);
   titleWidget->setColor(ColorTint::TextSecondary);
+  // I'm not sure why we need this, but otherwise the label can end up being cut off.
+  titleWidget->setFixedWidth(titleWidget->sizeHint().width());
 
   rowLayout->setContentsMargins(0, 0, 0, 0);
-  rowLayout->addWidget(titleWidget, 0, Qt::AlignLeft | Qt::AlignVCenter);
-  rowLayout->addWidget(widget, 0, Qt::AlignRight | Qt::AlignVCenter);
+  rowLayout->setSpacing(0);
+  rowLayout->addWidget(titleWidget);
+  rowLayout->addStretch();
+  rowLayout->addWidget(widget);
 
   row->setLayout(rowLayout);
   layout->addWidget(row);
@@ -34,6 +39,9 @@ void HorizontalMetadata::addItem(const MetadataItem &item) {
     auto labelWidget = new TypographyWidget();
 
     labelWidget->setText(label->text);
+    labelWidget->setEllideMode(Qt::TextElideMode::ElideMiddle);
+    labelWidget->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    // labelWidget->setAutoEllide(false);
 
     add(label->title, labelWidget);
   } else if (auto separator = std::get_if<MetadataSeparator>(&item)) {

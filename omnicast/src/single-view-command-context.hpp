@@ -23,6 +23,7 @@ concept DerivedFromView = std::derived_from<T, BaseView>;
 template <DerivedFromView T> class AbstractViewCommand : public AbstractCmd {
 public:
   CommandMode mode() const override { return CommandMode::CommandModeView; }
+  virtual CommandType type() const override { return CommandType::CommandTypeBuiltin; }
   CommandContext *createContext(const std::shared_ptr<AbstractCmd> &command) const override {
     return new SingleViewCommand<T>(command);
   }

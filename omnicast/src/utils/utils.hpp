@@ -1,6 +1,7 @@
 #pragma once
 #include <filesystem>
 #include <qdatetime.h>
+#include <qmimetype.h>
 #include <qstring.h>
 #include <string_view>
 
@@ -15,3 +16,5 @@ std::filesystem::path homeDir();
 QString getRelativeTimeString(const QDateTime &pastTime);
 
 QString qStringFromStdView(std::string_view view);
+
+bool isTextMimeType(const QMimeType &mime);
