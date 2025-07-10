@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" viewBox="0 0 16.933 16.933" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <filter id="filter1057" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="matrix(.26458 0 0 .26458 36.768 .37533)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#ff7d50" offset="0"/>
+   <stop stop-color="#ff4b5a" offset=".50594"/>
+   <stop stop-color="#ff509b" offset="1"/>
+  </linearGradient>
+ </defs>
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:title/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <g transform="translate(-1.9749 -.51027)">
+  <rect transform="matrix(.26458 0 0 .26458 1.9749 .51027)" x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+  <rect x="3.1656" y="1.7009" width="14.552" height="14.552" ry="3.9687" fill="url(#linearGradient1053)" stroke-linecap="round" stroke-width=".72611"/>
+  <path d="m6.6771 8.71c0.27331 0.27548 0.71771 0.27641 0.9925 0.00209l2.7771-3.0559 2.7641 3.0676c0.27363 0.27548 0.71768 0.27641 0.9925 0.00209 0.27482-0.27432 0.27575-0.71956 0.0021-0.99502l-3.2155-3.5687c-0.14805-0.14885-0.34548-0.21476-0.53978-0.20293-0.19391-0.012668-0.39195 0.05248-0.54062 0.20064l-3.2306 3.5552c-0.27448 0.27432-0.2754 0.71956-0.00209 0.99504zm3.7611 2.9707c-0.63865-0.0014-1.1575 0.51591-1.1588 1.1553-0.00135 0.63942 0.51528 1.1589 1.1539 1.1602 0.63865 0.0013 1.1575-0.51591 1.1588-1.1553 0.0014-0.63942-0.51528-1.1589-1.1539-1.1602zm7e-3 -3.3078c-0.63865-0.00135-1.1575 0.51591-1.1588 1.1553-0.00135 0.63942 0.51528 1.1589 1.1539 1.1602 0.63865 0.0013 1.1575-0.51588 1.1588-1.1553 0.0014-0.63942-0.51528-1.1589-1.1539-1.1602z" fill="#fff" stroke-width=".68194"/>
+ </g>
+</svg>

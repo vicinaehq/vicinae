@@ -1,0 +1,23 @@
+<svg width="64" height="64" version="1.1" viewBox="0 0 16.933 16.933" xmlns="http://www.w3.org/2000/svg" xmlns:osb="http://www.openswatchbook.org/uri/2009/osb" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <linearGradient id="a" x1="-329.22" x2="-328.74" y1="137.64" y2="304.37" gradientTransform="matrix(.22357 0 0 .1987 88.717 236.44)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#ccc" offset="0"/>
+   <stop stop-color="#9a9a9a" offset="1"/>
+  </linearGradient>
+  <linearGradient id="b" x1="-329.64" x2="-286.72" y1="137.99" y2="201.93" gradientTransform="matrix(.20283 0 0 .20328 83.778 237.32)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#4d4d4d" offset="0"/>
+   <stop stop-color="#1a1a1a" offset="1"/>
+  </linearGradient>
+  <filter id="c" x="-.044778" y="-.030114" width="1.0896" height="1.0602" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.41569834"/>
+  </filter>
+ </defs>
+ <g transform="translate(0 -280.07)">
+  <g transform="matrix(.49367 0 0 .49515 .10717 149.86)" stroke-width="2.0226">
+   <rect x="5.7932" y="263.5" width="22.28" height="33.13" ry="2.1323" filter="url(#c)" opacity=".25"/>
+   <rect x="5.7932" y="263.5" width="22.28" height="33.13" ry="2.1323" fill="url(#a)"/>
+   <path d="m16.933 280.67a7.4247 7.4413 0 0 0-7.4247 7.4413 7.4247 7.4413 0 0 0 7.4247 7.4413 7.4247 7.4413 0 0 0 7.4247-7.4413 7.4247 7.4413 0 0 0-7.4247-7.4413zm0.01811 0.32088a0.32851 0.32924 0 0 1 0.32854 0.32928 0.32851 0.32924 0 0 1-0.32854 0.32928 0.32851 0.32924 0 0 1-0.32843-0.32928 0.32851 0.32924 0 0 1 0.32843-0.32928zm-0.01811 3.4047a3.7074 3.7157 0 0 1 3.7074 3.7156 3.7074 3.7157 0 0 1-3.7074 3.7156 3.7074 3.7157 0 0 1-3.7074-3.7156 3.7074 3.7157 0 0 1 3.7074-3.7156zm-6.6489 3.4774a0.32851 0.32924 0 0 1 0.32854 0.32928 0.32851 0.32924 0 0 1-0.32854 0.32916 0.32851 0.32924 0 0 1-0.32843-0.32916 0.32851 0.32924 0 0 1 0.32843-0.32928zm13.298 0a0.32851 0.32924 0 0 1 0.32843 0.32928 0.32851 0.32924 0 0 1-0.32843 0.32916 0.32851 0.32924 0 0 1-0.32854-0.32916 0.32851 0.32924 0 0 1 0.32854-0.32928zm-6.6308 6.7001a0.32851 0.32924 0 0 1 0.32854 0.32916 0.32851 0.32924 0 0 1-0.32854 0.32928 0.32851 0.32924 0 0 1-0.32843-0.32928 0.32851 0.32924 0 0 1 0.32843-0.32916z" fill="#313131"/>
+   <rect x="8.2435" y="265.06" width="17.38" height="13.311" ry=".9119" fill="url(#b)" stroke="#4d4d4d" stroke-linecap="round" stroke-linejoin="round" stroke-width=".40452"/>
+  </g>
+ </g>
+</svg>

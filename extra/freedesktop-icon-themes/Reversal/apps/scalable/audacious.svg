@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" viewBox="0 0 16.933 16.933" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <filter id="filter1057-7" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053-5" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="matrix(.26458 0 0 .26458 34.972 .23359)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#323741" offset="0"/>
+   <stop stop-color="#465064" offset="1"/>
+  </linearGradient>
+ </defs>
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:title/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <g transform="translate(-.17954 -.36853)">
+  <rect transform="matrix(.26458 0 0 .26458 .17954 .36853)" x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057-7)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+  <rect x="1.3702" y="1.5592" width="14.552" height="14.552" ry="3.9687" fill="url(#linearGradient1053-5)" stroke-linecap="round" stroke-width=".72611"/>
+  <path d="m12.614 5.0631h-1.016v1.332c-0.7558-1.0433-1.6628-1.5104-2.9662-1.5104-2.2525 0-3.955 1.7037-3.955 3.955s1.716 3.9128 4.0367 3.9128c1.2762 0 2.0729-0.41136 2.8832-1.4967v1.3183h1.016zm-3.955 0.7558c1.6603 0 2.9377 1.2911 2.9377 2.9662 0 1.716-1.2638 3.0344-2.8832 3.0344-1.7024 0-3.0071-1.332-3.0071-3.048a2.9476 2.9476 0 0 1 2.9526-2.9526z" fill="#fff" font-size="11.082px" font-weight="400" letter-spacing="0" stroke-width=".3305" word-spacing="0" aria-label="a"/>
+  <g fill="none" stroke="#fff" stroke-opacity=".937" stroke-width=".13303">
+   <path d="m1.27 7.8867c0.75964 0.16137 1.4692 0.64928 2.0947 2.057 0.7121 1.6035 1.7147 2.3149 2.9287 2.3709 1.5637 0.072696 2.8241-1.2732 3.6545-2.4769 1.6925-2.453 4.7742-2.218 6.1453-1.2991" opacity=".35"/>
+   <path d="m1.2777 8.2917c0.9444-0.36336 2.2005-0.44009 3.0346 0.85858 0.76281 1.187 1.6651 2.9774 4.2779 2.8134 1.5615-0.098662 3.1231-0.73735 3.9281-2.2328 0.55904-0.96893 1.3313-1.9435 2.4225-2.1846 0.40379-0.084744 0.69228-0.073007 1.0312 0.05878" opacity=".35"/>
+   <path d="m1.5758 10.493c1.0007-0.46123 2.9009-0.99009 4.4344-0.55028 1.3703 0.3936 3.103 1.9181 6.3983 1.5619 0.87057-0.09347 1.608-0.58469 2.3064-1.5204 0.50555-0.67763 0.79258-1.059 1.3794-1.2118" opacity=".35"/>
+  </g>
+ </g>
+</svg>

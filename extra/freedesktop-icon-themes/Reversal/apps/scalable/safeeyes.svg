@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <filter id="filter1057-2" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053-0" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="translate(131.5 -.51)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#dee0e2" offset="0"/>
+   <stop stop-color="#f1f3f5" stop-opacity=".99608" offset="1"/>
+  </linearGradient>
+ </defs>
+ <rect x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057-2)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+ <rect x="4.5" y="4.5" width="55" height="55" ry="15" fill="url(#linearGradient1053-0)" stroke-linecap="round" stroke-width="2.7444"/>
+ <path class="shp36" d="m32 52c11.045 0 20-8.955 20-20s-8.955-20-20-20c-11.045 0-20 8.955-20 20s8.955 20 20 20z" fill="#1e1e1e" stroke-width="1.5062"/>
+ <path class="shp36" d="m32 50c9.9405 0 18-8.0595 18-18s-8.0595-18-18-18c-9.9405 0-18 8.0595-18 18s8.0595 18 18 18z" fill="#323232" stroke-width="1.3556"/>
+ <g transform="matrix(.83333 0 0 .83333 5.3317 5.3333)" fill="#fff">
+  <g stroke-linecap="round" stroke-linejoin="round" stroke-width="4.1252">
+   <rect x="31.5" y="10" width="1" height="4" ry=".53179"/>
+   <rect x="31.5" y="50" width="1" height="4" ry=".53179"/>
+   <rect transform="rotate(30)" x="43.213" y="-10.287" width="1" height="4" ry=".53179"/>
+   <rect transform="rotate(30)" x="43.213" y="29.713" width="1" height="4" ry=".53179"/>
+   <rect transform="rotate(60)" x="43.213" y="-33.713" width="1" height="4" ry=".53179"/>
+   <rect transform="rotate(60)" x="43.213" y="6.2872" width="1" height="4" ry=".53179"/>
+   <rect transform="rotate(90)" x="31.5" y="-54" width="1" height="4" ry=".53179"/>
+   <rect transform="rotate(90)" x="31.5" y="-14" width="1" height="4" ry=".53179"/>
+   <rect transform="rotate(120)" x="11.213" y="-65.713" width="1" height="4" ry=".53179"/>
+   <rect transform="rotate(120)" x="11.213" y="-25.713" width="1" height="4" ry=".53179"/>
+   <rect transform="rotate(150)" x="-12.213" y="-65.713" width="1" height="4" ry=".53179"/>
+   <rect transform="rotate(150)" x="-12.213" y="-25.713" width="1" height="4" ry=".53179"/>
+  </g>
+ </g>
+ <g stroke-linecap="square">
+  <path d="m31.998 18.667a13.333 13.333 0 0 1 11.547 6.6667l-11.547 6.6667z" fill="#f04646" stroke-width="1.8038"/>
+  <circle cx="31.998" cy="32" r="2.5" fill="#333" stroke-width="3.0044"/>
+  <circle cx="31.998" cy="32" r="1.6667" fill="#fff" stroke-width="2.0029"/>
+ </g>
+</svg>

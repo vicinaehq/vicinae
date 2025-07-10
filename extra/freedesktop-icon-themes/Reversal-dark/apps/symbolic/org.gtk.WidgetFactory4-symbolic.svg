@@ -1,0 +1,11 @@
+<svg width="16" height="16.031" version="1.1" xmlns="http://www.w3.org/2000/svg">
+ <title>Gnome Symbolic Icon Theme</title>
+ <g transform="translate(-444 35)" fill="#dedede">
+  <path d="m446.22-34c-0.64785 0-1.1875 0.53965-1.1875 1.1875v4.625c0 0.64785 0.53965 1.1875 1.1875 1.1875h11.656c0.64785 0 1.1562-0.53965 1.1562-1.1875v-4.625c0-0.64785-0.5084-1.1875-1.1562-1.1875h-11.656zm0 1h11.656c0.11114 0 0.15625 0.07636 0.15625 0.1875v4.625c0 0.11114-0.0451 0.1875-0.15625 0.1875h-11.656c-0.11114 0-0.1875-0.07636-0.1875-0.1875v-4.625c0-0.11114 0.0764-0.1875 0.1875-0.1875z" color="#000000" enable-background="new" style="block-progression:tb;text-indent:0;text-transform:none"/>
+  <path d="m454-32v1 0.0312l1.5312 1.375 1.4688-1.4062v-1h-0.75781l-0.73828 0.74609-0.72657-0.74609z" color="#000000" enable-background="new" style="block-progression:tb;text-indent:0;text-transform:none"/>
+  <path d="m446.22-26c-0.64785 0-1.1875 0.53965-1.1875 1.1875v4.6562c0 0.64785 0.53965 1.1875 1.1875 1.1875h11.656c0.64785 0 1.1562-0.53965 1.1562-1.1875v-4.6562c0-0.64785-0.5084-1.1875-1.1562-1.1875h-11.656zm0 1h11.656c0.11114 0 0.15625 0.07636 0.15625 0.1875v4.6562c0 0.11114-0.0451 0.1875-0.15625 0.1875h-11.656c-0.11114 0-0.1875-0.07636-0.1875-0.1875v-4.6562c0-0.11114 0.0764-0.1875 0.1875-0.1875z" color="#000000" enable-background="new" style="block-progression:tb;text-indent:0;text-transform:none"/>
+  <rect x="448" y="-24" width="8" height="2" rx="0" ry="0" color="#000000" enable-background="new"/>
+  <rect x="445.53" y="-29" width="12.861" height="1" rx="0" ry="0" color="#000000" enable-background="new" opacity=".3"/>
+  <rect x="445.53" y="-20.969" width="12.861" height="1" rx="0" ry="0" color="#000000" enable-background="new" opacity=".3"/>
+ </g>
+</svg>

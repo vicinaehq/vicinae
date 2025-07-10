@@ -1,0 +1,12 @@
+<svg height="22" width="22"
+  xmlns="http://www.w3.org/2000/svg">
+  <defs id="defs4157">
+    <style id="current-color-scheme" type="text/css">
+      .ColorScheme-Text {
+        color:#f2f2f2;
+      }
+    </style>
+  </defs>
+  <path class="ColorScheme-Text" id="path4315" d="M 3,19 19,3 v 16 z" style="opacity:0.35;fill:currentColor;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+  <path class="ColorScheme-Text" style="fill:currentColor;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" d="M 17,5 3,19 h 14 z" id="path4317" />
+</svg>

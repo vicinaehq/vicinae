@@ -1,0 +1,15 @@
+<svg width="24" height="24" version="1.1" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+ <style id="current-color-scheme" type="text/css">.ColorScheme-Text {
+        color:#f2f2f2;
+      }
+      .ColorScheme-Background {
+        color:#eff0f1;
+      }
+      .ColorScheme-Highlight {
+        color:#3daee9;
+      }
+      .ColorScheme-ButtonText {
+        color:#363636;
+      }</style>
+ <path class="ColorScheme-Text" d="m4 4v16h16v-16h-16zm8.3008 1.5996 2 1.5-0.60156 0.80078-2-1.5 0.60156-0.80078zm-5.9473 0.046875 2 2-0.70703 0.70703-2-2 0.70703-0.70703zm2.6465 2.3535h9v1h-4v3h3v1h-3v4h4v1h-9v-1h4v-4h-3v-1h3v-3h-4v-1zm-2.6465 0.64648 2 2-0.70703 0.70703-2-2 0.70703-0.70703zm1.1719 3.1953 0.94922 0.31641-2 6-0.94922-0.31641 2-6z" fill="currentColor"/>
+</svg>

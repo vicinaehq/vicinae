@@ -1,4 +1,5 @@
 #pragma once
+#include "actions/app/app-actions.hpp"
 #include "argument.hpp"
 #include "base-view.hpp"
 #include "color-formatter.hpp"
@@ -185,6 +186,45 @@ public:
   BaseCalculatorListItem(const AbstractCalculatorBackend::CalculatorResult &item) : item(item) {}
 };
 
+class RootFileListItem : public AbstractDefaultListItem, public ListView::Actionnable {
+  std::filesystem::path m_path;
+  QMimeDatabase m_mimeDb;
+
+  OmniIconUrl getIcon() const {
+    auto mime = m_mimeDb.mimeTypeForFile(m_path.c_str());
+
+    if (!mime.name().isEmpty()) {
+      if (!QIcon::fromTheme(mime.iconName()).isNull()) { return SystemOmniIconUrl(mime.iconName()); }
+
+      return SystemOmniIconUrl(mime.genericIconName());
+    }
+
+    return BuiltinOmniIconUrl("question-mark-circle");
+  }
+
+  ActionPanelView *actionPanel() const override {
+    auto appDb = ServiceRegistry::instance()->appDb();
+    auto panel = new ActionPanelStaticListView;
+
+    if (auto app = appDb->findBestOpener(m_path.c_str())) {
+      auto open = new OpenAppAction(app, "Open", {m_path.c_str()});
+      open->setPrimary(true);
+      panel->addAction(open);
+    }
+
+    return panel;
+  }
+
+public:
+  QString generateId() const override { return m_path.c_str(); }
+
+  ItemData data() const override {
+    return {.iconUrl = getIcon(), .name = m_path.filename().c_str(), .category = m_path.c_str()};
+  }
+
+  RootFileListItem(const std::filesystem::path &path) : m_path(path) {}
+};
+
 class RootSearchView : public ListView {
   QTimer *m_calcDebounce = new QTimer(this);
   std::optional<AbstractCalculatorBackend::CalculatorResult> m_currentCalculatorEntry;
@@ -289,6 +329,15 @@ class RootSearchView : public ListView {
 
     for (const auto &item : searchResults) {
       results.addItem(std::make_unique<RootSearchItem>(item));
+    }
+
+    if (text.size() >= 3) {
+      auto fileService = ServiceRegistry::instance()->fileService();
+      auto &section = m_list->addSection("Files");
+
+      for (const auto &file : fileService->search(text.toStdString())) {
+        section.addItem(std::make_unique<RootFileListItem>(file.path));
+      }
     }
 
     auto &fallbackSection = m_list->addSection(QString("Use \"%1\" with...").arg(text));

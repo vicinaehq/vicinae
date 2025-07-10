@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" xmlns="http://www.w3.org/2000/svg">
+ <defs>
+  <linearGradient id="linearGradient623" x1="273.64" x2="411.62" y1="74.198" y2="425.92" gradientTransform="matrix(.052755 0 0 .10275 5.3737 3.2331)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#b9e5ff" stop-opacity=".41964" offset="0"/>
+   <stop stop-color="#fff" offset="1"/>
+  </linearGradient>
+  <linearGradient id="linearGradient581" x1="596.06" x2="656.46" y1="231.01" y2="279.76" gradientTransform="scale(.80329 1.2449)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff2bc" offset="0"/>
+   <stop stop-color="#83560b" offset="1"/>
+  </linearGradient>
+  <linearGradient id="linearGradient590" x1="779.72" x2="908.45" y1="160.63" y2="264.66" gradientTransform="scale(.74212 1.3475)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff9db" stop-opacity=".73214" offset="0"/>
+   <stop stop-color="#2c2c2c" offset="1"/>
+  </linearGradient>
+  <filter id="filter6140" x="-.1365" y="-.089346" width="1.273" height="1.1787" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="1.5751452"/>
+  </filter>
+  <filter id="filter1057" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="translate(131.5 -.51)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#32d7ff" offset="0"/>
+   <stop stop-color="#329bff" offset="1"/>
+  </linearGradient>
+ </defs>
+ <g stroke-linecap="round">
+  <rect x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057)" opacity=".3" stroke-width="2.7444"/>
+  <rect x="4.5" y="4.5" width="55" height="55" ry="15" fill="url(#linearGradient1053)" stroke-width="2.7444"/>
+  <rect width="64" height="64" rx="0" ry="0" fill="none" stroke-linejoin="round" stroke-width="1.4464" style="paint-order:stroke fill markers"/>
+ </g>
+ <path d="m47.359 9.8469a7.06 4.0615 36.353 0 0-1.5681 0.71895 7.06 4.0615 36.353 0 0 0.0039 4.3797c-2.6681 5.5356-7.1632 12.464-7.8521 13.792-2.0916 2.8983-6.5215 17.202-8.2931 23.325l0.57321 0.02915c-0.1678-0.15673 8.2572-12.648 18.555-14.344 0.02295-9.7635 3.2553-14.957 5.1958-17.447a7.06 4.0615 36.353 0 0 2.5765-0.68397 7.06 4.0615 36.353 0 0-2.3492-7.306 7.06 4.0615 36.353 0 0-6.8416-2.4638z" fill="#060000" fill-rule="evenodd" filter="url(#filter6140)" opacity=".3"/>
+ <g transform="matrix(1.0502,0,0,1.0502,-2.5888,-1.8593)">
+  <g transform="matrix(.070103 0 0 .070103 7.5819 4.849)" fill-rule="evenodd">
+   <ellipse transform="matrix(.54666 .45993 -.50891 .46677 319.96 -324.01)" cx="765.44" cy="228.58" rx="134.35" ry="81.317" fill="#fffffe" stroke="#32beff" stroke-width="1pt"/>
+   <path transform="matrix(13.583 0 0 13.583 -72.99 -43.915)" d="m19.5 4.5c-8.31 0-15 6.69-15 15v1.5566c0.24388 1.2859 0.58669 2.6628 1.291 4.5039 5.3679 12.659 22.792 24.556 22.703 24.283 0 0-6.3499-10.048-1.4219-20.201 3.8153-7.9507 4.3962-19.626 1.4805-25.143h-9.0527z" fill="url(#linearGradient623)"/>
+   <path id="hrot" d="m336.09 639.87c-2.2903-2.1398 112.72-172.67 253.31-195.82 0.43209-183.82 84.951-251.44 90.301-262.95-11.296-61.067-44.463-84.131-74.398-88.989-50.737-6.4662-41.215 16.297-47.448 22.358-34.333 77.532-106.23 186.98-116.38 206.55-28.556 39.57-89.028 234.86-113.22 318.46z" fill="url(#linearGradient581)" stroke="#fffffd" stroke-width="5.6351"/>
+   <ellipse transform="matrix(1.1557 .77322 -1.3252 2.2065 751.11 -543.82)" cx="145.62" cy="355.49" rx="6.25" ry="9.6875" fill="#665123" stroke-width="1.251"/>
+   <path d="m437.92 373.24-2.2523-1.6917c-2.5906-1.9458-89.455 226.06-102.86 266.91 13.321-43.073 91.705-247.25 105.11-265.22z" fill="#665123" stroke="#665123" stroke-width="1.7391"/>
+   <path d="m486.65 450.08c30.497-23.976 43.938-43.489 74.133-49.436-5.2164-74.969 52.404-165.5 99.243-250.15l-8.4347-15.22c-19.375 29.345-134.52 240.2-164.94 314.8z" fill="url(#linearGradient590)" stroke-width="1pt"/>
+  </g>
+ </g>
+</svg>

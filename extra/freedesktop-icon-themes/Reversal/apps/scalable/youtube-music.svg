@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <filter id="filter1057" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1079" x1="120.96" x2="120.96" y1="4.5" y2="59.425" gradientTransform="translate(-88.965)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fe4b28" offset="0"/>
+   <stop stop-color="#db0302" offset="1"/>
+  </linearGradient>
+ </defs>
+ <rect x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+ <path d="m19.5 4.5c-8.31 0-15 6.69-15 15v25c0 8.31 6.69 15 15 15h25c8.31 0 15-6.69 15-15v-25c0-8.31-6.69-15-15-15z" fill="url(#linearGradient1079)" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="paint-order:stroke fill markers"/>
+ <g transform="matrix(1.0588 0 0 1.0588 -114.66 -1.8816)" fill="#fff">
+  <path d="m146.52 32-14 8.5002v-17l7.0003 4.2501z" stroke-width="1.3815"/>
+  <path d="m138.52 15a17 17 0 0 0-17 17 17 17 0 0 0 17 17 17 17 0 0 0 17-17 17 17 0 0 0-17-17zm-0.0273 3a14 14 0 0 1 0.0273 0 14 14 0 0 1 14 14 14 14 0 0 1-14 14 14 14 0 0 1-14-14 14 14 0 0 1 13.973-14z"/>
+ </g>
+</svg>

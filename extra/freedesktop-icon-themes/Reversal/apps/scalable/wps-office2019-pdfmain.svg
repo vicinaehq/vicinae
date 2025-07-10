@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg width="64" height="64" version="1.1" viewBox="0 0 16.933 16.933" xmlns="http://www.w3.org/2000/svg">
+ <defs>
+  <filter id="filter1057-0-3" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053-7" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="matrix(.26458 0 0 .26458 34.793 -.13496)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#ff8228" offset="0"/>
+   <stop stop-color="#ff5a1e" stop-opacity=".99608" offset=".50054"/>
+   <stop stop-color="#ff8c55" stop-opacity=".99608" offset="1"/>
+  </linearGradient>
+ </defs>
+ <rect transform="matrix(.26458 0 0 .26458 -6e-5 -6.016e-5)" x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057-0-3)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+ <rect x="1.1905" y="1.1905" width="14.552" height="14.552" ry="3.9687" fill="url(#linearGradient1053-7)" stroke-linecap="round" stroke-width=".72611"/>
+ <path d="m7.6728 4.498c-0.21986 0-0.39687 0.177-0.39687 0.39687v3.1749c0 0.21986 0.177 0.39687 0.39687 0.39687s0.39687-0.177 0.39687-0.39687v-2.7781h1.3229a1.852 1.852 0 0 1 1.852 1.852 1.852 1.852 0 0 1-1.852 1.852h-2.9104v0.0067a1.7198 1.7198 0 0 0-1.5875 1.713 1.7198 1.7198 0 0 0 1.7198 1.7198h1.0583c0.21986 0 0.39687-0.177 0.39687-0.39687v-1.3229c0-0.21986-0.177-0.39687-0.39687-0.39687s-0.39687 0.177-0.39687 0.39687v0.92602h-0.66144a0.92602 0.92602 0 0 1-0.92602-0.92602 0.92602 0.92602 0 0 1 0.92602-0.92602h2.7781a2.6458 2.6458 0 0 0 2.6458-2.6458 2.6458 2.6458 0 0 0-2.6458-2.6458z" fill="#fff" fill-rule="evenodd" style="paint-order:stroke fill markers"/>
+</svg>

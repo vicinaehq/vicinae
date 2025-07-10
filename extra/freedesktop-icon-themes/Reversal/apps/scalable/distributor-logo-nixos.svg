@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="64"
+   height="64"
+   version="1.1"
+   id="svg3"
+   sodipodi:docname="distributor-logo-nixos.svg"
+   inkscape:version="1.3.2 (091e20ef0f, 2023-11-25, custom)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs3">
+    <filter
+       id="filter1057"
+       x="-0.026999999"
+       y="-0.026999999"
+       width="1.054"
+       height="1.054"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         stdDeviation="0.61875"
+         id="feGaussianBlur2" />
+    </filter>
+    <linearGradient
+       id="linearGradient1053"
+       x1="-127"
+       x2="-72"
+       y1="60"
+       y2="5"
+       gradientTransform="matrix(1.0000071,0,0,1.0000071,131.49954,-0.51035953)"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         stop-color="#dee0e2"
+         offset="0"
+         id="stop2" />
+      <stop
+         stop-color="#f1f3f5"
+         stop-opacity=".99608"
+         offset="1"
+         id="stop3" />
+    </linearGradient>
+  </defs>
+  <sodipodi:namedview
+     id="namedview3"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="6.15625"
+     inkscape:cx="34.274112"
+     inkscape:cy="28.913706"
+     inkscape:window-width="1920"
+     inkscape:window-height="995"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg3" />
+  <rect
+     transform="matrix(1.0000071,0,0,1.0000071,-2.2781468e-4,-2.2781468e-4)"
+     x="4.5"
+     y="4.5"
+     width="55"
+     height="55"
+     ry="15"
+     fill="#141414"
+     filter="url(#filter1057)"
+     opacity="0.3"
+     stroke-linecap="round"
+     stroke-width="2.7444"
+     id="rect3" />
+  <rect
+     x="4.4996166"
+     y="4.4996166"
+     width="55.000767"
+     height="55.000767"
+     ry="15.000106"
+     fill="url(#linearGradient1053)"
+     stroke-linecap="round"
+     stroke-width="2.74437"
+     id="rect4"
+     style="fill:url(#linearGradient1053)" />
+  <path
+     fill="#64addc"
+     d="m30.943 16.739 8.03 13.964 1.364-2.334-2.504-4.356 4.15-6.184-.587-1.09h-1.509l-3.359 5.003-2.877-5.003h-2.708m-5.797 9.392-2.744 4.695h-7.374L14.396 32l.632 1.174h6.002l-3.125 5.347 1.305 2.42 8.655-14.81h-2.719m4.549 12.914 1.35 2.348h5.175l3.746 5.87h1.428l.624-1.158-2.972-4.708h5.507l1.266-2.348H29.694z"
+     id="path2" />
+  <path
+     fill="#4e66b2"
+     d="m22.609 16.739-.623 1.157 2.97 4.708H19.45l-1.265 2.348H34.31l-1.35-2.348h-5.175l-3.746-5.87H22.61m22.185 6.322L36.14 37.865h2.719l2.744-4.696h7.374l.632-1.174-.632-1.174h-6.003l3.125-5.347-1.304-2.42zM25.033 33.294l-1.364 2.334 2.504 4.356-4.15 6.184.587 1.09h1.509l3.358-5.004 2.878 5.003h2.708l-8.03-13.964"
+     id="path3" />
+</svg>

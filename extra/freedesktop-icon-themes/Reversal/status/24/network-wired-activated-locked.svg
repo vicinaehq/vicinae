@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" width="24" height="24" viewBox="0 0 24 24">
+  <style type="text/css" id="current-color-scheme">
+      .ColorScheme-Text {
+        color:#f2f2f2;
+      }
+      .ColorScheme-Background {
+        color:#eff0f1;
+      }
+      .ColorScheme-Highlight {
+        color:#3498db;
+      }
+      .ColorScheme-ButtonText {
+        color:#f2f2f2;
+      }
+      .ColorScheme-NegativeText{
+        color:#e74c3c;
+      }
+      </style>
+  <g transform="translate(1,1)">
+    <g id="network-wired-activated-locked" transform="translate(-22,0)">
+      <path class="ColorScheme-Text" id="path4571" d="m 25,3 0,6 2,0 0,7 c 0,1.662 1.338,3 3,3 l 1,0 1,0 2,0 0,-5 -5,0 0,1 0,1 1,0 1,0 0,1 0,0.726562 L 31,18 30,18 c -1.108,0 -2,-0.892 -2,-2 l 0,-7 2,0 0,-6 -5,0 z m 6,0 0,1 9,0 0,7 1,0 0,-8 -1,0 -9,0 z m -5,1 3,0 0,4 -3,0 0,-4 z m 1,1 0,2 1,0 0,-2 -1,0 z m -2,5 0,6 1,0 0,-6 -1,0 z m 13,2 c -1.108,0 -2,0.892 -2,2 l 0,2 -1,0 0,3 6,0 0,-3 -1,0 0,-2 c 0,-1.108 -0.892,-2 -2,-2 z m 0,1 c 0.554,0 1,0.446 1,1 l 0,2 -2,0 0,-2 c 0,-0.554 0.446,-1 1,-1 z" style="opacity:1;fill:currentColor;fill-opacity:1;stroke:none"/>
+      <rect y="0" x="22" height="22" width="22" id="rect4574" style="opacity:1;fill:none;fill-opacity:1;stroke:none"/>
+    </g>
+  </g>
+</svg>

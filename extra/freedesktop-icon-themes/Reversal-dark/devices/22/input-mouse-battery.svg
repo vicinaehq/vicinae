@@ -1,0 +1,10 @@
+<svg width="22" height="22">
+    <style type="text/css" id="current-color-scheme">.ColorScheme-Text {
+        color:#dedede;
+      }</style>
+    <g id="22-22-input-mouse-battery" transform="translate(-310,-268.36219) translate(-16,-266)">
+        <rect x="326" y="534.36218" width="22" height="22" ry="0" fill="none"/>
+        <path class="ColorScheme-Text" transform="translate(326,534.3622)" d="m13.5 3c-3.047 0-5.5 2.676-5.5 6v4c0 3.324 2.453 6 5.5 6s5.5-2.676 5.5-6v-4c0-3.324-2.453-6-5.5-6zm0 1c2.493 0 4.5 2.007 4.5 4.5v5c0 2.493-2.007 4.5-4.5 4.5s-4.5-2.007-4.5-4.5v-5c0-2.493 2.007-4.5 4.5-4.5zm0 2c-0.277 0-0.5 0.223-0.5 0.5v2c0 0.277 0.223 0.5 0.5 0.5s0.5-0.223 0.5-0.5v-2c0-0.277-0.223-0.5-0.5-0.5z" fill="currentColor"/>
+        <path class="ColorScheme-Text" d="m331 537.3622-2 5h2v3l2-5h-2z" fill="currentColor"/>
+    </g>
+</svg>

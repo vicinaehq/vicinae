@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:title/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css"/>
+  <style type="text/css"/>
+  <style type="text/css"/>
+  <style type="text/css"/>
+  <style type="text/css"/>
+  <style type="text/css"/>
+  <style type="text/css"/>
+  <style type="text/css"/>
+  <style type="text/css"/>
+  <filter id="filter1057" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="translate(131.5 -.51)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#02db96" offset="0"/>
+   <stop stop-color="#13d39b" offset="1"/>
+  </linearGradient>
+  <style type="text/css"/>
+  <style type="text/css"/>
+  <style type="text/css"/>
+ </defs>
+ <rect x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+ <rect x="4.5" y="4.5" width="55" height="55" ry="15" fill="url(#linearGradient1053)" stroke-linecap="round" stroke-width="2.7444"/>
+ <g transform="matrix(3.7796 0 0 3.7796 .00056722 -.0001887)" fill="#5e4aa6" stroke-width=".26458">
+  <g transform="translate(-.0272 .0065001)">
+   <circle cx="-330.35" cy="-328.38" r="0"/>
+   <circle cx="-312.11" cy="-326.25" r="0"/>
+   <circle cx="-306.02" cy="-333.07" r="0"/>
+   <circle cx="-308.84" cy="-326.01" r="0"/>
+   <circle cx="-330.35" cy="-328.38" r="0"/>
+   <circle cx="-312.11" cy="-326.25" r="0"/>
+   <circle cx="-306.02" cy="-333.07" r="0"/>
+   <circle cx="-308.84" cy="-326.01" r="0"/>
+  </g>
+  <g transform="translate(-.02705 .0064503)">
+   <circle cx="-330.35" cy="-328.38" r="0"/>
+   <circle cx="-312.11" cy="-326.25" r="0"/>
+   <circle cx="-306.02" cy="-333.07" r="0"/>
+   <circle cx="-308.84" cy="-326.01" r="0"/>
+  </g>
+ </g>
+ <circle cx="32" cy="32" r="13.612" opacity=".15" stroke-width="3.9569" style="paint-order:stroke markers fill"/>
+ <path d="m31.518 16c-0.89267 0.03323-1.3833 0.3329-1.7031 0.97657-0.20517 0.41304-0.37286 1.1011-0.37305 1.5293-6.6e-4 1.5708-1.5866 3.0039-3.3262 3.0039-0.85355 0-1.3224-0.23496-3.0508-1.5293-0.78669-0.58913-1.2833-0.4359-2.5039 0.76563-1.1596 1.1417-1.1889 1.6884-0.16211 3.0508 0.42433 0.56316 0.85426 1.3138 0.95507 1.6699 0.24934 0.88057-0.15888 2.4925-0.81447 3.209-0.53735 0.58731-1.8717 1.0449-3.0352 1.0449-1.1064 0-1.5039 0.62987-1.5039 2.373 0 1.3574 0.0521 1.5427 0.51757 1.8516 0.28447 0.18891 1.1062 0.42785 1.8281 0.53126 0.72194 0.10338 1.5553 0.34766 1.8496 0.54298 0.62133 0.41239 1.3415 1.8884 1.3477 2.7637 5e-3 0.63543-0.48417 1.7589-0.98829 2.2695-0.54944 0.55655-0.95136 1.5694-0.80664 2.0312 0.18542 0.59173 1.4414 1.857 2.0918 2.1074 0.37254 0.14351 0.64318 0.10167 1.0039-0.15428 1.0573-0.7501 2.8662-1.5645 3.4766-1.5645 0.92018 0 2.4465 0.81208 2.7812 1.4805 0.15759 0.31484 0.35405 1.0487 0.43748 1.6289 0.2023 1.4071 0.52208 2.0693 1.0586 2.1836 0.2439 0.0517 0.6364 0.13943 0.87108 0.19336 0.2347 0.05537 0.7631 0.05537 1.1738 0 1.0713-0.14385 1.6423-0.94263 1.8223-2.5488 0.16452-1.4686 0.29937-1.7049 1.3809-2.3965 1.0982-0.70225 1.9578-0.83937 2.8027-0.44728 0.70055 0.32516 0.98368 0.49365 2.1328 1.2598 0.84194 0.56146 1.3666 0.46867 2.3398-0.42188 1.4634-1.3391 1.4929-1.9214 0.18164-3.4512-1.2481-1.4559-1.2623-3.2471-0.0352-4.6228 0.46992-0.52688 0.89127-0.71015 2.2832-0.98829 2.1016-0.41991 2.4431-0.7631 2.4492-2.4688 6e-3 -1.7036-0.26495-1.982-2.2383-2.291-1.8777-0.29402-2.4789-0.71824-3.1387-2.2051-0.54853-1.2363-0.3972-1.9608 0.77346-3.6582 0.60031-0.87037 0.89913-1.5056 0.83008-1.7734-0.15429-0.59763-2.0994-2.3809-2.5977-2.3809-0.23075 0-0.84516 0.3323-1.3652 0.73438-1.4346 1.1094-2.289 1.36-3.5156 1.0312-1.4413-0.38609-1.9543-0.99487-2.3184-2.7539-0.41806-2.0202-0.68762-2.3838-1.877-2.5195-0.39625-0.04554-0.73763-0.06381-1.0352-0.05273v-0.0039zm0.48243 10a6.0001 6.0001 0 0 1 6.0001 6.0001 6.0001 6.0001 0 0 1-6.0001 6.0001 6.0001 6.0001 0 0 1-6.0001-6.0001 6.0001 6.0001 0 0 1 6.0001-6.0001z" fill="#fff"/>
+ <g transform="translate(62.133)" fill="#5e4aa6">
+  <circle cx="-1248.7" cy="-1241.6" r="0"/>
+  <circle cx="-149.15" cy="23.855" r="0" fill-rule="evenodd"/>
+  <circle cx="-1150.9" cy="-1256.6" r="0"/>
+  <circle cx="-51.327" cy="8.8744" r="0" fill-rule="evenodd"/>
+  <g transform="matrix(3.7796,0,0,3.7796,167.86,4.61)" stroke-width=".26458">
+   <g transform="translate(-.0272 .0065001)">
+    <circle cx="-330.35" cy="-328.38" r="0"/>
+    <circle cx="-312.11" cy="-326.25" r="0"/>
+    <circle cx="-306.02" cy="-333.07" r="0"/>
+    <circle cx="-308.84" cy="-326.01" r="0"/>
+    <circle cx="-330.35" cy="-328.38" r="0"/>
+    <circle cx="-312.11" cy="-326.25" r="0"/>
+    <circle cx="-306.02" cy="-333.07" r="0"/>
+    <circle cx="-308.84" cy="-326.01" r="0"/>
+   </g>
+   <g transform="translate(-.02705 .0064503)">
+    <circle cx="-330.35" cy="-328.38" r="0"/>
+    <circle cx="-312.11" cy="-326.25" r="0"/>
+    <circle cx="-306.02" cy="-333.07" r="0"/>
+    <circle cx="-308.84" cy="-326.01" r="0"/>
+   </g>
+  </g>
+  <circle cx="-1248.7" cy="-1241.6" r="0"/>
+  <circle cx="-149.15" cy="23.855" r="0" fill-rule="evenodd"/>
+  <circle cx="-1248.7" cy="-1241.6" r="0"/>
+  <circle cx="-149.15" cy="23.855" r="0" fill-rule="evenodd"/>
+  <circle cx="-1150.9" cy="-1256.6" r="0"/>
+  <circle cx="-51.327" cy="8.8744" r="0" fill-rule="evenodd"/>
+  <g transform="matrix(3.7796,0,0,3.7796,167.86,4.61)" stroke-width=".26458">
+   <g transform="translate(-.0272 .0065001)">
+    <circle cx="-330.35" cy="-328.38" r="0"/>
+    <circle cx="-312.11" cy="-326.25" r="0"/>
+    <circle cx="-306.02" cy="-333.07" r="0"/>
+    <circle cx="-308.84" cy="-326.01" r="0"/>
+    <circle cx="-330.35" cy="-328.38" r="0"/>
+    <circle cx="-312.11" cy="-326.25" r="0"/>
+    <circle cx="-306.02" cy="-333.07" r="0"/>
+    <circle cx="-308.84" cy="-326.01" r="0"/>
+   </g>
+   <g transform="translate(-.02705 .0064503)">
+    <circle cx="-330.35" cy="-328.38" r="0"/>
+    <circle cx="-312.11" cy="-326.25" r="0"/>
+    <circle cx="-306.02" cy="-333.07" r="0"/>
+    <circle cx="-308.84" cy="-326.01" r="0"/>
+   </g>
+  </g>
+ </g>
+</svg>

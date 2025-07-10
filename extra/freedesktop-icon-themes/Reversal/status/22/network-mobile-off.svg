@@ -1,0 +1,15 @@
+<svg height="22" width="22"
+  xmlns="http://www.w3.org/2000/svg">
+  <defs id="defs4157">
+    <style id="current-color-scheme" type="text/css">
+      .ColorScheme-Text {
+        color:#f2f2f2;
+      }
+      .ColorScheme-NegativeText{
+        color:#e74c3c;
+      }
+    </style>
+  </defs>
+  <path id="path4439-7" d="M 19,3 3,19 h 12.90234 l -0.85351,-0.853516 2.15234,-2.15039 -2.15234,-2.152344 1.30859,-1.306641 0.45899,-0.460937 2.15234,2.152344 0.0312,-0.03125 z" style="opacity:0.35;fill:currentColor;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" class="ColorScheme-Text" />
+  <path id="path6" d="m 16.81706,12.99585 -0.84844,0.848437 2.15156,2.151563 -2.15156,2.151563 0.84844,0.848437 2.15156,-2.151564 2.15156,2.151564 0.84844,-0.848437 -2.15156,-2.151563 2.15156,-2.151563 -0.84844,-0.848437 -2.15156,2.151563 z" class="ColorScheme-NegativeText" style="fill:currentColor;fill-opacity:1;stroke:none;stroke-width:1.2" />
+</svg>

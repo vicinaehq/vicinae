@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" width="24" height="24" viewBox="0 0 24 24">
+  <style type="text/css" id="current-color-scheme">
+      .ColorScheme-Text {
+        color:#f2f2f2;
+      }
+      .ColorScheme-Background {
+        color:#eff0f1;
+      }
+      .ColorScheme-Highlight {
+        color:#3daee9;
+      }
+      .ColorScheme-ButtonText {
+        color:#f2f2f2;
+      }
+      </style>
+  <g transform="translate(1,1)">
+    <g id="fcitx-ziranma" transform="translate(198,8e-6) translate(-198,-8e-06)">
+      <path class="ColorScheme-Text" style="fill:currentColor;fill-opacity:1;stroke:none" d="M 3,3 3,19 19,19 19,3 3,3 Z M 4,4 18,4 18,18 4,18 4,4 Z M 9.6796875,4.6152344 6.8183594,7 6,7 6,17 7,17 15.5,17 16,17 16,7 8.3828125,7 10.320312,5.3847656 9.6796875,4.6152344 Z M 7,8 l 8,0 0,8 -8,0 0,-2 6,0 0,-1 -6,0 0,-2 6,0 0,-1 -6,0 0,-2 z" id="path4227"/>
+      <rect style="fill:none;fill-opacity:1;stroke:none;stroke-linejoin:miter" id="rect4229" width="22" height="22" x="0" y="0"/>
+    </g>
+  </g>
+</svg>

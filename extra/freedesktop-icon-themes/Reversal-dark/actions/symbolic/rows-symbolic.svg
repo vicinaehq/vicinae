@@ -1,0 +1,8 @@
+<svg width="16" height="16" version="1.1" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+ <g id="align-horizontal-left" transform="matrix(.66667 0 0 .66667 -721.33 -396.91)" fill="#dedede">
+  <rect x="1085" y="599.86" width="15" height="1.5" rx="0" ry="0"/>
+  <rect x="1089.5" y="604.36" width="13.5" height="1.5" rx="0" ry="0" stroke-width=".94868"/>
+  <rect x="1089.5" y="613.36" width="13.5" height="1.5" rx="0" ry="0" stroke-width=".94868"/>
+  <rect x="1085" y="608.86" width="15" height="1.5" rx="0" ry="0"/>
+ </g>
+</svg>

@@ -1,0 +1,4 @@
+<svg width="16px" height="16px" version="1.1" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+ <path d="m8 4-4 12 4-3 4 3-4-12zm0 3.1641 2.0371 6.1133-1.4375-1.0781a1.0001 1.0001 0 0 0-1.1992 0l-1.4375 1.0781 2.0371-6.1133z" fill="#363636" stroke-linecap="round" stroke-linejoin="round" style="paint-order:stroke fill markers"/>
+ <circle cx="8" cy="2" r="1" fill="#363636" stroke-linecap="round" stroke-linejoin="round" style="paint-order:stroke fill markers"/>
+</svg>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" viewBox="0 0 16.933 16.933" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <filter id="filter1057" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="matrix(.26458 0 0 .26458 37.051 2.8322)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#323741" offset="0"/>
+   <stop stop-color="#465064" offset="1"/>
+  </linearGradient>
+ </defs>
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:title/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <g transform="translate(-2.2584 -2.9671)">
+  <rect transform="matrix(.26458 0 0 .26458 2.2584 2.9671)" x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+  <rect x="3.449" y="4.1577" width="14.552" height="14.552" ry="3.9687" fill="url(#linearGradient1053)" stroke-linecap="round" stroke-width=".72611"/>
+  <path d="m13.217 7.402c-0.20251 0.055907-0.5423 0.50347-0.71468 0.5364-0.19785 0.037582-0.78736-0.3519-0.92464-0.20748-0.13604 0.14567 0.296 0.71592 0.27177 0.91346-0.02547 0.19661-0.58951 0.64169-0.4926 0.81531 0.09722 0.17238 0.77897-0.059323 0.95974 0.024225 0.18201 0.083861 0.43204 0.74263 0.62833 0.70505 0.19661-0.03758 0.18325-0.74263 0.32022-0.88799 0.13697-0.14443 0.85041-0.17952 0.87463-0.37737 0.024226-0.19661-0.6538-0.39787-0.75226-0.57149-0.097216-0.17362 0.08386-0.86625-0.098148-0.95011-0.02174-0.00963-0.04504-0.00714-0.07392 0" fill="#78cfff" stroke-width=".31059"/>
+  <path d="m9.8156 9.8805c-0.39445 0.054664-0.44663 1.4874-0.73393 1.7642-0.28761 0.27674-1.6986 0.26463-1.7688 0.65877-0.070505 0.39321 1.2548 0.88923 1.4294 1.2517 0.17362 0.36029-0.27301 1.707 0.077649 1.8952 0.3519 0.18915 1.2315-0.93178 1.6256-0.98645 0.39446-0.05466 1.5346 0.78984 1.821 0.5131 0.28885-0.27674-0.50223-1.462-0.43204-1.8564 0.0705-0.39539 1.2219-1.2194 1.0483-1.5784-0.17362-0.36029-1.5359 0.03044-1.8866-0.15902-0.3519-0.18915-0.78487-1.5561-1.1806-1.4995" fill="#78cfff" stroke-width=".31059"/>
+ </g>
+</svg>

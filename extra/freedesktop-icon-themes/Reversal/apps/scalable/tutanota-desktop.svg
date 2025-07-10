@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" fill="none" version="1.1" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <rect x="4.5" y="4.5" width="55" height="55" rx="13.002" ry="13.002" filter="url(#filter2076-3)" opacity=".3"/>
+ <rect x="4.4995" y="4.4995" width="55.001" height="55.001" rx="13.002" ry="13.002" fill="url(#linearGradient2070-0)"/>
+ <path d="m36.812 24s3.7083 0.6022 3.6973 2.125c0 0.0548-8.19e-4 0.099497-0.011719 0.1543-0.2172 1.3599-3.9332 1.5632-6.5098 1.7051-0.537 0.0295-1.0238 0.057797-1.4199 0.091797-0.3341 0.0286-0.75111 0.049619-1.2246 0.074219h-0.001953c-2.7819 0.1448-7.5119 0.39103-8.8574 2.7402-0.0765 0.1424-0.12109 0.28452-0.12109 0.41602-0.0045 1.0303 2.1976 1.9252 4.8457 3 3.8001 1.5423 8.5187 3.4573 8.957 6.6855 0.0219 0.1753 0.033203 0.36181 0.033203 0.53711-0.010826 5.4665-11.468 10.311-25.613 15.977 2.0023 1.2572 4.3674 1.9941 6.916 1.9941h28.996c6.74 0 12.249-5.0768 12.93-11.631-1.3455-3.8803-3.8212-7.4854-8.1992-9.7578-4.965-2.5851-11.502-3.9849-16.381-5.0293-3.8056-0.8146-6.6025-1.4137-6.8613-2.1914-0.0219-0.0767-0.033203-0.15305-0.033203-0.21875 0.0109-1.2161 3.784-1.5006 6.2559-1.6211 2.6141-0.1314 6.5735-0.48279 7.0547-2.3672 0.0148-0.0592 0.024497-0.11854 0.029297-0.17774 0.0023-0.0284 0.003906-0.055584 0.003906-0.083984 0.011-1.7529-4.4844-2.4219-4.4844-2.4219z" fill="#fff"/>
+ <defs>
+  <mask>
+   <path d="m0.625 3.743h62.749v60.254h-62.749z" fill="#fff" stroke="#000" stroke-miterlimit="10"/>
+  </mask>
+  <filter id="filter2076-3" x="-.048" y="-.048" width="1.096" height="1.096" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="1.1"/>
+  </filter>
+  <linearGradient id="linearGradient2070-0" x1="145" x2="200" y1="59" y2="4" gradientTransform="translate(-140.5 .4995)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#dc2828" offset="0"/>
+   <stop stop-color="#fa4141" offset="1"/>
+  </linearGradient>
+ </defs>
+</svg>

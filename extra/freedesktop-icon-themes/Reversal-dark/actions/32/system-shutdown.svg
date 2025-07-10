@@ -1,0 +1,8 @@
+<svg version="1.1" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+ <defs>
+  <style id="current-color-scheme" type="text/css">.ColorScheme-Text {
+        color:#dedede;
+      }</style>
+ </defs>
+ <path class="ColorScheme-Text" d="m15.5 4v9h1v-9h-1zm8.0977 2.7148-0.63672 0.77734c2.5537 2.087 4.0362 5.2098 4.0391 8.5078 0 6.0751-4.9249 11-11 11-6.0751 0-11-4.9249-11-11 0.00178-3.2984 1.4836-6.4219 4.0371-8.5098l-0.62891-0.76953c-2.786 2.276-4.404 5.6818-4.4082 9.2793 0 6.6274 5.3726 12 12 12 6.6274 0 12-5.3726 12-12-9.69e-4 -3.5986-1.6169-7.0067-4.4023-9.2852z" fill="currentColor"/>
+</svg>

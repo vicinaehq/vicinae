@@ -1,0 +1,7 @@
+<svg width="16" height="16" shape-rendering="crispEdges" version="1.1" xmlns="http://www.w3.org/2000/svg">
+ <g transform="translate(-31.976 -220.36)" fill="#dedede">
+  <path transform="translate(31.976 220.36)" d="m0.03125 0v16h16v-16h-16zm1 1h14v14h-14v-14z"/>
+  <path transform="translate(31.976 220.36)" d="m3.0254 1v2h-2l-0.0019531 0.99414 0.0039063 0.011719h1.998v1.9941h-1.998v1h1.998v2h-1.998v1h1.998v2h-1.998v1h1.998v2h1v-2h2v2h1v-2h2v2h1v-2h2v2h1v-2h2.002v-1h-2.002v-2h2.002v-1h-2.002v-2h2.002v-1h-2.002v-2h2v-1h-2v-2h-1v2h-2v-2h-1v2h-2v-2h-1v2h-2v-2h-1zm7 3.002h2v1.998h-2v-1.998zm-6 0.0019531h2v1.9961h-2v-1.9961zm3 0h2v1.9961h-2v-1.9961zm-3 2.9961h2v2h-2v-2zm3 0h2v2h-2v-2zm3 0h2v2h-2v-2zm-6 3h2v2h-2v-2zm3 0h2v2h-2v-2zm3 0h2v2h-2v-2z" fill-rule="evenodd" opacity=".108"/>
+  <path d="m45.982 221.86a0.50005 0.50005 0 0 0-0.47461 0.41992c-0.67044 3.7609-2.1512 6.286-4.1641 8.0723s-4.5853 2.837-7.4609 3.5293a0.50005 0.50005 0 1 0 0.23438 0.97071c2.9671-0.71426 5.7073-1.8144 7.8906-3.752 2.1834-1.9376 3.7825-4.7092 4.4844-8.6465a0.50005 0.50005 0 0 0-0.50977-0.59375z" color="#000000" color-rendering="auto" fill-rule="evenodd" image-rendering="auto" shape-rendering="auto" solid-color="#000000" style="block-progression:tb;isolation:auto;mix-blend-mode:normal;text-decoration-color:#000000;text-decoration-line:none;text-decoration-style:solid;text-indent:0;text-transform:none;white-space:normal"/>
+ </g>
+</svg>

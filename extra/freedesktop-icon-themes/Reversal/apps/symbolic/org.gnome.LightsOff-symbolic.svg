@@ -1,0 +1,13 @@
+<svg width="16" height="16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+ <title>Gnome Symbolic Icon Theme</title>
+ <g transform="translate(-363 145)" fill="#363636">
+  <path d="m365.03-144c-0.57131 0-1.0312 0.45994-1.0312 1.0312v3.9375c0 0.57131 0.45994 1.0312 1.0312 1.0312h3.9375c0.57131 0 1.0312-0.45994 1.0312-1.0312v-3.9375c0-0.57131-0.45994-1.0312-1.0312-1.0312h-3.9375zm-0.03125 1h4v4h-4v-4z" opacity=".5"/>
+  <path d="m372.03-137c-0.57131 0-1.0312 0.45994-1.0312 1.0312v3.9375c0 0.57131 0.45994 1.0312 1.0312 1.0312h3.9375c0.57131 0 1.0312-0.45994 1.0312-1.0312v-3.9375c0-0.57131-0.45994-1.0312-1.0312-1.0312h-3.9375zm-0.03125 1h4v4h-4v-4z" opacity=".5"/>
+  <path d="m372.03-144c-0.57131 0-1.0312 0.45994-1.0312 1.0312v3.9375c0 0.57131 0.45994 1.0312 1.0312 1.0312h3.9375c0.57131 0 1.0312-0.45994 1.0312-1.0312v-3.9375c0-0.57131-0.45994-1.0312-1.0312-1.0312h-3.9375zm-0.03125 1h4v4h-4v-4z"/>
+  <path d="m365.03-137c-0.57131 0-1.0312 0.45994-1.0312 1.0312v3.9375c0 0.57131 0.45994 1.0312 1.0312 1.0312h3.9375c0.57131 0 1.0312-0.45994 1.0312-1.0312v-3.9375c0-0.57131-0.45994-1.0312-1.0312-1.0312h-3.9375zm-0.03125 1h4v4h-4v-4z"/>
+  <rect x="365" y="-143" width="4" height="4" fill-rule="evenodd" opacity=".25" stop-color="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="paint-order:stroke fill markers"/>
+  <rect x="372" y="-143" width="4" height="4" fill-rule="evenodd" opacity=".5" stop-color="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="paint-order:stroke fill markers"/>
+  <rect x="365" y="-136" width="4" height="4" fill-rule="evenodd" opacity=".5" stop-color="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="paint-order:stroke fill markers"/>
+  <rect x="372" y="-136" width="4" height="4" fill-rule="evenodd" opacity=".25" stop-color="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="paint-order:stroke fill markers"/>
+ </g>
+</svg>

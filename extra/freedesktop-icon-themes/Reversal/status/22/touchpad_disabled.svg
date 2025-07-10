@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" width="22" height="22">
+    <style type="text/css" id="current-color-scheme">
+      .ColorScheme-Text {
+        color:#f2f2f2;
+      }
+      .ColorScheme-Background {
+        color:#eff0f1;
+      }
+      .ColorScheme-Highlight {
+        color:#3daee9;
+      }
+      .ColorScheme-ButtonText {
+        color:#f2f2f2;
+      }
+      .ColorScheme-NegativeText {
+        color:#da4453;
+      }
+      </style>
+    <g id="22-22-touchpad_disabled" inkscape:label="#22-22-touchpad_disabled" transform="translate(0,-10)">
+    <path id="path17" class="ColorScheme-Text" d="m 4,13 c -0.554,0 -1,0.446 -1,1 l 0,14 c 0,0.554 0.446,1 1,1 l 14,0 c 0.554,0 1,-0.446 1,-1 l 0,-14 c 0,-0.554 -0.446,-1 -1,-1 L 4,13 Z m 0,1 14,0 0,11 -14,0 0,-11 z m 0,12 6,0 0,2 -6,0 0,-2 z m 8,0 6,0 0,2 -6,0 0,-2 z" style="fill:currentColor;fill-opacity:0.6;stroke:none"/>
+    <path id="path19" d="M 0 10 L 0 32 L 22 32 L 22 10 L 0 10 z " style="opacity:1;fill:none"/>
+    <path id="path21" class="ColorScheme-NegativeText" d="M 8.8476562,17 8,17.847656 10.152344,20 8,22.152344 8.8476562,23 11,20.847656 13.152344,23 14,22.152344 11.847656,20 14,17.847656 13.152344,17 11,19.152344 8.8476562,17 Z" style="fill:currentColor;fill-opacity:1;stroke:none"/>
+  </g>
+</svg>

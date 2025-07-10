@@ -1,0 +1,11 @@
+<svg width="24" height="24" enable-background="new" version="1.1" xmlns="http://www.w3.org/2000/svg">
+ <defs>
+  <style id="current-color-scheme" type="text/css">.ColorScheme-Text {
+        color:#dedede;
+      }</style>
+ </defs>
+ <g class="ColorScheme-Text" transform="translate(4,4)" fill="currentColor">
+  <rect x="4" y="3" width="2" height="10" rx="0" ry="0"/>
+  <rect x="10" y="3" width="2" height="10" rx="0" ry="0"/>
+ </g>
+</svg>

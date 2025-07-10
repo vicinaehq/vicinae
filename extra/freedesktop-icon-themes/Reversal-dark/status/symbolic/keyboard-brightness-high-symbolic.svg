@@ -1,0 +1,8 @@
+<svg width="16px" height="16px" version="1.1" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+ <rect x="5" y="11" width="6" height="1" fill="#dedede" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+ <rect y="11" width="3" height="1" rx=".5" ry=".5" fill="#dedede" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+ <rect x="13" y="11" width="3" height="1" rx=".5" ry=".5" fill="#dedede" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+ <rect transform="rotate(45)" x="5.7886" y="1.9749" width="3" height="1" rx=".5" ry=".5" fill="#dedede" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+ <rect transform="rotate(90)" x="3.5" y="-8.5" width="3" height="1" rx=".5" ry=".5" fill="#dedede" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+ <rect transform="rotate(135)" x="-5.5251" y="-14.289" width="3" height="1" rx=".5" ry=".5" fill="#dedede" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+</svg>

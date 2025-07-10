@@ -1,0 +1,41 @@
+<svg width="22" height="22" version="1.1" xmlns="http://www.w3.org/2000/svg">
+ <style id="current-color-scheme" type="text/css">.ColorScheme-Text {
+        color:#f2f2f2;
+      }
+      .ColorScheme-Background {
+        color:#eff0f1;
+      }
+      .ColorScheme-Highlight {
+        color:#3498db;
+      }
+      .ColorScheme-ViewText {
+        color:#f2f2f2;
+      }
+      .ColorScheme-ViewBackground {
+        color:#fcfcfc;
+      }
+      .ColorScheme-ViewHover {
+        color:#93cee9;
+      }
+      .ColorScheme-ViewFocus{
+        color:#3daee9;
+      }
+      .ColorScheme-ButtonText {
+        color:#f2f2f2;
+      }
+      .ColorScheme-ButtonBackground {
+        color:#eff0f1;
+      }
+      .ColorScheme-ButtonHover {
+        color:#93cee9;
+      }
+      .ColorScheme-ButtonFocus{
+        color:#3daee9;
+      }
+      .ColorScheme-NegativeText{
+        color:#e74c3c;
+      }</style>
+ <path class="ColorScheme-Text" d="m5 4c-1.108 0-2 0.892-2 2v8c0 1.108 0.892 2 2 2h2c0 1.108 0.892 2 2 2h3v-1h-3c-0.554 0-1-0.446-1-1v-1h-3c-0.554 0-1-0.446-1-1v-8c0-0.554 0.446-1 1-1h12c0.554 0 1 0.446 1 1v5h1v-5c0-1.108-0.892-2-2-2h-12z" fill="currentColor" opacity=".35"/>
+ <path class="ColorScheme-Text" d="m8.5 8c-0.277 0-0.5 0.223-0.5 0.5v3c0 0.277 0.223 0.5 0.5 0.5s0.5-0.223 0.5-0.5v-3c0-0.277-0.223-0.5-0.5-0.5zm5 0c-0.277 0-0.5 0.223-0.5 0.5v2.5h1v-2.5c0-0.277-0.223-0.5-0.5-0.5z" fill="currentColor" opacity=".35"/>
+ <path class="ColorScheme-NegativeText" d="M 13.84845,12 13,12.848437 15.15156,15 13,17.151563 13.84845,18 16.00001,15.848436 18.15155,18 19,17.151563 16.84844,15 19,12.848437 18.15155,12 16.00001,14.151563 Z" fill="currentColor"/>
+</svg>

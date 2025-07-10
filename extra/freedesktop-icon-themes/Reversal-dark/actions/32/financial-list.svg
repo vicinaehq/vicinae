@@ -1,0 +1,36 @@
+<svg height="32" width="32" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <linearGradient id="a" gradientTransform="matrix(0 -.7 .64516129 0 8.354839 24.4)" gradientUnits="userSpaceOnUse" x1="32" x2="-8" y1="-6" y2="32">
+        <stop offset="0" stop-color="#d8dcde"/>
+        <stop offset="1" stop-color="#f9fafb"/>
+    </linearGradient>
+    <linearGradient id="b" gradientUnits="userSpaceOnUse" x1="8" x2="19" y1="8" y2="19">
+        <stop offset="0"/>
+        <stop offset="1" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="c" gradientTransform="matrix(0 1 1 0 -2 -3)" gradientUnits="userSpaceOnUse" x1="8" x2="13" xlink:href="#b" y1="8" y2="13"/>
+    <linearGradient id="d" gradientTransform="matrix(-.0017625 .695632 .41203125 -.002961 3.308125 -.6761)" gradientUnits="userSpaceOnUse" x1="44.177147" x2="44.106125" y1="18.55378" y2="1.867849">
+        <stop offset="0" stop-color="#c9963c"/>
+        <stop offset="1" stop-color="#f6cd7b"/>
+    </linearGradient>
+    <linearGradient id="e" gradientTransform="matrix(0 -1 1 0 -2 44)" gradientUnits="userSpaceOnUse" x2="0" y1="8" y2="4">
+        <stop offset="0" stop-color="#2f3943"/>
+        <stop offset="1" stop-color="#4d5662"/>
+    </linearGradient>
+    <linearGradient id="f" gradientTransform="matrix(0 1 1 0 -2 14)" gradientUnits="userSpaceOnUse" x1="8" x2="13" xlink:href="#b" y1="8" y2="13"/>
+        <g stroke-linejoin="bevel" stroke-width="2">
+            <path d="m9 30h20v-28h-20z" fill="url(#a)"/>
+            <path d="m4 30v-28h5v28z" fill="url(#d)"/>
+            <g stroke-linecap="round">
+                <path d="m8 2v28h1v-28zm-3 2v7h1v-7zm0 17v7h1v-7z" fill="#c9963c"/>
+                <path d="m2 5v5h4v-5zm0 17v5h4v-5z" fill="url(#e)"/>
+            </g>
+        </g>
+        <path d="m6 5 3 3v5l-3-3z" fill="url(#c)" fill-rule="evenodd" opacity=".2"/>
+        <path d="m11 6v1h3v-1zm4 0v1h1v-1zm-4 2v1h8v-1zm0 1.9999999v1.0000001h7v-1.0000001zm0 4.0000001v1h3v-1zm4 0v1h2v-1zm-4 2v1h8v-1zm0 2v1h7v-1zm0 3v1h3v-1zm4 0v1h1v-1zm-4 2v1h8v-1zm0 2v1h7v-1z" fill="#626363"/>
+        <path d="m24 14v1h3v-1z" fill="#da4453"/>
+        <path d="m6 22 3 3v5l-3-3z" fill="url(#f)" fill-rule="evenodd" opacity=".2"/>
+    <g fill="#27ae60">
+        <path d="m22 6v1h-1v1h1v1h1v-1h1v-1h-1v-1z"/>
+        <path d="m22 21v1h-1v1h1v1h1v-1h1v-1h-1v-1z"/>
+    </g>
+</svg>

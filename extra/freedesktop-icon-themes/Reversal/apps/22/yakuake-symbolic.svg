@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" width="22" height="22">
+    <style type="text/css" id="current-color-scheme">.ColorScheme-Accent { color: #1a73e8; } .ColorScheme-Background { color: #2a2e32; } .ColorScheme-NegativeText { color: #ff4747; } .ColorScheme-Text { color: #363636; } </style>
+    <g id="22-22-yakuake" transform="translate(32,10) translate(-32,-10)">
+    <rect id="rect2" width="22" height="22" opacity=".001"/>
+    <path id="rect43-3" class="ColorScheme-Text" d="M 2.501151,5.5495627 V 5.583045 H 19.49911 V 5.5495627 Z M 19.49911,5.583045 V 17.415973 H 2.501151 V 5.583045 H 1.832897 V 18.08312 H 20.167293 V 5.583045 Z M 11.598348,8.4737052 9.0983335,10.97372 9.9828388,11.858226 12.482854,9.3582105 Z" fill-opacity="0.3" style="fill:currentColor"/>
+    <path id="rect63-6" class="ColorScheme-Text" d="M 1.416716,3.9168386 H 20.58326 c 0.230837,0 0.416666,0.1858368 0.416666,0.4166668 v 0.8333621 c 0,0.2308371 -0.185837,0.4166668 -0.416666,0.4166668 H 1.416716 c -0.2308371,0 -0.4166668,-0.1858368 -0.4166668,-0.4166668 V 4.3335054 c 0,-0.2308371 0.1858368,-0.4166668 0.4166668,-0.4166668 z m 6.0664649,4.5574559 -0.8842196,0.8842196 2.0596553,2.0578699 -2.0596553,2.057869 0.8842196,0.88422 2.9421601,-2.942161 z m 3.5174501,6.2766805 v 1.250008 h 4.582741 v -1.250008 z" style="fill:currentColor"/>
+  </g>
+</svg>

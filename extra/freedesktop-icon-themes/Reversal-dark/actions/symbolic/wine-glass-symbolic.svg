@@ -1,0 +1,5 @@
+<svg width="16px" height="16px" version="1.1" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+ <rect x="5" y="15" width="6" height="1" fill="#dedede" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="paint-order:stroke fill markers"/>
+ <path d="m4.209 0c-0.55897 1.5938-1.209 3.8979-1.209 6 0 3.6865 3 5 5 5s5-1.3135 5-5c0-2.1021-0.65001-4.4062-1.209-6zm0.75 1h6.082c0.47934 1.4849 0.95898 3.3392 0.95898 5 0 1.572-0.58137 2.476-1.3691 3.0977-0.78777 0.6217-1.8498 0.90234-2.6309 0.90234s-1.8431-0.28065-2.6309-0.90234c-0.78777-0.6217-1.3691-1.5257-1.3691-3.0977 0-1.6608 0.47965-3.5151 0.95898-5z" fill="#dedede" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="paint-order:stroke fill markers"/>
+ <rect x="7.498" y="10" width="1.004" height="6.011" fill="#dedede" style="paint-order:stroke fill markers"/>
+</svg>

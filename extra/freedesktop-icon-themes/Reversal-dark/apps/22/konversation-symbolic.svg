@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="22" height="22" version="1.1" id="svg6" sodipodi:docname="konversation.svg" inkscape:version="1.2.2 (b0a8486541, 2022-12-01)" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+  <defs id="defs10"/>
+  <namedview id="namedview8" pagecolor="#ffffff" bordercolor="#000000" borderopacity="0.25" inkscape:showpageshadow="2" inkscape:pageopacity="0.0" inkscape:pagecheckerboard="0" inkscape:deskcolor="#d1d1d1" showgrid="false" inkscape:zoom="35.136364" inkscape:cx="9.4773609" inkscape:cy="10.98577" inkscape:window-width="1920" inkscape:window-height="1011" inkscape:window-x="0" inkscape:window-y="0" inkscape:window-maximized="1" inkscape:current-layer="svg6"/>
+  <style type="text/css" id="current-color-scheme">.ColorScheme-Accent { color: #3daee9; } .ColorScheme-Background { color: #2a2e32; } .ColorScheme-ButtonText { color: #31363b; } .ColorScheme-Text { color: #dedede; } </style>
+  <g id="konversation" transform="translate(-326,-534.36218)">
+    <path sodipodi:nodetypes="cccccccccccccccccccccccccccccccccccccc" inkscape:connector-curvature="0" id="rect3353" d="m 344,538.3622 -12,3.41797 v 1.04297 4.53906 0.58203 l 1,0.28516 v 2.13281 0.30078 l 6,1.69922 v -1 -1.42383 l 5,1.42383 v -1.04297 -10.91406 z m -1,1.32813 v 10.34375 l -10,-2.84766 v -4.64844 z m -12,2.375 -1,0.28515 v 0.0117 1 3 1 0.0117 l 1,0.28516 v -0.29688 -0.74609 -3.50782 -0.74609 z m 3,6.44921 4,1.13868 v 1.42578 l -4,-1.13282 z" style="opacity:1;fill:currentColor;fill-opacity:1;stroke:none;stroke-width:0.1;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.299435" class="ColorScheme-Text"/>
+    <rect y="534.36218" x="326" height="22" width="22" id="rect4170" style="opacity:1;fill:none;fill-opacity:1;stroke:none"/>
+  </g>
+</svg>

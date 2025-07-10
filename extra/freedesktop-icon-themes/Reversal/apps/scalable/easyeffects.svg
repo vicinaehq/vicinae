@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <linearGradient id="linearGradient921" x1="409.83" x2="410.06" y1="539.74" y2="507.72" gradientTransform="matrix(1.3223 .16142 -.16142 1.3223 -387.66 -726.16)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#d1d1d1" offset="0"/>
+   <stop stop-color="#fff" offset="1"/>
+  </linearGradient>
+  <filter id="filter901" x="-.1116" y="-.10462" width="1.2232" height="1.2092" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="1.3950024"/>
+  </filter>
+  <filter id="filter1057" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="translate(131.5 -.51)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#32d7ff" offset="0"/>
+   <stop stop-color="#329bff" offset="1"/>
+  </linearGradient>
+  <linearGradient id="linearGradient924" x1="19" x2="19" y1="41" y2="35" gradientTransform="translate(-68.981 -18)" gradientUnits="userSpaceOnUse" xlink:href="#linearGradient921"/>
+  <linearGradient id="linearGradient926" x1="19" x2="19" y1="41" y2="35" gradientTransform="translate(-56.981 8)" gradientUnits="userSpaceOnUse" xlink:href="#linearGradient921"/>
+  <linearGradient id="linearGradient928" x1="-3" x2="-3" y1="35" y2="29" gradientTransform="translate(-58.981 6)" gradientUnits="userSpaceOnUse" xlink:href="#linearGradient921"/>
+ </defs>
+ <rect x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+ <rect x="4.5" y="4.5" width="55" height="55" ry="15" fill="url(#linearGradient1053)" stroke-linecap="round" stroke-width="2.7444"/>
+ <g transform="translate(81.982)">
+  <g transform="translate(-80.981)" fill="#fff">
+   <rect x="18" y="12" width="2" height="40" rx="1" ry="1" opacity=".75" style="paint-order:markers stroke fill"/>
+   <rect x="30" y="12" width="2" height="40" rx="1" ry="1" opacity=".75" style="paint-order:markers stroke fill"/>
+   <rect x="42" y="12" width="2" height="40" rx="1" ry="1" opacity=".75" style="paint-order:markers stroke fill"/>
+  </g>
+  <path d="m-50.032 18a3 3 0 0 0-2.9492 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-0.05078 0zm-12 18a3 3 0 0 0-2.9492 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-0.05078 0zm24 8a3 3 0 0 0-2.9492 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-0.05078 0z" filter="url(#filter901)" opacity=".15" style="paint-order:markers stroke fill"/>
+  <circle cx="-49.981" cy="20" r="3" fill="url(#linearGradient924)" style="paint-order:markers stroke fill"/>
+  <circle cx="-37.981" cy="46" r="3" fill="url(#linearGradient926)" style="paint-order:markers stroke fill"/>
+  <circle cx="-61.981" cy="38" r="3" fill="url(#linearGradient928)" style="paint-order:markers stroke fill"/>
+ </g>
+</svg>

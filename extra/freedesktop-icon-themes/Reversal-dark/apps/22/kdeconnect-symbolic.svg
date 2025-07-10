@@ -1,0 +1,13 @@
+<svg width="22" height="22" version="1.1" xmlns="http://www.w3.org/2000/svg">
+ <defs>
+  <style type="text/css">.ColorScheme-Text {
+          color:#dedede;
+        }</style>
+ </defs>
+ <namedview bordercolor="#000000" borderopacity="0.25" pagecolor="#ffffff" showgrid="false"/>
+ <style id="current-color-scheme" type="text/css">.ColorScheme-Accent { color: #3daee9; } .ColorScheme-Background { color: #2a2e32; } .ColorScheme-ButtonText { color: #31363b; } .ColorScheme-Text { color: #dedede; }</style>
+ <rect y="2.6172e-6" width="22" height="22" fill="none"/>
+ <path class="ColorScheme-Text" d="m10.5 7-0.27734 1.1074c-0.25212 0.0672-0.4944 0.167-0.7207 0.29688l-0.97656-0.58594-0.70703 0.70703 0.58594 0.97656c-0.13139 0.22672-0.23251 0.46967-0.30078 0.72266l-1.1035 0.27539v1l1.1074 0.27734c0.0672 0.25212 0.167 0.4944 0.29688 0.7207l-0.58594 0.97656 0.70703 0.70703 0.97656-0.58594c0.22672 0.13139 0.46967 0.23251 0.72266 0.30078l0.27539 1.1035h1l0.27734-1.1074c0.25212-0.0672 0.4944-0.167 0.7207-0.29688l0.97656 0.58594 0.70703-0.70703-0.58594-0.97656c0.13139-0.22672 0.23251-0.46967 0.30078-0.72266l1.1035-0.27539v-1l-1.1074-0.27734c-0.0672-0.25212-0.167-0.4944-0.29688-0.7207l0.58594-0.97656-0.70703-0.70703-0.97656 0.58594c-0.22672-0.13139-0.46967-0.23251-0.72266-0.30078l-0.27539-1.1035h-1zm0.5 2a2 2 0 0 1 2 2 2 2 0 0 1-2 2 2 2 0 0 1-2-2 2 2 0 0 1 2-2z" fill="currentColor"/>
+ <path class="ColorScheme-Text" d="m6.9609 1.0001c-1.0865 0-1.9609 0.87452-1.9609 1.9609v16.078c0 1.0865 0.87452 1.9609 1.9609 1.9609h8.0782c1.0865 0 1.9609-0.87452 1.9609-1.9609v-16.078c0-1.0865-0.87452-1.9609-1.9609-1.9609h-6.0391zm0.039062 1h1c0 0.554 0.446 1 1 1h4c0.554 0 1-0.446 1-1h1c0.554 0 1 0.446 1 1v16c0 0.554-0.446 1-1 1h-8c-0.554 0-1-0.446-1-1v-16c0-0.554 0.446-1 1-1z" fill="currentColor"/>
+ <rect class="ColorScheme-Text" x="8" y="18.5" width="6" height=".5" rx=".25" ry=".25" fill="currentColor" opacity=".5"/>
+</svg>

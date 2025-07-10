@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <linearGradient id="linearGradient1024" x1="1.3315" x2="15.65" y1="15.576" y2="1.17" gradientTransform="translate(-.00069968 .1404)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#00c8ff" offset="0"/>
+   <stop stop-color="#14a0ff" offset="1"/>
+  </linearGradient>
+  <filter id="filter1057-5" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053-5" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="translate(186.1 22.134)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#32d7ff" offset="0"/>
+   <stop stop-color="#329bff" offset="1"/>
+  </linearGradient>
+  <linearGradient id="linearGradient4055" x1="7.6703" x2="14.861" y1="37.489" y2="37.489" gradientTransform="translate(75.337 36.852)" gradientUnits="userSpaceOnUse" xlink:href="#linearGradient1024"/>
+  <linearGradient id="linearGradient4059" x1="7.6703" x2="14.861" y1="37.489" y2="37.489" gradientTransform="matrix(1.1226 0 0 .35438 73.956 20.751)" gradientUnits="userSpaceOnUse" xlink:href="#linearGradient1024"/>
+ </defs>
+ <g transform="translate(-54.603 -22.644)">
+  <rect x="59.103" y="27.144" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057-5)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+  <rect x="59.103" y="27.144" width="55" height="55" ry="15" fill="url(#linearGradient1053-5)" stroke-linecap="round" stroke-width="2.7444"/>
+  <rect x="73.111" y="31.865" width="26.983" height="45.559" ry="3.0763" fill="#fff" opacity=".6"/>
+  <rect x="73.925" y="32.542" width="25.356" height="44.203" ry="2.6373" fill="#fff"/>
+  <rect x="83.008" y="73.239" width="7.1909" height="2.2052" ry=".5" fill="url(#linearGradient4055)"/>
+  <rect x="82.567" y="33.645" width="8.0723" height=".78149" ry=".39074" fill="url(#linearGradient4059)"/>
+ </g>
+</svg>

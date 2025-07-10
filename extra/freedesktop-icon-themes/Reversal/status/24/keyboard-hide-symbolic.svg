@@ -1,0 +1,23 @@
+<svg width="24px" height="24px" version="1.1" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+ <path d="m7 17.994 5.0039 4 4.9961-4h-10zm2.8535 1h4.2969l-2.1465 1.7188-2.1504-1.7188z" color="#000000" fill="#f2f2f2" stroke-linejoin="round" style="-inkscape-stroke:none"/>
+ <path d="m3 2c-1.108 0-2 0.892-2 2v9c0 1.108 0.892 2 2 2h18c1.108 0 2-0.892 2-2v-9c0-1.108-0.892-2-2-2h-18zm0 1h18c0.554 0 1 0.446 1 1v9c0 0.554-0.446 1-1 1h-18c-0.554 0-1-0.446-1-1v-9c0-0.554 0.446-1 1-1z" fill="#f2f2f2"/>
+ <rect x="4" y="5" width="2" height="1" rx=".5" ry=".5" fill="#f2f2f2"/>
+ <rect x="7" y="5" width="2" height="1" rx=".5" ry=".5" fill="#f2f2f2"/>
+ <rect x="10" y="5" width="2" height="1" rx=".5" ry=".5" fill="#f2f2f2"/>
+ <rect x="13" y="5" width="2" height="1" rx=".5" ry=".5" fill="#f2f2f2"/>
+ <rect x="19" y="5" width="1" height="1" rx=".5" ry=".5" fill="#f2f2f2"/>
+ <rect x="4" y="7" width="3" height="1" rx=".5" ry=".5" fill="#f2f2f2"/>
+ <rect x="8" y="7" width="2" height="1" rx=".5" ry=".5" fill="#f2f2f2"/>
+ <rect x="11" y="7" width="2" height="1" rx=".5" ry=".5" fill="#f2f2f2"/>
+ <rect x="14" y="7" width="2" height="1" rx=".5" ry=".5" fill="#f2f2f2"/>
+ <rect x="17" y="7" width="3" height="1" rx=".5" ry=".5" fill="#f2f2f2"/>
+ <rect x="4" y="9" width="2" height="1" rx=".5" ry=".5" fill="#f2f2f2"/>
+ <rect x="7" y="9" width="2" height="1" rx=".5" ry=".5" fill="#f2f2f2"/>
+ <rect x="10" y="9" width="2" height="1" rx=".5" ry=".5" fill="#f2f2f2"/>
+ <rect x="13" y="9" width="2" height="1" rx=".5" ry=".5" fill="#f2f2f2"/>
+ <rect x="16" y="9" width="4" height="1" rx=".5" ry=".5" fill="#f2f2f2"/>
+ <rect x="4" y="11" width="3" height="1" rx=".5" ry=".47758" fill="#f2f2f2"/>
+ <rect x="17" y="11" width="3" height="1" rx=".5" ry=".5" fill="#f2f2f2"/>
+ <rect x="8" y="11" width="8" height="1" rx=".5" ry=".5" fill="#f2f2f2"/>
+ <rect x="16" y="5" width="2" height="1" rx=".5" ry=".5" fill="#f2f2f2"/>
+</svg>

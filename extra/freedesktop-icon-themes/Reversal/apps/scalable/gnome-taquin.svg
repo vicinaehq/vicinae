@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.0" xmlns="http://www.w3.org/2000/svg">
+ <defs>
+  <filter id="filter1057" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053" x1="-99.957" x2="-99.957" y1="59.788" y2="5.5801" gradientTransform="translate(131.5 -.51)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#ebebeb" offset="0"/>
+   <stop stop-color="#fafafa" stop-opacity=".99608" offset="1"/>
+  </linearGradient>
+ </defs>
+ <rect x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+ <rect x="4.5" y="4.5" width="55" height="55" ry="15" fill="url(#linearGradient1053)" stroke-linecap="round" stroke-width="2.7444"/>
+ <g fill="#1a5fb4">
+  <path d="m57.421 11.85c-3.7777 2.331-6.2409 6.5294-7.8826 10.64h3.5117c1.3158-2.7026 3.2124-5.9518 5.7172-7.6754-0.33692-1.0875-0.78374-1.9712-1.3463-2.9646z" stroke-width=".53846"/>
+  <path d="m22.502 30.03v3.5673c3.219 1.7117 6.2914 4.6132 7.8856 7.8985h3.5017c-2.0099-5.0503-6.4106-9.3062-11.387-11.466zm28.699 0.51703c-3.4856 0-6.7789 0.78508-9.6997 2.1705v3.6852c2.8084-1.6617 6.1313-2.625 9.6997-2.625 3.0957 0 5.7441 0.72585 8.2954 2.0025v-3.5673c-2.7188-1.1044-5.3625-1.6701-8.2959-1.666zm-28.699-15.594v3.6852c2.9212 1.3855 6.9324 2.2164 10.418 2.2164 2.9332 0.0041 5.8394-0.5617 8.558-1.666v-3.5673c-2.5512 1.2762-5.4623 2.0025-8.5585 2.0025-3.5678 0-7.6091-1.0092-10.418-2.6709zm27.622 26.561c1.9521 4.1887 3.9482 7.0877 8.0669 9.1662l1.0152-3.365c-2.3784-1.4957-4.0657-3.3631-5.4693-5.8012z" stroke-width=".53772"/>
+  <path d="m11.79 23a18.349 19.701 0 0 1 1.8415 8.6331 18.324 19.674 0 0 1-2.4548 9.8669h3.8645a21.686 23.283 0 0 0 2.0375-9.8669 21.696 23.294 0 0 0-1.5432-8.6331zm20.416 18.5a21.696 23.294 0 0 0-1.5422 8.6331 21.686 23.283 0 0 0 2.037 9.8669h3.8645a18.323 19.673 0 0 1-2.4554-9.8669c0-3.0988 0.66231-6.027 1.8415-8.6331z" stroke-width=".55794"/>
+ </g>
+ <g stroke-width=".70711">
+  <g transform="translate(0,-2)">
+   <rect x="4" y="24.5" width="56" height=".5" rx="0" ry="0" opacity=".1"/>
+   <rect x="4" y="24" width="56" height=".5" rx="0" ry="0" fill="#fff" opacity=".75"/>
+  </g>
+  <g transform="translate(0,17)">
+   <rect x="4" y="24.5" width="56" height=".5" rx="0" ry="0" opacity=".1"/>
+   <rect x="4" y="24" width="56" height=".5" rx="0" ry="0" fill="#fff" opacity=".75"/>
+  </g>
+  <g transform="rotate(90,33,33)">
+   <rect x="4" y="24.5" width="56" height=".5" rx="0" ry="0" opacity=".1"/>
+   <rect x="4" y="24" width="56" height=".5" rx="0" ry="0" fill="#fff" opacity=".75"/>
+  </g>
+  <g transform="rotate(90,23.5,23.5)">
+   <rect x="4" y="24.5" width="56" height=".5" rx="0" ry="0" opacity=".1"/>
+   <rect x="4" y="24" width="56" height=".5" rx="0" ry="0" fill="#fff" opacity=".75"/>
+  </g>
+ </g>
+ <path d="m4 42v4.998c0 7.2028 5.7991 13.002 13.002 13.002h4.998v-18h-18z" opacity=".05"/>
+</svg>

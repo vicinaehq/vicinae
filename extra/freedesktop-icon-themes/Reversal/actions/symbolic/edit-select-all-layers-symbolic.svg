@@ -1,0 +1,15 @@
+<svg width="16" height="16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+ <path d="m2 0c-1.108 0-2 0.892-2 2v1h1v-1c0-0.554 0.446-1 1-1h1v-1h-1zm2 0v1h2v-1h-2zm3 0v1h2v-1h-2zm3 0v1h2v-1h-2zm3 0v1h1c0.554 0 1 0.446 1 1v1h1v-1c0-1.108-0.892-2-2-2h-1zm-13 4v2h1v-2h-1zm15 0v2h1v-2h-1zm-15 3v2h1v-2h-1zm15 0v2h1v-2h-1zm-15 3v2h1v-2h-1zm15 0v2h1v-2h-1zm-15 3v1c0 1.108 0.892 2 2 2h1v-1h-1c-0.554 0-1-0.446-1-1v-1h-1zm15 0v1c0 0.554-0.446 1-1 1h-1v1h1c1.108 0 2-0.892 2-2v-1h-1zm-11 2v1h2v-1h-2zm3 0v1h2v-1h-2zm3 0v1h2v-1h-2z" fill="#363636" fill-rule="evenodd" stop-color="#000000" style="paint-order:stroke fill markers"/>
+ <rect x="3" y="4" width="10" height="1" fill="#363636" fill-rule="evenodd" stop-color="#000000" style="paint-order:stroke fill markers"/>
+ <rect x="3" y="8" width="10" height="1" fill="#363636" fill-rule="evenodd" stop-color="#000000" style="paint-order:stroke fill markers"/>
+ <rect x="3" y="13" width="10" height="1" fill="#363636" fill-rule="evenodd" stop-color="#000000" style="paint-order:stroke fill markers"/>
+ <rect x="3" y="10" width="10" height="1" fill="#363636" fill-rule="evenodd" stop-color="#000000" style="paint-order:stroke fill markers"/>
+ <rect x="3" y="6" width="10" height="1" fill="#363636" fill-rule="evenodd" stop-color="#000000" style="paint-order:stroke fill markers"/>
+ <rect x="3" y="2" width="10" height="1" fill="#363636" fill-rule="evenodd" stop-color="#000000" style="paint-order:stroke fill markers"/>
+ <rect x="3" y="3" width="1" height="1" fill="#363636" fill-rule="evenodd" stop-color="#000000" style="paint-order:stroke fill markers"/>
+ <rect x="12" y="3" width="1" height="1" fill="#363636" fill-rule="evenodd" stop-color="#000000" style="paint-order:stroke fill markers"/>
+ <rect x="3" y="7" width="1" height="1" fill="#363636" fill-rule="evenodd" stop-color="#000000" style="paint-order:stroke fill markers"/>
+ <rect x="12" y="7" width="1" height="1" fill="#363636" fill-rule="evenodd" stop-color="#000000" style="paint-order:stroke fill markers"/>
+ <rect x="3" y="11" width="1" height="2" fill="#363636" fill-rule="evenodd" stop-color="#000000" style="paint-order:stroke fill markers"/>
+ <rect x="12" y="11" width="1" height="2" fill="#363636" fill-rule="evenodd" stop-color="#000000" style="paint-order:stroke fill markers"/>
+</svg>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg width="64" height="64" version="1.1" viewBox="0 0 16.933 16.933" xmlns="http://www.w3.org/2000/svg">
+ <defs>
+  <filter id="filter1057" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="matrix(.26458 0 0 .26458 34.793 -.13494)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#32d7ff" offset="0"/>
+   <stop stop-color="#329bff" offset="1"/>
+  </linearGradient>
+ </defs>
+ <rect transform="scale(.26458)" x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+ <rect x="1.1906" y="1.1906" width="14.552" height="14.552" ry="3.9688" fill="url(#linearGradient1053)" stroke-linecap="round" stroke-width=".72612"/>
+ <g transform="translate(3.2604 -10.094)" stroke-width=".01743">
+  <path d="m12.009 11.285h-6.9853c-0.26594 0-0.47871 0.21277-0.47871 0.47871v4.8521c0 0.26594 0.21277 0.47871 0.47871 0.47871h6.9799c0.26594 0 0.47871-0.21277 0.47871-0.47871v-4.8521c0.0059-0.26594-0.21277-0.47871-0.47281-0.47871z" fill="#f1f3f7"/>
+  <rect x="5.0234" y="12.461" width="6.9853" height="4.1311" fill="#fcfcfd"/>
+  <circle cx="11.856" cy="11.905" r=".15366" fill="#f0582f"/>
+  <circle cx="11.318" cy="11.905" r=".15366" fill="#fbd303"/>
+  <circle cx="10.78" cy="11.905" r=".15366" fill="#6eb1e1"/>
+ </g>
+</svg>

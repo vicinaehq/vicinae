@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="64"
+   height="64"
+   viewBox="0 0 16.933 16.933"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="distributor-logo-blackarch.svg"
+   inkscape:version="1.3.2 (091e20ef0f, 2023-11-25, custom)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1">
+    <filter
+       inkscape:collect="always"
+       style="color-interpolation-filters:sRGB"
+       id="filter1057"
+       x="-0.026999999"
+       width="1.054"
+       y="-0.026999999"
+       height="1.054">
+      <feGaussianBlur
+         inkscape:collect="always"
+         stdDeviation="0.61875"
+         id="feGaussianBlur1059" />
+    </filter>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient1051"
+       id="linearGradient1053"
+       x1="-127"
+       y1="60"
+       x2="-72"
+       y2="5"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.26457813,0,0,0.26457813,34.792024,-0.13493434)" />
+    <linearGradient
+       inkscape:collect="always"
+       id="linearGradient1051">
+      <stop
+         style="stop-color:#323741;stop-opacity:1"
+         offset="0"
+         id="stop1047" />
+      <stop
+         style="stop-color:#465064;stop-opacity:1"
+         offset="1"
+         id="stop1049" />
+    </linearGradient>
+  </defs>
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="6.15625"
+     inkscape:cx="29.401015"
+     inkscape:cy="28.913706"
+     inkscape:window-width="1920"
+     inkscape:window-height="995"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg1" />
+  <rect
+     style="opacity:0.3;fill:#141414;fill-opacity:1;stroke-width:2.74436;stroke-linecap:round;filter:url(#filter1057)"
+     id="rect1055"
+     width="55"
+     height="55"
+     x="4.5"
+     y="4.5"
+     ry="15"
+     transform="scale(0.26457813)" />
+  <rect
+     ry="3.9686718"
+     y="1.1906021"
+     x="1.1906018"
+     height="14.551796"
+     width="14.551796"
+     id="rect1045"
+     style="fill:url(#linearGradient1053);fill-opacity:1;stroke-width:0.726098;stroke-linecap:round" />
+  <path
+     fill-rule="evenodd"
+     d="M 8.466,3.77 C 8.089,4.694 7.862,5.299 7.442,6.195 7.699,6.468 8.015,6.785 8.528,7.145 7.976,6.917 7.6,6.69 7.319,6.453 6.782,7.573 5.941,9.17 4.233,12.238 5.575,11.463 6.616,10.986 7.585,10.803 A 2.457,2.457 0 0 1 7.522,10.229 L 7.523,10.186 C 7.544,9.326 7.992,8.665 8.522,8.71 c 0.53,0.045 0.941,0.778 0.92,1.638 A 2.427,2.427 0 0 1 9.388,10.81 c 0.959,0.188 1.988,0.664 3.312,1.428 -0.261,-0.48 -0.494,-0.913 -0.717,-1.326 -0.35,-0.272 -0.716,-0.625 -1.461,-1.008 0.512,0.133 0.88,0.287 1.165,0.459 C 9.425,6.151 9.242,5.591 8.466,3.77 Z"
+     id="path2"
+     style="fill:#c8c8c8;fill-opacity:1" />
+</svg>

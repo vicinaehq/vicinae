@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" width="24" height="24" viewBox="0 0 24 24">
+  <style type="text/css" id="current-color-scheme">
+      .ColorScheme-Text {
+        color:#f2f2f2;
+      }
+      .ColorScheme-Background {
+        color:#eff0f1;
+      }
+      .ColorScheme-Highlight {
+        color:#3daee9;
+      }
+      .ColorScheme-ButtonText {
+        color:#f2f2f2;
+      }
+      </style>
+  <g transform="translate(1,1)">
+    <g transform="translate(22,44.000008) translate(-22,-44)" id="ime-sunpinyin">
+      <path style="fill:currentColor;fill-opacity:1;stroke:none" d="m 11,1.5136719 c -0.255619,0 -0.511163,0.099053 -0.707031,0.2949219 L 8.1015625,4 5,4 C 4.4459998,4 4,4.4459998 4,5 L 4,8.0996094 1.8066406,10.292969 c -0.3917372,0.391737 -0.3917372,1.022325 0,1.414062 L 4,13.900391 4,17 c 0,0.554 0.4459998,1 1,1 l 3.0996094,0 2.1933596,2.193359 c 0.391737,0.391738 1.022325,0.391738 1.414062,0 L 13.900391,18 17,18 c 0.554,0 1,-0.446 1,-1 l 0,-3.101562 2.191406,-2.191407 c 0.391737,-0.391737 0.391737,-1.022325 0,-1.414062 L 18,8.1015625 18,5 C 18,4.4459998 17.554,4 17,4 L 13.898438,4 11.707031,1.8085938 C 11.511163,1.612725 11.255619,1.5136719 11,1.5136719 Z m -0.09961,3.1875 1.5,2 L 12.001953,7 l 1.996094,0 -0.398438,-0.2988281 1.5,-2 0.800782,0.5996093 L 14.625,7 17,7 l 0,1 -2,0 0,3 2,0 0,1 -2,0 0,5 -1,0 0,-5 -2.041016,0 c -0.09614,1.118701 -0.477091,2.02943 -0.925781,2.806641 -0.620717,1.075 -1.6914061,2.058593 -1.6914061,2.058593 L 8.6582031,16.136719 c 0,0 1.0124506,-0.968778 1.5097659,-1.830078 C 10.569285,13.61152 10.872261,12.895032 10.960938,12 L 9,12 l 0,-0.941406 -1,0.5 L 8,17 5,17 5,16 7,16 7,12.058594 5.2226562,12.947266 4.7773438,12.052734 7,10.941406 7,8 5,8 5,7 7,7 7,5 8,5 8,7 9,7 9,8 8,8 8,10.441406 8.7773438,10.052734 9.2226562,10.947266 9.1171875,11 11,11 11,8 10,8 10,7 11.375,7 10.099609,5.3007812 10.900391,4.7011719 Z M 12,8 l 0,3 2,0 0,-3 -2,0 z" class="ColorScheme-Text" id="path6-8"/>
+      <rect style="fill:none;fill-opacity:1;stroke:none" id="rect4138-6" width="22" height="22" x="0" y="0"/>
+    </g>
+  </g>
+</svg>

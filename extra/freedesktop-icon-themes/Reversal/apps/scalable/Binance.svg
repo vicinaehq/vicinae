@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="64"
+   height="64"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="Binance.svg"
+   inkscape:version="1.3 (0e150ed6c4, 2023-07-21)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1">
+    <filter
+       id="filter2076-3"
+       x="-0.048000001"
+       y="-0.048000001"
+       width="1.096"
+       height="1.096"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         stdDeviation="1.1"
+         id="feGaussianBlur1041" />
+    </filter>
+    <linearGradient
+       id="linearGradient2070-6"
+       x1="145"
+       x2="200"
+       y1="59"
+       y2="4"
+       gradientTransform="translate(-140.5,0.50000119)"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         stop-color="#ffc841"
+         offset="0"
+         id="stop1034" />
+      <stop
+         stop-color="#ffbe37"
+         offset=".4925"
+         id="stop1036" />
+      <stop
+         stop-color="#ffc841"
+         offset="1"
+         id="stop1038" />
+    </linearGradient>
+    <filter
+       color-interpolation-filters="sRGB"
+       height="1.184088"
+       width="1.184088"
+       y="-0.092043995"
+       x="-0.092043995"
+       id="filter1091">
+      <feGaussianBlur
+         id="feGaussianBlur22"
+         stdDeviation="0.30215974" />
+    </filter>
+    <filter
+       color-interpolation-filters="sRGB"
+       height="1.184088"
+       width="1.184088"
+       y="-0.092043996"
+       x="-0.092043996"
+       id="filter1">
+      <feGaussianBlur
+         id="feGaussianBlur1"
+         stdDeviation="0.30215974" />
+    </filter>
+    <linearGradient
+       gradientUnits="userSpaceOnUse"
+       y2="-13.703"
+       y1="-5.5948"
+       x2="16.465"
+       x1="8.5858002"
+       id="linearGradient1063"
+       gradientTransform="matrix(3.7796021,0,0,3.7796021,-16.895198,66.00319)">
+      <stop
+         id="stop12"
+         offset="0"
+         stop-color="#f5f5f5" />
+      <stop
+         id="stop14"
+         offset="1"
+         stop-color="#fff" />
+    </linearGradient>
+    <linearGradient
+       gradientUnits="userSpaceOnUse"
+       y2="-11.992"
+       y1="-5.3551998"
+       x2="15.926"
+       x1="8.9222002"
+       id="linearGradient1071"
+       gradientTransform="matrix(3.7796021,0,0,3.7796021,-16.895198,66.00319)">
+      <stop
+         id="stop17"
+         offset="0"
+         stop-color="#ffdc96" />
+      <stop
+         id="stop19"
+         offset="1"
+         stop-color="#fff" />
+    </linearGradient>
+  </defs>
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="4.3531261"
+     inkscape:cx="30.093316"
+     inkscape:cy="21.823397"
+     inkscape:window-width="1920"
+     inkscape:window-height="941"
+     inkscape:window-x="0"
+     inkscape:window-y="34"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg1" />
+  <rect
+     id="rect1050"
+     opacity="0.3"
+     filter="url(#filter2076)"
+     ry="13.002"
+     rx="13.002"
+     height="55"
+     width="55"
+     y="4.5"
+     x="4.5000014"
+     style="filter:url(#filter2076-3)" />
+  <rect
+     id="rect1052"
+     ry="13.002"
+     rx="13.002"
+     height="55.000004"
+     width="55.000004"
+     y="4.5000014"
+     x="4.5000014"
+     style="fill:#ffbe37;fill-opacity:1" />
+  <path
+     d="m23.795 32-3.366 3.39-3.39-3.39 3.39-3.39ZM32 23.795l5.797 5.797 3.39-3.39-5.798-5.773L32 17.039l-3.39 3.39-5.773 5.774 3.39 3.39zm11.571 4.816L40.205 32l3.39 3.39L46.96 32ZM32 40.205l-5.797-5.797-3.366 3.39 5.797 5.796L32 46.96l3.39-3.389 5.797-5.797-3.39-3.366Zm0-4.816L35.39 32 32 28.61 28.61 32Z"
+     style="fill:#814b13;fill-opacity:1;stroke-width:.45834726"
+     id="path1" />
+</svg>

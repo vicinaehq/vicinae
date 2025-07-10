@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="64"
+   height="64"
+   version="1"
+   id="svg4140"
+   sodipodi:docname="team-fortress2.svg"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview4142"
+     pagecolor="#ffffff"
+     bordercolor="#999999"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="false"
+     inkscape:zoom="4.4746601"
+     inkscape:cx="30.840331"
+     inkscape:cy="6.3691989"
+     inkscape:window-width="1920"
+     inkscape:window-height="989"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg4140" />
+  <defs
+     id="defs4130">
+    <linearGradient
+       id="linearGradient1092"
+       x1="7.9373"
+       x2="7.9373"
+       y1="15.081"
+       y2="1.852"
+       gradientTransform="matrix(3.7796,0,0,3.7796,88.498342,0)"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         stop-color="#df162d"
+         offset="0"
+         id="stop4125" />
+      <stop
+         stop-color="#ff881f"
+         offset="1"
+         id="stop4127" />
+    </linearGradient>
+    <filter
+       id="filter1057-1"
+       x="-0.026999999"
+       y="-0.026999999"
+       width="1.054"
+       height="1.054"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         stdDeviation="0.61875"
+         id="feGaussianBlur4261" />
+    </filter>
+    <linearGradient
+       id="linearGradient980-8"
+       x1="-17.007"
+       x2="-2.4549999"
+       y1="15.742"
+       y2="1.1906"
+       gradientTransform="matrix(3.7796,0,0,3.7796,68.783001,0)"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         stop-color="#ff8228"
+         offset="0"
+         id="stop4264" />
+      <stop
+         stop-color="#ff7346"
+         offset=".49173"
+         id="stop4266" />
+      <stop
+         stop-color="#ff8c55"
+         offset="1"
+         id="stop4268" />
+    </linearGradient>
+    <filter
+       id="filter859-2"
+       x="-0.19863708"
+       y="-0.085965605"
+       width="1.3972742"
+       height="1.1719312"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         stdDeviation="0.18176567"
+         id="feGaussianBlur4271" />
+    </filter>
+  </defs>
+  <rect
+     x="4.4999995"
+     y="4.4999995"
+     width="55"
+     height="55"
+     ry="15"
+     fill="#141414"
+     filter="url(#filter1057-1)"
+     opacity="0.3"
+     stroke-linecap="round"
+     stroke-width="2.7444"
+     id="rect4276" />
+  <rect
+     x="4.4999995"
+     y="4.4999995"
+     width="55"
+     height="55"
+     ry="14.895"
+     fill="url(#linearGradient980-8)"
+     id="rect4278"
+     style="fill:url(#linearGradient980-8)" />
+  <path
+     d="m 33.575847,12.061311 a 20.011425,20.011425 0 0 0 -19.62757,11.335563 l 10.94534,2.932584 a 9.0961024,9.0961024 0 0 1 5.746917,-3.311891 l 2.935313,-10.955346 z m 7.027648,1.886532 -2.932583,10.94534 a 9.0961024,9.0961024 0 0 1 3.311891,5.746918 l 10.955346,2.935312 A 20.011425,20.011425 0 0 0 40.602586,13.946024 Z m -28.541748,16.47577 a 20.011425,20.011425 0 0 0 11.334652,19.62757 l 2.933493,-10.94534 A 9.0961024,9.0961024 0 0 1 23.017091,33.357106 L 12.061747,30.422704 Z m 27.04453,7.246865 a 9.0961024,9.0961024 0 0 1 -5.746008,3.311891 l -2.936222,10.956255 a 20.011425,20.011425 0 0 0 19.62757,-11.333743 l -10.94534,-2.933493 z"
+     fill="#ffffff"
+     id="path4539"
+     style="stroke-width:0.90961" />
+</svg>

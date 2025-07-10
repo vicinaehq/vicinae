@@ -1,0 +1,22 @@
+<svg width="22" height="22" version="1.1" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
+ <defs>
+  <style id="current-color-scheme" type="text/css">.ColorScheme-Accent {
+        color:#3593e6;
+      }</style>
+  <linearGradient id="a" x1="445.28" x2="445.28" y1="179.28" y2="200.07" gradientTransform="matrix(.27479 0 0 .26936 -114.26 -42.097)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#60c0f0" offset="0"/>
+   <stop stop-color="#83d4fb" offset="1"/>
+  </linearGradient>
+ </defs>
+ <g transform="translate(1,1)">
+  <g transform="translate(0 -1030.4)">
+   <g transform="matrix(1.9133 0 0 1.9133 -6.1992 1024)">
+    <path d="m4.053 4.328h1.901c0.53 0 0.552 0.02 1.088 0.444 0.491 0.371 0.668 0.303 1.315 0.303h4.523a0.81 0.81 0 0 1 0.813 0.813v4.863a0.81 0.81 0 0 1-0.813 0.813h-8.827a0.81 0.81 0 0 1-0.812-0.813v-5.61a0.81 0.81 0 0 1 0.812-0.813" fill="#2c96d3"/>
+    <rect x="3.241" y="5.822" width="10.451" height="7.092" rx=".812" ry=".796" fill="url(#a)"/>
+    <path d="m4.053 5.822a0.803 0.803 0 0 0-0.812 0.796v0.187c0-0.441 0.362-0.796 0.812-0.796h8.827c0.45 0 0.812 0.355 0.812 0.796v-0.187a0.803 0.803 0 0 0-0.812-0.796z" fill="#ffffff" opacity=".08"/>
+    <path d="m3.24 11.931v0.187c0 0.44 0.363 0.796 0.813 0.796h8.827c0.45 0 0.812-0.355 0.812-0.796v-0.187a0.803 0.803 0 0 1-0.812 0.796h-8.827a0.803 0.803 0 0 1-0.812-0.796z" opacity=".15"/>
+    <path d="m4.053 5.635a0.803 0.803 0 0 0-0.812 0.796v0.187c0-0.441 0.362-0.796 0.812-0.796h8.827c0.45 0 0.812 0.355 0.812 0.796v-0.187a0.803 0.803 0 0 0-0.812-0.796z" opacity=".05"/>
+   </g>
+  </g>
+ </g>
+</svg>

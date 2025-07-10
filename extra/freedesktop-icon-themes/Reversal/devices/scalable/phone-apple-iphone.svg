@@ -1,0 +1,20 @@
+<svg id="svg8" version="1.1" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+    <defs id="defs2">
+        <linearGradient id="linearGradient2554" x1="31.756" x2="30.031" y1="44.109" y2="25.774" gradientTransform="matrix(4.0863 0 0 4.0001 -111.78 -117.75)" gradientUnits="userSpaceOnUse">
+            <stop id="stop1" stop-color="#353535" offset="0"/>
+            <stop id="stop2" stop-color="#979797" offset="1"/>
+        </linearGradient>
+    </defs>
+    <path id="path2" d="m22.686 6.5681h18.629c1.8233 0 3.2911 1.4369 3.2911 3.2217v44.3056c0 1.7849-1.4679 3.2217-3.2911 3.2217h-18.629c-1.8233 0-3.2911-1.4369-3.2911-3.2217v-44.3056c0-1.7848 1.4679-3.2217 3.2911-3.2217z" fill="url(#linearGradient2554)" stroke="#050505" stroke-linecap="round" stroke-linejoin="round" style="paint-order:stroke fill markers"/>
+    <path id="path3" d="m22.684 6.5681h18.632c1.8239 0 3.2921 1.4207 3.2921 3.1854v44.382c0 1.7648-1.4683 3.1854-3.2921 3.1854h-18.632c-1.8239 0-3.2921-1.4207-3.2921-3.1854v-44.382c0-1.7647 1.4683-3.1854 3.2921-3.1854z" fill="none" stroke="#000" stroke-width="1.1628"/>
+    <g id="g1" stroke-width="0">
+        <path id="path4" d="m27.066 54.241a0.46244 0.46244 0 0 0-0.46164 0.46164 0.46244 0.46244 0 0 0 0.46164 0.46364h9.8669a0.46244 0.46244 0 0 0 0.46364-0.46364 0.46244 0.46244 0 0 0-0.46364-0.46164z" fill="#a5a5a5"/>
+        <rect id="rect4" x="26.686001" y="8.7411118" width="10.629" height="2.7751" ry="1.3875999" fill-opacity=".90577" stroke-miterlimit="4.4" style="paint-order:markers fill stroke"/>
+        <g id="g8" transform="translate(1.4866)" stroke-miterlimit="4.4">
+            <rect id="rect5" x="20.027" y="48.01" width="4.3029" height="4.2512" ry="1.3193" fill="#69cf50"/>
+            <rect id="rect6" x="25.584" y="48.01" width="4.3029" height="4.2512" ry="1.3193" fill="#34b9ff" style="paint-order:markers fill stroke"/>
+            <rect id="rect7" x="31.14" y="48.01" width="4.3029" height="4.2512" ry="1.3193" fill="#69cf50" style="paint-order:markers fill stroke"/>
+            <rect id="rect8" x="36.697" y="48.01" width="4.3029" height="4.2512" ry="1.3193" fill="#e74064" style="paint-order:markers fill stroke"/>
+        </g>
+    </g>
+</svg>

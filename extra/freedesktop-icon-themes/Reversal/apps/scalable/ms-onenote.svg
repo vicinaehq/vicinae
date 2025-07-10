@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:title/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <linearGradient id="linearGradient1030" x1="78.5" x2="106.56" y1="55.812" y2="27.75" gradientTransform="matrix(1.0489,0,0,1.0489,-50.005,2.2535)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#8232cd" offset="0"/>
+   <stop stop-color="#7328b4" offset="1"/>
+  </linearGradient>
+  <style type="text/css"/>
+  <style type="text/css"/>
+  <style type="text/css"/>
+  <style type="text/css"/>
+  <style type="text/css"/>
+  <style type="text/css"/>
+  <filter id="filter1057-6" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053-7" x1="-97.428" x2="-97.428" y1="60.097" y2="5.0898" gradientTransform="translate(64.126 -.58)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#5a466e" offset="0"/>
+   <stop stop-color="#5f328c" offset=".23921"/>
+   <stop stop-color="#69399f" offset=".23921"/>
+   <stop stop-color="#782dc4" offset=".52437"/>
+   <stop stop-color="#a147e8" offset=".52437"/>
+   <stop stop-color="#a53cdc" offset=".76649"/>
+   <stop stop-color="#ce63ff" offset=".76649"/>
+   <stop stop-color="#b455e6" offset="1"/>
+  </linearGradient>
+  <linearGradient id="linearGradient1075" x1="8.9333" x2="8.9333" y1="1.1166" y2="15.677" gradientTransform="matrix(4.0263 0 0 4.0263 -69.85 -1.4141)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#b455e6" offset="0"/>
+   <stop stop-color="#cd64ff" offset=".22539"/>
+   <stop stop-color="#be64e6" offset="1"/>
+  </linearGradient>
+  <linearGradient id="linearGradient1080" x1="35.572" x2="35.572" y1="9.6794" y2="-45.321" gradientTransform="matrix(1.1019 0 0 1.1019 -3.0622 51.815)" gradientUnits="userSpaceOnUse">
+   <stop offset="0"/>
+   <stop stop-opacity="0" offset="1"/>
+  </linearGradient>
+ </defs>
+ <rect x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057-6)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+ <g transform="translate(67.374 .070001)">
+  <rect x="-62.874" y="4.43" width="55" height="55" ry="15" fill="url(#linearGradient1053-7)" stroke-linecap="round" stroke-width="2.7444"/>
+  <path d="m-42.054 4.43v55h19.18c8.31 0 15-6.69 15-15v-25c0-8.31-6.69-15-15-15z" fill="url(#linearGradient1075)" fill-rule="evenodd" stroke-width="4.0263"/>
+ </g>
+ <path d="m19.5 4.5c-8.31 0-15 6.69-15 15v25c0 8.31 6.69 15 15 15h25c8.31 0 15-6.69 15-15v-25c0-8.31-6.69-15-15-15z" fill="url(#linearGradient1080)" fill-rule="evenodd" opacity=".15" stroke-width="4.1646"/>
+ <circle cx="47.219" cy="45.719" r="15.406" fill="url(#linearGradient1030)" fill-rule="evenodd" style="paint-order:stroke fill markers"/>
+ <path d="m43.513 36.375h-4.7431l-0.05092 18.688h4.7939v-11.288l7.4121 11.288h4.7431l0.05083-18.688h-4.7939v11.288z" fill="#fff" stroke-width=".9344"/>
+ <g transform="translate(-63.901)" fill="#5e4aa6">
+  <g transform="translate(-80.134,-57.985)" image-rendering="optimizeSpeed">
+   <circle cx="-1248.7" cy="-1241.6" r="0"/>
+   <circle cx="-149.15" cy="23.855" r="0" fill-rule="evenodd"/>
+   <circle cx="-1248.7" cy="-1241.6" r="0"/>
+   <circle cx="-149.15" cy="23.855" r="0" fill-rule="evenodd"/>
+  </g>
+  <circle cx="-1248.7" cy="-1241.6" r="0"/>
+  <circle cx="-149.15" cy="23.855" r="0" fill-rule="evenodd"/>
+  <g transform="matrix(3.7796,0,0,3.7796,5.8415e-4,-1.7177e-4)" stroke-width=".26458">
+   <g transform="translate(-.0272 .0065001)">
+    <circle cx="-330.35" cy="-328.38" r="0"/>
+    <circle cx="-312.11" cy="-326.25" r="0"/>
+    <circle cx="-306.02" cy="-333.07" r="0"/>
+    <circle cx="-308.84" cy="-326.01" r="0"/>
+    <circle cx="-330.35" cy="-328.38" r="0"/>
+    <circle cx="-312.11" cy="-326.25" r="0"/>
+    <circle cx="-306.02" cy="-333.07" r="0"/>
+    <circle cx="-308.84" cy="-326.01" r="0"/>
+   </g>
+   <g transform="translate(-.02705 .0064503)">
+    <circle cx="-330.35" cy="-328.38" r="0"/>
+    <circle cx="-312.11" cy="-326.25" r="0"/>
+    <circle cx="-306.02" cy="-333.07" r="0"/>
+    <circle cx="-308.84" cy="-326.01" r="0"/>
+   </g>
+  </g>
+  <g transform="translate(-79.199,-30.995)">
+   <circle cx="-1248.7" cy="-1241.6" r="0"/>
+   <circle cx="-1140.3" cy="-1301.8" r="0"/>
+   <circle cx="-1158.1" cy="-1246" r="0"/>
+  </g>
+  <circle cx="-1236.5" cy="-1298.7" r="0"/>
+  <circle cx="-136.95" cy="-33.178" r="0" fill-rule="evenodd"/>
+ </g>
+ <g transform="translate(-128.91 -.070001)" fill="#5e4aa6">
+  <g transform="translate(-80.134,-57.985)" image-rendering="optimizeSpeed">
+   <circle cx="-1248.7" cy="-1241.6" r="0"/>
+   <circle cx="-149.15" cy="23.855" r="0" fill-rule="evenodd"/>
+   <circle cx="-1248.7" cy="-1241.6" r="0"/>
+   <circle cx="-149.15" cy="23.855" r="0" fill-rule="evenodd"/>
+  </g>
+  <circle cx="-1248.7" cy="-1241.6" r="0"/>
+  <circle cx="-149.15" cy="23.855" r="0" fill-rule="evenodd"/>
+  <g transform="matrix(3.7796,0,0,3.7796,5.8415e-4,-1.7177e-4)" stroke-width=".26458">
+   <g transform="translate(-.0272 .0065001)">
+    <circle cx="-330.35" cy="-328.38" r="0"/>
+    <circle cx="-312.11" cy="-326.25" r="0"/>
+    <circle cx="-306.02" cy="-333.07" r="0"/>
+    <circle cx="-308.84" cy="-326.01" r="0"/>
+    <circle cx="-330.35" cy="-328.38" r="0"/>
+    <circle cx="-312.11" cy="-326.25" r="0"/>
+    <circle cx="-306.02" cy="-333.07" r="0"/>
+    <circle cx="-308.84" cy="-326.01" r="0"/>
+   </g>
+   <g transform="translate(-.02705 .0064503)">
+    <circle cx="-330.35" cy="-328.38" r="0"/>
+    <circle cx="-312.11" cy="-326.25" r="0"/>
+    <circle cx="-306.02" cy="-333.07" r="0"/>
+    <circle cx="-308.84" cy="-326.01" r="0"/>
+   </g>
+  </g>
+  <g transform="translate(-79.199,-30.995)">
+   <circle cx="-1248.7" cy="-1241.6" r="0"/>
+   <circle cx="-1140.3" cy="-1301.8" r="0"/>
+   <circle cx="-1158.1" cy="-1246" r="0"/>
+  </g>
+  <circle cx="-1236.5" cy="-1298.7" r="0"/>
+  <circle cx="-136.95" cy="-33.178" r="0" fill-rule="evenodd"/>
+ </g>
+</svg>

@@ -1,0 +1,17 @@
+<svg width="32" height="32" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <linearGradient id="a" x1="7.937" x2="7.937" y1="15.081" y2="1.852" gradientTransform="translate(.001 .015) scale(1.8897)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#8e8d92" offset="0"/>
+   <stop stop-color="#b3b2b6" offset="1"/>
+  </linearGradient>
+ </defs>
+ <image x=".5" y="1" width="31" height="31" image-rendering="optimizeQuality" preserveAspectRatio="none" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB8AAAAfCAYAAAAfrhY5AAAACXBIWXMAAA7DAAAOwwHHb6hkAAAA GXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAAPdJREFUSMftl7GuwjAMRY9NXlk6 8P9fycBCaWsGbJTmwQIkMORKVqWo6rm+zWCLmVFKRATI61VZlD0ASXkmIjsgAXtgAHZvwBdgAs7A bGbLQ7h3m4DR6++DnV+Ak9ccKaTsxQQcHJzehJaKNBNwdDNoFnXZ8Scl/t0RGJ13g2dxJ+pqw1ER Ub9cNTp+lsBeRFT9YGgAzg0MgARcG8M14DQE5wbuF+4r6vAO7/AO7/CqcGvMtYAbsDY0cOcFfGoM nwBTM1t9rr40MBBj9NnM1vjnc8zUleEbjnLbZZZsqK+RwGZxiM0lFa6O/qy6sfzWrlZzS/VL/U9X YfxzIl867ocAAAAASUVORK5CYII="/>
+ <rect x="2" y="2" width="28" height="28" rx="7" ry="7" fill="url(#a)"/>
+ <path d="M9 2C5.122 2 2 5.122 2 9v14c0 3.878 3.122 7 7 7h14c3.878 0 7-3.122 7-7V9c0-3.878-3.122-7-7-7H9zm0 .5h14c3.601 0 6.5 2.899 6.5 6.5v14c0 3.601-2.899 6.5-6.5 6.5H9A6.486 6.486 0 0 1 2.5 23V9c0-3.601 2.899-6.5 6.5-6.5z" fill="#fff" opacity=".15"/>
+ <g transform="translate(0,-1)" fill="#ffffff">
+  <path d="m11.5 16a2.5 2.5 0 0 0-1.9922 1h-1.5078c-0.554 0-1 0.446-1 1v1c0 0.554 0.446 1 1 1h1.5078a2.5 2.5 0 0 0 1.9922 1 2.5 2.5 0 0 0 1.9922-1h10.508c0.554 0 1-0.446 1-1v-1c0-0.554-0.446-1-1-1h-10.502a2.5 2.5 0 0 0-1.998-1zm0 1a1.5 1.5 0 0 1 1.5 1.5 1.5 1.5 0 0 1-1.5 1.5 1.5 1.5 0 0 1-1.5-1.5 1.5 1.5 0 0 1 1.5-1.5zm-3.5 1h1.0566a2.5 2.5 0 0 0-0.056641 0.5 2.5 2.5 0 0 0 0.056641 0.5h-1.0566zm5.9492 0h10.051v1h-10.057a2.5 2.5 0 0 0 0.056641-0.5 2.5 2.5 0 0 0-0.050781-0.5z"/>
+  <path d="m10.5 8c-1.939 0-3.5 1.561-3.5 3.5s1.561 3.5 3.5 3.5h11c1.939 0 3.5-1.561 3.5-3.5s-1.561-3.5-3.5-3.5zm0 1h11c1.385 0 2.5 1.115 2.5 2.5s-1.115 2.5-2.5 2.5h-11c-1.385 0-2.5-1.115-2.5-2.5s1.115-2.5 2.5-2.5z" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="21.5" cy="11.5" r="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="m20.5 21a2.5 2.5 0 0 1 1.9922 1h1.5078c0.554 0 1 0.446 1 1v1c0 0.554-0.446 1-1 1h-1.5078a2.5 2.5 0 0 1-1.9922 1 2.5 2.5 0 0 1-1.9922-1h-10.508c-0.554 0-1-0.446-1-1v-1c0-0.554 0.446-1 1-1h10.502a2.5 2.5 0 0 1 1.998-1zm0 1a1.5 1.5 0 0 0-1.5 1.5 1.5 1.5 0 0 0 1.5 1.5 1.5 1.5 0 0 0 1.5-1.5 1.5 1.5 0 0 0-1.5-1.5zm3.5 1h-1.0566a2.5 2.5 0 0 1 0.056641 0.5 2.5 2.5 0 0 1-0.056641 0.5h1.0566zm-5.9492 0h-10.051v1h10.057a2.5 2.5 0 0 1-0.056641-0.5 2.5 2.5 0 0 1 0.050781-0.5z"/>
+ </g>
+</svg>

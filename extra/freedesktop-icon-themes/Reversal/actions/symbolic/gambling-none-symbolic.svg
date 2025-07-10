@@ -1,0 +1,7 @@
+<svg width="16" height="16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+ <path d="m3.9844 1c-1.6531 0-2.9844 1.3312-2.9844 2.9844v8.0312c0 1.6531 1.3312 2.9844 2.9844 2.9844h8.0312c1.6531 0 2.9844-1.3312 2.9844-2.9844v-8.0312c0-1.6531-1.3312-2.9844-2.9844-2.9844zm0.015625 1h8c1.108 0 2 0.892 2 2v8c0 1.108-0.892 2-2 2h-8c-1.108 0-2-0.892-2-2v-8c0-1.108 0.892-2 2-2z" fill="#363636" opacity=".35" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="paint-order:stroke fill markers"/>
+ <circle cx="11" cy="5" r="1" fill="#363636" opacity=".35" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="paint-order:stroke fill markers"/>
+ <circle cx="5" cy="11" r="1" fill="#363636" opacity=".35" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="paint-order:stroke fill markers"/>
+ <circle cx="8" cy="8" r="1" fill="#363636" opacity=".35" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="paint-order:stroke fill markers"/>
+ <rect transform="rotate(45)" x=".31371" y="-.5" width="22" height="1" rx=".5" ry=".5" fill="#363636"/>
+</svg>

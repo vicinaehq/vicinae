@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <filter id="filter1057-37" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1021" x1="-72.168" x2="-17.552" y1="59.492" y2="4.8762" gradientTransform="translate(76.449)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#ff7832" offset="0"/>
+   <stop stop-color="#ffbe37" offset=".50754"/>
+   <stop stop-color="#ffdc32" offset="1"/>
+  </linearGradient>
+ </defs>
+ <g>
+  <rect x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057-37)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+  <path d="m17.502 4.5c-7.2031 0-13.002 5.7988-13.002 13.002v28.996c0 7.2031 5.7988 13.002 13.002 13.002h28.996c7.2031 0 13.002-5.7988 13.002-13.002v-28.996c0-7.2031-5.7988-13.002-13.002-13.002z" fill="url(#linearGradient1021)" stroke-linecap="round" stroke-width="4.648"/>
+  <path d="m22.625 17c-3.1062 0-5.625 2.5125-5.625 5.625 0 3.1062 2.5125 5.625 5.625 5.625h5.195l-7.93 7.8912c-2.1962 2.1962-2.1962 5.7725 0 7.9688s5.7725 2.1962 7.9688 0l7.8912-7.93v5.195c0 3.1062 2.5125 5.625 5.625 5.625 3.1062 0 5.625-2.5125 5.625-5.625v-18.75c0-3.1062-2.5125-5.625-5.625-5.625z" fill="#ff5326"/>
+ </g>
+</svg>

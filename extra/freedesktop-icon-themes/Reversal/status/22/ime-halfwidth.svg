@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" width="22" height="22">
+    <style type="text/css" id="current-color-scheme">
+      .ColorScheme-Text {
+        color:#f2f2f2;
+      }
+      .ColorScheme-Background {
+        color:#eff0f1;
+      }
+      .ColorScheme-Highlight {
+        color:#3daee9;
+      }
+      .ColorScheme-ButtonText {
+        color:#f2f2f2;
+      }
+      </style>
+    <g id="ime-halfwidth" transform="translate(154,-81.999973) translate(-154,-88)">
+    <rect style="fill:none;fill-opacity:1;stroke:none" id="rect4222" width="22" height="22" x="-2.4709701e-09" y="170"/>
+    <path id="ellipse4224" transform="translate(-154,81.999973)" d="M 167.56641 91.431641 A 8 7.9999995 0 0 1 168 94 A 8 7.9999995 0 0 1 160 102 A 8 7.9999995 0 0 1 157.43359 101.56836 A 8 7.9999995 0 0 0 165 107 A 8 7.9999995 0 0 0 173 99 A 8 7.9999995 0 0 0 167.56641 91.431641 z " style="fill:currentColor;fill-opacity:1;stroke:none" class="ColorScheme-Text"/>
+  </g>
+</svg>

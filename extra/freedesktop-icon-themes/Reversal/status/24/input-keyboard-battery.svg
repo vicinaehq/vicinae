@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" width="24" height="24" viewBox="0 0 24 24">
+  <style type="text/css" id="current-color-scheme">.ColorScheme-Text {
+        color:#f2f2f2;
+      }
+      .ColorScheme-Background {
+        color:#eff0f1;
+      }
+      .ColorScheme-Highlight {
+        color:#3daee9;
+      }
+      .ColorScheme-ButtonText {
+        color:#f2f2f2;
+      }
+    </style>
+  <g transform="translate(1,1)">
+    <g id="22-22-input-keyboard-battery" transform="translate(-332,-396.36218) translate(-16,-138)">
+      <rect x="348" y="534.36218" width="22" height="22" ry="0" fill="none"/>
+      <path class="ColorScheme-Text" transform="translate(332,396.36218)" d="m20 141v14l7 2 7-2v-5h-1v2h-12v-10h8v-1zm12 0-2 5h2v3l2-5h-2zm-5.5625 3-2.4375 6h1.074219l0.40625-1h3.039062l0.40625 1h1.074219l-2.439453-6h-0.537109l-0.023438 0.00977-0.023438-0.00977zm0.5625 1.25781 1.113281 2.74219h-2.226562zm-6 7.74219h12v1h-12z" fill="currentColor"/>
+    </g>
+  </g>
+</svg>

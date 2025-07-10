@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" xmlns="http://www.w3.org/2000/svg">
+ <defs>
+  <linearGradient id="linearGradient13131" x1="31" x2="31" y1="16" y2="48" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" offset="0"/>
+   <stop stop-color="#d2dce5" offset="1"/>
+  </linearGradient>
+  <filter id="filter1057-7" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053-5" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="matrix(1 0 0 1 55.999 -2.6231)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#323741" offset="0"/>
+   <stop stop-color="#465064" offset="1"/>
+  </linearGradient>
+ </defs>
+ <g transform="translate(75.501 2.1125)" stroke-linecap="round">
+  <rect transform="matrix(1 0 0 1 -75.501 -2.1127)" x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057-7)" opacity=".3" stroke-width="2.7444"/>
+  <rect x="-71.002" y="2.3871" width="55.001" height="55.001" ry="15" fill="url(#linearGradient1053-5)" stroke-width="2.7444"/>
+ </g>
+ <path d="m27 13v10h10v-10h-10zm14 0v10h10v-6c0-2.216-1.784-4-4-4h-6zm-28 14v10h10v-10h-10zm14 0v10h10v-10h-10zm14 0v10h10v-10h-10zm-28 14v6c0 2.216 1.784 4 4 4h6v-10h-10zm14 0v10h10v-10h-10z" fill="url(#linearGradient13131)"/>
+</svg>

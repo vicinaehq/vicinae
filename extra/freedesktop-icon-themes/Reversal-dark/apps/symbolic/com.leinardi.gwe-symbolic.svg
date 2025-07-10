@@ -1,0 +1,7 @@
+<svg width="16" height="16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+ <defs>
+  <style id="current-color-scheme" type="text/css">.ColorScheme-Text { color:#565656; } .ColorScheme-Highlight { color:#4285f4; } .ColorScheme-NeutralText { color:#ff9800; } .ColorScheme-PositiveText { color:#4caf50; } .ColorScheme-NegativeText { color:#f44336; }</style>
+ </defs>
+ <path d="m15.514 2.082c-5.2557 0.69966-8.5781 5.8203-8.5781 5.8203 0-1e-7 3.8985 5.6357 8.2656 6.4922 0.27351-0.36581 0.48909-0.77819 0.625-1.2266-3.2108-0.35661-6.1465-5.1602-6.1465-5.1602s2.4896-3.8886 6.2988-4.416c-0.054583-0.54329-0.21619-1.0536-0.46484-1.5098zm0.48633 3.3262c-2.4531 0.34465-3.918 2.5938-3.918 2.5938l2.3145 2.3398c0.62545-1.2344 1.0132-2.0842 1.6035-2.6172v-2.3164zm-10.352 4.9395c-0.51636 0.49139-2.5658 1.7148-3.002 2.2363 1.3024 1.2909 3.3437 2.483 5.5566 3.416h3.7969c0.42204 0 0.82762-0.065469 1.209-0.18555-2.8811-0.95849-5.2537-3.1053-7.5605-5.4668z" fill="#dedede"/>
+ <path d="m4 0c-2.216 0-4 1.784-4 4v8c0 2.216 1.784 4 4 4h8c2.216 0 4-1.784 4-4v-8c0-2.216-1.784-4-4-4h-8zm0 1h8c1.662 0 3 1.338 3 3v8c0 1.662-1.338 3-3 3h-8c-1.662 0-3-1.338-3-3v-8c0-1.662 1.338-3 3-3z" fill="#dedede" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2857" style="paint-order:stroke fill markers"/>
+</svg>

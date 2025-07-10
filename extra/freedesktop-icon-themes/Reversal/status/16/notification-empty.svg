@@ -1,0 +1,12 @@
+<svg width="16" height="16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+ <style id="current-color-scheme" type="text/css">.ColorScheme-Text {
+            color:#f2f2f2;
+        }
+        .ColorScheme-ButtonFocus {
+            color:#3daee9;
+        }
+        .ColorScheme-NegativeText {
+            color:#da4453;
+        }</style>
+ <path id="circle-outline" class="ColorScheme-Text" d="m8 0a8 8 0 0 0-8 8 8 8 0 0 0 8 8 8 8 0 0 0 8-8 8 8 0 0 0-8-8zm0 1a7 7 0 0 1 7 7 7 7 0 0 1-7 7 7 7 0 0 1-7-7 7 7 0 0 1 7-7z" fill="currentColor"/>
+</svg>

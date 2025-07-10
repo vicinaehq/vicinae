@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" viewBox="0 0 16.933 16.933" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <linearGradient id="linearGradient848-7" x1="145" x2="200" y1="59" y2="4" gradientTransform="matrix(.26459 0 0 .26459 -37.174 .13191)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#e1e1e1" offset="0"/>
+   <stop stop-color="#f5f5f5" offset="1"/>
+  </linearGradient>
+  <linearGradient id="linearGradient1053-9" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="matrix(.26458 0 0 .26458 34.792 -.13493)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#dee0e2" offset="0"/>
+   <stop stop-color="#f1f3f5" stop-opacity=".99608" offset="1"/>
+  </linearGradient>
+  <filter id="filter1057-1" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+ </defs>
+ <g stroke-linecap="round">
+  <rect transform="scale(.26458)" x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057-1)" opacity=".3" stroke-width="2.7444"/>
+  <rect x="1.1906" y="1.1906" width="14.552" height="14.552" ry="3.9687" fill="url(#linearGradient1053-9)" stroke-width=".72611"/>
+  <rect x="1.9843" y="1.9843" width="12.964" height="12.964" ry="3.1749" fill="#262626" stroke-width=".64689"/>
+ </g>
+ <rect x="1.8517" y="1.8516" width="13.229" height="13.229" rx="3.1274" ry="3.1274" fill="url(#linearGradient848-7)" fill-opacity="0" stroke-width=".24052"/>
+ <g transform="matrix(.012645 0 0 .012645 7.8026 7.8469)" fill="#fff">
+  <path d="m408 34-118-164c-6-8-20-15-30-15h-244c-10 0-23 7-29 15l-33 45 86 119c3 4 5 10 5 15s-2 11-5 15l-86 119 33 45c6 8 19 15 29 15h244c10 0 24-7 30-15l118-164c3-4 5-10 5-15s-2-11-5-15zm-202-124c12 0 21 9 21 21s-9 21-21 21-21-9-21-21 9-21 21-21z"/>
+  <path d="m3 49c0 6-2 11-5 15l-119 164c-6 8-20 15-30 15h-146c-7 0-11-3-11-8 0-2 1-5 3-7l130-179-130-179-3-7c0-5 4-8 11-8h146c10 0 24 7 30 15l119 164c3 4 5 10 5 15z"/>
+ </g>
+</svg>

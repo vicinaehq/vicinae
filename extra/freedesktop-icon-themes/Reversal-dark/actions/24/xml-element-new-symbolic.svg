@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="24"
+   height="24"
+   version="1.1"
+   id="svg8162"
+   sodipodi:docname="xml-element-new-symbolic.svg"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs8166" />
+  <sodipodi:namedview
+     id="namedview8164"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="true"
+     inkscape:zoom="13.906433"
+     inkscape:cx="4.3145499"
+     inkscape:cy="11.577375"
+     inkscape:window-width="1920"
+     inkscape:window-height="1014"
+     inkscape:window-x="0"
+     inkscape:window-y="32"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg8162">
+    <inkscape:grid
+       type="xygrid"
+       id="grid8168" />
+  </sodipodi:namedview>
+  <path
+     id="rect8170"
+     style="fill:#dedede;fill-rule:evenodd;stroke-width:0.912871;stroke-linecap:square;stop-color:#000000"
+     d="M 9.1923882 -1.463932 L 9.1923882 2.5356407 L 9.1923882 3.5355339 L 14.191854 3.5355339 L 14.191854 2.5356407 L 10.192281 2.5356407 L 10.192281 -1.463932 L 9.1923882 -1.463932 z M 15.506631 -7.7781746 L 15.506631 -6.7782814 L 19.506203 -6.7782814 L 19.506203 -2.7787087 L 20.506097 -2.7787087 L 20.506097 -6.7782814 L 20.506097 -7.7781746 L 19.506203 -7.7781746 L 15.506631 -7.7781746 z "
+     transform="rotate(45)" />
+  <rect
+     style="fill:#dedede;fill-rule:evenodd;stroke-linecap:square;stop-color:#000000"
+     id="rect8174"
+     width="1"
+     height="8"
+     x="13.420482"
+     y="1.5875039"
+     transform="rotate(15)" />
+  <path
+     id="path8181"
+     style="fill:#dedede;fill-rule:evenodd;stroke-width:0.875;stroke-linecap:square;stop-color:#000000"
+     d="M 15.5,14 A 3.5,3.5 0 0 0 12,17.5 3.5,3.5 0 0 0 15.5,21 3.5,3.5 0 0 0 19,17.5 3.5,3.5 0 0 0 15.5,14 Z M 15,15 h 1 v 2 h 2 v 1 h -2 v 2 h -1 v -2 h -2 v -1 h 2 z" />
+</svg>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" viewBox="0 0 16.933 16.933" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <filter id="filter1057-28" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient980" x1="-17.007" x2="-2.455" y1="15.742" y2="1.1906" gradientTransform="translate(34.962 -.93137)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#ff7d50" offset="0"/>
+   <stop stop-color="#fa4b5a" offset=".49173"/>
+   <stop stop-color="#ff509b" offset="1"/>
+  </linearGradient>
+  <linearGradient id="linearGradient1896" x1="8.3681" x2="8.3681" y1="5.1468" y2="11.387" gradientTransform="translate(16.765 -.93476)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" offset="0"/>
+   <stop stop-color="#ffcdd6" offset="1"/>
+  </linearGradient>
+ </defs>
+ <g fill="#5e4aa6" stroke-width=".26458">
+  <circle cx="-330.38" cy="-328.37" r="0"/>
+  <circle cx="-312.55" cy="-328.38" r="0"/>
+  <circle cx="-295.13" cy="-341.25" r="0"/>
+ </g>
+ <g transform="translate(-16.765 .93137)">
+  <rect transform="matrix(.26458 0 0 .26458 16.765 -.93137)" x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057-28)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+  <rect x="17.955" y=".25923" width="14.552" height="14.552" ry="3.9409" fill="url(#linearGradient980)"/>
+  <path d="m21.156 5.1052 3.4053 6.0156s0.1846 0.32244 0.64858 0.32244c0.46274 0 0.64734-0.32244 0.64734-0.32244s2.3666-3.6244 3.3327-5.5578c0.09723-0.19445 0.20183-0.39136 0.24614-0.60305a1.0276 1.0276 0 0 0 0.0086-0.44304 0.95009 0.95009 0 0 0-0.25475-0.47751 1.0129 1.0129 0 0 0-0.57104-0.2486 1.1852 1.1852 0 0 0-0.65842 0.13291 0.86148 0.86148 0 0 0-0.3409 0.32983 1.0461 1.0461 0 0 0-0.10707 0.45782 1.2479 1.2479 0 0 0 0.07015 0.42828c0.032 0.0874 0.07384 0.17229 0.10707 0.25845 0.02584 0.0739 0.064 0.14398 0.07138 0.22152a0.78764 0.78764 0 0 1-0.03446 0.37043c-0.22152 0.56367-0.60427 1.1039-1.1101 1.435-0.20922 0.1366-0.47751 0.17106-0.72611 0.18214-0.28552 0.0123-0.61535-0.01-0.84549-0.13661-0.23137-0.12553-0.33967-0.34459-0.48489-0.53658-0.66457-0.88241-1.7513-2.8146-1.7513-2.8146s-0.47259-0.83564-1.323-0.32982c-0.84918 0.50704-0.33106 1.3168-0.33106 1.3168z" fill="url(#linearGradient1896)" fill-rule="evenodd"/>
+ </g>
+</svg>

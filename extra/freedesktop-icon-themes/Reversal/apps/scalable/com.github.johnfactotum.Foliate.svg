@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <filter id="filter1057" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="translate(132 -1.01)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#1ca8a8" offset="0"/>
+   <stop stop-color="#0cc" offset="1"/>
+  </linearGradient>
+  <linearGradient id="linearGradient18767" x1="59.092" x2="46.289" y1="216.78" y2="169" gradientTransform="matrix(.4447 0 0 .5416 -1.938 -91.511)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#0cc" offset="0"/>
+   <stop stop-color="#32e5d2" offset="1"/>
+  </linearGradient>
+ </defs>
+ <g stroke-linecap="round">
+  <rect x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057)" opacity=".3" stroke-width="2.7444"/>
+  <rect x="4.999" y="4" width="55.001" height="55.001" ry="15" fill="url(#linearGradient1053)" stroke-width="2.7444"/>
+  <rect x="8" y="7.001" width="48.999" height="48.999" ry="11.999" fill="#f6f5f4" stroke-width="2.4449"/>
+ </g>
+ <rect x="12.001" y="19.503" width="15" height="2.267" rx="0" ry="0" opacity=".1"/>
+ <rect x="12.001" y="24.037" width="15" height="2.267" rx="0" ry="0" opacity=".1"/>
+ <rect x="12.001" y="28.57" width="15" height="2.267" rx="0" ry="0" opacity=".1"/>
+ <rect x="12.001" y="33.103" width="15" height="2.267" rx="0" ry="0" opacity=".1"/>
+ <rect x="12.001" y="37.637" width="15" height="2.267" rx="0" ry="0" opacity=".1"/>
+ <rect x="12.001" y="42.17" width="8.001" height="2.267" rx="0" ry="0" opacity=".1"/>
+ <rect x="36.999" y="17.236" width="12" height="3.4" rx="0" ry="0" fill="#0cc"/>
+ <rect x="36.999" y="24.037" width="15" height="2.267" rx="0" ry="0" opacity=".1"/>
+ <rect x="36.999" y="28.57" width="15" height="2.267" rx="0" ry="0" opacity=".1"/>
+ <rect x="36.999" y="33.104" width="15" height="2.267" rx="0" ry="0" opacity=".1"/>
+ <rect x="36.999" y="37.637" width="11" height="2.267" rx="0" ry="0" opacity=".1"/>
+ <path d="m18.65 8e-3s-3.66 11.068-3.65 16.89c8e-3 4.333 0.49 9.222 2.763 12.557 1.745 2.56 7.395 4.313 7.395 4.313l1.718-0.56s4.17-4.96 4.632-8.238c0.6-4.272-0.99-8.8-2.762-12.556-2.381-5.05-10.096-12.406-10.096-12.406z" fill="url(#linearGradient18767)"/>
+ <g fill="#1ca8a8">
+  <path d="m27.002 42.155c-4.79-21.774-4.664-24.205-7.007-36.188 2.904 11.755 3.934 13.853 8.725 35.627z"/>
+  <path d="m22.055 16.291c1.609-3.39 2.185-4.07 2.755-5.198-0.516 1.166-0.728 2.101-2.336 5.492zm1.115 5.264c2.232-4.71 3.033-5.653 3.824-7.22-0.714 1.62-1.01 2.919-3.244 7.628zm1.228 5.647c2.363-4.983 3.209-5.981 4.046-7.638-0.757 1.714-1.07 3.087-3.43 8.07z"/>
+  <path d="m22.387 16.184c-2.786-1.957-3.563-2.194-4.52-2.825 0.924 0.696 1.492 1.377 4.277 3.334zm1.195 5.238c-3.867-2.72-4.947-3.051-6.276-3.925 1.285 0.967 2.072 1.913 5.94 4.631zm1.254 5.636c-4.09-2.878-5.234-3.227-6.64-4.151 1.36 1.024 2.195 2.022 6.286 4.9z"/>
+ </g>
+</svg>

@@ -1,0 +1,9 @@
+<svg width="16" height="16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+ <g transform="rotate(45 7.3964 7.75)" fill="#363636" opacity=".35">
+  <path d="m8-1c-2.216 0-4 1.784-4 4v5h8v-5c0-2.216-1.784-4-4-4z" opacity=".15" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="paint-order:stroke fill markers"/>
+  <path d="m3.9996 8h8v-4.9628a4.0148 4.0507 0 0 0-4-4.0372 4.0148 4.0507 0 0 0-3.9993 4.0365z" color="#000000" opacity=".15" stroke-width="1.0039" style="-inkscape-stroke:none;paint-order:markers stroke fill"/>
+  <path d="m8-1c-2.216 0-4 1.784-4 4v9c0 2.216 1.784 4 4 4s4-1.784 4-4v-9c0-2.216-1.784-4-4-4zm0 1c1.662 0 3 1.338 3 3v9c0 1.662-1.338 3-3 3s-3-1.338-3-3v-9c0-1.662 1.338-3 3-3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="paint-order:stroke fill markers"/>
+  <rect x="4" y="7" width="8" height="1" rx="0" ry="0" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="paint-order:stroke fill markers"/>
+ </g>
+ <rect transform="rotate(45)" x=".31371" y="-.5" width="22" height="1" rx=".5" ry=".5" fill="#363636"/>
+</svg>

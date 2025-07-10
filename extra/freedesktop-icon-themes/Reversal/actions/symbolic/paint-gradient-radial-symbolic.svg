@@ -1,0 +1,8 @@
+<svg width="16" height="16" version="1.1" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+ <path d="m0 0v16h16v-16h-16z" fill="#363636" fill-rule="evenodd" opacity=".2" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" style="paint-order:stroke fill markers"/>
+ <path d="m2.043 0a10 10 0 0 0-2.043 2.043v11.914a10 10 0 0 0 2.043 2.043h11.914a10 10 0 0 0 2.043-2.043v-11.955a10 10 0 0 0-2-2.002h-11.957z" fill="#363636" fill-rule="evenodd" opacity=".2" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" style="paint-order:stroke fill markers"/>
+ <circle cx="7.9999" cy="7.9999" r="7.9999" fill="#363636" fill-rule="evenodd" opacity=".3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="paint-order:stroke fill markers"/>
+ <circle cx="7.9999" cy="7.9999" r="6.0001" fill="#363636" fill-rule="evenodd" opacity=".5" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" style="paint-order:stroke fill markers"/>
+ <circle cx="7.9999" cy="7.9999" r="3.9999" fill="#363636" fill-rule="evenodd" opacity=".5" stroke-linecap="round" stroke-linejoin="round" stroke-width=".99999" style="paint-order:stroke fill markers"/>
+ <circle cx="7.9999" cy="7.9999" r="2.0001" fill="#363636" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round" stroke-width=".50003" style="paint-order:stroke fill markers"/>
+</svg>

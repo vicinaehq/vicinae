@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" viewBox="0 0 16.933 16.933" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+ <defs>
+  <filter id="filter1057" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+ </defs>
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:title/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <g transform="translate(2.0883 -7.9281)">
+  <rect transform="matrix(.26458 0 0 .26458 -2.0883 7.9281)" x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+  <rect x="-.89769" y="9.1187" width="14.552" height="14.552" ry="3.9687" fill="#008237" stroke-linecap="round" stroke-width=".72611"/>
+  <path d="m1.836 17.814-2.6908 2.1523c0.013187 0.21541 0.032584 0.41266 0.05426 0.60306 0.01488 0.06715 0.032428 0.13316 0.050643 0.19896l1.45-0.96687v0.56741l-1.2935 0.86248c0.038869 0.09347 0.083554 0.18371 0.12919 0.27337h0.59686v0.86403c0.45708 0.50358 1.0402 0.88914 1.7033 1.1048v-2.8205l1.7033-1.4196h0.85163l-1.7033 1.4196v2.9807c0.4311 0.02621 0.911 0.03669 1.449 0.03669h4.4834c0.64524 0 1.2077-0.01497 1.7007-0.05478 1.5868-0.25377 2.8513-1.4386 3.2205-2.9828l-1.7689-2.251h-0.56792l-0.56741-0.56792z" fill="#43a047" fill-rule="evenodd" stroke-width=".2839"/>
+  <path d="m4.1366 9.1187c-0.65018 0-1.2138 0.016036-1.7095 0.056328-1.2454 0.20203-2.293 0.97572-2.8624 2.049v1.1963l-0.42116 0.42065c-0.015571 0.25938-0.027211 0.53202-0.03359 0.82786v5.29e-4l0.73846 0.73794h10.788l1.987-2.2712h0.91209c-0.02343-0.09578-0.04833-0.19084-0.07855-0.2837h-0.83354v-1.1358l-2.2712 2.5554h-0.85163l2.2712-2.5554v-1.0041c-0.42792-0.26437-0.90944-0.44878-1.4263-0.53485-0.50003-0.041385-1.0675-0.058911-1.726-0.058911z" fill="#43a047" fill-rule="evenodd" stroke-width=".2839"/>
+  <g stroke-width=".26458">
+   <circle cx="12.067" cy="22.083" r=".39687" fill="#fbc02d"/>
+   <circle cx="12.067" cy="22.083" r=".13229" fill="#263238"/>
+   <circle cx="12.067" cy="10.706" r=".39687" fill="#fbc02d"/>
+   <circle cx="12.067" cy="10.706" r=".13229" fill="#263238"/>
+   <circle cx=".68983" cy="22.083" r=".39687" fill="#fbc02d"/>
+   <circle cx=".68983" cy="22.083" r=".13229" fill="#263238"/>
+  </g>
+  <rect x=".55754" y="11.368" width="4.4979" height="1.5875" ry=".26458" fill="#263238" stroke-width=".29154"/>
+  <rect x="7.7013" y="19.57" width="4.4979" height="1.5875" ry=".26458" fill="#eceff1" stroke-width=".26458"/>
+  <g fill="#37474f" stroke-width=".26458">
+   <rect x="7.9659" y="19.834" width="2.3812" height=".26458" ry="0"/>
+   <path d="m7.9659 20.364h1.3229v0.26458h-1.3229z"/>
+   <path d="m10.876 20.893 0.52917-0.79375 0.52917 0.79375z" fill-rule="evenodd"/>
+  </g>
+  <circle cx=".68978" cy="10.706" r=".39687" fill="#fbc02d" stroke-width=".26458"/>
+  <circle cx=".68978" cy="10.706" r=".13229" fill="#263238" stroke-width=".26458"/>
+  <g fill="#fff" stroke-width=".26458">
+   <rect x=".82212" y="11.632" width="1.0583" height=".26458" opacity=".5" style="paint-order:stroke fill markers"/>
+   <rect x=".82212" y="12.161" width="2.1167" height=".26458" opacity=".5" style="paint-order:stroke fill markers"/>
+   <rect x="3.7325" y="12.161" width=".79375" height=".52917" opacity=".5" style="paint-order:stroke fill markers"/>
+  </g>
+  <rect x="2.6742" y="14.278" width="7.4083" height="4.2333" ry=".26458" fill="#263238" stroke-width=".26458"/>
+  <path d="m3.4679 15.072h0.52917v2.6458h-0.52917zm1.0583 0h0.52917v2.6458h-0.52917zm1.0583 0h0.52917v2.6458h-0.52917zm1.0583 0h0.52917v2.6458h-0.52917zm1.0583 0h0.52917v2.6458h-0.52917zm1.0583 0h0.52917v2.6458h-0.52917z" fill="#fbc02d" fill-rule="evenodd" stroke-width=".26458" style="paint-order:fill markers stroke"/>
+ </g>
+</svg>

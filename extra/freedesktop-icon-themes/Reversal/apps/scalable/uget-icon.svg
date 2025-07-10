@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" viewBox="0 0 16.933 16.933" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <filter id="filter1057-2" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053-7" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="matrix(.26458 0 0 .26458 31.476 1.2258)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#8cd750" offset="0"/>
+   <stop stop-color="#7dcd32" stop-opacity=".99608" offset=".49585"/>
+   <stop stop-color="#87d241" stop-opacity=".99608" offset="1"/>
+  </linearGradient>
+  <linearGradient id="linearGradient1277" x1="32.153" x2="32.153" y1="46.593" y2="4.0937" gradientTransform="matrix(.27224 0 0 .27224 -3.5527 1.3364)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#d1ecba" offset="0"/>
+   <stop stop-color="#d1ecba" stop-opacity="0" offset="1"/>
+  </linearGradient>
+  <filter id="filter2105" x="-.29796" y="-.12895" width="1.5959" height="1.2579" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.44165673"/>
+  </filter>
+ </defs>
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:title/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <g transform="translate(3.3167 -1.3607)">
+  <rect transform="matrix(.26458 0 0 .26458 -3.3167 1.3607)" x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057-2)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+  <rect x="-2.1261" y="2.5513" width="14.552" height="14.552" ry="3.9687" fill="url(#linearGradient1053-7)" stroke-linecap="round" stroke-width=".72611"/>
+  <path d="m1.8426 2.5513c-2.1987 0-3.9687 1.7701-3.9687 3.9687v0.74052l7.3267 6.7598 7.2254-6.7577v-0.74259c0-2.1987-1.7701-3.9687-3.9687-3.9687z" fill="url(#linearGradient1277)" stroke-width=".26458"/>
+  <rect transform="matrix(-.70711 .70711 .70711 .70711 0 0)" x="5.5931" y="9.0067" width=".8419" height="4.6814" ry=".42095" fill="#fafafa"/>
+  <path transform="matrix(1 0 0 1 -3.3384 1.6929)" d="m8.0959 4.1418c-0.2332 0-0.42064 0.18795-0.42064 0.42115v7.3782c0 0.02186 0.00302 0.04261 0.0062 0.06356 8.244e-4 0.0053 5.196e-4 0.01072 0.00155 0.01602 0.00466 0.02441 0.012529 0.04758 0.021187 0.07028 0.00105 0.0027 0.00148 0.0056 0.00258 0.0083 0.042594 0.10511 0.12587 0.18891 0.23099 0.2315 0.00357 0.0015 0.00725 0.0023 0.010852 0.0036 0.021897 0.0082 0.044217 0.01515 0.067695 0.01964 0.026507 0.0052 0.053197 0.0078 0.080097 0.0078 0.027375-3.4e-5 0.054209-0.0028 0.080097-0.0078 1.62e-4 -3.1e-5 3.551e-4 3.2e-5 5.168e-4 0 0.019902-0.0039 0.03858-0.01052 0.05736-0.01705 0.00709-0.0025 0.014792-0.0034 0.021704-0.0062 0.023-0.0094 0.044382-0.02147 0.065111-0.03462 0.00234-0.0015 0.00492-0.0026 0.00723-0.0041 0.023591-0.01563 0.045719-0.0338 0.065628-0.05374l0.00258-0.0026 2.7124-2.7124c0.1649-0.1649 0.1649-0.4304 0-0.5953s-0.4304-0.1649-0.5953 0l-1.9967 1.9967v-6.3618c0-0.2332-0.18795-0.42115-0.42115-0.42115z" fill="#80d03a" filter="url(#filter2105)"/>
+  <path d="m5.129 5.8348c-0.2332 0-0.42065 0.18795-0.42065 0.42116v7.3783c0 0.02186 0.00302 0.04261 0.0062 0.06356 8.202e-4 0.0053 5.292e-4 0.01072 0.00156 0.01602 0.00466 0.02441 0.012531 0.04758 0.021188 0.07028 0.00106 0.0027 0.00148 0.0056 0.00259 0.0083 0.042595 0.10511 0.12587 0.18891 0.23099 0.2315 0.00357 0.0015 0.00725 0.0023 0.010853 0.0036 0.021897 0.0082 0.044218 0.01515 0.067697 0.01964 0.026508 0.0052 0.053198 0.0078 0.080098 0.0078 0.027376-3.4e-5 0.05421-0.0028 0.080099-0.0078 1.619e-4 -3.1e-5 3.439e-4 3.2e-5 5.291e-4 0 0.019902-0.0039 0.038581-0.01052 0.057361-0.01705 0.00709-0.0025 0.014793-0.0034 0.021704-0.0062 0.023-0.0094 0.044383-0.02147 0.065112-0.03462 0.00233-0.0015 0.00492-0.0026 0.00723-0.0041 0.02359-0.01563 0.04572-0.0338 0.065629-0.05374l0.00259-0.0026 2.7125-2.7125c0.1649-0.1649 0.1649-0.43041 0-0.59531-0.1649-0.1649-0.43041-0.1649-0.59531 0l-1.9967 1.9967v-6.3619c0-0.2332-0.18795-0.42116-0.42116-0.42116z" fill="#fafafa"/>
+ </g>
+</svg>

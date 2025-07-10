@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="32"
+   height="32"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="start-here.svg"
+   inkscape:version="1.3.2 (091e20ef0f, 2023-11-25, custom)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="8.761495"
+     inkscape:cx="20.202032"
+     inkscape:cy="13.525089"
+     inkscape:window-width="1920"
+     inkscape:window-height="1000"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg1" />
+  <defs
+     id="defs1">
+    <style
+       id="current-color-scheme"
+       type="text/css">.ColorScheme-Text { color:#363636; }</style>
+  </defs>
+  <g
+     id="start-here-kde">
+    <rect
+       ry="0.90688264"
+       y="-4.0414427e-09"
+       x="-4.6142577e-07"
+       height="32"
+       width="32"
+       id="rect842"
+       style="opacity:0;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal" />
+    <g
+       id="g1628"
+       transform="translate(0,-30)">
+      <path
+         style="color:#000000;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:medium;line-height:normal;font-family:sans-serif;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-variant-east-asian:normal;font-feature-settings:normal;font-variation-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:#000000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;shape-margin:0;inline-size:0;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;vector-effect:none;fill:#505050;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.0259613;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate;stop-color:#000000"
+         d="M 26.462485,38.429439 17.369283,33.35498 c -0.848386,-0.473307 -1.897411,-0.473307 -2.745798,0 l -9.086821,5.074053 c -0.8395646,0.469336 -1.3554197,1.329813 -1.3548457,2.259963 v 10.770477 c -3.389e-4,0.941464 0.528507,1.810407 1.3845803,2.274994 l 9.0910654,4.926991 c 0.832512,0.451389 1.851699,0.451389 2.684213,0 l 9.091073,-4.927395 c 0.856467,-0.464315 1.385686,-1.333338 1.385432,-2.274996 V 40.688589 c 1.83e-4,-0.929942 -0.515806,-1.790062 -1.355271,-2.25915 z"
+         id="path1639" />
+      <circle
+         style="opacity:1;fill:#ffffff;fill-opacity:1;stroke-width:3.44147;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke fill markers"
+         id="path1612"
+         cx="16"
+         cy="46"
+         r="6" />
+      <circle
+         style="opacity:1;fill:#505050;fill-opacity:1;stroke-width:1.72074;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke fill markers"
+         id="circle1616"
+         cx="16"
+         cy="46"
+         r="3" />
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,10 @@
+<svg width="16px" height="16px" version="1.1" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+ <path d="m3 3c-1.108 0-2 0.892-2 2v7c0 1.108 0.892 2 2 2h10c1.108 0 2-0.892 2-2v-7c0-1.108-0.892-2-2-2h-10zm0 1h10c0.554 0 1 0.446 1 1v7c0 0.554-0.446 1-1 1h-10c-0.554 0-1-0.446-1-1v-7c0-0.554 0.446-1 1-1z" fill="#dedede"/>
+ <rect x="4" y="1" width="1" height="3" rx=".5" ry=".5" fill="#dedede" stroke-linecap="round" stroke-linejoin="round" style="paint-order:fill markers stroke"/>
+ <rect x="7.5" y="1" width="1" height="3" rx=".5" ry=".5" fill="#dedede" stroke-linecap="round" stroke-linejoin="round" style="paint-order:fill markers stroke"/>
+ <rect x="11" y="1" width="1" height="3" rx=".5" ry=".5" fill="#dedede" stroke-linecap="round" stroke-linejoin="round" style="paint-order:fill markers stroke"/>
+ <rect x="4" y="13" width="1" height="3" rx=".5" ry=".5" fill="#dedede" stroke-linecap="round" stroke-linejoin="round" style="paint-order:fill markers stroke"/>
+ <rect x="7.5" y="13" width="1" height="3" rx=".5" ry=".5" fill="#dedede" stroke-linecap="round" stroke-linejoin="round" style="paint-order:fill markers stroke"/>
+ <rect x="11" y="13" width="1" height="3" rx=".5" ry=".5" fill="#dedede" stroke-linecap="round" stroke-linejoin="round" style="paint-order:fill markers stroke"/>
+ <rect x="2" y="11" width="12" height="1" rx="0" ry="0" fill="#dedede" opacity=".45" stroke-linecap="round" stroke-linejoin="round" style="paint-order:fill markers stroke"/>
+</svg>

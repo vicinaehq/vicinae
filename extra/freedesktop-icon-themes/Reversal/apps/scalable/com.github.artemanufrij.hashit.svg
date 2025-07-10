@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Apps-Visual-Studio-Code" width="64" height="64" enable-background="new 0 0 1024 1024" image-rendering="optimizeSpeed" version="1.1" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css"/>
+  <style type="text/css"/>
+  <filter id="filter1057-27" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053-93" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="matrix(1 0 0 1 131.5 -.51062)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#dee0e2" offset="0"/>
+   <stop stop-color="#f1f3f5" stop-opacity=".99608" offset="1"/>
+  </linearGradient>
+ </defs>
+ <rect transform="matrix(1 0 0 1 -.00022781 -.00022781)" x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057-27)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+ <rect x="4.4996" y="4.4996" width="55.001" height="55.001" ry="15" fill="url(#linearGradient1053-93)" stroke-linecap="round" stroke-width="2.7444"/>
+ <image x="11.757" y="19.518" width="40" height="30" preserveAspectRatio="none" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAeCAYAAABe3VzdAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAA GXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAA65JREFUWIW1mOdy20AMhD82FduJ 3/8100RLLPlBbLA8UrLTboZD6wqwt6h0xf8b1c7c/LtCmn8ABLZgKqAG2nj2wH5ofASglNUPgPia 5o7AGTgFyJl9Bh+Cbz8ArmW5SAWMwGDrYqkO5SMwxdwJ+Ax0QF+s+2UqA7+5wCOAYqILZTXwZop0 /gQcAngfb13sGGuzXVKyG9L8uvhUgnyPQQF4sZteQ2Adyp8CyFsoGWLfEHNTvMeYFzi5QB0yL/H+ MEAxeAiQzoIHgRgc7ezIwiZx5hbKZd4mwL3G39+Ly/0CeQ+gQLQsJm5DiR+W+TvSB2fSTNpfx5x8 V+w9AZ9svbc9UzwbgHs+0pHmFQO1rUuGAEpGY+BlXneLF+A59k9xIVibenaArljCz3FbMdiSTn9k MW9H+mRLmvoUALpQ+COAnIK5T6QPziZDgCdgFEAxdiAjT2Z4KYQc4swxAJxZTHMzJRPpYycDdzXZ R5MlP7+SaQugcgZF/3MAO5GJFtL3Trb3bOwOpCkHWz/H3LcAMNhe99eeJdpvMQ+Ficshk1c7AnUh MXszwb4uP/VE37Mw+hwszixR/AX4yuKDyomrIBnjBhI0keZ6i8N9/D6QATPH2tfYd7VzuiisK8kb mTf1+0c8cpXZASpClas8EU92w0vsV31tQ4kA6rwCqRzSI6BiXJWktNImzShfNXaLMRSLnYolMvfW bibHATqLeu/V3009LtNMmf8aOwjpVwfW+VHna/aZ++MhgFLckdGnGjva3CH2Kb00LIwfSRcZyDSx x2I53m23xFxHppgzS/47kr7RBIgm9jwZiDnOX0g/3VNcmvrd4QyqSpxZMzSTDSdkhSkrSMfigx7B j8Yeu5tLCaAiS/nMo+zCEv6DCZD/qYT1ZLBo3z2W7s3vmtpb8VuAESMyqRLoQKYVNQCefuQKI/eb EAdZBldlzybNqDypxbqSaeN7PCPZXinBXmKtx5Ir6RqPhgNUgLZYmcNKnTZPxd831vXR+z7lQNVh rxx7+c5/T/bok+LZLi2dm1rsX2nySWdGpniU/T1Sp5318nJq217JdKc9d5uFkQwCseOKb6wbBB9i Sd8kDeu6K8v0LO6hkqkMcsU+sPy72BvWinULJBBaV4FXm16mjLITUiOgWl2yOZBZwNuuDYOqBhJQ mljKVKvLFktDbdVse/3LbrL1nkxb2idS5r3/FPjtveOo2KaCPXAupyn2lr4qi3hplN/OewB10EcJ oHqw9jeyyugH4CeQoL3HU1kK7AAAAABJRU5ErkJggg== "/>
+ <path d="m37.853 20.084-2.8717 0.02506 0.02506 2.7392 2.8699-0.02506zm-7.181 1.3839-1.7545 0.01611-1.3481 6.5132-5.7882 0.04834 1.3481-6.5114-1.7563 0.01433-1.3624 6.5132-4.3702 0.0376 0.01433 1.7205 4.0211-0.03402-1.1942 5.8902-3.5896 0.03223 0.01612 1.7205 3.2047-0.02864-1.2837 6.515 1.7563-0.01611 1.2819-6.5132 5.7899-0.05013-1.3159 6.515 1.7545-0.01611 1.3481-6.515 4.5134-0.0376-0.01433-1.7205-4.1464 0.03581 1.1924-5.892 3.7167-0.03223-0.01611-1.7205-3.3658 0.02865zm14.779 1.1011-1.9139 0.01611-0.81102 3.8635-2.1054 0.0179 0.0179 2.0875 1.9926-0.0179 0.10026 11.506c0.02246 2.6027 1.182 3.8941 3.4786 3.8743 0.98888-0.0085 1.9544-0.14507 2.8986-0.4082l-0.0179-2.1198c-0.72172 0.15476-1.2751 0.2348-1.6578 0.23811-0.66985 0.0057-1.1425-0.15282-1.4215-0.4816-0.26873-0.33792-0.40642-0.92229-0.41357-1.7509l-0.09489-10.882 3.1904-0.02865-0.0179-2.0857-3.1904 0.02686zm-7.5427 3.9208-2.8699 0.02506 0.1486 17.243 2.8699-0.02506zm-10.69 3.2298-1.1924 5.892-5.7756 0.05013 1.2282-5.892z" fill="#323232" stroke-linecap="round" stroke-width="3.4649"/>
+</svg>

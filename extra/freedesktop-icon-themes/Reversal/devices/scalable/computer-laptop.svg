@@ -1,0 +1,35 @@
+<svg width="64" height="64" version="1.1" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <linearGradient id="b" x1="73" x2="99" y1="36" y2="52" gradientTransform="matrix(1 0 0 1.0625 0 -2.25)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#1bd3fa" offset="0"/>
+   <stop stop-color="#1c7df2" offset="1"/>
+  </linearGradient>
+  <linearGradient id="a" x1="72" x2="100" y1="56.5" y2="56.5" gradientTransform="matrix(1.1429 0 0 .28572 -12.286 38.857)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#c9cace" offset="0"/>
+   <stop stop-color="#e5e5e7" offset=".50222"/>
+   <stop stop-color="#cbccce" offset="1"/>
+  </linearGradient>
+  <filter id="c" x="-.019125" y="-.306" width="1.0382" height="1.612" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.25500006"/>
+  </filter>
+ </defs>
+ <filter id="d" x="-.01448" y="-.016908" width="1.029" height="1.0338" color-interpolation-filters="sRGB">
+  <feGaussianBlur stdDeviation=".74992302"/>
+ </filter>
+ <filter id="g" x="-.040865" y="-.504" width="1.0817" height="2.008" color-interpolation-filters="sRGB">
+  <feGaussianBlur stdDeviation=".32830532"/>
+ </filter>
+ <filter id="h" x="-.080467" y="-.24545" width="1.1609" height="1.4909" color-interpolation-filters="sRGB">
+  <feGaussianBlur stdDeviation="1.4789442"/>
+ </filter>
+ <g id="computer-laptop" transform="matrix(2 0 0 2 -154 10)">
+  <rect x="77" y="-5" width="32" height="32" opacity="0" style="paint-order:fill markers stroke"/>
+  <g transform="translate(7 -34)" fill-rule="evenodd" stroke-width=".5">
+   <path d="m72.286 54.105h29.714v1.0009c0 0.36933-1.7337 0.99916-3 0.99916h-26c-1.2663 0-3-0.62982-3-0.99916v-1.0009z" filter="url(#c)" opacity=".35" style="paint-order:fill markers stroke"/>
+   <rect x="72" y="35" width="28" height="20" rx="1" ry="1" fill="#1a1a1a" style="paint-order:fill markers stroke"/>
+   <rect x="73" y="36" width="26" height="17" fill="url(#b)" style="paint-order:fill markers stroke"/>
+   <path d="m72.286 54h29.714v1.0009c0 0.36933-1.7337 0.99916-3 0.99916h-26c-1.2663 0-3-0.62982-3-0.99916v-1.0009z" fill="url(#a)" style="paint-order:fill markers stroke"/>
+   <path transform="matrix(.5 0 0 .5 70 29)" d="m22 50c0 1.108 0.892 2 2 2h16c1.108 0 2-0.892 2-2h-20z" opacity=".35" style="paint-order:fill markers stroke"/>
+  </g>
+ </g>
+</svg>

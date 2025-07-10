@@ -1,0 +1,394 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="64"
+   height="64"
+   version="1.1"
+   viewBox="0 0 64 64"
+   id="svg23"
+   sodipodi:docname="deepin-defender.svg"
+   inkscape:version="1.3.2 (091e20ef0f, 2023-11-25, custom)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <sodipodi:namedview
+     id="namedview23"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="5.8359375"
+     inkscape:cx="28.53012"
+     inkscape:cy="27.159304"
+     inkscape:window-width="1920"
+     inkscape:window-height="954"
+     inkscape:window-x="0"
+     inkscape:window-y="34"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg23" />
+  <metadata
+     id="metadata1">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs16">
+    <filter
+       id="deepin-defender128-a"
+       x="-0.036835445"
+       y="-0.023771905"
+       width="1.0736709"
+       height="1.0945778">
+      <feOffset
+         dy="2"
+         in="SourceAlpha"
+         result="shadowOffsetOuter1"
+         id="feOffset1" />
+      <feGaussianBlur
+         in="shadowOffsetOuter1"
+         result="shadowBlurOuter1"
+         stdDeviation="0.4057742"
+         id="feGaussianBlur1" />
+      <feComposite
+         in="shadowBlurOuter1"
+         in2="SourceAlpha"
+         operator="out"
+         result="shadowBlurOuter1"
+         id="feComposite1" />
+      <feColorMatrix
+         in="shadowBlurOuter1"
+         result="shadowMatrixOuter1"
+         values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.2 0"
+         id="feColorMatrix1" />
+      <feMerge
+         id="feMerge2">
+        <feMergeNode
+           in="shadowMatrixOuter1"
+           id="feMergeNode1" />
+        <feMergeNode
+           in="SourceGraphic"
+           id="feMergeNode2" />
+      </feMerge>
+    </filter>
+    <linearGradient
+       id="deepin-defender128-b"
+       x1="59"
+       x2="59"
+       y1="-.5"
+       y2="116.29"
+       gradientTransform="translate(5,5)"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         stop-color="#FFF"
+         offset="0"
+         id="stop2" />
+      <stop
+         stop-color="#EDEDED"
+         offset="1"
+         id="stop3" />
+    </linearGradient>
+    <linearGradient
+       id="deepin-defender128-c"
+       x1="59"
+       x2="59"
+       y2="116.29"
+       gradientTransform="translate(5,5)"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         stop-color="#44B0FB"
+         offset="0"
+         id="stop4" />
+      <stop
+         stop-color="#0074FF"
+         offset="1"
+         id="stop5" />
+    </linearGradient>
+    <linearGradient
+       id="deepin-defender128-d"
+       x1="59"
+       x2="59"
+       y2="118"
+       gradientTransform="translate(5,5)"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         stop-color="#FFF"
+         offset="0"
+         id="stop6" />
+      <stop
+         stop-color="#60B8E5"
+         offset="1"
+         id="stop7" />
+    </linearGradient>
+    <radialGradient
+       id="deepin-defender128-e"
+       cx="56.044"
+       cy="54"
+       r="55.931"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         stop-color="#FFF"
+         offset="0"
+         id="stop8" />
+      <stop
+         stop-color="#3AC3FF"
+         stop-opacity=".346"
+         offset="1"
+         id="stop9" />
+    </radialGradient>
+    <linearGradient
+       id="deepin-defender128-f"
+       x1="46.922"
+       x2="71.615"
+       y1="11.027"
+       y2="13.803"
+       gradientTransform="matrix(0.90349,0,0,1.1068,28.075,13.075)"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         stop-color="#5BE9FF"
+         offset="0"
+         id="stop10" />
+      <stop
+         stop-color="#5FE2FF"
+         stop-opacity=".936"
+         offset=".04362"
+         id="stop11" />
+      <stop
+         stop-color="#0065FA"
+         stop-opacity="0"
+         offset="1"
+         id="stop12" />
+    </linearGradient>
+    <linearGradient
+       id="deepin-defender128-i"
+       x1="37.186"
+       x2="38.518"
+       y1="15.716"
+       y2="86.876"
+       gradientTransform="scale(0.96609,1.0351)"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         stop-color="#FFF"
+         offset="0"
+         id="stop13" />
+      <stop
+         stop-color="#9CD8F8"
+         offset="1"
+         id="stop14" />
+    </linearGradient>
+    <path
+       id="deepin-defender128-h"
+       d="m70.477 26.339c-0.13746-1.0155-0.83851-1.8709-1.8175-2.2181l-30.913-8.8676c-1.3333-0.46722-2.6032-0.40659-3.642 0l-30.913 8.8676c-0.97949 0.34718-1.6801 1.2027-1.8175 2.2181-0.069129 0.51077-1.6552 12.673 1.5875 26.572 1.927 8.2592 5.1692 15.41 9.6373 21.255 5.5306 7.2345 12.924 12.44 21.98 15.481 0.75065 0.29927 1.5713 0.43618 2.6935 0 9.0562-3.0412 16.45-8.2465 21.981-15.481 4.4677-5.8448 7.7104-12.996 9.6373-21.255 3.2428-13.899 1.6562-26.061 1.5875-26.572z" />
+    <path
+       id="deepin-defender128-k"
+       d="m29.159 34.514c0.56541-2.0774 2.8271-3.5894 4.9002-3.5894h5.6541c2.0732 0 3.0155 1.512 2.2616 3.4009l-4.1538 10.599h8.1042c4.1464 0 5.2772 2.647 2.6386 5.6709l-18.27 21.337c-1.3193 1.512-2.0732 1.3235-1.5078-0.75394l4.1393-16.254h-6.5965c-2.0732 0-3.204-1.512-2.6386-3.5894z" />
+    <filter
+       id="filter1057-3"
+       x="-0.026999999"
+       y="-0.026999999"
+       width="1.054"
+       height="1.054"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         stdDeviation="0.61875"
+         id="feGaussianBlur14" />
+    </filter>
+    <linearGradient
+       id="linearGradient1053-6"
+       x1="-127"
+       x2="-72"
+       y1="60"
+       y2="5"
+       gradientTransform="matrix(0.26458,0,0,0.26458,58.824,-1.9853)"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         stop-color="#dee0e2"
+         offset="0"
+         id="stop15" />
+      <stop
+         stop-color="#f1f3f5"
+         stop-opacity=".99608"
+         offset="1"
+         id="stop16" />
+    </linearGradient>
+    <filter
+       id="filter27"
+       x="-0.00010256366"
+       y="-0.00010256405"
+       width="1.0002051"
+       height="1.0187236">
+      <feOffset
+         dy="2"
+         in="SourceAlpha"
+         result="shadowOffsetOuter1"
+         id="feOffset26" />
+      <feGaussianBlur
+         in="shadowOffsetOuter1"
+         result="shadowBlurOuter1"
+         stdDeviation="0.0046153843"
+         id="feGaussianBlur26" />
+      <feComposite
+         in="shadowBlurOuter1"
+         in2="SourceAlpha"
+         operator="out"
+         result="shadowBlurOuter1"
+         id="feComposite26" />
+      <feColorMatrix
+         in="shadowBlurOuter1"
+         result="shadowMatrixOuter1"
+         values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.2 0"
+         id="feColorMatrix26" />
+      <feMerge
+         id="feMerge27">
+        <feMergeNode
+           in="shadowMatrixOuter1"
+           id="feMergeNode26" />
+        <feMergeNode
+           in="SourceGraphic"
+           id="feMergeNode27" />
+      </feMerge>
+    </filter>
+    <filter
+       id="filter29"
+       x="-2.8489959e-06"
+       y="-2.8489959e-06"
+       width="1.0000057"
+       height="1.0177048">
+      <feOffset
+         dy="2"
+         in="SourceAlpha"
+         result="shadowOffsetOuter1"
+         id="feOffset27" />
+      <feGaussianBlur
+         in="shadowOffsetOuter1"
+         result="shadowBlurOuter1"
+         stdDeviation="0.00013414023"
+         id="feGaussianBlur27" />
+      <feComposite
+         in="shadowBlurOuter1"
+         in2="SourceAlpha"
+         operator="out"
+         result="shadowBlurOuter1"
+         id="feComposite27" />
+      <feColorMatrix
+         in="shadowBlurOuter1"
+         result="shadowMatrixOuter1"
+         values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.2 0"
+         id="feColorMatrix27" />
+      <feMerge
+         id="feMerge29">
+        <feMergeNode
+           in="shadowMatrixOuter1"
+           id="feMergeNode28" />
+        <feMergeNode
+           in="SourceGraphic"
+           id="feMergeNode29" />
+      </feMerge>
+    </filter>
+  </defs>
+  <g
+     transform="matrix(3.7796,0,0,3.7796,-90.831558,6.9931831)"
+     stroke-linecap="round"
+     id="g17">
+    <rect
+       transform="matrix(0.26458,0,0,0.26458,24.032,-1.8503)"
+       x="4.5"
+       y="4.5"
+       width="55"
+       height="55"
+       ry="15"
+       fill="#141414"
+       filter="url(#filter1057-3)"
+       opacity="0.3"
+       stroke-width="2.7444"
+       id="rect16" />
+    <rect
+       x="25.222"
+       y="-0.65972"
+       width="14.552"
+       height="14.552"
+       ry="3.9686999"
+       fill="url(#linearGradient1053-6)"
+       stroke-width="0.72611"
+       id="rect17"
+       style="fill:url(#linearGradient1053-6)" />
+  </g>
+  <path
+     style="color:#000000;fill:url(#deepin-defender128-c);fill-rule:evenodd;-inkscape-stroke:none;filter:url(#filter29)"
+     d="m 64,7.5 c 31.301,0 56.5,25.199 56.5,56.5 0,31.301 -25.199,56.5 -56.5,56.5 C 32.699,120.5 7.5,95.301 7.5,64 7.5,32.699 32.699,7.5 64,7.5 Z"
+     id="path25"
+     transform="matrix(0.32918,0,0,0.32918,10.932,10.008)" />
+  <path
+     style="color:#000000;fill:url(#deepin-defender128-d);fill-rule:evenodd;-inkscape-stroke:none;filter:url(#deepin-defender128-a)"
+     d="M 64,5 C 31.357276,5 5,31.357276 5,64 5,96.642724 31.357276,123 64,123 96.642724,123 123,96.642724 123,64 123,31.357276 96.642724,5 64,5 Z m 0,5 c 29.959213,0 54,24.040787 54,54 0,29.959213 -24.040787,54 -54,54 C 34.040787,118 10,93.959213 10,64 10,34.040787 34.040787,10 64,10 Z"
+     id="path26"
+     transform="matrix(0.32918,0,0,0.32918,10.932,10.008)" />
+  <circle
+     cx="54.875"
+     cy="54"
+     r="31"
+     opacity="0.3"
+     id="circle19"
+     transform="matrix(0.32918,0,0,0.32918,13.935768,13.2998)"
+     style="fill:none;fill-rule:evenodd;stroke:#7df3ff;filter:url(#deepin-defender128-a)" />
+  <ellipse
+     cx="55.375"
+     cy="54"
+     rx="39.5"
+     ry="40"
+     opacity="0.2"
+     id="ellipse19"
+     transform="matrix(0.32918,0,0,0.32918,13.935768,13.2998)"
+     style="fill:none;fill-rule:evenodd;stroke:#7df3ff;filter:url(#deepin-defender128-a)" />
+  <path
+     d="m 54.875,0 c 0.33442,0 0.66814,0.00304 1.0011,0.0090939 l -0.0011,52.9980001 37.189,-37.186 c 0.23552,0.23558 0.46888,0.47333 0.70003,0.71321 l -37.466,37.465 h 52.577 c 0,0.33509 -0.003,0.66847 -0.009,1.0011 l -52.991,-0.0011 v 0.153 l 37.107,37.108 c -0.23603,0.23509 -0.47422,0.46801 -0.71454,0.69873 l -36.393,-36.393 0.0011,51.425006 c -0.33296,0.006 -0.66668,0.009 -1.0011,0.009 V 55.566109 l -0.07163,-0.07182 -37.394,37.395 c -0.23988,-0.23116 -0.47763,-0.46451 -0.71321,-0.70003 l 37.188,-37.19 -53,0.0011 c -0.006042,-0.33265 -0.009076,-0.66603 -0.009076,-1.0001 0,-3.34e-4 0,-6.68e-4 1e-8,-10e-4 H 53.307557 l -37.392,-37.392 c 0.23072,-0.24032 0.46364,-0.47851 0.69873,-0.71454 l 38.108,38.106 h 0.152 z"
+     fill="url(#deepin-defender128-e)"
+     opacity="0.3"
+     id="path20"
+     style="fill:url(#deepin-defender128-e);fill-rule:evenodd;filter:url(#filter27)"
+     transform="matrix(0.32918,0,0,0.32918,13.935768,13.2998)" />
+  <path
+     d="m 64.001,14.002 c 15.793,0.15652 29.816,7.7094 38.771,19.361 L 64,61.5 Z"
+     fill="url(#deepin-defender128-f)"
+     filter="url(#deepin-defender128-a)"
+     id="path21"
+     style="fill:url(#deepin-defender128-f);fill-rule:evenodd"
+     transform="matrix(0.32918,0,0,0.32918,10.932,10.008)" />
+  <use
+     transform="matrix(0.32918,0,0,0.32918,20.173728,14.312028)"
+     width="100%"
+     height="100%"
+     fill="url(#deepin-defender128-i)"
+     fill-rule="evenodd"
+     filter="url(#deepin-defender128-a)"
+     xlink:href="#deepin-defender128-h"
+     id="use22"
+     style="fill:url(#deepin-defender128-i)" />
+  <image
+     width="19.09244"
+     height="24.35932"
+     xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADoAAABKCAYAAADqmUfpAAAABHNCSVQICAgIfAhkiAAAAAlwSFlz AAAOxAAADsQBlSsOGwAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAQnSURB VHic7ZrdcuowDIQXSt//gUvIuamGZVk5/ks5F96ZjIOTGH+RZMsGYGlpaWlpabou/1n7+ym9wDmg rs3S9zi46cAzQbWtS+EaS6H2wrVuzQJ1UBc5z7RTuUudnndrBqjCXPAOyZ9ZO94BtQ6YAHsbfD6D vJpzvg94dv6BJ9hD2p/muiOgDvJKJR/OqgF2/S0D0sFeMAg9atGQg/uSkkHZgg8AG15fQlh5mnpB nasyoDsc6IYn5IbXWHVu3q1ZrhtHQN3oiDqO1bDmBuCO9xcQ7X00RnUqCYsGzA3AN5UONFzWuXLE bLQ/BXbGqMuwbMlvPIEd6IZ3cB24Pj7qKiDHpoKGVa/0fEBGnCpglkZ2g7eCOrd1sAzJFoV0dsPr FJR917B6Y/TIom5AuuI142FX5XbddwEfnkcz2Gx6Ad4HIgXMXDeudQG3gGajrYO8yeewHE8dJSAk 9/D82gTcE6Oaw/LUosD8IlraPnoZzWnhqOs6i2oqqANNKRb5GYbg/Jchq2FrQTO3LeW4mtBHJ107 +vxO90TJiX8zbGuMliAzizJoNmIrYNy7/Z6zRRm2WiOu61w0W5q5gYgBb/DWjmPDqzJXTlUDWnJb NxgdrUMVkpdkzmM0nrvWp6MJQ81CW0FjoAlXdZa+m+dA958Wo67jJZd10wnH6VXqS5C8qomVjYbE oWYk9Zn1Sm5bajPkdiCOkoxUvaOuq8sm9t1cV1gF5IW5i9Vm2FGLui9125XueYWNmK1ZsjXnu0eg NW9O92LZ5eL5gMqmGgfl2j16gal6LZrB8fqSQYHjfLf0wh7J9WrwUVAeLBjSxZSuPzMgbk/rFbha R6C6LHKdi508TffimRC7L193bfHB0Bng1FzXdY6tyNuWfK/WcZyy9RTwTvVq4WartoAyIOegJSuC rmkZbTlAhXWu26SvinuyaSSrj7rSqJpZ84eOkusybBV0DSh3nD/X3M+pYkhj8scctRattmwLKJel +1wunFnTWZJhawaiKtWCBoQr4zxL9jmFi86yy5YA1ZpAhzWBNtAAilJzWAbVzTJ+KdHpUlyqyyrc 9BRQ5daBGjOldPBBdQzK5ZTBR9U7jx4l2gquez4BytbkOXN48FHN+MU7+3KddzXRYCtOHWGdRkCP LKvWDNfNkoSA3DDJXVkz/6zBctaMek7tsqRA/7AxrFl/1lA5a2bZkMtjYcohnQFasqaCnjLCOs0G VUhQqWtN566nQALzQLP5k+dbBuVy+gjrNGt60emD6yHXpiy7WjUKmkHyNeDVwgo5lMPWqjXXDWUJ frZN4gD/DBKYDxpySYOLX733NI2C6jnwnvNmW5Uw5Wnq+h1DnnWl20M6Kk/VDNDSecitbPT8VI2A uudL7SnUn0EC46A97fwpYGgWaE17HwFcWlpaWlpaWqrWP4A6XgV9OcT8AAAAAElFTkSuQmCC "
+     id="image23"
+     x="22.78248"
+     y="21.85848" />
+  <use
+     transform="matrix(0.32918,0,0,0.32918,20.173728,14.312028)"
+     width="100%"
+     height="100%"
+     fill="#0081ff"
+     filter="url(#deepin-defender128-a)"
+     xlink:href="#deepin-defender128-k"
+     id="use23" />
+</svg>

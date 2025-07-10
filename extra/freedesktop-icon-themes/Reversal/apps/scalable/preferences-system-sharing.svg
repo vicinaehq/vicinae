@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <filter id="filter1057-1" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053-2" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="translate(197.03 20.81)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#a53cff" offset="0"/>
+   <stop stop-color="#b496ff" offset="1"/>
+  </linearGradient>
+ </defs>
+ <g transform="translate(-65.532 -21.32)">
+  <rect x="70.032" y="25.82" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057-1)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+  <rect x="70.032" y="25.82" width="55" height="55" ry="15" fill="url(#linearGradient1053-2)" stroke-linecap="round" stroke-width="2.7444"/>
+  <g transform="matrix(2.7294 0 0 2.7294 -1035.8 -1405.6)" fill="#fff" stroke="#000" stroke-opacity=".8" stroke-width=".7572">
+   <g transform="translate(.22097 .44194)" fill="#fff" stroke-width=".7572">
+    <g transform="translate(1.3574,-1.2627)" fill="#fff" stroke-width=".7572">
+     <g transform="translate(-.41037 -.59978)" fill="#fff" stroke-width=".7572">
+      <g transform="matrix(.78637 0 0 .78395 92.594 111.88)" fill="#fff" stroke-width=".7572">
+       <g transform="matrix(1.2717,0,0,1.2756,-114.5,-140.34)" fill="#fff" stroke-width=".7572">
+        <g transform="matrix(.78637 0 0 .78395 93.326 112.35)" fill="#fff" stroke-width=".7572">
+         <path d="m409.03 539.85c-0.81855 0-1.5406 0.39154-2.0123 0.99113l-4.3753-2.2465c0.0573-0.2145 0.0985-0.43612 0.0985-0.66937 0-0.25391-0.0489-0.49298-0.11711-0.72557l4.356-2.2362c0.46913 0.62672 1.2098 1.0364 2.0509 1.0364 1.4248 0 2.5773-1.1572 2.5773-2.5864 0-1.4279-1.1526-2.5857-2.5773-2.5857-1.4215 0-2.5753 1.1578-2.5753 2.5857 0 0.2339 0.0412 0.45616 0.0991 0.67131l-4.374 2.2465c-0.47234-0.60022-1.1957-0.99306-2.0155-0.99306-1.4235 0-2.5754 1.1585-2.5754 2.587 0 1.4286 1.1519 2.5864 2.5754 2.5864 0.84236 0 1.5824-0.41093 2.0535-1.0383l4.354 2.2362c-0.0682 0.23195-0.11777 0.47295-0.11777 0.72751 0 1.4286 1.1538 2.5864 2.5754 2.5864 1.4248 0 2.5773-1.1578 2.5773-2.5864 0-1.4298-1.1525-2.587-2.5773-2.587z" fill="#fff" stroke="none"/>
+        </g>
+       </g>
+      </g>
+     </g>
+    </g>
+   </g>
+  </g>
+ </g>
+</svg>

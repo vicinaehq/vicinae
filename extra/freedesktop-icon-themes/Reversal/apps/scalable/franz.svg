@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+ <rect x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+ <rect x="4.5" y="4.5" width="55" height="55" ry="15" fill="url(#linearGradient1053)" stroke-linecap="round" stroke-width="2.7444"/>
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:title/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <linearGradient id="linearGradient882" x1="38.775" x2="38.775" y1="33.726" y2="14.795" gradientTransform="matrix(1.3043 0 0 1.3043 -19.132 .1443)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#d5ecf6" offset="0"/>
+   <stop stop-color="#f7fbfd" offset="1"/>
+  </linearGradient>
+  <style type="text/css"/>
+  <filter id="filter1057" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="translate(131.5 -.51)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#32d7ff" offset="0"/>
+   <stop stop-color="#329bff" offset="1"/>
+  </linearGradient>
+  <style type="text/css"/>
+  <style type="text/css"/>
+  <style type="text/css"/>
+  <style type="text/css"/>
+  <style type="text/css"/>
+  <style type="text/css"/>
+  <style type="text/css"/>
+ </defs>
+ <path d="m45.845 18.846-1.3849 0.69039s1.3163 5.8328-0.85004 7.9053c-0.59187 0.56617-1.0168 1.0783-1.3207 1.5301 0.0847 0.07778 0.17551 0.15443 0.25916 0.2322 1.621 1.5029 3.1385 2.9622 4.4969 3.454 0.3367 0.12125 0.63284 0.18481 0.90601 0.22599-0.52304-6.5573-2.1064-14.038-2.1064-14.038zm-27.69 0.0042s-1.5834 7.4787-2.1064 14.036c0.27317-0.04118 0.56932-0.10475 0.90601-0.22598 1.3584-0.49182 2.8759-1.9511 4.4969-3.454 0.08365-0.07778 0.17445-0.15443 0.25916-0.2322-0.30387-0.45182-0.7288-0.96392-1.3207-1.5301-2.1663-2.0737-0.85003-7.9032-0.85003-7.9032zm17.942 7.9654c-1.6836 0.09249-4.0968 1.2315-4.0968 1.2315s-3.1518-1.4864-4.7643-1.2004v0.0021c-3.9959 0.71028-6.8831 5.7187-10.059 6.8625-2.0085 0.72287-3.1762-0.33172-3.1762-0.33172s1.0586 2.615 3.1762 3.7588c2.8587 1.5441 6.4073 1.879 9.5308 1.1424 2.0106-0.47352 5.293-2.8528 5.293-2.8528s3.2824 2.3523 5.293 2.8258c3.1224 0.73659 6.672 0.42662 9.5308-1.1175 2.1176-1.1438 3.1762-3.7589 3.1762-3.7589s-1.1677 1.0546-3.1762 0.33172c-3.1764-1.1438-6.0636-6.1522-10.059-6.8625-0.20157-0.03588-0.42707-0.04431-0.66759-0.0311zm11.981 10.605c-0.29011 0.22304-0.59927 0.43576-0.94126 0.6199-2.1504 1.1609-4.3994 1.6534-6.8293 1.5757 0.80998 1.9479 1.3605 3.5875 0 5.5377 0 0 2.9981-0.3926 4.3248-0.92674 1.5712-0.63251 2.6514-1.5612 3.1596-4.0615 0.16517-0.81323 0.25434-1.743 0.28611-2.745zm-32.154 0.0021c0.03183 1.0011 0.12106 1.9303 0.28611 2.7429 0.50822 2.5003 1.5863 3.429 3.1576 4.0615 1.3267 0.53414 4.3269 0.92674 4.3269 0.92674-1.3605-1.9501-0.80998-3.5898 0-5.5377-2.4299 0.07778-4.681-0.41266-6.8314-1.5736-0.34112-0.18368-0.64972-0.39748-0.93918-0.6199z" fill="url(#linearGradient882)" fill-rule="evenodd"/>
+ <g fill="#5e4aa6">
+  <g transform="translate(-69.651 .27376)">
+   <circle cx="-1331.1" cy="-1237.8" r="0"/>
+   <circle cx="-1262.2" cy="-1229.7" r="0"/>
+   <circle cx="-1239.2" cy="-1255.5" r="0"/>
+   <circle cx="-1249.8" cy="-1228.8" r="0"/>
+  </g>
+  <g transform="matrix(3.7796 0 0 3.7796 -152.17 3.6649)" stroke-width=".26458">
+   <circle cx="-330.35" cy="-328.38" r="0"/>
+   <circle cx="-312.11" cy="-326.25" r="0"/>
+   <circle cx="-306.02" cy="-333.07" r="0"/>
+   <circle cx="-308.84" cy="-326.01" r="0"/>
+  </g>
+  <circle cx="-1201.2" cy="-1293.8" r="0"/>
+  <g>
+   <circle cx="-1082.7" cy="-1333.1" r="0"/>
+   <circle cx="16.829" cy="-67.587" r="0" fill-rule="evenodd"/>
+   <circle cx="-1004.2" cy="-1404.6" r="0"/>
+   <circle cx="95.328" cy="-139.06" r="0" fill-rule="evenodd"/>
+  </g>
+ </g>
+</svg>

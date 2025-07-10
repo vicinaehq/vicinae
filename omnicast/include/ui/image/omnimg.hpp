@@ -344,8 +344,11 @@ public:
       return;
     }
 
-    auto pix = m_icon.pixmap(*it).scaled(config.size * config.devicePixelRatio, Qt::KeepAspectRatio,
-                                         Qt::SmoothTransformation);
+    qDebug() << "icon size" << *it;
+
+    auto pix =
+        m_icon.pixmap(config.size)
+            .scaled(config.size * config.devicePixelRatio, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
     pix.setDevicePixelRatio(config.devicePixelRatio);
 

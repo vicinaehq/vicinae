@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" viewBox="0 0 16.933 16.933" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <filter id="filter1057-61" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053-8" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="matrix(.26458 0 0 .26458 53.988 3.626)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#323741" offset="0"/>
+   <stop stop-color="#465064" offset="1"/>
+  </linearGradient>
+ </defs>
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:title/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <g transform="translate(-19.196 -3.7609)">
+  <rect transform="matrix(.26458 0 0 .26458 19.196 3.7609)" x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057-61)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+  <rect x="20.386" y="4.9515" width="14.552" height="14.552" ry="3.9688" fill="url(#linearGradient1053-8)" stroke-linecap="round" stroke-width=".72612"/>
+  <path d="m25.874 8.8938c-0.08695 0-0.15724 0.068342-0.15724 0.15613v1.3543c0 0.08695 0.06945 0.15641 0.15724 0.15641h0.12057l-0.27781 0.27781 0.27781 0.27781-0.27699 3.0559c-0.30808 0-0.55536 0.24753-0.55536 0.55451 0 0.10085 0.03028 0.1953 0.07695 0.27781l-0.07723 0.0011-0.27781 0.55565h5.5562l-0.27781-0.55562-0.07779-0.0011c0.04778-0.08251 0.07807-0.17697 0.07807-0.27781 0-0.30808-0.24891-0.55451-0.55589-0.55451l-0.27755-3.0559 0.27781-0.27781-0.27781-0.27781h0.12168c0.08779 0 0.15724-0.06834 0.15724-0.15641v-1.3544c0-0.086955-0.06834-0.15613-0.15724-0.15613h-0.39976v0.55562h-0.55562v-0.55562h-0.55562v0.55562h-0.55562v-0.55565h-0.55562v0.55562h-0.55562v-0.55562" fill="#fff" stroke-width=".27781"/>
+ </g>
+</svg>

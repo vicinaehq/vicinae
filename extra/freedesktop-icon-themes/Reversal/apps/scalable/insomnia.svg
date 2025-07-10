@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg width="64" height="64" version="1.1" viewBox="0 0 16.933 16.933" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <filter id="filter1057-2" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053-9" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="matrix(.26458 0 0 .26458 48.005 7.6891)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#32d7ff" offset="0"/>
+   <stop stop-color="#329bff" offset="1"/>
+  </linearGradient>
+  <filter id="filter1426" x="-.075" y="-.075" width="1.15" height="1.15" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="1.1250009"/>
+  </filter>
+ </defs>
+ <g transform="translate(-13.213 -7.824)">
+  <rect transform="matrix(.26458 0 0 .26458 13.213 7.824)" x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057-2)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+  <rect x="14.403" y="9.0146" width="14.552" height="14.552" ry="3.9687" fill="url(#linearGradient1053-9)" stroke-linecap="round" stroke-width=".7261"/>
+  <path transform="matrix(.26458 0 0 .26458 13.213 7.824)" d="m31.91 15.954a18 18 0 0 0-6.7656 1.3574 7 7 0 0 1 2.8555 5.6426 7 7 0 0 1-7 7 7 7 0 0 1-5.6406-2.8574 18 18 0 0 0-1.3594 6.8574 18 18 0 0 0 18 18 18 18 0 0 0 18-18 18 18 0 0 0-18-18 18 18 0 0 0-0.0898 0z" filter="url(#filter1426)" opacity=".1" stroke-width="1.0096"/>
+  <path d="m21.655 11.528a4.7624 4.7624 0 0 0-1.79 0.35914 1.852 1.852 0 0 1 0.75549 1.4929 1.852 1.852 0 0 1-1.852 1.852 1.852 1.852 0 0 1-1.4924-0.75601 4.7624 4.7624 0 0 0-0.35966 1.8143 4.7624 4.7624 0 0 0 4.7624 4.7624 4.7624 4.7624 0 0 0 4.7624-4.7624 4.7624 4.7624 0 0 0-4.7624-4.7624 4.7624 4.7624 0 0 0-0.02377 0z" fill="#fff" stroke-linecap="round" stroke-width=".52916"/>
+ </g>
+</svg>

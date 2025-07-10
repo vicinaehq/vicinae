@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" width="22" height="22">
+    <style type="text/css" id="current-color-scheme">.ColorScheme-Text { color: #363636; } </style>
+    <g id="22-22-cantata" transform="translate(0,-10)">
+    <path id="path7" class="ColorScheme-Text" d="m 11,12.999863 a 7.9998002,8 0 0 0 -8,8 7.9998002,8 0 0 0 8,8 7.9998002,8 0 0 0 8,-8 7.9998002,8 0 0 0 -8,-8 z m 0,1 a 7,7 0 0 1 7,7 7,7 0 0 1 -7,7 7,7 0 0 1 -7,-7 7,7 0 0 1 7,-7 z" style="fill:currentColor;fill-opacity:0.6;stroke:none"/>
+    <path id="path9" class="ColorScheme-Text" d="m 10,12.999863 0,11.044922 c -0.83718,-0.3612 -1.8093231,-0.263585 -2.8457031,0.166016 -1.73476,0.7184 -2.7294463,2.293178 -2.2226563,3.517578 0.50678,1.2248 2.3253869,1.636768 4.0605469,0.917968 1.3687605,-0.5684 2.2070315,-2.045546 2.2070315,-2.935546 l 0,-8.710938 c 0,0 3.201172,0.39961 3.201172,3.599609 0,2.4 -0.800832,3.201172 -2.800782,5.201172 1.99995,-1.2 3.59961,-2.801172 3.59961,-5.201172 0,-3.199999 -2.469183,-4.639084 -3.101563,-5.271484 -0.39999,-0.4 -0.898437,-1.927734 -0.898437,-1.927734 L 10,12.999863 Z" style="fill:currentColor;fill-opacity:1;stroke:none"/>
+    <path id="path11" d="M 0 10 L 0 32 L 22 32 L 22 10 L 0 10 z " style="opacity:1;fill:none"/>
+  </g>
+</svg>

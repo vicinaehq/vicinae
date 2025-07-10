@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Flamingo" width="64" height="64" enable-background="new 0 0 1024 1024" image-rendering="optimizeSpeed" version="1.1" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <linearGradient id="a" x1="32" x2="32" y1="12.436" y2="51.565" gradientTransform="matrix(.99997 0 0 .99997 2.7681e-5 2.7681e-5)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fedede" offset="0"/>
+   <stop stop-color="#fdc3cb" offset="1"/>
+  </linearGradient>
+  <filter id="filter1057" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient980" x1="-17.007" x2="-2.455" y1="15.742" y2="1.1906" gradientTransform="matrix(3.7796 0 0 3.7796 68.779 0)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#ff7d50" offset="0"/>
+   <stop stop-color="#fa4b5a" offset=".49173"/>
+   <stop stop-color="#ff509b" offset="1"/>
+  </linearGradient>
+ </defs>
+ <rect x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+ <rect x="4.5" y="4.5" width="55" height="55" ry="14.895" fill="url(#linearGradient980)"/>
+ <path d="m12.434 31.999c0 10.805 8.7597 19.564 19.564 19.564 0.65215-0.81519 0.65215-1.6852 0-2.6086-9.3649 0-16.956-7.591-16.956-16.956z" opacity=".15" stroke-width="1.3043"/>
+ <path d="m31.999 12.436a19.564 19.564 0 0 0-19.563 19.563 19.564 19.564 0 0 0 1.1934 6.6912l7.9352-11.908h-5.6893a16.956 16.956 0 0 1 16.124-11.74 16.956 16.956 0 0 1 16.956 16.956 16.956 16.956 0 0 1-16.956 16.956v2.6073a19.564 19.564 0 0 0 19.563-19.563 19.564 19.564 0 0 0-19.563-19.563z" fill="url(#a)" stroke-width=".99997"/>
+</svg>

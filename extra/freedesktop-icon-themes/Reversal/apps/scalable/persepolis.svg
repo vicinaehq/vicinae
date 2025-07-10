@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" xmlns="http://www.w3.org/2000/svg">
+ <defs>
+  <linearGradient id="linearGradient1158" x1="399.57" x2="399.57" y1="545.8" y2="517.8" gradientTransform="matrix(2.1429,0,0,2.1429,-826.36,-1107.5)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#3889e9" offset="0"/>
+   <stop stop-color="#5ea5fb" offset="1"/>
+  </linearGradient>
+  <filter id="filter1057" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="translate(131.5 -.51051)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#ff7d50" offset="0"/>
+   <stop stop-color="#ff4b5a" offset=".50594"/>
+   <stop stop-color="#ff509b" offset="1"/>
+  </linearGradient>
+ </defs>
+ <g stroke-linecap="round">
+  <rect x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057)" opacity=".3" stroke-width="2.7444"/>
+  <rect x="4.4995" y="4.4995" width="55.001" height="55.001" ry="15" fill="url(#linearGradient1053)" stroke-width="2.7444"/>
+  <rect width="64" height="64" rx="0" ry="0" fill="none" stroke-linejoin="round" stroke-width="1.4464" style="paint-order:stroke fill markers"/>
+ </g>
+ <circle cx="32.02" cy="32.044" r="30.001" fill-opacity="0" stroke-width="1.5715"/>
+ <circle cx="32.02" cy="32.044" r="0" fill="url(#linearGradient1158)" stroke-width="1.5715"/>
+ <g transform="matrix(1.2857 0 0 1.2857 -10.886 -7.7474)" fill="#f9f9f9">
+  <g stroke-width=".77778">
+   <path d="m25.356 16.915 17 3.5-17 3.5z"/>
+   <path d="m25.356 26.915 17 3.5-17 3.5z"/>
+   <path d="m28.356 22.915 13 2.5-13 2.5z" fill="#faf8f9"/>
+  </g>
+  <path d="m31.356 34.915-3.5 10-3.5-10z" fill-opacity=".97797" stroke-width=".84008"/>
+  <path d="m40.356 34.915-3.5 10-3.5-10z" fill-opacity=".97797" stroke-width=".84008"/>
+ </g>
+</svg>

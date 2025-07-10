@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg width="64" height="64" version="1.1" viewBox="0 0 16.933 16.933" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <filter id="filter1057-36" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053-5" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="matrix(.26458 0 0 .26458 51.411 8.5406)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#2e55e7" offset="0"/>
+   <stop stop-color="#0d7eef" offset="1"/>
+  </linearGradient>
+ </defs>
+ <g transform="translate(-16.619 -8.6755)">
+  <rect transform="matrix(.26458 0 0 .26458 16.619 8.6755)" x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057-36)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+  <rect x="17.81" y="9.8662" width="14.552" height="14.552" ry="3.9687" fill="url(#linearGradient1053-5)" stroke-linecap="round" stroke-width=".7261"/>
+  <path d="m25.482 12.512a4.6307 4.6307 0 0 0-4.6296 4.6274v3.9143c0 0.3981 0.32045 0.71855 0.71855 0.71855h3.9132a4.6301 4.6301 0 0 0-0.0022-9.2603zm1.3955 1.0149c0.18593 0 0.31826 0.02187 0.48997 0.06562 0.25155 0.06562 0.45607 0.27233 0.45607 0.51185 0 0.28873-0.20889 0.49982-0.52388 0.49982-0.14874 0-0.20343-0.02953-0.42216-0.02953-0.64637 0-1.1702 0.52497-1.1713 1.1702v1.0128c0 0.09187 0.07328 0.16624 0.16405 0.16624h0.77105a0.51677 0.51677 0 1 1 0 1.0335h-0.9351v1.1823a2.2202 2.2202 0 0 1-2.2202 2.2202c-0.18593 0-0.31826-0.02187-0.48997-0.06672-0.25155-0.06562-0.45716-0.27123-0.45716-0.51075 0-0.28983 0.20999-0.49982 0.52497-0.49982 0.14874 0 0.20343 0.02844 0.42216 0.02844 0.64637 0 1.1702-0.52388 1.1713-1.1702v-1.0171a0.16515 0.16515 0 0 0-0.16515-0.16624h-0.76996a0.51677 0.51677 0 1 1 0.0055-1.0335h0.92963v-1.1768a2.2202 2.2202 0 0 1 2.2202-2.2202z" fill="#fff" stroke-width="1.0937"/>
+ </g>
+</svg>

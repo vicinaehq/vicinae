@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" viewBox="0 0 16.933 16.933" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <clipPath id="a-8">
+   <path d="m-1 1335h1029v-1334h-1029z"/>
+  </clipPath>
+  <filter id="filter1057-4" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053-5" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="matrix(.26459 0 0 .26459 34.794 -.1351)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#32d7ff" offset="0"/>
+   <stop stop-color="#329bff" offset="1"/>
+  </linearGradient>
+ </defs>
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:title/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <rect transform="matrix(.26459 0 0 .26459 -6.0189e-5 -6.0189e-5)" x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057-4)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+ <rect x="1.1905" y="1.1905" width="14.552" height="14.552" ry="3.9688" fill="url(#linearGradient1053-5)" stroke-linecap="round" stroke-width=".72612"/>
+ <g transform="translate(1.0016 -1.9277)" fill="#fff">
+  <circle transform="scale(1,-1)" cx="7.465" cy="-6.5303" r=".94496" fill-rule="evenodd" stroke-width=".30041"/>
+  <g transform="matrix(.15891 0 0 .15891 -91.65 -76.761)">
+   <g clip-path="url(#a-8)" fill="#fff">
+    <path d="m618.69 538.71c0-2.761 2.239-5 5-5 2.762 0 5 2.239 5 5v35c0 2.762-2.238 5-5 5-2.761 0-5-2.238-5-5z" fill="#fff"/>
+   </g>
+  </g>
+ </g>
+</svg>

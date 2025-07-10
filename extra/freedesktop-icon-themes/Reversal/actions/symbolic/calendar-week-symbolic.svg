@@ -1,0 +1,14 @@
+<svg width="16px" height="16px" version="1.1" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+ <path d="m1 7h4v1h-4z" fill="#363636"/>
+ <path d="m1 10h4v1h-4z" fill="#363636"/>
+ <path d="m1 13h4v1h-4z" fill="#363636"/>
+ <path d="m6 7h4v1h-4z" fill="#363636"/>
+ <path d="m6 10h4v1h-4z" fill="#363636"/>
+ <path d="m6 13h4v1h-4z" fill="#363636"/>
+ <path d="m11 7h4v1h-4z" fill="#363636"/>
+ <path d="m11 10h4v1h-4z" fill="#363636"/>
+ <path d="m11 13h4v1h-4z" fill="#363636"/>
+ <rect x="1" y="3" width="4" height="2" fill="#363636" fill-rule="evenodd" stop-color="#000000" stroke-linecap="round" stroke-linejoin="round" style="paint-order:stroke fill markers"/>
+ <rect x="6" y="3" width="4" height="2" fill="#363636" fill-rule="evenodd" stop-color="#000000" stroke-linecap="round" stroke-linejoin="round" style="paint-order:stroke fill markers"/>
+ <rect x="11" y="3" width="4" height="2" fill="#363636" fill-rule="evenodd" stop-color="#000000" stroke-linecap="round" stroke-linejoin="round" style="paint-order:stroke fill markers"/>
+</svg>

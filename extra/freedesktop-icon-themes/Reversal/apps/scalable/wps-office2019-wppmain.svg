@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg width="64" height="64" version="1.1" viewBox="0 0 16.933 16.933" xmlns="http://www.w3.org/2000/svg">
+ <defs>
+  <filter id="filter1057" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053" x1="-127" x2="-80.659" y1="60" y2="13.659" gradientTransform="matrix(.26458 0 0 .26458 34.792 -.135)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#ff7d1e" offset="0"/>
+   <stop stop-color="#ffa53c" offset="1"/>
+  </linearGradient>
+ </defs>
+ <g stroke-linecap="round">
+  <rect transform="matrix(.26458 0 0 .26458 -6e-5 -6.016e-5)" x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057)" opacity=".3" stroke-width="2.7444"/>
+  <rect x="1.1906" y="1.1906" width="14.552" height="14.552" ry="3.9687" fill="url(#linearGradient1053)" stroke-width=".72611"/>
+  <path d="m4.7345 11.456v-2.991h5.972s1.492 0 1.492-1.493c0-1.493-1.492-1.494-1.492-1.494h-5.972" fill="none" stroke="#fff" stroke-linejoin="round" stroke-width=".995"/>
+ </g>
+</svg>

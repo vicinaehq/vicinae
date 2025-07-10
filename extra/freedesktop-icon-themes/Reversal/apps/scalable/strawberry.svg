@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <filter id="filter1057-7" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="translate(131.5 -.51)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#dee0e2" offset="0"/>
+   <stop stop-color="#f1f3f5" stop-opacity=".99608" offset="1"/>
+  </linearGradient>
+  <linearGradient id="linearGradient1274" x1="37.594" x2="24.588" y1="22.56" y2="46.263" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#f00" offset="0"/>
+   <stop stop-color="#ff7864" offset="1"/>
+  </linearGradient>
+  <linearGradient id="linearGradient1672" x1="40.224" x2="35.203" y1="17.995" y2="26.733" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#389700" offset="0"/>
+   <stop stop-color="#34d710" offset="1"/>
+  </linearGradient>
+ </defs>
+ <rect x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057-7)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+ <rect x="4.5" y="4.5" width="55" height="55" ry="15" fill="url(#linearGradient1053)" stroke-linecap="round" stroke-width="2.7444"/>
+ <g stroke-width="1.2069">
+  <path d="m31.462 18.45c-3.4743-2.0059-7.4781-1.5303-10.495 3.6957-3.6207 6.2712-3.9874 21.389 2.2838 25.01 6.2712 3.6207 19.18-4.2559 22.801-10.527 3.0172-5.226 1.4272-8.9312-2.0471-10.937z" fill="url(#linearGradient1274)"/>
+  <path d="m40.75 16.845s-2.6939-0.16169-4.5042 2.9739c0.16169-2.6939-1.9714-3.9254-4.0191-5.1076-1.2069 2.0904-0.76514 3.7391 0.72182 5.9912-2.6939-0.16169-4.3425 0.28006-5.5494 2.3705 2.0478 1.1823 4.1808 2.4138 6.4329 0.92684-1.8103 3.1356-0.32339 5.3877-0.32339 5.3877s2.6939 0.16169 4.5042-2.9739c-0.16169 2.6939 1.9714 3.9254 4.0191 5.1076 1.2069-2.0904 0.76514-3.7391-0.72182-5.9912 2.6939 0.16169 4.3425-0.28006 5.5494-2.3705-2.0478-1.1823-4.1808-2.4138-6.4329-0.92684 1.8103-3.1356 0.32339-5.3877 0.32339-5.3877z" fill="url(#linearGradient1672)" style="paint-order:normal"/>
+  <g fill="#eeebcd">
+   <circle transform="rotate(30)" cx="43.713" cy="24.385" r="1.2069" style="paint-order:normal"/>
+   <circle transform="rotate(30)" cx="38.885" cy="19.558" r="1.2069" style="paint-order:normal"/>
+   <circle transform="rotate(30)" cx="48.54" cy="19.558" r="1.2069" style="paint-order:normal"/>
+   <circle transform="rotate(30)" cx="43.713" cy="17.144" r="1.2069" style="paint-order:normal"/>
+   <circle transform="rotate(30)" cx="50.954" cy="14.73" r="1.2069" style="paint-order:normal"/>
+   <circle transform="rotate(30)" cx="36.471" cy="14.73" r="1.2069" style="paint-order:normal"/>
+   <circle transform="rotate(30)" cx="34.058" cy="9.9025" r="1.2069" style="paint-order:normal"/>
+   <circle transform="rotate(30)" cx="53.368" cy="9.9025" r="1.2069" style="paint-order:normal"/>
+   <circle transform="rotate(30)" cx="40.092" cy="11.109" r="1.2069" style="paint-order:normal"/>
+   <circle transform="rotate(30)" cx="47.334" cy="11.109" r="1.2069" style="paint-order:normal"/>
+  </g>
+  <circle transform="rotate(30)" cx="43.713" cy="1.4542" r="2.4138" fill="#2c8223" style="paint-order:normal"/>
+  <circle transform="rotate(30)" cx="43.713" cy="1.4542" r="1.2069" fill="#5ccd7c" style="paint-order:normal"/>
+ </g>
+</svg>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:title/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <filter id="f" x="-.064666" y="-.056002" width="1.1293" height="1.112" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.66144363"/>
+  </filter>
+  <linearGradient id="e" x1="25.68" x2="26.448" y1="39.395" y2="17.376" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#345f29" offset="0"/>
+   <stop stop-color="#59a446" offset="1"/>
+  </linearGradient>
+  <linearGradient id="a" x1="15.707" x2="25.68" y1="32.561" y2="39.395" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#ad7c59" offset="0"/>
+   <stop stop-color="#835b41" offset="1"/>
+  </linearGradient>
+  <style type="text/css"/>
+  <style type="text/css"/>
+  <style type="text/css"/>
+  <style type="text/css"/>
+  <filter id="filter1057" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="translate(131.5 -.51)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#dee0e2" offset="0"/>
+   <stop stop-color="#f1f3f5" stop-opacity=".99608" offset="1"/>
+  </linearGradient>
+ </defs>
+ <rect x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+ <rect x="4.5" y="4.5" width="55" height="55" ry="15" fill="url(#linearGradient1053)" stroke-linecap="round" stroke-width="2.7444"/>
+ <g fill="#5e4aa6">
+  <circle cx="-1362.1" cy="-1209" r="0"/>
+  <circle cx="-262.53" cy="56.464" r="0" fill-rule="evenodd"/>
+  <circle cx="-1248.7" cy="-1241.6" r="0"/>
+  <circle cx="-149.15" cy="23.855" r="0" fill-rule="evenodd"/>
+ </g>
+ <g transform="translate(0 -1.333)">
+  <g transform="matrix(1.3035 0 0 1.317 -2.4751 -6.5511)" filter="url(#f)" opacity=".1">
+   <path transform="matrix(1.0229 0 0 1.0124 .87599 4.9741)" d="m25 11-12 7v14l12 7 12-7v-14z" fill-rule="evenodd"/>
+  </g>
+  <g transform="matrix(1.3035 0 0 1.317 -2.4743 -7.8841)" fill-rule="evenodd">
+   <path d="m14.173 23.2 12.275 21.257 12.273-21.257-12.273-7.09" fill="url(#e)"/>
+   <path d="m14.173 23.2v3.543l12.274 7.09 1e-3 -3.547z" fill="#59a849"/>
+   <path d="m26.448 33.827 12.274-7.087v-3.543l-12.274 7.086z" fill="#3e7231"/>
+   <path d="m14.173 26.74v10.63l12.274 7.087v-10.63z" fill="url(#a)"/>
+   <path d="m26.448 33.827 12.274-7.087v10.63l-12.274 7.087z" fill="#573d2b"/>
+  </g>
+ </g>
+ <circle cx="-1314.2" cy="-1241.6" r="0" fill="#5e4aa6"/>
+ <circle cx="-214.7" cy="23.855" r="0" fill="#5e4aa6" fill-rule="evenodd"/>
+</svg>

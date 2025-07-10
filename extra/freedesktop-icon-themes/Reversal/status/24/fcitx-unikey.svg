@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" width="24" height="24" viewBox="0 0 24 24">
+  <style type="text/css" id="current-color-scheme">
+      .ColorScheme-Text {
+        color:#f2f2f2;
+      }
+      .ColorScheme-Background {
+        color:#eff0f1;
+      }
+      .ColorScheme-Highlight {
+        color:#3daee9;
+      }
+      .ColorScheme-ButtonText {
+        color:#f2f2f2;
+      }
+      </style>
+  <g transform="translate(1,1)">
+    <g transform="translate(0,-59.999992) translate(2.47097e-09,-110)" id="fcitx-unikey">
+      <rect y="170" x="-2.4709701e-09" height="22" width="22" id="rect4386" style="fill:none;fill-opacity:1;stroke:none"/>
+      <path class="ColorScheme-Text" style="fill:currentColor;fill-opacity:1;stroke:none" d="m 4,126 0,0.5 0,7.5 3,0 0,7 8,0 0,-7 3,0 0,-8 -6,0 -1,0 z m 1,1 6,0 0,6 -6,0 z m 7,0 5,0 0,6 -2,0 -3,0 z m -6,1 0,1.5 c 0,0.80556 0.1226409,1.42283 0.484375,1.875 C 6.8461091,131.82717 7.4166667,132 8,132 8.5833333,132 9.1538909,131.82717 9.515625,131.375 9.8773591,130.92283 10,130.30556 10,129.5 l 0,-1.5 -1,0 0,1.5 c 0,0.69444 -0.1273591,1.07717 -0.265625,1.25 C 8.5961091,130.92283 8.4166667,131 8,131 7.5833333,131 7.4038909,130.92283 7.265625,130.75 7.1273591,130.57717 7,130.19444 7,129.5 L 7,128 Z m 8,0 0,4 1,0 0,-4 z m -6,6 3,0 1,0 2,0 0,6 -6,0 z m 2,1 -1,0 0,4 1,0 0,-2.49805 2,2.49805 1,0 0,-4 -1,0 0,2.49805 z" transform="translate(0,48)" id="rect4402"/>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,5 @@
+<svg width="16" height="16" enable-background="new" version="1.1" xmlns="http://www.w3.org/2000/svg">
+ <rect transform="rotate(90)" x="7" y="-3" width="2" height="2" rx="1" ry="1" fill="#363636"/>
+ <rect transform="rotate(90)" x="7" y="-9" width="2" height="2" rx="1" ry="1" fill="#363636"/>
+ <rect transform="rotate(90)" x="7" y="-15" width="2" height="2" rx="1" ry="1" fill="#363636"/>
+</svg>

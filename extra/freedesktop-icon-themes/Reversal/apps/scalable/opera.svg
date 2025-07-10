@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <filter id="filter1057-6" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053-7" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="translate(178.14 19.151)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#ff7d50" offset="0"/>
+   <stop stop-color="#ff4b5a" offset=".50594"/>
+   <stop stop-color="#ff509b" offset="1"/>
+  </linearGradient>
+  <linearGradient id="e" x1="74.643" x2="83.932" y1="18.269" y2="101.96" gradientTransform="matrix(.43781 0 0 .43781 52.395 25.392)" gradientUnits="userSpaceOnUse" xlink:href="#a-5"/>
+  <linearGradient id="a-5">
+   <stop stop-color="#ccc" offset="0"/>
+   <stop stop-color="#fff" offset="1"/>
+  </linearGradient>
+  <linearGradient id="d-3" x1="40.533" x2="37.578" y1="107.5" y2="15.159" gradientTransform="matrix(.43781 0 0 .43781 52.395 25.392)" gradientUnits="userSpaceOnUse" xlink:href="#a-5"/>
+ </defs>
+ <g transform="translate(-46.643 -19.661)">
+  <rect x="51.143" y="24.161" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057-6)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+  <rect x="51.143" y="24.161" width="55" height="55" ry="15" fill="url(#linearGradient1053-7)" stroke-linecap="round" stroke-width="2.7444"/>
+  <path d="m71.151 39.214c2.0342-2.4004 4.664-3.8521 7.5321-3.8521 6.4555 0 11.689 7.3202 11.689 16.344 0 9.0281-5.2331 16.344-11.689 16.344-2.8726 0-5.498-1.4473-7.5321-3.8477 3.1814 4.1301 7.9073 6.751 13.189 6.751 3.2476 0 6.2878-0.99282 8.8867-2.7137 4.5405-4.0595 7.3955-9.9589 7.3955-16.529 0-6.5658-2.8549-12.47-7.3955-16.529-2.599-1.7253-5.639-2.7137-8.8867-2.7137-5.2817 0-10.007 2.621-13.189 6.751" fill="url(#e)" image-rendering="optimizeSpeed" stroke-width=".43781"/>
+  <path d="m78.663 29.661c-12.149 0-22 9.8507-22 22 0 11.799 9.2903 21.426 20.954 21.974 0.35025 0.01751 0.69612 0.02627 1.0464 0.02627 5.6346 0 10.77-2.119 14.662-5.5996-2.5787 1.7118-5.5952 2.6925-8.8175 2.6925-5.2406 0-9.9295-2.6006-13.086-6.6985-2.4342-2.872-4.006-7.1144-4.1154-11.878v-1.0376c0.10945-4.7634 1.6812-9.0101 4.1154-11.878 3.1566-4.0979 7.8499-6.6985 13.086-6.6985 3.2223 0 6.2388 0.98507 8.8175 2.6969-3.8702-3.4631-8.9795-5.5777-14.579-5.5996z" fill="url(#d-3)" image-rendering="optimizeSpeed" stroke-width=".43781"/>
+ </g>
+</svg>

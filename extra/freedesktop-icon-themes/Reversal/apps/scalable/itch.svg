@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Gimp" width="64" height="64" enable-background="new 0 0 1024 1024" image-rendering="optimizeSpeed" version="1.1" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+ <defs>
+  <filter id="filter1057-3" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053-7" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="translate(131.5 -.51)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#df2a2a" offset="0"/>
+   <stop stop-color="#f83f3f" offset="1"/>
+  </linearGradient>
+ </defs>
+ <rect x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057-3)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+ <rect x="4.5" y="4.5" width="55" height="55" ry="15" fill="url(#linearGradient1053-7)" stroke-linecap="round" stroke-width="2.7444"/>
+ <g fill="#fff">
+  <path d="m-43.135 22.868s-2.5924-6.4388-8.9101-0.68692c-6.3177 5.7519-7.7607 20.912-7.2369 23.757 0.52379 2.8446 8.8118 3.5041 12.238-5.863l20.148-3.1235s1.7179 4.8462 5.6764 5.0194c3.9586 0.17329 7.959-1.6991 6.5499-8.4587s-3.0136-14.403-8.3835-16.786c-5.3698-2.3831-7.7499 4.0591-7.7499 4.0591z"/>
+  <path d="m-39.841 35.095v-4.247l-3.2098-0.41734 6.0468-6.7078 6.0342 8.5816-2.9923-0.1632v4.0306z"/>
+  <path d="m42.246 17.953c-3.3378 0.0015-4.8437 4.0781-4.8437 4.0781l-10.961 1.8516s-2.3062-5.7241-7.9219-0.61133c-5.6157 5.1128-6.8972 18.589-6.4316 21.117 0.46559 2.5285 7.8316 3.1154 10.877-5.2109l17.91-2.7773s1.5282 4.3089 5.0469 4.4629c3.5187 0.15404 7.0748-1.511 5.8223-7.5195-1.2525-6.0086-2.6799-12.804-7.4531-14.922-0.74582-0.33099-1.4268-0.46904-2.0449-0.46875zm-10.367 6.6895 5.375 5.9629-2.8535 0.37109v3.7734l-5.2266 0.95703v-3.582l-2.6582 0.14453z"/>
+ </g>
+</svg>

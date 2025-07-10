@@ -1,0 +1,10 @@
+<svg width="128" height="128" enable-background="new" version="1.0" xmlns="http://www.w3.org/2000/svg">
+ <text x="63.911999" y="125.74899" enable-background="new" fill="#000000" font-family="'Droid Sans'" font-size="11.085px" font-weight="700" style="line-height:0%" xml:space="preserve"><tspan x="63.911999" y="125.74899" font-size="9.2378px" style="line-height:1.25"> </tspan></text>
+ <path d="m25.047 28.88h75.869v75.869h-75.869z" fill="none"/>
+ <path d="m62.981 52.589a14.225 14.225 0 1 0 0 28.451 14.225 14.225 0 0 0 0-28.451zm-2.3377 3.9167c1.7734 0 3.2386 1.47 3.2386 3.3098 0 1.8351-1.4652 3.3809-3.2386 3.3809-1.7734 0-3.2386-1.5458-3.2386-3.3809 0-1.8351 1.4652-3.3098 3.2386-3.3098z" fill="#babdb6"/>
+ <path d="m62.981 38.364c-20.949 0-37.934 28.451-37.934 28.451s16.985 28.451 37.934 28.451c20.949 0 37.934-28.451 37.934-28.451s-16.985-28.451-37.934-28.451zm0 9.4836c18.332 0 28.451 18.967 28.451 18.967s-10.119 18.967-28.451 18.967c-18.332 0-28.451-18.967-28.451-18.967s10.119-18.967 28.451-18.967z" fill="#babdb6"/>
+ <path d="m34.531 57.037-4.7418-4.7418m61.643 4.7418 4.7418-4.7418" color="#000000" enable-background="accumulate" fill="none" stroke="#babdb6" stroke-linecap="round" stroke-width="5.133"/>
+ <path d="m44.014 52.295-9.4836-9.4836m16.004 2.6649-6.52-11.262m16.302 8.8909-3.2624-14.225m26.971 23.415 7.4067-9.4836m-13.927 2.6649 6.3066-10.214m-16.089 7.8429 4.0969-14.225" color="#000000" enable-background="accumulate" fill="none" stroke="#babdb6" stroke-linecap="round" stroke-width="5.133"/>
+ <path d="m64 4a60 60 0 0 0-60 60 60 60 0 0 0 60 60 60 60 0 0 0 60-60 60 60 0 0 0-60-60zm0 8a52 52 0 0 1 52 52 52 52 0 0 1-52 52 52 52 0 0 1-52-52 52 52 0 0 1 52-52z" fill="#babdb6" fill-rule="evenodd" stop-color="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="paint-order:stroke fill markers"/>
+ <rect transform="rotate(45)" x="86.51" y="-55" width="8" height="110" rx="0" ry="0" fill="#babdb6" fill-rule="evenodd" stop-color="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7127" style="paint-order:stroke fill markers"/>
+</svg>

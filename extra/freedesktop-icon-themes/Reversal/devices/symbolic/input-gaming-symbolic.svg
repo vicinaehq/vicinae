@@ -1,0 +1,8 @@
+<svg width="16" height="16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+ <g transform="translate(-1273 -80.948)">
+  <path d="m1277 85.967h0.992v1h0.992v1h-0.992v1h-0.992v-1h-0.992v-1h0.992zm7.44 0c0.273 0 0.495 0.224 0.495 0.5s-0.222 0.5-0.496 0.5c-0.275-0.0011-0.4971-0.22496-0.496-0.5 0-0.276 0.222-0.5 0.496-0.5zm-0.993 1c0.274 0 0.496 0.224 0.496 0.5s-0.222 0.5-0.496 0.5c-0.275-0.0011-0.4971-0.22496-0.496-0.5 0-0.276 0.222-0.5 0.496-0.5zm1.984 0c0.274 0 0.496 0.224 0.496 0.5s-0.222 0.5-0.496 0.5c-0.275-0.0011-0.4971-0.22496-0.496-0.5 0-0.276 0.222-0.5 0.496-0.5zm-0.992 1c0.274 0 0.496 0.224 0.496 0.5s-0.222 0.5-0.496 0.5c-0.275-0.0011-0.4971-0.22496-0.496-0.5 0-0.276 0.222-0.5 0.496-0.5z" fill="#363636"/>
+ </g>
+ <path d="m3 2c-1.662 0-3 1.338-3 3v5c0 1.662 1.338 3 3 3h10c1.662 0 3-1.338 3-3v-5c0-1.662-1.338-3-3-3h-10zm0 1h10c1.108 0 2 0.892 2 2v5c0 1.108-0.892 2-2 2h-10c-1.108 0-2-0.892-2-2v-5c0-1.108 0.892-2 2-2z" fill="#363636" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="paint-order:stroke fill markers"/>
+ <rect x="5" y="10" width="2" height="1" fill="#363636" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="paint-order:stroke fill markers"/>
+ <rect x="9" y="10" width="2" height="1" fill="#363636" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="paint-order:stroke fill markers"/>
+</svg>

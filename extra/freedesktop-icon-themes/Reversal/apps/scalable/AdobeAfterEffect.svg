@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" viewBox="0 0 16.933 16.933" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <filter id="filter1057" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="matrix(.26458 0 0 .26458 34.792 -.13493)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#8926f7" offset="0"/>
+   <stop stop-color="#ba7dff" offset="1"/>
+  </linearGradient>
+ </defs>
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <g>
+  <rect transform="scale(.26458)" x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+  <rect x="1.1906" y="1.1906" width="14.552" height="14.552" ry="3.9687" fill="url(#linearGradient1053)" stroke-linecap="round" stroke-width=".7261"/>
+  <path d="m5.8521 5.9432-1.7951 5.1077h1.1611l0.37047-1.2111h1.8521l0.37046 1.2111h1.1611l-1.8023-5.1077zm0.66261 0.79065c0.02375 0.094982 0.0545 0.20669 0.09249 0.33491s0.07588 0.25395 0.11387 0.37742c0.03799 0.12348 0.069 0.22558 0.09275 0.30632l0.37046 1.1828h-1.325l0.36325-1.1828c0.01899-0.05224 0.04507-0.14008 0.07832-0.26355 0.03799-0.12822 0.07588-0.26108 0.11387-0.3988 0.04274-0.14247 0.07621-0.26131 0.09996-0.3563zm4.6159 0.3563c-0.36568 0-0.68627 0.076029-0.96172 0.228-0.27544 0.15197-0.49147 0.3798-0.64819 0.68374-0.15197 0.29919-0.228 0.67687-0.228 1.1328 0 0.44641 0.08563 0.8167 0.2566 1.1111 0.17097 0.29444 0.40593 0.51539 0.70512 0.66261 0.29919 0.14247 0.64366 0.21357 1.0331 0.21357 0.29919 0 0.5531-0.02361 0.76206-0.0711 0.21371-0.04274 0.41571-0.11163 0.60568-0.20662v-0.81925c-0.21846 0.10448-0.42981 0.18297-0.63402 0.23521-0.20421 0.04749-0.4323 0.07111-0.684 0.07111-0.29919 0-0.53416-0.08537-0.70512-0.25634-0.16622-0.17097-0.25405-0.40619-0.26355-0.70538h2.5075v-0.51294c0-0.56514-0.15673-0.99965-0.47017-1.3036-0.31344-0.30869-0.7386-0.46295-1.2752-0.46295zm0.0072 0.7551c0.2517 0 0.43697 0.078236 0.5557 0.23495 0.11873 0.15197 0.18049 0.34684 0.18523 0.5843h-1.4888c0.02376-0.2802 0.102-0.48687 0.23497-0.61985 0.13772-0.13297 0.30872-0.1994 0.51293-0.1994z" fill="#1f1d21"/>
+ </g>
+</svg>

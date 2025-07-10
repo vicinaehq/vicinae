@@ -1,0 +1,61 @@
+<svg version="1.1" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <path id="H" d="m24 8c-8.864 0-16 7.136-16 16h16v-16" fill="url(#0)"/>
+  <path id="I" d="m408.57 539.8c8.864 0 16-7.136 16-16h-16v16" fill="url(#3)"/>
+  <path id="J" d="m408.57 539.8c-8.864 0-16-7.136-16-16h16v16" fill="url(#1)"/>
+  <linearGradient id="3" x1="424.57" x2="408.57" y1="523.8" y2="539.8" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#c1cc00" offset="0"/>
+   <stop stop-color="#dfcd00" offset=".312"/>
+   <stop stop-color="#f0cc00" offset=".562"/>
+   <stop stop-color="#fd8c08" offset=".75"/>
+   <stop stop-color="#f25c13" offset="1"/>
+  </linearGradient>
+  <linearGradient id="0" x1="8" x2="24" y1="24" y2="8" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#e81877" offset="0"/>
+   <stop stop-color="#dd1d8c" offset=".312"/>
+   <stop stop-color="#6d57b1" offset=".562"/>
+   <stop stop-color="#2a78c1" offset=".75"/>
+   <stop stop-color="#018dcb" offset="1"/>
+  </linearGradient>
+  <linearGradient id="2" x1="424.57" x2="408.57" y1="523.8" y2="507.8" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#bec900" offset="0"/>
+   <stop stop-color="#9ec80a" offset=".312"/>
+   <stop stop-color="#71b93d" offset=".562"/>
+   <stop stop-color="#35a48f" offset=".75"/>
+   <stop stop-color="#018fca" offset="1"/>
+  </linearGradient>
+  <linearGradient id="1" x1="392.57" x2="408.57" y1="523.8" y2="539.8" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#e51561" offset="0"/>
+   <stop stop-color="#e4156c" offset=".312"/>
+   <stop stop-color="#e71e2c" offset=".562"/>
+   <stop stop-color="#e8301e" offset=".75"/>
+   <stop stop-color="#e6320e" offset="1"/>
+  </linearGradient>
+  <linearGradient id="linearGradient3480" x1="424.57" x2="408.57" y1="523.8" y2="507.8" gradientUnits="userSpaceOnUse" xlink:href="#2"/>
+  <linearGradient id="linearGradient3484" x1="392.57" x2="408.57" y1="523.8" y2="539.8" gradientUnits="userSpaceOnUse" xlink:href="#1"/>
+ </defs>
+ <g transform="matrix(1.2489 0 0 1.2488 -5.738 -1292.5)">
+  <g transform="matrix(.38637 .10353 -.10353 .38637 -92.63 796.68)">
+   <use transform="translate(384.57,499.8)" width="100%" height="100%" clip-path="url(#5)" xlink:href="#H"/>
+   <use width="100%" height="100%" clip-path="url(#6)" xlink:href="#J"/>
+   <path d="m408.57 507.8c8.864 0 16 7.136 16 16h-16v-16" clip-path="url(#7)" fill="url(#linearGradient3480)"/>
+   <use width="100%" height="100%" clip-path="url(#8)" xlink:href="#I"/>
+  </g>
+  <g transform="matrix(.4 0 0 .4 -152.43 831.84)" opacity=".7">
+   <use transform="translate(384.57,499.8)" width="100%" height="100%" clip-path="url(#9)" filter="url(#4)" xlink:href="#H"/>
+   <use width="100%" height="100%" clip-path="url(#A)" filter="url(#4)" xlink:href="#J"/>
+   <use width="100%" height="100%" clip-path="url(#B)" filter="url(#4)" xlink:href="#I"/>
+   <path d="m408.57 507.8c8.864 0 16 7.136 16 16h-16v-16" clip-path="url(#C)" fill="url(#linearGradient3480)" filter="url(#4)"/>
+  </g>
+  <use transform="matrix(.28284 .28284 -.28284 .28284 11 1027.8)" width="100%" height="100%" clip-path="url(#9)" opacity=".35" xlink:href="#H"/>
+  <path transform="matrix(.28284 .28284 -.28284 .28284 43.591 777.65)" d="m408.57 539.8c-8.864 0-16-7.136-16-16h16v16" clip-path="url(#A)" fill="url(#linearGradient3484)" opacity=".35"/>
+  <use transform="matrix(.28284 .28284 -.28284 .28284 43.591 777.65)" width="100%" height="100%" clip-path="url(#B)" opacity=".35" xlink:href="#I"/>
+  <path transform="matrix(.28284 .28284 -.28284 .28284 43.591 777.65)" d="m408.57 507.8c8.864 0 16 7.136 16 16h-16v-16" clip-path="url(#C)" fill="url(#linearGradient3480)" opacity=".35"/>
+  <g transform="matrix(.10353 .38637 -.38637 .10353 171.08 829.27)">
+   <use transform="translate(384.57,499.8)" width="100%" height="100%" clip-path="url(#D)" opacity=".3" xlink:href="#H"/>
+   <use width="100%" height="100%" clip-path="url(#E)" opacity=".3" xlink:href="#J"/>
+   <use width="100%" height="100%" clip-path="url(#F)" opacity=".3" xlink:href="#I"/>
+   <path d="m408.57 507.8c8.864 0 16 7.136 16 16h-16v-16" clip-path="url(#G)" fill="url(#linearGradient3480)" opacity=".3"/>
+  </g>
+ </g>
+</svg>

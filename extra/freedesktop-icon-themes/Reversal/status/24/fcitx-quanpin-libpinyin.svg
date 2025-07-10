@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" width="24" height="24" viewBox="0 0 24 24">
+  <style type="text/css" id="current-color-scheme">
+      .ColorScheme-Text {
+        color:#f2f2f2;
+      }
+      .ColorScheme-Background {
+        color:#eff0f1;
+      }
+      .ColorScheme-Highlight {
+        color:#3daee9;
+      }
+      .ColorScheme-ButtonText {
+        color:#f2f2f2;
+      }
+      </style>
+  <g transform="translate(1,1)">
+    <g id="fcitx-quanpin-libpinyin" transform="translate(22,22.000008) translate(-22,-22)">
+      <path class="ColorScheme-Text" style="fill:currentColor;fill-opacity:1;stroke:none" d="m -22.5,-15 0,16 16,0 0,-16 -16,0 z m 7.509766,1.902344 0.980468,0.195312 c -0.01013,0.0507 -0.03402,0.09672 -0.04687,0.146485 1.876405,2.289048 5.7324222,3.787109 5.7324222,3.787109 l -0.3515624,0.9375 c -1e-7,0 -0.8084308,-0.3217555 -1.8242188,-0.8378906 L -10.5,-8 l -3.5,0 0,2 2.5,0 0,1 -2.5,0 0,3 4.5,0 0,1 -10,0 0,-1 4.5,0 0,-3 -2.5,0 0,-1 2.5,0 0,-2 -3.5,0 0,-0.8242188 c -1.028696,0.5017155 -1.830078,0.7949219 -1.830078,0.7949219 l -0.339844,-0.9414062 c 0,0 1.341234,-0.4888121 2.736328,-1.2773439 1.395095,-0.788531 2.757475,-1.920184 2.94336,-2.849609 z M -14.5,-11.767578 c -0.667588,0.99691 -1.846139,1.7715609 -2.941406,2.3906249 -0.247806,0.140064 -0.483167,0.2560026 -0.720703,0.3769531 l 7.396484,0 c -1.191361,-0.6304816 -2.618179,-1.552755 -3.734375,-2.767578 z" transform="translate(25.5,18)" id="path4202"/>
+      <rect style="fill:none;fill-opacity:1;stroke:none;stroke-linejoin:miter" id="rect4196" width="22" height="22" x="0" y="0"/>
+    </g>
+  </g>
+</svg>

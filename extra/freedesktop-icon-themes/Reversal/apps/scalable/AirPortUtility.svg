@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="64"
+   height="64"
+   version="1.1"
+   viewBox="0 0 64 64"
+   id="svg510"
+   sodipodi:docname="AirPortUtility.svg"
+   inkscape:version="1.3.2 (091e20ef0f, 2023-11-25, custom)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <sodipodi:namedview
+     id="namedview512"
+     pagecolor="#ffffff"
+     bordercolor="#999999"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="false"
+     inkscape:zoom="4.0117188"
+     inkscape:cx="60.821811"
+     inkscape:cy="0.99707887"
+     inkscape:window-width="1920"
+     inkscape:window-height="955"
+     inkscape:window-x="0"
+     inkscape:window-y="34"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg510" />
+  <metadata
+     id="metadata462">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs472">
+    <filter
+       id="e"
+       x="-0.051380801"
+       y="-0.072094449"
+       width="1.1027616"
+       height="1.1441889"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         stdDeviation="13.101814"
+         id="feGaussianBlur464" />
+    </filter>
+    <linearGradient
+       id="linearGradient862-3"
+       x1="7.9373"
+       x2="7.9373"
+       y1="15.081"
+       y2="1.852"
+       gradientTransform="matrix(3.7796,0,0,3.7796,-2.9993e-4,0.03040048)"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         stop-color="#1c47ff"
+         offset="0"
+         id="stop467" />
+      <stop
+         stop-color="#91d7eb"
+         offset="1"
+         id="stop469" />
+    </linearGradient>
+    <filter
+       id="filter1057"
+       x="-0.026999999"
+       y="-0.026999999"
+       width="1.054"
+       height="1.054"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         stdDeviation="0.61875"
+         id="feGaussianBlur854" />
+    </filter>
+    <linearGradient
+       id="linearGradient1053"
+       x1="-127"
+       x2="-72"
+       y1="60"
+       y2="5"
+       gradientTransform="translate(131.5,-0.51000061)"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         stop-color="#32d7ff"
+         offset="0"
+         id="stop857" />
+      <stop
+         stop-color="#329bff"
+         offset="1"
+         id="stop859" />
+    </linearGradient>
+  </defs>
+  <rect
+     x="4.4999995"
+     y="4.4999995"
+     width="55"
+     height="55"
+     ry="15"
+     fill="#141414"
+     filter="url(#filter1057)"
+     opacity="0.3"
+     stroke-linecap="round"
+     stroke-width="2.7444"
+     id="rect890" />
+  <rect
+     x="4.5"
+     y="4.5"
+     width="55"
+     height="55"
+     ry="15"
+     fill="url(#linearGradient1053)"
+     stroke-linecap="round"
+     stroke-width="2.7444"
+     id="rect892"
+     style="fill:url(#linearGradient1053)" />
+  <g
+     transform="matrix(0.058825,0,0,0.058825,1.6231,14.321501)"
+     fill="#ffffff"
+     stroke-width="0.41667"
+     id="g508">
+    <g
+       fill="#ffffff"
+       stroke-width="0.41667"
+       id="g506">
+      <g
+         fill="#ffffff"
+         stroke-width="0.41667"
+         id="g504">
+        <g
+           transform="translate(973.09,-210.4)"
+           fill="#ffffff"
+           stroke-width="0.41667"
+           id="g502">
+          <path
+             d="m -456.7,534.13 c -49.553,0 -96.331,21.852 -128.34,59.948 -9.93,11.811 -8.402,29.434 3.428,39.363 5.234,4.396 11.605,6.557 17.958,6.557 7.973,0 15.891,-3.39 21.405,-9.966 21.368,-25.429 52.552,-40.016 85.544,-40.016 32.992,0 64.177,14.587 85.544,40.016 5.533,6.595 13.45,9.966 21.405,9.966 6.353,0 12.724,-2.142 17.958,-6.557 11.83,-9.93 13.357,-27.553 3.428,-39.363 -32.005,-38.096 -78.783,-59.948 -128.34,-59.948 z"
+             id="path494" />
+          <path
+             d="m -456.71,411.21 c -82.545,0 -160.49,36.419 -213.88,99.926 -9.929,11.811 -8.402,29.434 3.428,39.363 5.234,4.396 11.605,6.558 17.958,6.558 7.973,0 15.891,-3.391 21.405,-9.967 42.716,-50.838 105.09,-79.993 171.09,-79.993 66,0 128.37,29.155 171.11,79.993 5.533,6.595 13.45,9.967 21.404,9.967 6.353,0 12.724,-2.143 17.959,-6.558 11.829,-9.929 13.356,-27.57 3.428,-39.363 -53.41,-63.506 -131.35,-99.926 -213.9,-99.926 z"
+             id="path496" />
+          <path
+             d="m -157.26,432.77 c -74.739,-88.935 -183.89,-139.92 -299.44,-139.92 -115.55,0 -224.69,50.988 -299.44,139.92 -9.93,11.811 -8.402,29.434 3.428,39.363 5.234,4.396 11.587,6.558 17.939,6.558 7.973,0 15.891,-3.391 21.423,-9.967 64.084,-76.248 157.64,-119.99 256.65,-119.99 99.01,0 192.57,43.741 256.65,119.97 5.533,6.576 13.45,9.967 21.424,9.967 6.353,0 12.724,-2.143 17.958,-6.558 11.811,-9.912 13.34,-27.553 3.41,-39.345 z"
+             id="path498" />
+          <path
+             d="m -502.73,682.98 c 0,25.406 20.62,46.025 46.025,46.025 25.405,0 46.025,-20.619 46.025,-46.025 -7.7755,-65.326 -90.569,-48.667 -92.049,0 z"
+             id="path500" />
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

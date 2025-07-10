@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="16" height="16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+ <path d="m7 5v8h5.0625a3.9375 4 0 0 0 3.9375-4 3.9375 4 0 0 0-3.9375-4z" fill="#5e5c64" stroke-width=".56695"/>
+ <circle cx="6" cy="7" r="6" fill="#5e5c64" stroke-width=".6"/>
+ <g fill-rule="evenodd">
+  <circle cx="8.5" cy="12.5" r="3.5" fill="#f95" stop-color="#000000" style="paint-order:stroke fill markers"/>
+  <rect x="8" y="10" width="1" height="3" rx=".5" ry=".5" fill="#f9f9f9" stop-color="#000000" style="paint-order:stroke fill markers"/>
+  <rect x="8" y="14" width="1" height="1" rx=".5" ry=".5" fill="#f9f9f9" stop-color="#000000" style="paint-order:stroke fill markers"/>
+ </g>
+</svg>

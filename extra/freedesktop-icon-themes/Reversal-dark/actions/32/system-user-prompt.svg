@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" width="32" height="32">
+    <style type="text/css" id="current-color-scheme">
+        .ColorScheme-Text {
+            color:#dedede;
+        }
+    </style>
+    <g id="system-user-prompt" transform="translate(112 64) translate(-134,-64)">
+        <path id="path44-5" d="m22 0v32h32v-32z" fill="none"/>
+        <path id="path889" class="ColorScheme-Text" d="m37 10.75v1.5h5v-1.5zm-4 0v1.5h3v-1.5zm-6 0v1.5h5v-1.5zm-1-1.75h24v5h-24zm-1-1v7h26v-7zm1 10h24v5h-24zm-1-1v7h26v-7zm3.5 2c-.828427 0-1.5.671573-1.5 1.5s.671573 1.5 1.5 1.5 1.5-.671573 1.5-1.5-.671573-1.5-1.5-1.5zm4 0c-.828427 0-1.5.671573-1.5 1.5s.671573 1.5 1.5 1.5 1.5-.671573 1.5-1.5-.671573-1.5-1.5-1.5zm4 0c-.828427 0-1.5.671573-1.5 1.5s.671573 1.5 1.5 1.5 1.5-.671573 1.5-1.5-.671573-1.5-1.5-1.5zm4 0c-.828427 0-1.5.671573-1.5 1.5s.671573 1.5 1.5 1.5 1.5-.671573 1.5-1.5-.671573-1.5-1.5-1.5z" fill="currentColor"/>
+    </g>
+</svg>

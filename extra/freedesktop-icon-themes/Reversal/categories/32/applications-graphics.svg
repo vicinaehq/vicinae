@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32" height="32" version="1.1" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:title/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <linearGradient id="linearGradient863" x1="399.57" x2="399.57" y1="545.8" y2="517.8" gradientTransform="translate(-384.57 -515.8)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#d3d3d3" offset="0"/>
+   <stop stop-color="#fcf9f9" offset="1"/>
+  </linearGradient>
+ </defs>
+ <rect x="1" y=".99997" width="30" height="30" rx="8" ry="8" fill="url(#linearGradient863)"/>
+ <g transform="matrix(1.0509 0 0 1.0509 -404.95 -542.7)" fill-rule="evenodd" stroke-width=".095161">
+  <path d="m400.45 543.89c4.6442-3.4267 5.2095-7.0387 0.16524-10.906-5.898 4.3069-3.7385 7.6876-0.16524 10.906z" fill="#48cfad" opacity=".85" stroke="#37bc9b"/>
+  <path d="m400.45 519.87c4.6442 3.4267 5.2095 7.0387 0.16524 10.906-5.898-4.3069-3.7385-7.6876-0.16524-10.906z" fill="#ed5565" opacity=".85" stroke="#da4453"/>
+  <path d="m412.68 531.73c-3.4267 4.6442-7.0387 5.2095-10.906 0.16524 4.3069-5.898 7.6876-3.7385 10.906-0.16524z" fill="#ffce54" opacity=".85" stroke="#f6bb42"/>
+  <path d="m388.64 531.81c3.4267 4.6441 7.0387 5.2095 10.906 0.16523-4.3069-5.898-7.6876-3.7385-10.906-0.16523z" fill="#ac92ec" opacity=".85" stroke="#967adc"/>
+  <path d="m399.99 531.12c-5.7577 0.39858-8.5286-1.9866-7.1915-8.2004 7.2831-0.54045 7.8284 3.4339 7.1915 8.2004z" fill="#ec87c0" opacity=".85" stroke="#d770ad"/>
+  <path d="m392.66 540.9c5.7577 0.39858 8.5286-1.9866 7.1915-8.2004-7.2831-0.54045-7.8284 3.4339-7.1915 8.2004z" fill="#5d9cec" opacity=".85" stroke="#4a89dc"/>
+  <path d="m401.41 531.18c5.7577 0.39859 8.5286-1.9866 7.1915-8.2004-7.2831-0.54045-7.8284 3.4339-7.1915 8.2004z" fill="#fc6e51" opacity=".85" stroke="#e9573f"/>
+  <path d="m408.73 540.92c-5.7577 0.39858-8.5286-1.9866-7.1915-8.2004 7.2831-0.54045 7.8284 3.4339 7.1915 8.2004z" fill="#a0d468" opacity=".85" stroke="#8cc152"/>
+ </g>
+</svg>

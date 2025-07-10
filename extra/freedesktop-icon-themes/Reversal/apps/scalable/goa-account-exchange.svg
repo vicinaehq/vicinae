@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" viewBox="0 0 16.933 16.933" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+ <defs>
+  <filter id="filter2076-3" x="-.048" y="-.048" width="1.096" height="1.096" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="1.1"/>
+  </filter>
+  <linearGradient id="linearGradient3750" x1="86.345" x2="97.988" y1="58.765" y2="56.894" gradientTransform="matrix(.085054 0 -.013056 .12661 15.535 7.2391)" gradientUnits="userSpaceOnUse">
+   <stop offset="0"/>
+   <stop stop-opacity=".054902" offset=".8249"/>
+   <stop stop-opacity=".027451" offset=".90864"/>
+   <stop stop-opacity=".019608" offset=".92884"/>
+   <stop stop-opacity=".011765" offset=".95191"/>
+   <stop stop-opacity="0" offset="1"/>
+  </linearGradient>
+ </defs>
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <g transform="translate(-11.949 -6.2796)">
+  <rect transform="matrix(.26458 0 0 .26458 11.949 6.2796)" x="4.5" y="4.5" width="55" height="55" rx="13.002" ry="13.002" filter="url(#filter2076-3)" opacity=".3"/>
+  <rect x="13.139" y="7.4702" width="14.552" height="14.552" rx="3.44" ry="3.44" fill="#007dcd" stroke-width=".26458"/>
+  <rect x="13.714" y="8.1316" width="13.229" height="13.229" rx="3.1273" ry="3.1273" fill="#e2e4e6" stroke-width=".24052"/>
+  <path d="m16.579 7.4702c-1.9058 0-3.44 1.5342-3.44 3.44v7.6717c0 1.9058 1.5343 3.44 3.44 3.44h6.0289v-14.552z" fill="#007dcd" stroke-width=".26458"/>
+  <path d="m22.939 10.636-0.0024 1.5197-1.5197-0.0024-0.0013 0.9184 1.5197 0.0024-0.0024 1.5197 0.9184 0.0014 0.0024-1.5197 1.5198 0.0024 0.0013-0.9184-1.5198-0.0024 0.0024-1.5197zm-1.5314 7.2957-0.0013 0.9184 3.9578 0.0063 0.0013-0.9184z" fill="#007dcd" stroke-width=".04592"/>
+  <path d="m22.608 8.1316v13.229l0.97994 0.10417c0.29241 0.03003 0.58056-0.3 0.64607-0.73989l1.7052-11.446c0.065536-0.43991-0.11715-0.81818-0.40957-0.84824z" fill="url(#linearGradient3750)" stroke-width=".29167"/>
+  <path d="m20.027 12.839h-2.9958v1.4261h2.8461v0.91436h-2.8461v1.4812h3.1257v0.91026h-4.2332v-5.6503h4.1033z" fill="#fff" stroke-width=".17197"/>
+ </g>
+</svg>

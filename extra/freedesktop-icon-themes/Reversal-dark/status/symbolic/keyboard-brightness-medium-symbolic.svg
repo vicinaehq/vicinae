@@ -1,0 +1,8 @@
+<svg width="16px" height="16px" version="1.1" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+ <rect x="5" y="11" width="6" height="1" rx="0" ry="0" fill="#dedede" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+ <circle cx="2.5" cy="11.5" r=".5" fill="#dedede" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+ <circle cx="13.5" cy="11.5" r=".5" fill="#dedede" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+ <circle transform="rotate(45)" cx="8.2886" cy="2.4749" r=".5" fill="#dedede" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+ <circle transform="rotate(90)" cx="6" cy="-8" r=".5" fill="#dedede" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+ <circle transform="rotate(135)" cx="-3.0251" cy="-13.789" r=".5" fill="#dedede" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+</svg>

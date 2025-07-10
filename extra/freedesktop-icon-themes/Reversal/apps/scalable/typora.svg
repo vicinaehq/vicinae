@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <filter id="filter1057-4" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053-7" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="translate(81.602 8.2703)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#dee0e2" offset="0"/>
+   <stop stop-color="#f1f3f5" stop-opacity=".99608" offset="1"/>
+  </linearGradient>
+ </defs>
+ <g transform="translate(49.898 -8.7803)">
+  <rect x="-45.398" y="13.28" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057-4)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+  <rect x="-45.398" y="13.28" width="55" height="55" ry="15" fill="url(#linearGradient1053-7)" stroke-linecap="round" stroke-width="2.7444"/>
+  <path d="m-12.247 53.01-0.0093 1.0243-11.653 9e-3 0.0093-1.0243 0.7329-5.67e-4c1.1726-9.07e-4 2.203-0.47446 2.6862-1.2234 0.44584-0.67009 0.56151-1.3005 0.58016-3.3492l0.17432-19.147-2.3819 0.0018c-3.7378 0.0029-5.0671 1.107-5.3541 4.456l-0.95277 7.38e-4 0.45977-6.2251 20.228-0.01565 0.34642 6.2245-0.91613 7.09e-4c-0.2986-3.4273-1.4253-4.4508-4.9798-4.448l-2.7117 0.0021-0.17432 19.147c-0.01901 2.0881 0.04926 2.6396 0.48254 3.3484 0.50622 0.74815 1.4913 1.2202 2.7006 1.2192z" fill="#202020" image-rendering="optimizeSpeed"/>
+ </g>
+</svg>

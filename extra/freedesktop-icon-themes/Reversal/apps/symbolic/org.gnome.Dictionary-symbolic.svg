@@ -1,0 +1,7 @@
+<svg width="16" height="16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+ <title>Gnome Symbolic Icon Theme</title>
+ <g transform="translate(-83 -175)" fill="#363636">
+  <path d="m85.008 175.98v14h11c0.51254 0 1-0.53386 1-1h-11v-2h10c0.57495 0 1-0.60225 1-1v-9c0-0.48814-0.44713-1-1-1zm0.99219 1.0176h10v9h-10z" enable-background="new" style="paint-order:normal"/>
+  <text x="88.032806" y="185" fill-rule="evenodd" font-family="'Droid Sans'" font-size="9.7391px" font-weight="bold" stop-color="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width=".4058" style="paint-order:stroke fill markers" xml:space="preserve"><tspan x="88.032806" y="185" fill="#363636" stroke-width=".4058">A</tspan></text>
+ </g>
+</svg>

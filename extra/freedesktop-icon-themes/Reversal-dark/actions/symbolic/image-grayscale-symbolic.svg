@@ -1,0 +1,16 @@
+<svg width="16" height="16" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <g transform="translate(-31.976 -220.36)" fill="#dedede">
+  <path d="m36 222.37v11.991h-1v-11.991" opacity=".83"/>
+  <path d="m37 222.37v11.991h-1v-11.991" opacity=".74"/>
+  <path d="m37 222.37h1v11.991h-1" opacity=".65"/>
+  <path d="m38 222.37h1v11.991h-1" opacity=".57"/>
+  <path d="m39 222.37h1v11.991h-1" opacity=".49"/>
+  <path d="m40 222.37h1v11.991h-1" opacity=".4"/>
+  <path d="m41 222.37h1v11.991h-1" opacity=".32"/>
+  <path d="m42 222.37h1v11.991h-1" opacity=".24"/>
+  <path d="m43 222.37h1v11.991h-1" opacity=".16"/>
+  <path d="m44 222.37h1v11.991h-1" opacity=".07"/>
+  <path d="m35.004 222.36v11.994h-1v-11.994" opacity=".94"/>
+  <path d="m32.004 220.37v0.5 15.496h15.996v-15.996h-15.996zm1 1h13.996v13.996h-13.996v-13.996z" color="#000000" color-rendering="auto" image-rendering="auto" opacity=".7" shape-rendering="auto" solid-color="#000000" style="block-progression:tb;isolation:auto;mix-blend-mode:normal;text-decoration-color:#000000;text-decoration-line:none;text-decoration-style:solid;text-indent:0;text-transform:none;white-space:normal"/>
+ </g>
+</svg>

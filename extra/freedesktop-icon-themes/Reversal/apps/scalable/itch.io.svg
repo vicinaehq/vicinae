@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Gimp" width="64" height="64" enable-background="new 0 0 1024 1024" image-rendering="optimizeSpeed" version="1.1" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <filter id="filter1057-3" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient2447" x1="31.738" x2="31.738" y1="6.2139" y2="58.771" gradientTransform="translate(-2.5e-6)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#1e1e1e" offset="0"/>
+   <stop stop-color="#3c3c3c" offset="1"/>
+  </linearGradient>
+ </defs>
+ <rect x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057-3)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+ <path d="m19.5 4.5c-8.31 0-15 6.69-15 15v25c0 8.31 6.69 15 15 15h25c8.31 0 15-6.69 15-15v-25c0-8.31-6.69-15-15-15z" fill="url(#linearGradient2447)" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.0016" style="paint-order:stroke fill markers"/>
+ <g transform="matrix(.40379 0 0 .40379 -5.24 67.698)">
+  <path transform="matrix(2.2013,0,0,2.2013,21.787,-158.85)" d="m43.119 16.215c-3.4695 0.31656-5.041 4.5703-5.041 4.5703l-12.332 2.082s-2.5925-6.4394-8.9102-0.6875-7.7621 20.913-7.2383 23.758c0.52379 2.8446 8.8123 3.5038 12.238-5.8633l20.148-3.123s1.7192 4.8462 5.6777 5.0195c3.9586 0.17329 7.9579-1.6993 6.5488-8.459-1.4091-6.7596-3.013-14.404-8.3828-16.787-1.0068-0.44684-1.9083-0.58282-2.709-0.50976zm-8.2012 7.5078v4.0312l2.9922-0.16406-6.0332 8.582-6.0469-6.709 3.209-0.41602v-4.248z" fill="#fff"/>
+ </g>
+</svg>

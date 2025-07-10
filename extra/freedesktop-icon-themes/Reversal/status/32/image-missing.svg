@@ -1,0 +1,19 @@
+<svg width="32" height="32" version="1.0" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <filter id="c" x="-.29973" y="-.30028" width="1.5994" height="1.6006" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="1.498625"/>
+  </filter>
+  <linearGradient id="linearGradient1112" x1="16" x2="16" y1="28" y2="5" gradientTransform="translate(33.939)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#474747" offset="0"/>
+   <stop stop-color="#616161" offset="1"/>
+  </linearGradient>
+ </defs>
+ <image x=".5" y="1.2035" width="31" height="31" preserveAspectRatio="none" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB8AAAAfCAYAAAAfrhY5AAAACXBIWXMAAA7DAAAOwwHHb6hkAAAA GXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAAPFJREFUSIntl00LgzAMhh/jpnOX wf7/bxzbZX4w2x1MpBQHA21PfSFIK+R5Ez0kFdsSoNLYK6/h4hdxcgFOwAVogPoA+AyMGp/QRAiv gQ64KVg4rnIHTMAL6NXQmlyAK3AH2oOgWyZG4AG8AWdtPSu4SwRG89YaAzALS9X2jVOBQwMNS3dF ggtJDDaJwiuDH/Vz/aOVJ8FFTlWQr9WbKvACL/ACL/ACTwL3mbne4DZd5jKw8gw+sTHUJ5JjmWK9 6GFQA6mrt0JHgtHZWmFbSsq5/alPH8JnlnUmhvud4TT3oOBe737uaq1Gtl0tNpF8S/0Cv+VTBPRh QykAAAAASUVORK5CYII= "/>
+ <rect x="2" y="2" width="28" height="28" rx="6" ry="6" fill="url(#linearGradient1112)"/>
+ <g transform="translate(0 .81676)" filter="url(#c)" opacity=".02">
+  <path d="m16 10.011c3.305 0 6 2.71 6 6.003 0 3.291-2.695 5.975-6 5.975s-6-2.684-6-5.975c0-3.292 2.695-6.003 6-6.003zm0 1.73a4.27 4.27 0 0 0-4.29 4.273c0 2.368 1.912 4.245 4.29 4.245s4.29-1.877 4.29-4.245a4.27 4.27 0 0 0-4.29-4.274z" overflow="visible" style="text-indent:0;text-transform:none"/>
+  <path d="m13.177 11.973 6.85 6.85-1.204 1.204-6.85-6.85z" overflow="visible" style="text-indent:0;text-transform:none"/>
+ </g>
+ <path d="M0 0h32v32H0z" fill="none"/>
+ <path d="m16 8a8 8 0 0 0-5.5488 2.2637c-0.038364 0.02181-0.074634 0.04729-0.10742 0.080078s-0.058268 0.069058-0.080078 0.10742a8 8 0 0 0-2.2637 5.5488 8 8 0 0 0 8 8 8 8 0 0 0 5.5488-2.2637c0.038364-0.02181 0.074634-0.04729 0.10742-0.080078s0.058268-0.069058 0.080078-0.10742a8 8 0 0 0 2.2637-5.5488 8 8 0 0 0-8-8zm0 1a7 7 0 0 1 7 7 7 7 0 0 1-1.7246 4.5684l-9.8438-9.8438a7 7 0 0 1 4.5684-1.7246zm-5.2754 2.4316 9.8438 9.8438a7 7 0 0 1-4.5684 1.7246 7 7 0 0 1-7-7 7 7 0 0 1 1.7246-4.5684z" fill="#e0574c" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" width="24" height="24" viewBox="0 0 24 24">
+  <style type="text/css" id="current-color-scheme">
+      .ColorScheme-Text {
+        color:#f2f2f2;
+      }
+      .ColorScheme-Background {
+        color:#eff0f1;
+      }
+      .ColorScheme-Highlight {
+        color:#3daee9;
+      }
+      .ColorScheme-ButtonText {
+        color:#f2f2f2;
+      }
+      </style>
+  <g transform="translate(1,1)">
+    <g id="fcitx-fullwidth-active" transform="translate(132,-81.999973) translate(-132,-88)">
+      <rect style="fill:none;fill-opacity:1;stroke:none" id="rect4214" width="22" height="22" x="-2.4709701e-09" y="170"/>
+      <ellipse class="ColorScheme-Text" style="fill:currentColor;fill-opacity:1;stroke:none" id="path4218" cx="11" cy="181" rx="8" ry="7.9999995"/>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" viewBox="0 0 16.933 16.933" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <linearGradient id="linearGradient64681">
+   <stop stop-color="#99c2e6" offset="0"/>
+   <stop stop-color="#6493bd" offset="1"/>
+  </linearGradient>
+  <filter id="filter1057" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="matrix(.26458 0 0 .26458 34.792 -.13493)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#32d7ff" offset="0"/>
+   <stop stop-color="#329bff" offset="1"/>
+  </linearGradient>
+  <linearGradient id="linearGradient1050" x1="31.803" x2="31.803" y1="8.0244" y2="8.241" gradientTransform="matrix(.82927 0 0 .8636 -17.745 1.0542)" gradientUnits="userSpaceOnUse" xlink:href="#linearGradient64681"/>
+  <linearGradient id="linearGradient1052" x1="31.803" x2="31.803" y1="8.0244" y2="8.241" gradientTransform="matrix(.8636 0 0 .8636 -18.831 .94954)" gradientUnits="userSpaceOnUse" xlink:href="#linearGradient64681"/>
+ </defs>
+ <g stroke-linecap="round">
+  <rect transform="scale(.26458)" x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057)" opacity=".3" stroke-width="2.7444"/>
+  <rect x="1.1906" y="1.1906" width="14.552" height="14.552" ry="3.9687" fill="url(#linearGradient1053)" stroke-width=".72611"/>
+  <path d="m4.6786 3.5035h7.5292c0.31592 0 0.54262 0.25553 0.57024 0.57024l0.36268 4.132c0.02762 0.3147-0.25432 0.57024-0.57024 0.57024h-8.2083c-0.31592 0-0.59436-0.25525-0.57024-0.57024l0.31642-4.132c0.02412-0.31499 0.25432-0.57024 0.57024-0.57024z" fill="#98d8ff" fill-rule="evenodd" opacity=".8" stroke-linejoin="round" stroke-width=".023247" style="paint-order:stroke fill markers"/>
+ </g>
+ <image x="6.0026" y="12.944" width="4.7983" height="1.1425" opacity=".5" preserveAspectRatio="none" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABUAAAAFCAYAAACqwacNAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAA GXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAAHhJREFUGJWd0EsKAkEMRdHTH8XP RGlwNb16F6QgDlrBKgdWQZGBiIFHEshLLunQYYO+1P9GRsIyYo0ZxzD0y4Ec+ivOYzFPOGFoiPsv y3NQwqt6q3nCAXtsfd6xw6ocGprlCc+iBxbci2641ME+ELY50kbKSppq/QYxHR5AgxOpPwAAAABJ RU5ErkJggg== "/>
+ <g stroke-width=".8636">
+  <path d="m6.2633 13.123v0.36947s1.9766 0.3362 4.3089 0l-3.69e-4 -0.36947z" fill="#fff"/>
+  <path d="m9.4948 13.002a2.1543 0.13977 0 0 1 1.0038 0.15722 2.1543 0.13977 0 0 1-2.0809 0.1036 2.1543 0.13977 0 0 1-2.0809-0.1036 2.1543 0.13977 0 0 1 1.0038-0.15722" fill="#fff" fill-rule="evenodd" style="paint-order:stroke fill markers"/>
+  <path d="m8.0638 8.7595v4.3261a1.4937 1.4937 0 0 0 0.023654 0.0067 1.4937 1.4937 0 0 0 0.11514 0.02276 1.4937 1.4937 0 0 0 0.11647 0.01383 1.4937 1.4937 0 0 0 0.11692 0.0045 1.4937 1.4937 0 0 0 0.11737-0.0045 1.4937 1.4937 0 0 0 0.11647-0.01383 1.4937 1.4937 0 0 0 0.11514-0.02276 1.4937 1.4937 0 0 0 0.023654-0.0067v-4.3261z" fill="#bae4ff" fill-rule="evenodd" style="paint-order:stroke fill markers"/>
+ </g>
+ <g fill-rule="evenodd">
+  <path d="m3.7949 8.3068-0.00313 0.041503c-0.024121 0.31499 0.25443 0.56989 0.57033 0.56989h8.2083c0.31592 0 0.59795-0.25519 0.57033-0.56989l-0.0027-0.033024c-0.03714 0.26239-0.28934 0.46055-0.56766 0.46055h-8.2083c-0.28128 0-0.53246-0.20233-0.56721-0.46903z" fill="#3f75a7" stroke-linecap="round" stroke-linejoin="round" stroke-width=".023247" style="paint-order:stroke fill markers"/>
+  <path d="m5.7952 4.3931h5.3904c0.06464 0 0.11378 0.052102 0.11667 0.11667l0.14616 3.2622c0.0029 0.064573-0.05204 0.11667-0.11667 0.11667h-5.6708c-0.064641 0-0.11933-0.052092-0.11667-0.11667l0.13423-3.2622c0.00268-0.064583 0.052032-0.11667 0.11667-0.11667z" fill="#fdfeff" stroke="#b5c0c9" stroke-linecap="round" stroke-linejoin="round" stroke-width=".22849" style="paint-order:stroke fill markers"/>
+  <rect x="4.8159" y="7.9842" width="7.35" height=".21179" ry=".1059" fill="url(#linearGradient1050)" stroke-width=".8636" style="paint-order:stroke fill markers"/>
+  <rect x="4.6637" y="7.8795" width="7.6544" height=".21179" ry=".1059" fill="url(#linearGradient1052)" stroke-width=".8636" style="paint-order:stroke fill markers"/>
+ </g>
+</svg>

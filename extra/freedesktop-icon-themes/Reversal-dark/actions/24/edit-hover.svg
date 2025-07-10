@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" width="24" height="24" viewBox="0 0 24 24">
+  <style type="text/css" id="current-color-scheme">
+      .ColorScheme-Text {
+        color:#31363b;
+      }
+      .ColorScheme-Background {
+        color:#eff0f1;
+      }
+      .ColorScheme-Highlight {
+        color:#3498db;
+      }
+      .ColorScheme-ViewText {
+        color:#31363b;
+      }
+      .ColorScheme-ViewBackground {
+        color:#fcfcfc;
+      }
+      .ColorScheme-ViewHover {
+        color:#93cee9;
+      }
+      .ColorScheme-ViewFocus{
+        color:#3daee9;
+      }
+      .ColorScheme-ButtonText {
+        color:#31363b;
+      }
+      .ColorScheme-ButtonBackground {
+        color:#eff0f1;
+      }
+      .ColorScheme-ButtonHover {
+        color:#93cee9;
+      }
+      .ColorScheme-ButtonFocus{
+        color:#3daee9;
+      }
+      .ColorScheme-NegativeText{
+        color:#e74c3c;
+      }
+      </style>
+  <g transform="translate(1,1)">
+    <g id="edit-hover" transform="translate(-304,-427.36218) translate(-22,-107)">
+      <g id="g4591">
+        <path class="ColorScheme-ButtonFocus" id="path4587" d="m 337.5,537.3622 c -1.21321,0 -2.22026,0.85686 -2.45117,2 l -6.04883,0 0,1 6.04883,0 c 0.23019,1.14407 1.23731,2 2.45117,2 1.21386,0 2.21902,-0.85593 2.44922,-2 l 5.05078,0 0,-1 -5.05078,0 c -0.23091,-1.14314 -1.23602,-2 -2.44922,-2 z m -6,11 c -1.385,0 -2.5,1.115 -2.5,2.5 0,1.385 1.115,2.5 2.5,2.5 1.21386,0 2.21902,-0.85593 2.44922,-2 l 11.05078,0 0,-1 -11.05078,0 c -0.23091,-1.14314 -1.23602,-2 -2.44922,-2 z m 0,1 c 0.831,0 1.5,0.669 1.5,1.5 0,0.831 -0.669,1.5 -1.5,1.5 -0.831,0 -1.5,-0.669 -1.5,-1.5 0,-0.831 0.669,-1.5 1.5,-1.5 z" style="fill:currentColor;fill-opacity:1;stroke:none"/>
+        <rect y="534.36218" x="326" height="22" width="22" id="rect4589" style="opacity:1;fill:none;fill-opacity:1;stroke:none;stroke-width:0.1;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"/>
+      </g>
+    </g>
+  </g>
+</svg>

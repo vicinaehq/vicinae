@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="64"
+   height="64"
+   viewBox="0 0 16.933 16.933"
+   version="1.1"
+   id="svg2"
+   sodipodi:docname="distributor-logo-slackware.svg"
+   inkscape:version="1.3.2 (091e20ef0f, 2023-11-25, custom)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs2">
+    <filter
+       id="filter1057-9"
+       x="-0.026999999"
+       y="-0.026999999"
+       width="1.054"
+       height="1.054"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         stdDeviation="0.61875"
+         id="feGaussianBlur1" />
+    </filter>
+    <linearGradient
+       id="linearGradient1053-1"
+       x1="-127"
+       x2="-72"
+       y1="60"
+       y2="5"
+       gradientTransform="matrix(0.26458,0,0,0.26458,34.7909,-0.13503005)"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         stop-color="#1d2123"
+         offset="0"
+         id="stop1" />
+      <stop
+         stop-color="#33393e"
+         stop-opacity=".99608"
+         offset="1"
+         id="stop2" />
+    </linearGradient>
+  </defs>
+  <sodipodi:namedview
+     id="namedview2"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="6.15625"
+     inkscape:cx="24.852792"
+     inkscape:cy="30.700508"
+     inkscape:window-width="1920"
+     inkscape:window-height="995"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg2" />
+  <rect
+     transform="matrix(0.26458,0,0,0.26458,-26.675016,-0.16793618)"
+     x="105.32"
+     y="5.1345"
+     width="55"
+     height="55"
+     ry="15"
+     fill="#141414"
+     filter="url(#filter1057-9)"
+     opacity="0.3"
+     stroke-linecap="round"
+     stroke-width="2.7444"
+     id="rect2" />
+  <rect
+     x="1.1905"
+     y="1.1905"
+     width="14.552"
+     height="14.552"
+     ry="3.9688001"
+     fill="url(#linearGradient1053-1)"
+     stroke-linecap="round"
+     stroke-width="0.72612"
+     id="rect3"
+     style="fill:url(#linearGradient1053-1)" />
+  <path
+     fill="#fff"
+     d="M5.773 12.546h.359c.068-.137.154-.205.256-.205.069 0 .223.034.462.102.753.171 1.352.257 1.796.257 1.745-.068 2.686-.855 2.822-2.36 0-.616-.256-1.198-.77-1.745-.41-.41-1.094-.855-2.052-1.334-1.06-.582-1.59-1.095-1.59-1.54.068-.581.496-.889 1.282-.923 1.06.034 1.78.616 2.156 1.744h.513L10.75 4.44h-.256c-.069.034-.086.05-.052.05a.499.499 0 0 1-.256.104c-.035 0-.154-.035-.36-.103-.615-.171-1.163-.257-1.642-.257-1.676.103-2.565.821-2.668 2.155.205 1.266.975 2.121 2.31 2.566 1.128.445 1.761 1.078 1.898 1.899-.069.82-.565 1.248-1.488 1.283-1.095 0-1.848-.65-2.258-1.95h-.513l.308 2.36"
+     font-family="刘德华字体叶根友仿版"
+     font-size="62.261"
+     font-weight="700"
+     letter-spacing="0"
+     word-spacing="0"
+     id="path2" />
+</svg>

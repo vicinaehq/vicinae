@@ -1,0 +1,5 @@
+<svg width="16" height="16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+ <path d="m9.8499 0.76804c-1.0183-1.0183-2.6802-1.0183-3.6985 0l-5.3834 5.3834c-1.0183 1.0183-1.0183 2.6802 0 3.6985l5.382 5.382c1.0183 1.0183 2.6802 1.0183 3.6985 0l5.3834-5.3834c1.0183-1.0183 1.0183-2.6802 0-3.6985zm-0.70711 0.70711 5.382 5.382c0.6388 0.6388 0.6388 1.6455-1e-6 2.2843l-5.3834 5.3834c-0.6388 0.6388-1.6455 0.6388-2.2843 1e-6l-5.382-5.382c-0.6388-0.6388-0.6388-1.6455 0-2.2843l5.3834-5.3834c0.6388-0.6388 1.6455-0.6388 2.2843 0z" color="#000000" fill="#dedede" stroke-linecap="round" stroke-linejoin="round" style="-inkscape-stroke:none;paint-order:stroke fill markers"/>
+ <rect x="7.5" y="4" width="1" height="6" rx=".5" ry=".5" fill="#dedede" style="paint-order:stroke fill markers"/>
+ <circle cx="8" cy="11.5" r=".5" fill="#dedede" style="paint-order:stroke fill markers"/>
+</svg>

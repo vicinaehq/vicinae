@@ -1,0 +1,6 @@
+<svg width="32px" height="32px" version="1.1" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+ <path d="m3 3c-1.662 0-3 1.338-3 3v23h1v-23c0-1.108 0.892-2 2-2h29v-1h-29z" fill="#dedede" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+ <rect x="1" y="8" width="31" height="1" rx="0" ry="0" fill="#dedede" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+ <rect x="3" y="5" width="6" height="2" rx="1" ry="1" fill="#dedede" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+ <rect x="10.32" y="5.32" width="1.36" height="1.36" rx=".68001" ry=".68001" fill="#dedede" opacity=".35" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.36"/>
+</svg>

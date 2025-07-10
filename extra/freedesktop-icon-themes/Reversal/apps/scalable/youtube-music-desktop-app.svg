@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" viewBox="0 0 16.933 16.933" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <filter id="filter1057-5" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053-4" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="matrix(.26458 0 0 .26458 49.901 7.2109)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#dee0e2" offset="0"/>
+   <stop stop-color="#f1f3f5" stop-opacity=".99608" offset="1"/>
+  </linearGradient>
+  <linearGradient id="linearGradient1103" x1="14.485" x2="49.828" y1="49.672" y2="14.053" gradientTransform="matrix(.26458 0 0 .26458 15.109 7.3459)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#f5102c" offset="0"/>
+   <stop stop-color="#ff4b00" offset="1"/>
+  </linearGradient>
+ </defs>
+ <g fill="#5e4aa6" stroke-width=".26458">
+  <circle cx="-330.38" cy="-328.37" r="0"/>
+  <circle cx="-312.55" cy="-328.38" r="0"/>
+  <circle cx="-295.13" cy="-341.25" r="0"/>
+ </g>
+ <g transform="translate(-15.109 -7.3459)" stroke-linecap="round">
+  <rect transform="matrix(.26458 0 0 .26458 15.109 7.3459)" x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057-5)" opacity=".3" stroke-width="2.7444"/>
+  <rect x="16.3" y="8.5365" width="14.552" height="14.552" ry="3.9687" fill="url(#linearGradient1053-4)" stroke-width=".7261"/>
+  <path d="m23.552 11.05a4.7624 4.7624 0 0 0-4.7386 4.7624 4.7624 4.7624 0 0 0 4.7624 4.7624 4.7624 4.7624 0 0 0 4.7624-4.7624 4.7624 4.7624 0 0 0-4.7624-4.7624 4.7624 4.7624 0 0 0-0.02377 0zm-1.1033 2.2913c0.09211 0.0048 0.17821 0.0352 0.25838 0.09095l2.9667 2.0443c0.09345 0.06583 0.1582 0.15268 0.1943 0.25993 0.0361 0.10726 0.0361 0.2157 0 0.324-0.03609 0.10725-0.10083 0.19412-0.19533 0.25889l-2.9657 2.0443c-0.10724 0.07327-0.22395 0.10274-0.35243 0.08681-0.12848-0.01593-0.2349-0.07235-0.3209-0.16898-0.08601-0.09663-0.1297-0.20996-0.1297-0.33951v-4.088c0-0.12954 0.0437-0.24339 0.1297-0.34002 0.08602-0.09663 0.19242-0.15305 0.3209-0.16898 0.03203-0.0041 0.06335-0.0052 0.09405-0.0036z" fill="url(#linearGradient1103)" stroke-width=".52916"/>
+ </g>
+</svg>

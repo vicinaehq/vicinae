@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:title/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css"/>
+  <style type="text/css"/>
+  <linearGradient id="b-3" x1="399.57" x2="399.57" y1="545.8" y2="517.8" gradientTransform="matrix(2.1429 0 0 2.1429 -753.93 -1107.5)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#3889e9" offset="0"/>
+   <stop stop-color="#5ea5fb" offset="1"/>
+  </linearGradient>
+  <style type="text/css"/>
+  <style type="text/css"/>
+  <filter id="filter1057-3" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053-6" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="translate(203.93 -.054156)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#1d2123" offset="0"/>
+   <stop stop-color="#33393e" stop-opacity=".99608" offset="1"/>
+  </linearGradient>
+ </defs>
+ <g transform="translate(-72.44)">
+  <rect x="76.935" y="4.9558" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057-3)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+  <rect x="76.935" y="4.9558" width="55" height="55" ry="15" fill="url(#linearGradient1053-6)" stroke-linecap="round" stroke-width="2.7444"/>
+  <circle cx="104.44" cy="32" r="30.001" fill-opacity="0" stroke-width="1.5715"/>
+ </g>
+ <g transform="matrix(3.7796 0 0 3.7796 72.439 .45588)" fill="#5e4aa6" stroke-width=".26458">
+  <circle cx="-330.35" cy="-328.37" r="0" image-rendering="optimizeSpeed"/>
+  <circle cx="-330.35" cy="-328.38" r="0" image-rendering="optimizeSpeed"/>
+  <circle cx="-330.35" cy="-328.38" r="0" image-rendering="optimizeSpeed"/>
+  <circle cx="-352.63" cy="-336.84" r="0" image-rendering="optimizeSpeed"/>
+  <circle cx="-330.35" cy="-328.37" r="0" image-rendering="optimizeSpeed"/>
+  <circle cx="-305.84" cy="-328.27" r="0" image-rendering="optimizeSpeed"/>
+  <circle cx="-305.84" cy="-328.28" r="0" image-rendering="optimizeSpeed"/>
+  <circle cx="-305.84" cy="-328.28" r="0" image-rendering="optimizeSpeed"/>
+  <circle cx="-328.12" cy="-336.74" r="0" image-rendering="optimizeSpeed"/>
+  <circle cx="-305.84" cy="-328.27" r="0" image-rendering="optimizeSpeed"/>
+  <circle cx="-305.03" cy="-328.69" r="0"/>
+ </g>
+ <circle cx="104.44" cy="32" r="0" fill="url(#b-3)" stroke-width="1.5715"/>
+ <circle cx="-1250.1" cy="-1241.1" r="0" fill="#5e4aa6"/>
+ <circle cx="-150.58" cy="24.311" r="0" fill="#5e4aa6" fill-rule="evenodd"/>
+ <g transform="matrix(1.3193 0 0 1.3193 12.169 12.17)" fill="#fff">
+  <path d="m16.963 7.376c-0.282-2.796-2.735-5.198-5.341-5.198-2.662 0-5.109 0.921-7.057 2.451-0.517-0.016-1.108 0.041-1.725 0.189-1.737 0.415-3.001 1.357-2.823 2.104 0.118 0.495 0.844 0.774 1.819 0.79-1.05 1.73-1.666 3.751-1.666 5.918 0 4.196 2.277 7.855 5.652 9.846-0.336 0.364-0.645 0.874-0.861 1.484-0.48 1.355-0.318 2.646 0.359 2.885 0.677 0.24 1.613-0.664 2.093-2.018 0.102-0.292 0.17-0.579 0.215-0.855 0.266 0.088 0.551 0.162 0.857 0.206 1.422 0.205 2.657-0.205 2.76-0.916 0.102-0.71-0.966-1.454-2.389-1.659-0.609-0.088-1.179-0.058-1.645 0.056-0.021-0.074-0.858-1.596-0.931-2.777-0.094-1.537 0.364-3.055 1.361-4.227 0.39-0.456 0.859-0.823 1.359-1.135-0.09 1.204 0.189 2.143 0.757 2.285 0.745 0.187 1.701-1.068 2.135-2.799 0.037-0.149 0.064-0.295 0.091-0.441l0.396-0.069c2.811-0.597 4.881-3.182 4.584-6.12z"/>
+  <path d="m13.1 22.686c0.282 2.796 2.735 5.198 5.341 5.198 2.662 0 5.109-0.921 7.057-2.451 0.518 0.016 1.108-0.041 1.726-0.188 1.737-0.415 3.001-1.358 2.823-2.105-0.118-0.495-0.844-0.774-1.819-0.79 1.05-1.73 1.666-3.75 1.666-5.917 0-4.196-2.277-7.855-5.652-9.846 0.336-0.364 0.646-0.874 0.861-1.484 0.479-1.355 0.318-2.646-0.359-2.885-0.677-0.24-1.613 0.664-2.093 2.018-0.102 0.292-0.17 0.579-0.215 0.854-0.266-0.088-0.551-0.162-0.857-0.206-1.422-0.205-2.657 0.205-2.76 0.916-0.102 0.71 0.966 1.454 2.389 1.659 0.609 0.088 1.179 0.058 1.646-0.056 0.021 0.074 0.858 1.596 0.931 2.777 0.094 1.537-0.364 3.055-1.361 4.227-0.39 0.457-0.858 0.825-1.358 1.137 0.09-1.204-0.188-2.143-0.757-2.285-0.745-0.186-1.701 1.068-2.135 2.799-0.037 0.149-0.064 0.295-0.091 0.441l-0.396 0.069c-2.815 0.595-4.884 3.181-4.587 6.118z"/>
+ </g>
+</svg>

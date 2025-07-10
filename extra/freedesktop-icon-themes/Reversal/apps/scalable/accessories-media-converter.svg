@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" viewBox="0 0 16.933 16.933" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <filter id="filter1057" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="matrix(.26458 0 0 .26458 35.161 1.5565)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#32d7ff" offset="0"/>
+   <stop stop-color="#329bff" offset="1"/>
+  </linearGradient>
+ </defs>
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:title/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <g transform="translate(-.36853 -1.6914)">
+  <rect transform="matrix(.26458 0 0 .26458 .36853 1.6914)" x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+  <rect x="1.5592" y="2.8821" width="14.552" height="14.552" ry="3.9687" fill="url(#linearGradient1053)" stroke-linecap="round" stroke-width=".72611"/>
+  <g fill="#fff">
+   <path d="m8.638 4.2054a5.959 5.959 0 0 0-4.0168 1.7395 5.959 5.959 0 0 0-0.48621 7.8628l1.2519-1.2519a4.2063 4.2063 0 0 1 0.47429-5.3708 4.2063 4.2063 0 0 1 4.3758-0.98566v1.505l2.2483-2.2483a5.959 5.959 0 0 0-3.8472-1.2506z" stroke-width=".99507" style="paint-order:stroke markers fill"/>
+   <path d="m13.536 6.5108-1.2519 1.2519a4.2063 4.2063 0 0 1-0.47561 5.3708 4.2063 4.2063 0 0 1-4.3758 0.98566v-1.5063l-1.4865 1.4877-0.76177 0.76045a5.959 5.959 0 0 0 7.8642-0.48754 5.959 5.959 0 0 0 0.48754-7.8628z" stroke-width=".99507" style="paint-order:stroke markers fill"/>
+   <path d="m8.1892 10.443c0 0.60888 0.01149 0.82142-0.37912 0.82142-0.3906 0-0.70079 0.12637-0.70079 0.48251 0 0.35614 0.36763 0.52846 0.59739 0.52846s0.68356-0.16083 0.68356-0.64334v-2.1827l1.953-0.45378v1.6716s0.02298 0.20105-0.2355 0.20105c-0.25849 0-0.82716-0.07468-0.82716 0.47103 0 0.54569 0.55144 0.51123 0.6376 0.51123 0.086162 0 0.64335-0.09191 0.64335-0.741v-3.0674l-2.3837 0.45953z" stroke-width=".13349"/>
+  </g>
+ </g>
+</svg>

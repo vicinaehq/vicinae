@@ -1,0 +1,29 @@
+<svg width="32" height="32" version="1.1" xmlns="http://www.w3.org/2000/svg">
+ <defs>
+  <linearGradient id="linearGradient3791" x1="51.322" x2="51.322" y1="4.8305" y2="21.717" gradientTransform="translate(-35.322 -2.8305)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" stop-opacity=".75" offset="0"/>
+   <stop stop-color="#ececec" offset="1"/>
+  </linearGradient>
+  <linearGradient id="linearGradient3799" x1="37.322" x2="51.322" y1="25.83" y2="25.83" gradientTransform="translate(-35.322 -2.8305)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" stop-opacity="0" offset="0"/>
+   <stop stop-color="#ececec" offset="1"/>
+  </linearGradient>
+  <linearGradient id="linearGradient3801" x1="39.322" x2="43.348" y1="29.83" y2="29.83" gradientTransform="translate(-35.322 -2.8305)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" stop-opacity="0" offset="0"/>
+   <stop stop-color="#ececec" offset="1"/>
+  </linearGradient>
+  <linearGradient id="linearGradient3803" x1="45.322" x2="63.321" y1="29.83" y2="29.83" gradientTransform="translate(-35.322 -2.8305)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" stop-opacity="0" offset="0"/>
+   <stop stop-color="#ececec" offset="1"/>
+  </linearGradient>
+  <linearGradient id="linearGradient3805" x1="55.322" x2="63.321" y1="25.83" y2="25.83" gradientTransform="translate(-35.322 -2.8305)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" stop-opacity="0" offset="0"/>
+   <stop stop-color="#ececec" offset="1"/>
+  </linearGradient>
+ </defs>
+ <path d="m16 4c-3.6727 0-6.7332 2.4036-7.8748 5.6876-3.4461 0.43672-6.1248 3.349-6.1248 6.914 0 1.2409 0.35163 2.3878 0.91794 3.3984h26.695c0.23923-0.62302 0.38671-1.2928 0.38671-2 0-3.0928-2.5087-5.6016-5.6014-5.6016 0-4.639-3.7593-8.3984-8.3982-8.3984z" fill="url(#linearGradient3791)" stroke-width="2"/>
+ <path d="m3.1666 22h11.666a1.1666 1 0 0 1 1.1666 1 1.1666 1 0 0 1-1.1666 1h-11.666a1.1666 1 0 0 1-1.1666-1 1.1666 1 0 0 1 1.1666-1" fill="url(#linearGradient3799)" stroke-width="1.4416"/>
+ <path d="m21.142 22h5.714a1.1428 1 0 0 1 1.1428 1 1.1428 1 0 0 1-1.1428 1h-5.714a1.1428 1 0 0 1-1.1428-1 1.1428 1 0 0 1 1.1428-1" fill="url(#linearGradient3805)" stroke-width="1.4268"/>
+ <path d="m4.9802 26h2.0131a1.0066 1 0 0 1 1.0066 1 1.0066 1 0 0 1-1.0066 1h-2.0131a1.0066 1 0 0 1-1.0066-1 1.0066 1 0 0 1 1.0066-1" fill="url(#linearGradient3801)" stroke-width="1.339"/>
+ <path d="m11.2 26h15.6a1.2 1 0 0 1 1.2 1 1.2 1 0 0 1-1.2 1h-15.6a1.2 1 0 0 1-1.2-1 1.2 1 0 0 1 1.2-1z" fill="url(#linearGradient3803)" stroke-width="1.462"/>
+</svg>

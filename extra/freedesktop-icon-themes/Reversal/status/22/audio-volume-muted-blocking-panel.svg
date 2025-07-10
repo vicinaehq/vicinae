@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="22"
+   height="22"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="audio-volume-muted-blocking-panel.svg"
+   inkscape:version="1.4 (e7c3feb100, 2024-10-09)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#c8c8c8"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="24.04163"
+     inkscape:cx="11.646465"
+     inkscape:cy="14.64127"
+     inkscape:window-width="1920"
+     inkscape:window-height="1051"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg1"
+     showgrid="true">
+    <inkscape:grid
+       id="grid3"
+       units="px"
+       originx="0"
+       originy="0"
+       spacingx="1"
+       spacingy="1"
+       empcolor="#0099e5"
+       empopacity="0.30196078"
+       color="#0099e5"
+       opacity="0.14902"
+       empspacing="5"
+       enabled="true"
+       visible="true" />
+  </sodipodi:namedview>
+  <defs
+     id="defs1">
+    <style
+       id="current-color-scheme"
+       type="text/css">
+   .ColorScheme-Text { color:#ffffff; } .ColorScheme-Highlight { color:#4285f4; }
+  </style>
+  </defs>
+  <rect
+     class="ColorScheme-Text"
+     x="2"
+     y="1.9999998"
+     width="18"
+     height="18"
+     ry="0"
+     fill="currentColor"
+     opacity="0"
+     id="rect93"
+     style="color:#363636;stroke-width:1.125" />
+  <path
+     class="ColorScheme-Text" fill="currentColor"
+     d="M 9.1171875 5.2597656 C 8.7901793 5.2597656 8.5602825 5.4073375 8.2011719 5.734375 L 5.3867188 8.2285156 C 5.3482468 8.2669906 5.2973928 8.2773438 5.2460938 8.2773438 L 3.4296875 8.2773438 C 2.4806341 8.2773439 2 8.7769837 2 9.7773438 L 2 12.240234 C 2 13.247013 2.4870399 13.742186 3.4296875 13.742188 L 5.2460938 13.742188 C 5.2973928 13.742188 5.3482471 13.752566 5.3867188 13.791016 L 8.2011719 16.304688 C 8.5346005 16.606086 8.7910102 16.75 9.1308594 16.75 C 9.6053934 16.75 9.9648438 16.388597 9.9648438 15.914062 L 9.9648438 6.1230469 C 9.9648438 5.642106 9.6045626 5.2597644 9.1171875 5.2597656 z M 8.6484375 6.8886719 C 8.6997285 6.8886719 8.7382813 6.9208026 8.7382812 6.9785156 L 8.7382812 15.027344 C 8.7382812 15.091484 8.70112 15.119141 8.65625 15.119141 C 8.6178 15.119141 8.587277 15.110175 8.5488281 15.078125 L 5.9941406 12.761719 C 5.8466512 12.627035 5.7200097 12.595702 5.546875 12.595703 L 3.5449219 12.595703 C 3.3333078 12.595703 3.2304687 12.49479 3.2304688 12.283203 L 3.2304688 9.7480469 C 3.2304688 9.5300411 3.3333073 9.4277344 3.5449219 9.4277344 L 5.546875 9.4277344 C 5.7200097 9.4277344 5.8466513 9.3964004 5.9941406 9.2617188 L 8.546875 6.9335938 C 8.578905 6.9079438 8.609987 6.8886719 8.6484375 6.8886719 z M 12.542969 7 C 12.404122 7 12.266547 7.0537653 12.160156 7.1601562 C 11.947375 7.3729379 11.947375 7.7149529 12.160156 7.9277344 L 15.232422 11 L 12.160156 14.072266 C 11.947374 14.285048 11.947375 14.627063 12.160156 14.839844 C 12.372938 15.052626 12.714952 15.052626 12.927734 14.839844 L 16 11.767578 L 19.072266 14.839844 C 19.285048 15.052626 19.627062 15.052626 19.839844 14.839844 C 20.052627 14.627063 20.052626 14.285048 19.839844 14.072266 L 16.767578 11 L 19.839844 7.9277344 C 20.052627 7.7149529 20.052627 7.372938 19.839844 7.1601562 C 19.627062 6.9473747 19.285048 6.9473747 19.072266 7.1601562 L 16 10.232422 L 12.927734 7.1601562 C 12.821343 7.0537653 12.681814 7 12.542969 7 z "
+     id="path1"
+     style="opacity:0.3" />
+</svg>

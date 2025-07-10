@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22">
+ <defs>
+  <style id="current-color-scheme" type="text/css">.ColorScheme-Text {
+                color:#f2f2f2;
+            }</style>
+ </defs>
+<path class="ColorScheme-Text" d="M6 3C4.338 3 3 4.338 3 6v10c0 1.662 1.338 3 3 3h10c1.662 0 3-1.338 3-3V6c0-1.662-1.338-3-3-3zm4.9 1.701 1.5 2-.398.299h1.996l-.398-.299 1.5-2 .8.6L14.625 7H17v1h-2v3h2v1h-2v5h-1v-5h-2.041c-.096 1.119-.477 2.03-.926 2.807-.62 1.075-1.691 2.058-1.691 2.058l-.684-.728s1.013-.97 1.51-1.83c.401-.695.704-1.412.793-2.307H9v-.941l-1 .5V17H5v-1h2v-3.941l-1.777.888-.446-.894L7 10.94V8H5V7h2V5h1v2h1v1H8v2.441l.777-.388.446.894-.106.053H11V8h-1V7h1.375L10.1 5.3zM12 8v3h2V8z" style="fill:currentColor;fill-opacity:1;stroke:none"/></svg>

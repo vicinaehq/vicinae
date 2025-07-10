@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg width="22" version="1.1" xmlns="http://www.w3.org/2000/svg" height="22" viewBox="0 0 5.8208332 5.8208335" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape">
+ <defs id="defs4"/>
+ <metadata id="metadata7"/>
+ <g inkscape:label="Capa 1" inkscape:groupmode="layer" id="layer1" transform="matrix(1 0 0 1 0 -291.17916)">
+  <rect width="5.291667" x="0.264583" y="291.70834" rx="2.116651" height="4.762512" style="fill:#fdd583" id="rect4152"/>
+  <path style="fill:#353738" id="rect4211" d="M 4 6 C 3.2589337 6 2.6209499 6.4042039 2.2753906 7 L 1.5 7 C 1.2229638 7 1 7.2229638 1 7.5 C 1 7.7770362 1.2229638 8 1.5 8 L 2 8 L 2 10 C 2 11.107995 2.8920053 12 4 12 L 8 12 C 9.1079947 12 10 11.107995 10 10 L 10 9 L 12 9 L 12 10 C 12 11.107995 12.892005 12 14 12 L 18 12 C 19.107995 12 20 11.107995 20 10 L 20 8 L 20.5 8 C 20.777025 8 21 7.777025 21 7.5 C 21 7.222975 20.777025 7 20.5 7 L 19.724609 7 C 19.37905 6.4042039 18.741066 6 18 6 L 14 6 C 12.892005 6 12 6.8920053 12 8 L 10 8 C 10 6.8920053 9.1079947 6 8 6 L 4 6 z " transform="matrix(0.26458334 0 0 0.26458334 0 291.17916)"/>
+  <rect width="1.5875" x="0.79375" y="293.03122" rx="0.264607" height="1.058357" style="fill:#b9d4f7" id="rect4203"/>
+  <rect width="1.5875" x="3.439583" y="293.03122" rx="0.264607" height="1.058357" style="fill:#b9d4f7" id="rect4205"/>
+  <path style="fill:#e3eefc;fill-rule:evenodd" id="path4282" d="M 14 7 C 13.44595 7 13 7.4459499 13 8 L 13 9 L 18 7 L 14 7 z " transform="matrix(0.26458334 0 0 0.26458334 0 291.17916)"/>
+  <path inkscape:connector-curvature="0" style="fill:#e3eefc;fill-rule:evenodd" id="path4296" d="m 1.058333,293.03124 c -0.14659239,0 -0.26458329,0.11799 -0.26458329,0.26459 l 0,0.26458 1.32291669,-0.52917 -1.0583334,0 z"/>
+  <path inkscape:connector-curvature="0" style="fill:#8f5315" id="path4233" d="m 2.0200315,294.88332 a 1.0583336,1.7197847 0 0 0 0.890385,0.79375 1.0583336,1.7197847 0 0 0 0.8914186,-0.79375 l -0.1038699,0 a 1.0583334,1.5875001 0 0 1 -0.7875487,0.52917 1.0583334,1.5875001 0 0 1 -0.7870321,-0.52917 l -0.1033529,0 z"/>
+ </g>
+</svg>

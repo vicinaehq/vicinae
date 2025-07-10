@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg width="64" height="64" version="1.1" viewBox="0 0 16.933 16.933" xmlns="http://www.w3.org/2000/svg">
+ <defs>
+  <filter id="filter1057-7" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053-5" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="matrix(.26459 0 0 .26459 50.796 11.31)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#2e55e7" offset="0"/>
+   <stop stop-color="#0d7eef" offset="1"/>
+  </linearGradient>
+ </defs>
+ <g transform="translate(-16.004 -11.445)">
+  <rect transform="matrix(.26459 0 0 .26459 20.375 14.375)" x="-12.018" y="-6.5739" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057-7)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+  <rect x="17.195" y="12.636" width="14.552" height="14.552" ry="3.9688" fill="url(#linearGradient1053-5)" stroke-linecap="round" stroke-width=".72612"/>
+  <g fill="#fff" fill-rule="evenodd" stroke-width=".26458">
+   <path d="m26.381 15.692c-0.09052 0.0101-0.17861 0.0411-0.26666 0.0992 0.13773 0.17144-0.1403 1.7855 0.20786 2.004l0.27171 0.17053v3.8924l-0.42681 0.31979c-0.32897 0.24648 0.02978 1.6662-0.05651 1.8488 0.09533 0.0582 0.23776 0.1203 0.36238 0.10514 0.03992-5e-3 0.08033-0.016 0.12041-0.0356l1.7369-0.85167c0.18929-0.0928 0.38035-0.16954 0.38035-0.38035v-5.9045c0-0.21082-0.19104-0.28759-0.38035-0.38035l-1.7369-0.85167c-0.04007-0.0196-0.08048-0.0308-0.12041-0.0357-0.03116-4e-3 -0.06181-3e-3 -0.09199 0z" style="paint-order:stroke fill markers"/>
+   <path d="m20.355 21.102 5.6513-5.223c0.25658-0.23713 0.58889-0.15304 0.58889 0.33743v1.7579l-5.2246 3.9958c-0.09136 0.0718-0.32944 0.24314-0.53717 0.0456l-0.52857-0.50253c-0.1387-0.13187-0.05988-0.30963 0.0501-0.41128z" style="paint-order:stroke fill markers"/>
+   <path d="m20.355 18.732 5.6513 5.223c0.25658 0.23712 0.58889 0.15304 0.58889-0.33743v-1.7579l-5.2246-3.9958c-0.09136-0.0718-0.32944-0.24313-0.53717-0.0456l-0.52857 0.50253c-0.1387 0.13187-0.05988 0.30962 0.0501 0.41128z" style="paint-order:stroke fill markers"/>
+  </g>
+ </g>
+</svg>

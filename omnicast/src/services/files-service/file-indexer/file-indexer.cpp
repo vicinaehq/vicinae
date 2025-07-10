@@ -245,6 +245,8 @@ std::vector<IndexerFileResult> FileIndexer::query(std::string_view view) const {
   )")
                          .arg(qStringFromStdView(view));
 
+  qDebug() << "query" << queryString;
+
   if (!query.exec(queryString)) {
     qCritical() << "Search query failed" << query.lastError();
     return {};

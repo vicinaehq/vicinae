@@ -1,0 +1,37 @@
+<svg width="32" height="32" version="1.1" xmlns="http://www.w3.org/2000/svg">
+ <style id="current-color-scheme" type="text/css">.ColorScheme-Text {
+        color:#363636;
+      }
+      .ColorScheme-Background{
+        color:#EFF0F1;
+      }
+      .ColorScheme-Highlight{
+        color:#3DAEE6;
+      }
+      .ColorScheme-ViewText {
+        color:#7B7C7E;
+      }
+      .ColorScheme-ViewBackground{
+        color:#FCFCFC;
+      }
+      .ColorScheme-ViewHover {
+        color:#3DAEE6;
+      }
+      .ColorScheme-ViewFocus{
+        color:#1E92FF;
+      }
+      .ColorScheme-ButtonText {
+        color:#7B7C7E;
+      }
+      .ColorScheme-ButtonBackground{
+        color:#EFF0F1;
+      }
+      .ColorScheme-ButtonHover {
+        color:#3DAEE6;
+      }
+      .ColorScheme-ButtonFocus{
+        color:#1E92FF;
+      }</style>
+ <path class="ColorScheme-Text" d="m5.5 6c-1.385 0-2.5 1.115-2.5 2.5v12c0 1.385 1.115 2.5 2.5 2.5h21c1.385 0 2.5-1.115 2.5-2.5v-12c0-1.385-1.115-2.5-2.5-2.5zm0 1.5h21c0.554 0 1 0.446 1 1v12c0 0.554-0.446 1-1 1h-21c-0.554 0-1-0.446-1-1v-12c0-0.554 0.446-1 1-1zm4.75 17c-0.4155 0-0.75 0.3345-0.75 0.75s0.3345 0.75 0.75 0.75h11.5c0.4155 0 0.75-0.3345 0.75-0.75s-0.3345-0.75-0.75-0.75z" fill="currentColor"/>
+ <path class="ColorScheme-Text" d="m23 9 3 3v-3zm-17 8v3h3z" fill="currentColor"/>
+</svg>

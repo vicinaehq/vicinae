@@ -1,0 +1,12 @@
+<svg width="24" height="24" version="1.1" xmlns="http://www.w3.org/2000/svg">
+ <defs>
+  <style id="current-color-scheme" type="text/css">.ColorScheme-Text { color:#f2f2f2; } .ColorScheme-Highlight { color:#4285f4; }</style>
+ </defs>
+ <g transform="translate(1,1)" fill="#f2f2f2" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="5" y="7" width="12" height="1" stroke-width="1.4142" style="paint-order:stroke markers fill"/>
+  <rect x="7" y="12" width="8" height="1" stroke-width="1.1547" style="paint-order:stroke markers fill"/>
+  <rect x="7" y="14" width="5" height="1" stroke-width=".91287" style="paint-order:stroke markers fill"/>
+  <rect x="7" y="10" width="8" height="1" stroke-width="1.1547" style="paint-order:stroke markers fill"/>
+  <path d="m6 3c-1.108 0-2 0.892-2 2v12c0 1.108 0.892 2 2 2h10c1.108 0 2-0.892 2-2v-12c0-1.108-0.892-2-2-2zm0 1h10c0.554 0 1 0.446 1 1v12c0 0.554-0.446 1-1 1h-10c-0.554 0-1-0.446-1-1v-12c0-0.554 0.446-1 1-1z" style="paint-order:stroke markers fill"/>
+ </g>
+</svg>

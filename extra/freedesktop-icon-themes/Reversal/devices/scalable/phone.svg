@@ -1,0 +1,47 @@
+<svg width="64" height="64" version="1.1" viewBox="0 0 16.933 16.933" xmlns="http://www.w3.org/2000/svg" xmlns:osb="http://www.openswatchbook.org/uri/2009/osb" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <linearGradient id="b" x1="-23.585" x2="10.249" y1="124.84" y2="173.45" gradientTransform="matrix(.1868 0 0 .21551 13.938 242.72)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#404040" offset="0"/>
+   <stop stop-color="#1f1f1f" offset="1"/>
+  </linearGradient>
+  <radialGradient id="a" cx="-74.104" cy="276.04" r="5.6027" gradientTransform="matrix(1.0755 -1.109 1.1794 1.1438 -318.67 -120.38)" gradientUnits="userSpaceOnUse" xlink:href="#c"/>
+  <linearGradient id="c">
+   <stop stop-color="#6a6a6a" offset="0"/>
+   <stop stop-color="#0d0d0d" offset="1"/>
+  </linearGradient>
+  <linearGradient id="e" x1="-94.898" x2="-94.914" y1="175.5" y2="177.08" gradientTransform="matrix(.26734 0 0 .26734 42.175 220.1)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#1a1a1a" offset="0"/>
+   <stop stop-color="#333" offset="1"/>
+  </linearGradient>
+  <linearGradient id="d" x1="-108.64" x2="-108.6" y1="175.14" y2="178.08" gradientTransform="matrix(.26734 0 0 .26734 42.175 220.1)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#1a1a1a" offset="0"/>
+   <stop stop-color="#333" offset="1"/>
+  </linearGradient>
+ </defs>
+ <g transform="translate(0 -280.07)">
+  <g transform="matrix(.5042 0 0 .50602 -.063334 146.8)" stroke-width="1.9798">
+   <g fill="#ccc" stroke="#808080" stroke-linecap="round" stroke-linejoin="round">
+    <g stroke-width=".10585">
+     <rect x="8.2992" y="266.98" width=".44856" height="1.3914"/>
+     <rect x="8.2992" y="270.08" width=".44856" height="1.3914" ry=".14241"/>
+     <rect x="8.2992" y="273.35" width=".44856" height="1.3914" ry=".14241"/>
+     <rect x="20.014" y="263.42" width="2.887" height=".37543"/>
+    </g>
+    <rect x="8.6238" y="263.8" width="16.762" height="32.834" rx="2.1708" ry="2.188" stroke-width=".40723"/>
+   </g>
+   <g>
+    <rect x="8.8646" y="264.06" width="16.28" height="32.304" rx="1.9301" ry="1.923"/>
+    <rect x="15.316" y="267" width="3.1629" height=".63456" ry=".31728" fill="url(#e)"/>
+    <rect x="9.5324" y="269.62" width="14.73" height="21.935" ry="0" fill="url(#b)"/>
+   </g>
+   <g transform="matrix(.26734 0 0 .26734 -82.242 240.66)">
+    <g transform="matrix(1.0342 0 0 1.0342 446.63 -80.455)" fill="url(#a)" stroke-width="1.9798">
+     <circle cx="-73.293" cy="269.83" r="5.6027" fill="url(#a)"/>
+    </g>
+    <rect x="368.87" y="196.83" width="3.9336" height="3.5403" ry=".86614" fill="#1a1a1a" fill-opacity=".98333" stroke="#b4b4b5" stroke-linecap="round" stroke-linejoin="round" stroke-width=".98323"/>
+   </g>
+   <circle cx="13.236" cy="267.32" r=".41684" fill="url(#d)"/>
+   <circle cx="13.23" cy="267.32" r=".20051" fill="#153980"/>
+  </g>
+ </g>
+</svg>

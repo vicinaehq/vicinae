@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <filter id="filter1057-70" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053-9" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="matrix(1 0 0 1 131.5 -.51029)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#02db96" offset="0"/>
+   <stop stop-color="#13d39b" offset="1"/>
+  </linearGradient>
+  <linearGradient id="linearGradient984" x1="15.951" x2="32.074" y1="24" y2="24" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" offset="0"/>
+   <stop stop-color="#c8ffe6" offset="1"/>
+  </linearGradient>
+ </defs>
+ <rect transform="matrix(1 0 0 1 -.000228 -.00022781)" x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057-70)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+ <rect x="4.4998" y="4.4998" width="55.001" height="55.001" ry="15" fill="url(#linearGradient1053-9)" stroke-linecap="round" stroke-width="2.7444"/>
+ <g transform="matrix(1.3861 0 0 1.3861 -1.2837 -1.2671)" fill="url(#linearGradient984)">
+  <path d="m32.074 32.423c-0.89715 0.4655-1.8324 0.81673-2.8057 1.0537-0.97332 0.23698-1.9889 0.35547-3.0469 0.35547-3.1569-1e-6 -5.6579-0.88021-7.5029-2.6406-1.8451-1.7689-2.7676-4.1641-2.7676-7.1855-1e-6 -3.0299 0.92252-5.4251 2.7676-7.1855 1.845-1.7689 4.346-2.6533 7.5029-2.6533 1.0579 2e-5 2.0736 0.11851 3.0469 0.35547 0.97329 0.237 1.9085 0.58824 2.8057 1.0537v3.9229c-0.90562-0.61782-1.7985-1.0706-2.6787-1.3584-0.88022-0.28774-1.807-0.43162-2.7803-0.43164-1.7435 1.5e-5 -3.1146 0.55861-4.1133 1.6758-0.9987 1.1172-1.4981 2.6576-1.498 4.6211-6e-6 1.9551 0.49934 3.4912 1.498 4.6084 0.99869 1.1172 2.3698 1.6758 4.1133 1.6758 0.9733 4e-6 1.9001-0.14388 2.7803-0.43164 0.88019-0.28776 1.7731-0.74056 2.6787-1.3584v3.9229" fill="url(#linearGradient984)" stroke-width=".72143"/>
+ </g>
+</svg>

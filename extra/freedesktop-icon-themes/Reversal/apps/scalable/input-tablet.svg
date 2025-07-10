@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg width="64" height="64" version="1.1" viewBox="0 0 16.933 16.933" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <filter id="filter1057-6" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1810" x1="32.325" x2="32.325" y1="4.4545" y2="59.359" gradientTransform="matrix(.26458 0 0 .26458 12.467 7.7411)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#1e1e1e" offset="0"/>
+   <stop stop-color="#414141" offset=".49688"/>
+   <stop stop-color="#5f5f5f" offset="1"/>
+  </linearGradient>
+ </defs>
+ <g transform="translate(-12.467 -7.7411)">
+  <rect transform="matrix(.26458 0 0 .26458 12.467 7.7411)" x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057-6)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+  <path d="m17.626 8.9317c-2.1986 0-3.9687 1.77-3.9687 3.9687v6.6145c0 2.1986 1.77 3.9687 3.9687 3.9687h6.6145c2.1986 0 3.9687-1.77 3.9687-3.9687v-6.6145c0-2.1986-1.77-3.9687-3.9687-3.9687z" fill="url(#linearGradient1810)" stroke-linecap="round" stroke-width=".13229" style="paint-order:stroke fill markers"/>
+  <circle cx="20.933" cy="16.208" r="7.9376" fill-opacity="0" stroke-width=".41578"/>
+  <path d="m17.558 8.9353c-0.04521 7.575e-4 -0.08954 0.00447-0.13436 0.00672-0.07822 0.00388-0.1528 0.00909-0.22789 0.013952-1.736 0.18563-3.1299 1.4806-3.4623 3.1672-0.04148 0.41737-0.0662 0.88262-0.07648 1.4123v5.3024c0.01109 0.57182 0.03984 1.0669 0.08785 1.5084 0.31828 1.5037 1.483 2.6846 2.976 3.0308 0.25959 0.02756 0.53308 0.04989 0.83714 0.06253z" enable-background="new" fill="#fff" opacity=".15" stroke-width=".3797"/>
+  <g fill="#ccc" stroke-width=".28372">
+   <circle cx="15.604" cy="16.242" r=".92041"/>
+   <circle cx="15.604" cy="13.788" r=".92041"/>
+   <circle cx="15.604" cy="11.335" r=".92041"/>
+  </g>
+ </g>
+</svg>

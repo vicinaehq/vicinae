@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+ <defs>
+  <linearGradient id="f" x1="6.6145" x2="6.6145" y1="3.175" y2="13.758" gradientTransform="matrix(3.7796 0 0 3.7796 99.606 1.5305)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#15c4fc" offset="0"/>
+   <stop stop-color="#1863ee" offset="1"/>
+  </linearGradient>
+  <filter id="filter1057" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="translate(203.94,7.5907)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#dee0e2" offset="0"/>
+   <stop stop-color="#f1f3f5" stop-opacity=".99608" offset="1"/>
+  </linearGradient>
+ </defs>
+ <g transform="translate(-55.904 6.399)">
+  <g transform="translate(-16.539 -14.5)" stroke-linecap="round" stroke-width="2.7444">
+   <rect x="76.943" y="12.601" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057)" opacity=".3"/>
+   <rect x="76.943" y="12.601" width="55" height="55" ry="15" fill="url(#linearGradient1053)"/>
+  </g>
+ </g>
+ <g transform="translate(-92.607 -1.5305)">
+  <circle cx="124.61" cy="33.53" r="20" fill="url(#f)" stroke-width="3.7796" style="paint-order:stroke markers fill"/>
+  <path d="m124.61 17.531a15.999 15.999 0 0 0-10.184 3.6719v2.7461a14 14 0 0 0-3.8164 9.5821 14 14 0 0 0 3.8164 9.5939v2.7363a15.999 15.999 0 0 0 10.184 3.6699 15.999 15.999 0 0 0 15.998-15.998 15.999 15.999 0 0 0-15.998-16.002z" opacity=".25" stroke-width="3.7796" style="paint-order:stroke markers fill"/>
+  <path d="m129.16 26.22v2.0618q-1.2036-0.57563-2.2712-0.85823t-2.0618-0.28259q-1.7269 0-2.6689 0.66982-0.93148 0.66982-0.93148 1.9048 0 1.0361 0.61751 1.5699 0.62798 0.52332 2.3654 0.84776l1.2769 0.26165q2.3654 0.45004 3.4852 1.5909 1.1304 1.1304 1.1304 3.0352 0 2.2712-1.528 3.4434-1.5176 1.1722-4.4588 1.1722-1.1094 0-2.3654-0.25119-1.2455-0.25119-2.5852-0.74311v-2.177q1.2873 0.72217 2.5224 1.0885 1.235 0.36632 2.4282 0.36632 1.8107 0 2.7945-0.7117t0.98383-2.0304q0-1.1513-0.7117-1.8002-0.70123-0.64892-2.313-0.97336l-1.2873-0.25119q-2.3654-0.47098-3.4225-1.4757-1.0571-1.0048-1.0571-2.7945 0-2.0723 1.4548-3.2655 1.4653-1.1931 4.0294-1.1931 1.099 0 2.2398 0.19886 1.1408 0.19886 2.334 0.59657z" fill="#fff"/>
+ </g>
+</svg>

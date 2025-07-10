@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="64"
+   height="64"
+   version="1.1"
+   id="svg22"
+   sodipodi:docname="spotify-client.svg"
+   inkscape:version="1.0.2 (e86c870879, 2021-01-15)">
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1920"
+     inkscape:window-height="992"
+     id="namedview24"
+     showgrid="false"
+     inkscape:zoom="4.5906698"
+     inkscape:cx="11.461856"
+     inkscape:cy="33.780567"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg22" />
+  <metadata
+     id="metadata2">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs14">
+    <linearGradient
+       inkscape:collect="always"
+       id="linearGradient1094">
+      <stop
+         style="stop-color:#14ff6e;stop-opacity:1;"
+         offset="0"
+         id="stop1090" />
+      <stop
+         style="stop-color:#a0ff1e;stop-opacity:1"
+         offset="1"
+         id="stop1092" />
+    </linearGradient>
+    <filter
+       id="filter2761"
+       x="-.024"
+       y="-.024"
+       width="1.048"
+       height="1.048"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         stdDeviation="0.14552168"
+         id="feGaussianBlur4" />
+    </filter>
+    <linearGradient
+       id="linearGradient4673"
+       x1="1.2573"
+       x2="15.644"
+       y1="15.429"
+       y2="1.1082"
+       gradientTransform="matrix(3.7796,0,0,3.7796,-98.960821,0.53085)"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         stop-color="#16ff6c"
+         offset="0"
+         id="stop7" />
+      <stop
+         stop-color="#28ff61"
+         offset=".47728"
+         id="stop9" />
+      <stop
+         stop-color="#9fff1b"
+         offset="1"
+         id="stop11" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient3764"
+       x1="1"
+       x2="47"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="rotate(-90,23.999998,24)">
+      <stop
+         style="stop-color:#43cd50;stop-opacity:1"
+         id="stop2" />
+      <stop
+         offset="1"
+         style="stop-color:#54d160;stop-opacity:1"
+         id="stop4" />
+    </linearGradient>
+    <style
+       type="text/css"
+       id="style876" />
+    <style
+       type="text/css"
+       id="style878" />
+    <style
+       type="text/css"
+       id="style880" />
+    <style
+       type="text/css"
+       id="style882" />
+    <filter
+       id="filter1057"
+       x="-0.027000001"
+       y="-0.027000001"
+       width="1.054"
+       height="1.054"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         stdDeviation="0.61875"
+         id="feGaussianBlur884" />
+    </filter>
+    <linearGradient
+       id="linearGradient1053"
+       x1="-127"
+       x2="-72"
+       y1="60"
+       y2="5"
+       gradientTransform="translate(131.5,-0.51)"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         stop-color="#02db96"
+         offset="0"
+         id="stop887"
+         style="stop-color:#14ff6e;stop-opacity:1" />
+      <stop
+         stop-color="#13d39b"
+         offset="1"
+         id="stop889"
+         style="stop-color:#a0ff1e;stop-opacity:1" />
+    </linearGradient>
+    <style
+       type="text/css"
+       id="style892" />
+    <style
+       type="text/css"
+       id="style894" />
+    <style
+       type="text/css"
+       id="style896" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient1094"
+       id="linearGradient1096"
+       x1="4.5"
+       y1="59.5"
+       x2="59.5"
+       y2="4.5"
+       gradientUnits="userSpaceOnUse" />
+  </defs>
+  <rect
+     x="4.5"
+     y="4.5"
+     width="55"
+     height="55"
+     ry="15"
+     fill="#141414"
+     filter="url(#filter1057)"
+     opacity="0.3"
+     stroke-linecap="round"
+     stroke-width="2.7444"
+     id="rect900" />
+  <path
+     id="rect1087"
+     style="fill:url(#linearGradient1096);fill-opacity:1;stroke-width:1.00157;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke fill markers"
+     d="M 19.5 4.5 C 11.19 4.5 4.5 11.19 4.5 19.5 L 4.5 44.5 C 4.5 52.81 11.19 59.5 19.5 59.5 L 44.5 59.5 C 52.81 59.5 59.5 52.81 59.5 44.5 L 59.5 19.5 C 59.5 11.19 52.81 4.5 44.5 4.5 L 19.5 4.5 z " />
+  <circle
+     cx="-1330.8"
+     cy="-1261.2"
+     r="0"
+     fill="#5e4aa6"
+     id="circle908" />
+  <circle
+     cx="-1336.4259"
+     cy="-1272.89"
+     r="0"
+     id="circle910"
+     style="fill:#5e4aa6" />
+  <circle
+     cx="-236.87599"
+     cy="-7.4350004"
+     r="0"
+     fill-rule="evenodd"
+     id="circle912"
+     style="fill:#5e4aa6" />
+  <circle
+     cx="-1336.4259"
+     cy="-1272.89"
+     r="0"
+     id="circle914"
+     style="fill:#5e4aa6" />
+  <circle
+     cx="-236.87599"
+     cy="-7.4350004"
+     r="0"
+     fill-rule="evenodd"
+     id="circle916"
+     style="fill:#5e4aa6" />
+  <circle
+     cx="-1238.626"
+     cy="-1287.89"
+     r="0"
+     id="circle918"
+     style="fill:#5e4aa6" />
+  <circle
+     cx="-139.05299"
+     cy="-22.4156"
+     r="0"
+     fill-rule="evenodd"
+     id="circle920"
+     style="fill:#5e4aa6" />
+  <g
+     transform="matrix(3.7796,0,0,3.7796,80.134,-26.68)"
+     stroke-width="0.26458"
+     id="g950"
+     style="fill:#5e4aa6">
+    <g
+       transform="translate(-0.0272,0.0065001)"
+       id="g938">
+      <circle
+         cx="-330.35001"
+         cy="-328.38"
+         r="0"
+         id="circle922" />
+      <circle
+         cx="-312.10999"
+         cy="-326.25"
+         r="0"
+         id="circle924" />
+      <circle
+         cx="-306.01999"
+         cy="-333.07001"
+         r="0"
+         id="circle926" />
+      <circle
+         cx="-308.84"
+         cy="-326.01001"
+         r="0"
+         id="circle928" />
+      <circle
+         cx="-330.35001"
+         cy="-328.38"
+         r="0"
+         id="circle930" />
+      <circle
+         cx="-312.10999"
+         cy="-326.25"
+         r="0"
+         id="circle932" />
+      <circle
+         cx="-306.01999"
+         cy="-333.07001"
+         r="0"
+         id="circle934" />
+      <circle
+         cx="-308.84"
+         cy="-326.01001"
+         r="0"
+         id="circle936" />
+    </g>
+    <g
+       transform="translate(-0.02705,0.0064503)"
+       id="g948">
+      <circle
+         cx="-330.35001"
+         cy="-328.38"
+         r="0"
+         id="circle940" />
+      <circle
+         cx="-312.10999"
+         cy="-326.25"
+         r="0"
+         id="circle942" />
+      <circle
+         cx="-306.01999"
+         cy="-333.07001"
+         r="0"
+         id="circle944" />
+      <circle
+         cx="-308.84"
+         cy="-326.01001"
+         r="0"
+         id="circle946" />
+    </g>
+  </g>
+  <path
+     d="m44.296 44.411c-0.50323 0.82529-1.5835 1.087-2.4088 0.58039-6.5963-4.0292-14.9-4.9417-24.68-2.7074-0.94238 0.21471-1.8817-0.37574-2.0964-1.3185-0.21572-0.94271 0.37239-1.8821 1.3171-2.0968 10.702-2.445 19.882-1.3923 27.287 3.1334 0.82529 0.50658 1.087 1.5835 0.58039 2.4088zm3.4387-7.6497c-0.63406 1.0306-1.9827 1.356-3.0126 0.72196-7.5517-4.6418-19.063-5.986-27.995-3.2747-1.1584 0.34991-2.3819-0.30294-2.7335-1.4594-0.3489-1.1584 0.30428-2.3796 1.4607-2.7318 10.203-3.0958 22.887-1.5962 31.56 3.7329 1.0299 0.63406 1.3554 1.9827 0.72129 3.0113zm0.29522-7.9657c-9.0547-5.3781-23.994-5.8726-32.639-3.2488-1.3882 0.42103-2.8563-0.36266-3.277-1.7509-0.4207-1.3889 0.36232-2.856 1.7516-3.278 9.9239-3.0126 26.421-2.4306 36.846 3.7581 1.2514 0.74108 1.6606 2.3538 0.91923 3.6007-0.73806 1.2487-2.3551 1.6603-3.5997 0.91889z"
+     fill="#141414"
+     stroke-width="1.4047"
+     id="path20" />
+</svg>

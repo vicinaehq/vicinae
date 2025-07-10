@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="24"
+   height="24"
+   version="1.1"
+   id="svg8801"
+   sodipodi:docname="xml-text-new-symbolic.svg"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs8805" />
+  <sodipodi:namedview
+     id="namedview8803"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="true"
+     inkscape:zoom="13.906433"
+     inkscape:cx="28.907484"
+     inkscape:cy="5.1774598"
+     inkscape:window-width="1920"
+     inkscape:window-height="1014"
+     inkscape:window-x="0"
+     inkscape:window-y="32"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg8801">
+    <inkscape:grid
+       type="xygrid"
+       id="grid8815" />
+  </sodipodi:namedview>
+  <path
+     id="rect8817"
+     style="fill:#dedede;fill-rule:evenodd;stroke-width:2;stroke-linecap:square;stop-color:#000000"
+     d="M 6 6 C 5.4460006 6 5 6.4460006 5 7 L 5 11 C 5 11.553999 5.4460006 12 6 12 L 16 12 C 16.553999 12 17 11.553999 17 11 L 17 7 C 17 6.4460006 16.553999 6 16 6 L 6 6 z M 6 7 L 16 7 L 16 11 L 6 11 L 6 7 z " />
+  <rect
+     style="fill:#dedede;fill-rule:evenodd;stroke-width:2;stroke-linecap:square;stop-color:#000000"
+     id="rect8822"
+     width="1"
+     height="8"
+     x="8"
+     y="5" />
+  <path
+     id="rect8824"
+     style="fill:#dedede;fill-rule:evenodd;stroke-width:2;stroke-linecap:square;stop-color:#000000"
+     d="M 7 4 L 7 5 C 7.5539988 5 8 5.4460012 8 6 L 9 6 C 9 4.8920022 8.1079978 4 7 4 z " />
+  <path
+     id="path8835"
+     style="fill:#dedede;fill-rule:evenodd;stroke-width:2;stroke-linecap:square;stop-color:#000000"
+     d="M 10,4 V 5 C 9.4460012,5 9,5.4460012 9,6 H 8 C 8,4.8920022 8.8920022,4 10,4 Z" />
+  <path
+     id="path8837"
+     style="fill:#dedede;fill-rule:evenodd;stroke-width:2;stroke-linecap:square;stop-color:#000000"
+     d="m 7,14 v -1 c 0.5539988,0 1,-0.446001 1,-1 h 1 c 0,1.107998 -0.8920022,2 -2,2 z" />
+  <path
+     id="path8839"
+     style="fill:#dedede;fill-rule:evenodd;stroke-width:2;stroke-linecap:square;stop-color:#000000"
+     d="M 10,14 V 13 C 9.4460012,13 9,12.553999 9,12 H 8 c 0,1.107998 0.8920022,2 2,2 z" />
+  <path
+     id="path8181"
+     style="fill:#dedede;fill-rule:evenodd;stroke-width:0.875;stroke-linecap:square;stop-color:#000000"
+     d="M 15.5,14 A 3.5,3.5 0 0 0 12,17.5 3.5,3.5 0 0 0 15.5,21 3.5,3.5 0 0 0 19,17.5 3.5,3.5 0 0 0 15.5,14 Z M 15,15 h 1 v 2 h 2 v 1 h -2 v 2 h -1 v -2 h -2 v -1 h 2 z" />
+</svg>

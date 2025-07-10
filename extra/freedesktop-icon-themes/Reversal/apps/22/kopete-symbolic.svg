@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" width="22" height="22">
+    <style type="text/css" id="current-color-scheme">.ColorScheme-Accent { color: #3daee9; } .ColorScheme-Background { color: #2a2e32; } .ColorScheme-ButtonText { color: #31363b; } .ColorScheme-Text { color: #363636; } </style>
+    <g id="kopete">
+    <path id="rect4144" d="m 3,3 0,12 3,0 0,4 4,-4 9,0 0,-12 z m 1,1 14,0 0,10 -14,0 z m 9.234375,0.5292969 -0.238281,0.4765625 C 14.254947,5.9480768 14.997235,7.4275888 15,9 c -0.0028,1.572411 -0.745053,3.051924 -2.003906,3.994141 l 0.238281,0.472656 C 14.927234,12.62117 15.997658,10.892314 16,9 15.999137,7.106279 14.928491,5.3755534 13.234375,4.5292969 Z M 6,5 6,7 8,7 8,5 Z m 3,3 0,2 4,0 0,-2 z m -3,3 0,2 2,0 0,-2 z" style="opacity:1;fill:currentColor;fill-opacity:1;stroke:none" inkscape:connector-curvature="0" sodipodi:nodetypes="ccccccccccccccccccccccccccccccccccc" class="ColorScheme-Text"/>
+    <rect y="0" x="0" height="22" width="22" id="rect4186" style="opacity:1;fill:none;fill-opacity:1;stroke:none"/>
+  </g>
+</svg>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" viewBox="0 0 16.933 16.933" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <filter id="filter1057-7" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1927" x1="4.5" x2="59.5" y1="59.5" y2="4.5" gradientTransform="matrix(.26458 0 0 .26458 .79375 1.9749)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#32d7ff" offset="0"/>
+   <stop stop-color="#329bff" offset="1"/>
+  </linearGradient>
+ </defs>
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:title/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <g transform="translate(-.79375 -1.9749)">
+  <rect transform="matrix(.26458 0 0 .26458 .79375 1.9749)" x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057-7)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+  <g stroke-width=".52917">
+   <path d="m5.9531 3.1656c-2.1987 0-3.9688 1.7701-3.9688 3.9687v6.6146c0 2.1987 1.7701 3.9688 3.9688 3.9688h6.6146c2.1987 0 3.9688-1.7701 3.9688-3.9688v-6.6146c0-2.1987-1.7701-3.9687-3.9688-3.9687z" fill="url(#linearGradient1927)"/>
+   <path d="m13.941 8.0304s-0.12713 1.5301-0.06925 2.3404c0.0578 0.81028-1.1079 1.2981-1.3808 1.4221-0.2729 0.12402-3.7553 0.04806-4.1605 0.04806s-0.82889 0.87747-0.82889 0.87747h3.1337c0.54373 0 0.99994 0.83044 0.99994 0.83044s0.52024 0.92393 1.5493 0.70177c1.029-0.2222 1.1081-0.94908 1.142-1.2346 0.06614-0.30591-0.38551-4.9857-0.38551-4.9857z" fill="#b4e1ff"/>
+   <path d="m11.822 6.1612v5.292e-4h-5.0271s-2.0836-0.00824-2.3068 2.1415c0 0-0.12749 2.1873-0.29662 4.7248 0 0-0.12628 1.0656 1.2557 1.2532 1.4656 0.1989 2.1332-2.282 2.927-2.282h4.2581c0.63286 0 1.311-0.63137 1.311-1.5317 0-0.90037 2.65e-4 -2.2566-5.29e-4 -2.4613 7.94e-4 -0.20685-0.11496-1.789-2.1208-1.8448z" fill="#fff"/>
+  </g>
+  <g fill="#0fa0ff">
+   <rect x="6.6844" y="7.6899" width=".88444" height="2.5592" ry=".44222"/>
+   <rect transform="rotate(-90)" x="-9.4116" y="5.8471" width=".88444" height="2.5592" ry=".44222"/>
+   <circle cx="11.557" cy="8.1992" r=".42387"/>
+   <circle cx="11.557" cy="9.7397" r=".42387"/>
+   <circle transform="rotate(-90)" cx="-8.9694" cy="10.787" r=".42387"/>
+   <circle transform="rotate(-90)" cx="-8.9694" cy="12.327" r=".42387"/>
+  </g>
+ </g>
+</svg>

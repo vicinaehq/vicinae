@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg width="64" height="64" version="1.1" viewBox="0 0 16.933 16.933" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <filter id="filter1057-1" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053-7" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="matrix(.26458 0 0 .26458 46.803 6.3626)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#323741" offset="0"/>
+   <stop stop-color="#465064" offset="1"/>
+  </linearGradient>
+ </defs>
+ <g transform="translate(-12.011 -6.4975)">
+  <rect transform="matrix(.26458 0 0 .26458 12.011 6.4975)" x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057-1)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+  <rect x="13.201" y="7.6881" width="14.552" height="14.552" ry="3.9687" fill="url(#linearGradient1053-7)" stroke-linecap="round" stroke-width=".7261"/>
+  <path d="m20.477 10.334c-2.5572 0-4.6301 2.073-4.6301 4.6301s2.073 4.6301 4.6301 4.6301c2.5572 0 4.6301-2.073 4.6301-4.6301s-2.073-4.6301-4.6301-4.6301zm2.2428 3.4583-1.0716 1.9633-0.07721 0.13753-0.15443 0.27505c-0.05024 0.08951-0.10695 0.21086-0.20902 0.26268l-1.1514 0.78352c-0.0411 0.02091-0.08557 0.03027-0.13006 0.0313v2e-3h-1.7334v-0.31501h1.42l0.08305-1.3994c-0.0072-0.11675 0.06565-0.22852 0.11584-0.31799l0.15446-0.27506 1.1488-2.1009c0.08532-0.15194 0.27421-0.20401 0.42195-0.11627l1.07 0.63529c0.1477 0.08769 0.19832 0.28197 0.11303 0.43391z" fill="#fafafa" stroke-width=".010341" p-id="1185"/>
+ </g>
+</svg>

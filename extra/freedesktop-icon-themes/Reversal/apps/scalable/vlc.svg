@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" viewBox="0 0 16.933 16.933" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <filter id="filter1057-0" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053-7" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="matrix(.26458 0 0 .26458 29.161 2.8322)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#ff8228" offset="0"/>
+   <stop stop-color="#ff5a1e" stop-opacity=".99608" offset=".50054"/>
+   <stop stop-color="#ff8c55" stop-opacity=".99608" offset="1"/>
+  </linearGradient>
+ </defs>
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:title/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <g transform="translate(5.6318 -2.9671)" stroke-linecap="round">
+  <rect transform="matrix(.26458 0 0 .26458 -5.6318 2.9671)" x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057-0)" opacity=".3" stroke-width="2.7444"/>
+  <rect x="-4.4412" y="4.1577" width="14.552" height="14.552" ry="3.9687" fill="url(#linearGradient1053-7)" stroke-width=".72611"/>
+ </g>
+ <path d="m8.4513 9.4287c1.221 0 2.2431-0.41492 2.3051-0.95652-0.18156-0.50932-0.37957-1.0647-0.57409-1.6106-0.13507 0.38936-0.88101 0.66389-1.7309 0.66389-0.84966 0-1.5956-0.27464-1.7309-0.66381-0.19453 0.54578-0.39232 1.1011-0.57388 1.6105 0.061711 0.5416 1.0836 0.95652 2.3047 0.95652zm0-3.4253c0.57388 0 1.1071-0.17767 1.2631-0.45352-0.21507-0.60412-0.39989-1.1224-0.51668-1.4495-0.077547-0.21793-0.42921-0.33113-0.74647-0.33113-0.31724 0-0.66892 0.1132-0.74655 0.33113-0.11658 0.32705-0.30131 0.84534-0.51668 1.4495 0.15612 0.27585 0.68956 0.45352 1.2632 0.45352zm4.4857 3.9299-1.9184-0.77272 0.22089 0.6164c-0.01114 0.65328-1.2793 1.1738-2.7882 1.1738-1.5087 0-2.7771-0.52057-2.7879-1.1738l0.22069-0.6164-1.9183 0.77272c-0.53782 0.2167-0.56031 0.61804-0.050064 0.89154l3.6079 1.9346c0.51025 0.2735 1.3454 0.2735 1.8556 0l3.6079-1.9346c0.51033-0.2735 0.48776-0.67485-0.05006-0.89154z" fill="#fff" stroke-width="1.6023"/>
+</svg>

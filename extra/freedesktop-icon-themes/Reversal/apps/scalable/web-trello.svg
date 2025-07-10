@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <filter id="filter1057" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053" x1="-114.94" x2="-114.94" y1="53.743" y2="17.961" gradientTransform="translate(131.5 -.50846)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#2e55e7" offset="0"/>
+   <stop stop-color="#0d7eef" offset="1"/>
+  </linearGradient>
+ </defs>
+ <rect x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+ <rect x="4.4995" y="4.4995" width="55.001" height="55.001" ry="15" fill="url(#linearGradient1053)" stroke-linecap="round" stroke-width="2.7444"/>
+ <image x="12.27" y="12.129" width="41" height="41" preserveAspectRatio="none" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACkAAAApCAYAAACoYAD2AAAACXBIWXMAAA7DAAAOwwHHb6hkAAAA GXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAAkVJREFUWIXtmetymzAQhT9s7KZJ +/5P2tTm2h/sKZsNEjgWM+0MO7MjkFdnjy6gY1Hx2aqVunHh96W6YnjVwvXJriuWE0SwwUq5x5ML cw1LPniydQA8W11twKcNBDvz3hEWsYiXIzos4AGMtQs6A1fgxby2uiVgT/AO3IAGaF18bXjfrcwR HY1UZ1jC6wSkXtdG7ifwZsApkup5C7xbeyUa7P4CvBreq92nZkZtG+CXwx+AwU+3SL4Z8LcMSY1k a4k75pHE2l2YRvGHYYpkbiTvdt96PJHU+rsYOfk50XMBi2Acda3vq8O6JgjKtAYb16ET0Gu6PdGz 87UHJ8ZGj7+vPeERC6Dy060yvn5ywLm4HGa0MRFXwceRWutlzlJti2DmpvOfsYNkKTtIlrK9SeYk 3Gbbk+ToyiUptxS/5NSZRs+Qk/fMokPCIyVyFeMlHwSpVoqgyo5ZKDTMe318watN72JbR3a3kZTW vDFJr5FJYPzdj0O8V0HvVnbsON0YycYSjpbU60mR9FOvkZTo7Qyn+HQrsfxmyW8EZRPiYV6PLfN0 A/uNpEgqmf9zl4oX0fjnbjeSPrGe8C2KaAwlsC/JmOzLL/ZjWyxlB8lSdpAsZf8dyWcEahFxmzK9 zFMCtcoQiEJ2N6I1H/dNbfLynI0hNnWYWoSkJ9gyyaqr1W85VbszSay+NLlIUkpaIhVLvvV88jez 4ilOVNPtlTSW8NGT3pb5rLuoxZOvR8/MtR7jmfkuJP11qa8PxWztG8tS3aPfcZ62PxvI9MUHnr7S AAAAAElFTkSuQmCC "/>
+ <rect x="14.5" y="14.5" width="14" height="33.601" rx="2.4805" fill="#f7fbfd"/>
+ <rect x="34.101" y="14.5" width="14" height="16.803" rx="2.4805" fill="#f7fbfd"/>
+</svg>

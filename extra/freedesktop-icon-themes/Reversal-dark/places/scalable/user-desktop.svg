@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg width="64" height="64" version="1.1" viewBox="0 0 16.933 16.933" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <filter id="filter1057" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="matrix(.26458 0 0 .26458 14.54 1.2999)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#f5aa1e" offset="0"/>
+   <stop stop-color="#ffc841" offset="1"/>
+  </linearGradient>
+ </defs>
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <g transform="translate(20.252 -1.4348)">
+  <g>
+   <rect transform="matrix(.26458 0 0 .26458 -20.252 1.4348)" x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+   <rect x="-19.061" y="2.6254" width="14.552" height="14.552" ry="3.9687" fill="url(#linearGradient1053)" stroke-linecap="round" stroke-width=".7261"/>
+   <rect x="-16.415" y="13.056" width="9.2602" height="2.8288" ry=".8284" fill="#fff" opacity=".35" style="paint-order:stroke fill markers"/>
+  </g>
+  <g fill="#f9f9f9" stroke-width=".5682">
+   <rect x="-15.643" y="13.719" width="1.5034" height="1.5034" rx=".30067" ry=".30067"/>
+   <rect x="-13.572" y="13.719" width="1.5034" height="1.5034" rx=".30067" ry=".30067"/>
+   <rect x="-11.502" y="13.719" width="1.5034" height="1.5034" rx=".30067" ry=".30067"/>
+   <rect x="-9.4309" y="13.719" width="1.5034" height="1.5034" rx=".30067" ry=".30067"/>
+  </g>
+ </g>
+</svg>

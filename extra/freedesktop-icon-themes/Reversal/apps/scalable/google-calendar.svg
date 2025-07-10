@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" viewBox="0 0 16.933 16.933" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <filter id="filter1057-2" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+ </defs>
+ <rect transform="scale(.26458)" x="4.5" y="4.5" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057-2)" opacity=".3" stroke-linecap="round" stroke-width="2.7444"/>
+ <g transform="translate(-18.653 17.065)" stroke-linecap="round" stroke-width="2.7444">
+  <path transform="scale(.26458)" d="m119-16h-33v10.461c1.2729 0.349 2.6133 0.53906 4 0.53906h25c1.3869 0 2.7269-0.18993 4-0.53906z" fill="#539a57"/>
+  <path transform="scale(.26458)" d="m119-16v10.461c5.0824-1.3938 9.0716-5.3784 10.465-10.461z" fill="#d4483c"/>
+  <path transform="scale(.26458)" d="m119-49h-33v33h33z" fill="#fff"/>
+  <path transform="scale(.26458)" d="m119-49v33h10.465c0.34887-1.2727 0.53516-2.6136 0.53516-4v-25c0-1.3867-0.19006-2.7271-0.53906-4z" fill="#f0b24b"/>
+  <path transform="scale(.26458)" d="m86-16h-10.461c1.3939 5.0812 5.3787 9.0675 10.461 10.461z" fill="#39713d"/>
+  <path transform="scale(.26458)" d="m75.539-49c-0.349 1.2729-0.53906 2.6133-0.53906 4v25c0 1.3868 0.18991 2.7272 0.53906 4h10.461v-33z" fill="#487fe5"/>
+  <path transform="scale(.26458)" d="m119-59.461c-1.2728-0.34915-2.6132-0.53906-4-0.53906h-25c-6.9233 0-12.718 4.6447-14.461 11h43.461z" fill="#487fe5"/>
+  <path transform="scale(.26458)" d="m119-59.461v10.461h10.461c-1.3935-5.0823-5.3797-9.067-10.461-10.461z" fill="#2a62c0"/>
+ </g>
+ <text x="4.5720725" y="11.036135" fill="#487fe5" font-family="AkrutiMal2" font-size="11.421px" letter-spacing="0px" stroke-width=".28551" word-spacing="0px" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal;line-height:1.25" xml:space="preserve"><tspan x="4.5720725" y="11.036135" fill="#487fe5" font-family="AkrutiMal2" font-size="11.421px" stroke-width=".28551" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal">31</tspan></text>
+</svg>

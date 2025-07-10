@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" version="1.1" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <filter id="filter1057-2" x="-.027" y="-.027" width="1.054" height="1.054" color-interpolation-filters="sRGB">
+   <feGaussianBlur stdDeviation="0.61875"/>
+  </filter>
+  <linearGradient id="linearGradient1053-0" x1="-127" x2="-72" y1="60" y2="5" gradientTransform="translate(156.32 9.6825)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#dee0e2" offset="0"/>
+   <stop stop-color="#f1f3f5" stop-opacity=".99608" offset="1"/>
+  </linearGradient>
+ </defs>
+ <g transform="translate(-24.824 -10.192)" stroke-linecap="round" stroke-width="2.7444">
+  <rect x="29.324" y="14.692" width="55" height="55" ry="15" fill="#141414" filter="url(#filter1057-2)" opacity=".3"/>
+  <rect x="29.324" y="14.692" width="55" height="55" ry="15" fill="url(#linearGradient1053-0)"/>
+ </g>
+ <g transform="matrix(1.251 0 0 1.251 1.3495 3.2285)">
+  <!-- color: #eeeeee -->
+  <path d="m23 22h8v2h-8v6.996c0 2 1 2.996 4 2.996v0.996h-11v-0.996c3 0 4-0.996 4-2.996v-15.996c0-2-2-2.996-4-2.996v-0.996h17v6h-1c0-4-3-4-9-4" fill="#5b5b5b"/>
+ </g>
+</svg>

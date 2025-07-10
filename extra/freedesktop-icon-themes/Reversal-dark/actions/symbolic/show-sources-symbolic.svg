@@ -1,0 +1,8 @@
+<svg width="16" height="16" version="1.1" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+ <g transform="translate(-691.99 -493.92)" fill="#dedede">
+  <rect x="692.99" y="501.42" width="8" height="1" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="paint-order:stroke fill markers"/>
+  <path d="m699.99 494.92a7 7 0 0 0-4.9375 2.0625l0.69141 0.69141a6.0035 6.0035 0 0 1 4.2461-1.7578 6.0035 6.0035 0 0 1 6.0039 6.0039 6.0035 6.0035 0 0 1-6.0039 6.0039 6.0035 6.0035 0 0 1-4.2461-1.7578l-0.69141 0.69141a7 7 0 0 0 4.9375 2.0625 7 7 0 0 0 7-7 7 7 0 0 0-7-7z"/>
+  <rect transform="rotate(45)" x="846.29" y="-141.47" width="5" height="1" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="paint-order:stroke fill markers"/>
+  <rect transform="matrix(.70711 -.70711 -.70711 -.70711 0 0)" x="136.47" y="-851.29" width="5" height="1" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="paint-order:stroke fill markers"/>
+ </g>
+</svg>
