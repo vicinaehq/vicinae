@@ -15,7 +15,7 @@ protocol, required for proper window positioning on most wlroots-based
 compositors." ON)
 
 
-list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus cmark proto qalculate qsqlbuilder xapian)
+list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus cmark proto qalculate)
 
 
 if (UNIX AND NOT APPLE)

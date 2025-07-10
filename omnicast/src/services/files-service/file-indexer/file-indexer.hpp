@@ -1,3 +1,4 @@
+#pragma once
 #include <condition_variable>
 #include <mutex>
 #include <qobject.h>
@@ -6,7 +7,6 @@
 #include <malloc.h>
 #include <libqalculate/includes.h>
 #include <qdatetime.h>
-#include "omnicast.hpp"
 #include <qsqldatabase.h>
 #include <qtmetamacros.h>
 #include <queue>

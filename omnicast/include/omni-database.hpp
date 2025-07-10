@@ -1,5 +1,4 @@
 #pragma once
-#include "Query.h"
 #include "utils/migration-manager/migration-manager.hpp"
 #include <qlogging.h>
 #include <qsqldatabase.h>

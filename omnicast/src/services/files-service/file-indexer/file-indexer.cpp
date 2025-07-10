@@ -1,5 +1,4 @@
 #include <mutex>
-#include <xapian.h>
 #include "file-indexer.hpp"
 #include <QtConcurrent/QtConcurrent>
 #include "omnicast.hpp"
