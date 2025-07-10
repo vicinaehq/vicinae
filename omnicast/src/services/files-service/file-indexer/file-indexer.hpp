@@ -16,8 +16,10 @@ class WriterWorker {
   std::mutex &batchMutex;
   std::deque<std::vector<std::filesystem::path>> &batchQueue;
   std::condition_variable &m_batchCv;
+  std::vector<std::filesystem::path> m_homeRootDirectories;
 
   void batchWrite(const std::vector<std::filesystem::path> &paths);
+  double computeRelevancyScore(const std::filesystem::path &path) const;
 
 public:
   void run();

@@ -1,8 +1,11 @@
+#include <filesystem>
 #include <mutex>
 #include "file-indexer.hpp"
 #include <QtConcurrent/QtConcurrent>
 #include "omnicast.hpp"
 #include "services/files-service/abstract-file-indexer.hpp"
+#include "services/files-service/file-indexer/relevancy-scorer.hpp"
+#include "timer.hpp"
 #include "utils/migration-manager/migration-manager.hpp"
 #include "utils/utils.hpp"
 #include <QDebug>
@@ -12,6 +15,7 @@
 #include <qsqldatabase.h>
 #include <qsqlquery.h>
 #include <QSqlError>
+#include <ranges>
 
 // clang-format off
 static const std::vector<std::string> sqlitePragmas = {
@@ -20,6 +24,7 @@ static const std::vector<std::string> sqlitePragmas = {
 	"PRAGMA temp_store = memory",
 	"PRAGMA mmap_size = 30000000000"
 };
+
 // clang-format on
 
 namespace fs = std::filesystem;
@@ -33,9 +38,12 @@ static const std::vector<fs::path> EXCLUDED_PATHS = {"/sys", "/run",     "/proc"
                                                      "/mnt", "/var/tmp", "/efi",  "/dev"};
 
 void WriterWorker::run() {
+
   std::filesystem::path dbPath = Omnicast::dataDir() / "file-indexer.db";
+  m_homeRootDirectories = homeRootDirectories();
   db = QSqlDatabase::addDatabase("QSQLITE", "file-indexer-writer");
   db.setDatabaseName(dbPath.c_str());
+
   if (!db.open()) { qCritical() << "Failed to open file indexer database at" << dbPath; }
 
   QSqlQuery query(db);
@@ -53,7 +61,6 @@ void WriterWorker::run() {
       m_batchCv.wait(lock, [&]() { return !batchQueue.empty(); });
       batch = std::move(batchQueue);
       batchQueue.clear();
-      malloc_trim(0);
     }
 
     for (const auto &paths : batch) {
@@ -73,23 +80,33 @@ void WriterWorker::batchWrite(const std::vector<fs::path> &paths) {
     return;
   }
 
-  query.prepare(
-      "INSERT INTO indexed_file (path, name, last_modified_at) VALUES (:path, :name, :last_modified_at) ON "
-      "CONFLICT (path) DO NOTHING");
+  query.prepare(R"(
+    INSERT INTO 
+	  	indexed_file (path, name, last_modified_at, relevancy_score) 
+	VALUES 
+		(:path, :name, :last_modified_at, :relevancy_score) 
+	ON CONFLICT (path) DO NOTHING
+  )");
 
   std::error_code ec;
+  RelevancyScorer scorer;
+  double score = 1.0;
 
   for (const auto &path : paths) {
-    auto ftime = std::filesystem::last_write_time(path, ec);
+    if (auto lastModified = std::filesystem::last_write_time(path, ec); !ec) {
+      auto sctp = std::chrono::clock_cast<std::chrono::system_clock>(lastModified);
+      long long epoch = std::chrono::duration_cast<std::chrono::seconds>(sctp.time_since_epoch()).count();
 
-    if (ec) continue;
-
-    auto sctp = std::chrono::clock_cast<std::chrono::system_clock>(ftime);
-    long long epoch = std::chrono::duration_cast<std::chrono::seconds>(sctp.time_since_epoch()).count();
+      query.bindValue(":last_modified_at", epoch);
+      score = scorer.computeScore(path, lastModified);
+    } else {
+      query.bindValue(":last_modified_at", QVariant());
+      score = scorer.computeScore(path, std::nullopt);
+    }
 
     query.bindValue(":path", path.c_str());
     query.bindValue(":name", path.filename().c_str());
-    query.bindValue(":last_modified_at", epoch);
+    query.bindValue(":relevancy_score", score);
 
     if (!query.exec()) {
       qCritical() << "Failed to insert file in index" << path << query.lastError();
@@ -285,44 +302,46 @@ IndexerAsyncQuery *FileIndexer::queryAsync(std::string_view view) const {
   auto searchQuery = qStringFromStdView(view);
 
   QThreadPool::globalInstance()->start([asyncQuery, searchQuery]() {
-    QSqlDatabase db;
-    std::filesystem::path dbPath = Omnicast::dataDir() / "file-indexer.db";
     QString connectionName = QString("file-indexer-reader-%1").arg(QUuid::createUuid().toString());
+    {
+      QSqlDatabase db;
+      std::filesystem::path dbPath = Omnicast::dataDir() / "file-indexer.db";
 
-    db = QSqlDatabase::addDatabase("QSQLITE", connectionName);
-    db.setDatabaseName(dbPath.c_str());
+      db = QSqlDatabase::addDatabase("QSQLITE", connectionName);
+      db.setDatabaseName(dbPath.c_str());
 
-    if (!db.open()) { qCritical() << "Failed to open file indexer database at" << dbPath; }
+      if (!db.open()) { qCritical() << "Failed to open file indexer database at" << dbPath; }
 
-    QSqlQuery query(db);
+      QSqlQuery query(db);
 
-    for (const auto &pragma : sqlitePragmas) {
-      if (!query.exec(pragma.c_str())) { qCritical() << "Failed to run file-indexer pragma" << pragma; }
-    }
+      for (const auto &pragma : sqlitePragmas) {
+        if (!query.exec(pragma.c_str())) { qCritical() << "Failed to run file-indexer pragma" << pragma; }
+      }
 
-    auto queryString = QString(R"(
+      auto queryString = QString(R"(
   	SELECT path, unicode_idx.rank FROM indexed_file f 
 	JOIN unicode_idx ON unicode_idx.rowid = f.id 
 	WHERE 
 	    unicode_idx MATCH '"%1"*'
-	ORDER BY bm25(unicode_idx)
+	ORDER BY f.relevancy_score DESC, bm25(unicode_idx)
 	LIMIT 50
   )")
-                           .arg(searchQuery);
+                             .arg(searchQuery);
 
-    if (!query.exec(queryString)) { qCritical() << "Search query failed" << query.lastError(); }
+      Timer timer;
+      if (!query.exec(queryString)) { qCritical() << "Search query failed" << query.lastError(); }
 
-    std::vector<IndexerFileResult> results;
-    while (query.next()) {
-      IndexerFileResult result{.path = query.value(0).toString().toStdString()};
+      timer.time("queryAsync");
 
-      results.emplace_back(result);
+      std::vector<IndexerFileResult> results;
+      while (query.next()) {
+        IndexerFileResult result{.path = query.value(0).toString().toStdString()};
+
+        results.emplace_back(result);
+      }
+
+      emit asyncQuery->finished(results);
     }
-
-    std::ranges::sort(results,
-                      [](auto &&a, auto &&b) { return a.path.string().size() > b.path.string().size(); });
-
-    emit asyncQuery->finished(results);
 
     QSqlDatabase::removeDatabase(connectionName);
   });

@@ -1,5 +1,6 @@
 #include "utils.hpp"
 #include <cstdlib>
+#include <filesystem>
 #include <qmimedatabase.h>
 #include <qmimetype.h>
 
@@ -57,3 +58,25 @@ bool isTextMimeType(const QMimeType &mime) {
 
   return mime.inherits(textPlain.name());
 }
+
+bool isHiddenPath(const std::filesystem::path &path) {
+  return std::ranges::any_of(path, [](auto &&path) { return path.string().starts_with('.'); });
+}
+
+bool isInHomeDirectory(const std::filesystem::path &path) {
+  return path.string().starts_with(homeDir().string());
+}
+
+std::vector<fs::path> homeRootDirectories() {
+  std::vector<fs::path> paths;
+  std::error_code ec;
+
+  for (const auto &entry : fs::directory_iterator(homeDir(), ec)) {
+    if (entry.is_directory() && !isHiddenPath(entry.path())) paths.emplace_back(entry.path());
+  }
+
+  return paths;
+}
+
+std::filesystem::path downloadsFolder() { return homeDir() / "Downloads"; }
+std::filesystem::path documentsFolder() { return homeDir() / "Downloads"; }

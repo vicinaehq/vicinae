@@ -18,3 +18,20 @@ QString getRelativeTimeString(const QDateTime &pastTime);
 QString qStringFromStdView(std::string_view view);
 
 bool isTextMimeType(const QMimeType &mime);
+
+/**
+ * Whether the path points to a file that is considered to be hidden.
+ * A file or directory is considered hidden when itself or one of its ancestor's name
+ * starts with a dot ('.').
+ */
+bool isHiddenPath(const std::filesystem::path &path);
+
+bool isInHomeDirectory(const std::filesystem::path &path);
+
+std::filesystem::path downloadsFolder();
+std::filesystem::path documentsFolder();
+
+/**
+ * The list of directories found at the root of the current user's home directory.
+ */
+std::vector<std::filesystem::path> homeRootDirectories();

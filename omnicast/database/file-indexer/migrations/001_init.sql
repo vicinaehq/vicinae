@@ -8,7 +8,8 @@ CREATE TABLE IF NOT EXISTS indexed_file (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	path TEXT UNIQUE NOT NULL,
 	name TEXT NOT NULL,
-	last_modified_at INT NOT NULL
+	last_modified_at INT,
+	relevancy_score REAL NOT NULL
 );
 
 CREATE VIRTUAL TABLE IF NOT EXISTS unicode_idx USING fts5(
@@ -22,3 +23,8 @@ CREATE TRIGGER unicode_idx_ai AFTER INSERT ON indexed_file BEGIN
 
 CREATE TRIGGER unicode_idx_ad AFTER DELETE ON indexed_file BEGIN
   INSERT INTO unicode_idx(unicode_idx, rowid, name) VALUES('delete', old.id, old.name);END; 
+
+CREATE INDEX IF NOT EXISTS idx_indexed_file_relevancy
+ON indexed_file(
+	relevancy_score DESC
+);
