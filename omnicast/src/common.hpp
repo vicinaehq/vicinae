@@ -23,7 +23,10 @@
 #include <qstack.h>
 #include <qwidget.h>
 #include <qwindowdefs.h>
-#include <type_traits>
+
+template <class... Ts> struct overloads : Ts... {
+  using Ts::operator()...;
+};
 
 template <typename T> struct PaginatedResponse {
   int totalCount;

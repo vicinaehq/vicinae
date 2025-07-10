@@ -1,8 +1,10 @@
 #include "ui/default-list-item-widget.hpp"
+#include "common.hpp"
 #include "omni-icon.hpp"
 #include "theme.hpp"
 #include "ui/image/omnimg.hpp"
 #include "ui/list-accessory-widget.hpp"
+#include <qnamespace.h>
 #include <qwidget.h>
 
 void DefaultListItemWidget::setName(const QString &name) {
@@ -21,9 +23,21 @@ void DefaultListItemWidget::setAccessories(const AccessoryList &list) {
   _accessoryList->setAccessories(list);
 }
 
-void DefaultListItemWidget::setCategory(const QString &category) {
-  _category->setText(category);
-  _category->setVisible(!category.isEmpty());
+void DefaultListItemWidget::setSubtitle(const std::variant<QString, std::filesystem::path> &subtitle) {
+  // clang-format off
+  const auto visitor = overloads {
+	   [&](const std::filesystem::path& path){
+  		_category->setText(path.c_str());
+  		_category->setEllideMode(Qt::ElideMiddle);
+	   },
+	   [&](const QString& text){
+  		_category->setText(text);
+  		_category->setEllideMode(Qt::ElideRight);
+	   }
+  };
+  // clang-format on
+
+  std::visit(visitor, subtitle);
 }
 
 void DefaultListItemWidget::setAlias(const QString &alias) {

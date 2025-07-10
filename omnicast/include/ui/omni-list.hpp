@@ -469,10 +469,13 @@ signals:
 
 class AbstractDefaultListItem : public OmniList::AbstractVirtualItem {
 public:
+  // Text ellision is done differently depending on the subtitle type
+  using ItemDataSubtitle = std::variant<QString, std::filesystem::path>;
+
   struct ItemData {
     std::optional<OmniIconUrl> iconUrl;
     QString name;
-    QString category;
+    ItemDataSubtitle subtitle;
     AccessoryList accessories;
     QString alias;
   };
@@ -489,7 +492,7 @@ public:
       auto itemData = data();
 
       widget->setName(itemData.name);
-      widget->setCategory(itemData.category);
+      widget->setSubtitle(itemData.subtitle);
       widget->setIconUrl(itemData.iconUrl);
       widget->setAccessories(itemData.accessories);
       widget->setAlias(itemData.alias);
@@ -506,7 +509,7 @@ public:
     auto itemData = data();
 
     widget->setName(itemData.name);
-    widget->setCategory(itemData.category);
+    widget->setSubtitle(itemData.subtitle);
     widget->setIconUrl(itemData.iconUrl);
     widget->setAccessories(itemData.accessories);
     widget->setAlias(itemData.alias);

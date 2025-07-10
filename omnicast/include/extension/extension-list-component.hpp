@@ -26,7 +26,7 @@ class ExtensionListItem : public AbstractDefaultListItem {
     return {
         .iconUrl = _item.icon,
         .name = _item.title,
-        .category = _item.subtitle,
+        .subtitle = _item.subtitle,
     };
   }
 

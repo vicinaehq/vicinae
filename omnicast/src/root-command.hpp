@@ -23,6 +23,7 @@
 #include <cmath>
 #include "action-panel/action-panel.hpp"
 #include "actions/color/color-actions.hpp"
+#include "utils/utils.hpp"
 #include <memory>
 #include <qbrush.h>
 #include <qcoreevent.h>
@@ -61,11 +62,13 @@ protected:
     auto metadata = manager->itemMetadata(m_item->uniqueId());
     auto accessories = m_item->accessories();
 
-    return {.iconUrl = m_item->iconUrl(),
-            .name = m_item->displayName(),
-            .category = m_item->subtitle(),
-            .accessories = m_item->accessories(),
-            .alias = metadata.alias};
+    return {
+        .iconUrl = m_item->iconUrl(),
+        .name = m_item->displayName(),
+        .subtitle = m_item->subtitle(),
+        .accessories = m_item->accessories(),
+        .alias = metadata.alias,
+    };
   }
 
   std::unique_ptr<CompleterData> createCompleter() const override {
@@ -107,7 +110,7 @@ class FallbackRootSearchItem : public AbstractDefaultListItem, public ListView::
     return {
         .iconUrl = m_item->iconUrl(),
         .name = m_item->displayName(),
-        .category = m_item->subtitle(),
+        .subtitle = m_item->subtitle(),
         .accessories = m_item->accessories(),
     };
   }
@@ -207,7 +210,8 @@ class RootFileListItem : public AbstractDefaultListItem, public ListView::Action
     auto panel = new ActionPanelStaticListView;
 
     if (auto app = appDb->findBestOpener(m_path.c_str())) {
-      auto open = new OpenAppAction(app, "Open", {m_path.c_str()});
+      auto title = QString("Open with %1").arg(app->name());
+      auto open = new OpenAppAction(app, title, {m_path.c_str()});
       open->setPrimary(true);
       panel->addAction(open);
     }
@@ -219,7 +223,7 @@ public:
   QString generateId() const override { return m_path.c_str(); }
 
   ItemData data() const override {
-    return {.iconUrl = getIcon(), .name = m_path.filename().c_str(), .category = m_path.c_str()};
+    return {.iconUrl = getIcon(), .name = m_path.filename().c_str(), .subtitle = compressPath(m_path)};
   }
 
   RootFileListItem(const std::filesystem::path &path) : m_path(path) {}

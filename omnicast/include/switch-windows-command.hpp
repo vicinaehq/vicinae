@@ -39,7 +39,7 @@ class UnamedWindowListItem : public WindowItem {
   ItemData data() const override {
     return {.iconUrl = BuiltinOmniIconUrl("app-window"),
             .name = _window->title(),
-            .category = _window->wmClass()};
+            .subtitle = _window->wmClass()};
   }
 
 public:
@@ -50,7 +50,7 @@ class AppWindowListItem : public WindowItem {
   std::shared_ptr<Application> _app;
 
   ItemData data() const override {
-    return {.iconUrl = _app->iconUrl(), .name = _window->title(), .category = _app->name()};
+    return {.iconUrl = _app->iconUrl(), .name = _window->title(), .subtitle = _app->name()};
   }
 
 public:

@@ -84,7 +84,7 @@ protected:
     return {
         .iconUrl = m_item->iconUrl(),
         .name = m_item->displayName(),
-        .category = m_item->subtitle(),
+        .subtitle = m_item->subtitle(),
         .accessories = m_item->accessories(),
     };
   }

@@ -55,7 +55,7 @@ class DefaultListItemWidget : public SelectableOmniListWidget {
 public:
   void setAccessories(const AccessoryList &list);
   void setName(const QString &name);
-  void setCategory(const QString &category);
+  void setSubtitle(const std::variant<QString, std::filesystem::path> &subtitle);
   void setIconUrl(const std::optional<OmniIconUrl> &url);
   void setAlias(const QString &title);
 
