@@ -247,7 +247,7 @@ void IndexerScanner::run() {
 
 void FileIndexer::start() {}
 
-std::vector<IndexerFileResult> FileIndexer::query(std::string_view view) const {
+std::vector<IndexerFileResult> FileIndexer::query(std::string_view view, const QueryParams &params) const {
   std::vector<IndexerFileResult> results;
   QSqlQuery query(m_db);
 
@@ -297,11 +297,28 @@ void FileIndexer::setEntrypoints(const std::vector<Entrypoint> &entrypoints) {
   // perform incremental scan based on existing data
 }
 
-IndexerAsyncQuery *FileIndexer::queryAsync(std::string_view view) const {
+QString FileIndexer::preparePrefixSearchQuery(std::string_view query) const {
+  QString finalQuery;
+
+  for (const auto &word : std::views::split(query, std::string_view(" "))) {
+    std::string_view view(word);
+
+    if (!finalQuery.isEmpty()) { finalQuery += ' '; }
+
+    finalQuery += QString("\"%1\"").arg(qStringFromStdView(view));
+  }
+
+  finalQuery += '*';
+
+  return finalQuery;
+}
+
+IndexerAsyncQuery *FileIndexer::queryAsync(std::string_view view, const QueryParams &params) const {
   auto asyncQuery = new IndexerAsyncQuery();
   auto searchQuery = qStringFromStdView(view);
+  QString finalQuery = preparePrefixSearchQuery(view);
 
-  QThreadPool::globalInstance()->start([asyncQuery, searchQuery]() {
+  QThreadPool::globalInstance()->start([asyncQuery, params, finalQuery]() {
     QString connectionName = QString("file-indexer-reader-%1").arg(QUuid::createUuid().toString());
     {
       QSqlDatabase db;
@@ -312,24 +329,25 @@ IndexerAsyncQuery *FileIndexer::queryAsync(std::string_view view) const {
 
       if (!db.open()) { qCritical() << "Failed to open file indexer database at" << dbPath; }
 
-      QSqlQuery query(db);
-
-      for (const auto &pragma : sqlitePragmas) {
-        if (!query.exec(pragma.c_str())) { qCritical() << "Failed to run file-indexer pragma" << pragma; }
-      }
-
       auto queryString = QString(R"(
   	SELECT path, unicode_idx.rank FROM indexed_file f 
 	JOIN unicode_idx ON unicode_idx.rowid = f.id 
 	WHERE 
-	    unicode_idx MATCH '"%1"*'
-	ORDER BY f.relevancy_score DESC, bm25(unicode_idx)
-	LIMIT 50
+	    unicode_idx MATCH '%1'
+	ORDER BY f.relevancy_score DESC, unicode_idx.rank 
+	LIMIT :limit
+	OFFSET :offset
   )")
-                             .arg(searchQuery);
+                             .arg(finalQuery);
+
+      QSqlQuery query(db);
+
+      query.prepare(queryString);
+      query.bindValue(":limit", params.pagination.limit);
+      query.bindValue(":offset", params.pagination.offset);
 
       Timer timer;
-      if (!query.exec(queryString)) { qCritical() << "Search query failed" << query.lastError(); }
+      if (!query.exec()) { qCritical() << "Search query failed" << query.lastError(); }
 
       timer.time("queryAsync");
 

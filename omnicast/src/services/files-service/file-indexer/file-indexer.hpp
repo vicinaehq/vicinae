@@ -29,11 +29,6 @@ public:
       : batchMutex(batchMutex), batchQueue(batchQueue), m_batchCv(batchCv) {}
 };
 
-class QueryWorker {
-public:
-  void query(QString &id, const QString &query) {}
-};
-
 class IndexerScanner {
   static const size_t INDEX_BATCH_SIZE = 10000;
 
@@ -90,10 +85,12 @@ class FileIndexer : public AbstractFileIndexer {
   ScanRecord createScan();
   std::vector<ScanRecord> listScans();
 
+  QString preparePrefixSearchQuery(std::string_view query) const;
+
 public:
   void setEntrypoints(const std::vector<Entrypoint> &entrypoints) override;
-  std::vector<IndexerFileResult> query(std::string_view view) const override;
-  virtual IndexerAsyncQuery *queryAsync(std::string_view view) const override;
+  std::vector<IndexerFileResult> query(std::string_view view, const QueryParams &params) const override;
+  virtual IndexerAsyncQuery *queryAsync(std::string_view view, const QueryParams &params) const override;
   void start() override;
 
   FileIndexer();

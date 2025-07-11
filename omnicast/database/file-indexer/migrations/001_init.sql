@@ -24,7 +24,5 @@ CREATE TRIGGER unicode_idx_ai AFTER INSERT ON indexed_file BEGIN
 CREATE TRIGGER unicode_idx_ad AFTER DELETE ON indexed_file BEGIN
   INSERT INTO unicode_idx(unicode_idx, rowid, name) VALUES('delete', old.id, old.name);END; 
 
-CREATE INDEX IF NOT EXISTS idx_indexed_file_relevancy
-ON indexed_file(
-	relevancy_score DESC
-);
+CREATE INDEX idx_indexed_file_covering 
+ON indexed_file(id, relevancy_score DESC, path);

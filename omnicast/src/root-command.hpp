@@ -246,7 +246,8 @@ class RootSearchView : public ListView {
     auto filesService = ServiceRegistry::instance()->fileService();
     if (m_searchText.size() >= 3) {
       QString currentQuery = m_searchText;
-      auto reply = filesService->indexer()->queryAsync(currentQuery.toStdString());
+      auto reply =
+          filesService->indexer()->queryAsync(currentQuery.toStdString(), {.pagination = {.limit = 8}});
 
       connect(reply, &IndexerAsyncQuery::finished, this, [this, reply, currentQuery](auto &&results) {
         reply->deleteLater();
@@ -398,6 +399,8 @@ class RootSearchView : public ListView {
 
     m_calcDebounce->start();
     m_fileSearchDebounce->start();
+
+    if (text.size() < 3) { m_fileResults.clear(); }
 
     return render(text);
   }

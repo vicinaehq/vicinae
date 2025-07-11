@@ -31,6 +31,11 @@ signals:
   void finished(const std::vector<IndexerFileResult> &results) const;
 };
 
+struct Pagination {
+  int offset = 0;
+  int limit = 50;
+};
+
 class AbstractFileIndexer : public QObject {
 public:
   /**
@@ -40,11 +45,16 @@ public:
     std::filesystem::path root;
   };
 
+  struct QueryParams {
+    Pagination pagination;
+  };
+
 public:
   virtual void start() = 0;
   virtual void setEntrypoints(const std::vector<Entrypoint> &entrypoints) = 0;
-  virtual std::vector<IndexerFileResult> query(std::string_view view) const = 0;
-  virtual IndexerAsyncQuery *queryAsync(std::string_view view) const = 0;
+  virtual std::vector<IndexerFileResult> query(std::string_view view,
+                                               const QueryParams &params = {}) const = 0;
+  virtual IndexerAsyncQuery *queryAsync(std::string_view view, const QueryParams &params = {}) const = 0;
 
   virtual ~AbstractFileIndexer() = default;
 };
