@@ -35,3 +35,5 @@ std::filesystem::path documentsFolder();
  * The list of directories found at the root of the current user's home directory.
  */
 std::vector<std::filesystem::path> homeRootDirectories();
+
+std::string getLastPathComponent(const std::filesystem::path &path);

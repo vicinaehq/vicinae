@@ -35,11 +35,11 @@ template <typename T> struct PaginatedResponse {
   std::vector<T> data;
 };
 
-class NonAssignable {
+class NonCopyable {
 public:
-  NonAssignable(const NonAssignable &) = delete;
-  NonAssignable &operator=(const NonAssignable &) = delete;
-  NonAssignable() {}
+  NonCopyable(const NonCopyable &) = delete;
+  NonCopyable &operator=(const NonCopyable &) = delete;
+  NonCopyable() {}
 };
 
 template <class T> using OptionalRef = std::optional<std::reference_wrapper<T>>;

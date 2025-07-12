@@ -9,7 +9,7 @@
 class AppWindow;
 class ActionPanelView;
 
-class AbstractAction : public QObject, public NonAssignable {
+class AbstractAction : public QObject, public NonCopyable {
 public:
   enum Style { Normal, Danger };
 

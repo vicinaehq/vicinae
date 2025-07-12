@@ -339,12 +339,9 @@ public:
 
     // most likely SVG, we can request the size we want
     if (it == sizes.end()) {
-      qDebug() << "svg icon";
       emit dataUpdated(m_icon.pixmap(config.size));
       return;
     }
-
-    qDebug() << "icon size" << *it;
 
     auto pix =
         m_icon.pixmap(config.size)

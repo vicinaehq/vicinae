@@ -81,7 +81,7 @@ struct ClipboardListSettings {
   QString query;
 };
 
-class ClipboardService : public QObject, public NonAssignable {
+class ClipboardService : public QObject, public NonCopyable {
   Q_OBJECT
 
   // prepared statements

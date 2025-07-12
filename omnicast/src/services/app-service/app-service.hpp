@@ -9,7 +9,7 @@
 #include <qsqlquery.h>
 #include <qtmetamacros.h>
 
-class AppService : public QObject, public NonAssignable {
+class AppService : public QObject, public NonCopyable {
   Q_OBJECT
 
 public:

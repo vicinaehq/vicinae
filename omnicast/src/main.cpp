@@ -201,6 +201,7 @@ int startDaemon() {
 
     // fileService->indexer()->setEntrypoints({{.root = "/home/aurelle/Downloads"}});
     fileService->indexer()->setEntrypoints({{.root = homeDir()}});
+    fileService->indexer()->start();
 
     registry->setFileService(std::move(fileService));
     registry->setUI(std::make_unique<UIController>());

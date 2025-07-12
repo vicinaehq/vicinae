@@ -50,7 +50,7 @@ signals:
   void loadingError();
 };
 
-class ImageFetcher : public NonAssignable {
+class ImageFetcher : public NonCopyable {
   QNetworkAccessManager *manager;
   QNetworkDiskCache *diskCache;
 

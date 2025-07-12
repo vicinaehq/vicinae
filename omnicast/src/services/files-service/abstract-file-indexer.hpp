@@ -52,8 +52,6 @@ public:
 public:
   virtual void start() = 0;
   virtual void setEntrypoints(const std::vector<Entrypoint> &entrypoints) = 0;
-  virtual std::vector<IndexerFileResult> query(std::string_view view,
-                                               const QueryParams &params = {}) const = 0;
   virtual IndexerAsyncQuery *queryAsync(std::string_view view, const QueryParams &params = {}) const = 0;
 
   virtual ~AbstractFileIndexer() = default;

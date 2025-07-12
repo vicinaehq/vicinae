@@ -80,3 +80,9 @@ std::vector<fs::path> homeRootDirectories() {
 
 std::filesystem::path downloadsFolder() { return homeDir() / "Downloads"; }
 std::filesystem::path documentsFolder() { return homeDir() / "Downloads"; }
+
+std::string getLastPathComponent(const std::filesystem::path &path) {
+  if (!path.has_filename() && path.has_parent_path()) { return path.parent_path().filename(); }
+
+  return path.filename();
+}

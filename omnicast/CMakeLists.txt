@@ -434,6 +434,7 @@ set(SRCS
 	src/services/files-service/file-service.cpp
 	src/services/files-service/file-indexer/file-indexer.hpp
 	src/services/files-service/file-indexer/file-indexer.cpp
+	src/services/files-service/file-indexer/filesystem-walker.cpp
 	src/services/files-service/file-indexer/relevancy-scorer.cpp
 
 
