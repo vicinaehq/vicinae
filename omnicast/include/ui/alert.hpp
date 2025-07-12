@@ -47,7 +47,7 @@ class AlertWidget : public DialogContentWidget {
     int borderRadius = 6;
     QPainter painter(this);
     QPainterPath path;
-    QPen pen(theme.colors.border, 1);
+    QPen pen(theme.colors.border, 2);
 
     painter.setRenderHint(QPainter::Antialiasing, true);
     path.addRoundedRect(rect(), borderRadius, borderRadius);

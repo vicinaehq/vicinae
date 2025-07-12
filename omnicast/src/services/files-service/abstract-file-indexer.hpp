@@ -22,6 +22,7 @@
 
 struct IndexerFileResult {
   std::filesystem::path path;
+  double rank;
 };
 
 struct IndexerAsyncQuery : public QObject {

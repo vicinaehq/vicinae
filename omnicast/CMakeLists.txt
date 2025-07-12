@@ -436,6 +436,10 @@ set(SRCS
 	src/services/files-service/file-indexer/file-indexer.cpp
 	src/services/files-service/file-indexer/filesystem-walker.cpp
 	src/services/files-service/file-indexer/relevancy-scorer.cpp
+	src/services/files-service/file-indexer/incremental-scanner.cpp
+	src/services/files-service/file-indexer/indexer-scanner.cpp
+	src/services/files-service/file-indexer/home-directory-watcher.cpp
+	src/services/files-service/file-indexer/file-indexer-db.cpp
 
 
 	src/utils/migration-manager/migration-manager.hpp

@@ -111,7 +111,7 @@ void FileSystemWalker::walk(const fs::path &root, const WalkCallback &callback) 
 
       auto path = entry.path();
 
-      if (m_ignoreHiddenFiles && path.string().starts_with('.')) continue;
+      if (m_ignoreHiddenFiles && isHiddenPath(path)) continue;
       if (std::ranges::contains(EXCLUDED_PATHS, path)) { continue; }
       if (std::ranges::contains(EXCLUDED_FILENAMES, path.filename())) { continue; }
       if (isIgnored(path)) { continue; }
