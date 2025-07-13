@@ -99,7 +99,7 @@ public:
 
   QString searchPlaceholderText() const { return ""; }
   void setSearchPlaceholderText(const QString &value) const {
-    m_uiController->setSearchPlaceholderText(value);
+    ServiceRegistry::instance()->UI()->setSearchPlaceholderText(value);
   }
 
   /**
@@ -116,7 +116,7 @@ public:
   /**
    * Set the search text for the current view, if applicable
    */
-  void setSearchText(const QString &value) { m_uiController->setSearchText(value); }
+  void setSearchText(const QString &value) { ServiceRegistry::instance()->UI()->setSearchText(value); }
 
   virtual ActionPanelV2Widget *actionPanel() const { return nullptr; }
 
@@ -146,8 +146,6 @@ public:
   void setNavigation(const QString &title, const OmniIconUrl &icon) {
     m_uiController->setNavigation(title, icon);
   }
-
-  void setSearchVisiblity(bool value) { m_uiController->setSearchVisiblity(value); }
 
   void setLoading(bool value) { m_uiController->setLoading(value); }
 

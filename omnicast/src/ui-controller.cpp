@@ -1,8 +1,11 @@
 #include "base-view.hpp"
+#include "common.hpp"
+#include "extension/extension-command.hpp"
 #include <qevent.h>
 #include <qlogging.h>
 #include <qnamespace.h>
 #include "ui/ui-controller.hpp"
+#include "extension/missing-extension-preference-view.hpp"
 
 void UIController::handleTextEdited(const QString &text) {
   if (auto view = topView()) {
@@ -55,6 +58,48 @@ void UIController::replaceView(BaseView *previous, BaseView *next) {
   emit replaceViewRequested(previous, next);
 }
 
+void UIController::launchCommand(const QString &id, const LaunchProps &opts) {
+  auto commandDb = ServiceRegistry::instance()->commandDb();
+
+  if (auto command = commandDb->findCommand(id)) { launchCommand(command->command, opts); }
+}
+
+void UIController::launchCommand(const std::shared_ptr<AbstractCmd> &cmd, const LaunchProps &opts) {
+  auto itemId = QString("extension.%1").arg(cmd->uniqueId());
+  auto manager = ServiceRegistry::instance()->rootItemManager();
+  auto preferences = manager->getMergedItemPreferences(itemId);
+  auto preferenceValues = manager->getPreferenceValues(itemId);
+
+  for (const auto &preference : preferences) {
+    if (preference.required() && !preferenceValues.contains(preference.name()) &&
+        preference.defaultValue().isUndefined()) {
+      if (cmd->type() == CommandType::CommandTypeExtension) {
+        auto extensionCommand = std::static_pointer_cast<ExtensionCommand>(cmd);
+
+        pushView(new MissingExtensionPreferenceView(extensionCommand, preferences, preferenceValues),
+                 {.navigation = NavigationStatus{.title = cmd->name(), .iconUrl = cmd->iconUrl()}});
+        return;
+      }
+
+      qDebug() << "MISSING PREFERENCE" << preference.title();
+    }
+  }
+
+  // TODO: unloadHangingCommand();
+
+  auto ctx = cmd->createContext(cmd);
+
+  if (!ctx) { return; }
+
+  if (cmd->isNoView() && cmd->type() == CommandType::CommandTypeBuiltin) {
+    qCritical() << "Running no view command";
+    ctx->load(opts);
+  } else {
+    m_commandStack.push_back({.command = std::unique_ptr<CommandContext>(ctx)});
+    ctx->load(opts);
+  }
+}
+
 void UIController::pushView(BaseView *view, const PushViewOptions &opts) {
   qCritical() << "push view";
 
@@ -71,7 +116,14 @@ void UIController::pushView(BaseView *view, const PushViewOptions &opts) {
       accessory->hide();
     }
 
+    state.navigation.title = m_statusBar->navigationTitle();
+    state.navigation.icon = m_statusBar->navigationIcon();
+
     m_topBar->destroyCompleter();
+
+    view->deactivate();
+    view->hide();
+    view->clearFocus();
   }
 
   ViewState state;
@@ -87,7 +139,29 @@ void UIController::pushView(BaseView *view, const PushViewOptions &opts) {
 
   m_topBar->setBackButtonVisiblity(m_stateStack.size() > 1);
   applyViewState(m_stateStack.back());
-  emit pushViewRequested(view, opts);
+
+  if (m_commandStack.empty()) {
+    qDebug() << "AppWindow::pushView called with empty command stack";
+    return;
+  }
+
+  auto &currentCommand = m_commandStack.at(m_commandStack.size() - 1);
+
+  currentCommand.viewStack.push(state);
+
+  if (auto navigation = opts.navigation) {
+    qDebug() << "set navigation";
+    m_statusBar->setNavigation(navigation->title, navigation->iconUrl);
+  }
+
+  emit currentViewChanged(view);
+  emit viewStackSizeChanged(m_stateStack.size());
+
+  view->show();
+  view->setFocus();
+  view->createInitialize();
+  view->onActivate();
+
   if (state.supportsSearch) { m_topBar->input->setFocus(); }
 }
 
@@ -152,23 +226,46 @@ void UIController::popView() {
   if (auto view = topView()) {
     auto &state = m_stateStack.back();
 
+    view->deactivate();
+    view->deleteLater();
+
     if (auto accessory = state.searchAccessory) { m_topBar->clearAccessoryWidget(); }
   }
 
-  if (!m_stateStack.empty()) {
-    qCritical() << "Pop view";
-    m_stateStack.pop_back();
+  if (m_stateStack.size() == 1) {
+    qDebug() << "can't pop base view";
+    return;
+  }
+
+  m_stateStack.pop_back();
+  auto &state = m_stateStack.back();
+
+  applyViewState(state);
+
+  auto &activeCommand = m_commandStack.at(m_commandStack.size() - 1);
+
+  qDebug() << "pop requested";
+
+  if (activeCommand.viewStack.empty()) {
+    qDebug() << "active command view stack empty";
+    return;
   }
 
   m_topBar->setBackButtonVisiblity(m_stateStack.size() > 1);
 
-  if (!m_stateStack.empty()) {
-    auto &state = m_stateStack.back();
+  state.sender->activate();
+  emit currentViewChanged(state.sender);
+  emit viewStackSizeChanged(m_stateStack.size());
 
-    applyViewState(state);
+  if (activeCommand.viewStack.size() == 1) {
+    qCritical() << "UNLOAD COMMAND";
+    activeCommand.command->unload();
+    activeCommand.command->deleteLater();
+    m_commandStack.pop_back();
+    qDebug() << "popping cmd stack now" << m_commandStack.size();
+  } else {
+    activeCommand.viewStack.pop();
   }
-
-  emit popViewRequested();
 }
 
 void UIController::handleCompleterArgumentsChanged(const std::vector<std::pair<QString, QString>> &values) {
@@ -179,24 +276,17 @@ void UIController::handleCompleterArgumentsChanged(const std::vector<std::pair<Q
 
 void UIController::applyViewState(const ViewState &state) {
   qCritical() << "restore navigation" << state.navigation.title;
-  m_statusBar->setNavigationTitle(state.navigation.title);
-  m_statusBar->setNavigationIcon(state.navigation.icon);
 
-  m_topBar->input->setText(state.text);
-  m_topBar->input->setPlaceholderText(state.placeholderText);
-  m_topBar->input->setVisible(state.supportsSearch);
-  m_topBar->setVisible(state.needsTopBar);
-  m_topBar->setLoading(state.isLoading);
-  m_statusBar->setVisible(state.needsStatusBar);
+  setNavigationTitle(state.navigation.title);
+  setNavigationIcon(state.navigation.icon);
+  setSearchText(state.text);
+  setSearchPlaceholderText(state.placeholderText);
 
   if (auto data = state.completer.data) {
     m_topBar->activateCompleter(*data, state.completer.values);
   } else {
     m_topBar->destroyCompleter();
   }
-
-  m_topBar->input->setFocus();
-  m_topBar->input->selectAll();
 
   if (auto accessory = state.searchAccessory) {
     qDebug() << "set accessory" << accessory;
@@ -210,15 +300,13 @@ void UIController::applyViewState(const ViewState &state) {
   if (auto panel = state.actionPanel) {
     connect(panel, &ActionPanelV2Widget::openChanged, this,
             [this](bool value) { m_statusBar->setActionButtonHighlight(value); });
-    connect(panel, &ActionPanelV2Widget::actionsChanged, this, [this, panel]() { setActionPanel(panel); });
+    connect(panel, &ActionPanelV2Widget::actionsChanged, this,
+            [this, panel]() { emit actionPanelStateChanged(panel); });
     connect(panel, &ActionPanelV2Widget::actionActivated, this, &UIController::executeAction);
-
-    setActionPanel(panel);
+    emit actionPanelStateChanged(panel);
   } else {
     clearActionPanel();
   }
-
-  qDebug() << "action set";
 }
 
 void UIController::setActionPanelWidget(BaseView *sender, ActionPanelV2Widget *panel) {

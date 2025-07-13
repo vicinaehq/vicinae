@@ -1,6 +1,7 @@
 #pragma once
 #include "action-panel/action-panel.hpp"
 #include "argument.hpp"
+#include "command.hpp"
 #include "common.hpp"
 #include "omni-icon.hpp"
 #include "ui/action-pannel/action.hpp"
@@ -45,6 +46,13 @@ class UIController : public QObject {
     bool needsTopBar = true;
     bool needsStatusBar = true;
   };
+
+  struct CommandSnapshot {
+    QStack<ViewState> viewStack;
+    std::unique_ptr<CommandContext> command;
+  };
+
+  std::vector<CommandSnapshot> m_commandStack;
 
   KeyboardShortcutModel defaultActionPanelShortcut() { return DEFAULT_ACTION_PANEL_SHORTCUT; }
 
@@ -118,8 +126,10 @@ public:
 
   void replaceView(BaseView *previous, BaseView *next);
   void replaceCurrentView(BaseView *next) { replaceView(topView(), next); }
-  void launchCommand(const std::shared_ptr<AbstractCmd> &cmd) const { emit launchCommandRequested(cmd); }
-  void launchCommand(const QString &cmdId) const { emit launchCommandRequestedById(cmdId); }
+
+  void launchCommand(const QString &cmdId, const LaunchProps &opts = {});
+  void launchCommand(const std::shared_ptr<AbstractCmd> &cmd, const LaunchProps &opts = {});
+
   void setToast(const QString &title, ToastPriority priority = ToastPriority::Success) const {
     emit showToastRequested(title, priority);
   }
@@ -133,19 +143,27 @@ public:
     return view;
   }
 
-  void setNavigationTitle(const QString &title) { m_statusBar->setNavigationTitle(title); }
-  void setNavigation(const QString &title, const OmniIconUrl &icon) { setNavigation(topView(), title, icon); }
-  void setSearchText(const QString &text) { setSearchText(topView(), text); }
-  void setSearchPlaceholderText(const QString &placeholderText) {
-    setSearchPlaceholderText(topView(), placeholderText);
+  QString navigationTitle() const { return m_stateStack.back().navigation.title; }
+  OmniIconUrl navigationIcon() const { return m_stateStack.back().navigation.icon; }
+
+  void setNavigationTitle(const QString &title) {
+    m_stateStack.back().navigation.title = title;
+    emit navigationTitleChanged(title);
   }
 
-  void setSearchText(BaseView *sender, const QString &text) {
-    if (sender == topView()) {
-      m_topBar->input->setText(text);
-      emit m_topBar->input->textEdited(text);
-    }
-    updateViewState(sender, [&](ViewState &state) { state.text = text; });
+  void setNavigationIcon(const OmniIconUrl &icon) {
+    m_stateStack.back().navigation.icon = icon;
+    emit navigationIconChanged(icon);
+  }
+
+  void setSearchText(const QString &text) {
+    m_stateStack.back().text = text;
+    emit searchTextChanged(text);
+  }
+
+  void setSearchPlaceholderText(const QString &placeholderText) {
+    m_stateStack.back().placeholderText = placeholderText;
+    emit searchTextPlaceholderChanged(placeholderText);
   }
 
   QString searchText(BaseView *sender) const {
@@ -153,12 +171,7 @@ public:
     return {};
   }
 
-  QString searchText() const { return m_topBar->input->text(); }
-
-  void setSearchPlaceholderText(BaseView *sender, const QString &placeholderText) {
-    if (sender == topView()) { m_topBar->input->setPlaceholderText(placeholderText); }
-    updateViewState(sender, [&](ViewState &state) { state.placeholderText = placeholderText; });
-  }
+  QString searchText() const { return m_stateStack.back().text; }
 
   void setNavigation(BaseView *sender, const QString &title, const OmniIconUrl &icon) {
     if (sender == topView()) { m_statusBar->setNavigation(title, icon); }
@@ -201,11 +214,6 @@ public:
 
   void handleTextEdited(const QString &text);
 
-  void setLoading(BaseView *sender, bool value) {
-    updateViewState(sender, [&](ViewState &state) { state.isLoading = value; });
-    if (sender == topView()) { m_topBar->setLoading(value); }
-  }
-
   void setAlert(AlertWidget *alert) { emit alertRequested(alert); }
 
   void setTopBar(TopBar *bar) {
@@ -216,44 +224,39 @@ public:
     connect(m_topBar, &TopBar::argumentsChanged, this, &UIController::handleCompleterArgumentsChanged);
   }
 
-  void setLoading(bool loading) { m_topBar->setLoading(loading); }
-
-  void setSearchAccessory(BaseView *view, QWidget *accessory) {
-    updateViewState(view, [&](ViewState &state) { state.searchAccessory = accessory; });
-    if (topView() == view) {
-      if (accessory) {
-        qDebug() << "set accessory" << accessory;
-        m_topBar->setAccessoryWidget(accessory);
-      } else {
-        m_topBar->clearAccessoryWidget();
-      }
-    }
+  void setLoading(bool loading) {
+    m_stateStack.back().isLoading = loading;
+    emit loadingChanged(loading);
   }
 
-  void setSearchVisibility(BaseView *view, bool value) {
-    updateViewState(view, [&](ViewState &state) { state.supportsSearch = value; });
-    if (topView() == view) {
-      m_topBar->input->setVisible(value);
-      m_topBar->input->setFocus();
-    }
+  void setSearchAccessory(QWidget *accessory) {
+    m_stateStack.back().searchAccessory = accessory;
+    emit searchAccessoryChanged(accessory);
   }
-
-  void setSearchVisibility(bool value) { setSearchVisibility(topView(), value); }
 
   void setActionPanelWidget(BaseView *sender, ActionPanelV2Widget *panel);
   void openSettings() const { emit openSettingsRequested(); }
+  void updateCurrentView() { emit currentViewChanged(topView()); }
 
 signals:
-  void pushViewRequested(BaseView *view, const PushViewOptions &opts) const;
+  void currentViewChanged(BaseView *view) const;
   void openSettingsRequested() const;
   void popViewRequested() const;
-  void popToRootRequested() const;
   void closeWindowRequested() const;
   void launchCommandRequested(const std::shared_ptr<AbstractCmd> &cmd) const;
   void launchCommandRequestedById(const QString &id) const;
   void showHUDRequested(const QString &title) const;
   void showToastRequested(const QString &title, ToastPriority priority) const;
   void replaceViewRequested(BaseView *previous, BaseView *next) const;
+
+  void searchTextChanged(const QString &text) const;
+  void searchTextPlaceholderChanged(const QString &text) const;
+  void navigationTitleChanged(const QString &text) const;
+  void navigationIconChanged(const OmniIconUrl &icon) const;
+  void viewStackSizeChanged(size_t size) const;
+  void loadingChanged(bool value) const;
+  void searchAccessoryChanged(QWidget *widget) const;
+  void actionPanelStateChanged(ActionPanelV2Widget *widget) const;
 
   void popViewCompleted() const;
   void alertRequested(AlertWidget *alert) const;
@@ -269,9 +272,10 @@ class UIViewController {
   UIController &m_controller;
 
 public:
-  void setSearchText(const QString &text) { m_controller.setSearchText(&m_view, text); }
-  void setSearchPlaceholderText(const QString &text) { m_controller.setSearchPlaceholderText(&m_view, text); }
-  QString searchText() const { return m_controller.searchText(&m_view); }
+  // void setSearchText(const QString &text) { m_controller.setSearchText(&m_view, text); }
+  // void setSearchPlaceholderText(const QString &text) { m_controller.setSearchPlaceholderText(&m_view,
+  // text); }
+  QString searchText() const { return m_controller.searchText(); }
   void setNavigation(const QString &title, const OmniIconUrl &url) {
     m_controller.setNavigation(&m_view, title, url);
   }
@@ -279,9 +283,8 @@ public:
     m_controller.activateCompleter(args, url);
   }
   void destroyCompleter() { m_controller.destroyCompleter(); }
-  void setSearchAccessory(QWidget *widget) { m_controller.setSearchAccessory(&m_view, widget); }
-  void setLoading(bool value) { m_controller.setLoading(&m_view, value); }
-  void setSearchVisiblity(bool value) { m_controller.setSearchVisibility(&m_view, value); }
+  void setSearchAccessory(QWidget *widget) { m_controller.setSearchAccessory(widget); }
+  void setLoading(bool value) { m_controller.setLoading(value); }
   void setActionPanelWidget(ActionPanelV2Widget *widget) {
     m_controller.setActionPanelWidget(&m_view, widget);
   }

@@ -339,13 +339,6 @@ class ExtensionCommandRuntime : public CommandContext {
     }
   }
 
-  void replaceView(BaseView *previous, BaseView *next) {
-    auto ui = ServiceRegistry::instance()->UI();
-
-    ui->replaceView(previous, next);
-    ui->setNavigation(m_command->name(), m_command->iconUrl());
-  }
-
   void handleRender(const QJsonArray &views) {
     if (m_viewStack.empty()) { m_timer.time("Got Initial render"); }
 

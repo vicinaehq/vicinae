@@ -176,13 +176,15 @@ class ManageThemesView : public ListView {
     });
   }
 
-  void initialize() override { textChanged(""); }
+  void initialize() override {
+    textChanged("");
+    setSearchPlaceholderText("Manage themes...");
+  }
 
   void textChanged(const QString &s) override { generateList(s); }
 
 public:
   ManageThemesView() {
-    setSearchPlaceholderText("Manage themes...");
     ThemeService::instance().scanThemeDirectories();
     /*
 connect(&ThemeService::instance(), &ThemeService::themeChanged, this,

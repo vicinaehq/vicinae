@@ -244,6 +244,7 @@ int startDaemon() {
 
   app.createWinId();
 
+  /*
 #ifdef WAYLAND_LAYER_SHELL
   qDebug() << "Initializing layer shell surface";
   if (auto lshell = LayerShellQt::Window::get(app.windowHandle())) {
@@ -256,6 +257,7 @@ int startDaemon() {
     qCritical() << "Unable apply layer shell rules to main window: LayerShellQt::Window::get() returned null";
   }
 #endif
+*/
 
   app.setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
   app.show();

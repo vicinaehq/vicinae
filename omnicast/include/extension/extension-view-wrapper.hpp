@@ -2,6 +2,7 @@
 #include "extension/extension-grid-component.hpp"
 #include "extension/extension-list-component.hpp"
 #include "extension/extension-view.hpp"
+#include "service-registry.hpp"
 #include <qtmetamacros.h>
 #include <sys/un.h>
 
@@ -42,7 +43,7 @@ class ExtensionViewWrapper : public BaseView {
     if (auto view = m_current) view->textChanged(text);
   }
 
-  bool supportsSearch() const override { return false; }
+  bool supportsSearch() const override { return m_current ? m_current->supportsSearch() : false; }
 
   ActionPanelV2Widget *actionPanel() const override { return m_current ? m_current->actionPanel() : nullptr; }
 
@@ -66,11 +67,12 @@ public:
 
       m_current = view;
       setActionPanelWidget(m_current->actionPanel());
-      setSearchVisiblity(m_current->supportsSearch());
       setSearchAccessory(m_current->searchBarAccessory());
       m_current->initialize();
       m_current->activate();
       m_index = model.index();
+
+      ServiceRegistry::instance()->UI()->updateCurrentView();
 
       auto text = searchText();
 
