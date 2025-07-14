@@ -1,0 +1,19 @@
+{
+	"version": "1.0.0",
+	"appearance": "dark",
+	"icon": "../rosepine.svg",
+	"name": "Rose Pine",
+	"description": "A soho vibes theme with warm, muted tones",
+	"palette": {
+		"background": "#191724",
+		"foreground": "#E0DEF4",
+		"blue": "#9CCFD8",
+		"green": "#31748F",
+		"magenta": "#C4A7E7",
+		"orange": "#F6C177",
+		"purple": "#C4A7E7",
+		"red": "#EB6F92",
+		"yellow": "#F6C177",
+		"cyan": "#9CCFD8"
+	}
+}

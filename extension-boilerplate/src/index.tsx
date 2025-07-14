@@ -210,11 +210,9 @@ const FruitList = () => {
 		console.log({ preferences: getPreferenceValues() });
 	}, []);
 
-	/*
 	if (count % 2) {
 		return <FruitGrid />;
 	}
-	*/
 
 	return (
 		<List 

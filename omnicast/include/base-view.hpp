@@ -65,7 +65,7 @@ public:
   virtual void textChanged(const QString &text) {}
 
   virtual OmniIconUrl navigationIcon() const { return BuiltinOmniIconUrl("question-mark-circle"); }
-  virtual QString navigationTitle() const { return ""; }
+  virtual QString navigationTitle() const { return m_uiController->navigationTitle(); }
 
   void setSearchAccessory(QWidget *accessory) { m_uiController->setSearchAccessory(accessory); }
 
@@ -93,20 +93,27 @@ public:
     m_uiController->activateCompleter(args, icon);
   }
 
+  void setUIController(std::unique_ptr<UIViewController> controller) {
+    m_uiController = std::move(controller);
+  }
+
   void destroyCompleter() { m_uiController->destroyCompleter(); }
 
   virtual QWidget *searchBarAccessory() const { return nullptr; }
 
-  QString searchPlaceholderText() const { return ""; }
+  QString searchPlaceholderText() const { return m_uiController->searchPlaceholderText(); }
+
   void setSearchPlaceholderText(const QString &value) const {
-    ServiceRegistry::instance()->UI()->setSearchPlaceholderText(value);
+    m_uiController->setSearchPlaceholderText(value);
   }
 
-  /**
-   * Clear the content of the search bar. If this is not applicable to the view
-   * (for instance, a form view doesn't have a search field) this method should not be overriden.
-   */
-  virtual void clearSearchBar() { qWarning() << "clearSearchBar() is not implemented for this view"; }
+  void setSearchVisiblity(bool visible) { m_uiController->setSearchVisiblity(visible); }
+
+  void setTopBarVisiblity(bool visible) { m_uiController->setTopBarVisiblity(visible); }
+
+  void setStatusBarVisiblity(bool visible) { m_uiController->setStatusBarVisibility(visible); }
+
+  virtual void clearSearchBar() { m_uiController->setSearchText(""); }
 
   /**
    * The current search text for this view. If not applicable, do not implement.
@@ -116,14 +123,9 @@ public:
   /**
    * Set the search text for the current view, if applicable
    */
-  void setSearchText(const QString &value) { ServiceRegistry::instance()->UI()->setSearchText(value); }
+  void setSearchText(const QString &value) { m_uiController->setSearchText(value); }
 
   virtual ActionPanelV2Widget *actionPanel() const { return nullptr; }
-
-  /**
-   * Set the navigation title, if applicable.
-   */
-  virtual void setNavigationTitle(const QString &title) {}
 
   /**
    * Allows the view to filter input from the main search bar before the input itself
@@ -141,11 +143,13 @@ public:
   /**
    * Set the navigation icon, if applicable
    */
-  virtual void setNavigationIcon(const OmniIconUrl &icon) {}
+  virtual void setNavigationIcon(const OmniIconUrl &icon) { m_uiController->setNavigationIcon(icon); }
 
   void setNavigation(const QString &title, const OmniIconUrl &icon) {
     m_uiController->setNavigation(title, icon);
   }
+
+  void setNavigationTitle(const QString &title) { m_uiController->setNavigationTitle(title); }
 
   void setLoading(bool value) { m_uiController->setLoading(value); }
 

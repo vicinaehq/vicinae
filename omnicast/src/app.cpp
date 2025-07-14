@@ -1,10 +1,12 @@
 #include "app.hpp"
 #include "action-panel/action-panel.hpp"
+#include "argument.hpp"
 #include "base-view.hpp"
 #include "command-builder.hpp"
 #include "command-database.hpp"
 #include "command-server.hpp"
 #include <QGraphicsBlurEffect>
+#include "omni-icon.hpp"
 #include "services/clipboard/clipboard-server-factory.hpp"
 #include "common.hpp"
 #include "services/config/config-service.hpp"
@@ -16,6 +18,7 @@
 #include "ui/keyboard.hpp"
 #include "ui/toast.hpp"
 #include "ui/top_bar.hpp"
+#include "ui/ui-controller.hpp"
 #include "wm/window-manager-factory.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "image-fetcher.hpp"
@@ -40,6 +43,24 @@
 #include <qpixmapcache.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
+
+bool AppWindow::eventFilter(QObject *watched, QEvent *event) {
+  auto ui = ServiceRegistry::instance()->UI();
+
+  if (watched == m_topBar->input && event->type() == QEvent::KeyPress) {
+    auto keyEvent = static_cast<QKeyEvent *>(event);
+    if (auto view = ui->topView()) {
+      if (view->inputFilter(keyEvent)) { return true; }
+    }
+
+    if (keyEvent->key() == Qt::Key_Escape) {
+      ui->popView();
+      return true;
+    }
+  }
+
+  return QMainWindow::eventFilter(watched, event);
+}
 
 bool AppWindow::event(QEvent *event) {
   auto ui = ServiceRegistry::instance()->UI();
@@ -209,6 +230,8 @@ void AppWindow::applyActionPanelState(ActionPanelV2Widget *panel) {
   KeyboardShortcutModel DEFAULT_ACTION_PANEL_SHORTCUT = {.key = "B", .modifiers = {"ctrl"}};
   m_statusBar->setActionButton("Actions", KeyboardShortcutModel{.key = "return"});
 
+  qDebug() << "action panel update, actions" << panel->actions().size();
+
   auto actions = panel->actions();
   auto primaryAction = panel->primaryAction();
 
@@ -222,6 +245,60 @@ void AppWindow::applyActionPanelState(ActionPanelV2Widget *panel) {
   } else {
     m_statusBar->setActionButton("Actions", KeyboardShortcutModel{.key = "return"});
   }
+}
+
+void AppWindow::executeAction(AbstractAction *action) {
+  auto ui = ServiceRegistry::instance()->UI();
+
+  if (action->isPrimary()) {
+    if (m_topBar->m_completer->isVisible()) {
+      for (int i = 0; i != m_topBar->m_completer->m_args.size(); ++i) {
+        auto &arg = m_topBar->m_completer->m_args.at(i);
+        auto input = m_topBar->m_completer->m_inputs.at(i);
+
+        qCritical() << "required" << arg.required << input->text();
+
+        if (arg.required && input->text().isEmpty()) {
+          input->setError("Required");
+          input->setFocus();
+          if (auto view = ui->topView()) {
+            if (auto panel = view->actionPanel()) { panel->close(); }
+          }
+          return;
+        }
+      }
+    }
+  }
+
+  if (auto view = ui->topView()) { view->executeAction(action); }
+}
+
+void AppWindow::handleTextEdited(const QString &text) {
+  auto ui = ServiceRegistry::instance()->UI();
+
+  ui->setSearchText(text);
+}
+
+void AppWindow::handleTextPop() {
+  auto ui = ServiceRegistry::instance()->UI();
+
+  if (ui->canPop()) { ui->popView(); }
+}
+
+void AppWindow::handleCompleterArgumentsChanged(const std::vector<std::pair<QString, QString>> &args) {
+  // TODO: implement arguments changed
+}
+
+void AppWindow::handleActionButtonClick() {
+  auto ui = ServiceRegistry::instance()->UI();
+
+  if (auto panel = ui->topView()->actionPanel()) { panel->show(); }
+}
+
+void AppWindow::handleCurrentActionButtonClick() {
+  auto ui = ServiceRegistry::instance()->UI();
+
+  ui->executeDefaultAction();
 }
 
 AppWindow::AppWindow(QWidget *parent) : QMainWindow(parent) {
@@ -241,6 +318,7 @@ AppWindow::AppWindow(QWidget *parent) : QMainWindow(parent) {
   _commandServer->setHandler(this);
 
   ImageFetcher::instance();
+  m_topBar->input->installEventFilter(this);
 
   connect(ServiceRegistry::instance()->config(), &ConfigService::configChanged, this,
           [](const ConfigService::Value &next, const ConfigService::Value &prev) {
@@ -277,9 +355,14 @@ AppWindow::AppWindow(QWidget *parent) : QMainWindow(parent) {
     m_topBar->input->setVisible(view->supportsSearch());
     m_topBar->setVisible(view->needsGlobalTopBar());
     m_statusBar->setVisible(view->needsGlobalStatusBar());
-    m_topBar->input->setFocus();
-    m_topBar->input->selectAll();
+
+    QTimer::singleShot(0, this, [this]() {
+      m_topBar->input->setFocus();
+      m_topBar->input->selectAll();
+    });
   });
+
+  m_topBar->input->setFocus();
 
   connect(ui, &UIController::closeWindowRequested, this, [this]() { closeWindow(false); });
   connect(ui, &UIController::openSettingsRequested, this, [this]() { settings->show(); });
@@ -289,19 +372,33 @@ AppWindow::AppWindow(QWidget *parent) : QMainWindow(parent) {
   connect(ui, &UIController::navigationTitleChanged, m_statusBar, &StatusBar::setNavigationTitle);
   connect(ui, &UIController::navigationIconChanged, m_statusBar, &StatusBar::setNavigationIcon);
   connect(ui, &UIController::loadingChanged, m_topBar, &TopBar::setLoading);
+  connect(ui, &UIController::actionExecutionRequested, this, &AppWindow::executeAction);
+
+  connect(ui, &UIController::topBarVisiblityChanged, m_topBar, &TopBar::setVisible);
+  connect(ui, &UIController::searchVisiblityChanged, m_topBar->input, &SearchBar::setVisible);
+  connect(ui, &UIController::statusBarVisiblityChanged, m_statusBar, &StatusBar::setVisible);
+
   connect(ui, &UIController::searchAccessoryChanged, this, [this](QWidget *widget) {
     if (widget)
       m_topBar->setAccessoryWidget(widget);
     else
       m_topBar->clearAccessoryWidget();
   });
+  connect(ui, &UIController::completerDestroyed, this, [this]() { m_topBar->destroyCompleter(); });
+  connect(ui, &UIController::completerActivated, this,
+          [this](const ArgumentList &args, const OmniIconUrl &icon) {
+            CompleterData completer{
+                .iconUrl = icon,
+                .arguments = args,
+            };
+
+            m_topBar->activateCompleter(completer);
+          });
 
   connect(ui, &UIController::actionPanelStateChanged, this, &AppWindow::applyActionPanelState);
 
   connect(ui, &UIController::viewStackSizeChanged, this,
           [this](size_t size) { m_topBar->setBackButtonVisiblity(size > 1); });
-
-  connect(m_topBar->input, &SearchBar::textEdited, ui, &UIController::setSearchText);
 
   auto toast = ServiceRegistry::instance()->toastService();
 
@@ -316,6 +413,9 @@ AppWindow::AppWindow(QWidget *parent) : QMainWindow(parent) {
     confirmAlert(widget);
   });
 
+  connect(ui, &UIController::actionPanelOpenChanged, this,
+          [this](bool value) { m_statusBar->setActionButtonHighlight(value); });
+
   connect(toast, &ToastService::toastHidden, this, [this](const Toast *toast) { m_statusBar->clearToast(); });
 
   m_statusBar->setFixedHeight(Omnicast::STATUS_BAR_HEIGHT);
@@ -323,8 +423,14 @@ AppWindow::AppWindow(QWidget *parent) : QMainWindow(parent) {
   m_statusBar->setCurrentActionButtonVisibility(false);
   m_topBar->setFixedHeight(Omnicast::TOP_BAR_HEIGHT);
 
-  ui->setStatusBar(m_statusBar);
-  ui->setTopBar(m_topBar);
+  connect(m_statusBar, &StatusBar::actionButtonClicked, this, &AppWindow::handleActionButtonClick);
+  connect(m_statusBar, &StatusBar::currentActionButtonClicked, this,
+          &AppWindow::handleCurrentActionButtonClick);
+
+  connect(m_topBar->input, &SearchBar::textEdited, this, &AppWindow::handleTextEdited);
+  connect(m_topBar->input, &SearchBar::pop, this, &AppWindow::handleTextPop);
+  connect(m_topBar, &TopBar::argumentsChanged, this, &AppWindow::handleCompleterArgumentsChanged);
+
   m_layout->setSpacing(0);
   m_layout->setContentsMargins(0, 0, 0, 0);
   m_layout->addWidget(m_topBar);

@@ -200,8 +200,9 @@ public:
 
   void textChanged(const QString &text) override { render(text); }
 
+  void initialize() override { setSearchPlaceholderText("Browse fonts to preview..."); }
+
   BrowseFontsView() {
-    setSearchPlaceholderText("Browse fonts to preview...");
     auto watcher = QSharedPointer<QFutureWatcher<std::unique_ptr<Trie<QString>>>>::create();
 
     watcher->setFuture(buildTrieAsync());

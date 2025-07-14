@@ -156,7 +156,7 @@ signals:
 };
 
 class ExtensionListComponent : public ExtensionSimpleView {
-  // SelectorInput *m_selector = new SelectorInput(this);
+  SelectorInput *m_selector = new SelectorInput(this);
   SplitDetailWidget *m_split = new SplitDetailWidget(this);
   ExtensionListDetail *m_detail = new ExtensionListDetail;
   ListModel _model;
@@ -171,10 +171,7 @@ class ExtensionListComponent : public ExtensionSimpleView {
   void handleDropdownSelectionChanged(const SelectorInput::AbstractItem &item);
   void handleDropdownSearchChanged(const QString &text);
 
-  QWidget *searchBarAccessory() const override {
-    return nullptr;
-    // return m_selector;
-  }
+  QWidget *searchBarAccessory() const override { return m_selector; }
 
   bool inputFilter(QKeyEvent *event) override {
     switch (event->key()) {

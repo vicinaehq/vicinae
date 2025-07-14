@@ -177,7 +177,7 @@ public:
 
 class HttpImageLoader : public AbstractImageLoader {
   std::unique_ptr<IODeviceImageLoader> m_loader;
-  QNetworkReply *m_reply;
+  QNetworkReply *m_reply = nullptr;
   QUrl m_url;
 
   void handleReplyFinished() {}

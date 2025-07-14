@@ -3,6 +3,8 @@
 #include "extension/extension-list-component.hpp"
 #include "extension/extension-view.hpp"
 #include "service-registry.hpp"
+#include "ui/ui-controller.hpp"
+#include <qlogging.h>
 #include <qtmetamacros.h>
 #include <sys/un.h>
 
@@ -25,7 +27,7 @@ class ExtensionViewWrapper : public BaseView {
     if (m_current) m_current->deactivate();
   }
   void onActivate() override {
-    if (m_current) m_current->activate();
+    if (m_current) { m_current->activate(); }
   }
 
   void executeAction(AbstractAction *action) override {
@@ -49,6 +51,7 @@ class ExtensionViewWrapper : public BaseView {
 
 public:
   void render(const RenderModel &model) {
+    auto ui = ServiceRegistry::instance()->UI();
     if (m_index != model.index()) {
       auto view = std::visit(ViewVisitor(), model);
 
@@ -66,13 +69,25 @@ public:
       m_layout->setCurrentWidget(view);
 
       m_current = view;
+      m_current->setUIController(std::make_unique<UIViewController>(ui, this));
+
+      setTopBarVisiblity(m_current->needsGlobalTopBar());
+      setSearchVisiblity(m_current->supportsSearch());
+      setStatusBarVisiblity(m_current->needsGlobalStatusBar());
+      setSearchPlaceholderText("");
+
+      if (isVisible()) {
+        qCritical() << "set action panel widget and co";
+        setSearchAccessory(m_current->searchBarAccessory());
+      } else {
+        qCritical() << "not visible";
+      }
       setActionPanelWidget(m_current->actionPanel());
-      setSearchAccessory(m_current->searchBarAccessory());
+
       m_current->initialize();
       m_current->activate();
-      m_index = model.index();
 
-      ServiceRegistry::instance()->UI()->updateCurrentView();
+      m_index = model.index();
 
       auto text = searchText();
 

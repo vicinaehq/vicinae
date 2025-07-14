@@ -7,7 +7,6 @@
 #include <qlogging.h>
 #include <qnamespace.h>
 #include <ranges>
-#include "service-registry.hpp"
 #include "ui/form/app-picker-input.hpp"
 #include "ui/form/selector-input.hpp"
 #include "ui/omni-list.hpp"
@@ -29,7 +28,7 @@ void ExtensionListComponent::renderDropdown(const DropdownModel &dropdown) {
       selectionPolicy = OmniList::SelectFirst;
     }
 
-    // m_selector->resetModel();
+    m_selector->resetModel();
 
     std::vector<std::shared_ptr<SelectorInput::AbstractItem>> freeSectionItems;
 
@@ -47,37 +46,34 @@ void ExtensionListComponent::renderDropdown(const DropdownModel &dropdown) {
         };
         auto items = section->items | std::views::transform(mapItem) | std::ranges::to<std::vector>();
 
-        // m_selector->addSection(section->title, items);
+        m_selector->addSection(section->title, items);
       }
     }
 
     if (!freeSectionItems.empty()) {
-      // m_selector->addSection("", freeSectionItems);
+      m_selector->addSection("", freeSectionItems);
       freeSectionItems.clear();
     }
 
-    // m_selector->updateModel();
+    m_selector->updateModel();
   }
 
-  // m_selector->setEnableDefaultFilter(dropdown.filtering.enabled);
+  m_selector->setEnableDefaultFilter(dropdown.filtering.enabled);
 
-  /*
   if (auto controlledValue = dropdown.value) {
-    //m_selector->setValue(*controlledValue);
+    m_selector->setValue(*controlledValue);
   } else if (!m_selector->value()) {
     if (dropdown.defaultValue) {
-      //m_selector->setValue(*dropdown.defaultValue);
+      m_selector->setValue(*dropdown.defaultValue);
     } else if (auto item = m_selector->list()->firstSelectableItem()) {
-      //m_selector->setValue(item->generateId());
+      m_selector->setValue(item->generateId());
     }
   }
 
   m_selector->setIsLoading(dropdown.isLoading);
-  */
 }
 
 void ExtensionListComponent::render(const RenderModel &baseModel) {
-  auto ui = ServiceRegistry::instance()->UI();
   ++m_renderCount;
   auto newModel = std::get<ListModel>(baseModel);
 
@@ -87,22 +83,11 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
     renderDropdown(dropdown);
   }
 
-  // m_selector->setVisible(newModel.searchBarAccessory.has_value() && isVisible());
+  m_selector->setVisible(newModel.searchBarAccessory.has_value() && isVisible());
 
-  if (!newModel.navigationTitle.isEmpty()) {
-    qDebug() << "set navigation title" << newModel.navigationTitle;
-    if (isVisible()) ui->setNavigationTitle(newModel.navigationTitle);
-  }
-  if (!newModel.searchPlaceholderText.isEmpty()) {
-    if (isVisible()) {
-      ServiceRegistry::instance()->UI()->setSearchPlaceholderText(newModel.searchPlaceholderText);
-    }
-  }
-
-  if (auto text = newModel.searchText) {
-    qDebug() << "[DEBUG] SET SEARCH TEXT" << text;
-    if (isVisible()) { ServiceRegistry::instance()->UI()->setSearchText(*text); }
-  }
+  if (!newModel.navigationTitle.isEmpty()) { setNavigationTitle(newModel.navigationTitle); }
+  if (!newModel.searchPlaceholderText.isEmpty()) { setSearchPlaceholderText(newModel.searchPlaceholderText); }
+  if (auto text = newModel.searchText) { setSearchText(*text); }
 
   if (newModel.throttle != _model.throttle) {
     _debounce->stop();
@@ -248,21 +233,16 @@ void ExtensionListComponent::textChanged(const QString &text) {
   if (auto handler = _model.onSearchTextChange) {
     // flag next render to reset the search selection
     _shouldResetSelection = !_model.filtering;
-
-    qDebug() << "[DEBUG] sending search changed event" << text;
-
     notify(*handler, {text});
   }
 
-  qCritical() << "text changed";
   //_debounce->start();
 }
 
 ExtensionListComponent::ExtensionListComponent() : _debounce(new QTimer(this)), _shouldResetSelection(true) {
-  // m_selector->setMinimumWidth(400);
-  // m_selector->setEnableDefaultFilter(false);
-  //  m_topBar->setAccessoryWidget(m_selector);
-  // m_selector->hide();
+  m_selector->setMinimumWidth(400);
+  m_selector->setEnableDefaultFilter(false);
+  m_selector->hide();
   setDefaultActionShortcuts({primaryShortcut, secondaryShortcut});
   m_split->setMainWidget(m_list);
   m_split->setDetailWidget(m_detail);
@@ -272,12 +252,10 @@ ExtensionListComponent::ExtensionListComponent() : _debounce(new QTimer(this)), 
   connect(_debounce, &QTimer::timeout, this, &ExtensionListComponent::handleDebouncedSearchNotification);
   connect(m_list, &ExtensionList::selectionChanged, this, &ExtensionListComponent::onSelectionChanged);
   connect(m_list, &ExtensionList::itemActivated, this, &ExtensionListComponent::onItemActivated);
-  /*
   connect(m_selector, &SelectorInput::selectionChanged, this,
           &ExtensionListComponent::handleDropdownSelectionChanged);
   connect(m_selector, &SelectorInput::textChanged, this,
           &ExtensionListComponent::handleDropdownSearchChanged);
-   */
 }
 
 ExtensionListComponent::~ExtensionListComponent() { qDebug() << "~ExtensionListComponent"; }

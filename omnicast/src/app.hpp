@@ -5,7 +5,6 @@
 #include "command-server.hpp"
 #include "settings/settings-window.hpp"
 #include <QScreen>
-#include "omni-icon.hpp"
 #include <cstring>
 #include <qboxlayout.h>
 #include <qdnslookup.h>
@@ -20,6 +19,7 @@
 #include <qscreen_platform.h>
 #include <qstackedwidget.h>
 #include <qwindow.h>
+#include "ui/action-pannel/action.hpp"
 #include "ui/alert.hpp"
 #include "ui/dialog.hpp"
 #include "ui/status_bar.hpp"
@@ -44,11 +44,19 @@ class AppWindow : public QMainWindow, public ICommandHandler {
   QStackedWidget *m_viewContainer = new QStackedWidget(this);
 
   std::variant<CommandResponse, CommandError> handleCommand(const CommandMessage &message) override;
-
+  bool eventFilter(QObject *watched, QEvent *event) override;
+  void executeAction(AbstractAction *action);
   void unloadHangingCommand();
   void closeWindow(bool popToRoot = false);
   void confirmAlert(AlertWidget *alert);
   void applyActionPanelState(ActionPanelV2Widget *panel);
+
+  void handleActionButtonClick();
+  void handleCurrentActionButtonClick();
+
+  void handleTextEdited(const QString &text);
+  void handleTextPop();
+  void handleCompleterArgumentsChanged(const std::vector<std::pair<QString, QString>> &arguments);
 
 protected:
   bool event(QEvent *event) override;
