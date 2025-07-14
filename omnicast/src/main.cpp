@@ -1,5 +1,6 @@
 #include "ai/ollama-ai-provider.hpp"
 #include <QStyleHints>
+#include "launcher-window.hpp"
 #include "services/app-service/app-service.hpp"
 #include "command-database.hpp"
 #include "root-search/apps/app-root-provider.hpp"
@@ -240,11 +241,11 @@ int startDaemon() {
     registry->rootItemManager()->addProvider(std::make_unique<BookmarkRootProvider>(*registry->bookmarks()));
   }
 
+  /*
   AppWindow app;
 
   app.createWinId();
 
-  /*
 #ifdef WAYLAND_LAYER_SHELL
   qDebug() << "Initializing layer shell surface";
   if (auto lshell = LayerShellQt::Window::get(app.windowHandle())) {
@@ -257,10 +258,14 @@ int startDaemon() {
     qCritical() << "Unable apply layer shell rules to main window: LayerShellQt::Window::get() returned null";
   }
 #endif
-*/
 
   app.setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
   app.show();
+  */
+
+  LauncherWindow launcher;
+
+  launcher.show();
 
   // Print it
 

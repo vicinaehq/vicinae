@@ -42,6 +42,7 @@ public:
   SearchBar(QWidget *parent = nullptr) : QLineEdit(parent) {
     auto debounce = new QTimer(this);
 
+    setFrame(false);
     setProperty("search-input", true);
     debounce->setInterval(10);
     debounce->setSingleShot(true);

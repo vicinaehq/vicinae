@@ -447,6 +447,15 @@ set(SRCS
 
 	src/utils/layout.hpp
 	src/utils/layout.cpp
+
+	src/header.hpp
+	src/header.cpp
+	src/navigation-controller.hpp
+	src/navigation-controller.cpp
+	src/launcher-window.hpp
+	src/launcher-window.cpp
+	src/global-bar.hpp
+	src/global-bar.cpp
 	
 )
 
