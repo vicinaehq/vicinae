@@ -1,5 +1,4 @@
 #pragma once
-#include "common.hpp"
 #include "navigation-controller.hpp"
 #include "omni-icon.hpp"
 #include "ui/image/omnimg.hpp"
@@ -28,6 +27,9 @@ class GlobalBar : public QWidget {
 
 public:
   GlobalBar(NavigationController &controller);
+
+protected:
+  void paintEvent(QPaintEvent *event) override;
 
 private:
   NavigationController &m_navigation;

@@ -5,7 +5,6 @@
 #include "clipboard-actions.hpp"
 #include "command-actions.hpp"
 #include "service-registry.hpp"
-#include "base-view.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 
 QString CommandRootItem::displayName() const { return m_command->name(); }
@@ -45,7 +44,8 @@ ActionPanelView *CommandRootItem::fallbackActionPanel() const {
   auto panel = new ActionPanelStaticListView;
   auto ui = ServiceRegistry::instance()->UI();
 
-  panel->addAction(new OpenBuiltinCommandAction(m_command, "Open command", ui->topView()->searchText()));
+  // TODO: fix this
+  panel->addAction(new OpenBuiltinCommandAction(m_command, "Open command", ""));
   panel->addAction(new ManageFallbackActions);
 
   return panel;

@@ -14,6 +14,7 @@ public:
 
 protected:
   void paintEvent(QPaintEvent *event) override;
+  bool event(QEvent *event) override;
 
 private:
   NavigationController m_navigation;

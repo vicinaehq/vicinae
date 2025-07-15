@@ -1,6 +1,7 @@
 #pragma once
 #include "action-panel/action-panel.hpp"
 #include "argument.hpp"
+#include "navigation-controller.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
 #include <libqalculate/Calculator.h>
@@ -25,6 +26,8 @@
 class BaseView : public QWidget {
   bool m_initialized = false;
   std::unique_ptr<UIViewController> m_uiController;
+
+  NavigationController *m_navigation = nullptr;
 
 public:
   void createInitialize() {
@@ -97,6 +100,8 @@ public:
     m_uiController = std::move(controller);
   }
 
+  void setNavigationController(NavigationController *nav) { m_navigation = nav; }
+
   void destroyCompleter() { m_uiController->destroyCompleter(); }
 
   virtual QWidget *searchBarAccessory() const { return nullptr; }
@@ -113,17 +118,22 @@ public:
 
   void setStatusBarVisiblity(bool visible) { m_uiController->setStatusBarVisibility(visible); }
 
-  virtual void clearSearchBar() { m_uiController->setSearchText(""); }
+  void clearSearchText() { setSearchText(""); }
 
   /**
    * The current search text for this view. If not applicable, do not implement.
    */
-  QString searchText() const { return m_uiController->searchText(); }
+  QString searchText() const {
+    if (m_navigation) return m_navigation->searchText();
+    return QString();
+  }
 
   /**
    * Set the search text for the current view, if applicable
    */
-  void setSearchText(const QString &value) { m_uiController->setSearchText(value); }
+  void setSearchText(const QString &value) {
+    if (m_navigation) return m_navigation->setSearchText(value);
+  }
 
   virtual ActionPanelV2Widget *actionPanel() const { return nullptr; }
 
@@ -220,7 +230,7 @@ public:
     // | std::ranges::to<std::vector>();
   }
 
-  void clearSearchBar() override { setSearchText(""); }
+  void clearSearchText() { setSearchText(""); }
 
   void initialize() override {}
 
@@ -306,9 +316,9 @@ protected:
       }
 
       if (auto completer = nextItem->createCompleter(); completer && completer->arguments.size() > 0) {
-        activateCompleter(completer->arguments, completer->iconUrl);
+        // activateCompleter(completer->arguments, completer->iconUrl);
       } else {
-        destroyCompleter();
+        // destroyCompleter();
       }
 
       // TODO: only expect suffix and automatically use command name from prefix
@@ -328,7 +338,7 @@ protected:
 
     } else {
       m_split->setDetailVisibility(false);
-      destroyCompleter();
+      // destroyCompleter();
       m_actionPannelV2->popToRoot();
       m_actionPannelV2->close();
     }
@@ -378,7 +388,7 @@ public:
       if (m_list->items().empty()) {
         auto ui = ServiceRegistry::instance()->UI();
 
-        ui->destroyCompleter();
+        // ui->destroyCompleter();
         m_content->setCurrentWidget(m_emptyView);
         return;
       }

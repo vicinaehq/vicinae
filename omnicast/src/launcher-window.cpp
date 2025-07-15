@@ -2,9 +2,15 @@
 #include "header.hpp"
 #include "navigation-controller.hpp"
 #include <qboxlayout.h>
+#include <qevent.h>
+#include <qnamespace.h>
 #include <qwidget.h>
+#include "root-command.hpp"
 
-LauncherWindow::LauncherWindow() : m_header(new GlobalHeader(m_navigation)) { setupUI(); }
+LauncherWindow::LauncherWindow() : m_header(new GlobalHeader(m_navigation)) {
+  setupUI();
+  m_navigation.pushView(new RootSearchView);
+}
 
 void LauncherWindow::setupUI() {
   setWindowFlags(Qt::FramelessWindowHint);
@@ -17,8 +23,35 @@ void LauncherWindow::setupUI() {
 void LauncherWindow::handleViewChange(const NavigationController::ViewState &state) {
   if (auto current = m_currentViewWrapper->widget(0)) { m_currentViewWrapper->removeWidget(current); }
 
-  m_currentViewWrapper->addWidget(state.sender.get());
-  m_currentViewWrapper->setCurrentWidget(state.sender.get());
+  m_currentViewWrapper->addWidget(state.sender);
+  m_currentViewWrapper->setCurrentWidget(state.sender);
+}
+
+bool LauncherWindow::event(QEvent *event) {
+  if (event->type() == QEvent::KeyPress) {
+    auto keyEvent = static_cast<QKeyEvent *>(event);
+
+    switch (keyEvent->key()) {
+    case Qt::Key_Escape: {
+      if (m_navigation.viewStackSize() == 1) {
+        if (m_navigation.searchText().isEmpty()) {
+          close();
+          return true;
+        }
+
+        m_navigation.clearSearchText();
+        return true;
+      }
+
+      m_navigation.popCurrentView();
+      return true;
+    }
+    default:
+      break;
+    }
+  }
+
+  return QMainWindow::event(event);
 }
 
 void LauncherWindow::paintEvent(QPaintEvent *event) {

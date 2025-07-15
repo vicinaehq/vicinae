@@ -117,7 +117,10 @@ void UIController::pushView(BaseView *view, const PushViewOptions &opts) {
   view->onActivate();
 }
 
-QString UIController::searchText() const { return topState()->text; }
+QString UIController::searchText() const {
+  if (auto state = topState()) return state->text;
+  return {};
+}
 
 void UIController::setSearchPlaceholderText(const QString &placeholderText) {
   topState()->placeholderText = placeholderText;

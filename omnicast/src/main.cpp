@@ -202,7 +202,7 @@ int startDaemon() {
 
     // fileService->indexer()->setEntrypoints({{.root = "/home/aurelle/Downloads"}});
     fileService->indexer()->setEntrypoints({{.root = homeDir()}});
-    fileService->indexer()->start();
+    // fileService->indexer()->start();
 
     registry->setFileService(std::move(fileService));
     registry->setUI(std::make_unique<UIController>());
@@ -262,6 +262,26 @@ int startDaemon() {
   app.setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
   app.show();
   */
+
+  QObject::connect(ServiceRegistry::instance()->config(), &ConfigService::configChanged,
+                   [](const ConfigService::Value &next, const ConfigService::Value &prev) {
+                     if (next.theme.name.value_or("") != prev.theme.name.value_or("")) {
+                       ThemeService::instance().setTheme(*next.theme.name);
+                     }
+
+                     if (QIcon::themeName() == "hicolor") {
+                       if (ThemeService::instance().theme().appearance == "light") {
+                         QIcon::setThemeName("Reversal");
+                       } else {
+                         QIcon::setThemeName("Reversal-dark");
+                       }
+                     }
+
+                     if (next.font.normal && *next.font.normal != prev.font.normal.value_or("")) {
+                       QApplication::setFont(*next.font.normal);
+                       qApp->setStyleSheet(qApp->styleSheet());
+                     }
+                   });
 
   LauncherWindow launcher;
 

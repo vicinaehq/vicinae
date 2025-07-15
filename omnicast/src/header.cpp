@@ -5,9 +5,11 @@
 #include <qdnslookup.h>
 #include <qevent.h>
 #include <qwidget.h>
+#include "base-view.hpp"
 
 void GlobalHeader::handleViewStateChange(const NavigationController::ViewState &state) {
-  m_input->setText(state.text);
+  qDebug() << "view state change" << state.searchText;
+  m_input->setText(state.searchText);
   m_input->setPlaceholderText(state.placeholderText);
 }
 
@@ -31,11 +33,23 @@ void GlobalHeader::setupUI() {
   m_input->setFocus();
 }
 
+void GlobalHeader::handleTextEdited(const QString &text) { m_navigation.setSearchText(text); }
+
+bool GlobalHeader::filterInputEvents(QEvent *event) {
+  if (event->type() == QEvent::KeyPress) {
+    auto keyEvent = static_cast<QKeyEvent *>(event);
+
+    if (auto state = m_navigation.topState()) {
+      if (state->sender->inputFilter(keyEvent)) { return true; }
+    }
+  }
+
+  return false;
+}
+
 bool GlobalHeader::eventFilter(QObject *watched, QEvent *event) {
   if (watched == m_input) {
-    if (auto state = m_navigation.topState()) {
-      if (auto filtered = state->sender->eventFilter(watched, event)) { return filtered; }
-    }
+    if (filterInputEvents(event)) { return true; }
   }
 
   return QWidget::eventFilter(watched, event);
@@ -50,4 +64,5 @@ GlobalHeader::GlobalHeader(NavigationController &controller) : m_navigation(cont
   connect(&m_navigation, &NavigationController::currentViewStateChanged, this,
           &GlobalHeader::handleViewStateChange);
   connect(m_input, &SearchBar::pop, this, &GlobalHeader::handleSearchPop);
+  connect(m_input, &SearchBar::textEdited, this, &GlobalHeader::handleTextEdited);
 }

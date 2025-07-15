@@ -3,6 +3,7 @@
 #include "ui/horizontal-loading-bar.hpp"
 #include "ui/top_bar.hpp"
 #include <qcoreevent.h>
+#include <qevent.h>
 #include <qobject.h>
 #include <qwidget.h>
 
@@ -21,4 +22,6 @@ private:
   void setupUI();
   void handleViewStateChange(const NavigationController::ViewState &state);
   void handleSearchPop();
+  bool filterInputEvents(QEvent *event);
+  void handleTextEdited(const QString &text);
 };

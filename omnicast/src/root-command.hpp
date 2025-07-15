@@ -257,6 +257,7 @@ class RootSearchView : public ListView {
   }
 
   void renderEmpty() {
+    qDebug() << "render empty";
     m_fileResults.clear();
     m_currentCalculatorEntry.reset();
 
@@ -406,6 +407,7 @@ class RootSearchView : public ListView {
   }
 
   void handleCalculatorTimeout() {
+    qDebug() << "calculator stuff";
     auto calculator = ServiceRegistry::instance()->calculatorService();
     QString expression = searchText().trimmed();
     bool isComputable = false;
