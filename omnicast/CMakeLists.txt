@@ -459,6 +459,11 @@ set(SRCS
 
 	src/command-controller.hpp
 	src/command-controller.cpp
+
+	src/ipc-command-server.hpp
+	src/ipc-command-server.cpp
+	src/ipc-command-handler.hpp
+	src/ipc-command-handler.cpp
 	
 )
 

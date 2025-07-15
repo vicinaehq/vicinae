@@ -87,7 +87,7 @@ bool LauncherWindow::event(QEvent *event) {
     case Qt::Key_Escape: {
       if (m_ctx.navigation->viewStackSize() == 1) {
         if (m_ctx.navigation->searchText().isEmpty()) {
-          close();
+          m_ctx.navigation->closeWindow();
           return true;
         }
 

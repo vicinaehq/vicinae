@@ -2,10 +2,8 @@
 #include <QGraphicsScene>
 #include <QGraphicsPixmapItem>
 #include "action-panel/action-panel.hpp"
-#include "command-server.hpp"
 #include "settings/settings-window.hpp"
 #include <QScreen>
-#include <cstring>
 #include <qboxlayout.h>
 #include <qdnslookup.h>
 #include <qevent.h>
@@ -28,7 +26,7 @@
 #include <qtmetamacros.h>
 #include <qwidget.h>
 
-class AppWindow : public QMainWindow, public ICommandHandler {
+class AppWindow : public QMainWindow {
   Q_OBJECT
 
   StatusBar *m_statusBar = new StatusBar();
@@ -38,12 +36,11 @@ class AppWindow : public QMainWindow, public ICommandHandler {
   AlertWidget *_alert = new AlertWidget;
 
   SettingsWindow *settings = new SettingsWindow();
-  CommandServer *_commandServer;
+  // CommandServer *_commandServer;
 
   QVBoxLayout *m_layout = new QVBoxLayout(this);
   QStackedWidget *m_viewContainer = new QStackedWidget(this);
 
-  std::variant<CommandResponse, CommandError> handleCommand(const CommandMessage &message) override;
   bool eventFilter(QObject *watched, QEvent *event) override;
   void executeAction(AbstractAction *action);
   void unloadHangingCommand();

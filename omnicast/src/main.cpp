@@ -1,18 +1,18 @@
 #include "ai/ollama-ai-provider.hpp"
 #include <QStyleHints>
 #include "common.hpp"
+#include "ipc-command-server.hpp"
+#include "ipc-command-handler.hpp"
 #include "launcher-window.hpp"
 #include "services/app-service/app-service.hpp"
 #include "command-database.hpp"
 #include "root-search/apps/app-root-provider.hpp"
 #include "services/bookmark/bookmark-service.hpp"
-#include "app.hpp"
 #include <QApplication>
 #include "services/config/config-service.hpp"
 #include "font-service.hpp"
 #include <QFontDatabase>
 #include <QSurfaceFormat>
-#include <cstdio>
 #include <memory>
 #include <wm/window-manager-factory.hpp>
 #include <QtSql/QtSql>
@@ -22,7 +22,6 @@
 #include <arpa/inet.h>
 #include <cmark.h>
 #include <csignal>
-#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -289,6 +288,11 @@ int startDaemon() {
   ctx.navigation = std::make_unique<NavigationController>(ctx);
   ctx.command = std::make_unique<CommandController>(*ctx.navigation);
   ctx.services = ServiceRegistry::instance();
+
+  IpcCommandServer commandServer;
+
+  commandServer.setHandler(new IpcCommandHandler(ctx));
+  commandServer.start(Omnicast::commandSocketPath());
 
   LauncherWindow launcher(ctx);
 

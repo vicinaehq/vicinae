@@ -68,6 +68,15 @@ QString NavigationController::navigationTitle(const BaseView *caller) const {
   return QString();
 }
 
+void NavigationController::toggleWindow() {
+  if (m_windowOpened)
+    closeWindow();
+  else
+    showWindow();
+}
+
+bool NavigationController::isWindowOpened() const { return m_windowOpened; }
+
 void searchPlaceholderText(const QString &text) {}
 
 void NavigationController::pushView(BaseView *view) {
@@ -96,9 +105,15 @@ void NavigationController::setActions(const ActionPanelState &panel, const BaseV
 
 size_t NavigationController::viewStackSize() const { return m_views.size(); }
 
-void NavigationController::closeWindow() { emit windowVisiblityChanged(false); }
+void NavigationController::closeWindow() {
+  m_windowOpened = false;
+  emit windowVisiblityChanged(false);
+}
 
-void NavigationController::showWindow() { emit windowVisiblityChanged(true); }
+void NavigationController::showWindow() {
+  m_windowOpened = true;
+  emit windowVisiblityChanged(true);
+}
 
 NavigationController::ViewState *NavigationController::topState() {
   if (m_views.empty()) return nullptr;

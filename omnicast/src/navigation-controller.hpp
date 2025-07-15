@@ -70,6 +70,9 @@ public:
 
   void closeWindow();
   void showWindow();
+  void toggleWindow();
+  bool isWindowOpened() const;
+
   void setSearchPlaceholderText(const QString &text, const BaseView *caller = nullptr);
   void setSearchText(const QString &text, const BaseView *caller = nullptr);
 
@@ -109,5 +112,6 @@ private:
   const ViewState *findViewState(const BaseView *view) const;
   const BaseView *topView() const;
 
+  bool m_windowOpened = true;
   std::vector<std::unique_ptr<ViewState>> m_views;
 };
