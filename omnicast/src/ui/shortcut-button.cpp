@@ -31,8 +31,11 @@ void ShortcutButton::setTextColor(const QColor &color) {
   updateGeometry();
 }
 
-void ShortcutButton::setShortcut(const KeyboardShortcutModel &model) {
-  _shortcut_indicator->setShortcut(model);
+void ShortcutButton::setShortcut(const std::optional<KeyboardShortcutModel> &model) {
+  _shortcut_indicator->setVisible(model.has_value());
+
+  if (model) { _shortcut_indicator->setShortcut(*model); }
+
   updateGeometry();
 }
 

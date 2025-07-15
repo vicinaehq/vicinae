@@ -1,6 +1,7 @@
 #pragma once
 #include "action-panel/action-panel.hpp"
 #include "argument.hpp"
+#include "common.hpp"
 #include "navigation-controller.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
@@ -25,9 +26,8 @@
 
 class BaseView : public QWidget {
   bool m_initialized = false;
-  std::unique_ptr<UIViewController> m_uiController;
-
-  NavigationController *m_navigation = nullptr;
+  ApplicationContext *m_ctx = nullptr;
+  const BaseView* m_navProxy = this;
 
 public:
   void createInitialize() {
@@ -39,6 +39,13 @@ public:
   bool isInitialized() { return m_initialized; }
 
   /**
+   * Forward navigation operations to `other` instead of this view.
+   * Allows to nest view with only one effectively having navigation responsability.
+   * In most cases, you should not use this. This is mainly used for extensions.
+   */
+  void setNavigationProxy(const BaseView* proxy) { m_navProxy = proxy; }
+
+  /**
    * Whether to show the search bar for this view. Calling setSearchText or searchText() is still
    * valid but will always return the empty string.
    */
@@ -47,7 +54,7 @@ public:
   virtual bool needsGlobalStatusBar() const { return true; }
   virtual bool needsGlobalTopBar() const { return true; }
 
-  void setActionPanelWidget(ActionPanelV2Widget *widget) { m_uiController->setActionPanelWidget(widget); }
+  void setActionPanelWidget(ActionPanelV2Widget *widget) { /**/ }
 
   /**
    * Called before the view is first shown on screen.
@@ -67,10 +74,14 @@ public:
    */
   virtual void textChanged(const QString &text) {}
 
-  virtual OmniIconUrl navigationIcon() const { return BuiltinOmniIconUrl("question-mark-circle"); }
-  virtual QString navigationTitle() const { return m_uiController->navigationTitle(); }
+  OmniIconUrl navigationIcon() const { return BuiltinOmniIconUrl("question-mark-circle"); }
 
-  void setSearchAccessory(QWidget *accessory) { m_uiController->setSearchAccessory(accessory); }
+  QString navigationTitle() const {
+    if (m_ctx) { return m_ctx->navigation->navigationTitle(m_navProxy); }
+    return QString();
+  }
+
+  void setSearchAccessory(QWidget *accessory) {}
 
   /**
    * Called when the view becomes visible. This is called the first time the view is shown
@@ -93,30 +104,40 @@ public:
   virtual void clearToast() {}
 
   void activateCompleter(const ArgumentList &args, const OmniIconUrl &icon) {
-    m_uiController->activateCompleter(args, icon);
+    // m_uiController->activateCompleter(args, icon);
   }
 
   void setUIController(std::unique_ptr<UIViewController> controller) {
-    m_uiController = std::move(controller);
+    // m_uiController = std::move(controller);
   }
 
-  void setNavigationController(NavigationController *nav) { m_navigation = nav; }
+  void setContext(ApplicationContext *ctx) { m_ctx = ctx; }
 
-  void destroyCompleter() { m_uiController->destroyCompleter(); }
+  /**
+   * The entire application context.
+   * You normally do not need to use this directly. Use the helper methods instead.
+   * Note that the returned context is only valid if the view is tracked by the navigation
+   * controller. A view not (yet) tracked will have this function return a null pointer.
+   */
+  ApplicationContext *context() const { return m_ctx; }
+
+  void destroyCompleter() { /*m_uiController->destroyCompleter();*/ }
 
   virtual QWidget *searchBarAccessory() const { return nullptr; }
 
-  QString searchPlaceholderText() const { return m_uiController->searchPlaceholderText(); }
+  QString searchPlaceholderText() const { /* todo: implemement */ return ""; }
 
   void setSearchPlaceholderText(const QString &value) const {
-    m_uiController->setSearchPlaceholderText(value);
+    if (!m_ctx) return;
+    qCritical() << "setSearchPlaceholderText" << value;
+    m_ctx->navigation->setSearchPlaceholderText(value, this);
   }
 
-  void setSearchVisiblity(bool visible) { m_uiController->setSearchVisiblity(visible); }
+  void setSearchVisiblity(bool visible) { /**/ }
 
-  void setTopBarVisiblity(bool visible) { m_uiController->setTopBarVisiblity(visible); }
+  void setTopBarVisiblity(bool visible) { /* TODO: implement */ }
 
-  void setStatusBarVisiblity(bool visible) { m_uiController->setStatusBarVisibility(visible); }
+  void setStatusBarVisiblity(bool visible) { /* TODO: implement  */ }
 
   void clearSearchText() { setSearchText(""); }
 
@@ -124,15 +145,16 @@ public:
    * The current search text for this view. If not applicable, do not implement.
    */
   QString searchText() const {
-    if (m_navigation) return m_navigation->searchText();
-    return QString();
+    if (!m_ctx) return QString();
+    return m_ctx->navigation->searchText(m_navProxy);
   }
 
   /**
    * Set the search text for the current view, if applicable
    */
   void setSearchText(const QString &value) {
-    if (m_navigation) return m_navigation->setSearchText(value);
+    if (!m_ctx) return;
+    return m_ctx->navigation->setSearchText(value, m_navProxy);
   }
 
   virtual ActionPanelV2Widget *actionPanel() const { return nullptr; }
@@ -141,8 +163,9 @@ public:
    * Allows the view to filter input from the main search bar before the input itself
    * processes it.
    * For instance, this allows a list view to capture up and down events to move the position in the list.
-   * Or, as an example that actually modifies the input behaviour, a grid list (with horizontal controls) can
-   * repurpose the left and right keys to navigate the list, while they would normally move the text cursor.
+   * Or, as an example that actually modifies the input behaviour, a grid list (with horizontal controls)
+   * can repurpose the left and right keys to navigate the list, while they would normally move the text
+   * cursor.
    *
    * In typical QT event filter fashion, this function should return false if the key is left for the input
    * to handle, or true if it needs to be ignored.
@@ -153,26 +176,27 @@ public:
   /**
    * Set the navigation icon, if applicable
    */
-  virtual void setNavigationIcon(const OmniIconUrl &icon) { m_uiController->setNavigationIcon(icon); }
-
-  void setNavigation(const QString &title, const OmniIconUrl &icon) {
-    m_uiController->setNavigation(title, icon);
+  virtual void setNavigationIcon(const OmniIconUrl &icon) {
+    // m_uiController->setNavigationIcon(icon);
   }
 
-  void setNavigationTitle(const QString &title) { m_uiController->setNavigationTitle(title); }
+  void setNavigation(const QString &title, const OmniIconUrl &icon) { setNavigationTitle(title); }
 
-  void setLoading(bool value) { m_uiController->setLoading(value); }
+  void setNavigationTitle(const QString &title) {
+    if (!m_ctx) return;
+    return m_ctx->navigation->setNavigationTitle(title, m_navProxy);
+  }
+
+  void setLoading(bool value) {
+    // m_uiController->setLoading(value);
+  }
 
   /**
    * The dynamic arguments for this view. Used by some actions.
    */
   virtual std::vector<QString> argumentValues() const { return {}; }
 
-  BaseView(QWidget *parent = nullptr) : QWidget(parent) {
-    auto ui = ServiceRegistry::instance()->UI();
-
-    m_uiController = std::make_unique<UIViewController>(ui, this);
-  }
+  BaseView(QWidget *parent = nullptr) : QWidget(parent) {}
 };
 
 class SimpleView : public BaseView {
@@ -226,8 +250,8 @@ protected:
 public:
   std::vector<QString> argumentValues() const override {
     return {};
-    // return m_topBar->m_completer->collect() | std::views::transform([](const auto &p) { return p.second; })
-    // | std::ranges::to<std::vector>();
+    // return m_topBar->m_completer->collect() | std::views::transform([](const auto &p) { return p.second;
+    // }) | std::ranges::to<std::vector>();
   }
 
   void clearSearchText() { setSearchText(""); }

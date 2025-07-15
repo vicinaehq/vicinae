@@ -11,6 +11,16 @@ class CopyToClipboardAction : public AbstractAction {
   Clipboard::CopyOptions m_opts;
 
 public:
+  void execute(ApplicationContext *context) override {
+    auto clipman = context->services->clipman();
+
+    if (clipman->copyContent(m_content, m_opts)) {
+      // ui->setToast("Copied");
+      context->navigation->closeWindow();
+      return;
+    }
+  }
+
   void execute() override {
     auto ui = ServiceRegistry::instance()->UI();
     auto clipman = ServiceRegistry::instance()->clipman();

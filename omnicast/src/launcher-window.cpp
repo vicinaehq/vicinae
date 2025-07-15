@@ -1,15 +1,49 @@
 #include "launcher-window.hpp"
+#include "action-panel/action-panel.hpp"
+#include "common.hpp"
 #include "header.hpp"
 #include "navigation-controller.hpp"
 #include <qboxlayout.h>
 #include <qevent.h>
 #include <qnamespace.h>
 #include <qwidget.h>
+#include "omni-icon.hpp"
 #include "root-command.hpp"
+#include "ui/action-pannel/action.hpp"
 
-LauncherWindow::LauncherWindow() : m_header(new GlobalHeader(m_navigation)) {
+LauncherWindow::LauncherWindow(ApplicationContext &ctx)
+    : m_ctx(ctx), m_header(new GlobalHeader(*m_ctx.navigation)) {
   setupUI();
-  m_navigation.pushView(new RootSearchView);
+
+  connect(m_actionPanel, &ActionPanelV2Widget::openChanged, this, [this](bool opened) {
+    if (opened)
+      m_ctx.navigation->openActionPanel();
+    else
+      m_ctx.navigation->closeActionPanel();
+  });
+
+  connect(m_actionPanel, &ActionPanelV2Widget::actionActivated, this, [this](AbstractAction *action) {
+    action->execute(&m_ctx);
+    m_ctx.navigation->closeActionPanel();
+  });
+
+  connect(m_ctx.navigation.get(), &NavigationController::actionPanelVisibilityChanged, this,
+          [this](bool value) {
+            if (value) {
+              m_actionPanel->show();
+            } else {
+              m_actionPanel->hide();
+            }
+          });
+
+  connect(m_ctx.navigation.get(), &NavigationController::actionsChanged, this,
+          [this](auto &&actions) { m_actionPanel->setNewActions(actions); });
+
+  connect(m_ctx.navigation.get(), &NavigationController::windowVisiblityChanged, this,
+          [this](bool visible) { setVisible(visible); });
+
+  ctx.navigation->pushView(new RootSearchView);
+  ctx.navigation->setNavigationIcon(BuiltinOmniIconUrl("omnicast"));
 }
 
 void LauncherWindow::setupUI() {
@@ -17,7 +51,8 @@ void LauncherWindow::setupUI() {
   setAttribute(Qt::WA_TranslucentBackground, true);
   setMinimumSize(Omnicast::WINDOW_SIZE);
   setCentralWidget(createWidget());
-  connect(&m_navigation, &NavigationController::currentViewChanged, this, &LauncherWindow::handleViewChange);
+  connect(m_ctx.navigation.get(), &NavigationController::currentViewChanged, this,
+          &LauncherWindow::handleViewChange);
 }
 
 void LauncherWindow::handleViewChange(const NavigationController::ViewState &state) {
@@ -31,19 +66,36 @@ bool LauncherWindow::event(QEvent *event) {
   if (event->type() == QEvent::KeyPress) {
     auto keyEvent = static_cast<QKeyEvent *>(event);
 
+    if (auto state = m_ctx.navigation->topState()) {
+      for (const auto &section : state->actionPanelState.sections()) {
+        for (const auto &action : section.actions()) {
+          if (action->shortcut && KeyboardShortcut(*action->shortcut) == keyEvent) {
+            action->execute();
+            return true;
+          }
+        }
+      }
+    }
+
+    if (keyEvent->keyCombination() == QKeyCombination(Qt::ControlModifier, Qt::Key_B)) {
+      qDebug() << "Open action panel";
+      m_actionPanel->show();
+      return true;
+    }
+
     switch (keyEvent->key()) {
     case Qt::Key_Escape: {
-      if (m_navigation.viewStackSize() == 1) {
-        if (m_navigation.searchText().isEmpty()) {
+      if (m_ctx.navigation->viewStackSize() == 1) {
+        if (m_ctx.navigation->searchText().isEmpty()) {
           close();
           return true;
         }
 
-        m_navigation.clearSearchText();
+        m_ctx.navigation->clearSearchText();
         return true;
       }
 
-      m_navigation.popCurrentView();
+      m_ctx.navigation->popCurrentView();
       return true;
     }
     default:
@@ -52,6 +104,15 @@ bool LauncherWindow::event(QEvent *event) {
   }
 
   return QMainWindow::event(event);
+}
+
+void LauncherWindow::handleActionVisibilityChanged(bool visible) {
+  if (visible) {
+    m_actionPanel->show();
+    return;
+  }
+
+  m_actionPanel->close();
 }
 
 void LauncherWindow::paintEvent(QPaintEvent *event) {
@@ -86,6 +147,7 @@ QWidget *LauncherWindow::createWidget() const {
   layout->setSpacing(0);
   layout->addWidget(m_header);
   layout->addWidget(m_currentViewWrapper, 1);
+  layout->addWidget(new HDivider);
   layout->addWidget(m_bar, 1);
   widget->setLayout(layout);
 

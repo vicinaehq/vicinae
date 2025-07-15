@@ -183,3 +183,13 @@ template <typename T = QObject> using QObjectUniquePtr = std::unique_ptr<T, QObj
 class AbstractArgumentProvider {
   virtual std::vector<std::pair<QString, QString>> args() const = 0;
 };
+
+class NavigationController;
+class CommandController;
+class ServiceRegistry;
+
+struct ApplicationContext {
+  std::unique_ptr<NavigationController> navigation;
+  std::unique_ptr<CommandController> command;
+  ServiceRegistry *services;
+};

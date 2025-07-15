@@ -21,6 +21,7 @@ private:
   Style m_style = Normal;
 
 public:
+  mutable QString m_id;
   QString _title;
   OmniIconUrl iconUrl;
   std::optional<KeyboardShortcutModel> shortcut;
@@ -44,7 +45,10 @@ public:
 
   Style style() const { return m_style; }
 
-  virtual QString id() const { return title() + icon().toString(); }
+  virtual QString id() const {
+    if (m_id.isEmpty()) { m_id = QUuid::createUuid().toString(QUuid::WithoutBraces); }
+    return m_id;
+  }
 
   std::function<void(void)> executionCallback() const { return _execCallback; }
 
@@ -56,6 +60,7 @@ public:
 
   virtual void execute(AppWindow &app) {}
   virtual void execute() { qWarning() << "Default execute"; }
+  virtual void execute(ApplicationContext *context) {}
 
   virtual bool isPushView() const { return false; }
 

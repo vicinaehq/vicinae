@@ -1,5 +1,6 @@
 #pragma once
 #include "common.hpp"
+#include "navigation-controller.hpp"
 #include "theme.hpp"
 #include "ui/action-pannel/action-list-item.hpp"
 #include "ui/action-pannel/action.hpp"
@@ -207,6 +208,11 @@ public:
   void addSection(const QString &title = "") { m_sections.emplace_back(ActionSection{}); }
 
   void clear() { m_sections.clear(); }
+
+  void addAction(const std::shared_ptr<AbstractAction> &action) {
+    if (m_sections.empty()) { addSection(m_title); }
+    m_sections.at(m_sections.size() - 1).actions.emplace_back(action);
+  }
 
   void addAction(AbstractAction *action) {
     if (m_sections.empty()) { addSection(m_title); }
@@ -433,6 +439,20 @@ public:
     }
 
     resizeView();
+  }
+
+  void setNewActions(const ActionPanelState &state) {
+    auto panel = new ActionPanelStaticListView;
+
+    for (const auto &section : state.sections()) {
+      panel->addSection(section.name());
+
+      for (const auto &action : section.actions()) {
+        panel->addAction(action);
+      }
+    }
+
+    setView(panel);
   }
 
   ActionPanelV2Widget(QWidget *parent = nullptr) : Popover(parent) {

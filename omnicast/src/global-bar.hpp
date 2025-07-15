@@ -1,7 +1,9 @@
 #pragma once
+#include "common.hpp"
 #include "navigation-controller.hpp"
 #include "omni-icon.hpp"
 #include "ui/image/omnimg.hpp"
+#include "ui/shortcut-button.hpp"
 #include "ui/typography/typography.hpp"
 #include <qstackedwidget.h>
 #include <qwidget.h>
@@ -21,18 +23,23 @@ private:
 };
 
 class GlobalBar : public QWidget {
-  // can show navigation icon + title or toast
-  QStackedWidget *m_leftWidget = new QStackedWidget;
-  NavigationStatusWidget *m_status = new NavigationStatusWidget;
 
 public:
-  GlobalBar(NavigationController &controller);
+  GlobalBar(ApplicationContext &ctx);
 
 protected:
   void paintEvent(QPaintEvent *event) override;
 
 private:
-  NavigationController &m_navigation;
+  ApplicationContext &m_ctx;
+  QStackedWidget *m_leftWidget = new QStackedWidget;
+  NavigationStatusWidget *m_status = new NavigationStatusWidget;
+  ShortcutButton *m_primaryActionButton = new ShortcutButton;
+  ShortcutButton *m_actionButton = new ShortcutButton;
+
+  void handleViewStateChange(const NavigationController::ViewState &state);
+  void actionsChanged(const ActionPanelState &actions);
+  void handleActionPanelVisiblityChange(bool visible);
 
   void setupUI();
 };

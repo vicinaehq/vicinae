@@ -8,7 +8,7 @@
 #include "base-view.hpp"
 
 void GlobalHeader::handleViewStateChange(const NavigationController::ViewState &state) {
-  qDebug() << "view state change" << state.searchText;
+  qDebug() << "view state change" << state.searchText << state.placeholderText;
   m_input->setText(state.searchText);
   m_input->setPlaceholderText(state.placeholderText);
 }

@@ -456,6 +456,9 @@ set(SRCS
 	src/launcher-window.cpp
 	src/global-bar.hpp
 	src/global-bar.cpp
+
+	src/command-controller.hpp
+	src/command-controller.cpp
 	
 )
 

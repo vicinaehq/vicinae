@@ -1,7 +1,10 @@
 #pragma once
+#include "action-panel/action-panel.hpp"
+#include "common.hpp"
 #include "global-bar.hpp"
 #include "header.hpp"
 #include "navigation-controller.hpp"
+#include "command-controller.hpp"
 #include <qevent.h>
 #include <qmainwindow.h>
 #include <qstackedwidget.h>
@@ -10,16 +13,18 @@
 class LauncherWindow : public QMainWindow {
 
 public:
-  LauncherWindow();
+  LauncherWindow(ApplicationContext &context);
 
 protected:
   void paintEvent(QPaintEvent *event) override;
   bool event(QEvent *event) override;
+  void handleActionVisibilityChanged(bool visible);
 
 private:
-  NavigationController m_navigation;
+  ApplicationContext &m_ctx;
+  ActionPanelV2Widget *m_actionPanel = new ActionPanelV2Widget;
   GlobalHeader *m_header;
-  GlobalBar *m_bar = new GlobalBar(m_navigation);
+  GlobalBar *m_bar = new GlobalBar(m_ctx);
   QStackedWidget *m_currentViewWrapper = new QStackedWidget;
 
   void handleViewChange(const NavigationController::ViewState &state);

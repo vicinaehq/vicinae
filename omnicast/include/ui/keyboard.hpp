@@ -105,6 +105,10 @@ public:
     return KeyboardShortcut(Qt::Key_V).withModifier(Qt::KeyboardModifier::ControlModifier);
   }
 
+  static KeyboardShortcut actionPanel() {
+    return KeyboardShortcut(Qt::Key_B).withModifier(Qt::KeyboardModifier::ControlModifier);
+  }
+
   static KeyboardShortcut shiftPaste() {
     return KeyboardShortcut(Qt::Key_V)
         .withModifier(Qt::KeyboardModifier::ControlModifier)

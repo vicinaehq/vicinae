@@ -111,10 +111,6 @@ class CalculatorHistoryView : public ListView {
   QTimer *m_calcDebounce = new QTimer(this);
   std::optional<AbstractCalculatorBackend::CalculatorResult> m_calcRes;
 
-  OmniIconUrl navigationIcon() const override {
-    return BuiltinOmniIconUrl("plus-minus-divide-multiply").setBackgroundTint(ColorTint::Red);
-  }
-
   void handlePinned(int id) { textChanged(m_searchQuery); }
 
   void handleUnpinned(int id) { textChanged(m_searchQuery); }

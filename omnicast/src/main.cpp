@@ -1,5 +1,6 @@
 #include "ai/ollama-ai-provider.hpp"
 #include <QStyleHints>
+#include "common.hpp"
 #include "launcher-window.hpp"
 #include "services/app-service/app-service.hpp"
 #include "command-database.hpp"
@@ -283,7 +284,13 @@ int startDaemon() {
                      }
                    });
 
-  LauncherWindow launcher;
+  ApplicationContext ctx;
+
+  ctx.navigation = std::make_unique<NavigationController>(ctx);
+  ctx.command = std::make_unique<CommandController>(*ctx.navigation);
+  ctx.services = ServiceRegistry::instance();
+
+  LauncherWindow launcher(ctx);
 
   launcher.show();
 

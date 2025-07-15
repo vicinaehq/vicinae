@@ -1,11 +1,13 @@
 #include "navigation-controller.hpp"
 #include "base-view.hpp"
 
+NavigationController::NavigationController(ApplicationContext &ctx) : m_ctx(ctx) {}
+
 void NavigationController::setNavigationTitle(const QString &navigationTitle, const BaseView *caller) {
   if (auto state = findViewState(VALUE_OR(caller, topView()))) {
     state->navigation.title = navigationTitle;
 
-    if (caller == topView()) { emit currentViewStateChanged(*state); }
+    if (state->sender == topView()) { emit currentViewStateChanged(*state); }
   }
 }
 
@@ -14,20 +16,24 @@ void NavigationController::setSearchText(const QString &text, const BaseView *ca
     state->searchText = text;
     state->sender->textChanged(text);
 
-    if (caller == topView()) { emit currentViewStateChanged(*state); }
+    if (state->sender == topView()) { emit currentViewStateChanged(*state); }
   }
 }
 
-void NavigationController::setSearchPlaceholderText(const QString &text) {
-  if (auto state = topState()) {
+void NavigationController::setSearchPlaceholderText(const QString &text, const BaseView *caller) {
+  if (auto state = findViewState(VALUE_OR(caller, topView()))) {
     state->placeholderText = text;
-    emit currentViewStateChanged(*state);
+    if (state->sender == topView()) { emit currentViewStateChanged(*state); }
   }
 }
 
 void NavigationController::clearSearchText() { setSearchText(""); }
 
 NavigationController::ViewState::~ViewState() { sender->deleteLater(); }
+
+void NavigationController::openActionPanel() { emit actionPanelVisibilityChanged(true); }
+
+void NavigationController::closeActionPanel() { emit actionPanelVisibilityChanged(false); }
 
 void NavigationController::setNavigationIcon(const OmniIconUrl &icon) {
   if (auto state = topState()) {
@@ -56,6 +62,12 @@ QString NavigationController::searchText(const BaseView *caller) const {
   return QString();
 }
 
+QString NavigationController::navigationTitle(const BaseView *caller) const {
+  if (auto state = findViewState(VALUE_OR(caller, topView()))) { return state->navigation.title; }
+
+  return QString();
+}
+
 void searchPlaceholderText(const QString &text) {}
 
 void NavigationController::pushView(BaseView *view) {
@@ -65,16 +77,28 @@ void NavigationController::pushView(BaseView *view) {
   state->supportsSearch = view->supportsSearch();
   state->needsTopBar = view->needsGlobalTopBar();
   state->supportsSearch = view->needsGlobalStatusBar();
-
-  state->sender->initialize();
-  state->sender->activate();
-
-  emit currentViewChanged(*state.get());
+  state->sender->setContext(&m_ctx);
   m_views.emplace_back(std::move(state));
+
+  view->initialize();
+  view->activate();
+
+  emit currentViewChanged(*m_views.back());
   emit viewPushed(view);
 }
 
+void NavigationController::setActions(const ActionPanelState &panel, const BaseView *caller) {
+  if (auto state = findViewState(VALUE_OR(caller, topView()))) {
+    state->actionPanelState = panel;
+    if (state->sender == topView()) { emit actionsChanged(panel); }
+  }
+}
+
 size_t NavigationController::viewStackSize() const { return m_views.size(); }
+
+void NavigationController::closeWindow() { emit windowVisiblityChanged(false); }
+
+void NavigationController::showWindow() { emit windowVisiblityChanged(true); }
 
 NavigationController::ViewState *NavigationController::topState() {
   if (m_views.empty()) return nullptr;

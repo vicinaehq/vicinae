@@ -2,6 +2,8 @@
 #include "actions/app/app-actions.hpp"
 #include "argument.hpp"
 #include "base-view.hpp"
+#include "clipboard-actions.hpp"
+#include "navigation-controller.hpp"
 #include "color-formatter.hpp"
 #include "actions/calculator/calculator-actions.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
@@ -322,7 +324,22 @@ class RootSearchView : public ListView {
     m_list->endResetModel(OmniList::SelectFirst);
   }
 
-  void itemSelected(const OmniList::AbstractVirtualItem *item) override {}
+  void itemSelected(const OmniList::AbstractVirtualItem *item) override {
+    ActionPanelState state;
+    ActionPanelSectionState section;
+
+    auto primary = new CopyToClipboardAction(Clipboard::Text("This is my clipboard text"));
+
+    primary->setPrimary(true);
+    section.addAction(primary);
+    section.addAction(new CopyToClipboardAction(Clipboard::Text("This is other clipboard text")));
+    section.addAction(new CopyToClipboardAction(Clipboard::Text("This is another clipboard text")));
+
+    state.setTitle("Actions");
+    state.addSection(section);
+
+    context()->navigation->setActions(state, this);
+  }
 
   void render(const QString &text) {
     auto rootItemManager = ServiceRegistry::instance()->rootItemManager();

@@ -22,7 +22,7 @@ public:
   void hoverChanged(bool hovered) override;
   void setText(const QString &text);
   void setTextColor(const QColor &color);
-  void setShortcut(const KeyboardShortcutModel &model);
+  void setShortcut(const std::optional<KeyboardShortcutModel> &model);
   KeyboardShortcutModel shortcut() const;
   void resetColor();
 
