@@ -1,6 +1,7 @@
 #include "navigation-controller.hpp"
 #include "base-view.hpp"
 #include <qlogging.h>
+#include <qwidget.h>
 
 NavigationController::NavigationController(ApplicationContext &ctx) : m_ctx(ctx) {}
 
@@ -37,6 +38,38 @@ NavigationController::ViewState::~ViewState() { sender->deleteLater(); }
 void NavigationController::openActionPanel() { emit actionPanelVisibilityChanged(true); }
 
 void NavigationController::closeActionPanel() { emit actionPanelVisibilityChanged(false); }
+
+void NavigationController::createCompletion(const ArgumentList &args, const OmniIconUrl &icon) {
+  if (auto state = topState()) {
+    CompleterState completer(args, icon);
+
+    state->completer = completer;
+    emit completionCreated(state->completer.value_or(completer));
+  }
+}
+
+void NavigationController::destroyCurrentCompletion() {
+  if (auto state = topState()) {
+    state->completer.reset();
+    emit completionDestroyed();
+  }
+}
+
+ArgumentValues NavigationController::completionValues() const {
+  if (auto state = topState()) {
+    if (auto completer = state->completer) { return completer->values; }
+
+    return {};
+  }
+
+  return {};
+}
+
+void NavigationController::setCompletionValues(const ArgumentValues &values) {
+  if (auto state = topState()) {
+    if (state->completer) { state->completer->values = values; }
+  }
+}
 
 void NavigationController::setNavigationIcon(const OmniIconUrl &icon) {
   if (auto state = topState()) {
@@ -121,12 +154,20 @@ void NavigationController::pushView(BaseView *view) {
 
   m_views.emplace_back(std::move(state));
 
-  clearSearchText();
+  emit searchTextChanged(QString());
+  emit searchPlaceholderTextChanged(QString());
   view->initialize();
   view->activate();
-
   emit currentViewChanged(*m_views.back());
   emit viewPushed(view);
+}
+
+void NavigationController::setSearchAccessory(QWidget *accessory) {
+  if (auto state = topState()) {
+    state->searchAccessory.reset(accessory);
+
+    if (state->sender == topView()) { emit searchAccessoryChanged(accessory); }
+  }
 }
 
 void NavigationController::setActions(std::unique_ptr<ActionPanelState> panel, const BaseView *caller) {

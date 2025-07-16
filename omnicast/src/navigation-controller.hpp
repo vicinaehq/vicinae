@@ -1,4 +1,5 @@
 #pragma once
+#include "argument.hpp"
 #include "common.hpp"
 #include "omni-icon.hpp"
 #include "ui/action-pannel/action.hpp"
@@ -6,6 +7,7 @@
 #include <qlogging.h>
 #include <qobject.h>
 #include <qobjectdefs.h>
+#include <qwidget.h>
 
 class BaseView;
 
@@ -51,6 +53,16 @@ struct ActionPanelState : public NonCopyable {
   QString title() const { return m_title; }
 };
 
+using ArgumentValues = std::pair<QString, QString>;
+
+struct CompleterState {
+  ArgumentList args;
+  ArgumentValues values;
+  OmniIconUrl icon;
+
+  CompleterState(const ArgumentList &args, const OmniIconUrl &icon) : args(args), icon(icon) {}
+};
+
 class NavigationController : public QObject, NonCopyable {
   Q_OBJECT
 
@@ -63,13 +75,12 @@ public:
     } navigation;
     QString placeholderText;
     QString searchText;
-    std::unique_ptr<QWidget> searchAccessory;
-    struct {
-      std::vector<std::pair<QString, QString>> values;
-      std::optional<CompleterData> data;
-    } completer;
+    QObjectUniquePtr<QWidget> searchAccessory;
+    std::optional<CompleterState> completer;
     std::unique_ptr<ActionPanelState> actionPanelState;
+
     bool isLoading = false;
+    void createCompletion(const ArgumentList &args, const OmniIconUrl &icon);
     bool supportsSearch = true;
     bool needsTopBar = true;
     bool needsStatusBar = true;
@@ -90,12 +101,19 @@ public:
   QString navigationTitle(const BaseView *caller = nullptr) const;
   void searchPlaceholderText(const QString &text);
 
+  void createCompletion(const ArgumentList &args, const OmniIconUrl &icon);
+  void destroyCurrentCompletion();
+
+  ArgumentValues completionValues() const;
+  void setCompletionValues(const ArgumentValues &values);
+
   void selectSearchText() const;
 
   void openActionPanel();
   void closeActionPanel();
 
   void setActions(std::unique_ptr<ActionPanelState> state, const BaseView *caller = nullptr);
+  void setSearchAccessory(QWidget *accessory);
 
   void clearSearchText();
   void setNavigationTitle(const QString &navigationTitle, const BaseView *caller = nullptr);
@@ -123,6 +141,9 @@ signals:
   void searchTextChanged(const QString &text) const;
   void searchPlaceholderTextChanged(const QString &text) const;
   void navigationStatusChanged(const QString &text, const OmniIconUrl &icon) const;
+  void searchAccessoryChanged(QWidget *widget) const;
+  void completionCreated(const CompleterState &completer) const;
+  void completionDestroyed() const;
 
 private:
   ApplicationContext &m_ctx;
