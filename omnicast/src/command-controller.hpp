@@ -11,10 +11,13 @@ public:
     std::shared_ptr<AbstractCmd> command;
     size_t viewCount;
 
-    ~CommandFrame() { context->unload(); }
+    ~CommandFrame() {
+      context->unload();
+      qDebug() << "~CommandFrame";
+    }
   };
 
-  CommandController(NavigationController &controller);
+  CommandController(ApplicationContext *ctx);
 
   void launch(const std::shared_ptr<AbstractCmd> &cmd);
 
@@ -22,6 +25,6 @@ private:
   void handleViewPushed(const BaseView *view);
   void handleViewPoped(const BaseView *view);
 
-  NavigationController &m_navigation;
+  ApplicationContext *m_ctx;
   std::vector<std::unique_ptr<CommandFrame>> m_frames;
 };

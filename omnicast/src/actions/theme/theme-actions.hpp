@@ -7,6 +7,7 @@ class SetThemeAction : public AbstractAction {
 
   void execute(AppWindow &app) override {}
   void execute() override;
+  void execute(ApplicationContext *context) override;
 
 public:
   SetThemeAction(const QString &themeId);

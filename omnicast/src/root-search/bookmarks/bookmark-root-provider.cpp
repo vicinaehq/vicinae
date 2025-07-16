@@ -40,6 +40,47 @@ ActionPanelView *RootBookmarkItem::actionPanel(const RootItemMetadata &metadata)
   return panel;
 };
 
+std::unique_ptr<ActionPanelState> RootBookmarkItem::newActionPanel(ApplicationContext *ctx,
+                                                                   const RootItemMetadata &metadata) {
+  auto panel = std::make_unique<ActionPanelState>();
+  auto mainSection = panel->createSection();
+  auto itemSection = panel->createSection();
+  auto dangerSection = panel->createSection();
+
+  auto open = new OpenCompletedBookmarkAction(m_link);
+  auto openWith = new OpenCompletedBookmarkWithAction(m_link);
+  auto edit = new EditBookmarkAction(m_link);
+  auto duplicate = new DuplicateBookmarkAction(m_link);
+  auto remove = new RemoveBookmarkAction(m_link);
+
+  auto resetRanking = new ResetItemRanking(uniqueId());
+  auto markAsFavorite = new ToggleItemAsFavorite(uniqueId(), metadata.favorite);
+
+  auto disable = new DisableItemAction(uniqueId());
+
+  open->setPrimary(true);
+  open->setShortcut({.key = "return"});
+  openWith->setShortcut({.key = "return", .modifiers = {"shift"}});
+  duplicate->setShortcut({.key = "N", .modifiers = {"ctrl"}});
+  edit->setShortcut({.key = "E", .modifiers = {"ctrl"}});
+  remove->setShortcut({.key = "X", .modifiers = {"ctrl"}});
+  disable->setShortcut({.key = "X", .modifiers = {"ctrl", "shift"}});
+
+  panel->setTitle(m_link->name());
+  mainSection->addAction(new DefaultActionWrapper(uniqueId(), open));
+  mainSection->addAction(openWith);
+  mainSection->addAction(edit);
+  mainSection->addAction(duplicate);
+
+  itemSection->addAction(resetRanking);
+  itemSection->addAction(markAsFavorite);
+
+  dangerSection->addAction(remove);
+  dangerSection->addAction(disable);
+
+  return panel;
+}
+
 ActionPanelView *RootBookmarkItem::fallbackActionPanel() const {
   auto panel = new ActionPanelStaticListView;
   auto open = new OpenBookmarkFromSearchText(m_link);

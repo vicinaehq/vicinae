@@ -1,12 +1,12 @@
 #pragma once
 #include "omni-icon.hpp"
-#include "ui/button.hpp"
 #include "ui/image/omnimg.hpp"
+#include "ui/omni-button.hpp"
 #include <qboxlayout.h>
 #include <qevent.h>
 #include <qnamespace.h>
 
-class IconButton : public Button {
+class IconButton : public OmniButtonWidget {
   Omnimg::ImageWidget *_icon;
 
 protected:

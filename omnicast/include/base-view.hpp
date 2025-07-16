@@ -27,7 +27,7 @@
 class BaseView : public QWidget {
   bool m_initialized = false;
   ApplicationContext *m_ctx = nullptr;
-  const BaseView* m_navProxy = this;
+  const BaseView *m_navProxy = this;
 
 public:
   void createInitialize() {
@@ -43,13 +43,15 @@ public:
    * Allows to nest view with only one effectively having navigation responsability.
    * In most cases, you should not use this. This is mainly used for extensions.
    */
-  void setNavigationProxy(const BaseView* proxy) { m_navProxy = proxy; }
+  void setNavigationProxy(const BaseView *proxy) { m_navProxy = proxy; }
 
   /**
    * Whether to show the search bar for this view. Calling setSearchText or searchText() is still
    * valid but will always return the empty string.
    */
   virtual bool supportsSearch() const { return true; }
+
+  void executePrimaryAction() { m_ctx->navigation->executePrimaryAction(); }
 
   virtual bool needsGlobalStatusBar() const { return true; }
   virtual bool needsGlobalTopBar() const { return true; }
@@ -232,12 +234,6 @@ protected:
 
   void onDeactivate() override { m_actionPannelV2->reset(); }
 
-  void activatePrimaryAction() {
-    auto ui = ServiceRegistry::instance()->UI();
-
-    ui->executeDefaultAction();
-  }
-
   void setupUI(QWidget *centerWidget) {
     QVBoxLayout *m_layout = new QVBoxLayout;
     m_layout->setContentsMargins(0, 0, 0, 0);
@@ -293,6 +289,10 @@ public:
     virtual QWidget *generateDetail() const { return nullptr; }
     virtual std::unique_ptr<CompleterData> createCompleter() const { return nullptr; }
     virtual QString navigationTitle() const { return {}; }
+
+    virtual std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const {
+      return std::make_unique<ActionPanelState>();
+    }
 
     virtual ActionPanelView *actionPanel() const {
       auto panel = new ActionPanelStaticListView;
@@ -351,14 +351,16 @@ protected:
         //
       }
 
-      auto ui = ServiceRegistry::instance()->UI();
+      context()->navigation->setActions(nextItem->newActionPanel(context()));
 
-      if (auto panel = nextItem->actionPanel()) {
-        m_actionPannelV2->setView(panel);
-      } else {
-        m_actionPannelV2->hide();
-        m_actionPannelV2->popToRoot();
-      }
+      /*
+  if (auto panel = nextItem->actionPanel()) {
+    m_actionPannelV2->setView(panel);
+  } else {
+    m_actionPannelV2->hide();
+    m_actionPannelV2->popToRoot();
+  }
+      */
 
     } else {
       m_split->setDetailVisibility(false);
@@ -378,7 +380,7 @@ protected:
     }
   }
 
-  virtual void itemActivated(const OmniList::AbstractVirtualItem &item) { activatePrimaryAction(); }
+  virtual void itemActivated(const OmniList::AbstractVirtualItem &item) { executePrimaryAction(); }
 
   QWidget *detail() const { return m_split->detailWidget(); }
 
@@ -503,11 +505,7 @@ protected:
     }
   }
 
-  virtual void itemActivated(const OmniList::AbstractVirtualItem &item) {
-    auto ui = ServiceRegistry::instance()->UI();
-
-    ui->executeDefaultAction();
-  }
+  virtual void itemActivated(const OmniList::AbstractVirtualItem &item) { executePrimaryAction(); }
 
 public:
   GridView(QWidget *parent = nullptr) : SimpleView(parent) {

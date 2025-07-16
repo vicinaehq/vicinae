@@ -4,22 +4,29 @@
 #include <qboxlayout.h>
 #include <qdnslookup.h>
 #include <qevent.h>
+#include <qnamespace.h>
 #include <qwidget.h>
 #include "base-view.hpp"
-
-void GlobalHeader::handleViewStateChange(const NavigationController::ViewState &state) {
-  qDebug() << "view state change" << state.searchText << state.placeholderText;
-  m_input->setText(state.searchText);
-  m_input->setPlaceholderText(state.placeholderText);
-}
 
 void GlobalHeader::setupUI() {
   auto vlayout = new QVBoxLayout;
   auto hlayout = new QHBoxLayout;
   auto horizontalWidget = new QWidget;
 
-  hlayout->setContentsMargins(10, 0, 10, 0);
+  hlayout->setContentsMargins(15, 5, 15, 5);
+  hlayout->addWidget(m_backButton);
+  hlayout->addWidget(m_backButtonSpacer);
   hlayout->addWidget(m_input);
+  hlayout->setSpacing(0);
+  hlayout->setAlignment(Qt::AlignVCenter);
+
+  m_backButton->setFixedSize(25, 25);
+  m_backButton->setBackgroundColor(ColorTint::MainSelectedBackground);
+  m_backButton->setUrl(BuiltinOmniIconUrl("arrow-left"));
+  m_backButtonSpacer->setFixedWidth(10);
+  m_backButtonSpacer->hide();
+  m_backButton->hide();
+
   horizontalWidget->setLayout(hlayout);
 
   vlayout->setContentsMargins(0, 0, 0, 0);
@@ -32,6 +39,8 @@ void GlobalHeader::setupUI() {
   m_input->installEventFilter(this);
   m_input->setFocus();
 }
+
+SearchBar *GlobalHeader::input() const { return m_input; }
 
 void GlobalHeader::handleTextEdited(const QString &text) { m_navigation.setSearchText(text); }
 
@@ -61,8 +70,19 @@ void GlobalHeader::handleSearchPop() {
 
 GlobalHeader::GlobalHeader(NavigationController &controller) : m_navigation(controller) {
   setupUI();
-  connect(&m_navigation, &NavigationController::currentViewStateChanged, this,
-          &GlobalHeader::handleViewStateChange);
+  connect(&m_navigation, &NavigationController::searchTextSelected, m_input, &SearchBar::selectAll);
+  connect(&m_navigation, &NavigationController::currentViewChanged, this, [this]() {
+    if (auto state = m_navigation.topState()) {
+      bool needsBackButton = m_navigation.viewStackSize() > 1;
+
+      m_backButton->setVisible(needsBackButton);
+      m_backButtonSpacer->setVisible(needsBackButton);
+    }
+  });
+  connect(&m_navigation, &NavigationController::searchTextChanged, m_input, &SearchBar::setText);
+  connect(&m_navigation, &NavigationController::searchPlaceholderTextChanged, m_input,
+          &SearchBar::setPlaceholderText);
   connect(m_input, &SearchBar::pop, this, &GlobalHeader::handleSearchPop);
+  connect(m_backButton, &IconButton::clicked, this, &GlobalHeader::handleSearchPop);
   connect(m_input, &SearchBar::textEdited, this, &GlobalHeader::handleTextEdited);
 }

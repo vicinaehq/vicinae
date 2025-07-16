@@ -46,11 +46,15 @@ public:
   DisableApplication(const QString &itemId) : DisableItemAction(itemId) {}
 };
 
+/**
+ * Wrapper for the main action of a root item, automatically recording execution.
+ */
 class DefaultActionWrapper : public AbstractAction {
   std::unique_ptr<AbstractAction> m_action;
   QString m_id;
 
   void execute() override;
+  void execute(ApplicationContext *context) override;
 
 public:
   QString title() const override;

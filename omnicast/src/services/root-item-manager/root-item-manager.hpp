@@ -1,7 +1,9 @@
 #pragma once
 #include "action-panel/action-panel.hpp"
 #include "argument.hpp"
+#include "common.hpp"
 #include "libtrie/trie.hpp"
+#include "navigation-controller.hpp"
 #include "omni-database.hpp"
 #include "omni-icon.hpp"
 #include "preference.hpp"
@@ -105,6 +107,11 @@ public:
   virtual QList<AbstractAction *> actions() const { return {}; }
 
   virtual ActionPanelView *actionPanel(const RootItemMetadata &metadata) const { return nullptr; }
+
+  virtual std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx,
+                                                           const RootItemMetadata &metadata) {
+    return {};
+  }
 
   /**
    * Action panel shown when this item is used as a fallback command.

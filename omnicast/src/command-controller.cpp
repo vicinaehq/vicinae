@@ -2,9 +2,10 @@
 #include "common.hpp"
 #include "navigation-controller.hpp"
 
-CommandController::CommandController(NavigationController &controller) : m_navigation(controller) {
-  connect(&m_navigation, &NavigationController::viewPushed, this, &CommandController::handleViewPushed);
-  connect(&m_navigation, &NavigationController::viewPoped, this, &CommandController::handleViewPoped);
+CommandController::CommandController(ApplicationContext *ctx) : m_ctx(ctx) {
+  connect(ctx->navigation.get(), &NavigationController::viewPushed, this,
+          &CommandController::handleViewPushed);
+  connect(ctx->navigation.get(), &NavigationController::viewPoped, this, &CommandController::handleViewPoped);
 }
 
 void CommandController::handleViewPushed(const BaseView *view) {
@@ -31,6 +32,7 @@ void CommandController::launch(const std::shared_ptr<AbstractCmd> &cmd) {
   frame->context.reset(cmd->createContext(cmd));
   frame->command = cmd;
   frame->viewCount = 0;
-  frame->context->load({});
+  frame->context->setContext(m_ctx);
   m_frames.emplace_back(std::move(frame));
+  m_frames.back()->context->load({});
 }

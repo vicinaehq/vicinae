@@ -21,10 +21,10 @@ struct ActionPanelSectionState {
   void addAction(AbstractAction *action) { m_actions.emplace_back(action); }
 };
 
-struct ActionPanelState {
+struct ActionPanelState : public NonCopyable {
   AbstractAction *findPrimaryAction() const {
     for (const auto &section : m_sections) {
-      for (const auto &action : section.actions()) {
+      for (const auto &action : section->actions()) {
         if (action->isPrimary()) return action.get();
       }
     }
@@ -33,15 +33,25 @@ struct ActionPanelState {
   }
 
   QString m_title;
-  std::vector<ActionPanelSectionState> m_sections;
+  std::vector<std::unique_ptr<ActionPanelSectionState>> m_sections;
 
-  std::vector<ActionPanelSectionState> sections() const { return m_sections; }
-  void addSection(const ActionPanelSectionState &section) { m_sections.emplace_back(section); }
+  const std::vector<std::unique_ptr<ActionPanelSectionState>> &sections() const { return m_sections; }
+
+  ActionPanelSectionState *createSection(const QString &name = "") {
+    auto section = std::make_unique<ActionPanelSectionState>();
+    auto handle = section.get();
+
+    section->setName(name);
+    m_sections.emplace_back(std::move(section));
+
+    return handle;
+  }
+
   void setTitle(const QString &title) { m_title = title; }
   QString title() const { return m_title; }
 };
 
-class NavigationController : public QObject {
+class NavigationController : public QObject, NonCopyable {
   Q_OBJECT
 
 public:
@@ -58,7 +68,7 @@ public:
       std::vector<std::pair<QString, QString>> values;
       std::optional<CompleterData> data;
     } completer;
-    ActionPanelState actionPanelState;
+    std::unique_ptr<ActionPanelState> actionPanelState;
     bool isLoading = false;
     bool supportsSearch = true;
     bool needsTopBar = true;
@@ -80,14 +90,19 @@ public:
   QString navigationTitle(const BaseView *caller = nullptr) const;
   void searchPlaceholderText(const QString &text);
 
+  void selectSearchText() const;
+
   void openActionPanel();
   void closeActionPanel();
 
-  void setActions(const ActionPanelState &state, const BaseView *caller = nullptr);
+  void setActions(std::unique_ptr<ActionPanelState> state, const BaseView *caller = nullptr);
 
   void clearSearchText();
   void setNavigationTitle(const QString &navigationTitle, const BaseView *caller = nullptr);
   void setNavigationIcon(const OmniIconUrl &icon);
+
+  bool executePrimaryAction();
+
   void popCurrentView();
   void pushView(BaseView *view);
   size_t viewStackSize() const;
@@ -104,10 +119,15 @@ signals:
   void actionPanelVisibilityChanged(bool visible);
   void actionsChanged(const ActionPanelState &actions) const;
   void windowVisiblityChanged(bool visible);
+  void searchTextSelected() const;
+  void searchTextChanged(const QString &text) const;
+  void searchPlaceholderTextChanged(const QString &text) const;
+  void navigationStatusChanged(const QString &text, const OmniIconUrl &icon) const;
 
 private:
   ApplicationContext &m_ctx;
 
+  void executeAction(AbstractAction *action);
   ViewState *findViewState(const BaseView *view);
   const ViewState *findViewState(const BaseView *view) const;
   const BaseView *topView() const;

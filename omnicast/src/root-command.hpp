@@ -60,6 +60,13 @@ protected:
     return m_item->actionPanel(metadata);
   }
 
+  std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
+    auto manager = ctx->services->rootItemManager();
+    auto metadata = manager->itemMetadata(m_item->uniqueId());
+
+    return m_item->newActionPanel(ctx, metadata);
+  }
+
   ItemData data() const override {
     auto manager = ServiceRegistry::instance()->rootItemManager();
     auto metadata = manager->itemMetadata(m_item->uniqueId());
@@ -324,22 +331,7 @@ class RootSearchView : public ListView {
     m_list->endResetModel(OmniList::SelectFirst);
   }
 
-  void itemSelected(const OmniList::AbstractVirtualItem *item) override {
-    ActionPanelState state;
-    ActionPanelSectionState section;
-
-    auto primary = new CopyToClipboardAction(Clipboard::Text("This is my clipboard text"));
-
-    primary->setPrimary(true);
-    section.addAction(primary);
-    section.addAction(new CopyToClipboardAction(Clipboard::Text("This is other clipboard text")));
-    section.addAction(new CopyToClipboardAction(Clipboard::Text("This is another clipboard text")));
-
-    state.setTitle("Actions");
-    state.addSection(section);
-
-    context()->navigation->setActions(state, this);
-  }
+  void itemSelected(const OmniList::AbstractVirtualItem *item) override {}
 
   void render(const QString &text) {
     auto rootItemManager = ServiceRegistry::instance()->rootItemManager();
@@ -408,6 +400,7 @@ class RootSearchView : public ListView {
   Timer timer;
 
   void textChanged(const QString &text) override {
+    qDebug() << "widget count" << QApplication::allWidgets().count();
     m_searchText = text;
     timer.time("time since last text changed");
     timer.start();

@@ -217,7 +217,7 @@ void ExtensionListComponent::handleDebouncedSearchNotification() {
   }
 }
 
-void ExtensionListComponent::onItemActivated(const ListItemViewModel &item) { activatePrimaryAction(); }
+void ExtensionListComponent::onItemActivated(const ListItemViewModel &item) { executePrimaryAction(); }
 
 void ExtensionListComponent::textChanged(const QString &text) {
   if (text == _model.searchText) { /*m_topBar->input->setText(*_model.searchText);*/

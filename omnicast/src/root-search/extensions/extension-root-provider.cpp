@@ -4,6 +4,7 @@
 #include "actions/root-search/root-search-actions.hpp"
 #include "clipboard-actions.hpp"
 #include "command-actions.hpp"
+#include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 
@@ -36,6 +37,28 @@ ActionPanelView *CommandRootItem::actionPanel(const RootItemMetadata &metadata) 
 
   panel->addSection();
   panel->addAction(new DisableApplication(uniqueId()));
+
+  return panel;
+}
+
+std::unique_ptr<ActionPanelState> CommandRootItem::newActionPanel(ApplicationContext *ctx,
+                                                                  const RootItemMetadata &metadata) {
+  auto panel = std::make_unique<ActionPanelState>();
+  auto open = new OpenBuiltinCommandAction(m_command, "Open command");
+  auto resetRanking = new ResetItemRanking(uniqueId());
+  auto markAsFavorite = new ToggleItemAsFavorite(uniqueId(), metadata.favorite);
+  auto mainSection = panel->createSection();
+  auto itemSection = panel->createSection();
+  auto dangerSection = panel->createSection();
+  auto deeplink =
+      QString("omnicast://extensions/%1/%2").arg(m_command->extensionId()).arg(m_command->commandId());
+  auto copyDeeplink = new CopyToClipboardAction(Clipboard::Text(deeplink), "Copy deeplink");
+
+  mainSection->addAction(new DefaultActionWrapper(uniqueId(), open));
+  itemSection->addAction(resetRanking);
+  itemSection->addAction(markAsFavorite);
+  itemSection->addAction(copyDeeplink);
+  dangerSection->addAction(new DisableApplication(uniqueId()));
 
   return panel;
 }

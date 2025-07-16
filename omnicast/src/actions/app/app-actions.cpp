@@ -15,6 +15,18 @@ void OpenAppAction::execute() {
   ui->closeWindow();
 }
 
+void OpenAppAction::execute(ApplicationContext *ctx) {
+  auto appDb = ctx->services->appDb();
+
+  if (!appDb->launch(*application.get(), args)) {
+    qDebug() << "Failed to launch app";
+    // ui->setToast("Failed to start app", ToastPriority::Danger);
+    return;
+  }
+
+  ctx->navigation->closeWindow();
+}
+
 OpenAppAction::OpenAppAction(const std::shared_ptr<Application> &app, const QString &title,
                              const std::vector<QString> args)
     : AbstractAction(title, app->iconUrl()), application(app), args(args) {}

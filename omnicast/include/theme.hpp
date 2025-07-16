@@ -13,7 +13,21 @@
 #include <qpalette.h>
 #include <qtmetamacros.h>
 
-enum ColorTint { InvalidTint, Blue, Green, Magenta, Orange, Purple, Red, Yellow, TextPrimary, TextSecondary };
+enum ColorTint {
+  InvalidTint,
+  Blue,
+  Green,
+  Magenta,
+  Orange,
+  Purple,
+  Red,
+  Yellow,
+  TextPrimary,
+  TextSecondary,
+  MainBackground,
+  MainHoverBackground,
+  MainSelectedBackground
+};
 enum TextSize { TextRegular, TextTitle, TextSmaller };
 
 struct ThemeLinearGradient {
@@ -99,6 +113,12 @@ struct ThemeInfo {
       return colors.text;
     case ColorTint::TextSecondary:
       return colors.subtext;
+    case ColorTint::MainBackground:
+      return colors.mainBackground;
+    case ColorTint::MainHoverBackground:
+      return colors.mainHoveredBackground;
+    case ColorTint::MainSelectedBackground:
+      return colors.mainSelectedBackground;
     default:
       break;
     }

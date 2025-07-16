@@ -115,7 +115,7 @@ void ExtensionGridComponent::onSelectionChanged(const GridItemViewModel *next) {
 
 void ExtensionGridComponent::handleDebouncedSearchNotification() { auto text = searchText(); }
 
-void ExtensionGridComponent::onItemActivated(const GridItemViewModel &item) { activatePrimaryAction(); }
+void ExtensionGridComponent::onItemActivated(const GridItemViewModel &item) { executePrimaryAction(); }
 
 void ExtensionGridComponent::textChanged(const QString &text) {
   if (_model.filtering) {

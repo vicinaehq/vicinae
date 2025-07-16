@@ -11,9 +11,16 @@ public:
   void load(const LaunchProps &props) override {
     qDebug() << "loading single view" << command()->name();
     auto ui = ServiceRegistry::instance()->UI();
+    auto &nav = context()->navigation;
 
-    ui->pushView(new T(), {.navigation = NavigationStatus{.title = command()->name(),
-                                                          .iconUrl = command()->iconUrl()}});
+    nav->pushView(new T());
+    nav->setNavigationTitle(command()->name());
+    nav->setNavigationIcon(command()->iconUrl());
+
+    /*
+ui->pushView(new T(), {.navigation = NavigationStatus{.title = command()->name(),
+                                                      .iconUrl = command()->iconUrl()}});
+    */
   }
 };
 

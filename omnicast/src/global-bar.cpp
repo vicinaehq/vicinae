@@ -3,7 +3,6 @@
 #include "navigation-controller.hpp"
 #include "omni-icon.hpp"
 #include "omnicast.hpp"
-#include "ui/keyboard.hpp"
 #include <qboxlayout.h>
 #include <qnamespace.h>
 #include <qwidget.h>
@@ -16,11 +15,11 @@ void NavigationStatusWidget::setIcon(const OmniIconUrl &icon) { m_navigationIcon
 void NavigationStatusWidget::setupUI() {
   auto layout = new QHBoxLayout;
 
-  m_navigationIcon->setFixedSize(25, 25);
+  m_navigationIcon->setFixedSize(20, 20);
 
   layout->setAlignment(Qt::AlignVCenter);
   layout->setContentsMargins(0, 0, 0, 0);
-  layout->setSpacing(0);
+  layout->setSpacing(10);
   layout->addWidget(m_navigationIcon);
   layout->addWidget(m_navigationTitle);
   setLayout(layout);
@@ -47,11 +46,7 @@ void GlobalBar::actionsChanged(const ActionPanelState &actions) {
   m_actionButton->setShortcut(KeyboardShortcutModel{.key = "B", .modifiers = {"ctrl"}});
 }
 
-void GlobalBar::handleViewStateChange(const NavigationController::ViewState &state) {
-
-  m_status->setTitle(state.navigation.title);
-  m_status->setIcon(state.navigation.icon);
-}
+void GlobalBar::handleViewStateChange(const NavigationController::ViewState &state) {}
 
 void GlobalBar::setupUI() {
   setFixedHeight(Omnicast::STATUS_BAR_HEIGHT);
@@ -70,13 +65,24 @@ void GlobalBar::setupUI() {
   m_status->setIcon(BuiltinOmniIconUrl("omnicast"));
   setLayout(layout);
 
-  connect(m_primaryActionButton, &ShortcutButton::clicked, this, [this]() {
-    if (auto state = m_ctx.navigation->topState()) {
-      if (auto primary = state->actionPanelState.findPrimaryAction()) { primary->execute(&m_ctx); }
-    }
-  });
+  connect(m_primaryActionButton, &ShortcutButton::clicked, this,
+          [this]() { m_ctx.navigation->executePrimaryAction(); });
 
   connect(m_actionButton, &ShortcutButton::clicked, this, [this]() { m_ctx.navigation->openActionPanel(); });
+
+  connect(m_ctx.navigation.get(), &NavigationController::currentViewChanged, this, [this]() {
+    auto state = m_ctx.navigation->topState();
+    if (auto &ac = state->actionPanelState) { actionsChanged(*ac.get()); }
+  });
+
+  connect(m_ctx.navigation.get(), &NavigationController::navigationStatusChanged, this,
+          [this](const QString &title, const OmniIconUrl &icon) {
+            m_status->setTitle(title);
+            m_status->setIcon(icon);
+          });
+
+  connect(m_ctx.navigation.get(), &NavigationController::currentViewStateChanged, this,
+          &GlobalBar::handleViewStateChange);
 
   connect(m_ctx.navigation.get(), &NavigationController::currentViewStateChanged, this,
           &GlobalBar::handleViewStateChange);

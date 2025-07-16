@@ -286,7 +286,7 @@ int startDaemon() {
   ApplicationContext ctx;
 
   ctx.navigation = std::make_unique<NavigationController>(ctx);
-  ctx.command = std::make_unique<CommandController>(*ctx.navigation);
+  ctx.command = std::make_unique<CommandController>(&ctx);
   ctx.services = ServiceRegistry::instance();
 
   IpcCommandServer commandServer;

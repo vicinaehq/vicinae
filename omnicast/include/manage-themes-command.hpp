@@ -91,17 +91,7 @@ class ThemeItem : public OmniList::AbstractVirtualItem, public ListView::Actionn
   ThemeInfo m_theme;
 
 public:
-  int calculateHeight(int width) const override {
-    static std::unique_ptr<ThemeItemWidget> ruler;
-
-    if (!ruler) {
-      ruler = std::make_unique<ThemeItemWidget>();
-      ruler->setTitle("dummy title");
-      ruler->setDescription("dummy description");
-    }
-
-    return ruler->sizeHint().height();
-  }
+  bool hasUniformHeight() const override { return true; }
 
   QString generateId() const override { return m_theme.id; }
 
@@ -127,6 +117,20 @@ public:
     item->setStrokeColor(m_theme.colors.text);
 
     return item;
+  }
+
+  std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
+    auto panel = std::make_unique<ActionPanelState>();
+    auto section = panel->createSection();
+    auto setTheme = new SetThemeAction(m_theme.id);
+
+    setTheme->setShortcut({.key = "return"});
+    setTheme->setPrimary(true);
+
+    panel->setTitle(m_theme.name);
+    section->addAction(setTheme);
+
+    return panel;
   }
 
   ActionPanelView *actionPanel() const override {

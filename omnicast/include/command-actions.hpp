@@ -6,6 +6,7 @@ struct OpenBuiltinCommandAction : public AbstractAction {
   QString text;
 
   void execute() override;
+  void execute(ApplicationContext *context) override;
 
   OpenBuiltinCommandAction(const std::shared_ptr<AbstractCmd> &cmd, const QString &title = "Open command",
                            const QString &text = "")

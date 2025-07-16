@@ -5,6 +5,7 @@
 #include "ui/image/omnimg.hpp"
 #include "ui/list-accessory-widget.hpp"
 #include <qnamespace.h>
+#include <qsizepolicy.h>
 #include <qwidget.h>
 
 void DefaultListItemWidget::setName(const QString &name) {
@@ -21,6 +22,7 @@ void DefaultListItemWidget::setIconUrl(const std::optional<OmniIconUrl> &url) {
 
 void DefaultListItemWidget::setAccessories(const AccessoryList &list) {
   _accessoryList->setAccessories(list);
+  _accessoryList->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 }
 
 void DefaultListItemWidget::setSubtitle(const std::variant<QString, std::filesystem::path> &subtitle) {

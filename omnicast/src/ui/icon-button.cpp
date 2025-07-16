@@ -7,11 +7,11 @@ void IconButton::resizeEvent(QResizeEvent *event) {
 
   _icon->setFixedSize(iconRect.size());
   _icon->move(margins.left(), margins.top());
-  Button::resizeEvent(event);
+  OmniButtonWidget::resizeEvent(event);
 }
 
 IconButton::IconButton() : _icon(new Omnimg::ImageWidget(this)) {
-  setContentsMargins(3, 3, 3, 3);
+  _icon->setContentsMargins(3, 3, 3, 3);
   _icon->show();
 }
 

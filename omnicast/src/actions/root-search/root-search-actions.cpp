@@ -77,6 +77,18 @@ void ToggleItemAsFavorite::execute() {
 ToggleItemAsFavorite::ToggleItemAsFavorite(const QString &id, bool currentValue)
     : m_id(id), m_value(currentValue) {}
 
+void DefaultActionWrapper::execute(ApplicationContext *ctx) {
+  auto manager = ctx->services->rootItemManager();
+
+  if (manager->registerVisit(m_id)) {
+    qDebug() << "Visit registered";
+  } else {
+    qCritical() << "Failed to register visit";
+  }
+
+  m_action->execute(ctx);
+}
+
 void DefaultActionWrapper::execute() {
   auto manager = ServiceRegistry::instance()->rootItemManager();
 

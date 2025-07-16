@@ -1,4 +1,5 @@
 #pragma once
+#include "common.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/toast.hpp"
 #include <qobject.h>
@@ -15,10 +16,14 @@ class CommandContext : public QObject {
   Q_OBJECT
 
   std::shared_ptr<AbstractCmd> _cmd;
+  ApplicationContext *m_ctx = nullptr;
 
 public:
   const AbstractCmd *command() const { return _cmd.get(); }
   virtual void onActionExecuted(AbstractAction *action) {}
+
+  void setContext(ApplicationContext *ctx) { m_ctx = ctx; }
+  ApplicationContext *context() const { return m_ctx; }
 
   virtual void load(const LaunchProps &props) {}
   virtual void unload() {};

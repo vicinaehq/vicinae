@@ -9,6 +9,7 @@ class OpenAppAction : public AbstractAction {
   std::vector<QString> args;
 
   void execute() override;
+  void execute(ApplicationContext *context) override;
 
 public:
   OpenAppAction(const std::shared_ptr<Application> &app, const QString &title,

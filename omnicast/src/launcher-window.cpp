@@ -60,25 +60,18 @@ void LauncherWindow::handleViewChange(const NavigationController::ViewState &sta
 
   m_currentViewWrapper->addWidget(state.sender);
   m_currentViewWrapper->setCurrentWidget(state.sender);
+  m_header->setVisible(state.needsTopBar);
+  m_bar->setVisible(state.needsStatusBar);
+  m_header->input()->setVisible(state.supportsSearch);
+
+  if (state.supportsSearch) { m_header->input()->setFocus(); }
 }
 
 bool LauncherWindow::event(QEvent *event) {
   if (event->type() == QEvent::KeyPress) {
     auto keyEvent = static_cast<QKeyEvent *>(event);
 
-    if (auto state = m_ctx.navigation->topState()) {
-      for (const auto &section : state->actionPanelState.sections()) {
-        for (const auto &action : section.actions()) {
-          if (action->shortcut && KeyboardShortcut(*action->shortcut) == keyEvent) {
-            action->execute();
-            return true;
-          }
-        }
-      }
-    }
-
     if (keyEvent->keyCombination() == QKeyCombination(Qt::ControlModifier, Qt::Key_B)) {
-      qDebug() << "Open action panel";
       m_actionPanel->show();
       return true;
     }
@@ -100,6 +93,20 @@ bool LauncherWindow::event(QEvent *event) {
     }
     default:
       break;
+    }
+
+    // handle bound actions
+    if (auto state = m_ctx.navigation->topState()) {
+      if (state->actionPanelState) {
+        for (const auto &section : state->actionPanelState->sections()) {
+          for (const auto &action : section->actions()) {
+            if (action->shortcut && KeyboardShortcut(*action->shortcut) == keyEvent) {
+              action->execute(&m_ctx);
+              return true;
+            }
+          }
+        }
+      }
     }
   }
 

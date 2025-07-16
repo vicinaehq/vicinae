@@ -445,9 +445,9 @@ public:
     auto panel = new ActionPanelStaticListView;
 
     for (const auto &section : state.sections()) {
-      panel->addSection(section.name());
+      panel->addSection(section->name());
 
-      for (const auto &action : section.actions()) {
+      for (const auto &action : section->actions()) {
         panel->addAction(action);
       }
     }

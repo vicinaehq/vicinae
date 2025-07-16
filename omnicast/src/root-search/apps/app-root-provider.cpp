@@ -1,6 +1,7 @@
 #include "root-search/apps/app-root-provider.hpp"
 #include "actions/app/app-actions.hpp"
 #include "actions/root-search/root-search-actions.hpp"
+#include "navigation-controller.hpp"
 #include "omni-icon.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "settings/app-metadata-settings-detail.hpp"
@@ -14,6 +15,8 @@ double AppRootItem::baseScoreWeight() const { return 1; }
 QString AppRootItem::typeDisplayName() const { return "Application"; }
 
 std::vector<QString> AppRootItem::keywords() const { return m_app->keywords(); }
+
+QString AppRootItem::subtitle() const { return m_app->description(); }
 
 QString AppRootItem::providerId() const { return "app"; }
 
@@ -77,6 +80,54 @@ ActionPanelView *AppRootItem::actionPanel(const RootItemMetadata &metadata) cons
   auto disable = new DisableApplication(uniqueId());
 
   panel->addAction(disable);
+
+  return panel;
+}
+
+std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext *ctx,
+                                                              const RootItemMetadata &metadata) {
+  auto panel = std::make_unique<ActionPanelState>();
+  auto appDb = ctx->services->appDb();
+  auto fileBrowser = appDb->fileBrowser();
+  auto textEditor = appDb->textEditor();
+  auto open = new OpenAppAction(m_app, "Open Application", {});
+  auto resetRanking = new ResetItemRanking(uniqueId());
+  auto markAsFavorite = new ToggleItemAsFavorite(uniqueId(), metadata.favorite);
+  auto disable = new DisableApplication(uniqueId());
+  auto mainSection = panel->createSection();
+  auto itemSection = panel->createSection();
+  auto dangerSection = panel->createSection();
+  auto appActions = m_app->actions();
+
+  panel->setTitle(m_app->name());
+
+  mainSection->addAction(new DefaultActionWrapper(uniqueId(), open));
+
+  auto makeAction = [](auto &&pair) -> OpenAppAction * {
+    const auto &[index, appAction] = pair;
+    auto openAction = new OpenAppAction(appAction, appAction->name(), {});
+
+    if (index < 9) {
+      openAction->setShortcut({.key = QString::number(index + 1), .modifiers = {"ctrl", "shift"}});
+    }
+
+    return openAction;
+  };
+
+  for (const auto &action : m_app->actions() | std::views::enumerate | std::views::transform(makeAction)) {
+    mainSection->addAction(action);
+  }
+
+  if (fileBrowser) {
+    auto openLocation = new OpenAppAction(fileBrowser, "Open Location", {m_app->path().c_str()});
+
+    openLocation->setShortcut({.key = "O", .modifiers = {"ctrl"}});
+    mainSection->addAction(openLocation);
+  }
+
+  itemSection->addAction(resetRanking);
+  itemSection->addAction(markAsFavorite);
+  dangerSection->addAction(disable);
 
   return panel;
 }
