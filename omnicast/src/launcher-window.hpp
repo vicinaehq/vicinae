@@ -4,7 +4,6 @@
 #include "global-bar.hpp"
 #include "header.hpp"
 #include "navigation-controller.hpp"
-#include "command-controller.hpp"
 #include <qevent.h>
 #include <qmainwindow.h>
 #include <qstackedwidget.h>

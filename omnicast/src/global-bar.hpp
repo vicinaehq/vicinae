@@ -4,6 +4,7 @@
 #include "omni-icon.hpp"
 #include "ui/image/omnimg.hpp"
 #include "ui/shortcut-button.hpp"
+#include "ui/toast.hpp"
 #include "ui/typography/typography.hpp"
 #include <qstackedwidget.h>
 #include <qwidget.h>
@@ -36,7 +37,10 @@ private:
   NavigationStatusWidget *m_status = new NavigationStatusWidget;
   ShortcutButton *m_primaryActionButton = new ShortcutButton;
   ShortcutButton *m_actionButton = new ShortcutButton;
+  ToastWidget *m_toast = new ToastWidget;
 
+  void handleToast(const Toast *toast);
+  void handleToastDestroyed(const Toast *toast);
   void handleViewStateChange(const NavigationController::ViewState &state);
   void actionsChanged(const ActionPanelState &actions);
   void handleActionPanelVisiblityChange(bool visible);

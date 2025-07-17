@@ -226,6 +226,7 @@ class ExtensionCommandRuntime : public CommandContext {
 
   QJsonObject handleToastRequest(const QString &action, const QJsonObject &payload) {
     auto &nav = context()->navigation;
+    auto toast = context()->services->toastService();
 
     if (action == "toast.show") {
       auto title = payload["title"].toString();
@@ -238,7 +239,7 @@ class ExtensionCommandRuntime : public CommandContext {
         priority = ToastPriority::Danger;
       }
 
-      // ui->setToast(title, priority);
+      toast->setToast(title, priority);
       return {};
     }
 
@@ -403,10 +404,7 @@ class ExtensionCommandRuntime : public CommandContext {
   }
 
   void handleViewPoped() {
-    if (m_viewStack.size() > 1) {
-      notify("pop-view", {});
-      qCritical() << "send pop!!!";
-    }
+    if (m_viewStack.size() > 1) { notify("pop-view", {}); }
 
     m_viewStack.pop_back();
   }
@@ -430,7 +428,7 @@ public:
   }
 
   void unload() override {
-    auto manager = ServiceRegistry::instance()->extensionManager();
+    auto manager = context()->services->extensionManager();
 
     manager->unloadCommand(m_sessionId);
   }

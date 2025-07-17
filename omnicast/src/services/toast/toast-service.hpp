@@ -64,7 +64,7 @@ public:
     });
   }
 
-  void setToast(const QString &title, ToastPriority priority, int duration = 2000) {
+  void setToast(const QString &title, ToastPriority priority = ToastPriority::Success, int duration = 2000) {
     auto toast = new Toast(title, priority);
 
     QTimer::singleShot(duration, toast, [this, toast]() {

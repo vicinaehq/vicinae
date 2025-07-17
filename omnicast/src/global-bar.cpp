@@ -2,6 +2,7 @@
 #include "common.hpp"
 #include "navigation-controller.hpp"
 #include "omni-icon.hpp"
+#include "service-registry.hpp"
 #include "omnicast.hpp"
 #include <qboxlayout.h>
 #include <qnamespace.h>
@@ -48,7 +49,16 @@ void GlobalBar::actionsChanged(const ActionPanelState &actions) {
 
 void GlobalBar::handleViewStateChange(const NavigationController::ViewState &state) {}
 
+void GlobalBar::handleToast(const Toast *toast) {
+  m_toast->setToast(toast);
+  m_leftWidget->setCurrentWidget(m_toast);
+}
+
+void GlobalBar::handleToastDestroyed(const Toast *toast) { m_leftWidget->setCurrentWidget(m_status); }
+
 void GlobalBar::setupUI() {
+  auto toast = m_ctx.services->toastService();
+
   setFixedHeight(Omnicast::STATUS_BAR_HEIGHT);
   auto layout = new QHBoxLayout;
 
@@ -58,6 +68,8 @@ void GlobalBar::setupUI() {
   layout->setContentsMargins(15, 5, 15, 5);
   layout->setSpacing(0);
   m_leftWidget->addWidget(m_status);
+  m_leftWidget->addWidget(m_toast);
+  m_leftWidget->setCurrentWidget(m_status);
   layout->addWidget(m_leftWidget, 0);
   layout->addStretch();
   layout->addWidget(m_primaryActionButton);
@@ -89,4 +101,7 @@ void GlobalBar::setupUI() {
   connect(m_ctx.navigation.get(), &NavigationController::actionPanelVisibilityChanged, this,
           &GlobalBar::handleActionPanelVisiblityChange);
   connect(m_ctx.navigation.get(), &NavigationController::actionsChanged, this, &GlobalBar::actionsChanged);
+
+  connect(toast, &ToastService::toastActivated, this, &GlobalBar::handleToast);
+  connect(toast, &ToastService::toastHidden, this, &GlobalBar::handleToastDestroyed);
 }

@@ -8,11 +8,14 @@
 #include <qnamespace.h>
 #include <qwidget.h>
 #include "omni-icon.hpp"
+#include "omnicast.hpp"
 #include "root-command.hpp"
 #include "ui/action-pannel/action.hpp"
 
 LauncherWindow::LauncherWindow(ApplicationContext &ctx)
     : m_ctx(ctx), m_header(new GlobalHeader(*m_ctx.navigation)) {
+  m_header->setFixedHeight(Omnicast::TOP_BAR_HEIGHT);
+  m_bar->setFixedHeight(Omnicast::STATUS_BAR_HEIGHT);
   setupUI();
 
   connect(m_actionPanel, &ActionPanelV2Widget::openChanged, this, [this](bool opened) {

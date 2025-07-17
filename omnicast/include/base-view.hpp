@@ -457,9 +457,6 @@ class GridView : public SimpleView {
       return m_grid->selectLeft();
     case Qt::Key_Right:
       return m_grid->selectRight();
-    case Qt::Key_Return:
-      m_grid->activateCurrentSelection();
-      return true;
     }
 
     return false;
@@ -494,15 +491,9 @@ public:
   }
 
   void applyActionnable(const Actionnable *actionnable) {
-    auto ui = ServiceRegistry::instance()->UI();
-
     if (auto navigation = actionnable->navigationTitle(); !navigation.isEmpty()) {
-      if (isVisible()) {
-        ui->setNavigationTitle(QString("%1 - %2").arg(rootNavigationTitle()).arg(navigation));
-      }
+      setNavigationTitle(QString("%1 - %2").arg(rootNavigationTitle()).arg(navigation));
     }
-
-    if (auto panel = actionnable->actionPanel()) { m_actionPannelV2->setView(panel); }
   }
 
 protected:
@@ -512,18 +503,16 @@ protected:
 
   virtual void selectionChanged(const OmniList::AbstractVirtualItem *next,
                                 const OmniList::AbstractVirtualItem *previous) {
-    auto ui = ServiceRegistry::instance()->UI();
-
     if (!next) {
-      if (isVisible()) { ui->setNavigationTitle(QString("%1").arg(rootNavigationTitle())); }
+      setNavigationTitle(rootNavigationTitle());
       return;
     }
 
     if (auto nextItem = dynamic_cast<const Actionnable *>(next)) {
       applyActionnable(nextItem);
     } else {
-      ui->clearActionPanel();
-      ui->destroyCompleter();
+      context()->navigation->clearActions(this);
+      destroyCompleter();
     }
   }
 

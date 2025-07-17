@@ -1,4 +1,5 @@
 #include "ai/ollama-ai-provider.hpp"
+#include "command-controller.hpp"
 #include <QStyleHints>
 #include "common.hpp"
 #include "ipc-command-server.hpp"

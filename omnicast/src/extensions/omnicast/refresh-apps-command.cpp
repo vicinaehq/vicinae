@@ -8,11 +8,11 @@ RefreshAppsCommandContext::RefreshAppsCommandContext(const std::shared_ptr<Abstr
 
 void RefreshAppsCommandContext::load(const LaunchProps &props) {
   auto appDb = ServiceRegistry::instance()->appDb();
-  auto ui = ServiceRegistry::instance()->UI();
+  auto toast = context()->services->toastService();
 
   if (appDb->scanSync()) {
-    ui->setToast("Apps successfully refreshed");
+    toast->setToast("Apps successfully refreshed");
   } else {
-    ui->setToast("Failed to refresh apps", ToastPriority::Danger);
+    toast->setToast("Failed to refresh apps", ToastPriority::Danger);
   }
 }
