@@ -91,16 +91,27 @@ void NavigationController::popCurrentView() {
 
   auto &next = m_views.back();
 
+  if (auto &accessory = next->searchAccessory) {
+    emit searchAccessoryChanged(accessory.get());
+  } else {
+    emit searchAccessoryCleared();
+  }
+
   emit currentViewChanged(*next.get());
 
   emit searchTextChanged(next->searchText);
   emit searchPlaceholderTextChanged(next->placeholderText);
   emit navigationStatusChanged(next->navigation.title, next->navigation.icon);
+  emit headerVisiblityChanged(next->needsTopBar);
+  emit searchVisibilityChanged(next->supportsSearch);
+  emit statusBarVisiblityChanged(next->needsStatusBar);
 
   if (auto &ac = next->actionPanelState) emit actionsChanged(*ac);
 
   selectSearchText();
 }
+
+void NavigationController::clearSearchAccessory() { emit clearSearchAccessory(); }
 
 void NavigationController::selectSearchText() const { emit searchTextSelected(); }
 
@@ -138,6 +149,27 @@ bool NavigationController::executePrimaryAction() {
   return false;
 }
 
+void NavigationController::setHeaderVisiblity(bool value, const BaseView *caller) {
+  if (auto state = findViewState(VALUE_OR(caller, topView()))) {
+    state->needsTopBar = value;
+    if (state->sender == topView()) { emit headerVisiblityChanged(value); }
+  }
+}
+
+void NavigationController::setSearchVisibility(bool value, const BaseView *caller) {
+  if (auto state = findViewState(VALUE_OR(caller, topView()))) {
+    state->supportsSearch = value;
+    if (state->sender == topView()) { emit searchVisibilityChanged(value); }
+  }
+}
+
+void NavigationController::setStatusBarVisibility(bool value, const BaseView *caller) {
+  if (auto state = findViewState(VALUE_OR(caller, topView()))) {
+    state->needsStatusBar = value;
+    if (state->sender == topView()) { emit statusBarVisiblityChanged(value); }
+  }
+}
+
 void NavigationController::executeAction(AbstractAction *action) {
   action->execute(&m_ctx);
   closeActionPanel();
@@ -149,11 +181,23 @@ void NavigationController::pushView(BaseView *view) {
   state->sender = view;
   state->supportsSearch = view->supportsSearch();
   state->needsTopBar = view->needsGlobalTopBar();
-  state->supportsSearch = view->supportsSearch();
+  state->needsStatusBar = view->needsGlobalStatusBar();
+  state->searchAccessory.reset(view->searchBarAccessory());
   state->sender->setContext(&m_ctx);
+
+  if (auto &accessory = state->searchAccessory) {
+    emit searchAccessoryChanged(accessory.get());
+  } else {
+    emit searchAccessoryCleared();
+  }
+
+  emit headerVisiblityChanged(state->needsTopBar);
+  emit searchVisibilityChanged(state->supportsSearch);
+  emit statusBarVisiblityChanged(state->needsStatusBar);
 
   m_views.emplace_back(std::move(state));
 
+  emit actionsChanged({});
   emit searchTextChanged(QString());
   emit searchPlaceholderTextChanged(QString());
   view->initialize();

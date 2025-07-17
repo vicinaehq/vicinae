@@ -80,7 +80,6 @@ public:
     std::unique_ptr<ActionPanelState> actionPanelState;
 
     bool isLoading = false;
-    void createCompletion(const ArgumentList &args, const OmniIconUrl &icon);
     bool supportsSearch = true;
     bool needsTopBar = true;
     bool needsStatusBar = true;
@@ -114,12 +113,17 @@ public:
 
   void setActions(std::unique_ptr<ActionPanelState> state, const BaseView *caller = nullptr);
   void setSearchAccessory(QWidget *accessory);
+  void clearSearchAccessory();
 
   void clearSearchText();
   void setNavigationTitle(const QString &navigationTitle, const BaseView *caller = nullptr);
   void setNavigationIcon(const OmniIconUrl &icon);
 
   bool executePrimaryAction();
+
+  void setHeaderVisiblity(bool value, const BaseView *caller = nullptr);
+  void setSearchVisibility(bool value, const BaseView *caller = nullptr);
+  void setStatusBarVisibility(bool value, const BaseView *caller = nullptr);
 
   void popCurrentView();
   void pushView(BaseView *view);
@@ -141,9 +145,16 @@ signals:
   void searchTextChanged(const QString &text) const;
   void searchPlaceholderTextChanged(const QString &text) const;
   void navigationStatusChanged(const QString &text, const OmniIconUrl &icon) const;
+
   void searchAccessoryChanged(QWidget *widget) const;
+  void searchAccessoryCleared() const;
+
   void completionCreated(const CompleterState &completer) const;
   void completionDestroyed() const;
+
+  void headerVisiblityChanged(bool value);
+  void searchVisibilityChanged(bool value);
+  void statusBarVisiblityChanged(bool value);
 
 private:
   ApplicationContext &m_ctx;

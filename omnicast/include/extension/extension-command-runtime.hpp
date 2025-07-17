@@ -310,13 +310,14 @@ class ExtensionCommandRuntime : public CommandContext {
   }
 
   void pushView() {
-    auto ui = ServiceRegistry::instance()->UI();
+    auto &nav = context()->navigation;
     auto view = new ExtensionViewWrapper();
 
     connect(view, &ExtensionViewWrapper::notificationRequested, this, &ExtensionCommandRuntime::notify);
 
-    ui->pushView(
-        view, {.navigation = NavigationStatus{.title = m_command->name(), .iconUrl = m_command->iconUrl()}});
+    nav->pushView(view);
+    nav->setNavigationTitle(m_command->name());
+    nav->setNavigationIcon(m_command->iconUrl());
     m_viewStack.emplace_back(view);
   }
 
@@ -421,7 +422,8 @@ public:
       // We push the first view immediately, waiting for the initial render to come
       // in and "hydrate" it.
       pushView();
-      connect(ui, &UIController::popViewCompleted, this, &ExtensionCommandRuntime::handleViewPoped);
+      connect(context()->navigation.get(), &NavigationController::viewPoped, this,
+              &ExtensionCommandRuntime::handleViewPoped);
     }
 
     manager->loadCommand(m_command->extensionId(), m_command->commandId(), preferenceValues, props);

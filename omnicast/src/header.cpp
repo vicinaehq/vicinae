@@ -17,6 +17,7 @@ void GlobalHeader::setupUI() {
   hlayout->addWidget(m_backButton);
   hlayout->addWidget(m_backButtonSpacer);
   hlayout->addWidget(m_input);
+  hlayout->addWidget(m_accessoryContainer, 0, Qt::AlignRight | Qt::AlignVCenter);
   hlayout->setSpacing(0);
   hlayout->setAlignment(Qt::AlignVCenter);
 
@@ -38,6 +39,15 @@ void GlobalHeader::setupUI() {
   setLayout(vlayout);
   m_input->installEventFilter(this);
   m_input->setFocus();
+}
+
+void GlobalHeader::setAccessory(QWidget *accessory) {
+  clearAccessory();
+  m_accessoryContainer->addWidget(accessory);
+}
+
+void GlobalHeader::clearAccessory() {
+  if (auto widget = m_accessoryContainer->widget(0)) { m_accessoryContainer->removeWidget(widget); }
 }
 
 SearchBar *GlobalHeader::input() const { return m_input; }
@@ -79,6 +89,8 @@ GlobalHeader::GlobalHeader(NavigationController &controller) : m_navigation(cont
       m_backButtonSpacer->setVisible(needsBackButton);
     }
   });
+  connect(&m_navigation, &NavigationController::searchAccessoryChanged, this, &GlobalHeader::setAccessory);
+  connect(&m_navigation, &NavigationController::searchAccessoryCleared, this, &GlobalHeader::clearAccessory);
   connect(&m_navigation, &NavigationController::searchTextChanged, m_input, &SearchBar::setText);
   connect(&m_navigation, &NavigationController::searchPlaceholderTextChanged, m_input,
           &SearchBar::setPlaceholderText);

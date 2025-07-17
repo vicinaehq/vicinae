@@ -28,7 +28,6 @@ bool ExtensionGridComponent::inputFilter(QKeyEvent *event) {
 
 void ExtensionGridComponent::render(const RenderModel &baseModel) {
   qDebug() << "render!";
-  auto ui = ServiceRegistry::instance()->UI();
   auto newModel = std::get<GridModel>(baseModel);
 
   if (auto accessory = newModel.searchBarAccessory) {
@@ -43,16 +42,13 @@ void ExtensionGridComponent::render(const RenderModel &baseModel) {
 
   if (!newModel.navigationTitle.isEmpty()) {
     qDebug() << "set navigation title" << newModel.navigationTitle;
-    if (isVisible()) { ui->setNavigationTitle(newModel.navigationTitle); }
+    setNavigationTitle(newModel.navigationTitle);
   }
-  if (!newModel.searchPlaceholderText.isEmpty()) {
-    if (isVisible()) { ui->setSearchPlaceholderText(newModel.searchPlaceholderText); }
-    setSearchPlaceholderText(newModel.searchPlaceholderText);
-  }
+  if (!newModel.searchPlaceholderText.isEmpty()) { setSearchPlaceholderText(newModel.searchPlaceholderText); }
 
   if (auto text = newModel.searchText) {
     qDebug() << "[DEBUG] SET SEARCH TEXT" << text;
-    if (isVisible()) { ui->setSearchText(*text); }
+    setSearchText(*text);
   }
 
   if (newModel.throttle != _model.throttle) {
@@ -65,7 +61,7 @@ void ExtensionGridComponent::render(const RenderModel &baseModel) {
     }
   }
 
-  if (isVisible()) ui->setLoading(newModel.isLoading);
+  // if (isVisible()) ui->setLoading(newModel.isLoading);
 
   // if (newModel.dirty) {
   OmniList::SelectionPolicy policy = OmniList::SelectFirst;

@@ -69,20 +69,14 @@ public:
       m_layout->setCurrentWidget(view);
 
       m_current = view;
-      m_current->setUIController(std::make_unique<UIViewController>(ui, this));
+      m_current->setProxy(this);
 
       setTopBarVisiblity(m_current->needsGlobalTopBar());
-      setSearchVisiblity(m_current->supportsSearch());
+      setSearchVisibility(m_current->supportsSearch());
       setStatusBarVisiblity(m_current->needsGlobalStatusBar());
       setSearchPlaceholderText("");
 
-      if (isVisible()) {
-        qCritical() << "set action panel widget and co";
-        setSearchAccessory(m_current->searchBarAccessory());
-      } else {
-        qCritical() << "not visible";
-      }
-      setActionPanelWidget(m_current->actionPanel());
+      if (auto accessory = m_current->searchBarAccessory()) { setSearchAccessory(accessory); }
 
       m_current->initialize();
       m_current->activate();

@@ -6,12 +6,12 @@
 #include <qcoreevent.h>
 #include <qevent.h>
 #include <qobject.h>
+#include <qstackedwidget.h>
 #include <qwidget.h>
 
 class GlobalHeader : public QWidget {
 public:
   GlobalHeader(NavigationController &controller);
-
   SearchBar *input() const;
 
 protected:
@@ -23,6 +23,10 @@ private:
   HorizontalLoadingBar *m_loadingBar = new HorizontalLoadingBar(this);
   IconButton *m_backButton = new IconButton;
   QWidget *m_backButtonSpacer = new QWidget;
+  QStackedWidget *m_accessoryContainer = new QStackedWidget(this);
+
+  void setAccessory(QWidget *accessory);
+  void clearAccessory();
 
   void setupUI();
   void handleViewStateChange(const NavigationController::ViewState &state);

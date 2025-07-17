@@ -44,6 +44,13 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx)
 
   ctx.navigation->pushView(new RootSearchView);
   ctx.navigation->setNavigationIcon(BuiltinOmniIconUrl("omnicast"));
+
+  connect(m_ctx.navigation.get(), &NavigationController::headerVisiblityChanged, m_header,
+          &GlobalHeader::setVisible);
+  connect(m_ctx.navigation.get(), &NavigationController::searchVisibilityChanged, m_header->input(),
+          &GlobalHeader::setVisible);
+  connect(m_ctx.navigation.get(), &NavigationController::statusBarVisiblityChanged, m_bar,
+          &GlobalBar::setVisible);
 }
 
 void LauncherWindow::setupUI() {
@@ -59,10 +66,6 @@ void LauncherWindow::handleViewChange(const NavigationController::ViewState &sta
   if (auto current = m_currentViewWrapper->widget(0)) { m_currentViewWrapper->removeWidget(current); }
 
   m_currentViewWrapper->addWidget(state.sender);
-  m_currentViewWrapper->setCurrentWidget(state.sender);
-  m_header->setVisible(state.needsTopBar);
-  m_bar->setVisible(state.needsStatusBar);
-  m_header->input()->setVisible(state.supportsSearch);
 
   if (state.supportsSearch) { m_header->input()->setFocus(); }
 }

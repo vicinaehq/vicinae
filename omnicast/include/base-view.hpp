@@ -39,11 +39,14 @@ public:
   bool isInitialized() { return m_initialized; }
 
   /**
-   * Forward navigation operations to `other` instead of this view.
+   * Forward navigation opercontext()ations to `other` instead of this view.
    * Allows to nest view with only one effectively having navigation responsability.
    * In most cases, you should not use this. This is mainly used for extensions.
    */
-  void setNavigationProxy(const BaseView *proxy) { m_navProxy = proxy; }
+  void setProxy(BaseView *proxy) {
+    m_navProxy = proxy;
+    setContext(proxy->context());
+  }
 
   /**
    * Whether to show the search bar for this view. Calling setSearchText or searchText() is still
@@ -83,7 +86,11 @@ public:
     return QString();
   }
 
-  void setSearchAccessory(QWidget *accessory) {}
+  void setSearchAccessory(QWidget *accessory) {
+    if (!m_ctx) return;
+
+    m_ctx->navigation->setSearchAccessory(accessory);
+  }
 
   /**
    * Called when the view becomes visible. This is called the first time the view is shown
@@ -135,11 +142,20 @@ public:
     m_ctx->navigation->setSearchPlaceholderText(value, this);
   }
 
-  void setSearchVisiblity(bool visible) { /**/ }
+  void setTopBarVisiblity(bool visible) {
+    if (!m_ctx) return;
+    m_ctx->navigation->setHeaderVisiblity(visible, m_navProxy);
+  }
 
-  void setTopBarVisiblity(bool visible) { /* TODO: implement */ }
+  void setSearchVisibility(bool visible) {
+    if (!m_ctx) return;
+    m_ctx->navigation->setSearchVisibility(visible, m_navProxy);
+  }
 
-  void setStatusBarVisiblity(bool visible) { /* TODO: implement  */ }
+  void setStatusBarVisiblity(bool visible) {
+    if (!m_ctx) return;
+    m_ctx->navigation->setStatusBarVisibility(visible, m_navProxy);
+  }
 
   void clearSearchText() { setSearchText(""); }
 

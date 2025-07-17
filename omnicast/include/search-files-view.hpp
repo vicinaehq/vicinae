@@ -140,10 +140,7 @@ class SearchFilesView : public ListView {
 
   QString currentQuery;
 
-  void initialize() override {
-    auto ui = ServiceRegistry::instance()->UI();
-    ui->setSearchPlaceholderText("Search for files...");
-  }
+  void initialize() override { setSearchPlaceholderText("Search for files..."); }
 
   void generateFilteredList(const QString &query) {
     auto fileService = ServiceRegistry::instance()->fileService();
