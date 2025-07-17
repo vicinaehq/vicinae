@@ -22,6 +22,7 @@ void GlobalHeader::setupUI() {
   hlayout->setAlignment(Qt::AlignVCenter);
 
   m_backButton->setFixedSize(25, 25);
+  m_backButton->setFocusPolicy(Qt::NoFocus);
   m_backButton->setBackgroundColor(ColorTint::MainSelectedBackground);
   m_backButton->setUrl(BuiltinOmniIconUrl("arrow-left"));
   m_backButtonSpacer->setFixedWidth(10);

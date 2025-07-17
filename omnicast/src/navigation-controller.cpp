@@ -111,7 +111,12 @@ void NavigationController::popCurrentView() {
   selectSearchText();
 }
 
-void NavigationController::clearSearchAccessory() { emit clearSearchAccessory(); }
+void NavigationController::clearSearchAccessory(const BaseView *caller) {
+  if (auto state = findViewState(VALUE_OR(caller, topView()))) {
+    state->searchAccessory.reset();
+    if (state->sender == topView()) { emit searchAccessoryCleared(); }
+  }
+}
 
 void NavigationController::selectSearchText() const { emit searchTextSelected(); }
 
@@ -119,6 +124,10 @@ QString NavigationController::searchText(const BaseView *caller) const {
   if (auto state = findViewState(VALUE_OR(caller, topView()))) { return state->searchText; }
 
   return QString();
+}
+
+void NavigationController::clearActions(const BaseView *caller) {
+  setActions(std::make_unique<ActionPanelState>(), caller);
 }
 
 QString NavigationController::navigationTitle(const BaseView *caller) const {
@@ -206,8 +215,8 @@ void NavigationController::pushView(BaseView *view) {
   emit viewPushed(view);
 }
 
-void NavigationController::setSearchAccessory(QWidget *accessory) {
-  if (auto state = topState()) {
+void NavigationController::setSearchAccessory(QWidget *accessory, const BaseView *caller) {
+  if (auto state = findViewState(VALUE_OR(caller, topView()))) {
     state->searchAccessory.reset(accessory);
 
     if (state->sender == topView()) { emit searchAccessoryChanged(accessory); }

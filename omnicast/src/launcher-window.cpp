@@ -47,8 +47,10 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx)
 
   connect(m_ctx.navigation.get(), &NavigationController::headerVisiblityChanged, m_header,
           &GlobalHeader::setVisible);
-  connect(m_ctx.navigation.get(), &NavigationController::searchVisibilityChanged, m_header->input(),
-          &GlobalHeader::setVisible);
+  connect(m_ctx.navigation.get(), &NavigationController::searchVisibilityChanged, [this](bool visible) {
+    m_header->input()->setVisible(visible);
+    if (visible) m_header->input()->setFocus();
+  });
   connect(m_ctx.navigation.get(), &NavigationController::statusBarVisiblityChanged, m_bar,
           &GlobalBar::setVisible);
 }

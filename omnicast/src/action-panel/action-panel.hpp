@@ -443,16 +443,20 @@ public:
 
   void setNewActions(const ActionPanelState &state) {
     auto panel = new ActionPanelStaticListView;
+    size_t count = 0;
 
     for (const auto &section : state.sections()) {
       panel->addSection(section->name());
 
       for (const auto &action : section->actions()) {
+        count++;
         panel->addAction(action);
       }
     }
 
     setView(panel);
+
+    if (!count) close();
   }
 
   ActionPanelV2Widget(QWidget *parent = nullptr) : Popover(parent) {

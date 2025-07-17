@@ -397,7 +397,7 @@ public:
 
     panel->addAction(submitAction);
     m_actionPannelV2->setView(panel);
-    form->focusFirst();
+    QTimer::singleShot(0, this, [this]() { form->focusFirst(); });
   }
 
   virtual void submit() {

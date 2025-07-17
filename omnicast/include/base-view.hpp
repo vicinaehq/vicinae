@@ -48,6 +48,11 @@ public:
     setContext(proxy->context());
   }
 
+  void setActions(std::unique_ptr<ActionPanelState> actions) {
+    if (!m_ctx) return;
+    m_ctx->navigation->setActions(std::move(actions), m_navProxy);
+  }
+
   /**
    * Whether to show the search bar for this view. Calling setSearchText or searchText() is still
    * valid but will always return the empty string.
@@ -89,7 +94,7 @@ public:
   void setSearchAccessory(QWidget *accessory) {
     if (!m_ctx) return;
 
-    m_ctx->navigation->setSearchAccessory(accessory);
+    m_ctx->navigation->setSearchAccessory(accessory, m_navProxy);
   }
 
   /**
@@ -138,9 +143,10 @@ public:
 
   void setSearchPlaceholderText(const QString &value) const {
     if (!m_ctx) return;
-    qCritical() << "setSearchPlaceholderText" << value;
-    m_ctx->navigation->setSearchPlaceholderText(value, this);
+    m_ctx->navigation->setSearchPlaceholderText(value, m_navProxy);
   }
+
+  void clearSearchAccessory() { m_ctx->navigation->clearSearchAccessory(m_navProxy); }
 
   void setTopBarVisiblity(bool visible) {
     if (!m_ctx) return;

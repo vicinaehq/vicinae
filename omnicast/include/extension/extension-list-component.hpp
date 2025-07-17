@@ -179,9 +179,6 @@ class ExtensionListComponent : public ExtensionSimpleView {
       return m_list->selectUp();
     case Qt::Key_Down:
       return m_list->selectDown();
-    case Qt::Key_Return:
-      m_list->activateCurrentSelection();
-      return true;
     }
 
     return ExtensionSimpleView::inputFilter(event);

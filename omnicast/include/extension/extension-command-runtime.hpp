@@ -3,9 +3,11 @@
 #include "command.hpp"
 #include "common.hpp"
 #include "extend/model-parser.hpp"
+#include "extension/extension-command-controller.hpp"
 #include "extension/extension-command.hpp"
 #include "extension/extension-view-wrapper.hpp"
 #include "extension/extension-view.hpp"
+#include "extension/manager/extension-manager.hpp"
 #include "services/local-storage/local-storage-service.hpp"
 #include "service-registry.hpp"
 #include "timer.hpp"
@@ -62,6 +64,7 @@ class ExtensionCommandRuntime : public CommandContext {
   std::vector<ExtensionViewWrapper *> m_viewStack;
   QFutureWatcher<ParsedRenderData> m_modelWatcher;
   RequestDispatcher m_actionDispatcher;
+  ExtensionCommandController *m_controller;
   Timer m_timer;
 
   QString m_sessionId;
@@ -75,7 +78,7 @@ class ExtensionCommandRuntime : public CommandContext {
   }
 
   QJsonObject handleStorage(const QString &action, const QJsonObject &payload) {
-    auto storage = ServiceRegistry::instance()->localStorage();
+    auto storage = context()->services->localStorage();
 
     if (action == "storage.clear") {
       storage->clearNamespace(m_command->extensionId());
@@ -121,7 +124,7 @@ class ExtensionCommandRuntime : public CommandContext {
   }
 
   QJsonObject handleAI(const QString &action, const QJsonObject &payload) {
-    auto manager = ServiceRegistry::instance()->AI();
+    auto manager = context()->services->AI();
 
     if (action == "ai.get-models") {
       QJsonArray items;
@@ -179,7 +182,7 @@ class ExtensionCommandRuntime : public CommandContext {
   }
 
   QJsonObject handleAppRequest(const QString &action, const QJsonObject &payload) {
-    auto appDb = ServiceRegistry::instance()->appDb();
+    auto appDb = context()->services->appDb();
 
     if (action == "apps.list") {
       auto baseApps = appDb->list();
@@ -222,7 +225,7 @@ class ExtensionCommandRuntime : public CommandContext {
   }
 
   QJsonObject handleToastRequest(const QString &action, const QJsonObject &payload) {
-    auto ui = ServiceRegistry::instance()->UI();
+    auto &nav = context()->navigation;
 
     if (action == "toast.show") {
       auto title = payload["title"].toString();
@@ -235,13 +238,11 @@ class ExtensionCommandRuntime : public CommandContext {
         priority = ToastPriority::Danger;
       }
 
-      ui->setToast(title, priority);
+      // ui->setToast(title, priority);
       return {};
     }
 
     if (action == "toast.hide") {
-      if (auto view = ui->topView()) { view->clearToast(); }
-
       // XXX - Implement actual toast hide
       return {};
     }
@@ -271,7 +272,7 @@ class ExtensionCommandRuntime : public CommandContext {
   }
 
   QJsonObject handleUI(const QString &action, const QJsonObject &payload) {
-    auto ui = ServiceRegistry::instance()->UI();
+    auto &nav = context()->navigation;
 
     if (m_command->isView() && action == "ui.push-view") {
       pushView();
@@ -284,18 +285,17 @@ class ExtensionCommandRuntime : public CommandContext {
     }
 
     if (action == "ui.show-hud") {
-      ui->popToRoot();
-      ui->closeWindow();
+      // TODO: implement hud
       return {};
     }
 
     if (action == "ui.close-main-window") {
-      ui->closeWindow();
+      nav->closeWindow();
       return {};
     }
 
     if (action == "ui.clear-search-bar") {
-      ui->setSearchText("");
+      nav->clearSearchText();
       return {};
     }
 
@@ -311,7 +311,7 @@ class ExtensionCommandRuntime : public CommandContext {
 
   void pushView() {
     auto &nav = context()->navigation;
-    auto view = new ExtensionViewWrapper();
+    auto view = new ExtensionViewWrapper(m_controller);
 
     connect(view, &ExtensionViewWrapper::notificationRequested, this, &ExtensionCommandRuntime::notify);
 
@@ -390,6 +390,7 @@ class ExtensionCommandRuntime : public CommandContext {
   }
 
   void commandLoaded(const LoadedCommand &command) {
+    m_controller->setSessionId(command.sessionId);
     m_sessionId = command.sessionId;
     m_timer.time("Extension loaded");
     m_timer.start();
@@ -416,7 +417,6 @@ public:
     auto preferenceValues =
         rootItemManager->getPreferenceValues(QString("extension.%1").arg(m_command->uniqueId()));
     auto manager = ServiceRegistry::instance()->extensionManager();
-    auto ui = ServiceRegistry::instance()->UI();
 
     if (m_command->mode() == CommandModeView) {
       // We push the first view immediately, waiting for the initial render to come
@@ -438,6 +438,7 @@ public:
   ExtensionCommandRuntime(const std::shared_ptr<ExtensionCommand> &command)
       : CommandContext(command), m_command(command) {
     auto manager = ServiceRegistry::instance()->extensionManager();
+    m_controller = new ExtensionCommandController(manager);
 
     m_actionDispatcher.registerHandler("storage.",
                                        std::bind_front(&ExtensionCommandRuntime::handleStorage, this));

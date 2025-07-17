@@ -112,8 +112,10 @@ public:
   void closeActionPanel();
 
   void setActions(std::unique_ptr<ActionPanelState> state, const BaseView *caller = nullptr);
-  void setSearchAccessory(QWidget *accessory);
-  void clearSearchAccessory();
+  void clearActions(const BaseView *caller = nullptr);
+
+  void setSearchAccessory(QWidget *accessory, const BaseView *sender = nullptr);
+  void clearSearchAccessory(const BaseView *sender = nullptr);
 
   void clearSearchText();
   void setNavigationTitle(const QString &navigationTitle, const BaseView *caller = nullptr);

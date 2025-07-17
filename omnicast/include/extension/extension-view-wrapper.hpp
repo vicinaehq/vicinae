@@ -1,4 +1,5 @@
 #pragma once
+#include "extension/extension-command-controller.hpp"
 #include "extension/extension-grid-component.hpp"
 #include "extension/extension-list-component.hpp"
 #include "extension/extension-view.hpp"
@@ -21,6 +22,7 @@ class ExtensionViewWrapper : public BaseView {
   ExtensionSimpleView *m_current = nullptr;
   QString m_searchText;
   QStackedLayout *m_layout = new QStackedLayout;
+  ExtensionCommandController *m_controller;
   int m_index = -1;
 
   void onDeactivate() override {
@@ -70,13 +72,19 @@ public:
 
       m_current = view;
       m_current->setProxy(this);
+      m_current->setExtensionCommandController(m_controller);
 
       setTopBarVisiblity(m_current->needsGlobalTopBar());
       setSearchVisibility(m_current->supportsSearch());
       setStatusBarVisiblity(m_current->needsGlobalStatusBar());
       setSearchPlaceholderText("");
+      context()->navigation->clearActions(this);
 
-      if (auto accessory = m_current->searchBarAccessory()) { setSearchAccessory(accessory); }
+      if (auto accessory = m_current->searchBarAccessory()) {
+        setSearchAccessory(accessory);
+      } else {
+        clearSearchAccessory();
+      }
 
       m_current->initialize();
       m_current->activate();
@@ -94,7 +102,9 @@ public:
     m_current->render(model);
   }
 
-  ExtensionViewWrapper() { setLayout(m_layout); }
+  ExtensionViewWrapper(ExtensionCommandController *controller) : m_controller(controller) {
+    setLayout(m_layout);
+  }
 
 signals:
   void notificationRequested(const QString &handler, const QJsonArray &args) const;
