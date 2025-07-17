@@ -96,6 +96,8 @@ public:
   void setSearchPlaceholderText(const QString &text, const BaseView *caller = nullptr);
   void setSearchText(const QString &text, const BaseView *caller = nullptr);
 
+  void popToRoot();
+
   QString searchText(const BaseView *caller = nullptr) const;
   QString navigationTitle(const BaseView *caller = nullptr) const;
   void searchPlaceholderText(const QString &text);

@@ -111,6 +111,12 @@ void NavigationController::popCurrentView() {
   selectSearchText();
 }
 
+void NavigationController::popToRoot() {
+  while (m_views.size() > 1) {
+    popCurrentView();
+  }
+}
+
 void NavigationController::clearSearchAccessory(const BaseView *caller) {
   if (auto state = findViewState(VALUE_OR(caller, topView()))) {
     state->searchAccessory.reset();

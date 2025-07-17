@@ -84,6 +84,11 @@ bool LauncherWindow::event(QEvent *event) {
       return true;
     }
 
+    if (keyEvent->keyCombination() == QKeyCombination(Qt::ShiftModifier, Qt::Key_Escape)) {
+      m_ctx.navigation->popToRoot();
+      return true;
+    }
+
     switch (keyEvent->key()) {
     case Qt::Key_Escape: {
       if (m_ctx.navigation->viewStackSize() == 1) {

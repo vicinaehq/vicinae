@@ -16,8 +16,8 @@ void GlobalHeader::setupUI() {
   hlayout->setContentsMargins(15, 5, 15, 5);
   hlayout->addWidget(m_backButton);
   hlayout->addWidget(m_backButtonSpacer);
-  hlayout->addWidget(m_input);
-  hlayout->addWidget(m_accessoryContainer, 0, Qt::AlignRight | Qt::AlignVCenter);
+  hlayout->addWidget(m_input, 1);
+  hlayout->addWidget(m_accessoryContainer);
   hlayout->setSpacing(0);
   hlayout->setAlignment(Qt::AlignVCenter);
 
