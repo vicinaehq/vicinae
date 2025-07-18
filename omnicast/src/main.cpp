@@ -56,6 +56,7 @@
 #include "theme.hpp"
 #include "ui/ui-controller.hpp"
 #include "utils/utils.hpp"
+#include "protocols/extension/extension.pb.h"
 
 #ifdef WAYLAND_LAYER_SHELL
 #include <LayerShellQt/window.h>

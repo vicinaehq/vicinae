@@ -1,0 +1,228 @@
+syntax = "proto3";
+
+import "google/protobuf/any.proto";
+
+package protocols.extensions;
+
+message IpcMessage {
+  oneof payload {
+    QualifiedExtensionRequest extension_request = 1;
+    QualifiedExtensionResponse extension_response = 2;
+    ManagerRequest manager_request = 3;
+    ManagerResponse manager_response = 4;
+  };
+};
+
+message ErrorResponseData {
+  string error_text = 1;
+};
+
+message ManagerRequestData {
+  oneof data {
+    ListExtensionsRequest list_extensions = 1;
+  };
+};
+
+message ManagerRequest {
+  string request_id = 1;
+  ManagerRequestData payload = 2;
+};
+
+message ManagerResponseData {
+  oneof data {
+    AckResponse ack = 1;
+    ListExtensionsResponse extension_list = 2;
+    ErrorResponseData error = 3;
+  };
+};
+
+
+message ManagerResponse {
+  string request_id = 1;
+  ManagerResponseData payload = 2;
+};
+
+message ListExtensionsRequest {
+};
+
+message ListExtensionsResponse {
+  repeated ExtensionInfo extension_list = 1;
+};
+
+message Preference {
+  string id = 1;
+  string type = 2;
+  bool is_required = 3;
+  string title = 4;
+  string placeholder = 5;
+  string description = 6;
+};
+
+message CommandArgument {
+  string name = 1;
+  string type = 2;
+  bool is_required = 3;
+  string placeholder = 4;
+};
+
+message ExtensionInfo {
+  ExtensionManifest manifest = 1;
+};
+
+message ExtensionManifest {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  repeated string categories = 4;
+  string author = 5;
+  // implement dark/light variant
+  string icon = 6;
+  repeated CommandManifest commands = 7;
+  repeated Preference preferences = 8;
+};
+
+message CommandManifest {
+  string id = 1;
+  string title = 2;
+  string description = 3;
+  string mode = 4;
+  repeated Preference preferences = 5;
+  repeated CommandArgument arguments = 6;
+};
+
+message QualifiedExtensionRequest {
+  string request_id = 1;
+  string session_id = 2;
+  ExtensionRequestData request = 3;
+};
+
+message QualifiedExtensionResponse {
+  string request_id = 1;
+  string session_id = 2;
+  ExtensionResponse response = 3;
+};
+
+message AckResponse {};
+
+message ExtensionResponse {
+  string request_id = 1;
+  oneof result {
+    ExtensionResponseData data = 2;
+    ErrorResponseData error = 3;
+  };
+};
+
+message ExtensionResponseData {
+  oneof payload {
+    AckResponse ack = 1;
+    ListApplicationResponse list_applications = 2;
+    ErrorResponseData error = 3;
+  };
+};
+
+message ExtensionEvent {
+  string id = 1;
+  repeated google.protobuf.Any args = 2;
+};
+
+message ExtensionMessage {
+  oneof message {
+    ExtensionRequest request = 1;
+    ExtensionResponse response = 2;
+    ExtensionEvent event = 3;
+  };
+};
+
+message ExtensionRequest {
+  string request_id = 1;
+  ExtensionRequestData data = 2;
+};
+
+message ExtensionRequestData {
+  oneof payload {
+    RenderRequest render = 1;
+    ListApplicationRequest list_apps = 2;
+    OpenApplicationRequest open_apps = 3;
+    ShowToastRequest show_toast = 4;
+    CopyToClipboardRequest clipboard_copy = 5;
+    PushViewRequest push_view = 6;
+    PopViewRequest pop_view = 7;
+    ClearSearchBarRequest clear_search = 8; 
+    CloseMainWindowRequest close_main_window = 9;
+    ShowHudRequest show_hud = 10;
+  };
+};
+
+
+message Application {
+  string id = 1;
+  string name = 2;
+  string icon = 3;
+};
+
+message ShowToastRequest {
+  string title = 1;
+  string style = 2;
+};
+
+message PushViewRequest {}
+message PopViewRequest {}
+message CloseMainWindowRequest {};
+message ClearSearchBarRequest {};
+
+message ShowHudRequest {
+  string text = 1;
+};
+
+message ClipboardHtmlContent {
+  string html = 1;
+  string text = 2;
+};
+
+message ClipboardPathContent {
+  string path = 1;
+};
+
+message ClipboardOptions {
+  bool concealed = 1;
+};
+
+message CopyToClipboardRequest {
+  ClipboardOptions options = 1;
+  oneof content {
+    string text = 2;
+    ClipboardHtmlContent html = 3;
+    ClipboardPathContent path = 4;
+  };
+};
+
+message OpenApplicationRequest {
+  string target = 1;
+  optional string app_id = 2;
+};
+
+message ListApplicationRequest {
+};
+
+message ListApplicationResponse {
+  repeated Application apps = 1;
+};
+
+
+// render stuff
+
+message RenderRequest {
+   //repeated RenderNode views = 1;
+   // we will migrate to actual protobuf
+   string json = 1;
+};
+
+message RenderNode {
+  string type = 1;
+  bool has_dirty_child = 2;
+  bool has_dirty_props = 3;
+  //map<string, google.protobuf.Any> props = 4;
+  repeated RenderNode children = 5;
+};
+
+

@@ -1,4 +1,4 @@
-set(CMAKE_CXX_STANDARD 26)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_AUTOMOC ON)
@@ -8,6 +8,7 @@ set(LIBS)
 set(TARGET omnicast)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets Sql Network Svg DBus)
+find_package(Protobuf CONFIG REQUIRED)
 find_package(cmark REQUIRED)
 
 option(WAYLAND_LAYER_SHELL "Enable support for the Wayland layer shell
@@ -15,7 +16,7 @@ protocol, required for proper window positioning on most wlroots-based
 compositors." ON)
 
 
-list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus cmark proto qalculate)
+list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus cmark proto qalculate protobuf::libprotobuf)
 
 
 if (UNIX AND NOT APPLE)
@@ -35,7 +36,12 @@ include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}/../proto
 	${CMAKE_CURRENT_SOURCE_DIR}/../qsqlbuilder/sqlbuilder
 	${CMAKE_CURRENT_SOURCE_DIR}/..
+	${Protobuf_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_BINARY_DIR}  # For generated headers
 )
+
+message(STATUS "Protobuf version: ${protobuf_VERSION}")
+message(STATUS "Protobuf compiler: ${protobuf_PROTOC_EXE}")
 
 set(SRCS
 	src/main.cpp
@@ -484,5 +490,12 @@ qt_add_executable(${TARGET} ${SRCS})
 
 target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(${TARGET} PRIVATE ${LIBS})
+
+protobuf_generate(
+	TARGET ${TARGET}
+	PROTOS ./protocols/extension/extension.proto
+
+)
+
 
 install(TARGETS ${TARGET})

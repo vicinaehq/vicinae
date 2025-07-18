@@ -23,7 +23,8 @@
     "@jgoz/esbuild-plugin-typecheck": "^4.0.3",
     "@types/node": "^22.10.1",
     "chokidar": "^4.0.3",
-    "esbuild": "^0.25.2"
+    "esbuild": "^0.25.2",
+    "ts-proto": "^2.7.5"
   },
   "dependencies": {
     "@types/react": "^18.1.0",
