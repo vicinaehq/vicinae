@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 import "google/protobuf/any.proto";
+import "google/protobuf/struct.proto";
 import "preference.proto";
 
 package protocols.extensions;
@@ -49,6 +50,28 @@ message ListExtensionsRequest {
 
 message ListExtensionsResponse {
   repeated ExtensionInfo extension_list = 1;
+};
+
+enum CommandMode {
+  View = 0;
+  NoView = 1;
+};
+
+enum CommandEnv {
+  Development = 0;
+  Production = 1;
+};
+
+message ManagerLoadCommand {
+  CommandMode mode = 1;
+  CommandEnv env = 2;
+  string entrypoint = 3;
+  map<string, google.protobuf.Value> preference_values = 4;
+  map<string, google.protobuf.Value> argument_values = 5;
+};
+
+message ManagerLoadResponseData {
+  string session_id = 1;
 };
 
 message CommandArgument {

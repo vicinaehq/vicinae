@@ -1,4 +1,6 @@
 #include "favicon/google-favicon-request.hpp"
+#include <qpixmap.h>
+#include <qstringview.h>
 
 void GoogleFaviconRequester::loadingFailed() {
   _currentReply->deleteLater();
@@ -14,7 +16,10 @@ void GoogleFaviconRequester::loadingFailed() {
   tryForCurrentSize();
 }
 
-void GoogleFaviconRequester::imageLoaded(QPixmap pixmap) {
+void GoogleFaviconRequester::imageLoaded(const QByteArray &data) {
+  QPixmap pixmap;
+
+  pixmap.loadFromData(data);
   _currentReply->deleteLater();
   _currentReply = nullptr;
   emit finished(pixmap);
@@ -26,12 +31,12 @@ void GoogleFaviconRequester::tryForCurrentSize() {
   if (currentSizeAttemptIndex >= sizes.size()) { return; }
 
   auto serviceUrl = makeUrl(sizes.at(currentSizeAttemptIndex));
-  auto reply = ImageFetcher::instance().fetch(serviceUrl, {});
+  auto reply = NetworkFetcher::instance()->fetch(serviceUrl);
 
   qDebug() << "request google favicon" << serviceUrl;
 
-  connect(reply, &ImageReply::imageLoaded, this, &GoogleFaviconRequester::imageLoaded);
-  connect(reply, &ImageReply::loadingError, this, &GoogleFaviconRequester::loadingFailed);
+  connect(reply, &FetchReply::finished, this, &GoogleFaviconRequester::imageLoaded);
+  // connect(reply, &ImageReply::loadingError, this, &GoogleFaviconRequester::loadingFailed);
   _currentReply = reply;
 }
 

@@ -224,7 +224,6 @@ AppWindow::AppWindow(QWidget *parent) : QMainWindow(parent) {
   //_commandServer = new CommandServer(this);
   //_commandServer->setHandler(this);
 
-  ImageFetcher::instance();
   m_topBar->input->installEventFilter(this);
 
   connect(ServiceRegistry::instance()->config(), &ConfigService::configChanged, this,

@@ -346,7 +346,7 @@ set(SRCS
 	include/ui/focus-notifier.hpp
 
 
-	include/image-fetcher.hpp
+	src/image-fetcher.hpp
 
 	src/json-patch.cpp
 
