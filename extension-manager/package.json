@@ -7,22 +7,26 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "typecheck": "tsc --noEmit",
     "build-only": "node scripts/build.mjs",
-	"build": "run-p typecheck build-only",
+    "build": "run-p typecheck build-only",
     "install": "node scripts/install.mjs"
   },
-  "keywords": ["omnicast", "omnicast-extensions"],
+  "keywords": [
+    "omnicast",
+    "omnicast-extensions"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@omnicast/api": "file:../api",
     "fast-json-patch": "^3.1.1",
-    "react-reconciler": "^0.28.0",
-    "@omnicast/api": "file:../api"
+    "react-reconciler": "^0.28.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.1",
     "@types/react-reconciler": "^0.31.0",
     "esbuild": "^0.24.0",
     "npm-run-all": "^4.1.5",
+    "ts-proto": "^2.7.5",
     "typescript": "^5.8.2"
   }
 }

@@ -74,7 +74,7 @@ class ExtensionCommandRuntime : public CommandContext {
     QJsonObject payload;
 
     payload["args"] = args;
-    manager->emitExtensionEvent(m_sessionId, handlerId, payload);
+    // manager->emitExtensionEvent(m_sessionId, handlerId, payload);
   }
 
   QJsonObject handleStorage(const QString &action, const QJsonObject &payload) {
@@ -367,7 +367,7 @@ class ExtensionCommandRuntime : public CommandContext {
 
     auto res = m_actionDispatcher.dispatch(action, payload);
 
-    manager->respond(requestId, res.value_or(QJsonObject{}));
+    // manager->respond(requestId, res.value_or(QJsonObject{}));
   }
 
   void handleEvent(const QString &sessionId, const QString &action, const QJsonObject &payload) {
@@ -449,8 +449,8 @@ public:
                                        std::bind_front(&ExtensionCommandRuntime::handleToastRequest, this));
     m_actionDispatcher.registerHandler("ui.", std::bind_front(&ExtensionCommandRuntime::handleUI, this));
 
-    connect(manager, &ExtensionManager::extensionRequest, this, &ExtensionCommandRuntime::handleRequest);
-    connect(manager, &ExtensionManager::extensionEvent, this, &ExtensionCommandRuntime::handleEvent);
+    // connect(manager, &ExtensionManager::extensionRequest, this, &ExtensionCommandRuntime::handleRequest);
+    // connect(manager, &ExtensionManager::extensionEvent, this, &ExtensionCommandRuntime::handleEvent);
     connect(manager, &ExtensionManager::commandLoaded, this, &ExtensionCommandRuntime::commandLoaded);
     connect(&m_modelWatcher, &QFutureWatcher<RenderModel>::finished, this,
             &ExtensionCommandRuntime::modelCreated);

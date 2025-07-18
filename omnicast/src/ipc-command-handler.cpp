@@ -43,7 +43,7 @@ std::variant<CommandResponse, CommandError> IpcCommandHandler::handleCommand(con
       QUrlQuery query(url.query());
       QString id = query.queryItemValue("id");
 
-      extensionManager->startDevelopmentSession(id);
+      // extensionManager->startDevelopmentSession(id);
       qDebug() << "start develop id" << query.queryItemValue("id");
     }
 
@@ -51,7 +51,7 @@ std::variant<CommandResponse, CommandError> IpcCommandHandler::handleCommand(con
       QUrlQuery query(url.query());
       QString id = query.queryItemValue("id");
 
-      extensionManager->refreshDevelopmentSession(id);
+      // extensionManager->refreshDevelopmentSession(id);
       qDebug() << "refresh develop id" << id;
     }
 

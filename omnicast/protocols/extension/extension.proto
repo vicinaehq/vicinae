@@ -22,9 +22,13 @@ message ErrorResponseData {
 
 message ManagerRequestData {
   oneof data {
-    ListExtensionsRequest list_extensions = 1;
+    ManagerPingRequestData ping = 1;
+    ManagerLoadCommand load = 2;
+    ManagerUnloadCommand unload = 3;   
   };
 };
+
+message ManagerPingRequestData {}
 
 message ManagerRequest {
   string request_id = 1;
@@ -34,22 +38,17 @@ message ManagerRequest {
 message ManagerResponseData {
   oneof data {
     AckResponse ack = 1;
-    ListExtensionsResponse extension_list = 2;
-    ErrorResponseData error = 3;
+    ManagerLoadResponseData load = 2;
   };
 };
 
 
 message ManagerResponse {
   string request_id = 1;
-  ManagerResponseData payload = 2;
-};
-
-message ListExtensionsRequest {
-};
-
-message ListExtensionsResponse {
-  repeated ExtensionInfo extension_list = 1;
+  oneof result {
+    ManagerResponseData value = 2;
+    ErrorResponseData error = 3;
+  };
 };
 
 enum CommandMode {
@@ -70,31 +69,20 @@ message ManagerLoadCommand {
   map<string, google.protobuf.Value> argument_values = 5;
 };
 
+message ManagerUnloadCommand {
+  string session_id = 1;
+};
+
 message ManagerLoadResponseData {
   string session_id = 1;
 };
+
 
 message CommandArgument {
   string name = 1;
   string type = 2;
   bool is_required = 3;
   string placeholder = 4;
-};
-
-message ExtensionInfo {
-  ExtensionManifest manifest = 1;
-};
-
-message ExtensionManifest {
-  string id = 1;
-  string name = 2;
-  string description = 3;
-  repeated string categories = 4;
-  string author = 5;
-  // implement dark/light variant
-  string icon = 6;
-  repeated CommandManifest commands = 7;
-  repeated preference.Preference preferences = 8;
 };
 
 message CommandManifest {
@@ -107,20 +95,18 @@ message CommandManifest {
 };
 
 message QualifiedExtensionRequest {
-  string request_id = 1;
-  string session_id = 2;
-  ExtensionRequestData request = 3;
+  string session_id = 1;
+  ExtensionRequest request = 2;
 };
 
 message QualifiedExtensionResponse {
-  string request_id = 1;
-  string session_id = 2;
-  ExtensionResponse response = 3;
+  string session_id = 1;
+  ExtensionResponse response = 2;
 };
 
 message QualifiedExtensionEvent {
-  string id = 1;
-  string session_id = 2;
+  string session_id = 1;
+  ExtensionEvent event = 2;
 };
 
 message AckResponse {};

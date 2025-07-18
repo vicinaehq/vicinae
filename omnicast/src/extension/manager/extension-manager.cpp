@@ -1,183 +1,31 @@
 #include "extension/manager/extension-manager.hpp"
 #include <QtConcurrent/qtconcurrentrun.h>
+#include <absl/strings/internal/str_format/extension.h>
 #include <qfuturewatcher.h>
+#include <qlogging.h>
+#include <qstringview.h>
+#include <string>
 #include <unordered_map>
+#include "protocols/extension.pb.h"
 
-static const std::unordered_map<ExtensionMessageType, QString> messageTypeToString = {
-    {ExtensionMessageType::REQUEST, "request"},
-    {ExtensionMessageType::RESPONSE, "response"},
-    {ExtensionMessageType::EVENT, "event"},
-};
+void Bus::sendMessage(const QByteArray &data) {
+  QByteArray message;
+  QDataStream dataStream(&message, QIODevice::WriteOnly);
 
-static const std::unordered_map<Messenger::Type, QString> messengerTypeToString = {
-    {Messenger::Type::MAIN, "main"},
-    {Messenger::Type::MANAGER, "manager"},
-    {Messenger::Type::EXTENSION, "extension"},
-};
+  dataStream << data;
 
-static const std::unordered_map<QString, Messenger::Type> stringToMessengerType = {
-    {"main", Messenger::MAIN},
-    {"manager", Messenger::MANAGER},
-    {"extension", Messenger::EXTENSION},
-};
-
-static const std::unordered_map<QString, ExtensionMessageType> stringToExtensionMessageType = {
-    {"request", ExtensionMessageType::REQUEST},
-    {"response", ExtensionMessageType::RESPONSE},
-    {"event", ExtensionMessageType::EVENT},
-};
-
-FullMessage Bus::parseRawMessage(const QByteArray &data) {
-  // qDebug() << "processing packet of size " << data.size();
-  auto json = QJsonDocument::fromJson(data);
-
-  return parseFullMessage(json.object());
-}
-
-Messenger Bus::parseMessenger(const QJsonObject &lhs) {
-  Messenger messenger;
-
-  messenger.id = lhs.value("id").toString();
-
-  if (auto it = stringToMessengerType.find(lhs["type"].toString()); it != stringToMessengerType.end()) {
-    messenger.type = it->second;
-  }
-
-  return messenger;
-}
-
-MessageEnvelope Bus::parseEnvelope(const QJsonObject &lhs) {
-  MessageEnvelope envelope;
-
-  envelope.id = lhs["id"].toString();
-  envelope.action = lhs["action"].toString();
-
-  if (auto it = stringToExtensionMessageType.find(lhs["type"].toString());
-      it != stringToExtensionMessageType.end()) {
-    envelope.type = it->second;
-  }
-
-  envelope.target = parseMessenger(lhs["target"].toObject());
-  envelope.sender = parseMessenger(lhs["sender"].toObject());
-
-  return envelope;
-}
-
-FullMessage Bus::parseFullMessage(const QJsonObject &lhs) {
-  auto envelope = parseEnvelope(lhs["envelope"].toObject());
-  auto data = lhs["data"].toObject();
-
-  return {envelope, data};
-}
-
-QJsonObject Bus::serializeMessenger(const Messenger &lhs) {
-  QJsonObject obj;
-
-  obj["id"] = lhs.id;
-
-  if (auto it = messengerTypeToString.find(lhs.type); it != messengerTypeToString.end()) {
-    obj["type"] = it->second;
-  }
-
-  return obj;
-}
-
-MessageEnvelope Bus::makeEnvelope(ExtensionMessageType type, const Messenger &target, const QString &action) {
-  auto id = QUuid::createUuid().toString(QUuid::StringFormat::WithoutBraces);
-  MessageEnvelope envelope{
-      .id = id,
-      .type = type,
-      .sender = selfMessenger,
-      .target = target,
-      .action = action,
-  };
-
-  return envelope;
-}
-
-void Bus::sendMessage(const MessageEnvelope &envelope, const QJsonObject &payload) {
-  QJsonObject serializedEnvelope;
-
-  serializedEnvelope["id"] = envelope.id;
-
-  if (auto it = messageTypeToString.find(envelope.type); it != messageTypeToString.end()) {
-    serializedEnvelope["type"] = it->second;
-  }
-
-  serializedEnvelope["sender"] = serializeMessenger(envelope.sender);
-  serializedEnvelope["target"] = serializeMessenger(envelope.target);
-  serializedEnvelope["action"] = envelope.action;
-
-  QJsonObject message;
-
-  message["envelope"] = serializedEnvelope;
-  message["data"] = payload;
-
-  QJsonDocument doc(message);
-
-  QByteArray data;
-  QDataStream dataStream(&data, QIODevice::WriteOnly);
-
-  dataStream << doc.toJson();
-  device->write(data);
+  device->write(message);
   // qDebug() << "waiting for write...";
   device->waitForBytesWritten(1000);
   // qDebug() << "wrote message";
 }
 
-void Bus::request(const Messenger &target, const QString &action, const QJsonObject &payload) {
-  auto envelope = makeEnvelope(ExtensionMessageType::REQUEST, target, action);
-
-  m_outgoingPendingRequests.insert({envelope.id, envelope});
-  sendMessage(envelope, payload);
-}
-
-void Bus::emitEvent(const Messenger &target, const QString &action, const QJsonObject &payload) {
-  auto envelope = makeEnvelope(ExtensionMessageType::EVENT, target, action);
-
-  sendMessage(envelope, payload);
-}
-
-void Bus::requestExtension(const QString &sessionId, const QString &action, const QJsonObject &payload) {
-  Messenger target{.id = sessionId, .type = Messenger::Type::EXTENSION};
-
-  request(target, action, payload);
-}
-
-void Bus::handleMessage(FullMessage &msg) {
+void Bus::handleMessage(const protocols::extensions::IpcMessage &msg) {
   // qDebug() << "[DEBUG] readyRead: got message of type" << msg.envelope.action;
 
-  if (msg.envelope.type == ExtensionMessageType::REQUEST) {
-    m_incomingPendingRequests.insert({msg.envelope.id, msg.envelope});
-  }
-
-  if (msg.envelope.sender.type == Messenger::Type::MANAGER) {
-    if (msg.envelope.type == ExtensionMessageType::REQUEST) {
-      qDebug() << "manager->main is not supported";
-      return;
-    }
-
-    if (msg.envelope.type == ExtensionMessageType::RESPONSE) {
-      auto it = m_outgoingPendingRequests.find(msg.envelope.id);
-
-      if (it == m_outgoingPendingRequests.end()) {
-        qDebug() << "No matching request for manager response";
-        return;
-      }
-
-      m_outgoingPendingRequests.erase(msg.envelope.id);
-      emit managerResponse(msg.envelope.action, msg.data);
-    }
-  }
-
-  if (msg.envelope.sender.type == Messenger::Type::EXTENSION) {
-    if (msg.envelope.type == ExtensionMessageType::EVENT) {
-      emit extensionEvent(msg.envelope.sender.id, msg.envelope.action, msg.data);
-    }
-    if (msg.envelope.type == ExtensionMessageType::REQUEST) {
-      emit extensionRequest(msg.envelope.sender.id, msg.envelope.id, msg.envelope.action, msg.data);
-    }
-  }
+  if (msg.has_extension_request()) { emit extensionRequest(msg.extension_request()); }
+  if (msg.has_extension_event()) { emit extensionEvent(msg.extension_event()); }
+  if (msg.has_manager_response()) { emit managerResponse(msg.manager_response()); }
 }
 
 void Bus::readyRead() {
@@ -193,15 +41,13 @@ void Bus::readyRead() {
       if (!isComplete) break;
 
       auto packet = _message.data.sliced(sizeof(uint32_t), length);
+      std::string stringData = packet.toStdString();
 
-      // TODO: find a better way that does not block while still preserving order
-      if (m_parseMessageTask.isRunning()) { m_parseMessageTask.waitForFinished(); }
+      protocols::extensions::IpcMessage msg;
 
-      // auto task = QtConcurrent::run([this, packet = std::move(packet)]() { return parseRawMessage(packet);
-      // });
-      auto message = parseRawMessage(packet);
+      msg.ParseFromString(stringData);
 
-      handleMessage(message);
+      handleMessage(msg);
 
       // m_parseMessageTask.setFuture(task);
       _message.data = _message.data.sliced(sizeof(uint32_t) + length);
@@ -209,55 +55,71 @@ void Bus::readyRead() {
   }
 }
 
-void Bus::requestManager(const QString &action, const QJsonObject &payload) {
-  Messenger target{.type = Messenger::Type::MANAGER};
+void Bus::requestManager(protocols::extensions::ManagerRequestData *req) {
+  std::string data;
+  protocols::extensions::IpcMessage message;
+  auto request = new protocols::extensions::ManagerRequest;
 
-  request(target, action, payload);
+  request->set_request_id(QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString());
+  request->set_allocated_payload(req);
+
+  message.set_allocated_manager_request(request);
+  message.SerializeToString(&data);
+  sendMessage(QByteArray::fromStdString(data));
 }
 
-bool Bus::respond(const QString &id, const QJsonObject &payload) {
-  auto it = m_incomingPendingRequests.find(id);
+void Bus::emitExtensionEvent(protocols::extensions::QualifiedExtensionEvent *event) {
+  std::string data;
+  protocols::extensions::IpcMessage message;
 
-  if (it == m_incomingPendingRequests.end()) {
-    qDebug() << "no request with id " << id;
-    return false;
-  }
+  message.set_allocated_extension_event(event);
+  message.SerializeToString(&data);
+  sendMessage(QByteArray::fromStdString(data));
+}
 
-  auto envelope = it->second;
+bool Bus::respondToExtension(const QString &requestId, protocols::extensions::ExtensionResponseData *data) {
+  protocols::extensions::IpcMessage message;
+  std::string serialized;
 
-  m_incomingPendingRequests.erase(id);
-  envelope.target = envelope.sender;
-  envelope.sender = selfMessenger;
-  envelope.type = ExtensionMessageType::RESPONSE;
-  sendMessage(envelope, payload);
+  auto qualifiedResponse = new protocols::extensions::QualifiedExtensionResponse;
+  auto response = new protocols::extensions::ExtensionResponse;
+
+  response->set_request_id(requestId.toStdString());
+  response->set_allocated_data(data);
+  // TODO: get session id from request
+  qualifiedResponse->set_session_id("");
+  qualifiedResponse->set_allocated_response(response);
+
+  message.set_allocated_extension_response(qualifiedResponse);
+  message.SerializeToString(&serialized);
+
+  sendMessage(QByteArray::fromStdString(serialized));
 
   return true;
 }
 
-void Bus::emitExtensionEvent(const QString &sessionId, const QString &action, const QJsonObject &payload) {
-  Messenger target{.id = sessionId, .type = Messenger::Type::EXTENSION};
-  auto envelope = makeEnvelope(ExtensionMessageType::EVENT, target, action);
-
-  sendMessage(envelope, payload);
-}
-
-void Bus::ping() { requestManager("ping", {}); }
+void Bus::ping() {}
 
 void Bus::loadCommand(const QString &extensionId, const QString &cmdName) {
-  QJsonObject data;
+  auto requestData = new protocols::extensions::ManagerRequestData;
+  auto command = new protocols::extensions::ManagerLoadCommand;
 
-  data["extensionId"] = extensionId;
-  data["commandName"] = cmdName;
+  qDebug() << "bus loadCommand";
 
-  requestManager("load-command", data);
+  command->set_entrypoint("/fake/entrypoint/lol");
+  command->set_env(protocols::extensions::CommandEnv::Development);
+  command->set_mode(protocols::extensions::CommandMode::View);
+  requestData->set_allocated_load(command);
+  requestManager(requestData);
 }
 
 void Bus::unloadCommand(const QString &sessionId) {
-  QJsonObject data;
+  auto requestData = new protocols::extensions::ManagerRequestData;
+  auto unload = new protocols::extensions::ManagerUnloadCommand;
 
-  data["sessionId"] = sessionId;
-
-  requestManager("unload-command", data);
+  unload->set_session_id(sessionId.toStdString());
+  requestData->set_allocated_unload(unload);
+  requestManager(requestData);
 }
 
 Bus::Bus(QIODevice *socket) : device(socket) {
@@ -272,7 +134,8 @@ ExtensionManager::ExtensionManager(OmniCommandDatabase &commandDb) : commandDb(c
   connect(&process, &QProcess::finished, this, &ExtensionManager::finished);
   connect(&process, &QProcess::started, this, &ExtensionManager::processStarted);
 
-  connect(&bus, &Bus::managerResponse, this, &ExtensionManager::handleManagerResponse);
+  /// TODO: implement
+  // connect(&bus, &Bus::managerResponse, this, &ExtensionManager::handleManagerResponse);
   connect(&bus, &Bus::extensionEvent, this, &ExtensionManager::extensionEvent);
   connect(&bus, &Bus::extensionRequest, this, &ExtensionManager::extensionRequest);
 }
@@ -309,17 +172,17 @@ const std::vector<std::shared_ptr<Extension>> &ExtensionManager::extensions() co
   return loadedExtensions;
 }
 
-bool ExtensionManager::respond(const QString &id, const QJsonObject &payload) {
-  return bus.respond(id, payload);
+void ExtensionManager::requestManager(protocols::extensions::ManagerRequestData *req) {
+  return bus.requestManager(req);
 }
 
-void ExtensionManager::emitExtensionEvent(const QString &sessionId, const QString &action,
-                                          const QJsonObject &payload) {
-  return bus.emitExtensionEvent(sessionId, action, payload);
+bool ExtensionManager::respondToExtension(const QString &requestId,
+                                          protocols::extensions::ExtensionResponseData *data) {
+  return bus.respondToExtension(requestId, data);
 }
 
-void ExtensionManager::requestManager(const QString &action, const QJsonObject &payload) {
-  return bus.requestManager(action, payload);
+void ExtensionManager::emitExtensionEvent(protocols::extensions::QualifiedExtensionEvent *event) {
+  return bus.emitExtensionEvent(event);
 }
 
 void ExtensionManager::processStarted() {}
@@ -347,52 +210,14 @@ void ExtensionManager::readError() {
   QTextStream(stderr) << buf;
 }
 
-void ExtensionManager::startDevelopmentSession(const QString &id) {
-  QJsonObject data;
-
-  data["id"] = id;
-  requestManager("develop.start", data);
-}
-
-void ExtensionManager::refreshDevelopmentSession(const QString &id) {
-  QJsonObject data;
-
-  data["id"] = id;
-  requestManager("develop.refresh", data);
-}
-
-void ExtensionManager::stopDevelopmentSession(const QString &id) {
-  QJsonObject data;
-
-  data["id"] = id;
-  requestManager("develop.stop", data);
-}
-
 void ExtensionManager::loadCommand(const QString &extensionId, const QString &cmd,
                                    const QJsonObject &preferenceValues, const LaunchProps &launchProps) {
-  QJsonObject payload;
-
-  qDebug() << "LOAD COMMAND" << extensionId << cmd;
-
-  payload["extensionId"] = extensionId;
-  payload["commandName"] = cmd;
-  payload["preferenceValues"] = preferenceValues;
-  payload["launchProps"] = serializeLaunchProps(launchProps);
-
-  bus.requestManager("load-command", payload);
+  bus.loadCommand(extensionId, cmd);
 }
 
-void ExtensionManager::unloadCommand(const QString &sessionId) {
-  QJsonObject payload;
-
-  payload["sessionId"] = sessionId;
-
-  bus.requestManager("unload-command", payload);
-}
+void ExtensionManager::unloadCommand(const QString &sessionId) { bus.unloadCommand(sessionId); }
 
 void ExtensionManager::handleManagerResponse(const QString &action, QJsonObject &data) {
-  if (action == "develop.refresh") { bus.requestManager("list-extensions", {}); }
-
   if (action == "load-command") {
     auto sessionId = data["sessionId"].toString();
 

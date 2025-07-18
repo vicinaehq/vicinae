@@ -11,7 +11,7 @@ public:
     QJsonObject payload;
 
     payload["args"] = args;
-    m_manager->emitExtensionEvent(m_sessionId, handlerId, payload);
+    // m_manager->emitExtensionEvent(m_sessionId, handlerId, payload);
   }
 
   ExtensionCommandController(ExtensionManager *manager) : m_manager(manager) {}

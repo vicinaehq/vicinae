@@ -8,6 +8,7 @@
 #include "common.hpp"
 #include "extension/extension.hpp"
 #include "omni-command-db.hpp"
+#include "protocols/extension.pb.h"
 #include <netinet/in.h>
 #include <qdebug.h>
 #include <qdir.h>
@@ -36,28 +37,6 @@ struct LoadedCommand {
   } command;
 };
 
-enum ExtensionMessageType { REQUEST, RESPONSE, EVENT };
-
-struct Messenger {
-  enum Type { MAIN, MANAGER, EXTENSION };
-
-  QString id;
-  Type type;
-};
-
-struct MessageEnvelope {
-  QString id;
-  ExtensionMessageType type;
-  Messenger sender;
-  Messenger target;
-  QString action;
-};
-
-struct FullMessage {
-  MessageEnvelope envelope;
-  QJsonObject data;
-};
-
 class Bus : public QObject {
   Q_OBJECT
 
@@ -67,30 +46,16 @@ class Bus : public QObject {
   };
 
   MessageBuffer _message = {.length = 0};
-  QFutureWatcher<FullMessage> m_parseMessageTask;
-  std::map<QString, MessageEnvelope> m_outgoingPendingRequests;
-  std::map<QString, MessageEnvelope> m_incomingPendingRequests;
-  Messenger selfMessenger{.type = Messenger::MAIN};
 
   QIODevice *device = nullptr;
-  QJsonObject serializeMessenger(const Messenger &lhs);
-  MessageEnvelope makeEnvelope(ExtensionMessageType type, const Messenger &target, const QString &action);
-  void sendMessage(const MessageEnvelope &envelope, const QJsonObject &payload);
-  void request(const Messenger &target, const QString &action, const QJsonObject &payload);
-  void emitEvent(const Messenger &target, const QString &action, const QJsonObject &payload);
-  void requestExtension(const QString &sessionId, const QString &action, const QJsonObject &payload);
-  void handleMessage(FullMessage &message);
+  void sendMessage(const QByteArray &data);
+  void handleMessage(const protocols::extensions::IpcMessage &message);
   void readyRead();
 
-  static Messenger parseMessenger(const QJsonObject &lhs);
-  static MessageEnvelope parseEnvelope(const QJsonObject &lhs);
-  static FullMessage parseFullMessage(const QJsonObject &lhs);
-  static FullMessage parseRawMessage(const QByteArray &data);
-
 public:
-  void requestManager(const QString &action, const QJsonObject &payload);
-  bool respond(const QString &id, const QJsonObject &payload);
-  void emitExtensionEvent(const QString &sessionId, const QString &action, const QJsonObject &payload);
+  void requestManager(protocols::extensions::ManagerRequestData *req);
+  bool respondToExtension(const QString &requestId, protocols::extensions::ExtensionResponseData *data);
+  void emitExtensionEvent(protocols::extensions::QualifiedExtensionEvent *event);
   void ping();
   void loadCommand(const QString &extensionId, const QString &cmdName);
   void unloadCommand(const QString &sessionId);
@@ -98,10 +63,9 @@ public:
   Bus(QIODevice *socket);
 
 signals:
-  void managerResponse(const QString &action, QJsonObject &data);
-  void extensionRequest(const QString &sessionId, const QString &id, const QString &action,
-                        QJsonObject &data);
-  void extensionEvent(const QString &sessionId, const QString &action, QJsonObject &data);
+  void managerResponse(const protocols::extensions::ManagerResponse &res);
+  void extensionRequest(const protocols::extensions::QualifiedExtensionRequest &req);
+  void extensionEvent(const protocols::extensions::QualifiedExtensionEvent &event);
 };
 
 class ExtensionManager : public QObject {
@@ -116,17 +80,15 @@ public:
   ExtensionManager(OmniCommandDatabase &commandDb);
 
   const std::vector<std::shared_ptr<Extension>> &extensions() const;
-  bool respond(const QString &id, const QJsonObject &payload);
-  void emitExtensionEvent(const QString &sessionId, const QString &action, const QJsonObject &payload);
-  void requestManager(const QString &action, const QJsonObject &payload);
+
+  void requestManager(protocols::extensions::ManagerRequestData *req);
+  bool respondToExtension(const QString &requestId, protocols::extensions::ExtensionResponseData *data);
+  void emitExtensionEvent(protocols::extensions::QualifiedExtensionEvent *event);
+
   void processStarted();
   static QJsonObject serializeLaunchProps(const LaunchProps &props);
 
   bool start();
-
-  void startDevelopmentSession(const QString &id);
-  void refreshDevelopmentSession(const QString &id);
-  void stopDevelopmentSession(const QString &id);
 
   void loadCommand(const QString &extensionId, const QString &cmd, const QJsonObject &preferenceValues = {},
                    const LaunchProps &launchProps = {});
@@ -136,9 +98,9 @@ public:
   void readError();
 
 signals:
-  void extensionEvent(const QString &sessionId, const QString &action, const QJsonObject &payload);
-  void extensionRequest(const QString &sessionId, const QString &id, const QString &action,
-                        const QJsonObject &payload);
-  void managerResponse(const QString &action, QJsonObject &payload);
+  void managerResponse(const protocols::extensions::ManagerResponse &res);
+  void extensionRequest(const protocols::extensions::QualifiedExtensionRequest &req);
+  void extensionEvent(const protocols::extensions::QualifiedExtensionEvent &event);
+
   void commandLoaded(const LoadedCommand &);
 };

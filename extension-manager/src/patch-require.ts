@@ -6,7 +6,8 @@ import Module from 'module';
 const requireOverrides: Record<string, any> = {
 	'react': React,
 	'react/jsx-runtime': jsxRuntime,
-	'@omnicast/api': omnicast
+	'@omnicast/api': omnicast,
+	'@raycast/api': omnicast
 };
 
 export const patchRequire = () => {
