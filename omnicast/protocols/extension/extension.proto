@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 import "google/protobuf/any.proto";
+import "preference.proto";
 
 package protocols.extensions;
 
@@ -8,8 +9,9 @@ message IpcMessage {
   oneof payload {
     QualifiedExtensionRequest extension_request = 1;
     QualifiedExtensionResponse extension_response = 2;
-    ManagerRequest manager_request = 3;
-    ManagerResponse manager_response = 4;
+    QualifiedExtensionEvent extension_event = 3;
+    ManagerRequest manager_request = 4;
+    ManagerResponse manager_response = 5;
   };
 };
 
@@ -49,15 +51,6 @@ message ListExtensionsResponse {
   repeated ExtensionInfo extension_list = 1;
 };
 
-message Preference {
-  string id = 1;
-  string type = 2;
-  bool is_required = 3;
-  string title = 4;
-  string placeholder = 5;
-  string description = 6;
-};
-
 message CommandArgument {
   string name = 1;
   string type = 2;
@@ -78,7 +71,7 @@ message ExtensionManifest {
   // implement dark/light variant
   string icon = 6;
   repeated CommandManifest commands = 7;
-  repeated Preference preferences = 8;
+  repeated preference.Preference preferences = 8;
 };
 
 message CommandManifest {
@@ -86,7 +79,7 @@ message CommandManifest {
   string title = 2;
   string description = 3;
   string mode = 4;
-  repeated Preference preferences = 5;
+  repeated preference.Preference preferences = 5;
   repeated CommandArgument arguments = 6;
 };
 
@@ -100,6 +93,11 @@ message QualifiedExtensionResponse {
   string request_id = 1;
   string session_id = 2;
   ExtensionResponse response = 3;
+};
+
+message QualifiedExtensionEvent {
+  string id = 1;
+  string session_id = 2;
 };
 
 message AckResponse {};

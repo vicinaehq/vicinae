@@ -131,7 +131,6 @@ public:
   void loadCommand(const QString &extensionId, const QString &cmd, const QJsonObject &preferenceValues = {},
                    const LaunchProps &launchProps = {});
   void unloadCommand(const QString &sessionId);
-  void parseListExtensionData(QJsonObject &obj);
   void handleManagerResponse(const QString &action, QJsonObject &data);
   void finished(int exitCode, QProcess::ExitStatus status);
   void readError();

@@ -4,6 +4,7 @@
 #include "command.hpp"
 #include "omni-icon.hpp"
 #include "preference.hpp"
+#include "services/extension-registry/extension-registry.hpp"
 #include <qstring.h>
 #include <qboxlayout.h>
 #include <qfuturewatcher.h>
@@ -20,21 +21,14 @@
 
 class ExtensionCommand : public AbstractCmd {
   QString _extensionId;
-  QString _id;
   QString _extensionTitle;
-  QString _title;
-  QString _icon;
   QString _extensionIcon;
   PreferenceList _extensionPreferences;
-  PreferenceList _preferences;
-  ArgumentList m_arguments;
   std::filesystem::path _assetPath;
-  CommandMode _mode;
-
-  ExtensionCommand(const QJsonObject &obj);
+  ExtensionManifest::Command m_command;
 
 public:
-  static ExtensionCommand fromJson(const QJsonObject &obj);
+  ExtensionCommand(const ExtensionManifest::Command &command) : m_command(command) {}
 
   QString extensionId() const override;
   void setExtensionId(const QString &text);
@@ -48,8 +42,8 @@ public:
 
   bool isFallback() const override { return true; }
 
-  std::vector<CommandArgument> arguments() const override { return m_arguments; }
-  std::vector<Preference> preferences() const override { return _preferences; }
+  std::vector<CommandArgument> arguments() const override { return m_command.arguments; }
+  std::vector<Preference> preferences() const override { return m_command.preferences; }
 
   QString uniqueId() const override;
   QString name() const override;

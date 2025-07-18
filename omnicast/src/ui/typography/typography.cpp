@@ -8,6 +8,7 @@
 void TypographyWidget::updateText() {
   if (m_label->wordWrap() || !m_autoEllide) {
     m_label->setText(m_text);
+    updateGeometry();
     return;
   }
 
@@ -23,7 +24,10 @@ void TypographyWidget::resizeEvent(QResizeEvent *event) {
   updateText();
 }
 
-void TypographyWidget::setEllideMode(Qt::TextElideMode mode) { m_elideMode = mode; }
+void TypographyWidget::setEllideMode(Qt::TextElideMode mode) {
+  m_elideMode = mode;
+  updateText();
+}
 
 void TypographyWidget::paintEvent(QPaintEvent *event) {
   OmniPainter painter(this);
@@ -88,7 +92,6 @@ void TypographyWidget::setSize(TextSize size) {
 
 void TypographyWidget::setText(const QString &text) {
   m_text = text;
-  updateGeometry();
   updateText();
 }
 
@@ -106,7 +109,6 @@ void TypographyWidget::setFont(const QFont &f) {
   font.setWeight(m_weight);
   m_label->setFont(font);
   updateText();
-  updateGeometry();
 }
 
 void TypographyWidget::setAlignment(Qt::Alignment align) { m_label->setAlignment(align); }
@@ -121,7 +123,7 @@ void TypographyWidget::setFontWeight(QFont::Weight weight) {
   m_label->setFont(_font);
 
   m_weight = weight;
-  updateGeometry();
+  updateText();
 }
 
 void TypographyWidget::clear() { setText(""); }

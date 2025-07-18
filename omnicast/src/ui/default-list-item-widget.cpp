@@ -10,8 +10,9 @@
 
 void DefaultListItemWidget::setName(const QString &name) {
   _name->setText(name);
+  _name->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   _name->setVisible(!name.isEmpty());
-  _name->setFixedWidth(_name->sizeHint().width());
+  //_name->setFixedWidth(_name->sizeHint().width());
 }
 
 void DefaultListItemWidget::setIconUrl(const std::optional<OmniIconUrl> &url) {

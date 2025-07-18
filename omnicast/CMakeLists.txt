@@ -40,6 +40,11 @@ include_directories(
     ${CMAKE_CURRENT_BINARY_DIR}  # For generated headers
 )
 
+set(PROTO_SRC_DIR ./protocols/extension)
+
+
+file(GLOB PROTO_FILES "${PROTO_SRC_DIR}/*.proto")
+
 message(STATUS "Protobuf version: ${protobuf_VERSION}")
 message(STATUS "Protobuf compiler: ${protobuf_PROTOC_EXE}")
 
@@ -447,6 +452,9 @@ set(SRCS
 	src/services/files-service/file-indexer/home-directory-watcher.cpp
 	src/services/files-service/file-indexer/file-indexer-db.cpp
 
+	src/services/extension-registry/extension-registry.hpp
+	src/services/extension-registry/extension-registry.cpp
+
 
 	src/utils/migration-manager/migration-manager.hpp
 	src/utils/migration-manager/migration-manager.cpp
@@ -491,10 +499,13 @@ qt_add_executable(${TARGET} ${SRCS})
 target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(${TARGET} PRIVATE ${LIBS})
 
+make_directory(${CMAKE_CURRENT_BINARY_DIR}/protocols)
+
 protobuf_generate(
 	TARGET ${TARGET}
-	PROTOS ./protocols/extension/extension.proto
-
+	PROTOS ${PROTO_FILES}
+	IMPORT_DIRS ${PROTO_SRC_DIR} ${COMMON_PROTO_DIR}
+	PROTOC_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/protocols
 )
 
 

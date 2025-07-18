@@ -41,6 +41,7 @@
 #include <qtmetamacros.h>
 #include "extension/manager/extension-manager.hpp"
 #include "services/emoji-service/emoji-service.hpp"
+#include "services/extension-registry/extension-registry.hpp"
 #include "services/files-service/file-service.hpp"
 #include "services/local-storage/local-storage-service.hpp"
 #include "omnicast.hpp"
@@ -56,7 +57,6 @@
 #include "theme.hpp"
 #include "ui/ui-controller.hpp"
 #include "utils/utils.hpp"
-#include "protocols/extension/extension.pb.h"
 
 #ifdef WAYLAND_LAYER_SHELL
 #include <LayerShellQt/window.h>
@@ -179,6 +179,7 @@ int startDaemon() {
     auto emojiService = std::make_unique<EmojiService>(*omniDb.get());
     auto calculatorService = std::make_unique<CalculatorService>(*omniDb.get());
     auto fileService = std::make_unique<FileService>();
+    auto extensionRegistry = std::make_unique<ExtensionRegistry>(*commandDb);
 
     if (auto name = currentConfig.theme.name) {
       if (!ThemeService::instance().setTheme(*name)) {
@@ -235,6 +236,12 @@ int startDaemon() {
 
     for (const auto &repo : builtinCommandDb->repositories()) {
       registry->commandDb()->registerRepository(repo);
+    }
+
+    for (const auto &manifest : extensionRegistry->scanAll()) {
+      auto extension = std::make_shared<Extension>(manifest);
+
+      ServiceRegistry::instance()->commandDb()->registerRepository(extension);
     }
 
     // this one needs to be set last

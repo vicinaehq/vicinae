@@ -322,7 +322,7 @@ void ExtensionManager::requestManager(const QString &action, const QJsonObject &
   return bus.requestManager(action, payload);
 }
 
-void ExtensionManager::processStarted() { bus.requestManager("list-extensions", {}); }
+void ExtensionManager::processStarted() {}
 
 QJsonObject ExtensionManager::serializeLaunchProps(const LaunchProps &props) {
   QJsonObject obj;
@@ -372,6 +372,8 @@ void ExtensionManager::loadCommand(const QString &extensionId, const QString &cm
                                    const QJsonObject &preferenceValues, const LaunchProps &launchProps) {
   QJsonObject payload;
 
+  qDebug() << "LOAD COMMAND" << extensionId << cmd;
+
   payload["extensionId"] = extensionId;
   payload["commandName"] = cmd;
   payload["preferenceValues"] = preferenceValues;
@@ -388,27 +390,7 @@ void ExtensionManager::unloadCommand(const QString &sessionId) {
   bus.requestManager("unload-command", payload);
 }
 
-void ExtensionManager::parseListExtensionData(QJsonObject &obj) {
-  std::vector<std::shared_ptr<Extension>> extensions;
-  auto extensionList = obj["extensions"].toArray();
-
-  extensions.reserve(extensionList.size());
-
-  qDebug() << "parse list extensions" << extensionList.size();
-
-  for (const auto &ext : extensionList) {
-    auto extension = std::make_shared<Extension>(Extension::fromObject((ext.toObject())));
-
-    commandDb.registerRepository(extension);
-    extensions.push_back(extension);
-  }
-
-  loadedExtensions = extensions;
-}
-
 void ExtensionManager::handleManagerResponse(const QString &action, QJsonObject &data) {
-  if (action == "list-extensions") { return parseListExtensionData(data); }
-
   if (action == "develop.refresh") { bus.requestManager("list-extensions", {}); }
 
   if (action == "load-command") {
