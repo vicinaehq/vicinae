@@ -1,0 +1,62 @@
+syntax = "proto3";
+import "google/protobuf/struct.proto";
+
+import "manager.proto";
+import "common.proto";
+import "extension.proto";
+
+package proto.ext;
+
+message IpcMessage {
+  oneof payload {
+    QualifiedExtensionRequest extension_request = 1;
+    QualifiedExtensionResponse extension_response = 2;
+    QualifiedExtensionEvent extension_event = 3;
+    ManagerRequest manager_request = 4;
+    ManagerResponse manager_response = 5;
+  };
+};
+
+message ManagerRequest {
+  string request_id = 1;
+  manager.RequestData payload = 2;
+};
+
+message ManagerResponse {
+  string request_id = 1;
+  oneof result {
+    manager.ResponseData value = 2;
+    common.ErrorResponse error = 3;
+  };
+};
+
+message QualifiedExtensionRequest {
+  string session_id = 1;
+  extension.Request request = 2;
+};
+
+message QualifiedExtensionResponse {
+  string session_id = 1;
+  extension.Response response = 2;
+};
+
+message QualifiedExtensionEvent {
+  string session_id = 1;
+  extension.Event event = 2;
+};
+
+
+message ExtensionMessage {
+  oneof message {
+    extension.Request request = 1;
+    extension.Response response = 2;
+    extension.Event event = 3;
+  };
+};
+
+
+
+// render stuff
+
+
+

@@ -76,6 +76,8 @@ bool GlobalHeader::eventFilter(QObject *watched, QEvent *event) {
 }
 
 void GlobalHeader::handleSearchPop() {
+  if (!m_input->isVisible()) return;
+
   if (m_navigation.viewStackSize() > 1) { m_navigation.popCurrentView(); }
 }
 

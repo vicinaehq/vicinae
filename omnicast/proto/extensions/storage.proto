@@ -1,0 +1,54 @@
+syntax = "proto3";
+import "google/protobuf/struct.proto";
+
+package proto.ext.storage;
+
+message ClearRequest {}
+
+message GetRequest {
+  string key = 1;
+}
+
+message GetResponse {
+  google.protobuf.Value value = 1;
+};
+
+message SetResponse {};
+
+message SetRequest {
+  string key = 1;
+  google.protobuf.Value value = 2;
+};
+
+message RemoveRequest {
+  string key = 1;
+};
+
+message RemoveResponse {};
+
+message ClearResponse {};
+
+message ListRequest {
+};
+
+message ListResponse {
+  map<string, google.protobuf.Value> values = 1;
+};
+
+message Request {
+  oneof payload {
+    GetRequest get = 1;
+    SetRequest set = 2;
+    RemoveRequest remove = 3;
+    ClearRequest clear = 4;
+    ListRequest list = 5;
+  };
+};
+
+message Response {
+  GetResponse get = 1;
+  SetResponse set = 2;
+  RemoveResponse remove = 3;
+  ClearResponse clear = 4;
+  ListResponse list = 5;
+};

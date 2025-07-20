@@ -175,6 +175,8 @@ std::expected<ExtensionManifest, ManifestError> ExtensionRegistry::scanBundle(co
   for (const auto &obj : obj.value("commands").toArray()) {
     auto command = parseCommandFromObject(obj.toObject());
 
+    command.entrypoint = path / std::format("{}.js", command.name.toStdString());
+
     if (std::ranges::contains(supportedModes, command.mode)) { manifest.commands.emplace_back(command); }
   }
 

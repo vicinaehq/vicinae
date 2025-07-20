@@ -230,6 +230,7 @@ void NavigationController::setSearchAccessory(QWidget *accessory, const BaseView
 }
 
 void NavigationController::setActions(std::unique_ptr<ActionPanelState> panel, const BaseView *caller) {
+  qDebug() << "set actions called";
   if (!panel) {
     qCritical() << "setActions called with a null pointer";
     return;

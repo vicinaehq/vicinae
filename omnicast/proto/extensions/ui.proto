@@ -1,0 +1,44 @@
+syntax = "proto3";
+import "google/protobuf/struct.proto";
+
+package proto.ext.ui;
+
+message ShowToastRequest {
+  string title = 1;
+  string style = 2;
+};
+
+message PushViewRequest {}
+message PopViewRequest {}
+message CloseMainWindowRequest {};
+message ClearSearchBarRequest {};
+
+message ShowHudRequest {
+  string text = 1;
+};
+
+message RenderRequest {
+   //repeated RenderNode views = 1;
+   // we will migrate to actual protobuf
+   string json = 1;
+};
+
+message Request {
+  oneof payload {
+    RenderRequest render = 1;
+    ShowToastRequest show_toast = 2;
+    PushViewRequest push_view = 3;
+    PopViewRequest pop_view = 4;
+    ClearSearchBarRequest clear_search = 5;
+    CloseMainWindowRequest close_main_window = 6;
+    ShowHudRequest show_hud = 7;
+  };
+};
+
+message RenderNode {
+  string type = 1;
+  bool has_dirty_child = 2;
+  bool has_dirty_props = 3;
+  map<string, google.protobuf.Value> props = 4;
+  repeated RenderNode children = 5;
+};

@@ -1,7 +1,6 @@
 import { PathLike } from 'fs';
 import { rm } from 'fs/promises';
-import { Message, bus } from './bus';
-import { ListApplicationRequest } from './omnicast/protocols/extension/extension';
+import { bus } from './bus';
 
 export const captureException = (exception: unknown): void => {
 	// maybe one day, if we have a developer hub, also...

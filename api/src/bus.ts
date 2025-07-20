@@ -1,6 +1,9 @@
 import { randomUUID } from "crypto"
 import { parentPort, MessagePort } from "worker_threads"
-import { ExtensionRequest, ExtensionMessage, ListApplicationRequest, ListApplicationResponse, ExtensionRequestData, ExtensionResponseData, ExtensionResponse } from './omnicast/protocols/extension/extension';
+
+import * as ipc from './proto/ipc';
+import * as extension from './proto/extension';
+
 
 export type Message<T = Record<string, any>> = {
 	envelope: {
@@ -21,21 +24,17 @@ type EventListenerInfo = {
 	callback: EventListener.Callback;
 };
 
-interface RequestResponseMap extends Record<keyof ExtensionRequestData, keyof ExtensionResponseData> {
-	'listApps': 'listApplications'
-};
 
-type RequestType = keyof ExtensionRequestData;
-type RequestFor<T extends RequestType> = NonNullable<ExtensionRequestData[T]>;
-type ResponseFor<T extends RequestType> = NonNullable<ExtensionResponseData[RequestResponseMap[T]]>;
+type RequestType = keyof extension.RequestData;
+type RequestFor<T extends RequestType> = NonNullable<extension.RequestData[T]>;
 
 
 class Bus {
   private requestMap = new Map<string, { resolve: (message: Message) => void }>();
-  private safeRequestMap = new Map<string, { resolve: (message: ExtensionResponse) => void }>();
+  private safeRequestMap = new Map<string, { resolve: (message: extension.Response) => void }>();
   private eventListeners = new Map<string, EventListenerInfo[]>();
 
-  private handleSafeMessage(message: ExtensionMessage) {
+  private handleSafeMessage(message: ipc.ExtensionMessage) {
 	  if (message.response) {
 		const request = this.safeRequestMap.get(message.response.requestId);
 
@@ -50,58 +49,31 @@ class Bus {
 	  }
 
 	  if (message.event) {
-		const { id, args } = message.event;
-		const listeners = this.listEventListeners(id)
+		const { id, generic } = message.event;
 
-		for (const listener of listeners) {
-			listener.callback(...(args ?? []))
+		console.error('got event with id', id);
+
+		if (generic) {
+			const listeners = this.listEventListeners(id)
+			const args = JSON.parse(generic.json);
+
+			console.error(`Got ${listeners.length} listeners for event ${id}`);
+
+			for (const listener of listeners) {
+				listener.callback(...(args ?? []))
+			}
 		}
 	  }
-  }
-
-  private handleMessage(message: Message) {
-	const { envelope, data } = message;
-
-	if (envelope.type == 'response') {
-		const request = this.requestMap.get(envelope.id);
-
-		if (!request) {
-			console.error(`Received response for unknown request ${envelope.action} ${envelope.id}`);
-			return ;
-		}
-
-		this.requestMap.delete(envelope.id);
-		request.resolve(message);
-
-		return ;
-	}
-
-	if (envelope.type == 'event') {
-		let start = performance.now();
-		const listeners = this.listEventListeners(envelope.action)
-		let end = performance.now();
-
-		start = performance.now();
-
-		for (const listener of listeners) {
-			listener.callback(...(data.args ?? []))
-		}
-
-		end = performance.now();
-
-		return ;
-	}
-
-	if (envelope.type == 'request') {
-		console.error(`Direct requests to extensions are not yet supported`);
-		return ;
-	}
   }
 
   constructor(private readonly port: MessagePort) {
 	  if (!port) return ;
 	  console.error('INSTANCIATE BUS');
-	  port.on('message', this.handleMessage.bind(this));
+
+	  port.on('message', (buf) => {
+		  this.handleSafeMessage(ipc.ExtensionMessage.decode(buf));
+	  });
+
 	  port.on('messageerror', (error) => {
 		  console.error(`Message error from manager`, error);
 	  });
@@ -140,39 +112,33 @@ class Bus {
   }
 
   emit(action: string, data: Record<string, any>) {
-	const id = randomUUID();
-	const message: Message = {
-		envelope: {
-			type: 'event',
-			action, 
-			id
-		},
-		data,
-		error: null,
-	};
+	const message = ipc.ExtensionMessage.create({
+		event: { 
+			id: action, 
+			generic: { json: JSON.stringify([data]) } 
+		}
+	});
 	
-	this.port.postMessage(message);
+	console.error('event', message);
+
+	this.sendMessage(message);
   }
 
-  safeRequest<T extends keyof ExtensionRequestData>(type: T, data: RequestFor<T>, options: { timeout?: number, rejectOnError?: boolean } = {}): Promise<ResponseFor<T>> {
-	  const dat: ExtensionRequestData = {
-		  [type]: data
-	  };
+  sendMessage(message: ipc.ExtensionMessage) {
+	  this.port.postMessage(ipc.ExtensionMessage.encode(message).finish());
+  }
 
-	  const req: ExtensionRequest = {
-		  requestId: randomUUID(),
-		  data: dat
-	  };
+  request2(data: extension.RequestData, options: { timeout?: number, rejectOnError?: boolean } = {}) {
+	  const req = extension.Request.create({ requestId: randomUUID(), data });
 
-
-	return new Promise<ResponseFor<T>>((resolve, reject) => {
+	  return new Promise<extension.ResponseData>((resolve, reject) => {
 		let timeout: NodeJS.Timeout | undefined;
 
 		if (options.timeout) {
 			timeout = setTimeout(() => reject(new Error(`request timed out`)), options.timeout);
 		}
 
-		const resolver = (response: ExtensionResponse) => { 
+		const resolver = (response: extension.Response) => { 
 			clearTimeout(timeout);
 
 			if (response.error && options.rejectOnError) {
@@ -183,27 +149,24 @@ class Bus {
 				return reject("No error and not data. This should normally not happen.");
 			}
 
-			const resData = response.data[type as any] as ResponseFor<T>;
-
-			if (!resData) {
-				return reject("Malformed response");
-			}
-
-			resolve(resData);
+			resolve(response.data);
 		};
 
 		try {
 			this.safeRequestMap.set(req.requestId, { resolve: resolver });
-			this.port.postMessage(ExtensionRequest.encode(req).finish());
+			this.sendMessage({ request: req });
 		} catch (error) {
 			reject(error);
 		}
 	});
+
   }
 
   request<T = Record<string, any>>(action: string, data: Record<string, any> = {}, options: { timeout?: number, rejectOnError?: boolean } = {}): Promise<Message<T>> {
 	const id = randomUUID();
 	const { rejectOnError = true } = options;
+
+	console.error('request', action);
 
 	return new Promise<Message<T>>((resolve, reject) => {
 		let timeout: NodeJS.Timeout | undefined;

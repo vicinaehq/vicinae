@@ -57,6 +57,8 @@ public:
   CommandType type() const override;
   CommandMode mode() const override;
 
+  const ExtensionManifest::Command &manifest() const { return m_command; }
+
   CommandContext *createContext(const std::shared_ptr<AbstractCmd> &command) const override;
 
   ExtensionCommand() {}

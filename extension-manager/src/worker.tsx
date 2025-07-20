@@ -60,7 +60,11 @@ const loadView = async () => {
 
 	const renderer = createRenderer({
 		onInitialRender: (views) => {
-			bus!.emit('render', { views });
+			bus.request2({ 
+				ui: { 
+					render: { json: JSON.stringify({ views }) } 
+				} 
+			});
 		},
 		onUpdate: (views) => {
 			const now = performance.now();
@@ -70,7 +74,12 @@ const loadView = async () => {
 
 			lastRender = now;
 			
-			bus!.emit('ui.render', { views });
+			bus.request2({ 
+				ui: { 
+					render: { json: JSON.stringify({ views }) } 
+				} 
+			});
+			//bus!.emit('ui.render', { views });
 		}
 	});
 

@@ -2,7 +2,11 @@ import { randomUUID } from 'crypto';
 import { isMainThread, Worker } from "worker_threads";
 import { main as workerMain } from './worker';
 import { isatty } from "tty";
-import { CommandEnv, CommandMode, IpcMessage, ManagerRequest, ManagerLoadResponseData, ManagerResponse, ErrorResponseData, ExtensionEvent, ExtensionMessage, QualifiedExtensionRequest, QualifiedExtensionEvent, ManagerResponseData, AckResponse } from './protocols/extension';
+
+import * as ipc from './proto/ipc';
+import * as common from './proto/common';
+import * as manager from './proto/manager';
+import * as extension from './proto/extension';
 
 class Omnicast {
 	private readonly workerMap = new Map<string, Worker>;
@@ -10,6 +14,10 @@ class Omnicast {
 	private currentMessage: { data: Buffer }= {
 		data: Buffer.from(''),
 	};
+
+	private formatError(error: Error) {
+		return `${error.stack}`;
+	}
 
 	private async writePacket(message: Buffer) {
 		const packet = Buffer.allocUnsafe(message.length + 4);
@@ -19,27 +27,24 @@ class Omnicast {
 		process.stdout.write(packet);
 	}
 
-	private respond(requestId: string, value: ManagerResponseData) {
-		const response = ManagerResponse.create({ requestId, value });
-		const message = IpcMessage.create({ managerResponse: response })
-		const data = IpcMessage.encode(message).finish();
-
-		this.writePacket(Buffer.from(data));
+	private respond(requestId: string, value: manager.ResponseData) {
+		this.writeMessage({ managerResponse: { requestId, value} });
 	}
 
-	private respondError(requestId: string, error: ErrorResponseData) {
-		const response = ManagerResponse.create({ requestId, error });
-		const message = IpcMessage.create({ managerResponse: response })
-		const data = IpcMessage.encode(message).finish();
-
-		this.writePacket(Buffer.from(data));
+	private writeMessage(message: ipc.IpcMessage) {
+		const buf = Buffer.from(ipc.IpcMessage.encode(message).finish());
+		this.writePacket(buf);
 	}
 
-	private parseMessage(packet: Buffer): IpcMessage {
-		return IpcMessage.decode(packet);
+	private respondError(requestId: string, error: common.ErrorResponse) {
+		this.writeMessage({managerResponse: {requestId, error}});
 	}
 
-	private async handleManagerRequest(request: ManagerRequest) {
+	private parseMessage(packet: Buffer): ipc.IpcMessage {
+		return ipc.IpcMessage.decode(packet);
+	}
+
+	private async handleManagerRequest(request: ipc.ManagerRequest) {
 		if (request.payload?.load) {
 			console.error('load command from extension manager');
 			const load = request.payload.load;
@@ -52,11 +57,11 @@ class Omnicast {
 					entrypoint: load.entrypoint,
 					preferenceValues: load.preferenceValues,
 					launchProps: { arguments: load.argumentValues },
-					commandMode: load.mode == CommandMode.View ? "view" : "no-view"
+					commandMode: load.mode == manager.CommandMode.View ? "view" : "no-view"
 				},
 				stdout: true,
 				env: {
-					'NODE_ENV': load.env == CommandEnv.Development ? 'development' : 'production',
+					'NODE_ENV': load.env == manager.CommandEnv.Development ? 'development' : 'production',
 				}
 			});
 
@@ -67,6 +72,10 @@ class Omnicast {
 			});
 
 			worker.on('error', (error) => {
+				const crash = extension.CrashEventData.create({ text: this.formatError(error) });
+				const event = ipc.QualifiedExtensionEvent.create({ sessionId, event: { id: randomUUID(), crash } });
+
+				this.writeMessage({ extensionEvent: event });
 				console.error(`worker error`, error);
 			});
 
@@ -75,25 +84,31 @@ class Omnicast {
 			});
 
 			worker.on('message', (buf: Buffer) => {
-				const { event, request } = ExtensionMessage.decode(buf);
+				console.error(buf);
+				try {
+					const { event, request } = ipc.ExtensionMessage.decode(buf);
 
-				/**
-				 * Here we qualify the request or event by appending to it the runtime session id
-				 * which is only known to us. Extensions cannot forge one themselves.
-				 */
+					/**
+					 * Here we qualify the request or event by appending to it the runtime session id
+					 * which is only known to us. Extensions cannot forge one themselves.
+					 */
 
-				if (request) {
-					const message = QualifiedExtensionRequest.encode({ sessionId, request }).finish();
+					if (request) {
+						this.requestMap.set(request.requestId, worker);
+						this.writeMessage({ extensionRequest: { sessionId, request } });
+						return ;
+					}
 
-					this.requestMap.set(request.requestId, worker);
-					this.writePacket(Buffer.from(message));
-					return ;
-				}
+					if (event) {
+						this.writeMessage({ extensionEvent: { sessionId, event }});
+					}
+				} catch (error) {
+					const crash = extension.CrashEventData.create({ text: error instanceof Error ? this.formatError(error) : `${error}` });
+					const event = ipc.QualifiedExtensionEvent.create({ sessionId, event: { id: randomUUID(), crash } });
 
-				if (event) {
-					const message = QualifiedExtensionEvent.encode({ sessionId, event }).finish();
-
-					this.writePacket(Buffer.from(message));
+					this.writeMessage({ extensionEvent: event });
+					this.workerMap.delete(sessionId);
+					worker.terminate();
 				}
 
 				//console.error(`from worker`, { qualifiedPayload });
@@ -113,8 +128,6 @@ class Omnicast {
 				console.error(`worker exited with code ${code}`)
 				this.workerMap.delete(sessionId);
 			});
-
-			let res = ManagerLoadResponseData.create({ sessionId });
 
 			return this.respond(request.requestId, { load: { sessionId } });
 		}
@@ -139,18 +152,22 @@ class Omnicast {
 		return this.respondError(request.requestId, { errorText: "No handler configured for this command" });
 	}
 
-	private async routeMessage(message: IpcMessage) {
+	private async routeMessage(message: ipc.IpcMessage) {
 		const { managerRequest, extensionEvent } = message;
-		
+
+		console.error({ message });
+
 		if (managerRequest) {
 			this.handleManagerRequest(managerRequest);
 		}
 		
 		if (extensionEvent) {
 			const worker = this.workerMap.get(extensionEvent.sessionId);
+
+			console.error('extension event', extensionEvent.event?.id, 'has worker', !!worker);
 			
 			if (worker) {
-				worker.postMessage(ExtensionMessage.encode({ event: extensionEvent.event }).finish());
+				worker.postMessage(ipc.ExtensionMessage.encode({ event: extensionEvent.event }).finish());
 			}
 		}
 	}

@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package proto.ext.common;
+
+message AckResponse {};
+
+message ErrorResponse {
+  string error_text = 1;
+};

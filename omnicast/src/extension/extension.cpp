@@ -31,6 +31,8 @@ std::vector<std::shared_ptr<AbstractCmd>> Extension::commands() const { return m
 
 QString Extension::description() const { return m_manifest.description; };
 
+const ExtensionManifest &Extension::manifest() const { return m_manifest; }
+
 Extension::Extension(const ExtensionManifest &manifest) : m_manifest(manifest) {
   for (const auto &cmd : m_manifest.commands) {
     auto command = std::make_shared<ExtensionCommand>(cmd);

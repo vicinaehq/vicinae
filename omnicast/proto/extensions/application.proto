@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package proto.ext.application;
+
+message OpenApplicationRequest {
+  string target = 1;
+  optional string app_id = 2;
+};
+
+message ListApplicationRequest {
+};
+
+message ListApplicationResponse {
+  repeated Application apps = 1;
+};
+
+message Request {
+  oneof payload {
+    ListApplicationRequest list = 1;
+    OpenApplicationRequest open = 2;
+  };
+};
+
+message Application {
+  string id = 1;
+  string name = 2;
+  string icon = 3;
+};

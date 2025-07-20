@@ -155,8 +155,8 @@ struct ThemeInfo {
       info.colors.subtext = scheme.palette.foreground.darker(150);
     } else {
       info.colors.border = info.colors.mainBackground.darker(130);
-      info.colors.mainSelectedBackground = info.colors.mainBackground.darker(110);
-      info.colors.mainHoveredBackground = info.colors.mainBackground.darker(115);
+      info.colors.mainSelectedBackground = info.colors.mainBackground.darker(115);
+      info.colors.mainHoveredBackground = info.colors.mainBackground.darker(120);
       info.colors.statusBackground = info.colors.mainBackground.darker(110);
       info.colors.statusBackgroundLighter = info.colors.statusBackground.darker(130);
       info.colors.statusBackgroundHover = info.colors.statusBackground.darker(100);

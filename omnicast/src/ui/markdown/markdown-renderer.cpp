@@ -137,7 +137,8 @@ void MarkdownRenderer::insertCodeBlock(cmark_node *node, bool isClosing) {
   fontFormat.setFontFamilies({"monospace"});
   fontFormat.setFontPointSize(_basePointSize * 0.95);
 
-  format.setBorder(1);
+  format.setBorder(2);
+  format.setBorderStyle(QTextFrameFormat::BorderStyle_Solid);
   format.setBorderBrush(theme.colors.statusBackgroundBorder);
   format.setBackground(theme.colors.statusBackground);
   format.setPadding(10);
@@ -153,7 +154,9 @@ void MarkdownRenderer::insertCodeBlock(cmark_node *node, bool isClosing) {
     }
   }
 
-  _cursor.insertText(code, fontFormat);
+  qDebug() << "code =>" << code;
+
+  _cursor.insertText(code.trimmed(), fontFormat);
   _cursor.setPosition(frame->lastPosition());
   _cursor.movePosition(QTextCursor::NextCharacter);
 }

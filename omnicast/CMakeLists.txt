@@ -40,7 +40,7 @@ include_directories(
     ${CMAKE_CURRENT_BINARY_DIR}  # For generated headers
 )
 
-set(PROTO_SRC_DIR ./protocols/extension)
+set(PROTO_SRC_DIR ./proto/extensions)
 
 
 file(GLOB PROTO_FILES "${PROTO_SRC_DIR}/*.proto")
@@ -499,13 +499,13 @@ qt_add_executable(${TARGET} ${SRCS})
 target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(${TARGET} PRIVATE ${LIBS})
 
-make_directory(${CMAKE_CURRENT_BINARY_DIR}/protocols)
+make_directory(${CMAKE_CURRENT_BINARY_DIR}/proto)
 
 protobuf_generate(
 	TARGET ${TARGET}
 	PROTOS ${PROTO_FILES}
 	IMPORT_DIRS ${PROTO_SRC_DIR} ${COMMON_PROTO_DIR}
-	PROTOC_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/protocols
+	PROTOC_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/proto
 )
 
 

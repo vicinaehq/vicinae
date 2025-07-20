@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package proto.ext.clipboard;
+
+message ClipboardHtmlContent {
+  string html = 1;
+  string text = 2;
+};
+
+message ClipboardPathContent {
+  string path = 1;
+};
+
+message ClipboardOptions {
+  bool concealed = 1;
+};
+
+message CopyToClipboardRequest {
+  ClipboardOptions options = 1;
+  oneof content {
+    string text = 2;
+    ClipboardHtmlContent html = 3;
+    ClipboardPathContent path = 4;
+  };
+};
+
+message Request {
+  oneof payload {
+    CopyToClipboardRequest copy = 1;
+  };
+};

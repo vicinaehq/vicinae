@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+import "storage.proto";
+import "ui.proto";
+import "application.proto";
+import "clipboard.proto";
+import "common.proto";
+
+package proto.ext.extension;
+
+message Request {
+  string request_id = 1;
+  RequestData data = 2;
+};
+
+message RequestData {
+  oneof payload {
+    ui.Request ui = 1;
+    application.Request app = 2;
+    clipboard.Request clipboard = 3;
+    storage.Request storage = 4;
+  };
+};
+
+message Response {
+  string request_id = 1;
+  oneof result {
+    ResponseData data = 2;
+    common.ErrorResponse error = 3;
+  };
+};
+
+message ResponseData {
+  oneof payload {
+    common.AckResponse ack = 1;
+  };
+};
+
+message Event {
+  string id = 1;
+  oneof payload {
+    GenericEventData generic = 2;
+    CrashEventData crash = 3;
+  };
+};
+
+message CrashEventData {
+  string text = 1;
+};
+
+message GenericEventData {
+  string json = 1;
+};

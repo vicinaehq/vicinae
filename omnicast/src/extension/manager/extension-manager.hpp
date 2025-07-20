@@ -8,13 +8,17 @@
 #include "common.hpp"
 #include "extension/extension.hpp"
 #include "omni-command-db.hpp"
-#include "protocols/extension.pb.h"
+#include "proto/common.pb.h"
+#include "proto/extension.pb.h"
+#include "proto/ipc.pb.h"
+#include "proto/manager.pb.h"
 #include <netinet/in.h>
 #include <qdebug.h>
 #include <qdir.h>
 #include <qfuturewatcher.h>
 #include <qhash.h>
 #include <qimage.h>
+#include <qjsonarray.h>
 #include <qjsondocument.h>
 #include <qjsonobject.h>
 #include <qlocalserver.h>
@@ -30,11 +34,14 @@
 #include <quuid.h>
 #include <unistd.h>
 
-struct LoadedCommand {
-  QString sessionId;
-  struct {
-    QString name;
-  } command;
+class ManagerRequest : public QObject {
+  Q_OBJECT
+
+public:
+  ManagerRequest() {}
+
+signals:
+  void finished(proto::ext::manager::ResponseData data);
 };
 
 class Bus : public QObject {
@@ -45,27 +52,87 @@ class Bus : public QObject {
     uint32_t length;
   };
 
+  std::unordered_map<std::string, ManagerRequest *> m_pendingManagerRequests;
   MessageBuffer _message = {.length = 0};
 
   QIODevice *device = nullptr;
   void sendMessage(const QByteArray &data);
-  void handleMessage(const protocols::extensions::IpcMessage &message);
+  void handleMessage(const proto::ext::IpcMessage &message);
   void readyRead();
 
 public:
-  void requestManager(protocols::extensions::ManagerRequestData *req);
-  bool respondToExtension(const QString &requestId, protocols::extensions::ExtensionResponseData *data);
-  void emitExtensionEvent(protocols::extensions::QualifiedExtensionEvent *event);
+  ManagerRequest *requestManager(proto::ext::manager::RequestData *req);
+  bool respondToExtension(const QString &sessionId, const QString &requestId,
+                          proto::ext::extension::Response *data);
+  void emitExtensionEvent(proto::ext::QualifiedExtensionEvent *event);
   void ping();
-  void loadCommand(const QString &extensionId, const QString &cmdName);
-  void unloadCommand(const QString &sessionId);
 
   Bus(QIODevice *socket);
 
 signals:
-  void managerResponse(const protocols::extensions::ManagerResponse &res);
-  void extensionRequest(const protocols::extensions::QualifiedExtensionRequest &req);
-  void extensionEvent(const protocols::extensions::QualifiedExtensionEvent &event);
+  void managerResponse(const proto::ext::ManagerResponse &res);
+  void extensionRequest(const proto::ext::QualifiedExtensionRequest &req);
+  void extensionEvent(const proto::ext::QualifiedExtensionEvent &event);
+};
+
+class ExtensionRequest : public NonCopyable {
+  proto::ext::QualifiedExtensionRequest m_request;
+  Bus &m_bus;
+  bool m_responded = false;
+
+public:
+  ExtensionRequest(Bus &bus, const proto::ext::QualifiedExtensionRequest &req) : m_bus(bus), m_request(req) {}
+
+  ~ExtensionRequest() {
+    if (!m_responded) { respondWithError("Unhandled request"); }
+  }
+
+  QString requestId() const { return QString::fromStdString(m_request.request().request_id()); }
+  QString sessionId() const { return QString::fromStdString(m_request.session_id()); }
+  const proto::ext::extension::RequestData &requestData() { return m_request.request().data(); }
+
+  void respond(proto::ext::extension::Response *data) {
+    if (m_responded) {
+      qCritical() << "Request" << requestId() << "already responded";
+      return;
+    }
+
+    m_bus.respondToExtension(sessionId(), requestId(), data);
+    m_responded = true;
+  }
+
+  void respondWithError(const QString &errorText) {
+    auto error = new proto::ext::common::ErrorResponse;
+    auto res = new proto::ext::extension::Response;
+
+    error->set_error_text(errorText.toStdString());
+    res->set_allocated_error(error);
+    respond(res);
+  }
+
+  void respondAck() {
+    auto res = new proto::ext::extension::Response;
+    auto data = new proto::ext::extension::ResponseData;
+    auto ack = new proto::ext::common::AckResponse;
+
+    data->set_allocated_ack(ack);
+    res->set_allocated_data(data);
+    respond(res);
+  }
+};
+
+class ExtensionEvent {
+  proto::ext::QualifiedExtensionEvent m_event;
+
+public:
+  QString sessionId() const { return QString::fromStdString(m_event.session_id()); };
+  const proto::ext::extension::Event *data() const { return &m_event.event(); }
+
+  ExtensionEvent(const proto::ext::QualifiedExtensionEvent &event) : m_event(event) {}
+};
+
+struct PendingManagerRequestInfo {
+  QString sessionId;
 };
 
 class ExtensionManager : public QObject {
@@ -81,9 +148,10 @@ public:
 
   const std::vector<std::shared_ptr<Extension>> &extensions() const;
 
-  void requestManager(protocols::extensions::ManagerRequestData *req);
-  bool respondToExtension(const QString &requestId, protocols::extensions::ExtensionResponseData *data);
-  void emitExtensionEvent(protocols::extensions::QualifiedExtensionEvent *event);
+  ManagerRequest *requestManager(proto::ext::manager::RequestData *req);
+  bool respondToExtension(const QString &requestId, proto::ext::extension::ResponseData *data);
+  void emitExtensionEvent(proto::ext::QualifiedExtensionEvent *event);
+  void emitGenericExtensionEvent(const QString &sessionId, const QString &handlerId, const QJsonArray &args);
 
   void processStarted();
   static QJsonObject serializeLaunchProps(const LaunchProps &props);
@@ -92,15 +160,14 @@ public:
 
   void loadCommand(const QString &extensionId, const QString &cmd, const QJsonObject &preferenceValues = {},
                    const LaunchProps &launchProps = {});
+
   void unloadCommand(const QString &sessionId);
   void handleManagerResponse(const QString &action, QJsonObject &data);
   void finished(int exitCode, QProcess::ExitStatus status);
   void readError();
 
 signals:
-  void managerResponse(const protocols::extensions::ManagerResponse &res);
-  void extensionRequest(const protocols::extensions::QualifiedExtensionRequest &req);
-  void extensionEvent(const protocols::extensions::QualifiedExtensionEvent &event);
-
-  void commandLoaded(const LoadedCommand &);
+  void managerResponse(const proto::ext::ManagerResponse &res);
+  void extensionRequest(ExtensionRequest &req);
+  void extensionEvent(const ExtensionEvent &event);
 };

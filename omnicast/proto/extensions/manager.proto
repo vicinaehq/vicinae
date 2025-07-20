@@ -1,0 +1,50 @@
+syntax = "proto3";
+import "google/protobuf/struct.proto";
+import "common.proto";
+
+package proto.ext.manager;
+
+message RequestData {
+  oneof data {
+    ManagerPingRequestData ping = 1;
+    ManagerLoadCommand load = 2;
+    ManagerUnloadCommand unload = 3;   
+  };
+};
+
+message ManagerPingRequestData {}
+
+message ResponseData {
+  oneof data {
+    common.AckResponse ack = 1;
+    ManagerLoadResponseData load = 2;
+  };
+};
+
+message ManagerLoadCommand {
+  CommandMode mode = 1;
+  CommandEnv env = 2;
+  string extension_path = 3;
+  // javascript source file to execute
+  string entrypoint = 4;
+  map<string, google.protobuf.Value> preference_values = 5;
+  map<string, google.protobuf.Value> argument_values = 6;
+};
+
+enum CommandMode {
+  View = 0;
+  NoView = 1;
+};
+
+enum CommandEnv {
+  Development = 0;
+  Production = 1;
+};
+
+message ManagerUnloadCommand {
+  string session_id = 1;
+};
+
+message ManagerLoadResponseData {
+  string session_id = 1;
+};

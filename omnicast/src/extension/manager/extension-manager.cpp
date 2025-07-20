@@ -6,7 +6,8 @@
 #include <qstringview.h>
 #include <string>
 #include <unordered_map>
-#include "protocols/extension.pb.h"
+#include "proto/extension.pb.h"
+#include "proto/manager.pb.h"
 
 void Bus::sendMessage(const QByteArray &data) {
   QByteArray message;
@@ -20,12 +21,25 @@ void Bus::sendMessage(const QByteArray &data) {
   // qDebug() << "wrote message";
 }
 
-void Bus::handleMessage(const protocols::extensions::IpcMessage &msg) {
+void Bus::handleMessage(const proto::ext::IpcMessage &msg) {
   // qDebug() << "[DEBUG] readyRead: got message of type" << msg.envelope.action;
+  qDebug() << "got message" << msg.GetTypeName();
 
   if (msg.has_extension_request()) { emit extensionRequest(msg.extension_request()); }
   if (msg.has_extension_event()) { emit extensionEvent(msg.extension_event()); }
-  if (msg.has_manager_response()) { emit managerResponse(msg.manager_response()); }
+  if (msg.has_manager_response()) {
+    auto &response = msg.manager_response();
+
+    if (auto it = m_pendingManagerRequests.find(response.request_id());
+        it != m_pendingManagerRequests.end()) {
+      m_pendingManagerRequests.erase(it);
+      emit it->second->finished(response.value());
+    } else {
+      qCritical() << "Got response but no matching request id" << response.request_id().c_str();
+    }
+
+    // emit managerResponse(msg.manager_response());
+  }
 }
 
 void Bus::readyRead() {
@@ -43,7 +57,7 @@ void Bus::readyRead() {
       auto packet = _message.data.sliced(sizeof(uint32_t), length);
       std::string stringData = packet.toStdString();
 
-      protocols::extensions::IpcMessage msg;
+      proto::ext::IpcMessage msg;
 
       msg.ParseFromString(stringData);
 
@@ -55,39 +69,44 @@ void Bus::readyRead() {
   }
 }
 
-void Bus::requestManager(protocols::extensions::ManagerRequestData *req) {
+ManagerRequest *Bus::requestManager(proto::ext::manager::RequestData *req) {
   std::string data;
-  protocols::extensions::IpcMessage message;
-  auto request = new protocols::extensions::ManagerRequest;
+  proto::ext::IpcMessage message;
+  auto request = new proto::ext::ManagerRequest;
+  auto id = QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString();
 
-  request->set_request_id(QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString());
+  request->set_request_id(id);
   request->set_allocated_payload(req);
 
   message.set_allocated_manager_request(request);
   message.SerializeToString(&data);
   sendMessage(QByteArray::fromStdString(data));
+
+  auto handle = new ManagerRequest;
+
+  m_pendingManagerRequests.insert({id, handle});
+
+  return handle;
 }
 
-void Bus::emitExtensionEvent(protocols::extensions::QualifiedExtensionEvent *event) {
+void Bus::emitExtensionEvent(proto::ext::QualifiedExtensionEvent *event) {
   std::string data;
-  protocols::extensions::IpcMessage message;
+  proto::ext::IpcMessage message;
 
   message.set_allocated_extension_event(event);
   message.SerializeToString(&data);
   sendMessage(QByteArray::fromStdString(data));
 }
 
-bool Bus::respondToExtension(const QString &requestId, protocols::extensions::ExtensionResponseData *data) {
-  protocols::extensions::IpcMessage message;
+bool Bus::respondToExtension(const QString &sessionId, const QString &requestId,
+                             proto::ext::extension::Response *response) {
+  proto::ext::IpcMessage message;
   std::string serialized;
 
-  auto qualifiedResponse = new protocols::extensions::QualifiedExtensionResponse;
-  auto response = new protocols::extensions::ExtensionResponse;
+  auto qualifiedResponse = new proto::ext::QualifiedExtensionResponse;
 
-  response->set_request_id(requestId.toStdString());
-  response->set_allocated_data(data);
   // TODO: get session id from request
-  qualifiedResponse->set_session_id("");
+  qualifiedResponse->set_session_id(sessionId.toStdString());
   qualifiedResponse->set_allocated_response(response);
 
   message.set_allocated_extension_response(qualifiedResponse);
@@ -99,28 +118,6 @@ bool Bus::respondToExtension(const QString &requestId, protocols::extensions::Ex
 }
 
 void Bus::ping() {}
-
-void Bus::loadCommand(const QString &extensionId, const QString &cmdName) {
-  auto requestData = new protocols::extensions::ManagerRequestData;
-  auto command = new protocols::extensions::ManagerLoadCommand;
-
-  qDebug() << "bus loadCommand";
-
-  command->set_entrypoint("/fake/entrypoint/lol");
-  command->set_env(protocols::extensions::CommandEnv::Development);
-  command->set_mode(protocols::extensions::CommandMode::View);
-  requestData->set_allocated_load(command);
-  requestManager(requestData);
-}
-
-void Bus::unloadCommand(const QString &sessionId) {
-  auto requestData = new protocols::extensions::ManagerRequestData;
-  auto unload = new protocols::extensions::ManagerUnloadCommand;
-
-  unload->set_session_id(sessionId.toStdString());
-  requestData->set_allocated_unload(unload);
-  requestManager(requestData);
-}
 
 Bus::Bus(QIODevice *socket) : device(socket) {
   connect(socket, &QIODevice::readyRead, this, &Bus::readyRead);
@@ -136,8 +133,13 @@ ExtensionManager::ExtensionManager(OmniCommandDatabase &commandDb) : commandDb(c
 
   /// TODO: implement
   // connect(&bus, &Bus::managerResponse, this, &ExtensionManager::handleManagerResponse);
-  connect(&bus, &Bus::extensionEvent, this, &ExtensionManager::extensionEvent);
-  connect(&bus, &Bus::extensionRequest, this, &ExtensionManager::extensionRequest);
+  connect(&bus, &Bus::extensionEvent, this,
+          [this](const proto::ext::QualifiedExtensionEvent &proto) { emit extensionEvent(proto); });
+
+  connect(&bus, &Bus::extensionRequest, this, [this](const proto::ext::QualifiedExtensionRequest &req) {
+    ExtensionRequest request(bus, req);
+    emit extensionRequest(request);
+  });
 }
 
 bool ExtensionManager::start() {
@@ -172,17 +174,30 @@ const std::vector<std::shared_ptr<Extension>> &ExtensionManager::extensions() co
   return loadedExtensions;
 }
 
-void ExtensionManager::requestManager(protocols::extensions::ManagerRequestData *req) {
+ManagerRequest *ExtensionManager::requestManager(proto::ext::manager::RequestData *req) {
   return bus.requestManager(req);
 }
 
-bool ExtensionManager::respondToExtension(const QString &requestId,
-                                          protocols::extensions::ExtensionResponseData *data) {
-  return bus.respondToExtension(requestId, data);
+void ExtensionManager::emitExtensionEvent(proto::ext::QualifiedExtensionEvent *event) {
+  return bus.emitExtensionEvent(event);
 }
 
-void ExtensionManager::emitExtensionEvent(protocols::extensions::QualifiedExtensionEvent *event) {
-  return bus.emitExtensionEvent(event);
+void ExtensionManager::emitGenericExtensionEvent(const QString &sessionId, const QString &handlerId,
+                                                 const QJsonArray &args) {
+  auto qualified = new proto::ext::QualifiedExtensionEvent;
+  auto event = new proto::ext::extension::Event;
+  auto generic = new proto::ext::extension::GenericEventData;
+  QJsonDocument document;
+
+  qDebug() << "send event to" << handlerId;
+
+  document.setArray(args);
+  qualified->set_session_id(sessionId.toStdString());
+  event->set_id(handlerId.toStdString());
+  event->set_allocated_generic(generic);
+  generic->set_json(document.toJson(QJsonDocument::Compact).toStdString());
+  qualified->set_allocated_event(event);
+  emitExtensionEvent(qualified);
 }
 
 void ExtensionManager::processStarted() {}
@@ -210,22 +225,13 @@ void ExtensionManager::readError() {
   QTextStream(stderr) << buf;
 }
 
-void ExtensionManager::loadCommand(const QString &extensionId, const QString &cmd,
-                                   const QJsonObject &preferenceValues, const LaunchProps &launchProps) {
-  bus.loadCommand(extensionId, cmd);
+void ExtensionManager::unloadCommand(const QString &sessionId) {
+  auto requestData = new proto::ext::manager::RequestData;
+  auto unload = new proto::ext::manager::ManagerUnloadCommand;
+
+  unload->set_session_id(sessionId.toStdString());
+  requestData->set_allocated_unload(unload);
+  requestManager(requestData);
 }
 
-void ExtensionManager::unloadCommand(const QString &sessionId) { bus.unloadCommand(sessionId); }
-
-void ExtensionManager::handleManagerResponse(const QString &action, QJsonObject &data) {
-  if (action == "load-command") {
-    auto sessionId = data["sessionId"].toString();
-
-    LoadedCommand cmd;
-
-    cmd.sessionId = sessionId;
-    cmd.command.name = data["command"].toObject()["name"].toString();
-
-    emit commandLoaded(cmd);
-  }
-}
+void ExtensionManager::handleManagerResponse(const QString &action, QJsonObject &data) {}

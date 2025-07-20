@@ -23,6 +23,7 @@ struct ExtensionManifest {
     std::vector<Preference> preferences;
     std::vector<CommandArgument> arguments;
     std::optional<QString> icon;
+    std::filesystem::path entrypoint;
   };
 
   std::filesystem::path path;

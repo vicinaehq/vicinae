@@ -17,20 +17,21 @@ export class LocalStorage {
 	}
 
 	static async setItem(key: string, value: LocalStorage.Value): Promise<void> {
-		await bus.request('storage.set', { key, value });
+		//await bus.request('storage.set', { key, value });
 	}
 
 	static async removeItem(key: string): Promise<void> {
-		await bus.request('storage.remove', { key });
+		//await bus.request('storage.remove', { key });
 	}
 
 	static async allItems(): Promise<LocalStorage.Values> {
-		const res = await bus.request<{ values: LocalStorage.Values }>('storage.list');
+		//const res = await bus.request<{ values: LocalStorage.Values }>('storage.list');
 
-		return res.data.values;
+		//return res.data.values;
+		return {};
 	}
 
 	static async clear(): Promise<void> {
-		await bus.request('storage.clear');
+		//await bus.request('storage.clear');
 	}
 }

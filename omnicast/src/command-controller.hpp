@@ -7,7 +7,7 @@
 class CommandController : public QObject {
 public:
   struct CommandFrame {
-    std::unique_ptr<CommandContext> context;
+    QObjectUniquePtr<CommandContext> context;
     std::shared_ptr<AbstractCmd> command;
     size_t viewCount;
 

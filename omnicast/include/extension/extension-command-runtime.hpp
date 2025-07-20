@@ -2,12 +2,19 @@
 #include "base-view.hpp"
 #include "command.hpp"
 #include "common.hpp"
+#include "extension-error-view.hpp"
 #include "extend/model-parser.hpp"
 #include "extension/extension-command-controller.hpp"
 #include "extension/extension-command.hpp"
 #include "extension/extension-view-wrapper.hpp"
 #include "extension/extension-view.hpp"
 #include "extension/manager/extension-manager.hpp"
+#include "proto/application.pb.h"
+#include "proto/extension.pb.h"
+#include "proto/ipc.pb.h"
+#include "proto/manager.pb.h"
+#include "proto/storage.pb.h"
+#include "proto/ui.pb.h"
 #include "services/local-storage/local-storage-service.hpp"
 #include "service-registry.hpp"
 #include "timer.hpp"
@@ -17,6 +24,7 @@
 #include <optional>
 #include <qjsonarray.h>
 #include <qjsonobject.h>
+#include <qjsonparseerror.h>
 #include <qjsonvalue.h>
 #include <qlogging.h>
 #include <qobject.h>
@@ -71,10 +79,8 @@ class ExtensionCommandRuntime : public CommandContext {
 
   void notify(const QString &handlerId, const QJsonArray &args) {
     auto manager = ServiceRegistry::instance()->extensionManager();
-    QJsonObject payload;
 
-    payload["args"] = args;
-    // manager->emitExtensionEvent(m_sessionId, handlerId, payload);
+    manager->emitGenericExtensionEvent(m_sessionId, handlerId, args);
   }
 
   QJsonObject handleStorage(const QString &action, const QJsonObject &payload) {
@@ -358,6 +364,97 @@ class ExtensionCommandRuntime : public CommandContext {
     }));
   }
 
+  proto::ext::extension::ResponseData *handleRender(const proto::ext::ui::RenderRequest &request) {
+    /**
+     * For now, we still process the render tree as JSON. Maybe later we can move that to protobuf as well,
+     * but that will require writing more serialization code in the reconciler.
+     */
+    QJsonParseError parseError;
+    auto doc = QJsonDocument::fromJson(request.json().c_str(), &parseError);
+
+    if (parseError.error) {
+      qCritical() << "Failed to parse render tree";
+      return {};
+    }
+
+    auto views = doc.object().value("views").toArray();
+
+    if (m_viewStack.empty()) { m_timer.time("Got Initial render"); }
+
+    if (m_modelWatcher.isRunning()) {
+      m_modelWatcher.cancel();
+      m_modelWatcher.waitForFinished();
+    }
+
+    m_modelWatcher.setFuture(QtConcurrent::run([views]() {
+      Timer timer;
+      auto model = ModelParser().parse(views);
+
+      timer.time("Model parsed");
+      return model;
+    }));
+
+    auto responseData = new proto::ext::extension::ResponseData;
+
+    responseData->set_allocated_ack(new proto::ext::common::AckResponse);
+
+    // render queued
+    return responseData;
+  }
+
+  void handleUI(const proto::ext::ui::Request &req) {
+    using Request = proto::ext::ui::Request;
+
+    switch (req.payload_case()) {
+    case Request::kRender:
+      handleRender(req.render());
+      break;
+    default:
+      break;
+    }
+  }
+
+  void handleStorage(const proto::ext::storage::Request &req) {
+    using Request = proto::ext::clipboard::Request;
+
+    switch (req.payload_case()) {
+    case Request::kCopy:
+      return;
+    default:
+      break;
+    }
+  }
+
+  void handleApp(const proto::ext::application::Request &req) {
+    using Request = proto::ext::application::Request;
+  }
+
+  void handleClipboard(const proto::ext::clipboard::Request &req) {}
+
+  void handleRequest(ExtensionRequest &request) {
+    using Request = proto::ext::extension::RequestData;
+
+    if (request.sessionId() != m_sessionId) return;
+
+    auto &data = request.requestData();
+
+    qDebug() << "got request";
+
+    switch (data.payload_case()) {
+    case Request::kUi:
+      return handleUI(data.ui());
+    case Request::kStorage:
+      return handleStorage(data.storage());
+    case Request::kApp:
+      return handleApp(data.app());
+    case Request::kClipboard:
+      return handleClipboard(data.clipboard());
+    default:
+      break;
+    }
+  }
+
+  /*
   void handleRequest(const QString &sessionId, const QString &requestId, const QString &action,
                      const QJsonObject &payload) {
     qDebug() << "request" << action;
@@ -369,32 +466,31 @@ class ExtensionCommandRuntime : public CommandContext {
 
     // manager->respond(requestId, res.value_or(QJsonObject{}));
   }
+  */
 
-  void handleEvent(const QString &sessionId, const QString &action, const QJsonObject &payload) {
-    // qDebug() << "event" << action << "for " << sessionId;
-    if (m_sessionId != sessionId) return;
+  void handleCrash(const proto::ext::extension::CrashEventData &crash) {
+    qCritical() << "Got crash" << crash.text();
+    auto &nav = context()->navigation;
 
-    if (action == "unload") {}
-
-    if (action == "error") { return handleError(payload); }
-
-    if (action == "ui.render") {
-      auto views = payload.value("views").toArray();
-      QJsonDocument doc;
-
-      doc.setObject(payload);
-
-      // std::cout << doc.toJson().toStdString();
-
-      return handleRender(views);
-    }
+    nav->popToRoot();
+    nav->pushView(new ExtensionErrorView(QString::fromStdString(crash.text())));
+    nav->setNavigationTitle(QString("%1 - Crash handler").arg(m_command->name()));
+    nav->setNavigationIcon(m_command->iconUrl());
   }
 
-  void commandLoaded(const LoadedCommand &command) {
-    m_controller->setSessionId(command.sessionId);
-    m_sessionId = command.sessionId;
-    m_timer.time("Extension loaded");
-    m_timer.start();
+  void handleGenericEvent(const proto::ext::extension::GenericEventData &event) {}
+
+  void handleEvent(const ExtensionEvent &event) {
+    using Event = proto::ext::extension::Event;
+
+    switch (event.data()->payload_case()) {
+    case Event::kCrash:
+      return handleCrash(event.data()->crash());
+    case Event::kGeneric:
+      return handleGenericEvent(event.data()->generic());
+    default:
+      break;
+    }
   }
 
   void handleError(const QJsonObject &payload) {
@@ -424,7 +520,25 @@ public:
               &ExtensionCommandRuntime::handleViewPoped);
     }
 
-    manager->loadCommand(m_command->extensionId(), m_command->commandId(), preferenceValues, props);
+    auto load = new proto::ext::manager::ManagerLoadCommand;
+    auto payload = new proto::ext::manager::RequestData;
+
+    load->set_entrypoint(m_command->manifest().entrypoint);
+    load->set_env(proto::ext::manager::CommandEnv::Development);
+    load->set_mode(proto::ext::manager::CommandMode::View);
+    load->set_extension_path("");
+    payload->set_allocated_load(load);
+
+    auto loadRequest = manager->requestManager(payload);
+
+    connect(loadRequest, &ManagerRequest::finished, this,
+            [this, loadRequest](const proto::ext::manager::ResponseData &data) {
+              m_sessionId = QString::fromStdString(data.load().session_id());
+              m_controller->setSessionId(m_sessionId);
+              loadRequest->deleteLater();
+              m_timer.time("Extension loaded");
+              m_timer.start();
+            });
   }
 
   void unload() override {
@@ -438,20 +552,8 @@ public:
     auto manager = ServiceRegistry::instance()->extensionManager();
     m_controller = new ExtensionCommandController(manager);
 
-    m_actionDispatcher.registerHandler("storage.",
-                                       std::bind_front(&ExtensionCommandRuntime::handleStorage, this));
-    m_actionDispatcher.registerHandler("ai.", std::bind_front(&ExtensionCommandRuntime::handleAI, this));
-    m_actionDispatcher.registerHandler("apps.",
-                                       std::bind_front(&ExtensionCommandRuntime::handleAppRequest, this));
-    m_actionDispatcher.registerHandler("clipboard.",
-                                       std::bind_front(&ExtensionCommandRuntime::handleClipboard, this));
-    m_actionDispatcher.registerHandler("toast.",
-                                       std::bind_front(&ExtensionCommandRuntime::handleToastRequest, this));
-    m_actionDispatcher.registerHandler("ui.", std::bind_front(&ExtensionCommandRuntime::handleUI, this));
-
-    // connect(manager, &ExtensionManager::extensionRequest, this, &ExtensionCommandRuntime::handleRequest);
-    // connect(manager, &ExtensionManager::extensionEvent, this, &ExtensionCommandRuntime::handleEvent);
-    connect(manager, &ExtensionManager::commandLoaded, this, &ExtensionCommandRuntime::commandLoaded);
+    connect(manager, &ExtensionManager::extensionRequest, this, &ExtensionCommandRuntime::handleRequest);
+    connect(manager, &ExtensionManager::extensionEvent, this, &ExtensionCommandRuntime::handleEvent);
     connect(&m_modelWatcher, &QFutureWatcher<RenderModel>::finished, this,
             &ExtensionCommandRuntime::modelCreated);
   }
