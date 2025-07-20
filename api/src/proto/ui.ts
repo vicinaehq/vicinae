@@ -6,6 +6,7 @@
 
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
+import { AckResponse } from "./common";
 import { Value } from "./google/protobuf/struct";
 
 export const protobufPackage = "proto.ext.ui";
@@ -47,6 +48,16 @@ export interface Request {
   clearSearch?: ClearSearchBarRequest | undefined;
   closeMainWindow?: CloseMainWindowRequest | undefined;
   showHud?: ShowHudRequest | undefined;
+}
+
+export interface Response {
+  render: AckResponse | undefined;
+  showToast: AckResponse | undefined;
+  pushView: AckResponse | undefined;
+  popView: AckResponse | undefined;
+  clearSearch: AckResponse | undefined;
+  closeMainWindow: AckResponse | undefined;
+  showHud: AckResponse | undefined;
 }
 
 export interface RenderNode {
@@ -601,6 +612,184 @@ export const Request: MessageFns<Request> = {
       : undefined;
     message.showHud = (object.showHud !== undefined && object.showHud !== null)
       ? ShowHudRequest.fromPartial(object.showHud)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseResponse(): Response {
+  return {
+    render: undefined,
+    showToast: undefined,
+    pushView: undefined,
+    popView: undefined,
+    clearSearch: undefined,
+    closeMainWindow: undefined,
+    showHud: undefined,
+  };
+}
+
+export const Response: MessageFns<Response> = {
+  encode(message: Response, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.render !== undefined) {
+      AckResponse.encode(message.render, writer.uint32(10).fork()).join();
+    }
+    if (message.showToast !== undefined) {
+      AckResponse.encode(message.showToast, writer.uint32(18).fork()).join();
+    }
+    if (message.pushView !== undefined) {
+      AckResponse.encode(message.pushView, writer.uint32(26).fork()).join();
+    }
+    if (message.popView !== undefined) {
+      AckResponse.encode(message.popView, writer.uint32(34).fork()).join();
+    }
+    if (message.clearSearch !== undefined) {
+      AckResponse.encode(message.clearSearch, writer.uint32(42).fork()).join();
+    }
+    if (message.closeMainWindow !== undefined) {
+      AckResponse.encode(message.closeMainWindow, writer.uint32(50).fork()).join();
+    }
+    if (message.showHud !== undefined) {
+      AckResponse.encode(message.showHud, writer.uint32(58).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): Response {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.render = AckResponse.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.showToast = AckResponse.decode(reader, reader.uint32());
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.pushView = AckResponse.decode(reader, reader.uint32());
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.popView = AckResponse.decode(reader, reader.uint32());
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.clearSearch = AckResponse.decode(reader, reader.uint32());
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.closeMainWindow = AckResponse.decode(reader, reader.uint32());
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.showHud = AckResponse.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): Response {
+    return {
+      render: isSet(object.render) ? AckResponse.fromJSON(object.render) : undefined,
+      showToast: isSet(object.showToast) ? AckResponse.fromJSON(object.showToast) : undefined,
+      pushView: isSet(object.pushView) ? AckResponse.fromJSON(object.pushView) : undefined,
+      popView: isSet(object.popView) ? AckResponse.fromJSON(object.popView) : undefined,
+      clearSearch: isSet(object.clearSearch) ? AckResponse.fromJSON(object.clearSearch) : undefined,
+      closeMainWindow: isSet(object.closeMainWindow) ? AckResponse.fromJSON(object.closeMainWindow) : undefined,
+      showHud: isSet(object.showHud) ? AckResponse.fromJSON(object.showHud) : undefined,
+    };
+  },
+
+  toJSON(message: Response): unknown {
+    const obj: any = {};
+    if (message.render !== undefined) {
+      obj.render = AckResponse.toJSON(message.render);
+    }
+    if (message.showToast !== undefined) {
+      obj.showToast = AckResponse.toJSON(message.showToast);
+    }
+    if (message.pushView !== undefined) {
+      obj.pushView = AckResponse.toJSON(message.pushView);
+    }
+    if (message.popView !== undefined) {
+      obj.popView = AckResponse.toJSON(message.popView);
+    }
+    if (message.clearSearch !== undefined) {
+      obj.clearSearch = AckResponse.toJSON(message.clearSearch);
+    }
+    if (message.closeMainWindow !== undefined) {
+      obj.closeMainWindow = AckResponse.toJSON(message.closeMainWindow);
+    }
+    if (message.showHud !== undefined) {
+      obj.showHud = AckResponse.toJSON(message.showHud);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<Response>, I>>(base?: I): Response {
+    return Response.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<Response>, I>>(object: I): Response {
+    const message = createBaseResponse();
+    message.render = (object.render !== undefined && object.render !== null)
+      ? AckResponse.fromPartial(object.render)
+      : undefined;
+    message.showToast = (object.showToast !== undefined && object.showToast !== null)
+      ? AckResponse.fromPartial(object.showToast)
+      : undefined;
+    message.pushView = (object.pushView !== undefined && object.pushView !== null)
+      ? AckResponse.fromPartial(object.pushView)
+      : undefined;
+    message.popView = (object.popView !== undefined && object.popView !== null)
+      ? AckResponse.fromPartial(object.popView)
+      : undefined;
+    message.clearSearch = (object.clearSearch !== undefined && object.clearSearch !== null)
+      ? AckResponse.fromPartial(object.clearSearch)
+      : undefined;
+    message.closeMainWindow = (object.closeMainWindow !== undefined && object.closeMainWindow !== null)
+      ? AckResponse.fromPartial(object.closeMainWindow)
+      : undefined;
+    message.showHud = (object.showHud !== undefined && object.showHud !== null)
+      ? AckResponse.fromPartial(object.showHud)
       : undefined;
     return message;
   },

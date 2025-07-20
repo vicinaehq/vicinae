@@ -60,11 +60,11 @@ export interface Request {
 }
 
 export interface Response {
-  get: GetResponse | undefined;
-  set: SetResponse | undefined;
-  remove: RemoveResponse | undefined;
-  clear: ClearResponse | undefined;
-  list: ListResponse | undefined;
+  get?: GetResponse | undefined;
+  set?: SetResponse | undefined;
+  remove?: RemoveResponse | undefined;
+  clear?: ClearResponse | undefined;
+  list?: ListResponse | undefined;
 }
 
 function createBaseClearRequest(): ClearRequest {

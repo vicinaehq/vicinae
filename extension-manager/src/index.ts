@@ -100,10 +100,15 @@ class Omnicast {
 					}
 
 					if (event) {
+						if (event.crash) {
+							this.workerMap.delete(sessionId);
+							worker.terminate();
+						}
+
 						this.writeMessage({ extensionEvent: { sessionId, event }});
 					}
 				} catch (error) {
-					const crash = extension.CrashEventData.create({ text: error instanceof Error ? this.formatError(error) : `${error}` });
+					const crash = extension.CrashEventData.create({ text: `The extension manager process received a malformed request.\nThis most likely indicate a problem with the software itself, not the extension.\nPlease file a bug report.` });
 					const event = ipc.QualifiedExtensionEvent.create({ sessionId, event: { id: randomUUID(), crash } });
 
 					this.writeMessage({ extensionEvent: event });
@@ -153,9 +158,9 @@ class Omnicast {
 	}
 
 	private async routeMessage(message: ipc.IpcMessage) {
-		const { managerRequest, extensionEvent } = message;
+		const { managerRequest, extensionEvent, extensionResponse } = message;
 
-		console.error({ message });
+		console.error(JSON.stringify({ message }, null, 2));
 
 		if (managerRequest) {
 			this.handleManagerRequest(managerRequest);
@@ -168,6 +173,14 @@ class Omnicast {
 			
 			if (worker) {
 				worker.postMessage(ipc.ExtensionMessage.encode({ event: extensionEvent.event }).finish());
+			}
+		}
+
+		if (extensionResponse) {
+			const worker = this.workerMap.get(extensionResponse.sessionId);
+			
+			if (worker) {
+				worker.postMessage(ipc.ExtensionMessage.encode({ response: extensionResponse.response }).finish());
 			}
 		}
 	}

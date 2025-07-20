@@ -53,18 +53,13 @@ export const getFrontmostApplication = async (): Promise<Application> => {
 }
 
 export const getApplications = async (path?: PathLike): Promise<Application[]> => {
-	const res = await bus.request<{ apps: MessageApp[] }>('apps.list', {
-		target: path?.toString()
-	});
+	const res = await bus.turboRequest('app.list', {});
 
-	const res2 = await bus.request2({ app: { list: {} }});
-	const listRes = res2.app?.list;
-	
-	if (!listRes) {
-		throw new Error(`getApplications: got invalid response`);
-	}
+	if (!res.ok) return [];
 
-	return res.data.apps.map(deserializeApp);
+	console.log('got turbo apps', { apps: res.value });
+
+	return [];
 }
 
 export const getDefaultApplication = async (path: PathLike): Promise<Application> => {

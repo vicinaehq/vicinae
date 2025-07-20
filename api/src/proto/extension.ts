@@ -6,11 +6,11 @@
 
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
-import { Request as Request2, Response as Response5 } from "./application";
+import { Request as Request2, Response as Response6 } from "./application";
 import { Request as Request3 } from "./clipboard";
-import { AckResponse, ErrorResponse } from "./common";
-import { Request as Request4 } from "./storage";
-import { Request as Request1 } from "./ui";
+import { ErrorResponse } from "./common";
+import { Request as Request4, Response as Response7 } from "./storage";
+import { Request as Request1, Response as Response5 } from "./ui";
 
 export const protobufPackage = "proto.ext.extension";
 
@@ -33,8 +33,9 @@ export interface Response {
 }
 
 export interface ResponseData {
-  ack?: AckResponse | undefined;
-  app?: Response5 | undefined;
+  ui?: Response5 | undefined;
+  app?: Response6 | undefined;
+  storage?: Response7 | undefined;
 }
 
 export interface Event {
@@ -338,16 +339,19 @@ export const Response: MessageFns<Response> = {
 };
 
 function createBaseResponseData(): ResponseData {
-  return { ack: undefined, app: undefined };
+  return { ui: undefined, app: undefined, storage: undefined };
 }
 
 export const ResponseData: MessageFns<ResponseData> = {
   encode(message: ResponseData, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.ack !== undefined) {
-      AckResponse.encode(message.ack, writer.uint32(10).fork()).join();
+    if (message.ui !== undefined) {
+      Response5.encode(message.ui, writer.uint32(10).fork()).join();
     }
     if (message.app !== undefined) {
-      Response5.encode(message.app, writer.uint32(18).fork()).join();
+      Response6.encode(message.app, writer.uint32(18).fork()).join();
+    }
+    if (message.storage !== undefined) {
+      Response7.encode(message.storage, writer.uint32(26).fork()).join();
     }
     return writer;
   },
@@ -364,7 +368,7 @@ export const ResponseData: MessageFns<ResponseData> = {
             break;
           }
 
-          message.ack = AckResponse.decode(reader, reader.uint32());
+          message.ui = Response5.decode(reader, reader.uint32());
           continue;
         }
         case 2: {
@@ -372,7 +376,15 @@ export const ResponseData: MessageFns<ResponseData> = {
             break;
           }
 
-          message.app = Response5.decode(reader, reader.uint32());
+          message.app = Response6.decode(reader, reader.uint32());
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.storage = Response7.decode(reader, reader.uint32());
           continue;
         }
       }
@@ -386,18 +398,22 @@ export const ResponseData: MessageFns<ResponseData> = {
 
   fromJSON(object: any): ResponseData {
     return {
-      ack: isSet(object.ack) ? AckResponse.fromJSON(object.ack) : undefined,
-      app: isSet(object.app) ? Response5.fromJSON(object.app) : undefined,
+      ui: isSet(object.ui) ? Response5.fromJSON(object.ui) : undefined,
+      app: isSet(object.app) ? Response6.fromJSON(object.app) : undefined,
+      storage: isSet(object.storage) ? Response7.fromJSON(object.storage) : undefined,
     };
   },
 
   toJSON(message: ResponseData): unknown {
     const obj: any = {};
-    if (message.ack !== undefined) {
-      obj.ack = AckResponse.toJSON(message.ack);
+    if (message.ui !== undefined) {
+      obj.ui = Response5.toJSON(message.ui);
     }
     if (message.app !== undefined) {
-      obj.app = Response5.toJSON(message.app);
+      obj.app = Response6.toJSON(message.app);
+    }
+    if (message.storage !== undefined) {
+      obj.storage = Response7.toJSON(message.storage);
     }
     return obj;
   },
@@ -407,8 +423,11 @@ export const ResponseData: MessageFns<ResponseData> = {
   },
   fromPartial<I extends Exact<DeepPartial<ResponseData>, I>>(object: I): ResponseData {
     const message = createBaseResponseData();
-    message.ack = (object.ack !== undefined && object.ack !== null) ? AckResponse.fromPartial(object.ack) : undefined;
-    message.app = (object.app !== undefined && object.app !== null) ? Response5.fromPartial(object.app) : undefined;
+    message.ui = (object.ui !== undefined && object.ui !== null) ? Response5.fromPartial(object.ui) : undefined;
+    message.app = (object.app !== undefined && object.app !== null) ? Response6.fromPartial(object.app) : undefined;
+    message.storage = (object.storage !== undefined && object.storage !== null)
+      ? Response7.fromPartial(object.storage)
+      : undefined;
     return message;
   },
 };

@@ -26,6 +26,10 @@ export interface Request {
   open?: OpenApplicationRequest | undefined;
 }
 
+export interface Response {
+  list?: ListApplicationResponse | undefined;
+}
+
 export interface Application {
   id: string;
   name: string;
@@ -284,6 +288,66 @@ export const Request: MessageFns<Request> = {
       : undefined;
     message.open = (object.open !== undefined && object.open !== null)
       ? OpenApplicationRequest.fromPartial(object.open)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseResponse(): Response {
+  return { list: undefined };
+}
+
+export const Response: MessageFns<Response> = {
+  encode(message: Response, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.list !== undefined) {
+      ListApplicationResponse.encode(message.list, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): Response {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.list = ListApplicationResponse.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): Response {
+    return { list: isSet(object.list) ? ListApplicationResponse.fromJSON(object.list) : undefined };
+  },
+
+  toJSON(message: Response): unknown {
+    const obj: any = {};
+    if (message.list !== undefined) {
+      obj.list = ListApplicationResponse.toJSON(message.list);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<Response>, I>>(base?: I): Response {
+    return Response.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<Response>, I>>(object: I): Response {
+    const message = createBaseResponse();
+    message.list = (object.list !== undefined && object.list !== null)
+      ? ListApplicationResponse.fromPartial(object.list)
       : undefined;
     return message;
   },

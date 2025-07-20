@@ -89,7 +89,7 @@ public:
 
   QString requestId() const { return QString::fromStdString(m_request.request().request_id()); }
   QString sessionId() const { return QString::fromStdString(m_request.session_id()); }
-  const proto::ext::extension::RequestData &requestData() { return m_request.request().data(); }
+  const proto::ext::extension::RequestData &requestData() const { return m_request.request().data(); }
 
   void respond(proto::ext::extension::Response *data) {
     if (m_responded) {
@@ -97,6 +97,7 @@ public:
       return;
     }
 
+    data->set_request_id(requestId().toStdString());
     m_bus.respondToExtension(sessionId(), requestId(), data);
     m_responded = true;
   }
@@ -107,16 +108,6 @@ public:
 
     error->set_error_text(errorText.toStdString());
     res->set_allocated_error(error);
-    respond(res);
-  }
-
-  void respondAck() {
-    auto res = new proto::ext::extension::Response;
-    auto data = new proto::ext::extension::ResponseData;
-    auto ack = new proto::ext::common::AckResponse;
-
-    data->set_allocated_ack(ack);
-    res->set_allocated_data(data);
     respond(res);
   }
 };

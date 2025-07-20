@@ -9,29 +9,30 @@ export declare namespace LocalStorage {
 
 export class LocalStorage {
 	static async getItem<T extends LocalStorage.Value>(key: string): Promise<T | undefined> {
-		const res = await bus.request<{ value: T | undefined }>('storage.get', {
-			key
-		});
+		const res = await bus.turboRequest('storage.get', { key });
 
-		return res.data.value;
+		if (!res.ok) { return undefined; };
+
+		return res.value.value;
 	}
 
 	static async setItem(key: string, value: LocalStorage.Value): Promise<void> {
-		//await bus.request('storage.set', { key, value });
+		await bus.turboRequest('storage.set', { key, value });
 	}
 
 	static async removeItem(key: string): Promise<void> {
-		//await bus.request('storage.remove', { key });
+		await bus.turboRequest('storage.remove', { key });
 	}
 
 	static async allItems(): Promise<LocalStorage.Values> {
-		//const res = await bus.request<{ values: LocalStorage.Values }>('storage.list');
+		const res = await bus.turboRequest('storage.list', {});
 
-		//return res.data.values;
-		return {};
+		if (!res.ok) return {};
+
+		return res.value.values
 	}
 
 	static async clear(): Promise<void> {
-		//await bus.request('storage.clear');
+		await bus.turboRequest('storage.clear', {});
 	}
 }

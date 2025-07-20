@@ -1,9 +1,11 @@
 #pragma once
 #include <filesystem>
 #include <qdatetime.h>
+#include <qjsonvalue.h>
 #include <qmimetype.h>
 #include <qstring.h>
 #include <string_view>
+#include "proto/ipc.pb.h"
 
 /**
  * Attempts to compress the path as much as possible to make it better
@@ -37,3 +39,6 @@ std::filesystem::path documentsFolder();
 std::vector<std::filesystem::path> homeRootDirectories();
 
 std::string getLastPathComponent(const std::filesystem::path &path);
+
+google::protobuf::Value transformJsonValueToProto(const QJsonValue &value);
+QJsonValue protoToJsonValue(const google::protobuf::Value &value);

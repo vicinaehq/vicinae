@@ -478,6 +478,9 @@ set(SRCS
 	src/ipc-command-server.cpp
 	src/ipc-command-handler.hpp
 	src/ipc-command-handler.cpp
+
+	src/extension/requests/storage-request-router.cpp
+	src/extension/requests/ui-request-router.cpp
 	
 )
 

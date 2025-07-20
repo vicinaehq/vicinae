@@ -1,5 +1,6 @@
 syntax = "proto3";
 import "google/protobuf/struct.proto";
+import "common.proto";
 
 package proto.ext.ui;
 
@@ -12,6 +13,10 @@ message PushViewRequest {}
 message PopViewRequest {}
 message CloseMainWindowRequest {};
 message ClearSearchBarRequest {};
+
+message SetSearchTextRequest {
+  string text = 1;
+};
 
 message ShowHudRequest {
   string text = 1;
@@ -32,7 +37,19 @@ message Request {
     ClearSearchBarRequest clear_search = 5;
     CloseMainWindowRequest close_main_window = 6;
     ShowHudRequest show_hud = 7;
+    SetSearchTextRequest set_search_text = 8;
   };
+};
+
+message Response {
+  common.AckResponse render = 1;
+  common.AckResponse show_toast = 2;
+  common.AckResponse push_view = 3;
+  common.AckResponse pop_view = 4;
+  common.AckResponse clear_search = 5;
+  common.AckResponse close_main_window = 6;
+  common.AckResponse show_hud = 7;
+  common.AckResponse set_search_text = 8;
 };
 
 message RenderNode {

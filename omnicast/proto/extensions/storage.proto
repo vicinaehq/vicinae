@@ -46,9 +46,11 @@ message Request {
 };
 
 message Response {
-  GetResponse get = 1;
-  SetResponse set = 2;
-  RemoveResponse remove = 3;
-  ClearResponse clear = 4;
-  ListResponse list = 5;
+  oneof payload {
+    GetResponse get = 1;
+    SetResponse set = 2;
+    RemoveResponse remove = 3;
+    ClearResponse clear = 4;
+    ListResponse list = 5;
+  }
 };

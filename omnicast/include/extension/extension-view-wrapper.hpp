@@ -64,8 +64,10 @@ public:
 
       if (!view) return;
 
-      connect(view, &ExtensionSimpleView::notificationRequested, this,
-              &ExtensionViewWrapper::notificationRequested);
+      /*
+  connect(view, &ExtensionSimpleView::notificationRequested, m_controller,
+          &ExtensionCommandController::notify);
+            */
 
       m_layout->addWidget(view);
       m_layout->setCurrentWidget(view);

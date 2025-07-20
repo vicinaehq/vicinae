@@ -32,8 +32,9 @@ message Response {
 
 message ResponseData {
   oneof payload {
-    common.AckResponse ack = 1;
+    ui.Response ui = 1;
     application.Response app = 2;
+    storage.Response storage = 3;
   };
 };
 
