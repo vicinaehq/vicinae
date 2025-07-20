@@ -34,7 +34,8 @@ message ResponseData {
   oneof payload {
     ui.Response ui = 1;
     application.Response app = 2;
-    storage.Response storage = 3;
+    clipboard.Response clipboard = 3;
+    storage.Response storage = 4;
   };
 };
 

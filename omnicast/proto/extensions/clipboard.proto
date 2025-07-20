@@ -16,16 +16,29 @@ message ClipboardOptions {
 };
 
 message CopyToClipboardRequest {
-  ClipboardOptions options = 1;
+  ClipboardContent content = 1;
+  ClipboardOptions options = 2;
+};
+
+message ClipboardContent {
   oneof content {
-    string text = 2;
-    ClipboardHtmlContent html = 3;
-    ClipboardPathContent path = 4;
+    string text = 1;
+    ClipboardHtmlContent html = 2;
+    ClipboardPathContent path = 3;
   };
+};
+
+message CopyToClipboardResponse {
 };
 
 message Request {
   oneof payload {
     CopyToClipboardRequest copy = 1;
+  };
+};
+
+message Response {
+  oneof payload {
+    CopyToClipboardResponse copy = 1;
   };
 };

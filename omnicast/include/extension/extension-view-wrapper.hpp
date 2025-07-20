@@ -64,10 +64,10 @@ public:
 
       if (!view) return;
 
-      /*
-  connect(view, &ExtensionSimpleView::notificationRequested, m_controller,
-          &ExtensionCommandController::notify);
-            */
+      connect(view, &ExtensionSimpleView::notificationRequested, this,
+              [this](const QString &handlerId, const QJsonArray &values) {
+                m_controller->notify(handlerId, values);
+              });
 
       m_layout->addWidget(view);
       m_layout->setCurrentWidget(view);

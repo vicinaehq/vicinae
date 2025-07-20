@@ -2,22 +2,19 @@
 #include "command.hpp"
 #include "common.hpp"
 #include "extension-error-view.hpp"
-#include "extend/model-parser.hpp"
 #include "extension/extension-command.hpp"
 #include "extension/extension-navigation-controller.hpp"
-#include "extension/extension-view-wrapper.hpp"
 #include "extension/manager/extension-manager.hpp"
+#include "extension/requests/app-request-router.hpp"
+#include "extension/requests/clipboard-request-router.hpp"
 #include "extension/requests/storage-request-router.hpp"
 #include "extension/requests/ui-request-router.hpp"
 #include "navigation-controller.hpp"
-#include "proto/application.pb.h"
 #include "proto/common.pb.h"
 #include "proto/extension.pb.h"
 #include "proto/manager.pb.h"
-#include "proto/ui.pb.h"
 #include "service-registry.hpp"
 #include "timer.hpp"
-#include <algorithm>
 #include <google/protobuf/struct.pb.h>
 #include <memory>
 #include <optional>
@@ -28,17 +25,16 @@
 #include <qlogging.h>
 #include <qobject.h>
 #include <qwidget.h>
-#include <ranges>
 
 class ExtensionCommandRuntime : public CommandContext {
   std::shared_ptr<ExtensionCommand> m_command;
-  std::vector<ExtensionViewWrapper *> m_viewStack;
-  QFutureWatcher<ParsedRenderData> m_modelWatcher;
   Timer m_timer;
 
   std::unique_ptr<StorageRequestRouter> m_storageRouter;
   std::unique_ptr<ExtensionNavigationController> m_navigation;
   std::unique_ptr<UIRequestRouter> m_uiRouter;
+  std::unique_ptr<AppRequestRouter> m_appRouter;
+  std::unique_ptr<ClipboardRequestRouter> m_clipboardRouter;
 
   QString m_sessionId;
 
@@ -106,49 +102,6 @@ class ExtensionCommandRuntime : public CommandContext {
     return {};
   }
 
-  QJsonObject handleAppRequest(const QString &action, const QJsonObject &payload) {
-    auto appDb = context()->services->appDb();
-
-    if (action == "apps.list") {
-      auto baseApps = appDb->list();
-      QJsonArray apps;
-
-      auto serializedApps = baseApps |
-                            std::views::filter([](const auto &app) { return app->displayable(); }) |
-                            std::views::transform([](const auto &app) {
-                              QJsonObject appObj;
-
-                              appObj["id"] = app->id();
-                              appObj["name"] = app->name();
-                              appObj["icon"] = app->iconUrl().name();
-
-                              return appObj;
-                            });
-
-      std::ranges::for_each(serializedApps, [&apps](const auto &a) { apps.push_back(a); });
-
-      return {{"apps", apps}};
-    }
-
-    if (action == "apps.open") {
-      auto target = payload.value("target").toString();
-
-      if (payload.contains("appId")) {
-        auto appId = payload.value("appId").toString();
-
-        if (auto app = appDb->findById(appId)) {
-          if (appDb->launch(*app, {target})) return {};
-        }
-      }
-
-      if (auto opener = appDb->findBestOpener(target)) { appDb->launch(*opener, {target}); }
-
-      return {};
-    }
-
-    return {};
-  }
-
   QJsonObject handleToastRequest(const QString &action, const QJsonObject &payload) {
     auto &nav = context()->navigation;
     auto toast = context()->services->toastService();
@@ -181,96 +134,6 @@ class ExtensionCommandRuntime : public CommandContext {
     return {};
   }
 
-  QJsonObject handleClipboard(const QString &action, const QJsonObject &payload) {
-    auto clipman = ServiceRegistry::instance()->clipman();
-
-    if (action == "clipboard.copy") {
-      auto content = Clipboard::fromJson(payload.value("content").toObject());
-      auto options = payload.value("options").toObject();
-      Clipboard::CopyOptions copyActions;
-
-      copyActions.concealed = options.value("concealed").toBool(false);
-      clipman->copyContent(content, copyActions);
-      return {};
-    }
-
-    return {};
-  }
-
-  void modelCreated() {
-    if (m_modelWatcher.isCanceled()) return;
-
-    auto models = m_modelWatcher.result();
-    auto items = models.items | std::views::take(m_viewStack.size()) | std::views::enumerate;
-
-    for (const auto &[n, model] : items) {
-      auto view = m_viewStack.at(n);
-      bool shouldSkipRender = !model.dirty && !model.propsDirty;
-
-      if (shouldSkipRender) {
-        qDebug() << "view" << n << "is not dirty, skipping render";
-        continue;
-      }
-
-      view->render(model.root);
-    }
-  }
-
-  void handleRender(const QJsonArray &views) {
-    if (m_viewStack.empty()) { m_timer.time("Got Initial render"); }
-
-    if (m_modelWatcher.isRunning()) {
-      m_modelWatcher.cancel();
-      m_modelWatcher.waitForFinished();
-    }
-
-    m_modelWatcher.setFuture(QtConcurrent::run([views]() {
-      Timer timer;
-      auto model = ModelParser().parse(views);
-
-      timer.time("Model parsed");
-      return model;
-    }));
-  }
-
-  proto::ext::ui::Response *handleRender(const proto::ext::ui::RenderRequest &request) {
-    /**
-     * For now, we still process the render tree as JSON. Maybe later we can move that to protobuf as well,
-     * but that will require writing more serialization code in the reconciler.
-     */
-    QJsonParseError parseError;
-    auto doc = QJsonDocument::fromJson(request.json().c_str(), &parseError);
-
-    if (parseError.error) {
-      qCritical() << "Failed to parse render tree";
-      return {};
-    }
-
-    auto views = doc.object().value("views").toArray();
-
-    if (m_viewStack.empty()) { m_timer.time("Got Initial render"); }
-
-    if (m_modelWatcher.isRunning()) {
-      m_modelWatcher.cancel();
-      m_modelWatcher.waitForFinished();
-    }
-
-    m_modelWatcher.setFuture(QtConcurrent::run([views]() {
-      Timer timer;
-      auto model = ModelParser().parse(views);
-
-      timer.time("Model parsed");
-      return model;
-    }));
-
-    auto response = new proto::ext::ui::Response;
-
-    response->set_allocated_render(new proto::ext::common::AckResponse);
-
-    // render queued
-    return response;
-  }
-
   proto::ext::extension::Response *makeErrorResponse(const QString &errorText) {
     auto res = new proto::ext::extension::Response;
     auto err = new proto::ext::common::ErrorResponse;
@@ -281,15 +144,8 @@ class ExtensionCommandRuntime : public CommandContext {
     return res;
   }
 
-  void handleApp(const proto::ext::application::Request &req) {
-    using Request = proto::ext::application::Request;
-  }
-
-  void handleClipboard(const proto::ext::clipboard::Request &req) {}
-
   proto::ext::extension::Response *dispatchRequest(const ExtensionRequest &request) {
     using Request = proto::ext::extension::RequestData;
-
     auto &data = request.requestData();
 
     qDebug() << "got request";
@@ -300,9 +156,9 @@ class ExtensionCommandRuntime : public CommandContext {
     case Request::kStorage:
       return m_storageRouter->route(data.storage());
     case Request::kApp:
-      // return handleApp(data.app());
+      return m_appRouter->route(data.app());
     case Request::kClipboard:
-      // return handleClipboard(data.clipboard());
+      return m_clipboardRouter->route(data.clipboard());
     default:
       break;
     }
@@ -341,18 +197,14 @@ class ExtensionCommandRuntime : public CommandContext {
     }
   }
 
-  void handleError(const QJsonObject &payload) {
-    auto message = payload.value("message").toString();
-
-    // push error view
-  }
-
   void initializeRouters() {
     m_navigation = std::make_unique<ExtensionNavigationController>(m_command, context()->navigation.get(),
                                                                    context()->services->extensionManager());
     m_uiRouter = std::make_unique<UIRequestRouter>(m_navigation.get());
     m_storageRouter =
         std::make_unique<StorageRequestRouter>(context()->services->localStorage(), m_command->extensionId());
+    m_appRouter = std::make_unique<AppRequestRouter>(*context()->services->appDb());
+    m_clipboardRouter = std::make_unique<ClipboardRequestRouter>(*context()->services->clipman());
   }
 
 public:
@@ -402,7 +254,5 @@ public:
     auto manager = ServiceRegistry::instance()->extensionManager();
     connect(manager, &ExtensionManager::extensionRequest, this, &ExtensionCommandRuntime::handleRequest);
     connect(manager, &ExtensionManager::extensionEvent, this, &ExtensionCommandRuntime::handleEvent);
-    connect(&m_modelWatcher, &QFutureWatcher<RenderModel>::finished, this,
-            &ExtensionCommandRuntime::modelCreated);
   }
 };

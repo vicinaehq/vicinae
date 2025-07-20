@@ -4,9 +4,27 @@ import "common.proto";
 
 package proto.ext.ui;
 
+enum ToastStyle {
+  Success = 0;
+  Info = 1;
+  Warning = 2;
+  Error = 3;
+  Dynamic = 4;
+};
+
 message ShowToastRequest {
-  string title = 1;
-  string style = 2;
+  string id = 1;
+  string title = 2;
+  ToastStyle style = 3;
+};
+
+message HideToastRequest {
+  string id = 1;
+};
+
+message UpdateToastRequest {
+  string id = 1;
+  string title = 2;
 };
 
 message PushViewRequest {}
@@ -32,24 +50,28 @@ message Request {
   oneof payload {
     RenderRequest render = 1;
     ShowToastRequest show_toast = 2;
-    PushViewRequest push_view = 3;
-    PopViewRequest pop_view = 4;
-    ClearSearchBarRequest clear_search = 5;
-    CloseMainWindowRequest close_main_window = 6;
-    ShowHudRequest show_hud = 7;
-    SetSearchTextRequest set_search_text = 8;
+    HideToastRequest hide_toast = 3;
+    UpdateToastRequest update_toast = 4;
+    PushViewRequest push_view = 5;
+    PopViewRequest pop_view = 6;
+    ClearSearchBarRequest clear_search = 7;
+    CloseMainWindowRequest close_main_window = 8;
+    ShowHudRequest show_hud = 9;
+    SetSearchTextRequest set_search_text = 10;
   };
 };
 
 message Response {
   common.AckResponse render = 1;
   common.AckResponse show_toast = 2;
-  common.AckResponse push_view = 3;
-  common.AckResponse pop_view = 4;
-  common.AckResponse clear_search = 5;
-  common.AckResponse close_main_window = 6;
-  common.AckResponse show_hud = 7;
-  common.AckResponse set_search_text = 8;
+  common.AckResponse hide_toast = 3;
+  common.AckResponse update_toast = 4;
+  common.AckResponse push_view = 5;
+  common.AckResponse pop_view = 6;
+  common.AckResponse clear_search = 7;
+  common.AckResponse close_main_window = 8;
+  common.AckResponse show_hud = 9;
+  common.AckResponse set_search_text = 10; 
 };
 
 message RenderNode {
