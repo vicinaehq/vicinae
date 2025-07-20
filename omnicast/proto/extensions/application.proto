@@ -21,6 +21,12 @@ message Request {
   };
 };
 
+message Response {
+  oneof payload {
+    ListApplicationResponse list = 1;
+  };
+};
+
 message Application {
   string id = 1;
   string name = 2;

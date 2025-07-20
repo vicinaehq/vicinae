@@ -33,6 +33,7 @@ message Response {
 message ResponseData {
   oneof payload {
     common.AckResponse ack = 1;
+    application.Response app = 2;
   };
 };
 

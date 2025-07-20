@@ -57,6 +57,13 @@ export const getApplications = async (path?: PathLike): Promise<Application[]> =
 		target: path?.toString()
 	});
 
+	const res2 = await bus.request2({ app: { list: {} }});
+	const listRes = res2.app?.list;
+	
+	if (!listRes) {
+		throw new Error(`getApplications: got invalid response`);
+	}
+
 	return res.data.apps.map(deserializeApp);
 }
 

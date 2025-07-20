@@ -6,7 +6,7 @@
 
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
-import { Request as Request2 } from "./application";
+import { Request as Request2, Response as Response5 } from "./application";
 import { Request as Request3 } from "./clipboard";
 import { AckResponse, ErrorResponse } from "./common";
 import { Request as Request4 } from "./storage";
@@ -34,6 +34,7 @@ export interface Response {
 
 export interface ResponseData {
   ack?: AckResponse | undefined;
+  app?: Response5 | undefined;
 }
 
 export interface Event {
@@ -337,13 +338,16 @@ export const Response: MessageFns<Response> = {
 };
 
 function createBaseResponseData(): ResponseData {
-  return { ack: undefined };
+  return { ack: undefined, app: undefined };
 }
 
 export const ResponseData: MessageFns<ResponseData> = {
   encode(message: ResponseData, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.ack !== undefined) {
       AckResponse.encode(message.ack, writer.uint32(10).fork()).join();
+    }
+    if (message.app !== undefined) {
+      Response5.encode(message.app, writer.uint32(18).fork()).join();
     }
     return writer;
   },
@@ -363,6 +367,14 @@ export const ResponseData: MessageFns<ResponseData> = {
           message.ack = AckResponse.decode(reader, reader.uint32());
           continue;
         }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.app = Response5.decode(reader, reader.uint32());
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -373,13 +385,19 @@ export const ResponseData: MessageFns<ResponseData> = {
   },
 
   fromJSON(object: any): ResponseData {
-    return { ack: isSet(object.ack) ? AckResponse.fromJSON(object.ack) : undefined };
+    return {
+      ack: isSet(object.ack) ? AckResponse.fromJSON(object.ack) : undefined,
+      app: isSet(object.app) ? Response5.fromJSON(object.app) : undefined,
+    };
   },
 
   toJSON(message: ResponseData): unknown {
     const obj: any = {};
     if (message.ack !== undefined) {
       obj.ack = AckResponse.toJSON(message.ack);
+    }
+    if (message.app !== undefined) {
+      obj.app = Response5.toJSON(message.app);
     }
     return obj;
   },
@@ -390,6 +408,7 @@ export const ResponseData: MessageFns<ResponseData> = {
   fromPartial<I extends Exact<DeepPartial<ResponseData>, I>>(object: I): ResponseData {
     const message = createBaseResponseData();
     message.ack = (object.ack !== undefined && object.ack !== null) ? AckResponse.fromPartial(object.ack) : undefined;
+    message.app = (object.app !== undefined && object.app !== null) ? Response5.fromPartial(object.app) : undefined;
     return message;
   },
 };
