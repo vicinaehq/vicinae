@@ -49,11 +49,11 @@ public:
       static GridItemWidget2 ruler;
 
       auto fm = ruler.fontMetrics();
-      auto spacing = ruler.spacing();
+      auto spacing = 10;
       int height = width / aspectRatio();
 
-      if (!title().isEmpty()) { height += fm.ascent() + spacing; }
-      if (!subtitle().isEmpty()) { height += fm.ascent() + spacing; }
+      if (!title().isEmpty()) { height += 15 + spacing; }
+      if (!subtitle().isEmpty()) { height += 15 + spacing; }
 
       return height;
     }

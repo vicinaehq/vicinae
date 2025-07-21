@@ -27,6 +27,10 @@ class ExtensionGridItem : public OmniGrid::AbstractGridItem {
     return icon;
   }
 
+  QString title() const override { return _item.title; }
+
+  QString subtitle() const override { return _item.subtitle; }
+
   void recycleCenterWidget(QWidget *widget) const override { refreshCenterWidget(widget); }
 
   bool centerWidgetRecyclable() const override { return true; }

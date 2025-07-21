@@ -1,15 +1,15 @@
 #pragma once
-#include "ui/ellided-label.hpp"
 #include "ui/grid-item-content-widget.hpp"
 #include "ui/omni-list-item-widget.hpp"
+#include "ui/typography/typography.hpp"
 #include <qboxlayout.h>
 #include <qevent.h>
 #include <qwidget.h>
 
 class GridItemWidget2 : public OmniListItemWidget {
   QVBoxLayout *layout;
-  EllidedLabel *titleLabel;
-  EllidedLabel *subtitleLabel;
+  TypographyWidget *titleLabel = new TypographyWidget;
+  TypographyWidget *subtitleLabel = new TypographyWidget;
   void resizeEvent(QResizeEvent *event) override;
   double m_aspectRatio = 1;
 

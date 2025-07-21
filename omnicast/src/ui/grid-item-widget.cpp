@@ -11,13 +11,15 @@ void GridItemWidget2::resizeEvent(QResizeEvent *event) {
   OmniListItemWidget::resizeEvent(event);
 }
 
-GridItemWidget2::GridItemWidget2(QWidget *parent)
-    : layout(new QVBoxLayout), main(new GridItemContentWidget), titleLabel(new EllidedLabel),
-      subtitleLabel(new EllidedLabel) {
+GridItemWidget2::GridItemWidget2(QWidget *parent) : layout(new QVBoxLayout), main(new GridItemContentWidget) {
   layout->setContentsMargins(0, 0, 0, 0);
+  layout->setSpacing(0);
   layout->addWidget(main);
+  layout->addSpacing(10);
   layout->addWidget(titleLabel);
   layout->addWidget(subtitleLabel);
+
+  subtitleLabel->setColor(ColorTint::TextSecondary);
 
   setLayout(layout);
   connect(main, &GridItemContentWidget::clicked, this, &OmniListItemWidget::clicked);

@@ -11,6 +11,7 @@
 
 class Tooltip : public QWidget {
   QWidget *m_target = nullptr;
+  QWidget *m_content = nullptr;
   Qt::Alignment m_alignment = Qt::AlignBottom | Qt::AlignCenter;
   QVBoxLayout *m_layout = new QVBoxLayout;
 

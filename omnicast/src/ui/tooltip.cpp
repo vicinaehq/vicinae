@@ -3,6 +3,7 @@
 #include "ui/typography/typography.hpp"
 #include <qevent.h>
 #include <qnamespace.h>
+#include <qobjectdefs.h>
 #include <qwidget.h>
 
 bool Tooltip::eventFilter(QObject *watched, QEvent *event) {
@@ -74,6 +75,8 @@ void Tooltip::position() {
 }
 
 void Tooltip::showEvent(QShowEvent *event) {
+  if (!m_content) return;
+
   position();
   QWidget::showEvent(event);
 }
@@ -85,9 +88,17 @@ void Tooltip::setWidget(QWidget *widget) {
       previous->deleteLater();
     }
   }
+
+  m_content = widget;
 }
 
 void Tooltip::setText(const QString &s) {
+  if (s.isEmpty()) {
+    if (m_content) m_content->deleteLater();
+    m_content = nullptr;
+    return;
+  }
+
   auto typography = new TypographyWidget();
 
   typography->setText(s);
