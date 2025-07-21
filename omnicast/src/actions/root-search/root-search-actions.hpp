@@ -12,7 +12,7 @@ public:
 
 class ResetItemRanking : public AbstractAction {
   QString m_id;
-  void execute() override;
+  void execute(ApplicationContext *context) override;
 
 public:
   ResetItemRanking(const QString &id);

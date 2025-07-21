@@ -2,6 +2,7 @@ import { randomBytes, randomUUID } from "crypto";
 import { HandlerId } from "../types/jsx";
 import { bus, createHandler } from "./bus";
 import { Keyboard } from "./keyboard";
+import { ToastStyle as ProtoToastStyle } from "./proto/ui";
 
 /**
  * A Toast with a certain style, title, and message.
@@ -21,6 +22,9 @@ import { Keyboard } from "./keyboard";
  * };
  * ```
  */
+
+
+
 export class Toast {
     private options: {
 		title: string;
@@ -34,6 +38,12 @@ export class Toast {
 		secondary?: HandlerId;
 	} = {};
 	private id: string;
+
+	private styleMap: Record<Toast.Style, ProtoToastStyle> = {
+		[Toast.Style.Success]: ProtoToastStyle.Success,
+		[Toast.Style.Failure]: ProtoToastStyle.Error,
+		[Toast.Style.Animated]: ProtoToastStyle.Dynamic
+	};
 
     /**
      * Deprecated - Use `showToast` instead
@@ -115,7 +125,11 @@ export class Toast {
 			};
 		}
 
-		await bus.request("toast.show", payload, { timeout: 1000 });
+		await bus.turboRequest('ui.showToast', { 
+			id: this.id,
+			title: payload.title, 
+			style: this.styleMap[payload.style ?? Toast.Style.Success]
+		});
 	}
 
     /**
@@ -124,9 +138,7 @@ export class Toast {
      * @returns A Promise that resolves when toast is hidden.
      */
     async hide(): Promise<void> {
-		await bus.request("toast.hide", {
-			id: this.id
-		}, { timeout: 1000 });
+		await bus.turboRequest('ui.hideToast', { id: this.id });
 	}
 
     private update;

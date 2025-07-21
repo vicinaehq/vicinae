@@ -54,10 +54,14 @@ type EndpointMapping = {
 	"app.list": "app.list";
 	'ui.render': 'ui.render'
 	'ui.showToast': 'ui.showToast',
+	'ui.hideToast': 'ui.hideToast',
+	'ui.updateToast': 'ui.updateToast',
 	'ui.pushView': 'ui.pushView',
 	'ui.popView': 'ui.popView',
 	'ui.closeMainWindow': 'ui.closeMainWindow',
 	'ui.showHud': 'ui.showHud',
+	'ui.setSearchText': 'ui.setSearchText'
+	'ui.confirmAlert': 'ui.confirmAlert'
 
 	'storage.get': 'storage.get',
 	'storage.set': 'storage.set',
@@ -94,8 +98,6 @@ type Map = {
 		response: ExtractResponseType<EndpointMapping[K]>['data'];
 	}
 }
-
-
 
 class Bus {
   private requestMap = new Map<string, { resolve: (message: Message) => void }>();
@@ -176,10 +178,6 @@ class Bus {
 	  });
 	  port.on('close', () => {
 		  console.error(`Parent port closed prematurely`);
-	  });
-
-	  this.turboRequest('app.list', {}).then((result) => { 
-		  if (result.ok) {result.value}
 	  });
   }
   

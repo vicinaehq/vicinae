@@ -11,9 +11,109 @@ import { Value } from "./google/protobuf/struct";
 
 export const protobufPackage = "proto.ext.ui";
 
+export enum ToastStyle {
+  Success = 0,
+  Info = 1,
+  Warning = 2,
+  Error = 3,
+  Dynamic = 4,
+  UNRECOGNIZED = -1,
+}
+
+export function toastStyleFromJSON(object: any): ToastStyle {
+  switch (object) {
+    case 0:
+    case "Success":
+      return ToastStyle.Success;
+    case 1:
+    case "Info":
+      return ToastStyle.Info;
+    case 2:
+    case "Warning":
+      return ToastStyle.Warning;
+    case 3:
+    case "Error":
+      return ToastStyle.Error;
+    case 4:
+    case "Dynamic":
+      return ToastStyle.Dynamic;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return ToastStyle.UNRECOGNIZED;
+  }
+}
+
+export function toastStyleToJSON(object: ToastStyle): string {
+  switch (object) {
+    case ToastStyle.Success:
+      return "Success";
+    case ToastStyle.Info:
+      return "Info";
+    case ToastStyle.Warning:
+      return "Warning";
+    case ToastStyle.Error:
+      return "Error";
+    case ToastStyle.Dynamic:
+      return "Dynamic";
+    case ToastStyle.UNRECOGNIZED:
+    default:
+      return "UNRECOGNIZED";
+  }
+}
+
+export enum ConfirmAlertActionStyle {
+  Default = 0,
+  Destructive = 1,
+  Cancel = 2,
+  UNRECOGNIZED = -1,
+}
+
+export function confirmAlertActionStyleFromJSON(object: any): ConfirmAlertActionStyle {
+  switch (object) {
+    case 0:
+    case "Default":
+      return ConfirmAlertActionStyle.Default;
+    case 1:
+    case "Destructive":
+      return ConfirmAlertActionStyle.Destructive;
+    case 2:
+    case "Cancel":
+      return ConfirmAlertActionStyle.Cancel;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return ConfirmAlertActionStyle.UNRECOGNIZED;
+  }
+}
+
+export function confirmAlertActionStyleToJSON(object: ConfirmAlertActionStyle): string {
+  switch (object) {
+    case ConfirmAlertActionStyle.Default:
+      return "Default";
+    case ConfirmAlertActionStyle.Destructive:
+      return "Destructive";
+    case ConfirmAlertActionStyle.Cancel:
+      return "Cancel";
+    case ConfirmAlertActionStyle.UNRECOGNIZED:
+    default:
+      return "UNRECOGNIZED";
+  }
+}
+
 export interface ShowToastRequest {
+  id: string;
   title: string;
-  style: string;
+  style: ToastStyle;
+}
+
+export interface HideToastRequest {
+  id: string;
+}
+
+export interface UpdateToastRequest {
+  id: string;
+  title: string;
 }
 
 export interface PushViewRequest {
@@ -28,6 +128,10 @@ export interface CloseMainWindowRequest {
 export interface ClearSearchBarRequest {
 }
 
+export interface SetSearchTextRequest {
+  text: string;
+}
+
 export interface ShowHudRequest {
   text: string;
 }
@@ -40,24 +144,48 @@ export interface RenderRequest {
   json: string;
 }
 
+export interface ConfirmAlertRequest {
+  title: string;
+  description: string;
+  /** TODO: replace with proper ImageLike message */
+  icon?: string | undefined;
+  dismissAction?: ConfirmAlertAction | undefined;
+  primaryAction?: ConfirmAlertAction | undefined;
+  rememberUserChoice: boolean;
+  handle: string;
+}
+
+export interface ConfirmAlertAction {
+  title: string;
+  style: ConfirmAlertActionStyle;
+}
+
 export interface Request {
   render?: RenderRequest | undefined;
   showToast?: ShowToastRequest | undefined;
+  hideToast?: HideToastRequest | undefined;
+  updateToast?: UpdateToastRequest | undefined;
   pushView?: PushViewRequest | undefined;
   popView?: PopViewRequest | undefined;
   clearSearch?: ClearSearchBarRequest | undefined;
   closeMainWindow?: CloseMainWindowRequest | undefined;
   showHud?: ShowHudRequest | undefined;
+  setSearchText?: SetSearchTextRequest | undefined;
+  confirmAlert?: ConfirmAlertRequest | undefined;
 }
 
 export interface Response {
   render: AckResponse | undefined;
   showToast: AckResponse | undefined;
+  hideToast: AckResponse | undefined;
+  updateToast: AckResponse | undefined;
   pushView: AckResponse | undefined;
   popView: AckResponse | undefined;
   clearSearch: AckResponse | undefined;
   closeMainWindow: AckResponse | undefined;
   showHud: AckResponse | undefined;
+  setSearchText: AckResponse | undefined;
+  confirmAlert: AckResponse | undefined;
 }
 
 export interface RenderNode {
@@ -74,16 +202,19 @@ export interface RenderNode_PropsEntry {
 }
 
 function createBaseShowToastRequest(): ShowToastRequest {
-  return { title: "", style: "" };
+  return { id: "", title: "", style: 0 };
 }
 
 export const ShowToastRequest: MessageFns<ShowToastRequest> = {
   encode(message: ShowToastRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.title !== "") {
-      writer.uint32(10).string(message.title);
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
     }
-    if (message.style !== "") {
-      writer.uint32(18).string(message.style);
+    if (message.title !== "") {
+      writer.uint32(18).string(message.title);
+    }
+    if (message.style !== 0) {
+      writer.uint32(24).int32(message.style);
     }
     return writer;
   },
@@ -100,7 +231,7 @@ export const ShowToastRequest: MessageFns<ShowToastRequest> = {
             break;
           }
 
-          message.title = reader.string();
+          message.id = reader.string();
           continue;
         }
         case 2: {
@@ -108,7 +239,15 @@ export const ShowToastRequest: MessageFns<ShowToastRequest> = {
             break;
           }
 
-          message.style = reader.string();
+          message.title = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.style = reader.int32() as any;
           continue;
         }
       }
@@ -122,18 +261,22 @@ export const ShowToastRequest: MessageFns<ShowToastRequest> = {
 
   fromJSON(object: any): ShowToastRequest {
     return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
       title: isSet(object.title) ? globalThis.String(object.title) : "",
-      style: isSet(object.style) ? globalThis.String(object.style) : "",
+      style: isSet(object.style) ? toastStyleFromJSON(object.style) : 0,
     };
   },
 
   toJSON(message: ShowToastRequest): unknown {
     const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
     if (message.title !== "") {
       obj.title = message.title;
     }
-    if (message.style !== "") {
-      obj.style = message.style;
+    if (message.style !== 0) {
+      obj.style = toastStyleToJSON(message.style);
     }
     return obj;
   },
@@ -143,8 +286,143 @@ export const ShowToastRequest: MessageFns<ShowToastRequest> = {
   },
   fromPartial<I extends Exact<DeepPartial<ShowToastRequest>, I>>(object: I): ShowToastRequest {
     const message = createBaseShowToastRequest();
+    message.id = object.id ?? "";
     message.title = object.title ?? "";
-    message.style = object.style ?? "";
+    message.style = object.style ?? 0;
+    return message;
+  },
+};
+
+function createBaseHideToastRequest(): HideToastRequest {
+  return { id: "" };
+}
+
+export const HideToastRequest: MessageFns<HideToastRequest> = {
+  encode(message: HideToastRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): HideToastRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseHideToastRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): HideToastRequest {
+    return { id: isSet(object.id) ? globalThis.String(object.id) : "" };
+  },
+
+  toJSON(message: HideToastRequest): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<HideToastRequest>, I>>(base?: I): HideToastRequest {
+    return HideToastRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<HideToastRequest>, I>>(object: I): HideToastRequest {
+    const message = createBaseHideToastRequest();
+    message.id = object.id ?? "";
+    return message;
+  },
+};
+
+function createBaseUpdateToastRequest(): UpdateToastRequest {
+  return { id: "", title: "" };
+}
+
+export const UpdateToastRequest: MessageFns<UpdateToastRequest> = {
+  encode(message: UpdateToastRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.title !== "") {
+      writer.uint32(18).string(message.title);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): UpdateToastRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUpdateToastRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.title = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UpdateToastRequest {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      title: isSet(object.title) ? globalThis.String(object.title) : "",
+    };
+  },
+
+  toJSON(message: UpdateToastRequest): unknown {
+    const obj: any = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.title !== "") {
+      obj.title = message.title;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<UpdateToastRequest>, I>>(base?: I): UpdateToastRequest {
+    return UpdateToastRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<UpdateToastRequest>, I>>(object: I): UpdateToastRequest {
+    const message = createBaseUpdateToastRequest();
+    message.id = object.id ?? "";
+    message.title = object.title ?? "";
     return message;
   },
 };
@@ -321,6 +599,64 @@ export const ClearSearchBarRequest: MessageFns<ClearSearchBarRequest> = {
   },
 };
 
+function createBaseSetSearchTextRequest(): SetSearchTextRequest {
+  return { text: "" };
+}
+
+export const SetSearchTextRequest: MessageFns<SetSearchTextRequest> = {
+  encode(message: SetSearchTextRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.text !== "") {
+      writer.uint32(10).string(message.text);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): SetSearchTextRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSetSearchTextRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.text = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SetSearchTextRequest {
+    return { text: isSet(object.text) ? globalThis.String(object.text) : "" };
+  },
+
+  toJSON(message: SetSearchTextRequest): unknown {
+    const obj: any = {};
+    if (message.text !== "") {
+      obj.text = message.text;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SetSearchTextRequest>, I>>(base?: I): SetSearchTextRequest {
+    return SetSearchTextRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<SetSearchTextRequest>, I>>(object: I): SetSearchTextRequest {
+    const message = createBaseSetSearchTextRequest();
+    message.text = object.text ?? "";
+    return message;
+  },
+};
+
 function createBaseShowHudRequest(): ShowHudRequest {
   return { text: "" };
 }
@@ -437,15 +773,263 @@ export const RenderRequest: MessageFns<RenderRequest> = {
   },
 };
 
+function createBaseConfirmAlertRequest(): ConfirmAlertRequest {
+  return {
+    title: "",
+    description: "",
+    icon: undefined,
+    dismissAction: undefined,
+    primaryAction: undefined,
+    rememberUserChoice: false,
+    handle: "",
+  };
+}
+
+export const ConfirmAlertRequest: MessageFns<ConfirmAlertRequest> = {
+  encode(message: ConfirmAlertRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.title !== "") {
+      writer.uint32(10).string(message.title);
+    }
+    if (message.description !== "") {
+      writer.uint32(18).string(message.description);
+    }
+    if (message.icon !== undefined) {
+      writer.uint32(26).string(message.icon);
+    }
+    if (message.dismissAction !== undefined) {
+      ConfirmAlertAction.encode(message.dismissAction, writer.uint32(34).fork()).join();
+    }
+    if (message.primaryAction !== undefined) {
+      ConfirmAlertAction.encode(message.primaryAction, writer.uint32(42).fork()).join();
+    }
+    if (message.rememberUserChoice !== false) {
+      writer.uint32(48).bool(message.rememberUserChoice);
+    }
+    if (message.handle !== "") {
+      writer.uint32(58).string(message.handle);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ConfirmAlertRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseConfirmAlertRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.title = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.description = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.icon = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.dismissAction = ConfirmAlertAction.decode(reader, reader.uint32());
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.primaryAction = ConfirmAlertAction.decode(reader, reader.uint32());
+          continue;
+        }
+        case 6: {
+          if (tag !== 48) {
+            break;
+          }
+
+          message.rememberUserChoice = reader.bool();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.handle = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ConfirmAlertRequest {
+    return {
+      title: isSet(object.title) ? globalThis.String(object.title) : "",
+      description: isSet(object.description) ? globalThis.String(object.description) : "",
+      icon: isSet(object.icon) ? globalThis.String(object.icon) : undefined,
+      dismissAction: isSet(object.dismissAction) ? ConfirmAlertAction.fromJSON(object.dismissAction) : undefined,
+      primaryAction: isSet(object.primaryAction) ? ConfirmAlertAction.fromJSON(object.primaryAction) : undefined,
+      rememberUserChoice: isSet(object.rememberUserChoice) ? globalThis.Boolean(object.rememberUserChoice) : false,
+      handle: isSet(object.handle) ? globalThis.String(object.handle) : "",
+    };
+  },
+
+  toJSON(message: ConfirmAlertRequest): unknown {
+    const obj: any = {};
+    if (message.title !== "") {
+      obj.title = message.title;
+    }
+    if (message.description !== "") {
+      obj.description = message.description;
+    }
+    if (message.icon !== undefined) {
+      obj.icon = message.icon;
+    }
+    if (message.dismissAction !== undefined) {
+      obj.dismissAction = ConfirmAlertAction.toJSON(message.dismissAction);
+    }
+    if (message.primaryAction !== undefined) {
+      obj.primaryAction = ConfirmAlertAction.toJSON(message.primaryAction);
+    }
+    if (message.rememberUserChoice !== false) {
+      obj.rememberUserChoice = message.rememberUserChoice;
+    }
+    if (message.handle !== "") {
+      obj.handle = message.handle;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ConfirmAlertRequest>, I>>(base?: I): ConfirmAlertRequest {
+    return ConfirmAlertRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ConfirmAlertRequest>, I>>(object: I): ConfirmAlertRequest {
+    const message = createBaseConfirmAlertRequest();
+    message.title = object.title ?? "";
+    message.description = object.description ?? "";
+    message.icon = object.icon ?? undefined;
+    message.dismissAction = (object.dismissAction !== undefined && object.dismissAction !== null)
+      ? ConfirmAlertAction.fromPartial(object.dismissAction)
+      : undefined;
+    message.primaryAction = (object.primaryAction !== undefined && object.primaryAction !== null)
+      ? ConfirmAlertAction.fromPartial(object.primaryAction)
+      : undefined;
+    message.rememberUserChoice = object.rememberUserChoice ?? false;
+    message.handle = object.handle ?? "";
+    return message;
+  },
+};
+
+function createBaseConfirmAlertAction(): ConfirmAlertAction {
+  return { title: "", style: 0 };
+}
+
+export const ConfirmAlertAction: MessageFns<ConfirmAlertAction> = {
+  encode(message: ConfirmAlertAction, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.title !== "") {
+      writer.uint32(10).string(message.title);
+    }
+    if (message.style !== 0) {
+      writer.uint32(16).int32(message.style);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ConfirmAlertAction {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseConfirmAlertAction();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.title = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.style = reader.int32() as any;
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ConfirmAlertAction {
+    return {
+      title: isSet(object.title) ? globalThis.String(object.title) : "",
+      style: isSet(object.style) ? confirmAlertActionStyleFromJSON(object.style) : 0,
+    };
+  },
+
+  toJSON(message: ConfirmAlertAction): unknown {
+    const obj: any = {};
+    if (message.title !== "") {
+      obj.title = message.title;
+    }
+    if (message.style !== 0) {
+      obj.style = confirmAlertActionStyleToJSON(message.style);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ConfirmAlertAction>, I>>(base?: I): ConfirmAlertAction {
+    return ConfirmAlertAction.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ConfirmAlertAction>, I>>(object: I): ConfirmAlertAction {
+    const message = createBaseConfirmAlertAction();
+    message.title = object.title ?? "";
+    message.style = object.style ?? 0;
+    return message;
+  },
+};
+
 function createBaseRequest(): Request {
   return {
     render: undefined,
     showToast: undefined,
+    hideToast: undefined,
+    updateToast: undefined,
     pushView: undefined,
     popView: undefined,
     clearSearch: undefined,
     closeMainWindow: undefined,
     showHud: undefined,
+    setSearchText: undefined,
+    confirmAlert: undefined,
   };
 }
 
@@ -457,20 +1041,32 @@ export const Request: MessageFns<Request> = {
     if (message.showToast !== undefined) {
       ShowToastRequest.encode(message.showToast, writer.uint32(18).fork()).join();
     }
+    if (message.hideToast !== undefined) {
+      HideToastRequest.encode(message.hideToast, writer.uint32(26).fork()).join();
+    }
+    if (message.updateToast !== undefined) {
+      UpdateToastRequest.encode(message.updateToast, writer.uint32(34).fork()).join();
+    }
     if (message.pushView !== undefined) {
-      PushViewRequest.encode(message.pushView, writer.uint32(26).fork()).join();
+      PushViewRequest.encode(message.pushView, writer.uint32(42).fork()).join();
     }
     if (message.popView !== undefined) {
-      PopViewRequest.encode(message.popView, writer.uint32(34).fork()).join();
+      PopViewRequest.encode(message.popView, writer.uint32(50).fork()).join();
     }
     if (message.clearSearch !== undefined) {
-      ClearSearchBarRequest.encode(message.clearSearch, writer.uint32(42).fork()).join();
+      ClearSearchBarRequest.encode(message.clearSearch, writer.uint32(58).fork()).join();
     }
     if (message.closeMainWindow !== undefined) {
-      CloseMainWindowRequest.encode(message.closeMainWindow, writer.uint32(50).fork()).join();
+      CloseMainWindowRequest.encode(message.closeMainWindow, writer.uint32(66).fork()).join();
     }
     if (message.showHud !== undefined) {
-      ShowHudRequest.encode(message.showHud, writer.uint32(58).fork()).join();
+      ShowHudRequest.encode(message.showHud, writer.uint32(74).fork()).join();
+    }
+    if (message.setSearchText !== undefined) {
+      SetSearchTextRequest.encode(message.setSearchText, writer.uint32(82).fork()).join();
+    }
+    if (message.confirmAlert !== undefined) {
+      ConfirmAlertRequest.encode(message.confirmAlert, writer.uint32(90).fork()).join();
     }
     return writer;
   },
@@ -503,7 +1099,7 @@ export const Request: MessageFns<Request> = {
             break;
           }
 
-          message.pushView = PushViewRequest.decode(reader, reader.uint32());
+          message.hideToast = HideToastRequest.decode(reader, reader.uint32());
           continue;
         }
         case 4: {
@@ -511,7 +1107,7 @@ export const Request: MessageFns<Request> = {
             break;
           }
 
-          message.popView = PopViewRequest.decode(reader, reader.uint32());
+          message.updateToast = UpdateToastRequest.decode(reader, reader.uint32());
           continue;
         }
         case 5: {
@@ -519,7 +1115,7 @@ export const Request: MessageFns<Request> = {
             break;
           }
 
-          message.clearSearch = ClearSearchBarRequest.decode(reader, reader.uint32());
+          message.pushView = PushViewRequest.decode(reader, reader.uint32());
           continue;
         }
         case 6: {
@@ -527,7 +1123,7 @@ export const Request: MessageFns<Request> = {
             break;
           }
 
-          message.closeMainWindow = CloseMainWindowRequest.decode(reader, reader.uint32());
+          message.popView = PopViewRequest.decode(reader, reader.uint32());
           continue;
         }
         case 7: {
@@ -535,7 +1131,39 @@ export const Request: MessageFns<Request> = {
             break;
           }
 
+          message.clearSearch = ClearSearchBarRequest.decode(reader, reader.uint32());
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.closeMainWindow = CloseMainWindowRequest.decode(reader, reader.uint32());
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
           message.showHud = ShowHudRequest.decode(reader, reader.uint32());
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.setSearchText = SetSearchTextRequest.decode(reader, reader.uint32());
+          continue;
+        }
+        case 11: {
+          if (tag !== 90) {
+            break;
+          }
+
+          message.confirmAlert = ConfirmAlertRequest.decode(reader, reader.uint32());
           continue;
         }
       }
@@ -551,6 +1179,8 @@ export const Request: MessageFns<Request> = {
     return {
       render: isSet(object.render) ? RenderRequest.fromJSON(object.render) : undefined,
       showToast: isSet(object.showToast) ? ShowToastRequest.fromJSON(object.showToast) : undefined,
+      hideToast: isSet(object.hideToast) ? HideToastRequest.fromJSON(object.hideToast) : undefined,
+      updateToast: isSet(object.updateToast) ? UpdateToastRequest.fromJSON(object.updateToast) : undefined,
       pushView: isSet(object.pushView) ? PushViewRequest.fromJSON(object.pushView) : undefined,
       popView: isSet(object.popView) ? PopViewRequest.fromJSON(object.popView) : undefined,
       clearSearch: isSet(object.clearSearch) ? ClearSearchBarRequest.fromJSON(object.clearSearch) : undefined,
@@ -558,6 +1188,8 @@ export const Request: MessageFns<Request> = {
         ? CloseMainWindowRequest.fromJSON(object.closeMainWindow)
         : undefined,
       showHud: isSet(object.showHud) ? ShowHudRequest.fromJSON(object.showHud) : undefined,
+      setSearchText: isSet(object.setSearchText) ? SetSearchTextRequest.fromJSON(object.setSearchText) : undefined,
+      confirmAlert: isSet(object.confirmAlert) ? ConfirmAlertRequest.fromJSON(object.confirmAlert) : undefined,
     };
   },
 
@@ -568,6 +1200,12 @@ export const Request: MessageFns<Request> = {
     }
     if (message.showToast !== undefined) {
       obj.showToast = ShowToastRequest.toJSON(message.showToast);
+    }
+    if (message.hideToast !== undefined) {
+      obj.hideToast = HideToastRequest.toJSON(message.hideToast);
+    }
+    if (message.updateToast !== undefined) {
+      obj.updateToast = UpdateToastRequest.toJSON(message.updateToast);
     }
     if (message.pushView !== undefined) {
       obj.pushView = PushViewRequest.toJSON(message.pushView);
@@ -584,6 +1222,12 @@ export const Request: MessageFns<Request> = {
     if (message.showHud !== undefined) {
       obj.showHud = ShowHudRequest.toJSON(message.showHud);
     }
+    if (message.setSearchText !== undefined) {
+      obj.setSearchText = SetSearchTextRequest.toJSON(message.setSearchText);
+    }
+    if (message.confirmAlert !== undefined) {
+      obj.confirmAlert = ConfirmAlertRequest.toJSON(message.confirmAlert);
+    }
     return obj;
   },
 
@@ -597,6 +1241,12 @@ export const Request: MessageFns<Request> = {
       : undefined;
     message.showToast = (object.showToast !== undefined && object.showToast !== null)
       ? ShowToastRequest.fromPartial(object.showToast)
+      : undefined;
+    message.hideToast = (object.hideToast !== undefined && object.hideToast !== null)
+      ? HideToastRequest.fromPartial(object.hideToast)
+      : undefined;
+    message.updateToast = (object.updateToast !== undefined && object.updateToast !== null)
+      ? UpdateToastRequest.fromPartial(object.updateToast)
       : undefined;
     message.pushView = (object.pushView !== undefined && object.pushView !== null)
       ? PushViewRequest.fromPartial(object.pushView)
@@ -613,6 +1263,12 @@ export const Request: MessageFns<Request> = {
     message.showHud = (object.showHud !== undefined && object.showHud !== null)
       ? ShowHudRequest.fromPartial(object.showHud)
       : undefined;
+    message.setSearchText = (object.setSearchText !== undefined && object.setSearchText !== null)
+      ? SetSearchTextRequest.fromPartial(object.setSearchText)
+      : undefined;
+    message.confirmAlert = (object.confirmAlert !== undefined && object.confirmAlert !== null)
+      ? ConfirmAlertRequest.fromPartial(object.confirmAlert)
+      : undefined;
     return message;
   },
 };
@@ -621,11 +1277,15 @@ function createBaseResponse(): Response {
   return {
     render: undefined,
     showToast: undefined,
+    hideToast: undefined,
+    updateToast: undefined,
     pushView: undefined,
     popView: undefined,
     clearSearch: undefined,
     closeMainWindow: undefined,
     showHud: undefined,
+    setSearchText: undefined,
+    confirmAlert: undefined,
   };
 }
 
@@ -637,20 +1297,32 @@ export const Response: MessageFns<Response> = {
     if (message.showToast !== undefined) {
       AckResponse.encode(message.showToast, writer.uint32(18).fork()).join();
     }
+    if (message.hideToast !== undefined) {
+      AckResponse.encode(message.hideToast, writer.uint32(26).fork()).join();
+    }
+    if (message.updateToast !== undefined) {
+      AckResponse.encode(message.updateToast, writer.uint32(34).fork()).join();
+    }
     if (message.pushView !== undefined) {
-      AckResponse.encode(message.pushView, writer.uint32(26).fork()).join();
+      AckResponse.encode(message.pushView, writer.uint32(42).fork()).join();
     }
     if (message.popView !== undefined) {
-      AckResponse.encode(message.popView, writer.uint32(34).fork()).join();
+      AckResponse.encode(message.popView, writer.uint32(50).fork()).join();
     }
     if (message.clearSearch !== undefined) {
-      AckResponse.encode(message.clearSearch, writer.uint32(42).fork()).join();
+      AckResponse.encode(message.clearSearch, writer.uint32(58).fork()).join();
     }
     if (message.closeMainWindow !== undefined) {
-      AckResponse.encode(message.closeMainWindow, writer.uint32(50).fork()).join();
+      AckResponse.encode(message.closeMainWindow, writer.uint32(66).fork()).join();
     }
     if (message.showHud !== undefined) {
-      AckResponse.encode(message.showHud, writer.uint32(58).fork()).join();
+      AckResponse.encode(message.showHud, writer.uint32(74).fork()).join();
+    }
+    if (message.setSearchText !== undefined) {
+      AckResponse.encode(message.setSearchText, writer.uint32(82).fork()).join();
+    }
+    if (message.confirmAlert !== undefined) {
+      AckResponse.encode(message.confirmAlert, writer.uint32(90).fork()).join();
     }
     return writer;
   },
@@ -683,7 +1355,7 @@ export const Response: MessageFns<Response> = {
             break;
           }
 
-          message.pushView = AckResponse.decode(reader, reader.uint32());
+          message.hideToast = AckResponse.decode(reader, reader.uint32());
           continue;
         }
         case 4: {
@@ -691,7 +1363,7 @@ export const Response: MessageFns<Response> = {
             break;
           }
 
-          message.popView = AckResponse.decode(reader, reader.uint32());
+          message.updateToast = AckResponse.decode(reader, reader.uint32());
           continue;
         }
         case 5: {
@@ -699,7 +1371,7 @@ export const Response: MessageFns<Response> = {
             break;
           }
 
-          message.clearSearch = AckResponse.decode(reader, reader.uint32());
+          message.pushView = AckResponse.decode(reader, reader.uint32());
           continue;
         }
         case 6: {
@@ -707,7 +1379,7 @@ export const Response: MessageFns<Response> = {
             break;
           }
 
-          message.closeMainWindow = AckResponse.decode(reader, reader.uint32());
+          message.popView = AckResponse.decode(reader, reader.uint32());
           continue;
         }
         case 7: {
@@ -715,7 +1387,39 @@ export const Response: MessageFns<Response> = {
             break;
           }
 
+          message.clearSearch = AckResponse.decode(reader, reader.uint32());
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.closeMainWindow = AckResponse.decode(reader, reader.uint32());
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
           message.showHud = AckResponse.decode(reader, reader.uint32());
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.setSearchText = AckResponse.decode(reader, reader.uint32());
+          continue;
+        }
+        case 11: {
+          if (tag !== 90) {
+            break;
+          }
+
+          message.confirmAlert = AckResponse.decode(reader, reader.uint32());
           continue;
         }
       }
@@ -731,11 +1435,15 @@ export const Response: MessageFns<Response> = {
     return {
       render: isSet(object.render) ? AckResponse.fromJSON(object.render) : undefined,
       showToast: isSet(object.showToast) ? AckResponse.fromJSON(object.showToast) : undefined,
+      hideToast: isSet(object.hideToast) ? AckResponse.fromJSON(object.hideToast) : undefined,
+      updateToast: isSet(object.updateToast) ? AckResponse.fromJSON(object.updateToast) : undefined,
       pushView: isSet(object.pushView) ? AckResponse.fromJSON(object.pushView) : undefined,
       popView: isSet(object.popView) ? AckResponse.fromJSON(object.popView) : undefined,
       clearSearch: isSet(object.clearSearch) ? AckResponse.fromJSON(object.clearSearch) : undefined,
       closeMainWindow: isSet(object.closeMainWindow) ? AckResponse.fromJSON(object.closeMainWindow) : undefined,
       showHud: isSet(object.showHud) ? AckResponse.fromJSON(object.showHud) : undefined,
+      setSearchText: isSet(object.setSearchText) ? AckResponse.fromJSON(object.setSearchText) : undefined,
+      confirmAlert: isSet(object.confirmAlert) ? AckResponse.fromJSON(object.confirmAlert) : undefined,
     };
   },
 
@@ -746,6 +1454,12 @@ export const Response: MessageFns<Response> = {
     }
     if (message.showToast !== undefined) {
       obj.showToast = AckResponse.toJSON(message.showToast);
+    }
+    if (message.hideToast !== undefined) {
+      obj.hideToast = AckResponse.toJSON(message.hideToast);
+    }
+    if (message.updateToast !== undefined) {
+      obj.updateToast = AckResponse.toJSON(message.updateToast);
     }
     if (message.pushView !== undefined) {
       obj.pushView = AckResponse.toJSON(message.pushView);
@@ -762,6 +1476,12 @@ export const Response: MessageFns<Response> = {
     if (message.showHud !== undefined) {
       obj.showHud = AckResponse.toJSON(message.showHud);
     }
+    if (message.setSearchText !== undefined) {
+      obj.setSearchText = AckResponse.toJSON(message.setSearchText);
+    }
+    if (message.confirmAlert !== undefined) {
+      obj.confirmAlert = AckResponse.toJSON(message.confirmAlert);
+    }
     return obj;
   },
 
@@ -775,6 +1495,12 @@ export const Response: MessageFns<Response> = {
       : undefined;
     message.showToast = (object.showToast !== undefined && object.showToast !== null)
       ? AckResponse.fromPartial(object.showToast)
+      : undefined;
+    message.hideToast = (object.hideToast !== undefined && object.hideToast !== null)
+      ? AckResponse.fromPartial(object.hideToast)
+      : undefined;
+    message.updateToast = (object.updateToast !== undefined && object.updateToast !== null)
+      ? AckResponse.fromPartial(object.updateToast)
       : undefined;
     message.pushView = (object.pushView !== undefined && object.pushView !== null)
       ? AckResponse.fromPartial(object.pushView)
@@ -790,6 +1516,12 @@ export const Response: MessageFns<Response> = {
       : undefined;
     message.showHud = (object.showHud !== undefined && object.showHud !== null)
       ? AckResponse.fromPartial(object.showHud)
+      : undefined;
+    message.setSearchText = (object.setSearchText !== undefined && object.setSearchText !== null)
+      ? AckResponse.fromPartial(object.setSearchText)
+      : undefined;
+    message.confirmAlert = (object.confirmAlert !== undefined && object.confirmAlert !== null)
+      ? AckResponse.fromPartial(object.confirmAlert)
       : undefined;
     return message;
   },

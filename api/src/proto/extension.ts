@@ -7,9 +7,9 @@
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import { Request as Request2, Response as Response6 } from "./application";
-import { Request as Request3 } from "./clipboard";
+import { Request as Request3, Response as Response7 } from "./clipboard";
 import { ErrorResponse } from "./common";
-import { Request as Request4, Response as Response7 } from "./storage";
+import { Request as Request4, Response as Response8 } from "./storage";
 import { Request as Request1, Response as Response5 } from "./ui";
 
 export const protobufPackage = "proto.ext.extension";
@@ -35,7 +35,8 @@ export interface Response {
 export interface ResponseData {
   ui?: Response5 | undefined;
   app?: Response6 | undefined;
-  storage?: Response7 | undefined;
+  clipboard?: Response7 | undefined;
+  storage?: Response8 | undefined;
 }
 
 export interface Event {
@@ -339,7 +340,7 @@ export const Response: MessageFns<Response> = {
 };
 
 function createBaseResponseData(): ResponseData {
-  return { ui: undefined, app: undefined, storage: undefined };
+  return { ui: undefined, app: undefined, clipboard: undefined, storage: undefined };
 }
 
 export const ResponseData: MessageFns<ResponseData> = {
@@ -350,8 +351,11 @@ export const ResponseData: MessageFns<ResponseData> = {
     if (message.app !== undefined) {
       Response6.encode(message.app, writer.uint32(18).fork()).join();
     }
+    if (message.clipboard !== undefined) {
+      Response7.encode(message.clipboard, writer.uint32(26).fork()).join();
+    }
     if (message.storage !== undefined) {
-      Response7.encode(message.storage, writer.uint32(26).fork()).join();
+      Response8.encode(message.storage, writer.uint32(34).fork()).join();
     }
     return writer;
   },
@@ -384,7 +388,15 @@ export const ResponseData: MessageFns<ResponseData> = {
             break;
           }
 
-          message.storage = Response7.decode(reader, reader.uint32());
+          message.clipboard = Response7.decode(reader, reader.uint32());
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.storage = Response8.decode(reader, reader.uint32());
           continue;
         }
       }
@@ -400,7 +412,8 @@ export const ResponseData: MessageFns<ResponseData> = {
     return {
       ui: isSet(object.ui) ? Response5.fromJSON(object.ui) : undefined,
       app: isSet(object.app) ? Response6.fromJSON(object.app) : undefined,
-      storage: isSet(object.storage) ? Response7.fromJSON(object.storage) : undefined,
+      clipboard: isSet(object.clipboard) ? Response7.fromJSON(object.clipboard) : undefined,
+      storage: isSet(object.storage) ? Response8.fromJSON(object.storage) : undefined,
     };
   },
 
@@ -412,8 +425,11 @@ export const ResponseData: MessageFns<ResponseData> = {
     if (message.app !== undefined) {
       obj.app = Response6.toJSON(message.app);
     }
+    if (message.clipboard !== undefined) {
+      obj.clipboard = Response7.toJSON(message.clipboard);
+    }
     if (message.storage !== undefined) {
-      obj.storage = Response7.toJSON(message.storage);
+      obj.storage = Response8.toJSON(message.storage);
     }
     return obj;
   },
@@ -425,8 +441,11 @@ export const ResponseData: MessageFns<ResponseData> = {
     const message = createBaseResponseData();
     message.ui = (object.ui !== undefined && object.ui !== null) ? Response5.fromPartial(object.ui) : undefined;
     message.app = (object.app !== undefined && object.app !== null) ? Response6.fromPartial(object.app) : undefined;
+    message.clipboard = (object.clipboard !== undefined && object.clipboard !== null)
+      ? Response7.fromPartial(object.clipboard)
+      : undefined;
     message.storage = (object.storage !== undefined && object.storage !== null)
-      ? Response7.fromPartial(object.storage)
+      ? Response8.fromPartial(object.storage)
       : undefined;
     return message;
   },

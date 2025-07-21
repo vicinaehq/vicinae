@@ -1,4 +1,22 @@
 #include "ui-request-router.hpp"
+#include "proto/ui.pb.h"
+#include "ui/alert.hpp"
+#include "ui/toast.hpp"
+#include <unordered_map>
+
+namespace ui = proto::ext::ui;
+
+static const std::unordered_map<ui::ToastStyle, ToastPriority> toastMap = {
+    {ui::ToastStyle::Success, ToastPriority::Success}, {ui::ToastStyle::Info, ToastPriority::Info},
+    {ui::ToastStyle::Warning, ToastPriority::Warning}, {ui::ToastStyle::Error, ToastPriority::Danger},
+    {ui::ToastStyle::Dynamic, ToastPriority::Dynamic},
+};
+
+ToastPriority UIRequestRouter::parseProtoToastStyle(ui::ToastStyle style) {
+  if (auto it = toastMap.find(style); it != toastMap.end()) return it->second;
+
+  return ToastPriority::Success;
+}
 
 void UIRequestRouter::modelCreated() {
   if (m_modelWatcher.isCanceled()) return;
@@ -18,6 +36,37 @@ void UIRequestRouter::modelCreated() {
 
     view->render(model.root);
   }
+}
+
+proto::ext::ui::Response *UIRequestRouter::showToast(const proto::ext::ui::ShowToastRequest &req) {
+  auto res = new proto::ext::ui::Response;
+  auto ack = new proto::ext::common::AckResponse;
+  auto style = parseProtoToastStyle(req.style());
+
+  m_toast.setToast(req.title().c_str(), style);
+
+  res->set_allocated_show_toast(ack);
+
+  return res;
+}
+
+proto::ext::ui::Response *UIRequestRouter::hideToast(const proto::ext::ui::HideToastRequest &req) {
+  // TODO: implement needed
+  auto res = new proto::ext::ui::Response;
+  auto ack = new proto::ext::common::AckResponse;
+
+  res->set_allocated_hide_toast(ack);
+
+  return res;
+}
+
+proto::ext::ui::Response *UIRequestRouter::updateToast(const proto::ext::ui::UpdateToastRequest &req) {
+  auto res = new proto::ext::ui::Response;
+  auto ack = new proto::ext::common::AckResponse;
+
+  res->set_allocated_update_toast(ack);
+
+  return res;
 }
 
 proto::ext::ui::Response *
@@ -65,12 +114,46 @@ proto::ext::extension::Response *UIRequestRouter::route(const proto::ext::ui::Re
     return wrapUI(pushView(req.push_view()));
   case Request::kPopView:
     return wrapUI(pushView(req.push_view()));
+  case Request::kShowToast:
+    return wrapUI(showToast(req.show_toast()));
+  case Request::kHideToast:
+    return wrapUI(hideToast(req.hide_toast()));
+  case Request::kUpdateToast:
+    return wrapUI(updateToast(req.update_toast()));
+  case Request::kConfirmAlert:
+    return wrapUI(confirmAlert(req.confirm_alert()));
   default:
     break;
   }
 
   return nullptr;
   // return makeErrorResponse("Unhandled UI request");
+}
+
+class ExtensionAlert : public AlertWidget {
+  void confirm() const override {}
+
+  void canceled() const override {}
+};
+
+ui::Response *UIRequestRouter::confirmAlert(const ui::ConfirmAlertRequest &req) {
+  auto alert = new CallbackAlertWidget;
+  auto controller = m_navigation->controller();
+
+  alert->setTitle(req.title().c_str());
+  alert->setMessage(req.description().c_str());
+
+  // Alert is dismissed on navigation change, so capturing is safe here.
+  alert->setCallback([req, controller](bool value) { controller->notify(req.handle().c_str(), {value}); });
+
+  m_navigation->handle()->confirmAlert(alert);
+
+  auto res = new proto::ext::ui::Response;
+  auto ack = new proto::ext::common::AckResponse;
+
+  res->set_allocated_confirm_alert(ack);
+
+  return res;
 }
 
 proto::ext::ui::Response *UIRequestRouter::pushView(const proto::ext::ui::PushViewRequest &req) {

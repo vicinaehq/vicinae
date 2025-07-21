@@ -1,5 +1,6 @@
 #include "navigation-controller.hpp"
 #include "base-view.hpp"
+#include "ui/alert.hpp"
 #include <qlogging.h>
 #include <qwidget.h>
 
@@ -30,6 +31,8 @@ void NavigationController::setSearchPlaceholderText(const QString &text, const B
     if (state->sender == topView()) { emit searchPlaceholderTextChanged(state->placeholderText); }
   }
 }
+
+void NavigationController::confirmAlert(AlertWidget *widget) { emit confirmAlertRequested(widget); }
 
 void NavigationController::clearSearchText() { setSearchText(""); }
 

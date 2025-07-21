@@ -65,9 +65,21 @@ void LauncherWindow::setupUI() {
   setCentralWidget(createWidget());
   connect(m_ctx.navigation.get(), &NavigationController::currentViewChanged, this,
           &LauncherWindow::handleViewChange);
+  connect(m_ctx.navigation.get(), &NavigationController::confirmAlertRequested, this,
+          &LauncherWindow::handleConfirmAlert);
+}
+
+void LauncherWindow::handleConfirmAlert(AlertWidget *alert) {
+  m_dialog->setContent(alert);
+  // we need to make sure no other popup is opened for the dialog to properly
+  // show up
+  m_actionPanel->close();
+  m_dialog->showDialog();
+  m_dialog->setFocus();
 }
 
 void LauncherWindow::handleViewChange(const NavigationController::ViewState &state) {
+  if (m_dialog->isVisible()) { m_dialog->close(); }
   if (auto current = m_currentViewWrapper->widget(0)) { m_currentViewWrapper->removeWidget(current); }
 
   m_currentViewWrapper->addWidget(state.sender);

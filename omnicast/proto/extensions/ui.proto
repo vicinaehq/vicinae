@@ -46,6 +46,28 @@ message RenderRequest {
    string json = 1;
 };
 
+enum ConfirmAlertActionStyle {
+  Default = 0;
+  Destructive = 1;
+  Cancel = 2;
+};
+
+message ConfirmAlertRequest {
+  string title = 1;
+  string description = 2;
+  // TODO: replace with proper ImageLike message
+  optional string icon = 3;
+  optional ConfirmAlertAction dismiss_action = 4;
+  optional ConfirmAlertAction primary_action = 5;
+  bool remember_user_choice = 6;
+  string handle = 7;
+};
+
+message ConfirmAlertAction {
+  string title = 1;
+  ConfirmAlertActionStyle style = 2;
+};
+
 message Request {
   oneof payload {
     RenderRequest render = 1;
@@ -58,8 +80,10 @@ message Request {
     CloseMainWindowRequest close_main_window = 8;
     ShowHudRequest show_hud = 9;
     SetSearchTextRequest set_search_text = 10;
+    ConfirmAlertRequest confirm_alert = 11;
   };
 };
+
 
 message Response {
   common.AckResponse render = 1;
@@ -72,6 +96,7 @@ message Response {
   common.AckResponse close_main_window = 8;
   common.AckResponse show_hud = 9;
   common.AckResponse set_search_text = 10; 
+  common.AckResponse confirm_alert = 11;
 };
 
 message RenderNode {

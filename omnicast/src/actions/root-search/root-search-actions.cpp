@@ -5,18 +5,19 @@
 #include "ui/alert.hpp"
 #include "ui/toast.hpp"
 
-void ResetItemRanking::execute() {
-  auto ui = ServiceRegistry::instance()->UI();
+void ResetItemRanking::execute(ApplicationContext *ctx) {
   auto id = m_id;
 
-  auto callback = [ui, id](bool confirmed) {
+  auto callback = [ctx, id](bool confirmed) {
     if (!confirmed) return;
+
+    auto toast = ctx->services->toastService();
 
     auto manager = ServiceRegistry::instance()->rootItemManager();
     if (manager->resetRanking(id)) {
-      ui->setToast("Ranking was successfuly reset");
+      toast->setToast("Ranking was successfuly reset");
     } else {
-      ui->setToast("Unable to reset ranking");
+      toast->setToast("Unable to reset ranking");
     }
   };
 
@@ -28,7 +29,7 @@ void ResetItemRanking::execute() {
       "root search results.");
   alert->setConfirmText("Reset", ColorTint::Red);
   alert->setCallback(callback);
-  ui->setAlert(alert);
+  ctx->navigation->confirmAlert(alert);
 }
 
 ResetItemRanking::ResetItemRanking(const QString &id)

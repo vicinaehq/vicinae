@@ -7,7 +7,7 @@
 #include <QTimer>
 
 class Toast;
-enum ToastPriority { Success, Info, Warning, Danger };
+enum ToastPriority { Success, Info, Warning, Danger, Dynamic };
 
 class ToastWidget : public QWidget {
   TypographyWidget *m_text = new TypographyWidget;

@@ -13,6 +13,8 @@ class ExtensionNavigationController : public QObject {
   QString m_sessionId;
 
 public:
+  ExtensionCommandController *controller() const { return m_controller.get(); }
+
   NavigationController *handle() const { return m_navigation; }
 
   void pushView() {

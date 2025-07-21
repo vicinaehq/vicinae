@@ -1,9 +1,9 @@
 import { bus } from './bus';
 
 export const closeMainWindow = async () => {
-	await bus.request('ui.close-main-window', {});
+	await bus.turboRequest('ui.closeMainWindow', {});
 }
 
 export const clearSearchBar = async () => {
-	await bus.request('ui.clear-search-bar', {});
+	await bus.turboRequest('ui.setSearchText', { text: '' });
 }
