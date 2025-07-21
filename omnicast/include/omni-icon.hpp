@@ -31,6 +31,7 @@
 #include <qwidget.h>
 #include "lib/emoji-detect.hpp"
 #include "network-manager.hpp"
+#include "services/asset-resolver/asset-resolver.hpp"
 #include "theme.hpp"
 #include "ui/omni-painter.hpp"
 
@@ -215,6 +216,12 @@ public:
       if (QFile(image->source).exists()) {
         setType(OmniIconType::Local);
         setName(image->source);
+        return;
+      }
+
+      if (auto resolved = RelativeAssetResolver::instance()->resolve(image->source.toStdString())) {
+        setType(OmniIconType::Local);
+        setName(resolved->c_str());
         return;
       }
 

@@ -40,6 +40,8 @@ public:
 
   void setExtensionPreferences(const PreferenceList &prefs) { _extensionPreferences = prefs; }
 
+  std::filesystem::path assetPath() const { return _assetPath; }
+
   bool isFallback() const override { return true; }
 
   std::vector<CommandArgument> arguments() const override { return m_command.arguments; }

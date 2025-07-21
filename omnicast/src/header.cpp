@@ -98,6 +98,8 @@ GlobalHeader::GlobalHeader(NavigationController &controller) : m_navigation(cont
   connect(&m_navigation, &NavigationController::searchPlaceholderTextChanged, m_input,
           &SearchBar::setPlaceholderText);
   connect(m_input, &SearchBar::pop, this, &GlobalHeader::handleSearchPop);
-  connect(m_backButton, &IconButton::clicked, this, &GlobalHeader::handleSearchPop);
+  connect(m_backButton, &IconButton::clicked, &m_navigation, &NavigationController::popCurrentView);
   connect(m_input, &SearchBar::textEdited, this, &GlobalHeader::handleTextEdited);
+  connect(&m_navigation, &NavigationController::loadingChanged, m_loadingBar,
+          &HorizontalLoadingBar::setStarted);
 }

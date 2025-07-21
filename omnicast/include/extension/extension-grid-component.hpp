@@ -8,6 +8,7 @@
 #include "ui/omni-list.hpp"
 #include <QJsonArray>
 #include <qboxlayout.h>
+#include <qlogging.h>
 #include <qnamespace.h>
 #include <qresource.h>
 #include <qtimer.h>
@@ -63,12 +64,14 @@ class ExtensionGridList : public QWidget {
   }
 
   void render(OmniList::SelectionPolicy selectionPolicy) {
+    m_list->invalidateCache();
     auto matches = [&](const GridItemViewModel &item) { return matchesFilter(item, m_filter); };
     std::vector<std::shared_ptr<OmniList::AbstractVirtualItem>> currentSectionItems;
     auto appendSectionLess = [&]() {
       if (!currentSectionItems.empty()) {
         auto &listSection = m_list->addSection();
 
+        listSection.setSpacing(10);
         listSection.setColumns(m_columns);
         listSection.addItems(currentSectionItems);
         currentSectionItems.clear();
@@ -101,7 +104,7 @@ class ExtensionGridList : public QWidget {
               if (section->title.isEmpty()) { sec.addSpacing(10); }
 
               sec.setSpacing(10);
-              sec.setColumns(section->columns);
+              sec.setColumns(section->columns.value_or(m_columns));
               sec.addItems(std::move(items));
             }
           }
@@ -144,6 +147,7 @@ public:
   void setColumns(int cols) {
     if (m_columns == cols) return;
     m_columns = cols;
+    qCritical() << "columns changed" << cols;
     render(OmniList::PreserveSelection);
   }
 

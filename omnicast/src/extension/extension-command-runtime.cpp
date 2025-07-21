@@ -1,4 +1,5 @@
 #include "extension-command-runtime.hpp"
+#include "services/asset-resolver/asset-resolver.hpp"
 #include <QString>
 
 proto::ext::extension::Response *ExtensionCommandRuntime::makeErrorResponse(const QString &errorText) {
@@ -65,6 +66,8 @@ void ExtensionCommandRuntime::handleEvent(const ExtensionEvent &event) {
 void ExtensionCommandRuntime::initialize() {
   auto manager = context()->services->extensionManager();
 
+  RelativeAssetResolver::instance()->addPath(m_command->assetPath());
+
   m_navigation = std::make_unique<ExtensionNavigationController>(m_command, context()->navigation.get(),
                                                                  context()->services->extensionManager());
   m_uiRouter = std::make_unique<UIRequestRouter>(m_navigation.get(), *context()->services->toastService());
@@ -113,6 +116,8 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
 }
 
 void ExtensionCommandRuntime::unload() {
+  RelativeAssetResolver::instance()->removePath(m_command->assetPath());
+
   auto manager = context()->services->extensionManager();
 
   manager->unloadCommand(m_sessionId);

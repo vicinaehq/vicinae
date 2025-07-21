@@ -43,7 +43,9 @@ GridSectionModel GridModelParser::parseSection(const QJsonObject &instance) {
   model.title = props.value("title").toString();
   model.subtitle = props.value("subtitle").toString();
   model.aspectRatio = props.value("aspectRatio").toDouble(1);
-  model.columns = props.value("columns").toInt(1);
+
+  if (props.contains("columns")) { model.columns = props.value("columns").toInt(); }
+
   model.inset = props.value("inset").toInt(0);
   model.children.reserve(arr.size());
 

@@ -62,6 +62,7 @@ class Omnicast {
 				stdout: true,
 				env: {
 					'NODE_ENV': load.env == manager.CommandEnv.Development ? 'development' : 'production',
+					'RECONCILER_TRACE': process.env.RECONCILER_TRACE,
 				}
 			});
 
@@ -120,7 +121,13 @@ class Omnicast {
 				//console.error(`[DEBUG] forward event type ${qualifiedPayload.envelope.action}`);
 			});
 
-			worker.stdout.on('data', async (buf) => {
+			worker.stdout.on('data', async (buf: Buffer) => {
+				console.error(buf.toString());
+				//await appendFile(join(extension.path, "dev.log"), buf)
+			});
+
+			worker.stderr.on('data', async (buf: Buffer) => {
+				console.error(buf.toString());
 				//await appendFile(join(extension.path, "dev.log"), buf)
 			});
 

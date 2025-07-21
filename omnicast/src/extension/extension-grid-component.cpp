@@ -74,6 +74,7 @@ void ExtensionGridComponent::render(const RenderModel &baseModel) {
     policy = OmniList::PreserveSelection;
   }
 
+  m_list->setColumns(newModel.columns);
   m_list->setModel(newModel.items, policy);
 
   if (!newModel.searchText) {

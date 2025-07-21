@@ -3,7 +3,8 @@ import { setTimeout, clearTimeout } from 'node:timers';
 import { DefaultEventPriority } from 'react-reconciler/constants';
 import { ReactElement } from 'react';
 import { isDeepEqual } from './utils';
-import { writeFileSync } from 'node:fs';
+import { appendFileSync, writeFileSync } from 'node:fs';
+import { before } from 'node:test';
 
 type LinkNode = {
 	next: LinkNode | null;
@@ -142,6 +143,18 @@ const emitDirty = (instance?: Instance) => {
 	}
 }
 
+function traceWrap(hostConfig: any) {
+  let traceWrappedHostConfig = {} as any;
+  Object.keys(hostConfig).map(key => {
+    const func = hostConfig[key];
+    traceWrappedHostConfig[key] = (...args: any[]) => {
+      console.log(key);
+      return func(...args);
+    };
+  });
+  return traceWrappedHostConfig;
+}
+
 const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 	const hostConfig: Reconciler.HostConfig<
 		InstanceType,
@@ -213,7 +226,8 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 				}
 			}
 
-			return changes.length > 0 ? changes : null;
+			return changes;
+			//return changes.length > 0 ? changes : null;
 		},
 
 		shouldSetTextContent() {
@@ -267,6 +281,12 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 
 		// mutation methods
 		appendChild(parent: Instance, child: Instance) {
+			const selfIdx = parent.children.indexOf(child);
+
+			if (selfIdx != -1) {
+				parent.children.splice(selfIdx, 1);
+			}	
+
 			child.parent = parent;
 			emitDirty(parent);
 			parent.children.push(child);
@@ -277,16 +297,27 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 		},
 
 		insertBefore(parent, child, beforeChild) {
-			if (child.parent && child.parent !== parent) {
-				child.parent.childList.remove(child);
-			}
-
-			child.parent = parent;
-			emitDirty(parent);
-
 			const beforeIndex = parent.children.indexOf(beforeChild);
 
-			parent.children.splice(beforeIndex, 0, child);
+			if (child.parent != parent) {
+				throw new Error('child has parent');
+			}
+ 
+			// insertBefore is used for reordering
+			const selfIdx = parent.children.indexOf(child);
+
+			if (selfIdx != - 1) {
+				console.debug('REMOVE SELF');
+				parent.children.splice(selfIdx, 1);
+			}
+
+			if (beforeIndex != -1) {
+				parent.children.splice(beforeIndex, 0, child);
+				child.parent = parent;
+				emitDirty(parent);
+			} else {
+				throw new Error('Unreachable');
+			}
 		},
 
 		insertInContainerBefore(container, child, beforeChild) {
@@ -408,13 +439,13 @@ export const createRenderer = (config: RendererConfig) => {
 		if (!debounce) {
 			debounce = setTimeout(() => {
 				debounce = null;
-				if (!container.dirty) return ;
 
 				const start = performance.now();
 				const views: ViewData[] = [];
 				const root = serializeInstance(container);
 
-				writeFileSync('/tmp/render.txt', JSON.stringify(root, null, 2));
+				writeFileSync('/tmp/render.txt', `Generated ${new Date}\n`);
+				appendFileSync('/tmp/render.txt', JSON.stringify(root, null, 2));
 
 				for (let i = 0; i != root.children.length; ++i) {
 					const view = root.children[i];
@@ -436,7 +467,7 @@ export const createRenderer = (config: RendererConfig) => {
 	}
 
 	const hostConfig = createHostConfig({}, renderImpl);
-	const reconciler = Reconciler(hostConfig);
+	const reconciler = Reconciler(process.env.RECONCILER_TRACE === '1' ? traceWrap(hostConfig) : hostConfig);
 
 	return {
 		render(element: ReactElement) {

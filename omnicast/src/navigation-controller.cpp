@@ -32,6 +32,13 @@ void NavigationController::setSearchPlaceholderText(const QString &text, const B
   }
 }
 
+void NavigationController::setLoading(bool value, const BaseView *caller) {
+  if (auto state = findViewState(VALUE_OR(caller, topView()))) {
+    state->loading = value;
+    if (state->sender == topView()) { emit loadingChanged(value); }
+  }
+}
+
 void NavigationController::confirmAlert(AlertWidget *widget) { emit confirmAlertRequested(widget); }
 
 void NavigationController::clearSearchText() { setSearchText(""); }
@@ -108,6 +115,7 @@ void NavigationController::popCurrentView() {
   emit headerVisiblityChanged(next->needsTopBar);
   emit searchVisibilityChanged(next->supportsSearch);
   emit statusBarVisiblityChanged(next->needsStatusBar);
+  emit loadingChanged(next->isLoading);
 
   if (auto &ac = next->actionPanelState) emit actionsChanged(*ac);
 

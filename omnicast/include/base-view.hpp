@@ -212,7 +212,8 @@ public:
   }
 
   void setLoading(bool value) {
-    // m_uiController->setLoading(value);
+    if (!m_ctx) return;
+    return m_ctx->navigation->setLoading(value, m_navProxy);
   }
 
   /**

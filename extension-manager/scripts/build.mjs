@@ -15,7 +15,7 @@ await esbuild.build({
   bundle: true,
   outfile: join(OUT_DIR, 'runtime.js'),
   format: 'cjs',
-  minify: true,
+  //minify: true,
   platform: 'node',
 	alias: {
 		'@omnicast/api': '../api/src/',

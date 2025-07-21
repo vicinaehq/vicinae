@@ -22,7 +22,7 @@ struct GridSectionModel {
   QString subtitle;
 
   double aspectRatio;
-  int columns;
+  std::optional<int> columns;
   GridFit fit;
   int inset;
 

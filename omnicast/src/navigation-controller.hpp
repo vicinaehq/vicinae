@@ -79,6 +79,7 @@ public:
     QObjectUniquePtr<QWidget> searchAccessory;
     std::optional<CompleterState> completer;
     std::unique_ptr<ActionPanelState> actionPanelState;
+    bool loading;
 
     bool isLoading = false;
     bool supportsSearch = true;
@@ -96,6 +97,8 @@ public:
 
   void setSearchPlaceholderText(const QString &text, const BaseView *caller = nullptr);
   void setSearchText(const QString &text, const BaseView *caller = nullptr);
+
+  void setLoading(bool value, const BaseView *caller = nullptr);
 
   void popToRoot();
 
@@ -153,6 +156,7 @@ signals:
   void searchPlaceholderTextChanged(const QString &text) const;
   void navigationStatusChanged(const QString &text, const OmniIconUrl &icon) const;
   void confirmAlertRequested(AlertWidget *widget);
+  void loadingChanged(bool value) const;
 
   void searchAccessoryChanged(QWidget *widget) const;
   void searchAccessoryCleared() const;
