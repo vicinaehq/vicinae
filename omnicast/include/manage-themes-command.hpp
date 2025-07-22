@@ -72,6 +72,7 @@ public:
     m_description->setColor(ColorTint::TextSecondary);
     m_textLayout->addWidget(m_title);
     m_textLayout->setContentsMargins(0, 0, 0, 0);
+    m_textLayout->setSpacing(2);
     m_textLayout->addWidget(m_description);
     m_textWidget->setLayout(m_textLayout);
 

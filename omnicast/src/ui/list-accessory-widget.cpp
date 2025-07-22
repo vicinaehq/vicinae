@@ -1,5 +1,6 @@
 #include "ui/list-accessory-widget.hpp"
 #include "theme.hpp"
+#include "ui/image/omnimg.hpp"
 #include "ui/typography/typography.hpp"
 
 void ListAccessoryWidget::paintEvent(QPaintEvent *event) {
@@ -21,7 +22,7 @@ void ListAccessoryWidget::resizeEvent(QResizeEvent *event) {
   auto geo = rect().marginsRemoved(_layout->contentsMargins());
   auto size = geo.size();
 
-  _icon->setFixedSize(size.height(), size.height());
+  //_icon->setFixedSize(size.height(), size.height());
 }
 
 void ListAccessoryWidget::setAccessory(const ListAccessory &accessory) {
@@ -40,8 +41,8 @@ void ListAccessoryWidget::setAccessory(const ListAccessory &accessory) {
 }
 
 ListAccessoryWidget::ListAccessoryWidget(QWidget *parent)
-    : QWidget(parent), _layout(new QHBoxLayout), _icon(new OmniIcon), _text(new TypographyWidget()),
-      _tooltip(new Tooltip) {
+    : QWidget(parent), _layout(new QHBoxLayout), _icon(new Omnimg::ImageWidget),
+      _text(new TypographyWidget()), _tooltip(new Tooltip) {
   _layout->setContentsMargins(6, 3, 6, 3);
   _layout->setAlignment(Qt::AlignVCenter);
   _layout->addWidget(_icon);

@@ -14,6 +14,7 @@
 #include "omni-database.hpp"
 #include "quicklist-database.hpp"
 #include "root-extension-manager.hpp"
+#include "services/raycast/raycast-store.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "services/toast/toast-service.hpp"
 #include "ui/ui-controller.hpp"
@@ -42,6 +43,7 @@ class ServiceRegistry : public QObject {
   std::unique_ptr<EmojiService> m_emojiService;
   std::unique_ptr<CalculatorService> m_calculatorService;
   std::unique_ptr<FileService> m_fileService;
+  std::unique_ptr<RaycastStoreService> m_raycastStoreService;
 
 public:
   static ServiceRegistry *instance() {
@@ -67,10 +69,14 @@ public:
   auto bookmarks() const { return m_bookmarkService.get(); }
   auto UI() const { return m_uiController.get(); }
   auto fileService() const { return m_fileService.get(); }
+  auto raycastStore() const { return m_raycastStoreService.get(); }
 
   auto setUI(std::unique_ptr<UIController> controller) { m_uiController = std::move(controller); }
   auto setRootItemManager(std::unique_ptr<RootItemManager> manager) {
     m_rootItemManager = std::move(manager);
+  }
+  auto setRaycastStore(std::unique_ptr<RaycastStoreService> service) {
+    m_raycastStoreService = std::move(service);
   }
   void setConfig(std::unique_ptr<ConfigService> cfg) { m_config = std::move(cfg); }
   void setBookmarkService(std::unique_ptr<BookmarkService> service) {

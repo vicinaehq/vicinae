@@ -7,6 +7,7 @@
 #include "extensions/file/file-extension.hpp"
 #include "extensions/omnicast/open-documentation-command.hpp"
 #include "extensions/omnicast/refresh-apps-command.hpp"
+#include "extensions/raycast/raycast-compat-extension.hpp"
 #include "icon-browser-command.hpp"
 #include "manage-fallback-commands.hpp"
 #include "omnicast/browse-fonts-view.hpp"
@@ -70,6 +71,7 @@ CommandDatabase::CommandDatabase() {
     registerRepository(clipboard);
 
     registerRepository(std::make_shared<FileExtension>());
+    registerRepository(std::make_shared<RaycastCompatExtension>());
 
     auto iconSearch =
         CommandBuilder("browse-icons")

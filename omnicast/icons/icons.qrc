@@ -840,5 +840,6 @@
 		<file>yunohost.svg</file>
 		<file>zend.svg</file>
 		<file>zig.svg</file>
+		<file>raycast.svg</file>
 	</qresource>
 </RCC>

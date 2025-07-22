@@ -30,6 +30,8 @@ bool isHiddenPath(const std::filesystem::path &path);
 
 bool isInHomeDirectory(const std::filesystem::path &path);
 
+QString formatCount(int count);
+
 std::filesystem::path downloadsFolder();
 std::filesystem::path documentsFolder();
 

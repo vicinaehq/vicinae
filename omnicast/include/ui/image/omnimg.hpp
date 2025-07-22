@@ -4,6 +4,7 @@
 #include "omni-icon.hpp"
 #include "theme.hpp"
 #include "timer.hpp"
+#include "ui/omni-painter.hpp"
 #include <QtConcurrent/qtconcurrentiteratekernel.h>
 #include <algorithm>
 #include <memory>
@@ -24,6 +25,7 @@
 #include <qobject.h>
 #include <qobjectdefs.h>
 #include <qpainter.h>
+#include <qpainterpath.h>
 #include <qpixmap.h>
 #include <filesystem>
 #include <qrawfont.h>
@@ -437,6 +439,21 @@ class ImageWidget : public QWidget {
       painter.drawRoundedRect(rect(), m_borderRadius, m_borderRadius);
     }
 
+    QPainterPath path;
+
+    switch (m_source.mask()) {
+    case OmniPainter::ImageMaskType::CircleMask:
+      path.addEllipse(rect());
+      painter.setClipPath(path);
+      break;
+    case OmniPainter::ImageMaskType::RoundedRectangleMask:
+      path.addRoundedRect(rect(), 6, 6);
+      painter.setClipPath(path);
+      break;
+    default:
+      break;
+    }
+
     painter.drawPixmap(pos, m_data);
   }
 
@@ -452,6 +469,7 @@ class ImageWidget : public QWidget {
   }
 
   void handleDataUpdated(const QPixmap &data) {
+    qDebug() << "got image" << data.size();
     m_data = data;
     update();
   }

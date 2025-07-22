@@ -1,4 +1,5 @@
 #include "utils.hpp"
+#include <cmath>
 #include <cstdlib>
 #include <filesystem>
 #include <qmimedatabase.h>
@@ -117,4 +118,10 @@ QJsonValue protoToJsonValue(const google::protobuf::Value &value) {
   }
 
   return QJsonValue();
+}
+
+QString formatCount(int count) {
+  if (count > 1000) { return QString("%1K").arg(round(count / 1000.f)); }
+
+  return QString::number(count);
 }

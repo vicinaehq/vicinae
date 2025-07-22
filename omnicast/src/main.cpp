@@ -49,6 +49,7 @@
 #include "proto.hpp"
 #include "quicklink-seeder.hpp"
 #include "quicklist-database.hpp"
+#include "services/raycast/raycast-store.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "root-search/apps/app-root-provider.hpp"
 #include "root-search/bookmarks/bookmark-root-provider.hpp"
@@ -180,6 +181,7 @@ int startDaemon() {
     auto calculatorService = std::make_unique<CalculatorService>(*omniDb.get());
     auto fileService = std::make_unique<FileService>();
     auto extensionRegistry = std::make_unique<ExtensionRegistry>(*commandDb);
+    auto raycastStore = std::make_unique<RaycastStoreService>();
 
     if (auto name = currentConfig.theme.name) {
       if (!ThemeService::instance().setTheme(*name)) {
@@ -225,6 +227,7 @@ int startDaemon() {
     registry->setWindowManager(std::move(windowManager));
     registry->setFontService(std::move(fontService));
     registry->setEmojiService(std::move(emojiService));
+    registry->setRaycastStore(std::move(raycastStore));
 
     auto p = rootExtMan.get();
 

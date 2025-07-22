@@ -43,7 +43,6 @@ void OmniScrollBar::paintEvent(QPaintEvent *event) {
   int radius = 4;
   if (orientation() == Qt::Horizontal) {
     // handleRect.setHeight(8); // Ensure correct thickness
-    qDebug() << "horizontal";
   } else {
     handleRect.setWidth(8);
 

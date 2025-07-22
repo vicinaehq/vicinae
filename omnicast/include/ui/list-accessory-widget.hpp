@@ -1,6 +1,7 @@
 #pragma once
 #include "omni-icon.hpp"
 #include "theme.hpp"
+#include "ui/image/omnimg.hpp"
 #include "ui/typography/typography.hpp"
 #include "ui/tooltip.hpp"
 #include <optional>
@@ -16,7 +17,7 @@ struct ListAccessory {
 
 class ListAccessoryWidget : public QWidget {
   QHBoxLayout *_layout;
-  OmniIcon *_icon = nullptr;
+  Omnimg::ImageWidget *_icon = nullptr;
   Tooltip *_tooltip;
   ListAccessory _accessory;
   TypographyWidget *_text;
