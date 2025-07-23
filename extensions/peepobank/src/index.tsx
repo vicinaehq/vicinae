@@ -10,7 +10,7 @@ type Peepo = {
 	url: string;
 };
 
-const fetchRandomPage = async (n = 20) => {
+const fetchRandomPage = async (n = 50) => {
 	const res = await fetch(`${BASE_URL}/api/random?n=${n}`)
 	const json = await res.json();
 
@@ -29,10 +29,11 @@ const FruitGrid = () => {
 	const [peepos, setPeepos] = useState<Peepo[]>([]);
 
 	const startSearch = (query: string) => {
+		console.log('search', query);
 		setIsLoading(true);
 		fetchRandomPage()
 		.then((peepos) => { setPeepos(peepos); console.log(`fetched peepos ${peepos.length}`)})
-		.catch(error => {})
+		.catch(error => { console.error(error) })
 		.finally(() => { setIsLoading(false); });
 	}
 
@@ -41,7 +42,7 @@ const FruitGrid = () => {
 	}, []);
 
 	useEffect(() => {
-		console.log('peepos updated', peepos);
+		console.error('peepos updated', peepos);
 	}, [peepos]);
 
 	return (
@@ -51,9 +52,9 @@ const FruitGrid = () => {
 			onSearchTextChange={startSearch}
 			onSelectionChange={() => {}}
 		>
-			<Grid.Section title="Results" columns={8}>
+			<Grid.Section inset={20} title="Results" columns={6}>
 				{peepos.map(peepo => (
-					<Grid.Item key={peepo.id} id={peepo.id} content={peepo.url} />
+					<Grid.Item title={peepo.name} subtitle={peepo.id} key={peepo.id} id={peepo.id} content={peepo.url} />
 				))}
 			</Grid.Section>
 		</Grid>

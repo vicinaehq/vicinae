@@ -1,5 +1,6 @@
 #include "raycast-store.hpp"
 #include <qfuture.h>
+#include <qnetworkdiskcache.h>
 #include <qnetworkreply.h>
 #include <expected>
 
@@ -11,8 +12,9 @@ QFuture<Raycast::ListResult> RaycastStoreService::search(const QString &query) {
   QNetworkRequest request(endpoint);
 
   request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+  request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
 
-  auto reply = m_net->get(QNetworkRequest(endpoint));
+  auto reply = m_net->get(request);
 
   connect(reply, &QNetworkReply::finished, this, [this, reply, promise = std::move(promise)]() mutable {
     if (reply->error() != QNetworkReply::NoError) {
@@ -49,6 +51,28 @@ QFuture<Raycast::ListResult> RaycastStoreService::search(const QString &query) {
   return future;
 }
 
+QFuture<Raycast::DownloadExtensionResult> RaycastStoreService::downloadExtension(const QUrl &url) {
+  QNetworkRequest request(url);
+  QPromise<Raycast::DownloadExtensionResult> promise;
+  auto future = promise.future();
+  auto reply = m_net->get(request);
+
+  request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
+
+  connect(reply, &QNetworkReply::finished, this, [this, reply, promise = std::move(promise)]() mutable {
+    if (reply->error() != QNetworkReply::NoError) {
+      promise.addResult(std::unexpected("Failed to fetch"));
+    } else {
+      promise.addResult(reply->readAll());
+    }
+
+    promise.finish();
+    reply->deleteLater();
+  });
+
+  return future;
+}
+
 QFuture<Raycast::ListResult>
 RaycastStoreService::fetchExtensions(const Raycast::ListPaginationOptions &opts) {
 
@@ -66,8 +90,9 @@ RaycastStoreService::fetchExtensions(const Raycast::ListPaginationOptions &opts)
   }
 
   request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+  request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
 
-  auto reply = m_net->get(QNetworkRequest(endpoint));
+  auto reply = m_net->get(request);
 
   connect(reply, &QNetworkReply::finished, this, [this, opts, reply, promise = std::move(promise)]() mutable {
     if (reply->error() != QNetworkReply::NoError) {
@@ -105,4 +130,11 @@ RaycastStoreService::fetchExtensions(const Raycast::ListPaginationOptions &opts)
   return future;
 }
 
-RaycastStoreService::RaycastStoreService() {}
+RaycastStoreService::RaycastStoreService() {
+  auto diskCache = new QNetworkDiskCache;
+  auto cacheDir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) +
+                  QLatin1StringView("/omnicast/raycast-store");
+
+  diskCache->setCacheDirectory(cacheDir);
+  m_net->setCache(diskCache);
+}

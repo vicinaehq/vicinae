@@ -4,6 +4,7 @@
 #include "theme.hpp"
 #include <expected>
 #include <qcontainerfwd.h>
+#include <qstringview.h>
 #include <vector>
 #include <qfuture.h>
 #include <qnetworkaccessmanager.h>
@@ -475,6 +476,8 @@ struct ListPaginationOptions {
 
 using ListResult = std::expected<Raycast::ListFrontPageResponse, QString>;
 
+using DownloadExtensionResult = std::expected<QByteArray, QString>;
+
 } // namespace Raycast
 
 class RaycastStoreService : public QObject, NonCopyable {
@@ -485,6 +488,10 @@ class RaycastStoreService : public QObject, NonCopyable {
 public:
   RaycastStoreService();
 
+  /**
+   * Download the extension bundle as a zip file.
+   */
+  QFuture<Raycast::DownloadExtensionResult> downloadExtension(const QUrl &url);
   QFuture<Raycast::ListResult> fetchExtensions(const Raycast::ListPaginationOptions &opts = {});
   QFuture<Raycast::ListResult> search(const QString &query);
 };

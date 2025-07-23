@@ -469,7 +469,6 @@ class ImageWidget : public QWidget {
   }
 
   void handleDataUpdated(const QPixmap &data) {
-    qDebug() << "got image" << data.size();
     m_data = data;
     update();
   }

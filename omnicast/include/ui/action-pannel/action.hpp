@@ -71,14 +71,18 @@ signals:
 };
 
 struct StaticAction : public AbstractAction {
-  std::function<void(void)> m_fn;
+  std::function<void(ApplicationContext *ctx)> m_fn;
 
   void execute(ApplicationContext *context) override {
-    if (m_fn) m_fn();
+    if (m_fn) m_fn(context);
   }
 
 public:
-  StaticAction(const QString &title, const OmniIconUrl &url, const std::function<void(void)> &fn)
+  StaticAction(const QString &title, const OmniIconUrl &url, const std::function<void()> &fn)
+      : AbstractAction(title, url), m_fn([fn](ApplicationContext *ctx) { fn(); }) {}
+
+  StaticAction(const QString &title, const OmniIconUrl &url,
+               const std::function<void(ApplicationContext *ctx)> &fn)
       : AbstractAction(title, url), m_fn(fn) {}
 };
 

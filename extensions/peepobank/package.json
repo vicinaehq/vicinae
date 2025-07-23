@@ -24,14 +24,14 @@
     "typescript": "^4.4.3"
   },
   "icon": "peepobank.png",
-   "commands": [
+  "commands": [
     {
       "name": "index",
       "title": "Pick peepo",
       "description": "Pick a peepo",
       "mode": "view"
     }
-   ],
+  ],
   "preferences": [],
   "title": "Peepobank (Online)"
 }

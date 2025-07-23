@@ -146,7 +146,7 @@ QBoxLayout *Stack::buildLayout() const {
     if (auto stretch = std::get_if<LayoutStretch>(&item)) {
       layout->addStretch(stretch->stretch);
     } else if (auto widget = std::get_if<LayoutWidget>(&item)) {
-      pushWidget(widget->widget, widget->stretch);
+      pushWidget(widget->widget, widget->stretch, widget->align);
     } else if (auto stackPtr = std::get_if<std::shared_ptr<Stack>>(&item)) {
       QWidget *child = new QWidget;
 

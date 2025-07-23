@@ -1,6 +1,7 @@
 #pragma once
 #include "base-view.hpp"
 #include "common.hpp"
+#include "ui/action-pannel/action.hpp"
 #include "ui/text-link/text-link.hpp"
 #include "omni-icon.hpp"
 #include "services/raycast/raycast-store.hpp"
@@ -16,6 +17,7 @@
 #include <absl/container/internal/raw_hash_set.h>
 #include <qboxlayout.h>
 #include <qevent.h>
+#include <qfuturewatcher.h>
 #include <qnamespace.h>
 #include <qscrollarea.h>
 #include <qsizepolicy.h>
@@ -232,6 +234,45 @@ class RaycastStoreDetailView : public BaseView {
   QWidget *createUI(const Raycast::Extension &ext) {
     return VStack().add(createPresentationSection()).add(createContentSection()).divided(1).buildWidget();
   }
+
+  void createActions() {
+    auto panel = std::make_unique<ActionPanelState>();
+    auto install = new StaticAction(
+        "Install extension", m_ext.themedIcon(), [ext = m_ext](const ApplicationContext *ctx) {
+          using Watcher = QFutureWatcher<Raycast::DownloadExtensionResult>;
+          auto store = ctx->services->raycastStore();
+          auto watcher = new Watcher;
+          ctx->services->toastService()->setToast("Downloading extension...");
+
+          QObject::connect(watcher, &Watcher::finished, [ctx, ext, watcher]() {
+            auto result = watcher->result();
+
+            watcher->deleteLater();
+
+            if (!result) { ctx->services->toastService()->setToast("Failed to download extension"); }
+
+            std::filesystem::path target = std::format("/tmp/{}.zip", ext.name.toStdString());
+
+            QFile file(target);
+
+            if (!file.open(QIODevice::WriteOnly)) { return; }
+
+            file.write(result.value());
+            ctx->services->toastService()->setToast("Extension downloaded");
+          });
+
+          watcher->setFuture(store->downloadExtension(ext.download_url));
+        });
+
+    auto main = panel->createSection();
+
+    main->addAction(install);
+    install->setPrimary(true);
+
+    setActions(std::move(panel));
+  }
+
+  void initialize() override { createActions(); }
 
   void setupUI(const Raycast::Extension &extension) {
     auto layout = new QVBoxLayout;

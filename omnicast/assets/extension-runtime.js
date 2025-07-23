@@ -23880,9 +23880,6 @@ var createHostConfig = (hostCtx, callback) => {
     },
     insertBefore(parent, child, beforeChild) {
       const beforeIndex = parent.children.indexOf(beforeChild);
-      if (child.parent != parent) {
-        throw new Error("child has parent");
-      }
       const selfIdx = parent.children.indexOf(child);
       if (selfIdx != -1) {
         console.debug("REMOVE SELF");

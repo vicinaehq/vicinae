@@ -298,10 +298,6 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 
 		insertBefore(parent, child, beforeChild) {
 			const beforeIndex = parent.children.indexOf(beforeChild);
-
-			if (child.parent != parent) {
-				throw new Error('child has parent');
-			}
  
 			// insertBefore is used for reordering
 			const selfIdx = parent.children.indexOf(child);
