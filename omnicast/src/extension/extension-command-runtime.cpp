@@ -1,4 +1,5 @@
 #include "extension-command-runtime.hpp"
+#include "common.hpp"
 #include "services/asset-resolver/asset-resolver.hpp"
 #include <QString>
 
@@ -99,7 +100,11 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
 
   load->set_entrypoint(m_command->manifest().entrypoint);
   load->set_env(proto::ext::manager::CommandEnv::Development);
-  load->set_mode(proto::ext::manager::CommandMode::View);
+  if (m_command->mode() == CommandMode::CommandModeView) {
+    load->set_mode(proto::ext::manager::CommandMode::View);
+  } else {
+    load->set_mode(proto::ext::manager::CommandMode::NoView);
+  }
   load->set_extension_path("");
   payload->set_allocated_load(load);
 

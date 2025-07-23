@@ -58,6 +58,8 @@ public:
   std::shared_ptr<Application> findBestOpener(const QString &target) const;
   void setAdditionalSearchPaths(const std::vector<std::filesystem::path> &paths);
 
+  bool openTarget(const QString &target) const;
+
   /**
    * Scan application directories synchronously.
    * This is usually very fast.

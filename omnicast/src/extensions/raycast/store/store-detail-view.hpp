@@ -1,6 +1,7 @@
 #pragma once
 #include "base-view.hpp"
 #include "common.hpp"
+#include "ui/text-link/text-link.hpp"
 #include "omni-icon.hpp"
 #include "services/raycast/raycast-store.hpp"
 #include "settings/extension-settings.hpp"
@@ -131,6 +132,7 @@ class RaycastStoreDetailView : public BaseView {
 
                           )
                  .spacing(20))
+        .addStretch()
         .divided(1)
         .margins(20)
         .spacing(20);
@@ -162,6 +164,15 @@ class RaycastStoreDetailView : public BaseView {
   }
 
   QWidget *createSideMetadataSection() {
+    auto readmeLink = VStack()
+                          .addText("README", SemanticColor::TextSecondary)
+                          .add(new TextLinkWidget("Open README", QUrl(m_ext.readme_assets_path)))
+                          .spacing(5);
+    auto viewSource = VStack()
+                          .addText("Source Code", SemanticColor::TextSecondary)
+                          .add(new TextLinkWidget("View Code", QUrl(m_ext.source_url)))
+                          .spacing(5);
+
     auto lastUpdate =
         VStack()
             .addText("Last update", SemanticColor::TextSecondary)
@@ -169,6 +180,7 @@ class RaycastStoreDetailView : public BaseView {
             .spacing(5);
 
     return VStack()
+        .add(readmeLink)
         .add(lastUpdate)
         .addIf(!m_ext.contributors.isEmpty(),
                [&]() {
@@ -177,6 +189,7 @@ class RaycastStoreDetailView : public BaseView {
                      .add(createContributorList())
                      .spacing(5);
                })
+        .add(viewSource)
         .addStretch()
         .spacing(10)
         .margins(10)

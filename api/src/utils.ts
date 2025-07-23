@@ -26,7 +26,7 @@ export const open = async (target: string, app?: Application | string) => {
 		}
 	}
 
-	await bus?.request('apps.open', {
+	await bus.turboRequest('app.open', {
 		target,
 		appId
 	});

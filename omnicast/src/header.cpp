@@ -7,19 +7,22 @@
 #include <qnamespace.h>
 #include <qwidget.h>
 #include "base-view.hpp"
+#include "utils/layout.hpp"
 
 void GlobalHeader::setupUI() {
-  auto vlayout = new QVBoxLayout;
-  auto hlayout = new QHBoxLayout;
-  auto horizontalWidget = new QWidget;
+  /*
+auto vlayout = new QVBoxLayout;
+auto hlayout = new QHBoxLayout;
+auto horizontalWidget = new QWidget;
 
-  hlayout->setContentsMargins(15, 5, 15, 5);
-  hlayout->addWidget(m_backButton);
-  hlayout->addWidget(m_backButtonSpacer);
-  hlayout->addWidget(m_input, 1);
-  hlayout->addWidget(m_accessoryContainer, 0, Qt::AlignRight | Qt::AlignVCenter);
-  hlayout->setSpacing(0);
-  hlayout->setAlignment(Qt::AlignVCenter);
+hlayout->setContentsMargins(15, 5, 15, 5);
+hlayout->addWidget(m_backButton);
+hlayout->addWidget(m_backButtonSpacer);
+hlayout->addWidget(m_input, 1);
+hlayout->addWidget(m_accessoryContainer, 0, Qt::AlignRight | Qt::AlignVCenter);
+hlayout->setSpacing(0);
+hlayout->setAlignment(Qt::AlignVCenter);
+*/
 
   m_backButton->setFixedSize(25, 25);
   m_backButton->setFocusPolicy(Qt::NoFocus);
@@ -29,15 +32,29 @@ void GlobalHeader::setupUI() {
   m_backButtonSpacer->hide();
   m_backButton->hide();
 
+  m_loadingBar->setFixedHeight(1);
+  m_loadingBar->setBarWidth(100);
+
+  /*
   horizontalWidget->setLayout(hlayout);
 
   vlayout->setContentsMargins(0, 0, 0, 0);
   vlayout->setSpacing(0);
   vlayout->addWidget(horizontalWidget);
   vlayout->addWidget(m_loadingBar);
+  */
 
   setFixedHeight(Omnicast::TOP_BAR_HEIGHT);
-  setLayout(vlayout);
+
+  auto left = HStack()
+                  .add(m_backButton)
+                  .add(m_backButtonSpacer)
+                  .add(m_input, 1)
+                  .addStretch()
+                  .add(m_accessoryContainer);
+
+  VStack().add(left.margins(15, 5, 15, 5)).add(m_loadingBar).imbue(this);
+
   m_input->installEventFilter(this);
   m_input->setFocus();
 }

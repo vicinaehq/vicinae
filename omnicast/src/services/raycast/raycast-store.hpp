@@ -109,7 +109,7 @@ struct User {
 
   // Return user icon or generic user icon
   OmniIconUrl validUserIcon() const {
-    if (avatar.isEmpty()) return BuiltinOmniIconUrl("user");
+    if (avatar.isEmpty()) return BuiltinOmniIconUrl("person").setBackgroundTint(SemanticColor::Blue);
 
     return HttpOmniIconUrl(avatar);
   }

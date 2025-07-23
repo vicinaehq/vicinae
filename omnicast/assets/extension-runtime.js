@@ -29263,7 +29263,7 @@ var open = async (target, app) => {
       appId = app.id;
     }
   }
-  await bus?.request("apps.open", {
+  await bus.turboRequest("app.open", {
     target,
     appId
   });

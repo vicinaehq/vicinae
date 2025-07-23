@@ -43,6 +43,11 @@ std::shared_ptr<Application> AppService::findByClass(const QString &wmClass) con
   return m_provider->findByClass(wmClass);
 }
 
+bool AppService::openTarget(const QString &target) const {
+  if (auto app = findBestOpener(target)) { return launch(*app, {target}); }
+  return false;
+}
+
 std::vector<fs::path> AppService::defaultSearchPaths() const { return m_provider->defaultSearchPaths(); }
 
 std::shared_ptr<Application> AppService::textEditor() const { return m_provider->textEditor(); }

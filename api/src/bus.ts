@@ -52,6 +52,8 @@ type Responses = {
 
 type EndpointMapping = {
 	"app.list": "app.list";
+	"app.open": "app.open";
+
 	'ui.render': 'ui.render'
 	'ui.showToast': 'ui.showToast',
 	'ui.hideToast': 'ui.hideToast',
