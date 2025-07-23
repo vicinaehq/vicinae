@@ -13,7 +13,7 @@
 #include <qpalette.h>
 #include <qtmetamacros.h>
 
-enum ColorTint {
+enum SemanticColor {
   InvalidTint,
   Blue,
   Green,
@@ -24,6 +24,7 @@ enum ColorTint {
   Yellow,
   TextPrimary,
   TextSecondary,
+  Border,
   MainBackground,
   MainHoverBackground,
   MainSelectedBackground
@@ -38,7 +39,7 @@ struct ThemeRadialGradient {
   std::vector<QColor> points;
 };
 
-using ColorLike = std::variant<QColor, ThemeLinearGradient, ThemeRadialGradient, ColorTint>;
+using ColorLike = std::variant<QColor, ThemeLinearGradient, ThemeRadialGradient, SemanticColor>;
 
 struct ColorPalette {
   QColor background;
@@ -93,32 +94,34 @@ struct ThemeInfo {
     QColor yellow;
   } colors;
 
-  QColor resolveTint(ColorTint tint) const {
+  QColor resolveTint(SemanticColor tint) const {
     switch (tint) {
-    case ColorTint::Blue:
+    case SemanticColor::Blue:
       return colors.blue;
-    case ColorTint::Green:
+    case SemanticColor::Green:
       return colors.green;
-    case ColorTint::Magenta:
+    case SemanticColor::Magenta:
       return colors.magenta;
-    case ColorTint::Orange:
+    case SemanticColor::Orange:
       return colors.orange;
-    case ColorTint::Purple:
+    case SemanticColor::Purple:
       return colors.purple;
-    case ColorTint::Red:
+    case SemanticColor::Red:
       return colors.red;
-    case ColorTint::Yellow:
+    case SemanticColor::Yellow:
       return colors.yellow;
-    case ColorTint::TextPrimary:
+    case SemanticColor::TextPrimary:
       return colors.text;
-    case ColorTint::TextSecondary:
+    case SemanticColor::TextSecondary:
       return colors.subtext;
-    case ColorTint::MainBackground:
+    case SemanticColor::MainBackground:
       return colors.mainBackground;
-    case ColorTint::MainHoverBackground:
+    case SemanticColor::MainHoverBackground:
       return colors.mainHoveredBackground;
-    case ColorTint::MainSelectedBackground:
+    case SemanticColor::MainSelectedBackground:
       return colors.mainSelectedBackground;
+    case SemanticColor::Border:
+      return colors.border;
     default:
       break;
     }
@@ -233,7 +236,7 @@ public:
     return false;
   }
 
-  ColorLike getTintColor(ColorTint tint) const { return m_theme.resolveTint(tint); }
+  ColorLike getTintColor(SemanticColor tint) const { return m_theme.resolveTint(tint); }
 
   void setTheme(const ThemeInfo &info);
 

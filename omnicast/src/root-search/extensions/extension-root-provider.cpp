@@ -77,7 +77,7 @@ ActionPanelView *CommandRootItem::fallbackActionPanel() const {
 QString CommandRootItem::uniqueId() const { return QString("extension.%1").arg(m_command->uniqueId()); }
 
 AccessoryList CommandRootItem::accessories() const {
-  return {{.text = "Command", .color = ColorTint::TextSecondary}};
+  return {{.text = "Command", .color = SemanticColor::TextSecondary}};
 }
 
 std::vector<std::shared_ptr<RootItem>> ExtensionRootProvider::loadItems() const {

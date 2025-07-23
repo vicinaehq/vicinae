@@ -107,9 +107,9 @@ class ClipboardHistoryItemWidget : public SelectableOmniListWidget {
   }
 
   void setupUI() {
-    m_pinIcon->setUrl(BuiltinOmniIconUrl("pin").setFill(ColorTint::Red));
+    m_pinIcon->setUrl(BuiltinOmniIconUrl("pin").setFill(SemanticColor::Red));
     m_pinIcon->setFixedSize(16, 16);
-    m_description->setColor(ColorTint::TextSecondary);
+    m_description->setColor(SemanticColor::TextSecondary);
     m_description->setSize(TextSize::TextSmaller);
 
     auto layout = HStack().margins(5).spacing(10).add(m_icon).add(
@@ -325,11 +325,11 @@ public:
   OmniIconUrl statusIcon(ClipboardStatus status) {
     switch (status) {
     case Monitoring:
-      return BuiltinOmniIconUrl("pause-filled").setFill(ColorTint::Orange);
+      return BuiltinOmniIconUrl("pause-filled").setFill(SemanticColor::Orange);
     case Paused:
-      return BuiltinOmniIconUrl("play-filled").setFill(ColorTint::Green);
+      return BuiltinOmniIconUrl("play-filled").setFill(SemanticColor::Green);
     default:
-      return BuiltinOmniIconUrl("warning").setFill(ColorTint::Red);
+      return BuiltinOmniIconUrl("warning").setFill(SemanticColor::Red);
     }
   }
 

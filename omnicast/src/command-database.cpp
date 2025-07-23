@@ -23,7 +23,7 @@
 #include <qfuture.h>
 #include <qlocale.h>
 
-OmniIconUrl tintedCommandIcon(const QString &iconName, ColorTint tint) {
+OmniIconUrl tintedCommandIcon(const QString &iconName, SemanticColor tint) {
   BuiltinOmniIconUrl url(iconName);
   QColor color("#FFFFFF");
 
@@ -63,7 +63,7 @@ CommandDatabase::CommandDatabase() {
   {
     auto emoji = CommandBuilder("emoji-symbols")
                      .withName("Search Emojis & Symbols")
-                     .withTintedIcon("emoji", ColorTint::Red)
+                     .withTintedIcon("emoji", SemanticColor::Red)
                      .toSingleView<EmojiView>();
 
     auto clipboard = std::make_shared<ClipboardExtension>();
@@ -78,7 +78,7 @@ CommandDatabase::CommandDatabase() {
             .withName("Search Omnicast Icons")
             .withDescription(
                 R"("Browse the list of icons that are built into Omnicast. Useful when building extensions.")")
-            .withTintedIcon("omnicast", ColorTint::Red)
+            .withTintedIcon("omnicast", SemanticColor::Red)
             .toSingleView<IconBrowserView>();
 
     auto configureFallbackCommands =
@@ -86,7 +86,7 @@ CommandDatabase::CommandDatabase() {
             .withName("Configure Fallback Commands")
             .withDescription(
                 R"("Configure what commands are to be presented as fallback options when nothing matches the search in the root search.)")
-            .withTintedIcon("magnifying-glass", ColorTint::Red)
+            .withTintedIcon("magnifying-glass", SemanticColor::Red)
             .toSingleView<ManageFallbackCommands>();
 
     auto refreshApps =
@@ -94,17 +94,17 @@ CommandDatabase::CommandDatabase() {
             .withName("Refresh Applications")
             .withDescription(
                 R"(Refresh applications installed on the system and update the root search index accordingly. Running this command manually is usually not needed but can help work around some quirks.)")
-            .withTintedIcon("redo", ColorTint::Red)
+            .withTintedIcon("redo", SemanticColor::Red)
             .toContext<RefreshAppsCommandContext>();
 
     auto openDocumentation = CommandBuilder("open-documentation")
                                  .withName("Open Documentation")
                                  .withDescription(R"(Open the Omnicast documentation in the default browser)")
-                                 .withTintedIcon("book", ColorTint::Red)
+                                 .withTintedIcon("book", SemanticColor::Red)
                                  .toContext<OpenDocumentationCommand>();
 
     auto omnicast = CommandRepositoryBuilder("omnicast")
-                        .withTintedIcon("omnicast", ColorTint::Red)
+                        .withTintedIcon("omnicast", SemanticColor::Red)
                         .withName("Omnicast")
                         .withCommand(emoji)
                         .withCommand(iconSearch)
@@ -137,7 +137,7 @@ CommandDatabase::CommandDatabase() {
     auto quicklinks = CommandRepositoryBuilder("bookmarks")
                           .withName("Bookmarks")
                           .withPreference(textExtensionPref)
-                          .withTintedIcon("bookmark", ColorTint::Red)
+                          .withTintedIcon("bookmark", SemanticColor::Red)
                           .withCommand(create)
                           .withCommand(manage)
                           .withCommand(_export)
@@ -152,7 +152,7 @@ CommandDatabase::CommandDatabase() {
         CommandBuilder("switch-windows").withName("Switch Windows").toSingleView<SwitchWindowsCommand>();
     auto wm = CommandRepositoryBuilder("window-management")
                   .withName("Window Management")
-                  .withTintedIcon("app-window-list", ColorTint::Blue)
+                  .withTintedIcon("app-window-list", SemanticColor::Blue)
                   .withCommand(switchWindows)
                   .makeShared();
 
@@ -168,7 +168,7 @@ CommandDatabase::CommandDatabase() {
             .toSingleView<ManageThemesView>();
     auto theme = CommandRepositoryBuilder("theme")
                      .withName("Theme")
-                     .withTintedIcon("brush", ColorTint::Purple)
+                     .withTintedIcon("brush", SemanticColor::Purple)
                      .withCommand(manageThemes)
                      .makeShared();
 
@@ -182,7 +182,7 @@ CommandDatabase::CommandDatabase() {
                            .toSingleView<BrowseFontsView>();
     auto fonts = CommandRepositoryBuilder("fonts")
                      .withName("Font")
-                     .withTintedIcon("text", ColorTint::Orange)
+                     .withTintedIcon("text", SemanticColor::Orange)
                      .withCommand(browseFonts)
                      .makeShared();
 
@@ -201,7 +201,7 @@ CommandDatabase::CommandDatabase() {
         CommandBuilder("manage-extensions").withName("Manage Extensions").toSingleView<ManageThemesView>();
     auto developer = CommandRepositoryBuilder("developer")
                          .withName("Developer")
-                         .withTintedIcon("hammer", ColorTint::Magenta)
+                         .withTintedIcon("hammer", SemanticColor::Magenta)
                          .withCommand(diagnostics)
                          .withCommand(create)
                          .withCommand(_import)

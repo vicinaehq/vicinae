@@ -84,10 +84,10 @@ QBrush OmniPainter::colorBrush(const ColorLike &colorLike) const {
     }
 
     return gradient;
-  } else if (auto tint = std::get_if<ColorTint>(&colorLike)) {
+  } else if (auto tint = std::get_if<SemanticColor>(&colorLike)) {
     auto color = ThemeService::instance().getTintColor(*tint);
 
-    if (std::get_if<ColorTint>(&color)) {
+    if (std::get_if<SemanticColor>(&color)) {
       qWarning() << "Theme color set to color tint, not allowed! No color will be set to avoid loop";
       return {};
     }
@@ -105,10 +105,10 @@ void OmniPainter::fillRect(QRect rect, const ColorLike &colorLike, int radius, f
     fillRect(rect, *lgrad, radius, alpha);
   } else if (auto rgrad = std::get_if<ThemeRadialGradient>(&colorLike)) {
     fillRect(rect, *rgrad, radius, alpha);
-  } else if (auto tint = std::get_if<ColorTint>(&colorLike)) {
+  } else if (auto tint = std::get_if<SemanticColor>(&colorLike)) {
     auto color = ThemeService::instance().getTintColor(*tint);
 
-    if (std::get_if<ColorTint>(&color)) {
+    if (std::get_if<SemanticColor>(&color)) {
       qWarning() << "Theme color set to color tint, not allowed! No color will be set to avoid loop";
       return;
     }
@@ -116,6 +116,12 @@ void OmniPainter::fillRect(QRect rect, const ColorLike &colorLike, int radius, f
     fillRect(rect, color, radius, alpha);
   }
 }
+
+void OmniPainter::setThemePen(const ColorLike &color, int width) {
+  QPainter::setPen(QPen(colorBrush(color), width));
+}
+
+void OmniPainter::setThemeBrush(const ColorLike &color) { QPainter::setBrush(colorBrush(color)); }
 
 QColor OmniPainter::textColorForBackground(const ColorLike &colorLike) {
   if (auto color = std::get_if<QColor>(&colorLike)) {
@@ -137,10 +143,10 @@ QColor OmniPainter::textColorForBackground(const ColorLike &colorLike) {
     return {};
   } else if (auto rgrad = std::get_if<ThemeRadialGradient>(&colorLike)) {
     return {};
-  } else if (auto tint = std::get_if<ColorTint>(&colorLike)) {
+  } else if (auto tint = std::get_if<SemanticColor>(&colorLike)) {
     auto color = ThemeService::instance().getTintColor(*tint);
 
-    if (std::get_if<ColorTint>(&color)) {
+    if (std::get_if<SemanticColor>(&color)) {
       qWarning() << "Theme color set to color tint, not allowed! No color will be set to avoid loop";
       return {};
     }

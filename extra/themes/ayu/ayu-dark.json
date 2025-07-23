@@ -1,0 +1,19 @@
+{
+	"version": "1.0.0",
+	"appearance": "dark",
+	"icon": "../ayu.svg",
+	"name": "Ayu Dark",
+	"description": "The authentic Ayu dark color palette with warm oranges and muted tones",
+	"palette": {
+	  "background": "#0A0E14",
+	  "foreground": "#B3B1AD",
+	  "blue": "#39BAE6",
+	  "green": "#91B362",
+	  "magenta": "#D2A6FF",
+	  "orange": "#FF8F40",
+	  "purple": "#A37ACC",
+	  "red": "#F07178",
+	  "yellow": "#E6B450",
+	  "cyan": "#95E6CB"
+	}
+}

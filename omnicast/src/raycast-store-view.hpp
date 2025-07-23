@@ -64,22 +64,6 @@ class RaycastExtensionDetailsView : public BaseView {};
 class RaycastStoreExtensionItem : public OmniList::AbstractVirtualItem, public ListView::Actionnable {
   Raycast::Extension m_extension;
 
-  OmniIconUrl resolveIcon() const {
-    auto appearance = ThemeService::instance().theme().appearance;
-
-    if (appearance == "light" && !m_extension.icons.light.isEmpty()) {
-      return HttpOmniIconUrl(m_extension.icons.light);
-    }
-
-    if (appearance == "dark" && !m_extension.icons.dark.isEmpty()) {
-      return HttpOmniIconUrl(m_extension.icons.dark);
-    }
-
-    if (!m_extension.icons.light.isEmpty()) { return HttpOmniIconUrl(m_extension.icons.light); }
-
-    return HttpOmniIconUrl(m_extension.icons.dark);
-  }
-
 public:
   bool hasUniformHeight() const override { return true; }
 
@@ -94,7 +78,7 @@ public:
   void imbue(RaycastStoreExtensionItemWidget *item) const {
     item->setTitle(m_extension.title);
     item->setDescription(m_extension.description);
-    item->setIcon(resolveIcon());
+    item->setIcon(m_extension.themedIcon());
     item->setDownloadCount(m_extension.download_count);
 
     if (m_extension.author.avatar.isEmpty()) {
@@ -115,7 +99,7 @@ public:
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
     auto panel = std::make_unique<ActionPanelState>();
     auto section = panel->createSection();
-    auto icon = resolveIcon();
+    auto icon = m_extension.themedIcon();
     auto showExtension = new StaticAction("Show details", BuiltinOmniIconUrl("computer-chip"),
                                           [ext = m_extension, icon, ctx]() {
                                             ctx->navigation->pushView(new RaycastExtensionDetailsView());

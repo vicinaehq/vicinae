@@ -164,7 +164,7 @@ class RemoveAllCalculatorHistoryRecordsAction : public AbstractAction {
     ConfirmAlert() {
       setTitle("Are you sure?");
       setMessage("The current calculator history will be lost forever.");
-      setConfirmText("Remove entries", ColorTint::Red);
+      setConfirmText("Remove entries", SemanticColor::Red);
     }
   };
 

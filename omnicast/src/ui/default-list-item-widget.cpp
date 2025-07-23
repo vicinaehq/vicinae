@@ -47,7 +47,7 @@ void DefaultListItemWidget::setAlias(const QString &alias) {
   if (!alias.isEmpty()) {
     m_alias->setAccessory(ListAccessory{
         .text = alias,
-        .color = ColorTint::TextPrimary,
+        .color = SemanticColor::TextPrimary,
         .fillBackground = true,
     });
   }
@@ -56,7 +56,7 @@ void DefaultListItemWidget::setAlias(const QString &alias) {
 
 DefaultListItemWidget::DefaultListItemWidget(QWidget *parent) : SelectableOmniListWidget(parent) {
 
-  _category->setColor(ColorTint::TextSecondary);
+  _category->setColor(SemanticColor::TextSecondary);
   _icon->setFixedSize(25, 25);
 
   setAttribute(Qt::WA_Hover);

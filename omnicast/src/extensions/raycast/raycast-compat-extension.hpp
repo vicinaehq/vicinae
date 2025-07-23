@@ -8,7 +8,7 @@ public:
   QString id() const override { return "raycast-compat"; }
   QString name() const override { return "Raycast Compat"; }
   OmniIconUrl iconUrl() const override {
-    return BuiltinOmniIconUrl("raycast").setBackgroundTint(ColorTint::Red);
+    return BuiltinOmniIconUrl("raycast").setBackgroundTint(SemanticColor::Red);
   }
   QString description() const override { return "Raycast compatiblity features"; }
   std::vector<std::shared_ptr<AbstractCmd>> commands() const override {

@@ -102,7 +102,7 @@ public:
     _name = name;
     return *this;
   }
-  CommandRepositoryBuilder &withTintedIcon(const QString &name, ColorTint tint) {
+  CommandRepositoryBuilder &withTintedIcon(const QString &name, SemanticColor tint) {
     _icon = BuiltinOmniIconUrl(name).setBackgroundTint(tint);
     return *this;
   }

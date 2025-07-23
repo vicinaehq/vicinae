@@ -27,7 +27,7 @@ class TypographyWidget : public QWidget {
   TextSize m_size = TextSize::TextRegular;
   QFont::Weight m_weight = QFont::Weight::Normal;
   ThemeService &m_theme = ThemeService::instance();
-  ColorLike m_color = ColorTint::TextPrimary;
+  ColorLike m_color = SemanticColor::TextPrimary;
   QString m_text;
   QLabel *m_label = new QLabel(this);
   Qt::TextElideMode m_elideMode = Qt::ElideRight;

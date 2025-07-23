@@ -27,7 +27,7 @@ QWidget *AppRootItem::settingsDetail(const QJsonObject &preferences) const {
 }
 
 AccessoryList AppRootItem::accessories() const {
-  return {{.text = "Application", .color = ColorTint::TextSecondary}};
+  return {{.text = "Application", .color = SemanticColor::TextSecondary}};
 }
 
 QString AppRootItem::uniqueId() const { return QString("apps.%1").arg(m_app->id()); }

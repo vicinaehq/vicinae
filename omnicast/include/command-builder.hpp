@@ -31,7 +31,7 @@ public:
     return *this;
   }
 
-  CommandBuilder &withTintedIcon(const QString &name, ColorTint tint) {
+  CommandBuilder &withTintedIcon(const QString &name, SemanticColor tint) {
     _url = BuiltinOmniIconUrl(name).setBackgroundTint(tint);
     return *this;
   }

@@ -10,7 +10,7 @@ FormField::FormField(QWidget *widget, const QString &name)
       _layout(new QHBoxLayout) {
   setFocusPolicy(Qt::StrongFocus);
   _nameLabel->setText(name);
-  _errorLabel->setColor(ColorTint::Red);
+  _errorLabel->setColor(SemanticColor::Red);
   _layout->setSpacing(20);
   _layout->setContentsMargins(0, 0, 0, 0);
   _layout->addWidget(_nameLabel, 2, Qt::AlignVCenter | Qt::AlignRight);
@@ -33,7 +33,7 @@ FormField::FormField(QWidget *widget, const QString &name)
 
   m_info->setDocumentMargin(0);
   m_info->setGrowAsRequired(true);
-  m_info->setBaseTextColor(ColorTint::TextSecondary);
+  m_info->setBaseTextColor(SemanticColor::TextSecondary);
   m_mainLayout->addWidget(fieldRow);
   m_mainLayout->addWidget(m_infoContainer);
   m_mainLayout->setSpacing(10);

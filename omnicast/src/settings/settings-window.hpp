@@ -39,12 +39,12 @@ class SettingsNavPane : public QWidget {
   bool event(QEvent *event) override {
     switch (event->type()) {
     case QEvent::HoverEnter: {
-      setForeground(ColorTint::TextPrimary);
+      setForeground(SemanticColor::TextPrimary);
       m_hovered = true;
       break;
     }
     case QEvent::HoverLeave: {
-      setForeground(m_selected ? ColorTint::TextPrimary : ColorTint::TextSecondary);
+      setForeground(m_selected ? SemanticColor::TextPrimary : SemanticColor::TextSecondary);
       m_hovered = false;
       break;
     }
@@ -84,13 +84,13 @@ class SettingsNavPane : public QWidget {
 public:
   void select() {
     m_selected = true;
-    setForeground(ColorTint::TextPrimary);
+    setForeground(SemanticColor::TextPrimary);
     update();
   }
 
   void deselect() {
     m_selected = false;
-    setForeground(ColorTint::TextSecondary);
+    setForeground(SemanticColor::TextSecondary);
     update();
   }
 
@@ -99,7 +99,7 @@ public:
 
     setAttribute(Qt::WA_Hover);
     m_title->setAlignment(Qt::AlignCenter);
-    m_title->setColor(ColorTint::TextSecondary);
+    m_title->setColor(SemanticColor::TextSecondary);
     m_icon->setFixedSize(20, 20);
     layout->setContentsMargins(0, 5, 0, 5);
     layout->addWidget(m_icon, 0, Qt::AlignCenter);
@@ -111,7 +111,7 @@ public:
   void setIcon(const OmniIconUrl &url) {
     OmniIconUrl finalUrl = url;
 
-    finalUrl.setFill(ColorTint::TextSecondary);
+    finalUrl.setFill(SemanticColor::TextSecondary);
     m_icon->setUrl(finalUrl);
   }
   void setTitle(const QString &title) { m_title->setText(title); }

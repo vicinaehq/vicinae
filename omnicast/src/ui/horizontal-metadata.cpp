@@ -20,7 +20,7 @@ void HorizontalMetadata::add(const QString &title, QWidget *widget) {
   auto titleWidget = new TypographyWidget;
 
   titleWidget->setText(title);
-  titleWidget->setColor(ColorTint::TextSecondary);
+  titleWidget->setColor(SemanticColor::TextSecondary);
   // I'm not sure why we need this, but otherwise the label can end up being cut off.
   titleWidget->setFixedWidth(titleWidget->sizeHint().width());
 

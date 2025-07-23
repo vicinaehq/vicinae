@@ -4,6 +4,7 @@
 #include "navigation-controller.hpp"
 #include "omni-icon.hpp"
 #include "services/raycast/raycast-store.hpp"
+#include "theme.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/default-list-item-widget.hpp"
 #include "ui/list-accessory-widget.hpp"
@@ -38,7 +39,7 @@ public:
   RaycastStoreExtensionItemWidget(QWidget *parent = nullptr) : SelectableOmniListWidget(parent) {
     m_downloadCount->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     m_author->setFixedSize(20, 20);
-    m_description->setColor(ColorTint::TextSecondary);
+    m_description->setColor(SemanticColor::TextSecondary);
     m_textLayout->addWidget(m_title);
     m_textLayout->setContentsMargins(0, 0, 0, 0);
     m_textLayout->setSpacing(2);
@@ -65,22 +66,6 @@ class RaycastExtensionDetailsView : public BaseView {};
 class RaycastStoreExtensionItem : public OmniList::AbstractVirtualItem, public ListView::Actionnable {
   Raycast::Extension m_extension;
 
-  OmniIconUrl resolveIcon() const {
-    auto appearance = ThemeService::instance().theme().appearance;
-
-    if (appearance == "light" && !m_extension.icons.light.isEmpty()) {
-      return HttpOmniIconUrl(m_extension.icons.light);
-    }
-
-    if (appearance == "dark" && !m_extension.icons.dark.isEmpty()) {
-      return HttpOmniIconUrl(m_extension.icons.dark);
-    }
-
-    if (!m_extension.icons.light.isEmpty()) { return HttpOmniIconUrl(m_extension.icons.light); }
-
-    return HttpOmniIconUrl(m_extension.icons.dark);
-  }
-
 public:
   bool hasUniformHeight() const override { return true; }
 
@@ -95,7 +80,7 @@ public:
   void imbue(RaycastStoreExtensionItemWidget *item) const {
     item->setTitle(m_extension.title);
     item->setDescription(m_extension.description);
-    item->setIcon(resolveIcon());
+    item->setIcon(m_extension.themedIcon());
     item->setDownloadCount(m_extension.download_count);
 
     if (m_extension.author.avatar.isEmpty()) {
@@ -116,13 +101,14 @@ public:
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
     auto panel = std::make_unique<ActionPanelState>();
     auto section = panel->createSection();
-    auto icon = resolveIcon();
-    auto showExtension = new StaticAction("Show details", BuiltinOmniIconUrl("computer-chip"),
-                                          [ext = m_extension, icon, ctx]() {
-                                            ctx->navigation->pushView(new RaycastStoreDetailView(ext));
-                                            ctx->navigation->setNavigationTitle(ext.name);
-                                            ctx->navigation->setNavigationIcon(icon);
-                                          });
+    auto icon = m_extension.themedIcon();
+    auto showExtension = new StaticAction(
+        "Show details", BuiltinOmniIconUrl("computer-chip"), [ext = m_extension, icon, ctx]() {
+          ctx->navigation->pushView(new RaycastStoreDetailView(ext));
+          ctx->navigation->setNavigationTitle(QString("Raycast Store - %1").arg(ext.title));
+          ctx->navigation->setNavigationIcon(
+              BuiltinOmniIconUrl("raycast").setBackgroundTint(SemanticColor::Red));
+        });
 
     panel->setTitle(m_extension.name);
     section->addAction(showExtension);

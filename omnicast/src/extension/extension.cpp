@@ -8,7 +8,7 @@
 #include <qlogging.h>
 
 OmniIconUrl Extension::iconUrl() const {
-  auto fallback = BuiltinOmniIconUrl("hammer").setBackgroundTint(ColorTint::Blue);
+  auto fallback = BuiltinOmniIconUrl("hammer").setBackgroundTint(SemanticColor::Blue);
 
   if (!m_manifest.icon.isEmpty()) {
     return LocalOmniIconUrl(assetDirectory() / m_manifest.icon.toStdString()).withFallback(fallback);

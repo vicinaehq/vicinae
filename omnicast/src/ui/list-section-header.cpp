@@ -14,7 +14,7 @@ OmniListSectionHeader::OmniListSectionHeader(const QString &title, const QString
 
   auto titleLabel = new TypographyWidget();
 
-  titleLabel->setColor(ColorTint::TextSecondary);
+  titleLabel->setColor(SemanticColor::TextSecondary);
   titleLabel->setText(title);
   titleLabel->setFontWeight(QFont::Bold);
   titleLabel->setSize(TextSize::TextSmaller);
@@ -22,7 +22,7 @@ OmniListSectionHeader::OmniListSectionHeader(const QString &title, const QString
 
   auto subtitleLabel = new TypographyWidget();
 
-  subtitleLabel->setColor(ColorTint::TextSecondary);
+  subtitleLabel->setColor(SemanticColor::TextSecondary);
   subtitleLabel->setText(subtitle);
   subtitleLabel->setSize(TextSize::TextSmaller);
   // subtitleLabel->setVisible(!subtitle.isEmpty());

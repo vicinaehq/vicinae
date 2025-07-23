@@ -16,7 +16,7 @@ class ClipboardHistoryCommand : public AbstractViewCommand<ClipboardHistoryView>
   virtual CommandType type() const override { return CommandType::CommandTypeBuiltin; }
   OmniIconUrl iconUrl() const override {
     auto icon = BuiltinOmniIconUrl("copy-clipboard");
-    icon.setBackgroundTint(ColorTint::Red);
+    icon.setBackgroundTint(SemanticColor::Red);
     return icon;
   }
   std::vector<Preference> preferences() const override;

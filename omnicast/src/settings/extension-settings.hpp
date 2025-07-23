@@ -76,7 +76,7 @@ public:
   NonApplicableTextPlaceholder() {
     setText("--");
     setAlignment(Qt::AlignCenter);
-    setColor(ColorTint::TextSecondary);
+    setColor(SemanticColor::TextSecondary);
   }
 };
 
@@ -388,6 +388,13 @@ public:
     return false;
   }
 
+  void resizeEvent(QResizeEvent *event) override {
+    // Very cool trick that makes it so that the scrollbar doesn't shrink the space allocated
+    // for the widget, positioning it on top of it instead.
+    setViewportMargins(0, 0, -verticalScrollBar()->width(), 0);
+    QScrollArea::resizeEvent(event);
+  }
+
   VerticalScrollArea(QWidget *parent = nullptr) : QScrollArea(parent) {
     setWidgetResizable(true);
     setVerticalScrollBar(new OmniScrollBar);
@@ -440,7 +447,7 @@ public:
 
     m_title->setText("AI Command");
 
-    icon.setBackgroundTint(ColorTint::Red);
+    icon.setBackgroundTint(SemanticColor::Red);
     m_icon->setUrl(icon);
     m_icon->setFixedSize(30, 30);
     headerLayout->setSpacing(10);

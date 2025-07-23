@@ -35,7 +35,7 @@ class PreferenceSwitchFormItem : public AbstractPreferenceFormItem {
   void setupUI() {
     m_labelContainer->setLayout(m_hlayout);
 
-    m_label->setColor(ColorTint::TextSecondary);
+    m_label->setColor(SemanticColor::TextSecondary);
     m_description->setWordWrap(true);
     m_vlayout->setContentsMargins(0, 0, 0, 0);
     m_vlayout->setSpacing(10);
@@ -65,7 +65,7 @@ class FilePickerPreferenceFormItem : public AbstractPreferenceFormItem {
   TypographyWidget *m_description = new TypographyWidget;
 
   void setupUI() {
-    m_label->setColor(ColorTint::TextSecondary);
+    m_label->setColor(SemanticColor::TextSecondary);
     m_description->setWordWrap(true);
     m_description->setSize(TextSize::TextSmaller);
     m_vlayout->setContentsMargins(0, 0, 0, 0);
@@ -94,7 +94,7 @@ class VerticalFormItem : public AbstractPreferenceFormItem {
   JsonFormItemWidget *m_item = nullptr;
 
   void setupUI() {
-    m_label->setColor(ColorTint::TextSecondary);
+    m_label->setColor(SemanticColor::TextSecondary);
     m_description->setWordWrap(true);
     m_description->setSize(TextSize::TextSmaller);
     m_vlayout->setContentsMargins(0, 0, 0, 0);

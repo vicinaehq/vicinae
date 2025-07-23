@@ -27,9 +27,9 @@ void ResetItemRanking::execute(ApplicationContext *ctx) {
   alert->setMessage(
       "You will have to rebuild search history for this item in order for it to reappear on top of the "
       "root search results.");
-  alert->setConfirmText("Reset", ColorTint::Red);
+  alert->setConfirmText("Reset", SemanticColor::Red);
   alert->setCallback(callback);
-  ctx->navigation->confirmAlert(alert);
+  ctx->navigation->setDialog(alert);
 }
 
 ResetItemRanking::ResetItemRanking(const QString &id)

@@ -146,7 +146,7 @@ ui::Response *UIRequestRouter::confirmAlert(const ui::ConfirmAlertRequest &req) 
   // Alert is dismissed on navigation change, so capturing is safe here.
   alert->setCallback([req, controller](bool value) { controller->notify(req.handle().c_str(), {value}); });
 
-  m_navigation->handle()->confirmAlert(alert);
+  m_navigation->handle()->setDialog(alert);
 
   auto res = new proto::ext::ui::Response;
   auto ack = new proto::ext::common::AckResponse;

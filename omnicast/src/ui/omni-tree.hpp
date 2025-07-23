@@ -183,7 +183,7 @@ class OmniTreeRowWidget : public OmniListItemWidget {
       painter.setRenderHint(QPainter::Antialiasing);
 
       if (m_selected) {
-        QColor color = theme.resolveTint(ColorTint::Blue);
+        QColor color = theme.resolveTint(SemanticColor::Blue);
 
         color.setAlphaF(0.5);
         painter.setBrush(color);

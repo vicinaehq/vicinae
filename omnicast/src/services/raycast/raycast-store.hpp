@@ -1,6 +1,7 @@
 #pragma once
 #include "common.hpp"
 #include "omni-icon.hpp"
+#include "theme.hpp"
 #include <expected>
 #include <qcontainerfwd.h>
 #include <vector>
@@ -23,6 +24,7 @@ namespace Raycast {
 struct User;
 struct Command;
 struct Icons;
+struct Extension;
 
 struct Icons {
   QString light;
@@ -105,6 +107,13 @@ struct User {
     return json;
   }
 
+  // Return user icon or generic user icon
+  OmniIconUrl validUserIcon() const {
+    if (avatar.isEmpty()) return BuiltinOmniIconUrl("user");
+
+    return HttpOmniIconUrl(avatar);
+  }
+
   // Get as QDateTime for convenience
   QDateTime createdAtDateTime() const { return QDateTime::fromSecsSinceEpoch(created_at); }
 };
@@ -121,10 +130,40 @@ struct Command {
   bool disabled_by_default;
   bool beta;
   Icons icons;
+  Icons extensionIcons;
+
+  HttpOmniIconUrl extensionThemedIcon() const {
+    auto appearance = ThemeService::instance().theme().appearance;
+
+    if (appearance == "light" && !extensionIcons.light.isEmpty()) {
+      return HttpOmniIconUrl(extensionIcons.light);
+    }
+    if (appearance == "dark" && !extensionIcons.dark.isEmpty()) {
+      return HttpOmniIconUrl(extensionIcons.dark);
+    }
+
+    if (!extensionIcons.light.isEmpty()) { return HttpOmniIconUrl(extensionIcons.light); }
+    if (!extensionIcons.dark.isEmpty()) { return HttpOmniIconUrl(extensionIcons.dark); }
+
+    return HttpOmniIconUrl(extensionIcons.dark);
+  }
+
+  HttpOmniIconUrl themedIcon() const {
+    auto appearance = ThemeService::instance().theme().appearance;
+
+    if (appearance == "light" && !icons.light.isEmpty()) { return HttpOmniIconUrl(icons.light); }
+    if (appearance == "dark" && !icons.dark.isEmpty()) { return HttpOmniIconUrl(icons.dark); }
+
+    if (!icons.light.isEmpty()) { return HttpOmniIconUrl(icons.light); }
+    if (!icons.dark.isEmpty()) { return HttpOmniIconUrl(icons.dark); }
+
+    return extensionThemedIcon();
+  }
 
   // Convert from QJsonObject
-  static Command fromJson(const QJsonObject &json) {
+  static Command fromJson(Icons extensionIcons, const QJsonObject &json) {
     Command command;
+    command.extensionIcons = extensionIcons;
     command.id = json["id"].toString();
     command.name = json["name"].toString();
     command.title = json["title"].toString();
@@ -267,7 +306,7 @@ struct Extension {
     // Handle commands array
     QJsonArray commandsArray = json["commands"].toArray();
     for (const QJsonValue &value : commandsArray) {
-      ext.commands.append(Command::fromJson(value.toObject()));
+      ext.commands.append(Command::fromJson(ext.icons, value.toObject()));
     }
 
     // Handle contributors array
@@ -362,6 +401,21 @@ struct Extension {
     json["tools"] = toolsArray;
 
     return json;
+  }
+
+  /**
+   * Return appropriate icon given the current theme.
+   */
+  HttpOmniIconUrl themedIcon() const {
+    auto appearance = ThemeService::instance().theme().appearance;
+
+    if (appearance == "light" && !icons.light.isEmpty()) { return HttpOmniIconUrl(icons.light); }
+
+    if (appearance == "dark" && !icons.dark.isEmpty()) { return HttpOmniIconUrl(icons.dark); }
+
+    if (!icons.light.isEmpty()) { return HttpOmniIconUrl(icons.light); }
+
+    return HttpOmniIconUrl(icons.dark);
   }
 
   // Parse from QJsonDocument

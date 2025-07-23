@@ -42,37 +42,43 @@ static std::vector<std::pair<QString, OmniIconType>> iconTypes = {
     {"http", Http},       {"https", Http},       {"local", Local},
 };
 
-static std::vector<std::pair<QString, ColorTint>> colorTints = {{"blue", ColorTint::Blue},
-                                                                {"green", ColorTint::Green},
-                                                                {"magenta", ColorTint::Magenta},
-                                                                {"orange", ColorTint::Orange},
-                                                                {"purple", ColorTint::Purple},
-                                                                {"red", ColorTint::Red},
-                                                                {"yellow", ColorTint::Yellow},
-                                                                {"primary-text", ColorTint::TextPrimary},
-                                                                {"secondary-text", ColorTint::TextSecondary}};
+static std::vector<std::pair<QString, SemanticColor>> colorTints = {
+    {"blue", SemanticColor::Blue},
+    {"green", SemanticColor::Green},
+    {"magenta", SemanticColor::Magenta},
+    {"orange", SemanticColor::Orange},
+    {"purple", SemanticColor::Purple},
+    {"red", SemanticColor::Red},
+    {"yellow", SemanticColor::Yellow},
+    {"primary-text", SemanticColor::TextPrimary},
+    {"secondary-text", SemanticColor::TextSecondary}};
 
 class OmniIconUrl {
   OmniIconType _type = OmniIconType::Invalid;
   bool _isValid = false;
   QString _name;
   QSize _size;
-  ColorTint _bgTint;
-  ColorTint _fgTint;
-  OmniPainter::ImageMaskType _mask;
+  SemanticColor _bgTint;
+  SemanticColor _fgTint;
+  OmniPainter::ImageMaskType _mask = OmniPainter::ImageMaskType::NoMask;
   std::optional<QString> _fallback;
   std::optional<ColorLike> _fillColor = std::nullopt;
 
 public:
-  static ColorTint tintForName(const QString &name) {
+  OmniIconUrl &circle() {
+    setMask(OmniPainter::CircleMask);
+    return *this;
+  }
+
+  static SemanticColor tintForName(const QString &name) {
     for (const auto &[n, t] : colorTints) {
       if (name == n) return t;
     }
 
-    return ColorTint::InvalidTint;
+    return SemanticColor::InvalidTint;
   }
 
-  static QString nameForTint(ColorTint type) {
+  static QString nameForTint(SemanticColor type) {
     for (const auto &[n, t] : colorTints) {
       if (t == type) return n;
     }
@@ -131,7 +137,7 @@ public:
     if (_fallback) query.addQueryItem("fallback", *_fallback);
     if (_bgTint != InvalidTint) query.addQueryItem("bg_tint", nameForTint(_bgTint));
     if (_fillColor) {
-      if (auto tint = std::get_if<ColorTint>(&*_fillColor); tint && *tint != InvalidTint) {
+      if (auto tint = std::get_if<SemanticColor>(&*_fillColor); tint && *tint != InvalidTint) {
         query.addQueryItem("fill", nameForTint(*tint));
       }
     }
@@ -144,8 +150,8 @@ public:
   OmniIconType type() const { return _type; }
   const QString &name() const { return _name; }
   QSize size() const { return _size; }
-  ColorTint foregroundTint() const { return _fgTint; }
-  ColorTint backgroundTint() const { return _bgTint; }
+  SemanticColor foregroundTint() const { return _fgTint; }
+  SemanticColor backgroundTint() const { return _bgTint; }
   const std::optional<ColorLike> &fillColor() const { return _fillColor; }
   OmniPainter::ImageMaskType mask() const { return _mask; }
 
@@ -163,11 +169,11 @@ public:
     return *this;
   }
 
-  OmniIconUrl &setForegroundTint(ColorTint tint) {
+  OmniIconUrl &setForegroundTint(SemanticColor tint) {
     _fgTint = tint;
     return *this;
   }
-  OmniIconUrl &setBackgroundTint(ColorTint tint) {
+  OmniIconUrl &setBackgroundTint(SemanticColor tint) {
     _bgTint = tint;
     return *this;
   }
@@ -208,7 +214,7 @@ public:
 
       if (QFile(":icons/" + image->source + ".svg").exists()) {
         setType(OmniIconType::Builtin);
-        setFill(image->tintColor.value_or(ColorTint::TextPrimary));
+        setFill(image->tintColor.value_or(SemanticColor::TextPrimary));
         setName(image->source);
         return;
       }
@@ -234,7 +240,7 @@ public:
 
     setName("question-mark-circle");
     setType(OmniIconType::Builtin);
-    setFill(ColorTint::TextPrimary);
+    setFill(SemanticColor::TextPrimary);
   }
 
   bool operator==(const OmniIconUrl &rhs) const { return toString() == rhs.toString(); }
@@ -274,11 +280,11 @@ public:
 
 class BuiltinOmniIconUrl : public OmniIconUrl {
 public:
-  BuiltinOmniIconUrl(const QString &name, ColorTint tint = InvalidTint) : OmniIconUrl() {
+  BuiltinOmniIconUrl(const QString &name, SemanticColor tint = InvalidTint) : OmniIconUrl() {
     setType(OmniIconType::Builtin);
     setName(name);
     setForegroundTint(tint);
-    setFill(ColorTint::TextPrimary);
+    setFill(SemanticColor::TextPrimary);
   }
 };
 
@@ -378,7 +384,7 @@ public:
 
 class BuiltinOmniIconRenderer : public OmniIconWidget {
   QString name;
-  ColorTint _backgroundTint = InvalidTint;
+  SemanticColor _backgroundTint = InvalidTint;
   std::optional<ColorLike> _fillColor;
   QSvgRenderer _renderer;
   QPixmap _pixmap;
@@ -459,7 +465,7 @@ public:
     _fillColor = color;
     return *this;
   }
-  BuiltinOmniIconRenderer &setBackgroundTaint(ColorTint color) {
+  BuiltinOmniIconRenderer &setBackgroundTaint(SemanticColor color) {
     _backgroundTint = color;
     return *this;
   }
@@ -617,7 +623,7 @@ class HttpOmniIconWidget : public OmniIconWidget {
   QPixmap _pixmap;
   QNetworkReply *m_reply = nullptr;
   QFutureWatcher<QPixmap> watcher;
-  OmniPainter::ImageMaskType _mask;
+  OmniPainter::ImageMaskType _mask = OmniPainter::ImageMaskType::NoMask;
   QSize m_lastLoadedForSize;
   QUrl url;
 
@@ -664,7 +670,6 @@ class HttpOmniIconWidget : public OmniIconWidget {
   }
 
   static QPixmap loadImage(QByteArray data, QSize size) {
-    qDebug() << "got image of size" << data.size() << "target size" << size;
     QBuffer buffer(&data);
 
     buffer.open(QIODevice::ReadOnly);

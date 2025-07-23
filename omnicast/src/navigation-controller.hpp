@@ -4,6 +4,7 @@
 #include "omni-icon.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/alert.hpp"
+#include "ui/dialog.hpp"
 #include "ui/top_bar.hpp"
 #include <qlogging.h>
 #include <qobject.h>
@@ -106,7 +107,7 @@ public:
   QString navigationTitle(const BaseView *caller = nullptr) const;
   void searchPlaceholderText(const QString &text);
 
-  void confirmAlert(AlertWidget *alert);
+  void setDialog(DialogContentWidget *dialog);
 
   void createCompletion(const ArgumentList &args, const OmniIconUrl &icon);
   void destroyCurrentCompletion();
@@ -155,7 +156,7 @@ signals:
   void searchTextChanged(const QString &text) const;
   void searchPlaceholderTextChanged(const QString &text) const;
   void navigationStatusChanged(const QString &text, const OmniIconUrl &icon) const;
-  void confirmAlertRequested(AlertWidget *widget);
+  void confirmAlertRequested(DialogContentWidget *widget);
   void loadingChanged(bool value) const;
 
   void searchAccessoryChanged(QWidget *widget) const;

@@ -148,9 +148,10 @@ public:
     auto ui = ServiceRegistry::instance()->UI();
     auto view = new DuplicateBookmarkView(link);
 
-    emit ui->pushView(view, {.navigation = NavigationStatus{
-                                 .title = "Duplicate link",
-                                 .iconUrl = BuiltinOmniIconUrl("link").setBackgroundTint(ColorTint::Red)}});
+    emit ui->pushView(view,
+                      {.navigation = NavigationStatus{
+                           .title = "Duplicate link",
+                           .iconUrl = BuiltinOmniIconUrl("link").setBackgroundTint(SemanticColor::Red)}});
   }
 
   DuplicateBookmarkAction(const std::shared_ptr<Bookmark> &link)

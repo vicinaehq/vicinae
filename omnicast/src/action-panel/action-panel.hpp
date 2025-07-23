@@ -32,7 +32,7 @@ class NoResultListItem : public OmniList::AbstractVirtualItem {
       auto layout = new QVBoxLayout(this);
 
       m_text->setText("No Results");
-      m_text->setColor(ColorTint::TextSecondary);
+      m_text->setColor(SemanticColor::TextSecondary);
       m_text->setAlignment(Qt::AlignCenter);
       layout->addWidget(m_text, Qt::AlignCenter);
       setLayout(layout);
@@ -57,7 +57,7 @@ class ActionSectionTitleListItem : public OmniList::AbstractVirtualItem {
 
       layout->setContentsMargins(10, 5, 5, 5);
       layout->addWidget(m_text);
-      m_text->setColor(ColorTint::TextSecondary);
+      m_text->setColor(SemanticColor::TextSecondary);
       m_text->setText(title);
       m_text->setSize(TextSize::TextSmaller);
       setLayout(layout);

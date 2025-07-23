@@ -60,13 +60,13 @@ class AiProviderListItem : public AbstractDefaultListItem, public ListView::Acti
 
     accessories.emplace_back(ListAccessory{
         .text = m_info.configured ? "Configured" : "Not configured",
-        .color = m_info.configured ? ColorTint::Blue : ColorTint::Orange,
+        .color = m_info.configured ? SemanticColor::Blue : SemanticColor::Orange,
         .fillBackground = true,
         .icon = BuiltinOmniIconUrl("cog"),
     });
     accessories.emplace_back(ListAccessory{
         .text = m_info.enabled ? "Enabled" : "Disabled",
-        .color = m_info.enabled ? ColorTint::Green : ColorTint::Red,
+        .color = m_info.enabled ? SemanticColor::Green : SemanticColor::Red,
         .fillBackground = true,
         .icon = BuiltinOmniIconUrl(m_info.enabled ? "checkmark" : "x-mark-circle"),
     });

@@ -16,7 +16,7 @@ class EmptyViewWidget : public QWidget {
     auto layout = new QVBoxLayout();
     auto container = new QVBoxLayout();
 
-    m_description->setColor(ColorTint::TextSecondary);
+    m_description->setColor(SemanticColor::TextSecondary);
     m_description->setWordWrap(true);
     m_icon->setFixedSize(48, 48);
     container->setAlignment(Qt::AlignCenter);

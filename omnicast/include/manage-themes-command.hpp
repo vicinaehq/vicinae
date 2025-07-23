@@ -69,7 +69,7 @@ public:
   void setStrokeColor(const QColor &color) { m_palette->setStrokeColor(color); }
 
   ThemeItemWidget(QWidget *parent = nullptr) : SelectableOmniListWidget(parent) {
-    m_description->setColor(ColorTint::TextSecondary);
+    m_description->setColor(SemanticColor::TextSecondary);
     m_textLayout->addWidget(m_title);
     m_textLayout->setContentsMargins(0, 0, 0, 0);
     m_textLayout->setSpacing(2);

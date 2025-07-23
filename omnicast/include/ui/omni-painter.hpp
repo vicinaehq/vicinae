@@ -22,6 +22,9 @@ public:
   void drawPixmap(const QRect &rect, const QPixmap &pixmap) { QPainter::drawPixmap(rect, pixmap); }
   void drawBlurredPixmap(const QPixmap &pixmap, int blurRadius = 10);
 
+  void setThemePen(const ColorLike &color, int width = 1);
+  void setThemeBrush(const ColorLike &color);
+
   QBrush colorBrush(const ColorLike &color) const;
   static QColor textColorForBackground(const ColorLike &colorLike);
 

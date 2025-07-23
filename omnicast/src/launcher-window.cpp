@@ -11,6 +11,7 @@
 #include "omnicast.hpp"
 #include "root-command.hpp"
 #include "ui/action-pannel/action.hpp"
+#include "ui/dialog.hpp"
 
 LauncherWindow::LauncherWindow(ApplicationContext &ctx)
     : m_ctx(ctx), m_header(new GlobalHeader(*m_ctx.navigation)) {
@@ -66,10 +67,10 @@ void LauncherWindow::setupUI() {
   connect(m_ctx.navigation.get(), &NavigationController::currentViewChanged, this,
           &LauncherWindow::handleViewChange);
   connect(m_ctx.navigation.get(), &NavigationController::confirmAlertRequested, this,
-          &LauncherWindow::handleConfirmAlert);
+          &LauncherWindow::handleDialog);
 }
 
-void LauncherWindow::handleConfirmAlert(AlertWidget *alert) {
+void LauncherWindow::handleDialog(DialogContentWidget *alert) {
   m_dialog->setContent(alert);
   // we need to make sure no other popup is opened for the dialog to properly
   // show up

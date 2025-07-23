@@ -6,10 +6,10 @@
 #include <qnamespace.h>
 
 static QHash<ToastPriority, ColorLike> toastPriorityToColor{
-    {ToastPriority::Success, ColorTint::Green},
-    {ToastPriority::Info, ColorTint::Blue},
-    {ToastPriority::Warning, ColorTint::Orange},
-    {ToastPriority::Danger, ColorTint::Red},
+    {ToastPriority::Success, SemanticColor::Green},
+    {ToastPriority::Info, SemanticColor::Blue},
+    {ToastPriority::Warning, SemanticColor::Orange},
+    {ToastPriority::Danger, SemanticColor::Red},
 };
 
 ToastWidget::ToastWidget() {

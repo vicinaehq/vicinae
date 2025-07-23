@@ -22,7 +22,7 @@ public:
   QString name() const override { return "Calculator"; }
   QString description() const override { return "Do maths, convert units or search past calculations..."; }
   OmniIconUrl iconUrl() const override {
-    return BuiltinOmniIconUrl("plus-minus-divide-multiply").setBackgroundTint(ColorTint::Red);
+    return BuiltinOmniIconUrl("plus-minus-divide-multiply").setBackgroundTint(SemanticColor::Red);
   }
 
   std::vector<std::shared_ptr<AbstractCmd>> commands() const override {

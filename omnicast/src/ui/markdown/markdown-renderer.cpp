@@ -252,7 +252,7 @@ void MarkdownRenderer::insertSpan(cmark_node *node, QTextCharFormat &fmt) {
     break;
   case CMARK_NODE_CODE:
     fmt.setFontFamilies({"monospace"});
-    fmt.setForeground(painter.colorBrush(theme.resolveTint(ColorTint::Red)));
+    fmt.setForeground(painter.colorBrush(theme.resolveTint(SemanticColor::Red)));
     fmt.setBackground(painter.colorBrush(theme.colors.statusBackground));
     _cursor.insertText(cmark_node_get_literal(node), fmt);
     break;

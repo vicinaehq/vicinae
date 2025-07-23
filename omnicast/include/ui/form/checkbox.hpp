@@ -12,7 +12,7 @@ class Checkbox : public JsonFormItemWidget {
 
   bool m_value = false;
   QSvgRenderer *m_svg = new QSvgRenderer(this);
-  ColorLike m_fillColor = ColorTint::Blue;
+  ColorLike m_fillColor = SemanticColor::Blue;
   FocusNotifier *m_focusNotifier = new FocusNotifier(this);
 
 protected:

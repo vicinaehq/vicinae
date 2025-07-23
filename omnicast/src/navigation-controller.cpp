@@ -39,7 +39,7 @@ void NavigationController::setLoading(bool value, const BaseView *caller) {
   }
 }
 
-void NavigationController::confirmAlert(AlertWidget *widget) { emit confirmAlertRequested(widget); }
+void NavigationController::setDialog(DialogContentWidget *widget) { emit confirmAlertRequested(widget); }
 
 void NavigationController::clearSearchText() { setSearchText(""); }
 

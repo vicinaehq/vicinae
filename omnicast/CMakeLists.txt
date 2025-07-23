@@ -486,8 +486,11 @@ set(SRCS
 	src/extension/extension-command-runtime.cpp
 
 	src/extensions/raycast/store/store-listing-view.hpp
+	src/extensions/raycast/store/store-detail-view.hpp
 
 	src/services/raycast/raycast-store.cpp
+
+	src/ui/thumbnail/thumbnail.hpp
 
 )
 

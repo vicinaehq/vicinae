@@ -2,85 +2,45 @@
 #include "base-view.hpp"
 #include "common.hpp"
 #include "omni-icon.hpp"
+#include "services/raycast/raycast-store.hpp"
+#include "settings/extension-settings.hpp"
 #include "theme.hpp"
 #include "ui/image/omnimg.hpp"
+#include "ui/list-accessory-widget.hpp"
 #include "ui/omni-scroll-bar.hpp"
+#include "ui/thumbnail/thumbnail.hpp"
 #include "ui/typography/typography.hpp"
+#include "utils/layout.hpp"
+#include "utils/utils.hpp"
+#include <absl/container/internal/raw_hash_set.h>
 #include <qboxlayout.h>
+#include <qevent.h>
 #include <qnamespace.h>
 #include <qscrollarea.h>
 #include <qsizepolicy.h>
+#include <qtmetamacros.h>
+#include <qurl.h>
 #include <qwidget.h>
 
-class StoreDetailHeader : public QWidget {
-  Omnimg::ImageWidget *m_icon = new Omnimg::ImageWidget(this);
-  TypographyWidget *m_title = new TypographyWidget(this);
-  TypographyWidget *m_author = new TypographyWidget(this);
-  Omnimg::ImageWidget *m_avatar = new Omnimg::ImageWidget(this);
-
-  QWidget *makeVerticalContainer() {
-    auto widget = new QWidget;
-    auto layout = new QVBoxLayout;
-
-    layout->setContentsMargins(0, 4, 0, 4);
-    layout->addWidget(m_title);
-    layout->addStretch();
-    layout->addWidget(m_author);
-    widget->setLayout(layout);
-
-    return widget;
-    // add author + avatar name
-  }
-
-  void setupUI() {
-    auto layout = new QHBoxLayout;
-
-    m_title->setSize(TextSize::TextTitle);
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->setSpacing(20);
-    layout->addWidget(m_icon);
-    layout->setAlignment(Qt::AlignVCenter);
-    layout->addWidget(makeVerticalContainer());
-    layout->addStretch();
-
-    m_icon->setFixedSize({64, 64});
-
-    setLayout(layout);
-  }
-
-public:
-  void setTitle(const QString &title) { m_title->setText(title); }
-  void setIcon(const OmniIconUrl &url) { m_icon->setUrl(url); }
-  void setAuthor(const QString &author, const OmniIconUrl &icon) {
-    m_author->setText(author);
-    m_avatar->setUrl(icon);
-  }
-  StoreDetailHeader() { setupUI(); }
-};
-
 class ScreenshotList : public QScrollArea {
+  Q_OBJECT
 
   QWidget *createWidget(const std::vector<QUrl> &urls) {
-    auto widget = new QWidget;
-    QHBoxLayout *layout = new QHBoxLayout;
-
-    layout->setContentsMargins(0, 0, 0, 0);
-
-    for (const auto &url : urls) {
-      auto image = new Omnimg::ImageWidget;
+    auto makeThumbnail = [this](const QUrl &url) -> Thumbnail * {
+      auto thumbnail = new Thumbnail;
       double aspectRatio = 16 / 10.f;
 
-      image->setAlignment(Qt::AlignLeft);
-      image->setFixedHeight(150);
-      image->setFixedWidth(150 * aspectRatio);
-      image->setUrl(HttpOmniIconUrl(url));
-      layout->addWidget(image);
-    }
+      connect(thumbnail, &Thumbnail::clicked, this, [this, url]() { emit clickedUrl(HttpOmniIconUrl(url)); });
 
-    layout->addStretch();
-    widget->setLayout(layout);
+      thumbnail->setClickable(true);
+      thumbnail->setFixedHeight(150);
+      thumbnail->setFixedWidth(150 * aspectRatio);
+      thumbnail->setImage(HttpOmniIconUrl(url));
 
-    return widget;
+      return thumbnail;
+    };
+
+    return HStack().map(urls, makeThumbnail).addStretch().spacing(10).buildWidget();
   }
 
   void setupUI() {
@@ -97,48 +57,162 @@ public:
   }
 
   ScreenshotList() { setupUI(); }
+
+signals:
+  void clickedUrl(const OmniIconUrl &url);
 };
 
 class RaycastStoreDetailView : public BaseView {
-  StoreDetailHeader *m_header = new StoreDetailHeader;
-  ScreenshotList *m_screenshotList = new ScreenshotList;
+  VerticalScrollArea *m_scrollArea = new VerticalScrollArea(this);
+  Raycast::Extension m_ext;
+
+  bool supportsSearch() const override { return false; }
+
+  Stack createContributorList() {
+    auto makeContributor = [&](const Raycast::User &user) {
+      return HStack().addIcon(user.validUserIcon().circle(), {16, 16}).addText(user.name).spacing(10);
+    };
+
+    return VStack().map(m_ext.contributors, makeContributor).spacing(10);
+  }
+
+  Stack createHeader() {
+    auto author = HStack()
+                      .addIcon(HttpOmniIconUrl(m_ext.author.avatar).circle(), {16, 16})
+                      .addText(m_ext.author.name)
+                      .spacing(10);
+    auto downloadCount = HStack()
+                             .addIcon(BuiltinOmniIconUrl("download"), {16, 16})
+                             .addText(formatCount(m_ext.download_count))
+                             .spacing(5);
+    auto metadata = HStack().add(author).add(downloadCount).addStretch().divided(1).spacing(10);
+
+    auto left = HStack()
+                    .addIcon(m_ext.themedIcon(), {64, 64})
+                    .add(VStack().addTitle(m_ext.title).add(metadata).margins(0, 4, 0, 4).justifyBetween())
+                    .spacing(20);
+
+    auto accessory = new ListAccessoryWidget();
+
+    accessory->setAccessory({
+        .text = "Installed",
+        .color = SemanticColor::Green,
+        .fillBackground = true,
+        .icon = BuiltinOmniIconUrl("check-circle"),
+    });
+
+    accessory->setMaximumHeight(30);
+
+    return HStack().add(left).add(accessory).justifyBetween();
+  }
+
+  Stack createMainWidget() {
+    qDebug() << "description" << m_ext.description;
+    return VStack()
+        .add(VStack()
+                 .addText("Description")
+                 .addParagraph(m_ext.description, SemanticColor::TextSecondary)
+                 .spacing(10))
+        .add(VStack()
+                 .addText("Commands", SemanticColor::TextSecondary)
+                 .add(VStack()
+                          .map(m_ext.commands,
+                               [&](const auto &cmd) {
+                                 return VStack()
+                                     .add(HStack()
+                                              .addIcon(cmd.themedIcon(), {20, 20})
+                                              .addText(cmd.title)
+                                              .spacing(10))
+                                     .addParagraph(cmd.description, SemanticColor::TextSecondary)
+                                     .spacing(10);
+                               })
+                          .divided(1)
+                          .spacing(15)
+
+                          )
+                 .spacing(20))
+        .divided(1)
+        .margins(20)
+        .spacing(20);
+  }
 
   // section with header and preview images
   QWidget *createPresentationSection() {
-    auto container = new QWidget;
-    auto layout = new QVBoxLayout;
+    auto header = createHeader().buildWidget();
 
-    layout->setContentsMargins(25, 25, 25, 25);
-    layout->setSpacing(20);
-    layout->addWidget(m_header);
-    layout->addWidget(new HDivider);
-    layout->addWidget(m_screenshotList);
-    // add image previews
-    layout->addStretch();
-    container->setLayout(layout);
+    header->setMaximumHeight(70);
 
-    return container;
+    return VStack()
+        .add(header)
+        .addIf(m_ext.metadata_count > 0,
+               [&]() {
+                 auto list = new ScreenshotList();
+                 list->setFixedHeight(160);
+                 list->setUrls(m_ext.screenshots());
+
+                 connect(list, &ScreenshotList::clickedUrl, this,
+                         &RaycastStoreDetailView::handleClickedScreenshot);
+
+                 return list;
+               })
+        .spacing(20)
+        .divided(1)
+        .margins(25)
+        .buildWidget();
+  }
+
+  QWidget *createSideMetadataSection() {
+    auto lastUpdate =
+        VStack()
+            .addText("Last update", SemanticColor::TextSecondary)
+            .addText(getRelativeTimeString(m_ext.updatedAtDateTime()), SemanticColor::TextPrimary)
+            .spacing(5);
+
+    return VStack()
+        .add(lastUpdate)
+        .addIf(!m_ext.contributors.isEmpty(),
+               [&]() {
+                 return VStack()
+                     .addText("Contributors", SemanticColor::TextSecondary)
+                     .add(createContributorList())
+                     .spacing(5);
+               })
+        .addStretch()
+        .spacing(10)
+        .margins(10)
+        .buildWidget();
+  }
+
+  QWidget *createContentSection() {
+    return HStack()
+        .add(createMainWidget().buildWidget(), 2)
+        .add(createSideMetadataSection(), 1)
+        .divided(1)
+        .buildWidget();
+  }
+
+  void handleClickedScreenshot(const OmniIconUrl &url) {
+    auto dialog = new ImagePreviewDialogWidget(url);
+
+    dialog->setAspectRatio(16 / 10.f);
+    context()->navigation->setDialog(dialog);
+  }
+
+  QWidget *createUI(const Raycast::Extension &ext) {
+    return VStack().add(createPresentationSection()).add(createContentSection()).divided(1).buildWidget();
   }
 
   void setupUI(const Raycast::Extension &extension) {
     auto layout = new QVBoxLayout;
 
-    m_header->setMaximumHeight(70);
-
-    m_screenshotList->setUrls(extension.screenshots());
-
-    m_header->setTitle(extension.title);
-    m_header->setIcon(HttpOmniIconUrl(extension.icons.light));
-    m_header->setAuthor(extension.author.name, extension.author.avatar);
-
+    m_scrollArea->setWidget(createUI(extension));
+    layout->addWidget(m_scrollArea);
     layout->setContentsMargins(0, 0, 0, 0);
-    layout->addWidget(createPresentationSection());
-    layout->addStretch();
     setLayout(layout);
   }
 
 public:
-  RaycastStoreDetailView(const Raycast::Extension &extension) {
+  RaycastStoreDetailView(const Raycast::Extension &extension) : m_ext(extension) {
     setupUI(extension);
 
     for (const auto &url : extension.screenshots()) {

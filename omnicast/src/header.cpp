@@ -23,7 +23,7 @@ void GlobalHeader::setupUI() {
 
   m_backButton->setFixedSize(25, 25);
   m_backButton->setFocusPolicy(Qt::NoFocus);
-  m_backButton->setBackgroundColor(ColorTint::MainSelectedBackground);
+  m_backButton->setBackgroundColor(SemanticColor::MainSelectedBackground);
   m_backButton->setUrl(BuiltinOmniIconUrl("arrow-left"));
   m_backButtonSpacer->setFixedWidth(10);
   m_backButtonSpacer->hide();

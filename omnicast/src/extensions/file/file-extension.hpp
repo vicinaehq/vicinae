@@ -11,7 +11,7 @@ class SearchFilesCommand : public AbstractViewCommand<SearchFilesView> {
   QString extensionId() const override { return "file"; }
   QString commandId() const override { return "search"; }
   OmniIconUrl iconUrl() const override {
-    return BuiltinOmniIconUrl("folder").setBackgroundTint(ColorTint::Red);
+    return BuiltinOmniIconUrl("folder").setBackgroundTint(SemanticColor::Red);
   }
   std::vector<Preference> preferences() const override { return {}; }
   void preferenceValuesChanged(const QJsonObject &value) const override {}
@@ -22,7 +22,7 @@ class FileExtension : public AbstractCommandRepository {
   QString name() const override { return "System files"; }
   QString description() const override { return "Integrate with system files"; }
   OmniIconUrl iconUrl() const override {
-    return BuiltinOmniIconUrl("folder").setBackgroundTint(ColorTint::Red);
+    return BuiltinOmniIconUrl("folder").setBackgroundTint(SemanticColor::Red);
   }
   std::vector<std::shared_ptr<AbstractCmd>> commands() const override {
     auto search = std::make_shared<SearchFilesCommand>();

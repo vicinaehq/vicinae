@@ -46,7 +46,7 @@ public:
     auto paragraph = new TypographyWidget;
 
     // paragraph->setAlignment(Qt::AlignCenter);
-    paragraph->setColor(ColorTint::TextSecondary);
+    paragraph->setColor(SemanticColor::TextSecondary);
     paragraph->setText(
         "Before you can use this command, you need to fill in the required preference fields below.");
     paragraph->setWordWrap(true);

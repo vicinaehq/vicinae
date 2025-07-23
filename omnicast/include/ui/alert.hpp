@@ -110,11 +110,11 @@ public:
         _message(new TypographyWidget), _cancelBtn(new OmniButtonWidget), _actionBtn(new OmniButtonWidget) {
     auto layout = new QVBoxLayout;
 
-    _message->setColor(ColorTint::TextSecondary);
+    _message->setColor(SemanticColor::TextSecondary);
     setFocusPolicy(Qt::StrongFocus);
 
     _icon->setFixedSize(25, 25);
-    _icon->setUrl(BuiltinOmniIconUrl("trash").setFill(ColorTint::Red));
+    _icon->setUrl(BuiltinOmniIconUrl("trash").setFill(SemanticColor::Red));
     _title->setText("Are you sure?");
     _title->setFontWeight(QFont::Bold);
 
@@ -128,7 +128,7 @@ public:
     _cancelBtn->setText("Cancel");
     _actionBtn->setContentsMargins(btnMargins);
     _actionBtn->setText("Delete");
-    _actionBtn->setColor(ColorTint::Red);
+    _actionBtn->setColor(SemanticColor::Red);
 
     layout->setContentsMargins(20, 20, 20, 20);
     layout->setSpacing(10);

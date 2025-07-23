@@ -19,7 +19,7 @@ GridItemWidget2::GridItemWidget2(QWidget *parent) : layout(new QVBoxLayout), mai
   layout->addWidget(titleLabel);
   layout->addWidget(subtitleLabel);
 
-  subtitleLabel->setColor(ColorTint::TextSecondary);
+  subtitleLabel->setColor(SemanticColor::TextSecondary);
 
   setLayout(layout);
   connect(main, &GridItemContentWidget::clicked, this, &OmniListItemWidget::clicked);

@@ -41,5 +41,5 @@ OmniIconUrl ExtensionCommand::iconUrl() const {
 
   if (std::filesystem::exists(extensionIconUrl)) { return LocalOmniIconUrl(extensionIconUrl); }
 
-  return BuiltinOmniIconUrl("hammer").setBackgroundTint(ColorTint::Blue);
+  return BuiltinOmniIconUrl("hammer").setBackgroundTint(SemanticColor::Blue);
 }

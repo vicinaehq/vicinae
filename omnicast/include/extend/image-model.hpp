@@ -14,7 +14,7 @@ struct ThemeAwareIconSource {
 struct ExtensionImageModel {
   QString source;
   std::optional<QString> fallback;
-  std::optional<ColorTint> tintColor;
+  std::optional<SemanticColor> tintColor;
   std::optional<OmniPainter::ImageMaskType> mask;
 };
 

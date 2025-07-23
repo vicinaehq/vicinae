@@ -214,6 +214,6 @@ public:
   ManageFallbackCommands() {
     setSearchPlaceholderText("Manage fallback commands...");
     setNavigationTitle("Manage Fallback Commands");
-    setNavigationIcon(BuiltinOmniIconUrl("arrow-counter-clockwise").setBackgroundTint(ColorTint::Red));
+    setNavigationIcon(BuiltinOmniIconUrl("arrow-counter-clockwise").setBackgroundTint(SemanticColor::Red));
   }
 };

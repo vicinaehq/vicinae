@@ -107,7 +107,7 @@ double RootBookmarkItem::baseScoreWeight() const { return 1.4; }
 QString RootBookmarkItem::providerId() const { return "bookmark"; }
 
 AccessoryList RootBookmarkItem::accessories() const {
-  return {{.text = "Bookmark", .color = ColorTint::TextSecondary}};
+  return {{.text = "Bookmark", .color = SemanticColor::TextSecondary}};
 }
 
 bool RootBookmarkItem::isSuitableForFallback() const { return m_link->arguments().size() == 1; }
@@ -129,7 +129,7 @@ ArgumentList RootBookmarkItem::arguments() const {
 OmniIconUrl RootBookmarkItem::iconUrl() const {
   OmniIconUrl url(m_link->icon());
 
-  if (url.type() == OmniIconType::Builtin) { url.setBackgroundTint(ColorTint::Red); }
+  if (url.type() == OmniIconType::Builtin) { url.setBackgroundTint(SemanticColor::Red); }
 
   return url;
 }
@@ -149,7 +149,7 @@ QString BookmarkRootProvider::displayName() const { return "Bookmarks"; }
 OmniIconUrl BookmarkRootProvider::icon() const {
   auto icon = BuiltinOmniIconUrl("bookmark");
 
-  icon.setBackgroundTint(ColorTint::Red);
+  icon.setBackgroundTint(SemanticColor::Red);
 
   return icon;
 }
