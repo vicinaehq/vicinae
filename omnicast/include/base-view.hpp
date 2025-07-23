@@ -267,12 +267,6 @@ protected:
   }
 
 public:
-  std::vector<QString> argumentValues() const override {
-    return {};
-    // return m_topBar->m_completer->collect() | std::views::transform([](const auto &p) { return p.second;
-    // }) | std::ranges::to<std::vector>();
-  }
-
   void clearSearchText() { setSearchText(""); }
 
   void initialize() override {}
@@ -376,15 +370,6 @@ protected:
 
       context()->navigation->setActions(nextItem->newActionPanel(context()));
 
-      /*
-  if (auto panel = nextItem->actionPanel()) {
-    m_actionPannelV2->setView(panel);
-  } else {
-    m_actionPannelV2->hide();
-    m_actionPannelV2->popToRoot();
-  }
-      */
-
     } else {
       m_split->setDetailVisibility(false);
       // destroyCompleter();
@@ -434,7 +419,7 @@ public:
     connect(m_list, &OmniList::itemActivated, this, &ListView::itemActivated);
     connect(m_list, &OmniList::itemRightClicked, this, &ListView::itemRightClicked);
     connect(m_list, &OmniList::virtualHeightChanged, this, [this](int height) {
-      if (m_list->items().empty()) {
+      if (m_list->items().empty() && !searchText().isEmpty()) {
         auto ui = ServiceRegistry::instance()->UI();
 
         // ui->destroyCompleter();
@@ -532,7 +517,7 @@ public:
     connect(m_grid, &OmniList::selectionChanged, this, &GridView::selectionChanged);
     connect(m_grid, &OmniList::itemActivated, this, &GridView::itemActivated);
     connect(m_grid, &OmniList::virtualHeightChanged, this, [this](int height) {
-      if (m_grid->items().empty()) {
+      if (m_grid->items().empty() && !searchText().isEmpty()) {
         m_content->setCurrentWidget(m_emptyView);
         return;
       }

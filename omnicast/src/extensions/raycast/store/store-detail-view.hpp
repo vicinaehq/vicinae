@@ -83,10 +83,29 @@ class RaycastStoreDetailView : public BaseView {
                       .addText(m_ext.author.name)
                       .spacing(10);
     auto downloadCount = HStack()
-                             .addIcon(BuiltinOmniIconUrl("download"), {16, 16})
+                             .addIcon(BuiltinOmniIconUrl("arrow-down-circle"), {16, 16})
                              .addText(formatCount(m_ext.download_count))
                              .spacing(5);
-    auto metadata = HStack().add(author).add(downloadCount).addStretch().divided(1).spacing(10);
+
+    auto metadata = HStack()
+                        .add(author)
+                        .add(downloadCount)
+                        .addIf(!m_ext.platforms.isEmpty(),
+                               [&]() {
+                                 auto platforms = HStack().spacing(5);
+
+                                 if (m_ext.platforms.contains("macOS")) {
+                                   platforms.addIcon(BuiltinOmniIconUrl("apple"), {16, 16});
+                                 }
+                                 if (m_ext.platforms.contains("Windows")) {
+                                   platforms.addIcon(BuiltinOmniIconUrl("windows11"), {16, 16});
+                                 }
+
+                                 return platforms;
+                               })
+                        .addStretch()
+                        .divided(1)
+                        .spacing(10);
 
     auto left = HStack()
                     .addIcon(m_ext.themedIcon(), {64, 64})
@@ -108,7 +127,6 @@ class RaycastStoreDetailView : public BaseView {
   }
 
   Stack createMainWidget() {
-    qDebug() << "description" << m_ext.description;
     return VStack()
         .add(VStack()
                  .addText("Description")
@@ -191,7 +209,7 @@ class RaycastStoreDetailView : public BaseView {
                })
         .add(viewSource)
         .addStretch()
-        .spacing(10)
+        .spacing(15)
         .margins(10)
         .buildWidget();
   }

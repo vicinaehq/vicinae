@@ -1,5 +1,6 @@
 #pragma once
 #include "common.hpp"
+#include "omnicast.hpp"
 #include <qmetacontainer.h>
 #include <qnetworkaccessmanager.h>
 #include <qnetworkdiskcache.h>
@@ -9,7 +10,6 @@
 #include <qstringview.h>
 #include <qthread.h>
 #include <qtmetamacros.h>
-#include <queue>
 #include <qurl.h>
 #include <quuid.h>
 #include <unordered_map>
@@ -25,7 +25,11 @@ class FetcherWorker : public QObject {
   void handleFetchRequest(const QString &id, const QUrl &url) {
     if (!m_manager) return;
 
-    auto reply = m_manager->get(QNetworkRequest(url));
+    QNetworkRequest req(url);
+
+    req.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
+
+    auto reply = m_manager->get(req);
 
     connect(reply, &QNetworkReply::finished, this, [this, id, reply]() {
       emit fetchFinished(id, reply->readAll());
@@ -45,7 +49,9 @@ public:
     m_manager = new QNetworkAccessManager;
     m_diskCache = new QNetworkDiskCache;
     m_diskCache->setCacheDirectory(directory);
+    m_diskCache->setMaximumCacheSize(Omnicast::IMAGE_DISK_CACHE_MAX_SIZE);
     m_manager->setCache(m_diskCache);
+
     connect(this, &FetcherWorker::fetchRequested, this, &FetcherWorker::handleFetchRequest);
   }
 
@@ -74,7 +80,7 @@ signals:
 class NetworkFetcher : public QObject {
   Q_OBJECT
 
-  size_t m_concurrency = 2;
+  size_t m_concurrency = 6;
   FetcherWorker *m_worker = new FetcherWorker;
   QThread *m_thread = new QThread;
 

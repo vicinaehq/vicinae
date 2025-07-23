@@ -51,6 +51,8 @@ class ExtensionViewWrapper : public BaseView {
 
   ActionPanelV2Widget *actionPanel() const override { return m_current ? m_current->actionPanel() : nullptr; }
 
+  void initialize() override { setLoading(true); }
+
 public:
   void render(const RenderModel &model) {
     auto ui = ServiceRegistry::instance()->UI();
@@ -76,6 +78,7 @@ public:
       m_current->setProxy(this);
       m_current->setExtensionCommandController(m_controller);
 
+      setLoading(false);
       setTopBarVisiblity(m_current->needsGlobalTopBar());
       setSearchVisibility(m_current->supportsSearch());
       setStatusBarVisiblity(m_current->needsGlobalStatusBar());

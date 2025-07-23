@@ -1,11 +1,11 @@
 #pragma once
+#include <algorithm>
+#include <qboxlayout.h>
 #include "omni-icon.hpp"
 #include "theme.hpp"
-#include "ui/image/omnimg.hpp"
-#include "ui/typography/typography.hpp"
-#include <qboxlayout.h>
 #include <qlabel.h>
 #include <qmargins.h>
+#include <qnamespace.h>
 #include <qwidget.h>
 #include <ranges>
 #include <type_traits>
@@ -32,6 +32,7 @@ struct LayoutStretch {
 struct LayoutWidget {
   QWidget *widget = nullptr;
   int stretch = 0;
+  Qt::Alignment align;
 };
 
 using LayoutItem = std::variant<std::shared_ptr<Stack>, LayoutWidget, LayoutStretch>;
@@ -39,14 +40,7 @@ using LayoutItem = std::variant<std::shared_ptr<Stack>, LayoutWidget, LayoutStre
 enum AlignStrategy { None, JustifyBetween };
 
 template <typename T>
-concept ConvertibleToLayoutItem =
-    std::is_same_v<std::decay_t<T>, Stack> || std::is_same_v<std::decay_t<T>, VStack> ||
-    std::is_same_v<std::decay_t<T>, HStack> || std::is_convertible_v<std::decay_t<T>, QWidget *>;
-
-template <typename T>
 concept StackBase = std::is_convertible_v<std::decay_t<T>, Stack>;
-
-struct IconBuilder {};
 
 class Stack {
 public:
@@ -65,122 +59,55 @@ public:
     return *this;
   }
 
-  Stack &add(QWidget *widget, int stretch = 0) {
-    m_items.emplace_back(LayoutWidget{.widget = widget, .stretch = stretch});
+  template <std::ranges::sized_range T> Stack &map(const T &ct, const auto &fn) {
+    m_items.reserve(m_items.size() + ct.size());
+    std::ranges::for_each(ct, [&](auto &&item) { add(fn(item)); });
+
     return *this;
   }
 
+  Stack &add(QWidget *widget, int stretch = 0, Qt::Alignment align = {});
   Stack &addText(const QString &text, SemanticColor color = SemanticColor::TextPrimary,
-                 TextSize size = TextSize::TextRegular) {
-    auto typo = new TypographyWidget;
-
-    typo->setText(text);
-    typo->setColor(color);
-    typo->setSize(size);
-    add(typo);
-
-    return *this;
-  }
-
-  Stack &addTitle(const QString &title, SemanticColor color = SemanticColor::TextPrimary) {
-    return addText(title, color, TextSize::TextTitle);
-  }
-
-  Stack &addIcon(const OmniIconUrl &url, QSize size = {20, 20}) {
-    auto icon = new Omnimg::ImageWidget;
-
-    if (!size.isEmpty()) icon->setFixedSize(size);
-    icon->setUrl(url);
-    add(icon);
-
-    return *this;
-  }
-
+                 TextSize size = TextSize::TextRegular);
+  Stack &addTitle(const QString &title, SemanticColor color = SemanticColor::TextPrimary);
+  Stack &addIcon(const OmniIconUrl &url, QSize size = {20, 20});
   Stack &addParagraph(const QString &text, SemanticColor color = SemanticColor::TextPrimary,
-                      TextSize size = TextSize::TextRegular) {
-    auto typo = new TypographyWidget;
+                      TextSize size = TextSize::TextRegular);
 
-    typo->setText(text);
-    typo->setWordWrap(true);
-    typo->setColor(color);
-    typo->setSize(size);
-    add(typo);
-
-    return *this;
-  }
-
-  Stack &divided(int n) {
-    m_divided = n;
-    return *this;
-  }
-
-  int divided() const { return m_divided; }
-
-  /**
-   * Build the layout and set it as the activate layout for `target`.
-   */
-  void imbue(QWidget *target) { target->setLayout(buildLayout()); }
-
-  /**
-   * For each item in the range, add a new widget
-   */
-  template <std::ranges::sized_range T> Stack &map(const T &container, const auto &fn) {
-    m_items.reserve(m_items.size() + container.size());
-
-    for (const auto &item : container) {
-      add(fn(item));
-    }
-
-    return *this;
-  }
+  Stack &divided(int n);
+  int divided() const;
 
   const std::vector<LayoutItem> &items() const { return m_items; }
 
-  int spacing() const { return m_spacing; }
-  Direction direction() const { return m_direction; }
+  int spacing() const;
+  Direction direction() const;
+  Stack &direction(Direction direction);
 
-  Stack &direction(Direction direction) {
-    m_direction = direction;
-    return *this;
-  }
-
-  Stack &addIf(bool value, const auto &fn) {
+  Stack addIf(bool value, const auto &fn) {
     if (value) add(fn());
     return *this;
   }
 
-  Stack &align(AlignStrategy strategy) {
-    m_align = strategy;
-    return *this;
-  }
-  AlignStrategy align() const { return m_align; }
+  Stack &align(AlignStrategy strategy);
+  AlignStrategy align() const;
+  QMargins margins() const;
+  Stack &margins(int margin);
+  Stack &margins(int left, int top, int right, int bottom);
+  Stack &spacing(int spacing);
 
-  QMargins margins() const { return m_margins; }
-  Stack &margins(int margin) {
-    m_margins = {margin, margin, margin, margin};
-    return *this;
-  }
-  Stack &margins(int left, int top, int right, int bottom) {
-    m_margins = {left, top, right, bottom};
-    return *this;
-  }
-  Stack &spacing(int spacing) {
-    m_spacing = spacing;
-    return *this;
-  }
-
-  Stack &justifyBetween() {
-    align(AlignStrategy::JustifyBetween);
-    return *this;
-  }
-
-  Stack &addStretch(int stretch = 0) {
-    m_items.emplace_back(LayoutStretch{stretch});
-    return *this;
-  }
-
+  /**
+   * Implement alignment behaviour similar to 'justify-between' in CSS
+   */
+  Stack &justifyBetween();
+  Stack &addStretch(int stretch = 0);
   QBoxLayout *buildLayout() const;
   QWidget *buildWidget() const;
+
+  /**
+   * Build the layout and set it as the active layout for `target`.
+   * If a layout is already set for that widget, it will be replaced.
+   */
+  void imbue(QWidget *target);
 };
 
 class VStack : public Stack {

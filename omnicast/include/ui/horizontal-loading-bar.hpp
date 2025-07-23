@@ -6,10 +6,12 @@
 class HorizontalLoadingBar : public QWidget {
   bool _isAnimationStarted;
   QTimer *_timer;
+  bool m_started = false;
   int _position;
   int _positionStep;
   int _barWidth;
   std::chrono::milliseconds _tick;
+  QTimer m_loadingDebounce;
   void paintEvent(QPaintEvent *event) override;
   void updateAnimation();
 

@@ -5,6 +5,10 @@
 #include <qsize.h>
 
 namespace Omnicast {
+
+constexpr long long GB = 1e9;
+constexpr long long IMAGE_DISK_CACHE_MAX_SIZE = GB * 5;
+
 std::filesystem::path runtimeDir();
 std::filesystem::path commandSocketPath();
 std::filesystem::path pidFile();
