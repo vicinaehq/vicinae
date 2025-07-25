@@ -150,6 +150,10 @@ std::vector<ExtensionManifest> ExtensionRegistry::scanAll() {
   return manifests;
 }
 
+bool ExtensionRegistry::isInstalled(const QString &id) const {
+  return fs::is_directory(extensionDir() / id.toStdString());
+}
+
 std::expected<ExtensionManifest, ManifestError> ExtensionRegistry::scanBundle(const fs::path &path) {
   static const std::vector<CommandMode> supportedModes{CommandMode::CommandModeView, CommandModeNoView};
   fs::path manifestPath = path / "package.json";

@@ -2,7 +2,6 @@
 #include "common.hpp"
 #include "omni-command-db.hpp"
 #include "preference.hpp"
-#include "zip/unzip.hpp"
 #include <expected>
 #include <filesystem>
 #include <qjsonobject.h>
@@ -54,6 +53,7 @@ public:
   std::expected<ExtensionManifest, ManifestError> scanBundle(const std::filesystem::path &path);
   std::vector<ExtensionManifest> scanAll();
   void rescanBundle();
+  bool isInstalled(const QString &id) const;
 
   ExtensionRegistry(OmniCommandDatabase &commandDb);
 

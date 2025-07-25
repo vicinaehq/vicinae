@@ -1,5 +1,28 @@
 import { Image } from './image';
 
+enum OauthRedirectMethod {
+	 /**
+	  * Use this type for a redirect back to the Raycast website, which will then open the extension.
+	  * In the OAuth app, configure `https://raycast.com/redirect?packageName=Extension`
+	  * (This is a static redirect URL for all extensions.)
+	  * If the provider does not accept query parameters in redirect URLs, you can alternatively use `https://raycast.com/redirect/extension`
+	  * and then customize the {@link OAuth.AuthorizationRequest} via its `extraParameters` property. For example add:
+	  *  `extraParameters: { "redirect_uri": "https://raycast.com/redirect/extension" }`
+	  */
+	 Web = "web",
+	 /**
+	  * Use this type for an app-scheme based redirect that directly opens Raycast.
+	  * In the OAuth app, configure `raycast://oauth?package_name=Extension`
+	  */
+	 App = "app",
+	 /**
+	  * Use this type for a URI-style app scheme that directly opens Raycast.
+	  * In the OAuth app, configure `com.raycast:/oauth?package_name=Extension`
+	  * (Note the single slash - Google, for example, would require this flavor for an OAuth app where the Bundle ID is `com.raycast`)
+	  */
+	 AppURI = "appURI"
+}
+
 export declare namespace OAuth {
      export namespace PKCEClient {
          /**
@@ -33,6 +56,9 @@ export declare namespace OAuth {
              description?: string;
          }
      }
+
+	 type RedirectMethod = OauthRedirectMethod;
+
      /**
       * A client for the [OAuth PKCE extension](https://datatracker.ietf.org/doc/html/rfc7636).
       *
@@ -48,90 +74,13 @@ export declare namespace OAuth {
       * });
       * ```
       */
-     export class PKCEClient {
-         redirectMethod: RedirectMethod;
-         providerName: string;
-         providerIcon?: Image.ImageLike;
-         providerId?: string;
-         description?: string;
-         private resolvesOnRedirect?;
-         private isAuthorizing;
-         constructor(options: PKCEClient.Options);
-         /**
-          * Creates an authorization request for the provided authorization endpoint, client ID, and scopes.
-          * You need to first create the authorization request before calling {@link OAuth.PKCEClient.authorize}.
-          *
-          * @remarks The generated code challenge for the PKCE request uses the S256 method.
-          *
-          * @returns A promise for an {@link OAuth.AuthorizationRequest} that you can use as input for {@link OAuth.PKCEClient.authorize}.
-          */
-         authorizationRequest(options: AuthorizationRequestOptions): Promise<AuthorizationRequest>;
-         /**
-          * Starts the authorization and shows the OAuth overlay in Raycast.
-          * As parameter you can either directly use the returned request from {@link OAuth.PKCEClient.authorizationRequest},
-          * or customize the URL by extracting parameters from {@link OAuth.AuthorizationRequest} and providing your own URL via {@link AuthorizationOptions}.
-          * Eventually the URL will be used to open the authorization page of the provider in the web browser.
-          *
-          * @returns A promise for an {@link OAuth.AuthorizationResponse}, which contains the authorization code needed for the token exchange.
-          * The promise is resolved when the user was redirected back from the provider's authorization page to the Raycast extension.
-          */
-         authorize(options: AuthorizationRequest | AuthorizationOptions): Promise<AuthorizationResponse>;
-         private authorizationURL;
-         /**
-          * Securely stores a {@link OAuth.TokenSet} for the provider. Use this after fetching the access token from the provider.
-          * If the provider returns a a standard OAuth JSON token response, you can directly pass the {@link OAuth.TokenResponse}.
-          * At a minimum, you need to set the {@link OAuth.TokenSet.accessToken}, and typically you also set {@link OAuth.TokenSet.refreshToken} and {@link OAuth.TokenSet.isExpired}.
-          * Raycast automatically shows a logout preference for the extension when a token set was saved.
-          *
-          * @remarks If you want to make use of the convenience {@link OAuth.TokenSet.isExpired} method, the property {@link OAuth.TokenSet.expiresIn} must be configured.
-          *
-          * @returns A promise that resolves when the token set has been stored.
-          */
-         setTokens(options: TokenSetOptions | TokenResponse): Promise<void>;
-         /**
-          * Retrieves the stored {@link OAuth.TokenSet} for the client.
-          * You can use this to initially check whether the authorization flow should be initiated or
-          * the user is already logged in and you might have to refresh the access token.
-          *
-          * @returns A promise that resolves when the token set has been retrieved.
-          */
-         getTokens(): Promise<TokenSet | undefined>;
-         /**
-          * Removes the stored {@link OAuth.TokenSet} for the client.
-          *
-          * @remarks Raycast automatically shows a logout preference that removes the token set.
-          * Use this method only if you need to provide an additional logout option in your extension or you want to remove the token set because of a migration.
-          *
-          */
-         removeTokens(): Promise<void>;
-     }
+     
      /**
       * Defines the supported redirect methods for the OAuth flow.
       * You can choose between web and app-scheme redirect methods, depending on what the provider requires when setting up the OAuth app.
       * For examples on what redirect URI you need to configure, see the docs for each method.
       */
-     export enum RedirectMethod {
-         /**
-          * Use this type for a redirect back to the Raycast website, which will then open the extension.
-          * In the OAuth app, configure `https://raycast.com/redirect?packageName=Extension`
-          * (This is a static redirect URL for all extensions.)
-          * If the provider does not accept query parameters in redirect URLs, you can alternatively use `https://raycast.com/redirect/extension`
-          * and then customize the {@link OAuth.AuthorizationRequest} via its `extraParameters` property. For example add:
-          *  `extraParameters: { "redirect_uri": "https://raycast.com/redirect/extension" }`
-          */
-         Web = "web",
-         /**
-          * Use this type for an app-scheme based redirect that directly opens Raycast.
-          * In the OAuth app, configure `raycast://oauth?package_name=Extension`
-          */
-         App = "app",
-         /**
-          * Use this type for a URI-style app scheme that directly opens Raycast.
-          * In the OAuth app, configure `com.raycast:/oauth?package_name=Extension`
-          * (Note the single slash - Google, for example, would require this flavor for an OAuth app where the Bundle ID is `com.raycast`)
-          */
-         AppURI = "appURI"
-     }
+
      /**
       * The options for an authorization request via {@link OAuth.PKCEClient.authorizationRequest}.
       */
@@ -376,3 +325,9 @@ export class PKCEClient {
           */
          async removeTokens(): Promise<void> {}
      }
+
+
+export const OAuth = {
+	PKCEClient,
+	RedirectMethod: OauthRedirectMethod
+};

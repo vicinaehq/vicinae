@@ -6,7 +6,6 @@
 #include "services/raycast/raycast-store.hpp"
 #include "theme.hpp"
 #include "ui/action-pannel/action.hpp"
-#include "ui/default-list-item-widget.hpp"
 #include "ui/list-accessory-widget.hpp"
 #include "ui/toast.hpp"
 #include <chrono>
@@ -16,13 +15,10 @@
 #include <qwidget.h>
 
 class RaycastStoreExtensionItemWidget : public SelectableOmniListWidget {
-  QHBoxLayout *m_layout = new QHBoxLayout(this);
   Omnimg::ImageWidget *m_icon = new Omnimg::ImageWidget();
   TypographyWidget *m_title = new TypographyWidget();
   TypographyWidget *m_description = new TypographyWidget();
-  AccessoryListWidget *m_accessories = new AccessoryListWidget(this);
-  QWidget *m_textWidget = new QWidget(this);
-  QVBoxLayout *m_textLayout = new QVBoxLayout(m_textWidget);
+  Omnimg::ImageWidget *m_installed = new Omnimg::ImageWidget;
   Omnimg::ImageWidget *m_author = new Omnimg::ImageWidget;
   ListAccessoryWidget *m_downloadCount = new ListAccessoryWidget;
 
@@ -35,29 +31,21 @@ public:
     m_downloadCount->setAccessory(
         ListAccessory{.text = formatCount(count), .icon = BuiltinOmniIconUrl("arrow-down-circle")});
   }
+  void setInstalled(bool value) { m_installed->setVisible(value); }
 
   RaycastStoreExtensionItemWidget(QWidget *parent = nullptr) : SelectableOmniListWidget(parent) {
+    auto left = HStack().spacing(15).add(m_icon).add(VStack().add(m_title).add(m_description).spacing(2));
+    auto right = HStack().add(m_installed).add(m_downloadCount).add(m_author).spacing(10);
+    auto layout = HStack().add(left).add(right).justifyBetween().margins(10).spacing(15);
+
+    m_installed->setUrl(BuiltinOmniIconUrl("check-circle").setFill(SemanticColor::Green));
+    m_installed->setFixedSize(20, 20);
+
     m_downloadCount->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     m_author->setFixedSize(20, 20);
     m_description->setColor(SemanticColor::TextSecondary);
-    m_textLayout->addWidget(m_title);
-    m_textLayout->setContentsMargins(0, 0, 0, 0);
-    m_textLayout->setSpacing(2);
-    m_textLayout->addWidget(m_description);
-    m_textWidget->setLayout(m_textLayout);
-
     m_icon->setFixedSize(30, 30);
-
-    m_layout->setSpacing(15);
-    m_layout->addWidget(m_icon);
-    m_layout->addWidget(m_textWidget);
-    m_layout->addStretch();
-    m_layout->addWidget(m_downloadCount);
-    m_layout->addWidget(m_author);
-    m_layout->setContentsMargins(10, 10, 10, 10);
-    m_layout->setAlignment(Qt::AlignVCenter);
-
-    setLayout(m_layout);
+    layout.imbue(this);
   }
 };
 
@@ -65,6 +53,7 @@ class RaycastExtensionDetailsView : public BaseView {};
 
 class RaycastStoreExtensionItem : public OmniList::AbstractVirtualItem, public ListView::Actionnable {
   Raycast::Extension m_extension;
+  bool m_installed = false;
 
 public:
   bool hasUniformHeight() const override { return true; }
@@ -82,6 +71,7 @@ public:
     item->setDescription(m_extension.description);
     item->setIcon(m_extension.themedIcon());
     item->setDownloadCount(m_extension.download_count);
+    item->setInstalled(m_installed);
 
     if (m_extension.author.avatar.isEmpty()) {
       item->setAuthorUrl(BuiltinOmniIconUrl("person"));
@@ -117,7 +107,8 @@ public:
     return panel;
   }
 
-  RaycastStoreExtensionItem(const Raycast::Extension &extension) : m_extension(extension) {}
+  RaycastStoreExtensionItem(const Raycast::Extension &extension, bool installed)
+      : m_extension(extension), m_installed(installed) {}
 };
 
 class RaycastStoreListingView : public ListView {
@@ -161,7 +152,9 @@ class RaycastStoreListingView : public ListView {
       auto &results = m_list->addSection("Results");
 
       for (const auto &extension : result->m_extensions) {
-        results.addItem(std::make_unique<RaycastStoreExtensionItem>(extension));
+        bool installed = context()->services->extensionRegistry()->isInstalled(extension.id);
+
+        results.addItem(std::make_unique<RaycastStoreExtensionItem>(extension, installed));
       }
     });
   }
@@ -182,7 +175,9 @@ class RaycastStoreListingView : public ListView {
       auto &results = m_list->addSection("Extensions");
 
       for (const auto &extension : result->m_extensions) {
-        results.addItem(std::make_unique<RaycastStoreExtensionItem>(extension));
+        bool installed = context()->services->extensionRegistry()->isInstalled(extension.id);
+
+        results.addItem(std::make_unique<RaycastStoreExtensionItem>(extension, installed));
       }
     });
   }

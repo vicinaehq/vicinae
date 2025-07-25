@@ -24033,6 +24033,7 @@ __export(src_exports, {
   LocalStorage: () => LocalStorage,
   MenuBarExtra: () => MenuBarExtra,
   NavigationProvider: () => NavigationProvider,
+  OAuth: () => OAuth,
   PKCEClient: () => PKCEClient,
   PopToRootType: () => PopToRootType,
   Toast: () => Toast,
@@ -30318,6 +30319,12 @@ var LocalStorage = class {
 };
 
 // ../api/src/oauth.ts
+var OauthRedirectMethod = /* @__PURE__ */ ((OauthRedirectMethod2) => {
+  OauthRedirectMethod2["Web"] = "web";
+  OauthRedirectMethod2["App"] = "app";
+  OauthRedirectMethod2["AppURI"] = "appURI";
+  return OauthRedirectMethod2;
+})(OauthRedirectMethod || {});
 var PKCEClient = class {
   redirectMethod;
   providerName;
@@ -30390,6 +30397,10 @@ var PKCEClient = class {
    */
   async removeTokens() {
   }
+};
+var OAuth = {
+  PKCEClient,
+  RedirectMethod: OauthRedirectMethod
 };
 
 // ../api/src/ai.ts

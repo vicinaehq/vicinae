@@ -69,6 +69,7 @@ signals:
 class RaycastStoreDetailView : public BaseView {
   VerticalScrollArea *m_scrollArea = new VerticalScrollArea(this);
   Raycast::Extension m_ext;
+  ListAccessoryWidget *m_installedAccessory = new ListAccessoryWidget;
 
   bool supportsSearch() const override { return false; }
 
@@ -115,18 +116,16 @@ class RaycastStoreDetailView : public BaseView {
                     .add(VStack().addTitle(m_ext.title).add(metadata).margins(0, 4, 0, 4).justifyBetween())
                     .spacing(20);
 
-    auto accessory = new ListAccessoryWidget();
-
-    accessory->setAccessory({
+    m_installedAccessory->setAccessory({
         .text = "Installed",
         .color = SemanticColor::Green,
         .fillBackground = true,
         .icon = BuiltinOmniIconUrl("check-circle"),
     });
 
-    accessory->setMaximumHeight(30);
+    m_installedAccessory->setMaximumHeight(30);
 
-    return HStack().add(left).add(accessory).justifyBetween();
+    return HStack().add(left).add(m_installedAccessory).justifyBetween();
   }
 
   Stack createMainWidget() {
@@ -268,7 +267,12 @@ class RaycastStoreDetailView : public BaseView {
     setActions(std::move(panel));
   }
 
-  void initialize() override { createActions(); }
+  void initialize() override {
+    bool isInstalled = context()->services->extensionRegistry()->isInstalled(m_ext.id);
+
+    createActions();
+    m_installedAccessory->setVisible(isInstalled);
+  }
 
   void setupUI(const Raycast::Extension &extension) {
     auto layout = new QVBoxLayout;
