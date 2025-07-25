@@ -491,6 +491,7 @@ set(SRCS
 	src/services/raycast/raycast-store.cpp
 
 	src/ui/thumbnail/thumbnail.hpp
+	src/ui/thumbnail/thumbnail.cpp
 
 	src/lib/zip/unzip.cpp
 
