@@ -10,29 +10,27 @@
 #include <qwidget.h>
 
 class GridItemContentWidget : public QWidget {
-  Q_OBJECT
+public:
+  enum Inset { Small, Medium, Large };
 
-  bool selected;
-  bool hovered;
-  int _inset;
-  Tooltip *tooltip;
-  QWidget *_widget;
+private:
+  Q_OBJECT
+  bool m_selected;
+  Inset m_inset;
+  Tooltip *m_tooltip;
+  QWidget *m_widget;
 
 protected:
   int borderWidth() const;
   void paintEvent(QPaintEvent *event) override;
   void hideEvent(QHideEvent *event) override;
-  void moveEvent(QMoveEvent *event) override {
-    QWidget::moveEvent(event);
-    // reposition the tooltip relative to the widget
-    if (tooltip->isVisible()) { showTooltip(); }
-  }
-  bool event(QEvent *event) override;
 
   void resizeEvent(QResizeEvent *event) override;
   void mousePressEvent(QMouseEvent *event) override;
   void mouseDoubleClickEvent(QMouseEvent *event) override;
   QSize innerWidgetSize() const;
+  int insetForSize(Inset inset, QSize size) const;
+  void repositionCenterWidget();
 
 public:
   GridItemContentWidget();
@@ -41,9 +39,8 @@ public:
   void setTooltipText(const QString &text);
   void showTooltip();
   void hideTooltip();
-  void setHovered(bool hovered);
   void setSelected(bool selected);
-  void setInset(int inset);
+  void setInset(Inset inset);
 
   void setWidget(QWidget *widget);
   QWidget *widget() const;

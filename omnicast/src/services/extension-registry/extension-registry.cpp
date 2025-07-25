@@ -4,6 +4,7 @@
 #include <QJsonArray>
 #include "services/extension-registry/extension-registry.hpp"
 #include "utils/utils.hpp"
+#include "zip/unzip.hpp"
 #include <filesystem>
 #include <qjsonparseerror.h>
 #include <qlogging.h>
@@ -42,6 +43,20 @@ CommandArgument ExtensionRegistry::parseArgumentFromObject(const QJsonObject &ob
   }
 
   return arg;
+}
+
+bool ExtensionRegistry::installFromZip(const QString &id, std::string_view data) {
+  fs::path extractDir = extensionDir() / id.toStdString();
+  Unzipper unzip(data);
+
+  if (!unzip) {
+    qCritical() << "Failed to create unzipper";
+    return false;
+  }
+
+  unzip.extract(extractDir, {.stripComponents = 1});
+
+  return true;
 }
 
 Preference ExtensionRegistry::parsePreferenceFromObject(const QJsonObject &obj) {
@@ -164,6 +179,7 @@ std::expected<ExtensionManifest, ManifestError> ExtensionRegistry::scanBundle(co
   manifest.path = path;
   manifest.id = QString::fromStdString(getLastPathComponent(path));
   manifest.name = obj.value("name").toString();
+  manifest.title = obj.value("title").toString();
   manifest.description = obj.value("description").toString();
   manifest.icon = obj.value("icon").toString();
   manifest.author = obj.value("author").toString();

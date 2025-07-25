@@ -40,7 +40,7 @@ export interface Arguments {
     fallbackText?: string;
 };
 
-export declare enum LaunchType {
+export enum LaunchType {
     /**
      * A regular launch through user interaction
      */

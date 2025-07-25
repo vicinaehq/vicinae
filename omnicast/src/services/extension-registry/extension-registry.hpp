@@ -2,6 +2,7 @@
 #include "common.hpp"
 #include "omni-command-db.hpp"
 #include "preference.hpp"
+#include "zip/unzip.hpp"
 #include <expected>
 #include <filesystem>
 #include <qjsonobject.h>
@@ -29,6 +30,7 @@ struct ExtensionManifest {
   std::filesystem::path path;
   QString id;
   QString name;
+  QString title;
   QString description;
   QString icon;
   QString author;
@@ -47,9 +49,14 @@ class ExtensionRegistry {
   std::filesystem::path extensionDir() const;
 
 public:
+  bool installFromZip(const QString &id, std::string_view data);
+
   std::expected<ExtensionManifest, ManifestError> scanBundle(const std::filesystem::path &path);
   std::vector<ExtensionManifest> scanAll();
   void rescanBundle();
 
   ExtensionRegistry(OmniCommandDatabase &commandDb);
+
+signals:
+  void extensionAdded(const QString &id);
 };

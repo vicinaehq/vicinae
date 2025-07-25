@@ -37,6 +37,11 @@ export type ActionOpenProps = BaseActionProps & {
 	app?: Application;
 };
 
+export type ActionPasteProps = BaseActionProps & {
+	content: string;
+	onPaste?: (content: string | number | Clipboard.Content) => void,
+};
+
 export type ActionOpenInBrowserProps = BaseActionProps & {
 	url: string;
 };
@@ -70,9 +75,23 @@ const CopyToClipboard: React.FC<CopyToClipboardProps> = ({
 	...props 
 }) => {
 	return <ActionRoot title={title} {...props} icon={Icon.CopyClipboard} onAction={async () => {
-		await Clipboard.copy(content, { concealed });
+		Clipboard.copy(content, { concealed });
 		closeMainWindow();
 		onCopy?.(content);
+	}} />
+}
+
+const Paste: React.FC<ActionPasteProps> = ({ 
+	title = "Paste to active window", 
+	icon = Icon.CopyClipboard,
+	content, 
+	onPaste,
+	...props 
+}) => {
+	return <ActionRoot title={title} {...props} icon={Icon.CopyClipboard} onAction={async () => {
+		Clipboard.paste(content);
+		closeMainWindow();
+		onPaste?.(content);
 	}} />
 }
 
@@ -120,6 +139,7 @@ export const Action = Object.assign(ActionRoot, {
 	CopyToClipboard,
 	Push,
 	Open,
+	Paste,
 	SubmitForm,
 	OpenInBrowser,
 	Style: {

@@ -85,7 +85,6 @@ class Omnicast {
 			});
 
 			worker.on('message', (buf: Buffer) => {
-				console.error(buf);
 				try {
 					const { event, request } = ipc.ExtensionMessage.decode(buf);
 
@@ -167,7 +166,7 @@ class Omnicast {
 	private async routeMessage(message: ipc.IpcMessage) {
 		const { managerRequest, extensionEvent, extensionResponse } = message;
 
-		console.error(JSON.stringify({ message }, null, 2));
+		//console.error(JSON.stringify({ message }, null, 2));
 
 		if (managerRequest) {
 			this.handleManagerRequest(managerRequest);
@@ -200,14 +199,14 @@ class Omnicast {
 			const length = this.currentMessage.data.readUInt32BE();
 			const isComplete = this.currentMessage.data.length - 4 >= length;
 
-			console.error('read message: length', length);
+			//console.error('read message: length', length);
 
 			if (!isComplete) return ;
 
 			const packet = this.currentMessage.data.subarray(4, length + 4);
 			const message = this.parseMessage(packet);
 
-			console.error('routing message');
+			//console.error('routing message');
 
 			this.routeMessage(message);
 			this.currentMessage.data = this.currentMessage.data.subarray(length + 4);

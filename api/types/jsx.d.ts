@@ -43,7 +43,7 @@ declare module 'react' {
 			},
 
 			grid: {
-				inset: Grid.Inset;
+				inset?: Grid.Inset;
 				columns?: number;
 				fit: Grid.Fit;
 				aspectRatio: Grid.AspectRatio;
@@ -58,7 +58,7 @@ declare module 'react' {
                 onSelectionChange?: HandlerId;
             };
             'grid-section': {
-				inset?: number;
+				inset?: Grid.Inset;
 				columns?: number;
 				fit: Grid.Fit;
 				aspectRatio: Grid.AspectRatio;

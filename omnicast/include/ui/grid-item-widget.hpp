@@ -6,7 +6,9 @@
 #include <qevent.h>
 #include <qwidget.h>
 
-class GridItemWidget2 : public OmniListItemWidget {
+class GridItemWidget : public OmniListItemWidget {
+  // actual inset depends on the size of the main widget
+
   QVBoxLayout *layout;
   TypographyWidget *titleLabel = new TypographyWidget;
   TypographyWidget *subtitleLabel = new TypographyWidget;
@@ -18,7 +20,7 @@ public:
 
   void enterEvent(QEnterEvent *event) override { OmniListItemWidget::enterEvent(event); }
 
-  GridItemWidget2(QWidget *parent = nullptr);
+  GridItemWidget(QWidget *parent = nullptr);
   void selectionChanged(bool selected) override;
 
   void setTitle(const QString &title);
@@ -27,7 +29,8 @@ public:
 
   void clearTransientState() override;
 
-  void setInset(int inset) { main->setInset(inset); }
+  void setInset(GridItemContentWidget::Inset inset) { main->setInset(inset); }
+
   void setAspectRatio(double ratio) {
     if (ratio == m_aspectRatio) return;
 

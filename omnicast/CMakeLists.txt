@@ -492,7 +492,9 @@ set(SRCS
 
 	src/ui/thumbnail/thumbnail.hpp
 
-)
+	src/lib/zip/unzip.cpp
+
+) 
 
 
 if (UNIX AND NOT APPLE)

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ui/grid-item-content-widget.hpp"
 #include "ui/grid-item-widget.hpp"
 #include "ui/omni-list.hpp"
 #include <qwidget.h>
@@ -11,7 +12,7 @@ class OmniGrid : public OmniList {
 
 public:
   class AbstractGridItem : public AbstractVirtualItem {
-    int _inset;
+    GridItemContentWidget::Inset m_inset;
 
     virtual QString title() const { return {}; }
     virtual QString subtitle() const { return {}; }
@@ -19,7 +20,7 @@ public:
     virtual QWidget *centerWidget() const = 0;
 
     void recycle(QWidget *base) const override final {
-      auto widget = static_cast<GridItemWidget2 *>(base);
+      auto widget = static_cast<GridItemWidget *>(base);
 
       widget->setTitle(title());
       widget->setSubtitle(subtitle());
@@ -46,7 +47,7 @@ public:
     bool recyclable() const override { return true; }
 
     int calculateHeight(int width) const final override {
-      static GridItemWidget2 ruler;
+      static GridItemWidget ruler;
 
       auto fm = ruler.fontMetrics();
       auto spacing = 10;
@@ -59,10 +60,10 @@ public:
     }
 
     OmniListItemWidget *createWidget() const final override {
-      auto widget = new GridItemWidget2();
+      auto widget = new GridItemWidget();
 
       widget->setAspectRatio(aspectRatio());
-      widget->setInset(_inset);
+      widget->setInset(m_inset);
       widget->setTitle(title());
       widget->setSubtitle(subtitle());
       widget->setTooltipText(tooltip());
@@ -72,10 +73,10 @@ public:
     }
 
     void refresh(QWidget *widget) const override {
-      auto itemWidget = static_cast<GridItemWidget2 *>(widget);
+      auto itemWidget = static_cast<GridItemWidget *>(widget);
 
       itemWidget->setAspectRatio(aspectRatio());
-      itemWidget->setInset(_inset);
+      itemWidget->setInset(m_inset);
       itemWidget->setTitle(title());
       itemWidget->setSubtitle(subtitle());
       itemWidget->setTooltipText(tooltip());
@@ -83,9 +84,9 @@ public:
     }
 
   public:
-    void setInset(int inset) { _inset = inset; }
+    void setInset(GridItemContentWidget::Inset inset) { m_inset = inset; }
 
-    AbstractGridItem() : _inset(10) {}
+    AbstractGridItem() : m_inset(GridItemContentWidget::Inset::Small) {}
   };
 
 public:

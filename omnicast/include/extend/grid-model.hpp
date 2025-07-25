@@ -3,16 +3,22 @@
 #include "extend/empty-view-model.hpp"
 #include "extend/image-model.hpp"
 #include "extend/pagination-model.hpp"
+#include "ui/grid-item-content-widget.hpp"
 #include <qjsonobject.h>
 
 enum GridFit { GridContain, GridFill };
+
+struct ImageContentWithTooltip {
+  ImageLikeModel value;
+  std::optional<QString> tooltip;
+};
 
 struct GridItemViewModel {
   QString id;
   QString title;
   QString subtitle;
   // Handle color display
-  ImageLikeModel content;
+  std::variant<ImageLikeModel, ImageContentWithTooltip> content;
   std::vector<QString> keywords;
   std::optional<ActionPannelModel> actionPannel;
 };
@@ -24,8 +30,7 @@ struct GridSectionModel {
   double aspectRatio;
   std::optional<int> columns;
   GridFit fit;
-  int inset;
-
+  std::optional<GridItemContentWidget::Inset> inset;
   std::vector<GridItemViewModel> children;
 };
 
@@ -37,8 +42,8 @@ struct GridModel {
   bool throttle;
   double aspectRatio;
   bool dirty;
-  int columns;
-  int inset;
+  std::optional<int> columns;
+  std::optional<GridItemContentWidget::Inset> inset;
   GridFit fit;
 
   QString navigationTitle;
@@ -57,6 +62,7 @@ struct GridModel {
 };
 
 class GridModelParser {
+  GridItemContentWidget::Inset parseInset(const QString &s);
   GridItemViewModel parseListItem(const QJsonObject &instance, size_t index);
   GridSectionModel parseSection(const QJsonObject &instance);
 

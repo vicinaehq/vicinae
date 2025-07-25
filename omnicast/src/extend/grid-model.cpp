@@ -16,7 +16,19 @@ GridItemViewModel GridModelParser::parseListItem(const QJsonObject &instance, si
   model.id = props["id"].toString(QString::number(index));
   model.title = props["title"].toString();
   model.subtitle = props["subtitle"].toString();
-  model.content = ImageModelParser().parse((props.value("content").toObject()));
+
+  auto content = props.value("content").toObject();
+
+  if (content.contains("value")) {
+    ImageContentWithTooltip data;
+
+    if (content.contains("tooltip")) { data.tooltip = content.value("tooltip").toString(); }
+
+    data.value = ImageModelParser().parse(content.value("value").toObject());
+    model.content = data;
+  } else {
+    model.content = ImageModelParser().parse(content);
+  }
 
   if (props.contains("keywords")) {
     model.keywords = props.value("keywords").toArray() |
@@ -45,8 +57,8 @@ GridSectionModel GridModelParser::parseSection(const QJsonObject &instance) {
   model.aspectRatio = props.value("aspectRatio").toDouble(1);
 
   if (props.contains("columns")) { model.columns = props.value("columns").toInt(); }
+  if (auto inset = props.value("inset"); inset.isString()) { model.inset = parseInset(inset.toString()); }
 
-  model.inset = props.value("inset").toInt(10);
   model.children.reserve(arr.size());
 
   for (const auto &child : arr) {
@@ -65,6 +77,15 @@ GridSectionModel GridModelParser::parseSection(const QJsonObject &instance) {
   return model;
 }
 
+GridItemContentWidget::Inset GridModelParser::parseInset(const QString &s) {
+  using Inset = GridItemContentWidget::Inset;
+
+  if (s == "medium") return Inset::Medium;
+  if (s == "large") return Inset::Large;
+
+  return Inset::Small;
+}
+
 GridModel GridModelParser::parse(const QJsonObject &instance) {
   GridModel model;
   auto props = instance.value("props").toObject();
@@ -74,8 +95,15 @@ GridModel GridModelParser::parse(const QJsonObject &instance) {
   model.dirty = instance.value("dirty").toBool(true);
   model.isLoading = props["isLoading"].toBool(false);
   model.throttle = props["throttle"].toBool(false);
-  model.inset = props["inset"].toInt(10);
-  model.columns = props["columns"].toInt(8);
+
+  if (auto inset = props.value("inset"); inset.isString()) { model.inset = parseInset(inset.toString()); }
+  if (auto cols = props.value("columns"); cols.isDouble()) {
+    qDebug() << "COLS" << cols;
+    model.columns = cols.toInt();
+  } else {
+    qDebug() << "no columns!";
+  }
+
   model.fit = GridFit::GridContain;
   model.aspectRatio = 1;
   model.searchPlaceholderText = props["searchBarPlaceholder"].toString();

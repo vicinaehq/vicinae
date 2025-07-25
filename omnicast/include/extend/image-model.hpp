@@ -6,13 +6,13 @@
 #include <qstring.h>
 #include <variant>
 
-struct ThemeAwareIconSource {
+struct ThemedIconSource {
   QString light;
   QString dark;
 };
 
 struct ExtensionImageModel {
-  QString source;
+  std::variant<QString, ThemedIconSource> source;
   std::optional<QString> fallback;
   std::optional<SemanticColor> tintColor;
   std::optional<OmniPainter::ImageMaskType> mask;
@@ -24,7 +24,8 @@ struct ExtensionFileIconModel {
 
 using InvalidImageModel = std::monostate;
 
-using ImageLikeModel = std::variant<InvalidImageModel, ExtensionImageModel, ExtensionFileIconModel>;
+using ImageLikeModel =
+    std::variant<InvalidImageModel, ExtensionImageModel, ExtensionFileIconModel, ThemedIconSource>;
 
 class ImageModelParser {
 public:

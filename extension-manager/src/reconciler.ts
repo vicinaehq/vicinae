@@ -176,7 +176,11 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 		supportsHydration: false,
 
 		createInstance(type, props, root, ctx, handle): Instance {
-			const { children, key, ...rest } = props;
+			let { children, key, ...rest } = props;
+
+			if (Array.isArray(children)) {
+				children = children.filter(Boolean);
+			}
 
 			return {
 				id: Symbol(type),
@@ -226,8 +230,7 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 				}
 			}
 
-			return changes;
-			//return changes.length > 0 ? changes : null;
+			return changes.length > 0 ? changes : null;
 		},
 
 		shouldSetTextContent() {

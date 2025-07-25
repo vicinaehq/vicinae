@@ -8,10 +8,7 @@ int GridItemContentWidget::borderWidth() const { return 3; }
 void GridItemContentWidget::resizeEvent(QResizeEvent *event) {
   QWidget::resizeEvent(event);
 
-  if (_widget) {
-    _widget->setFixedSize(innerWidgetSize());
-    _widget->move(_inset, _inset);
-  }
+  if (m_widget) repositionCenterWidget();
 }
 
 void GridItemContentWidget::paintEvent(QPaintEvent *event) {
@@ -31,8 +28,8 @@ void GridItemContentWidget::paintEvent(QPaintEvent *event) {
 
   painter.fillPath(path, backgroundColor);
 
-  if (selected || hovered) {
-    QPen pen(selected ? theme.colors.text : theme.colors.subtext, 3);
+  if (m_selected || underMouse()) {
+    QPen pen(m_selected ? theme.colors.text : theme.colors.subtext, 3);
     painter.setPen(pen);
   } else {
     painter.setPen(Qt::NoPen);
@@ -41,67 +38,68 @@ void GridItemContentWidget::paintEvent(QPaintEvent *event) {
   painter.drawPath(path);
 }
 
+int GridItemContentWidget::insetForSize(Inset inset, QSize size) const {
+  switch (inset) {
+  case Inset::Small:
+    return size.width() * 0.10;
+  case Inset::Medium:
+    return size.width() * 0.20;
+  case Inset::Large:
+    return size.width() * 0.30;
+  }
+
+  return 0;
+}
+
 void GridItemContentWidget::mousePressEvent(QMouseEvent *event) { emit clicked(); }
 void GridItemContentWidget::mouseDoubleClickEvent(QMouseEvent *event) { emit doubleClicked(); }
 
-void GridItemContentWidget::hideEvent(QHideEvent *event) { tooltip->hide(); }
+void GridItemContentWidget::hideEvent(QHideEvent *event) { m_tooltip->hide(); }
 
-QSize GridItemContentWidget::innerWidgetSize() const { return {width() - _inset * 2, height() - _inset * 2}; }
+QSize GridItemContentWidget::innerWidgetSize() const {
+  int inset = insetForSize(m_inset, size());
+
+  return {width() - inset * 2, height() - inset * 2};
+}
+
+void GridItemContentWidget::repositionCenterWidget() {
+  int inset = insetForSize(m_inset, size());
+
+  m_widget->setFixedSize(innerWidgetSize());
+  m_widget->move(inset, inset);
+}
 
 void GridItemContentWidget::setWidget(QWidget *widget) {
-  if (_widget) { _widget->deleteLater(); }
+  if (m_widget) { m_widget->deleteLater(); }
 
-  _widget = widget;
+  m_widget = widget;
   widget->setParent(this);
-  widget->setFixedSize(innerWidgetSize());
-  widget->move(_inset, _inset);
+  repositionCenterWidget();
 }
 
-QWidget *GridItemContentWidget::widget() const { return _widget; }
+QWidget *GridItemContentWidget::widget() const { return m_widget; }
 
 void GridItemContentWidget::setSelected(bool selected) {
-  this->selected = selected;
+  this->m_selected = selected;
   update();
 }
 
-void GridItemContentWidget::setInset(int inset) {
-  _inset = inset;
+void GridItemContentWidget::setInset(Inset inset) {
+  m_inset = inset;
   update();
 }
 
-void GridItemContentWidget::setHovered(bool hovered) {
-  this->hovered = hovered;
-
-  if (hovered) {
-    showTooltip();
-  } else {
-    hideTooltip();
-  }
-
-  update();
-}
-
-void GridItemContentWidget::hideTooltip() { tooltip->hide(); }
+void GridItemContentWidget::hideTooltip() { m_tooltip->hide(); }
 
 void GridItemContentWidget::showTooltip() {}
 
-void GridItemContentWidget::setTooltipText(const QString &text) { tooltip->setText(text); }
-
-bool GridItemContentWidget::event(QEvent *event) {
-  if (event->type() == QEvent::HoverEnter) {
-    setHovered(true);
-  } else if (event->type() == QEvent::HoverLeave) {
-    setHovered(false);
-  }
-
-  return QWidget::event(event);
-}
+void GridItemContentWidget::setTooltipText(const QString &text) { m_tooltip->setText(text); }
 
 GridItemContentWidget::GridItemContentWidget()
-    : _widget(nullptr), selected(false), hovered(false), tooltip(new Tooltip(this)), _inset(10) {
+    : m_widget(nullptr), m_selected(false), m_tooltip(new Tooltip(this)), m_inset(Inset::Small) {
   setAttribute(Qt::WA_Hover);
-  tooltip->hide();
-  tooltip->setTarget(this);
+  m_tooltip->hide();
+  m_tooltip->setTarget(this);
 }
 
-GridItemContentWidget::~GridItemContentWidget() { tooltip->deleteLater(); }
+GridItemContentWidget::~GridItemContentWidget() { m_tooltip->deleteLater(); }

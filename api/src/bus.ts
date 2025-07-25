@@ -70,6 +70,8 @@ type EndpointMapping = {
 	'storage.remove': 'storage.remove',
 	'storage.clear': 'storage.clear',
 	'storage.list': 'storage.list',
+
+	'clipboard.copy': 'clipboard.copy'
 }
 
 type RequestEndpoint = keyof EndpointMapping
@@ -119,7 +121,7 @@ class Bus {
 
 	  if (!resData) return Err(Error(`Invalid response for request of type ${endpoint}: ${JSON.stringify(res, null, 2)}`));
 
-	  console.error(`Got valid response for ${endpoint}`);
+	  //console.error(`Got valid response for ${endpoint}`);
 
 	  return Ok(resData);
   }
@@ -127,11 +129,11 @@ class Bus {
 
   private handleSafeMessage(message: ipc.ExtensionMessage) {
 	  if (message.response) {
-		  console.log('got response response', message.response.requestId);
+		  //console.log('got response response', message.response.requestId);
 		const request = this.safeRequestMap.get(message.response.requestId);
 
 		if (!request) {
-			console.error(`Received response for unknown request ${message.response.requestId}`);
+			//console.error(`Received response for unknown request ${message.response.requestId}`);
 			return ;
 		}
 
@@ -143,7 +145,7 @@ class Bus {
 	  if (message.event) {
 		const { id, generic } = message.event;
 
-		console.error('got event with id', id);
+		//console.error('got event with id', id);
 
 		if (generic) {
 			const listeners = this.listEventListeners(id)

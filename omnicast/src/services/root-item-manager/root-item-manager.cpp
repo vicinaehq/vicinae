@@ -41,7 +41,7 @@ void RootItemManager::rebuildTrie() {
   timer.time("trie rebuild");
 }
 
-RootItem *RootItemManager::findItemById(const QString &id) {
+RootItem *RootItemManager::findItemById(const QString &id) const {
   auto it = std::ranges::find_if(m_items, [&](auto &&v) { return v->uniqueId() == id; });
 
   if (it != m_items.end()) return it->get();
@@ -49,7 +49,7 @@ RootItem *RootItemManager::findItemById(const QString &id) {
   return nullptr;
 }
 
-RootProvider *RootItemManager::findProviderById(const QString &id) {
+RootProvider *RootItemManager::findProviderById(const QString &id) const {
   auto it = std::ranges::find_if(m_providers, [&](auto &&provider) { return provider->uniqueId() == id; });
 
   if (it == m_providers.end()) return nullptr;
@@ -108,6 +108,8 @@ bool RootItemManager::upsertItem(const QString &providerId, const RootItem &item
 
 bool RootItemManager::upsertProvider(const RootProvider &provider) {
   QSqlQuery query = m_db.createQuery();
+
+  qDebug() << "upsertProvider" << provider.uniqueId();
 
   query.prepare(R"(
 		INSERT INTO 
@@ -375,7 +377,7 @@ QJsonObject RootItemManager::getItemPreferenceValues(const QString &id) const {
   return values;
 }
 
-std::vector<Preference> RootItemManager::getMergedItemPreferences(const QString &rootItemId) {
+std::vector<Preference> RootItemManager::getMergedItemPreferences(const QString &rootItemId) const {
   auto metadata = itemMetadata(rootItemId);
   auto provider = findProviderById(metadata.providerId);
   auto item = findItemById(rootItemId);
@@ -431,10 +433,12 @@ QJsonObject RootItemManager::getPreferenceValues(const QString &id) const {
   auto json = QJsonDocument::fromJson(rawJson.toUtf8());
   auto preferenceValues = json.object();
 
-  for (auto pref : item->preferences()) {
+  for (auto pref : getMergedItemPreferences(id)) {
     auto dflt = pref.defaultValue();
 
-    if (!preferenceValues.contains(pref.name()) && !dflt.isNull()) { preferenceValues[pref.name()] = dflt; }
+    if (!preferenceValues.contains(pref.name()) && !dflt.isUndefined()) {
+      preferenceValues[pref.name()] = dflt;
+    }
   }
 
   return preferenceValues;

@@ -53,7 +53,7 @@ class IconBrowserView : public GridView {
     auto makeIcon = [&](auto &&icon) -> std::unique_ptr<OmniList::AbstractVirtualItem> {
       auto item = std::make_unique<IconBrowserItem>(icon);
 
-      item->setInset(inset);
+      item->setInset(GridItemContentWidget::Inset::Large);
       return item;
     };
 
@@ -62,7 +62,7 @@ class IconBrowserView : public GridView {
 
       section.setColumns(8);
       section.setSpacing(10);
-      m_grid->setInset(20);
+      m_grid->setInset(GridItemContentWidget::Inset::Large);
 
       auto items = BuiltinIconService::icons() | std::views::filter(filter) |
                    std::views::transform(makeIcon) | std::ranges::to<std::vector>();

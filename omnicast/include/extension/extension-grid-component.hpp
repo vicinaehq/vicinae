@@ -1,11 +1,14 @@
 #pragma once
 #include "extend/grid-model.hpp"
 #include <qdebug.h>
+#include "extend/image-model.hpp"
 #include "extension/extension-view.hpp"
 #include "omni-icon.hpp"
+#include "ui/grid-item-content-widget.hpp"
 #include "ui/image/omnimg.hpp"
 #include "ui/omni-grid.hpp"
 #include "ui/omni-list.hpp"
+#include "ui/tooltip.hpp"
 #include <QJsonArray>
 #include <qboxlayout.h>
 #include <qlogging.h>
@@ -22,9 +25,17 @@ class ExtensionGridItem : public OmniGrid::AbstractGridItem {
   QWidget *centerWidget() const override {
     auto icon = new Omnimg::ImageWidget;
 
-    icon->setUrl(_item.content);
+    refreshCenterWidget(icon);
 
     return icon;
+  }
+
+  QString tooltip() const override {
+    const auto visitor =
+        overloads{[](const ImageLikeModel &model) { return QString(""); },
+                  [](const ImageContentWithTooltip &model) { return model.tooltip.value_or(""); }};
+
+    return std::visit(visitor, _item.content);
   }
 
   QString title() const override { return _item.title; }
@@ -37,8 +48,10 @@ class ExtensionGridItem : public OmniGrid::AbstractGridItem {
 
   void refreshCenterWidget(QWidget *widget) const override {
     auto icon = static_cast<Omnimg::ImageWidget *>(widget);
+    const auto visitor = overloads{[](const ImageLikeModel &model) { return model; },
+                                   [](const ImageContentWithTooltip &model) { return model.value; }};
 
-    icon->setUrl(_item.content);
+    icon->setUrl(std::visit(visitor, _item.content));
   }
 
   const QString &name() const { return _item.title; }
@@ -58,6 +71,7 @@ class ExtensionGridList : public QWidget {
   OmniList *m_list = new OmniList;
   std::vector<GridChild> m_model;
   int m_columns = 1;
+  GridItemContentWidget::Inset m_inset = GridItemContentWidget::Inset::Small;
   QString m_filter;
 
   bool matchesFilter(const GridItemViewModel &item, const QString &query) {
@@ -97,7 +111,11 @@ class ExtensionGridList : public QWidget {
               auto items =
                   section->children | std::views::filter(matches) |
                   std::views::transform([&](auto &&item) -> std::unique_ptr<OmniList::AbstractVirtualItem> {
-                    return std::make_unique<ExtensionGridItem>(item, section->aspectRatio);
+                    auto gridItem = std::make_unique<ExtensionGridItem>(item, section->aspectRatio);
+
+                    gridItem->setInset(section->inset.value_or(m_inset));
+
+                    return gridItem;
                   }) |
                   std::ranges::to<std::vector>();
 
@@ -151,7 +169,13 @@ public:
   void setColumns(int cols) {
     if (m_columns == cols) return;
     m_columns = cols;
-    qCritical() << "columns changed" << cols;
+    render(OmniList::PreserveSelection);
+  }
+
+  void setInset(GridItemContentWidget::Inset inset) {
+    if (m_inset == inset) return;
+
+    m_inset = inset;
     render(OmniList::PreserveSelection);
   }
 

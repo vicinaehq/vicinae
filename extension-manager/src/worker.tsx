@@ -1,6 +1,6 @@
 import { parentPort, workerData } from "worker_threads";
 import { createRenderer } from './reconciler';
-import { NavigationProvider, bus, environment } from '@omnicast/api';
+import { LaunchType, NavigationProvider, bus, environment } from '@omnicast/api';
 import type { ComponentType, ReactNode } from "react";
 import * as React from 'react';
 import { patchRequire } from "./patch-require";
@@ -19,11 +19,10 @@ class ErrorBoundary extends React.Component<{ children: ReactNode }, { error: st
     const {error} = this.state;
 
     if (error) {
-		console.error(`FUCK THE ERROR! ${error}`);
-      return null;
-    } else {
-      return <>{this.props.children}</>;
-    }
+		bus.emitCrash(error);
+	}
+
+    return <>{this.props.children}</>;
   }
 }
 
@@ -45,7 +44,7 @@ const loadEnviron = () => {
 	environment.commandMode = workerData.commandMode;
 	environment.supportPath = '/tmp';
 	environment.raycastVersion = '1.0.0';
-	environment.launchType = {} as any;
+	environment.launchType = LaunchType.UserInitiated;
 }
 
 const loadView = async () => {

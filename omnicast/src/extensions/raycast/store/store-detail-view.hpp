@@ -14,6 +14,7 @@
 #include "ui/typography/typography.hpp"
 #include "utils/layout.hpp"
 #include "utils/utils.hpp"
+#include "zip/unzip.hpp"
 #include <absl/container/internal/raw_hash_set.h>
 #include <qboxlayout.h>
 #include <qevent.h>
@@ -251,13 +252,8 @@ class RaycastStoreDetailView : public BaseView {
 
             if (!result) { ctx->services->toastService()->setToast("Failed to download extension"); }
 
-            std::filesystem::path target = std::format("/tmp/{}.zip", ext.name.toStdString());
-
-            QFile file(target);
-
-            if (!file.open(QIODevice::WriteOnly)) { return; }
-
-            file.write(result.value());
+            ctx->services->extensionRegistry()->installFromZip(ext.id,
+                                                               std::string_view(result->toStdString()));
             ctx->services->toastService()->setToast("Extension downloaded");
           });
 

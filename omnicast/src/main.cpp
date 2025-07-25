@@ -228,6 +228,7 @@ int startDaemon() {
     registry->setFontService(std::move(fontService));
     registry->setEmojiService(std::move(emojiService));
     registry->setRaycastStore(std::move(raycastStore));
+    registry->setExtensionRegistry(std::move(extensionRegistry));
 
     auto p = rootExtMan.get();
 

@@ -1,6 +1,7 @@
 #include "extension-command-runtime.hpp"
 #include "common.hpp"
 #include "services/asset-resolver/asset-resolver.hpp"
+#include "utils/utils.hpp"
 #include <QString>
 
 proto::ext::extension::Response *ExtensionCommandRuntime::makeErrorResponse(const QString &errorText) {
@@ -105,6 +106,15 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
   } else {
     load->set_mode(proto::ext::manager::CommandMode::NoView);
   }
+
+  for (const auto &key : preferenceValues.keys()) {
+    auto value = preferenceValues.value(key);
+
+    qDebug() << "preference" << key << value;
+
+    load->mutable_preference_values()->insert({key.toStdString(), transformJsonValueToProto(value)});
+  }
+
   load->set_extension_path("");
   payload->set_allocated_load(load);
 

@@ -1,5 +1,6 @@
 import { PathLike } from 'fs';
 import { bus } from './bus';
+import { ClipboardContent } from './proto/clipboard';
 
 type CopyParams = {
 };
@@ -13,19 +14,33 @@ export namespace Clipboard {
 };
 
 export const Clipboard = {
-	async copy(text: string | number | Clipboard.Content, options: Clipboard.CopyOptions = {}) {
-		let content = typeof text === 'object' ? text : { text: `${text}` };
+	mapContent(content: string | number | Clipboard.Content): ClipboardContent {
+		let ct = ClipboardContent.create();
 
-		await bus.request('clipboard.copy', {
-			content,
-			options
+		if (typeof content != 'object') {
+			ct.text = `${content}`;
+		} else {
+			if (content['file']) {
+				ct.path = { path: content['file'] };
+			} else if (content['html']) {
+				ct.html = {html: content['html'], text: content['text']}
+			} else {
+				ct.text = content['text'];
+			}
+		}
+
+		return ct;
+	},
+
+	async copy(text: string | number | Clipboard.Content, options: Clipboard.CopyOptions = {}) {
+		await bus.turboRequest('clipboard.copy', {
+			content: this.mapContent(text),
+			options: { concealed: options.concealed ?? false }
 		});
 	},
 
 	async paste(content : string | Clipboard.Content) {
-		await bus.request('clipboard.paste', {
-			content
-		});
+		// TODO: implement
 	},
 
 	async read(options?: { offset?: number }): Promise<Clipboard.ReadContent> {
@@ -45,8 +60,6 @@ export const Clipboard = {
 	},
 
 	async clear(text: string) {
-		await bus!.request('clipboard.clear', {
-			text
-		});
+		// TODO: implement
 	}
 };

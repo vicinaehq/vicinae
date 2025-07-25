@@ -66,7 +66,7 @@ public:
   }
 
   void registerCommand(const QString &repositoryId, const std::shared_ptr<AbstractCmd> &cmd) {
-    qDebug() << "registering command with id" << cmd->uniqueId();
+    // qDebug() << "registering command with id" << cmd->uniqueId();
 
     if (!hasCommand(cmd->uniqueId())) {
       CommandDbEntry entry;
@@ -75,7 +75,7 @@ public:
       entry.disabled = false;
       entry.repositoryId = repositoryId;
 
-      qDebug() << "command" << cmd->uniqueId() << "open count" << entry.openCount;
+      // qDebug() << "command" << cmd->uniqueId() << "open count" << entry.openCount;
 
       // TODO: use something better
       entries.insert(entries.begin(), entry);

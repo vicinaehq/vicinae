@@ -183,7 +183,17 @@ public:
   OmniIconUrl(const ImageLikeModel &imageLike)
       : _bgTint(InvalidTint), _fgTint(InvalidTint), _mask(OmniPainter::NoMask) {
     if (auto image = std::get_if<ExtensionImageModel>(&imageLike)) {
-      QUrl url(image->source);
+      struct {
+        QString operator()(const ThemedIconSource &icon) {
+          if (ThemeService::instance().theme().appearance == "light") { return icon.light; }
+          return icon.dark;
+        }
+        QString operator()(const QString &icon) { return icon; }
+      } visitor;
+
+      auto source = std::visit(visitor, image->source);
+
+      QUrl url(source);
 
       if (auto fallback = image->fallback) {
         withFallback(ImageLikeModel(ExtensionImageModel{.source = *fallback}));
@@ -201,39 +211,39 @@ public:
 
         if (url.scheme() == "https" || url.scheme() == "http") {
           setType(OmniIconType::Http);
-          setName(image->source.split("://").at(1));
+          setName(source.split("://").at(1));
           return;
         }
       }
 
-      if (isEmoji(image->source)) {
+      if (isEmoji(source)) {
         setType(OmniIconType::Emoji);
-        setName(image->source);
+        setName(source);
         return;
       }
 
-      if (QFile(":icons/" + image->source + ".svg").exists()) {
+      if (QFile(":icons/" + source + ".svg").exists()) {
         setType(OmniIconType::Builtin);
         setFill(image->tintColor.value_or(SemanticColor::TextPrimary));
-        setName(image->source);
+        setName(source);
         return;
       }
 
-      if (QFile(image->source).exists()) {
+      if (QFile(source).exists()) {
         setType(OmniIconType::Local);
-        setName(image->source);
+        setName(source);
         return;
       }
 
-      if (auto resolved = RelativeAssetResolver::instance()->resolve(image->source.toStdString())) {
+      if (auto resolved = RelativeAssetResolver::instance()->resolve(source.toStdString())) {
         setType(OmniIconType::Local);
         setName(resolved->c_str());
         return;
       }
 
-      if (!QIcon::fromTheme(image->source).isNull()) {
+      if (!QIcon::fromTheme(source).isNull()) {
         setType(OmniIconType::System);
-        setName(image->source);
+        setName(source);
         return;
       }
     }

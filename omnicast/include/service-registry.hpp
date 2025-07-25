@@ -8,6 +8,7 @@
 #include "extension/manager/extension-manager.hpp"
 #include "font-service.hpp"
 #include "services/emoji-service/emoji-service.hpp"
+#include "services/extension-registry/extension-registry.hpp"
 #include "services/files-service/file-service.hpp"
 #include "services/local-storage/local-storage-service.hpp"
 #include "omni-command-db.hpp"
@@ -44,6 +45,7 @@ class ServiceRegistry : public QObject {
   std::unique_ptr<CalculatorService> m_calculatorService;
   std::unique_ptr<FileService> m_fileService;
   std::unique_ptr<RaycastStoreService> m_raycastStoreService;
+  std::unique_ptr<ExtensionRegistry> m_extensionRegistry;
 
 public:
   static ServiceRegistry *instance() {
@@ -70,6 +72,7 @@ public:
   auto UI() const { return m_uiController.get(); }
   auto fileService() const { return m_fileService.get(); }
   auto raycastStore() const { return m_raycastStoreService.get(); }
+  auto extensionRegistry() const { return m_extensionRegistry.get(); }
 
   auto setUI(std::unique_ptr<UIController> controller) { m_uiController = std::move(controller); }
   auto setRootItemManager(std::unique_ptr<RootItemManager> manager) {
@@ -84,6 +87,9 @@ public:
   }
   auto setCalculatorService(std::unique_ptr<CalculatorService> service) {
     m_calculatorService = std::move(service);
+  }
+  auto setExtensionRegistry(std::unique_ptr<ExtensionRegistry> service) {
+    m_extensionRegistry = std::move(service);
   }
   auto setFileService(std::unique_ptr<FileService> service) { m_fileService = std::move(service); }
   void setEmojiService(std::unique_ptr<EmojiService> service) { m_emojiService = std::move(service); }

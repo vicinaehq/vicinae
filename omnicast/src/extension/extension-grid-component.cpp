@@ -1,7 +1,7 @@
 #include "extension/extension-grid-component.hpp"
 #include "extend/grid-model.hpp"
 #include "extension/extension-view.hpp"
-#include "service-registry.hpp"
+#include "ui/grid-item-content-widget.hpp"
 #include "ui/omni-list.hpp"
 
 static const std::chrono::milliseconds THROTTLE_DEBOUNCE_DURATION(300);
@@ -61,7 +61,7 @@ void ExtensionGridComponent::render(const RenderModel &baseModel) {
     }
   }
 
-  // if (isVisible()) ui->setLoading(newModel.isLoading);
+  setLoading(newModel.isLoading);
 
   // if (newModel.dirty) {
   OmniList::SelectionPolicy policy = OmniList::SelectFirst;
@@ -74,7 +74,8 @@ void ExtensionGridComponent::render(const RenderModel &baseModel) {
     policy = OmniList::PreserveSelection;
   }
 
-  m_list->setColumns(newModel.columns);
+  m_list->setColumns(newModel.columns.value_or(1));
+  m_list->setInset(newModel.inset.value_or(GridItemContentWidget::Inset::Small));
   m_list->setModel(newModel.items, policy);
 
   if (!newModel.searchText) {

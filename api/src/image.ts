@@ -1,6 +1,6 @@
 import { Color } from "./color";
 
-export type SerializedImageLike = Image | { fileIcon: string; }
+export type SerializedImageLike = Image | { fileIcon: string; } | { light: URL | Image.Asset, dark: URL | Image.Asset };
 
 export type FileIcon = {
 	fileIcon: string;
@@ -21,7 +21,8 @@ export namespace Image {
 	export type ThemedSource = { light: URL | Asset, dark: URL | Asset };
 	export type Fallback = Asset | ThemedSource;
 	export type Source = URL | Asset | ThemedSource;
-	export type ImageLike = URL | Image.Asset |  FileIcon | Image;
+	export type ImageLike = URL | Image.Asset |  FileIcon | Image | ThemedImage;
+	export type ThemedImage = { light: URL | Asset, dark: URL | Asset };
 
 	export enum Mask {
 		Circle = 'circle',

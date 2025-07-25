@@ -225,8 +225,8 @@ private:
   void indexItem(const std::shared_ptr<RootItem> &item);
   void rebuildTrie();
   void reloadProviders();
-  RootItem *findItemById(const QString &id);
-  RootProvider *findProviderById(const QString &id);
+  RootItem *findItemById(const QString &id) const;
+  RootProvider *findProviderById(const QString &id) const;
 
 public:
   RootItemManager(OmniDatabase &db) : m_db(db) {}
@@ -252,7 +252,7 @@ public:
   /**
    * Merge the item preferences with the provider preferences.
    */
-  std::vector<Preference> getMergedItemPreferences(const QString &rootItemId);
+  std::vector<Preference> getMergedItemPreferences(const QString &rootItemId) const;
   QJsonObject getPreferenceValues(const QString &id) const;
   RootItemMetadata itemMetadata(const QString &id) const;
   int maxFallbackPosition();

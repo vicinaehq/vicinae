@@ -19,7 +19,7 @@ OmniIconUrl Extension::iconUrl() const {
 
 QString Extension::id() const { return m_manifest.id; }
 
-QString Extension::name() const { return m_manifest.name; }
+QString Extension::name() const { return m_manifest.title; }
 
 std::filesystem::path Extension::assetDirectory() const { return m_manifest.path / "assets"; }
 
@@ -39,7 +39,7 @@ Extension::Extension(const ExtensionManifest &manifest) : m_manifest(manifest) {
 
     command->setExtensionId(m_manifest.id);
     command->setAssetPath(assetDirectory());
-    command->setExtensionTitle(m_manifest.name);
+    command->setExtensionTitle(m_manifest.title);
     command->setExtensionIcon(m_manifest.icon);
     command->setExtensionPreferences(m_manifest.preferences);
     m_commands.emplace_back(command);

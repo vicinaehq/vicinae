@@ -23778,7 +23778,10 @@ var createHostConfig = (hostCtx, callback) => {
     supportsPersistence: false,
     supportsHydration: false,
     createInstance(type, props, root, ctx3, handle) {
-      const { children, key, ...rest } = props;
+      let { children, key, ...rest } = props;
+      if (Array.isArray(children)) {
+        children = children.filter(Boolean);
+      }
       return {
         id: Symbol(type),
         type,
@@ -23819,7 +23822,7 @@ var createHostConfig = (hostCtx, callback) => {
           changes.push(key, newValue);
         }
       }
-      return changes;
+      return changes.length > 0 ? changes : null;
     },
     shouldSetTextContent() {
       return false;
@@ -24024,6 +24027,7 @@ __export(src_exports, {
   Icon: () => Icon,
   Image: () => Image,
   Keyboard: () => Keyboard,
+  LaunchType: () => LaunchType,
   List: () => List,
   ListAccessory: () => ListAccessory,
   LocalStorage: () => LocalStorage,
@@ -28843,15 +28847,12 @@ var Bus = class {
     }
     const resData = res.value[category]?.[requestId];
     if (!resData) return Err(Error(`Invalid response for request of type ${endpoint}: ${JSON.stringify(res, null, 2)}`));
-    console.error(`Got valid response for ${endpoint}`);
     return Ok(resData);
   }
   handleSafeMessage(message) {
     if (message.response) {
-      console.log("got response response", message.response.requestId);
       const request = this.safeRequestMap.get(message.response.requestId);
       if (!request) {
-        console.error(`Received response for unknown request ${message.response.requestId}`);
         return;
       }
       this.requestMap.delete(message.response.requestId);
@@ -28860,7 +28861,6 @@ var Bus = class {
     }
     if (message.event) {
       const { id, generic } = message.event;
-      console.error("got event with id", id);
       if (generic) {
         const listeners = this.listEventListeners(id);
         const args = JSON.parse(generic.json);
@@ -29140,7 +29140,13 @@ var List = Object.assign(ListRoot, {
 var import_react3 = __toESM(require_react());
 var import_crypto3 = require("crypto");
 var import_jsx_runtime6 = __toESM(require_jsx_runtime());
-var GridRoot = ({ onSearchTextChange, searchBarAccessory, onSelectionChange, children, actions, inset = "small" /* Small */, fit = "contain" /* Contain */, aspectRatio = "1", ...props }) => {
+var GridInset = /* @__PURE__ */ ((GridInset2) => {
+  GridInset2["Small"] = "small";
+  GridInset2["Medium"] = "medium";
+  GridInset2["Large"] = "large";
+  return GridInset2;
+})(GridInset || {});
+var GridRoot = ({ onSearchTextChange, searchBarAccessory, onSelectionChange, children, actions, inset, fit = "contain" /* Contain */, aspectRatio = "1", ...props }) => {
   const searchTextChangeHandler = useEventListener(onSearchTextChange);
   const selectionChangeHandler = useEventListener(onSelectionChange);
   if (typeof props.enableFiltering === "boolean" && typeof props.filtering === "undefined") {
@@ -29174,8 +29180,16 @@ var GridItem = ({ detail, actions, keywords, ...props }) => {
   const isColor = (content) => {
     return !!content["color"];
   };
+  const isDataWithTooltip = (content) => {
+    return !!content["value"];
+  };
   if (isColor(props.content)) {
     nativeProps.content = { color: props.content.color };
+  } else if (isDataWithTooltip(props.content)) {
+    nativeProps.content = {
+      value: serializeImageLike(props.content.value),
+      tooltip: props.content.tooltip
+    };
   } else {
     nativeProps.content = serializeImageLike(props.content);
   }
@@ -29184,10 +29198,11 @@ var GridItem = ({ detail, actions, keywords, ...props }) => {
     actions
   ] });
 };
-var GridSection = ({ fit = "contain" /* Contain */, aspectRatio = "1", inset = "small" /* Small */, ...props }) => {
+var GridSection = ({ fit = "contain" /* Contain */, aspectRatio = "1", inset, ...props }) => {
   const nativeProps = {
     fit,
     aspectRatio,
+    inset,
     ...props
   };
   return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("grid-section", { ...nativeProps });
@@ -29199,6 +29214,7 @@ var Grid = Object.assign(GridRoot, {
   Section: GridSection,
   EmptyView,
   Dropdown,
+  Inset: GridInset,
   Item: Object.assign(GridItem, {
     Accessory: GridAccessory
   })
@@ -29221,8 +29237,10 @@ var ActionPanelRoot = (props) => {
   return /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("action-panel", { ...nativeProps });
 };
 var ActionPanelSection = (props) => {
-  const nativeProps = props;
-  return /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("action-panel-section", { ...nativeProps });
+  const nativeProps = {
+    title: props.title
+  };
+  return /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("action-panel-section", { ...nativeProps, children: props.children });
 };
 var ActionPannelSubmenu = ({ icon, children, onOpen, onSearchTextChange, ...props }) => {
   const onSearchTextChangeHandler = useEventListener(onSearchTextChange);
@@ -29327,17 +29345,28 @@ var useNavigation = () => {
 
 // ../api/src/clipboard.ts
 var Clipboard = {
+  mapContent(content) {
+    let ct = ClipboardContent.create();
+    if (typeof content != "object") {
+      ct.text = `${content}`;
+    } else {
+      if (content["file"]) {
+        ct.path = { path: content["file"] };
+      } else if (content["html"]) {
+        ct.html = { html: content["html"], text: content["text"] };
+      } else {
+        ct.text = content["text"];
+      }
+    }
+    return ct;
+  },
   async copy(text, options = {}) {
-    let content = typeof text === "object" ? text : { text: `${text}` };
-    await bus.request("clipboard.copy", {
-      content,
-      options
+    await bus.turboRequest("clipboard.copy", {
+      content: this.mapContent(text),
+      options: { concealed: options.concealed ?? false }
     });
   },
   async paste(content) {
-    await bus.request("clipboard.paste", {
-      content
-    });
   },
   async read(options) {
     const res = await bus.request("clipboard.read", {
@@ -29352,9 +29381,6 @@ var Clipboard = {
     return res.data.content;
   },
   async clear(text) {
-    await bus.request("clipboard.clear", {
-      text
-    });
   }
 };
 
@@ -29829,9 +29855,22 @@ var CopyToClipboard = ({
   ...props
 }) => {
   return /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(ActionRoot, { title, ...props, icon: "copy-clipboard" /* CopyClipboard */, onAction: async () => {
-    await Clipboard.copy(content, { concealed });
+    Clipboard.copy(content, { concealed });
     closeMainWindow();
     onCopy?.(content);
+  } });
+};
+var Paste = ({
+  title = "Paste to active window",
+  icon = "copy-clipboard" /* CopyClipboard */,
+  content,
+  onPaste,
+  ...props
+}) => {
+  return /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(ActionRoot, { title, ...props, icon: "copy-clipboard" /* CopyClipboard */, onAction: async () => {
+    Clipboard.paste(content);
+    closeMainWindow();
+    onPaste?.(content);
   } });
 };
 var Open = ({ target, app, ...props }) => {
@@ -29871,6 +29910,7 @@ var Action = Object.assign(ActionRoot, {
   CopyToClipboard,
   Push,
   Open,
+  Paste,
   SubmitForm,
   OpenInBrowser,
   Style: {
@@ -30038,6 +30078,11 @@ var Keyboard = {
 };
 
 // ../api/src/environment.ts
+var LaunchType = /* @__PURE__ */ ((LaunchType2) => {
+  LaunchType2["UserInitiated"] = "userInitiated";
+  LaunchType2["Background"] = "background";
+  return LaunchType2;
+})(LaunchType || {});
 var environment = {};
 
 // ../api/src/cache.ts
@@ -30524,11 +30569,9 @@ var ErrorBoundary = class extends React5.Component {
   render() {
     const { error } = this.state;
     if (error) {
-      console.error(`FUCK THE ERROR! ${error}`);
-      return null;
-    } else {
-      return /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(import_jsx_runtime13.Fragment, { children: this.props.children });
+      bus.emitCrash(error);
     }
+    return /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(import_jsx_runtime13.Fragment, { children: this.props.children });
   }
 };
 var App = ({ component: Component2, launchProps }) => {
@@ -30543,7 +30586,7 @@ var loadEnviron = () => {
   environment.commandMode = import_worker_threads3.workerData.commandMode;
   environment.supportPath = "/tmp";
   environment.raycastVersion = "1.0.0";
-  environment.launchType = {};
+  environment.launchType = "userInitiated" /* UserInitiated */;
 };
 var loadView = async () => {
   const module2 = await import(import_worker_threads3.workerData.entrypoint);
@@ -36489,7 +36532,6 @@ var Omnicast = class {
         console.error(`worker is online`);
       });
       worker.on("message", (buf) => {
-        console.error(buf);
         try {
           const { event, request: request2 } = ExtensionMessage2.decode(buf);
           if (request2) {
@@ -36546,7 +36588,6 @@ Please file a bug report.` });
   }
   async routeMessage(message) {
     const { managerRequest, extensionEvent, extensionResponse } = message;
-    console.error(JSON.stringify({ message }, null, 2));
     if (managerRequest) {
       this.handleManagerRequest(managerRequest);
     }
@@ -36569,11 +36610,9 @@ Please file a bug report.` });
     while (this.currentMessage.data.length >= 4) {
       const length = this.currentMessage.data.readUInt32BE();
       const isComplete = this.currentMessage.data.length - 4 >= length;
-      console.error("read message: length", length);
       if (!isComplete) return;
       const packet = this.currentMessage.data.subarray(4, length + 4);
       const message = this.parseMessage(packet);
-      console.error("routing message");
       this.routeMessage(message);
       this.currentMessage.data = this.currentMessage.data.subarray(length + 4);
     }

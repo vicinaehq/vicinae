@@ -6,6 +6,7 @@ omnicast: configure
 .PHONY: omnicast
 
 extension-manager:
+	cd api && tsc --outDir dist
 	cd extension-manager && npm run build
 	cp extension-manager/dist/runtime.js omnicast/assets/extension-runtime.js
 

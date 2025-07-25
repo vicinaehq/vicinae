@@ -41,7 +41,7 @@ export declare namespace Grid {
 			detail?: React.ReactNode;
 			keywords?: string[];
 			icon?: ImageLike;
-			content: Image.ImageLike | { color: ColorLike };
+			content: Image.ImageLike | { color: ColorLike } | { value: Image.ImageLike, tooltip?: string };
 			id?: string;
 			subtitle?: string;
 			actions?: ReactNode;
@@ -83,7 +83,7 @@ type GridSectionProps = SectionConfig & {
 };
 
 const GridRoot: React.FC<GridProps> = 
-	({ onSearchTextChange, searchBarAccessory, onSelectionChange, children, actions, inset = GridInset.Small, fit = GridFit.Contain, aspectRatio = '1', ...props }) => {
+	({ onSearchTextChange, searchBarAccessory, onSelectionChange, children, actions, inset, fit = GridFit.Contain, aspectRatio = '1', ...props }) => {
 	const searchTextChangeHandler = useEventListener(onSearchTextChange);
 	const selectionChangeHandler = useEventListener(onSelectionChange);
 
@@ -116,9 +116,17 @@ const GridItem: React.FC<Grid.Item.Props> = ({ detail, actions, keywords, ...pro
 	const isColor = (content: Grid.Item.Props['content']): content is { color: ColorLike } => {
 		return !!content['color'];
 	}
+	const isDataWithTooltip = (content: Grid.Item.Props['content']): content is { value: ImageLike, tooltip?: string } => {
+		return !!content['value'];
+	}
 
 	if (isColor(props.content)) {
 		nativeProps.content = { color: props.content.color };
+	} else if (isDataWithTooltip(props.content)) {
+		nativeProps.content = {
+			value: serializeImageLike(props.content.value),
+			tooltip: props.content.tooltip
+		}
 	} else {
 		nativeProps.content = serializeImageLike(props.content);
 	}
@@ -131,10 +139,13 @@ const GridItem: React.FC<Grid.Item.Props> = ({ detail, actions, keywords, ...pro
 	);
 }
 
-const GridSection: React.FC<Grid.Section.Props> = ({ fit = GridFit.Contain, aspectRatio = '1', inset = GridInset.Small, ...props }) => {
+
+
+const GridSection: React.FC<Grid.Section.Props> = ({ fit = GridFit.Contain, aspectRatio = '1', inset, ...props }) => {
 	const nativeProps: React.JSX.IntrinsicElements['grid-section'] = {
 		fit,
 		aspectRatio,
+		inset,
 		...props
 	}
 
@@ -149,6 +160,7 @@ export const Grid = Object.assign(GridRoot, {
 	Section: GridSection,
 	EmptyView,
 	Dropdown,
+	Inset: GridInset,
 	Item: Object.assign(GridItem, {
 		Accessory: GridAccessory
 	}),

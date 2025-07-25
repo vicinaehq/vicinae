@@ -21,11 +21,15 @@ export type ActionPanelSectionProps = {
 	children?: ReactNode;
 };
 
-const ActionPanelSection: React.FC<ActionPanelSectionProps> = (props) => {
-	const nativeProps: React.JSX.IntrinsicElements['action-panel-section'] = props;
+const ActionPanelSection: React.FC<React.PropsWithChildren<ActionPanelSectionProps>> = (props) => {
+	const nativeProps: React.JSX.IntrinsicElements['action-panel-section'] = {
+		title: props.title,
+	}
 
 	return (
-		<action-panel-section {...nativeProps} />
+		<action-panel-section {...nativeProps}>
+			{props.children}
+		</action-panel-section>
 	);
 }
 

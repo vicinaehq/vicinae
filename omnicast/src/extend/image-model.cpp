@@ -10,9 +10,18 @@ ImageLikeModel ImageModelParser::parse(const QJsonObject &imageLike) {
 
   if (imageLike.contains("source")) {
     ExtensionImageModel model;
-    auto source = imageLike.value("source").toString();
+    auto source = imageLike.value("source");
 
-    model.source = imageLike.value("source").toString();
+    if (source.isObject()) {
+      auto obj = source.toObject();
+
+      model.source = ThemedIconSource{
+          .light = obj.value("light").toString(),
+          .dark = obj.value("dark").toString(),
+      };
+    } else {
+      model.source = imageLike.value("source").toString();
+    }
 
     if (imageLike.contains("fallback")) { model.fallback = imageLike.value("fallback").toString(); }
 
