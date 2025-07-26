@@ -1,7 +1,7 @@
 BUILD_DIR := build
 
 omnicast: configure
-	cmake --build $(BUILD_DIR) -j64
+	cmake --build $(BUILD_DIR)
 
 .PHONY: omnicast
 
@@ -25,7 +25,7 @@ format:
 .PHONY: format
 
 configure:
-	PARALLEL_LEVEL=$(shell nproc) cmake -B $(BUILD_DIR)
+	cmake -G Ninja -B $(BUILD_DIR)
 .PHONY: configure
 
 gen-emoji:
