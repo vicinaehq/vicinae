@@ -159,6 +159,6 @@ public:
 
 signals:
   void managerResponse(const proto::ext::ManagerResponse &res);
-  void extensionRequest(ExtensionRequest &req);
+  void extensionRequest(ExtensionRequest *req);
   void extensionEvent(const ExtensionEvent &event);
 };

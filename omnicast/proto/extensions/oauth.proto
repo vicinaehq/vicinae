@@ -1,0 +1,40 @@
+syntax = "proto3";
+import "google/protobuf/struct.proto";
+
+package proto.ext.oauth;
+
+enum RedirectMethod {
+  Web = 0;
+  App = 1;
+  AppURI = 2;
+};
+
+message PKCEClientOptions {
+  optional string id = 1;
+  string name = 2;
+  // we need to implement image like schema
+  string icon = 3;
+  string description = 4;
+};
+
+message AuthorizeRequest {
+  PKCEClientOptions client = 1;
+  string url = 2;
+};
+
+message AuthorizeResponse {
+  string code = 1;
+};
+
+message Request {
+  oneof payload {
+    AuthorizeRequest authorize = 1;
+  };
+};
+
+message Response {
+  oneof payload {
+    AuthorizeResponse authorize = 1;
+  };
+};
+

@@ -137,7 +137,7 @@ ExtensionManager::ExtensionManager(OmniCommandDatabase &commandDb) : commandDb(c
           [this](const proto::ext::QualifiedExtensionEvent &proto) { emit extensionEvent(proto); });
 
   connect(&bus, &Bus::extensionRequest, this, [this](const proto::ext::QualifiedExtensionRequest &req) {
-    ExtensionRequest request(bus, req);
+    auto request = new ExtensionRequest(bus, req);
     emit extensionRequest(request);
   });
 }

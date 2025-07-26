@@ -15,6 +15,7 @@
 #include "omni-database.hpp"
 #include "quicklist-database.hpp"
 #include "root-extension-manager.hpp"
+#include "services/oauth/oauth-service.hpp"
 #include "services/raycast/raycast-store.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "services/toast/toast-service.hpp"
@@ -46,6 +47,7 @@ class ServiceRegistry : public QObject {
   std::unique_ptr<FileService> m_fileService;
   std::unique_ptr<RaycastStoreService> m_raycastStoreService;
   std::unique_ptr<ExtensionRegistry> m_extensionRegistry;
+  std::unique_ptr<OAuthService> m_oauthService;
 
 public:
   static ServiceRegistry *instance() {
@@ -73,6 +75,7 @@ public:
   auto fileService() const { return m_fileService.get(); }
   auto raycastStore() const { return m_raycastStoreService.get(); }
   auto extensionRegistry() const { return m_extensionRegistry.get(); }
+  auto oauthService() const { return m_oauthService.get(); }
 
   auto setUI(std::unique_ptr<UIController> controller) { m_uiController = std::move(controller); }
   auto setRootItemManager(std::unique_ptr<RootItemManager> manager) {
@@ -81,6 +84,8 @@ public:
   auto setRaycastStore(std::unique_ptr<RaycastStoreService> service) {
     m_raycastStoreService = std::move(service);
   }
+  auto setOAuthService(std::unique_ptr<OAuthService> service) { m_oauthService = std::move(service); }
+
   void setConfig(std::unique_ptr<ConfigService> cfg) { m_config = std::move(cfg); }
   void setBookmarkService(std::unique_ptr<BookmarkService> service) {
     m_bookmarkService = std::move(service);

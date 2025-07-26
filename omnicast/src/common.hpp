@@ -187,9 +187,11 @@ class AbstractArgumentProvider {
 class NavigationController;
 class CommandController;
 class ServiceRegistry;
+class OverlayController;
 
 struct ApplicationContext {
   std::unique_ptr<NavigationController> navigation;
   std::unique_ptr<CommandController> command;
+  std::unique_ptr<OverlayController> overlay;
   ServiceRegistry *services;
 };

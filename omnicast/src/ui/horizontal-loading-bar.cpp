@@ -66,7 +66,7 @@ HorizontalLoadingBar::HorizontalLoadingBar(QWidget *parent)
   using namespace std::chrono_literals;
 
   setFixedHeight(1);
-  m_loadingDebounce.setInterval(200ms);
+  m_loadingDebounce.setInterval(0ms);
   m_loadingDebounce.setSingleShot(true);
 
   connect(&m_loadingDebounce, &QTimer::timeout, this, [this]() {

@@ -14,38 +14,38 @@ Stack &Stack::add(QWidget *widget, int stretch, Qt::Alignment align) {
   return *this;
 }
 
-Stack &Stack::addText(const QString &text, SemanticColor color, TextSize size) {
+Stack &Stack::addText(const QString &text, SemanticColor color, TextSize size, Qt::Alignment align) {
   auto typo = new TypographyWidget;
 
   typo->setText(text);
   typo->setColor(color);
   typo->setSize(size);
-  add(typo);
+  add(typo, 0, align);
 
   return *this;
 }
-Stack &Stack::addTitle(const QString &title, SemanticColor color) {
-  return addText(title, color, TextSize::TextTitle);
+Stack &Stack::addTitle(const QString &title, SemanticColor color, Qt::Alignment align) {
+  return addText(title, color, TextSize::TextTitle, align);
 }
 
-Stack &Stack::addIcon(const OmniIconUrl &url, QSize size) {
+Stack &Stack::addIcon(const OmniIconUrl &url, QSize size, Qt::Alignment align) {
   auto icon = new Omnimg::ImageWidget;
 
   if (!size.isEmpty()) icon->setFixedSize(size);
   icon->setUrl(url);
-  add(icon);
+  add(icon, 0, align);
 
   return *this;
 }
 
-Stack &Stack::addParagraph(const QString &text, SemanticColor color, TextSize size) {
+Stack &Stack::addParagraph(const QString &text, SemanticColor color, TextSize size, Qt::Alignment align) {
   auto typo = new TypographyWidget;
 
   typo->setText(text);
   typo->setWordWrap(true);
   typo->setColor(color);
   typo->setSize(size);
-  add(typo);
+  add(typo, 0, align);
 
   return *this;
 }

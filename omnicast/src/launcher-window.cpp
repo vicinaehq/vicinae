@@ -9,9 +9,11 @@
 #include <qwidget.h>
 #include "omni-icon.hpp"
 #include "omnicast.hpp"
+#include "overlay-controller/overlay-controller.hpp"
 #include "root-command.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/dialog.hpp"
+#include "ui/overlay/overlay.hpp"
 
 LauncherWindow::LauncherWindow(ApplicationContext &ctx)
     : m_ctx(ctx), m_header(new GlobalHeader(*m_ctx.navigation)) {
@@ -40,6 +42,19 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx)
             }
           });
 
+  connect(m_ctx.overlay.get(), &OverlayController::currentOverlayDismissed, this, [this]() {
+    if (auto widget = m_currentOverlayWrapper->widget(0)) { m_currentOverlayWrapper->removeWidget(widget); }
+
+    m_currentView->setCurrentWidget(m_mainWidget);
+    m_header->input()->setFocus();
+  });
+
+  connect(m_ctx.overlay.get(), &OverlayController::currentOverlayChanged, this, [this](OverlayView *overlay) {
+    m_currentOverlayWrapper->addWidget(overlay);
+    m_currentView->setCurrentWidget(m_currentOverlayWrapper);
+    overlay->setFocus();
+  });
+
   connect(m_ctx.navigation.get(), &NavigationController::actionsChanged, this,
           [this](auto &&actions) { m_actionPanel->setNewActions(actions); });
 
@@ -49,14 +64,19 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx)
   ctx.navigation->pushView(new RootSearchView);
   ctx.navigation->setNavigationIcon(BuiltinOmniIconUrl("omnicast"));
 
-  connect(m_ctx.navigation.get(), &NavigationController::headerVisiblityChanged, m_header,
-          &GlobalHeader::setVisible);
+  connect(m_ctx.navigation.get(), &NavigationController::headerVisiblityChanged, this, [this](bool value) {
+    if (m_currentOverlayWrapper->isVisible()) return;
+    m_header->setVisible(value);
+  });
+
   connect(m_ctx.navigation.get(), &NavigationController::searchVisibilityChanged, [this](bool visible) {
     m_header->input()->setVisible(visible);
-    if (visible) m_header->input()->setFocus();
+    if (visible && !m_currentOverlayWrapper->isVisible()) m_header->input()->setFocus();
   });
-  connect(m_ctx.navigation.get(), &NavigationController::statusBarVisiblityChanged, m_bar,
-          &GlobalBar::setVisible);
+  connect(m_ctx.navigation.get(), &NavigationController::statusBarVisiblityChanged, this, [this](bool value) {
+    if (m_currentOverlayWrapper->isVisible()) return;
+    m_bar->setVisible(value);
+  });
 }
 
 void LauncherWindow::setupUI() {
@@ -174,15 +194,17 @@ void LauncherWindow::paintEvent(QPaintEvent *event) {
 
 QWidget *LauncherWindow::createWidget() const {
   auto layout = new QVBoxLayout;
-  auto widget = new QWidget;
 
   layout->setContentsMargins(0, 0, 0, 0);
   layout->setSpacing(0);
   layout->addWidget(m_header);
   layout->addWidget(m_currentViewWrapper, 1);
-  layout->addWidget(new HDivider);
+  layout->addWidget(m_barDivider);
   layout->addWidget(m_bar, 1);
-  widget->setLayout(layout);
+  m_mainWidget->setLayout(layout);
 
-  return widget;
+  m_currentView->addWidget(m_mainWidget);
+  m_currentView->addWidget(m_currentOverlayWrapper);
+
+  return m_currentView;
 }

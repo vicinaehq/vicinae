@@ -10,6 +10,7 @@
 #include "extension/requests/storage-request-router.hpp"
 #include "extension/requests/ui-request-router.hpp"
 #include "proto/extension.pb.h"
+#include "proto/oauth.pb.h"
 #include "timer.hpp"
 #include <google/protobuf/struct.pb.h>
 #include <memory>
@@ -34,9 +35,11 @@ class ExtensionCommandRuntime : public CommandContext {
   QString m_sessionId;
 
   proto::ext::extension::Response *makeErrorResponse(const QString &errorText);
-  proto::ext::extension::Response *dispatchRequest(const ExtensionRequest &request);
-  void handleRequest(ExtensionRequest &request);
+  proto::ext::extension::Response *dispatchRequest(ExtensionRequest *request);
+  void handleRequest(ExtensionRequest *request);
   void handleCrash(const proto::ext::extension::CrashEventData &crash);
+
+  void handleOAuth(ExtensionRequest *request, const proto::ext::oauth::Request &req);
 
   void handleGenericEvent(const proto::ext::extension::GenericEventData &event) {}
 

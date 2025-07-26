@@ -68,11 +68,12 @@ public:
 
   Stack &add(QWidget *widget, int stretch = 0, Qt::Alignment align = {});
   Stack &addText(const QString &text, SemanticColor color = SemanticColor::TextPrimary,
-                 TextSize size = TextSize::TextRegular);
-  Stack &addTitle(const QString &title, SemanticColor color = SemanticColor::TextPrimary);
-  Stack &addIcon(const OmniIconUrl &url, QSize size = {20, 20});
+                 TextSize size = TextSize::TextRegular, Qt::Alignment align = {});
+  Stack &addTitle(const QString &title, SemanticColor color = SemanticColor::TextPrimary,
+                  Qt::Alignment align = {});
+  Stack &addIcon(const OmniIconUrl &url, QSize size = {20, 20}, Qt::Alignment align = {});
   Stack &addParagraph(const QString &text, SemanticColor color = SemanticColor::TextPrimary,
-                      TextSize size = TextSize::TextRegular);
+                      TextSize size = TextSize::TextRegular, Qt::Alignment align = {});
 
   Stack &divided(int n);
   int divided() const;

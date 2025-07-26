@@ -25755,6 +25755,330 @@ function isSet3(value) {
   return value !== null && value !== void 0;
 }
 
+// ../api/src/proto/oauth.ts
+function createBasePKCEClientOptions() {
+  return { id: void 0, name: "", icon: "", description: "" };
+}
+var PKCEClientOptions = {
+  encode(message, writer = new BinaryWriter()) {
+    if (message.id !== void 0) {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.name !== "") {
+      writer.uint32(18).string(message.name);
+    }
+    if (message.icon !== "") {
+      writer.uint32(26).string(message.icon);
+    }
+    if (message.description !== "") {
+      writer.uint32(34).string(message.description);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBasePKCEClientOptions();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+          message.name = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+          message.icon = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+          message.description = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return {
+      id: isSet4(object.id) ? globalThis.String(object.id) : void 0,
+      name: isSet4(object.name) ? globalThis.String(object.name) : "",
+      icon: isSet4(object.icon) ? globalThis.String(object.icon) : "",
+      description: isSet4(object.description) ? globalThis.String(object.description) : ""
+    };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.id !== void 0) {
+      obj.id = message.id;
+    }
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    if (message.icon !== "") {
+      obj.icon = message.icon;
+    }
+    if (message.description !== "") {
+      obj.description = message.description;
+    }
+    return obj;
+  },
+  create(base) {
+    return PKCEClientOptions.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBasePKCEClientOptions();
+    message.id = object.id ?? void 0;
+    message.name = object.name ?? "";
+    message.icon = object.icon ?? "";
+    message.description = object.description ?? "";
+    return message;
+  }
+};
+function createBaseAuthorizeRequest() {
+  return { client: void 0, url: "" };
+}
+var AuthorizeRequest = {
+  encode(message, writer = new BinaryWriter()) {
+    if (message.client !== void 0) {
+      PKCEClientOptions.encode(message.client, writer.uint32(10).fork()).join();
+    }
+    if (message.url !== "") {
+      writer.uint32(18).string(message.url);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseAuthorizeRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.client = PKCEClientOptions.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+          message.url = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return {
+      client: isSet4(object.client) ? PKCEClientOptions.fromJSON(object.client) : void 0,
+      url: isSet4(object.url) ? globalThis.String(object.url) : ""
+    };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.client !== void 0) {
+      obj.client = PKCEClientOptions.toJSON(message.client);
+    }
+    if (message.url !== "") {
+      obj.url = message.url;
+    }
+    return obj;
+  },
+  create(base) {
+    return AuthorizeRequest.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseAuthorizeRequest();
+    message.client = object.client !== void 0 && object.client !== null ? PKCEClientOptions.fromPartial(object.client) : void 0;
+    message.url = object.url ?? "";
+    return message;
+  }
+};
+function createBaseAuthorizeResponse() {
+  return { code: "" };
+}
+var AuthorizeResponse = {
+  encode(message, writer = new BinaryWriter()) {
+    if (message.code !== "") {
+      writer.uint32(10).string(message.code);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseAuthorizeResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.code = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return { code: isSet4(object.code) ? globalThis.String(object.code) : "" };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.code !== "") {
+      obj.code = message.code;
+    }
+    return obj;
+  },
+  create(base) {
+    return AuthorizeResponse.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseAuthorizeResponse();
+    message.code = object.code ?? "";
+    return message;
+  }
+};
+function createBaseRequest3() {
+  return { authorize: void 0 };
+}
+var Request3 = {
+  encode(message, writer = new BinaryWriter()) {
+    if (message.authorize !== void 0) {
+      AuthorizeRequest.encode(message.authorize, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseRequest3();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.authorize = AuthorizeRequest.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return { authorize: isSet4(object.authorize) ? AuthorizeRequest.fromJSON(object.authorize) : void 0 };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.authorize !== void 0) {
+      obj.authorize = AuthorizeRequest.toJSON(message.authorize);
+    }
+    return obj;
+  },
+  create(base) {
+    return Request3.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseRequest3();
+    message.authorize = object.authorize !== void 0 && object.authorize !== null ? AuthorizeRequest.fromPartial(object.authorize) : void 0;
+    return message;
+  }
+};
+function createBaseResponse3() {
+  return { authorize: void 0 };
+}
+var Response3 = {
+  encode(message, writer = new BinaryWriter()) {
+    if (message.authorize !== void 0) {
+      AuthorizeResponse.encode(message.authorize, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseResponse3();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.authorize = AuthorizeResponse.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return { authorize: isSet4(object.authorize) ? AuthorizeResponse.fromJSON(object.authorize) : void 0 };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.authorize !== void 0) {
+      obj.authorize = AuthorizeResponse.toJSON(message.authorize);
+    }
+    return obj;
+  },
+  create(base) {
+    return Response3.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseResponse3();
+    message.authorize = object.authorize !== void 0 && object.authorize !== null ? AuthorizeResponse.fromPartial(object.authorize) : void 0;
+    return message;
+  }
+};
+function isSet4(value) {
+  return value !== null && value !== void 0;
+}
+
 // ../api/src/proto/google/protobuf/struct.ts
 function nullValueFromJSON(object) {
   switch (object) {
@@ -25913,8 +26237,8 @@ var Struct_FieldsEntry = {
   },
   fromJSON(object) {
     return {
-      key: isSet4(object.key) ? globalThis.String(object.key) : "",
-      value: isSet4(object?.value) ? object.value : void 0
+      key: isSet5(object.key) ? globalThis.String(object.key) : "",
+      value: isSet5(object?.value) ? object.value : void 0
     };
   },
   toJSON(message) {
@@ -26028,10 +26352,10 @@ var Value = {
   },
   fromJSON(object) {
     return {
-      nullValue: isSet4(object.nullValue) ? nullValueFromJSON(object.nullValue) : void 0,
-      numberValue: isSet4(object.numberValue) ? globalThis.Number(object.numberValue) : void 0,
-      stringValue: isSet4(object.stringValue) ? globalThis.String(object.stringValue) : void 0,
-      boolValue: isSet4(object.boolValue) ? globalThis.Boolean(object.boolValue) : void 0,
+      nullValue: isSet5(object.nullValue) ? nullValueFromJSON(object.nullValue) : void 0,
+      numberValue: isSet5(object.numberValue) ? globalThis.Number(object.numberValue) : void 0,
+      stringValue: isSet5(object.stringValue) ? globalThis.String(object.stringValue) : void 0,
+      boolValue: isSet5(object.boolValue) ? globalThis.Boolean(object.boolValue) : void 0,
       structValue: isObject(object.structValue) ? object.structValue : void 0,
       listValue: globalThis.Array.isArray(object.listValue) ? [...object.listValue] : void 0
     };
@@ -26173,7 +26497,7 @@ var ListValue = {
 function isObject(value) {
   return typeof value === "object" && value !== null;
 }
-function isSet4(value) {
+function isSet5(value) {
   return value !== null && value !== void 0;
 }
 
@@ -26248,7 +26572,7 @@ var GetRequest = {
     return message;
   },
   fromJSON(object) {
-    return { key: isSet5(object.key) ? globalThis.String(object.key) : "" };
+    return { key: isSet6(object.key) ? globalThis.String(object.key) : "" };
   },
   toJSON(message) {
     const obj = {};
@@ -26299,7 +26623,7 @@ var GetResponse = {
     return message;
   },
   fromJSON(object) {
-    return { value: isSet5(object?.value) ? object.value : void 0 };
+    return { value: isSet6(object?.value) ? object.value : void 0 };
   },
   toJSON(message) {
     const obj = {};
@@ -26398,8 +26722,8 @@ var SetRequest = {
   },
   fromJSON(object) {
     return {
-      key: isSet5(object.key) ? globalThis.String(object.key) : "",
-      value: isSet5(object?.value) ? object.value : void 0
+      key: isSet6(object.key) ? globalThis.String(object.key) : "",
+      value: isSet6(object?.value) ? object.value : void 0
     };
   },
   toJSON(message) {
@@ -26455,7 +26779,7 @@ var RemoveRequest = {
     return message;
   },
   fromJSON(object) {
-    return { key: isSet5(object.key) ? globalThis.String(object.key) : "" };
+    return { key: isSet6(object.key) ? globalThis.String(object.key) : "" };
   },
   toJSON(message) {
     const obj = {};
@@ -26703,8 +27027,8 @@ var ListResponse_ValuesEntry = {
   },
   fromJSON(object) {
     return {
-      key: isSet5(object.key) ? globalThis.String(object.key) : "",
-      value: isSet5(object?.value) ? object.value : void 0
+      key: isSet6(object.key) ? globalThis.String(object.key) : "",
+      value: isSet6(object?.value) ? object.value : void 0
     };
   },
   toJSON(message) {
@@ -26727,10 +27051,10 @@ var ListResponse_ValuesEntry = {
     return message;
   }
 };
-function createBaseRequest3() {
+function createBaseRequest4() {
   return { get: void 0, set: void 0, remove: void 0, clear: void 0, list: void 0 };
 }
-var Request3 = {
+var Request4 = {
   encode(message, writer = new BinaryWriter()) {
     if (message.get !== void 0) {
       GetRequest.encode(message.get, writer.uint32(10).fork()).join();
@@ -26752,7 +27076,7 @@ var Request3 = {
   decode(input, length) {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseRequest3();
+    const message = createBaseRequest4();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -26801,11 +27125,11 @@ var Request3 = {
   },
   fromJSON(object) {
     return {
-      get: isSet5(object.get) ? GetRequest.fromJSON(object.get) : void 0,
-      set: isSet5(object.set) ? SetRequest.fromJSON(object.set) : void 0,
-      remove: isSet5(object.remove) ? RemoveRequest.fromJSON(object.remove) : void 0,
-      clear: isSet5(object.clear) ? ClearRequest.fromJSON(object.clear) : void 0,
-      list: isSet5(object.list) ? ListRequest.fromJSON(object.list) : void 0
+      get: isSet6(object.get) ? GetRequest.fromJSON(object.get) : void 0,
+      set: isSet6(object.set) ? SetRequest.fromJSON(object.set) : void 0,
+      remove: isSet6(object.remove) ? RemoveRequest.fromJSON(object.remove) : void 0,
+      clear: isSet6(object.clear) ? ClearRequest.fromJSON(object.clear) : void 0,
+      list: isSet6(object.list) ? ListRequest.fromJSON(object.list) : void 0
     };
   },
   toJSON(message) {
@@ -26828,10 +27152,10 @@ var Request3 = {
     return obj;
   },
   create(base) {
-    return Request3.fromPartial(base ?? {});
+    return Request4.fromPartial(base ?? {});
   },
   fromPartial(object) {
-    const message = createBaseRequest3();
+    const message = createBaseRequest4();
     message.get = object.get !== void 0 && object.get !== null ? GetRequest.fromPartial(object.get) : void 0;
     message.set = object.set !== void 0 && object.set !== null ? SetRequest.fromPartial(object.set) : void 0;
     message.remove = object.remove !== void 0 && object.remove !== null ? RemoveRequest.fromPartial(object.remove) : void 0;
@@ -26840,10 +27164,10 @@ var Request3 = {
     return message;
   }
 };
-function createBaseResponse3() {
+function createBaseResponse4() {
   return { get: void 0, set: void 0, remove: void 0, clear: void 0, list: void 0 };
 }
-var Response3 = {
+var Response4 = {
   encode(message, writer = new BinaryWriter()) {
     if (message.get !== void 0) {
       GetResponse.encode(message.get, writer.uint32(10).fork()).join();
@@ -26865,7 +27189,7 @@ var Response3 = {
   decode(input, length) {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseResponse3();
+    const message = createBaseResponse4();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -26914,11 +27238,11 @@ var Response3 = {
   },
   fromJSON(object) {
     return {
-      get: isSet5(object.get) ? GetResponse.fromJSON(object.get) : void 0,
-      set: isSet5(object.set) ? SetResponse.fromJSON(object.set) : void 0,
-      remove: isSet5(object.remove) ? RemoveResponse.fromJSON(object.remove) : void 0,
-      clear: isSet5(object.clear) ? ClearResponse.fromJSON(object.clear) : void 0,
-      list: isSet5(object.list) ? ListResponse.fromJSON(object.list) : void 0
+      get: isSet6(object.get) ? GetResponse.fromJSON(object.get) : void 0,
+      set: isSet6(object.set) ? SetResponse.fromJSON(object.set) : void 0,
+      remove: isSet6(object.remove) ? RemoveResponse.fromJSON(object.remove) : void 0,
+      clear: isSet6(object.clear) ? ClearResponse.fromJSON(object.clear) : void 0,
+      list: isSet6(object.list) ? ListResponse.fromJSON(object.list) : void 0
     };
   },
   toJSON(message) {
@@ -26941,10 +27265,10 @@ var Response3 = {
     return obj;
   },
   create(base) {
-    return Response3.fromPartial(base ?? {});
+    return Response4.fromPartial(base ?? {});
   },
   fromPartial(object) {
-    const message = createBaseResponse3();
+    const message = createBaseResponse4();
     message.get = object.get !== void 0 && object.get !== null ? GetResponse.fromPartial(object.get) : void 0;
     message.set = object.set !== void 0 && object.set !== null ? SetResponse.fromPartial(object.set) : void 0;
     message.remove = object.remove !== void 0 && object.remove !== null ? RemoveResponse.fromPartial(object.remove) : void 0;
@@ -26956,7 +27280,7 @@ var Response3 = {
 function isObject2(value) {
   return typeof value === "object" && value !== null;
 }
-function isSet5(value) {
+function isSet6(value) {
   return value !== null && value !== void 0;
 }
 
@@ -27085,9 +27409,9 @@ var ShowToastRequest = {
   },
   fromJSON(object) {
     return {
-      id: isSet6(object.id) ? globalThis.String(object.id) : "",
-      title: isSet6(object.title) ? globalThis.String(object.title) : "",
-      style: isSet6(object.style) ? toastStyleFromJSON(object.style) : 0
+      id: isSet7(object.id) ? globalThis.String(object.id) : "",
+      title: isSet7(object.title) ? globalThis.String(object.title) : "",
+      style: isSet7(object.style) ? toastStyleFromJSON(object.style) : 0
     };
   },
   toJSON(message) {
@@ -27147,7 +27471,7 @@ var HideToastRequest = {
     return message;
   },
   fromJSON(object) {
-    return { id: isSet6(object.id) ? globalThis.String(object.id) : "" };
+    return { id: isSet7(object.id) ? globalThis.String(object.id) : "" };
   },
   toJSON(message) {
     const obj = {};
@@ -27209,8 +27533,8 @@ var UpdateToastRequest = {
   },
   fromJSON(object) {
     return {
-      id: isSet6(object.id) ? globalThis.String(object.id) : "",
-      title: isSet6(object.title) ? globalThis.String(object.title) : ""
+      id: isSet7(object.id) ? globalThis.String(object.id) : "",
+      title: isSet7(object.title) ? globalThis.String(object.title) : ""
     };
   },
   toJSON(message) {
@@ -27414,7 +27738,7 @@ var SetSearchTextRequest = {
     return message;
   },
   fromJSON(object) {
-    return { text: isSet6(object.text) ? globalThis.String(object.text) : "" };
+    return { text: isSet7(object.text) ? globalThis.String(object.text) : "" };
   },
   toJSON(message) {
     const obj = {};
@@ -27465,7 +27789,7 @@ var ShowHudRequest = {
     return message;
   },
   fromJSON(object) {
-    return { text: isSet6(object.text) ? globalThis.String(object.text) : "" };
+    return { text: isSet7(object.text) ? globalThis.String(object.text) : "" };
   },
   toJSON(message) {
     const obj = {};
@@ -27516,7 +27840,7 @@ var RenderRequest = {
     return message;
   },
   fromJSON(object) {
-    return { json: isSet6(object.json) ? globalThis.String(object.json) : "" };
+    return { json: isSet7(object.json) ? globalThis.String(object.json) : "" };
   },
   toJSON(message) {
     const obj = {};
@@ -27636,13 +27960,13 @@ var ConfirmAlertRequest = {
   },
   fromJSON(object) {
     return {
-      title: isSet6(object.title) ? globalThis.String(object.title) : "",
-      description: isSet6(object.description) ? globalThis.String(object.description) : "",
-      icon: isSet6(object.icon) ? globalThis.String(object.icon) : void 0,
-      dismissAction: isSet6(object.dismissAction) ? ConfirmAlertAction.fromJSON(object.dismissAction) : void 0,
-      primaryAction: isSet6(object.primaryAction) ? ConfirmAlertAction.fromJSON(object.primaryAction) : void 0,
-      rememberUserChoice: isSet6(object.rememberUserChoice) ? globalThis.Boolean(object.rememberUserChoice) : false,
-      handle: isSet6(object.handle) ? globalThis.String(object.handle) : ""
+      title: isSet7(object.title) ? globalThis.String(object.title) : "",
+      description: isSet7(object.description) ? globalThis.String(object.description) : "",
+      icon: isSet7(object.icon) ? globalThis.String(object.icon) : void 0,
+      dismissAction: isSet7(object.dismissAction) ? ConfirmAlertAction.fromJSON(object.dismissAction) : void 0,
+      primaryAction: isSet7(object.primaryAction) ? ConfirmAlertAction.fromJSON(object.primaryAction) : void 0,
+      rememberUserChoice: isSet7(object.rememberUserChoice) ? globalThis.Boolean(object.rememberUserChoice) : false,
+      handle: isSet7(object.handle) ? globalThis.String(object.handle) : ""
     };
   },
   toJSON(message) {
@@ -27729,8 +28053,8 @@ var ConfirmAlertAction = {
   },
   fromJSON(object) {
     return {
-      title: isSet6(object.title) ? globalThis.String(object.title) : "",
-      style: isSet6(object.style) ? confirmAlertActionStyleFromJSON(object.style) : 0
+      title: isSet7(object.title) ? globalThis.String(object.title) : "",
+      style: isSet7(object.style) ? confirmAlertActionStyleFromJSON(object.style) : 0
     };
   },
   toJSON(message) {
@@ -27753,7 +28077,7 @@ var ConfirmAlertAction = {
     return message;
   }
 };
-function createBaseRequest4() {
+function createBaseRequest5() {
   return {
     render: void 0,
     showToast: void 0,
@@ -27768,7 +28092,7 @@ function createBaseRequest4() {
     confirmAlert: void 0
   };
 }
-var Request4 = {
+var Request5 = {
   encode(message, writer = new BinaryWriter()) {
     if (message.render !== void 0) {
       RenderRequest.encode(message.render, writer.uint32(10).fork()).join();
@@ -27808,7 +28132,7 @@ var Request4 = {
   decode(input, length) {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseRequest4();
+    const message = createBaseRequest5();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -27899,17 +28223,17 @@ var Request4 = {
   },
   fromJSON(object) {
     return {
-      render: isSet6(object.render) ? RenderRequest.fromJSON(object.render) : void 0,
-      showToast: isSet6(object.showToast) ? ShowToastRequest.fromJSON(object.showToast) : void 0,
-      hideToast: isSet6(object.hideToast) ? HideToastRequest.fromJSON(object.hideToast) : void 0,
-      updateToast: isSet6(object.updateToast) ? UpdateToastRequest.fromJSON(object.updateToast) : void 0,
-      pushView: isSet6(object.pushView) ? PushViewRequest.fromJSON(object.pushView) : void 0,
-      popView: isSet6(object.popView) ? PopViewRequest.fromJSON(object.popView) : void 0,
-      clearSearch: isSet6(object.clearSearch) ? ClearSearchBarRequest.fromJSON(object.clearSearch) : void 0,
-      closeMainWindow: isSet6(object.closeMainWindow) ? CloseMainWindowRequest.fromJSON(object.closeMainWindow) : void 0,
-      showHud: isSet6(object.showHud) ? ShowHudRequest.fromJSON(object.showHud) : void 0,
-      setSearchText: isSet6(object.setSearchText) ? SetSearchTextRequest.fromJSON(object.setSearchText) : void 0,
-      confirmAlert: isSet6(object.confirmAlert) ? ConfirmAlertRequest.fromJSON(object.confirmAlert) : void 0
+      render: isSet7(object.render) ? RenderRequest.fromJSON(object.render) : void 0,
+      showToast: isSet7(object.showToast) ? ShowToastRequest.fromJSON(object.showToast) : void 0,
+      hideToast: isSet7(object.hideToast) ? HideToastRequest.fromJSON(object.hideToast) : void 0,
+      updateToast: isSet7(object.updateToast) ? UpdateToastRequest.fromJSON(object.updateToast) : void 0,
+      pushView: isSet7(object.pushView) ? PushViewRequest.fromJSON(object.pushView) : void 0,
+      popView: isSet7(object.popView) ? PopViewRequest.fromJSON(object.popView) : void 0,
+      clearSearch: isSet7(object.clearSearch) ? ClearSearchBarRequest.fromJSON(object.clearSearch) : void 0,
+      closeMainWindow: isSet7(object.closeMainWindow) ? CloseMainWindowRequest.fromJSON(object.closeMainWindow) : void 0,
+      showHud: isSet7(object.showHud) ? ShowHudRequest.fromJSON(object.showHud) : void 0,
+      setSearchText: isSet7(object.setSearchText) ? SetSearchTextRequest.fromJSON(object.setSearchText) : void 0,
+      confirmAlert: isSet7(object.confirmAlert) ? ConfirmAlertRequest.fromJSON(object.confirmAlert) : void 0
     };
   },
   toJSON(message) {
@@ -27950,10 +28274,10 @@ var Request4 = {
     return obj;
   },
   create(base) {
-    return Request4.fromPartial(base ?? {});
+    return Request5.fromPartial(base ?? {});
   },
   fromPartial(object) {
-    const message = createBaseRequest4();
+    const message = createBaseRequest5();
     message.render = object.render !== void 0 && object.render !== null ? RenderRequest.fromPartial(object.render) : void 0;
     message.showToast = object.showToast !== void 0 && object.showToast !== null ? ShowToastRequest.fromPartial(object.showToast) : void 0;
     message.hideToast = object.hideToast !== void 0 && object.hideToast !== null ? HideToastRequest.fromPartial(object.hideToast) : void 0;
@@ -27968,7 +28292,7 @@ var Request4 = {
     return message;
   }
 };
-function createBaseResponse4() {
+function createBaseResponse5() {
   return {
     render: void 0,
     showToast: void 0,
@@ -27983,7 +28307,7 @@ function createBaseResponse4() {
     confirmAlert: void 0
   };
 }
-var Response4 = {
+var Response5 = {
   encode(message, writer = new BinaryWriter()) {
     if (message.render !== void 0) {
       AckResponse.encode(message.render, writer.uint32(10).fork()).join();
@@ -28023,7 +28347,7 @@ var Response4 = {
   decode(input, length) {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseResponse4();
+    const message = createBaseResponse5();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -28114,17 +28438,17 @@ var Response4 = {
   },
   fromJSON(object) {
     return {
-      render: isSet6(object.render) ? AckResponse.fromJSON(object.render) : void 0,
-      showToast: isSet6(object.showToast) ? AckResponse.fromJSON(object.showToast) : void 0,
-      hideToast: isSet6(object.hideToast) ? AckResponse.fromJSON(object.hideToast) : void 0,
-      updateToast: isSet6(object.updateToast) ? AckResponse.fromJSON(object.updateToast) : void 0,
-      pushView: isSet6(object.pushView) ? AckResponse.fromJSON(object.pushView) : void 0,
-      popView: isSet6(object.popView) ? AckResponse.fromJSON(object.popView) : void 0,
-      clearSearch: isSet6(object.clearSearch) ? AckResponse.fromJSON(object.clearSearch) : void 0,
-      closeMainWindow: isSet6(object.closeMainWindow) ? AckResponse.fromJSON(object.closeMainWindow) : void 0,
-      showHud: isSet6(object.showHud) ? AckResponse.fromJSON(object.showHud) : void 0,
-      setSearchText: isSet6(object.setSearchText) ? AckResponse.fromJSON(object.setSearchText) : void 0,
-      confirmAlert: isSet6(object.confirmAlert) ? AckResponse.fromJSON(object.confirmAlert) : void 0
+      render: isSet7(object.render) ? AckResponse.fromJSON(object.render) : void 0,
+      showToast: isSet7(object.showToast) ? AckResponse.fromJSON(object.showToast) : void 0,
+      hideToast: isSet7(object.hideToast) ? AckResponse.fromJSON(object.hideToast) : void 0,
+      updateToast: isSet7(object.updateToast) ? AckResponse.fromJSON(object.updateToast) : void 0,
+      pushView: isSet7(object.pushView) ? AckResponse.fromJSON(object.pushView) : void 0,
+      popView: isSet7(object.popView) ? AckResponse.fromJSON(object.popView) : void 0,
+      clearSearch: isSet7(object.clearSearch) ? AckResponse.fromJSON(object.clearSearch) : void 0,
+      closeMainWindow: isSet7(object.closeMainWindow) ? AckResponse.fromJSON(object.closeMainWindow) : void 0,
+      showHud: isSet7(object.showHud) ? AckResponse.fromJSON(object.showHud) : void 0,
+      setSearchText: isSet7(object.setSearchText) ? AckResponse.fromJSON(object.setSearchText) : void 0,
+      confirmAlert: isSet7(object.confirmAlert) ? AckResponse.fromJSON(object.confirmAlert) : void 0
     };
   },
   toJSON(message) {
@@ -28165,10 +28489,10 @@ var Response4 = {
     return obj;
   },
   create(base) {
-    return Response4.fromPartial(base ?? {});
+    return Response5.fromPartial(base ?? {});
   },
   fromPartial(object) {
-    const message = createBaseResponse4();
+    const message = createBaseResponse5();
     message.render = object.render !== void 0 && object.render !== null ? AckResponse.fromPartial(object.render) : void 0;
     message.showToast = object.showToast !== void 0 && object.showToast !== null ? AckResponse.fromPartial(object.showToast) : void 0;
     message.hideToast = object.hideToast !== void 0 && object.hideToast !== null ? AckResponse.fromPartial(object.hideToast) : void 0;
@@ -28183,15 +28507,15 @@ var Response4 = {
     return message;
   }
 };
-function isSet6(value) {
+function isSet7(value) {
   return value !== null && value !== void 0;
 }
 
 // ../api/src/proto/extension.ts
-function createBaseRequest5() {
+function createBaseRequest6() {
   return { requestId: "", data: void 0 };
 }
-var Request5 = {
+var Request6 = {
   encode(message, writer = new BinaryWriter()) {
     if (message.requestId !== "") {
       writer.uint32(10).string(message.requestId);
@@ -28204,7 +28528,7 @@ var Request5 = {
   decode(input, length) {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseRequest5();
+    const message = createBaseRequest6();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -28232,8 +28556,8 @@ var Request5 = {
   },
   fromJSON(object) {
     return {
-      requestId: isSet7(object.requestId) ? globalThis.String(object.requestId) : "",
-      data: isSet7(object.data) ? RequestData.fromJSON(object.data) : void 0
+      requestId: isSet8(object.requestId) ? globalThis.String(object.requestId) : "",
+      data: isSet8(object.data) ? RequestData.fromJSON(object.data) : void 0
     };
   },
   toJSON(message) {
@@ -28247,22 +28571,22 @@ var Request5 = {
     return obj;
   },
   create(base) {
-    return Request5.fromPartial(base ?? {});
+    return Request6.fromPartial(base ?? {});
   },
   fromPartial(object) {
-    const message = createBaseRequest5();
+    const message = createBaseRequest6();
     message.requestId = object.requestId ?? "";
     message.data = object.data !== void 0 && object.data !== null ? RequestData.fromPartial(object.data) : void 0;
     return message;
   }
 };
 function createBaseRequestData() {
-  return { ui: void 0, app: void 0, clipboard: void 0, storage: void 0 };
+  return { ui: void 0, app: void 0, clipboard: void 0, storage: void 0, oauth: void 0 };
 }
 var RequestData = {
   encode(message, writer = new BinaryWriter()) {
     if (message.ui !== void 0) {
-      Request4.encode(message.ui, writer.uint32(10).fork()).join();
+      Request5.encode(message.ui, writer.uint32(10).fork()).join();
     }
     if (message.app !== void 0) {
       Request.encode(message.app, writer.uint32(18).fork()).join();
@@ -28271,7 +28595,10 @@ var RequestData = {
       Request2.encode(message.clipboard, writer.uint32(26).fork()).join();
     }
     if (message.storage !== void 0) {
-      Request3.encode(message.storage, writer.uint32(34).fork()).join();
+      Request4.encode(message.storage, writer.uint32(34).fork()).join();
+    }
+    if (message.oauth !== void 0) {
+      Request3.encode(message.oauth, writer.uint32(42).fork()).join();
     }
     return writer;
   },
@@ -28286,7 +28613,7 @@ var RequestData = {
           if (tag !== 10) {
             break;
           }
-          message.ui = Request4.decode(reader, reader.uint32());
+          message.ui = Request5.decode(reader, reader.uint32());
           continue;
         }
         case 2: {
@@ -28307,7 +28634,14 @@ var RequestData = {
           if (tag !== 34) {
             break;
           }
-          message.storage = Request3.decode(reader, reader.uint32());
+          message.storage = Request4.decode(reader, reader.uint32());
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+          message.oauth = Request3.decode(reader, reader.uint32());
           continue;
         }
       }
@@ -28320,16 +28654,17 @@ var RequestData = {
   },
   fromJSON(object) {
     return {
-      ui: isSet7(object.ui) ? Request4.fromJSON(object.ui) : void 0,
-      app: isSet7(object.app) ? Request.fromJSON(object.app) : void 0,
-      clipboard: isSet7(object.clipboard) ? Request2.fromJSON(object.clipboard) : void 0,
-      storage: isSet7(object.storage) ? Request3.fromJSON(object.storage) : void 0
+      ui: isSet8(object.ui) ? Request5.fromJSON(object.ui) : void 0,
+      app: isSet8(object.app) ? Request.fromJSON(object.app) : void 0,
+      clipboard: isSet8(object.clipboard) ? Request2.fromJSON(object.clipboard) : void 0,
+      storage: isSet8(object.storage) ? Request4.fromJSON(object.storage) : void 0,
+      oauth: isSet8(object.oauth) ? Request3.fromJSON(object.oauth) : void 0
     };
   },
   toJSON(message) {
     const obj = {};
     if (message.ui !== void 0) {
-      obj.ui = Request4.toJSON(message.ui);
+      obj.ui = Request5.toJSON(message.ui);
     }
     if (message.app !== void 0) {
       obj.app = Request.toJSON(message.app);
@@ -28338,7 +28673,10 @@ var RequestData = {
       obj.clipboard = Request2.toJSON(message.clipboard);
     }
     if (message.storage !== void 0) {
-      obj.storage = Request3.toJSON(message.storage);
+      obj.storage = Request4.toJSON(message.storage);
+    }
+    if (message.oauth !== void 0) {
+      obj.oauth = Request3.toJSON(message.oauth);
     }
     return obj;
   },
@@ -28347,17 +28685,18 @@ var RequestData = {
   },
   fromPartial(object) {
     const message = createBaseRequestData();
-    message.ui = object.ui !== void 0 && object.ui !== null ? Request4.fromPartial(object.ui) : void 0;
+    message.ui = object.ui !== void 0 && object.ui !== null ? Request5.fromPartial(object.ui) : void 0;
     message.app = object.app !== void 0 && object.app !== null ? Request.fromPartial(object.app) : void 0;
     message.clipboard = object.clipboard !== void 0 && object.clipboard !== null ? Request2.fromPartial(object.clipboard) : void 0;
-    message.storage = object.storage !== void 0 && object.storage !== null ? Request3.fromPartial(object.storage) : void 0;
+    message.storage = object.storage !== void 0 && object.storage !== null ? Request4.fromPartial(object.storage) : void 0;
+    message.oauth = object.oauth !== void 0 && object.oauth !== null ? Request3.fromPartial(object.oauth) : void 0;
     return message;
   }
 };
-function createBaseResponse5() {
+function createBaseResponse6() {
   return { requestId: "", data: void 0, error: void 0 };
 }
-var Response5 = {
+var Response6 = {
   encode(message, writer = new BinaryWriter()) {
     if (message.requestId !== "") {
       writer.uint32(10).string(message.requestId);
@@ -28373,7 +28712,7 @@ var Response5 = {
   decode(input, length) {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseResponse5();
+    const message = createBaseResponse6();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -28408,9 +28747,9 @@ var Response5 = {
   },
   fromJSON(object) {
     return {
-      requestId: isSet7(object.requestId) ? globalThis.String(object.requestId) : "",
-      data: isSet7(object.data) ? ResponseData.fromJSON(object.data) : void 0,
-      error: isSet7(object.error) ? ErrorResponse.fromJSON(object.error) : void 0
+      requestId: isSet8(object.requestId) ? globalThis.String(object.requestId) : "",
+      data: isSet8(object.data) ? ResponseData.fromJSON(object.data) : void 0,
+      error: isSet8(object.error) ? ErrorResponse.fromJSON(object.error) : void 0
     };
   },
   toJSON(message) {
@@ -28427,10 +28766,10 @@ var Response5 = {
     return obj;
   },
   create(base) {
-    return Response5.fromPartial(base ?? {});
+    return Response6.fromPartial(base ?? {});
   },
   fromPartial(object) {
-    const message = createBaseResponse5();
+    const message = createBaseResponse6();
     message.requestId = object.requestId ?? "";
     message.data = object.data !== void 0 && object.data !== null ? ResponseData.fromPartial(object.data) : void 0;
     message.error = object.error !== void 0 && object.error !== null ? ErrorResponse.fromPartial(object.error) : void 0;
@@ -28438,12 +28777,12 @@ var Response5 = {
   }
 };
 function createBaseResponseData() {
-  return { ui: void 0, app: void 0, clipboard: void 0, storage: void 0 };
+  return { ui: void 0, app: void 0, clipboard: void 0, storage: void 0, oauth: void 0 };
 }
 var ResponseData = {
   encode(message, writer = new BinaryWriter()) {
     if (message.ui !== void 0) {
-      Response4.encode(message.ui, writer.uint32(10).fork()).join();
+      Response5.encode(message.ui, writer.uint32(10).fork()).join();
     }
     if (message.app !== void 0) {
       Response.encode(message.app, writer.uint32(18).fork()).join();
@@ -28452,7 +28791,10 @@ var ResponseData = {
       Response2.encode(message.clipboard, writer.uint32(26).fork()).join();
     }
     if (message.storage !== void 0) {
-      Response3.encode(message.storage, writer.uint32(34).fork()).join();
+      Response4.encode(message.storage, writer.uint32(34).fork()).join();
+    }
+    if (message.oauth !== void 0) {
+      Response3.encode(message.oauth, writer.uint32(42).fork()).join();
     }
     return writer;
   },
@@ -28467,7 +28809,7 @@ var ResponseData = {
           if (tag !== 10) {
             break;
           }
-          message.ui = Response4.decode(reader, reader.uint32());
+          message.ui = Response5.decode(reader, reader.uint32());
           continue;
         }
         case 2: {
@@ -28488,7 +28830,14 @@ var ResponseData = {
           if (tag !== 34) {
             break;
           }
-          message.storage = Response3.decode(reader, reader.uint32());
+          message.storage = Response4.decode(reader, reader.uint32());
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+          message.oauth = Response3.decode(reader, reader.uint32());
           continue;
         }
       }
@@ -28501,16 +28850,17 @@ var ResponseData = {
   },
   fromJSON(object) {
     return {
-      ui: isSet7(object.ui) ? Response4.fromJSON(object.ui) : void 0,
-      app: isSet7(object.app) ? Response.fromJSON(object.app) : void 0,
-      clipboard: isSet7(object.clipboard) ? Response2.fromJSON(object.clipboard) : void 0,
-      storage: isSet7(object.storage) ? Response3.fromJSON(object.storage) : void 0
+      ui: isSet8(object.ui) ? Response5.fromJSON(object.ui) : void 0,
+      app: isSet8(object.app) ? Response.fromJSON(object.app) : void 0,
+      clipboard: isSet8(object.clipboard) ? Response2.fromJSON(object.clipboard) : void 0,
+      storage: isSet8(object.storage) ? Response4.fromJSON(object.storage) : void 0,
+      oauth: isSet8(object.oauth) ? Response3.fromJSON(object.oauth) : void 0
     };
   },
   toJSON(message) {
     const obj = {};
     if (message.ui !== void 0) {
-      obj.ui = Response4.toJSON(message.ui);
+      obj.ui = Response5.toJSON(message.ui);
     }
     if (message.app !== void 0) {
       obj.app = Response.toJSON(message.app);
@@ -28519,7 +28869,10 @@ var ResponseData = {
       obj.clipboard = Response2.toJSON(message.clipboard);
     }
     if (message.storage !== void 0) {
-      obj.storage = Response3.toJSON(message.storage);
+      obj.storage = Response4.toJSON(message.storage);
+    }
+    if (message.oauth !== void 0) {
+      obj.oauth = Response3.toJSON(message.oauth);
     }
     return obj;
   },
@@ -28528,10 +28881,11 @@ var ResponseData = {
   },
   fromPartial(object) {
     const message = createBaseResponseData();
-    message.ui = object.ui !== void 0 && object.ui !== null ? Response4.fromPartial(object.ui) : void 0;
+    message.ui = object.ui !== void 0 && object.ui !== null ? Response5.fromPartial(object.ui) : void 0;
     message.app = object.app !== void 0 && object.app !== null ? Response.fromPartial(object.app) : void 0;
     message.clipboard = object.clipboard !== void 0 && object.clipboard !== null ? Response2.fromPartial(object.clipboard) : void 0;
-    message.storage = object.storage !== void 0 && object.storage !== null ? Response3.fromPartial(object.storage) : void 0;
+    message.storage = object.storage !== void 0 && object.storage !== null ? Response4.fromPartial(object.storage) : void 0;
+    message.oauth = object.oauth !== void 0 && object.oauth !== null ? Response3.fromPartial(object.oauth) : void 0;
     return message;
   }
 };
@@ -28589,9 +28943,9 @@ var Event = {
   },
   fromJSON(object) {
     return {
-      id: isSet7(object.id) ? globalThis.String(object.id) : "",
-      generic: isSet7(object.generic) ? GenericEventData.fromJSON(object.generic) : void 0,
-      crash: isSet7(object.crash) ? CrashEventData.fromJSON(object.crash) : void 0
+      id: isSet8(object.id) ? globalThis.String(object.id) : "",
+      generic: isSet8(object.generic) ? GenericEventData.fromJSON(object.generic) : void 0,
+      crash: isSet8(object.crash) ? CrashEventData.fromJSON(object.crash) : void 0
     };
   },
   toJSON(message) {
@@ -28651,7 +29005,7 @@ var CrashEventData = {
     return message;
   },
   fromJSON(object) {
-    return { text: isSet7(object.text) ? globalThis.String(object.text) : "" };
+    return { text: isSet8(object.text) ? globalThis.String(object.text) : "" };
   },
   toJSON(message) {
     const obj = {};
@@ -28702,7 +29056,7 @@ var GenericEventData = {
     return message;
   },
   fromJSON(object) {
-    return { json: isSet7(object.json) ? globalThis.String(object.json) : "" };
+    return { json: isSet8(object.json) ? globalThis.String(object.json) : "" };
   },
   toJSON(message) {
     const obj = {};
@@ -28720,7 +29074,7 @@ var GenericEventData = {
     return message;
   }
 };
-function isSet7(value) {
+function isSet8(value) {
   return value !== null && value !== void 0;
 }
 
@@ -28731,10 +29085,10 @@ function createBaseExtensionMessage() {
 var ExtensionMessage = {
   encode(message, writer = new BinaryWriter()) {
     if (message.request !== void 0) {
-      Request5.encode(message.request, writer.uint32(10).fork()).join();
+      Request6.encode(message.request, writer.uint32(10).fork()).join();
     }
     if (message.response !== void 0) {
-      Response5.encode(message.response, writer.uint32(18).fork()).join();
+      Response6.encode(message.response, writer.uint32(18).fork()).join();
     }
     if (message.event !== void 0) {
       Event.encode(message.event, writer.uint32(26).fork()).join();
@@ -28752,14 +29106,14 @@ var ExtensionMessage = {
           if (tag !== 10) {
             break;
           }
-          message.request = Request5.decode(reader, reader.uint32());
+          message.request = Request6.decode(reader, reader.uint32());
           continue;
         }
         case 2: {
           if (tag !== 18) {
             break;
           }
-          message.response = Response5.decode(reader, reader.uint32());
+          message.response = Response6.decode(reader, reader.uint32());
           continue;
         }
         case 3: {
@@ -28779,18 +29133,18 @@ var ExtensionMessage = {
   },
   fromJSON(object) {
     return {
-      request: isSet8(object.request) ? Request5.fromJSON(object.request) : void 0,
-      response: isSet8(object.response) ? Response5.fromJSON(object.response) : void 0,
-      event: isSet8(object.event) ? Event.fromJSON(object.event) : void 0
+      request: isSet9(object.request) ? Request6.fromJSON(object.request) : void 0,
+      response: isSet9(object.response) ? Response6.fromJSON(object.response) : void 0,
+      event: isSet9(object.event) ? Event.fromJSON(object.event) : void 0
     };
   },
   toJSON(message) {
     const obj = {};
     if (message.request !== void 0) {
-      obj.request = Request5.toJSON(message.request);
+      obj.request = Request6.toJSON(message.request);
     }
     if (message.response !== void 0) {
-      obj.response = Response5.toJSON(message.response);
+      obj.response = Response6.toJSON(message.response);
     }
     if (message.event !== void 0) {
       obj.event = Event.toJSON(message.event);
@@ -28802,13 +29156,13 @@ var ExtensionMessage = {
   },
   fromPartial(object) {
     const message = createBaseExtensionMessage();
-    message.request = object.request !== void 0 && object.request !== null ? Request5.fromPartial(object.request) : void 0;
-    message.response = object.response !== void 0 && object.response !== null ? Response5.fromPartial(object.response) : void 0;
+    message.request = object.request !== void 0 && object.request !== null ? Request6.fromPartial(object.request) : void 0;
+    message.response = object.response !== void 0 && object.response !== null ? Response6.fromPartial(object.response) : void 0;
     message.event = object.event !== void 0 && object.event !== null ? Event.fromPartial(object.event) : void 0;
     return message;
   }
 };
-function isSet8(value) {
+function isSet9(value) {
   return value !== null && value !== void 0;
 }
 
@@ -28918,7 +29272,7 @@ var Bus = class {
     this.port.postMessage(ExtensionMessage.encode(message).finish());
   }
   request2(data, options = {}) {
-    const req = Request5.create({ requestId: (0, import_crypto.randomUUID)(), data });
+    const req = Request6.create({ requestId: (0, import_crypto.randomUUID)(), data });
     return new Promise((resolve, reject) => {
       let timeout;
       if (options.timeout) {
@@ -30319,6 +30673,7 @@ var LocalStorage = class {
 };
 
 // ../api/src/oauth.ts
+var import_node_crypto = require("node:crypto");
 var OauthRedirectMethod = /* @__PURE__ */ ((OauthRedirectMethod2) => {
   OauthRedirectMethod2["Web"] = "web";
   OauthRedirectMethod2["App"] = "app";
@@ -30342,6 +30697,29 @@ var PKCEClient = class {
     this.resolvesOnRedirect = false;
     this.isAuthorizing = false;
   }
+  buildAuthUrl(options, state, codeChallenge, redirectURI) {
+    const params = new URLSearchParams({
+      response_type: "code",
+      client_id: options.clientId,
+      redirect_uri: redirectURI,
+      scope: options.scope,
+      state,
+      code_challenge: codeChallenge,
+      code_challenge_method: "S256",
+      ...options.extraParameters
+    });
+    return `${options.endpoint}?${params}`;
+  }
+  getRedirectURI() {
+    switch (this.redirectMethod) {
+      case OAuth.RedirectMethod.Web:
+        return "https://raycast.com/redirect?packageName=Extension";
+      case OAuth.RedirectMethod.App:
+        return "raycast://oauth?package_name=Extension";
+      case OAuth.RedirectMethod.AppURI:
+        return "com.raycast:/oauth?package_name=Extension";
+    }
+  }
   /**
    * Creates an authorization request for the provided authorization endpoint, client ID, and scopes.
    * You need to first create the authorization request before calling {@link OAuth.PKCEClient.authorize}.
@@ -30351,7 +30729,17 @@ var PKCEClient = class {
    * @returns A promise for an {@link OAuth.AuthorizationRequest} that you can use as input for {@link OAuth.PKCEClient.authorize}.
    */
   async authorizationRequest(options) {
-    return {};
+    const codeVerifier = (0, import_node_crypto.randomBytes)(128).toString("hex");
+    const codeChallenge = (0, import_node_crypto.hash)("sha256", codeVerifier, "base64url");
+    const state = (0, import_node_crypto.randomBytes)(32).toString("hex");
+    const redirectURI = this.getRedirectURI();
+    return {
+      state,
+      codeChallenge,
+      codeVerifier,
+      redirectURI,
+      toURL: () => this.buildAuthUrl(options, state, codeChallenge, redirectURI)
+    };
   }
   /**
    * Starts the authorization and shows the OAuth overlay in Raycast.
@@ -30363,7 +30751,22 @@ var PKCEClient = class {
    * The promise is resolved when the user was redirected back from the provider's authorization page to the Raycast extension.
    */
   async authorize(options) {
-    return {};
+    const isAuthorizationOptions = (s) => {
+      return typeof s.url === "string";
+    };
+    const res = await bus.turboRequest("oauth.authorize", {
+      client: {
+        id: this.providerId,
+        description: this.description ?? "",
+        name: this.providerName,
+        icon: ""
+      },
+      url: isAuthorizationOptions(options) ? options.url : options.toURL()
+    });
+    if (!res.ok) {
+      throw res.error;
+    }
+    return { authorizationCode: res.value.code };
   }
   authorizationURL;
   /**
@@ -30398,9 +30801,21 @@ var PKCEClient = class {
   async removeTokens() {
   }
 };
+var TokenSet = class {
+  accessToken = "";
+  refreshToken;
+  idToken;
+  expiresIn;
+  scope;
+  updatedAt = /* @__PURE__ */ new Date();
+  isExpired() {
+    return true;
+  }
+};
 var OAuth = {
   PKCEClient,
-  RedirectMethod: OauthRedirectMethod
+  RedirectMethod: OauthRedirectMethod,
+  TokenSet
 };
 
 // ../api/src/ai.ts
@@ -30479,7 +30894,7 @@ var AI;
 })(AI || (AI = {}));
 
 // ../api/src/alert.ts
-var import_node_crypto = require("node:crypto");
+var import_node_crypto2 = require("node:crypto");
 var Alert;
 ((Alert2) => {
   let ActionStyle;
@@ -30496,7 +30911,7 @@ var styleMap = {
 };
 var confirmAlert = async (options) => {
   return new Promise(async (resolve) => {
-    const handle = (0, import_node_crypto.randomUUID)();
+    const handle = (0, import_node_crypto2.randomUUID)();
     let confirmCallback = () => {
     };
     let cancelCallback = () => {
@@ -30548,6 +30963,7 @@ var openCommandPreferences = async () => {
 };
 
 // src/worker.tsx
+var import_react9 = __toESM(require_react());
 var React5 = __toESM(require_react());
 
 // src/patch-require.ts
@@ -30580,13 +30996,13 @@ var ErrorBoundary = class extends React5.Component {
   render() {
     const { error } = this.state;
     if (error) {
-      bus.emitCrash(error);
+      console.error(error);
     }
     return /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(import_jsx_runtime13.Fragment, { children: this.props.children });
   }
 };
 var App = ({ component: Component2, launchProps }) => {
-  return /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(ErrorBoundary, { children: /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(NavigationProvider, { root: /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(Component2, { ...launchProps }) }) });
+  return /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(ErrorBoundary, { children: /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(import_react9.Suspense, { fallback: /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(import_jsx_runtime13.Fragment, {}), children: /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(NavigationProvider, { root: /* @__PURE__ */ (0, import_jsx_runtime13.jsx)(Component2, { ...launchProps }) }) }) });
 };
 var loadEnviron = () => {
   process.env.NODE_ENV = "development";
@@ -31437,7 +31853,7 @@ var ErrorResponse2 = {
     return message;
   },
   fromJSON(object) {
-    return { errorText: isSet9(object.errorText) ? globalThis.String(object.errorText) : "" };
+    return { errorText: isSet10(object.errorText) ? globalThis.String(object.errorText) : "" };
   },
   toJSON(message) {
     const obj = {};
@@ -31455,7 +31871,7 @@ var ErrorResponse2 = {
     return message;
   }
 };
-function isSet9(value) {
+function isSet10(value) {
   return value !== null && value !== void 0;
 }
 
@@ -31504,8 +31920,8 @@ var OpenApplicationRequest2 = {
   },
   fromJSON(object) {
     return {
-      target: isSet10(object.target) ? globalThis.String(object.target) : "",
-      appId: isSet10(object.appId) ? globalThis.String(object.appId) : void 0
+      target: isSet11(object.target) ? globalThis.String(object.target) : "",
+      appId: isSet11(object.appId) ? globalThis.String(object.appId) : void 0
     };
   },
   toJSON(message) {
@@ -31616,10 +32032,10 @@ var ListApplicationResponse2 = {
     return message;
   }
 };
-function createBaseRequest6() {
+function createBaseRequest7() {
   return { list: void 0, open: void 0 };
 }
-var Request6 = {
+var Request7 = {
   encode(message, writer = new BinaryWriter2()) {
     if (message.list !== void 0) {
       ListApplicationRequest2.encode(message.list, writer.uint32(10).fork()).join();
@@ -31632,7 +32048,7 @@ var Request6 = {
   decode(input, length) {
     const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
     const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseRequest6();
+    const message = createBaseRequest7();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -31660,8 +32076,8 @@ var Request6 = {
   },
   fromJSON(object) {
     return {
-      list: isSet10(object.list) ? ListApplicationRequest2.fromJSON(object.list) : void 0,
-      open: isSet10(object.open) ? OpenApplicationRequest2.fromJSON(object.open) : void 0
+      list: isSet11(object.list) ? ListApplicationRequest2.fromJSON(object.list) : void 0,
+      open: isSet11(object.open) ? OpenApplicationRequest2.fromJSON(object.open) : void 0
     };
   },
   toJSON(message) {
@@ -31675,19 +32091,19 @@ var Request6 = {
     return obj;
   },
   create(base) {
-    return Request6.fromPartial(base ?? {});
+    return Request7.fromPartial(base ?? {});
   },
   fromPartial(object) {
-    const message = createBaseRequest6();
+    const message = createBaseRequest7();
     message.list = object.list !== void 0 && object.list !== null ? ListApplicationRequest2.fromPartial(object.list) : void 0;
     message.open = object.open !== void 0 && object.open !== null ? OpenApplicationRequest2.fromPartial(object.open) : void 0;
     return message;
   }
 };
-function createBaseResponse6() {
+function createBaseResponse7() {
   return { list: void 0 };
 }
-var Response6 = {
+var Response7 = {
   encode(message, writer = new BinaryWriter2()) {
     if (message.list !== void 0) {
       ListApplicationResponse2.encode(message.list, writer.uint32(10).fork()).join();
@@ -31697,7 +32113,7 @@ var Response6 = {
   decode(input, length) {
     const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
     const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseResponse6();
+    const message = createBaseResponse7();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -31717,7 +32133,7 @@ var Response6 = {
     return message;
   },
   fromJSON(object) {
-    return { list: isSet10(object.list) ? ListApplicationResponse2.fromJSON(object.list) : void 0 };
+    return { list: isSet11(object.list) ? ListApplicationResponse2.fromJSON(object.list) : void 0 };
   },
   toJSON(message) {
     const obj = {};
@@ -31727,10 +32143,10 @@ var Response6 = {
     return obj;
   },
   create(base) {
-    return Response6.fromPartial(base ?? {});
+    return Response7.fromPartial(base ?? {});
   },
   fromPartial(object) {
-    const message = createBaseResponse6();
+    const message = createBaseResponse7();
     message.list = object.list !== void 0 && object.list !== null ? ListApplicationResponse2.fromPartial(object.list) : void 0;
     return message;
   }
@@ -31789,9 +32205,9 @@ var Application4 = {
   },
   fromJSON(object) {
     return {
-      id: isSet10(object.id) ? globalThis.String(object.id) : "",
-      name: isSet10(object.name) ? globalThis.String(object.name) : "",
-      icon: isSet10(object.icon) ? globalThis.String(object.icon) : ""
+      id: isSet11(object.id) ? globalThis.String(object.id) : "",
+      name: isSet11(object.name) ? globalThis.String(object.name) : "",
+      icon: isSet11(object.icon) ? globalThis.String(object.icon) : ""
     };
   },
   toJSON(message) {
@@ -31818,7 +32234,7 @@ var Application4 = {
     return message;
   }
 };
-function isSet10(value) {
+function isSet11(value) {
   return value !== null && value !== void 0;
 }
 
@@ -31867,8 +32283,8 @@ var ClipboardHtmlContent2 = {
   },
   fromJSON(object) {
     return {
-      html: isSet11(object.html) ? globalThis.String(object.html) : "",
-      text: isSet11(object.text) ? globalThis.String(object.text) : ""
+      html: isSet12(object.html) ? globalThis.String(object.html) : "",
+      text: isSet12(object.text) ? globalThis.String(object.text) : ""
     };
   },
   toJSON(message) {
@@ -31924,7 +32340,7 @@ var ClipboardPathContent2 = {
     return message;
   },
   fromJSON(object) {
-    return { path: isSet11(object.path) ? globalThis.String(object.path) : "" };
+    return { path: isSet12(object.path) ? globalThis.String(object.path) : "" };
   },
   toJSON(message) {
     const obj = {};
@@ -31975,7 +32391,7 @@ var ClipboardOptions2 = {
     return message;
   },
   fromJSON(object) {
-    return { concealed: isSet11(object.concealed) ? globalThis.Boolean(object.concealed) : false };
+    return { concealed: isSet12(object.concealed) ? globalThis.Boolean(object.concealed) : false };
   },
   toJSON(message) {
     const obj = {};
@@ -32037,8 +32453,8 @@ var CopyToClipboardRequest2 = {
   },
   fromJSON(object) {
     return {
-      content: isSet11(object.content) ? ClipboardContent2.fromJSON(object.content) : void 0,
-      options: isSet11(object.options) ? ClipboardOptions2.fromJSON(object.options) : void 0
+      content: isSet12(object.content) ? ClipboardContent2.fromJSON(object.content) : void 0,
+      options: isSet12(object.options) ? ClipboardOptions2.fromJSON(object.options) : void 0
     };
   },
   toJSON(message) {
@@ -32115,9 +32531,9 @@ var ClipboardContent2 = {
   },
   fromJSON(object) {
     return {
-      text: isSet11(object.text) ? globalThis.String(object.text) : void 0,
-      html: isSet11(object.html) ? ClipboardHtmlContent2.fromJSON(object.html) : void 0,
-      path: isSet11(object.path) ? ClipboardPathContent2.fromJSON(object.path) : void 0
+      text: isSet12(object.text) ? globalThis.String(object.text) : void 0,
+      html: isSet12(object.html) ? ClipboardHtmlContent2.fromJSON(object.html) : void 0,
+      path: isSet12(object.path) ? ClipboardPathContent2.fromJSON(object.path) : void 0
     };
   },
   toJSON(message) {
@@ -32181,10 +32597,10 @@ var CopyToClipboardResponse2 = {
     return message;
   }
 };
-function createBaseRequest7() {
+function createBaseRequest8() {
   return { copy: void 0 };
 }
-var Request7 = {
+var Request8 = {
   encode(message, writer = new BinaryWriter2()) {
     if (message.copy !== void 0) {
       CopyToClipboardRequest2.encode(message.copy, writer.uint32(10).fork()).join();
@@ -32194,7 +32610,7 @@ var Request7 = {
   decode(input, length) {
     const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
     const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseRequest7();
+    const message = createBaseRequest8();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -32214,7 +32630,7 @@ var Request7 = {
     return message;
   },
   fromJSON(object) {
-    return { copy: isSet11(object.copy) ? CopyToClipboardRequest2.fromJSON(object.copy) : void 0 };
+    return { copy: isSet12(object.copy) ? CopyToClipboardRequest2.fromJSON(object.copy) : void 0 };
   },
   toJSON(message) {
     const obj = {};
@@ -32224,18 +32640,18 @@ var Request7 = {
     return obj;
   },
   create(base) {
-    return Request7.fromPartial(base ?? {});
+    return Request8.fromPartial(base ?? {});
   },
   fromPartial(object) {
-    const message = createBaseRequest7();
+    const message = createBaseRequest8();
     message.copy = object.copy !== void 0 && object.copy !== null ? CopyToClipboardRequest2.fromPartial(object.copy) : void 0;
     return message;
   }
 };
-function createBaseResponse7() {
+function createBaseResponse8() {
   return { copy: void 0 };
 }
-var Response7 = {
+var Response8 = {
   encode(message, writer = new BinaryWriter2()) {
     if (message.copy !== void 0) {
       CopyToClipboardResponse2.encode(message.copy, writer.uint32(10).fork()).join();
@@ -32245,7 +32661,7 @@ var Response7 = {
   decode(input, length) {
     const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
     const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseResponse7();
+    const message = createBaseResponse8();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -32265,7 +32681,7 @@ var Response7 = {
     return message;
   },
   fromJSON(object) {
-    return { copy: isSet11(object.copy) ? CopyToClipboardResponse2.fromJSON(object.copy) : void 0 };
+    return { copy: isSet12(object.copy) ? CopyToClipboardResponse2.fromJSON(object.copy) : void 0 };
   },
   toJSON(message) {
     const obj = {};
@@ -32275,15 +32691,339 @@ var Response7 = {
     return obj;
   },
   create(base) {
-    return Response7.fromPartial(base ?? {});
+    return Response8.fromPartial(base ?? {});
   },
   fromPartial(object) {
-    const message = createBaseResponse7();
+    const message = createBaseResponse8();
     message.copy = object.copy !== void 0 && object.copy !== null ? CopyToClipboardResponse2.fromPartial(object.copy) : void 0;
     return message;
   }
 };
-function isSet11(value) {
+function isSet12(value) {
+  return value !== null && value !== void 0;
+}
+
+// src/proto/oauth.ts
+function createBasePKCEClientOptions2() {
+  return { id: void 0, name: "", icon: "", description: "" };
+}
+var PKCEClientOptions2 = {
+  encode(message, writer = new BinaryWriter2()) {
+    if (message.id !== void 0) {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.name !== "") {
+      writer.uint32(18).string(message.name);
+    }
+    if (message.icon !== "") {
+      writer.uint32(26).string(message.icon);
+    }
+    if (message.description !== "") {
+      writer.uint32(34).string(message.description);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBasePKCEClientOptions2();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+          message.name = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+          message.icon = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+          message.description = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return {
+      id: isSet13(object.id) ? globalThis.String(object.id) : void 0,
+      name: isSet13(object.name) ? globalThis.String(object.name) : "",
+      icon: isSet13(object.icon) ? globalThis.String(object.icon) : "",
+      description: isSet13(object.description) ? globalThis.String(object.description) : ""
+    };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.id !== void 0) {
+      obj.id = message.id;
+    }
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    if (message.icon !== "") {
+      obj.icon = message.icon;
+    }
+    if (message.description !== "") {
+      obj.description = message.description;
+    }
+    return obj;
+  },
+  create(base) {
+    return PKCEClientOptions2.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBasePKCEClientOptions2();
+    message.id = object.id ?? void 0;
+    message.name = object.name ?? "";
+    message.icon = object.icon ?? "";
+    message.description = object.description ?? "";
+    return message;
+  }
+};
+function createBaseAuthorizeRequest2() {
+  return { client: void 0, url: "" };
+}
+var AuthorizeRequest2 = {
+  encode(message, writer = new BinaryWriter2()) {
+    if (message.client !== void 0) {
+      PKCEClientOptions2.encode(message.client, writer.uint32(10).fork()).join();
+    }
+    if (message.url !== "") {
+      writer.uint32(18).string(message.url);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseAuthorizeRequest2();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.client = PKCEClientOptions2.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+          message.url = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return {
+      client: isSet13(object.client) ? PKCEClientOptions2.fromJSON(object.client) : void 0,
+      url: isSet13(object.url) ? globalThis.String(object.url) : ""
+    };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.client !== void 0) {
+      obj.client = PKCEClientOptions2.toJSON(message.client);
+    }
+    if (message.url !== "") {
+      obj.url = message.url;
+    }
+    return obj;
+  },
+  create(base) {
+    return AuthorizeRequest2.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseAuthorizeRequest2();
+    message.client = object.client !== void 0 && object.client !== null ? PKCEClientOptions2.fromPartial(object.client) : void 0;
+    message.url = object.url ?? "";
+    return message;
+  }
+};
+function createBaseAuthorizeResponse2() {
+  return { code: "" };
+}
+var AuthorizeResponse2 = {
+  encode(message, writer = new BinaryWriter2()) {
+    if (message.code !== "") {
+      writer.uint32(10).string(message.code);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseAuthorizeResponse2();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.code = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return { code: isSet13(object.code) ? globalThis.String(object.code) : "" };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.code !== "") {
+      obj.code = message.code;
+    }
+    return obj;
+  },
+  create(base) {
+    return AuthorizeResponse2.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseAuthorizeResponse2();
+    message.code = object.code ?? "";
+    return message;
+  }
+};
+function createBaseRequest9() {
+  return { authorize: void 0 };
+}
+var Request9 = {
+  encode(message, writer = new BinaryWriter2()) {
+    if (message.authorize !== void 0) {
+      AuthorizeRequest2.encode(message.authorize, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseRequest9();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.authorize = AuthorizeRequest2.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return { authorize: isSet13(object.authorize) ? AuthorizeRequest2.fromJSON(object.authorize) : void 0 };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.authorize !== void 0) {
+      obj.authorize = AuthorizeRequest2.toJSON(message.authorize);
+    }
+    return obj;
+  },
+  create(base) {
+    return Request9.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseRequest9();
+    message.authorize = object.authorize !== void 0 && object.authorize !== null ? AuthorizeRequest2.fromPartial(object.authorize) : void 0;
+    return message;
+  }
+};
+function createBaseResponse9() {
+  return { authorize: void 0 };
+}
+var Response9 = {
+  encode(message, writer = new BinaryWriter2()) {
+    if (message.authorize !== void 0) {
+      AuthorizeResponse2.encode(message.authorize, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseResponse9();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.authorize = AuthorizeResponse2.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return { authorize: isSet13(object.authorize) ? AuthorizeResponse2.fromJSON(object.authorize) : void 0 };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.authorize !== void 0) {
+      obj.authorize = AuthorizeResponse2.toJSON(message.authorize);
+    }
+    return obj;
+  },
+  create(base) {
+    return Response9.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseResponse9();
+    message.authorize = object.authorize !== void 0 && object.authorize !== null ? AuthorizeResponse2.fromPartial(object.authorize) : void 0;
+    return message;
+  }
+};
+function isSet13(value) {
   return value !== null && value !== void 0;
 }
 
@@ -32445,8 +33185,8 @@ var Struct_FieldsEntry2 = {
   },
   fromJSON(object) {
     return {
-      key: isSet12(object.key) ? globalThis.String(object.key) : "",
-      value: isSet12(object?.value) ? object.value : void 0
+      key: isSet14(object.key) ? globalThis.String(object.key) : "",
+      value: isSet14(object?.value) ? object.value : void 0
     };
   },
   toJSON(message) {
@@ -32560,10 +33300,10 @@ var Value2 = {
   },
   fromJSON(object) {
     return {
-      nullValue: isSet12(object.nullValue) ? nullValueFromJSON2(object.nullValue) : void 0,
-      numberValue: isSet12(object.numberValue) ? globalThis.Number(object.numberValue) : void 0,
-      stringValue: isSet12(object.stringValue) ? globalThis.String(object.stringValue) : void 0,
-      boolValue: isSet12(object.boolValue) ? globalThis.Boolean(object.boolValue) : void 0,
+      nullValue: isSet14(object.nullValue) ? nullValueFromJSON2(object.nullValue) : void 0,
+      numberValue: isSet14(object.numberValue) ? globalThis.Number(object.numberValue) : void 0,
+      stringValue: isSet14(object.stringValue) ? globalThis.String(object.stringValue) : void 0,
+      boolValue: isSet14(object.boolValue) ? globalThis.Boolean(object.boolValue) : void 0,
       structValue: isObject3(object.structValue) ? object.structValue : void 0,
       listValue: globalThis.Array.isArray(object.listValue) ? [...object.listValue] : void 0
     };
@@ -32705,7 +33445,7 @@ var ListValue2 = {
 function isObject3(value) {
   return typeof value === "object" && value !== null;
 }
-function isSet12(value) {
+function isSet14(value) {
   return value !== null && value !== void 0;
 }
 
@@ -32780,7 +33520,7 @@ var GetRequest2 = {
     return message;
   },
   fromJSON(object) {
-    return { key: isSet13(object.key) ? globalThis.String(object.key) : "" };
+    return { key: isSet15(object.key) ? globalThis.String(object.key) : "" };
   },
   toJSON(message) {
     const obj = {};
@@ -32831,7 +33571,7 @@ var GetResponse2 = {
     return message;
   },
   fromJSON(object) {
-    return { value: isSet13(object?.value) ? object.value : void 0 };
+    return { value: isSet15(object?.value) ? object.value : void 0 };
   },
   toJSON(message) {
     const obj = {};
@@ -32930,8 +33670,8 @@ var SetRequest2 = {
   },
   fromJSON(object) {
     return {
-      key: isSet13(object.key) ? globalThis.String(object.key) : "",
-      value: isSet13(object?.value) ? object.value : void 0
+      key: isSet15(object.key) ? globalThis.String(object.key) : "",
+      value: isSet15(object?.value) ? object.value : void 0
     };
   },
   toJSON(message) {
@@ -32987,7 +33727,7 @@ var RemoveRequest2 = {
     return message;
   },
   fromJSON(object) {
-    return { key: isSet13(object.key) ? globalThis.String(object.key) : "" };
+    return { key: isSet15(object.key) ? globalThis.String(object.key) : "" };
   },
   toJSON(message) {
     const obj = {};
@@ -33235,8 +33975,8 @@ var ListResponse_ValuesEntry2 = {
   },
   fromJSON(object) {
     return {
-      key: isSet13(object.key) ? globalThis.String(object.key) : "",
-      value: isSet13(object?.value) ? object.value : void 0
+      key: isSet15(object.key) ? globalThis.String(object.key) : "",
+      value: isSet15(object?.value) ? object.value : void 0
     };
   },
   toJSON(message) {
@@ -33259,10 +33999,10 @@ var ListResponse_ValuesEntry2 = {
     return message;
   }
 };
-function createBaseRequest8() {
+function createBaseRequest10() {
   return { get: void 0, set: void 0, remove: void 0, clear: void 0, list: void 0 };
 }
-var Request8 = {
+var Request10 = {
   encode(message, writer = new BinaryWriter2()) {
     if (message.get !== void 0) {
       GetRequest2.encode(message.get, writer.uint32(10).fork()).join();
@@ -33284,7 +34024,7 @@ var Request8 = {
   decode(input, length) {
     const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
     const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseRequest8();
+    const message = createBaseRequest10();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -33333,11 +34073,11 @@ var Request8 = {
   },
   fromJSON(object) {
     return {
-      get: isSet13(object.get) ? GetRequest2.fromJSON(object.get) : void 0,
-      set: isSet13(object.set) ? SetRequest2.fromJSON(object.set) : void 0,
-      remove: isSet13(object.remove) ? RemoveRequest2.fromJSON(object.remove) : void 0,
-      clear: isSet13(object.clear) ? ClearRequest2.fromJSON(object.clear) : void 0,
-      list: isSet13(object.list) ? ListRequest2.fromJSON(object.list) : void 0
+      get: isSet15(object.get) ? GetRequest2.fromJSON(object.get) : void 0,
+      set: isSet15(object.set) ? SetRequest2.fromJSON(object.set) : void 0,
+      remove: isSet15(object.remove) ? RemoveRequest2.fromJSON(object.remove) : void 0,
+      clear: isSet15(object.clear) ? ClearRequest2.fromJSON(object.clear) : void 0,
+      list: isSet15(object.list) ? ListRequest2.fromJSON(object.list) : void 0
     };
   },
   toJSON(message) {
@@ -33360,10 +34100,10 @@ var Request8 = {
     return obj;
   },
   create(base) {
-    return Request8.fromPartial(base ?? {});
+    return Request10.fromPartial(base ?? {});
   },
   fromPartial(object) {
-    const message = createBaseRequest8();
+    const message = createBaseRequest10();
     message.get = object.get !== void 0 && object.get !== null ? GetRequest2.fromPartial(object.get) : void 0;
     message.set = object.set !== void 0 && object.set !== null ? SetRequest2.fromPartial(object.set) : void 0;
     message.remove = object.remove !== void 0 && object.remove !== null ? RemoveRequest2.fromPartial(object.remove) : void 0;
@@ -33372,10 +34112,10 @@ var Request8 = {
     return message;
   }
 };
-function createBaseResponse8() {
+function createBaseResponse10() {
   return { get: void 0, set: void 0, remove: void 0, clear: void 0, list: void 0 };
 }
-var Response8 = {
+var Response10 = {
   encode(message, writer = new BinaryWriter2()) {
     if (message.get !== void 0) {
       GetResponse2.encode(message.get, writer.uint32(10).fork()).join();
@@ -33397,7 +34137,7 @@ var Response8 = {
   decode(input, length) {
     const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
     const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseResponse8();
+    const message = createBaseResponse10();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -33446,11 +34186,11 @@ var Response8 = {
   },
   fromJSON(object) {
     return {
-      get: isSet13(object.get) ? GetResponse2.fromJSON(object.get) : void 0,
-      set: isSet13(object.set) ? SetResponse2.fromJSON(object.set) : void 0,
-      remove: isSet13(object.remove) ? RemoveResponse2.fromJSON(object.remove) : void 0,
-      clear: isSet13(object.clear) ? ClearResponse2.fromJSON(object.clear) : void 0,
-      list: isSet13(object.list) ? ListResponse2.fromJSON(object.list) : void 0
+      get: isSet15(object.get) ? GetResponse2.fromJSON(object.get) : void 0,
+      set: isSet15(object.set) ? SetResponse2.fromJSON(object.set) : void 0,
+      remove: isSet15(object.remove) ? RemoveResponse2.fromJSON(object.remove) : void 0,
+      clear: isSet15(object.clear) ? ClearResponse2.fromJSON(object.clear) : void 0,
+      list: isSet15(object.list) ? ListResponse2.fromJSON(object.list) : void 0
     };
   },
   toJSON(message) {
@@ -33473,10 +34213,10 @@ var Response8 = {
     return obj;
   },
   create(base) {
-    return Response8.fromPartial(base ?? {});
+    return Response10.fromPartial(base ?? {});
   },
   fromPartial(object) {
-    const message = createBaseResponse8();
+    const message = createBaseResponse10();
     message.get = object.get !== void 0 && object.get !== null ? GetResponse2.fromPartial(object.get) : void 0;
     message.set = object.set !== void 0 && object.set !== null ? SetResponse2.fromPartial(object.set) : void 0;
     message.remove = object.remove !== void 0 && object.remove !== null ? RemoveResponse2.fromPartial(object.remove) : void 0;
@@ -33488,7 +34228,7 @@ var Response8 = {
 function isObject4(value) {
   return typeof value === "object" && value !== null;
 }
-function isSet13(value) {
+function isSet15(value) {
   return value !== null && value !== void 0;
 }
 
@@ -33617,9 +34357,9 @@ var ShowToastRequest2 = {
   },
   fromJSON(object) {
     return {
-      id: isSet14(object.id) ? globalThis.String(object.id) : "",
-      title: isSet14(object.title) ? globalThis.String(object.title) : "",
-      style: isSet14(object.style) ? toastStyleFromJSON2(object.style) : 0
+      id: isSet16(object.id) ? globalThis.String(object.id) : "",
+      title: isSet16(object.title) ? globalThis.String(object.title) : "",
+      style: isSet16(object.style) ? toastStyleFromJSON2(object.style) : 0
     };
   },
   toJSON(message) {
@@ -33679,7 +34419,7 @@ var HideToastRequest2 = {
     return message;
   },
   fromJSON(object) {
-    return { id: isSet14(object.id) ? globalThis.String(object.id) : "" };
+    return { id: isSet16(object.id) ? globalThis.String(object.id) : "" };
   },
   toJSON(message) {
     const obj = {};
@@ -33741,8 +34481,8 @@ var UpdateToastRequest2 = {
   },
   fromJSON(object) {
     return {
-      id: isSet14(object.id) ? globalThis.String(object.id) : "",
-      title: isSet14(object.title) ? globalThis.String(object.title) : ""
+      id: isSet16(object.id) ? globalThis.String(object.id) : "",
+      title: isSet16(object.title) ? globalThis.String(object.title) : ""
     };
   },
   toJSON(message) {
@@ -33946,7 +34686,7 @@ var SetSearchTextRequest2 = {
     return message;
   },
   fromJSON(object) {
-    return { text: isSet14(object.text) ? globalThis.String(object.text) : "" };
+    return { text: isSet16(object.text) ? globalThis.String(object.text) : "" };
   },
   toJSON(message) {
     const obj = {};
@@ -33997,7 +34737,7 @@ var ShowHudRequest2 = {
     return message;
   },
   fromJSON(object) {
-    return { text: isSet14(object.text) ? globalThis.String(object.text) : "" };
+    return { text: isSet16(object.text) ? globalThis.String(object.text) : "" };
   },
   toJSON(message) {
     const obj = {};
@@ -34048,7 +34788,7 @@ var RenderRequest2 = {
     return message;
   },
   fromJSON(object) {
-    return { json: isSet14(object.json) ? globalThis.String(object.json) : "" };
+    return { json: isSet16(object.json) ? globalThis.String(object.json) : "" };
   },
   toJSON(message) {
     const obj = {};
@@ -34168,13 +34908,13 @@ var ConfirmAlertRequest2 = {
   },
   fromJSON(object) {
     return {
-      title: isSet14(object.title) ? globalThis.String(object.title) : "",
-      description: isSet14(object.description) ? globalThis.String(object.description) : "",
-      icon: isSet14(object.icon) ? globalThis.String(object.icon) : void 0,
-      dismissAction: isSet14(object.dismissAction) ? ConfirmAlertAction2.fromJSON(object.dismissAction) : void 0,
-      primaryAction: isSet14(object.primaryAction) ? ConfirmAlertAction2.fromJSON(object.primaryAction) : void 0,
-      rememberUserChoice: isSet14(object.rememberUserChoice) ? globalThis.Boolean(object.rememberUserChoice) : false,
-      handle: isSet14(object.handle) ? globalThis.String(object.handle) : ""
+      title: isSet16(object.title) ? globalThis.String(object.title) : "",
+      description: isSet16(object.description) ? globalThis.String(object.description) : "",
+      icon: isSet16(object.icon) ? globalThis.String(object.icon) : void 0,
+      dismissAction: isSet16(object.dismissAction) ? ConfirmAlertAction2.fromJSON(object.dismissAction) : void 0,
+      primaryAction: isSet16(object.primaryAction) ? ConfirmAlertAction2.fromJSON(object.primaryAction) : void 0,
+      rememberUserChoice: isSet16(object.rememberUserChoice) ? globalThis.Boolean(object.rememberUserChoice) : false,
+      handle: isSet16(object.handle) ? globalThis.String(object.handle) : ""
     };
   },
   toJSON(message) {
@@ -34261,8 +35001,8 @@ var ConfirmAlertAction2 = {
   },
   fromJSON(object) {
     return {
-      title: isSet14(object.title) ? globalThis.String(object.title) : "",
-      style: isSet14(object.style) ? confirmAlertActionStyleFromJSON2(object.style) : 0
+      title: isSet16(object.title) ? globalThis.String(object.title) : "",
+      style: isSet16(object.style) ? confirmAlertActionStyleFromJSON2(object.style) : 0
     };
   },
   toJSON(message) {
@@ -34285,7 +35025,7 @@ var ConfirmAlertAction2 = {
     return message;
   }
 };
-function createBaseRequest9() {
+function createBaseRequest11() {
   return {
     render: void 0,
     showToast: void 0,
@@ -34300,7 +35040,7 @@ function createBaseRequest9() {
     confirmAlert: void 0
   };
 }
-var Request9 = {
+var Request11 = {
   encode(message, writer = new BinaryWriter2()) {
     if (message.render !== void 0) {
       RenderRequest2.encode(message.render, writer.uint32(10).fork()).join();
@@ -34340,7 +35080,7 @@ var Request9 = {
   decode(input, length) {
     const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
     const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseRequest9();
+    const message = createBaseRequest11();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -34431,17 +35171,17 @@ var Request9 = {
   },
   fromJSON(object) {
     return {
-      render: isSet14(object.render) ? RenderRequest2.fromJSON(object.render) : void 0,
-      showToast: isSet14(object.showToast) ? ShowToastRequest2.fromJSON(object.showToast) : void 0,
-      hideToast: isSet14(object.hideToast) ? HideToastRequest2.fromJSON(object.hideToast) : void 0,
-      updateToast: isSet14(object.updateToast) ? UpdateToastRequest2.fromJSON(object.updateToast) : void 0,
-      pushView: isSet14(object.pushView) ? PushViewRequest2.fromJSON(object.pushView) : void 0,
-      popView: isSet14(object.popView) ? PopViewRequest2.fromJSON(object.popView) : void 0,
-      clearSearch: isSet14(object.clearSearch) ? ClearSearchBarRequest2.fromJSON(object.clearSearch) : void 0,
-      closeMainWindow: isSet14(object.closeMainWindow) ? CloseMainWindowRequest2.fromJSON(object.closeMainWindow) : void 0,
-      showHud: isSet14(object.showHud) ? ShowHudRequest2.fromJSON(object.showHud) : void 0,
-      setSearchText: isSet14(object.setSearchText) ? SetSearchTextRequest2.fromJSON(object.setSearchText) : void 0,
-      confirmAlert: isSet14(object.confirmAlert) ? ConfirmAlertRequest2.fromJSON(object.confirmAlert) : void 0
+      render: isSet16(object.render) ? RenderRequest2.fromJSON(object.render) : void 0,
+      showToast: isSet16(object.showToast) ? ShowToastRequest2.fromJSON(object.showToast) : void 0,
+      hideToast: isSet16(object.hideToast) ? HideToastRequest2.fromJSON(object.hideToast) : void 0,
+      updateToast: isSet16(object.updateToast) ? UpdateToastRequest2.fromJSON(object.updateToast) : void 0,
+      pushView: isSet16(object.pushView) ? PushViewRequest2.fromJSON(object.pushView) : void 0,
+      popView: isSet16(object.popView) ? PopViewRequest2.fromJSON(object.popView) : void 0,
+      clearSearch: isSet16(object.clearSearch) ? ClearSearchBarRequest2.fromJSON(object.clearSearch) : void 0,
+      closeMainWindow: isSet16(object.closeMainWindow) ? CloseMainWindowRequest2.fromJSON(object.closeMainWindow) : void 0,
+      showHud: isSet16(object.showHud) ? ShowHudRequest2.fromJSON(object.showHud) : void 0,
+      setSearchText: isSet16(object.setSearchText) ? SetSearchTextRequest2.fromJSON(object.setSearchText) : void 0,
+      confirmAlert: isSet16(object.confirmAlert) ? ConfirmAlertRequest2.fromJSON(object.confirmAlert) : void 0
     };
   },
   toJSON(message) {
@@ -34482,10 +35222,10 @@ var Request9 = {
     return obj;
   },
   create(base) {
-    return Request9.fromPartial(base ?? {});
+    return Request11.fromPartial(base ?? {});
   },
   fromPartial(object) {
-    const message = createBaseRequest9();
+    const message = createBaseRequest11();
     message.render = object.render !== void 0 && object.render !== null ? RenderRequest2.fromPartial(object.render) : void 0;
     message.showToast = object.showToast !== void 0 && object.showToast !== null ? ShowToastRequest2.fromPartial(object.showToast) : void 0;
     message.hideToast = object.hideToast !== void 0 && object.hideToast !== null ? HideToastRequest2.fromPartial(object.hideToast) : void 0;
@@ -34500,7 +35240,7 @@ var Request9 = {
     return message;
   }
 };
-function createBaseResponse9() {
+function createBaseResponse11() {
   return {
     render: void 0,
     showToast: void 0,
@@ -34515,7 +35255,7 @@ function createBaseResponse9() {
     confirmAlert: void 0
   };
 }
-var Response9 = {
+var Response11 = {
   encode(message, writer = new BinaryWriter2()) {
     if (message.render !== void 0) {
       AckResponse2.encode(message.render, writer.uint32(10).fork()).join();
@@ -34555,7 +35295,7 @@ var Response9 = {
   decode(input, length) {
     const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
     const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseResponse9();
+    const message = createBaseResponse11();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -34646,17 +35386,17 @@ var Response9 = {
   },
   fromJSON(object) {
     return {
-      render: isSet14(object.render) ? AckResponse2.fromJSON(object.render) : void 0,
-      showToast: isSet14(object.showToast) ? AckResponse2.fromJSON(object.showToast) : void 0,
-      hideToast: isSet14(object.hideToast) ? AckResponse2.fromJSON(object.hideToast) : void 0,
-      updateToast: isSet14(object.updateToast) ? AckResponse2.fromJSON(object.updateToast) : void 0,
-      pushView: isSet14(object.pushView) ? AckResponse2.fromJSON(object.pushView) : void 0,
-      popView: isSet14(object.popView) ? AckResponse2.fromJSON(object.popView) : void 0,
-      clearSearch: isSet14(object.clearSearch) ? AckResponse2.fromJSON(object.clearSearch) : void 0,
-      closeMainWindow: isSet14(object.closeMainWindow) ? AckResponse2.fromJSON(object.closeMainWindow) : void 0,
-      showHud: isSet14(object.showHud) ? AckResponse2.fromJSON(object.showHud) : void 0,
-      setSearchText: isSet14(object.setSearchText) ? AckResponse2.fromJSON(object.setSearchText) : void 0,
-      confirmAlert: isSet14(object.confirmAlert) ? AckResponse2.fromJSON(object.confirmAlert) : void 0
+      render: isSet16(object.render) ? AckResponse2.fromJSON(object.render) : void 0,
+      showToast: isSet16(object.showToast) ? AckResponse2.fromJSON(object.showToast) : void 0,
+      hideToast: isSet16(object.hideToast) ? AckResponse2.fromJSON(object.hideToast) : void 0,
+      updateToast: isSet16(object.updateToast) ? AckResponse2.fromJSON(object.updateToast) : void 0,
+      pushView: isSet16(object.pushView) ? AckResponse2.fromJSON(object.pushView) : void 0,
+      popView: isSet16(object.popView) ? AckResponse2.fromJSON(object.popView) : void 0,
+      clearSearch: isSet16(object.clearSearch) ? AckResponse2.fromJSON(object.clearSearch) : void 0,
+      closeMainWindow: isSet16(object.closeMainWindow) ? AckResponse2.fromJSON(object.closeMainWindow) : void 0,
+      showHud: isSet16(object.showHud) ? AckResponse2.fromJSON(object.showHud) : void 0,
+      setSearchText: isSet16(object.setSearchText) ? AckResponse2.fromJSON(object.setSearchText) : void 0,
+      confirmAlert: isSet16(object.confirmAlert) ? AckResponse2.fromJSON(object.confirmAlert) : void 0
     };
   },
   toJSON(message) {
@@ -34697,10 +35437,10 @@ var Response9 = {
     return obj;
   },
   create(base) {
-    return Response9.fromPartial(base ?? {});
+    return Response11.fromPartial(base ?? {});
   },
   fromPartial(object) {
-    const message = createBaseResponse9();
+    const message = createBaseResponse11();
     message.render = object.render !== void 0 && object.render !== null ? AckResponse2.fromPartial(object.render) : void 0;
     message.showToast = object.showToast !== void 0 && object.showToast !== null ? AckResponse2.fromPartial(object.showToast) : void 0;
     message.hideToast = object.hideToast !== void 0 && object.hideToast !== null ? AckResponse2.fromPartial(object.hideToast) : void 0;
@@ -34715,15 +35455,15 @@ var Response9 = {
     return message;
   }
 };
-function isSet14(value) {
+function isSet16(value) {
   return value !== null && value !== void 0;
 }
 
 // src/proto/extension.ts
-function createBaseRequest10() {
+function createBaseRequest12() {
   return { requestId: "", data: void 0 };
 }
-var Request10 = {
+var Request12 = {
   encode(message, writer = new BinaryWriter2()) {
     if (message.requestId !== "") {
       writer.uint32(10).string(message.requestId);
@@ -34736,7 +35476,7 @@ var Request10 = {
   decode(input, length) {
     const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
     const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseRequest10();
+    const message = createBaseRequest12();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -34764,8 +35504,8 @@ var Request10 = {
   },
   fromJSON(object) {
     return {
-      requestId: isSet15(object.requestId) ? globalThis.String(object.requestId) : "",
-      data: isSet15(object.data) ? RequestData3.fromJSON(object.data) : void 0
+      requestId: isSet17(object.requestId) ? globalThis.String(object.requestId) : "",
+      data: isSet17(object.data) ? RequestData3.fromJSON(object.data) : void 0
     };
   },
   toJSON(message) {
@@ -34779,31 +35519,34 @@ var Request10 = {
     return obj;
   },
   create(base) {
-    return Request10.fromPartial(base ?? {});
+    return Request12.fromPartial(base ?? {});
   },
   fromPartial(object) {
-    const message = createBaseRequest10();
+    const message = createBaseRequest12();
     message.requestId = object.requestId ?? "";
     message.data = object.data !== void 0 && object.data !== null ? RequestData3.fromPartial(object.data) : void 0;
     return message;
   }
 };
 function createBaseRequestData2() {
-  return { ui: void 0, app: void 0, clipboard: void 0, storage: void 0 };
+  return { ui: void 0, app: void 0, clipboard: void 0, storage: void 0, oauth: void 0 };
 }
 var RequestData3 = {
   encode(message, writer = new BinaryWriter2()) {
     if (message.ui !== void 0) {
-      Request9.encode(message.ui, writer.uint32(10).fork()).join();
+      Request11.encode(message.ui, writer.uint32(10).fork()).join();
     }
     if (message.app !== void 0) {
-      Request6.encode(message.app, writer.uint32(18).fork()).join();
+      Request7.encode(message.app, writer.uint32(18).fork()).join();
     }
     if (message.clipboard !== void 0) {
-      Request7.encode(message.clipboard, writer.uint32(26).fork()).join();
+      Request8.encode(message.clipboard, writer.uint32(26).fork()).join();
     }
     if (message.storage !== void 0) {
-      Request8.encode(message.storage, writer.uint32(34).fork()).join();
+      Request10.encode(message.storage, writer.uint32(34).fork()).join();
+    }
+    if (message.oauth !== void 0) {
+      Request9.encode(message.oauth, writer.uint32(42).fork()).join();
     }
     return writer;
   },
@@ -34818,28 +35561,35 @@ var RequestData3 = {
           if (tag !== 10) {
             break;
           }
-          message.ui = Request9.decode(reader, reader.uint32());
+          message.ui = Request11.decode(reader, reader.uint32());
           continue;
         }
         case 2: {
           if (tag !== 18) {
             break;
           }
-          message.app = Request6.decode(reader, reader.uint32());
+          message.app = Request7.decode(reader, reader.uint32());
           continue;
         }
         case 3: {
           if (tag !== 26) {
             break;
           }
-          message.clipboard = Request7.decode(reader, reader.uint32());
+          message.clipboard = Request8.decode(reader, reader.uint32());
           continue;
         }
         case 4: {
           if (tag !== 34) {
             break;
           }
-          message.storage = Request8.decode(reader, reader.uint32());
+          message.storage = Request10.decode(reader, reader.uint32());
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+          message.oauth = Request9.decode(reader, reader.uint32());
           continue;
         }
       }
@@ -34852,25 +35602,29 @@ var RequestData3 = {
   },
   fromJSON(object) {
     return {
-      ui: isSet15(object.ui) ? Request9.fromJSON(object.ui) : void 0,
-      app: isSet15(object.app) ? Request6.fromJSON(object.app) : void 0,
-      clipboard: isSet15(object.clipboard) ? Request7.fromJSON(object.clipboard) : void 0,
-      storage: isSet15(object.storage) ? Request8.fromJSON(object.storage) : void 0
+      ui: isSet17(object.ui) ? Request11.fromJSON(object.ui) : void 0,
+      app: isSet17(object.app) ? Request7.fromJSON(object.app) : void 0,
+      clipboard: isSet17(object.clipboard) ? Request8.fromJSON(object.clipboard) : void 0,
+      storage: isSet17(object.storage) ? Request10.fromJSON(object.storage) : void 0,
+      oauth: isSet17(object.oauth) ? Request9.fromJSON(object.oauth) : void 0
     };
   },
   toJSON(message) {
     const obj = {};
     if (message.ui !== void 0) {
-      obj.ui = Request9.toJSON(message.ui);
+      obj.ui = Request11.toJSON(message.ui);
     }
     if (message.app !== void 0) {
-      obj.app = Request6.toJSON(message.app);
+      obj.app = Request7.toJSON(message.app);
     }
     if (message.clipboard !== void 0) {
-      obj.clipboard = Request7.toJSON(message.clipboard);
+      obj.clipboard = Request8.toJSON(message.clipboard);
     }
     if (message.storage !== void 0) {
-      obj.storage = Request8.toJSON(message.storage);
+      obj.storage = Request10.toJSON(message.storage);
+    }
+    if (message.oauth !== void 0) {
+      obj.oauth = Request9.toJSON(message.oauth);
     }
     return obj;
   },
@@ -34879,17 +35633,18 @@ var RequestData3 = {
   },
   fromPartial(object) {
     const message = createBaseRequestData2();
-    message.ui = object.ui !== void 0 && object.ui !== null ? Request9.fromPartial(object.ui) : void 0;
-    message.app = object.app !== void 0 && object.app !== null ? Request6.fromPartial(object.app) : void 0;
-    message.clipboard = object.clipboard !== void 0 && object.clipboard !== null ? Request7.fromPartial(object.clipboard) : void 0;
-    message.storage = object.storage !== void 0 && object.storage !== null ? Request8.fromPartial(object.storage) : void 0;
+    message.ui = object.ui !== void 0 && object.ui !== null ? Request11.fromPartial(object.ui) : void 0;
+    message.app = object.app !== void 0 && object.app !== null ? Request7.fromPartial(object.app) : void 0;
+    message.clipboard = object.clipboard !== void 0 && object.clipboard !== null ? Request8.fromPartial(object.clipboard) : void 0;
+    message.storage = object.storage !== void 0 && object.storage !== null ? Request10.fromPartial(object.storage) : void 0;
+    message.oauth = object.oauth !== void 0 && object.oauth !== null ? Request9.fromPartial(object.oauth) : void 0;
     return message;
   }
 };
-function createBaseResponse10() {
+function createBaseResponse12() {
   return { requestId: "", data: void 0, error: void 0 };
 }
-var Response10 = {
+var Response12 = {
   encode(message, writer = new BinaryWriter2()) {
     if (message.requestId !== "") {
       writer.uint32(10).string(message.requestId);
@@ -34905,7 +35660,7 @@ var Response10 = {
   decode(input, length) {
     const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
     const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseResponse10();
+    const message = createBaseResponse12();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -34940,9 +35695,9 @@ var Response10 = {
   },
   fromJSON(object) {
     return {
-      requestId: isSet15(object.requestId) ? globalThis.String(object.requestId) : "",
-      data: isSet15(object.data) ? ResponseData3.fromJSON(object.data) : void 0,
-      error: isSet15(object.error) ? ErrorResponse2.fromJSON(object.error) : void 0
+      requestId: isSet17(object.requestId) ? globalThis.String(object.requestId) : "",
+      data: isSet17(object.data) ? ResponseData3.fromJSON(object.data) : void 0,
+      error: isSet17(object.error) ? ErrorResponse2.fromJSON(object.error) : void 0
     };
   },
   toJSON(message) {
@@ -34959,10 +35714,10 @@ var Response10 = {
     return obj;
   },
   create(base) {
-    return Response10.fromPartial(base ?? {});
+    return Response12.fromPartial(base ?? {});
   },
   fromPartial(object) {
-    const message = createBaseResponse10();
+    const message = createBaseResponse12();
     message.requestId = object.requestId ?? "";
     message.data = object.data !== void 0 && object.data !== null ? ResponseData3.fromPartial(object.data) : void 0;
     message.error = object.error !== void 0 && object.error !== null ? ErrorResponse2.fromPartial(object.error) : void 0;
@@ -34970,21 +35725,24 @@ var Response10 = {
   }
 };
 function createBaseResponseData2() {
-  return { ui: void 0, app: void 0, clipboard: void 0, storage: void 0 };
+  return { ui: void 0, app: void 0, clipboard: void 0, storage: void 0, oauth: void 0 };
 }
 var ResponseData3 = {
   encode(message, writer = new BinaryWriter2()) {
     if (message.ui !== void 0) {
-      Response9.encode(message.ui, writer.uint32(10).fork()).join();
+      Response11.encode(message.ui, writer.uint32(10).fork()).join();
     }
     if (message.app !== void 0) {
-      Response6.encode(message.app, writer.uint32(18).fork()).join();
+      Response7.encode(message.app, writer.uint32(18).fork()).join();
     }
     if (message.clipboard !== void 0) {
-      Response7.encode(message.clipboard, writer.uint32(26).fork()).join();
+      Response8.encode(message.clipboard, writer.uint32(26).fork()).join();
     }
     if (message.storage !== void 0) {
-      Response8.encode(message.storage, writer.uint32(34).fork()).join();
+      Response10.encode(message.storage, writer.uint32(34).fork()).join();
+    }
+    if (message.oauth !== void 0) {
+      Response9.encode(message.oauth, writer.uint32(42).fork()).join();
     }
     return writer;
   },
@@ -34999,28 +35757,35 @@ var ResponseData3 = {
           if (tag !== 10) {
             break;
           }
-          message.ui = Response9.decode(reader, reader.uint32());
+          message.ui = Response11.decode(reader, reader.uint32());
           continue;
         }
         case 2: {
           if (tag !== 18) {
             break;
           }
-          message.app = Response6.decode(reader, reader.uint32());
+          message.app = Response7.decode(reader, reader.uint32());
           continue;
         }
         case 3: {
           if (tag !== 26) {
             break;
           }
-          message.clipboard = Response7.decode(reader, reader.uint32());
+          message.clipboard = Response8.decode(reader, reader.uint32());
           continue;
         }
         case 4: {
           if (tag !== 34) {
             break;
           }
-          message.storage = Response8.decode(reader, reader.uint32());
+          message.storage = Response10.decode(reader, reader.uint32());
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+          message.oauth = Response9.decode(reader, reader.uint32());
           continue;
         }
       }
@@ -35033,25 +35798,29 @@ var ResponseData3 = {
   },
   fromJSON(object) {
     return {
-      ui: isSet15(object.ui) ? Response9.fromJSON(object.ui) : void 0,
-      app: isSet15(object.app) ? Response6.fromJSON(object.app) : void 0,
-      clipboard: isSet15(object.clipboard) ? Response7.fromJSON(object.clipboard) : void 0,
-      storage: isSet15(object.storage) ? Response8.fromJSON(object.storage) : void 0
+      ui: isSet17(object.ui) ? Response11.fromJSON(object.ui) : void 0,
+      app: isSet17(object.app) ? Response7.fromJSON(object.app) : void 0,
+      clipboard: isSet17(object.clipboard) ? Response8.fromJSON(object.clipboard) : void 0,
+      storage: isSet17(object.storage) ? Response10.fromJSON(object.storage) : void 0,
+      oauth: isSet17(object.oauth) ? Response9.fromJSON(object.oauth) : void 0
     };
   },
   toJSON(message) {
     const obj = {};
     if (message.ui !== void 0) {
-      obj.ui = Response9.toJSON(message.ui);
+      obj.ui = Response11.toJSON(message.ui);
     }
     if (message.app !== void 0) {
-      obj.app = Response6.toJSON(message.app);
+      obj.app = Response7.toJSON(message.app);
     }
     if (message.clipboard !== void 0) {
-      obj.clipboard = Response7.toJSON(message.clipboard);
+      obj.clipboard = Response8.toJSON(message.clipboard);
     }
     if (message.storage !== void 0) {
-      obj.storage = Response8.toJSON(message.storage);
+      obj.storage = Response10.toJSON(message.storage);
+    }
+    if (message.oauth !== void 0) {
+      obj.oauth = Response9.toJSON(message.oauth);
     }
     return obj;
   },
@@ -35060,10 +35829,11 @@ var ResponseData3 = {
   },
   fromPartial(object) {
     const message = createBaseResponseData2();
-    message.ui = object.ui !== void 0 && object.ui !== null ? Response9.fromPartial(object.ui) : void 0;
-    message.app = object.app !== void 0 && object.app !== null ? Response6.fromPartial(object.app) : void 0;
-    message.clipboard = object.clipboard !== void 0 && object.clipboard !== null ? Response7.fromPartial(object.clipboard) : void 0;
-    message.storage = object.storage !== void 0 && object.storage !== null ? Response8.fromPartial(object.storage) : void 0;
+    message.ui = object.ui !== void 0 && object.ui !== null ? Response11.fromPartial(object.ui) : void 0;
+    message.app = object.app !== void 0 && object.app !== null ? Response7.fromPartial(object.app) : void 0;
+    message.clipboard = object.clipboard !== void 0 && object.clipboard !== null ? Response8.fromPartial(object.clipboard) : void 0;
+    message.storage = object.storage !== void 0 && object.storage !== null ? Response10.fromPartial(object.storage) : void 0;
+    message.oauth = object.oauth !== void 0 && object.oauth !== null ? Response9.fromPartial(object.oauth) : void 0;
     return message;
   }
 };
@@ -35121,9 +35891,9 @@ var Event2 = {
   },
   fromJSON(object) {
     return {
-      id: isSet15(object.id) ? globalThis.String(object.id) : "",
-      generic: isSet15(object.generic) ? GenericEventData2.fromJSON(object.generic) : void 0,
-      crash: isSet15(object.crash) ? CrashEventData2.fromJSON(object.crash) : void 0
+      id: isSet17(object.id) ? globalThis.String(object.id) : "",
+      generic: isSet17(object.generic) ? GenericEventData2.fromJSON(object.generic) : void 0,
+      crash: isSet17(object.crash) ? CrashEventData2.fromJSON(object.crash) : void 0
     };
   },
   toJSON(message) {
@@ -35183,7 +35953,7 @@ var CrashEventData2 = {
     return message;
   },
   fromJSON(object) {
-    return { text: isSet15(object.text) ? globalThis.String(object.text) : "" };
+    return { text: isSet17(object.text) ? globalThis.String(object.text) : "" };
   },
   toJSON(message) {
     const obj = {};
@@ -35234,7 +36004,7 @@ var GenericEventData2 = {
     return message;
   },
   fromJSON(object) {
-    return { json: isSet15(object.json) ? globalThis.String(object.json) : "" };
+    return { json: isSet17(object.json) ? globalThis.String(object.json) : "" };
   },
   toJSON(message) {
     const obj = {};
@@ -35252,7 +36022,7 @@ var GenericEventData2 = {
     return message;
   }
 };
-function isSet15(value) {
+function isSet17(value) {
   return value !== null && value !== void 0;
 }
 
@@ -35361,9 +36131,9 @@ var RequestData4 = {
   },
   fromJSON(object) {
     return {
-      ping: isSet16(object.ping) ? ManagerPingRequestData.fromJSON(object.ping) : void 0,
-      load: isSet16(object.load) ? ManagerLoadCommand.fromJSON(object.load) : void 0,
-      unload: isSet16(object.unload) ? ManagerUnloadCommand.fromJSON(object.unload) : void 0
+      ping: isSet18(object.ping) ? ManagerPingRequestData.fromJSON(object.ping) : void 0,
+      load: isSet18(object.load) ? ManagerLoadCommand.fromJSON(object.load) : void 0,
+      unload: isSet18(object.unload) ? ManagerUnloadCommand.fromJSON(object.unload) : void 0
     };
   },
   toJSON(message) {
@@ -35471,8 +36241,8 @@ var ResponseData4 = {
   },
   fromJSON(object) {
     return {
-      ack: isSet16(object.ack) ? AckResponse2.fromJSON(object.ack) : void 0,
-      load: isSet16(object.load) ? ManagerLoadResponseData.fromJSON(object.load) : void 0
+      ack: isSet18(object.ack) ? AckResponse2.fromJSON(object.ack) : void 0,
+      load: isSet18(object.load) ? ManagerLoadResponseData.fromJSON(object.load) : void 0
     };
   },
   toJSON(message) {
@@ -35589,10 +36359,10 @@ var ManagerLoadCommand = {
   },
   fromJSON(object) {
     return {
-      mode: isSet16(object.mode) ? commandModeFromJSON(object.mode) : 0,
-      env: isSet16(object.env) ? commandEnvFromJSON(object.env) : 0,
-      extensionPath: isSet16(object.extensionPath) ? globalThis.String(object.extensionPath) : "",
-      entrypoint: isSet16(object.entrypoint) ? globalThis.String(object.entrypoint) : "",
+      mode: isSet18(object.mode) ? commandModeFromJSON(object.mode) : 0,
+      env: isSet18(object.env) ? commandEnvFromJSON(object.env) : 0,
+      extensionPath: isSet18(object.extensionPath) ? globalThis.String(object.extensionPath) : "",
+      entrypoint: isSet18(object.entrypoint) ? globalThis.String(object.entrypoint) : "",
       preferenceValues: isObject5(object.preferenceValues) ? Object.entries(object.preferenceValues).reduce((acc, [key, value]) => {
         acc[key] = value;
         return acc;
@@ -35711,8 +36481,8 @@ var ManagerLoadCommand_PreferenceValuesEntry = {
   },
   fromJSON(object) {
     return {
-      key: isSet16(object.key) ? globalThis.String(object.key) : "",
-      value: isSet16(object?.value) ? object.value : void 0
+      key: isSet18(object.key) ? globalThis.String(object.key) : "",
+      value: isSet18(object?.value) ? object.value : void 0
     };
   },
   toJSON(message) {
@@ -35779,8 +36549,8 @@ var ManagerLoadCommand_ArgumentValuesEntry = {
   },
   fromJSON(object) {
     return {
-      key: isSet16(object.key) ? globalThis.String(object.key) : "",
-      value: isSet16(object?.value) ? object.value : void 0
+      key: isSet18(object.key) ? globalThis.String(object.key) : "",
+      value: isSet18(object?.value) ? object.value : void 0
     };
   },
   toJSON(message) {
@@ -35836,7 +36606,7 @@ var ManagerUnloadCommand = {
     return message;
   },
   fromJSON(object) {
-    return { sessionId: isSet16(object.sessionId) ? globalThis.String(object.sessionId) : "" };
+    return { sessionId: isSet18(object.sessionId) ? globalThis.String(object.sessionId) : "" };
   },
   toJSON(message) {
     const obj = {};
@@ -35887,7 +36657,7 @@ var ManagerLoadResponseData = {
     return message;
   },
   fromJSON(object) {
-    return { sessionId: isSet16(object.sessionId) ? globalThis.String(object.sessionId) : "" };
+    return { sessionId: isSet18(object.sessionId) ? globalThis.String(object.sessionId) : "" };
   },
   toJSON(message) {
     const obj = {};
@@ -35908,7 +36678,7 @@ var ManagerLoadResponseData = {
 function isObject5(value) {
   return typeof value === "object" && value !== null;
 }
-function isSet16(value) {
+function isSet18(value) {
   return value !== null && value !== void 0;
 }
 
@@ -35993,11 +36763,11 @@ var IpcMessage = {
   },
   fromJSON(object) {
     return {
-      extensionRequest: isSet17(object.extensionRequest) ? QualifiedExtensionRequest.fromJSON(object.extensionRequest) : void 0,
-      extensionResponse: isSet17(object.extensionResponse) ? QualifiedExtensionResponse.fromJSON(object.extensionResponse) : void 0,
-      extensionEvent: isSet17(object.extensionEvent) ? QualifiedExtensionEvent.fromJSON(object.extensionEvent) : void 0,
-      managerRequest: isSet17(object.managerRequest) ? ManagerRequest.fromJSON(object.managerRequest) : void 0,
-      managerResponse: isSet17(object.managerResponse) ? ManagerResponse.fromJSON(object.managerResponse) : void 0
+      extensionRequest: isSet19(object.extensionRequest) ? QualifiedExtensionRequest.fromJSON(object.extensionRequest) : void 0,
+      extensionResponse: isSet19(object.extensionResponse) ? QualifiedExtensionResponse.fromJSON(object.extensionResponse) : void 0,
+      extensionEvent: isSet19(object.extensionEvent) ? QualifiedExtensionEvent.fromJSON(object.extensionEvent) : void 0,
+      managerRequest: isSet19(object.managerRequest) ? ManagerRequest.fromJSON(object.managerRequest) : void 0,
+      managerResponse: isSet19(object.managerResponse) ? ManagerResponse.fromJSON(object.managerResponse) : void 0
     };
   },
   toJSON(message) {
@@ -36076,8 +36846,8 @@ var ManagerRequest = {
   },
   fromJSON(object) {
     return {
-      requestId: isSet17(object.requestId) ? globalThis.String(object.requestId) : "",
-      payload: isSet17(object.payload) ? RequestData4.fromJSON(object.payload) : void 0
+      requestId: isSet19(object.requestId) ? globalThis.String(object.requestId) : "",
+      payload: isSet19(object.payload) ? RequestData4.fromJSON(object.payload) : void 0
     };
   },
   toJSON(message) {
@@ -36154,9 +36924,9 @@ var ManagerResponse = {
   },
   fromJSON(object) {
     return {
-      requestId: isSet17(object.requestId) ? globalThis.String(object.requestId) : "",
-      value: isSet17(object.value) ? ResponseData4.fromJSON(object.value) : void 0,
-      error: isSet17(object.error) ? ErrorResponse2.fromJSON(object.error) : void 0
+      requestId: isSet19(object.requestId) ? globalThis.String(object.requestId) : "",
+      value: isSet19(object.value) ? ResponseData4.fromJSON(object.value) : void 0,
+      error: isSet19(object.error) ? ErrorResponse2.fromJSON(object.error) : void 0
     };
   },
   toJSON(message) {
@@ -36192,7 +36962,7 @@ var QualifiedExtensionRequest = {
       writer.uint32(10).string(message.sessionId);
     }
     if (message.request !== void 0) {
-      Request10.encode(message.request, writer.uint32(18).fork()).join();
+      Request12.encode(message.request, writer.uint32(18).fork()).join();
     }
     return writer;
   },
@@ -36214,7 +36984,7 @@ var QualifiedExtensionRequest = {
           if (tag !== 18) {
             break;
           }
-          message.request = Request10.decode(reader, reader.uint32());
+          message.request = Request12.decode(reader, reader.uint32());
           continue;
         }
       }
@@ -36227,8 +36997,8 @@ var QualifiedExtensionRequest = {
   },
   fromJSON(object) {
     return {
-      sessionId: isSet17(object.sessionId) ? globalThis.String(object.sessionId) : "",
-      request: isSet17(object.request) ? Request10.fromJSON(object.request) : void 0
+      sessionId: isSet19(object.sessionId) ? globalThis.String(object.sessionId) : "",
+      request: isSet19(object.request) ? Request12.fromJSON(object.request) : void 0
     };
   },
   toJSON(message) {
@@ -36237,7 +37007,7 @@ var QualifiedExtensionRequest = {
       obj.sessionId = message.sessionId;
     }
     if (message.request !== void 0) {
-      obj.request = Request10.toJSON(message.request);
+      obj.request = Request12.toJSON(message.request);
     }
     return obj;
   },
@@ -36247,7 +37017,7 @@ var QualifiedExtensionRequest = {
   fromPartial(object) {
     const message = createBaseQualifiedExtensionRequest();
     message.sessionId = object.sessionId ?? "";
-    message.request = object.request !== void 0 && object.request !== null ? Request10.fromPartial(object.request) : void 0;
+    message.request = object.request !== void 0 && object.request !== null ? Request12.fromPartial(object.request) : void 0;
     return message;
   }
 };
@@ -36260,7 +37030,7 @@ var QualifiedExtensionResponse = {
       writer.uint32(10).string(message.sessionId);
     }
     if (message.response !== void 0) {
-      Response10.encode(message.response, writer.uint32(18).fork()).join();
+      Response12.encode(message.response, writer.uint32(18).fork()).join();
     }
     return writer;
   },
@@ -36282,7 +37052,7 @@ var QualifiedExtensionResponse = {
           if (tag !== 18) {
             break;
           }
-          message.response = Response10.decode(reader, reader.uint32());
+          message.response = Response12.decode(reader, reader.uint32());
           continue;
         }
       }
@@ -36295,8 +37065,8 @@ var QualifiedExtensionResponse = {
   },
   fromJSON(object) {
     return {
-      sessionId: isSet17(object.sessionId) ? globalThis.String(object.sessionId) : "",
-      response: isSet17(object.response) ? Response10.fromJSON(object.response) : void 0
+      sessionId: isSet19(object.sessionId) ? globalThis.String(object.sessionId) : "",
+      response: isSet19(object.response) ? Response12.fromJSON(object.response) : void 0
     };
   },
   toJSON(message) {
@@ -36305,7 +37075,7 @@ var QualifiedExtensionResponse = {
       obj.sessionId = message.sessionId;
     }
     if (message.response !== void 0) {
-      obj.response = Response10.toJSON(message.response);
+      obj.response = Response12.toJSON(message.response);
     }
     return obj;
   },
@@ -36315,7 +37085,7 @@ var QualifiedExtensionResponse = {
   fromPartial(object) {
     const message = createBaseQualifiedExtensionResponse();
     message.sessionId = object.sessionId ?? "";
-    message.response = object.response !== void 0 && object.response !== null ? Response10.fromPartial(object.response) : void 0;
+    message.response = object.response !== void 0 && object.response !== null ? Response12.fromPartial(object.response) : void 0;
     return message;
   }
 };
@@ -36363,8 +37133,8 @@ var QualifiedExtensionEvent = {
   },
   fromJSON(object) {
     return {
-      sessionId: isSet17(object.sessionId) ? globalThis.String(object.sessionId) : "",
-      event: isSet17(object.event) ? Event2.fromJSON(object.event) : void 0
+      sessionId: isSet19(object.sessionId) ? globalThis.String(object.sessionId) : "",
+      event: isSet19(object.event) ? Event2.fromJSON(object.event) : void 0
     };
   },
   toJSON(message) {
@@ -36393,10 +37163,10 @@ function createBaseExtensionMessage2() {
 var ExtensionMessage2 = {
   encode(message, writer = new BinaryWriter2()) {
     if (message.request !== void 0) {
-      Request10.encode(message.request, writer.uint32(10).fork()).join();
+      Request12.encode(message.request, writer.uint32(10).fork()).join();
     }
     if (message.response !== void 0) {
-      Response10.encode(message.response, writer.uint32(18).fork()).join();
+      Response12.encode(message.response, writer.uint32(18).fork()).join();
     }
     if (message.event !== void 0) {
       Event2.encode(message.event, writer.uint32(26).fork()).join();
@@ -36414,14 +37184,14 @@ var ExtensionMessage2 = {
           if (tag !== 10) {
             break;
           }
-          message.request = Request10.decode(reader, reader.uint32());
+          message.request = Request12.decode(reader, reader.uint32());
           continue;
         }
         case 2: {
           if (tag !== 18) {
             break;
           }
-          message.response = Response10.decode(reader, reader.uint32());
+          message.response = Response12.decode(reader, reader.uint32());
           continue;
         }
         case 3: {
@@ -36441,18 +37211,18 @@ var ExtensionMessage2 = {
   },
   fromJSON(object) {
     return {
-      request: isSet17(object.request) ? Request10.fromJSON(object.request) : void 0,
-      response: isSet17(object.response) ? Response10.fromJSON(object.response) : void 0,
-      event: isSet17(object.event) ? Event2.fromJSON(object.event) : void 0
+      request: isSet19(object.request) ? Request12.fromJSON(object.request) : void 0,
+      response: isSet19(object.response) ? Response12.fromJSON(object.response) : void 0,
+      event: isSet19(object.event) ? Event2.fromJSON(object.event) : void 0
     };
   },
   toJSON(message) {
     const obj = {};
     if (message.request !== void 0) {
-      obj.request = Request10.toJSON(message.request);
+      obj.request = Request12.toJSON(message.request);
     }
     if (message.response !== void 0) {
-      obj.response = Response10.toJSON(message.response);
+      obj.response = Response12.toJSON(message.response);
     }
     if (message.event !== void 0) {
       obj.event = Event2.toJSON(message.event);
@@ -36464,13 +37234,13 @@ var ExtensionMessage2 = {
   },
   fromPartial(object) {
     const message = createBaseExtensionMessage2();
-    message.request = object.request !== void 0 && object.request !== null ? Request10.fromPartial(object.request) : void 0;
-    message.response = object.response !== void 0 && object.response !== null ? Response10.fromPartial(object.response) : void 0;
+    message.request = object.request !== void 0 && object.request !== null ? Request12.fromPartial(object.request) : void 0;
+    message.response = object.response !== void 0 && object.response !== null ? Response12.fromPartial(object.response) : void 0;
     message.event = object.event !== void 0 && object.event !== null ? Event2.fromPartial(object.event) : void 0;
     return message;
   }
 };
-function isSet17(value) {
+function isSet19(value) {
   return value !== null && value !== void 0;
 }
 
@@ -36546,6 +37316,7 @@ var Omnicast = class {
         try {
           const { event, request: request2 } = ExtensionMessage2.decode(buf);
           if (request2) {
+            console.error("request of type", JSON.stringify(request2, null, 2));
             this.requestMap.set(request2.requestId, worker);
             this.writeMessage({ extensionRequest: { sessionId, request: request2 } });
             return;
@@ -36599,6 +37370,7 @@ Please file a bug report.` });
   }
   async routeMessage(message) {
     const { managerRequest, extensionEvent, extensionResponse } = message;
+    console.error(JSON.stringify({ message }, null, 2));
     if (managerRequest) {
       this.handleManagerRequest(managerRequest);
     }

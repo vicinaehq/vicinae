@@ -2,6 +2,7 @@
 #include "common.hpp"
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
+#include <qlogging.h>
 
 std::variant<CommandResponse, CommandError> IpcCommandHandler::handleCommand(const CommandMessage &message) {
   qDebug() << "received message type" << message.type;
@@ -17,6 +18,8 @@ std::variant<CommandResponse, CommandError> IpcCommandHandler::handleCommand(con
 
   if (message.type == "url-scheme-handler") {
     QUrl url(message.params.asString().c_str());
+
+    qCritical() << "Got url" << url;
 
     // omnicast://extensions/<extension_id>/<command_id>
     if (url.host() == "extensions") {

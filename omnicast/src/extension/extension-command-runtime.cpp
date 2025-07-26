@@ -1,8 +1,12 @@
 #include "extension-command-runtime.hpp"
 #include "common.hpp"
+#include "proto/oauth.pb.h"
 #include "services/asset-resolver/asset-resolver.hpp"
+#include "services/oauth/oauth-service.hpp"
+#include "ui/oauth-view.hpp"
 #include "utils/utils.hpp"
 #include <QString>
+#include "overlay-controller/overlay-controller.hpp"
 
 proto::ext::extension::Response *ExtensionCommandRuntime::makeErrorResponse(const QString &errorText) {
   auto res = new proto::ext::extension::Response;
@@ -14,9 +18,36 @@ proto::ext::extension::Response *ExtensionCommandRuntime::makeErrorResponse(cons
   return res;
 }
 
-proto::ext::extension::Response *ExtensionCommandRuntime::dispatchRequest(const ExtensionRequest &request) {
+void ExtensionCommandRuntime::handleOAuth(ExtensionRequest *request, const proto::ext::oauth::Request &req) {
+  auto oauth = context()->services->oauthService();
+
+  auto e = [request](const QString &code) {
+    auto res = new proto::ext::extension::Response;
+    auto resData = new proto::ext::extension::ResponseData;
+    auto oauthRes = new proto::ext::oauth::Response;
+    auto authorizeRes = new proto::ext::oauth::AuthorizeResponse;
+
+    res->set_allocated_data(resData);
+    resData->set_allocated_oauth(oauthRes);
+    oauthRes->set_allocated_authorize(authorizeRes);
+    authorizeRes->set_code(code.toStdString());
+
+    request->respond(res);
+    delete request;
+  };
+
+  switch (req.payload_case()) {
+  case proto::ext::oauth::Request::kAuthorize: {
+    context()->overlay->setCurrent(new OAuthView(context(), request, req.authorize()));
+  }
+  default:
+    break;
+  }
+}
+
+proto::ext::extension::Response *ExtensionCommandRuntime::dispatchRequest(ExtensionRequest *request) {
   using Request = proto::ext::extension::RequestData;
-  auto &data = request.requestData();
+  auto &data = request->requestData();
 
   qDebug() << "got request";
 
@@ -29,6 +60,9 @@ proto::ext::extension::Response *ExtensionCommandRuntime::dispatchRequest(const 
     return m_appRouter->route(data.app());
   case Request::kClipboard:
     return m_clipboardRouter->route(data.clipboard());
+  case Request::kOauth:
+    handleOAuth(request, data.oauth());
+    return nullptr;
   default:
     break;
   }
@@ -36,10 +70,13 @@ proto::ext::extension::Response *ExtensionCommandRuntime::dispatchRequest(const 
   return makeErrorResponse("Unhandled top level request");
 }
 
-void ExtensionCommandRuntime::handleRequest(ExtensionRequest &request) {
-  if (request.sessionId() != m_sessionId) return;
+void ExtensionCommandRuntime::handleRequest(ExtensionRequest *request) {
+  if (request->sessionId() != m_sessionId) return;
 
-  request.respond(dispatchRequest(request));
+  if (auto res = dispatchRequest(request)) {
+    request->respond(res);
+    delete request;
+  }
 }
 
 void ExtensionCommandRuntime::handleCrash(const proto::ext::extension::CrashEventData &crash) {

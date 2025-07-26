@@ -5,6 +5,7 @@ import "ui.proto";
 import "application.proto";
 import "clipboard.proto";
 import "common.proto";
+import "oauth.proto";
 
 package proto.ext.extension;
 
@@ -19,6 +20,7 @@ message RequestData {
     application.Request app = 2;
     clipboard.Request clipboard = 3;
     storage.Request storage = 4;
+    oauth.Request oauth = 5;
   };
 };
 
@@ -36,6 +38,7 @@ message ResponseData {
     application.Response app = 2;
     clipboard.Response clipboard = 3;
     storage.Response storage = 4;
+    oauth.Response oauth = 5;
   };
 };
 

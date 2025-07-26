@@ -71,6 +71,8 @@ type EndpointMapping = {
 	'storage.clear': 'storage.clear',
 	'storage.list': 'storage.list',
 
+	'oauth.authorize': 'oauth.authorize',
+
 	'clipboard.copy': 'clipboard.copy'
 }
 

@@ -5,6 +5,7 @@
 #include "ipc-command-server.hpp"
 #include "ipc-command-handler.hpp"
 #include "launcher-window.hpp"
+#include "overlay-controller/overlay-controller.hpp"
 #include "services/app-service/app-service.hpp"
 #include "command-database.hpp"
 #include "root-search/apps/app-root-provider.hpp"
@@ -49,6 +50,7 @@
 #include "proto.hpp"
 #include "quicklink-seeder.hpp"
 #include "quicklist-database.hpp"
+#include "services/oauth/oauth-service.hpp"
 #include "services/raycast/raycast-store.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "root-search/apps/app-root-provider.hpp"
@@ -229,6 +231,7 @@ int startDaemon() {
     registry->setEmojiService(std::move(emojiService));
     registry->setRaycastStore(std::move(raycastStore));
     registry->setExtensionRegistry(std::move(extensionRegistry));
+    registry->setOAuthService(std::make_unique<OAuthService>());
 
     auto p = rootExtMan.get();
 
@@ -300,6 +303,7 @@ int startDaemon() {
 
   ctx.navigation = std::make_unique<NavigationController>(ctx);
   ctx.command = std::make_unique<CommandController>(&ctx);
+  ctx.overlay = std::make_unique<OverlayController>(&ctx);
   ctx.services = ServiceRegistry::instance();
 
   IpcCommandServer commandServer;

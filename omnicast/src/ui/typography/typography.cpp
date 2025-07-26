@@ -131,6 +131,7 @@ void TypographyWidget::clear() { setText(""); }
 TypographyWidget::TypographyWidget(QWidget *parent) : QWidget(parent) {
   QVBoxLayout *layout = new QVBoxLayout;
 
+  m_label->setOpenExternalLinks(true);
   layout->setSpacing(0);
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(m_label);

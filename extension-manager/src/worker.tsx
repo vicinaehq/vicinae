@@ -1,7 +1,7 @@
 import { parentPort, workerData } from "worker_threads";
 import { createRenderer } from './reconciler';
 import { LaunchType, NavigationProvider, bus, environment } from '@omnicast/api';
-import type { ComponentType, ReactNode } from "react";
+import { ComponentType, ReactNode, Suspense } from "react";
 import * as React from 'react';
 import { patchRequire } from "./patch-require";
 
@@ -19,7 +19,7 @@ class ErrorBoundary extends React.Component<{ children: ReactNode }, { error: st
     const {error} = this.state;
 
     if (error) {
-		bus.emitCrash(error);
+		console.error(error);
 	}
 
     return <>{this.props.children}</>;
@@ -29,7 +29,9 @@ class ErrorBoundary extends React.Component<{ children: ReactNode }, { error: st
 const App: React.FC<{ component: ComponentType, launchProps: any }> = ({ component: Component, launchProps }) => {
 	return (
 		<ErrorBoundary>
-			<NavigationProvider root={<Component {...launchProps} />} />
+			<Suspense fallback={<></>}>
+				<NavigationProvider root={<Component {...launchProps} />} />
+			</Suspense>
 		</ErrorBoundary>
 	)
 }

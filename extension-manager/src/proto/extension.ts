@@ -6,11 +6,12 @@
 
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
-import { Request as Request2, Response as Response6 } from "./application";
-import { Request as Request3, Response as Response7 } from "./clipboard";
+import { Request as Request2, Response as Response7 } from "./application";
+import { Request as Request3, Response as Response8 } from "./clipboard";
 import { ErrorResponse } from "./common";
-import { Request as Request4, Response as Response8 } from "./storage";
-import { Request as Request1, Response as Response5 } from "./ui";
+import { Request as Request5, Response as Response10 } from "./oauth";
+import { Request as Request4, Response as Response9 } from "./storage";
+import { Request as Request1, Response as Response6 } from "./ui";
 
 export const protobufPackage = "proto.ext.extension";
 
@@ -24,6 +25,7 @@ export interface RequestData {
   app?: Request2 | undefined;
   clipboard?: Request3 | undefined;
   storage?: Request4 | undefined;
+  oauth?: Request5 | undefined;
 }
 
 export interface Response {
@@ -33,10 +35,11 @@ export interface Response {
 }
 
 export interface ResponseData {
-  ui?: Response5 | undefined;
-  app?: Response6 | undefined;
-  clipboard?: Response7 | undefined;
-  storage?: Response8 | undefined;
+  ui?: Response6 | undefined;
+  app?: Response7 | undefined;
+  clipboard?: Response8 | undefined;
+  storage?: Response9 | undefined;
+  oauth?: Response10 | undefined;
 }
 
 export interface Event {
@@ -132,7 +135,7 @@ export const Request: MessageFns<Request> = {
 };
 
 function createBaseRequestData(): RequestData {
-  return { ui: undefined, app: undefined, clipboard: undefined, storage: undefined };
+  return { ui: undefined, app: undefined, clipboard: undefined, storage: undefined, oauth: undefined };
 }
 
 export const RequestData: MessageFns<RequestData> = {
@@ -148,6 +151,9 @@ export const RequestData: MessageFns<RequestData> = {
     }
     if (message.storage !== undefined) {
       Request4.encode(message.storage, writer.uint32(34).fork()).join();
+    }
+    if (message.oauth !== undefined) {
+      Request5.encode(message.oauth, writer.uint32(42).fork()).join();
     }
     return writer;
   },
@@ -191,6 +197,14 @@ export const RequestData: MessageFns<RequestData> = {
           message.storage = Request4.decode(reader, reader.uint32());
           continue;
         }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.oauth = Request5.decode(reader, reader.uint32());
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -206,6 +220,7 @@ export const RequestData: MessageFns<RequestData> = {
       app: isSet(object.app) ? Request2.fromJSON(object.app) : undefined,
       clipboard: isSet(object.clipboard) ? Request3.fromJSON(object.clipboard) : undefined,
       storage: isSet(object.storage) ? Request4.fromJSON(object.storage) : undefined,
+      oauth: isSet(object.oauth) ? Request5.fromJSON(object.oauth) : undefined,
     };
   },
 
@@ -223,6 +238,9 @@ export const RequestData: MessageFns<RequestData> = {
     if (message.storage !== undefined) {
       obj.storage = Request4.toJSON(message.storage);
     }
+    if (message.oauth !== undefined) {
+      obj.oauth = Request5.toJSON(message.oauth);
+    }
     return obj;
   },
 
@@ -238,6 +256,9 @@ export const RequestData: MessageFns<RequestData> = {
       : undefined;
     message.storage = (object.storage !== undefined && object.storage !== null)
       ? Request4.fromPartial(object.storage)
+      : undefined;
+    message.oauth = (object.oauth !== undefined && object.oauth !== null)
+      ? Request5.fromPartial(object.oauth)
       : undefined;
     return message;
   },
@@ -340,22 +361,25 @@ export const Response: MessageFns<Response> = {
 };
 
 function createBaseResponseData(): ResponseData {
-  return { ui: undefined, app: undefined, clipboard: undefined, storage: undefined };
+  return { ui: undefined, app: undefined, clipboard: undefined, storage: undefined, oauth: undefined };
 }
 
 export const ResponseData: MessageFns<ResponseData> = {
   encode(message: ResponseData, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.ui !== undefined) {
-      Response5.encode(message.ui, writer.uint32(10).fork()).join();
+      Response6.encode(message.ui, writer.uint32(10).fork()).join();
     }
     if (message.app !== undefined) {
-      Response6.encode(message.app, writer.uint32(18).fork()).join();
+      Response7.encode(message.app, writer.uint32(18).fork()).join();
     }
     if (message.clipboard !== undefined) {
-      Response7.encode(message.clipboard, writer.uint32(26).fork()).join();
+      Response8.encode(message.clipboard, writer.uint32(26).fork()).join();
     }
     if (message.storage !== undefined) {
-      Response8.encode(message.storage, writer.uint32(34).fork()).join();
+      Response9.encode(message.storage, writer.uint32(34).fork()).join();
+    }
+    if (message.oauth !== undefined) {
+      Response10.encode(message.oauth, writer.uint32(42).fork()).join();
     }
     return writer;
   },
@@ -372,7 +396,7 @@ export const ResponseData: MessageFns<ResponseData> = {
             break;
           }
 
-          message.ui = Response5.decode(reader, reader.uint32());
+          message.ui = Response6.decode(reader, reader.uint32());
           continue;
         }
         case 2: {
@@ -380,7 +404,7 @@ export const ResponseData: MessageFns<ResponseData> = {
             break;
           }
 
-          message.app = Response6.decode(reader, reader.uint32());
+          message.app = Response7.decode(reader, reader.uint32());
           continue;
         }
         case 3: {
@@ -388,7 +412,7 @@ export const ResponseData: MessageFns<ResponseData> = {
             break;
           }
 
-          message.clipboard = Response7.decode(reader, reader.uint32());
+          message.clipboard = Response8.decode(reader, reader.uint32());
           continue;
         }
         case 4: {
@@ -396,7 +420,15 @@ export const ResponseData: MessageFns<ResponseData> = {
             break;
           }
 
-          message.storage = Response8.decode(reader, reader.uint32());
+          message.storage = Response9.decode(reader, reader.uint32());
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.oauth = Response10.decode(reader, reader.uint32());
           continue;
         }
       }
@@ -410,26 +442,30 @@ export const ResponseData: MessageFns<ResponseData> = {
 
   fromJSON(object: any): ResponseData {
     return {
-      ui: isSet(object.ui) ? Response5.fromJSON(object.ui) : undefined,
-      app: isSet(object.app) ? Response6.fromJSON(object.app) : undefined,
-      clipboard: isSet(object.clipboard) ? Response7.fromJSON(object.clipboard) : undefined,
-      storage: isSet(object.storage) ? Response8.fromJSON(object.storage) : undefined,
+      ui: isSet(object.ui) ? Response6.fromJSON(object.ui) : undefined,
+      app: isSet(object.app) ? Response7.fromJSON(object.app) : undefined,
+      clipboard: isSet(object.clipboard) ? Response8.fromJSON(object.clipboard) : undefined,
+      storage: isSet(object.storage) ? Response9.fromJSON(object.storage) : undefined,
+      oauth: isSet(object.oauth) ? Response10.fromJSON(object.oauth) : undefined,
     };
   },
 
   toJSON(message: ResponseData): unknown {
     const obj: any = {};
     if (message.ui !== undefined) {
-      obj.ui = Response5.toJSON(message.ui);
+      obj.ui = Response6.toJSON(message.ui);
     }
     if (message.app !== undefined) {
-      obj.app = Response6.toJSON(message.app);
+      obj.app = Response7.toJSON(message.app);
     }
     if (message.clipboard !== undefined) {
-      obj.clipboard = Response7.toJSON(message.clipboard);
+      obj.clipboard = Response8.toJSON(message.clipboard);
     }
     if (message.storage !== undefined) {
-      obj.storage = Response8.toJSON(message.storage);
+      obj.storage = Response9.toJSON(message.storage);
+    }
+    if (message.oauth !== undefined) {
+      obj.oauth = Response10.toJSON(message.oauth);
     }
     return obj;
   },
@@ -439,13 +475,16 @@ export const ResponseData: MessageFns<ResponseData> = {
   },
   fromPartial<I extends Exact<DeepPartial<ResponseData>, I>>(object: I): ResponseData {
     const message = createBaseResponseData();
-    message.ui = (object.ui !== undefined && object.ui !== null) ? Response5.fromPartial(object.ui) : undefined;
-    message.app = (object.app !== undefined && object.app !== null) ? Response6.fromPartial(object.app) : undefined;
+    message.ui = (object.ui !== undefined && object.ui !== null) ? Response6.fromPartial(object.ui) : undefined;
+    message.app = (object.app !== undefined && object.app !== null) ? Response7.fromPartial(object.app) : undefined;
     message.clipboard = (object.clipboard !== undefined && object.clipboard !== null)
-      ? Response7.fromPartial(object.clipboard)
+      ? Response8.fromPartial(object.clipboard)
       : undefined;
     message.storage = (object.storage !== undefined && object.storage !== null)
-      ? Response8.fromPartial(object.storage)
+      ? Response9.fromPartial(object.storage)
+      : undefined;
+    message.oauth = (object.oauth !== undefined && object.oauth !== null)
+      ? Response10.fromPartial(object.oauth)
       : undefined;
     return message;
   },

@@ -32,6 +32,7 @@ protected:
     QBrush brush;
 
     if (underMouse()) {
+      qDebug() << "under mouse";
       brush = painter.colorBrush(m_hoverColor);
     } else {
       brush = painter.colorBrush(m_color);
@@ -129,7 +130,7 @@ public:
   void setText(const QString &text) { label->setText(text); }
 
   OmniButtonWidget(QWidget *parent = nullptr) : QWidget(parent) {
-    setAttribute(Qt::WA_Hover, true);
+    setAttribute(Qt::WA_Hover);
     setFocusPolicy(Qt::StrongFocus);
 
     _layout->setContentsMargins(5, 5, 5, 5);

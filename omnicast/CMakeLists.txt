@@ -493,6 +493,11 @@ set(SRCS
 	src/ui/thumbnail/thumbnail.hpp
 	src/ui/thumbnail/thumbnail.cpp
 
+	src/overlay-controller/overlay-controller.hpp
+
+	src/ui/overlay/overlay.hpp
+	src/ui/overlay/overlay.cpp
+
 	src/lib/zip/unzip.cpp
 
 ) 

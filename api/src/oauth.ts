@@ -1,4 +1,7 @@
-import { Image } from './image';
+import { hash, randomBytes } from 'node:crypto';
+import { Image, serializeImageLike } from './image';
+import { bus } from './bus';
+import { RedirectMethod } from './proto/oauth';
 
 enum OauthRedirectMethod {
 	 /**
@@ -269,6 +272,32 @@ export class PKCEClient {
 			 this.isAuthorizing = false;
 		 }
 
+		 buildAuthUrl(options: OAuth.AuthorizationRequestOptions, state: string, codeChallenge: string, redirectURI: string) {
+			const params = new URLSearchParams({
+				response_type: 'code',
+				client_id: options.clientId,
+				redirect_uri: redirectURI,
+				scope: options.scope,
+				state: state,
+				code_challenge: codeChallenge,
+				code_challenge_method: 'S256',
+				...options.extraParameters
+			});
+
+			return `${options.endpoint}?${params}`;
+		 }
+
+		 getRedirectURI() {
+			switch (this.redirectMethod) {
+				case OAuth.RedirectMethod.Web:
+					return 'https://raycast.com/redirect?packageName=Extension';
+				case OAuth.RedirectMethod.App:
+					return 'raycast://oauth?package_name=Extension';
+				case OAuth.RedirectMethod.AppURI:
+					return 'com.raycast:/oauth?package_name=Extension';
+			}
+		}
+
          /**
           * Creates an authorization request for the provided authorization endpoint, client ID, and scopes.
           * You need to first create the authorization request before calling {@link OAuth.PKCEClient.authorize}.
@@ -278,7 +307,18 @@ export class PKCEClient {
           * @returns A promise for an {@link OAuth.AuthorizationRequest} that you can use as input for {@link OAuth.PKCEClient.authorize}.
           */
          async authorizationRequest(options: OAuth.AuthorizationRequestOptions): Promise<OAuth.AuthorizationRequest> {
-			 return {} as any;
+			 const codeVerifier = randomBytes(128).toString('hex');
+			 const codeChallenge = hash('sha256', codeVerifier, 'base64url');
+			 const state = randomBytes(32).toString('hex');
+			 const redirectURI = this.getRedirectURI();
+
+			 return {
+				 state,
+				 codeChallenge,
+				 codeVerifier,
+				 redirectURI, 
+				 toURL: () => this.buildAuthUrl(options, state, codeChallenge, redirectURI)
+			 };
 		 }
          /**
           * Starts the authorization and shows the OAuth overlay in Raycast.
@@ -290,7 +330,25 @@ export class PKCEClient {
           * The promise is resolved when the user was redirected back from the provider's authorization page to the Raycast extension.
           */
          async authorize(options: OAuth.AuthorizationRequest | OAuth.AuthorizationOptions): Promise<OAuth.AuthorizationResponse> {
-			 return {} as any;
+			 const isAuthorizationOptions = (s: OAuth.AuthorizationRequest | OAuth.AuthorizationOptions): s is OAuth.AuthorizationOptions => {
+				 return typeof (s as any).url === 'string';
+			 };
+
+			 const res = await bus.turboRequest('oauth.authorize', {
+				 client: {
+					 id: this.providerId,
+					 description: this.description ?? '',
+					 name: this.providerName,
+					 icon: ''
+				 },
+				 url: isAuthorizationOptions(options) ? options.url : options.toURL()
+			 });
+
+			 if (!res.ok) {
+				 throw res.error;
+			 }
+
+			 return { authorizationCode: res.value.code }
 		 }
 
          private authorizationURL;
@@ -327,7 +385,22 @@ export class PKCEClient {
      }
 
 
+class TokenSet {
+         accessToken: string = '';
+         refreshToken?: string;
+         idToken?: string;
+         expiresIn?: number;
+         scope?: string;
+         updatedAt: Date = new Date;
+
+         isExpired(): boolean {
+			 return true;
+		 }
+}
+
+
 export const OAuth = {
 	PKCEClient,
-	RedirectMethod: OauthRedirectMethod
+	RedirectMethod: OauthRedirectMethod,
+	TokenSet
 };
