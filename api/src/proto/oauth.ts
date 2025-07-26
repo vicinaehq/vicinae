@@ -6,6 +6,7 @@
 
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
+import { Image } from "./ui";
 
 export const protobufPackage = "proto.ext.oauth";
 
@@ -52,8 +53,8 @@ export interface PKCEClientOptions {
   id?: string | undefined;
   name: string;
   /** we need to implement image like schema */
-  icon: string;
   description: string;
+  icon?: Image | undefined;
 }
 
 export interface AuthorizeRequest {
@@ -74,7 +75,7 @@ export interface Response {
 }
 
 function createBasePKCEClientOptions(): PKCEClientOptions {
-  return { id: undefined, name: "", icon: "", description: "" };
+  return { id: undefined, name: "", description: "", icon: undefined };
 }
 
 export const PKCEClientOptions: MessageFns<PKCEClientOptions> = {
@@ -85,11 +86,11 @@ export const PKCEClientOptions: MessageFns<PKCEClientOptions> = {
     if (message.name !== "") {
       writer.uint32(18).string(message.name);
     }
-    if (message.icon !== "") {
-      writer.uint32(26).string(message.icon);
-    }
     if (message.description !== "") {
-      writer.uint32(34).string(message.description);
+      writer.uint32(26).string(message.description);
+    }
+    if (message.icon !== undefined) {
+      Image.encode(message.icon, writer.uint32(34).fork()).join();
     }
     return writer;
   },
@@ -122,7 +123,7 @@ export const PKCEClientOptions: MessageFns<PKCEClientOptions> = {
             break;
           }
 
-          message.icon = reader.string();
+          message.description = reader.string();
           continue;
         }
         case 4: {
@@ -130,7 +131,7 @@ export const PKCEClientOptions: MessageFns<PKCEClientOptions> = {
             break;
           }
 
-          message.description = reader.string();
+          message.icon = Image.decode(reader, reader.uint32());
           continue;
         }
       }
@@ -146,8 +147,8 @@ export const PKCEClientOptions: MessageFns<PKCEClientOptions> = {
     return {
       id: isSet(object.id) ? globalThis.String(object.id) : undefined,
       name: isSet(object.name) ? globalThis.String(object.name) : "",
-      icon: isSet(object.icon) ? globalThis.String(object.icon) : "",
       description: isSet(object.description) ? globalThis.String(object.description) : "",
+      icon: isSet(object.icon) ? Image.fromJSON(object.icon) : undefined,
     };
   },
 
@@ -159,11 +160,11 @@ export const PKCEClientOptions: MessageFns<PKCEClientOptions> = {
     if (message.name !== "") {
       obj.name = message.name;
     }
-    if (message.icon !== "") {
-      obj.icon = message.icon;
-    }
     if (message.description !== "") {
       obj.description = message.description;
+    }
+    if (message.icon !== undefined) {
+      obj.icon = Image.toJSON(message.icon);
     }
     return obj;
   },
@@ -175,8 +176,8 @@ export const PKCEClientOptions: MessageFns<PKCEClientOptions> = {
     const message = createBasePKCEClientOptions();
     message.id = object.id ?? undefined;
     message.name = object.name ?? "";
-    message.icon = object.icon ?? "";
     message.description = object.description ?? "";
+    message.icon = (object.icon !== undefined && object.icon !== null) ? Image.fromPartial(object.icon) : undefined;
     return message;
   },
 };

@@ -31,11 +31,12 @@
 #include <qwidget.h>
 #include "lib/emoji-detect.hpp"
 #include "network-manager.hpp"
+#include "proto/ui.pb.h"
 #include "services/asset-resolver/asset-resolver.hpp"
 #include "theme.hpp"
 #include "ui/omni-painter.hpp"
 
-enum OmniIconType { Invalid, Builtin, Favicon, System, Http, Local, Emoji };
+enum OmniIconType { Invalid, Builtin, Favicon, System, Http, Local, Emoji, DataURI };
 
 static std::vector<std::pair<QString, OmniIconType>> iconTypes = {
     {"favicon", Favicon}, {"omnicast", Builtin}, {"system", System},
@@ -180,6 +181,52 @@ public:
 
   OmniIconUrl() : _bgTint(InvalidTint), _fgTint(InvalidTint) {}
   OmniIconUrl(const QString &s) noexcept { *this = std::move(QUrl(s)); }
+
+  OmniIconUrl(const proto::ext::ui::Image &image) {
+    using Source = proto::ext::ui::ImageSource;
+    ExtensionImageModel model;
+
+    if (image.has_color_tint()) { model.tintColor = OmniIconUrl::tintForName(image.color_tint().c_str()); }
+    if (image.has_mask()) {
+      switch (image.mask()) {
+      case proto::ext::ui::ImageMask::Circle:
+        model.mask = OmniPainter::ImageMaskType::CircleMask;
+        break;
+      case proto::ext::ui::ImageMask::RoundedRectangle:
+        model.mask = OmniPainter::ImageMaskType::RoundedRectangleMask;
+        break;
+      default:
+        break;
+      }
+    }
+
+    switch (image.source().payload_case()) {
+    case Source::kRaw:
+      model.source = image.source().raw().c_str();
+      break;
+    case Source::kThemed: {
+      auto &themed = image.source().themed();
+
+      model.source = ThemedIconSource{.light = themed.light().c_str(), .dark = themed.dark().c_str()};
+      break;
+    }
+    default:
+      break;
+    }
+
+    if (image.has_fallback()) {
+      switch (image.fallback().payload_case()) {
+      case Source::kRaw:
+        model.fallback = image.fallback().raw().c_str();
+        break;
+      default:
+        break;
+      }
+    }
+
+    *this = ImageLikeModel(model);
+  }
+
   OmniIconUrl(const ImageLikeModel &imageLike)
       : _bgTint(InvalidTint), _fgTint(InvalidTint), _mask(OmniPainter::NoMask) {
     if (auto image = std::get_if<ExtensionImageModel>(&imageLike)) {
@@ -207,6 +254,11 @@ public:
           setType(OmniIconType::Local);
           setName(url.host() + url.path());
           return;
+        }
+
+        if (url.scheme() == "data") {
+          setType(OmniIconType::DataURI);
+          setName(source.split("data:").at(1));
         }
 
         if (url.scheme() == "https" || url.scheme() == "http") {

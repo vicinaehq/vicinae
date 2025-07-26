@@ -1,5 +1,5 @@
 syntax = "proto3";
-import "google/protobuf/struct.proto";
+import "ui.proto";
 
 package proto.ext.oauth;
 
@@ -13,8 +13,8 @@ message PKCEClientOptions {
   optional string id = 1;
   string name = 2;
   // we need to implement image like schema
-  string icon = 3;
-  string description = 4;
+  string description = 3;
+  optional ui.Image icon = 4;
 };
 
 message AuthorizeRequest {

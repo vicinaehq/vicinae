@@ -24025,7 +24025,7 @@ __export(src_exports, {
   Grid: () => Grid,
   GridAccessory: () => GridAccessory,
   Icon: () => Icon,
-  Image: () => Image,
+  Image: () => Image2,
   Keyboard: () => Keyboard,
   LaunchType: () => LaunchType,
   List: () => List,
@@ -24053,6 +24053,7 @@ __export(src_exports, {
   openExtensionPreferences: () => openExtensionPreferences,
   serializeColorLike: () => serializeColorLike,
   serializeImageLike: () => serializeImageLike,
+  serializeProtoImage: () => serializeProtoImage,
   showHUD: () => showHUD,
   showInFinder: () => showInFinder,
   showToast: () => showToast,
@@ -24063,56 +24064,6 @@ __export(src_exports, {
 
 // ../api/src/components/list.tsx
 var import_react2 = __toESM(require_react());
-
-// ../api/src/image.ts
-var Image;
-((Image6) => {
-  let Mask;
-  ((Mask2) => {
-    Mask2["Circle"] = "circle";
-    Mask2["RoundedRectangle"] = "roundedRectangle";
-  })(Mask = Image6.Mask || (Image6.Mask = {}));
-  ;
-})(Image || (Image = {}));
-var serializeImageLike = (image) => {
-  if (image instanceof URL) {
-    return { source: image.toString() };
-  }
-  if (typeof image == "string") {
-    return { source: image };
-  }
-  return image;
-};
-
-// ../api/src/components/list.tsx
-var import_crypto2 = require("crypto");
-
-// ../api/src/color.ts
-var Color = /* @__PURE__ */ ((Color2) => {
-  Color2["Blue"] = "blue";
-  Color2["Green"] = "green";
-  Color2["Magenta"] = "magenta";
-  Color2["Orange"] = "orange";
-  Color2["Purple"] = "purple";
-  Color2["Red"] = "red";
-  Color2["Yellow"] = "yellow";
-  Color2["PrimaryText"] = "primary-text";
-  Color2["SecondaryText"] = "secondary-text";
-  return Color2;
-})(Color || {});
-var serializeColorLike = (color) => {
-  if (typeof color == "string") {
-    return color;
-  }
-  return color;
-};
-
-// ../api/src/hooks.ts
-var import_react = __toESM(require_react());
-
-// ../api/src/bus.ts
-var import_crypto = require("crypto");
-var import_worker_threads = require("worker_threads");
 
 // ../api/node_modules/@bufbuild/protobuf/dist/esm/wire/varint.js
 function varint64read() {
@@ -24927,1158 +24878,6 @@ function isSet(value) {
   return value !== null && value !== void 0;
 }
 
-// ../api/src/proto/application.ts
-function createBaseOpenApplicationRequest() {
-  return { target: "", appId: void 0 };
-}
-var OpenApplicationRequest = {
-  encode(message, writer = new BinaryWriter()) {
-    if (message.target !== "") {
-      writer.uint32(10).string(message.target);
-    }
-    if (message.appId !== void 0) {
-      writer.uint32(18).string(message.appId);
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseOpenApplicationRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.target = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-          message.appId = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return {
-      target: isSet2(object.target) ? globalThis.String(object.target) : "",
-      appId: isSet2(object.appId) ? globalThis.String(object.appId) : void 0
-    };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.target !== "") {
-      obj.target = message.target;
-    }
-    if (message.appId !== void 0) {
-      obj.appId = message.appId;
-    }
-    return obj;
-  },
-  create(base) {
-    return OpenApplicationRequest.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseOpenApplicationRequest();
-    message.target = object.target ?? "";
-    message.appId = object.appId ?? void 0;
-    return message;
-  }
-};
-function createBaseListApplicationRequest() {
-  return {};
-}
-var ListApplicationRequest = {
-  encode(_, writer = new BinaryWriter()) {
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseListApplicationRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(_) {
-    return {};
-  },
-  toJSON(_) {
-    const obj = {};
-    return obj;
-  },
-  create(base) {
-    return ListApplicationRequest.fromPartial(base ?? {});
-  },
-  fromPartial(_) {
-    const message = createBaseListApplicationRequest();
-    return message;
-  }
-};
-function createBaseListApplicationResponse() {
-  return { apps: [] };
-}
-var ListApplicationResponse = {
-  encode(message, writer = new BinaryWriter()) {
-    for (const v of message.apps) {
-      Application.encode(v, writer.uint32(10).fork()).join();
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseListApplicationResponse();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.apps.push(Application.decode(reader, reader.uint32()));
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return { apps: globalThis.Array.isArray(object?.apps) ? object.apps.map((e) => Application.fromJSON(e)) : [] };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.apps?.length) {
-      obj.apps = message.apps.map((e) => Application.toJSON(e));
-    }
-    return obj;
-  },
-  create(base) {
-    return ListApplicationResponse.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseListApplicationResponse();
-    message.apps = object.apps?.map((e) => Application.fromPartial(e)) || [];
-    return message;
-  }
-};
-function createBaseRequest() {
-  return { list: void 0, open: void 0 };
-}
-var Request = {
-  encode(message, writer = new BinaryWriter()) {
-    if (message.list !== void 0) {
-      ListApplicationRequest.encode(message.list, writer.uint32(10).fork()).join();
-    }
-    if (message.open !== void 0) {
-      OpenApplicationRequest.encode(message.open, writer.uint32(18).fork()).join();
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.list = ListApplicationRequest.decode(reader, reader.uint32());
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-          message.open = OpenApplicationRequest.decode(reader, reader.uint32());
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return {
-      list: isSet2(object.list) ? ListApplicationRequest.fromJSON(object.list) : void 0,
-      open: isSet2(object.open) ? OpenApplicationRequest.fromJSON(object.open) : void 0
-    };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.list !== void 0) {
-      obj.list = ListApplicationRequest.toJSON(message.list);
-    }
-    if (message.open !== void 0) {
-      obj.open = OpenApplicationRequest.toJSON(message.open);
-    }
-    return obj;
-  },
-  create(base) {
-    return Request.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseRequest();
-    message.list = object.list !== void 0 && object.list !== null ? ListApplicationRequest.fromPartial(object.list) : void 0;
-    message.open = object.open !== void 0 && object.open !== null ? OpenApplicationRequest.fromPartial(object.open) : void 0;
-    return message;
-  }
-};
-function createBaseResponse() {
-  return { list: void 0 };
-}
-var Response = {
-  encode(message, writer = new BinaryWriter()) {
-    if (message.list !== void 0) {
-      ListApplicationResponse.encode(message.list, writer.uint32(10).fork()).join();
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseResponse();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.list = ListApplicationResponse.decode(reader, reader.uint32());
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return { list: isSet2(object.list) ? ListApplicationResponse.fromJSON(object.list) : void 0 };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.list !== void 0) {
-      obj.list = ListApplicationResponse.toJSON(message.list);
-    }
-    return obj;
-  },
-  create(base) {
-    return Response.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseResponse();
-    message.list = object.list !== void 0 && object.list !== null ? ListApplicationResponse.fromPartial(object.list) : void 0;
-    return message;
-  }
-};
-function createBaseApplication() {
-  return { id: "", name: "", icon: "" };
-}
-var Application = {
-  encode(message, writer = new BinaryWriter()) {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
-    }
-    if (message.name !== "") {
-      writer.uint32(18).string(message.name);
-    }
-    if (message.icon !== "") {
-      writer.uint32(26).string(message.icon);
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseApplication();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.id = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-          message.name = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-          message.icon = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return {
-      id: isSet2(object.id) ? globalThis.String(object.id) : "",
-      name: isSet2(object.name) ? globalThis.String(object.name) : "",
-      icon: isSet2(object.icon) ? globalThis.String(object.icon) : ""
-    };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    if (message.name !== "") {
-      obj.name = message.name;
-    }
-    if (message.icon !== "") {
-      obj.icon = message.icon;
-    }
-    return obj;
-  },
-  create(base) {
-    return Application.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseApplication();
-    message.id = object.id ?? "";
-    message.name = object.name ?? "";
-    message.icon = object.icon ?? "";
-    return message;
-  }
-};
-function isSet2(value) {
-  return value !== null && value !== void 0;
-}
-
-// ../api/src/proto/clipboard.ts
-function createBaseClipboardHtmlContent() {
-  return { html: "", text: "" };
-}
-var ClipboardHtmlContent = {
-  encode(message, writer = new BinaryWriter()) {
-    if (message.html !== "") {
-      writer.uint32(10).string(message.html);
-    }
-    if (message.text !== "") {
-      writer.uint32(18).string(message.text);
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseClipboardHtmlContent();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.html = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-          message.text = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return {
-      html: isSet3(object.html) ? globalThis.String(object.html) : "",
-      text: isSet3(object.text) ? globalThis.String(object.text) : ""
-    };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.html !== "") {
-      obj.html = message.html;
-    }
-    if (message.text !== "") {
-      obj.text = message.text;
-    }
-    return obj;
-  },
-  create(base) {
-    return ClipboardHtmlContent.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseClipboardHtmlContent();
-    message.html = object.html ?? "";
-    message.text = object.text ?? "";
-    return message;
-  }
-};
-function createBaseClipboardPathContent() {
-  return { path: "" };
-}
-var ClipboardPathContent = {
-  encode(message, writer = new BinaryWriter()) {
-    if (message.path !== "") {
-      writer.uint32(10).string(message.path);
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseClipboardPathContent();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.path = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return { path: isSet3(object.path) ? globalThis.String(object.path) : "" };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.path !== "") {
-      obj.path = message.path;
-    }
-    return obj;
-  },
-  create(base) {
-    return ClipboardPathContent.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseClipboardPathContent();
-    message.path = object.path ?? "";
-    return message;
-  }
-};
-function createBaseClipboardOptions() {
-  return { concealed: false };
-}
-var ClipboardOptions = {
-  encode(message, writer = new BinaryWriter()) {
-    if (message.concealed !== false) {
-      writer.uint32(8).bool(message.concealed);
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseClipboardOptions();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 8) {
-            break;
-          }
-          message.concealed = reader.bool();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return { concealed: isSet3(object.concealed) ? globalThis.Boolean(object.concealed) : false };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.concealed !== false) {
-      obj.concealed = message.concealed;
-    }
-    return obj;
-  },
-  create(base) {
-    return ClipboardOptions.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseClipboardOptions();
-    message.concealed = object.concealed ?? false;
-    return message;
-  }
-};
-function createBaseCopyToClipboardRequest() {
-  return { content: void 0, options: void 0 };
-}
-var CopyToClipboardRequest = {
-  encode(message, writer = new BinaryWriter()) {
-    if (message.content !== void 0) {
-      ClipboardContent.encode(message.content, writer.uint32(10).fork()).join();
-    }
-    if (message.options !== void 0) {
-      ClipboardOptions.encode(message.options, writer.uint32(18).fork()).join();
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseCopyToClipboardRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.content = ClipboardContent.decode(reader, reader.uint32());
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-          message.options = ClipboardOptions.decode(reader, reader.uint32());
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return {
-      content: isSet3(object.content) ? ClipboardContent.fromJSON(object.content) : void 0,
-      options: isSet3(object.options) ? ClipboardOptions.fromJSON(object.options) : void 0
-    };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.content !== void 0) {
-      obj.content = ClipboardContent.toJSON(message.content);
-    }
-    if (message.options !== void 0) {
-      obj.options = ClipboardOptions.toJSON(message.options);
-    }
-    return obj;
-  },
-  create(base) {
-    return CopyToClipboardRequest.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseCopyToClipboardRequest();
-    message.content = object.content !== void 0 && object.content !== null ? ClipboardContent.fromPartial(object.content) : void 0;
-    message.options = object.options !== void 0 && object.options !== null ? ClipboardOptions.fromPartial(object.options) : void 0;
-    return message;
-  }
-};
-function createBaseClipboardContent() {
-  return { text: void 0, html: void 0, path: void 0 };
-}
-var ClipboardContent = {
-  encode(message, writer = new BinaryWriter()) {
-    if (message.text !== void 0) {
-      writer.uint32(10).string(message.text);
-    }
-    if (message.html !== void 0) {
-      ClipboardHtmlContent.encode(message.html, writer.uint32(18).fork()).join();
-    }
-    if (message.path !== void 0) {
-      ClipboardPathContent.encode(message.path, writer.uint32(26).fork()).join();
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseClipboardContent();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.text = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-          message.html = ClipboardHtmlContent.decode(reader, reader.uint32());
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-          message.path = ClipboardPathContent.decode(reader, reader.uint32());
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return {
-      text: isSet3(object.text) ? globalThis.String(object.text) : void 0,
-      html: isSet3(object.html) ? ClipboardHtmlContent.fromJSON(object.html) : void 0,
-      path: isSet3(object.path) ? ClipboardPathContent.fromJSON(object.path) : void 0
-    };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.text !== void 0) {
-      obj.text = message.text;
-    }
-    if (message.html !== void 0) {
-      obj.html = ClipboardHtmlContent.toJSON(message.html);
-    }
-    if (message.path !== void 0) {
-      obj.path = ClipboardPathContent.toJSON(message.path);
-    }
-    return obj;
-  },
-  create(base) {
-    return ClipboardContent.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseClipboardContent();
-    message.text = object.text ?? void 0;
-    message.html = object.html !== void 0 && object.html !== null ? ClipboardHtmlContent.fromPartial(object.html) : void 0;
-    message.path = object.path !== void 0 && object.path !== null ? ClipboardPathContent.fromPartial(object.path) : void 0;
-    return message;
-  }
-};
-function createBaseCopyToClipboardResponse() {
-  return {};
-}
-var CopyToClipboardResponse = {
-  encode(_, writer = new BinaryWriter()) {
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseCopyToClipboardResponse();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(_) {
-    return {};
-  },
-  toJSON(_) {
-    const obj = {};
-    return obj;
-  },
-  create(base) {
-    return CopyToClipboardResponse.fromPartial(base ?? {});
-  },
-  fromPartial(_) {
-    const message = createBaseCopyToClipboardResponse();
-    return message;
-  }
-};
-function createBaseRequest2() {
-  return { copy: void 0 };
-}
-var Request2 = {
-  encode(message, writer = new BinaryWriter()) {
-    if (message.copy !== void 0) {
-      CopyToClipboardRequest.encode(message.copy, writer.uint32(10).fork()).join();
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseRequest2();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.copy = CopyToClipboardRequest.decode(reader, reader.uint32());
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return { copy: isSet3(object.copy) ? CopyToClipboardRequest.fromJSON(object.copy) : void 0 };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.copy !== void 0) {
-      obj.copy = CopyToClipboardRequest.toJSON(message.copy);
-    }
-    return obj;
-  },
-  create(base) {
-    return Request2.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseRequest2();
-    message.copy = object.copy !== void 0 && object.copy !== null ? CopyToClipboardRequest.fromPartial(object.copy) : void 0;
-    return message;
-  }
-};
-function createBaseResponse2() {
-  return { copy: void 0 };
-}
-var Response2 = {
-  encode(message, writer = new BinaryWriter()) {
-    if (message.copy !== void 0) {
-      CopyToClipboardResponse.encode(message.copy, writer.uint32(10).fork()).join();
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseResponse2();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.copy = CopyToClipboardResponse.decode(reader, reader.uint32());
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return { copy: isSet3(object.copy) ? CopyToClipboardResponse.fromJSON(object.copy) : void 0 };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.copy !== void 0) {
-      obj.copy = CopyToClipboardResponse.toJSON(message.copy);
-    }
-    return obj;
-  },
-  create(base) {
-    return Response2.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseResponse2();
-    message.copy = object.copy !== void 0 && object.copy !== null ? CopyToClipboardResponse.fromPartial(object.copy) : void 0;
-    return message;
-  }
-};
-function isSet3(value) {
-  return value !== null && value !== void 0;
-}
-
-// ../api/src/proto/oauth.ts
-function createBasePKCEClientOptions() {
-  return { id: void 0, name: "", icon: "", description: "" };
-}
-var PKCEClientOptions = {
-  encode(message, writer = new BinaryWriter()) {
-    if (message.id !== void 0) {
-      writer.uint32(10).string(message.id);
-    }
-    if (message.name !== "") {
-      writer.uint32(18).string(message.name);
-    }
-    if (message.icon !== "") {
-      writer.uint32(26).string(message.icon);
-    }
-    if (message.description !== "") {
-      writer.uint32(34).string(message.description);
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBasePKCEClientOptions();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.id = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-          message.name = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-          message.icon = reader.string();
-          continue;
-        }
-        case 4: {
-          if (tag !== 34) {
-            break;
-          }
-          message.description = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return {
-      id: isSet4(object.id) ? globalThis.String(object.id) : void 0,
-      name: isSet4(object.name) ? globalThis.String(object.name) : "",
-      icon: isSet4(object.icon) ? globalThis.String(object.icon) : "",
-      description: isSet4(object.description) ? globalThis.String(object.description) : ""
-    };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.id !== void 0) {
-      obj.id = message.id;
-    }
-    if (message.name !== "") {
-      obj.name = message.name;
-    }
-    if (message.icon !== "") {
-      obj.icon = message.icon;
-    }
-    if (message.description !== "") {
-      obj.description = message.description;
-    }
-    return obj;
-  },
-  create(base) {
-    return PKCEClientOptions.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBasePKCEClientOptions();
-    message.id = object.id ?? void 0;
-    message.name = object.name ?? "";
-    message.icon = object.icon ?? "";
-    message.description = object.description ?? "";
-    return message;
-  }
-};
-function createBaseAuthorizeRequest() {
-  return { client: void 0, url: "" };
-}
-var AuthorizeRequest = {
-  encode(message, writer = new BinaryWriter()) {
-    if (message.client !== void 0) {
-      PKCEClientOptions.encode(message.client, writer.uint32(10).fork()).join();
-    }
-    if (message.url !== "") {
-      writer.uint32(18).string(message.url);
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseAuthorizeRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.client = PKCEClientOptions.decode(reader, reader.uint32());
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-          message.url = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return {
-      client: isSet4(object.client) ? PKCEClientOptions.fromJSON(object.client) : void 0,
-      url: isSet4(object.url) ? globalThis.String(object.url) : ""
-    };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.client !== void 0) {
-      obj.client = PKCEClientOptions.toJSON(message.client);
-    }
-    if (message.url !== "") {
-      obj.url = message.url;
-    }
-    return obj;
-  },
-  create(base) {
-    return AuthorizeRequest.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseAuthorizeRequest();
-    message.client = object.client !== void 0 && object.client !== null ? PKCEClientOptions.fromPartial(object.client) : void 0;
-    message.url = object.url ?? "";
-    return message;
-  }
-};
-function createBaseAuthorizeResponse() {
-  return { code: "" };
-}
-var AuthorizeResponse = {
-  encode(message, writer = new BinaryWriter()) {
-    if (message.code !== "") {
-      writer.uint32(10).string(message.code);
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseAuthorizeResponse();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.code = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return { code: isSet4(object.code) ? globalThis.String(object.code) : "" };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.code !== "") {
-      obj.code = message.code;
-    }
-    return obj;
-  },
-  create(base) {
-    return AuthorizeResponse.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseAuthorizeResponse();
-    message.code = object.code ?? "";
-    return message;
-  }
-};
-function createBaseRequest3() {
-  return { authorize: void 0 };
-}
-var Request3 = {
-  encode(message, writer = new BinaryWriter()) {
-    if (message.authorize !== void 0) {
-      AuthorizeRequest.encode(message.authorize, writer.uint32(10).fork()).join();
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseRequest3();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.authorize = AuthorizeRequest.decode(reader, reader.uint32());
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return { authorize: isSet4(object.authorize) ? AuthorizeRequest.fromJSON(object.authorize) : void 0 };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.authorize !== void 0) {
-      obj.authorize = AuthorizeRequest.toJSON(message.authorize);
-    }
-    return obj;
-  },
-  create(base) {
-    return Request3.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseRequest3();
-    message.authorize = object.authorize !== void 0 && object.authorize !== null ? AuthorizeRequest.fromPartial(object.authorize) : void 0;
-    return message;
-  }
-};
-function createBaseResponse3() {
-  return { authorize: void 0 };
-}
-var Response3 = {
-  encode(message, writer = new BinaryWriter()) {
-    if (message.authorize !== void 0) {
-      AuthorizeResponse.encode(message.authorize, writer.uint32(10).fork()).join();
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseResponse3();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.authorize = AuthorizeResponse.decode(reader, reader.uint32());
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return { authorize: isSet4(object.authorize) ? AuthorizeResponse.fromJSON(object.authorize) : void 0 };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.authorize !== void 0) {
-      obj.authorize = AuthorizeResponse.toJSON(message.authorize);
-    }
-    return obj;
-  },
-  create(base) {
-    return Response3.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseResponse3();
-    message.authorize = object.authorize !== void 0 && object.authorize !== null ? AuthorizeResponse.fromPartial(object.authorize) : void 0;
-    return message;
-  }
-};
-function isSet4(value) {
-  return value !== null && value !== void 0;
-}
-
 // ../api/src/proto/google/protobuf/struct.ts
 function nullValueFromJSON(object) {
   switch (object) {
@@ -26237,8 +25036,8 @@ var Struct_FieldsEntry = {
   },
   fromJSON(object) {
     return {
-      key: isSet5(object.key) ? globalThis.String(object.key) : "",
-      value: isSet5(object?.value) ? object.value : void 0
+      key: isSet2(object.key) ? globalThis.String(object.key) : "",
+      value: isSet2(object?.value) ? object.value : void 0
     };
   },
   toJSON(message) {
@@ -26352,10 +25151,10 @@ var Value = {
   },
   fromJSON(object) {
     return {
-      nullValue: isSet5(object.nullValue) ? nullValueFromJSON(object.nullValue) : void 0,
-      numberValue: isSet5(object.numberValue) ? globalThis.Number(object.numberValue) : void 0,
-      stringValue: isSet5(object.stringValue) ? globalThis.String(object.stringValue) : void 0,
-      boolValue: isSet5(object.boolValue) ? globalThis.Boolean(object.boolValue) : void 0,
+      nullValue: isSet2(object.nullValue) ? nullValueFromJSON(object.nullValue) : void 0,
+      numberValue: isSet2(object.numberValue) ? globalThis.Number(object.numberValue) : void 0,
+      stringValue: isSet2(object.stringValue) ? globalThis.String(object.stringValue) : void 0,
+      boolValue: isSet2(object.boolValue) ? globalThis.Boolean(object.boolValue) : void 0,
       structValue: isObject(object.structValue) ? object.structValue : void 0,
       listValue: globalThis.Array.isArray(object.listValue) ? [...object.listValue] : void 0
     };
@@ -26497,7 +25296,2726 @@ var ListValue = {
 function isObject(value) {
   return typeof value === "object" && value !== null;
 }
+function isSet2(value) {
+  return value !== null && value !== void 0;
+}
+
+// ../api/src/proto/ui.ts
+function toastStyleFromJSON(object) {
+  switch (object) {
+    case 0:
+    case "Success":
+      return 0 /* Success */;
+    case 1:
+    case "Info":
+      return 1 /* Info */;
+    case 2:
+    case "Warning":
+      return 2 /* Warning */;
+    case 3:
+    case "Error":
+      return 3 /* Error */;
+    case 4:
+    case "Dynamic":
+      return 4 /* Dynamic */;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return -1 /* UNRECOGNIZED */;
+  }
+}
+function toastStyleToJSON(object) {
+  switch (object) {
+    case 0 /* Success */:
+      return "Success";
+    case 1 /* Info */:
+      return "Info";
+    case 2 /* Warning */:
+      return "Warning";
+    case 3 /* Error */:
+      return "Error";
+    case 4 /* Dynamic */:
+      return "Dynamic";
+    case -1 /* UNRECOGNIZED */:
+    default:
+      return "UNRECOGNIZED";
+  }
+}
+function confirmAlertActionStyleFromJSON(object) {
+  switch (object) {
+    case 0:
+    case "Default":
+      return 0 /* Default */;
+    case 1:
+    case "Destructive":
+      return 1 /* Destructive */;
+    case 2:
+    case "Cancel":
+      return 2 /* Cancel */;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return -1 /* UNRECOGNIZED */;
+  }
+}
+function confirmAlertActionStyleToJSON(object) {
+  switch (object) {
+    case 0 /* Default */:
+      return "Default";
+    case 1 /* Destructive */:
+      return "Destructive";
+    case 2 /* Cancel */:
+      return "Cancel";
+    case -1 /* UNRECOGNIZED */:
+    default:
+      return "UNRECOGNIZED";
+  }
+}
+function imageMaskFromJSON(object) {
+  switch (object) {
+    case 0:
+    case "None":
+      return 0 /* None */;
+    case 1:
+    case "Circle":
+      return 1 /* Circle */;
+    case 2:
+    case "RoundedRectangle":
+      return 2 /* RoundedRectangle */;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return -1 /* UNRECOGNIZED */;
+  }
+}
+function imageMaskToJSON(object) {
+  switch (object) {
+    case 0 /* None */:
+      return "None";
+    case 1 /* Circle */:
+      return "Circle";
+    case 2 /* RoundedRectangle */:
+      return "RoundedRectangle";
+    case -1 /* UNRECOGNIZED */:
+    default:
+      return "UNRECOGNIZED";
+  }
+}
+function createBaseShowToastRequest() {
+  return { id: "", title: "", style: 0 };
+}
+var ShowToastRequest = {
+  encode(message, writer = new BinaryWriter()) {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.title !== "") {
+      writer.uint32(18).string(message.title);
+    }
+    if (message.style !== 0) {
+      writer.uint32(24).int32(message.style);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseShowToastRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+          message.title = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+          message.style = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return {
+      id: isSet3(object.id) ? globalThis.String(object.id) : "",
+      title: isSet3(object.title) ? globalThis.String(object.title) : "",
+      style: isSet3(object.style) ? toastStyleFromJSON(object.style) : 0
+    };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.title !== "") {
+      obj.title = message.title;
+    }
+    if (message.style !== 0) {
+      obj.style = toastStyleToJSON(message.style);
+    }
+    return obj;
+  },
+  create(base) {
+    return ShowToastRequest.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseShowToastRequest();
+    message.id = object.id ?? "";
+    message.title = object.title ?? "";
+    message.style = object.style ?? 0;
+    return message;
+  }
+};
+function createBaseHideToastRequest() {
+  return { id: "" };
+}
+var HideToastRequest = {
+  encode(message, writer = new BinaryWriter()) {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseHideToastRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.id = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return { id: isSet3(object.id) ? globalThis.String(object.id) : "" };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    return obj;
+  },
+  create(base) {
+    return HideToastRequest.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseHideToastRequest();
+    message.id = object.id ?? "";
+    return message;
+  }
+};
+function createBaseUpdateToastRequest() {
+  return { id: "", title: "" };
+}
+var UpdateToastRequest = {
+  encode(message, writer = new BinaryWriter()) {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.title !== "") {
+      writer.uint32(18).string(message.title);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseUpdateToastRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+          message.title = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return {
+      id: isSet3(object.id) ? globalThis.String(object.id) : "",
+      title: isSet3(object.title) ? globalThis.String(object.title) : ""
+    };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.title !== "") {
+      obj.title = message.title;
+    }
+    return obj;
+  },
+  create(base) {
+    return UpdateToastRequest.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseUpdateToastRequest();
+    message.id = object.id ?? "";
+    message.title = object.title ?? "";
+    return message;
+  }
+};
+function createBasePushViewRequest() {
+  return {};
+}
+var PushViewRequest = {
+  encode(_, writer = new BinaryWriter()) {
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBasePushViewRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(_) {
+    return {};
+  },
+  toJSON(_) {
+    const obj = {};
+    return obj;
+  },
+  create(base) {
+    return PushViewRequest.fromPartial(base ?? {});
+  },
+  fromPartial(_) {
+    const message = createBasePushViewRequest();
+    return message;
+  }
+};
+function createBasePopViewRequest() {
+  return {};
+}
+var PopViewRequest = {
+  encode(_, writer = new BinaryWriter()) {
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBasePopViewRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(_) {
+    return {};
+  },
+  toJSON(_) {
+    const obj = {};
+    return obj;
+  },
+  create(base) {
+    return PopViewRequest.fromPartial(base ?? {});
+  },
+  fromPartial(_) {
+    const message = createBasePopViewRequest();
+    return message;
+  }
+};
+function createBaseCloseMainWindowRequest() {
+  return {};
+}
+var CloseMainWindowRequest = {
+  encode(_, writer = new BinaryWriter()) {
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseCloseMainWindowRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(_) {
+    return {};
+  },
+  toJSON(_) {
+    const obj = {};
+    return obj;
+  },
+  create(base) {
+    return CloseMainWindowRequest.fromPartial(base ?? {});
+  },
+  fromPartial(_) {
+    const message = createBaseCloseMainWindowRequest();
+    return message;
+  }
+};
+function createBaseClearSearchBarRequest() {
+  return {};
+}
+var ClearSearchBarRequest = {
+  encode(_, writer = new BinaryWriter()) {
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseClearSearchBarRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(_) {
+    return {};
+  },
+  toJSON(_) {
+    const obj = {};
+    return obj;
+  },
+  create(base) {
+    return ClearSearchBarRequest.fromPartial(base ?? {});
+  },
+  fromPartial(_) {
+    const message = createBaseClearSearchBarRequest();
+    return message;
+  }
+};
+function createBaseSetSearchTextRequest() {
+  return { text: "" };
+}
+var SetSearchTextRequest = {
+  encode(message, writer = new BinaryWriter()) {
+    if (message.text !== "") {
+      writer.uint32(10).string(message.text);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseSetSearchTextRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.text = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return { text: isSet3(object.text) ? globalThis.String(object.text) : "" };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.text !== "") {
+      obj.text = message.text;
+    }
+    return obj;
+  },
+  create(base) {
+    return SetSearchTextRequest.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseSetSearchTextRequest();
+    message.text = object.text ?? "";
+    return message;
+  }
+};
+function createBaseShowHudRequest() {
+  return { text: "" };
+}
+var ShowHudRequest = {
+  encode(message, writer = new BinaryWriter()) {
+    if (message.text !== "") {
+      writer.uint32(10).string(message.text);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseShowHudRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.text = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return { text: isSet3(object.text) ? globalThis.String(object.text) : "" };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.text !== "") {
+      obj.text = message.text;
+    }
+    return obj;
+  },
+  create(base) {
+    return ShowHudRequest.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseShowHudRequest();
+    message.text = object.text ?? "";
+    return message;
+  }
+};
+function createBaseRenderRequest() {
+  return { json: "" };
+}
+var RenderRequest = {
+  encode(message, writer = new BinaryWriter()) {
+    if (message.json !== "") {
+      writer.uint32(10).string(message.json);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseRenderRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.json = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return { json: isSet3(object.json) ? globalThis.String(object.json) : "" };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.json !== "") {
+      obj.json = message.json;
+    }
+    return obj;
+  },
+  create(base) {
+    return RenderRequest.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseRenderRequest();
+    message.json = object.json ?? "";
+    return message;
+  }
+};
+function createBaseConfirmAlertRequest() {
+  return {
+    title: "",
+    description: "",
+    icon: void 0,
+    dismissAction: void 0,
+    primaryAction: void 0,
+    rememberUserChoice: false,
+    handle: ""
+  };
+}
+var ConfirmAlertRequest = {
+  encode(message, writer = new BinaryWriter()) {
+    if (message.title !== "") {
+      writer.uint32(10).string(message.title);
+    }
+    if (message.description !== "") {
+      writer.uint32(18).string(message.description);
+    }
+    if (message.icon !== void 0) {
+      writer.uint32(26).string(message.icon);
+    }
+    if (message.dismissAction !== void 0) {
+      ConfirmAlertAction.encode(message.dismissAction, writer.uint32(34).fork()).join();
+    }
+    if (message.primaryAction !== void 0) {
+      ConfirmAlertAction.encode(message.primaryAction, writer.uint32(42).fork()).join();
+    }
+    if (message.rememberUserChoice !== false) {
+      writer.uint32(48).bool(message.rememberUserChoice);
+    }
+    if (message.handle !== "") {
+      writer.uint32(58).string(message.handle);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseConfirmAlertRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.title = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+          message.description = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+          message.icon = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+          message.dismissAction = ConfirmAlertAction.decode(reader, reader.uint32());
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+          message.primaryAction = ConfirmAlertAction.decode(reader, reader.uint32());
+          continue;
+        }
+        case 6: {
+          if (tag !== 48) {
+            break;
+          }
+          message.rememberUserChoice = reader.bool();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+          message.handle = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return {
+      title: isSet3(object.title) ? globalThis.String(object.title) : "",
+      description: isSet3(object.description) ? globalThis.String(object.description) : "",
+      icon: isSet3(object.icon) ? globalThis.String(object.icon) : void 0,
+      dismissAction: isSet3(object.dismissAction) ? ConfirmAlertAction.fromJSON(object.dismissAction) : void 0,
+      primaryAction: isSet3(object.primaryAction) ? ConfirmAlertAction.fromJSON(object.primaryAction) : void 0,
+      rememberUserChoice: isSet3(object.rememberUserChoice) ? globalThis.Boolean(object.rememberUserChoice) : false,
+      handle: isSet3(object.handle) ? globalThis.String(object.handle) : ""
+    };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.title !== "") {
+      obj.title = message.title;
+    }
+    if (message.description !== "") {
+      obj.description = message.description;
+    }
+    if (message.icon !== void 0) {
+      obj.icon = message.icon;
+    }
+    if (message.dismissAction !== void 0) {
+      obj.dismissAction = ConfirmAlertAction.toJSON(message.dismissAction);
+    }
+    if (message.primaryAction !== void 0) {
+      obj.primaryAction = ConfirmAlertAction.toJSON(message.primaryAction);
+    }
+    if (message.rememberUserChoice !== false) {
+      obj.rememberUserChoice = message.rememberUserChoice;
+    }
+    if (message.handle !== "") {
+      obj.handle = message.handle;
+    }
+    return obj;
+  },
+  create(base) {
+    return ConfirmAlertRequest.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseConfirmAlertRequest();
+    message.title = object.title ?? "";
+    message.description = object.description ?? "";
+    message.icon = object.icon ?? void 0;
+    message.dismissAction = object.dismissAction !== void 0 && object.dismissAction !== null ? ConfirmAlertAction.fromPartial(object.dismissAction) : void 0;
+    message.primaryAction = object.primaryAction !== void 0 && object.primaryAction !== null ? ConfirmAlertAction.fromPartial(object.primaryAction) : void 0;
+    message.rememberUserChoice = object.rememberUserChoice ?? false;
+    message.handle = object.handle ?? "";
+    return message;
+  }
+};
+function createBaseConfirmAlertAction() {
+  return { title: "", style: 0 };
+}
+var ConfirmAlertAction = {
+  encode(message, writer = new BinaryWriter()) {
+    if (message.title !== "") {
+      writer.uint32(10).string(message.title);
+    }
+    if (message.style !== 0) {
+      writer.uint32(16).int32(message.style);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseConfirmAlertAction();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.title = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+          message.style = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return {
+      title: isSet3(object.title) ? globalThis.String(object.title) : "",
+      style: isSet3(object.style) ? confirmAlertActionStyleFromJSON(object.style) : 0
+    };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.title !== "") {
+      obj.title = message.title;
+    }
+    if (message.style !== 0) {
+      obj.style = confirmAlertActionStyleToJSON(message.style);
+    }
+    return obj;
+  },
+  create(base) {
+    return ConfirmAlertAction.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseConfirmAlertAction();
+    message.title = object.title ?? "";
+    message.style = object.style ?? 0;
+    return message;
+  }
+};
+function createBaseRequest() {
+  return {
+    render: void 0,
+    showToast: void 0,
+    hideToast: void 0,
+    updateToast: void 0,
+    pushView: void 0,
+    popView: void 0,
+    clearSearch: void 0,
+    closeMainWindow: void 0,
+    showHud: void 0,
+    setSearchText: void 0,
+    confirmAlert: void 0
+  };
+}
+var Request = {
+  encode(message, writer = new BinaryWriter()) {
+    if (message.render !== void 0) {
+      RenderRequest.encode(message.render, writer.uint32(10).fork()).join();
+    }
+    if (message.showToast !== void 0) {
+      ShowToastRequest.encode(message.showToast, writer.uint32(18).fork()).join();
+    }
+    if (message.hideToast !== void 0) {
+      HideToastRequest.encode(message.hideToast, writer.uint32(26).fork()).join();
+    }
+    if (message.updateToast !== void 0) {
+      UpdateToastRequest.encode(message.updateToast, writer.uint32(34).fork()).join();
+    }
+    if (message.pushView !== void 0) {
+      PushViewRequest.encode(message.pushView, writer.uint32(42).fork()).join();
+    }
+    if (message.popView !== void 0) {
+      PopViewRequest.encode(message.popView, writer.uint32(50).fork()).join();
+    }
+    if (message.clearSearch !== void 0) {
+      ClearSearchBarRequest.encode(message.clearSearch, writer.uint32(58).fork()).join();
+    }
+    if (message.closeMainWindow !== void 0) {
+      CloseMainWindowRequest.encode(message.closeMainWindow, writer.uint32(66).fork()).join();
+    }
+    if (message.showHud !== void 0) {
+      ShowHudRequest.encode(message.showHud, writer.uint32(74).fork()).join();
+    }
+    if (message.setSearchText !== void 0) {
+      SetSearchTextRequest.encode(message.setSearchText, writer.uint32(82).fork()).join();
+    }
+    if (message.confirmAlert !== void 0) {
+      ConfirmAlertRequest.encode(message.confirmAlert, writer.uint32(90).fork()).join();
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.render = RenderRequest.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+          message.showToast = ShowToastRequest.decode(reader, reader.uint32());
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+          message.hideToast = HideToastRequest.decode(reader, reader.uint32());
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+          message.updateToast = UpdateToastRequest.decode(reader, reader.uint32());
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+          message.pushView = PushViewRequest.decode(reader, reader.uint32());
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+          message.popView = PopViewRequest.decode(reader, reader.uint32());
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+          message.clearSearch = ClearSearchBarRequest.decode(reader, reader.uint32());
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+          message.closeMainWindow = CloseMainWindowRequest.decode(reader, reader.uint32());
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+          message.showHud = ShowHudRequest.decode(reader, reader.uint32());
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+          message.setSearchText = SetSearchTextRequest.decode(reader, reader.uint32());
+          continue;
+        }
+        case 11: {
+          if (tag !== 90) {
+            break;
+          }
+          message.confirmAlert = ConfirmAlertRequest.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return {
+      render: isSet3(object.render) ? RenderRequest.fromJSON(object.render) : void 0,
+      showToast: isSet3(object.showToast) ? ShowToastRequest.fromJSON(object.showToast) : void 0,
+      hideToast: isSet3(object.hideToast) ? HideToastRequest.fromJSON(object.hideToast) : void 0,
+      updateToast: isSet3(object.updateToast) ? UpdateToastRequest.fromJSON(object.updateToast) : void 0,
+      pushView: isSet3(object.pushView) ? PushViewRequest.fromJSON(object.pushView) : void 0,
+      popView: isSet3(object.popView) ? PopViewRequest.fromJSON(object.popView) : void 0,
+      clearSearch: isSet3(object.clearSearch) ? ClearSearchBarRequest.fromJSON(object.clearSearch) : void 0,
+      closeMainWindow: isSet3(object.closeMainWindow) ? CloseMainWindowRequest.fromJSON(object.closeMainWindow) : void 0,
+      showHud: isSet3(object.showHud) ? ShowHudRequest.fromJSON(object.showHud) : void 0,
+      setSearchText: isSet3(object.setSearchText) ? SetSearchTextRequest.fromJSON(object.setSearchText) : void 0,
+      confirmAlert: isSet3(object.confirmAlert) ? ConfirmAlertRequest.fromJSON(object.confirmAlert) : void 0
+    };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.render !== void 0) {
+      obj.render = RenderRequest.toJSON(message.render);
+    }
+    if (message.showToast !== void 0) {
+      obj.showToast = ShowToastRequest.toJSON(message.showToast);
+    }
+    if (message.hideToast !== void 0) {
+      obj.hideToast = HideToastRequest.toJSON(message.hideToast);
+    }
+    if (message.updateToast !== void 0) {
+      obj.updateToast = UpdateToastRequest.toJSON(message.updateToast);
+    }
+    if (message.pushView !== void 0) {
+      obj.pushView = PushViewRequest.toJSON(message.pushView);
+    }
+    if (message.popView !== void 0) {
+      obj.popView = PopViewRequest.toJSON(message.popView);
+    }
+    if (message.clearSearch !== void 0) {
+      obj.clearSearch = ClearSearchBarRequest.toJSON(message.clearSearch);
+    }
+    if (message.closeMainWindow !== void 0) {
+      obj.closeMainWindow = CloseMainWindowRequest.toJSON(message.closeMainWindow);
+    }
+    if (message.showHud !== void 0) {
+      obj.showHud = ShowHudRequest.toJSON(message.showHud);
+    }
+    if (message.setSearchText !== void 0) {
+      obj.setSearchText = SetSearchTextRequest.toJSON(message.setSearchText);
+    }
+    if (message.confirmAlert !== void 0) {
+      obj.confirmAlert = ConfirmAlertRequest.toJSON(message.confirmAlert);
+    }
+    return obj;
+  },
+  create(base) {
+    return Request.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseRequest();
+    message.render = object.render !== void 0 && object.render !== null ? RenderRequest.fromPartial(object.render) : void 0;
+    message.showToast = object.showToast !== void 0 && object.showToast !== null ? ShowToastRequest.fromPartial(object.showToast) : void 0;
+    message.hideToast = object.hideToast !== void 0 && object.hideToast !== null ? HideToastRequest.fromPartial(object.hideToast) : void 0;
+    message.updateToast = object.updateToast !== void 0 && object.updateToast !== null ? UpdateToastRequest.fromPartial(object.updateToast) : void 0;
+    message.pushView = object.pushView !== void 0 && object.pushView !== null ? PushViewRequest.fromPartial(object.pushView) : void 0;
+    message.popView = object.popView !== void 0 && object.popView !== null ? PopViewRequest.fromPartial(object.popView) : void 0;
+    message.clearSearch = object.clearSearch !== void 0 && object.clearSearch !== null ? ClearSearchBarRequest.fromPartial(object.clearSearch) : void 0;
+    message.closeMainWindow = object.closeMainWindow !== void 0 && object.closeMainWindow !== null ? CloseMainWindowRequest.fromPartial(object.closeMainWindow) : void 0;
+    message.showHud = object.showHud !== void 0 && object.showHud !== null ? ShowHudRequest.fromPartial(object.showHud) : void 0;
+    message.setSearchText = object.setSearchText !== void 0 && object.setSearchText !== null ? SetSearchTextRequest.fromPartial(object.setSearchText) : void 0;
+    message.confirmAlert = object.confirmAlert !== void 0 && object.confirmAlert !== null ? ConfirmAlertRequest.fromPartial(object.confirmAlert) : void 0;
+    return message;
+  }
+};
+function createBaseResponse() {
+  return {
+    render: void 0,
+    showToast: void 0,
+    hideToast: void 0,
+    updateToast: void 0,
+    pushView: void 0,
+    popView: void 0,
+    clearSearch: void 0,
+    closeMainWindow: void 0,
+    showHud: void 0,
+    setSearchText: void 0,
+    confirmAlert: void 0
+  };
+}
+var Response = {
+  encode(message, writer = new BinaryWriter()) {
+    if (message.render !== void 0) {
+      AckResponse.encode(message.render, writer.uint32(10).fork()).join();
+    }
+    if (message.showToast !== void 0) {
+      AckResponse.encode(message.showToast, writer.uint32(18).fork()).join();
+    }
+    if (message.hideToast !== void 0) {
+      AckResponse.encode(message.hideToast, writer.uint32(26).fork()).join();
+    }
+    if (message.updateToast !== void 0) {
+      AckResponse.encode(message.updateToast, writer.uint32(34).fork()).join();
+    }
+    if (message.pushView !== void 0) {
+      AckResponse.encode(message.pushView, writer.uint32(42).fork()).join();
+    }
+    if (message.popView !== void 0) {
+      AckResponse.encode(message.popView, writer.uint32(50).fork()).join();
+    }
+    if (message.clearSearch !== void 0) {
+      AckResponse.encode(message.clearSearch, writer.uint32(58).fork()).join();
+    }
+    if (message.closeMainWindow !== void 0) {
+      AckResponse.encode(message.closeMainWindow, writer.uint32(66).fork()).join();
+    }
+    if (message.showHud !== void 0) {
+      AckResponse.encode(message.showHud, writer.uint32(74).fork()).join();
+    }
+    if (message.setSearchText !== void 0) {
+      AckResponse.encode(message.setSearchText, writer.uint32(82).fork()).join();
+    }
+    if (message.confirmAlert !== void 0) {
+      AckResponse.encode(message.confirmAlert, writer.uint32(90).fork()).join();
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.render = AckResponse.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+          message.showToast = AckResponse.decode(reader, reader.uint32());
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+          message.hideToast = AckResponse.decode(reader, reader.uint32());
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+          message.updateToast = AckResponse.decode(reader, reader.uint32());
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+          message.pushView = AckResponse.decode(reader, reader.uint32());
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+          message.popView = AckResponse.decode(reader, reader.uint32());
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+          message.clearSearch = AckResponse.decode(reader, reader.uint32());
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+          message.closeMainWindow = AckResponse.decode(reader, reader.uint32());
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+          message.showHud = AckResponse.decode(reader, reader.uint32());
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+          message.setSearchText = AckResponse.decode(reader, reader.uint32());
+          continue;
+        }
+        case 11: {
+          if (tag !== 90) {
+            break;
+          }
+          message.confirmAlert = AckResponse.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return {
+      render: isSet3(object.render) ? AckResponse.fromJSON(object.render) : void 0,
+      showToast: isSet3(object.showToast) ? AckResponse.fromJSON(object.showToast) : void 0,
+      hideToast: isSet3(object.hideToast) ? AckResponse.fromJSON(object.hideToast) : void 0,
+      updateToast: isSet3(object.updateToast) ? AckResponse.fromJSON(object.updateToast) : void 0,
+      pushView: isSet3(object.pushView) ? AckResponse.fromJSON(object.pushView) : void 0,
+      popView: isSet3(object.popView) ? AckResponse.fromJSON(object.popView) : void 0,
+      clearSearch: isSet3(object.clearSearch) ? AckResponse.fromJSON(object.clearSearch) : void 0,
+      closeMainWindow: isSet3(object.closeMainWindow) ? AckResponse.fromJSON(object.closeMainWindow) : void 0,
+      showHud: isSet3(object.showHud) ? AckResponse.fromJSON(object.showHud) : void 0,
+      setSearchText: isSet3(object.setSearchText) ? AckResponse.fromJSON(object.setSearchText) : void 0,
+      confirmAlert: isSet3(object.confirmAlert) ? AckResponse.fromJSON(object.confirmAlert) : void 0
+    };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.render !== void 0) {
+      obj.render = AckResponse.toJSON(message.render);
+    }
+    if (message.showToast !== void 0) {
+      obj.showToast = AckResponse.toJSON(message.showToast);
+    }
+    if (message.hideToast !== void 0) {
+      obj.hideToast = AckResponse.toJSON(message.hideToast);
+    }
+    if (message.updateToast !== void 0) {
+      obj.updateToast = AckResponse.toJSON(message.updateToast);
+    }
+    if (message.pushView !== void 0) {
+      obj.pushView = AckResponse.toJSON(message.pushView);
+    }
+    if (message.popView !== void 0) {
+      obj.popView = AckResponse.toJSON(message.popView);
+    }
+    if (message.clearSearch !== void 0) {
+      obj.clearSearch = AckResponse.toJSON(message.clearSearch);
+    }
+    if (message.closeMainWindow !== void 0) {
+      obj.closeMainWindow = AckResponse.toJSON(message.closeMainWindow);
+    }
+    if (message.showHud !== void 0) {
+      obj.showHud = AckResponse.toJSON(message.showHud);
+    }
+    if (message.setSearchText !== void 0) {
+      obj.setSearchText = AckResponse.toJSON(message.setSearchText);
+    }
+    if (message.confirmAlert !== void 0) {
+      obj.confirmAlert = AckResponse.toJSON(message.confirmAlert);
+    }
+    return obj;
+  },
+  create(base) {
+    return Response.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseResponse();
+    message.render = object.render !== void 0 && object.render !== null ? AckResponse.fromPartial(object.render) : void 0;
+    message.showToast = object.showToast !== void 0 && object.showToast !== null ? AckResponse.fromPartial(object.showToast) : void 0;
+    message.hideToast = object.hideToast !== void 0 && object.hideToast !== null ? AckResponse.fromPartial(object.hideToast) : void 0;
+    message.updateToast = object.updateToast !== void 0 && object.updateToast !== null ? AckResponse.fromPartial(object.updateToast) : void 0;
+    message.pushView = object.pushView !== void 0 && object.pushView !== null ? AckResponse.fromPartial(object.pushView) : void 0;
+    message.popView = object.popView !== void 0 && object.popView !== null ? AckResponse.fromPartial(object.popView) : void 0;
+    message.clearSearch = object.clearSearch !== void 0 && object.clearSearch !== null ? AckResponse.fromPartial(object.clearSearch) : void 0;
+    message.closeMainWindow = object.closeMainWindow !== void 0 && object.closeMainWindow !== null ? AckResponse.fromPartial(object.closeMainWindow) : void 0;
+    message.showHud = object.showHud !== void 0 && object.showHud !== null ? AckResponse.fromPartial(object.showHud) : void 0;
+    message.setSearchText = object.setSearchText !== void 0 && object.setSearchText !== null ? AckResponse.fromPartial(object.setSearchText) : void 0;
+    message.confirmAlert = object.confirmAlert !== void 0 && object.confirmAlert !== null ? AckResponse.fromPartial(object.confirmAlert) : void 0;
+    return message;
+  }
+};
+function createBaseThemedImageSource() {
+  return { light: "", dark: "" };
+}
+var ThemedImageSource = {
+  encode(message, writer = new BinaryWriter()) {
+    if (message.light !== "") {
+      writer.uint32(10).string(message.light);
+    }
+    if (message.dark !== "") {
+      writer.uint32(18).string(message.dark);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseThemedImageSource();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.light = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+          message.dark = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return {
+      light: isSet3(object.light) ? globalThis.String(object.light) : "",
+      dark: isSet3(object.dark) ? globalThis.String(object.dark) : ""
+    };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.light !== "") {
+      obj.light = message.light;
+    }
+    if (message.dark !== "") {
+      obj.dark = message.dark;
+    }
+    return obj;
+  },
+  create(base) {
+    return ThemedImageSource.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseThemedImageSource();
+    message.light = object.light ?? "";
+    message.dark = object.dark ?? "";
+    return message;
+  }
+};
+function createBaseImageSource() {
+  return { raw: void 0, themed: void 0 };
+}
+var ImageSource = {
+  encode(message, writer = new BinaryWriter()) {
+    if (message.raw !== void 0) {
+      writer.uint32(10).string(message.raw);
+    }
+    if (message.themed !== void 0) {
+      ThemedImageSource.encode(message.themed, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseImageSource();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.raw = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+          message.themed = ThemedImageSource.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return {
+      raw: isSet3(object.raw) ? globalThis.String(object.raw) : void 0,
+      themed: isSet3(object.themed) ? ThemedImageSource.fromJSON(object.themed) : void 0
+    };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.raw !== void 0) {
+      obj.raw = message.raw;
+    }
+    if (message.themed !== void 0) {
+      obj.themed = ThemedImageSource.toJSON(message.themed);
+    }
+    return obj;
+  },
+  create(base) {
+    return ImageSource.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseImageSource();
+    message.raw = object.raw ?? void 0;
+    message.themed = object.themed !== void 0 && object.themed !== null ? ThemedImageSource.fromPartial(object.themed) : void 0;
+    return message;
+  }
+};
+function createBaseImage() {
+  return { source: void 0, fallback: void 0, mask: void 0, colorTint: void 0 };
+}
+var Image = {
+  encode(message, writer = new BinaryWriter()) {
+    if (message.source !== void 0) {
+      ImageSource.encode(message.source, writer.uint32(10).fork()).join();
+    }
+    if (message.fallback !== void 0) {
+      ImageSource.encode(message.fallback, writer.uint32(18).fork()).join();
+    }
+    if (message.mask !== void 0) {
+      writer.uint32(24).int32(message.mask);
+    }
+    if (message.colorTint !== void 0) {
+      writer.uint32(34).string(message.colorTint);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseImage();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.source = ImageSource.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+          message.fallback = ImageSource.decode(reader, reader.uint32());
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+          message.mask = reader.int32();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+          message.colorTint = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return {
+      source: isSet3(object.source) ? ImageSource.fromJSON(object.source) : void 0,
+      fallback: isSet3(object.fallback) ? ImageSource.fromJSON(object.fallback) : void 0,
+      mask: isSet3(object.mask) ? imageMaskFromJSON(object.mask) : void 0,
+      colorTint: isSet3(object.colorTint) ? globalThis.String(object.colorTint) : void 0
+    };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.source !== void 0) {
+      obj.source = ImageSource.toJSON(message.source);
+    }
+    if (message.fallback !== void 0) {
+      obj.fallback = ImageSource.toJSON(message.fallback);
+    }
+    if (message.mask !== void 0) {
+      obj.mask = imageMaskToJSON(message.mask);
+    }
+    if (message.colorTint !== void 0) {
+      obj.colorTint = message.colorTint;
+    }
+    return obj;
+  },
+  create(base) {
+    return Image.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseImage();
+    message.source = object.source !== void 0 && object.source !== null ? ImageSource.fromPartial(object.source) : void 0;
+    message.fallback = object.fallback !== void 0 && object.fallback !== null ? ImageSource.fromPartial(object.fallback) : void 0;
+    message.mask = object.mask ?? void 0;
+    message.colorTint = object.colorTint ?? void 0;
+    return message;
+  }
+};
+function isSet3(value) {
+  return value !== null && value !== void 0;
+}
+
+// ../api/src/image.ts
+var Image2;
+((Image9) => {
+  let Mask;
+  ((Mask2) => {
+    Mask2["Circle"] = "circle";
+    Mask2["RoundedRectangle"] = "roundedRectangle";
+  })(Mask = Image9.Mask || (Image9.Mask = {}));
+  ;
+})(Image2 || (Image2 = {}));
+var maskMap = {
+  ["circle" /* Circle */]: 1 /* Circle */,
+  ["roundedRectangle" /* RoundedRectangle */]: 2 /* RoundedRectangle */
+};
+var serializeImageLike = (image) => {
+  if (image instanceof URL) {
+    return { source: image.toString() };
+  }
+  if (typeof image == "string") {
+    return { source: image };
+  }
+  return image;
+};
+var serializeProtoImage = (image) => {
+  const serializeSource = (payload) => {
+    if (typeof payload === "object") {
+      const tmp = payload;
+      return { themed: { light: tmp.light.toString(), dark: tmp.dark.toString() } };
+    }
+    return { raw: payload.toString() };
+  };
+  if (image instanceof URL || typeof image === "string") {
+    return { source: { raw: image.toString() } };
+  }
+  const proto = Image.create();
+  const img = image;
+  proto.source = serializeSource(img.source);
+  if (img.fallback) {
+    proto.fallback = serializeSource(img.fallback);
+  }
+  if (img.mask) {
+    proto.mask = maskMap[img.mask];
+  }
+  return proto;
+};
+
+// ../api/src/components/list.tsx
+var import_crypto2 = require("crypto");
+
+// ../api/src/color.ts
+var Color = /* @__PURE__ */ ((Color2) => {
+  Color2["Blue"] = "blue";
+  Color2["Green"] = "green";
+  Color2["Magenta"] = "magenta";
+  Color2["Orange"] = "orange";
+  Color2["Purple"] = "purple";
+  Color2["Red"] = "red";
+  Color2["Yellow"] = "yellow";
+  Color2["PrimaryText"] = "primary-text";
+  Color2["SecondaryText"] = "secondary-text";
+  return Color2;
+})(Color || {});
+var serializeColorLike = (color) => {
+  if (typeof color == "string") {
+    return color;
+  }
+  return color;
+};
+
+// ../api/src/hooks.ts
+var import_react = __toESM(require_react());
+
+// ../api/src/bus.ts
+var import_crypto = require("crypto");
+var import_worker_threads = require("worker_threads");
+
+// ../api/src/proto/application.ts
+function createBaseOpenApplicationRequest() {
+  return { target: "", appId: void 0 };
+}
+var OpenApplicationRequest = {
+  encode(message, writer = new BinaryWriter()) {
+    if (message.target !== "") {
+      writer.uint32(10).string(message.target);
+    }
+    if (message.appId !== void 0) {
+      writer.uint32(18).string(message.appId);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseOpenApplicationRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.target = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+          message.appId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return {
+      target: isSet4(object.target) ? globalThis.String(object.target) : "",
+      appId: isSet4(object.appId) ? globalThis.String(object.appId) : void 0
+    };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.target !== "") {
+      obj.target = message.target;
+    }
+    if (message.appId !== void 0) {
+      obj.appId = message.appId;
+    }
+    return obj;
+  },
+  create(base) {
+    return OpenApplicationRequest.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseOpenApplicationRequest();
+    message.target = object.target ?? "";
+    message.appId = object.appId ?? void 0;
+    return message;
+  }
+};
+function createBaseListApplicationRequest() {
+  return {};
+}
+var ListApplicationRequest = {
+  encode(_, writer = new BinaryWriter()) {
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseListApplicationRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(_) {
+    return {};
+  },
+  toJSON(_) {
+    const obj = {};
+    return obj;
+  },
+  create(base) {
+    return ListApplicationRequest.fromPartial(base ?? {});
+  },
+  fromPartial(_) {
+    const message = createBaseListApplicationRequest();
+    return message;
+  }
+};
+function createBaseListApplicationResponse() {
+  return { apps: [] };
+}
+var ListApplicationResponse = {
+  encode(message, writer = new BinaryWriter()) {
+    for (const v of message.apps) {
+      Application.encode(v, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseListApplicationResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.apps.push(Application.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return { apps: globalThis.Array.isArray(object?.apps) ? object.apps.map((e) => Application.fromJSON(e)) : [] };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.apps?.length) {
+      obj.apps = message.apps.map((e) => Application.toJSON(e));
+    }
+    return obj;
+  },
+  create(base) {
+    return ListApplicationResponse.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseListApplicationResponse();
+    message.apps = object.apps?.map((e) => Application.fromPartial(e)) || [];
+    return message;
+  }
+};
+function createBaseRequest2() {
+  return { list: void 0, open: void 0 };
+}
+var Request2 = {
+  encode(message, writer = new BinaryWriter()) {
+    if (message.list !== void 0) {
+      ListApplicationRequest.encode(message.list, writer.uint32(10).fork()).join();
+    }
+    if (message.open !== void 0) {
+      OpenApplicationRequest.encode(message.open, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseRequest2();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.list = ListApplicationRequest.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+          message.open = OpenApplicationRequest.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return {
+      list: isSet4(object.list) ? ListApplicationRequest.fromJSON(object.list) : void 0,
+      open: isSet4(object.open) ? OpenApplicationRequest.fromJSON(object.open) : void 0
+    };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.list !== void 0) {
+      obj.list = ListApplicationRequest.toJSON(message.list);
+    }
+    if (message.open !== void 0) {
+      obj.open = OpenApplicationRequest.toJSON(message.open);
+    }
+    return obj;
+  },
+  create(base) {
+    return Request2.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseRequest2();
+    message.list = object.list !== void 0 && object.list !== null ? ListApplicationRequest.fromPartial(object.list) : void 0;
+    message.open = object.open !== void 0 && object.open !== null ? OpenApplicationRequest.fromPartial(object.open) : void 0;
+    return message;
+  }
+};
+function createBaseResponse2() {
+  return { list: void 0 };
+}
+var Response2 = {
+  encode(message, writer = new BinaryWriter()) {
+    if (message.list !== void 0) {
+      ListApplicationResponse.encode(message.list, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseResponse2();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.list = ListApplicationResponse.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return { list: isSet4(object.list) ? ListApplicationResponse.fromJSON(object.list) : void 0 };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.list !== void 0) {
+      obj.list = ListApplicationResponse.toJSON(message.list);
+    }
+    return obj;
+  },
+  create(base) {
+    return Response2.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseResponse2();
+    message.list = object.list !== void 0 && object.list !== null ? ListApplicationResponse.fromPartial(object.list) : void 0;
+    return message;
+  }
+};
+function createBaseApplication() {
+  return { id: "", name: "", icon: "" };
+}
+var Application = {
+  encode(message, writer = new BinaryWriter()) {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.name !== "") {
+      writer.uint32(18).string(message.name);
+    }
+    if (message.icon !== "") {
+      writer.uint32(26).string(message.icon);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseApplication();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+          message.name = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+          message.icon = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return {
+      id: isSet4(object.id) ? globalThis.String(object.id) : "",
+      name: isSet4(object.name) ? globalThis.String(object.name) : "",
+      icon: isSet4(object.icon) ? globalThis.String(object.icon) : ""
+    };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    if (message.icon !== "") {
+      obj.icon = message.icon;
+    }
+    return obj;
+  },
+  create(base) {
+    return Application.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseApplication();
+    message.id = object.id ?? "";
+    message.name = object.name ?? "";
+    message.icon = object.icon ?? "";
+    return message;
+  }
+};
+function isSet4(value) {
+  return value !== null && value !== void 0;
+}
+
+// ../api/src/proto/clipboard.ts
+function createBaseClipboardHtmlContent() {
+  return { html: "", text: "" };
+}
+var ClipboardHtmlContent = {
+  encode(message, writer = new BinaryWriter()) {
+    if (message.html !== "") {
+      writer.uint32(10).string(message.html);
+    }
+    if (message.text !== "") {
+      writer.uint32(18).string(message.text);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseClipboardHtmlContent();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.html = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+          message.text = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return {
+      html: isSet5(object.html) ? globalThis.String(object.html) : "",
+      text: isSet5(object.text) ? globalThis.String(object.text) : ""
+    };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.html !== "") {
+      obj.html = message.html;
+    }
+    if (message.text !== "") {
+      obj.text = message.text;
+    }
+    return obj;
+  },
+  create(base) {
+    return ClipboardHtmlContent.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseClipboardHtmlContent();
+    message.html = object.html ?? "";
+    message.text = object.text ?? "";
+    return message;
+  }
+};
+function createBaseClipboardPathContent() {
+  return { path: "" };
+}
+var ClipboardPathContent = {
+  encode(message, writer = new BinaryWriter()) {
+    if (message.path !== "") {
+      writer.uint32(10).string(message.path);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseClipboardPathContent();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.path = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return { path: isSet5(object.path) ? globalThis.String(object.path) : "" };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.path !== "") {
+      obj.path = message.path;
+    }
+    return obj;
+  },
+  create(base) {
+    return ClipboardPathContent.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseClipboardPathContent();
+    message.path = object.path ?? "";
+    return message;
+  }
+};
+function createBaseClipboardOptions() {
+  return { concealed: false };
+}
+var ClipboardOptions = {
+  encode(message, writer = new BinaryWriter()) {
+    if (message.concealed !== false) {
+      writer.uint32(8).bool(message.concealed);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseClipboardOptions();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+          message.concealed = reader.bool();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return { concealed: isSet5(object.concealed) ? globalThis.Boolean(object.concealed) : false };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.concealed !== false) {
+      obj.concealed = message.concealed;
+    }
+    return obj;
+  },
+  create(base) {
+    return ClipboardOptions.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseClipboardOptions();
+    message.concealed = object.concealed ?? false;
+    return message;
+  }
+};
+function createBaseCopyToClipboardRequest() {
+  return { content: void 0, options: void 0 };
+}
+var CopyToClipboardRequest = {
+  encode(message, writer = new BinaryWriter()) {
+    if (message.content !== void 0) {
+      ClipboardContent.encode(message.content, writer.uint32(10).fork()).join();
+    }
+    if (message.options !== void 0) {
+      ClipboardOptions.encode(message.options, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseCopyToClipboardRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.content = ClipboardContent.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+          message.options = ClipboardOptions.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return {
+      content: isSet5(object.content) ? ClipboardContent.fromJSON(object.content) : void 0,
+      options: isSet5(object.options) ? ClipboardOptions.fromJSON(object.options) : void 0
+    };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.content !== void 0) {
+      obj.content = ClipboardContent.toJSON(message.content);
+    }
+    if (message.options !== void 0) {
+      obj.options = ClipboardOptions.toJSON(message.options);
+    }
+    return obj;
+  },
+  create(base) {
+    return CopyToClipboardRequest.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseCopyToClipboardRequest();
+    message.content = object.content !== void 0 && object.content !== null ? ClipboardContent.fromPartial(object.content) : void 0;
+    message.options = object.options !== void 0 && object.options !== null ? ClipboardOptions.fromPartial(object.options) : void 0;
+    return message;
+  }
+};
+function createBaseClipboardContent() {
+  return { text: void 0, html: void 0, path: void 0 };
+}
+var ClipboardContent = {
+  encode(message, writer = new BinaryWriter()) {
+    if (message.text !== void 0) {
+      writer.uint32(10).string(message.text);
+    }
+    if (message.html !== void 0) {
+      ClipboardHtmlContent.encode(message.html, writer.uint32(18).fork()).join();
+    }
+    if (message.path !== void 0) {
+      ClipboardPathContent.encode(message.path, writer.uint32(26).fork()).join();
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseClipboardContent();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.text = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+          message.html = ClipboardHtmlContent.decode(reader, reader.uint32());
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+          message.path = ClipboardPathContent.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return {
+      text: isSet5(object.text) ? globalThis.String(object.text) : void 0,
+      html: isSet5(object.html) ? ClipboardHtmlContent.fromJSON(object.html) : void 0,
+      path: isSet5(object.path) ? ClipboardPathContent.fromJSON(object.path) : void 0
+    };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.text !== void 0) {
+      obj.text = message.text;
+    }
+    if (message.html !== void 0) {
+      obj.html = ClipboardHtmlContent.toJSON(message.html);
+    }
+    if (message.path !== void 0) {
+      obj.path = ClipboardPathContent.toJSON(message.path);
+    }
+    return obj;
+  },
+  create(base) {
+    return ClipboardContent.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseClipboardContent();
+    message.text = object.text ?? void 0;
+    message.html = object.html !== void 0 && object.html !== null ? ClipboardHtmlContent.fromPartial(object.html) : void 0;
+    message.path = object.path !== void 0 && object.path !== null ? ClipboardPathContent.fromPartial(object.path) : void 0;
+    return message;
+  }
+};
+function createBaseCopyToClipboardResponse() {
+  return {};
+}
+var CopyToClipboardResponse = {
+  encode(_, writer = new BinaryWriter()) {
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseCopyToClipboardResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(_) {
+    return {};
+  },
+  toJSON(_) {
+    const obj = {};
+    return obj;
+  },
+  create(base) {
+    return CopyToClipboardResponse.fromPartial(base ?? {});
+  },
+  fromPartial(_) {
+    const message = createBaseCopyToClipboardResponse();
+    return message;
+  }
+};
+function createBaseRequest3() {
+  return { copy: void 0 };
+}
+var Request3 = {
+  encode(message, writer = new BinaryWriter()) {
+    if (message.copy !== void 0) {
+      CopyToClipboardRequest.encode(message.copy, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseRequest3();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.copy = CopyToClipboardRequest.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return { copy: isSet5(object.copy) ? CopyToClipboardRequest.fromJSON(object.copy) : void 0 };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.copy !== void 0) {
+      obj.copy = CopyToClipboardRequest.toJSON(message.copy);
+    }
+    return obj;
+  },
+  create(base) {
+    return Request3.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseRequest3();
+    message.copy = object.copy !== void 0 && object.copy !== null ? CopyToClipboardRequest.fromPartial(object.copy) : void 0;
+    return message;
+  }
+};
+function createBaseResponse3() {
+  return { copy: void 0 };
+}
+var Response3 = {
+  encode(message, writer = new BinaryWriter()) {
+    if (message.copy !== void 0) {
+      CopyToClipboardResponse.encode(message.copy, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseResponse3();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.copy = CopyToClipboardResponse.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return { copy: isSet5(object.copy) ? CopyToClipboardResponse.fromJSON(object.copy) : void 0 };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.copy !== void 0) {
+      obj.copy = CopyToClipboardResponse.toJSON(message.copy);
+    }
+    return obj;
+  },
+  create(base) {
+    return Response3.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseResponse3();
+    message.copy = object.copy !== void 0 && object.copy !== null ? CopyToClipboardResponse.fromPartial(object.copy) : void 0;
+    return message;
+  }
+};
 function isSet5(value) {
+  return value !== null && value !== void 0;
+}
+
+// ../api/src/proto/oauth.ts
+function createBasePKCEClientOptions() {
+  return { id: void 0, name: "", description: "", icon: void 0 };
+}
+var PKCEClientOptions = {
+  encode(message, writer = new BinaryWriter()) {
+    if (message.id !== void 0) {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.name !== "") {
+      writer.uint32(18).string(message.name);
+    }
+    if (message.description !== "") {
+      writer.uint32(26).string(message.description);
+    }
+    if (message.icon !== void 0) {
+      Image.encode(message.icon, writer.uint32(34).fork()).join();
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBasePKCEClientOptions();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+          message.name = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+          message.description = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+          message.icon = Image.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return {
+      id: isSet6(object.id) ? globalThis.String(object.id) : void 0,
+      name: isSet6(object.name) ? globalThis.String(object.name) : "",
+      description: isSet6(object.description) ? globalThis.String(object.description) : "",
+      icon: isSet6(object.icon) ? Image.fromJSON(object.icon) : void 0
+    };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.id !== void 0) {
+      obj.id = message.id;
+    }
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    if (message.description !== "") {
+      obj.description = message.description;
+    }
+    if (message.icon !== void 0) {
+      obj.icon = Image.toJSON(message.icon);
+    }
+    return obj;
+  },
+  create(base) {
+    return PKCEClientOptions.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBasePKCEClientOptions();
+    message.id = object.id ?? void 0;
+    message.name = object.name ?? "";
+    message.description = object.description ?? "";
+    message.icon = object.icon !== void 0 && object.icon !== null ? Image.fromPartial(object.icon) : void 0;
+    return message;
+  }
+};
+function createBaseAuthorizeRequest() {
+  return { client: void 0, url: "" };
+}
+var AuthorizeRequest = {
+  encode(message, writer = new BinaryWriter()) {
+    if (message.client !== void 0) {
+      PKCEClientOptions.encode(message.client, writer.uint32(10).fork()).join();
+    }
+    if (message.url !== "") {
+      writer.uint32(18).string(message.url);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseAuthorizeRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.client = PKCEClientOptions.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+          message.url = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return {
+      client: isSet6(object.client) ? PKCEClientOptions.fromJSON(object.client) : void 0,
+      url: isSet6(object.url) ? globalThis.String(object.url) : ""
+    };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.client !== void 0) {
+      obj.client = PKCEClientOptions.toJSON(message.client);
+    }
+    if (message.url !== "") {
+      obj.url = message.url;
+    }
+    return obj;
+  },
+  create(base) {
+    return AuthorizeRequest.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseAuthorizeRequest();
+    message.client = object.client !== void 0 && object.client !== null ? PKCEClientOptions.fromPartial(object.client) : void 0;
+    message.url = object.url ?? "";
+    return message;
+  }
+};
+function createBaseAuthorizeResponse() {
+  return { code: "" };
+}
+var AuthorizeResponse = {
+  encode(message, writer = new BinaryWriter()) {
+    if (message.code !== "") {
+      writer.uint32(10).string(message.code);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseAuthorizeResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.code = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return { code: isSet6(object.code) ? globalThis.String(object.code) : "" };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.code !== "") {
+      obj.code = message.code;
+    }
+    return obj;
+  },
+  create(base) {
+    return AuthorizeResponse.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseAuthorizeResponse();
+    message.code = object.code ?? "";
+    return message;
+  }
+};
+function createBaseRequest4() {
+  return { authorize: void 0 };
+}
+var Request4 = {
+  encode(message, writer = new BinaryWriter()) {
+    if (message.authorize !== void 0) {
+      AuthorizeRequest.encode(message.authorize, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseRequest4();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.authorize = AuthorizeRequest.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return { authorize: isSet6(object.authorize) ? AuthorizeRequest.fromJSON(object.authorize) : void 0 };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.authorize !== void 0) {
+      obj.authorize = AuthorizeRequest.toJSON(message.authorize);
+    }
+    return obj;
+  },
+  create(base) {
+    return Request4.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseRequest4();
+    message.authorize = object.authorize !== void 0 && object.authorize !== null ? AuthorizeRequest.fromPartial(object.authorize) : void 0;
+    return message;
+  }
+};
+function createBaseResponse4() {
+  return { authorize: void 0 };
+}
+var Response4 = {
+  encode(message, writer = new BinaryWriter()) {
+    if (message.authorize !== void 0) {
+      AuthorizeResponse.encode(message.authorize, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseResponse4();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.authorize = AuthorizeResponse.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return { authorize: isSet6(object.authorize) ? AuthorizeResponse.fromJSON(object.authorize) : void 0 };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.authorize !== void 0) {
+      obj.authorize = AuthorizeResponse.toJSON(message.authorize);
+    }
+    return obj;
+  },
+  create(base) {
+    return Response4.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseResponse4();
+    message.authorize = object.authorize !== void 0 && object.authorize !== null ? AuthorizeResponse.fromPartial(object.authorize) : void 0;
+    return message;
+  }
+};
+function isSet6(value) {
   return value !== null && value !== void 0;
 }
 
@@ -26572,7 +28090,7 @@ var GetRequest = {
     return message;
   },
   fromJSON(object) {
-    return { key: isSet6(object.key) ? globalThis.String(object.key) : "" };
+    return { key: isSet7(object.key) ? globalThis.String(object.key) : "" };
   },
   toJSON(message) {
     const obj = {};
@@ -26623,7 +28141,7 @@ var GetResponse = {
     return message;
   },
   fromJSON(object) {
-    return { value: isSet6(object?.value) ? object.value : void 0 };
+    return { value: isSet7(object?.value) ? object.value : void 0 };
   },
   toJSON(message) {
     const obj = {};
@@ -26722,8 +28240,8 @@ var SetRequest = {
   },
   fromJSON(object) {
     return {
-      key: isSet6(object.key) ? globalThis.String(object.key) : "",
-      value: isSet6(object?.value) ? object.value : void 0
+      key: isSet7(object.key) ? globalThis.String(object.key) : "",
+      value: isSet7(object?.value) ? object.value : void 0
     };
   },
   toJSON(message) {
@@ -26779,7 +28297,7 @@ var RemoveRequest = {
     return message;
   },
   fromJSON(object) {
-    return { key: isSet6(object.key) ? globalThis.String(object.key) : "" };
+    return { key: isSet7(object.key) ? globalThis.String(object.key) : "" };
   },
   toJSON(message) {
     const obj = {};
@@ -27027,8 +28545,8 @@ var ListResponse_ValuesEntry = {
   },
   fromJSON(object) {
     return {
-      key: isSet6(object.key) ? globalThis.String(object.key) : "",
-      value: isSet6(object?.value) ? object.value : void 0
+      key: isSet7(object.key) ? globalThis.String(object.key) : "",
+      value: isSet7(object?.value) ? object.value : void 0
     };
   },
   toJSON(message) {
@@ -27051,10 +28569,10 @@ var ListResponse_ValuesEntry = {
     return message;
   }
 };
-function createBaseRequest4() {
+function createBaseRequest5() {
   return { get: void 0, set: void 0, remove: void 0, clear: void 0, list: void 0 };
 }
-var Request4 = {
+var Request5 = {
   encode(message, writer = new BinaryWriter()) {
     if (message.get !== void 0) {
       GetRequest.encode(message.get, writer.uint32(10).fork()).join();
@@ -27076,7 +28594,7 @@ var Request4 = {
   decode(input, length) {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseRequest4();
+    const message = createBaseRequest5();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -27125,11 +28643,11 @@ var Request4 = {
   },
   fromJSON(object) {
     return {
-      get: isSet6(object.get) ? GetRequest.fromJSON(object.get) : void 0,
-      set: isSet6(object.set) ? SetRequest.fromJSON(object.set) : void 0,
-      remove: isSet6(object.remove) ? RemoveRequest.fromJSON(object.remove) : void 0,
-      clear: isSet6(object.clear) ? ClearRequest.fromJSON(object.clear) : void 0,
-      list: isSet6(object.list) ? ListRequest.fromJSON(object.list) : void 0
+      get: isSet7(object.get) ? GetRequest.fromJSON(object.get) : void 0,
+      set: isSet7(object.set) ? SetRequest.fromJSON(object.set) : void 0,
+      remove: isSet7(object.remove) ? RemoveRequest.fromJSON(object.remove) : void 0,
+      clear: isSet7(object.clear) ? ClearRequest.fromJSON(object.clear) : void 0,
+      list: isSet7(object.list) ? ListRequest.fromJSON(object.list) : void 0
     };
   },
   toJSON(message) {
@@ -27152,10 +28670,10 @@ var Request4 = {
     return obj;
   },
   create(base) {
-    return Request4.fromPartial(base ?? {});
+    return Request5.fromPartial(base ?? {});
   },
   fromPartial(object) {
-    const message = createBaseRequest4();
+    const message = createBaseRequest5();
     message.get = object.get !== void 0 && object.get !== null ? GetRequest.fromPartial(object.get) : void 0;
     message.set = object.set !== void 0 && object.set !== null ? SetRequest.fromPartial(object.set) : void 0;
     message.remove = object.remove !== void 0 && object.remove !== null ? RemoveRequest.fromPartial(object.remove) : void 0;
@@ -27164,10 +28682,10 @@ var Request4 = {
     return message;
   }
 };
-function createBaseResponse4() {
+function createBaseResponse5() {
   return { get: void 0, set: void 0, remove: void 0, clear: void 0, list: void 0 };
 }
-var Response4 = {
+var Response5 = {
   encode(message, writer = new BinaryWriter()) {
     if (message.get !== void 0) {
       GetResponse.encode(message.get, writer.uint32(10).fork()).join();
@@ -27189,7 +28707,7 @@ var Response4 = {
   decode(input, length) {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseResponse4();
+    const message = createBaseResponse5();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -27238,11 +28756,11 @@ var Response4 = {
   },
   fromJSON(object) {
     return {
-      get: isSet6(object.get) ? GetResponse.fromJSON(object.get) : void 0,
-      set: isSet6(object.set) ? SetResponse.fromJSON(object.set) : void 0,
-      remove: isSet6(object.remove) ? RemoveResponse.fromJSON(object.remove) : void 0,
-      clear: isSet6(object.clear) ? ClearResponse.fromJSON(object.clear) : void 0,
-      list: isSet6(object.list) ? ListResponse.fromJSON(object.list) : void 0
+      get: isSet7(object.get) ? GetResponse.fromJSON(object.get) : void 0,
+      set: isSet7(object.set) ? SetResponse.fromJSON(object.set) : void 0,
+      remove: isSet7(object.remove) ? RemoveResponse.fromJSON(object.remove) : void 0,
+      clear: isSet7(object.clear) ? ClearResponse.fromJSON(object.clear) : void 0,
+      list: isSet7(object.list) ? ListResponse.fromJSON(object.list) : void 0
     };
   },
   toJSON(message) {
@@ -27265,10 +28783,10 @@ var Response4 = {
     return obj;
   },
   create(base) {
-    return Response4.fromPartial(base ?? {});
+    return Response5.fromPartial(base ?? {});
   },
   fromPartial(object) {
-    const message = createBaseResponse4();
+    const message = createBaseResponse5();
     message.get = object.get !== void 0 && object.get !== null ? GetResponse.fromPartial(object.get) : void 0;
     message.set = object.set !== void 0 && object.set !== null ? SetResponse.fromPartial(object.set) : void 0;
     message.remove = object.remove !== void 0 && object.remove !== null ? RemoveResponse.fromPartial(object.remove) : void 0;
@@ -27280,1233 +28798,6 @@ var Response4 = {
 function isObject2(value) {
   return typeof value === "object" && value !== null;
 }
-function isSet6(value) {
-  return value !== null && value !== void 0;
-}
-
-// ../api/src/proto/ui.ts
-function toastStyleFromJSON(object) {
-  switch (object) {
-    case 0:
-    case "Success":
-      return 0 /* Success */;
-    case 1:
-    case "Info":
-      return 1 /* Info */;
-    case 2:
-    case "Warning":
-      return 2 /* Warning */;
-    case 3:
-    case "Error":
-      return 3 /* Error */;
-    case 4:
-    case "Dynamic":
-      return 4 /* Dynamic */;
-    case -1:
-    case "UNRECOGNIZED":
-    default:
-      return -1 /* UNRECOGNIZED */;
-  }
-}
-function toastStyleToJSON(object) {
-  switch (object) {
-    case 0 /* Success */:
-      return "Success";
-    case 1 /* Info */:
-      return "Info";
-    case 2 /* Warning */:
-      return "Warning";
-    case 3 /* Error */:
-      return "Error";
-    case 4 /* Dynamic */:
-      return "Dynamic";
-    case -1 /* UNRECOGNIZED */:
-    default:
-      return "UNRECOGNIZED";
-  }
-}
-function confirmAlertActionStyleFromJSON(object) {
-  switch (object) {
-    case 0:
-    case "Default":
-      return 0 /* Default */;
-    case 1:
-    case "Destructive":
-      return 1 /* Destructive */;
-    case 2:
-    case "Cancel":
-      return 2 /* Cancel */;
-    case -1:
-    case "UNRECOGNIZED":
-    default:
-      return -1 /* UNRECOGNIZED */;
-  }
-}
-function confirmAlertActionStyleToJSON(object) {
-  switch (object) {
-    case 0 /* Default */:
-      return "Default";
-    case 1 /* Destructive */:
-      return "Destructive";
-    case 2 /* Cancel */:
-      return "Cancel";
-    case -1 /* UNRECOGNIZED */:
-    default:
-      return "UNRECOGNIZED";
-  }
-}
-function createBaseShowToastRequest() {
-  return { id: "", title: "", style: 0 };
-}
-var ShowToastRequest = {
-  encode(message, writer = new BinaryWriter()) {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
-    }
-    if (message.title !== "") {
-      writer.uint32(18).string(message.title);
-    }
-    if (message.style !== 0) {
-      writer.uint32(24).int32(message.style);
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseShowToastRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.id = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-          message.title = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 24) {
-            break;
-          }
-          message.style = reader.int32();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return {
-      id: isSet7(object.id) ? globalThis.String(object.id) : "",
-      title: isSet7(object.title) ? globalThis.String(object.title) : "",
-      style: isSet7(object.style) ? toastStyleFromJSON(object.style) : 0
-    };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    if (message.title !== "") {
-      obj.title = message.title;
-    }
-    if (message.style !== 0) {
-      obj.style = toastStyleToJSON(message.style);
-    }
-    return obj;
-  },
-  create(base) {
-    return ShowToastRequest.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseShowToastRequest();
-    message.id = object.id ?? "";
-    message.title = object.title ?? "";
-    message.style = object.style ?? 0;
-    return message;
-  }
-};
-function createBaseHideToastRequest() {
-  return { id: "" };
-}
-var HideToastRequest = {
-  encode(message, writer = new BinaryWriter()) {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseHideToastRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.id = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return { id: isSet7(object.id) ? globalThis.String(object.id) : "" };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    return obj;
-  },
-  create(base) {
-    return HideToastRequest.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseHideToastRequest();
-    message.id = object.id ?? "";
-    return message;
-  }
-};
-function createBaseUpdateToastRequest() {
-  return { id: "", title: "" };
-}
-var UpdateToastRequest = {
-  encode(message, writer = new BinaryWriter()) {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
-    }
-    if (message.title !== "") {
-      writer.uint32(18).string(message.title);
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseUpdateToastRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.id = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-          message.title = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return {
-      id: isSet7(object.id) ? globalThis.String(object.id) : "",
-      title: isSet7(object.title) ? globalThis.String(object.title) : ""
-    };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    if (message.title !== "") {
-      obj.title = message.title;
-    }
-    return obj;
-  },
-  create(base) {
-    return UpdateToastRequest.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseUpdateToastRequest();
-    message.id = object.id ?? "";
-    message.title = object.title ?? "";
-    return message;
-  }
-};
-function createBasePushViewRequest() {
-  return {};
-}
-var PushViewRequest = {
-  encode(_, writer = new BinaryWriter()) {
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBasePushViewRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(_) {
-    return {};
-  },
-  toJSON(_) {
-    const obj = {};
-    return obj;
-  },
-  create(base) {
-    return PushViewRequest.fromPartial(base ?? {});
-  },
-  fromPartial(_) {
-    const message = createBasePushViewRequest();
-    return message;
-  }
-};
-function createBasePopViewRequest() {
-  return {};
-}
-var PopViewRequest = {
-  encode(_, writer = new BinaryWriter()) {
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBasePopViewRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(_) {
-    return {};
-  },
-  toJSON(_) {
-    const obj = {};
-    return obj;
-  },
-  create(base) {
-    return PopViewRequest.fromPartial(base ?? {});
-  },
-  fromPartial(_) {
-    const message = createBasePopViewRequest();
-    return message;
-  }
-};
-function createBaseCloseMainWindowRequest() {
-  return {};
-}
-var CloseMainWindowRequest = {
-  encode(_, writer = new BinaryWriter()) {
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseCloseMainWindowRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(_) {
-    return {};
-  },
-  toJSON(_) {
-    const obj = {};
-    return obj;
-  },
-  create(base) {
-    return CloseMainWindowRequest.fromPartial(base ?? {});
-  },
-  fromPartial(_) {
-    const message = createBaseCloseMainWindowRequest();
-    return message;
-  }
-};
-function createBaseClearSearchBarRequest() {
-  return {};
-}
-var ClearSearchBarRequest = {
-  encode(_, writer = new BinaryWriter()) {
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseClearSearchBarRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(_) {
-    return {};
-  },
-  toJSON(_) {
-    const obj = {};
-    return obj;
-  },
-  create(base) {
-    return ClearSearchBarRequest.fromPartial(base ?? {});
-  },
-  fromPartial(_) {
-    const message = createBaseClearSearchBarRequest();
-    return message;
-  }
-};
-function createBaseSetSearchTextRequest() {
-  return { text: "" };
-}
-var SetSearchTextRequest = {
-  encode(message, writer = new BinaryWriter()) {
-    if (message.text !== "") {
-      writer.uint32(10).string(message.text);
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseSetSearchTextRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.text = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return { text: isSet7(object.text) ? globalThis.String(object.text) : "" };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.text !== "") {
-      obj.text = message.text;
-    }
-    return obj;
-  },
-  create(base) {
-    return SetSearchTextRequest.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseSetSearchTextRequest();
-    message.text = object.text ?? "";
-    return message;
-  }
-};
-function createBaseShowHudRequest() {
-  return { text: "" };
-}
-var ShowHudRequest = {
-  encode(message, writer = new BinaryWriter()) {
-    if (message.text !== "") {
-      writer.uint32(10).string(message.text);
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseShowHudRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.text = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return { text: isSet7(object.text) ? globalThis.String(object.text) : "" };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.text !== "") {
-      obj.text = message.text;
-    }
-    return obj;
-  },
-  create(base) {
-    return ShowHudRequest.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseShowHudRequest();
-    message.text = object.text ?? "";
-    return message;
-  }
-};
-function createBaseRenderRequest() {
-  return { json: "" };
-}
-var RenderRequest = {
-  encode(message, writer = new BinaryWriter()) {
-    if (message.json !== "") {
-      writer.uint32(10).string(message.json);
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseRenderRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.json = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return { json: isSet7(object.json) ? globalThis.String(object.json) : "" };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.json !== "") {
-      obj.json = message.json;
-    }
-    return obj;
-  },
-  create(base) {
-    return RenderRequest.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseRenderRequest();
-    message.json = object.json ?? "";
-    return message;
-  }
-};
-function createBaseConfirmAlertRequest() {
-  return {
-    title: "",
-    description: "",
-    icon: void 0,
-    dismissAction: void 0,
-    primaryAction: void 0,
-    rememberUserChoice: false,
-    handle: ""
-  };
-}
-var ConfirmAlertRequest = {
-  encode(message, writer = new BinaryWriter()) {
-    if (message.title !== "") {
-      writer.uint32(10).string(message.title);
-    }
-    if (message.description !== "") {
-      writer.uint32(18).string(message.description);
-    }
-    if (message.icon !== void 0) {
-      writer.uint32(26).string(message.icon);
-    }
-    if (message.dismissAction !== void 0) {
-      ConfirmAlertAction.encode(message.dismissAction, writer.uint32(34).fork()).join();
-    }
-    if (message.primaryAction !== void 0) {
-      ConfirmAlertAction.encode(message.primaryAction, writer.uint32(42).fork()).join();
-    }
-    if (message.rememberUserChoice !== false) {
-      writer.uint32(48).bool(message.rememberUserChoice);
-    }
-    if (message.handle !== "") {
-      writer.uint32(58).string(message.handle);
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseConfirmAlertRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.title = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-          message.description = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-          message.icon = reader.string();
-          continue;
-        }
-        case 4: {
-          if (tag !== 34) {
-            break;
-          }
-          message.dismissAction = ConfirmAlertAction.decode(reader, reader.uint32());
-          continue;
-        }
-        case 5: {
-          if (tag !== 42) {
-            break;
-          }
-          message.primaryAction = ConfirmAlertAction.decode(reader, reader.uint32());
-          continue;
-        }
-        case 6: {
-          if (tag !== 48) {
-            break;
-          }
-          message.rememberUserChoice = reader.bool();
-          continue;
-        }
-        case 7: {
-          if (tag !== 58) {
-            break;
-          }
-          message.handle = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return {
-      title: isSet7(object.title) ? globalThis.String(object.title) : "",
-      description: isSet7(object.description) ? globalThis.String(object.description) : "",
-      icon: isSet7(object.icon) ? globalThis.String(object.icon) : void 0,
-      dismissAction: isSet7(object.dismissAction) ? ConfirmAlertAction.fromJSON(object.dismissAction) : void 0,
-      primaryAction: isSet7(object.primaryAction) ? ConfirmAlertAction.fromJSON(object.primaryAction) : void 0,
-      rememberUserChoice: isSet7(object.rememberUserChoice) ? globalThis.Boolean(object.rememberUserChoice) : false,
-      handle: isSet7(object.handle) ? globalThis.String(object.handle) : ""
-    };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.title !== "") {
-      obj.title = message.title;
-    }
-    if (message.description !== "") {
-      obj.description = message.description;
-    }
-    if (message.icon !== void 0) {
-      obj.icon = message.icon;
-    }
-    if (message.dismissAction !== void 0) {
-      obj.dismissAction = ConfirmAlertAction.toJSON(message.dismissAction);
-    }
-    if (message.primaryAction !== void 0) {
-      obj.primaryAction = ConfirmAlertAction.toJSON(message.primaryAction);
-    }
-    if (message.rememberUserChoice !== false) {
-      obj.rememberUserChoice = message.rememberUserChoice;
-    }
-    if (message.handle !== "") {
-      obj.handle = message.handle;
-    }
-    return obj;
-  },
-  create(base) {
-    return ConfirmAlertRequest.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseConfirmAlertRequest();
-    message.title = object.title ?? "";
-    message.description = object.description ?? "";
-    message.icon = object.icon ?? void 0;
-    message.dismissAction = object.dismissAction !== void 0 && object.dismissAction !== null ? ConfirmAlertAction.fromPartial(object.dismissAction) : void 0;
-    message.primaryAction = object.primaryAction !== void 0 && object.primaryAction !== null ? ConfirmAlertAction.fromPartial(object.primaryAction) : void 0;
-    message.rememberUserChoice = object.rememberUserChoice ?? false;
-    message.handle = object.handle ?? "";
-    return message;
-  }
-};
-function createBaseConfirmAlertAction() {
-  return { title: "", style: 0 };
-}
-var ConfirmAlertAction = {
-  encode(message, writer = new BinaryWriter()) {
-    if (message.title !== "") {
-      writer.uint32(10).string(message.title);
-    }
-    if (message.style !== 0) {
-      writer.uint32(16).int32(message.style);
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseConfirmAlertAction();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.title = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 16) {
-            break;
-          }
-          message.style = reader.int32();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return {
-      title: isSet7(object.title) ? globalThis.String(object.title) : "",
-      style: isSet7(object.style) ? confirmAlertActionStyleFromJSON(object.style) : 0
-    };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.title !== "") {
-      obj.title = message.title;
-    }
-    if (message.style !== 0) {
-      obj.style = confirmAlertActionStyleToJSON(message.style);
-    }
-    return obj;
-  },
-  create(base) {
-    return ConfirmAlertAction.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseConfirmAlertAction();
-    message.title = object.title ?? "";
-    message.style = object.style ?? 0;
-    return message;
-  }
-};
-function createBaseRequest5() {
-  return {
-    render: void 0,
-    showToast: void 0,
-    hideToast: void 0,
-    updateToast: void 0,
-    pushView: void 0,
-    popView: void 0,
-    clearSearch: void 0,
-    closeMainWindow: void 0,
-    showHud: void 0,
-    setSearchText: void 0,
-    confirmAlert: void 0
-  };
-}
-var Request5 = {
-  encode(message, writer = new BinaryWriter()) {
-    if (message.render !== void 0) {
-      RenderRequest.encode(message.render, writer.uint32(10).fork()).join();
-    }
-    if (message.showToast !== void 0) {
-      ShowToastRequest.encode(message.showToast, writer.uint32(18).fork()).join();
-    }
-    if (message.hideToast !== void 0) {
-      HideToastRequest.encode(message.hideToast, writer.uint32(26).fork()).join();
-    }
-    if (message.updateToast !== void 0) {
-      UpdateToastRequest.encode(message.updateToast, writer.uint32(34).fork()).join();
-    }
-    if (message.pushView !== void 0) {
-      PushViewRequest.encode(message.pushView, writer.uint32(42).fork()).join();
-    }
-    if (message.popView !== void 0) {
-      PopViewRequest.encode(message.popView, writer.uint32(50).fork()).join();
-    }
-    if (message.clearSearch !== void 0) {
-      ClearSearchBarRequest.encode(message.clearSearch, writer.uint32(58).fork()).join();
-    }
-    if (message.closeMainWindow !== void 0) {
-      CloseMainWindowRequest.encode(message.closeMainWindow, writer.uint32(66).fork()).join();
-    }
-    if (message.showHud !== void 0) {
-      ShowHudRequest.encode(message.showHud, writer.uint32(74).fork()).join();
-    }
-    if (message.setSearchText !== void 0) {
-      SetSearchTextRequest.encode(message.setSearchText, writer.uint32(82).fork()).join();
-    }
-    if (message.confirmAlert !== void 0) {
-      ConfirmAlertRequest.encode(message.confirmAlert, writer.uint32(90).fork()).join();
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseRequest5();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.render = RenderRequest.decode(reader, reader.uint32());
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-          message.showToast = ShowToastRequest.decode(reader, reader.uint32());
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-          message.hideToast = HideToastRequest.decode(reader, reader.uint32());
-          continue;
-        }
-        case 4: {
-          if (tag !== 34) {
-            break;
-          }
-          message.updateToast = UpdateToastRequest.decode(reader, reader.uint32());
-          continue;
-        }
-        case 5: {
-          if (tag !== 42) {
-            break;
-          }
-          message.pushView = PushViewRequest.decode(reader, reader.uint32());
-          continue;
-        }
-        case 6: {
-          if (tag !== 50) {
-            break;
-          }
-          message.popView = PopViewRequest.decode(reader, reader.uint32());
-          continue;
-        }
-        case 7: {
-          if (tag !== 58) {
-            break;
-          }
-          message.clearSearch = ClearSearchBarRequest.decode(reader, reader.uint32());
-          continue;
-        }
-        case 8: {
-          if (tag !== 66) {
-            break;
-          }
-          message.closeMainWindow = CloseMainWindowRequest.decode(reader, reader.uint32());
-          continue;
-        }
-        case 9: {
-          if (tag !== 74) {
-            break;
-          }
-          message.showHud = ShowHudRequest.decode(reader, reader.uint32());
-          continue;
-        }
-        case 10: {
-          if (tag !== 82) {
-            break;
-          }
-          message.setSearchText = SetSearchTextRequest.decode(reader, reader.uint32());
-          continue;
-        }
-        case 11: {
-          if (tag !== 90) {
-            break;
-          }
-          message.confirmAlert = ConfirmAlertRequest.decode(reader, reader.uint32());
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return {
-      render: isSet7(object.render) ? RenderRequest.fromJSON(object.render) : void 0,
-      showToast: isSet7(object.showToast) ? ShowToastRequest.fromJSON(object.showToast) : void 0,
-      hideToast: isSet7(object.hideToast) ? HideToastRequest.fromJSON(object.hideToast) : void 0,
-      updateToast: isSet7(object.updateToast) ? UpdateToastRequest.fromJSON(object.updateToast) : void 0,
-      pushView: isSet7(object.pushView) ? PushViewRequest.fromJSON(object.pushView) : void 0,
-      popView: isSet7(object.popView) ? PopViewRequest.fromJSON(object.popView) : void 0,
-      clearSearch: isSet7(object.clearSearch) ? ClearSearchBarRequest.fromJSON(object.clearSearch) : void 0,
-      closeMainWindow: isSet7(object.closeMainWindow) ? CloseMainWindowRequest.fromJSON(object.closeMainWindow) : void 0,
-      showHud: isSet7(object.showHud) ? ShowHudRequest.fromJSON(object.showHud) : void 0,
-      setSearchText: isSet7(object.setSearchText) ? SetSearchTextRequest.fromJSON(object.setSearchText) : void 0,
-      confirmAlert: isSet7(object.confirmAlert) ? ConfirmAlertRequest.fromJSON(object.confirmAlert) : void 0
-    };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.render !== void 0) {
-      obj.render = RenderRequest.toJSON(message.render);
-    }
-    if (message.showToast !== void 0) {
-      obj.showToast = ShowToastRequest.toJSON(message.showToast);
-    }
-    if (message.hideToast !== void 0) {
-      obj.hideToast = HideToastRequest.toJSON(message.hideToast);
-    }
-    if (message.updateToast !== void 0) {
-      obj.updateToast = UpdateToastRequest.toJSON(message.updateToast);
-    }
-    if (message.pushView !== void 0) {
-      obj.pushView = PushViewRequest.toJSON(message.pushView);
-    }
-    if (message.popView !== void 0) {
-      obj.popView = PopViewRequest.toJSON(message.popView);
-    }
-    if (message.clearSearch !== void 0) {
-      obj.clearSearch = ClearSearchBarRequest.toJSON(message.clearSearch);
-    }
-    if (message.closeMainWindow !== void 0) {
-      obj.closeMainWindow = CloseMainWindowRequest.toJSON(message.closeMainWindow);
-    }
-    if (message.showHud !== void 0) {
-      obj.showHud = ShowHudRequest.toJSON(message.showHud);
-    }
-    if (message.setSearchText !== void 0) {
-      obj.setSearchText = SetSearchTextRequest.toJSON(message.setSearchText);
-    }
-    if (message.confirmAlert !== void 0) {
-      obj.confirmAlert = ConfirmAlertRequest.toJSON(message.confirmAlert);
-    }
-    return obj;
-  },
-  create(base) {
-    return Request5.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseRequest5();
-    message.render = object.render !== void 0 && object.render !== null ? RenderRequest.fromPartial(object.render) : void 0;
-    message.showToast = object.showToast !== void 0 && object.showToast !== null ? ShowToastRequest.fromPartial(object.showToast) : void 0;
-    message.hideToast = object.hideToast !== void 0 && object.hideToast !== null ? HideToastRequest.fromPartial(object.hideToast) : void 0;
-    message.updateToast = object.updateToast !== void 0 && object.updateToast !== null ? UpdateToastRequest.fromPartial(object.updateToast) : void 0;
-    message.pushView = object.pushView !== void 0 && object.pushView !== null ? PushViewRequest.fromPartial(object.pushView) : void 0;
-    message.popView = object.popView !== void 0 && object.popView !== null ? PopViewRequest.fromPartial(object.popView) : void 0;
-    message.clearSearch = object.clearSearch !== void 0 && object.clearSearch !== null ? ClearSearchBarRequest.fromPartial(object.clearSearch) : void 0;
-    message.closeMainWindow = object.closeMainWindow !== void 0 && object.closeMainWindow !== null ? CloseMainWindowRequest.fromPartial(object.closeMainWindow) : void 0;
-    message.showHud = object.showHud !== void 0 && object.showHud !== null ? ShowHudRequest.fromPartial(object.showHud) : void 0;
-    message.setSearchText = object.setSearchText !== void 0 && object.setSearchText !== null ? SetSearchTextRequest.fromPartial(object.setSearchText) : void 0;
-    message.confirmAlert = object.confirmAlert !== void 0 && object.confirmAlert !== null ? ConfirmAlertRequest.fromPartial(object.confirmAlert) : void 0;
-    return message;
-  }
-};
-function createBaseResponse5() {
-  return {
-    render: void 0,
-    showToast: void 0,
-    hideToast: void 0,
-    updateToast: void 0,
-    pushView: void 0,
-    popView: void 0,
-    clearSearch: void 0,
-    closeMainWindow: void 0,
-    showHud: void 0,
-    setSearchText: void 0,
-    confirmAlert: void 0
-  };
-}
-var Response5 = {
-  encode(message, writer = new BinaryWriter()) {
-    if (message.render !== void 0) {
-      AckResponse.encode(message.render, writer.uint32(10).fork()).join();
-    }
-    if (message.showToast !== void 0) {
-      AckResponse.encode(message.showToast, writer.uint32(18).fork()).join();
-    }
-    if (message.hideToast !== void 0) {
-      AckResponse.encode(message.hideToast, writer.uint32(26).fork()).join();
-    }
-    if (message.updateToast !== void 0) {
-      AckResponse.encode(message.updateToast, writer.uint32(34).fork()).join();
-    }
-    if (message.pushView !== void 0) {
-      AckResponse.encode(message.pushView, writer.uint32(42).fork()).join();
-    }
-    if (message.popView !== void 0) {
-      AckResponse.encode(message.popView, writer.uint32(50).fork()).join();
-    }
-    if (message.clearSearch !== void 0) {
-      AckResponse.encode(message.clearSearch, writer.uint32(58).fork()).join();
-    }
-    if (message.closeMainWindow !== void 0) {
-      AckResponse.encode(message.closeMainWindow, writer.uint32(66).fork()).join();
-    }
-    if (message.showHud !== void 0) {
-      AckResponse.encode(message.showHud, writer.uint32(74).fork()).join();
-    }
-    if (message.setSearchText !== void 0) {
-      AckResponse.encode(message.setSearchText, writer.uint32(82).fork()).join();
-    }
-    if (message.confirmAlert !== void 0) {
-      AckResponse.encode(message.confirmAlert, writer.uint32(90).fork()).join();
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseResponse5();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.render = AckResponse.decode(reader, reader.uint32());
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-          message.showToast = AckResponse.decode(reader, reader.uint32());
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-          message.hideToast = AckResponse.decode(reader, reader.uint32());
-          continue;
-        }
-        case 4: {
-          if (tag !== 34) {
-            break;
-          }
-          message.updateToast = AckResponse.decode(reader, reader.uint32());
-          continue;
-        }
-        case 5: {
-          if (tag !== 42) {
-            break;
-          }
-          message.pushView = AckResponse.decode(reader, reader.uint32());
-          continue;
-        }
-        case 6: {
-          if (tag !== 50) {
-            break;
-          }
-          message.popView = AckResponse.decode(reader, reader.uint32());
-          continue;
-        }
-        case 7: {
-          if (tag !== 58) {
-            break;
-          }
-          message.clearSearch = AckResponse.decode(reader, reader.uint32());
-          continue;
-        }
-        case 8: {
-          if (tag !== 66) {
-            break;
-          }
-          message.closeMainWindow = AckResponse.decode(reader, reader.uint32());
-          continue;
-        }
-        case 9: {
-          if (tag !== 74) {
-            break;
-          }
-          message.showHud = AckResponse.decode(reader, reader.uint32());
-          continue;
-        }
-        case 10: {
-          if (tag !== 82) {
-            break;
-          }
-          message.setSearchText = AckResponse.decode(reader, reader.uint32());
-          continue;
-        }
-        case 11: {
-          if (tag !== 90) {
-            break;
-          }
-          message.confirmAlert = AckResponse.decode(reader, reader.uint32());
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return {
-      render: isSet7(object.render) ? AckResponse.fromJSON(object.render) : void 0,
-      showToast: isSet7(object.showToast) ? AckResponse.fromJSON(object.showToast) : void 0,
-      hideToast: isSet7(object.hideToast) ? AckResponse.fromJSON(object.hideToast) : void 0,
-      updateToast: isSet7(object.updateToast) ? AckResponse.fromJSON(object.updateToast) : void 0,
-      pushView: isSet7(object.pushView) ? AckResponse.fromJSON(object.pushView) : void 0,
-      popView: isSet7(object.popView) ? AckResponse.fromJSON(object.popView) : void 0,
-      clearSearch: isSet7(object.clearSearch) ? AckResponse.fromJSON(object.clearSearch) : void 0,
-      closeMainWindow: isSet7(object.closeMainWindow) ? AckResponse.fromJSON(object.closeMainWindow) : void 0,
-      showHud: isSet7(object.showHud) ? AckResponse.fromJSON(object.showHud) : void 0,
-      setSearchText: isSet7(object.setSearchText) ? AckResponse.fromJSON(object.setSearchText) : void 0,
-      confirmAlert: isSet7(object.confirmAlert) ? AckResponse.fromJSON(object.confirmAlert) : void 0
-    };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.render !== void 0) {
-      obj.render = AckResponse.toJSON(message.render);
-    }
-    if (message.showToast !== void 0) {
-      obj.showToast = AckResponse.toJSON(message.showToast);
-    }
-    if (message.hideToast !== void 0) {
-      obj.hideToast = AckResponse.toJSON(message.hideToast);
-    }
-    if (message.updateToast !== void 0) {
-      obj.updateToast = AckResponse.toJSON(message.updateToast);
-    }
-    if (message.pushView !== void 0) {
-      obj.pushView = AckResponse.toJSON(message.pushView);
-    }
-    if (message.popView !== void 0) {
-      obj.popView = AckResponse.toJSON(message.popView);
-    }
-    if (message.clearSearch !== void 0) {
-      obj.clearSearch = AckResponse.toJSON(message.clearSearch);
-    }
-    if (message.closeMainWindow !== void 0) {
-      obj.closeMainWindow = AckResponse.toJSON(message.closeMainWindow);
-    }
-    if (message.showHud !== void 0) {
-      obj.showHud = AckResponse.toJSON(message.showHud);
-    }
-    if (message.setSearchText !== void 0) {
-      obj.setSearchText = AckResponse.toJSON(message.setSearchText);
-    }
-    if (message.confirmAlert !== void 0) {
-      obj.confirmAlert = AckResponse.toJSON(message.confirmAlert);
-    }
-    return obj;
-  },
-  create(base) {
-    return Response5.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseResponse5();
-    message.render = object.render !== void 0 && object.render !== null ? AckResponse.fromPartial(object.render) : void 0;
-    message.showToast = object.showToast !== void 0 && object.showToast !== null ? AckResponse.fromPartial(object.showToast) : void 0;
-    message.hideToast = object.hideToast !== void 0 && object.hideToast !== null ? AckResponse.fromPartial(object.hideToast) : void 0;
-    message.updateToast = object.updateToast !== void 0 && object.updateToast !== null ? AckResponse.fromPartial(object.updateToast) : void 0;
-    message.pushView = object.pushView !== void 0 && object.pushView !== null ? AckResponse.fromPartial(object.pushView) : void 0;
-    message.popView = object.popView !== void 0 && object.popView !== null ? AckResponse.fromPartial(object.popView) : void 0;
-    message.clearSearch = object.clearSearch !== void 0 && object.clearSearch !== null ? AckResponse.fromPartial(object.clearSearch) : void 0;
-    message.closeMainWindow = object.closeMainWindow !== void 0 && object.closeMainWindow !== null ? AckResponse.fromPartial(object.closeMainWindow) : void 0;
-    message.showHud = object.showHud !== void 0 && object.showHud !== null ? AckResponse.fromPartial(object.showHud) : void 0;
-    message.setSearchText = object.setSearchText !== void 0 && object.setSearchText !== null ? AckResponse.fromPartial(object.setSearchText) : void 0;
-    message.confirmAlert = object.confirmAlert !== void 0 && object.confirmAlert !== null ? AckResponse.fromPartial(object.confirmAlert) : void 0;
-    return message;
-  }
-};
 function isSet7(value) {
   return value !== null && value !== void 0;
 }
@@ -28586,19 +28877,19 @@ function createBaseRequestData() {
 var RequestData = {
   encode(message, writer = new BinaryWriter()) {
     if (message.ui !== void 0) {
-      Request5.encode(message.ui, writer.uint32(10).fork()).join();
+      Request.encode(message.ui, writer.uint32(10).fork()).join();
     }
     if (message.app !== void 0) {
-      Request.encode(message.app, writer.uint32(18).fork()).join();
+      Request2.encode(message.app, writer.uint32(18).fork()).join();
     }
     if (message.clipboard !== void 0) {
-      Request2.encode(message.clipboard, writer.uint32(26).fork()).join();
+      Request3.encode(message.clipboard, writer.uint32(26).fork()).join();
     }
     if (message.storage !== void 0) {
-      Request4.encode(message.storage, writer.uint32(34).fork()).join();
+      Request5.encode(message.storage, writer.uint32(34).fork()).join();
     }
     if (message.oauth !== void 0) {
-      Request3.encode(message.oauth, writer.uint32(42).fork()).join();
+      Request4.encode(message.oauth, writer.uint32(42).fork()).join();
     }
     return writer;
   },
@@ -28613,35 +28904,35 @@ var RequestData = {
           if (tag !== 10) {
             break;
           }
-          message.ui = Request5.decode(reader, reader.uint32());
+          message.ui = Request.decode(reader, reader.uint32());
           continue;
         }
         case 2: {
           if (tag !== 18) {
             break;
           }
-          message.app = Request.decode(reader, reader.uint32());
+          message.app = Request2.decode(reader, reader.uint32());
           continue;
         }
         case 3: {
           if (tag !== 26) {
             break;
           }
-          message.clipboard = Request2.decode(reader, reader.uint32());
+          message.clipboard = Request3.decode(reader, reader.uint32());
           continue;
         }
         case 4: {
           if (tag !== 34) {
             break;
           }
-          message.storage = Request4.decode(reader, reader.uint32());
+          message.storage = Request5.decode(reader, reader.uint32());
           continue;
         }
         case 5: {
           if (tag !== 42) {
             break;
           }
-          message.oauth = Request3.decode(reader, reader.uint32());
+          message.oauth = Request4.decode(reader, reader.uint32());
           continue;
         }
       }
@@ -28654,29 +28945,29 @@ var RequestData = {
   },
   fromJSON(object) {
     return {
-      ui: isSet8(object.ui) ? Request5.fromJSON(object.ui) : void 0,
-      app: isSet8(object.app) ? Request.fromJSON(object.app) : void 0,
-      clipboard: isSet8(object.clipboard) ? Request2.fromJSON(object.clipboard) : void 0,
-      storage: isSet8(object.storage) ? Request4.fromJSON(object.storage) : void 0,
-      oauth: isSet8(object.oauth) ? Request3.fromJSON(object.oauth) : void 0
+      ui: isSet8(object.ui) ? Request.fromJSON(object.ui) : void 0,
+      app: isSet8(object.app) ? Request2.fromJSON(object.app) : void 0,
+      clipboard: isSet8(object.clipboard) ? Request3.fromJSON(object.clipboard) : void 0,
+      storage: isSet8(object.storage) ? Request5.fromJSON(object.storage) : void 0,
+      oauth: isSet8(object.oauth) ? Request4.fromJSON(object.oauth) : void 0
     };
   },
   toJSON(message) {
     const obj = {};
     if (message.ui !== void 0) {
-      obj.ui = Request5.toJSON(message.ui);
+      obj.ui = Request.toJSON(message.ui);
     }
     if (message.app !== void 0) {
-      obj.app = Request.toJSON(message.app);
+      obj.app = Request2.toJSON(message.app);
     }
     if (message.clipboard !== void 0) {
-      obj.clipboard = Request2.toJSON(message.clipboard);
+      obj.clipboard = Request3.toJSON(message.clipboard);
     }
     if (message.storage !== void 0) {
-      obj.storage = Request4.toJSON(message.storage);
+      obj.storage = Request5.toJSON(message.storage);
     }
     if (message.oauth !== void 0) {
-      obj.oauth = Request3.toJSON(message.oauth);
+      obj.oauth = Request4.toJSON(message.oauth);
     }
     return obj;
   },
@@ -28685,11 +28976,11 @@ var RequestData = {
   },
   fromPartial(object) {
     const message = createBaseRequestData();
-    message.ui = object.ui !== void 0 && object.ui !== null ? Request5.fromPartial(object.ui) : void 0;
-    message.app = object.app !== void 0 && object.app !== null ? Request.fromPartial(object.app) : void 0;
-    message.clipboard = object.clipboard !== void 0 && object.clipboard !== null ? Request2.fromPartial(object.clipboard) : void 0;
-    message.storage = object.storage !== void 0 && object.storage !== null ? Request4.fromPartial(object.storage) : void 0;
-    message.oauth = object.oauth !== void 0 && object.oauth !== null ? Request3.fromPartial(object.oauth) : void 0;
+    message.ui = object.ui !== void 0 && object.ui !== null ? Request.fromPartial(object.ui) : void 0;
+    message.app = object.app !== void 0 && object.app !== null ? Request2.fromPartial(object.app) : void 0;
+    message.clipboard = object.clipboard !== void 0 && object.clipboard !== null ? Request3.fromPartial(object.clipboard) : void 0;
+    message.storage = object.storage !== void 0 && object.storage !== null ? Request5.fromPartial(object.storage) : void 0;
+    message.oauth = object.oauth !== void 0 && object.oauth !== null ? Request4.fromPartial(object.oauth) : void 0;
     return message;
   }
 };
@@ -28782,19 +29073,19 @@ function createBaseResponseData() {
 var ResponseData = {
   encode(message, writer = new BinaryWriter()) {
     if (message.ui !== void 0) {
-      Response5.encode(message.ui, writer.uint32(10).fork()).join();
+      Response.encode(message.ui, writer.uint32(10).fork()).join();
     }
     if (message.app !== void 0) {
-      Response.encode(message.app, writer.uint32(18).fork()).join();
+      Response2.encode(message.app, writer.uint32(18).fork()).join();
     }
     if (message.clipboard !== void 0) {
-      Response2.encode(message.clipboard, writer.uint32(26).fork()).join();
+      Response3.encode(message.clipboard, writer.uint32(26).fork()).join();
     }
     if (message.storage !== void 0) {
-      Response4.encode(message.storage, writer.uint32(34).fork()).join();
+      Response5.encode(message.storage, writer.uint32(34).fork()).join();
     }
     if (message.oauth !== void 0) {
-      Response3.encode(message.oauth, writer.uint32(42).fork()).join();
+      Response4.encode(message.oauth, writer.uint32(42).fork()).join();
     }
     return writer;
   },
@@ -28809,35 +29100,35 @@ var ResponseData = {
           if (tag !== 10) {
             break;
           }
-          message.ui = Response5.decode(reader, reader.uint32());
+          message.ui = Response.decode(reader, reader.uint32());
           continue;
         }
         case 2: {
           if (tag !== 18) {
             break;
           }
-          message.app = Response.decode(reader, reader.uint32());
+          message.app = Response2.decode(reader, reader.uint32());
           continue;
         }
         case 3: {
           if (tag !== 26) {
             break;
           }
-          message.clipboard = Response2.decode(reader, reader.uint32());
+          message.clipboard = Response3.decode(reader, reader.uint32());
           continue;
         }
         case 4: {
           if (tag !== 34) {
             break;
           }
-          message.storage = Response4.decode(reader, reader.uint32());
+          message.storage = Response5.decode(reader, reader.uint32());
           continue;
         }
         case 5: {
           if (tag !== 42) {
             break;
           }
-          message.oauth = Response3.decode(reader, reader.uint32());
+          message.oauth = Response4.decode(reader, reader.uint32());
           continue;
         }
       }
@@ -28850,29 +29141,29 @@ var ResponseData = {
   },
   fromJSON(object) {
     return {
-      ui: isSet8(object.ui) ? Response5.fromJSON(object.ui) : void 0,
-      app: isSet8(object.app) ? Response.fromJSON(object.app) : void 0,
-      clipboard: isSet8(object.clipboard) ? Response2.fromJSON(object.clipboard) : void 0,
-      storage: isSet8(object.storage) ? Response4.fromJSON(object.storage) : void 0,
-      oauth: isSet8(object.oauth) ? Response3.fromJSON(object.oauth) : void 0
+      ui: isSet8(object.ui) ? Response.fromJSON(object.ui) : void 0,
+      app: isSet8(object.app) ? Response2.fromJSON(object.app) : void 0,
+      clipboard: isSet8(object.clipboard) ? Response3.fromJSON(object.clipboard) : void 0,
+      storage: isSet8(object.storage) ? Response5.fromJSON(object.storage) : void 0,
+      oauth: isSet8(object.oauth) ? Response4.fromJSON(object.oauth) : void 0
     };
   },
   toJSON(message) {
     const obj = {};
     if (message.ui !== void 0) {
-      obj.ui = Response5.toJSON(message.ui);
+      obj.ui = Response.toJSON(message.ui);
     }
     if (message.app !== void 0) {
-      obj.app = Response.toJSON(message.app);
+      obj.app = Response2.toJSON(message.app);
     }
     if (message.clipboard !== void 0) {
-      obj.clipboard = Response2.toJSON(message.clipboard);
+      obj.clipboard = Response3.toJSON(message.clipboard);
     }
     if (message.storage !== void 0) {
-      obj.storage = Response4.toJSON(message.storage);
+      obj.storage = Response5.toJSON(message.storage);
     }
     if (message.oauth !== void 0) {
-      obj.oauth = Response3.toJSON(message.oauth);
+      obj.oauth = Response4.toJSON(message.oauth);
     }
     return obj;
   },
@@ -28881,11 +29172,11 @@ var ResponseData = {
   },
   fromPartial(object) {
     const message = createBaseResponseData();
-    message.ui = object.ui !== void 0 && object.ui !== null ? Response5.fromPartial(object.ui) : void 0;
-    message.app = object.app !== void 0 && object.app !== null ? Response.fromPartial(object.app) : void 0;
-    message.clipboard = object.clipboard !== void 0 && object.clipboard !== null ? Response2.fromPartial(object.clipboard) : void 0;
-    message.storage = object.storage !== void 0 && object.storage !== null ? Response4.fromPartial(object.storage) : void 0;
-    message.oauth = object.oauth !== void 0 && object.oauth !== null ? Response3.fromPartial(object.oauth) : void 0;
+    message.ui = object.ui !== void 0 && object.ui !== null ? Response.fromPartial(object.ui) : void 0;
+    message.app = object.app !== void 0 && object.app !== null ? Response2.fromPartial(object.app) : void 0;
+    message.clipboard = object.clipboard !== void 0 && object.clipboard !== null ? Response3.fromPartial(object.clipboard) : void 0;
+    message.storage = object.storage !== void 0 && object.storage !== null ? Response5.fromPartial(object.storage) : void 0;
+    message.oauth = object.oauth !== void 0 && object.oauth !== null ? Response4.fromPartial(object.oauth) : void 0;
     return message;
   }
 };
@@ -30759,7 +31050,7 @@ var PKCEClient = class {
         id: this.providerId,
         description: this.description ?? "",
         name: this.providerName,
-        icon: ""
+        icon: this.providerIcon ? serializeProtoImage(this.providerIcon) : void 0
       },
       url: isAuthorizationOptions(options) ? options.url : options.toURL()
     });
@@ -32703,330 +32994,6 @@ function isSet12(value) {
   return value !== null && value !== void 0;
 }
 
-// src/proto/oauth.ts
-function createBasePKCEClientOptions2() {
-  return { id: void 0, name: "", icon: "", description: "" };
-}
-var PKCEClientOptions2 = {
-  encode(message, writer = new BinaryWriter2()) {
-    if (message.id !== void 0) {
-      writer.uint32(10).string(message.id);
-    }
-    if (message.name !== "") {
-      writer.uint32(18).string(message.name);
-    }
-    if (message.icon !== "") {
-      writer.uint32(26).string(message.icon);
-    }
-    if (message.description !== "") {
-      writer.uint32(34).string(message.description);
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBasePKCEClientOptions2();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.id = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-          message.name = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-          message.icon = reader.string();
-          continue;
-        }
-        case 4: {
-          if (tag !== 34) {
-            break;
-          }
-          message.description = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return {
-      id: isSet13(object.id) ? globalThis.String(object.id) : void 0,
-      name: isSet13(object.name) ? globalThis.String(object.name) : "",
-      icon: isSet13(object.icon) ? globalThis.String(object.icon) : "",
-      description: isSet13(object.description) ? globalThis.String(object.description) : ""
-    };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.id !== void 0) {
-      obj.id = message.id;
-    }
-    if (message.name !== "") {
-      obj.name = message.name;
-    }
-    if (message.icon !== "") {
-      obj.icon = message.icon;
-    }
-    if (message.description !== "") {
-      obj.description = message.description;
-    }
-    return obj;
-  },
-  create(base) {
-    return PKCEClientOptions2.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBasePKCEClientOptions2();
-    message.id = object.id ?? void 0;
-    message.name = object.name ?? "";
-    message.icon = object.icon ?? "";
-    message.description = object.description ?? "";
-    return message;
-  }
-};
-function createBaseAuthorizeRequest2() {
-  return { client: void 0, url: "" };
-}
-var AuthorizeRequest2 = {
-  encode(message, writer = new BinaryWriter2()) {
-    if (message.client !== void 0) {
-      PKCEClientOptions2.encode(message.client, writer.uint32(10).fork()).join();
-    }
-    if (message.url !== "") {
-      writer.uint32(18).string(message.url);
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseAuthorizeRequest2();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.client = PKCEClientOptions2.decode(reader, reader.uint32());
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-          message.url = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return {
-      client: isSet13(object.client) ? PKCEClientOptions2.fromJSON(object.client) : void 0,
-      url: isSet13(object.url) ? globalThis.String(object.url) : ""
-    };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.client !== void 0) {
-      obj.client = PKCEClientOptions2.toJSON(message.client);
-    }
-    if (message.url !== "") {
-      obj.url = message.url;
-    }
-    return obj;
-  },
-  create(base) {
-    return AuthorizeRequest2.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseAuthorizeRequest2();
-    message.client = object.client !== void 0 && object.client !== null ? PKCEClientOptions2.fromPartial(object.client) : void 0;
-    message.url = object.url ?? "";
-    return message;
-  }
-};
-function createBaseAuthorizeResponse2() {
-  return { code: "" };
-}
-var AuthorizeResponse2 = {
-  encode(message, writer = new BinaryWriter2()) {
-    if (message.code !== "") {
-      writer.uint32(10).string(message.code);
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseAuthorizeResponse2();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.code = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return { code: isSet13(object.code) ? globalThis.String(object.code) : "" };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.code !== "") {
-      obj.code = message.code;
-    }
-    return obj;
-  },
-  create(base) {
-    return AuthorizeResponse2.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseAuthorizeResponse2();
-    message.code = object.code ?? "";
-    return message;
-  }
-};
-function createBaseRequest9() {
-  return { authorize: void 0 };
-}
-var Request9 = {
-  encode(message, writer = new BinaryWriter2()) {
-    if (message.authorize !== void 0) {
-      AuthorizeRequest2.encode(message.authorize, writer.uint32(10).fork()).join();
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseRequest9();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.authorize = AuthorizeRequest2.decode(reader, reader.uint32());
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return { authorize: isSet13(object.authorize) ? AuthorizeRequest2.fromJSON(object.authorize) : void 0 };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.authorize !== void 0) {
-      obj.authorize = AuthorizeRequest2.toJSON(message.authorize);
-    }
-    return obj;
-  },
-  create(base) {
-    return Request9.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseRequest9();
-    message.authorize = object.authorize !== void 0 && object.authorize !== null ? AuthorizeRequest2.fromPartial(object.authorize) : void 0;
-    return message;
-  }
-};
-function createBaseResponse9() {
-  return { authorize: void 0 };
-}
-var Response9 = {
-  encode(message, writer = new BinaryWriter2()) {
-    if (message.authorize !== void 0) {
-      AuthorizeResponse2.encode(message.authorize, writer.uint32(10).fork()).join();
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseResponse9();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.authorize = AuthorizeResponse2.decode(reader, reader.uint32());
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return { authorize: isSet13(object.authorize) ? AuthorizeResponse2.fromJSON(object.authorize) : void 0 };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.authorize !== void 0) {
-      obj.authorize = AuthorizeResponse2.toJSON(message.authorize);
-    }
-    return obj;
-  },
-  create(base) {
-    return Response9.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseResponse9();
-    message.authorize = object.authorize !== void 0 && object.authorize !== null ? AuthorizeResponse2.fromPartial(object.authorize) : void 0;
-    return message;
-  }
-};
-function isSet13(value) {
-  return value !== null && value !== void 0;
-}
-
 // src/proto/google/protobuf/struct.ts
 function nullValueFromJSON2(object) {
   switch (object) {
@@ -33185,8 +33152,8 @@ var Struct_FieldsEntry2 = {
   },
   fromJSON(object) {
     return {
-      key: isSet14(object.key) ? globalThis.String(object.key) : "",
-      value: isSet14(object?.value) ? object.value : void 0
+      key: isSet13(object.key) ? globalThis.String(object.key) : "",
+      value: isSet13(object?.value) ? object.value : void 0
     };
   },
   toJSON(message) {
@@ -33300,10 +33267,10 @@ var Value2 = {
   },
   fromJSON(object) {
     return {
-      nullValue: isSet14(object.nullValue) ? nullValueFromJSON2(object.nullValue) : void 0,
-      numberValue: isSet14(object.numberValue) ? globalThis.Number(object.numberValue) : void 0,
-      stringValue: isSet14(object.stringValue) ? globalThis.String(object.stringValue) : void 0,
-      boolValue: isSet14(object.boolValue) ? globalThis.Boolean(object.boolValue) : void 0,
+      nullValue: isSet13(object.nullValue) ? nullValueFromJSON2(object.nullValue) : void 0,
+      numberValue: isSet13(object.numberValue) ? globalThis.Number(object.numberValue) : void 0,
+      stringValue: isSet13(object.stringValue) ? globalThis.String(object.stringValue) : void 0,
+      boolValue: isSet13(object.boolValue) ? globalThis.Boolean(object.boolValue) : void 0,
       structValue: isObject3(object.structValue) ? object.structValue : void 0,
       listValue: globalThis.Array.isArray(object.listValue) ? [...object.listValue] : void 0
     };
@@ -33445,7 +33412,1822 @@ var ListValue2 = {
 function isObject3(value) {
   return typeof value === "object" && value !== null;
 }
+function isSet13(value) {
+  return value !== null && value !== void 0;
+}
+
+// src/proto/ui.ts
+function toastStyleFromJSON2(object) {
+  switch (object) {
+    case 0:
+    case "Success":
+      return 0 /* Success */;
+    case 1:
+    case "Info":
+      return 1 /* Info */;
+    case 2:
+    case "Warning":
+      return 2 /* Warning */;
+    case 3:
+    case "Error":
+      return 3 /* Error */;
+    case 4:
+    case "Dynamic":
+      return 4 /* Dynamic */;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return -1 /* UNRECOGNIZED */;
+  }
+}
+function toastStyleToJSON2(object) {
+  switch (object) {
+    case 0 /* Success */:
+      return "Success";
+    case 1 /* Info */:
+      return "Info";
+    case 2 /* Warning */:
+      return "Warning";
+    case 3 /* Error */:
+      return "Error";
+    case 4 /* Dynamic */:
+      return "Dynamic";
+    case -1 /* UNRECOGNIZED */:
+    default:
+      return "UNRECOGNIZED";
+  }
+}
+function confirmAlertActionStyleFromJSON2(object) {
+  switch (object) {
+    case 0:
+    case "Default":
+      return 0 /* Default */;
+    case 1:
+    case "Destructive":
+      return 1 /* Destructive */;
+    case 2:
+    case "Cancel":
+      return 2 /* Cancel */;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return -1 /* UNRECOGNIZED */;
+  }
+}
+function confirmAlertActionStyleToJSON2(object) {
+  switch (object) {
+    case 0 /* Default */:
+      return "Default";
+    case 1 /* Destructive */:
+      return "Destructive";
+    case 2 /* Cancel */:
+      return "Cancel";
+    case -1 /* UNRECOGNIZED */:
+    default:
+      return "UNRECOGNIZED";
+  }
+}
+function imageMaskFromJSON2(object) {
+  switch (object) {
+    case 0:
+    case "None":
+      return 0 /* None */;
+    case 1:
+    case "Circle":
+      return 1 /* Circle */;
+    case 2:
+    case "RoundedRectangle":
+      return 2 /* RoundedRectangle */;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return -1 /* UNRECOGNIZED */;
+  }
+}
+function imageMaskToJSON2(object) {
+  switch (object) {
+    case 0 /* None */:
+      return "None";
+    case 1 /* Circle */:
+      return "Circle";
+    case 2 /* RoundedRectangle */:
+      return "RoundedRectangle";
+    case -1 /* UNRECOGNIZED */:
+    default:
+      return "UNRECOGNIZED";
+  }
+}
+function createBaseShowToastRequest2() {
+  return { id: "", title: "", style: 0 };
+}
+var ShowToastRequest2 = {
+  encode(message, writer = new BinaryWriter2()) {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.title !== "") {
+      writer.uint32(18).string(message.title);
+    }
+    if (message.style !== 0) {
+      writer.uint32(24).int32(message.style);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseShowToastRequest2();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+          message.title = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+          message.style = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return {
+      id: isSet14(object.id) ? globalThis.String(object.id) : "",
+      title: isSet14(object.title) ? globalThis.String(object.title) : "",
+      style: isSet14(object.style) ? toastStyleFromJSON2(object.style) : 0
+    };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.title !== "") {
+      obj.title = message.title;
+    }
+    if (message.style !== 0) {
+      obj.style = toastStyleToJSON2(message.style);
+    }
+    return obj;
+  },
+  create(base) {
+    return ShowToastRequest2.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseShowToastRequest2();
+    message.id = object.id ?? "";
+    message.title = object.title ?? "";
+    message.style = object.style ?? 0;
+    return message;
+  }
+};
+function createBaseHideToastRequest2() {
+  return { id: "" };
+}
+var HideToastRequest2 = {
+  encode(message, writer = new BinaryWriter2()) {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseHideToastRequest2();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.id = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return { id: isSet14(object.id) ? globalThis.String(object.id) : "" };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    return obj;
+  },
+  create(base) {
+    return HideToastRequest2.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseHideToastRequest2();
+    message.id = object.id ?? "";
+    return message;
+  }
+};
+function createBaseUpdateToastRequest2() {
+  return { id: "", title: "" };
+}
+var UpdateToastRequest2 = {
+  encode(message, writer = new BinaryWriter2()) {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.title !== "") {
+      writer.uint32(18).string(message.title);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseUpdateToastRequest2();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+          message.title = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return {
+      id: isSet14(object.id) ? globalThis.String(object.id) : "",
+      title: isSet14(object.title) ? globalThis.String(object.title) : ""
+    };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.id !== "") {
+      obj.id = message.id;
+    }
+    if (message.title !== "") {
+      obj.title = message.title;
+    }
+    return obj;
+  },
+  create(base) {
+    return UpdateToastRequest2.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseUpdateToastRequest2();
+    message.id = object.id ?? "";
+    message.title = object.title ?? "";
+    return message;
+  }
+};
+function createBasePushViewRequest2() {
+  return {};
+}
+var PushViewRequest2 = {
+  encode(_, writer = new BinaryWriter2()) {
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBasePushViewRequest2();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(_) {
+    return {};
+  },
+  toJSON(_) {
+    const obj = {};
+    return obj;
+  },
+  create(base) {
+    return PushViewRequest2.fromPartial(base ?? {});
+  },
+  fromPartial(_) {
+    const message = createBasePushViewRequest2();
+    return message;
+  }
+};
+function createBasePopViewRequest2() {
+  return {};
+}
+var PopViewRequest2 = {
+  encode(_, writer = new BinaryWriter2()) {
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBasePopViewRequest2();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(_) {
+    return {};
+  },
+  toJSON(_) {
+    const obj = {};
+    return obj;
+  },
+  create(base) {
+    return PopViewRequest2.fromPartial(base ?? {});
+  },
+  fromPartial(_) {
+    const message = createBasePopViewRequest2();
+    return message;
+  }
+};
+function createBaseCloseMainWindowRequest2() {
+  return {};
+}
+var CloseMainWindowRequest2 = {
+  encode(_, writer = new BinaryWriter2()) {
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseCloseMainWindowRequest2();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(_) {
+    return {};
+  },
+  toJSON(_) {
+    const obj = {};
+    return obj;
+  },
+  create(base) {
+    return CloseMainWindowRequest2.fromPartial(base ?? {});
+  },
+  fromPartial(_) {
+    const message = createBaseCloseMainWindowRequest2();
+    return message;
+  }
+};
+function createBaseClearSearchBarRequest2() {
+  return {};
+}
+var ClearSearchBarRequest2 = {
+  encode(_, writer = new BinaryWriter2()) {
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseClearSearchBarRequest2();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(_) {
+    return {};
+  },
+  toJSON(_) {
+    const obj = {};
+    return obj;
+  },
+  create(base) {
+    return ClearSearchBarRequest2.fromPartial(base ?? {});
+  },
+  fromPartial(_) {
+    const message = createBaseClearSearchBarRequest2();
+    return message;
+  }
+};
+function createBaseSetSearchTextRequest2() {
+  return { text: "" };
+}
+var SetSearchTextRequest2 = {
+  encode(message, writer = new BinaryWriter2()) {
+    if (message.text !== "") {
+      writer.uint32(10).string(message.text);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseSetSearchTextRequest2();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.text = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return { text: isSet14(object.text) ? globalThis.String(object.text) : "" };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.text !== "") {
+      obj.text = message.text;
+    }
+    return obj;
+  },
+  create(base) {
+    return SetSearchTextRequest2.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseSetSearchTextRequest2();
+    message.text = object.text ?? "";
+    return message;
+  }
+};
+function createBaseShowHudRequest2() {
+  return { text: "" };
+}
+var ShowHudRequest2 = {
+  encode(message, writer = new BinaryWriter2()) {
+    if (message.text !== "") {
+      writer.uint32(10).string(message.text);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseShowHudRequest2();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.text = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return { text: isSet14(object.text) ? globalThis.String(object.text) : "" };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.text !== "") {
+      obj.text = message.text;
+    }
+    return obj;
+  },
+  create(base) {
+    return ShowHudRequest2.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseShowHudRequest2();
+    message.text = object.text ?? "";
+    return message;
+  }
+};
+function createBaseRenderRequest2() {
+  return { json: "" };
+}
+var RenderRequest2 = {
+  encode(message, writer = new BinaryWriter2()) {
+    if (message.json !== "") {
+      writer.uint32(10).string(message.json);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseRenderRequest2();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.json = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return { json: isSet14(object.json) ? globalThis.String(object.json) : "" };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.json !== "") {
+      obj.json = message.json;
+    }
+    return obj;
+  },
+  create(base) {
+    return RenderRequest2.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseRenderRequest2();
+    message.json = object.json ?? "";
+    return message;
+  }
+};
+function createBaseConfirmAlertRequest2() {
+  return {
+    title: "",
+    description: "",
+    icon: void 0,
+    dismissAction: void 0,
+    primaryAction: void 0,
+    rememberUserChoice: false,
+    handle: ""
+  };
+}
+var ConfirmAlertRequest2 = {
+  encode(message, writer = new BinaryWriter2()) {
+    if (message.title !== "") {
+      writer.uint32(10).string(message.title);
+    }
+    if (message.description !== "") {
+      writer.uint32(18).string(message.description);
+    }
+    if (message.icon !== void 0) {
+      writer.uint32(26).string(message.icon);
+    }
+    if (message.dismissAction !== void 0) {
+      ConfirmAlertAction2.encode(message.dismissAction, writer.uint32(34).fork()).join();
+    }
+    if (message.primaryAction !== void 0) {
+      ConfirmAlertAction2.encode(message.primaryAction, writer.uint32(42).fork()).join();
+    }
+    if (message.rememberUserChoice !== false) {
+      writer.uint32(48).bool(message.rememberUserChoice);
+    }
+    if (message.handle !== "") {
+      writer.uint32(58).string(message.handle);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseConfirmAlertRequest2();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.title = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+          message.description = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+          message.icon = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+          message.dismissAction = ConfirmAlertAction2.decode(reader, reader.uint32());
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+          message.primaryAction = ConfirmAlertAction2.decode(reader, reader.uint32());
+          continue;
+        }
+        case 6: {
+          if (tag !== 48) {
+            break;
+          }
+          message.rememberUserChoice = reader.bool();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+          message.handle = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return {
+      title: isSet14(object.title) ? globalThis.String(object.title) : "",
+      description: isSet14(object.description) ? globalThis.String(object.description) : "",
+      icon: isSet14(object.icon) ? globalThis.String(object.icon) : void 0,
+      dismissAction: isSet14(object.dismissAction) ? ConfirmAlertAction2.fromJSON(object.dismissAction) : void 0,
+      primaryAction: isSet14(object.primaryAction) ? ConfirmAlertAction2.fromJSON(object.primaryAction) : void 0,
+      rememberUserChoice: isSet14(object.rememberUserChoice) ? globalThis.Boolean(object.rememberUserChoice) : false,
+      handle: isSet14(object.handle) ? globalThis.String(object.handle) : ""
+    };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.title !== "") {
+      obj.title = message.title;
+    }
+    if (message.description !== "") {
+      obj.description = message.description;
+    }
+    if (message.icon !== void 0) {
+      obj.icon = message.icon;
+    }
+    if (message.dismissAction !== void 0) {
+      obj.dismissAction = ConfirmAlertAction2.toJSON(message.dismissAction);
+    }
+    if (message.primaryAction !== void 0) {
+      obj.primaryAction = ConfirmAlertAction2.toJSON(message.primaryAction);
+    }
+    if (message.rememberUserChoice !== false) {
+      obj.rememberUserChoice = message.rememberUserChoice;
+    }
+    if (message.handle !== "") {
+      obj.handle = message.handle;
+    }
+    return obj;
+  },
+  create(base) {
+    return ConfirmAlertRequest2.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseConfirmAlertRequest2();
+    message.title = object.title ?? "";
+    message.description = object.description ?? "";
+    message.icon = object.icon ?? void 0;
+    message.dismissAction = object.dismissAction !== void 0 && object.dismissAction !== null ? ConfirmAlertAction2.fromPartial(object.dismissAction) : void 0;
+    message.primaryAction = object.primaryAction !== void 0 && object.primaryAction !== null ? ConfirmAlertAction2.fromPartial(object.primaryAction) : void 0;
+    message.rememberUserChoice = object.rememberUserChoice ?? false;
+    message.handle = object.handle ?? "";
+    return message;
+  }
+};
+function createBaseConfirmAlertAction2() {
+  return { title: "", style: 0 };
+}
+var ConfirmAlertAction2 = {
+  encode(message, writer = new BinaryWriter2()) {
+    if (message.title !== "") {
+      writer.uint32(10).string(message.title);
+    }
+    if (message.style !== 0) {
+      writer.uint32(16).int32(message.style);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseConfirmAlertAction2();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.title = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+          message.style = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return {
+      title: isSet14(object.title) ? globalThis.String(object.title) : "",
+      style: isSet14(object.style) ? confirmAlertActionStyleFromJSON2(object.style) : 0
+    };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.title !== "") {
+      obj.title = message.title;
+    }
+    if (message.style !== 0) {
+      obj.style = confirmAlertActionStyleToJSON2(message.style);
+    }
+    return obj;
+  },
+  create(base) {
+    return ConfirmAlertAction2.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseConfirmAlertAction2();
+    message.title = object.title ?? "";
+    message.style = object.style ?? 0;
+    return message;
+  }
+};
+function createBaseRequest9() {
+  return {
+    render: void 0,
+    showToast: void 0,
+    hideToast: void 0,
+    updateToast: void 0,
+    pushView: void 0,
+    popView: void 0,
+    clearSearch: void 0,
+    closeMainWindow: void 0,
+    showHud: void 0,
+    setSearchText: void 0,
+    confirmAlert: void 0
+  };
+}
+var Request9 = {
+  encode(message, writer = new BinaryWriter2()) {
+    if (message.render !== void 0) {
+      RenderRequest2.encode(message.render, writer.uint32(10).fork()).join();
+    }
+    if (message.showToast !== void 0) {
+      ShowToastRequest2.encode(message.showToast, writer.uint32(18).fork()).join();
+    }
+    if (message.hideToast !== void 0) {
+      HideToastRequest2.encode(message.hideToast, writer.uint32(26).fork()).join();
+    }
+    if (message.updateToast !== void 0) {
+      UpdateToastRequest2.encode(message.updateToast, writer.uint32(34).fork()).join();
+    }
+    if (message.pushView !== void 0) {
+      PushViewRequest2.encode(message.pushView, writer.uint32(42).fork()).join();
+    }
+    if (message.popView !== void 0) {
+      PopViewRequest2.encode(message.popView, writer.uint32(50).fork()).join();
+    }
+    if (message.clearSearch !== void 0) {
+      ClearSearchBarRequest2.encode(message.clearSearch, writer.uint32(58).fork()).join();
+    }
+    if (message.closeMainWindow !== void 0) {
+      CloseMainWindowRequest2.encode(message.closeMainWindow, writer.uint32(66).fork()).join();
+    }
+    if (message.showHud !== void 0) {
+      ShowHudRequest2.encode(message.showHud, writer.uint32(74).fork()).join();
+    }
+    if (message.setSearchText !== void 0) {
+      SetSearchTextRequest2.encode(message.setSearchText, writer.uint32(82).fork()).join();
+    }
+    if (message.confirmAlert !== void 0) {
+      ConfirmAlertRequest2.encode(message.confirmAlert, writer.uint32(90).fork()).join();
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseRequest9();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.render = RenderRequest2.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+          message.showToast = ShowToastRequest2.decode(reader, reader.uint32());
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+          message.hideToast = HideToastRequest2.decode(reader, reader.uint32());
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+          message.updateToast = UpdateToastRequest2.decode(reader, reader.uint32());
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+          message.pushView = PushViewRequest2.decode(reader, reader.uint32());
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+          message.popView = PopViewRequest2.decode(reader, reader.uint32());
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+          message.clearSearch = ClearSearchBarRequest2.decode(reader, reader.uint32());
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+          message.closeMainWindow = CloseMainWindowRequest2.decode(reader, reader.uint32());
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+          message.showHud = ShowHudRequest2.decode(reader, reader.uint32());
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+          message.setSearchText = SetSearchTextRequest2.decode(reader, reader.uint32());
+          continue;
+        }
+        case 11: {
+          if (tag !== 90) {
+            break;
+          }
+          message.confirmAlert = ConfirmAlertRequest2.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return {
+      render: isSet14(object.render) ? RenderRequest2.fromJSON(object.render) : void 0,
+      showToast: isSet14(object.showToast) ? ShowToastRequest2.fromJSON(object.showToast) : void 0,
+      hideToast: isSet14(object.hideToast) ? HideToastRequest2.fromJSON(object.hideToast) : void 0,
+      updateToast: isSet14(object.updateToast) ? UpdateToastRequest2.fromJSON(object.updateToast) : void 0,
+      pushView: isSet14(object.pushView) ? PushViewRequest2.fromJSON(object.pushView) : void 0,
+      popView: isSet14(object.popView) ? PopViewRequest2.fromJSON(object.popView) : void 0,
+      clearSearch: isSet14(object.clearSearch) ? ClearSearchBarRequest2.fromJSON(object.clearSearch) : void 0,
+      closeMainWindow: isSet14(object.closeMainWindow) ? CloseMainWindowRequest2.fromJSON(object.closeMainWindow) : void 0,
+      showHud: isSet14(object.showHud) ? ShowHudRequest2.fromJSON(object.showHud) : void 0,
+      setSearchText: isSet14(object.setSearchText) ? SetSearchTextRequest2.fromJSON(object.setSearchText) : void 0,
+      confirmAlert: isSet14(object.confirmAlert) ? ConfirmAlertRequest2.fromJSON(object.confirmAlert) : void 0
+    };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.render !== void 0) {
+      obj.render = RenderRequest2.toJSON(message.render);
+    }
+    if (message.showToast !== void 0) {
+      obj.showToast = ShowToastRequest2.toJSON(message.showToast);
+    }
+    if (message.hideToast !== void 0) {
+      obj.hideToast = HideToastRequest2.toJSON(message.hideToast);
+    }
+    if (message.updateToast !== void 0) {
+      obj.updateToast = UpdateToastRequest2.toJSON(message.updateToast);
+    }
+    if (message.pushView !== void 0) {
+      obj.pushView = PushViewRequest2.toJSON(message.pushView);
+    }
+    if (message.popView !== void 0) {
+      obj.popView = PopViewRequest2.toJSON(message.popView);
+    }
+    if (message.clearSearch !== void 0) {
+      obj.clearSearch = ClearSearchBarRequest2.toJSON(message.clearSearch);
+    }
+    if (message.closeMainWindow !== void 0) {
+      obj.closeMainWindow = CloseMainWindowRequest2.toJSON(message.closeMainWindow);
+    }
+    if (message.showHud !== void 0) {
+      obj.showHud = ShowHudRequest2.toJSON(message.showHud);
+    }
+    if (message.setSearchText !== void 0) {
+      obj.setSearchText = SetSearchTextRequest2.toJSON(message.setSearchText);
+    }
+    if (message.confirmAlert !== void 0) {
+      obj.confirmAlert = ConfirmAlertRequest2.toJSON(message.confirmAlert);
+    }
+    return obj;
+  },
+  create(base) {
+    return Request9.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseRequest9();
+    message.render = object.render !== void 0 && object.render !== null ? RenderRequest2.fromPartial(object.render) : void 0;
+    message.showToast = object.showToast !== void 0 && object.showToast !== null ? ShowToastRequest2.fromPartial(object.showToast) : void 0;
+    message.hideToast = object.hideToast !== void 0 && object.hideToast !== null ? HideToastRequest2.fromPartial(object.hideToast) : void 0;
+    message.updateToast = object.updateToast !== void 0 && object.updateToast !== null ? UpdateToastRequest2.fromPartial(object.updateToast) : void 0;
+    message.pushView = object.pushView !== void 0 && object.pushView !== null ? PushViewRequest2.fromPartial(object.pushView) : void 0;
+    message.popView = object.popView !== void 0 && object.popView !== null ? PopViewRequest2.fromPartial(object.popView) : void 0;
+    message.clearSearch = object.clearSearch !== void 0 && object.clearSearch !== null ? ClearSearchBarRequest2.fromPartial(object.clearSearch) : void 0;
+    message.closeMainWindow = object.closeMainWindow !== void 0 && object.closeMainWindow !== null ? CloseMainWindowRequest2.fromPartial(object.closeMainWindow) : void 0;
+    message.showHud = object.showHud !== void 0 && object.showHud !== null ? ShowHudRequest2.fromPartial(object.showHud) : void 0;
+    message.setSearchText = object.setSearchText !== void 0 && object.setSearchText !== null ? SetSearchTextRequest2.fromPartial(object.setSearchText) : void 0;
+    message.confirmAlert = object.confirmAlert !== void 0 && object.confirmAlert !== null ? ConfirmAlertRequest2.fromPartial(object.confirmAlert) : void 0;
+    return message;
+  }
+};
+function createBaseResponse9() {
+  return {
+    render: void 0,
+    showToast: void 0,
+    hideToast: void 0,
+    updateToast: void 0,
+    pushView: void 0,
+    popView: void 0,
+    clearSearch: void 0,
+    closeMainWindow: void 0,
+    showHud: void 0,
+    setSearchText: void 0,
+    confirmAlert: void 0
+  };
+}
+var Response9 = {
+  encode(message, writer = new BinaryWriter2()) {
+    if (message.render !== void 0) {
+      AckResponse2.encode(message.render, writer.uint32(10).fork()).join();
+    }
+    if (message.showToast !== void 0) {
+      AckResponse2.encode(message.showToast, writer.uint32(18).fork()).join();
+    }
+    if (message.hideToast !== void 0) {
+      AckResponse2.encode(message.hideToast, writer.uint32(26).fork()).join();
+    }
+    if (message.updateToast !== void 0) {
+      AckResponse2.encode(message.updateToast, writer.uint32(34).fork()).join();
+    }
+    if (message.pushView !== void 0) {
+      AckResponse2.encode(message.pushView, writer.uint32(42).fork()).join();
+    }
+    if (message.popView !== void 0) {
+      AckResponse2.encode(message.popView, writer.uint32(50).fork()).join();
+    }
+    if (message.clearSearch !== void 0) {
+      AckResponse2.encode(message.clearSearch, writer.uint32(58).fork()).join();
+    }
+    if (message.closeMainWindow !== void 0) {
+      AckResponse2.encode(message.closeMainWindow, writer.uint32(66).fork()).join();
+    }
+    if (message.showHud !== void 0) {
+      AckResponse2.encode(message.showHud, writer.uint32(74).fork()).join();
+    }
+    if (message.setSearchText !== void 0) {
+      AckResponse2.encode(message.setSearchText, writer.uint32(82).fork()).join();
+    }
+    if (message.confirmAlert !== void 0) {
+      AckResponse2.encode(message.confirmAlert, writer.uint32(90).fork()).join();
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseResponse9();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.render = AckResponse2.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+          message.showToast = AckResponse2.decode(reader, reader.uint32());
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+          message.hideToast = AckResponse2.decode(reader, reader.uint32());
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+          message.updateToast = AckResponse2.decode(reader, reader.uint32());
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+          message.pushView = AckResponse2.decode(reader, reader.uint32());
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+          message.popView = AckResponse2.decode(reader, reader.uint32());
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+          message.clearSearch = AckResponse2.decode(reader, reader.uint32());
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+          message.closeMainWindow = AckResponse2.decode(reader, reader.uint32());
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+          message.showHud = AckResponse2.decode(reader, reader.uint32());
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+          message.setSearchText = AckResponse2.decode(reader, reader.uint32());
+          continue;
+        }
+        case 11: {
+          if (tag !== 90) {
+            break;
+          }
+          message.confirmAlert = AckResponse2.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return {
+      render: isSet14(object.render) ? AckResponse2.fromJSON(object.render) : void 0,
+      showToast: isSet14(object.showToast) ? AckResponse2.fromJSON(object.showToast) : void 0,
+      hideToast: isSet14(object.hideToast) ? AckResponse2.fromJSON(object.hideToast) : void 0,
+      updateToast: isSet14(object.updateToast) ? AckResponse2.fromJSON(object.updateToast) : void 0,
+      pushView: isSet14(object.pushView) ? AckResponse2.fromJSON(object.pushView) : void 0,
+      popView: isSet14(object.popView) ? AckResponse2.fromJSON(object.popView) : void 0,
+      clearSearch: isSet14(object.clearSearch) ? AckResponse2.fromJSON(object.clearSearch) : void 0,
+      closeMainWindow: isSet14(object.closeMainWindow) ? AckResponse2.fromJSON(object.closeMainWindow) : void 0,
+      showHud: isSet14(object.showHud) ? AckResponse2.fromJSON(object.showHud) : void 0,
+      setSearchText: isSet14(object.setSearchText) ? AckResponse2.fromJSON(object.setSearchText) : void 0,
+      confirmAlert: isSet14(object.confirmAlert) ? AckResponse2.fromJSON(object.confirmAlert) : void 0
+    };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.render !== void 0) {
+      obj.render = AckResponse2.toJSON(message.render);
+    }
+    if (message.showToast !== void 0) {
+      obj.showToast = AckResponse2.toJSON(message.showToast);
+    }
+    if (message.hideToast !== void 0) {
+      obj.hideToast = AckResponse2.toJSON(message.hideToast);
+    }
+    if (message.updateToast !== void 0) {
+      obj.updateToast = AckResponse2.toJSON(message.updateToast);
+    }
+    if (message.pushView !== void 0) {
+      obj.pushView = AckResponse2.toJSON(message.pushView);
+    }
+    if (message.popView !== void 0) {
+      obj.popView = AckResponse2.toJSON(message.popView);
+    }
+    if (message.clearSearch !== void 0) {
+      obj.clearSearch = AckResponse2.toJSON(message.clearSearch);
+    }
+    if (message.closeMainWindow !== void 0) {
+      obj.closeMainWindow = AckResponse2.toJSON(message.closeMainWindow);
+    }
+    if (message.showHud !== void 0) {
+      obj.showHud = AckResponse2.toJSON(message.showHud);
+    }
+    if (message.setSearchText !== void 0) {
+      obj.setSearchText = AckResponse2.toJSON(message.setSearchText);
+    }
+    if (message.confirmAlert !== void 0) {
+      obj.confirmAlert = AckResponse2.toJSON(message.confirmAlert);
+    }
+    return obj;
+  },
+  create(base) {
+    return Response9.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseResponse9();
+    message.render = object.render !== void 0 && object.render !== null ? AckResponse2.fromPartial(object.render) : void 0;
+    message.showToast = object.showToast !== void 0 && object.showToast !== null ? AckResponse2.fromPartial(object.showToast) : void 0;
+    message.hideToast = object.hideToast !== void 0 && object.hideToast !== null ? AckResponse2.fromPartial(object.hideToast) : void 0;
+    message.updateToast = object.updateToast !== void 0 && object.updateToast !== null ? AckResponse2.fromPartial(object.updateToast) : void 0;
+    message.pushView = object.pushView !== void 0 && object.pushView !== null ? AckResponse2.fromPartial(object.pushView) : void 0;
+    message.popView = object.popView !== void 0 && object.popView !== null ? AckResponse2.fromPartial(object.popView) : void 0;
+    message.clearSearch = object.clearSearch !== void 0 && object.clearSearch !== null ? AckResponse2.fromPartial(object.clearSearch) : void 0;
+    message.closeMainWindow = object.closeMainWindow !== void 0 && object.closeMainWindow !== null ? AckResponse2.fromPartial(object.closeMainWindow) : void 0;
+    message.showHud = object.showHud !== void 0 && object.showHud !== null ? AckResponse2.fromPartial(object.showHud) : void 0;
+    message.setSearchText = object.setSearchText !== void 0 && object.setSearchText !== null ? AckResponse2.fromPartial(object.setSearchText) : void 0;
+    message.confirmAlert = object.confirmAlert !== void 0 && object.confirmAlert !== null ? AckResponse2.fromPartial(object.confirmAlert) : void 0;
+    return message;
+  }
+};
+function createBaseThemedImageSource2() {
+  return { light: "", dark: "" };
+}
+var ThemedImageSource2 = {
+  encode(message, writer = new BinaryWriter2()) {
+    if (message.light !== "") {
+      writer.uint32(10).string(message.light);
+    }
+    if (message.dark !== "") {
+      writer.uint32(18).string(message.dark);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseThemedImageSource2();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.light = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+          message.dark = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return {
+      light: isSet14(object.light) ? globalThis.String(object.light) : "",
+      dark: isSet14(object.dark) ? globalThis.String(object.dark) : ""
+    };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.light !== "") {
+      obj.light = message.light;
+    }
+    if (message.dark !== "") {
+      obj.dark = message.dark;
+    }
+    return obj;
+  },
+  create(base) {
+    return ThemedImageSource2.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseThemedImageSource2();
+    message.light = object.light ?? "";
+    message.dark = object.dark ?? "";
+    return message;
+  }
+};
+function createBaseImageSource2() {
+  return { raw: void 0, themed: void 0 };
+}
+var ImageSource2 = {
+  encode(message, writer = new BinaryWriter2()) {
+    if (message.raw !== void 0) {
+      writer.uint32(10).string(message.raw);
+    }
+    if (message.themed !== void 0) {
+      ThemedImageSource2.encode(message.themed, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseImageSource2();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.raw = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+          message.themed = ThemedImageSource2.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return {
+      raw: isSet14(object.raw) ? globalThis.String(object.raw) : void 0,
+      themed: isSet14(object.themed) ? ThemedImageSource2.fromJSON(object.themed) : void 0
+    };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.raw !== void 0) {
+      obj.raw = message.raw;
+    }
+    if (message.themed !== void 0) {
+      obj.themed = ThemedImageSource2.toJSON(message.themed);
+    }
+    return obj;
+  },
+  create(base) {
+    return ImageSource2.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseImageSource2();
+    message.raw = object.raw ?? void 0;
+    message.themed = object.themed !== void 0 && object.themed !== null ? ThemedImageSource2.fromPartial(object.themed) : void 0;
+    return message;
+  }
+};
+function createBaseImage2() {
+  return { source: void 0, fallback: void 0, mask: void 0, colorTint: void 0 };
+}
+var Image8 = {
+  encode(message, writer = new BinaryWriter2()) {
+    if (message.source !== void 0) {
+      ImageSource2.encode(message.source, writer.uint32(10).fork()).join();
+    }
+    if (message.fallback !== void 0) {
+      ImageSource2.encode(message.fallback, writer.uint32(18).fork()).join();
+    }
+    if (message.mask !== void 0) {
+      writer.uint32(24).int32(message.mask);
+    }
+    if (message.colorTint !== void 0) {
+      writer.uint32(34).string(message.colorTint);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseImage2();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.source = ImageSource2.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+          message.fallback = ImageSource2.decode(reader, reader.uint32());
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+          message.mask = reader.int32();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+          message.colorTint = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return {
+      source: isSet14(object.source) ? ImageSource2.fromJSON(object.source) : void 0,
+      fallback: isSet14(object.fallback) ? ImageSource2.fromJSON(object.fallback) : void 0,
+      mask: isSet14(object.mask) ? imageMaskFromJSON2(object.mask) : void 0,
+      colorTint: isSet14(object.colorTint) ? globalThis.String(object.colorTint) : void 0
+    };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.source !== void 0) {
+      obj.source = ImageSource2.toJSON(message.source);
+    }
+    if (message.fallback !== void 0) {
+      obj.fallback = ImageSource2.toJSON(message.fallback);
+    }
+    if (message.mask !== void 0) {
+      obj.mask = imageMaskToJSON2(message.mask);
+    }
+    if (message.colorTint !== void 0) {
+      obj.colorTint = message.colorTint;
+    }
+    return obj;
+  },
+  create(base) {
+    return Image8.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseImage2();
+    message.source = object.source !== void 0 && object.source !== null ? ImageSource2.fromPartial(object.source) : void 0;
+    message.fallback = object.fallback !== void 0 && object.fallback !== null ? ImageSource2.fromPartial(object.fallback) : void 0;
+    message.mask = object.mask ?? void 0;
+    message.colorTint = object.colorTint ?? void 0;
+    return message;
+  }
+};
 function isSet14(value) {
+  return value !== null && value !== void 0;
+}
+
+// src/proto/oauth.ts
+function createBasePKCEClientOptions2() {
+  return { id: void 0, name: "", description: "", icon: void 0 };
+}
+var PKCEClientOptions2 = {
+  encode(message, writer = new BinaryWriter2()) {
+    if (message.id !== void 0) {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.name !== "") {
+      writer.uint32(18).string(message.name);
+    }
+    if (message.description !== "") {
+      writer.uint32(26).string(message.description);
+    }
+    if (message.icon !== void 0) {
+      Image8.encode(message.icon, writer.uint32(34).fork()).join();
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBasePKCEClientOptions2();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+          message.name = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+          message.description = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+          message.icon = Image8.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return {
+      id: isSet15(object.id) ? globalThis.String(object.id) : void 0,
+      name: isSet15(object.name) ? globalThis.String(object.name) : "",
+      description: isSet15(object.description) ? globalThis.String(object.description) : "",
+      icon: isSet15(object.icon) ? Image8.fromJSON(object.icon) : void 0
+    };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.id !== void 0) {
+      obj.id = message.id;
+    }
+    if (message.name !== "") {
+      obj.name = message.name;
+    }
+    if (message.description !== "") {
+      obj.description = message.description;
+    }
+    if (message.icon !== void 0) {
+      obj.icon = Image8.toJSON(message.icon);
+    }
+    return obj;
+  },
+  create(base) {
+    return PKCEClientOptions2.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBasePKCEClientOptions2();
+    message.id = object.id ?? void 0;
+    message.name = object.name ?? "";
+    message.description = object.description ?? "";
+    message.icon = object.icon !== void 0 && object.icon !== null ? Image8.fromPartial(object.icon) : void 0;
+    return message;
+  }
+};
+function createBaseAuthorizeRequest2() {
+  return { client: void 0, url: "" };
+}
+var AuthorizeRequest2 = {
+  encode(message, writer = new BinaryWriter2()) {
+    if (message.client !== void 0) {
+      PKCEClientOptions2.encode(message.client, writer.uint32(10).fork()).join();
+    }
+    if (message.url !== "") {
+      writer.uint32(18).string(message.url);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseAuthorizeRequest2();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.client = PKCEClientOptions2.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+          message.url = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return {
+      client: isSet15(object.client) ? PKCEClientOptions2.fromJSON(object.client) : void 0,
+      url: isSet15(object.url) ? globalThis.String(object.url) : ""
+    };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.client !== void 0) {
+      obj.client = PKCEClientOptions2.toJSON(message.client);
+    }
+    if (message.url !== "") {
+      obj.url = message.url;
+    }
+    return obj;
+  },
+  create(base) {
+    return AuthorizeRequest2.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseAuthorizeRequest2();
+    message.client = object.client !== void 0 && object.client !== null ? PKCEClientOptions2.fromPartial(object.client) : void 0;
+    message.url = object.url ?? "";
+    return message;
+  }
+};
+function createBaseAuthorizeResponse2() {
+  return { code: "" };
+}
+var AuthorizeResponse2 = {
+  encode(message, writer = new BinaryWriter2()) {
+    if (message.code !== "") {
+      writer.uint32(10).string(message.code);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseAuthorizeResponse2();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.code = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return { code: isSet15(object.code) ? globalThis.String(object.code) : "" };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.code !== "") {
+      obj.code = message.code;
+    }
+    return obj;
+  },
+  create(base) {
+    return AuthorizeResponse2.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseAuthorizeResponse2();
+    message.code = object.code ?? "";
+    return message;
+  }
+};
+function createBaseRequest10() {
+  return { authorize: void 0 };
+}
+var Request10 = {
+  encode(message, writer = new BinaryWriter2()) {
+    if (message.authorize !== void 0) {
+      AuthorizeRequest2.encode(message.authorize, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseRequest10();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.authorize = AuthorizeRequest2.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return { authorize: isSet15(object.authorize) ? AuthorizeRequest2.fromJSON(object.authorize) : void 0 };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.authorize !== void 0) {
+      obj.authorize = AuthorizeRequest2.toJSON(message.authorize);
+    }
+    return obj;
+  },
+  create(base) {
+    return Request10.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseRequest10();
+    message.authorize = object.authorize !== void 0 && object.authorize !== null ? AuthorizeRequest2.fromPartial(object.authorize) : void 0;
+    return message;
+  }
+};
+function createBaseResponse10() {
+  return { authorize: void 0 };
+}
+var Response10 = {
+  encode(message, writer = new BinaryWriter2()) {
+    if (message.authorize !== void 0) {
+      AuthorizeResponse2.encode(message.authorize, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
+    const end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseResponse10();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+          message.authorize = AuthorizeResponse2.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return { authorize: isSet15(object.authorize) ? AuthorizeResponse2.fromJSON(object.authorize) : void 0 };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.authorize !== void 0) {
+      obj.authorize = AuthorizeResponse2.toJSON(message.authorize);
+    }
+    return obj;
+  },
+  create(base) {
+    return Response10.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseResponse10();
+    message.authorize = object.authorize !== void 0 && object.authorize !== null ? AuthorizeResponse2.fromPartial(object.authorize) : void 0;
+    return message;
+  }
+};
+function isSet15(value) {
   return value !== null && value !== void 0;
 }
 
@@ -33520,7 +35302,7 @@ var GetRequest2 = {
     return message;
   },
   fromJSON(object) {
-    return { key: isSet15(object.key) ? globalThis.String(object.key) : "" };
+    return { key: isSet16(object.key) ? globalThis.String(object.key) : "" };
   },
   toJSON(message) {
     const obj = {};
@@ -33571,7 +35353,7 @@ var GetResponse2 = {
     return message;
   },
   fromJSON(object) {
-    return { value: isSet15(object?.value) ? object.value : void 0 };
+    return { value: isSet16(object?.value) ? object.value : void 0 };
   },
   toJSON(message) {
     const obj = {};
@@ -33670,8 +35452,8 @@ var SetRequest2 = {
   },
   fromJSON(object) {
     return {
-      key: isSet15(object.key) ? globalThis.String(object.key) : "",
-      value: isSet15(object?.value) ? object.value : void 0
+      key: isSet16(object.key) ? globalThis.String(object.key) : "",
+      value: isSet16(object?.value) ? object.value : void 0
     };
   },
   toJSON(message) {
@@ -33727,7 +35509,7 @@ var RemoveRequest2 = {
     return message;
   },
   fromJSON(object) {
-    return { key: isSet15(object.key) ? globalThis.String(object.key) : "" };
+    return { key: isSet16(object.key) ? globalThis.String(object.key) : "" };
   },
   toJSON(message) {
     const obj = {};
@@ -33975,8 +35757,8 @@ var ListResponse_ValuesEntry2 = {
   },
   fromJSON(object) {
     return {
-      key: isSet15(object.key) ? globalThis.String(object.key) : "",
-      value: isSet15(object?.value) ? object.value : void 0
+      key: isSet16(object.key) ? globalThis.String(object.key) : "",
+      value: isSet16(object?.value) ? object.value : void 0
     };
   },
   toJSON(message) {
@@ -33999,10 +35781,10 @@ var ListResponse_ValuesEntry2 = {
     return message;
   }
 };
-function createBaseRequest10() {
+function createBaseRequest11() {
   return { get: void 0, set: void 0, remove: void 0, clear: void 0, list: void 0 };
 }
-var Request10 = {
+var Request11 = {
   encode(message, writer = new BinaryWriter2()) {
     if (message.get !== void 0) {
       GetRequest2.encode(message.get, writer.uint32(10).fork()).join();
@@ -34024,7 +35806,7 @@ var Request10 = {
   decode(input, length) {
     const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
     const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseRequest10();
+    const message = createBaseRequest11();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -34073,11 +35855,11 @@ var Request10 = {
   },
   fromJSON(object) {
     return {
-      get: isSet15(object.get) ? GetRequest2.fromJSON(object.get) : void 0,
-      set: isSet15(object.set) ? SetRequest2.fromJSON(object.set) : void 0,
-      remove: isSet15(object.remove) ? RemoveRequest2.fromJSON(object.remove) : void 0,
-      clear: isSet15(object.clear) ? ClearRequest2.fromJSON(object.clear) : void 0,
-      list: isSet15(object.list) ? ListRequest2.fromJSON(object.list) : void 0
+      get: isSet16(object.get) ? GetRequest2.fromJSON(object.get) : void 0,
+      set: isSet16(object.set) ? SetRequest2.fromJSON(object.set) : void 0,
+      remove: isSet16(object.remove) ? RemoveRequest2.fromJSON(object.remove) : void 0,
+      clear: isSet16(object.clear) ? ClearRequest2.fromJSON(object.clear) : void 0,
+      list: isSet16(object.list) ? ListRequest2.fromJSON(object.list) : void 0
     };
   },
   toJSON(message) {
@@ -34100,10 +35882,10 @@ var Request10 = {
     return obj;
   },
   create(base) {
-    return Request10.fromPartial(base ?? {});
+    return Request11.fromPartial(base ?? {});
   },
   fromPartial(object) {
-    const message = createBaseRequest10();
+    const message = createBaseRequest11();
     message.get = object.get !== void 0 && object.get !== null ? GetRequest2.fromPartial(object.get) : void 0;
     message.set = object.set !== void 0 && object.set !== null ? SetRequest2.fromPartial(object.set) : void 0;
     message.remove = object.remove !== void 0 && object.remove !== null ? RemoveRequest2.fromPartial(object.remove) : void 0;
@@ -34112,10 +35894,10 @@ var Request10 = {
     return message;
   }
 };
-function createBaseResponse10() {
+function createBaseResponse11() {
   return { get: void 0, set: void 0, remove: void 0, clear: void 0, list: void 0 };
 }
-var Response10 = {
+var Response11 = {
   encode(message, writer = new BinaryWriter2()) {
     if (message.get !== void 0) {
       GetResponse2.encode(message.get, writer.uint32(10).fork()).join();
@@ -34137,7 +35919,7 @@ var Response10 = {
   decode(input, length) {
     const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
     const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseResponse10();
+    const message = createBaseResponse11();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -34186,11 +35968,11 @@ var Response10 = {
   },
   fromJSON(object) {
     return {
-      get: isSet15(object.get) ? GetResponse2.fromJSON(object.get) : void 0,
-      set: isSet15(object.set) ? SetResponse2.fromJSON(object.set) : void 0,
-      remove: isSet15(object.remove) ? RemoveResponse2.fromJSON(object.remove) : void 0,
-      clear: isSet15(object.clear) ? ClearResponse2.fromJSON(object.clear) : void 0,
-      list: isSet15(object.list) ? ListResponse2.fromJSON(object.list) : void 0
+      get: isSet16(object.get) ? GetResponse2.fromJSON(object.get) : void 0,
+      set: isSet16(object.set) ? SetResponse2.fromJSON(object.set) : void 0,
+      remove: isSet16(object.remove) ? RemoveResponse2.fromJSON(object.remove) : void 0,
+      clear: isSet16(object.clear) ? ClearResponse2.fromJSON(object.clear) : void 0,
+      list: isSet16(object.list) ? ListResponse2.fromJSON(object.list) : void 0
     };
   },
   toJSON(message) {
@@ -34213,10 +35995,10 @@ var Response10 = {
     return obj;
   },
   create(base) {
-    return Response10.fromPartial(base ?? {});
+    return Response11.fromPartial(base ?? {});
   },
   fromPartial(object) {
-    const message = createBaseResponse10();
+    const message = createBaseResponse11();
     message.get = object.get !== void 0 && object.get !== null ? GetResponse2.fromPartial(object.get) : void 0;
     message.set = object.set !== void 0 && object.set !== null ? SetResponse2.fromPartial(object.set) : void 0;
     message.remove = object.remove !== void 0 && object.remove !== null ? RemoveResponse2.fromPartial(object.remove) : void 0;
@@ -34228,1233 +36010,6 @@ var Response10 = {
 function isObject4(value) {
   return typeof value === "object" && value !== null;
 }
-function isSet15(value) {
-  return value !== null && value !== void 0;
-}
-
-// src/proto/ui.ts
-function toastStyleFromJSON2(object) {
-  switch (object) {
-    case 0:
-    case "Success":
-      return 0 /* Success */;
-    case 1:
-    case "Info":
-      return 1 /* Info */;
-    case 2:
-    case "Warning":
-      return 2 /* Warning */;
-    case 3:
-    case "Error":
-      return 3 /* Error */;
-    case 4:
-    case "Dynamic":
-      return 4 /* Dynamic */;
-    case -1:
-    case "UNRECOGNIZED":
-    default:
-      return -1 /* UNRECOGNIZED */;
-  }
-}
-function toastStyleToJSON2(object) {
-  switch (object) {
-    case 0 /* Success */:
-      return "Success";
-    case 1 /* Info */:
-      return "Info";
-    case 2 /* Warning */:
-      return "Warning";
-    case 3 /* Error */:
-      return "Error";
-    case 4 /* Dynamic */:
-      return "Dynamic";
-    case -1 /* UNRECOGNIZED */:
-    default:
-      return "UNRECOGNIZED";
-  }
-}
-function confirmAlertActionStyleFromJSON2(object) {
-  switch (object) {
-    case 0:
-    case "Default":
-      return 0 /* Default */;
-    case 1:
-    case "Destructive":
-      return 1 /* Destructive */;
-    case 2:
-    case "Cancel":
-      return 2 /* Cancel */;
-    case -1:
-    case "UNRECOGNIZED":
-    default:
-      return -1 /* UNRECOGNIZED */;
-  }
-}
-function confirmAlertActionStyleToJSON2(object) {
-  switch (object) {
-    case 0 /* Default */:
-      return "Default";
-    case 1 /* Destructive */:
-      return "Destructive";
-    case 2 /* Cancel */:
-      return "Cancel";
-    case -1 /* UNRECOGNIZED */:
-    default:
-      return "UNRECOGNIZED";
-  }
-}
-function createBaseShowToastRequest2() {
-  return { id: "", title: "", style: 0 };
-}
-var ShowToastRequest2 = {
-  encode(message, writer = new BinaryWriter2()) {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
-    }
-    if (message.title !== "") {
-      writer.uint32(18).string(message.title);
-    }
-    if (message.style !== 0) {
-      writer.uint32(24).int32(message.style);
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseShowToastRequest2();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.id = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-          message.title = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 24) {
-            break;
-          }
-          message.style = reader.int32();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return {
-      id: isSet16(object.id) ? globalThis.String(object.id) : "",
-      title: isSet16(object.title) ? globalThis.String(object.title) : "",
-      style: isSet16(object.style) ? toastStyleFromJSON2(object.style) : 0
-    };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    if (message.title !== "") {
-      obj.title = message.title;
-    }
-    if (message.style !== 0) {
-      obj.style = toastStyleToJSON2(message.style);
-    }
-    return obj;
-  },
-  create(base) {
-    return ShowToastRequest2.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseShowToastRequest2();
-    message.id = object.id ?? "";
-    message.title = object.title ?? "";
-    message.style = object.style ?? 0;
-    return message;
-  }
-};
-function createBaseHideToastRequest2() {
-  return { id: "" };
-}
-var HideToastRequest2 = {
-  encode(message, writer = new BinaryWriter2()) {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseHideToastRequest2();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.id = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return { id: isSet16(object.id) ? globalThis.String(object.id) : "" };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    return obj;
-  },
-  create(base) {
-    return HideToastRequest2.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseHideToastRequest2();
-    message.id = object.id ?? "";
-    return message;
-  }
-};
-function createBaseUpdateToastRequest2() {
-  return { id: "", title: "" };
-}
-var UpdateToastRequest2 = {
-  encode(message, writer = new BinaryWriter2()) {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
-    }
-    if (message.title !== "") {
-      writer.uint32(18).string(message.title);
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseUpdateToastRequest2();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.id = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-          message.title = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return {
-      id: isSet16(object.id) ? globalThis.String(object.id) : "",
-      title: isSet16(object.title) ? globalThis.String(object.title) : ""
-    };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    if (message.title !== "") {
-      obj.title = message.title;
-    }
-    return obj;
-  },
-  create(base) {
-    return UpdateToastRequest2.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseUpdateToastRequest2();
-    message.id = object.id ?? "";
-    message.title = object.title ?? "";
-    return message;
-  }
-};
-function createBasePushViewRequest2() {
-  return {};
-}
-var PushViewRequest2 = {
-  encode(_, writer = new BinaryWriter2()) {
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBasePushViewRequest2();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(_) {
-    return {};
-  },
-  toJSON(_) {
-    const obj = {};
-    return obj;
-  },
-  create(base) {
-    return PushViewRequest2.fromPartial(base ?? {});
-  },
-  fromPartial(_) {
-    const message = createBasePushViewRequest2();
-    return message;
-  }
-};
-function createBasePopViewRequest2() {
-  return {};
-}
-var PopViewRequest2 = {
-  encode(_, writer = new BinaryWriter2()) {
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBasePopViewRequest2();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(_) {
-    return {};
-  },
-  toJSON(_) {
-    const obj = {};
-    return obj;
-  },
-  create(base) {
-    return PopViewRequest2.fromPartial(base ?? {});
-  },
-  fromPartial(_) {
-    const message = createBasePopViewRequest2();
-    return message;
-  }
-};
-function createBaseCloseMainWindowRequest2() {
-  return {};
-}
-var CloseMainWindowRequest2 = {
-  encode(_, writer = new BinaryWriter2()) {
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseCloseMainWindowRequest2();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(_) {
-    return {};
-  },
-  toJSON(_) {
-    const obj = {};
-    return obj;
-  },
-  create(base) {
-    return CloseMainWindowRequest2.fromPartial(base ?? {});
-  },
-  fromPartial(_) {
-    const message = createBaseCloseMainWindowRequest2();
-    return message;
-  }
-};
-function createBaseClearSearchBarRequest2() {
-  return {};
-}
-var ClearSearchBarRequest2 = {
-  encode(_, writer = new BinaryWriter2()) {
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseClearSearchBarRequest2();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(_) {
-    return {};
-  },
-  toJSON(_) {
-    const obj = {};
-    return obj;
-  },
-  create(base) {
-    return ClearSearchBarRequest2.fromPartial(base ?? {});
-  },
-  fromPartial(_) {
-    const message = createBaseClearSearchBarRequest2();
-    return message;
-  }
-};
-function createBaseSetSearchTextRequest2() {
-  return { text: "" };
-}
-var SetSearchTextRequest2 = {
-  encode(message, writer = new BinaryWriter2()) {
-    if (message.text !== "") {
-      writer.uint32(10).string(message.text);
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseSetSearchTextRequest2();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.text = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return { text: isSet16(object.text) ? globalThis.String(object.text) : "" };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.text !== "") {
-      obj.text = message.text;
-    }
-    return obj;
-  },
-  create(base) {
-    return SetSearchTextRequest2.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseSetSearchTextRequest2();
-    message.text = object.text ?? "";
-    return message;
-  }
-};
-function createBaseShowHudRequest2() {
-  return { text: "" };
-}
-var ShowHudRequest2 = {
-  encode(message, writer = new BinaryWriter2()) {
-    if (message.text !== "") {
-      writer.uint32(10).string(message.text);
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseShowHudRequest2();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.text = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return { text: isSet16(object.text) ? globalThis.String(object.text) : "" };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.text !== "") {
-      obj.text = message.text;
-    }
-    return obj;
-  },
-  create(base) {
-    return ShowHudRequest2.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseShowHudRequest2();
-    message.text = object.text ?? "";
-    return message;
-  }
-};
-function createBaseRenderRequest2() {
-  return { json: "" };
-}
-var RenderRequest2 = {
-  encode(message, writer = new BinaryWriter2()) {
-    if (message.json !== "") {
-      writer.uint32(10).string(message.json);
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseRenderRequest2();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.json = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return { json: isSet16(object.json) ? globalThis.String(object.json) : "" };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.json !== "") {
-      obj.json = message.json;
-    }
-    return obj;
-  },
-  create(base) {
-    return RenderRequest2.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseRenderRequest2();
-    message.json = object.json ?? "";
-    return message;
-  }
-};
-function createBaseConfirmAlertRequest2() {
-  return {
-    title: "",
-    description: "",
-    icon: void 0,
-    dismissAction: void 0,
-    primaryAction: void 0,
-    rememberUserChoice: false,
-    handle: ""
-  };
-}
-var ConfirmAlertRequest2 = {
-  encode(message, writer = new BinaryWriter2()) {
-    if (message.title !== "") {
-      writer.uint32(10).string(message.title);
-    }
-    if (message.description !== "") {
-      writer.uint32(18).string(message.description);
-    }
-    if (message.icon !== void 0) {
-      writer.uint32(26).string(message.icon);
-    }
-    if (message.dismissAction !== void 0) {
-      ConfirmAlertAction2.encode(message.dismissAction, writer.uint32(34).fork()).join();
-    }
-    if (message.primaryAction !== void 0) {
-      ConfirmAlertAction2.encode(message.primaryAction, writer.uint32(42).fork()).join();
-    }
-    if (message.rememberUserChoice !== false) {
-      writer.uint32(48).bool(message.rememberUserChoice);
-    }
-    if (message.handle !== "") {
-      writer.uint32(58).string(message.handle);
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseConfirmAlertRequest2();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.title = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-          message.description = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-          message.icon = reader.string();
-          continue;
-        }
-        case 4: {
-          if (tag !== 34) {
-            break;
-          }
-          message.dismissAction = ConfirmAlertAction2.decode(reader, reader.uint32());
-          continue;
-        }
-        case 5: {
-          if (tag !== 42) {
-            break;
-          }
-          message.primaryAction = ConfirmAlertAction2.decode(reader, reader.uint32());
-          continue;
-        }
-        case 6: {
-          if (tag !== 48) {
-            break;
-          }
-          message.rememberUserChoice = reader.bool();
-          continue;
-        }
-        case 7: {
-          if (tag !== 58) {
-            break;
-          }
-          message.handle = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return {
-      title: isSet16(object.title) ? globalThis.String(object.title) : "",
-      description: isSet16(object.description) ? globalThis.String(object.description) : "",
-      icon: isSet16(object.icon) ? globalThis.String(object.icon) : void 0,
-      dismissAction: isSet16(object.dismissAction) ? ConfirmAlertAction2.fromJSON(object.dismissAction) : void 0,
-      primaryAction: isSet16(object.primaryAction) ? ConfirmAlertAction2.fromJSON(object.primaryAction) : void 0,
-      rememberUserChoice: isSet16(object.rememberUserChoice) ? globalThis.Boolean(object.rememberUserChoice) : false,
-      handle: isSet16(object.handle) ? globalThis.String(object.handle) : ""
-    };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.title !== "") {
-      obj.title = message.title;
-    }
-    if (message.description !== "") {
-      obj.description = message.description;
-    }
-    if (message.icon !== void 0) {
-      obj.icon = message.icon;
-    }
-    if (message.dismissAction !== void 0) {
-      obj.dismissAction = ConfirmAlertAction2.toJSON(message.dismissAction);
-    }
-    if (message.primaryAction !== void 0) {
-      obj.primaryAction = ConfirmAlertAction2.toJSON(message.primaryAction);
-    }
-    if (message.rememberUserChoice !== false) {
-      obj.rememberUserChoice = message.rememberUserChoice;
-    }
-    if (message.handle !== "") {
-      obj.handle = message.handle;
-    }
-    return obj;
-  },
-  create(base) {
-    return ConfirmAlertRequest2.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseConfirmAlertRequest2();
-    message.title = object.title ?? "";
-    message.description = object.description ?? "";
-    message.icon = object.icon ?? void 0;
-    message.dismissAction = object.dismissAction !== void 0 && object.dismissAction !== null ? ConfirmAlertAction2.fromPartial(object.dismissAction) : void 0;
-    message.primaryAction = object.primaryAction !== void 0 && object.primaryAction !== null ? ConfirmAlertAction2.fromPartial(object.primaryAction) : void 0;
-    message.rememberUserChoice = object.rememberUserChoice ?? false;
-    message.handle = object.handle ?? "";
-    return message;
-  }
-};
-function createBaseConfirmAlertAction2() {
-  return { title: "", style: 0 };
-}
-var ConfirmAlertAction2 = {
-  encode(message, writer = new BinaryWriter2()) {
-    if (message.title !== "") {
-      writer.uint32(10).string(message.title);
-    }
-    if (message.style !== 0) {
-      writer.uint32(16).int32(message.style);
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseConfirmAlertAction2();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.title = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 16) {
-            break;
-          }
-          message.style = reader.int32();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return {
-      title: isSet16(object.title) ? globalThis.String(object.title) : "",
-      style: isSet16(object.style) ? confirmAlertActionStyleFromJSON2(object.style) : 0
-    };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.title !== "") {
-      obj.title = message.title;
-    }
-    if (message.style !== 0) {
-      obj.style = confirmAlertActionStyleToJSON2(message.style);
-    }
-    return obj;
-  },
-  create(base) {
-    return ConfirmAlertAction2.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseConfirmAlertAction2();
-    message.title = object.title ?? "";
-    message.style = object.style ?? 0;
-    return message;
-  }
-};
-function createBaseRequest11() {
-  return {
-    render: void 0,
-    showToast: void 0,
-    hideToast: void 0,
-    updateToast: void 0,
-    pushView: void 0,
-    popView: void 0,
-    clearSearch: void 0,
-    closeMainWindow: void 0,
-    showHud: void 0,
-    setSearchText: void 0,
-    confirmAlert: void 0
-  };
-}
-var Request11 = {
-  encode(message, writer = new BinaryWriter2()) {
-    if (message.render !== void 0) {
-      RenderRequest2.encode(message.render, writer.uint32(10).fork()).join();
-    }
-    if (message.showToast !== void 0) {
-      ShowToastRequest2.encode(message.showToast, writer.uint32(18).fork()).join();
-    }
-    if (message.hideToast !== void 0) {
-      HideToastRequest2.encode(message.hideToast, writer.uint32(26).fork()).join();
-    }
-    if (message.updateToast !== void 0) {
-      UpdateToastRequest2.encode(message.updateToast, writer.uint32(34).fork()).join();
-    }
-    if (message.pushView !== void 0) {
-      PushViewRequest2.encode(message.pushView, writer.uint32(42).fork()).join();
-    }
-    if (message.popView !== void 0) {
-      PopViewRequest2.encode(message.popView, writer.uint32(50).fork()).join();
-    }
-    if (message.clearSearch !== void 0) {
-      ClearSearchBarRequest2.encode(message.clearSearch, writer.uint32(58).fork()).join();
-    }
-    if (message.closeMainWindow !== void 0) {
-      CloseMainWindowRequest2.encode(message.closeMainWindow, writer.uint32(66).fork()).join();
-    }
-    if (message.showHud !== void 0) {
-      ShowHudRequest2.encode(message.showHud, writer.uint32(74).fork()).join();
-    }
-    if (message.setSearchText !== void 0) {
-      SetSearchTextRequest2.encode(message.setSearchText, writer.uint32(82).fork()).join();
-    }
-    if (message.confirmAlert !== void 0) {
-      ConfirmAlertRequest2.encode(message.confirmAlert, writer.uint32(90).fork()).join();
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseRequest11();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.render = RenderRequest2.decode(reader, reader.uint32());
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-          message.showToast = ShowToastRequest2.decode(reader, reader.uint32());
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-          message.hideToast = HideToastRequest2.decode(reader, reader.uint32());
-          continue;
-        }
-        case 4: {
-          if (tag !== 34) {
-            break;
-          }
-          message.updateToast = UpdateToastRequest2.decode(reader, reader.uint32());
-          continue;
-        }
-        case 5: {
-          if (tag !== 42) {
-            break;
-          }
-          message.pushView = PushViewRequest2.decode(reader, reader.uint32());
-          continue;
-        }
-        case 6: {
-          if (tag !== 50) {
-            break;
-          }
-          message.popView = PopViewRequest2.decode(reader, reader.uint32());
-          continue;
-        }
-        case 7: {
-          if (tag !== 58) {
-            break;
-          }
-          message.clearSearch = ClearSearchBarRequest2.decode(reader, reader.uint32());
-          continue;
-        }
-        case 8: {
-          if (tag !== 66) {
-            break;
-          }
-          message.closeMainWindow = CloseMainWindowRequest2.decode(reader, reader.uint32());
-          continue;
-        }
-        case 9: {
-          if (tag !== 74) {
-            break;
-          }
-          message.showHud = ShowHudRequest2.decode(reader, reader.uint32());
-          continue;
-        }
-        case 10: {
-          if (tag !== 82) {
-            break;
-          }
-          message.setSearchText = SetSearchTextRequest2.decode(reader, reader.uint32());
-          continue;
-        }
-        case 11: {
-          if (tag !== 90) {
-            break;
-          }
-          message.confirmAlert = ConfirmAlertRequest2.decode(reader, reader.uint32());
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return {
-      render: isSet16(object.render) ? RenderRequest2.fromJSON(object.render) : void 0,
-      showToast: isSet16(object.showToast) ? ShowToastRequest2.fromJSON(object.showToast) : void 0,
-      hideToast: isSet16(object.hideToast) ? HideToastRequest2.fromJSON(object.hideToast) : void 0,
-      updateToast: isSet16(object.updateToast) ? UpdateToastRequest2.fromJSON(object.updateToast) : void 0,
-      pushView: isSet16(object.pushView) ? PushViewRequest2.fromJSON(object.pushView) : void 0,
-      popView: isSet16(object.popView) ? PopViewRequest2.fromJSON(object.popView) : void 0,
-      clearSearch: isSet16(object.clearSearch) ? ClearSearchBarRequest2.fromJSON(object.clearSearch) : void 0,
-      closeMainWindow: isSet16(object.closeMainWindow) ? CloseMainWindowRequest2.fromJSON(object.closeMainWindow) : void 0,
-      showHud: isSet16(object.showHud) ? ShowHudRequest2.fromJSON(object.showHud) : void 0,
-      setSearchText: isSet16(object.setSearchText) ? SetSearchTextRequest2.fromJSON(object.setSearchText) : void 0,
-      confirmAlert: isSet16(object.confirmAlert) ? ConfirmAlertRequest2.fromJSON(object.confirmAlert) : void 0
-    };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.render !== void 0) {
-      obj.render = RenderRequest2.toJSON(message.render);
-    }
-    if (message.showToast !== void 0) {
-      obj.showToast = ShowToastRequest2.toJSON(message.showToast);
-    }
-    if (message.hideToast !== void 0) {
-      obj.hideToast = HideToastRequest2.toJSON(message.hideToast);
-    }
-    if (message.updateToast !== void 0) {
-      obj.updateToast = UpdateToastRequest2.toJSON(message.updateToast);
-    }
-    if (message.pushView !== void 0) {
-      obj.pushView = PushViewRequest2.toJSON(message.pushView);
-    }
-    if (message.popView !== void 0) {
-      obj.popView = PopViewRequest2.toJSON(message.popView);
-    }
-    if (message.clearSearch !== void 0) {
-      obj.clearSearch = ClearSearchBarRequest2.toJSON(message.clearSearch);
-    }
-    if (message.closeMainWindow !== void 0) {
-      obj.closeMainWindow = CloseMainWindowRequest2.toJSON(message.closeMainWindow);
-    }
-    if (message.showHud !== void 0) {
-      obj.showHud = ShowHudRequest2.toJSON(message.showHud);
-    }
-    if (message.setSearchText !== void 0) {
-      obj.setSearchText = SetSearchTextRequest2.toJSON(message.setSearchText);
-    }
-    if (message.confirmAlert !== void 0) {
-      obj.confirmAlert = ConfirmAlertRequest2.toJSON(message.confirmAlert);
-    }
-    return obj;
-  },
-  create(base) {
-    return Request11.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseRequest11();
-    message.render = object.render !== void 0 && object.render !== null ? RenderRequest2.fromPartial(object.render) : void 0;
-    message.showToast = object.showToast !== void 0 && object.showToast !== null ? ShowToastRequest2.fromPartial(object.showToast) : void 0;
-    message.hideToast = object.hideToast !== void 0 && object.hideToast !== null ? HideToastRequest2.fromPartial(object.hideToast) : void 0;
-    message.updateToast = object.updateToast !== void 0 && object.updateToast !== null ? UpdateToastRequest2.fromPartial(object.updateToast) : void 0;
-    message.pushView = object.pushView !== void 0 && object.pushView !== null ? PushViewRequest2.fromPartial(object.pushView) : void 0;
-    message.popView = object.popView !== void 0 && object.popView !== null ? PopViewRequest2.fromPartial(object.popView) : void 0;
-    message.clearSearch = object.clearSearch !== void 0 && object.clearSearch !== null ? ClearSearchBarRequest2.fromPartial(object.clearSearch) : void 0;
-    message.closeMainWindow = object.closeMainWindow !== void 0 && object.closeMainWindow !== null ? CloseMainWindowRequest2.fromPartial(object.closeMainWindow) : void 0;
-    message.showHud = object.showHud !== void 0 && object.showHud !== null ? ShowHudRequest2.fromPartial(object.showHud) : void 0;
-    message.setSearchText = object.setSearchText !== void 0 && object.setSearchText !== null ? SetSearchTextRequest2.fromPartial(object.setSearchText) : void 0;
-    message.confirmAlert = object.confirmAlert !== void 0 && object.confirmAlert !== null ? ConfirmAlertRequest2.fromPartial(object.confirmAlert) : void 0;
-    return message;
-  }
-};
-function createBaseResponse11() {
-  return {
-    render: void 0,
-    showToast: void 0,
-    hideToast: void 0,
-    updateToast: void 0,
-    pushView: void 0,
-    popView: void 0,
-    clearSearch: void 0,
-    closeMainWindow: void 0,
-    showHud: void 0,
-    setSearchText: void 0,
-    confirmAlert: void 0
-  };
-}
-var Response11 = {
-  encode(message, writer = new BinaryWriter2()) {
-    if (message.render !== void 0) {
-      AckResponse2.encode(message.render, writer.uint32(10).fork()).join();
-    }
-    if (message.showToast !== void 0) {
-      AckResponse2.encode(message.showToast, writer.uint32(18).fork()).join();
-    }
-    if (message.hideToast !== void 0) {
-      AckResponse2.encode(message.hideToast, writer.uint32(26).fork()).join();
-    }
-    if (message.updateToast !== void 0) {
-      AckResponse2.encode(message.updateToast, writer.uint32(34).fork()).join();
-    }
-    if (message.pushView !== void 0) {
-      AckResponse2.encode(message.pushView, writer.uint32(42).fork()).join();
-    }
-    if (message.popView !== void 0) {
-      AckResponse2.encode(message.popView, writer.uint32(50).fork()).join();
-    }
-    if (message.clearSearch !== void 0) {
-      AckResponse2.encode(message.clearSearch, writer.uint32(58).fork()).join();
-    }
-    if (message.closeMainWindow !== void 0) {
-      AckResponse2.encode(message.closeMainWindow, writer.uint32(66).fork()).join();
-    }
-    if (message.showHud !== void 0) {
-      AckResponse2.encode(message.showHud, writer.uint32(74).fork()).join();
-    }
-    if (message.setSearchText !== void 0) {
-      AckResponse2.encode(message.setSearchText, writer.uint32(82).fork()).join();
-    }
-    if (message.confirmAlert !== void 0) {
-      AckResponse2.encode(message.confirmAlert, writer.uint32(90).fork()).join();
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof BinaryReader2 ? input : new BinaryReader2(input);
-    const end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseResponse11();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-          message.render = AckResponse2.decode(reader, reader.uint32());
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-          message.showToast = AckResponse2.decode(reader, reader.uint32());
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-          message.hideToast = AckResponse2.decode(reader, reader.uint32());
-          continue;
-        }
-        case 4: {
-          if (tag !== 34) {
-            break;
-          }
-          message.updateToast = AckResponse2.decode(reader, reader.uint32());
-          continue;
-        }
-        case 5: {
-          if (tag !== 42) {
-            break;
-          }
-          message.pushView = AckResponse2.decode(reader, reader.uint32());
-          continue;
-        }
-        case 6: {
-          if (tag !== 50) {
-            break;
-          }
-          message.popView = AckResponse2.decode(reader, reader.uint32());
-          continue;
-        }
-        case 7: {
-          if (tag !== 58) {
-            break;
-          }
-          message.clearSearch = AckResponse2.decode(reader, reader.uint32());
-          continue;
-        }
-        case 8: {
-          if (tag !== 66) {
-            break;
-          }
-          message.closeMainWindow = AckResponse2.decode(reader, reader.uint32());
-          continue;
-        }
-        case 9: {
-          if (tag !== 74) {
-            break;
-          }
-          message.showHud = AckResponse2.decode(reader, reader.uint32());
-          continue;
-        }
-        case 10: {
-          if (tag !== 82) {
-            break;
-          }
-          message.setSearchText = AckResponse2.decode(reader, reader.uint32());
-          continue;
-        }
-        case 11: {
-          if (tag !== 90) {
-            break;
-          }
-          message.confirmAlert = AckResponse2.decode(reader, reader.uint32());
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return {
-      render: isSet16(object.render) ? AckResponse2.fromJSON(object.render) : void 0,
-      showToast: isSet16(object.showToast) ? AckResponse2.fromJSON(object.showToast) : void 0,
-      hideToast: isSet16(object.hideToast) ? AckResponse2.fromJSON(object.hideToast) : void 0,
-      updateToast: isSet16(object.updateToast) ? AckResponse2.fromJSON(object.updateToast) : void 0,
-      pushView: isSet16(object.pushView) ? AckResponse2.fromJSON(object.pushView) : void 0,
-      popView: isSet16(object.popView) ? AckResponse2.fromJSON(object.popView) : void 0,
-      clearSearch: isSet16(object.clearSearch) ? AckResponse2.fromJSON(object.clearSearch) : void 0,
-      closeMainWindow: isSet16(object.closeMainWindow) ? AckResponse2.fromJSON(object.closeMainWindow) : void 0,
-      showHud: isSet16(object.showHud) ? AckResponse2.fromJSON(object.showHud) : void 0,
-      setSearchText: isSet16(object.setSearchText) ? AckResponse2.fromJSON(object.setSearchText) : void 0,
-      confirmAlert: isSet16(object.confirmAlert) ? AckResponse2.fromJSON(object.confirmAlert) : void 0
-    };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.render !== void 0) {
-      obj.render = AckResponse2.toJSON(message.render);
-    }
-    if (message.showToast !== void 0) {
-      obj.showToast = AckResponse2.toJSON(message.showToast);
-    }
-    if (message.hideToast !== void 0) {
-      obj.hideToast = AckResponse2.toJSON(message.hideToast);
-    }
-    if (message.updateToast !== void 0) {
-      obj.updateToast = AckResponse2.toJSON(message.updateToast);
-    }
-    if (message.pushView !== void 0) {
-      obj.pushView = AckResponse2.toJSON(message.pushView);
-    }
-    if (message.popView !== void 0) {
-      obj.popView = AckResponse2.toJSON(message.popView);
-    }
-    if (message.clearSearch !== void 0) {
-      obj.clearSearch = AckResponse2.toJSON(message.clearSearch);
-    }
-    if (message.closeMainWindow !== void 0) {
-      obj.closeMainWindow = AckResponse2.toJSON(message.closeMainWindow);
-    }
-    if (message.showHud !== void 0) {
-      obj.showHud = AckResponse2.toJSON(message.showHud);
-    }
-    if (message.setSearchText !== void 0) {
-      obj.setSearchText = AckResponse2.toJSON(message.setSearchText);
-    }
-    if (message.confirmAlert !== void 0) {
-      obj.confirmAlert = AckResponse2.toJSON(message.confirmAlert);
-    }
-    return obj;
-  },
-  create(base) {
-    return Response11.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseResponse11();
-    message.render = object.render !== void 0 && object.render !== null ? AckResponse2.fromPartial(object.render) : void 0;
-    message.showToast = object.showToast !== void 0 && object.showToast !== null ? AckResponse2.fromPartial(object.showToast) : void 0;
-    message.hideToast = object.hideToast !== void 0 && object.hideToast !== null ? AckResponse2.fromPartial(object.hideToast) : void 0;
-    message.updateToast = object.updateToast !== void 0 && object.updateToast !== null ? AckResponse2.fromPartial(object.updateToast) : void 0;
-    message.pushView = object.pushView !== void 0 && object.pushView !== null ? AckResponse2.fromPartial(object.pushView) : void 0;
-    message.popView = object.popView !== void 0 && object.popView !== null ? AckResponse2.fromPartial(object.popView) : void 0;
-    message.clearSearch = object.clearSearch !== void 0 && object.clearSearch !== null ? AckResponse2.fromPartial(object.clearSearch) : void 0;
-    message.closeMainWindow = object.closeMainWindow !== void 0 && object.closeMainWindow !== null ? AckResponse2.fromPartial(object.closeMainWindow) : void 0;
-    message.showHud = object.showHud !== void 0 && object.showHud !== null ? AckResponse2.fromPartial(object.showHud) : void 0;
-    message.setSearchText = object.setSearchText !== void 0 && object.setSearchText !== null ? AckResponse2.fromPartial(object.setSearchText) : void 0;
-    message.confirmAlert = object.confirmAlert !== void 0 && object.confirmAlert !== null ? AckResponse2.fromPartial(object.confirmAlert) : void 0;
-    return message;
-  }
-};
 function isSet16(value) {
   return value !== null && value !== void 0;
 }
@@ -35534,7 +36089,7 @@ function createBaseRequestData2() {
 var RequestData3 = {
   encode(message, writer = new BinaryWriter2()) {
     if (message.ui !== void 0) {
-      Request11.encode(message.ui, writer.uint32(10).fork()).join();
+      Request9.encode(message.ui, writer.uint32(10).fork()).join();
     }
     if (message.app !== void 0) {
       Request7.encode(message.app, writer.uint32(18).fork()).join();
@@ -35543,10 +36098,10 @@ var RequestData3 = {
       Request8.encode(message.clipboard, writer.uint32(26).fork()).join();
     }
     if (message.storage !== void 0) {
-      Request10.encode(message.storage, writer.uint32(34).fork()).join();
+      Request11.encode(message.storage, writer.uint32(34).fork()).join();
     }
     if (message.oauth !== void 0) {
-      Request9.encode(message.oauth, writer.uint32(42).fork()).join();
+      Request10.encode(message.oauth, writer.uint32(42).fork()).join();
     }
     return writer;
   },
@@ -35561,7 +36116,7 @@ var RequestData3 = {
           if (tag !== 10) {
             break;
           }
-          message.ui = Request11.decode(reader, reader.uint32());
+          message.ui = Request9.decode(reader, reader.uint32());
           continue;
         }
         case 2: {
@@ -35582,14 +36137,14 @@ var RequestData3 = {
           if (tag !== 34) {
             break;
           }
-          message.storage = Request10.decode(reader, reader.uint32());
+          message.storage = Request11.decode(reader, reader.uint32());
           continue;
         }
         case 5: {
           if (tag !== 42) {
             break;
           }
-          message.oauth = Request9.decode(reader, reader.uint32());
+          message.oauth = Request10.decode(reader, reader.uint32());
           continue;
         }
       }
@@ -35602,17 +36157,17 @@ var RequestData3 = {
   },
   fromJSON(object) {
     return {
-      ui: isSet17(object.ui) ? Request11.fromJSON(object.ui) : void 0,
+      ui: isSet17(object.ui) ? Request9.fromJSON(object.ui) : void 0,
       app: isSet17(object.app) ? Request7.fromJSON(object.app) : void 0,
       clipboard: isSet17(object.clipboard) ? Request8.fromJSON(object.clipboard) : void 0,
-      storage: isSet17(object.storage) ? Request10.fromJSON(object.storage) : void 0,
-      oauth: isSet17(object.oauth) ? Request9.fromJSON(object.oauth) : void 0
+      storage: isSet17(object.storage) ? Request11.fromJSON(object.storage) : void 0,
+      oauth: isSet17(object.oauth) ? Request10.fromJSON(object.oauth) : void 0
     };
   },
   toJSON(message) {
     const obj = {};
     if (message.ui !== void 0) {
-      obj.ui = Request11.toJSON(message.ui);
+      obj.ui = Request9.toJSON(message.ui);
     }
     if (message.app !== void 0) {
       obj.app = Request7.toJSON(message.app);
@@ -35621,10 +36176,10 @@ var RequestData3 = {
       obj.clipboard = Request8.toJSON(message.clipboard);
     }
     if (message.storage !== void 0) {
-      obj.storage = Request10.toJSON(message.storage);
+      obj.storage = Request11.toJSON(message.storage);
     }
     if (message.oauth !== void 0) {
-      obj.oauth = Request9.toJSON(message.oauth);
+      obj.oauth = Request10.toJSON(message.oauth);
     }
     return obj;
   },
@@ -35633,11 +36188,11 @@ var RequestData3 = {
   },
   fromPartial(object) {
     const message = createBaseRequestData2();
-    message.ui = object.ui !== void 0 && object.ui !== null ? Request11.fromPartial(object.ui) : void 0;
+    message.ui = object.ui !== void 0 && object.ui !== null ? Request9.fromPartial(object.ui) : void 0;
     message.app = object.app !== void 0 && object.app !== null ? Request7.fromPartial(object.app) : void 0;
     message.clipboard = object.clipboard !== void 0 && object.clipboard !== null ? Request8.fromPartial(object.clipboard) : void 0;
-    message.storage = object.storage !== void 0 && object.storage !== null ? Request10.fromPartial(object.storage) : void 0;
-    message.oauth = object.oauth !== void 0 && object.oauth !== null ? Request9.fromPartial(object.oauth) : void 0;
+    message.storage = object.storage !== void 0 && object.storage !== null ? Request11.fromPartial(object.storage) : void 0;
+    message.oauth = object.oauth !== void 0 && object.oauth !== null ? Request10.fromPartial(object.oauth) : void 0;
     return message;
   }
 };
@@ -35730,7 +36285,7 @@ function createBaseResponseData2() {
 var ResponseData3 = {
   encode(message, writer = new BinaryWriter2()) {
     if (message.ui !== void 0) {
-      Response11.encode(message.ui, writer.uint32(10).fork()).join();
+      Response9.encode(message.ui, writer.uint32(10).fork()).join();
     }
     if (message.app !== void 0) {
       Response7.encode(message.app, writer.uint32(18).fork()).join();
@@ -35739,10 +36294,10 @@ var ResponseData3 = {
       Response8.encode(message.clipboard, writer.uint32(26).fork()).join();
     }
     if (message.storage !== void 0) {
-      Response10.encode(message.storage, writer.uint32(34).fork()).join();
+      Response11.encode(message.storage, writer.uint32(34).fork()).join();
     }
     if (message.oauth !== void 0) {
-      Response9.encode(message.oauth, writer.uint32(42).fork()).join();
+      Response10.encode(message.oauth, writer.uint32(42).fork()).join();
     }
     return writer;
   },
@@ -35757,7 +36312,7 @@ var ResponseData3 = {
           if (tag !== 10) {
             break;
           }
-          message.ui = Response11.decode(reader, reader.uint32());
+          message.ui = Response9.decode(reader, reader.uint32());
           continue;
         }
         case 2: {
@@ -35778,14 +36333,14 @@ var ResponseData3 = {
           if (tag !== 34) {
             break;
           }
-          message.storage = Response10.decode(reader, reader.uint32());
+          message.storage = Response11.decode(reader, reader.uint32());
           continue;
         }
         case 5: {
           if (tag !== 42) {
             break;
           }
-          message.oauth = Response9.decode(reader, reader.uint32());
+          message.oauth = Response10.decode(reader, reader.uint32());
           continue;
         }
       }
@@ -35798,17 +36353,17 @@ var ResponseData3 = {
   },
   fromJSON(object) {
     return {
-      ui: isSet17(object.ui) ? Response11.fromJSON(object.ui) : void 0,
+      ui: isSet17(object.ui) ? Response9.fromJSON(object.ui) : void 0,
       app: isSet17(object.app) ? Response7.fromJSON(object.app) : void 0,
       clipboard: isSet17(object.clipboard) ? Response8.fromJSON(object.clipboard) : void 0,
-      storage: isSet17(object.storage) ? Response10.fromJSON(object.storage) : void 0,
-      oauth: isSet17(object.oauth) ? Response9.fromJSON(object.oauth) : void 0
+      storage: isSet17(object.storage) ? Response11.fromJSON(object.storage) : void 0,
+      oauth: isSet17(object.oauth) ? Response10.fromJSON(object.oauth) : void 0
     };
   },
   toJSON(message) {
     const obj = {};
     if (message.ui !== void 0) {
-      obj.ui = Response11.toJSON(message.ui);
+      obj.ui = Response9.toJSON(message.ui);
     }
     if (message.app !== void 0) {
       obj.app = Response7.toJSON(message.app);
@@ -35817,10 +36372,10 @@ var ResponseData3 = {
       obj.clipboard = Response8.toJSON(message.clipboard);
     }
     if (message.storage !== void 0) {
-      obj.storage = Response10.toJSON(message.storage);
+      obj.storage = Response11.toJSON(message.storage);
     }
     if (message.oauth !== void 0) {
-      obj.oauth = Response9.toJSON(message.oauth);
+      obj.oauth = Response10.toJSON(message.oauth);
     }
     return obj;
   },
@@ -35829,11 +36384,11 @@ var ResponseData3 = {
   },
   fromPartial(object) {
     const message = createBaseResponseData2();
-    message.ui = object.ui !== void 0 && object.ui !== null ? Response11.fromPartial(object.ui) : void 0;
+    message.ui = object.ui !== void 0 && object.ui !== null ? Response9.fromPartial(object.ui) : void 0;
     message.app = object.app !== void 0 && object.app !== null ? Response7.fromPartial(object.app) : void 0;
     message.clipboard = object.clipboard !== void 0 && object.clipboard !== null ? Response8.fromPartial(object.clipboard) : void 0;
-    message.storage = object.storage !== void 0 && object.storage !== null ? Response10.fromPartial(object.storage) : void 0;
-    message.oauth = object.oauth !== void 0 && object.oauth !== null ? Response9.fromPartial(object.oauth) : void 0;
+    message.storage = object.storage !== void 0 && object.storage !== null ? Response11.fromPartial(object.storage) : void 0;
+    message.oauth = object.oauth !== void 0 && object.oauth !== null ? Response10.fromPartial(object.oauth) : void 0;
     return message;
   }
 };

@@ -97,6 +97,12 @@ public:
 
     auto backButton = new IconButton;
 
+    auto m_icon = new Omnimg::ImageWidget;
+
+    m_icon->setFixedSize(40, 40);
+
+    if (reqData.client().has_icon()) { m_icon->setUrl(reqData.client().icon()); }
+
     backButton->setFixedSize(25, 25);
     backButton->setUrl(BuiltinOmniIconUrl("arrow-left"));
     backButton->setBackgroundColor(SemanticColor::MainSelectedBackground);
@@ -131,7 +137,7 @@ public:
 
     auto content = HStack()
                        .add(VStack()
-                                .addIcon(BuiltinOmniIconUrl("omnicast"), {40, 40}, Qt::AlignHCenter)
+                                .add(m_icon, 0, Qt::AlignHCenter)
                                 .addTitle(client.name().c_str(), SemanticColor::TextPrimary, Qt::AlignHCenter)
                                 .addText("Connect to your account", SemanticColor::TextPrimary,
                                          TextSize::TextRegular, Qt::AlignHCenter)

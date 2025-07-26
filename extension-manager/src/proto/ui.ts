@@ -101,6 +101,45 @@ export function confirmAlertActionStyleToJSON(object: ConfirmAlertActionStyle): 
   }
 }
 
+export enum ImageMask {
+  None = 0,
+  Circle = 1,
+  RoundedRectangle = 2,
+  UNRECOGNIZED = -1,
+}
+
+export function imageMaskFromJSON(object: any): ImageMask {
+  switch (object) {
+    case 0:
+    case "None":
+      return ImageMask.None;
+    case 1:
+    case "Circle":
+      return ImageMask.Circle;
+    case 2:
+    case "RoundedRectangle":
+      return ImageMask.RoundedRectangle;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return ImageMask.UNRECOGNIZED;
+  }
+}
+
+export function imageMaskToJSON(object: ImageMask): string {
+  switch (object) {
+    case ImageMask.None:
+      return "None";
+    case ImageMask.Circle:
+      return "Circle";
+    case ImageMask.RoundedRectangle:
+      return "RoundedRectangle";
+    case ImageMask.UNRECOGNIZED:
+    default:
+      return "UNRECOGNIZED";
+  }
+}
+
 export interface ShowToastRequest {
   id: string;
   title: string;
@@ -199,6 +238,23 @@ export interface RenderNode {
 export interface RenderNode_PropsEntry {
   key: string;
   value: any | undefined;
+}
+
+export interface ThemedImageSource {
+  light: string;
+  dark: string;
+}
+
+export interface ImageSource {
+  raw?: string | undefined;
+  themed?: ThemedImageSource | undefined;
+}
+
+export interface Image {
+  source: ImageSource | undefined;
+  fallback?: ImageSource | undefined;
+  mask?: ImageMask | undefined;
+  colorTint?: string | undefined;
 }
 
 function createBaseShowToastRequest(): ShowToastRequest {
@@ -1749,6 +1805,272 @@ export const RenderNode_PropsEntry: MessageFns<RenderNode_PropsEntry> = {
     const message = createBaseRenderNode_PropsEntry();
     message.key = object.key ?? "";
     message.value = object.value ?? undefined;
+    return message;
+  },
+};
+
+function createBaseThemedImageSource(): ThemedImageSource {
+  return { light: "", dark: "" };
+}
+
+export const ThemedImageSource: MessageFns<ThemedImageSource> = {
+  encode(message: ThemedImageSource, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.light !== "") {
+      writer.uint32(10).string(message.light);
+    }
+    if (message.dark !== "") {
+      writer.uint32(18).string(message.dark);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ThemedImageSource {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseThemedImageSource();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.light = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.dark = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ThemedImageSource {
+    return {
+      light: isSet(object.light) ? globalThis.String(object.light) : "",
+      dark: isSet(object.dark) ? globalThis.String(object.dark) : "",
+    };
+  },
+
+  toJSON(message: ThemedImageSource): unknown {
+    const obj: any = {};
+    if (message.light !== "") {
+      obj.light = message.light;
+    }
+    if (message.dark !== "") {
+      obj.dark = message.dark;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ThemedImageSource>, I>>(base?: I): ThemedImageSource {
+    return ThemedImageSource.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ThemedImageSource>, I>>(object: I): ThemedImageSource {
+    const message = createBaseThemedImageSource();
+    message.light = object.light ?? "";
+    message.dark = object.dark ?? "";
+    return message;
+  },
+};
+
+function createBaseImageSource(): ImageSource {
+  return { raw: undefined, themed: undefined };
+}
+
+export const ImageSource: MessageFns<ImageSource> = {
+  encode(message: ImageSource, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.raw !== undefined) {
+      writer.uint32(10).string(message.raw);
+    }
+    if (message.themed !== undefined) {
+      ThemedImageSource.encode(message.themed, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ImageSource {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseImageSource();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.raw = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.themed = ThemedImageSource.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ImageSource {
+    return {
+      raw: isSet(object.raw) ? globalThis.String(object.raw) : undefined,
+      themed: isSet(object.themed) ? ThemedImageSource.fromJSON(object.themed) : undefined,
+    };
+  },
+
+  toJSON(message: ImageSource): unknown {
+    const obj: any = {};
+    if (message.raw !== undefined) {
+      obj.raw = message.raw;
+    }
+    if (message.themed !== undefined) {
+      obj.themed = ThemedImageSource.toJSON(message.themed);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ImageSource>, I>>(base?: I): ImageSource {
+    return ImageSource.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ImageSource>, I>>(object: I): ImageSource {
+    const message = createBaseImageSource();
+    message.raw = object.raw ?? undefined;
+    message.themed = (object.themed !== undefined && object.themed !== null)
+      ? ThemedImageSource.fromPartial(object.themed)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseImage(): Image {
+  return { source: undefined, fallback: undefined, mask: undefined, colorTint: undefined };
+}
+
+export const Image: MessageFns<Image> = {
+  encode(message: Image, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.source !== undefined) {
+      ImageSource.encode(message.source, writer.uint32(10).fork()).join();
+    }
+    if (message.fallback !== undefined) {
+      ImageSource.encode(message.fallback, writer.uint32(18).fork()).join();
+    }
+    if (message.mask !== undefined) {
+      writer.uint32(24).int32(message.mask);
+    }
+    if (message.colorTint !== undefined) {
+      writer.uint32(34).string(message.colorTint);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): Image {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseImage();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.source = ImageSource.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.fallback = ImageSource.decode(reader, reader.uint32());
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.mask = reader.int32() as any;
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.colorTint = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): Image {
+    return {
+      source: isSet(object.source) ? ImageSource.fromJSON(object.source) : undefined,
+      fallback: isSet(object.fallback) ? ImageSource.fromJSON(object.fallback) : undefined,
+      mask: isSet(object.mask) ? imageMaskFromJSON(object.mask) : undefined,
+      colorTint: isSet(object.colorTint) ? globalThis.String(object.colorTint) : undefined,
+    };
+  },
+
+  toJSON(message: Image): unknown {
+    const obj: any = {};
+    if (message.source !== undefined) {
+      obj.source = ImageSource.toJSON(message.source);
+    }
+    if (message.fallback !== undefined) {
+      obj.fallback = ImageSource.toJSON(message.fallback);
+    }
+    if (message.mask !== undefined) {
+      obj.mask = imageMaskToJSON(message.mask);
+    }
+    if (message.colorTint !== undefined) {
+      obj.colorTint = message.colorTint;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<Image>, I>>(base?: I): Image {
+    return Image.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<Image>, I>>(object: I): Image {
+    const message = createBaseImage();
+    message.source = (object.source !== undefined && object.source !== null)
+      ? ImageSource.fromPartial(object.source)
+      : undefined;
+    message.fallback = (object.fallback !== undefined && object.fallback !== null)
+      ? ImageSource.fromPartial(object.fallback)
+      : undefined;
+    message.mask = object.mask ?? undefined;
+    message.colorTint = object.colorTint ?? undefined;
     return message;
   },
 };

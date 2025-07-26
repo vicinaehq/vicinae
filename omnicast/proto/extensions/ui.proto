@@ -106,3 +106,28 @@ message RenderNode {
   map<string, google.protobuf.Value> props = 4;
   repeated RenderNode children = 5;
 };
+
+message ThemedImageSource {
+  string light = 1;
+  string dark = 2;
+};
+
+message ImageSource {
+  oneof payload {
+    string raw = 1;
+    ThemedImageSource themed = 2;
+  };
+};
+
+enum ImageMask {
+  None = 0;
+  Circle = 1;
+  RoundedRectangle = 2;
+};
+
+message Image {
+  ImageSource source = 1;
+  optional ImageSource fallback = 2;
+  optional ImageMask mask = 3;
+  optional string color_tint = 4;
+};

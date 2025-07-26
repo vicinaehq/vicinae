@@ -1,5 +1,5 @@
 import { hash, randomBytes } from 'node:crypto';
-import { Image, serializeImageLike } from './image';
+import { Image, serializeImageLike, serializeProtoImage } from './image';
 import { bus } from './bus';
 import { RedirectMethod } from './proto/oauth';
 
@@ -339,7 +339,7 @@ export class PKCEClient {
 					 id: this.providerId,
 					 description: this.description ?? '',
 					 name: this.providerName,
-					 icon: ''
+					 icon: this.providerIcon ? serializeProtoImage(this.providerIcon) : undefined
 				 },
 				 url: isAuthorizationOptions(options) ? options.url : options.toURL()
 			 });
