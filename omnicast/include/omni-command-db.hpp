@@ -98,9 +98,10 @@ public:
       }
     }
 
-    if (index == -1) { repositories.push_back(repository); }
-
-    emit registryAdded(repository);
+    if (index == -1) {
+      repositories.push_back(repository);
+      emit registryAdded(repository);
+    }
   }
 
 signals:

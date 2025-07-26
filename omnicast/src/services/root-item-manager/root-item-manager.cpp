@@ -59,8 +59,34 @@ RootProvider *RootItemManager::findProviderById(const QString &id) const {
 
 void RootItemManager::reloadProviders() {
   qDebug() << "reloaded providers!";
-  m_items = m_providers | std::views::transform([](const auto &p) { return p->loadItems(); }) |
-            std::views::join | std::ranges::to<std::vector>();
+
+  m_items.clear();
+
+  for (const auto &provider : m_providers) {
+    upsertProvider(*provider);
+
+    auto items = provider->loadItems();
+
+    if (!upsertProvider(*provider.get())) return;
+
+    m_items.insert(m_items.end(), items.begin(), items.end());
+
+    std::ranges::for_each(items, [&](const auto &item) { upsertItem(provider->uniqueId(), *item.get()); });
+
+    auto preferences = getProviderPreferenceValues(provider->uniqueId());
+
+    if (preferences.empty()) {
+      preferences = provider->generateDefaultPreferences();
+
+      if (!preferences.empty()) {
+        qCritical() << "set default preferences for app" << provider->uniqueId();
+        setProviderPreferenceValues(provider->uniqueId(), preferences);
+      }
+    }
+
+    provider->preferencesChanged(preferences);
+  }
+
   rebuildTrie();
   emit itemsChanged();
 }

@@ -250,6 +250,8 @@ public:
       if (auto mask = image->mask) { setMask(*mask); }
 
       if (url.isValid()) {
+        qDebug() << "url" << url;
+
         if (url.scheme() == "file") {
           setType(OmniIconType::Local);
           setName(url.host() + url.path());
@@ -258,7 +260,8 @@ public:
 
         if (url.scheme() == "data") {
           setType(OmniIconType::DataURI);
-          setName(source.split("data:").at(1));
+          setName(source);
+          return;
         }
 
         if (url.scheme() == "https" || url.scheme() == "http") {

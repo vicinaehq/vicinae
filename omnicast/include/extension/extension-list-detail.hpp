@@ -8,7 +8,10 @@
 class ExtensionListDetail : public DetailWidget {
   MarkdownRenderer *markdownRenderer = new MarkdownRenderer;
 
-  void resizeEvent(QResizeEvent *event) override { DetailWidget::resizeEvent(event); }
+  void resizeEvent(QResizeEvent *event) override {
+    DetailWidget::resizeEvent(event);
+    m_metadata->setMaximumHeight(height() * 0.4);
+  }
 
 public:
   ExtensionListDetail() { setContentWidget(markdownRenderer); }

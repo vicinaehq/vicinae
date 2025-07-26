@@ -5,13 +5,16 @@
 #include <qboxlayout.h>
 #include <qlabel.h>
 #include <qnamespace.h>
+#include <qwidget.h>
 
 HorizontalMetadata::HorizontalMetadata() : layout(new QVBoxLayout) {
-  layout->setAlignment(Qt::AlignTop);
+  auto widget = new QWidget;
+
   layout->setContentsMargins(12, 12, 12, 12);
   layout->setSpacing(10);
-
-  setLayout(layout);
+  layout->addStretch();
+  widget->setLayout(layout);
+  setWidget(widget);
 }
 
 void HorizontalMetadata::add(const QString &title, QWidget *widget) {

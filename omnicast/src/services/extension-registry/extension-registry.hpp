@@ -5,6 +5,8 @@
 #include <expected>
 #include <filesystem>
 #include <qjsonobject.h>
+#include <qobject.h>
+#include <qtmetamacros.h>
 #include <vector>
 #include <QString>
 
@@ -38,7 +40,9 @@ struct ExtensionManifest {
   std::vector<Command> commands;
 };
 
-class ExtensionRegistry {
+class ExtensionRegistry : public QObject {
+  Q_OBJECT
+
   OmniCommandDatabase &m_db;
 
   CommandArgument parseArgumentFromObject(const QJsonObject &obj);

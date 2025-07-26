@@ -499,6 +499,7 @@ set(SRCS
 	src/ui/overlay/overlay.cpp
 
 	src/lib/zip/unzip.cpp
+	src/lib/data-uri/data-uri.cpp
 
 ) 
 

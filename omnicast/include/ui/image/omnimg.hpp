@@ -1,11 +1,14 @@
 #pragma once
 
+#include "common.hpp"
+#include "data-uri/data-uri.hpp"
 #include "image-fetcher.hpp"
 #include "omni-icon.hpp"
 #include "theme.hpp"
 #include "timer.hpp"
 #include "ui/omni-painter.hpp"
 #include <QtConcurrent/qtconcurrentiteratekernel.h>
+#include <QtCore>
 #include <algorithm>
 #include <memory>
 #include <qbuffer.h>
@@ -221,6 +224,7 @@ class LocalImageLoader : public AbstractImageLoader {
   std::unique_ptr<IODeviceImageLoader> m_loader;
   std::filesystem::path m_path;
 
+public:
   void render(const RenderConfig &cfg) override {
     auto file = std::make_unique<QFile>(m_path);
     m_loader = std::make_unique<IODeviceImageLoader>(std::move(file));
@@ -229,8 +233,32 @@ class LocalImageLoader : public AbstractImageLoader {
     m_loader->render(cfg);
   }
 
-public:
   LocalImageLoader(const std::filesystem::path &path) { m_path = path; }
+};
+
+class DataUriImageLoader : public AbstractImageLoader {
+  QTemporaryFile m_tmp;
+  QObjectUniquePtr<LocalImageLoader> m_loader;
+
+  void render(const RenderConfig &config) override { m_loader->render(config); }
+
+public:
+  DataUriImageLoader(const QString &url) {
+    DataUri uri(url);
+
+    if (!m_tmp.open()) {
+      qCritical() << "Failed to open temp file for data URI image";
+      return;
+    }
+
+    m_tmp.write(uri.decodeContent());
+    m_tmp.close();
+    m_loader.reset(new LocalImageLoader(m_tmp.filesystemFileName()));
+
+    connect(m_loader.get(), &LocalImageLoader::dataUpdated, this, &LocalImageLoader::dataUpdated);
+    connect(m_loader.get(), &LocalImageLoader::errorOccured, this, &LocalImageLoader::errorOccured);
+    qDebug() << "content" << m_tmp.filesystemFileName();
+  }
 };
 
 class SvgImageLoader : public AbstractImageLoader {
@@ -492,6 +520,10 @@ class ImageWidget : public QWidget {
 
     else if (type == OmniIconType::System) {
       m_loader = std::make_unique<QIconImageLoader>(url.name());
+    }
+
+    else if (type == OmniIconType::DataURI) {
+      m_loader = std::make_unique<DataUriImageLoader>(QString("data:%1").arg(url.name()));
     }
 
     else if (type == OmniIconType::Builtin) {

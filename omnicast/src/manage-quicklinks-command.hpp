@@ -53,6 +53,11 @@ public:
     setAutoFillBackground(false);
   }
 
+  void resizeEvent(QResizeEvent *event) override {
+    QWidget::resizeEvent(event);
+    m_metadata->setMaximumHeight(height() * 0.4);
+  }
+
   void setupUI() {
     auto layout = new QVBoxLayout;
 

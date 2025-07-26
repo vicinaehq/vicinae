@@ -1,6 +1,7 @@
 #include "ai/ollama-ai-provider.hpp"
 #include "command-controller.hpp"
 #include <QStyleHints>
+#include "data-uri/data-uri.hpp"
 #include "common.hpp"
 #include "ipc-command-server.hpp"
 #include "ipc-command-handler.hpp"
@@ -245,6 +246,16 @@ int startDaemon() {
       registry->commandDb()->registerRepository(repo);
     }
 
+    auto reg = ServiceRegistry::instance()->extensionRegistry();
+
+    QObject::connect(reg, &ExtensionRegistry::extensionAdded, [reg](const QString &id) {
+      for (const auto &manifest : reg->scanAll()) {
+        auto extension = std::make_shared<Extension>(manifest);
+
+        ServiceRegistry::instance()->commandDb()->registerRepository(extension);
+      }
+    });
+
     for (const auto &manifest : extensionRegistry->scanAll()) {
       auto extension = std::make_shared<Extension>(manifest);
 
@@ -337,6 +348,18 @@ int main(int argc, char **argv) {
   QApplication qapp(argc, argv);
 
   qInstallMessageHandler(coloredMessageHandler);
+
+  /*
+  QString text(
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/"
+      "PchI7wAAAABJRU5ErkJggg==");
+          */
+
+  QString text("data:image/png;base64,aGVsbG8gd29yZA0K");
+
+  DataUri uri(text);
+
+  qDebug() << "DATA URI" << uri.m_mediaType << uri.m_content << uri.decodeContent().toStdString();
 
   if (qapp.arguments().size() == 2 && qapp.arguments().at(1) == "server") { return startDaemon(); }
 
