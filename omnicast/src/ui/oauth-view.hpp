@@ -14,12 +14,14 @@
 #include "ui/toast.hpp"
 #include "ui/typography/typography.hpp"
 #include "utils/layout.hpp"
+#include <absl/strings/internal/str_format/extension.h>
 #include <qcoreevent.h>
 #include <qevent.h>
 #include <qfuture.h>
 #include <qfuturewatcher.h>
 #include <qlogging.h>
 #include <qnamespace.h>
+#include <qwidget.h>
 
 class OAuthView : public OverlayView {
   QFutureWatcher<OAuthResponse> m_watcher;
@@ -68,40 +70,20 @@ class OAuthView : public OverlayView {
     QWidget::keyPressEvent(key);
   }
 
-  /*
-  void paintEvent(QPaintEvent *event) {
-    QPainter painter(this);
-
-    painter.fillRect(rect(), QColor("red"));
-
-    QWidget::paintEvent(event);
-  }
-  */
-
 public:
   OAuthView(ApplicationContext *ctx, ExtensionRequest *request,
             const proto::ext::oauth::AuthorizeRequest &reqData)
       : m_ctx(ctx), m_request(request), m_reqData(reqData) {
-    setMouseTracking(true);
-
     setFocusPolicy(Qt::StrongFocus);
 
     auto oauth = m_ctx->services->oauthService();
     auto data = OAuthRequestData::fromUrl(QUrl(m_reqData.url().c_str()));
-
-    qDebug() << "url" << m_reqData.url().c_str();
 
     m_watcher.setFuture(oauth->request(OAuthClient::fromProto(m_reqData.client()), data));
 
     connect(&m_watcher, &QFutureWatcher<OAuthResponse>::finished, this, &OAuthView::handleFinished);
 
     auto backButton = new IconButton;
-
-    auto m_icon = new Omnimg::ImageWidget;
-
-    m_icon->setFixedSize(40, 40);
-
-    if (reqData.client().has_icon()) { m_icon->setUrl(reqData.client().icon()); }
 
     backButton->setFixedSize(25, 25);
     backButton->setUrl(BuiltinOmniIconUrl("arrow-left"));
@@ -113,39 +95,32 @@ public:
 
     auto &client = reqData.client();
 
-    auto need = new TypographyWidget;
     QString url = reqData.url().c_str();
 
-    need->setColor(SemanticColor::TextSecondary);
-    need->setText(QString("Need to open in another browser? <a href=\"%1\">Copy authorization link</a>")
-                      .arg(reqData.url().c_str()));
-    need->setAutoEllide(false);
+    auto helpText = QString("Need to open in another browser? <a href=\"%1\">Copy authorization link</a>")
+                        .arg(reqData.url().c_str());
 
-    auto btn = new OmniButtonWidget;
+    auto clicked = [this, url]() {
+      // m_ctx->navigation->popToRoot();
+      // dismiss();
+      m_ctx->services->appDb()->openTarget(url);
+    };
+    OmniIconUrl iconUrl;
 
-    btn->setText(QString("Sign in with %1").arg(client.name().c_str()));
-    btn->setBackgroundColor(SemanticColor::MainSelectedBackground);
-    btn->setHoverBackgroundColor(SemanticColor::MainHoverBackground);
+    if (reqData.client().has_icon()) { iconUrl = reqData.client().icon(); }
 
-    connect(btn, &OmniButtonWidget::clicked, this,
-            [this, url]() { m_ctx->services->appDb()->openTarget(url); });
-
-    connect(backButton, &IconButton::clicked, this, [this]() {
-      m_ctx->navigation->popToRoot();
-      dismiss();
-    });
-
-    auto content = HStack()
-                       .add(VStack()
-                                .add(m_icon, 0, Qt::AlignHCenter)
-                                .addTitle(client.name().c_str(), SemanticColor::TextPrimary, Qt::AlignHCenter)
-                                .addText("Connect to your account", SemanticColor::TextPrimary,
-                                         TextSize::TextRegular, Qt::AlignHCenter)
-                                .add(btn, 0, Qt::AlignHCenter)
-                                .addStretch()
-                                .add(HStack().addStretch().add(need).addStretch())
-                                .spacing(20))
-                       .margins(40, 40, 40, 40);
+    auto content =
+        HStack()
+            .add(VStack()
+                     .add(UI::Icon(iconUrl).size({40, 40}), 0, Qt::AlignCenter)
+                     .add(UI::Text(client.name().c_str()).title().align(Qt::AlignHCenter))
+                     .add(UI::Text(client.description().c_str()).align(Qt::AlignHCenter))
+                     .add(UI::Button(QString("Sign in with %1").arg(client.name().c_str())).onClick(clicked),
+                          0, Qt::AlignHCenter)
+                     .addStretch()
+                     .add(UI::Text(helpText).secondary().align(Qt::AlignHCenter).autoEllide(false))
+                     .spacing(20))
+            .margins(40, 40, 40, 40);
 
     VStack().add(header).add(content).imbue(this);
   }

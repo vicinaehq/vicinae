@@ -55,6 +55,11 @@ Stack &Stack::justifyBetween() {
   return *this;
 }
 
+Stack &Stack::center() {
+  align(AlignStrategy::Center);
+  return *this;
+}
+
 Stack &Stack::addStretch(int stretch) {
   m_items.emplace_back(LayoutStretch{stretch});
   return *this;
@@ -142,6 +147,8 @@ QBoxLayout *Stack::buildLayout() const {
     ++widgetCount;
   };
 
+  if (align() == AlignStrategy::Center) layout->addStretch();
+
   for (const auto &item : items()) {
     if (auto stretch = std::get_if<LayoutStretch>(&item)) {
       layout->addStretch(stretch->stretch);
@@ -154,6 +161,8 @@ QBoxLayout *Stack::buildLayout() const {
       pushWidget(child);
     }
   }
+
+  if (align() == AlignStrategy::Center) layout->addStretch();
 
   return layout;
 }
