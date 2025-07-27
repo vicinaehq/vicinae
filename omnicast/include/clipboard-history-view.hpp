@@ -386,7 +386,10 @@ class ClipboardHistoryView : public SimpleView {
   QTimer m_searchDebounce;
   PreferenceDropdown *m_filterInput = new PreferenceDropdown(this);
 
-  void handleDebounce() { generateList(searchText()); }
+  void handleDebounce() {
+    qDebug() << "search text" << searchText();
+    generateList(searchText());
+  }
 
   QWidget *searchBarAccessory() const override { return m_filterInput; }
 

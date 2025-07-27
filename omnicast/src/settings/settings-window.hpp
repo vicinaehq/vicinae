@@ -1,4 +1,6 @@
 #pragma once
+#include "app/app-database.hpp"
+#include "common.hpp"
 #include "omni-icon.hpp"
 #include "theme.hpp"
 #include "ui/image/omnimg.hpp"
@@ -168,6 +170,7 @@ struct PaneInfo {
 };
 
 class SettingsWindow : public QMainWindow {
+  ApplicationContext *m_ctx = nullptr;
   std::vector<std::unique_ptr<SettingsCategory>> m_categories;
   SettingsNavWidget *m_navigation = new SettingsNavWidget;
   QStackedWidget *content = new QStackedWidget;
@@ -177,6 +180,6 @@ class SettingsWindow : public QMainWindow {
   QWidget *createWidget();
 
 public:
-  SettingsWindow();
+  SettingsWindow(ApplicationContext *ctx);
   ~SettingsWindow();
 };

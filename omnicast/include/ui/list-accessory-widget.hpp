@@ -18,7 +18,7 @@ struct ListAccessory {
 class ListAccessoryWidget : public QWidget {
   QHBoxLayout *_layout;
   Omnimg::ImageWidget *_icon = nullptr;
-  Tooltip *_tooltip;
+  TooltipWidget *_tooltip;
   ListAccessory _accessory;
   TypographyWidget *_text;
 

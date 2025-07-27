@@ -17,7 +17,7 @@ private:
   Q_OBJECT
   bool m_selected;
   Inset m_inset;
-  Tooltip *m_tooltip;
+  TooltipWidget *m_tooltip;
   QWidget *m_widget;
 
 protected:

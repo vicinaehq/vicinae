@@ -9,7 +9,7 @@
 #include <qpainterpath.h>
 #include <qwidget.h>
 
-class Tooltip : public QWidget {
+class TooltipWidget : public QWidget {
   QWidget *m_target = nullptr;
   QWidget *m_content = nullptr;
   Qt::Alignment m_alignment = Qt::AlignBottom | Qt::AlignCenter;
@@ -26,7 +26,7 @@ class Tooltip : public QWidget {
   }
 
 public:
-  Tooltip(QWidget *parent = nullptr);
+  TooltipWidget(QWidget *parent = nullptr);
   void setAlignment(Qt::Alignment align);
   void setWidget(QWidget *widget);
   void setTarget(QWidget *target);

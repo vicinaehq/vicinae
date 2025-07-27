@@ -57,6 +57,8 @@
 #include "root-search/bookmarks/bookmark-root-provider.hpp"
 #include "service-registry.hpp"
 #include "services/toast/toast-service.hpp"
+#include "settings-controller/settings-controller.hpp"
+#include "settings/settings-window.hpp"
 #include "theme.hpp"
 #include "utils/utils.hpp"
 
@@ -299,6 +301,7 @@ int startDaemon() {
   ctx.navigation = std::make_unique<NavigationController>(ctx);
   ctx.command = std::make_unique<CommandController>(&ctx);
   ctx.overlay = std::make_unique<OverlayController>(&ctx);
+  ctx.settings = std::make_unique<SettingsController>();
   ctx.services = ServiceRegistry::instance();
 
   IpcCommandServer commandServer;
@@ -306,6 +309,7 @@ int startDaemon() {
   commandServer.setHandler(new IpcCommandHandler(ctx));
   commandServer.start(Omnicast::commandSocketPath());
 
+  SettingsWindow settings(&ctx);
   LauncherWindow launcher(ctx);
 
   launcher.show();

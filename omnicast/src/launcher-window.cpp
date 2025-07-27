@@ -19,6 +19,7 @@
 #include "ui/hud/hud.hpp"
 #include "ui/dialog.hpp"
 #include <QStackedWidget>
+#include "settings-controller/settings-controller.hpp"
 
 void LauncherWindow::showEvent(QShowEvent *event) { m_hud->hide(); }
 
@@ -158,6 +159,11 @@ bool LauncherWindow::event(QEvent *event) {
 
     if (keyEvent->keyCombination() == QKeyCombination(Qt::ShiftModifier, Qt::Key_Escape)) {
       m_ctx.navigation->popToRoot();
+      return true;
+    }
+
+    if (keyEvent->keyCombination() == QKeyCombination(Qt::ControlModifier, Qt::Key_Comma)) {
+      m_ctx.settings->openWindow();
       return true;
     }
 

@@ -151,6 +151,9 @@ set(SRCS
 	src/services/local-storage/local-storage-service.hpp
 	src/services/local-storage/local-storage.cpp
 
+	src/settings-controller/settings-controller.hpp
+	src/settings-controller/settings-controller.cpp
+
 	src/services/config/config-service.hpp
 
 	src/services/toast/toast-service.hpp

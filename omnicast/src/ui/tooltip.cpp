@@ -6,7 +6,7 @@
 #include <qobjectdefs.h>
 #include <qwidget.h>
 
-bool Tooltip::eventFilter(QObject *watched, QEvent *event) {
+bool TooltipWidget::eventFilter(QObject *watched, QEvent *event) {
   if (watched != m_target) return QWidget::eventFilter(watched, event);
 
   if (event->type() == QEvent::HoverEnter) {
@@ -25,7 +25,7 @@ bool Tooltip::eventFilter(QObject *watched, QEvent *event) {
   return QWidget::eventFilter(watched, event);
 }
 
-void Tooltip::paintEvent(QPaintEvent *event) {
+void TooltipWidget::paintEvent(QPaintEvent *event) {
   auto &theme = ThemeService::instance().theme();
   int borderRadius = 10;
 
@@ -46,7 +46,7 @@ void Tooltip::paintEvent(QPaintEvent *event) {
   painter.drawPath(path);
 }
 
-QPoint Tooltip::calculatePosition(Qt::Alignment align) const {
+QPoint TooltipWidget::calculatePosition(Qt::Alignment align) const {
   if (!m_target) { return {}; }
 
   QPoint baseTargetPos;
@@ -69,19 +69,19 @@ QPoint Tooltip::calculatePosition(Qt::Alignment align) const {
   return {xpos, ypos};
 }
 
-void Tooltip::position() {
+void TooltipWidget::position() {
   auto pos = calculatePosition(m_alignment);
   move(pos);
 }
 
-void Tooltip::showEvent(QShowEvent *event) {
+void TooltipWidget::showEvent(QShowEvent *event) {
   if (!m_content) return;
 
   position();
   QWidget::showEvent(event);
 }
 
-void Tooltip::setWidget(QWidget *widget) {
+void TooltipWidget::setWidget(QWidget *widget) {
   if (auto item = m_layout->itemAt(0)) {
     if (auto previous = item->widget()) {
       m_layout->replaceWidget(previous, widget);
@@ -92,7 +92,7 @@ void Tooltip::setWidget(QWidget *widget) {
   m_content = widget;
 }
 
-void Tooltip::setText(const QString &s) {
+void TooltipWidget::setText(const QString &s) {
   if (s.isEmpty()) {
     if (m_content) m_content->deleteLater();
     m_content = nullptr;
@@ -105,7 +105,7 @@ void Tooltip::setText(const QString &s) {
   setWidget(typography);
 }
 
-void Tooltip::setTarget(QWidget *target) {
+void TooltipWidget::setTarget(QWidget *target) {
   if (m_target) { m_target->removeEventFilter(this); }
 
   m_target = target;
@@ -113,7 +113,7 @@ void Tooltip::setTarget(QWidget *target) {
   m_target->installEventFilter(this);
 }
 
-Tooltip::Tooltip(QWidget *parent) {
+TooltipWidget::TooltipWidget(QWidget *parent) {
   if (parent) setParent(parent->window());
   setWindowFlags(Qt::ToolTip | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
   setAttribute(Qt::WA_TranslucentBackground);
@@ -128,7 +128,7 @@ Tooltip::Tooltip(QWidget *parent) {
   setLayout(m_layout);
 }
 
-void Tooltip::setAlignment(Qt::Alignment align) {
+void TooltipWidget::setAlignment(Qt::Alignment align) {
   m_alignment = align;
   position();
 }

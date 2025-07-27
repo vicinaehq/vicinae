@@ -96,7 +96,7 @@ void GridItemContentWidget::showTooltip() {}
 void GridItemContentWidget::setTooltipText(const QString &text) { m_tooltip->setText(text); }
 
 GridItemContentWidget::GridItemContentWidget()
-    : m_widget(nullptr), m_selected(false), m_tooltip(new Tooltip(this)), m_inset(Inset::Small) {
+    : m_widget(nullptr), m_selected(false), m_tooltip(new TooltipWidget(this)), m_inset(Inset::Small) {
   setAttribute(Qt::WA_Hover);
   m_tooltip->hide();
   m_tooltip->setTarget(this);

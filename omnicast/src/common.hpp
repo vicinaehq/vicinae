@@ -188,10 +188,12 @@ class NavigationController;
 class CommandController;
 class ServiceRegistry;
 class OverlayController;
+class SettingsController;
 
 struct ApplicationContext {
   std::unique_ptr<NavigationController> navigation;
   std::unique_ptr<CommandController> command;
   std::unique_ptr<OverlayController> overlay;
   ServiceRegistry *services;
+  std::unique_ptr<SettingsController> settings;
 };

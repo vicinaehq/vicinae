@@ -14,7 +14,7 @@ void BaseInput::paintEvent(QPaintEvent *event) {
   int borderRadius = 6;
   QPainter painter(this);
 
-  QPen pen(hasFocus() ? theme.colors.subtext : theme.colors.border, 3);
+  QPen pen(hasFocus() ? theme.colors.inputBorderFocus : theme.colors.inputBorder, 3);
   painter.setPen(pen);
   painter.setRenderHint(QPainter::Antialiasing, true);
   painter.drawRoundedRect(rect(), borderRadius, borderRadius);

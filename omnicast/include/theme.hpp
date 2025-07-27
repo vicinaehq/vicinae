@@ -15,6 +15,8 @@
 
 enum SemanticColor {
   InvalidTint,
+
+  // Basic color palette
   Blue,
   Green,
   Magenta,
@@ -22,13 +24,78 @@ enum SemanticColor {
   Purple,
   Red,
   Yellow,
+
+  // Text colors
   TextPrimary,
   TextSecondary,
-  Border,
+  TextTertiary, // Even more subtle than secondary
+  TextDisabled, // For disabled text
+  TextOnAccent, // White/black text on colored backgrounds
+  TextError,    // Error messages
+  TextSuccess,  // Success messages
+  TextWarning,  // Warning messages
+
+  // Background colors
   MainBackground,
   MainHoverBackground,
-  MainSelectedBackground
+  MainSelectedBackground,
+  SecondaryBackground, // Cards, panels
+  TertiaryBackground,  // Deep inset areas
+
+  // Button states
+  ButtonPrimary,
+  ButtonPrimaryHover,
+  ButtonPrimaryPressed,
+  ButtonPrimaryDisabled,
+
+  ButtonSecondary,
+  ButtonSecondaryHover,
+  ButtonSecondaryPressed,
+  ButtonSecondaryDisabled,
+
+  ButtonDestructive, // Delete, remove actions
+  ButtonDestructiveHover,
+  ButtonDestructivePressed,
+
+  // Input/form states
+  InputBackground,
+  InputBorder,
+  InputBorderFocus,
+  InputBorderError,
+  InputPlaceholder,
+
+  // UI elements
+  Border,
+  BorderSubtle, // Very light borders
+  BorderStrong, // Emphasized borders
+
+  Separator, // Divider lines
+  Shadow,    // Drop shadows
+
+  // Status/feedback colors
+  StatusBackground,
+  StatusBorder,
+  StatusHover,
+
+  ErrorBackground, // Error state backgrounds
+  ErrorBorder,
+  SuccessBackground, // Success state backgrounds
+  SuccessBorder,
+  WarningBackground, // Warning state backgrounds
+  WarningBorder,
+
+  // Interactive elements
+  LinkDefault,
+  LinkHover,
+  LinkVisited,
+
+  // Special states
+  Focus,       // Focus rings
+  Overlay,     // Modal overlays, tooltips
+  Tooltip,     // Tooltip backgrounds
+  TooltipText, // Tooltip text
 };
+
 enum TextSize { TextRegular, TextTitle, TextSmaller };
 
 struct ThemeLinearGradient {
@@ -92,84 +159,62 @@ struct ThemeInfo {
     QColor purple;
     QColor red;
     QColor yellow;
+
+    QColor textTertiary;
+    QColor textDisabled;
+    QColor textOnAccent;
+
+    QColor secondaryBackground;
+    QColor tertiaryBackground;
+
+    QColor buttonPrimary;
+    QColor buttonPrimaryHover;
+    QColor buttonPrimaryPressed;
+    QColor buttonPrimaryDisabled;
+
+    QColor buttonSecondary;
+    QColor buttonSecondaryHover;
+    QColor buttonSecondaryPressed;
+    QColor buttonSecondaryDisabled;
+
+    QColor buttonDestructive;
+    QColor buttonDestructiveHover;
+    QColor buttonDestructivePressed;
+
+    QColor inputBackground;
+    QColor inputBorder;
+    QColor inputBorderFocus;
+    QColor inputBorderError;
+    QColor inputPlaceholder;
+
+    QColor borderSubtle;
+    QColor borderStrong;
+    QColor separator;
+    QColor shadow;
+
+    QColor errorBackground;
+    QColor errorBorder;
+    QColor successBackground;
+    QColor successBorder;
+    QColor warningBackground;
+    QColor warningBorder;
+
+    QColor linkDefault;
+    QColor linkHover;
+    QColor linkVisited;
+
+    QColor focus;
+    QColor overlay;
+    QColor tooltip;
+    QColor tooltipText;
   } colors;
 
-  QColor resolveTint(SemanticColor tint) const {
-    switch (tint) {
-    case SemanticColor::Blue:
-      return colors.blue;
-    case SemanticColor::Green:
-      return colors.green;
-    case SemanticColor::Magenta:
-      return colors.magenta;
-    case SemanticColor::Orange:
-      return colors.orange;
-    case SemanticColor::Purple:
-      return colors.purple;
-    case SemanticColor::Red:
-      return colors.red;
-    case SemanticColor::Yellow:
-      return colors.yellow;
-    case SemanticColor::TextPrimary:
-      return colors.text;
-    case SemanticColor::TextSecondary:
-      return colors.subtext;
-    case SemanticColor::MainBackground:
-      return colors.mainBackground;
-    case SemanticColor::MainHoverBackground:
-      return colors.mainHoveredBackground;
-    case SemanticColor::MainSelectedBackground:
-      return colors.mainSelectedBackground;
-    case SemanticColor::Border:
-      return colors.border;
-    default:
-      break;
-    }
+  static QColor adjustColorHSL(const QColor &base, int hueShift = 0, float satMult = 1.0f,
+                               float lightMult = 1.0f);
 
-    return {};
-  }
+  QColor resolveTint(SemanticColor tint) const;
 
-  static ThemeInfo fromParsed(const ParsedThemeData &scheme) {
-    ThemeInfo info;
-
-    info.id = scheme.id;
-    info.name = scheme.name;
-    info.appearance = scheme.appearance;
-    info.icon = scheme.icon;
-    info.description = scheme.description;
-    info.colors.blue = scheme.palette.blue;
-    info.colors.green = scheme.palette.green;
-    info.colors.magenta = scheme.palette.magenta;
-    info.colors.orange = scheme.palette.orange;
-    info.colors.purple = scheme.palette.purple;
-    info.colors.red = scheme.palette.red;
-    info.colors.yellow = scheme.palette.yellow;
-    info.colors.mainBackground = scheme.palette.background;
-
-    if (scheme.appearance == "dark") {
-      info.colors.border = info.colors.mainBackground.lighter(180);
-      info.colors.mainSelectedBackground = info.colors.mainBackground.lighter(135);
-      info.colors.mainHoveredBackground = info.colors.mainBackground.lighter(140);
-      info.colors.statusBackground = info.colors.mainBackground.lighter(140);
-      info.colors.statusBackgroundLighter = info.colors.statusBackground.lighter(150);
-      info.colors.statusBackgroundHover = info.colors.statusBackground.lighter(120);
-      info.colors.statusBackgroundBorder = info.colors.statusBackground.lighter(180);
-      info.colors.text = scheme.palette.foreground;
-      info.colors.subtext = scheme.palette.foreground.darker(150);
-    } else {
-      info.colors.border = info.colors.mainBackground.darker(130);
-      info.colors.mainSelectedBackground = info.colors.mainBackground.darker(115);
-      info.colors.mainHoveredBackground = info.colors.mainBackground.darker(120);
-      info.colors.statusBackground = info.colors.mainBackground.darker(110);
-      info.colors.statusBackgroundLighter = info.colors.statusBackground.darker(130);
-      info.colors.statusBackgroundHover = info.colors.statusBackground.darker(100);
-      info.colors.statusBackgroundBorder = info.colors.statusBackground.darker(160);
-      info.colors.text = scheme.palette.foreground;
-      info.colors.subtext = scheme.palette.foreground.lighter(130);
-    }
-
-    return info;
-  }
+  static ThemeInfo fromParsed(const ParsedThemeData &scheme);
 };
 
 class ThemeService : public QObject {
@@ -185,58 +230,25 @@ class ThemeService : public QObject {
   ThemeService(const ThemeService &rhs) = delete;
   ThemeService &operator=(const ThemeService &rhs) = delete;
 
-  ThemeService() {
-    registerBuiltinThemes();
-    scanThemeDirectories();
-  }
+  ThemeService();
 
 public:
-  static ThemeService &instance() {
-    static ThemeService _instance;
+  static ThemeService &instance();
 
-    return _instance;
-  }
-
-  int pointSize(TextSize size) const {
-    switch (size) {
-    case TextSize::TextRegular:
-      return m_baseFontPointSize;
-    case TextSize::TextTitle:
-      return m_baseFontPointSize * 1.5;
-    case TextSize::TextSmaller:
-      return m_baseFontPointSize * 0.9;
-    }
-
-    return m_baseFontPointSize;
-  }
+  int pointSize(TextSize size) const;
 
   /**
    * Returns the theme that is currently in use
    */
-  const ThemeInfo &theme() const { return m_theme; }
+  const ThemeInfo &theme() const;
 
   std::vector<ParsedThemeData> loadColorSchemes() const;
 
-  std::optional<ThemeInfo> theme(const QString &name) const {
-    for (const auto &info : m_themes) {
-      if (info.name == name) { return info; }
-    }
+  std::optional<ThemeInfo> theme(const QString &name) const;
 
-    return std::nullopt;
-  }
+  bool setTheme(const QString &name);
 
-  bool setTheme(const QString &name) {
-    for (const auto &info : m_themes) {
-      if (info.id == name) {
-        setTheme(info);
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  ColorLike getTintColor(SemanticColor tint) const { return m_theme.resolveTint(tint); }
+  ColorLike getTintColor(SemanticColor tint) const;
 
   void setTheme(const ThemeInfo &info);
 

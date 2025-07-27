@@ -4,6 +4,7 @@
 #include "common.hpp"
 #include "services/config/config-service.hpp"
 #include "service-registry.hpp"
+#include "settings-controller/settings-controller.hpp"
 
 static constexpr QSize windowSize(1000, 600);
 
@@ -61,7 +62,7 @@ void SettingsWindow::showEvent(QShowEvent *event) {
   QMainWindow::showEvent(event);
 }
 
-SettingsWindow::SettingsWindow() {
+SettingsWindow::SettingsWindow(ApplicationContext *ctx) : m_ctx(ctx) {
   setWindowFlags(Qt::FramelessWindowHint);
   setAttribute(Qt::WA_TranslucentBackground, true);
   setMinimumSize(windowSize);
@@ -72,6 +73,9 @@ SettingsWindow::SettingsWindow() {
   m_categories.emplace_back(std::make_unique<AdvancedSettingsCategory>());
   m_categories.emplace_back(std::make_unique<AboutSettingsCategory>());
   setCentralWidget(createWidget());
+
+  connect(m_ctx->settings.get(), &SettingsController::windowVisiblityChangeRequested, this,
+          [this](bool value) { setVisible(value); });
 }
 
 SettingsWindow::~SettingsWindow() {}
