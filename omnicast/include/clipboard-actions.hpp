@@ -1,4 +1,5 @@
 #pragma once
+#include "common.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
@@ -11,27 +12,13 @@ class CopyToClipboardAction : public AbstractAction {
   Clipboard::CopyOptions m_opts;
 
 public:
-  void execute(ApplicationContext *context) override {
-    auto clipman = context->services->clipman();
+  void execute(ApplicationContext *ctx) override {
+    auto clipman = ctx->services->clipman();
 
     if (clipman->copyContent(m_content, m_opts)) {
-      // ui->setToast("Copied");
-      context->navigation->closeWindow();
+      ctx->navigation->showHud("Copied to clipboard", BuiltinOmniIconUrl("copy-clipboard"));
       return;
     }
-  }
-
-  void execute() override {
-    auto ui = ServiceRegistry::instance()->UI();
-    auto clipman = ServiceRegistry::instance()->clipman();
-
-    if (clipman->copyContent(m_content, m_opts)) {
-      ui->setToast("Copied");
-      ui->closeWindow();
-      return;
-    }
-
-    ui->setToast("Failed to copy to clipboard", ToastPriority::Danger);
   }
 
 public:
@@ -62,11 +49,10 @@ class PasteToFocusedWindowAction : public AbstractAction {
   }
 
 protected:
-  void execute() override {
-    auto wm = ServiceRegistry::instance()->windowManager();
-    auto clipman = ServiceRegistry::instance()->clipman();
-    auto appDb = ServiceRegistry::instance()->appDb();
-    auto ui = ServiceRegistry::instance()->UI();
+  void execute(ApplicationContext *ctx) override {
+    auto wm = ctx->services->windowManager();
+    auto clipman = ctx->services->clipman();
+    auto appDb = ctx->services->appDb();
     auto window = wm->getActiveWindowSync();
     KeyboardShortcut shortcut = KeyboardShortcut::paste();
 
@@ -74,7 +60,7 @@ protected:
       if (app->isTerminalEmulator()) { shortcut = KeyboardShortcut::shiftPaste(); }
     }
 
-    ui->closeWindow();
+    ctx->navigation->closeWindow();
     clipman->copyContent(m_content, {.concealed = true});
     QTimer::singleShot(10, [wm, window, shortcut]() { wm->sendShortcutSync(*window.get(), shortcut); });
   }

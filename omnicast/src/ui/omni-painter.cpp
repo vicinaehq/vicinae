@@ -39,6 +39,10 @@ void OmniPainter::fillRect(QRect rect, const ThemeLinearGradient &lgrad, int rad
   drawRoundedRect(rect, radius, radius);
 }
 
+QColor OmniPainter::resolveColor(SemanticColor color) const {
+  return ThemeService::instance().theme().resolveTint(color);
+}
+
 void OmniPainter::fillRect(QRect rect, const ThemeRadialGradient &rgrad, int radius, float alpha) {
   QRadialGradient gradient(rect.center(), rect.width() / 2.0);
 

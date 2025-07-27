@@ -1,6 +1,5 @@
 #include "command-database.hpp"
 #include "create-quicklink-command.hpp"
-#include "configure-ai-providers-command.hpp"
 #include "extensions/clipboard/clipboard-extension.hpp"
 #include "extensions/calculator/calculator-extension.hpp"
 #include "emoji-command.hpp"

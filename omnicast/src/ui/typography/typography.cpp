@@ -1,4 +1,5 @@
 #include "ui/typography/typography.hpp"
+#include "theme.hpp"
 #include "ui/omni-painter.hpp"
 #include <qboxlayout.h>
 #include <qlabel.h>
@@ -80,9 +81,10 @@ QSize TypographyWidget::sizeHint() const {
 }
 
 void TypographyWidget::setSize(TextSize size) {
+  auto &theme = ThemeService::instance();
   QFont _font = font();
 
-  _font.setPointSize(m_theme.pointSize(size));
+  _font.setPointSize(theme.pointSize(size));
   _font.setWeight(m_weight);
 
   m_size = size;
@@ -104,8 +106,9 @@ void TypographyWidget::setColor(const ColorLike &color) {
 
 void TypographyWidget::setFont(const QFont &f) {
   QFont font(f);
+  auto &theme = ThemeService::instance();
 
-  font.setPointSize(m_theme.pointSize(m_size));
+  font.setPointSize(theme.pointSize(m_size));
   font.setWeight(m_weight);
   m_label->setFont(font);
   updateText();
@@ -117,8 +120,9 @@ void TypographyWidget::setWordWrap(bool wrap) { m_label->setWordWrap(wrap); }
 
 void TypographyWidget::setFontWeight(QFont::Weight weight) {
   QFont _font = font();
+  auto &theme = ThemeService::instance();
 
-  _font.setPointSize(m_theme.pointSize(m_size));
+  _font.setPointSize(theme.pointSize(m_size));
   _font.setWeight(weight);
   m_label->setFont(_font);
 
@@ -128,9 +132,10 @@ void TypographyWidget::setFontWeight(QFont::Weight weight) {
 
 void TypographyWidget::clear() { setText(""); }
 
-TypographyWidget::TypographyWidget(QWidget *parent) : QWidget(parent) {
+TypographyWidget::TypographyWidget(QWidget *parent) : QWidget(parent), m_color(SemanticColor::TextPrimary) {
   QVBoxLayout *layout = new QVBoxLayout;
 
+  m_label = new QLabel(this);
   m_label->setOpenExternalLinks(true);
   layout->setSpacing(0);
   layout->setContentsMargins(0, 0, 0, 0);

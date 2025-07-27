@@ -1,10 +1,11 @@
 #pragma once
+#include "common.hpp"
 #include "ui/action-pannel/action.hpp"
 
 class DisableItemAction : public AbstractAction {
   QString m_id;
 
-  void execute() override;
+  void execute(ApplicationContext *ctx) override;
 
 public:
   DisableItemAction(const QString &id);
@@ -21,7 +22,7 @@ public:
 class MarkItemAsFavorite : public AbstractAction {
   QString m_id;
 
-  void execute() override;
+  void execute(ApplicationContext *ctx) override;
 
 public:
   MarkItemAsFavorite(const QString &id);
@@ -31,7 +32,7 @@ class ToggleItemAsFavorite : public AbstractAction {
   QString m_id;
   bool m_value;
 
-  void execute() override;
+  void execute(ApplicationContext *ctx) override;
   QString title() const override;
   OmniIconUrl icon() const override;
 
@@ -53,7 +54,6 @@ class DefaultActionWrapper : public AbstractAction {
   std::unique_ptr<AbstractAction> m_action;
   QString m_id;
 
-  void execute() override;
   void execute(ApplicationContext *context) override;
 
 public:

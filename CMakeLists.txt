@@ -8,7 +8,7 @@ add_compile_definitions(OMNICAST_VERSION="${OMNICAST_VERSION}")
 find_program(CCACHE ccache)
 
 if (CCACHE) 
-	set(CMAKE_CXX_COMPILER_LAUNCHER "ccache")
+	#set(CMAKE_CXX_COMPILER_LAUNCHER "ccache")
 endif()
 
 if ("$ENV{DIST_TYPE}" STREQUAL "generic")

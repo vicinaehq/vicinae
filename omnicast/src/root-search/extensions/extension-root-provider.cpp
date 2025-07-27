@@ -5,7 +5,6 @@
 #include "clipboard-actions.hpp"
 #include "command-actions.hpp"
 #include "navigation-controller.hpp"
-#include "service-registry.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 
 QString CommandRootItem::displayName() const { return m_command->name(); }
@@ -65,7 +64,7 @@ std::unique_ptr<ActionPanelState> CommandRootItem::newActionPanel(ApplicationCon
 
 ActionPanelView *CommandRootItem::fallbackActionPanel() const {
   auto panel = new ActionPanelStaticListView;
-  auto ui = ServiceRegistry::instance()->UI();
+  // auto ui = ServiceRegistry::instance()->UI();
 
   // TODO: fix this
   panel->addAction(new OpenBuiltinCommandAction(m_command, "Open command", ""));

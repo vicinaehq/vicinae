@@ -2,6 +2,7 @@
 #include "omni-icon.hpp"
 #include "theme.hpp"
 #include "ui/dialog.hpp"
+#include "ui/image/omnimg.hpp"
 #include "ui/omni-button.hpp"
 #include "ui/typography/typography.hpp"
 #include <qboxlayout.h>
@@ -29,7 +30,7 @@ public:
 class AlertWidget : public DialogContentWidget {
   Q_OBJECT
 
-  OmniIcon *_icon;
+  Omnimg::ImageWidget *_icon;
   TypographyWidget *_title;
   TypographyWidget *_message;
   OmniButtonWidget *_cancelBtn;
@@ -106,7 +107,7 @@ public:
     _actionBtn->setColor(color);
   }
   AlertWidget(QWidget *parent = nullptr)
-      : DialogContentWidget(parent), _icon(new OmniIcon), _title(new TypographyWidget),
+      : DialogContentWidget(parent), _icon(new Omnimg::ImageWidget), _title(new TypographyWidget),
         _message(new TypographyWidget), _cancelBtn(new OmniButtonWidget), _actionBtn(new OmniButtonWidget) {
     auto layout = new QVBoxLayout;
 

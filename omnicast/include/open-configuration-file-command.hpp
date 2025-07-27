@@ -1,5 +1,4 @@
 #pragma once
-#include "app.hpp"
 #include "command.hpp"
 #include "omnicast.hpp"
 #include "service-registry.hpp"
@@ -8,7 +7,6 @@
 class OpenConfigurationFileCommand : public CommandContext {
 public:
   void load(const LaunchProps &props) override {
-    auto ui = ServiceRegistry::instance()->UI();
     auto appDb = ServiceRegistry::instance()->appDb();
     auto configFile = Omnicast::configDir() / "omnicast.json";
 
@@ -20,7 +18,7 @@ public:
 
     if (auto browser = appDb->textEditor()) {
       appDb->launch(*browser, {configFile.c_str()});
-      ui->closeWindow();
+      context()->navigation->closeWindow();
       return;
     }
 

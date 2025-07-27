@@ -2,6 +2,7 @@
 #include "base-view.hpp"
 #include "clipboard-actions.hpp"
 #include "common-actions.hpp"
+#include "common.hpp"
 #include "service-registry.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "omni-icon.hpp"
@@ -27,32 +28,7 @@
 #include <qobjectdefs.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
-#include <ranges>
 #include <unistd.h>
-
-class TestLongToast : public AbstractAction {
-public:
-  void execute() override {
-    auto toastService = ServiceRegistry::instance()->toastService();
-    auto toast = new Toast("Doing the thing...", ToastPriority::Info);
-
-    toastService->registerToast(toast);
-    auto fut = QtConcurrent::run([toast]() {
-      for (int i = 0; i != 100; ++i) {
-        QThread::msleep(200);
-        toast->setTitle(QString("Running (%1%)").arg(i));
-      }
-      toast->setTitle("Done!");
-      toast->setPriority(ToastPriority::Success);
-      toast->update();
-      QThread::msleep(2000);
-      toast->close();
-      toast->deleteLater();
-    });
-  }
-
-  TestLongToast() : AbstractAction("Test long toast", BuiltinOmniIconUrl("copy-clipboard")) {}
-};
 
 class EditEmojiKeywordsView : public FormView {
   FormWidget *m_form = new FormWidget;
@@ -62,13 +38,12 @@ class EditEmojiKeywordsView : public FormView {
   void onActivate() override { m_form->focusFirst(); }
 
   void handleSubmit() {
-    auto emojiService = ServiceRegistry::instance()->emojiService();
-    auto toast = ServiceRegistry::instance()->toastService();
-    auto ui = ServiceRegistry::instance()->UI();
+    auto emojiService = context()->services->emojiService();
+    auto toast = context()->services->toastService();
 
     if (emojiService->setCustomKeywords(m_emoji, m_keywords->text())) {
       toast->setToast("Keywords edited", ToastPriority::Success);
-      ui->popView();
+      popSelf();
     } else {
       toast->setToast("Failed to edit keywords", ToastPriority::Danger);
     }
@@ -103,14 +78,14 @@ class ResetEmojiRankingAction : public AbstractAction {
   std::string_view m_emoji;
 
 public:
-  void execute() override {
-    auto emojiService = ServiceRegistry::instance()->emojiService();
-    auto ui = ServiceRegistry::instance()->UI();
+  void execute(ApplicationContext *ctx) override {
+    auto emojiService = ctx->services->emojiService();
+    auto toast = ctx->services->toastService();
 
     if (emojiService->resetRanking(m_emoji)) {
-      ui->setToast("Ranking successfuly reset");
+      toast->setToast("Ranking successfuly reset");
     } else {
-      ui->setToast("Failed to reset ranking", ToastPriority::Danger);
+      toast->setToast("Failed to reset ranking", ToastPriority::Danger);
     }
   }
   QString title() const override { return "Reset ranking"; }
@@ -123,10 +98,9 @@ class PasteEmojiAction : public PasteToFocusedWindowAction {
   std::string_view m_emoji;
 
 public:
-  void execute() override {
-    auto emojiService = ServiceRegistry::instance()->emojiService();
-    auto ui = ServiceRegistry::instance()->UI();
-    PasteToFocusedWindowAction::execute();
+  void execute(ApplicationContext *ctx) override {
+    auto emojiService = ctx->services->emojiService();
+    PasteToFocusedWindowAction::execute(ctx);
 
     emojiService->registerVisit(m_emoji);
   }
@@ -139,12 +113,13 @@ class PinEmojiAction : public AbstractAction {
   std::string_view m_emoji;
 
 public:
-  void execute() override {
-    auto ui = ServiceRegistry::instance()->UI();
-    if (ServiceRegistry::instance()->emojiService()->pin(m_emoji)) {
-      ui->setToast("Emoji pinned");
+  void execute(ApplicationContext *ctx) override {
+    auto toast = ctx->services->toastService();
+
+    if (ctx->services->emojiService()->pin(m_emoji)) {
+      toast->setToast("Emoji pinned");
     } else {
-      ui->setToast("Failed to pin emoji", ToastPriority::Danger);
+      toast->setToast("Failed to pin emoji", ToastPriority::Danger);
     }
   }
 
@@ -157,10 +132,10 @@ public:
 class EditEmojiKeywordsAction : public AbstractAction {
   std::string_view m_emoji;
 
-  void execute() override {
+  void execute(ApplicationContext *ctx) override {
     PushViewAction pushAction(title(), new EditEmojiKeywordsView(m_emoji), icon());
 
-    pushAction.execute();
+    pushAction.execute(ctx);
   }
 
   QString title() const override { return "Edit custom keywords"; }
@@ -174,13 +149,14 @@ class UnpinEmojiAction : public AbstractAction {
   std::string_view m_emoji;
 
 public:
-  void execute() override {
-    auto ui = ServiceRegistry::instance()->UI();
+  void execute(ApplicationContext *ctx) override {
+    auto toast = ctx->services->toastService();
+    auto emojiService = ctx->services->emojiService();
 
-    if (ServiceRegistry::instance()->emojiService()->unpin(m_emoji)) {
-      ui->setToast("Emoji unpinned");
+    if (emojiService->unpin(m_emoji)) {
+      toast->setToast("Emoji unpinned");
     } else {
-      ui->setToast("Failed to unpin emoji", ToastPriority::Danger);
+      toast->setToast("Failed to unpin emoji", ToastPriority::Danger);
     }
   }
 
@@ -272,9 +248,7 @@ public:
   }
 
   void resetList() {
-    auto ui = ServiceRegistry::instance()->UI();
-
-    if (isVisible() && ui->searchText().isEmpty()) {
+    if (isVisible() && context()->navigation->searchText().isEmpty()) {
       generateRootList(OmniList::SelectionPolicy::PreserveSelection);
     }
   }

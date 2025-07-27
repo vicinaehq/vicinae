@@ -1,5 +1,9 @@
-#include "local-storage-service.hpp"
 #include <qjsondocument.h>
+#include <qjsonobject.h>
+#include <qsqlquery.h>
+#include <qvariant.h>
+#include "local-storage-service.hpp"
+#include "omni-database.hpp"
 
 using ValueType = LocalStorageService::ValueType;
 
@@ -20,6 +24,8 @@ QJsonValue LocalStorageService::deserializeValue(const QString &value, ValueType
   case ValueType::Number:
     return value.toDouble();
   }
+
+  return {};
 }
 
 QJsonObject LocalStorageService::getItemAsJson(const QString &namespaceId, const QString &key) {
@@ -108,6 +114,12 @@ bool LocalStorageService::clearNamespace(const QString &namespaceId) {
 }
 
 LocalStorageService::LocalStorageService(OmniDatabase &db) : db(db) {
+  m_clearQuery = db.createQuery();
+  m_listQuery = db.createQuery();
+  m_removeQuery = db.createQuery();
+  m_setItemQuery = db.createQuery();
+  m_getQuery = db.createQuery();
+
   m_clearQuery.prepare("DELETE FROM storage_data_item WHERE namespace_id = :namespace_id");
   m_listQuery.prepare("SELECT key, value FROM storage_data_item WHERE namespace_id = :namespace_id");
   m_removeQuery.prepare("DELETE FROM storage_data_item WHERE namespace_id = :namespace_id AND key = :key");

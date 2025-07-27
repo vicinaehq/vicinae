@@ -2,13 +2,14 @@
 #include "extend/empty-view-model.hpp"
 #include "omni-icon.hpp"
 #include "theme.hpp"
+#include "ui/image/omnimg.hpp"
 #include "ui/typography/typography.hpp"
 #include <qboxlayout.h>
 #include <qnamespace.h>
 #include <qwidget.h>
 
 class EmptyViewWidget : public QWidget {
-  OmniIcon *m_icon = new OmniIcon(this);
+  Omnimg::ImageWidget *m_icon = new Omnimg::ImageWidget(this);
   TypographyWidget *m_title = new TypographyWidget(this);
   TypographyWidget *m_description = new TypographyWidget(this);
 

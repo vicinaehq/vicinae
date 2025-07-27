@@ -1,3 +1,4 @@
+#include "services/local-storage/local-storage-service.hpp"
 #include "storage-request-router.hpp"
 #include "utils/utils.hpp"
 

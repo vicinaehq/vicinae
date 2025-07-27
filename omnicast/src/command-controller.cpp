@@ -28,6 +28,10 @@ void CommandController::handleViewPoped(const BaseView *view) {
   if (frame->viewCount == 0) { m_frames.pop_back(); }
 }
 
+void CommandController::launch(const QString &id) {
+  if (auto cmd = m_ctx->services->commandDb()->findCommand(id)) { launch(cmd->command); };
+}
+
 void CommandController::launch(const std::shared_ptr<AbstractCmd> &cmd) {
   // unload stalled no-view command
   if (!m_frames.empty() && m_frames.back()->viewCount == 0) { m_frames.pop_back(); }

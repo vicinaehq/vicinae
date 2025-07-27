@@ -1,3 +1,4 @@
+#pragma once
 #include "base-view.hpp"
 #include "command.hpp"
 #include "common.hpp"
@@ -20,6 +21,7 @@ public:
   CommandController(ApplicationContext *ctx);
 
   void launch(const std::shared_ptr<AbstractCmd> &cmd);
+  void launch(const QString &id);
 
 private:
   void handleViewPushed(const BaseView *view);

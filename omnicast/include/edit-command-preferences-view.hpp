@@ -1,5 +1,5 @@
 #pragma once
-#include "app.hpp"
+#include "base-view.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
 #include "ui/action-pannel/action-item.hpp"
@@ -8,12 +8,12 @@
 #include "ui/form/preference-field.hpp"
 #include "command-database.hpp"
 #include "ui/toast.hpp"
-#include "view.hpp"
 #include <qboxlayout.h>
 #include <qjsonobject.h>
 #include <qlogging.h>
+#include <qjsonvalue.h>
 
-class EditCommandPreferencesView : public View {
+class EditCommandPreferencesView : public BaseView {
   class SubmitAction : public AbstractAction {
   public:
     void execute(AppWindow &app) override {}

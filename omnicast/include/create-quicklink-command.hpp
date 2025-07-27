@@ -401,9 +401,8 @@ public:
   }
 
   virtual void submit() {
-    auto ui = ServiceRegistry::instance()->UI();
-    auto quicklinkDb = ServiceRegistry::instance()->quicklinks();
-    auto bookmarkDb = ServiceRegistry::instance()->bookmarks();
+    auto bookmarkDb = context()->services->bookmarks();
+    auto toast = context()->services->toastService();
 
     if (link->text().isEmpty()) {
       form->setError(link, "Required");
@@ -425,10 +424,10 @@ public:
     }
 
     if (bookmarkDb->createBookmark(name->text(), icon->icon()->toString(), link->text(), item->app->id())) {
-      ui->setToast("Created bookmark");
-      ServiceRegistry::instance()->UI()->popView();
+      toast->setToast("Created bookmark");
+      popSelf();
     } else {
-      ui->setToast("Failed to create bookmark", ToastPriority::Danger);
+      toast->setToast("Failed to create bookmark", ToastPriority::Danger);
     }
   }
 };
@@ -461,9 +460,8 @@ public:
   }
 
   void submit() override {
-    auto ui = ServiceRegistry::instance()->UI();
-    auto quicklinkDb = ServiceRegistry::instance()->quicklinks();
-    auto bookmarkDb = ServiceRegistry::instance()->bookmarks();
+    auto bookmarkDb = context()->services->bookmarks();
+    auto toast = context()->services->toastService();
     auto item = static_cast<const AppSelectorItem *>(appSelector->value());
 
     if (!item) {
@@ -482,11 +480,11 @@ public:
                                               link->text(), item->app->id());
 
     if (!updated) {
-      ui->setToast("Failed to update bookmark");
+      toast->setToast("Failed to update bookmark");
       return;
     }
 
-    ui->popView();
+    popSelf();
   }
 };
 
@@ -506,8 +504,8 @@ public:
   void onActivate() override { name->selectAll(); }
 
   void submit() override {
-    auto ui = ServiceRegistry::instance()->UI();
-    auto bookmarkDb = ServiceRegistry::instance()->bookmarks();
+    auto bookmarkDb = context()->services->bookmarks();
+    auto toast = context()->services->toastService();
     auto item = static_cast<const AppSelectorItem *>(appSelector->value());
 
     if (!item) {
@@ -523,10 +521,10 @@ public:
     }
 
     if (bookmarkDb->createBookmark(name->text(), icon->icon()->toString(), link->text(), item->app->id())) {
-      ui->setToast("Created bookmark");
-      ui->popView();
+      toast->setToast("Created bookmark");
+      popSelf();
     } else {
-      ui->setToast("Failed to create bookmark", ToastPriority::Danger);
+      toast->setToast("Failed to create bookmark", ToastPriority::Danger);
     }
   }
 };

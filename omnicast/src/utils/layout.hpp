@@ -175,7 +175,7 @@ class Icon : public WidgetBuilder<Omnimg::ImageWidget> {
   OmniIconUrl m_icon;
 
 public:
-  Icon(const OmniIconUrl &icon) : m_icon(icon) {}
+  Icon(const OmniIconUrl &icon = {}) : m_icon(icon) {}
 
   virtual Omnimg::ImageWidget *create() const override {
     auto icon = new Omnimg::ImageWidget;

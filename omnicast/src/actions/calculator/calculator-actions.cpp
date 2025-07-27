@@ -1,7 +1,8 @@
 #include "calculator-actions.hpp"
+#include "common.hpp"
+#include "command-controller.hpp"
 
-void OpenCalculatorHistoryAction::execute() {
-  auto ui = ServiceRegistry::instance()->UI();
+void OpenCalculatorHistoryAction::execute(ApplicationContext *ctx) {
 
-  ui->launchCommand("calculator.history");
+  ctx->command->launch("calculator.history");
 }

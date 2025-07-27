@@ -4,7 +4,6 @@
 #include <qdebug.h>
 #include "extension/extension-list-detail.hpp"
 #include "extension/extension-view.hpp"
-#include "service-registry.hpp"
 #include "ui/form/selector-input.hpp"
 #include "ui/omni-list.hpp"
 #include "ui/split-detail.hpp"
@@ -184,14 +183,7 @@ class ExtensionListComponent : public ExtensionSimpleView {
     return ExtensionSimpleView::inputFilter(event);
   }
 
-  void onActivate() override {
-    if (auto searchText = _model.searchText) {
-      ServiceRegistry::instance()->UI()->setSearchText(*searchText);
-    }
-    if (auto placeholderText = _model.searchPlaceholderText; !placeholderText.isEmpty()) {
-      ServiceRegistry::instance()->UI()->setSearchPlaceholderText(placeholderText);
-    }
-  }
+  void onActivate() override {}
 
 public:
   void render(const RenderModel &baseModel) override;

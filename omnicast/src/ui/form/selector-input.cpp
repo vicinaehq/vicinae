@@ -1,7 +1,7 @@
 #include "ui/form/selector-input.hpp"
 #include "common.hpp"
 #include "ui/focus-notifier.hpp"
-#include "ui/typography/typography.hpp"
+#include "ui/image/omnimg.hpp"
 #include <memory>
 #include <qboxlayout.h>
 #include <qjsonvalue.h>
@@ -75,8 +75,8 @@ FocusNotifier *SelectorInput::focusNotifier() const { return m_focusNotifier; }
 
 SelectorInput::SelectorInput(QWidget *parent)
     : JsonFormItemWidget(parent), m_list(new OmniList), inputField(new BaseInput),
-      m_searchField(new QLineEdit()), popover(new Popover(this)), collapseIcon(new OmniIcon),
-      selectionIcon(new OmniIcon) {
+      m_searchField(new QLineEdit()), popover(new Popover(this)), collapseIcon(new Omnimg::ImageWidget),
+      selectionIcon(new Omnimg::ImageWidget) {
   auto *layout = new QVBoxLayout();
   layout->setContentsMargins(0, 0, 0, 0);
 

@@ -1,5 +1,6 @@
 #pragma once
 #include "color-formatter.hpp"
+#include "common.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
 #include "ui/action-pannel/action.hpp"
@@ -8,14 +9,12 @@ class CopyColorAs : public AbstractAction {
   ColorFormatter::ColorFormat m_format;
   QColor m_color;
 
-  void execute() override {
+  void execute(ApplicationContext *ctx) override {
     ColorFormatter formatter;
-    auto ui = ServiceRegistry::instance()->UI();
-    auto clipman = ServiceRegistry::instance()->clipman();
+    auto clipman = ctx->services->clipman();
     auto formatted = formatter.format(m_color, m_format);
 
     clipman->copyText(formatted);
-    ui->closeWindow();
   }
 
   QString id() const override { return QString::number(m_format); };

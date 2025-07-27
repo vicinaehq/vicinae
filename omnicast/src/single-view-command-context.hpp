@@ -1,7 +1,6 @@
 #pragma once
 #include "command-database.hpp"
 #include "preference.hpp"
-#include "service-registry.hpp"
 #include <concepts>
 
 template <typename T> class SingleViewCommand : public CommandContext {
@@ -10,7 +9,6 @@ public:
 
   void load(const LaunchProps &props) override {
     qDebug() << "loading single view" << command()->name();
-    auto ui = ServiceRegistry::instance()->UI();
     auto &nav = context()->navigation;
 
     nav->pushView(new T());

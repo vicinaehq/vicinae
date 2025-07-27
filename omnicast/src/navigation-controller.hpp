@@ -1,18 +1,12 @@
 #pragma once
-#include "app/app-database.hpp"
-#include "argument.hpp"
+
 #include "common.hpp"
-#include "omni-icon.hpp"
 #include "ui/action-pannel/action.hpp"
-#include "ui/alert.hpp"
 #include "ui/dialog.hpp"
-#include "ui/top_bar.hpp"
-#include <qlogging.h>
-#include <qobject.h>
-#include <qobjectdefs.h>
-#include <qwidget.h>
+#include <QString>
 
 class BaseView;
+class DialogContentWidget;
 
 #define VALUE_OR(VALUE, FALLBACK) (VALUE ? VALUE : FALLBACK)
 
@@ -137,6 +131,8 @@ public:
   void setSearchVisibility(bool value, const BaseView *caller = nullptr);
   void setStatusBarVisibility(bool value, const BaseView *caller = nullptr);
 
+  void showHud(const QString &title, const std::optional<OmniIconUrl> &icon = std::nullopt);
+
   void popCurrentView();
   void pushView(BaseView *view);
   size_t viewStackSize() const;
@@ -159,6 +155,7 @@ signals:
   void navigationStatusChanged(const QString &text, const OmniIconUrl &icon) const;
   void confirmAlertRequested(DialogContentWidget *widget);
   void loadingChanged(bool value) const;
+  void showHudRequested(const QString &title, const std::optional<OmniIconUrl> &icon);
 
   void searchAccessoryChanged(QWidget *widget) const;
   void searchAccessoryCleared() const;

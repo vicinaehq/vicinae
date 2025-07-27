@@ -4,7 +4,6 @@
 #include "common.hpp"
 #include "navigation-controller.hpp"
 #include "omni-icon.hpp"
-#include "service-registry.hpp"
 #include <libqalculate/Calculator.h>
 #include <qevent.h>
 #include <qnamespace.h>
@@ -12,10 +11,9 @@
 #include "ui/empty-view.hpp"
 #include "ui/omni-grid.hpp"
 #include "ui/omni-list.hpp"
+#include "ui/search-bar/search-bar.hpp"
 #include "ui/split-detail.hpp"
 #include "ui/toast.hpp"
-#include "ui/top_bar.hpp"
-#include "ui/ui-controller.hpp"
 #include <memory>
 #include <qboxlayout.h>
 #include <qlogging.h>
@@ -37,6 +35,13 @@ public:
     m_initialized = true;
   }
   bool isInitialized() { return m_initialized; }
+
+  void popSelf() {
+    if (!m_ctx) return;
+
+    // TODO: ensure it's the topmost view
+    m_ctx->navigation->popCurrentView();
+  }
 
   /**
    * Forward navigation opercontext()ations to `other` instead of this view.
@@ -119,10 +124,6 @@ public:
 
   void activateCompleter(const ArgumentList &args, const OmniIconUrl &icon) {
     // m_uiController->activateCompleter(args, icon);
-  }
-
-  void setUIController(std::unique_ptr<UIViewController> controller) {
-    // m_uiController = std::move(controller);
   }
 
   void setContext(ApplicationContext *ctx) { m_ctx = ctx; }
@@ -420,8 +421,6 @@ public:
     connect(m_list, &OmniList::itemRightClicked, this, &ListView::itemRightClicked);
     connect(m_list, &OmniList::virtualHeightChanged, this, [this](int height) {
       if (m_list->items().empty() && !searchText().isEmpty()) {
-        auto ui = ServiceRegistry::instance()->UI();
-
         // ui->destroyCompleter();
         m_content->setCurrentWidget(m_emptyView);
         return;

@@ -1,6 +1,9 @@
 #pragma once
-#include "proto/ipc.pb.h"
-#include "services/local-storage/local-storage-service.hpp"
+#include "proto/storage.pb.h"
+#include "proto/extension.pb.h"
+#include <QString>
+
+class LocalStorageService;
 
 class StorageRequestRouter {
   LocalStorageService *m_storage = nullptr;

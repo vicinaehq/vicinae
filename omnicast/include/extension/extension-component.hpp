@@ -1,6 +1,4 @@
 #pragma once
-#include "app.hpp"
-#include "base-view.hpp"
 #include "extend/action-model.hpp"
 #include "extend/model-parser.hpp"
 #include <qjsonarray.h>

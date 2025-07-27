@@ -31048,7 +31048,7 @@ var PKCEClient = class {
     const res = await bus.turboRequest("oauth.authorize", {
       client: {
         id: this.providerId,
-        description: this.description ?? "",
+        description: this.description ?? "Connect to your account",
         name: this.providerName,
         icon: this.providerIcon ? serializeProtoImage(this.providerIcon) : void 0
       },

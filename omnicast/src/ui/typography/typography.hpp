@@ -1,14 +1,10 @@
 #pragma once
+#include "qfont.h"
+#include "qwidget.h"
 #include "theme.hpp"
-#include <qevent.h>
-#include <qfont.h>
-#include <qfontmetrics.h>
-#include <qlabel.h>
-#include <qlogging.h>
-#include <qnamespace.h>
-#include <qpainter.h>
-#include <qtextformat.h>
-#include <qwidget.h>
+
+class QLabel;
+class ThemeService;
 
 /**
  * A custom widget we specifically use to render individual pieces of text or paragraphs.
@@ -26,10 +22,9 @@
 class TypographyWidget : public QWidget {
   TextSize m_size = TextSize::TextRegular;
   QFont::Weight m_weight = QFont::Weight::Normal;
-  ThemeService &m_theme = ThemeService::instance();
-  ColorLike m_color = SemanticColor::TextPrimary;
+  ColorLike m_color;
   QString m_text;
-  QLabel *m_label = new QLabel(this);
+  QLabel *m_label = nullptr;
   Qt::TextElideMode m_elideMode = Qt::ElideRight;
   bool m_autoEllide = true;
 

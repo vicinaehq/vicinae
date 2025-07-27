@@ -55,17 +55,17 @@ public:
 class PasteClipboardSelection : public PasteToFocusedWindowAction {
   int m_id;
 
-  void execute() override {
-    auto ui = ServiceRegistry::instance()->UI();
-    auto clipman = ServiceRegistry::instance()->clipman();
+  void execute(ApplicationContext *ctx) override {
+    auto clipman = ctx->services->clipman();
+    auto toast = ctx->services->toastService();
 
     if (auto selection = clipman->retrieveSelectionById(m_id)) {
       loadClipboardData(*selection);
-      PasteToFocusedWindowAction::execute();
+      PasteToFocusedWindowAction::execute(ctx);
       return;
     }
 
-    ui->setToast(QString("No selection with ID %1").arg(m_id));
+    toast->setToast(QString("No selection with ID %1").arg(m_id));
   }
 
 public:
@@ -75,18 +75,17 @@ public:
 class CopyClipboardSelection : public AbstractAction {
   int m_id;
 
-  void execute() override {
-    auto clipman = ServiceRegistry::instance()->clipman();
-    auto ui = ServiceRegistry::instance()->UI();
+  void execute(ApplicationContext *ctx) override {
+    auto clipman = ctx->services->clipman();
+    auto toast = ctx->services->toastService();
 
     if (auto selection = clipman->retrieveSelectionById(m_id)) {
       clipman->copySelection(*selection, {.concealed = true});
-      ui->setToast("Selection copied to clipboard");
-      ui->closeWindow();
+      ctx->navigation->showHud("Selection copied to clipboard");
       return;
     }
 
-    ui->setToast("Failed to copy to clipboard", ToastPriority::Danger);
+    toast->setToast("Failed to copy to clipboard", ToastPriority::Danger);
   }
 
 public:
@@ -193,14 +192,14 @@ public:
 class RemoveSelectionAction : public AbstractAction {
   int _id;
 
-  void execute() override {
-    auto ui = ServiceRegistry::instance()->UI();
-    auto clipman = ServiceRegistry::instance()->clipman();
+  void execute(ApplicationContext *ctx) override {
+    auto clipman = ctx->services->clipman();
+    auto toast = ctx->services->toastService();
 
     if (clipman->removeSelection(_id)) {
-      ui->setToast("Entry removed");
+      toast->setToast("Entry removed");
     } else {
-      ui->setToast("Failed to remove entry", ToastPriority::Danger);
+      toast->setToast("Failed to remove entry", ToastPriority::Danger);
     }
   }
 
@@ -387,11 +386,7 @@ class ClipboardHistoryView : public SimpleView {
   QTimer m_searchDebounce;
   PreferenceDropdown *m_filterInput = new PreferenceDropdown(this);
 
-  void handleDebounce() {
-    auto ui = ServiceRegistry::instance()->UI();
-
-    generateList(ui->searchText());
-  }
+  void handleDebounce() { generateList(searchText()); }
 
   QWidget *searchBarAccessory() const override { return m_filterInput; }
 
@@ -542,8 +537,7 @@ public:
     setLayout(layout);
 
     connect(m_list, &OmniList::selectionChanged, this, &ClipboardHistoryView::selectionChanged);
-    connect(m_list, &OmniList::itemActivated, this,
-            [this]() { ServiceRegistry::instance()->UI()->executeDefaultAction(); });
+    connect(m_list, &OmniList::itemActivated, this, [this]() { executePrimaryAction(); });
     connect(clipman, &ClipboardService::itemInserted, this,
             &ClipboardHistoryView::clipboardSelectionInserted);
     connect(clipman, &ClipboardService::monitoringChanged, this,

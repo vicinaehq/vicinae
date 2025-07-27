@@ -3,8 +3,6 @@
 #include "extension/extension-grid-component.hpp"
 #include "extension/extension-list-component.hpp"
 #include "extension/extension-view.hpp"
-#include "service-registry.hpp"
-#include "ui/ui-controller.hpp"
 #include <qlogging.h>
 #include <qtmetamacros.h>
 #include <sys/un.h>
@@ -55,7 +53,6 @@ class ExtensionViewWrapper : public BaseView {
 
 public:
   void render(const RenderModel &model) {
-    auto ui = ServiceRegistry::instance()->UI();
     if (m_index != model.index()) {
       auto view = std::visit(ViewVisitor(), model);
 

@@ -2,6 +2,7 @@
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
 #include "theme.hpp"
+#include "ui/image/omnimg.hpp"
 #include "ui/omni-scroll-bar.hpp"
 #include <cmark.h>
 #include <qapplication.h>
@@ -58,7 +59,7 @@ void MarkdownRenderer::insertImage(cmark_node *node) {
   const char *p = cmark_node_get_url(node);
   QUrl url(p);
   QUrlQuery query(url);
-  auto icon = new OmniIcon(this);
+  auto icon = new Omnimg::ImageWidget(this);
   auto pos = _cursor.position();
   auto documentMargin = _document->documentMargin();
   int widthOffset = documentMargin * 4;
@@ -98,6 +99,7 @@ void MarkdownRenderer::insertImage(cmark_node *node) {
     iconUrl.setName(p);
   }
 
+  /*
   connect(icon, &OmniIcon::imageUpdated, this, [this, url, pos, icon](const QPixmap &pix) {
     qDebug() << "loaded image";
     QTextBlockFormat blockFormat;
@@ -121,12 +123,13 @@ void MarkdownRenderer::insertImage(cmark_node *node) {
     _document->markContentsDirty(0, _document->characterCount());
     icon->deleteLater();
   });
+  */
 
   icon->setUrl(iconUrl);
   icon->show();
   icon->hide();
 
-  m_images.push_back({.cursorPos = _cursor.position(), .icon = icon});
+  // m_images.push_back({.cursorPos = _cursor.position(), .icon = icon});
 }
 
 void MarkdownRenderer::insertCodeBlock(cmark_node *node, bool isClosing) {

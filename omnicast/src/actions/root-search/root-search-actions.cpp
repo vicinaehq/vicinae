@@ -1,4 +1,5 @@
 #include "actions/root-search/root-search-actions.hpp"
+#include "common.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
 #include "ui/action-pannel/action.hpp"
@@ -35,10 +36,7 @@ void ResetItemRanking::execute(ApplicationContext *ctx) {
 ResetItemRanking::ResetItemRanking(const QString &id)
     : AbstractAction("Reset ranking", BuiltinOmniIconUrl("arrow-counter-clockwise")), m_id(id) {}
 
-void MarkItemAsFavorite::execute() {
-  auto manager = ServiceRegistry::instance()->rootItemManager();
-  auto ui = ServiceRegistry::instance()->UI();
-
+void MarkItemAsFavorite::execute(ApplicationContext *ctx) {
   // TODO: mark as favorite
 }
 
@@ -55,22 +53,22 @@ QString ToggleItemAsFavorite::title() const {
   return "Add to favorites";
 }
 
-void ToggleItemAsFavorite::execute() {
-  auto manager = ServiceRegistry::instance()->rootItemManager();
-  auto ui = ServiceRegistry::instance()->UI();
+void ToggleItemAsFavorite::execute(ApplicationContext *ctx) {
+  auto manager = ctx->services->rootItemManager();
+  auto toast = ctx->services->toastService();
   bool targetValue = !m_value;
 
   if (manager->setItemAsFavorite(m_id, targetValue)) {
     if (targetValue) {
-      ui->setToast("Successfuly added to favorites");
+      toast->setToast("Successfuly added to favorites");
     } else {
-      ui->setToast("Successfuly removed from favorites");
+      toast->setToast("Successfuly removed from favorites");
     }
   } else {
     if (targetValue) {
-      ui->setToast("Failed to add to favorites");
+      toast->setToast("Failed to add to favorites");
     } else {
-      ui->setToast("Failed to remove from favorites", ToastPriority::Danger);
+      toast->setToast("Failed to remove from favorites", ToastPriority::Danger);
     }
   }
 };
@@ -90,18 +88,6 @@ void DefaultActionWrapper::execute(ApplicationContext *ctx) {
   m_action->execute(ctx);
 }
 
-void DefaultActionWrapper::execute() {
-  auto manager = ServiceRegistry::instance()->rootItemManager();
-
-  if (manager->registerVisit(m_id)) {
-    qDebug() << "Visit registered";
-  } else {
-    qCritical() << "Failed to register visit";
-  }
-
-  m_action->execute();
-}
-
 QString DefaultActionWrapper::title() const { return m_action->title(); }
 
 DefaultActionWrapper::DefaultActionWrapper(const QString &id, AbstractAction *action)
@@ -110,14 +96,14 @@ DefaultActionWrapper::DefaultActionWrapper(const QString &id, AbstractAction *ac
   setShortcut({.key = "return"});
 }
 
-void DisableItemAction::execute() {
+void DisableItemAction::execute(ApplicationContext *ctx) {
   auto manager = ServiceRegistry::instance()->rootItemManager();
-  auto ui = ServiceRegistry::instance()->UI();
+  auto toast = ctx->services->toastService();
 
   if (manager->disableItem(m_id)) {
-    ui->setToast("Item disabled", ToastPriority::Success);
+    toast->setToast("Item disabled", ToastPriority::Success);
   } else {
-    ui->setToast("Failed to disable", ToastPriority::Danger);
+    toast->setToast("Failed to disable", ToastPriority::Danger);
   }
 }
 

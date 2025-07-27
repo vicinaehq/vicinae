@@ -1,6 +1,5 @@
 #include "navigation-controller.hpp"
 #include "base-view.hpp"
-#include "ui/alert.hpp"
 #include <qlogging.h>
 #include <qwidget.h>
 
@@ -37,6 +36,11 @@ void NavigationController::setLoading(bool value, const BaseView *caller) {
     state->loading = value;
     if (state->sender == topView()) { emit loadingChanged(value); }
   }
+}
+
+void NavigationController::showHud(const QString &title, const std::optional<OmniIconUrl> &icon) {
+  closeWindow();
+  emit showHudRequested(title, icon);
 }
 
 void NavigationController::setDialog(DialogContentWidget *widget) { emit confirmAlertRequested(widget); }

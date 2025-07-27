@@ -1,12 +1,9 @@
 #pragma once
-#include "omni-database.hpp"
-#include <qjsonobject.h>
-#include <qjsonvalue.h>
-#include <qlogging.h>
-#include <qobjectdefs.h>
 #include <qsqlquery.h>
 #include <qsqlerror.h>
-#include <qvariant.h>
+#include <qjsonobject.h>
+
+class OmniDatabase;
 
 class LocalStorageService {
 public:
@@ -14,11 +11,11 @@ public:
 
 private:
   OmniDatabase &db;
-  QSqlQuery m_clearQuery = db.createQuery();
-  QSqlQuery m_listQuery = db.createQuery();
-  QSqlQuery m_removeQuery = db.createQuery();
-  QSqlQuery m_setItemQuery = db.createQuery();
-  QSqlQuery m_getQuery = db.createQuery();
+  QSqlQuery m_clearQuery;
+  QSqlQuery m_listQuery;
+  QSqlQuery m_removeQuery;
+  QSqlQuery m_setItemQuery;
+  QSqlQuery m_getQuery;
 
   std::pair<QString, ValueType> serializeValue(const QJsonValue &value) const;
 

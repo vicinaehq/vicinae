@@ -1,5 +1,4 @@
 #pragma once
-#include "ai/ai-service.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/bookmark/bookmark-service.hpp"
 #include "services/clipboard/clipboard-service.hpp"
@@ -19,7 +18,6 @@
 #include "services/raycast/raycast-store.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "services/toast/toast-service.hpp"
-#include "ui/ui-controller.hpp"
 #include "wm/window-manager.hpp"
 #include <memory>
 #include <qobject.h>
@@ -34,13 +32,11 @@ class ServiceRegistry : public QObject {
   std::unique_ptr<LocalStorageService> m_localStorage;
   std::unique_ptr<ExtensionManager> m_extensionManager;
   std::unique_ptr<ClipboardService> m_clipman;
-  std::unique_ptr<AI::Manager> m_aiManager;
   std::unique_ptr<FontService> m_fontService;
   std::unique_ptr<RootItemManager> m_rootItemManager;
   std::unique_ptr<RootExtensionManager> m_rootExtMan;
   std::unique_ptr<ConfigService> m_config;
   std::unique_ptr<BookmarkService> m_bookmarkService;
-  std::unique_ptr<UIController> m_uiController;
   std::unique_ptr<ToastService> m_toastService;
   std::unique_ptr<EmojiService> m_emojiService;
   std::unique_ptr<CalculatorService> m_calculatorService;
@@ -57,7 +53,6 @@ public:
 
   auto rootItemManager() const { return m_rootItemManager.get(); }
   auto config() const { return m_config.get(); }
-  auto AI() const { return m_aiManager.get(); }
   auto omniDb() const { return m_omniDb.get(); }
   auto calculatorService() const { return m_calculatorService.get(); }
   auto quicklinks() const { return m_quickinkDb.get(); }
@@ -71,13 +66,11 @@ public:
   auto appDb() const { return m_appDb.get(); }
   auto toastService() const { return m_toastService.get(); }
   auto bookmarks() const { return m_bookmarkService.get(); }
-  auto UI() const { return m_uiController.get(); }
   auto fileService() const { return m_fileService.get(); }
   auto raycastStore() const { return m_raycastStoreService.get(); }
   auto extensionRegistry() const { return m_extensionRegistry.get(); }
   auto oauthService() const { return m_oauthService.get(); }
 
-  auto setUI(std::unique_ptr<UIController> controller) { m_uiController = std::move(controller); }
   auto setRootItemManager(std::unique_ptr<RootItemManager> manager) {
     m_rootItemManager = std::move(manager);
   }
@@ -100,7 +93,6 @@ public:
   void setEmojiService(std::unique_ptr<EmojiService> service) { m_emojiService = std::move(service); }
   void setToastService(std::unique_ptr<ToastService> service) { m_toastService = std::move(service); }
   void setRootExtMan(std::unique_ptr<RootExtensionManager> man) { m_rootExtMan = std::move(man); }
-  void setAI(std::unique_ptr<AI::Manager> manager) { m_aiManager = std::move(manager); }
   void setFontService(std::unique_ptr<FontService> font) { m_fontService = std::move(font); }
   void setOmniDb(std::unique_ptr<OmniDatabase> service) { m_omniDb = std::move(service); }
   void setQuicklinks(std::unique_ptr<QuicklistDatabase> service) { m_quickinkDb = std::move(service); }

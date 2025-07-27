@@ -1,14 +1,20 @@
 #pragma once
-#include "action-panel/action-panel.hpp"
-#include "common.hpp"
-#include "global-bar.hpp"
-#include "header.hpp"
-#include "navigation-controller.hpp"
-#include "ui/dialog.hpp"
-#include <qevent.h>
+#include "omni-icon.hpp"
 #include <qmainwindow.h>
-#include <qstackedwidget.h>
-#include <qwidget.h>
+#include "navigation-controller.hpp"
+
+class ApplicationContext;
+class QMainWindow;
+class ActionPanelV2Widget;
+class GlobalHeader;
+class HudWidget;
+class GlobalBar;
+class QStackedWidget;
+class HDivider;
+class DialogWidget;
+class DialogContentWidget;
+class HDivider;
+class OmniIconUrl;
 
 class LauncherWindow : public QMainWindow {
 
@@ -19,20 +25,23 @@ protected:
   void paintEvent(QPaintEvent *event) override;
   bool event(QEvent *event) override;
   void handleActionVisibilityChanged(bool visible);
-  void resizeEvent(QResizeEvent *event) override { QMainWindow::resizeEvent(event); }
+  void showEvent(QShowEvent *event) override;
 
 private:
   ApplicationContext &m_ctx;
-  ActionPanelV2Widget *m_actionPanel = new ActionPanelV2Widget;
-  GlobalHeader *m_header;
-  HDivider *m_barDivider = new HDivider;
-  GlobalBar *m_bar = new GlobalBar(m_ctx);
-  QStackedWidget *m_currentView = new QStackedWidget;
-  QWidget *m_mainWidget = new QWidget(this);
-  QStackedWidget *m_currentViewWrapper = new QStackedWidget;
-  QStackedWidget *m_currentOverlayWrapper = new QStackedWidget(this);
-  DialogWidget *m_dialog = new DialogWidget(this);
+  ActionPanelV2Widget *m_actionPanel = nullptr;
+  GlobalHeader *m_header = nullptr;
+  HudWidget *m_hud = nullptr;
+  QTimer *m_hudDismissTimer = nullptr;
+  HDivider *m_barDivider = nullptr;
+  GlobalBar *m_bar = nullptr;
+  QStackedWidget *m_currentView = nullptr;
+  QWidget *m_mainWidget = nullptr;
+  QStackedWidget *m_currentViewWrapper = nullptr;
+  QStackedWidget *m_currentOverlayWrapper = nullptr;
+  DialogWidget *m_dialog = nullptr;
 
+  void handleShowHUD(const QString &text, const std::optional<OmniIconUrl> &icon);
   void handleDialog(DialogContentWidget *alert);
   void handleViewChange(const NavigationController::ViewState &state);
   void setupUI();

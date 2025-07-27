@@ -1,4 +1,3 @@
-#include "app.hpp"
 #include "base-view.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"

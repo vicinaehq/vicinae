@@ -1,6 +1,7 @@
 #pragma once
 #include "omni-icon.hpp"
 #include "theme.hpp"
+#include "ui/image/omnimg.hpp"
 #include "ui/typography/typography.hpp"
 #include <qboxlayout.h>
 #include <qcoreevent.h>
@@ -112,14 +113,14 @@ public:
   }
 
   void setLeftIcon(const OmniIconUrl &url, QSize size = {25, 25}) {
-    auto icon = new OmniIcon(url);
+    auto icon = new Omnimg::ImageWidget(url);
 
     icon->setFixedSize(size);
     setLeftAccessory(icon);
   }
 
   void setRightAccessory(const OmniIconUrl &url, QSize size = {25, 25}) {
-    auto icon = new OmniIcon(url);
+    auto icon = new Omnimg::ImageWidget(url);
 
     icon->setFixedSize(size);
     setRightAccessory(icon);

@@ -1,4 +1,6 @@
 #pragma once
+#include "app/app-database.hpp"
+#include "common.hpp"
 #include "services/bookmark/bookmark-service.hpp"
 #include "create-quicklink-command.hpp"
 #include "omni-icon.hpp"
@@ -15,12 +17,10 @@ class OpenBookmarkAction : public AbstractAction {
   std::vector<QString> m_arguments;
   std::shared_ptr<Application> m_app;
 
-  void execute(AppWindow &app) override {}
-
 public:
-  void execute() override {
-    auto ui = ServiceRegistry::instance()->UI();
-    auto appDb = ServiceRegistry::instance()->appDb();
+  void execute(ApplicationContext *ctx) override {
+    auto appDb = ctx->services->appDb();
+    auto toast = ctx->services->toastService();
     QString expanded;
     size_t argumentIndex = 0;
 
@@ -47,12 +47,12 @@ public:
     } else if (auto app = appDb->findById(m_bookmark->app())) {
       appDb->launch(*app, {expanded});
     } else {
-      ui->setToast("No app with id " + m_bookmark->app(), ToastPriority::Danger);
+      toast->setToast("No app with id " + m_bookmark->app(), ToastPriority::Danger);
       return;
     }
 
-    ui->popToRoot();
-    ui->closeWindow();
+    ctx->navigation->popToRoot();
+    ctx->navigation->closeWindow();
   }
 
   QString title() const override { return "Open bookmark"; }
@@ -69,11 +69,12 @@ class OpenCompletedBookmarkAction : public AbstractAction {
   std::shared_ptr<Application> m_app;
 
 public:
-  void execute() override {
-    auto ui = ServiceRegistry::instance()->UI();
-    OpenBookmarkAction open(m_bookmark, ui->argumentValues(), m_app);
+  void execute(ApplicationContext *ctx) override {
+    /*
+OpenBookmarkAction open(m_bookmark, ctx->argumentValues(), m_app);
 
-    open.execute();
+open.execute();
+  */
   }
 
   OpenCompletedBookmarkAction(const std::shared_ptr<Bookmark> &bookmark,
@@ -86,11 +87,10 @@ class OpenBookmarkFromSearchText : public AbstractAction {
 
   void execute(AppWindow &app) override {}
 
-  void execute() override {
-    auto ui = ServiceRegistry::instance()->UI();
-    OpenBookmarkAction open(m_bookmark, {ui->searchText()});
+  void execute(ApplicationContext *ctx) override {
+    OpenBookmarkAction open(m_bookmark, {ctx->navigation->searchText()});
 
-    open.execute();
+    open.execute(ctx);
   }
 
 public:
@@ -102,13 +102,10 @@ struct EditBookmarkAction : public AbstractAction {
 public:
   std::shared_ptr<Bookmark> m_bookmark;
 
-  void execute(AppWindow &app) override {}
-
-  void execute() override {
+  void execute(ApplicationContext *ctx) override {
     auto view = new EditBookmarkView(m_bookmark);
-    auto ui = ServiceRegistry::instance()->UI();
 
-    ui->pushView(view);
+    ctx->navigation->pushView(view);
   }
 
   EditBookmarkAction(const std::shared_ptr<Bookmark> &bookmark, const QList<QString> &args = {})
@@ -121,15 +118,15 @@ struct RemoveBookmarkAction : public AbstractAction {
   void execute(AppWindow &app) override {}
 
 public:
-  void execute() override {
-    auto ui = ServiceRegistry::instance()->UI();
-    auto bookmarkDb = ServiceRegistry::instance()->bookmarks();
+  void execute(ApplicationContext *ctx) override {
+    auto bookmarkDb = ctx->services->bookmarks();
+    auto toast = ctx->services->toastService();
     bool removeResult = bookmarkDb->removeBookmark(m_bookmark->id());
 
     if (removeResult) {
-      ui->setToast("Removed link");
+      toast->setToast("Removed link");
     } else {
-      ui->setToast("Failed to remove link", ToastPriority::Danger);
+      toast->setToast("Failed to remove link", ToastPriority::Danger);
     }
   }
 
@@ -144,14 +141,10 @@ struct DuplicateBookmarkAction : public AbstractAction {
 public:
   std::shared_ptr<Bookmark> link;
 
-  void execute() override {
-    auto ui = ServiceRegistry::instance()->UI();
+  void execute(ApplicationContext *ctx) override {
     auto view = new DuplicateBookmarkView(link);
 
-    emit ui->pushView(view,
-                      {.navigation = NavigationStatus{
-                           .title = "Duplicate link",
-                           .iconUrl = BuiltinOmniIconUrl("link").setBackgroundTint(SemanticColor::Red)}});
+    emit ctx->navigation->pushView(view);
   }
 
   DuplicateBookmarkAction(const std::shared_ptr<Bookmark> &link)
@@ -167,7 +160,9 @@ class OpenCompletedBookmarkWithAction : public AbstractAction {
     std::shared_ptr<Bookmark> m_bookmark;
     std::shared_ptr<Application> m_app;
 
-    void execute() override { OpenCompletedBookmarkAction(m_bookmark, m_app).execute(); }
+    void execute(ApplicationContext *ctx) override {
+      OpenCompletedBookmarkAction(m_bookmark, m_app).execute(ctx);
+    }
 
     QString id() const override { return m_app->id(); }
 

@@ -1,9 +1,9 @@
 #include "action-panel/action-panel.hpp"
 #include "base-view.hpp"
 #include "extension/extension-command.hpp"
-#include "omni-icon.hpp"
 #include "service-registry.hpp"
 #include "theme.hpp"
+#include "command-controller.hpp"
 #include "ui/form/preference-field.hpp"
 #include "ui/form/form.hpp"
 #include "ui/action-pannel/action.hpp"
@@ -31,7 +31,7 @@ public:
 
     auto centeringLayout = new QHBoxLayout;
 
-    auto icon = new OmniIcon();
+    auto icon = new Omnimg::ImageWidget();
 
     icon->setFixedSize(32, 32);
     icon->setUrl(command->iconUrl());
@@ -90,8 +90,7 @@ public:
   }
 
   void handleSubmit() {
-    auto manager = ServiceRegistry::instance()->rootItemManager();
-    auto ui = ServiceRegistry::instance()->UI();
+    auto manager = context()->services->rootItemManager();
     bool validated = true;
     QJsonObject obj(m_existingPreferenceValues);
 
@@ -116,8 +115,8 @@ public:
     if (!validated) return;
 
     manager->setPreferenceValues(QString("extension.%1").arg(m_command->uniqueId()), obj);
-    ui->popView();
-    ui->launchCommand(m_command);
+    context()->navigation->popCurrentView();
+    context()->command->launch(m_command);
   }
 
   void onActivate() override { m_form->focusFirst(); }

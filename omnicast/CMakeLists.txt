@@ -50,15 +50,12 @@ message(STATUS "Protobuf compiler: ${protobuf_PROTOC_EXE}")
 
 set(SRCS
 	src/main.cpp
-	src/app.cpp
-	src/app.hpp
 
 	include/theme.hpp
 	src/theme.cpp
 
 	include/font-service.hpp
 	src/font-service.cpp
-
 
 	include/ui/image/omnimg.hpp
 
@@ -118,7 +115,6 @@ set(SRCS
 
 	src/actions/app/app-actions.hpp
 	src/actions/app/app-actions.cpp
-
 
 	src/color-formatter.hpp
 	src/color-formatter.cpp
@@ -190,12 +186,6 @@ set(SRCS
 	include/lib/emoji-detect.hpp
 	src/lib/emoji-detect.cpp
 
-	# start AI
-	include/ai/ai-service.hpp
-	include//ai/ai-provider.hpp
-	include/ai/ollama-ai-provider.hpp
-	# end AI
-
 	include/clipboard-history-view.hpp
 
 	include/ui/omni-painter.hpp
@@ -206,7 +196,6 @@ set(SRCS
 	include/extension/extension-command.hpp
 	include/extension/extension-view.hpp
 	include/extension/extension-view-wrapper.hpp
-	include/extension/extension-component.hpp
 
 	include/extension/extension-form-component.hpp
 
@@ -275,13 +264,10 @@ set(SRCS
 
 	include/ui/omni-list-item-widget.hpp
 
-	include/ollama-service.hpp
-
 	include/omni-icon.hpp
 
 	include/base-view.hpp
 
-	include/ui/ui-controller.hpp
 
 	include/ui/omni-scroll-bar.hpp
 	src/ui/omni-scroll-bar.cpp
@@ -290,9 +276,6 @@ set(SRCS
 
 	src/ui/ellided-label.cpp
 	include/ui/ellided-label.hpp
-
-	src/tinyexpr.cpp
-	include/tinyexpr.hpp
 
 	include/create-quicklink-command.hpp
 
@@ -348,18 +331,12 @@ set(SRCS
 
 	src/image-fetcher.hpp
 
-	src/json-patch.cpp
 
 	src/root-command.hpp
 	src/command.hpp
 	
-	src/ui-controller.cpp
 
 	src/xdg/xdg-desktop.cpp
-
-	include/network-manager.hpp
-
-	#src/commands/create-quicklink/create-quicklink.cpp
 
 	src/omnicast.hpp
 	src/omnicast.cpp
@@ -371,14 +348,8 @@ set(SRCS
 	./database/clipboard/migrations.qrc
 	./database/file-indexer//migrations.qrc
 
-	src/ui/status_bar.hpp
-	src/ui/status_bar.cpp
-	src/ui/input_completer.hpp
-	src/ui/input_completer.cpp
 	src/ui/inline_qline_edit.hpp
 	src/ui/inline_qline_edit.cpp
-	src/ui/top_bar.hpp
-	src/ui/top_bar.cpp
 	src/ui/color_circle.hpp
 	src/ui/color_circle.cpp
 	src/ui/toast.hpp
@@ -501,6 +472,10 @@ set(SRCS
 	src/lib/zip/unzip.cpp
 	src/lib/data-uri/data-uri.cpp
 
+	src/ui/hud/hud.hpp
+	src/ui/hud/hud.cpp
+
+	src/ui/search-bar/search-bar.hpp
 ) 
 
 

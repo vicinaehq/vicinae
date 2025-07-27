@@ -10,13 +10,12 @@ OpenDocumentationCommand::OpenDocumentationCommand(const std::shared_ptr<Abstrac
     : CommandContext(cmd) {}
 
 void OpenDocumentationCommand::load(const LaunchProps &props) {
-  auto appDb = ServiceRegistry::instance()->appDb();
-  auto ui = ServiceRegistry::instance()->UI();
+  auto appDb = context()->services->appDb();
 
   if (auto browser = appDb->webBrowser()) {
     appDb->launch(*browser, {DOC_URL});
     return;
   }
 
-  ui->setToast("No browser to open the link", ToastPriority::Danger);
+  context()->services->toastService()->setToast("No browser to open the link", ToastPriority::Danger);
 }

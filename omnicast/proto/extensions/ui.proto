@@ -36,8 +36,16 @@ message SetSearchTextRequest {
   string text = 1;
 };
 
+enum PopToRootType {
+  PopToRootDefault = 0;
+  PopToRootImmediate = 1;
+  PopToRootSuspended = 2;
+};
+
 message ShowHudRequest {
   string text = 1;
+  bool clear_root_search = 2;
+  PopToRootType pop_to_root = 3;
 };
 
 message RenderRequest {

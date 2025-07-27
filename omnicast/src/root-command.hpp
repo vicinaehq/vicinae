@@ -19,7 +19,6 @@
 #include "ui/color-transform-widget.hpp"
 #include "ui/omni-list-item-widget.hpp"
 #include "ui/omni-list.hpp"
-#include "ui/top_bar.hpp"
 #include <QtConcurrent/QtConcurrent>
 #include <cfloat>
 #include <chrono>
@@ -184,15 +183,21 @@ protected:
 
   QString generateId() const override { return item.question; }
 
-  QList<AbstractAction *> generateActions() const override {
+  std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
+    auto panel = std::make_unique<ActionPanelState>();
     auto copyAnswer = new CopyCalculatorAnswerAction(item);
     auto copyQA = new CopyCalculatorQuestionAndAnswerAction(item);
     auto putAnswerInSearchBar = new PutCalculatorAnswerInSearchBar(item);
     auto openHistory = new OpenCalculatorHistoryAction();
+    auto main = panel->createSection();
 
     copyAnswer->setPrimary(true);
+    main->addAction(copyAnswer);
+    main->addAction(copyQA);
+    main->addAction(putAnswerInSearchBar);
+    main->addAction(openHistory);
 
-    return {copyAnswer, copyQA, putAnswerInSearchBar, openHistory};
+    return panel;
   }
 
 public:

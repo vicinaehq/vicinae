@@ -1,11 +1,12 @@
 #include "launcher-window.hpp"
 #include "action-panel/action-panel.hpp"
 #include "common.hpp"
+#include "global-bar.hpp"
 #include "header.hpp"
-#include "navigation-controller.hpp"
 #include <qboxlayout.h>
 #include <qevent.h>
 #include <qnamespace.h>
+#include <qstackedwidget.h>
 #include <qwidget.h>
 #include "omni-icon.hpp"
 #include "omnicast.hpp"
@@ -14,11 +15,32 @@
 #include "ui/action-pannel/action.hpp"
 #include "ui/dialog.hpp"
 #include "ui/overlay/overlay.hpp"
+#include "ui/hud/hud.hpp"
+#include "ui/dialog.hpp"
+#include <QStackedWidget>
 
-LauncherWindow::LauncherWindow(ApplicationContext &ctx)
-    : m_ctx(ctx), m_header(new GlobalHeader(*m_ctx.navigation)) {
+void LauncherWindow::showEvent(QShowEvent *event) { m_hud->hide(); }
+
+LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
+  using namespace std::chrono_literals;
+
+  m_hud = new HudWidget;
+  m_header = new GlobalHeader(*m_ctx.navigation);
+  m_bar = new GlobalBar(m_ctx);
+  m_actionPanel = new ActionPanelV2Widget(this);
+  m_dialog = new DialogWidget(this);
+  m_currentView = new QStackedWidget(this);
+  m_currentViewWrapper = new QStackedWidget(this);
+  m_currentOverlayWrapper = new QStackedWidget(this);
+  m_mainWidget = new QWidget(this);
+  m_barDivider = new HDivider(this);
+  m_hudDismissTimer = new QTimer(this);
+
   m_header->setFixedHeight(Omnicast::TOP_BAR_HEIGHT);
   m_bar->setFixedHeight(Omnicast::STATUS_BAR_HEIGHT);
+  m_hudDismissTimer->setInterval(1500ms);
+  m_hudDismissTimer->setSingleShot(true);
+
   setupUI();
 
   connect(m_actionPanel, &ActionPanelV2Widget::openChanged, this, [this](bool opened) {
@@ -33,6 +55,8 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx)
     m_ctx.navigation->closeActionPanel();
   });
 
+  connect(m_hudDismissTimer, &QTimer::timeout, this, [this]() { m_hud->fadeOut(); });
+
   connect(m_ctx.navigation.get(), &NavigationController::actionPanelVisibilityChanged, this,
           [this](bool value) {
             if (value) {
@@ -41,6 +65,9 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx)
               m_actionPanel->hide();
             }
           });
+
+  connect(m_ctx.navigation.get(), &NavigationController::showHudRequested, this,
+          &LauncherWindow::handleShowHUD);
 
   connect(m_ctx.overlay.get(), &OverlayController::currentOverlayDismissed, this, [this]() {
     if (auto widget = m_currentOverlayWrapper->widget(0)) { m_currentOverlayWrapper->removeWidget(widget); }
@@ -79,11 +106,22 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx)
   });
 }
 
+void LauncherWindow::handleShowHUD(const QString &text, const std::optional<OmniIconUrl> &icon) {
+  m_hud->clear();
+  m_hud->setText(text);
+  if (icon) m_hud->setIcon(*icon);
+  m_hud->showDirect();
+  m_hudDismissTimer->start();
+}
+
 void LauncherWindow::setupUI() {
   setWindowFlags(Qt::FramelessWindowHint);
   setAttribute(Qt::WA_TranslucentBackground, true);
   setMinimumSize(Omnicast::WINDOW_SIZE);
   setCentralWidget(createWidget());
+
+  m_hud->setMaximumWidth(300);
+
   connect(m_ctx.navigation.get(), &NavigationController::currentViewChanged, this,
           &LauncherWindow::handleViewChange);
   connect(m_ctx.navigation.get(), &NavigationController::confirmAlertRequested, this,

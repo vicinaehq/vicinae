@@ -25,6 +25,7 @@ class UIRequestRouter : public QObject {
   proto::ext::ui::Response *pushView(const proto::ext::ui::PushViewRequest &req);
   proto::ext::ui::Response *popView(const proto::ext::ui::PopViewRequest &req);
   proto::ext::ui::Response *confirmAlert(const proto::ext::ui::ConfirmAlertRequest &req);
+  proto::ext::ui::Response *showHud(const proto::ext::ui::ShowHudRequest &req);
 
   void modelCreated();
 

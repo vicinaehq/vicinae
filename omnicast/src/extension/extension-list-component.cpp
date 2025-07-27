@@ -7,6 +7,7 @@
 #include <qlogging.h>
 #include <qnamespace.h>
 #include <ranges>
+#include "extension/form/extension-dropdown.hpp"
 #include "ui/form/app-picker-input.hpp"
 #include "ui/form/selector-input.hpp"
 #include "ui/omni-list.hpp"

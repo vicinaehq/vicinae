@@ -37,6 +37,7 @@
 #include <qsvgrenderer.h>
 #include <qurl.h>
 #include <qwidget.h>
+#include "favicon/favicon-service.hpp"
 
 namespace Omnimg {
 enum ObjectFit { ObjectFitContain, ObjectFitFill };
@@ -609,6 +610,11 @@ public:
   void setUrl(const OmniIconUrl &url) {
     if (url == m_source) { return; }
     setUrlImpl(url);
+  }
+
+  ImageWidget(const OmniIconUrl url, QWidget *parent = nullptr) : QWidget(parent) {
+    setUrl(url);
+    connect(&ThemeService::instance(), &ThemeService::themeChanged, this, &ImageWidget::refreshTheme);
   }
 
   ImageWidget(QWidget *parent = nullptr) : QWidget(parent) {

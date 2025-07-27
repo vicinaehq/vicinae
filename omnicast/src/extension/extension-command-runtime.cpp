@@ -1,10 +1,16 @@
 #include "extension-command-runtime.hpp"
 #include "common.hpp"
+#include "extension/extension-navigation-controller.hpp"
+#include "extension-error-view.hpp"
+#include "extension/requests/app-request-router.hpp"
+#include "extension/requests/clipboard-request-router.hpp"
+#include "extension/requests/storage-request-router.hpp"
+#include "extension/requests/ui-request-router.hpp"
 #include "proto/oauth.pb.h"
+#include "common.hpp"
+#include "service-registry.hpp"
 #include "services/asset-resolver/asset-resolver.hpp"
-#include "services/oauth/oauth-service.hpp"
 #include "ui/oauth-view.hpp"
-#include "utils/utils.hpp"
 #include <QString>
 #include "overlay-controller/overlay-controller.hpp"
 
@@ -122,10 +128,10 @@ void ExtensionCommandRuntime::initialize() {
 void ExtensionCommandRuntime::load(const LaunchProps &props) {
   initialize();
 
-  auto rootItemManager = ServiceRegistry::instance()->rootItemManager();
+  auto rootItemManager = context()->services->rootItemManager();
   auto preferenceValues =
       rootItemManager->getPreferenceValues(QString("extension.%1").arg(m_command->uniqueId()));
-  auto manager = ServiceRegistry::instance()->extensionManager();
+  auto manager = context()->services->extensionManager();
 
   if (m_command->mode() == CommandModeView) {
     // We push the first view immediately, waiting for the initial render to come
@@ -162,8 +168,6 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
             m_sessionId = QString::fromStdString(data.load().session_id());
             m_navigation->setSessionId(m_sessionId);
             loadRequest->deleteLater();
-            m_timer.time("Extension loaded");
-            m_timer.start();
           });
 }
 

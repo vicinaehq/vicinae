@@ -1,5 +1,6 @@
 #pragma once
 #include "omni-icon.hpp"
+#include "ui/image/omnimg.hpp"
 #include <QTextBlock>
 #include <qlogging.h>
 #include <qnamespace.h>
@@ -21,7 +22,7 @@ struct TopLevelBlock {
 
 struct ImageResource {
   int cursorPos;
-  OmniIcon *icon;
+  Omnimg::ImageWidget *icon;
   QUrl name;
 };
 

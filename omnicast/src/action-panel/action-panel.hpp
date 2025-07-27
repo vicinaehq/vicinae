@@ -7,7 +7,6 @@
 #include "ui/omni-list-item-widget.hpp"
 #include "ui/omni-list.hpp"
 #include "ui/popover.hpp"
-#include "ui/top_bar.hpp"
 #include "ui/typography/typography.hpp"
 #include <qboxlayout.h>
 #include <qcoreevent.h>
@@ -170,7 +169,7 @@ public:
     m_input->installEventFilter(this);
 
     setLayout(m_layout);
-    connect(m_input, &SearchBar::textChanged, this, &ActionPanelListView::onSearchChanged);
+    connect(m_input, &QLineEdit::textChanged, this, &ActionPanelListView::onSearchChanged);
     connect(m_list, &OmniList::itemActivated, this, &ActionPanelListView::itemActivated);
     connect(m_list, &OmniList::virtualHeightChanged, this, [this](int height) {
       m_list->setFixedHeight(std::min(height, 180));

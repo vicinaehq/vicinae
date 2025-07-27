@@ -1,13 +1,12 @@
 #pragma once
 #include "navigation-controller.hpp"
-#include "ui/horizontal-loading-bar.hpp"
-#include "ui/icon-button.hpp"
-#include "ui/top_bar.hpp"
-#include <qcoreevent.h>
-#include <qevent.h>
-#include <qobject.h>
-#include <qstackedwidget.h>
 #include <qwidget.h>
+
+class NavigationController;
+class SearchBar;
+class IconButton;
+class QStackedWidget;
+class HorizontalLoadingBar;
 
 class GlobalHeader : public QWidget {
 public:
@@ -19,11 +18,11 @@ protected:
 
 private:
   NavigationController &m_navigation;
-  SearchBar *m_input = new SearchBar(this);
-  HorizontalLoadingBar *m_loadingBar = new HorizontalLoadingBar(this);
-  IconButton *m_backButton = new IconButton;
+  SearchBar *m_input;
+  HorizontalLoadingBar *m_loadingBar;
+  IconButton *m_backButton;
   QWidget *m_backButtonSpacer = new QWidget;
-  QStackedWidget *m_accessoryContainer = new QStackedWidget(this);
+  QStackedWidget *m_accessoryContainer;
 
   void setAccessory(QWidget *accessory);
   void clearAccessory();

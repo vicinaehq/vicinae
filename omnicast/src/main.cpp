@@ -1,4 +1,3 @@
-#include "ai/ollama-ai-provider.hpp"
 #include "command-controller.hpp"
 #include <QStyleHints>
 #include "data-uri/data-uri.hpp"
@@ -59,7 +58,6 @@
 #include "service-registry.hpp"
 #include "services/toast/toast-service.hpp"
 #include "theme.hpp"
-#include "ui/ui-controller.hpp"
 #include "utils/utils.hpp"
 
 #ifdef WAYLAND_LAYER_SHELL
@@ -171,8 +169,6 @@ int startDaemon() {
     auto clipboardManager = std::make_unique<ClipboardService>(Omnicast::dataDir() / "clipboard.db");
     auto processManager = std::make_unique<ProcessManagerService>();
     auto windowManager = WindowManagerFactory().create();
-    auto aiManager = std::make_unique<AI::Manager>(*omniDb);
-    auto ollamaProvider = std::make_unique<OllamaAiProvider>();
     auto fontService = std::make_unique<FontService>();
     auto appService = std::make_unique<AppService>(*omniDb.get());
     auto configService = std::make_unique<ConfigService>();
@@ -196,8 +192,6 @@ int startDaemon() {
       ThemeService::instance().setDefaultTheme();
     }
 
-    aiManager->registerProvider(std::move(ollamaProvider));
-
     if (!extensionManager->start()) {
       qCritical() << "Failed to load extension manager. Extensions will not work";
     }
@@ -213,7 +207,6 @@ int startDaemon() {
     // fileService->indexer()->start();
 
     registry->setFileService(std::move(fileService));
-    registry->setUI(std::make_unique<UIController>());
     registry->setToastService(std::move(toastService));
     registry->setBookmarkService(std::move(bookmarkService));
     registry->setConfig(std::move(configService));
@@ -222,7 +215,6 @@ int startDaemon() {
     registry->setCalculatorService(std::move(calculatorService));
     registry->setAppDb(std::move(appService));
     registry->setOmniDb(std::move(omniDb));
-    registry->setAI(std::move(aiManager));
     registry->setCommandDb(std::move(commandDb));
     registry->setLocalStorage(std::move(localStorage));
     registry->setExtensionManager(std::move(extensionManager));

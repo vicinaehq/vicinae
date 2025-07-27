@@ -1,6 +1,7 @@
 #include "ui/action-pannel/action-list-widget.hpp"
 #include "theme.hpp"
 #include "ui/action-pannel/action.hpp"
+#include "ui/image/omnimg.hpp"
 #include "ui/typography/typography.hpp"
 #include <qlogging.h>
 
@@ -63,7 +64,8 @@ void ActionListWidget::setAction(const AbstractAction *action) {
 }
 
 ActionListWidget::ActionListWidget()
-    : m_icon(new OmniIcon), m_label(new TypographyWidget), m_shortcut(new KeyboardShortcutIndicatorWidget) {
+    : m_icon(new Omnimg::ImageWidget), m_label(new TypographyWidget),
+      m_shortcut(new KeyboardShortcutIndicatorWidget) {
   auto &theme = ThemeService::instance().theme();
   auto layout = new QHBoxLayout;
 
