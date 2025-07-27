@@ -4,6 +4,7 @@
 #include "ui/file-picker/file-picker-default-item-delegate.hpp"
 #include "ui/app-selector/app-selector.hpp"
 #include "ui/file-picker/file-picker.hpp"
+#include "services/app-service/app-service.hpp"
 #include <qwidget.h>
 
 class AppSearchPathPickerItemDelegate : public DefaultFilePickerItemDelegate {

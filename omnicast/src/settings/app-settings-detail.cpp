@@ -3,6 +3,8 @@
 #include "settings/command-metadata-settings-detail.hpp"
 #include "ui/file-picker/file-picker.hpp"
 #include <qboxlayout.h>
+#include "services/app-service/app-service.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
 #include <qlogging.h>
 
 void AppSettingsDetail::setupUI() {

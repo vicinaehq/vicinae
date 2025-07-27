@@ -1,9 +1,11 @@
 #pragma once
 #include "base-view.hpp"
 #include "clipboard-actions.hpp"
+#include "libtrie/trie.hpp"
 #include "services/config/config-service.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
+#include "font-service.hpp"
 #include "timer.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/markdown/markdown-renderer.hpp"

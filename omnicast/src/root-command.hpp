@@ -3,7 +3,9 @@
 #include "argument.hpp"
 #include "base-view.hpp"
 #include "clipboard-actions.hpp"
+#include "services/files-service/file-service.hpp"
 #include "navigation-controller.hpp"
+#include "services/app-service/app-service.hpp"
 #include "color-formatter.hpp"
 #include "actions/calculator/calculator-actions.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
@@ -277,9 +279,8 @@ class RootSearchView : public ListView {
 
     m_list->beginResetModel();
     auto commandDb = ServiceRegistry::instance()->commandDb();
-    auto quicklinkDb = ServiceRegistry::instance()->quicklinks();
     auto appDb = ServiceRegistry::instance()->appDb();
-    const auto &quicklinks = quicklinkDb->list();
+    // const auto &quicklinks = quicklinkDb->list();
     const auto &appEntries = appDb->list();
     const auto &commandEntries = commandDb->commands();
     auto rootManager = ServiceRegistry::instance()->rootItemManager();
@@ -341,12 +342,10 @@ class RootSearchView : public ListView {
   void render(const QString &text) {
     auto rootItemManager = ServiceRegistry::instance()->rootItemManager();
     auto commandDb = ServiceRegistry::instance()->commandDb();
-    auto quicklinkDb = ServiceRegistry::instance()->quicklinks();
     auto appDb = ServiceRegistry::instance()->appDb();
-    const auto &quicklinks = quicklinkDb->list();
     const auto &appEntries = appDb->list();
     const auto &commandEntries = commandDb->commands();
-    size_t maxReserve = appEntries.size() + commandEntries.size() + quicklinks.size();
+    size_t maxReserve = appEntries.size() + commandEntries.size();
 
     m_list->beginResetModel();
 

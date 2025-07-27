@@ -3,6 +3,9 @@
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
+#include "services/clipboard/clipboard-service.hpp"
+#include "services/calculator-service/calculator-service.hpp"
+#include "services/toast/toast-service.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/toast.hpp"
 #include <base-view.hpp>

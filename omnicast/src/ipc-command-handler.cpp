@@ -3,6 +3,7 @@
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include <qlogging.h>
+#include "omni-command-db.hpp"
 
 std::variant<CommandResponse, CommandError> IpcCommandHandler::handleCommand(const CommandMessage &message) {
   qDebug() << "received message type" << message.type;

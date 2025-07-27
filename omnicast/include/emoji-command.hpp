@@ -9,6 +9,7 @@
 #include "services/emoji-service/emoji.hpp"
 #include "services/toast/toast-service.hpp"
 #include "timer.hpp"
+#include "services/emoji-service/emoji-service.hpp"
 #include "ui/action-pannel/action-item.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/form/base-input.hpp"

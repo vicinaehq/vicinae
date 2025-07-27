@@ -3,6 +3,7 @@
 #include <qevent.h>
 #include <qnamespace.h>
 #include <qwidget.h>
+#include "font-service.hpp"
 
 void EmojiViewer::setEmoji(const QString &emoji) {
   _emoji = emoji;

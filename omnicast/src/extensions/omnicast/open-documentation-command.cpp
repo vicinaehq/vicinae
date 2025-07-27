@@ -1,6 +1,8 @@
 #include "extensions/omnicast/open-documentation-command.hpp"
 #include "command.hpp"
 #include "service-registry.hpp"
+#include "services/app-service/app-service.hpp"
+#include "services/toast/toast-service.hpp"
 #include "ui/toast.hpp"
 #include <qlogging.h>
 

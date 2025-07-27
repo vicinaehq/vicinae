@@ -1,5 +1,6 @@
 #include "theme-actions.hpp"
 #include "service-registry.hpp"
+#include "services/config/config-service.hpp"
 
 void SetThemeAction::execute(ApplicationContext *ctx) {
   auto configService = ctx->services->config();

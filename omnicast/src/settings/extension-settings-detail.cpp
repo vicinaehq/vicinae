@@ -7,6 +7,7 @@
 #include <qlogging.h>
 #include <qnamespace.h>
 #include <qwidget.h>
+#include "services/root-item-manager/root-item-manager.hpp"
 
 void ExtensionSettingsDetail::handleFocusChanged(bool focused) {
   if (!focused) { savePendingPreferences(); }

@@ -11,6 +11,8 @@
 #include "root-search/apps/app-root-provider.hpp"
 #include "services/bookmark/bookmark-service.hpp"
 #include <QApplication>
+#include "services/calculator-service/calculator-service.hpp"
+#include "services/clipboard/clipboard-service.hpp"
 #include "services/config/config-service.hpp"
 #include "font-service.hpp"
 #include <QFontDatabase>
@@ -48,8 +50,6 @@
 #include "omnicast.hpp"
 #include "process-manager-service.hpp"
 #include "proto.hpp"
-#include "quicklink-seeder.hpp"
-#include "quicklist-database.hpp"
 #include "services/oauth/oauth-service.hpp"
 #include "services/raycast/raycast-store.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
@@ -161,7 +161,6 @@ int startDaemon() {
   {
     auto registry = ServiceRegistry::instance();
     auto omniDb = std::make_unique<OmniDatabase>(Omnicast::dataDir() / "omnicast.db");
-    auto quicklinkService = std::make_unique<QuicklistDatabase>(*omniDb.get());
     auto localStorage = std::make_unique<LocalStorageService>(*omniDb);
     auto rootItemManager = std::make_unique<RootItemManager>(*omniDb.get());
     auto commandDb = std::make_unique<OmniCommandDatabase>();
@@ -196,12 +195,6 @@ int startDaemon() {
       qCritical() << "Failed to load extension manager. Extensions will not work";
     }
 
-    {
-      auto seeder = std::make_unique<QuickLinkSeeder>(*appService->provider(), *quicklinkService);
-
-      if (quicklinkService->list().empty()) { seeder->seed(); }
-    }
-
     // fileService->indexer()->setEntrypoints({{.root = "/home/aurelle/Downloads"}});
     fileService->indexer()->setEntrypoints({{.root = homeDir()}});
     // fileService->indexer()->start();
@@ -211,7 +204,6 @@ int startDaemon() {
     registry->setBookmarkService(std::move(bookmarkService));
     registry->setConfig(std::move(configService));
     registry->setRootItemManager(std::move(rootItemManager));
-    registry->setQuicklinks(std::move(quicklinkService));
     registry->setCalculatorService(std::move(calculatorService));
     registry->setAppDb(std::move(appService));
     registry->setOmniDb(std::move(omniDb));

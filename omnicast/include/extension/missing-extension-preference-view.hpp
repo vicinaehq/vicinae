@@ -11,6 +11,7 @@
 #include <qboxlayout.h>
 #include <qjsonobject.h>
 #include <qjsonvalue.h>
+#include "services/root-item-manager/root-item-manager.hpp"
 #include <qnamespace.h>
 #include <qwidget.h>
 

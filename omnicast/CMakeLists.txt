@@ -115,6 +115,8 @@ set(SRCS
 
 	src/actions/app/app-actions.hpp
 	src/actions/app/app-actions.cpp
+	
+	src/service-registry.cpp
 
 	src/color-formatter.hpp
 	src/color-formatter.cpp

@@ -130,6 +130,7 @@ TransformResult::TransformResult()
   auto icon = QIcon(":icons/arrow-right.svg");
 
   m_arrowIcon->setUrl(BuiltinOmniIconUrl("arrow-right"));
+  m_arrowIcon->setFixedSize(25, 25);
   setContentsMargins(10, 10, 10, 10);
   _arrowIcon = icon.pixmap(32, 32).scaledToWidth(32, Qt::SmoothTransformation);
   _arrowMid = {_arrowIcon.width() / 2, _arrowIcon.height() / 2};

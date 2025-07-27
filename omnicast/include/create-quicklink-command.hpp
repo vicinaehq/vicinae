@@ -34,6 +34,8 @@
 #include <ranges>
 #include <sched.h>
 #include <unistd.h>
+#include "services/app-service/app-service.hpp"
+#include "services/toast/toast-service.hpp"
 
 class AppSelectorItem : public SelectorInput::AbstractItem {
 public:
@@ -287,8 +289,6 @@ public:
       : form(new FormWidget), name(new BaseInput), link(new CompletedInput), appSelector(new SelectorInput),
         iconSelector(new SelectorInput) {
     Timer timer;
-    auto quicklinkDb = ServiceRegistry::instance()->quicklinks();
-
     name->setPlaceholderText("Bookmark name");
     link->setPlaceholderText("https://google.com/search?q={argument}");
 

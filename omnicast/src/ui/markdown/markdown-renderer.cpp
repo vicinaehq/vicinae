@@ -25,6 +25,7 @@
 #include <qtextlist.h>
 #include <qurl.h>
 #include <qurlquery.h>
+#include "services/config/config-service.hpp"
 
 int MarkdownRenderer::getHeadingLevelPointSize(int level) const {
   auto factor = HEADING_LEVEL_SCALE_FACTORS[std::clamp(level, 1, 4)];

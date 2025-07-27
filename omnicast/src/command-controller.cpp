@@ -3,6 +3,7 @@
 #include "extension/extension-command.hpp"
 #include "navigation-controller.hpp"
 #include "extension/missing-extension-preference-view.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
 
 CommandController::CommandController(ApplicationContext *ctx) : m_ctx(ctx) {
   connect(ctx->navigation.get(), &NavigationController::viewPushed, this,

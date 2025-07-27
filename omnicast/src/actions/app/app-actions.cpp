@@ -2,6 +2,8 @@
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "ui/action-pannel/action.hpp"
+#include "services/app-service/app-service.hpp"
+#include "services/toast/toast-service.hpp"
 
 void OpenAppAction::execute(ApplicationContext *ctx) {
   auto appDb = ctx->services->appDb();

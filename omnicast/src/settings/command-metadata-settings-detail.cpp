@@ -1,6 +1,7 @@
 #include "settings/command-metadata-settings-detail.hpp"
 #include "service-registry.hpp"
 #include "app-metadata-settings-detail.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
 #include <qboxlayout.h>
 #include <qlogging.h>
 #include <qwidget.h>

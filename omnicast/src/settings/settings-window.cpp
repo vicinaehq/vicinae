@@ -2,6 +2,7 @@
 #include <qwidget.h>
 #include "settings-window.hpp"
 #include "common.hpp"
+#include "services/config/config-service.hpp"
 #include "service-registry.hpp"
 
 static constexpr QSize windowSize(1000, 600);

@@ -1,5 +1,6 @@
 #include "file-picker-default-item-delegate.hpp"
 #include "service-registry.hpp"
+#include "services/app-service/app-service.hpp"
 
 void DefaultFilePickerItemDelegate::handleOpen() {
   auto appDb = ServiceRegistry::instance()->appDb();

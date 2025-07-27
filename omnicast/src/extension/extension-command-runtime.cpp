@@ -13,6 +13,7 @@
 #include "ui/oauth-view.hpp"
 #include <QString>
 #include "overlay-controller/overlay-controller.hpp"
+#include "utils/utils.hpp"
 
 proto::ext::extension::Response *ExtensionCommandRuntime::makeErrorResponse(const QString &errorText) {
   auto res = new proto::ext::extension::Response;

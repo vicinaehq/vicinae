@@ -6,6 +6,8 @@
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
 #include "ui/action-pannel/action.hpp"
+#include "services/app-service/app-service.hpp"
+#include "services/toast/toast-service.hpp"
 #include "ui/toast.hpp"
 #include <memory>
 #include <qclipboard.h>

@@ -2,6 +2,10 @@
 #include "common.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "omni-icon.hpp"
+#include "wm/window-manager.hpp"
+#include "navigation-controller.hpp"
+#include "services/app-service/app-service.hpp"
+#include <QTimer>
 #include "service-registry.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/keyboard.hpp"

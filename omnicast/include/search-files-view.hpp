@@ -4,6 +4,7 @@
 #include "base-view.hpp"
 #include "clipboard-history-view.hpp"
 #include "manage-quicklinks-command.hpp"
+#include "services/files-service/file-service.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
 #include "services/files-service/abstract-file-indexer.hpp"

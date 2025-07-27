@@ -4,6 +4,8 @@
 #include "navigation-controller.hpp"
 #include "omni-icon.hpp"
 #include "services/raycast/raycast-store.hpp"
+#include "services/toast/toast-service.hpp"
+#include "services/extension-registry/extension-registry.hpp"
 #include "theme.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/list-accessory-widget.hpp"

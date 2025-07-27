@@ -5,6 +5,9 @@
 #include "ui/action-pannel/action.hpp"
 #include "ui/alert.hpp"
 #include "ui/toast.hpp"
+#include "navigation-controller.hpp"
+#include "services/toast/toast-service.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
 
 void ResetItemRanking::execute(ApplicationContext *ctx) {
   auto id = m_id;

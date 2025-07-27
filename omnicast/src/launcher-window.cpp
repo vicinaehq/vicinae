@@ -10,6 +10,7 @@
 #include <qwidget.h>
 #include "omni-icon.hpp"
 #include "omnicast.hpp"
+#include "services/config/config-service.hpp"
 #include "overlay-controller/overlay-controller.hpp"
 #include "root-command.hpp"
 #include "ui/action-pannel/action.hpp"

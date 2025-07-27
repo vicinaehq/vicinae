@@ -7,6 +7,7 @@
 #include <qboxlayout.h>
 #include <qnamespace.h>
 #include <qwidget.h>
+#include "services/toast/toast-service.hpp"
 
 NavigationStatusWidget::NavigationStatusWidget() { setupUI(); }
 
