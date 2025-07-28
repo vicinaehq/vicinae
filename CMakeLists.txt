@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.16)
-set(OMNICAST_VERSION v1.0.0)
+set(VICINAE_VERSION v1.0.0)
 set(PROJECT_NAME omnicast)
 project(${PROJECT_NAME} VERSION 1.0.0 LANGUAGES C CXX)
 
-add_compile_definitions(OMNICAST_VERSION="${OMNICAST_VERSION}")
+add_compile_definitions(VICINAE_VERSION="${VICINAE_VERSION}")
 
 find_program(CCACHE ccache)
 
@@ -18,7 +18,7 @@ else()
 endif()
 
 add_subdirectory(omnictl)
-add_subdirectory(omnicast)
+add_subdirectory(vicinae)
 add_subdirectory(proto)
 add_subdirectory(libtrie)
 

@@ -1,0 +1,17 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Outer circle -->
+  <circle cx="100" cy="100" r="80" fill="none" stroke="#000000" stroke-width="4"/>
+
+  <!-- Crescent using mask -->
+  <defs>
+    <mask id="crescentMask">
+      <rect width="200" height="200" fill="black"/>
+      <circle cx="100" cy="100" r="65" fill="white"/>
+      <circle cx="150" cy="100" r="60" fill="black"/>
+    </mask>
+  </defs>
+
+  <!-- Apply the mask -->
+  <circle cx="100" cy="100" r="70" fill="#000000" mask="url(#crescentMask)"/>
+</svg>
+
