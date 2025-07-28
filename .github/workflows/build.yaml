@@ -13,8 +13,6 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      with:
-        submodules: recursive  # If you have git submodules
     
     - name: Create build directory
       run: mkdir -p build
