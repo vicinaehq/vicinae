@@ -1,27 +1,14 @@
 #pragma once
 #include "common.hpp"
-#include <QClipboard>
-#include <QSqlError>
-#include <cmath>
-#include <cstdint>
+#include "services/clipboard/clipboard-server.hpp"
+#include <QString>
 #include <filesystem>
-#include <qapplication.h>
-#include <qclipboard.h>
-#include <qcryptographichash.h>
+#include <QJsonObject>
 #include <qdir.h>
 #include <qfileinfo.h>
-#include <qjsonobject.h>
-#include <qjsonvalue.h>
-#include <qlogging.h>
-#include <qmimedata.h>
 #include <qmimedatabase.h>
-#include <qobject.h>
 #include <qsqldatabase.h>
 #include <qsqlquery.h>
-#include <qstringview.h>
-#include <qtmetamacros.h>
-#include <variant>
-#include "services/clipboard/clipboard-server.hpp"
 
 namespace Clipboard {
 static const char *CONCEALED_MIME_TYPE = "omnicast/concealed";
@@ -84,12 +71,9 @@ struct ClipboardListSettings {
 class ClipboardService : public QObject, public NonCopyable {
   Q_OBJECT
 
-  // prepared statements
   QSqlQuery m_retrieveSelectionByIdQuery;
   bool m_recordAllOffers = true;
   bool m_monitoring = true;
-
-  // end prepare statements
 
   QSqlDatabase db;
   QMimeDatabase _mimeDb;

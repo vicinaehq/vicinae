@@ -1,3 +1,4 @@
+#include <QClipboard>
 #include "services/clipboard/clipboard-service.hpp"
 #include "common.hpp"
 #include "services/clipboard/clipboard-service.hpp"
