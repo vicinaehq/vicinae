@@ -1,1 +1,1 @@
-# Test
+![Banner](./assets/vicinae-banner.png)
