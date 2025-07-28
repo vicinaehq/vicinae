@@ -1,1 +1,1 @@
-![Banner](./assets/vicinae-banner.png)
+![Banner](.github/assets/vicinae-banner.png)
