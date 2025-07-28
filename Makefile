@@ -1,14 +1,14 @@
 BUILD_DIR := build
 
-omnicast: configure
+vicinae: configure
 	cmake --build $(BUILD_DIR)
 
-.PHONY: omnicast
+.PHONY: vicinae
 
 extension-manager:
 	cd api && tsc --outDir dist
 	cd extension-manager && npm run build
-	cp extension-manager/dist/runtime.js omnicast/assets/extension-runtime.js
+	cp extension-manager/dist/runtime.js vicinae/assets/extension-runtime.js
 
 .PHONY: extension-manager
 
@@ -16,12 +16,12 @@ wayland:
 	wayland-scanner client-header ./wlr-clipman/protocols/wlr-data-control-unstable-v1.xml wlr-clipman/include/wayland-wlr-data-control-client-protocol.h
 	wayland-scanner public-code ./wlr-clipman/protocols/wlr-data-control-unstable-v1.xml wlr-clipman/src/wayland-wlr-data-control-client-protocol.c
 
-all: omnicast extension-manager
+all: vicinae extension-manager
 	cmake --build $(BUILD_DIR)
 .PHONY: all
 
 format:
-	@echo 'omnicast\nwlr-clip\nproto\nomnictl' | xargs -I{} find {} -type d -iname 'build' -prune -o -type f -iname '*.hpp' -o -type f -iname '*.cpp' | xargs -I{} bash -c '[ -f {} ] && clang-format -i {} && echo "Formatted {}" || echo "Failed to format {}"'
+	@echo 'vicinae\nwlr-clip\nproto\nomnictl' | xargs -I{} find {} -type d -iname 'build' -prune -o -type f -iname '*.hpp' -o -type f -iname '*.cpp' | xargs -I{} bash -c '[ -f {} ] && clang-format -i {} && echo "Formatted {}" || echo "Failed to format {}"'
 .PHONY: format
 
 configure:
@@ -30,7 +30,7 @@ configure:
 
 gen-emoji:
 	cd ./scripts/emoji && npm install && tsc --outDir dist && node dist/main.js
-	cp ./scripts/emoji/dist/emoji.{cpp,hpp} omnicast/src/services/emoji-service/
+	cp ./scripts/emoji/dist/emoji.{cpp,hpp} vicinae/src/services/emoji-service/
 .PHONY: gen-emoji
 
 clean:
