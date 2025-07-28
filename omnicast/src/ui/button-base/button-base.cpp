@@ -1,9 +1,9 @@
-#include "ui/button.hpp"
+#include "button-base.hpp"
 #include <qcolor.h>
 #include <qevent.h>
 #include <qpainter.h>
 
-bool Button::event(QEvent *event) {
+bool ButtonBase::event(QEvent *event) {
   switch (event->type()) {
   case QEvent::HoverEnter:
     hoverChanged(true);
@@ -18,7 +18,7 @@ bool Button::event(QEvent *event) {
   return QWidget::event(event);
 }
 
-void Button::mousePressEvent(QMouseEvent *event) {
+void ButtonBase::mousePressEvent(QMouseEvent *event) {
   if (event->button() == Qt::LeftButton) {
     emit clicked();
     return;
@@ -26,7 +26,7 @@ void Button::mousePressEvent(QMouseEvent *event) {
   QWidget::mousePressEvent(event);
 }
 
-void Button::paintEvent(QPaintEvent *event) {
+void ButtonBase::paintEvent(QPaintEvent *event) {
   QPainter painter(this);
 
   if (_bgColor.isValid()) {
@@ -39,8 +39,8 @@ void Button::paintEvent(QPaintEvent *event) {
   QWidget::paintEvent(event);
 }
 
-void Button::setBackgroundColor(const QColor &color) { _bgColor = color; }
+void ButtonBase::setBackgroundColor(const QColor &color) { _bgColor = color; }
 
-void Button::hoverChanged(bool hovered) { update(); }
+void ButtonBase::hoverChanged(bool hovered) { update(); }
 
-Button::Button() : _hovered(false) { setAttribute(Qt::WA_Hover); }
+ButtonBase::ButtonBase() : _hovered(false) { setAttribute(Qt::WA_Hover); }

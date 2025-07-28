@@ -382,6 +382,8 @@ void ThemeService::setTheme(const ThemeInfo &info) {
 
   palette.setBrush(QPalette::WindowText, info.colors.text);
   palette.setBrush(QPalette::Text, info.colors.text);
+  palette.setBrush(QPalette::Link, info.colors.linkDefault);
+  palette.setBrush(QPalette::LinkVisited, info.colors.linkVisited);
 
   QColor placeholderText = info.colors.subtext;
 

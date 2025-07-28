@@ -1,7 +1,7 @@
 #pragma once
 #include <qwidget.h>
 
-class Button : public QWidget {
+class ButtonBase : public QWidget {
   Q_OBJECT
   bool _hovered;
   QColor _bgColor;
@@ -16,7 +16,7 @@ public:
   bool hovered() const { return _hovered; }
   void setBackgroundColor(const QColor &color);
 
-  Button();
+  ButtonBase();
 
 signals:
   void clicked() const;

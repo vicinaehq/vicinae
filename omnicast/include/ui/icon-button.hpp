@@ -1,7 +1,7 @@
 #pragma once
 #include "omni-icon.hpp"
 #include "ui/image/omnimg.hpp"
-#include "ui/omni-button.hpp"
+#include "ui/button/button.hpp"
 #include <qboxlayout.h>
 #include <qevent.h>
 #include <qnamespace.h>

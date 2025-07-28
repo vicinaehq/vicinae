@@ -6,7 +6,7 @@
 #include "ui/focus-notifier.hpp"
 #include "ui/icon-button.hpp"
 #include "ui/image/omnimg.hpp"
-#include "ui/omni-button.hpp"
+#include "ui/button/button.hpp"
 #include "ui/omni-list-item-widget.hpp"
 #include "ui/omni-list.hpp"
 #include "ui/typography/typography.hpp"

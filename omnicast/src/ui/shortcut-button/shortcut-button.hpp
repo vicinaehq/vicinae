@@ -1,18 +1,11 @@
 #pragma once
-#include "extend/action-model.hpp"
-#include "ui/keyboard-shortcut-indicator.hpp"
-#include <qcoreevent.h>
-#include <qevent.h>
-#include "ui/button.hpp"
-#include "ui/typography/typography.hpp"
-#include <qlabel.h>
-#include <QHBoxLayout>
-#include <qnamespace.h>
-#include <qpainter.h>
-#include <qtmetamacros.h>
-#include <qwidget.h>
+#include "ui/button-base/button-base.hpp"
 
-class ShortcutButton : public Button {
+class TypographyWidget;
+class KeyboardShortcutIndicatorWidget;
+class KeyboardShortcutModel;
+
+class ShortcutButton : public ButtonBase {
   Q_OBJECT
 
   TypographyWidget *_label;

@@ -188,6 +188,7 @@ public:
   void initialize() override {
     m_store = context()->services->raycastStore();
     setLoading(true);
+    setSearchPlaceholderText("Browse Raycast extensions");
 
     m_listResultWatcher.setFuture(m_store->fetchExtensions());
   }

@@ -9,7 +9,7 @@
 #include "theme.hpp"
 #include "ui/dialog.hpp"
 #include "ui/icon-button.hpp"
-#include "ui/omni-button.hpp"
+#include "ui/button/button.hpp"
 #include "ui/overlay/overlay.hpp"
 #include "ui/toast.hpp"
 #include "ui/typography/typography.hpp"

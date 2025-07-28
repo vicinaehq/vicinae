@@ -1,23 +1,26 @@
-#include "ui/shortcut-button.hpp"
+#include "shortcut-button.hpp"
 #include "theme.hpp"
+#include "ui/keyboard-shortcut-indicator.hpp"
 #include "ui/typography/typography.hpp"
+#include <qboxlayout.h>
 #include <qcolor.h>
+#include <qnamespace.h>
 
 void ShortcutButton::hoverChanged(bool hovered) {
   auto &theme = ThemeService::instance().theme();
 
-  _shortcut_indicator->setBackgroundColor(hovered ? theme.colors.statusBackgroundLighter
-                                                  : theme.colors.statusBackgroundLighter);
-  setBackgroundColor(hovered ? theme.colors.statusBackgroundHover : QColor::Invalid);
+  _shortcut_indicator->setBackgroundColor(hovered ? SemanticColor::SecondaryBackground
+                                                  : SemanticColor::ButtonSecondary);
+  setBackgroundColor(hovered ? theme.resolveTint(SemanticColor::ButtonSecondaryHover) : Qt::transparent);
   update();
 }
 
 void ShortcutButton::resetColor() {
   auto &theme = ThemeService::instance().theme();
 
-  _shortcut_indicator->setBackgroundColor(hovered() ? theme.colors.statusBackgroundLighter
-                                                    : theme.colors.statusBackgroundLighter);
-  setBackgroundColor(hovered() ? theme.colors.statusBackgroundHover : QColor::Invalid);
+  _shortcut_indicator->setBackgroundColor(hovered() ? SemanticColor::SecondaryBackground
+                                                    : SemanticColor::ButtonSecondary);
+  setBackgroundColor(hovered() ? theme.resolveTint(SemanticColor::ButtonSecondaryHover) : Qt::transparent);
   setTextColor(theme.colors.text);
 }
 
@@ -49,6 +52,8 @@ ShortcutButton::ShortcutButton()
   layout->addWidget(_label, 0, Qt::AlignLeft);
   layout->addWidget(_shortcut_indicator, 0, Qt::AlignRight);
   layout->setContentsMargins(8, 4, 8, 4);
+
+  connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() { resetColor(); });
 
   setLayout(layout);
 }

@@ -1,13 +1,16 @@
 #pragma once
-#include "common.hpp"
-#include "navigation-controller.hpp"
-#include "omni-icon.hpp"
-#include "ui/image/omnimg.hpp"
-#include "ui/shortcut-button.hpp"
-#include "ui/toast.hpp"
-#include "ui/typography/typography.hpp"
-#include <qstackedwidget.h>
 #include <qwidget.h>
+#include "navigation-controller.hpp"
+#include "ui/image/omnimg.hpp"
+
+class ApplicationContext;
+class TypographyWidget;
+class OmniIconUrl;
+class ToastWidget;
+class ShortcutButton;
+class QStackedWidget;
+class ActionPanelState;
+class Toast;
 
 class NavigationStatusWidget : public QWidget {
 public:
@@ -19,7 +22,7 @@ public:
 private:
   void setupUI();
 
-  TypographyWidget *m_navigationTitle = new TypographyWidget(this);
+  TypographyWidget *m_navigationTitle;
   Omnimg::ImageWidget *m_navigationIcon = new Omnimg::ImageWidget(this);
 };
 
@@ -33,11 +36,11 @@ protected:
 
 private:
   ApplicationContext &m_ctx;
-  QStackedWidget *m_leftWidget = new QStackedWidget;
-  NavigationStatusWidget *m_status = new NavigationStatusWidget;
-  ShortcutButton *m_primaryActionButton = new ShortcutButton;
-  ShortcutButton *m_actionButton = new ShortcutButton;
-  ToastWidget *m_toast = new ToastWidget;
+  QStackedWidget *m_leftWidget;
+  NavigationStatusWidget *m_status;
+  ShortcutButton *m_primaryActionButton;
+  ShortcutButton *m_actionButton;
+  ToastWidget *m_toast;
 
   void handleToast(const Toast *toast);
   void handleToastDestroyed(const Toast *toast);

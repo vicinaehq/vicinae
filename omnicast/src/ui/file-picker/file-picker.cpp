@@ -3,7 +3,7 @@
 #include "services/file-chooser/abstract-file-chooser.hpp"
 #include "theme.hpp"
 #include "ui/file-picker/file-picker-default-item-delegate.hpp"
-#include "ui/omni-button.hpp"
+#include "ui/button/button.hpp"
 #include <cstdio>
 #include <filesystem>
 #include <qboxlayout.h>

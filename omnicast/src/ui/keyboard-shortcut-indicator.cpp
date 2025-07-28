@@ -2,6 +2,7 @@
 #include "builtin_icon.hpp"
 #include "extend/action-model.hpp"
 #include "theme.hpp"
+#include "ui/omni-painter.hpp"
 #include <qnamespace.h>
 #include <qpainter.h>
 #include <qwidget.h>
@@ -16,13 +17,13 @@ static std::unordered_map<QString, QString> keyToIcon = {
 };
 // clang-format on
 
-void KeyboardShortcutIndicatorWidget::setBackgroundColor(QColor color) { _backgroundColor = color; }
+void KeyboardShortcutIndicatorWidget::setBackgroundColor(ColorLike color) { _backgroundColor = color; }
 
-void KeyboardShortcutIndicatorWidget::drawKey(const QString &key, QRect rect, QPainter &painter) {
+void KeyboardShortcutIndicatorWidget::drawKey(const QString &key, QRect rect, OmniPainter &painter) {
   int padding = height() * 0.2;
   auto &theme = ThemeService::instance().theme();
 
-  painter.setBrush(QBrush(_backgroundColor));
+  painter.setThemeBrush(_backgroundColor);
   painter.setPen(Qt::NoPen);
   painter.drawRoundedRect(rect, 6, 6);
 
@@ -41,7 +42,7 @@ void KeyboardShortcutIndicatorWidget::drawKey(const QString &key, QRect rect, QP
 }
 
 void KeyboardShortcutIndicatorWidget::paintEvent(QPaintEvent *event) {
-  QPainter painter(this);
+  OmniPainter painter(this);
   painter.setRenderHint(QPainter::Antialiasing);
 
   QRect rect{0, 0, height(), height()};

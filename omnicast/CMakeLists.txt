@@ -126,7 +126,6 @@ set(SRCS
 
 	src/action-panel/action-panel.hpp
 
-	include/ui/omni-button.hpp
 	include/ui/dialog.hpp
 	include/ui/alert.hpp
 
@@ -227,9 +226,6 @@ set(SRCS
 
 	include/ui/argument-completer-widget.hpp
 
-	include/ui/button.hpp
-	src/ui/button.cpp
-
 
 	include/ui/icon-button.hpp
 	src/ui/icon-button.cpp
@@ -301,8 +297,6 @@ set(SRCS
 	include/ui/keyboard-shortcut-indicator.hpp
 	src/ui/keyboard-shortcut-indicator.cpp
 
-	include/ui/shortcut-button.hpp
-	src/ui/shortcut-button.cpp
 
 	include/emoji-command.hpp
 
@@ -479,6 +473,14 @@ set(SRCS
 
 	src/ui/hud/hud.hpp
 	src/ui/hud/hud.cpp
+
+	src/ui/button-base/button-base.hpp
+	src/ui/button-base/button-base.cpp
+	src/ui/button/button.hpp
+	src/ui/button/button.cpp
+
+	src/ui/shortcut-button/shortcut-button.hpp
+	src/ui/shortcut-button/shortcut-button.cpp
 
 	src/ui/search-bar/search-bar.hpp
 ) 

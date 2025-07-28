@@ -4,7 +4,7 @@
 #include "omni-icon.hpp"
 #include "theme.hpp"
 #include "ui/image/omnimg.hpp"
-#include "ui/omni-button.hpp"
+#include "ui/button/button.hpp"
 #include "ui/typography/typography.hpp"
 #include <qlabel.h>
 #include <qmargins.h>

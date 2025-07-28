@@ -4,10 +4,14 @@
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
 #include "omnicast.hpp"
+#include "ui/shortcut-button/shortcut-button.hpp"
 #include <qboxlayout.h>
 #include <qnamespace.h>
+#include <qstackedwidget.h>
 #include <qwidget.h>
 #include "services/toast/toast-service.hpp"
+#include "ui/toast.hpp"
+#include "ui/typography/typography.hpp"
 
 NavigationStatusWidget::NavigationStatusWidget() { setupUI(); }
 
@@ -17,6 +21,7 @@ void NavigationStatusWidget::setIcon(const OmniIconUrl &icon) { m_navigationIcon
 void NavigationStatusWidget::setupUI() {
   auto layout = new QHBoxLayout;
 
+  m_navigationTitle = new TypographyWidget(this);
   m_navigationIcon->setFixedSize(20, 20);
 
   layout->setAlignment(Qt::AlignVCenter);
@@ -59,6 +64,12 @@ void GlobalBar::handleToastDestroyed(const Toast *toast) { m_leftWidget->setCurr
 
 void GlobalBar::setupUI() {
   auto toast = m_ctx.services->toastService();
+
+  m_leftWidget = new QStackedWidget;
+  m_primaryActionButton = new ShortcutButton;
+  m_actionButton = new ShortcutButton;
+  m_toast = new ToastWidget;
+  m_status = new NavigationStatusWidget;
 
   setFixedHeight(Omnicast::STATUS_BAR_HEIGHT);
   auto layout = new QHBoxLayout;

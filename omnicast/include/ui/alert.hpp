@@ -3,7 +3,7 @@
 #include "theme.hpp"
 #include "ui/dialog.hpp"
 #include "ui/image/omnimg.hpp"
-#include "ui/omni-button.hpp"
+#include "ui/button/button.hpp"
 #include "ui/typography/typography.hpp"
 #include <qboxlayout.h>
 #include <qdir.h>
