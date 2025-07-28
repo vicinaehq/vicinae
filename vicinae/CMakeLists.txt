@@ -8,7 +8,7 @@ set(LIBS)
 set(TARGET vicinae)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets Sql Network Svg DBus)
-find_package(Protobuf CONFIG REQUIRED)
+find_package(protobuf CONFIG REQUIRED)
 find_package(cmark REQUIRED)
 
 option(WAYLAND_LAYER_SHELL "Enable support for the Wayland layer shell
