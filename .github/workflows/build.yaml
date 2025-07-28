@@ -1,0 +1,33 @@
+name: Qt CMake Build
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: self-hosted
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive  # If you have git submodules
+    
+    - name: Create build directory
+      run: mkdir -p build
+    
+    - name: Configure CMake
+      run: |
+        cd build
+        cmake .. \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_PREFIX_PATH=$Qt6_DIR \
+          -DCMAKE_INSTALL_PREFIX=../install
+    
+    - name: Build
+      run: |
+        cd build
+        cmake --build . --config Release --parallel $(nproc)
