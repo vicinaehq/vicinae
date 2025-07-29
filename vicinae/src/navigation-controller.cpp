@@ -224,6 +224,7 @@ void NavigationController::pushView(BaseView *view) {
   emit headerVisiblityChanged(state->needsTopBar);
   emit searchVisibilityChanged(state->supportsSearch);
   emit statusBarVisiblityChanged(state->needsStatusBar);
+  emit loadingChanged(state->isLoading);
 
   m_views.emplace_back(std::move(state));
 
