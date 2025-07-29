@@ -1,9 +1,10 @@
 {
   "name": "@omnicast/api",
   "version": "1.0.0",
-  "description": "TypeScript SDK to build omnicast extensions",
+  "description": "TypeScript SDK to build Vicinae extensions",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+	"build": "tsc --outDir dist"
   },
   "bin": {
     "omni": "./dist/bin/main.js"

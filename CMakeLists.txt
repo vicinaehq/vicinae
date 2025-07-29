@@ -3,6 +3,9 @@ set(VICINAE_VERSION v1.0.0)
 set(PROJECT_NAME omnicast)
 project(${PROJECT_NAME} VERSION 1.0.0 LANGUAGES C CXX)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+include(ExtensionManager)
+
 add_compile_definitions(VICINAE_VERSION="${VICINAE_VERSION}")
 
 find_program(CCACHE ccache)

@@ -5,18 +5,11 @@ vicinae: configure
 
 .PHONY: vicinae
 
-extension-manager:
-	cd api && npm install && tsc --outDir dist
-	cd extension-manager && npm run build
-	cp extension-manager/dist/runtime.js vicinae/assets/extension-runtime.js
-
-.PHONY: extension-manager
-
 wayland:
 	wayland-scanner client-header ./wlr-clipman/protocols/wlr-data-control-unstable-v1.xml wlr-clipman/include/wayland-wlr-data-control-client-protocol.h
 	wayland-scanner public-code ./wlr-clipman/protocols/wlr-data-control-unstable-v1.xml wlr-clipman/src/wayland-wlr-data-control-client-protocol.c
 
-all: vicinae extension-manager
+all: vicinae
 	cmake --build $(BUILD_DIR)
 .PHONY: all
 
