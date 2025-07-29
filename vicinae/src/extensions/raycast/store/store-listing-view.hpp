@@ -125,13 +125,17 @@ class RaycastStoreListingView : public ListView {
 
     setLoading(true);
     lastQueryText = searchText();
-    m_queryResultWatcher.setFuture(m_store->search(lastQueryText));
+    auto result = m_store->search(lastQueryText);
+
+    m_queryResultWatcher.setFuture(result);
   }
 
   void textChanged(const QString &text) override {
     if (text.isEmpty()) {
       setLoading(true);
-      m_listResultWatcher.setFuture(m_store->fetchExtensions());
+      auto result = m_store->fetchExtensions();
+
+      m_listResultWatcher.setFuture(result);
       return;
     }
 
@@ -190,7 +194,9 @@ public:
     setLoading(true);
     setSearchPlaceholderText("Browse Raycast extensions");
 
-    m_listResultWatcher.setFuture(m_store->fetchExtensions());
+    auto result = m_store->fetchExtensions();
+
+    m_listResultWatcher.setFuture(result);
   }
 
   RaycastStoreListingView() {

@@ -258,7 +258,9 @@ class RaycastStoreDetailView : public BaseView {
             ctx->services->toastService()->setToast("Extension downloaded");
           });
 
-          watcher->setFuture(store->downloadExtension(ext.download_url));
+          auto downloadResult = store->downloadExtension(ext.download_url);
+
+          watcher->setFuture(downloadResult);
         });
 
     auto main = panel->createSection();
