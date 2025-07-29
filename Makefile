@@ -6,7 +6,7 @@ vicinae: configure
 .PHONY: vicinae
 
 extension-manager:
-	cd api && tsc --outDir dist
+	cd api && npm install && tsc --outDir dist
 	cd extension-manager && npm run build
 	cp extension-manager/dist/runtime.js vicinae/assets/extension-runtime.js
 
