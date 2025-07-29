@@ -24,7 +24,6 @@
 #include <QXmlStreamReader>
 #include <QtSql/qsqldatabase.h>
 #include <arpa/inet.h>
-#include <cmark.h>
 #include <csignal>
 #include <filesystem>
 #include <fstream>

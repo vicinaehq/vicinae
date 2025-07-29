@@ -8,15 +8,14 @@ set(LIBS)
 set(TARGET vicinae)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets Sql Network Svg DBus)
-find_package(protobuf CONFIG REQUIRED)
-find_package(cmark REQUIRED)
+find_package(protobuf CONFIG REQUIRED) # may not work on older protobuf versions (ubuntu 25 doesn't from my testing)
 
 option(WAYLAND_LAYER_SHELL "Enable support for the Wayland layer shell
 protocol, required for proper window positioning on most wlroots-based
 compositors." ON)
 
 
-list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus cmark proto qalculate protobuf::libprotobuf minizip)
+list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus cmark-gfm proto qalculate protobuf::libprotobuf minizip)
 
 
 if (UNIX AND NOT APPLE)

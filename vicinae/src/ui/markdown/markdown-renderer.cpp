@@ -4,7 +4,7 @@
 #include "theme.hpp"
 #include "ui/image/omnimg.hpp"
 #include "ui/omni-scroll-bar.hpp"
-#include <cmark.h>
+#include <cmark-gfm.h>
 #include <qapplication.h>
 #include <qboxlayout.h>
 #include <qevent.h>

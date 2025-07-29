@@ -6,7 +6,7 @@
 #include <qnamespace.h>
 #include <qplaintextedit.h>
 #include <qstring.h>
-#include <cmark.h>
+#include <cmark-gfm.h>
 #include <qstringview.h>
 #include <qtextcursor.h>
 #include <qtextdocument.h>
