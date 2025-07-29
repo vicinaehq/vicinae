@@ -36,3 +36,53 @@ Vicinae currently runs best on **wlroots-based compositors**, such as **Hyprland
   → Includes access to the official Raycast extension store, with one-click installs directly from within the launcher  
   → Many extensions may not work yet due to missing APIs or general Linux incompatibilities (improvements in progress)
 
+---
+
+## Installation
+
+### Runtime dependencies
+
+These must be installed regardless of your installation method:
+
+- `qtbase`
+- `libQt6Svg` (should be separate from `qtbase`)
+- `libcmark-gfm`
+- `libprotobuf`
+- `libqalculate`
+- `libminizip`
+- `libQt6WaylandClient` *(optional — only needed on Wayland, which is highly recommended for running Vicinae)*
+- `libLayerShellQtInterface` *(optional — only if your compositor supports the `wlr-layer-shell` protocol)*
+- `nodejs >= 18` *(optional — required only if you want to run or develop third-party extensions using React/TypeScript. `npm` is **not** required at runtime.)*
+
+---
+
+### Install from repository
+
+Vicinae is a new project and not yet packaged for most distributions. As packaging efforts progress, we’ll list supported distros here.
+
+---
+
+### Install from latest release
+
+You can fetch the latest release archive, which contains:
+- The compiled Vicinae binary
+- A `.desktop` file (required for URL scheme support)
+- A few optional themes
+
+---
+
+### Build from source
+
+#### Build requirements
+
+- A C++23-capable compiler (GCC is recommended; Clang should work as well)
+
+> ⚠️ **Note:** GCC 15 has a [known bug with `std::expected`](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=119714), which is used in the codebase.  
+> If using GCC, make sure you're running an older or patched version.
+
+Additional requirements:
+
+- `cmake`
+- `libprotoc` — the Protocol Buffers compiler (different from the runtime `libprotobuf` used above)
+- `npm` (any version bundled with Node.js ≥ 18 should work)
+
