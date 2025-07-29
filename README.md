@@ -1,7 +1,7 @@
 <p align="center">
   <img
     width="600"
-    src="./github/assets/vicinae-banner.png"
+    src=".github/assets/vicinae-banner.png"
     alt="Vicinae text logo"
   />
 </p>
@@ -33,5 +33,6 @@ Vicinae currently runs best on **wlroots-based compositors**, such as **Hyprland
 - Built-in theming system with light and dark palettes  
   → Custom themes can be added via config (see docs)
 - Raycast compatibility module  
-  → Includes access to the official Raycast extension store, with one-click installs directly from within the launcher
+  → Includes access to the official Raycast extension store, with one-click installs directly from within the launcher  
+  → Many extensions may not work yet due to missing APIs or general Linux incompatibilities (improvements in progress)
 
