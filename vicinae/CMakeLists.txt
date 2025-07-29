@@ -39,7 +39,7 @@ include_directories(
     ${CMAKE_CURRENT_BINARY_DIR}  # For generated headers
 )
 
-set(PROTO_SRC_DIR ./proto/extensions)
+set(PROTO_SRC_DIR ${CMAKE_SOURCE_DIR}/proto/extensions)
 
 
 file(GLOB PROTO_FILES "${PROTO_SRC_DIR}/*.proto")

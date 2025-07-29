@@ -1,10 +1,11 @@
 import * as esbuild from 'esbuild'
-import { rmSync } from 'fs'
+import { mkdirSync, rmSync } from 'fs'
 import { join } from 'path';
 
 const OUT_DIR = 'dist';
 
-rmSync(OUT_DIR, { recursive: true });
+rmSync(OUT_DIR, { recursive: true, force: true });
+mkdirSync(OUT_DIR, { recursive: true });
 
 const start = performance.now();
 

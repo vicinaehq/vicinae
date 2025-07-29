@@ -62,6 +62,45 @@ export function toastStyleToJSON(object: ToastStyle): string {
   }
 }
 
+export enum PopToRootType {
+  PopToRootDefault = 0,
+  PopToRootImmediate = 1,
+  PopToRootSuspended = 2,
+  UNRECOGNIZED = -1,
+}
+
+export function popToRootTypeFromJSON(object: any): PopToRootType {
+  switch (object) {
+    case 0:
+    case "PopToRootDefault":
+      return PopToRootType.PopToRootDefault;
+    case 1:
+    case "PopToRootImmediate":
+      return PopToRootType.PopToRootImmediate;
+    case 2:
+    case "PopToRootSuspended":
+      return PopToRootType.PopToRootSuspended;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return PopToRootType.UNRECOGNIZED;
+  }
+}
+
+export function popToRootTypeToJSON(object: PopToRootType): string {
+  switch (object) {
+    case PopToRootType.PopToRootDefault:
+      return "PopToRootDefault";
+    case PopToRootType.PopToRootImmediate:
+      return "PopToRootImmediate";
+    case PopToRootType.PopToRootSuspended:
+      return "PopToRootSuspended";
+    case PopToRootType.UNRECOGNIZED:
+    default:
+      return "UNRECOGNIZED";
+  }
+}
+
 export enum ConfirmAlertActionStyle {
   Default = 0,
   Destructive = 1,
@@ -173,6 +212,8 @@ export interface SetSearchTextRequest {
 
 export interface ShowHudRequest {
   text: string;
+  clearRootSearch: boolean;
+  popToRoot: PopToRootType;
 }
 
 export interface RenderRequest {
@@ -714,13 +755,19 @@ export const SetSearchTextRequest: MessageFns<SetSearchTextRequest> = {
 };
 
 function createBaseShowHudRequest(): ShowHudRequest {
-  return { text: "" };
+  return { text: "", clearRootSearch: false, popToRoot: 0 };
 }
 
 export const ShowHudRequest: MessageFns<ShowHudRequest> = {
   encode(message: ShowHudRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.text !== "") {
       writer.uint32(10).string(message.text);
+    }
+    if (message.clearRootSearch !== false) {
+      writer.uint32(16).bool(message.clearRootSearch);
+    }
+    if (message.popToRoot !== 0) {
+      writer.uint32(24).int32(message.popToRoot);
     }
     return writer;
   },
@@ -740,6 +787,22 @@ export const ShowHudRequest: MessageFns<ShowHudRequest> = {
           message.text = reader.string();
           continue;
         }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.clearRootSearch = reader.bool();
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.popToRoot = reader.int32() as any;
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -750,13 +813,23 @@ export const ShowHudRequest: MessageFns<ShowHudRequest> = {
   },
 
   fromJSON(object: any): ShowHudRequest {
-    return { text: isSet(object.text) ? globalThis.String(object.text) : "" };
+    return {
+      text: isSet(object.text) ? globalThis.String(object.text) : "",
+      clearRootSearch: isSet(object.clearRootSearch) ? globalThis.Boolean(object.clearRootSearch) : false,
+      popToRoot: isSet(object.popToRoot) ? popToRootTypeFromJSON(object.popToRoot) : 0,
+    };
   },
 
   toJSON(message: ShowHudRequest): unknown {
     const obj: any = {};
     if (message.text !== "") {
       obj.text = message.text;
+    }
+    if (message.clearRootSearch !== false) {
+      obj.clearRootSearch = message.clearRootSearch;
+    }
+    if (message.popToRoot !== 0) {
+      obj.popToRoot = popToRootTypeToJSON(message.popToRoot);
     }
     return obj;
   },
@@ -767,6 +840,8 @@ export const ShowHudRequest: MessageFns<ShowHudRequest> = {
   fromPartial<I extends Exact<DeepPartial<ShowHudRequest>, I>>(object: I): ShowHudRequest {
     const message = createBaseShowHudRequest();
     message.text = object.text ?? "";
+    message.clearRootSearch = object.clearRootSearch ?? false;
+    message.popToRoot = object.popToRoot ?? 0;
     return message;
   },
 };
