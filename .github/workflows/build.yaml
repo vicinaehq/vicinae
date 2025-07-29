@@ -20,7 +20,7 @@ jobs:
     - name: Configure CMake
       run: |
         cd build
-        cmake .. \
+        cmake -G Ninja .. \
           -DCMAKE_BUILD_TYPE=Release \
           -DCMAKE_PREFIX_PATH=$Qt6_DIR \
           -DCMAKE_INSTALL_PREFIX=../install
