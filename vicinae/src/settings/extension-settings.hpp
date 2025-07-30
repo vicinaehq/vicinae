@@ -8,7 +8,7 @@
 #include "ui/form/checkbox.hpp"
 #include "ui/image/omnimg.hpp"
 #include "ui/vertical-scroll-area/vertical-scroll-area.hpp"
-#include "ui/omni-scroll-bar.hpp"
+#include "ui/scroll-bar/scroll-bar.hpp"
 #include "ui/omni-tree.hpp"
 #include "ui/typography/typography.hpp"
 #include <libqalculate/Number.h>

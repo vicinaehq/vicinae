@@ -14,10 +14,9 @@
 #include "overlay-controller/overlay-controller.hpp"
 #include "root-command.hpp"
 #include "ui/action-pannel/action.hpp"
-#include "ui/dialog.hpp"
+#include "ui/dialog/dialog.hpp"
 #include "ui/overlay/overlay.hpp"
 #include "ui/hud/hud.hpp"
-#include "ui/dialog.hpp"
 #include <QStackedWidget>
 #include "settings-controller/settings-controller.hpp"
 

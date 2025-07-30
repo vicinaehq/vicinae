@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ui/dialog.hpp"
+#include "ui/dialog/dialog.hpp"
 #include "ui/image/omnimg.hpp"
 
 class TypographyWidget;

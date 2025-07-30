@@ -98,7 +98,6 @@ void OmniButtonWidget::paintEvent(QPaintEvent *event) {
   QBrush brush;
 
   if (underMouse()) {
-    qDebug() << "under mouse";
     brush = painter.colorBrush(m_hoverColor);
   } else {
     brush = painter.colorBrush(m_color);

@@ -1,4 +1,4 @@
-#include "ui/omni-scroll-bar.hpp"
+#include "ui/scroll-bar/scroll-bar.hpp"
 #include <qboxlayout.h>
 #include <qdir.h>
 #include <qnamespace.h>

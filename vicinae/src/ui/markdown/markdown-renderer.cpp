@@ -3,7 +3,7 @@
 #include "service-registry.hpp"
 #include "theme.hpp"
 #include "ui/image/omnimg.hpp"
-#include "ui/omni-scroll-bar.hpp"
+#include "ui/scroll-bar/scroll-bar.hpp"
 #include <cmark-gfm.h>
 #include <qapplication.h>
 #include <qboxlayout.h>

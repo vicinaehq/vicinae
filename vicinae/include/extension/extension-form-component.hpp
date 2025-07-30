@@ -6,7 +6,7 @@
 #include "extension/form/extension-checkbox-field.hpp"
 #include "extension/form/extension-text-field.hpp"
 #include "ui/form/form-field.hpp"
-#include "ui/omni-scroll-bar.hpp"
+#include "ui/scroll-bar/scroll-bar.hpp"
 #include <qboxlayout.h>
 #include <qjsonarray.h>
 #include <qjsonvalue.h>

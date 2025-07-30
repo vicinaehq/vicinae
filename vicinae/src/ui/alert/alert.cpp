@@ -1,4 +1,5 @@
 #include "alert.hpp"
+#include "theme.hpp"
 #include "utils/layout.hpp"
 
 void CallbackAlertWidget::confirm() const {
@@ -86,18 +87,19 @@ AlertWidget::AlertWidget(QWidget *parent)
 
   _icon->setFixedSize(25, 25);
   _icon->setUrl(BuiltinOmniIconUrl("trash").setFill(SemanticColor::Red));
+  _title->setSize(TextSize::TextTitle);
   _title->setText("Are you sure?");
   _title->setFontWeight(QFont::Bold);
 
   _message->setText("This action cannot be undone");
   _message->setWordWrap(true);
 
-  QMargins btnMargins(50, 8, 50, 8);
+  int btnHeight = 30;
 
   _cancelBtn->setFocus();
-  _cancelBtn->setContentsMargins(btnMargins);
+  _cancelBtn->setFixedHeight(btnHeight);
   _cancelBtn->setText("Cancel");
-  _actionBtn->setContentsMargins(btnMargins);
+  _actionBtn->setFixedHeight(btnHeight);
   _actionBtn->setText("Delete");
   _actionBtn->setColor(SemanticColor::Red);
 

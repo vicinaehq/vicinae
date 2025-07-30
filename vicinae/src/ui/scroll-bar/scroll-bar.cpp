@@ -1,4 +1,4 @@
-#include "ui/omni-scroll-bar.hpp"
+#include "scroll-bar.hpp"
 #include "theme.hpp"
 #include <qscrollbar.h>
 #include <qwidget.h>

@@ -2,7 +2,7 @@
 
 #include "common.hpp"
 #include "ui/action-pannel/action.hpp"
-#include "ui/dialog.hpp"
+#include "ui/dialog/dialog.hpp"
 #include <QString>
 
 class BaseView;

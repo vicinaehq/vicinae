@@ -8,7 +8,7 @@
 #include "services/bookmark/bookmark.hpp"
 #include "ui/horizontal-metadata.hpp"
 #include "ui/omni-list.hpp"
-#include "ui/omni-scroll-bar.hpp"
+#include "ui/scroll-bar/scroll-bar.hpp"
 #include "ui/typography/typography.hpp"
 #include <memory>
 #include <qboxlayout.h>

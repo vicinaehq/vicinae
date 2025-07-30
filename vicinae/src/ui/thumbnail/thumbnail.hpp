@@ -1,6 +1,6 @@
 #pragma once
 #include "omni-icon.hpp"
-#include "ui/dialog.hpp"
+#include "ui/dialog/dialog.hpp"
 #include "ui/image/omnimg.hpp"
 #include <qboxlayout.h>
 #include <qevent.h>

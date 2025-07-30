@@ -1,5 +1,5 @@
 #include "ui/vertical-scroll-area/vertical-scroll-area.hpp"
-#include "ui/omni-scroll-bar.hpp"
+#include "ui/scroll-bar/scroll-bar.hpp"
 #include <qcoreevent.h>
 
 bool VerticalScrollArea::eventFilter(QObject *o, QEvent *e) {

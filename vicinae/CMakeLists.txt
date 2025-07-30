@@ -125,8 +125,6 @@ set(SRCS
 
 	src/action-panel/action-panel.hpp
 
-	include/ui/dialog.hpp
-
 	include/omni-command-db.hpp
 
 	include/ui/split-detail.hpp
@@ -181,7 +179,7 @@ set(SRCS
 	src/ui/horizontal-loading-bar.cpp
 
 	# start markdown renderer
-	include/ui/markdown/markdown-renderer.hpp
+	src/ui/markdown/markdown-renderer.hpp
 	src/ui/markdown/markdown-renderer.cpp
 	# end markdown renderer
 
@@ -246,8 +244,6 @@ set(SRCS
 
 	include/ui/default-list-item-widget.hpp
 	src/ui/default-list-item-widget.cpp
-	include/ui/list-accessory-widget.hpp
-	src/ui/list-accessory-widget.cpp
 
 	include/ui/text-widget.hpp
 	src/ui/text-widget.cpp
@@ -267,9 +263,6 @@ set(SRCS
 
 	include/base-view.hpp
 
-
-	include/ui/omni-scroll-bar.hpp
-	src/ui/omni-scroll-bar.cpp
 
 	src/calculator-history-command.hpp
 
@@ -486,6 +479,15 @@ set(SRCS
 
 	src/ui/alert/alert.hpp
 	src/ui/alert/alert.cpp
+
+	src/ui/dialog/dialog.hpp
+	src/ui/dialog/dialog.cpp
+
+	src/ui/list-accessory/list-accessory.hpp
+	src/ui/list-accessory/list-accessory.cpp
+
+	src/ui/scroll-bar/scroll-bar.hpp
+	src/ui/scroll-bar/scroll-bar.cpp
 ) 
 
 

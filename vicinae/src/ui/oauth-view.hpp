@@ -7,7 +7,7 @@
 #include "proto/oauth.pb.h"
 #include "services/oauth/oauth-service.hpp"
 #include "theme.hpp"
-#include "ui/dialog.hpp"
+#include "ui/dialog/dialog.hpp"
 #include "ui/icon-button.hpp"
 #include "ui/button/button.hpp"
 #include "ui/overlay/overlay.hpp"

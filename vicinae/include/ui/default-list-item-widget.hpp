@@ -8,7 +8,7 @@
 #include <qnamespace.h>
 #include <qpainter.h>
 #include <qwidget.h>
-#include "ui/list-accessory-widget.hpp"
+#include "ui/list-accessory/list-accessory.hpp"
 
 class AccessoryListWidget : public QWidget {
   QHBoxLayout *_layout;

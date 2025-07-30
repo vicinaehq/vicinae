@@ -1,5 +1,4 @@
-#include "ui/list-accessory-widget.hpp"
-#include "theme.hpp"
+#include "list-accessory.hpp"
 #include "ui/image/omnimg.hpp"
 #include "ui/typography/typography.hpp"
 

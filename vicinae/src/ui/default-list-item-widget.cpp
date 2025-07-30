@@ -3,7 +3,7 @@
 #include "omni-icon.hpp"
 #include "theme.hpp"
 #include "ui/image/omnimg.hpp"
-#include "ui/list-accessory-widget.hpp"
+#include "ui/list-accessory/list-accessory.hpp"
 #include <qnamespace.h>
 #include <qsizepolicy.h>
 #include <qwidget.h>

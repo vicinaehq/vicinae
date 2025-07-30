@@ -8,7 +8,7 @@
 #include "services/extension-registry/extension-registry.hpp"
 #include "theme.hpp"
 #include "ui/action-pannel/action.hpp"
-#include "ui/list-accessory-widget.hpp"
+#include "ui/list-accessory/list-accessory.hpp"
 #include "ui/toast.hpp"
 #include <chrono>
 #include <memory>
