@@ -1,5 +1,5 @@
 #pragma once
-#include "app/app-database.hpp"
+#include "abstract-app-db.hpp"
 #include "common.hpp"
 #include "omni-database.hpp"
 #include <memory>

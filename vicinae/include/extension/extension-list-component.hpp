@@ -6,7 +6,7 @@
 #include "extension/extension-view.hpp"
 #include "ui/form/selector-input.hpp"
 #include "ui/omni-list.hpp"
-#include "ui/split-detail.hpp"
+#include "ui/split-detail/split-detail.hpp"
 #include <QJsonArray>
 #include <qboxlayout.h>
 #include <qevent.h>

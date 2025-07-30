@@ -1,10 +1,5 @@
-#include "ui/tooltip.hpp"
-#include "theme.hpp"
+#include "tooltip.hpp"
 #include "ui/typography/typography.hpp"
-#include <qevent.h>
-#include <qnamespace.h>
-#include <qobjectdefs.h>
-#include <qwidget.h>
 
 bool TooltipWidget::eventFilter(QObject *watched, QEvent *event) {
   if (watched != m_target) return QWidget::eventFilter(watched, event);

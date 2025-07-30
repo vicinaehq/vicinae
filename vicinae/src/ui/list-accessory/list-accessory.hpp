@@ -3,7 +3,7 @@
 #include "theme.hpp"
 #include "ui/image/omnimg.hpp"
 #include "ui/typography/typography.hpp"
-#include "ui/tooltip.hpp"
+#include "ui/tooltip/tooltip.hpp"
 #include <optional>
 #include <qcontainerfwd.h>
 

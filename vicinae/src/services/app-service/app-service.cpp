@@ -1,5 +1,5 @@
 #include "app-service.hpp"
-#include "app/xdg-app-database.hpp"
+#include "services/app-service/xdg/xdg-app-database.hpp"
 #include "omni-database.hpp"
 
 namespace fs = std::filesystem;

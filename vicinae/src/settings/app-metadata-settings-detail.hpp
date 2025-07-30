@@ -1,5 +1,5 @@
 #pragma once
-#include "app/app-database.hpp"
+#include "services/app-service/abstract-app-db.hpp"
 #include "common.hpp"
 #include "ui/typography/typography.hpp"
 #include "utils/utils.hpp"

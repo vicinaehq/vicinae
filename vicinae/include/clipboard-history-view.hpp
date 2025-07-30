@@ -6,7 +6,7 @@
 #include "ui/form/selector-input.hpp"
 #include "ui/selectable-omni-list-widget.hpp"
 #include "utils/layout.hpp"
-#include "ui/empty-view.hpp"
+#include "ui/empty-view/empty-view.hpp"
 #include "common.hpp"
 #include "extend/metadata-model.hpp"
 #include "manage-quicklinks-command.hpp"
@@ -16,7 +16,7 @@
 #include "ui/icon-button.hpp"
 #include "ui/image/omnimg.hpp"
 #include "ui/omni-list.hpp"
-#include "ui/split-detail.hpp"
+#include "ui/split-detail/split-detail.hpp"
 #include "ui/toast.hpp"
 #include <libqalculate/Number.h>
 #include <libqalculate/includes.h>

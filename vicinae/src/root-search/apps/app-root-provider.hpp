@@ -1,6 +1,5 @@
 #pragma once
 #include "services/app-service/app-service.hpp"
-#include "app/app-database.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include <qjsonobject.h>
 #include <qwidget.h>

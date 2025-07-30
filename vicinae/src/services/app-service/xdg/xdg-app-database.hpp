@@ -1,5 +1,5 @@
 #pragma once
-#include "app/app-database.hpp"
+#include "services/app-service/abstract-app-db.hpp"
 #include "omni-icon.hpp"
 #include "xdg/xdg-desktop.hpp"
 #include <qfileinfo.h>

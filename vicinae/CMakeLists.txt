@@ -127,8 +127,8 @@ set(SRCS
 
 	include/omni-command-db.hpp
 
-	include/ui/split-detail.hpp
-	src/ui/split-detail.cpp
+	src/ui/split-detail/split-detail.hpp
+	src/ui/split-detail/split-detail.cpp
 
 	include/ui/detail-widget.hpp
 	src/ui/detail-widget.cpp
@@ -154,10 +154,9 @@ set(SRCS
 	src/services/toast/toast-service.hpp
 
 	# begin app-database
-	include/app/app-database.hpp
-	include/app/xdg-app-database.hpp
-
-	src/app/xdg-app-database.cpp
+	src/services/app-service/xdg/xdg-app-database.hpp
+	src/services/app-service/xdg/xdg-app-database.cpp
+	src/services/app-service/abstract-app-db.hpp
 
 	# end app-database
 
@@ -251,8 +250,8 @@ set(SRCS
 	include/ui/grid-item-content-widget.hpp
 	src/ui/grid-item-content-widget.cpp
 
-	include/ui/tooltip.hpp
-	src/ui/tooltip.cpp
+	src/ui/tooltip/tooltip.hpp
+	src/ui/tooltip/tooltip.cpp
 
 	include/ui/grid-item-widget.hpp
 	src/ui/grid-item-widget.cpp
@@ -283,11 +282,11 @@ set(SRCS
 	include/ui/emoji-viewer.hpp
 	src/ui/emoji-viewer.cpp
 
-	include/ui/empty-view.hpp
+	src/ui/empty-view/empty-view.hpp
+	src/ui/empty-view/empty-view.cpp
 
 	include/ui/keyboard-shortcut-indicator.hpp
 	src/ui/keyboard-shortcut-indicator.cpp
-
 
 	include/emoji-command.hpp
 

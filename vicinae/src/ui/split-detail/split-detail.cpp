@@ -1,4 +1,4 @@
-#include "ui/split-detail.hpp"
+#include "split-detail.hpp"
 #include <qtimer.h>
 #include <qwidget.h>
 

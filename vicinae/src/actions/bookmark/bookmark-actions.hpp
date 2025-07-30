@@ -1,5 +1,4 @@
 #pragma once
-#include "app/app-database.hpp"
 #include "common.hpp"
 #include "services/bookmark/bookmark-service.hpp"
 #include "create-quicklink-command.hpp"

@@ -1,5 +1,5 @@
 #pragma once
-#include "app/app-database.hpp"
+#include "services/app-service/abstract-app-db.hpp"
 #include "ui/action-pannel/action.hpp"
 
 class OpenAppAction : public AbstractAction {

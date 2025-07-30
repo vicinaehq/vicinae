@@ -1,5 +1,4 @@
-#include "app/xdg-app-database.hpp"
-#include "app/app-database.hpp"
+#include "xdg-app-database.hpp"
 #include <filesystem>
 #include <qlogging.h>
 #include <qsettings.h>

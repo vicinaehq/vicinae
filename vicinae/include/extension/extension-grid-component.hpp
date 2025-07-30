@@ -8,7 +8,6 @@
 #include "ui/image/omnimg.hpp"
 #include "ui/omni-grid.hpp"
 #include "ui/omni-list.hpp"
-#include "ui/tooltip.hpp"
 #include <QJsonArray>
 #include <qboxlayout.h>
 #include <qlogging.h>

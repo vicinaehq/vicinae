@@ -1,56 +1,20 @@
 #pragma once
-#include "extend/empty-view-model.hpp"
-#include "omni-icon.hpp"
-#include "theme.hpp"
 #include "ui/image/omnimg.hpp"
-#include "ui/typography/typography.hpp"
-#include <qboxlayout.h>
-#include <qnamespace.h>
-#include <qwidget.h>
+#include <QWidget>
+
+class TypographyWidget;
 
 class EmptyViewWidget : public QWidget {
   Omnimg::ImageWidget *m_icon = new Omnimg::ImageWidget(this);
-  TypographyWidget *m_title = new TypographyWidget(this);
-  TypographyWidget *m_description = new TypographyWidget(this);
+  TypographyWidget *m_title;
+  TypographyWidget *m_description;
 
-  void setupUi() {
-    auto layout = new QVBoxLayout();
-    auto container = new QVBoxLayout();
-
-    m_description->setColor(SemanticColor::TextSecondary);
-    m_description->setWordWrap(true);
-    m_icon->setFixedSize(48, 48);
-    container->setAlignment(Qt::AlignCenter);
-    layout->setSpacing(10);
-    layout->addWidget(m_icon, 0, Qt::AlignCenter);
-    layout->addWidget(m_title, 0, Qt::AlignCenter);
-    layout->addWidget(m_description, 0, Qt::AlignCenter);
-    container->addLayout(layout);
-    setLayout(container);
-  }
+  void setupUi();
 
 public:
-  void setTitle(const QString &title) {
-    m_title->setText(title);
-    m_title->setVisible(!title.isEmpty());
-  }
+  void setTitle(const QString &title);
+  void setDescription(const QString &description);
+  void setIcon(const std::optional<OmniIconUrl> url);
 
-  void setDescription(const QString &description) {
-    m_description->setText(description);
-    m_description->setVisible(!description.isEmpty());
-  }
-
-  void setIcon(const std::optional<OmniIconUrl> url) {
-    if (url) m_icon->setUrl(*url);
-    m_icon->setVisible(url.has_value());
-  }
-
-  EmptyViewWidget(QWidget *parent = nullptr) : QWidget(parent) { setupUi(); }
-
-  EmptyViewWidget(const EmptyViewModel &model, QWidget *parent = nullptr) : QWidget(parent) {
-    setupUi();
-    setIcon(model.icon);
-    setTitle(model.title);
-    setDescription(model.description);
-  }
+  EmptyViewWidget(QWidget *parent = nullptr);
 };

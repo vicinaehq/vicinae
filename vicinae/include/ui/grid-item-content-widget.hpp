@@ -1,5 +1,5 @@
 #pragma once
-#include "ui/tooltip.hpp"
+#include "ui/tooltip/tooltip.hpp"
 #include <qboxlayout.h>
 #include <qevent.h>
 #include <qlabel.h>

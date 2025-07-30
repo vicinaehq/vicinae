@@ -1,5 +1,4 @@
 #pragma once
-#include "app/app-database.hpp"
 #include "common.hpp"
 #include "omni-icon.hpp"
 #include "theme.hpp"

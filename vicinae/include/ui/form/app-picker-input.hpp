@@ -1,4 +1,4 @@
-#include "app/app-database.hpp"
+#include "services/app-service/abstract-app-db.hpp"
 #include "ui/form/selector-input.hpp"
 
 class AppPickerInput : public SelectorInput {
