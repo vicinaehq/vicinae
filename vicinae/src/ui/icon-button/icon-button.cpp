@@ -1,4 +1,4 @@
-#include "ui/icon-button.hpp"
+#include "ui/icon-button/icon-button.hpp"
 #include "ui/image/omnimg.hpp"
 
 void IconButton::resizeEvent(QResizeEvent *event) {

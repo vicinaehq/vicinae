@@ -1,6 +1,5 @@
 #pragma once
-
-#include "ui/transform-result.hpp"
+#include "ui/transform-result/transform-result.hpp"
 
 class ColorTransformWidget : public TransformResult {
 public:

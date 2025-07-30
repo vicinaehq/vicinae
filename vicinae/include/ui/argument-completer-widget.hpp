@@ -2,7 +2,7 @@
 #include "argument.hpp"
 #include "omni-icon.hpp"
 #include "ui/image/omnimg.hpp"
-#include "ui/inline_qline_edit.hpp"
+#include "ui/inline-input/inline_qline_edit.hpp"
 #include <qboxlayout.h>
 #include <qlineedit.h>
 #include <qnamespace.h>

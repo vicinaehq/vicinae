@@ -2,7 +2,7 @@
 
 #include "ui/grid-item-content-widget.hpp"
 #include "ui/grid-item-widget.hpp"
-#include "ui/omni-list.hpp"
+#include "ui/omni-list/omni-list.hpp"
 #include <qwidget.h>
 
 class OmniGrid : public OmniList {

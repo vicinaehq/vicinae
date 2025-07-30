@@ -5,8 +5,8 @@
 #include "ui/action-pannel/action-list-item.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/omni-list-item-widget.hpp"
-#include "ui/omni-list.hpp"
-#include "ui/popover.hpp"
+#include "ui/omni-list/omni-list.hpp"
+#include "ui/popover/popover.hpp"
 #include "ui/typography/typography.hpp"
 #include <qboxlayout.h>
 #include <qcoreevent.h>

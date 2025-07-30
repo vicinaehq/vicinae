@@ -7,7 +7,7 @@
 #include "ui/form/form.hpp"
 #include "ui/form/preference-field.hpp"
 #include "command-database.hpp"
-#include "ui/toast.hpp"
+#include "ui/toast/toast.hpp"
 #include <qboxlayout.h>
 #include <qjsonobject.h>
 #include <qlogging.h>

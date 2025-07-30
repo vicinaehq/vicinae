@@ -16,9 +16,9 @@
 #include "ui/form/form-field.hpp"
 #include "ui/form/form.hpp"
 #include "ui/image/omnimg.hpp"
-#include "ui/omni-grid.hpp"
-#include "ui/omni-list.hpp"
-#include "ui/toast.hpp"
+#include "ui/omni-grid/omni-grid.hpp"
+#include "ui/omni-list/omni-list.hpp"
+#include "ui/toast/toast.hpp"
 #include "utils/utils.hpp"
 #include <QtConcurrent/qtconcurrentrun.h>
 #include <memory>

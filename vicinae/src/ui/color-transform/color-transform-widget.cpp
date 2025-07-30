@@ -1,5 +1,5 @@
-#include "ui/color-transform-widget.hpp"
-#include "ui/color_circle.hpp"
+#include "color-transform-widget.hpp"
+#include "ui/color-circle/color_circle.hpp"
 
 void ColorTransformWidget::setColor(const QString &base, QColor color) {
   auto circle = new ColorCircle({60, 60});

@@ -2,7 +2,7 @@
 #include "omni-icon.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/image/omnimg.hpp"
-#include "ui/keyboard-shortcut-indicator.hpp"
+#include "ui/keyboard-shortcut-indicator/keyboard-shortcut-indicator.hpp"
 #include "ui/selectable-omni-list-widget.hpp"
 #include "ui/typography/typography.hpp"
 

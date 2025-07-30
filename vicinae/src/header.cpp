@@ -9,9 +9,9 @@
 #include <qwidget.h>
 #include "base-view.hpp"
 #include "ui/horizontal-loading-bar.hpp"
-#include "ui/icon-button.hpp"
+#include "ui/icon-button/icon-button.hpp"
 #include "ui/search-bar/search-bar.hpp"
-#include "ui/icon-button.hpp"
+#include "ui/icon-button/icon-button.hpp"
 #include "utils/layout.hpp"
 
 void GlobalHeader::setupUI() {

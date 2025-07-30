@@ -2,7 +2,7 @@
 #include "command.hpp"
 #include "omnicast.hpp"
 #include "service-registry.hpp"
-#include "ui/toast.hpp"
+#include "ui/toast/toast.hpp"
 
 class OpenConfigurationFileCommand : public CommandContext {
 public:

@@ -7,7 +7,7 @@
 #include "proto/ipc.pb.h"
 #include "proto/ui.pb.h"
 #include "services/toast/toast-service.hpp"
-#include "ui/toast.hpp"
+#include "ui/toast/toast.hpp"
 
 class UIRequestRouter : public QObject {
   QFutureWatcher<ParsedRenderData> m_modelWatcher;

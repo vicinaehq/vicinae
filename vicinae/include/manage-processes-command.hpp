@@ -6,8 +6,8 @@
 #include "theme.hpp"
 #include "ui/action_popover.hpp"
 #include "ui/declarative-omni-list-view.hpp"
-#include "ui/default-list-item-widget.hpp"
-#include "ui/omni-list.hpp"
+#include "ui/default-list-item-widget/default-list-item-widget.hpp"
+#include "ui/omni-list/omni-list.hpp"
 #include "view.hpp"
 #include <csignal>
 #include <QPointer>

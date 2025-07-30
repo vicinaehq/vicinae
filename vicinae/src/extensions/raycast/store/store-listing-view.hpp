@@ -9,7 +9,7 @@
 #include "theme.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/list-accessory/list-accessory.hpp"
-#include "ui/toast.hpp"
+#include "ui/toast/toast.hpp"
 #include <chrono>
 #include <memory>
 #include <qboxlayout.h>

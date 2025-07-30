@@ -8,7 +8,7 @@
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/calculator-list-item-widget.hpp"
-#include "ui/omni-list.hpp"
+#include "ui/omni-list/omni-list.hpp"
 #include <memory>
 #include <qnamespace.h>
 #include <qobject.h>

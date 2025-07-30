@@ -1,5 +1,5 @@
 #pragma once
-#include "ui/color_circle.hpp"
+#include "ui/color-circle/color_circle.hpp"
 #include "ui/typography/typography.hpp"
 #include <QColor>
 #include <QHBoxLayout>

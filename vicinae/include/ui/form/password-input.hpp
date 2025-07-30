@@ -1,7 +1,7 @@
 #pragma once
 #include "omni-icon.hpp"
 #include "ui/form/base-input.hpp"
-#include "ui/icon-button.hpp"
+#include "ui/icon-button/icon-button.hpp"
 #include <qlineedit.h>
 #include <qwidget.h>
 

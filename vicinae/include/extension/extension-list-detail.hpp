@@ -1,6 +1,6 @@
 #pragma once
 #include "extend/detail-model.hpp"
-#include "ui/detail-widget.hpp"
+#include "ui/detail-widget/detail-widget.hpp"
 #include "ui/markdown/markdown-renderer.hpp"
 #include <qevent.h>
 #include <qnamespace.h>

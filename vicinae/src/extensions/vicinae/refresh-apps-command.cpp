@@ -3,7 +3,7 @@
 #include "service-registry.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/app-service/app-service.hpp"
-#include "ui/toast.hpp"
+#include "ui/toast/toast.hpp"
 
 RefreshAppsCommandContext::RefreshAppsCommandContext(const std::shared_ptr<AbstractCmd> &command)
     : CommandContext(command) {}

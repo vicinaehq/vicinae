@@ -9,7 +9,7 @@
 #include "service-registry.hpp"
 #include "services/files-service/abstract-file-indexer.hpp"
 #include "timer.hpp"
-#include "ui/omni-list.hpp"
+#include "ui/omni-list/omni-list.hpp"
 #include "utils/utils.hpp"
 #include <filesystem>
 #include <qlocale.h>

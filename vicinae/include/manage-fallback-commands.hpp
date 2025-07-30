@@ -4,7 +4,7 @@
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "service-registry.hpp"
 #include "ui/action-pannel/action.hpp"
-#include "ui/omni-list.hpp"
+#include "ui/omni-list/omni-list.hpp"
 #include <qobjectdefs.h>
 #include <ranges>
 

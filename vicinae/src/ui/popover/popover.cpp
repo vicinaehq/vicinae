@@ -1,4 +1,4 @@
-#include "ui/popover.hpp"
+#include "ui/popover/popover.hpp"
 #include "theme.hpp"
 #include "ui/omni-painter.hpp"
 #include <qevent.h>

@@ -3,8 +3,8 @@
 #include "ui/focus-notifier.hpp"
 #include "ui/form/base-input.hpp"
 #include "ui/image/omnimg.hpp"
-#include "ui/omni-list.hpp"
-#include "ui/popover.hpp"
+#include "ui/omni-list/omni-list.hpp"
+#include "ui/popover/popover.hpp"
 #include <qlineedit.h>
 #include <qwidget.h>
 

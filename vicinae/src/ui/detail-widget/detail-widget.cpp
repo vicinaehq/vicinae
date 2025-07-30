@@ -1,4 +1,4 @@
-#include "ui/detail-widget.hpp"
+#include "ui/detail-widget/detail-widget.hpp"
 #include "common.hpp"
 #include "extend/metadata-model.hpp"
 #include <qwidget.h>

@@ -16,11 +16,10 @@
 #include "timer.hpp"
 #include "ui/action-pannel/action-item.hpp"
 #include "ui/action-pannel/action.hpp"
-#include "quicklist-database.hpp"
 #include "ui/calculator-list-item-widget.hpp"
-#include "ui/color-transform-widget.hpp"
+#include "ui/color-transform/color-transform-widget.hpp"
 #include "ui/omni-list-item-widget.hpp"
-#include "ui/omni-list.hpp"
+#include "ui/omni-list/omni-list.hpp"
 #include <QtConcurrent/QtConcurrent>
 #include <cfloat>
 #include <chrono>

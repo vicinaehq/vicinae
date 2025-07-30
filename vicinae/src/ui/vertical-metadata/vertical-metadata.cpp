@@ -1,4 +1,4 @@
-#include "ui/vertical-metadata.hpp"
+#include "ui/vertical-metadata/vertical-metadata.hpp"
 #include "common.hpp"
 #include "tag.hpp"
 #include "ui/typography/typography.hpp"

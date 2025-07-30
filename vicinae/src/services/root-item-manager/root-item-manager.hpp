@@ -9,7 +9,7 @@
 #include "preference.hpp"
 #include "timer.hpp"
 #include "ui/action-pannel/action.hpp"
-#include "ui/default-list-item-widget.hpp"
+#include "ui/default-list-item-widget/default-list-item-widget.hpp"
 #include <algorithm>
 #include <qdnslookup.h>
 #include <qjsonobject.h>

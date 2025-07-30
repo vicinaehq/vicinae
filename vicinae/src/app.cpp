@@ -15,7 +15,7 @@
 #include "services/toast/toast-service.hpp"
 #include "ui/alert.hpp"
 #include "ui/keyboard.hpp"
-#include "ui/toast.hpp"
+#include "ui/toast/toast.hpp"
 #include "ui/top_bar.hpp"
 #include "ui/ui-controller.hpp"
 #include "wm/window-manager-factory.hpp"

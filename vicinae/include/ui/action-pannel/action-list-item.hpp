@@ -1,5 +1,5 @@
 #pragma once
-#include "ui/omni-list.hpp"
+#include "ui/omni-list/omni-list.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/action-pannel/action-list-widget.hpp"
 

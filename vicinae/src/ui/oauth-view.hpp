@@ -8,10 +8,10 @@
 #include "services/oauth/oauth-service.hpp"
 #include "theme.hpp"
 #include "ui/dialog/dialog.hpp"
-#include "ui/icon-button.hpp"
+#include "ui/icon-button/icon-button.hpp"
 #include "ui/button/button.hpp"
 #include "ui/overlay/overlay.hpp"
-#include "ui/toast.hpp"
+#include "ui/toast/toast.hpp"
 #include "ui/typography/typography.hpp"
 #include "utils/layout.hpp"
 #include <absl/strings/internal/str_format/extension.h>

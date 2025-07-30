@@ -1,4 +1,4 @@
-#include "ui/omni-list.hpp"
+#include "omni-list.hpp"
 #include "ui/list-section-header.hpp"
 #include "ui/omni-list-item-widget-wrapper.hpp"
 #include <algorithm>

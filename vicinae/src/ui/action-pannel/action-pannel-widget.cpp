@@ -4,7 +4,7 @@
 #include "ui/action-pannel/action.hpp"
 #include "ui/action-pannel/static-action-pannel-list-view.hpp"
 #include "ui/keyboard.hpp"
-#include "ui/popover.hpp"
+#include "ui/popover/popover.hpp"
 #include <memory>
 #include <qboxlayout.h>
 #include <qlineedit.h>

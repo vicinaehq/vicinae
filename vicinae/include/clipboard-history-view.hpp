@@ -13,11 +13,11 @@
 #include "services/clipboard/clipboard-service.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
-#include "ui/icon-button.hpp"
+#include "ui/icon-button/icon-button.hpp"
 #include "ui/image/omnimg.hpp"
-#include "ui/omni-list.hpp"
+#include "ui/omni-list/omni-list.hpp"
 #include "ui/split-detail/split-detail.hpp"
-#include "ui/toast.hpp"
+#include "ui/toast/toast.hpp"
 #include <libqalculate/Number.h>
 #include <libqalculate/includes.h>
 #include <memory>

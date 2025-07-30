@@ -7,7 +7,7 @@
 #include "services/calculator-service/calculator-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "ui/action-pannel/action.hpp"
-#include "ui/toast.hpp"
+#include "ui/toast/toast.hpp"
 #include <base-view.hpp>
 #include <qnamespace.h>
 

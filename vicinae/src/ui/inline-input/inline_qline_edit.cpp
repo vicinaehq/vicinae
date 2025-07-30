@@ -1,4 +1,4 @@
-#include "ui/inline_qline_edit.hpp"
+#include "ui/inline-input/inline_qline_edit.hpp"
 #include "theme.hpp"
 #include "ui/omni-painter.hpp"
 #include <QLineEdit>

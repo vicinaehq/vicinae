@@ -4,9 +4,9 @@
 #include "omni-icon.hpp"
 #include "services/raycast/raycast-store.hpp"
 #include "ui/action-pannel/action.hpp"
-#include "ui/default-list-item-widget.hpp"
+#include "ui/default-list-item-widget/default-list-item-widget.hpp"
 #include "ui/list-accessory-widget.hpp"
-#include "ui/toast.hpp"
+#include "ui/toast/toast.hpp"
 #include <chrono>
 #include <memory>
 #include <qboxlayout.h>

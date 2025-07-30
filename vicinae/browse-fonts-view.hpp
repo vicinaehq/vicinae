@@ -9,7 +9,7 @@
 #include "timer.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/markdown/markdown-renderer.hpp"
-#include "ui/omni-list.hpp"
+#include "ui/omni-list/omni-list.hpp"
 #include <memory>
 #include <qboxlayout.h>
 #include <qfuture.h>

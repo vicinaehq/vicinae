@@ -4,11 +4,11 @@
 #include "services/file-chooser/abstract-file-chooser.hpp"
 #include "services/file-chooser/xdp-file-chooser/xdp-file-chooser.hpp"
 #include "ui/focus-notifier.hpp"
-#include "ui/icon-button.hpp"
+#include "ui/icon-button/icon-button.hpp"
 #include "ui/image/omnimg.hpp"
 #include "ui/button/button.hpp"
 #include "ui/omni-list-item-widget.hpp"
-#include "ui/omni-list.hpp"
+#include "ui/omni-list/omni-list.hpp"
 #include "ui/typography/typography.hpp"
 #include "utils/utils.hpp"
 #include <qboxlayout.h>

@@ -1,4 +1,4 @@
-#include "ui/keyboard-shortcut-indicator.hpp"
+#include "ui/keyboard-shortcut-indicator/keyboard-shortcut-indicator.hpp"
 #include "builtin_icon.hpp"
 #include "extend/action-model.hpp"
 #include "theme.hpp"

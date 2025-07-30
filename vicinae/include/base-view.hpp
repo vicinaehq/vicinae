@@ -9,11 +9,11 @@
 #include <qnamespace.h>
 #include "ui/action-pannel/action.hpp"
 #include "ui/empty-view/empty-view.hpp"
-#include "ui/omni-grid.hpp"
-#include "ui/omni-list.hpp"
+#include "ui/omni-grid/omni-grid.hpp"
+#include "ui/omni-list/omni-list.hpp"
 #include "ui/search-bar/search-bar.hpp"
 #include "ui/split-detail/split-detail.hpp"
-#include "ui/toast.hpp"
+#include "ui/toast/toast.hpp"
 #include <memory>
 #include <qboxlayout.h>
 #include <qlogging.h>

@@ -6,10 +6,10 @@
 #include "service-registry.hpp"
 #include "theme.hpp"
 #include "ui/action-pannel/action.hpp"
-#include "ui/color_circle.hpp"
-#include "ui/default-list-item-widget.hpp"
+#include "ui/color-circle/color_circle.hpp"
+#include "ui/default-list-item-widget/default-list-item-widget.hpp"
 #include "ui/image/omnimg.hpp"
-#include "ui/omni-list.hpp"
+#include "ui/omni-list/omni-list.hpp"
 #include "ui/selectable-omni-list-widget.hpp"
 #include "ui/typography/typography.hpp"
 #include <algorithm>

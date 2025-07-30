@@ -120,8 +120,8 @@ set(SRCS
 	src/color-formatter.hpp
 	src/color-formatter.cpp
 
-	include/ui/popover.hpp
-	src/ui/popover.cpp
+	src/ui/popover/popover.hpp
+	src/ui/popover/popover.cpp
 
 	src/action-panel/action-panel.hpp
 
@@ -130,8 +130,8 @@ set(SRCS
 	src/ui/split-detail/split-detail.hpp
 	src/ui/split-detail/split-detail.cpp
 
-	include/ui/detail-widget.hpp
-	src/ui/detail-widget.cpp
+	src/ui/detail-widget/detail-widget.hpp
+	src/ui/detail-widget/detail-widget.cpp
 
 	src/services/clipboard/clipboard-server.hpp
 	src/services/clipboard/wlr-clipboard-server.hpp
@@ -222,15 +222,15 @@ set(SRCS
 	include/ui/argument-completer-widget.hpp
 
 
-	include/ui/icon-button.hpp
-	src/ui/icon-button.cpp
+	src/ui/icon-button/icon-button.hpp
+	src/ui/icon-button/icon-button.cpp
 
 	include/command-database.hpp
 	src/command-database.cpp
 
 	# omni list 
-	include/ui/omni-list.hpp
-	src/ui/omni-list.cpp
+	src/ui/omni-list/omni-list.hpp
+	src/ui/omni-list/omni-list.cpp
 
 	include/ui/omni-list-item-widget-wrapper.hpp
 	src/ui/omni-list-item-widget-wrapper.cpp
@@ -241,11 +241,8 @@ set(SRCS
 	include/ui/list-section-header.hpp
 	src/ui/list-section-header.cpp
 
-	include/ui/default-list-item-widget.hpp
-	src/ui/default-list-item-widget.cpp
-
-	include/ui/text-widget.hpp
-	src/ui/text-widget.cpp
+	src/ui/default-list-item-widget/default-list-item-widget.hpp
+	src/ui/default-list-item-widget/default-list-item-widget.cpp
 
 	include/ui/grid-item-content-widget.hpp
 	src/ui/grid-item-content-widget.cpp
@@ -265,19 +262,16 @@ set(SRCS
 
 	src/calculator-history-command.hpp
 
-	src/ui/ellided-label.cpp
-	include/ui/ellided-label.hpp
-
 	include/create-quicklink-command.hpp
 
 	include/builtin_icon.hpp
 	src/builtin_icon.cpp
 
-	include/ui/transform-result.hpp
-	src/ui/transform-result.cpp
+	src/ui/transform-result/transform-result.hpp
+	src/ui/transform-result/transform-result.cpp
 
-	include/ui/color-transform-widget.hpp
-	src/ui/color-transform-widget.cpp
+	src/ui/color-transform/color-transform-widget.hpp
+	src/ui/color-transform/color-transform-widget.cpp
 
 	include/ui/emoji-viewer.hpp
 	src/ui/emoji-viewer.cpp
@@ -285,8 +279,8 @@ set(SRCS
 	src/ui/empty-view/empty-view.hpp
 	src/ui/empty-view/empty-view.cpp
 
-	include/ui/keyboard-shortcut-indicator.hpp
-	src/ui/keyboard-shortcut-indicator.cpp
+	src/ui/keyboard-shortcut-indicator/keyboard-shortcut-indicator.hpp
+	src/ui/keyboard-shortcut-indicator/keyboard-shortcut-indicator.cpp
 
 	include/emoji-command.hpp
 
@@ -298,8 +292,8 @@ set(SRCS
 	include/ui/horizontal-metadata.hpp
 	src/ui/horizontal-metadata.cpp
 
-	include/ui/vertical-metadata.hpp
-	src/ui/vertical-metadata.cpp
+	src/ui/vertical-metadata/vertical-metadata.hpp
+	src/ui/vertical-metadata/vertical-metadata.cpp
 
 	src/extend/action-model.cpp
 	src/extend/color-model.cpp
@@ -337,14 +331,12 @@ set(SRCS
 	./database/clipboard/migrations.qrc
 	./database/file-indexer//migrations.qrc
 
-	src/ui/inline_qline_edit.hpp
-	src/ui/inline_qline_edit.cpp
-	src/ui/color_circle.hpp
-	src/ui/color_circle.cpp
-	src/ui/toast.hpp
-	src/ui/toast.cpp
-	#src/ui/action_popover.hpp
-	#src/ui/action_popover.cpp
+	src/ui/inline-input/inline_qline_edit.hpp
+	src/ui/inline-input/inline_qline_edit.cpp
+	src/ui/color-circle/color_circle.hpp
+	src/ui/color-circle/color_circle.cpp
+	src/ui/toast/toast.hpp
+	src/ui/toast/toast.cpp
 
 	# settings
 	src/settings/settings-window.hpp

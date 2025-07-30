@@ -1,5 +1,5 @@
 #pragma once
-#include "ui/toast.hpp"
+#include "ui/toast/toast.hpp"
 #include <deque>
 #include <qobject.h>
 #include <qstring.h>

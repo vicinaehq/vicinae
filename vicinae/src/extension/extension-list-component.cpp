@@ -10,7 +10,7 @@
 #include "extension/form/extension-dropdown.hpp"
 #include "ui/form/app-picker-input.hpp"
 #include "ui/form/selector-input.hpp"
-#include "ui/omni-list.hpp"
+#include "ui/omni-list/omni-list.hpp"
 
 static const std::chrono::milliseconds THROTTLE_DEBOUNCE_DURATION(300);
 

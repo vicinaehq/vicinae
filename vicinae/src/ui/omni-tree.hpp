@@ -3,7 +3,7 @@
 #include "omni-icon.hpp"
 #include "theme.hpp"
 #include "ui/image/omnimg.hpp"
-#include "ui/omni-list.hpp"
+#include "ui/omni-list/omni-list.hpp"
 #include "ui/selectable-omni-list-widget.hpp"
 #include "ui/typography/typography.hpp"
 #include <QtConcurrent/qtconcurrentiteratekernel.h>

@@ -1,6 +1,6 @@
 #include "shortcut-button.hpp"
 #include "theme.hpp"
-#include "ui/keyboard-shortcut-indicator.hpp"
+#include "ui/keyboard-shortcut-indicator/keyboard-shortcut-indicator.hpp"
 #include "ui/typography/typography.hpp"
 #include <qboxlayout.h>
 #include <qcolor.h>

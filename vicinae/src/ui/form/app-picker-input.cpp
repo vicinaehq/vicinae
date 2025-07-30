@@ -1,6 +1,6 @@
 #include "ui/form/app-picker-input.hpp"
 #include "services/app-service/abstract-app-db.hpp"
-#include "ui/omni-list.hpp"
+#include "ui/omni-list/omni-list.hpp"
 #include <ranges>
 
 class AppItem : public SelectorInput::AbstractItem {

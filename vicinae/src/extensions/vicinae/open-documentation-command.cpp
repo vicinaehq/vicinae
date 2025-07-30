@@ -3,7 +3,7 @@
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/toast/toast-service.hpp"
-#include "ui/toast.hpp"
+#include "ui/toast/toast.hpp"
 #include <qlogging.h>
 
 static const char *DOC_URL = "https://docs.vicinae.com";

@@ -1,4 +1,4 @@
-#include "ui/color_circle.hpp"
+#include "ui/color-circle/color_circle.hpp"
 #include "ui/omni-painter.hpp"
 
 ColorCircle::ColorCircle(QSize size, QWidget *parent) : QWidget(parent), size(size), strokeWidth(0) {

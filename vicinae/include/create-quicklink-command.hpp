@@ -13,8 +13,8 @@
 #include "ui/form/completed-input.hpp"
 #include "ui/form/form-field.hpp"
 #include "ui/form/selector-input.hpp"
-#include "ui/omni-list.hpp"
-#include "ui/toast.hpp"
+#include "ui/omni-list/omni-list.hpp"
+#include "ui/toast/toast.hpp"
 #include "ui/form/form.hpp"
 #include <functional>
 #include <memory>

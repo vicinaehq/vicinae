@@ -1,7 +1,7 @@
 #pragma once
 #include "common.hpp"
 #include "ui/action-pannel/action.hpp"
-#include "ui/toast.hpp"
+#include "ui/toast/toast.hpp"
 #include <qobject.h>
 #include <qdebug.h>
 #include <qtmetamacros.h>

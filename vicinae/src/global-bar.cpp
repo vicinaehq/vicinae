@@ -10,7 +10,7 @@
 #include <qstackedwidget.h>
 #include <qwidget.h>
 #include "services/toast/toast-service.hpp"
-#include "ui/toast.hpp"
+#include "ui/toast/toast.hpp"
 #include "ui/typography/typography.hpp"
 
 NavigationStatusWidget::NavigationStatusWidget() { setupUI(); }
