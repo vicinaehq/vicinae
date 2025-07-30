@@ -174,8 +174,8 @@ set(SRCS
 
 	# end action-pannel-widget
 
-	include/ui/horizontal-loading-bar.hpp
-	src/ui/horizontal-loading-bar.cpp
+	src/ui/loading-bar/horizontal-loading-bar.hpp
+	src/ui/loading-bar/horizontal-loading-bar.cpp
 
 	# start markdown renderer
 	src/ui/markdown/markdown-renderer.hpp
@@ -187,8 +187,8 @@ set(SRCS
 
 	include/clipboard-history-view.hpp
 
-	include/ui/omni-painter.hpp
-	src/ui/omni-painter.cpp
+	src/ui/omni-painter/omni-painter.hpp
+	src/ui/omni-painter/omni-painter.cpp
 
 	include/wm/window-manager.hpp
 	
@@ -232,11 +232,11 @@ set(SRCS
 	src/ui/omni-list/omni-list.hpp
 	src/ui/omni-list/omni-list.cpp
 
-	include/ui/omni-list-item-widget-wrapper.hpp
-	src/ui/omni-list-item-widget-wrapper.cpp
+	src/ui/omni-list/omni-list-item-widget-wrapper.hpp
+	src/ui/omni-list/omni-list-item-widget-wrapper.cpp
 
-	include/ui/selectable-omni-list-widget.hpp
-	src/ui/selectable-omni-list-widget.cpp
+	src/ui/selectable-omni-list-widget/selectable-omni-list-widget.hpp
+	src/ui/selectable-omni-list-widget/selectable-omni-list-widget.cpp
 
 	include/ui/list-section-header.hpp
 	src/ui/list-section-header.cpp
@@ -244,20 +244,18 @@ set(SRCS
 	src/ui/default-list-item-widget/default-list-item-widget.hpp
 	src/ui/default-list-item-widget/default-list-item-widget.cpp
 
-	include/ui/grid-item-content-widget.hpp
-	src/ui/grid-item-content-widget.cpp
+	src/ui/omni-grid/grid-item-content-widget.hpp
+	src/ui/omni-grid/grid-item-content-widget.cpp
 
 	src/ui/tooltip/tooltip.hpp
 	src/ui/tooltip/tooltip.cpp
 
-	include/ui/grid-item-widget.hpp
-	src/ui/grid-item-widget.cpp
+	src/ui/omni-grid/grid-item-widget.hpp
+	src/ui/omni-grid/grid-item-widget.cpp
 
-	include/ui/omni-list-item-widget.hpp
+	src/ui/omni-list/omni-list-item-widget.hpp
 
 	include/omni-icon.hpp
-
-	include/base-view.hpp
 
 
 	src/calculator-history-command.hpp
@@ -273,8 +271,8 @@ set(SRCS
 	src/ui/color-transform/color-transform-widget.hpp
 	src/ui/color-transform/color-transform-widget.cpp
 
-	include/ui/emoji-viewer.hpp
-	src/ui/emoji-viewer.cpp
+	src/ui/emoji-viewer/emoji-viewer.hpp
+	src/ui/emoji-viewer/emoji-viewer.cpp
 
 	src/ui/empty-view/empty-view.hpp
 	src/ui/empty-view/empty-view.cpp
@@ -287,7 +285,6 @@ set(SRCS
 	src/manage-quicklinks-command.hpp
 
 	include/ui/metadata-pane.hpp
-	src/ui/metadata-pane.cpp
 
 	include/ui/horizontal-metadata.hpp
 	src/ui/horizontal-metadata.cpp
@@ -347,7 +344,7 @@ set(SRCS
 	src/settings/extension-settings-detail.cpp
 	src/settings/app-settings-detail.cpp
 
-	src/ui/omni-tree.hpp
+	src/ui/omni-tree/omni-tree.hpp
 
 	src/extensions/clipboard/clipboard-history-command.cpp
 
@@ -414,14 +411,22 @@ set(SRCS
 	src/utils/layout.hpp
 	src/utils/layout.cpp
 
-	src/header.hpp
-	src/header.cpp
+	src/ui/top-bar/top-bar.hpp
+	src/ui/top-bar/top-bar.cpp
+
 	src/navigation-controller.hpp
 	src/navigation-controller.cpp
-	src/launcher-window.hpp
-	src/launcher-window.cpp
-	src/global-bar.hpp
-	src/global-bar.cpp
+
+	src/ui/views/base-view.cpp
+	src/ui/views/simple-view.cpp
+	src/ui/views/list-view.cpp
+	src/ui/views/grid-view.cpp
+	#src/ui/views/form-view.cpp
+	
+	src/ui/launcher-window/launcher-window.cpp
+
+	src/ui/status-bar/status-bar.hpp
+	src/ui/status-bar/status-bar.cpp
 
 	src/command-controller.hpp
 	src/command-controller.cpp

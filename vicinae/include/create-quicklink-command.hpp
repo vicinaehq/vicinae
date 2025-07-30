@@ -1,11 +1,10 @@
 #pragma once
-#include "base-view.hpp"
+#include "ui/views/base-view.hpp"
 #include "builtin_icon.hpp"
 #include "services/bookmark/bookmark-service.hpp"
 #include "favicon/favicon-service.hpp"
 #include "action-panel/action-panel.hpp"
 #include "omni-icon.hpp"
-#include "quicklist-database.hpp"
 #include "service-registry.hpp"
 #include "timer.hpp"
 #include "ui/action-pannel/action.hpp"
@@ -35,6 +34,7 @@
 #include <sched.h>
 #include <unistd.h>
 #include "services/app-service/app-service.hpp"
+#include "ui/views/form-view.hpp"
 #include "services/toast/toast-service.hpp"
 
 class AppSelectorItem : public SelectorInput::AbstractItem {
@@ -375,19 +375,6 @@ public:
     initializeIconSelector();
   }
 
-  void loadLink(const Quicklink &quicklink) {
-    auto appDb = ServiceRegistry::instance()->appDb();
-
-    name->setText(QString("Copy of %1").arg(quicklink.name));
-    link->setText(quicklink.rawUrl);
-
-    if (auto app = appDb->findById(quicklink.app)) {
-      // appSelector->setValue(std::make_shared<AppSelectorItem>(app));
-    }
-
-    // iconSelector->setValue(std::make_shared<IconSelectorItem>(quicklink.iconName));
-  }
-
   void onActivate() override {
     auto panel = new ActionPanelStaticListView;
     auto submitAction = new StaticAction("Submit", BuiltinOmniIconUrl("enter-key"), [this]() { submit(); });
@@ -396,7 +383,6 @@ public:
     submitAction->setPrimary(true);
 
     panel->addAction(submitAction);
-    m_actionPannelV2->setView(panel);
     QTimer::singleShot(0, this, [this]() { form->focusFirst(); });
   }
 

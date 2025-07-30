@@ -4,7 +4,7 @@
 #include "extend/image-model.hpp"
 #include "extension/extension-view.hpp"
 #include "omni-icon.hpp"
-#include "ui/grid-item-content-widget.hpp"
+#include "ui/omni-grid/grid-item-content-widget.hpp"
 #include "ui/image/omnimg.hpp"
 #include "ui/omni-grid/omni-grid.hpp"
 #include "ui/omni-list/omni-list.hpp"

@@ -1,6 +1,6 @@
 #include "ui/popover/popover.hpp"
 #include "theme.hpp"
-#include "ui/omni-painter.hpp"
+#include "ui/omni-painter/omni-painter.hpp"
 #include <qevent.h>
 #include <qnamespace.h>
 #include <qpainter.h>

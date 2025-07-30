@@ -8,7 +8,8 @@
 #include "services/toast/toast-service.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/toast/toast.hpp"
-#include <base-view.hpp>
+#include "navigation-controller.hpp"
+#include "ui/views/base-view.hpp"
 #include <qnamespace.h>
 
 class CopyCalculatorAnswerAction : public AbstractAction {

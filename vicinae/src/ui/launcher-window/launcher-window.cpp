@@ -1,8 +1,8 @@
 #include "launcher-window.hpp"
 #include "action-panel/action-panel.hpp"
 #include "common.hpp"
-#include "global-bar.hpp"
-#include "header.hpp"
+#include "ui/status-bar/status-bar.hpp"
+#include "ui/top-bar/top-bar.hpp"
 #include <qboxlayout.h>
 #include <qevent.h>
 #include <qnamespace.h>
@@ -17,6 +17,7 @@
 #include "ui/dialog/dialog.hpp"
 #include "ui/overlay/overlay.hpp"
 #include "ui/hud/hud.hpp"
+#include "ui/views/base-view.hpp"
 #include <QStackedWidget>
 #include "settings-controller/settings-controller.hpp"
 

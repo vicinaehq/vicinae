@@ -1,6 +1,6 @@
-#include "ui/selectable-omni-list-widget.hpp"
+#include "ui/selectable-omni-list-widget/selectable-omni-list-widget.hpp"
 #include "theme.hpp"
-#include "ui/omni-list-item-widget.hpp"
+#include "ui/omni-list/omni-list-item-widget.hpp"
 #include <qevent.h>
 #include <qnamespace.h>
 

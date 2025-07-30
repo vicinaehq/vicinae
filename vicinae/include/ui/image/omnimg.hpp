@@ -6,7 +6,7 @@
 #include "omni-icon.hpp"
 #include "theme.hpp"
 #include "timer.hpp"
-#include "ui/omni-painter.hpp"
+#include "ui/omni-painter/omni-painter.hpp"
 #include <QtConcurrent/qtconcurrentiteratekernel.h>
 #include <QtCore>
 #include <algorithm>

@@ -1,10 +1,12 @@
 #pragma once
-#include "base-view.hpp"
+#include "navigation-controller.hpp"
+#include "ui/views/base-view.hpp"
 #include "extend/action-model.hpp"
 #include "extend/model-parser.hpp"
 #include "extension/extension-command-controller.hpp"
 #include "omni-icon.hpp"
 #include "ui/action-pannel/action.hpp"
+#include "ui/views/simple-view.hpp"
 #include <qboxlayout.h>
 #include <qevent.h>
 #include <qjsonarray.h>
@@ -43,13 +45,6 @@ public:
   }
 
   void setExtensionCommandController(ExtensionCommandController *controller) { m_controller = controller; }
-
-  void onActionExecuted(AbstractAction *action) override {
-    if (auto extAction = dynamic_cast<const ExtensionActionV2 *>(action)) {
-      qDebug() << "extension action!";
-      notify(extAction->model().onAction, {});
-    }
-  }
 
   void setActionPanel(const ActionPannelModel &model) {
     auto panel = std::make_unique<ActionPanelState>();

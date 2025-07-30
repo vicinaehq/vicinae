@@ -1,6 +1,6 @@
 #pragma once
 #include <qboxlayout.h>
-#include "ui/omni-list-item-widget.hpp"
+#include "ui/omni-list/omni-list-item-widget.hpp"
 
 class OmniListSectionHeader : public OmniListItemWidget {
 public:

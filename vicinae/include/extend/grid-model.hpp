@@ -3,7 +3,7 @@
 #include "extend/empty-view-model.hpp"
 #include "extend/image-model.hpp"
 #include "extend/pagination-model.hpp"
-#include "ui/grid-item-content-widget.hpp"
+#include "ui/omni-grid/grid-item-content-widget.hpp"
 #include <qjsonobject.h>
 
 enum GridFit { GridContain, GridFill };

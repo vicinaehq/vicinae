@@ -1,6 +1,6 @@
-#include "ui/grid-item-widget.hpp"
-#include "ui/grid-item-content-widget.hpp"
-#include "ui/omni-list-item-widget.hpp"
+#include "grid-item-widget.hpp"
+#include "grid-item-content-widget.hpp"
+#include "ui/omni-list/omni-list-item-widget.hpp"
 #include <qwidget.h>
 
 void GridItemWidget::resizeEvent(QResizeEvent *event) {

@@ -1,6 +1,6 @@
 #include "theme.hpp"
 #include "timer.hpp"
-#include "ui/omni-painter.hpp"
+#include "ui/omni-painter/omni-painter.hpp"
 #include <QLinearGradient>
 #include <QStyleHints>
 

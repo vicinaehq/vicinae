@@ -1,8 +1,8 @@
 #pragma once
 #include "common.hpp"
 #include "omni-icon.hpp"
-#include "ui/omni-list-item-widget-wrapper.hpp"
-#include "ui/omni-list-item-widget.hpp"
+#include "ui/omni-list/omni-list-item-widget.hpp"
+#include "ui/omni-list/omni-list-item-widget-wrapper.hpp"
 #include "ui/default-list-item-widget/default-list-item-widget.hpp"
 #include "ui/scroll-bar/scroll-bar.hpp"
 #include <algorithm>

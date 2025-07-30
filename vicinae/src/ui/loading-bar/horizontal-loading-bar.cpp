@@ -1,4 +1,4 @@
-#include "ui/horizontal-loading-bar.hpp"
+#include "ui/loading-bar/horizontal-loading-bar.hpp"
 #include "theme.hpp"
 #include <chrono>
 #include <qnamespace.h>

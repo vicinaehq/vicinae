@@ -1,7 +1,7 @@
 #include "ui/transform-result/transform-result.hpp"
 #include "omni-icon.hpp"
 #include "theme.hpp"
-#include "ui/selectable-omni-list-widget.hpp"
+#include "ui/selectable-omni-list-widget/selectable-omni-list-widget.hpp"
 #include "ui/typography/typography.hpp"
 #include <qboxlayout.h>
 #include <qfont.h>

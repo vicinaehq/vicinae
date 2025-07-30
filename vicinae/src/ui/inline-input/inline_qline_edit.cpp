@@ -1,6 +1,6 @@
 #include "ui/inline-input/inline_qline_edit.hpp"
 #include "theme.hpp"
-#include "ui/omni-painter.hpp"
+#include "ui/omni-painter/omni-painter.hpp"
 #include <QLineEdit>
 #include <qpainter.h>
 #include <qpainterpath.h>

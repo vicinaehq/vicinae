@@ -2,7 +2,7 @@
 #include "builtin_icon.hpp"
 #include "extend/action-model.hpp"
 #include "theme.hpp"
-#include "ui/omni-painter.hpp"
+#include "ui/omni-painter/omni-painter.hpp"
 #include <qnamespace.h>
 #include <qpainter.h>
 #include <qwidget.h>

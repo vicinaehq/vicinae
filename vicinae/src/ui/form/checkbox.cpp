@@ -1,7 +1,7 @@
 #include "ui/form/checkbox.hpp"
 #include "common.hpp"
 #include "theme.hpp"
-#include "ui/omni-painter.hpp"
+#include "ui/omni-painter/omni-painter.hpp"
 #include <qevent.h>
 #include <qjsonvalue.h>
 #include <qnamespace.h>

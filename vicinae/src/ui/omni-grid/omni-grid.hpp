@@ -1,7 +1,7 @@
 #pragma once
 
-#include "ui/grid-item-content-widget.hpp"
-#include "ui/grid-item-widget.hpp"
+#include "grid-item-content-widget.hpp"
+#include "grid-item-widget.hpp"
 #include "ui/omni-list/omni-list.hpp"
 #include <qwidget.h>
 

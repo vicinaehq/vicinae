@@ -1,10 +1,10 @@
 #pragma once
-#include "base-view.hpp"
+#include "ui/views/base-view.hpp"
 #include "clipboard-actions.hpp"
 #include "settings/command-metadata-settings-detail.hpp"
 #include "theme.hpp"
 #include "ui/form/selector-input.hpp"
-#include "ui/selectable-omni-list-widget.hpp"
+#include "ui/selectable-omni-list-widget/selectable-omni-list-widget.hpp"
 #include "utils/layout.hpp"
 #include "ui/empty-view/empty-view.hpp"
 #include "common.hpp"
@@ -20,6 +20,7 @@
 #include "ui/toast/toast.hpp"
 #include <libqalculate/Number.h>
 #include <libqalculate/includes.h>
+#include "services/toast/toast-service.hpp"
 #include <memory>
 #include <qboxlayout.h>
 #include <qevent.h>
@@ -438,7 +439,6 @@ class ClipboardHistoryView : public SimpleView {
                         const OmniList::AbstractVirtualItem *previous) const {
     if (!next) {
       m_split->setDetailVisibility(false);
-      m_actionPannelV2->popToRoot();
       return;
     }
 
@@ -448,7 +448,6 @@ class ClipboardHistoryView : public SimpleView {
       m_split->setDetailWidget(detail);
       m_split->setDetailVisibility(true);
     }
-    if (auto panel = entry->actionPanel()) { m_actionPannelV2->setView(panel); }
   }
 
   void textChanged(const QString &value) override { m_searchDebounce.start(200); }

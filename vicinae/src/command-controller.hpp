@@ -1,5 +1,5 @@
 #pragma once
-#include "base-view.hpp"
+#include "ui/views/base-view.hpp"
 #include "command.hpp"
 #include "common.hpp"
 #include "navigation-controller.hpp"

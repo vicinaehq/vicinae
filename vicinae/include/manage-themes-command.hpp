@@ -1,7 +1,7 @@
 #pragma once
 #include "action-panel/action-panel.hpp"
 #include "actions/theme/theme-actions.hpp"
-#include "base-view.hpp"
+#include "ui/views/base-view.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
 #include "theme.hpp"
@@ -10,7 +10,7 @@
 #include "ui/default-list-item-widget/default-list-item-widget.hpp"
 #include "ui/image/omnimg.hpp"
 #include "ui/omni-list/omni-list.hpp"
-#include "ui/selectable-omni-list-widget.hpp"
+#include "ui/selectable-omni-list-widget/selectable-omni-list-widget.hpp"
 #include "ui/typography/typography.hpp"
 #include <algorithm>
 #include <memory>

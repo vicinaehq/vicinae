@@ -1,7 +1,7 @@
 #pragma once
 #include "actions/app/app-actions.hpp"
 #include "argument.hpp"
-#include "base-view.hpp"
+#include "ui/views/base-view.hpp"
 #include "clipboard-actions.hpp"
 #include "services/files-service/file-service.hpp"
 #include "navigation-controller.hpp"
@@ -18,7 +18,7 @@
 #include "ui/action-pannel/action.hpp"
 #include "ui/calculator-list-item-widget.hpp"
 #include "ui/color-transform/color-transform-widget.hpp"
-#include "ui/omni-list-item-widget.hpp"
+#include "ui/omni-list/omni-list-item-widget.hpp"
 #include "ui/omni-list/omni-list.hpp"
 #include <QtConcurrent/QtConcurrent>
 #include <cfloat>
@@ -47,18 +47,21 @@
 #include <quuid.h>
 #include <qwidget.h>
 #include <ranges>
+#include "ui/views/list-view.hpp"
 
 class RootSearchItem : public AbstractDefaultListItem, public ListView::Actionnable {
 
 protected:
   std::shared_ptr<RootItem> m_item;
 
+  /*
   ActionPanelView *actionPanel() const override {
     auto manager = ServiceRegistry::instance()->rootItemManager();
     auto metadata = manager->itemMetadata(m_item->uniqueId());
 
     return m_item->actionPanel(metadata);
   }
+  */
 
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
     auto manager = ctx->services->rootItemManager();
@@ -447,8 +450,6 @@ class RootSearchView : public ListView {
     qCritical() << "calculator rerender";
     render(searchText());
   }
-
-  void onActionExecuted(AbstractAction *action) override {}
 
   void handleFavoriteChanged(const QString &itemId, bool value) {
     if (isVisible()) textChanged(searchText());

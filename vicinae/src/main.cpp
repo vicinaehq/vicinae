@@ -1,10 +1,10 @@
 #include "command-controller.hpp"
+#include "ui/launcher-window/launcher-window.hpp"
 #include <QStyleHints>
 #include "data-uri/data-uri.hpp"
 #include "common.hpp"
 #include "ipc-command-server.hpp"
 #include "ipc-command-handler.hpp"
-#include "launcher-window.hpp"
 #include "overlay-controller/overlay-controller.hpp"
 #include "services/app-service/app-service.hpp"
 #include "command-database.hpp"

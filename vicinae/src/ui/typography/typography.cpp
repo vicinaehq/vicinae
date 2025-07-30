@@ -1,6 +1,6 @@
 #include "ui/typography/typography.hpp"
 #include "theme.hpp"
-#include "ui/omni-painter.hpp"
+#include "ui/omni-painter/omni-painter.hpp"
 #include <qboxlayout.h>
 #include <qlabel.h>
 #include <qnamespace.h>

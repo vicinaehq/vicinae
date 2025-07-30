@@ -1,5 +1,5 @@
-#include "ui/omni-list-item-widget-wrapper.hpp"
-#include "ui/omni-list-item-widget.hpp"
+#include "ui/omni-list/omni-list-item-widget-wrapper.hpp"
+#include "ui/omni-list/omni-list-item-widget.hpp"
 #include <qnamespace.h>
 
 void OmniListItemWidgetWrapper::handleRightClicked() const { emit rightClicked(_index); }

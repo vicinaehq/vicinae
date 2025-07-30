@@ -1,5 +1,5 @@
 #pragma once
-#include "base-view.hpp"
+#include "ui/views/list-view.hpp"
 #include "omni-icon.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "service-registry.hpp"
@@ -7,6 +7,7 @@
 #include "ui/omni-list/omni-list.hpp"
 #include <qobjectdefs.h>
 #include <ranges>
+#include "ui/views/list-view.hpp"
 
 class DisableFallbackAction : public AbstractAction {
   QString m_id;
@@ -123,33 +124,35 @@ public:
 
 // Overrides item actions when no filtering is applied
 class RootFallbackListItem : public FallbackListItem {
-  QList<AbstractAction *> generateActions() const override {
-    auto manager = ServiceRegistry::instance()->rootItemManager();
-    auto metadata = manager->itemMetadata(m_item->uniqueId());
-    QList<AbstractAction *> actions;
-    int maxFallbackPosition = manager->maxFallbackPosition();
+  /*
+QList<AbstractAction *> generateActions() const override {
+auto manager = ServiceRegistry::instance()->rootItemManager();
+auto metadata = manager->itemMetadata(m_item->uniqueId());
+QList<AbstractAction *> actions;
+int maxFallbackPosition = manager->maxFallbackPosition();
 
-    if (metadata.isFallback) {
-      auto disableFallback = new DisableFallbackAction(m_item->uniqueId());
+if (metadata.isFallback) {
+auto disableFallback = new DisableFallbackAction(m_item->uniqueId());
 
-      disableFallback->setPrimary(true);
-      disableFallback->setShortcut({.key = "return"});
-      actions << disableFallback;
+disableFallback->setPrimary(true);
+disableFallback->setShortcut({.key = "return"});
+actions << disableFallback;
 
-      if (metadata.fallbackPosition > 0) { actions << new MoveFallbackUpAction(m_item->uniqueId()); }
-      if (metadata.fallbackPosition < maxFallbackPosition) {
-        actions << new MoveFallbackDownAction(m_item->uniqueId());
-      }
-    } else {
-      auto enableFallback = new EnableFallbackAction(m_item->uniqueId());
+if (metadata.fallbackPosition > 0) { actions << new MoveFallbackUpAction(m_item->uniqueId()); }
+if (metadata.fallbackPosition < maxFallbackPosition) {
+  actions << new MoveFallbackDownAction(m_item->uniqueId());
+}
+} else {
+auto enableFallback = new EnableFallbackAction(m_item->uniqueId());
 
-      enableFallback->setPrimary(true);
-      enableFallback->setShortcut({.key = "return"});
-      actions << enableFallback;
-    }
+enableFallback->setPrimary(true);
+enableFallback->setShortcut({.key = "return"});
+actions << enableFallback;
+}
 
-    return actions;
-  }
+return actions;
+}
+*/
 
 public:
   RootFallbackListItem(const std::shared_ptr<RootItem> &item) : FallbackListItem(item) {}

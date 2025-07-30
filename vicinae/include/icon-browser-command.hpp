@@ -1,6 +1,6 @@
 #pragma once
 #include "actions/theme/theme-actions.hpp"
-#include "base-view.hpp"
+#include "ui/views/base-view.hpp"
 #include "omni-icon.hpp"
 #include "ui/image/omnimg.hpp"
 #include "ui/omni-grid/omni-grid.hpp"
@@ -9,6 +9,7 @@
 #include <qlogging.h>
 #include <qnamespace.h>
 #include <ranges>
+#include "ui/views/grid-view.hpp"
 
 class IconBrowserView : public GridView {
   class IconBrowserItem : public OmniGrid::AbstractGridItem, public GridView::Actionnable {

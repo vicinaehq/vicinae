@@ -1,6 +1,6 @@
 #pragma once
 #include "theme.hpp"
-#include "ui/omni-painter.hpp"
+#include "ui/omni-painter/omni-painter.hpp"
 #include <qjsonobject.h>
 #include <filesystem>
 #include <qstring.h>

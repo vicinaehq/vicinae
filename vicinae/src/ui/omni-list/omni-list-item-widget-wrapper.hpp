@@ -1,5 +1,5 @@
 #pragma once
-#include "ui/omni-list-item-widget.hpp"
+#include "ui/omni-list/omni-list-item-widget.hpp"
 #include <qevent.h>
 #include <qtmetamacros.h>
 

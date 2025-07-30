@@ -1,5 +1,5 @@
 #include "navigation-controller.hpp"
-#include "base-view.hpp"
+#include "ui/views/base-view.hpp"
 #include <qlogging.h>
 #include <qwidget.h>
 
@@ -254,7 +254,10 @@ void NavigationController::setActions(std::unique_ptr<ActionPanelState> panel, c
 
   if (auto state = findViewState(VALUE_OR(caller, topView()))) {
     state->actionPanelState = std::move(panel);
-    if (state->sender == topView()) { emit actionsChanged(*state->actionPanelState.get()); }
+    if (state->sender == topView()) {
+      qDebug() << "actions changed";
+      emit actionsChanged(*state->actionPanelState.get());
+    }
   }
 }
 

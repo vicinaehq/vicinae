@@ -1,5 +1,5 @@
 #pragma once
-#include "base-view.hpp"
+#include "ui/views/base-view.hpp"
 #include "extensions/raycast/store/store-detail-view.hpp"
 #include "navigation-controller.hpp"
 #include "omni-icon.hpp"

@@ -1,5 +1,5 @@
 #pragma once
-#include "base-view.hpp"
+#include "ui/views/base-view.hpp"
 #include "common.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "omni-icon.hpp"

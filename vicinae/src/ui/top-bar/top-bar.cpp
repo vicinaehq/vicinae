@@ -1,4 +1,4 @@
-#include "header.hpp"
+#include "top-bar.hpp"
 #include "navigation-controller.hpp"
 #include "vicinae.hpp"
 #include <qboxlayout.h>
@@ -7,15 +7,14 @@
 #include <qnamespace.h>
 #include <qstackedwidget.h>
 #include <qwidget.h>
-#include "base-view.hpp"
-#include "ui/horizontal-loading-bar.hpp"
+#include "ui/views/base-view.hpp"
+#include "ui/loading-bar/horizontal-loading-bar.hpp"
 #include "ui/icon-button/icon-button.hpp"
 #include "ui/search-bar/search-bar.hpp"
 #include "ui/icon-button/icon-button.hpp"
 #include "utils/layout.hpp"
 
 void GlobalHeader::setupUI() {
-
   m_input = new SearchBar(this);
   m_backButton = new IconButton;
   m_accessoryContainer = new QStackedWidget(this);

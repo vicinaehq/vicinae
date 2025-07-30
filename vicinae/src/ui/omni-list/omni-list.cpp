@@ -1,6 +1,6 @@
 #include "omni-list.hpp"
 #include "ui/list-section-header.hpp"
-#include "ui/omni-list-item-widget-wrapper.hpp"
+#include "ui/omni-list/omni-list-item-widget-wrapper.hpp"
 #include <algorithm>
 #include <chrono>
 #include <qabstractitemview.h>

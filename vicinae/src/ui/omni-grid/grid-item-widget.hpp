@@ -1,6 +1,6 @@
 #pragma once
-#include "ui/grid-item-content-widget.hpp"
-#include "ui/omni-list-item-widget.hpp"
+#include "grid-item-content-widget.hpp"
+#include "ui/omni-list/omni-list-item-widget.hpp"
 #include "ui/typography/typography.hpp"
 #include <qboxlayout.h>
 #include <qevent.h>

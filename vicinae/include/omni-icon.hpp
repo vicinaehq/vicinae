@@ -32,7 +32,7 @@
 #include "proto/ui.pb.h"
 #include "services/asset-resolver/asset-resolver.hpp"
 #include "theme.hpp"
-#include "ui/omni-painter.hpp"
+#include "ui/omni-painter/omni-painter.hpp"
 
 enum OmniIconType { Invalid, Builtin, Favicon, System, Http, Local, Emoji, DataURI };
 

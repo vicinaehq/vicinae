@@ -1,4 +1,4 @@
-#include "global-bar.hpp"
+#include "status-bar.hpp"
 #include "common.hpp"
 #include "navigation-controller.hpp"
 #include "omni-icon.hpp"
@@ -40,6 +40,8 @@ void GlobalBar::handleActionPanelVisiblityChange(bool visible) { m_actionButton-
 
 void GlobalBar::actionsChanged(const ActionPanelState &actions) {
   auto primaryAction = actions.findPrimaryAction();
+
+  qDebug() << "ACTION CHANGED FROM STATUS";
 
   if (primaryAction) {
     m_primaryActionButton->setText(primaryAction->title());

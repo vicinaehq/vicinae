@@ -1,5 +1,5 @@
 #include "dialog.hpp"
-#include "ui/omni-painter.hpp"
+#include "ui/omni-painter/omni-painter.hpp"
 
 DialogContentWidget::DialogContentWidget(QWidget *parent) : QWidget(parent) {}
 

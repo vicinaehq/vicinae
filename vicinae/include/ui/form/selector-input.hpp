@@ -4,7 +4,7 @@
 #include "omni-icon.hpp"
 #include "ui/focus-notifier.hpp"
 #include "ui/form/base-input.hpp"
-#include "ui/horizontal-loading-bar.hpp"
+#include "ui/loading-bar/horizontal-loading-bar.hpp"
 #include "ui/image/omnimg.hpp"
 #include "ui/omni-list/omni-list.hpp"
 #include "ui/popover/popover.hpp"

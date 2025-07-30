@@ -1,5 +1,5 @@
 #include "action-panel/action-panel.hpp"
-#include "base-view.hpp"
+#include "ui/views/base-view.hpp"
 #include "extension/extension-command.hpp"
 #include "service-registry.hpp"
 #include "theme.hpp"
@@ -14,6 +14,7 @@
 #include "services/root-item-manager/root-item-manager.hpp"
 #include <qnamespace.h>
 #include <qwidget.h>
+#include "ui/views/form-view.hpp"
 
 class MissingExtensionPreferenceView : public FormView {
   FormWidget *m_form = new FormWidget;
@@ -130,6 +131,5 @@ public:
     continueAction->setShortcut({.key = "return", .modifiers = {"shift"}});
     continueAction->setPrimary(true);
     panel->addAction(continueAction);
-    m_actionPannelV2->setView(panel);
   }
 };

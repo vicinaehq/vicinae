@@ -1,6 +1,5 @@
 #pragma once
-#include "base-view.hpp"
-#include "actions/bookmark/bookmark-actions.hpp"
+#include "ui/search-bar/search-bar.hpp"
 #include "common.hpp"
 #include "services/bookmark/bookmark-service.hpp"
 #include "extend/metadata-model.hpp"
@@ -12,6 +11,7 @@
 #include "ui/typography/typography.hpp"
 #include <memory>
 #include <qboxlayout.h>
+#include <QClipboard>
 #include <qlabel.h>
 #include <qnamespace.h>
 #include <qobject.h>
@@ -20,6 +20,7 @@
 #include <ranges>
 #include <sys/socket.h>
 #include <qscrollarea.h>
+#include "ui/views/list-view.hpp"
 
 class DetailWithMetadataWidget : public QWidget {
   HorizontalMetadata *m_metadata = new HorizontalMetadata;
@@ -149,6 +150,7 @@ class QuicklinkItem : public AbstractDefaultListItem, public ListView::Actionnab
 public:
   const std::shared_ptr<Bookmark> &bookmark() const { return link; }
 
+  /*
   ActionPanelView *actionPanel() const override {
     auto panel = new ActionPanelStaticListView;
 
@@ -165,6 +167,7 @@ public:
 
     return panel;
   }
+  */
 
   std::unique_ptr<CompleterData> createCompleter() const override {
     ArgumentList args;

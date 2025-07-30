@@ -1,4 +1,4 @@
-#include "ui/emoji-viewer.hpp"
+#include "ui/emoji-viewer/emoji-viewer.hpp"
 #include "service-registry.hpp"
 #include <qevent.h>
 #include <qnamespace.h>

@@ -1,7 +1,7 @@
 #include "actions/bookmark/bookmark-actions.hpp"
 #include "create-quicklink-command.hpp"
 #include "service-registry.hpp"
-#include "base-view.hpp"
+#include "ui/views/base-view.hpp"
 
 void OpenBookmarkAction::execute() {
   auto ui = ServiceRegistry::instance()->UI();

@@ -1,6 +1,6 @@
 #include "button.hpp"
 #include "ui/image/omnimg.hpp"
-#include "ui/omni-painter.hpp"
+#include "ui/omni-painter/omni-painter.hpp"
 #include <qpainterpath.h>
 
 void OmniButtonWidget::setColor(ButtonColor color) {

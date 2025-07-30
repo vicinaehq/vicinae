@@ -1,4 +1,4 @@
-#include "ui/grid-item-content-widget.hpp"
+#include "grid-item-content-widget.hpp"
 #include "theme.hpp"
 #include <qnamespace.h>
 #include <qwidget.h>

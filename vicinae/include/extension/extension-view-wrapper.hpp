@@ -30,11 +30,6 @@ class ExtensionViewWrapper : public BaseView {
     if (m_current) { m_current->activate(); }
   }
 
-  void executeAction(AbstractAction *action) override {
-    qDebug() << "Execute action" << action->title();
-    if (auto view = m_current) return static_cast<BaseView *>(view)->executeAction(action);
-  }
-
   bool inputFilter(QKeyEvent *event) override {
     if (auto view = m_current) return view->inputFilter(event);
 
@@ -46,8 +41,6 @@ class ExtensionViewWrapper : public BaseView {
   }
 
   bool supportsSearch() const override { return m_current ? m_current->supportsSearch() : false; }
-
-  ActionPanelV2Widget *actionPanel() const override { return m_current ? m_current->actionPanel() : nullptr; }
 
   void initialize() override { setLoading(true); }
 

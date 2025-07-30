@@ -1,10 +1,14 @@
-#include "base-view.hpp"
+#include "ui/action-pannel/action.hpp"
+#include "ui/omni-list/omni-list.hpp"
+#include "ui/views/base-view.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
 #include "wm/window-manager.hpp"
 #include <chrono>
 #include <qfuturewatcher.h>
 #include <qnamespace.h>
+#include "ui/views/list-view.hpp"
+#include "services/app-service/app-service.hpp"
 
 class FocusWindowAction : public AbstractAction {
   std::shared_ptr<AbstractWindowManager::Window> _window;
@@ -64,7 +68,7 @@ class SwitchWindowsCommand : public ListView {
       std::chrono::high_resolution_clock::now();
 
 public:
-  void onSearchChanged(const QString &s) override {
+  void textChanged(const QString &s) override {
     auto wm = ServiceRegistry::instance()->windowManager();
     auto appDb = ServiceRegistry::instance()->appDb();
     auto now = std::chrono::high_resolution_clock::now();

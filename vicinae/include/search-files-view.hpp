@@ -1,7 +1,7 @@
 #pragma once
 #include "action-panel/action-panel.hpp"
 #include "actions/app/app-actions.hpp"
-#include "base-view.hpp"
+#include "ui/views/base-view.hpp"
 #include "clipboard-history-view.hpp"
 #include "manage-quicklinks-command.hpp"
 #include "services/files-service/file-service.hpp"

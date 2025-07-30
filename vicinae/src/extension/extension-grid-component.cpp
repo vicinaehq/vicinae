@@ -1,7 +1,7 @@
 #include "extension/extension-grid-component.hpp"
 #include "extend/grid-model.hpp"
 #include "extension/extension-view.hpp"
-#include "ui/grid-item-content-widget.hpp"
+#include "ui/omni-grid/grid-item-content-widget.hpp"
 #include "ui/omni-list/omni-list.hpp"
 
 static const std::chrono::milliseconds THROTTLE_DEBOUNCE_DURATION(300);

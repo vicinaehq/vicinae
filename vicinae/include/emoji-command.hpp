@@ -1,5 +1,6 @@
 #pragma once
-#include "base-view.hpp"
+#include "ui/views/form-view.hpp"
+#include "ui/views/grid-view.hpp"
 #include "clipboard-actions.hpp"
 #include "common-actions.hpp"
 #include "common.hpp"
@@ -51,16 +52,18 @@ class EditEmojiKeywordsView : public FormView {
   }
 
   void initialize() override {
-    auto emojiService = ServiceRegistry::instance()->emojiService();
-    auto panel = new ActionPanelStaticListView;
-    auto submit = new StaticAction("Edit keywords", BuiltinOmniIconUrl("text"), [this]() { handleSubmit(); });
-    auto metadata = emojiService->mapMetadata(m_emoji);
+    /*
+auto emojiService = ServiceRegistry::instance()->emojiService();
+auto panel = new ActionPanelStaticListView;
+auto submit = new StaticAction("Edit keywords", BuiltinOmniIconUrl("text"), [this]() { handleSubmit(); });
+auto metadata = emojiService->mapMetadata(m_emoji);
 
-    m_keywords->setText(metadata.keywords);
-    submit->setPrimary(true);
-    submit->setShortcut({.key = "return", .modifiers = {"shift"}});
-    panel->addAction(submit);
-    m_actionPannelV2->setView(panel);
+m_keywords->setText(metadata.keywords);
+submit->setPrimary(true);
+submit->setShortcut({.key = "return", .modifiers = {"shift"}});
+panel->addAction(submit);
+m_actionPannelV2->setView(panel);
+  */
   }
 
 public:
@@ -200,6 +203,7 @@ public:
 
   QString generateId() const override { return QString::fromUtf8(info.emoji.data(), info.emoji.size()); }
 
+  /*
   ActionPanelView *actionPanel() const override {
     auto panel = new ActionPanelStaticListView;
     auto paste = new PasteEmojiAction(info.emoji);
@@ -225,6 +229,7 @@ public:
 
     return panel;
   }
+  */
 
   QString navigationTitle() const override { return qStringFromStdView(info.name); }
 

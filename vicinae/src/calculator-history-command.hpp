@@ -1,7 +1,7 @@
 #pragma once
 #include "action-panel/action-panel.hpp"
 #include "actions/calculator/calculator-actions.hpp"
-#include "base-view.hpp"
+#include "ui/views/base-view.hpp"
 #include "clipboard-actions.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"

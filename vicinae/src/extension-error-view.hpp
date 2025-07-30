@@ -1,4 +1,4 @@
-#include "base-view.hpp"
+#include "ui/views/base-view.hpp"
 #include "clipboard-actions.hpp"
 #include "ui/markdown/markdown-renderer.hpp"
 #include <qboxlayout.h>

@@ -1,6 +1,6 @@
 #include "extend/image-model.hpp"
 #include "omni-icon.hpp"
-#include "ui/omni-painter.hpp"
+#include "ui/omni-painter/omni-painter.hpp"
 #include <qjsonobject.h>
 
 ImageModelParser::ImageModelParser() {}

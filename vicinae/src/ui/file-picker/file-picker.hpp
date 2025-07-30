@@ -7,7 +7,7 @@
 #include "ui/icon-button/icon-button.hpp"
 #include "ui/image/omnimg.hpp"
 #include "ui/button/button.hpp"
-#include "ui/omni-list-item-widget.hpp"
+#include "ui/omni-list/omni-list-item-widget.hpp"
 #include "ui/omni-list/omni-list.hpp"
 #include "ui/typography/typography.hpp"
 #include "utils/utils.hpp"
