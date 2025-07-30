@@ -126,7 +126,6 @@ set(SRCS
 	src/action-panel/action-panel.hpp
 
 	include/ui/dialog.hpp
-	include/ui/alert.hpp
 
 	include/omni-command-db.hpp
 
@@ -484,6 +483,9 @@ set(SRCS
 	src/ui/search-bar/search-bar.hpp
 
 	src/ui/vertical-scroll-area/vertical-scroll-area.cpp
+
+	src/ui/alert/alert.hpp
+	src/ui/alert/alert.cpp
 ) 
 
 

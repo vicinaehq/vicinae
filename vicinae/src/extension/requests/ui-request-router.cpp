@@ -1,6 +1,6 @@
 #include "ui-request-router.hpp"
 #include "proto/ui.pb.h"
-#include "ui/alert.hpp"
+#include "ui/alert/alert.hpp"
 #include "ui/toast.hpp"
 #include <unordered_map>
 

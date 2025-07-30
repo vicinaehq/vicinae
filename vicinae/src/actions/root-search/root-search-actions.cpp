@@ -3,7 +3,7 @@
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
 #include "ui/action-pannel/action.hpp"
-#include "ui/alert.hpp"
+#include "ui/alert/alert.hpp"
 #include "ui/toast.hpp"
 #include "navigation-controller.hpp"
 #include "services/toast/toast-service.hpp"
