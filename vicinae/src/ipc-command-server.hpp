@@ -1,7 +1,5 @@
 #pragma once
-#include "proto.hpp"
 #include "proto/daemon.pb.h"
-#include <algorithm>
 #include <cstdint>
 #include <filesystem>
 #include <netinet/in.h>
@@ -21,7 +19,6 @@
 
 struct CommandMessage {
   std::string type;
-  Proto::Variant params;
 };
 
 struct ClientInfo {
@@ -31,8 +28,6 @@ struct ClientInfo {
     uint32_t length;
   } frame;
 };
-
-using CommandResponse = Proto::Variant;
 
 struct CommandError {
   std::string error;
@@ -53,9 +48,6 @@ class IpcCommandServer : public QObject {
   QLocalServer *_server;
   std::vector<ClientInfo> _clients;
 
-  void writeResponse(QLocalSocket *conn, const Proto::Variant &data);
-  void writeError(QLocalSocket *conn, const CommandError &error);
-  void writeSuccess(QLocalSocket *conn, const CommandResponse &res);
   void processFrame(QLocalSocket *conn, QByteArrayView frame);
   void handleRead(QLocalSocket *conn);
   void handleDisconnection(QLocalSocket *conn);

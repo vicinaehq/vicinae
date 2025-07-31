@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <iomanip>
-#include <ranges>
+#include <netinet/in.h>
 #include <iostream>
 #include <iostream>
 #include <memory>
@@ -11,14 +11,13 @@
 #include <stdexcept>
 #include <sys/syscall.h>
 #include <unistd.h>
-#include <vector>
 #include <wayland-client-core.h>
 #include <wayland-client-protocol.h>
 #include <wayland-util.h>
 #include "data-control-client.hpp"
 #include "display.hpp"
-#include "proto.hpp"
 #include "wayland-wlr-data-control-client-protocol.h"
+#include "proto/wlr-clipboard.pb.h"
 
 constexpr const char *CONCEALED_MIME = "omnicast/concealed";
 
@@ -51,28 +50,29 @@ class Clipman : public WaylandDisplay,
         std::cout << std::left << std::setw(30) << mime << path << std::endl;
       }
       std::cout << "********** " << "END SELECTION" << "**********" << std::endl;
-    } else {
-      Proto::Array args{"selection"};
-      Proto::Marshaler marshaler;
 
-      auto transformOffer = [&](const std::string &mime) -> Proto::Dict {
-        Proto::Dict offerData;
-
-        offerData["file_path"] = offer.receive(*this, mime).string();
-        offerData["mime_type"] = mime;
-
-        return offerData;
-      };
-
-      auto offers = offer.mimes() |
-                    std::views::filter([](const auto &mime) { return mime != CONCEALED_MIME; }) |
-                    std::views::transform(transformOffer) | std::ranges::to<Proto::Array>();
-
-      args.push_back(offers);
-      auto message = marshaler.marshalSized(args);
-
-      write(STDOUT_FILENO, message.data(), message.size());
+      return;
     }
+
+    proto::ext::wlrclip::Selection selection;
+
+    for (const auto &mime : offer.mimes()) {
+      if (mime == CONCEALED_MIME) continue;
+
+      auto dataOffer = selection.add_offers();
+
+      dataOffer->set_file_path(offer.receive(*this, mime));
+      dataOffer->set_mime_type(mime);
+    }
+
+    std::string data;
+
+    selection.SerializeToString(&data);
+
+    uint32_t size = htonl(data.size());
+
+    write(STDOUT_FILENO, &size, sizeof(size));
+    write(STDOUT_FILENO, data.data(), data.size());
   }
 
 public:

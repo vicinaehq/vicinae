@@ -2,21 +2,6 @@
 #include "proto/daemon.pb.h"
 #include <qlogging.h>
 
-void IpcCommandServer::writeResponse(QLocalSocket *conn, const Proto::Variant &data) {
-  Proto::Marshaler marshaler;
-  std::vector<uint8_t> frame(marshaler.marshalSized(data));
-
-  conn->write(reinterpret_cast<const char *>(frame.data()), frame.size());
-}
-
-void IpcCommandServer::writeError(QLocalSocket *conn, const CommandError &error) {
-  writeResponse(conn, Proto::Array{Proto::Int(CommandErrorStatus), error.error});
-}
-
-void IpcCommandServer::writeSuccess(QLocalSocket *conn, const CommandResponse &res) {
-  writeResponse(conn, Proto::Array{Proto::Int(CommandOkStatus), res});
-}
-
 void IpcCommandServer::processFrame(QLocalSocket *conn, QByteArrayView frame) {
 
   proto::ext::daemon::Request req;

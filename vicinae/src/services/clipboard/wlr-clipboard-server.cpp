@@ -1,7 +1,9 @@
 #include "services/clipboard/wlr-clipboard-server.hpp"
+#include "build/wlr-clip/proto/wlr-clipboard.pb.h"
 #include "services/clipboard/clipboard-server.hpp"
-#include "proto.hpp"
 #include <algorithm>
+#include <netinet/in.h>
+#include <qlogging.h>
 #include <qprocess.h>
 #include <qdebug.h>
 
@@ -23,25 +25,18 @@ bool WlrClipboardServer::isActivatable() const {
   });
 }
 
-void WlrClipboardServer::handleMessage(const std::string &message, const Proto::Variant &data) {
-  if (message == "selection") {
-    Proto::Array offers = data.asArray();
-    ClipboardSelection cs;
+void WlrClipboardServer::handleMessage(const proto::ext::wlrclip::Selection &sel) {
+  ClipboardSelection cs;
 
-    cs.offers.reserve(offers.size());
+  cs.offers.reserve(sel.offers().size());
 
-    for (const auto &offer : offers) {
-      auto dict = offer.asDict();
-      auto filePath = dict["file_path"].asString();
-      auto mimeType = dict["mime_type"].asString();
-
-      cs.offers.push_back({mimeType, filePath});
-
-      qDebug() << "WlrClipboardManager got" << mimeType;
-    }
-
-    emit selection(cs);
+  for (const auto &offer : sel.offers()) {
+    cs.offers.push_back({offer.mime_type().c_str(), offer.file_path().c_str()});
   }
+
+  qDebug() << "selection emitted for" << sel.offers().size();
+
+  emit selection(cs);
 }
 
 void WlrClipboardServer::handleExit(int code, QProcess::ExitStatus status) {}
@@ -68,31 +63,21 @@ void WlrClipboardServer::handleRead() {
 
   if (_messageLength == 0 && _message.size() > sizeof(uint32_t)) {
     _messageLength = ntohl(*reinterpret_cast<uint32_t *>(_message.data()));
+    qDebug() << "message of length" << _messageLength;
     _message.erase(_message.begin(), _message.begin() + sizeof(uint32_t));
   }
 
   if (_message.size() >= _messageLength) {
-    std::vector<uint8_t> data(_message.begin(), _message.begin() + _messageLength);
-    auto result = _marshaler.unmarshal<Proto::Array>(data);
+    std::string data(_message.begin(), _message.begin() + _messageLength);
+    proto::ext::wlrclip::Selection selection;
+
+    if (!selection.ParseFromString(data)) {
+      qCritical() << "Failed to parse selection";
+    } else {
+      handleMessage(selection);
+    }
 
     _message.erase(_message.begin(), _message.begin() + _messageLength);
-
-    if (auto err = std::get_if<Proto::Marshaler::Error>(&result)) {
-      qDebug() << "Failed to unmarshal message of size" << _messageLength << err->message;
-      return;
-    }
-
-    auto arr = std::get<Proto::Array>(result);
-
-    if (arr.size() != 2) {
-      qDebug() << "Malformed input";
-      return;
-    }
-
-    auto verb = arr[0].asString();
-    auto content = arr[1];
-
-    handleMessage(verb, content);
     _messageLength = 0;
   }
 }

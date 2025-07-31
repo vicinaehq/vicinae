@@ -50,7 +50,6 @@
 #include "services/local-storage/local-storage-service.hpp"
 #include "vicinae.hpp"
 #include "process-manager-service.hpp"
-#include "proto.hpp"
 #include "services/oauth/oauth-service.hpp"
 #include "services/raycast/raycast-store.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
@@ -340,8 +339,6 @@ int main(int argc, char **argv) {
 
   if (qapp.arguments().size() == 2 && qapp.arguments().at(1) == "server") { return startDaemon(); }
 
-  QLocalSocket socket;
-  Proto::Marshaler marshaler;
   DaemonIpcClient daemonClient;
 
   daemonClient.connect();
@@ -351,10 +348,6 @@ int main(int argc, char **argv) {
     daemonClient.toggle();
     return 0;
   }
-
-  proto::ext::daemon::Request daemonReq;
-  auto urlReq = new proto::ext::daemon::UrlRequest;
-  std::string data;
 
   QUrl url(argv[1]);
 

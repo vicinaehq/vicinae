@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package proto.ext.wlrclip;
+
+message Offer {
+  string file_path = 1;
+  string mime_type = 2;
+};
+
+message Selection {
+  repeated Offer offers = 1;
+};

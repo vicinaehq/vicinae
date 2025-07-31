@@ -15,7 +15,7 @@ protocol, required for proper window positioning on most wlroots-based
 compositors." ON)
 
 
-list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus cmark-gfm proto qalculate protobuf::libprotobuf minizip)
+list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus cmark-gfm qalculate protobuf::libprotobuf minizip)
 
 
 if (UNIX AND NOT APPLE)
@@ -32,7 +32,6 @@ include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_SOURCE_DIR}/src
 	${CMAKE_CURRENT_SOURCE_DIR}/src/lib
-	${CMAKE_CURRENT_SOURCE_DIR}/../proto
 	${CMAKE_CURRENT_SOURCE_DIR}/../qsqlbuilder/sqlbuilder
 	${CMAKE_CURRENT_SOURCE_DIR}/..
 	${Protobuf_INCLUDE_DIRS}
@@ -514,6 +513,5 @@ protobuf_generate(
 	IMPORT_DIRS ${PROTO_SRC_DIR} ${COMMON_PROTO_DIR}
 	PROTOC_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/proto
 )
-
 
 install(TARGETS ${TARGET})
