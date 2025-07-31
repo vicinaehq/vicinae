@@ -20,7 +20,7 @@ else()
 	add_compile_options(-march=native -g3)
 endif()
 
-add_subdirectory(omnictl)
+#add_subdirectory(omnictl)
 add_subdirectory(vicinae)
 add_subdirectory(libtrie)
 
