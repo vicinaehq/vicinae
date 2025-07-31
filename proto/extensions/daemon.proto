@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package proto.ext.daemon;
+
+message PingRequest {};
+message PingResponse {};
+message ToggleResponse {};
+message UrlResponse {};
+
+message ToggleRequest {};
+
+message UrlRequest {
+  string url = 1;
+};
+
+message Request {
+  oneof payload {
+    PingRequest ping = 1;
+    ToggleRequest toggle = 2;
+    UrlRequest url = 3;
+  };
+};
+
+message Response {
+  oneof payload {
+    PingResponse ping = 1;
+    ToggleResponse toggle = 2;
+    UrlResponse url = 3;
+  };
+};

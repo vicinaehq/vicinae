@@ -58,6 +58,8 @@ set(SRCS
 
 	include/ui/image/omnimg.hpp
 
+	src/daemon/ipc-client.cpp
+
 	include/favicon/favicon-service.hpp
 	src/favicon/favicon-service.cpp
 	include/favicon/favicon-request.hpp

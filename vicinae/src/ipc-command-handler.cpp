@@ -1,10 +1,39 @@
 #include "ipc-command-handler.hpp"
 #include "common.hpp"
-#include "navigation-controller.hpp"
-#include "service-registry.hpp"
+#include "proto/daemon.pb.h"
 #include <qlogging.h>
-#include "omni-command-db.hpp"
+#include "navigation-controller.hpp"
 
+proto::ext::daemon::Response *IpcCommandHandler::handleCommand(const proto::ext::daemon::Request &request) {
+  auto res = new proto::ext::daemon::Response;
+  auto &nav = m_ctx.navigation;
+
+  qDebug() << "Got ipc command";
+
+  switch (request.payload_case()) {
+  case proto::ext::daemon::Request::kPing: {
+    qDebug() << "Got answering ping";
+    res->set_allocated_ping(new proto::ext::daemon::PingResponse());
+    break;
+  }
+  case proto::ext::daemon::Request::kToggle: {
+    nav->toggleWindow();
+    res->set_allocated_toggle(new proto::ext::daemon::ToggleResponse());
+    break;
+  }
+  case proto::ext::daemon::Request::kUrl: {
+    qDebug() << "GOT URL" << request.url().url();
+    res->set_allocated_url(new proto::ext::daemon::UrlResponse());
+    break;
+  }
+  default:
+    break;
+  }
+
+  return res;
+}
+
+/*
 std::variant<CommandResponse, CommandError> IpcCommandHandler::handleCommand(const CommandMessage &message) {
   qDebug() << "received message type" << message.type;
   auto commandDb = m_ctx.services->commandDb();
@@ -89,5 +118,6 @@ std::variant<CommandResponse, CommandError> IpcCommandHandler::handleCommand(con
 
   return CommandError{"Unknowm command"};
 }
+*/
 
 IpcCommandHandler::IpcCommandHandler(ApplicationContext &ctx) : m_ctx(ctx) {}

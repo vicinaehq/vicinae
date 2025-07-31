@@ -1,8 +1,10 @@
 #include "command-controller.hpp"
+#include "daemon/ipc-client.hpp"
 #include "ui/launcher-window/launcher-window.hpp"
 #include <QStyleHints>
 #include "data-uri/data-uri.hpp"
 #include "common.hpp"
+#include "proto/daemon.pb.h"
 #include "ipc-command-server.hpp"
 #include "ipc-command-handler.hpp"
 #include "overlay-controller/overlay-controller.hpp"
@@ -336,70 +338,28 @@ int main(int argc, char **argv) {
 
   qInstallMessageHandler(coloredMessageHandler);
 
-  /*
-  QString text(
-      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/"
-      "PchI7wAAAABJRU5ErkJggg==");
-          */
-
-  QString text("data:image/png;base64,aGVsbG8gd29yZA0K");
-
-  DataUri uri(text);
-
-  qDebug() << "DATA URI" << uri.m_mediaType << uri.m_content << uri.decodeContent().toStdString();
-
   if (qapp.arguments().size() == 2 && qapp.arguments().at(1) == "server") { return startDaemon(); }
 
   QLocalSocket socket;
   Proto::Marshaler marshaler;
+  DaemonIpcClient daemonClient;
 
-  socket.connectToServer(Omnicast::commandSocketPath().c_str());
-
-  if (!socket.waitForConnected(1000)) {
-    qDebug() << "Failed to connect to omnicast daemon. Is omnicast running? You can start a new omnicast "
-                "instance by runnning 'omnicast server'";
-    return 1;
-  }
-
-  Proto::Array args{"ping", {}};
-  auto packet = marshaler.marshalSized(args);
-
-  socket.write(reinterpret_cast<const char *>(packet.data()), packet.size());
-  qDebug() << "Ping sent to omnicast daemon";
-
-  if (!socket.waitForBytesWritten(1000)) {
-    qDebug() << "Failed to connect to omnicast daemon. Is omnicast running? You can start a new omnicast "
-                "instance by runnning 'omnicast server'";
-    return 1;
-  }
-
-  if (!socket.waitForReadyRead(1000)) {
-    qDebug() << "Failed to connect to omnicast daemon. Is omnicast running? You can start a new omnicast "
-                "instance by runnning 'omnicast server'";
-    return 1;
-  }
-
-  socket.readAll();
+  daemonClient.connect();
+  daemonClient.ping();
 
   if (argc == 1) {
-    Proto::Array args{"toggle", {}};
-    auto packet = marshaler.marshalSized(args);
-
-    qDebug() << "Opening running instance";
-    socket.write(reinterpret_cast<const char *>(packet.data()), packet.size());
-    socket.waitForBytesWritten();
+    daemonClient.toggle();
     return 0;
   }
+
+  proto::ext::daemon::Request daemonReq;
+  auto urlReq = new proto::ext::daemon::UrlRequest;
+  std::string data;
 
   QUrl url(argv[1]);
 
   if (url.isValid()) {
-    Proto::Array args{"url-scheme-handler", argv[1]};
-    auto packet = marshaler.marshalSized(args);
-
-    qDebug() << "Handling URL" << url;
-    socket.write(reinterpret_cast<const char *>(packet.data()), packet.size());
-    socket.waitForBytesWritten();
+    daemonClient.passUrl(url);
     return 0;
   }
 }

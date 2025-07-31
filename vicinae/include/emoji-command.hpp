@@ -233,7 +233,9 @@ public:
 
   QString navigationTitle() const override { return qStringFromStdView(info.name); }
 
-  EmojiGridItem(const EmojiData &info, bool pinned = false) : info(info), m_pinned(pinned) {}
+  EmojiGridItem(const EmojiData &info, bool pinned = false) : info(info), m_pinned(pinned) {
+    setInset(GridItemContentWidget::Inset::Medium);
+  }
 };
 
 class PinnedEmojiGridItem : public EmojiGridItem {

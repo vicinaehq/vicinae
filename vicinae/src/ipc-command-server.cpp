@@ -1,4 +1,6 @@
 #include "ipc-command-server.hpp"
+#include "proto/daemon.pb.h"
+#include <qlogging.h>
 
 void IpcCommandServer::writeResponse(QLocalSocket *conn, const Proto::Variant &data) {
   Proto::Marshaler marshaler;
@@ -16,36 +18,23 @@ void IpcCommandServer::writeSuccess(QLocalSocket *conn, const CommandResponse &r
 }
 
 void IpcCommandServer::processFrame(QLocalSocket *conn, QByteArrayView frame) {
-  Proto::Marshaler marshaler;
-  std::vector<uint8_t> packet(frame.begin(), frame.end());
-  auto result = marshaler.unmarshal<Proto::Array>(packet);
 
-  if (auto err = std::get_if<Proto::Marshaler::Error>(&result)) {
-    qDebug() << "Failed message unmarshaling, message discarded" << err->message;
-    return;
-  }
+  proto::ext::daemon::Request req;
 
-  auto message = std::get<Proto::Array>(result);
+  qDebug() << "processing frame";
 
-  if (message.size() != 2) {
-    qDebug() << "Invalid message. Expected 2 arguments got" << message.size();
-    return;
-  }
-
-  CommandMessage cmd{.type = message[0].asString(), .params = message[1]};
+  req.ParseFromString(frame.toByteArray().toStdString());
 
   if (!_handler) {
-    writeError(conn, {.error = "No handler configured on the server side"});
+    qCritical() << "no handler was configured";
     return;
   }
 
-  auto handlerResult = _handler->handleCommand(cmd);
+  auto handlerResult = _handler->handleCommand(req);
+  std::string packet;
 
-  if (auto error = std::get_if<CommandError>(&handlerResult)) {
-    writeError(conn, *error);
-  } else if (auto res = std::get_if<CommandResponse>(&handlerResult)) {
-    writeSuccess(conn, *res);
-  }
+  handlerResult->SerializeToString(&packet);
+  conn->write(packet.data(), packet.size());
 }
 
 void IpcCommandServer::handleRead(QLocalSocket *conn) {
@@ -65,6 +54,8 @@ void IpcCommandServer::handleRead(QLocalSocket *conn) {
       uint32_t length = ntohl(*reinterpret_cast<uint32_t *>(it->frame.data.data()));
       bool isComplete = it->frame.data.size() - sizeof(uint32_t) >= length;
 
+      qDebug() << "read data, expected size" << length << "got" << it->frame.data.size();
+
       if (!isComplete) break;
 
       auto packet = QByteArrayView(it->frame.data).sliced(sizeof(uint32_t), length);
@@ -72,14 +63,17 @@ void IpcCommandServer::handleRead(QLocalSocket *conn) {
       processFrame(conn, packet);
 
       it->frame.data = it->frame.data.sliced(sizeof(uint32_t) + length);
+
+      qDebug() << "data after processing" << it->frame.data.size();
     }
   }
 }
 
 void IpcCommandServer::handleDisconnection(QLocalSocket *conn) {
-  auto it = std::remove_if(_clients.begin(), _clients.end(),
-                           [conn](const ClientInfo &info) { return info.conn == conn; });
+  auto it = std::find_if(_clients.begin(), _clients.end(),
+                         [conn](const ClientInfo &info) { return info.conn == conn; });
 
+  _clients.erase(it);
   conn->deleteLater();
 }
 

@@ -1,5 +1,6 @@
 #pragma once
 #include "proto.hpp"
+#include "proto/daemon.pb.h"
 #include <algorithm>
 #include <cstdint>
 #include <filesystem>
@@ -44,7 +45,7 @@ enum CommandResponseStatus {
 
 class ICommandHandler {
 public:
-  virtual std::variant<CommandResponse, CommandError> handleCommand(const CommandMessage &message) = 0;
+  virtual proto::ext::daemon::Response *handleCommand(const proto::ext::daemon::Request &request) = 0;
 };
 
 class IpcCommandServer : public QObject {
