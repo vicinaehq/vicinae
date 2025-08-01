@@ -26,12 +26,16 @@ class ExtensionCommand : public AbstractCmd {
   PreferenceList _extensionPreferences;
   std::filesystem::path _assetPath;
   ExtensionManifest::Command m_command;
+  QString m_author;
 
 public:
   ExtensionCommand(const ExtensionManifest::Command &command) : m_command(command) {}
 
+  QString author() const override { return m_author; }
+
   QString extensionId() const override;
   void setExtensionId(const QString &text);
+  void setAuthor(const QString &author) { m_author = author; }
 
   const QString &extensionIcon() const;
   void setExtensionIcon(const QString &icon);

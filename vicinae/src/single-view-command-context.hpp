@@ -1,81 +1,53 @@
 #pragma once
 #include "command-database.hpp"
-#include "preference.hpp"
+#include "command.hpp"
+#include "common.hpp"
+#include "ui/views/base-view.hpp"
+#include "navigation-controller.hpp"
 #include <concepts>
 
-template <typename T> class SingleViewCommand : public CommandContext {
+template <typename T>
+concept DerivedFromView = std::derived_from<T, BaseView>;
+
+template <DerivedFromView T> class SingleViewCommand : public CommandContext {
 public:
   SingleViewCommand(const std::shared_ptr<AbstractCmd> &command) : CommandContext(command) {}
 
   void load(const LaunchProps &props) override {
-    qDebug() << "loading single view" << command()->name();
     auto &nav = context()->navigation;
 
     nav->pushView(new T());
     nav->setNavigationTitle(command()->name());
     nav->setNavigationIcon(command()->iconUrl());
-
-    /*
-ui->pushView(new T(), {.navigation = NavigationStatus{.title = command()->name(),
-                                                      .iconUrl = command()->iconUrl()}});
-    */
   }
 };
 
-template <typename T>
-concept DerivedFromView = std::derived_from<T, BaseView>;
-
-template <DerivedFromView T> class AbstractViewCommand : public AbstractCmd {
+template <DerivedFromView T> class BuiltinViewCommand : public BuiltinCommand {
 public:
-  CommandMode mode() const override { return CommandMode::CommandModeView; }
-  virtual CommandType type() const override { return CommandType::CommandTypeBuiltin; }
+  CommandMode mode() const override final { return CommandMode::CommandModeView; }
   CommandContext *createContext(const std::shared_ptr<AbstractCmd> &command) const override {
     return new SingleViewCommand<T>(command);
   }
 };
 
-template <typename T> class BuiltinCommandContext : public BuiltinCommand {
-public:
-  CommandMode mode() const override { return CommandMode::CommandModeView; }
-  CommandContext *createContext(const std::shared_ptr<AbstractCmd> &command) const override {
-    return new T(command);
-  }
+class CallbackContext : public CommandContext {
+  std::function<void(ApplicationContext *)> m_cb;
 
-  BuiltinCommandContext(const QString &id, const QString &name,
-                        const std::optional<OmniIconUrl> &url = std::nullopt,
-                        const PreferenceList &preferences = {})
-      : BuiltinCommand(id, name, url) {
-    setPreferences(preferences);
-  }
+public:
+  void load(const LaunchProps &props) override { m_cb(context()); }
+
+  CallbackContext(const std::shared_ptr<AbstractCmd> &command,
+                  const std::function<void(ApplicationContext *ctx)> &cb)
+      : CommandContext(command), m_cb(cb) {}
 };
 
-template <typename T> class BuiltinNoViewCommandContext : public BuiltinCommand {
+class BuiltinCallbackCommand : public BuiltinCommand {
 public:
   CommandMode mode() const override { return CommandMode::CommandModeNoView; }
-  CommandContext *createContext(const std::shared_ptr<AbstractCmd> &command) const override {
-    return new T(command);
-  }
 
-  BuiltinNoViewCommandContext(const QString &id, const QString &name,
-                              const std::optional<OmniIconUrl> &url = std::nullopt,
-                              const PreferenceList &preferences = {})
-      : BuiltinCommand(id, name, url) {
-    setPreferences(preferences);
-  }
-};
-
-template <typename T> class BuiltinViewCommand : public BuiltinCommand {
-public:
-  CommandMode mode() const override { return CommandMode::CommandModeView; }
+  virtual void execute(ApplicationContext *ctx) const {}
 
   CommandContext *createContext(const std::shared_ptr<AbstractCmd> &command) const override {
-    return new SingleViewCommand<T>(command);
-  }
-
-  BuiltinViewCommand(const QString &id, const QString &name,
-                     const std::optional<OmniIconUrl> &url = std::nullopt,
-                     const PreferenceList &preferences = {})
-      : BuiltinCommand(id, name, url) {
-    setPreferences(preferences);
+    return new CallbackContext(command, [this](auto &&ctx) { execute(ctx); });
   }
 };

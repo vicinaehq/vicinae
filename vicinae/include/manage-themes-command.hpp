@@ -4,6 +4,7 @@
 #include "ui/views/base-view.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
+#include "ui/views/list-view.hpp"
 #include "theme.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/color-circle/color_circle.hpp"

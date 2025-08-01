@@ -7,7 +7,7 @@ class ManageFallbackActions : public AbstractAction {
   void execute(AppWindow &app) override {}
 
   void execute(ApplicationContext *ctx) override {
-    auto view = new ManageFallbackCommands();
+    auto view = new ManageFallbackCommandsView();
 
     ctx->navigation->pushView(view);
   }

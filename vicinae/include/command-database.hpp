@@ -22,117 +22,58 @@ class AppWindow;
 class ViewCommandContext;
 
 class BuiltinCommand : public AbstractCmd {
-  QString _id;
-  QString _name;
-  QString m_description;
   std::optional<OmniIconUrl> _url;
-  OmniIconUrl _repositoryIcon;
   QString _repositoryId;
   QString _repositoryName;
-  std::vector<Preference> _preferences;
-  std::vector<Preference> _repositoryPreferences;
-  std::vector<CommandArgument> _arguments;
-  bool m_fallback = false;
 
 public:
-  QString uniqueId() const override { return _repositoryId + "." + _id; }
-  QString name() const override { return _name; }
-  QString description() const override { return m_description; }
-  OmniIconUrl iconUrl() const override { return _url.value_or(_repositoryIcon); }
-  virtual CommandType type() const override { return CommandTypeBuiltin; }
-  QString extensionId() const override { return _repositoryId; }
-  QString commandId() const override { return _id; }
+  QString uniqueId() const override final { return _repositoryId + "." + id(); }
 
-  void setRepositoryIconUrl(const OmniIconUrl &icon) { _repositoryIcon = icon; }
+  virtual QString id() const = 0;
+  QString name() const override = 0;
+  QString description() const override { return ""; }
+  OmniIconUrl iconUrl() const override = 0;
+  virtual CommandType type() const override final { return CommandTypeBuiltin; }
+  QString extensionId() const override { return _repositoryId; }
+  QString commandId() const override { return id(); }
+
+  QString author() const override { return Omnicast::APP_ID; }
+
+  // TODO: remove
+  void setRepositoryIconUrl(const OmniIconUrl &icon) {}
+
   void setRepositoryId(const QString &id) { _repositoryId = id; }
   void setRepositoryName(const QString &name) { _repositoryName = name; }
-  void setRepositoryPreferences(const PreferenceList &prefs) { _repositoryPreferences = prefs; }
-  bool isFallback() const override { return m_fallback; }
-  void setIsFallback(bool value) { m_fallback = value; }
 
-  std::vector<Preference> preferences() const override { return _preferences; }
-  std::vector<CommandArgument> arguments() const override { return _arguments; }
-
+  bool isFallback() const override { return false; }
   void setIconUrl(const OmniIconUrl &url) { _url = url; }
-
-  void setPreferences(const std::vector<Preference> &preferences) { _preferences = preferences; }
-  void setArguments(const std::vector<CommandArgument> &arguments) { _arguments = arguments; }
-
-  void setDescription(const QString &description) { m_description = description; }
 
   QString repositoryName() const override { return _repositoryName; }
   const QString &repositoryId() { return _repositoryId; }
 
   virtual std::vector<QString> keywords() const override { return {}; }
 
-  BuiltinCommand(const QString &id, const QString &name, const std::optional<OmniIconUrl> &url)
-      : _id(id), _name(name), _url(url) {}
+  BuiltinCommand() {}
 };
 
 class BuiltinCommandRepository : public AbstractCommandRepository {
-  QString _id;
-  QString _name;
   std::vector<std::shared_ptr<AbstractCmd>> _commands;
-  OmniIconUrl _icon;
-  std::vector<Preference> _preferences;
 
-  QString id() const override { return _id; }
-  QString name() const override { return _name; }
-  std::vector<std::shared_ptr<AbstractCmd>> commands() const override { return _commands; }
-  OmniIconUrl iconUrl() const override { return _icon; }
-  std::vector<Preference> preferences() const override { return _preferences; }
-  QString author() const override { return Omnicast::APP_ID; }
+  virtual QString id() const override = 0;
+  QString name() const override = 0;
+  std::vector<std::shared_ptr<AbstractCmd>> commands() const override final { return _commands; }
+  QString author() const override final { return Omnicast::APP_ID; }
+
+protected:
+  template <typename T> void registerCommand() {
+    auto cmd = std::make_shared<T>();
+    cmd->setRepositoryId(id());
+    cmd->setRepositoryName(name());
+    _commands.emplace_back(cmd);
+  }
 
 public:
   BuiltinCommandRepository() {}
-  BuiltinCommandRepository(const QString &id, const QString &name,
-                           const std::vector<std::shared_ptr<AbstractCmd>> &commands, const OmniIconUrl &url,
-                           const std::vector<Preference> &preferences)
-      : _id(id), _name(name), _commands(commands), _icon(url), _preferences(preferences) {}
-};
-
-class CommandRepositoryBuilder {
-  QString _id;
-  QString _name;
-  OmniIconUrl _icon;
-  std::vector<std::shared_ptr<AbstractCmd>> _commands;
-  std::vector<Preference> _preferences;
-
-public:
-  CommandRepositoryBuilder(const QString &id) : _id(id) {}
-
-  CommandRepositoryBuilder &withName(const QString &name) {
-    _name = name;
-    return *this;
-  }
-  CommandRepositoryBuilder &withTintedIcon(const QString &name, SemanticColor tint) {
-    _icon = BuiltinOmniIconUrl(name).setBackgroundTint(tint);
-    return *this;
-  }
-  CommandRepositoryBuilder &withIcon(const OmniIconUrl &icon) {
-    _icon = icon;
-    return *this;
-  }
-  CommandRepositoryBuilder &withPreference(const Preference &preference) {
-    _preferences.push_back(preference);
-    return *this;
-  }
-  CommandRepositoryBuilder &withCommand(const std::shared_ptr<AbstractCmd> &cmd) {
-    _commands.push_back(cmd);
-    return *this;
-  }
-  CommandRepositoryBuilder &withCommand(const std::shared_ptr<BuiltinCommand> &cmd) {
-    cmd->setRepositoryIconUrl(_icon);
-    cmd->setRepositoryId(_id);
-    cmd->setRepositoryName(_name);
-    cmd->setRepositoryPreferences(_preferences);
-    _commands.push_back(cmd);
-    return *this;
-  }
-
-  std::shared_ptr<AbstractCommandRepository> makeShared() {
-    return std::make_shared<BuiltinCommandRepository>(_id, _name, _commands, _icon, _preferences);
-  };
 };
 
 class CommandDatabase {
@@ -140,7 +81,8 @@ class CommandDatabase {
 
 public:
   const std::vector<std::shared_ptr<AbstractCommandRepository>> &repositories() const;
-  void registerRepository(const std::shared_ptr<AbstractCommandRepository> &repo);
+
+  template <typename T> void registerRepository() { _repositories.push_back(std::make_shared<T>()); }
 
   const AbstractCmd *findCommand(const QString &id);
   const AbstractCommandRepository *findRepository(const QString &name);

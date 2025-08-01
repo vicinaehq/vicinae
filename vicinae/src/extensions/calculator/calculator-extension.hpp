@@ -1,8 +1,6 @@
 #pragma once
 #include "calculator-history-command.hpp"
-#include "command-builder.hpp"
 #include "command-database.hpp"
-#include "common.hpp"
 #include "omni-icon.hpp"
 #include "preference.hpp"
 
@@ -17,6 +15,14 @@ static const std::vector<Preference::DropdownData::Option> refreshRatesOptions =
     {"Every month", "monthly"},
 };
 
+class CalculatorHistoryCommand : public BuiltinViewCommand<CalculatorHistoryView> {
+  QString id() const override { return "history"; }
+  QString name() const override { return "Calculator history"; }
+  OmniIconUrl iconUrl() const override {
+    return BuiltinOmniIconUrl("plus-minus-divide-multiply").setBackgroundTint(SemanticColor::Red);
+  }
+};
+
 class CalculatorExtension : public BuiltinCommandRepository {
 public:
   QString id() const override { return "calculator"; }
@@ -26,16 +32,7 @@ public:
     return BuiltinOmniIconUrl("plus-minus-divide-multiply").setBackgroundTint(SemanticColor::Red);
   }
 
-  std::vector<std::shared_ptr<AbstractCmd>> commands() const override {
-    auto history = CommandBuilder("history")
-                       .withName("Calculator History")
-                       .withIcon(iconUrl())
-                       .toSingleView<CalculatorHistoryView>();
-
-    history->setRepositoryId(id());
-
-    return {history};
-  }
+  CalculatorExtension() { registerCommand<CalculatorHistoryCommand>(); }
 
   std::vector<Preference> preferences() const override {
     auto backendPref = Preference::makeDropdown("backend", backendOptions);

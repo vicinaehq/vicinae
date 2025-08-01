@@ -64,6 +64,8 @@ SettingsWindow::SettingsWindow(ApplicationContext *ctx) : m_ctx(ctx) {
   setMinimumSize(windowSize);
   setMaximumSize(windowSize);
 
+  setWindowTitle("Vicinae Settings");
+
   m_categories.reserve(4);
   m_categories.emplace_back(std::make_unique<GeneralSettingsCategory>());
   m_categories.emplace_back(std::make_unique<ExtensionSettingsCategory>());

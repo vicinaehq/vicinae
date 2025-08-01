@@ -158,7 +158,7 @@ public:
   RootFallbackListItem(const std::shared_ptr<RootItem> &item) : FallbackListItem(item) {}
 };
 
-class ManageFallbackCommands : public ListView {
+class ManageFallbackCommandsView : public ListView {
   void renderList(const QString &text, OmniList::SelectionPolicy selectionPolicy = OmniList::SelectFirst) {
     qDebug() << "render list";
     QString query = text.trimmed();
@@ -214,7 +214,7 @@ class ManageFallbackCommands : public ListView {
   }
 
 public:
-  ManageFallbackCommands() {
+  ManageFallbackCommandsView() {
     setSearchPlaceholderText("Manage fallback commands...");
     setNavigationTitle("Manage Fallback Commands");
     setNavigationIcon(BuiltinOmniIconUrl("arrow-counter-clockwise").setBackgroundTint(SemanticColor::Red));

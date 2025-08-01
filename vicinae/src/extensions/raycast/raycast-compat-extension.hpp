@@ -11,9 +11,6 @@ public:
     return BuiltinOmniIconUrl("raycast").setBackgroundTint(SemanticColor::Red);
   }
   QString description() const override { return "Raycast compatiblity features"; }
-  std::vector<std::shared_ptr<AbstractCmd>> commands() const override {
-    auto store = std::make_shared<RaycastStoreCommand>();
 
-    return {store};
-  }
+  RaycastCompatExtension() { registerCommand<RaycastStoreCommand>(); }
 };

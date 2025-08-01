@@ -62,7 +62,7 @@ public:
       : WindowItem(item), _app(app) {}
 };
 
-class SwitchWindowsCommand : public ListView {
+class SwitchWindowsView : public ListView {
   AbstractWindowManager::WindowList windows;
   std::chrono::time_point<std::chrono::high_resolution_clock> m_lastWindowFetch =
       std::chrono::high_resolution_clock::now();
@@ -98,5 +98,5 @@ public:
     m_list->endResetModel(OmniList::SelectFirst);
   }
 
-  SwitchWindowsCommand() { setSearchPlaceholderText("Search open window..."); }
+  SwitchWindowsView() { setSearchPlaceholderText("Search open window..."); }
 };

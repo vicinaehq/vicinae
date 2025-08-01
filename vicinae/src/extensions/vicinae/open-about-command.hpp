@@ -1,11 +1,16 @@
 #pragma once
-#include "command.hpp"
 #include "common.hpp"
+#include "omni-icon.hpp"
 #include "settings-controller/settings-controller.hpp"
+#include "single-view-command-context.hpp"
+#include "theme.hpp"
 
-class OpenAboutCommand : public CommandContext {
-  void load(const LaunchProps &props) override { context()->settings->openTab("About"); }
+class OpenAboutCommand : public BuiltinCallbackCommand {
+  QString id() const override { return "about"; }
+  QString name() const override { return "About"; }
+  OmniIconUrl iconUrl() const override {
+    return BuiltinOmniIconUrl("info-01").setBackgroundTint(SemanticColor::Red);
+  }
 
-public:
-  OpenAboutCommand(const std::shared_ptr<AbstractCmd> &cmd) : CommandContext(cmd) {}
+  void execute(ApplicationContext *ctx) const override { ctx->settings->openTab("About"); }
 };

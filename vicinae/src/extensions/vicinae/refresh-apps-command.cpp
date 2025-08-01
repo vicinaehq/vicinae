@@ -1,16 +1,13 @@
 #include "extensions/vicinae/refresh-apps-command.hpp"
-#include "command.hpp"
+#include "common.hpp"
 #include "service-registry.hpp"
-#include "services/toast/toast-service.hpp"
 #include "services/app-service/app-service.hpp"
+#include "services/toast/toast-service.hpp"
 #include "ui/toast/toast.hpp"
 
-RefreshAppsCommandContext::RefreshAppsCommandContext(const std::shared_ptr<AbstractCmd> &command)
-    : CommandContext(command) {}
-
-void RefreshAppsCommandContext::load(const LaunchProps &props) {
-  auto appDb = ServiceRegistry::instance()->appDb();
-  auto toast = context()->services->toastService();
+void RefreshAppsCommand::execute(ApplicationContext *ctx) const {
+  auto appDb = ctx->services->appDb();
+  auto toast = ctx->services->toastService();
 
   if (appDb->scanSync()) {
     toast->setToast("Apps successfully refreshed");

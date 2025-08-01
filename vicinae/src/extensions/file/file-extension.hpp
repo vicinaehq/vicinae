@@ -5,8 +5,8 @@
 #include "search-files-view.hpp"
 #include "single-view-command-context.hpp"
 
-class SearchFilesCommand : public AbstractViewCommand<SearchFilesView> {
-  QString uniqueId() const override { return "file.search"; }
+class SearchFilesCommand : public BuiltinViewCommand<SearchFilesView> {
+  QString id() const override { return "search"; }
   QString name() const override { return "Search Files"; }
   QString description() const override { return "Search files on your system"; }
   QString extensionId() const override { return "file"; }
@@ -25,9 +25,7 @@ class FileExtension : public BuiltinCommandRepository {
   OmniIconUrl iconUrl() const override {
     return BuiltinOmniIconUrl("folder").setBackgroundTint(SemanticColor::Red);
   }
-  std::vector<std::shared_ptr<AbstractCmd>> commands() const override {
-    auto search = std::make_shared<SearchFilesCommand>();
 
-    return {search};
-  }
+public:
+  FileExtension() { registerCommand<SearchFilesCommand>(); }
 };

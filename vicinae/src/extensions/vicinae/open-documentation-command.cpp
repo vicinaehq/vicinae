@@ -8,16 +8,13 @@
 
 static const char *DOC_URL = "https://docs.vicinae.com";
 
-OpenDocumentationCommand::OpenDocumentationCommand(const std::shared_ptr<AbstractCmd> &cmd)
-    : CommandContext(cmd) {}
-
-void OpenDocumentationCommand::load(const LaunchProps &props) {
-  auto appDb = context()->services->appDb();
+void OpenDocumentationCommand::execute(ApplicationContext *ctx) const {
+  auto appDb = ctx->services->appDb();
 
   if (auto browser = appDb->webBrowser()) {
     appDb->launch(*browser, {DOC_URL});
     return;
   }
 
-  context()->services->toastService()->setToast("No browser to open the link", ToastPriority::Danger);
+  ctx->services->toastService()->setToast("No browser to open the link", ToastPriority::Danger);
 }

@@ -1,8 +1,19 @@
 #pragma once
-#include "command.hpp"
+#include "omni-icon.hpp"
+#include "single-view-command-context.hpp"
+#include "theme.hpp"
 
-class RefreshAppsCommandContext : public CommandContext {
+class RefreshAppsCommand : public BuiltinCallbackCommand {
+  QString id() const override { return "refresh-apps"; }
+  QString name() const override { return "Refresh Apps"; }
+  QString description() const override {
+    return R"("Configure what commands are to be presented as fallback options when nothing matches the
+search in the root search.)";
+  }
+  OmniIconUrl iconUrl() const override {
+    return BuiltinOmniIconUrl("redo").setBackgroundTint(SemanticColor::Red);
+  }
+
 public:
-  void load(const LaunchProps &props) override;
-  RefreshAppsCommandContext(const std::shared_ptr<AbstractCmd> &command);
+  void execute(ApplicationContext *ctx) const override;
 };

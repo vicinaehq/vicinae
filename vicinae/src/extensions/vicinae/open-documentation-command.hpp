@@ -1,10 +1,14 @@
 #pragma once
-#include "command.hpp"
-#include "common.hpp"
+#include "omni-icon.hpp"
+#include "single-view-command-context.hpp"
+#include "theme.hpp"
 
-class OpenDocumentationCommand : public CommandContext {
-  void load(const LaunchProps &props) override;
+class OpenDocumentationCommand : public BuiltinCallbackCommand {
+  QString id() const override { return "documentation"; }
+  QString name() const override { return "Open documentation"; }
+  OmniIconUrl iconUrl() const override {
+    return BuiltinOmniIconUrl("book").setBackgroundTint(SemanticColor::Red);
+  }
 
-public:
-  OpenDocumentationCommand(const std::shared_ptr<AbstractCmd> &cmd);
+  void execute(ApplicationContext *ctx) const override;
 };

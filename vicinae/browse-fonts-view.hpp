@@ -1,5 +1,5 @@
 #pragma once
-#include "ui/views/base-view.hpp"
+#include "ui/views/list-view.hpp"
 #include "clipboard-actions.hpp"
 #include "libtrie/trie.hpp"
 #include "services/config/config-service.hpp"

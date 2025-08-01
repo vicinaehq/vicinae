@@ -9,13 +9,13 @@
 #include "ui/action-pannel/action.hpp"
 #include "ui/calculator-list-item-widget.hpp"
 #include "ui/omni-list/omni-list.hpp"
-#include <memory>
 #include <qnamespace.h>
 #include <qobject.h>
 #include <qsharedpointer.h>
 #include <qthreadpool.h>
 #include <qtimer.h>
 #include <qtmetamacros.h>
+#include "ui/views/list-view.hpp"
 
 class CalculatorListItem : public OmniList::AbstractVirtualItem, public ListView::Actionnable {
 protected:

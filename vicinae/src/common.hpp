@@ -146,6 +146,7 @@ public:
   virtual OmniIconUrl iconUrl() const = 0;
   virtual CommandType type() const = 0;
   virtual CommandMode mode() const = 0;
+  virtual QString author() const = 0;
   virtual std::vector<Preference> preferences() const { return {}; }
   virtual std::vector<CommandArgument> arguments() const { return {}; }
   virtual std::vector<QString> keywords() const { return {}; }
