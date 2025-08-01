@@ -1,4 +1,5 @@
 #pragma once
+#include "common.hpp"
 #include "ui/views/list-view.hpp"
 #include "clipboard-actions.hpp"
 #include "libtrie/trie.hpp"
@@ -110,10 +111,9 @@ class FontListItem : public AbstractDefaultListItem, public ListView::Actionnabl
   class SetAppFont : public AbstractAction {
     QFont m_font;
 
-    void execute() override {
-      auto configService = ServiceRegistry::instance()->config();
-
-      configService->updateConfig([&](ConfigService::Value &value) { value.font.normal = m_font.family(); });
+    void execute(ApplicationContext *ctx) override {
+      ctx->services->config()->updateConfig(
+          [&](ConfigService::Value &value) { value.font.normal = m_font.family(); });
     }
 
   public:
@@ -127,11 +127,18 @@ public:
   QString generateId() const override { return m_family; }
   ItemData data() const override { return {.iconUrl = BuiltinOmniIconUrl("text"), .name = m_family}; }
 
-  QList<AbstractAction *> generateActions() const override {
+  std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
+    auto panel = std::make_unique<ActionPanelState>();
+    auto section = panel->createSection();
+
     auto copyFamily = new CopyToClipboardAction(Clipboard::Text(m_family), "Copy font family");
     auto setFont = new SetAppFont(m_family);
 
-    return {copyFamily, setFont};
+    copyFamily->setPrimary(true);
+    section->addAction(copyFamily);
+    section->addAction(setFont);
+
+    return panel;
   }
 
   QWidget *generateDetail() const override {

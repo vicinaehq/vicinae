@@ -65,31 +65,33 @@ class CalculatorHistoryListItem : public AbstractDefaultListItem, public ListVie
 public:
   QString generateId() const override { return QString::number(m_record.id); };
 
-  ActionPanelView *actionPanel() const override {
-    auto panel = new ActionPanelStaticListView;
+  std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
+    auto panel = std::make_unique<ActionPanelState>();
     auto copyAnswer = new CopyToClipboardAction(Clipboard::Text(m_record.answer), "Copy answer");
     auto copyQuestion = new CopyToClipboardAction(Clipboard::Text(m_record.question), "Copy question");
     auto copyQuestionAndAnswer =
         new CopyToClipboardAction(Clipboard::Text(m_record.expression()), "Copy question and answer");
     auto remove = new RemoveCalculatorHistoryRecordAction(m_record.id);
     auto removeAll = new RemoveAllCalculatorHistoryRecordsAction();
-
-    panel->addSection();
+    auto pinSection = panel->createSection();
 
     if (m_record.pinnedAt) {
-      panel->addAction(new UnpinCalculatorHistoryRecordAction(m_record.id));
+      pinSection->addAction(new UnpinCalculatorHistoryRecordAction(m_record.id));
     } else {
-      panel->addAction(new PinCalculatorHistoryRecordAction(m_record.id));
+      pinSection->addAction(new PinCalculatorHistoryRecordAction(m_record.id));
     }
 
-    panel->addSection();
+    auto copySection = panel->createSection();
+
     copyAnswer->setPrimary(true);
-    panel->addAction(copyAnswer);
-    panel->addAction(copyQuestion);
-    panel->addAction(copyQuestionAndAnswer);
-    panel->addSection();
-    panel->addAction(remove);
-    panel->addAction(removeAll);
+    copySection->addAction(copyAnswer);
+    copySection->addAction(copyQuestion);
+    copySection->addAction(copyQuestionAndAnswer);
+
+    auto dangerSection = panel->createSection();
+
+    dangerSection->addAction(remove);
+    dangerSection->addAction(removeAll);
 
     return panel;
   }
