@@ -225,16 +225,21 @@ class RootFileListItem : public AbstractDefaultListItem, public ListView::Action
     return BuiltinOmniIconUrl("question-mark-circle");
   }
 
-  ActionPanelView *actionPanel() const override {
-    auto appDb = ServiceRegistry::instance()->appDb();
-    auto panel = new ActionPanelStaticListView;
+  std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
+    auto panel = std::make_unique<ActionPanelState>();
+    auto appDb = ctx->services->appDb();
+    auto section = panel->createSection();
+    auto openInFolder = new OpenAppAction(appDb->fileBrowser(), "Open in folder", {m_path.c_str()});
 
     if (auto app = appDb->findBestOpener(m_path.c_str())) {
-      auto title = QString("Open with %1").arg(app->name());
-      auto open = new OpenAppAction(app, title, {m_path.c_str()});
+      auto open = new OpenAppAction(app, "Open", {m_path.c_str()});
       open->setPrimary(true);
-      panel->addAction(open);
+      section->addAction(open);
+    } else {
+      openInFolder->setPrimary(true);
     }
+
+    section->addAction(openInFolder);
 
     return panel;
   }
@@ -254,9 +259,16 @@ class RootSearchView : public ListView {
   QTimer *m_fileSearchDebounce = new QTimer(this);
   std::optional<AbstractCalculatorBackend::CalculatorResult> m_currentCalculatorEntry;
   std::vector<IndexerFileResult> m_fileResults;
+  QFutureWatcher<std::vector<IndexerFileResult>> m_pendingFileSearchResults;
+  QString m_lastFileSearchQuery;
   QString m_searchText;
 
-  void handleFileResults(const std::vector<IndexerFileResult> &results) {
+  void handleFileResults() {
+    if (!m_pendingFileSearchResults.isFinished()) return;
+
+    auto results = m_pendingFileSearchResults.result();
+
+    if (m_lastFileSearchQuery != m_searchText) return;
     m_fileResults = results;
     render(m_searchText);
   }
@@ -265,13 +277,10 @@ class RootSearchView : public ListView {
     auto filesService = ServiceRegistry::instance()->fileService();
     if (m_searchText.size() >= 3) {
       QString currentQuery = m_searchText;
-      auto reply =
-          filesService->indexer()->queryAsync(currentQuery.toStdString(), {.pagination = {.limit = 8}});
 
-      connect(reply, &IndexerAsyncQuery::finished, this, [this, reply, currentQuery](auto &&results) {
-        reply->deleteLater();
-        if (m_searchText == currentQuery) { handleFileResults(results); }
-      });
+      m_pendingFileSearchResults.setFuture(
+          filesService->indexer()->queryAsync(currentQuery.toStdString(), {.pagination = {.limit = 8}}));
+      m_lastFileSearchQuery = currentQuery;
     }
   }
 
@@ -462,20 +471,22 @@ class RootSearchView : public ListView {
   }
 
   void initialize() override {
+    auto manager = context()->services->rootItemManager();
+
     m_calcDebounce->setInterval(100);
     m_calcDebounce->setSingleShot(true);
-
     m_fileSearchDebounce->setInterval(100);
     m_fileSearchDebounce->setSingleShot(true);
 
     setSearchPlaceholderText("Search for apps or commands...");
     textChanged(searchText());
 
-    auto manager = ServiceRegistry::instance()->rootItemManager();
     connect(manager, &RootItemManager::itemsChanged, this, &RootSearchView::handleItemChange);
     connect(manager, &RootItemManager::itemFavoriteChanged, this, &RootSearchView::handleFavoriteChanged);
     connect(m_calcDebounce, &QTimer::timeout, this, &RootSearchView::handleCalculatorTimeout);
     connect(m_fileSearchDebounce, &QTimer::timeout, this, &RootSearchView::handleFileSearchTimeout);
+    connect(&m_pendingFileSearchResults, &QFutureWatcher<std::vector<IndexerFileResult>>::finished, this,
+            &RootSearchView::handleFileResults);
   }
 
 public:

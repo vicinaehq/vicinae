@@ -101,12 +101,14 @@ QString FileIndexer::preparePrefixSearchQuery(std::string_view query) const {
   return finalQuery;
 }
 
-IndexerAsyncQuery *FileIndexer::queryAsync(std::string_view view, const QueryParams &params) const {
-  auto asyncQuery = new IndexerAsyncQuery();
+QFuture<std::vector<IndexerFileResult>> FileIndexer::queryAsync(std::string_view view,
+                                                                const QueryParams &params) const {
   auto searchQuery = qStringFromStdView(view);
   QString finalQuery = preparePrefixSearchQuery(view);
+  QPromise<std::vector<IndexerFileResult>> promise;
+  auto future = promise.future();
 
-  QThreadPool::globalInstance()->start([asyncQuery, params, finalQuery]() {
+  QThreadPool::globalInstance()->start([params, finalQuery, promise = std::move(promise)]() mutable {
     std::vector<fs::path> paths;
     {
       FileIndexerDatabase db;
@@ -116,10 +118,11 @@ IndexerAsyncQuery *FileIndexer::queryAsync(std::string_view view, const QueryPar
         paths | std::views::transform([](auto &&path) { return IndexerFileResult{.path = path}; }) |
         std::ranges::to<std::vector>();
 
-    emit asyncQuery->finished(results);
+    promise.addResult(results);
+    promise.finish();
   });
 
-  return asyncQuery;
+  return future;
 }
 
 FileIndexer::FileIndexer() {

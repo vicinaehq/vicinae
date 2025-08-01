@@ -12,6 +12,7 @@
 #include "ui/omni-list/omni-list.hpp"
 #include "utils/utils.hpp"
 #include <filesystem>
+#include <qfuturewatcher.h>
 #include <qlocale.h>
 #include <qmimedatabase.h>
 
@@ -111,15 +112,21 @@ class FileListItem : public AbstractDefaultListItem, public ListView::Actionnabl
     return detail;
   }
 
-  ActionPanelView *actionPanel() const override {
-    auto appDb = ServiceRegistry::instance()->appDb();
-    auto panel = new ActionPanelStaticListView;
+  std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
+    auto panel = std::make_unique<ActionPanelState>();
+    auto appDb = ctx->services->appDb();
+    auto section = panel->createSection();
+    auto openInFolder = new OpenAppAction(appDb->fileBrowser(), "Open in folder", {m_path.c_str()});
 
     if (auto app = appDb->findBestOpener(m_path.c_str())) {
       auto open = new OpenAppAction(app, "Open", {m_path.c_str()});
       open->setPrimary(true);
-      panel->addAction(open);
+      section->addAction(open);
+    } else {
+      openInFolder->setPrimary(true);
     }
+
+    section->addAction(openInFolder);
 
     return panel;
   }
@@ -138,34 +145,44 @@ public:
 };
 
 class SearchFilesView : public ListView {
+  using Watcher = QFutureWatcher<std::vector<IndexerFileResult>>;
+  Watcher m_pendingFileResults;
+  QString m_lastSearchText;
 
   QString currentQuery;
 
   void initialize() override { setSearchPlaceholderText("Search for files..."); }
 
+  void handleSearchResults() {
+    if (!m_pendingFileResults.isFinished()) return;
+
+    if (currentQuery != m_lastSearchText) return;
+
+    auto results = m_pendingFileResults.result();
+
+    m_list->updateModel([&]() {
+      auto &section = m_list->addSection("Files");
+      for (const auto &result : results) {
+        section.addItem(std::make_unique<FileListItem>(result.path));
+      }
+    });
+  }
+
   void generateFilteredList(const QString &query) {
-    auto fileService = ServiceRegistry::instance()->fileService();
-    Timer timer;
-    // auto items = fileService->search(query.toStdString());
-    timer.time("search");
+    auto fileService = context()->services->fileService();
 
     currentQuery = query;
-
-    auto asyncQuery = fileService->indexer()->queryAsync(query.toStdString());
-
-    connect(asyncQuery, &IndexerAsyncQuery::finished, this, [this, query, asyncQuery](auto &&files) {
-      asyncQuery->deleteLater();
-      if (currentQuery != query) return;
-      m_list->updateModel([&]() {
-        auto &section = m_list->addSection("Files");
-        for (const auto &result : files) {
-          section.addItem(std::make_unique<FileListItem>(result.path));
-        }
-      });
-    });
+    if (m_pendingFileResults.isRunning()) { m_pendingFileResults.cancel(); }
+    m_lastSearchText = query;
+    m_pendingFileResults.setFuture(fileService->queryAsync(query.toStdString()));
   }
 
   void textChanged(const QString &query) override {
     if (!query.isEmpty()) generateFilteredList(query);
+  }
+
+public:
+  SearchFilesView() {
+    connect(&m_pendingFileResults, &Watcher::finished, this, &SearchFilesView::handleSearchResults);
   }
 };

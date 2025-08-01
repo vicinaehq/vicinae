@@ -1,5 +1,6 @@
 #pragma once
 #include <filesystem>
+#include <qfuture.h>
 #include <qobject.h>
 #include <qtmetamacros.h>
 #include <vector>
@@ -53,7 +54,8 @@ public:
 public:
   virtual void start() = 0;
   virtual void setEntrypoints(const std::vector<Entrypoint> &entrypoints) = 0;
-  virtual IndexerAsyncQuery *queryAsync(std::string_view view, const QueryParams &params = {}) const = 0;
+  virtual QFuture<std::vector<IndexerFileResult>> queryAsync(std::string_view view,
+                                                             const QueryParams &params = {}) const = 0;
 
   virtual ~AbstractFileIndexer() = default;
 };

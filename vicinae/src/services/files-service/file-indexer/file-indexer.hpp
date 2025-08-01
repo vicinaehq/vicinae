@@ -56,7 +56,8 @@ class FileIndexer : public AbstractFileIndexer {
 
 public:
   void setEntrypoints(const std::vector<Entrypoint> &entrypoints) override;
-  virtual IndexerAsyncQuery *queryAsync(std::string_view view, const QueryParams &params) const override;
+  QFuture<std::vector<IndexerFileResult>> queryAsync(std::string_view view,
+                                                     const QueryParams &params = {}) const override;
   void start() override;
 
   FileIndexer();

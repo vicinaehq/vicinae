@@ -1,10 +1,11 @@
 #include "file-indexer/file-indexer.hpp"
+#include "services/files-service/abstract-file-indexer.hpp"
 #include "file-service.hpp"
 
 AbstractFileIndexer *FileService::indexer() const { return m_indexer.get(); }
 
-IndexerAsyncQuery *FileService::queryAsync(std::string_view query,
-                                           const AbstractFileIndexer::QueryParams &params) {
+QFuture<std::vector<IndexerFileResult>>
+FileService::queryAsync(std::string_view query, const AbstractFileIndexer::QueryParams &params) {
   return m_indexer->queryAsync(query, params);
 }
 
