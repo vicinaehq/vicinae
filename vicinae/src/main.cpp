@@ -2,9 +2,7 @@
 #include "daemon/ipc-client.hpp"
 #include "ui/launcher-window/launcher-window.hpp"
 #include <QStyleHints>
-#include "data-uri/data-uri.hpp"
 #include "common.hpp"
-#include "proto/daemon.pb.h"
 #include "ipc-command-server.hpp"
 #include "ipc-command-handler.hpp"
 #include "overlay-controller/overlay-controller.hpp"
@@ -20,7 +18,7 @@
 #include <QFontDatabase>
 #include <QSurfaceFormat>
 #include <memory>
-#include <wm/window-manager-factory.hpp>
+#include "services/window-manager/window-manager.hpp"
 #include <QtSql/QtSql>
 #include "root-extension-manager.hpp"
 #include <QXmlStreamReader>
@@ -169,7 +167,7 @@ int startDaemon() {
     auto extensionManager = std::make_unique<ExtensionManager>(*commandDb);
     auto clipboardManager = std::make_unique<ClipboardService>(Omnicast::dataDir() / "clipboard.db");
     auto processManager = std::make_unique<ProcessManagerService>();
-    auto windowManager = WindowManagerFactory().create();
+    auto windowManager = std::make_unique<WindowManager>();
     auto fontService = std::make_unique<FontService>();
     auto appService = std::make_unique<AppService>(*omniDb.get());
     auto configService = std::make_unique<ConfigService>();

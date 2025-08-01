@@ -191,7 +191,6 @@ set(SRCS
 	src/ui/omni-painter/omni-painter.hpp
 	src/ui/omni-painter/omni-painter.cpp
 
-	include/wm/window-manager.hpp
 	
 	include/extension/extension-command.hpp
 	include/extension/extension-view.hpp
@@ -491,6 +490,8 @@ set(SRCS
 
 	src/settings/general-settings.cpp
 	src/settings/settings-about.cpp
+
+	src/services/window-manager/window-manager.cpp
 ) 
 
 
@@ -498,9 +499,9 @@ if (UNIX AND NOT APPLE)
 	list(APPEND SRCS
 		src/lib/xkbcommon-utils.cpp
 
+		src/services/window-manager/hyprland/hyprland.cpp
+
 		# Hyprland
-		include/wm/hyprland/hyprland.hpp
-		include/wm/hyprland/hyprctl.hpp
 		# End Hyprland
 	)
 endif()

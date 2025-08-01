@@ -1,4 +1,5 @@
 #pragma once
+#include "navigation-controller.hpp"
 #include "simple-view.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/omni-list/omni-list.hpp"
@@ -14,6 +15,10 @@ public:
   struct Actionnable {
     virtual QList<AbstractAction *> generateActions() const { return {}; };
     virtual QString navigationTitle() const { return {}; }
+
+    virtual std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const {
+      return std::make_unique<ActionPanelState>();
+    }
 
     /**
      * Current action title to show in the status bar. Only shown if no primary action has been set.

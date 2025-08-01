@@ -7,6 +7,7 @@
 #include "ui/shortcut-button/shortcut-button.hpp"
 #include <qboxlayout.h>
 #include <qnamespace.h>
+#include <qsizepolicy.h>
 #include <qstackedwidget.h>
 #include <qwidget.h>
 #include "services/toast/toast-service.hpp"
@@ -35,6 +36,11 @@ void NavigationStatusWidget::setupUI() {
 GlobalBar::GlobalBar(ApplicationContext &ctx) : m_ctx(ctx) { setupUI(); }
 
 void GlobalBar::paintEvent(QPaintEvent *event) { QWidget::paintEvent(event); }
+
+void GlobalBar::resizeEvent(QResizeEvent *event) {
+  QWidget::resizeEvent(event);
+  m_leftWidget->setMaximumWidth(width() * 0.5);
+}
 
 void GlobalBar::handleActionPanelVisiblityChange(bool visible) { m_actionButton->hoverChanged(visible); }
 
@@ -89,6 +95,9 @@ void GlobalBar::setupUI() {
   layout->addWidget(m_primaryActionButton);
   layout->addWidget(m_actionButton);
   m_status->setIcon(BuiltinOmniIconUrl("vicinae"));
+
+  m_actionButton->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+
   setLayout(layout);
 
   connect(m_primaryActionButton, &ShortcutButton::clicked, this,

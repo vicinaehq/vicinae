@@ -35,11 +35,13 @@ void GridView::applyActionnable(const Actionnable *actionnable) {
 void GridView::selectionChanged(const OmniList::AbstractVirtualItem *next,
                                 const OmniList::AbstractVirtualItem *previous) {
   if (!next) {
+    context()->navigation->clearActions(this);
     setNavigationTitle(rootNavigationTitle());
     return;
   }
 
   if (auto nextItem = dynamic_cast<const Actionnable *>(next)) {
+    setActions(nextItem->newActionPanel(context()));
     applyActionnable(nextItem);
   } else {
     context()->navigation->clearActions(this);
