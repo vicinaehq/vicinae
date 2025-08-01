@@ -103,6 +103,7 @@ BaseInput::BaseInput(QWidget *parent) : leftAccessory(nullptr), rightAccessory(n
   setLayout(layout);
   setFocusProxy(m_input);
   setAttribute(Qt::WA_TranslucentBackground);
+
   connect(m_input, &QLineEdit::textChanged, this, &BaseInput::textChanged);
 }
 

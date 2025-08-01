@@ -23,13 +23,12 @@ class Stack;
 class VStack;
 class HStack;
 
-class LayoutItemBase {
-  virtual QWidget *createWidget() const = 0;
-  virtual ~LayoutItemBase() = default;
-};
-
 struct LayoutStretch {
   int stretch = 0;
+};
+
+struct LayoutSpacer {
+  int space = 0;
 };
 
 struct LayoutWidget {
@@ -82,6 +81,7 @@ class Text : public WidgetBuilder<TypographyWidget> {
   TextSize m_size = TextSize::TextRegular;
   std::optional<ColorLike> m_color;
   bool m_autoEllide = true;
+  bool m_wordWrap = false;
   Qt::Alignment m_align;
 
 public:
@@ -99,6 +99,11 @@ public:
 
   Text &autoEllide(bool value) {
     m_autoEllide = value;
+    return *this;
+  }
+
+  Text &paragraph() {
+    m_wordWrap = true;
     return *this;
   }
 
@@ -134,6 +139,7 @@ public:
     typo->setSize(m_size);
     typo->setAutoEllide(m_autoEllide);
     typo->setAlignment(m_align);
+    typo->setWordWrap(m_wordWrap);
 
     if (m_color) typo->setColor(*m_color);
 
@@ -144,6 +150,7 @@ public:
 class Button : public WidgetBuilder<OmniButtonWidget> {
   std::function<void(void)> m_onClick;
   QString m_text;
+  std::optional<OmniIconUrl> m_leftIcon;
 
 public:
   Button &onClick(const std::function<void(void)> &fn) {
@@ -156,10 +163,18 @@ public:
     return *this;
   }
 
+  Button &leftIcon(const OmniIconUrl &url) {
+    m_leftIcon = url;
+    return *this;
+  }
+
   OmniButtonWidget *create() const override {
     auto btn = new OmniButtonWidget;
 
     btn->setText(m_text);
+
+    if (m_leftIcon) { btn->setLeftIcon(*m_leftIcon, {16, 16}); }
+
     QObject::connect(btn, &OmniButtonWidget::clicked, [onClick = m_onClick]() {
       if (onClick) onClick();
     });
@@ -188,7 +203,7 @@ public:
 
 } // namespace UI
 
-using LayoutItem = std::variant<std::shared_ptr<Stack>, LayoutWidget, LayoutStretch>;
+using LayoutItem = std::variant<std::shared_ptr<Stack>, LayoutWidget, LayoutStretch, LayoutSpacer>;
 
 enum AlignStrategy { None, JustifyBetween, Center };
 
@@ -220,6 +235,7 @@ public:
   }
 
   Stack &add(QWidget *widget, int stretch = 0, Qt::Alignment align = {});
+  Stack &addSpacer(int space);
   Stack &addText(const QString &text, SemanticColor color = SemanticColor::TextPrimary,
                  TextSize size = TextSize::TextRegular, Qt::Alignment align = {});
   Stack &addTitle(const QString &title, SemanticColor color = SemanticColor::TextPrimary,

@@ -1,6 +1,7 @@
 #include "button.hpp"
 #include "ui/image/omnimg.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
+#include <qnamespace.h>
 #include <qpainterpath.h>
 
 void OmniButtonWidget::setColor(ButtonColor color) {
@@ -113,10 +114,11 @@ void OmniButtonWidget::paintEvent(QPaintEvent *event) {
 
 OmniButtonWidget::OmniButtonWidget(QWidget *parent) : QWidget(parent) {
   setAttribute(Qt::WA_Hover);
-  setFocusPolicy(Qt::StrongFocus);
+  setFocusPolicy(Qt::FocusPolicy::TabFocus);
   setColor(Secondary);
 
   _layout->setContentsMargins(5, 5, 5, 5);
+  _layout->setAlignment(Qt::AlignHCenter);
   _layout->addWidget(leftAccessory);
   _layout->addWidget(label);
   _layout->addWidget(rightAccessory, 0, Qt::AlignRight);

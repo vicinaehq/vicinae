@@ -146,6 +146,8 @@ SelectorInput::SelectorInput(QWidget *parent)
 
   popoverLayout->addWidget(m_content);
 
+  selectionIcon->hide();
+
   connect(m_searchField, &QLineEdit::textChanged, this, &SelectorInput::handleTextChanged);
   connect(m_list, &OmniList::itemActivated, this, &SelectorInput::itemActivated);
   connect(m_list, &OmniList::itemUpdated, this, &SelectorInput::itemUpdated);
@@ -188,7 +190,12 @@ bool SelectorInput::setValue(const QString &id) {
   inputField->setText(item->displayName());
   inputField->update();
 
-  if (icon) { selectionIcon->setUrl(*icon); }
+  if (icon) {
+    selectionIcon->setUrl(*icon);
+    selectionIcon->show();
+  }
+
+  inputField->recalculate();
 
   return true;
 }

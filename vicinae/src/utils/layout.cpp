@@ -14,6 +14,11 @@ Stack &Stack::add(QWidget *widget, int stretch, Qt::Alignment align) {
   return *this;
 }
 
+Stack &Stack::addSpacer(int space) {
+  m_items.emplace_back(LayoutSpacer{.space = space});
+  return *this;
+}
+
 Stack &Stack::addText(const QString &text, SemanticColor color, TextSize size, Qt::Alignment align) {
   auto typo = new TypographyWidget;
 
@@ -152,6 +157,8 @@ QBoxLayout *Stack::buildLayout() const {
   for (const auto &item : items()) {
     if (auto stretch = std::get_if<LayoutStretch>(&item)) {
       layout->addStretch(stretch->stretch);
+    } else if (auto spacer = std::get_if<LayoutSpacer>(&item)) {
+      layout->addSpacing(spacer->space);
     } else if (auto widget = std::get_if<LayoutWidget>(&item)) {
       pushWidget(widget->widget, widget->stretch, widget->align);
     } else if (auto stackPtr = std::get_if<std::shared_ptr<Stack>>(&item)) {

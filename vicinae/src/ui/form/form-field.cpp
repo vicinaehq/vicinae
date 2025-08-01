@@ -10,6 +10,7 @@ FormField::FormField(QWidget *widget, const QString &name)
       _layout(new QHBoxLayout) {
   setFocusPolicy(Qt::StrongFocus);
   _nameLabel->setText(name);
+  _nameLabel->setColor(SemanticColor::TextSecondary);
   _errorLabel->setColor(SemanticColor::Red);
   _layout->setSpacing(20);
   _layout->setContentsMargins(0, 0, 0, 0);

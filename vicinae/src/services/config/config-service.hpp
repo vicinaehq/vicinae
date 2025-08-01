@@ -24,7 +24,11 @@ public:
     struct {
       int rounding = 10;
       float opacity = 1;
+      bool csd = true;
     } window;
+    struct {
+      bool searchFiles;
+    } rootSearch;
     struct {
       std::optional<QString> normal;
       std::optional<QString> italic;
@@ -68,10 +72,17 @@ private:
     }
 
     {
+      auto rootSearch = obj.value("rootSearch").toObject();
+
+      cfg.rootSearch.searchFiles = rootSearch.value("searchFiles").toBool(true);
+    }
+
+    {
       auto window = obj.value("window").toObject();
 
       cfg.window.rounding = window.value("rounding").toInt(10);
       cfg.window.opacity = window.value("opacity").toDouble(1);
+      cfg.window.csd = window.value("csd").toBool(true);
     }
 
     return cfg;
@@ -137,10 +148,18 @@ public:
     }
 
     {
+      QJsonObject rootSearch;
+
+      rootSearch["searchFiles"] = value.rootSearch.searchFiles;
+      obj["rootSearch"] = rootSearch;
+    }
+
+    {
       QJsonObject window;
 
       window["rounding"] = value.window.rounding;
       window["opacity"] = value.window.opacity;
+      window["csd"] = value.window.csd;
       obj["window"] = window;
     }
 

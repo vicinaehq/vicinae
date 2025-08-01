@@ -2,6 +2,7 @@
 #include "common.hpp"
 #include "ui/form/checkbox.hpp"
 #include "ui/typography/typography.hpp"
+#include "utils/layout.hpp"
 #include <qboxlayout.h>
 #include <qnamespace.h>
 #include <qtmetamacros.h>
@@ -10,18 +11,16 @@
 class CheckboxInput : public JsonFormItemWidget {
   Q_OBJECT
 
-  QHBoxLayout *m_layout = new QHBoxLayout;
   TypographyWidget *m_label = new TypographyWidget;
   Checkbox *m_checkbox = new Checkbox;
 
   QJsonValue asJsonValue() const override { return m_checkbox->value(); }
 
+public:
   void setLabel(const QString &label) {
     m_label->setText(label);
     m_label->setVisible(!label.isEmpty());
   }
-
-public:
   void setValueAsJson(const QJsonValue &value) override { m_checkbox->setValue(value.toBool(false)); }
   bool value() const { return m_checkbox->value(); }
   FocusNotifier *focusNotifier() const override { return m_checkbox->focusNotifier(); }
@@ -29,12 +28,11 @@ public:
   CheckboxInput(QWidget *parent = nullptr) : JsonFormItemWidget(parent) {
     setFocusProxy(m_checkbox);
     setFocusPolicy(Qt::StrongFocus);
-    m_checkbox->setFixedSize(20, 20);
+    m_checkbox->setFixedSize(16, 16);
     m_label->hide();
-    m_layout->setContentsMargins(0, 0, 0, 0);
-    m_layout->addWidget(m_label, 0, Qt::AlignLeft);
-    m_layout->addWidget(m_checkbox, 0, Qt::AlignLeft);
-    setLayout(m_layout);
+
+    HStack().add(m_checkbox).add(m_label).spacing(10).imbue(this);
+
     connect(m_checkbox, &Checkbox::valueChanged, this, &CheckboxInput::valueChanged);
   }
 

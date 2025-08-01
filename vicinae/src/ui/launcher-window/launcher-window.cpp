@@ -224,17 +224,21 @@ void LauncherWindow::paintEvent(QPaintEvent *event) {
 
   painter.setRenderHint(QPainter::Antialiasing, true);
 
-  QPainterPath path;
-  path.addRoundedRect(rect(), config.window.rounding, config.window.rounding);
+  if (config.window.csd) {
+    QPainterPath path;
+    path.addRoundedRect(rect(), config.window.rounding, config.window.rounding);
 
-  painter.setClipPath(path);
+    painter.setClipPath(path);
 
-  painter.fillPath(path, finalBgColor);
+    painter.fillPath(path, finalBgColor);
 
-  QPen pen(theme.colors.border, borderWidth);
-  painter.setPen(pen);
+    QPen pen(theme.colors.border, borderWidth);
+    painter.setPen(pen);
 
-  painter.drawPath(path);
+    painter.drawPath(path);
+  } else {
+    painter.fillRect(rect(), finalBgColor);
+  }
 }
 
 QWidget *LauncherWindow::createWidget() const {

@@ -12,7 +12,7 @@ void Checkbox::paintEvent(QPaintEvent *event) {
   OmniPainter painter(this);
 
   painter.setRenderHint(QPainter::Antialiasing);
-  painter.setPen(hasFocus() ? theme.colors.subtext : theme.colors.border);
+  painter.setPen(QPen(hasFocus() ? theme.colors.subtext : theme.colors.border, 2));
 
   if (m_value) {
     painter.setBrush(painter.colorBrush(m_fillColor));
@@ -20,7 +20,7 @@ void Checkbox::paintEvent(QPaintEvent *event) {
     painter.setBrush(Qt::transparent);
   }
 
-  painter.drawRoundedRect(rect(), 4, 4);
+  painter.drawRoundedRect(rect(), 6, 6);
 
   if (m_value) {
     auto check = rect().marginsRemoved(contentsMargins());

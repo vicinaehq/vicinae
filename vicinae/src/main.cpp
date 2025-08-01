@@ -296,6 +296,18 @@ int startDaemon() {
                      }
                    });
 
+  int fontId = QFontDatabase::addApplicationFont(":assets/fonts/SF-Pro-Text-Regular.otf");
+  fontId = QFontDatabase::addApplicationFont(":assets/fonts/SF-Pro-Text-Light.otf");
+  fontId = QFontDatabase::addApplicationFont(":assets/fonts/SF-Pro-Text-Bold.otf");
+
+  QFont font("SF Pro Text");
+
+  font.setHintingPreference(QFont::HintingPreference::PreferNoHinting);
+
+  QApplication::setFont(font);
+  QApplication::setApplicationName("vicinae");
+  QApplication::setQuitOnLastWindowClosed(false);
+
   ApplicationContext ctx;
 
   ctx.navigation = std::make_unique<NavigationController>(ctx);
@@ -315,18 +327,6 @@ int startDaemon() {
   launcher.show();
 
   // Print it
-
-  int fontId = QFontDatabase::addApplicationFont(":assets/fonts/SF-Pro-Text-Regular.otf");
-  fontId = QFontDatabase::addApplicationFont(":assets/fonts/SF-Pro-Text-Light.otf");
-  fontId = QFontDatabase::addApplicationFont(":assets/fonts/SF-Pro-Text-Bold.otf");
-
-  QFont font("SF Pro Text Display");
-
-  font.setHintingPreference(QFont::HintingPreference::PreferNoHinting);
-
-  QApplication::setFont(font);
-  QApplication::setApplicationName("vicinae");
-  QApplication::setQuitOnLastWindowClosed(false);
 
   return qApp->exec();
 }

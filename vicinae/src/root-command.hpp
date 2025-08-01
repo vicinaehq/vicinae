@@ -3,6 +3,7 @@
 #include "argument.hpp"
 #include "ui/views/base-view.hpp"
 #include "clipboard-actions.hpp"
+#include "services/config/config-service.hpp"
 #include "services/files-service/file-service.hpp"
 #include "navigation-controller.hpp"
 #include "services/app-service/app-service.hpp"
@@ -415,7 +416,8 @@ class RootSearchView : public ListView {
     if (query.isEmpty()) return renderEmpty();
 
     m_calcDebounce->start();
-    m_fileSearchDebounce->start();
+
+    if (context()->services->config()->value().rootSearch.searchFiles) { m_fileSearchDebounce->start(); }
 
     if (text.size() < 3) { m_fileResults.clear(); }
 

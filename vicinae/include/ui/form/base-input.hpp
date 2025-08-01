@@ -22,7 +22,6 @@ class BaseInput : public JsonFormItemWidget {
   bool event(QEvent *) override;
   void resizeEvent(QResizeEvent *event) override;
   void setFocusState(bool value);
-  void recalculate();
 
   QJsonValue asJsonValue() const override;
   void setValueAsJson(const QJsonValue &value) override;
@@ -36,6 +35,7 @@ protected:
   }
 
 public:
+  void recalculate();
   void setLeftAccessory(QWidget *widget);
   void setRightAccessory(QWidget *widget);
   FocusNotifier *focusNotifier() const override { return m_focusNotifier; }

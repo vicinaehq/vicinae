@@ -5,8 +5,13 @@ project(${PROJECT_NAME} VERSION 1.0.0 LANGUAGES C CXX)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 include(ExtensionManager)
+include(Git)
 
-add_compile_definitions(VICINAE_VERSION="${VICINAE_VERSION}")
+get_git_commit(GIT_COMMIT)
+get_git_tag(GIT_TAG)
+
+add_compile_definitions(VICINAE_GIT_TAG="${GIT_TAG}")
+add_compile_definitions(VICINAE_GIT_COMMIT_HASH="${GIT_COMMIT}")
 
 find_program(CCACHE ccache)
 

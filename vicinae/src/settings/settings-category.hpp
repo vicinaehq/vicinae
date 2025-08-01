@@ -1,5 +1,7 @@
 #include "omni-icon.hpp"
 #include "settings/extension-settings.hpp"
+#include "general-settings.hpp"
+#include "settings-about.hpp"
 #include <qwidget.h>
 
 class SettingsCategory {
@@ -33,7 +35,7 @@ public:
 class GeneralSettingsCategory : public SettingsCategory {
   QString title() const override { return "General"; }
   OmniIconUrl icon() const override { return BuiltinOmniIconUrl("cog"); }
-  QWidget *createContent() override { return new QWidget; }
+  QWidget *createContent() override { return new GeneralSettings(); }
 };
 
 class AdvancedSettingsCategory : public SettingsCategory {
@@ -44,6 +46,6 @@ class AdvancedSettingsCategory : public SettingsCategory {
 
 class AboutSettingsCategory : public SettingsCategory {
   QString title() const override { return "About"; }
-  OmniIconUrl icon() const override { return BuiltinOmniIconUrl("omnicast"); }
-  QWidget *createContent() override { return new QWidget; }
+  OmniIconUrl icon() const override { return BuiltinOmniIconUrl("vicinae"); }
+  QWidget *createContent() override { return new SettingsAbout; }
 };

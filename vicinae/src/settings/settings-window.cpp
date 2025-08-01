@@ -57,8 +57,8 @@ QWidget *SettingsWindow::createWidget() {
 }
 
 void SettingsWindow::showEvent(QShowEvent *event) {
-  m_navigation->setSelected("Extensions");
-  content->setCurrentIndex(1);
+  m_navigation->setSelected("General");
+  content->setCurrentIndex(0);
   QMainWindow::showEvent(event);
 }
 
@@ -66,6 +66,7 @@ SettingsWindow::SettingsWindow(ApplicationContext *ctx) : m_ctx(ctx) {
   setWindowFlags(Qt::FramelessWindowHint);
   setAttribute(Qt::WA_TranslucentBackground, true);
   setMinimumSize(windowSize);
+  setMaximumSize(windowSize);
 
   m_categories.reserve(4);
   m_categories.emplace_back(std::make_unique<GeneralSettingsCategory>());
@@ -75,7 +76,18 @@ SettingsWindow::SettingsWindow(ApplicationContext *ctx) : m_ctx(ctx) {
   setCentralWidget(createWidget());
 
   connect(m_ctx->settings.get(), &SettingsController::windowVisiblityChangeRequested, this,
-          [this](bool value) { setVisible(value); });
+          [this](bool value) {
+            hide();
+            setVisible(value);
+          });
+
+  connect(m_ctx->settings.get(), &SettingsController::tabIdOpened, this, [this](const QString &id) {
+    if (auto it = std::ranges::find_if(m_categories, [&](auto &&cat) { return cat->title() == id; });
+        it != m_categories.end()) {
+      m_navigation->setSelected(id);
+      content->setCurrentIndex(std::distance(it, m_categories.end()) - 1);
+    }
+  });
 }
 
 SettingsWindow::~SettingsWindow() {}
