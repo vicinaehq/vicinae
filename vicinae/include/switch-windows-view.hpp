@@ -1,9 +1,8 @@
 #include "ui/action-pannel/action.hpp"
 #include "ui/omni-list/omni-list.hpp"
-#include "ui/views/base-view.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
-#include "wm/window-manager.hpp"
+#include "services/window-manager/window-manager.hpp"
 #include <chrono>
 #include <qfuturewatcher.h>
 #include <qnamespace.h>
@@ -11,22 +10,22 @@
 #include "services/app-service/app-service.hpp"
 
 class FocusWindowAction : public AbstractAction {
-  std::shared_ptr<AbstractWindowManager::Window> _window;
+  std::shared_ptr<AbstractWindowManager::AbstractWindow> _window;
 
   void execute(AppWindow &app) override {
     auto wm = ServiceRegistry::instance()->windowManager();
 
-    wm->focusWindowSync(*_window.get());
+    wm->provider()->focusWindowSync(*_window.get());
   }
 
 public:
-  FocusWindowAction(const std::shared_ptr<AbstractWindowManager::Window> &window)
+  FocusWindowAction(const std::shared_ptr<AbstractWindowManager::AbstractWindow> &window)
       : AbstractAction("Focus window", BuiltinOmniIconUrl("app-window")), _window(window) {}
 };
 
 class WindowItem : public AbstractDefaultListItem, public ListView::Actionnable {
 protected:
-  std::shared_ptr<AbstractWindowManager::Window> _window;
+  std::shared_ptr<AbstractWindowManager::AbstractWindow> _window;
 
   QString generateId() const override { return _window->id(); }
 
@@ -35,7 +34,7 @@ protected:
   }
 
 public:
-  WindowItem(const std::shared_ptr<AbstractWindowManager::Window> &item) : _window(item) {}
+  WindowItem(const std::shared_ptr<AbstractWindowManager::AbstractWindow> &item) : _window(item) {}
 };
 
 class UnamedWindowListItem : public WindowItem {
@@ -46,7 +45,8 @@ class UnamedWindowListItem : public WindowItem {
   }
 
 public:
-  UnamedWindowListItem(const std::shared_ptr<AbstractWindowManager::Window> &item) : WindowItem(item) {}
+  UnamedWindowListItem(const std::shared_ptr<AbstractWindowManager::AbstractWindow> &item)
+      : WindowItem(item) {}
 };
 
 class AppWindowListItem : public WindowItem {
@@ -57,7 +57,7 @@ class AppWindowListItem : public WindowItem {
   }
 
 public:
-  AppWindowListItem(const std::shared_ptr<AbstractWindowManager::Window> &item,
+  AppWindowListItem(const std::shared_ptr<AbstractWindowManager::AbstractWindow> &item,
                     const std::shared_ptr<Application> &app)
       : WindowItem(item), _app(app) {}
 };
@@ -98,5 +98,10 @@ public:
     m_list->endResetModel(OmniList::SelectFirst);
   }
 
-  SwitchWindowsView() { setSearchPlaceholderText("Search open window..."); }
+  void initialize() override {
+    setSearchPlaceholderText("Search open window...");
+    textChanged("");
+  }
+
+  SwitchWindowsView() {}
 };

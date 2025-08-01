@@ -2,7 +2,7 @@
 #include "common.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "omni-icon.hpp"
-#include "wm/window-manager.hpp"
+#include "services/window-manager/window-manager.hpp"
 #include "navigation-controller.hpp"
 #include "services/app-service/app-service.hpp"
 #include <QTimer>
@@ -37,10 +37,10 @@ class PasteToFocusedWindowAction : public AbstractAction {
   QString title() const override {
     auto wm = ServiceRegistry::instance()->windowManager();
 
-    if (!wm->ping()) return _title;
+    if (!wm->provider()->ping()) return _title;
 
     auto appDb = ServiceRegistry::instance()->appDb();
-    auto window = wm->getActiveWindowSync();
+    auto window = wm->getFocusedWindow();
     QString name;
 
     if (auto app = appDb->find(window->wmClass())) {
@@ -57,16 +57,18 @@ protected:
     auto wm = ctx->services->windowManager();
     auto clipman = ctx->services->clipman();
     auto appDb = ctx->services->appDb();
-    auto window = wm->getActiveWindowSync();
+    auto window = wm->getFocusedWindow();
     KeyboardShortcut shortcut = KeyboardShortcut::paste();
 
     if (auto app = appDb->find(window->wmClass())) {
       if (app->isTerminalEmulator()) { shortcut = KeyboardShortcut::shiftPaste(); }
     }
 
-    ctx->navigation->closeWindow();
+    // ctx->navigation->closeWindow();
     clipman->copyContent(m_content, {.concealed = true});
-    QTimer::singleShot(10, [wm, window, shortcut]() { wm->sendShortcutSync(*window.get(), shortcut); });
+    QTimer::singleShot(10, [wm, window = std::move(window), shortcut]() {
+      wm->provider()->sendShortcutSync(*window.get(), shortcut);
+    });
   }
 
   void loadClipboardData(const Clipboard::Content &content) { m_content = content; }

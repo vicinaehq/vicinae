@@ -1,4 +1,5 @@
 #pragma once
+#include "navigation-controller.hpp"
 #include "ui/views/form-view.hpp"
 #include "ui/views/grid-view.hpp"
 #include "clipboard-actions.hpp"
@@ -203,33 +204,38 @@ public:
 
   QString generateId() const override { return QString::fromUtf8(info.emoji.data(), info.emoji.size()); }
 
-  /*
-  ActionPanelView *actionPanel() const override {
-    auto panel = new ActionPanelStaticListView;
-    auto paste = new PasteEmojiAction(info.emoji);
+  std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
+    auto wm = ctx->services->windowManager();
+    auto panel = std::make_unique<ActionPanelState>();
     auto copyName = new CopyToClipboardAction(
         Clipboard::Text(QString::fromUtf8(info.name.data(), info.name.size())), "Copy emoji name");
     auto copyGroup = new CopyToClipboardAction(
         Clipboard::Text(QString::fromUtf8(info.group.data(), info.group.size())), "Copy emoji group");
     auto editKeywords = new EditEmojiKeywordsAction(info.emoji);
     auto resetRanking = new ResetEmojiRankingAction(info.emoji);
+    auto mainSection = panel->createSection();
 
-    paste->setPrimary(true);
-    panel->addAction(paste);
-    panel->addAction(copyName);
-    panel->addAction(copyGroup);
-    panel->addAction(editKeywords);
-    panel->addAction(resetRanking);
+    if (wm->canPaste()) {
+      auto paste = new PasteEmojiAction(info.emoji);
+      paste->setPrimary(true);
+      mainSection->addAction(paste);
+    } else {
+      copyName->setPrimary(true);
+    }
+
+    mainSection->addAction(copyName);
+    mainSection->addAction(copyGroup);
+    mainSection->addAction(editKeywords);
+    mainSection->addAction(resetRanking);
 
     if (m_pinned) {
-      panel->addAction(new UnpinEmojiAction(info.emoji));
+      mainSection->addAction(new UnpinEmojiAction(info.emoji));
     } else {
-      panel->addAction(new PinEmojiAction(info.emoji));
+      mainSection->addAction(new PinEmojiAction(info.emoji));
     }
 
     return panel;
   }
-  */
 
   QString navigationTitle() const override { return qStringFromStdView(info.name); }
 

@@ -1,4 +1,5 @@
 #pragma once
+#include "navigation-controller.hpp"
 #include "ui/views/base-view.hpp"
 #include "clipboard-actions.hpp"
 #include "settings/command-metadata-settings-detail.hpp"
@@ -229,29 +230,38 @@ class ClipboardHistoryItem : public OmniList::AbstractVirtualItem, public ListVi
 public:
   ClipboardHistoryEntry info;
 
-  ActionPanelView *actionPanel() const override {
-    auto panel = new ActionPanelStaticListView;
+  std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
+    auto panel = std::make_unique<ActionPanelState>();
+    auto wm = ctx->services->windowManager();
     auto pin = new PinClipboardAction(info.id, !info.pinnedAt);
-    auto paste = new PasteClipboardSelection(info.id);
     auto copyToClipboard = new CopyClipboardSelection(info.id);
     auto remove = new RemoveSelectionAction(info.id);
+    auto mainSection = panel->createSection();
 
     remove->setStyle(AbstractAction::Danger);
     remove->setShortcut({.key = "X", .modifiers = {"ctrl"}});
 
-    paste->setPrimary(true);
-    paste->setShortcut({.key = "return"});
-
-    copyToClipboard->setShortcut({.key = "return", .modifiers = {"shift"}});
-
     pin->setShortcut({.key = "P", .modifiers = {"shift", "ctrl"}});
 
-    panel->addAction(paste);
-    panel->addAction(copyToClipboard);
-    panel->addSection();
-    panel->addAction(pin);
-    panel->addSection();
-    panel->addAction(remove);
+    if (wm->canPaste()) {
+      auto paste = new PasteClipboardSelection(info.id);
+
+      paste->setShortcut({.key = "return"});
+      paste->setPrimary(true);
+      mainSection->addAction(paste);
+      copyToClipboard->setShortcut({.key = "return", .modifiers = {"shift"}});
+    } else {
+      copyToClipboard->setPrimary(true);
+      copyToClipboard->setShortcut({.key = "return"});
+    }
+
+    mainSection->addAction(copyToClipboard);
+
+    auto toolsSection = panel->createSection();
+    auto dangerSection = panel->createSection();
+
+    toolsSection->addAction(pin);
+    dangerSection->addAction(remove);
 
     return panel;
   }
@@ -444,6 +454,8 @@ class ClipboardHistoryView : public SimpleView {
 
     auto entry = static_cast<const ClipboardHistoryItem *>(next);
 
+    context()->navigation->setActions(entry->newActionPanel(context()));
+
     if (auto detail = entry->generateDetail()) {
       m_split->setDetailWidget(detail);
       m_split->setDetailVisibility(true);
@@ -489,6 +501,7 @@ class ClipboardHistoryView : public SimpleView {
       return m_list->selectDown();
     case Qt::Key_Return:
       m_list->activateCurrentSelection();
+      return true;
     }
 
     if (event->keyCombination() == QKeyCombination(Qt::ControlModifier, Qt::Key_P)) {

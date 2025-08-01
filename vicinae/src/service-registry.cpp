@@ -17,13 +17,13 @@
 #include "services/raycast/raycast-store.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "services/toast/toast-service.hpp"
-#include "wm/window-manager.hpp"
+#include "services/window-manager/window-manager.hpp"
 
 RootItemManager *ServiceRegistry::rootItemManager() const { return m_rootItemManager.get(); }
 ConfigService *ServiceRegistry::config() const { return m_config.get(); }
 OmniDatabase *ServiceRegistry::omniDb() const { return m_omniDb.get(); }
 CalculatorService *ServiceRegistry::calculatorService() const { return m_calculatorService.get(); }
-AbstractWindowManager *ServiceRegistry::windowManager() const { return m_windowManager.get(); }
+WindowManager *ServiceRegistry::windowManager() const { return m_windowManager.get(); }
 EmojiService *ServiceRegistry::emojiService() const { return m_emojiService.get(); }
 FontService *ServiceRegistry::fontService() const { return m_fontService.get(); }
 OmniCommandDatabase *ServiceRegistry::commandDb() const { return m_omniCommandDb.get(); }
@@ -37,6 +37,10 @@ FileService *ServiceRegistry::fileService() const { return m_fileService.get(); 
 RaycastStoreService *ServiceRegistry::raycastStore() const { return m_raycastStoreService.get(); }
 ExtensionRegistry *ServiceRegistry::extensionRegistry() const { return m_extensionRegistry.get(); }
 OAuthService *ServiceRegistry::oauthService() const { return m_oauthService.get(); }
+
+void ServiceRegistry::setWindowManager(std::unique_ptr<WindowManager> manager) {
+  m_windowManager = std::move(manager);
+}
 
 void ServiceRegistry::ServiceRegistry::setRootItemManager(std::unique_ptr<RootItemManager> manager) {
   m_rootItemManager = std::move(manager);
@@ -72,9 +76,7 @@ void ServiceRegistry::setRootExtMan(std::unique_ptr<RootExtensionManager> man) {
 }
 void ServiceRegistry::setFontService(std::unique_ptr<FontService> font) { m_fontService = std::move(font); }
 void ServiceRegistry::setOmniDb(std::unique_ptr<OmniDatabase> service) { m_omniDb = std::move(service); }
-void ServiceRegistry::setWindowManager(std::unique_ptr<AbstractWindowManager> service) {
-  m_windowManager = std::move(service);
-}
+
 void ServiceRegistry::setCommandDb(std::unique_ptr<OmniCommandDatabase> commandDb) {
   m_omniCommandDb = std::move(commandDb);
 }

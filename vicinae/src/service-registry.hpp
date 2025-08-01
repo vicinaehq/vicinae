@@ -22,9 +22,10 @@ class FileService;
 class RaycastStoreService;
 class ExtensionRegistry;
 class OAuthService;
+class WindowManager;
 
 class ServiceRegistry : public QObject {
-  std::unique_ptr<AbstractWindowManager> m_windowManager;
+  std::unique_ptr<WindowManager> m_windowManager;
   std::unique_ptr<AppService> m_appDb;
   std::unique_ptr<OmniDatabase> m_omniDb;
   std::unique_ptr<OmniCommandDatabase> m_omniCommandDb;
@@ -50,7 +51,7 @@ public:
   ConfigService *config() const;
   OmniDatabase *omniDb() const;
   CalculatorService *calculatorService() const;
-  AbstractWindowManager *windowManager() const;
+  WindowManager *windowManager() const;
   EmojiService *emojiService() const;
   FontService *fontService() const;
   OmniCommandDatabase *commandDb() const;
@@ -65,6 +66,7 @@ public:
   ExtensionRegistry *extensionRegistry() const;
   OAuthService *oauthService() const;
 
+  void setWindowManager(std::unique_ptr<WindowManager> manager);
   void setRootItemManager(std::unique_ptr<RootItemManager> manager);
   void setRaycastStore(std::unique_ptr<RaycastStoreService> service);
   void setOAuthService(std::unique_ptr<OAuthService> service);
