@@ -56,11 +56,7 @@ QWidget *SettingsWindow::createWidget() {
   return widget;
 }
 
-void SettingsWindow::showEvent(QShowEvent *event) {
-  m_navigation->setSelected("General");
-  content->setCurrentIndex(0);
-  QMainWindow::showEvent(event);
-}
+void SettingsWindow::showEvent(QShowEvent *event) { QMainWindow::showEvent(event); }
 
 SettingsWindow::SettingsWindow(ApplicationContext *ctx) : m_ctx(ctx) {
   setWindowFlags(Qt::FramelessWindowHint);
@@ -85,9 +81,14 @@ SettingsWindow::SettingsWindow(ApplicationContext *ctx) : m_ctx(ctx) {
     if (auto it = std::ranges::find_if(m_categories, [&](auto &&cat) { return cat->title() == id; });
         it != m_categories.end()) {
       m_navigation->setSelected(id);
-      content->setCurrentIndex(std::distance(it, m_categories.end()) - 1);
+      content->setCurrentIndex(std::distance(m_categories.begin(), it));
+      hide();
+      show();
     }
   });
+
+  m_navigation->setSelected("General");
+  content->setCurrentIndex(0);
 }
 
 SettingsWindow::~SettingsWindow() {}

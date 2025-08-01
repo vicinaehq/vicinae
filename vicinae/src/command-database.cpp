@@ -4,6 +4,7 @@
 #include "extensions/calculator/calculator-extension.hpp"
 #include "emoji-command.hpp"
 #include "extensions/file/file-extension.hpp"
+#include "extensions/vicinae/open-about-command.hpp"
 #include "extensions/vicinae/open-documentation-command.hpp"
 #include "extensions/vicinae/refresh-apps-command.hpp"
 #include "extensions/raycast/raycast-compat-extension.hpp"
@@ -102,6 +103,12 @@ CommandDatabase::CommandDatabase() {
                                  .withTintedIcon("book", SemanticColor::Red)
                                  .toContext<OpenDocumentationCommand>();
 
+    auto openAbout = CommandBuilder("open-about")
+                         .withName("About Vicinae")
+                         .withDescription(R"(Open the about page in the settings)")
+                         .withTintedIcon("info-01", SemanticColor::Red)
+                         .toContext<OpenAboutCommand>();
+
     auto omnicast = CommandRepositoryBuilder("omnicast")
                         .withTintedIcon("vicinae", SemanticColor::Red)
                         .withName("Vicinae")
@@ -110,6 +117,7 @@ CommandDatabase::CommandDatabase() {
                         .withCommand(configureFallbackCommands)
                         .withCommand(refreshApps)
                         .withCommand(openDocumentation)
+                        .withCommand(openAbout)
                         .makeShared();
 
     registerRepository(omnicast);

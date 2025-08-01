@@ -3,7 +3,7 @@
 #include "omni-icon.hpp"
 #include "raycast-store-command.hpp"
 
-class RaycastCompatExtension : public AbstractCommandRepository {
+class RaycastCompatExtension : public BuiltinCommandRepository {
 public:
   QString id() const override { return "raycast-compat"; }
   QString name() const override { return "Raycast Compat"; }

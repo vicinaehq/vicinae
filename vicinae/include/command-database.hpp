@@ -16,6 +16,7 @@
 #include <qlogging.h>
 #include <qwidget.h>
 #include "common.hpp"
+#include "vicinae.hpp"
 
 class AppWindow;
 class ViewCommandContext;
@@ -80,8 +81,10 @@ class BuiltinCommandRepository : public AbstractCommandRepository {
   std::vector<std::shared_ptr<AbstractCmd>> commands() const override { return _commands; }
   OmniIconUrl iconUrl() const override { return _icon; }
   std::vector<Preference> preferences() const override { return _preferences; }
+  QString author() const override { return Omnicast::APP_ID; }
 
 public:
+  BuiltinCommandRepository() {}
   BuiltinCommandRepository(const QString &id, const QString &name,
                            const std::vector<std::shared_ptr<AbstractCmd>> &commands, const OmniIconUrl &url,
                            const std::vector<Preference> &preferences)

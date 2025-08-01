@@ -1,9 +1,10 @@
 #pragma once
+#include "command-database.hpp"
 #include "common.hpp"
 #include "extensions/clipboard/clipboard-history-command.hpp"
 #include "omni-icon.hpp"
 
-class ClipboardExtension : public AbstractCommandRepository {
+class ClipboardExtension : public BuiltinCommandRepository {
 public:
   QString id() const override { return "clipboard"; }
   QString name() const override { return "Clipboard"; }

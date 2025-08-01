@@ -167,6 +167,7 @@ public:
   virtual QString id() const = 0;
   virtual QString name() const = 0;
   virtual QString description() const { return ""; }
+  virtual QString author() const = 0;
   virtual std::vector<std::shared_ptr<AbstractCmd>> commands() const = 0;
   virtual OmniIconUrl iconUrl() const = 0;
   virtual std::vector<Preference> preferences() const { return {}; }

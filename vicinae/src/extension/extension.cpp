@@ -27,6 +27,8 @@ std::filesystem::path Extension::installedPath() const { return m_manifest.path;
 
 PreferenceList Extension::preferences() const { return m_manifest.preferences; }
 
+QString Extension::author() const { return m_manifest.author; }
+
 std::vector<std::shared_ptr<AbstractCmd>> Extension::commands() const { return m_commands; }
 
 QString Extension::description() const { return m_manifest.description; };

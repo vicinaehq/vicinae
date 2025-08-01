@@ -1,4 +1,5 @@
 #pragma once
+#include "command-database.hpp"
 #include "common.hpp"
 #include "omni-icon.hpp"
 #include "search-files-view.hpp"
@@ -17,7 +18,7 @@ class SearchFilesCommand : public AbstractViewCommand<SearchFilesView> {
   void preferenceValuesChanged(const QJsonObject &value) const override {}
 };
 
-class FileExtension : public AbstractCommandRepository {
+class FileExtension : public BuiltinCommandRepository {
   QString id() const override { return "file"; }
   QString name() const override { return "System files"; }
   QString description() const override { return "Integrate with system files"; }

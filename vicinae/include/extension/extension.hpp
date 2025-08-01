@@ -27,5 +27,6 @@ public:
   std::filesystem::path installedPath() const;
   PreferenceList preferences() const override;
   std::vector<std::shared_ptr<AbstractCmd>> commands() const override;
+  QString author() const override;
   const ExtensionManifest &manifest() const;
 };

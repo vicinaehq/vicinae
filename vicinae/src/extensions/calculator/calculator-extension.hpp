@@ -1,6 +1,7 @@
 #pragma once
 #include "calculator-history-command.hpp"
 #include "command-builder.hpp"
+#include "command-database.hpp"
 #include "common.hpp"
 #include "omni-icon.hpp"
 #include "preference.hpp"
@@ -16,7 +17,7 @@ static const std::vector<Preference::DropdownData::Option> refreshRatesOptions =
     {"Every month", "monthly"},
 };
 
-class CalculatorExtension : public AbstractCommandRepository {
+class CalculatorExtension : public BuiltinCommandRepository {
 public:
   QString id() const override { return "calculator"; }
   QString name() const override { return "Calculator"; }
