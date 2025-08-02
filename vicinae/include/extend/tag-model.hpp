@@ -7,7 +7,7 @@
 struct TagItemModel {
   QString text;
   std::optional<ImageLikeModel> icon;
-  std::optional<ColorLikeModel> color;
+  std::optional<ColorLike> color;
   QString onAction;
 };
 

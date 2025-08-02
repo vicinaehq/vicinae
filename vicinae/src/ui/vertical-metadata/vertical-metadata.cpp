@@ -2,12 +2,13 @@
 #include "common.hpp"
 #include "extend/tag-model.hpp"
 #include "extensions/raycast/store/store-detail-view.hpp"
-#include "tag.hpp"
+#include "theme.hpp"
 #include "ui/typography/typography.hpp"
 #include "ui/vertical-scroll-area/vertical-scroll-area.hpp"
 #include "utils/layout.hpp"
 #include <qboxlayout.h>
 #include <qlabel.h>
+#include "ui/tag/tag.hpp"
 #include <qwidget.h>
 
 void VerticalMetadata::setMetadata(const std::vector<MetadataItem> &metadatas) {
@@ -38,11 +39,13 @@ void VerticalMetadata::setMetadata(const std::vector<MetadataItem> &metadatas) {
       auto hstack = Flow()
                         .map(tagList->items,
                              [](const TagItemModel &tag) {
-                               return HStack()
-                                   .addIf(tag.icon.has_value(),
-                                          [&]() -> QWidget * { return UI::Icon(*tag.icon).size({16, 16}); })
-                                   .add(UI::Text(tag.text))
-                                   .spacing(5);
+                               auto widget = new TagWidget;
+
+                               widget->setText(tag.text);
+                               if (tag.icon) widget->setIcon(*tag.icon);
+                               if (tag.color) widget->setColor(tag.color);
+
+                               return widget;
                              })
                         .spacing(5);
 

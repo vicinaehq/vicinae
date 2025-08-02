@@ -1,4 +1,5 @@
 #pragma once
+#include "theme.hpp"
 #include <qjsonobject.h>
 #include <qstring.h>
 
@@ -16,5 +17,5 @@ class ColorLikeModelParser {
 public:
   ColorLikeModelParser();
 
-  ColorLikeModel parse(const QJsonObject &colorLike);
+  ColorLike parse(const QJsonValue &colorLike);
 };

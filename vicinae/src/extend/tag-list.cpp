@@ -12,9 +12,7 @@ TagItemModel TagListParser::parseTagItem(const QJsonObject &instance) {
 
   if (props.contains("icon")) model.icon = ImageModelParser().parse(props.value("icon").toObject());
 
-  if (props.contains("color")) {
-    model.color = ColorLikeModelParser().parse(props.value("color").toObject());
-  }
+  if (props.contains("color")) { model.color = ColorLikeModelParser().parse(props.value("color")); }
 
   model.text = props.value("text").toString();
   model.onAction = props.value("onAction").toString();

@@ -1,6 +1,6 @@
 #include "ui/horizontal-metadata.hpp"
 #include "common.hpp"
-#include "tag.hpp"
+#include "ui/tag/tag.hpp"
 #include "ui/typography/typography.hpp"
 #include <qboxlayout.h>
 #include <qlabel.h>
@@ -50,16 +50,18 @@ void HorizontalMetadata::addItem(const MetadataItem &item) {
   } else if (auto separator = std::get_if<MetadataSeparator>(&item)) {
     layout->addWidget(new HDivider);
   } else if (auto tagList = std::get_if<TagListModel>(&item)) {
-    auto widget = new TagList;
+    /*
+auto widget = new TagList;
 
-    for (const auto &model : tagList->items) {
-      auto tag = new Tag();
+for (const auto &model : tagList->items) {
+auto tag = new Tag();
 
-      tag->applyModel(model);
-      widget->addTag(tag);
-    }
+tag->applyModel(model);
+widget->addTag(tag);
+}
 
-    add(tagList->title, widget);
+add(tagList->title, widget);
+  */
   }
 }
 

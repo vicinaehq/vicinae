@@ -1,12 +1,19 @@
 #include "extend/color-model.hpp"
+#include "omni-icon.hpp"
+#include "theme.hpp"
+#include "ui/omni-painter/omni-painter.hpp"
 #include <qjsonobject.h>
 
 ColorLikeModelParser::ColorLikeModelParser() {}
 
-ColorLikeModel ColorLikeModelParser::parse(const QJsonObject &colorLike) {
-  if (colorLike.contains("themeColor")) { return colorLike.value("themeColor").toString(); }
+ColorLike ColorLikeModelParser::parse(const QJsonValue &colorLike) {
+  if (colorLike.isString()) {
+    if (auto tint = OmniIconUrl::tintForName(colorLike.toString()); tint != SemanticColor::InvalidTint) {
+      return tint;
+    }
 
-  if (colorLike.contains("colorString")) { return colorLike.value("colorString").toString(); }
+    return QColor(colorLike.toString());
+  }
 
-  return "primary-text";
+  return QColor();
 }

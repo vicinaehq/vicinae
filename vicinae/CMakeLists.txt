@@ -488,6 +488,8 @@ set(SRCS
 	src/ui/flow-layout/flow-layout.hpp
 	src/ui/flow-layout/flow-layout.cpp
 
+	src/ui/tag/tag.cpp
+
 	src/ui/theme-selector/theme-selector.cpp
 	src/ui/font-selector/font-selector.cpp
 
