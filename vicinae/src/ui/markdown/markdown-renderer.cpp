@@ -1,5 +1,4 @@
 #include "ui/markdown/markdown-renderer.hpp"
-#include "omni-icon.hpp"
 #include "service-registry.hpp"
 #include "theme.hpp"
 #include "ui/image/omnimg.hpp"
@@ -33,19 +32,31 @@ int MarkdownRenderer::getHeadingLevelPointSize(int level) const {
   return _basePointSize * factor;
 }
 
+void MarkdownRenderer::insertIfNotFirstBlock() {
+  if (m_isFirstBlock) {
+    if (!_cursor.block().text().isEmpty()) { _cursor.insertBlock(); }
+    qDebug() << "skipping block: first";
+    m_isFirstBlock = false;
+    return;
+  }
+  _cursor.insertBlock();
+}
+
 void MarkdownRenderer::insertHeading(const QString &text, int level) {
   QTextBlockFormat blockFormat;
   QTextCharFormat charFormat;
 
-  if (!_cursor.block().text().isEmpty()) { _cursor.insertBlock(); }
+  insertIfNotFirstBlock();
 
-  blockFormat.setAlignment(Qt::AlignLeft);
-  blockFormat.setTopMargin(level == 1 ? 15 : 10);
+  // blockFormat.setAlignment(Qt::AlignLeft);
+  blockFormat.setTopMargin(level == 1 ? 20 : 15);
   blockFormat.setBottomMargin(level == 1 ? 15 : 10);
 
   charFormat.setFont(_document->defaultFont());
   charFormat.setFontPointSize(getHeadingLevelPointSize(level));
   charFormat.setFontWeight(QFont::Bold);
+
+  qDebug() << "heading" << text;
 
   _cursor.setBlockFormat(blockFormat);
   _cursor.setBlockCharFormat(charFormat);
@@ -60,77 +71,59 @@ void MarkdownRenderer::insertImage(cmark_node *node) {
   const char *p = cmark_node_get_url(node);
   QUrl url(p);
   QUrlQuery query(url);
-  auto icon = new Omnimg::ImageWidget(this);
-  auto pos = _cursor.position();
   auto documentMargin = _document->documentMargin();
   int widthOffset = documentMargin * 4;
-
-  icon->setFixedSize(size().width() - widthOffset, size().height() - documentMargin * 2);
+  QSize iconSize(size().width() - widthOffset, size().height() - documentMargin * 2);
 
   for (const auto &attr : widthAttributes) {
     if (auto value = query.queryItemValue(attr); !value.isEmpty()) {
-      icon->setFixedWidth(value.toInt());
+      iconSize.setWidth(value.toInt());
       break;
     }
   }
 
   for (const auto &attr : heightAttributes) {
     if (auto value = query.queryItemValue(attr); !value.isEmpty()) {
-      icon->setFixedHeight(value.toInt());
+      iconSize.setHeight(value.toInt());
       break;
     }
   }
-
-  OmniIconUrl iconUrl;
 
   for (const auto &attr : tintAttributes) {
     // implement for tint
   }
 
+  std::unique_ptr<Omnimg::AbstractImageLoader> imageLoader;
+
   if (url.scheme() == "https") {
-    iconUrl.setType(OmniIconType::Http);
-    iconUrl.setName(url.host() + url.path());
-  }
-
-  else if (url.scheme() == "file") {
-    iconUrl.setType(OmniIconType::Local);
-    iconUrl.setName(url.host() + url.path());
+    imageLoader = std::make_unique<Omnimg::HttpImageLoader>(url);
   } else {
-    iconUrl.setType(OmniIconType::Local);
-    iconUrl.setName(p);
+    std::filesystem::path path = QString("%1%2").arg(url.host()).arg(url.path()).toStdString();
+
+    imageLoader = std::make_unique<Omnimg::LocalImageLoader>(path);
   }
 
-  /*
-  connect(icon, &OmniIcon::imageUpdated, this, [this, url, pos, icon](const QPixmap &pix) {
-    qDebug() << "loaded image";
-    QTextBlockFormat blockFormat;
-    auto old = _cursor.position();
+  auto pos = _cursor.position();
 
-    _cursor.setPosition(pos);
-    _document->addResource(QTextDocument::ImageResource, url, pix);
+  connect(imageLoader.get(), &Omnimg::AbstractImageLoader::dataUpdated, this,
+          [this, url, pos](const QPixmap &pix) {
+            auto old = _cursor.position();
 
-    blockFormat.setTopMargin(15);
-    blockFormat.setBottomMargin(15);
-    blockFormat.setAlignment(Qt::AlignCenter);
+            _cursor.setPosition(pos);
+            _document->addResource(QTextDocument::ImageResource, url, pix);
 
-    if (!_cursor.block().text().isEmpty()) {
-      _cursor.insertBlock(blockFormat);
-    } else {
-      _cursor.setBlockFormat(blockFormat);
-    }
+            QTextBlockFormat blockFormat = _cursor.blockFormat();
 
-    _cursor.insertImage(url.toString());
-    _cursor.setPosition(old);
-    _document->markContentsDirty(0, _document->characterCount());
-    icon->deleteLater();
-  });
-  */
+            blockFormat.setAlignment(Qt::AlignCenter);
 
-  icon->setUrl(iconUrl);
-  icon->show();
-  icon->hide();
+            _cursor.setBlockFormat(blockFormat);
+            _cursor.insertImage(url.toString());
+            _cursor.setPosition(old);
+            _document->markContentsDirty(0, _document->characterCount());
+          });
 
-  // m_images.push_back({.cursorPos = _cursor.position(), .icon = icon});
+  imageLoader->render({.size = iconSize, .devicePixelRatio = devicePixelRatio()});
+  m_images.push_back({.cursorPos = pos, .icon = std::move(imageLoader)});
 }
 
 void MarkdownRenderer::insertCodeBlock(cmark_node *node, bool isClosing) {
@@ -183,7 +176,8 @@ QTextList *MarkdownRenderer::insertList(cmark_node *list, int indent) {
     break;
   }
 
-  _cursor.insertBlock();
+  insertIfNotFirstBlock();
+
   QTextCharFormat charFormat;
   charFormat.setFontWeight(QFont::Normal);
   charFormat.setFontPointSize(_basePointSize); // Set default size
@@ -197,7 +191,6 @@ QTextList *MarkdownRenderer::insertList(cmark_node *list, int indent) {
   _cursor.setBlockFormat(blockFormat);
 
   QTextList *textList = _cursor.createList(listFormat);
-
   size_t i = 0;
 
   while (item) {
@@ -207,7 +200,6 @@ QTextList *MarkdownRenderer::insertList(cmark_node *list, int indent) {
       while (node) {
         switch (cmark_node_get_type(node)) {
         case CMARK_NODE_PARAGRAPH:
-          if (i > 0) { _cursor.insertBlock(blockFormat, charFormat); }
           insertParagraph(node);
           textList->add(_cursor.block());
           break;
@@ -232,8 +224,7 @@ QTextList *MarkdownRenderer::insertList(cmark_node *list, int indent) {
 void MarkdownRenderer::insertBlockParagraph(cmark_node *node) {
   QTextBlockFormat blockFormat;
 
-  if (!_cursor.block().text().isEmpty()) { _cursor.insertBlock(); }
-
+  insertIfNotFirstBlock();
   blockFormat.setAlignment(Qt::AlignLeft);
   blockFormat.setTopMargin(10);
   blockFormat.setBottomMargin(10);
@@ -287,9 +278,10 @@ void MarkdownRenderer::insertParagraph(cmark_node *node) {
   OmniPainter painter;
   cmark_node *child = cmark_node_first_child(node);
   QTextCharFormat defaultFormat;
+  size_t i = 0;
 
   defaultFormat.setFont(_document->defaultFont());
-  defaultFormat.setForeground(painter.colorBrush(*m_baseTextColor));
+  defaultFormat.setForeground(theme.resolveTint(SemanticColor::TextPrimary));
   defaultFormat.setFontPointSize(_basePointSize);
 
   while (child) {
@@ -297,8 +289,11 @@ void MarkdownRenderer::insertParagraph(cmark_node *node) {
 
     switch (cmark_node_get_type(child)) {
     case CMARK_NODE_IMAGE:
+      // XXX - Workaround so that images renderered right below a heading do not
+      // appear on the same line than the heading. Since we insert a new block for each
+      // paragraph (the image being the first child of the paragraph) I'm not sure why that happens.
+      if (_lastNodeType == CMARK_NODE_HEADING) insertIfNotFirstBlock();
       insertImage(child);
-      if (cmark_node_next(child)) { _cursor.insertBlock(); }
       break;
     default:
       insertSpan(child, fmt);
@@ -306,6 +301,7 @@ void MarkdownRenderer::insertParagraph(cmark_node *node) {
       break;
     }
 
+    ++i;
     child = cmark_node_next(child);
   }
   _cursor.setCharFormat(defaultFormat);
@@ -344,6 +340,8 @@ void MarkdownRenderer::insertTopLevelNode(cmark_node *node) {
   default:
     break;
   }
+
+  _lastNodeType = type;
 }
 
 QTextEdit *MarkdownRenderer::textEdit() const { return _textEdit; }
@@ -450,35 +448,14 @@ void MarkdownRenderer::appendMarkdown(QStringView markdown) {
 }
 
 void MarkdownRenderer::setMarkdown(QStringView markdown) {
+  m_isFirstBlock = true;
+  m_images.clear();
   clear();
   appendMarkdown(markdown);
   _cursor.setPosition(0);
   _textEdit->verticalScrollBar()->setValue(0);
   _textEdit->setTextCursor(_cursor);
   qreal height = _document->size().height();
-
-  /*
-  QFont font = _document->defaultFont();
-  QFontMetrics metrics(font);
-
-  qDebug() << "Font point size:" << font.pointSize();
-  qDebug() << "Font pixel size:" << font.pixelSize();
-  qDebug() << "Line spacing:" << metrics.lineSpacing();
-  qDebug() << "Height (ascent + descent):" << metrics.height();
-  qDebug() << "Ascent:" << metrics.ascent();
-  qDebug() << "Descent:" << metrics.descent();
-  qDebug() << "Leading:" << metrics.leading();
-  qDebug() << "Document margin:" << _document->documentMargin();
-  qCritical() << "text edit height" << _textEdit->height();
-  qCritical() << "set height to" << height;
-
-  QTextCursor cursor(_document);
-  do {
-    QTextBlockFormat format = cursor.blockFormat();
-    qDebug() << "Block" << cursor.blockNumber() << "top margin:" << format.topMargin()
-             << "bottom margin:" << format.bottomMargin();
-  } while (cursor.movePosition(QTextCursor::NextBlock));
-  */
 
   if (m_growAsRequired) { setFixedHeight(_document->size().height()); }
 }

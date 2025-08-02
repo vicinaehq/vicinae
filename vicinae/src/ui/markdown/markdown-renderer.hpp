@@ -22,7 +22,7 @@ struct TopLevelBlock {
 
 struct ImageResource {
   int cursorPos;
-  Omnimg::ImageWidget *icon;
+  std::unique_ptr<Omnimg::AbstractImageLoader> icon;
   QUrl name;
 };
 
@@ -39,6 +39,7 @@ class MarkdownRenderer : public QWidget {
   int _basePointSize;
   bool m_growAsRequired = false;
   std::optional<ColorLike> m_baseTextColor = SemanticColor::TextPrimary;
+  bool m_isFirstBlock = true;
 
   int _lastNodeType = CMARK_NODE_NONE;
 
@@ -58,6 +59,8 @@ class MarkdownRenderer : public QWidget {
   void insertCodeBlock(cmark_node *node, bool isClosing = false);
   void insertHeading(cmark_node *node);
   void insertTopLevelNode(cmark_node *node);
+
+  void insertIfNotFirstBlock();
 
 public:
   void setGrowAsRequired(bool value);
