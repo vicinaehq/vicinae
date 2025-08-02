@@ -89,6 +89,11 @@ declare module 'react' {
                 icon?: SerializedImageLike;
             };
             'metadata-separator': {};
+			'metadata-link': {
+				title: string,
+				target: string,
+				text: string
+			},
             'action-panel': {
                 title?: string;
                 children?: React.ReactNode;

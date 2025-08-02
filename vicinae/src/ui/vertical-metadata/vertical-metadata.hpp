@@ -1,18 +1,16 @@
 #pragma once
 #include "extend/metadata-model.hpp"
+#include "ui/vertical-scroll-area/vertical-scroll-area.hpp"
 #include <qboxlayout.h>
 #include <qjsonvalue.h>
 #include <qwidget.h>
 
-class VerticalMetadata : public QWidget {
+class VerticalMetadata : public VerticalScrollArea {
 private:
-  QVBoxLayout *layout;
-  QVBoxLayout *currentLayout = 0;
-
-  void add(const QString &title, QWidget *widget);
+  QWidget *container = nullptr;
 
 public:
-  VerticalMetadata();
+  void setMetadata(const std::vector<MetadataItem> &metadatas);
 
-  void addItem(const MetadataItem &item);
+  VerticalMetadata();
 };

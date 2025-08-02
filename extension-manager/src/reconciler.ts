@@ -1,10 +1,11 @@
 import Reconciler, { OpaqueRoot } from 'react-reconciler';
 import { setTimeout, clearTimeout } from 'node:timers';
 import { DefaultEventPriority } from 'react-reconciler/constants';
-import { ReactElement } from 'react';
+import React, { ReactElement } from 'react';
 import { isDeepEqual } from './utils';
 import { appendFileSync, writeFileSync } from 'node:fs';
 import { before } from 'node:test';
+import { inspect } from 'node:util';
 
 type LinkNode = {
 	next: LinkNode | null;
@@ -155,6 +156,20 @@ function traceWrap(hostConfig: any) {
   return traceWrappedHostConfig;
 }
 
+const sanitizeProps = (props: Record<string, any>): Record<string, any> => {
+	const sanitized: Record<string, any> = {};
+
+	for (const key of Object.keys(props)) {
+		if (React.isValidElement(props[key])) {
+			console.error(`React element in props is ignored for key ${key}`);
+		} else if (key !== 'children') {
+			sanitized[key] = props[key];
+		}
+	}
+
+	return sanitized;
+}
+
 const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 	const hostConfig: Reconciler.HostConfig<
 		InstanceType,
@@ -178,14 +193,10 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 		createInstance(type, props, root, ctx, handle): Instance {
 			let { children, key, ...rest } = props;
 
-			if (Array.isArray(children)) {
-				children = children.filter(Boolean);
-			}
-
 			return {
 				id: Symbol(type),
 				type,
-				props: rest,
+				props: sanitizeProps(rest),
 				children: [],
 				dirty: true,
 				propsDirty: true,
@@ -348,12 +359,17 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 				emitDirty(instance.parent);
 			}
 
+
+			instance.props = sanitizeProps(nextProps);
+
+			/*
 			while (i < payload.length) {
 				const key = payload[i++];
 				const value = payload[i++];
 
 				instance.props[key] = value;
 			}
+			*/
 		},
 
 		replaceContainerChildren() {
@@ -443,8 +459,9 @@ export const createRenderer = (config: RendererConfig) => {
 				const views: ViewData[] = [];
 				const root = serializeInstance(container);
 
-				writeFileSync('/tmp/render.txt', `Generated ${new Date}\n`);
-				appendFileSync('/tmp/render.txt', JSON.stringify(root, null, 2));
+
+				//writeFileSync('/tmp/render.txt', `${inspect(root, { depth: null, colors: true })}`);
+				//appendFileSync('/tmp/render.txt', JSON.stringify(root, null, 2));
 
 				for (let i = 0; i != root.children.length; ++i) {
 					const view = root.children[i];

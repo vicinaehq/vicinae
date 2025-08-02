@@ -22,6 +22,7 @@
 class Stack;
 class VStack;
 class HStack;
+class Flow;
 
 struct LayoutStretch {
   int stretch = 0;
@@ -210,6 +211,40 @@ enum AlignStrategy { None, JustifyBetween, Center };
 template <typename T>
 concept StackBase = std::is_convertible_v<std::decay_t<T>, Stack>;
 
+using FlowLayoutItem = std::variant<std::shared_ptr<Stack>, QWidget *>;
+
+class Flow {
+  std::vector<FlowLayoutItem> m_items;
+  int m_spacing = 0;
+
+public:
+  Flow() {}
+
+  Flow &spacing(int spacing) {
+    m_spacing = spacing;
+    return *this;
+  }
+
+  template <StackBase T> Flow &add(const T &stack) {
+    m_items.emplace_back(std::make_shared<T>(stack));
+    return *this;
+  }
+
+  Flow &add(QWidget *widget) {
+    m_items.emplace_back(widget);
+    return *this;
+  }
+
+  template <std::ranges::sized_range T> Flow &map(const T &ct, const auto &fn) {
+    m_items.reserve(m_items.size() + ct.size());
+    std::ranges::for_each(ct, [&](auto &&item) { add(fn(item)); });
+
+    return *this;
+  }
+
+  QWidget *buildWidget() const;
+};
+
 class Stack {
 public:
   enum Direction { Horizontal, Vertical };
@@ -217,6 +252,7 @@ public:
   Direction m_direction;
   AlignStrategy m_align = AlignStrategy::None;
   int m_spacing = 0;
+  bool m_wrapped = false;
   QMargins m_margins;
   std::vector<LayoutItem> m_items;
   int m_divided = 0;
@@ -244,6 +280,11 @@ public:
   Stack &addParagraph(const QString &text, SemanticColor color = SemanticColor::TextPrimary,
                       TextSize size = TextSize::TextRegular, Qt::Alignment align = {});
 
+  Stack &wrapped() {
+    m_wrapped = true;
+    return *this;
+  }
+
   Stack &divided(int n);
   int divided() const;
 
@@ -261,6 +302,8 @@ public:
   Stack &align(AlignStrategy strategy);
   AlignStrategy align() const;
   QMargins margins() const;
+  Stack &marginsX(int x);
+  Stack &marginsY(int y);
   Stack &margins(int margin);
   Stack &margins(int left, int top, int right, int bottom);
   Stack &spacing(int spacing);

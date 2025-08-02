@@ -485,6 +485,9 @@ set(SRCS
 	src/ui/scroll-bar/scroll-bar.hpp
 	src/ui/scroll-bar/scroll-bar.cpp
 
+	src/ui/flow-layout/flow-layout.hpp
+	src/ui/flow-layout/flow-layout.cpp
+
 	src/ui/theme-selector/theme-selector.cpp
 	src/ui/font-selector/font-selector.cpp
 

@@ -32,8 +32,13 @@ const MetadataSeparator: React.FC = () => {
 	return <metadata-separator />
 }
 
+const MetadataLink: React.FC<{ title: string, target: string, text: string }> = ({ title, target, text }) => {
+	return <metadata-link title={title} target={target} text={text} />
+}
+
 export const Metadata = Object.assign(MetadataRoot, {
 	Label: MetadataLabel,
 	Separator: MetadataSeparator,
-	TagList
+	TagList,
+	Link: MetadataLink
 });

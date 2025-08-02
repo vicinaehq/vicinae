@@ -1,5 +1,6 @@
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
+#include "services/app-service/app-service.hpp"
 #include "theme.hpp"
 #include "ui/image/omnimg.hpp"
 #include "ui/typography/typography.hpp"

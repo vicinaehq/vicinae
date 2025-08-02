@@ -1,5 +1,7 @@
 #pragma once
+#include "extend/extension-detail-view.hpp"
 #include "extension/extension-command-controller.hpp"
+#include "extension/extension-form-component.hpp"
 #include "extension/extension-grid-component.hpp"
 #include "extension/extension-list-component.hpp"
 #include "extension/extension-view.hpp"
@@ -10,9 +12,9 @@
 struct ViewVisitor {
   ExtensionSimpleView *operator()(const ListModel &model) const { return new ExtensionListComponent; }
   ExtensionSimpleView *operator()(const GridModel &model) const { return new ExtensionGridComponent; }
-  ExtensionSimpleView *operator()(const FormModel &model) const { return nullptr; }
+  ExtensionSimpleView *operator()(const FormModel &model) const { return new ExtensionFormComponent; }
+  ExtensionSimpleView *operator()(const RootDetailModel &model) const { return new ExtensionDetailView; }
   ExtensionSimpleView *operator()(const InvalidModel &model) const { return nullptr; }
-  ExtensionSimpleView *operator()(const RootDetailModel &model) const { return nullptr; }
 };
 
 class ExtensionViewWrapper : public BaseView {
@@ -52,6 +54,7 @@ public:
       if (auto previous = m_layout->widget(0)) {
         m_layout->removeWidget(previous);
         previous->deleteLater();
+        m_current = nullptr;
       }
 
       if (!view) return;

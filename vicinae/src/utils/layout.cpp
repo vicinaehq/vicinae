@@ -5,6 +5,7 @@
 #include <qnamespace.h>
 #include <qwidget.h>
 #include <variant>
+#include "ui/flow-layout/flow-layout.hpp"
 #include "ui/image/omnimg.hpp"
 #include "ui/typography/typography.hpp"
 #include "omni-icon.hpp"
@@ -107,6 +108,17 @@ Stack &Stack::margins(int left, int top, int right, int bottom) {
   m_margins = {left, top, right, bottom};
   return *this;
 }
+
+Stack &Stack::marginsX(int x) {
+  m_margins = {x, m_margins.top(), x, m_margins.bottom()};
+  return *this;
+}
+
+Stack &Stack::marginsY(int y) {
+  m_margins = {m_margins.left(), y, m_margins.right(), y};
+  return *this;
+}
+
 Stack &Stack::spacing(int spacing) {
   m_spacing = spacing;
   return *this;
@@ -178,6 +190,30 @@ QWidget *Stack::buildWidget() const {
   auto widget = new QWidget;
 
   widget->setLayout(buildLayout());
+
+  return widget;
+}
+
+QWidget *Flow::buildWidget() const {
+  auto layout = new FlowLayout;
+
+  layout->setContentsMargins(0, 0, 0, 0);
+  layout->setSpacing(m_spacing);
+
+  for (const auto &item : m_items) {
+    if (auto widget = std::get_if<QWidget *>(&item)) {
+      layout->addWidget(*widget);
+    } else if (auto stackPtr = std::get_if<std::shared_ptr<Stack>>(&item)) {
+      QWidget *child = new QWidget;
+
+      child->setLayout(stackPtr->get()->buildLayout());
+      layout->addWidget(child);
+    }
+  }
+
+  auto widget = new QWidget;
+
+  widget->setLayout(layout);
 
   return widget;
 }

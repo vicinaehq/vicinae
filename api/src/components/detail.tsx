@@ -5,6 +5,7 @@ export type DetailProps = {
 	navigationTitle?: string;
 	metadata?: ReactNode;
 	markdown: string;
+	actions?: ReactNode;
 };
 
 const DetailRoot: React.FC<DetailProps> = ({ metadata, ...props }) => {

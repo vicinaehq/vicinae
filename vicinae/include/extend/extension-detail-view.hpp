@@ -1,4 +1,10 @@
 #pragma once
+#include "extend/model-parser.hpp"
+#include "extension/extension-view.hpp"
+#include "ui/markdown/markdown-renderer.hpp"
+#include "ui/split-detail/split-detail.hpp"
+#include "ui/vertical-metadata/vertical-metadata.hpp"
+#include "utils/layout.hpp"
 #include <QListWidget>
 #include <QTextEdit>
 #include <qboxlayout.h>
@@ -14,63 +20,40 @@
 #include <qtmetamacros.h>
 #include <qwidget.h>
 
-/*
-class ExtensionDetailView : public ExtensionComponent {
+class ExtensionDetailView : public ExtensionSimpleView {
   Q_OBJECT
 
-  View &parent;
-  QHBoxLayout *layout;
-  MarkdownView *markdownEditor;
+  MarkdownRenderer *markdownEditor;
   VerticalMetadata *metadata;
+  SplitDetailWidget *m_split;
 
-private slots:
+  bool supportsSearch() const override { return false; }
+
 public:
-  ExtensionDetailView(const RootDetailModel &model, View &parent)
-      : parent(parent), layout(new QHBoxLayout),
-        markdownEditor(new MarkdownView), metadata(new VerticalMetadata()) {
-    layout->setSpacing(0);
-    layout->addWidget(markdownEditor, 2);
-    layout->addWidget(new VDivider());
-    layout->addWidget(metadata, 1);
-    layout->setContentsMargins(0, 0, 0, 0);
+  ExtensionDetailView()
+      : markdownEditor(new MarkdownRenderer), metadata(new VerticalMetadata()),
+        m_split(new SplitDetailWidget) {
+    m_split->setMainWidget(markdownEditor);
+    m_split->setDetailWidget(metadata);
+    m_split->setRatio(0.40);
 
-    parent.hideInput();
-
-    setLayout(layout);
-    dispatchModel(model);
+    VStack().add(m_split).imbue(this);
   }
 
-  void dispatchModel(const RootDetailModel &model) {
-    qDebug() << "set markdown" << model.markdown;
-    markdownEditor->setMarkdown(model.markdown);
+  void render(const RenderModel &model) override {
+    auto newModel = std::get<RootDetailModel>(model);
 
-    ThemeService theme;
+    setLoading(newModel.isLoading);
 
-    if (model.metadata) {
-      auto newMeta = new VerticalMetadata();
+    markdownEditor->setMarkdown(newModel.markdown);
 
-      for (const auto &child : model.metadata->children) {
-        newMeta->addItem(child);
-      }
-
-      layout->replaceWidget(metadata, newMeta);
-      newMeta->show();
-
-      metadata->deleteLater();
-      metadata = newMeta;
+    if (newModel.metadata) {
+      metadata->setMetadata(newModel.metadata->children | std::ranges::to<std::vector>());
     } else {
       metadata->hide();
     }
+    m_split->setDetailVisibility(newModel.metadata.has_value());
 
-    if (model.actions) {
-      // parent.setActions(*model.actions);
-    }
-
-    qDebug() << "dispatching model update";
-  }
-
-  void onActionActivated(ActionModel model) {
-    qDebug() << "activated" << model.title;
+    if (auto actions = newModel.actions) { setActionPanel(*actions); }
   }
 };
-*/

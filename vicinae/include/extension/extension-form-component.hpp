@@ -1,8 +1,7 @@
 #pragma once
-#include "common.hpp"
 #include "extend/form-model.hpp"
 #include "extend/model.hpp"
-#include "extension/extension-component.hpp"
+#include "extension/extension-view.hpp"
 #include "extension/form/extension-checkbox-field.hpp"
 #include "extension/form/extension-text-field.hpp"
 #include "ui/form/form-field.hpp"
@@ -17,6 +16,7 @@
 #include "extension/form/extension-form-input.hpp"
 #include "extension/form/extension-dropdown.hpp"
 #include "extension/form/extension-password-field.hpp"
+#include "ui/vertical-scroll-area/vertical-scroll-area.hpp"
 #include <qwidget.h>
 
 class ExtensionFormField : public FormField {
@@ -87,12 +87,14 @@ signals:
   void notifyEvent(const QString &handler, const QJsonArray &args) const;
 };
 
-class ExtensionFormComponent : public AbstractExtensionRootComponent {
-  QScrollArea *m_scrollArea = new QScrollArea(this);
+class ExtensionFormComponent : public ExtensionSimpleView {
+  QScrollArea *m_scrollArea = new VerticalScrollArea(this);
   std::unordered_map<QString, ExtensionFormField *> m_fieldMap;
   std::vector<ExtensionFormField *> m_fields;
   QVBoxLayout *m_layout = new QVBoxLayout;
   bool autoFocused = false;
+
+  bool supportsSearch() const override { return false; }
 
 public:
   void handleSubmit(const EventHandler &handler) {
@@ -106,7 +108,7 @@ public:
       payload[field->id()] = field->valueAsJson();
     }
 
-    notifyEvent(handler, {payload});
+    notify(handler, {payload});
     reset();
   }
 
@@ -120,17 +122,7 @@ public:
     auto formModel = std::get<FormModel>(model);
     size_t i = 0;
 
-    if (auto pannel = formModel.actions) {
-      for (auto &item : pannel->children) {
-        if (auto action = std::get_if<ActionModel>(&item)) {
-          if (i == 0) action->shortcut = {"return", {"shift"}};
-
-          ++i;
-        }
-      }
-
-      emit updateActionPannel(*pannel);
-    }
+    if (auto pannel = formModel.actions) { setActionPanel(*pannel); }
 
     std::vector<QString> visibleIds;
 
@@ -151,7 +143,7 @@ public:
         } else {
           formField = new ExtensionFormField();
           m_fieldMap.insert({field->id, formField});
-          connect(formField, &ExtensionFormField::notifyEvent, this, &ExtensionFormComponent::notifyEvent);
+          connect(formField, &ExtensionFormField::notifyEvent, this, &ExtensionFormComponent::notify);
         }
 
         formField->setModel(field);
@@ -195,7 +187,7 @@ public:
     qDebug() << "form model render with" << formModel.items.size() << "items";
   }
 
-  ExtensionFormComponent(AppWindow &app) : AbstractExtensionRootComponent(app) {
+  ExtensionFormComponent() {
     auto layout = new QVBoxLayout;
     auto form = new QWidget;
 

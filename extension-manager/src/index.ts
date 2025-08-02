@@ -94,7 +94,7 @@ class Omnicast {
 					 */
 
 					if (request) {
-						console.error('request of type', JSON.stringify(request, null, 2));
+						//console.error('request of type', JSON.stringify(request, null, 2));
 						this.requestMap.set(request.requestId, worker);
 						this.writeMessage({ extensionRequest: { sessionId, request } });
 						return ;
@@ -164,7 +164,7 @@ class Omnicast {
 	private async routeMessage(message: ipc.IpcMessage) {
 		const { managerRequest, extensionEvent, extensionResponse } = message;
 
-		console.error(JSON.stringify({ message }, null, 2));
+		//console.error(JSON.stringify({ message }, null, 2));
 
 		if (managerRequest) {
 			this.handleManagerRequest(managerRequest);

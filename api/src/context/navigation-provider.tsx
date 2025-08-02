@@ -10,13 +10,13 @@ export const NavigationProvider: React.FC<{ root: ReactNode }>= ({ root }) => {
 	const [navStack, setNavStack] = useState<ReactNode[]>([root]);
 
 	const pop = () => {
-		bus!.request('ui.pop-view', {}).then(() => {
+		bus.turboRequest('ui.popView', {}).then(() => {
 			setNavStack((cur) => cur.slice(0, -1));
 		});
 	}
 
 	const push = (node: ReactNode) => {
-		bus!.request('ui.push-view', {}).then(() => {
+		bus.turboRequest('ui.pushView', {}).then(() => {
 			setNavStack((cur) => [...cur, node]);
 		});
 	}

@@ -1,64 +1,62 @@
 #include "ui/vertical-metadata/vertical-metadata.hpp"
 #include "common.hpp"
+#include "extend/tag-model.hpp"
+#include "extensions/raycast/store/store-detail-view.hpp"
 #include "tag.hpp"
 #include "ui/typography/typography.hpp"
+#include "ui/vertical-scroll-area/vertical-scroll-area.hpp"
+#include "utils/layout.hpp"
 #include <qboxlayout.h>
 #include <qlabel.h>
+#include <qwidget.h>
 
-static QVBoxLayout *createContainer() {
-  QVBoxLayout *layout = new QVBoxLayout;
+void VerticalMetadata::setMetadata(const std::vector<MetadataItem> &metadatas) {
+  auto stack = VStack().spacing(10).margins(0, 10, 0, 0);
 
-  layout = new QVBoxLayout();
-  layout->setAlignment(Qt::AlignTop);
-  layout->setContentsMargins(12, 12, 12, 12);
-  layout->setSpacing(15);
+  int marginX = 10;
 
-  return layout;
-}
+  for (const auto &metadata : metadatas) {
+    if (auto link = std::get_if<MetadataLink>(&metadata)) {
+      auto widget = new TextLinkWidget;
 
-VerticalMetadata::VerticalMetadata() : layout(new QVBoxLayout) {
-  layout->setAlignment(Qt::AlignTop);
-  layout->setContentsMargins(0, 0, 0, 0);
-
-  currentLayout = createContainer();
-  layout->addLayout(currentLayout);
-
-  setLayout(layout);
-}
-
-void VerticalMetadata::add(const QString &title, QWidget *widget) {
-  auto row = new QWidget();
-  auto rowLayout = new QVBoxLayout();
-  auto titleWidget = new TypographyWidget();
-
-  titleWidget->setText(title);
-
-  rowLayout->setContentsMargins(0, 0, 0, 0);
-  rowLayout->setSpacing(10);
-  rowLayout->addWidget(titleWidget, 0, Qt::AlignLeft);
-  rowLayout->addWidget(widget, 0, Qt::AlignLeft);
-
-  row->setLayout(rowLayout);
-  currentLayout->addWidget(row);
-}
-
-void VerticalMetadata::addItem(const MetadataItem &item) {
-  if (auto label = std::get_if<MetadataLabel>(&item)) {
-    add(label->title, new QLabel(label->text));
-  } else if (auto separator = std::get_if<MetadataSeparator>(&item)) {
-    layout->addWidget(new HDivider);
-    currentLayout = createContainer();
-    layout->addLayout(currentLayout);
-  } else if (auto tagList = std::get_if<TagListModel>(&item)) {
-    auto widget = new TagList;
-
-    for (const auto &model : tagList->items) {
-      auto tag = new Tag();
-
-      tag->applyModel(model);
-      widget->addTag(tag);
+      widget->setText(link->text);
+      widget->setHref(link->target);
+      stack.add(VStack().marginsX(marginX).add(UI::Text(link->title).secondary()).add(widget).spacing(5));
     }
 
-    add(tagList->title, widget);
+    if (auto label = std::get_if<MetadataLabel>(&metadata)) {
+      auto hstack = HStack()
+                        .addIf(label->icon.has_value(),
+                               [&]() -> QWidget * { return UI::Icon(*label->icon).size({16, 16}); })
+                        .add(UI::Text(label->text))
+                        .spacing(5);
+
+      stack.add(VStack().marginsX(marginX).add(UI::Text(label->title).secondary()).add(hstack).spacing(5));
+    }
+
+    if (auto tagList = std::get_if<TagListModel>(&metadata)) {
+      auto hstack = Flow()
+                        .map(tagList->items,
+                             [](const TagItemModel &tag) {
+                               return HStack()
+                                   .addIf(tag.icon.has_value(),
+                                          [&]() -> QWidget * { return UI::Icon(*tag.icon).size({16, 16}); })
+                                   .add(UI::Text(tag.text))
+                                   .spacing(5);
+                             })
+                        .spacing(5);
+
+      stack.add(VStack()
+                    .marginsX(marginX)
+                    .add(UI::Text(tagList->title).secondary())
+                    .add(hstack.buildWidget())
+                    .spacing(5));
+    }
+
+    if (auto sep = std::get_if<MetadataSeparator>(&metadata)) { stack.add(new HDivider); }
   }
+
+  stack.imbue(container);
 }
+
+VerticalMetadata::VerticalMetadata() : container(new QWidget) { setWidget(container); }

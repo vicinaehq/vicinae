@@ -19,7 +19,8 @@ class ErrorBoundary extends React.Component<{ children: ReactNode }, { error: st
     const {error} = this.state;
 
     if (error) {
-		console.error(error);
+		bus.emitCrash(error);
+		return null;
 	}
 
     return <>{this.props.children}</>;
