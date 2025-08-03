@@ -16,7 +16,8 @@ ListItemViewModel ListModelParser::parseListItem(const QJsonObject &instance, si
   model.id = props["id"].toString(QString::number(index));
   model.title = props["title"].toString();
   model.subtitle = props["subtitle"].toString();
-  model.icon = ImageModelParser().parse((props.value("icon").toObject()));
+
+  if (props.contains("icon")) { model.icon = ImageModelParser().parse((props.value("icon").toObject())); }
 
   size_t i = 0;
 

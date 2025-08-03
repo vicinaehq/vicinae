@@ -12,7 +12,7 @@ struct ListItemViewModel {
   QString id;
   QString title;
   QString subtitle;
-  ImageLikeModel icon;
+  std::optional<ImageLikeModel> icon;
   std::optional<DetailModel> detail;
   std::optional<ActionPannelModel> actionPannel;
 };
