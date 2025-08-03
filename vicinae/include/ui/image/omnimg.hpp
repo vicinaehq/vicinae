@@ -188,6 +188,8 @@ class HttpImageLoader : public AbstractImageLoader {
   void handleReplyFinished() {}
 
   void render(const RenderConfig &cfg) override {
+    if (m_reply) { m_reply->abort(); }
+
     QNetworkRequest request(m_url);
     // auto reply = NetworkManager::instance()->manager()->get(request);
     auto reply = NetworkFetcher::instance()->fetch(m_url);
@@ -196,6 +198,8 @@ class HttpImageLoader : public AbstractImageLoader {
     m_reply = reply;
 
     connect(reply, &FetchReply::finished, this, [this, reply, cfg](const QByteArray &data) {
+      if (m_reply != reply) return;
+
       auto buffer = std::make_unique<QBuffer>();
 
       Timer timer;
@@ -583,8 +587,14 @@ class ImageWidget : public QWidget {
 
   void refreshTheme(const ThemeInfo &theme) { setUrlImpl(m_source); }
 
+  void showEvent(QShowEvent *event) override {
+    QWidget::showEvent(event);
+    render();
+  }
+
 public:
   void render() {
+    if (!isVisible() || !parent()) return;
     if (size().isNull() || size().isEmpty() || !size().isValid()) return;
 
     if (!m_loader) { return; }

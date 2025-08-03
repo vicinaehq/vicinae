@@ -12,6 +12,7 @@ void HorizontalMetadata::setMetadata(const std::vector<MetadataItem> &metadatas)
   auto stack = VStack().spacing(10).margins(0, 0, 0, 0);
 
   int marginX = 10;
+  int minHorizontalSpacing = 10;
 
   for (const auto &metadata : metadatas) {
     if (auto link = std::get_if<MetadataLink>(&metadata)) {
@@ -22,9 +23,9 @@ void HorizontalMetadata::setMetadata(const std::vector<MetadataItem> &metadatas)
       stack.add(HStack()
                     .marginsX(marginX)
                     .justifyBetween()
-                    .add(UI::Text(link->title).secondary())
+                    .add(UI::Text(link->title).secondary().fixed())
                     .add(widget)
-                    .spacing(5));
+                    .spacing(minHorizontalSpacing));
     }
 
     if (auto label = std::get_if<MetadataLabel>(&metadata)) {
@@ -37,9 +38,9 @@ void HorizontalMetadata::setMetadata(const std::vector<MetadataItem> &metadatas)
       stack.add(HStack()
                     .marginsX(marginX)
                     .justifyBetween()
-                    .add(UI::Text(label->title).secondary())
+                    .add(UI::Text(label->title).secondary().fixed())
                     .add(hstack)
-                    .spacing(5));
+                    .spacing(minHorizontalSpacing));
     }
 
     if (auto tagList = std::get_if<TagListModel>(&metadata)) {
@@ -54,14 +55,15 @@ void HorizontalMetadata::setMetadata(const std::vector<MetadataItem> &metadatas)
 
                                return widget;
                              })
-                        .spacing(5);
+                        .spacing(5)
+                        .buildWidget();
 
       stack.add(HStack()
                     .marginsX(marginX)
+                    .add(UI::Text(tagList->title).fixed().secondary())
+                    .add(hstack)
                     .justifyBetween()
-                    .add(UI::Text(tagList->title).secondary())
-                    .add(hstack.buildWidget())
-                    .spacing(5));
+                    .spacing(minHorizontalSpacing));
     }
 
     if (auto sep = std::get_if<MetadataSeparator>(&metadata)) { stack.add(new HDivider); }

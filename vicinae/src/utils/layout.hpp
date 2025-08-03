@@ -84,6 +84,7 @@ class Text : public WidgetBuilder<TypographyWidget> {
   bool m_autoEllide = true;
   bool m_wordWrap = false;
   Qt::Alignment m_align;
+  bool m_shrink = true;
 
 public:
   Text(const QString &text) : m_text(text) {}
@@ -118,6 +119,11 @@ public:
     return *this;
   }
 
+  Text &fixed() {
+    m_shrink = false;
+    return *this;
+  }
+
   Text &size(TextSize textSize) {
     m_size = textSize;
     return *this;
@@ -135,6 +141,8 @@ public:
 
   virtual TypographyWidget *create() const override {
     auto typo = new TypographyWidget;
+
+    if (!m_shrink) { typo->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed); }
 
     typo->setText(m_text);
     typo->setSize(m_size);
