@@ -16,26 +16,43 @@
 #include <qtmetamacros.h>
 #include <qwidget.h>
 
-class ExtensionActionV2 : public AbstractAction {
-  ExtensionCommandController &m_controller;
-  ActionModel m_model;
-
-  void execute() override {}
-
-  void execute(ApplicationContext *ctx) override { m_controller.notify(m_model.onAction, {}); }
-
-public:
-  const ActionModel &model() const { return m_model; }
-  ExtensionActionV2(const ActionModel &model, ExtensionCommandController &controller)
-      : AbstractAction(model.title, OmniIconUrl(model.icon.value_or(std::monostate{}))), m_model(model),
-        m_controller(controller) {}
-};
-
 class ExtensionSimpleView : public SimpleView {
   Q_OBJECT
 
   ExtensionCommandController *m_controller;
   std::vector<KeyboardShortcutModel> m_defaultActionShortcuts;
+
+  AbstractAction *createActionFromModel(const ActionModel &model) {
+    return new StaticAction(model.title, model.icon.value_or(std::monostate()), [this, model]() {
+      notify(model.onAction, {});
+
+      if (auto handler = model.onSubmit) {
+        auto res = submit();
+
+        if (res.has_value()) {
+          notify(*handler, {res.value()});
+        } else {
+          qCritical() << "Failed to submit action" << res.error();
+        }
+      }
+    });
+  }
+
+  /**
+   * Called when a submit action is executed.
+   * This function should return the submission data that is going to be sent
+   * to the submit handler.
+   *
+   * If for any reason the submission is not possible, an error should be returned.
+   *
+   * Note that only form views are expected to handle submit events, but for practical reasons every action
+   * can technically have an optional submit handler.
+   *
+   * The onAction handler is fired before the submission one.
+   */
+  virtual std::expected<QJsonObject, QString> submit() {
+    return std::unexpected("This view can't handle submit actions");
+  }
 
 public:
   virtual void render(const RenderModel &model) {}
@@ -58,7 +75,7 @@ public:
         auto sec = panel->createSection(section->title);
 
         for (const auto &model : section->actions) {
-          auto action = new ExtensionActionV2(model, *m_controller);
+          auto action = createActionFromModel(model);
 
           if (idx == 0) { action->setPrimary(true); }
 
@@ -74,7 +91,7 @@ public:
       if (auto actionModel = std::get_if<ActionModel>(&item)) {
         if (!outsideSection) { outsideSection = panel->createSection(); }
 
-        auto action = new ExtensionActionV2(*actionModel, *m_controller);
+        auto action = createActionFromModel(*actionModel);
 
         if (idx == 0) { action->setPrimary(true); }
 

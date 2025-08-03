@@ -6,6 +6,8 @@
 struct KeyboardShortcutModel {
   QString key;
   QStringList modifiers;
+
+  static KeyboardShortcutModel submit() { return {.key = "return", .modifiers = {"shift"}}; }
 };
 
 struct ActionModel {

@@ -97,19 +97,19 @@ class ExtensionFormComponent : public ExtensionSimpleView {
   bool supportsSearch() const override { return false; }
 
 public:
-  void handleSubmit(const EventHandler &handler) {
+  std::expected<QJsonObject, QString> submit() override {
     QJsonObject payload;
 
     for (const auto &field : m_fields) {
-      if (field->hasError()) return;
+      if (field->hasError()) return std::unexpected("one or more fields have error");
 
       qDebug() << "Submit" << field->valueAsJson();
 
       payload[field->id()] = field->valueAsJson();
     }
 
-    notify(handler, {payload});
     reset();
+    return payload;
   }
 
   void reset() {
@@ -190,6 +190,8 @@ public:
   ExtensionFormComponent() {
     auto layout = new QVBoxLayout;
     auto form = new QWidget;
+
+    setDefaultActionShortcuts({KeyboardShortcutModel::submit()});
 
     m_layout->setAlignment(Qt::AlignTop);
     form->setLayout(m_layout);
