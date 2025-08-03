@@ -86,6 +86,7 @@ void GridItemContentWidget::setSelected(bool selected) {
 
 void GridItemContentWidget::setInset(Inset inset) {
   m_inset = inset;
+  if (m_widget) repositionCenterWidget();
   update();
 }
 

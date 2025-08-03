@@ -74,10 +74,35 @@ void OmniList::updateVisibleItems() {
 
   auto &cell = m_items[startIndex];
   int marginOffset = std::max(0, margins.top - scrollHeight);
-  int viewportY = marginOffset + cell.bounds.y() - scrollHeight;
   QSize viewportSize = size();
   size_t endIndex = startIndex;
+
+  std::unordered_set<QString> reused;
+
+  // we perform a first scan to mark all cached widgets with an ID in range
+  // so that we can reuse them directly. Calling refresh() on a widget with the same ID
+  // is very likely to be a no-op.
+
+  int viewportY = marginOffset + cell.bounds.y() - scrollHeight;
   int lastY = -1;
+
+  while (endIndex < m_items.size()) {
+    auto &vinfo = m_items[endIndex];
+    auto cacheIt = _widgetCache.find(vinfo.item->id());
+
+    if (lastY != -1 && lastY != vinfo.bounds.y()) { viewportY += vinfo.bounds.y() - lastY; }
+
+    if (viewportY >= viewportSize.height()) break;
+
+    if (cacheIt != _widgetCache.end()) reused.insert(vinfo.item->id());
+
+    lastY = vinfo.bounds.y();
+    ++endIndex;
+  }
+
+  lastY = -1;
+  viewportY = marginOffset + cell.bounds.y() - scrollHeight;
+  endIndex = startIndex;
 
   while (endIndex < m_items.size()) {
     auto &vinfo = m_items[endIndex];
@@ -91,17 +116,20 @@ void OmniList::updateVisibleItems() {
     bool isWidgetCreated = false;
 
     auto start = std::chrono::high_resolution_clock::now();
+
     if (cacheIt == _widgetCache.end()) {
       bool recycled = false;
+      // TODO: find a more efficient solution, this is doing too much map stuff
       for (const auto &[key, cache] : _widgetCache) {
-        bool alreadyUsed =
-            std::ranges::any_of(m_visibleWidgets, [&](auto &&widget) { return widget == cache.widget; });
+        bool reserved = reused.find(key) != reused.end();
 
-        if (!alreadyUsed && vinfo.item->recyclable() && vinfo.item->recyclingId() == cache.recyclingId) {
+        if (!reserved && vinfo.item->recyclable() && vinfo.item->recyclingId() == cache.recyclingId) {
           vinfo.item->recycle(cache.widget->widget());
           vinfo.item->attached(cache.widget->widget());
           widget = cache.widget;
           _widgetCache[vinfo.item->id()] = cache;
+          reused.insert(vinfo.item->id());
+          // qDebug() << "placed to reused" << vinfo.item->id();
           _widgetCache.erase(key);
 
           // qInfo() << "recycled in place" << vinfo.item->id();
@@ -137,6 +165,7 @@ void OmniList::updateVisibleItems() {
         if (vinfo.item->recyclable()) { cache.recyclingId = vinfo.item->recyclingId(); }
 
         isWidgetCreated = true;
+        reused.insert(vinfo.item->id());
         _widgetCache[vinfo.item->id()] = cache;
       }
     } else {
@@ -187,6 +216,8 @@ qDebug() << "Widget" << vinfo.item->id() << "visible:" << widget->isVisible()
 
     if (auto it = _widgetCache.find(item->id()); it != _widgetCache.end()) {
       OmniListItemWidgetWrapper *widget = it->second.widget;
+
+      qDebug() << "delete" << item->id();
 
       if (item->recyclable()) {
         moveToPool(item->recyclingId(), widget);
