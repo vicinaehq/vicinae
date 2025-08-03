@@ -483,6 +483,8 @@ public:
 
   bool hasUniformHeight() const override { return true; }
 
+  int calculateHeight(int width) const override { return 40; }
+
   bool hasPartialUpdates() const override { return true; }
 
   size_t recyclingId() const override { return typeid(AbstractDefaultListItem).hash_code(); }
