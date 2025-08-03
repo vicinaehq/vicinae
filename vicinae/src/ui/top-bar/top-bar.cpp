@@ -49,6 +49,7 @@ void GlobalHeader::setupUI() {
 void GlobalHeader::setAccessory(QWidget *accessory) {
   clearAccessory();
   m_accessoryContainer->addWidget(accessory);
+  m_accessoryContainer->setCurrentWidget(accessory);
 }
 
 void GlobalHeader::clearAccessory() {

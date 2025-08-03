@@ -19,7 +19,7 @@ void BaseInput::paintEvent(QPaintEvent *event) {
   painter.setRenderHint(QPainter::Antialiasing, true);
   painter.drawRoundedRect(rect(), borderRadius, borderRadius);
 
-  QWidget::paintEvent(event);
+  JsonFormItemWidget::paintEvent(event);
 }
 
 bool BaseInput::event(QEvent *event) { return QWidget::event(event); }
@@ -30,37 +30,40 @@ void BaseInput::resizeEvent(QResizeEvent *event) {
 }
 
 void BaseInput::recalculate() {
-  if (!size().isValid()) return;
-
   QMargins margins{5, 0, 5, 0};
 
+  if (leftAccessory && leftAccessory->isVisible()) { margins.setLeft(leftAccessory->width() + 10); }
+
+  if (rightAccessory && rightAccessory->isVisible()) { margins.setRight(rightAccessory->width() + 10); }
+
+  m_input->setTextMargins(margins);
+
   if (leftAccessory && leftAccessory->isVisible()) {
-    leftAccessory->move(8, (height() - leftAccessory->height()) / 2);
+    leftAccessory->hide();
     leftAccessory->show();
-    margins.setLeft(leftAccessory->width() + 10);
+    leftAccessory->move(8, (height() - leftAccessory->height()) / 2);
   }
 
   if (rightAccessory && rightAccessory->isVisible()) {
     rightAccessory->move(width() - rightAccessory->width() - 8, (height() - rightAccessory->height()) / 2);
     rightAccessory->show();
-    margins.setRight(rightAccessory->width() + 10);
   }
 
-  m_input->setTextMargins(margins);
+  update();
 }
 
 void BaseInput::setValueAsJson(const QJsonValue &value) { m_input->setText(value.toString()); }
 
 void BaseInput::setLeftAccessory(QWidget *widget) {
   leftAccessory = widget;
-  leftAccessory->setFixedSize(18, 18);
   leftAccessory->setParent(this);
+  leftAccessory->setFixedSize(18, 18);
 }
 
 void BaseInput::setRightAccessory(QWidget *widget) {
   rightAccessory = widget;
-  rightAccessory->setFixedSize(18, 18);
   rightAccessory->setParent(this);
+  rightAccessory->setFixedSize(18, 18);
 }
 
 QJsonValue BaseInput::asJsonValue() const { return m_input->text(); }

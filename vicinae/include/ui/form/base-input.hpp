@@ -30,8 +30,8 @@ class BaseInput : public JsonFormItemWidget {
 
 protected:
   void showEvent(QShowEvent *event) override {
-    recalculate();
     QWidget::showEvent(event);
+    recalculate();
   }
 
 public:

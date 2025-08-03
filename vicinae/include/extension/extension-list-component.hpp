@@ -47,8 +47,9 @@ class ExtensionList : public QWidget {
   QString m_filter;
 
   bool matchesFilter(const ListItemViewModel &item, const QString &query) {
-    // todo: improve this
-    return item.title.startsWith(query, Qt::CaseInsensitive);
+    // TODO: use better search algorithm if we run into issues
+    return item.title.contains(query, Qt::CaseInsensitive) ||
+           item.subtitle.contains(query, Qt::CaseInsensitive);
   }
 
   void render(OmniList::SelectionPolicy selectionPolicy) {

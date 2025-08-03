@@ -594,7 +594,6 @@ class ImageWidget : public QWidget {
 
 public:
   void render() {
-    if (!isVisible() || !parent()) return;
     if (size().isNull() || size().isEmpty() || !size().isValid()) return;
 
     if (!m_loader) { return; }

@@ -1,5 +1,6 @@
 #include "ui/form/selector-input.hpp"
 #include "common.hpp"
+#include "omni-icon.hpp"
 #include "ui/focus-notifier.hpp"
 #include "ui/image/omnimg.hpp"
 #include <memory>
@@ -185,14 +186,16 @@ bool SelectorInput::setValue(const QString &id) {
   auto icon = item->icon();
 
   _currentSelection.reset(item->clone());
-  selectionIcon->setVisible(icon.has_value());
 
   inputField->setText(item->displayName());
   inputField->update();
 
+  qCritical() << "set to item" << item->displayName();
+
   if (icon) {
-    selectionIcon->setUrl(*icon);
+    qDebug() << "set icon" << icon->toString();
     selectionIcon->show();
+    selectionIcon->setUrl(*icon);
   }
 
   inputField->recalculate();

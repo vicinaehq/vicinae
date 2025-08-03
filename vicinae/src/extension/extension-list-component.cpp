@@ -245,7 +245,7 @@ void ExtensionListComponent::textChanged(const QString &text) {
 }
 
 ExtensionListComponent::ExtensionListComponent() : _debounce(new QTimer(this)), _shouldResetSelection(true) {
-  m_selector->setMinimumWidth(400);
+  m_selector->setMinimumWidth(300);
   m_selector->setEnableDefaultFilter(false);
   m_selector->hide();
   setDefaultActionShortcuts({primaryShortcut, secondaryShortcut});
