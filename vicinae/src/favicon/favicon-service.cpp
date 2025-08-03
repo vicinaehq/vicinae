@@ -79,12 +79,12 @@ AbstractFaviconRequest *FaviconService::makeRequest(const QString &domain, QObje
   return requester;
 }
 
-FaviconService::FaviconService(const QString &path, QObject *parent)
+FaviconService::FaviconService(const std::filesystem::path &path, QObject *parent)
     : QObject(parent), _db(QSqlDatabase::addDatabase("QSQLITE", "favicon")),
       _requesterType(RequesterType::Google) {
   _dataDir = QFileInfo(path).dir().filePath("favicon-data");
   _dataDir.mkpath(_dataDir.path());
-  _db.setDatabaseName(path);
+  _db.setDatabaseName(path.c_str());
 
   if (!_db.open()) {
     qDebug() << "Failed to open favicon DB" << _db.lastError();

@@ -1,5 +1,6 @@
 #include "command-controller.hpp"
 #include "daemon/ipc-client.hpp"
+#include "favicon/favicon-service.hpp"
 #include "ui/launcher-window/launcher-window.hpp"
 #include <QStyleHints>
 #include "common.hpp"
@@ -252,9 +253,9 @@ int startDaemon() {
     registry->rootItemManager()->addProvider(std::make_unique<BookmarkRootProvider>(*registry->bookmarks()));
   }
 
-  /*
-  AppWindow app;
+  FaviconService::initialize(new FaviconService(Omnicast::dataDir() / "favicon"));
 
+  /*
   app.createWinId();
 
 #ifdef WAYLAND_LAYER_SHELL
@@ -269,9 +270,6 @@ int startDaemon() {
     qCritical() << "Unable apply layer shell rules to main window: LayerShellQt::Window::get() returned null";
   }
 #endif
-
-  app.setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
-  app.show();
   */
 
   QObject::connect(ServiceRegistry::instance()->config(), &ConfigService::configChanged,

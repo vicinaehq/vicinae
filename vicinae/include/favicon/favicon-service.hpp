@@ -38,5 +38,5 @@ public:
   static FaviconService *instance();
 
   AbstractFaviconRequest *makeRequest(const QString &domain, QObject *parent = nullptr);
-  FaviconService(const QString &path, QObject *parent = nullptr);
+  FaviconService(const std::filesystem::path &path, QObject *parent = nullptr);
 };

@@ -3,11 +3,9 @@
 #include "builtin_icon.hpp"
 #include "services/bookmark/bookmark-service.hpp"
 #include "favicon/favicon-service.hpp"
-#include "action-panel/action-panel.hpp"
 #include "omni-icon.hpp"
 #include "service-registry.hpp"
 #include "timer.hpp"
-#include "ui/action-pannel/action.hpp"
 #include "ui/form/base-input.hpp"
 #include "ui/form/completed-input.hpp"
 #include "ui/form/form-field.hpp"
@@ -15,7 +13,6 @@
 #include "ui/omni-list/omni-list.hpp"
 #include "ui/toast/toast.hpp"
 #include "ui/form/form.hpp"
-#include <functional>
 #include <memory>
 #include <qboxlayout.h>
 #include <qlocale.h>
@@ -370,23 +367,12 @@ public:
     appSelector->setValue("default");
   }
 
-  void initialize() override {
+  void initializeForm() override {
     initializeAppSelector();
     initializeIconSelector();
   }
 
-  void onActivate() override {
-    auto panel = new ActionPanelStaticListView;
-    auto submitAction = new StaticAction("Submit", BuiltinOmniIconUrl("enter-key"), [this]() { submit(); });
-
-    submitAction->setShortcut(KeyboardShortcutModel{.key = "return", .modifiers = {"shift"}});
-    submitAction->setPrimary(true);
-
-    panel->addAction(submitAction);
-    QTimer::singleShot(0, this, [this]() { form->focusFirst(); });
-  }
-
-  virtual void submit() {
+  void onSubmit() override {
     auto bookmarkDb = context()->services->bookmarks();
     auto toast = context()->services->toastService();
 
@@ -431,9 +417,7 @@ public:
     // iconSelector->setValue(std::make_shared<IconSelectorItem>(quicklink.iconName, quicklink.iconName));
   }
 
-  void initialize() override {
-    BookmarkFormView::initialize();
-
+  void initializeForm() override {
     if (!iconSelector->setValue(m_bookmark->icon())) {
       iconSelector->updateItem("default", [&](SelectorInput::AbstractItem *item) {
         auto icon = static_cast<IconSelectorItem *>(item);
@@ -445,7 +429,7 @@ public:
     appSelector->setValue(m_bookmark->app());
   }
 
-  void submit() override {
+  void onSubmit() override {
     auto bookmarkDb = context()->services->bookmarks();
     auto toast = context()->services->toastService();
     auto item = static_cast<const AppSelectorItem *>(appSelector->value());
@@ -489,7 +473,7 @@ public:
 
   void onActivate() override { name->selectAll(); }
 
-  void submit() override {
+  void onSubmit() override {
     auto bookmarkDb = context()->services->bookmarks();
     auto toast = context()->services->toastService();
     auto item = static_cast<const AppSelectorItem *>(appSelector->value());

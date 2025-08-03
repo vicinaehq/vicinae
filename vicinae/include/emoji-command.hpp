@@ -40,7 +40,7 @@ class EditEmojiKeywordsView : public FormView {
 
   void onActivate() override { m_form->focusFirst(); }
 
-  void handleSubmit() {
+  void onSubmit() override {
     auto emojiService = context()->services->emojiService();
     auto toast = context()->services->toastService();
 
@@ -52,19 +52,11 @@ class EditEmojiKeywordsView : public FormView {
     }
   }
 
-  void initialize() override {
-    /*
-auto emojiService = ServiceRegistry::instance()->emojiService();
-auto panel = new ActionPanelStaticListView;
-auto submit = new StaticAction("Edit keywords", BuiltinOmniIconUrl("text"), [this]() { handleSubmit(); });
-auto metadata = emojiService->mapMetadata(m_emoji);
+  void initializeForm() override {
+    auto emojiService = context()->services->emojiService();
+    auto metadata = emojiService->mapMetadata(m_emoji);
 
-m_keywords->setText(metadata.keywords);
-submit->setPrimary(true);
-submit->setShortcut({.key = "return", .modifiers = {"shift"}});
-panel->addAction(submit);
-m_actionPannelV2->setView(panel);
-  */
+    m_keywords->setText(metadata.keywords);
   }
 
 public:

@@ -1,4 +1,3 @@
-#include "action-panel/action-panel.hpp"
 #include "ui/views/base-view.hpp"
 #include "extension/extension-command.hpp"
 #include "service-registry.hpp"
@@ -6,7 +5,6 @@
 #include "command-controller.hpp"
 #include "ui/form/preference-field.hpp"
 #include "ui/form/form.hpp"
-#include "ui/action-pannel/action.hpp"
 #include "ui/typography/typography.hpp"
 #include <qboxlayout.h>
 #include <qjsonobject.h>
@@ -91,7 +89,7 @@ public:
     setupUI(w);
   }
 
-  void handleSubmit() {
+  void onSubmit() override {
     auto manager = context()->services->rootItemManager();
     bool validated = true;
     QJsonObject obj(m_existingPreferenceValues);
@@ -123,13 +121,5 @@ public:
 
   void onActivate() override { m_form->focusFirst(); }
 
-  void initialize() override {
-    auto panel = new ActionPanelStaticListView;
-    auto continueAction =
-        new StaticAction("Save preferences", m_command->iconUrl(), [this]() { handleSubmit(); });
-
-    continueAction->setShortcut({.key = "return", .modifiers = {"shift"}});
-    continueAction->setPrimary(true);
-    panel->addAction(continueAction);
-  }
+  QString submitTitle() const override { return "Save preferences"; }
 };
