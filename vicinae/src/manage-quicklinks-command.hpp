@@ -29,18 +29,13 @@ class DetailWithMetadataWidget : public QWidget {
 
 public:
   void setMetadata(const std::vector<MetadataItem> &items) {
-    m_metadata->clear();
-
-    for (const auto &item : items) {
-      m_metadata->addItem(item);
-    }
-
+    m_metadata->setMetadata(items);
     hdivider->show();
     m_metadata->show();
   }
 
   void clearMetadata() {
-    m_metadata->clear();
+    // m_metadata->clear();
     hdivider->hide();
     m_metadata->hide();
   }

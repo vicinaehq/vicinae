@@ -131,15 +131,18 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
   _model = newModel;
 
   if (auto selected = m_list->selected(); selected && newModel.dirty) {
-    m_split->setDetailVisibility(selected->detail.has_value() && _model.isShowingDetail);
+    m_split->setDetailVisibility(_model.isShowingDetail);
 
     if (auto detail = selected->detail) {
+      m_split->detailWidget()->show();
       if (m_split->isDetailVisible()) {
         m_detail->updateDetail(*detail);
       } else {
         qDebug() << "create detail";
         m_detail->setDetail(*detail);
       }
+    } else {
+      m_split->detailWidget()->hide();
     }
 
     if (auto panel = selected->actionPannel; panel && _model.dirty && panel->dirty) {
@@ -166,7 +169,9 @@ void ExtensionListComponent::onSelectionChanged(const ListItemViewModel *next) {
     return;
   }
 
-  m_split->setDetailVisibility(_model.isShowingDetail && next->detail);
+  if (auto handler = _model.onSelectionChanged) { notify(*handler, {next->id}); }
+
+  m_split->setDetailVisibility(_model.isShowingDetail);
 
   if (auto detail = next->detail) {
     qDebug() << "set markdown for" << next->id;
@@ -174,7 +179,6 @@ void ExtensionListComponent::onSelectionChanged(const ListItemViewModel *next) {
   }
 
   if (auto pannel = next->actionPannel) { setActionPanel(*pannel); }
-  if (auto handler = _model.onSelectionChanged) { notify(*handler, {next->id}); }
 }
 
 void ExtensionListComponent::handleDropdownSelectionChanged(const SelectorInput::AbstractItem &item) {
@@ -247,6 +251,7 @@ ExtensionListComponent::ExtensionListComponent() : _debounce(new QTimer(this)), 
   setDefaultActionShortcuts({primaryShortcut, secondaryShortcut});
   m_split->setMainWidget(m_list);
   m_split->setDetailWidget(m_detail);
+  m_split->detailWidget()->hide();
   setupUI(m_split);
 
   _debounce->setSingleShot(true);

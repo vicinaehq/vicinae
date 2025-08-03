@@ -131,9 +131,6 @@ set(SRCS
 	src/ui/split-detail/split-detail.hpp
 	src/ui/split-detail/split-detail.cpp
 
-	src/ui/detail-widget/detail-widget.hpp
-	src/ui/detail-widget/detail-widget.cpp
-
 	src/services/clipboard/clipboard-server.hpp
 	src/services/clipboard/wlr-clipboard-server.hpp
 	src/services/clipboard/wlr-clipboard-server.cpp

@@ -3,7 +3,10 @@
 #include <qcoreevent.h>
 
 bool VerticalScrollArea::eventFilter(QObject *o, QEvent *e) {
-  if (o == widget() && e->type() == QEvent::Resize) { widget()->setMaximumWidth(width()); }
+  if (o == widget() && e->type() == QEvent::Resize) {
+    widget()->setMaximumWidth(width());
+    emit widgetResized();
+  }
 
   return false;
 }

@@ -1,72 +1,73 @@
 #include "ui/horizontal-metadata.hpp"
 #include "common.hpp"
 #include "ui/tag/tag.hpp"
-#include "ui/typography/typography.hpp"
+#include "utils/layout.hpp"
+#include "ui/text-link/text-link.hpp"
 #include <qboxlayout.h>
 #include <qlabel.h>
 #include <qnamespace.h>
 #include <qwidget.h>
 
-HorizontalMetadata::HorizontalMetadata() : layout(new QVBoxLayout) {
-  auto widget = new QWidget;
+void HorizontalMetadata::setMetadata(const std::vector<MetadataItem> &metadatas) {
+  auto stack = VStack().spacing(10).margins(0, 0, 0, 0);
 
-  layout->setContentsMargins(12, 12, 12, 12);
-  layout->setSpacing(10);
-  layout->addStretch();
-  widget->setLayout(layout);
-  setWidget(widget);
-}
+  int marginX = 10;
 
-void HorizontalMetadata::add(const QString &title, QWidget *widget) {
-  auto row = new QWidget();
-  auto rowLayout = new QHBoxLayout();
-  auto titleWidget = new TypographyWidget;
+  for (const auto &metadata : metadatas) {
+    if (auto link = std::get_if<MetadataLink>(&metadata)) {
+      auto widget = new TextLinkWidget;
 
-  titleWidget->setText(title);
-  titleWidget->setColor(SemanticColor::TextSecondary);
-  // I'm not sure why we need this, but otherwise the label can end up being cut off.
-  titleWidget->setFixedWidth(titleWidget->sizeHint().width());
+      widget->setText(link->text);
+      widget->setHref(link->target);
+      stack.add(HStack()
+                    .marginsX(marginX)
+                    .justifyBetween()
+                    .add(UI::Text(link->title).secondary())
+                    .add(widget)
+                    .spacing(5));
+    }
 
-  rowLayout->setContentsMargins(0, 0, 0, 0);
-  rowLayout->setSpacing(0);
-  rowLayout->addWidget(titleWidget);
-  rowLayout->addStretch();
-  rowLayout->addWidget(widget);
+    if (auto label = std::get_if<MetadataLabel>(&metadata)) {
+      auto hstack = HStack()
+                        .addIf(label->icon.has_value(),
+                               [&]() -> QWidget * { return UI::Icon(*label->icon).size({16, 16}); })
+                        .add(UI::Text(label->text))
+                        .spacing(5);
 
-  row->setLayout(rowLayout);
-  layout->addWidget(row);
-}
+      stack.add(HStack()
+                    .marginsX(marginX)
+                    .justifyBetween()
+                    .add(UI::Text(label->title).secondary())
+                    .add(hstack)
+                    .spacing(5));
+    }
 
-void HorizontalMetadata::addItem(const MetadataItem &item) {
-  if (auto label = std::get_if<MetadataLabel>(&item)) {
-    auto labelWidget = new TypographyWidget();
+    if (auto tagList = std::get_if<TagListModel>(&metadata)) {
+      auto hstack = HStack()
+                        .map(tagList->items,
+                             [](const TagItemModel &tag) {
+                               auto widget = new TagWidget;
 
-    labelWidget->setText(label->text);
-    labelWidget->setEllideMode(Qt::TextElideMode::ElideMiddle);
-    labelWidget->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-    // labelWidget->setAutoEllide(false);
+                               widget->setText(tag.text);
+                               if (tag.icon) widget->setIcon(*tag.icon);
+                               if (tag.color) widget->setColor(tag.color);
 
-    add(label->title, labelWidget);
-  } else if (auto separator = std::get_if<MetadataSeparator>(&item)) {
-    layout->addWidget(new HDivider);
-  } else if (auto tagList = std::get_if<TagListModel>(&item)) {
-    /*
-auto widget = new TagList;
+                               return widget;
+                             })
+                        .spacing(5);
 
-for (const auto &model : tagList->items) {
-auto tag = new Tag();
+      stack.add(HStack()
+                    .marginsX(marginX)
+                    .justifyBetween()
+                    .add(UI::Text(tagList->title).secondary())
+                    .add(hstack.buildWidget())
+                    .spacing(5));
+    }
 
-tag->applyModel(model);
-widget->addTag(tag);
-}
-
-add(tagList->title, widget);
-  */
+    if (auto sep = std::get_if<MetadataSeparator>(&metadata)) { stack.add(new HDivider); }
   }
+
+  stack.imbue(container);
 }
 
-void HorizontalMetadata::clear() {
-  while (auto item = layout->takeAt(0)) {
-    if (auto widget = item->widget()) widget->deleteLater();
-  }
-}
+HorizontalMetadata::HorizontalMetadata() : container(new QWidget) { setWidget(container); }

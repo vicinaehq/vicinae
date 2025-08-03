@@ -4,6 +4,7 @@
 #include "clipboard-actions.hpp"
 #include "settings/command-metadata-settings-detail.hpp"
 #include "theme.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
 #include "ui/form/selector-input.hpp"
 #include "ui/selectable-omni-list-widget/selectable-omni-list-widget.hpp"
 #include "utils/layout.hpp"

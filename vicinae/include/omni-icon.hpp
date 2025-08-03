@@ -248,8 +248,6 @@ public:
       if (auto mask = image->mask) { setMask(*mask); }
 
       if (url.isValid()) {
-        qDebug() << "url" << url;
-
         if (url.scheme() == "file") {
           setType(OmniIconType::Local);
           setName(url.host() + url.path());

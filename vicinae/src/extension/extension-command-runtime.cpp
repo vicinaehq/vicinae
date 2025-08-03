@@ -12,6 +12,7 @@
 #include "services/asset-resolver/asset-resolver.hpp"
 #include "ui/oauth-view.hpp"
 #include <QString>
+#include "services/root-item-manager/root-item-manager.hpp"
 #include "overlay-controller/overlay-controller.hpp"
 #include "utils/utils.hpp"
 
