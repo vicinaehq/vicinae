@@ -55,9 +55,9 @@ using ArgumentValues = std::pair<QString, QString>;
 struct CompleterState {
   ArgumentList args;
   ArgumentValues values;
-  OmniIconUrl icon;
+  ImageURL icon;
 
-  CompleterState(const ArgumentList &args, const OmniIconUrl &icon) : args(args), icon(icon) {}
+  CompleterState(const ArgumentList &args, const ImageURL &icon) : args(args), icon(icon) {}
 };
 
 class NavigationController : public QObject, NonCopyable {
@@ -68,7 +68,7 @@ public:
     BaseView *sender = nullptr;
     struct {
       QString title;
-      OmniIconUrl icon;
+      ImageURL icon;
     } navigation;
     QString placeholderText;
     QString searchText;
@@ -104,7 +104,7 @@ public:
 
   void setDialog(DialogContentWidget *dialog);
 
-  void createCompletion(const ArgumentList &args, const OmniIconUrl &icon);
+  void createCompletion(const ArgumentList &args, const ImageURL &icon);
   void destroyCurrentCompletion();
 
   ArgumentValues completionValues() const;
@@ -123,7 +123,7 @@ public:
 
   void clearSearchText();
   void setNavigationTitle(const QString &navigationTitle, const BaseView *caller = nullptr);
-  void setNavigationIcon(const OmniIconUrl &icon);
+  void setNavigationIcon(const ImageURL &icon);
 
   bool executePrimaryAction();
 
@@ -131,7 +131,7 @@ public:
   void setSearchVisibility(bool value, const BaseView *caller = nullptr);
   void setStatusBarVisibility(bool value, const BaseView *caller = nullptr);
 
-  void showHud(const QString &title, const std::optional<OmniIconUrl> &icon = std::nullopt);
+  void showHud(const QString &title, const std::optional<ImageURL> &icon = std::nullopt);
 
   void popCurrentView();
   void pushView(BaseView *view);
@@ -152,10 +152,10 @@ signals:
   void searchTextSelected() const;
   void searchTextChanged(const QString &text) const;
   void searchPlaceholderTextChanged(const QString &text) const;
-  void navigationStatusChanged(const QString &text, const OmniIconUrl &icon) const;
+  void navigationStatusChanged(const QString &text, const ImageURL &icon) const;
   void confirmAlertRequested(DialogContentWidget *widget);
   void loadingChanged(bool value) const;
-  void showHudRequested(const QString &title, const std::optional<OmniIconUrl> &icon);
+  void showHudRequested(const QString &title, const std::optional<ImageURL> &icon);
 
   void searchAccessoryChanged(QWidget *widget) const;
   void searchAccessoryCleared() const;

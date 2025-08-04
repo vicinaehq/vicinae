@@ -1,6 +1,6 @@
 #pragma once
 #include "command-database.hpp"
-#include "omni-icon.hpp"
+#include "../../ui/image/url.hpp"
 #include "theme.hpp"
 #include <qcontainerfwd.h>
 #include "switch-windows-command.hpp"
@@ -8,7 +8,7 @@
 class WindowManagementExtension : public BuiltinCommandRepository {
   QString id() const override { return "wm"; }
   QString name() const override { return "Window Management"; }
-  OmniIconUrl iconUrl() const override {
+  ImageURL iconUrl() const override {
     return BuiltinOmniIconUrl("app-window-list").setBackgroundTint(SemanticColor::Blue);
   }
 

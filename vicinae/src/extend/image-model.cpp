@@ -1,5 +1,5 @@
 #include "extend/image-model.hpp"
-#include "omni-icon.hpp"
+#include "../ui/image/url.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
 #include <qjsonobject.h>
 
@@ -26,7 +26,7 @@ ImageLikeModel ImageModelParser::parse(const QJsonObject &imageLike) {
     if (imageLike.contains("fallback")) { model.fallback = imageLike.value("fallback").toString(); }
 
     if (imageLike.contains("tintColor")) {
-      model.tintColor = OmniIconUrl::tintForName(imageLike.value("tintColor").toString());
+      model.tintColor = ImageURL::tintForName(imageLike.value("tintColor").toString());
     }
 
     if (imageLike.contains("mask")) {

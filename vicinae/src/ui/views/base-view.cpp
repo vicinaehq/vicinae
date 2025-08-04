@@ -111,11 +111,11 @@ bool BaseView::inputFilter(QKeyEvent *event) { return false; }
 /**
  * Set the navigation icon, if applicable
  */
-void BaseView::setNavigationIcon(const OmniIconUrl &icon) {
+void BaseView::setNavigationIcon(const ImageURL &icon) {
   // m_uiController->setNavigationIcon(icon);
 }
 
-void BaseView::setNavigation(const QString &title, const OmniIconUrl &icon) { setNavigationTitle(title); }
+void BaseView::setNavigation(const QString &title, const ImageURL &icon) { setNavigationTitle(title); }
 
 void BaseView::setNavigationTitle(const QString &title) {
   if (!m_ctx) return;

@@ -3,7 +3,7 @@
 #include "actions/calculator/calculator-actions.hpp"
 #include "ui/views/base-view.hpp"
 #include "clipboard-actions.hpp"
-#include "omni-icon.hpp"
+#include "ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 #include "ui/action-pannel/action.hpp"
@@ -51,7 +51,7 @@ public:
 class CalculatorHistoryListItem : public AbstractDefaultListItem, public ListView::Actionnable {
   CalculatorService::CalculatorRecord m_record;
 
-  OmniIconUrl icon() const {
+  ImageURL icon() const {
     switch (m_record.typeHint) {
     case AbstractCalculatorBackend::NORMAL:
       return BuiltinOmniIconUrl("calculator");

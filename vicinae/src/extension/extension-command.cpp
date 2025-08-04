@@ -1,7 +1,7 @@
 #include "extension/extension-command.hpp"
 #include "command.hpp"
 #include "extension/extension-command-runtime.hpp"
-#include "omni-icon.hpp"
+#include "../ui/image/url.hpp"
 #include <filesystem>
 
 QString ExtensionCommand::extensionId() const { return _extensionId; }
@@ -30,7 +30,7 @@ void ExtensionCommand::setAssetPath(const std::filesystem::path &path) { _assetP
 
 void ExtensionCommand::setExtensionTitle(const QString &title) { _extensionTitle = title; }
 
-OmniIconUrl ExtensionCommand::iconUrl() const {
+ImageURL ExtensionCommand::iconUrl() const {
   if (auto icon = m_command.icon) {
     auto commandIconPath = _assetPath / icon->toStdString();
 

@@ -1,7 +1,7 @@
 #pragma once
 #include <algorithm>
 #include <qboxlayout.h>
-#include "omni-icon.hpp"
+#include "../ui/image/url.hpp"
 #include "theme.hpp"
 #include "ui/image/omnimg.hpp"
 #include "ui/button/button.hpp"
@@ -159,7 +159,7 @@ public:
 class Button : public WidgetBuilder<OmniButtonWidget> {
   std::function<void(void)> m_onClick;
   QString m_text;
-  std::optional<OmniIconUrl> m_leftIcon;
+  std::optional<ImageURL> m_leftIcon;
 
 public:
   Button &onClick(const std::function<void(void)> &fn) {
@@ -172,7 +172,7 @@ public:
     return *this;
   }
 
-  Button &leftIcon(const OmniIconUrl &url) {
+  Button &leftIcon(const ImageURL &url) {
     m_leftIcon = url;
     return *this;
   }
@@ -196,10 +196,10 @@ public:
 
 class Icon : public WidgetBuilder<Omnimg::ImageWidget> {
   QString m_text;
-  OmniIconUrl m_icon;
+  ImageURL m_icon;
 
 public:
-  Icon(const OmniIconUrl &icon = {}) : m_icon(icon) {}
+  Icon(const ImageURL &icon = {}) : m_icon(icon) {}
 
   virtual Omnimg::ImageWidget *create() const override {
     auto icon = new Omnimg::ImageWidget;
@@ -284,7 +284,7 @@ public:
                  TextSize size = TextSize::TextRegular, Qt::Alignment align = {});
   Stack &addTitle(const QString &title, SemanticColor color = SemanticColor::TextPrimary,
                   Qt::Alignment align = {});
-  Stack &addIcon(const OmniIconUrl &url, QSize size = {20, 20}, Qt::Alignment align = {});
+  Stack &addIcon(const ImageURL &url, QSize size = {20, 20}, Qt::Alignment align = {});
   Stack &addParagraph(const QString &text, SemanticColor color = SemanticColor::TextPrimary,
                       TextSize size = TextSize::TextRegular, Qt::Alignment align = {});
 

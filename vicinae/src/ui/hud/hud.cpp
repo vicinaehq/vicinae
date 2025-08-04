@@ -23,7 +23,7 @@ void HudWidget::setupUI() {
   clear();
 }
 
-void HudWidget::setIcon(const OmniIconUrl &icon) {
+void HudWidget::setIcon(const ImageURL &icon) {
   m_icon->setUrl(icon);
   m_icon->show();
 }

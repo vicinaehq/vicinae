@@ -1,6 +1,6 @@
 #pragma once
 #include "common.hpp"
-#include "omni-icon.hpp"
+#include "../../ui/image/url.hpp"
 #include "theme.hpp"
 #include <expected>
 #include <qcontainerfwd.h>
@@ -109,7 +109,7 @@ struct User {
   }
 
   // Return user icon or generic user icon
-  OmniIconUrl validUserIcon() const {
+  ImageURL validUserIcon() const {
     if (avatar.isEmpty()) return BuiltinOmniIconUrl("person").setBackgroundTint(SemanticColor::Blue);
 
     return HttpOmniIconUrl(avatar);

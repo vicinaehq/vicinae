@@ -57,7 +57,7 @@ void AlertWidget::setCancelText(const QString &text, const ColorLike &color) {
   _cancelBtn->setColor(color);
 }
 
-void AlertWidget::setIcon(const std::optional<OmniIconUrl> &url) {
+void AlertWidget::setIcon(const std::optional<ImageURL> &url) {
   if (!url) {
     _icon->hide();
     return;

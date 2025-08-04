@@ -1,6 +1,6 @@
 #pragma once
 #include "services/app-service/abstract-app-db.hpp"
-#include "omni-icon.hpp"
+#include "../../../ui/image/url.hpp"
 #include "xdg/xdg-desktop.hpp"
 #include <qfileinfo.h>
 #include <qlogging.h>
@@ -21,7 +21,7 @@ class XdgApplicationAction : public XdgApplicationBase {
   XdgDesktopEntry _parentData;
   QString m_parentPath;
 
-  OmniIconUrl iconUrl() const override {
+  ImageURL iconUrl() const override {
     return _data.icon.isEmpty() ? SystemOmniIconUrl(_parentData.icon) : SystemOmniIconUrl(_data.icon);
   }
 
@@ -59,7 +59,7 @@ public:
   QString version() const override { return _data.version; }
 
   std::vector<QString> keywords() const override { return {_data.keywords.begin(), _data.keywords.end()}; }
-  OmniIconUrl iconUrl() const override { return SystemOmniIconUrl(_data.icon); }
+  ImageURL iconUrl() const override { return SystemOmniIconUrl(_data.icon); }
   std::vector<std::shared_ptr<Application>> actions() const override {
     auto makeAction = [&](const XdgDesktopEntry::Action action) -> std::shared_ptr<Application> {
       return std::shared_ptr<Application>(new XdgApplicationAction(action, _data, _path, id()));

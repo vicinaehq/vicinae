@@ -1,5 +1,5 @@
 #pragma once
-#include "omni-icon.hpp"
+#include "../image/url.hpp"
 #include "ui/dialog/dialog.hpp"
 #include "ui/image/omnimg.hpp"
 #include <qboxlayout.h>
@@ -30,7 +30,7 @@ class Thumbnail : public QWidget {
 
 public:
   void setClickable(bool clickable);
-  void setImage(const OmniIconUrl &url);
+  void setImage(const ImageURL &url);
   void setRadius(int radius);
 
   Thumbnail(QWidget *parent = nullptr);
@@ -52,5 +52,5 @@ class ImagePreviewDialogWidget : public DialogContentWidget {
 public:
   void setAspectRatio(double ratio);
 
-  ImagePreviewDialogWidget(const OmniIconUrl &icon);
+  ImagePreviewDialogWidget(const ImageURL &icon);
 };

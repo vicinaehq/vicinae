@@ -11,7 +11,7 @@ class RootBookmarkItem : public RootItem {
   AccessoryList accessories() const override;
   bool isSuitableForFallback() const override;
   ArgumentList arguments() const override;
-  OmniIconUrl iconUrl() const override;
+  ImageURL iconUrl() const override;
   QString uniqueId() const override;
   ActionPanelView *actionPanel(const RootItemMetadata &metadata) const override;
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx,
@@ -31,7 +31,7 @@ class BookmarkRootProvider : public RootProvider {
 public:
   QString displayName() const override;
   QString uniqueId() const override;
-  OmniIconUrl icon() const override;
+  ImageURL icon() const override;
   Type type() const override;
   std::vector<std::shared_ptr<RootItem>> loadItems() const override;
 

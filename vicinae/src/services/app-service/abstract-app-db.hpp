@@ -1,5 +1,5 @@
 #pragma once
-#include "omni-icon.hpp"
+#include "../../ui/image/url.hpp"
 #include <QString>
 #include <qmimetype.h>
 #include <qobject.h>
@@ -15,7 +15,7 @@ public:
   virtual bool isTerminalApp() const = 0;
   virtual bool isTerminalEmulator() const { return false; }
   virtual QString fullyQualifiedName() const { return name(); }
-  virtual OmniIconUrl iconUrl() const = 0;
+  virtual ImageURL iconUrl() const = 0;
   virtual std::vector<std::shared_ptr<Application>> actions() const { return {}; }
   virtual std::vector<QString> keywords() const { return {}; }
   virtual std::filesystem::path path() const = 0;

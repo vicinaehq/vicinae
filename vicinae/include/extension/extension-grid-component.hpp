@@ -3,7 +3,7 @@
 #include <qdebug.h>
 #include "extend/image-model.hpp"
 #include "extension/extension-view.hpp"
-#include "omni-icon.hpp"
+#include "../../src/ui/image/url.hpp"
 #include "ui/omni-grid/grid-item-content-widget.hpp"
 #include "ui/image/omnimg.hpp"
 #include "ui/omni-grid/omni-grid.hpp"

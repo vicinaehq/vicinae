@@ -8,7 +8,7 @@
 #include "ui/flow-layout/flow-layout.hpp"
 #include "ui/image/omnimg.hpp"
 #include "ui/typography/typography.hpp"
-#include "omni-icon.hpp"
+#include "../ui/image/url.hpp"
 
 Stack &Stack::add(QWidget *widget, int stretch, Qt::Alignment align) {
   m_items.emplace_back(LayoutWidget{.widget = widget, .stretch = stretch, .align = align});
@@ -34,7 +34,7 @@ Stack &Stack::addTitle(const QString &title, SemanticColor color, Qt::Alignment 
   return addText(title, color, TextSize::TextTitle, align);
 }
 
-Stack &Stack::addIcon(const OmniIconUrl &url, QSize size, Qt::Alignment align) {
+Stack &Stack::addIcon(const ImageURL &url, QSize size, Qt::Alignment align) {
   auto icon = new Omnimg::ImageWidget;
 
   if (!size.isEmpty()) icon->setFixedSize(size);

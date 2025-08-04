@@ -15,4 +15,4 @@ IconButton::IconButton() : _icon(new Omnimg::ImageWidget(this)) {
   _icon->show();
 }
 
-void IconButton::setUrl(const OmniIconUrl &url) { _icon->setUrl(url); }
+void IconButton::setUrl(const ImageURL &url) { _icon->setUrl(url); }

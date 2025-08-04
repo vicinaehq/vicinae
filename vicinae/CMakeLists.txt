@@ -168,8 +168,6 @@ set(SRCS
 	include/ui/action-pannel/action-list-item.hpp
 	src/ui/action-pannel/action-list-item.cpp
 
-	include/ui/argument-completer-widget.hpp
-
 	# end action-pannel-widget
 
 	src/ui/loading-bar/horizontal-loading-bar.hpp
@@ -216,8 +214,7 @@ set(SRCS
 	include/extend/extension-detail-view.hpp
 
 
-	include/ui/argument-completer-widget.hpp
-
+	src/ui/image/url.cpp
 
 	src/ui/icon-button/icon-button.hpp
 	src/ui/icon-button/icon-button.cpp
@@ -252,7 +249,7 @@ set(SRCS
 
 	src/ui/omni-list/omni-list-item-widget.hpp
 
-	include/omni-icon.hpp
+		src/ui/image/url.hpp
 
 
 	src/calculator-history-command.hpp

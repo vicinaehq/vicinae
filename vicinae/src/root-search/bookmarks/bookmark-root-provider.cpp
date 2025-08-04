@@ -4,7 +4,7 @@
 #include "actions/fallback-actions.hpp"
 #include "actions/root-search/root-search-actions.hpp"
 #include "argument.hpp"
-#include "omni-icon.hpp"
+#include "../../ui/image/url.hpp"
 #include "services/bookmark/bookmark-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include <memory>
@@ -126,10 +126,10 @@ ArgumentList RootBookmarkItem::arguments() const {
   return m_link->arguments() | std::views::transform(mapArg) | std::ranges::to<std::vector>();
 }
 
-OmniIconUrl RootBookmarkItem::iconUrl() const {
-  OmniIconUrl url(m_link->icon());
+ImageURL RootBookmarkItem::iconUrl() const {
+  ImageURL url(m_link->icon());
 
-  if (url.type() == OmniIconType::Builtin) { url.setBackgroundTint(SemanticColor::Red); }
+  if (url.type() == ImageURLType::Builtin) { url.setBackgroundTint(SemanticColor::Red); }
 
   return url;
 }
@@ -146,7 +146,7 @@ std::vector<std::shared_ptr<RootItem>> BookmarkRootProvider::loadItems() const {
 
 QString BookmarkRootProvider::displayName() const { return "Bookmarks"; }
 
-OmniIconUrl BookmarkRootProvider::icon() const {
+ImageURL BookmarkRootProvider::icon() const {
   auto icon = BuiltinOmniIconUrl("bookmark");
 
   icon.setBackgroundTint(SemanticColor::Red);

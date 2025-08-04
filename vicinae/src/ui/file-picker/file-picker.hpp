@@ -1,6 +1,6 @@
 #pragma once
 #include "common.hpp"
-#include "omni-icon.hpp"
+#include "../image/url.hpp"
 #include "services/file-chooser/abstract-file-chooser.hpp"
 #include "services/file-chooser/xdp-file-chooser/xdp-file-chooser.hpp"
 #include "ui/focus-notifier.hpp"

@@ -7,7 +7,7 @@
 #include "common.hpp"
 #include "service-registry.hpp"
 #include "services/clipboard/clipboard-service.hpp"
-#include "omni-icon.hpp"
+#include "../src/ui/image/url.hpp"
 #include "services/emoji-service/emoji.hpp"
 #include "services/toast/toast-service.hpp"
 #include "timer.hpp"
@@ -86,7 +86,7 @@ public:
     }
   }
   QString title() const override { return "Reset ranking"; }
-  OmniIconUrl icon() const override { return BuiltinOmniIconUrl("arrow-counter-clockwise"); }
+  ImageURL icon() const override { return BuiltinOmniIconUrl("arrow-counter-clockwise"); }
 
   ResetEmojiRankingAction(std::string_view emoji) : m_emoji(emoji) {}
 };
@@ -120,7 +120,7 @@ public:
     }
   }
 
-  OmniIconUrl icon() const override { return BuiltinOmniIconUrl("pin"); }
+  ImageURL icon() const override { return BuiltinOmniIconUrl("pin"); }
   QString title() const override { return "Pin emoji"; };
 
   PinEmojiAction(std::string_view emoji) : m_emoji(emoji) {}
@@ -136,7 +136,7 @@ class EditEmojiKeywordsAction : public AbstractAction {
   }
 
   QString title() const override { return "Edit custom keywords"; }
-  OmniIconUrl icon() const override { return BuiltinOmniIconUrl("text"); }
+  ImageURL icon() const override { return BuiltinOmniIconUrl("text"); }
 
 public:
   EditEmojiKeywordsAction(std::string_view emoji) : m_emoji(emoji) {}
@@ -157,7 +157,7 @@ public:
     }
   }
 
-  OmniIconUrl icon() const override { return BuiltinOmniIconUrl("pin-disabled"); }
+  ImageURL icon() const override { return BuiltinOmniIconUrl("pin-disabled"); }
   QString title() const override { return "Unpin emoji"; };
 
   UnpinEmojiAction(std::string_view emoji) : m_emoji(emoji) {}
@@ -172,9 +172,9 @@ public:
 
   QWidget *centerWidget() const override {
     auto icon = new Omnimg::ImageWidget();
-    OmniIconUrl url;
+    ImageURL url;
 
-    url.setType(OmniIconType::Emoji);
+    url.setType(ImageURLType::Emoji);
     url.setName(QString::fromStdString(std::string(info.emoji)));
     icon->setUrl(url);
     icon->setContentsMargins(10, 10, 10, 10);
@@ -186,9 +186,9 @@ public:
 
   void recycleCenterWidget(QWidget *widget) const override {
     auto icon = static_cast<Omnimg::ImageWidget *>(widget);
-    OmniIconUrl url;
+    ImageURL url;
 
-    url.setType(OmniIconType::Emoji);
+    url.setType(ImageURLType::Emoji);
     url.setName(QString::fromStdString(std::string(info.emoji)));
     icon->setUrl(url);
     icon->setContentsMargins(10, 10, 10, 10);

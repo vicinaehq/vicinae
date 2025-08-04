@@ -11,7 +11,7 @@ class CommandRootItem : public RootItem {
 public:
   QString displayName() const override;
   QString subtitle() const override;
-  OmniIconUrl iconUrl() const override;
+  ImageURL iconUrl() const override;
   ArgumentList arguments() const override;
   QString providerId() const override;
   bool isSuitableForFallback() const override;
@@ -44,7 +44,7 @@ public:
   PreferenceList preferences() const override { return m_repo->preferences(); }
   QString displayName() const override { return m_repo->name(); }
   QString uniqueId() const override { return QString("extension.%1").arg(m_repo->id()); }
-  OmniIconUrl icon() const override { return m_repo->iconUrl(); };
+  ImageURL icon() const override { return m_repo->iconUrl(); };
   Type type() const override { return RootProvider::Type::ExtensionProvider; }
   std::vector<std::shared_ptr<RootItem>> loadItems() const override;
   QWidget *settingsDetail() const override { return new ExtensionSettingsDetail(uniqueId(), m_repo); }

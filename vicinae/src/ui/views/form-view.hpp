@@ -1,6 +1,6 @@
 #pragma once
 #include "navigation-controller.hpp"
-#include "omni-icon.hpp"
+#include "../image/url.hpp"
 #include "simple-view.hpp"
 #include "ui/action-pannel/action.hpp"
 #include <qlogging.h>

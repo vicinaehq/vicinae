@@ -1,5 +1,5 @@
 #pragma once
-#include "omni-icon.hpp"
+#include "../image/url.hpp"
 #include "ui/form/selector-input.hpp"
 #include "font-service.hpp"
 
@@ -10,7 +10,7 @@ class FontSelectorItem : public SelectorInput::AbstractItem {
 
   QString generateId() const override { return m_family; }
 
-  std::optional<OmniIconUrl> icon() const override { return BuiltinOmniIconUrl("text"); }
+  std::optional<ImageURL> icon() const override { return BuiltinOmniIconUrl("text"); }
 
   AbstractItem *clone() const override { return new FontSelectorItem(*this); }
 

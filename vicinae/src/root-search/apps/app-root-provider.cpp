@@ -2,7 +2,7 @@
 #include "actions/app/app-actions.hpp"
 #include "actions/root-search/root-search-actions.hpp"
 #include "navigation-controller.hpp"
-#include "omni-icon.hpp"
+#include "../../ui/image/url.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "settings/app-metadata-settings-detail.hpp"
 #include "settings/app-settings-detail.hpp"
@@ -32,7 +32,7 @@ AccessoryList AppRootItem::accessories() const {
 
 QString AppRootItem::uniqueId() const { return QString("apps.%1").arg(m_app->id()); }
 
-OmniIconUrl AppRootItem::iconUrl() const { return m_app->iconUrl(); }
+ImageURL AppRootItem::iconUrl() const { return m_app->iconUrl(); }
 
 ActionPanelView *AppRootItem::actionPanel(const RootItemMetadata &metadata) const {
   auto panel = new ActionPanelStaticListView;
@@ -134,7 +134,7 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
 
 RootProvider::Type AppRootProvider::type() const { return RootProvider::Type::GroupProvider; }
 
-OmniIconUrl AppRootProvider::icon() const { return BuiltinOmniIconUrl("folder"); }
+ImageURL AppRootProvider::icon() const { return BuiltinOmniIconUrl("folder"); }
 
 QString AppRootProvider::displayName() const { return "Applications"; }
 

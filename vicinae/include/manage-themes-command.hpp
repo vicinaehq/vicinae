@@ -2,7 +2,7 @@
 #include "action-panel/action-panel.hpp"
 #include "actions/theme/theme-actions.hpp"
 #include "ui/views/base-view.hpp"
-#include "omni-icon.hpp"
+#include "../src/ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "ui/views/list-view.hpp"
 #include "theme.hpp"
@@ -63,7 +63,7 @@ class ThemeItemWidget : public SelectableOmniListWidget {
   HorizontalColorPaletteWidget *m_palette = new HorizontalColorPaletteWidget();
 
 public:
-  void setIcon(const OmniIconUrl &url) { m_icon->setUrl(url); }
+  void setIcon(const ImageURL &url) { m_icon->setUrl(url); }
   void setTitle(const QString &title) { m_title->setText(title); }
   void setDescription(const QString &description) { m_description->setText(description); }
   void setColors(const std::vector<ColorLike> &colors) { m_palette->setColors(colors); }

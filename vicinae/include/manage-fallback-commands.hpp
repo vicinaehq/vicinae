@@ -1,6 +1,6 @@
 #pragma once
 #include "ui/views/list-view.hpp"
-#include "omni-icon.hpp"
+#include "../src/ui/image/url.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "service-registry.hpp"
 #include "ui/action-pannel/action.hpp"

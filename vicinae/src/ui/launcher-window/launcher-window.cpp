@@ -8,7 +8,7 @@
 #include <qnamespace.h>
 #include <qstackedwidget.h>
 #include <qwidget.h>
-#include "omni-icon.hpp"
+#include "../image/url.hpp"
 #include "vicinae.hpp"
 #include "services/config/config-service.hpp"
 #include "overlay-controller/overlay-controller.hpp"
@@ -110,7 +110,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
   });
 }
 
-void LauncherWindow::handleShowHUD(const QString &text, const std::optional<OmniIconUrl> &icon) {
+void LauncherWindow::handleShowHUD(const QString &text, const std::optional<ImageURL> &icon) {
   m_hud->clear();
   m_hud->setText(text);
   if (icon) m_hud->setIcon(*icon);

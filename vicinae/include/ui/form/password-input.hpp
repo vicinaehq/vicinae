@@ -1,5 +1,5 @@
 #pragma once
-#include "omni-icon.hpp"
+#include "../../../src/ui/image/url.hpp"
 #include "ui/form/base-input.hpp"
 #include "ui/icon-button/icon-button.hpp"
 #include <qlineedit.h>

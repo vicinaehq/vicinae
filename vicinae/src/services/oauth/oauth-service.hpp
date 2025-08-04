@@ -1,5 +1,5 @@
 #pragma once
-#include "omni-icon.hpp"
+#include "../../ui/image/url.hpp"
 #include "proto/oauth.pb.h"
 #include <expected>
 #include <qlogging.h>
@@ -53,7 +53,7 @@ struct OAuthClient {
   std::optional<QString> id;
   std::optional<QString> description;
   QString name;
-  OmniIconUrl icon;
+  ImageURL icon;
 
   static OAuthClient fromProto(const proto::ext::oauth::PKCEClientOptions &opts) {
     OAuthClient client;

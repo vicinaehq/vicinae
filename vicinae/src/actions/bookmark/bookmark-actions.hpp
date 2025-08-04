@@ -2,7 +2,7 @@
 #include "common.hpp"
 #include "services/bookmark/bookmark-service.hpp"
 #include "create-quicklink-command.hpp"
-#include "omni-icon.hpp"
+#include "../../ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "services/app-service/app-service.hpp"

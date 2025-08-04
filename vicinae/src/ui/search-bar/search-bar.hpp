@@ -1,6 +1,6 @@
 #pragma once
 #include "argument.hpp"
-#include "omni-icon.hpp"
+#include "../image/url.hpp"
 #include <qcontainerfwd.h>
 #include <qlineedit.h>
 #include <qtimer.h>
@@ -8,7 +8,7 @@
 struct CompleterData {
   QList<QString> placeholders;
   QList<QString> values;
-  OmniIconUrl iconUrl;
+  ImageURL iconUrl;
   ArgumentList arguments;
 };
 

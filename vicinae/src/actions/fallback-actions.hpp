@@ -1,6 +1,6 @@
 #pragma once
 #include "manage-fallback-commands.hpp"
-#include "omni-icon.hpp"
+#include "../ui/image/url.hpp"
 #include "ui/action-pannel/action.hpp"
 
 class ManageFallbackActions : public AbstractAction {

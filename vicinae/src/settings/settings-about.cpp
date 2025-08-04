@@ -1,5 +1,5 @@
 #include "settings-about.hpp"
-#include "omni-icon.hpp"
+#include "../ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "utils/layout.hpp"
 #include <qnamespace.h>

@@ -13,7 +13,7 @@ public:
   class Completer {
   public:
     struct CompletionChoice {
-      OmniIconUrl url;
+      ImageURL url;
       QString title;
       QString subtitle;
     };
@@ -37,7 +37,7 @@ public:
   public:
     AbstractItem() {}
 
-    virtual OmniIconUrl icon() const { return BuiltinOmniIconUrl("circle"); };
+    virtual ImageURL icon() const { return BuiltinOmniIconUrl("circle"); };
     virtual QString displayName() const = 0;
     virtual bool hasPartialUpdates() const override { return true; }
 

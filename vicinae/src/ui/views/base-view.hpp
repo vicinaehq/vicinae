@@ -5,7 +5,7 @@
 class ApplicationContext;
 class ActionPanelState;
 class Toast;
-class OmniIconUrl;
+class ImageURL;
 
 class BaseView : public QWidget {
   bool m_initialized = false;
@@ -64,7 +64,7 @@ public:
    */
   virtual void onDeactivate();
 
-  void activateCompleter(const ArgumentList &args, const OmniIconUrl &icon) {
+  void activateCompleter(const ArgumentList &args, const ImageURL &icon) {
     // m_uiController->activateCompleter(args, icon);
   }
 
@@ -123,9 +123,9 @@ public:
   /**
    * Set the navigation icon, if applicable
    */
-  virtual void setNavigationIcon(const OmniIconUrl &icon);
+  virtual void setNavigationIcon(const ImageURL &icon);
 
-  void setNavigation(const QString &title, const OmniIconUrl &icon);
+  void setNavigation(const QString &title, const ImageURL &icon);
 
   void setNavigationTitle(const QString &title);
 

@@ -5,7 +5,7 @@
 
 class ApplicationContext;
 class TypographyWidget;
-class OmniIconUrl;
+class ImageURL;
 class ToastWidget;
 class ShortcutButton;
 class QStackedWidget;
@@ -17,7 +17,7 @@ public:
   NavigationStatusWidget();
 
   void setTitle(const QString &title);
-  void setIcon(const OmniIconUrl &icon);
+  void setIcon(const ImageURL &icon);
 
 private:
   void setupUI();

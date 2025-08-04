@@ -1,7 +1,7 @@
 #pragma once
 #include "common.hpp"
 #include "extend/action-model.hpp"
-#include "omni-icon.hpp"
+#include "../../../src/ui/image/url.hpp"
 #include <qcontainerfwd.h>
 #include <qlogging.h>
 #include <qtmetamacros.h>
@@ -23,7 +23,7 @@ private:
 public:
   mutable QString m_id;
   QString _title;
-  OmniIconUrl iconUrl;
+  ImageURL iconUrl;
   std::optional<KeyboardShortcutModel> shortcut;
   std::function<void(void)> _execCallback;
 
@@ -53,10 +53,10 @@ public:
   std::function<void(void)> executionCallback() const { return _execCallback; }
 
   virtual QString title() const { return _title; }
-  virtual OmniIconUrl icon() const { return iconUrl; }
+  virtual ImageURL icon() const { return iconUrl; }
 
   AbstractAction() {}
-  AbstractAction(const QString &title, const OmniIconUrl &icon) : _title(title), iconUrl(icon) {}
+  AbstractAction(const QString &title, const ImageURL &icon) : _title(title), iconUrl(icon) {}
 
   virtual void execute(AppWindow &app) {}
   virtual void execute() { qWarning() << "Default execute"; }
@@ -78,10 +78,10 @@ struct StaticAction : public AbstractAction {
   }
 
 public:
-  StaticAction(const QString &title, const OmniIconUrl &url, const std::function<void()> &fn)
+  StaticAction(const QString &title, const ImageURL &url, const std::function<void()> &fn)
       : AbstractAction(title, url), m_fn([fn](ApplicationContext *ctx) { fn(); }) {}
 
-  StaticAction(const QString &title, const OmniIconUrl &url,
+  StaticAction(const QString &title, const ImageURL &url,
                const std::function<void(ApplicationContext *ctx)> &fn)
       : AbstractAction(title, url), m_fn(fn) {}
 };

@@ -5,7 +5,7 @@
 #include "clipboard-history-view.hpp"
 #include "manage-quicklinks-command.hpp"
 #include "services/files-service/file-service.hpp"
-#include "omni-icon.hpp"
+#include "../src/ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "services/files-service/abstract-file-indexer.hpp"
 #include "timer.hpp"
@@ -93,7 +93,7 @@ class FileListItem : public AbstractDefaultListItem, public ListView::Actionnabl
   std::filesystem::path m_path;
   QMimeDatabase m_mimeDb;
 
-  OmniIconUrl getIcon() const {
+  ImageURL getIcon() const {
     auto mime = m_mimeDb.mimeTypeForFile(m_path.c_str());
 
     if (!mime.name().isEmpty()) {

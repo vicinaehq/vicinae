@@ -29,7 +29,7 @@ void EmptyViewWidget::setDescription(const QString &description) {
   m_description->setVisible(!description.isEmpty());
 }
 
-void EmptyViewWidget::setIcon(const std::optional<OmniIconUrl> url) {
+void EmptyViewWidget::setIcon(const std::optional<ImageURL> url) {
   if (url) m_icon->setUrl(*url);
   m_icon->setVisible(url.has_value());
 }

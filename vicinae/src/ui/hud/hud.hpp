@@ -60,7 +60,7 @@ class HudWidget : public FadeWidget {
 
 public:
   void setText(const QString &text);
-  void setIcon(const OmniIconUrl &icon);
+  void setIcon(const ImageURL &icon);
   void setClientSideBorderDrawing(bool value);
   void clear();
 

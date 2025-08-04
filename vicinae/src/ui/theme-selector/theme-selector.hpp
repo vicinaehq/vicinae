@@ -1,5 +1,5 @@
 #pragma once
-#include "omni-icon.hpp"
+#include "../image/url.hpp"
 #include "theme.hpp"
 #include "ui/form/selector-input.hpp"
 
@@ -10,7 +10,7 @@ class ThemeSelectorItem : public SelectorInput::AbstractItem {
 
   QString generateId() const override { return m_theme.id; }
 
-  std::optional<OmniIconUrl> icon() const override {
+  std::optional<ImageURL> icon() const override {
     if (m_theme.icon) return LocalOmniIconUrl(*m_theme.icon);
     return BuiltinOmniIconUrl("vicinae");
   }

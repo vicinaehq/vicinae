@@ -1,5 +1,5 @@
 #pragma once
-#include "omni-icon.hpp"
+#include "../image/url.hpp"
 #include "ui/typography/typography.hpp"
 #include <qboxlayout.h>
 #include <qwidget.h>
@@ -33,8 +33,8 @@ public:
   void setFocused(bool value);
   void setLeftAccessory(QWidget *w);
   void setRightAccessory(QWidget *w);
-  void setLeftIcon(const OmniIconUrl &url, QSize size = {25, 25});
-  void setRightAccessory(const OmniIconUrl &url, QSize size = {25, 25});
+  void setLeftIcon(const ImageURL &url, QSize size = {25, 25});
+  void setRightAccessory(const ImageURL &url, QSize size = {25, 25});
   void setColor(const ColorLike &color);
   void setText(const QString &text);
   void setColor(ButtonColor color);

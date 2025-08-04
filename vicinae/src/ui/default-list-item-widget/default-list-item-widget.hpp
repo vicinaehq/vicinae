@@ -1,5 +1,5 @@
 #pragma once
-#include "omni-icon.hpp"
+#include "../image/url.hpp"
 #include "ui/typography/typography.hpp"
 #include "ui/image/omnimg.hpp"
 #include "ui/selectable-omni-list-widget/selectable-omni-list-widget.hpp"
@@ -56,7 +56,7 @@ public:
   void setAccessories(const AccessoryList &list);
   void setName(const QString &name);
   void setSubtitle(const std::variant<QString, std::filesystem::path> &subtitle);
-  void setIconUrl(const std::optional<OmniIconUrl> &url);
+  void setIconUrl(const std::optional<ImageURL> &url);
   void setAlias(const QString &title);
 
   DefaultListItemWidget(QWidget *parent = nullptr);

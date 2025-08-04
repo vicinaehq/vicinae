@@ -1,13 +1,13 @@
 #include "extension/extension.hpp"
 #include "extension/extension-command.hpp"
-#include "omni-icon.hpp"
+#include "../ui/image/url.hpp"
 #include "preference.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include <qjsonobject.h>
 #include <qjsonarray.h>
 #include <qlogging.h>
 
-OmniIconUrl Extension::iconUrl() const {
+ImageURL Extension::iconUrl() const {
   auto fallback = BuiltinOmniIconUrl("hammer").setBackgroundTint(SemanticColor::Blue);
 
   if (!m_manifest.icon.isEmpty()) {

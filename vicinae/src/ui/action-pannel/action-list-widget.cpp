@@ -5,7 +5,7 @@
 #include "ui/typography/typography.hpp"
 #include <qlogging.h>
 
-ActionListWidget &ActionListWidget::setIconUrl(const OmniIconUrl &url) {
+ActionListWidget &ActionListWidget::setIconUrl(const ImageURL &url) {
   m_icon->setUrl(url);
   return *this;
 }

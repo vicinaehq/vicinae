@@ -34,7 +34,7 @@ class ToggleItemAsFavorite : public AbstractAction {
 
   void execute(ApplicationContext *ctx) override;
   QString title() const override;
-  OmniIconUrl icon() const override;
+  ImageURL icon() const override;
 
 public:
   ToggleItemAsFavorite(const QString &id, bool currentValue);

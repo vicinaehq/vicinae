@@ -1,7 +1,7 @@
 #pragma once
 #include "argument.hpp"
 #include "command.hpp"
-#include "omni-icon.hpp"
+#include "../src/ui/image/url.hpp"
 #include "preference.hpp"
 #include "theme.hpp"
 #include <QKeyEvent>
@@ -22,7 +22,7 @@ class AppWindow;
 class ViewCommandContext;
 
 class BuiltinCommand : public AbstractCmd {
-  std::optional<OmniIconUrl> _url;
+  std::optional<ImageURL> _url;
   QString _repositoryId;
   QString _repositoryName;
 
@@ -32,7 +32,7 @@ public:
   virtual QString id() const = 0;
   QString name() const override = 0;
   QString description() const override { return ""; }
-  OmniIconUrl iconUrl() const override = 0;
+  ImageURL iconUrl() const override = 0;
   virtual CommandType type() const override final { return CommandTypeBuiltin; }
   QString extensionId() const override { return _repositoryId; }
   QString commandId() const override { return id(); }
@@ -40,13 +40,13 @@ public:
   QString author() const override { return Omnicast::APP_ID; }
 
   // TODO: remove
-  void setRepositoryIconUrl(const OmniIconUrl &icon) {}
+  void setRepositoryIconUrl(const ImageURL &icon) {}
 
   void setRepositoryId(const QString &id) { _repositoryId = id; }
   void setRepositoryName(const QString &name) { _repositoryName = name; }
 
   bool isFallback() const override { return false; }
-  void setIconUrl(const OmniIconUrl &url) { _url = url; }
+  void setIconUrl(const ImageURL &url) { _url = url; }
 
   QString repositoryName() const override { return _repositoryName; }
   const QString &repositoryId() { return _repositoryId; }

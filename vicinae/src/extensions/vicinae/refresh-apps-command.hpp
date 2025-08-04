@@ -1,5 +1,5 @@
 #pragma once
-#include "omni-icon.hpp"
+#include "../../ui/image/url.hpp"
 #include "single-view-command-context.hpp"
 #include "theme.hpp"
 
@@ -10,7 +10,7 @@ class RefreshAppsCommand : public BuiltinCallbackCommand {
     return R"("Configure what commands are to be presented as fallback options when nothing matches the
 search in the root search.)";
   }
-  OmniIconUrl iconUrl() const override {
+  ImageURL iconUrl() const override {
     return BuiltinOmniIconUrl("redo").setBackgroundTint(SemanticColor::Red);
   }
 

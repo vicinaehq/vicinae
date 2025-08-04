@@ -1,7 +1,7 @@
 #pragma once
 #include "calculator-history-command.hpp"
 #include "command-database.hpp"
-#include "omni-icon.hpp"
+#include "../../ui/image/url.hpp"
 #include "preference.hpp"
 
 static const std::vector<Preference::DropdownData::Option> backendOptions = {
@@ -18,7 +18,7 @@ static const std::vector<Preference::DropdownData::Option> refreshRatesOptions =
 class CalculatorHistoryCommand : public BuiltinViewCommand<CalculatorHistoryView> {
   QString id() const override { return "history"; }
   QString name() const override { return "Calculator history"; }
-  OmniIconUrl iconUrl() const override {
+  ImageURL iconUrl() const override {
     return BuiltinOmniIconUrl("plus-minus-divide-multiply").setBackgroundTint(SemanticColor::Red);
   }
 };
@@ -28,7 +28,7 @@ public:
   QString id() const override { return "calculator"; }
   QString name() const override { return "Calculator"; }
   QString description() const override { return "Do maths, convert units or search past calculations..."; }
-  OmniIconUrl iconUrl() const override {
+  ImageURL iconUrl() const override {
     return BuiltinOmniIconUrl("plus-minus-divide-multiply").setBackgroundTint(SemanticColor::Red);
   }
 

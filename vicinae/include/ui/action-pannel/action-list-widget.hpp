@@ -1,5 +1,5 @@
 #pragma once
-#include "omni-icon.hpp"
+#include "../../../src/ui/image/url.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/image/omnimg.hpp"
 #include "ui/keyboard-shortcut-indicator/keyboard-shortcut-indicator.hpp"
@@ -12,7 +12,7 @@ class ActionListWidget : public SelectableOmniListWidget {
   KeyboardShortcutIndicatorWidget *m_shortcut;
 
 public:
-  ActionListWidget &setIconUrl(const OmniIconUrl &url);
+  ActionListWidget &setIconUrl(const ImageURL &url);
   ActionListWidget &setShortcut(const KeyboardShortcutModel &shortcut);
   ActionListWidget &clearShortcut();
   ActionListWidget &setTitle(const QString &title);

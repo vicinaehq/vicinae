@@ -38,7 +38,7 @@ void NavigationController::setLoading(bool value, const BaseView *caller) {
   }
 }
 
-void NavigationController::showHud(const QString &title, const std::optional<OmniIconUrl> &icon) {
+void NavigationController::showHud(const QString &title, const std::optional<ImageURL> &icon) {
   closeWindow();
   emit showHudRequested(title, icon);
 }
@@ -53,7 +53,7 @@ void NavigationController::openActionPanel() { emit actionPanelVisibilityChanged
 
 void NavigationController::closeActionPanel() { emit actionPanelVisibilityChanged(false); }
 
-void NavigationController::createCompletion(const ArgumentList &args, const OmniIconUrl &icon) {
+void NavigationController::createCompletion(const ArgumentList &args, const ImageURL &icon) {
   if (auto state = topState()) {
     CompleterState completer(args, icon);
 
@@ -85,7 +85,7 @@ void NavigationController::setCompletionValues(const ArgumentValues &values) {
   }
 }
 
-void NavigationController::setNavigationIcon(const OmniIconUrl &icon) {
+void NavigationController::setNavigationIcon(const ImageURL &icon) {
   if (auto state = topState()) {
     state->navigation.icon = icon;
 

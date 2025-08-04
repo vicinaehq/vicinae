@@ -4,7 +4,7 @@
 #include "extend/action-model.hpp"
 #include "extend/model-parser.hpp"
 #include "extension/extension-command-controller.hpp"
-#include "omni-icon.hpp"
+#include "../../src/ui/image/url.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/views/simple-view.hpp"
 #include <qboxlayout.h>

@@ -61,7 +61,7 @@ void OmniButtonWidget::setRightAccessory(QWidget *w) {
   }
 }
 
-void OmniButtonWidget::setLeftIcon(const OmniIconUrl &url, QSize size) {
+void OmniButtonWidget::setLeftIcon(const ImageURL &url, QSize size) {
   auto icon = new Omnimg::ImageWidget(url);
 
   icon->setFixedSize(size);
@@ -72,7 +72,7 @@ void OmniButtonWidget::setColor(const ColorLike &color) { label->setColor(color)
 
 void OmniButtonWidget::setText(const QString &text) { label->setText(text); }
 
-void OmniButtonWidget::setRightAccessory(const OmniIconUrl &url, QSize size) {
+void OmniButtonWidget::setRightAccessory(const ImageURL &url, QSize size) {
   auto icon = new Omnimg::ImageWidget(url);
 
   icon->setFixedSize(size);

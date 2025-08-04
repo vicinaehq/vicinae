@@ -1,5 +1,5 @@
 #pragma once
-#include "omni-icon.hpp"
+#include "../image/url.hpp"
 #include "ui/image/omnimg.hpp"
 #include "ui/button/button.hpp"
 #include <qboxlayout.h>
@@ -15,5 +15,5 @@ protected:
 public:
   IconButton();
 
-  void setUrl(const OmniIconUrl &url);
+  void setUrl(const ImageURL &url);
 };

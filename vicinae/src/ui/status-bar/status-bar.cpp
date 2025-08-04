@@ -1,7 +1,7 @@
 #include "status-bar.hpp"
 #include "common.hpp"
 #include "navigation-controller.hpp"
-#include "omni-icon.hpp"
+#include "../image/url.hpp"
 #include "service-registry.hpp"
 #include "vicinae.hpp"
 #include "ui/shortcut-button/shortcut-button.hpp"
@@ -17,7 +17,7 @@
 NavigationStatusWidget::NavigationStatusWidget() { setupUI(); }
 
 void NavigationStatusWidget::setTitle(const QString &title) { m_navigationTitle->setText(title); }
-void NavigationStatusWidget::setIcon(const OmniIconUrl &icon) { m_navigationIcon->setUrl(icon); }
+void NavigationStatusWidget::setIcon(const ImageURL &icon) { m_navigationIcon->setUrl(icon); }
 
 void NavigationStatusWidget::setupUI() {
   auto layout = new QHBoxLayout;
@@ -111,7 +111,7 @@ void GlobalBar::setupUI() {
   });
 
   connect(m_ctx.navigation.get(), &NavigationController::navigationStatusChanged, this,
-          [this](const QString &title, const OmniIconUrl &icon) {
+          [this](const QString &title, const ImageURL &icon) {
             m_status->setTitle(title);
             m_status->setIcon(icon);
           });

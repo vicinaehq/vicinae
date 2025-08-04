@@ -3,7 +3,7 @@
 #include "common.hpp"
 #include "data-uri/data-uri.hpp"
 #include "image-fetcher.hpp"
-#include "omni-icon.hpp"
+#include "../../../src/ui/image/url.hpp"
 #include "theme.hpp"
 #include "timer.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
@@ -439,7 +439,7 @@ public:
 class ImageWidget : public QWidget {
   std::unique_ptr<AbstractImageLoader> m_loader;
   QPixmap m_data;
-  OmniIconUrl m_source;
+  ImageURL m_source;
   QString m_fallback;
   int m_renderCount = 0;
   ObjectFit m_fit = ObjectFit::ObjectFitContain;
@@ -511,7 +511,7 @@ class ImageWidget : public QWidget {
     return {25, 25};
   }
 
-  void setUrlImpl(const OmniIconUrl &url) {
+  void setUrlImpl(const ImageURL &url) {
     auto &theme = ThemeService::instance().theme();
     auto type = url.type();
 
@@ -519,19 +519,19 @@ class ImageWidget : public QWidget {
     m_data = {};
     m_loader.reset();
 
-    if (type == OmniIconType::Favicon) {
+    if (type == ImageURLType::Favicon) {
       m_loader = std::make_unique<FaviconImageLoader>(url.name());
     }
 
-    else if (type == OmniIconType::System) {
+    else if (type == ImageURLType::System) {
       m_loader = std::make_unique<QIconImageLoader>(url.name());
     }
 
-    else if (type == OmniIconType::DataURI) {
+    else if (type == ImageURLType::DataURI) {
       m_loader = std::make_unique<DataUriImageLoader>(QString("data:%1").arg(url.name()));
     }
 
-    else if (type == OmniIconType::Builtin) {
+    else if (type == ImageURLType::Builtin) {
       QString icon = QString(":icons/%1.svg").arg(url.name());
       auto loader = std::make_unique<BuiltinIconLoader>(icon);
 
@@ -546,7 +546,7 @@ class ImageWidget : public QWidget {
       m_loader = std::move(loader);
     }
 
-    else if (type == OmniIconType::Local) {
+    else if (type == ImageURLType::Local) {
       std::filesystem::path path = url.name().toStdString();
       auto filename = path.filename().string();
       auto pos = filename.find('.');
@@ -566,13 +566,13 @@ class ImageWidget : public QWidget {
       m_loader = std::make_unique<LocalImageLoader>(path);
     }
 
-    else if (type == OmniIconType::Http) {
+    else if (type == ImageURLType::Http) {
       QUrl httpUrl("https://" + url.name());
 
       m_loader = std::make_unique<HttpImageLoader>(httpUrl);
     }
 
-    else if (type == OmniIconType::Emoji) {
+    else if (type == ImageURLType::Emoji) {
       m_loader = std::make_unique<EmojiImageLoader>(url.name());
     }
 
@@ -615,14 +615,14 @@ public:
     update();
   }
 
-  const OmniIconUrl &url() const { return m_source; }
+  const ImageURL &url() const { return m_source; }
 
-  void setUrl(const OmniIconUrl &url) {
+  void setUrl(const ImageURL &url) {
     if (url == m_source) { return; }
     setUrlImpl(url);
   }
 
-  ImageWidget(const OmniIconUrl url, QWidget *parent = nullptr) : QWidget(parent) {
+  ImageWidget(const ImageURL url, QWidget *parent = nullptr) : QWidget(parent) {
     setUrl(url);
     connect(&ThemeService::instance(), &ThemeService::themeChanged, this, &ImageWidget::refreshTheme);
   }

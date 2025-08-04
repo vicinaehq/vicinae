@@ -1,6 +1,6 @@
 #include "ui/default-list-item-widget/default-list-item-widget.hpp"
 #include "common.hpp"
-#include "omni-icon.hpp"
+#include "../image/url.hpp"
 #include "theme.hpp"
 #include "ui/image/omnimg.hpp"
 #include "ui/list-accessory/list-accessory.hpp"
@@ -15,7 +15,7 @@ void DefaultListItemWidget::setName(const QString &name) {
   //_name->setFixedWidth(_name->sizeHint().width());
 }
 
-void DefaultListItemWidget::setIconUrl(const std::optional<OmniIconUrl> &url) {
+void DefaultListItemWidget::setIconUrl(const std::optional<ImageURL> &url) {
   if (url) { _icon->setUrl(*url); }
 
   _icon->setVisible(url.has_value());

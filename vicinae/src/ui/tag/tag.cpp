@@ -1,5 +1,5 @@
 #include "ui/tag/tag.hpp"
-#include "omni-icon.hpp"
+#include "../image/url.hpp"
 #include "theme.hpp"
 #include "ui/image/omnimg.hpp"
 #include "ui/typography/typography.hpp"
@@ -31,13 +31,13 @@ void TagWidget::paintEvent(QPaintEvent *event) {
 
 void TagWidget::setColor(const std::optional<ColorLike> &color) {
   m_text->setColor(color.value_or(SemanticColor::TextPrimary));
-  m_image->setUrl(OmniIconUrl(m_image->url()).setFill(color));
+  m_image->setUrl(ImageURL(m_image->url()).setFill(color));
   m_color = color;
   update();
 }
 
-void TagWidget::setIcon(const OmniIconUrl &icon) {
-  m_image->setUrl(OmniIconUrl(icon).setFill(m_color.value_or(SemanticColor::TextPrimary)));
+void TagWidget::setIcon(const ImageURL &icon) {
+  m_image->setUrl(ImageURL(icon).setFill(m_color.value_or(SemanticColor::TextPrimary)));
   m_image->show();
 }
 

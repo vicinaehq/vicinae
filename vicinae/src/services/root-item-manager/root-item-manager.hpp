@@ -5,7 +5,7 @@
 #include "libtrie/trie.hpp"
 #include "navigation-controller.hpp"
 #include "omni-database.hpp"
-#include "omni-icon.hpp"
+#include "../../ui/image/url.hpp"
 #include "preference.hpp"
 #include "timer.hpp"
 #include "ui/action-pannel/action.hpp"
@@ -48,7 +48,7 @@ public:
    */
   virtual QString displayName() const = 0;
 
-  virtual OmniIconUrl iconUrl() const = 0;
+  virtual ImageURL iconUrl() const = 0;
 
   virtual QWidget *settingsDetail(const QJsonObject &preferences) const { return new QWidget; }
 
@@ -146,7 +146,7 @@ public:
 
   virtual QString uniqueId() const = 0;
   virtual QString displayName() const = 0;
-  virtual OmniIconUrl icon() const = 0;
+  virtual ImageURL icon() const = 0;
   virtual Type type() const = 0;
   QString typeAsString() {
     switch (type()) {

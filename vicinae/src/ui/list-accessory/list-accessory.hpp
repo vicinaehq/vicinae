@@ -1,5 +1,5 @@
 #pragma once
-#include "omni-icon.hpp"
+#include "../image/url.hpp"
 #include "theme.hpp"
 #include "ui/image/omnimg.hpp"
 #include "ui/typography/typography.hpp"
@@ -12,7 +12,7 @@ struct ListAccessory {
   std::optional<ColorLike> color;
   QString tooltip;
   bool fillBackground;
-  std::optional<OmniIconUrl> icon;
+  std::optional<ImageURL> icon;
 };
 
 class ListAccessoryWidget : public QWidget {

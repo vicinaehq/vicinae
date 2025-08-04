@@ -1,6 +1,6 @@
 #pragma once
 #include "common.hpp"
-#include "omni-icon.hpp"
+#include "../image/url.hpp"
 #include "theme.hpp"
 #include "ui/image/omnimg.hpp"
 #include "ui/omni-list/omni-list.hpp"

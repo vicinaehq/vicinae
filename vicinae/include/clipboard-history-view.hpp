@@ -13,7 +13,7 @@
 #include "extend/metadata-model.hpp"
 #include "manage-quicklinks-command.hpp"
 #include "services/clipboard/clipboard-service.hpp"
-#include "omni-icon.hpp"
+#include "../src/ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "ui/icon-button/icon-button.hpp"
 #include "ui/image/omnimg.hpp"
@@ -102,7 +102,7 @@ class ClipboardHistoryItemWidget : public SelectableOmniListWidget {
   Omnimg::ImageWidget *m_icon = new Omnimg::ImageWidget;
   Omnimg::ImageWidget *m_pinIcon = new Omnimg::ImageWidget;
 
-  OmniIconUrl iconForMime(const ClipboardHistoryEntry &entry) const {
+  ImageURL iconForMime(const ClipboardHistoryEntry &entry) const {
     if (entry.mimeType.startsWith("text/")) { return BuiltinOmniIconUrl("text"); }
     if (entry.mimeType.startsWith("image/")) { return BuiltinOmniIconUrl("image"); }
     return BuiltinOmniIconUrl("text");
@@ -287,7 +287,7 @@ public:
 
   bool hasUniformHeight() const override { return true; }
 
-  OmniIconUrl iconForMime(const QString &mime) const {
+  ImageURL iconForMime(const QString &mime) const {
     if (info.mimeType.startsWith("text/")) { return BuiltinOmniIconUrl("text"); }
     if (info.mimeType.startsWith("image/")) { return BuiltinOmniIconUrl("image"); }
     return BuiltinOmniIconUrl("text");
@@ -333,7 +333,7 @@ public:
     }
   }
 
-  OmniIconUrl statusIcon(ClipboardStatus status) {
+  ImageURL statusIcon(ClipboardStatus status) {
     switch (status) {
     case Monitoring:
       return BuiltinOmniIconUrl("pause-filled").setFill(SemanticColor::Orange);

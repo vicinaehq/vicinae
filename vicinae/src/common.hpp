@@ -1,6 +1,6 @@
 #pragma once
 #include "argument.hpp"
-#include "omni-icon.hpp"
+#include "ui/image/url.hpp"
 #include "preference.hpp"
 #include "theme.hpp"
 #include "ui/focus-notifier.hpp"
@@ -119,7 +119,7 @@ struct LaunchProps {
 
 struct NavigationStatus {
   QString title;
-  OmniIconUrl iconUrl;
+  ImageURL iconUrl;
 };
 
 struct LaunchCommandOptions {
@@ -143,7 +143,7 @@ public:
   virtual QString uniqueId() const = 0;
   virtual QString name() const = 0;
   virtual QString description() const = 0;
-  virtual OmniIconUrl iconUrl() const = 0;
+  virtual ImageURL iconUrl() const = 0;
   virtual CommandType type() const = 0;
   virtual CommandMode mode() const = 0;
   virtual QString author() const = 0;
@@ -170,7 +170,7 @@ public:
   virtual QString description() const { return ""; }
   virtual QString author() const = 0;
   virtual std::vector<std::shared_ptr<AbstractCmd>> commands() const = 0;
-  virtual OmniIconUrl iconUrl() const = 0;
+  virtual ImageURL iconUrl() const = 0;
   virtual std::vector<Preference> preferences() const { return {}; }
   virtual QWidget *settingsDetail() const { return new QWidget; }
   virtual void preferenceValuesChanged(const QJsonObject &value) const {}

@@ -14,7 +14,7 @@ class EmptyViewWidget : public QWidget {
 public:
   void setTitle(const QString &title);
   void setDescription(const QString &description);
-  void setIcon(const std::optional<OmniIconUrl> url);
+  void setIcon(const std::optional<ImageURL> url);
 
   EmptyViewWidget(QWidget *parent = nullptr);
 };

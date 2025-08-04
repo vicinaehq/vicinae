@@ -1,6 +1,6 @@
 #include "ui/action-pannel/action.hpp"
 #include "ui/omni-list/omni-list.hpp"
-#include "omni-icon.hpp"
+#include "../src/ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include <chrono>

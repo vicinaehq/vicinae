@@ -9,7 +9,7 @@
 
 QString CommandRootItem::displayName() const { return m_command->name(); }
 QString CommandRootItem::subtitle() const { return m_command->repositoryName(); }
-OmniIconUrl CommandRootItem::iconUrl() const { return m_command->iconUrl(); }
+ImageURL CommandRootItem::iconUrl() const { return m_command->iconUrl(); }
 ArgumentList CommandRootItem::arguments() const { return m_command->arguments(); }
 QString CommandRootItem::providerId() const { return "command"; }
 bool CommandRootItem::isSuitableForFallback() const { return m_command->isFallback(); }

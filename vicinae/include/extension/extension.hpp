@@ -1,6 +1,6 @@
 #pragma once
 #include "common.hpp"
-#include "omni-icon.hpp"
+#include "../../src/ui/image/url.hpp"
 #include "preference.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include <filesystem>
@@ -21,7 +21,7 @@ public:
 
   QString id() const override;
   QString name() const override;
-  OmniIconUrl iconUrl() const override;
+  ImageURL iconUrl() const override;
   QString description() const override;
   std::filesystem::path assetDirectory() const;
   std::filesystem::path installedPath() const;

@@ -1,7 +1,7 @@
 #pragma once
 #include "actions/theme/theme-actions.hpp"
 #include "ui/views/base-view.hpp"
-#include "omni-icon.hpp"
+#include "../src/ui/image/url.hpp"
 #include "ui/image/omnimg.hpp"
 #include "ui/omni-grid/omni-grid.hpp"
 #include "ui/omni-list/omni-list.hpp"

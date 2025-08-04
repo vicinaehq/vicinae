@@ -3,7 +3,7 @@
 #include "builtin_icon.hpp"
 #include "services/bookmark/bookmark-service.hpp"
 #include "favicon/favicon-service.hpp"
-#include "omni-icon.hpp"
+#include "../src/ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "timer.hpp"
 #include "ui/form/base-input.hpp"
@@ -39,7 +39,7 @@ public:
   std::shared_ptr<Application> app;
   bool isDefault;
 
-  std::optional<OmniIconUrl> icon() const override { return app->iconUrl(); }
+  std::optional<ImageURL> icon() const override { return app->iconUrl(); }
 
   QString displayName() const override {
     QString name = app->fullyQualifiedName();
@@ -69,9 +69,9 @@ class IconSelectorItem : public SelectorInput::AbstractItem {
 public:
   QString name;
   QString dname;
-  OmniIconUrl iconUrl;
+  ImageURL iconUrl;
 
-  std::optional<OmniIconUrl> icon() const override { return iconUrl; }
+  std::optional<ImageURL> icon() const override { return iconUrl; }
 
   QString displayName() const override { return iconUrl.name(); }
 
@@ -81,9 +81,9 @@ public:
 
   AbstractItem *clone() const override { return new IconSelectorItem(*this); }
 
-  void setIcon(const OmniIconUrl &url) { this->iconUrl = url; }
+  void setIcon(const ImageURL &url) { this->iconUrl = url; }
 
-  IconSelectorItem(const OmniIconUrl &url, const QString &displayName = "")
+  IconSelectorItem(const ImageURL &url, const QString &displayName = "")
       : dname(displayName), iconUrl(url) {}
 };
 
@@ -93,12 +93,12 @@ class DefaultIconSelectorItem : public IconSelectorItem {
   AbstractItem *clone() const override { return new DefaultIconSelectorItem(*this); }
 
 public:
-  DefaultIconSelectorItem(const OmniIconUrl &url, const QString &displayName = "")
+  DefaultIconSelectorItem(const ImageURL &url, const QString &displayName = "")
       : IconSelectorItem(url, displayName) {}
 };
 
 struct LinkDynamicPlaceholder {
-  OmniIconUrl icon;
+  ImageURL icon;
   QString title;
   QString value;
   QString id;

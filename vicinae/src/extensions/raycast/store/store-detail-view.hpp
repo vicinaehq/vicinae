@@ -3,7 +3,7 @@
 #include "common.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/text-link/text-link.hpp"
-#include "omni-icon.hpp"
+#include "../../../ui/image/url.hpp"
 #include "services/raycast/raycast-store.hpp"
 #include "settings/extension-settings.hpp"
 #include "theme.hpp"
@@ -65,7 +65,7 @@ public:
   ScreenshotList() { setupUI(); }
 
 signals:
-  void clickedUrl(const OmniIconUrl &url);
+  void clickedUrl(const ImageURL &url);
 };
 
 class RaycastStoreDetailView : public BaseView {
@@ -226,7 +226,7 @@ class RaycastStoreDetailView : public BaseView {
         .buildWidget();
   }
 
-  void handleClickedScreenshot(const OmniIconUrl &url) {
+  void handleClickedScreenshot(const ImageURL &url) {
     auto dialog = new ImagePreviewDialogWidget(url);
 
     dialog->setAspectRatio(16 / 10.f);

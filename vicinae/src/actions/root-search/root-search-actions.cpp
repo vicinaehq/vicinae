@@ -1,6 +1,6 @@
 #include "actions/root-search/root-search-actions.hpp"
 #include "common.hpp"
-#include "omni-icon.hpp"
+#include "../../ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/alert/alert.hpp"
@@ -46,7 +46,7 @@ void MarkItemAsFavorite::execute(ApplicationContext *ctx) {
 MarkItemAsFavorite::MarkItemAsFavorite(const QString &id)
     : AbstractAction("Mark as favorite", BuiltinOmniIconUrl("stars")), m_id(id) {}
 
-OmniIconUrl ToggleItemAsFavorite::icon() const {
+ImageURL ToggleItemAsFavorite::icon() const {
   if (m_value) return BuiltinOmniIconUrl("star-disabled");
   return BuiltinOmniIconUrl("star");
 }

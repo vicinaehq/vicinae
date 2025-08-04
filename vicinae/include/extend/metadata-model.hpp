@@ -1,12 +1,12 @@
 #pragma once
 #include "extend/tag-model.hpp"
-#include "omni-icon.hpp"
+#include "../../src/ui/image/url.hpp"
 #include <qjsonobject.h>
 
 struct MetadataLabel {
   QString text;
   QString title;
-  std::optional<OmniIconUrl> icon;
+  std::optional<ImageURL> icon;
 };
 
 struct MetadataLink {

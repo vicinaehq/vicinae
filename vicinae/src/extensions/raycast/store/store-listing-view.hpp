@@ -2,7 +2,7 @@
 #include "ui/views/base-view.hpp"
 #include "extensions/raycast/store/store-detail-view.hpp"
 #include "navigation-controller.hpp"
-#include "omni-icon.hpp"
+#include "../../../ui/image/url.hpp"
 #include "services/raycast/raycast-store.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/extension-registry/extension-registry.hpp"
@@ -25,10 +25,10 @@ class RaycastStoreExtensionItemWidget : public SelectableOmniListWidget {
   ListAccessoryWidget *m_downloadCount = new ListAccessoryWidget;
 
 public:
-  void setIcon(const OmniIconUrl &url) { m_icon->setUrl(url); }
+  void setIcon(const ImageURL &url) { m_icon->setUrl(url); }
   void setTitle(const QString &title) { m_title->setText(title); }
   void setDescription(const QString &description) { m_description->setText(description); }
-  void setAuthorUrl(const OmniIconUrl &url) { m_author->setUrl(url); }
+  void setAuthorUrl(const ImageURL &url) { m_author->setUrl(url); }
   void setDownloadCount(int count) {
     m_downloadCount->setAccessory(
         ListAccessory{.text = formatCount(count), .icon = BuiltinOmniIconUrl("arrow-down-circle")});

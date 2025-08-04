@@ -2,7 +2,7 @@
 #include "ui/views/base-view.hpp"
 #include "common.hpp"
 #include "extension/manager/extension-manager.hpp"
-#include "omni-icon.hpp"
+#include "image/url.hpp"
 #include "vicinae.hpp"
 #include "proto/oauth.pb.h"
 #include "services/oauth/oauth-service.hpp"
@@ -105,7 +105,7 @@ public:
       // dismiss();
       m_ctx->services->appDb()->openTarget(url);
     };
-    OmniIconUrl iconUrl;
+    ImageURL iconUrl;
 
     if (reqData.client().has_icon()) { iconUrl = reqData.client().icon(); }
 

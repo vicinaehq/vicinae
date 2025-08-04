@@ -1,6 +1,6 @@
 #pragma once
 #include "common.hpp"
-#include "omni-icon.hpp"
+#include "../ui/image/url.hpp"
 #include "theme.hpp"
 #include "ui/image/omnimg.hpp"
 #include <qevent.h>
@@ -30,7 +30,7 @@ class SettingsNavPane : public QWidget {
   }
 
   void setForeground(const ColorLike &color) {
-    OmniIconUrl url = m_icon->url();
+    ImageURL url = m_icon->url();
 
     url.setFill(color);
     m_title->setColor(color);
@@ -109,8 +109,8 @@ public:
     setLayout(layout);
   }
 
-  void setIcon(const OmniIconUrl &url) {
-    OmniIconUrl finalUrl = url;
+  void setIcon(const ImageURL &url) {
+    ImageURL finalUrl = url;
 
     finalUrl.setFill(SemanticColor::TextSecondary);
     m_icon->setUrl(finalUrl);
@@ -141,7 +141,7 @@ public:
     }
   }
 
-  void addPane(const QString &title, const OmniIconUrl &icon) {
+  void addPane(const QString &title, const ImageURL &icon) {
     auto pane = new SettingsNavPane;
     size_t idx = m_panes.size();
 
@@ -164,7 +164,7 @@ signals:
 
 struct PaneInfo {
   QString title;
-  OmniIconUrl icon;
+  ImageURL icon;
   QWidget *content = nullptr;
 };
 

@@ -1,6 +1,6 @@
 #pragma once
 #include "common.hpp"
-#include "omni-icon.hpp"
+#include "../image/url.hpp"
 #include "ui/omni-list/omni-list-item-widget.hpp"
 #include "ui/omni-list/omni-list-item-widget-wrapper.hpp"
 #include "ui/default-list-item-widget/default-list-item-widget.hpp"
@@ -473,7 +473,7 @@ public:
   using ItemDataSubtitle = std::variant<QString, std::filesystem::path>;
 
   struct ItemData {
-    std::optional<OmniIconUrl> iconUrl;
+    std::optional<ImageURL> iconUrl;
     QString name;
     ItemDataSubtitle subtitle;
     AccessoryList accessories;

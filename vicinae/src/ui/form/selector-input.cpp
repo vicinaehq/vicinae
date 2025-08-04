@@ -1,6 +1,6 @@
 #include "ui/form/selector-input.hpp"
 #include "common.hpp"
-#include "omni-icon.hpp"
+#include "../image/url.hpp"
 #include "ui/focus-notifier.hpp"
 #include "ui/image/omnimg.hpp"
 #include <memory>

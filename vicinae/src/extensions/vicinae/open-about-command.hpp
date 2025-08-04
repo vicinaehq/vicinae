@@ -1,6 +1,6 @@
 #pragma once
 #include "common.hpp"
-#include "omni-icon.hpp"
+#include "../../ui/image/url.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "single-view-command-context.hpp"
 #include "theme.hpp"
@@ -8,7 +8,7 @@
 class OpenAboutCommand : public BuiltinCallbackCommand {
   QString id() const override { return "about"; }
   QString name() const override { return "About"; }
-  OmniIconUrl iconUrl() const override {
+  ImageURL iconUrl() const override {
     return BuiltinOmniIconUrl("info-01").setBackgroundTint(SemanticColor::Red);
   }
 

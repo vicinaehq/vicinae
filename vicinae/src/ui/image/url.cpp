@@ -1,0 +1,212 @@
+#include "extend/image-model.hpp"
+#include "lib/emoji-detect.hpp"
+#include "services/asset-resolver/asset-resolver.hpp"
+#include <qurlquery.h>
+#include "url.hpp"
+
+ImageURL &ImageURL::setFill(const std::optional<ColorLike> &color) {
+  _fillColor = color;
+  return *this;
+}
+
+ImageURL &ImageURL::setMask(OmniPainter::ImageMaskType mask) {
+  _mask = mask;
+  return *this;
+}
+
+ImageURL &ImageURL::setForegroundTint(SemanticColor tint) {
+  _fgTint = tint;
+  return *this;
+}
+ImageURL &ImageURL::setBackgroundTint(SemanticColor tint) {
+  _bgTint = tint;
+  return *this;
+}
+
+ImageURLType ImageURL::type() const { return _type; }
+const QString &ImageURL::name() const { return _name; }
+SemanticColor ImageURL::foregroundTint() const { return _fgTint; }
+SemanticColor ImageURL::backgroundTint() const { return _bgTint; }
+const std::optional<ColorLike> &ImageURL::fillColor() const { return _fillColor; }
+OmniPainter::ImageMaskType ImageURL::mask() const { return _mask; }
+
+ImageURL &ImageURL::withFallback(const ImageURL &fallback) {
+  _fallback = fallback.toString();
+  return *this;
+}
+
+QUrl ImageURL::url() const {
+  QUrl url;
+
+  url.setScheme("icon");
+  url.setHost(nameForType(_type));
+  url.setPath("/" + _name);
+
+  QUrlQuery query;
+
+  if (_fallback) query.addQueryItem("fallback", *_fallback);
+  if (_bgTint != InvalidTint) query.addQueryItem("bg_tint", nameForTint(_bgTint));
+  if (_fillColor) {
+    if (auto tint = std::get_if<SemanticColor>(&*_fillColor); tint && *tint != InvalidTint) {
+      query.addQueryItem("fill", nameForTint(*tint));
+    }
+  }
+
+  url.setQuery(query);
+
+  return url;
+}
+
+void ImageURL::setType(ImageURLType type) { _type = type; }
+void ImageURL::setName(const QString &name) { _name = name; }
+
+bool ImageURL::operator==(const ImageURL &rhs) const { return toString() == rhs.toString(); }
+
+ImageURL::ImageURL(const QString &s) noexcept { *this = std::move(QUrl(s)); }
+
+ImageURL::ImageURL() : _bgTint(InvalidTint), _fgTint(InvalidTint) {}
+
+ImageURL::ImageURL(const proto::ext::ui::Image &image) {
+  using Source = proto::ext::ui::ImageSource;
+  ExtensionImageModel model;
+
+  if (image.has_color_tint()) { model.tintColor = ImageURL::tintForName(image.color_tint().c_str()); }
+  if (image.has_mask()) {
+    switch (image.mask()) {
+    case proto::ext::ui::ImageMask::Circle:
+      model.mask = OmniPainter::ImageMaskType::CircleMask;
+      break;
+    case proto::ext::ui::ImageMask::RoundedRectangle:
+      model.mask = OmniPainter::ImageMaskType::RoundedRectangleMask;
+      break;
+    default:
+      break;
+    }
+  }
+
+  switch (image.source().payload_case()) {
+  case Source::kRaw:
+    model.source = image.source().raw().c_str();
+    break;
+  case Source::kThemed: {
+    auto &themed = image.source().themed();
+
+    model.source = ThemedIconSource{.light = themed.light().c_str(), .dark = themed.dark().c_str()};
+    break;
+  }
+  default:
+    break;
+  }
+
+  if (image.has_fallback()) {
+    switch (image.fallback().payload_case()) {
+    case Source::kRaw:
+      model.fallback = image.fallback().raw().c_str();
+      break;
+    default:
+      break;
+    }
+  }
+
+  *this = ImageLikeModel(model);
+}
+
+ImageURL::ImageURL(const QUrl &url) : _bgTint(InvalidTint), _fgTint(InvalidTint), _mask(OmniPainter::NoMask) {
+  if (url.scheme() != "icon") { return; }
+
+  _type = typeForName(url.host());
+
+  if (_type == Invalid) { return; }
+
+  _name = url.path().sliced(1);
+
+  auto query = QUrlQuery(url.query());
+
+  if (auto fgTint = query.queryItemValue("fg_tint"); !fgTint.isEmpty()) { _fgTint = tintForName(fgTint); }
+  if (auto bgTint = query.queryItemValue("bg_tint"); !bgTint.isEmpty()) { _bgTint = tintForName(bgTint); }
+  if (auto fill = query.queryItemValue("fill"); !fill.isEmpty()) { _fillColor = tintForName(fill); }
+  if (auto fallback = query.queryItemValue("fallback"); !fallback.isEmpty()) { _fallback = fallback; }
+  if (auto mask = query.queryItemValue("mask"); !mask.isEmpty()) {
+    if (mask == "circle")
+      _mask = OmniPainter::ImageMaskType::CircleMask;
+    else if (mask == "roundedRectangle")
+      _mask = OmniPainter::ImageMaskType::RoundedRectangleMask;
+  }
+
+  _isValid = true;
+}
+
+ImageURL::ImageURL(const ImageLikeModel &imageLike)
+    : _bgTint(InvalidTint), _fgTint(InvalidTint), _mask(OmniPainter::NoMask) {
+  if (auto image = std::get_if<ExtensionImageModel>(&imageLike)) {
+    struct {
+      QString operator()(const ThemedIconSource &icon) {
+        if (ThemeService::instance().theme().appearance == "light") { return icon.light; }
+        return icon.dark;
+      }
+      QString operator()(const QString &icon) { return icon; }
+    } visitor;
+
+    auto source = std::visit(visitor, image->source);
+
+    QUrl url(source);
+
+    if (auto fallback = image->fallback) {
+      withFallback(ImageLikeModel(ExtensionImageModel{.source = *fallback}));
+    }
+
+    if (auto tintColor = image->tintColor) { setFill(*tintColor); }
+    if (auto mask = image->mask) { setMask(*mask); }
+
+    if (url.isValid()) {
+      if (url.scheme() == "file") {
+        setType(ImageURLType::Local);
+        setName(url.host() + url.path());
+        return;
+      }
+
+      if (url.scheme() == "data") {
+        setType(ImageURLType::DataURI);
+        setName(source);
+        return;
+      }
+
+      if (url.scheme() == "https" || url.scheme() == "http") {
+        setType(ImageURLType::Http);
+        setName(source.split("://").at(1));
+        return;
+      }
+    }
+
+    if (isEmoji(source)) {
+      setType(ImageURLType::Emoji);
+      setName(source);
+      return;
+    }
+
+    if (QFile(":icons/" + source + ".svg").exists()) {
+      setType(ImageURLType::Builtin);
+      setFill(image->tintColor.value_or(SemanticColor::TextPrimary));
+      setName(source);
+      return;
+    }
+
+    if (QFile(source).exists()) {
+      setType(ImageURLType::Local);
+      setName(source);
+      return;
+    }
+
+    if (auto resolved = RelativeAssetResolver::instance()->resolve(source.toStdString())) {
+      setType(ImageURLType::Local);
+      setName(resolved->c_str());
+      return;
+    }
+
+    if (!QIcon::fromTheme(source).isNull()) {
+      setType(ImageURLType::System);
+      setName(source);
+      return;
+    }
+  }
+}

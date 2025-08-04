@@ -1,5 +1,5 @@
 #pragma once
-#include "omni-icon.hpp"
+#include "../image/url.hpp"
 #include "theme.hpp"
 #include "ui/image/omnimg.hpp"
 #include <qevent.h>
@@ -21,7 +21,7 @@ public:
 
   void setColor(const std::optional<ColorLike> &color);
   void setText(const QString &text);
-  void setIcon(const OmniIconUrl &icon);
+  void setIcon(const ImageURL &icon);
 };
 
 using ChipWidget = TagWidget;

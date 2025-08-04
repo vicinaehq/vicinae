@@ -1,6 +1,6 @@
 #pragma once
 #include "common.hpp"
-#include "omni-icon.hpp"
+#include "../ui/image/url.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "service-registry.hpp"
 #include "theme.hpp"
@@ -38,7 +38,7 @@ class NameTreeWidget : public QWidget {
 
 public:
   void setText(const QString &text) { m_text->setText(text); }
-  void setIcon(const OmniIconUrl &icon) { m_icon->setUrl(icon); }
+  void setIcon(const ImageURL &icon) { m_icon->setUrl(icon); }
 
   void setupUI() {
     m_icon->setFixedSize(20, 20);
@@ -132,7 +132,7 @@ public:
 
 class AbstractSettingsDetailPaneItem {
 public:
-  virtual OmniIconUrl icon() const = 0;
+  virtual ImageURL icon() const = 0;
   virtual QString title() const = 0;
   virtual QWidget *content() const = 0;
 
@@ -143,7 +143,7 @@ class ProviderDetailPaneItem : public AbstractSettingsDetailPaneItem {
   RootProvider *m_provider = nullptr;
 
 public:
-  OmniIconUrl icon() const override { return m_provider->icon(); }
+  ImageURL icon() const override { return m_provider->icon(); }
   QString title() const override { return m_provider->displayName(); }
   QWidget *content() const override { return m_provider->settingsDetail(); }
 
@@ -154,7 +154,7 @@ class RootDetailPaneItem : public AbstractSettingsDetailPaneItem {
   std::shared_ptr<RootItem> m_item;
 
 public:
-  OmniIconUrl icon() const override { return m_item->iconUrl(); }
+  ImageURL icon() const override { return m_item->iconUrl(); }
   QString title() const override { return m_item->displayName(); }
   QWidget *content() const override {
     auto manager = ServiceRegistry::instance()->rootItemManager();

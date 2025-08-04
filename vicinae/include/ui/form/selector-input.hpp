@@ -1,7 +1,7 @@
 #pragma once
 #include "common.hpp"
 #include "libtrie/trie.hpp"
-#include "omni-icon.hpp"
+#include "../../../src/ui/image/url.hpp"
 #include "ui/focus-notifier.hpp"
 #include "ui/form/base-input.hpp"
 #include "ui/loading-bar/horizontal-loading-bar.hpp"
@@ -23,7 +23,7 @@ public:
   public:
     AbstractItem() {}
 
-    virtual std::optional<OmniIconUrl> icon() const { return std::nullopt; };
+    virtual std::optional<ImageURL> icon() const { return std::nullopt; };
     virtual QString displayName() const = 0;
     virtual bool hasPartialUpdates() const override { return true; }
 

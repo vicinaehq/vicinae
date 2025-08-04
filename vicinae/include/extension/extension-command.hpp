@@ -2,7 +2,7 @@
 #include "argument.hpp"
 #include "argument.hpp"
 #include "command.hpp"
-#include "omni-icon.hpp"
+#include "../../src/ui/image/url.hpp"
 #include "preference.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include <qstring.h>
@@ -55,7 +55,7 @@ public:
   QString name() const override;
   QString commandId() const override;
 
-  OmniIconUrl iconUrl() const override;
+  ImageURL iconUrl() const override;
   QString repositoryName() const override;
 
   void setAssetPath(const std::filesystem::path &path);

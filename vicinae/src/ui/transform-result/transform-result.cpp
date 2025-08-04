@@ -1,5 +1,5 @@
 #include "ui/transform-result/transform-result.hpp"
-#include "omni-icon.hpp"
+#include "../image/url.hpp"
 #include "theme.hpp"
 #include "ui/selectable-omni-list-widget/selectable-omni-list-widget.hpp"
 #include "ui/typography/typography.hpp"

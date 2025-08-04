@@ -47,8 +47,8 @@ void Thumbnail::setClickable(bool clickable) {
   update();
 }
 
-void Thumbnail::setImage(const OmniIconUrl &url) {
-  m_content->setUrl(OmniIconUrl(url).setMask(OmniPainter::RoundedRectangleMask));
+void Thumbnail::setImage(const ImageURL &url) {
+  m_content->setUrl(ImageURL(url).setMask(OmniPainter::RoundedRectangleMask));
 }
 
 void Thumbnail::setRadius(int radius) {
@@ -94,7 +94,7 @@ void ImagePreviewDialogWidget::setupUI() {
 
 void ImagePreviewDialogWidget::setAspectRatio(double ratio) { m_aspectRatio = ratio; }
 
-ImagePreviewDialogWidget::ImagePreviewDialogWidget(const OmniIconUrl &icon) {
+ImagePreviewDialogWidget::ImagePreviewDialogWidget(const ImageURL &icon) {
   setupUI();
   m_thumbnail->setImage(icon);
 }

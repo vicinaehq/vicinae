@@ -1,7 +1,7 @@
 #pragma once
 #include "color-formatter.hpp"
 #include "common.hpp"
-#include "omni-icon.hpp"
+#include "../../ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "ui/action-pannel/action.hpp"
 

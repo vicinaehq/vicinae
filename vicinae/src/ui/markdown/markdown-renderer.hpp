@@ -1,5 +1,5 @@
 #pragma once
-#include "omni-icon.hpp"
+#include "../image/url.hpp"
 #include "ui/image/omnimg.hpp"
 #include <QTextBlock>
 #include <qlogging.h>

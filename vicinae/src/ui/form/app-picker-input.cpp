@@ -8,7 +8,7 @@ public:
   std::shared_ptr<Application> app;
   bool isDefault;
 
-  std::optional<OmniIconUrl> icon() const override { return app->iconUrl(); }
+  std::optional<ImageURL> icon() const override { return app->iconUrl(); }
 
   QString displayName() const override {
     QString name = app->fullyQualifiedName();

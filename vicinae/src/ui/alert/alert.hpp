@@ -30,7 +30,7 @@ public:
   void setTitle(const QString &title);
   void setMessage(const QString &message);
   void setCancelText(const QString &text, const ColorLike &color);
-  void setIcon(const std::optional<OmniIconUrl> &url);
+  void setIcon(const std::optional<ImageURL> &url);
   void setConfirmText(const QString &text, const ColorLike &color);
 
   AlertWidget(QWidget *parent = nullptr);

@@ -4,7 +4,7 @@
 #include "clipboard-actions.hpp"
 #include "libtrie/trie.hpp"
 #include "services/config/config-service.hpp"
-#include "omni-icon.hpp"
+#include "src/ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "font-service.hpp"
 #include "timer.hpp"

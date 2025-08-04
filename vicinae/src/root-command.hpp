@@ -213,7 +213,7 @@ class RootFileListItem : public AbstractDefaultListItem, public ListView::Action
   std::filesystem::path m_path;
   QMimeDatabase m_mimeDb;
 
-  OmniIconUrl getIcon() const {
+  ImageURL getIcon() const {
     auto mime = m_mimeDb.mimeTypeForFile(m_path.c_str());
 
     if (!mime.name().isEmpty()) {

@@ -1,4 +1,4 @@
-#include "omni-icon.hpp"
+#include "../ui/image/url.hpp"
 #include "settings/extension-settings.hpp"
 #include "general-settings.hpp"
 #include "settings-about.hpp"
@@ -20,7 +20,7 @@ public:
   /**
    * Category's icon as shown on the top bar
    */
-  virtual OmniIconUrl icon() const = 0;
+  virtual ImageURL icon() const = 0;
 
   virtual ~SettingsCategory() = default;
 };
@@ -28,24 +28,24 @@ public:
 class ExtensionSettingsCategory : public SettingsCategory {
 public:
   QString title() const override { return "Extensions"; }
-  OmniIconUrl icon() const override { return BuiltinOmniIconUrl("computer-chip"); }
+  ImageURL icon() const override { return BuiltinOmniIconUrl("computer-chip"); }
   QWidget *createContent() override { return new ExtensionSettingsContent(); }
 };
 
 class GeneralSettingsCategory : public SettingsCategory {
   QString title() const override { return "General"; }
-  OmniIconUrl icon() const override { return BuiltinOmniIconUrl("cog"); }
+  ImageURL icon() const override { return BuiltinOmniIconUrl("cog"); }
   QWidget *createContent() override { return new GeneralSettings(); }
 };
 
 class AdvancedSettingsCategory : public SettingsCategory {
   QString title() const override { return "Advanced"; }
-  OmniIconUrl icon() const override { return BuiltinOmniIconUrl("wrench-screwdriver"); }
+  ImageURL icon() const override { return BuiltinOmniIconUrl("wrench-screwdriver"); }
   QWidget *createContent() override { return new QWidget; }
 };
 
 class AboutSettingsCategory : public SettingsCategory {
   QString title() const override { return "About"; }
-  OmniIconUrl icon() const override { return BuiltinOmniIconUrl("vicinae"); }
+  ImageURL icon() const override { return BuiltinOmniIconUrl("vicinae"); }
   QWidget *createContent() override { return new SettingsAbout; }
 };

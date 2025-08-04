@@ -1,5 +1,5 @@
 #pragma once
-#include "omni-icon.hpp"
+#include "../image/url.hpp"
 #include <qmainwindow.h>
 #include "navigation-controller.hpp"
 
@@ -14,7 +14,7 @@ class HDivider;
 class DialogWidget;
 class DialogContentWidget;
 class HDivider;
-class OmniIconUrl;
+class ImageURL;
 
 class LauncherWindow : public QMainWindow {
 
@@ -41,7 +41,7 @@ private:
   QStackedWidget *m_currentOverlayWrapper = nullptr;
   DialogWidget *m_dialog = nullptr;
 
-  void handleShowHUD(const QString &text, const std::optional<OmniIconUrl> &icon);
+  void handleShowHUD(const QString &text, const std::optional<ImageURL> &icon);
   void handleDialog(DialogContentWidget *alert);
   void handleViewChange(const NavigationController::ViewState &state);
   void setupUI();
