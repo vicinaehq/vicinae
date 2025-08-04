@@ -2,7 +2,7 @@
 #include "common.hpp"
 #include "../ui/image/url.hpp"
 #include "theme.hpp"
-#include "ui/image/omnimg.hpp"
+#include "ui/image/image.hpp"
 #include <qevent.h>
 #include <ranges>
 #include "settings-category.hpp"
@@ -19,7 +19,7 @@
 class SettingsNavPane : public QWidget {
   Q_OBJECT
 
-  Omnimg::ImageWidget *m_icon = new Omnimg::ImageWidget;
+  ImageWidget *m_icon = new ImageWidget;
   TypographyWidget *m_title = new TypographyWidget;
   bool m_hovered = false;
   bool m_selected = false;

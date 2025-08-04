@@ -6,7 +6,7 @@
 #include "theme.hpp"
 #include "ui/form/base-input.hpp"
 #include "ui/form/checkbox.hpp"
-#include "ui/image/omnimg.hpp"
+#include "ui/image/image.hpp"
 #include "ui/vertical-scroll-area/vertical-scroll-area.hpp"
 #include "ui/scroll-bar/scroll-bar.hpp"
 #include "ui/omni-tree/omni-tree.hpp"
@@ -33,7 +33,7 @@
 
 class NameTreeWidget : public QWidget {
   QHBoxLayout *m_layout = new QHBoxLayout;
-  Omnimg::ImageWidget *m_icon = new Omnimg::ImageWidget;
+  ImageWidget *m_icon = new ImageWidget;
   TypographyWidget *m_text = new TypographyWidget;
 
 public:
@@ -55,7 +55,7 @@ public:
 class ExtensionSettingsToolbar : public QWidget {
   QHBoxLayout *m_layout = new QHBoxLayout;
   BaseInput *m_input = new BaseInput;
-  Omnimg::ImageWidget *m_searchIcon = new Omnimg::ImageWidget;
+  ImageWidget *m_searchIcon = new ImageWidget;
 
 public:
   QLineEdit *input() const { return m_input->input(); }
@@ -382,7 +382,7 @@ signals:
 };
 
 class ExtensionSettingsDetailPane : public QWidget {
-  Omnimg::ImageWidget *m_icon = new Omnimg::ImageWidget;
+  ImageWidget *m_icon = new ImageWidget;
   QVBoxLayout *m_layout = new QVBoxLayout;
   TypographyWidget *m_title = new TypographyWidget;
   QWidget *m_header = new QWidget;

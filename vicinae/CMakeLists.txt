@@ -55,8 +55,6 @@ set(SRCS
 	include/font-service.hpp
 	src/font-service.cpp
 
-	include/ui/image/omnimg.hpp
-
 	src/daemon/ipc-client.cpp
 
 	include/favicon/favicon-service.hpp
@@ -215,6 +213,19 @@ set(SRCS
 
 
 	src/ui/image/url.cpp
+	src/ui/image/image.hpp
+	src/ui/image/image.cpp
+	src/ui/image/static-image-loader.cpp
+	src/ui/image/animated-image-loader.cpp
+	src/ui/image/io-image-loader.cpp
+	src/ui/image/local-image-loader.cpp
+	src/ui/image/http-image-loader.cpp
+	src/ui/image/data-uri-image-loader.cpp
+	src/ui/image/favicon-image-loader.cpp
+	src/ui/image/svg-image-loader.cpp
+	src/ui/image/builtin-icon-loader.cpp
+	src/ui/image/qicon-image-loader.cpp
+	src/ui/image/emoji-image-loader.cpp
 
 	src/ui/icon-button/icon-button.hpp
 	src/ui/icon-button/icon-button.cpp

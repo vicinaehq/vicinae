@@ -2,7 +2,7 @@
 #include "common.hpp"
 #include "../image/url.hpp"
 #include "theme.hpp"
-#include "ui/image/omnimg.hpp"
+#include "ui/image/image.hpp"
 #include "ui/list-accessory/list-accessory.hpp"
 #include <qnamespace.h>
 #include <qsizepolicy.h>

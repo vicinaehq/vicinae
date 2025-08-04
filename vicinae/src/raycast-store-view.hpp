@@ -15,13 +15,13 @@
 
 class RaycastStoreExtensionItemWidget : public SelectableOmniListWidget {
   QHBoxLayout *m_layout = new QHBoxLayout(this);
-  Omnimg::ImageWidget *m_icon = new Omnimg::ImageWidget();
+  ImageWidget *m_icon = new ImageWidget();
   TypographyWidget *m_title = new TypographyWidget();
   TypographyWidget *m_description = new TypographyWidget();
   AccessoryListWidget *m_accessories = new AccessoryListWidget(this);
   QWidget *m_textWidget = new QWidget(this);
   QVBoxLayout *m_textLayout = new QVBoxLayout(m_textWidget);
-  Omnimg::ImageWidget *m_author = new Omnimg::ImageWidget;
+  ImageWidget *m_author = new ImageWidget;
   ListAccessoryWidget *m_downloadCount = new ListAccessoryWidget;
 
 public:

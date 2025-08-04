@@ -17,7 +17,7 @@
 #include "ui/form/base-input.hpp"
 #include "ui/form/form-field.hpp"
 #include "ui/form/form.hpp"
-#include "ui/image/omnimg.hpp"
+#include "ui/image/image.hpp"
 #include "ui/omni-grid/omni-grid.hpp"
 #include "ui/omni-list/omni-list.hpp"
 #include "ui/toast/toast.hpp"
@@ -171,7 +171,7 @@ public:
   QString tooltip() const override { return qStringFromStdView(info.name); }
 
   QWidget *centerWidget() const override {
-    auto icon = new Omnimg::ImageWidget();
+    auto icon = new ImageWidget();
     ImageURL url;
 
     url.setType(ImageURLType::Emoji);
@@ -185,7 +185,7 @@ public:
   bool centerWidgetRecyclable() const override { return true; }
 
   void recycleCenterWidget(QWidget *widget) const override {
-    auto icon = static_cast<Omnimg::ImageWidget *>(widget);
+    auto icon = static_cast<ImageWidget *>(widget);
     ImageURL url;
 
     url.setType(ImageURLType::Emoji);

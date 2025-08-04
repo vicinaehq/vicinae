@@ -2,7 +2,7 @@
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 #include "theme.hpp"
-#include "ui/image/omnimg.hpp"
+#include "ui/image/image.hpp"
 #include "ui/typography/typography.hpp"
 #include "utils/layout.hpp"
 #include <google/protobuf/descriptor.h>
@@ -11,7 +11,7 @@
 #include <qwidget.h>
 
 class TextLinkWidget : public QWidget {
-  Omnimg::ImageWidget *m_icon = new Omnimg::ImageWidget;
+  ImageWidget *m_icon = new ImageWidget;
   TypographyWidget *m_text = new TypographyWidget;
   QUrl m_href;
 

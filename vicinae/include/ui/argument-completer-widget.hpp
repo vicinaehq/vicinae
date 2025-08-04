@@ -1,7 +1,7 @@
 #pragma once
 #include "argument.hpp"
 #include "omni-icon.hpp"
-#include "ui/image/omnimg.hpp"
+#include "ui/image/image.hpp"
 #include "ui/inline-input/inline_qline_edit.hpp"
 #include <qboxlayout.h>
 #include <qlineedit.h>
@@ -15,7 +15,7 @@ struct ArgumentCompleterWidget : public QWidget {
 public:
   ArgumentList m_args;
   QHBoxLayout *m_layout = new QHBoxLayout;
-  Omnimg::ImageWidget *m_icon = new Omnimg::ImageWidget();
+  ImageWidget *m_icon = new ImageWidget();
   std::vector<InlineQLineEdit *> m_inputs;
 
 public:

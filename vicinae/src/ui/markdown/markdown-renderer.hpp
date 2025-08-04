@@ -1,6 +1,6 @@
 #pragma once
 #include "../image/url.hpp"
-#include "ui/image/omnimg.hpp"
+#include "ui/image/image.hpp"
 #include <QTextBlock>
 #include <qlogging.h>
 #include <qnamespace.h>
@@ -22,7 +22,7 @@ struct TopLevelBlock {
 
 struct ImageResource {
   int cursorPos;
-  std::unique_ptr<Omnimg::AbstractImageLoader> icon;
+  std::unique_ptr<AbstractImageLoader> icon;
   QUrl name;
 };
 

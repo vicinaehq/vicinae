@@ -2,7 +2,7 @@
 #include "common.hpp"
 #include "ui/focus-notifier.hpp"
 #include "ui/form/base-input.hpp"
-#include "ui/image/omnimg.hpp"
+#include "ui/image/image.hpp"
 #include <memory>
 #include <qjsonvalue.h>
 #include <qlocale.h>
@@ -48,7 +48,7 @@ FocusNotifier *CompletedInput::focusNotifier() const { return m_focusNotifier; }
 
 CompletedInput::CompletedInput(QWidget *parent)
     : JsonFormItemWidget(parent), m_completerList(new OmniList), inputField(new BaseInput),
-      popover(new Popover(this)), selectionIcon(new Omnimg::ImageWidget) {
+      popover(new Popover(this)), selectionIcon(new ImageWidget) {
   auto *layout = new QVBoxLayout();
   layout->setContentsMargins(0, 0, 0, 0);
 

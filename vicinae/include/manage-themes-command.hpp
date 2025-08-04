@@ -9,7 +9,7 @@
 #include "ui/action-pannel/action.hpp"
 #include "ui/color-circle/color_circle.hpp"
 #include "ui/default-list-item-widget/default-list-item-widget.hpp"
-#include "ui/image/omnimg.hpp"
+#include "ui/image/image.hpp"
 #include "ui/omni-list/omni-list.hpp"
 #include "ui/selectable-omni-list-widget/selectable-omni-list-widget.hpp"
 #include "ui/typography/typography.hpp"
@@ -54,7 +54,7 @@ public:
 
 class ThemeItemWidget : public SelectableOmniListWidget {
   QHBoxLayout *m_layout = new QHBoxLayout(this);
-  Omnimg::ImageWidget *m_icon = new Omnimg::ImageWidget();
+  ImageWidget *m_icon = new ImageWidget();
   TypographyWidget *m_title = new TypographyWidget();
   TypographyWidget *m_description = new TypographyWidget();
   AccessoryListWidget *m_accessories = new AccessoryListWidget(this);

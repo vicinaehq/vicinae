@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ui/dialog/dialog.hpp"
-#include "ui/image/omnimg.hpp"
+#include "ui/image/image.hpp"
 
 class TypographyWidget;
 class OmniButtonWidget;
@@ -9,7 +9,7 @@ class OmniButtonWidget;
 class AlertWidget : public DialogContentWidget {
   Q_OBJECT
 
-  Omnimg::ImageWidget *_icon;
+  ImageWidget *_icon;
   TypographyWidget *_title;
   TypographyWidget *_message;
   OmniButtonWidget *_cancelBtn;

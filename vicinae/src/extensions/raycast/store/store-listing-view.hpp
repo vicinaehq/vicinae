@@ -17,11 +17,11 @@
 #include <qwidget.h>
 
 class RaycastStoreExtensionItemWidget : public SelectableOmniListWidget {
-  Omnimg::ImageWidget *m_icon = new Omnimg::ImageWidget();
+  ImageWidget *m_icon = new ImageWidget();
   TypographyWidget *m_title = new TypographyWidget();
   TypographyWidget *m_description = new TypographyWidget();
-  Omnimg::ImageWidget *m_installed = new Omnimg::ImageWidget;
-  Omnimg::ImageWidget *m_author = new Omnimg::ImageWidget;
+  ImageWidget *m_installed = new ImageWidget;
+  ImageWidget *m_author = new ImageWidget;
   ListAccessoryWidget *m_downloadCount = new ListAccessoryWidget;
 
 public:

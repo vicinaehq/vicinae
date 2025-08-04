@@ -3,7 +3,7 @@
 #include <qboxlayout.h>
 #include "../ui/image/url.hpp"
 #include "theme.hpp"
-#include "ui/image/omnimg.hpp"
+#include "ui/image/image.hpp"
 #include "ui/button/button.hpp"
 #include "ui/typography/typography.hpp"
 #include <qlabel.h>
@@ -194,15 +194,15 @@ public:
   Button(const QString &text = "") : m_text(text) {}
 };
 
-class Icon : public WidgetBuilder<Omnimg::ImageWidget> {
+class Icon : public WidgetBuilder<ImageWidget> {
   QString m_text;
   ImageURL m_icon;
 
 public:
   Icon(const ImageURL &icon = {}) : m_icon(icon) {}
 
-  virtual Omnimg::ImageWidget *create() const override {
-    auto icon = new Omnimg::ImageWidget;
+  virtual ImageWidget *create() const override {
+    auto icon = new ImageWidget;
 
     icon->setUrl(m_icon);
 

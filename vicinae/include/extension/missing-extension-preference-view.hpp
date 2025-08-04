@@ -31,7 +31,7 @@ public:
 
     auto centeringLayout = new QHBoxLayout;
 
-    auto icon = new Omnimg::ImageWidget();
+    auto icon = new ImageWidget();
 
     icon->setFixedSize(32, 32);
     icon->setUrl(command->iconUrl());

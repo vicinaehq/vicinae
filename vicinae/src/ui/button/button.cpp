@@ -1,6 +1,7 @@
 #include "button.hpp"
-#include "ui/image/omnimg.hpp"
+#include "ui/image/image.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
+#include <qevent.h>
 #include <qnamespace.h>
 #include <qpainterpath.h>
 
@@ -62,9 +63,10 @@ void OmniButtonWidget::setRightAccessory(QWidget *w) {
 }
 
 void OmniButtonWidget::setLeftIcon(const ImageURL &url, QSize size) {
-  auto icon = new Omnimg::ImageWidget(url);
+  auto icon = new ImageWidget();
 
   icon->setFixedSize(size);
+  icon->setUrl(url);
   setLeftAccessory(icon);
 }
 
@@ -73,9 +75,10 @@ void OmniButtonWidget::setColor(const ColorLike &color) { label->setColor(color)
 void OmniButtonWidget::setText(const QString &text) { label->setText(text); }
 
 void OmniButtonWidget::setRightAccessory(const ImageURL &url, QSize size) {
-  auto icon = new Omnimg::ImageWidget(url);
+  auto icon = new ImageWidget;
 
   icon->setFixedSize(size);
+  icon->setUrl(url);
   setRightAccessory(icon);
 }
 

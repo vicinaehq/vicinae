@@ -1,5 +1,5 @@
 #pragma once
-#include "ui/image/omnimg.hpp"
+#include "ui/image/image.hpp"
 #include "ui/selectable-omni-list-widget/selectable-omni-list-widget.hpp"
 #include "ui/typography/typography.hpp"
 #include <qboxlayout.h>
@@ -15,7 +15,7 @@ class TransformResult : public SelectableOmniListWidget {
   QColor _dividerColor;
   QWidget *_base;
   QWidget *_result;
-  Omnimg::ImageWidget *m_arrowIcon = new Omnimg::ImageWidget(this);
+  ImageWidget *m_arrowIcon = new ImageWidget(this);
 
   QWidget *createVContainer(QWidget *left, QWidget *right) const;
   TypographyWidget *createLabel(const QString &text, QWidget *parent = nullptr) const;

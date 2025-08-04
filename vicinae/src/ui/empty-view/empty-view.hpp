@@ -1,11 +1,11 @@
 #pragma once
-#include "ui/image/omnimg.hpp"
+#include "ui/image/image.hpp"
 #include <QWidget>
 
 class TypographyWidget;
 
 class EmptyViewWidget : public QWidget {
-  Omnimg::ImageWidget *m_icon = new Omnimg::ImageWidget(this);
+  ImageWidget *m_icon = new ImageWidget(this);
   TypographyWidget *m_title;
   TypographyWidget *m_description;
 

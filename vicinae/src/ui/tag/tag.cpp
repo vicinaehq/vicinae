@@ -1,7 +1,7 @@
 #include "ui/tag/tag.hpp"
 #include "../image/url.hpp"
 #include "theme.hpp"
-#include "ui/image/omnimg.hpp"
+#include "ui/image/image.hpp"
 #include "ui/typography/typography.hpp"
 #include "utils/layout.hpp"
 #include <qnamespace.h>
@@ -10,7 +10,7 @@
 
 void TagWidget::setupUI() {
   m_text = new TypographyWidget;
-  m_image = new Omnimg::ImageWidget;
+  m_image = new ImageWidget;
 
   m_image->setFixedSize(16, 16);
   m_image->hide();

@@ -6,7 +6,7 @@
 #include <qwidget.h>
 #include <variant>
 #include "ui/flow-layout/flow-layout.hpp"
-#include "ui/image/omnimg.hpp"
+#include "ui/image/image.hpp"
 #include "ui/typography/typography.hpp"
 #include "../ui/image/url.hpp"
 
@@ -35,7 +35,7 @@ Stack &Stack::addTitle(const QString &title, SemanticColor color, Qt::Alignment 
 }
 
 Stack &Stack::addIcon(const ImageURL &url, QSize size, Qt::Alignment align) {
-  auto icon = new Omnimg::ImageWidget;
+  auto icon = new ImageWidget;
 
   if (!size.isEmpty()) icon->setFixedSize(size);
   icon->setUrl(url);

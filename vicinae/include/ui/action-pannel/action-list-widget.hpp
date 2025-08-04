@@ -1,13 +1,13 @@
 #pragma once
 #include "../../../src/ui/image/url.hpp"
 #include "ui/action-pannel/action.hpp"
-#include "ui/image/omnimg.hpp"
+#include "ui/image/image.hpp"
 #include "ui/keyboard-shortcut-indicator/keyboard-shortcut-indicator.hpp"
 #include "ui/selectable-omni-list-widget/selectable-omni-list-widget.hpp"
 #include "ui/typography/typography.hpp"
 
 class ActionListWidget : public SelectableOmniListWidget {
-  Omnimg::ImageWidget *m_icon;
+  ImageWidget *m_icon;
   TypographyWidget *m_label;
   KeyboardShortcutIndicatorWidget *m_shortcut;
 

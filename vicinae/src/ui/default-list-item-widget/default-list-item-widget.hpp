@@ -1,7 +1,7 @@
 #pragma once
 #include "../image/url.hpp"
 #include "ui/typography/typography.hpp"
-#include "ui/image/omnimg.hpp"
+#include "ui/image/image.hpp"
 #include "ui/selectable-omni-list-widget/selectable-omni-list-widget.hpp"
 #include <qboxlayout.h>
 #include <qcolor.h>
@@ -46,7 +46,7 @@ public:
 using AccessoryList = std::vector<ListAccessory>;
 
 class DefaultListItemWidget : public SelectableOmniListWidget {
-  Omnimg::ImageWidget *_icon = new Omnimg::ImageWidget(this);
+  ImageWidget *_icon = new ImageWidget(this);
   TypographyWidget *_name = new TypographyWidget(this);
   TypographyWidget *_category = new TypographyWidget(this);
   AccessoryListWidget *_accessoryList = new AccessoryListWidget(this);

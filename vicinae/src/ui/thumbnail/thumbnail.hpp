@@ -1,7 +1,7 @@
 #pragma once
 #include "../image/url.hpp"
 #include "ui/dialog/dialog.hpp"
-#include "ui/image/omnimg.hpp"
+#include "ui/image/image.hpp"
 #include <qboxlayout.h>
 #include <qevent.h>
 #include <qgraphicseffect.h>
@@ -17,8 +17,8 @@
 class Thumbnail : public QWidget {
   Q_OBJECT
 
-  Omnimg::ImageWidget *m_content = new Omnimg::ImageWidget(this);
-  Omnimg::ImageWidget *m_placeholder = new Omnimg::ImageWidget(this);
+  ImageWidget *m_content = new ImageWidget(this);
+  ImageWidget *m_placeholder = new ImageWidget(this);
   int m_borderRadius = 20;
   bool m_clickable = false;
   QGraphicsOpacityEffect *m_opacityEffect = new QGraphicsOpacityEffect(this);

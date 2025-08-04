@@ -7,7 +7,7 @@
 #include "services/raycast/raycast-store.hpp"
 #include "settings/extension-settings.hpp"
 #include "theme.hpp"
-#include "ui/image/omnimg.hpp"
+#include "ui/image/image.hpp"
 #include "ui/list-accessory/list-accessory.hpp"
 #include "ui/scroll-bar/scroll-bar.hpp"
 #include "ui/thumbnail/thumbnail.hpp"

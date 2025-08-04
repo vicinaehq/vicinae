@@ -5,7 +5,7 @@
 #include "services/file-chooser/xdp-file-chooser/xdp-file-chooser.hpp"
 #include "ui/focus-notifier.hpp"
 #include "ui/icon-button/icon-button.hpp"
-#include "ui/image/omnimg.hpp"
+#include "ui/image/image.hpp"
 #include "ui/button/button.hpp"
 #include "ui/omni-list/omni-list-item-widget.hpp"
 #include "ui/omni-list/omni-list.hpp"
@@ -29,7 +29,7 @@ struct File {
 class SelectedFileWidget : public OmniListItemWidget {
   Q_OBJECT
 
-  Omnimg::ImageWidget *m_icon = new Omnimg::ImageWidget;
+  ImageWidget *m_icon = new ImageWidget;
   TypographyWidget *m_title = new TypographyWidget;
   IconButton *m_showFolder = new IconButton();
   IconButton *m_removeButton = new IconButton();

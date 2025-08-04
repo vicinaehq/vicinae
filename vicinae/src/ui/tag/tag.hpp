@@ -1,7 +1,7 @@
 #pragma once
 #include "../image/url.hpp"
 #include "theme.hpp"
-#include "ui/image/omnimg.hpp"
+#include "ui/image/image.hpp"
 #include <qevent.h>
 #include <qwidget.h>
 
@@ -10,7 +10,7 @@ class TypographyWidget;
 class TagWidget : public QWidget {
   std::optional<ColorLike> m_color;
   TypographyWidget *m_text;
-  Omnimg::ImageWidget *m_image;
+  ImageWidget *m_image;
 
   void setupUI();
 

@@ -5,7 +5,7 @@
 #include "ui/focus-notifier.hpp"
 #include "ui/form/base-input.hpp"
 #include "ui/loading-bar/horizontal-loading-bar.hpp"
-#include "ui/image/omnimg.hpp"
+#include "ui/image/image.hpp"
 #include "ui/omni-list/omni-list.hpp"
 #include "ui/popover/popover.hpp"
 #include <algorithm>
@@ -76,9 +76,9 @@ protected:
   OmniList *m_list;
   BaseInput *inputField;
   QLineEdit *m_searchField;
-  Omnimg::ImageWidget *collapseIcon;
+  ImageWidget *collapseIcon;
   HorizontalLoadingBar *m_loadingBar = new HorizontalLoadingBar(this);
-  Omnimg::ImageWidget *selectionIcon;
+  ImageWidget *selectionIcon;
   Popover *popover;
   QStackedWidget *m_content = new QStackedWidget(popover);
   QWidget *m_emptyView = new QWidget(m_content);

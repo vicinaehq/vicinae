@@ -1,8 +1,9 @@
 #pragma once
 #include <qgraphicseffect.h>
 #include <qnamespace.h>
+#include <qpropertyanimation.h>
 #include <qwidget.h>
-#include "ui/image/omnimg.hpp"
+#include "ui/image/image.hpp"
 
 class FadeWidget : public QWidget {
 private:
@@ -52,7 +53,7 @@ class TypographyWidget;
 
 class HudWidget : public FadeWidget {
   TypographyWidget *m_text = nullptr;
-  Omnimg::ImageWidget *m_icon = nullptr;
+  ImageWidget *m_icon = nullptr;
   bool m_shouldDrawBorders = true;
 
   void paintEvent(QPaintEvent *event) override;

@@ -2,7 +2,7 @@
 #include "common.hpp"
 #include "../image/url.hpp"
 #include "theme.hpp"
-#include "ui/image/omnimg.hpp"
+#include "ui/image/image.hpp"
 #include "ui/omni-list/omni-list.hpp"
 #include "ui/selectable-omni-list-widget/selectable-omni-list-widget.hpp"
 #include "ui/typography/typography.hpp"
@@ -128,7 +128,7 @@ public:
 
 class LeftTableWidget : public QWidget {
   QHBoxLayout *m_layout = new QHBoxLayout;
-  Omnimg::ImageWidget *m_icon = new Omnimg::ImageWidget;
+  ImageWidget *m_icon = new ImageWidget;
 
 public:
   void setWidget(QWidget *widget) {

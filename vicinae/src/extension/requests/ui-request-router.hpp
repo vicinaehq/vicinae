@@ -1,10 +1,8 @@
 #pragma once
 #include "extension/extension-navigation-controller.hpp"
-#include "navigation-controller.hpp"
 #include <qjsonarray.h>
 #include <qjsonobject.h>
 #include <qobject.h>
-#include "proto/ipc.pb.h"
 #include "proto/ui.pb.h"
 #include "services/toast/toast-service.hpp"
 #include "ui/toast/toast.hpp"

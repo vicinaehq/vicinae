@@ -2,7 +2,7 @@
 #include "actions/theme/theme-actions.hpp"
 #include "ui/views/base-view.hpp"
 #include "../src/ui/image/url.hpp"
-#include "ui/image/omnimg.hpp"
+#include "ui/image/image.hpp"
 #include "ui/omni-grid/omni-grid.hpp"
 #include "ui/omni-list/omni-list.hpp"
 #include <qlabel.h>
@@ -20,7 +20,7 @@ class IconBrowserView : public GridView {
     QString navigationTitle() const override { return _name; }
 
     QWidget *centerWidget() const override {
-      auto icon = new Omnimg::ImageWidget;
+      auto icon = new ImageWidget;
 
       icon->setFixedSize(30, 30);
       icon->setUrl(BuiltinOmniIconUrl(_name));
@@ -35,7 +35,7 @@ class IconBrowserView : public GridView {
     }
 
     void recycleCenterWidget(QWidget *widget) const override {
-      auto icon = static_cast<Omnimg::ImageWidget *>(widget);
+      auto icon = static_cast<ImageWidget *>(widget);
 
       icon->setUrl(BuiltinOmniIconUrl(_name));
     }

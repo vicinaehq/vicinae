@@ -1,7 +1,7 @@
 #pragma once
 #include <qwidget.h>
 #include "navigation-controller.hpp"
-#include "ui/image/omnimg.hpp"
+#include "ui/image/image.hpp"
 
 class ApplicationContext;
 class TypographyWidget;
@@ -23,7 +23,7 @@ private:
   void setupUI();
 
   TypographyWidget *m_navigationTitle;
-  Omnimg::ImageWidget *m_navigationIcon = new Omnimg::ImageWidget(this);
+  ImageWidget *m_navigationIcon = new ImageWidget(this);
 };
 
 class GlobalBar : public QWidget {

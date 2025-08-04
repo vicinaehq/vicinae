@@ -2,7 +2,7 @@
 #include "common.hpp"
 #include "ui/focus-notifier.hpp"
 #include "ui/form/base-input.hpp"
-#include "ui/image/omnimg.hpp"
+#include "ui/image/image.hpp"
 #include "ui/omni-list/omni-list.hpp"
 #include "ui/popover/popover.hpp"
 #include <qlineedit.h>
@@ -79,7 +79,7 @@ private:
 protected:
   OmniList *m_completerList;
   BaseInput *inputField;
-  Omnimg::ImageWidget *selectionIcon;
+  ImageWidget *selectionIcon;
   Popover *popover;
   std::unique_ptr<AbstractItem> _currentSelection;
 

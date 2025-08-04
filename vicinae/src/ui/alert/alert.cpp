@@ -1,6 +1,7 @@
 #include "alert.hpp"
 #include "theme.hpp"
 #include "utils/layout.hpp"
+#include <qpainterpath.h>
 
 void CallbackAlertWidget::confirm() const {
   if (m_fn) m_fn(true);
@@ -78,7 +79,7 @@ void AlertWidget::setConfirmText(const QString &text, const ColorLike &color) {
 void AlertWidget::setTitle(const QString &title) { _title->setText(title); }
 
 AlertWidget::AlertWidget(QWidget *parent)
-    : DialogContentWidget(parent), _icon(new Omnimg::ImageWidget), _title(new TypographyWidget),
+    : DialogContentWidget(parent), _icon(new ImageWidget), _title(new TypographyWidget),
       _message(new TypographyWidget), _cancelBtn(new OmniButtonWidget), _actionBtn(new OmniButtonWidget) {
   auto layout = new QVBoxLayout;
 

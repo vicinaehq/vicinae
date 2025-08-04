@@ -1,7 +1,9 @@
 #include "ui/markdown/markdown-renderer.hpp"
 #include "service-registry.hpp"
 #include "theme.hpp"
-#include "ui/image/omnimg.hpp"
+#include "ui/image/http-image-loader.hpp"
+#include "ui/image/image.hpp"
+#include "ui/image/local-image-loader.hpp"
 #include "ui/scroll-bar/scroll-bar.hpp"
 #include <cmark-gfm.h>
 #include <qapplication.h>
@@ -93,34 +95,33 @@ void MarkdownRenderer::insertImage(cmark_node *node) {
     // implement for tint
   }
 
-  std::unique_ptr<Omnimg::AbstractImageLoader> imageLoader;
+  std::unique_ptr<AbstractImageLoader> imageLoader;
 
   if (url.scheme() == "https") {
-    imageLoader = std::make_unique<Omnimg::HttpImageLoader>(url);
+    imageLoader = std::make_unique<HttpImageLoader>(url);
   } else {
     std::filesystem::path path = QString("%1%2").arg(url.host()).arg(url.path()).toStdString();
 
-    imageLoader = std::make_unique<Omnimg::LocalImageLoader>(path);
+    imageLoader = std::make_unique<LocalImageLoader>(path);
   }
 
   auto pos = _cursor.position();
 
-  connect(imageLoader.get(), &Omnimg::AbstractImageLoader::dataUpdated, this,
-          [this, url, pos](const QPixmap &pix) {
-            auto old = _cursor.position();
+  connect(imageLoader.get(), &AbstractImageLoader::dataUpdated, this, [this, url, pos](const QPixmap &pix) {
+    auto old = _cursor.position();
 
-            _cursor.setPosition(pos);
-            _document->addResource(QTextDocument::ImageResource, url, pix);
+    _cursor.setPosition(pos);
+    _document->addResource(QTextDocument::ImageResource, url, pix);
 
-            QTextBlockFormat blockFormat = _cursor.blockFormat();
+    QTextBlockFormat blockFormat = _cursor.blockFormat();
 
-            blockFormat.setAlignment(Qt::AlignCenter);
+    blockFormat.setAlignment(Qt::AlignCenter);
 
-            _cursor.setBlockFormat(blockFormat);
-            _cursor.insertImage(url.toString());
-            _cursor.setPosition(old);
-            _document->markContentsDirty(0, _document->characterCount());
-          });
+    _cursor.setBlockFormat(blockFormat);
+    _cursor.insertImage(url.toString());
+    _cursor.setPosition(old);
+    _document->markContentsDirty(0, _document->characterCount());
+  });
 
   imageLoader->render({.size = iconSize, .devicePixelRatio = devicePixelRatio()});
   m_images.push_back({.cursorPos = pos, .icon = std::move(imageLoader)});

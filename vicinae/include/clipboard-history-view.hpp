@@ -16,7 +16,7 @@
 #include "../src/ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "ui/icon-button/icon-button.hpp"
-#include "ui/image/omnimg.hpp"
+#include "ui/image/image.hpp"
 #include "ui/omni-list/omni-list.hpp"
 #include "ui/split-detail/split-detail.hpp"
 #include "ui/toast/toast.hpp"
@@ -99,8 +99,8 @@ public:
 class ClipboardHistoryItemWidget : public SelectableOmniListWidget {
   TypographyWidget *m_title = new TypographyWidget;
   TypographyWidget *m_description = new TypographyWidget;
-  Omnimg::ImageWidget *m_icon = new Omnimg::ImageWidget;
-  Omnimg::ImageWidget *m_pinIcon = new Omnimg::ImageWidget;
+  ImageWidget *m_icon = new ImageWidget;
+  ImageWidget *m_pinIcon = new ImageWidget;
 
   ImageURL iconForMime(const ClipboardHistoryEntry &entry) const {
     if (entry.mimeType.startsWith("text/")) { return BuiltinOmniIconUrl("text"); }
@@ -169,7 +169,7 @@ class ClipboardHistoryDetail : public DetailWithMetadataWidget {
     }
 
     if (entry.mimeType.startsWith("image/")) {
-      auto icon = new Omnimg::ImageWidget;
+      auto icon = new ImageWidget;
 
       icon->setContentsMargins(10, 10, 10, 10);
       icon->setUrl(LocalOmniIconUrl(entry.filePath));

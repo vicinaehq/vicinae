@@ -1,5 +1,6 @@
 #include "empty-view.hpp"
 #include "ui/typography/typography.hpp"
+#include <qboxlayout.h>
 
 void EmptyViewWidget::setupUi() {
   auto layout = new QVBoxLayout();

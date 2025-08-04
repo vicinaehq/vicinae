@@ -5,7 +5,7 @@
 #include "extension/extension-view.hpp"
 #include "../../src/ui/image/url.hpp"
 #include "ui/omni-grid/grid-item-content-widget.hpp"
-#include "ui/image/omnimg.hpp"
+#include "ui/image/image.hpp"
 #include "ui/omni-grid/omni-grid.hpp"
 #include "ui/omni-list/omni-list.hpp"
 #include <QJsonArray>
@@ -22,7 +22,7 @@ class ExtensionGridItem : public OmniGrid::AbstractGridItem {
   QString generateId() const override { return _item.id; }
 
   QWidget *centerWidget() const override {
-    auto icon = new Omnimg::ImageWidget;
+    auto icon = new ImageWidget;
 
     refreshCenterWidget(icon);
 
@@ -46,7 +46,7 @@ class ExtensionGridItem : public OmniGrid::AbstractGridItem {
   bool centerWidgetRecyclable() const override { return true; }
 
   void refreshCenterWidget(QWidget *widget) const override {
-    auto icon = static_cast<Omnimg::ImageWidget *>(widget);
+    auto icon = static_cast<ImageWidget *>(widget);
     const auto visitor = overloads{[](const ImageLikeModel &model) { return model; },
                                    [](const ImageContentWithTooltip &model) { return model.value; }};
 

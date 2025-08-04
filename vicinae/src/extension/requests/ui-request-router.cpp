@@ -1,7 +1,9 @@
 #include "ui-request-router.hpp"
 #include "proto/ui.pb.h"
+#include "timer.hpp"
 #include "ui/alert/alert.hpp"
 #include "ui/toast/toast.hpp"
+#include <QtConcurrent/QtConcurrent>
 #include <unordered_map>
 
 namespace ui = proto::ext::ui;

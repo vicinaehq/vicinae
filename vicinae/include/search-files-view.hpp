@@ -49,7 +49,7 @@ class FileListItemMetadata : public DetailWithMetadataWidget {
     auto mime = m_mimeDb.mimeTypeForFile(path.c_str());
 
     if (mime.name().startsWith("image/")) {
-      auto icon = new Omnimg::ImageWidget;
+      auto icon = new ImageWidget;
 
       icon->setContentsMargins(10, 10, 10, 10);
       icon->setUrl(LocalOmniIconUrl(path));
@@ -67,7 +67,7 @@ class FileListItemMetadata : public DetailWithMetadataWidget {
       return container;
     }
 
-    auto icon = new Omnimg::ImageWidget;
+    auto icon = new ImageWidget;
 
     icon->setContentsMargins(10, 10, 10, 10);
     icon->setUrl(SystemOmniIconUrl(mime.iconName()).withFallback(SystemOmniIconUrl(mime.genericIconName())));
