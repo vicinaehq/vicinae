@@ -24,11 +24,15 @@ QString ExtensionCommand::commandId() const { return m_command.name; }
 
 QString ExtensionCommand::name() const { return m_command.title; }
 
-QString ExtensionCommand::repositoryName() const { return _extensionTitle; }
+QString ExtensionCommand::repositoryDisplayName() const { return _extensionTitle; }
+
+QString ExtensionCommand::repositoryName() const { return m_extensionName; }
 
 void ExtensionCommand::setAssetPath(const std::filesystem::path &path) { _assetPath = path; }
 
 void ExtensionCommand::setExtensionTitle(const QString &title) { _extensionTitle = title; }
+
+void ExtensionCommand::setExtensionName(const QString &name) { m_extensionName = name; }
 
 ImageURL ExtensionCommand::iconUrl() const {
   if (auto icon = m_command.icon) {

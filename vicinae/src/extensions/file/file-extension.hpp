@@ -20,7 +20,7 @@ class SearchFilesCommand : public BuiltinViewCommand<SearchFilesView> {
 
 class FileExtension : public BuiltinCommandRepository {
   QString id() const override { return "file"; }
-  QString name() const override { return "System files"; }
+  QString displayName() const override { return "System files"; }
   QString description() const override { return "Integrate with system files"; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("folder").setBackgroundTint(SemanticColor::Red);

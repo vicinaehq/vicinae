@@ -7,7 +7,7 @@
 
 class WindowManagementExtension : public BuiltinCommandRepository {
   QString id() const override { return "wm"; }
-  QString name() const override { return "Window Management"; }
+  QString displayName() const override { return "Window Management"; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("app-window-list").setBackgroundTint(SemanticColor::Blue);
   }

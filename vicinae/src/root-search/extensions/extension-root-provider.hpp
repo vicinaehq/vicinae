@@ -42,7 +42,7 @@ class ExtensionRootProvider : public RootProvider {
 
 public:
   PreferenceList preferences() const override { return m_repo->preferences(); }
-  QString displayName() const override { return m_repo->name(); }
+  QString displayName() const override { return m_repo->displayName(); }
   QString uniqueId() const override { return QString("extension.%1").arg(m_repo->id()); }
   ImageURL icon() const override { return m_repo->iconUrl(); };
   Type type() const override { return RootProvider::Type::ExtensionProvider; }

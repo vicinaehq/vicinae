@@ -9,7 +9,7 @@
 
 class VicinaeExtension : public BuiltinCommandRepository {
   QString id() const override { return "vicinae"; }
-  QString name() const override { return "Vicinae"; }
+  QString displayName() const override { return "Vicinae"; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("vicinae").setBackgroundTint(SemanticColor::Red);
   }

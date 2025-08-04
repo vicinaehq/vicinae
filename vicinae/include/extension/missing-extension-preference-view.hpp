@@ -39,7 +39,7 @@ public:
     auto title = new TypographyWidget;
 
     title->setSize(TextSize::TextTitle);
-    title->setText(QString("Welcome to %1").arg(m_command->repositoryName()));
+    title->setText(QString("Welcome to %1").arg(m_command->repositoryDisplayName()));
     title->setFontWeight(QFont::Weight::DemiBold);
     title->setAlignment(Qt::AlignCenter);
 

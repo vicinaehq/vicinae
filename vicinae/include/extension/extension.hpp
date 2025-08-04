@@ -20,6 +20,7 @@ public:
   Extension(const ExtensionManifest &manifest);
 
   QString id() const override;
+  QString displayName() const override;
   QString name() const override;
   ImageURL iconUrl() const override;
   QString description() const override;

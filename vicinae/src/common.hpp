@@ -4,6 +4,7 @@
 #include "preference.hpp"
 #include "theme.hpp"
 #include "ui/focus-notifier.hpp"
+#include "vicinae.hpp"
 #include <QHBoxLayout>
 #include <QString>
 #include <cmath>
@@ -150,9 +151,18 @@ public:
   virtual std::vector<Preference> preferences() const { return {}; }
   virtual std::vector<CommandArgument> arguments() const { return {}; }
   virtual std::vector<QString> keywords() const { return {}; }
+  virtual QString repositoryDisplayName() const { return ""; }
   virtual QString repositoryName() const { return ""; }
   virtual bool isFallback() const { return false; }
   virtual void preferenceValuesChanged(const QJsonObject &value) const {}
+
+  QString deeplink() const {
+    return QString("%1://extensions/%2/%3/%4")
+        .arg(Omnicast::APP_SCHEME)
+        .arg(author())
+        .arg(repositoryName())
+        .arg(commandId());
+  }
 
   virtual QString extensionId() const = 0;
   virtual QString commandId() const = 0;
@@ -166,7 +176,8 @@ public:
 class AbstractCommandRepository {
 public:
   virtual QString id() const = 0;
-  virtual QString name() const = 0;
+  virtual QString displayName() const = 0;
+  virtual QString name() const { return id(); }
   virtual QString description() const { return ""; }
   virtual QString author() const = 0;
   virtual std::vector<std::shared_ptr<AbstractCmd>> commands() const = 0;

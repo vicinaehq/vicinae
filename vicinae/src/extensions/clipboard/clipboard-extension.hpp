@@ -6,7 +6,7 @@
 class ClipboardExtension : public BuiltinCommandRepository {
 public:
   QString id() const override { return "clipboard"; }
-  QString name() const override { return "Clipboard"; }
+  QString displayName() const override { return "Clipboard"; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("copy-clipboard").setBackgroundTint(SemanticColor::Red);
   }

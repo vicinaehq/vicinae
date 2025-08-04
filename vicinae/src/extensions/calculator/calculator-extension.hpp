@@ -26,7 +26,7 @@ class CalculatorHistoryCommand : public BuiltinViewCommand<CalculatorHistoryView
 class CalculatorExtension : public BuiltinCommandRepository {
 public:
   QString id() const override { return "calculator"; }
-  QString name() const override { return "Calculator"; }
+  QString displayName() const override { return "Calculator"; }
   QString description() const override { return "Do maths, convert units or search past calculations..."; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("plus-minus-divide-multiply").setBackgroundTint(SemanticColor::Red);

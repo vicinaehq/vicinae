@@ -37,6 +37,8 @@ public:
   QString extensionId() const override { return _repositoryId; }
   QString commandId() const override { return id(); }
 
+  QString repositoryName() const override { return _repositoryId; }
+
   QString author() const override { return Omnicast::APP_ID; }
 
   // TODO: remove
@@ -48,7 +50,7 @@ public:
   bool isFallback() const override { return false; }
   void setIconUrl(const ImageURL &url) { _url = url; }
 
-  QString repositoryName() const override { return _repositoryName; }
+  QString repositoryDisplayName() const override { return _repositoryName; }
   const QString &repositoryId() { return _repositoryId; }
 
   virtual std::vector<QString> keywords() const override { return {}; }
@@ -60,7 +62,7 @@ class BuiltinCommandRepository : public AbstractCommandRepository {
   std::vector<std::shared_ptr<AbstractCmd>> _commands;
 
   virtual QString id() const override = 0;
-  QString name() const override = 0;
+  QString displayName() const override = 0;
   std::vector<std::shared_ptr<AbstractCmd>> commands() const override final { return _commands; }
   QString author() const override final { return Omnicast::APP_ID; }
 
@@ -68,7 +70,7 @@ protected:
   template <typename T> void registerCommand() {
     auto cmd = std::make_shared<T>();
     cmd->setRepositoryId(id());
-    cmd->setRepositoryName(name());
+    cmd->setRepositoryName(displayName());
     _commands.emplace_back(cmd);
   }
 

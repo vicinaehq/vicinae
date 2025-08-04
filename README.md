@@ -50,7 +50,6 @@ These must be installed regardless of your installation method:
 - `libprotobuf`
 - `libqalculate`
 - `libminizip`
-- `libQt6WaylandClient` *(optional — only needed on Wayland, which is highly recommended for running Vicinae)*
 - `libLayerShellQtInterface` *(optional — only if your compositor supports the `wlr-layer-shell` protocol)*
 - `nodejs >= 18` *(optional — required only if you want to run or develop third-party extensions using React/TypeScript. `npm` is **not** required at runtime.)*
 

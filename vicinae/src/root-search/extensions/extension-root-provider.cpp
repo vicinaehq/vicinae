@@ -8,7 +8,7 @@
 #include "services/root-item-manager/root-item-manager.hpp"
 
 QString CommandRootItem::displayName() const { return m_command->name(); }
-QString CommandRootItem::subtitle() const { return m_command->repositoryName(); }
+QString CommandRootItem::subtitle() const { return m_command->repositoryDisplayName(); }
 ImageURL CommandRootItem::iconUrl() const { return m_command->iconUrl(); }
 ArgumentList CommandRootItem::arguments() const { return m_command->arguments(); }
 QString CommandRootItem::providerId() const { return "command"; }
@@ -28,8 +28,10 @@ ActionPanelView *CommandRootItem::actionPanel(const RootItemMetadata &metadata) 
   panel->addAction(resetRanking);
   panel->addAction(markAsFavorite);
 
-  auto deeplink =
-      QString("omnicast://extensions/%1/%2").arg(m_command->extensionId()).arg(m_command->commandId());
+  auto deeplink = QString("omnicast://extensions/%1/%2/%3")
+                      .arg(m_command->author())
+                      .arg(m_command->extensionId())
+                      .arg(m_command->commandId());
   auto action = new CopyToClipboardAction(Clipboard::Text(deeplink), "Copy to deeplink");
 
   panel->addAction(action);
@@ -49,9 +51,7 @@ std::unique_ptr<ActionPanelState> CommandRootItem::newActionPanel(ApplicationCon
   auto mainSection = panel->createSection();
   auto itemSection = panel->createSection();
   auto dangerSection = panel->createSection();
-  auto deeplink =
-      QString("omnicast://extensions/%1/%2").arg(m_command->extensionId()).arg(m_command->commandId());
-  auto copyDeeplink = new CopyToClipboardAction(Clipboard::Text(deeplink), "Copy deeplink");
+  auto copyDeeplink = new CopyToClipboardAction(Clipboard::Text(m_command->deeplink()), "Copy deeplink");
 
   mainSection->addAction(new DefaultActionWrapper(uniqueId(), open));
   itemSection->addAction(resetRanking);

@@ -21,6 +21,7 @@
 
 class ExtensionCommand : public AbstractCmd {
   QString _extensionId;
+  QString m_extensionName;
   QString _extensionTitle;
   QString _extensionIcon;
   PreferenceList _extensionPreferences;
@@ -56,10 +57,12 @@ public:
   QString commandId() const override;
 
   ImageURL iconUrl() const override;
+  QString repositoryDisplayName() const override;
   QString repositoryName() const override;
 
   void setAssetPath(const std::filesystem::path &path);
   void setExtensionTitle(const QString &title);
+  void setExtensionName(const QString &name);
   CommandType type() const override;
   CommandMode mode() const override;
 

@@ -5,7 +5,7 @@
 
 class ThemeExtension : public BuiltinCommandRepository {
   QString id() const override { return "theme"; }
-  QString name() const override { return "Theme"; }
+  QString displayName() const override { return "Theme"; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("brush").setBackgroundTint(SemanticColor::Purple);
   }

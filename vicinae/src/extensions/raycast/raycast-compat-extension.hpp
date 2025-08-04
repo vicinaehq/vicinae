@@ -6,7 +6,7 @@
 class RaycastCompatExtension : public BuiltinCommandRepository {
 public:
   QString id() const override { return "raycast-compat"; }
-  QString name() const override { return "Raycast Compat"; }
+  QString displayName() const override { return "Raycast Compat"; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("raycast").setBackgroundTint(SemanticColor::Red);
   }
