@@ -7,6 +7,7 @@ class IpcCommandHandler : public ICommandHandler {
 
 public:
   proto::ext::daemon::Response *handleCommand(const proto::ext::daemon::Request &message) override;
+  void handleUrl(const QUrl &url);
 
   IpcCommandHandler(ApplicationContext &ctx);
 

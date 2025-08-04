@@ -1,10 +1,14 @@
 #include "static-image-loader.hpp"
 #include <qimagereader.h>
 #include <QtConcurrent/QtConcurrent>
+#include <qstringview.h>
 
-QImage StaticIODeviceImageLoader::loadStatic(std::unique_ptr<QIODevice> device, const RenderConfig &cfg) {
+QImage StaticIODeviceImageLoader::loadStatic(const QByteArray &bytes, const RenderConfig &cfg) {
   QSize deviceSize = cfg.size * cfg.devicePixelRatio;
-  QImageReader reader(device.get());
+  QBuffer buf;
+  buf.setData(bytes);
+  buf.open(QIODevice::ReadOnly);
+  QImageReader reader(&buf);
   QSize originalSize = reader.size();
   bool isDownScalable =
       originalSize.height() > deviceSize.height() || originalSize.width() > deviceSize.width();
@@ -27,15 +31,12 @@ void StaticIODeviceImageLoader::abort() const {
 
 void StaticIODeviceImageLoader::render(const RenderConfig &cfg) {
   // TODO: allow rendering with a new config instead of no op
-  if (m_started) return;
-
-  m_started = true;
-  auto future = QtConcurrent::run([cfg, this]() { return loadStatic(std::move(m_device), cfg); });
+  auto future = QtConcurrent::run([cfg, data = m_data, this]() { return loadStatic(data, cfg); });
   m_watcher->setFuture(future);
 }
 
-StaticIODeviceImageLoader::StaticIODeviceImageLoader(std::unique_ptr<QIODevice> device)
-    : m_device(std::move(device)), m_watcher(QSharedPointer<ImageWatcher>::create()) {
+StaticIODeviceImageLoader::StaticIODeviceImageLoader(const QByteArray &data)
+    : m_data(data), m_watcher(QSharedPointer<ImageWatcher>::create()) {
   connect(m_watcher.get(), &ImageWatcher::finished, this,
           [this]() { emit dataUpdated(QPixmap::fromImage(m_watcher->future().takeResult())); });
 }

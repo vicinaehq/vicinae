@@ -1,12 +1,14 @@
 #include "animated-image-loader.hpp"
 #include "ui/image/image.hpp"
 #include <QMovie>
+#include <qbuffer.h>
+#include <qstringview.h>
 
 void AnimatedIODeviceImageLoader::render(const RenderConfig &cfg) {
   QSize deviceSize = cfg.size * cfg.devicePixelRatio;
 
   m_movie = std::make_unique<QMovie>();
-  m_movie->setDevice(m_device.get());
+  m_movie->setDevice(&m_buf);
 
   // m_movie->setScaledSize({deviceSize.width(), -1});
   m_movie->setCacheMode(QMovie::CacheAll);
@@ -31,5 +33,7 @@ void AnimatedIODeviceImageLoader::render(const RenderConfig &cfg) {
   m_movie->start();
 }
 
-AnimatedIODeviceImageLoader::AnimatedIODeviceImageLoader(std::unique_ptr<QIODevice> device)
-    : m_device(std::move(device)) {}
+AnimatedIODeviceImageLoader::AnimatedIODeviceImageLoader(const QByteArray &data) : m_data(data) {
+  m_buf.setData(m_data);
+  m_buf.open(QIODevice::ReadOnly);
+}

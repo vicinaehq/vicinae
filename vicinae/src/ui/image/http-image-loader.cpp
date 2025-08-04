@@ -16,12 +16,9 @@ void HttpImageLoader::render(const RenderConfig &cfg) {
   connect(reply, &FetchReply::finished, this, [this, reply, cfg](const QByteArray &data) {
     if (m_reply != reply) return;
 
-    auto buffer = std::make_unique<QBuffer>();
-
     Timer timer;
-    buffer->setData(data);
     timer.time("read http image network data");
-    m_loader = std::make_unique<IODeviceImageLoader>(std::move(buffer));
+    m_loader = std::make_unique<IODeviceImageLoader>(data);
     connect(m_loader.get(), &IODeviceImageLoader::dataUpdated, this, &HttpImageLoader::dataUpdated);
     connect(m_loader.get(), &IODeviceImageLoader::errorOccured, this, &HttpImageLoader::errorOccured);
     m_loader->render(cfg);

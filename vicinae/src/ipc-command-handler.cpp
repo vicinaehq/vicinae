@@ -2,7 +2,11 @@
 #include "common.hpp"
 #include "proto/daemon.pb.h"
 #include <qlogging.h>
+#include <qurl.h>
 #include "navigation-controller.hpp"
+#include "service-registry.hpp"
+#include "omni-command-db.hpp"
+#include "command-controller.hpp"
 
 proto::ext::daemon::Response *IpcCommandHandler::handleCommand(const proto::ext::daemon::Request &request) {
   auto res = new proto::ext::daemon::Response;
@@ -23,6 +27,8 @@ proto::ext::daemon::Response *IpcCommandHandler::handleCommand(const proto::ext:
   }
   case proto::ext::daemon::Request::kUrl: {
     qDebug() << "GOT URL" << request.url().url();
+
+    handleUrl(QUrl(request.url().url().c_str()));
     res->set_allocated_url(new proto::ext::daemon::UrlResponse());
     break;
   }
@@ -31,6 +37,16 @@ proto::ext::daemon::Response *IpcCommandHandler::handleCommand(const proto::ext:
   }
 
   return res;
+}
+
+void IpcCommandHandler::handleUrl(const QUrl &url) {
+  for (const auto &cmd : m_ctx.services->commandDb()->commands()) {
+    if (cmd.command->deeplink() == url) {
+      m_ctx.command->launch(cmd.command);
+      m_ctx.navigation->showWindow();
+      break;
+    }
+  }
 }
 
 /*
@@ -61,7 +77,7 @@ std::variant<CommandResponse, CommandError> IpcCommandHandler::handleCommand(con
         qCritical() << "Malformed extensions request";
         return false;
       }
-
+>
       for (auto &entry : commandDb->commands()) {
         if (entry.command->extensionId() == extId && entry.command->commandId() == commandId) {
           // ui->launchCommand(entry.command);
