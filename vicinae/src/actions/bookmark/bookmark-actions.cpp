@@ -71,7 +71,7 @@ void EditBookmarkAction::execute() {
 }
 
 EditBookmarkAction::EditBookmarkAction(const std::shared_ptr<Bookmark> &bookmark, const QList<QString> &args)
-    : AbstractAction("Edit bookmark", BuiltinOmniIconUrl("pencil")), m_bookmark(bookmark) {}
+    : AbstractAction("Edit bookmark", ImageURL::builtin("pencil")), m_bookmark(bookmark) {}
 
 // RemoveBookmarkAction
 
@@ -88,7 +88,7 @@ void RemoveBookmarkAction::execute() {
 }
 
 RemoveBookmarkAction::RemoveBookmarkAction(const std::shared_ptr<Bookmark> &link)
-    : AbstractAction("Remove link", BuiltinOmniIconUrl("trash")), m_bookmark(link) {}
+    : AbstractAction("Remove link", ImageURL::builtin("trash")), m_bookmark(link) {}
 
 // DuplicateBookmarkAction
 
@@ -98,8 +98,8 @@ void DuplicateBookmarkAction::execute() {
 
   emit ui->pushView(view, {.navigation = NavigationStatus{
                                .title = "Duplicate link",
-                               .iconUrl = BuiltinOmniIconUrl("link").setBackgroundTint(ColorTint::Red)}});
+                               .iconUrl = ImageURL::builtin("link").setBackgroundTint(ColorTint::Red)}});
 }
 
 DuplicateBookmarkAction::DuplicateBookmarkAction(const std::shared_ptr<Bookmark> &link)
-    : AbstractAction("Duplicate link", BuiltinOmniIconUrl("duplicate")), link(link) {}
+    : AbstractAction("Duplicate link", ImageURL::builtin("duplicate")), link(link) {}

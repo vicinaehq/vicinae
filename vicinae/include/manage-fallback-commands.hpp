@@ -23,7 +23,7 @@ class DisableFallbackAction : public AbstractAction {
 
 public:
   DisableFallbackAction(const QString &id)
-      : AbstractAction("Disable fallback", BuiltinOmniIconUrl("trash")), m_id(id) {}
+      : AbstractAction("Disable fallback", ImageURL::builtin("trash")), m_id(id) {}
 };
 
 class MoveFallbackUpAction : public AbstractAction {
@@ -41,7 +41,7 @@ class MoveFallbackUpAction : public AbstractAction {
 
 public:
   MoveFallbackUpAction(const QString &id)
-      : AbstractAction("Move fallback up", BuiltinOmniIconUrl("arrow-up")), m_id(id) {}
+      : AbstractAction("Move fallback up", ImageURL::builtin("arrow-up")), m_id(id) {}
 };
 
 class MoveFallbackDownAction : public AbstractAction {
@@ -58,7 +58,7 @@ class MoveFallbackDownAction : public AbstractAction {
 
 public:
   MoveFallbackDownAction(const QString &id)
-      : AbstractAction("Move fallback down", BuiltinOmniIconUrl("arrow-down")), m_id(id) {}
+      : AbstractAction("Move fallback down", ImageURL::builtin("arrow-down")), m_id(id) {}
 };
 
 class EnableFallbackAction : public AbstractAction {
@@ -74,7 +74,7 @@ class EnableFallbackAction : public AbstractAction {
 
 public:
   EnableFallbackAction(const QString &id)
-      : AbstractAction("Enable fallback", BuiltinOmniIconUrl("checkmark")), m_id(id) {}
+      : AbstractAction("Enable fallback", ImageURL::builtin("checkmark")), m_id(id) {}
 };
 
 class FallbackListItem : public AbstractDefaultListItem, public ListView::Actionnable {
@@ -217,6 +217,6 @@ public:
   ManageFallbackCommandsView() {
     setSearchPlaceholderText("Manage fallback commands...");
     setNavigationTitle("Manage Fallback Commands");
-    setNavigationIcon(BuiltinOmniIconUrl("arrow-counter-clockwise").setBackgroundTint(SemanticColor::Red));
+    setNavigationIcon(ImageURL::builtin("arrow-counter-clockwise").setBackgroundTint(SemanticColor::Red));
   }
 };

@@ -18,7 +18,7 @@ class EditCommandPreferencesView : public BaseView {
   public:
     void execute(AppWindow &app) override {}
 
-    SubmitAction() : AbstractAction("Save preferences", BuiltinOmniIconUrl("save-document")) {}
+    SubmitAction() : AbstractAction("Save preferences", ImageURL::builtin("save-document")) {}
   };
 
   QVBoxLayout *m_layout = new QVBoxLayout;

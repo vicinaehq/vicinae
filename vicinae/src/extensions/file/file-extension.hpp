@@ -12,7 +12,7 @@ class SearchFilesCommand : public BuiltinViewCommand<SearchFilesView> {
   QString extensionId() const override { return "file"; }
   QString commandId() const override { return "search"; }
   ImageURL iconUrl() const override {
-    return BuiltinOmniIconUrl("folder").setBackgroundTint(SemanticColor::Red);
+    return ImageURL::builtin("folder").setBackgroundTint(SemanticColor::Red);
   }
   std::vector<Preference> preferences() const override { return {}; }
   void preferenceValuesChanged(const QJsonObject &value) const override {}
@@ -23,7 +23,7 @@ class FileExtension : public BuiltinCommandRepository {
   QString name() const override { return "System files"; }
   QString description() const override { return "Integrate with system files"; }
   ImageURL iconUrl() const override {
-    return BuiltinOmniIconUrl("folder").setBackgroundTint(SemanticColor::Red);
+    return ImageURL::builtin("folder").setBackgroundTint(SemanticColor::Red);
   }
 
 public:

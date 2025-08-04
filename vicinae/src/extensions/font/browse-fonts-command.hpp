@@ -7,6 +7,6 @@ class BrowseFontsCommand : public BuiltinViewCommand<BrowseFontsView> {
   QString id() const override { return "browse"; }
   QString name() const override { return "Browse Fonts"; };
   ImageURL iconUrl() const override {
-    return BuiltinOmniIconUrl("text").setBackgroundTint(SemanticColor::Orange);
+    return ImageURL::builtin("text").setBackgroundTint(SemanticColor::Orange);
   }
 };

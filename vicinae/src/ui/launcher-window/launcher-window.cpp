@@ -93,7 +93,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
           [this](bool visible) { setVisible(visible); });
 
   ctx.navigation->pushView(new RootSearchView);
-  ctx.navigation->setNavigationIcon(BuiltinOmniIconUrl("vicinae"));
+  ctx.navigation->setNavigationIcon(ImageURL::builtin("vicinae"));
 
   connect(m_ctx.navigation.get(), &NavigationController::headerVisiblityChanged, this, [this](bool value) {
     if (m_currentOverlayWrapper->isVisible()) return;

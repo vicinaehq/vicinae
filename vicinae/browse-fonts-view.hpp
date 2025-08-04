@@ -119,14 +119,14 @@ class FontListItem : public AbstractDefaultListItem, public ListView::Actionnabl
 
   public:
     SetAppFont(const QFont &font)
-        : AbstractAction("Set as omnicast font", BuiltinOmniIconUrl("text")), m_font(font) {}
+        : AbstractAction("Set as omnicast font", ImageURL::builtin("text")), m_font(font) {}
   };
 
   QString m_family;
 
 public:
   QString generateId() const override { return m_family; }
-  ItemData data() const override { return {.iconUrl = BuiltinOmniIconUrl("text"), .name = m_family}; }
+  ItemData data() const override { return {.iconUrl = ImageURL::builtin("text"), .name = m_family}; }
 
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
     auto panel = std::make_unique<ActionPanelState>();

@@ -217,12 +217,12 @@ class RootFileListItem : public AbstractDefaultListItem, public ListView::Action
     auto mime = m_mimeDb.mimeTypeForFile(m_path.c_str());
 
     if (!mime.name().isEmpty()) {
-      if (!QIcon::fromTheme(mime.iconName()).isNull()) { return SystemOmniIconUrl(mime.iconName()); }
+      if (!QIcon::fromTheme(mime.iconName()).isNull()) { return ImageURL::system(mime.iconName()); }
 
-      return SystemOmniIconUrl(mime.genericIconName());
+      return ImageURL::system(mime.genericIconName());
     }
 
-    return BuiltinOmniIconUrl("question-mark-circle");
+    return ImageURL::builtin("question-mark-circle");
   }
 
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {

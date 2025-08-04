@@ -10,7 +10,7 @@ void ManageFallbackAction::execute() {
 }
 
 ManageFallbackAction::ManageFallbackAction()
-    : AbstractAction("Manage Fallback Actions", BuiltinOmniIconUrl("arrow-counter-clockwise")) {}
+    : AbstractAction("Manage Fallback Actions", ImageURL::builtin("arrow-counter-clockwise")) {}
 
 // DisableFallbackAction
 
@@ -21,7 +21,7 @@ void DisableFallbackAction::execute() {
 }
 
 DisableFallbackAction::DisableFallbackAction(const QString &id)
-    : AbstractAction("Disable fallback", BuiltinOmniIconUrl("trash")), m_id(id) {}
+    : AbstractAction("Disable fallback", ImageURL::builtin("trash")), m_id(id) {}
 
 // MoveFallbackUpAction
 
@@ -33,7 +33,7 @@ void MoveFallbackUpAction::execute() {
 }
 
 MoveFallbackUpAction::MoveFallbackUpAction(const QString &id)
-    : AbstractAction("Move fallback up", BuiltinOmniIconUrl("arrow-up")), m_id(id) {}
+    : AbstractAction("Move fallback up", ImageURL::builtin("arrow-up")), m_id(id) {}
 
 // MoveFallbackDownAction
 
@@ -45,7 +45,7 @@ void MoveFallbackDownAction::execute() {
 }
 
 MoveFallbackDownAction::MoveFallbackDownAction(const QString &id)
-    : AbstractAction("Move fallback down", BuiltinOmniIconUrl("arrow-down")), m_id(id) {}
+    : AbstractAction("Move fallback down", ImageURL::builtin("arrow-down")), m_id(id) {}
 
 // EnableFallbackAction
 
@@ -56,4 +56,4 @@ void EnableFallbackAction::execute() {
 }
 
 EnableFallbackAction::EnableFallbackAction(const QString &id)
-    : AbstractAction("Enable fallback", BuiltinOmniIconUrl("checkmark")), m_id(id) {}
+    : AbstractAction("Enable fallback", ImageURL::builtin("checkmark")), m_id(id) {}

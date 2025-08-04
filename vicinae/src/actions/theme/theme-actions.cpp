@@ -10,4 +10,4 @@ void SetThemeAction::execute(ApplicationContext *ctx) {
 }
 
 SetThemeAction::SetThemeAction(const QString &themeName)
-    : AbstractAction("Set theme", BuiltinOmniIconUrl("brush")), m_themeId(themeName) {}
+    : AbstractAction("Set theme", ImageURL::builtin("brush")), m_themeId(themeName) {}

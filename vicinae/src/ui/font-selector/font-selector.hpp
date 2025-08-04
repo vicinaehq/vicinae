@@ -10,7 +10,7 @@ class FontSelectorItem : public SelectorInput::AbstractItem {
 
   QString generateId() const override { return m_family; }
 
-  std::optional<ImageURL> icon() const override { return BuiltinOmniIconUrl("text"); }
+  std::optional<ImageURL> icon() const override { return ImageURL::builtin("text"); }
 
   AbstractItem *clone() const override { return new FontSelectorItem(*this); }
 

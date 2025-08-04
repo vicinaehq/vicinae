@@ -20,7 +20,7 @@ class FocusWindowAction : public AbstractAction {
 
 public:
   FocusWindowAction(const std::shared_ptr<AbstractWindowManager::AbstractWindow> &window)
-      : AbstractAction("Focus window", BuiltinOmniIconUrl("app-window")), _window(window) {}
+      : AbstractAction("Focus window", ImageURL::builtin("app-window")), _window(window) {}
 };
 
 class WindowItem : public AbstractDefaultListItem, public ListView::Actionnable {
@@ -39,7 +39,7 @@ public:
 
 class UnamedWindowListItem : public WindowItem {
   ItemData data() const override {
-    return {.iconUrl = BuiltinOmniIconUrl("app-window"),
+    return {.iconUrl = ImageURL::builtin("app-window"),
             .name = _window->title(),
             .subtitle = _window->wmClass()};
   }

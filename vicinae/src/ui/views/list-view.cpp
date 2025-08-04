@@ -89,7 +89,7 @@ void ListView::setupUI(QWidget *center) {
 
   m_emptyView->setTitle("No results");
   m_emptyView->setDescription("No results matching your search. You can try to refine your search.");
-  m_emptyView->setIcon(BuiltinOmniIconUrl("magnifying-glass"));
+  m_emptyView->setIcon(ImageURL::builtin("magnifying-glass"));
 
   m_split->setMainWidget(m_list);
 

@@ -15,7 +15,7 @@ class TextLinkWidget : public QWidget {
   TypographyWidget *m_text = new TypographyWidget;
   QUrl m_href;
 
-  void setArrowIcon(SemanticColor color) { m_icon->setUrl(BuiltinOmniIconUrl("arrow-ne").setFill(color)); }
+  void setArrowIcon(SemanticColor color) { m_icon->setUrl(ImageURL::builtin("arrow-ne").setFill(color)); }
 
   bool event(QEvent *event) override {
     switch (event->type()) {

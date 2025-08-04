@@ -36,12 +36,12 @@ class ScreenshotList : public QScrollArea {
       auto thumbnail = new Thumbnail;
       double aspectRatio = 16 / 10.f;
 
-      connect(thumbnail, &Thumbnail::clicked, this, [this, url]() { emit clickedUrl(HttpOmniIconUrl(url)); });
+      connect(thumbnail, &Thumbnail::clicked, this, [this, url]() { emit clickedUrl(ImageURL::http(url)); });
 
       thumbnail->setClickable(true);
       thumbnail->setFixedHeight(150);
       thumbnail->setFixedWidth(150 * aspectRatio);
-      thumbnail->setImage(HttpOmniIconUrl(url));
+      thumbnail->setImage(ImageURL::http(url));
 
       return thumbnail;
     };
@@ -85,11 +85,11 @@ class RaycastStoreDetailView : public BaseView {
 
   Stack createHeader() {
     auto author = HStack()
-                      .addIcon(HttpOmniIconUrl(m_ext.author.avatar).circle(), {16, 16})
+                      .addIcon(ImageURL::http(m_ext.author.avatar).circle(), {16, 16})
                       .addText(m_ext.author.name)
                       .spacing(10);
     auto downloadCount = HStack()
-                             .addIcon(BuiltinOmniIconUrl("arrow-down-circle"), {16, 16})
+                             .addIcon(ImageURL::builtin("arrow-down-circle"), {16, 16})
                              .addText(formatCount(m_ext.download_count))
                              .spacing(5);
 
@@ -101,10 +101,10 @@ class RaycastStoreDetailView : public BaseView {
                                  auto platforms = HStack().spacing(5);
 
                                  if (m_ext.platforms.contains("macOS")) {
-                                   platforms.addIcon(BuiltinOmniIconUrl("apple"), {16, 16});
+                                   platforms.addIcon(ImageURL::builtin("apple"), {16, 16});
                                  }
                                  if (m_ext.platforms.contains("Windows")) {
-                                   platforms.addIcon(BuiltinOmniIconUrl("windows11"), {16, 16});
+                                   platforms.addIcon(ImageURL::builtin("windows11"), {16, 16});
                                  }
 
                                  return platforms;
@@ -122,7 +122,7 @@ class RaycastStoreDetailView : public BaseView {
         .text = "Installed",
         .color = SemanticColor::Green,
         .fillBackground = true,
-        .icon = BuiltinOmniIconUrl("check-circle"),
+        .icon = ImageURL::builtin("check-circle"),
     });
 
     m_installedAccessory->setMaximumHeight(30);

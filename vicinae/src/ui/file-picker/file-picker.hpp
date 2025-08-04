@@ -54,10 +54,10 @@ class SelectedFileWidget : public OmniListItemWidget {
     m_title->setEllideMode(Qt::ElideMiddle);
 
     m_showFolder->setFixedSize(25, 25);
-    m_showFolder->setUrl(BuiltinOmniIconUrl("arrow-right-circle"));
+    m_showFolder->setUrl(ImageURL::builtin("arrow-right-circle"));
 
     m_removeButton->setFixedSize(25, 25);
-    m_removeButton->setUrl(BuiltinOmniIconUrl("x-mark-circle"));
+    m_removeButton->setUrl(ImageURL::builtin("x-mark-circle"));
 
     connect(m_showFolder, &IconButton::clicked, this, &SelectedFileWidget::openClicked);
     connect(m_removeButton, &IconButton::clicked, this, &SelectedFileWidget::removeClicked);
@@ -85,18 +85,18 @@ public:
     m_title->setText(compressPath(file.path).c_str());
 
     if (!icon.isNull()) {
-      m_icon->setUrl(SystemOmniIconUrl(file.mime.iconName()));
+      m_icon->setUrl(ImageURL::system(file.mime.iconName()));
       return;
     }
 
     icon = QIcon::fromTheme(file.mime.genericIconName());
 
     if (!icon.isNull()) {
-      m_icon->setUrl(SystemOmniIconUrl(file.mime.iconName()));
+      m_icon->setUrl(ImageURL::system(file.mime.iconName()));
       return;
     }
 
-    m_icon->setUrl(BuiltinOmniIconUrl("blank-document"));
+    m_icon->setUrl(ImageURL::builtin("blank-document"));
   }
 
 public:

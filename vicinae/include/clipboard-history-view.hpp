@@ -93,7 +93,7 @@ class CopyClipboardSelection : public AbstractAction {
 
 public:
   CopyClipboardSelection(int id)
-      : AbstractAction("Copy to clipboard", BuiltinOmniIconUrl("copy-clipboard")), m_id(id) {}
+      : AbstractAction("Copy to clipboard", ImageURL::builtin("copy-clipboard")), m_id(id) {}
 };
 
 class ClipboardHistoryItemWidget : public SelectableOmniListWidget {
@@ -103,13 +103,13 @@ class ClipboardHistoryItemWidget : public SelectableOmniListWidget {
   ImageWidget *m_pinIcon = new ImageWidget;
 
   ImageURL iconForMime(const ClipboardHistoryEntry &entry) const {
-    if (entry.mimeType.startsWith("text/")) { return BuiltinOmniIconUrl("text"); }
-    if (entry.mimeType.startsWith("image/")) { return BuiltinOmniIconUrl("image"); }
-    return BuiltinOmniIconUrl("text");
+    if (entry.mimeType.startsWith("text/")) { return ImageURL::builtin("text"); }
+    if (entry.mimeType.startsWith("image/")) { return ImageURL::builtin("image"); }
+    return ImageURL::builtin("text");
   }
 
   void setupUI() {
-    m_pinIcon->setUrl(BuiltinOmniIconUrl("pin").setFill(SemanticColor::Red));
+    m_pinIcon->setUrl(ImageURL::builtin("pin").setFill(SemanticColor::Red));
     m_pinIcon->setFixedSize(16, 16);
     m_description->setColor(SemanticColor::TextSecondary);
     m_description->setSize(TextSize::TextSmaller);
@@ -172,7 +172,7 @@ class ClipboardHistoryDetail : public DetailWithMetadataWidget {
       auto icon = new ImageWidget;
 
       icon->setContentsMargins(10, 10, 10, 10);
-      icon->setUrl(LocalOmniIconUrl(entry.filePath));
+      icon->setUrl(ImageURL::local(entry.filePath));
 
       return icon;
     }
@@ -207,7 +207,7 @@ class RemoveSelectionAction : public AbstractAction {
   }
 
 public:
-  RemoveSelectionAction(int id) : AbstractAction("Remove entry", BuiltinOmniIconUrl("trash")), _id(id) {
+  RemoveSelectionAction(int id) : AbstractAction("Remove entry", ImageURL::builtin("trash")), _id(id) {
     setStyle(AbstractAction::Danger);
   }
 };
@@ -224,7 +224,7 @@ public:
   int entryId() const { return _id; }
 
   PinClipboardAction(int id, bool value)
-      : AbstractAction(value ? "Pin" : "Unpin", BuiltinOmniIconUrl("pin")), _id(id), _value(value) {}
+      : AbstractAction(value ? "Pin" : "Unpin", ImageURL::builtin("pin")), _id(id), _value(value) {}
 };
 
 class ClipboardHistoryItem : public OmniList::AbstractVirtualItem, public ListView::Actionnable {
@@ -288,9 +288,9 @@ public:
   bool hasUniformHeight() const override { return true; }
 
   ImageURL iconForMime(const QString &mime) const {
-    if (info.mimeType.startsWith("text/")) { return BuiltinOmniIconUrl("text"); }
-    if (info.mimeType.startsWith("image/")) { return BuiltinOmniIconUrl("image"); }
-    return BuiltinOmniIconUrl("text");
+    if (info.mimeType.startsWith("text/")) { return ImageURL::builtin("text"); }
+    if (info.mimeType.startsWith("image/")) { return ImageURL::builtin("image"); }
+    return ImageURL::builtin("text");
   }
 
   const QString &name() const { return info.textPreview; }
@@ -336,11 +336,11 @@ public:
   ImageURL statusIcon(ClipboardStatus status) {
     switch (status) {
     case Monitoring:
-      return BuiltinOmniIconUrl("pause-filled").setFill(SemanticColor::Orange);
+      return ImageURL::builtin("pause-filled").setFill(SemanticColor::Orange);
     case Paused:
-      return BuiltinOmniIconUrl("play-filled").setFill(SemanticColor::Green);
+      return ImageURL::builtin("play-filled").setFill(SemanticColor::Green);
     default:
-      return BuiltinOmniIconUrl("warning").setFill(SemanticColor::Red);
+      return ImageURL::builtin("warning").setFill(SemanticColor::Red);
     }
   }
 
@@ -362,7 +362,7 @@ public:
     rightLayout->addWidget(m_rightIcon);
     rightLayout->setContentsMargins(0, 0, 0, 0);
     m_rightIcon->setFixedSize(25, 25);
-    m_rightIcon->setUrl(BuiltinOmniIconUrl("pause-filled"));
+    m_rightIcon->setUrl(ImageURL::builtin("pause-filled"));
     m_right->setLayout(rightLayout);
     m_rightText->setText("Pause clipboard");
 
@@ -539,7 +539,7 @@ public:
 
     m_emptyView->setTitle("No clipboard entries");
     m_emptyView->setDescription("No results matching your search. You can try to refine your search.");
-    m_emptyView->setIcon(BuiltinOmniIconUrl("magnifying-glass"));
+    m_emptyView->setIcon(ImageURL::builtin("magnifying-glass"));
 
     m_searchDebounce.setSingleShot(true);
 

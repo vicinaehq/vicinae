@@ -22,7 +22,7 @@ class XdgApplicationAction : public XdgApplicationBase {
   QString m_parentPath;
 
   ImageURL iconUrl() const override {
-    return _data.icon.isEmpty() ? SystemOmniIconUrl(_parentData.icon) : SystemOmniIconUrl(_data.icon);
+    return _data.icon.isEmpty() ? ImageURL::system(_parentData.icon) : ImageURL::system(_data.icon);
   }
 
   QString description() const override { return _parentData.comment; }
@@ -59,7 +59,7 @@ public:
   QString version() const override { return _data.version; }
 
   std::vector<QString> keywords() const override { return {_data.keywords.begin(), _data.keywords.end()}; }
-  ImageURL iconUrl() const override { return SystemOmniIconUrl(_data.icon); }
+  ImageURL iconUrl() const override { return ImageURL::system(_data.icon); }
   std::vector<std::shared_ptr<Application>> actions() const override {
     auto makeAction = [&](const XdgDesktopEntry::Action action) -> std::shared_ptr<Application> {
       return std::shared_ptr<Application>(new XdgApplicationAction(action, _data, _path, id()));

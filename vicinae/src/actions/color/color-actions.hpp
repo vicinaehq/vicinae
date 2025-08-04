@@ -28,6 +28,6 @@ class CopyColorAs : public AbstractAction {
 
 public:
   CopyColorAs(const QColor &color, ColorFormatter::ColorFormat format)
-      : AbstractAction("Copy color as", BuiltinOmniIconUrl("copy-clipboard")), m_color(color),
+      : AbstractAction("Copy color as", ImageURL::builtin("copy-clipboard")), m_color(color),
         m_format(format) {}
 };

@@ -110,7 +110,7 @@ public:
   }
 
   EditBookmarkAction(const std::shared_ptr<Bookmark> &bookmark, const QList<QString> &args = {})
-      : AbstractAction("Edit bookmark", BuiltinOmniIconUrl("pencil")), m_bookmark(bookmark) {}
+      : AbstractAction("Edit bookmark", ImageURL::builtin("pencil")), m_bookmark(bookmark) {}
 };
 
 struct RemoveBookmarkAction : public AbstractAction {
@@ -132,7 +132,7 @@ public:
   }
 
   RemoveBookmarkAction(const std::shared_ptr<Bookmark> &link)
-      : AbstractAction("Remove link", BuiltinOmniIconUrl("trash")), m_bookmark(link) {
+      : AbstractAction("Remove link", ImageURL::builtin("trash")), m_bookmark(link) {
     setStyle(AbstractAction::Danger);
     setShortcut({.key = "X", .modifiers = {"ctrl", "shift"}});
   }
@@ -149,7 +149,7 @@ public:
   }
 
   DuplicateBookmarkAction(const std::shared_ptr<Bookmark> &link)
-      : AbstractAction("Duplicate link", BuiltinOmniIconUrl("duplicate")), link(link) {}
+      : AbstractAction("Duplicate link", ImageURL::builtin("duplicate")), link(link) {}
 };
 
 /**
@@ -198,5 +198,5 @@ class OpenCompletedBookmarkWithAction : public AbstractAction {
 
 public:
   OpenCompletedBookmarkWithAction(const std::shared_ptr<Bookmark> &bookmark)
-      : AbstractAction("Open with...", BuiltinOmniIconUrl("arrow-clockwise")), m_bookmark(bookmark) {}
+      : AbstractAction("Open with...", ImageURL::builtin("arrow-clockwise")), m_bookmark(bookmark) {}
 };

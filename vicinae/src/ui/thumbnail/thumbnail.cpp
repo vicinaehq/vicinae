@@ -26,7 +26,7 @@ void Thumbnail::setupUI() {
   auto layout = new QVBoxLayout;
 
   m_placeholder->setFixedSize(25, 25);
-  m_placeholder->setUrl(BuiltinOmniIconUrl("image").setFill(SemanticColor::TextSecondary));
+  m_placeholder->setUrl(ImageURL::builtin("image").setFill(SemanticColor::TextSecondary));
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(m_placeholder, 0, Qt::AlignCenter);
 

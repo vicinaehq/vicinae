@@ -138,7 +138,7 @@ QSize ImageWidget::sizeHint() const {
 void ImageWidget::handleLoadingError(const QString &reason) {
   // qCritical() << "Failed to load" << reason;
   if (auto fallback = m_source.fallback()) { return setUrl(*fallback); }
-  return setUrl(BuiltinOmniIconUrl("question-mark-circle"));
+  return setUrl(ImageURL::builtin("question-mark-circle"));
 }
 
 void ImageWidget::resizeEvent(QResizeEvent *event) {

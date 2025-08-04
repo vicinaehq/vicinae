@@ -34,12 +34,12 @@ ImageURL ExtensionCommand::iconUrl() const {
   if (auto icon = m_command.icon) {
     auto commandIconPath = _assetPath / icon->toStdString();
 
-    if (std::filesystem::exists(commandIconPath)) { return LocalOmniIconUrl(commandIconPath); }
+    if (std::filesystem::exists(commandIconPath)) { return ImageURL::local(commandIconPath); }
   }
 
   auto extensionIconUrl = _assetPath / _extensionIcon.toStdString();
 
-  if (std::filesystem::exists(extensionIconUrl)) { return LocalOmniIconUrl(extensionIconUrl); }
+  if (std::filesystem::exists(extensionIconUrl)) { return ImageURL::local(extensionIconUrl); }
 
-  return BuiltinOmniIconUrl("hammer").setBackgroundTint(SemanticColor::Blue);
+  return ImageURL::builtin("hammer").setBackgroundTint(SemanticColor::Blue);
 }

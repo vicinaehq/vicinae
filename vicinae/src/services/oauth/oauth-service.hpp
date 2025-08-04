@@ -60,7 +60,7 @@ struct OAuthClient {
 
     client.id = opts.id().c_str();
     client.name = opts.name().c_str();
-    client.icon = BuiltinOmniIconUrl("omnicast");
+    client.icon = ImageURL::builtin("omnicast");
     client.description = opts.description().c_str();
 
     return client;

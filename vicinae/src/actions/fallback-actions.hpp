@@ -14,5 +14,5 @@ class ManageFallbackActions : public AbstractAction {
 
 public:
   ManageFallbackActions()
-      : AbstractAction("Manage Fallback Actions", BuiltinOmniIconUrl("arrow-counter-clockwise")) {}
+      : AbstractAction("Manage Fallback Actions", ImageURL::builtin("arrow-counter-clockwise")) {}
 };

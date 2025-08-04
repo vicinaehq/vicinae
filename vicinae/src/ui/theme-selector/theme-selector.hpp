@@ -11,8 +11,8 @@ class ThemeSelectorItem : public SelectorInput::AbstractItem {
   QString generateId() const override { return m_theme.id; }
 
   std::optional<ImageURL> icon() const override {
-    if (m_theme.icon) return LocalOmniIconUrl(*m_theme.icon);
-    return BuiltinOmniIconUrl("vicinae");
+    if (m_theme.icon) return ImageURL::local(*m_theme.icon);
+    return ImageURL::builtin("vicinae");
   }
 
   AbstractItem *clone() const override { return new ThemeSelectorItem(*this); }

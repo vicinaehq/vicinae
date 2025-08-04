@@ -11,7 +11,7 @@ class RefreshAppsCommand : public BuiltinCallbackCommand {
 search in the root search.)";
   }
   ImageURL iconUrl() const override {
-    return BuiltinOmniIconUrl("redo").setBackgroundTint(SemanticColor::Red);
+    return ImageURL::builtin("redo").setBackgroundTint(SemanticColor::Red);
   }
 
 public:

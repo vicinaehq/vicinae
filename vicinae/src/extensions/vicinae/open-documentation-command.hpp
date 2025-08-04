@@ -7,7 +7,7 @@ class OpenDocumentationCommand : public BuiltinCallbackCommand {
   QString id() const override { return "documentation"; }
   QString name() const override { return "Open documentation"; }
   ImageURL iconUrl() const override {
-    return BuiltinOmniIconUrl("book").setBackgroundTint(SemanticColor::Red);
+    return ImageURL::builtin("book").setBackgroundTint(SemanticColor::Red);
   }
 
   void execute(ApplicationContext *ctx) const override;

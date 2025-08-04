@@ -7,7 +7,7 @@ class FontExtension : public BuiltinCommandRepository {
   QString id() const override { return "font"; }
   QString name() const override { return "Font"; }
   ImageURL iconUrl() const override {
-    return BuiltinOmniIconUrl("text").setBackgroundTint(SemanticColor::Orange);
+    return ImageURL::builtin("text").setBackgroundTint(SemanticColor::Orange);
   }
 
 public:

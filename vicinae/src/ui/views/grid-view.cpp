@@ -61,7 +61,7 @@ GridView::GridView(QWidget *parent) : SimpleView(parent) {
   m_content->setCurrentWidget(m_grid);
   m_emptyView->setTitle("No results");
   m_emptyView->setDescription("No results matching your search. You can try to refine your search.");
-  m_emptyView->setIcon(BuiltinOmniIconUrl("magnifying-glass"));
+  m_emptyView->setIcon(ImageURL::builtin("magnifying-glass"));
 
   setupUI(m_content);
   connect(m_grid, &OmniList::selectionChanged, this, &GridView::selectionChanged);

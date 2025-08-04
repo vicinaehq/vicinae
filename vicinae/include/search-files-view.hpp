@@ -52,7 +52,7 @@ class FileListItemMetadata : public DetailWithMetadataWidget {
       auto icon = new ImageWidget;
 
       icon->setContentsMargins(10, 10, 10, 10);
-      icon->setUrl(LocalOmniIconUrl(path));
+      icon->setUrl(ImageURL::local(path));
 
       return icon;
     }
@@ -70,7 +70,7 @@ class FileListItemMetadata : public DetailWithMetadataWidget {
     auto icon = new ImageWidget;
 
     icon->setContentsMargins(10, 10, 10, 10);
-    icon->setUrl(SystemOmniIconUrl(mime.iconName()).withFallback(SystemOmniIconUrl(mime.genericIconName())));
+    icon->setUrl(ImageURL::system(mime.iconName()).withFallback(ImageURL::system(mime.genericIconName())));
 
     return icon;
   }
@@ -97,12 +97,12 @@ class FileListItem : public AbstractDefaultListItem, public ListView::Actionnabl
     auto mime = m_mimeDb.mimeTypeForFile(m_path.c_str());
 
     if (!mime.name().isEmpty()) {
-      if (!QIcon::fromTheme(mime.iconName()).isNull()) { return SystemOmniIconUrl(mime.iconName()); }
+      if (!QIcon::fromTheme(mime.iconName()).isNull()) { return ImageURL::system(mime.iconName()); }
 
-      return SystemOmniIconUrl(mime.genericIconName());
+      return ImageURL::system(mime.genericIconName());
     }
 
-    return BuiltinOmniIconUrl("question-mark-circle");
+    return ImageURL::builtin("question-mark-circle");
   }
 
   QWidget *generateDetail() const override {

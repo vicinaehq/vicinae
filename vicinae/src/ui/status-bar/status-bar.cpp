@@ -94,7 +94,7 @@ void GlobalBar::setupUI() {
   layout->addStretch();
   layout->addWidget(m_primaryActionButton);
   layout->addWidget(m_actionButton);
-  m_status->setIcon(BuiltinOmniIconUrl("vicinae"));
+  m_status->setIcon(ImageURL::builtin("vicinae"));
 
   m_actionButton->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 

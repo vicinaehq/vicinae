@@ -134,7 +134,7 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
 
 RootProvider::Type AppRootProvider::type() const { return RootProvider::Type::GroupProvider; }
 
-ImageURL AppRootProvider::icon() const { return BuiltinOmniIconUrl("folder"); }
+ImageURL AppRootProvider::icon() const { return ImageURL::builtin("folder"); }
 
 QString AppRootProvider::displayName() const { return "Applications"; }
 

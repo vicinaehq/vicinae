@@ -8,6 +8,6 @@ class SwitchWindowsCommand : public BuiltinViewCommand<SwitchWindowsView> {
   QString id() const override { return "switch-windows"; }
   QString name() const override { return "Switch Windows"; }
   ImageURL iconUrl() const override {
-    return BuiltinOmniIconUrl("app-window-list").setBackgroundTint(SemanticColor::Blue);
+    return ImageURL::builtin("app-window-list").setBackgroundTint(SemanticColor::Blue);
   }
 };

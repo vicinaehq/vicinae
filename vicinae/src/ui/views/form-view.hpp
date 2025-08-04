@@ -19,7 +19,7 @@ public:
 
     auto panel = std::make_unique<ActionPanelState>();
     auto section = panel->createSection();
-    auto submit = new StaticAction(submitTitle(), BuiltinOmniIconUrl("enter-key"), [this]() { onSubmit(); });
+    auto submit = new StaticAction(submitTitle(), ImageURL::builtin("enter-key"), [this]() { onSubmit(); });
 
     submit->setPrimary(true);
     submit->setShortcut({.key = "return", .modifiers = {"shift"}});

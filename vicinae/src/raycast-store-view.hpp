@@ -31,7 +31,7 @@ public:
   void setAuthorUrl(const OmniIconUrl &url) { m_author->setUrl(url); }
   void setDownloadCount(int count) {
     m_downloadCount->setAccessory(
-        ListAccessory{.text = formatCount(count), .icon = BuiltinOmniIconUrl("arrow-down-circle")});
+        ListAccessory{.text = formatCount(count), .icon = ImageURL::builtin("arrow-down-circle")});
   }
 
   RaycastStoreExtensionItemWidget(QWidget *parent = nullptr) : SelectableOmniListWidget(parent) {
@@ -82,9 +82,9 @@ public:
     item->setDownloadCount(m_extension.download_count);
 
     if (m_extension.author.avatar.isEmpty()) {
-      item->setAuthorUrl(BuiltinOmniIconUrl("person"));
+      item->setAuthorUrl(ImageURL::builtin("person"));
     } else {
-      item->setAuthorUrl(HttpOmniIconUrl(m_extension.author.avatar).setMask(OmniPainter::CircleMask));
+      item->setAuthorUrl(ImageURL::http(m_extension.author.avatar).setMask(OmniPainter::CircleMask));
     }
   }
 
@@ -100,7 +100,7 @@ public:
     auto panel = std::make_unique<ActionPanelState>();
     auto section = panel->createSection();
     auto icon = m_extension.themedIcon();
-    auto showExtension = new StaticAction("Show details", BuiltinOmniIconUrl("computer-chip"),
+    auto showExtension = new StaticAction("Show details", ImageURL::builtin("computer-chip"),
                                           [ext = m_extension, icon, ctx]() {
                                             ctx->navigation->pushView(new RaycastExtensionDetailsView());
                                             ctx->navigation->setNavigationTitle(ext.name);

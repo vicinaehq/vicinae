@@ -110,9 +110,9 @@ struct User {
 
   // Return user icon or generic user icon
   ImageURL validUserIcon() const {
-    if (avatar.isEmpty()) return BuiltinOmniIconUrl("person").setBackgroundTint(SemanticColor::Blue);
+    if (avatar.isEmpty()) return ImageURL::builtin("person").setBackgroundTint(SemanticColor::Blue);
 
-    return HttpOmniIconUrl(avatar);
+    return ImageURL::http(avatar);
   }
 
   // Get as QDateTime for convenience
@@ -133,30 +133,30 @@ struct Command {
   Icons icons;
   Icons extensionIcons;
 
-  HttpOmniIconUrl extensionThemedIcon() const {
+  ImageURL extensionThemedIcon() const {
     auto appearance = ThemeService::instance().theme().appearance;
 
     if (appearance == "light" && !extensionIcons.light.isEmpty()) {
-      return HttpOmniIconUrl(extensionIcons.light);
+      return ImageURL::http(extensionIcons.light);
     }
     if (appearance == "dark" && !extensionIcons.dark.isEmpty()) {
-      return HttpOmniIconUrl(extensionIcons.dark);
+      return ImageURL::http(extensionIcons.dark);
     }
 
-    if (!extensionIcons.light.isEmpty()) { return HttpOmniIconUrl(extensionIcons.light); }
-    if (!extensionIcons.dark.isEmpty()) { return HttpOmniIconUrl(extensionIcons.dark); }
+    if (!extensionIcons.light.isEmpty()) { return ImageURL::http(extensionIcons.light); }
+    if (!extensionIcons.dark.isEmpty()) { return ImageURL::http(extensionIcons.dark); }
 
-    return HttpOmniIconUrl(extensionIcons.dark);
+    return ImageURL::http(extensionIcons.dark);
   }
 
-  HttpOmniIconUrl themedIcon() const {
+  ImageURL themedIcon() const {
     auto appearance = ThemeService::instance().theme().appearance;
 
-    if (appearance == "light" && !icons.light.isEmpty()) { return HttpOmniIconUrl(icons.light); }
-    if (appearance == "dark" && !icons.dark.isEmpty()) { return HttpOmniIconUrl(icons.dark); }
+    if (appearance == "light" && !icons.light.isEmpty()) { return ImageURL::http(icons.light); }
+    if (appearance == "dark" && !icons.dark.isEmpty()) { return ImageURL::http(icons.dark); }
 
-    if (!icons.light.isEmpty()) { return HttpOmniIconUrl(icons.light); }
-    if (!icons.dark.isEmpty()) { return HttpOmniIconUrl(icons.dark); }
+    if (!icons.light.isEmpty()) { return ImageURL::http(icons.light); }
+    if (!icons.dark.isEmpty()) { return ImageURL::http(icons.dark); }
 
     return extensionThemedIcon();
   }
@@ -407,16 +407,16 @@ struct Extension {
   /**
    * Return appropriate icon given the current theme.
    */
-  HttpOmniIconUrl themedIcon() const {
+  ImageURL themedIcon() const {
     auto appearance = ThemeService::instance().theme().appearance;
 
-    if (appearance == "light" && !icons.light.isEmpty()) { return HttpOmniIconUrl(icons.light); }
+    if (appearance == "light" && !icons.light.isEmpty()) { return ImageURL::http(icons.light); }
 
-    if (appearance == "dark" && !icons.dark.isEmpty()) { return HttpOmniIconUrl(icons.dark); }
+    if (appearance == "dark" && !icons.dark.isEmpty()) { return ImageURL::http(icons.dark); }
 
-    if (!icons.light.isEmpty()) { return HttpOmniIconUrl(icons.light); }
+    if (!icons.light.isEmpty()) { return ImageURL::http(icons.light); }
 
-    return HttpOmniIconUrl(icons.dark);
+    return ImageURL::http(icons.dark);
   }
 
   // Parse from QJsonDocument

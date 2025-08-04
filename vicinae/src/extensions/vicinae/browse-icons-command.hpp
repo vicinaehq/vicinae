@@ -7,6 +7,6 @@ class BrowseIconsCommand : public BuiltinViewCommand<IconBrowserView> {
   QString id() const override { return "browse-icons"; }
   QString name() const override { return "Browse builtin icons"; }
   ImageURL iconUrl() const override {
-    return BuiltinOmniIconUrl("vicinae").setBackgroundTint(SemanticColor::Red);
+    return ImageURL::builtin("vicinae").setBackgroundTint(SemanticColor::Red);
   }
 };

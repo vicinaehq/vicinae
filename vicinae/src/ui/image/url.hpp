@@ -3,6 +3,7 @@
 #include "proto/ui.pb.h"
 #include "theme.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
+#include <filesystem>
 #include <vector>
 #include <QString>
 
@@ -106,49 +107,11 @@ public:
 
   bool operator==(const ImageURL &rhs) const;
   operator QString() const { return toString(); }
-};
 
-class BuiltinOmniIconUrl : public ImageURL {
-public:
-  BuiltinOmniIconUrl(const QString &name, SemanticColor tint = InvalidTint) : ImageURL() {
-    setType(ImageURLType::Builtin);
-    setName(name);
-    setForegroundTint(tint);
-    setFill(SemanticColor::TextPrimary);
-  }
-};
-
-class FaviconOmniIconUrl : public ImageURL {
-public:
-  FaviconOmniIconUrl(const QString &domain) : ImageURL() {
-    setType(ImageURLType::Favicon);
-    setName(domain);
-  }
-};
-
-class SystemOmniIconUrl : public ImageURL {
-public:
-  SystemOmniIconUrl(const QString &name) : ImageURL() {
-    setType(ImageURLType::System);
-    setName(name);
-  }
-};
-
-class LocalOmniIconUrl : public ImageURL {
-public:
-  LocalOmniIconUrl(const QString &path) : ImageURL() {
-    setType(ImageURLType::Local);
-    setName(path);
-  }
-  LocalOmniIconUrl(const std::filesystem::path &path) : ImageURL() {
-    *this = std::move(QString(path.c_str()));
-  }
-};
-
-class HttpOmniIconUrl : public ImageURL {
-public:
-  HttpOmniIconUrl(const QUrl &url) : ImageURL() {
-    setType(ImageURLType::Http);
-    setName(url.host() + url.path());
-  }
+  static ImageURL builtin(const QString &name);
+  static ImageURL favicon(const QString &domain);
+  static ImageURL system(const QString &name);
+  static ImageURL local(const QString &path);
+  static ImageURL local(const std::filesystem::path &path);
+  static ImageURL http(const QUrl &httpUrl);
 };

@@ -23,7 +23,7 @@ class CopyCalculatorAnswerAction : public AbstractAction {
     if (m_addToHistory) { calculator->addRecord(m_item); }
 
     if (clip->copyText(m_item.answer)) {
-      ctx->navigation->showHud("Answer copied to clipboard", BuiltinOmniIconUrl("copy-clipboard"));
+      ctx->navigation->showHud("Answer copied to clipboard", ImageURL::builtin("copy-clipboard"));
     } else {
       ctx->services->toastService()->setToast("Failed to copy answer", ToastPriority::Danger);
     }
@@ -32,7 +32,7 @@ class CopyCalculatorAnswerAction : public AbstractAction {
 public:
   CopyCalculatorAnswerAction(const AbstractCalculatorBackend::CalculatorResult &item,
                              bool addToHistory = true)
-      : AbstractAction("Copy Result", BuiltinOmniIconUrl("copy-clipboard")), m_item(item),
+      : AbstractAction("Copy Result", ImageURL::builtin("copy-clipboard")), m_item(item),
         m_addToHistory(addToHistory) {}
 };
 
@@ -48,7 +48,7 @@ class CopyCalculatorQuestionAndAnswerAction : public AbstractAction {
     if (m_addToHistory) { calculator->addRecord(m_item); }
 
     if (clip->copyText(result)) {
-      ctx->navigation->showHud("Answer copied to clipboard", BuiltinOmniIconUrl("copy-clipboard"));
+      ctx->navigation->showHud("Answer copied to clipboard", ImageURL::builtin("copy-clipboard"));
     } else {
       ctx->services->toastService()->setToast("Failed to copy answer", ToastPriority::Danger);
     }
@@ -57,7 +57,7 @@ class CopyCalculatorQuestionAndAnswerAction : public AbstractAction {
 public:
   CopyCalculatorQuestionAndAnswerAction(const AbstractCalculatorBackend::CalculatorResult &item,
                                         bool addToHistory = true)
-      : AbstractAction("Copy Question And Answer", BuiltinOmniIconUrl("copy-clipboard")), m_item(item),
+      : AbstractAction("Copy Question And Answer", ImageURL::builtin("copy-clipboard")), m_item(item),
         m_addToHistory(addToHistory) {}
 };
 
@@ -66,7 +66,7 @@ class OpenCalculatorHistoryAction : public AbstractAction {
 
 public:
   OpenCalculatorHistoryAction()
-      : AbstractAction("Open Calculator History", BuiltinOmniIconUrl("calculator")) {}
+      : AbstractAction("Open Calculator History", ImageURL::builtin("calculator")) {}
 };
 
 class PutCalculatorAnswerInSearchBar : public AbstractAction {
@@ -76,7 +76,7 @@ class PutCalculatorAnswerInSearchBar : public AbstractAction {
 
 public:
   QString title() const override { return "Put answer in search bar"; }
-  ImageURL icon() const override { return BuiltinOmniIconUrl("text"); }
+  ImageURL icon() const override { return ImageURL::builtin("text"); }
 
   PutCalculatorAnswerInSearchBar(const AbstractCalculatorBackend::CalculatorResult &item) : m_item(item) {}
 };
@@ -93,7 +93,7 @@ public:
   }
 
   QString title() const override { return "Pin entry"; }
-  ImageURL icon() const override { return BuiltinOmniIconUrl("pin"); }
+  ImageURL icon() const override { return ImageURL::builtin("pin"); }
 
   PinCalculatorHistoryRecordAction(int id) : m_id(id) {}
 };
@@ -111,7 +111,7 @@ public:
   }
 
   QString title() const override { return "Unpin entry"; }
-  ImageURL icon() const override { return BuiltinOmniIconUrl("pin-disabled"); }
+  ImageURL icon() const override { return ImageURL::builtin("pin-disabled"); }
 
   UnpinCalculatorHistoryRecordAction(int id) : m_id(id) {}
 };
@@ -129,7 +129,7 @@ public:
   }
 
   QString title() const override { return "Delete entry"; }
-  ImageURL icon() const override { return BuiltinOmniIconUrl("trash"); }
+  ImageURL icon() const override { return ImageURL::builtin("trash"); }
 
   RemoveCalculatorHistoryRecordAction(int id) : m_id(id) { setStyle(AbstractAction::Style::Danger); }
 };
@@ -163,7 +163,7 @@ setConfirmText("Remove entries", SemanticColor::Red);
 
 public:
   QString title() const override { return "Delete all entries"; }
-  ImageURL icon() const override { return BuiltinOmniIconUrl("trash"); }
+  ImageURL icon() const override { return ImageURL::builtin("trash"); }
 
   RemoveAllCalculatorHistoryRecordsAction() { setStyle(AbstractAction::Danger); }
 };

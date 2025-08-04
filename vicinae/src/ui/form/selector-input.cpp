@@ -26,10 +26,10 @@ void SelectorInput::listHeightChanged(int height) {
 bool SelectorInput::eventFilter(QObject *obj, QEvent *event) {
   if (obj == popover) {
     if (event->type() == QEvent::Close) {
-      collapseIcon->setUrl(BuiltinOmniIconUrl("chevron-down"));
+      collapseIcon->setUrl(ImageURL::builtin("chevron-down"));
       m_searchField->clear();
     } else if (event->type() == QEvent::Show) {
-      collapseIcon->setUrl(BuiltinOmniIconUrl("chevron-up"));
+      collapseIcon->setUrl(ImageURL::builtin("chevron-up"));
       m_searchField->setFocus();
     }
   }
@@ -101,7 +101,7 @@ SelectorInput::SelectorInput(QWidget *parent)
   // Main input field
   inputField->setPlaceholderText("Select an item...");
   inputField->setReadOnly(true); // Read-only to behave like a combo box
-  collapseIcon->setUrl(BuiltinOmniIconUrl("chevron-down"));
+  collapseIcon->setUrl(ImageURL::builtin("chevron-down"));
   inputField->setLeftAccessory(selectionIcon);
   inputField->setRightAccessory(collapseIcon);
 

@@ -8,7 +8,7 @@ class RaycastStoreCommand : public BuiltinViewCommand<RaycastStoreListingView> {
   QString extensionId() const override { return "raycast-compat"; }
   QString commandId() const override { return "store"; }
   ImageURL iconUrl() const override {
-    auto icon = BuiltinOmniIconUrl("raycast");
+    auto icon = ImageURL::builtin("raycast");
     icon.setBackgroundTint(SemanticColor::Red);
     return icon;
   }

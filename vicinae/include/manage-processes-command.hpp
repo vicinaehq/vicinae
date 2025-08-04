@@ -19,7 +19,7 @@ class KillProcessAction : public AbstractAction {
   void execute(AppWindow &app) override { kill(pid, SIGKILL); }
 
 public:
-  KillProcessAction(int pid) : AbstractAction("Kill process", BuiltinOmniIconUrl("droplets")), pid(pid) {}
+  KillProcessAction(int pid) : AbstractAction("Kill process", ImageURL::builtin("droplets")), pid(pid) {}
 };
 
 class ManageProcessesMainView : public DeclarativeOmniListView {
@@ -41,7 +41,7 @@ class ManageProcessesMainView : public DeclarativeOmniListView {
             .text = "Cunt",
             .color = ColorTint::Blue,
             .fillBackground = true,
-            .icon = BuiltinOmniIconUrl("archlinux"),
+            .icon = ImageURL::builtin("archlinux"),
         });
       }
 
@@ -50,7 +50,7 @@ class ManageProcessesMainView : public DeclarativeOmniListView {
             .text = "Magic",
             .color = ColorTint::Magenta,
             .fillBackground = true,
-            .icon = BuiltinOmniIconUrl("wand"),
+            .icon = ImageURL::builtin("wand"),
         });
       }
 
@@ -58,12 +58,12 @@ class ManageProcessesMainView : public DeclarativeOmniListView {
           .text = "Stornijop",
           .color = ColorTint::Green,
           .fillBackground = true,
-          .icon = BuiltinOmniIconUrl("cplusplus"),
+          .icon = ImageURL::builtin("cplusplus"),
       });
       list.push_back({.text = "Chad",
                       .color = ColorTint::Yellow,
                       .fillBackground = true,
-                      .icon = BuiltinOmniIconUrl("zig")});
+                      .icon = ImageURL::builtin("zig")});
 
       return list;
     }
@@ -71,7 +71,7 @@ class ManageProcessesMainView : public DeclarativeOmniListView {
     QString id() const override { return QString::number(info.pid); }
 
     ItemData data() const override {
-      return {.iconUrl = BuiltinOmniIconUrl("bar-chart"),
+      return {.iconUrl = ImageURL::builtin("bar-chart"),
               .name = info.comm,
               .category = "",
               .accessories = generateAccessories()};

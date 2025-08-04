@@ -54,11 +54,11 @@ class CalculatorHistoryListItem : public AbstractDefaultListItem, public ListVie
   ImageURL icon() const {
     switch (m_record.typeHint) {
     case AbstractCalculatorBackend::NORMAL:
-      return BuiltinOmniIconUrl("calculator");
+      return ImageURL::builtin("calculator");
     case AbstractCalculatorBackend::CONVERSION:
-      return BuiltinOmniIconUrl("switch");
+      return ImageURL::builtin("switch");
     default:
-      return BuiltinOmniIconUrl("calculator");
+      return ImageURL::builtin("calculator");
     }
   }
 

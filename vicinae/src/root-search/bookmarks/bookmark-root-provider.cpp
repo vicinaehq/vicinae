@@ -147,7 +147,7 @@ std::vector<std::shared_ptr<RootItem>> BookmarkRootProvider::loadItems() const {
 QString BookmarkRootProvider::displayName() const { return "Bookmarks"; }
 
 ImageURL BookmarkRootProvider::icon() const {
-  auto icon = BuiltinOmniIconUrl("bookmark");
+  auto icon = ImageURL::builtin("bookmark");
 
   icon.setBackgroundTint(SemanticColor::Red);
 

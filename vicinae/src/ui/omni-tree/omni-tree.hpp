@@ -143,13 +143,13 @@ public:
   void setFoldIconVisiblity(bool value) { m_icon->setVisible(value); }
   void setFolded(bool value) {
     if (value)
-      m_icon->setUrl(BuiltinOmniIconUrl("chevron-down-small"));
+      m_icon->setUrl(ImageURL::builtin("chevron-down-small"));
     else
-      m_icon->setUrl(BuiltinOmniIconUrl("chevron-right-small"));
+      m_icon->setUrl(ImageURL::builtin("chevron-right-small"));
   }
 
   LeftTableWidget() {
-    m_icon->setUrl(BuiltinOmniIconUrl("chevron-right-small"));
+    m_icon->setUrl(ImageURL::builtin("chevron-right-small"));
     m_icon->setFixedSize(20, 20);
     m_layout->setContentsMargins(0, 0, 0, 0);
     m_layout->addWidget(m_icon);

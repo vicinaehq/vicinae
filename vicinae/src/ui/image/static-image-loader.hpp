@@ -5,6 +5,7 @@ class StaticIODeviceImageLoader : public AbstractImageLoader {
   using ImageWatcher = QFutureWatcher<QImage>;
   QSharedPointer<ImageWatcher> m_watcher;
   std::unique_ptr<QIODevice> m_device = nullptr;
+  bool m_started = false;
 
   static QImage loadStatic(std::unique_ptr<QIODevice> device, const RenderConfig &cfg);
 

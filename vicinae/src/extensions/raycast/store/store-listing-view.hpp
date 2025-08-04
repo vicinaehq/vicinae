@@ -31,7 +31,7 @@ public:
   void setAuthorUrl(const ImageURL &url) { m_author->setUrl(url); }
   void setDownloadCount(int count) {
     m_downloadCount->setAccessory(
-        ListAccessory{.text = formatCount(count), .icon = BuiltinOmniIconUrl("arrow-down-circle")});
+        ListAccessory{.text = formatCount(count), .icon = ImageURL::builtin("arrow-down-circle")});
   }
   void setInstalled(bool value) { m_installed->setVisible(value); }
 
@@ -40,7 +40,7 @@ public:
     auto right = HStack().add(m_installed).add(m_downloadCount).add(m_author).spacing(10);
     auto layout = HStack().add(left).add(right).justifyBetween().margins(10).spacing(15);
 
-    m_installed->setUrl(BuiltinOmniIconUrl("check-circle").setFill(SemanticColor::Green));
+    m_installed->setUrl(ImageURL::builtin("check-circle").setFill(SemanticColor::Green));
     m_installed->setFixedSize(20, 20);
 
     m_downloadCount->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
@@ -76,9 +76,9 @@ public:
     item->setInstalled(m_installed);
 
     if (m_extension.author.avatar.isEmpty()) {
-      item->setAuthorUrl(BuiltinOmniIconUrl("person"));
+      item->setAuthorUrl(ImageURL::builtin("person"));
     } else {
-      item->setAuthorUrl(HttpOmniIconUrl(m_extension.author.avatar).setMask(OmniPainter::CircleMask));
+      item->setAuthorUrl(ImageURL::http(m_extension.author.avatar).setMask(OmniPainter::CircleMask));
     }
   }
 
@@ -95,11 +95,11 @@ public:
     auto section = panel->createSection();
     auto icon = m_extension.themedIcon();
     auto showExtension = new StaticAction(
-        "Show details", BuiltinOmniIconUrl("computer-chip"), [ext = m_extension, icon, ctx]() {
+        "Show details", ImageURL::builtin("computer-chip"), [ext = m_extension, icon, ctx]() {
           ctx->navigation->pushView(new RaycastStoreDetailView(ext));
           ctx->navigation->setNavigationTitle(QString("Raycast Store - %1").arg(ext.title));
           ctx->navigation->setNavigationIcon(
-              BuiltinOmniIconUrl("raycast").setBackgroundTint(SemanticColor::Red));
+              ImageURL::builtin("raycast").setBackgroundTint(SemanticColor::Red));
         });
 
     panel->setTitle(m_extension.name);

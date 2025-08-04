@@ -210,3 +210,51 @@ ImageURL::ImageURL(const ImageLikeModel &imageLike)
     }
   }
 }
+
+ImageURL ImageURL::builtin(const QString &name) {
+  ImageURL url;
+
+  url.setType(ImageURLType::Builtin);
+  url.setName(name);
+  url.setFill(SemanticColor::TextPrimary);
+
+  return url;
+}
+
+ImageURL ImageURL::favicon(const QString &domain) {
+  ImageURL url;
+
+  url.setType(ImageURLType::Favicon);
+  url.setName(domain);
+
+  return url;
+}
+
+ImageURL ImageURL::system(const QString &name) {
+  ImageURL url;
+
+  url.setType(ImageURLType::System);
+  url.setName(name);
+
+  return url;
+}
+
+ImageURL ImageURL::local(const QString &path) {
+  ImageURL url;
+
+  url.setType(ImageURLType::Local);
+  url.setName(path);
+
+  return url;
+}
+
+ImageURL ImageURL::local(const std::filesystem::path &path) { return local(QString(path.c_str())); }
+
+ImageURL ImageURL::http(const QUrl &httpUrl) {
+  ImageURL url;
+
+  url.setType(ImageURLType::Http);
+  url.setName(httpUrl.host() + httpUrl.path());
+
+  return url;
+}

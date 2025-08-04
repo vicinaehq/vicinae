@@ -37,7 +37,7 @@ public:
   public:
     AbstractItem() {}
 
-    virtual ImageURL icon() const { return BuiltinOmniIconUrl("circle"); };
+    virtual ImageURL icon() const { return ImageURL::builtin("circle"); };
     virtual QString displayName() const = 0;
     virtual bool hasPartialUpdates() const override { return true; }
 

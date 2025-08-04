@@ -62,7 +62,7 @@ public:
 
   ExtensionSettingsToolbar() {
     m_searchIcon->setFixedSize({20, 20});
-    m_searchIcon->setUrl(BuiltinOmniIconUrl("magnifying-glass"));
+    m_searchIcon->setUrl(ImageURL::builtin("magnifying-glass"));
     m_layout->setContentsMargins(10, 10, 10, 10);
     m_layout->setSpacing(0);
     m_layout->addWidget(m_input);
@@ -416,7 +416,7 @@ public:
 
   void setupUI() {
     QHBoxLayout *headerLayout = new QHBoxLayout;
-    auto icon = BuiltinOmniIconUrl("stars");
+    auto icon = ImageURL::builtin("stars");
 
     m_content->setWidgetResizable(true);
     m_content->setVerticalScrollBar(new OmniScrollBar);

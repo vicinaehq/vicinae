@@ -121,14 +121,14 @@ public:
 class BookmarkFormView : public FormView {
   std::vector<LinkDynamicPlaceholder> mainLinkArguments{
       LinkDynamicPlaceholder{
-          .icon = BuiltinOmniIconUrl("text-cursor"), .title = "Selected Text", .id = "selected"},
+          .icon = ImageURL::builtin("text-cursor"), .title = "Selected Text", .id = "selected"},
       LinkDynamicPlaceholder{
-          .icon = BuiltinOmniIconUrl("copy-clipboard"), .title = "Clipboard Text", .id = "clipboard"},
-      LinkDynamicPlaceholder{.icon = BuiltinOmniIconUrl("text-cursor"),
+          .icon = ImageURL::builtin("copy-clipboard"), .title = "Clipboard Text", .id = "clipboard"},
+      LinkDynamicPlaceholder{.icon = ImageURL::builtin("text-cursor"),
                              .title = "Argument",
                              .id = "argument",
                              .arguments = {{"name", "Argument"}}},
-      LinkDynamicPlaceholder{.icon = BuiltinOmniIconUrl("fingerprint"), .title = "UUID", .id = "uuid"},
+      LinkDynamicPlaceholder{.icon = ImageURL::builtin("fingerprint"), .title = "UUID", .id = "uuid"},
   };
 
   void handleAppSelectorTextChanged(const QString &text) {}
@@ -201,7 +201,7 @@ class BookmarkFormView : public FormView {
 
       connect(request.get(), &AbstractFaviconRequest::finished, this, [this, url, request]() {
         iconSelector->updateItem("default", [&url](SelectorInput::AbstractItem *item) {
-          auto icon = FaviconOmniIconUrl(url.host()).withFallback(BuiltinOmniIconUrl("image"));
+          auto icon = ImageURL::favicon(url.host()).withFallback(ImageURL::builtin("image"));
           auto iconItem = static_cast<IconSelectorItem *>(item);
 
           iconItem->setIcon(icon);
@@ -330,14 +330,14 @@ public:
   void initializeIconSelector() {
     std::vector<std::shared_ptr<SelectorInput::AbstractItem>> iconItems;
     auto mapItem = [](auto &&name) -> std::shared_ptr<SelectorInput::AbstractItem> {
-      return std::make_shared<IconSelectorItem>(BuiltinOmniIconUrl(name));
+      return std::make_shared<IconSelectorItem>(ImageURL::builtin(name));
     };
 
     iconItems.reserve(BuiltinIconService::icons().size() + 1);
     auto items = BuiltinIconService::icons() | std::views::transform(mapItem);
 
     iconItems.emplace_back(
-        std::make_shared<DefaultIconSelectorItem>(BuiltinOmniIconUrl("bookmark"), "Default"));
+        std::make_shared<DefaultIconSelectorItem>(ImageURL::builtin("bookmark"), "Default"));
     std::ranges::for_each(items, [&](auto item) { iconItems.emplace_back(item); });
 
     iconSelector->addSection("", iconItems);

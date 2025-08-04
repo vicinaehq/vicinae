@@ -127,7 +127,7 @@ TransformResult::TransformResult()
     : _isDividerVisible(true), _dividerColor("#666666"), _base(nullptr), _result(nullptr) {
   auto icon = QIcon(":icons/arrow-right.svg");
 
-  m_arrowIcon->setUrl(BuiltinOmniIconUrl("arrow-right"));
+  m_arrowIcon->setUrl(ImageURL::builtin("arrow-right"));
   m_arrowIcon->setFixedSize(25, 25);
   setContentsMargins(10, 10, 10, 10);
   _arrowIcon = icon.pixmap(32, 32).scaledToWidth(32, Qt::SmoothTransformation);

@@ -20,7 +20,7 @@ public:
     auto clipman = ctx->services->clipman();
 
     if (clipman->copyContent(m_content, m_opts)) {
-      ctx->navigation->showHud("Copied to clipboard", BuiltinOmniIconUrl("copy-clipboard"));
+      ctx->navigation->showHud("Copied to clipboard", ImageURL::builtin("copy-clipboard"));
       return;
     }
   }
@@ -28,7 +28,7 @@ public:
 public:
   CopyToClipboardAction(const Clipboard::Content &content, const QString &title = "Copy to clipboard",
                         const Clipboard::CopyOptions options = {})
-      : AbstractAction(title, BuiltinOmniIconUrl("copy-clipboard")), m_content(content), m_opts(options) {}
+      : AbstractAction(title, ImageURL::builtin("copy-clipboard")), m_content(content), m_opts(options) {}
 };
 
 class PasteToFocusedWindowAction : public AbstractAction {
@@ -75,5 +75,5 @@ protected:
 
 public:
   PasteToFocusedWindowAction(const Clipboard::Content &content = Clipboard::NoData{})
-      : AbstractAction("Copy to focused window", BuiltinOmniIconUrl("copy-clipboard")), m_content(content) {}
+      : AbstractAction("Copy to focused window", ImageURL::builtin("copy-clipboard")), m_content(content) {}
 };

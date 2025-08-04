@@ -86,7 +86,7 @@ public:
     auto backButton = new IconButton;
 
     backButton->setFixedSize(25, 25);
-    backButton->setUrl(BuiltinOmniIconUrl("arrow-left"));
+    backButton->setUrl(ImageURL::builtin("arrow-left"));
     backButton->setBackgroundColor(SemanticColor::MainSelectedBackground);
 
     auto header = HStack().add(backButton).addStretch().margins(15, 5, 15, 5).buildWidget();

@@ -28,24 +28,24 @@ public:
 class ExtensionSettingsCategory : public SettingsCategory {
 public:
   QString title() const override { return "Extensions"; }
-  ImageURL icon() const override { return BuiltinOmniIconUrl("computer-chip"); }
+  ImageURL icon() const override { return ImageURL::builtin("computer-chip"); }
   QWidget *createContent() override { return new ExtensionSettingsContent(); }
 };
 
 class GeneralSettingsCategory : public SettingsCategory {
   QString title() const override { return "General"; }
-  ImageURL icon() const override { return BuiltinOmniIconUrl("cog"); }
+  ImageURL icon() const override { return ImageURL::builtin("cog"); }
   QWidget *createContent() override { return new GeneralSettings(); }
 };
 
 class AdvancedSettingsCategory : public SettingsCategory {
   QString title() const override { return "Advanced"; }
-  ImageURL icon() const override { return BuiltinOmniIconUrl("wrench-screwdriver"); }
+  ImageURL icon() const override { return ImageURL::builtin("wrench-screwdriver"); }
   QWidget *createContent() override { return new QWidget; }
 };
 
 class AboutSettingsCategory : public SettingsCategory {
   QString title() const override { return "About"; }
-  ImageURL icon() const override { return BuiltinOmniIconUrl("vicinae"); }
+  ImageURL icon() const override { return ImageURL::builtin("vicinae"); }
   QWidget *createContent() override { return new SettingsAbout; }
 };

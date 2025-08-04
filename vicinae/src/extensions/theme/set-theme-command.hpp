@@ -6,6 +6,6 @@ class SetThemeCommand : public BuiltinViewCommand<ManageThemesView> {
   QString id() const override { return "set"; }
   QString name() const override { return "Set Theme"; }
   ImageURL iconUrl() const override {
-    return BuiltinOmniIconUrl("brush").setBackgroundTint(SemanticColor::Purple);
+    return ImageURL::builtin("brush").setBackgroundTint(SemanticColor::Purple);
   }
 };

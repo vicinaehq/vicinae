@@ -37,18 +37,18 @@ void ResetItemRanking::execute(ApplicationContext *ctx) {
 }
 
 ResetItemRanking::ResetItemRanking(const QString &id)
-    : AbstractAction("Reset ranking", BuiltinOmniIconUrl("arrow-counter-clockwise")), m_id(id) {}
+    : AbstractAction("Reset ranking", ImageURL::builtin("arrow-counter-clockwise")), m_id(id) {}
 
 void MarkItemAsFavorite::execute(ApplicationContext *ctx) {
   // TODO: mark as favorite
 }
 
 MarkItemAsFavorite::MarkItemAsFavorite(const QString &id)
-    : AbstractAction("Mark as favorite", BuiltinOmniIconUrl("stars")), m_id(id) {}
+    : AbstractAction("Mark as favorite", ImageURL::builtin("stars")), m_id(id) {}
 
 ImageURL ToggleItemAsFavorite::icon() const {
-  if (m_value) return BuiltinOmniIconUrl("star-disabled");
-  return BuiltinOmniIconUrl("star");
+  if (m_value) return ImageURL::builtin("star-disabled");
+  return ImageURL::builtin("star");
 }
 
 QString ToggleItemAsFavorite::title() const {
@@ -111,6 +111,6 @@ void DisableItemAction::execute(ApplicationContext *ctx) {
 }
 
 DisableItemAction::DisableItemAction(const QString &id)
-    : AbstractAction("Disable item", BuiltinOmniIconUrl("trash")), m_id(id) {
+    : AbstractAction("Disable item", ImageURL::builtin("trash")), m_id(id) {
   setStyle(AbstractAction::Danger);
 }

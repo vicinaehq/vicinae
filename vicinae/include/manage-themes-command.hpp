@@ -106,9 +106,9 @@ public:
     item->setDescription(m_theme.description.isEmpty() ? "Default theme description" : m_theme.description);
 
     if (m_theme.icon) {
-      item->setIcon(LocalOmniIconUrl(*m_theme.icon).withFallback(BuiltinOmniIconUrl("vicinae")));
+      item->setIcon(ImageURL::local(*m_theme.icon).withFallback(ImageURL::builtin("vicinae")));
     } else {
-      item->setIcon(BuiltinOmniIconUrl("vicinae"));
+      item->setIcon(ImageURL::builtin("vicinae"));
     }
 
     std::vector<ColorLike> colors{m_theme.colors.red,     m_theme.colors.blue,   m_theme.colors.green,

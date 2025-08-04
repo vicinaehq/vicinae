@@ -19,7 +19,7 @@ class CalculatorHistoryCommand : public BuiltinViewCommand<CalculatorHistoryView
   QString id() const override { return "history"; }
   QString name() const override { return "Calculator history"; }
   ImageURL iconUrl() const override {
-    return BuiltinOmniIconUrl("plus-minus-divide-multiply").setBackgroundTint(SemanticColor::Red);
+    return ImageURL::builtin("plus-minus-divide-multiply").setBackgroundTint(SemanticColor::Red);
   }
 };
 
@@ -29,7 +29,7 @@ public:
   QString name() const override { return "Calculator"; }
   QString description() const override { return "Do maths, convert units or search past calculations..."; }
   ImageURL iconUrl() const override {
-    return BuiltinOmniIconUrl("plus-minus-divide-multiply").setBackgroundTint(SemanticColor::Red);
+    return ImageURL::builtin("plus-minus-divide-multiply").setBackgroundTint(SemanticColor::Red);
   }
 
   CalculatorExtension() { registerCommand<CalculatorHistoryCommand>(); }

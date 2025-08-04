@@ -10,9 +10,9 @@ class PasswordInput : public BaseInput {
 
   void setEchoMode(QLineEdit::EchoMode mode) {
     if (mode == QLineEdit::EchoMode::Password) {
-      toggleVisiblityIcon->setUrl(BuiltinOmniIconUrl("eye"));
+      toggleVisiblityIcon->setUrl(ImageURL::builtin("eye"));
     } else if (mode == QLineEdit::EchoMode::Normal) {
-      toggleVisiblityIcon->setUrl(BuiltinOmniIconUrl("eye-disabled"));
+      toggleVisiblityIcon->setUrl(ImageURL::builtin("eye-disabled"));
     }
 
     BaseInput::setEchoMode(mode);
@@ -26,7 +26,7 @@ class PasswordInput : public BaseInput {
 public:
   PasswordInput(QWidget *parent = nullptr) : BaseInput(parent) {
     toggleVisiblityIcon->setFixedSize(30, 30);
-    toggleVisiblityIcon->setUrl(BuiltinOmniIconUrl("eye"));
+    toggleVisiblityIcon->setUrl(ImageURL::builtin("eye"));
     setEchoMode(QLineEdit::EchoMode::Password);
     setRightAccessory(toggleVisiblityIcon);
     connect(toggleVisiblityIcon, &IconButton::clicked, this, &PasswordInput::toggleVisiblity);

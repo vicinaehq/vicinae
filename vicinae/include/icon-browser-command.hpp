@@ -23,7 +23,7 @@ class IconBrowserView : public GridView {
       auto icon = new ImageWidget;
 
       icon->setFixedSize(30, 30);
-      icon->setUrl(BuiltinOmniIconUrl(_name));
+      icon->setUrl(ImageURL::builtin(_name));
 
       return icon;
     }
@@ -37,7 +37,7 @@ class IconBrowserView : public GridView {
     void recycleCenterWidget(QWidget *widget) const override {
       auto icon = static_cast<ImageWidget *>(widget);
 
-      icon->setUrl(BuiltinOmniIconUrl(_name));
+      icon->setUrl(ImageURL::builtin(_name));
     }
 
     bool centerWidgetRecyclable() const override { return true; }
