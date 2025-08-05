@@ -13,17 +13,11 @@ void DaemonIpcClient::writeRequest(const proto::ext::daemon::Request &req) {
 }
 
 void DaemonIpcClient::toggle() {
-  proto::ext::daemon::Request req;
+  QUrl url;
 
-  req.set_allocated_toggle(new proto::ext::daemon::ToggleRequest);
-  writeRequest(req);
-}
-
-void DaemonIpcClient::ping() {
-  proto::ext::daemon::Request req;
-
-  req.set_allocated_ping(new proto::ext::daemon::PingRequest);
-  writeRequest(req);
+  url.setScheme(Omnicast::APP_SCHEME);
+  url.setHost("toggle");
+  passUrl(url);
 }
 
 void DaemonIpcClient::passUrl(const QUrl &url) {

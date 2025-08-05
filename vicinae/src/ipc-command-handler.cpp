@@ -1,12 +1,19 @@
 #include "ipc-command-handler.hpp"
 #include "common.hpp"
 #include "proto/daemon.pb.h"
+#include <algorithm>
+#include "services/toast/toast-service.hpp"
 #include <qlogging.h>
+#include <qobjectdefs.h>
+#include <qsqlquery.h>
 #include <qurl.h>
+#include <qurlquery.h>
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "omni-command-db.hpp"
 #include "command-controller.hpp"
+#include "ui/toast/toast.hpp"
+#include "vicinae.hpp"
 
 proto::ext::daemon::Response *IpcCommandHandler::handleCommand(const proto::ext::daemon::Request &request) {
   auto res = new proto::ext::daemon::Response;
@@ -15,16 +22,6 @@ proto::ext::daemon::Response *IpcCommandHandler::handleCommand(const proto::ext:
   qDebug() << "Got ipc command";
 
   switch (request.payload_case()) {
-  case proto::ext::daemon::Request::kPing: {
-    qDebug() << "Got answering ping";
-    res->set_allocated_ping(new proto::ext::daemon::PingResponse());
-    break;
-  }
-  case proto::ext::daemon::Request::kToggle: {
-    nav->toggleWindow();
-    res->set_allocated_toggle(new proto::ext::daemon::ToggleResponse());
-    break;
-  }
   case proto::ext::daemon::Request::kUrl: {
     qDebug() << "GOT URL" << request.url().url();
 
@@ -40,100 +37,78 @@ proto::ext::daemon::Response *IpcCommandHandler::handleCommand(const proto::ext:
 }
 
 void IpcCommandHandler::handleUrl(const QUrl &url) {
-  for (const auto &cmd : m_ctx.services->commandDb()->commands()) {
-    if (cmd.command->deeplink() == url) {
-      m_ctx.command->launch(cmd.command);
-      m_ctx.navigation->showWindow();
-      break;
+  qDebug() << url.toString();
+  if (!std::ranges::contains(Omnicast::APP_SCHEMES, url.scheme())) {
+    qCritical() << "Unsupported url scheme" << url.scheme() << "Supported schemes are"
+                << Omnicast::APP_SCHEMES;
+    return;
+  }
+
+  QUrlQuery query(url.query());
+
+  if (url.host() == "toggle") {
+    m_ctx.navigation->toggleWindow();
+    return;
+  }
+
+  if (url.host() == "close") {
+    m_ctx.navigation->closeWindow();
+    return;
+  }
+
+  if (url.host() == "open") {
+    m_ctx.navigation->showWindow();
+    return;
+  }
+
+  if (url.host() == "pop_current") {
+    m_ctx.navigation->popCurrentView();
+    return;
+  }
+
+  if (url.host() == "pop_to_root") {
+    m_ctx.navigation->popToRoot();
+    return;
+  }
+
+  if (url.host() == "toast") {
+    QString title = query.hasQueryItem("title") ? query.queryItemValue("title") : "Toast";
+    m_ctx.services->toastService()->setToast(title, ToastPriority::Info);
+    return;
+  }
+
+  if (url.host() == "extensions") {
+    auto components = url.path().sliced(1).split('/');
+
+    if (components.size() < 3) {
+      qCritical() << "Invalid use of extensions verb: expected format is "
+                     "vicinae://extensions/<author>/<ext_name>/<cmd_name>";
+      return;
     }
-  }
-}
 
-/*
-std::variant<CommandResponse, CommandError> IpcCommandHandler::handleCommand(const CommandMessage &message) {
-  qDebug() << "received message type" << message.type;
-  auto commandDb = m_ctx.services->commandDb();
-  auto extensionManager = m_ctx.services->extensionManager();
-  auto &nav = m_ctx.navigation;
+    QString author = components[0];
+    QString extName = components[1];
+    QString cmdName = components[2];
 
-  if (message.type == "ping") { return "pong"; }
-  if (message.type == "toggle") {
-    nav->toggleWindow();
-    return true;
-  }
+    qDebug() << "query" << url.query();
 
-  if (message.type == "url-scheme-handler") {
-    QUrl url(message.params.asString().c_str());
+    qDebug() << "author" << author << extName << cmdName;
 
-    qCritical() << "Got url" << url;
+    for (const auto &cmd : m_ctx.services->commandDb()->commands()) {
+      if (cmd.command->author() == author && cmd.command->commandId() == cmdName &&
+          cmd.command->repositoryName() == extName) {
+        m_ctx.command->launch(cmd.command);
 
-    // omnicast://extensions/<extension_id>/<command_id>
-    if (url.host() == "extensions") {
-      auto ss = url.path().slice(1).split('/');
-      auto extId = ss.at(0);
-      auto commandId = ss.at(1);
-
-      if (ss.size() < 2) {
-        qCritical() << "Malformed extensions request";
-        return false;
-      }
->
-      for (auto &entry : commandDb->commands()) {
-        if (entry.command->extensionId() == extId && entry.command->commandId() == commandId) {
-          // ui->launchCommand(entry.command);
-          return true;
+        if (auto text = query.queryItemValue("fallbackText"); !text.isEmpty()) {
+          m_ctx.navigation->setSearchText(text);
         }
+
+        m_ctx.navigation->showWindow();
+
+        break;
       }
-
-      qCritical() << "No command id" << extId << commandId;
     }
-
-    if (url.path() == "/api/extensions/develop/start") {
-      QUrlQuery query(url.query());
-      QString id = query.queryItemValue("id");
-
-      // extensionManager->startDevelopmentSession(id);
-      qDebug() << "start develop id" << query.queryItemValue("id");
-    }
-
-    else if (url.path() == "/api/extensions/develop/refresh") {
-      QUrlQuery query(url.query());
-      QString id = query.queryItemValue("id");
-
-      // extensionManager->refreshDevelopmentSession(id);
-      qDebug() << "refresh develop id" << id;
-    }
-
-    qDebug() << "handling URL in daemon" << url.toString();
-    return {};
   }
-
-  if (message.type == "command.list") {
-    Proto::Array results;
-
-    for (const auto &entry : commandDb->commands()) {
-      Proto::Dict result;
-
-      result["id"] = entry.command->uniqueId().toUtf8().constData();
-      result["name"] = entry.command->name().toUtf8().constData();
-      results.push_back(result);
-    }
-
-    return results;
-  }
-
-  if (message.type == "command.push") {
-    auto args = message.params.asArray();
-
-    if (args.empty()) { return CommandError{"Ill-formed command.push request"}; }
-
-    auto id = args.at(0).asString();
-
-    return CommandError{"No such command"};
-  }
-
-  return CommandError{"Unknowm command"};
 }
-*/
 
 IpcCommandHandler::IpcCommandHandler(ApplicationContext &ctx) : m_ctx(ctx) {}

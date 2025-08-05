@@ -16,6 +16,7 @@ static const QString DOC_URL = "https://docs.vicinae.com";
 static const QString HEADLINE = "A focused launcher for your desktop — native, fast, extensible";
 static const QString APP_ID = "vicinae";
 static const QString APP_SCHEME = APP_ID;
+static const std::array<QString, 2> APP_SCHEMES = {APP_SCHEME, "raycast"};
 
 std::filesystem::path runtimeDir();
 std::filesystem::path commandSocketPath();

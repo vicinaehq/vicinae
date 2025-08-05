@@ -338,7 +338,6 @@ int main(int argc, char **argv) {
   DaemonIpcClient daemonClient;
 
   daemonClient.connect();
-  daemonClient.ping();
 
   if (argc == 1) {
     daemonClient.toggle();

@@ -18,7 +18,6 @@ class DaemonIpcClient {
 
 public:
   void toggle();
-  void ping();
   void passUrl(const QUrl &url);
   bool connect();
 
