@@ -69,7 +69,7 @@ void ImageWidget::setUrlImpl(const ImageURL &url) {
   }
 
   else if (type == ImageURLType::System) {
-    m_loader = std::make_unique<QIconImageLoader>(url.name());
+    m_loader = std::make_unique<QIconImageLoader>(url.name(), url.param("theme"));
   }
 
   else if (type == ImageURLType::DataURI) {

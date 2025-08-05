@@ -52,9 +52,24 @@ QUrl ImageURL::url() const {
     }
   }
 
+  for (const auto &[k, v] : m_params) {
+    query.addQueryItem(k, v);
+  }
+
   url.setQuery(query);
 
   return url;
+}
+
+ImageURL &ImageURL::param(const QString &name, const QString &value) {
+  m_params[name] = value;
+  return *this;
+}
+
+std::optional<QString> ImageURL::param(const QString &name) const {
+  if (auto it = m_params.find(name); it != m_params.end()) return it->second;
+
+  return std::nullopt;
 }
 
 void ImageURL::setType(ImageURLType type) { _type = type; }
@@ -131,6 +146,10 @@ ImageURL::ImageURL(const QUrl &url) : _bgTint(InvalidTint), _fgTint(InvalidTint)
       _mask = OmniPainter::ImageMaskType::CircleMask;
     else if (mask == "roundedRectangle")
       _mask = OmniPainter::ImageMaskType::RoundedRectangleMask;
+  }
+
+  for (const auto &[k, v] : query.queryItems()) {
+    m_params[k] = v;
   }
 
   _isValid = true;

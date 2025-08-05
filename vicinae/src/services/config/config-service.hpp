@@ -20,6 +20,7 @@ public:
   struct Value {
     struct {
       std::optional<QString> name;
+      std::optional<QString> iconTheme;
     } theme;
     struct {
       int rounding = 10;
@@ -69,6 +70,7 @@ private:
       auto theme = obj.value("theme").toObject();
 
       if (theme.contains("name")) { cfg.theme.name = theme.value("name").toString(); }
+      if (theme.contains("iconTheme")) { cfg.theme.iconTheme = theme.value("iconTheme").toString(); }
     }
 
     {
@@ -143,6 +145,7 @@ public:
       QJsonObject theme;
 
       if (value.theme.name) { theme["name"] = *value.theme.name; }
+      if (value.theme.iconTheme) { theme["iconTheme"] = *value.theme.iconTheme; }
 
       obj["theme"] = theme;
     }

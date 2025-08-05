@@ -35,6 +35,9 @@ class ImageURL {
   std::optional<QString> _fallback;
   std::optional<ColorLike> _fillColor = std::nullopt;
 
+  // url dependant custom params
+  std::map<QString, QString> m_params;
+
 public:
   ImageURL &circle() {
     setMask(OmniPainter::CircleMask);
@@ -82,6 +85,9 @@ public:
   ImageURL &withFallback(const ImageURL &fallback);
 
   QUrl url() const;
+
+  ImageURL &param(const QString &name, const QString &value);
+  std::optional<QString> param(const QString &name) const;
 
   ImageURLType type() const;
   const QString &name() const;

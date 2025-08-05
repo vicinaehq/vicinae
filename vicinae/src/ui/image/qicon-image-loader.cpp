@@ -1,31 +1,35 @@
 #include "qicon-image-loader.hpp"
 
 void QIconImageLoader::render(const RenderConfig &config) {
-  if (m_icon.isNull()) {
-    emit errorOccured("No icon for this name" + m_icon.name());
-    return;
-  }
+  QString savedTheme = QIcon::themeName();
 
-  auto sizes = m_icon.availableSizes();
+  if (m_theme) { QIcon::setThemeName(*m_theme); }
+
+  auto icon = QIcon::fromTheme(m_icon);
+
+  if (m_icon.isNull()) { icon = QIcon(m_icon); }
+  if (m_icon.isNull()) { emit errorOccured(QString("No icon with name: %1").arg(m_icon)); }
+
+  auto sizes = icon.availableSizes();
   auto it = std::ranges::max_element(
       sizes, [](QSize a, QSize b) { return a.width() * a.height() < b.width() * b.height(); });
 
   // most likely SVG, we can request the size we want
   if (it == sizes.end()) {
-    emit dataUpdated(m_icon.pixmap(config.size));
+    emit dataUpdated(icon.pixmap(config.size));
+    QIcon::setThemeName(savedTheme);
     return;
   }
 
   auto pix =
-      m_icon.pixmap(config.size)
+      icon.pixmap(config.size)
           .scaled(config.size * config.devicePixelRatio, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
   pix.setDevicePixelRatio(config.devicePixelRatio);
+  QIcon::setThemeName(savedTheme);
 
   emit dataUpdated(pix);
 }
 
-QIconImageLoader::QIconImageLoader(const QString &name) {
-  m_icon = QIcon(name);
-  if (m_icon.isNull()) { m_icon = QIcon::fromTheme(name); }
-}
+QIconImageLoader::QIconImageLoader(const QString &name, const std::optional<QString> &themeName)
+    : m_icon(name), m_theme(themeName) {}

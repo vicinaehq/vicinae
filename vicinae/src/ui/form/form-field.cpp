@@ -32,9 +32,9 @@ FormField::FormField(QWidget *widget, const QString &name)
   m_infoLayout->addStretch(2);
   m_infoContainer->setLayout(m_infoLayout);
 
-  m_info->setDocumentMargin(0);
-  m_info->setGrowAsRequired(true);
-  m_info->setBaseTextColor(SemanticColor::TextSecondary);
+  m_info->setColor(SemanticColor::TextSecondary);
+  m_info->setSize(TextSize::TextSmaller);
+  m_info->setWordWrap(true);
   m_mainLayout->addWidget(fieldRow);
   m_mainLayout->addWidget(m_infoContainer);
   m_mainLayout->setSpacing(10);
@@ -66,7 +66,7 @@ void FormField::setVerticalDirection(bool value) {
 void FormField::setName(const QString &name) { _nameLabel->setText(name); }
 
 void FormField::setInfo(const QString &info) {
-  m_info->setMarkdown(info);
+  m_info->setText(info);
   m_infoContainer->setVisible(!info.isEmpty());
 }
 

@@ -496,6 +496,7 @@ set(SRCS
 	src/ui/tag/tag.cpp
 
 	src/ui/theme-selector/theme-selector.cpp
+	src/ui/qtheme-selector/qtheme-selector.cpp
 	src/ui/font-selector/font-selector.cpp
 
 	src/settings/general-settings.cpp

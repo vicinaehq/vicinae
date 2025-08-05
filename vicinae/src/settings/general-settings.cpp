@@ -5,6 +5,7 @@
 #include "ui/form/checkbox-input.hpp"
 #include "ui/form/form-field.hpp"
 #include "ui/form/form.hpp"
+#include "ui/qtheme-selector/qtheme-selector.hpp"
 #include "ui/theme-selector/theme-selector.hpp"
 #include "utils/layout.hpp"
 #include "ui/font-selector/font-selector.hpp"
@@ -12,12 +13,20 @@
 
 void GeneralSettings::setConfig(const ConfigService::Value &value) {
   auto appFont = QApplication::font().family();
+  auto currentIconTheme = QIcon::themeName();
 
   m_opacity->setText(QString::number(value.window.opacity));
   m_csd->setValueAsJson(value.window.csd);
   m_themeSelector->setValue(value.theme.name.value_or("vicinae-dark"));
   m_fontSelector->setValue(value.font.normal.value_or(appFont));
   m_rootFileSearch->setValueAsJson(value.rootSearch.searchFiles);
+  m_qThemeSelector->setValue(value.theme.iconTheme.value_or(currentIconTheme));
+}
+
+void GeneralSettings::handleIconThemeChange(const QString &iconTheme) {
+  auto config = ServiceRegistry::instance()->config();
+
+  config->updateConfig([&](ConfigService::Value &value) { value.theme.iconTheme = iconTheme; });
 }
 
 void GeneralSettings::handleThemeChange(const QString &id) {
@@ -59,6 +68,7 @@ void GeneralSettings::setupUI() {
   m_csd = new CheckboxInput;
   m_opacity = new BaseInput;
   m_themeSelector = new ThemeSelector;
+  m_qThemeSelector = new QThemeSelector;
   m_fontSelector = new FontSelector;
 
   FormWidget *form = new FormWidget;
@@ -83,6 +93,9 @@ void GeneralSettings::setupUI() {
   connect(m_themeSelector, &ThemeSelector::selectionChanged, this,
           [this](auto &&item) { handleThemeChange(item.id()); });
 
+  connect(m_qThemeSelector, &QThemeSelector::selectionChanged, this,
+          [this](auto &&item) { handleIconThemeChange(item.id()); });
+
   connect(opacityField, &FormField::blurred, this,
           [this]() { handleOpacityChange(m_opacity->text().toDouble()); });
 
@@ -104,6 +117,13 @@ void GeneralSettings::setupUI() {
   m_rootFileSearch->setLabel("Show files in root search");
   auto checkField = new FormField;
 
+  auto qThemeField = new FormField;
+
+  qThemeField->setWidget(m_qThemeSelector, m_qThemeSelector->focusNotifier());
+  qThemeField->setName("Icon Theme");
+  qThemeField->setInfo("The icon theme used for system icons (applications, mime types, folder icons...). "
+                       "This does not affect builtin Vicinae icons.");
+
   connect(m_rootFileSearch, &CheckboxInput::valueChanged, this,
           &GeneralSettings::handleRootSearchFilesChange);
 
@@ -114,12 +134,13 @@ void GeneralSettings::setupUI() {
 
   form->addField(checkField);
   form->addField(themeField);
+  form->addField(qThemeField);
   form->addField(fontField);
   form->addField(csdField);
   form->addField(opacityField);
-  form->setMaximumWidth(600);
+  form->setMaximumWidth(650);
 
-  VStack().margins(0, 20, 0, 20).add(HStack().add(form, Qt::AlignCenter)).imbue(this);
+  setWidget(VStack().margins(0, 20, 0, 20).add(HStack().add(form, Qt::AlignCenter)).buildWidget());
 }
 
 GeneralSettings::GeneralSettings() {

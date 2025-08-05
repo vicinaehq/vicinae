@@ -1,18 +1,22 @@
+#pragma once
 #include "services/config/config-service.hpp"
 #include "ui/font-selector/font-selector.hpp"
 #include "ui/form/base-input.hpp"
 #include "ui/form/checkbox-input.hpp"
+#include "ui/qtheme-selector/qtheme-selector.hpp"
 #include "ui/theme-selector/theme-selector.hpp"
+#include "ui/vertical-scroll-area/vertical-scroll-area.hpp"
 #include <qnamespace.h>
 #include <qwidget.h>
 #include <QFont>
 
-class GeneralSettings : public QWidget {
+class GeneralSettings : public VerticalScrollArea {
   CheckboxInput *m_rootFileSearch;
   CheckboxInput *m_csd;
   BaseInput *m_opacity;
   ThemeSelector *m_themeSelector;
   FontSelector *m_fontSelector;
+  QThemeSelector *m_qThemeSelector;
 
   void setupUI();
 
@@ -21,6 +25,7 @@ class GeneralSettings : public QWidget {
   void handleClientSideDecorationChange(bool value);
   void handleFontChange(const QString &fontFamily);
   void handleOpacityChange(double opacity);
+  void handleIconThemeChange(const QString &iconTheme);
 
   void setConfig(const ConfigService::Value &value);
 

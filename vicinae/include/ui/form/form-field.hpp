@@ -1,6 +1,5 @@
 #pragma once
 #include "ui/focus-notifier.hpp"
-#include "ui/markdown/markdown-renderer.hpp"
 #include "ui/typography/typography.hpp"
 #include <qboxlayout.h>
 #include <qcoreevent.h>
@@ -15,7 +14,7 @@ class FormField : public QWidget {
   TypographyWidget *_nameLabel;
   TypographyWidget *_errorLabel;
   bool m_vertical = false;
-  MarkdownRenderer *m_info = new MarkdownRenderer;
+  TypographyWidget *m_info = new TypographyWidget;
   QWidget *_widget;
   QHBoxLayout *_layout;
   QWidget *m_infoContainer = new QWidget;

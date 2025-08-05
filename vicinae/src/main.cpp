@@ -278,13 +278,7 @@ int startDaemon() {
                        ThemeService::instance().setTheme(*next.theme.name);
                      }
 
-                     if (QIcon::themeName() == "hicolor") {
-                       if (ThemeService::instance().theme().appearance == "light") {
-                         QIcon::setThemeName("Reversal");
-                       } else {
-                         QIcon::setThemeName("Reversal-dark");
-                       }
-                     }
+                     if (auto icon = next.theme.iconTheme) { QIcon::setThemeName(icon.value()); }
 
                      if (next.font.normal && *next.font.normal != prev.font.normal.value_or("")) {
                        QApplication::setFont(*next.font.normal);
