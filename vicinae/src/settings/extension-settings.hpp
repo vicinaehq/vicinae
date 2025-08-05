@@ -393,6 +393,8 @@ public:
   void setData(std::unique_ptr<AbstractSettingsDetailPaneItem> data) {
     m_title->setText(data->title());
     m_icon->setUrl(data->icon());
+    m_icon->show();
+    m_divider->show();
 
     QWidget *content = data->content();
 
@@ -416,18 +418,15 @@ public:
 
   void setupUI() {
     QHBoxLayout *headerLayout = new QHBoxLayout;
-    auto icon = ImageURL::builtin("stars");
 
     m_content->setWidgetResizable(true);
     m_content->setVerticalScrollBar(new OmniScrollBar);
     m_content->setHorizontalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
 
     headerLayout->setContentsMargins(20, 20, 20, 20);
+    m_icon->hide();
+    m_divider->hide();
 
-    m_title->setText("AI Command");
-
-    icon.setBackgroundTint(SemanticColor::Red);
-    m_icon->setUrl(icon);
     m_icon->setFixedSize(30, 30);
     headerLayout->setSpacing(10);
     headerLayout->addWidget(m_icon);
