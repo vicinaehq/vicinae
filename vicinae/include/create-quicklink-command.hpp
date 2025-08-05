@@ -1,8 +1,8 @@
 #pragma once
+#include "favicon/favicon-service.hpp"
 #include "ui/views/base-view.hpp"
 #include "builtin_icon.hpp"
 #include "services/bookmark/bookmark-service.hpp"
-#include "favicon/favicon-service.hpp"
 #include "../src/ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "timer.hpp"
@@ -15,6 +15,7 @@
 #include "ui/form/form.hpp"
 #include <memory>
 #include <qboxlayout.h>
+#include <qfuturewatcher.h>
 #include <qlocale.h>
 #include <qlogging.h>
 #include <qnamespace.h>
@@ -83,8 +84,7 @@ public:
 
   void setIcon(const ImageURL &url) { this->iconUrl = url; }
 
-  IconSelectorItem(const ImageURL &url, const QString &displayName = "")
-      : dname(displayName), iconUrl(url) {}
+  IconSelectorItem(const ImageURL &url, const QString &displayName = "") : dname(displayName), iconUrl(url) {}
 };
 
 class DefaultIconSelectorItem : public IconSelectorItem {
@@ -196,10 +196,15 @@ class BookmarkFormView : public FormView {
     }
 
     if (url.scheme().startsWith("http")) {
-      auto request =
-          QSharedPointer<AbstractFaviconRequest>(FaviconService::instance()->makeRequest(url.host()));
+      using Watcher = QFutureWatcher<FaviconService::FaviconResponse>;
 
-      connect(request.get(), &AbstractFaviconRequest::finished, this, [this, url, request]() {
+      // we fetch to know whether we need to update the icon or not
+      // but we don't use the data the first time
+      auto watcher = std::make_unique<Watcher>();
+      auto ptr = watcher.get();
+
+      watcher->setFuture(FaviconService::instance()->makeRequest(url.host()));
+      connect(ptr, &Watcher::finished, this, [this, url, watcher = std::move(watcher)]() {
         iconSelector->updateItem("default", [&url](SelectorInput::AbstractItem *item) {
           auto icon = ImageURL::favicon(url.host()).withFallback(ImageURL::builtin("image"));
           auto iconItem = static_cast<IconSelectorItem *>(item);
@@ -208,7 +213,6 @@ class BookmarkFormView : public FormView {
           iconItem->setDisplayName(url.host());
         });
       });
-      request->start();
 
       return;
     }

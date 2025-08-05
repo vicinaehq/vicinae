@@ -1,10 +1,11 @@
 #pragma once
-#include "favicon/favicon-request.hpp"
 #include <QSqlError>
 #include <cassert>
+#include <expected>
 #include <qbuffer.h>
 #include <qdir.h>
 #include <qfileinfo.h>
+#include <qfuture.h>
 #include <qimage.h>
 #include <qobject.h>
 #include <qpixmap.h>
@@ -19,6 +20,7 @@ class FaviconService : public QObject {
   static constexpr size_t maxCacheCount = 50;
 
 public:
+  using FaviconResponse = std::expected<QPixmap, QString>;
   enum RequesterType { Google, DuckDuckGo };
 
 private:
@@ -37,6 +39,6 @@ public:
   static void initialize(FaviconService *service) { _instance = service; }
   static FaviconService *instance();
 
-  AbstractFaviconRequest *makeRequest(const QString &domain, QObject *parent = nullptr);
+  QFuture<FaviconResponse> makeRequest(const QString &domain, QObject *parent = nullptr);
   FaviconService(const std::filesystem::path &path, QObject *parent = nullptr);
 };

@@ -58,9 +58,15 @@ QPixmap FaviconService::retrieveFromCache(const QString &domain) {
   return pm;
 }
 
-AbstractFaviconRequest *FaviconService::makeRequest(const QString &domain, QObject *parent) {
+QFuture<FaviconService::FaviconResponse> FaviconService::makeRequest(const QString &domain, QObject *parent) {
+  QPromise<FaviconResponse> promise;
+  auto future = promise.future();
+
   if (auto pix = retrieveFromCache(domain); !pix.isNull()) {
-    return new CachedFaviconRequest(domain, pix, parent);
+    promise.addResult(pix);
+    promise.finish();
+
+    return future;
   }
 
   AbstractFaviconRequest *requester = nullptr;
@@ -73,10 +79,20 @@ AbstractFaviconRequest *FaviconService::makeRequest(const QString &domain, QObje
     requester = new DummyFaviconRequest(domain, parent);
   }
 
-  connect(requester, &AbstractFaviconRequest::finished, this,
-          [this, domain](const QPixmap &favicon) { handleFetchedFavicon(domain, favicon); });
+  qDebug() << "request start !";
 
-  return requester;
+  connect(requester, &AbstractFaviconRequest::finished, this,
+          [this, requester, domain, promise = std::move(promise)](const QPixmap &favicon) mutable {
+            qDebug() << "got result for" << domain;
+            handleFetchedFavicon(domain, favicon);
+            promise.addResult(domain);
+            promise.finish();
+            requester->deleteLater();
+          });
+
+  requester->start();
+
+  return future;
 }
 
 FaviconService::FaviconService(const std::filesystem::path &path, QObject *parent)
