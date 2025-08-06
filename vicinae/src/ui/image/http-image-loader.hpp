@@ -1,11 +1,12 @@
 #pragma once
+#include "common.hpp"
 #include "ui/image/image.hpp"
 #include "io-image-loader.hpp"
 
 class FetchReply;
 
 class HttpImageLoader : public AbstractImageLoader {
-  std::unique_ptr<IODeviceImageLoader> m_loader;
+  QObjectUniquePtr<IODeviceImageLoader> m_loader;
   FetchReply *m_reply = nullptr;
   QUrl m_url;
 

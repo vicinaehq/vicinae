@@ -1,5 +1,6 @@
 #pragma once
 
+#include "common.hpp"
 #include "ui/image/url.hpp"
 #include <qfont.h>
 #include <qicon.h>
@@ -29,13 +30,18 @@ public:
   void virtual abort() const {};
   virtual ~AbstractImageLoader() {}
 
+  void forwardSignals(AbstractImageLoader *other) const {
+    connect(this, &AbstractImageLoader::dataUpdated, other, &AbstractImageLoader::dataUpdated);
+    connect(this, &AbstractImageLoader::errorOccured, other, &AbstractImageLoader::errorOccured);
+  }
+
 signals:
   void dataUpdated(const QPixmap &data) const;
   void errorOccured(const QString &errorDescription) const;
 };
 
 class ImageWidget : public QWidget {
-  std::unique_ptr<AbstractImageLoader> m_loader;
+  QObjectUniquePtr<AbstractImageLoader> m_loader;
   QPixmap m_data;
   ImageURL m_source;
   QString m_fallback;

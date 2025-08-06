@@ -12,9 +12,7 @@ DataUriImageLoader::DataUriImageLoader(const QString &url) {
   m_tmp.write(uri.decodeContent());
   m_tmp.close();
   m_loader.reset(new LocalImageLoader(m_tmp.filesystemFileName()));
-
-  connect(m_loader.get(), &LocalImageLoader::dataUpdated, this, &LocalImageLoader::dataUpdated);
-  connect(m_loader.get(), &LocalImageLoader::errorOccured, this, &LocalImageLoader::errorOccured);
+  m_loader->forwardSignals(this);
 }
 
 void DataUriImageLoader::render(const RenderConfig &config) { m_loader->render(config); }

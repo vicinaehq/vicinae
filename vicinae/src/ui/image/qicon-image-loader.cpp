@@ -8,7 +8,11 @@ void QIconImageLoader::render(const RenderConfig &config) {
   auto icon = QIcon::fromTheme(m_icon);
 
   if (m_icon.isNull()) { icon = QIcon(m_icon); }
-  if (m_icon.isNull()) { emit errorOccured(QString("No icon with name: %1").arg(m_icon)); }
+  if (m_icon.isNull()) {
+    emit errorOccured(QString("No icon with name: %1").arg(m_icon));
+    QIcon::setThemeName(savedTheme);
+    return;
+  }
 
   auto sizes = icon.availableSizes();
   auto it = std::ranges::max_element(

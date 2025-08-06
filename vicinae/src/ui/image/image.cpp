@@ -65,20 +65,20 @@ void ImageWidget::setUrlImpl(const ImageURL &url) {
   m_loader.reset();
 
   if (type == ImageURLType::Favicon) {
-    m_loader = std::make_unique<FaviconImageLoader>(url.name());
+    m_loader.reset(new FaviconImageLoader(url.name()));
   }
 
   else if (type == ImageURLType::System) {
-    m_loader = std::make_unique<QIconImageLoader>(url.name(), url.param("theme"));
+    m_loader.reset(new QIconImageLoader(url.name(), url.param("theme")));
   }
 
   else if (type == ImageURLType::DataURI) {
-    m_loader = std::make_unique<DataUriImageLoader>(QString("data:%1").arg(url.name()));
+    m_loader.reset(new DataUriImageLoader(QString("data:%1").arg(url.name())));
   }
 
   else if (type == ImageURLType::Builtin) {
     QString icon = QString(":icons/%1.svg").arg(url.name());
-    auto loader = std::make_unique<BuiltinIconLoader>(icon);
+    auto loader = new BuiltinIconLoader(icon);
 
     if (url.backgroundTint()) {
       loader->setBackgroundColor(url.backgroundTint());
@@ -88,7 +88,7 @@ void ImageWidget::setUrlImpl(const ImageURL &url) {
       loader->setFillColor(url.fillColor());
     }
 
-    m_loader = std::move(loader);
+    m_loader.reset(loader);
   }
 
   else if (type == ImageURLType::Local) {
@@ -108,17 +108,17 @@ void ImageWidget::setUrlImpl(const ImageURL &url) {
 
     if (std::filesystem::is_regular_file(suffixedPath)) { path = suffixedPath; }
 
-    m_loader = std::make_unique<LocalImageLoader>(path);
+    m_loader.reset(new LocalImageLoader(path));
   }
 
   else if (type == ImageURLType::Http) {
     QUrl httpUrl("https://" + url.name());
 
-    m_loader = std::make_unique<HttpImageLoader>(httpUrl);
+    m_loader.reset(new HttpImageLoader(httpUrl));
   }
 
   else if (type == ImageURLType::Emoji) {
-    m_loader = std::make_unique<EmojiImageLoader>(url.name());
+    m_loader.reset(new EmojiImageLoader(url.name()));
   }
 
   if (!m_loader) { return handleLoadingError("No loader"); }

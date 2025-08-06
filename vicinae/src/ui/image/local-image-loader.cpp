@@ -7,8 +7,7 @@ void LocalImageLoader::render(const RenderConfig &cfg) {
   file.open(QIODevice::ReadOnly);
 
   m_loader = std::make_unique<IODeviceImageLoader>(file.readAll());
-  connect(m_loader.get(), &IODeviceImageLoader::dataUpdated, this, &LocalImageLoader::dataUpdated);
-  connect(m_loader.get(), &IODeviceImageLoader::errorOccured, this, &LocalImageLoader::errorOccured);
+  m_loader->forwardSignals(this);
   m_loader->render(cfg);
 }
 

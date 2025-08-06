@@ -19,8 +19,7 @@ void IODeviceImageLoader::render(const RenderConfig &cfg) {
     m_loader = std::make_unique<StaticIODeviceImageLoader>(m_data);
   }
 
-  connect(m_loader.get(), &AbstractImageLoader::dataUpdated, this, &IODeviceImageLoader::dataUpdated);
-  connect(m_loader.get(), &AbstractImageLoader::errorOccured, this, &IODeviceImageLoader::errorOccured);
+  m_loader->forwardSignals(this);
   m_loader->render(cfg);
 }
 
