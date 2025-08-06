@@ -1,5 +1,6 @@
 #include "general-settings.hpp"
 #include "service-registry.hpp"
+#include "ui/favicon-service-selector/favicon-service-selector.hpp"
 #include "ui/font-selector/font-selector.hpp"
 #include "ui/form/base-input.hpp"
 #include "ui/form/checkbox-input.hpp"
@@ -21,6 +22,13 @@ void GeneralSettings::setConfig(const ConfigService::Value &value) {
   m_fontSelector->setValue(value.font.normal.value_or(appFont));
   m_rootFileSearch->setValueAsJson(value.rootSearch.searchFiles);
   m_qThemeSelector->setValue(value.theme.iconTheme.value_or(currentIconTheme));
+  m_faviconSelector->setValue(value.faviconService);
+}
+
+void GeneralSettings::handleFaviconServiceChange(const QString &service) {
+  auto config = ServiceRegistry::instance()->config();
+
+  config->updateConfig([&](ConfigService::Value &value) { value.faviconService = service; });
 }
 
 void GeneralSettings::handleIconThemeChange(const QString &iconTheme) {
@@ -70,6 +78,7 @@ void GeneralSettings::setupUI() {
   m_themeSelector = new ThemeSelector;
   m_qThemeSelector = new QThemeSelector;
   m_fontSelector = new FontSelector;
+  m_faviconSelector = new FaviconServiceSelector;
 
   FormWidget *form = new FormWidget;
 
@@ -95,6 +104,9 @@ void GeneralSettings::setupUI() {
 
   connect(m_qThemeSelector, &QThemeSelector::selectionChanged, this,
           [this](auto &&item) { handleIconThemeChange(item.id()); });
+
+  connect(m_faviconSelector, &FaviconServiceSelector::selectionChanged, this,
+          [this](auto &&item) { handleFaviconServiceChange(item.id()); });
 
   connect(opacityField, &FormField::blurred, this,
           [this]() { handleOpacityChange(m_opacity->text().toDouble()); });
@@ -124,6 +136,13 @@ void GeneralSettings::setupUI() {
   qThemeField->setInfo("The icon theme used for system icons (applications, mime types, folder icons...). "
                        "This does not affect builtin Vicinae icons.");
 
+  auto faviconField = new FormField;
+
+  faviconField->setWidget(m_faviconSelector, m_faviconSelector->focusNotifier());
+  faviconField->setName("Favicon Fetching");
+  faviconField->setInfo("The favicon provider used to load favicons where needed. You can turn off favicon "
+                        "loading by selecting 'None'.");
+
   connect(m_rootFileSearch, &CheckboxInput::valueChanged, this,
           &GeneralSettings::handleRootSearchFilesChange);
 
@@ -136,6 +155,7 @@ void GeneralSettings::setupUI() {
   form->addField(themeField);
   form->addField(qThemeField);
   form->addField(fontField);
+  form->addField(faviconField);
   form->addField(csdField);
   form->addField(opacityField);
   form->setMaximumWidth(650);

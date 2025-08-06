@@ -2,6 +2,13 @@
 #include "favicon/cached-favicon-request.hpp"
 #include "favicon/dummy-favicon-request.hpp"
 #include "favicon/google-favicon-request.hpp"
+#include <qlogging.h>
+
+static const std::vector<FaviconService::FaviconServiceData> faviconProviders = {
+    {.id = "google", .name = "Google", .icon = ImageURL::builtin("google"), .type = FaviconService::Google},
+    {.id = "none", .name = "None", .icon = ImageURL::builtin("image"), .type = FaviconService::None}};
+
+std::vector<FaviconService::FaviconServiceData> FaviconService::providers() { return faviconProviders; }
 
 FaviconService *FaviconService::instance() {
   assert(_instance && "FaviconService::instance() called before FaviconService::initialize()");
@@ -58,6 +65,18 @@ QPixmap FaviconService::retrieveFromCache(const QString &domain) {
   return pm;
 }
 
+void FaviconService::setService(const QString &id) {
+  if (auto it = std::ranges::find_if(faviconProviders, [&](auto &&item) { return item.id == id; });
+      it != faviconProviders.end()) {
+    setService(it->type);
+    return;
+  }
+
+  qCritical() << "no favicon provider for id" << id;
+}
+
+void FaviconService::setService(RequesterType type) { _requesterType = type; }
+
 QFuture<FaviconService::FaviconResponse> FaviconService::makeRequest(const QString &domain, QObject *parent) {
   QPromise<FaviconResponse> promise;
   auto future = promise.future();
@@ -75,6 +94,10 @@ QFuture<FaviconService::FaviconResponse> FaviconService::makeRequest(const QStri
   case Google:
     requester = new GoogleFaviconRequester(domain, parent);
     break;
+  case None:
+    promise.addResult(std::unexpected("Favicon fetching is disabled"));
+    promise.finish();
+    return future;
   default:
     requester = new DummyFaviconRequest(domain, parent);
   }

@@ -1,4 +1,5 @@
 #pragma once
+#include "ui/image/url.hpp"
 #include <QSqlError>
 #include <cassert>
 #include <expected>
@@ -21,7 +22,14 @@ class FaviconService : public QObject {
 
 public:
   using FaviconResponse = std::expected<QPixmap, QString>;
-  enum RequesterType { Google, DuckDuckGo };
+  enum RequesterType { None, Google, DuckDuckGo };
+
+  struct FaviconServiceData {
+    QString id;
+    QString name;
+    ImageURL icon;
+    RequesterType type;
+  };
 
 private:
   inline static FaviconService *_instance = nullptr;
@@ -36,8 +44,12 @@ private:
   QPixmap retrieveFromCache(const QString &domain);
 
 public:
+  static std::vector<FaviconServiceData> providers();
   static void initialize(FaviconService *service) { _instance = service; }
   static FaviconService *instance();
+
+  void setService(RequesterType type);
+  void setService(const QString &id);
 
   QFuture<FaviconResponse> makeRequest(const QString &domain, QObject *parent = nullptr);
   FaviconService(const std::filesystem::path &path, QObject *parent = nullptr);

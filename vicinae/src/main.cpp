@@ -278,6 +278,8 @@ int startDaemon() {
                        ThemeService::instance().setTheme(*next.theme.name);
                      }
 
+                     FaviconService::instance()->setService(next.faviconService);
+
                      if (auto icon = next.theme.iconTheme) { QIcon::setThemeName(icon.value()); }
 
                      if (next.font.normal && *next.font.normal != prev.font.normal.value_or("")) {

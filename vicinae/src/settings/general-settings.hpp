@@ -1,5 +1,6 @@
 #pragma once
 #include "services/config/config-service.hpp"
+#include "ui/favicon-service-selector/favicon-service-selector.hpp"
 #include "ui/font-selector/font-selector.hpp"
 #include "ui/form/base-input.hpp"
 #include "ui/form/checkbox-input.hpp"
@@ -17,6 +18,7 @@ class GeneralSettings : public VerticalScrollArea {
   ThemeSelector *m_themeSelector;
   FontSelector *m_fontSelector;
   QThemeSelector *m_qThemeSelector;
+  FaviconServiceSelector *m_faviconSelector;
 
   void setupUI();
 
@@ -26,6 +28,7 @@ class GeneralSettings : public VerticalScrollArea {
   void handleFontChange(const QString &fontFamily);
   void handleOpacityChange(double opacity);
   void handleIconThemeChange(const QString &iconTheme);
+  void handleFaviconServiceChange(const QString &service);
 
   void setConfig(const ConfigService::Value &value);
 

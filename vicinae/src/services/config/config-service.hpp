@@ -18,6 +18,7 @@ class ConfigService : public QObject {
 
 public:
   struct Value {
+    QString faviconService;
     struct {
       std::optional<QString> name;
       std::optional<QString> iconTheme;
@@ -55,6 +56,8 @@ private:
   Value load() const {
     QJsonObject obj = loadAsJson();
     Value cfg;
+
+    cfg.faviconService = obj.value("faviconService").toString("google");
 
     {
       auto font = obj.value("font").toObject();
@@ -131,6 +134,8 @@ public:
   void saveConfig(const Value &value) {
     QJsonDocument doc;
     QJsonObject obj;
+
+    obj["faviconService"] = value.faviconService;
 
     {
       QJsonObject font;
