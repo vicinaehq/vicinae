@@ -1,5 +1,6 @@
 #pragma once
 
+#include "argument.hpp"
 #include "common.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/dialog/dialog.hpp"
@@ -50,7 +51,7 @@ struct ActionPanelState : public NonCopyable {
   QString title() const { return m_title; }
 };
 
-using ArgumentValues = std::pair<QString, QString>;
+using ArgumentValues = std::vector<std::pair<QString, QString>>;
 
 struct CompleterState {
   ArgumentList args;
@@ -126,6 +127,7 @@ public:
   void setNavigationIcon(const ImageURL &icon);
 
   bool executePrimaryAction();
+  void executeAction(AbstractAction *action);
 
   void setHeaderVisiblity(bool value, const BaseView *caller = nullptr);
   void setSearchVisibility(bool value, const BaseView *caller = nullptr);
@@ -157,6 +159,10 @@ signals:
   void loadingChanged(bool value) const;
   void showHudRequested(const QString &title, const std::optional<ImageURL> &icon);
 
+  void completionValuesChanged(const ArgumentValues &values) const;
+
+  void invalidCompletionFired();
+
   void searchAccessoryChanged(QWidget *widget) const;
   void searchAccessoryCleared() const;
 
@@ -170,7 +176,6 @@ signals:
 private:
   ApplicationContext &m_ctx;
 
-  void executeAction(AbstractAction *action);
   ViewState *findViewState(const BaseView *view);
   const ViewState *findViewState(const BaseView *view) const;
   const BaseView *topView() const;

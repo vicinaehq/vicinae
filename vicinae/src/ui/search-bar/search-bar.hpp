@@ -14,6 +14,7 @@ struct CompleterData {
 
 class SearchBar : public QLineEdit {
   Q_OBJECT
+  bool m_inline = false;
 
 protected:
   bool event(QEvent *event) override {
@@ -39,9 +40,24 @@ public:
     debounce->setSingleShot(true);
     connect(debounce, &QTimer::timeout, this, &SearchBar::debounce);
     connect(this, &QLineEdit::textEdited, debounce, [debounce]() { debounce->start(); });
+
+    connect(this, &QLineEdit::textEdited, this, [this]() {
+      if (m_inline) {
+        auto fm = fontMetrics();
+        QString sizedText = text();
+
+        if (sizedText.isEmpty()) sizedText = placeholderText();
+
+        int width = fm.horizontalAdvance(sizedText) + 10;
+
+        setFixedWidth(width);
+      }
+    });
   }
 
   void setInline(bool isInline) {
+    m_inline = isInline;
+
     if (isInline) {
       auto fm = fontMetrics();
       QString sizedText = text();

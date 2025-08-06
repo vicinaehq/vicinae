@@ -55,7 +55,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
   });
 
   connect(m_actionPanel, &ActionPanelV2Widget::actionActivated, this, [this](AbstractAction *action) {
-    action->execute(&m_ctx);
+    m_ctx.navigation->executeAction(action);
     m_ctx.navigation->closeActionPanel();
   });
 
@@ -194,7 +194,7 @@ bool LauncherWindow::event(QEvent *event) {
         for (const auto &section : state->actionPanelState->sections()) {
           for (const auto &action : section->actions()) {
             if (action->shortcut && KeyboardShortcut(*action->shortcut) == keyEvent) {
-              action->execute(&m_ctx);
+              m_ctx.navigation->executeAction(action.get());
               return true;
             }
           }

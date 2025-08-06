@@ -1,5 +1,6 @@
 #include "top-bar.hpp"
 #include "navigation-controller.hpp"
+#include "ui/arg-completer/arg-completer.hpp"
 #include "vicinae.hpp"
 #include <qboxlayout.h>
 #include <qdnslookup.h>
@@ -19,6 +20,7 @@ void GlobalHeader::setupUI() {
   m_backButton = new IconButton;
   m_accessoryContainer = new QStackedWidget(this);
   m_loadingBar = new HorizontalLoadingBar(this);
+  m_completer = new ArgCompleter(this);
 
   m_backButton->setFixedSize(25, 25);
   m_backButton->setFocusPolicy(Qt::NoFocus);
@@ -37,13 +39,34 @@ void GlobalHeader::setupUI() {
                   .add(m_backButton)
                   .add(m_backButtonSpacer)
                   .add(m_input, 1)
+                  .add(m_completer)
                   .addStretch()
                   .add(m_accessoryContainer, 0, Qt::AlignVCenter);
+
+  m_completer->hide();
 
   VStack().add(left.margins(15, 5, 15, 5)).add(m_loadingBar).imbue(this);
 
   m_input->installEventFilter(this);
   m_input->setFocus();
+
+  connect(&m_navigation, &NavigationController::completionCreated, this, [this](const CompleterState &state) {
+    m_input->setInline(true);
+    m_completer->setIconUrl(state.icon);
+    m_completer->setArguments(state.args);
+  });
+
+  connect(&m_navigation, &NavigationController::completionDestroyed, this, [this]() {
+    m_input->setInline(false);
+    m_completer->clear();
+  });
+
+  connect(&m_navigation, &NavigationController::invalidCompletionFired, m_completer, &ArgCompleter::validate);
+  connect(&m_navigation, &NavigationController::completionValuesChanged, m_completer,
+          &ArgCompleter::setValues);
+
+  connect(m_completer, &ArgCompleter::valueChanged, this,
+          [this](auto &&values) { m_navigation.setCompletionValues(values); });
 }
 
 void GlobalHeader::setAccessory(QWidget *accessory) {

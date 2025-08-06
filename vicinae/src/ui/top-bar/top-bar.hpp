@@ -7,6 +7,7 @@ class SearchBar;
 class IconButton;
 class QStackedWidget;
 class HorizontalLoadingBar;
+class ArgCompleter;
 
 class GlobalHeader : public QWidget {
 public:
@@ -23,6 +24,7 @@ private:
   IconButton *m_backButton;
   QWidget *m_backButtonSpacer = new QWidget;
   QStackedWidget *m_accessoryContainer;
+  ArgCompleter *m_completer;
 
   void setAccessory(QWidget *accessory);
   void clearAccessory();

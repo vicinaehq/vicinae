@@ -43,9 +43,10 @@ void ListView::selectionChanged(const OmniList::AbstractVirtualItem *next,
     }
 
     if (auto completer = nextItem->createCompleter(); completer && completer->arguments.size() > 0) {
-      // activateCompleter(completer->arguments, completer->iconUrl);
+      qCritical() << "completer arguments" << completer->arguments.size();
+      context()->navigation->createCompletion(completer->arguments, completer->iconUrl);
     } else {
-      // destroyCompleter();
+      context()->navigation->destroyCurrentCompletion();
     }
 
     // TODO: only expect suffix and automatically use command name from prefix
@@ -59,7 +60,7 @@ void ListView::selectionChanged(const OmniList::AbstractVirtualItem *next,
 
   } else {
     m_split->setDetailVisibility(false);
-    // destroyCompleter();
+    context()->navigation->destroyCurrentCompletion();
   }
 
   itemSelected(next);

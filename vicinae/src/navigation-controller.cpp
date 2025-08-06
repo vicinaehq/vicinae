@@ -81,7 +81,10 @@ ArgumentValues NavigationController::completionValues() const {
 
 void NavigationController::setCompletionValues(const ArgumentValues &values) {
   if (auto state = topState()) {
-    if (state->completer) { state->completer->values = values; }
+    if (state->completer) {
+      state->completer->values = values;
+      emit completionValuesChanged(values);
+    }
   }
 }
 
@@ -120,6 +123,13 @@ void NavigationController::popCurrentView() {
   emit searchVisibilityChanged(next->supportsSearch);
   emit statusBarVisiblityChanged(next->needsStatusBar);
   emit loadingChanged(next->isLoading);
+
+  if (auto cmpl = next->completer) {
+    createCompletion(cmpl->args, cmpl->icon);
+    setCompletionValues(cmpl->values);
+  } else {
+    destroyCurrentCompletion();
+  }
 
   if (auto &ac = next->actionPanelState) emit actionsChanged(*ac);
 
@@ -169,12 +179,19 @@ bool NavigationController::isWindowOpened() const { return m_windowOpened; }
 void searchPlaceholderText(const QString &text) {}
 
 bool NavigationController::executePrimaryAction() {
-  if (auto state = topState()) {
-    if (auto &panel = state->actionPanelState) {
-      if (auto primary = panel->findPrimaryAction()) { executeAction(primary); }
-    }
-    return false;
-  }
+  auto state = topState();
+
+  if (!state) return false;
+
+  auto &panel = state->actionPanelState;
+
+  if (!panel) return false;
+
+  auto action = panel->findPrimaryAction();
+
+  if (!action) return false;
+
+  executeAction(action);
 
   return false;
 }
@@ -201,6 +218,19 @@ void NavigationController::setStatusBarVisibility(bool value, const BaseView *ca
 }
 
 void NavigationController::executeAction(AbstractAction *action) {
+  auto state = topState();
+
+  if (!state) return;
+
+  if (auto cmpl = state->completer; cmpl && action->isPrimary()) {
+    for (const auto &[arg, value] : std::views::zip(cmpl->args, cmpl->values)) {
+      if (arg.required && value.second.isEmpty()) {
+        emit invalidCompletionFired();
+        return;
+      }
+    }
+  }
+
   action->execute(&m_ctx);
   closeActionPanel();
 }
@@ -233,6 +263,8 @@ void NavigationController::pushView(BaseView *view) {
   emit searchPlaceholderTextChanged(QString());
   view->initialize();
   view->activate();
+
+  destroyCurrentCompletion();
   emit currentViewChanged(*m_views.back());
   emit viewPushed(view);
 }
