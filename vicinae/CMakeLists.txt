@@ -506,6 +506,8 @@ set(SRCS
 	src/ui/arg-completer/arg-completer.hpp
 	src/ui/arg-completer/arg-completer.cpp
 
+	src/root-search.cpp
+
 	src/services/window-manager/window-manager.cpp
 ) 
 

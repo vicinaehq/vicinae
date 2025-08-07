@@ -80,6 +80,7 @@ You can fetch the latest release archive, which contains:
 
 - A C++23-capable compiler (GCC is recommended; Clang should also work)
 - `cmake`
+- `RapidFuzz`
 - `libprotoc` — the Protocol Buffers compiler (different from the runtime `libprotobuf`)
 - `npm` (any version bundled with Node.js ≥ 18 should work)
 

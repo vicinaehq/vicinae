@@ -1,6 +1,8 @@
 #include "root-item-manager.hpp"
+#include "root-search.hpp"
 #include <bits/chrono.h>
 #include <qlogging.h>
+#include <ranges>
 
 RootItemMetadata RootItemManager::loadMetadata(const QString &id) {
   RootItemMetadata item;
@@ -34,13 +36,6 @@ RootItemMetadata RootItemManager::loadMetadata(const QString &id) {
   return item;
 }
 
-void RootItemManager::rebuildTrie() {
-  Timer timer;
-  m_trie.clear();
-  std::ranges::for_each(m_items, std::bind_front(&RootItemManager::indexItem, this));
-  timer.time("trie rebuild");
-}
-
 RootItem *RootItemManager::findItemById(const QString &id) const {
   auto it = std::ranges::find_if(m_items, [&](auto &&v) { return v->uniqueId() == id; });
 
@@ -58,8 +53,6 @@ RootProvider *RootItemManager::findProviderById(const QString &id) const {
 }
 
 void RootItemManager::reloadProviders() {
-  qDebug() << "reloaded providers!";
-
   m_items.clear();
 
   for (const auto &provider : m_providers) {
@@ -78,32 +71,13 @@ void RootItemManager::reloadProviders() {
     if (preferences.empty()) {
       preferences = provider->generateDefaultPreferences();
 
-      if (!preferences.empty()) {
-        qCritical() << "set default preferences for app" << provider->uniqueId();
-        setProviderPreferenceValues(provider->uniqueId(), preferences);
-      }
+      if (!preferences.empty()) { setProviderPreferenceValues(provider->uniqueId(), preferences); }
     }
 
     provider->preferencesChanged(preferences);
   }
 
-  rebuildTrie();
   emit itemsChanged();
-}
-
-void RootItemManager::indexItem(const std::shared_ptr<RootItem> &item) {
-  auto metadata = itemMetadata(item->uniqueId());
-  std::string name = item->displayName().toStdString();
-  std::string subtitle = item->subtitle().toStdString();
-
-  m_trie.index(name, item);
-  m_trie.indexLatinText(name, item);
-  m_trie.indexLatinText(subtitle, item);
-  m_trie.indexLatinText(metadata.alias.toStdString(), item);
-
-  for (const auto &keyword : item->keywords()) {
-    m_trie.index(keyword.toStdString(), item);
-  }
 }
 
 bool RootItemManager::upsertItem(const QString &providerId, const RootItem &item) {
@@ -156,29 +130,20 @@ bool RootItemManager::upsertProvider(const RootProvider &provider) {
 
 std::vector<std::shared_ptr<RootItem>>
 RootItemManager::prefixSearch(const QString &query, const RootItemPrefixSearchOptions &opts) {
-  std::vector<std::shared_ptr<RootItem>> items;
-
-  for (const auto &item : m_trie.prefixSearch(query.toStdString())) {
-    if (!opts.includeDisabled) {
-      auto meta = itemMetadata(item->uniqueId());
-
-      if (meta.isEnabled) { items.emplace_back(item); }
-    } else {
-      items.emplace_back(item);
-    }
-  }
+  RootSearcher searcher;
+  auto items = searcher.search(m_items, query);
 
   std::ranges::sort(items, [this](const auto &a, const auto &b) {
-    auto ameta = itemMetadata(a->uniqueId());
-    auto bmeta = itemMetadata(b->uniqueId());
-
-    auto ascore = computeScore(ameta, a->baseScoreWeight());
-    auto bscore = computeScore(bmeta, b->baseScoreWeight());
+    auto ameta = itemMetadata(a.item->uniqueId());
+    auto bmeta = itemMetadata(b.item->uniqueId());
+    auto ascore = a.score * computeScore(ameta, a.item->baseScoreWeight());
+    auto bscore = b.score * computeScore(bmeta, b.item->baseScoreWeight());
 
     return ascore > bscore;
   });
 
-  return items;
+  return items | std::views::transform([](auto &&item) { return item.item; }) |
+         std::ranges::to<std::vector>();
 }
 
 bool RootItemManager::setItemEnabled(const QString &id, bool value) {
@@ -321,9 +286,6 @@ bool RootItemManager::setAlias(const QString &id, const QString &alias) {
 
   auto metadata = itemMetadata(id);
 
-  m_trie.removeLatinTextItem(metadata.alias.toStdString(), *it);
-  m_trie.removeLatinTextItem(metadata.alias.toStdString(), *it);
-  m_trie.indexLatinText(alias.toStdString(), *it);
   metadata.alias = alias;
   m_metadata[id] = metadata;
 
@@ -764,7 +726,6 @@ void RootItemManager::addProvider(std::unique_ptr<RootProvider> provider) {
 
   connect(provider.get(), &RootProvider::itemsChanged, this, &RootItemManager::reloadProviders);
   m_providers.emplace_back(std::move(provider));
-  rebuildTrie();
   emit itemsChanged();
 }
 

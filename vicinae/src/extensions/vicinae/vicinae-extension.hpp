@@ -19,7 +19,6 @@ public:
     registerCommand<OpenDocumentationCommand>();
     registerCommand<OpenAboutCommand>();
     registerCommand<RefreshAppsCommand>();
-    registerCommand<RefreshAppsCommand>();
     registerCommand<BrowseIconsCommand>();
     registerCommand<ManageFallbackCommand>();
     registerCommand<SearchEmojiCommand>();

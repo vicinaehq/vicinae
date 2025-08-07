@@ -1,0 +1,75 @@
+#include "root-search.hpp"
+#include "rapidfuzz/fuzz.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
+#include <qlogging.h>
+#include <qnamespace.h>
+
+double RootSearcher::computeExactStringScore(QStringView str, QStringView query) {
+  if (str == query) { return 1; };
+  if (str.startsWith(query, Qt::CaseInsensitive)) { return 0.9; };
+
+  double score = 0;
+  // TODO: we could use more advanced tokenization in the future, for now it's fine
+  auto words = str.split(' ');
+
+  if (words.empty()) return 0;
+
+  size_t matchCount = 0;
+
+  for (const auto &word : words) {
+    matchCount += word.startsWith(query, Qt::CaseInsensitive);
+  }
+
+  return static_cast<double>(matchCount) / words.size();
+}
+
+double RootSearcher::clampScore(double v) { return std::clamp(v, 0.0, 1.0); }
+
+double RootSearcher::computeExactScore(const RootItem &item, QStringView query) {
+  double nameScore = computeExactStringScore(item.displayName(), query) * 0.8;
+  double subtitleScore = computeExactStringScore(item.subtitle(), query) * 0.5;
+  double keywordScore = 0;
+
+  for (const auto &kw : item.keywords()) {
+    keywordScore += computeExactStringScore(kw, query);
+  }
+
+  keywordScore *= 0.3;
+
+  return clampScore(nameScore + subtitleScore + keywordScore);
+}
+
+double RootSearcher::computeFuzzyScore(const RootItem &item, QStringView query) {
+  namespace fuzz = rapidfuzz::fuzz;
+  double nameScore =
+      fuzz::partial_ratio(item.displayName().toStdString(), query.toString().toStdString(), 70);
+
+  return clampScore(nameScore / 100);
+}
+
+std::vector<RootSearcher::ScoredItem>
+RootSearcher::search(const std::vector<std::shared_ptr<RootItem>> &items, QStringView s) {
+  std::vector<ScoredItem> results;
+  std::string str = s.toString().toStdString();
+
+  results.reserve(100);
+
+  double exactWeight = 0.8;
+  double fuzzyWeight = 0.2;
+
+  for (const auto &item : items) {
+    double exactScore = computeExactScore(*item, s);
+    double fuzzyScore = computeFuzzyScore(*item, s);
+    double score = (exactScore * exactWeight) + (fuzzyScore * fuzzyWeight);
+
+    if (score > 0) { results.emplace_back(ScoredItem{.score = score, .item = item}); }
+  }
+
+  std::ranges::sort(results, [](auto &&a, auto &&b) { return a.score > b.score; });
+
+  for (const auto &item : results | std::views::take(10)) {
+    qCritical() << item.item->uniqueId() << "with score" << item.score;
+  }
+
+  return results;
+}
