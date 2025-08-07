@@ -183,62 +183,37 @@ void OmniList::updateVisibleItems() {
     widget->setSelected(endIndex == m_selected);
     if (widget->size() != size) { widget->resize(size); }
     widget->move(pos);
+    widget->show();
 
     /*
 qDebug() << "Widget" << vinfo.item->id() << "visible:" << widget->isVisible()
          << "parent:" << widget->parent() << "geometry:" << widget->geometry()
          << "enabled:" << widget->isEnabled();
-    */
+                     */
     widget->blockSignals(false);
 
     lastY = vinfo.bounds.y();
     m_visibleWidgets.emplace_back(widget);
+    reused.insert(vinfo.item->id());
 
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() / 1e6;
     ++endIndex;
   }
 
-  for (const auto &widget : m_visibleWidgets) {
-    widget->show();
-  }
-
-  VisibleRangeV2 range = {startIndex, endIndex - startIndex};
-
-  // get rid of widgets that went out of range
-
-  for (int i = 0; i != visibleIndexRange.size; ++i) {
-    int index = visibleIndexRange.start + i;
-    bool isStillVisible = range.size > 0 && index >= range.start && index < (range.start + range.size);
-
-    if (isStillVisible) continue;
-
-    auto &item = m_items.at(index).item;
-
-    if (auto it = _widgetCache.find(item->id()); it != _widgetCache.end()) {
-      OmniListItemWidgetWrapper *widget = it->second.widget;
-
-      qDebug() << "delete" << item->id();
-
-      if (item->recyclable()) {
-        moveToPool(item->recyclingId(), widget);
-      } else {
-        // TODO: we might want to keep them cached for some time
-        widget->deleteLater();
-      }
-
-      item->detached(widget->widget());
-      _widgetCache.erase(it);
+  for (auto it = _widgetCache.begin(); it != _widgetCache.end();) {
+    if (auto match = reused.find(it->first); match == reused.end()) {
+      it->second.widget->deleteLater();
+      it = _widgetCache.erase(it);
+    } else {
+      ++it;
     }
   }
 
-  // timer.time("updateVisibleItems");
-
   setUpdatesEnabled(true);
-
   recalculateMousePosition();
   updateFocusChain();
-  this->visibleIndexRange = range;
+  this->visibleIndexRange = {startIndex, endIndex - startIndex};
 }
 
 bool OmniList::isDividableContent(const ModelItem &item) {
