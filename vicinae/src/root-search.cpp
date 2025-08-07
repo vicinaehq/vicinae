@@ -25,8 +25,16 @@ double RootSearcher::computeExactStringScore(QStringView str, QStringView query)
 
 double RootSearcher::clampScore(double v) { return std::clamp(v, 0.0, 1.0); }
 
+RootItemMetadata RootSearcher::metadata(const QString &id) const {
+  if (auto it = m_meta.find(id); it != m_meta.end()) { return it->second; }
+
+  return {};
+}
+
 double RootSearcher::computeExactScore(const RootItem &item, QStringView query) {
+  auto meta = metadata(item.uniqueId());
   double nameScore = computeExactStringScore(item.displayName(), query) * 0.8;
+  double aliasScore = computeExactStringScore(meta.alias, query) * 0.8;
   double subtitleScore = computeExactStringScore(item.subtitle(), query) * 0.5;
   double keywordScore = 0;
 
@@ -36,7 +44,7 @@ double RootSearcher::computeExactScore(const RootItem &item, QStringView query) 
 
   keywordScore *= 0.3;
 
-  return clampScore(nameScore + subtitleScore + keywordScore);
+  return clampScore(nameScore + subtitleScore + keywordScore + aliasScore);
 }
 
 double RootSearcher::computeFuzzyScore(const RootItem &item, QStringView query) {
@@ -67,9 +75,7 @@ RootSearcher::search(const std::vector<std::shared_ptr<RootItem>> &items, QStrin
 
   std::ranges::sort(results, [](auto &&a, auto &&b) { return a.score > b.score; });
 
-  for (const auto &item : results | std::views::take(10)) {
-    qCritical() << item.item->uniqueId() << "with score" << item.score;
-  }
-
   return results;
 }
+
+RootSearcher::RootSearcher(const std::unordered_map<QString, RootItemMetadata> &meta) : m_meta(meta) {}

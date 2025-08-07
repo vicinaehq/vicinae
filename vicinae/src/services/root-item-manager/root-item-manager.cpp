@@ -131,7 +131,7 @@ bool RootItemManager::upsertProvider(const RootProvider &provider) {
 
 std::vector<std::shared_ptr<RootItem>>
 RootItemManager::prefixSearch(const QString &query, const RootItemPrefixSearchOptions &opts) {
-  RootSearcher searcher;
+  RootSearcher searcher(m_metadata);
   std::vector<RootSearcher::ScoredItem> results;
 
   if (!opts.includeDisabled) {
