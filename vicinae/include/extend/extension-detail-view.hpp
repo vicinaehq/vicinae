@@ -38,14 +38,22 @@ public:
     m_split->setRatio(0.40);
 
     VStack().add(m_split).imbue(this);
+
+    setDefaultActionShortcuts({
+        {.key = "return"},
+        {.key = "return", .modifiers = {"shift"}},
+    });
   }
 
   void render(const RenderModel &model) override {
     auto newModel = std::get<RootDetailModel>(model);
 
     setLoading(newModel.isLoading);
+    setNavigationTitle(newModel.navigationTitle);
 
     markdownEditor->setMarkdown(newModel.markdown);
+
+    if (auto actions = newModel.actions) { setActionPanel(*actions); }
 
     if (newModel.metadata) {
       metadata->setMetadata(newModel.metadata->children | std::ranges::to<std::vector>());

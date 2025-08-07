@@ -8,11 +8,12 @@ export type DetailProps = {
 	actions?: ReactNode;
 };
 
-const DetailRoot: React.FC<DetailProps> = ({ metadata, ...props }) => {
+const DetailRoot: React.FC<DetailProps> = ({ metadata, actions, ...props }) => {
 	const nativeProps: React.JSX.IntrinsicElements['detail'] = props;
 
 	return (
 		<detail {...nativeProps}>
+			{actions}
 			{metadata}
 		</detail>
 	);

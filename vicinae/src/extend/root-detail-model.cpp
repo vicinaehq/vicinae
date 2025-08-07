@@ -18,7 +18,7 @@ RootDetailModel RootDetailModelParser::parse(const QJsonObject &instance) {
     auto obj = child.toObject();
     auto type = obj.value("type").toString();
 
-    if (type == "actions") {
+    if (type == "action-panel") {
       model.actions = ActionPannelParser().parse(obj);
     }
 

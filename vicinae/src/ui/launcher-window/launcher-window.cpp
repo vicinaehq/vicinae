@@ -26,7 +26,7 @@ void LauncherWindow::showEvent(QShowEvent *event) { m_hud->hide(); }
 LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
   using namespace std::chrono_literals;
 
-  setWindowTitle("Vicinae Launcher");
+  setWindowTitle(Omnicast::MAIN_WINDOW_NAME);
 
   m_hud = new HudWidget;
   m_header = new GlobalHeader(*m_ctx.navigation);

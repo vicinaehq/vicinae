@@ -12,6 +12,7 @@ constexpr long long IMAGE_DISK_CACHE_MAX_SIZE = GB * 5;
 static const QString GH_REPO = "https://github.com/vicinaehq/vicinae";
 static const QString GH_REPO_CREATE_ISSUE = GH_REPO + "/issues/new";
 static const QString GH_REPO_LICENSE = GH_REPO + "/blob/main/LICENSE";
+static const QString MAIN_WINDOW_NAME = "Vicinae Launcher";
 static const QString DOC_URL = "https://docs.vicinae.com";
 static const QString HEADLINE = "A focused launcher for your desktop — native, fast, extensible";
 static const QString APP_ID = "vicinae";
