@@ -1,5 +1,4 @@
 #include "extensions/vicinae/open-documentation-command.hpp"
-#include "command.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/toast/toast-service.hpp"
@@ -13,6 +12,7 @@ void OpenDocumentationCommand::execute(ApplicationContext *ctx) const {
 
   if (auto browser = appDb->webBrowser()) {
     appDb->launch(*browser, {DOC_URL});
+    ctx->navigation->showHud("Opened in browser");
     return;
   }
 
