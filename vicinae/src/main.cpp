@@ -179,7 +179,7 @@ int startDaemon() {
     auto emojiService = std::make_unique<EmojiService>(*omniDb.get());
     auto calculatorService = std::make_unique<CalculatorService>(*omniDb.get());
     auto fileService = std::make_unique<FileService>();
-    auto extensionRegistry = std::make_unique<ExtensionRegistry>(*commandDb);
+    auto extensionRegistry = std::make_unique<ExtensionRegistry>(*commandDb, *localStorage);
     auto raycastStore = std::make_unique<RaycastStoreService>();
 
     if (auto name = currentConfig.theme.name) {
@@ -239,6 +239,10 @@ int startDaemon() {
 
         ServiceRegistry::instance()->commandDb()->registerRepository(extension);
       }
+    });
+
+    QObject::connect(reg, &ExtensionRegistry::extensionUninstalled, [reg](const QString &id) {
+      ServiceRegistry::instance()->commandDb()->removeRepository(id);
     });
 
     for (const auto &manifest : extensionRegistry->scanAll()) {

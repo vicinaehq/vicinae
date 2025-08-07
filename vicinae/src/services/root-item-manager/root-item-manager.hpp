@@ -224,6 +224,7 @@ private:
   void reloadProviders();
   RootItem *findItemById(const QString &id) const;
   RootProvider *findProviderById(const QString &id) const;
+  bool pruneProvider(const QString &id);
 
 public:
   RootItemManager(OmniDatabase &db) : m_db(db) {}
@@ -269,6 +270,8 @@ public:
   bool enableItem(const QString &id);
 
   std::vector<RootProvider *> providers() const;
+
+  void removeProvider(const QString &id);
   void addProvider(std::unique_ptr<RootProvider> provider);
   RootProvider *provider(const QString &id) const;
   std::vector<std::shared_ptr<RootItem>> allItems() const { return m_items; }

@@ -74,8 +74,6 @@ QSize ImagePreviewDialogWidget::sizeHint() const {
     int targetHeight = parentSize.height() - m_padding * 2;
     int width = targetHeight * m_aspectRatio;
 
-    qDebug() << "parent size" << parentSize;
-
     return {width, targetHeight};
   }
 

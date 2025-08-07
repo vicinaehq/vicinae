@@ -2,6 +2,7 @@
 #include "common.hpp"
 #include "omni-command-db.hpp"
 #include "preference.hpp"
+#include "services/local-storage/local-storage-service.hpp"
 #include <expected>
 #include <filesystem>
 #include <qjsonobject.h>
@@ -44,6 +45,7 @@ class ExtensionRegistry : public QObject {
   Q_OBJECT
 
   OmniCommandDatabase &m_db;
+  LocalStorageService &m_storage;
 
   CommandArgument parseArgumentFromObject(const QJsonObject &obj);
   Preference parsePreferenceFromObject(const QJsonObject &obj);
@@ -58,9 +60,11 @@ public:
   std::vector<ExtensionManifest> scanAll();
   void rescanBundle();
   bool isInstalled(const QString &id) const;
+  bool uninstall(const QString &id);
 
-  ExtensionRegistry(OmniCommandDatabase &commandDb);
+  ExtensionRegistry(OmniCommandDatabase &commandDb, LocalStorageService &storage);
 
 signals:
   void extensionAdded(const QString &id);
+  void extensionUninstalled(const QString &id);
 };

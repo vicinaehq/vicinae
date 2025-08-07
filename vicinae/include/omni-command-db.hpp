@@ -83,6 +83,14 @@ public:
     }
   }
 
+  void removeRepository(const QString &id) {
+    if (auto it = std::ranges::find_if(repositories, [&](auto &&repo) { return repo->id() == id; });
+        it != repositories.end()) {
+      repositories.erase(it);
+      emit repositoryRemoved(id);
+    }
+  }
+
   void registerRepository(const std::shared_ptr<AbstractCommandRepository> &repository) {
     for (const auto &cmd : repository->commands()) {
       registerCommand(repository->id(), cmd);
@@ -107,4 +115,5 @@ public:
 signals:
   void commandRegistered(const CommandDbEntry &entry) const;
   void registryAdded(const std::shared_ptr<AbstractCommandRepository> &registry) const;
+  void repositoryRemoved(const QString &id);
 };

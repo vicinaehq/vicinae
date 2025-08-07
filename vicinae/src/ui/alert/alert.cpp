@@ -1,6 +1,7 @@
 #include "alert.hpp"
 #include "theme.hpp"
 #include "utils/layout.hpp"
+#include <qnamespace.h>
 #include <qpainterpath.h>
 
 void CallbackAlertWidget::confirm() const {
@@ -95,6 +96,8 @@ AlertWidget::AlertWidget(QWidget *parent)
   _message->setText("This action cannot be undone");
   _message->setWordWrap(true);
 
+  setMinimumWidth(400);
+
   int btnHeight = 30;
 
   _cancelBtn->setFocus();
@@ -105,10 +108,11 @@ AlertWidget::AlertWidget(QWidget *parent)
   _actionBtn->setColor(SemanticColor::Red);
 
   layout->setContentsMargins(20, 20, 20, 20);
-  layout->setSpacing(10);
+  layout->setSpacing(15);
   layout->addWidget(_icon, 0, Qt::AlignCenter);
   layout->addWidget(_title, 0, Qt::AlignCenter);
   layout->addWidget(_message, 0, Qt::AlignCenter);
+  _message->setAlignment(Qt::AlignCenter);
   layout->addWidget(HStack().add(_cancelBtn).add(_actionBtn).spacing(10).buildWidget());
   setLayout(layout);
 

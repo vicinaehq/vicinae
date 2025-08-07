@@ -41,10 +41,21 @@ public:
 };
 
 class DisableApplication : public DisableItemAction {
-  QString title() const override { return "Disable Application"; }
+  QString title() const override { return "Disable item"; }
 
 public:
   DisableApplication(const QString &itemId) : DisableItemAction(itemId) {}
+};
+
+class UninstallExtensionAction : public AbstractAction {
+  QString m_id;
+
+  ImageURL icon() const override { return ImageURL::builtin("computer-chip"); }
+  void execute(ApplicationContext *ctx) override;
+  QString title() const override { return "Uninstall Extension"; }
+
+public:
+  UninstallExtensionAction(const QString &id) : m_id(id) { setStyle(AbstractAction::Danger); }
 };
 
 /**

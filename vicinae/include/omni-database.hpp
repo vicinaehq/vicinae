@@ -5,6 +5,8 @@
 #include <qsqlquery.h>
 #include <filesystem>
 
+static const std::vector<QString> pragmas = {"PRAGMA foreign_keys = ON;"};
+
 class OmniDatabase {
   QSqlDatabase _db;
 
@@ -22,5 +24,11 @@ public:
     MigrationManager manager(_db, "omnicast");
 
     manager.runMigrations();
+
+    auto query = createQuery();
+
+    for (const auto &pragma : pragmas) {
+      query.exec(pragma);
+    }
   }
 };

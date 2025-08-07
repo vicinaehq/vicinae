@@ -4,8 +4,11 @@
 #include "actions/root-search/root-search-actions.hpp"
 #include "clipboard-actions.hpp"
 #include "command-actions.hpp"
+#include "extension/extension-command.hpp"
 #include "navigation-controller.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
+#include "services/toast/toast-service.hpp"
+#include "ui/action-pannel/action.hpp"
 
 QString CommandRootItem::displayName() const { return m_command->name(); }
 QString CommandRootItem::subtitle() const { return m_command->repositoryDisplayName(); }
@@ -58,6 +61,12 @@ std::unique_ptr<ActionPanelState> CommandRootItem::newActionPanel(ApplicationCon
   itemSection->addAction(markAsFavorite);
   itemSection->addAction(copyDeeplink);
   dangerSection->addAction(new DisableApplication(uniqueId()));
+
+  if (m_command->type() == CommandType::CommandTypeExtension) {
+    auto cmd = static_cast<ExtensionCommand *>(m_command.get());
+
+    dangerSection->addAction(new UninstallExtensionAction(cmd->extensionId()));
+  }
 
   return panel;
 }

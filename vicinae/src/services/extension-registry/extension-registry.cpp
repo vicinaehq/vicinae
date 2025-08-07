@@ -1,5 +1,6 @@
 #include "extension-registry.hpp"
 #include "common.hpp"
+#include "services/local-storage/local-storage-service.hpp"
 #include "vicinae.hpp"
 #include <QJsonArray>
 #include "services/extension-registry/extension-registry.hpp"
@@ -11,7 +12,8 @@
 
 namespace fs = std::filesystem;
 
-ExtensionRegistry::ExtensionRegistry(OmniCommandDatabase &commandDb) : m_db(commandDb) {}
+ExtensionRegistry::ExtensionRegistry(OmniCommandDatabase &commandDb, LocalStorageService &storage)
+    : m_db(commandDb), m_storage(storage) {}
 
 fs::path ExtensionRegistry::extensionDir() const { return Omnicast::dataDir() / "extensions"; }
 
@@ -56,6 +58,19 @@ bool ExtensionRegistry::installFromZip(const QString &id, std::string_view data)
 
   unzip.extract(extractDir, {.stripComponents = 1});
   emit extensionAdded(id);
+
+  return true;
+}
+
+bool ExtensionRegistry::uninstall(const QString &id) {
+  fs::path bundle = extensionDir() / id.toStdString();
+
+  if (!fs::is_directory(bundle)) return false;
+
+  fs::remove_all(bundle);
+  m_storage.clearNamespace(id);
+
+  emit extensionUninstalled(id);
 
   return true;
 }

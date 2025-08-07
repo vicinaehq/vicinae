@@ -6,6 +6,7 @@
 #include "ui/alert/alert.hpp"
 #include "ui/toast/toast.hpp"
 #include "navigation-controller.hpp"
+#include "services/extension-registry/extension-registry.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 
@@ -100,17 +101,48 @@ DefaultActionWrapper::DefaultActionWrapper(const QString &id, AbstractAction *ac
 }
 
 void DisableItemAction::execute(ApplicationContext *ctx) {
-  auto manager = ServiceRegistry::instance()->rootItemManager();
-  auto toast = ctx->services->toastService();
+  auto alert = new CallbackAlertWidget();
 
-  if (manager->disableItem(m_id)) {
-    toast->setToast("Item disabled", ToastPriority::Success);
-  } else {
-    toast->setToast("Failed to disable", ToastPriority::Danger);
-  }
+  alert->setTitle("Are you sure?");
+  alert->setMessage("You will need to go in the settings to manually re-enable it.");
+  alert->setConfirmText("Disable", SemanticColor::Red);
+  alert->setCallback([ctx, id = m_id](bool ok) {
+    auto manager = ctx->services->rootItemManager();
+    auto toast = ctx->services->toastService();
+
+    if (!ok) return;
+
+    if (manager->disableItem(id)) {
+      toast->setToast("Item disabled", ToastPriority::Success);
+    } else {
+      toast->setToast("Failed to disable", ToastPriority::Danger);
+    }
+  });
+
+  ctx->navigation->setDialog(alert);
 }
 
 DisableItemAction::DisableItemAction(const QString &id)
     : AbstractAction("Disable item", ImageURL::builtin("trash")), m_id(id) {
   setStyle(AbstractAction::Danger);
+}
+
+void UninstallExtensionAction::execute(ApplicationContext *ctx) {
+  auto alert = new CallbackAlertWidget();
+
+  alert->setTitle("Are you sure?");
+  alert->setMessage(
+      "All this extension data will be permanently lost. If you "
+      "just want the extension to not appear in the root search anymore, consider disabling it instead.");
+  alert->setConfirmText("Uninstall", SemanticColor::Red);
+  alert->setCallback([ctx, id = m_id](bool ok) {
+    if (!ok) return;
+    if (ctx->services->extensionRegistry()->uninstall(id)) {
+      ctx->services->toastService()->setToast("Extension uninstalled");
+    } else {
+      ctx->services->toastService()->setToast("Failed to uninstall extension", ToastPriority::Danger);
+    }
+  });
+
+  ctx->navigation->setDialog(alert);
 }

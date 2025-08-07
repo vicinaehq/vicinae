@@ -1,6 +1,7 @@
 #include "root-item-manager.hpp"
 #include "root-search.hpp"
 #include <bits/chrono.h>
+#include <numbers>
 #include <qlogging.h>
 #include <ranges>
 
@@ -131,9 +132,19 @@ bool RootItemManager::upsertProvider(const RootProvider &provider) {
 std::vector<std::shared_ptr<RootItem>>
 RootItemManager::prefixSearch(const QString &query, const RootItemPrefixSearchOptions &opts) {
   RootSearcher searcher;
-  auto items = searcher.search(m_items, query);
+  std::vector<RootSearcher::ScoredItem> results;
 
-  std::ranges::sort(items, [this](const auto &a, const auto &b) {
+  if (!opts.includeDisabled) {
+    auto candidates =
+        m_items |
+        std::views::filter([this](auto &&item) { return itemMetadata(item->uniqueId()).isEnabled; }) |
+        std::ranges::to<std::vector>();
+    results = searcher.search(candidates, query);
+  } else {
+    results = searcher.search(m_items, query);
+  }
+
+  std::ranges::sort(results, [this](const auto &a, const auto &b) {
     auto ameta = itemMetadata(a.item->uniqueId());
     auto bmeta = itemMetadata(b.item->uniqueId());
     auto ascore = a.score * computeScore(ameta, a.item->baseScoreWeight());
@@ -142,7 +153,7 @@ RootItemManager::prefixSearch(const QString &query, const RootItemPrefixSearchOp
     return ascore > bscore;
   });
 
-  return items | std::views::transform([](auto &&item) { return item.item; }) |
+  return results | std::views::transform([](auto &&item) { return item.item; }) |
          std::ranges::to<std::vector>();
 }
 
@@ -322,6 +333,20 @@ QJsonObject RootItemManager::getProviderPreferenceValues(const QString &id) cons
   auto json = QJsonDocument::fromJson(rawJson.toUtf8());
 
   return json.object();
+}
+
+bool RootItemManager::pruneProvider(const QString &id) {
+  auto query = m_db.createQuery();
+
+  query.prepare("DELETE FROM root_provider WHERE id = :id");
+  query.addBindValue(id);
+
+  if (!query.exec()) {
+    qCritical() << "pruneProvider() failed" << id << query.lastError();
+    return false;
+  }
+
+  return true;
 }
 
 QJsonObject RootItemManager::getItemPreferenceValues(const QString &id) const {
@@ -700,6 +725,12 @@ bool RootItemManager::enableItem(const QString &id) { return setItemEnabled(id, 
 std::vector<RootProvider *> RootItemManager::providers() const {
   return m_providers | std::views::transform([](const auto &p) { return p.get(); }) |
          std::ranges::to<std::vector>();
+}
+
+void RootItemManager::removeProvider(const QString &id) {
+  if (pruneProvider(id)) { qCritical() << "pruned provider" << id; }
+  std::erase_if(m_providers, [&](auto &&p) { return p->uniqueId() == id; });
+  reloadProviders();
 }
 
 void RootItemManager::addProvider(std::unique_ptr<RootProvider> provider) {
