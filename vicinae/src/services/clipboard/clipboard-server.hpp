@@ -12,6 +12,12 @@ struct ClipboardDataOffer {
 
 struct ClipboardSelection {
   std::vector<ClipboardDataOffer> offers;
+
+  ~ClipboardSelection() {
+    for (const auto &offer : offers) {
+      std::filesystem::remove(offer.path);
+    }
+  }
 };
 
 enum ClipboardServerType { WlrootsDataControlClipboardServer = 0, InvalidClipboardServer };

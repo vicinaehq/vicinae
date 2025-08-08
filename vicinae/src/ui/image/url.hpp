@@ -4,6 +4,7 @@
 #include "theme.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
 #include <filesystem>
+#include <qstringview.h>
 #include <vector>
 #include <QString>
 
@@ -120,4 +121,5 @@ public:
   static ImageURL local(const QString &path);
   static ImageURL local(const std::filesystem::path &path);
   static ImageURL http(const QUrl &httpUrl);
+  static ImageURL rawData(const QByteArray &data, const QString &mimeType);
 };

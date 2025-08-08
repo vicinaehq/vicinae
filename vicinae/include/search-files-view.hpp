@@ -62,7 +62,7 @@ class FileListItemMetadata : public DetailWithMetadataWidget {
       auto viewer = new TextFileViewer;
 
       container->setWidget(viewer);
-      viewer->load(path.c_str());
+      viewer->load(path);
 
       return container;
     }

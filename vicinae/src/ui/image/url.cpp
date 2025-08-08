@@ -1,6 +1,7 @@
 #include "extend/image-model.hpp"
 #include "lib/emoji-detect.hpp"
 #include "services/asset-resolver/asset-resolver.hpp"
+#include <qstringview.h>
 #include <qurlquery.h>
 #include "url.hpp"
 
@@ -274,6 +275,15 @@ ImageURL ImageURL::http(const QUrl &httpUrl) {
 
   url.setType(ImageURLType::Http);
   url.setName(httpUrl.host() + httpUrl.path());
+
+  return url;
+}
+
+ImageURL ImageURL::rawData(const QByteArray &data, const QString &mimeType) {
+  ImageURL url;
+
+  url.setType(ImageURLType::DataURI);
+  url.setName(QString("data:%1;base64,%2").arg(mimeType).arg(data.toBase64(QByteArray::Base64UrlEncoding)));
 
   return url;
 }

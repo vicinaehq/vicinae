@@ -8,7 +8,8 @@ CREATE TABLE IF NOT EXISTS selection (
 	source TEXT,
 	offer_count TEXT,
 	created_at INTEGER DEFAULT (unixepoch()),
-	pinned_at INTEGER
+	pinned_at INTEGER,
+	tags JSON DEFAULT '[]'
 );
 
 CREATE TABLE IF NOT EXISTS data_offer (
@@ -16,6 +17,7 @@ CREATE TABLE IF NOT EXISTS data_offer (
 	mime_type TEXT NOT NULL,
 	text_preview TEXT,
 	content_hash_md5 TEXT NOT NULL,
+	encryption_type TEXT NOT NULL DEFAULT 'none', -- 'none' | 'local' | 'sync' (none can only happen if no keychain backend is available)
 	selection_id INTEGER,
 	FOREIGN KEY(selection_id)
 	REFERENCES selection(id)

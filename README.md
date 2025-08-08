@@ -49,6 +49,7 @@ These must be installed regardless of your installation method:
 - `libcmark-gfm`
 - `libprotobuf`
 - `libqalculate`
+- `libqtkeychain`
 - `libminizip`
 - `libLayerShellQtInterface` *(optional — only if your compositor supports the `wlr-layer-shell` protocol)*
 - `nodejs >= 18` *(optional — required only if you want to run or develop third-party extensions using React/TypeScript. `npm` is **not** required at runtime.)*

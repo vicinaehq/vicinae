@@ -32,6 +32,7 @@
 #include <qobject.h>
 #include <qproperty.h>
 #include <qstackedwidget.h>
+#include <qstringview.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
 #include <sys/socket.h>
@@ -157,13 +158,14 @@ class ClipboardHistoryDetail : public DetailWithMetadataWidget {
   }
 
   QWidget *createEntryWidget(const ClipboardHistoryEntry &entry) {
+    auto data = ServiceRegistry::instance()->clipman()->decryptMainSelectionOffer(entry.id);
 
     if (entry.mimeType.startsWith("text/")) {
       auto container = new TextContainer;
       auto viewer = new TextFileViewer();
 
       container->setWidget(viewer);
-      viewer->load(entry.filePath);
+      viewer->load(data);
 
       return container;
     }
@@ -172,7 +174,7 @@ class ClipboardHistoryDetail : public DetailWithMetadataWidget {
       auto icon = new ImageWidget;
 
       icon->setContentsMargins(10, 10, 10, 10);
-      icon->setUrl(ImageURL::local(entry.filePath));
+      icon->setUrl(ImageURL::rawData(data, entry.mimeType));
 
       return icon;
     }

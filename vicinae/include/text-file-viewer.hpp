@@ -3,6 +3,7 @@
 #include <qdir.h>
 #include <qnamespace.h>
 #include <qpainter.h>
+#include <qstringview.h>
 #include <qsyntaxhighlighter.h>
 #include <qtextedit.h>
 #include <qwidget.h>
@@ -12,11 +13,13 @@ class TextFileViewer : public QWidget {
   QTextEdit *edit;
 
 public:
-  void load(const QString &path) {
+  void load(const std::filesystem::path &path) {
     QFile file(path);
 
     if (file.open(QIODevice::ReadOnly | QIODevice::Text)) { edit->setPlainText(file.readAll()); }
   }
+
+  void load(const QByteArray &data) { edit->setPlainText(data); }
 
   void resizeEvent(QResizeEvent *event) override { QWidget::resizeEvent(event); }
 
