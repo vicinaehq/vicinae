@@ -27,6 +27,7 @@
 #include <qlogging.h>
 #include <qmimedata.h>
 #include <qsqlquery.h>
+#include <qtimer.h>
 #include <qtypes.h>
 #include <quuid.h>
 #include <variant>
@@ -34,9 +35,6 @@
 namespace fs = std::filesystem;
 
 static const QString KEYCHAIN_ENCRYPTION_KEY_NAME = "clipboard-data-key";
-
-static const char *retrieveSelectionByIdQuery =
-    "SELECT mime_type, content_hash_md5 from data_offer where selection_id = :id";
 
 bool ClipboardService::setPinned(int id, bool pinned) {
   QSqlQuery query(db);
@@ -281,7 +279,7 @@ ClipboardService::listAll(int limit, int offset, const ClipboardListSettings &op
           promise.finish();
         }
 
-        QSqlDatabase::removeDatabase(conId);
+        QTimer::singleShot(0, [conId]() { QSqlDatabase::removeDatabase(conId); });
       });
 
   return future;
@@ -686,11 +684,8 @@ bool ClipboardService::copySelection(const ClipboardSelection &selection,
 AbstractClipboardServer *ClipboardService::clipboardServer() const { return m_clipboardServer.get(); }
 
 ClipboardService::ClipboardService(const std::filesystem::path &path)
-    : db(QSqlDatabase::addDatabase("QSQLITE", "clipboard")), _path(path),
-      _data_dir(_path.dir().filePath("clipboard-data")) {
-
+    : db(QSqlDatabase::addDatabase("QSQLITE", "clipboard")) {
   m_dataDir = path.parent_path() / "clipboard-data";
-
   m_clipboardServer =
       std::unique_ptr<AbstractClipboardServer>(ClipboardServerFactory().createFirstActivatable());
 
@@ -708,7 +703,7 @@ ClipboardService::ClipboardService(const std::filesystem::path &path)
     if (!query.exec(pragma)) { qCritical() << "Failed to run pragma" << pragma << query.lastError(); }
   }
 
-  _data_dir.mkpath(_data_dir.path());
+  fs::create_directories(m_dataDir);
 
   QSqlQuery query(db);
 
@@ -716,15 +711,9 @@ ClipboardService::ClipboardService(const std::filesystem::path &path)
 
   manager.runMigrations();
 
-  query.prepare(retrieveSelectionByIdQuery);
-
   if (!m_clipboardServer->start()) {
     qCritical() << "Failed to start clipboard server, clipboard monitoring will not work";
   }
-
-  m_retrieveSelectionByIdQuery = QSqlQuery(db);
-  m_retrieveSelectionByIdQuery.prepare(
-      "SELECT mime_type, content_hash_md5 from data_offer where selection_id = :id");
 
   auto watcher = new QFutureWatcher<GetLocalEncryptionKeyResponse>;
 

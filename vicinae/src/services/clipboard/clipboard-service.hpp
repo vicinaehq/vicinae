@@ -100,7 +100,6 @@ public:
 private:
   Q_OBJECT
 
-  QSqlQuery m_retrieveSelectionByIdQuery;
   bool m_recordAllOffers = true;
   bool m_monitoring = true;
   std::optional<QByteArray> m_localEncryptionKey;
@@ -108,8 +107,6 @@ private:
 
   QSqlDatabase db;
   QMimeDatabase _mimeDb;
-  QFileInfo _path;
-  QDir _data_dir;
   std::filesystem::path m_dataDir;
   std::unique_ptr<AbstractClipboardServer> m_clipboardServer;
 
