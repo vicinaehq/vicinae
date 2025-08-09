@@ -1,11 +1,11 @@
 #pragma once
 #include <filesystem>
+#include <google/protobuf/struct.pb.h>
 #include <qdatetime.h>
 #include <qjsonvalue.h>
 #include <qmimetype.h>
 #include <qstring.h>
 #include <string_view>
-#include "proto/ipc.pb.h"
 
 /**
  * Attempts to compress the path as much as possible to make it better
@@ -44,3 +44,5 @@ std::string getLastPathComponent(const std::filesystem::path &path);
 
 google::protobuf::Value transformJsonValueToProto(const QJsonValue &value);
 QJsonValue protoToJsonValue(const google::protobuf::Value &value);
+
+QString formatSize(size_t bytes);

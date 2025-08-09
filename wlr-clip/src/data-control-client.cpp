@@ -1,11 +1,8 @@
 #include "data-control-client.hpp"
 #include "seat.hpp"
 #include "display.hpp"
-#include "utils.hpp"
 #include "wayland-wlr-data-control-client-protocol.h"
 #include <cstring>
-#include <filesystem>
-#include <fstream>
 #include <stdexcept>
 
 /* DataOffer */
@@ -22,16 +19,10 @@ void DataControlManager::DataDevice::DataOffer::offer(void *data, zwlr_data_cont
   self->_mimes.push_back(mime);
 }
 
-std::filesystem::path
-DataControlManager::DataDevice::DataOffer::DataOffer::receive(const WaylandDisplay &display,
-                                                              const std::string &mime) {
+std::string DataControlManager::DataDevice::DataOffer::DataOffer::receive(const WaylandDisplay &display,
+                                                                          const std::string &mime) {
+  std::string data;
   int pipefd[2];
-  auto filePath = std::filesystem::path("/tmp") / ("omni-wlr-clip-" + generateFileId());
-  std::ofstream file(filePath);
-
-  if (!file.is_open()) {
-    throw std::runtime_error(std::string("Failed to open file at ") + filePath.c_str());
-  }
 
   if (pipe(pipefd) == -1) { throw std::runtime_error(std::string("Failed to pipe(): ") + strerror(errno)); }
 
@@ -43,14 +34,14 @@ DataControlManager::DataDevice::DataOffer::DataOffer::receive(const WaylandDispl
   int rc = 0;
 
   while ((rc = read(pipefd[0], _buf, sizeof(_buf))) > 0) {
-    file.write(_buf, rc);
+    data += std::string_view(_buf, rc);
   }
 
   if (rc == -1) { perror("failed to read read end of the pipe"); }
 
   close(pipefd[0]);
 
-  return filePath;
+  return data;
 }
 
 DataControlManager::DataDevice::DataOffer::~DataOffer() {

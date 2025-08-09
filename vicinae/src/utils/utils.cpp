@@ -120,6 +120,38 @@ QJsonValue protoToJsonValue(const google::protobuf::Value &value) {
   return QJsonValue();
 }
 
+QString formatSize(size_t bytes) {
+  if (bytes <= 0) { return "0 bytes"; }
+
+  const std::vector<QString> units = {"bytes", "KB", "MB", "GB", "TB", "PB"};
+  const double base = 1024.0;
+
+  int unitIndex = static_cast<int>(std::floor(std::log(bytes) / std::log(base)));
+
+  // Clamp to available units
+  unitIndex = std::min(unitIndex, static_cast<int>(units.size() - 1));
+
+  double size = bytes / std::pow(base, unitIndex);
+
+  // Format with appropriate precision
+  QString formattedSize;
+  if (unitIndex == 0) {
+    // Bytes - no decimal places
+    formattedSize = QString::number(static_cast<qint64>(size));
+  } else if (size >= 100) {
+    // >= 100 - no decimal places
+    formattedSize = QString::number(size, 'f', 0);
+  } else if (size >= 10) {
+    // >= 10 - one decimal place
+    formattedSize = QString::number(size, 'f', 1);
+  } else {
+    // < 10 - two decimal places
+    formattedSize = QString::number(size, 'f', 2);
+  }
+
+  return formattedSize + " " + units[unitIndex];
+}
+
 QString formatCount(int count) {
   if (count > 1000) { return QString("%1K").arg(round(count / 1000.f)); }
 

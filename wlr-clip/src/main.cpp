@@ -19,8 +19,6 @@
 #include "wayland-wlr-data-control-client-protocol.h"
 #include "proto/wlr-clipboard.pb.h"
 
-constexpr const char *CONCEALED_MIME = "omnicast/concealed";
-
 class Clipman : public WaylandDisplay,
                 public WaylandRegistry::Listener,
                 public DataControlManager::DataDevice::Listener {
@@ -57,11 +55,9 @@ class Clipman : public WaylandDisplay,
     proto::ext::wlrclip::Selection selection;
 
     for (const auto &mime : offer.mimes()) {
-      if (mime == CONCEALED_MIME) continue;
-
       auto dataOffer = selection.add_offers();
 
-      dataOffer->set_file_path(offer.receive(*this, mime));
+      dataOffer->set_data(offer.receive(*this, mime));
       dataOffer->set_mime_type(mime);
     }
 

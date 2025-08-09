@@ -6,6 +6,7 @@
 #include <qlogging.h>
 #include <qprocess.h>
 #include <qdebug.h>
+#include <qstringview.h>
 
 bool WlrClipboardServer::isAlive() const { return process->isOpen(); }
 
@@ -31,10 +32,8 @@ void WlrClipboardServer::handleMessage(const proto::ext::wlrclip::Selection &sel
   cs.offers.reserve(sel.offers().size());
 
   for (const auto &offer : sel.offers()) {
-    cs.offers.push_back({offer.mime_type().c_str(), offer.file_path().c_str()});
+    cs.offers.push_back({offer.mime_type().c_str(), QByteArray::fromStdString(offer.data())});
   }
-
-  qDebug() << "selection emitted for" << sel.offers().size();
 
   emit selection(cs);
 }

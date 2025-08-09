@@ -3,13 +3,14 @@
 #include "common.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include <expected>
+#include "crypto.hpp"
 #include <openssl/rand.h>
+#include <qbuffer.h>
 #include <qfuturewatcher.h>
 #include <qt6keychain/keychain.h>
 #include "services/clipboard/clipboard-server.hpp"
 #include "services/clipboard/clipboard-server-factory.hpp"
 #include <algorithm>
-#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <ios>
@@ -27,10 +28,12 @@
 #include <qmimedata.h>
 #include <qsqlquery.h>
 #include <qtypes.h>
-#include <sstream>
+#include <quuid.h>
 #include <variant>
 
 namespace fs = std::filesystem;
+
+static const QString KEYCHAIN_ENCRYPTION_KEY_NAME = "clipboard-data-key";
 
 static const char *retrieveSelectionByIdQuery =
     "SELECT mime_type, content_hash_md5 from data_offer where selection_id = :id";
@@ -60,14 +63,13 @@ QFuture<ClipboardService::GetLocalEncryptionKeyResponse> ClipboardService::getLo
 
   auto promise = std::make_shared<QPromise<ClipboardService::GetLocalEncryptionKeyResponse>>();
   auto future = promise->future();
-  const QString key = "clipboard-data-key";
 
   auto readJob = new ReadPasswordJob(Omnicast::APP_ID);
 
-  readJob->setKey(key);
+  readJob->setKey(KEYCHAIN_ENCRYPTION_KEY_NAME);
   readJob->start();
 
-  connect(readJob, &ReadPasswordJob::finished, this, [this, readJob, promise, key](Job *job) {
+  connect(readJob, &ReadPasswordJob::finished, this, [this, readJob, promise](Job *job) {
     if (readJob->error() == QKeychain::NoError) {
       promise->addResult(readJob->binaryData());
       promise->finish();
@@ -75,11 +77,9 @@ QFuture<ClipboardService::GetLocalEncryptionKeyResponse> ClipboardService::getLo
     }
 
     auto writeJob = new QKeychain::WritePasswordJob(Omnicast::APP_ID);
-    QByteArray keyData(32, 0);
+    auto keyData = Crypto::AES256GCM::generateKey();
 
-    RAND_bytes(reinterpret_cast<unsigned char *>(keyData.data()), keyData.size());
-
-    writeJob->setKey(key);
+    writeJob->setKey(KEYCHAIN_ENCRYPTION_KEY_NAME);
     writeJob->setBinaryData(keyData);
     writeJob->start();
 
@@ -181,22 +181,44 @@ bool ClipboardService::copyText(const QString &text, const Clipboard::CopyOption
   return true;
 }
 
-PaginatedResponse<ClipboardHistoryEntry> ClipboardService::listAll(int limit, int offset,
-                                                                   const ClipboardListSettings &opts) const {
-  QSqlQuery query(db);
+QFuture<PaginatedResponse<ClipboardHistoryEntry>>
+ClipboardService::listAll(int limit, int offset, const ClipboardListSettings &opts) const {
+  QPromise<PaginatedResponse<ClipboardHistoryEntry>> promise;
+  auto future = promise.future();
 
-  if (!query.exec("SELECT COUNT(*) FROM selection;") || !query.next()) { return {}; }
+  QThreadPool::globalInstance()->start(
+      [promise = std::move(promise), opts, limit, offset, dbPath = db.databaseName()]() mutable {
+        auto conId = Crypto::UUID::v4();
+        auto db = QSqlDatabase::addDatabase("QSQLITE", conId);
 
-  PaginatedResponse<ClipboardHistoryEntry> response;
+        db.setDatabaseName(dbPath);
 
-  response.totalCount = query.value(0).toInt();
-  response.totalPages = ceil(static_cast<double>(response.totalCount) / limit);
-  response.currentPage = ceil(static_cast<double>(offset) / limit);
-  response.data.reserve(limit);
+        if (!db.open()) {
+          qDebug() << "Failed to open database for listall query" << db.lastError();
+          promise.addResult({});
+          promise.finish();
+          return;
+        }
+        {
 
-  QString queryString = R"(
+          QSqlQuery query(db);
+
+          if (!query.exec("SELECT COUNT(*) FROM selection;") || !query.next()) {
+            promise.addResult({});
+            promise.finish();
+            return;
+          }
+
+          PaginatedResponse<ClipboardHistoryEntry> response;
+
+          response.totalCount = query.value(0).toInt();
+          response.totalPages = ceil(static_cast<double>(response.totalCount) / limit);
+          response.currentPage = ceil(static_cast<double>(offset) / limit);
+          response.data.reserve(limit);
+
+          QString queryString = R"(
 	  	SELECT
-			selection.id, o.mime_type, o.text_preview, pinned_at, o.content_hash_md5, created_at
+			selection.id, o.mime_type, o.text_preview, pinned_at, o.content_hash_md5, created_at, o.size
 		FROM
 			selection
 		JOIN
@@ -208,16 +230,16 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardService::listAll(int limit, in
 
 	)";
 
-  if (!opts.query.isEmpty()) {
-    queryString += " JOIN selection_fts ON selection_fts.selection_id = selection.id ";
-  }
+          if (!opts.query.isEmpty()) {
+            queryString += " JOIN selection_fts ON selection_fts.selection_id = selection.id ";
+          }
 
-  if (!opts.query.isEmpty()) { queryString += " WHERE selection_fts MATCH '" + opts.query + "*' "; }
+          if (!opts.query.isEmpty()) { queryString += " WHERE selection_fts MATCH '" + opts.query + "*' "; }
 
-  if (!opts.query.isEmpty()) {}
-  queryString += " GROUP BY selection.id ";
+          if (!opts.query.isEmpty()) {}
+          queryString += " GROUP BY selection.id ";
 
-  queryString += R"(
+          queryString += R"(
 	ORDER BY
         pinned_at DESC,
         created_at DESC
@@ -225,35 +247,44 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardService::listAll(int limit, in
     OFFSET :offset
   )";
 
-  // qDebug() << "query" << queryString;
+          // qDebug() << "query" << queryString;
 
-  query.prepare(queryString);
-  query.bindValue(":limit", limit);
-  query.bindValue(":offset", offset);
+          query.prepare(queryString);
+          query.bindValue(":limit", limit);
+          query.bindValue(":offset", offset);
 
-  Timer timer;
+          Timer timer;
 
-  if (!query.exec()) {
-    qDebug() << "Failed to listall clipboard items" << query.lastError();
-    return {};
-  }
+          if (!query.exec()) {
+            qDebug() << "Failed to listall clipboard items" << query.lastError();
+            promise.addResult({});
+            promise.finish();
+            return;
+          }
 
-  while (query.next()) {
-    auto sum = query.value(4).toString();
+          while (query.next()) {
+            auto sum = query.value(4).toString();
 
-    response.data.push_back(ClipboardHistoryEntry{
-        .id = query.value(0).toInt(),
-        .mimeType = query.value(1).toString(),
-        .textPreview = query.value(2).toString(),
-        .pinnedAt = query.value(3).toULongLong(),
-        .md5sum = sum,
-        .createdAt = query.value(5).toULongLong(),
-        .filePath = _data_dir.absoluteFilePath(sum),
-    });
-  }
-  timer.time("clipboard db query listAll");
+            response.data.push_back(ClipboardHistoryEntry{
+                .id = query.value(0).toString(),
+                .mimeType = query.value(1).toString(),
+                .textPreview = query.value(2).toString(),
+                .pinnedAt = query.value(3).toULongLong(),
+                .md5sum = sum,
+                .createdAt = query.value(5).toULongLong(),
+                .size = query.value(6).toULongLong(),
+            });
+          }
+          timer.time("clipboard db query listAll");
 
-  return response;
+          promise.addResult(response);
+          promise.finish();
+        }
+
+        QSqlDatabase::removeDatabase(conId);
+      });
+
+  return future;
 }
 
 struct TransformedSelection {
@@ -331,7 +362,7 @@ QString ClipboardService::createTextPreview(const QByteArray &data, int maxLengt
   return preview;
 }
 
-bool ClipboardService::removeSelection(int selectionId) {
+bool ClipboardService::removeSelection(const QString &selectionId) {
   if (!db.transaction()) { return false; }
 
   QSqlQuery query(db);
@@ -341,16 +372,7 @@ bool ClipboardService::removeSelection(int selectionId) {
 		data_offer
 	WHERE 
 		selection_id = :selection_id
-	RETURNING 
-		content_hash_md5,
-		(
-			SELECT
-				COUNT(*)
-			FROM
-				data_offer do_b
-			WHERE
-				do_b.content_hash_md5 = data_offer.content_hash_md5
-		) as remaining;
+	RETURNING id
   )");
   query.bindValue(":selection_id", selectionId);
 
@@ -360,13 +382,12 @@ bool ClipboardService::removeSelection(int selectionId) {
     return false;
   }
 
-  std::vector<QString> flaggedForDeletion;
+  std::vector<fs::path> pendingDeletions;
 
   while (query.next()) {
-    auto sum = query.value(0).toString();
-    auto remaining = query.value(1).toUInt();
-
-    if (remaining == 0) { flaggedForDeletion.push_back(sum); }
+    auto id = query.value(0).toString();
+    // we will delete only if transaction is successfully commited
+    pendingDeletions.emplace_back(m_dataDir / id.toStdString());
   }
 
   query.prepare("DELETE FROM selection WHERE id = :selection_id");
@@ -380,32 +401,58 @@ bool ClipboardService::removeSelection(int selectionId) {
 
   db.commit();
 
-  for (const auto &sum : flaggedForDeletion) {
-    QFile::remove(_data_dir.filePath(sum));
-  }
+  for (const auto &path : pendingDeletions)
+    fs::remove(path);
 
   return true;
 }
 
-QByteArray ClipboardService::decryptMainSelectionOffer(int selectionId) const {
+QByteArray ClipboardService::decryptOffer(const QByteArray &data, ClipboardEncryptionType enc) const {
+  switch (enc) {
+  case ClipboardEncryptionType::None:
+    return data;
+  case ClipboardEncryptionType::Local: {
+    if (!m_localEncryptionKey) {
+      qCritical() << "No local encryption key available for decryption";
+      return {};
+    }
+
+    qDebug() << "decrypt from local";
+
+    return Crypto::AES256GCM::decrypt(data, *m_localEncryptionKey);
+  }
+  default:
+    break;
+  }
+
+  return {};
+}
+
+QByteArray ClipboardService::decryptMainSelectionOffer(const QString &selectionId) const {
+  Timer timer;
   QSqlQuery query(db);
 
   query.prepare(R"(
-		SELECT content_hash_md5, encryption_type FROM data_offer o
+		SELECT o.id, o.encryption_type FROM data_offer o
 		JOIN selection s ON s.id = o.selection_id
 		WHERE o.mime_type = s.preferred_mime_type
 		AND selection_id = :selection
 	)");
   query.addBindValue(selectionId);
 
-  if (!query.exec() || !query.next()) {
+  if (!query.exec()) {
     qCritical() << "Failed to decrypt main selection offer" << query.lastError();
     return {};
   }
 
-  QString md5sum = query.value(0).toString();
+  if (!query.next()) {
+    qCritical() << "No match for default mime type" << query.lastError();
+    return {};
+  }
+
+  QString id = query.value(0).toString();
   ClipboardEncryptionType encryption = parseEncryptionType(query.value(1).toString());
-  fs::path path = m_dataDir / md5sum.toStdString();
+  fs::path path = m_dataDir / id.toStdString();
   QFile file(path);
 
   if (!file.open(QIODevice::ReadOnly)) {
@@ -413,173 +460,43 @@ QByteArray ClipboardService::decryptMainSelectionOffer(int selectionId) const {
     return {};
   }
 
-  switch (encryption) {
-  case ClipboardEncryptionType::None:
-    return file.readAll();
-  case ClipboardEncryptionType::Local:
-    if (!m_localEncryptionKey) {
-      qCritical() << "No local encryption key available for decryption";
-      return {};
-    }
-
-    return decrypt(file.readAll(), *m_localEncryptionKey);
-  default:
-    break;
-  }
+  return decryptOffer(file.readAll(), encryption);
 }
 
-QByteArray ClipboardService::decrypt(const QByteArray &encrypted, const QByteArray &key) const {
-  if (key.size() != 32) {
-    qWarning() << "Key must be exactly 32 bytes (256 bits)";
-    return QByteArray();
+QByteArray ClipboardService::computeSelectionHash(const ClipboardSelection &selection) const {
+  QCryptographicHash hash(QCryptographicHash::Md5);
+
+  for (const auto &offer : selection.offers) {
+    hash.addData(QCryptographicHash::hash(offer.data, QCryptographicHash::Md5));
   }
 
-  if (encrypted.size() < 28) { // IV(12) + tag(16) = minimum 28 bytes
-    qWarning() << "Encrypted data too short";
-    return QByteArray();
-  }
-
-  // Extract components
-  QByteArray iv = encrypted.left(12);
-  QByteArray tag = encrypted.right(16);
-  QByteArray ciphertext = encrypted.mid(12, encrypted.size() - 28);
-
-  // Create cipher context
-  EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
-  if (!ctx) return QByteArray();
-
-  // Initialize decryption
-  if (EVP_DecryptInit_ex(ctx, EVP_aes_256_gcm(), nullptr,
-                         reinterpret_cast<const unsigned char *>(key.constData()),
-                         reinterpret_cast<const unsigned char *>(iv.constData())) != 1) {
-    EVP_CIPHER_CTX_free(ctx);
-    return QByteArray();
-  }
-
-  // Decrypt
-  QByteArray plaintext(ciphertext.size(), 0);
-  int len;
-  if (EVP_DecryptUpdate(ctx, reinterpret_cast<unsigned char *>(plaintext.data()), &len,
-                        reinterpret_cast<const unsigned char *>(ciphertext.constData()),
-                        ciphertext.size()) != 1) {
-    EVP_CIPHER_CTX_free(ctx);
-    return QByteArray();
-  }
-
-  // Set expected tag
-  if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, 16,
-                          const_cast<void *>(reinterpret_cast<const void *>(tag.constData()))) != 1) {
-    EVP_CIPHER_CTX_free(ctx);
-    return QByteArray();
-  }
-
-  // Finalize and verify
-  int plaintext_len = len;
-  if (EVP_DecryptFinal_ex(ctx, reinterpret_cast<unsigned char *>(plaintext.data()) + len, &len) != 1) {
-    EVP_CIPHER_CTX_free(ctx);
-    qWarning() << "Authentication failed - data may be corrupted";
-    return QByteArray();
-  }
-
-  plaintext_len += len;
-  EVP_CIPHER_CTX_free(ctx);
-
-  plaintext.resize(plaintext_len);
-  return plaintext;
+  return hash.result();
 }
 
-QByteArray ClipboardService::encrypt(const QByteArray &data, const QByteArray &key) const {
-  QByteArray iv(12, 0);
-
-  RAND_bytes(reinterpret_cast<unsigned char *>(iv.data()), iv.size());
-
-  EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
-  EVP_EncryptInit_ex(ctx, EVP_aes_256_gcm(), nullptr,
-                     reinterpret_cast<const unsigned char *>(key.constData()),
-                     reinterpret_cast<const unsigned char *>(iv.constData()));
-
-  QByteArray ciphertext(data.size(), 0);
-  int len;
-  if (EVP_EncryptUpdate(ctx, reinterpret_cast<unsigned char *>(ciphertext.data()), &len,
-                        reinterpret_cast<const unsigned char *>(data.constData()), data.size()) != 1) {
-    EVP_CIPHER_CTX_free(ctx);
-    return {};
-  }
-
-  int ciphertext_len = len;
-
-  // Finalize encryption
-  if (EVP_EncryptFinal_ex(ctx, reinterpret_cast<unsigned char *>(ciphertext.data()) + len, &len) != 1) {
-    EVP_CIPHER_CTX_free(ctx);
-    return {};
-  }
-  ciphertext_len += len;
-
-  // Get the authentication tag (16 bytes for GCM)
-  QByteArray tag(16, 0);
-  if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, 16, tag.data()) != 1) {
-    EVP_CIPHER_CTX_free(ctx);
-    return {};
-  }
-
-  EVP_CIPHER_CTX_free(ctx);
-  ciphertext.resize(ciphertext_len);
-
-  // Return format: IV (12) + Ciphertext + Auth Tag (16)
-  return iv + ciphertext + tag;
+bool ClipboardService::isClearSelection(const ClipboardSelection &selection) const {
+  return std::ranges::fold_left(selection.offers, 0,
+                                [](size_t acc, auto &&item) { return acc + item.data.size(); }) == 0;
 }
 
 void ClipboardService::saveSelection(const ClipboardSelection &selection) {
   if (!m_monitoring || !m_isEncryptionReady) return;
 
-  std::vector<TransformedSelection> transformedOffers;
-  char buf[1 << 16];
-  QCryptographicHash selectionHash(QCryptographicHash::Md5);
-  uint64_t totalLength = 0;
   ClipboardHistoryEntry insertedEntry;
 
-  transformedOffers.reserve(selection.offers.size());
-
-  for (const auto &offer : selection.offers) {
-    if (offer.mimeType == "omnicast/concealed") {
-      qDebug() << "Ignoring selection because it offers mime type omnicast/concealed";
-      return;
-    }
-
-    TransformedSelection selection{.mimeType = offer.mimeType.c_str()};
-    QFile file(offer.path);
-
-    if (!file.open(QIODevice::ReadOnly)) {
-      qDebug() << "Unable to open file" << offer.path;
-      continue;
-    }
-
-    QCryptographicHash fileHash(QCryptographicHash::Md5);
-    quint64 rc = 0;
-
-    while ((rc = file.read(buf, sizeof(buf))) > 0) {
-      fileHash.addData(QByteArrayView(buf, rc));
-      totalLength += rc;
-    }
-
-    auto md5sum = fileHash.result();
-    QFileInfo targetFile(_data_dir.filePath(md5sum.toHex()));
-
-    selectionHash.addData(offer.mimeType);
-    selectionHash.addData(md5sum);
-    selection.dataPath = targetFile.filePath();
-    selection.md5sum = md5sum.toHex();
-    selection.path = offer.path;
-    transformedOffers.push_back(selection);
-  }
-
-  // probably a clipboard clear
-  if (totalLength == 0) {
+  if (isClearSelection(selection)) {
     qDebug() << "skipped clipboard clear";
     return;
   }
 
-  auto selectionSum = selectionHash.result().toHex();
+  bool isConcealed = std::ranges::any_of(
+      selection.offers, [](auto &&offer) { return offer.mimeType == Clipboard::CONCEALED_MIME_TYPE; });
+
+  if (isConcealed) {
+    qDebug() << "Ignoring concealed selection";
+    return;
+  }
+
+  auto selectionHash = QString::fromUtf8(computeSelectionHash(selection).toHex());
 
   if (!db.transaction()) {
     qDebug() << "Failed to create transaction" << db.lastError();
@@ -588,11 +505,17 @@ void ClipboardService::saveSelection(const ClipboardSelection &selection) {
 
   QSqlQuery query(db);
 
-  query.exec("SELECT hash_md5 FROM selection ORDER BY created_at DESC LIMIT 1");
+  query.prepare("UPDATE selection SET created_at = unixepoch() WHERE hash_md5 = :hash");
+  query.addBindValue(selectionHash);
 
-  if (query.next() && query.value(0).toString() == selectionSum) {
-    qDebug() << "ignored immediate clip duplicate";
+  if (!query.exec()) {
+    qCritical() << "Failed to execute clipboard update";
     db.rollback();
+    return;
+  }
+
+  if (query.numRowsAffected() > 0) {
+    if (!db.commit()) { qCritical() << "Failed to commit transaction" << db.lastError(); }
     return;
   }
 
@@ -600,12 +523,13 @@ void ClipboardService::saveSelection(const ClipboardSelection &selection) {
   std::vector<InsertClipboardHistoryLine> dbOffers;
 
   query.prepare(R"(
-  	INSERT INTO selection (offer_count, hash_md5, preferred_mime_type, source)
-	VALUES (:offer_count, :hash_md5, :preferred_mime_type, :source)
+  	INSERT INTO selection (id, offer_count, hash_md5, preferred_mime_type, source)
+	VALUES (:id, :offer_count, :hash_md5, :preferred_mime_type, :source)
 	RETURNING id, created_at;
   )");
+  query.bindValue(":id", Crypto::UUID::v4());
   query.bindValue(":offer_count", static_cast<uint>(selection.offers.size()));
-  query.bindValue(":hash_md5", selectionHash.result().toHex());
+  query.bindValue(":hash_md5", selectionHash);
   query.bindValue(":preferred_mime_type", preferredMimeType.c_str());
 
   // TODO: use window manager integration to figure out what's the currently focused window
@@ -617,44 +541,19 @@ void ClipboardService::saveSelection(const ClipboardSelection &selection) {
     return;
   }
 
-  int selectionId = query.value(0).toInt();
+  QString selectionId = query.value(0).toString();
   auto createdAt = query.value(1).toULongLong();
 
-  for (const auto &offer : transformedOffers) {
-    ClipboardEncryptionType encryption;
-    fs::path targetPath = m_dataDir / offer.md5sum.toStdString();
-
-    if (m_localEncryptionKey) {
-      QFile targetFile(targetPath);
-      QFile file(offer.path);
-
-      if (!file.open(QIODevice::ReadOnly)) { continue; }
-      if (!targetFile.open(QIODevice::WriteOnly)) { continue; }
-
-      QByteArray encrypted = encrypt(file.readAll(), *m_localEncryptionKey);
-
-      targetFile.write(encrypted);
-      encryption = ClipboardEncryptionType::Local;
-    } else {
-      encryption = ClipboardEncryptionType::None;
-      fs::copy(offer.path, targetPath);
-    }
-
+  for (const auto &offer : selection.offers) {
     QString textPreview;
 
-    if (offer.mimeType.startsWith("text/")) {
-      QFile file(offer.path);
-
-      if (!file.open(QIODevice::ReadOnly)) { return; }
-
-      auto data = file.readAll();
-
-      textPreview = createTextPreview(data, 50);
+    if (offer.mimeType.starts_with("text/")) {
+      textPreview = createTextPreview(offer.data, 50);
       query.prepare(R"(
 		INSERT INTO selection_fts (selection_id, content) VALUES (:selection_id, :content);
 	)");
       query.bindValue(":selection_id", selectionId);
-      query.bindValue(":content", data);
+      query.bindValue(":content", offer.data);
 
       if (!query.exec()) {
         qDebug() << "failed to index text" << query.lastError();
@@ -665,8 +564,11 @@ void ClipboardService::saveSelection(const ClipboardSelection &selection) {
       // TODO: index text for selection
     }
 
-    else if (offer.mimeType.startsWith("image/")) {
-      QImageReader reader(offer.path.c_str());
+    else if (offer.mimeType.starts_with("image/")) {
+      QBuffer buffer;
+      QImageReader reader(&buffer);
+
+      buffer.setData(offer.data);
 
       if (auto size = reader.size(); size.isValid()) {
         textPreview = QString("Image (%1x%2)").arg(size.width()).arg(size.height());
@@ -677,29 +579,47 @@ void ClipboardService::saveSelection(const ClipboardSelection &selection) {
       textPreview = "Unnamed";
     }
 
+    auto md5sum = QCryptographicHash::hash(offer.data, QCryptographicHash::Md5).toHex();
+    auto offerId = Crypto::UUID::v4();
+    ClipboardEncryptionType encryption = ClipboardEncryptionType::None;
+
+    if (m_localEncryptionKey) encryption = ClipboardEncryptionType::Local;
+
     query.prepare(R"(
-		INSERT INTO data_offer (selection_id, mime_type, text_preview, content_hash_md5, encryption_type)
-		VALUES (:selection_id, :mime_type, :text_preview, :content_hash_md5, :encryption)
+		INSERT INTO data_offer (id, selection_id, mime_type, text_preview, content_hash_md5, encryption_type, size)
+		VALUES (:id, :selection_id, :mime_type, :text_preview, :content_hash_md5, :encryption, :size)
   	)");
+    query.bindValue(":id", offerId);
     query.bindValue(":selection_id", selectionId);
-    query.bindValue(":mime_type", offer.mimeType);
+    query.bindValue(":mime_type", offer.mimeType.c_str());
     query.bindValue(":text_preview", textPreview);
-    query.bindValue(":content_hash_md5", offer.md5sum);
+    query.bindValue(":content_hash_md5", md5sum);
     query.bindValue(":encryption", stringifyEncryptionType(encryption));
+    query.bindValue(":size", offer.data.size());
 
     if (!query.exec()) {
       db.rollback();
       return;
     }
 
+    fs::path targetPath = m_dataDir / offerId.toStdString();
+    QFile targetFile(targetPath);
+
+    if (!targetFile.open(QIODevice::WriteOnly)) { continue; }
+
+    if (m_localEncryptionKey) {
+      targetFile.write(Crypto::AES256GCM::encrypt(offer.data, *m_localEncryptionKey));
+    } else {
+      targetFile.write(offer.data);
+    }
+
     if (offer.mimeType == preferredMimeType) {
       insertedEntry.id = selectionId;
       insertedEntry.pinnedAt = 0;
       insertedEntry.createdAt = createdAt;
-      insertedEntry.mimeType = offer.mimeType;
-      insertedEntry.md5sum = offer.md5sum;
+      insertedEntry.mimeType = offer.mimeType.c_str();
+      insertedEntry.md5sum = md5sum;
       insertedEntry.textPreview = textPreview;
-      insertedEntry.filePath = _data_dir.filePath(offer.md5sum);
     }
   }
 
@@ -707,23 +627,29 @@ void ClipboardService::saveSelection(const ClipboardSelection &selection) {
   emit itemInserted(insertedEntry);
 }
 
-std::optional<ClipboardSelection> ClipboardService::retrieveSelectionById(int id) {
+std::optional<ClipboardSelection> ClipboardService::retrieveSelectionById(const QString &id) {
   ClipboardSelection selection;
+  QSqlQuery query(db);
 
-  m_retrieveSelectionByIdQuery.bindValue(":id", id);
+  query.prepare("SELECT id, mime_type, encryption_type from data_offer where selection_id = :id");
+  query.addBindValue(id);
 
-  if (!m_retrieveSelectionByIdQuery.exec()) {
-    qCritical() << "Failed to execute retrieveSelectionById query"
-                << m_retrieveSelectionByIdQuery.lastError();
-    return {};
+  if (!query.exec()) {
+    qCritical() << "Failed to retrieve selection for id" << id << query.lastError();
+    return std::nullopt;
   }
 
-  while (m_retrieveSelectionByIdQuery.next()) {
+  while (query.next()) {
     ClipboardDataOffer offer;
-    QString mimeType = m_retrieveSelectionByIdQuery.value(0).toString();
-    QString checksum = m_retrieveSelectionByIdQuery.value(1).toString();
+    QString id = query.value(0).toString();
+    QString mimeType = query.value(1).toString();
+    ClipboardEncryptionType encryption = parseEncryptionType(query.value(2).toString());
+    fs::path path = m_dataDir / id.toStdString();
+    QFile file(path);
 
-    offer.path = _data_dir.filePath(checksum).toStdString();
+    if (!file.open(QIODevice::ReadOnly)) { continue; }
+
+    offer.data = decryptOffer(file.readAll(), encryption);
     offer.mimeType = mimeType.toStdString();
     selection.offers.emplace_back(offer);
   }
@@ -749,27 +675,10 @@ bool ClipboardService::copySelection(const ClipboardSelection &selection,
   }
 
   QMimeData *mimeData = new QMimeData;
-  auto appendOffer = [mimeData](const ClipboardDataOffer &offer) {
-    if (!std::filesystem::exists(offer.path)) {
-      qWarning() << "Cannot copy offer of type" << offer.mimeType << "contents do not exist at location"
-                 << offer.path;
-      return;
-    }
 
-    std::ifstream ifs(offer.path, std::ios_base::binary);
-    std::stringstream ss;
-
-    if (!ifs) {
-      qWarning() << "Could not open" << offer.path << "for reading";
-      return;
-    }
-
-    ss << ifs.rdbuf();
-    QByteArray buf(ss.str().data(), ss.str().size());
-    mimeData->setData(QString::fromStdString(offer.mimeType), buf);
-  };
-
-  std::ranges::for_each(selection.offers, appendOffer);
+  for (const auto &offer : selection.offers) {
+    mimeData->setData(offer.mimeType.c_str(), offer.data);
+  }
 
   return copyQMimeData(mimeData, options);
 }

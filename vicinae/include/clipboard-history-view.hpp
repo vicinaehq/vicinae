@@ -26,6 +26,7 @@
 #include <memory>
 #include <qboxlayout.h>
 #include <qevent.h>
+#include <qfuturewatcher.h>
 #include <qlabel.h>
 #include <qlogging.h>
 #include <qnamespace.h>
@@ -57,7 +58,7 @@ public:
 };
 
 class PasteClipboardSelection : public PasteToFocusedWindowAction {
-  int m_id;
+  QString m_id;
 
   void execute(ApplicationContext *ctx) override {
     auto clipman = ctx->services->clipman();
@@ -73,11 +74,11 @@ class PasteClipboardSelection : public PasteToFocusedWindowAction {
   }
 
 public:
-  PasteClipboardSelection(int id) : PasteToFocusedWindowAction(), m_id(id) {}
+  PasteClipboardSelection(const QString &id) : PasteToFocusedWindowAction(), m_id(id) {}
 };
 
 class CopyClipboardSelection : public AbstractAction {
-  int m_id;
+  QString m_id;
 
   void execute(ApplicationContext *ctx) override {
     auto clipman = ctx->services->clipman();
@@ -93,7 +94,7 @@ class CopyClipboardSelection : public AbstractAction {
   }
 
 public:
-  CopyClipboardSelection(int id)
+  CopyClipboardSelection(const QString &id)
       : AbstractAction("Copy to clipboard", ImageURL::builtin("copy-clipboard")), m_id(id) {}
 };
 
@@ -141,9 +142,9 @@ class ClipboardHistoryDetail : public DetailWithMetadataWidget {
         .text = entry.mimeType,
         .title = "Mime",
     };
-    auto id = MetadataLabel{
-        .text = QString::number(entry.id),
-        .title = "ID",
+    auto size = MetadataLabel{
+        .text = formatSize(entry.size),
+        .title = "Size",
     };
     auto copiedAt = MetadataLabel{
         .text = QDateTime::fromSecsSinceEpoch(entry.createdAt).toString(),
@@ -154,7 +155,7 @@ class ClipboardHistoryDetail : public DetailWithMetadataWidget {
         .title = "Checksum (MD5)",
     };
 
-    return {mime, id, copiedAt, checksum};
+    return {mime, size, copiedAt, checksum};
   }
 
   QWidget *createEntryWidget(const ClipboardHistoryEntry &entry) {
@@ -187,15 +188,15 @@ public:
     if (auto previous = content()) { previous->deleteLater(); }
 
     auto widget = createEntryWidget(entry);
-    // auto metadata = createEntryMetadata(entry);
+    auto metadata = createEntryMetadata(entry);
 
     setContent(widget);
-    // setMetadata({});
+    setMetadata(metadata);
   }
 };
 
 class RemoveSelectionAction : public AbstractAction {
-  int _id;
+  QString _id;
 
   void execute(ApplicationContext *ctx) override {
     auto clipman = ctx->services->clipman();
@@ -209,13 +210,14 @@ class RemoveSelectionAction : public AbstractAction {
   }
 
 public:
-  RemoveSelectionAction(int id) : AbstractAction("Remove entry", ImageURL::builtin("trash")), _id(id) {
+  RemoveSelectionAction(const QString &id)
+      : AbstractAction("Remove entry", ImageURL::builtin("trash")), _id(id) {
     setStyle(AbstractAction::Danger);
   }
 };
 
 class PinClipboardAction : public AbstractAction {
-  int _id;
+  QString _id;
   bool _value;
 
   void execute() override {
@@ -223,9 +225,9 @@ class PinClipboardAction : public AbstractAction {
   }
 
 public:
-  int entryId() const { return _id; }
+  QString entryId() const { return _id; }
 
-  PinClipboardAction(int id, bool value)
+  PinClipboardAction(const QString &id, bool value)
       : AbstractAction(value ? "Pin" : "Unpin", ImageURL::builtin("pin")), _id(id), _value(value) {}
 };
 
@@ -305,7 +307,7 @@ public:
     return detail;
   }
 
-  QString generateId() const override { return QString::number(info.id); }
+  QString generateId() const override { return info.id; }
 
 public:
   ClipboardHistoryItem(const ClipboardHistoryEntry &info) : info(info) {}
@@ -399,17 +401,26 @@ class ClipboardHistoryView : public SimpleView {
   QStackedWidget *m_content = new QStackedWidget(this);
   QTimer m_searchDebounce;
   PreferenceDropdown *m_filterInput = new PreferenceDropdown(this);
+  using Watcher = QFutureWatcher<PaginatedResponse<ClipboardHistoryEntry>>;
+  Watcher m_watcher;
 
   void handleDebounce() {
-    qDebug() << "search text" << searchText();
-    generateList(searchText());
+    auto clipman = context()->services->clipman();
+
+    if (m_watcher.isRunning()) { m_watcher.cancel(); }
+
+    m_watcher.setFuture(clipman->listAll(1000, 0, {.query = searchText()}));
+  }
+
+  void handleListFinished() {
+    if (!m_watcher.isFinished()) return;
+
+    generateList(m_watcher.result());
   }
 
   QWidget *searchBarAccessory() const override { return m_filterInput; }
 
-  void generateList(const QString &query) {
-    auto clipman = ServiceRegistry::instance()->clipman();
-    auto result = clipman->listAll(1000, 0, {.query = query});
+  void generateList(const PaginatedResponse<ClipboardHistoryEntry> &result) {
     size_t i = 0;
 
     qDebug() << "results" << result.totalCount;
@@ -445,7 +456,7 @@ class ClipboardHistoryView : public SimpleView {
 
   void initialize() override {
     setSearchPlaceholderText("Browse clipboard history...");
-    generateList("");
+    textChanged("");
   }
 
   void selectionChanged(const OmniList::AbstractVirtualItem *next,
@@ -465,12 +476,12 @@ class ClipboardHistoryView : public SimpleView {
     }
   }
 
-  void textChanged(const QString &value) override { m_searchDebounce.start(200); }
+  void textChanged(const QString &value) override { handleDebounce(); }
 
   void clipboardSelectionInserted(const ClipboardHistoryEntry &entry) {}
 
-  void handlePinChanged(int entryId, bool value) { generateList(searchText()); }
-  void handleRemoved(int entryId) { generateList(searchText()); }
+  void handlePinChanged(int entryId, bool value) { textChanged(searchText()); }
+  void handleRemoved(int entryId) { textChanged(searchText()); }
 
   void handleMonitoringChanged(bool monitor) {
     if (monitor) {
@@ -564,5 +575,6 @@ public:
             &ClipboardHistoryView::handleStatusClipboard);
     connect(&m_searchDebounce, &QTimer::timeout, this, &ClipboardHistoryView::handleDebounce);
     connect(m_filterInput, &SelectorInput::selectionChanged, this, &ClipboardHistoryView::handleFilterChange);
+    connect(&m_watcher, &Watcher::finished, this, &ClipboardHistoryView::handleListFinished);
   }
 };

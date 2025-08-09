@@ -2,7 +2,7 @@
 -- a very big thing on its own and will benefit from database-level specific optimisations.
 
 CREATE TABLE IF NOT EXISTS selection (
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	id TEXT PRIMARY KEY,
 	hash_md5 TEXT NOT NULL,
 	preferred_mime_type TEXT NOT NULL,
 	source TEXT,
@@ -13,10 +13,11 @@ CREATE TABLE IF NOT EXISTS selection (
 );
 
 CREATE TABLE IF NOT EXISTS data_offer (
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	id TEXT PRIMARY KEY,
 	mime_type TEXT NOT NULL,
 	text_preview TEXT,
 	content_hash_md5 TEXT NOT NULL,
+	size INTEGER NOT NULL,
 	encryption_type TEXT NOT NULL DEFAULT 'none', -- 'none' | 'local' | 'sync' (none can only happen if no keychain backend is available)
 	selection_id INTEGER,
 	FOREIGN KEY(selection_id)

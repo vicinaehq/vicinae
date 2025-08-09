@@ -29,7 +29,7 @@ public:
        * The caller is responsible for the cleaning of this file after they are done
        * processing it.
        */
-      std::filesystem::path receive(const WaylandDisplay &display, const std::string &mime);
+      std::string receive(const WaylandDisplay &display, const std::string &mime);
       const std::vector<std::string> &mimes() const;
 
       DataOffer(zwlr_data_control_offer_v1 *offer);

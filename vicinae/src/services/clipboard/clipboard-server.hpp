@@ -1,23 +1,17 @@
 #pragma once
 #include <qobject.h>
+#include <qstringview.h>
 #include <qtmetamacros.h>
 #include <string>
-#include <filesystem>
 #include <vector>
 
 struct ClipboardDataOffer {
   std::string mimeType;
-  std::filesystem::path path;
+  QByteArray data;
 };
 
 struct ClipboardSelection {
   std::vector<ClipboardDataOffer> offers;
-
-  ~ClipboardSelection() {
-    for (const auto &offer : offers) {
-      std::filesystem::remove(offer.path);
-    }
-  }
 };
 
 enum ClipboardServerType { WlrootsDataControlClipboardServer = 0, InvalidClipboardServer };

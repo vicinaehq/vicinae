@@ -60,13 +60,13 @@ struct InsertClipboardHistoryLine {
 };
 
 struct ClipboardHistoryEntry {
-  int id;
+  QString id;
   QString mimeType;
   QString textPreview;
   uint64_t pinnedAt;
   QString md5sum;
   uint64_t createdAt;
-  QString filePath;
+  uint64_t size;
 };
 
 struct ClipboardListSettings {
@@ -118,18 +118,24 @@ private:
 
   QFuture<GetLocalEncryptionKeyResponse> getLocalEncryptionKey();
 
-  QByteArray encrypt(const QByteArray &data, const QByteArray &key) const;
-  QByteArray decrypt(const QByteArray &data, const QByteArray &key) const;
+  /**
+   * Unique selection hash obtained by hashing all the data offer hashes together.
+   * This is used to prevent reinserting the exact same selection multiple times.
+   */
+  QByteArray computeSelectionHash(const ClipboardSelection &selection) const;
+  bool isClearSelection(const ClipboardSelection &selection) const;
+
+  QByteArray decryptOffer(const QByteArray &data, ClipboardEncryptionType enc) const;
 
 public:
   ClipboardService(const std::filesystem::path &path);
 
-  QByteArray decryptMainSelectionOffer(int selectionId) const;
+  QByteArray decryptMainSelectionOffer(const QString &selectionId) const;
   AbstractClipboardServer *clipboardServer() const;
-  bool removeSelection(int id);
+  bool removeSelection(const QString &id);
   bool setPinned(int id, bool pinned);
-  PaginatedResponse<ClipboardHistoryEntry> listAll(int limit = 100, int offset = 0,
-                                                   const ClipboardListSettings &opts = {}) const;
+  QFuture<PaginatedResponse<ClipboardHistoryEntry>> listAll(int limit = 100, int offset = 0,
+                                                            const ClipboardListSettings &opts = {}) const;
   bool copyText(const QString &text, const Clipboard::CopyOptions &options = {.concealed = true});
   bool copyHtml(const Clipboard::Html &data, const Clipboard::CopyOptions &options = {.concealed = false});
   bool copyFile(const std::filesystem::path &path,
@@ -139,9 +145,8 @@ public:
   void setRecordAllOffers(bool value);
   bool clear();
   void saveSelection(const ClipboardSelection &selection);
-  void saveSelection2(const ClipboardSelection &selection);
   ClipboardSelection retrieveSelection(int offset = 0);
-  std::optional<ClipboardSelection> retrieveSelectionById(int id);
+  std::optional<ClipboardSelection> retrieveSelectionById(const QString &id);
   bool copySelection(const ClipboardSelection &selection, const Clipboard::CopyOptions &options);
   bool copyQMimeData(QMimeData *data, const Clipboard::CopyOptions &options = {});
 

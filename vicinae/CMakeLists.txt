@@ -179,6 +179,7 @@ set(SRCS
 
 	include/lib/emoji-detect.hpp
 	src/lib/emoji-detect.cpp
+	src/lib/crypto.cpp
 
 	include/clipboard-history-view.hpp
 
