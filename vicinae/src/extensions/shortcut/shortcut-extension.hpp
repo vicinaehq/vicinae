@@ -9,7 +9,7 @@ class ShortcutExtension : public BuiltinCommandRepository {
   QString id() const override { return "shortcut"; }
   QString displayName() const override { return "Shortcuts"; }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("link").setBackgroundTint(SemanticColor::Red);
+    return ImageURL::builtin("link").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 
 public:

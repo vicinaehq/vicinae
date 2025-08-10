@@ -1,6 +1,7 @@
 #include "extend/image-model.hpp"
 #include "lib/emoji-detect.hpp"
 #include "services/asset-resolver/asset-resolver.hpp"
+#include <qdir.h>
 #include <qstringview.h>
 #include <qurlquery.h>
 #include "url.hpp"

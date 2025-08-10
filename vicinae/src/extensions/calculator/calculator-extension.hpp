@@ -3,6 +3,8 @@
 #include "command-database.hpp"
 #include "../../ui/image/url.hpp"
 #include "preference.hpp"
+#include "single-view-command-context.hpp"
+#include "vicinae.hpp"
 
 static const std::vector<Preference::DropdownData::Option> backendOptions = {
     {"libqalculate", "libqalculate"},
@@ -19,7 +21,7 @@ class CalculatorHistoryCommand : public BuiltinViewCommand<CalculatorHistoryView
   QString id() const override { return "history"; }
   QString name() const override { return "Calculator history"; }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("plus-minus-divide-multiply").setBackgroundTint(SemanticColor::Red);
+    return ImageURL::builtin("plus-minus-divide-multiply").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 };
 
@@ -29,7 +31,7 @@ public:
   QString displayName() const override { return "Calculator"; }
   QString description() const override { return "Do maths, convert units or search past calculations..."; }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("plus-minus-divide-multiply").setBackgroundTint(SemanticColor::Red);
+    return ImageURL::builtin("plus-minus-divide-multiply").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 
   CalculatorExtension() { registerCommand<CalculatorHistoryCommand>(); }

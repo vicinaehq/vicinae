@@ -9,7 +9,7 @@ class RaycastStoreCommand : public BuiltinViewCommand<RaycastStoreListingView> {
   QString commandId() const override { return "store"; }
   ImageURL iconUrl() const override {
     auto icon = ImageURL::builtin("raycast");
-    icon.setBackgroundTint(SemanticColor::Red);
+    icon.setBackgroundTint(Omnicast::ACCENT_COLOR);
     return icon;
   }
   std::vector<Preference> preferences() const override { return {}; }

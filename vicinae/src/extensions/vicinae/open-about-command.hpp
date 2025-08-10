@@ -9,7 +9,7 @@ class OpenAboutCommand : public BuiltinCallbackCommand {
   QString id() const override { return "about"; }
   QString name() const override { return "About"; }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("info-01").setBackgroundTint(SemanticColor::Red);
+    return ImageURL::builtin("info-01").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 
   void execute(ApplicationContext *ctx) const override { ctx->settings->openTab("About"); }

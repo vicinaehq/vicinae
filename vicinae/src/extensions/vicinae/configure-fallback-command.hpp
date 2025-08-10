@@ -7,7 +7,7 @@ class ManageFallbackCommand : public BuiltinViewCommand<ManageFallbackCommandsVi
   QString id() const override { return "manage-fallback"; }
   QString name() const override { return "Configure Fallback Commands"; }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("undo").setBackgroundTint(SemanticColor::Red);
+    return ImageURL::builtin("undo").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
   QString description() const override {
     return R"("Configure what commands are to be presented as fallback options when nothing matches the

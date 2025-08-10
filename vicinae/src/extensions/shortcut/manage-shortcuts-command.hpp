@@ -7,6 +7,6 @@ class ManageShortcutsCommand : public BuiltinViewCommand<ManageBookmarksView> {
   QString id() const override { return "manage"; }
   QString name() const override { return "Manage Shortcuts"; }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("link").setBackgroundTint(SemanticColor::Red);
+    return ImageURL::builtin("link").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 };

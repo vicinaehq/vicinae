@@ -1,6 +1,7 @@
 #pragma once
 #include "clipboard-history-view.hpp"
 #include "single-view-command-context.hpp"
+#include "vicinae.hpp"
 #include <qjsonobject.h>
 
 class ClipboardHistoryCommand : public BuiltinViewCommand<ClipboardHistoryView> {
@@ -10,7 +11,7 @@ class ClipboardHistoryCommand : public BuiltinViewCommand<ClipboardHistoryView> 
     return "Browse your clipboard's history, pin, edit and remove entries.";
   }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("copy-clipboard").setBackgroundTint(SemanticColor::Red);
+    return ImageURL::builtin("copy-clipboard").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
   std::vector<Preference> preferences() const override;
   void preferenceValuesChanged(const QJsonObject &value) const override;

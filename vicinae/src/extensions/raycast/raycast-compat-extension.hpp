@@ -8,7 +8,7 @@ public:
   QString id() const override { return "raycast-compat"; }
   QString displayName() const override { return "Raycast Compat"; }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("raycast").setBackgroundTint(SemanticColor::Red);
+    return ImageURL::builtin("raycast").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
   QString description() const override { return "Raycast compatiblity features"; }
 

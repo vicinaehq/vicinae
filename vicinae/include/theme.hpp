@@ -1,5 +1,4 @@
 #pragma once
-#include "vicinae.hpp"
 #include <filesystem>
 #include <libqalculate/includes.h>
 #include <qapplication.h>
@@ -223,9 +222,9 @@ class ThemeService : public QObject {
   std::vector<ThemeInfo> m_themes;
   ThemeInfo m_theme;
   int m_baseFontPointSize = 10;
-  std::filesystem::path m_configDir = Omnicast::configDir();
-  std::filesystem::path m_userThemeDir = m_configDir / "themes";
-  std::filesystem::path m_dataThemeDir = Omnicast::dataDir() / "themes";
+  std::filesystem::path m_configDir;
+  std::filesystem::path m_userThemeDir;
+  std::filesystem::path m_dataThemeDir;
 
   ThemeService(const ThemeService &rhs) = delete;
   ThemeService &operator=(const ThemeService &rhs) = delete;

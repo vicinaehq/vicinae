@@ -1,6 +1,7 @@
 #include "theme.hpp"
 #include "timer.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
+#include "vicinae.hpp"
 #include <QLinearGradient>
 #include <QStyleHints>
 
@@ -611,7 +612,9 @@ const ThemeInfo &ThemeService::theme() const { return m_theme; }
 
 ColorLike ThemeService::getTintColor(SemanticColor tint) const { return m_theme.resolveTint(tint); }
 
-ThemeService::ThemeService() {
+ThemeService::ThemeService()
+    : m_configDir(Omnicast::configDir()), m_userThemeDir(Omnicast::configDir() / "themes"),
+      m_dataThemeDir(Omnicast::dataDir() / "themes") {
   registerBuiltinThemes();
   scanThemeDirectories();
 }

@@ -11,7 +11,7 @@ class VicinaeExtension : public BuiltinCommandRepository {
   QString id() const override { return "vicinae"; }
   QString displayName() const override { return "Vicinae"; }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("vicinae").setBackgroundTint(SemanticColor::Red);
+    return ImageURL::builtin("vicinae").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 
 public:

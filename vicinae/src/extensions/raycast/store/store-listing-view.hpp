@@ -99,7 +99,7 @@ public:
           ctx->navigation->pushView(new RaycastStoreDetailView(ext));
           ctx->navigation->setNavigationTitle(QString("Raycast Store - %1").arg(ext.title));
           ctx->navigation->setNavigationIcon(
-              ImageURL::builtin("raycast").setBackgroundTint(SemanticColor::Red));
+              ImageURL::builtin("raycast").setBackgroundTint(Omnicast::ACCENT_COLOR));
         });
 
     panel->setTitle(m_extension.name);

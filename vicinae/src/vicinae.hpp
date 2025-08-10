@@ -3,6 +3,7 @@
 #include <qdir.h>
 #include <qstandardpaths.h>
 #include <qsize.h>
+#include "theme.hpp"
 
 namespace Omnicast {
 
@@ -18,6 +19,8 @@ static const QString HEADLINE = "A focused launcher for your desktop — native,
 static const QString APP_ID = "vicinae";
 static const QString APP_SCHEME = APP_ID;
 static const std::array<QString, 2> APP_SCHEMES = {APP_SCHEME, "raycast"};
+
+static const SemanticColor ACCENT_COLOR = SemanticColor::Red;
 
 std::filesystem::path runtimeDir();
 std::filesystem::path commandSocketPath();
