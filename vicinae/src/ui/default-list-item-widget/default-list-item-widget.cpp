@@ -63,7 +63,7 @@ DefaultListItemWidget::DefaultListItemWidget(QWidget *parent) : SelectableOmniLi
 
   auto mainLayout = new QHBoxLayout();
 
-  mainLayout->setContentsMargins(10, 8, 10, 8);
+  mainLayout->setContentsMargins(10, 0, 10, 0);
 
   auto left = new QWidget();
   auto leftLayout = new QHBoxLayout();

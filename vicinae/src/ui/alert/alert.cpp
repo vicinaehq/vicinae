@@ -88,7 +88,7 @@ AlertWidget::AlertWidget(QWidget *parent)
   setFocusPolicy(Qt::StrongFocus);
 
   _icon->setFixedSize(25, 25);
-  _icon->setUrl(ImageURL::builtin("trash").setFill(SemanticColor::Red));
+  _icon->setUrl(ImageURL::builtin("warning").setFill(SemanticColor::Red));
   _title->setSize(TextSize::TextTitle);
   _title->setText("Are you sure?");
   _title->setFontWeight(QFont::Bold);

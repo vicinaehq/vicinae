@@ -8,6 +8,8 @@ class FileService {
 public:
   AbstractFileIndexer *indexer() const;
 
+  void rebuildIndex();
+
   QFuture<std::vector<IndexerFileResult>> queryAsync(std::string_view query,
                                                      const AbstractFileIndexer::QueryParams &params = {});
 

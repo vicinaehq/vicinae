@@ -3,6 +3,7 @@
 #include "services/files-service/file-indexer/file-indexer.hpp"
 #include "services/files-service/file-indexer/filesystem-walker.hpp"
 #include "services/files-service/file-indexer/incremental-scanner.hpp"
+#include <qlogging.h>
 
 namespace fs = std::filesystem;
 
@@ -51,11 +52,15 @@ void IndexerScanner::scan(const std::filesystem::path &root) {
   enqueueBatch(batchedIndex);
 }
 
-void IndexerScanner::enqueue(const std::filesystem::path &path, EnqueuedScan::Kind kind,
+void IndexerScanner::enqueueFull(const std::filesystem::path &path) {
+  enqueue(path, FileIndexerDatabase::ScanType::Full);
+}
+
+void IndexerScanner::enqueue(const std::filesystem::path &path, FileIndexerDatabase::ScanType type,
                              std::optional<size_t> maxDepth) {
   {
     std::lock_guard lock(m_scanMutex);
-    m_scanPaths.push(EnqueuedScan{.path = path, .kind = kind, .maxDepth = maxDepth});
+    m_scanPaths.push(EnqueuedScan{.type = type, .path = path, .maxDepth = maxDepth});
   }
   m_scanCv.notify_one();
 }
@@ -74,13 +79,27 @@ void IndexerScanner::run() {
       m_scanPaths.pop();
     }
 
-    switch (sc.kind) {
-    case EnqueuedScan::Kind::Full:
+    auto result = m_db->createScan(sc.path, sc.type);
+
+    if (!result) {
+      qWarning() << "Not scanning" << sc.path << "because scan record creation failed with error"
+                 << result.error();
+      continue;
+    }
+
+    auto scanRecord = result.value();
+
+    m_db->updateScanStatus(scanRecord.id, FileIndexerDatabase::ScanStatus::Started);
+
+    switch (sc.type) {
+    case FileIndexerDatabase::ScanType::Full:
       scan(sc.path);
       break;
-    case EnqueuedScan::Kind::Incremental:
+    case FileIndexerDatabase::ScanType::Incremental:
       IncrementalScanner(*m_db.get()).scan(sc.path, sc.maxDepth);
       break;
     }
+
+    m_db->updateScanStatus(scanRecord.id, FileIndexerDatabase::ScanStatus::Finished);
   }
 }

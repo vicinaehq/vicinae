@@ -9,4 +9,6 @@ FileService::queryAsync(std::string_view query, const AbstractFileIndexer::Query
   return m_indexer->queryAsync(query, params);
 }
 
+void FileService::rebuildIndex() { m_indexer->rebuildIndex(); }
+
 FileService::FileService() { m_indexer = std::make_unique<FileIndexer>(); }

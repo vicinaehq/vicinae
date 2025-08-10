@@ -55,6 +55,8 @@ class FileIndexer : public AbstractFileIndexer {
   QString preparePrefixSearchQuery(std::string_view query) const;
 
 public:
+  void startFullscan();
+  void rebuildIndex() override;
   void setEntrypoints(const std::vector<Entrypoint> &entrypoints) override;
   QFuture<std::vector<IndexerFileResult>> queryAsync(std::string_view view,
                                                      const QueryParams &params = {}) const override;

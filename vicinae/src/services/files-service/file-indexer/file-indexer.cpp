@@ -65,21 +65,40 @@ WriterWorker::WriterWorker(std::mutex &batchMutex, std::deque<std::vector<std::f
                            std::condition_variable &batchCv)
     : batchMutex(batchMutex), batchQueue(batchQueue), m_batchCv(batchCv) {}
 
+void FileIndexer::startFullscan() {
+  for (const auto &entrypoint : m_entrypoints) {
+    m_scanner->enqueueFull(entrypoint.root);
+  }
+}
+
+void FileIndexer::rebuildIndex() { startFullscan(); }
+
 void FileIndexer::start() {
   auto lastScan = m_db.getLastScan();
 
+  // this is our first scan
   if (!lastScan) {
-    m_db.createScan();
-
+    qInfo() << "This is our first startup, enqueuing a full scan...";
     for (const auto &entrypoint : m_entrypoints) {
-      m_scanner->enqueue(entrypoint.root, IndexerScanner::EnqueuedScan::Full);
+      m_scanner->enqueueFull(entrypoint.root);
     }
     return;
   }
 
-  for (const auto &entrypoint : m_entrypoints) {
-    // if last scan is not old enough we limit the max depth to perform a faster scan
-    m_scanner->enqueue(entrypoint.root, IndexerScanner::EnqueuedScan::Incremental, 5);
+  // Scans marked as started when we call start() (that is, at the beginning of the program)
+  // are considered failed because they were not able to finish.
+  auto startedScans = m_db.listStartedScans();
+
+  for (const auto &scan : startedScans) {
+    qCritical() << "Creating new scann after previous scan for" << scan.path << "failed";
+    m_db.setScanError(scan.id, "Interrupted");
+    m_scanner->enqueue(scan.path, scan.type);
+  }
+
+  if (startedScans.empty()) {
+    for (const auto &entrypoint : m_entrypoints) {
+      m_scanner->enqueue(entrypoint.root, FileIndexerDatabase::ScanType::Incremental, 5);
+    }
   }
 }
 
@@ -127,7 +146,7 @@ QFuture<std::vector<IndexerFileResult>> FileIndexer::queryAsync(std::string_view
 
 FileIndexer::FileIndexer() {
   m_db.runMigrations();
-  m_homeWatcher = std::make_unique<HomeDirectoryWatcher>(*m_scanner.get());
+  // m_homeWatcher = std::make_unique<HomeDirectoryWatcher>(*m_scanner.get());
   m_scannerThread = std::thread([&]() { m_scanner->run(); });
 }
 

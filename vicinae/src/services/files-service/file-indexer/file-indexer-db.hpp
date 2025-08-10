@@ -1,5 +1,6 @@
 #pragma once
 #include "services/files-service/abstract-file-indexer.hpp"
+#include <expected>
 #include <qdatetime.h>
 #include <qobject.h>
 #include <qrandom.h>
@@ -17,7 +18,9 @@ class FileIndexerDatabase : public QObject {
   QString m_connectionId;
 
 public:
-  enum ScanStatus {
+  enum class ScanType { Full, Incremental };
+  enum class ScanStatus {
+    Pending,
     Started,
     Failed,
     Finished,
@@ -27,6 +30,8 @@ public:
     int id;
     ScanStatus status;
     QDateTime createdAt;
+    std::filesystem::path path;
+    ScanType type;
   };
 
   ScanRecord mapScan(const QSqlQuery &query) const;
@@ -35,7 +40,13 @@ public:
 
   std::vector<ScanRecord> listScans();
   std::optional<ScanRecord> getLastScan() const;
-  ScanRecord createScan();
+
+  std::vector<ScanRecord> listStartedScans();
+
+  bool updateScanStatus(int scanId, ScanStatus status);
+  std::expected<ScanRecord, QString> createScan(const std::filesystem::path &path, ScanType type);
+
+  bool setScanError(int scanId, const QString &error);
 
   std::optional<QDateTime> retrieveIndexedLastModified(const std::filesystem::path &path) const;
   std::vector<std::filesystem::path> listIndexedDirectoryFiles(const std::filesystem::path &path) const;

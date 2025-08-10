@@ -9,7 +9,7 @@ namespace fs = std::filesystem;
 void HomeDirectoryWatcher::directoryChanged(const QString &pathStr) {
   fs::path path(pathStr.toStdString());
 
-  m_scanner.enqueue(path, IndexerScanner::EnqueuedScan::Incremental, 1);
+  m_scanner.enqueue(path, FileIndexerDatabase::ScanType::Incremental, 1);
 
   if (path == homeDir()) { rebuildWatch(); }
 }
@@ -38,7 +38,7 @@ void HomeDirectoryWatcher::dispatchHourlyUpdate() {
   if (!m_allowsBackgroundUpdates) return;
 
   for (const auto &dir : m_watcher->directories()) {
-    m_scanner.enqueue(dir.toStdString(), IndexerScanner::EnqueuedScan::Incremental, BACKGROUND_UPDATE_DEPTH);
+    m_scanner.enqueue(dir.toStdString(), FileIndexerDatabase::ScanType::Incremental, BACKGROUND_UPDATE_DEPTH);
   }
 }
 
@@ -56,7 +56,7 @@ void HomeDirectoryWatcher::dispatchImportantUpdate() {
   for (const auto &dir : getImportantDirectories()) {
     if (m_watcher->directories().contains(dir.c_str())) {
       // 5 max depth
-      m_scanner.enqueue(dir, IndexerScanner::EnqueuedScan::Incremental, BACKGROUND_UPDATE_DEPTH);
+      m_scanner.enqueue(dir, FileIndexerDatabase::ScanType::Incremental, BACKGROUND_UPDATE_DEPTH);
     }
   }
 }

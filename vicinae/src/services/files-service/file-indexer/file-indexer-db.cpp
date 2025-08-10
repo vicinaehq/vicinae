@@ -7,6 +7,7 @@
 #include <qsqldatabase.h>
 #include <qsqlquery.h>
 #include <qtimer.h>
+#include <qtypes.h>
 #include <quuid.h>
 #include <qdebug.h>
 #include <QSqlError>
@@ -99,20 +100,56 @@ void FileIndexerDatabase::runMigrations() {
   manager.runMigrations();
 }
 
-FileIndexerDatabase::ScanRecord FileIndexerDatabase::createScan() {
+bool FileIndexerDatabase::setScanError(int scanId, const QString &error) {
   QSqlQuery query(m_db);
 
-  query.prepare("INSERT INTO scan_history (status) VALUES (:status) RETURNING id, status, created_at");
-  query.addBindValue(ScanStatus::Started);
+  query.prepare("UPDATE scan_history SET status = :status, error = :error WHERE id = :id");
+  query.bindValue(":id", scanId);
+  query.bindValue(":status", static_cast<quint8>(ScanStatus::Failed));
+  query.bindValue(":error", error);
 
   if (!query.exec()) {
-    qCritical() << "Failed to create scan history" << query.lastError();
-    return {};
+    qWarning() << "Failed to update scan status" << query.lastError();
+    return false;
+  }
+
+  return true;
+}
+
+bool FileIndexerDatabase::updateScanStatus(int scanId, ScanStatus status) {
+  QSqlQuery query(m_db);
+
+  query.prepare("UPDATE scan_history SET status = :status WHERE id = :id");
+  query.bindValue(":id", scanId);
+  query.bindValue(":status", static_cast<quint8>(status));
+
+  if (!query.exec()) {
+    qWarning() << "Failed to update scan status" << query.lastError();
+    return false;
+  }
+
+  return true;
+}
+
+std::expected<FileIndexerDatabase::ScanRecord, QString>
+FileIndexerDatabase::createScan(const std::filesystem::path &path, ScanType type) {
+  QSqlQuery query(m_db);
+
+  query.prepare("INSERT INTO scan_history (entrypoint, type, status) VALUES (:entrypoint, :type, :status) "
+                "RETURNING id, status, "
+                "created_at, entrypoint");
+  query.bindValue(":entrypoint", path.c_str());
+  query.bindValue(":status", static_cast<quint8>(ScanStatus::Pending));
+  query.bindValue(":type", static_cast<quint8>(type));
+
+  if (!query.exec()) {
+    qWarning() << "Failed to create scan history" << query.lastError();
+    return std::unexpected("Failed to create scan history");
   }
 
   if (!query.next()) {
-    qCritical() << "No next entry after createScan" << query.lastError();
-    return {};
+    qWarning() << "No next entry after createScan" << query.lastError();
+    return std::unexpected("No next entry after createScan");
   }
 
   ScanRecord record;
@@ -120,6 +157,7 @@ FileIndexerDatabase::ScanRecord FileIndexerDatabase::createScan() {
   record.id = query.value(0).toInt();
   record.status = static_cast<ScanStatus>(query.value(1).toInt());
   record.createdAt = QDateTime::fromSecsSinceEpoch(query.value(2).toULongLong());
+  record.path = path;
 
   return record;
 }
@@ -130,6 +168,8 @@ FileIndexerDatabase::ScanRecord FileIndexerDatabase::mapScan(const QSqlQuery &qu
   record.id = query.value(0).toInt();
   record.status = static_cast<ScanStatus>(query.value(1).toInt());
   record.createdAt = QDateTime::fromSecsSinceEpoch(query.value(2).toULongLong());
+  record.path = query.value(3).toString().toStdString();
+  record.type = static_cast<ScanType>(query.value(4).toUInt());
 
   return record;
 }
@@ -137,7 +177,8 @@ FileIndexerDatabase::ScanRecord FileIndexerDatabase::mapScan(const QSqlQuery &qu
 std::optional<FileIndexerDatabase::ScanRecord> FileIndexerDatabase::getLastScan() const {
   QSqlQuery query(m_db);
 
-  if (!query.exec("SELECT id, status, created_at FROM scan_history ORDER BY created_at DESC LIMIT 1")) {
+  if (!query.exec("SELECT id, status, created_at, entrypoint, type FROM scan_history ORDER BY created_at "
+                  "DESC LIMIT 1")) {
     qCritical() << "Failed to list scan records" << query.lastError();
     return {};
   }
@@ -150,8 +191,30 @@ std::optional<FileIndexerDatabase::ScanRecord> FileIndexerDatabase::getLastScan(
 std::vector<FileIndexerDatabase::ScanRecord> FileIndexerDatabase::listScans() {
   QSqlQuery query(m_db);
 
-  if (!query.exec("SELECT id, status, created_at FROM scan_history")) {
+  if (!query.exec("SELECT id, status, created_at, entrypoint, type FROM scan_history")) {
     qCritical() << "Failed to list scan records" << query.lastError();
+    return {};
+  }
+
+  std::vector<ScanRecord> records;
+
+  records.reserve(0xF);
+
+  while (query.next()) {
+    records.emplace_back(mapScan(query));
+  }
+
+  return records;
+}
+
+std::vector<FileIndexerDatabase::ScanRecord> FileIndexerDatabase::listStartedScans() {
+  QSqlQuery query(m_db);
+
+  query.prepare("SELECT id, status, created_at, entrypoint FROM scan_history WHERE status = :status");
+  query.bindValue(":status", static_cast<quint8>(ScanStatus::Started));
+
+  if (!query.exec()) {
+    qCritical() << "Failed to list started scan records" << query.lastError();
     return {};
   }
 

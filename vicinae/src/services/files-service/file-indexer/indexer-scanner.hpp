@@ -8,9 +8,8 @@ class WriterWorker;
 class IndexerScanner : public NonCopyable {
 public:
   struct EnqueuedScan {
-    enum Kind { Full, Incremental };
+    FileIndexerDatabase::ScanType type;
     std::filesystem::path path;
-    Kind kind;
     std::optional<size_t> maxDepth;
   };
 
@@ -36,7 +35,9 @@ private:
   void enqueueBatch(const std::vector<std::filesystem::path> &paths);
 
 public:
-  void enqueue(const std::filesystem::path &path, EnqueuedScan::Kind kind = EnqueuedScan::Kind::Incremental,
+  void enqueueFull(const std::filesystem::path &path);
+  void enqueue(const std::filesystem::path &path,
+               FileIndexerDatabase::ScanType type = FileIndexerDatabase::ScanType::Incremental,
                std::optional<size_t> maxDepth = std::nullopt);
   void run();
   void stop();

@@ -1,7 +1,6 @@
 #pragma once
 #include "command-database.hpp"
 #include "../../ui/image/url.hpp"
-#include "theme.hpp"
 #include "create-shortcut-command.hpp"
 #include "manage-shortcuts-command.hpp"
 
