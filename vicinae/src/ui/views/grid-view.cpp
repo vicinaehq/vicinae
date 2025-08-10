@@ -2,19 +2,25 @@
 #include "ui/empty-view/empty-view.hpp"
 #include "ui/omni-grid/omni-grid.hpp"
 #include <qevent.h>
+#include <qnamespace.h>
 #include <qstackedwidget.h>
 #include "navigation-controller.hpp"
 
 bool GridView::inputFilter(QKeyEvent *event) {
-  switch (event->key()) {
-  case Qt::Key_Up:
-    return m_grid->selectUp();
-  case Qt::Key_Down:
-    return m_grid->selectDown();
-  case Qt::Key_Left:
-    return m_grid->selectLeft();
-  case Qt::Key_Right:
-    return m_grid->selectRight();
+  if (event->modifiers().toInt() == 0) {
+    switch (event->key()) {
+    case Qt::Key_Up:
+      return m_grid->selectUp();
+    case Qt::Key_Down:
+      return m_grid->selectDown();
+    case Qt::Key_Left:
+      return m_grid->selectLeft();
+    case Qt::Key_Right:
+      return m_grid->selectRight();
+    case Qt::Key_Return:
+      m_grid->activateCurrentSelection();
+      return true;
+    }
   }
 
   return false;

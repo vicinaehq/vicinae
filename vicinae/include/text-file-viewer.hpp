@@ -28,7 +28,7 @@ public:
     auto layout = new QVBoxLayout;
 
     edit->setFocusPolicy(Qt::FocusPolicy::NoFocus);
-    edit->document()->setDocumentMargin(10);
+    edit->document()->setDocumentMargin(2);
     edit->setTabStopDistance(40);
     edit->setReadOnly(true);
     edit->setVerticalScrollBar(new OmniScrollBar);

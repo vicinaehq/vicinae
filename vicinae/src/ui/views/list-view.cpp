@@ -3,19 +3,22 @@
 #include "ui/views/base-view.hpp"
 #include "ui/empty-view/empty-view.hpp"
 #include "ui/split-detail/split-detail.hpp"
+#include <qlogging.h>
 #include <qstackedwidget.h>
 
 bool ListView::inputFilter(QKeyEvent *event) {
-  switch (event->key()) {
-  case Qt::Key_Up:
-    return m_list->selectUp();
-    break;
-  case Qt::Key_Down:
-    return m_list->selectDown();
-    break;
-  case Qt::Key_Return:
-    m_list->activateCurrentSelection();
-    return true;
+  if (event->modifiers().toInt() == 0) {
+    switch (event->key()) {
+    case Qt::Key_Up:
+      return m_list->selectUp();
+      break;
+    case Qt::Key_Down:
+      return m_list->selectDown();
+      break;
+    case Qt::Key_Return:
+      m_list->activateCurrentSelection();
+      return true;
+    }
   }
 
   return SimpleView::inputFilter(event);
@@ -27,9 +30,6 @@ void ListView::selectionChanged(const OmniList::AbstractVirtualItem *next,
                                 const OmniList::AbstractVirtualItem *previous) {
   if (!next) {
     m_split->setDetailVisibility(false);
-    // m_topBar->destroyCompleter();
-    //   setNavigationTitle(QString("%1").arg(m_baseNavigationTitle));
-
     return;
   }
 
@@ -43,7 +43,6 @@ void ListView::selectionChanged(const OmniList::AbstractVirtualItem *next,
     }
 
     if (auto completer = nextItem->createCompleter(); completer && completer->arguments.size() > 0) {
-      qCritical() << "completer arguments" << completer->arguments.size();
       context()->navigation->createCompletion(completer->arguments, completer->iconUrl);
     } else {
       context()->navigation->destroyCurrentCompletion();
@@ -55,7 +54,6 @@ void ListView::selectionChanged(const OmniList::AbstractVirtualItem *next,
       //
     }
 
-    qDebug() << "setActions";
     context()->navigation->setActions(nextItem->newActionPanel(context()));
 
   } else {

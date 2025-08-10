@@ -106,9 +106,8 @@ QFuture<FaviconService::FaviconResponse> FaviconService::makeRequest(const QStri
 
   connect(requester, &AbstractFaviconRequest::finished, this,
           [this, requester, domain, promise = std::move(promise)](const QPixmap &favicon) mutable {
-            qDebug() << "got result for" << domain;
             handleFetchedFavicon(domain, favicon);
-            promise.addResult(domain);
+            promise.addResult(favicon);
             promise.finish();
             requester->deleteLater();
           });

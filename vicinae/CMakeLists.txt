@@ -131,6 +131,8 @@ set(SRCS
 	src/ui/split-detail/split-detail.cpp
 
 	src/services/clipboard/clipboard-server.hpp
+	src/services/clipboard/clipboard-db.hpp
+	src/services/clipboard/clipboard-db.cpp
 	src/services/clipboard/wlr-clipboard-server.hpp
 	src/services/clipboard/wlr-clipboard-server.cpp
 	src/services/clipboard/dummy-clipboard-server.hpp
@@ -180,6 +182,7 @@ set(SRCS
 	include/lib/emoji-detect.hpp
 	src/lib/emoji-detect.cpp
 	src/lib/crypto.cpp
+
 
 	include/clipboard-history-view.hpp
 

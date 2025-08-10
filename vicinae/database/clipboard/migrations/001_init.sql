@@ -6,20 +6,24 @@ CREATE TABLE IF NOT EXISTS selection (
 	hash_md5 TEXT NOT NULL,
 	preferred_mime_type TEXT NOT NULL,
 	source TEXT,
-	offer_count TEXT,
+	offer_count INTEGER,
 	created_at INTEGER DEFAULT (unixepoch()),
+	updated_at INTEGER DEFAULT (unixepoch()), -- updated when the same selection is reselected
 	pinned_at INTEGER,
+	kind INTEGER,
 	tags JSON DEFAULT '[]'
 );
 
 CREATE TABLE IF NOT EXISTS data_offer (
 	id TEXT PRIMARY KEY,
+	selection_id TEXT,
 	mime_type TEXT NOT NULL,
 	text_preview TEXT,
 	content_hash_md5 TEXT NOT NULL,
 	size INTEGER NOT NULL,
-	encryption_type TEXT NOT NULL DEFAULT 'none', -- 'none' | 'local' | 'sync' (none can only happen if no keychain backend is available)
-	selection_id INTEGER,
+	encryption_type INT NOT NULL, 
+	kind INT NOT NULL,
+	url_host TEXT, -- only applicable to web url types: used to quickly fetch favicon
 	FOREIGN KEY(selection_id)
 	REFERENCES selection(id)
 	ON DELETE CASCADE

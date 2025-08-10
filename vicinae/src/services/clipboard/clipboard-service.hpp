@@ -1,5 +1,6 @@
 #pragma once
 #include "common.hpp"
+#include "services/clipboard/clipboard-db.hpp"
 #include "services/clipboard/clipboard-server.hpp"
 #include <QString>
 #include <expected>
@@ -53,49 +54,9 @@ static Content fromJson(const QJsonObject &obj) {
 
 }; // namespace Clipboard
 
-struct InsertClipboardHistoryLine {
-  QString mimeType;
-  QString textPreview;
-  QString md5sum;
-};
-
-struct ClipboardHistoryEntry {
-  QString id;
-  QString mimeType;
-  QString textPreview;
-  uint64_t pinnedAt;
-  QString md5sum;
-  uint64_t createdAt;
-  uint64_t size;
-};
-
-struct ClipboardListSettings {
-  QString query;
-};
-
 class ClipboardService : public QObject, public NonCopyable {
 public:
   using GetLocalEncryptionKeyResponse = std::expected<QByteArray, QKeychain::Error>;
-  enum class ClipboardEncryptionType {
-    None,
-    Local,
-  };
-
-  QString stringifyEncryptionType(ClipboardEncryptionType type) const {
-    switch (type) {
-    case ClipboardEncryptionType::Local:
-      return "local";
-    case ClipboardEncryptionType::None:
-      return "none";
-    default:
-      return "none";
-    }
-  }
-
-  ClipboardEncryptionType parseEncryptionType(const QString &type) const {
-    if (type == "local") return ClipboardEncryptionType::Local;
-    return ClipboardEncryptionType::None;
-  }
 
 private:
   Q_OBJECT
@@ -105,13 +66,12 @@ private:
   std::optional<QByteArray> m_localEncryptionKey;
   bool m_isEncryptionReady = false;
 
-  QSqlDatabase db;
   QMimeDatabase _mimeDb;
   std::filesystem::path m_dataDir;
   std::unique_ptr<AbstractClipboardServer> m_clipboardServer;
 
-  std::string getSelectionPreferredMimeType(const ClipboardSelection &selection) const;
-  QString createTextPreview(const QByteArray &data, int maxLength = 50) const;
+  static std::string getSelectionPreferredMimeType(const ClipboardSelection &selection);
+  static QString getOfferTextPreview(const ClipboardDataOffer &offer);
 
   QFuture<GetLocalEncryptionKeyResponse> getLocalEncryptionKey();
 
@@ -124,13 +84,15 @@ private:
 
   QByteArray decryptOffer(const QByteArray &data, ClipboardEncryptionType enc) const;
 
+  static ClipboardOfferKind getKind(const ClipboardDataOffer &offer);
+
 public:
   ClipboardService(const std::filesystem::path &path);
 
   QByteArray decryptMainSelectionOffer(const QString &selectionId) const;
   AbstractClipboardServer *clipboardServer() const;
   bool removeSelection(const QString &id);
-  bool setPinned(int id, bool pinned);
+  bool setPinned(const QString id, bool pinned);
   QFuture<PaginatedResponse<ClipboardHistoryEntry>> listAll(int limit = 100, int offset = 0,
                                                             const ClipboardListSettings &opts = {}) const;
   bool copyText(const QString &text, const Clipboard::CopyOptions &options = {.concealed = true});
@@ -141,7 +103,7 @@ public:
                    const Clipboard::CopyOptions options = {.concealed = false});
   void setRecordAllOffers(bool value);
   bool clear();
-  void saveSelection(const ClipboardSelection &selection);
+  void saveSelection(ClipboardSelection selection);
   ClipboardSelection retrieveSelection(int offset = 0);
   std::optional<ClipboardSelection> retrieveSelectionById(const QString &id);
   bool copySelection(const ClipboardSelection &selection, const Clipboard::CopyOptions &options);

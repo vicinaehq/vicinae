@@ -1,5 +1,6 @@
 #pragma once
 #include "navigation-controller.hpp"
+#include "services/clipboard/clipboard-db.hpp"
 #include "ui/views/base-view.hpp"
 #include "clipboard-actions.hpp"
 #include "settings/command-metadata-settings-detail.hpp"
@@ -20,6 +21,8 @@
 #include "ui/omni-list/omni-list.hpp"
 #include "ui/split-detail/split-detail.hpp"
 #include "ui/toast/toast.hpp"
+#include <QtCore>
+#include <cstdio>
 #include <libqalculate/Number.h>
 #include <libqalculate/includes.h>
 #include "services/toast/toast-service.hpp"
@@ -104,10 +107,26 @@ class ClipboardHistoryItemWidget : public SelectableOmniListWidget {
   ImageWidget *m_icon = new ImageWidget;
   ImageWidget *m_pinIcon = new ImageWidget;
 
+  ImageURL getLinkIcon(const std::optional<QString> &urlHost) const {
+    auto dflt = ImageURL::builtin("link");
+
+    if (urlHost) return ImageURL::favicon(*urlHost).withFallback(dflt);
+
+    return dflt;
+  }
+
   ImageURL iconForMime(const ClipboardHistoryEntry &entry) const {
-    if (entry.mimeType.startsWith("text/")) { return ImageURL::builtin("text"); }
-    if (entry.mimeType.startsWith("image/")) { return ImageURL::builtin("image"); }
-    return ImageURL::builtin("text");
+    switch (entry.kind) {
+    case ClipboardOfferKind::Image:
+      return ImageURL::builtin("image");
+    case ClipboardOfferKind::Link:
+      return getLinkIcon(entry.urlHost);
+    case ClipboardOfferKind::Text:
+      return ImageURL::builtin("text");
+    default:
+      break;
+    }
+    return ImageURL::builtin("question-mark-circle");
   }
 
   void setupUI() {
@@ -124,7 +143,7 @@ class ClipboardHistoryItemWidget : public SelectableOmniListWidget {
 
 public:
   void setEntry(const ClipboardHistoryEntry &entry) {
-    auto createdAt = QDateTime::fromSecsSinceEpoch(entry.createdAt);
+    auto createdAt = QDateTime::fromSecsSinceEpoch(entry.updatedAt);
     m_title->setText(entry.textPreview);
     m_pinIcon->setVisible(entry.pinnedAt);
     // TODO: add char count / size
@@ -137,6 +156,8 @@ public:
 };
 
 class ClipboardHistoryDetail : public DetailWithMetadataWidget {
+  QTemporaryFile m_tmpFile;
+
   std::vector<MetadataItem> createEntryMetadata(const ClipboardHistoryEntry &entry) const {
     auto mime = MetadataLabel{
         .text = entry.mimeType,
@@ -147,7 +168,7 @@ class ClipboardHistoryDetail : public DetailWithMetadataWidget {
         .title = "Size",
     };
     auto copiedAt = MetadataLabel{
-        .text = QDateTime::fromSecsSinceEpoch(entry.createdAt).toString(),
+        .text = QDateTime::fromSecsSinceEpoch(entry.updatedAt).toString(),
         .title = "Copied at",
     };
     auto checksum = MetadataLabel{
@@ -172,10 +193,15 @@ class ClipboardHistoryDetail : public DetailWithMetadataWidget {
     }
 
     if (entry.mimeType.startsWith("image/")) {
+      if (!m_tmpFile.open()) { qWarning() << "Failed to open file"; }
+
+      m_tmpFile.write(data);
+      m_tmpFile.close();
+
       auto icon = new ImageWidget;
 
       icon->setContentsMargins(10, 10, 10, 10);
-      icon->setUrl(ImageURL::rawData(data, entry.mimeType));
+      icon->setUrl(ImageURL::local(m_tmpFile.filesystemFileName()));
 
       return icon;
     }
@@ -291,12 +317,6 @@ public:
 
   bool hasUniformHeight() const override { return true; }
 
-  ImageURL iconForMime(const QString &mime) const {
-    if (info.mimeType.startsWith("text/")) { return ImageURL::builtin("text"); }
-    if (info.mimeType.startsWith("image/")) { return ImageURL::builtin("image"); }
-    return ImageURL::builtin("text");
-  }
-
   const QString &name() const { return info.textPreview; }
 
   QWidget *generateDetail() const override {
@@ -367,13 +387,14 @@ public:
     rightLayout->setContentsMargins(0, 0, 0, 0);
     m_rightIcon->setFixedSize(25, 25);
     m_rightIcon->setUrl(ImageURL::builtin("pause-filled"));
+    m_rightIcon->setBackgroundColor(Qt::transparent);
     m_right->setLayout(rightLayout);
     m_rightText->setText("Pause clipboard");
 
     auto layout = new QHBoxLayout;
 
     layout->setContentsMargins(15, 8, 15, 8);
-    m_text->setText("323 Items");
+    m_text->setText("0 Items");
 
     layout->addWidget(m_text);
     layout->addWidget(m_right, 0, Qt::AlignRight | Qt::AlignVCenter);
@@ -471,6 +492,8 @@ class ClipboardHistoryView : public SimpleView {
     context()->navigation->setActions(entry->newActionPanel(context()));
 
     if (auto detail = entry->generateDetail()) {
+      if (auto current = m_split->detailWidget()) { current->deleteLater(); }
+
       m_split->setDetailWidget(detail);
       m_split->setDetailVisibility(true);
     }
@@ -478,7 +501,7 @@ class ClipboardHistoryView : public SimpleView {
 
   void textChanged(const QString &value) override { handleDebounce(); }
 
-  void clipboardSelectionInserted(const ClipboardHistoryEntry &entry) {}
+  void clipboardSelectionInserted(const ClipboardHistoryEntry &entry) { handleDebounce(); }
 
   void handlePinChanged(int entryId, bool value) { textChanged(searchText()); }
   void handleRemoved(int entryId) { textChanged(searchText()); }
@@ -495,7 +518,7 @@ class ClipboardHistoryView : public SimpleView {
   void handleStatusClipboard() {
     qCritical() << "status changed, click";
     auto manager = ServiceRegistry::instance()->rootItemManager();
-    QString rootItemId = "extension.clipboard.clipboard-history";
+    QString rootItemId = "extension.clipboard.history";
     auto preferences = manager->getItemPreferenceValues(rootItemId);
 
     if (m_statusToolbar->clipboardStatus() == ClipboardStatusToobar::Paused) {
@@ -508,14 +531,16 @@ class ClipboardHistoryView : public SimpleView {
   }
 
   bool inputFilter(QKeyEvent *event) override {
-    switch (event->key()) {
-    case Qt::Key_Up:
-      return m_list->selectUp();
-    case Qt::Key_Down:
-      return m_list->selectDown();
-    case Qt::Key_Return:
-      m_list->activateCurrentSelection();
-      return true;
+    if (event->modifiers().toInt() == 0) {
+      switch (event->key()) {
+      case Qt::Key_Up:
+        return m_list->selectUp();
+      case Qt::Key_Down:
+        return m_list->selectDown();
+      case Qt::Key_Return:
+        m_list->activateCurrentSelection();
+        return true;
+      }
     }
 
     if (event->keyCombination() == QKeyCombination(Qt::ControlModifier, Qt::Key_P)) {
