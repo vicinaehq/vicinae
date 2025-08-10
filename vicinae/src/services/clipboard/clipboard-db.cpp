@@ -70,6 +70,14 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::listAll(int limit, i
 
   if (!opts.query.isEmpty()) { queryString += " WHERE selection_fts MATCH '\"" + opts.query + "\"*' "; }
 
+  if (opts.kind) {
+    if (opts.query.isEmpty()) {
+      queryString += " WHERE selection.kind = :kind";
+    } else {
+      queryString += " AND selection.kind = :kind";
+    }
+  }
+
   if (!opts.query.isEmpty()) {}
   queryString += " GROUP BY selection.id ";
 
@@ -78,6 +86,10 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::listAll(int limit, i
   query.prepare(queryString);
   query.bindValue(":limit", limit);
   query.bindValue(":offset", offset);
+
+  if (opts.kind) { query.bindValue(":kind", static_cast<quint8>(*opts.kind)); }
+
+  qDebug() << "queryString" << queryString;
 
   if (!query.exec()) {
     qWarning() << "Failed to list all clipboard items" << query.lastError();

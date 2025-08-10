@@ -60,6 +60,7 @@ struct ClipboardHistoryEntry {
 
 struct ClipboardListSettings {
   QString query;
+  std::optional<ClipboardOfferKind> kind;
 };
 
 struct ClipboardSelectionOfferRecord {

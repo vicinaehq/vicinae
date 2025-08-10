@@ -409,9 +409,15 @@ signals:
 
 static const std::vector<Preference::DropdownData::Option> filterSelectorOptions = {
     {"All", "all"},
-    {"Files", "file"},
+    {"Text", "text"},
     {"Images", "image"},
     {"Links", "link"},
+};
+
+static const std::unordered_map<QString, ClipboardOfferKind> typeToOfferKind{
+    {"image", ClipboardOfferKind::Image},
+    {"link", ClipboardOfferKind::Link},
+    {"text", ClipboardOfferKind::Text},
 };
 
 class ClipboardHistoryView : public SimpleView {
@@ -420,18 +426,12 @@ class ClipboardHistoryView : public SimpleView {
   SplitDetailWidget *m_split = new SplitDetailWidget(this);
   EmptyViewWidget *m_emptyView = new EmptyViewWidget;
   QStackedWidget *m_content = new QStackedWidget(this);
-  QTimer m_searchDebounce;
   PreferenceDropdown *m_filterInput = new PreferenceDropdown(this);
   using Watcher = QFutureWatcher<PaginatedResponse<ClipboardHistoryEntry>>;
   Watcher m_watcher;
+  std::optional<ClipboardOfferKind> m_kindFilter;
 
-  void handleDebounce() {
-    auto clipman = context()->services->clipman();
-
-    if (m_watcher.isRunning()) { m_watcher.cancel(); }
-
-    m_watcher.setFuture(clipman->listAll(1000, 0, {.query = searchText()}));
-  }
+  void reloadCurrentSearch() { startSearch({.query = searchText(), .kind = m_kindFilter}); }
 
   void handleListFinished() {
     if (!m_watcher.isFinished()) return;
@@ -499,12 +499,12 @@ class ClipboardHistoryView : public SimpleView {
     }
   }
 
-  void textChanged(const QString &value) override { handleDebounce(); }
+  void textChanged(const QString &value) override { startSearch({.query = value, .kind = m_kindFilter}); }
 
-  void clipboardSelectionInserted(const ClipboardHistoryEntry &entry) { handleDebounce(); }
+  void clipboardSelectionInserted(const ClipboardHistoryEntry &entry) { reloadCurrentSearch(); }
 
-  void handlePinChanged(int entryId, bool value) { textChanged(searchText()); }
-  void handleRemoved(int entryId) { textChanged(searchText()); }
+  void handlePinChanged(int entryId, bool value) { reloadCurrentSearch(); }
+  void handleRemoved(int entryId) { reloadCurrentSearch(); }
 
   void handleMonitoringChanged(bool monitor) {
     if (monitor) {
@@ -516,8 +516,7 @@ class ClipboardHistoryView : public SimpleView {
   }
 
   void handleStatusClipboard() {
-    qCritical() << "status changed, click";
-    auto manager = ServiceRegistry::instance()->rootItemManager();
+    auto manager = context()->services->rootItemManager();
     QString rootItemId = "extension.clipboard.history";
     auto preferences = manager->getItemPreferenceValues(rootItemId);
 
@@ -551,8 +550,26 @@ class ClipboardHistoryView : public SimpleView {
     return SimpleView::inputFilter(event);
   }
 
+  void startSearch(const ClipboardListSettings &opts) {
+    auto clipman = context()->services->clipman();
+
+    if (m_watcher.isRunning()) { m_watcher.cancel(); }
+
+    m_watcher.setFuture(clipman->listAll(1000, 0, opts));
+  }
+
   void handleFilterChange(const SelectorInput::AbstractItem &item) {
-    qDebug() << "filter changed" << item.id();
+    if (auto it = typeToOfferKind.find(item.id()); it != typeToOfferKind.end()) {
+      m_kindFilter = it->second;
+    } else {
+      m_kindFilter.reset();
+    }
+
+    if (!searchText().isEmpty()) {
+      clearSearchText();
+    } else {
+      reloadCurrentSearch();
+    }
   }
 
 public:
@@ -579,8 +596,6 @@ public:
     m_emptyView->setDescription("No results matching your search. You can try to refine your search.");
     m_emptyView->setIcon(ImageURL::builtin("magnifying-glass"));
 
-    m_searchDebounce.setSingleShot(true);
-
     m_split->setMainWidget(m_list);
     m_split->setDetailVisibility(false);
     layout->setSpacing(0);
@@ -598,7 +613,6 @@ public:
             &ClipboardHistoryView::handleMonitoringChanged);
     connect(m_statusToolbar, &ClipboardStatusToobar::statusIconClicked, this,
             &ClipboardHistoryView::handleStatusClipboard);
-    connect(&m_searchDebounce, &QTimer::timeout, this, &ClipboardHistoryView::handleDebounce);
     connect(m_filterInput, &SelectorInput::selectionChanged, this, &ClipboardHistoryView::handleFilterChange);
     connect(&m_watcher, &Watcher::finished, this, &ClipboardHistoryView::handleListFinished);
   }
