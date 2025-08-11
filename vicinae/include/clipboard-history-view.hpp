@@ -1,6 +1,7 @@
 #pragma once
 #include "navigation-controller.hpp"
 #include "services/clipboard/clipboard-db.hpp"
+#include "ui/alert/alert.hpp"
 #include "ui/views/base-view.hpp"
 #include "clipboard-actions.hpp"
 #include "settings/command-metadata-settings-detail.hpp"
@@ -242,8 +243,14 @@ class PinClipboardAction : public AbstractAction {
   QString _id;
   bool _value;
 
-  void execute() override {
-    // To implement
+  void execute(ApplicationContext *ctx) override {
+    QString action = _value ? "pinned" : "unpinned";
+
+    if (ctx->services->clipman()->setPinned(_id, _value)) {
+      ctx->services->toastService()->success(QString("Selection %1").arg(action));
+    } else {
+      ctx->services->toastService()->failure("Failed to change pin status");
+    }
   }
 
 public:
@@ -251,6 +258,33 @@ public:
 
   PinClipboardAction(const QString &id, bool value)
       : AbstractAction(value ? "Pin" : "Unpin", ImageURL::builtin("pin")), _id(id), _value(value) {}
+};
+
+class RemoveAllSelectionsAction : public AbstractAction {
+  void execute(ApplicationContext *ctx) override {
+    auto alert = new CallbackAlertWidget();
+
+    alert->setTitle("Are you sure?");
+    alert->setMessage("All your clipboard history will be lost forever");
+    alert->setConfirmText("Delete all", SemanticColor::Red);
+    alert->setCallback([ctx](bool value) {
+      auto toast = ctx->services->toastService();
+      auto clipman = ctx->services->clipman();
+
+      if (clipman->removeAllSelections()) {
+        toast->success("All selections were removed");
+      } else {
+        toast->failure("Failed to remove all selections");
+      }
+    });
+    ctx->navigation->setDialog(alert);
+  }
+
+public:
+  QString title() const override { return "Remove all"; }
+  ImageURL icon() const override { return ImageURL::builtin("trash"); }
+
+  RemoveAllSelectionsAction() { setStyle(AbstractAction::Danger); }
 };
 
 class ClipboardHistoryItem : public OmniList::AbstractVirtualItem, public ListView::Actionnable {
@@ -263,10 +297,12 @@ public:
     auto pin = new PinClipboardAction(info.id, !info.pinnedAt);
     auto copyToClipboard = new CopyClipboardSelection(info.id);
     auto remove = new RemoveSelectionAction(info.id);
+    auto removeAll = new RemoveAllSelectionsAction();
     auto mainSection = panel->createSection();
 
     remove->setStyle(AbstractAction::Danger);
     remove->setShortcut({.key = "X", .modifiers = {"ctrl"}});
+    removeAll->setShortcut({.key = "X", .modifiers = {"ctrl", "shift"}});
 
     pin->setShortcut({.key = "P", .modifiers = {"shift", "ctrl"}});
 
@@ -289,6 +325,7 @@ public:
 
     toolsSection->addAction(pin);
     dangerSection->addAction(remove);
+    dangerSection->addAction(removeAll);
 
     return panel;
   }
@@ -384,6 +421,7 @@ public:
     m_rightIcon->setFixedSize(25, 25);
     m_rightIcon->setUrl(ImageURL::builtin("pause-filled"));
     m_rightIcon->setBackgroundColor(Qt::transparent);
+    m_rightIcon->setFocusPolicy(Qt::NoFocus);
     m_right->setLayout(rightLayout);
     m_rightText->setText("Pause clipboard");
 
@@ -598,6 +636,10 @@ public:
     layout->addWidget(new HDivider);
     layout->addWidget(m_content, 1);
     setLayout(layout);
+
+    connect(clipman, &ClipboardService::selectionPinStatusChanged, this, [this]() { reloadCurrentSearch(); });
+    connect(clipman, &ClipboardService::selectionRemoved, this, [this]() { reloadCurrentSearch(); });
+    connect(clipman, &ClipboardService::allSelectionsRemoved, this, [this]() { reloadCurrentSearch(); });
 
     connect(m_list, &OmniList::selectionChanged, this, &ClipboardHistoryView::selectionChanged);
     connect(m_list, &OmniList::itemActivated, this, [this]() { executePrimaryAction(); });

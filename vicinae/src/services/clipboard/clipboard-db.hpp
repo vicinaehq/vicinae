@@ -86,6 +86,8 @@ public:
   PaginatedResponse<ClipboardHistoryEntry> listAll(int limit = 100, int offset = 0,
                                                    const ClipboardListSettings &opts = {}) const;
 
+  bool removeAll();
+
   bool setPinned(const QString &id, bool pinned);
   /**
    * Tries to take an existing selection and update its created_at date

@@ -115,6 +115,12 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::listAll(int limit, i
   return response;
 }
 
+bool ClipboardDatabase::removeAll() {
+  QSqlQuery query(m_db);
+
+  return query.exec("DELETE FROM selection");
+}
+
 std::vector<QString> ClipboardDatabase::removeSelection(const QString &selectionId) {
   if (!m_db.transaction()) { return {}; }
 

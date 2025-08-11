@@ -1,9 +1,11 @@
 #include <QClipboard>
 #include "clipboard-service.hpp"
+#include <filesystem>
 #include <format>
 #include <qimagereader.h>
 #include <qlogging.h>
 #include <qmimedata.h>
+#include <qsqlquery.h>
 #include <qt6keychain/keychain.h>
 #include <QtConcurrent/QtConcurrent>
 #include <QFutureWatcher>
@@ -16,7 +18,11 @@ namespace fs = std::filesystem;
 static const QString KEYCHAIN_ENCRYPTION_KEY_NAME = "clipboard-data-key";
 
 bool ClipboardService::setPinned(const QString id, bool pinned) {
-  return ClipboardDatabase().setPinned(id, pinned);
+  if (!ClipboardDatabase().setPinned(id, pinned)) { return false; }
+
+  emit selectionPinStatusChanged(id, pinned);
+
+  return true;
 }
 
 bool ClipboardService::clear() {
@@ -220,6 +226,8 @@ bool ClipboardService::removeSelection(const QString &selectionId) {
   for (const auto &offer : cdb.removeSelection(selectionId)) {
     fs::remove(m_dataDir / offer.toStdString());
   }
+
+  emit selectionRemoved(selectionId);
 
   return true;
 }
@@ -451,6 +459,19 @@ bool ClipboardService::copySelection(const ClipboardSelection &selection,
   }
 
   return copyQMimeData(mimeData, options);
+}
+
+bool ClipboardService::removeAllSelections() {
+  ClipboardDatabase db;
+
+  if (!db.removeAll()) return false;
+
+  fs::remove_all(m_dataDir);
+  fs::create_directories(m_dataDir);
+
+  emit allSelectionsRemoved();
+
+  return true;
 }
 
 AbstractClipboardServer *ClipboardService::clipboardServer() const { return m_clipboardServer.get(); }

@@ -63,6 +63,9 @@ public:
     });
   }
 
+  void success(const QString &title) { setToast(title, ToastPriority::Success); }
+  void failure(const QString &title) { setToast(title, ToastPriority::Danger); }
+
   void setToast(const QString &title, ToastPriority priority = ToastPriority::Success, int duration = 2000) {
     auto toast = new Toast(title, priority);
 

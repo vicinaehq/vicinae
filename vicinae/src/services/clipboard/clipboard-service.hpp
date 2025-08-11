@@ -89,6 +89,8 @@ private:
 public:
   ClipboardService(const std::filesystem::path &path);
 
+  bool removeAllSelections();
+
   QByteArray decryptMainSelectionOffer(const QString &selectionId) const;
   AbstractClipboardServer *clipboardServer() const;
   bool removeSelection(const QString &id);
@@ -114,7 +116,10 @@ public:
   void setMonitoring(bool value);
 
 signals:
+  void allSelectionsRemoved() const;
   void itemCopied(const InsertClipboardHistoryLine &item) const;
   void itemInserted(const ClipboardHistoryEntry &entry) const;
+  void selectionPinStatusChanged(const QString &id, bool pinned) const;
+  void selectionRemoved(const QString &id) const;
   void monitoringChanged(bool value) const;
 };
