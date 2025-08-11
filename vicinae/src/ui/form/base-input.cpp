@@ -67,7 +67,9 @@ void BaseInput::setRightAccessory(QWidget *widget) {
   rightAccessory->setFixedSize(18, 18);
 }
 
-QJsonValue BaseInput::asJsonValue() const { return m_input->text(); }
+QJsonValue BaseInput::asJsonValue() const {
+  return m_input->text().isEmpty() ? QJsonValue() : m_input->text();
+}
 
 void BaseInput::clear() { m_input->clear(); };
 

@@ -60,6 +60,8 @@ public:
   QString repositoryDisplayName() const override;
   QString repositoryName() const override;
 
+  bool isDefaultDisabled() const override;
+
   void setAssetPath(const std::filesystem::path &path);
   void setExtensionTitle(const QString &title);
   void setExtensionName(const QString &name);

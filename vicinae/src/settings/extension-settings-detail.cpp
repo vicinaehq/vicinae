@@ -66,14 +66,10 @@ void ExtensionSettingsDetail::savePendingPreferences() {
   QJsonObject obj;
 
   for (const auto &[preferenceId, widget] : m_preferenceFields) {
-    qDebug() << "set preference" << preferenceId;
-    QJsonValue value = widget->formItem()->asJsonValue();
-
-    obj[preferenceId] = value;
+    obj[preferenceId] = widget->formItem()->asJsonValue();
   }
 
   manager->setProviderPreferenceValues(m_rootItemId, obj);
-  qCritical() << "set preference values";
 }
 
 ExtensionSettingsDetail::ExtensionSettingsDetail(const QString &providerId,

@@ -156,6 +156,8 @@ public:
   virtual bool isFallback() const { return false; }
   virtual void preferenceValuesChanged(const QJsonObject &value) const {}
 
+  virtual bool isDefaultDisabled() const { return false; }
+
   QString deeplink() const {
     return QString("%1://extensions/%2/%3/%4")
         .arg(Omnicast::APP_SCHEME)

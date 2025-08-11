@@ -124,6 +124,7 @@ ExtensionManifest::Command ExtensionRegistry::parseCommandFromObject(const QJson
   command.name = obj.value("name").toString();
   command.title = obj.value("title").toString();
   command.description = obj.value("description").toString();
+  command.defaultDisabled = obj.value("disabledByDefault").toBool(false);
 
   if (obj.contains("icon")) { command.icon = obj.value("icon").toString(); }
 

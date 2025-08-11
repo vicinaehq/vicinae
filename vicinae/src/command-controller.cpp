@@ -43,20 +43,24 @@ void CommandController::launch(const std::shared_ptr<AbstractCmd> &cmd) {
   auto preferenceValues = manager->getPreferenceValues(itemId);
 
   for (const auto &preference : preferences) {
-    if (preference.required() && !preferenceValues.contains(preference.name()) &&
-        preference.defaultValue().isUndefined()) {
-      if (cmd->type() == CommandType::CommandTypeExtension) {
-        auto extensionCommand = std::static_pointer_cast<ExtensionCommand>(cmd);
+    QJsonValue value = preferenceValues.value(preference.name());
+    bool hasValue = !(value.isUndefined() || value.isNull());
+    bool hasDefault = !preference.defaultValue().isUndefined();
+    bool isMissing = preference.required() && !hasValue && !hasDefault;
 
-        m_ctx->navigation->pushView(
-            new MissingExtensionPreferenceView(extensionCommand, preferences, preferenceValues));
-        m_ctx->navigation->setNavigationTitle(cmd->name());
-        m_ctx->navigation->setNavigationIcon(cmd->iconUrl());
-        return;
-      }
+    if (!isMissing) continue;
 
-      qDebug() << "MISSING PREFERENCE" << preference.title();
+    if (cmd->type() == CommandType::CommandTypeExtension) {
+      auto extensionCommand = std::static_pointer_cast<ExtensionCommand>(cmd);
+
+      m_ctx->navigation->pushView(
+          new MissingExtensionPreferenceView(extensionCommand, preferences, preferenceValues));
+      m_ctx->navigation->setNavigationTitle(cmd->name());
+      m_ctx->navigation->setNavigationIcon(cmd->iconUrl());
+      return;
     }
+
+    qDebug() << "MISSING PREFERENCE" << preference.title();
   }
 
   auto frame = std::make_unique<CommandFrame>();

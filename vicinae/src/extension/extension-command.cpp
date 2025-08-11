@@ -28,6 +28,8 @@ QString ExtensionCommand::repositoryDisplayName() const { return _extensionTitle
 
 QString ExtensionCommand::repositoryName() const { return m_extensionName; }
 
+bool ExtensionCommand::isDefaultDisabled() const { return m_command.defaultDisabled; }
+
 void ExtensionCommand::setAssetPath(const std::filesystem::path &path) { _assetPath = path; }
 
 void ExtensionCommand::setExtensionTitle(const QString &title) { _extensionTitle = title; }

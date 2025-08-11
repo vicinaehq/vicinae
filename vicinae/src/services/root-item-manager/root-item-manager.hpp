@@ -2,15 +2,12 @@
 #include "action-panel/action-panel.hpp"
 #include "argument.hpp"
 #include "common.hpp"
-#include "libtrie/trie.hpp"
 #include "navigation-controller.hpp"
 #include "omni-database.hpp"
 #include "../../ui/image/url.hpp"
 #include "preference.hpp"
-#include "timer.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/default-list-item-widget/default-list-item-widget.hpp"
-#include <algorithm>
 #include <qdnslookup.h>
 #include <qjsonobject.h>
 #include <qjsonvalue.h>
@@ -23,7 +20,6 @@
 #include <qhash.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
-#include <ranges>
 
 class RootItemMetadata;
 
@@ -123,6 +119,8 @@ public:
    * Calls actions() as its default implementation.
    */
   virtual QList<AbstractAction *> fallbackActions() const { return actions(); }
+
+  virtual bool isDefaultDisabled() const { return false; }
 
   /**
    * Additional strings that will be indexed and prefix searchable.

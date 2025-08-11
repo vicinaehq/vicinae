@@ -1,7 +1,6 @@
 #include "root-item-manager.hpp"
 #include "root-search.hpp"
 #include <bits/chrono.h>
-#include <numbers>
 #include <qlogging.h>
 #include <ranges>
 
@@ -92,7 +91,7 @@ bool RootItemManager::upsertItem(const QString &providerId, const RootItem &item
 	)");
   query.bindValue(":id", item.uniqueId());
   query.bindValue(":provider_id", providerId);
-  query.bindValue(":enabled", 1);
+  query.bindValue(":enabled", !item.isDefaultDisabled());
   query.bindValue(":fallback", item.isDefaultFallback());
 
   if (!query.exec()) {

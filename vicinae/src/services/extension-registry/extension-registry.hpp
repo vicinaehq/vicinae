@@ -27,6 +27,7 @@ struct ExtensionManifest {
     std::vector<CommandArgument> arguments;
     std::optional<QString> icon;
     std::filesystem::path entrypoint;
+    bool defaultDisabled;
   };
 
   std::filesystem::path path;

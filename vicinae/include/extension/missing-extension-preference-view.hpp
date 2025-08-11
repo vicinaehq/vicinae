@@ -59,8 +59,12 @@ public:
     m_layout->addStretch();
 
     for (const auto &preference : preferences) {
-      if (preference.required() && !preference.hasDefaultValue() &&
-          !m_existingPreferenceValues.contains(preference.name())) {
+      QJsonValue value = m_existingPreferenceValues.value(preference.name());
+      bool hasValue = !(value.isUndefined() || value.isNull());
+      bool hasDefault = !preference.defaultValue().isUndefined();
+      bool isMissing = preference.required() && !hasValue && !hasDefault;
+
+      if (isMissing) {
         auto field = new PreferenceField(preference);
 
         m_form->addField(field);

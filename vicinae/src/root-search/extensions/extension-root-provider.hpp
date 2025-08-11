@@ -24,6 +24,7 @@ public:
   QString uniqueId() const override;
   AccessoryList accessories() const override;
   PreferenceList preferences() const override { return m_command->preferences(); }
+  bool isDefaultDisabled() const override { return m_command->isDefaultDisabled(); }
   QWidget *settingsDetail(const QJsonObject &preferences) const override {
     return new CommandMetadataSettingsDetailWidget(uniqueId(), m_command);
   }
