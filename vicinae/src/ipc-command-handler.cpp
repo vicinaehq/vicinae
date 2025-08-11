@@ -76,18 +76,14 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
     auto components = url.path().sliced(1).split('/');
 
     if (components.size() < 3) {
-      qCritical() << "Invalid use of extensions verb: expected format is "
-                     "vicinae://extensions/<author>/<ext_name>/<cmd_name>";
+      qWarning() << "Invalid use of extensions verb: expected format is "
+                    "vicinae://extensions/<author>/<ext_name>/<cmd_name>";
       return;
     }
 
     QString author = components[0];
     QString extName = components[1];
     QString cmdName = components[2];
-
-    qDebug() << "query" << url.query();
-
-    qDebug() << "author" << author << extName << cmdName;
 
     for (const auto &cmd : m_ctx.services->commandDb()->commands()) {
       if (cmd.command->author() == author && cmd.command->commandId() == cmdName &&
@@ -103,6 +99,8 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
         break;
       }
     }
+
+    return;
   }
 
   qWarning() << "No handler for URL" << url;

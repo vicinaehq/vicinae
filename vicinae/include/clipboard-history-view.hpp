@@ -615,7 +615,7 @@ public:
       handleMonitoringChanged(clipman->monitoring());
     }
 
-    m_filterInput->setMinimumWidth(300);
+    m_filterInput->setMinimumWidth(200);
     m_filterInput->setFocusPolicy(Qt::NoFocus);
     m_filterInput->setOptions(filterSelectorOptions);
     m_filterInput->setValue("all");

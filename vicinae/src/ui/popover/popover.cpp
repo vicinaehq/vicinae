@@ -10,7 +10,7 @@
 void Popover::paintEvent(QPaintEvent *event) {
   auto &theme = ThemeService::instance().theme();
   int borderRadius = 10;
-  QPainter painter(this);
+  OmniPainter painter(this);
   QPainterPath path;
   QPen pen(theme.colors.border, 1);
 
@@ -19,7 +19,7 @@ void Popover::paintEvent(QPaintEvent *event) {
 
   painter.setClipPath(path);
 
-  QColor finalColor(theme.colors.mainBackground);
+  QColor finalColor = painter.resolveColor(SemanticColor::SecondaryBackground);
 
   finalColor.setAlphaF(0.98);
   painter.setPen(pen);
