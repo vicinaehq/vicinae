@@ -83,6 +83,7 @@ void NavigationController::setCompletionValues(const ArgumentValues &values) {
   if (auto state = topState()) {
     if (state->completer) {
       state->completer->values = values;
+      state->sender->argumentValuesChanged(values);
       emit completionValuesChanged(values);
     }
   }
