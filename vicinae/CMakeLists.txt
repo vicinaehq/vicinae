@@ -7,6 +7,7 @@ set(LIBS)
 
 set(TARGET vicinae)
 
+
 find_package(Qt6 REQUIRED COMPONENTS Widgets Sql Network Svg DBus Keychain)
 find_package(protobuf CONFIG REQUIRED) # may not work on older protobuf versions (ubuntu 25 doesn't from my testing)
 find_package(OpenSSL REQUIRED)
@@ -17,6 +18,10 @@ compositors." ON)
 
 
 list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus qt6keychain cmark-gfm qalculate protobuf::libprotobuf minizip OpenSSL::Crypto)
+
+set(WLR_CLIP_BIN ${CMAKE_BINARY_DIR}/wlr-clip/wlr-clip${CMAKE_EXECUTABLE_SUFFIX})
+set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/assets)
+configure_file(resources.qrc.in resources.qrc)
 
 
 if (UNIX AND NOT APPLE)
@@ -331,7 +336,8 @@ set(SRCS
 	src/vicinae.hpp
 	src/vicinae.cpp
 
-	./resources.qrc
+	${CMAKE_CURRENT_BINARY_DIR}/resources.qrc
+
 	./icons/icons.qrc
 
 	./database/vicinae/migrations.qrc
@@ -531,6 +537,7 @@ endif()
 
 qt_add_executable(${TARGET} ${SRCS})
 
+add_dependencies(${TARGET} wlr-clip)
 target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(${TARGET} PRIVATE ${LIBS})
 

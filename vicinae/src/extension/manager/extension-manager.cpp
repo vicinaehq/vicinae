@@ -138,7 +138,7 @@ ExtensionManager::ExtensionManager(OmniCommandDatabase &commandDb) : commandDb(c
 }
 
 bool ExtensionManager::start() {
-  QFile file(":assets/extension-runtime.js");
+  QFile file(":bin/extension-manager");
 
   if (!file.exists()) {
     qCritical("Could not find bundled extension runtime. Cannot start extension_manager.");

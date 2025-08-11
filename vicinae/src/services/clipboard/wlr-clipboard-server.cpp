@@ -1,11 +1,14 @@
 #include "services/clipboard/wlr-clipboard-server.hpp"
 #include "build/wlr-clip/proto/wlr-clipboard.pb.h"
 #include "services/clipboard/clipboard-server.hpp"
+#include "vicinae.hpp"
+#include <QtCore>
 #include <algorithm>
 #include <netinet/in.h>
 #include <qlogging.h>
 #include <qprocess.h>
 #include <qdebug.h>
+#include <qresource.h>
 #include <qstringview.h>
 
 bool WlrClipboardServer::isAlive() const { return process->isOpen(); }
@@ -42,13 +45,38 @@ void WlrClipboardServer::handleExit(int code, QProcess::ExitStatus status) {}
 
 bool WlrClipboardServer::start() {
   process = new QProcess;
+  QFile bin(":bin/wlr-clip");
+
+  if (!bin.exists()) {
+    qWarning() << ":bin/wlr-clip resource could not found, can't start clipboard server";
+    return false;
+  }
+
+  bin.open(QIODevice::ReadOnly);
+
+  std::filesystem::path target = Omnicast::runtimeDir() / "wlr-clip";
+
+  bin.copy(target);
+
+#ifdef Q_OS_UNIX
+  QFile::setPermissions(target, QFile::ExeOwner | QFile::ReadOwner | QFile::WriteOwner);
+#endif
 
   connect(process, &QProcess::readyReadStandardOutput, this, &WlrClipboardServer::handleRead);
+  connect(process, &QProcess::readyReadStandardError, this, &WlrClipboardServer::handleReadError);
   connect(process, &QProcess::finished, this, &WlrClipboardServer::handleExit);
-  process->start("omni-wlr-clip", {});
+
+  process->start(target.c_str(), {});
+
+  if (!process->waitForStarted(2000)) {
+    qCritical() << "Failed to start wlr-clip" << target.c_str() << process->errorString();
+    return false;
+  }
 
   return process;
 }
+
+void WlrClipboardServer::handleReadError() { QTextStream(stderr) << process->readAllStandardError(); }
 
 void WlrClipboardServer::handleRead() {
   auto array = process->readAllStandardOutput();

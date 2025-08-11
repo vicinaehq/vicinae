@@ -316,10 +316,7 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
 
   std::ranges::unique(selection.offers, [](auto &&a, auto &&b) { return a.mimeType == b.mimeType; });
 
-  if (isClearSelection(selection)) {
-    qDebug() << "skipped clipboard clear";
-    return;
-  }
+  if (isClearSelection(selection)) { return; }
 
   bool isConcealed = std::ranges::any_of(
       selection.offers, [](auto &&offer) { return offer.mimeType == Clipboard::CONCEALED_MIME_TYPE; });

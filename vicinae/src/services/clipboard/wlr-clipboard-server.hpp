@@ -12,6 +12,7 @@ class WlrClipboardServer : public AbstractClipboardServer {
 
   void handleMessage(const proto::ext::wlrclip::Selection &selection);
   void handleRead();
+  void handleReadError();
   void handleExit(int code, QProcess::ExitStatus status);
 
 public:
