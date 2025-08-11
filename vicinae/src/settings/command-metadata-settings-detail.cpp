@@ -62,13 +62,10 @@ void CommandMetadataSettingsDetailWidget::savePendingPreferences() {
   for (const auto &[preferenceId, widget] : m_preferenceFields) {
     QJsonValue value = widget->formItem()->asJsonValue();
 
-    qDebug() << "set preference" << preferenceId;
-
     obj[preferenceId] = value;
   }
 
   manager->setItemPreferenceValues(m_rootItemId, obj);
-  qCritical() << "set preference values";
 }
 
 CommandMetadataSettingsDetailWidget::CommandMetadataSettingsDetailWidget(

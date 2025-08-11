@@ -366,8 +366,6 @@ set(SRCS
 
 	src/extensions/vicinae/refresh-apps-command.hpp
 	src/extensions/vicinae/refresh-apps-command.cpp
-	src/extensions/vicinae/open-documentation-command.hpp
-	src/extensions/vicinae/open-documentation-command.cpp
 
 	src/ui/switch/switch.hpp
 	src/ui/switch/switch.cpp
