@@ -31,8 +31,6 @@ public:
   void handleViewPoped() {
     if (m_views.size() > 1) { m_controller->notify("pop-view", {}); }
 
-    qDebug() << "view poped!";
-
     m_views.pop_back();
   }
 

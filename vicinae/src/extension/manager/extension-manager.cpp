@@ -16,15 +16,10 @@ void Bus::sendMessage(const QByteArray &data) {
   dataStream << data;
 
   device->write(message);
-  // qDebug() << "waiting for write...";
   device->waitForBytesWritten(1000);
-  // qDebug() << "wrote message";
 }
 
 void Bus::handleMessage(const proto::ext::IpcMessage &msg) {
-  // qDebug() << "[DEBUG] readyRead: got message of type" << msg.envelope.action;
-  qDebug() << "got message" << msg.GetTypeName();
-
   if (msg.has_extension_request()) { emit extensionRequest(msg.extension_request()); }
   if (msg.has_extension_event()) { emit extensionEvent(msg.extension_event()); }
   if (msg.has_manager_response()) {
@@ -35,7 +30,7 @@ void Bus::handleMessage(const proto::ext::IpcMessage &msg) {
       m_pendingManagerRequests.erase(it);
       emit it->second->finished(response.value());
     } else {
-      qCritical() << "Got response but no matching request id" << response.request_id().c_str();
+      qWarning() << "Got response but no matching request id" << response.request_id().c_str();
     }
 
     // emit managerResponse(msg.manager_response());
@@ -162,7 +157,7 @@ bool ExtensionManager::start() {
     return false;
   }
 
-  qDebug() << "Started extension runtime" << runtimeFile->fileName();
+  qInfo() << "Started extension manager" << runtimeFile->fileName();
 
   runtimeFile->write(file.readAll());
   process.start("/bin/node", {runtimeFile->fileName()});
@@ -189,8 +184,6 @@ void ExtensionManager::emitGenericExtensionEvent(const QString &sessionId, const
   auto generic = new proto::ext::extension::GenericEventData;
   QJsonDocument document;
 
-  qDebug() << "send event to" << handlerId;
-
   document.setArray(args);
   qualified->set_session_id(sessionId.toStdString());
   event->set_id(handlerId.toStdString());
@@ -216,13 +209,15 @@ QJsonObject ExtensionManager::serializeLaunchProps(const LaunchProps &props) {
 }
 
 void ExtensionManager::finished(int exitCode, QProcess::ExitStatus status) {
-  qDebug() << "Extension manager exited prematurely. Extensions will not work";
+  qCritical() << "Extension manager crashed. Extensions will not work";
 }
 
 void ExtensionManager::readError() {
   auto buf = process.readAllStandardError();
 
-  QTextStream(stderr) << buf;
+  for (const auto &line : buf.trimmed().split('\n')) {
+    qInfo() << "[EXTENSION]" << line;
+  }
 }
 
 void ExtensionManager::unloadCommand(const QString &sessionId) {

@@ -60,7 +60,6 @@ class OAuthView : public OverlayView {
   }
 
   void keyPressEvent(QKeyEvent *key) override {
-    qDebug() << "OAUTH KEY!!!";
     if (key->key() == Qt::Key_Escape) {
       m_ctx->navigation->popToRoot();
       dismiss();

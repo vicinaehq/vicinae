@@ -11,8 +11,6 @@ using AppPtr = XdgAppDatabase::AppPtr;
 static const std::vector<fs::path> wellKnownPaths = {"/usr/share/applications",
                                                      "/usr/local/share/applications"};
 
-// QDir::homePath() + "/.local/share/applications"};
-
 std::shared_ptr<Application> XdgAppDatabase::defaultForMime(const QString &mime) const {
   if (auto it = mimeToDefaultApp.find(mime); it != mimeToDefaultApp.end()) {
     if (auto appIt = appMap.find(it->second); appIt != appMap.end()) { return appIt->second; }
@@ -45,8 +43,6 @@ bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
   appToMimes.clear();
   mimeToDefaultApp.clear();
   apps.clear();
-
-  qCritical() << "XdgAppDatabase::scan";
 
   std::vector<fs::path> traversed;
 
@@ -265,8 +261,6 @@ bool XdgAppDatabase::launch(const Application &app, const std::vector<QString> &
     offset = 1;
   }
 
-  qDebug() << "args" << args.size();
-
   for (size_t i = offset; i != exec.size(); ++i) {
     auto &part = exec.at(i);
 
@@ -288,10 +282,7 @@ bool XdgAppDatabase::launch(const Application &app, const std::vector<QString> &
   process.setStandardOutputFile(QProcess::nullDevice());
   process.setStandardErrorFile(QProcess::nullDevice());
 
-  if (!process.startDetached()) {
-    qDebug() << xdgApp.name() << "failed to launch";
-    return false;
-  }
+  if (!process.startDetached()) { return false; }
 
   return true;
 }

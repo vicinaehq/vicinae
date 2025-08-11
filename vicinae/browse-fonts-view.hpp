@@ -195,7 +195,6 @@ public:
     Timer timer;
     auto results = m_trie->prefixSearch(query.toStdString(), 500);
     auto nonWide = [](const QString &name) { return !name.contains("wide", Qt::CaseInsensitive); };
-    timer.time("font search");
 
     auto &section = m_list->addSection("Fonts");
     auto items = results | std::views::filter(nonWide) | std::views::transform([](const QString &family) {

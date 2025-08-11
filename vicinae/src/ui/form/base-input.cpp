@@ -39,7 +39,6 @@ void BaseInput::recalculate() {
   m_input->setTextMargins(margins);
 
   if (leftAccessory && leftAccessory->isVisible()) {
-    qCritical() << "left accessory visible";
     leftAccessory->hide();
     leftAccessory->show();
     leftAccessory->move(8, (height() - leftAccessory->height()) / 2);

@@ -89,8 +89,6 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::listAll(int limit, i
 
   if (opts.kind) { query.bindValue(":kind", static_cast<quint8>(*opts.kind)); }
 
-  qDebug() << "queryString" << queryString;
-
   if (!query.exec()) {
     qWarning() << "Failed to list all clipboard items" << query.lastError();
     return {};

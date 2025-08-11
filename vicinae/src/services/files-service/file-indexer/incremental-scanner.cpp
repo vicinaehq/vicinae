@@ -1,6 +1,7 @@
 #include "incremental-scanner.hpp"
 #include "services/files-service/file-indexer/file-indexer-db.hpp"
 #include "services/files-service/file-indexer/filesystem-walker.hpp"
+#include <algorithm>
 #include <ranges>
 #include <unordered_set>
 
@@ -59,10 +60,7 @@ std::vector<fs::path> IncrementalScanner::getScannableDirectories(const fs::path
 }
 
 void IncrementalScanner::scan(const fs::path &path, std::optional<size_t> maxDepth) {
-  auto dirs = getScannableDirectories(path, maxDepth);
-
-  for (const auto &dir : dirs) {
-    qDebug() << "scannable" << dir;
+  for (const auto &dir : getScannableDirectories(path, maxDepth)) {
     processDirectory(dir);
   }
 }

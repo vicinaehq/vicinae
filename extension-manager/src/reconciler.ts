@@ -317,7 +317,6 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 			const selfIdx = parent.children.indexOf(child);
 
 			if (selfIdx != - 1) {
-				console.debug('REMOVE SELF');
 				parent.children.splice(selfIdx, 1);
 			}
 
@@ -475,8 +474,8 @@ export const createRenderer = (config: RendererConfig) => {
 
 				const end = performance.now();
 
-				console.error(`[PERF] processed render frame in ${end - start}ms`);
-				console.error(`[PERF] last render ${end - lastRender}ms`);
+				//console.error(`[PERF] processed render frame in ${end - start}ms`);
+				///console.error(`[PERF] last render ${end - lastRender}ms`);
 				lastRender = end;
 			}, debounceInterval);
 		}

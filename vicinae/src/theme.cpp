@@ -399,9 +399,8 @@ void ThemeService::setTheme(const ThemeInfo &info) {
   QApplication::setPalette(palette);
 
   Timer timer;
-  qDebug() << "widgets" << qApp->allWidgets().size();
   qApp->setStyleSheet(style);
-  timer.time("set app style sheet");
+  timer.time("Theme changed");
 
   emit themeChanged(info);
 }

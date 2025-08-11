@@ -172,8 +172,6 @@ AppRootProvider::AppRootProvider(AppService &appService) : m_appService(appServi
 void AppRootProvider::preferencesChanged(const QJsonObject &preferences) {
   QJsonArray jsonPaths = preferences.value("paths").toArray();
 
-  qCritical() << "app root provider preference hook!";
-
   if (!jsonPaths.empty()) {
     std::vector<fs::path> paths;
     paths.reserve(jsonPaths.size());

@@ -7,8 +7,6 @@ void ClipboardHistoryCommand::preferenceValuesChanged(const QJsonObject &value) 
 
   clipman->setRecordAllOffers(value.value("store-all-offerings").toBool());
   clipman->setMonitoring(value.value("monitoring").toBool());
-
-  qDebug() << "clipboard history preference changes";
 }
 
 std::vector<Preference> ClipboardHistoryCommand::preferences() const {

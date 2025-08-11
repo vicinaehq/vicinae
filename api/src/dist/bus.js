@@ -41,7 +41,6 @@ class Bus {
         this.port = port;
         if (!port)
             return;
-        console.error('INSTANCIATE BUS');
         port.on('message', this.handleMessage.bind(this));
         port.on('messageerror', (error) => {
             console.error(`Message error from manager`, error);

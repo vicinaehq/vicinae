@@ -1,6 +1,5 @@
 #pragma once
 #include "extend/form-model.hpp"
-#include "extend/model.hpp"
 #include "extension/extension-view.hpp"
 #include "extension/form/extension-checkbox-field.hpp"
 #include "extension/form/extension-text-field.hpp"
@@ -72,9 +71,6 @@ public:
   }
 
   void handleFocusChanged(bool value) {
-    qDebug() << "Focus changed" << m_model->id << value << "blur" << m_model->onBlur << "focus"
-             << m_model->onFocus;
-
     if (!value && m_model->onBlur) { emit notifyEvent(*m_model->onBlur, {}); }
     if (value && m_model->onFocus) { emit notifyEvent(*m_model->onFocus, {}); }
   }
@@ -102,8 +98,6 @@ public:
 
     for (const auto &field : m_fields) {
       if (field->hasError()) return std::unexpected("one or more fields have error");
-
-      qDebug() << "Submit" << field->valueAsJson();
 
       payload[field->id()] = field->valueAsJson();
     }
@@ -176,15 +170,12 @@ public:
 
     for (auto it = m_fieldMap.begin(); it != m_fieldMap.end();) {
       if (std::find(visibleIds.begin(), visibleIds.end(), it->first) == visibleIds.end()) {
-        qDebug() << "erase" << it->first;
         it->second->deleteLater();
         it = m_fieldMap.erase(it);
       } else {
         ++it;
       }
     }
-
-    qDebug() << "form model render with" << formModel.items.size() << "items";
   }
 
   ExtensionFormComponent() {

@@ -25,7 +25,6 @@ std::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const
   bool error = false;
 
   for (auto msg = CALCULATOR->message(); msg; msg = CALCULATOR->nextMessage()) {
-    qCritical() << "Calculator Error" << msg->message();
     error = true;
   }
 
@@ -39,17 +38,12 @@ std::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const
 
   std::string res = result.print(printOpts);
 
-  for (int i = 0; i != result.size(); ++i) {
-    if (result[i].isUnit()) { qCritical() << "UNIT INVOLVED!"; }
-  }
-
   CalculatorResult calcRes;
 
   calcRes.question = question;
   calcRes.answer = QString::fromStdString(res);
 
   if (result.containsType(STRUCT_UNIT)) {
-    qDebug() << "Has unit";
     calcRes.type = CalculatorAnswerType::CONVERSION;
   } else {
     calcRes.type = CalculatorAnswerType::NORMAL;
@@ -72,13 +66,4 @@ QalculateBackend::QalculateBackend() {
   m_calc.loadExchangeRates();
   m_calc.loadGlobalDefinitions();
   m_calc.loadLocalDefinitions();
-
-  size_t idx = 1;
-  std::string url;
-
-  while (true) {
-    url = m_calc.getExchangeRatesUrl(idx++);
-    if (url.empty()) break;
-    qDebug() << "exchange rate url" << url;
-  }
 }

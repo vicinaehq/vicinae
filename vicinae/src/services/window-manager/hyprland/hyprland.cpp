@@ -53,7 +53,7 @@ bool HyprlandWindowManager::sendShortcutSync(const AbstractWindow &window, const
                  .arg(stringifyKey(shortcut.key))
                  .arg(window.id());
 
-  qWarning() << "send dispatcher" << cmd;
+  // qWarning() << "send dispatcher" << cmd;
   Hyprctl::oneshot(cmd.toStdString());
 
   return true;

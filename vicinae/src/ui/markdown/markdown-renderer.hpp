@@ -79,7 +79,6 @@ public:
 
   void resizeEvent(QResizeEvent *event) override {
     QWidget::resizeEvent(event);
-    qCritical() << "document size on resize of" << event->size() << _document->size().toSize();
     _textEdit->setFixedSize(event->size());
     setMarkdown(QString(_markdown));
   }

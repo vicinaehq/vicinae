@@ -280,8 +280,6 @@ public:
             metadataMap.insert({item.data->emoji, item});
           }
 
-          timer.time("Get visited");
-
           size_t i = 0;
 
           auto &pinnedSection = m_grid->addSection("Pinned");
@@ -325,9 +323,7 @@ public:
 
   void generateFilteredList(const QString &s) {
     auto emojiService = ServiceRegistry::instance()->emojiService();
-    Timer timer;
     auto matches = emojiService->mapMetadata(emojiService->search(s.toStdString()));
-    timer.time("trie search");
 
     m_grid->updateModel([&]() {
       if (matches.empty()) { return; }

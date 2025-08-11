@@ -45,8 +45,6 @@ std::expected<MigrationManager::Migration, MigrationLoadingError>
 MigrationManager::loadMigrationFile(const std::filesystem::path &path) {
   Migration migration;
 
-  qDebug() << "loadig migration" << path;
-
   migration.id = path.filename().c_str();
 
   {
@@ -196,8 +194,6 @@ void MigrationManager::runMigrations() {
     }
 
     if (!m_db.commit()) { throw std::runtime_error("Failed to commit transaction"); }
-
-    if (newExecCount == 0) { qInfo() << "No changes applied to database, as there is no new migrations"; }
   } catch (const std::exception &exception) {
     qCritical() << "Failed to run migrations:" << exception.what();
     m_db.rollback();

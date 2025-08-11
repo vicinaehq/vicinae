@@ -54,10 +54,7 @@ class AppMetadataSettingsDetail : public QWidget {
   MetadataRowWidget *m_where = new MetadataRowWidget(this);
   MetadataRowWidget *m_terminal = new MetadataRowWidget(this);
 
-  void resizeEvent(QResizeEvent *event) override {
-    qCritical() << "app settings size" << event->size();
-    QWidget::resizeEvent(event);
-  }
+  void resizeEvent(QResizeEvent *event) override { QWidget::resizeEvent(event); }
 
   void setupUI(const std::shared_ptr<Application> &app) {
     auto layout = new QVBoxLayout;

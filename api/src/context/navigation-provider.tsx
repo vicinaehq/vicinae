@@ -22,7 +22,7 @@ export const NavigationProvider: React.FC<{ root: ReactNode }>= ({ root }) => {
 	}
 
 	useEffect(() => {
-		console.log('changed nav stack size', navStack.length);
+		//console.log('changed nav stack size', navStack.length);
 	}, [navStack]);
 
 	useEffect(() => {

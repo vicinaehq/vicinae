@@ -86,10 +86,9 @@ SelectorInput::SelectorInput(QWidget *parent)
   setFocusProxy(inputField);
 
   connect(inputField->focusNotifier(), &FocusNotifier::focusChanged, this, [this](bool value) {
-    // we don't consider opening the selection menu a focus change
+    // opening the selection menu is NOT a focus change
     if (!popover->isVisible()) {
       if (m_focused != value) {
-        qDebug() << "input field focus notifier" << value;
         emit m_focusNotifier->focusChanged(value);
         m_focused = value;
       }
@@ -178,7 +177,7 @@ bool SelectorInput::setValue(const QString &id) {
   auto selectedItem = m_list->setSelected(id);
 
   if (!selectedItem) {
-    qDebug() << "selectValue: no item with ID:" << id;
+    qWarning() << "selectValue: no item with ID:" << id;
     return false;
   }
 
@@ -190,10 +189,7 @@ bool SelectorInput::setValue(const QString &id) {
   inputField->setText(item->displayName());
   inputField->update();
 
-  qCritical() << "set to item" << item->displayName();
-
   if (icon) {
-    qDebug() << "set icon" << icon->toString();
     selectionIcon->show();
     selectionIcon->setUrl(*icon);
   }

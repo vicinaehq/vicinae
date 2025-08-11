@@ -274,8 +274,6 @@ public:
       });
     }
 
-    qDebug() << "build filtered";
-
     m_list->endResetModel(OmniList::SelectFirst);
   }
 
@@ -333,7 +331,6 @@ class ActionPanelV2Widget : public Popover {
   }
 
   void showEvent(QShowEvent *event) override {
-    qCritical() << "SHOW EVENT" << windowHandle()->objectName();
     emit opened();
     emit openChanged(true);
     resizeView();

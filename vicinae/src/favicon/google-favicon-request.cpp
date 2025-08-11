@@ -33,8 +33,6 @@ void GoogleFaviconRequester::tryForCurrentSize() {
   auto serviceUrl = makeUrl(sizes.at(currentSizeAttemptIndex));
   auto reply = NetworkFetcher::instance()->fetch(serviceUrl);
 
-  qDebug() << "request google favicon" << serviceUrl;
-
   connect(reply, &FetchReply::finished, this, &GoogleFaviconRequester::imageLoaded);
   // connect(reply, &ImageReply::loadingError, this, &GoogleFaviconRequester::loadingFailed);
   _currentReply = reply;

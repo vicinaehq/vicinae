@@ -56,8 +56,6 @@ proto::ext::extension::Response *StorageRequestRouter::route(const storage::Requ
   namespace storage = storage;
   auto storageRes = new storage::Response();
 
-  qDebug() << "storage request";
-
   switch (req.payload_case()) {
   case storage::Request::kGet:
     storageRes->set_allocated_get(handleGetStorage(req.get()));

@@ -34,10 +34,7 @@ void ArgCompleter::setArguments(const ArgumentList &args) {
   for (const auto &arg : args) {
     auto edit = new InlineQLineEdit(arg.placeholder, this);
 
-    connect(edit, &InlineQLineEdit::textChanged, this, [this]() {
-      qDebug() << "text changed";
-      emit valueChanged(collect());
-    });
+    connect(edit, &InlineQLineEdit::textChanged, this, [this]() { emit valueChanged(collect()); });
 
     if (arg.type == CommandArgument::Password) edit->setEchoMode(QLineEdit::EchoMode::Password);
 
@@ -46,7 +43,6 @@ void ArgCompleter::setArguments(const ArgumentList &args) {
   }
 
   m_args = args;
-  qDebug() << "showing arguments";
   show();
   emit valueChanged(collect());
   emit activated();

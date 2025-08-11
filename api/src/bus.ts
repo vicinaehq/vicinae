@@ -153,8 +153,6 @@ class Bus {
 			const listeners = this.listEventListeners(id)
 			const args = JSON.parse(generic.json);
 
-			console.error(`Got ${listeners.length} listeners for event ${id}`);
-
 			for (const listener of listeners) {
 				listener.callback(...(args ?? []))
 			}
@@ -173,7 +171,6 @@ class Bus {
 
   constructor(private readonly port: MessagePort) {
 	  if (!port) return ;
-	  console.error('INSTANCIATE BUS');
 
 	  port.on('message', (buf) => {
 		  this.handleSafeMessage(ipc.ExtensionMessage.decode(buf));
@@ -225,8 +222,6 @@ class Bus {
 		}
 	});
 	
-	console.error('event', message);
-
 	this.sendMessage(message);
   }
 
@@ -271,8 +266,6 @@ class Bus {
   request<T = Record<string, any>>(action: string, data: Record<string, any> = {}, options: { timeout?: number, rejectOnError?: boolean } = {}): Promise<Message<T>> {
 	const id = randomUUID();
 	const { rejectOnError = true } = options;
-
-	console.error('request', action);
 
 	return new Promise<Message<T>>((resolve, reject) => {
 		let timeout: NodeJS.Timeout | undefined;

@@ -57,7 +57,6 @@ public:
     emit toastActivated(toast);
     connect(toast, &Toast::destroyRequested, this, [toast, this]() {
       if (m_toast == toast) {
-        qDebug() << "got toast destroy!";
         emit toastHidden(toast);
         m_toast = nullptr;
       }

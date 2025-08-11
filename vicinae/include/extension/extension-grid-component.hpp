@@ -81,7 +81,6 @@ class ExtensionGridList : public QWidget {
   }
 
   void render(OmniList::SelectionPolicy selectionPolicy) {
-    m_list->invalidateCache();
     auto matches = [&](const GridItemViewModel &item) { return matchesFilter(item, m_filter); };
     std::vector<std::shared_ptr<OmniList::AbstractVirtualItem>> currentSectionItems;
     auto appendSectionLess = [&]() {
@@ -95,7 +94,6 @@ class ExtensionGridList : public QWidget {
       }
     };
 
-    qDebug() << "UPDATED MODEL";
     m_list->updateModel(
         [&]() {
           for (const auto &item : m_model) {

@@ -328,7 +328,6 @@ public:
 
     form->setContentsMargins(0, 10, 0, 0);
     setupUI(form);
-    timer.time("Build form");
   }
 
   void initializeIconSelector() {

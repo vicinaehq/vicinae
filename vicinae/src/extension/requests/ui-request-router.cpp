@@ -31,10 +31,7 @@ void UIRequestRouter::modelCreated() {
     auto view = views.at(n);
     bool shouldSkipRender = !model.dirty && !model.propsDirty;
 
-    if (shouldSkipRender) {
-      qDebug() << "view" << n << "is not dirty, skipping render";
-      continue;
-    }
+    if (shouldSkipRender) { continue; }
 
     view->render(model.root);
   }
@@ -202,7 +199,7 @@ proto::ext::ui::Response *UIRequestRouter::handleRender(const proto::ext::ui::Re
     Timer timer;
     auto model = ModelParser().parse(views);
 
-    timer.time("Model parsed");
+    // timer.time("Model parsed");
     return model;
   }));
 

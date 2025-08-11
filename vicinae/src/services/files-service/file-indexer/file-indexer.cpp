@@ -58,7 +58,6 @@ void WriterWorker::run() {
 void WriterWorker::batchWrite(const std::vector<fs::path> &paths) {
   // Writing is happening in the writerThread
   db->indexFiles(paths);
-  qCritical() << "INDEXED" << paths.size() << "files";
 }
 
 WriterWorker::WriterWorker(std::mutex &batchMutex, std::deque<std::vector<std::filesystem::path>> &batchQueue,
@@ -90,7 +89,7 @@ void FileIndexer::start() {
   auto startedScans = m_db.listStartedScans();
 
   for (const auto &scan : startedScans) {
-    qCritical() << "Creating new scann after previous scan for" << scan.path << "failed";
+    qWarning() << "Creating new scan after previous scan for" << scan.path.c_str() << "was interrupted";
     m_db.setScanError(scan.id, "Interrupted");
     m_scanner->enqueue(scan.path, scan.type);
   }

@@ -66,12 +66,7 @@ const loadView = async () => {
 		},
 		onUpdate: (views) => {
 			const now = performance.now();
-			const elapsed =  now - lastRender;
-
-			console.debug(`[PERF] Render update (last update ${elapsed}ms ago)`);
-
 			lastRender = now;
-			
 			bus.turboRequest('ui.render', { json: JSON.stringify({ views }) });
 		}
 	});

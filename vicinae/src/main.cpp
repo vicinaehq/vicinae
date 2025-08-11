@@ -93,23 +93,23 @@ void coloredMessageHandler(QtMsgType type, const QMessageLogContext &context, co
   switch (type) {
   case QtDebugMsg:
     color = CYAN;
-    levelName = "debug";
+    levelName = "DEBUG";
     break;
   case QtInfoMsg:
     color = GREEN;
-    levelName = "info ";
+    levelName = "INFO ";
     break;
   case QtWarningMsg:
     color = YELLOW;
-    levelName = "warn ";
+    levelName = "WARN ";
     break;
   case QtCriticalMsg:
     color = RED;
-    levelName = "error";
+    levelName = "ERROR";
     break;
   case QtFatalMsg:
     color = MAGENTA;
-    levelName = "fatal";
+    levelName = "FATAL";
     break;
   }
 

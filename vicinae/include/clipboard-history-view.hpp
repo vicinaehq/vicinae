@@ -44,10 +44,6 @@
 #include "ui/typography/typography.hpp"
 #include "utils/utils.hpp"
 
-class LogWidget : public QWidget {
-  ~LogWidget() { qDebug() << "widget down"; }
-};
-
 class TextContainer : public QWidget {
   QVBoxLayout *_layout;
 
@@ -443,8 +439,6 @@ class ClipboardHistoryView : public SimpleView {
 
   void generateList(const PaginatedResponse<ClipboardHistoryEntry> &result) {
     size_t i = 0;
-
-    qDebug() << "results" << result.totalCount;
 
     if (result.data.empty()) {
       m_content->setCurrentWidget(m_emptyView);

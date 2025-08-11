@@ -37,14 +37,11 @@ FileIndexerDatabase::retrieveIndexedLastModified(const std::filesystem::path &pa
   query.addBindValue(path.c_str());
 
   if (!query.exec()) {
-    qCritical() << "Failed to retriveIndexedLastModified" << query.lastError();
+    qWarning() << "Failed to retriveIndexedLastModified" << query.lastError();
     return std::nullopt;
   }
 
-  if (!query.next()) {
-    qDebug() << "no indexed file at" << path;
-    return std::nullopt;
-  }
+  if (!query.next()) { return std::nullopt; }
 
   return QDateTime::fromSecsSinceEpoch(query.value(0).toULongLong());
 }
@@ -250,7 +247,7 @@ std::vector<fs::path> FileIndexerDatabase::search(std::string_view searchQuery,
   query.bindValue(":limit", params.pagination.limit);
   query.bindValue(":offset", params.pagination.offset);
 
-  if (!query.exec()) { qCritical() << "Search query failed" << query.lastError(); }
+  if (!query.exec()) { qWarning() << "Search query failed" << query.lastError(); }
 
   std::vector<fs::path> results;
 
@@ -268,10 +265,8 @@ std::vector<fs::path> FileIndexerDatabase::search(std::string_view searchQuery,
 void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &paths) {
   QSqlQuery query(m_db);
 
-  qDebug() << "starting batch write" << paths.size();
-
   if (!m_db.transaction()) {
-    qCritical() << "Failed to start batch insert transaction" << m_db.lastError();
+    qWarning() << "Failed to start batch insert transaction" << m_db.lastError();
     return;
   }
 

@@ -278,18 +278,14 @@ void NavigationController::setSearchAccessory(QWidget *accessory, const BaseView
 }
 
 void NavigationController::setActions(std::unique_ptr<ActionPanelState> panel, const BaseView *caller) {
-  qDebug() << "set actions called";
   if (!panel) {
-    qCritical() << "setActions called with a null pointer";
+    qWarning() << "setActions called with a null pointer";
     return;
   }
 
   if (auto state = findViewState(VALUE_OR(caller, topView()))) {
     state->actionPanelState = std::move(panel);
-    if (state->sender == topView()) {
-      qDebug() << "actions changed";
-      emit actionsChanged(*state->actionPanelState.get());
-    }
+    if (state->sender == topView()) { emit actionsChanged(*state->actionPanelState.get()); }
   }
 }
 

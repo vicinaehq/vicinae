@@ -6,12 +6,10 @@ void IpcCommandServer::processFrame(QLocalSocket *conn, QByteArrayView frame) {
 
   proto::ext::daemon::Request req;
 
-  qDebug() << "processing frame";
-
   req.ParseFromString(frame.toByteArray().toStdString());
 
   if (!_handler) {
-    qCritical() << "no handler was configured";
+    qWarning() << "no handler was configured";
     return;
   }
 
@@ -27,7 +25,7 @@ void IpcCommandServer::handleRead(QLocalSocket *conn) {
                          [conn](const ClientInfo &info) { return info.conn == conn; });
 
   if (it == _clients.end()) {
-    qDebug() << "CommandServer::handleRead: could not find client info";
+    qWarning() << "CommandServer::handleRead: could not find client info";
     conn->disconnect();
     return;
   }
@@ -39,8 +37,6 @@ void IpcCommandServer::handleRead(QLocalSocket *conn) {
       uint32_t length = ntohl(*reinterpret_cast<uint32_t *>(it->frame.data.data()));
       bool isComplete = it->frame.data.size() - sizeof(uint32_t) >= length;
 
-      qDebug() << "read data, expected size" << length << "got" << it->frame.data.size();
-
       if (!isComplete) break;
 
       auto packet = QByteArrayView(it->frame.data).sliced(sizeof(uint32_t), length);
@@ -48,8 +44,6 @@ void IpcCommandServer::handleRead(QLocalSocket *conn) {
       processFrame(conn, packet);
 
       it->frame.data = it->frame.data.sliced(sizeof(uint32_t) + length);
-
-      qDebug() << "data after processing" << it->frame.data.size();
     }
   }
 }

@@ -106,7 +106,6 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
     OmniList::SelectionPolicy policy = OmniList::SelectFirst;
 
     if (_shouldResetSelection) {
-      qDebug() << "should reset selection";
       _shouldResetSelection = false;
       policy = OmniList::SelectFirst;
     } else {
@@ -138,7 +137,6 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
       if (m_split->isDetailVisible()) {
         m_detail->updateDetail(*detail);
       } else {
-        qDebug() << "create detail";
         m_detail->setDetail(*detail);
       }
     } else {
@@ -146,7 +144,6 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
     }
 
     if (auto panel = selected->actionPannel; panel && _model.dirty && panel->dirty) {
-      qDebug() << "panel dirty" << panel->dirty;
       setActionPanel(*panel);
     }
   }
@@ -158,7 +155,6 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
 
 void ExtensionListComponent::onSelectionChanged(const ListItemViewModel *next) {
   if (!next) {
-    qDebug() << "nore visibiliy breaux";
     m_split->setDetailVisibility(false);
 
     if (auto &pannel = _model.actions) {
@@ -173,10 +169,7 @@ void ExtensionListComponent::onSelectionChanged(const ListItemViewModel *next) {
 
   m_split->setDetailVisibility(_model.isShowingDetail);
 
-  if (auto detail = next->detail) {
-    qDebug() << "set markdown for" << next->id;
-    m_detail->setDetail(*detail);
-  }
+  if (auto detail = next->detail) { m_detail->setDetail(*detail); }
 
   if (auto pannel = next->actionPannel) { setActionPanel(*pannel); }
 }
@@ -215,8 +208,6 @@ void ExtensionListComponent::handleDebouncedSearchNotification() {
   if (auto handler = _model.onSearchTextChange) {
     // flag next render to reset the search selection
     _shouldResetSelection = !_model.filtering;
-
-    qDebug() << "[DEBUG] sending search changed event" << text;
 
     notify(*handler, {text});
   }
@@ -264,4 +255,4 @@ ExtensionListComponent::ExtensionListComponent() : _debounce(new QTimer(this)), 
           &ExtensionListComponent::handleDropdownSearchChanged);
 }
 
-ExtensionListComponent::~ExtensionListComponent() { qDebug() << "~ExtensionListComponent"; }
+ExtensionListComponent::~ExtensionListComponent() {}

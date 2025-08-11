@@ -97,12 +97,7 @@ GridModel GridModelParser::parse(const QJsonObject &instance) {
   model.throttle = props["throttle"].toBool(false);
 
   if (auto inset = props.value("inset"); inset.isString()) { model.inset = parseInset(inset.toString()); }
-  if (auto cols = props.value("columns"); cols.isDouble()) {
-    qDebug() << "COLS" << cols;
-    model.columns = cols.toInt();
-  } else {
-    qDebug() << "no columns!";
-  }
+  if (auto cols = props.value("columns"); cols.isDouble()) { model.columns = cols.toInt(); }
 
   model.fit = GridFit::GridContain;
   model.aspectRatio = 1;

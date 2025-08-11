@@ -47,8 +47,6 @@ void GlobalBar::handleActionPanelVisiblityChange(bool visible) { m_actionButton-
 void GlobalBar::actionsChanged(const ActionPanelState &actions) {
   auto primaryAction = actions.findPrimaryAction();
 
-  qDebug() << "ACTION CHANGED FROM STATUS";
-
   if (primaryAction) {
     m_primaryActionButton->setText(primaryAction->title());
     m_primaryActionButton->setShortcut(

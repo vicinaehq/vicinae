@@ -1,8 +1,6 @@
 #pragma once
 #include "actions/app/app-actions.hpp"
-#include "argument.hpp"
 #include "ui/views/base-view.hpp"
-#include "clipboard-actions.hpp"
 #include "services/config/config-service.hpp"
 #include "services/files-service/file-service.hpp"
 #include "navigation-controller.hpp"
@@ -14,7 +12,6 @@
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "omni-command-db.hpp"
 #include "service-registry.hpp"
-#include "timer.hpp"
 #include "ui/action-pannel/action-item.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/calculator-list-item-widget.hpp"
@@ -54,15 +51,6 @@ class RootSearchItem : public AbstractDefaultListItem, public ListView::Actionna
 
 protected:
   std::shared_ptr<RootItem> m_item;
-
-  /*
-  ActionPanelView *actionPanel() const override {
-    auto manager = ServiceRegistry::instance()->rootItemManager();
-    auto metadata = manager->itemMetadata(m_item->uniqueId());
-
-    return m_item->actionPanel(metadata);
-  }
-  */
 
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
     auto manager = ctx->services->rootItemManager();
@@ -285,7 +273,6 @@ class RootSearchView : public ListView {
   }
 
   void renderEmpty() {
-    qDebug() << "render empty";
     m_fileResults.clear();
     m_currentCalculatorEntry.reset();
 
@@ -413,13 +400,8 @@ class RootSearchView : public ListView {
     // qDebug() << "root searched in " << duration << "ms";
   }
 
-  Timer timer;
-
   void textChanged(const QString &text) override {
-    qDebug() << "widget count" << QApplication::allWidgets().count();
     m_searchText = text;
-    timer.time("time since last text changed");
-    timer.start();
     QString query = text.trimmed();
 
     if (query.isEmpty()) return renderEmpty();
@@ -434,7 +416,6 @@ class RootSearchView : public ListView {
   }
 
   void handleCalculatorTimeout() {
-    qDebug() << "calculator stuff";
     auto calculator = ServiceRegistry::instance()->calculatorService();
     QString expression = searchText().trimmed();
     bool isComputable = false;
@@ -458,7 +439,6 @@ class RootSearchView : public ListView {
     } else {
       m_currentCalculatorEntry.reset();
     }
-    qCritical() << "calculator rerender";
     render(searchText());
   }
 
@@ -478,7 +458,7 @@ class RootSearchView : public ListView {
     m_fileSearchDebounce->setInterval(100);
     m_fileSearchDebounce->setSingleShot(true);
 
-    setSearchPlaceholderText("Search for apps or commands...");
+    setSearchPlaceholderText("Search for anything...");
     textChanged(searchText());
 
     connect(manager, &RootItemManager::itemsChanged, this, &RootSearchView::handleItemChange);

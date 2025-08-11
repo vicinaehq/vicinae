@@ -19,12 +19,8 @@ proto::ext::daemon::Response *IpcCommandHandler::handleCommand(const proto::ext:
   auto res = new proto::ext::daemon::Response;
   auto &nav = m_ctx.navigation;
 
-  qDebug() << "Got ipc command";
-
   switch (request.payload_case()) {
   case proto::ext::daemon::Request::kUrl: {
-    qDebug() << "GOT URL" << request.url().url();
-
     handleUrl(QUrl(request.url().url().c_str()));
     res->set_allocated_url(new proto::ext::daemon::UrlResponse());
     break;
@@ -37,10 +33,9 @@ proto::ext::daemon::Response *IpcCommandHandler::handleCommand(const proto::ext:
 }
 
 void IpcCommandHandler::handleUrl(const QUrl &url) {
-  qDebug() << url.toString();
   if (!std::ranges::contains(Omnicast::APP_SCHEMES, url.scheme())) {
-    qCritical() << "Unsupported url scheme" << url.scheme() << "Supported schemes are"
-                << Omnicast::APP_SCHEMES;
+    qWarning() << "Unsupported url scheme" << url.scheme() << "Supported schemes are"
+               << Omnicast::APP_SCHEMES;
     return;
   }
 
@@ -109,6 +104,8 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
       }
     }
   }
+
+  qWarning() << "No handler for URL" << url;
 }
 
 IpcCommandHandler::IpcCommandHandler(ApplicationContext &ctx) : m_ctx(ctx) {}

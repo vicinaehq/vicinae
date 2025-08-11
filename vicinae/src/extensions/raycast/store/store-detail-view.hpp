@@ -288,11 +288,5 @@ class RaycastStoreDetailView : public BaseView {
   }
 
 public:
-  RaycastStoreDetailView(const Raycast::Extension &extension) : m_ext(extension) {
-    setupUI(extension);
-
-    for (const auto &url : extension.screenshots()) {
-      qDebug() << "asset url" << url;
-    }
-  }
+  RaycastStoreDetailView(const Raycast::Extension &extension) : m_ext(extension) { setupUI(extension); }
 };

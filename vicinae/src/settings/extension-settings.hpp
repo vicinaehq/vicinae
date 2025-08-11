@@ -210,7 +210,6 @@ public:
       connect(checkbox, &Checkbox::valueChanged, this, [this, manager](bool value) {
         manager->setItemEnabled(m_item->uniqueId(), value);
 
-        qDebug() << "value changed";
         emit itemEnabledChanged(m_item.get(), value);
       });
     }
@@ -529,7 +528,6 @@ class ExtensionSettingsContextLeftPane : public QWidget {
   void selectionUpdated(VirtualTreeItemDelegate *next, VirtualTreeItemDelegate *previous) {
     emit itemSelectionChanged(static_cast<AbstractRootItemDelegate *>(next),
                               static_cast<AbstractRootItemDelegate *>(previous));
-    qDebug() << "selection changed";
   }
 
   void setupUI() {

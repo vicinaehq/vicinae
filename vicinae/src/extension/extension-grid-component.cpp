@@ -27,7 +27,6 @@ bool ExtensionGridComponent::inputFilter(QKeyEvent *event) {
 }
 
 void ExtensionGridComponent::render(const RenderModel &baseModel) {
-  qDebug() << "render!";
   auto newModel = std::get<GridModel>(baseModel);
 
   if (auto accessory = newModel.searchBarAccessory) {
@@ -36,20 +35,12 @@ void ExtensionGridComponent::render(const RenderModel &baseModel) {
     // renderDropdown(dropdown);
   }
 
-  qDebug() << "Rendering grid with" << newModel.items.size() << "items";
-
   // m_selector->setVisible(newModel.searchBarAccessory.has_value() && isVisible());
 
-  if (!newModel.navigationTitle.isEmpty()) {
-    qDebug() << "set navigation title" << newModel.navigationTitle;
-    setNavigationTitle(newModel.navigationTitle);
-  }
+  if (!newModel.navigationTitle.isEmpty()) { setNavigationTitle(newModel.navigationTitle); }
   if (!newModel.searchPlaceholderText.isEmpty()) { setSearchPlaceholderText(newModel.searchPlaceholderText); }
 
-  if (auto text = newModel.searchText) {
-    qDebug() << "[DEBUG] SET SEARCH TEXT" << text;
-    setSearchText(*text);
-  }
+  if (auto text = newModel.searchText) { setSearchText(*text); }
 
   if (newModel.throttle != _model.throttle) {
     _debounce->stop();
@@ -67,7 +58,6 @@ void ExtensionGridComponent::render(const RenderModel &baseModel) {
   OmniList::SelectionPolicy policy = OmniList::SelectFirst;
 
   if (_shouldResetSelection) {
-    qDebug() << "should reset selection";
     _shouldResetSelection = false;
     policy = OmniList::SelectFirst;
   } else {
@@ -105,8 +95,6 @@ void ExtensionGridComponent::onSelectionChanged(const GridItemViewModel *next) {
     return;
   }
 
-  qDebug() << "item" << next->id;
-
   if (auto &panel = next->actionPannel) { setActionPanel(*panel); }
   if (auto handler = _model.onSelectionChanged) { notify(*handler, {next->id}); }
 }
@@ -125,8 +113,6 @@ void ExtensionGridComponent::textChanged(const QString &text) {
   if (auto handler = _model.onSearchTextChange) {
     // flag next render to reset the search selection
     _shouldResetSelection = !_model.filtering;
-
-    qDebug() << "[DEBUG] sending search changed event" << text;
 
     notify(*handler, {text});
   }

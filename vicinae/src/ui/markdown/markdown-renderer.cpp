@@ -37,7 +37,6 @@ int MarkdownRenderer::getHeadingLevelPointSize(int level) const {
 void MarkdownRenderer::insertIfNotFirstBlock() {
   if (m_isFirstBlock) {
     if (!_cursor.block().text().isEmpty()) { _cursor.insertBlock(); }
-    qDebug() << "skipping block: first";
     m_isFirstBlock = false;
     return;
   }
@@ -57,8 +56,6 @@ void MarkdownRenderer::insertHeading(const QString &text, int level) {
   charFormat.setFont(_document->defaultFont());
   charFormat.setFontPointSize(getHeadingLevelPointSize(level));
   charFormat.setFontWeight(QFont::Bold);
-
-  qDebug() << "heading" << text;
 
   _cursor.setBlockFormat(blockFormat);
   _cursor.setBlockCharFormat(charFormat);
@@ -151,8 +148,6 @@ void MarkdownRenderer::insertCodeBlock(cmark_node *node, bool isClosing) {
       code.removeLast();
     }
   }
-
-  qDebug() << "code =>" << code;
 
   _cursor.insertText(code.trimmed(), fontFormat);
   _cursor.setPosition(frame->lastPosition());
@@ -324,7 +319,6 @@ void MarkdownRenderer::insertHeading(cmark_node *node) {
 void MarkdownRenderer::insertTopLevelNode(cmark_node *node) {
   auto type = cmark_node_get_type(node);
 
-  // qDebug() << "NODE=" << cmark_node_get_type_string(node);
   switch (type) {
   case CMARK_NODE_PARAGRAPH:
     insertBlockParagraph(node);

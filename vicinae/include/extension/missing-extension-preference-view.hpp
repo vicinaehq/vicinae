@@ -114,7 +114,6 @@ public:
     QJsonDocument doc;
 
     doc.setObject(obj);
-    qDebug() << "preference object:" << doc.toJson();
 
     if (!validated) return;
 

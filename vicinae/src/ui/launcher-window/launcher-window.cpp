@@ -1,6 +1,7 @@
 #include "launcher-window.hpp"
 #include "action-panel/action-panel.hpp"
 #include "common.hpp"
+#include "ui/keyboard.hpp"
 #include "ui/status-bar/status-bar.hpp"
 #include "ui/top-bar/top-bar.hpp"
 #include <qboxlayout.h>

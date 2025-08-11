@@ -57,8 +57,6 @@ proto::ext::extension::Response *ExtensionCommandRuntime::dispatchRequest(Extens
   using Request = proto::ext::extension::RequestData;
   auto &data = request->requestData();
 
-  qDebug() << "got request";
-
   switch (data.payload_case()) {
   case Request::kUi:
     return m_uiRouter->route(data.ui());
@@ -154,8 +152,6 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
 
   for (const auto &key : preferenceValues.keys()) {
     auto value = preferenceValues.value(key);
-
-    qDebug() << "preference" << key << value;
 
     load->mutable_preference_values()->insert({key.toStdString(), transformJsonValueToProto(value)});
   }

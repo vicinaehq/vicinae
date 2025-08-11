@@ -1,4 +1,5 @@
 #include "unzip.hpp"
+#include <qlogging.h>
 
 namespace fs = std::filesystem;
 
@@ -28,7 +29,7 @@ std::string ZipedFile::readAll() {
   int bytesRead;
 
   if (unzOpenCurrentFile(m_handle.file) != UNZ_OK) {
-    qCritical() << "Failed to open ziped file" << path();
+    qWarning() << "Failed to open ziped file" << path();
     return {};
   }
 
@@ -51,8 +52,6 @@ void Unzipper::extract(const std::filesystem::path &target, const Unzipper::Extr
     std::filesystem::create_directories(path.parent_path());
     std::ofstream ofs(path);
     auto data = file.readAll();
-
-    qDebug() << "path" << path.c_str();
 
     ofs.write(data.data(), data.size());
   }

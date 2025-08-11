@@ -383,7 +383,7 @@ void OmniList::calculateHeights() {
   scrollBar->setMinimum(0);
   m_virtualHeight = yOffset;
 
-  timer.time("calculateHeights");
+  // timer.time("calculateHeights");
 
   updateVisibleItems();
 
@@ -872,8 +872,6 @@ bool OmniList::updateItem(const QString &id, const UpdateItemCallback &cb) {
 void OmniList::invalidateCache() {
   for (const auto &[id, cached] : _widgetCache) {
     auto item = itemAt(id);
-
-    qDebug() << "looking for id" << id;
 
     if (item->recyclable()) {
       moveToPool(item->recyclingId(), cached.widget);

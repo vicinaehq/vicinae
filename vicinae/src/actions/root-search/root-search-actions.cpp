@@ -84,9 +84,8 @@ void DefaultActionWrapper::execute(ApplicationContext *ctx) {
   auto manager = ctx->services->rootItemManager();
 
   if (manager->registerVisit(m_id)) {
-    qDebug() << "Visit registered";
   } else {
-    qCritical() << "Failed to register visit";
+    qWarning() << "Failed to register root item visit";
   }
 
   m_action->execute(ctx);

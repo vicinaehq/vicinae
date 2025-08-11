@@ -14,7 +14,7 @@ public:
 
     ~CommandFrame() {
       context->unload();
-      qDebug() << "~CommandFrame";
+      qInfo() << "Unloading command" << command->uniqueId();
     }
   };
 

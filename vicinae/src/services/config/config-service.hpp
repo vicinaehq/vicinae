@@ -96,8 +96,6 @@ private:
   void handleDirectoryChanged(const QString &path) {}
 
   void handleFileChanged(const QString &path) {
-    qDebug() << "file changed" << path;
-
     if (path != m_configFile.c_str()) return;
 
     auto prev = m_config;
@@ -194,11 +192,11 @@ public:
     m_config = load();
 
     if (!m_watcher.addPath(Omnicast::configDir().c_str())) {
-      qCritical() << "Failed to watch config directory";
+      qWarning() << "Failed to watch config directory";
     }
 
     if (!m_watcher.addPath(m_configFile.c_str())) {
-      qCritical() << "Failed to watch config file at" << m_configFile;
+      qWarning() << "Failed to watch config file at" << m_configFile;
     }
 
     connect(&m_watcher, &QFileSystemWatcher::directoryChanged, this, &ConfigService::handleDirectoryChanged);

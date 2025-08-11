@@ -109,8 +109,6 @@ bool RootItemManager::upsertItem(const QString &providerId, const RootItem &item
 bool RootItemManager::upsertProvider(const RootProvider &provider) {
   QSqlQuery query = m_db.createQuery();
 
-  qDebug() << "upsertProvider" << provider.uniqueId();
-
   query.prepare(R"(
 		INSERT INTO 
 			root_provider (id) 
@@ -121,7 +119,7 @@ bool RootItemManager::upsertProvider(const RootProvider &provider) {
   query.bindValue(":id", provider.uniqueId());
 
   if (!query.exec()) {
-    qCritical() << "Failed to upsert provider with id" << provider.uniqueId() << query.lastError();
+    qWarning() << "Failed to upsert provider with id" << provider.uniqueId() << query.lastError();
     return false;
   }
 
@@ -409,7 +407,7 @@ QJsonObject RootItemManager::getPreferenceValues(const QString &id) const {
   auto it = std::ranges::find_if(m_items, [&](auto &&item) { return item->uniqueId() == id; });
 
   if (it == m_items.end()) {
-    qCritical() << "No item with id" << id;
+    qWarning() << "No item with id" << id;
     return {};
   }
 
@@ -435,12 +433,10 @@ QJsonObject RootItemManager::getPreferenceValues(const QString &id) const {
   }
 
   if (!query.next()) {
-    qDebug() << "No results";
+    qWarning() << "No results";
     return {};
   }
   auto rawJson = query.value(0).toString();
-
-  qDebug() << "raw preferences json" << rawJson;
 
   auto json = QJsonDocument::fromJson(rawJson.toUtf8());
   auto preferenceValues = json.object();
@@ -727,7 +723,7 @@ std::vector<RootProvider *> RootItemManager::providers() const {
 }
 
 void RootItemManager::removeProvider(const QString &id) {
-  if (pruneProvider(id)) { qCritical() << "pruned provider" << id; }
+  pruneProvider(id);
   std::erase_if(m_providers, [&](auto &&p) { return p->uniqueId() == id; });
   reloadProviders();
 }

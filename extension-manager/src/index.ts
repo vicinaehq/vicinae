@@ -46,9 +46,7 @@ class Omnicast {
 
 	private async handleManagerRequest(request: ipc.ManagerRequest) {
 		if (request.payload?.load) {
-			console.error('load command from extension manager');
 			const load = request.payload.load;
-
 			const sessionId = randomUUID();
 
 			const worker = new Worker(__filename, {
@@ -81,7 +79,6 @@ class Omnicast {
 			});
 
 			worker.on('online', () => {
-				console.error(`worker is online`);
 			});
 
 			worker.on('message', (buf: Buffer) => {
@@ -129,12 +126,10 @@ class Omnicast {
 			});
 
 			worker.on('error', (error) => { 
-				console.error(`error is of type ${typeof error}: instance of error ${error instanceof Error}`);
 				console.error(`worker error: ${error.name}:${error.message}`); 
 			});
 
 			worker.on('exit', (code) => {
-				console.error(`worker exited with code ${code}`)
 				this.workerMap.delete(sessionId);
 			});
 
@@ -164,8 +159,6 @@ class Omnicast {
 	private async routeMessage(message: ipc.IpcMessage) {
 		const { managerRequest, extensionEvent, extensionResponse } = message;
 
-		//console.error(JSON.stringify({ message }, null, 2));
-
 		if (managerRequest) {
 			this.handleManagerRequest(managerRequest);
 		}
@@ -173,8 +166,6 @@ class Omnicast {
 		if (extensionEvent) {
 			const worker = this.workerMap.get(extensionEvent.sessionId);
 
-			console.error('extension event', extensionEvent.event?.id, 'has worker', !!worker);
-			
 			if (worker) {
 				worker.postMessage(ipc.ExtensionMessage.encode({ event: extensionEvent.event }).finish());
 			}
@@ -212,7 +203,6 @@ class Omnicast {
 	}
 
 	constructor() {
-		console.error('init extman');
 		process.stdin.on('error', (error) => {
 			throw new Error(`${error}`);
 		});

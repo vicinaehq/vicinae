@@ -47,8 +47,6 @@ bool WlrClipboardServer::start() {
   connect(process, &QProcess::finished, this, &WlrClipboardServer::handleExit);
   process->start("omni-wlr-clip", {});
 
-  qDebug() << "start WlrClipboardManager";
-
   return process;
 }
 
@@ -56,13 +54,10 @@ void WlrClipboardServer::handleRead() {
   auto array = process->readAllStandardOutput();
   auto _buf = array.constData();
 
-  qDebug() << "reading" << array.size();
-
   _message.insert(_message.end(), _buf, _buf + array.size());
 
   if (_messageLength == 0 && _message.size() > sizeof(uint32_t)) {
     _messageLength = ntohl(*reinterpret_cast<uint32_t *>(_message.data()));
-    qDebug() << "message of length" << _messageLength;
     _message.erase(_message.begin(), _message.begin() + sizeof(uint32_t));
   }
 
@@ -71,7 +66,7 @@ void WlrClipboardServer::handleRead() {
     proto::ext::wlrclip::Selection selection;
 
     if (!selection.ParseFromString(data)) {
-      qCritical() << "Failed to parse selection";
+      qWarning() << "Failed to parse selection";
     } else {
       handleMessage(selection);
     }

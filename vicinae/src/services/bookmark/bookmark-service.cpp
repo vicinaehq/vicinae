@@ -121,7 +121,4 @@ bool BookmarkService::createBookmark(const QString &name, const QString &icon, c
   return true;
 }
 
-BookmarkService::BookmarkService(OmniDatabase &db) : m_db(db) {
-  m_bookmarks = loadAll();
-  qCritical() << "loaded" << m_bookmarks.size() << "bookmarks";
-}
+BookmarkService::BookmarkService(OmniDatabase &db) : m_db(db) { m_bookmarks = loadAll(); }
