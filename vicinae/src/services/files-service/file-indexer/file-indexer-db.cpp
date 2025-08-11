@@ -210,7 +210,7 @@ std::vector<FileIndexerDatabase::ScanRecord> FileIndexerDatabase::listScans() {
 std::vector<FileIndexerDatabase::ScanRecord> FileIndexerDatabase::listStartedScans() {
   QSqlQuery query(m_db);
 
-  query.prepare("SELECT id, status, created_at, entrypoint FROM scan_history WHERE status = :status");
+  query.prepare("SELECT id, status, created_at, entrypoint, type FROM scan_history WHERE status = :status");
   query.bindValue(":status", static_cast<quint8>(ScanStatus::Started));
 
   if (!query.exec()) {
