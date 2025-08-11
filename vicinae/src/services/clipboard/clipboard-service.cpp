@@ -311,6 +311,14 @@ QString ClipboardService::getOfferTextPreview(const ClipboardDataOffer &offer) {
   return "Unnamed";
 }
 
+std::optional<QString> ClipboardService::retrieveKeywords(const QString &id) {
+  return ClipboardDatabase().retrieveKeywords(id);
+}
+
+bool ClipboardService::setKeywords(const QString &id, const QString &keywords) {
+  return ClipboardDatabase().setKeywords(id, keywords);
+}
+
 void ClipboardService::saveSelection(ClipboardSelection selection) {
   if (!m_monitoring || !m_isEncryptionReady) return;
 

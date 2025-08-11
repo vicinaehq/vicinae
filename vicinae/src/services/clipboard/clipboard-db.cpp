@@ -115,6 +115,41 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::listAll(int limit, i
   return response;
 }
 
+std::optional<QString> ClipboardDatabase::retrieveKeywords(const QString &id) {
+  QSqlQuery query(m_db);
+
+  query.prepare("SELECT keywords FROM selection WHERE id = :id");
+  query.bindValue(":id", id);
+
+  if (!query.exec()) {
+    qWarning() << "Failed to get keywords for selection" << id << query.lastError();
+    return std::nullopt;
+  }
+
+  if (!query.next()) return std::nullopt;
+
+  return query.value(0).toString();
+}
+
+bool ClipboardDatabase::setKeywords(const QString &id, const QString &keywords) {
+  return transaction([&](auto db) {
+    QSqlQuery query(m_db);
+
+    query.prepare("UPDATE selection SET keywords = :keywords WHERE id = :id");
+    query.bindValue(":id", id);
+    query.bindValue(":keywords", keywords);
+
+    if (!query.exec()) {
+      qWarning() << "Failed to set keywords for id" << id << query.lastError();
+      return false;
+    }
+
+    indexSelectionContent(id, keywords);
+
+    return true;
+  });
+}
+
 bool ClipboardDatabase::removeAll() {
   QSqlQuery query(m_db);
 

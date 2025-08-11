@@ -88,6 +88,9 @@ public:
 
   bool removeAll();
 
+  bool setKeywords(const QString &id, const QString &keywords);
+  std::optional<QString> retrieveKeywords(const QString &id);
+
   bool setPinned(const QString &id, bool pinned);
   /**
    * Tries to take an existing selection and update its created_at date

@@ -91,6 +91,9 @@ public:
 
   bool removeAllSelections();
 
+  std::optional<QString> retrieveKeywords(const QString &id);
+  bool setKeywords(const QString &id, const QString &keywords);
+
   QByteArray decryptMainSelectionOffer(const QString &selectionId) const;
   AbstractClipboardServer *clipboardServer() const;
   bool removeSelection(const QString &id);

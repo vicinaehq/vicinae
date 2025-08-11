@@ -2,6 +2,7 @@
 #include "navigation-controller.hpp"
 #include "services/clipboard/clipboard-db.hpp"
 #include "ui/alert/alert.hpp"
+#include "ui/action-pannel/push-action.hpp"
 #include "ui/views/base-view.hpp"
 #include "clipboard-actions.hpp"
 #include "settings/command-metadata-settings-detail.hpp"
@@ -9,6 +10,7 @@
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "ui/form/selector-input.hpp"
 #include "ui/selectable-omni-list-widget/selectable-omni-list-widget.hpp"
+#include "ui/views/form-view.hpp"
 #include "utils/layout.hpp"
 #include "ui/empty-view/empty-view.hpp"
 #include "common.hpp"
@@ -260,6 +262,51 @@ public:
       : AbstractAction(value ? "Pin" : "Unpin", ImageURL::builtin("pin")), _id(id), _value(value) {}
 };
 
+class EditClipboardSelectionKeywordsView : public FormView {
+  FormWidget *m_form = new FormWidget;
+  BaseInput *m_keywords = new BaseInput;
+  QString m_selectionId;
+
+  void onActivate() override { m_form->focusFirst(); }
+
+  void onSubmit() override {
+    auto clipman = context()->services->clipman();
+    auto toast = context()->services->toastService();
+
+    if (clipman->setKeywords(m_selectionId, m_keywords->text())) {
+      toast->setToast("Keywords edited", ToastPriority::Success);
+      popSelf();
+    } else {
+      toast->setToast("Failed to edit keywords", ToastPriority::Danger);
+    }
+  }
+
+  void initializeForm() override {
+    auto clipman = context()->services->clipman();
+
+    m_keywords->setText(clipman->retrieveKeywords(m_selectionId).value_or(""));
+  }
+
+public:
+  EditClipboardSelectionKeywordsView(const QString &id) : m_selectionId(id) {
+    auto inputField = new FormField();
+
+    inputField->setWidget(m_keywords);
+    inputField->setName("Keywords");
+
+    m_form->addField(inputField);
+    setupUI(m_form);
+  }
+};
+
+class EditClipboardKeywordsAction : public PushAction<EditClipboardSelectionKeywordsView, QString> {
+  QString title() const override { return "Edit keywords"; }
+  ImageURL icon() const override { return ImageURL::builtin("text"); }
+
+public:
+  EditClipboardKeywordsAction(const QString &id) : PushAction(id) {}
+};
+
 class RemoveAllSelectionsAction : public AbstractAction {
   void execute(ApplicationContext *ctx) override {
     auto alert = new CallbackAlertWidget();
@@ -296,9 +343,12 @@ public:
     auto wm = ctx->services->windowManager();
     auto pin = new PinClipboardAction(info.id, !info.pinnedAt);
     auto copyToClipboard = new CopyClipboardSelection(info.id);
+    auto editKeywords = new EditClipboardKeywordsAction(info.id);
     auto remove = new RemoveSelectionAction(info.id);
     auto removeAll = new RemoveAllSelectionsAction();
     auto mainSection = panel->createSection();
+
+    editKeywords->setShortcut({.key = "E", .modifiers = {"ctrl"}});
 
     remove->setStyle(AbstractAction::Danger);
     remove->setShortcut({.key = "X", .modifiers = {"ctrl"}});
@@ -324,6 +374,7 @@ public:
     auto dangerSection = panel->createSection();
 
     toolsSection->addAction(pin);
+    toolsSection->addAction(editKeywords);
     dangerSection->addAction(remove);
     dangerSection->addAction(removeAll);
 

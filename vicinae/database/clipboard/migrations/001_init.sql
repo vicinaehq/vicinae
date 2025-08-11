@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS selection (
 	updated_at INTEGER DEFAULT (unixepoch()), -- updated when the same selection is reselected
 	pinned_at INTEGER,
 	kind INTEGER,
-	tags JSON DEFAULT '[]'
+	keywords TEXT DEFAULT '' -- additional user defined text to index
 );
 
 CREATE TABLE IF NOT EXISTS data_offer (
