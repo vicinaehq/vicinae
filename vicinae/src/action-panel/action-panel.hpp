@@ -461,10 +461,7 @@ public:
     setLayout(m_layout);
   }
 
-  ~ActionPanelV2Widget() {
-    popToRoot();
-    qDebug() << "~ActionPanelV2Widget";
-  }
+  ~ActionPanelV2Widget() { popToRoot(); }
 
 signals:
   void actionActivated(AbstractAction *action) const;

@@ -32,7 +32,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
   m_hud = new HudWidget;
   m_header = new GlobalHeader(*m_ctx.navigation);
   m_bar = new GlobalBar(m_ctx);
-  m_actionPanel = new ActionPanelV2Widget(this);
+  m_actionPanel = new ActionPanelV2Widget();
   m_dialog = new DialogWidget(this);
   m_currentView = new QStackedWidget(this);
   m_currentViewWrapper = new QStackedWidget(this);
@@ -212,6 +212,8 @@ void LauncherWindow::handleActionVisibilityChanged(bool visible) {
     m_actionPanel->show();
     return;
   }
+
+  qDebug() << "close panel";
 
   m_actionPanel->close();
 }

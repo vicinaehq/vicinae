@@ -32,19 +32,4 @@ Popover::Popover(QWidget *parent) : QWidget(parent) {
   setAttribute(Qt::WA_TranslucentBackground);
 }
 
-void Popover::resizeEvent(QResizeEvent *event) {
-  QWidget::resizeEvent(event);
-  // recomputeWallpaper();
-}
-
-void Popover::recomputeWallpaper() {
-  QPixmap pix("/home/aurelle/Downloads/sequoia.jpg");
-  QPixmap wp(size());
-  {
-    OmniPainter painter(&wp);
-
-    wp.fill(Qt::transparent);
-    painter.drawBlurredPixmap(pix.scaled(size(), {}, Qt::SmoothTransformation), 30);
-  }
-  _wallpaper = wp;
-}
+void Popover::resizeEvent(QResizeEvent *event) { QWidget::resizeEvent(event); }

@@ -13,17 +13,27 @@ get_git_tag(GIT_TAG)
 add_compile_definitions(VICINAE_GIT_TAG="${GIT_TAG}")
 add_compile_definitions(VICINAE_GIT_COMMIT_HASH="${GIT_COMMIT}")
 
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+endif()
+
+message(STATUS "Configured build type ${CMAKE_BUILD_TYPE}")
+
+set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Debug Release ReleaseHost)
+
 find_program(CCACHE ccache)
 
 if (CCACHE) 
 	#set(CMAKE_CXX_COMPILER_LAUNCHER "ccache")
 endif()
 
-if ("$ENV{DIST_TYPE}" STREQUAL "generic")
-	message(STATUS "DIST_TYPE=generic, won't apply local optimizations")
-else()
-	add_compile_options(-march=native -g3)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+	add_compile_options(-g3)
+elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+elseif(CMAKE_BUILD_TYPE STREQUAL "ReleaseHost")
+	add_compile_options(-march=native)
 endif()
+
 
 #add_subdirectory(omnictl)
 add_subdirectory(vicinae)

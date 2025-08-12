@@ -259,23 +259,6 @@ int startDaemon() {
 
   FaviconService::initialize(new FaviconService(Omnicast::dataDir() / "favicon"));
 
-  /*
-  app.createWinId();
-
-#ifdef WAYLAND_LAYER_SHELL
-  qDebug() << "Initializing layer shell surface";
-  if (auto lshell = LayerShellQt::Window::get(app.windowHandle())) {
-    lshell->setLayer(LayerShellQt::Window::LayerOverlay);
-    lshell->setScope("omnicast");
-    lshell->setKeyboardInteractivity(LayerShellQt::Window::KeyboardInteractivityExclusive);
-    lshell->setExclusiveZone(-1);
-    lshell->setAnchors(LayerShellQt::Window::AnchorNone);
-  } else {
-    qCritical() << "Unable apply layer shell rules to main window: LayerShellQt::Window::get() returned null";
-  }
-#endif
-  */
-
   QObject::connect(ServiceRegistry::instance()->config(), &ConfigService::configChanged,
                    [](const ConfigService::Value &next, const ConfigService::Value &prev) {
                      if (next.theme.name.value_or("") != prev.theme.name.value_or("")) {
@@ -319,6 +302,20 @@ int startDaemon() {
 
   SettingsWindow settings(&ctx);
   LauncherWindow launcher(ctx);
+
+#ifdef WAYLAND_LAYER_SHELL
+  launcher.createWinId();
+  qDebug() << "Initializing layer shell surface";
+  if (auto lshell = LayerShellQt::Window::get(launcher.windowHandle())) {
+    lshell->setLayer(LayerShellQt::Window::LayerOverlay);
+    lshell->setScope("vicinae");
+    lshell->setKeyboardInteractivity(LayerShellQt::Window::KeyboardInteractivityExclusive);
+    lshell->setExclusiveZone(-1);
+    lshell->setAnchors(LayerShellQt::Window::AnchorNone);
+  } else {
+    qCritical() << "Unable apply layer shell rules to main window: LayerShellQt::Window::get() returned null";
+  }
+#endif
 
   launcher.show();
 

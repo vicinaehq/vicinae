@@ -29,9 +29,10 @@ gen-emoji:
 
 clean:
 	rm -rf $(BUILD_DIR)
-	find -type d -name 'node_modules' -exec $(RM) -rf {} \;
+	$(RM) -rf ./api/node_modules
 	$(RM) -rf ./api/dist
 	$(RM) -rf ./extension-manager/dist/
+	$(RM) -rf ./extension-manager/node_modules
 	$(RM) -rf ./scripts/.tmp
 .PHONY: clean
 
