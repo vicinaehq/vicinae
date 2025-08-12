@@ -451,8 +451,10 @@ void OmniList::setSelected(SelectionPolicy policy) {
     }
     break;
   case PreserveSelection: {
-    int targetIndex = std::clamp(m_selected, 0, (int)m_items.size() - 1);
+    int targetIndex = m_selected;
     int distance = 0;
+
+    if (m_selected >= m_items.size()) { targetIndex = m_items.empty() ? -1 : m_items.size() - 1; }
 
     for (;;) {
       int lowTarget = targetIndex - distance;
