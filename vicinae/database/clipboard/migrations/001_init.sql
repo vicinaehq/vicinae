@@ -51,3 +51,13 @@ CREATE INDEX IF NOT EXISTS idx_selection_preferred_mime
 ON selection(
 	preferred_mime_type
 );
+
+-- always delete indexed content when a selection gets deleted
+-- content insertion is done programatically as it depends on the actual selection content
+-- which is not stored in database.
+CREATE TRIGGER selection_ad AFTER DELETE ON selection BEGIN
+  DELETE FROM selection_fts WHERE selection_id = old.id;END;
+
+-- keep keyword index in sync
+CREATE TRIGGER selection_auk AFTER UPDATE OF keywords ON selection BEGIN
+DELETE FROM selection_fts WHERE selection_id = old.id AND content = old.keywords; INSERT INTO selection_fts (selection_id, content) VALUES (new.id, new.keywords); END;

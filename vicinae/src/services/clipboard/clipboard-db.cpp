@@ -144,8 +144,6 @@ bool ClipboardDatabase::setKeywords(const QString &id, const QString &keywords) 
       return false;
     }
 
-    indexSelectionContent(id, keywords);
-
     return true;
   });
 }
@@ -187,15 +185,6 @@ std::vector<QString> ClipboardDatabase::removeSelection(const QString &selection
 
   if (!query.exec()) {
     qDebug() << "failed to execute selecton deletion" << query.lastError();
-    m_db.rollback();
-    return {};
-  }
-
-  query.prepare("DELETE FROM selection_fts WHERE selection_id = :id");
-  query.bindValue(":id", selectionId);
-
-  if (!query.exec()) {
-    qCritical() << "Failed to remove selection from FTS" << query.lastError();
     m_db.rollback();
     return {};
   }
