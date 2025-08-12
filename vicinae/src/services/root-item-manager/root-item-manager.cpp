@@ -743,11 +743,18 @@ void RootItemManager::removeProvider(const QString &id) {
 void RootItemManager::addProvider(std::unique_ptr<RootProvider> provider) {
   auto items = provider->loadItems();
 
-  if (!upsertProvider(*provider.get())) return;
+  if (!m_db.db().transaction()) { qWarning() << "Failed to start upsert transaction"; }
+
+  if (!upsertProvider(*provider.get())) {
+    m_db.db().rollback();
+    return;
+  }
 
   m_items.insert(m_items.end(), items.begin(), items.end());
 
   std::ranges::for_each(items, [&](const auto &item) { upsertItem(provider->uniqueId(), *item.get()); });
+
+  m_db.db().commit();
 
   auto preferences = getProviderPreferenceValues(provider->uniqueId());
 
