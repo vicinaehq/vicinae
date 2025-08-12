@@ -94,8 +94,8 @@ set(SRCS
 
 	src/root-search/extensions/extension-root-provider.hpp
 	src/root-search/extensions/extension-root-provider.cpp
-	src/root-search/bookmarks/bookmark-root-provider.hpp
-	src/root-search/bookmarks/bookmark-root-provider.cpp
+	src/root-search/shortcuts/shortcut-root-provider.hpp
+	src/root-search/shortcuts/shortcut-root-provider.cpp
 	src/root-search/apps/app-root-provider.hpp
 	src/root-search/apps/app-root-provider.cpp
 	
@@ -103,10 +103,10 @@ set(SRCS
 	src/extension/manager/extension-manager.cpp
 
 	# Bookmark - Start
-	src/services/bookmark/bookmark-service.hpp
-	src/services/bookmark/bookmark-service.cpp
-	src/services/bookmark/bookmark.hpp
-	src/services/bookmark/bookmark.cpp
+	src/services/shortcut/shortcut-service.hpp
+	src/services/shortcut/shortcut-service.cpp
+	src/services/shortcut/shortcut.hpp
+	src/services/shortcut/shortcut.cpp
 
 	src/actions/theme/theme-actions.hpp
 	src/actions/theme/theme-actions.cpp

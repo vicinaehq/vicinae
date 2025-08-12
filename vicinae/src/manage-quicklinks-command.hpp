@@ -1,10 +1,12 @@
 #pragma once
+#include "actions/shortcut/shortcut-actions.hpp"
 #include "ui/search-bar/search-bar.hpp"
 #include "common.hpp"
-#include "services/bookmark/bookmark-service.hpp"
+#include "services/shortcut/shortcut-service.hpp"
 #include "extend/metadata-model.hpp"
 #include "service-registry.hpp"
-#include "services/bookmark/bookmark.hpp"
+#include "services/app-service/app-service.hpp"
+#include "services/shortcut/shortcut.hpp"
 #include "ui/horizontal-metadata.hpp"
 #include "ui/omni-list/omni-list.hpp"
 #include "ui/scroll-bar/scroll-bar.hpp"
@@ -21,6 +23,7 @@
 #include <sys/socket.h>
 #include <qscrollarea.h>
 #include "ui/views/list-view.hpp"
+#include "utils/layout.hpp"
 
 class DetailWithMetadataWidget : public QWidget {
   HorizontalMetadata *m_metadata = new HorizontalMetadata;
@@ -79,19 +82,19 @@ public:
   DetailWithMetadataWidget(QWidget *parent = nullptr) : QWidget(parent) { setupUI(); }
 };
 
-class BookmarkDetailWidget : public DetailWithMetadataWidget {
+class ShortcutDetailWidget : public DetailWithMetadataWidget {
   TypographyWidget *m_expandedLink = new TypographyWidget(this);
-  std::shared_ptr<Bookmark> m_bookmark;
+  std::shared_ptr<Shortcut> m_shortcut;
 
-  QString expandLink(const Bookmark &bookmark, const std::vector<QString> &arguments) {
+  QString expandLink(const Shortcut &shortcut, const std::vector<QString> &arguments) {
     auto appDb = ServiceRegistry::instance()->appDb();
     QString expanded;
     size_t argumentIndex = 0;
 
-    for (const auto &part : m_bookmark->parts()) {
+    for (const auto &part : m_shortcut->parts()) {
       if (auto s = std::get_if<QString>(&part)) {
         expanded += *s;
-      } else if (auto placeholder = std::get_if<Bookmark::ParsedPlaceholder>(&part)) {
+      } else if (auto placeholder = std::get_if<Shortcut::ParsedPlaceholder>(&part)) {
         if (placeholder->id == "clipboard") {
           expanded += QApplication::clipboard()->text();
         } else if (placeholder->id == "selected") {
@@ -108,61 +111,63 @@ class BookmarkDetailWidget : public DetailWithMetadataWidget {
   }
 
 public:
-  void setBookmark(const std::shared_ptr<Bookmark> &bookmark) {
-    m_bookmark = bookmark;
+  void setShortcut(const std::shared_ptr<Shortcut> &shortcut) {
+    auto appDb = ServiceRegistry::instance()->appDb();
+    std::vector<MetadataItem> meta;
+
+    m_shortcut = shortcut;
 
     auto name = MetadataLabel{
-        .text = m_bookmark->name(),
+        .text = m_shortcut->name(),
         .title = "Name",
     };
-    auto app = MetadataLabel{
-        .text = m_bookmark->app(),
-        .title = "Application",
-    };
-    auto opened = MetadataLabel{
-        .text = QString::number(0),
-        .title = "Opened",
-    };
 
-    setMetadata({name, app, opened});
-    m_expandedLink->setText(expandLink(*m_bookmark.get(), {}));
+    meta.emplace_back(name);
+
+    if (auto app = appDb->findById(shortcut->app())) {
+      meta.emplace_back(MetadataLabel{
+          .text = app->name(),
+          .title = "Application",
+          .icon = app->iconUrl(),
+      });
+    }
+
+    meta.emplace_back(MetadataLabel{
+        .text = QString::number(m_shortcut->openCount()),
+        .title = "Opened",
+    });
+
+    meta.emplace_back(MetadataLabel{
+        .text = m_shortcut->lastOpenedAt() ? m_shortcut->lastOpenedAt()->toString() : "Never",
+        .title = "Last Opened",
+    });
+
+    meta.emplace_back(MetadataLabel{
+        .text = m_shortcut->createdAt().toString(),
+        .title = "Created at",
+    });
+
+    setMetadata(meta);
+    m_expandedLink->setText(expandLink(*m_shortcut.get(), {}));
   }
 
   void updateArguments(const std::vector<QString> &arguments) {
-    m_expandedLink->setText(expandLink(*m_bookmark.get(), arguments));
+    m_expandedLink->setText(expandLink(*m_shortcut.get(), arguments));
   }
 
-  BookmarkDetailWidget(QWidget *parent = nullptr) {
+  ShortcutDetailWidget(QWidget *parent = nullptr) {
     m_expandedLink->setWordWrap(true);
     m_expandedLink->setAlignment(Qt::AlignLeft | Qt::AlignTop);
-    setContent(m_expandedLink);
+
+    setContent(VStack().add(m_expandedLink).margins(10).buildWidget());
   }
 };
 
 class QuicklinkItem : public AbstractDefaultListItem, public ListView::Actionnable {
-  std::shared_ptr<Bookmark> link;
+  std::shared_ptr<Shortcut> link;
 
 public:
-  const std::shared_ptr<Bookmark> &bookmark() const { return link; }
-
-  /*
-  ActionPanelView *actionPanel() const override {
-    auto panel = new ActionPanelStaticListView;
-
-    auto open = new OpenCompletedBookmarkAction(link);
-    auto edit = new EditBookmarkAction(link);
-    auto duplicate = new DuplicateBookmarkAction(link);
-    auto remove = new RemoveBookmarkAction(link);
-
-    panel->addAction(open);
-    panel->addAction(edit);
-    panel->addAction(duplicate);
-    panel->addSection();
-    panel->addAction(remove);
-
-    return panel;
-  }
-  */
+  const std::shared_ptr<Shortcut> &shortcut() const { return link; }
 
   std::unique_ptr<CompleterData> createCompleter() const override {
     ArgumentList args;
@@ -182,6 +187,32 @@ public:
     });
   }
 
+  std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
+    auto panel = std::make_unique<ActionPanelState>();
+    auto mainSection = panel->createSection();
+    auto itemSection = panel->createSection();
+    auto dangerSection = panel->createSection();
+
+    auto open = new OpenCompletedShortcutAction(link);
+    auto edit = new EditShortcutAction(link);
+    auto duplicate = new DuplicateShortcutAction(link);
+    auto remove = new RemoveShortcutAction(link);
+
+    open->setPrimary(true);
+    open->setShortcut({.key = "return"});
+    duplicate->setShortcut({.key = "N", .modifiers = {"ctrl"}});
+    edit->setShortcut({.key = "E", .modifiers = {"ctrl"}});
+    remove->setShortcut({.key = "X", .modifiers = {"ctrl"}});
+
+    panel->setTitle(link->name());
+    mainSection->addAction(open);
+    mainSection->addAction(edit);
+    mainSection->addAction(duplicate);
+    dangerSection->addAction(remove);
+
+    return panel;
+  }
+
   ItemData data() const override {
     return {
         .iconUrl = link->icon(),
@@ -190,24 +221,24 @@ public:
   }
 
   QWidget *generateDetail() const override {
-    auto widget = new BookmarkDetailWidget;
+    auto widget = new ShortcutDetailWidget;
 
-    widget->setBookmark(link);
+    widget->setShortcut(link);
 
     return widget;
   }
 
-  QString generateId() const override { return QString::number(link->id()); }
+  QString generateId() const override { return link->id(); }
 
 public:
-  QuicklinkItem(const std::shared_ptr<Bookmark> &link) : link(link) {}
+  QuicklinkItem(const std::shared_ptr<Shortcut> &link) : link(link) {}
 };
 
-class ManageBookmarksView : public ListView {
+class ManageShortcutsView : public ListView {
   void renderList(const QString &s, OmniList::SelectionPolicy policy = OmniList::SelectFirst) {
-    auto bookmarkService = ServiceRegistry::instance()->bookmarks();
-    auto bookmarks =
-        bookmarkService->bookmarks() |
+    auto shortcutService = ServiceRegistry::instance()->shortcuts();
+    auto shortcuts =
+        shortcutService->shortcuts() |
         std::views::filter([s](auto bk) { return bk->name().contains(s, Qt::CaseInsensitive); }) |
         std::views::transform([](auto bk) -> std::unique_ptr<OmniList::AbstractVirtualItem> {
           return std::make_unique<QuicklinkItem>(bk);
@@ -216,40 +247,44 @@ class ManageBookmarksView : public ListView {
 
     m_list->updateModel(
         [&]() {
-          auto &section = m_list->addSection("Bookmarks");
+          auto &section = m_list->addSection("Shortcuts");
 
-          section.addItems(std::move(bookmarks));
+          section.addItems(std::move(shortcuts));
         },
         policy);
   }
 
   void itemSelected(const OmniList::AbstractVirtualItem *item) override {}
 
-  void onBookmarkRemoved() { renderList(searchText(), OmniList::PreserveSelection); }
+  void onShortcutRemoved() { renderList(searchText(), OmniList::PreserveSelection); }
 
-  void onBookmarkSaved() { renderList(searchText(), OmniList::PreserveSelection); }
+  void onShortcutSaved() { renderList(searchText(), OmniList::PreserveSelection); }
+
+  void onShortcutUpdated() { renderList(searchText(), OmniList::PreserveSelection); }
 
   void textChanged(const QString &s) override { renderList(s); }
 
-  void initialize() override { textChanged(""); }
+  void initialize() override {
+    setSearchPlaceholderText("Search shortcuts...");
+    textChanged("");
+  }
 
   void argumentValuesChanged(const std::vector<std::pair<QString, QString>> &args) override {
     auto values = args | std::views::transform([](auto &&pair) { return pair.second; }) |
                   std::ranges::to<std::vector>();
-    if (auto bookmarkDetail = dynamic_cast<BookmarkDetailWidget *>(detail())) {
-      bookmarkDetail->updateArguments(values);
+    if (auto shortcutDetail = dynamic_cast<ShortcutDetailWidget *>(detail())) {
+      shortcutDetail->updateArguments(values);
     }
   }
 
 public:
-  ManageBookmarksView() {
-    auto bookmarkService = ServiceRegistry::instance()->bookmarks();
+  ManageShortcutsView() {
+    auto shortcutService = ServiceRegistry::instance()->shortcuts();
 
-    setSearchPlaceholderText("Search bookmarks...");
-    setNavigationTitle("Search Bookmarks");
-
-    connect(bookmarkService, &BookmarkService::bookmarkSaved, this, &ManageBookmarksView::onBookmarkSaved);
-    connect(bookmarkService, &BookmarkService::bookmarkRemoved, this,
-            &ManageBookmarksView::onBookmarkRemoved);
+    connect(shortcutService, &ShortcutService::shortcutSaved, this, &ManageShortcutsView::onShortcutSaved);
+    connect(shortcutService, &ShortcutService::shortcutUpdated, this,
+            &ManageShortcutsView::onShortcutUpdated);
+    connect(shortcutService, &ShortcutService::shortcutRemoved, this,
+            &ManageShortcutsView::onShortcutRemoved);
   }
 };

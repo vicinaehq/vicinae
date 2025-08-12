@@ -14,7 +14,7 @@ class FontService;
 class RootItemManager;
 class RootExtensionManager;
 class ConfigService;
-class BookmarkService;
+class ShortcutService;
 class ToastService;
 class EmojiService;
 class CalculatorService;
@@ -36,7 +36,7 @@ class ServiceRegistry : public QObject {
   std::unique_ptr<RootItemManager> m_rootItemManager;
   std::unique_ptr<RootExtensionManager> m_rootExtMan;
   std::unique_ptr<ConfigService> m_config;
-  std::unique_ptr<BookmarkService> m_bookmarkService;
+  std::unique_ptr<ShortcutService> m_shortcutService;
   std::unique_ptr<ToastService> m_toastService;
   std::unique_ptr<EmojiService> m_emojiService;
   std::unique_ptr<CalculatorService> m_calculatorService;
@@ -60,7 +60,7 @@ public:
   ClipboardService *clipman() const;
   AppService *appDb() const;
   ToastService *toastService() const;
-  BookmarkService *bookmarks() const;
+  ShortcutService *shortcuts() const;
   FileService *fileService() const;
   RaycastStoreService *raycastStore() const;
   ExtensionRegistry *extensionRegistry() const;
@@ -71,7 +71,7 @@ public:
   void setRaycastStore(std::unique_ptr<RaycastStoreService> service);
   void setOAuthService(std::unique_ptr<OAuthService> service);
   void setConfig(std::unique_ptr<ConfigService> cfg);
-  void setBookmarkService(std::unique_ptr<BookmarkService> service);
+  void setShortcutService(std::unique_ptr<ShortcutService> service);
   void setCalculatorService(std::unique_ptr<CalculatorService> service);
   void setExtensionRegistry(std::unique_ptr<ExtensionRegistry> service);
   void setFileService(std::unique_ptr<FileService> service);

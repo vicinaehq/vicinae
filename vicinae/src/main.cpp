@@ -10,7 +10,7 @@
 #include "services/app-service/app-service.hpp"
 #include "command-database.hpp"
 #include "root-search/apps/app-root-provider.hpp"
-#include "services/bookmark/bookmark-service.hpp"
+#include "services/shortcut/shortcut-service.hpp"
 #include <QApplication>
 #include "services/calculator-service/calculator-service.hpp"
 #include "services/clipboard/clipboard-service.hpp"
@@ -53,7 +53,7 @@
 #include "services/raycast/raycast-store.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "root-search/apps/app-root-provider.hpp"
-#include "root-search/bookmarks/bookmark-root-provider.hpp"
+#include "root-search/shortcuts/shortcut-root-provider.hpp"
 #include "service-registry.hpp"
 #include "services/toast/toast-service.hpp"
 #include "settings-controller/settings-controller.hpp"
@@ -172,7 +172,7 @@ int startDaemon() {
     auto fontService = std::make_unique<FontService>();
     auto appService = std::make_unique<AppService>(*omniDb.get());
     auto configService = std::make_unique<ConfigService>();
-    auto bookmarkService = std::make_unique<BookmarkService>(*omniDb.get());
+    auto shortcutService = std::make_unique<ShortcutService>(*omniDb.get());
     auto toastService = std::make_unique<ToastService>();
     auto currentConfig = configService->value();
     auto rootExtMan = std::make_unique<RootExtensionManager>(*rootItemManager.get(), *commandDb.get());
@@ -202,7 +202,7 @@ int startDaemon() {
 
     registry->setFileService(std::move(fileService));
     registry->setToastService(std::move(toastService));
-    registry->setBookmarkService(std::move(bookmarkService));
+    registry->setShortcutService(std::move(shortcutService));
     registry->setConfig(std::move(configService));
     registry->setRootItemManager(std::move(rootItemManager));
     registry->setCalculatorService(std::move(calculatorService));
@@ -254,7 +254,7 @@ int startDaemon() {
     // this one needs to be set last
 
     registry->rootItemManager()->addProvider(std::make_unique<AppRootProvider>(*registry->appDb()));
-    registry->rootItemManager()->addProvider(std::make_unique<BookmarkRootProvider>(*registry->bookmarks()));
+    registry->rootItemManager()->addProvider(std::make_unique<ShortcutRootProvider>(*registry->shortcuts()));
   }
 
   FaviconService::initialize(new FaviconService(Omnicast::dataDir() / "favicon"));

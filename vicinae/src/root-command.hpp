@@ -322,8 +322,8 @@ class RootSearchView : public ListView {
         section.addItem(std::move(item));
     }
 
-    if (auto provider = rootManager->provider("bookmarks")) {
-      auto &section = m_list->addSection("Bookmarks");
+    if (auto provider = rootManager->provider("shortcuts")) {
+      auto &section = m_list->addSection("Shortcuts");
 
       auto items = provider->loadItems() | std::views::transform([](const auto &item) {
                      return std::make_unique<RootSearchItem>(item);
@@ -447,6 +447,7 @@ class RootSearchView : public ListView {
   }
 
   void handleItemChange() {
+    qDebug() << "item changed";
     if (isVisible()) textChanged(searchText());
   }
 

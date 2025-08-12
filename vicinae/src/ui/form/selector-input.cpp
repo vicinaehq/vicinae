@@ -168,7 +168,7 @@ QString SelectorInput::searchText() { return m_searchField->text(); }
 void SelectorInput::updateItem(const QString &id, const UpdateItemCallback &cb) {
   m_list->updateItem(id,
                      [&cb](OmniList::AbstractVirtualItem *item) { cb(static_cast<AbstractItem *>(item)); });
-  if (_currentSelection->generateId() == id) { setValue(id); }
+  if (_currentSelection && _currentSelection->generateId() == id) { setValue(id); }
 }
 
 const SelectorInput::AbstractItem *SelectorInput::value() const { return _currentSelection.get(); }

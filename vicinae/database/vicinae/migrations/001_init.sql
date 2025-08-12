@@ -1,12 +1,28 @@
-CREATE TABLE IF NOT EXISTS bookmarks (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
+CREATE TABLE IF NOT EXISTS shortcut (
+		id TEXT PRIMARY KEY,
 		name TEXT NOT NULL,
 		icon TEXT NOT NULL,
 		url TEXT NOT NULL,
 		app TEXT NOT NULL,
 		open_count INTEGER DEFAULT 0,
 		created_at INTEGER DEFAULT (unixepoch()),
+		updated_at INTEGER DEFAULT (unixepoch()),
 		last_used_at INTEGER
+);
+
+-- no used yet, but planned
+CREATE TABLE IF NOT EXISTS shortcut_tag (
+	id TEXT PRIMARY KEY,
+	name TEXT NOT NULL,
+	color INT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS shortcut_tag_shortcut (
+	shortcut_id TEXT NOT NULL,
+	tag_id TEXT NOT NULL,
+	PRIMARY KEY (shortcut_id, tag_id),
+	FOREIGN KEY (shortcut_id) REFERENCES shortcut(id),
+	FOREIGN KEY (tag_id) REFERENCES shortcut_tag(id)
 );
 
 CREATE TABLE IF NOT EXISTS root_provider (
@@ -37,12 +53,11 @@ CREATE TABLE IF NOT EXISTS root_provider_item (
 
 -- local storage
 CREATE TABLE IF NOT EXISTS storage_data_item (
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	namespace_id TEXT NOT NULL,
 	value_type INT NOT NULL,
 	key TEXT NOT NULL,
 	value TEXT NOT NULL,
-	UNIQUE(namespace_id, key)
+	PRIMARY KEY(namespace_id, key)
 );
 
 CREATE TABLE IF NOT EXISTS calculator_history (
@@ -60,12 +75,4 @@ CREATE TABLE IF NOT EXISTS visited_emoji (
 	last_visited_at INTEGER,
 	visit_count INTEGER DEFAULT 0,
 	custom_keywords TEXT
-);
-
-CREATE TABLE IF NOT EXISTS ai_provider_config (
-	id TEXT PRIMARY KEY,
-	data JSON,
-	enabled INT DEFAULT 1,
-	created_at INTEGER DEFAULT (unixepoch()),
-	updated_at INTEGER
 );

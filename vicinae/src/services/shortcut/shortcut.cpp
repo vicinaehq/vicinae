@@ -1,6 +1,6 @@
-#include "services/bookmark/bookmark.hpp"
+#include "services/shortcut/shortcut.hpp"
 
-void Bookmark::insertPlaceholder(const ParsedPlaceholder &placeholder) {
+void Shortcut::insertPlaceholder(const ParsedPlaceholder &placeholder) {
   bool isReserved =
       std::ranges::any_of(m_reservedPlaceholderIds, [&](const QString &s) { return s == placeholder.id; });
   bool isArgument = !isReserved || placeholder.id == "argument";
@@ -20,22 +20,32 @@ void Bookmark::insertPlaceholder(const ParsedPlaceholder &placeholder) {
   m_placeholders.emplace_back(placeholder);
 }
 
-QString Bookmark::app() const { return m_app; }
-QString Bookmark::name() const { return m_name; }
-QString Bookmark::icon() const { return m_icon; }
-std::vector<Bookmark::UrlPart> Bookmark::parts() const { return m_parts; }
-const std::vector<Bookmark::ParsedPlaceholder> &Bookmark::placeholders() const { return m_placeholders; }
-const std::vector<Bookmark::Argument> &Bookmark::arguments() const { return m_args; }
+QString Shortcut::app() const { return m_app; }
+QString Shortcut::name() const { return m_name; }
+QString Shortcut::icon() const { return m_icon; }
+std::vector<Shortcut::UrlPart> Shortcut::parts() const { return m_parts; }
+const std::vector<Shortcut::ParsedPlaceholder> &Shortcut::placeholders() const { return m_placeholders; }
+const std::vector<Shortcut::Argument> &Shortcut::arguments() const { return m_args; }
 
-int Bookmark::id() const { return m_id; }
-QString Bookmark::url() const { return m_raw; }
+QString Shortcut::id() const { return m_id; }
+QString Shortcut::url() const { return m_raw; }
 
-void Bookmark::setApp(const QString &app) { m_app = app; }
-void Bookmark::setName(const QString &name) { m_name = name; }
-void Bookmark::setIcon(const QString &icon) { m_icon = icon; }
-void Bookmark::setId(int id) { m_id = id; }
+int Shortcut::openCount() const { return m_openCount; }
+QDateTime Shortcut::createdAt() { return m_createdAt; }
+QDateTime Shortcut::updatedAt() { return m_updatedAt; }
+std::optional<QDateTime> Shortcut::lastOpenedAt() { return m_lastOpenedAt; }
 
-void Bookmark::setLink(const QString &link) {
+void Shortcut::setApp(const QString &app) { m_app = app; }
+void Shortcut::setName(const QString &name) { m_name = name; }
+void Shortcut::setIcon(const QString &icon) { m_icon = icon; }
+void Shortcut::setId(const QString &id) { m_id = id; }
+
+void Shortcut::setCreatedAt(const QDateTime &date) { m_createdAt = date; }
+void Shortcut::setUpdatedAt(const QDateTime &date) { m_updatedAt = date; }
+void Shortcut::setLastOpenedAt(const std::optional<QDateTime> &date) { m_lastOpenedAt = date; }
+void Shortcut::setOpenCount(int openCount) { m_openCount = openCount; }
+
+void Shortcut::setLink(const QString &link) {
   enum {
     BK_NORMAL,
     PH_ID,

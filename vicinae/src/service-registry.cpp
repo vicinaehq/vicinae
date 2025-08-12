@@ -5,7 +5,7 @@
 #include "omni-database.hpp"
 #include "root-extension-manager.hpp"
 #include "services/app-service/app-service.hpp"
-#include "services/bookmark/bookmark-service.hpp"
+#include "services/shortcut/shortcut-service.hpp"
 #include "services/calculator-service/calculator-service.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "services/config/config-service.hpp"
@@ -32,7 +32,7 @@ ExtensionManager *ServiceRegistry::extensionManager() const { return m_extension
 ClipboardService *ServiceRegistry::clipman() const { return m_clipman.get(); }
 AppService *ServiceRegistry::appDb() const { return m_appDb.get(); }
 ToastService *ServiceRegistry::toastService() const { return m_toastService.get(); }
-BookmarkService *ServiceRegistry::bookmarks() const { return m_bookmarkService.get(); }
+ShortcutService *ServiceRegistry::shortcuts() const { return m_shortcutService.get(); }
 FileService *ServiceRegistry::fileService() const { return m_fileService.get(); }
 RaycastStoreService *ServiceRegistry::raycastStore() const { return m_raycastStoreService.get(); }
 ExtensionRegistry *ServiceRegistry::extensionRegistry() const { return m_extensionRegistry.get(); }
@@ -53,8 +53,8 @@ void ServiceRegistry::ServiceRegistry::setOAuthService(std::unique_ptr<OAuthServ
 }
 
 void ServiceRegistry::setConfig(std::unique_ptr<ConfigService> cfg) { m_config = std::move(cfg); }
-void ServiceRegistry::setBookmarkService(std::unique_ptr<BookmarkService> service) {
-  m_bookmarkService = std::move(service);
+void ServiceRegistry::setShortcutService(std::unique_ptr<ShortcutService> service) {
+  m_shortcutService = std::move(service);
 }
 void ServiceRegistry::ServiceRegistry::setCalculatorService(std::unique_ptr<CalculatorService> service) {
   m_calculatorService = std::move(service);

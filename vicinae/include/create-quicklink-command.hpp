@@ -2,7 +2,7 @@
 #include "favicon/favicon-service.hpp"
 #include "ui/views/base-view.hpp"
 #include "builtin_icon.hpp"
-#include "services/bookmark/bookmark-service.hpp"
+#include "services/shortcut/shortcut-service.hpp"
 #include "../src/ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "timer.hpp"
@@ -118,7 +118,7 @@ public:
   CompletionListItem(const LinkDynamicPlaceholder &data) : m_data(data) {}
 };
 
-class BookmarkFormView : public FormView {
+class ShortcutFormView : public FormView {
   std::vector<LinkDynamicPlaceholder> mainLinkArguments{
       LinkDynamicPlaceholder{
           .icon = ImageURL::builtin("text-cursor"), .title = "Selected Text", .id = "selected"},
@@ -286,11 +286,14 @@ protected:
   SelectorInput *iconSelector;
 
 public:
-  BookmarkFormView()
+  // to force default icon update
+  void blurLink() { handleLinkBlurred(); }
+
+  ShortcutFormView()
       : form(new FormWidget), name(new BaseInput), link(new CompletedInput), appSelector(new SelectorInput),
         iconSelector(new SelectorInput) {
     Timer timer;
-    name->setPlaceholderText("Bookmark name");
+    name->setPlaceholderText("Shortcut Name");
     link->setPlaceholderText("https://google.com/search?q={argument}");
 
     auto nameField = new FormField;
@@ -314,11 +317,11 @@ public:
     form->addField(openField);
     form->addField(iconField);
 
-    connect(link, &CompletedInput::textChanged, this, &BookmarkFormView::handleLinkChange);
-    connect(linkField, &FormField::blurred, this, &BookmarkFormView::handleLinkBlurred);
-    connect(appSelector, &SelectorInput::textChanged, this, &BookmarkFormView::handleAppSelectorTextChanged);
-    connect(iconSelector, &SelectorInput::textChanged, this, &BookmarkFormView::iconSelectorTextChanged);
-    connect(appSelector, &SelectorInput::selectionChanged, this, &BookmarkFormView::appSelectionChanged);
+    connect(link, &CompletedInput::textChanged, this, &ShortcutFormView::handleLinkChange);
+    connect(linkField, &FormField::blurred, this, &ShortcutFormView::handleLinkBlurred);
+    connect(appSelector, &SelectorInput::textChanged, this, &ShortcutFormView::handleAppSelectorTextChanged);
+    connect(iconSelector, &SelectorInput::textChanged, this, &ShortcutFormView::iconSelectorTextChanged);
+    connect(appSelector, &SelectorInput::selectionChanged, this, &ShortcutFormView::appSelectionChanged);
     connect(link, &CompletedInput::completionActivated, this,
             [this](const OmniList::AbstractVirtualItem &item) {
               auto completion = static_cast<const CompletionListItem &>(item);
@@ -340,7 +343,7 @@ public:
     auto items = BuiltinIconService::icons() | std::views::transform(mapItem);
 
     iconItems.emplace_back(
-        std::make_shared<DefaultIconSelectorItem>(ImageURL::builtin("bookmark"), "Default"));
+        std::make_shared<DefaultIconSelectorItem>(ImageURL::builtin("shortcut"), "Default"));
     std::ranges::for_each(items, [&](auto item) { iconItems.emplace_back(item); });
 
     iconSelector->addSection("", iconItems);
@@ -373,10 +376,11 @@ public:
   void initializeForm() override {
     initializeAppSelector();
     initializeIconSelector();
+    QTimer::singleShot(0, this, [this]() { form->focusFirst(); });
   }
 
   void onSubmit() override {
-    auto bookmarkDb = context()->services->bookmarks();
+    auto shortcutDb = context()->services->shortcuts();
     auto toast = context()->services->toastService();
 
     if (link->text().isEmpty()) {
@@ -398,42 +402,35 @@ public:
       return;
     }
 
-    if (bookmarkDb->createBookmark(name->text(), icon->icon()->toString(), link->text(), item->app->id())) {
-      toast->setToast("Created bookmark");
+    if (shortcutDb->createShortcut(name->text(), icon->icon()->toString(), link->text(), item->app->id())) {
+      toast->setToast("Created shortcut");
       popSelf();
     } else {
-      toast->setToast("Failed to create bookmark", ToastPriority::Danger);
+      toast->setToast("Failed to create shortcut", ToastPriority::Danger);
     }
   }
 };
 
-class EditBookmarkView : public BookmarkFormView {
-  std::shared_ptr<Bookmark> m_bookmark;
+class EditShortcutView : public ShortcutFormView {
+  std::shared_ptr<Shortcut> m_shortcut;
 
 public:
-  EditBookmarkView(const std::shared_ptr<Bookmark> &bookmark) : m_bookmark(bookmark) {
-    auto appDb = ServiceRegistry::instance()->appDb();
-
-    name->setText(m_bookmark->name());
-    link->setText(m_bookmark->url());
-
-    // iconSelector->setValue(std::make_shared<IconSelectorItem>(quicklink.iconName, quicklink.iconName));
-  }
+  EditShortcutView(const std::shared_ptr<Shortcut> &shortcut) : m_shortcut(shortcut) {}
 
   void initializeForm() override {
-    if (!iconSelector->setValue(m_bookmark->icon())) {
-      iconSelector->updateItem("default", [&](SelectorInput::AbstractItem *item) {
-        auto icon = static_cast<IconSelectorItem *>(item);
+    auto appDb = context()->services->appDb();
 
-        icon->setIcon(m_bookmark->icon());
-        icon->setDisplayName("Default");
-      });
-    }
-    appSelector->setValue(m_bookmark->app());
+    ShortcutFormView::initializeForm();
+    name->setText(m_shortcut->name());
+    link->setText(m_shortcut->url());
+
+    if (!iconSelector->setValue(m_shortcut->icon())) { blurLink(); }
+
+    if (auto app = appDb->findById(m_shortcut->app())) { appSelector->setValue(m_shortcut->app()); }
   }
 
   void onSubmit() override {
-    auto bookmarkDb = context()->services->bookmarks();
+    auto shortcutDb = context()->services->shortcuts();
     auto toast = context()->services->toastService();
     auto item = static_cast<const AppSelectorItem *>(appSelector->value());
 
@@ -449,11 +446,11 @@ public:
       return;
     }
 
-    bool updated = bookmarkDb->updateBookmark(m_bookmark->id(), name->text(), icon->icon().value().toString(),
+    bool updated = shortcutDb->updateShortcut(m_shortcut->id(), name->text(), icon->icon().value().toString(),
                                               link->text(), item->app->id());
 
     if (!updated) {
-      toast->setToast("Failed to update bookmark");
+      toast->setToast("Failed to update shortcut");
       return;
     }
 
@@ -461,23 +458,32 @@ public:
   }
 };
 
-class DuplicateBookmarkView : public BookmarkFormView {
+class DuplicateShortcutView : public ShortcutFormView {
+  std::shared_ptr<Shortcut> m_shortcut;
+
 public:
-  DuplicateBookmarkView(const std::shared_ptr<Bookmark> &bookmark) {
-    auto appDb = ServiceRegistry::instance()->appDb();
+  DuplicateShortcutView(const std::shared_ptr<Shortcut> &shortcut) : m_shortcut(shortcut) {}
 
-    name->setText(QString("Copy of %1").arg(bookmark->name()));
-    link->setText(bookmark->url());
+  void initializeForm() override {
+    ShortcutFormView::initializeForm();
 
-    if (auto app = appDb->findById(bookmark->app())) { appSelector->setValue(bookmark->app()); }
+    auto appDb = context()->services->appDb();
 
-    // iconSelector->setValue(std::make_shared<IconSelectorItem>(quicklink.iconName));
+    name->setText(QString("Copy of %1").arg(m_shortcut->name()));
+    link->setText(m_shortcut->url());
+
+    if (!iconSelector->setValue(m_shortcut->icon())) {
+      // do something if we are dealing with the default value
+      blurLink();
+    }
+
+    if (auto app = appDb->findById(m_shortcut->app())) { appSelector->setValue(m_shortcut->app()); }
   }
 
   void onActivate() override { name->selectAll(); }
 
   void onSubmit() override {
-    auto bookmarkDb = context()->services->bookmarks();
+    auto shortcutDb = context()->services->shortcuts();
     auto toast = context()->services->toastService();
     auto item = static_cast<const AppSelectorItem *>(appSelector->value());
 
@@ -493,11 +499,11 @@ public:
       return;
     }
 
-    if (bookmarkDb->createBookmark(name->text(), icon->icon()->toString(), link->text(), item->app->id())) {
-      toast->setToast("Created bookmark");
+    if (shortcutDb->createShortcut(name->text(), icon->icon()->toString(), link->text(), item->app->id())) {
+      toast->setToast("Created shortcut");
       popSelf();
     } else {
-      toast->setToast("Failed to create bookmark", ToastPriority::Danger);
+      toast->setToast("Failed to create shortcut", ToastPriority::Danger);
     }
   }
 };

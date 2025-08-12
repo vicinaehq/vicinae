@@ -53,14 +53,24 @@ RootProvider *RootItemManager::findProviderById(const QString &id) const {
 }
 
 void RootItemManager::reloadProviders() {
+  static bool isReloading = false;
+
+  if (isReloading) {
+    qWarning() << "nested reloadProviders() detected, ignoring.";
+    return;
+  }
+
   m_items.clear();
+  isReloading = true;
+
+  qDebug() << "reloading" << m_providers.size() << "providers";
 
   for (const auto &provider : m_providers) {
-    upsertProvider(*provider);
-
     auto items = provider->loadItems();
 
-    if (!upsertProvider(*provider.get())) return;
+    if (!upsertProvider(*provider.get())) continue;
+
+    qDebug() << "reload provider" << provider->uniqueId();
 
     m_items.insert(m_items.end(), items.begin(), items.end());
 
@@ -74,8 +84,10 @@ void RootItemManager::reloadProviders() {
       if (!preferences.empty()) { setProviderPreferenceValues(provider->uniqueId(), preferences); }
     }
 
-    provider->preferencesChanged(preferences);
+    // provider->preferencesChanged(preferences);
   }
+
+  qDebug() << "done reloading providers";
 
   emit itemsChanged();
 }
@@ -750,7 +762,10 @@ void RootItemManager::addProvider(std::unique_ptr<RootProvider> provider) {
 
   provider->preferencesChanged(preferences);
 
-  connect(provider.get(), &RootProvider::itemsChanged, this, &RootItemManager::reloadProviders);
+  connect(provider.get(), &RootProvider::itemsChanged, this, [this, name = provider->uniqueId()]() {
+    qDebug() << "provider" << name << "signals change";
+    reloadProviders();
+  });
   m_providers.emplace_back(std::move(provider));
   emit itemsChanged();
 }

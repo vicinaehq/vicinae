@@ -1,9 +1,9 @@
 #pragma once
-#include "services/bookmark/bookmark-service.hpp"
+#include "services/shortcut/shortcut-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 
-class RootBookmarkItem : public RootItem {
-  std::shared_ptr<Bookmark> m_link;
+class RootShortcutItem : public RootItem {
+  std::shared_ptr<Shortcut> m_link;
 
   QString displayName() const override;
   double baseScoreWeight() const override;
@@ -20,13 +20,13 @@ class RootBookmarkItem : public RootItem {
   QString typeDisplayName() const override;
 
 public:
-  const Bookmark &bookmark() const { return *m_link.get(); }
+  const Shortcut &shortcut() const { return *m_link.get(); }
 
-  RootBookmarkItem(const std::shared_ptr<Bookmark> &link);
+  RootShortcutItem(const std::shared_ptr<Shortcut> &link);
 };
 
-class BookmarkRootProvider : public RootProvider {
-  BookmarkService &m_db;
+class ShortcutRootProvider : public RootProvider {
+  ShortcutService &m_db;
 
 public:
   QString displayName() const override;
@@ -35,5 +35,5 @@ public:
   Type type() const override;
   std::vector<std::shared_ptr<RootItem>> loadItems() const override;
 
-  BookmarkRootProvider(BookmarkService &db);
+  ShortcutRootProvider(ShortcutService &db);
 };

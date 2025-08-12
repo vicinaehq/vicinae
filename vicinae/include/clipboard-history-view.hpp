@@ -285,6 +285,7 @@ class EditClipboardSelectionKeywordsView : public FormView {
     auto clipman = context()->services->clipman();
 
     m_keywords->setText(clipman->retrieveKeywords(m_selectionId).value_or(""));
+    QTimer::singleShot(0, this, [this]() { m_form->focusFirst(); });
   }
 
 public:
