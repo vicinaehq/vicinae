@@ -12,5 +12,8 @@ class OpenAboutCommand : public BuiltinCallbackCommand {
     return ImageURL::builtin("info-01").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 
-  void execute(ApplicationContext *ctx) const override { ctx->settings->openTab("About"); }
+  void execute(ApplicationContext *ctx) const override {
+    ctx->navigation->closeWindow();
+    ctx->settings->openTab("About");
+  }
 };

@@ -6,6 +6,7 @@
 #include "extensions/vicinae/search-emoji-command.hpp"
 #include "../../ui/image/url.hpp"
 #include "builtin-url-command.hpp"
+#include "single-view-command-context.hpp"
 #include "vicinae.hpp"
 
 class GetVicinaeSourceCodeCommand : public BuiltinUrlCommand {
@@ -35,6 +36,19 @@ class OpenDocumentationCommand : public BuiltinUrlCommand {
   QUrl url() const override { return Omnicast::DOC_URL; }
 };
 
+class OpenSettingsCommand : public BuiltinCallbackCommand {
+  QString id() const override { return "settings"; }
+  QString name() const override { return "Open Vicinae Settings"; }
+  ImageURL iconUrl() const override {
+    return ImageURL::builtin("cog").setBackgroundTint(Omnicast::ACCENT_COLOR);
+  }
+
+  void execute(ApplicationContext *ctx) const override {
+    ctx->navigation->closeWindow();
+    ctx->settings->openWindow();
+  }
+};
+
 class VicinaeExtension : public BuiltinCommandRepository {
   QString id() const override { return "vicinae"; }
   QString displayName() const override { return "Vicinae"; }
@@ -52,5 +66,6 @@ public:
     registerCommand<SearchEmojiCommand>();
     registerCommand<GetVicinaeSourceCodeCommand>();
     registerCommand<ReportVicinaeBugCommand>();
+    registerCommand<OpenSettingsCommand>();
   }
 };

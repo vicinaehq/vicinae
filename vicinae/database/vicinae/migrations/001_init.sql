@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS storage_data_item (
 );
 
 CREATE TABLE IF NOT EXISTS calculator_history (
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	id TEXT PRIMARY KEY,
 	type_hint INTEGER NOT NULL, -- unit conversion / regular arithmetic
 	question TEXT NOT NULL,
 	answer TEXT NOT NULL,

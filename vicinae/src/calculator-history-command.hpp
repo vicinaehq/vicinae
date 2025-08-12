@@ -63,7 +63,7 @@ class CalculatorHistoryListItem : public AbstractDefaultListItem, public ListVie
   }
 
 public:
-  QString generateId() const override { return QString::number(m_record.id); };
+  QString generateId() const override { return m_record.id; };
 
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
     auto panel = std::make_unique<ActionPanelState>();
@@ -113,11 +113,11 @@ class CalculatorHistoryView : public ListView {
   QTimer *m_calcDebounce = new QTimer(this);
   std::optional<AbstractCalculatorBackend::CalculatorResult> m_calcRes;
 
-  void handlePinned(int id) { textChanged(m_searchQuery); }
+  void handlePinned(const QString &id) { textChanged(m_searchQuery); }
 
-  void handleUnpinned(int id) { textChanged(m_searchQuery); }
+  void handleUnpinned(const QString &id) { textChanged(m_searchQuery); }
 
-  void handleRemoved(int id) { textChanged(m_searchQuery); }
+  void handleRemoved(const QString &id) { textChanged(m_searchQuery); }
 
   void handleAllRemoved() { textChanged(m_searchQuery); }
 

@@ -1,4 +1,5 @@
 #include "calculator-service.hpp"
+#include "crypto.hpp"
 #include "omni-database.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 #include "services/calculator-service/calculator-service.hpp"
@@ -33,7 +34,7 @@ std::vector<CalculatorService::CalculatorRecord> CalculatorService::loadAll() co
   while (query.next()) {
     CalculatorRecord record;
 
-    record.id = query.value(0).toInt();
+    record.id = query.value(0).toString();
     record.typeHint = static_cast<AbstractCalculatorBackend::CalculatorAnswerType>(query.value(1).toInt());
     record.question = query.value(2).toString();
     record.answer = query.value(3).toString();
@@ -143,12 +144,13 @@ bool CalculatorService::addRecord(const AbstractCalculatorBackend::CalculatorRes
   QSqlQuery query = m_db.createQuery();
 
   query.prepare(R"(
-		INSERT INTO calculator_history (type_hint, question, answer)
-		VALUES (:type_hint, :question, :answer)
+		INSERT INTO calculator_history (id, type_hint, question, answer)
+		VALUES (:id, :type_hint, :question, :answer)
 	)");
-  query.addBindValue(result.type);
-  query.addBindValue(result.question);
-  query.addBindValue(result.answer);
+  query.bindValue(":id", Crypto::UUID::v4());
+  query.bindValue(":type_hint", result.type);
+  query.bindValue(":question", result.question);
+  query.bindValue(":answer", result.answer);
 
   if (!query.exec()) {
     qCritical() << "Failed to add calculator record" << query.lastError();
@@ -157,7 +159,7 @@ bool CalculatorService::addRecord(const AbstractCalculatorBackend::CalculatorRes
 
   CalculatorRecord record;
 
-  record.id = query.lastInsertId().toInt();
+  record.id = query.lastInsertId().toString();
   record.question = result.question;
   record.answer = result.answer;
   record.typeHint = result.type;
@@ -174,7 +176,7 @@ bool CalculatorService::addRecord(const AbstractCalculatorBackend::CalculatorRes
   return true;
 }
 
-bool CalculatorService::pinRecord(int id) {
+bool CalculatorService::pinRecord(const QString &id) {
   QSqlQuery query = m_db.createQuery();
 
   query.prepare("UPDATE calculator_history SET pinned_at = unixepoch() WHERE id = :id");
@@ -196,7 +198,7 @@ bool CalculatorService::pinRecord(int id) {
   return true;
 }
 
-bool CalculatorService::unpinRecord(int id) {
+bool CalculatorService::unpinRecord(const QString &id) {
   QSqlQuery query = m_db.createQuery();
 
   query.prepare("UPDATE calculator_history SET pinned_at = NULL WHERE id = :id");
@@ -229,7 +231,7 @@ bool CalculatorService::unpinRecord(int id) {
   return true;
 }
 
-bool CalculatorService::removeRecord(int id) {
+bool CalculatorService::removeRecord(const QString &id) {
   QSqlQuery query = m_db.createQuery();
 
   query.prepare("DELETE FROM calculator_history WHERE id = :id");

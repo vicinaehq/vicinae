@@ -69,7 +69,7 @@ SettingsWindow::SettingsWindow(ApplicationContext *ctx) : m_ctx(ctx) {
   m_categories.reserve(4);
   m_categories.emplace_back(std::make_unique<GeneralSettingsCategory>());
   m_categories.emplace_back(std::make_unique<ExtensionSettingsCategory>());
-  m_categories.emplace_back(std::make_unique<AdvancedSettingsCategory>());
+  // m_categories.emplace_back(std::make_unique<AdvancedSettingsCategory>());
   m_categories.emplace_back(std::make_unique<AboutSettingsCategory>());
   setCentralWidget(createWidget());
 

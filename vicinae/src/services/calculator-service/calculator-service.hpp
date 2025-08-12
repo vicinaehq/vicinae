@@ -22,7 +22,7 @@ public:
   struct CalculatorRecord {
     QString expression() const { return QString("%1 = %2").arg(question).arg(answer); }
 
-    int id;
+    QString id;
     QString question;
     QString answer;
     /**
@@ -51,9 +51,9 @@ public:
   groupRecordsByTime(const std::vector<CalculatorRecord> &records) const;
   bool addRecord(const AbstractCalculatorBackend::CalculatorResult &result);
   std::vector<CalculatorRecord> query(const QString &query);
-  bool removeRecord(int id);
-  bool pinRecord(int id);
-  bool unpinRecord(int id);
+  bool removeRecord(const QString &id);
+  bool pinRecord(const QString &id);
+  bool unpinRecord(const QString &id);
   bool removeAll();
 
   void updateConversionRecords();
@@ -70,8 +70,8 @@ public:
 signals:
   void conversionRecordsUpdated();
   void allRecordsRemoved() const;
-  void recordAdded(int id) const;
-  void recordRemoved(int id) const;
-  void recordPinned(int id) const;
-  void recordUnpinned(int id) const;
+  void recordAdded(const QString &id) const;
+  void recordRemoved(const QString &id) const;
+  void recordPinned(const QString &id) const;
+  void recordUnpinned(const QString &id) const;
 };

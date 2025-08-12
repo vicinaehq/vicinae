@@ -161,7 +161,7 @@ int startDaemon() {
 
   {
     auto registry = ServiceRegistry::instance();
-    auto omniDb = std::make_unique<OmniDatabase>(Omnicast::dataDir() / "omnicast.db");
+    auto omniDb = std::make_unique<OmniDatabase>(Omnicast::dataDir() / "vicinae.db");
     auto localStorage = std::make_unique<LocalStorageService>(*omniDb);
     auto rootItemManager = std::make_unique<RootItemManager>(*omniDb.get());
     auto commandDb = std::make_unique<OmniCommandDatabase>();

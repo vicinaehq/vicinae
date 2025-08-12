@@ -82,7 +82,7 @@ public:
 };
 
 class PinCalculatorHistoryRecordAction : public AbstractAction {
-  int m_id = -1;
+  QString m_id;
 
 public:
   void execute(ApplicationContext *ctx) override {
@@ -95,11 +95,11 @@ public:
   QString title() const override { return "Pin entry"; }
   ImageURL icon() const override { return ImageURL::builtin("pin"); }
 
-  PinCalculatorHistoryRecordAction(int id) : m_id(id) {}
+  PinCalculatorHistoryRecordAction(const QString &id) : m_id(id) {}
 };
 
 class UnpinCalculatorHistoryRecordAction : public AbstractAction {
-  int m_id = -1;
+  QString m_id;
 
 public:
   void execute(ApplicationContext *ctx) override {
@@ -113,11 +113,11 @@ public:
   QString title() const override { return "Unpin entry"; }
   ImageURL icon() const override { return ImageURL::builtin("pin-disabled"); }
 
-  UnpinCalculatorHistoryRecordAction(int id) : m_id(id) {}
+  UnpinCalculatorHistoryRecordAction(const QString &id) : m_id(id) {}
 };
 
 class RemoveCalculatorHistoryRecordAction : public AbstractAction {
-  int m_id = -1;
+  QString m_id;
 
 public:
   void execute(ApplicationContext *ctx) override {
@@ -131,7 +131,9 @@ public:
   QString title() const override { return "Delete entry"; }
   ImageURL icon() const override { return ImageURL::builtin("trash"); }
 
-  RemoveCalculatorHistoryRecordAction(int id) : m_id(id) { setStyle(AbstractAction::Style::Danger); }
+  RemoveCalculatorHistoryRecordAction(const QString &id) : m_id(id) {
+    setStyle(AbstractAction::Style::Danger);
+  }
 };
 
 class RemoveAllCalculatorHistoryRecordsAction : public AbstractAction {
