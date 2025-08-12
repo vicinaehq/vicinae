@@ -1,4 +1,5 @@
 BUILD_DIR := build
+RM := /usr/bin/rm
 
 vicinae: configure
 	cmake --build $(BUILD_DIR)
@@ -28,7 +29,15 @@ gen-emoji:
 
 clean:
 	rm -rf $(BUILD_DIR)
+	find -type d -name 'node_modules' -exec $(RM) -rf {} \;
+	$(RM) -rf ./api/dist
+	$(RM) -rf ./extension-manager/dist/
+	$(RM) -rf ./scripts/.tmp
 .PHONY: clean
+
+pack: clean
+	tar cvfz vicinae.tar.gz .
+.PHONY: pack
 
 re: clean all
 .PHONY: re
