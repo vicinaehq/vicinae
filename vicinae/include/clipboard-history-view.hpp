@@ -601,8 +601,8 @@ class ClipboardHistoryView : public SimpleView {
 
   void handleStatusClipboard() {
     auto manager = context()->services->rootItemManager();
-    QString rootItemId = "extension.clipboard.history";
-    auto preferences = manager->getItemPreferenceValues(rootItemId);
+    QString provider = "extension.clipboard";
+    auto preferences = manager->getProviderPreferenceValues(provider);
 
     if (m_statusToolbar->clipboardStatus() == ClipboardStatusToobar::Paused) {
       preferences["monitoring"] = true;
@@ -610,7 +610,7 @@ class ClipboardHistoryView : public SimpleView {
       preferences["monitoring"] = false;
     }
 
-    manager->setItemPreferenceValues(rootItemId, preferences);
+    manager->setProviderPreferenceValues(provider, preferences);
   }
 
   bool inputFilter(QKeyEvent *event) override {

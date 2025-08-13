@@ -179,6 +179,7 @@ bool LauncherWindow::event(QEvent *event) {
     }
 
     if (keyEvent->keyCombination() == QKeyCombination(Qt::ControlModifier, Qt::Key_Comma)) {
+      m_ctx.navigation->closeWindow();
       m_ctx.settings->openWindow();
       return true;
     }

@@ -49,6 +49,9 @@ public:
   Type type() const override { return RootProvider::Type::ExtensionProvider; }
   std::vector<std::shared_ptr<RootItem>> loadItems() const override;
   QWidget *settingsDetail() const override { return new ExtensionSettingsDetail(uniqueId(), m_repo); }
+  void preferencesChanged(const QJsonObject &preferences) override {
+    return m_repo->preferenceValuesChanged(preferences);
+  }
 
   ExtensionRootProvider(const std::shared_ptr<AbstractCommandRepository> &repo) : m_repo(repo) {}
 };
