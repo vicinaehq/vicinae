@@ -87,6 +87,8 @@ public:
     ~ViewState();
   };
 
+  bool m_isPanelOpened = false;
+
   void closeWindow();
   void showWindow();
   void toggleWindow();
@@ -115,6 +117,7 @@ public:
 
   void openActionPanel();
   void closeActionPanel();
+  void toggleActionPanel();
 
   void setActions(std::unique_ptr<ActionPanelState> state, const BaseView *caller = nullptr);
   void clearActions(const BaseView *caller = nullptr);

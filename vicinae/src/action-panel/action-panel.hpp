@@ -119,9 +119,14 @@ protected:
     return ActionPanelView::sizeHint();
   }
 
+  void showEvent(QShowEvent *event) override {
+    QWidget::showEvent(event);
+    m_input->setFocus();
+  }
+
   void onActivate() override {
     m_input->setPlaceholderText("Filter actions");
-    m_input->setFocus();
+    if (isVisible()) { m_input->setFocus(); }
   }
 
   void resizeEvent(QResizeEvent *event) override { ActionPanelView::resizeEvent(event); }
@@ -333,6 +338,7 @@ class ActionPanelV2Widget : public Popover {
   void showEvent(QShowEvent *event) override {
     emit opened();
     emit openChanged(true);
+    raise();
     resizeView();
     QWidget::showEvent(event);
   }
@@ -456,6 +462,7 @@ public:
   }
 
   ActionPanelV2Widget(QWidget *parent = nullptr) : Popover(parent) {
+    setFocusPolicy(Qt::NoFocus);
     setFixedWidth(400);
     m_layout->setContentsMargins(0, 0, 0, 0);
     setLayout(m_layout);

@@ -28,7 +28,7 @@ void Popover::paintEvent(QPaintEvent *event) {
 }
 
 Popover::Popover(QWidget *parent) : QWidget(parent) {
-  setWindowFlags(Qt::FramelessWindowHint | Qt::Popup);
+  setWindowFlags(Qt::FramelessWindowHint);
   setAttribute(Qt::WA_TranslucentBackground);
 }
 

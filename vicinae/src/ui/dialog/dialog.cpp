@@ -1,5 +1,7 @@
 #include "dialog.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
+#include <qevent.h>
+#include <qnamespace.h>
 
 DialogContentWidget::DialogContentWidget(QWidget *parent) : QWidget(parent) {}
 
@@ -32,8 +34,16 @@ void DialogWidget::showDialog() {
   }
 }
 
+void DialogWidget::keyPressEvent(QKeyEvent *event) {
+  if (event->key() == Qt::Key_Escape) {
+    hide();
+    return;
+  };
+  return QWidget::keyPressEvent(event);
+}
+
 DialogWidget::DialogWidget(QWidget *parent) : QWidget(parent), _layout(new QVBoxLayout), _content(nullptr) {
-  setWindowFlags(Qt::FramelessWindowHint | Qt::Popup);
+  setWindowFlags(Qt::FramelessWindowHint);
   setAttribute(Qt::WA_TranslucentBackground);
 
   _layout->setContentsMargins(0, 0, 0, 0);

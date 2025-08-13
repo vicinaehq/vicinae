@@ -101,7 +101,8 @@ void GlobalBar::setupUI() {
   connect(m_primaryActionButton, &ShortcutButton::clicked, this,
           [this]() { m_ctx.navigation->executePrimaryAction(); });
 
-  connect(m_actionButton, &ShortcutButton::clicked, this, [this]() { m_ctx.navigation->openActionPanel(); });
+  connect(m_actionButton, &ShortcutButton::clicked, this,
+          [this]() { m_ctx.navigation->toggleActionPanel(); });
 
   connect(m_ctx.navigation.get(), &NavigationController::currentViewChanged, this, [this]() {
     auto state = m_ctx.navigation->topState();

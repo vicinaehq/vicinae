@@ -49,9 +49,20 @@ void NavigationController::clearSearchText() { setSearchText(""); }
 
 NavigationController::ViewState::~ViewState() { sender->deleteLater(); }
 
-void NavigationController::openActionPanel() { emit actionPanelVisibilityChanged(true); }
+void NavigationController::openActionPanel() {
+  m_isPanelOpened = true;
+  emit actionPanelVisibilityChanged(m_isPanelOpened);
+}
 
-void NavigationController::closeActionPanel() { emit actionPanelVisibilityChanged(false); }
+void NavigationController::closeActionPanel() {
+  m_isPanelOpened = false;
+  emit actionPanelVisibilityChanged(m_isPanelOpened);
+}
+
+void NavigationController::toggleActionPanel() {
+  m_isPanelOpened = !m_isPanelOpened;
+  emit actionPanelVisibilityChanged(m_isPanelOpened);
+}
 
 void NavigationController::createCompletion(const ArgumentList &args, const ImageURL &icon) {
   if (auto state = topState()) {

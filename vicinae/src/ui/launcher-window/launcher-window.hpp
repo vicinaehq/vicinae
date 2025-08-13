@@ -1,6 +1,10 @@
 #pragma once
 #include "../image/url.hpp"
+#include <qdebug.h>
+#include <qlogging.h>
 #include <qmainwindow.h>
+#include <qtmetamacros.h>
+#include <qwidget.h>
 #include "navigation-controller.hpp"
 
 class ApplicationContext;
@@ -16,6 +20,18 @@ class DialogContentWidget;
 class HDivider;
 class ImageURL;
 
+class ActionVeilWidget : public QWidget {
+  Q_OBJECT
+
+public:
+  ActionVeilWidget(QWidget *parent) : QWidget(parent) {}
+
+  void mousePressEvent(QMouseEvent *event) override { emit mousePressed(); }
+
+signals:
+  void mousePressed() const;
+};
+
 class LauncherWindow : public QMainWindow {
 
 public:
@@ -28,6 +44,7 @@ protected:
   void showEvent(QShowEvent *event) override;
 
 private:
+  ActionVeilWidget *m_actionVeil;
   ApplicationContext &m_ctx;
   ActionPanelV2Widget *m_actionPanel = nullptr;
   GlobalHeader *m_header = nullptr;

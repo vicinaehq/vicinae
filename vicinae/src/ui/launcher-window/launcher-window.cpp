@@ -6,6 +6,7 @@
 #include "ui/top-bar/top-bar.hpp"
 #include <qboxlayout.h>
 #include <qevent.h>
+#include <qlogging.h>
 #include <qnamespace.h>
 #include <qstackedwidget.h>
 #include <qwidget.h>
@@ -32,7 +33,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
   m_hud = new HudWidget;
   m_header = new GlobalHeader(*m_ctx.navigation);
   m_bar = new GlobalBar(m_ctx);
-  m_actionPanel = new ActionPanelV2Widget();
+  m_actionPanel = new ActionPanelV2Widget(this);
   m_dialog = new DialogWidget(this);
   m_currentView = new QStackedWidget(this);
   m_currentViewWrapper = new QStackedWidget(this);
@@ -40,6 +41,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
   m_mainWidget = new QWidget(this);
   m_barDivider = new HDivider(this);
   m_hudDismissTimer = new QTimer(this);
+  m_actionVeil = new ActionVeilWidget(this);
 
   m_header->setFixedHeight(Omnicast::TOP_BAR_HEIGHT);
   m_bar->setFixedHeight(Omnicast::STATUS_BAR_HEIGHT);
@@ -51,8 +53,10 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
   connect(m_actionPanel, &ActionPanelV2Widget::openChanged, this, [this](bool opened) {
     if (opened)
       m_ctx.navigation->openActionPanel();
-    else
+    else {
       m_ctx.navigation->closeActionPanel();
+      m_header->input()->setFocus();
+    }
   });
 
   connect(m_actionPanel, &ActionPanelV2Widget::actionActivated, this, [this](AbstractAction *action) {
@@ -65,8 +69,12 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
   connect(m_ctx.navigation.get(), &NavigationController::actionPanelVisibilityChanged, this,
           [this](bool value) {
             if (value) {
+              m_actionVeil->setGeometry(geometry());
+              m_actionVeil->raise();
+              m_actionVeil->show();
               m_actionPanel->show();
             } else {
+              m_actionVeil->hide();
               m_actionPanel->hide();
             }
           });
@@ -131,19 +139,24 @@ void LauncherWindow::setupUI() {
           &LauncherWindow::handleViewChange);
   connect(m_ctx.navigation.get(), &NavigationController::confirmAlertRequested, this,
           &LauncherWindow::handleDialog);
+  connect(m_actionVeil, &ActionVeilWidget::mousePressed, this,
+          [this]() { m_ctx.navigation->closeActionPanel(); });
 }
 
 void LauncherWindow::handleDialog(DialogContentWidget *alert) {
   m_dialog->setContent(alert);
   // we need to make sure no other popup is opened for the dialog to properly
   // show up
-  m_actionPanel->close();
+  m_ctx.navigation->closeActionPanel();
+  m_header->input()->clearFocus();
+  m_dialog->setGeometry(geometry());
+  m_dialog->raise();
   m_dialog->showDialog();
   m_dialog->setFocus();
 }
 
 void LauncherWindow::handleViewChange(const NavigationController::ViewState &state) {
-  if (m_dialog->isVisible()) { m_dialog->close(); }
+  if (m_dialog->isVisible()) { m_dialog->hide(); }
   if (auto current = m_currentViewWrapper->widget(0)) { m_currentViewWrapper->removeWidget(current); }
 
   m_currentViewWrapper->addWidget(state.sender);
@@ -208,6 +221,7 @@ bool LauncherWindow::event(QEvent *event) {
 }
 
 void LauncherWindow::handleActionVisibilityChanged(bool visible) {
+  qDebug() << "action panel visilibty" << visible;
   if (visible) {
     m_actionPanel->show();
     return;
@@ -215,7 +229,7 @@ void LauncherWindow::handleActionVisibilityChanged(bool visible) {
 
   qDebug() << "close panel";
 
-  m_actionPanel->close();
+  m_actionPanel->hide();
 }
 
 void LauncherWindow::paintEvent(QPaintEvent *event) {

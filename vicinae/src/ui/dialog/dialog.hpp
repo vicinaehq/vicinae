@@ -19,6 +19,7 @@ class DialogWidget : public QWidget {
   QWidget *_content;
 
   void paintEvent(QPaintEvent *event) override;
+  void keyPressEvent(QKeyEvent *event) override;
 
 public:
   void setContent(DialogContentWidget *content);
