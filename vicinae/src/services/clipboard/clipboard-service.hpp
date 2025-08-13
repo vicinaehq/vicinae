@@ -1,7 +1,11 @@
 #pragma once
 #include "common.hpp"
+#include "extensions/wm/wm-extension.hpp"
+#include "services/app-service/app-service.hpp"
 #include "services/clipboard/clipboard-db.hpp"
 #include "services/clipboard/clipboard-server.hpp"
+#include "services/window-manager/abstract-window-manager.hpp"
+#include "services/window-manager/window-manager.hpp"
 #include <QString>
 #include <expected>
 #include <filesystem>
@@ -61,6 +65,9 @@ public:
 private:
   Q_OBJECT
 
+  WindowManager &m_wm;
+  AppService &m_appDb;
+
   bool m_recordAllOffers = true;
   bool m_monitoring = true;
   std::optional<QByteArray> m_localEncryptionKey;
@@ -87,7 +94,7 @@ private:
   static ClipboardOfferKind getKind(const ClipboardDataOffer &offer);
 
 public:
-  ClipboardService(const std::filesystem::path &path);
+  ClipboardService(const std::filesystem::path &path, WindowManager &wm, AppService &app);
 
   bool removeAllSelections();
 
@@ -106,6 +113,8 @@ public:
                 const Clipboard::CopyOptions &options = {.concealed = false});
   bool copyContent(const Clipboard::Content &content,
                    const Clipboard::CopyOptions options = {.concealed = false});
+  bool pasteContent(const Clipboard::Content &content,
+                    const Clipboard::CopyOptions options = {.concealed = false});
   void setRecordAllOffers(bool value);
   bool clear();
   void saveSelection(ClipboardSelection selection);

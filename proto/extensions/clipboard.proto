@@ -20,6 +20,10 @@ message CopyToClipboardRequest {
   ClipboardOptions options = 2;
 };
 
+message PasteToClipboardRequest {
+  ClipboardContent content = 1;
+};
+
 message ClipboardContent {
   oneof content {
     string text = 1;
@@ -31,14 +35,19 @@ message ClipboardContent {
 message CopyToClipboardResponse {
 };
 
+message PasteToClipboardResponse {
+};
+
 message Request {
   oneof payload {
     CopyToClipboardRequest copy = 1;
+    PasteToClipboardRequest paste = 2;
   };
 };
 
 message Response {
   oneof payload {
     CopyToClipboardResponse copy = 1;
+    PasteToClipboardResponse paste = 2;
   };
 };

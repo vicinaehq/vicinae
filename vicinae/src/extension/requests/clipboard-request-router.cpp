@@ -23,6 +23,21 @@ ClipboardRequestRouter::parseProtoClipboardContent(const proto::ext::clipboard::
 }
 
 proto::ext::clipboard::Response *
+ClipboardRequestRouter::paste(const proto::ext::clipboard::PasteToClipboardRequest &req) {
+  auto content = parseProtoClipboardContent(req.content());
+
+  // wait for the window which might be closing
+  QTimer::singleShot(100, this, [this, content]() { m_clipboard.pasteContent(content); });
+
+  auto resData = new proto::ext::clipboard::PasteToClipboardResponse;
+  auto res = new proto::ext::clipboard::Response;
+
+  res->set_allocated_paste(resData);
+
+  return res;
+}
+
+proto::ext::clipboard::Response *
 ClipboardRequestRouter::copy(const proto::ext::clipboard::CopyToClipboardRequest &req) {
   auto content = parseProtoClipboardContent(req.content());
   bool concealed = req.options().concealed();
@@ -52,6 +67,8 @@ proto::ext::extension::Response *ClipboardRequestRouter::route(const proto::ext:
   switch (req.payload_case()) {
   case clipboard::Request::kCopy:
     return wrap(copy(req.copy()));
+  case clipboard::Request::kPaste:
+    return wrap(paste(req.paste()));
   default:
     break;
   }

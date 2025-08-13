@@ -74,6 +74,7 @@ type EndpointMapping = {
 	'oauth.authorize': 'oauth.authorize',
 
 	'clipboard.copy': 'clipboard.copy'
+	'clipboard.paste': 'clipboard.paste'
 }
 
 type RequestEndpoint = keyof EndpointMapping

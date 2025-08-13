@@ -54,21 +54,10 @@ class PasteToFocusedWindowAction : public AbstractAction {
 
 protected:
   void execute(ApplicationContext *ctx) override {
-    auto wm = ctx->services->windowManager();
     auto clipman = ctx->services->clipman();
-    auto appDb = ctx->services->appDb();
-    auto window = wm->getFocusedWindow();
-    KeyboardShortcut shortcut = KeyboardShortcut::paste();
 
-    if (auto app = appDb->find(window->wmClass())) {
-      if (app->isTerminalEmulator()) { shortcut = KeyboardShortcut::shiftPaste(); }
-    }
-
-    // ctx->navigation->closeWindow();
-    clipman->copyContent(m_content, {.concealed = true});
-    QTimer::singleShot(10, [wm, window = std::move(window), shortcut]() {
-      wm->provider()->sendShortcutSync(*window.get(), shortcut);
-    });
+    ctx->navigation->closeWindow();
+    QTimer::singleShot(100, [content = m_content, clipman]() { clipman->pasteContent(content, {}); });
   }
 
   void loadClipboardData(const Clipboard::Content &content) { m_content = content; }

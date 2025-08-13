@@ -166,11 +166,12 @@ int startDaemon() {
     auto rootItemManager = std::make_unique<RootItemManager>(*omniDb.get());
     auto commandDb = std::make_unique<OmniCommandDatabase>();
     auto extensionManager = std::make_unique<ExtensionManager>(*commandDb);
-    auto clipboardManager = std::make_unique<ClipboardService>(Omnicast::dataDir() / "clipboard.db");
-    auto processManager = std::make_unique<ProcessManagerService>();
     auto windowManager = std::make_unique<WindowManager>();
-    auto fontService = std::make_unique<FontService>();
     auto appService = std::make_unique<AppService>(*omniDb.get());
+    auto clipboardManager =
+        std::make_unique<ClipboardService>(Omnicast::dataDir() / "clipboard.db", *windowManager, *appService);
+    auto processManager = std::make_unique<ProcessManagerService>();
+    auto fontService = std::make_unique<FontService>();
     auto configService = std::make_unique<ConfigService>();
     auto shortcutService = std::make_unique<ShortcutService>(*omniDb.get());
     auto toastService = std::make_unique<ToastService>();
@@ -305,7 +306,6 @@ int startDaemon() {
 
 #ifdef WAYLAND_LAYER_SHELL
   launcher.createWinId();
-  qDebug() << "Initializing layer shell surface";
   if (auto lshell = LayerShellQt::Window::get(launcher.windowHandle())) {
     lshell->setLayer(LayerShellQt::Window::LayerOverlay);
     lshell->setScope("vicinae");
@@ -313,13 +313,11 @@ int startDaemon() {
     lshell->setExclusiveZone(-1);
     lshell->setAnchors(LayerShellQt::Window::AnchorNone);
   } else {
-    qCritical() << "Unable apply layer shell rules to main window: LayerShellQt::Window::get() returned null";
+    qWarning() << "Unable apply layer shell rules to main window: LayerShellQt::Window::get() returned null";
   }
 #endif
 
   launcher.show();
-
-  // Print it
 
   return qApp->exec();
 }

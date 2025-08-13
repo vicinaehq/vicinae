@@ -11,7 +11,10 @@
 #include <QFutureWatcher>
 #include "clipboard-server-factory.hpp"
 #include "crypto.hpp"
+#include "services/app-service/app-service.hpp"
 #include "services/clipboard/clipboard-db.hpp"
+#include "services/window-manager/abstract-window-manager.hpp"
+#include "services/window-manager/window-manager.hpp"
 
 namespace fs = std::filesystem;
 
@@ -96,6 +99,28 @@ bool ClipboardService::copyContent(const Clipboard::Content &content, const Clip
   ContentVisitor visitor(*this, options);
 
   return std::visit(visitor, content);
+}
+
+bool ClipboardService::pasteContent(const Clipboard::Content &content, const Clipboard::CopyOptions options) {
+  if (!copyContent(content, options)) return false;
+
+  if (!m_wm.provider()->supportsInputForwarding()) {
+    qWarning()
+        << "pasteContent called but no window manager capable of input forwarding is running. Falling i"
+           "back to regular clipboard copy";
+    return false;
+  }
+
+  auto window = m_wm.getFocusedWindow();
+  KeyboardShortcut shortcut = KeyboardShortcut::paste();
+
+  if (auto app = m_appDb.find(window->wmClass())) {
+    if (app->isTerminalEmulator()) { shortcut = KeyboardShortcut::shiftPaste(); }
+  }
+
+  m_wm.provider()->sendShortcutSync(*window, shortcut);
+
+  return true;
 }
 
 bool ClipboardService::copyFile(const std::filesystem::path &path, const Clipboard::CopyOptions &options) {
@@ -481,7 +506,8 @@ bool ClipboardService::removeAllSelections() {
 
 AbstractClipboardServer *ClipboardService::clipboardServer() const { return m_clipboardServer.get(); }
 
-ClipboardService::ClipboardService(const std::filesystem::path &path) {
+ClipboardService::ClipboardService(const std::filesystem::path &path, WindowManager &wm, AppService &app)
+    : m_wm(wm), m_appDb(app) {
   m_dataDir = path.parent_path() / "clipboard-data";
   m_clipboardServer =
       std::unique_ptr<AbstractClipboardServer>(ClipboardServerFactory().createFirstActivatable());

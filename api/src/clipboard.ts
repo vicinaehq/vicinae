@@ -2,9 +2,6 @@ import { PathLike } from 'fs';
 import { bus } from './bus';
 import { ClipboardContent } from './proto/clipboard';
 
-type CopyParams = {
-};
-
 export namespace Clipboard {
 	export type Content = { text: string } | { file: PathLike } | { html: string, text?: string };
 	export type ReadContent = { text: string } | { file?: string } | { html?: string };
@@ -39,8 +36,10 @@ export const Clipboard = {
 		});
 	},
 
-	async paste(content : string | Clipboard.Content) {
-		// TODO: implement
+	async paste(text : string | Clipboard.Content) {
+		await bus.turboRequest('clipboard.paste', {
+			content: this.mapContent(text),
+		});
 	},
 
 	async read(options?: { offset?: number }): Promise<Clipboard.ReadContent> {
