@@ -37,13 +37,13 @@ QWidget *SettingsWindow::createWidget() {
   QVBoxLayout *layout = new QVBoxLayout;
 
   for (const auto &category : m_categories) {
-    m_navigation->addPane(category->title(), category->icon());
+    m_navigation->addPane(category->id(), category->title(), category->icon());
     content->addWidget(category->createContent());
   }
 
   connect(m_navigation, &SettingsNavWidget::rowChanged, this, [this](int idx) {
     content->setCurrentIndex(idx);
-    m_navigation->setSelected(m_categories.at(idx)->title());
+    m_navigation->setSelected(m_categories.at(idx)->id());
   });
 
   layout->setContentsMargins(0, 0, 0, 0);
@@ -80,7 +80,7 @@ SettingsWindow::SettingsWindow(ApplicationContext *ctx) : m_ctx(ctx) {
           });
 
   connect(m_ctx->settings.get(), &SettingsController::tabIdOpened, this, [this](const QString &id) {
-    if (auto it = std::ranges::find_if(m_categories, [&](auto &&cat) { return cat->title() == id; });
+    if (auto it = std::ranges::find_if(m_categories, [&](auto &&cat) { return cat->id() == id; });
         it != m_categories.end()) {
       m_navigation->setSelected(id);
       content->setCurrentIndex(std::distance(m_categories.begin(), it));
@@ -89,7 +89,7 @@ SettingsWindow::SettingsWindow(ApplicationContext *ctx) : m_ctx(ctx) {
     }
   });
 
-  m_navigation->setSelected("General");
+  m_navigation->setSelected("general");
   content->setCurrentIndex(0);
 }
 

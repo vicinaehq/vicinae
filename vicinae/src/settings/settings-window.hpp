@@ -142,13 +142,13 @@ public:
     }
   }
 
-  void addPane(const QString &title, const ImageURL &icon) {
+  void addPane(const QString &id, const QString &title, const ImageURL &icon) {
     auto pane = new SettingsNavPane;
     size_t idx = m_panes.size();
 
     connect(pane, &SettingsNavPane::clicked, this, [this, idx]() { emit rowChanged(idx); });
 
-    m_panes.emplace_back(title);
+    m_panes.emplace_back(id);
     pane->setTitle(title);
     pane->setIcon(icon);
     pane->setFixedWidth(100);

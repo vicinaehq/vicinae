@@ -14,6 +14,6 @@ class OpenAboutCommand : public BuiltinCallbackCommand {
 
   void execute(ApplicationContext *ctx) const override {
     ctx->navigation->closeWindow();
-    ctx->settings->openTab("About");
+    ctx->settings->openTab("about");
   }
 };

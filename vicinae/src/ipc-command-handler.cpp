@@ -3,6 +3,7 @@
 #include "proto/daemon.pb.h"
 #include <algorithm>
 #include "services/toast/toast-service.hpp"
+#include "settings-controller/settings-controller.hpp"
 #include <qlogging.h>
 #include <qobjectdefs.h>
 #include <qsqlquery.h>
@@ -44,6 +45,20 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
   if (url.host() == "toggle") {
     m_ctx.navigation->toggleWindow();
     return;
+  }
+
+  if (url.host() == "settings") {
+    if (url.path() == "/open") {
+      m_ctx.settings->openWindow();
+
+      if (auto text = query.queryItemValue("tab"); !text.isEmpty()) { m_ctx.settings->openTab(text); }
+
+      return;
+    }
+    if (url.path() == "/close") {
+      m_ctx.settings->closeWindow();
+      return;
+    }
   }
 
   if (url.host() == "close") {
