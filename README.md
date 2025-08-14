@@ -14,6 +14,13 @@ Inspired by the popular [Raycast launcher](https://www.raycast.com/), Vicinae pr
 
 Vicinae is designed for developers and power users who want fast, keyboard-first access to common system actions — without unnecessary overhead.
 
+<p align="center">
+  <img
+    src=".github/assets/demo.gif"
+    alt="Vicinae text logo"
+  />
+</p>
+
 ---
 
 ## ✏️ Features
