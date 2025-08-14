@@ -1,6 +1,7 @@
 #include "ui/scroll-bar/scroll-bar.hpp"
 #include <qboxlayout.h>
 #include <qdir.h>
+#include <qlogging.h>
 #include <qnamespace.h>
 #include <qpainter.h>
 #include <qstringview.h>
@@ -14,9 +15,15 @@ class TextFileViewer : public QWidget {
 
 public:
   void load(const std::filesystem::path &path) {
+    size_t READ_LIMIT = 1024 * 10; // 10 KB
     QFile file(path);
 
-    if (file.open(QIODevice::ReadOnly | QIODevice::Text)) { edit->setPlainText(file.readAll()); }
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+      qWarning() << "Failed to open file at" << path.c_str();
+      return;
+    }
+
+    edit->setPlainText(file.read(READ_LIMIT));
   }
 
   void load(const QByteArray &data) { edit->setPlainText(data); }
