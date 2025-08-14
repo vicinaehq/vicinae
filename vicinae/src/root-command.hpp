@@ -447,7 +447,6 @@ class RootSearchView : public ListView {
   }
 
   void handleItemChange() {
-    qDebug() << "item changed";
     if (isVisible()) textChanged(searchText());
   }
 

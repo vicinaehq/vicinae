@@ -63,14 +63,10 @@ void RootItemManager::reloadProviders() {
   m_items.clear();
   isReloading = true;
 
-  qDebug() << "reloading" << m_providers.size() << "providers";
-
   for (const auto &provider : m_providers) {
     auto items = provider->loadItems();
 
     if (!upsertProvider(*provider.get())) continue;
-
-    qDebug() << "reload provider" << provider->uniqueId();
 
     m_items.insert(m_items.end(), items.begin(), items.end());
 
@@ -87,8 +83,7 @@ void RootItemManager::reloadProviders() {
     // provider->preferencesChanged(preferences);
   }
 
-  qDebug() << "done reloading providers";
-
+  isReloading = false;
   emit itemsChanged();
 }
 

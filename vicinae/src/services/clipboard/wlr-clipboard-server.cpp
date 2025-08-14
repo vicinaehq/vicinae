@@ -4,6 +4,7 @@
 #include "vicinae.hpp"
 #include <QtCore>
 #include <algorithm>
+#include <filesystem>
 #include <netinet/in.h>
 #include <qlogging.h>
 #include <qprocess.h>
@@ -55,6 +56,7 @@ bool WlrClipboardServer::start() {
   bin.open(QIODevice::ReadOnly);
 
   std::filesystem::path target = Omnicast::runtimeDir() / "wlr-clip";
+  std::filesystem::remove(target);
 
   bin.copy(target);
 
