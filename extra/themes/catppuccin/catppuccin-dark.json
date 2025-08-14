@@ -1,7 +1,7 @@
 {
 	"version": "1.0.0",
 	"appearance": "dark",
-	"icon": "../catppuccin.svg",
+	"icon": "./catppuccin.png",
 	"name": "Catppuccin Mocha",
 	"description": "The popular Catppuccin Mocha theme - soothing pastel colors for dark environments",
 	"palette": {

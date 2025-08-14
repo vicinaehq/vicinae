@@ -1,7 +1,0 @@
-<svg width="16px" height="16px" version="1.1" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
- <g fill="#dedede" stroke-width="1.2">
-  <path d="m14 8c0 3.3141-2.6859 6-6 6v-6z" opacity=".45"/>
-  <path d="m2 8c0-3.3141 2.6859-6 6-6v6z" opacity=".45"/>
- </g>
- <path d="m8 0a8 8 0 0 0-8 8 8 8 0 0 0 8 8 8 8 0 0 0 8-8 8 8 0 0 0-8-8zm0 1a7 7 0 0 1 7 7 7 7 0 0 1-7 7 7 7 0 0 1-7-7 7 7 0 0 1 7-7z" fill="#dedede" fill-rule="evenodd" stop-color="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="paint-order:stroke fill markers"/>
-</svg>

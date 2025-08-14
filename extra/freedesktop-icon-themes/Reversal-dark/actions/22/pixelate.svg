@@ -1,6 +1,0 @@
-<svg version="1.1" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
-    <style>.ColorScheme-Text { 
-    color:#dedede;
-}</style>
-    <path class="ColorScheme-Text" d="m14 14h3v3h-3zm-9 0h3v3h-3zm4 0h4v3h-4zm5-5.0000003h3v4.0000003h-3zm-9 0h3v4.0000003h-3zm4 0h4v4.0000003h-4zm5-3.9999997h3v3h-3zm-9 0h3v3h-3zm4 0h4v3h-4zm-5 9v1h-1v-1zm0-7v1h-1v-1zm0 2v4h-1v-4zm15 5v1h-1v-1zm0-7v1h-1v-1zm0 2v4h-1v-4zm-12 9h1v1h-1zm7 0h1v1h-1zm-5 0h4v1h-4zm-2-15h1v1h-1zm7 0h1v1h-1zm-5 0h4v1h-4z" fill="currentColor"/>
-</svg>

@@ -1,6 +1,0 @@
-<svg width="16" height="16" version="1.1" xmlns="http://www.w3.org/2000/svg">
- <rect x="2" y="3" width="12" height="1" fill="#363636" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="paint-order:stroke fill markers"/>
- <rect x="2" y="8" width="5" height="1" fill="#363636" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="paint-order:stroke fill markers"/>
- <rect x="2" y="13" width="5" height="1" fill="#363636" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="paint-order:stroke fill markers"/>
- <path d="m9.9785 7a1.0001 1.0001 0 0 0-0.42578 0.10547 1.0001 1.0001 0 0 0-0.55273 0.89453v5a1.0001 1.0001 0 0 0 1.4473 0.89453l4-2a1.0001 1.0001 0 0 0 0.15234-1.6953l-4-3a1.0001 1.0001 0 0 0-0.62109-0.19922zm0.021484 1 4 3-4 2v-5z" color="#000000" fill="#363636" stroke-linecap="round" stroke-linejoin="round" style="-inkscape-stroke:none;paint-order:stroke fill markers"/>
-</svg>

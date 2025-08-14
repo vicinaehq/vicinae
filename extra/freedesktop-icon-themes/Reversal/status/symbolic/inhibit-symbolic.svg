@@ -1,9 +1,0 @@
-<svg width="16" height="16" version="1.1" xmlns="http://www.w3.org/2000/svg">
- <title>Gnome Symbolic Icon Theme</title>
- <g fill="#363636">
-  <path d="m3 5.001 4.5-2e-7v1l-3 3h3v1h-4.5v-1l3-3h-3z"/>
-  <path d="m8.5 5.001 4.5-2e-7v1l-3 3h3v1h-4.5v-1l3-3h-3z"/>
- </g>
- <path d="m3 1c-1.662 0-3 1.338-3 3v7c0 1.662 1.338 3 3 3h10c1.662 0 3-1.338 3-3v-7c0-1.662-1.338-3-3-3zm0 1h10c1.108 0 2 0.892 2 2v7c0 1.108-0.892 2-2 2h-10c-1.108 0-2-0.892-2-2v-7c0-1.108 0.892-2 2-2z" fill="#363636" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.0016"/>
- <rect x="4" y="15" width="8" height="1" rx=".5" ry=".5" fill="#363636" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.0016"/>
-</svg>

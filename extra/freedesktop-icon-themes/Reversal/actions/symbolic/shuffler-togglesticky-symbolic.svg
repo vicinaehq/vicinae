@@ -1,6 +1,0 @@
-<svg width="16" height="16" version="1.1" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
- <path d="m3 3v3h3v-3h-3zm1 1h1v1h-1v-1z" fill="#363636" stop-color="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
- <path d="m7 7v6h6v-6h-6zm1 1h4v4h-4v-4z" fill="#363636" stop-color="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
- <path d="m3 7v3h3v-3zm1 1h1v1h-1z" fill="#363636" stop-color="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
- <path d="m7 3v3h3v-3zm1 1h1v1h-1z" fill="#363636" stop-color="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-</svg>

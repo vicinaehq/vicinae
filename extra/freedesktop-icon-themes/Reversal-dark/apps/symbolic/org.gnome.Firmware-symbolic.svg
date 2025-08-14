@@ -1,6 +1,0 @@
-<svg width="16px" height="16px" version="1.1" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
- <g transform="matrix(-1 0 0 1 1129 -60.993)">
-  <path d="m1127 61a1 1 0 0 0-1 1v1h-11.49c-0.822 0-1.5 0.678-1.5 1.5v8.994c0 0.823 0.678 1.5 1.5 1.5h11.49v2.006h1v-4h2l0.01-7.003-2.005 3e-3v-3.5s0-0.5 0.5-0.5h1.5v-1zm-12.49 3h11.49v9.994h-11.49a0.488 0.488 0 0 1-0.5-0.5v-8.994c0-0.286 0.214-0.5 0.5-0.5zm12.5 2.994h1v1h-1zm0 2h1v1h-1zm0 2h1v1h-1z" color="#000000" fill="#dedede" font-family="sans-serif" font-weight="400" overflow="visible" style="font-feature-settings:normal;font-variant-alternates:normal;font-variant-caps:normal;font-variant-ligatures:normal;font-variant-numeric:normal;font-variant-position:normal;isolation:auto;mix-blend-mode:normal;shape-padding:0;text-decoration-color:#000000;text-decoration-line:none;text-decoration-style:solid;text-indent:0;text-orientation:mixed;text-transform:none" white-space="normal"/>
- </g>
- <path d="m7 5v1h-2v4h2v1h1v-1h2v1h1v-1h2v-4h-2v-1h-1v1h-2v-1h-1zm-1 2h6v2h-6v-2z" fill="#dedede" fill-rule="evenodd" stop-color="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7888" style="paint-order:stroke fill markers"/>
-</svg>

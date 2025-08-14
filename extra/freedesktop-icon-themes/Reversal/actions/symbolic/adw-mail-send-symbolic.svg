@@ -1,7 +1,0 @@
-<svg width="16" height="16" version="1.1" xmlns="http://www.w3.org/2000/svg">
- <path d="m2 9c-1.108 0-2 0.892-2 2v5h1v-5c0-0.554 0.446-1 1-1h12c0.554 0 1 0.446 1 1v5h1v-5c0-1.108-0.892-2-2-2h-12z" fill="#363636" fill-rule="evenodd" stop-color="#000000"/>
- <path d="m1.1035 10.449c-0.06473 0.12035-0.10352 0.25755-0.10352 0.4043v0.68945l5.8613 3.957c0.62269 0.42034 1.6547 0.42034 2.2773 0l5.8613-3.957v-0.68945c0-0.14675-0.038786-0.28395-0.10352-0.4043l-6.6191 4.4688c-0.16078 0.10853-0.3939 0.10853-0.55469 0l-6.6191-4.4688z" color="#000000" fill="#363636" fill-rule="evenodd" stroke-width=".96304"/>
- <rect transform="rotate(45)" x="5.6569" y="-5.6569" width="6" height="1" rx="0" ry="0" fill="#363636" fill-rule="evenodd" stop-color="#000000"/>
- <rect transform="matrix(-.70711 .70711 .70711 .70711 0 0)" x="-5.6569" y="5.6569" width="6" height="1" rx="0" ry="0" fill="#363636" fill-rule="evenodd" stop-color="#000000"/>
- <rect x="7.5" y="1" width="1" height="7" fill="#363636" fill-rule="evenodd" stop-color="#000000"/>
-</svg>

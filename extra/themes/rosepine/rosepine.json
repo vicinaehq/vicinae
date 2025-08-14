@@ -1,7 +1,7 @@
 {
 	"version": "1.0.0",
 	"appearance": "dark",
-	"icon": "../rosepine.svg",
+	"icon": "./rosepine.png",
 	"name": "Rose Pine",
 	"description": "A soho vibes theme with warm, muted tones",
 	"palette": {

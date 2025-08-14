@@ -1,9 +1,0 @@
-<svg width="16" height="16" version="1.1" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
- <title>Symbolic Icons</title>
- <g transform="translate(-36 88)" fill="#dedede">
-  <path d="m37-84v8h4v-8h-4zm5 0v8h4v-8h-4zm5 0v8h4v-8h-4zm-9 1h2v6h-2v-6zm5 0h2v6h-2v-6zm5 0h2v6h-2v-6z"/>
-  <rect x="38" y="-83" width="2" height="6" rx="0" ry="0" fill-rule="evenodd" opacity=".5" stop-color="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="paint-order:stroke fill markers"/>
-  <rect x="43" y="-83" width="2" height="6" rx="0" ry="0" fill-rule="evenodd" opacity=".5" stop-color="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="paint-order:stroke fill markers"/>
-  <rect x="48" y="-83" width="2" height="6" rx="0" ry="0" fill-rule="evenodd" opacity=".5" stop-color="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="paint-order:stroke fill markers"/>
- </g>
-</svg>

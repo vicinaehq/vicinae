@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "appearance": "dark",
-  "icon": "icon.svg",
+  "icon": "./night-owl.png",
   "name": "Night Owl",
   "description": "Sarah Drasner's popular Night Owl theme for night owls",
   "palette": {

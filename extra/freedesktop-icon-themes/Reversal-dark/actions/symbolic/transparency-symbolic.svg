@@ -1,6 +1,0 @@
-<svg width="16" height="16" version="1.1" xmlns="http://www.w3.org/2000/svg">
- <path d="m2 1c-0.554 0-1 0.446-1 1v4c0 0.554 0.446 1 1 1h4c0.554 0 1-0.446 1-1v-4c0-0.554-0.446-1-1-1h-4zm0 1h4v4h-4v-4z" fill="#dedede" fill-rule="evenodd" stop-color="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7143" style="paint-order:stroke fill markers"/>
- <path d="m10 1c-0.554 0-1 0.446-1 1v4c0 0.554 0.446 1 1 1h4c0.554 0 1-0.446 1-1v-4c0-0.554-0.446-1-1-1zm0 1h4v4h-4z" fill="#dedede" fill-rule="evenodd" opacity=".5" stop-color="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7143" style="paint-order:stroke fill markers"/>
- <path d="m2 9c-0.554 0-1 0.446-1 1v4c0 0.554 0.446 1 1 1h4c0.554 0 1-0.446 1-1v-4c0-0.554-0.446-1-1-1zm0 1h4v4h-4z" fill="#dedede" fill-rule="evenodd" opacity=".5" stop-color="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7143" style="paint-order:stroke fill markers"/>
- <path d="m10 9c-0.554 0-1 0.446-1 1v4c0 0.554 0.446 1 1 1h4c0.554 0 1-0.446 1-1v-4c0-0.554-0.446-1-1-1zm0 1h4v4h-4z" fill="#dedede" fill-rule="evenodd" stop-color="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7143" style="paint-order:stroke fill markers"/>
-</svg>

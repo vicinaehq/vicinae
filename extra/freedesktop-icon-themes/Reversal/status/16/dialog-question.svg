@@ -1,7 +1,0 @@
-<svg version="1.1" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-    <style type="text/css">.ColorScheme-Text {
-            color:#f2f2f2;
-        }</style>
-    <rect x="2" y="2" width="12" height="12" rx="2" fill="#9b59b6"/>
-    <path d="M8 2a4 4 0 0 0-4 4h2a2 2 0 0 1 2-2 2 2 0 0 1 2 2 2 2 0 0 1-2 2H7v3h2V9.867A4 4 0 0 0 12 6a4 4 0 0 0-4-4zM7 12v2h2v-2z" fill="#fff"/>
-</svg>

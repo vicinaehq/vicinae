@@ -1,6 +1,0 @@
-<svg width="16" height="16" version="1.1" xmlns="http://www.w3.org/2000/svg">
- <path class="ColorScheme-Text" d="m7.9941 1-5.9688 0.03125c-0.5477 0.003254-0.99089 0.44645-0.99414 0.99414l-0.03125 5.9688c-0.001369 0.28107 0.1156 0.54974 0.32227 0.74023l6.5 6c0.39424 0.3637 1.0052 0.35164 1.3848-0.027344l2.793-2.793v-1.4141l-3.5 3.5-6.5-6 0.03125-5.9688 5.9688-0.03125 4 4.332v-1.4727l-3.2656-3.5371c-0.19049-0.20667-0.45916-0.32364-0.74023-0.32227zm-2.4941 3c-0.828 0-1.5 0.672-1.5 1.5s0.672 1.5 1.5 1.5 1.5-0.672 1.5-1.5-0.672-1.5-1.5-1.5z" color="#dedede" fill="#dedede"/>
- <circle cx="14" cy="3" r="1" fill="#dedede" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="paint-order:stroke fill markers"/>
- <circle cx="14" cy="8" r="1" fill="#dedede" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="paint-order:stroke fill markers"/>
- <circle cx="14" cy="13" r="1" fill="#dedede" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" style="paint-order:stroke fill markers"/>
-</svg>

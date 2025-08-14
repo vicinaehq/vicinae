@@ -1,9 +1,0 @@
-<svg width="16" height="16">
- <defs>
-  <style id="current-color-scheme" type="text/css">.ColorScheme-Text { color:#dedede; }</style>
- </defs>
- <g transform="rotate(90,8,8)" class="ColorScheme-Text" fill="currentColor">
-  <path class="ColorScheme-Text" d="M 14.3633,12.3633 8,6 l -6.3633,6.3633 0.70703,0.70703 5.6562,-5.6562 5.6562,5.6562 0.70703,-0.70703 z"/>
-  <circle class="ColorScheme-Text" cx="8" cy="4" r="1"/>
- </g>
-</svg>

@@ -1,4 +1,0 @@
-<svg width="16" height="16" version="1.1" xmlns="http://www.w3.org/2000/svg">
- <path d="m2 0c-1.108 0-2 0.892-2 2v1h1v-1c0-0.554 0.446-1 1-1h1v-1zm2 0v1h2v-1zm3 0v1h2v-1zm3 0v1h2v-1zm3 0v1h1c0.554 0 1 0.446 1 1v1h1v-1c0-1.108-0.892-2-2-2zm-13 4v2h1v-2zm15 0v2h1v-2zm-15 3v2h1v-2zm15 0v2h1v-2zm-15 3v2h1v-2zm15 0v2h1v-2zm-15 3v1c0 1.108 0.892 2 2 2h1v-1h-1c-0.554 0-1-0.446-1-1v-1zm15 0v1c0 0.554-0.446 1-1 1h-1v1h1c1.108 0 2-0.892 2-2v-1zm-11 2v1h2v-1zm3 0v1h2v-1zm3 0v1h2v-1z" fill="#dedede" fill-rule="evenodd" stop-color="#000000" style="paint-order:stroke fill markers"/>
- <rect x="3" y="3" width="10" height="10" fill="#dedede" fill-rule="evenodd" stop-color="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" style="paint-order:stroke fill markers"/>
-</svg>

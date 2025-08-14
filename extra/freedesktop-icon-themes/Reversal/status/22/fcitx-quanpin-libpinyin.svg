@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22">
- <defs>
-  <style id="current-color-scheme" type="text/css">.ColorScheme-Text {
-                color:#f2f2f2;
-            }</style>
- </defs>
-<path class="ColorScheme-Text" d="M6 3C4.338 3 3 4.338 3 6v10c0 1.662 1.338 3 3 3h10c1.662 0 3-1.338 3-3V6c0-1.662-1.338-3-3-3zm4.51 1.902.98.196c-.01.05-.034.096-.047.146 1.877 2.29 5.733 3.787 5.733 3.787l-.352.938S16.016 9.647 15 9.13V10h-3.5v2H14v1h-2.5v3H16v1H6v-1h4.5v-3H8v-1h2.5v-2H7v-.824c-1.029.501-1.83.795-1.83.795l-.34-.942s1.341-.489 2.736-1.277c1.395-.789 2.758-1.92 2.944-2.85m.49 1.33c-.668.997-1.846 1.772-2.941 2.391-.248.14-.484.256-.721.377h7.396C13.543 8.37 12.116 7.447 11 6.232" style="fill:currentColor;fill-opacity:1;stroke:none"/></svg>

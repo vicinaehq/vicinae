@@ -1,7 +1,0 @@
-<svg width="24" height="24" enable-background="new" version="1.1" xmlns="http://www.w3.org/2000/svg">
- <g transform="translate(4,4)" fill="#dedede">
-  <rect transform="scale(-1,1)" x="-15" y="4" width="1" height="8" fill-rule="evenodd" stop-color="#000000" stroke-width="0" style="paint-order:stroke fill markers"/>
-  <path d="m2 4v8l6-4-5.4-3.6z" stroke-width=".60302"/>
-  <path d="m8 4v8l6-4-5.4-3.6z" stroke-width=".60302"/>
- </g>
-</svg>

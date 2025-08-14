@@ -1,7 +1,0 @@
-<svg width="24" height="24" version="1.1" xmlns="http://www.w3.org/2000/svg">
- <g transform="translate(4,4)" fill="#363636" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round">
-  <path d="m7 6h1v1h-1zm0 2h1v1h-1zm0 2h1v1h-1zm0 2h1v1h-1zm0 2h1v1h-1zm-6-13h13v1h-13z" stop-color="#000000"/>
-  <path d="m1 1h1v14h-1zm12 0h1v14h-1zm-9 3h1v11h-1zm6 0h1v11h-1z" stop-color="#000000"/>
-  <path d="m4 4h7v1h-7zm-3 10h4v1h-4zm9 0h4v1h-4z" stop-color="#000000"/>
- </g>
-</svg>

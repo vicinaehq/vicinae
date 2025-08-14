@@ -1,5 +1,0 @@
-<svg width="16" height="16" enable-background="new" version="1.1" xmlns="http://www.w3.org/2000/svg">
- <path class="warning" d="m8 0a8 8 0 0 0-8 8 8 8 0 0 0 8 8 8 8 0 0 0 8-8 8 8 0 0 0-8-8zm-0.09375 1a7 7 0 0 1 0.09375 0 7 7 0 0 1 7 7 7 7 0 0 1-7 7 7 7 0 0 1-7-7 7 7 0 0 1 6.9062-7z" fill="#f57900"/>
- <rect x="7.5" y="4" width="1" height="6" rx=".5" ry=".5" fill="#f57900" style="paint-order:markers fill stroke"/>
- <rect x="7.5" y="11" width="1" height="1" rx=".5" ry=".5" fill="#f57900" style="paint-order:markers fill stroke"/>
-</svg>

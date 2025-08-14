@@ -1,7 +1,0 @@
-<svg width="16" height="16" version="1.1" xmlns="http://www.w3.org/2000/svg">
- <rect y="1" width="15" height="2" rx="1" ry="1" fill="#99c1f1" fill-rule="evenodd" stroke-width=".96825"/>
- <rect x="1" y="4" width="12" height="2" rx="1" ry="1" fill="#99c1f1" fill-rule="evenodd" stroke-width=".92582"/>
- <rect x="4" y="7" width="10" height="2" rx="1" ry="1" fill="#99c1f1" fill-rule="evenodd"/>
- <rect x="3" y="10" width="8" height="2" rx="1" ry="1" fill="#99c1f1" fill-rule="evenodd" stroke-width=".94281"/>
- <rect x="6" y="13" width="4" height="2" rx="1" ry="1" fill="#99c1f1" fill-rule="evenodd" stroke-width=".75593"/>
-</svg>

@@ -1,7 +1,7 @@
 {
 	"version": "1.0.0",
 	"appearance": "dark",
-	"icon": "../vscode.svg",
+	"icon": "./vscode.png",
 	"name": "VS Code Dark",
 	"description": "The official VS Code dark color palette",
 	"palette": {

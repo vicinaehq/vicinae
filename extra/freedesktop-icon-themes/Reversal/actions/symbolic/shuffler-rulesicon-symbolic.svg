@@ -1,4 +1,0 @@
-<svg width="16" height="16" version="1.1" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
- <path d="m11 5v1h2.293l-7.4238 7.4238 0.70703 0.70703 7.4238-7.4238v2.293h1v-4h-4z" fill="#363636" stop-color="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
- <path d="m5 11v-1h-2.293l7.4238-7.4238-0.70703-0.70703-7.4238 7.4238v-2.293h-1v4z" fill="#363636" stop-color="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-</svg>

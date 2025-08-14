@@ -1,9 +1,0 @@
-<svg width="16px" height="16px" version="1.1" xmlns="http://www.w3.org/2000/svg">
- <g fill="#363636">
-  <rect transform="rotate(45)" x="4.5135" y=".62868" width="8" height="1" stop-color="#000000" style="paint-order:stroke fill markers"/>
-  <rect transform="matrix(-.70711 .70711 .70711 .70711 0 0)" x="-6.3713" y="11.513" width="8" height="1" stop-color="#000000" style="paint-order:stroke fill markers"/>
-  <rect x="10" y="2.9896" width="4" height="1" stop-color="#000000" style="paint-order:stroke fill markers"/>
-  <rect x="13" y="2.9896" width="1" height="4" stop-color="#000000" style="paint-order:stroke fill markers"/>
-  <rect x="7" y="9" width="1" height="6" stop-color="#000000" style="paint-order:stroke fill markers"/>
- </g>
-</svg>
