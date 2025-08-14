@@ -35,7 +35,6 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "ReleaseHost")
 endif()
 
 
-#add_subdirectory(omnictl)
 add_subdirectory(vicinae)
 
 if (UNIX AND NOT APPLE)
