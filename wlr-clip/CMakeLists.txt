@@ -14,7 +14,6 @@ include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}/src/lib
 	${Protobuf_INCLUDE_DIRS}
     ${CMAKE_CURRENT_BINARY_DIR}  # For generated headers
-
 )
 
 set(SRCS

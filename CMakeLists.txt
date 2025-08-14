@@ -43,6 +43,6 @@ if (UNIX AND NOT APPLE)
 	add_subdirectory(wlr-clip)
 endif()
 
-install(DIRECTORY ./extra/freedesktop-icon-themes/Reversal/ DESTINATION ${CMAKE_INSTALL_PREFIX}/share/icons/Reversal)
-install(DIRECTORY ./extra/freedesktop-icon-themes/Reversal-dark/ DESTINATION ${CMAKE_INSTALL_PREFIX}/share/icons/Reversal-dark)
+
+make_directory(${CMAKE_INSTALL_PREFIX}/share/applications)
 install(FILES ./extra/vicinae.desktop DESTINATION ${CMAKE_INSTALL_PREFIX}/share/applications)

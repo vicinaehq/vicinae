@@ -1,0 +1,54 @@
+name: Release (tagged)
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-and-release:
+    runs-on: self-hosted
+    permissions:
+      contents: write   # needed to create a release with GITHUB_TOKEN
+    env:
+      BUILD_TYPE: Release
+      INSTALL_DIR: ${{ github.workspace }}/install
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare dirs
+        run: mkdir -p build install
+
+      - name: Configure CMake
+        run: |
+          cd build
+          cmake -G Ninja .. \
+            -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+            -DCMAKE_PREFIX_PATH="$Qt6_DIR" \
+            -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}"
+
+      - name: Build
+        run: |
+          cmake --build build --config ${BUILD_TYPE} --parallel $(nproc)
+
+      - name: Install
+        run: |
+          cd build
+          cmake --install . --config ${BUILD_TYPE}
+
+      - name: Package (zip install dir)
+        run: |
+          cd "${INSTALL_DIR}"
+          zip -r "${{ github.workspace }}/linux-x86_64-${{ github.ref_name }}.zip" .
+
+      - name: Create GitHub Release and upload asset
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          generate_release_notes: true
+          files: |
+            linux-x86-64-${{ github.ref_name }}.zip
+
