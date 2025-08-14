@@ -531,6 +531,7 @@ class ExtensionSettingsContextLeftPane : public QWidget {
   }
 
   void setupUI() {
+    auto manager = ServiceRegistry::instance()->rootItemManager();
     auto theme = ThemeService::instance().theme();
     auto layout = new QVBoxLayout;
     // m_tree->setHeaderLabels({"Name", "Type", "Alias", "Enabled"});
@@ -554,6 +555,8 @@ class ExtensionSettingsContextLeftPane : public QWidget {
     });
 
     connect(m_tree, &OmniTree::selectionUpdated, this, &ExtensionSettingsContextLeftPane::selectionUpdated);
+    connect(manager, &RootItemManager::itemsChanged, this,
+            [this]() { populateTreeFromQuery(m_toolbar->input()->text()); });
 
     setLayout(layout);
     populateTreeFromQuery("");
