@@ -41,7 +41,7 @@ jobs:
       - name: Package (tar install dir)
         run: |
           cd "${INSTALL_DIR}"
-          tar -czvf "${{ github.workspace }}/linux-x86_64-${{ github.ref_name }}.tar.gz" .
+          tar -czvf "${{ github.workspace }}/vicinae-linux-x86_64-${{ github.ref_name }}.tar.gz" .
 
       - name: Create GitHub Release and upload asset
         uses: softprops/action-gh-release@v2
@@ -50,5 +50,5 @@ jobs:
           name: ${{ github.ref_name }}
           generate_release_notes: true
           files: |
-            linux-x86_64-${{ github.ref_name }}.tar.gz
+            vicinae-linux-x86_64-${{ github.ref_name }}.tar.gz
 
