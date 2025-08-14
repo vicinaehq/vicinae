@@ -13,19 +13,22 @@
 #include <qtimer.h>
 #include <qtmetamacros.h>
 
+// XXX - Currently we store the config file on the filesystem as a json file
+// There is no guarantee that this will remain the case, and the config file should not be edited
+// by hand if possible.
 class ConfigService : public QObject {
   Q_OBJECT
 
 public:
   struct Value {
-    QString faviconService;
+    QString faviconService = "google";
     struct {
       std::optional<QString> name;
       std::optional<QString> iconTheme;
     } theme;
     struct {
       int rounding = 10;
-      float opacity = 1;
+      double opacity = 0.95;
       bool csd = true;
     } window;
     struct {
@@ -33,9 +36,6 @@ public:
     } rootSearch;
     struct {
       std::optional<QString> normal;
-      std::optional<QString> italic;
-      std::optional<QString> bold;
-      std::optional<QString> boldItalic;
       int baseSize = 10;
     } font;
   };
@@ -43,7 +43,7 @@ public:
 private:
   QFileSystemWatcher m_watcher;
   Value m_config;
-  std::filesystem::path m_configFile = Omnicast::configDir() / "omnicast.json";
+  std::filesystem::path m_configFile = Omnicast::configDir() / "vicinae.json";
 
   QJsonObject loadAsJson() const {
     QFile file(m_configFile);
@@ -63,16 +63,13 @@ private:
       auto font = obj.value("font").toObject();
 
       if (font.contains("normal")) { cfg.font.normal = font.value("normal").toString(); }
-      if (font.contains("italic")) { cfg.font.italic = font.value("italic").toString(); }
-      if (font.contains("bold")) { cfg.font.bold = font.value("bold").toString(); }
-      if (font.contains("bold_italic")) { cfg.font.boldItalic = font.value("bold_italic").toString(); }
       if (font.contains("size")) { cfg.font.baseSize = font.value("size").toInt(); }
     }
 
     {
       auto theme = obj.value("theme").toObject();
 
-      if (theme.contains("name")) { cfg.theme.name = theme.value("name").toString(); }
+      cfg.theme.name = theme.value("name").toString("vicinae-dark");
       if (theme.contains("iconTheme")) { cfg.theme.iconTheme = theme.value("iconTheme").toString(); }
     }
 
@@ -86,7 +83,7 @@ private:
       auto window = obj.value("window").toObject();
 
       cfg.window.rounding = window.value("rounding").toInt(10);
-      cfg.window.opacity = window.value("opacity").toDouble(1);
+      cfg.window.opacity = window.value("opacity").toDouble(0.95);
       cfg.window.csd = window.value("csd").toBool(true);
     }
 

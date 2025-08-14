@@ -276,15 +276,6 @@ int startDaemon() {
                      }
                    });
 
-  int fontId = QFontDatabase::addApplicationFont(":assets/fonts/SF-Pro-Text-Regular.otf");
-  fontId = QFontDatabase::addApplicationFont(":assets/fonts/SF-Pro-Text-Light.otf");
-  fontId = QFontDatabase::addApplicationFont(":assets/fonts/SF-Pro-Text-Bold.otf");
-
-  QFont font("SF Pro Text");
-
-  font.setHintingPreference(QFont::HintingPreference::PreferNoHinting);
-
-  QApplication::setFont(font);
   QApplication::setApplicationName("vicinae");
   QApplication::setQuitOnLastWindowClosed(false);
 
@@ -303,19 +294,6 @@ int startDaemon() {
 
   SettingsWindow settings(&ctx);
   LauncherWindow launcher(ctx);
-
-#ifdef WAYLAND_LAYER_SHELL
-  launcher.createWinId();
-  if (auto lshell = LayerShellQt::Window::get(launcher.windowHandle())) {
-    lshell->setLayer(LayerShellQt::Window::LayerOverlay);
-    lshell->setScope("vicinae");
-    lshell->setKeyboardInteractivity(LayerShellQt::Window::KeyboardInteractivityExclusive);
-    lshell->setExclusiveZone(-1);
-    lshell->setAnchors(LayerShellQt::Window::AnchorNone);
-  } else {
-    qWarning() << "Unable apply layer shell rules to main window: LayerShellQt::Window::get() returned null";
-  }
-#endif
 
   launcher.show();
 

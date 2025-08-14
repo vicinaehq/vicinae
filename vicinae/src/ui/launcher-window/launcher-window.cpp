@@ -135,6 +135,19 @@ void LauncherWindow::setupUI() {
 
   m_hud->setMaximumWidth(300);
 
+#ifdef WAYLAND_LAYER_SHELL
+  createWinId();
+  if (auto lshell = LayerShellQt::Window::get(windowHandle())) {
+    lshell->setLayer(LayerShellQt::Window::LayerOverlay);
+    lshell->setScope("vicinae");
+    lshell->setKeyboardInteractivity(LayerShellQt::Window::KeyboardInteractivityExclusive);
+    lshell->setExclusiveZone(-1);
+    lshell->setAnchors(LayerShellQt::Window::AnchorNone);
+  } else {
+    qWarning() << "Unable apply layer shell rules to main window: LayerShellQt::Window::get() returned null";
+  }
+#endif
+
   connect(m_ctx.navigation.get(), &NavigationController::currentViewChanged, this,
           &LauncherWindow::handleViewChange);
   connect(m_ctx.navigation.get(), &NavigationController::confirmAlertRequested, this,
