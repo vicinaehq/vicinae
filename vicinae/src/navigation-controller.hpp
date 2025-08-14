@@ -183,6 +183,6 @@ private:
   const ViewState *findViewState(const BaseView *view) const;
   const BaseView *topView() const;
 
-  bool m_windowOpened = true;
+  bool m_windowOpened = false;
   std::vector<std::unique_ptr<ViewState>> m_views;
 };

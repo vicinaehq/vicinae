@@ -295,7 +295,7 @@ int startDaemon() {
   SettingsWindow settings(&ctx);
   LauncherWindow launcher(ctx);
 
-  launcher.show();
+  qInfo() << "Vicinae server successfully started. Call vicinae without an argument to toggle the window";
 
   return qApp->exec();
 }
