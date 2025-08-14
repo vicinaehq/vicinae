@@ -514,6 +514,7 @@ void ThemeService::scanThemeDirectory(const std::filesystem::path &path) {
       theme.palette.purple = colors.value("purple").toString();
       theme.palette.red = colors.value("red").toString();
       theme.palette.yellow = colors.value("yellow").toString();
+      theme.palette.cyan = colors.value("cyan").toString();
 
       upsertTheme(theme);
 
