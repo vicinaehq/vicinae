@@ -50,5 +50,5 @@ jobs:
           name: ${{ github.ref_name }}
           generate_release_notes: true
           files: |
-            linux-x86-64-${{ github.ref_name }}.tar.gz
+            linux-x86_64-${{ github.ref_name }}.tar.gz
 
