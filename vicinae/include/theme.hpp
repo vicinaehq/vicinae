@@ -23,6 +23,7 @@ enum SemanticColor {
   Purple,
   Red,
   Yellow,
+  Cyan,
 
   // Text colors
   TextPrimary,
@@ -158,6 +159,7 @@ struct ThemeInfo {
     QColor purple;
     QColor red;
     QColor yellow;
+    QColor cyan;
 
     QColor textTertiary;
     QColor textDisabled;

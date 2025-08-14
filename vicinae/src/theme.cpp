@@ -22,6 +22,8 @@ QColor ThemeInfo::resolveTint(SemanticColor tint) const {
     return colors.red;
   case SemanticColor::Yellow:
     return colors.yellow;
+  case SemanticColor::Cyan:
+    return colors.cyan;
 
   // Text colors
   case SemanticColor::TextPrimary:
@@ -164,6 +166,10 @@ QColor ThemeInfo::adjustColorHSL(const QColor &base, int hueShift, float satMult
 ThemeInfo ThemeInfo::fromParsed(const ParsedThemeData &scheme) {
   ThemeInfo info;
 
+  // IMPORTANT: most of the semantic colors derived from the palette have been generated
+  // but are not used yet, only the main ones are.
+  // Eventually we will shit toward using more meaningful semantic colors for particular elements.
+
   info.id = scheme.id;
   info.name = scheme.name;
   info.appearance = scheme.appearance;
@@ -176,6 +182,7 @@ ThemeInfo ThemeInfo::fromParsed(const ParsedThemeData &scheme) {
   info.colors.purple = scheme.palette.purple;
   info.colors.red = scheme.palette.red;
   info.colors.yellow = scheme.palette.yellow;
+  info.colors.cyan = scheme.palette.cyan;
   info.colors.mainBackground = scheme.palette.background;
 
   if (scheme.appearance == "dark") {
@@ -524,7 +531,6 @@ void ThemeService::setDefaultTheme() {
 }
 
 std::vector<ParsedThemeData> ThemeService::loadColorSchemes() const {
-  // XXX - Later on we may want to load those from somewhere on the filesystem (I guess)
   std::vector<ParsedThemeData> schemes;
 
   schemes.reserve(2);
@@ -537,14 +543,14 @@ std::vector<ParsedThemeData> ThemeService::loadColorSchemes() const {
   lightTheme.appearance = "light";
   lightTheme.palette = ColorPalette{.background = "#F4F2EE",
                                     .foreground = "#1A1A1A",
-                                    .blue = "#2C3E50",
-                                    .green = "#7F8E7B",
+                                    .blue = "#1F6FEB",
+                                    .green = "#3A9C61",
                                     .magenta = "#A48ED6",
                                     .orange = "#DA8A48",
                                     .purple = "#8374B7",
                                     .red = "#C25C49",
-                                    .yellow = "#C8B887",
-                                    .cyan = "#5AC8D8"};
+                                    .yellow = "#BFAE78",
+                                    .cyan = "#18A5B3"};
 
   schemes.emplace_back(lightTheme);
 
@@ -556,14 +562,14 @@ std::vector<ParsedThemeData> ThemeService::loadColorSchemes() const {
   darkTheme.appearance = "dark";
   darkTheme.palette = ColorPalette{.background = "#1A1A1A",
                                    .foreground = "#E8E6E1",
-                                   .blue = "#1B2A38",
-                                   .green = "#A7AE9F",
+                                   .blue = "#2F6FED",
+                                   .green = "#3A9C61",
                                    .magenta = "#BC8CFF",
                                    .orange = "#F0883E",
                                    .purple = "#7267B0",
                                    .red = "#B9543B",
-                                   .yellow = "#C8B887",
-                                   .cyan = "#76E3EA"};
+                                   .yellow = "#BFAE78",
+                                   .cyan = "#18A5B3"};
   schemes.emplace_back(darkTheme);
 
   return schemes;

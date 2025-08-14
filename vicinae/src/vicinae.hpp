@@ -20,7 +20,7 @@ static const QString APP_ID = "vicinae";
 static const QString APP_SCHEME = APP_ID;
 static const std::array<QString, 2> APP_SCHEMES = {APP_SCHEME, "raycast"};
 
-static const SemanticColor ACCENT_COLOR = SemanticColor::Red;
+static const SemanticColor ACCENT_COLOR = SemanticColor::Cyan;
 
 std::filesystem::path runtimeDir();
 std::filesystem::path commandSocketPath();
