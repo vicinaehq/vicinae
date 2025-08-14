@@ -148,11 +148,12 @@ void NavigationController::popCurrentView() {
   selectSearchText();
 }
 
-void NavigationController::popToRoot() {
+void NavigationController::popToRoot(const PopToRootOptions opts) {
   while (m_views.size() > 1) {
     popCurrentView();
   }
-  clearSearchText();
+
+  if (opts.clearSearch) clearSearchText();
 }
 
 void NavigationController::clearSearchAccessory(const BaseView *caller) {
@@ -178,6 +179,27 @@ QString NavigationController::navigationTitle(const BaseView *caller) const {
   if (auto state = findViewState(VALUE_OR(caller, topView()))) { return state->navigation.title; }
 
   return QString();
+}
+
+void NavigationController::setPopToRootOnClose(bool value) { m_popToRootOnClose = value; }
+
+void NavigationController::closeWindow(const CloseWindowOptions &settings) {
+  auto resolveApplicablePopToRoot = [&]() {
+    if (settings.popToRootType == PopToRootType::Default)
+      return m_popToRootOnClose ? PopToRootType::Immediate : PopToRootType::Suspended;
+    return settings.popToRootType;
+  };
+
+  m_windowOpened = false;
+  emit windowVisiblityChanged(false);
+
+  switch (resolveApplicablePopToRoot()) {
+  case PopToRootType::Immediate:
+    popToRoot({.clearSearch = settings.clearRootSearch});
+    break;
+  default:
+    break;
+  }
 }
 
 void NavigationController::toggleWindow() {
@@ -303,11 +325,6 @@ void NavigationController::setActions(std::unique_ptr<ActionPanelState> panel, c
 }
 
 size_t NavigationController::viewStackSize() const { return m_views.size(); }
-
-void NavigationController::closeWindow() {
-  m_windowOpened = false;
-  emit windowVisiblityChanged(false);
-}
 
 void NavigationController::showWindow() {
   m_windowOpened = true;

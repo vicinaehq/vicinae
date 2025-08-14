@@ -77,7 +77,13 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
   }
 
   if (url.host() == "pop_to_root") {
-    m_ctx.navigation->popToRoot();
+    PopToRootOptions opts;
+
+    if (auto text = query.queryItemValue("clearSearch"); !text.isEmpty()) {
+      opts.clearSearch = text == "true" || text == "1";
+    }
+
+    m_ctx.navigation->popToRoot(opts);
     return;
   }
 
