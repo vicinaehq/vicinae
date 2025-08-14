@@ -263,6 +263,8 @@ class RaycastStoreDetailView : public BaseView {
           watcher->setFuture(downloadResult);
         });
 
+    install->setShortcut({.key = "return"});
+
     auto main = panel->createSection();
 
     main->addAction(install);
