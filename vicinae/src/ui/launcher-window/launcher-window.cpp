@@ -4,6 +4,9 @@
 #include "ui/keyboard.hpp"
 #include "ui/status-bar/status-bar.hpp"
 #include "ui/top-bar/top-bar.hpp"
+#ifdef WAYLAND_LAYER_SHELL
+#include <LayerShellQt/window.h>
+#endif
 #include <qboxlayout.h>
 #include <qevent.h>
 #include <qlogging.h>
@@ -136,15 +139,21 @@ void LauncherWindow::setupUI() {
   m_hud->setMaximumWidth(300);
 
 #ifdef WAYLAND_LAYER_SHELL
-  createWinId();
-  if (auto lshell = LayerShellQt::Window::get(windowHandle())) {
-    lshell->setLayer(LayerShellQt::Window::LayerOverlay);
-    lshell->setScope("vicinae");
-    lshell->setKeyboardInteractivity(LayerShellQt::Window::KeyboardInteractivityExclusive);
-    lshell->setExclusiveZone(-1);
-    lshell->setAnchors(LayerShellQt::Window::AnchorNone);
-  } else {
-    qWarning() << "Unable apply layer shell rules to main window: LayerShellQt::Window::get() returned null";
+  {
+    namespace Shell = LayerShellQt;
+
+    createWinId();
+    if (auto lshell = Shell::Window::get(windowHandle())) {
+      lshell->setLayer(Shell::Window::LayerOverlay);
+      lshell->setScope("vicinae");
+      lshell->setScreenConfiguration(Shell::Window::ScreenFromCompositor);
+      lshell->setKeyboardInteractivity(Shell::Window::KeyboardInteractivityExclusive);
+      lshell->setExclusiveZone(-1);
+      lshell->setAnchors(Shell::Window::AnchorNone);
+    } else {
+      qWarning()
+          << "Unable apply layer shell rules to main window: LayerShellQt::Window::get() returned null";
+    }
   }
 #endif
 
