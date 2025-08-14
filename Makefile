@@ -14,6 +14,16 @@ all: vicinae
 	cmake --build $(BUILD_DIR)
 .PHONY: all
 
+release:
+	cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -B $(BUILD_DIR)
+	cmake --build $(BUILD_DIR)
+.PHONY: release
+
+debug:
+	cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -B $(BUILD_DIR)
+	cmake --build $(BUILD_DIR)
+.PHONY: debug
+
 format:
 	@echo 'vicinae\nwlr-clip\nproto\nomnictl' | xargs -I{} find {} -type d -iname 'build' -prune -o -type f -iname '*.hpp' -o -type f -iname '*.cpp' | xargs -I{} bash -c '[ -f {} ] && clang-format -i {} && echo "Formatted {}" || echo "Failed to format {}"'
 .PHONY: format
@@ -35,10 +45,6 @@ clean:
 	$(RM) -rf ./extension-manager/node_modules
 	$(RM) -rf ./scripts/.tmp
 .PHONY: clean
-
-pack: clean
-	tar cvfz vicinae.tar.gz .
-.PHONY: pack
 
 re: clean all
 .PHONY: re
