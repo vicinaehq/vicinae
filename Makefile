@@ -1,5 +1,6 @@
 BUILD_DIR := build
 RM := /usr/bin/rm
+TAG := $(shell git describe --tags --abbrev=0)
 
 vicinae: configure
 	cmake --build $(BUILD_DIR)
@@ -28,13 +29,21 @@ format:
 	@echo 'vicinae\nwlr-clip\nproto\nomnictl' | xargs -I{} find {} -type d -iname 'build' -prune -o -type f -iname '*.hpp' -o -type f -iname '*.cpp' | xargs -I{} bash -c '[ -f {} ] && clang-format -i {} && echo "Formatted {}" || echo "Failed to format {}"'
 .PHONY: format
 
+# if we need to manually create a release
+gh-release:
+	mkdir -p dist
+	cmake -G Ninja -DCMAKE_INSTALL_PREFIX=dist -DCMAKE_BUILD_TYPE=Release -B $(BUILD_DIR)
+	cmake --build $(BUILD_DIR)
+	cmake --install build
+	tar -czvf vicinae-linux-x86_64-$(TAG).tar.gz -C dist .
+.PHONY: gh-release
+
 configure:
 	cmake -G Ninja -B $(BUILD_DIR)
 .PHONY: configure
 
 gen-emoji:
 	cd ./scripts/emoji && npm install && tsc --outDir dist && node dist/main.js
-	cp ./scripts/emoji/dist/emoji.{cpp,hpp} vicinae/src/services/emoji-service/
 .PHONY: gen-emoji
 
 clean:

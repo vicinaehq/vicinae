@@ -9,3 +9,6 @@ extension-manager/runtime/node_modules
 /vgcore*
 
 vicinae/assets/extension-runtime.js
+
+*.tar.gz
+/dist
