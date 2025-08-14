@@ -17,7 +17,7 @@ Locale::Locale(QStringView data) {
   size_t i = 0;
   size_t end = i;
 
-  while (state != DONE) {
+  while (state != DONE && i < data.size()) {
     QChar c = data.at(i);
 
     switch (state) {
