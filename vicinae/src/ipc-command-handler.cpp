@@ -62,7 +62,18 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
   }
 
   if (url.host() == "close") {
-    m_ctx.navigation->closeWindow();
+    CloseWindowOptions opts;
+
+    if (auto text = query.queryItemValue("popToRootType"); !text.isEmpty()) {
+      if (text == "immediate") { opts.popToRootType = PopToRootType::Immediate; }
+      if (text == "suspended") { opts.popToRootType = PopToRootType::Suspended; }
+    }
+
+    if (auto text = query.queryItemValue("clearRootSearch"); !text.isEmpty()) {
+      opts.clearRootSearch = text == "true" || text == "1";
+    }
+
+    m_ctx.navigation->closeWindow(opts);
     return;
   }
 
@@ -77,7 +88,13 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
   }
 
   if (url.host() == "pop_to_root") {
-    m_ctx.navigation->popToRoot();
+    PopToRootOptions opts;
+
+    if (auto text = query.queryItemValue("clearSearch"); !text.isEmpty()) {
+      opts.clearSearch = text == "true" || text == "1";
+    }
+
+    m_ctx.navigation->popToRoot(opts);
     return;
   }
 

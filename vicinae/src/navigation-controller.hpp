@@ -21,6 +21,19 @@ struct ActionPanelSectionState {
   void addAction(AbstractAction *action) { m_actions.emplace_back(action); }
 };
 
+// matches raycast pop to root type policiy
+// https://developers.raycast.com/api-reference/window-and-search-bar#poptoroottype
+enum class PopToRootType { Default, Immediate, Suspended };
+
+struct CloseWindowOptions {
+  PopToRootType popToRootType = PopToRootType::Default;
+  bool clearRootSearch = true; // has no effect if we do not pop to root
+};
+
+struct PopToRootOptions {
+  bool clearSearch = true;
+};
+
 struct ActionPanelState : public NonCopyable {
   AbstractAction *findPrimaryAction() const {
     for (const auto &section : m_sections) {
@@ -88,18 +101,21 @@ public:
   };
 
   bool m_isPanelOpened = false;
+  bool m_popToRootOnClose = false;
 
-  void closeWindow();
+  void closeWindow(const CloseWindowOptions &settings = {});
   void showWindow();
   void toggleWindow();
   bool isWindowOpened() const;
+
+  void setPopToRootOnClose(bool value);
 
   void setSearchPlaceholderText(const QString &text, const BaseView *caller = nullptr);
   void setSearchText(const QString &text, const BaseView *caller = nullptr);
 
   void setLoading(bool value, const BaseView *caller = nullptr);
 
-  void popToRoot();
+  void popToRoot(const PopToRootOptions &opts = {});
 
   QString searchText(const BaseView *caller = nullptr) const;
   QString navigationTitle(const BaseView *caller = nullptr) const;

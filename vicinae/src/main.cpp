@@ -1,6 +1,7 @@
 #include "command-controller.hpp"
 #include "daemon/ipc-client.hpp"
 #include "favicon/favicon-service.hpp"
+#include "navigation-controller.hpp"
 #include "ui/launcher-window/launcher-window.hpp"
 #include <QStyleHints>
 #include "common.hpp"
@@ -260,22 +261,6 @@ int startDaemon() {
 
   FaviconService::initialize(new FaviconService(Omnicast::dataDir() / "favicon"));
 
-  QObject::connect(ServiceRegistry::instance()->config(), &ConfigService::configChanged,
-                   [](const ConfigService::Value &next, const ConfigService::Value &prev) {
-                     if (next.theme.name.value_or("") != prev.theme.name.value_or("")) {
-                       ThemeService::instance().setTheme(*next.theme.name);
-                     }
-
-                     FaviconService::instance()->setService(next.faviconService);
-
-                     if (auto icon = next.theme.iconTheme) { QIcon::setThemeName(icon.value()); }
-
-                     if (next.font.normal && *next.font.normal != prev.font.normal.value_or("")) {
-                       QApplication::setFont(*next.font.normal);
-                       qApp->setStyleSheet(qApp->styleSheet());
-                     }
-                   });
-
   QApplication::setApplicationName("vicinae");
   QApplication::setQuitOnLastWindowClosed(false);
 
@@ -291,6 +276,24 @@ int startDaemon() {
 
   commandServer.setHandler(new IpcCommandHandler(ctx));
   commandServer.start(Omnicast::commandSocketPath());
+
+  QObject::connect(ServiceRegistry::instance()->config(), &ConfigService::configChanged,
+                   [&ctx](const ConfigService::Value &next, const ConfigService::Value &prev) {
+                     if (next.theme.name.value_or("") != prev.theme.name.value_or("")) {
+                       ThemeService::instance().setTheme(*next.theme.name);
+                     }
+
+                     ctx.navigation->setPopToRootOnClose(next.popToRootOnClose);
+
+                     FaviconService::instance()->setService(next.faviconService);
+
+                     if (auto icon = next.theme.iconTheme) { QIcon::setThemeName(icon.value()); }
+
+                     if (next.font.normal && *next.font.normal != prev.font.normal.value_or("")) {
+                       QApplication::setFont(*next.font.normal);
+                       qApp->setStyleSheet(qApp->styleSheet());
+                     }
+                   });
 
   SettingsWindow settings(&ctx);
   LauncherWindow launcher(ctx);
