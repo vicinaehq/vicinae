@@ -148,7 +148,7 @@ void NavigationController::popCurrentView() {
   selectSearchText();
 }
 
-void NavigationController::popToRoot(const PopToRootOptions opts) {
+void NavigationController::popToRoot(const PopToRootOptions &opts) {
   while (m_views.size() > 1) {
     popCurrentView();
   }

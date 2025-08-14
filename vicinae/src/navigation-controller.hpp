@@ -115,7 +115,7 @@ public:
 
   void setLoading(bool value, const BaseView *caller = nullptr);
 
-  void popToRoot(const PopToRootOptions opts = {});
+  void popToRoot(const PopToRootOptions &opts = {});
 
   QString searchText(const BaseView *caller = nullptr) const;
   QString navigationTitle(const BaseView *caller = nullptr) const;
