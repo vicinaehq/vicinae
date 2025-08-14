@@ -1,6 +1,6 @@
 #pragma once
 #include "common.hpp"
-#include "libtrie/trie.hpp"
+#include "trie.hpp"
 #include "../../../src/ui/image/url.hpp"
 #include "ui/focus-notifier.hpp"
 #include "ui/form/base-input.hpp"

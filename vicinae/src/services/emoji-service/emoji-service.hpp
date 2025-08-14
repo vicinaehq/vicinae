@@ -1,5 +1,5 @@
 #pragma once
-#include "libtrie/trie.hpp"
+#include "trie.hpp"
 #include "omni-database.hpp"
 #include "services/emoji-service/emoji.hpp"
 #include <qobject.h>

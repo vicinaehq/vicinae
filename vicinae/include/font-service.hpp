@@ -1,5 +1,5 @@
 #pragma once
-#include "libtrie/trie.hpp"
+#include "trie.hpp"
 #include <cstdlib>
 #include <qfont.h>
 #include <qfontdatabase.h>

@@ -2,7 +2,7 @@
 #include "common.hpp"
 #include "ui/views/list-view.hpp"
 #include "clipboard-actions.hpp"
-#include "libtrie/trie.hpp"
+#include "trie.hpp"
 #include <QtConcurrent/QtConcurrent>
 #include "services/config/config-service.hpp"
 #include "src/ui/image/url.hpp"

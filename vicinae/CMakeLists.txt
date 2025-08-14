@@ -38,7 +38,6 @@ include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_SOURCE_DIR}/src
 	${CMAKE_CURRENT_SOURCE_DIR}/src/lib
-	${CMAKE_CURRENT_SOURCE_DIR}/../qsqlbuilder/sqlbuilder
 	${CMAKE_CURRENT_SOURCE_DIR}/..
 	${Protobuf_INCLUDE_DIRS}
     ${CMAKE_CURRENT_BINARY_DIR}  # For generated headers

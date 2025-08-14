@@ -37,7 +37,6 @@ endif()
 
 #add_subdirectory(omnictl)
 add_subdirectory(vicinae)
-add_subdirectory(libtrie)
 
 if (UNIX AND NOT APPLE)
 	add_subdirectory(wlr-clip)
