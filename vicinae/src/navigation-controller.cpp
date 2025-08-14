@@ -152,6 +152,7 @@ void NavigationController::popToRoot() {
   while (m_views.size() > 1) {
     popCurrentView();
   }
+  clearSearchText();
 }
 
 void NavigationController::clearSearchAccessory(const BaseView *caller) {
