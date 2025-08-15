@@ -14,21 +14,7 @@
 
 bool WlrClipboardServer::isAlive() const { return process->isOpen(); }
 
-bool WlrClipboardServer::isActivatable() const {
-  QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-
-  auto namedVars = {
-      env.value("XDG_CURRENT_DESKTOP").toLower(),
-      env.value("XDG_SESSION_DESKTOP").toLower(),
-      env.value("WAYLAND_COMPOSITOR").toLower(),
-  };
-
-  auto nameFlags = {"wlroots", "sway", "river", "wayfire", "hyprland"};
-
-  return std::ranges::any_of(namedVars, [&](auto &&var) {
-    return std::ranges::any_of(nameFlags, [&](auto &&flag) { return var.contains(flag); });
-  });
-}
+bool WlrClipboardServer::isActivatable() const { return QApplication::platformName() == "wayland"; }
 
 void WlrClipboardServer::handleMessage(const proto::ext::wlrclip::Selection &sel) {
   ClipboardSelection cs;

@@ -23,6 +23,7 @@ void GeneralSettings::setConfig(const ConfigService::Value &value) {
   m_rootFileSearch->setValueAsJson(value.rootSearch.searchFiles);
   m_qThemeSelector->setValue(value.theme.iconTheme.value_or(currentIconTheme));
   m_faviconSelector->setValue(value.faviconService);
+  m_popToRootOnClose->setValueAsJson(value.popToRootOnClose);
 }
 
 void GeneralSettings::handleFaviconServiceChange(const QString &service) {
@@ -67,6 +68,12 @@ void GeneralSettings::handleOpacityChange(double opacity) {
   config->updateConfig([&](ConfigService::Value &value) { value.window.opacity = opacity; });
 }
 
+void GeneralSettings::handlePopToRootOnCloseChange(bool popToRootOnClose) {
+  auto config = ServiceRegistry::instance()->config();
+
+  config->updateConfig([&](ConfigService::Value &value) { value.popToRootOnClose = popToRootOnClose; });
+}
+
 void GeneralSettings::setupUI() {
   auto config = ServiceRegistry::instance()->config();
   auto appFont = QApplication::font().family();
@@ -79,6 +86,9 @@ void GeneralSettings::setupUI() {
   m_qThemeSelector = new QThemeSelector;
   m_fontSelector = new FontSelector;
   m_faviconSelector = new FaviconServiceSelector;
+  m_popToRootOnClose = new CheckboxInput;
+
+  m_popToRootOnClose->setLabel("Pop to root on window close");
 
   FormWidget *form = new FormWidget;
 
@@ -151,13 +161,24 @@ void GeneralSettings::setupUI() {
   checkField->setInfo("Files are searched asynchronously, so if this is enabled you should expect a slight "
                       "delay for file search results to show up");
 
+  auto popToRootOnCloseField = new FormField;
+
+  connect(m_popToRootOnClose, &CheckboxInput::valueChanged, this,
+          [this](bool value) { handlePopToRootOnCloseChange(value); });
+
+  popToRootOnCloseField->setName("Pop on close");
+  popToRootOnCloseField->setWidget(m_popToRootOnClose);
+  popToRootOnCloseField->setInfo("Whether to reset the navigation state when the launcher window is closed.");
+
   form->addField(checkField);
+  form->addField(popToRootOnCloseField);
   form->addField(themeField);
   form->addField(qThemeField);
   form->addField(fontField);
   form->addField(faviconField);
   form->addField(csdField);
   form->addField(opacityField);
+
   form->setMaximumWidth(650);
 
   setWidget(VStack().margins(0, 20, 0, 20).add(HStack().add(form, Qt::AlignCenter)).buildWidget());

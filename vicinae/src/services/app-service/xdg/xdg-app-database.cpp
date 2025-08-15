@@ -301,21 +301,24 @@ std::vector<AppPtr> XdgAppDatabase::list() const { return {apps.begin(), apps.en
 
 bool XdgAppDatabase::addDesktopFile(const QString &path) {
   QFileInfo info(path);
-  XdgDesktopEntry ent(path);
 
-  auto entry = std::make_shared<XdgApplication>(info, ent);
+  try {
+    XdgDesktopEntry ent(path);
 
-  for (const auto &mimeName : ent.mimeType) {
-    mimeToApps[mimeName].insert(entry->id());
-    appToMimes[entry->id()].insert(mimeName);
-  }
+    auto entry = std::make_shared<XdgApplication>(info, ent);
 
-  apps.push_back(entry);
-  appMap.insert({entry->id(), entry});
+    for (const auto &mimeName : ent.mimeType) {
+      mimeToApps[mimeName].insert(entry->id());
+      appToMimes[entry->id()].insert(mimeName);
+    }
 
-  for (const auto &action : entry->actions()) {
-    appMap.insert({action->id(), action});
-  }
+    apps.push_back(entry);
+    appMap.insert({entry->id(), entry});
+
+    for (const auto &action : entry->actions()) {
+      appMap.insert({action->id(), action});
+    }
+  } catch (const std::exception &except) { qWarning() << "Failed to parse app at" << path << except.what(); }
 
   return true;
 }

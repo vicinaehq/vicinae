@@ -1,7 +1,9 @@
 #include "emoji-image-loader.hpp"
+#include "service-registry.hpp"
+#include "font-service.hpp"
 
 void EmojiImageLoader::render(const RenderConfig &config) {
-  auto font = QFont("Twemoji");
+  auto font = ServiceRegistry::instance()->fontService()->emojiFont();
   QPixmap canva(config.size * config.devicePixelRatio);
 
   font.setStyleStrategy(QFont::StyleStrategy::NoFontMerging);

@@ -22,6 +22,7 @@ class ConfigService : public QObject {
 public:
   struct Value {
     QString faviconService = "google";
+    bool popToRootOnClose = false;
     struct {
       std::optional<QString> name;
       std::optional<QString> iconTheme;
@@ -58,6 +59,7 @@ private:
     Value cfg;
 
     cfg.faviconService = obj.value("faviconService").toString("google");
+    cfg.popToRootOnClose = obj.value("popToRootOnClose").toBool(false);
 
     {
       auto font = obj.value("font").toObject();
@@ -131,6 +133,7 @@ public:
     QJsonObject obj;
 
     obj["faviconService"] = value.faviconService;
+    obj["popToRootOnClose"] = value.popToRootOnClose;
 
     {
       QJsonObject font;
