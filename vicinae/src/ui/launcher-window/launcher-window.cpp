@@ -139,7 +139,9 @@ void LauncherWindow::setupUI() {
   m_hud->setMaximumWidth(300);
 
 #ifdef WAYLAND_LAYER_SHELL
-  {
+  bool useLayerShell = QProcessEnvironment().systemEnvironment().value("USE_LAYER_SHELL", "1") == "1";
+
+  if (useLayerShell) {
     namespace Shell = LayerShellQt;
 
     createWinId();
@@ -151,9 +153,12 @@ void LauncherWindow::setupUI() {
       lshell->setExclusiveZone(-1);
       lshell->setAnchors(Shell::Window::AnchorNone);
     } else {
+
       qWarning()
           << "Unable apply layer shell rules to main window: LayerShellQt::Window::get() returned null";
     }
+  } else {
+    qInfo() << "USE_LAYER_SHELL=0 is set, not using layer shell";
   }
 #endif
 
