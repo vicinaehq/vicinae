@@ -2,6 +2,7 @@
 #include "../image/url.hpp"
 #include "ui/typography/typography.hpp"
 #include <qboxlayout.h>
+#include <qgraphicseffect.h>
 #include <qwidget.h>
 
 class OmniButtonWidget : public QWidget {
@@ -15,8 +16,10 @@ public:
   QHBoxLayout *_layout = new QHBoxLayout(this);
   TypographyWidget *label = new TypographyWidget;
   bool _focused = false;
+  bool m_disabled = false;
   ColorLike m_color = Qt::transparent;
   ColorLike m_hoverColor = Qt::transparent;
+  QGraphicsOpacityEffect *m_opacityEffect = new QGraphicsOpacityEffect(this);
 
 protected:
   void paintEvent(QPaintEvent *event) override;
@@ -29,6 +32,7 @@ protected:
 
 public:
   void setBackgroundColor(const ColorLike &color);
+  void setDisabled(bool disabled);
   void setHoverBackgroundColor(const ColorLike &color);
   void setFocused(bool value);
   void setLeftAccessory(QWidget *w);

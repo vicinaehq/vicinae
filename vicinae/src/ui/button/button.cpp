@@ -22,11 +22,15 @@ void OmniButtonWidget::setColor(ButtonColor color) {
 }
 
 void OmniButtonWidget::mouseDoubleClickEvent(QMouseEvent *event) {
+  if (m_disabled) return;
+
   emit doubleClicked();
   emit activated();
 }
 
 void OmniButtonWidget::mousePressEvent(QMouseEvent *event) {
+  if (m_disabled) return;
+
   emit clicked();
   emit activated();
 }
@@ -72,6 +76,15 @@ void OmniButtonWidget::setLeftIcon(const ImageURL &url, QSize size) {
 
 void OmniButtonWidget::setColor(const ColorLike &color) { label->setColor(color); }
 
+void OmniButtonWidget::setDisabled(bool disabled) {
+  if (m_disabled == disabled) return;
+
+  m_opacityEffect->setOpacity(disabled ? 0.6 : 1);
+  setFocusPolicy(m_disabled ? Qt::NoFocus : Qt::TabFocus);
+  m_disabled = disabled;
+  update();
+}
+
 void OmniButtonWidget::setText(const QString &text) { label->setText(text); }
 
 void OmniButtonWidget::setRightAccessory(const ImageURL &url, QSize size) {
@@ -101,7 +114,7 @@ void OmniButtonWidget::paintEvent(QPaintEvent *event) {
   QPen pen(theme.colors.text, 1);
   QBrush brush;
 
-  if (underMouse()) {
+  if (underMouse() && !m_disabled) {
     brush = painter.colorBrush(m_hoverColor);
   } else {
     brush = painter.colorBrush(m_color);
@@ -113,13 +126,17 @@ void OmniButtonWidget::paintEvent(QPaintEvent *event) {
   painter.setPen(_focused ? pen : Qt::NoPen);
   painter.fillPath(path, brush);
   painter.drawPath(path);
+
+  QWidget::paintEvent(event);
 }
 
 OmniButtonWidget::OmniButtonWidget(QWidget *parent) : QWidget(parent) {
   setAttribute(Qt::WA_Hover);
   setFocusPolicy(Qt::FocusPolicy::TabFocus);
   setColor(Secondary);
+  setGraphicsEffect(m_opacityEffect);
 
+  m_opacityEffect->setOpacity(1);
   _layout->setContentsMargins(5, 5, 5, 5);
   _layout->setAlignment(Qt::AlignHCenter);
   _layout->addWidget(leftAccessory);
