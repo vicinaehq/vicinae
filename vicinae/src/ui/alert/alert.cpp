@@ -107,11 +107,14 @@ AlertWidget::AlertWidget(QWidget *parent)
   _actionBtn->setText("Delete");
   _actionBtn->setColor(SemanticColor::Red);
 
+  _title->setAlignment(Qt::AlignCenter);
+  _message->setAlignment(Qt::AlignCenter);
+
   layout->setContentsMargins(20, 20, 20, 20);
   layout->setSpacing(15);
   layout->addWidget(_icon, 0, Qt::AlignCenter);
-  layout->addWidget(_title, 0, Qt::AlignCenter);
-  layout->addWidget(_message, 0, Qt::AlignCenter);
+  layout->addWidget(_title);
+  layout->addWidget(_message);
   _message->setAlignment(Qt::AlignCenter);
   layout->addWidget(HStack().add(_cancelBtn).add(_actionBtn).spacing(10).buildWidget());
   setLayout(layout);
