@@ -50,6 +50,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
   m_bar->setFixedHeight(Omnicast::STATUS_BAR_HEIGHT);
   m_hudDismissTimer->setInterval(1500ms);
   m_hudDismissTimer->setSingleShot(true);
+  m_dialog->hide();
 
   setupUI();
 
