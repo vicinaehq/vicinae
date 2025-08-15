@@ -108,18 +108,20 @@ public:
 
     if (reqData.client().has_icon()) { iconUrl = reqData.client().icon(); }
 
-    auto content =
-        HStack()
-            .add(VStack()
-                     .add(UI::Icon(iconUrl).size({40, 40}), 0, Qt::AlignCenter)
-                     .add(UI::Text(client.name().c_str()).title().align(Qt::AlignHCenter))
-                     .add(UI::Text(client.description().c_str()).align(Qt::AlignHCenter))
-                     .add(UI::Button(QString("Sign in with %1").arg(client.name().c_str())).onClick(clicked),
-                          0, Qt::AlignHCenter)
-                     .addStretch()
-                     .add(UI::Text(helpText).secondary().align(Qt::AlignHCenter).autoEllide(false))
-                     .spacing(20))
-            .margins(40, 40, 40, 40);
+    auto content = HStack()
+                       .add(VStack()
+                                .add(UI::Icon(iconUrl).size({40, 40}), 0, Qt::AlignCenter)
+                                .add(UI::Text(client.name().c_str()).title().align(Qt::AlignHCenter))
+                                .add(UI::Text(client.description().c_str()).align(Qt::AlignHCenter))
+                                .add(UI::Button(QString("OAuth is not supported yet"))
+                                         .danger()
+                                         .disabled()
+                                         .onClick(clicked),
+                                     0, Qt::AlignHCenter)
+                                .addStretch()
+                                .add(UI::Text(helpText).secondary().align(Qt::AlignHCenter).autoEllide(false))
+                                .spacing(20))
+                       .margins(40, 40, 40, 40);
 
     VStack().add(header).add(content).imbue(this);
   }

@@ -160,10 +160,24 @@ class Button : public WidgetBuilder<OmniButtonWidget> {
   std::function<void(void)> m_onClick;
   QString m_text;
   std::optional<ImageURL> m_leftIcon;
+  ColorLike m_color = SemanticColor::TextPrimary;
+  bool m_disabled = false;
 
 public:
   Button &onClick(const std::function<void(void)> &fn) {
     m_onClick = fn;
+    return *this;
+  }
+
+  Button &color(const ColorLike &color) {
+    m_color = color;
+    return *this;
+  }
+
+  Button &danger() { return color(SemanticColor::Red); }
+
+  Button &disabled() {
+    m_disabled = true;
     return *this;
   }
 
@@ -181,6 +195,8 @@ public:
     auto btn = new OmniButtonWidget;
 
     btn->setText(m_text);
+    btn->setColor(m_color);
+    btn->setDisabled(m_disabled);
 
     if (m_leftIcon) { btn->setLeftIcon(*m_leftIcon, {16, 16}); }
 
