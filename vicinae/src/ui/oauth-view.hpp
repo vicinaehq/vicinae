@@ -1,4 +1,5 @@
 #pragma once
+#include "ui/button-base/button-base.hpp"
 #include "ui/views/base-view.hpp"
 #include "common.hpp"
 #include "extension/manager/extension-manager.hpp"
@@ -59,10 +60,14 @@ class OAuthView : public OverlayView {
     }
   }
 
+  void abort() {
+    m_ctx->navigation->popToRoot();
+    dismiss();
+  }
+
   void keyPressEvent(QKeyEvent *key) override {
     if (key->key() == Qt::Key_Escape) {
-      m_ctx->navigation->popToRoot();
-      dismiss();
+      abort();
       return;
     }
 
@@ -87,6 +92,8 @@ public:
     backButton->setFixedSize(25, 25);
     backButton->setUrl(ImageURL::builtin("arrow-left"));
     backButton->setBackgroundColor(SemanticColor::MainSelectedBackground);
+
+    connect(backButton, &IconButton::clicked, this, &OAuthView::abort);
 
     auto header = HStack().add(backButton).addStretch().margins(15, 5, 15, 5).buildWidget();
 
