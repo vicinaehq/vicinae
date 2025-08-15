@@ -41,6 +41,11 @@ if (UNIX AND NOT APPLE)
 	add_subdirectory(wlr-clip)
 endif()
 
+set(INSTALL_SHARE ${CMAKE_INSTALL_PREFIX}/share)
+set(VICINAE_INSTALL_SHARE ${INSTALL_SHARE}/vicinae)
 
 make_directory(${CMAKE_INSTALL_PREFIX}/share/applications)
-install(FILES ./extra/vicinae.desktop DESTINATION ${CMAKE_INSTALL_PREFIX}/share/applications)
+make_directory(${VICINAE_INSTALL_SHARE})
+
+install(FILES ./extra/vicinae.desktop DESTINATION ${INSTALL_SHARE}/applications)
+install(DIRECTORY ./extra/themes DESTINATION ${VICINAE_INSTALL_SHARE})
