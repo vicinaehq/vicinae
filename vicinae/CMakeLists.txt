@@ -9,8 +9,12 @@ set(TARGET vicinae)
 
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets Sql Network Svg DBus Keychain)
-find_package(protobuf CONFIG REQUIRED) # may not work on older protobuf versions (ubuntu 25 doesn't from my testing)
 find_package(OpenSSL REQUIRED)
+
+# https://cmake.org/cmake/help/latest/module/FindProtobuf.html#example-finding-protobuf-in-config-mode
+set(CMAKE_FIND_PACKAGE_PREFER_CONFIG TRUE)
+find_package(Protobuf)
+unset(CMAKE_FIND_PACKAGE_PREFER_CONFIG)
 
 option(WAYLAND_LAYER_SHELL "Enable support for the Wayland layer shell
 protocol, required for proper window positioning on most wlroots-based
