@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-and-release:
-    runs-on: self-hosted
+    runs-on: [self-hosted, Linux, X64, prod]
     permissions:
       contents: write   # needed to create a release with GITHUB_TOKEN
     env:
