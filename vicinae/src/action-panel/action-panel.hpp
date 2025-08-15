@@ -319,27 +319,25 @@ class ActionPanelV2Widget : public Popover {
   }
 
   void resizeView() {
-    auto window = QApplication::activeWindow();
+    auto parent = parentWidget();
 
-    if (!window) {
-      // qDebug() << "showActions: no active window, won't show popover";
+    if (!parent) {
+      qWarning() << "Failed to resize action panel: no parent";
       return;
     }
 
-    auto parentGeo = window->geometry();
+    QRect parentGeo = parent->geometry();
+    int x = parentGeo.width() - width() - 10;
+    int y = parentGeo.height() - height() - 50;
 
-    auto x = parentGeo.width() - width() - 10;
-    auto y = parentGeo.height() - height() - 50;
-    QPoint global = window->mapToGlobal(QPoint(x, y));
-
-    move(global);
+    move({x, y});
   }
 
   void showEvent(QShowEvent *event) override {
     emit opened();
     emit openChanged(true);
-    raise();
     resizeView();
+    raise();
     QWidget::showEvent(event);
   }
 
