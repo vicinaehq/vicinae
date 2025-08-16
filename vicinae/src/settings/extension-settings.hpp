@@ -342,10 +342,7 @@ public:
 
   std::vector<std::shared_ptr<VirtualTreeItemDelegate>> children() const override { return child; }
 
-  void setCheckboxState(CheckboxState state) {
-    qDebug() << "setting checkbox state to" << state;
-    m_checkboxState = state;
-  }
+  void setCheckboxState(CheckboxState state) { m_checkboxState = state; }
 
 public:
   ProviderItemDelegate(RootProvider *provider, const std::vector<std::shared_ptr<RootItem>> &items)
@@ -454,11 +451,15 @@ class ExtensionSettingsContextLeftPane : public QWidget {
   void handleTextChange(const QString &text) { populateTreeFromQuery(text); }
 
   void providerEnabledChanged(ProviderItemDelegate *delegate, bool value) {
-    qDebug() << "providerEnabledChanged" << value;
-    for (auto &item : delegate->children()) {
-      auto delegate = std::static_pointer_cast<RootItemDelegate>(item);
+    auto manager = ServiceRegistry::instance()->rootItemManager();
 
-      delegate->setEnabled(value);
+    if (!manager->setProviderEnabled(delegate->id(), value)) {
+      qWarning() << "Failed to enable/disable provider" << delegate->id();
+      return;
+    }
+
+    for (auto &item : delegate->children()) {
+      std::static_pointer_cast<RootItemDelegate>(item)->setEnabled(value);
     }
 
     if (value) {
