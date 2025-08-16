@@ -16,11 +16,15 @@ public:
   std::vector<std::filesystem::path> m_additionalSearchPaths;
 
 private:
+  QFileSystemWatcher *m_watcher = new QFileSystemWatcher(this);
   OmniDatabase &m_db;
   std::unique_ptr<AbstractAppDatabase> m_provider;
 
   static std::unique_ptr<AbstractAppDatabase> createLocalProvider();
   std::vector<std::filesystem::path> mergedPaths() const;
+
+  bool reinstallWatches(const std::vector<std::filesystem::path> &paths);
+  void handleDirectoryChanged(const QString &path);
 
 public:
   /**
