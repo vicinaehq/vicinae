@@ -32,6 +32,7 @@ TypographyWidget *TransformResult::createLabel(const QString &text, QWidget *par
   auto label = new TypographyWidget(parent);
 
   label->setText(text);
+  label->setAlignment(Qt::AlignCenter);
   label->setStyleSheet("font-size: 16pt; font-weight: bold;");
 
   return label;
