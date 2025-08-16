@@ -32,6 +32,7 @@ TypographyWidget *TransformResult::createLabel(const QString &text, QWidget *par
   auto label = new TypographyWidget(parent);
 
   label->setText(text);
+  label->setAlignment(Qt::AlignCenter);
   label->setStyleSheet("font-size: 16pt; font-weight: bold;");
 
   return label;
@@ -131,5 +132,5 @@ TransformResult::TransformResult()
   m_arrowIcon->setFixedSize(25, 25);
   setContentsMargins(10, 10, 10, 10);
   _arrowIcon = icon.pixmap(32, 32).scaledToWidth(32, Qt::SmoothTransformation);
-  _arrowMid = {_arrowIcon.width() / 2, _arrowIcon.height() / 2};
+  _arrowMid = {m_arrowIcon->width() / 2, m_arrowIcon->height() / 2};
 }
