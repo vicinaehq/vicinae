@@ -25,6 +25,11 @@ debug:
 	cmake --build $(BUILD_DIR)
 .PHONY: debug
 
+runner:
+	cd ./scripts/runners/ && ./start.sh
+.PHONY:
+	runner
+
 format:
 	@echo 'vicinae\nwlr-clip\nproto\nomnictl' | xargs -I{} find {} -type d -iname 'build' -prune -o -type f -iname '*.hpp' -o -type f -iname '*.cpp' | xargs -I{} bash -c '[ -f {} ] && clang-format -i {} && echo "Formatted {}" || echo "Failed to format {}"'
 .PHONY: format
