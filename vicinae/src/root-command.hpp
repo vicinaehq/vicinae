@@ -429,6 +429,7 @@ class RootSearchView : public ListView {
 
     if (!isComputable) {
       m_currentCalculatorEntry.reset();
+      render(searchText());
       return;
     }
 
