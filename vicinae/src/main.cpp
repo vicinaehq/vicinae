@@ -141,11 +141,7 @@ int startDaemon() {
     if (ifs.is_open()) {
       ifs >> pid;
 
-      qDebug() << "Kill existing omnicast instance with pid" << pid;
-
-      if (kill(pid, SIGKILL) < 0) {
-        qDebug() << "Failed to kill existing omnicast instance with pid" << pid << strerror(errno);
-      }
+      if (kill(pid, SIGKILL) == 0) { qInfo() << "Killed existing vicinae instance with pid" << pid; }
     }
   }
 
