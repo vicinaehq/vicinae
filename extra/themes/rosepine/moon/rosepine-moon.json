@@ -1,0 +1,19 @@
+{
+	"version": "1.0.0",
+	"appearance": "dark",
+	"icon": "../rosepine.png",
+	"name": "Rosé Pine Moon",
+	"description": "All natural pine, faux fur and a bit of soho vibes for the classy minimalist",
+	"palette": {
+		"background": "#2A273F",
+		"foreground": "#E0DEF4",
+		"blue": "#3E8FB0",
+		"green": "#9CCFD8",
+		"magenta": "#C4A7E7",
+		"orange": "#EA9A97",
+		"purple": "#C4A7E7",
+		"red": "#EB6F92",
+		"yellow": "#F6C177",
+		"cyan": "#9CCFD8"
+	}
+}
