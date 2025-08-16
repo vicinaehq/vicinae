@@ -50,6 +50,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
   m_bar->setFixedHeight(Omnicast::STATUS_BAR_HEIGHT);
   m_hudDismissTimer->setInterval(1500ms);
   m_hudDismissTimer->setSingleShot(true);
+  m_dialog->hide();
 
   setupUI();
 
@@ -72,7 +73,8 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
   connect(m_ctx.navigation.get(), &NavigationController::actionPanelVisibilityChanged, this,
           [this](bool value) {
             if (value) {
-              m_actionVeil->setGeometry(geometry());
+              m_actionVeil->setFixedSize(size());
+              m_actionVeil->move(0, 0);
               m_actionVeil->raise();
               m_actionVeil->show();
               m_actionPanel->show();
@@ -172,12 +174,8 @@ void LauncherWindow::setupUI() {
 
 void LauncherWindow::handleDialog(DialogContentWidget *alert) {
   m_dialog->setContent(alert);
-  // we need to make sure no other popup is opened for the dialog to properly
-  // show up
   m_ctx.navigation->closeActionPanel();
   m_header->input()->clearFocus();
-  m_dialog->setGeometry(geometry());
-  m_dialog->raise();
   m_dialog->showDialog();
   m_dialog->setFocus();
 }

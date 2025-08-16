@@ -1,19 +1,22 @@
 #include "dialog.hpp"
+#include "service-registry.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
 #include <qevent.h>
+#include <qlogging.h>
 #include <qnamespace.h>
+#include "services/config/config-service.hpp"
 
 DialogContentWidget::DialogContentWidget(QWidget *parent) : QWidget(parent) {}
 
 void DialogWidget::paintEvent(QPaintEvent *event) {
   OmniPainter painter(this);
   QColor finalColor = painter.resolveColor(SemanticColor::MainBackground);
+  auto config = ServiceRegistry::instance()->config()->value();
 
   finalColor.setAlphaF(0.5);
-
   painter.setBrush(finalColor);
   painter.setPen(Qt::NoPen);
-  painter.drawRect(rect());
+  painter.drawRoundedRect(rect(), config.window.rounding, config.window.rounding);
 
   QWidget::paintEvent(event);
 }
@@ -28,10 +31,17 @@ void DialogWidget::setContent(DialogContentWidget *content) {
 }
 
 void DialogWidget::showDialog() {
-  if (auto w = parentWidget()) {
-    setGeometry(w->geometry());
-    show();
+  auto parent = parentWidget();
+
+  if (!parent) {
+    qWarning() << "Dialog has no parent widget, can't position";
+    return;
   }
+
+  setFixedSize(parent->size());
+  move(0, 0);
+  raise();
+  show();
 }
 
 void DialogWidget::keyPressEvent(QKeyEvent *event) {
