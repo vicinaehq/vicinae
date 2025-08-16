@@ -58,7 +58,8 @@ QIcon QIconImageLoader::loadIconFromFileSystem(const QString &iconName) {
     }
   }
   
-  return QIcon();
+  // In case icon is specified as a full path.
+  return QIcon(iconName);
 }
 
 QIconImageLoader::QIconImageLoader(const QString &name, const std::optional<QString> &themeName)
