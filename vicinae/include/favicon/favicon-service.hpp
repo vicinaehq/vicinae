@@ -22,7 +22,7 @@ class FaviconService : public QObject {
 
 public:
   using FaviconResponse = std::expected<QPixmap, QString>;
-  enum RequesterType { None, Google, DuckDuckGo };
+  enum RequesterType { None, Google, Twenty, DuckDuckGo };
 
   struct FaviconServiceData {
     QString id;
