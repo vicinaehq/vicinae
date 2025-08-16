@@ -1,6 +1,8 @@
 #include "app-service.hpp"
 #include "services/app-service/xdg/xdg-app-database.hpp"
 #include "omni-database.hpp"
+#include <filesystem>
+#include <qfilesystemwatcher.h>
 
 namespace fs = std::filesystem;
 
@@ -68,12 +70,35 @@ std::shared_ptr<Application> AppService::find(const QString &target) const {
   return nullptr;
 }
 
+void AppService::handleDirectoryChanged(const QString &path) {
+  // This event can fire multiple times for a single change.
+  // Since scanning apps is fast we don't really need to batch events, at least for now.
+
+  qInfo() << "app directory" << path << "changed, launching a new scan";
+  scanSync();
+}
+
 void AppService::setAdditionalSearchPaths(const std::vector<std::filesystem::path> &paths) {
   m_additionalSearchPaths = paths;
+  reinstallWatches(mergedPaths());
 }
 
 std::vector<std::shared_ptr<Application>> AppService::findOpeners(const QString &target) const {
   return m_provider->findOpeners(target);
+}
+
+bool AppService::reinstallWatches(const std::vector<fs::path> &paths) {
+  for (const auto &path : m_watcher->directories()) {
+    m_watcher->removePath(path);
+  }
+
+  auto isDir = [](auto &&path) { return fs::is_directory(path); };
+
+  for (const auto &path : paths | std::views::filter(isDir)) {
+    m_watcher->addPath(path.c_str());
+  }
+
+  return true;
 }
 
 bool AppService::scanSync() {
@@ -84,4 +109,7 @@ bool AppService::scanSync() {
   return result;
 }
 
-AppService::AppService(OmniDatabase &db) : m_db(db), m_provider(createLocalProvider()) {}
+AppService::AppService(OmniDatabase &db) : m_db(db), m_provider(createLocalProvider()) {
+  reinstallWatches(mergedPaths());
+  connect(m_watcher, &QFileSystemWatcher::directoryChanged, this, &AppService::handleDirectoryChanged);
+}
