@@ -160,7 +160,7 @@ bool ExtensionManager::start() {
   qInfo() << "Started extension manager" << runtimeFile->fileName();
 
   runtimeFile->write(file.readAll());
-  process.start("/bin/node", {runtimeFile->fileName()});
+  process.start("node", {runtimeFile->fileName()});
 
   return true;
 }
