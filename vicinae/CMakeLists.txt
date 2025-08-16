@@ -455,6 +455,8 @@ set(SRCS
 	src/ipc-command-handler.hpp
 	src/ipc-command-handler.cpp
 
+	src/log/message-handler.cpp
+
 	src/extension/requests/storage-request-router.cpp
 	src/extension/requests/ui-request-router.cpp
 	src/extension/requests/app-request-router.cpp
