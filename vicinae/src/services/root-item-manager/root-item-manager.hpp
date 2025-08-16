@@ -198,16 +198,16 @@ struct RootItemMetadata {
   QString providerId;
 };
 
+struct RootProviderMetadata {
+  bool enabled;
+};
+
 class RootItemManager : public QObject {
 private:
   Q_OBJECT
 
   struct RootItemHash {
     size_t operator()(const std::shared_ptr<RootItem> &item) const { return qHash(item->uniqueId()); }
-  };
-
-  struct RootProviderMetadata {
-    bool enabled;
   };
 
   std::vector<std::shared_ptr<RootItem>> m_items;
@@ -265,6 +265,7 @@ public:
   QString getItemProviderId(const QString &id);
   bool setProviderEnabled(const QString &providerId, bool value);
   bool disableItem(const QString &id);
+
   bool enableItem(const QString &id);
 
   std::vector<RootProvider *> providers() const;

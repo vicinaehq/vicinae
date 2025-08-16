@@ -1,0 +1,24 @@
+services:
+  runner-1:
+    build:
+        context: cpp
+        dockerfile: Dockerfile
+    environment:
+      - REPO_URL=https://github.com/vicinaehq
+      - RUNNER_TOKEN=${RUNNER_TOKEN}
+      - RUNNER_NAME=docker-runner-local
+      - LABELS=linux,docker,cpp,nodejs
+    #volumes:
+      #- /var/run/docker.sock:/var/run/docker.sock
+      #- runner1-data:/home/runner/actions-runner
+      #- runner1-work:/home/runner/_work
+      #- runner1-nuget:/home/runner/.nuget/packages
+    restart: unless-stopped
+
+#volumes:
+#  runner1-data:
+#    driver: local
+#  runner1-work:
+#    driver: local
+#  runner1-nuget:
+#    drver: local

@@ -32,6 +32,7 @@ TypographyWidget *TransformResult::createLabel(const QString &text, QWidget *par
   auto label = new TypographyWidget(parent);
 
   label->setText(text);
+  label->setAlignment(Qt::AlignCenter);
   label->setStyleSheet("font-size: 16pt; font-weight: bold;");
 
   return label;
@@ -42,10 +43,10 @@ QSize TransformResult::sizeHint() const {
 
   if (parentWidget()) { size.setWidth(parentWidget()->width()); }
 
-  if (_base) { size.setHeight(_base->sizeHint().height()); }
+  if (m_base) { size.setHeight(m_base->sizeHint().height()); }
 
-  if (_result) {
-    int hint = _result->sizeHint().height();
+  if (m_result) {
+    int hint = m_result->sizeHint().height();
 
     if (hint > size.height()) size.setHeight(hint);
   }
@@ -71,27 +72,22 @@ void TransformResult::paintEvent(QPaintEvent *event) {
   painter.setPen(Qt::NoPen);
   painter.setBrush(theme.colors.border);
 
-  _base->setFixedSize({midW, availableHeight()});
-  _base->move(0, margins.top());
+  m_base->setFixedSize({midW, availableHeight()});
+  m_base->move(0, margins.top());
 
-  _result->setFixedSize({midW, availableHeight()});
-  _result->move(midW, margins.top());
+  m_result->setFixedSize({midW, availableHeight()});
+  m_result->move(midW, margins.top());
 
   if (selected() || hovered()) {
-    painter.drawRect(midW, 0, 1, midH - _arrowMid.height());
-    painter.drawRect(midW, midH + _arrowMid.width(), 1, midH - _arrowMid.height());
+    painter.drawRect(midW, 0, 1, midH - m_arrowMid.height());
+    painter.drawRect(midW, midH + m_arrowMid.width(), 1, midH - m_arrowMid.height());
   }
 
-  m_arrowIcon->move(midW - _arrowMid.width(), midH - _arrowMid.height());
+  m_arrowIcon->move(midW - m_arrowMid.width(), midH - m_arrowMid.height());
 }
 
 void TransformResult::setDividerVisible(bool visible) {
-  _isDividerVisible = visible;
-  update();
-}
-
-void TransformResult::setDividerColor(QColor color) {
-  _dividerColor = color;
+  m_isDividerVisible = visible;
   update();
 }
 
@@ -104,32 +100,28 @@ void TransformResult::setResult(const QString &text, const QString &chip) {
 void TransformResult::setBase(QWidget *widget, const QString &chip) {
   auto label = new TypographyWidget;
 
-  if (_base) { _base->deleteLater(); }
+  if (m_base) { m_base->deleteLater(); }
 
   label->setText(chip);
-  _base = createVContainer(widget, label);
-  _base->setParent(this);
+  m_base = createVContainer(widget, label);
+  m_base->setParent(this);
   update();
 }
 
 void TransformResult::setResult(QWidget *widget, const QString &chip) {
   auto label = new TypographyWidget;
 
-  if (_result) { _result->deleteLater(); }
+  if (m_result) { m_result->deleteLater(); }
 
   label->setText(chip);
-  _result = createVContainer(widget, label);
-  _result->setParent(this);
+  m_result = createVContainer(widget, label);
+  m_result->setParent(this);
   update();
 }
 
-TransformResult::TransformResult()
-    : _isDividerVisible(true), _dividerColor("#666666"), _base(nullptr), _result(nullptr) {
-  auto icon = QIcon(":icons/arrow-right.svg");
-
+TransformResult::TransformResult() : m_isDividerVisible(true), m_base(nullptr), m_result(nullptr) {
   m_arrowIcon->setUrl(ImageURL::builtin("arrow-right"));
   m_arrowIcon->setFixedSize(25, 25);
   setContentsMargins(10, 10, 10, 10);
-  _arrowIcon = icon.pixmap(32, 32).scaledToWidth(32, Qt::SmoothTransformation);
-  _arrowMid = {_arrowIcon.width() / 2, _arrowIcon.height() / 2};
+  m_arrowMid = {m_arrowIcon->width() / 2, m_arrowIcon->height() / 2};
 }

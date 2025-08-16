@@ -10,7 +10,6 @@ void OpenAppAction::execute(ApplicationContext *ctx) {
   auto toast = ctx->services->toastService();
 
   if (!appDb->launch(*application.get(), args)) {
-    qDebug() << "Failed to launch app";
     toast->setToast("Failed to start app", ToastPriority::Danger);
     return;
   }

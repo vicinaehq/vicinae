@@ -2,10 +2,12 @@
 #include "favicon/cached-favicon-request.hpp"
 #include "favicon/dummy-favicon-request.hpp"
 #include "favicon/google-favicon-request.hpp"
+#include "favicon/twenty-favicon-request.hpp"
 #include <qlogging.h>
 
 static const std::vector<FaviconService::FaviconServiceData> faviconProviders = {
     {.id = "google", .name = "Google", .icon = ImageURL::builtin("google"), .type = FaviconService::Google},
+    {.id = "twenty", .name = "Twenty", .icon = ImageURL::builtin("twenty"), .type = FaviconService::Twenty},
     {.id = "none", .name = "None", .icon = ImageURL::builtin("image"), .type = FaviconService::None}};
 
 std::vector<FaviconService::FaviconServiceData> FaviconService::providers() { return faviconProviders; }
@@ -93,6 +95,9 @@ QFuture<FaviconService::FaviconResponse> FaviconService::makeRequest(const QStri
   switch (_requesterType) {
   case Google:
     requester = new GoogleFaviconRequester(domain, parent);
+    break;
+  case Twenty:
+    requester = new TwentyFaviconRequester(domain, parent);
     break;
   case None:
     promise.addResult(std::unexpected("Favicon fetching is disabled"));

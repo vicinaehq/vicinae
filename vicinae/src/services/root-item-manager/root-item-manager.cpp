@@ -764,10 +764,8 @@ void RootItemManager::addProvider(std::unique_ptr<RootProvider> provider) {
 
   provider->preferencesChanged(preferences);
 
-  connect(provider.get(), &RootProvider::itemsChanged, this, [this, name = provider->uniqueId()]() {
-    qDebug() << "provider" << name << "signals change";
-    reloadProviders();
-  });
+  connect(provider.get(), &RootProvider::itemsChanged, this,
+          [this, name = provider->uniqueId()]() { reloadProviders(); });
   m_providers.emplace_back(std::move(provider));
   emit itemsChanged();
 }

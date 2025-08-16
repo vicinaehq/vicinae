@@ -216,6 +216,7 @@ public:
   void setExpanded(bool value) {
     m_expanded = value;
     m_left->setFoldIconVisiblity(value);
+    m_left->setFolded(value);
   }
   void setExpandable(bool value) {
     m_expandable = value;

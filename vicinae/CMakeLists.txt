@@ -72,6 +72,8 @@ set(SRCS
 	src/favicon/favicon-request.cpp
 	include/favicon/google-favicon-request.hpp
 	src/favicon/google-favicon-request.cpp
+	include/favicon/twenty-favicon-request.hpp
+	src/favicon/twenty-favicon-request.cpp
 	include/favicon/dummy-favicon-request.hpp
 	src/favicon/dummy-favicon-request.cpp
 	include/favicon/cached-favicon-request.hpp

@@ -1,0 +1,19 @@
+{
+	"version": "1.0.0",
+	"appearance": "light",
+	"icon": "../rosepine.png",
+	"name": "Rosé Pine Dawn",
+	"description": "All natural pine, faux fur and a bit of soho vibes for the classy minimalist",
+	"palette": {
+		"background": "#FFFAF3",
+		"foreground": "#575279",
+		"blue": "#286983",
+		"green": "#56949F",
+		"magenta": "#907AA9",
+		"orange": "#D7827E",
+		"purple": "#907AA9",
+		"red": "#B4637A",
+		"yellow": "#EA9D34",
+		"cyan": "#56949F"
+	}
+}

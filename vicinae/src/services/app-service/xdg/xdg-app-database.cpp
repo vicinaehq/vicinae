@@ -282,7 +282,10 @@ bool XdgAppDatabase::launch(const Application &app, const std::vector<QString> &
   process.setStandardOutputFile(QProcess::nullDevice());
   process.setStandardErrorFile(QProcess::nullDevice());
 
-  if (!process.startDetached()) { return false; }
+  if (!process.startDetached()) {
+    qWarning() << "Failed to start app" << argv << process.errorString();
+    return false;
+  }
 
   return true;
 }
