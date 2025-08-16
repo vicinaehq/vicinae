@@ -138,6 +138,7 @@ ExtensionManager::ExtensionManager(OmniCommandDatabase &commandDb) : commandDb(c
 }
 
 bool ExtensionManager::start() {
+  int maxWaitForStart = 5000;
   QFile file(":bin/extension-manager");
 
   if (!file.exists()) {
@@ -157,10 +158,15 @@ bool ExtensionManager::start() {
     return false;
   }
 
-  qInfo() << "Started extension manager" << runtimeFile->fileName();
-
   runtimeFile->write(file.readAll());
   process.start("node", {runtimeFile->fileName()});
+
+  if (!process.waitForStarted(maxWaitForStart)) {
+    qCritical() << "Failed to start extension manager" << process.errorString();
+    return false;
+  }
+
+  qInfo() << "Started extension manager" << runtimeFile->fileName();
 
   return true;
 }
