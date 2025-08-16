@@ -9,7 +9,6 @@
 #include <qpainter.h>
 
 class TransformResult : public SelectableOmniListWidget {
-  QPixmap _arrowIcon;
   QSize _arrowMid;
   bool _isDividerVisible;
   QColor _dividerColor;
