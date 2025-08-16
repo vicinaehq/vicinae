@@ -21,7 +21,7 @@ class ConfigService : public QObject {
 
 public:
   struct Value {
-    QString faviconService = "google";
+    QString faviconService = Omnicast::DEFAULT_FAVICON_SERVICE;
     bool popToRootOnClose = false;
     struct {
       std::optional<QString> name;
