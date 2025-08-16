@@ -9,12 +9,10 @@
 #include <qpainter.h>
 
 class TransformResult : public SelectableOmniListWidget {
-  QPixmap _arrowIcon;
-  QSize _arrowMid;
-  bool _isDividerVisible;
-  QColor _dividerColor;
-  QWidget *_base;
-  QWidget *_result;
+  QSize m_arrowMid;
+  bool m_isDividerVisible;
+  QWidget *m_base;
+  QWidget *m_result;
   ImageWidget *m_arrowIcon = new ImageWidget(this);
 
   QWidget *createVContainer(QWidget *left, QWidget *right) const;
@@ -28,7 +26,6 @@ protected:
 public:
   QSize sizeHint() const override;
   void setDividerVisible(bool visible);
-  void setDividerColor(QColor color);
 
   void setBase(QWidget *widget, const QString &chip);
   void setBase(const QString &text, const QString &chip);
