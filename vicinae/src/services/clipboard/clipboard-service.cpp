@@ -1,7 +1,6 @@
 #include <QClipboard>
 #include "clipboard-service.hpp"
 #include <filesystem>
-#include <format>
 #include <qimagereader.h>
 #include <qlogging.h>
 #include <qmimedata.h>
@@ -13,6 +12,7 @@
 #include "crypto.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/clipboard/clipboard-db.hpp"
+#include "wlr/wlr-clipboard-server.hpp"
 #include "services/window-manager/abstract-window-manager.hpp"
 #include "services/window-manager/window-manager.hpp"
 
@@ -177,8 +177,8 @@ ClipboardService::listAll(int limit, int offset, const ClipboardListSettings &op
 }
 
 ClipboardOfferKind ClipboardService::getKind(const ClipboardDataOffer &offer) {
-  if (offer.mimeType.starts_with("image/")) return ClipboardOfferKind::Image;
-  if (offer.mimeType.starts_with("text/")) {
+  if (offer.mimeType.startsWith("image/")) return ClipboardOfferKind::Image;
+  if (offer.mimeType.startsWith("text/")) {
     if (offer.mimeType == "text/html") { return ClipboardOfferKind::Text; }
     auto url = QUrl::fromEncoded(offer.data, QUrl::StrictMode);
     if (url.isValid() && !url.scheme().isEmpty()) { return ClipboardOfferKind::Link; }
@@ -187,10 +187,10 @@ ClipboardOfferKind ClipboardService::getKind(const ClipboardDataOffer &offer) {
   }
 
   // some of these can be text
-  if (offer.mimeType.starts_with("application/")) {
+  if (offer.mimeType.startsWith("application/")) {
     static auto applicationTexts =
-        std::vector<std::string>{"json", "xml", "javascript", "sql"} |
-        std::views::transform([](auto &&text) { return std::format("application/{}", text); });
+        std::vector<QString>{"json", "xml", "javascript", "sql"} |
+        std::views::transform([](auto &&text) { return QString("application/%1").arg(text); });
 
     if (std::ranges::contains(applicationTexts, offer.mimeType)) return ClipboardOfferKind::Text;
   }
@@ -198,7 +198,7 @@ ClipboardOfferKind ClipboardService::getKind(const ClipboardDataOffer &offer) {
   return ClipboardOfferKind::Unknown;
 }
 
-std::string ClipboardService::getSelectionPreferredMimeType(const ClipboardSelection &selection) {
+QString ClipboardService::getSelectionPreferredMimeType(const ClipboardSelection &selection) {
   enum SelectionPriority {
     Invalid,
     Other,
@@ -209,12 +209,12 @@ std::string ClipboardService::getSelectionPreferredMimeType(const ClipboardSelec
     ImagePng,
     ImageSvg
   } priority = Invalid;
-  std::string preferredMimeType;
+  QString preferredMimeType;
 
   for (const auto &offer : selection.offers) {
     auto mimePriority = SelectionPriority::Other;
 
-    if (offer.mimeType.starts_with("text/")) {
+    if (offer.mimeType.startsWith("text/")) {
       if (offer.mimeType == "text/html") {
         mimePriority = SelectionPriority::HtmlText;
       } else if (offer.mimeType == "text/svg") {
@@ -222,7 +222,7 @@ std::string ClipboardService::getSelectionPreferredMimeType(const ClipboardSelec
       } else {
         mimePriority = SelectionPriority::Text;
       }
-    } else if (offer.mimeType.starts_with("image/")) {
+    } else if (offer.mimeType.startsWith("image/")) {
       if (offer.mimeType == "image/jpg" || offer.mimeType == "image/jpeg") {
         mimePriority = SelectionPriority::ImageJpeg;
       } else if (offer.mimeType == "image/png") {
@@ -318,9 +318,9 @@ bool ClipboardService::isClearSelection(const ClipboardSelection &selection) con
 }
 
 QString ClipboardService::getOfferTextPreview(const ClipboardDataOffer &offer) {
-  if (offer.mimeType.starts_with("text/")) { return offer.data.simplified().mid(0, 50); }
+  if (offer.mimeType.startsWith("text/")) { return offer.data.simplified().mid(0, 50); }
 
-  if (offer.mimeType.starts_with("image/")) {
+  if (offer.mimeType.startsWith("image/")) {
     QBuffer buffer;
     QImageReader reader(&buffer);
 
@@ -360,7 +360,7 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
   }
 
   auto selectionHash = QString::fromUtf8(computeSelectionHash(selection).toHex());
-  std::string preferredMimeType = getSelectionPreferredMimeType(selection);
+  QString preferredMimeType = getSelectionPreferredMimeType(selection);
 
   // capturing this inside this lambda is safe because we only read data
   ClipboardHistoryEntry insertedEntry;
@@ -379,9 +379,10 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
     if (!db.insertSelection({.id = selectionId,
                              .offerCount = static_cast<int>(selection.offers.size()),
                              .hash = selectionHash,
-                             .preferredMimeType = preferredMimeType.c_str(),
-                             .kind = kind})) {
-      qDebug() << "failed to insert selection";
+                             .preferredMimeType = preferredMimeType,
+                             .kind = kind,
+                             .source = selection.sourceApp})) {
+      qWarning() << "failed to insert selection";
       return false;
     }
 
@@ -400,13 +401,15 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
 
       if (m_localEncryptionKey) encryption = ClipboardEncryptionType::Local;
 
-      InsertClipboardOfferPayload dto{.id = offerId,
-                                      .selectionId = selectionId,
-                                      .mimeType = offer.mimeType.c_str(),
-                                      .textPreview = textPreview,
-                                      .md5sum = md5sum,
-                                      .encryption = encryption,
-                                      .size = static_cast<quint64>(offer.data.size())};
+      InsertClipboardOfferPayload dto{
+          .id = offerId,
+          .selectionId = selectionId,
+          .mimeType = offer.mimeType,
+          .textPreview = textPreview,
+          .md5sum = md5sum,
+          .encryption = encryption,
+          .size = static_cast<quint64>(offer.data.size()),
+      };
 
       if (kind == ClipboardOfferKind::Link) {
         auto url = QUrl::fromEncoded(offer.data, QUrl::StrictMode);
@@ -431,7 +434,7 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
         insertedEntry.id = selectionId;
         insertedEntry.pinnedAt = 0;
         insertedEntry.updatedAt = {};
-        insertedEntry.mimeType = offer.mimeType.c_str();
+        insertedEntry.mimeType = offer.mimeType;
         insertedEntry.md5sum = md5sum;
         insertedEntry.textPreview = textPreview;
       }
@@ -458,7 +461,7 @@ std::optional<ClipboardSelection> ClipboardService::retrieveSelectionById(const 
     if (!file.open(QIODevice::ReadOnly)) { continue; }
 
     populatedOffer.data = decryptOffer(file.readAll(), offer.encryption);
-    populatedOffer.mimeType = offer.mimeType.toStdString();
+    populatedOffer.mimeType = offer.mimeType;
     populatedSelection.offers.emplace_back(populatedOffer);
   }
 
@@ -485,7 +488,7 @@ bool ClipboardService::copySelection(const ClipboardSelection &selection,
   QMimeData *mimeData = new QMimeData;
 
   for (const auto &offer : selection.offers) {
-    mimeData->setData(offer.mimeType.c_str(), offer.data);
+    mimeData->setData(offer.mimeType, offer.data);
   }
 
   return copyQMimeData(mimeData, options);
@@ -509,8 +512,15 @@ AbstractClipboardServer *ClipboardService::clipboardServer() const { return m_cl
 ClipboardService::ClipboardService(const std::filesystem::path &path, WindowManager &wm, AppService &app)
     : m_wm(wm), m_appDb(app) {
   m_dataDir = path.parent_path() / "clipboard-data";
-  m_clipboardServer =
-      std::unique_ptr<AbstractClipboardServer>(ClipboardServerFactory().createFirstActivatable());
+
+  {
+    ClipboardServerFactory factory;
+
+    factory.registerServer<WlrClipboardServer>();
+    m_clipboardServer = factory.createFirstActivatable();
+
+    qInfo() << "Activated clipboard server" << m_clipboardServer->id();
+  }
 
   fs::create_directories(m_dataDir);
 
@@ -533,6 +543,6 @@ ClipboardService::ClipboardService(const std::filesystem::path &path, WindowMana
     m_isEncryptionReady = true; // at that point, we know whether we can encrypt or not
   });
 
-  connect(m_clipboardServer.get(), &AbstractClipboardServer::selection, this,
+  connect(m_clipboardServer.get(), &AbstractClipboardServer::selectionAdded, this,
           &ClipboardService::saveSelection);
 }

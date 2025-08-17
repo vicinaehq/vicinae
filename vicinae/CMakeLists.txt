@@ -143,10 +143,10 @@ set(SRCS
 	src/services/clipboard/clipboard-server.hpp
 	src/services/clipboard/clipboard-db.hpp
 	src/services/clipboard/clipboard-db.cpp
-	src/services/clipboard/wlr-clipboard-server.hpp
-	src/services/clipboard/wlr-clipboard-server.cpp
-	src/services/clipboard/dummy-clipboard-server.hpp
-	src/services/clipboard/dummy-clipboard-server.cpp
+	src/services/clipboard/wlr/wlr-clipboard-server.hpp
+	src/services/clipboard/wlr/wlr-clipboard-server.cpp
+	src/services/clipboard/dummy/dummy-clipboard-server.hpp
+	src/services/clipboard/dummy/dummy-clipboard-server.cpp
 	src/services/clipboard/clipboard-server-factory.hpp
 	src/services/clipboard/clipboard-server-factory.cpp
 	src/services/clipboard/clipboard-service.hpp
@@ -454,6 +454,8 @@ set(SRCS
 	src/ipc-command-server.cpp
 	src/ipc-command-handler.hpp
 	src/ipc-command-handler.cpp
+
+	src/log/message-handler.cpp
 
 	src/extension/requests/storage-request-router.cpp
 	src/extension/requests/ui-request-router.cpp

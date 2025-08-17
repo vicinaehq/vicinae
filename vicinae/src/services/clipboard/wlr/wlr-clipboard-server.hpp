@@ -1,5 +1,5 @@
 #pragma once
-#include "build/wlr-clip/proto/wlr-clipboard.pb.h"
+#include "proto/wlr-clipboard.pb.h"
 #include "services/clipboard/clipboard-server.hpp"
 #include <qprocess.h>
 
@@ -18,6 +18,7 @@ class WlrClipboardServer : public AbstractClipboardServer {
 public:
   bool start() override;
   bool isActivatable() const override;
+  QString id() const override;
 
   WlrClipboardServer();
 };

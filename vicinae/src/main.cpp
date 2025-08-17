@@ -61,74 +61,7 @@
 #include "settings/settings-window.hpp"
 #include "theme.hpp"
 #include "utils/utils.hpp"
-
-#ifdef WAYLAND_LAYER_SHELL
-#include <LayerShellQt/window.h>
-#include <LayerShellQt/shell.h>
-#endif
-
-void coloredMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg) {
-  // ANSI color codes
-  const char *BLACK = "\033[30m";
-  const char *RED = "\033[31m";
-  const char *GREEN = "\033[32m";
-  const char *YELLOW = "\033[33m";
-  const char *BLUE = "\033[34m";
-  const char *MAGENTA = "\033[35m";
-  const char *CYAN = "\033[36m";
-  const char *WHITE = "\033[37m";
-  const char *RESET = "\033[0m";
-
-  QString timestamp = QDateTime::currentDateTime().toString("hh:mm:ss.zzz");
-  QString contextInfo = "";
-
-  if (context.file) {
-    std::filesystem::path file(context.file);
-
-    contextInfo = QString("(%1%2:%3%4)").arg(BLUE).arg(file.filename().c_str()).arg(context.line).arg(RESET);
-  }
-
-  QString color;
-  QString levelName;
-
-  switch (type) {
-  case QtDebugMsg:
-    color = CYAN;
-    levelName = "DEBUG";
-    break;
-  case QtInfoMsg:
-    color = GREEN;
-    levelName = "INFO ";
-    break;
-  case QtWarningMsg:
-    color = YELLOW;
-    levelName = "WARN ";
-    break;
-  case QtCriticalMsg:
-    color = RED;
-    levelName = "ERROR";
-    break;
-  case QtFatalMsg:
-    color = MAGENTA;
-    levelName = "FATAL";
-    break;
-  }
-
-  // Format: [time] LEVEL message (file:line)
-  QString formattedMessage = QString("%1[%2] %3%4%5  -  %6 %7%8\n")
-                                 .arg(WHITE)
-                                 .arg(timestamp)
-                                 .arg(color)
-                                 .arg(levelName)
-                                 .arg(RESET)
-                                 .arg(msg)
-                                 .arg(contextInfo)
-                                 .arg(RESET);
-
-  std::cerr << formattedMessage.toStdString();
-
-  if (type == QtFatalMsg) { abort(); }
-}
+#include "log/message-handler.hpp"
 
 int startDaemon() {
   std::filesystem::create_directories(Omnicast::runtimeDir());
@@ -141,11 +74,7 @@ int startDaemon() {
     if (ifs.is_open()) {
       ifs >> pid;
 
-      qDebug() << "Kill existing omnicast instance with pid" << pid;
-
-      if (kill(pid, SIGKILL) < 0) {
-        qDebug() << "Failed to kill existing omnicast instance with pid" << pid << strerror(errno);
-      }
+      if (kill(pid, SIGKILL) == 0) { qInfo() << "Killed existing vicinae instance with pid" << pid; }
     }
   }
 
@@ -184,21 +113,10 @@ int startDaemon() {
     auto extensionRegistry = std::make_unique<ExtensionRegistry>(*commandDb, *localStorage);
     auto raycastStore = std::make_unique<RaycastStoreService>();
 
-    if (auto name = currentConfig.theme.name) {
-      if (!ThemeService::instance().setTheme(*name)) {
-        qCritical() << "Could not set theme with id" << *name
-                    << "as it does not exist. Falling back to default theme instead.";
-        ThemeService::instance().setDefaultTheme();
-      }
-    } else {
-      ThemeService::instance().setDefaultTheme();
-    }
-
     if (!extensionManager->start()) {
       qCritical() << "Failed to load extension manager. Extensions will not work";
     }
 
-    // fileService->indexer()->setEntrypoints({{.root = "/home/aurelle/Downloads"}});
     fileService->indexer()->setEntrypoints({{.root = homeDir()}});
     fileService->indexer()->start();
 

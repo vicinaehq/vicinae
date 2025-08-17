@@ -250,6 +250,8 @@ bool ClipboardDatabase::insertSelection(const InsertSelectionPayload &payload) {
   query.bindValue(":hash_md5", payload.hash);
   query.bindValue(":preferred_mime_type", payload.preferredMimeType);
 
+  if (payload.source) { query.bindValue(":source", *payload.source); }
+
   if (!query.exec()) {
     qCritical() << "Failed to insert selection" << query.lastError();
     return false;

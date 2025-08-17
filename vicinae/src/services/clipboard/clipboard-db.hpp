@@ -26,6 +26,7 @@ struct InsertSelectionPayload {
   QString hash;
   QString preferredMimeType;
   ClipboardOfferKind kind;
+  std::optional<QString> source;
 };
 
 struct InsertClipboardOfferPayload {
