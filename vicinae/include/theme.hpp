@@ -227,6 +227,7 @@ class ThemeService : public QObject {
   std::filesystem::path m_configDir;
   std::filesystem::path m_userThemeDir;
   std::filesystem::path m_dataThemeDir;
+  std::filesystem::path m_systemThemeDir;
 
   ThemeService(const ThemeService &rhs) = delete;
   ThemeService &operator=(const ThemeService &rhs) = delete;
