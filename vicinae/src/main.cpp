@@ -165,7 +165,7 @@ int startDaemon() {
       ServiceRegistry::instance()->commandDb()->removeRepository(id);
     });
 
-    for (const auto &manifest : extensionRegistry->scanAll()) {
+    for (const auto &manifest : reg->scanAll()) {
       auto extension = std::make_shared<Extension>(manifest);
 
       ServiceRegistry::instance()->commandDb()->registerRepository(extension);
