@@ -3,7 +3,6 @@
 #include "services/clipboard/clipboard-server.hpp"
 #include "vicinae.hpp"
 #include <QtCore>
-#include <algorithm>
 #include <filesystem>
 #include <netinet/in.h>
 #include <qlogging.h>
@@ -25,7 +24,7 @@ void WlrClipboardServer::handleMessage(const proto::ext::wlrclip::Selection &sel
     cs.offers.push_back({offer.mime_type().c_str(), QByteArray::fromStdString(offer.data())});
   }
 
-  emit selection(cs);
+  emit selectionAdded(cs);
 }
 
 void WlrClipboardServer::handleExit(int code, QProcess::ExitStatus status) {}
@@ -92,4 +91,4 @@ void WlrClipboardServer::handleRead() {
   }
 }
 
-WlrClipboardServer::WlrClipboardServer() : AbstractClipboardServer(WlrootsDataControlClipboardServer) {}
+WlrClipboardServer::WlrClipboardServer() {}

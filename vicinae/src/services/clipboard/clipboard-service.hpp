@@ -77,7 +77,7 @@ private:
   std::filesystem::path m_dataDir;
   std::unique_ptr<AbstractClipboardServer> m_clipboardServer;
 
-  static std::string getSelectionPreferredMimeType(const ClipboardSelection &selection);
+  static QString getSelectionPreferredMimeType(const ClipboardSelection &selection);
   static QString getOfferTextPreview(const ClipboardDataOffer &offer);
 
   QFuture<GetLocalEncryptionKeyResponse> getLocalEncryptionKey();

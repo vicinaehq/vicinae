@@ -1,27 +1,21 @@
 #include "services/clipboard/clipboard-server-factory.hpp"
 #include "services/clipboard/clipboard-server.hpp"
-#include "services/clipboard/wlr-clipboard-server.hpp"
 #include "services/clipboard/dummy-clipboard-server.hpp"
 
-AbstractClipboardServer *ClipboardServerFactory::create(ClipboardServerType type, QObject *parent) const {
-  switch (type) {
-  case WlrootsDataControlClipboardServer:
-    return new WlrClipboardServer();
-  default:
-    break;
+std::unique_ptr<AbstractClipboardServer> ClipboardServerFactory::createFirstActivatable() const {
+  std::vector<std::unique_ptr<AbstractClipboardServer>> activatable;
+
+  for (const auto &factory : m_registeredServers) {
+    if (auto server = factory(); server && server->isActivatable()) {
+      activatable.emplace_back(std::move(server));
+    }
   }
 
-  return new DummyClipboardServer;
-}
+  if (activatable.empty()) { return std::make_unique<DummyClipboardServer>(); }
 
-AbstractClipboardServer *ClipboardServerFactory::createFirstActivatable(QObject *parent) const {
-  for (int i = 0; i != InvalidClipboardServer; ++i) {
-    auto server = create(static_cast<ClipboardServerType>(i), parent);
+  auto cmp = [](const auto &a, const auto &b) { return a->activationPriority() > b->activationPriority(); };
 
-    if (server->isActivatable()) { return server; }
+  std::ranges::sort(activatable, cmp);
 
-    server->deleteLater();
-  }
-
-  return new DummyClipboardServer;
+  return std::move(activatable.front());
 }

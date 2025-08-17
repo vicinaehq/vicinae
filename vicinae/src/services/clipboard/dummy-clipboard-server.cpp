@@ -1,5 +1,4 @@
 #include "services/clipboard/dummy-clipboard-server.hpp"
-#include "services/clipboard/clipboard-server.hpp"
 #include <qdebug.h>
 
 bool DummyClipboardServer::isActivatable() const { return true; }
@@ -11,4 +10,4 @@ bool DummyClipboardServer::start() {
 
 bool DummyClipboardServer::isAlive() const { return false; }
 
-DummyClipboardServer::DummyClipboardServer() : AbstractClipboardServer(InvalidClipboardServer) {}
+DummyClipboardServer::DummyClipboardServer() {}
