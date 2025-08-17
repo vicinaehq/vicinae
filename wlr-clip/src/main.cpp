@@ -67,8 +67,9 @@ class Clipman : public WaylandDisplay,
 
     uint32_t size = htonl(data.size());
 
-    write(STDOUT_FILENO, &size, sizeof(size));
-    write(STDOUT_FILENO, data.data(), data.size());
+    std::cout.write(reinterpret_cast<const char *>(&size), sizeof(size));
+    std::cout.write(data.data(), data.size());
+    std::cout.flush();
   }
 
 public:
