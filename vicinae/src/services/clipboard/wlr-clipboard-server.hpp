@@ -18,6 +18,7 @@ class WlrClipboardServer : public AbstractClipboardServer {
 public:
   bool start() override;
   bool isActivatable() const override;
+  QString id() const override;
 
   WlrClipboardServer();
 };

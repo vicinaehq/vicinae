@@ -40,6 +40,8 @@ public:
    */
   virtual bool start() = 0;
 
+  virtual QString id() const = 0;
+
   /**
    * Simple healthcheck, return true if you are not able to implement this
    */

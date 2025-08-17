@@ -29,6 +29,8 @@ void WlrClipboardServer::handleMessage(const proto::ext::wlrclip::Selection &sel
 
 void WlrClipboardServer::handleExit(int code, QProcess::ExitStatus status) {}
 
+QString WlrClipboardServer::id() const { return "wlr-clipboard"; };
+
 bool WlrClipboardServer::start() {
   process = new QProcess;
   QFile bin(":bin/wlr-clip");

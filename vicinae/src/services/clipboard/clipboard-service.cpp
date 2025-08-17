@@ -518,6 +518,8 @@ ClipboardService::ClipboardService(const std::filesystem::path &path, WindowMana
 
     factory.registerServer<WlrClipboardServer>();
     m_clipboardServer = factory.createFirstActivatable();
+
+    qInfo() << "Activated clipboard server" << m_clipboardServer->id();
   }
 
   fs::create_directories(m_dataDir);
