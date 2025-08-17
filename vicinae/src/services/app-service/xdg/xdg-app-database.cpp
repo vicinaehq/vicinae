@@ -132,7 +132,7 @@ bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
 
 std::vector<fs::path> XdgAppDatabase::defaultSearchPaths() const {
   std::vector<fs::path> paths;
-  
+
   // First, add XDG_DATA_HOME (highest priority after manually added paths)
   char *dataHome = std::getenv("XDG_DATA_HOME");
   if (dataHome) {
@@ -144,7 +144,7 @@ std::vector<fs::path> XdgAppDatabase::defaultSearchPaths() const {
     fs::path appDir = fs::path(homeDir.toStdString()) / ".local" / "share" / "applications";
     paths.emplace_back(appDir);
   }
-  
+
   // Then add XDG_DATA_DIRS
   char *ddir = std::getenv("XDG_DATA_DIRS");
   if (ddir) {
@@ -330,6 +330,10 @@ bool XdgAppDatabase::addDesktopFile(const QString &path) {
   try {
     XdgDesktopEntry ent(path);
 
+    // we should not track hidden apps as they are explictly removed, unlike apps with NoDisplay
+    // see: https://specifications.freedesktop.org/desktop-entry-spec/latest/recognized-keys.html
+    if (ent.hidden) return true;
+
     auto entry = std::make_shared<XdgApplication>(info, ent);
 
     for (const auto &mimeName : ent.mimeType) {
@@ -343,7 +347,10 @@ bool XdgAppDatabase::addDesktopFile(const QString &path) {
     for (const auto &action : entry->actions()) {
       appMap.insert({action->id(), action});
     }
-  } catch (const std::exception &except) { qWarning() << "Failed to parse app at" << path << except.what(); }
+  } catch (const std::exception &except) {
+    qWarning() << "Failed to parse app at" << path << except.what();
+    return false;
+  }
 
   return true;
 }
