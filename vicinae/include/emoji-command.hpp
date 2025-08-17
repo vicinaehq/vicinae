@@ -199,6 +199,7 @@ public:
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
     auto wm = ctx->services->windowManager();
     auto panel = std::make_unique<ActionPanelState>();
+    auto copyEmoji = new CopyToClipboardAction(Clipboard::Text(QString::fromUtf8(info.emoji)), "Copy emoji");
     auto copyName = new CopyToClipboardAction(
         Clipboard::Text(QString::fromUtf8(info.name.data(), info.name.size())), "Copy emoji name");
     auto copyGroup = new CopyToClipboardAction(
@@ -212,9 +213,10 @@ public:
       paste->setPrimary(true);
       mainSection->addAction(paste);
     } else {
-      copyName->setPrimary(true);
+      copyEmoji->setPrimary(true);
     }
 
+    mainSection->addAction(copyEmoji);
     mainSection->addAction(copyName);
     mainSection->addAction(copyGroup);
     mainSection->addAction(editKeywords);
