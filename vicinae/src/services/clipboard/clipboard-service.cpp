@@ -12,7 +12,7 @@
 #include "crypto.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/clipboard/clipboard-db.hpp"
-#include "services/clipboard/wlr-clipboard-server.hpp"
+#include "wlr/wlr-clipboard-server.hpp"
 #include "services/window-manager/abstract-window-manager.hpp"
 #include "services/window-manager/window-manager.hpp"
 

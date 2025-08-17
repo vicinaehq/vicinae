@@ -1,4 +1,4 @@
-#include "services/clipboard/dummy-clipboard-server.hpp"
+#include "dummy-clipboard-server.hpp"
 #include <qdebug.h>
 
 bool DummyClipboardServer::isActivatable() const { return true; }

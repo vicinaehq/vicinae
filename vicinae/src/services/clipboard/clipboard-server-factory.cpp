@@ -1,6 +1,6 @@
 #include "services/clipboard/clipboard-server-factory.hpp"
 #include "services/clipboard/clipboard-server.hpp"
-#include "services/clipboard/dummy-clipboard-server.hpp"
+#include "dummy/dummy-clipboard-server.hpp"
 
 std::unique_ptr<AbstractClipboardServer> ClipboardServerFactory::createFirstActivatable() const {
   std::vector<std::unique_ptr<AbstractClipboardServer>> activatable;

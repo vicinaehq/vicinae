@@ -1,5 +1,5 @@
-#include "services/clipboard/wlr-clipboard-server.hpp"
-#include "build/wlr-clip/proto/wlr-clipboard.pb.h"
+#include "wlr-clipboard-server.hpp"
+#include "proto/wlr-clipboard.pb.h"
 #include "services/clipboard/clipboard-server.hpp"
 #include "vicinae.hpp"
 #include <QtCore>
