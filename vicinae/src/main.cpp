@@ -175,6 +175,9 @@ int startDaemon() {
 
     registry->rootItemManager()->addProvider(std::make_unique<AppRootProvider>(*registry->appDb()));
     registry->rootItemManager()->addProvider(std::make_unique<ShortcutRootProvider>(*registry->shortcuts()));
+
+    // Force reload providers to make sure items that depend on them are shown
+    registry->rootItemManager()->reloadProviders();
   }
 
   FaviconService::initialize(new FaviconService(Omnicast::dataDir() / "favicon"));

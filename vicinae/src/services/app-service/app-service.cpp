@@ -11,8 +11,10 @@ std::vector<std::filesystem::path> AppService::mergedPaths() const {
   auto defaultPaths = defaultSearchPaths();
 
   paths.reserve(defaultPaths.size() + m_additionalSearchPaths.size());
-  paths.insert(paths.end(), defaultPaths.begin(), defaultPaths.end());
+  // Manually added paths have highest priority, so they come first
   paths.insert(paths.end(), m_additionalSearchPaths.begin(), m_additionalSearchPaths.end());
+  // Then add default system paths (XDG_DATA_HOME, XDG_DATA_DIRS)
+  paths.insert(paths.end(), defaultPaths.begin(), defaultPaths.end());
 
   return paths;
 }

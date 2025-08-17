@@ -3,6 +3,8 @@
 #include <qlogging.h>
 #include <qsettings.h>
 #include <ranges>
+#include <set>
+#include <QDir>
 
 namespace fs = std::filesystem;
 
@@ -45,6 +47,7 @@ bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
   apps.clear();
 
   std::vector<fs::path> traversed;
+  std::set<std::string> processedFilenames; // Track which .desktop filenames we've already processed
 
   // scan dirs
   for (const auto &dir : paths) {
@@ -61,7 +64,12 @@ bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
       std::string filename = entry.path().filename().string();
       if (!filename.ends_with(".desktop")) continue;
 
-      addDesktopFile(entry.path().c_str());
+      // Only process this .desktop file if we haven't seen one with this filename before
+      // This ensures that the first occurrence (highest priority) wins
+      if (processedFilenames.find(filename) == processedFilenames.end()) {
+        processedFilenames.insert(filename);
+        addDesktopFile(entry.path().c_str());
+      }
     }
   }
 
@@ -123,17 +131,31 @@ bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
 }
 
 std::vector<fs::path> XdgAppDatabase::defaultSearchPaths() const {
-  char *ddir = std::getenv("XDG_DATA_DIRS");
-
-  if (!ddir) { return wellKnownPaths; }
-
-  std::string s = ddir;
   std::vector<fs::path> paths;
-
-  for (const auto p : std::views::split(s, std::string_view(":"))) {
-    fs::path appDir = fs::path(std::string_view(p)) / "applications";
-
+  
+  // First, add XDG_DATA_HOME (highest priority after manually added paths)
+  char *dataHome = std::getenv("XDG_DATA_HOME");
+  if (dataHome) {
+    fs::path appDir = fs::path(dataHome) / "applications";
     paths.emplace_back(appDir);
+  } else {
+    // Default to $HOME/.local/share/applications if XDG_DATA_HOME is not set
+    QString homeDir = QDir::homePath();
+    fs::path appDir = fs::path(homeDir.toStdString()) / ".local" / "share" / "applications";
+    paths.emplace_back(appDir);
+  }
+  
+  // Then add XDG_DATA_DIRS
+  char *ddir = std::getenv("XDG_DATA_DIRS");
+  if (ddir) {
+    std::string s = ddir;
+    for (const auto p : std::views::split(s, std::string_view(":"))) {
+      fs::path appDir = fs::path(std::string_view(p)) / "applications";
+      paths.emplace_back(appDir);
+    }
+  } else {
+    // Fallback to well-known paths if XDG_DATA_DIRS is not set
+    paths.insert(paths.end(), wellKnownPaths.begin(), wellKnownPaths.end());
   }
 
   return paths;

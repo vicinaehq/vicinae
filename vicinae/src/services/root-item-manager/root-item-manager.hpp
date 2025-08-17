@@ -219,7 +219,6 @@ private:
   RootItemMetadata loadMetadata(const QString &id);
   bool upsertProvider(const RootProvider &provider);
   bool upsertItem(const QString &providerId, const RootItem &item);
-  void reloadProviders();
   RootItem *findItemById(const QString &id) const;
   RootProvider *findProviderById(const QString &id) const;
   bool pruneProvider(const QString &id);
@@ -270,6 +269,7 @@ public:
 
   std::vector<RootProvider *> providers() const;
 
+  void reloadProviders();
   void removeProvider(const QString &id);
   void addProvider(std::unique_ptr<RootProvider> provider);
   RootProvider *provider(const QString &id) const;
