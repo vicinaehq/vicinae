@@ -7,9 +7,6 @@
 	"build": "tsc --outDir dist",
 	"pack": "npm run build && npm pack"
   },
-  "bin": {
-    "vici": "./dist/bin/main.js"
-  },
   "files": [
     "dist",
     "types"

@@ -6,7 +6,7 @@ import Module from 'module';
 const requireOverrides: Record<string, any> = {
 	'react': React,
 	'react/jsx-runtime': jsxRuntime,
-	'@@vicinae/api': vicinae,
+	'@vicinae/api': vicinae,
 	'@raycast/api': vicinae
 };
 
