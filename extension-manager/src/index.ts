@@ -8,7 +8,7 @@ import * as common from './proto/common';
 import * as manager from './proto/manager';
 import * as extension from './proto/extension';
 
-class Omnicast {
+class Vicinae {
 	private readonly workerMap = new Map<string, Worker>;
 	private readonly requestMap = new Map<string, Worker>;
 	private currentMessage: { data: Buffer }= {
@@ -218,7 +218,7 @@ const main = async () => {
 		process.exit(1);
 	}
 
-	const omnicast = new Omnicast()
+	const vicinae = new Vicinae()
 }
 
 main();

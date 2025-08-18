@@ -3,20 +3,9 @@ import esbuild from 'esbuild';
 import { join } from 'path';
 import {  cpSync, existsSync, mkdirSync, read, readFileSync, writeFileSync } from 'fs';
 import { open, stat } from 'fs/promises';
-import { spawn, spawnSync } from 'child_process';
-import { extensionDataDir } from './utils';
+import { spawn } from 'child_process';
+import { extensionDataDir, invokeVicinae } from './utils';
 import { pid } from 'process';
-
-const OMNICAST_BIN = "/home/aurelle/prog/perso/omnicast/build/omnicast/omnicast";
-
-const invokeOmnicast = (endpoint: string): Error | null => {
-	const url = new URL(endpoint, 'omnicast://');
-	const result = spawnSync(OMNICAST_BIN, [url.toString()]);
-
-	if (result.error) return result.error;
-
-	return result.status === 0 ? null : new Error(result.stderr.toString());
-}
 
 class Logger {
 	prefixes = {
@@ -60,6 +49,12 @@ type TypeCheckResult = {
 	error: string;
 }
 
+	
+const startDev = (id: string) => invokeVicinae(`api/extensions/develop/start?id=${id}`);
+const stopDev = (id: string) => invokeVicinae(`/api/extensions/develop/stop?id=${id}`);
+const refreshDev = (id: string) => invokeVicinae(`api/extensions/develop/refresh?id=${id}`);
+const ping = () => invokeVicinae('ping');
+
 const typeCheck = async (): Promise<TypeCheckResult> => {
 	const spawned = spawn('npx', ['tsc', '--noEmit']);
 	let stderr = Buffer.from('');
@@ -74,6 +69,8 @@ const typeCheck = async (): Promise<TypeCheckResult> => {
 }
 
 const build = async (outDir: string) => {
+
+
 	logger.logInfo("Started type checking in background thread");
 
 	typeCheck().then(({ ok, error }) => {
@@ -96,7 +93,7 @@ const build = async (outDir: string) => {
 		  bundle: true,
 		  external: [
 			  "react",
-			  "@omnicast/api"
+			  "@vicinae/api"
 		  ],
 		  outfile: join(outDir, `${cmd.name}.js`),
 		  format: 'cjs',
@@ -121,7 +118,14 @@ type LogFileData = {
 	cursor: number;
 };
 
-export const developExtension = (extensionPath: string) => {
+export const developExtension = async (extensionPath: string) => {
+	const pingError = ping();
+
+	if (pingError) {
+		console.error(`Failed to ping vicinae\n`, pingError.message);
+		return ;
+	}
+
 	process.chdir(extensionPath);
 	const pkg = JSON.parse(readFileSync("package.json", 'utf-8'));
 	const dataDir = extensionDataDir();
@@ -131,20 +135,21 @@ export const developExtension = (extensionPath: string) => {
 	const pidFile = join(extensionDir, "cli.pid");
 
 	mkdirSync(extensionDir, { recursive: true });
-	build(extensionDir);
+	await build(extensionDir);
 	logger.logReady('built extension successfully');
 	writeFileSync(pidFile, `${pid}`)
 	writeFileSync(logFile, '');
 
 	process.on('SIGINT', () => {
 		logger.logInfo('Shutting down...');
+		stopDev(id);
 		process.exit(0);
 	});
 
-	const error = invokeOmnicast(`/api/extensions/develop/start?id=${id}`);
+	const error = startDev(id); 
 
 	if (error) {
-		console.error(`Failed to invoke omnicast`, error);
+		console.error(`Failed to invoke vicinae`, error);
 		return ;
 	}
 
@@ -152,7 +157,7 @@ export const developExtension = (extensionPath: string) => {
 		logger.logEvent(`changed file ${path}:`);
 		build(extensionDir);
 		logger.logReady('built extension successfully');
-		invokeOmnicast(`/api/extensions/develop/refresh?id=${id}`);
+		refreshDev(id);
 	});
 
 	const logFiles = new Map<string, LogFileData>();

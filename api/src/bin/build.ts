@@ -15,7 +15,7 @@ export const buildExtension = async (path: string = process.cwd()) => {
 		  bundle: true,
 		  external: [
 			  "react",
-			  "@omnicast/api"
+			  "@vicinae/api"
 		  ],
 		  outfile: join(outdir, `${cmd.name}.js`),
 		  format: 'cjs',

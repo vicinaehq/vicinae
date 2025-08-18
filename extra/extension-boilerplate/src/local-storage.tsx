@@ -1,4 +1,4 @@
-import { Action, ActionPanel, Icon, List, LocalStorage, clearSearchBar, getPreferenceValues, showToast, Toast } from '@omnicast/api';
+import { Action, ActionPanel, Icon, List, LocalStorage, clearSearchBar, getPreferenceValues, showToast, Toast } from '@vicinae/api';
 import { randomUUID } from 'crypto';
 import React, { useEffect, useState } from 'react';
 

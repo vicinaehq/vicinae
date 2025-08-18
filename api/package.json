@@ -1,13 +1,14 @@
 {
-  "name": "@omnicast/api",
+  "name": "@vicinae/api",
   "version": "1.0.0",
   "description": "TypeScript SDK to build Vicinae extensions",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-	"build": "tsc --outDir dist"
+	"build": "tsc --outDir dist",
+	"pack": "npm run build && npm pack"
   },
   "bin": {
-    "omni": "./dist/bin/main.js"
+    "vici": "./dist/bin/main.js"
   },
   "files": [
     "dist",
@@ -20,14 +21,12 @@
     "./dist/index.d.ts"
   ],
   "main": "dist/index.js",
-  "devDependencies": {
+  "dependencies": {
     "@jgoz/esbuild-plugin-typecheck": "^4.0.3",
     "@types/node": "^22.10.1",
     "chokidar": "^4.0.3",
     "esbuild": "^0.25.2",
-    "ts-proto": "^2.7.5"
-  },
-  "dependencies": {
+    "ts-proto": "^2.7.5",
     "@types/react": "^18.1.0",
     "react": "^18.1.0"
   }

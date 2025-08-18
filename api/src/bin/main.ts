@@ -2,11 +2,11 @@
 
 import { developExtension } from "./develop";
 
-export const main = () => {
+export const main = async () => {
 	const command = process.argv[2];
 
 	if (command === 'develop') {
-		developExtension(process.argv[3] ?? process.cwd());
+		await developExtension(process.argv[3] ?? process.cwd());
 	}
 }
 

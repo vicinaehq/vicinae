@@ -13,7 +13,7 @@ const platformDataDir = () => {
 	return join(homedir(), '.data');
 }
 
-export const dataDir = () => join(platformDataDir(), 'omnicast');
+export const dataDir = () => join(platformDataDir(), 'vicinae');
 
 export const runtimeDir = () => join(dataDir(), 'runtime');
 

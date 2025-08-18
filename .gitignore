@@ -13,3 +13,4 @@ vicinae/assets/extension-runtime.js
 /dist
 
 __cmake*
+*.tgz
