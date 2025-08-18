@@ -4,6 +4,7 @@
 #include "ui/alert/alert.hpp"
 #include "ui/toast/toast.hpp"
 #include <QtConcurrent/QtConcurrent>
+#include <QClipboard>
 #include <unordered_map>
 
 namespace ui = proto::ext::ui;
@@ -90,6 +91,18 @@ UIRequestRouter::handleCloseWindow(const proto::ext::ui::CloseMainWindowRequest 
   return res;
 }
 
+proto::ext::ui::Response *
+UIRequestRouter::getSelectedText(const proto::ext::ui::GetSelectedTextRequest &req) {
+  auto text = QApplication::clipboard()->text(QClipboard::Mode::Selection);
+  auto res = new proto::ext::ui::Response;
+  auto selectedTextRes = new proto::ext::ui::GetSelectedTextResponse;
+
+  selectedTextRes->set_text(text.toStdString());
+  res->set_allocated_get_selected_text(selectedTextRes);
+
+  return res;
+}
+
 proto::ext::extension::Response *UIRequestRouter::route(const proto::ext::ui::Request &req) {
   using Request = proto::ext::ui::Request;
 
@@ -121,6 +134,9 @@ proto::ext::extension::Response *UIRequestRouter::route(const proto::ext::ui::Re
     return wrapUI(updateToast(req.update_toast()));
   case Request::kConfirmAlert:
     return wrapUI(confirmAlert(req.confirm_alert()));
+  case Request::kGetSelectedText:
+    return wrapUI(getSelectedText(req.get_selected_text()));
+
   default:
     break;
   }
