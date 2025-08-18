@@ -137,10 +137,26 @@ protected:
     }
   }
 
-  bool eventFilter(QObject *watched, QEvent *event) override {
-    if (watched == m_input && event->type() == QEvent::KeyPress) {
-      auto keyEvent = static_cast<QKeyEvent *>(event);
+bool eventFilter(QObject *watched, QEvent *event) override {
+  if (watched == m_input && event->type() == QEvent::KeyPress) {
+    auto keyEvent = static_cast<QKeyEvent *>(event);
 
+    if (keyEvent->modifiers() == Qt::ControlModifier) {
+      switch (keyEvent->key()) {
+      case Qt::Key_J:
+        return m_list->selectDown();
+      case Qt::Key_K:
+        return m_list->selectUp();
+      case Qt::Key_H:
+        pop();
+        return true;
+      case Qt::Key_L:
+        m_list->activateCurrentSelection();
+        return true;
+      }
+    }
+
+    if (keyEvent->modifiers().toInt() == 0) {
       switch (keyEvent->key()) {
       case Qt::Key_Up:
         return m_list->selectUp();
@@ -154,9 +170,10 @@ protected:
         return true;
       }
     }
-
-    return ActionPanelView::eventFilter(watched, event);
   }
+
+  return ActionPanelView::eventFilter(watched, event);
+}
 
   void keyPressEvent(QKeyEvent *event) override { return ActionPanelView::keyPressEvent(event); }
 
