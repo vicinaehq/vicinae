@@ -30,10 +30,30 @@ USAGE
 # Commands
 
 <!-- commands -->
+* [`vici build`](#vici-build)
 * [`vici develop`](#vici-develop)
-* [`vici hello PERSON`](#vici-hello-person)
-* [`vici hello world`](#vici-hello-world)
 * [`vici help [COMMAND]`](#vici-help-command)
+
+## `vici build`
+
+Start an extension development session
+
+```
+USAGE
+  $ vici build [-o <value>] [-s <value>]
+
+FLAGS
+  -o, --out=<value>  Path to output the compiled extension bundle to. Defaults to Vicinae extension directory.
+  -s, --src=<value>  [default: /home/aurelle/prog/perso/vicinae/vici] Path to the extension source directory
+
+DESCRIPTION
+  Start an extension development session
+
+EXAMPLES
+  $ vici build --target /path/to/extension
+```
+
+_See code: [src/commands/build/index.ts](https://github.com/vicinaehq/vici/blob/v0.0.0/src/commands/build/index.ts)_
 
 ## `vici develop`
 
@@ -54,48 +74,6 @@ EXAMPLES
 ```
 
 _See code: [src/commands/develop/index.ts](https://github.com/vicinaehq/vici/blob/v0.0.0/src/commands/develop/index.ts)_
-
-## `vici hello PERSON`
-
-Say hello
-
-```
-USAGE
-  $ vici hello PERSON -f <value>
-
-ARGUMENTS
-  PERSON  Person to say hello to
-
-FLAGS
-  -f, --from=<value>  (required) Who is saying hello
-
-DESCRIPTION
-  Say hello
-
-EXAMPLES
-  $ vici hello friend --from oclif
-  hello friend from oclif! (./src/commands/hello/index.ts)
-```
-
-_See code: [src/commands/hello/index.ts](https://github.com/vicinaehq/vici/blob/v0.0.0/src/commands/hello/index.ts)_
-
-## `vici hello world`
-
-Say hello world
-
-```
-USAGE
-  $ vici hello world
-
-DESCRIPTION
-  Say hello world
-
-EXAMPLES
-  $ vici hello world
-  hello world! (./src/commands/hello/world.ts)
-```
-
-_See code: [src/commands/hello/world.ts](https://github.com/vicinaehq/vici/blob/v0.0.0/src/commands/hello/world.ts)_
 
 ## `vici help [COMMAND]`
 
