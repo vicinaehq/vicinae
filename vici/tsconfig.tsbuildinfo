@@ -1,1 +1,1 @@
-{"root":["./src/index.ts","./src/commands/develop/index.ts","./src/commands/hello/index.ts","./src/commands/hello/world.ts","./src/schemas/manifest.ts","./src/utils/logger.ts","./src/utils/utils.ts","./src/utils/vicinae.ts"],"version":"5.9.2"}
+{"root":["./src/index.ts","./src/commands/develop/index.ts","./src/schemas/manifest.ts","./src/utils/logger.ts","./src/utils/utils.ts","./src/utils/vicinae.ts"],"version":"5.9.2"}
