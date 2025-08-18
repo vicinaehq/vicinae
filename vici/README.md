@@ -1,6 +1,10 @@
 # @vicinae/vici
 
-Vicinae extension ecosystem CLI
+CLI tool to interact with the Vicinae extension ecosystem.
+
+Vicinae is a launcher built using native desktop technologies (C++/QT Widgets), but it is extendable using React and Typescript.
+
+More documentation about Vicinae can be found [here](https://docs.vicinae.com).
 
 [![Version](https://img.shields.io/npm/v/@vicinae/vici.svg)](https://npmjs.org/package/@vicinae/vici)
 [![Downloads/week](https://img.shields.io/npm/dw/@vicinae/vici.svg)](https://npmjs.org/package/@vicinae/vici)
