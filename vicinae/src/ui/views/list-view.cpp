@@ -7,6 +7,21 @@
 #include <qstackedwidget.h>
 
 bool ListView::inputFilter(QKeyEvent *event) {
+  if (event->modifiers() == Qt::ControlModifier) {
+    switch (event->key()) {
+    case Qt::Key_J:
+      return m_list->selectDown();
+    case Qt::Key_K:
+      return m_list->selectUp();
+    case Qt::Key_H:
+      context()->navigation->popCurrentView();
+      return true;
+    case Qt::Key_L:
+      m_list->activateCurrentSelection();
+      return true;
+    }
+  }
+
   if (event->modifiers().toInt() == 0) {
     switch (event->key()) {
     case Qt::Key_Up:
