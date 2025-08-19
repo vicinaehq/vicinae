@@ -8,7 +8,7 @@ export const LocalStorageList = () => {
 	useEffect(() => {
 		refetchStorage();
 
-		console.log({ preferences: getPreferenceValues() });
+		console.log({ preference: getPreferenceValues() });
 	}, []);
 
 

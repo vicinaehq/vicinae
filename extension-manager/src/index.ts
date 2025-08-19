@@ -7,6 +7,9 @@ import * as ipc from './proto/ipc';
 import * as common from './proto/common';
 import * as manager from './proto/manager';
 import * as extension from './proto/extension';
+import { existsSync } from 'fs';
+import { appendFile } from 'fs/promises';
+import { join } from 'path';
 
 class Vicinae {
 	private readonly workerMap = new Map<string, Worker>;
@@ -115,14 +118,23 @@ class Vicinae {
 				}
 			});
 
+			const devLogPath = join(load.extensionPath, "dev.log");
+			const shouldLog = existsSync(devLogPath);
+
+			if (shouldLog) {
+				console.error(`Log file exists at ${devLogPath}`);
+			} else {
+				console.error(`No Log file exists at ${devLogPath}`);
+			}
+
 			worker.stdout.on('data', async (buf: Buffer) => {
-				console.error(buf.toString());
-				//await appendFile(join(extension.path, "dev.log"), buf)
+				//console.error(buf.toString());
+				if (shouldLog) await appendFile(devLogPath, buf)
 			});
 
 			worker.stderr.on('data', async (buf: Buffer) => {
-				console.error(buf.toString());
-				//await appendFile(join(extension.path, "dev.log"), buf)
+				//console.error(buf.toString());
+				if (shouldLog) await appendFile(devLogPath, buf)
 			});
 
 			worker.on('error', (error) => { 

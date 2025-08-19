@@ -42,7 +42,7 @@ Extension::Extension(const ExtensionManifest &manifest) : m_manifest(manifest) {
     auto command = std::make_shared<ExtensionCommand>(cmd);
 
     command->setExtensionId(m_manifest.id);
-    command->setAssetPath(assetDirectory());
+    command->setPath(m_manifest.path);
     command->setExtensionTitle(m_manifest.title);
     command->setExtensionIcon(m_manifest.icon);
     command->setExtensionPreferences(m_manifest.preferences);

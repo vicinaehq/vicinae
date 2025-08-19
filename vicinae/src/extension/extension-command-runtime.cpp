@@ -143,20 +143,24 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
   auto payload = new proto::ext::manager::RequestData;
 
   load->set_entrypoint(m_command->manifest().entrypoint);
+  // TODO: check if a dev session is active for this command
   load->set_env(proto::ext::manager::CommandEnv::Development);
+  load->set_extension_path(m_command->path());
+
   if (m_command->mode() == CommandMode::CommandModeView) {
     load->set_mode(proto::ext::manager::CommandMode::View);
   } else {
     load->set_mode(proto::ext::manager::CommandMode::NoView);
   }
 
+  auto preferences = load->mutable_preference_values();
+
   for (const auto &key : preferenceValues.keys()) {
     auto value = preferenceValues.value(key);
 
-    load->mutable_preference_values()->insert({key.toStdString(), transformJsonValueToProto(value)});
+    preferences->insert({key.toStdString(), transformJsonValueToProto(value)});
   }
 
-  load->set_extension_path("");
   payload->set_allocated_load(load);
 
   auto loadRequest = manager->requestManager(payload);
