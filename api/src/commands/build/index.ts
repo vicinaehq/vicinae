@@ -10,7 +10,6 @@ import {
 import { join } from "node:path";
 import { Logger } from "../../utils/logger.js";
 import { extensionDataDir } from "../../utils/utils.js";
-import { VicinaeClient } from "../../utils/vicinae.js";
 import ManifestSchema from '../../schemas/manifest.js';
 
 export default class Build extends Command {
@@ -61,8 +60,6 @@ export default class Build extends Command {
 	const manifest = e.data;
 	const outDir = flags.out ?? join(extensionDataDir(), manifest.name);
 
-    const vicinae = new VicinaeClient();
-
     const build = async (outDir: string) => {
 
       const entryPoints = manifest.commands.map((cmd) =>
@@ -96,13 +93,6 @@ export default class Build extends Command {
         mkdirSync(targetAssets, { recursive: true });
       }
     };
-
-    const pingError = vicinae.ping();
-
-    if (pingError) {
-      console.error(`Failed to ping vicinae\n`, pingError.message);
-      return;
-    }
 
     process.chdir(src);
 
