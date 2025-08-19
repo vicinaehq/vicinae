@@ -6,6 +6,7 @@ extension-manager/runtime/node_modules
 /cmake-build-debug
 /.idea
 /vgcore*
+.env
 
 vicinae/assets/extension-runtime.js
 

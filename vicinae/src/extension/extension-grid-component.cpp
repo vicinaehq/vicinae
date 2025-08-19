@@ -9,18 +9,33 @@ static const KeyboardShortcutModel primaryShortcut{.key = "return"};
 static const KeyboardShortcutModel secondaryShortcut{.key = "return", .modifiers = {"shift"}};
 
 bool ExtensionGridComponent::inputFilter(QKeyEvent *event) {
-  switch (event->key()) {
-  case Qt::Key_Left:
-    return m_list->selectLeft();
-  case Qt::Key_Right:
-    return m_list->selectRight();
-  case Qt::Key_Up:
-    return m_list->selectUp();
-  case Qt::Key_Down:
-    return m_list->selectDown();
-  case Qt::Key_Return:
-    m_list->activateCurrentSelection();
-    return true;
+  if (event->modifiers() == Qt::ControlModifier) {
+    switch (event->key()) {
+    case Qt::Key_H:
+      return m_list->selectLeft();
+    case Qt::Key_L:
+      return m_list->selectRight();
+    case Qt::Key_K:
+      return m_list->selectUp();
+    case Qt::Key_J:
+      return m_list->selectDown();
+    }
+  }
+
+  if (event->modifiers().toInt() == 0) {
+    switch (event->key()) {
+    case Qt::Key_Left:
+      return m_list->selectLeft();
+    case Qt::Key_Right:
+      return m_list->selectRight();
+    case Qt::Key_Up:
+      return m_list->selectUp();
+    case Qt::Key_Down:
+      return m_list->selectDown();
+    case Qt::Key_Return:
+      m_list->activateCurrentSelection();
+      return true;
+    }
   }
 
   return ExtensionSimpleView::inputFilter(event);
