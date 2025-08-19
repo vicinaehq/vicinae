@@ -1,6 +1,6 @@
 import { parentPort, workerData } from "worker_threads";
 import { createRenderer } from './reconciler';
-import { LaunchType, NavigationProvider, bus, environment } from '@omnicast/api';
+import { LaunchType, NavigationProvider, bus, environment } from '@vicinae/api';
 import { ComponentType, ReactNode, Suspense } from "react";
 import * as React from 'react';
 import { patchRequire } from "./patch-require";

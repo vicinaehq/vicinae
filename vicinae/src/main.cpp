@@ -153,7 +153,7 @@ int startDaemon() {
 
     auto reg = ServiceRegistry::instance()->extensionRegistry();
 
-    QObject::connect(reg, &ExtensionRegistry::extensionAdded, [reg](const QString &id) {
+    QObject::connect(reg, &ExtensionRegistry::extensionsChanged, [reg]() {
       for (const auto &manifest : reg->scanAll()) {
         auto extension = std::make_shared<Extension>(manifest);
 
@@ -165,7 +165,7 @@ int startDaemon() {
       ServiceRegistry::instance()->commandDb()->removeRepository(id);
     });
 
-    for (const auto &manifest : extensionRegistry->scanAll()) {
+    for (const auto &manifest : reg->scanAll()) {
       auto extension = std::make_shared<Extension>(manifest);
 
       ServiceRegistry::instance()->commandDb()->registerRepository(extension);

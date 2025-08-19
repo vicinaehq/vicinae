@@ -133,6 +133,7 @@ class ExtensionManager : public QObject {
   Bus bus;
   std::vector<std::shared_ptr<Extension>> loadedExtensions;
   OmniCommandDatabase &commandDb;
+  std::unordered_set<QString> m_developmentSessions;
 
 public:
   ExtensionManager(OmniCommandDatabase &commandDb);
@@ -143,6 +144,10 @@ public:
   bool respondToExtension(const QString &requestId, proto::ext::extension::ResponseData *data);
   void emitExtensionEvent(proto::ext::QualifiedExtensionEvent *event);
   void emitGenericExtensionEvent(const QString &sessionId, const QString &handlerId, const QJsonArray &args);
+
+  void addDevelopmentSession(const QString &id);
+  void removeDevelopmentSession(const QString &id);
+  bool hasDevelopmentSession(const QString &id) const;
 
   void processStarted();
   static QJsonObject serializeLaunchProps(const LaunchProps &props);

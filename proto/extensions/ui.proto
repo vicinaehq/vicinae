@@ -36,6 +36,13 @@ message SetSearchTextRequest {
   string text = 1;
 };
 
+message GetSelectedTextRequest {
+}
+
+message GetSelectedTextResponse {
+  string text = 1;
+}
+
 enum PopToRootType {
   PopToRootDefault = 0;
   PopToRootImmediate = 1;
@@ -89,22 +96,26 @@ message Request {
     ShowHudRequest show_hud = 9;
     SetSearchTextRequest set_search_text = 10;
     ConfirmAlertRequest confirm_alert = 11;
+    GetSelectedTextRequest get_selected_text = 12;
   };
 };
 
 
 message Response {
-  common.AckResponse render = 1;
-  common.AckResponse show_toast = 2;
-  common.AckResponse hide_toast = 3;
-  common.AckResponse update_toast = 4;
-  common.AckResponse push_view = 5;
-  common.AckResponse pop_view = 6;
-  common.AckResponse clear_search = 7;
-  common.AckResponse close_main_window = 8;
-  common.AckResponse show_hud = 9;
-  common.AckResponse set_search_text = 10; 
-  common.AckResponse confirm_alert = 11;
+  oneof payload {
+    common.AckResponse render = 1;
+    common.AckResponse show_toast = 2;
+    common.AckResponse hide_toast = 3;
+    common.AckResponse update_toast = 4;
+    common.AckResponse push_view = 5;
+    common.AckResponse pop_view = 6;
+    common.AckResponse clear_search = 7;
+    common.AckResponse close_main_window = 8;
+    common.AckResponse show_hud = 9;
+    common.AckResponse set_search_text = 10; 
+    common.AckResponse confirm_alert = 11;
+    GetSelectedTextResponse get_selected_text = 12;
+  };
 };
 
 message RenderNode {

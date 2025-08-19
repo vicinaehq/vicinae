@@ -1,4 +1,14 @@
+*-debug.log
+*-error.log
+**/.DS_Store
+/.idea
 /dist
+/tmp
 /node_modules
-src/omnicast
-/src/proto
+oclif.manifest.json
+
+
+
+yarn.lock
+pnpm-lock.yaml
+

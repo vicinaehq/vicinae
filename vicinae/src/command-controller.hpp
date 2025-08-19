@@ -22,6 +22,9 @@ public:
 
   void launch(const std::shared_ptr<AbstractCmd> &cmd);
   void launch(const QString &id);
+  const AbstractCmd *activeCommand() const;
+  bool reloadActiveCommand();
+  void unloadActiveCommand();
 
 private:
   void handleViewPushed(const BaseView *view);

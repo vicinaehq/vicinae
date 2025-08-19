@@ -1,7 +1,7 @@
 {
   "name": "extension-manager",
   "version": "1.0.0",
-  "description": "Internal extension manager runtime spawned by the omnicast daemon",
+  "description": "Internal extension manager runtime spawned by the vicinae server",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -10,20 +10,20 @@
     "build": "run-p typecheck build-only"
   },
   "keywords": [
-    "omnicast",
-    "omnicast-extensions"
+    "vicinae",
+    "vicinae-extensions"
   ],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@omnicast/api": "file:../api",
+    "@vicinae/api": "file:../api",
     "fast-json-patch": "^3.1.1",
     "react-reconciler": "^0.28.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.1",
     "@types/react-reconciler": "^0.31.0",
-    "esbuild": "^0.24.0",
+    "esbuild": "^0.25.9",
     "npm-run-all": "^4.1.5",
     "ts-proto": "^2.7.5",
     "typescript": "^5.8.2"

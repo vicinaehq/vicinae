@@ -438,7 +438,11 @@ void ThemeService::upsertTheme(const ParsedThemeData &data) {
   *it = ThemeInfo::fromParsed(data);
 }
 
-void ThemeService::scanThemeDirectories() { scanThemeDirectory(m_userThemeDir); }
+void ThemeService::scanThemeDirectories() {
+  scanThemeDirectory(m_userThemeDir);
+  scanThemeDirectory(m_dataThemeDir);
+  scanThemeDirectory(m_systemThemeDir);
+}
 
 void ThemeService::scanThemeDirectory(const std::filesystem::path &path) {
   std::error_code ec;
@@ -620,7 +624,7 @@ ColorLike ThemeService::getTintColor(SemanticColor tint) const { return m_theme.
 
 ThemeService::ThemeService()
     : m_configDir(Omnicast::configDir()), m_userThemeDir(Omnicast::configDir() / "themes"),
-      m_dataThemeDir(Omnicast::dataDir() / "themes") {
+      m_dataThemeDir(Omnicast::dataDir() / "themes"), m_systemThemeDir("/usr/share/vicinae/themes") {
   registerBuiltinThemes();
   scanThemeDirectories();
 }

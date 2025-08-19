@@ -58,6 +58,7 @@ bool ExtensionRegistry::installFromZip(const QString &id, std::string_view data)
 
   unzip.extract(extractDir, {.stripComponents = 1});
   emit extensionAdded(id);
+  emit extensionsChanged();
 
   return true;
 }
@@ -71,6 +72,7 @@ bool ExtensionRegistry::uninstall(const QString &id) {
   m_storage.clearNamespace(id);
 
   emit extensionUninstalled(id);
+  emit extensionsChanged();
 
   return true;
 }

@@ -30,7 +30,7 @@ QString ExtensionCommand::repositoryName() const { return m_extensionName; }
 
 bool ExtensionCommand::isDefaultDisabled() const { return m_command.defaultDisabled; }
 
-void ExtensionCommand::setAssetPath(const std::filesystem::path &path) { _assetPath = path; }
+void ExtensionCommand::setPath(const std::filesystem::path &path) { m_path = path; }
 
 void ExtensionCommand::setExtensionTitle(const QString &title) { _extensionTitle = title; }
 
@@ -38,12 +38,12 @@ void ExtensionCommand::setExtensionName(const QString &name) { m_extensionName =
 
 ImageURL ExtensionCommand::iconUrl() const {
   if (auto icon = m_command.icon) {
-    auto commandIconPath = _assetPath / icon->toStdString();
+    auto commandIconPath = assetPath() / icon->toStdString();
 
     if (std::filesystem::exists(commandIconPath)) { return ImageURL::local(commandIconPath); }
   }
 
-  auto extensionIconUrl = _assetPath / _extensionIcon.toStdString();
+  auto extensionIconUrl = assetPath() / _extensionIcon.toStdString();
 
   if (std::filesystem::exists(extensionIconUrl)) { return ImageURL::local(extensionIconUrl); }
 

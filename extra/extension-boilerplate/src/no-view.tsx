@@ -1,4 +1,4 @@
-import { open, showToast, LocalStorage, LaunchProps, closeMainWindow } from "@omnicast/api";
+import { open, showToast, LocalStorage, LaunchProps, closeMainWindow } from "@vicinae/api";
 
 export default async function Command(props: LaunchProps) {
 	console.log({ props });

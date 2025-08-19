@@ -12,6 +12,8 @@ class ExtensionRequest;
 class ExtensionEvent;
 
 class ExtensionCommandRuntime : public CommandContext {
+  bool m_isDevMode = false;
+
   std::shared_ptr<ExtensionCommand> m_command;
 
   std::unique_ptr<StorageRequestRouter> m_storageRouter;

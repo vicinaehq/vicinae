@@ -1,6 +1,5 @@
 .cache
-build
-/home/aurelle/Downloads/wireguard.png
+/build
 /src
 .tmp
 extension-manager/runtime/node_modules
@@ -12,3 +11,6 @@ vicinae/assets/extension-runtime.js
 
 *.tar.gz
 /dist
+
+__cmake*
+*.tgz

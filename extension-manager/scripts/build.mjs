@@ -19,7 +19,7 @@ await esbuild.build({
   //minify: true,
   platform: 'node',
 	alias: {
-		'@omnicast/api': '../api/src/',
+		'@vicinae/api': '../api/src/',
 		// we want react to always resolve to the local node_modules version
 		'react': './node_modules/react'
 	}
