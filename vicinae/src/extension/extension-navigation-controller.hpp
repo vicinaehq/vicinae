@@ -11,6 +11,12 @@ class ExtensionNavigationController : public QObject {
   NavigationController *m_navigation;
   std::unique_ptr<ExtensionCommandController> m_controller;
   QString m_sessionId;
+  bool m_devMode = false;
+
+  QString defaultNavigationTitle() {
+    if (m_devMode) return QString("%1 (Dev)").arg(m_command->name());
+    return m_command->name();
+  }
 
 public:
   ExtensionCommandController *controller() const { return m_controller.get(); }
@@ -21,7 +27,7 @@ public:
     auto view = new ExtensionViewWrapper(m_controller.get());
 
     m_navigation->pushView(view);
-    m_navigation->setNavigationTitle(m_command->name());
+    m_navigation->setNavigationTitle(defaultNavigationTitle());
     m_navigation->setNavigationIcon(m_command->iconUrl());
     m_views.emplace_back(view);
   }
@@ -43,6 +49,8 @@ public:
     m_sessionId = id;
     m_controller->setSessionId(id);
   }
+
+  void setDevMode(bool mode) { m_devMode = mode; }
 
   ExtensionNavigationController(const std::shared_ptr<ExtensionCommand> &command,
                                 NavigationController *navigation, ExtensionManager *manager)

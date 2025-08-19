@@ -183,6 +183,14 @@ void ExtensionManager::emitExtensionEvent(proto::ext::QualifiedExtensionEvent *e
   return bus.emitExtensionEvent(event);
 }
 
+void ExtensionManager::addDevelopmentSession(const QString &id) { m_developmentSessions.insert(id); }
+
+void ExtensionManager::removeDevelopmentSession(const QString &id) { m_developmentSessions.erase(id); }
+
+bool ExtensionManager::hasDevelopmentSession(const QString &id) const {
+  return std::ranges::contains(m_developmentSessions, id);
+}
+
 void ExtensionManager::emitGenericExtensionEvent(const QString &sessionId, const QString &handlerId,
                                                  const QJsonArray &args) {
   auto qualified = new proto::ext::QualifiedExtensionEvent;

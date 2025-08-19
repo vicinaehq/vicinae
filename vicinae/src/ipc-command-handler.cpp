@@ -7,6 +7,7 @@
 #include "services/extension-registry/extension-registry.hpp"
 #include <qlogging.h>
 #include <qobjectdefs.h>
+#include "extension/manager/extension-manager.hpp"
 #include <qsqlquery.h>
 #include <qurl.h>
 #include <qurlquery.h>
@@ -148,6 +149,8 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
     }
 
     if (url.path() == "/extensions/develop/start") {
+      m_ctx.services->extensionManager()->addDevelopmentSession(id);
+
       qInfo() << "Start extension development session for" << id;
       // the caller should have created or updated a new extension bundle at that point
       // so all we have to do is to rescan.
@@ -173,6 +176,7 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
     }
 
     if (url.path() == "/extensions/develop/stop") {
+      m_ctx.services->extensionManager()->removeDevelopmentSession(id);
       qInfo() << "Stopping extension development for" << id;
       // stopping a development session doesn't remove the bundle, but if a command
       // from the extension is launched outside of dev mode it's going to be run in

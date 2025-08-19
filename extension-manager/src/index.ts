@@ -109,7 +109,7 @@ class Vicinae {
 						this.writeMessage({ extensionEvent: { sessionId, event }});
 					}
 				} catch (error) {
-					const crash = extension.CrashEventData.create({ text: `The extension manager process received a malformed request.\nThis most likely indicate a problem with the software itself, not the extension.\nPlease file a bug report.` });
+					const crash = extension.CrashEventData.create({ text: `The extension manager process received a malformed request.\nThis most likely indicates a problem with Vicinae, not the extension.\nPlease file a bug report: https://github.com/vicinaehq/vicinae/issues/new` });
 					const event = ipc.QualifiedExtensionEvent.create({ sessionId, event: { id: randomUUID(), crash } });
 
 					this.writeMessage({ extensionEvent: event });
@@ -119,13 +119,7 @@ class Vicinae {
 			});
 
 			const devLogPath = join(load.extensionPath, "dev.log");
-			const shouldLog = existsSync(devLogPath);
-
-			if (shouldLog) {
-				console.error(`Log file exists at ${devLogPath}`);
-			} else {
-				console.error(`No Log file exists at ${devLogPath}`);
-			}
+			const shouldLog = load.env === manager.CommandEnv.Development && existsSync(devLogPath);
 
 			worker.stdout.on('data', async (buf: Buffer) => {
 				//console.error(buf.toString());
@@ -133,8 +127,8 @@ class Vicinae {
 			});
 
 			worker.stderr.on('data', async (buf: Buffer) => {
-				//console.error(buf.toString());
 				if (shouldLog) await appendFile(devLogPath, buf)
+			    else console.error(buf.toString());
 			});
 
 			worker.on('error', (error) => { 
