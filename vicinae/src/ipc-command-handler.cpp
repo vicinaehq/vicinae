@@ -4,8 +4,10 @@
 #include <algorithm>
 #include "services/toast/toast-service.hpp"
 #include "settings-controller/settings-controller.hpp"
+#include "services/extension-registry/extension-registry.hpp"
 #include <qlogging.h>
 #include <qobjectdefs.h>
+#include "extension/manager/extension-manager.hpp"
 #include <qsqlquery.h>
 #include <qurl.h>
 #include <qurlquery.h>
@@ -41,6 +43,8 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
   }
 
   QUrlQuery query(url.query());
+
+  if (url.host() == "ping") { return; }
 
   if (url.host() == "toggle") {
     m_ctx.navigation->toggleWindow();
@@ -133,6 +137,52 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
     }
 
     return;
+  }
+
+  if (url.host() == "api") {
+    auto registry = m_ctx.services->extensionRegistry();
+    auto id = query.queryItemValue("id");
+
+    if (id.isEmpty()) {
+      qWarning() << "Missing valid extension id from URI";
+      return;
+    }
+
+    if (url.path() == "/extensions/develop/start") {
+      m_ctx.services->extensionManager()->addDevelopmentSession(id);
+
+      qInfo() << "Start extension development session for" << id;
+      // the caller should have created or updated a new extension bundle at that point
+      // so all we have to do is to rescan.
+      // this hook is how we can know to launch an extension in development mode instead of production
+      registry->requestScan();
+      return;
+    }
+
+    if (url.path() == "/extensions/develop/refresh") {
+      qInfo() << "Refreshing extension development for" << id;
+
+      // we just rescan all bundles, we don't really need to do it incrementally for now
+      // an extension is "hot reloaded" although state is not preserved (this is a very tricky thing to
+      // implement properly)
+      registry->requestScan();
+
+      if (auto cmd = m_ctx.command->activeCommand(); cmd && cmd->extensionId() == id) {
+        qInfo() << "Reloading active command following extension refresh";
+        m_ctx.command->reloadActiveCommand();
+      }
+
+      return;
+    }
+
+    if (url.path() == "/extensions/develop/stop") {
+      m_ctx.services->extensionManager()->removeDevelopmentSession(id);
+      qInfo() << "Stopping extension development for" << id;
+      // stopping a development session doesn't remove the bundle, but if a command
+      // from the extension is launched outside of dev mode it's going to be run in
+      // the production environment (although the bundle itself won't be optimized for production)
+      return;
+    }
   }
 
   qWarning() << "No handler for URL" << url;

@@ -3,6 +3,7 @@
 	"src/components/*",
 	"types/*",
 	"src/*",
+	"src/commands",
 	"src/bin"
   ],
   "compilerOptions": {

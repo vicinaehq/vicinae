@@ -1,0 +1,106 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "example-extension",
+  "description": "Manage your todo list quickly by adding items and marking items as completed.",
+  "categories": [
+    "Applications",
+    "Productivitye"
+  ],
+  "license": "MIT",
+  "author": "maggie",
+  "contributors": [],
+  "pastContributors": [],
+  "scripts": {
+    "build": "vici build",
+    "dev": "vici develop"
+  },
+  "dependencies": {
+    "@vicinae/api": "file:vicinae-api-1.0.0.tgz"
+  },
+  "devDependencies": {
+    "@types/node": "~16.10.0",
+    "@types/react": "^19.0.0",
+    "esbuild": "^0.25.2",
+    "typescript": "^4.4.3"
+  },
+  "icon": "command-icon.png",
+  "commands": [
+    {
+      "name": "index",
+      "title": "My Example Command",
+      "description": "Boilerplate command",
+      "mode": "view"
+    },
+    {
+      "name": "local-storage",
+      "title": "Test Local Storage",
+      "description": "Test Local Storage feature",
+      "mode": "view",
+      "preferences": [
+        {
+          "name": "localToken",
+          "type": "password",
+          "required": true,
+          "title": "Local Token",
+          "placeholder": "Your Local Token",
+          "description": "Local token to access the service"
+        }
+      ]
+    },
+    {
+      "name": "heavy-duty",
+      "title": "Heavy Duty Stuff",
+      "description": "Heavy Duty",
+      "mode": "view"
+    },
+    {
+      "name": "no-view",
+      "title": "Test No View",
+      "description": "Test No View Feature",
+      "mode": "no-view",
+      "preferences": [],
+      "arguments": [
+        {
+          "name": "username",
+          "type": "text",
+          "required": true,
+          "placeholder": "Username"
+        },
+        {
+          "name": "password",
+          "type": "password",
+          "required": true,
+          "placeholder": "Password"
+        }
+      ]
+    }
+  ],
+  "preferences": [
+    {
+      "name": "apiToken",
+      "type": "password",
+      "required": true,
+      "title": "API Token",
+      "placeholder": "Your API token",
+      "description": "API token to access the service"
+    },
+    {
+      "name": "baseUrl",
+      "type": "textfield",
+      "required": true,
+      "title": "Base URL",
+      "placeholder": "http://localhost:3000",
+      "description": "The base URL for the service"
+    },
+    {
+      "name": "examplePreference",
+      "type": "checkbox",
+      "required": false,
+      "title": "Example preference",
+      "description": "Showcases how to use preferences",
+      "default": false,
+      "label": "Showcases how to use preferences"
+    }
+  ],
+  "title": "My Example Extension"
+}

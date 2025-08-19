@@ -64,6 +64,7 @@ type EndpointMapping = {
 	'ui.showHud': 'ui.showHud',
 	'ui.setSearchText': 'ui.setSearchText'
 	'ui.confirmAlert': 'ui.confirmAlert'
+	'ui.getSelectedText': 'ui.getSelectedText',
 
 	'storage.get': 'storage.get',
 	'storage.set': 'storage.set',

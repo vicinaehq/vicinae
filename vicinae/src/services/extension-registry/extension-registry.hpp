@@ -65,7 +65,12 @@ public:
 
   ExtensionRegistry(OmniCommandDatabase &commandDb, LocalStorageService &storage);
 
+  void requestScan() { emit extensionsChanged(); }
+
 signals:
   void extensionAdded(const QString &id);
   void extensionUninstalled(const QString &id);
+
+  // used to notify subscribers that they should rescan
+  void extensionsChanged() const;
 };

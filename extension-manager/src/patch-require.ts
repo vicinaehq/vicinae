@@ -1,13 +1,13 @@
 import * as React from 'react';
-import * as omnicast from '@omnicast/api';
+import * as vicinae from '@vicinae/api';
 import * as jsxRuntime from 'react/jsx-runtime';
 import Module from 'module';
 
 const requireOverrides: Record<string, any> = {
 	'react': React,
 	'react/jsx-runtime': jsxRuntime,
-	'@omnicast/api': omnicast,
-	'@raycast/api': omnicast
+	'@vicinae/api': vicinae,
+	'@raycast/api': vicinae
 };
 
 export const patchRequire = () => {

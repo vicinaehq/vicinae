@@ -1,4 +1,4 @@
-import { hash, randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { Image, serializeImageLike, serializeProtoImage } from './image';
 import { bus } from './bus';
 import { RedirectMethod } from './proto/oauth';
@@ -308,7 +308,7 @@ export class PKCEClient {
           */
          async authorizationRequest(options: OAuth.AuthorizationRequestOptions): Promise<OAuth.AuthorizationRequest> {
 			 const codeVerifier = randomBytes(128).toString('hex');
-			 const codeChallenge = hash('sha256', codeVerifier, 'base64url');
+			 const codeChallenge = createHash('sha256').update(codeVerifier).digest('base64url');
 			 const state = randomBytes(32).toString('hex');
 			 const redirectURI = this.getRedirectURI();
 

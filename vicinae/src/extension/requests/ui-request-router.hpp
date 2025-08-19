@@ -25,6 +25,8 @@ class UIRequestRouter : public QObject {
   proto::ext::ui::Response *confirmAlert(const proto::ext::ui::ConfirmAlertRequest &req);
   proto::ext::ui::Response *showHud(const proto::ext::ui::ShowHudRequest &req);
 
+  proto::ext::ui::Response *getSelectedText(const proto::ext::ui::GetSelectedTextRequest &req);
+
   void modelCreated();
 
 public:

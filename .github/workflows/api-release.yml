@@ -1,0 +1,21 @@
+name: publish
+
+on:
+  release:
+    types: [released]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set version from release tag
+        run: npm version ${GITHUB_REF#refs/tags/} --no-git-tag-version
+      - uses: actions/setup-node@v4
+        with:
+          node-version: latest
+      - run: npm install
+      - run: npm run build
+      - uses: JS-DevTools/npm-publish@19c28f1ef146469e409470805ea4279d47c3d35c
+        with:
+          token: ${{ secrets.NPM_TOKEN }}

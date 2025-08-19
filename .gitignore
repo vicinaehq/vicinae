@@ -1,5 +1,5 @@
 .cache
-build
+/build
 /src
 .tmp
 extension-manager/runtime/node_modules
@@ -13,3 +13,4 @@ vicinae/assets/extension-runtime.js
 /dist
 
 __cmake*
+*.tgz
