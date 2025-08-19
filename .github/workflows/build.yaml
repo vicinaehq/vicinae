@@ -2,30 +2,46 @@ name: Qt CMake Build
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main ]
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: [self-hosted, Linux, X64, prod]
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    
-    - name: Create build directory
-      run: mkdir -p build
-    
-    - name: Configure CMake
-      run: |
-        cd build
-        cmake -G Ninja .. \
-          -DCMAKE_BUILD_TYPE=Release \
-          -DCMAKE_PREFIX_PATH=$Qt6_DIR \
-          -DCMAKE_INSTALL_PREFIX=../install
-    
-    - name: Build
-      run: |
-        cd build
-        cmake --build . --config Release --parallel $(nproc)
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Restore CMake build cache
+        id: restore-cache
+        uses: actions/cache@v3
+        with:
+          path: build
+          key: ${{ runner.os }}-cmake-${{ hashFiles('**/CMakeLists.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-cmake-
+
+      - name: Create build directory
+        run: mkdir -p build
+
+      - name: Configure CMake
+        run: |
+          cd build
+          cmake -G Ninja .. \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH=$Qt6_DIR \
+            -DCMAKE_INSTALL_PREFIX=../install
+
+      - name: Build
+        run: |
+          cd build
+          cmake --build . --config Release --parallel $(nproc)
+
+      - name: Update build cache
+        uses: actions/cache@v3
+        with:
+          path: build
+          key: ${{ runner.os }}-cmake-${{ hashFiles('**/CMakeLists.txt') }}-postbuild
