@@ -1,4 +1,4 @@
-import { Action, ActionPanel, Icon, List } from '@omnicast/api';
+import { Action, ActionPanel, Icon, List } from '@vicinae/api';
 
 const items = Array.from({ length: 10_000 }, (v, idx) => idx);
 

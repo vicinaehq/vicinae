@@ -25,7 +25,7 @@ class ExtensionCommand : public AbstractCmd {
   QString _extensionTitle;
   QString _extensionIcon;
   PreferenceList _extensionPreferences;
-  std::filesystem::path _assetPath;
+  std::filesystem::path m_path;
   ExtensionManifest::Command m_command;
   QString m_author;
 
@@ -45,7 +45,8 @@ public:
 
   void setExtensionPreferences(const PreferenceList &prefs) { _extensionPreferences = prefs; }
 
-  std::filesystem::path assetPath() const { return _assetPath; }
+  std::filesystem::path path() const { return m_path; }
+  std::filesystem::path assetPath() const { return m_path / "assets"; }
 
   bool isFallback() const override { return true; }
 
@@ -62,7 +63,7 @@ public:
 
   bool isDefaultDisabled() const override;
 
-  void setAssetPath(const std::filesystem::path &path);
+  void setPath(const std::filesystem::path &path);
   void setExtensionTitle(const QString &title);
   void setExtensionName(const QString &name);
   CommandType type() const override;

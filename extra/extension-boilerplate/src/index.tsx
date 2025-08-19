@@ -1,4 +1,4 @@
-import { Action, ActionPanel, AI,  Form, getPreferenceValues, Grid, Icon, List, showToast, Toast, useNavigation } from "@omnicast/api"
+import { Action, ActionPanel, AI,  Form, getPreferenceValues, Grid, Icon, List, showToast, Toast, useNavigation } from "@vicinae/api"
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Fruit, fruits } from "./fruits";
 

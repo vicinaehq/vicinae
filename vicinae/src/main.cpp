@@ -153,7 +153,7 @@ int startDaemon() {
 
     auto reg = ServiceRegistry::instance()->extensionRegistry();
 
-    QObject::connect(reg, &ExtensionRegistry::extensionAdded, [reg](const QString &id) {
+    QObject::connect(reg, &ExtensionRegistry::extensionsChanged, [reg]() {
       for (const auto &manifest : reg->scanAll()) {
         auto extension = std::make_shared<Extension>(manifest);
 
@@ -234,7 +234,11 @@ int main(int argc, char **argv) {
 
   DaemonIpcClient daemonClient;
 
-  daemonClient.connect();
+    if (!daemonClient.connect()) {
+    qInfo() << "Vicinae server is not running. Please run 'vicinae server' or "
+               "systemctl enable --now --user vicinae.service";
+    return 1;
+  }
 
   if (argc == 1) {
     daemonClient.toggle();

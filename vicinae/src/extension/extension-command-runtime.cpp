@@ -6,6 +6,7 @@
 #include "extension/requests/clipboard-request-router.hpp"
 #include "extension/requests/storage-request-router.hpp"
 #include "extension/requests/ui-request-router.hpp"
+#include "proto/manager.pb.h"
 #include "proto/oauth.pb.h"
 #include "common.hpp"
 #include "service-registry.hpp"
@@ -115,6 +116,8 @@ void ExtensionCommandRuntime::initialize() {
 
   m_navigation = std::make_unique<ExtensionNavigationController>(m_command, context()->navigation.get(),
                                                                  context()->services->extensionManager());
+  m_isDevMode = manager->hasDevelopmentSession(m_command->extensionId());
+  m_navigation->setDevMode(m_isDevMode);
   m_uiRouter = std::make_unique<UIRequestRouter>(m_navigation.get(), *context()->services->toastService());
   m_storageRouter =
       std::make_unique<StorageRequestRouter>(context()->services->localStorage(), m_command->extensionId());
@@ -139,24 +142,32 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
     m_navigation->pushView();
   }
 
+  auto resolveCommandEnv = [&]() {
+    using namespace proto::ext::manager;
+    return m_isDevMode ? CommandEnv::Development : CommandEnv::Production;
+  };
+
   auto load = new proto::ext::manager::ManagerLoadCommand;
   auto payload = new proto::ext::manager::RequestData;
 
   load->set_entrypoint(m_command->manifest().entrypoint);
-  load->set_env(proto::ext::manager::CommandEnv::Development);
+  load->set_env(resolveCommandEnv());
+  load->set_extension_path(m_command->path());
+
   if (m_command->mode() == CommandMode::CommandModeView) {
     load->set_mode(proto::ext::manager::CommandMode::View);
   } else {
     load->set_mode(proto::ext::manager::CommandMode::NoView);
   }
 
+  auto preferences = load->mutable_preference_values();
+
   for (const auto &key : preferenceValues.keys()) {
     auto value = preferenceValues.value(key);
 
-    load->mutable_preference_values()->insert({key.toStdString(), transformJsonValueToProto(value)});
+    preferences->insert({key.toStdString(), transformJsonValueToProto(value)});
   }
 
-  load->set_extension_path("");
   payload->set_allocated_load(load);
 
   auto loadRequest = manager->requestManager(payload);

@@ -4,6 +4,8 @@
 #include "navigation-controller.hpp"
 #include "extension/missing-extension-preference-view.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
+#include <qlogging.h>
+#include <qobjectdefs.h>
 
 CommandController::CommandController(ApplicationContext *ctx) : m_ctx(ctx) {
   connect(ctx->navigation.get(), &NavigationController::viewPushed, this,
@@ -17,6 +19,40 @@ void CommandController::handleViewPushed(const BaseView *view) {
   auto &frame = m_frames.back();
 
   frame->viewCount += 1;
+}
+
+const AbstractCmd *CommandController::activeCommand() const {
+  if (m_frames.empty()) return nullptr;
+
+  return m_frames.back()->command.get();
+}
+
+void CommandController::unloadActiveCommand() {
+  if (m_frames.empty()) {
+    qWarning() << "unloadActiveCommand called while no commands are loaded";
+    return;
+  }
+
+  auto size = m_frames.back()->viewCount;
+
+  for (int i = 0; i < size; ++i) {
+    m_ctx->navigation->popCurrentView();
+  }
+}
+
+bool CommandController::reloadActiveCommand() {
+  auto cmd = activeCommand();
+
+  if (!cmd) return false;
+
+  // we only store the id, as the pointer will likely become invalid
+  // after unloading.
+  QString id = cmd->uniqueId();
+
+  unloadActiveCommand();
+  launch(id);
+
+  return true;
 }
 
 void CommandController::handleViewPoped(const BaseView *view) {

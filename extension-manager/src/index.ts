@@ -7,8 +7,11 @@ import * as ipc from './proto/ipc';
 import * as common from './proto/common';
 import * as manager from './proto/manager';
 import * as extension from './proto/extension';
+import { existsSync } from 'fs';
+import { appendFile } from 'fs/promises';
+import { join } from 'path';
 
-class Omnicast {
+class Vicinae {
 	private readonly workerMap = new Map<string, Worker>;
 	private readonly requestMap = new Map<string, Worker>;
 	private currentMessage: { data: Buffer }= {
@@ -106,7 +109,7 @@ class Omnicast {
 						this.writeMessage({ extensionEvent: { sessionId, event }});
 					}
 				} catch (error) {
-					const crash = extension.CrashEventData.create({ text: `The extension manager process received a malformed request.\nThis most likely indicate a problem with the software itself, not the extension.\nPlease file a bug report.` });
+					const crash = extension.CrashEventData.create({ text: `The extension manager process received a malformed request.\nThis most likely indicates a problem with Vicinae, not the extension.\nPlease file a bug report: https://github.com/vicinaehq/vicinae/issues/new` });
 					const event = ipc.QualifiedExtensionEvent.create({ sessionId, event: { id: randomUUID(), crash } });
 
 					this.writeMessage({ extensionEvent: event });
@@ -115,14 +118,17 @@ class Omnicast {
 				}
 			});
 
+			const devLogPath = join(load.extensionPath, "dev.log");
+			const shouldLog = load.env === manager.CommandEnv.Development && existsSync(devLogPath);
+
 			worker.stdout.on('data', async (buf: Buffer) => {
-				console.error(buf.toString());
-				//await appendFile(join(extension.path, "dev.log"), buf)
+				//console.error(buf.toString());
+				if (shouldLog) await appendFile(devLogPath, buf)
 			});
 
 			worker.stderr.on('data', async (buf: Buffer) => {
-				console.error(buf.toString());
-				//await appendFile(join(extension.path, "dev.log"), buf)
+				if (shouldLog) await appendFile(devLogPath, buf)
+			    else console.error(buf.toString());
 			});
 
 			worker.on('error', (error) => { 
@@ -218,7 +224,7 @@ const main = async () => {
 		process.exit(1);
 	}
 
-	const omnicast = new Omnicast()
+	const vicinae = new Vicinae()
 }
 
 main();
