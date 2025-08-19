@@ -7,6 +7,19 @@
 #include "navigation-controller.hpp"
 
 bool GridView::inputFilter(QKeyEvent *event) {
+  if (event->modifiers() == Qt::ControlModifier) {
+    switch (event->key()) {
+    case Qt::Key_J:
+      return m_grid->selectDown();
+    case Qt::Key_K:
+      return m_grid->selectUp();
+    case Qt::Key_H:
+      return m_grid->selectLeft();
+    case Qt::Key_L:
+      return m_grid->selectRight();
+    }
+  }
+
   if (event->modifiers().toInt() == 0) {
     switch (event->key()) {
     case Qt::Key_Up:
@@ -23,7 +36,7 @@ bool GridView::inputFilter(QKeyEvent *event) {
     }
   }
 
-  return false;
+  return SimpleView::inputFilter(event);
 }
 
 void GridView::onActivate() {

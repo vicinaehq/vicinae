@@ -1,5 +1,8 @@
 This package lets you extend the [Vicinae](https://docs.vicinae.com/) launcher using React and TypeScript.
 
+[![Version](https://img.shields.io/npm/v/@vicinae/api.svg)](https://npmjs.org/package/@vicinae/api)
+[![Downloads/week](https://img.shields.io/npm/dw/@vicinae/api.svg)](https://npmjs.org/package/@vicinae/api)
+
 # Getting started
 
 Install the package:
