@@ -20,6 +20,9 @@
   "types": [
     "./dist/index.d.ts"
   ],
+  "publishConfig": {
+	  "access": "public"
+  },
   "main": "dist/index.js",
   "dependencies": {
     "@jgoz/esbuild-plugin-typecheck": "^4.0.3",
