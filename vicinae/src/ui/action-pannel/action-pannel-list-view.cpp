@@ -7,14 +7,31 @@ bool ActionPannelListView::eventFilter(QObject *sender, QEvent *event) {
   if (event->type() == QEvent::KeyPress) {
     auto keyEvent = static_cast<QKeyEvent *>(event);
 
-    switch (keyEvent->key()) {
-    case Qt::Key_Up:
-      return _list->selectUp();
-    case Qt::Key_Down:
-      return _list->selectDown();
-    case Qt::Key_Return:
-      _list->activateCurrentSelection();
-      return true;
+    if (keyEvent->modifiers() == Qt::ControlModifier) {
+      switch (keyEvent->key()) {
+      case Qt::Key_J:
+        return _list->selectDown();
+      case Qt::Key_K:
+        return _list->selectUp();
+      case Qt::Key_H:
+        context()->navigation->popCurrentView();
+        return true;
+      case Qt::Key_L:
+        _list->activateCurrentSelection();
+        return true;
+      }
+    }
+
+    if (keyEvent->modifiers().toInt() == 0) {
+      switch (keyEvent->key()) {
+      case Qt::Key_Up:
+        return _list->selectUp();
+      case Qt::Key_Down:
+        return _list->selectDown();
+      case Qt::Key_Return:
+        _list->activateCurrentSelection();
+        return true;
+      }
     }
   }
 
