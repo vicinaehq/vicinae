@@ -122,7 +122,9 @@ public:
     context()->command->launch(m_command);
   }
 
-  void onActivate() override { m_form->focusFirst(); }
+  void onActivate() override {
+    QTimer::singleShot(0, this, [this]() { m_form->focusFirst(); });
+  }
 
   QString submitTitle() const override { return "Save preferences"; }
 };
