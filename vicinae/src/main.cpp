@@ -234,7 +234,11 @@ int main(int argc, char **argv) {
 
   DaemonIpcClient daemonClient;
 
-  daemonClient.connect();
+    if (!daemonClient.connect()) {
+    qInfo() << "Vicinae server is not running. Please run 'vicinae server' or "
+               "systemctl enable --now --user vicinae.service";
+    return 1;
+  }
 
   if (argc == 1) {
     daemonClient.toggle();
