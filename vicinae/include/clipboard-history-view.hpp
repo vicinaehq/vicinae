@@ -614,6 +614,21 @@ class ClipboardHistoryView : public SimpleView {
   }
 
   bool inputFilter(QKeyEvent *event) override {
+    if (event->modifiers() == Qt::ControlModifier) {
+      switch (event->key()) {
+      case Qt::Key_J:
+        return m_list->selectDown();
+      case Qt::Key_K:
+        return m_list->selectUp();
+      case Qt::Key_H:
+        context()->navigation->popCurrentView();
+        return true;
+      case Qt::Key_L:
+        m_list->activateCurrentSelection();
+        return true;
+      }
+    }
+
     if (event->modifiers().toInt() == 0) {
       switch (event->key()) {
       case Qt::Key_Up:
@@ -626,13 +641,13 @@ class ClipboardHistoryView : public SimpleView {
       }
     }
 
-    if (event->keyCombination() == QKeyCombination(Qt::ControlModifier, Qt::Key_P)) {
-      m_filterInput->openSelector();
-      return true;
-    }
-
-    return SimpleView::inputFilter(event);
+  if (event->keyCombination() == QKeyCombination(Qt::ControlModifier, Qt::Key_P)) {
+    m_filterInput->openSelector();
+    return true;
   }
+
+  return SimpleView::inputFilter(event);
+}
 
   void startSearch(const ClipboardListSettings &opts) {
     auto clipman = context()->services->clipman();
