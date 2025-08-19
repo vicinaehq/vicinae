@@ -158,10 +158,17 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
 
     if (url.path() == "/extensions/develop/refresh") {
       qInfo() << "Refreshing extension development for" << id;
+
       // we just rescan all bundles, we don't really need to do it incrementally for now
       // an extension is "hot reloaded" although state is not preserved (this is a very tricky thing to
       // implement properly)
       registry->requestScan();
+
+      if (auto cmd = m_ctx.command->activeCommand(); cmd && cmd->extensionId() == id) {
+        qInfo() << "Reloading active command following extension refresh";
+        m_ctx.command->reloadActiveCommand();
+      }
+
       return;
     }
 
