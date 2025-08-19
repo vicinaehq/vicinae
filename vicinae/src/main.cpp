@@ -234,9 +234,9 @@ int main(int argc, char **argv) {
 
   DaemonIpcClient daemonClient;
 
-  if (!daemonClient.connect()) {
-    qCritical() << "Could not connect to vicinae daemon: is vicinae running? You can spawn the vicinae "
-                   "server by running the \"vicinae server\" command.";
+    if (!daemonClient.connect()) {
+    qInfo() << "Vicinae server is not running. Please run 'vicinae server' or "
+               "systemctl enable --now --user vicinae.service";
     return 1;
   }
 
