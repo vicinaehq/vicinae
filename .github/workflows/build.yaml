@@ -32,7 +32,7 @@ jobs:
       - name: Configure CMake
         run: |
           if [ ! -f build/CMakeCache.txt ]; then
-            cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/usr/lib/cmake/Qt6
+            cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$Qt6_DIR
           else
             echo "skipping config"
           fi
