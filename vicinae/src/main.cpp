@@ -234,15 +234,23 @@ int main(int argc, char **argv) {
 
   DaemonIpcClient daemonClient;
 
-  if (!daemonClient.connect()) {
-    qInfo() << "Vicinae server not running. Starting it now...";
-    if (!QProcess::startDetached(qapp.applicationFilePath(), {"server"})) {
-      qCritical() << "Failed to start vicinae server.";
-      return 1;
+if (qEnvironmentVariableIsSet("VICINAE_AUTO_START")) {
+    if (!daemonClient.connect()) {
+        qInfo() << "Vicinae server not running. Starting it now...";
+        if (!QProcess::startDetached(qapp.applicationFilePath(), {"server"})) {
+            qCritical() << "Failed to start vicinae server.";
+            return 1;
+        }
+        qInfo() << "Vicinae server started. Please try your command again.";
+        return 0;
     }
-    qInfo() << "Vicinae server started. Please try your command again.";
-    return 0;
+} else {
+    if (!daemonClient.connect()) {
+    qInfo() << "Vicinae server is not running. Please run 'vicinae server' or "
+               "systemctl enable --now --user vicinae.service";
+    return 1;
   }
+}
 
   if (argc == 1) {
     daemonClient.toggle();
