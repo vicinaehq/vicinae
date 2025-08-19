@@ -2,20 +2,43 @@ name: publish
 
 on:
   release:
-    types: [released]
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g. v1.2.3)'
+        required: false
 
 jobs:
   publish:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./api
     steps:
       - uses: actions/checkout@v4
-      - name: Set version from release tag
-        run: npm version ${GITHUB_REF#refs/tags/} --no-git-tag-version
+
+      - name: Set version from tag
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            TAG_NAME=${GITHUB_REF_NAME}
+          else
+            TAG_NAME=${{ github.event.inputs.tag }}
+          fi
+
+          if [ -z "$TAG_NAME" ]; then
+            echo "Error: No tag specified."
+            exit 1
+          fi
+
+          npm version "$TAG_NAME" --no-git-tag-version
+
       - uses: actions/setup-node@v4
         with:
-          node-version: latest
+          node-version: 'latest'
       - run: npm install
       - run: npm run build
       - uses: JS-DevTools/npm-publish@19c28f1ef146469e409470805ea4279d47c3d35c
         with:
           token: ${{ secrets.NPM_TOKEN }}
+
