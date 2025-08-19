@@ -15,7 +15,7 @@
     "dev": "vici develop"
   },
   "dependencies": {
-    "@vicinae/api": "file:vicinae-api-1.0.0.tgz"
+    "@vicinae/api": "file:vicinae-api-0.0.0.tgz"
   },
   "devDependencies": {
     "@types/node": "~16.10.0",
