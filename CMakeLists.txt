@@ -13,6 +13,9 @@ get_git_tag(GIT_TAG)
 add_compile_definitions(VICINAE_GIT_TAG="${GIT_TAG}")
 add_compile_definitions(VICINAE_GIT_COMMIT_HASH="${GIT_COMMIT}")
 
+option(IGNORE_CCACHE "Always ignore ccache even if it is installed" OFF)
+
+
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
 endif()
@@ -21,10 +24,12 @@ message(STATUS "Configured build type ${CMAKE_BUILD_TYPE}")
 
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Debug Release ReleaseHost)
 
+
 find_program(CCACHE ccache)
 
-if (CCACHE) 
-	#set(CMAKE_CXX_COMPILER_LAUNCHER "ccache")
+if (CCACHE AND NOT IGNORE_CCACHE) 
+	message(STATUS "Found ccache installed, changing CMAKE_CXX_COMPILER_LAUNCHER")
+	set(CMAKE_CXX_COMPILER_LAUNCHER "ccache")
 endif()
 
 set(WLR_CLIP_BIN "vicinae-wlr-clip")
