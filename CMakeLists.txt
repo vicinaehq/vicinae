@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-set(VICINAE_VERSION v1.0.0)
-set(PROJECT_NAME omnicast)
+set(PROJECT_NAME vicinae)
 project(${PROJECT_NAME} VERSION 1.0.0 LANGUAGES C CXX)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
