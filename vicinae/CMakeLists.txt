@@ -542,7 +542,6 @@ endif()
 
 qt_add_executable(${TARGET} ${SRCS})
 
-add_dependencies(${TARGET} wlr-clip)
 target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(${TARGET} PRIVATE ${LIBS})
 

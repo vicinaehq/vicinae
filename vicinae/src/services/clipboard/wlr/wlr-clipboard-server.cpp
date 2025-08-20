@@ -32,33 +32,17 @@ void WlrClipboardServer::handleExit(int code, QProcess::ExitStatus status) {}
 QString WlrClipboardServer::id() const { return "wlr-clipboard"; };
 
 bool WlrClipboardServer::start() {
+  int maxWaitForStart = 5000;
   process = new QProcess;
-  QFile bin(":bin/wlr-clip");
-
-  if (!bin.exists()) {
-    qWarning() << ":bin/wlr-clip resource could not found, can't start clipboard server";
-    return false;
-  }
-
-  bin.open(QIODevice::ReadOnly);
-
-  std::filesystem::path target = Omnicast::runtimeDir() / "wlr-clip";
-  std::filesystem::remove(target);
-
-  bin.copy(target);
-
-#ifdef Q_OS_UNIX
-  QFile::setPermissions(target, QFile::ExeOwner | QFile::ReadOwner | QFile::WriteOwner);
-#endif
 
   connect(process, &QProcess::readyReadStandardOutput, this, &WlrClipboardServer::handleRead);
   connect(process, &QProcess::readyReadStandardError, this, &WlrClipboardServer::handleReadError);
   connect(process, &QProcess::finished, this, &WlrClipboardServer::handleExit);
 
-  process->start(target.c_str(), {});
+  process->start(WLR_CLIP_BIN, {});
 
-  if (!process->waitForStarted(2000)) {
-    qCritical() << "Failed to start wlr-clip" << target.c_str() << process->errorString();
+  if (!process->waitForStarted(maxWaitForStart)) {
+    qCritical() << "Failed to start:" << WLR_CLIP_BIN << process->errorString();
     return false;
   }
 

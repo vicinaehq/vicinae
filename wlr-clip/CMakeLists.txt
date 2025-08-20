@@ -2,7 +2,7 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(TARGET wlr-clip)
+set(TARGET ${WLR_CLIP_BIN})
 set(PROTO_SRC_DIR ${CMAKE_SOURCE_DIR}/proto/extensions)
 set(PROTO_FILES "${PROTO_SRC_DIR}/wlr-clipboard.proto")
 
@@ -42,3 +42,6 @@ protobuf_generate(
 	IMPORT_DIRS ${PROTO_SRC_DIR} ${COMMON_PROTO_DIR}
 	PROTOC_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/proto
 )
+
+install(TARGETS ${TARGET})
+
