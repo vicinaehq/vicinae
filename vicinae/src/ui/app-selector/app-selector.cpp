@@ -6,7 +6,7 @@ AppSelector::AppSelector(QWidget *parent) : SelectorInput(parent) {}
 
 void AppSelector::setApps(const std::vector<std::shared_ptr<Application>> &apps) {
   auto transform = [&](auto &&option) -> std::shared_ptr<AbstractItem> {
-    return std::make_shared<AppSelectorItem>(option);
+    return std::make_shared<AppSelectorItem2>(option);
   };
 
   auto items = apps | std::views::transform(transform) | std::ranges::to<std::vector>();
@@ -15,6 +15,6 @@ void AppSelector::setApps(const std::vector<std::shared_ptr<Application>> &apps)
   updateModel();
 }
 
-AppSelectorItem const *AppSelector::value() const {
-  return static_cast<AppSelectorItem const *>(SelectorInput::value());
+AppSelectorItem2 const *AppSelector::value() const {
+  return static_cast<AppSelectorItem2 const *>(SelectorInput::value());
 }

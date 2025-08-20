@@ -14,7 +14,7 @@ add_compile_definitions(VICINAE_GIT_TAG="${GIT_TAG}")
 add_compile_definitions(VICINAE_GIT_COMMIT_HASH="${GIT_COMMIT}")
 
 option(IGNORE_CCACHE "Always ignore ccache even if it is installed" OFF)
-
+option(LTO "Enable Link Time Optimization (LTO). This will result in better performance, but greatly increased compile time. (Gentoo chads can't live without this)" OFF)
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
@@ -24,8 +24,19 @@ message(STATUS "Configured build type ${CMAKE_BUILD_TYPE}")
 
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Debug Release ReleaseHost)
 
-
 find_program(CCACHE ccache)
+find_program(HAS_MOLD mold)
+
+if (HAS_MOLD)
+	message(STATUS "Using mold linker as it is present")
+	add_link_options("-fuse-ld=mold")
+endif()
+
+if (LTO)
+	message(STATUS "Link Time Optimization (LTO) is enabled")
+	# gcc needs 'auto' to enable parallel compilation: https://stackoverflow.com/questions/72218980/gcc-v12-1-warning-about-serial-compilation
+	add_compile_options(-flto=auto)
+endif()
 
 if (CCACHE AND NOT IGNORE_CCACHE) 
 	message(STATUS "Found ccache installed, changing CMAKE_CXX_COMPILER_LAUNCHER")

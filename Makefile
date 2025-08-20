@@ -20,6 +20,11 @@ release:
 	cmake --build $(BUILD_DIR)
 .PHONY: release
 
+optimized:
+	cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DLTO=ON -B $(BUILD_DIR)
+	cmake --build $(BUILD_DIR)
+.PHONY: optimized
+
 debug:
 	cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -B $(BUILD_DIR)
 	cmake --build $(BUILD_DIR)
