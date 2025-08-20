@@ -15,6 +15,7 @@
 #include "service-registry.hpp"
 #include "omni-command-db.hpp"
 #include "command-controller.hpp"
+#include "theme.hpp"
 #include "ui/toast/toast.hpp"
 #include "vicinae.hpp"
 
@@ -137,6 +138,27 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
     }
 
     return;
+  }
+
+  if (url.host() == "theme") {
+    auto components = url.path().sliced(1).split('/');
+    auto verb = components.at(0);
+
+    if (verb == "set") {
+      if (components.size() != 2) {
+        qCritical() << "Correct usage is vicinae://theme/set/<theme_id>";
+        return;
+      }
+
+      QString id = components.at(1);
+
+      if (!ThemeService::instance().setTheme(id)) {
+        qWarning() << "Failed to set theme with id" << id << "(this theme most likely doesn't exist)";
+        return;
+      }
+
+      return;
+    }
   }
 
   if (url.host() == "api") {
