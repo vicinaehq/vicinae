@@ -6,6 +6,8 @@
   />
 </p>
 
+[![Discord](https://discord.com/api/guilds/1407488619765174273/widget.png?style=shield)](https://discord.gg/rP4ecD42p7)
+
 **Vicinae** (pronounced _"vih-SIN-ay"_) is a high-performance, native launcher for Linux — built with C++ and Qt.
 
 It includes a set of built-in modules, and extensions can be developed quickly using fully server-side React/TypeScript — with no browser or Electron involved.
