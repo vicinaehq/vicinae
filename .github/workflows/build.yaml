@@ -2,30 +2,40 @@ name: Qt CMake Build
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main ]
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: [self-hosted, Linux, X64, prod]
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    
-    - name: Create build directory
-      run: mkdir -p build
-    
-    - name: Configure CMake
-      run: |
-        cd build
-        cmake -G Ninja .. \
-          -DCMAKE_BUILD_TYPE=Release \
-          -DCMAKE_PREFIX_PATH=$Qt6_DIR \
-          -DCMAKE_INSTALL_PREFIX=../install
-    
-    - name: Build
-      run: |
-        cd build
-        cmake --build . --config Release --parallel $(nproc)
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Restore CMake build cache
+        id: restore-cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            build
+            build/CMakeCache.txt
+            build/CMakeFiles
+            extension-manager/node_modules
+            extension-manager/src/proto
+          key: self-hosted-cmake-${{ hashFiles('**/CMakeLists.txt') }}
+          restore-keys: |
+            self-hosted-cmake-
+
+      - name: Configure CMake
+        run: |
+          if [ ! -f build/CMakeCache.txt ]; then
+            cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$Qt6_DIR
+          else
+            echo "skipping config"
+          fi
+
+      - name: Build
+        run: cmake --build build --parallel ${nproc}
