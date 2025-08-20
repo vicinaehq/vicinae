@@ -1,7 +1,6 @@
 <!DOCTYPE RCC>
 <RCC version="1.0">
   <qresource prefix="/bin">
-  	<file alias="wlr-clip">@WLR_CLIP_BIN@</file>
   	<file alias="extension-manager">@ASSET_PATH@/extension-runtime.js</file>
   </qresource>
 </RCC>

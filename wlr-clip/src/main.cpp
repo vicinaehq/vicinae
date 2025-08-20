@@ -95,11 +95,12 @@ public:
   }
 };
 
-int main() {
+int main(int ac, char **av) {
   Clipman clipman;
 
   if (isatty(STDIN_FILENO)) {
-    std::cerr << "omni-wlr-clip started directly from TTY. Start interacting with the clipboard and "
+    std::cerr << av[0]
+              << " started directly from TTY. Start interacting with the clipboard and "
                  "selection events will show up here"
               << std::endl;
   }
