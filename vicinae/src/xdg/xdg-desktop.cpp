@@ -229,7 +229,7 @@ XdgDesktopEntry::Parser::Entry XdgDesktopEntry::Parser::parseEntry() {
   if (data.at(cursor) == '[') {
     size_t end = ++cursor;
 
-    while (data.at(end) != ']')
+    while (end < data.size() && data.at(end) != ']')
       ++end;
 
     auto view = data.sliced(cursor, end - cursor);
@@ -240,7 +240,7 @@ XdgDesktopEntry::Parser::Entry XdgDesktopEntry::Parser::parseEntry() {
 
   skipWS();
 
-  if (data.at(cursor) != '=') { throw std::runtime_error("Invalid key name"); }
+  if (cursor < data.size() && data.at(cursor) != '=') { throw std::runtime_error("Invalid key name"); }
 
   cursor++;
   entry.value = parseEntryValue();
