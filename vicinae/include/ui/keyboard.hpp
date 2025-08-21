@@ -130,5 +130,7 @@ public:
 
   KeyboardShortcut() {}
 
-  bool operator==(QKeyEvent *event) { return event->key() == key && event->modifiers().testFlags(modifiers); }
+  bool operator==(QKeyEvent *event) {
+    return event->key() == key && modifiers.toInt() == event->modifiers().toInt();
+  }
 };
