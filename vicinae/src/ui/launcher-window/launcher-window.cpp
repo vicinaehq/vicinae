@@ -228,18 +228,9 @@ bool LauncherWindow::event(QEvent *event) {
       break;
     }
 
-    // handle bound actions
-    if (auto state = m_ctx.navigation->topState()) {
-      if (state->actionPanelState) {
-        for (const auto &section : state->actionPanelState->sections()) {
-          for (const auto &action : section->actions()) {
-            if (action->shortcut && KeyboardShortcut(*action->shortcut) == keyEvent) {
-              m_ctx.navigation->executeAction(action.get());
-              return true;
-            }
-          }
-        }
-      }
+    if (AbstractAction *action = m_ctx.navigation->findBoundAction(keyEvent)) {
+      m_ctx.navigation->executeAction(action);
+      return true;
     }
   }
 

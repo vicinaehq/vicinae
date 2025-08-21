@@ -1,5 +1,6 @@
 #include "top-bar.hpp"
 #include "navigation-controller.hpp"
+#include "ui/action-pannel/action.hpp"
 #include "ui/arg-completer/arg-completer.hpp"
 #include "vicinae.hpp"
 #include <qboxlayout.h>
@@ -86,6 +87,19 @@ void GlobalHeader::handleTextEdited(const QString &text) { m_navigation.setSearc
 bool GlobalHeader::filterInputEvents(QEvent *event) {
   if (event->type() == QEvent::KeyPress) {
     auto keyEvent = static_cast<QKeyEvent *>(event);
+
+    // Escape behaviour can't be overriden: navigation primitives need to remain
+    // predictable.
+    if (keyEvent->key() == Qt::Key_Escape) return false;
+
+    // we need to handle this in the event filter so that actions bound with, for instance, CTRL-X,
+    // get properly executed instead of letting the input consume the CTRL-X key sequence as it normally
+    // would (used for cutting text)
+    // Note: bound actions always take precedence over other kinds of input handling
+    if (AbstractAction *action = m_navigation.findBoundAction(keyEvent)) {
+      m_navigation.executeAction(action);
+      return true;
+    }
 
     if (auto state = m_navigation.topState()) {
       if (state->sender->inputFilter(keyEvent)) { return true; }
