@@ -8,6 +8,7 @@
 #include <qt6keychain/keychain.h>
 #include <QtConcurrent/QtConcurrent>
 #include <QFutureWatcher>
+#include <QTextDocument>
 #include "clipboard-server-factory.hpp"
 #include "crypto.hpp"
 #include "services/app-service/app-service.hpp"
@@ -200,48 +201,42 @@ ClipboardOfferKind ClipboardService::getKind(const ClipboardDataOffer &offer) {
 
 QString ClipboardService::getSelectionPreferredMimeType(const ClipboardSelection &selection) {
   enum SelectionPriority {
-    Invalid,
-    Other,
-    HtmlText,
-    Text,
-    GenericImage,
-    ImageJpeg,
-    ImagePng,
-    ImageSvg
-  } priority = Invalid;
+    Invalid = 0,
+    Other = 1,
+    HtmlText = 2,
+    Text = 3,
+    GenericImage = 4,
+    ImageJpeg = 5,
+    ImagePng = 6,
+    ImageSvg = 7
+  };
+  int priority = Invalid;
   QString preferredMimeType;
-
   for (const auto &offer : selection.offers) {
-    auto mimePriority = SelectionPriority::Other;
-
+    if (offer.mimeType.startsWith("text/_moz_html")) continue;
+    int mimePriority = Other;
     if (offer.mimeType.startsWith("text/")) {
-      if (offer.mimeType == "text/html") {
-        mimePriority = SelectionPriority::HtmlText;
+      if (offer.mimeType == "text/plain") {
+        mimePriority = Text;
+      } else if (offer.mimeType == "text/html") {
+        mimePriority = HtmlText;
       } else if (offer.mimeType == "text/svg") {
-        mimePriority = SelectionPriority::ImageSvg;
+        mimePriority = ImageSvg;
       } else {
-        mimePriority = SelectionPriority::Text;
+        mimePriority = Text;
       }
-    } else if (offer.mimeType.startsWith("image/")) {
-      if (offer.mimeType == "image/jpg" || offer.mimeType == "image/jpeg") {
-        mimePriority = SelectionPriority::ImageJpeg;
-      } else if (offer.mimeType == "image/png") {
-        mimePriority = SelectionPriority::ImagePng;
-      } else if (offer.mimeType == "image/svg+xml") {
-        mimePriority = SelectionPriority::ImageSvg;
-      } else {
-        mimePriority = SelectionPriority::GenericImage;
-      }
-    } else {
-      mimePriority = SelectionPriority::Other;
+    } else if (offer.mimeType == "image/jpeg") {
+      mimePriority = ImageJpeg;
+    } else if (offer.mimeType == "image/png") {
+      mimePriority = ImagePng;
+    } else if (offer.mimeType == "image/svg+xml") {
+      mimePriority = ImageSvg;
     }
-
     if (mimePriority > priority) {
       priority = mimePriority;
       preferredMimeType = offer.mimeType;
     }
   }
-
   return preferredMimeType;
 }
 
@@ -347,6 +342,7 @@ bool ClipboardService::setKeywords(const QString &id, const QString &keywords) {
 void ClipboardService::saveSelection(ClipboardSelection selection) {
   if (!m_monitoring || !m_isEncryptionReady) return;
 
+  std::erase_if(selection.offers, [](const auto& offer) { return offer.data.isEmpty(); });
   std::ranges::unique(selection.offers, [](auto &&a, auto &&b) { return a.mimeType == b.mimeType; });
 
   if (isClearSelection(selection)) { return; }
@@ -359,86 +355,98 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
     return;
   }
 
-  auto selectionHash = QString::fromUtf8(computeSelectionHash(selection).toHex());
-  QString preferredMimeType = getSelectionPreferredMimeType(selection);
+  // Prefer text/plain, then image/*, then text/html
+  QByteArray offerData;
+  QString mimeTypeToSave;
 
-  // capturing this inside this lambda is safe because we only read data
+  auto plainIt = std::ranges::find_if(selection.offers, [](const auto& offer){ return offer.mimeType == "text/plain"; });
+  auto imageIt = std::ranges::find_if(selection.offers, [](const auto& offer){ return offer.mimeType.startsWith("image/"); });
+  auto htmlIt = std::ranges::find_if(selection.offers, [](const auto& offer){ return offer.mimeType == "text/html"; });
+
+  if (plainIt != selection.offers.end()) {
+    offerData = plainIt->data;
+    mimeTypeToSave = "text/plain";
+  } else if (imageIt != selection.offers.end()) {
+    offerData = imageIt->data;
+    mimeTypeToSave = imageIt->mimeType;
+  } else if (htmlIt != selection.offers.end()) {
+    // Extract plain text from HTML
+    QTextDocument doc;
+    doc.setHtml(QString::fromUtf8(htmlIt->data));
+    offerData = doc.toPlainText().toUtf8();
+    mimeTypeToSave = "text/plain";
+  } else {
+    // No supported mime type
+    return;
+  }
+
+  auto selectionHash = QString::fromUtf8(QCryptographicHash::hash(offerData, QCryptographicHash::Md5).toHex());
+
   ClipboardHistoryEntry insertedEntry;
   ClipboardDatabase cdb;
 
-  auto &preferredOffer =
-      *std::ranges::find_if(selection.offers, [&](auto &&o) { return o.mimeType == preferredMimeType; });
-
   cdb.transaction([&](ClipboardDatabase &db) {
-    // selection already exists, stop here
     if (db.tryBubbleUpSelection(selectionHash)) return true;
 
     QString selectionId = Crypto::UUID::v4();
-    ClipboardOfferKind kind = getKind(preferredOffer);
+    ClipboardOfferKind kind = getKind({mimeTypeToSave, offerData});
 
     if (!db.insertSelection({.id = selectionId,
-                             .offerCount = static_cast<int>(selection.offers.size()),
+                             .offerCount = 1,
                              .hash = selectionHash,
-                             .preferredMimeType = preferredMimeType,
+                             .preferredMimeType = mimeTypeToSave,
                              .kind = kind,
                              .source = selection.sourceApp})) {
       qWarning() << "failed to insert selection";
       return false;
     }
 
-    for (const auto &offer : selection.offers) {
-      ClipboardOfferKind kind = getKind(offer);
-      bool isIndexableText = kind == ClipboardOfferKind::Text || kind == ClipboardOfferKind::Link;
-      QString textPreview = getOfferTextPreview(offer);
+    QString textPreview = getOfferTextPreview({mimeTypeToSave, offerData});
 
-      if (isIndexableText) {
-        if (!db.indexSelectionContent(selectionId, offer.data)) return false;
-      }
-
-      auto md5sum = QCryptographicHash::hash(offer.data, QCryptographicHash::Md5).toHex();
-      auto offerId = Crypto::UUID::v4();
-      ClipboardEncryptionType encryption = ClipboardEncryptionType::None;
-
-      if (m_localEncryptionKey) encryption = ClipboardEncryptionType::Local;
-
-      InsertClipboardOfferPayload dto{
-          .id = offerId,
-          .selectionId = selectionId,
-          .mimeType = offer.mimeType,
-          .textPreview = textPreview,
-          .md5sum = md5sum,
-          .encryption = encryption,
-          .size = static_cast<quint64>(offer.data.size()),
-      };
-
-      if (kind == ClipboardOfferKind::Link) {
-        auto url = QUrl::fromEncoded(offer.data, QUrl::StrictMode);
-
-        if (url.scheme().startsWith("http")) { dto.urlHost = url.host(); }
-      }
-
-      db.insertOffer(dto);
-
-      fs::path targetPath = m_dataDir / offerId.toStdString();
-      QFile targetFile(targetPath);
-
-      if (!targetFile.open(QIODevice::WriteOnly)) { continue; }
-
-      if (m_localEncryptionKey) {
-        targetFile.write(Crypto::AES256GCM::encrypt(offer.data, *m_localEncryptionKey));
-      } else {
-        targetFile.write(offer.data);
-      }
-
-      if (offer.mimeType == preferredMimeType) {
-        insertedEntry.id = selectionId;
-        insertedEntry.pinnedAt = 0;
-        insertedEntry.updatedAt = {};
-        insertedEntry.mimeType = offer.mimeType;
-        insertedEntry.md5sum = md5sum;
-        insertedEntry.textPreview = textPreview;
-      }
+    if (kind == ClipboardOfferKind::Text || kind == ClipboardOfferKind::Link) {
+      if (!db.indexSelectionContent(selectionId, offerData)) return false;
     }
+
+    auto md5sum = QCryptographicHash::hash(offerData, QCryptographicHash::Md5).toHex();
+    auto offerId = Crypto::UUID::v4();
+    ClipboardEncryptionType encryption = ClipboardEncryptionType::None;
+
+    if (m_localEncryptionKey) encryption = ClipboardEncryptionType::Local;
+
+    InsertClipboardOfferPayload dto{
+        .id = offerId,
+        .selectionId = selectionId,
+        .mimeType = mimeTypeToSave,
+        .textPreview = textPreview,
+        .md5sum = md5sum,
+        .encryption = encryption,
+        .size = static_cast<quint64>(offerData.size()),
+    };
+
+    if (kind == ClipboardOfferKind::Link) {
+      auto url = QUrl::fromEncoded(offerData, QUrl::StrictMode);
+      if (url.scheme().startsWith("http")) { dto.urlHost = url.host(); }
+    }
+
+    db.insertOffer(dto);
+
+    fs::path targetPath = m_dataDir / offerId.toStdString();
+    QFile targetFile(targetPath);
+
+    if (!targetFile.open(QIODevice::WriteOnly)) { return false; }
+
+    if (m_localEncryptionKey) {
+      targetFile.write(Crypto::AES256GCM::encrypt(offerData, *m_localEncryptionKey));
+    } else {
+      targetFile.write(offerData);
+    }
+
+    insertedEntry.id = selectionId;
+    insertedEntry.pinnedAt = 0;
+    insertedEntry.updatedAt = {};
+    insertedEntry.mimeType = mimeTypeToSave;
+    insertedEntry.md5sum = md5sum;
+    insertedEntry.textPreview = textPreview;
 
     return true;
   });
