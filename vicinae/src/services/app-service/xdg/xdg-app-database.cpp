@@ -26,6 +26,8 @@ std::shared_ptr<Application> XdgAppDatabase::defaultForMime(const QString &mime)
 AppPtr XdgAppDatabase::findBestOpenerForMime(const QString &mimeName) const {
   QMimeType mime = mimeDb.mimeTypeForName(mimeName);
 
+  if (!mime.isValid()) return nullptr;
+
   if (auto app = defaultForMime(mimeName)) { return app; }
 
   for (const auto &mime : mime.parentMimeTypes()) {
@@ -180,6 +182,8 @@ XdgAppDatabase::AppPtr XdgAppDatabase::findBestOpener(const QString &target) con
   }
 
   QMimeType mime = mimeDb.mimeTypeForFile(target);
+
+  if (!mime.isValid()) return nullptr;
 
   if (auto app = defaultForMime(mime.name())) { return app; }
 
