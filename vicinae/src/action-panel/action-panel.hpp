@@ -145,15 +145,6 @@ protected:
       auto keyEvent = static_cast<QKeyEvent *>(event);
       auto hasShortcut = [](auto &&ac) { return ac->shortcut.has_value(); };
 
-      for (const auto &action : actions() | std::views::filter(hasShortcut)) {
-        KeyboardShortcut shortcut(*action->shortcut);
-
-        if (shortcut.matchesKeyEvent(keyEvent)) {
-          emit actionActivated(action);
-          return true;
-        }
-      }
-
       if (keyEvent->modifiers() == Qt::ControlModifier) {
         switch (keyEvent->key()) {
         case Qt::Key_J:
@@ -180,6 +171,15 @@ protected:
           return true;
         case Qt::Key_Escape:
           pop();
+          return true;
+        }
+      }
+
+      for (const auto &action : actions() | std::views::filter(hasShortcut)) {
+        KeyboardShortcut shortcut(*action->shortcut);
+
+        if (shortcut.matchesKeyEvent(keyEvent)) {
+          emit actionActivated(action);
           return true;
         }
       }
