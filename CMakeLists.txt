@@ -24,7 +24,10 @@ message(STATUS "Configured build type ${CMAKE_BUILD_TYPE}")
 
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Debug Release ReleaseHost)
 
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
+if (NOT NOSTRIP)
+	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
+	message(STATUS "Built binaries will be stripped")
+endif()
 
 find_program(CCACHE ccache)
 find_program(HAS_MOLD mold)
