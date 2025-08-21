@@ -1,19 +1,45 @@
 #include "vicinae.hpp"
+#include "utils/utils.hpp"
+#include <qprocess.h>
 
-std::filesystem::path Omnicast::runtimeDir() {
-  std::filesystem::path osRundir(
-      QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation).toStdString());
+namespace fs = std::filesystem;
+
+fs::path Omnicast::runtimeDir() {
+  fs::path osRundir(QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation).toStdString());
 
   return osRundir / "vicinae";
 }
 
-std::filesystem::path Omnicast::dataDir() {
+fs::path Omnicast::dataDir() {
   return QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation).toStdString();
 }
 
-std::filesystem::path Omnicast::configDir() {
+fs::path Omnicast::configDir() {
   return QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation).toStdString();
 }
 
-std::filesystem::path Omnicast::commandSocketPath() { return runtimeDir() / "vicinae.sock"; }
-std::filesystem::path Omnicast::pidFile() { return runtimeDir() / "vicinae.pid"; }
+fs::path Omnicast::commandSocketPath() { return runtimeDir() / "vicinae.sock"; }
+fs::path Omnicast::pidFile() { return runtimeDir() / "vicinae.pid"; }
+
+std::vector<fs::path> Omnicast::xdgConfigDirs() {
+  auto env = QProcessEnvironment::systemEnvironment();
+  std::set<fs::path> seen;
+  std::vector<fs::path> paths;
+  fs::path configHome = homeDir() / ".config";
+
+  if (auto value = env.value("XDG_CONFIG_HOME"); !value.isEmpty()) { configHome = value.toStdString(); }
+
+  paths.emplace_back(configHome);
+  seen.insert(configHome);
+
+  for (const QString &dir : env.value("XDG_CONFIG_DIRS").split(':')) {
+    fs::path path = dir.toStdString();
+
+    if (std::ranges::contains(seen, path)) { continue; }
+
+    seen.insert(path);
+    paths.emplace_back(path);
+  }
+
+  return paths;
+}

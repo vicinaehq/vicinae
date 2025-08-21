@@ -1,4 +1,6 @@
 #include "xdg-app-database.hpp"
+#include "utils/utils.hpp"
+#include "vicinae.hpp"
 #include <filesystem>
 #include <qlogging.h>
 #include <qsettings.h>
@@ -73,18 +75,17 @@ bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
     }
   }
 
-  QString configHome = qgetenv("XDG_CONFIG_HOME");
+  auto toMimeApp = [](const fs::path &path) { return path / "mimeapps.list"; };
+  auto isFile = [](const fs::path &path) {
+    std::error_code ec;
+    return fs::is_regular_file(path, ec);
+  };
+  // we reverse the config dir order to scan the directories with the least priority first
+  auto mimeAppPaths = Omnicast::xdgConfigDirs() | std::views::reverse | std::views::transform(toMimeApp) |
+                      std::views::filter(isFile);
 
-  if (configHome.isEmpty()) configHome = QDir::homePath() + QDir::separator() + ".config";
-
-  QList<QDir> mimeappDirs;
-
-  mimeappDirs.push_back(configHome);
-  mimeappDirs.push_back(QDir("/etc/xdg"));
-
-  for (const auto &dir : mimeappDirs) {
-    QString path = dir.path() + QDir::separator() + "mimeapps.list";
-    QSettings ini(path, QSettings::IniFormat);
+  for (const auto &path : mimeAppPaths) {
+    QSettings ini(path.c_str(), QSettings::IniFormat);
 
     ini.beginGroup("Default Applications");
     for (const auto &key : ini.allKeys()) {
