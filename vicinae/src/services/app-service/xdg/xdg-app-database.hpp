@@ -86,6 +86,8 @@ class XdgAppDatabase : public AbstractAppDatabase {
   std::shared_ptr<Application> defaultForMime(const QString &mime) const;
   bool addDesktopFile(const QString &path);
 
+  AppPtr findBestTerminalEmulator() const;
+
 public:
   bool scan(const std::vector<std::filesystem::path> &paths) override;
   std::vector<std::filesystem::path> defaultSearchPaths() const override;
