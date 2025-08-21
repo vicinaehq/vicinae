@@ -4,19 +4,51 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g. v1.2.3)"
+        required: false
 
 jobs:
   build-and-release:
     runs-on: [self-hosted, Linux, X64, prod]
     permissions:
-      contents: write   # needed to create a release with GITHUB_TOKEN
+      contents: write
     env:
       BUILD_TYPE: Release
       INSTALL_DIR: ${{ github.workspace }}/install
 
     steps:
+      - name: Resolve tag
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            TAG="${{ inputs.tag || '' }}"
+            if [[ -z "$TAG" ]]; then
+              echo "When dispatching manually, you must provide 'tag' (e.g. v1.2.3)." >&2
+              exit 1
+            fi
+          else
+            TAG="${GITHUB_REF_NAME}"
+          fi
+
+          # Optional: validate tag format like v1.2.3 (allow v1 or v1.2 etc.)
+          if ! [[ "$TAG" =~ ^v[0-9]+(\.[0-9]+)*$ ]]; then
+            echo "Tag '$TAG' does not match expected format (e.g. v1.2.3)." >&2
+            exit 1
+          fi
+
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "artifact=vicinae-linux-x86_64-$TAG.tar.gz" >> "$GITHUB_OUTPUT"
+
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ steps.meta.outputs.tag }}
 
       - name: Prepare dirs
         run: mkdir -p build install
@@ -42,14 +74,14 @@ jobs:
       - name: Package (tar install dir)
         run: |
           cd "${INSTALL_DIR}"
-          tar -czvf "${{ github.workspace }}/vicinae-linux-x86_64-${{ github.ref_name }}.tar.gz" .
+          tar -czvf "${{ github.workspace }}/${{ steps.meta.outputs.artifact }}" .
 
       - name: Create GitHub Release and upload asset
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: ${{ github.ref_name }}
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: ${{ steps.meta.outputs.tag }}
           generate_release_notes: true
           files: |
-            vicinae-linux-x86_64-${{ github.ref_name }}.tar.gz
+            ${{ steps.meta.outputs.artifact }}
 
