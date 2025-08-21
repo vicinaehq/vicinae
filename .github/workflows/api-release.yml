@@ -1,8 +1,9 @@
 name: publish
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - "v*"
   workflow_dispatch:
     inputs:
       tag:
