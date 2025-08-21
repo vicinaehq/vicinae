@@ -197,7 +197,11 @@ QChar XdgDesktopEntry::Parser::parseEscaped() {
 }
 
 QString XdgDesktopEntry::Parser::parseEntryValue() {
-  skipWS();
+  static const QString leadingWsSet = " \t"; // only space and tab as we don't want to skip newlines
+
+  while (cursor < data.size() && leadingWsSet.contains(data.at(cursor))) {
+    ++cursor;
+  }
 
   QString value;
   QChar c;
