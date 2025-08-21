@@ -1,13 +1,16 @@
 #pragma once
 #include "common.hpp"
+#include "extend/action-model.hpp"
 #include "navigation-controller.hpp"
 #include "theme.hpp"
 #include "ui/action-pannel/action-list-item.hpp"
 #include "ui/action-pannel/action.hpp"
+#include "ui/keyboard.hpp"
 #include "ui/omni-list/omni-list-item-widget.hpp"
 #include "ui/omni-list/omni-list.hpp"
 #include "ui/popover/popover.hpp"
 #include "ui/typography/typography.hpp"
+#include <absl/strings/internal/str_format/extension.h>
 #include <qboxlayout.h>
 #include <qcoreevent.h>
 #include <qdnslookup.h>
@@ -137,43 +140,53 @@ protected:
     }
   }
 
-bool eventFilter(QObject *watched, QEvent *event) override {
-  if (watched == m_input && event->type() == QEvent::KeyPress) {
-    auto keyEvent = static_cast<QKeyEvent *>(event);
+  bool eventFilter(QObject *watched, QEvent *event) override {
+    if (watched == m_input && event->type() == QEvent::KeyPress) {
+      auto keyEvent = static_cast<QKeyEvent *>(event);
+      auto hasShortcut = [](auto &&ac) { return ac->shortcut.has_value(); };
 
-    if (keyEvent->modifiers() == Qt::ControlModifier) {
-      switch (keyEvent->key()) {
-      case Qt::Key_J:
-        return m_list->selectDown();
-      case Qt::Key_K:
-        return m_list->selectUp();
-      case Qt::Key_H:
-        pop();
-        return true;
-      case Qt::Key_L:
-        m_list->activateCurrentSelection();
-        return true;
+      for (const auto &action : actions() | std::views::filter(hasShortcut)) {
+        KeyboardShortcut shortcut(*action->shortcut);
+
+        if (shortcut.matchesKeyEvent(keyEvent)) {
+          emit actionActivated(action);
+          return true;
+        }
+      }
+
+      if (keyEvent->modifiers() == Qt::ControlModifier) {
+        switch (keyEvent->key()) {
+        case Qt::Key_J:
+          return m_list->selectDown();
+        case Qt::Key_K:
+          return m_list->selectUp();
+        case Qt::Key_H:
+          pop();
+          return true;
+        case Qt::Key_L:
+          m_list->activateCurrentSelection();
+          return true;
+        }
+      }
+
+      if (keyEvent->modifiers().toInt() == 0) {
+        switch (keyEvent->key()) {
+        case Qt::Key_Up:
+          return m_list->selectUp();
+        case Qt::Key_Down:
+          return m_list->selectDown();
+        case Qt::Key_Return:
+          m_list->activateCurrentSelection();
+          return true;
+        case Qt::Key_Escape:
+          pop();
+          return true;
+        }
       }
     }
 
-    if (keyEvent->modifiers().toInt() == 0) {
-      switch (keyEvent->key()) {
-      case Qt::Key_Up:
-        return m_list->selectUp();
-      case Qt::Key_Down:
-        return m_list->selectDown();
-      case Qt::Key_Return:
-        m_list->activateCurrentSelection();
-        return true;
-      case Qt::Key_Escape:
-        pop();
-        return true;
-      }
-    }
+    return ActionPanelView::eventFilter(watched, event);
   }
-
-  return ActionPanelView::eventFilter(watched, event);
-}
 
   void keyPressEvent(QKeyEvent *event) override { return ActionPanelView::keyPressEvent(event); }
 
