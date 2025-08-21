@@ -1,7 +1,7 @@
 #include "ui/keyboard-shortcut-indicator/keyboard-shortcut-indicator.hpp"
-#include "builtin_icon.hpp"
 #include "extend/action-model.hpp"
 #include "theme.hpp"
+#include "ui/image/builtin-icon-loader.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
 #include <qnamespace.h>
 #include <qpainter.h>
@@ -31,10 +31,12 @@ void KeyboardShortcutIndicatorWidget::drawKey(const QString &key, QRect rect, Om
                     rect.height() - padding * 2);
 
   if (auto it = keyToIcon.find(key); it != keyToIcon.end()) {
-    auto controlIcon = BuiltinIconService::loadTinted(it->second, theme.colors.text);
+    BuiltinIconLoader loader(it->second);
+    QPixmap pix =
+        loader.renderSync({.size = contentRect.size(), .devicePixelRatio = qApp->devicePixelRatio()});
 
-    painter.drawPixmap(contentRect,
-                       controlIcon.scaled(contentRect.size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+    painter.drawPixmap(contentRect, pix);
   } else {
     painter.setPen(theme.colors.text);
     painter.drawText(contentRect, Qt::AlignCenter, _shortcutModel.key);

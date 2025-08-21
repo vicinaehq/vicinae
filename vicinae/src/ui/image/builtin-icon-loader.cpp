@@ -2,7 +2,9 @@
 #include "ui/image/image.hpp"
 #include "svg-image-loader.hpp"
 
-void BuiltinIconLoader::render(const RenderConfig &config) {
+void BuiltinIconLoader::render(const RenderConfig &config) { emit dataUpdated(renderSync(config)); }
+
+QPixmap BuiltinIconLoader::renderSync(const RenderConfig &config) {
   QPixmap canva(config.size * config.devicePixelRatio);
   int margin = 0;
 
@@ -26,7 +28,8 @@ void BuiltinIconLoader::render(const RenderConfig &config) {
   loader.setFillColor(m_fillColor);
   loader.render(canva, iconRect);
   canva.setDevicePixelRatio(config.devicePixelRatio);
-  emit dataUpdated(canva);
+
+  return canva;
 }
 
 void BuiltinIconLoader::setFillColor(const std::optional<ColorLike> &color) { m_fillColor = color; }
