@@ -5,6 +5,7 @@
 #include "ui/action-pannel/action.hpp"
 #include "ui/dialog/dialog.hpp"
 #include <QString>
+#include <qevent.h>
 
 class BaseView;
 class DialogContentWidget;
@@ -120,6 +121,8 @@ public:
   QString searchText(const BaseView *caller = nullptr) const;
   QString navigationTitle(const BaseView *caller = nullptr) const;
   void searchPlaceholderText(const QString &text);
+
+  AbstractAction *findBoundAction(const QKeyEvent *event) const;
 
   void setDialog(DialogContentWidget *dialog);
 

@@ -1,4 +1,5 @@
 #include "navigation-controller.hpp"
+#include "ui/keyboard.hpp"
 #include "ui/views/base-view.hpp"
 #include <qlogging.h>
 #include <qwidget.h>
@@ -268,6 +269,25 @@ void NavigationController::executeAction(AbstractAction *action) {
 
   action->execute(&m_ctx);
   closeActionPanel();
+}
+
+AbstractAction *NavigationController::findBoundAction(const QKeyEvent *event) const {
+  auto state = topState();
+
+  if (!state) return nullptr;
+  if (!state->actionPanelState) return nullptr;
+
+  for (const auto &section : state->actionPanelState->sections()) {
+    for (const auto &action : section->actions()) {
+      if (!action->shortcut) continue;
+
+      KeyboardShortcut shortcut(*action->shortcut);
+
+      if (action->shortcut && shortcut.matchesKeyEvent(event)) { return action.get(); }
+    }
+  }
+
+  return nullptr;
 }
 
 void NavigationController::pushView(BaseView *view) {

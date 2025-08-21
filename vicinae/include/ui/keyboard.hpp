@@ -130,7 +130,7 @@ public:
 
   KeyboardShortcut() {}
 
-  bool operator==(QKeyEvent *event) {
+  bool matchesKeyEvent(const QKeyEvent *event) const {
     return event->key() == key && modifiers.toInt() == event->modifiers().toInt();
   }
 };
