@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RCC version="1.0">
+  <qresource prefix="/contribs">
+    <file alias="ArjixWasTaken">contribs/ArjixWasTaken.png</file>
+    <file alias="aurelien-brabant">contribs/aurelien-brabant.png</file>
+    <file alias="cilginc">contribs/cilginc.png</file>
+    <file alias="elliotnash">contribs/elliotnash.png</file>
+    <file alias="LuizSSampaio">contribs/LuizSSampaio.png</file>
+    <file alias="ThatOneCalculator">contribs/ThatOneCalculator.png</file>
+  </qresource>
+</RCC>

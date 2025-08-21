@@ -213,14 +213,23 @@ public:
 class Icon : public WidgetBuilder<ImageWidget> {
   QString m_text;
   ImageURL m_icon;
+  bool m_rounded = false;
 
 public:
   Icon(const ImageURL &icon = {}) : m_icon(icon) {}
 
+  Icon &rounded() {
+    m_rounded = true;
+    return *this;
+  }
+
   virtual ImageWidget *create() const override {
     auto icon = new ImageWidget;
+    ImageURL url(m_icon);
 
-    icon->setUrl(m_icon);
+    if (m_rounded) { url.setMask(OmniPainter::CircleMask); }
+
+    icon->setUrl(url);
 
     return icon;
   }

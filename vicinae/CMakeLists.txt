@@ -343,6 +343,10 @@ set(SRCS
 
 	${CMAKE_CURRENT_BINARY_DIR}/resources.qrc
 
+	contribs.qrc
+
+	src/contribs/contribs.cpp
+
 	./icons/icons.qrc
 
 	./database/vicinae/migrations.qrc
