@@ -1,4 +1,5 @@
 #include "xdg-desktop.hpp"
+#include <qnamespace.h>
 #include <qstringview.h>
 
 static bool isGroupHeaderNameChar(QChar c) { return c.isPrint() && c != '[' && c != ']'; }
@@ -331,10 +332,10 @@ XdgDesktopEntry XdgDesktopEntry::Parser::parse() {
 
   entry.path = (*it)[QStringLiteral("Path")];
   entry.terminal = (*it)[QStringLiteral("Terminal")] == "true";
-  auto actions = (*it)[QStringLiteral("Actions")].split(';');
-  entry.mimeType = (*it)[QStringLiteral("MimeType")].split(';');
-  entry.categories = (*it)[QStringLiteral("Categories")].split(';');
-  entry.keywords = (*it)[QStringLiteral("Keywords")].split(';');
+  auto actions = (*it)[QStringLiteral("Actions")].split(';', Qt::SkipEmptyParts);
+  entry.mimeType = (*it)[QStringLiteral("MimeType")].split(';', Qt::SkipEmptyParts);
+  entry.categories = (*it)[QStringLiteral("Categories")].split(';', Qt::SkipEmptyParts);
+  entry.keywords = (*it)[QStringLiteral("Keywords")].split(';', Qt::SkipEmptyParts);
   entry.startupWMClass = (*it)[QStringLiteral("StartupWMClass")];
   entry.singleMainWindow = (*it)[QStringLiteral("SingleMainWindow")] == "true";
 
