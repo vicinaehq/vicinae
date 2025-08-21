@@ -14,6 +14,7 @@ add_compile_definitions(VICINAE_GIT_COMMIT_HASH="${GIT_COMMIT}")
 
 option(IGNORE_CCACHE "Always ignore ccache even if it is installed" OFF)
 option(LTO "Enable Link Time Optimization (LTO). This will result in better performance, but greatly increased compile time. (Gentoo chads can't live without this)" OFF)
+option(NOSTRIP "Never strip debug symbols from the binary, even in release mode. Note that symbols are never stripped for debug releases." OFF)
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
@@ -22,6 +23,8 @@ endif()
 message(STATUS "Configured build type ${CMAKE_BUILD_TYPE}")
 
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Debug Release ReleaseHost)
+
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
 
 find_program(CCACHE ccache)
 find_program(HAS_MOLD mold)
