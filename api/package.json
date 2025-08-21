@@ -26,11 +26,8 @@
   "main": "dist/index.js",
   "dependencies": {
     "@jgoz/esbuild-plugin-typecheck": "^4.0.3",
-    "@types/node": "^22.10.1",
     "chokidar": "^4.0.3",
     "esbuild": "^0.25.2",
-    "ts-proto": "^2.7.5",
-    "@types/react": "^18.1.0",
     "react": "^18.1.0",
 	"@oclif/core": "^4",
     "@oclif/plugin-help": "^6",
@@ -53,7 +50,10 @@
     "oclif": "^4",
     "shx": "^0.3.3",
     "ts-node": "^10",
-    "typescript": "^5"
+    "typescript": "^5",
+    "@types/react": "^18.1.0",
+    "ts-proto": "^2.7.5",
+    "@types/node": "^22.10.1"
   },
   "oclif": {
     "bin": "vici",
@@ -64,10 +64,7 @@
     ],
     "topicSeparator": " ",
     "topics": {
-      "hello": {
-        "description": "Say hello to the world and others"
-      }
     }
   },
-  "repository": "vicinaehq/vici"
+  "repository": "vicinaehq/vicinae"
 }
