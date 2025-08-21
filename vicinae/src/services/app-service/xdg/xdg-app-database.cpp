@@ -1,5 +1,4 @@
 #include "xdg-app-database.hpp"
-#include "utils/utils.hpp"
 #include "vicinae.hpp"
 #include <filesystem>
 #include <qlogging.h>
@@ -39,6 +38,25 @@ AppPtr XdgAppDatabase::findBestOpenerForMime(const QString &mimeName) const {
   }
 
   return nullptr;
+}
+
+AppPtr XdgAppDatabase::findBestTerminalEmulator() const {
+  if (auto emulator = findBestOpenerForMime("x-scheme-handler/terminal")) { return emulator; }
+
+  qWarning()
+      << "Vicinae was unable to find a default terminal emulator by looking for a x-scheme-handler/terminal "
+         "mime association. We may fallback on whatever emulator is available, but you should set a default "
+         "terminal to use if you want predictable behavior. On Linux, you should be able to use the "
+         "following: 'xdg-mime default <desktop_file_name>.desktop x-scheme-handler/terminal'. Note that "
+         "this warning can also be shown if you added an invalid association, typically with an invalid "
+         "desktop file.";
+
+  auto isTerminal = [](auto &&app) { return app->isTerminalEmulator(); };
+  auto result = list() | std::views::filter(isTerminal) | std::views::take(1);
+
+  if (result.empty()) return nullptr;
+
+  return *result.begin();
 }
 
 bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
@@ -181,6 +199,8 @@ XdgAppDatabase::AppPtr XdgAppDatabase::findBestOpener(const QString &target) con
 
   QMimeType mime = mimeDb.mimeTypeForFile(target);
 
+  if (!mime.isValid()) return nullptr;
+
   if (auto app = defaultForMime(mime.name())) { return app; }
 
   for (const auto &mime : mime.parentMimeTypes()) {
@@ -268,7 +288,7 @@ bool XdgAppDatabase::launch(const Application &app, const std::vector<QString> &
   size_t offset = 0;
 
   if (xdgApp.isTerminalApp()) {
-    if (auto emulator = findBestOpenerForMime("x-scheme-handler/terminal")) {
+    if (auto emulator = findBestTerminalEmulator()) {
       auto xdgEmulator = static_cast<const XdgApplicationBase *>(emulator.get());
       if (auto exec = xdgEmulator->exec(); !exec.empty()) { program = exec.at(0); }
     }
