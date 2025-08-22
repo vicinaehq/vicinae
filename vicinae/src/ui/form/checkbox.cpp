@@ -14,7 +14,7 @@ void Checkbox::paintEvent(QPaintEvent *event) {
 
   painter.setRenderHint(QPainter::Antialiasing);
   painter.setRenderHint(QPainter::SmoothPixmapTransform);
-  painter.setPen(QPen(hasFocus() ? theme.colors.subtext : theme.colors.border, 2));
+  painter.setThemePen(hasFocus() ? SemanticColor::InputBorderFocus : SemanticColor::Border, 2);
 
   if (m_value) {
     painter.setBrush(painter.colorBrush(m_fillColor));
