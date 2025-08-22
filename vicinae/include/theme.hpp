@@ -263,7 +263,6 @@ public:
   void scanThemeDirectory(const std::filesystem::path &path);
   void handleDirectoryChanged(const QString &directory);
   void scanThemeDirectories();
-  void setDefaultTheme();
 
 signals:
   bool themeChanged(const ThemeInfo &info) const;
