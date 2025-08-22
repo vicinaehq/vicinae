@@ -383,6 +383,8 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
     }
 
     for (const auto &offer : selection.offers) {
+      if (offer.data.isEmpty()) continue;
+
       ClipboardOfferKind kind = getKind(offer);
       bool isIndexableText = kind == ClipboardOfferKind::Text || kind == ClipboardOfferKind::Link;
       QString textPreview = getOfferTextPreview(offer);
