@@ -1,19 +1,16 @@
 #pragma once
-#include "action-panel/action-panel.hpp"
 #include "actions/theme/theme-actions.hpp"
 #include "ui/views/base-view.hpp"
 #include "../src/ui/image/url.hpp"
-#include "service-registry.hpp"
 #include "ui/views/list-view.hpp"
 #include "theme.hpp"
-#include "ui/action-pannel/action.hpp"
 #include "ui/color-circle/color_circle.hpp"
 #include "ui/default-list-item-widget/default-list-item-widget.hpp"
 #include "ui/image/image.hpp"
 #include "ui/omni-list/omni-list.hpp"
 #include "ui/selectable-omni-list-widget/selectable-omni-list-widget.hpp"
 #include "ui/typography/typography.hpp"
-#include <algorithm>
+#include "utils/layout.hpp"
 #include <memory>
 #include <qboxlayout.h>
 #include <qlabel.h>
@@ -25,41 +22,35 @@
 #include <sys/socket.h>
 
 class HorizontalColorPaletteWidget : public QWidget {
-  QHBoxLayout *m_layout = new QHBoxLayout;
   std::vector<ColorCircle *> m_colors;
   QColor m_strokeColor = "#CCCCCC";
 
 public:
-  HorizontalColorPaletteWidget() {
-    m_layout->setContentsMargins(0, 0, 0, 0);
-    setLayout(m_layout);
-  }
+  HorizontalColorPaletteWidget() {}
 
   void setStrokeColor(const QColor &color) { m_strokeColor = color; }
 
   void setColors(const std::vector<ColorLike> &colors) {
-    while (m_layout->count() > 0) {
-      m_layout->takeAt(0)->widget()->deleteLater();
-    }
+    HStack()
+        .spacing(2)
+        .map(colors,
+             [&](const ColorLike &color) {
+               auto circle = new ColorCircle({16, 16});
+               circle->setColor(color);
+               circle->setStroke(m_strokeColor, 2);
 
-    std::ranges::for_each(colors, [&](const ColorLike &color) {
-      auto circle = new ColorCircle({16, 16});
-
-      circle->setColor(color);
-      circle->setStroke(m_strokeColor, 2);
-      m_layout->addWidget(circle);
-    });
+               return circle;
+             })
+        .imbue(this);
   }
 };
 
 class ThemeItemWidget : public SelectableOmniListWidget {
-  QHBoxLayout *m_layout = new QHBoxLayout(this);
   ImageWidget *m_icon = new ImageWidget();
   TypographyWidget *m_title = new TypographyWidget();
   TypographyWidget *m_description = new TypographyWidget();
   AccessoryListWidget *m_accessories = new AccessoryListWidget(this);
   QWidget *m_textWidget = new QWidget(this);
-  QVBoxLayout *m_textLayout = new QVBoxLayout(m_textWidget);
   HorizontalColorPaletteWidget *m_palette = new HorizontalColorPaletteWidget();
 
 public:
@@ -71,21 +62,15 @@ public:
 
   ThemeItemWidget(QWidget *parent = nullptr) : SelectableOmniListWidget(parent) {
     m_description->setColor(SemanticColor::TextSecondary);
-    m_textLayout->addWidget(m_title);
-    m_textLayout->setContentsMargins(0, 0, 0, 0);
-    m_textLayout->setSpacing(2);
-    m_textLayout->addWidget(m_description);
-    m_textWidget->setLayout(m_textLayout);
-
     m_icon->setFixedSize(30, 30);
 
-    m_layout->setSpacing(10);
-    m_layout->addWidget(m_icon);
-    m_layout->addWidget(m_textWidget);
-    m_layout->addWidget(m_palette, 0, Qt::AlignRight);
-    m_layout->setContentsMargins(10, 10, 10, 10);
-
-    setLayout(m_layout);
+    HStack()
+        .margins(10)
+        .justifyBetween()
+        .spacing(10)
+        .add(HStack().spacing(10).add(m_icon).add(VStack().spacing(2).add(m_title).add(m_description)))
+        .add(m_palette)
+        .imbue(this);
   }
 };
 
@@ -135,24 +120,12 @@ public:
     return panel;
   }
 
-  ActionPanelView *actionPanel() const override {
-    auto panel = new ActionPanelStaticListView;
-    auto setTheme = new SetThemeAction(m_theme.id);
-
-    setTheme->setPrimary(true);
-    setTheme->setShortcut({.key = "return"});
-    panel->setTitle(m_theme.name);
-    panel->addAction(setTheme);
-
-    return panel;
-  }
-
   const ThemeInfo &theme() const { return m_theme; }
 
   ThemeItem(const ThemeInfo &theme) : m_theme(theme) {}
 };
 
-class ManageThemesView : public ListView {
+class SetThemeView : public ListView {
   void generateList(const QString &query) {
     auto &themeService = ThemeService::instance();
 
@@ -184,17 +157,15 @@ class ManageThemesView : public ListView {
 
   void initialize() override {
     textChanged("");
-    setSearchPlaceholderText("Manage themes...");
+    setSearchPlaceholderText("Search for a theme...");
   }
 
   void textChanged(const QString &s) override { generateList(s); }
 
 public:
-  ManageThemesView() {
+  SetThemeView() {
     ThemeService::instance().scanThemeDirectories();
-    /*
-connect(&ThemeService::instance(), &ThemeService::themeChanged, this,
-        [this](const auto &info) { generateList(searchText()); });
-    */
+    connect(&ThemeService::instance(), &ThemeService::themeChanged, this,
+            [this](const auto &info) { generateList(searchText()); });
   }
 };

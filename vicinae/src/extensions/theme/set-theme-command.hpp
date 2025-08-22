@@ -2,7 +2,7 @@
 #include "../../ui/image/url.hpp"
 #include "single-view-command-context.hpp"
 
-class SetThemeCommand : public BuiltinViewCommand<ManageThemesView> {
+class SetThemeCommand : public BuiltinViewCommand<SetThemeView> {
   QString id() const override { return "set"; }
   QString name() const override { return "Set Theme"; }
   ImageURL iconUrl() const override {
