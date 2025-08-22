@@ -119,6 +119,14 @@ export interface Environment {
      * @deprecated Use the top-level prop `launchContext` instead.
      */
     launchContext?: LaunchContext;
+
+	/**
+	 * The Vicinae version. Vicinae extensions should rely on this and ignore `raycastVersion`.
+	 */
+	vicinaeVersion: {
+		tag: string;
+		commit: string;
+	}
 }  
 
 export const environment: Environment = {} as any;

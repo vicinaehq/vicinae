@@ -38,15 +38,18 @@ const App: React.FC<{ component: ComponentType, launchProps: any }> = ({ compone
 }
 
 const loadEnviron = () => {
+	const { supportPath, assetsPath, commandMode, vicinaeVersion } = workerData;
+
 	environment.textSize = 'medium';
 	environment.appearance = 'dark';
 	environment.canAccess = (api) => false,
-	environment.assetsPath = "";
-	environment.isDevelopment = process.env.NODE_ENV == 'development';
-	environment.commandMode = workerData.commandMode;
-	environment.supportPath = '/tmp';
-	environment.raycastVersion = '1.0.0';
+	environment.isDevelopment = process.env.NODE_ENV === 'development';
+	environment.commandMode = commandMode;
+	environment.supportPath = supportPath;
+	environment.assetsPath = assetsPath;
+	environment.raycastVersion = '1.0.0'; // provided for compatibility only, not meaningful
 	environment.launchType = LaunchType.UserInitiated;
+	environment.vicinaeVersion = vicinaeVersion;
 }
 
 const loadView = async () => {
