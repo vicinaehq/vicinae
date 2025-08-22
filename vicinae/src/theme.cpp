@@ -527,14 +527,6 @@ void ThemeService::scanThemeDirectory(const std::filesystem::path &path) {
   }
 }
 
-void ThemeService::setDefaultTheme() {
-  QString defaultTheme = "omnicast-dark";
-
-  if (qApp->styleHints()->colorScheme() == Qt::ColorScheme::Light) { defaultTheme = "omnicast-light"; }
-
-  setTheme(defaultTheme);
-}
-
 std::vector<ParsedThemeData> ThemeService::loadColorSchemes() const {
   std::vector<ParsedThemeData> schemes;
 
@@ -627,4 +619,5 @@ ThemeService::ThemeService()
       m_dataThemeDir(Omnicast::dataDir() / "themes"), m_systemThemeDir("/usr/share/vicinae/themes") {
   registerBuiltinThemes();
   scanThemeDirectories();
+  setTheme("vicinae-dark");
 }
