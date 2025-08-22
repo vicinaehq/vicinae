@@ -37,6 +37,7 @@ std::filesystem::path configDir();
  * position of the first one is meaningful: subsequent occurences are fully ignored.
  */
 std::vector<std::filesystem::path> xdgConfigDirs();
+std::vector<std::filesystem::path> xdgDataDirs();
 
 static const int TOP_BAR_HEIGHT = 60;
 static const int STATUS_BAR_HEIGHT = 40;

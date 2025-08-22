@@ -122,6 +122,12 @@ Bus::Bus(QIODevice *socket) : device(socket) {
 // Extension Manager
 
 ExtensionManager::ExtensionManager(OmniCommandDatabase &commandDb) : commandDb(commandDb), bus(&process) {
+  QProcessEnvironment env;
+
+  env.insert("VICINAE_VERSION", VICINAE_GIT_TAG);
+  env.insert("VICINAE_COMMIT", VICINAE_GIT_COMMIT_HASH);
+  process.setProcessEnvironment(env);
+
   connect(&process, &QProcess::readyReadStandardError, this, &ExtensionManager::readError);
   connect(&process, &QProcess::finished, this, &ExtensionManager::finished);
   connect(&process, &QProcess::started, this, &ExtensionManager::processStarted);
@@ -159,6 +165,7 @@ bool ExtensionManager::start() {
   }
 
   runtimeFile->write(file.readAll());
+
   process.start("node", {runtimeFile->fileName()});
 
   if (!process.waitForStarted(maxWaitForStart)) {

@@ -272,7 +272,7 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 		scheduleTimeout: setTimeout,
 		cancelTimeout: (id) => clearTimeout(id),
 		noTimeout: -1,
-		supportsMicrotasks: false,
+		//supportsMicrotasks: false,
 		scheduleMicrotask: queueMicrotask,
 
 		isPrimaryRenderer: true,

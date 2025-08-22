@@ -1,4 +1,4 @@
-name: Qt CMake Build
+name: Build
 
 on:
   push:

@@ -1,4 +1,4 @@
-name: publish
+name: API Publish
 
 on:
   push:
@@ -21,10 +21,10 @@ jobs:
 
       - name: Set version from tag
         run: |
-          if [ "${{ github.event_name }}" = "release" ]; then
-            TAG_NAME=${GITHUB_REF_NAME}
-          else
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             TAG_NAME=${{ github.event.inputs.tag }}
+          else
+            TAG_NAME=${GITHUB_REF_NAME}
           fi
 
           if [ -z "$TAG_NAME" ]; then

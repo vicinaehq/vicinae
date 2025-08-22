@@ -12,7 +12,6 @@ class Checkbox : public JsonFormItemWidget {
   Q_OBJECT
 
   bool m_value = false;
-  QSvgRenderer *m_svg = new QSvgRenderer(this);
   ColorLike m_fillColor = Qt::transparent;
   FocusNotifier *m_focusNotifier = new FocusNotifier(this);
 
