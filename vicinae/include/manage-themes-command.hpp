@@ -32,7 +32,7 @@ public:
 
   void setColors(const std::vector<ColorLike> &colors) {
     HStack()
-        .spacing(2)
+        .spacing(3)
         .map(colors,
              [&](const ColorLike &color) {
                auto circle = new ColorCircle({16, 16});
