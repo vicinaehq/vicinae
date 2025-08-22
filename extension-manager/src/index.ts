@@ -60,6 +60,7 @@ class Vicinae {
 					launchProps: { arguments: load.argumentValues },
 					commandMode: load.mode == manager.CommandMode.View ? "view" : "no-view"
 				},
+
 				stdout: true,
 				env: {
 					'NODE_ENV': load.env == manager.CommandEnv.Development ? 'development' : 'production',

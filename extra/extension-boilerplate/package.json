@@ -1,13 +1,13 @@
 {
   "$schema": "https://www.raycast.com/schemas/extension.json",
   "name": "example-extension",
-  "description": "Manage your todo list quickly by adding items and marking items as completed.",
+  "description": "Exemple extension boilerplate (to be improved very soon)",
   "categories": [
     "Applications",
-    "Productivitye"
+    "Productivity"
   ],
   "license": "MIT",
-  "author": "maggie",
+  "author": "vicinae",
   "contributors": [],
   "pastContributors": [],
   "scripts": {
@@ -15,13 +15,7 @@
     "dev": "vici develop"
   },
   "dependencies": {
-    "@vicinae/api": "file:vicinae-api-0.0.0.tgz"
-  },
-  "devDependencies": {
-    "@types/node": "~16.10.0",
-    "@types/react": "^19.0.0",
-    "esbuild": "^0.25.2",
-    "typescript": "^4.4.3"
+    "@vicinae/api": "^0.4.0"
   },
   "icon": "command-icon.png",
   "commands": [

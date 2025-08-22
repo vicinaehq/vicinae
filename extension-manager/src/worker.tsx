@@ -38,12 +38,11 @@ const App: React.FC<{ component: ComponentType, launchProps: any }> = ({ compone
 }
 
 const loadEnviron = () => {
-	process.env.NODE_ENV = 'development';
 	environment.textSize = 'medium';
 	environment.appearance = 'dark';
 	environment.canAccess = (api) => false,
 	environment.assetsPath = "";
-	environment.isDevelopment = false;
+	environment.isDevelopment = process.env.NODE_ENV == 'development';
 	environment.commandMode = workerData.commandMode;
 	environment.supportPath = '/tmp';
 	environment.raycastVersion = '1.0.0';
@@ -93,6 +92,8 @@ export const main = async () => {
 
 	patchRequire();
 	loadEnviron();
+
+	(process as any).noDeprecation = !environment.isDevelopment;
 
 	if (environment.commandMode == 'view') {
 		await loadView();
