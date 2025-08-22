@@ -6,6 +6,7 @@
     <file alias="cilginc">contribs/cilginc.png</file>
     <file alias="elliotnash">contribs/elliotnash.png</file>
     <file alias="LuizSSampaio">contribs/LuizSSampaio.png</file>
+    <file alias="RolfKoenders">contribs/RolfKoenders.png</file>
     <file alias="ThatOneCalculator">contribs/ThatOneCalculator.png</file>
   </qresource>
 </RCC>

@@ -48,6 +48,11 @@ gh-release:
 	tar -czvf vicinae-linux-x86_64-$(TAG).tar.gz -C dist .
 .PHONY: gh-release
 
+# we run this from time to time only, it's not part of the build pipeline
+gen-contrib:
+	node ./scripts/gen-contrib.js
+.PHONY: gen-contrib
+
 configure:
 	cmake -G Ninja -B $(BUILD_DIR)
 .PHONY: configure
