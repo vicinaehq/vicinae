@@ -199,7 +199,6 @@ ClipboardOfferKind ClipboardService::getKind(const ClipboardDataOffer &offer) {
 }
 
 QString ClipboardService::getSelectionPreferredMimeType(const ClipboardSelection &selection) {
-  // List of preferred plain text MIME types in order
   static const std::vector<QString> plainTextMimeTypes = {
     "text/plain",
     "text/plain;charset=utf-8",
@@ -209,33 +208,33 @@ QString ClipboardService::getSelectionPreferredMimeType(const ClipboardSelection
     "COMPOUND_TEXT"
   };
 
-  // 1. Prefer plain text
+  // 1. Prefer plain text (non-empty)
   for (const auto &mime : plainTextMimeTypes) {
     auto it = std::ranges::find_if(selection.offers, [&](const auto &offer) {
-      return offer.mimeType == mime;
+      return offer.mimeType == mime && !offer.data.isEmpty();
     });
     if (it != selection.offers.end()) return it->mimeType;
   }
 
-  // 2. Then image types
+  // 2. Then image types (non-empty)
   auto imageIt = std::ranges::find_if(selection.offers, [](const auto &offer) {
-    return offer.mimeType.startsWith("image/");
+    return offer.mimeType.startsWith("image/") && !offer.data.isEmpty();
   });
   if (imageIt != selection.offers.end()) return imageIt->mimeType;
 
-  // 3. Then HTML
+  // 3. Then HTML (non-empty)
   auto htmlIt = std::ranges::find_if(selection.offers, [](const auto &offer) {
-    return offer.mimeType == "text/html";
+    return offer.mimeType == "text/html" && !offer.data.isEmpty();
   });
   if (htmlIt != selection.offers.end()) return htmlIt->mimeType;
 
-  // 4. Otherwise, fallback to first non-Firefox/Zen custom type
+  // 4. Otherwise, fallback to first non-Firefox/Zen custom type (non-empty)
   auto fallbackIt = std::ranges::find_if(selection.offers, [](const auto &offer) {
-    return !offer.mimeType.startsWith("text/_moz_html");
+    return !offer.mimeType.startsWith("text/_moz_html") && !offer.data.isEmpty();
   });
   if (fallbackIt != selection.offers.end()) return fallbackIt->mimeType;
 
-  // 5. If nothing else, fallback to first offer
+  // 5. If nothing else, fallback to first offer (even if empty)
   if (!selection.offers.empty()) return selection.offers.front().mimeType;
 
   return {};
@@ -358,19 +357,17 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
   auto selectionHash = QString::fromUtf8(computeSelectionHash(selection).toHex());
   QString preferredMimeType = getSelectionPreferredMimeType(selection);
 
-  // capturing this inside this lambda is safe because we only read data
   ClipboardHistoryEntry insertedEntry;
   ClipboardDatabase cdb;
 
-  auto &preferredOffer =
-      *std::ranges::find_if(selection.offers, [&](auto &&o) { return o.mimeType == preferredMimeType; });
+  auto preferredOfferIt =
+      std::ranges::find_if(selection.offers, [&](auto &&o) { return o.mimeType == preferredMimeType; });
 
   cdb.transaction([&](ClipboardDatabase &db) {
-    // selection already exists, stop here
     if (db.tryBubbleUpSelection(selectionHash)) return true;
 
     QString selectionId = Crypto::UUID::v4();
-    ClipboardOfferKind kind = getKind(preferredOffer);
+    ClipboardOfferKind kind = getKind(*preferredOfferIt);
 
     if (!db.insertSelection({.id = selectionId,
                              .offerCount = static_cast<int>(selection.offers.size()),
@@ -382,14 +379,13 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
       return false;
     }
 
+    // Index all offers, including empty ones
     for (const auto &offer : selection.offers) {
-      if (offer.data.isEmpty()) continue;
-
       ClipboardOfferKind kind = getKind(offer);
       bool isIndexableText = kind == ClipboardOfferKind::Text || kind == ClipboardOfferKind::Link;
       QString textPreview = getOfferTextPreview(offer);
 
-      if (isIndexableText) {
+      if (isIndexableText && !offer.data.isEmpty()) {
         if (!db.indexSelectionContent(selectionId, offer.data)) return false;
       }
 
@@ -411,7 +407,6 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
 
       if (kind == ClipboardOfferKind::Link) {
         auto url = QUrl::fromEncoded(offer.data, QUrl::StrictMode);
-
         if (url.scheme().startsWith("http")) { dto.urlHost = url.host(); }
       }
 
@@ -428,6 +423,7 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
         targetFile.write(offer.data);
       }
 
+      // Set the insertedEntry for the preferred offer
       if (offer.mimeType == preferredMimeType) {
         insertedEntry.id = selectionId;
         insertedEntry.pinnedAt = 0;
