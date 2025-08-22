@@ -5,9 +5,11 @@ project(${PROJECT_NAME} VERSION 1.0.0 LANGUAGES C CXX)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 include(ExtensionManager)
 include(Git)
+include(Utils)
 
 get_git_commit(GIT_COMMIT)
 get_git_tag(GIT_TAG)
+get_cxx_compiler_name(CXX_COMPILER_NAME)
 
 add_compile_definitions(VICINAE_GIT_TAG="${GIT_TAG}")
 add_compile_definitions(VICINAE_GIT_COMMIT_HASH="${GIT_COMMIT}")
@@ -29,6 +31,9 @@ if (NOT NOSTRIP)
 	message(STATUS "Built binaries will be stripped")
 endif()
 
+
+set(BUILD_INFO "${CXX_COMPILER_NAME} ${CMAKE_CXX_COMPILER_VERSION} - ${CMAKE_BUILD_TYPE}")
+
 find_program(CCACHE ccache)
 find_program(HAS_MOLD mold)
 
@@ -38,6 +43,7 @@ if (HAS_MOLD)
 endif()
 
 if (LTO)
+	set(BUILD_INFO "${BUILD_INFO} - LTO")
 	message(STATUS "Link Time Optimization (LTO) is enabled")
 	# gcc needs 'auto' to enable parallel compilation: https://stackoverflow.com/questions/72218980/gcc-v12-1-warning-about-serial-compilation
 	add_compile_options(-flto=auto)
@@ -64,6 +70,8 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 else()
 	add_compile_definitions(WLR_CLIP_BIN="${WLR_CLIP_BIN}")
 endif()
+
+add_compile_definitions(BUILD_INFO="${BUILD_INFO}")
 
 add_subdirectory(vicinae)
 
