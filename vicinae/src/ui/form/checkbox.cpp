@@ -1,6 +1,7 @@
 #include "ui/form/checkbox.hpp"
 #include "common.hpp"
 #include "theme.hpp"
+#include "ui/image/builtin-icon-loader.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
 #include <qevent.h>
 #include <qjsonvalue.h>
@@ -12,6 +13,7 @@ void Checkbox::paintEvent(QPaintEvent *event) {
   OmniPainter painter(this);
 
   painter.setRenderHint(QPainter::Antialiasing);
+  painter.setRenderHint(QPainter::SmoothPixmapTransform);
   painter.setPen(QPen(hasFocus() ? theme.colors.subtext : theme.colors.border, 2));
 
   if (m_value) {
@@ -24,8 +26,11 @@ void Checkbox::paintEvent(QPaintEvent *event) {
 
   if (m_value) {
     auto check = rect().marginsRemoved(contentsMargins());
+    BuiltinIconLoader loader(":icons/checkmark.svg");
+    loader.setFillColor(SemanticColor::TextPrimary);
+    QPixmap pix = loader.renderSync({.size = check.size(), .devicePixelRatio = qApp->devicePixelRatio()});
 
-    m_svg->render(&painter, check);
+    painter.drawPixmap(check, pix);
   }
 }
 
@@ -95,5 +100,4 @@ FocusNotifier *Checkbox::focusNotifier() const { return m_focusNotifier; }
 Checkbox::Checkbox(QWidget *parent) : JsonFormItemWidget(parent) {
   setContentsMargins(1, 1, 1, 1);
   setFocusPolicy(Qt::StrongFocus);
-  m_svg->load(QString(":icons/checkmark.svg"));
 }
