@@ -3,7 +3,11 @@
 #include "ui/omni-painter/omni-painter.hpp"
 #include "vicinae.hpp"
 #include <QLinearGradient>
+#include <filesystem>
 #include <QStyleHints>
+#include <system_error>
+
+namespace fs = std::filesystem;
 
 QColor ThemeInfo::resolveTint(SemanticColor tint) const {
   switch (tint) {
@@ -439,9 +443,20 @@ void ThemeService::upsertTheme(const ParsedThemeData &data) {
 }
 
 void ThemeService::scanThemeDirectories() {
-  scanThemeDirectory(m_userThemeDir);
-  scanThemeDirectory(m_dataThemeDir);
-  scanThemeDirectory(m_systemThemeDir);
+  auto configThemes = Omnicast::configDir() / "themes";
+  auto dataThemes = Omnicast::dataDir() / "themes";
+
+  scanThemeDirectory(configThemes);
+  scanThemeDirectory(dataThemes);
+
+  for (const auto dir : Omnicast::xdgDataDirs()) {
+    fs::path themeDir = dir / "vicinae" / "themes";
+    std::error_code ec;
+
+    if (!fs::is_directory(themeDir, ec)) continue;
+
+    scanThemeDirectory(themeDir);
+  }
 }
 
 void ThemeService::scanThemeDirectory(const std::filesystem::path &path) {
@@ -614,9 +629,7 @@ const ThemeInfo &ThemeService::theme() const { return m_theme; }
 
 ColorLike ThemeService::getTintColor(SemanticColor tint) const { return m_theme.resolveTint(tint); }
 
-ThemeService::ThemeService()
-    : m_configDir(Omnicast::configDir()), m_userThemeDir(Omnicast::configDir() / "themes"),
-      m_dataThemeDir(Omnicast::dataDir() / "themes"), m_systemThemeDir("/usr/share/vicinae/themes") {
+ThemeService::ThemeService() {
   registerBuiltinThemes();
   scanThemeDirectories();
   setTheme("vicinae-dark");

@@ -224,10 +224,6 @@ class ThemeService : public QObject {
   std::vector<ThemeInfo> m_themes;
   ThemeInfo m_theme;
   int m_baseFontPointSize = 10;
-  std::filesystem::path m_configDir;
-  std::filesystem::path m_userThemeDir;
-  std::filesystem::path m_dataThemeDir;
-  std::filesystem::path m_systemThemeDir;
 
   ThemeService(const ThemeService &rhs) = delete;
   ThemeService &operator=(const ThemeService &rhs) = delete;
@@ -262,6 +258,10 @@ public:
   void upsertTheme(const ParsedThemeData &data);
   void scanThemeDirectory(const std::filesystem::path &path);
   void handleDirectoryChanged(const QString &directory);
+
+  /**
+   * Scan themes in local config directory first, then try to load themes from data directories.
+   */
   void scanThemeDirectories();
 
 signals:
