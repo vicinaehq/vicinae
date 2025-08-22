@@ -40,7 +40,7 @@ void KeyboardShortcutIndicatorWidget::drawKey(const QString &key, QRect rect, Om
     painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
     painter.drawPixmap(contentRect, pix);
   } else {
-    painter.setPen(theme.colors.text);
+    painter.setThemePen(SemanticColor::TextPrimary);
     painter.drawText(contentRect, Qt::AlignCenter, _shortcutModel.key);
   }
 }
