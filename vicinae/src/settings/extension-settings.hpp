@@ -549,7 +549,7 @@ class ExtensionSettingsContextLeftPane : public QWidget {
     connect(&m_searchDebounce, &QTimer::timeout, this,
             &ExtensionSettingsContextLeftPane::handleDebouncedSearch);
 
-    m_tree->setAlternateBackgroundColor(theme.colors.mainHoveredBackground);
+    m_tree->setAlternateBackgroundColor(SemanticColor::MainHoverBackground);
 
     connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this](const ThemeInfo &theme) {
       m_tree->setAlternateBackgroundColor(theme.colors.mainHoveredBackground);
