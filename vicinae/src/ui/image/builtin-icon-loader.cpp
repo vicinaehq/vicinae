@@ -1,4 +1,5 @@
 #include "builtin-icon-loader.hpp"
+#include "theme.hpp"
 #include "ui/image/image.hpp"
 #include "svg-image-loader.hpp"
 
@@ -37,4 +38,5 @@ void BuiltinIconLoader::setBackgroundColor(const std::optional<ColorLike> &color
   m_backgroundColor = color;
 }
 
-BuiltinIconLoader::BuiltinIconLoader(const QString &iconName) : m_iconName(iconName) {}
+BuiltinIconLoader::BuiltinIconLoader(const QString &iconName)
+    : m_iconName(iconName), m_fillColor(SemanticColor::TextPrimary) {}
