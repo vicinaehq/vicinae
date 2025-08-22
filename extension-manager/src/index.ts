@@ -7,8 +7,8 @@ import * as ipc from './proto/ipc';
 import * as common from './proto/common';
 import * as manager from './proto/manager';
 import * as extension from './proto/extension';
-import { existsSync } from 'fs';
-import { appendFile } from 'fs/promises';
+import { existsSync, mkdirSync } from 'fs';
+import { appendFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 
 class Vicinae {
@@ -51,6 +51,13 @@ class Vicinae {
 		if (request.payload?.load) {
 			const load = request.payload.load;
 			const sessionId = randomUUID();
+			const supportPath = join(load.extensionPath, "support");
+			const assetsPath = join(load.extensionPath, "assets");
+
+			await Promise.all([
+				mkdir(supportPath, { recursive: true }),
+				mkdir(assetsPath, { recursive: true })
+			]);
 
 			const worker = new Worker(__filename, {
 				workerData: {
@@ -58,8 +65,15 @@ class Vicinae {
 					entrypoint: load.entrypoint,
 					preferenceValues: load.preferenceValues,
 					launchProps: { arguments: load.argumentValues },
-					commandMode: load.mode == manager.CommandMode.View ? "view" : "no-view"
+					commandMode: load.mode == manager.CommandMode.View ? "view" : "no-view",
+					supportPath,
+					assetsPath,
+					vicinaeVersion: {
+						tag: process.env.VICINAE_VERSION ?? 'unknown',
+						commit: process.env.VICINAE_COMMIT ?? 'unknown',
+					}
 				},
+
 				stdout: true,
 				env: {
 					'NODE_ENV': load.env == manager.CommandEnv.Development ? 'development' : 'production',

@@ -38,16 +38,18 @@ const App: React.FC<{ component: ComponentType, launchProps: any }> = ({ compone
 }
 
 const loadEnviron = () => {
-	process.env.NODE_ENV = 'development';
+	const { supportPath, assetsPath, commandMode, vicinaeVersion } = workerData;
+
 	environment.textSize = 'medium';
 	environment.appearance = 'dark';
 	environment.canAccess = (api) => false,
-	environment.assetsPath = "";
-	environment.isDevelopment = false;
-	environment.commandMode = workerData.commandMode;
-	environment.supportPath = '/tmp';
-	environment.raycastVersion = '1.0.0';
+	environment.isDevelopment = process.env.NODE_ENV === 'development';
+	environment.commandMode = commandMode;
+	environment.supportPath = supportPath;
+	environment.assetsPath = assetsPath;
+	environment.raycastVersion = '1.0.0'; // provided for compatibility only, not meaningful
 	environment.launchType = LaunchType.UserInitiated;
+	environment.vicinaeVersion = vicinaeVersion;
 }
 
 const loadView = async () => {
@@ -93,6 +95,8 @@ export const main = async () => {
 
 	patchRequire();
 	loadEnviron();
+
+	(process as any).noDeprecation = !environment.isDevelopment;
 
 	if (environment.commandMode == 'view') {
 		await loadView();
