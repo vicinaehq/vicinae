@@ -43,3 +43,20 @@ std::vector<fs::path> Omnicast::xdgConfigDirs() {
 
   return paths;
 }
+
+std::vector<fs::path> Omnicast::xdgDataDirs() {
+  auto env = QProcessEnvironment::systemEnvironment();
+  std::set<fs::path> seen;
+  std::vector<fs::path> paths;
+
+  for (const QString &dir : env.value("XDG_DATA_DIRS").split(':')) {
+    fs::path path = dir.toStdString();
+
+    if (std::ranges::contains(seen, path)) { continue; }
+
+    seen.insert(path);
+    paths.emplace_back(path);
+  }
+
+  return paths;
+}
