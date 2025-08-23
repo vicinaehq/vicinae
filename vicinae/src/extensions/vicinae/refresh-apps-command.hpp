@@ -1,7 +1,7 @@
 #pragma once
 #include "../../ui/image/url.hpp"
+#include "common.hpp"
 #include "single-view-command-context.hpp"
-#include "theme.hpp"
 
 class RefreshAppsCommand : public BuiltinCallbackCommand {
   QString id() const override { return "refresh-apps"; }
@@ -15,5 +15,5 @@ search in the root search.)";
   }
 
 public:
-  void execute(ApplicationContext *ctx) const override;
+  void execute(const LaunchProps &values, ApplicationContext *ctx) const override;
 };
