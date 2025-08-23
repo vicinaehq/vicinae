@@ -84,8 +84,8 @@ public:
 
   bool recyclable() const override { return false; }
 
-  OmniListItemWidget *createWidget() const override {
-    auto item = new ThemeItemWidget;
+  void refresh(QWidget *widget) const override {
+    auto item = static_cast<ThemeItemWidget *>(widget);
 
     item->setTitle(m_theme.name);
     item->setDescription(m_theme.description.isEmpty() ? "Default theme description" : m_theme.description);
@@ -102,6 +102,12 @@ public:
 
     item->setColors(colors);
     item->setStrokeColor(m_theme.colors.text);
+  }
+
+  OmniListItemWidget *createWidget() const override {
+    auto item = new ThemeItemWidget;
+
+    refresh(item);
 
     return item;
   }
