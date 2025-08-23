@@ -1,6 +1,7 @@
 #pragma once
 #include "command-database.hpp"
 #include "../../ui/image/url.hpp"
+#include "common.hpp"
 #include "search-files-view.hpp"
 #include "single-view-command-context.hpp"
 #include "ui/alert/alert.hpp"
@@ -30,7 +31,7 @@ class RebuildFileIndexCommand : public BuiltinCallbackCommand {
   std::vector<Preference> preferences() const override { return {}; }
   void preferenceValuesChanged(const QJsonObject &value) const override {}
 
-  void execute(ApplicationContext *ctx) const override {
+  void execute(const LaunchProps &props, ApplicationContext *ctx) const override {
     auto alert = new CallbackAlertWidget;
 
     alert->setTitle("Are you sure?");

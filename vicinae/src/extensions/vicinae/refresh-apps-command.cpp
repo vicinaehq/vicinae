@@ -5,7 +5,7 @@
 #include "services/toast/toast-service.hpp"
 #include "ui/toast/toast.hpp"
 
-void RefreshAppsCommand::execute(ApplicationContext *ctx) const {
+void RefreshAppsCommand::execute(const LaunchProps &props, ApplicationContext *ctx) const {
   auto appDb = ctx->services->appDb();
   auto toast = ctx->services->toastService();
 

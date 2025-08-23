@@ -13,6 +13,7 @@ public:
   QString subtitle() const override;
   ImageURL iconUrl() const override;
   ArgumentList arguments() const override;
+  std::vector<QString> keywords() const override { return m_command->keywords(); }
   QString providerId() const override;
   bool isSuitableForFallback() const override;
   double baseScoreWeight() const override;
