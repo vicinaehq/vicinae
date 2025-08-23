@@ -331,13 +331,12 @@ void OmniList::calculateHeights() {
           VirtualWidgetInfo vinfo{.bounds = geometry, .item = item.get(), .enumerable = true};
 
           // TODO: if in viewport, look for cached entry
-          if (isInViewport(geometry) && item->recyclable()) {
+          if (isInViewport(geometry)) {
             if (auto it = _widgetCache.find(item->id()); it != _widgetCache.end()) {
               QWidget *widget = it->second.widget->widget();
 
               widget->setUpdatesEnabled(false);
-              item->attached(widget);
-              item->recycle(widget);
+              item->refresh(widget);
               widget->setUpdatesEnabled(true);
               updatedCache[item->id()] = it->second;
               _widgetCache.erase(it->first);
