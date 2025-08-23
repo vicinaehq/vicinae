@@ -8,7 +8,7 @@ assignees: ''
 ---
 
 > [!WARNING]  
-> If you are able to run Vicinae on your system, you should use the "Report bug" command to create a new issue as it will auto fill version and system information for you (since v0.7.0).
+> If you are able to run Vicinae on your system, you should use the "Report bug" command to create a new issue as it will auto fill version and system information for you (since v0.6.1).
 > You can automatically run it using:
 > ```vicinae vicinae://extensions/vicinae/vicinae/report-bug```
 
