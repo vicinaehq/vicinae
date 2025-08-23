@@ -19,6 +19,7 @@ public:
   bool start() override;
   bool isActivatable() const override;
   QString id() const override;
+  int activationPriority() const override;
 
   WlrClipboardServer();
 };

@@ -13,6 +13,7 @@
 #include "services/app-service/app-service.hpp"
 #include "services/clipboard/clipboard-db.hpp"
 #include "wlr/wlr-clipboard-server.hpp"
+#include "qt/qt-clipboard-server.hpp"
 #include "services/window-manager/abstract-window-manager.hpp"
 #include "services/window-manager/window-manager.hpp"
 
@@ -511,6 +512,7 @@ ClipboardService::ClipboardService(const std::filesystem::path &path, WindowMana
     ClipboardServerFactory factory;
 
     factory.registerServer<WlrClipboardServer>();
+    factory.registerServer<QtClipboardServer>();
     m_clipboardServer = factory.createFirstActivatable();
 
     qInfo() << "Activated clipboard server" << m_clipboardServer->id();
