@@ -8,6 +8,8 @@
 #include <qt6keychain/keychain.h>
 #include <QtConcurrent/QtConcurrent>
 #include <QFutureWatcher>
+#include <QBuffer>
+#include <QImage>
 #include "clipboard-server-factory.hpp"
 #include "crypto.hpp"
 #include "services/app-service/app-service.hpp"
@@ -201,19 +203,12 @@ ClipboardOfferKind ClipboardService::getKind(const ClipboardDataOffer &offer) {
 
 QString ClipboardService::getSelectionPreferredMimeType(const ClipboardSelection &selection) {
   static const std::vector<QString> plainTextMimeTypes = {
-    "text/plain",
-    "text/plain;charset=utf-8",
-    "UTF8_STRING",
-    "STRING",
-    "TEXT",
-    "COMPOUND_TEXT"
-  };
+      "text/plain", "text/plain;charset=utf-8", "UTF8_STRING", "STRING", "TEXT", "COMPOUND_TEXT"};
 
   // 1. Prefer plain text (non-empty)
   for (const auto &mime : plainTextMimeTypes) {
-    auto it = std::ranges::find_if(selection.offers, [&](const auto &offer) {
-      return offer.mimeType == mime && !offer.data.isEmpty();
-    });
+    auto it = std::ranges::find_if(
+        selection.offers, [&](const auto &offer) { return offer.mimeType == mime && !offer.data.isEmpty(); });
     if (it != selection.offers.end()) return it->mimeType;
   }
 
@@ -483,7 +478,29 @@ bool ClipboardService::copySelection(const ClipboardSelection &selection,
   QMimeData *mimeData = new QMimeData;
 
   for (const auto &offer : selection.offers) {
-    mimeData->setData(offer.mimeType, offer.data);
+    // Handle images specially - Qt expects them to be set as QImage objects
+    if (offer.mimeType.startsWith("image/")) {
+      QBuffer buffer;
+      buffer.setData(offer.data);
+      buffer.open(QIODevice::ReadOnly);
+
+      QImageReader reader(&buffer);
+      QImage image = reader.read();
+
+      if (!image.isNull()) {
+        // Set the image data properly for Qt applications
+        mimeData->setImageData(image);
+        // Also set raw data for applications that expect it
+        mimeData->setData(offer.mimeType, offer.data);
+      } else {
+        qWarning() << "Failed to load image data for MIME type:" << offer.mimeType;
+        // Fallback to raw data only
+        mimeData->setData(offer.mimeType, offer.data);
+      }
+    } else {
+      // Handle non-image data normally
+      mimeData->setData(offer.mimeType, offer.data);
+    }
   }
 
   return copyQMimeData(mimeData, options);
