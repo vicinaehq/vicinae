@@ -7,6 +7,7 @@
 /node_modules
 oclif.manifest.json
 
+/src/proto
 
 
 yarn.lock
