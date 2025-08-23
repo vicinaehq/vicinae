@@ -523,6 +523,8 @@ set(SRCS
 	src/settings/general-settings.cpp
 	src/settings/settings-about.cpp
 
+	src/lib/os-release.cpp
+
 	src/ui/arg-completer/arg-completer.hpp
 	src/ui/arg-completer/arg-completer.cpp
 

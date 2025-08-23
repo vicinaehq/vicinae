@@ -1,11 +1,15 @@
 #pragma once
 #include "builtin-url-command.hpp"
+#include <qapplication.h>
 #include <qurlquery.h>
+#include "lib/os-release.hpp"
 
 static const QString ISSUE_TEMPLATE = R"(**System information**
 
 - Version: %1 (%2)
 - Build info: %3
+- OS: %4
+- QT Platform: %5
 
 **Describe the bug**
 
@@ -48,7 +52,15 @@ class ReportVicinaeBugCommand : public BuiltinUrlCommand {
   std::vector<QString> keywords() const override { return {"create issue"}; }
 
   QUrl url(const ArgumentValues &values) const override {
-    QString content = ISSUE_TEMPLATE.arg(VICINAE_GIT_TAG).arg(VICINAE_GIT_COMMIT_HASH).arg(BUILD_INFO);
+    OsRelease os;
+    QString osString =
+        os.isValid() ? QString("%1 - %2").arg(os.prettyName()).arg(os.version()) : "Unknown OS";
+
+    QString content = ISSUE_TEMPLATE.arg(VICINAE_GIT_TAG)
+                          .arg(VICINAE_GIT_COMMIT_HASH)
+                          .arg(BUILD_INFO)
+                          .arg(osString)
+                          .arg(QApplication::platformName());
     QUrl url(Omnicast::GH_REPO_CREATE_ISSUE);
     QUrlQuery query;
 
