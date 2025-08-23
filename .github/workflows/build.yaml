@@ -15,27 +15,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Restore CMake build cache
-        id: restore-cache
-        uses: actions/cache@v3
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
         with:
-          path: |
-            build
-            build/CMakeCache.txt
-            build/CMakeFiles
-            extension-manager/node_modules
-            extension-manager/src/proto
-          key: self-hosted-cmake-${{ hashFiles('**/CMakeLists.txt') }}
-          restore-keys: |
-            self-hosted-cmake-
+          key: self-hosted-prod
+          max-size: 0
 
       - name: Configure CMake
         run: |
-          if [ ! -f build/CMakeCache.txt ]; then
-            cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$Qt6_DIR
-          else
-            echo "skipping config"
-          fi
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$Qt6_DIR -DCMAKE_C_COMPILER_LAUNCHER="ccache" -DCMAKE_CXX_COMPILER_LAUNCHER="ccache"
 
       - name: Build
         run: cmake --build build --parallel ${nproc}
