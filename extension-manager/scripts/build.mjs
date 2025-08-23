@@ -21,7 +21,7 @@ await esbuild.build({
 	alias: {
 		'@vicinae/api': '../api/src/',
 		// we want react to always resolve to the local node_modules version
-		'react': './node_modules/react'
+		'react': '../api/node_modules/react'
 	}
 })
 
