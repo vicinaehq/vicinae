@@ -32,6 +32,17 @@ class OpenDocumentationCommand : public BuiltinUrlCommand {
   QUrl url(const ArgumentValues &values) const override { return Omnicast::DOC_URL; }
 };
 
+class OpenDiscordCommand : public BuiltinUrlCommand {
+  QString id() const override { return "join-discord-server"; }
+  QString name() const override { return "Join Vicinae Discord Server"; }
+  QString description() const override { return "Open link to join the official Vicinae discord server."; }
+  ImageURL iconUrl() const override {
+    return ImageURL::builtin("discord").setBackgroundTint(Omnicast::ACCENT_COLOR);
+  }
+  std::vector<QString> keywords() const override { return {"help", "support"}; }
+  QUrl url(const ArgumentValues &values) const override { return Omnicast::DISCORD_INVITE_LINK; }
+};
+
 class OpenSettingsCommand : public BuiltinCallbackCommand {
   QString id() const override { return "settings"; }
   QString name() const override { return "Open Vicinae Settings"; }
@@ -63,5 +74,6 @@ public:
     registerCommand<GetVicinaeSourceCodeCommand>();
     registerCommand<ReportVicinaeBugCommand>();
     registerCommand<OpenSettingsCommand>();
+    registerCommand<OpenDiscordCommand>();
   }
 };

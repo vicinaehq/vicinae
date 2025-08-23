@@ -19,7 +19,13 @@ static const QString HEADLINE = "A focused launcher for your desktop — native,
 static const QString APP_ID = "vicinae";
 static const QString APP_SCHEME = APP_ID;
 static const std::array<QString, 2> APP_SCHEMES = {APP_SCHEME, "raycast"};
-static QString DEFAULT_FAVICON_SERVICE = "twenty";
+static const QString DEFAULT_FAVICON_SERVICE = "twenty";
+
+/**
+ * We use the http:// scheme instead of discord:// as we don't make assumptions
+ * about whether discord is installed on the desktop.
+ */
+static const QString DISCORD_INVITE_LINK = "https://discord.gg/rP4ecD42p7";
 
 static const SemanticColor ACCENT_COLOR = SemanticColor::Cyan;
 
