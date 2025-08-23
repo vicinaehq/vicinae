@@ -200,9 +200,16 @@ int startDaemon() {
 
   QObject::connect(ServiceRegistry::instance()->config(), &ConfigService::configChanged,
                    [&ctx](const ConfigService::Value &next, const ConfigService::Value &prev) {
-                     if (next.theme.name.value_or("") != prev.theme.name.value_or("")) {
-                       ThemeService::instance().setTheme(*next.theme.name);
+                     auto &theme = ThemeService::instance();
+                     bool themeChangeRequired = next.theme.name.value_or("") != prev.theme.name.value_or("");
+
+                     if (next.font.baseSize != prev.font.baseSize) {
+                       theme.setFontBasePointSize(next.font.baseSize);
+
+                       if (!themeChangeRequired) { theme.reloadCurrentTheme(); }
                      }
+
+                     if (themeChangeRequired) { theme.setTheme(*next.theme.name); }
 
                      ctx.navigation->setPopToRootOnClose(next.popToRootOnClose);
 
@@ -234,7 +241,7 @@ int main(int argc, char **argv) {
 
   DaemonIpcClient daemonClient;
 
-    if (!daemonClient.connect()) {
+  if (!daemonClient.connect()) {
     qInfo() << "Vicinae server is not running. Please run 'vicinae server' or "
                "systemctl enable --now --user vicinae.service";
     return 1;

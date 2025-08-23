@@ -20,6 +20,7 @@ class GeneralSettings : public VerticalScrollArea {
   QThemeSelector *m_qThemeSelector;
   FaviconServiceSelector *m_faviconSelector;
   CheckboxInput *m_popToRootOnClose;
+  BaseInput *m_fontSize;
 
   void setupUI();
 
@@ -31,6 +32,7 @@ class GeneralSettings : public VerticalScrollArea {
   void handleIconThemeChange(const QString &iconTheme);
   void handleFaviconServiceChange(const QString &service);
   void handlePopToRootOnCloseChange(bool popToRootOnClose);
+  void handleFontSizeChange(double size);
 
   void setConfig(const ConfigService::Value &value);
 

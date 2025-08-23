@@ -11,6 +11,8 @@
 #include "utils/layout.hpp"
 #include "ui/font-selector/font-selector.hpp"
 #include "services/config/config-service.hpp"
+#include <algorithm>
+#include <qlogging.h>
 
 void GeneralSettings::setConfig(const ConfigService::Value &value) {
   auto appFont = QApplication::font().family();
@@ -24,6 +26,7 @@ void GeneralSettings::setConfig(const ConfigService::Value &value) {
   m_qThemeSelector->setValue(value.theme.iconTheme.value_or(currentIconTheme));
   m_faviconSelector->setValue(value.faviconService);
   m_popToRootOnClose->setValueAsJson(value.popToRootOnClose);
+  m_fontSize->setText(QString::number(value.font.baseSize));
 }
 
 void GeneralSettings::handleFaviconServiceChange(const QString &service) {
@@ -74,6 +77,13 @@ void GeneralSettings::handlePopToRootOnCloseChange(bool popToRootOnClose) {
   config->updateConfig([&](ConfigService::Value &value) { value.popToRootOnClose = popToRootOnClose; });
 }
 
+void GeneralSettings::handleFontSizeChange(double size) {
+  auto config = ServiceRegistry::instance()->config();
+
+  config->updateConfig(
+      [&](ConfigService::Value &value) { value.font.baseSize = std::clamp(size, 1.0, 99.0); });
+}
+
 void GeneralSettings::setupUI() {
   auto config = ServiceRegistry::instance()->config();
   auto appFont = QApplication::font().family();
@@ -87,6 +97,7 @@ void GeneralSettings::setupUI() {
   m_fontSelector = new FontSelector;
   m_faviconSelector = new FaviconServiceSelector;
   m_popToRootOnClose = new CheckboxInput;
+  m_fontSize = new BaseInput;
 
   m_popToRootOnClose->setLabel("Pop to root on window close");
 
@@ -170,6 +181,24 @@ void GeneralSettings::setupUI() {
   popToRootOnCloseField->setWidget(m_popToRootOnClose);
   popToRootOnCloseField->setInfo("Whether to reset the navigation state when the launcher window is closed.");
 
+  auto fontSizeField = new FormField;
+
+  connect(fontSizeField, &FormField::blurred, this, [this]() {
+    bool ok = false;
+
+    if (double size = m_fontSize->text().toDouble(&ok); ok) {
+      handleFontSizeChange(m_fontSize->text().toDouble());
+    } else {
+      qWarning() << m_fontSize->text() << "is not a valid font size";
+    }
+  });
+
+  fontSizeField->setName("Font size");
+  fontSizeField->setInfo(
+      "The base point size used to compute font sizes. Fractional values are accepted and should render as "
+      "expected on most platforms. The recommended range is [10.0;12.0].");
+  fontSizeField->setWidget(m_fontSize, m_fontSize->focusNotifier());
+
   form->addField(checkField);
   form->addField(popToRootOnCloseField);
   form->addField(themeField);
@@ -178,6 +207,7 @@ void GeneralSettings::setupUI() {
   form->addField(faviconField);
   form->addField(csdField);
   form->addField(opacityField);
+  form->addField(fontSizeField);
 
   form->setMaximumWidth(650);
 

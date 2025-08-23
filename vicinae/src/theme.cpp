@@ -365,22 +365,25 @@ ThemeInfo ThemeInfo::fromParsed(const ParsedThemeData &scheme) {
 void ThemeService::setTheme(const ThemeInfo &info) {
   m_theme = info;
 
+  double mainInputSize = std::round(m_baseFontPointSize * 1.20);
   auto style = QString(R"(
+  		QWidget {
+			font-size: %1pt;
+		}
 
 		QLineEdit, QTextEdit {
 			background-color: transparent;
 			border: none;
-            font-size: 10pt;
 		}
 		QLineEdit:focus[form-input="true"] {
-			border-color: %1;
+			border-color: %2;
 		}
 		QTextEdit {
 			font-family: monospace;
 		}
 
 	   QLineEdit[search-input="true"] {
-			font-size: 12pt;
+			font-size: %3pt;
 		}
 
 		QScrollArea, 
@@ -388,7 +391,9 @@ void ThemeService::setTheme(const ThemeInfo &info) {
 		QScrollArea > QWidget > QWidget
 		{ background: transparent; }
 		)")
-                   .arg(info.colors.border.name());
+                   .arg(m_baseFontPointSize)
+                   .arg(info.colors.border.name())
+                   .arg(mainInputSize);
 
   auto palette = QApplication::palette();
 
@@ -593,7 +598,7 @@ ThemeService &ThemeService::instance() {
   return _instance;
 }
 
-int ThemeService::pointSize(TextSize size) const {
+double ThemeService::pointSize(TextSize size) const {
   switch (size) {
   case TextSize::TextRegular:
     return m_baseFontPointSize;
@@ -605,6 +610,10 @@ int ThemeService::pointSize(TextSize size) const {
 
   return m_baseFontPointSize;
 }
+
+void ThemeService::setFontBasePointSize(double pointSize) { m_baseFontPointSize = pointSize; }
+
+void ThemeService::reloadCurrentTheme() { setTheme(m_theme.id); }
 
 std::optional<ThemeInfo> ThemeService::theme(const QString &name) const {
   for (const auto &info : m_themes) {

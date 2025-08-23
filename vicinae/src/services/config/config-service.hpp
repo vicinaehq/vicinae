@@ -37,7 +37,7 @@ public:
     } rootSearch;
     struct {
       std::optional<QString> normal;
-      int baseSize = 10;
+      double baseSize = 10;
     } font;
   };
 
@@ -65,7 +65,7 @@ private:
       auto font = obj.value("font").toObject();
 
       if (font.contains("normal")) { cfg.font.normal = font.value("normal").toString(); }
-      if (font.contains("size")) { cfg.font.baseSize = font.value("size").toInt(); }
+      if (font.contains("size")) { cfg.font.baseSize = font.value("size").toDouble(); }
     }
 
     {
