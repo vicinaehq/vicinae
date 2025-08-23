@@ -84,7 +84,7 @@ void TypographyWidget::setSize(TextSize size) {
   auto &theme = ThemeService::instance();
   QFont _font = font();
 
-  _font.setPointSize(theme.pointSize(size));
+  _font.setPointSizeF(theme.pointSize(size));
   _font.setWeight(m_weight);
 
   m_size = size;
@@ -108,7 +108,7 @@ void TypographyWidget::setFont(const QFont &f) {
   QFont font(f);
   auto &theme = ThemeService::instance();
 
-  font.setPointSize(theme.pointSize(m_size));
+  font.setPointSizeF(theme.pointSize(m_size));
   font.setWeight(m_weight);
   m_label->setFont(font);
   updateText();
@@ -122,7 +122,7 @@ void TypographyWidget::setFontWeight(QFont::Weight weight) {
   QFont _font = font();
   auto &theme = ThemeService::instance();
 
-  _font.setPointSize(theme.pointSize(m_size));
+  _font.setPointSizeF(theme.pointSize(m_size));
   _font.setWeight(weight);
   m_label->setFont(_font);
 

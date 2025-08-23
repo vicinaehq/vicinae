@@ -223,7 +223,7 @@ class ThemeService : public QObject {
 
   std::vector<ThemeInfo> m_themes;
   ThemeInfo m_theme;
-  int m_baseFontPointSize = 10;
+  double m_baseFontPointSize = 10;
 
   ThemeService(const ThemeService &rhs) = delete;
   ThemeService &operator=(const ThemeService &rhs) = delete;
@@ -233,7 +233,7 @@ class ThemeService : public QObject {
 public:
   static ThemeService &instance();
 
-  int pointSize(TextSize size) const;
+  double pointSize(TextSize size) const;
 
   /**
    * Returns the theme that is currently in use
@@ -252,6 +252,10 @@ public:
 
   void registerTheme(const ThemeInfo &info) { m_themes.emplace_back(info); }
   const std::vector<ThemeInfo> &themes() const { return m_themes; }
+
+  void setFontBasePointSize(double pointSize);
+
+  void reloadCurrentTheme();
 
   void registerBuiltinThemes();
   std::optional<ThemeInfo> findTheme(const QString &name);

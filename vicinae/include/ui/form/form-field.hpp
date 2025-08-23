@@ -22,15 +22,9 @@ class FormField : public QWidget {
   QHBoxLayout *m_infoLayout = new QHBoxLayout();
 
 protected:
-  void focusInEvent(QFocusEvent *event) override {
-    qDebug() << "focus in";
-    QWidget::focusInEvent(event);
-  }
+  void focusInEvent(QFocusEvent *event) override { QWidget::focusInEvent(event); }
 
-  void focusOutEvent(QFocusEvent *event) override {
-    qDebug() << "focus out";
-    QWidget::focusInEvent(event);
-  }
+  void focusOutEvent(QFocusEvent *event) override { QWidget::focusInEvent(event); }
 
   bool eventFilter(QObject *obj, QEvent *event) override {
     if (event->type() == QEvent::FocusIn) {
