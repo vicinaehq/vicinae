@@ -4,8 +4,8 @@
   "description": "TypeScript SDK to build Vicinae extensions",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-	"build": "tsc --outDir dist",
-	"pack": "npm run build && npm pack"
+    "build": "tsc --outDir dist",
+    "pack": "npm run build && npm pack"
   },
   "bin": {
     "vici": "./bin/run.js"
@@ -21,27 +21,28 @@
     "./dist/index.d.ts"
   ],
   "publishConfig": {
-	  "access": "public"
+    "access": "public"
   },
   "main": "dist/index.js",
   "dependencies": {
     "@jgoz/esbuild-plugin-typecheck": "^4.0.3",
-    "react": "^18.1.0",
-    "@types/react": "^18.1.0",
-    "@types/node": "^20.8.10",
-    "chokidar": "^4.0.3",
-    "esbuild": "^0.25.2",
-	"@oclif/core": "^4",
+    "@oclif/core": "^4",
     "@oclif/plugin-help": "^6",
     "@oclif/plugin-plugins": "^5",
+    "@types/react": "^18.1.0",
+	"@types/node": ">=18",
     "chalk": "^5.6.0",
+    "chokidar": "^4.0.3",
+    "esbuild": "^0.25.2",
+    "react": "18.1.0",
     "zod": "^4.0.17"
   },
   "peerDependencies": {
-    "@types/react": "18.1.0",
-    "@types/node": "20.8.10"
+    "@types/node": ">=18",
+    "@types/react": "^18.1.0"
   },
   "devDependencies": {
+    "@bufbuild/protobuf": "^2.7.0",
     "@eslint/compat": "^1",
     "@oclif/prettier-config": "^0.2.1",
     "@oclif/test": "^4",
@@ -55,8 +56,8 @@
     "oclif": "^4",
     "shx": "^0.3.3",
     "ts-node": "^10",
-    "typescript": "^5",
-    "ts-proto": "^2.7.5"
+    "ts-proto": "^2.7.5",
+    "typescript": "^5"
   },
   "oclif": {
     "bin": "vici",
@@ -66,8 +67,7 @@
       "@oclif/plugin-help"
     ],
     "topicSeparator": " ",
-    "topics": {
-    }
+    "topics": {}
   },
   "repository": "vicinaehq/vicinae"
 }

@@ -20,8 +20,10 @@
     "react-reconciler": "0.28.0"
   },
   "devDependencies": {
+    "@bufbuild/protobuf": "^2.7.0",
     "@types/node": "^22.10.1",
     "@types/react-reconciler": "0.28.0",
+    "@types/react": "^18.1.0",
     "esbuild": "^0.25.9",
     "npm-run-all": "^4.1.5",
     "ts-proto": "^2.7.5",
