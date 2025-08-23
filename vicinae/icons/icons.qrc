@@ -843,5 +843,6 @@
 		<file>zend.svg</file>
 		<file>zig.svg</file>
 		<file>raycast.svg</file>
+		<file>discord.svg</file>
 	</qresource>
 </RCC>

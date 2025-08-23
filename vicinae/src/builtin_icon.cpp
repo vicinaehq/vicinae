@@ -842,6 +842,7 @@ static const QList<QString> builtinIcons = {"vicinae",
                                             "yunohost",
                                             "zend",
                                             "zig",
-                                            "raycast"};
+                                            "raycast",
+                                            "discord"};
 
 const QList<QString> &BuiltinIconService::icons() { return builtinIcons; }
