@@ -16,7 +16,7 @@
 #include <wayland-util.h>
 #include "data-control-client.hpp"
 #include "display.hpp"
-#include "wayland-wlr-data-control-client-protocol.h"
+#include "wlr-data-control-unstable-v1-client-protocol.h"
 #include "proto/wlr-clipboard.pb.h"
 
 class Clipman : public WaylandDisplay,
