@@ -4,20 +4,8 @@
 #include "common.hpp"
 #include "preference.hpp"
 #include "search-files-view.hpp"
-#include "service-registry.hpp"
-#include "services/files-service/abstract-file-indexer.hpp"
-#include "settings/app-settings-detail.hpp"
-#include "single-view-command-context.hpp"
 #include "ui/alert/alert.hpp"
-#include "utils/utils.hpp"
 #include "vicinae.hpp"
-#include <qjsonarray.h>
-#include <qjsonobject.h>
-#include <qjsonvalue.h>
-#include <qnamespace.h>
-#include <qwidget.h>
-#include <ranges>
-#include <vector>
 
 class SearchFilesCommand : public BuiltinViewCommand<SearchFilesView> {
   QString id() const override { return "search"; }

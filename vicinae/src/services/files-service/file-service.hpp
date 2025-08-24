@@ -1,7 +1,6 @@
 #pragma once
 #include "services/files-service/abstract-file-indexer.hpp"
 #include <string_view>
-#include <vector>
 
 class FileService {
   std::unique_ptr<AbstractFileIndexer> m_indexer;

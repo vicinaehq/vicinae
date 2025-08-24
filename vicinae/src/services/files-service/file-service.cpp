@@ -1,6 +1,5 @@
 #include "file-indexer/file-indexer.hpp"
 #include "services/files-service/abstract-file-indexer.hpp"
-#include <vector>
 #include "file-service.hpp"
 
 AbstractFileIndexer *FileService::indexer() const { return m_indexer.get(); }
