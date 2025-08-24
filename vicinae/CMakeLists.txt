@@ -91,6 +91,8 @@ set(SRCS
 	include/ui/form/app-picker-input.hpp
 	src/ui/form/app-picker-input.cpp
 
+	src/ui/form/text-area.cpp
+
 	src/command-actions.cpp
 
 	src/root-search/extensions/extension-root-provider.hpp
