@@ -19,6 +19,13 @@ public:
 
   std::optional<FormField *> fieldAt(int index) const;
   void addField(FormField *field);
+  FormField *addField();
+  FormField *addField(const QString &label, QWidget *widget);
+
+  // remove all fields
+  void clearFields();
+
+  void addSeparator();
 
   FormWidget(QWidget *parent = nullptr);
 };

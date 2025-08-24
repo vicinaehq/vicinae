@@ -1,4 +1,6 @@
 #include "ui/form/form.hpp"
+#include "common.hpp"
+#include "ui/form/form-field.hpp"
 #include <qwidget.h>
 
 FormField *FormWidget::fieldForWidget(QWidget *widget) const {
@@ -22,6 +24,31 @@ void FormWidget::addField(FormField *field) {
   _layout->addWidget(field);
 }
 
+FormField *FormWidget::addField() {
+  auto field = new FormField;
+
+  addField(field);
+
+  return field;
+}
+
+FormField *FormWidget::addField(const QString &label, QWidget *widget) {
+  auto field = addField();
+
+  field->setName(label);
+  field->setWidget(widget);
+
+  return field;
+}
+
+void FormWidget::clearFields() {
+  for (const auto &field : _fields) {
+    field->deleteLater();
+  }
+  clearAllErrors();
+  _fields.clear();
+}
+
 bool FormWidget::isValid() const {
   for (const auto field : _fields) {
     if (auto error = field->errorText(); !error.isEmpty()) { return false; }
@@ -29,6 +56,8 @@ bool FormWidget::isValid() const {
 
   return true;
 }
+
+void FormWidget::addSeparator() { _layout->addWidget(new HDivider); }
 
 void FormWidget::setError(QWidget *widget, const QString &error) {
   if (auto field = fieldForWidget(widget)) {
