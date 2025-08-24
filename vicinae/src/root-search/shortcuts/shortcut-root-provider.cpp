@@ -12,36 +12,6 @@
 #include <qlogging.h>
 #include <ranges>
 
-ActionPanelView *RootShortcutItem::actionPanel(const RootItemMetadata &metadata) const {
-  auto panel = new ActionPanelStaticListView;
-  auto open = new OpenCompletedShortcutAction(m_link);
-  auto openWith = new OpenCompletedShortcutWithAction(m_link);
-  auto edit = new EditShortcutAction(m_link);
-  auto duplicate = new DuplicateShortcutAction(m_link);
-  auto remove = new RemoveShortcutAction(m_link);
-  auto markAsFavorite = new ToggleItemAsFavorite(uniqueId(), metadata.favorite);
-  auto disable = new DisableItemAction(uniqueId());
-
-  open->setPrimary(true);
-  open->setShortcut({.key = "return"});
-  openWith->setShortcut({.key = "return", .modifiers = {"shift"}});
-  duplicate->setShortcut({.key = "N", .modifiers = {"ctrl"}});
-  edit->setShortcut({.key = "E", .modifiers = {"ctrl"}});
-  remove->setShortcut({.key = "X", .modifiers = {"ctrl"}});
-  disable->setShortcut({.key = "X", .modifiers = {"ctrl", "shift"}});
-
-  panel->setTitle(m_link->name());
-  panel->addAction(open);
-  panel->addAction(openWith);
-  panel->addAction(edit);
-  panel->addAction(duplicate);
-  panel->addSection();
-  panel->addAction(remove);
-  panel->addAction(disable);
-
-  return panel;
-};
-
 std::unique_ptr<ActionPanelState> RootShortcutItem::newActionPanel(ApplicationContext *ctx,
                                                                    const RootItemMetadata &metadata) {
   auto panel = std::make_unique<ActionPanelState>();
@@ -59,6 +29,7 @@ std::unique_ptr<ActionPanelState> RootShortcutItem::newActionPanel(ApplicationCo
 
   auto disable = new DisableItemAction(uniqueId());
 
+  open->setClearSearch(true);
   open->setPrimary(true);
   open->setShortcut({.key = "return"});
   // openWith->setShortcut({.key = "return", .modifiers = {"shift"}});

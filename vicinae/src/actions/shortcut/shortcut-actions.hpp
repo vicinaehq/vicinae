@@ -17,6 +17,7 @@ class OpenShortcutAction : public AbstractAction {
   std::shared_ptr<Shortcut> m_shortcut;
   std::vector<QString> m_arguments;
   std::shared_ptr<Application> m_app;
+  bool m_clearSearch = false;
 
 public:
   void execute(ApplicationContext *ctx) override {
@@ -52,13 +53,15 @@ public:
     }
 
     shortcut->registerVisit(m_shortcut->id());
-    ctx->navigation->popToRoot();
     ctx->navigation->closeWindow();
+    if (m_clearSearch) ctx->navigation->clearSearchText();
   }
 
   QString title() const override { return "Open shortcut"; }
 
 public:
+  void setClearSearch(bool value) { m_clearSearch = value; }
+
   OpenShortcutAction(const std::shared_ptr<Shortcut> &shortcut, const std::vector<QString> &arguments,
                      const std::shared_ptr<Application> &app = nullptr)
       : AbstractAction("Open shortcut", shortcut->icon()), m_shortcut(shortcut), m_arguments(arguments),
@@ -68,6 +71,7 @@ public:
 class OpenCompletedShortcutAction : public AbstractAction {
   std::shared_ptr<Shortcut> m_shortcut;
   std::shared_ptr<Application> m_app;
+  bool m_clearSearch = false;
 
 public:
   void execute(ApplicationContext *ctx) override {
@@ -75,8 +79,11 @@ public:
                   std::views::transform([](auto &&p) { return p.second; }) | std::ranges::to<std::vector>();
     OpenShortcutAction open(m_shortcut, values, m_app);
 
+    open.setClearSearch(m_clearSearch);
     open.execute(ctx);
   }
+
+  void setClearSearch(bool value) { m_clearSearch = value; }
 
   OpenCompletedShortcutAction(const std::shared_ptr<Shortcut> &shortcut,
                               const std::shared_ptr<Application> &app = nullptr)

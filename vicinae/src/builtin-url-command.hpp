@@ -11,13 +11,15 @@ class BuiltinUrlCommand : public BuiltinCallbackCommand {
 
   void execute(const LaunchProps &props, ApplicationContext *ctx) const override {
     auto appDb = ctx->services->appDb();
+    auto browser = appDb->webBrowser();
 
-    if (auto browser = appDb->webBrowser()) {
-      appDb->launch(*browser, {url(props.arguments).toString()});
-      ctx->navigation->showHud("Opened in browser");
+    if (!browser) {
+      ctx->services->toastService()->setToast("No browser to open the link", ToastPriority::Danger);
       return;
     }
 
-    ctx->services->toastService()->setToast("No browser to open the link", ToastPriority::Danger);
+    appDb->launch(*browser, {url(props.arguments).toString()});
+    ctx->navigation->showHud("Opened in browser");
+    ctx->navigation->clearSearchText();
   }
 };
