@@ -1,6 +1,7 @@
 #include "wlr-clipboard-server.hpp"
 #include "proto/wlr-clipboard.pb.h"
 #include "services/clipboard/clipboard-server.hpp"
+#include "utils/environment.hpp"
 #include "vicinae.hpp"
 #include <QtCore>
 #include <QApplication>
@@ -16,18 +17,13 @@ bool WlrClipboardServer::isAlive() const { return process->isOpen(); }
 
 bool WlrClipboardServer::isActivatable() const {
   // Check if we're on Wayland
-  if (QApplication::platformName() != "wayland") { return false; }
+  if (!Environment::isWaylandSession()) { return false; }
 
-  // Check if we're in a GNOME environment
   // GNOME doesn't support wlr-data-control protocol, so we need to fall back
-  // to QtClipboardServer for clipboard functionality in GNOME environments
-  const QString desktop = qgetenv("XDG_CURRENT_DESKTOP");
-  const QString session = qgetenv("GDMSESSION");
+  // to GnomeClipboardServer for clipboard functionality in GNOME environments
+  if (Environment::isGnomeEnvironment()) { return false; }
 
-  if (desktop.contains("GNOME", Qt::CaseInsensitive) || session.contains("gnome", Qt::CaseInsensitive)) {
-    return false;
-  }
-
+  // Prefer wlroots compositors, but allow other Wayland compositors too
   return true;
 }
 
