@@ -529,6 +529,8 @@ set(SRCS
 	src/root-search.cpp
 
 	src/services/window-manager/window-manager.cpp
+
+	src/services/extension-boilerplate-generator/extension-boilerplate-generator.cpp
 ) 
 
 

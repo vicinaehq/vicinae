@@ -1,8 +1,13 @@
+#include "services/extension-boilerplate-generator/extension-boilerplate-generator.hpp"
 #include "ui/form/base-input.hpp"
 #include "ui/form/form-field.hpp"
 #include "ui/form/form.hpp"
 #include "ui/form/text-area.hpp"
 #include "ui/views/form-view.hpp"
+#include "service-registry.hpp"
+#include "services/toast/toast-service.hpp"
+#include <qlogging.h>
+#include <ranges>
 
 struct CreateExtensionCommandFrame {
   BaseInput *m_title = new BaseInput;
@@ -38,10 +43,43 @@ class CreateExtensionView : public ManagedFormView {
     }
   }
 
+  ExtensionBoilerplateConfig::CommandConfig mapCommandToConfig(const CreateExtensionCommandFrame &frame) {
+    ExtensionBoilerplateConfig::CommandConfig cfg;
+
+    cfg.title = frame.m_title->text();
+    cfg.subtitle = frame.m_subtitle->text();
+    cfg.description = frame.m_description->text();
+
+    return cfg;
+  }
+
+  ExtensionBoilerplateConfig getConfig() {
+    ExtensionBoilerplateConfig cfg;
+
+    cfg.author = m_username->text();
+    cfg.title = m_title->text();
+    cfg.description = m_description->text();
+    cfg.commands = m_commands |
+                   std::views::transform([this](auto &&cfg) { return mapCommandToConfig(cfg); }) |
+                   std::ranges::to<std::vector>();
+
+    return cfg;
+  }
+
+  void onSubmit() override {
+    auto cfg = getConfig();
+    ExtensionBoilerplateGenerator gen;
+    std::filesystem::path targetDir = m_location->text().toStdString();
+
+    if (auto v = gen.generate(targetDir, cfg); !v) {
+      context()->services->toastService()->failure("Failed to create extension");
+      qCritical() << "Failed to create extension with error" << v.error();
+      return;
+    }
+  }
+
 public:
   QString submitTitle() const override { return "Create extension"; }
-
-  void onSubmit() override { qDebug() << "submit"; }
 
   CreateExtensionView() {
     m_username->setPlaceholderText("Username");
