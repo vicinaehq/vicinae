@@ -627,7 +627,7 @@
       "title": "The extension's source dependencies",
       "required": ["@vicinae/api"],
       "properties": {
-        "@raycast/api": {
+        "@vicinae/api": {
           "type": "string",
           "title": "Vicinae API dependency",
           "description": "The Vicinae API version used by this extension."
