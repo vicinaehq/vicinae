@@ -89,6 +89,7 @@ void DefaultActionWrapper::execute(ApplicationContext *ctx) {
   }
 
   m_action->execute(ctx);
+  ctx->navigation->clearSearchText();
 }
 
 QString DefaultActionWrapper::title() const { return m_action->title(); }
