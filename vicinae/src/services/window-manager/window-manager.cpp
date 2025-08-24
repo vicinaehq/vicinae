@@ -1,5 +1,6 @@
 #include "window-manager.hpp"
 #include "hyprland/hyprland.hpp"
+#include "gnome/gnome-window-manager.hpp"
 #include "dummy-window-manager.hpp"
 #include "services/window-manager/abstract-window-manager.hpp"
 
@@ -8,6 +9,7 @@ std::vector<std::unique_ptr<AbstractWindowManager>> WindowManager::createCandida
   std::vector<std::unique_ptr<AbstractWindowManager>> candidates;
 
   candidates.emplace_back(std::make_unique<HyprlandWindowManager>());
+  candidates.emplace_back(std::make_unique<GnomeWindowManager>());
 
   return candidates;
 }

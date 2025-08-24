@@ -24,6 +24,10 @@ public:
     virtual QString title() const = 0;
     virtual QString wmClass() const = 0;
     virtual std::optional<int> pid() const { return std::nullopt; }
+
+    // Abstract methods for extended window information
+    virtual std::optional<int> workspace() const { return std::nullopt; }
+    virtual bool canClose() const { return true; } // Default to true for most windows
   };
 
   using WindowPtr = std::shared_ptr<AbstractWindow>;
@@ -52,6 +56,12 @@ public:
   virtual std::shared_ptr<AbstractWindow> getFocusedWindowSync() const { return nullptr; }
 
   virtual void focusWindowSync(const AbstractWindow &window) const {}
+
+  /**
+   * Close a window. Returns true if successful, false otherwise.
+   * This is a common operation that should be supported by all window managers.
+   */
+  virtual bool closeWindow(const AbstractWindow &window) const { return false; }
 
   /**
    * Whether the window manager supports sending arbitrary key events to any given window.

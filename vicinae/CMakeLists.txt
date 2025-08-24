@@ -537,6 +537,8 @@ if (UNIX AND NOT APPLE)
 		src/lib/xkbcommon-utils.cpp
 
 		src/services/window-manager/hyprland/hyprland.cpp
+		src/services/window-manager/gnome/gnome-window-manager.cpp
+		src/services/window-manager/gnome/gnome-window.cpp
 
 		# Hyprland
 		# End Hyprland

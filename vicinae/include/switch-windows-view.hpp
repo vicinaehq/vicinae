@@ -1,3 +1,4 @@
+#pragma once
 #include "ui/action-pannel/action.hpp"
 #include "ui/omni-list/omni-list.hpp"
 #include "../src/ui/image/url.hpp"
@@ -12,9 +13,8 @@
 class FocusWindowAction : public AbstractAction {
   std::shared_ptr<AbstractWindowManager::AbstractWindow> _window;
 
-  void execute(AppWindow &app) override {
-    auto wm = ServiceRegistry::instance()->windowManager();
-
+  void execute(ApplicationContext *ctx) override {
+    auto wm = ctx->services->windowManager();
     wm->provider()->focusWindowSync(*_window.get());
   }
 
@@ -23,14 +23,63 @@ public:
       : AbstractAction("Focus window", ImageURL::builtin("app-window")), _window(window) {}
 };
 
+class CloseWindowAction : public AbstractAction {
+  std::shared_ptr<AbstractWindowManager::AbstractWindow> _window;
+
+  void execute(ApplicationContext *ctx) override {
+    auto wm = ctx->services->windowManager();
+    wm->provider()->closeWindow(*_window.get());
+  }
+
+public:
+  CloseWindowAction(const std::shared_ptr<AbstractWindowManager::AbstractWindow> &window)
+      : AbstractAction("Close window", ImageURL::builtin("xmark")), _window(window) {
+    setStyle(AbstractAction::Danger);
+  }
+};
+
 class WindowItem : public AbstractDefaultListItem, public ListView::Actionnable {
 protected:
   std::shared_ptr<AbstractWindowManager::AbstractWindow> _window;
 
   QString generateId() const override { return _window->id(); }
 
+  // Helper method to generate workspace accessories
+  AccessoryList generateWorkspaceAccessories() const {
+    AccessoryList accessories;
+
+    // Use abstract interface for workspace information
+    if (auto workspace = _window->workspace()) {
+      accessories.push_back(ListAccessory{.text = QString("WS %1").arg(*workspace + 1),
+                                          .color = std::nullopt,
+                                          .tooltip = QString("Workspace %1").arg(*workspace + 1),
+                                          .fillBackground = false,
+                                          .icon = std::nullopt});
+    }
+
+    return accessories;
+  }
+
   virtual QList<AbstractAction *> generateActions() const override {
-    return {new FocusWindowAction(_window)};
+    QList<AbstractAction *> actions;
+    auto focusAction = new FocusWindowAction(_window);
+    focusAction->setPrimary(true);
+    actions.append(focusAction);
+    actions.append(new CloseWindowAction(_window));
+    return actions;
+  }
+
+  virtual std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
+    auto state = std::make_unique<ActionPanelState>();
+    auto focusAction = new FocusWindowAction(_window);
+    focusAction->setPrimary(true);
+    auto closeAction = new CloseWindowAction(_window);
+
+    auto section = state->createSection("Window Actions");
+    section->addAction(focusAction);
+    section->addAction(closeAction);
+
+    return state;
   }
 
 public:
@@ -41,7 +90,8 @@ class UnamedWindowListItem : public WindowItem {
   ItemData data() const override {
     return {.iconUrl = ImageURL::builtin("app-window"),
             .name = _window->title(),
-            .subtitle = _window->wmClass()};
+            .subtitle = _window->wmClass(),
+            .accessories = generateWorkspaceAccessories()};
   }
 
 public:
@@ -53,7 +103,10 @@ class AppWindowListItem : public WindowItem {
   std::shared_ptr<Application> _app;
 
   ItemData data() const override {
-    return {.iconUrl = _app->iconUrl(), .name = _window->title(), .subtitle = _app->name()};
+    return {.iconUrl = _app->iconUrl(),
+            .name = _window->title(),
+            .subtitle = _app->name(),
+            .accessories = generateWorkspaceAccessories()};
   }
 
 public:
