@@ -2,10 +2,19 @@
 #include "command-database.hpp"
 #include "../../ui/image/url.hpp"
 #include "common.hpp"
+#include "preference.hpp"
 #include "search-files-view.hpp"
+#include "service-registry.hpp"
+#include "services/files-service/abstract-file-indexer.hpp"
 #include "single-view-command-context.hpp"
 #include "ui/alert/alert.hpp"
+#include "utils/utils.hpp"
 #include "vicinae.hpp"
+#include <qjsonarray.h>
+#include <qjsonobject.h>
+#include <qjsonvalue.h>
+#include <ranges>
+#include <vector>
 
 class SearchFilesCommand : public BuiltinViewCommand<SearchFilesView> {
   QString id() const override { return "search"; }
@@ -60,5 +69,25 @@ public:
   FileExtension() {
     registerCommand<SearchFilesCommand>();
     registerCommand<RebuildFileIndexCommand>();
+  }
+
+  void preferenceValuesChanged(const QJsonObject &preferences) const override {
+    QJsonArray searchPaths = preferences.value("paths").toArray();
+    FileService *service = ServiceRegistry::instance()->fileService();
+
+    if (searchPaths.empty()) {
+      service->setEntrypoints({{.root = homeDir()}});
+      return;
+    }
+
+    auto entrypointRange =
+      searchPaths | std::views::transform([](const QJsonValue &obj) -> AbstractFileIndexer::Entrypoint {
+        return {.root = obj.toString().toStdString()};
+      });
+
+    std::vector<AbstractFileIndexer::Entrypoint> entrypoints =
+      {entrypointRange.begin(), entrypointRange.end()};
+
+    service->setEntrypoints(entrypoints);
   }
 };
