@@ -1,7 +1,7 @@
 #include "data-control-client.hpp"
 #include "seat.hpp"
 #include "display.hpp"
-#include "wayland-wlr-data-control-client-protocol.h"
+#include "wlr-data-control-unstable-v1-client-protocol.h"
 #include <cstring>
 #include <stdexcept>
 
