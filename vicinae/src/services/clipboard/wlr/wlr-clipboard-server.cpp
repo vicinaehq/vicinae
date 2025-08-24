@@ -20,7 +20,7 @@ bool WlrClipboardServer::isActivatable() const {
 
   // Check if we're in a GNOME environment
   // GNOME doesn't support wlr-data-control protocol, so we need to fall back
-  // to QtClipboardServer for clipboard functionality in GNOME environments
+  // to GnomeClipboardServer for clipboard functionality in GNOME environments
   const QString desktop = qgetenv("XDG_CURRENT_DESKTOP");
   const QString session = qgetenv("GDMSESSION");
 
