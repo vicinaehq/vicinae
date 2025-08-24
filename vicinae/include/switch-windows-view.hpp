@@ -73,8 +73,13 @@ protected:
     QList<AbstractAction *> actions;
     auto focusAction = new FocusWindowAction(_window);
     focusAction->setPrimary(true);
+    focusAction->setShortcut({.key = "return"});
+
+    auto closeAction = new CloseWindowAction(_window, _refreshCallback);
+    closeAction->setShortcut({.key = "Q", .modifiers = {"ctrl"}});
+
     actions.append(focusAction);
-    actions.append(new CloseWindowAction(_window, _refreshCallback));
+    actions.append(closeAction);
     return actions;
   }
 
@@ -82,7 +87,10 @@ protected:
     auto state = std::make_unique<ActionPanelState>();
     auto focusAction = new FocusWindowAction(_window);
     focusAction->setPrimary(true);
+    focusAction->setShortcut({.key = "return"});
+
     auto closeAction = new CloseWindowAction(_window, _refreshCallback);
+    closeAction->setShortcut({.key = "Q", .modifiers = {"ctrl"}});
 
     auto section = state->createSection("Window Actions");
     section->addAction(focusAction);
