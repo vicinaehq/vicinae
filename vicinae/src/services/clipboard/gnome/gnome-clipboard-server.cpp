@@ -46,7 +46,7 @@ bool GnomeClipboardServer::isActivatable() const {
     qWarning() << "GnomeClipboardServer: vicinae@dagimg-dot extension not installed or not running";
     qWarning() << "GnomeClipboardServer: Please install the GNOME extension for clipboard support";
     qWarning() << "GnomeClipboardServer: Extension available at: "
-                  "https://github.com/MelakuDemeke/vicinae-gnome-extension";
+                  "https://github.com/dagimg-dot/vicinae-gnome-extension";
     qWarning() << "GnomeClipboardServer: Falling back to dummy clipboard server";
     return false;
   }
