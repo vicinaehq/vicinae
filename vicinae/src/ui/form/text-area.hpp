@@ -28,7 +28,7 @@ public:
   /**
    * If this is true (the default) the text area will expand as the text
    * document becomes higher and shrink as it becomes smaller.
-   * The minimum height can be set by calling `setMinimumHeight`, as you would on any regular QT widget.
+   * The minimum height can be set by calling `setRows` to specify a minimum number of rows.
    * If false, a scroll bar will be shown if the text becomes to tall to fit in
    * the allowed space.
    * For UX reasons, the former is always preferred as nested scrollbars can make it diffcult
