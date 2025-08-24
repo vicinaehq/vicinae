@@ -2,7 +2,7 @@
 
 #include "display.hpp"
 #include "seat.hpp"
-#include "wayland-wlr-data-control-client-protocol.h"
+#include "wlr-data-control-unstable-v1-client-protocol.h"
 #include <memory>
 #include <string>
 #include <filesystem>

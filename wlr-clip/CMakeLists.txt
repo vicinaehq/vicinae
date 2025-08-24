@@ -1,3 +1,5 @@
+include("Wayland")
+
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -22,7 +24,6 @@ include_directories(
 
 set(SRCS
 	src/main.cpp
-	src/wayland-wlr-data-control-client-protocol.c
 	src/data-control-client.cpp
 	src/display.cpp
 	src/registry.cpp
@@ -31,8 +32,9 @@ set(SRCS
 )
 
 add_executable(${TARGET} ${SRCS})
-target_compile_options(${TARGET} PUBLIC -g3)
-target_link_libraries(${TARGET} PRIVATE wayland-client protobuf::libprotobuf)
+wayland_generate_protocol(${TARGET} ${CMAKE_CURRENT_SOURCE_DIR}/protocols/wlr-data-control-unstable-v1.xml)
+target_compile_options(${TARGET} PUBLIC -g3 -fsanitize=address)
+target_link_libraries(${TARGET} PRIVATE wayland-client protobuf::libprotobuf -fsanitize=address)
 
 make_directory(${CMAKE_CURRENT_BINARY_DIR}/proto)
 
@@ -44,4 +46,3 @@ protobuf_generate(
 )
 
 install(TARGETS ${TARGET})
-
