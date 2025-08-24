@@ -73,6 +73,10 @@ void CommandController::launch(const std::shared_ptr<AbstractCmd> &cmd) {
   // unload stalled no-view command
   if (!m_frames.empty() && m_frames.back()->viewCount == 0) { m_frames.pop_back(); }
 
+  LaunchProps props;
+
+  props.arguments = m_ctx->navigation->completionValues();
+
   auto itemId = QString("extension.%1").arg(cmd->uniqueId());
   auto manager = m_ctx->services->rootItemManager();
   auto preferences = manager->getMergedItemPreferences(itemId);
@@ -106,5 +110,5 @@ void CommandController::launch(const std::shared_ptr<AbstractCmd> &cmd) {
   frame->viewCount = 0;
   frame->context->setContext(m_ctx);
   m_frames.emplace_back(std::move(frame));
-  m_frames.back()->context->load({});
+  m_frames.back()->context->load(props);
 }

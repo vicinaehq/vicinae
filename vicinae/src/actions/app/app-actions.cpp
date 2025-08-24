@@ -15,6 +15,7 @@ void OpenAppAction::execute(ApplicationContext *ctx) {
   }
 
   ctx->navigation->closeWindow();
+  if (m_clearSearch) ctx->navigation->clearSearchText();
 }
 
 OpenAppAction::OpenAppAction(const std::shared_ptr<Application> &app, const QString &title,

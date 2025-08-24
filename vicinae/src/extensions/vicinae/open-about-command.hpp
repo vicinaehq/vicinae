@@ -3,7 +3,6 @@
 #include "../../ui/image/url.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "single-view-command-context.hpp"
-#include "theme.hpp"
 
 class OpenAboutCommand : public BuiltinCallbackCommand {
   QString id() const override { return "about"; }
@@ -12,7 +11,7 @@ class OpenAboutCommand : public BuiltinCallbackCommand {
     return ImageURL::builtin("info-01").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 
-  void execute(ApplicationContext *ctx) const override {
+  void execute(const LaunchProps &props, ApplicationContext *ctx) const override {
     ctx->navigation->closeWindow();
     ctx->settings->openTab("about");
   }

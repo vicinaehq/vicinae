@@ -34,56 +34,6 @@ QString AppRootItem::uniqueId() const { return QString("apps.%1").arg(m_app->id(
 
 ImageURL AppRootItem::iconUrl() const { return m_app->iconUrl(); }
 
-ActionPanelView *AppRootItem::actionPanel(const RootItemMetadata &metadata) const {
-  auto panel = new ActionPanelStaticListView;
-  auto appDb = ServiceRegistry::instance()->appDb();
-  auto fileBrowser = appDb->fileBrowser();
-  auto textEditor = appDb->textEditor();
-  auto open = new OpenAppAction(m_app, "Open Application", {});
-  auto actions = m_app->actions();
-
-  panel->setTitle(m_app->name());
-  panel->addAction(new DefaultActionWrapper(uniqueId(), open));
-
-  auto makeAction = [](auto &&pair) -> OpenAppAction * {
-    const auto &[index, appAction] = pair;
-    auto openAction = new OpenAppAction(appAction, appAction->name(), {});
-
-    if (index < 9) {
-      openAction->setShortcut({.key = QString::number(index + 1), .modifiers = {"ctrl", "shift"}});
-    }
-
-    return openAction;
-  };
-
-  panel->addSection();
-
-  for (const auto &action : m_app->actions() | std::views::enumerate | std::views::transform(makeAction)) {
-    panel->addAction(action);
-  }
-
-  if (fileBrowser) {
-    auto openLocation = new OpenAppAction(fileBrowser, "Open Location", {m_app->path().c_str()});
-
-    openLocation->setShortcut({.key = "O", .modifiers = {"ctrl"}});
-    panel->addAction(openLocation);
-  }
-
-  auto resetRanking = new ResetItemRanking(uniqueId());
-  auto markAsFavorite = new ToggleItemAsFavorite(uniqueId(), metadata.favorite);
-
-  panel->addSection();
-  panel->addAction(resetRanking);
-  panel->addAction(markAsFavorite);
-  panel->addSection();
-
-  auto disable = new DisableApplication(uniqueId());
-
-  panel->addAction(disable);
-
-  return panel;
-}
-
 std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext *ctx,
                                                               const RootItemMetadata &metadata) {
   auto panel = std::make_unique<ActionPanelState>();
@@ -99,6 +49,7 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
   auto dangerSection = panel->createSection();
   auto appActions = m_app->actions();
 
+  open->setClearSearch(true);
   panel->setTitle(m_app->name());
 
   mainSection->addAction(new DefaultActionWrapper(uniqueId(), open));
