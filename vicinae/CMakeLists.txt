@@ -49,11 +49,7 @@ include_directories(
 
 set(PROTO_SRC_DIR ${CMAKE_SOURCE_DIR}/proto/extensions)
 
-
 file(GLOB PROTO_FILES "${PROTO_SRC_DIR}/*.proto")
-
-message(STATUS "Protobuf version: ${protobuf_VERSION}")
-message(STATUS "Protobuf compiler: ${protobuf_PROTOC_EXE}")
 
 set(SRCS
 	src/main.cpp
