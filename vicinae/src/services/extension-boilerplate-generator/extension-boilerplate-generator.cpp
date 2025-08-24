@@ -12,8 +12,7 @@
 static const std::vector<CommandBoilerplate> CMD_TEMPLATE_LIST = {
     CommandBoilerplate{
         .resource = ":boilerplate/tmpl-simple-detail", .name = "Simple Detail", .mode = CommandModeView},
-    CommandBoilerplate{
-        .resource = ":boilerplate/tmpl-no-view-args", .name = "No View With Args", .mode = CommandModeNoView},
+    CommandBoilerplate{.resource = ":boilerplate/tmpl-no-view", .name = "No View", .mode = CommandModeNoView},
 };
 
 namespace fs = std::filesystem;
@@ -27,6 +26,11 @@ ExtensionBoilerplateGenerator::generate(const fs::path &targetDir, const Extensi
   std::error_code ec;
   QString extName = slugify(config.title);
 
+  auto userCopy = [](const QString &src, const QString &dst) {
+    QFile::copy(src, dst);
+    QFile::setPermissions(dst, QFileDevice::ReadOwner | QFileDevice::WriteOwner);
+  };
+
   if (!fs::is_directory(targetDir, ec)) {
     return std::unexpected(QString("%1 is not a directory. The boilerplate generator will not create the "
                                    "containing directory for you")
@@ -35,7 +39,9 @@ ExtensionBoilerplateGenerator::generate(const fs::path &targetDir, const Extensi
 
   fs::path extDir = targetDir / extName.toStdString();
   fs::path srcDir = extDir / "src";
+  fs::path assetsDir = extDir / "assets";
   fs::create_directories(srcDir);
+  fs::create_directories(assetsDir);
 
   QFile packageJson(":boilerplate/package.json");
 
@@ -75,11 +81,12 @@ ExtensionBoilerplateGenerator::generate(const fs::path &targetDir, const Extensi
       return std::unexpected(QString("Unknown template with id %1").arg(cmd.templateId));
     }
 
-    QString ext = it->mode == CommandModeView ? "tsx" : "ts";
+    // QString ext = it->mode == CommandModeView ? "tsx" : "ts";
+    QString ext = "tsx";
     QString filename = QString("%1.%2").arg(name).arg(ext);
 
     obj["mode"] = it->mode == CommandModeView ? "view" : "no-view";
-    QFile::copy(it->resource, QString::fromStdString(srcDir / filename.toStdString()));
+    userCopy(it->resource, QString::fromStdString(srcDir / filename.toStdString()));
 
     cmds.push_back(obj);
   }
@@ -104,7 +111,8 @@ ExtensionBoilerplateGenerator::generate(const fs::path &targetDir, const Extensi
     file.write(finalManifest.toJson());
   }
 
-  QFile::copy(":boilerplate/tsconfig.json", QString::fromStdString(extDir / "tsconfig.json"));
+  userCopy(":boilerplate/tsconfig.json", QString::fromStdString(extDir / "tsconfig.json"));
+  userCopy(":boilerplate/extension_icon", QString::fromStdString(assetsDir / "extension_icon.png"));
 
   return {};
 }

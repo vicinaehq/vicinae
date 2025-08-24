@@ -17,7 +17,7 @@
   "dependencies": {
     "@vicinae/api": "^0.4.0"
   },
-  "icon": "command-icon.png",
+  "icon": "extension_icon.png",
   "commands": [],
   "preferences": [],
   "title": "My Example Extension"

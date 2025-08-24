@@ -3,7 +3,8 @@
 	<qresource prefix="/boilerplate">
 		<file>package.json</file>
 		<file>tsconfig.json</file>
+		<file alias="extension_icon">assets/extension_icon.png</file>
 		<file alias="tmpl-simple-detail">command-templates/simple-detail.tsx</file>
-		<file alias="tmpl-no-view-args">command-templates/no-view-args.tsx</file>
+		<file alias="tmpl-no-view">command-templates/no-view.tsx</file>
   </qresource>
 </RCC>
