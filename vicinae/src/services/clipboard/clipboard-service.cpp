@@ -15,7 +15,7 @@
 #include "services/app-service/app-service.hpp"
 #include "services/clipboard/clipboard-db.hpp"
 #include "wlr/wlr-clipboard-server.hpp"
-#include "qt/qt-clipboard-server.hpp"
+#include "gnome/gnome-clipboard-server.hpp"
 #include "services/window-manager/abstract-window-manager.hpp"
 #include "services/window-manager/window-manager.hpp"
 
@@ -528,8 +528,8 @@ ClipboardService::ClipboardService(const std::filesystem::path &path, WindowMana
   {
     ClipboardServerFactory factory;
 
-    factory.registerServer<WlrClipboardServer>();
-    factory.registerServer<QtClipboardServer>();
+    factory.registerServer<GnomeClipboardServer>(); // Priority 20 (GNOME + extension)
+    factory.registerServer<WlrClipboardServer>();   // Priority 15 (Wayland non-GNOME)
     m_clipboardServer = factory.createFirstActivatable();
 
     qInfo() << "Activated clipboard server" << m_clipboardServer->id();

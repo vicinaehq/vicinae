@@ -151,8 +151,8 @@ set(SRCS
 	src/services/clipboard/clipboard-server-factory.cpp
 	src/services/clipboard/clipboard-service.hpp
 	src/services/clipboard/clipboard-service.cpp
-	src/services/clipboard/qt/qt-clipboard-server.hpp
-	src/services/clipboard/qt/qt-clipboard-server.cpp
+	src/services/clipboard/gnome/gnome-clipboard-server.hpp
+	src/services/clipboard/gnome/gnome-clipboard-server.cpp
 
 	src/services/local-storage/local-storage-service.hpp
 	src/services/local-storage/local-storage.cpp
