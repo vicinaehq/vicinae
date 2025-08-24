@@ -6,6 +6,7 @@
 #include "search-files-view.hpp"
 #include "service-registry.hpp"
 #include "services/files-service/abstract-file-indexer.hpp"
+#include "settings/app-settings-detail.hpp"
 #include "single-view-command-context.hpp"
 #include "ui/alert/alert.hpp"
 #include "utils/utils.hpp"
@@ -13,6 +14,8 @@
 #include <qjsonarray.h>
 #include <qjsonobject.h>
 #include <qjsonvalue.h>
+#include <qnamespace.h>
+#include <qwidget.h>
 #include <ranges>
 #include <vector>
 
@@ -71,14 +74,18 @@ public:
     registerCommand<RebuildFileIndexCommand>();
   }
 
-  void preferenceValuesChanged(const QJsonObject &preferences) const override {
-    QJsonArray searchPaths = preferences.value("paths").toArray();
-    FileService *service = ServiceRegistry::instance()->fileService();
+  std::vector<Preference> preferences() const override {
+    auto paths = Preference::makeText("paths");
+    paths.setTitle("Search paths");
+    paths.setDescription("Semicolon-separated list of paths that vicinae will search");
+    paths.setDefaultValue(homeDir().c_str());
 
-    if (searchPaths.empty()) {
-      service->setEntrypoints({{.root = homeDir()}});
-      return;
-    }
+    return {paths};
+  }
+
+  void preferenceValuesChanged(const QJsonObject &preferences) const override {
+    QStringList searchPaths = preferences.value("paths").toString().split(';', Qt::SkipEmptyParts);
+    FileService *service = ServiceRegistry::instance()->fileService();
 
     auto entrypointRange =
       searchPaths | std::views::transform([](const QJsonValue &obj) -> AbstractFileIndexer::Entrypoint {
