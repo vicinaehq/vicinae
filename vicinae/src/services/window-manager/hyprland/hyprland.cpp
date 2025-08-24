@@ -63,6 +63,11 @@ void HyprlandWindowManager::focusWindowSync(const AbstractWindow &window) const 
   Hyprctl::oneshot(std::format("dispatch focuswindow address:{}", window.id().toStdString()));
 }
 
+bool HyprlandWindowManager::closeWindow(const AbstractWindow &window) const {
+  // TODO: Implement close window for Hyprland
+  return true;
+}
+
 bool HyprlandWindowManager::isActivatable() const {
   bool isWayland = QGuiApplication::platformName() == "wayland";
 

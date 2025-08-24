@@ -28,6 +28,10 @@ public:
   std::optional<int> pid() const override { return m_pid; }
   QString title() const override { return m_title; }
   QString wmClass() const override { return m_wmClass; }
+  
+  // Extended AbstractWindow interface - use defaults for now
+  std::optional<int> workspace() const override { return std::nullopt; }
+  bool canClose() const override { return true; }
 
   HyprlandWindow(const QJsonObject &json);
 };
@@ -45,6 +49,7 @@ public:
   bool supportsInputForwarding() const override;
   bool sendShortcutSync(const AbstractWindow &window, const KeyboardShortcut &shortcut) override;
   void focusWindowSync(const AbstractWindow &window) const override;
+  bool closeWindow(const AbstractWindow &window) const override;
   bool isActivatable() const override;
 
   bool ping() const override;
