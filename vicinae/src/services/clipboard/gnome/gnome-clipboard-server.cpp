@@ -1,4 +1,5 @@
 #include "gnome-clipboard-server.hpp"
+#include "utils/environment.hpp"
 #include <QApplication>
 #include <QDBusConnection>
 #include <QDBusInterface>
@@ -20,15 +21,10 @@ GnomeClipboardServer::GnomeClipboardServer() : m_bus(QDBusConnection::sessionBus
 GnomeClipboardServer::~GnomeClipboardServer() { cleanupDBusConnection(); }
 
 bool GnomeClipboardServer::isActivatable() const {
-  qInfo() << "GnomeClipboardServer: Checking for GNOME environment...";
+  const QString envDesc = Environment::getEnvironmentDescription();
+  qInfo() << "GnomeClipboardServer: Detected environment:" << envDesc;
 
-  // Check if we're in GNOME environment
-  const QString desktop = qgetenv("XDG_CURRENT_DESKTOP");
-  const QString session = qgetenv("GDMSESSION");
-  bool isGnome =
-      (desktop.contains("GNOME", Qt::CaseInsensitive) || session.contains("gnome", Qt::CaseInsensitive));
-
-  if (!isGnome) {
+  if (!Environment::isGnomeEnvironment()) {
     qInfo() << "GnomeClipboardServer: Not in GNOME environment, skipping";
     return false;
   }
