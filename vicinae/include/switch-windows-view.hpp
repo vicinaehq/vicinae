@@ -5,10 +5,12 @@
 #include "service-registry.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include <chrono>
+#include <functional>
 #include <qfuturewatcher.h>
 #include <qnamespace.h>
 #include "ui/views/list-view.hpp"
 #include "services/app-service/app-service.hpp"
+#include <QTimer>
 
 class FocusWindowAction : public AbstractAction {
   std::shared_ptr<AbstractWindowManager::AbstractWindow> _window;
@@ -25,15 +27,21 @@ public:
 
 class CloseWindowAction : public AbstractAction {
   std::shared_ptr<AbstractWindowManager::AbstractWindow> _window;
+  std::function<void()> _refreshCallback;
 
   void execute(ApplicationContext *ctx) override {
     auto wm = ctx->services->windowManager();
-    wm->provider()->closeWindow(*_window.get());
+    bool success = wm->provider()->closeWindow(*_window.get());
+
+    // If the window was closed successfully and we have a refresh callback, trigger it
+    if (success && _refreshCallback) { _refreshCallback(); }
   }
 
 public:
-  CloseWindowAction(const std::shared_ptr<AbstractWindowManager::AbstractWindow> &window)
-      : AbstractAction("Close window", ImageURL::builtin("xmark")), _window(window) {
+  CloseWindowAction(const std::shared_ptr<AbstractWindowManager::AbstractWindow> &window,
+                    std::function<void()> refreshCallback = nullptr)
+      : AbstractAction("Close window", ImageURL::builtin("xmark")), _window(window),
+        _refreshCallback(refreshCallback) {
     setStyle(AbstractAction::Danger);
   }
 };
@@ -41,6 +49,7 @@ public:
 class WindowItem : public AbstractDefaultListItem, public ListView::Actionnable {
 protected:
   std::shared_ptr<AbstractWindowManager::AbstractWindow> _window;
+  std::function<void()> _refreshCallback;
 
   QString generateId() const override { return _window->id(); }
 
@@ -65,7 +74,7 @@ protected:
     auto focusAction = new FocusWindowAction(_window);
     focusAction->setPrimary(true);
     actions.append(focusAction);
-    actions.append(new CloseWindowAction(_window));
+    actions.append(new CloseWindowAction(_window, _refreshCallback));
     return actions;
   }
 
@@ -73,7 +82,7 @@ protected:
     auto state = std::make_unique<ActionPanelState>();
     auto focusAction = new FocusWindowAction(_window);
     focusAction->setPrimary(true);
-    auto closeAction = new CloseWindowAction(_window);
+    auto closeAction = new CloseWindowAction(_window, _refreshCallback);
 
     auto section = state->createSection("Window Actions");
     section->addAction(focusAction);
@@ -83,7 +92,9 @@ protected:
   }
 
 public:
-  WindowItem(const std::shared_ptr<AbstractWindowManager::AbstractWindow> &item) : _window(item) {}
+  WindowItem(const std::shared_ptr<AbstractWindowManager::AbstractWindow> &item,
+             std::function<void()> refreshCallback = nullptr)
+      : _window(item), _refreshCallback(refreshCallback) {}
 };
 
 class UnamedWindowListItem : public WindowItem {
@@ -95,8 +106,9 @@ class UnamedWindowListItem : public WindowItem {
   }
 
 public:
-  UnamedWindowListItem(const std::shared_ptr<AbstractWindowManager::AbstractWindow> &item)
-      : WindowItem(item) {}
+  UnamedWindowListItem(const std::shared_ptr<AbstractWindowManager::AbstractWindow> &item,
+                       std::function<void()> refreshCallback = nullptr)
+      : WindowItem(item, refreshCallback) {}
 };
 
 class AppWindowListItem : public WindowItem {
@@ -111,8 +123,8 @@ class AppWindowListItem : public WindowItem {
 
 public:
   AppWindowListItem(const std::shared_ptr<AbstractWindowManager::AbstractWindow> &item,
-                    const std::shared_ptr<Application> &app)
-      : WindowItem(item), _app(app) {}
+                    const std::shared_ptr<Application> &app, std::function<void()> refreshCallback = nullptr)
+      : WindowItem(item, refreshCallback), _app(app) {}
 };
 
 class SwitchWindowsView : public ListView {
@@ -121,6 +133,22 @@ class SwitchWindowsView : public ListView {
       std::chrono::high_resolution_clock::now();
 
 public:
+  // Method to force refresh the windows list
+  void refreshWindowsList() {
+    // Force a refresh by clearing the cache
+    windows.clear();
+    m_lastWindowFetch = std::chrono::time_point<std::chrono::high_resolution_clock>{};
+
+    // Refresh the current view
+    textChanged(searchText());
+  }
+
+  // Method to refresh with a delay (for after window operations)
+  void refreshWindowsListDelayed() {
+    // Use a small delay to ensure the window manager has processed the close operation
+    QTimer::singleShot(100, this, [this]() { refreshWindowsList(); });
+  }
+
   void textChanged(const QString &s) override {
     auto wm = ServiceRegistry::instance()->windowManager();
     auto appDb = ServiceRegistry::instance()->appDb();
@@ -136,14 +164,17 @@ public:
 
     auto &section = m_list->addSection("Open Windows");
 
+    // Create a refresh callback that this view can use
+    auto refreshCallback = [this]() { refreshWindowsListDelayed(); };
+
     for (const auto &win : windows) {
       if (win->title().contains(s, Qt::CaseInsensitive)) {
         if (auto app = appDb->findByClass(win->wmClass())) {
-          section.addItem(std::make_unique<AppWindowListItem>(win, app));
+          section.addItem(std::make_unique<AppWindowListItem>(win, app, refreshCallback));
         } else if (auto app = appDb->findById(win->wmClass())) {
-          section.addItem(std::make_unique<AppWindowListItem>(win, app));
+          section.addItem(std::make_unique<AppWindowListItem>(win, app, refreshCallback));
         } else {
-          section.addItem(std::make_unique<UnamedWindowListItem>(win));
+          section.addItem(std::make_unique<UnamedWindowListItem>(win, refreshCallback));
         }
       }
     }
