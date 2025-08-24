@@ -1,7 +1,7 @@
 {
-  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "$schema": "https://raw.githubusercontent.com/vicinaehq/vicinae/refs/heads/main/extra/schemas/extension.json",
   "name": "example-extension",
-  "description": "Exemple extension boilerplate (to be improved very soon)",
+  "description": "Example description",
   "categories": [
     "Applications",
     "Productivity"
@@ -18,83 +18,7 @@
     "@vicinae/api": "^0.4.0"
   },
   "icon": "command-icon.png",
-  "commands": [
-    {
-      "name": "index",
-      "title": "My Example Command",
-      "description": "Boilerplate command",
-      "mode": "view"
-    },
-    {
-      "name": "local-storage",
-      "title": "Test Local Storage",
-      "description": "Test Local Storage feature",
-      "mode": "view",
-      "preferences": [
-        {
-          "name": "localToken",
-          "type": "password",
-          "required": true,
-          "title": "Local Token",
-          "placeholder": "Your Local Token",
-          "description": "Local token to access the service"
-        }
-      ]
-    },
-    {
-      "name": "heavy-duty",
-      "title": "Heavy Duty Stuff",
-      "description": "Heavy Duty",
-      "mode": "view"
-    },
-    {
-      "name": "no-view",
-      "title": "Test No View",
-      "description": "Test No View Feature",
-      "mode": "no-view",
-      "preferences": [],
-      "arguments": [
-        {
-          "name": "username",
-          "type": "text",
-          "required": true,
-          "placeholder": "Username"
-        },
-        {
-          "name": "password",
-          "type": "password",
-          "required": true,
-          "placeholder": "Password"
-        }
-      ]
-    }
-  ],
-  "preferences": [
-    {
-      "name": "apiToken",
-      "type": "password",
-      "required": true,
-      "title": "API Token",
-      "placeholder": "Your API token",
-      "description": "API token to access the service"
-    },
-    {
-      "name": "baseUrl",
-      "type": "textfield",
-      "required": true,
-      "title": "Base URL",
-      "placeholder": "http://localhost:3000",
-      "description": "The base URL for the service"
-    },
-    {
-      "name": "examplePreference",
-      "type": "checkbox",
-      "required": false,
-      "title": "Example preference",
-      "description": "Showcases how to use preferences",
-      "default": false,
-      "label": "Showcases how to use preferences"
-    }
-  ],
+  "commands": [],
+  "preferences": [],
   "title": "My Example Extension"
 }

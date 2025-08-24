@@ -341,6 +341,8 @@ set(SRCS
 
 	${CMAKE_CURRENT_BINARY_DIR}/resources.qrc
 
+	../extra/extension-boilerplate/boilerplate.qrc
+
 	contribs.qrc
 
 	src/contribs/contribs.cpp

@@ -1,4 +1,5 @@
 #pragma once
+#include "common.hpp"
 #include <expected>
 #include <qstring.h>
 #include <filesystem>
@@ -8,6 +9,7 @@ struct ExtensionBoilerplateConfig {
     QString title;
     QString subtitle;
     QString description;
+    QString templateId;
   };
 
   QString author;
@@ -16,10 +18,17 @@ struct ExtensionBoilerplateConfig {
   std::vector<CommandConfig> commands;
 };
 
+struct CommandBoilerplate {
+  QString resource;
+  QString name;
+  CommandMode mode;
+};
+
 class ExtensionBoilerplateGenerator {
   using BoilerplateGenRes = std::expected<void, QString>;
 
 public:
+  const std::vector<CommandBoilerplate> &commandBoilerplates() const;
   BoilerplateGenRes generate(const std::filesystem::path &targetDir,
                              const ExtensionBoilerplateConfig &config);
 

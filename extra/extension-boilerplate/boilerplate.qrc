@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RCC version="1.0">
+	<qresource prefix="/boilerplate">
+		<file>package.json</file>
+		<file>tsconfig.json</file>
+		<file alias="tmpl-simple-detail">command-templates/simple-detail.tsx</file>
+		<file alias="tmpl-no-view-args">command-templates/no-view-args.tsx</file>
+  </qresource>
+</RCC>

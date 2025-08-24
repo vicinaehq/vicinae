@@ -24,6 +24,15 @@ fs::path compressPath(const fs::path &path) {
   return path;
 }
 
+std::filesystem::path expandPath(const std::filesystem::path &path) {
+  auto homeStr = homeDir().string();
+  auto str = path.string();
+
+  if (str.starts_with("~")) { return homeStr + str.substr(1); }
+
+  return path;
+}
+
 QString getRelativeTimeString(const QDateTime &pastTime) {
   QDateTime now = QDateTime::currentDateTime();
   qint64 secondsDiff = pastTime.secsTo(now);
@@ -118,6 +127,26 @@ QJsonValue protoToJsonValue(const google::protobuf::Value &value) {
   }
 
   return QJsonValue();
+}
+
+QString slugify(const QString &input, const QString &separator) {
+  if (input.isEmpty()) { return QString(); }
+
+  QString result = input;
+
+  result = result.toLower();
+  result = result.normalized(QString::NormalizationForm_D);
+  result.remove(QRegularExpression("[\\u0300-\\u036f]"));
+  result.replace(QRegularExpression("[\\s_]+"), separator);
+
+  QString pattern = QString("[^a-z0-9%1]+").arg(QRegularExpression::escape(separator));
+  result.remove(QRegularExpression(pattern));
+
+  QString escapedSep = QRegularExpression::escape(separator);
+  result.remove(QRegularExpression(QString("^%1+|%1+$").arg(escapedSep)));
+  result.replace(QRegularExpression(QString("%1{2,}").arg(escapedSep)), separator);
+
+  return result;
 }
 
 QString formatSize(size_t bytes) {
