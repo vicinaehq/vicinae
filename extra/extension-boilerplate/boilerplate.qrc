@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RCC version="1.0">
 	<qresource prefix="/boilerplate">
-		<file>package.json</file>
+		<file alias="package.json">assets/package.json</file>
 		<file>tsconfig.json</file>
 		<file alias="README.md">assets/README.md</file>
 		<file alias="extension_icon">assets/extension_icon.png</file>

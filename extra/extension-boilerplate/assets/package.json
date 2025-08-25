@@ -1,0 +1,24 @@
+{
+  "$schema": "https://raw.githubusercontent.com/vicinaehq/vicinae/refs/heads/main/extra/schemas/extension.json",
+  "name": "%NAME%",
+  "title": "%TITLE%",
+  "description": "%DESCRIPTION%",
+  "categories": [],
+  "license": "MIT",
+  "author": "%AUTHOR%",
+  "contributors": [],
+  "pastContributors": [],
+  "icon": "extension_icon.png",
+  "commands": %COMMAND_LIST%,
+  "preferences": [],
+  "scripts": {
+    "build": "vici build",
+    "dev": "vici develop"
+  },
+  "dependencies": {
+    "@vicinae/api": "%VICINAE_VERSION%"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2"
+  }
+}

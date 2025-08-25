@@ -13,7 +13,7 @@
   "pastContributors": [],
   "icon": "icon.png",
   "commands": [
-	  {
+      {
 		"name": "list",
 		"title": "Simple List",
 		"description": "A simple list view",
@@ -37,7 +37,7 @@
 		"description": "A simple detail view",
 		"mode": "view"
 	  },
-	  {
+      {
 		"name": "no-view",
 		"title": "No View",
 		"description": "A basic no view command",
