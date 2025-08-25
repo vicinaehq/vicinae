@@ -3,11 +3,12 @@
 	<qresource prefix="/boilerplate">
 		<file>package.json</file>
 		<file>tsconfig.json</file>
+		<file alias="README.md">assets/README.md</file>
 		<file alias="extension_icon">assets/extension_icon.png</file>
-		<file alias="tmpl-simple-detail">command-templates/simple-detail.tsx</file>
-		<file alias="tmpl-no-view">command-templates/no-view.tsx</file>
-		<file alias="tmpl-list">command-templates/list.tsx</file>
-		<file alias="tmpl-list-detail">command-templates/list-detail.tsx</file>
-		<file alias="tmpl-controlled-list">command-templates/controlled-list.tsx</file>
+		<file alias="tmpl-simple-detail">src/simple-detail.tsx</file>
+		<file alias="tmpl-no-view">src/no-view.tsx</file>
+		<file alias="tmpl-list">src/list.tsx</file>
+		<file alias="tmpl-list-detail">src/list-detail.tsx</file>
+		<file alias="tmpl-controlled-list">src/controlled-list.tsx</file>
   </qresource>
 </RCC>

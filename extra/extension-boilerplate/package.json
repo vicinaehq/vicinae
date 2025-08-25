@@ -1,7 +1,8 @@
 {
   "$schema": "https://raw.githubusercontent.com/vicinaehq/vicinae/refs/heads/main/extra/schemas/extension.json",
-  "name": "example-extension",
-  "description": "Example description",
+  "name": "template",
+  "title": "Template",
+  "description": "A collection of command templates to build extensions from",
   "categories": [
     "Applications",
     "Productivity"
@@ -10,6 +11,40 @@
   "author": "vicinae",
   "contributors": [],
   "pastContributors": [],
+  "icon": "icon.png",
+  "commands": [
+	  {
+		"name": "list",
+		"title": "Simple List",
+		"description": "A simple list view",
+		"mode": "view"
+	  },
+	  {
+		"name": "list-detail",
+		"title": "List With Detail",
+		"description": "A list with a detail view",
+		"mode": "view"
+	  },
+	  {
+		"name": "controlled-list",
+		"title": "Controlled List",
+		"description": "A list where search is controlled by state",
+		"mode": "view"
+	  },
+	  {
+		"name": "simple-detail",
+		"title": "Simple Detail",
+		"description": "A simple detail view",
+		"mode": "view"
+	  },
+	  {
+		"name": "no-view",
+		"title": "No View",
+		"description": "A basic no view command",
+		"mode": "no-view"
+	  }
+  ],
+  "preferences": [],
   "scripts": {
     "build": "vici build",
     "dev": "vici develop"
@@ -17,10 +52,6 @@
   "dependencies": {
     "@vicinae/api": "^0.4.0"
   },
-  "icon": "extension_icon.png",
-  "commands": [],
-  "preferences": [],
-  "title": "My Example Extension",
   "devDependencies": {
     "typescript": "^5.9.2"
   }

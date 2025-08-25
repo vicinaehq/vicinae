@@ -68,7 +68,7 @@ ExtensionBoilerplateGenerator::generate(const fs::path &targetDir, const Extensi
 
   auto manifest = json.object();
   auto deps = manifest.value("dependencies").toObject();
-  auto cmds = manifest.value("commands").toArray();
+  QJsonArray cmds;
   QString version(VICINAE_GIT_TAG);
 
   if (!version.isEmpty()) version[0] = '^';
@@ -123,6 +123,7 @@ ExtensionBoilerplateGenerator::generate(const fs::path &targetDir, const Extensi
 
   userCopy(":boilerplate/tsconfig.json", QString::fromStdString(extDir / "tsconfig.json"));
   userCopy(":boilerplate/extension_icon", QString::fromStdString(assetsDir / "extension_icon.png"));
+  userCopy(":boilerplate/README.md", QString::fromStdString(extDir / "README.md"));
 
   return extDir;
 }
