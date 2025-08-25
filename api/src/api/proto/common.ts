@@ -9,8 +9,7 @@ import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 
 export const protobufPackage = "proto.ext.common";
 
-export interface AckResponse {
-}
+export interface AckResponse {}
 
 export interface ErrorResponse {
   errorText: string;
@@ -21,12 +20,16 @@ function createBaseAckResponse(): AckResponse {
 }
 
 export const AckResponse: MessageFns<AckResponse> = {
-  encode(_: AckResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    _: AckResponse,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     return writer;
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): AckResponse {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseAckResponse();
     while (reader.pos < end) {
@@ -64,7 +67,10 @@ function createBaseErrorResponse(): ErrorResponse {
 }
 
 export const ErrorResponse: MessageFns<ErrorResponse> = {
-  encode(message: ErrorResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: ErrorResponse,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.errorText !== "") {
       writer.uint32(10).string(message.errorText);
     }
@@ -72,7 +78,8 @@ export const ErrorResponse: MessageFns<ErrorResponse> = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): ErrorResponse {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseErrorResponse();
     while (reader.pos < end) {
@@ -96,7 +103,11 @@ export const ErrorResponse: MessageFns<ErrorResponse> = {
   },
 
   fromJSON(object: any): ErrorResponse {
-    return { errorText: isSet(object.errorText) ? globalThis.String(object.errorText) : "" };
+    return {
+      errorText: isSet(object.errorText)
+        ? globalThis.String(object.errorText)
+        : "",
+    };
   },
 
   toJSON(message: ErrorResponse): unknown {
@@ -107,27 +118,45 @@ export const ErrorResponse: MessageFns<ErrorResponse> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<ErrorResponse>, I>>(base?: I): ErrorResponse {
+  create<I extends Exact<DeepPartial<ErrorResponse>, I>>(
+    base?: I,
+  ): ErrorResponse {
     return ErrorResponse.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ErrorResponse>, I>>(object: I): ErrorResponse {
+  fromPartial<I extends Exact<DeepPartial<ErrorResponse>, I>>(
+    object: I,
+  ): ErrorResponse {
     const message = createBaseErrorResponse();
     message.errorText = object.errorText ?? "";
     return message;
   },
 };
 
-type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+type Builtin =
+  | Date
+  | Function
+  | Uint8Array
+  | string
+  | number
+  | boolean
+  | undefined;
 
-export type DeepPartial<T> = T extends Builtin ? T
-  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
-  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
-  : Partial<T>;
+export type DeepPartial<T> = T extends Builtin
+  ? T
+  : T extends globalThis.Array<infer U>
+    ? globalThis.Array<DeepPartial<U>>
+    : T extends ReadonlyArray<infer U>
+      ? ReadonlyArray<DeepPartial<U>>
+      : T extends {}
+        ? { [K in keyof T]?: DeepPartial<T[K]> }
+        : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & {
+      [K in Exclude<keyof I, KeysOfUnion<P>>]: never;
+    };
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;

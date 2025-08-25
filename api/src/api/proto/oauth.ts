@@ -79,7 +79,10 @@ function createBasePKCEClientOptions(): PKCEClientOptions {
 }
 
 export const PKCEClientOptions: MessageFns<PKCEClientOptions> = {
-  encode(message: PKCEClientOptions, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: PKCEClientOptions,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.id !== undefined) {
       writer.uint32(10).string(message.id);
     }
@@ -96,7 +99,8 @@ export const PKCEClientOptions: MessageFns<PKCEClientOptions> = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): PKCEClientOptions {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBasePKCEClientOptions();
     while (reader.pos < end) {
@@ -147,7 +151,9 @@ export const PKCEClientOptions: MessageFns<PKCEClientOptions> = {
     return {
       id: isSet(object.id) ? globalThis.String(object.id) : undefined,
       name: isSet(object.name) ? globalThis.String(object.name) : "",
-      description: isSet(object.description) ? globalThis.String(object.description) : "",
+      description: isSet(object.description)
+        ? globalThis.String(object.description)
+        : "",
       icon: isSet(object.icon) ? Image.fromJSON(object.icon) : undefined,
     };
   },
@@ -169,15 +175,22 @@ export const PKCEClientOptions: MessageFns<PKCEClientOptions> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<PKCEClientOptions>, I>>(base?: I): PKCEClientOptions {
+  create<I extends Exact<DeepPartial<PKCEClientOptions>, I>>(
+    base?: I,
+  ): PKCEClientOptions {
     return PKCEClientOptions.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<PKCEClientOptions>, I>>(object: I): PKCEClientOptions {
+  fromPartial<I extends Exact<DeepPartial<PKCEClientOptions>, I>>(
+    object: I,
+  ): PKCEClientOptions {
     const message = createBasePKCEClientOptions();
     message.id = object.id ?? undefined;
     message.name = object.name ?? "";
     message.description = object.description ?? "";
-    message.icon = (object.icon !== undefined && object.icon !== null) ? Image.fromPartial(object.icon) : undefined;
+    message.icon =
+      object.icon !== undefined && object.icon !== null
+        ? Image.fromPartial(object.icon)
+        : undefined;
     return message;
   },
 };
@@ -187,7 +200,10 @@ function createBaseAuthorizeRequest(): AuthorizeRequest {
 }
 
 export const AuthorizeRequest: MessageFns<AuthorizeRequest> = {
-  encode(message: AuthorizeRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: AuthorizeRequest,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.client !== undefined) {
       PKCEClientOptions.encode(message.client, writer.uint32(10).fork()).join();
     }
@@ -198,7 +214,8 @@ export const AuthorizeRequest: MessageFns<AuthorizeRequest> = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): AuthorizeRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseAuthorizeRequest();
     while (reader.pos < end) {
@@ -231,7 +248,9 @@ export const AuthorizeRequest: MessageFns<AuthorizeRequest> = {
 
   fromJSON(object: any): AuthorizeRequest {
     return {
-      client: isSet(object.client) ? PKCEClientOptions.fromJSON(object.client) : undefined,
+      client: isSet(object.client)
+        ? PKCEClientOptions.fromJSON(object.client)
+        : undefined,
       url: isSet(object.url) ? globalThis.String(object.url) : "",
     };
   },
@@ -247,14 +266,19 @@ export const AuthorizeRequest: MessageFns<AuthorizeRequest> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<AuthorizeRequest>, I>>(base?: I): AuthorizeRequest {
+  create<I extends Exact<DeepPartial<AuthorizeRequest>, I>>(
+    base?: I,
+  ): AuthorizeRequest {
     return AuthorizeRequest.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<AuthorizeRequest>, I>>(object: I): AuthorizeRequest {
+  fromPartial<I extends Exact<DeepPartial<AuthorizeRequest>, I>>(
+    object: I,
+  ): AuthorizeRequest {
     const message = createBaseAuthorizeRequest();
-    message.client = (object.client !== undefined && object.client !== null)
-      ? PKCEClientOptions.fromPartial(object.client)
-      : undefined;
+    message.client =
+      object.client !== undefined && object.client !== null
+        ? PKCEClientOptions.fromPartial(object.client)
+        : undefined;
     message.url = object.url ?? "";
     return message;
   },
@@ -265,7 +289,10 @@ function createBaseAuthorizeResponse(): AuthorizeResponse {
 }
 
 export const AuthorizeResponse: MessageFns<AuthorizeResponse> = {
-  encode(message: AuthorizeResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: AuthorizeResponse,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.code !== "") {
       writer.uint32(10).string(message.code);
     }
@@ -273,7 +300,8 @@ export const AuthorizeResponse: MessageFns<AuthorizeResponse> = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): AuthorizeResponse {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseAuthorizeResponse();
     while (reader.pos < end) {
@@ -308,10 +336,14 @@ export const AuthorizeResponse: MessageFns<AuthorizeResponse> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<AuthorizeResponse>, I>>(base?: I): AuthorizeResponse {
+  create<I extends Exact<DeepPartial<AuthorizeResponse>, I>>(
+    base?: I,
+  ): AuthorizeResponse {
     return AuthorizeResponse.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<AuthorizeResponse>, I>>(object: I): AuthorizeResponse {
+  fromPartial<I extends Exact<DeepPartial<AuthorizeResponse>, I>>(
+    object: I,
+  ): AuthorizeResponse {
     const message = createBaseAuthorizeResponse();
     message.code = object.code ?? "";
     return message;
@@ -323,15 +355,22 @@ function createBaseRequest(): Request {
 }
 
 export const Request: MessageFns<Request> = {
-  encode(message: Request, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: Request,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.authorize !== undefined) {
-      AuthorizeRequest.encode(message.authorize, writer.uint32(10).fork()).join();
+      AuthorizeRequest.encode(
+        message.authorize,
+        writer.uint32(10).fork(),
+      ).join();
     }
     return writer;
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): Request {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseRequest();
     while (reader.pos < end) {
@@ -355,7 +394,11 @@ export const Request: MessageFns<Request> = {
   },
 
   fromJSON(object: any): Request {
-    return { authorize: isSet(object.authorize) ? AuthorizeRequest.fromJSON(object.authorize) : undefined };
+    return {
+      authorize: isSet(object.authorize)
+        ? AuthorizeRequest.fromJSON(object.authorize)
+        : undefined,
+    };
   },
 
   toJSON(message: Request): unknown {
@@ -371,9 +414,10 @@ export const Request: MessageFns<Request> = {
   },
   fromPartial<I extends Exact<DeepPartial<Request>, I>>(object: I): Request {
     const message = createBaseRequest();
-    message.authorize = (object.authorize !== undefined && object.authorize !== null)
-      ? AuthorizeRequest.fromPartial(object.authorize)
-      : undefined;
+    message.authorize =
+      object.authorize !== undefined && object.authorize !== null
+        ? AuthorizeRequest.fromPartial(object.authorize)
+        : undefined;
     return message;
   },
 };
@@ -383,15 +427,22 @@ function createBaseResponse(): Response {
 }
 
 export const Response: MessageFns<Response> = {
-  encode(message: Response, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: Response,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.authorize !== undefined) {
-      AuthorizeResponse.encode(message.authorize, writer.uint32(10).fork()).join();
+      AuthorizeResponse.encode(
+        message.authorize,
+        writer.uint32(10).fork(),
+      ).join();
     }
     return writer;
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): Response {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseResponse();
     while (reader.pos < end) {
@@ -415,7 +466,11 @@ export const Response: MessageFns<Response> = {
   },
 
   fromJSON(object: any): Response {
-    return { authorize: isSet(object.authorize) ? AuthorizeResponse.fromJSON(object.authorize) : undefined };
+    return {
+      authorize: isSet(object.authorize)
+        ? AuthorizeResponse.fromJSON(object.authorize)
+        : undefined,
+    };
   },
 
   toJSON(message: Response): unknown {
@@ -431,24 +486,39 @@ export const Response: MessageFns<Response> = {
   },
   fromPartial<I extends Exact<DeepPartial<Response>, I>>(object: I): Response {
     const message = createBaseResponse();
-    message.authorize = (object.authorize !== undefined && object.authorize !== null)
-      ? AuthorizeResponse.fromPartial(object.authorize)
-      : undefined;
+    message.authorize =
+      object.authorize !== undefined && object.authorize !== null
+        ? AuthorizeResponse.fromPartial(object.authorize)
+        : undefined;
     return message;
   },
 };
 
-type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+type Builtin =
+  | Date
+  | Function
+  | Uint8Array
+  | string
+  | number
+  | boolean
+  | undefined;
 
-export type DeepPartial<T> = T extends Builtin ? T
-  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
-  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
-  : Partial<T>;
+export type DeepPartial<T> = T extends Builtin
+  ? T
+  : T extends globalThis.Array<infer U>
+    ? globalThis.Array<DeepPartial<U>>
+    : T extends ReadonlyArray<infer U>
+      ? ReadonlyArray<DeepPartial<U>>
+      : T extends {}
+        ? { [K in keyof T]?: DeepPartial<T[K]> }
+        : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & {
+      [K in Exclude<keyof I, KeysOfUnion<P>>]: never;
+    };
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;

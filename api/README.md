@@ -25,7 +25,7 @@ While convenience scripts are already provided in the boilerplate, you can still
 npx vici --help
 
 # assuming vicinae is running
-npx vici develop 
+npx vici develop
 npx vici build -o my/output/path
 ```
 

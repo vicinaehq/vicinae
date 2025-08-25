@@ -63,27 +63,46 @@ function createBaseIpcMessage(): IpcMessage {
 }
 
 export const IpcMessage: MessageFns<IpcMessage> = {
-  encode(message: IpcMessage, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: IpcMessage,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.extensionRequest !== undefined) {
-      QualifiedExtensionRequest.encode(message.extensionRequest, writer.uint32(10).fork()).join();
+      QualifiedExtensionRequest.encode(
+        message.extensionRequest,
+        writer.uint32(10).fork(),
+      ).join();
     }
     if (message.extensionResponse !== undefined) {
-      QualifiedExtensionResponse.encode(message.extensionResponse, writer.uint32(18).fork()).join();
+      QualifiedExtensionResponse.encode(
+        message.extensionResponse,
+        writer.uint32(18).fork(),
+      ).join();
     }
     if (message.extensionEvent !== undefined) {
-      QualifiedExtensionEvent.encode(message.extensionEvent, writer.uint32(26).fork()).join();
+      QualifiedExtensionEvent.encode(
+        message.extensionEvent,
+        writer.uint32(26).fork(),
+      ).join();
     }
     if (message.managerRequest !== undefined) {
-      ManagerRequest.encode(message.managerRequest, writer.uint32(34).fork()).join();
+      ManagerRequest.encode(
+        message.managerRequest,
+        writer.uint32(34).fork(),
+      ).join();
     }
     if (message.managerResponse !== undefined) {
-      ManagerResponse.encode(message.managerResponse, writer.uint32(42).fork()).join();
+      ManagerResponse.encode(
+        message.managerResponse,
+        writer.uint32(42).fork(),
+      ).join();
     }
     return writer;
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): IpcMessage {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseIpcMessage();
     while (reader.pos < end) {
@@ -94,7 +113,10 @@ export const IpcMessage: MessageFns<IpcMessage> = {
             break;
           }
 
-          message.extensionRequest = QualifiedExtensionRequest.decode(reader, reader.uint32());
+          message.extensionRequest = QualifiedExtensionRequest.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
         case 2: {
@@ -102,7 +124,10 @@ export const IpcMessage: MessageFns<IpcMessage> = {
             break;
           }
 
-          message.extensionResponse = QualifiedExtensionResponse.decode(reader, reader.uint32());
+          message.extensionResponse = QualifiedExtensionResponse.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
         case 3: {
@@ -110,7 +135,10 @@ export const IpcMessage: MessageFns<IpcMessage> = {
             break;
           }
 
-          message.extensionEvent = QualifiedExtensionEvent.decode(reader, reader.uint32());
+          message.extensionEvent = QualifiedExtensionEvent.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
         case 4: {
@@ -118,7 +146,10 @@ export const IpcMessage: MessageFns<IpcMessage> = {
             break;
           }
 
-          message.managerRequest = ManagerRequest.decode(reader, reader.uint32());
+          message.managerRequest = ManagerRequest.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
         case 5: {
@@ -126,7 +157,10 @@ export const IpcMessage: MessageFns<IpcMessage> = {
             break;
           }
 
-          message.managerResponse = ManagerResponse.decode(reader, reader.uint32());
+          message.managerResponse = ManagerResponse.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
       }
@@ -149,21 +183,31 @@ export const IpcMessage: MessageFns<IpcMessage> = {
       extensionEvent: isSet(object.extensionEvent)
         ? QualifiedExtensionEvent.fromJSON(object.extensionEvent)
         : undefined,
-      managerRequest: isSet(object.managerRequest) ? ManagerRequest.fromJSON(object.managerRequest) : undefined,
-      managerResponse: isSet(object.managerResponse) ? ManagerResponse.fromJSON(object.managerResponse) : undefined,
+      managerRequest: isSet(object.managerRequest)
+        ? ManagerRequest.fromJSON(object.managerRequest)
+        : undefined,
+      managerResponse: isSet(object.managerResponse)
+        ? ManagerResponse.fromJSON(object.managerResponse)
+        : undefined,
     };
   },
 
   toJSON(message: IpcMessage): unknown {
     const obj: any = {};
     if (message.extensionRequest !== undefined) {
-      obj.extensionRequest = QualifiedExtensionRequest.toJSON(message.extensionRequest);
+      obj.extensionRequest = QualifiedExtensionRequest.toJSON(
+        message.extensionRequest,
+      );
     }
     if (message.extensionResponse !== undefined) {
-      obj.extensionResponse = QualifiedExtensionResponse.toJSON(message.extensionResponse);
+      obj.extensionResponse = QualifiedExtensionResponse.toJSON(
+        message.extensionResponse,
+      );
     }
     if (message.extensionEvent !== undefined) {
-      obj.extensionEvent = QualifiedExtensionEvent.toJSON(message.extensionEvent);
+      obj.extensionEvent = QualifiedExtensionEvent.toJSON(
+        message.extensionEvent,
+      );
     }
     if (message.managerRequest !== undefined) {
       obj.managerRequest = ManagerRequest.toJSON(message.managerRequest);
@@ -177,23 +221,31 @@ export const IpcMessage: MessageFns<IpcMessage> = {
   create<I extends Exact<DeepPartial<IpcMessage>, I>>(base?: I): IpcMessage {
     return IpcMessage.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<IpcMessage>, I>>(object: I): IpcMessage {
+  fromPartial<I extends Exact<DeepPartial<IpcMessage>, I>>(
+    object: I,
+  ): IpcMessage {
     const message = createBaseIpcMessage();
-    message.extensionRequest = (object.extensionRequest !== undefined && object.extensionRequest !== null)
-      ? QualifiedExtensionRequest.fromPartial(object.extensionRequest)
-      : undefined;
-    message.extensionResponse = (object.extensionResponse !== undefined && object.extensionResponse !== null)
-      ? QualifiedExtensionResponse.fromPartial(object.extensionResponse)
-      : undefined;
-    message.extensionEvent = (object.extensionEvent !== undefined && object.extensionEvent !== null)
-      ? QualifiedExtensionEvent.fromPartial(object.extensionEvent)
-      : undefined;
-    message.managerRequest = (object.managerRequest !== undefined && object.managerRequest !== null)
-      ? ManagerRequest.fromPartial(object.managerRequest)
-      : undefined;
-    message.managerResponse = (object.managerResponse !== undefined && object.managerResponse !== null)
-      ? ManagerResponse.fromPartial(object.managerResponse)
-      : undefined;
+    message.extensionRequest =
+      object.extensionRequest !== undefined && object.extensionRequest !== null
+        ? QualifiedExtensionRequest.fromPartial(object.extensionRequest)
+        : undefined;
+    message.extensionResponse =
+      object.extensionResponse !== undefined &&
+      object.extensionResponse !== null
+        ? QualifiedExtensionResponse.fromPartial(object.extensionResponse)
+        : undefined;
+    message.extensionEvent =
+      object.extensionEvent !== undefined && object.extensionEvent !== null
+        ? QualifiedExtensionEvent.fromPartial(object.extensionEvent)
+        : undefined;
+    message.managerRequest =
+      object.managerRequest !== undefined && object.managerRequest !== null
+        ? ManagerRequest.fromPartial(object.managerRequest)
+        : undefined;
+    message.managerResponse =
+      object.managerResponse !== undefined && object.managerResponse !== null
+        ? ManagerResponse.fromPartial(object.managerResponse)
+        : undefined;
     return message;
   },
 };
@@ -203,7 +255,10 @@ function createBaseManagerRequest(): ManagerRequest {
 }
 
 export const ManagerRequest: MessageFns<ManagerRequest> = {
-  encode(message: ManagerRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: ManagerRequest,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.requestId !== "") {
       writer.uint32(10).string(message.requestId);
     }
@@ -214,7 +269,8 @@ export const ManagerRequest: MessageFns<ManagerRequest> = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): ManagerRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseManagerRequest();
     while (reader.pos < end) {
@@ -247,8 +303,12 @@ export const ManagerRequest: MessageFns<ManagerRequest> = {
 
   fromJSON(object: any): ManagerRequest {
     return {
-      requestId: isSet(object.requestId) ? globalThis.String(object.requestId) : "",
-      payload: isSet(object.payload) ? RequestData.fromJSON(object.payload) : undefined,
+      requestId: isSet(object.requestId)
+        ? globalThis.String(object.requestId)
+        : "",
+      payload: isSet(object.payload)
+        ? RequestData.fromJSON(object.payload)
+        : undefined,
     };
   },
 
@@ -263,15 +323,20 @@ export const ManagerRequest: MessageFns<ManagerRequest> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<ManagerRequest>, I>>(base?: I): ManagerRequest {
+  create<I extends Exact<DeepPartial<ManagerRequest>, I>>(
+    base?: I,
+  ): ManagerRequest {
     return ManagerRequest.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ManagerRequest>, I>>(object: I): ManagerRequest {
+  fromPartial<I extends Exact<DeepPartial<ManagerRequest>, I>>(
+    object: I,
+  ): ManagerRequest {
     const message = createBaseManagerRequest();
     message.requestId = object.requestId ?? "";
-    message.payload = (object.payload !== undefined && object.payload !== null)
-      ? RequestData.fromPartial(object.payload)
-      : undefined;
+    message.payload =
+      object.payload !== undefined && object.payload !== null
+        ? RequestData.fromPartial(object.payload)
+        : undefined;
     return message;
   },
 };
@@ -281,7 +346,10 @@ function createBaseManagerResponse(): ManagerResponse {
 }
 
 export const ManagerResponse: MessageFns<ManagerResponse> = {
-  encode(message: ManagerResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: ManagerResponse,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.requestId !== "") {
       writer.uint32(10).string(message.requestId);
     }
@@ -295,7 +363,8 @@ export const ManagerResponse: MessageFns<ManagerResponse> = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): ManagerResponse {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseManagerResponse();
     while (reader.pos < end) {
@@ -336,9 +405,15 @@ export const ManagerResponse: MessageFns<ManagerResponse> = {
 
   fromJSON(object: any): ManagerResponse {
     return {
-      requestId: isSet(object.requestId) ? globalThis.String(object.requestId) : "",
-      value: isSet(object.value) ? ResponseData.fromJSON(object.value) : undefined,
-      error: isSet(object.error) ? ErrorResponse.fromJSON(object.error) : undefined,
+      requestId: isSet(object.requestId)
+        ? globalThis.String(object.requestId)
+        : "",
+      value: isSet(object.value)
+        ? ResponseData.fromJSON(object.value)
+        : undefined,
+      error: isSet(object.error)
+        ? ErrorResponse.fromJSON(object.error)
+        : undefined,
     };
   },
 
@@ -356,18 +431,24 @@ export const ManagerResponse: MessageFns<ManagerResponse> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<ManagerResponse>, I>>(base?: I): ManagerResponse {
+  create<I extends Exact<DeepPartial<ManagerResponse>, I>>(
+    base?: I,
+  ): ManagerResponse {
     return ManagerResponse.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ManagerResponse>, I>>(object: I): ManagerResponse {
+  fromPartial<I extends Exact<DeepPartial<ManagerResponse>, I>>(
+    object: I,
+  ): ManagerResponse {
     const message = createBaseManagerResponse();
     message.requestId = object.requestId ?? "";
-    message.value = (object.value !== undefined && object.value !== null)
-      ? ResponseData.fromPartial(object.value)
-      : undefined;
-    message.error = (object.error !== undefined && object.error !== null)
-      ? ErrorResponse.fromPartial(object.error)
-      : undefined;
+    message.value =
+      object.value !== undefined && object.value !== null
+        ? ResponseData.fromPartial(object.value)
+        : undefined;
+    message.error =
+      object.error !== undefined && object.error !== null
+        ? ErrorResponse.fromPartial(object.error)
+        : undefined;
     return message;
   },
 };
@@ -376,164 +457,201 @@ function createBaseQualifiedExtensionRequest(): QualifiedExtensionRequest {
   return { sessionId: "", request: undefined };
 }
 
-export const QualifiedExtensionRequest: MessageFns<QualifiedExtensionRequest> = {
-  encode(message: QualifiedExtensionRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.sessionId !== "") {
-      writer.uint32(10).string(message.sessionId);
-    }
-    if (message.request !== undefined) {
-      Request.encode(message.request, writer.uint32(18).fork()).join();
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): QualifiedExtensionRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseQualifiedExtensionRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.sessionId = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.request = Request.decode(reader, reader.uint32());
-          continue;
-        }
+export const QualifiedExtensionRequest: MessageFns<QualifiedExtensionRequest> =
+  {
+    encode(
+      message: QualifiedExtensionRequest,
+      writer: BinaryWriter = new BinaryWriter(),
+    ): BinaryWriter {
+      if (message.sessionId !== "") {
+        writer.uint32(10).string(message.sessionId);
       }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
+      if (message.request !== undefined) {
+        Request.encode(message.request, writer.uint32(18).fork()).join();
       }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+      return writer;
+    },
 
-  fromJSON(object: any): QualifiedExtensionRequest {
-    return {
-      sessionId: isSet(object.sessionId) ? globalThis.String(object.sessionId) : "",
-      request: isSet(object.request) ? Request.fromJSON(object.request) : undefined,
-    };
-  },
+    decode(
+      input: BinaryReader | Uint8Array,
+      length?: number,
+    ): QualifiedExtensionRequest {
+      const reader =
+        input instanceof BinaryReader ? input : new BinaryReader(input);
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseQualifiedExtensionRequest();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-  toJSON(message: QualifiedExtensionRequest): unknown {
-    const obj: any = {};
-    if (message.sessionId !== "") {
-      obj.sessionId = message.sessionId;
-    }
-    if (message.request !== undefined) {
-      obj.request = Request.toJSON(message.request);
-    }
-    return obj;
-  },
+            message.sessionId = reader.string();
+            continue;
+          }
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
 
-  create<I extends Exact<DeepPartial<QualifiedExtensionRequest>, I>>(base?: I): QualifiedExtensionRequest {
-    return QualifiedExtensionRequest.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<QualifiedExtensionRequest>, I>>(object: I): QualifiedExtensionRequest {
-    const message = createBaseQualifiedExtensionRequest();
-    message.sessionId = object.sessionId ?? "";
-    message.request = (object.request !== undefined && object.request !== null)
-      ? Request.fromPartial(object.request)
-      : undefined;
-    return message;
-  },
-};
+            message.request = Request.decode(reader, reader.uint32());
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    },
+
+    fromJSON(object: any): QualifiedExtensionRequest {
+      return {
+        sessionId: isSet(object.sessionId)
+          ? globalThis.String(object.sessionId)
+          : "",
+        request: isSet(object.request)
+          ? Request.fromJSON(object.request)
+          : undefined,
+      };
+    },
+
+    toJSON(message: QualifiedExtensionRequest): unknown {
+      const obj: any = {};
+      if (message.sessionId !== "") {
+        obj.sessionId = message.sessionId;
+      }
+      if (message.request !== undefined) {
+        obj.request = Request.toJSON(message.request);
+      }
+      return obj;
+    },
+
+    create<I extends Exact<DeepPartial<QualifiedExtensionRequest>, I>>(
+      base?: I,
+    ): QualifiedExtensionRequest {
+      return QualifiedExtensionRequest.fromPartial(base ?? ({} as any));
+    },
+    fromPartial<I extends Exact<DeepPartial<QualifiedExtensionRequest>, I>>(
+      object: I,
+    ): QualifiedExtensionRequest {
+      const message = createBaseQualifiedExtensionRequest();
+      message.sessionId = object.sessionId ?? "";
+      message.request =
+        object.request !== undefined && object.request !== null
+          ? Request.fromPartial(object.request)
+          : undefined;
+      return message;
+    },
+  };
 
 function createBaseQualifiedExtensionResponse(): QualifiedExtensionResponse {
   return { sessionId: "", response: undefined };
 }
 
-export const QualifiedExtensionResponse: MessageFns<QualifiedExtensionResponse> = {
-  encode(message: QualifiedExtensionResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.sessionId !== "") {
-      writer.uint32(10).string(message.sessionId);
-    }
-    if (message.response !== undefined) {
-      Response.encode(message.response, writer.uint32(18).fork()).join();
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): QualifiedExtensionResponse {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseQualifiedExtensionResponse();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.sessionId = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.response = Response.decode(reader, reader.uint32());
-          continue;
-        }
+export const QualifiedExtensionResponse: MessageFns<QualifiedExtensionResponse> =
+  {
+    encode(
+      message: QualifiedExtensionResponse,
+      writer: BinaryWriter = new BinaryWriter(),
+    ): BinaryWriter {
+      if (message.sessionId !== "") {
+        writer.uint32(10).string(message.sessionId);
       }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
+      if (message.response !== undefined) {
+        Response.encode(message.response, writer.uint32(18).fork()).join();
       }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+      return writer;
+    },
 
-  fromJSON(object: any): QualifiedExtensionResponse {
-    return {
-      sessionId: isSet(object.sessionId) ? globalThis.String(object.sessionId) : "",
-      response: isSet(object.response) ? Response.fromJSON(object.response) : undefined,
-    };
-  },
+    decode(
+      input: BinaryReader | Uint8Array,
+      length?: number,
+    ): QualifiedExtensionResponse {
+      const reader =
+        input instanceof BinaryReader ? input : new BinaryReader(input);
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseQualifiedExtensionResponse();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-  toJSON(message: QualifiedExtensionResponse): unknown {
-    const obj: any = {};
-    if (message.sessionId !== "") {
-      obj.sessionId = message.sessionId;
-    }
-    if (message.response !== undefined) {
-      obj.response = Response.toJSON(message.response);
-    }
-    return obj;
-  },
+            message.sessionId = reader.string();
+            continue;
+          }
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
 
-  create<I extends Exact<DeepPartial<QualifiedExtensionResponse>, I>>(base?: I): QualifiedExtensionResponse {
-    return QualifiedExtensionResponse.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<QualifiedExtensionResponse>, I>>(object: I): QualifiedExtensionResponse {
-    const message = createBaseQualifiedExtensionResponse();
-    message.sessionId = object.sessionId ?? "";
-    message.response = (object.response !== undefined && object.response !== null)
-      ? Response.fromPartial(object.response)
-      : undefined;
-    return message;
-  },
-};
+            message.response = Response.decode(reader, reader.uint32());
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    },
+
+    fromJSON(object: any): QualifiedExtensionResponse {
+      return {
+        sessionId: isSet(object.sessionId)
+          ? globalThis.String(object.sessionId)
+          : "",
+        response: isSet(object.response)
+          ? Response.fromJSON(object.response)
+          : undefined,
+      };
+    },
+
+    toJSON(message: QualifiedExtensionResponse): unknown {
+      const obj: any = {};
+      if (message.sessionId !== "") {
+        obj.sessionId = message.sessionId;
+      }
+      if (message.response !== undefined) {
+        obj.response = Response.toJSON(message.response);
+      }
+      return obj;
+    },
+
+    create<I extends Exact<DeepPartial<QualifiedExtensionResponse>, I>>(
+      base?: I,
+    ): QualifiedExtensionResponse {
+      return QualifiedExtensionResponse.fromPartial(base ?? ({} as any));
+    },
+    fromPartial<I extends Exact<DeepPartial<QualifiedExtensionResponse>, I>>(
+      object: I,
+    ): QualifiedExtensionResponse {
+      const message = createBaseQualifiedExtensionResponse();
+      message.sessionId = object.sessionId ?? "";
+      message.response =
+        object.response !== undefined && object.response !== null
+          ? Response.fromPartial(object.response)
+          : undefined;
+      return message;
+    },
+  };
 
 function createBaseQualifiedExtensionEvent(): QualifiedExtensionEvent {
   return { sessionId: "", event: undefined };
 }
 
 export const QualifiedExtensionEvent: MessageFns<QualifiedExtensionEvent> = {
-  encode(message: QualifiedExtensionEvent, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: QualifiedExtensionEvent,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.sessionId !== "") {
       writer.uint32(10).string(message.sessionId);
     }
@@ -543,8 +661,12 @@ export const QualifiedExtensionEvent: MessageFns<QualifiedExtensionEvent> = {
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): QualifiedExtensionEvent {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+  decode(
+    input: BinaryReader | Uint8Array,
+    length?: number,
+  ): QualifiedExtensionEvent {
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseQualifiedExtensionEvent();
     while (reader.pos < end) {
@@ -577,7 +699,9 @@ export const QualifiedExtensionEvent: MessageFns<QualifiedExtensionEvent> = {
 
   fromJSON(object: any): QualifiedExtensionEvent {
     return {
-      sessionId: isSet(object.sessionId) ? globalThis.String(object.sessionId) : "",
+      sessionId: isSet(object.sessionId)
+        ? globalThis.String(object.sessionId)
+        : "",
       event: isSet(object.event) ? Event.fromJSON(object.event) : undefined,
     };
   },
@@ -593,13 +717,20 @@ export const QualifiedExtensionEvent: MessageFns<QualifiedExtensionEvent> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<QualifiedExtensionEvent>, I>>(base?: I): QualifiedExtensionEvent {
+  create<I extends Exact<DeepPartial<QualifiedExtensionEvent>, I>>(
+    base?: I,
+  ): QualifiedExtensionEvent {
     return QualifiedExtensionEvent.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<QualifiedExtensionEvent>, I>>(object: I): QualifiedExtensionEvent {
+  fromPartial<I extends Exact<DeepPartial<QualifiedExtensionEvent>, I>>(
+    object: I,
+  ): QualifiedExtensionEvent {
     const message = createBaseQualifiedExtensionEvent();
     message.sessionId = object.sessionId ?? "";
-    message.event = (object.event !== undefined && object.event !== null) ? Event.fromPartial(object.event) : undefined;
+    message.event =
+      object.event !== undefined && object.event !== null
+        ? Event.fromPartial(object.event)
+        : undefined;
     return message;
   },
 };
@@ -609,7 +740,10 @@ function createBaseExtensionMessage(): ExtensionMessage {
 }
 
 export const ExtensionMessage: MessageFns<ExtensionMessage> = {
-  encode(message: ExtensionMessage, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: ExtensionMessage,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.request !== undefined) {
       Request.encode(message.request, writer.uint32(10).fork()).join();
     }
@@ -623,7 +757,8 @@ export const ExtensionMessage: MessageFns<ExtensionMessage> = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): ExtensionMessage {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseExtensionMessage();
     while (reader.pos < end) {
@@ -664,8 +799,12 @@ export const ExtensionMessage: MessageFns<ExtensionMessage> = {
 
   fromJSON(object: any): ExtensionMessage {
     return {
-      request: isSet(object.request) ? Request.fromJSON(object.request) : undefined,
-      response: isSet(object.response) ? Response.fromJSON(object.response) : undefined,
+      request: isSet(object.request)
+        ? Request.fromJSON(object.request)
+        : undefined,
+      response: isSet(object.response)
+        ? Response.fromJSON(object.response)
+        : undefined,
       event: isSet(object.event) ? Event.fromJSON(object.event) : undefined,
     };
   },
@@ -684,33 +823,56 @@ export const ExtensionMessage: MessageFns<ExtensionMessage> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<ExtensionMessage>, I>>(base?: I): ExtensionMessage {
+  create<I extends Exact<DeepPartial<ExtensionMessage>, I>>(
+    base?: I,
+  ): ExtensionMessage {
     return ExtensionMessage.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ExtensionMessage>, I>>(object: I): ExtensionMessage {
+  fromPartial<I extends Exact<DeepPartial<ExtensionMessage>, I>>(
+    object: I,
+  ): ExtensionMessage {
     const message = createBaseExtensionMessage();
-    message.request = (object.request !== undefined && object.request !== null)
-      ? Request.fromPartial(object.request)
-      : undefined;
-    message.response = (object.response !== undefined && object.response !== null)
-      ? Response.fromPartial(object.response)
-      : undefined;
-    message.event = (object.event !== undefined && object.event !== null) ? Event.fromPartial(object.event) : undefined;
+    message.request =
+      object.request !== undefined && object.request !== null
+        ? Request.fromPartial(object.request)
+        : undefined;
+    message.response =
+      object.response !== undefined && object.response !== null
+        ? Response.fromPartial(object.response)
+        : undefined;
+    message.event =
+      object.event !== undefined && object.event !== null
+        ? Event.fromPartial(object.event)
+        : undefined;
     return message;
   },
 };
 
-type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+type Builtin =
+  | Date
+  | Function
+  | Uint8Array
+  | string
+  | number
+  | boolean
+  | undefined;
 
-export type DeepPartial<T> = T extends Builtin ? T
-  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
-  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
-  : Partial<T>;
+export type DeepPartial<T> = T extends Builtin
+  ? T
+  : T extends globalThis.Array<infer U>
+    ? globalThis.Array<DeepPartial<U>>
+    : T extends ReadonlyArray<infer U>
+      ? ReadonlyArray<DeepPartial<U>>
+      : T extends {}
+        ? { [K in keyof T]?: DeepPartial<T[K]> }
+        : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & {
+      [K in Exclude<keyof I, KeysOfUnion<P>>]: never;
+    };
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;

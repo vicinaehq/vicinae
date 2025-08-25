@@ -23,7 +23,10 @@ function createBaseOffer(): Offer {
 }
 
 export const Offer: MessageFns<Offer> = {
-  encode(message: Offer, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: Offer,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.data.length !== 0) {
       writer.uint32(10).bytes(message.data);
     }
@@ -34,7 +37,8 @@ export const Offer: MessageFns<Offer> = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): Offer {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseOffer();
     while (reader.pos < end) {
@@ -67,8 +71,12 @@ export const Offer: MessageFns<Offer> = {
 
   fromJSON(object: any): Offer {
     return {
-      data: isSet(object.data) ? bytesFromBase64(object.data) : new Uint8Array(0),
-      mimeType: isSet(object.mimeType) ? globalThis.String(object.mimeType) : "",
+      data: isSet(object.data)
+        ? bytesFromBase64(object.data)
+        : new Uint8Array(0),
+      mimeType: isSet(object.mimeType)
+        ? globalThis.String(object.mimeType)
+        : "",
     };
   },
 
@@ -99,7 +107,10 @@ function createBaseSelection(): Selection {
 }
 
 export const Selection: MessageFns<Selection> = {
-  encode(message: Selection, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: Selection,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     for (const v of message.offers) {
       Offer.encode(v!, writer.uint32(10).fork()).join();
     }
@@ -107,7 +118,8 @@ export const Selection: MessageFns<Selection> = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): Selection {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseSelection();
     while (reader.pos < end) {
@@ -131,7 +143,11 @@ export const Selection: MessageFns<Selection> = {
   },
 
   fromJSON(object: any): Selection {
-    return { offers: globalThis.Array.isArray(object?.offers) ? object.offers.map((e: any) => Offer.fromJSON(e)) : [] };
+    return {
+      offers: globalThis.Array.isArray(object?.offers)
+        ? object.offers.map((e: any) => Offer.fromJSON(e))
+        : [],
+    };
   },
 
   toJSON(message: Selection): unknown {
@@ -145,7 +161,9 @@ export const Selection: MessageFns<Selection> = {
   create<I extends Exact<DeepPartial<Selection>, I>>(base?: I): Selection {
     return Selection.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<Selection>, I>>(object: I): Selection {
+  fromPartial<I extends Exact<DeepPartial<Selection>, I>>(
+    object: I,
+  ): Selection {
     const message = createBaseSelection();
     message.offers = object.offers?.map((e) => Offer.fromPartial(e)) || [];
     return message;
@@ -177,17 +195,31 @@ function base64FromBytes(arr: Uint8Array): string {
   }
 }
 
-type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+type Builtin =
+  | Date
+  | Function
+  | Uint8Array
+  | string
+  | number
+  | boolean
+  | undefined;
 
-export type DeepPartial<T> = T extends Builtin ? T
-  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
-  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
-  : Partial<T>;
+export type DeepPartial<T> = T extends Builtin
+  ? T
+  : T extends globalThis.Array<infer U>
+    ? globalThis.Array<DeepPartial<U>>
+    : T extends ReadonlyArray<infer U>
+      ? ReadonlyArray<DeepPartial<U>>
+      : T extends {}
+        ? { [K in keyof T]?: DeepPartial<T[K]> }
+        : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & {
+      [K in Exclude<keyof I, KeysOfUnion<P>>]: never;
+    };
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;

@@ -37,11 +37,9 @@ export interface ClipboardContent {
   path?: ClipboardPathContent | undefined;
 }
 
-export interface CopyToClipboardResponse {
-}
+export interface CopyToClipboardResponse {}
 
-export interface PasteToClipboardResponse {
-}
+export interface PasteToClipboardResponse {}
 
 export interface Request {
   copy?: CopyToClipboardRequest | undefined;
@@ -58,7 +56,10 @@ function createBaseClipboardHtmlContent(): ClipboardHtmlContent {
 }
 
 export const ClipboardHtmlContent: MessageFns<ClipboardHtmlContent> = {
-  encode(message: ClipboardHtmlContent, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: ClipboardHtmlContent,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.html !== "") {
       writer.uint32(10).string(message.html);
     }
@@ -68,8 +69,12 @@ export const ClipboardHtmlContent: MessageFns<ClipboardHtmlContent> = {
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): ClipboardHtmlContent {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+  decode(
+    input: BinaryReader | Uint8Array,
+    length?: number,
+  ): ClipboardHtmlContent {
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseClipboardHtmlContent();
     while (reader.pos < end) {
@@ -118,10 +123,14 @@ export const ClipboardHtmlContent: MessageFns<ClipboardHtmlContent> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<ClipboardHtmlContent>, I>>(base?: I): ClipboardHtmlContent {
+  create<I extends Exact<DeepPartial<ClipboardHtmlContent>, I>>(
+    base?: I,
+  ): ClipboardHtmlContent {
     return ClipboardHtmlContent.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ClipboardHtmlContent>, I>>(object: I): ClipboardHtmlContent {
+  fromPartial<I extends Exact<DeepPartial<ClipboardHtmlContent>, I>>(
+    object: I,
+  ): ClipboardHtmlContent {
     const message = createBaseClipboardHtmlContent();
     message.html = object.html ?? "";
     message.text = object.text ?? "";
@@ -134,15 +143,22 @@ function createBaseClipboardPathContent(): ClipboardPathContent {
 }
 
 export const ClipboardPathContent: MessageFns<ClipboardPathContent> = {
-  encode(message: ClipboardPathContent, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: ClipboardPathContent,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.path !== "") {
       writer.uint32(10).string(message.path);
     }
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): ClipboardPathContent {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+  decode(
+    input: BinaryReader | Uint8Array,
+    length?: number,
+  ): ClipboardPathContent {
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseClipboardPathContent();
     while (reader.pos < end) {
@@ -177,10 +193,14 @@ export const ClipboardPathContent: MessageFns<ClipboardPathContent> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<ClipboardPathContent>, I>>(base?: I): ClipboardPathContent {
+  create<I extends Exact<DeepPartial<ClipboardPathContent>, I>>(
+    base?: I,
+  ): ClipboardPathContent {
     return ClipboardPathContent.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ClipboardPathContent>, I>>(object: I): ClipboardPathContent {
+  fromPartial<I extends Exact<DeepPartial<ClipboardPathContent>, I>>(
+    object: I,
+  ): ClipboardPathContent {
     const message = createBaseClipboardPathContent();
     message.path = object.path ?? "";
     return message;
@@ -192,7 +212,10 @@ function createBaseClipboardOptions(): ClipboardOptions {
 }
 
 export const ClipboardOptions: MessageFns<ClipboardOptions> = {
-  encode(message: ClipboardOptions, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: ClipboardOptions,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.concealed !== false) {
       writer.uint32(8).bool(message.concealed);
     }
@@ -200,7 +223,8 @@ export const ClipboardOptions: MessageFns<ClipboardOptions> = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): ClipboardOptions {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseClipboardOptions();
     while (reader.pos < end) {
@@ -224,7 +248,11 @@ export const ClipboardOptions: MessageFns<ClipboardOptions> = {
   },
 
   fromJSON(object: any): ClipboardOptions {
-    return { concealed: isSet(object.concealed) ? globalThis.Boolean(object.concealed) : false };
+    return {
+      concealed: isSet(object.concealed)
+        ? globalThis.Boolean(object.concealed)
+        : false,
+    };
   },
 
   toJSON(message: ClipboardOptions): unknown {
@@ -235,10 +263,14 @@ export const ClipboardOptions: MessageFns<ClipboardOptions> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<ClipboardOptions>, I>>(base?: I): ClipboardOptions {
+  create<I extends Exact<DeepPartial<ClipboardOptions>, I>>(
+    base?: I,
+  ): ClipboardOptions {
     return ClipboardOptions.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ClipboardOptions>, I>>(object: I): ClipboardOptions {
+  fromPartial<I extends Exact<DeepPartial<ClipboardOptions>, I>>(
+    object: I,
+  ): ClipboardOptions {
     const message = createBaseClipboardOptions();
     message.concealed = object.concealed ?? false;
     return message;
@@ -250,7 +282,10 @@ function createBaseCopyToClipboardRequest(): CopyToClipboardRequest {
 }
 
 export const CopyToClipboardRequest: MessageFns<CopyToClipboardRequest> = {
-  encode(message: CopyToClipboardRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: CopyToClipboardRequest,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.content !== undefined) {
       ClipboardContent.encode(message.content, writer.uint32(10).fork()).join();
     }
@@ -260,8 +295,12 @@ export const CopyToClipboardRequest: MessageFns<CopyToClipboardRequest> = {
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): CopyToClipboardRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+  decode(
+    input: BinaryReader | Uint8Array,
+    length?: number,
+  ): CopyToClipboardRequest {
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseCopyToClipboardRequest();
     while (reader.pos < end) {
@@ -294,8 +333,12 @@ export const CopyToClipboardRequest: MessageFns<CopyToClipboardRequest> = {
 
   fromJSON(object: any): CopyToClipboardRequest {
     return {
-      content: isSet(object.content) ? ClipboardContent.fromJSON(object.content) : undefined,
-      options: isSet(object.options) ? ClipboardOptions.fromJSON(object.options) : undefined,
+      content: isSet(object.content)
+        ? ClipboardContent.fromJSON(object.content)
+        : undefined,
+      options: isSet(object.options)
+        ? ClipboardOptions.fromJSON(object.options)
+        : undefined,
     };
   },
 
@@ -310,17 +353,23 @@ export const CopyToClipboardRequest: MessageFns<CopyToClipboardRequest> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<CopyToClipboardRequest>, I>>(base?: I): CopyToClipboardRequest {
+  create<I extends Exact<DeepPartial<CopyToClipboardRequest>, I>>(
+    base?: I,
+  ): CopyToClipboardRequest {
     return CopyToClipboardRequest.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<CopyToClipboardRequest>, I>>(object: I): CopyToClipboardRequest {
+  fromPartial<I extends Exact<DeepPartial<CopyToClipboardRequest>, I>>(
+    object: I,
+  ): CopyToClipboardRequest {
     const message = createBaseCopyToClipboardRequest();
-    message.content = (object.content !== undefined && object.content !== null)
-      ? ClipboardContent.fromPartial(object.content)
-      : undefined;
-    message.options = (object.options !== undefined && object.options !== null)
-      ? ClipboardOptions.fromPartial(object.options)
-      : undefined;
+    message.content =
+      object.content !== undefined && object.content !== null
+        ? ClipboardContent.fromPartial(object.content)
+        : undefined;
+    message.options =
+      object.options !== undefined && object.options !== null
+        ? ClipboardOptions.fromPartial(object.options)
+        : undefined;
     return message;
   },
 };
@@ -330,15 +379,22 @@ function createBasePasteToClipboardRequest(): PasteToClipboardRequest {
 }
 
 export const PasteToClipboardRequest: MessageFns<PasteToClipboardRequest> = {
-  encode(message: PasteToClipboardRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: PasteToClipboardRequest,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.content !== undefined) {
       ClipboardContent.encode(message.content, writer.uint32(10).fork()).join();
     }
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): PasteToClipboardRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+  decode(
+    input: BinaryReader | Uint8Array,
+    length?: number,
+  ): PasteToClipboardRequest {
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBasePasteToClipboardRequest();
     while (reader.pos < end) {
@@ -362,7 +418,11 @@ export const PasteToClipboardRequest: MessageFns<PasteToClipboardRequest> = {
   },
 
   fromJSON(object: any): PasteToClipboardRequest {
-    return { content: isSet(object.content) ? ClipboardContent.fromJSON(object.content) : undefined };
+    return {
+      content: isSet(object.content)
+        ? ClipboardContent.fromJSON(object.content)
+        : undefined,
+    };
   },
 
   toJSON(message: PasteToClipboardRequest): unknown {
@@ -373,14 +433,19 @@ export const PasteToClipboardRequest: MessageFns<PasteToClipboardRequest> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<PasteToClipboardRequest>, I>>(base?: I): PasteToClipboardRequest {
+  create<I extends Exact<DeepPartial<PasteToClipboardRequest>, I>>(
+    base?: I,
+  ): PasteToClipboardRequest {
     return PasteToClipboardRequest.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<PasteToClipboardRequest>, I>>(object: I): PasteToClipboardRequest {
+  fromPartial<I extends Exact<DeepPartial<PasteToClipboardRequest>, I>>(
+    object: I,
+  ): PasteToClipboardRequest {
     const message = createBasePasteToClipboardRequest();
-    message.content = (object.content !== undefined && object.content !== null)
-      ? ClipboardContent.fromPartial(object.content)
-      : undefined;
+    message.content =
+      object.content !== undefined && object.content !== null
+        ? ClipboardContent.fromPartial(object.content)
+        : undefined;
     return message;
   },
 };
@@ -390,21 +455,31 @@ function createBaseClipboardContent(): ClipboardContent {
 }
 
 export const ClipboardContent: MessageFns<ClipboardContent> = {
-  encode(message: ClipboardContent, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: ClipboardContent,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.text !== undefined) {
       writer.uint32(10).string(message.text);
     }
     if (message.html !== undefined) {
-      ClipboardHtmlContent.encode(message.html, writer.uint32(18).fork()).join();
+      ClipboardHtmlContent.encode(
+        message.html,
+        writer.uint32(18).fork(),
+      ).join();
     }
     if (message.path !== undefined) {
-      ClipboardPathContent.encode(message.path, writer.uint32(26).fork()).join();
+      ClipboardPathContent.encode(
+        message.path,
+        writer.uint32(26).fork(),
+      ).join();
     }
     return writer;
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): ClipboardContent {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseClipboardContent();
     while (reader.pos < end) {
@@ -446,8 +521,12 @@ export const ClipboardContent: MessageFns<ClipboardContent> = {
   fromJSON(object: any): ClipboardContent {
     return {
       text: isSet(object.text) ? globalThis.String(object.text) : undefined,
-      html: isSet(object.html) ? ClipboardHtmlContent.fromJSON(object.html) : undefined,
-      path: isSet(object.path) ? ClipboardPathContent.fromJSON(object.path) : undefined,
+      html: isSet(object.html)
+        ? ClipboardHtmlContent.fromJSON(object.html)
+        : undefined,
+      path: isSet(object.path)
+        ? ClipboardPathContent.fromJSON(object.path)
+        : undefined,
     };
   },
 
@@ -465,18 +544,24 @@ export const ClipboardContent: MessageFns<ClipboardContent> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<ClipboardContent>, I>>(base?: I): ClipboardContent {
+  create<I extends Exact<DeepPartial<ClipboardContent>, I>>(
+    base?: I,
+  ): ClipboardContent {
     return ClipboardContent.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ClipboardContent>, I>>(object: I): ClipboardContent {
+  fromPartial<I extends Exact<DeepPartial<ClipboardContent>, I>>(
+    object: I,
+  ): ClipboardContent {
     const message = createBaseClipboardContent();
     message.text = object.text ?? undefined;
-    message.html = (object.html !== undefined && object.html !== null)
-      ? ClipboardHtmlContent.fromPartial(object.html)
-      : undefined;
-    message.path = (object.path !== undefined && object.path !== null)
-      ? ClipboardPathContent.fromPartial(object.path)
-      : undefined;
+    message.html =
+      object.html !== undefined && object.html !== null
+        ? ClipboardHtmlContent.fromPartial(object.html)
+        : undefined;
+    message.path =
+      object.path !== undefined && object.path !== null
+        ? ClipboardPathContent.fromPartial(object.path)
+        : undefined;
     return message;
   },
 };
@@ -486,12 +571,19 @@ function createBaseCopyToClipboardResponse(): CopyToClipboardResponse {
 }
 
 export const CopyToClipboardResponse: MessageFns<CopyToClipboardResponse> = {
-  encode(_: CopyToClipboardResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    _: CopyToClipboardResponse,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): CopyToClipboardResponse {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+  decode(
+    input: BinaryReader | Uint8Array,
+    length?: number,
+  ): CopyToClipboardResponse {
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseCopyToClipboardResponse();
     while (reader.pos < end) {
@@ -515,10 +607,14 @@ export const CopyToClipboardResponse: MessageFns<CopyToClipboardResponse> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<CopyToClipboardResponse>, I>>(base?: I): CopyToClipboardResponse {
+  create<I extends Exact<DeepPartial<CopyToClipboardResponse>, I>>(
+    base?: I,
+  ): CopyToClipboardResponse {
     return CopyToClipboardResponse.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<CopyToClipboardResponse>, I>>(_: I): CopyToClipboardResponse {
+  fromPartial<I extends Exact<DeepPartial<CopyToClipboardResponse>, I>>(
+    _: I,
+  ): CopyToClipboardResponse {
     const message = createBaseCopyToClipboardResponse();
     return message;
   },
@@ -529,12 +625,19 @@ function createBasePasteToClipboardResponse(): PasteToClipboardResponse {
 }
 
 export const PasteToClipboardResponse: MessageFns<PasteToClipboardResponse> = {
-  encode(_: PasteToClipboardResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    _: PasteToClipboardResponse,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): PasteToClipboardResponse {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+  decode(
+    input: BinaryReader | Uint8Array,
+    length?: number,
+  ): PasteToClipboardResponse {
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBasePasteToClipboardResponse();
     while (reader.pos < end) {
@@ -558,10 +661,14 @@ export const PasteToClipboardResponse: MessageFns<PasteToClipboardResponse> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<PasteToClipboardResponse>, I>>(base?: I): PasteToClipboardResponse {
+  create<I extends Exact<DeepPartial<PasteToClipboardResponse>, I>>(
+    base?: I,
+  ): PasteToClipboardResponse {
     return PasteToClipboardResponse.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<PasteToClipboardResponse>, I>>(_: I): PasteToClipboardResponse {
+  fromPartial<I extends Exact<DeepPartial<PasteToClipboardResponse>, I>>(
+    _: I,
+  ): PasteToClipboardResponse {
     const message = createBasePasteToClipboardResponse();
     return message;
   },
@@ -572,18 +679,28 @@ function createBaseRequest(): Request {
 }
 
 export const Request: MessageFns<Request> = {
-  encode(message: Request, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: Request,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.copy !== undefined) {
-      CopyToClipboardRequest.encode(message.copy, writer.uint32(10).fork()).join();
+      CopyToClipboardRequest.encode(
+        message.copy,
+        writer.uint32(10).fork(),
+      ).join();
     }
     if (message.paste !== undefined) {
-      PasteToClipboardRequest.encode(message.paste, writer.uint32(18).fork()).join();
+      PasteToClipboardRequest.encode(
+        message.paste,
+        writer.uint32(18).fork(),
+      ).join();
     }
     return writer;
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): Request {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseRequest();
     while (reader.pos < end) {
@@ -602,7 +719,10 @@ export const Request: MessageFns<Request> = {
             break;
           }
 
-          message.paste = PasteToClipboardRequest.decode(reader, reader.uint32());
+          message.paste = PasteToClipboardRequest.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
       }
@@ -616,8 +736,12 @@ export const Request: MessageFns<Request> = {
 
   fromJSON(object: any): Request {
     return {
-      copy: isSet(object.copy) ? CopyToClipboardRequest.fromJSON(object.copy) : undefined,
-      paste: isSet(object.paste) ? PasteToClipboardRequest.fromJSON(object.paste) : undefined,
+      copy: isSet(object.copy)
+        ? CopyToClipboardRequest.fromJSON(object.copy)
+        : undefined,
+      paste: isSet(object.paste)
+        ? PasteToClipboardRequest.fromJSON(object.paste)
+        : undefined,
     };
   },
 
@@ -637,12 +761,14 @@ export const Request: MessageFns<Request> = {
   },
   fromPartial<I extends Exact<DeepPartial<Request>, I>>(object: I): Request {
     const message = createBaseRequest();
-    message.copy = (object.copy !== undefined && object.copy !== null)
-      ? CopyToClipboardRequest.fromPartial(object.copy)
-      : undefined;
-    message.paste = (object.paste !== undefined && object.paste !== null)
-      ? PasteToClipboardRequest.fromPartial(object.paste)
-      : undefined;
+    message.copy =
+      object.copy !== undefined && object.copy !== null
+        ? CopyToClipboardRequest.fromPartial(object.copy)
+        : undefined;
+    message.paste =
+      object.paste !== undefined && object.paste !== null
+        ? PasteToClipboardRequest.fromPartial(object.paste)
+        : undefined;
     return message;
   },
 };
@@ -652,18 +778,28 @@ function createBaseResponse(): Response {
 }
 
 export const Response: MessageFns<Response> = {
-  encode(message: Response, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: Response,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.copy !== undefined) {
-      CopyToClipboardResponse.encode(message.copy, writer.uint32(10).fork()).join();
+      CopyToClipboardResponse.encode(
+        message.copy,
+        writer.uint32(10).fork(),
+      ).join();
     }
     if (message.paste !== undefined) {
-      PasteToClipboardResponse.encode(message.paste, writer.uint32(18).fork()).join();
+      PasteToClipboardResponse.encode(
+        message.paste,
+        writer.uint32(18).fork(),
+      ).join();
     }
     return writer;
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): Response {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseResponse();
     while (reader.pos < end) {
@@ -674,7 +810,10 @@ export const Response: MessageFns<Response> = {
             break;
           }
 
-          message.copy = CopyToClipboardResponse.decode(reader, reader.uint32());
+          message.copy = CopyToClipboardResponse.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
         case 2: {
@@ -682,7 +821,10 @@ export const Response: MessageFns<Response> = {
             break;
           }
 
-          message.paste = PasteToClipboardResponse.decode(reader, reader.uint32());
+          message.paste = PasteToClipboardResponse.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
       }
@@ -696,8 +838,12 @@ export const Response: MessageFns<Response> = {
 
   fromJSON(object: any): Response {
     return {
-      copy: isSet(object.copy) ? CopyToClipboardResponse.fromJSON(object.copy) : undefined,
-      paste: isSet(object.paste) ? PasteToClipboardResponse.fromJSON(object.paste) : undefined,
+      copy: isSet(object.copy)
+        ? CopyToClipboardResponse.fromJSON(object.copy)
+        : undefined,
+      paste: isSet(object.paste)
+        ? PasteToClipboardResponse.fromJSON(object.paste)
+        : undefined,
     };
   },
 
@@ -717,27 +863,43 @@ export const Response: MessageFns<Response> = {
   },
   fromPartial<I extends Exact<DeepPartial<Response>, I>>(object: I): Response {
     const message = createBaseResponse();
-    message.copy = (object.copy !== undefined && object.copy !== null)
-      ? CopyToClipboardResponse.fromPartial(object.copy)
-      : undefined;
-    message.paste = (object.paste !== undefined && object.paste !== null)
-      ? PasteToClipboardResponse.fromPartial(object.paste)
-      : undefined;
+    message.copy =
+      object.copy !== undefined && object.copy !== null
+        ? CopyToClipboardResponse.fromPartial(object.copy)
+        : undefined;
+    message.paste =
+      object.paste !== undefined && object.paste !== null
+        ? PasteToClipboardResponse.fromPartial(object.paste)
+        : undefined;
     return message;
   },
 };
 
-type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+type Builtin =
+  | Date
+  | Function
+  | Uint8Array
+  | string
+  | number
+  | boolean
+  | undefined;
 
-export type DeepPartial<T> = T extends Builtin ? T
-  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
-  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
-  : Partial<T>;
+export type DeepPartial<T> = T extends Builtin
+  ? T
+  : T extends globalThis.Array<infer U>
+    ? globalThis.Array<DeepPartial<U>>
+    : T extends ReadonlyArray<infer U>
+      ? ReadonlyArray<DeepPartial<U>>
+      : T extends {}
+        ? { [K in keyof T]?: DeepPartial<T[K]> }
+        : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & {
+      [K in Exclude<keyof I, KeysOfUnion<P>>]: never;
+    };
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;
