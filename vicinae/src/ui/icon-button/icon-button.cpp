@@ -1,5 +1,6 @@
 #include "ui/icon-button/icon-button.hpp"
 #include "ui/image/image.hpp"
+#include <qnamespace.h>
 
 void IconButton::resizeEvent(QResizeEvent *event) {
   auto margins = contentsMargins();
@@ -11,6 +12,7 @@ void IconButton::resizeEvent(QResizeEvent *event) {
 }
 
 IconButton::IconButton() : _icon(new ImageWidget(this)) {
+  setFocusPolicy(Qt::NoFocus);
   _icon->setContentsMargins(3, 3, 3, 3);
   _icon->show();
 }

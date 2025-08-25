@@ -13,6 +13,7 @@
  * Typically, if the path starts with $HOME, it is replaced by the '~' symbol.
  */
 std::filesystem::path compressPath(const std::filesystem::path &);
+std::filesystem::path expandPath(const std::filesystem::path &);
 std::filesystem::path homeDir();
 
 QString getRelativeTimeString(const QDateTime &pastTime);
@@ -46,3 +47,5 @@ google::protobuf::Value transformJsonValueToProto(const QJsonValue &value);
 QJsonValue protoToJsonValue(const google::protobuf::Value &value);
 
 QString formatSize(size_t bytes);
+
+QString slugify(const QString &input, const QString &separator = "-");

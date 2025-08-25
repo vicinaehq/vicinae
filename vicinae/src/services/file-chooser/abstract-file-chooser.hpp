@@ -16,6 +16,8 @@ public:
   /**
    * Open the file chooser.
    * Return whether the operation succeeded or not.
+   * The filesChosen signal will be emitted if files are chosen
+   * during this session (this can be aborted).
    */
   virtual bool openFile() = 0;
 

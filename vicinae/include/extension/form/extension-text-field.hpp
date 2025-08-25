@@ -14,9 +14,9 @@ public:
 
   void clear() override { m_input->setText(""); }
 
-  QJsonValue jsonValue() const override { return m_input->text(); }
+  QJsonValue asJsonValue() const override { return m_input->text(); }
 
-  void setJsonValue(const QJsonValue &value) const override { m_input->setText(value.toString()); }
+  void setValueAsJson(const QJsonValue &value) override { m_input->setText(value.toString()); }
 
   void render(const std::shared_ptr<FormModel::IField> &field) override {
     m_model = std::static_pointer_cast<FormModel::TextField>(field);

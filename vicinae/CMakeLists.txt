@@ -91,6 +91,8 @@ set(SRCS
 	include/ui/form/app-picker-input.hpp
 	src/ui/form/app-picker-input.cpp
 
+	src/ui/form/text-area.cpp
+
 	src/command-actions.cpp
 
 	src/root-search/extensions/extension-root-provider.hpp
@@ -339,6 +341,8 @@ set(SRCS
 
 	${CMAKE_CURRENT_BINARY_DIR}/resources.qrc
 
+	../extra/extension-boilerplate/boilerplate.qrc
+
 	contribs.qrc
 
 	src/contribs/contribs.cpp
@@ -527,6 +531,13 @@ set(SRCS
 	src/root-search.cpp
 
 	src/services/window-manager/window-manager.cpp
+
+	src/services/extension-boilerplate-generator/extension-boilerplate-generator.cpp
+
+	src/ui/file-picker-button/file-picker-button.hpp
+	src/ui/file-picker-button/file-picker-button.cpp
+
+	src/ui/form/directory-input.cpp
 ) 
 
 

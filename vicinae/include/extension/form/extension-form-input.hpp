@@ -1,4 +1,5 @@
 #pragma once
+#include "common.hpp"
 #include "extend/form-model.hpp"
 #include "ui/focus-notifier.hpp"
 #include <qboxlayout.h>
@@ -17,7 +18,7 @@ signals:
   void eventNotified(const QString &id, const QJsonArray &value) const;
 };
 
-class ExtensionFormInput : public QWidget {
+class ExtensionFormInput : public JsonFormItemWidget {
   QVBoxLayout *m_layout = new QVBoxLayout(this);
   QWidget *m_widget = nullptr;
   FocusNotifier *m_focusNotifier = nullptr;
@@ -27,26 +28,26 @@ class ExtensionFormInput : public QWidget {
 public:
   ExtensionEventNotifier *m_extensionNotifier = new ExtensionEventNotifier(this);
 
-  virtual QJsonValue jsonValue() const = 0;
+  virtual QJsonValue asJsonValue() const override = 0;
 
   virtual void reset() {
     if (m_field->storeValue) return;
-    if (auto value = m_field->defaultValue) { return setJsonValue(*value); }
+    if (auto value = m_field->defaultValue) { return setValueAsJson(*value); }
 
     clear();
   }
 
   virtual void clear() {}
 
-  virtual void setJsonValue(const QJsonValue &value) const = 0;
+  virtual void setValueAsJson(const QJsonValue &value) override = 0;
 
-  ExtensionFormInput(QWidget *parent = nullptr) : QWidget(parent) {
+  ExtensionFormInput(QWidget *parent = nullptr) : JsonFormItemWidget(parent) {
     setFocusPolicy(Qt::StrongFocus);
     m_layout->setContentsMargins(0, 0, 0, 0);
     setLayout(m_layout);
   }
 
-  FocusNotifier *focusNotifier() const { return m_focusNotifier; }
+  FocusNotifier *focusNotifier() const override { return m_focusNotifier; }
 
   void setWrapped(QWidget *widget, FocusNotifier *focusNotifier = nullptr) {
     if (auto item = m_layout->takeAt(0); item && item->widget()) { item->widget()->deleteLater(); }
