@@ -9,8 +9,7 @@ import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 
 export const protobufPackage = "proto.ext.daemon";
 
-export interface UrlResponse {
-}
+export interface UrlResponse {}
 
 export interface UrlRequest {
   url: string;
@@ -29,12 +28,16 @@ function createBaseUrlResponse(): UrlResponse {
 }
 
 export const UrlResponse: MessageFns<UrlResponse> = {
-  encode(_: UrlResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    _: UrlResponse,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     return writer;
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): UrlResponse {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseUrlResponse();
     while (reader.pos < end) {
@@ -72,7 +75,10 @@ function createBaseUrlRequest(): UrlRequest {
 }
 
 export const UrlRequest: MessageFns<UrlRequest> = {
-  encode(message: UrlRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: UrlRequest,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.url !== "") {
       writer.uint32(10).string(message.url);
     }
@@ -80,7 +86,8 @@ export const UrlRequest: MessageFns<UrlRequest> = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): UrlRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseUrlRequest();
     while (reader.pos < end) {
@@ -118,7 +125,9 @@ export const UrlRequest: MessageFns<UrlRequest> = {
   create<I extends Exact<DeepPartial<UrlRequest>, I>>(base?: I): UrlRequest {
     return UrlRequest.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<UrlRequest>, I>>(object: I): UrlRequest {
+  fromPartial<I extends Exact<DeepPartial<UrlRequest>, I>>(
+    object: I,
+  ): UrlRequest {
     const message = createBaseUrlRequest();
     message.url = object.url ?? "";
     return message;
@@ -130,7 +139,10 @@ function createBaseRequest(): Request {
 }
 
 export const Request: MessageFns<Request> = {
-  encode(message: Request, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: Request,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.url !== undefined) {
       UrlRequest.encode(message.url, writer.uint32(10).fork()).join();
     }
@@ -138,7 +150,8 @@ export const Request: MessageFns<Request> = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): Request {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseRequest();
     while (reader.pos < end) {
@@ -162,7 +175,9 @@ export const Request: MessageFns<Request> = {
   },
 
   fromJSON(object: any): Request {
-    return { url: isSet(object.url) ? UrlRequest.fromJSON(object.url) : undefined };
+    return {
+      url: isSet(object.url) ? UrlRequest.fromJSON(object.url) : undefined,
+    };
   },
 
   toJSON(message: Request): unknown {
@@ -178,7 +193,10 @@ export const Request: MessageFns<Request> = {
   },
   fromPartial<I extends Exact<DeepPartial<Request>, I>>(object: I): Request {
     const message = createBaseRequest();
-    message.url = (object.url !== undefined && object.url !== null) ? UrlRequest.fromPartial(object.url) : undefined;
+    message.url =
+      object.url !== undefined && object.url !== null
+        ? UrlRequest.fromPartial(object.url)
+        : undefined;
     return message;
   },
 };
@@ -188,7 +206,10 @@ function createBaseResponse(): Response {
 }
 
 export const Response: MessageFns<Response> = {
-  encode(message: Response, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: Response,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.url !== undefined) {
       UrlResponse.encode(message.url, writer.uint32(10).fork()).join();
     }
@@ -196,7 +217,8 @@ export const Response: MessageFns<Response> = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): Response {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseResponse();
     while (reader.pos < end) {
@@ -220,7 +242,9 @@ export const Response: MessageFns<Response> = {
   },
 
   fromJSON(object: any): Response {
-    return { url: isSet(object.url) ? UrlResponse.fromJSON(object.url) : undefined };
+    return {
+      url: isSet(object.url) ? UrlResponse.fromJSON(object.url) : undefined,
+    };
   },
 
   toJSON(message: Response): unknown {
@@ -236,22 +260,39 @@ export const Response: MessageFns<Response> = {
   },
   fromPartial<I extends Exact<DeepPartial<Response>, I>>(object: I): Response {
     const message = createBaseResponse();
-    message.url = (object.url !== undefined && object.url !== null) ? UrlResponse.fromPartial(object.url) : undefined;
+    message.url =
+      object.url !== undefined && object.url !== null
+        ? UrlResponse.fromPartial(object.url)
+        : undefined;
     return message;
   },
 };
 
-type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+type Builtin =
+  | Date
+  | Function
+  | Uint8Array
+  | string
+  | number
+  | boolean
+  | undefined;
 
-export type DeepPartial<T> = T extends Builtin ? T
-  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
-  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
-  : Partial<T>;
+export type DeepPartial<T> = T extends Builtin
+  ? T
+  : T extends globalThis.Array<infer U>
+    ? globalThis.Array<DeepPartial<U>>
+    : T extends ReadonlyArray<infer U>
+      ? ReadonlyArray<DeepPartial<U>>
+      : T extends {}
+        ? { [K in keyof T]?: DeepPartial<T[K]> }
+        : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & {
+      [K in Exclude<keyof I, KeysOfUnion<P>>]: never;
+    };
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;

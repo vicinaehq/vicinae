@@ -366,12 +366,17 @@ void ThemeService::setTheme(const ThemeInfo &info) {
   m_theme = info;
 
   double mainInputSize = std::round(m_baseFontPointSize * 1.20);
+
+  /**
+   * We try to not use stylesheets directly in most of the app, but some very high level
+   * rules can help fix issues that would be hard to fix otherwise.
+   */
   auto style = QString(R"(
   		QWidget {
 			font-size: %1pt;
 		}
 
-		QLineEdit, QTextEdit {
+		QLineEdit, QTextEdit, QPlainTextEdit {
 			background-color: transparent;
 			border: none;
 		}

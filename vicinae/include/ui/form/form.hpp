@@ -1,9 +1,10 @@
 #pragma once
+#include "common.hpp"
 #include "ui/form/form-field.hpp"
 #include <qwidget.h>
 
 class FormWidget : public QWidget {
-  std::vector<FormField *> _fields;
+  std::vector<FormField *> m_fields;
   QVBoxLayout *_layout;
 
 public:
@@ -19,6 +20,14 @@ public:
 
   std::optional<FormField *> fieldAt(int index) const;
   void addField(FormField *field);
+  FormField *addField();
+  FormField *addField(const QString &label, JsonFormItemWidget *widget);
+
+  // remove all fields
+  void clearFields();
+
+  void addSeparator();
+  bool validate();
 
   FormWidget(QWidget *parent = nullptr);
 };

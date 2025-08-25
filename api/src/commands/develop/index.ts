@@ -15,7 +15,7 @@ import { join } from "node:path";
 import { Logger } from "../../utils/logger.js";
 import { extensionDataDir } from "../../utils/utils.js";
 import { VicinaeClient } from "../../utils/vicinae.js";
-import ManifestSchema from '../../schemas/manifest.js';
+import ManifestSchema from "../../schemas/manifest.js";
 
 type TypeCheckResult = {
   error: string;
@@ -51,22 +51,23 @@ export default class Develop extends Command {
 
     if (!existsSync(pkgPath)) {
       logger.logError(
-        `No package.json found at ${pkgPath}. Does this location point to a valid extension repository?`
+        `No package.json found at ${pkgPath}. Does this location point to a valid extension repository?`,
       );
       process.exit(1);
     }
 
-	const json = JSON.parse(readFileSync(pkgPath, 'utf8'));
+    const json = JSON.parse(readFileSync(pkgPath, "utf8"));
 
-	const e = ManifestSchema.safeParse(json);
+    const e = ManifestSchema.safeParse(json);
 
-	if (e.error) {
-		logger.logError(`${pkgPath} is not a valid extension manifest: ${e.error}`);
-		process.exit(1);
-	}
+    if (e.error) {
+      logger.logError(
+        `${pkgPath} is not a valid extension manifest: ${e.error}`,
+      );
+      process.exit(1);
+    }
 
-	const manifest = e.data;
-
+    const manifest = e.data;
 
     const vicinae = new VicinaeClient();
 
@@ -80,7 +81,7 @@ export default class Develop extends Command {
         });
 
         spawned.on("exit", (status) =>
-          resolve({ error: stderr.toString(), ok: status === 0 })
+          resolve({ error: stderr.toString(), ok: status === 0 }),
         );
       });
     };
@@ -97,13 +98,35 @@ export default class Develop extends Command {
       });
 
       const entryPoints = manifest.commands.map((cmd) =>
-        join("src", `${cmd.name}.tsx`)
+        join("src", `${cmd.name}.tsx`),
       );
 
       logger.logInfo(`entrypoints [${entryPoints.join(", ")}]`);
 
       const promises = manifest.commands.map((cmd) => {
-        const source = join(process.cwd(), "src", `${cmd.name}.tsx`);
+        const base = join(process.cwd(), "src", `${cmd.name}`);
+        const tsxSource = `${base}.tsx`;
+        const tsSource = `${base}.ts`;
+        let source = tsxSource;
+
+        if (cmd.mode == "view" && !existsSync(tsxSource)) {
+          throw new Error(
+            `Unable to find view command ${cmd.name} at ${tsxSource}`,
+          );
+        }
+
+        // we allow .ts or .tsx for no-view
+        if (cmd.mode == "no-view") {
+          if (!existsSync(tsxSource)) {
+            source = tsSource;
+            if (!existsSync(tsSource)) {
+              throw new Error(
+                `Unable to find no-view command ${cmd.name} at ${base}.{ts,tsx}`,
+              );
+            }
+          }
+        }
+
         return esbuild.build({
           bundle: true,
           entryPoints: [source],
@@ -138,7 +161,7 @@ export default class Develop extends Command {
     process.chdir(flags.target);
 
     const dataDir = extensionDataDir();
-    const id = `${manifest.name}.dev`;
+    const id = `${manifest.name}`;
     const extensionDir = join(dataDir, id);
     const logFile = join(extensionDir, "dev.log");
     const pidFile = join(extensionDir, "cli.pid");

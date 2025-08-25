@@ -73,25 +73,15 @@ export interface Struct_FieldsEntry {
  */
 export interface Value {
   /** Represents a null value. */
-  nullValue?:
-    | NullValue
-    | undefined;
+  nullValue?: NullValue | undefined;
   /** Represents a double value. */
-  numberValue?:
-    | number
-    | undefined;
+  numberValue?: number | undefined;
   /** Represents a string value. */
-  stringValue?:
-    | string
-    | undefined;
+  stringValue?: string | undefined;
   /** Represents a boolean value. */
-  boolValue?:
-    | boolean
-    | undefined;
+  boolValue?: boolean | undefined;
   /** Represents a structured value. */
-  structValue?:
-    | { [key: string]: any }
-    | undefined;
+  structValue?: { [key: string]: any } | undefined;
   /** Represents a repeated `Value`. */
   listValue?: Array<any> | undefined;
 }
@@ -111,17 +101,24 @@ function createBaseStruct(): Struct {
 }
 
 export const Struct: MessageFns<Struct> & StructWrapperFns = {
-  encode(message: Struct, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: Struct,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     Object.entries(message.fields).forEach(([key, value]) => {
       if (value !== undefined) {
-        Struct_FieldsEntry.encode({ key: key as any, value }, writer.uint32(10).fork()).join();
+        Struct_FieldsEntry.encode(
+          { key: key as any, value },
+          writer.uint32(10).fork(),
+        ).join();
       }
     });
     return writer;
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): Struct {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseStruct();
     while (reader.pos < end) {
@@ -150,10 +147,12 @@ export const Struct: MessageFns<Struct> & StructWrapperFns = {
   fromJSON(object: any): Struct {
     return {
       fields: isObject(object.fields)
-        ? Object.entries(object.fields).reduce<{ [key: string]: any | undefined }>((acc, [key, value]) => {
-          acc[key] = value as any | undefined;
-          return acc;
-        }, {})
+        ? Object.entries(object.fields).reduce<{
+            [key: string]: any | undefined;
+          }>((acc, [key, value]) => {
+            acc[key] = value as any | undefined;
+            return acc;
+          }, {})
         : {},
     };
   },
@@ -177,15 +176,14 @@ export const Struct: MessageFns<Struct> & StructWrapperFns = {
   },
   fromPartial<I extends Exact<DeepPartial<Struct>, I>>(object: I): Struct {
     const message = createBaseStruct();
-    message.fields = Object.entries(object.fields ?? {}).reduce<{ [key: string]: any | undefined }>(
-      (acc, [key, value]) => {
-        if (value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      },
-      {},
-    );
+    message.fields = Object.entries(object.fields ?? {}).reduce<{
+      [key: string]: any | undefined;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {});
     return message;
   },
 
@@ -216,7 +214,10 @@ function createBaseStruct_FieldsEntry(): Struct_FieldsEntry {
 }
 
 export const Struct_FieldsEntry: MessageFns<Struct_FieldsEntry> = {
-  encode(message: Struct_FieldsEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: Struct_FieldsEntry,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.key !== "") {
       writer.uint32(10).string(message.key);
     }
@@ -226,8 +227,12 @@ export const Struct_FieldsEntry: MessageFns<Struct_FieldsEntry> = {
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): Struct_FieldsEntry {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+  decode(
+    input: BinaryReader | Uint8Array,
+    length?: number,
+  ): Struct_FieldsEntry {
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseStruct_FieldsEntry();
     while (reader.pos < end) {
@@ -276,10 +281,14 @@ export const Struct_FieldsEntry: MessageFns<Struct_FieldsEntry> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<Struct_FieldsEntry>, I>>(base?: I): Struct_FieldsEntry {
+  create<I extends Exact<DeepPartial<Struct_FieldsEntry>, I>>(
+    base?: I,
+  ): Struct_FieldsEntry {
     return Struct_FieldsEntry.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<Struct_FieldsEntry>, I>>(object: I): Struct_FieldsEntry {
+  fromPartial<I extends Exact<DeepPartial<Struct_FieldsEntry>, I>>(
+    object: I,
+  ): Struct_FieldsEntry {
     const message = createBaseStruct_FieldsEntry();
     message.key = object.key ?? "";
     message.value = object.value ?? undefined;
@@ -299,7 +308,10 @@ function createBaseValue(): Value {
 }
 
 export const Value: MessageFns<Value> & AnyValueWrapperFns = {
-  encode(message: Value, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: Value,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.nullValue !== undefined) {
       writer.uint32(8).int32(message.nullValue);
     }
@@ -313,16 +325,23 @@ export const Value: MessageFns<Value> & AnyValueWrapperFns = {
       writer.uint32(32).bool(message.boolValue);
     }
     if (message.structValue !== undefined) {
-      Struct.encode(Struct.wrap(message.structValue), writer.uint32(42).fork()).join();
+      Struct.encode(
+        Struct.wrap(message.structValue),
+        writer.uint32(42).fork(),
+      ).join();
     }
     if (message.listValue !== undefined) {
-      ListValue.encode(ListValue.wrap(message.listValue), writer.uint32(50).fork()).join();
+      ListValue.encode(
+        ListValue.wrap(message.listValue),
+        writer.uint32(50).fork(),
+      ).join();
     }
     return writer;
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): Value {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseValue();
     while (reader.pos < end) {
@@ -365,7 +384,9 @@ export const Value: MessageFns<Value> & AnyValueWrapperFns = {
             break;
           }
 
-          message.structValue = Struct.unwrap(Struct.decode(reader, reader.uint32()));
+          message.structValue = Struct.unwrap(
+            Struct.decode(reader, reader.uint32()),
+          );
           continue;
         }
         case 6: {
@@ -373,7 +394,9 @@ export const Value: MessageFns<Value> & AnyValueWrapperFns = {
             break;
           }
 
-          message.listValue = ListValue.unwrap(ListValue.decode(reader, reader.uint32()));
+          message.listValue = ListValue.unwrap(
+            ListValue.decode(reader, reader.uint32()),
+          );
           continue;
         }
       }
@@ -387,12 +410,24 @@ export const Value: MessageFns<Value> & AnyValueWrapperFns = {
 
   fromJSON(object: any): Value {
     return {
-      nullValue: isSet(object.nullValue) ? nullValueFromJSON(object.nullValue) : undefined,
-      numberValue: isSet(object.numberValue) ? globalThis.Number(object.numberValue) : undefined,
-      stringValue: isSet(object.stringValue) ? globalThis.String(object.stringValue) : undefined,
-      boolValue: isSet(object.boolValue) ? globalThis.Boolean(object.boolValue) : undefined,
-      structValue: isObject(object.structValue) ? object.structValue : undefined,
-      listValue: globalThis.Array.isArray(object.listValue) ? [...object.listValue] : undefined,
+      nullValue: isSet(object.nullValue)
+        ? nullValueFromJSON(object.nullValue)
+        : undefined,
+      numberValue: isSet(object.numberValue)
+        ? globalThis.Number(object.numberValue)
+        : undefined,
+      stringValue: isSet(object.stringValue)
+        ? globalThis.String(object.stringValue)
+        : undefined,
+      boolValue: isSet(object.boolValue)
+        ? globalThis.Boolean(object.boolValue)
+        : undefined,
+      structValue: isObject(object.structValue)
+        ? object.structValue
+        : undefined,
+      listValue: globalThis.Array.isArray(object.listValue)
+        ? [...object.listValue]
+        : undefined,
     };
   },
 
@@ -453,7 +488,9 @@ export const Value: MessageFns<Value> & AnyValueWrapperFns = {
     return result;
   },
 
-  unwrap(message: any): string | number | boolean | Object | null | Array<any> | undefined {
+  unwrap(
+    message: any,
+  ): string | number | boolean | Object | null | Array<any> | undefined {
     if (message.stringValue !== undefined) {
       return message.stringValue;
     } else if (message?.numberValue !== undefined) {
@@ -476,7 +513,10 @@ function createBaseListValue(): ListValue {
 }
 
 export const ListValue: MessageFns<ListValue> & ListValueWrapperFns = {
-  encode(message: ListValue, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: ListValue,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     for (const v of message.values) {
       Value.encode(Value.wrap(v!), writer.uint32(10).fork()).join();
     }
@@ -484,7 +524,8 @@ export const ListValue: MessageFns<ListValue> & ListValueWrapperFns = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): ListValue {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseListValue();
     while (reader.pos < end) {
@@ -495,7 +536,9 @@ export const ListValue: MessageFns<ListValue> & ListValueWrapperFns = {
             break;
           }
 
-          message.values.push(Value.unwrap(Value.decode(reader, reader.uint32())));
+          message.values.push(
+            Value.unwrap(Value.decode(reader, reader.uint32())),
+          );
           continue;
         }
       }
@@ -508,7 +551,11 @@ export const ListValue: MessageFns<ListValue> & ListValueWrapperFns = {
   },
 
   fromJSON(object: any): ListValue {
-    return { values: globalThis.Array.isArray(object?.values) ? [...object.values] : [] };
+    return {
+      values: globalThis.Array.isArray(object?.values)
+        ? [...object.values]
+        : [],
+    };
   },
 
   toJSON(message: ListValue): unknown {
@@ -522,7 +569,9 @@ export const ListValue: MessageFns<ListValue> & ListValueWrapperFns = {
   create<I extends Exact<DeepPartial<ListValue>, I>>(base?: I): ListValue {
     return ListValue.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ListValue>, I>>(object: I): ListValue {
+  fromPartial<I extends Exact<DeepPartial<ListValue>, I>>(
+    object: I,
+  ): ListValue {
     const message = createBaseListValue();
     message.values = object.values?.map((e) => e) || [];
     return message;
@@ -535,7 +584,10 @@ export const ListValue: MessageFns<ListValue> & ListValueWrapperFns = {
   },
 
   unwrap(message: ListValue): Array<any> {
-    if (message?.hasOwnProperty("values") && globalThis.Array.isArray(message.values)) {
+    if (
+      message?.hasOwnProperty("values") &&
+      globalThis.Array.isArray(message.values)
+    ) {
       return message.values;
     } else {
       return message as any;
@@ -543,17 +595,31 @@ export const ListValue: MessageFns<ListValue> & ListValueWrapperFns = {
   },
 };
 
-type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+type Builtin =
+  | Date
+  | Function
+  | Uint8Array
+  | string
+  | number
+  | boolean
+  | undefined;
 
-export type DeepPartial<T> = T extends Builtin ? T
-  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
-  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
-  : Partial<T>;
+export type DeepPartial<T> = T extends Builtin
+  ? T
+  : T extends globalThis.Array<infer U>
+    ? globalThis.Array<DeepPartial<U>>
+    : T extends ReadonlyArray<infer U>
+      ? ReadonlyArray<DeepPartial<U>>
+      : T extends {}
+        ? { [K in keyof T]?: DeepPartial<T[K]> }
+        : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & {
+      [K in Exclude<keyof I, KeysOfUnion<P>>]: never;
+    };
 
 function isObject(value: any): boolean {
   return typeof value === "object" && value !== null;
@@ -579,7 +645,9 @@ export interface StructWrapperFns {
 
 export interface AnyValueWrapperFns {
   wrap(value: any): Value;
-  unwrap(message: any): string | number | boolean | Object | null | Array<any> | undefined;
+  unwrap(
+    message: any,
+  ): string | number | boolean | Object | null | Array<any> | undefined;
 }
 
 export interface ListValueWrapperFns {

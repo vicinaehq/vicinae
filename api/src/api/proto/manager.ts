@@ -83,8 +83,7 @@ export interface RequestData {
   unload?: ManagerUnloadCommand | undefined;
 }
 
-export interface ManagerPingRequestData {
-}
+export interface ManagerPingRequestData {}
 
 export interface ResponseData {
   ack?: AckResponse | undefined;
@@ -124,21 +123,31 @@ function createBaseRequestData(): RequestData {
 }
 
 export const RequestData: MessageFns<RequestData> = {
-  encode(message: RequestData, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: RequestData,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.ping !== undefined) {
-      ManagerPingRequestData.encode(message.ping, writer.uint32(10).fork()).join();
+      ManagerPingRequestData.encode(
+        message.ping,
+        writer.uint32(10).fork(),
+      ).join();
     }
     if (message.load !== undefined) {
       ManagerLoadCommand.encode(message.load, writer.uint32(18).fork()).join();
     }
     if (message.unload !== undefined) {
-      ManagerUnloadCommand.encode(message.unload, writer.uint32(26).fork()).join();
+      ManagerUnloadCommand.encode(
+        message.unload,
+        writer.uint32(26).fork(),
+      ).join();
     }
     return writer;
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): RequestData {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseRequestData();
     while (reader.pos < end) {
@@ -179,9 +188,15 @@ export const RequestData: MessageFns<RequestData> = {
 
   fromJSON(object: any): RequestData {
     return {
-      ping: isSet(object.ping) ? ManagerPingRequestData.fromJSON(object.ping) : undefined,
-      load: isSet(object.load) ? ManagerLoadCommand.fromJSON(object.load) : undefined,
-      unload: isSet(object.unload) ? ManagerUnloadCommand.fromJSON(object.unload) : undefined,
+      ping: isSet(object.ping)
+        ? ManagerPingRequestData.fromJSON(object.ping)
+        : undefined,
+      load: isSet(object.load)
+        ? ManagerLoadCommand.fromJSON(object.load)
+        : undefined,
+      unload: isSet(object.unload)
+        ? ManagerUnloadCommand.fromJSON(object.unload)
+        : undefined,
     };
   },
 
@@ -202,17 +217,22 @@ export const RequestData: MessageFns<RequestData> = {
   create<I extends Exact<DeepPartial<RequestData>, I>>(base?: I): RequestData {
     return RequestData.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<RequestData>, I>>(object: I): RequestData {
+  fromPartial<I extends Exact<DeepPartial<RequestData>, I>>(
+    object: I,
+  ): RequestData {
     const message = createBaseRequestData();
-    message.ping = (object.ping !== undefined && object.ping !== null)
-      ? ManagerPingRequestData.fromPartial(object.ping)
-      : undefined;
-    message.load = (object.load !== undefined && object.load !== null)
-      ? ManagerLoadCommand.fromPartial(object.load)
-      : undefined;
-    message.unload = (object.unload !== undefined && object.unload !== null)
-      ? ManagerUnloadCommand.fromPartial(object.unload)
-      : undefined;
+    message.ping =
+      object.ping !== undefined && object.ping !== null
+        ? ManagerPingRequestData.fromPartial(object.ping)
+        : undefined;
+    message.load =
+      object.load !== undefined && object.load !== null
+        ? ManagerLoadCommand.fromPartial(object.load)
+        : undefined;
+    message.unload =
+      object.unload !== undefined && object.unload !== null
+        ? ManagerUnloadCommand.fromPartial(object.unload)
+        : undefined;
     return message;
   },
 };
@@ -222,12 +242,19 @@ function createBaseManagerPingRequestData(): ManagerPingRequestData {
 }
 
 export const ManagerPingRequestData: MessageFns<ManagerPingRequestData> = {
-  encode(_: ManagerPingRequestData, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    _: ManagerPingRequestData,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): ManagerPingRequestData {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+  decode(
+    input: BinaryReader | Uint8Array,
+    length?: number,
+  ): ManagerPingRequestData {
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseManagerPingRequestData();
     while (reader.pos < end) {
@@ -251,10 +278,14 @@ export const ManagerPingRequestData: MessageFns<ManagerPingRequestData> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<ManagerPingRequestData>, I>>(base?: I): ManagerPingRequestData {
+  create<I extends Exact<DeepPartial<ManagerPingRequestData>, I>>(
+    base?: I,
+  ): ManagerPingRequestData {
     return ManagerPingRequestData.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ManagerPingRequestData>, I>>(_: I): ManagerPingRequestData {
+  fromPartial<I extends Exact<DeepPartial<ManagerPingRequestData>, I>>(
+    _: I,
+  ): ManagerPingRequestData {
     const message = createBaseManagerPingRequestData();
     return message;
   },
@@ -265,18 +296,25 @@ function createBaseResponseData(): ResponseData {
 }
 
 export const ResponseData: MessageFns<ResponseData> = {
-  encode(message: ResponseData, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: ResponseData,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.ack !== undefined) {
       AckResponse.encode(message.ack, writer.uint32(10).fork()).join();
     }
     if (message.load !== undefined) {
-      ManagerLoadResponseData.encode(message.load, writer.uint32(18).fork()).join();
+      ManagerLoadResponseData.encode(
+        message.load,
+        writer.uint32(18).fork(),
+      ).join();
     }
     return writer;
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): ResponseData {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseResponseData();
     while (reader.pos < end) {
@@ -295,7 +333,10 @@ export const ResponseData: MessageFns<ResponseData> = {
             break;
           }
 
-          message.load = ManagerLoadResponseData.decode(reader, reader.uint32());
+          message.load = ManagerLoadResponseData.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
       }
@@ -310,7 +351,9 @@ export const ResponseData: MessageFns<ResponseData> = {
   fromJSON(object: any): ResponseData {
     return {
       ack: isSet(object.ack) ? AckResponse.fromJSON(object.ack) : undefined,
-      load: isSet(object.load) ? ManagerLoadResponseData.fromJSON(object.load) : undefined,
+      load: isSet(object.load)
+        ? ManagerLoadResponseData.fromJSON(object.load)
+        : undefined,
     };
   },
 
@@ -325,25 +368,43 @@ export const ResponseData: MessageFns<ResponseData> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<ResponseData>, I>>(base?: I): ResponseData {
+  create<I extends Exact<DeepPartial<ResponseData>, I>>(
+    base?: I,
+  ): ResponseData {
     return ResponseData.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ResponseData>, I>>(object: I): ResponseData {
+  fromPartial<I extends Exact<DeepPartial<ResponseData>, I>>(
+    object: I,
+  ): ResponseData {
     const message = createBaseResponseData();
-    message.ack = (object.ack !== undefined && object.ack !== null) ? AckResponse.fromPartial(object.ack) : undefined;
-    message.load = (object.load !== undefined && object.load !== null)
-      ? ManagerLoadResponseData.fromPartial(object.load)
-      : undefined;
+    message.ack =
+      object.ack !== undefined && object.ack !== null
+        ? AckResponse.fromPartial(object.ack)
+        : undefined;
+    message.load =
+      object.load !== undefined && object.load !== null
+        ? ManagerLoadResponseData.fromPartial(object.load)
+        : undefined;
     return message;
   },
 };
 
 function createBaseManagerLoadCommand(): ManagerLoadCommand {
-  return { mode: 0, env: 0, extensionPath: "", entrypoint: "", preferenceValues: {}, argumentValues: {} };
+  return {
+    mode: 0,
+    env: 0,
+    extensionPath: "",
+    entrypoint: "",
+    preferenceValues: {},
+    argumentValues: {},
+  };
 }
 
 export const ManagerLoadCommand: MessageFns<ManagerLoadCommand> = {
-  encode(message: ManagerLoadCommand, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: ManagerLoadCommand,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.mode !== 0) {
       writer.uint32(8).int32(message.mode);
     }
@@ -358,19 +419,29 @@ export const ManagerLoadCommand: MessageFns<ManagerLoadCommand> = {
     }
     Object.entries(message.preferenceValues).forEach(([key, value]) => {
       if (value !== undefined) {
-        ManagerLoadCommand_PreferenceValuesEntry.encode({ key: key as any, value }, writer.uint32(42).fork()).join();
+        ManagerLoadCommand_PreferenceValuesEntry.encode(
+          { key: key as any, value },
+          writer.uint32(42).fork(),
+        ).join();
       }
     });
     Object.entries(message.argumentValues).forEach(([key, value]) => {
       if (value !== undefined) {
-        ManagerLoadCommand_ArgumentValuesEntry.encode({ key: key as any, value }, writer.uint32(50).fork()).join();
+        ManagerLoadCommand_ArgumentValuesEntry.encode(
+          { key: key as any, value },
+          writer.uint32(50).fork(),
+        ).join();
       }
     });
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): ManagerLoadCommand {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+  decode(
+    input: BinaryReader | Uint8Array,
+    length?: number,
+  ): ManagerLoadCommand {
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseManagerLoadCommand();
     while (reader.pos < end) {
@@ -413,7 +484,10 @@ export const ManagerLoadCommand: MessageFns<ManagerLoadCommand> = {
             break;
           }
 
-          const entry5 = ManagerLoadCommand_PreferenceValuesEntry.decode(reader, reader.uint32());
+          const entry5 = ManagerLoadCommand_PreferenceValuesEntry.decode(
+            reader,
+            reader.uint32(),
+          );
           if (entry5.value !== undefined) {
             message.preferenceValues[entry5.key] = entry5.value;
           }
@@ -424,7 +498,10 @@ export const ManagerLoadCommand: MessageFns<ManagerLoadCommand> = {
             break;
           }
 
-          const entry6 = ManagerLoadCommand_ArgumentValuesEntry.decode(reader, reader.uint32());
+          const entry6 = ManagerLoadCommand_ArgumentValuesEntry.decode(
+            reader,
+            reader.uint32(),
+          );
           if (entry6.value !== undefined) {
             message.argumentValues[entry6.key] = entry6.value;
           }
@@ -443,19 +520,27 @@ export const ManagerLoadCommand: MessageFns<ManagerLoadCommand> = {
     return {
       mode: isSet(object.mode) ? commandModeFromJSON(object.mode) : 0,
       env: isSet(object.env) ? commandEnvFromJSON(object.env) : 0,
-      extensionPath: isSet(object.extensionPath) ? globalThis.String(object.extensionPath) : "",
-      entrypoint: isSet(object.entrypoint) ? globalThis.String(object.entrypoint) : "",
+      extensionPath: isSet(object.extensionPath)
+        ? globalThis.String(object.extensionPath)
+        : "",
+      entrypoint: isSet(object.entrypoint)
+        ? globalThis.String(object.entrypoint)
+        : "",
       preferenceValues: isObject(object.preferenceValues)
-        ? Object.entries(object.preferenceValues).reduce<{ [key: string]: any | undefined }>((acc, [key, value]) => {
-          acc[key] = value as any | undefined;
-          return acc;
-        }, {})
+        ? Object.entries(object.preferenceValues).reduce<{
+            [key: string]: any | undefined;
+          }>((acc, [key, value]) => {
+            acc[key] = value as any | undefined;
+            return acc;
+          }, {})
         : {},
       argumentValues: isObject(object.argumentValues)
-        ? Object.entries(object.argumentValues).reduce<{ [key: string]: any | undefined }>((acc, [key, value]) => {
-          acc[key] = value as any | undefined;
-          return acc;
-        }, {})
+        ? Object.entries(object.argumentValues).reduce<{
+            [key: string]: any | undefined;
+          }>((acc, [key, value]) => {
+            acc[key] = value as any | undefined;
+            return acc;
+          }, {})
         : {},
     };
   },
@@ -495,33 +580,35 @@ export const ManagerLoadCommand: MessageFns<ManagerLoadCommand> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<ManagerLoadCommand>, I>>(base?: I): ManagerLoadCommand {
+  create<I extends Exact<DeepPartial<ManagerLoadCommand>, I>>(
+    base?: I,
+  ): ManagerLoadCommand {
     return ManagerLoadCommand.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ManagerLoadCommand>, I>>(object: I): ManagerLoadCommand {
+  fromPartial<I extends Exact<DeepPartial<ManagerLoadCommand>, I>>(
+    object: I,
+  ): ManagerLoadCommand {
     const message = createBaseManagerLoadCommand();
     message.mode = object.mode ?? 0;
     message.env = object.env ?? 0;
     message.extensionPath = object.extensionPath ?? "";
     message.entrypoint = object.entrypoint ?? "";
-    message.preferenceValues = Object.entries(object.preferenceValues ?? {}).reduce<{ [key: string]: any | undefined }>(
-      (acc, [key, value]) => {
-        if (value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      },
-      {},
-    );
-    message.argumentValues = Object.entries(object.argumentValues ?? {}).reduce<{ [key: string]: any | undefined }>(
-      (acc, [key, value]) => {
-        if (value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      },
-      {},
-    );
+    message.preferenceValues = Object.entries(
+      object.preferenceValues ?? {},
+    ).reduce<{ [key: string]: any | undefined }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {});
+    message.argumentValues = Object.entries(
+      object.argumentValues ?? {},
+    ).reduce<{ [key: string]: any | undefined }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {});
     return message;
   },
 };
@@ -530,176 +617,209 @@ function createBaseManagerLoadCommand_PreferenceValuesEntry(): ManagerLoadComman
   return { key: "", value: undefined };
 }
 
-export const ManagerLoadCommand_PreferenceValuesEntry: MessageFns<ManagerLoadCommand_PreferenceValuesEntry> = {
-  encode(message: ManagerLoadCommand_PreferenceValuesEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.key !== "") {
-      writer.uint32(10).string(message.key);
-    }
-    if (message.value !== undefined) {
-      Value.encode(Value.wrap(message.value), writer.uint32(18).fork()).join();
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): ManagerLoadCommand_PreferenceValuesEntry {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseManagerLoadCommand_PreferenceValuesEntry();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.key = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.value = Value.unwrap(Value.decode(reader, reader.uint32()));
-          continue;
-        }
+export const ManagerLoadCommand_PreferenceValuesEntry: MessageFns<ManagerLoadCommand_PreferenceValuesEntry> =
+  {
+    encode(
+      message: ManagerLoadCommand_PreferenceValuesEntry,
+      writer: BinaryWriter = new BinaryWriter(),
+    ): BinaryWriter {
+      if (message.key !== "") {
+        writer.uint32(10).string(message.key);
       }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
+      if (message.value !== undefined) {
+        Value.encode(
+          Value.wrap(message.value),
+          writer.uint32(18).fork(),
+        ).join();
       }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+      return writer;
+    },
 
-  fromJSON(object: any): ManagerLoadCommand_PreferenceValuesEntry {
-    return {
-      key: isSet(object.key) ? globalThis.String(object.key) : "",
-      value: isSet(object?.value) ? object.value : undefined,
-    };
-  },
+    decode(
+      input: BinaryReader | Uint8Array,
+      length?: number,
+    ): ManagerLoadCommand_PreferenceValuesEntry {
+      const reader =
+        input instanceof BinaryReader ? input : new BinaryReader(input);
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseManagerLoadCommand_PreferenceValuesEntry();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-  toJSON(message: ManagerLoadCommand_PreferenceValuesEntry): unknown {
-    const obj: any = {};
-    if (message.key !== "") {
-      obj.key = message.key;
-    }
-    if (message.value !== undefined) {
-      obj.value = message.value;
-    }
-    return obj;
-  },
+            message.key = reader.string();
+            continue;
+          }
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
 
-  create<I extends Exact<DeepPartial<ManagerLoadCommand_PreferenceValuesEntry>, I>>(
-    base?: I,
-  ): ManagerLoadCommand_PreferenceValuesEntry {
-    return ManagerLoadCommand_PreferenceValuesEntry.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ManagerLoadCommand_PreferenceValuesEntry>, I>>(
-    object: I,
-  ): ManagerLoadCommand_PreferenceValuesEntry {
-    const message = createBaseManagerLoadCommand_PreferenceValuesEntry();
-    message.key = object.key ?? "";
-    message.value = object.value ?? undefined;
-    return message;
-  },
-};
+            message.value = Value.unwrap(Value.decode(reader, reader.uint32()));
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    },
+
+    fromJSON(object: any): ManagerLoadCommand_PreferenceValuesEntry {
+      return {
+        key: isSet(object.key) ? globalThis.String(object.key) : "",
+        value: isSet(object?.value) ? object.value : undefined,
+      };
+    },
+
+    toJSON(message: ManagerLoadCommand_PreferenceValuesEntry): unknown {
+      const obj: any = {};
+      if (message.key !== "") {
+        obj.key = message.key;
+      }
+      if (message.value !== undefined) {
+        obj.value = message.value;
+      }
+      return obj;
+    },
+
+    create<
+      I extends Exact<DeepPartial<ManagerLoadCommand_PreferenceValuesEntry>, I>,
+    >(base?: I): ManagerLoadCommand_PreferenceValuesEntry {
+      return ManagerLoadCommand_PreferenceValuesEntry.fromPartial(
+        base ?? ({} as any),
+      );
+    },
+    fromPartial<
+      I extends Exact<DeepPartial<ManagerLoadCommand_PreferenceValuesEntry>, I>,
+    >(object: I): ManagerLoadCommand_PreferenceValuesEntry {
+      const message = createBaseManagerLoadCommand_PreferenceValuesEntry();
+      message.key = object.key ?? "";
+      message.value = object.value ?? undefined;
+      return message;
+    },
+  };
 
 function createBaseManagerLoadCommand_ArgumentValuesEntry(): ManagerLoadCommand_ArgumentValuesEntry {
   return { key: "", value: undefined };
 }
 
-export const ManagerLoadCommand_ArgumentValuesEntry: MessageFns<ManagerLoadCommand_ArgumentValuesEntry> = {
-  encode(message: ManagerLoadCommand_ArgumentValuesEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.key !== "") {
-      writer.uint32(10).string(message.key);
-    }
-    if (message.value !== undefined) {
-      Value.encode(Value.wrap(message.value), writer.uint32(18).fork()).join();
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): ManagerLoadCommand_ArgumentValuesEntry {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseManagerLoadCommand_ArgumentValuesEntry();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.key = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.value = Value.unwrap(Value.decode(reader, reader.uint32()));
-          continue;
-        }
+export const ManagerLoadCommand_ArgumentValuesEntry: MessageFns<ManagerLoadCommand_ArgumentValuesEntry> =
+  {
+    encode(
+      message: ManagerLoadCommand_ArgumentValuesEntry,
+      writer: BinaryWriter = new BinaryWriter(),
+    ): BinaryWriter {
+      if (message.key !== "") {
+        writer.uint32(10).string(message.key);
       }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
+      if (message.value !== undefined) {
+        Value.encode(
+          Value.wrap(message.value),
+          writer.uint32(18).fork(),
+        ).join();
       }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
+      return writer;
+    },
 
-  fromJSON(object: any): ManagerLoadCommand_ArgumentValuesEntry {
-    return {
-      key: isSet(object.key) ? globalThis.String(object.key) : "",
-      value: isSet(object?.value) ? object.value : undefined,
-    };
-  },
+    decode(
+      input: BinaryReader | Uint8Array,
+      length?: number,
+    ): ManagerLoadCommand_ArgumentValuesEntry {
+      const reader =
+        input instanceof BinaryReader ? input : new BinaryReader(input);
+      const end = length === undefined ? reader.len : reader.pos + length;
+      const message = createBaseManagerLoadCommand_ArgumentValuesEntry();
+      while (reader.pos < end) {
+        const tag = reader.uint32();
+        switch (tag >>> 3) {
+          case 1: {
+            if (tag !== 10) {
+              break;
+            }
 
-  toJSON(message: ManagerLoadCommand_ArgumentValuesEntry): unknown {
-    const obj: any = {};
-    if (message.key !== "") {
-      obj.key = message.key;
-    }
-    if (message.value !== undefined) {
-      obj.value = message.value;
-    }
-    return obj;
-  },
+            message.key = reader.string();
+            continue;
+          }
+          case 2: {
+            if (tag !== 18) {
+              break;
+            }
 
-  create<I extends Exact<DeepPartial<ManagerLoadCommand_ArgumentValuesEntry>, I>>(
-    base?: I,
-  ): ManagerLoadCommand_ArgumentValuesEntry {
-    return ManagerLoadCommand_ArgumentValuesEntry.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<ManagerLoadCommand_ArgumentValuesEntry>, I>>(
-    object: I,
-  ): ManagerLoadCommand_ArgumentValuesEntry {
-    const message = createBaseManagerLoadCommand_ArgumentValuesEntry();
-    message.key = object.key ?? "";
-    message.value = object.value ?? undefined;
-    return message;
-  },
-};
+            message.value = Value.unwrap(Value.decode(reader, reader.uint32()));
+            continue;
+          }
+        }
+        if ((tag & 7) === 4 || tag === 0) {
+          break;
+        }
+        reader.skip(tag & 7);
+      }
+      return message;
+    },
+
+    fromJSON(object: any): ManagerLoadCommand_ArgumentValuesEntry {
+      return {
+        key: isSet(object.key) ? globalThis.String(object.key) : "",
+        value: isSet(object?.value) ? object.value : undefined,
+      };
+    },
+
+    toJSON(message: ManagerLoadCommand_ArgumentValuesEntry): unknown {
+      const obj: any = {};
+      if (message.key !== "") {
+        obj.key = message.key;
+      }
+      if (message.value !== undefined) {
+        obj.value = message.value;
+      }
+      return obj;
+    },
+
+    create<
+      I extends Exact<DeepPartial<ManagerLoadCommand_ArgumentValuesEntry>, I>,
+    >(base?: I): ManagerLoadCommand_ArgumentValuesEntry {
+      return ManagerLoadCommand_ArgumentValuesEntry.fromPartial(
+        base ?? ({} as any),
+      );
+    },
+    fromPartial<
+      I extends Exact<DeepPartial<ManagerLoadCommand_ArgumentValuesEntry>, I>,
+    >(object: I): ManagerLoadCommand_ArgumentValuesEntry {
+      const message = createBaseManagerLoadCommand_ArgumentValuesEntry();
+      message.key = object.key ?? "";
+      message.value = object.value ?? undefined;
+      return message;
+    },
+  };
 
 function createBaseManagerUnloadCommand(): ManagerUnloadCommand {
   return { sessionId: "" };
 }
 
 export const ManagerUnloadCommand: MessageFns<ManagerUnloadCommand> = {
-  encode(message: ManagerUnloadCommand, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: ManagerUnloadCommand,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.sessionId !== "") {
       writer.uint32(10).string(message.sessionId);
     }
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): ManagerUnloadCommand {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+  decode(
+    input: BinaryReader | Uint8Array,
+    length?: number,
+  ): ManagerUnloadCommand {
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseManagerUnloadCommand();
     while (reader.pos < end) {
@@ -723,7 +843,11 @@ export const ManagerUnloadCommand: MessageFns<ManagerUnloadCommand> = {
   },
 
   fromJSON(object: any): ManagerUnloadCommand {
-    return { sessionId: isSet(object.sessionId) ? globalThis.String(object.sessionId) : "" };
+    return {
+      sessionId: isSet(object.sessionId)
+        ? globalThis.String(object.sessionId)
+        : "",
+    };
   },
 
   toJSON(message: ManagerUnloadCommand): unknown {
@@ -734,10 +858,14 @@ export const ManagerUnloadCommand: MessageFns<ManagerUnloadCommand> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<ManagerUnloadCommand>, I>>(base?: I): ManagerUnloadCommand {
+  create<I extends Exact<DeepPartial<ManagerUnloadCommand>, I>>(
+    base?: I,
+  ): ManagerUnloadCommand {
     return ManagerUnloadCommand.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ManagerUnloadCommand>, I>>(object: I): ManagerUnloadCommand {
+  fromPartial<I extends Exact<DeepPartial<ManagerUnloadCommand>, I>>(
+    object: I,
+  ): ManagerUnloadCommand {
     const message = createBaseManagerUnloadCommand();
     message.sessionId = object.sessionId ?? "";
     return message;
@@ -749,15 +877,22 @@ function createBaseManagerLoadResponseData(): ManagerLoadResponseData {
 }
 
 export const ManagerLoadResponseData: MessageFns<ManagerLoadResponseData> = {
-  encode(message: ManagerLoadResponseData, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: ManagerLoadResponseData,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.sessionId !== "") {
       writer.uint32(10).string(message.sessionId);
     }
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): ManagerLoadResponseData {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+  decode(
+    input: BinaryReader | Uint8Array,
+    length?: number,
+  ): ManagerLoadResponseData {
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseManagerLoadResponseData();
     while (reader.pos < end) {
@@ -781,7 +916,11 @@ export const ManagerLoadResponseData: MessageFns<ManagerLoadResponseData> = {
   },
 
   fromJSON(object: any): ManagerLoadResponseData {
-    return { sessionId: isSet(object.sessionId) ? globalThis.String(object.sessionId) : "" };
+    return {
+      sessionId: isSet(object.sessionId)
+        ? globalThis.String(object.sessionId)
+        : "",
+    };
   },
 
   toJSON(message: ManagerLoadResponseData): unknown {
@@ -792,27 +931,45 @@ export const ManagerLoadResponseData: MessageFns<ManagerLoadResponseData> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<ManagerLoadResponseData>, I>>(base?: I): ManagerLoadResponseData {
+  create<I extends Exact<DeepPartial<ManagerLoadResponseData>, I>>(
+    base?: I,
+  ): ManagerLoadResponseData {
     return ManagerLoadResponseData.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ManagerLoadResponseData>, I>>(object: I): ManagerLoadResponseData {
+  fromPartial<I extends Exact<DeepPartial<ManagerLoadResponseData>, I>>(
+    object: I,
+  ): ManagerLoadResponseData {
     const message = createBaseManagerLoadResponseData();
     message.sessionId = object.sessionId ?? "";
     return message;
   },
 };
 
-type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+type Builtin =
+  | Date
+  | Function
+  | Uint8Array
+  | string
+  | number
+  | boolean
+  | undefined;
 
-export type DeepPartial<T> = T extends Builtin ? T
-  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
-  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
-  : Partial<T>;
+export type DeepPartial<T> = T extends Builtin
+  ? T
+  : T extends globalThis.Array<infer U>
+    ? globalThis.Array<DeepPartial<U>>
+    : T extends ReadonlyArray<infer U>
+      ? ReadonlyArray<DeepPartial<U>>
+      : T extends {}
+        ? { [K in keyof T]?: DeepPartial<T[K]> }
+        : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & {
+      [K in Exclude<keyof I, KeysOfUnion<P>>]: never;
+    };
 
 function isObject(value: any): boolean {
   return typeof value === "object" && value !== null;

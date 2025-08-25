@@ -1,10 +1,10 @@
 #pragma once
 #include "common.hpp"
 #include "preference.hpp"
-#include "settings/command-metadata-settings-detail.hpp"
 #include "ui/form/base-input.hpp"
 #include "ui/form/checkbox-input.hpp"
 #include "ui/form/form-field.hpp"
+#include "ui/preference-dropdown/preference-dropdown.hpp"
 #include <qjsonvalue.h>
 #include <qlineedit.h>
 #include <qlogging.h>
@@ -48,9 +48,9 @@ class PreferenceField : public FormField {
   JsonFormItemWidget *m_serializable = nullptr;
   Preference m_preference;
 
-  void setWidget(QWidget *widget, JsonFormItemWidget *serializable) {
-    m_serializable = serializable;
-    FormField::setWidget(widget, serializable->focusNotifier());
+  void setWidget(JsonFormItemWidget *widget) {
+    m_serializable = widget;
+    FormField::setWidget(widget, widget->focusNotifier());
   }
 
 public:
@@ -64,6 +64,6 @@ public:
 
     if (!widget) return;
 
-    setWidget(widget, widget);
+    setWidget(widget);
   }
 };

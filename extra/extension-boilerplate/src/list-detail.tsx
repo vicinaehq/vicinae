@@ -1,11 +1,37 @@
-// Define a type for our fruit entries
-export type Fruit = {
+import React from 'react';
+import { ActionPanel, Action, List, showToast, Icon } from '@vicinae/api';
+
+export default function ListDetail() {
+	return (
+		<List isShowingDetail searchBarPlaceholder={'Search fruits...'}>
+			<List.Section title={'Fruits'}>
+				{fruits.map(fruit => (
+					<List.Item 
+						key={fruit.emoji}
+						title={fruit.name} 
+						icon={fruit.emoji} 
+						detail={
+							<List.Item.Detail markdown={fruit.description} />
+						}
+						actions={
+							<ActionPanel>
+								<Action.CopyToClipboard title="Copy emoji" content={fruit.emoji} />
+								<Action title="Custom action" icon={Icon.Cog} onAction={() => showToast({ title: 'Hello from custom action' })} />
+							</ActionPanel>
+						}
+					/>
+				))}
+			</List.Section>
+		</List>
+	);
+}
+
+type Fruit = {
   emoji: string;
   name: string;
   description: string; // Markdown formatted description
 };
 
-// Create an array of fruits with their emoji, names, and detailed markdown descriptions
 export const fruits: Fruit[] = [
   { 
     emoji: "🍎", 

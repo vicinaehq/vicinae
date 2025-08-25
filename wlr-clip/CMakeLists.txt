@@ -33,8 +33,8 @@ set(SRCS
 
 add_executable(${TARGET} ${SRCS})
 wayland_generate_protocol(${TARGET} ${CMAKE_CURRENT_SOURCE_DIR}/protocols/wlr-data-control-unstable-v1.xml)
-target_compile_options(${TARGET} PUBLIC -g3 -fsanitize=address)
-target_link_libraries(${TARGET} PRIVATE wayland-client protobuf::libprotobuf -fsanitize=address)
+#target_compile_options(${TARGET} PUBLIC)
+target_link_libraries(${TARGET} PRIVATE wayland-client protobuf::libprotobuf) 
 
 make_directory(${CMAKE_CURRENT_BINARY_DIR}/proto)
 

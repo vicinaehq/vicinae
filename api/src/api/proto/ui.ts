@@ -108,7 +108,9 @@ export enum ConfirmAlertActionStyle {
   UNRECOGNIZED = -1,
 }
 
-export function confirmAlertActionStyleFromJSON(object: any): ConfirmAlertActionStyle {
+export function confirmAlertActionStyleFromJSON(
+  object: any,
+): ConfirmAlertActionStyle {
   switch (object) {
     case 0:
     case "Default":
@@ -126,7 +128,9 @@ export function confirmAlertActionStyleFromJSON(object: any): ConfirmAlertAction
   }
 }
 
-export function confirmAlertActionStyleToJSON(object: ConfirmAlertActionStyle): string {
+export function confirmAlertActionStyleToJSON(
+  object: ConfirmAlertActionStyle,
+): string {
   switch (object) {
     case ConfirmAlertActionStyle.Default:
       return "Default";
@@ -194,24 +198,19 @@ export interface UpdateToastRequest {
   title: string;
 }
 
-export interface PushViewRequest {
-}
+export interface PushViewRequest {}
 
-export interface PopViewRequest {
-}
+export interface PopViewRequest {}
 
-export interface CloseMainWindowRequest {
-}
+export interface CloseMainWindowRequest {}
 
-export interface ClearSearchBarRequest {
-}
+export interface ClearSearchBarRequest {}
 
 export interface SetSearchTextRequest {
   text: string;
 }
 
-export interface GetSelectedTextRequest {
-}
+export interface GetSelectedTextRequest {}
 
 export interface GetSelectedTextResponse {
   text: string;
@@ -312,7 +311,10 @@ function createBaseShowToastRequest(): ShowToastRequest {
 }
 
 export const ShowToastRequest: MessageFns<ShowToastRequest> = {
-  encode(message: ShowToastRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: ShowToastRequest,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.id !== "") {
       writer.uint32(10).string(message.id);
     }
@@ -326,7 +328,8 @@ export const ShowToastRequest: MessageFns<ShowToastRequest> = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): ShowToastRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseShowToastRequest();
     while (reader.pos < end) {
@@ -387,10 +390,14 @@ export const ShowToastRequest: MessageFns<ShowToastRequest> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<ShowToastRequest>, I>>(base?: I): ShowToastRequest {
+  create<I extends Exact<DeepPartial<ShowToastRequest>, I>>(
+    base?: I,
+  ): ShowToastRequest {
     return ShowToastRequest.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ShowToastRequest>, I>>(object: I): ShowToastRequest {
+  fromPartial<I extends Exact<DeepPartial<ShowToastRequest>, I>>(
+    object: I,
+  ): ShowToastRequest {
     const message = createBaseShowToastRequest();
     message.id = object.id ?? "";
     message.title = object.title ?? "";
@@ -404,7 +411,10 @@ function createBaseHideToastRequest(): HideToastRequest {
 }
 
 export const HideToastRequest: MessageFns<HideToastRequest> = {
-  encode(message: HideToastRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: HideToastRequest,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.id !== "") {
       writer.uint32(10).string(message.id);
     }
@@ -412,7 +422,8 @@ export const HideToastRequest: MessageFns<HideToastRequest> = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): HideToastRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseHideToastRequest();
     while (reader.pos < end) {
@@ -447,10 +458,14 @@ export const HideToastRequest: MessageFns<HideToastRequest> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<HideToastRequest>, I>>(base?: I): HideToastRequest {
+  create<I extends Exact<DeepPartial<HideToastRequest>, I>>(
+    base?: I,
+  ): HideToastRequest {
     return HideToastRequest.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<HideToastRequest>, I>>(object: I): HideToastRequest {
+  fromPartial<I extends Exact<DeepPartial<HideToastRequest>, I>>(
+    object: I,
+  ): HideToastRequest {
     const message = createBaseHideToastRequest();
     message.id = object.id ?? "";
     return message;
@@ -462,7 +477,10 @@ function createBaseUpdateToastRequest(): UpdateToastRequest {
 }
 
 export const UpdateToastRequest: MessageFns<UpdateToastRequest> = {
-  encode(message: UpdateToastRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: UpdateToastRequest,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.id !== "") {
       writer.uint32(10).string(message.id);
     }
@@ -472,8 +490,12 @@ export const UpdateToastRequest: MessageFns<UpdateToastRequest> = {
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): UpdateToastRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+  decode(
+    input: BinaryReader | Uint8Array,
+    length?: number,
+  ): UpdateToastRequest {
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseUpdateToastRequest();
     while (reader.pos < end) {
@@ -522,10 +544,14 @@ export const UpdateToastRequest: MessageFns<UpdateToastRequest> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<UpdateToastRequest>, I>>(base?: I): UpdateToastRequest {
+  create<I extends Exact<DeepPartial<UpdateToastRequest>, I>>(
+    base?: I,
+  ): UpdateToastRequest {
     return UpdateToastRequest.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<UpdateToastRequest>, I>>(object: I): UpdateToastRequest {
+  fromPartial<I extends Exact<DeepPartial<UpdateToastRequest>, I>>(
+    object: I,
+  ): UpdateToastRequest {
     const message = createBaseUpdateToastRequest();
     message.id = object.id ?? "";
     message.title = object.title ?? "";
@@ -538,12 +564,16 @@ function createBasePushViewRequest(): PushViewRequest {
 }
 
 export const PushViewRequest: MessageFns<PushViewRequest> = {
-  encode(_: PushViewRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    _: PushViewRequest,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     return writer;
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): PushViewRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBasePushViewRequest();
     while (reader.pos < end) {
@@ -567,10 +597,14 @@ export const PushViewRequest: MessageFns<PushViewRequest> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<PushViewRequest>, I>>(base?: I): PushViewRequest {
+  create<I extends Exact<DeepPartial<PushViewRequest>, I>>(
+    base?: I,
+  ): PushViewRequest {
     return PushViewRequest.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<PushViewRequest>, I>>(_: I): PushViewRequest {
+  fromPartial<I extends Exact<DeepPartial<PushViewRequest>, I>>(
+    _: I,
+  ): PushViewRequest {
     const message = createBasePushViewRequest();
     return message;
   },
@@ -581,12 +615,16 @@ function createBasePopViewRequest(): PopViewRequest {
 }
 
 export const PopViewRequest: MessageFns<PopViewRequest> = {
-  encode(_: PopViewRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    _: PopViewRequest,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     return writer;
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): PopViewRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBasePopViewRequest();
     while (reader.pos < end) {
@@ -610,10 +648,14 @@ export const PopViewRequest: MessageFns<PopViewRequest> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<PopViewRequest>, I>>(base?: I): PopViewRequest {
+  create<I extends Exact<DeepPartial<PopViewRequest>, I>>(
+    base?: I,
+  ): PopViewRequest {
     return PopViewRequest.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<PopViewRequest>, I>>(_: I): PopViewRequest {
+  fromPartial<I extends Exact<DeepPartial<PopViewRequest>, I>>(
+    _: I,
+  ): PopViewRequest {
     const message = createBasePopViewRequest();
     return message;
   },
@@ -624,12 +666,19 @@ function createBaseCloseMainWindowRequest(): CloseMainWindowRequest {
 }
 
 export const CloseMainWindowRequest: MessageFns<CloseMainWindowRequest> = {
-  encode(_: CloseMainWindowRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    _: CloseMainWindowRequest,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): CloseMainWindowRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+  decode(
+    input: BinaryReader | Uint8Array,
+    length?: number,
+  ): CloseMainWindowRequest {
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseCloseMainWindowRequest();
     while (reader.pos < end) {
@@ -653,10 +702,14 @@ export const CloseMainWindowRequest: MessageFns<CloseMainWindowRequest> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<CloseMainWindowRequest>, I>>(base?: I): CloseMainWindowRequest {
+  create<I extends Exact<DeepPartial<CloseMainWindowRequest>, I>>(
+    base?: I,
+  ): CloseMainWindowRequest {
     return CloseMainWindowRequest.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<CloseMainWindowRequest>, I>>(_: I): CloseMainWindowRequest {
+  fromPartial<I extends Exact<DeepPartial<CloseMainWindowRequest>, I>>(
+    _: I,
+  ): CloseMainWindowRequest {
     const message = createBaseCloseMainWindowRequest();
     return message;
   },
@@ -667,12 +720,19 @@ function createBaseClearSearchBarRequest(): ClearSearchBarRequest {
 }
 
 export const ClearSearchBarRequest: MessageFns<ClearSearchBarRequest> = {
-  encode(_: ClearSearchBarRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    _: ClearSearchBarRequest,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): ClearSearchBarRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+  decode(
+    input: BinaryReader | Uint8Array,
+    length?: number,
+  ): ClearSearchBarRequest {
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseClearSearchBarRequest();
     while (reader.pos < end) {
@@ -696,10 +756,14 @@ export const ClearSearchBarRequest: MessageFns<ClearSearchBarRequest> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<ClearSearchBarRequest>, I>>(base?: I): ClearSearchBarRequest {
+  create<I extends Exact<DeepPartial<ClearSearchBarRequest>, I>>(
+    base?: I,
+  ): ClearSearchBarRequest {
     return ClearSearchBarRequest.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ClearSearchBarRequest>, I>>(_: I): ClearSearchBarRequest {
+  fromPartial<I extends Exact<DeepPartial<ClearSearchBarRequest>, I>>(
+    _: I,
+  ): ClearSearchBarRequest {
     const message = createBaseClearSearchBarRequest();
     return message;
   },
@@ -710,15 +774,22 @@ function createBaseSetSearchTextRequest(): SetSearchTextRequest {
 }
 
 export const SetSearchTextRequest: MessageFns<SetSearchTextRequest> = {
-  encode(message: SetSearchTextRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: SetSearchTextRequest,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.text !== "") {
       writer.uint32(10).string(message.text);
     }
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): SetSearchTextRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+  decode(
+    input: BinaryReader | Uint8Array,
+    length?: number,
+  ): SetSearchTextRequest {
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseSetSearchTextRequest();
     while (reader.pos < end) {
@@ -753,10 +824,14 @@ export const SetSearchTextRequest: MessageFns<SetSearchTextRequest> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<SetSearchTextRequest>, I>>(base?: I): SetSearchTextRequest {
+  create<I extends Exact<DeepPartial<SetSearchTextRequest>, I>>(
+    base?: I,
+  ): SetSearchTextRequest {
     return SetSearchTextRequest.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<SetSearchTextRequest>, I>>(object: I): SetSearchTextRequest {
+  fromPartial<I extends Exact<DeepPartial<SetSearchTextRequest>, I>>(
+    object: I,
+  ): SetSearchTextRequest {
     const message = createBaseSetSearchTextRequest();
     message.text = object.text ?? "";
     return message;
@@ -768,12 +843,19 @@ function createBaseGetSelectedTextRequest(): GetSelectedTextRequest {
 }
 
 export const GetSelectedTextRequest: MessageFns<GetSelectedTextRequest> = {
-  encode(_: GetSelectedTextRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    _: GetSelectedTextRequest,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): GetSelectedTextRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+  decode(
+    input: BinaryReader | Uint8Array,
+    length?: number,
+  ): GetSelectedTextRequest {
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseGetSelectedTextRequest();
     while (reader.pos < end) {
@@ -797,10 +879,14 @@ export const GetSelectedTextRequest: MessageFns<GetSelectedTextRequest> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<GetSelectedTextRequest>, I>>(base?: I): GetSelectedTextRequest {
+  create<I extends Exact<DeepPartial<GetSelectedTextRequest>, I>>(
+    base?: I,
+  ): GetSelectedTextRequest {
     return GetSelectedTextRequest.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<GetSelectedTextRequest>, I>>(_: I): GetSelectedTextRequest {
+  fromPartial<I extends Exact<DeepPartial<GetSelectedTextRequest>, I>>(
+    _: I,
+  ): GetSelectedTextRequest {
     const message = createBaseGetSelectedTextRequest();
     return message;
   },
@@ -811,15 +897,22 @@ function createBaseGetSelectedTextResponse(): GetSelectedTextResponse {
 }
 
 export const GetSelectedTextResponse: MessageFns<GetSelectedTextResponse> = {
-  encode(message: GetSelectedTextResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: GetSelectedTextResponse,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.text !== "") {
       writer.uint32(10).string(message.text);
     }
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): GetSelectedTextResponse {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+  decode(
+    input: BinaryReader | Uint8Array,
+    length?: number,
+  ): GetSelectedTextResponse {
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseGetSelectedTextResponse();
     while (reader.pos < end) {
@@ -854,10 +947,14 @@ export const GetSelectedTextResponse: MessageFns<GetSelectedTextResponse> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<GetSelectedTextResponse>, I>>(base?: I): GetSelectedTextResponse {
+  create<I extends Exact<DeepPartial<GetSelectedTextResponse>, I>>(
+    base?: I,
+  ): GetSelectedTextResponse {
     return GetSelectedTextResponse.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<GetSelectedTextResponse>, I>>(object: I): GetSelectedTextResponse {
+  fromPartial<I extends Exact<DeepPartial<GetSelectedTextResponse>, I>>(
+    object: I,
+  ): GetSelectedTextResponse {
     const message = createBaseGetSelectedTextResponse();
     message.text = object.text ?? "";
     return message;
@@ -869,7 +966,10 @@ function createBaseShowHudRequest(): ShowHudRequest {
 }
 
 export const ShowHudRequest: MessageFns<ShowHudRequest> = {
-  encode(message: ShowHudRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: ShowHudRequest,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.text !== "") {
       writer.uint32(10).string(message.text);
     }
@@ -883,7 +983,8 @@ export const ShowHudRequest: MessageFns<ShowHudRequest> = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): ShowHudRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseShowHudRequest();
     while (reader.pos < end) {
@@ -925,8 +1026,12 @@ export const ShowHudRequest: MessageFns<ShowHudRequest> = {
   fromJSON(object: any): ShowHudRequest {
     return {
       text: isSet(object.text) ? globalThis.String(object.text) : "",
-      clearRootSearch: isSet(object.clearRootSearch) ? globalThis.Boolean(object.clearRootSearch) : false,
-      popToRoot: isSet(object.popToRoot) ? popToRootTypeFromJSON(object.popToRoot) : 0,
+      clearRootSearch: isSet(object.clearRootSearch)
+        ? globalThis.Boolean(object.clearRootSearch)
+        : false,
+      popToRoot: isSet(object.popToRoot)
+        ? popToRootTypeFromJSON(object.popToRoot)
+        : 0,
     };
   },
 
@@ -944,10 +1049,14 @@ export const ShowHudRequest: MessageFns<ShowHudRequest> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<ShowHudRequest>, I>>(base?: I): ShowHudRequest {
+  create<I extends Exact<DeepPartial<ShowHudRequest>, I>>(
+    base?: I,
+  ): ShowHudRequest {
     return ShowHudRequest.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ShowHudRequest>, I>>(object: I): ShowHudRequest {
+  fromPartial<I extends Exact<DeepPartial<ShowHudRequest>, I>>(
+    object: I,
+  ): ShowHudRequest {
     const message = createBaseShowHudRequest();
     message.text = object.text ?? "";
     message.clearRootSearch = object.clearRootSearch ?? false;
@@ -961,7 +1070,10 @@ function createBaseRenderRequest(): RenderRequest {
 }
 
 export const RenderRequest: MessageFns<RenderRequest> = {
-  encode(message: RenderRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: RenderRequest,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.json !== "") {
       writer.uint32(10).string(message.json);
     }
@@ -969,7 +1081,8 @@ export const RenderRequest: MessageFns<RenderRequest> = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): RenderRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseRenderRequest();
     while (reader.pos < end) {
@@ -1004,10 +1117,14 @@ export const RenderRequest: MessageFns<RenderRequest> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<RenderRequest>, I>>(base?: I): RenderRequest {
+  create<I extends Exact<DeepPartial<RenderRequest>, I>>(
+    base?: I,
+  ): RenderRequest {
     return RenderRequest.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<RenderRequest>, I>>(object: I): RenderRequest {
+  fromPartial<I extends Exact<DeepPartial<RenderRequest>, I>>(
+    object: I,
+  ): RenderRequest {
     const message = createBaseRenderRequest();
     message.json = object.json ?? "";
     return message;
@@ -1027,7 +1144,10 @@ function createBaseConfirmAlertRequest(): ConfirmAlertRequest {
 }
 
 export const ConfirmAlertRequest: MessageFns<ConfirmAlertRequest> = {
-  encode(message: ConfirmAlertRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: ConfirmAlertRequest,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.title !== "") {
       writer.uint32(10).string(message.title);
     }
@@ -1038,10 +1158,16 @@ export const ConfirmAlertRequest: MessageFns<ConfirmAlertRequest> = {
       writer.uint32(26).string(message.icon);
     }
     if (message.dismissAction !== undefined) {
-      ConfirmAlertAction.encode(message.dismissAction, writer.uint32(34).fork()).join();
+      ConfirmAlertAction.encode(
+        message.dismissAction,
+        writer.uint32(34).fork(),
+      ).join();
     }
     if (message.primaryAction !== undefined) {
-      ConfirmAlertAction.encode(message.primaryAction, writer.uint32(42).fork()).join();
+      ConfirmAlertAction.encode(
+        message.primaryAction,
+        writer.uint32(42).fork(),
+      ).join();
     }
     if (message.rememberUserChoice !== false) {
       writer.uint32(48).bool(message.rememberUserChoice);
@@ -1052,8 +1178,12 @@ export const ConfirmAlertRequest: MessageFns<ConfirmAlertRequest> = {
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): ConfirmAlertRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+  decode(
+    input: BinaryReader | Uint8Array,
+    length?: number,
+  ): ConfirmAlertRequest {
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseConfirmAlertRequest();
     while (reader.pos < end) {
@@ -1088,7 +1218,10 @@ export const ConfirmAlertRequest: MessageFns<ConfirmAlertRequest> = {
             break;
           }
 
-          message.dismissAction = ConfirmAlertAction.decode(reader, reader.uint32());
+          message.dismissAction = ConfirmAlertAction.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
         case 5: {
@@ -1096,7 +1229,10 @@ export const ConfirmAlertRequest: MessageFns<ConfirmAlertRequest> = {
             break;
           }
 
-          message.primaryAction = ConfirmAlertAction.decode(reader, reader.uint32());
+          message.primaryAction = ConfirmAlertAction.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
         case 6: {
@@ -1127,11 +1263,19 @@ export const ConfirmAlertRequest: MessageFns<ConfirmAlertRequest> = {
   fromJSON(object: any): ConfirmAlertRequest {
     return {
       title: isSet(object.title) ? globalThis.String(object.title) : "",
-      description: isSet(object.description) ? globalThis.String(object.description) : "",
+      description: isSet(object.description)
+        ? globalThis.String(object.description)
+        : "",
       icon: isSet(object.icon) ? globalThis.String(object.icon) : undefined,
-      dismissAction: isSet(object.dismissAction) ? ConfirmAlertAction.fromJSON(object.dismissAction) : undefined,
-      primaryAction: isSet(object.primaryAction) ? ConfirmAlertAction.fromJSON(object.primaryAction) : undefined,
-      rememberUserChoice: isSet(object.rememberUserChoice) ? globalThis.Boolean(object.rememberUserChoice) : false,
+      dismissAction: isSet(object.dismissAction)
+        ? ConfirmAlertAction.fromJSON(object.dismissAction)
+        : undefined,
+      primaryAction: isSet(object.primaryAction)
+        ? ConfirmAlertAction.fromJSON(object.primaryAction)
+        : undefined,
+      rememberUserChoice: isSet(object.rememberUserChoice)
+        ? globalThis.Boolean(object.rememberUserChoice)
+        : false,
       handle: isSet(object.handle) ? globalThis.String(object.handle) : "",
     };
   },
@@ -1162,20 +1306,26 @@ export const ConfirmAlertRequest: MessageFns<ConfirmAlertRequest> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<ConfirmAlertRequest>, I>>(base?: I): ConfirmAlertRequest {
+  create<I extends Exact<DeepPartial<ConfirmAlertRequest>, I>>(
+    base?: I,
+  ): ConfirmAlertRequest {
     return ConfirmAlertRequest.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ConfirmAlertRequest>, I>>(object: I): ConfirmAlertRequest {
+  fromPartial<I extends Exact<DeepPartial<ConfirmAlertRequest>, I>>(
+    object: I,
+  ): ConfirmAlertRequest {
     const message = createBaseConfirmAlertRequest();
     message.title = object.title ?? "";
     message.description = object.description ?? "";
     message.icon = object.icon ?? undefined;
-    message.dismissAction = (object.dismissAction !== undefined && object.dismissAction !== null)
-      ? ConfirmAlertAction.fromPartial(object.dismissAction)
-      : undefined;
-    message.primaryAction = (object.primaryAction !== undefined && object.primaryAction !== null)
-      ? ConfirmAlertAction.fromPartial(object.primaryAction)
-      : undefined;
+    message.dismissAction =
+      object.dismissAction !== undefined && object.dismissAction !== null
+        ? ConfirmAlertAction.fromPartial(object.dismissAction)
+        : undefined;
+    message.primaryAction =
+      object.primaryAction !== undefined && object.primaryAction !== null
+        ? ConfirmAlertAction.fromPartial(object.primaryAction)
+        : undefined;
     message.rememberUserChoice = object.rememberUserChoice ?? false;
     message.handle = object.handle ?? "";
     return message;
@@ -1187,7 +1337,10 @@ function createBaseConfirmAlertAction(): ConfirmAlertAction {
 }
 
 export const ConfirmAlertAction: MessageFns<ConfirmAlertAction> = {
-  encode(message: ConfirmAlertAction, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: ConfirmAlertAction,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.title !== "") {
       writer.uint32(10).string(message.title);
     }
@@ -1197,8 +1350,12 @@ export const ConfirmAlertAction: MessageFns<ConfirmAlertAction> = {
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): ConfirmAlertAction {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+  decode(
+    input: BinaryReader | Uint8Array,
+    length?: number,
+  ): ConfirmAlertAction {
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseConfirmAlertAction();
     while (reader.pos < end) {
@@ -1232,7 +1389,9 @@ export const ConfirmAlertAction: MessageFns<ConfirmAlertAction> = {
   fromJSON(object: any): ConfirmAlertAction {
     return {
       title: isSet(object.title) ? globalThis.String(object.title) : "",
-      style: isSet(object.style) ? confirmAlertActionStyleFromJSON(object.style) : 0,
+      style: isSet(object.style)
+        ? confirmAlertActionStyleFromJSON(object.style)
+        : 0,
     };
   },
 
@@ -1247,10 +1406,14 @@ export const ConfirmAlertAction: MessageFns<ConfirmAlertAction> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<ConfirmAlertAction>, I>>(base?: I): ConfirmAlertAction {
+  create<I extends Exact<DeepPartial<ConfirmAlertAction>, I>>(
+    base?: I,
+  ): ConfirmAlertAction {
     return ConfirmAlertAction.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ConfirmAlertAction>, I>>(object: I): ConfirmAlertAction {
+  fromPartial<I extends Exact<DeepPartial<ConfirmAlertAction>, I>>(
+    object: I,
+  ): ConfirmAlertAction {
     const message = createBaseConfirmAlertAction();
     message.title = object.title ?? "";
     message.style = object.style ?? 0;
@@ -1276,18 +1439,30 @@ function createBaseRequest(): Request {
 }
 
 export const Request: MessageFns<Request> = {
-  encode(message: Request, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: Request,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.render !== undefined) {
       RenderRequest.encode(message.render, writer.uint32(10).fork()).join();
     }
     if (message.showToast !== undefined) {
-      ShowToastRequest.encode(message.showToast, writer.uint32(18).fork()).join();
+      ShowToastRequest.encode(
+        message.showToast,
+        writer.uint32(18).fork(),
+      ).join();
     }
     if (message.hideToast !== undefined) {
-      HideToastRequest.encode(message.hideToast, writer.uint32(26).fork()).join();
+      HideToastRequest.encode(
+        message.hideToast,
+        writer.uint32(26).fork(),
+      ).join();
     }
     if (message.updateToast !== undefined) {
-      UpdateToastRequest.encode(message.updateToast, writer.uint32(34).fork()).join();
+      UpdateToastRequest.encode(
+        message.updateToast,
+        writer.uint32(34).fork(),
+      ).join();
     }
     if (message.pushView !== undefined) {
       PushViewRequest.encode(message.pushView, writer.uint32(42).fork()).join();
@@ -1296,28 +1471,44 @@ export const Request: MessageFns<Request> = {
       PopViewRequest.encode(message.popView, writer.uint32(50).fork()).join();
     }
     if (message.clearSearch !== undefined) {
-      ClearSearchBarRequest.encode(message.clearSearch, writer.uint32(58).fork()).join();
+      ClearSearchBarRequest.encode(
+        message.clearSearch,
+        writer.uint32(58).fork(),
+      ).join();
     }
     if (message.closeMainWindow !== undefined) {
-      CloseMainWindowRequest.encode(message.closeMainWindow, writer.uint32(66).fork()).join();
+      CloseMainWindowRequest.encode(
+        message.closeMainWindow,
+        writer.uint32(66).fork(),
+      ).join();
     }
     if (message.showHud !== undefined) {
       ShowHudRequest.encode(message.showHud, writer.uint32(74).fork()).join();
     }
     if (message.setSearchText !== undefined) {
-      SetSearchTextRequest.encode(message.setSearchText, writer.uint32(82).fork()).join();
+      SetSearchTextRequest.encode(
+        message.setSearchText,
+        writer.uint32(82).fork(),
+      ).join();
     }
     if (message.confirmAlert !== undefined) {
-      ConfirmAlertRequest.encode(message.confirmAlert, writer.uint32(90).fork()).join();
+      ConfirmAlertRequest.encode(
+        message.confirmAlert,
+        writer.uint32(90).fork(),
+      ).join();
     }
     if (message.getSelectedText !== undefined) {
-      GetSelectedTextRequest.encode(message.getSelectedText, writer.uint32(98).fork()).join();
+      GetSelectedTextRequest.encode(
+        message.getSelectedText,
+        writer.uint32(98).fork(),
+      ).join();
     }
     return writer;
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): Request {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseRequest();
     while (reader.pos < end) {
@@ -1352,7 +1543,10 @@ export const Request: MessageFns<Request> = {
             break;
           }
 
-          message.updateToast = UpdateToastRequest.decode(reader, reader.uint32());
+          message.updateToast = UpdateToastRequest.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
         case 5: {
@@ -1376,7 +1570,10 @@ export const Request: MessageFns<Request> = {
             break;
           }
 
-          message.clearSearch = ClearSearchBarRequest.decode(reader, reader.uint32());
+          message.clearSearch = ClearSearchBarRequest.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
         case 8: {
@@ -1384,7 +1581,10 @@ export const Request: MessageFns<Request> = {
             break;
           }
 
-          message.closeMainWindow = CloseMainWindowRequest.decode(reader, reader.uint32());
+          message.closeMainWindow = CloseMainWindowRequest.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
         case 9: {
@@ -1400,7 +1600,10 @@ export const Request: MessageFns<Request> = {
             break;
           }
 
-          message.setSearchText = SetSearchTextRequest.decode(reader, reader.uint32());
+          message.setSearchText = SetSearchTextRequest.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
         case 11: {
@@ -1408,7 +1611,10 @@ export const Request: MessageFns<Request> = {
             break;
           }
 
-          message.confirmAlert = ConfirmAlertRequest.decode(reader, reader.uint32());
+          message.confirmAlert = ConfirmAlertRequest.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
         case 12: {
@@ -1416,7 +1622,10 @@ export const Request: MessageFns<Request> = {
             break;
           }
 
-          message.getSelectedText = GetSelectedTextRequest.decode(reader, reader.uint32());
+          message.getSelectedText = GetSelectedTextRequest.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
       }
@@ -1430,19 +1639,39 @@ export const Request: MessageFns<Request> = {
 
   fromJSON(object: any): Request {
     return {
-      render: isSet(object.render) ? RenderRequest.fromJSON(object.render) : undefined,
-      showToast: isSet(object.showToast) ? ShowToastRequest.fromJSON(object.showToast) : undefined,
-      hideToast: isSet(object.hideToast) ? HideToastRequest.fromJSON(object.hideToast) : undefined,
-      updateToast: isSet(object.updateToast) ? UpdateToastRequest.fromJSON(object.updateToast) : undefined,
-      pushView: isSet(object.pushView) ? PushViewRequest.fromJSON(object.pushView) : undefined,
-      popView: isSet(object.popView) ? PopViewRequest.fromJSON(object.popView) : undefined,
-      clearSearch: isSet(object.clearSearch) ? ClearSearchBarRequest.fromJSON(object.clearSearch) : undefined,
+      render: isSet(object.render)
+        ? RenderRequest.fromJSON(object.render)
+        : undefined,
+      showToast: isSet(object.showToast)
+        ? ShowToastRequest.fromJSON(object.showToast)
+        : undefined,
+      hideToast: isSet(object.hideToast)
+        ? HideToastRequest.fromJSON(object.hideToast)
+        : undefined,
+      updateToast: isSet(object.updateToast)
+        ? UpdateToastRequest.fromJSON(object.updateToast)
+        : undefined,
+      pushView: isSet(object.pushView)
+        ? PushViewRequest.fromJSON(object.pushView)
+        : undefined,
+      popView: isSet(object.popView)
+        ? PopViewRequest.fromJSON(object.popView)
+        : undefined,
+      clearSearch: isSet(object.clearSearch)
+        ? ClearSearchBarRequest.fromJSON(object.clearSearch)
+        : undefined,
       closeMainWindow: isSet(object.closeMainWindow)
         ? CloseMainWindowRequest.fromJSON(object.closeMainWindow)
         : undefined,
-      showHud: isSet(object.showHud) ? ShowHudRequest.fromJSON(object.showHud) : undefined,
-      setSearchText: isSet(object.setSearchText) ? SetSearchTextRequest.fromJSON(object.setSearchText) : undefined,
-      confirmAlert: isSet(object.confirmAlert) ? ConfirmAlertRequest.fromJSON(object.confirmAlert) : undefined,
+      showHud: isSet(object.showHud)
+        ? ShowHudRequest.fromJSON(object.showHud)
+        : undefined,
+      setSearchText: isSet(object.setSearchText)
+        ? SetSearchTextRequest.fromJSON(object.setSearchText)
+        : undefined,
+      confirmAlert: isSet(object.confirmAlert)
+        ? ConfirmAlertRequest.fromJSON(object.confirmAlert)
+        : undefined,
       getSelectedText: isSet(object.getSelectedText)
         ? GetSelectedTextRequest.fromJSON(object.getSelectedText)
         : undefined,
@@ -1473,7 +1702,9 @@ export const Request: MessageFns<Request> = {
       obj.clearSearch = ClearSearchBarRequest.toJSON(message.clearSearch);
     }
     if (message.closeMainWindow !== undefined) {
-      obj.closeMainWindow = CloseMainWindowRequest.toJSON(message.closeMainWindow);
+      obj.closeMainWindow = CloseMainWindowRequest.toJSON(
+        message.closeMainWindow,
+      );
     }
     if (message.showHud !== undefined) {
       obj.showHud = ShowHudRequest.toJSON(message.showHud);
@@ -1485,7 +1716,9 @@ export const Request: MessageFns<Request> = {
       obj.confirmAlert = ConfirmAlertRequest.toJSON(message.confirmAlert);
     }
     if (message.getSelectedText !== undefined) {
-      obj.getSelectedText = GetSelectedTextRequest.toJSON(message.getSelectedText);
+      obj.getSelectedText = GetSelectedTextRequest.toJSON(
+        message.getSelectedText,
+      );
     }
     return obj;
   },
@@ -1495,42 +1728,54 @@ export const Request: MessageFns<Request> = {
   },
   fromPartial<I extends Exact<DeepPartial<Request>, I>>(object: I): Request {
     const message = createBaseRequest();
-    message.render = (object.render !== undefined && object.render !== null)
-      ? RenderRequest.fromPartial(object.render)
-      : undefined;
-    message.showToast = (object.showToast !== undefined && object.showToast !== null)
-      ? ShowToastRequest.fromPartial(object.showToast)
-      : undefined;
-    message.hideToast = (object.hideToast !== undefined && object.hideToast !== null)
-      ? HideToastRequest.fromPartial(object.hideToast)
-      : undefined;
-    message.updateToast = (object.updateToast !== undefined && object.updateToast !== null)
-      ? UpdateToastRequest.fromPartial(object.updateToast)
-      : undefined;
-    message.pushView = (object.pushView !== undefined && object.pushView !== null)
-      ? PushViewRequest.fromPartial(object.pushView)
-      : undefined;
-    message.popView = (object.popView !== undefined && object.popView !== null)
-      ? PopViewRequest.fromPartial(object.popView)
-      : undefined;
-    message.clearSearch = (object.clearSearch !== undefined && object.clearSearch !== null)
-      ? ClearSearchBarRequest.fromPartial(object.clearSearch)
-      : undefined;
-    message.closeMainWindow = (object.closeMainWindow !== undefined && object.closeMainWindow !== null)
-      ? CloseMainWindowRequest.fromPartial(object.closeMainWindow)
-      : undefined;
-    message.showHud = (object.showHud !== undefined && object.showHud !== null)
-      ? ShowHudRequest.fromPartial(object.showHud)
-      : undefined;
-    message.setSearchText = (object.setSearchText !== undefined && object.setSearchText !== null)
-      ? SetSearchTextRequest.fromPartial(object.setSearchText)
-      : undefined;
-    message.confirmAlert = (object.confirmAlert !== undefined && object.confirmAlert !== null)
-      ? ConfirmAlertRequest.fromPartial(object.confirmAlert)
-      : undefined;
-    message.getSelectedText = (object.getSelectedText !== undefined && object.getSelectedText !== null)
-      ? GetSelectedTextRequest.fromPartial(object.getSelectedText)
-      : undefined;
+    message.render =
+      object.render !== undefined && object.render !== null
+        ? RenderRequest.fromPartial(object.render)
+        : undefined;
+    message.showToast =
+      object.showToast !== undefined && object.showToast !== null
+        ? ShowToastRequest.fromPartial(object.showToast)
+        : undefined;
+    message.hideToast =
+      object.hideToast !== undefined && object.hideToast !== null
+        ? HideToastRequest.fromPartial(object.hideToast)
+        : undefined;
+    message.updateToast =
+      object.updateToast !== undefined && object.updateToast !== null
+        ? UpdateToastRequest.fromPartial(object.updateToast)
+        : undefined;
+    message.pushView =
+      object.pushView !== undefined && object.pushView !== null
+        ? PushViewRequest.fromPartial(object.pushView)
+        : undefined;
+    message.popView =
+      object.popView !== undefined && object.popView !== null
+        ? PopViewRequest.fromPartial(object.popView)
+        : undefined;
+    message.clearSearch =
+      object.clearSearch !== undefined && object.clearSearch !== null
+        ? ClearSearchBarRequest.fromPartial(object.clearSearch)
+        : undefined;
+    message.closeMainWindow =
+      object.closeMainWindow !== undefined && object.closeMainWindow !== null
+        ? CloseMainWindowRequest.fromPartial(object.closeMainWindow)
+        : undefined;
+    message.showHud =
+      object.showHud !== undefined && object.showHud !== null
+        ? ShowHudRequest.fromPartial(object.showHud)
+        : undefined;
+    message.setSearchText =
+      object.setSearchText !== undefined && object.setSearchText !== null
+        ? SetSearchTextRequest.fromPartial(object.setSearchText)
+        : undefined;
+    message.confirmAlert =
+      object.confirmAlert !== undefined && object.confirmAlert !== null
+        ? ConfirmAlertRequest.fromPartial(object.confirmAlert)
+        : undefined;
+    message.getSelectedText =
+      object.getSelectedText !== undefined && object.getSelectedText !== null
+        ? GetSelectedTextRequest.fromPartial(object.getSelectedText)
+        : undefined;
     return message;
   },
 };
@@ -1553,7 +1798,10 @@ function createBaseResponse(): Response {
 }
 
 export const Response: MessageFns<Response> = {
-  encode(message: Response, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: Response,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.render !== undefined) {
       AckResponse.encode(message.render, writer.uint32(10).fork()).join();
     }
@@ -1576,25 +1824,35 @@ export const Response: MessageFns<Response> = {
       AckResponse.encode(message.clearSearch, writer.uint32(58).fork()).join();
     }
     if (message.closeMainWindow !== undefined) {
-      AckResponse.encode(message.closeMainWindow, writer.uint32(66).fork()).join();
+      AckResponse.encode(
+        message.closeMainWindow,
+        writer.uint32(66).fork(),
+      ).join();
     }
     if (message.showHud !== undefined) {
       AckResponse.encode(message.showHud, writer.uint32(74).fork()).join();
     }
     if (message.setSearchText !== undefined) {
-      AckResponse.encode(message.setSearchText, writer.uint32(82).fork()).join();
+      AckResponse.encode(
+        message.setSearchText,
+        writer.uint32(82).fork(),
+      ).join();
     }
     if (message.confirmAlert !== undefined) {
       AckResponse.encode(message.confirmAlert, writer.uint32(90).fork()).join();
     }
     if (message.getSelectedText !== undefined) {
-      GetSelectedTextResponse.encode(message.getSelectedText, writer.uint32(98).fork()).join();
+      GetSelectedTextResponse.encode(
+        message.getSelectedText,
+        writer.uint32(98).fork(),
+      ).join();
     }
     return writer;
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): Response {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseResponse();
     while (reader.pos < end) {
@@ -1693,7 +1951,10 @@ export const Response: MessageFns<Response> = {
             break;
           }
 
-          message.getSelectedText = GetSelectedTextResponse.decode(reader, reader.uint32());
+          message.getSelectedText = GetSelectedTextResponse.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
       }
@@ -1707,17 +1968,39 @@ export const Response: MessageFns<Response> = {
 
   fromJSON(object: any): Response {
     return {
-      render: isSet(object.render) ? AckResponse.fromJSON(object.render) : undefined,
-      showToast: isSet(object.showToast) ? AckResponse.fromJSON(object.showToast) : undefined,
-      hideToast: isSet(object.hideToast) ? AckResponse.fromJSON(object.hideToast) : undefined,
-      updateToast: isSet(object.updateToast) ? AckResponse.fromJSON(object.updateToast) : undefined,
-      pushView: isSet(object.pushView) ? AckResponse.fromJSON(object.pushView) : undefined,
-      popView: isSet(object.popView) ? AckResponse.fromJSON(object.popView) : undefined,
-      clearSearch: isSet(object.clearSearch) ? AckResponse.fromJSON(object.clearSearch) : undefined,
-      closeMainWindow: isSet(object.closeMainWindow) ? AckResponse.fromJSON(object.closeMainWindow) : undefined,
-      showHud: isSet(object.showHud) ? AckResponse.fromJSON(object.showHud) : undefined,
-      setSearchText: isSet(object.setSearchText) ? AckResponse.fromJSON(object.setSearchText) : undefined,
-      confirmAlert: isSet(object.confirmAlert) ? AckResponse.fromJSON(object.confirmAlert) : undefined,
+      render: isSet(object.render)
+        ? AckResponse.fromJSON(object.render)
+        : undefined,
+      showToast: isSet(object.showToast)
+        ? AckResponse.fromJSON(object.showToast)
+        : undefined,
+      hideToast: isSet(object.hideToast)
+        ? AckResponse.fromJSON(object.hideToast)
+        : undefined,
+      updateToast: isSet(object.updateToast)
+        ? AckResponse.fromJSON(object.updateToast)
+        : undefined,
+      pushView: isSet(object.pushView)
+        ? AckResponse.fromJSON(object.pushView)
+        : undefined,
+      popView: isSet(object.popView)
+        ? AckResponse.fromJSON(object.popView)
+        : undefined,
+      clearSearch: isSet(object.clearSearch)
+        ? AckResponse.fromJSON(object.clearSearch)
+        : undefined,
+      closeMainWindow: isSet(object.closeMainWindow)
+        ? AckResponse.fromJSON(object.closeMainWindow)
+        : undefined,
+      showHud: isSet(object.showHud)
+        ? AckResponse.fromJSON(object.showHud)
+        : undefined,
+      setSearchText: isSet(object.setSearchText)
+        ? AckResponse.fromJSON(object.setSearchText)
+        : undefined,
+      confirmAlert: isSet(object.confirmAlert)
+        ? AckResponse.fromJSON(object.confirmAlert)
+        : undefined,
       getSelectedText: isSet(object.getSelectedText)
         ? GetSelectedTextResponse.fromJSON(object.getSelectedText)
         : undefined,
@@ -1760,7 +2043,9 @@ export const Response: MessageFns<Response> = {
       obj.confirmAlert = AckResponse.toJSON(message.confirmAlert);
     }
     if (message.getSelectedText !== undefined) {
-      obj.getSelectedText = GetSelectedTextResponse.toJSON(message.getSelectedText);
+      obj.getSelectedText = GetSelectedTextResponse.toJSON(
+        message.getSelectedText,
+      );
     }
     return obj;
   },
@@ -1770,52 +2055,73 @@ export const Response: MessageFns<Response> = {
   },
   fromPartial<I extends Exact<DeepPartial<Response>, I>>(object: I): Response {
     const message = createBaseResponse();
-    message.render = (object.render !== undefined && object.render !== null)
-      ? AckResponse.fromPartial(object.render)
-      : undefined;
-    message.showToast = (object.showToast !== undefined && object.showToast !== null)
-      ? AckResponse.fromPartial(object.showToast)
-      : undefined;
-    message.hideToast = (object.hideToast !== undefined && object.hideToast !== null)
-      ? AckResponse.fromPartial(object.hideToast)
-      : undefined;
-    message.updateToast = (object.updateToast !== undefined && object.updateToast !== null)
-      ? AckResponse.fromPartial(object.updateToast)
-      : undefined;
-    message.pushView = (object.pushView !== undefined && object.pushView !== null)
-      ? AckResponse.fromPartial(object.pushView)
-      : undefined;
-    message.popView = (object.popView !== undefined && object.popView !== null)
-      ? AckResponse.fromPartial(object.popView)
-      : undefined;
-    message.clearSearch = (object.clearSearch !== undefined && object.clearSearch !== null)
-      ? AckResponse.fromPartial(object.clearSearch)
-      : undefined;
-    message.closeMainWindow = (object.closeMainWindow !== undefined && object.closeMainWindow !== null)
-      ? AckResponse.fromPartial(object.closeMainWindow)
-      : undefined;
-    message.showHud = (object.showHud !== undefined && object.showHud !== null)
-      ? AckResponse.fromPartial(object.showHud)
-      : undefined;
-    message.setSearchText = (object.setSearchText !== undefined && object.setSearchText !== null)
-      ? AckResponse.fromPartial(object.setSearchText)
-      : undefined;
-    message.confirmAlert = (object.confirmAlert !== undefined && object.confirmAlert !== null)
-      ? AckResponse.fromPartial(object.confirmAlert)
-      : undefined;
-    message.getSelectedText = (object.getSelectedText !== undefined && object.getSelectedText !== null)
-      ? GetSelectedTextResponse.fromPartial(object.getSelectedText)
-      : undefined;
+    message.render =
+      object.render !== undefined && object.render !== null
+        ? AckResponse.fromPartial(object.render)
+        : undefined;
+    message.showToast =
+      object.showToast !== undefined && object.showToast !== null
+        ? AckResponse.fromPartial(object.showToast)
+        : undefined;
+    message.hideToast =
+      object.hideToast !== undefined && object.hideToast !== null
+        ? AckResponse.fromPartial(object.hideToast)
+        : undefined;
+    message.updateToast =
+      object.updateToast !== undefined && object.updateToast !== null
+        ? AckResponse.fromPartial(object.updateToast)
+        : undefined;
+    message.pushView =
+      object.pushView !== undefined && object.pushView !== null
+        ? AckResponse.fromPartial(object.pushView)
+        : undefined;
+    message.popView =
+      object.popView !== undefined && object.popView !== null
+        ? AckResponse.fromPartial(object.popView)
+        : undefined;
+    message.clearSearch =
+      object.clearSearch !== undefined && object.clearSearch !== null
+        ? AckResponse.fromPartial(object.clearSearch)
+        : undefined;
+    message.closeMainWindow =
+      object.closeMainWindow !== undefined && object.closeMainWindow !== null
+        ? AckResponse.fromPartial(object.closeMainWindow)
+        : undefined;
+    message.showHud =
+      object.showHud !== undefined && object.showHud !== null
+        ? AckResponse.fromPartial(object.showHud)
+        : undefined;
+    message.setSearchText =
+      object.setSearchText !== undefined && object.setSearchText !== null
+        ? AckResponse.fromPartial(object.setSearchText)
+        : undefined;
+    message.confirmAlert =
+      object.confirmAlert !== undefined && object.confirmAlert !== null
+        ? AckResponse.fromPartial(object.confirmAlert)
+        : undefined;
+    message.getSelectedText =
+      object.getSelectedText !== undefined && object.getSelectedText !== null
+        ? GetSelectedTextResponse.fromPartial(object.getSelectedText)
+        : undefined;
     return message;
   },
 };
 
 function createBaseRenderNode(): RenderNode {
-  return { type: "", hasDirtyChild: false, hasDirtyProps: false, props: {}, children: [] };
+  return {
+    type: "",
+    hasDirtyChild: false,
+    hasDirtyProps: false,
+    props: {},
+    children: [],
+  };
 }
 
 export const RenderNode: MessageFns<RenderNode> = {
-  encode(message: RenderNode, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: RenderNode,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.type !== "") {
       writer.uint32(10).string(message.type);
     }
@@ -1827,7 +2133,10 @@ export const RenderNode: MessageFns<RenderNode> = {
     }
     Object.entries(message.props).forEach(([key, value]) => {
       if (value !== undefined) {
-        RenderNode_PropsEntry.encode({ key: key as any, value }, writer.uint32(34).fork()).join();
+        RenderNode_PropsEntry.encode(
+          { key: key as any, value },
+          writer.uint32(34).fork(),
+        ).join();
       }
     });
     for (const v of message.children) {
@@ -1837,7 +2146,8 @@ export const RenderNode: MessageFns<RenderNode> = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): RenderNode {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseRenderNode();
     while (reader.pos < end) {
@@ -1898,13 +2208,19 @@ export const RenderNode: MessageFns<RenderNode> = {
   fromJSON(object: any): RenderNode {
     return {
       type: isSet(object.type) ? globalThis.String(object.type) : "",
-      hasDirtyChild: isSet(object.hasDirtyChild) ? globalThis.Boolean(object.hasDirtyChild) : false,
-      hasDirtyProps: isSet(object.hasDirtyProps) ? globalThis.Boolean(object.hasDirtyProps) : false,
+      hasDirtyChild: isSet(object.hasDirtyChild)
+        ? globalThis.Boolean(object.hasDirtyChild)
+        : false,
+      hasDirtyProps: isSet(object.hasDirtyProps)
+        ? globalThis.Boolean(object.hasDirtyProps)
+        : false,
       props: isObject(object.props)
-        ? Object.entries(object.props).reduce<{ [key: string]: any | undefined }>((acc, [key, value]) => {
-          acc[key] = value as any | undefined;
-          return acc;
-        }, {})
+        ? Object.entries(object.props).reduce<{
+            [key: string]: any | undefined;
+          }>((acc, [key, value]) => {
+            acc[key] = value as any | undefined;
+            return acc;
+          }, {})
         : {},
       children: globalThis.Array.isArray(object?.children)
         ? object.children.map((e: any) => RenderNode.fromJSON(e))
@@ -1941,21 +2257,23 @@ export const RenderNode: MessageFns<RenderNode> = {
   create<I extends Exact<DeepPartial<RenderNode>, I>>(base?: I): RenderNode {
     return RenderNode.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<RenderNode>, I>>(object: I): RenderNode {
+  fromPartial<I extends Exact<DeepPartial<RenderNode>, I>>(
+    object: I,
+  ): RenderNode {
     const message = createBaseRenderNode();
     message.type = object.type ?? "";
     message.hasDirtyChild = object.hasDirtyChild ?? false;
     message.hasDirtyProps = object.hasDirtyProps ?? false;
-    message.props = Object.entries(object.props ?? {}).reduce<{ [key: string]: any | undefined }>(
-      (acc, [key, value]) => {
-        if (value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      },
-      {},
-    );
-    message.children = object.children?.map((e) => RenderNode.fromPartial(e)) || [];
+    message.props = Object.entries(object.props ?? {}).reduce<{
+      [key: string]: any | undefined;
+    }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {});
+    message.children =
+      object.children?.map((e) => RenderNode.fromPartial(e)) || [];
     return message;
   },
 };
@@ -1965,7 +2283,10 @@ function createBaseRenderNode_PropsEntry(): RenderNode_PropsEntry {
 }
 
 export const RenderNode_PropsEntry: MessageFns<RenderNode_PropsEntry> = {
-  encode(message: RenderNode_PropsEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: RenderNode_PropsEntry,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.key !== "") {
       writer.uint32(10).string(message.key);
     }
@@ -1975,8 +2296,12 @@ export const RenderNode_PropsEntry: MessageFns<RenderNode_PropsEntry> = {
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): RenderNode_PropsEntry {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+  decode(
+    input: BinaryReader | Uint8Array,
+    length?: number,
+  ): RenderNode_PropsEntry {
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseRenderNode_PropsEntry();
     while (reader.pos < end) {
@@ -2025,10 +2350,14 @@ export const RenderNode_PropsEntry: MessageFns<RenderNode_PropsEntry> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<RenderNode_PropsEntry>, I>>(base?: I): RenderNode_PropsEntry {
+  create<I extends Exact<DeepPartial<RenderNode_PropsEntry>, I>>(
+    base?: I,
+  ): RenderNode_PropsEntry {
     return RenderNode_PropsEntry.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<RenderNode_PropsEntry>, I>>(object: I): RenderNode_PropsEntry {
+  fromPartial<I extends Exact<DeepPartial<RenderNode_PropsEntry>, I>>(
+    object: I,
+  ): RenderNode_PropsEntry {
     const message = createBaseRenderNode_PropsEntry();
     message.key = object.key ?? "";
     message.value = object.value ?? undefined;
@@ -2041,7 +2370,10 @@ function createBaseThemedImageSource(): ThemedImageSource {
 }
 
 export const ThemedImageSource: MessageFns<ThemedImageSource> = {
-  encode(message: ThemedImageSource, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: ThemedImageSource,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.light !== "") {
       writer.uint32(10).string(message.light);
     }
@@ -2052,7 +2384,8 @@ export const ThemedImageSource: MessageFns<ThemedImageSource> = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): ThemedImageSource {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseThemedImageSource();
     while (reader.pos < end) {
@@ -2101,10 +2434,14 @@ export const ThemedImageSource: MessageFns<ThemedImageSource> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<ThemedImageSource>, I>>(base?: I): ThemedImageSource {
+  create<I extends Exact<DeepPartial<ThemedImageSource>, I>>(
+    base?: I,
+  ): ThemedImageSource {
     return ThemedImageSource.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ThemedImageSource>, I>>(object: I): ThemedImageSource {
+  fromPartial<I extends Exact<DeepPartial<ThemedImageSource>, I>>(
+    object: I,
+  ): ThemedImageSource {
     const message = createBaseThemedImageSource();
     message.light = object.light ?? "";
     message.dark = object.dark ?? "";
@@ -2117,7 +2454,10 @@ function createBaseImageSource(): ImageSource {
 }
 
 export const ImageSource: MessageFns<ImageSource> = {
-  encode(message: ImageSource, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: ImageSource,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.raw !== undefined) {
       writer.uint32(10).string(message.raw);
     }
@@ -2128,7 +2468,8 @@ export const ImageSource: MessageFns<ImageSource> = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): ImageSource {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseImageSource();
     while (reader.pos < end) {
@@ -2162,7 +2503,9 @@ export const ImageSource: MessageFns<ImageSource> = {
   fromJSON(object: any): ImageSource {
     return {
       raw: isSet(object.raw) ? globalThis.String(object.raw) : undefined,
-      themed: isSet(object.themed) ? ThemedImageSource.fromJSON(object.themed) : undefined,
+      themed: isSet(object.themed)
+        ? ThemedImageSource.fromJSON(object.themed)
+        : undefined,
     };
   },
 
@@ -2180,22 +2523,33 @@ export const ImageSource: MessageFns<ImageSource> = {
   create<I extends Exact<DeepPartial<ImageSource>, I>>(base?: I): ImageSource {
     return ImageSource.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ImageSource>, I>>(object: I): ImageSource {
+  fromPartial<I extends Exact<DeepPartial<ImageSource>, I>>(
+    object: I,
+  ): ImageSource {
     const message = createBaseImageSource();
     message.raw = object.raw ?? undefined;
-    message.themed = (object.themed !== undefined && object.themed !== null)
-      ? ThemedImageSource.fromPartial(object.themed)
-      : undefined;
+    message.themed =
+      object.themed !== undefined && object.themed !== null
+        ? ThemedImageSource.fromPartial(object.themed)
+        : undefined;
     return message;
   },
 };
 
 function createBaseImage(): Image {
-  return { source: undefined, fallback: undefined, mask: undefined, colorTint: undefined };
+  return {
+    source: undefined,
+    fallback: undefined,
+    mask: undefined,
+    colorTint: undefined,
+  };
 }
 
 export const Image: MessageFns<Image> = {
-  encode(message: Image, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: Image,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.source !== undefined) {
       ImageSource.encode(message.source, writer.uint32(10).fork()).join();
     }
@@ -2212,7 +2566,8 @@ export const Image: MessageFns<Image> = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): Image {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseImage();
     while (reader.pos < end) {
@@ -2261,10 +2616,16 @@ export const Image: MessageFns<Image> = {
 
   fromJSON(object: any): Image {
     return {
-      source: isSet(object.source) ? ImageSource.fromJSON(object.source) : undefined,
-      fallback: isSet(object.fallback) ? ImageSource.fromJSON(object.fallback) : undefined,
+      source: isSet(object.source)
+        ? ImageSource.fromJSON(object.source)
+        : undefined,
+      fallback: isSet(object.fallback)
+        ? ImageSource.fromJSON(object.fallback)
+        : undefined,
       mask: isSet(object.mask) ? imageMaskFromJSON(object.mask) : undefined,
-      colorTint: isSet(object.colorTint) ? globalThis.String(object.colorTint) : undefined,
+      colorTint: isSet(object.colorTint)
+        ? globalThis.String(object.colorTint)
+        : undefined,
     };
   },
 
@@ -2290,29 +2651,45 @@ export const Image: MessageFns<Image> = {
   },
   fromPartial<I extends Exact<DeepPartial<Image>, I>>(object: I): Image {
     const message = createBaseImage();
-    message.source = (object.source !== undefined && object.source !== null)
-      ? ImageSource.fromPartial(object.source)
-      : undefined;
-    message.fallback = (object.fallback !== undefined && object.fallback !== null)
-      ? ImageSource.fromPartial(object.fallback)
-      : undefined;
+    message.source =
+      object.source !== undefined && object.source !== null
+        ? ImageSource.fromPartial(object.source)
+        : undefined;
+    message.fallback =
+      object.fallback !== undefined && object.fallback !== null
+        ? ImageSource.fromPartial(object.fallback)
+        : undefined;
     message.mask = object.mask ?? undefined;
     message.colorTint = object.colorTint ?? undefined;
     return message;
   },
 };
 
-type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+type Builtin =
+  | Date
+  | Function
+  | Uint8Array
+  | string
+  | number
+  | boolean
+  | undefined;
 
-export type DeepPartial<T> = T extends Builtin ? T
-  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
-  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
-  : Partial<T>;
+export type DeepPartial<T> = T extends Builtin
+  ? T
+  : T extends globalThis.Array<infer U>
+    ? globalThis.Array<DeepPartial<U>>
+    : T extends ReadonlyArray<infer U>
+      ? ReadonlyArray<DeepPartial<U>>
+      : T extends {}
+        ? { [K in keyof T]?: DeepPartial<T[K]> }
+        : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & {
+      [K in Exclude<keyof I, KeysOfUnion<P>>]: never;
+    };
 
 function isObject(value: any): boolean {
   return typeof value === "object" && value !== null;
