@@ -6,5 +6,8 @@
 		<file alias="extension_icon">assets/extension_icon.png</file>
 		<file alias="tmpl-simple-detail">command-templates/simple-detail.tsx</file>
 		<file alias="tmpl-no-view">command-templates/no-view.tsx</file>
+		<file alias="tmpl-list">command-templates/list.tsx</file>
+		<file alias="tmpl-list-detail">command-templates/list-detail.tsx</file>
+		<file alias="tmpl-controlled-list">command-templates/controlled-list.tsx</file>
   </qresource>
 </RCC>

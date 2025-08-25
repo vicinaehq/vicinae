@@ -10,6 +10,11 @@
 #include <qjsonarray.h>
 
 static const std::vector<CommandBoilerplate> CMD_TEMPLATE_LIST = {
+    CommandBoilerplate{.resource = ":boilerplate/tmpl-list", .name = "Simple List", .mode = CommandModeView},
+    CommandBoilerplate{
+        .resource = ":boilerplate/tmpl-list-detail", .name = "List with Detail", .mode = CommandModeView},
+    CommandBoilerplate{
+        .resource = ":boilerplate/tmpl-controlled-list", .name = "Controlled List", .mode = CommandModeView},
     CommandBoilerplate{
         .resource = ":boilerplate/tmpl-simple-detail", .name = "Simple Detail", .mode = CommandModeView},
     CommandBoilerplate{.resource = ":boilerplate/tmpl-no-view", .name = "No View", .mode = CommandModeNoView},

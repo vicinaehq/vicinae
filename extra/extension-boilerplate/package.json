@@ -20,5 +20,8 @@
   "icon": "extension_icon.png",
   "commands": [],
   "preferences": [],
-  "title": "My Example Extension"
+  "title": "My Example Extension",
+  "devDependencies": {
+    "typescript": "^5.9.2"
+  }
 }
