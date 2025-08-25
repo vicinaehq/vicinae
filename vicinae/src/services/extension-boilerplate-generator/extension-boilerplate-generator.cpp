@@ -43,6 +43,11 @@ ExtensionBoilerplateGenerator::generate(const fs::path &targetDir, const Extensi
   }
 
   fs::path extDir = targetDir / extName.toStdString();
+
+  if (fs::exists(extDir, ec)) {
+    return std::unexpected(QString("%1 already exists. Won't override.").arg(extDir.c_str()));
+  }
+
   fs::path srcDir = extDir / "src";
   fs::path assetsDir = extDir / "assets";
   fs::create_directories(srcDir);
