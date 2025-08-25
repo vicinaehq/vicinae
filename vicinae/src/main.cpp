@@ -117,9 +117,6 @@ int startDaemon() {
       qCritical() << "Failed to load extension manager. Extensions will not work";
     }
 
-    fileService->indexer()->setEntrypoints({{.root = homeDir()}});
-    fileService->indexer()->start();
-
     registry->setFileService(std::move(fileService));
     registry->setToastService(std::move(toastService));
     registry->setShortcutService(std::move(shortcutService));
@@ -178,6 +175,9 @@ int startDaemon() {
 
     // Force reload providers to make sure items that depend on them are shown
     registry->rootItemManager()->reloadProviders();
+
+    // Start indexing after registerRepository() so that search paths are configured properly
+    registry->fileService()->indexer()->start();
   }
 
   FaviconService::initialize(new FaviconService(Omnicast::dataDir() / "favicon"));

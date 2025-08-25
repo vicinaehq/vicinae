@@ -11,4 +11,8 @@ FileService::queryAsync(std::string_view query, const AbstractFileIndexer::Query
 
 void FileService::rebuildIndex() { m_indexer->rebuildIndex(); }
 
+void FileService::setEntrypoints(const std::vector<AbstractFileIndexer::Entrypoint> &entrypoints) {
+  m_indexer->setEntrypoints(entrypoints);
+}
+
 FileService::FileService() { m_indexer = std::make_unique<FileIndexer>(); }
