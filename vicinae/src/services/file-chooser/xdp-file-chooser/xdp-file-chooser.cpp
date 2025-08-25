@@ -12,7 +12,7 @@ XdpFileChooser::XdpFileChooser() : m_bus(QDBusConnection::sessionBus()) {
   qDBusRegisterMetaType<FilterRequest>();
   qDBusRegisterMetaType<QList<XdpFileChooser::Filter>>();
 
-  if (!m_bus.isConnected()) { qCritical() << "Failed to connec to dbus" << m_bus.lastError(); }
+  if (!m_bus.isConnected()) { qWarning() << "Failed to connec to dbus" << m_bus.lastError(); }
 
   m_interface = new QDBusInterface("org.freedesktop.portal.Desktop", "/org/freedesktop/portal/desktop",
                                    "org.freedesktop.portal.FileChooser", m_bus, this);
@@ -41,7 +41,7 @@ bool XdpFileChooser::openFile() {
   QString windowHandle = "";
 
   if (!m_interface->isValid()) {
-    qDebug() << "FileChooser portal interface is not valid";
+    qWarning() << "FileChooser portal interface is not valid";
     return false;
   }
 
@@ -88,8 +88,6 @@ bool XdpFileChooser::openFile() {
 
   // Connect to the Response signal before making the call
 
-  qDebug() << "request path" << requestPath;
-
   m_ongoing = true;
 
   return true;
@@ -97,22 +95,15 @@ bool XdpFileChooser::openFile() {
 
 void XdpFileChooser::handleResponse(uint response, const QVariantMap &results) {
   m_ongoing = false;
-  if (response == 1) {
-    qDebug() << "File chooser was cancelled";
-    return;
-  }
+  if (response == 1) { return; }
 
   if (response != 0) {
-    qDebug() << "File chooser failed with response:" << response;
+    qWarning() << "File chooser failed with response:" << response;
     return;
   }
-
-  qDebug() << "File chooser succeeded";
 
   if (results.contains("uris")) {
     QStringList uris = results["uris"].toStringList();
-    qDebug() << "Selected files:" << uris;
-    // Convert to local file paths
     std::vector<std::filesystem::path> filePaths;
     for (const QString &uri : uris) {
       QUrl url(uri);
