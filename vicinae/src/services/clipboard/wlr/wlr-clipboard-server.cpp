@@ -3,6 +3,7 @@
 #include "services/clipboard/clipboard-server.hpp"
 #include "vicinae.hpp"
 #include <QtCore>
+#include <QApplication>
 #include <filesystem>
 #include <netinet/in.h>
 #include <qlogging.h>
@@ -13,7 +14,22 @@
 
 bool WlrClipboardServer::isAlive() const { return process->isOpen(); }
 
-bool WlrClipboardServer::isActivatable() const { return QApplication::platformName() == "wayland"; }
+bool WlrClipboardServer::isActivatable() const {
+  // Check if we're on Wayland
+  if (QApplication::platformName() != "wayland") { return false; }
+
+  // Check if we're in a GNOME environment
+  // GNOME doesn't support wlr-data-control protocol, so we need to fall back
+  // to GnomeClipboardServer for clipboard functionality in GNOME environments
+  const QString desktop = qgetenv("XDG_CURRENT_DESKTOP");
+  const QString session = qgetenv("GDMSESSION");
+
+  if (desktop.contains("GNOME", Qt::CaseInsensitive) || session.contains("gnome", Qt::CaseInsensitive)) {
+    return false;
+  }
+
+  return true;
+}
 
 void WlrClipboardServer::handleMessage(const proto::ext::wlrclip::Selection &sel) {
   ClipboardSelection cs;
@@ -29,7 +45,12 @@ void WlrClipboardServer::handleMessage(const proto::ext::wlrclip::Selection &sel
 
 void WlrClipboardServer::handleExit(int code, QProcess::ExitStatus status) {}
 
-QString WlrClipboardServer::id() const { return "wlr-clipboard"; };
+QString WlrClipboardServer::id() const { return "wlr-clipboard"; }
+
+int WlrClipboardServer::activationPriority() const {
+  // High priority for Wayland environments (but not GNOME)
+  return 15;
+}
 
 bool WlrClipboardServer::start() {
   int maxWaitForStart = 5000;
