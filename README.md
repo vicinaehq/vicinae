@@ -66,3 +66,10 @@ For more details on installation, usage, configuration, extension development, a
     alt="Clipboard History Gruvbox"
   />
 </p>
+
+<p align="center">
+  <img
+    src=".github/assets/svgl-rosepine-dawn.png"
+    alt="Clipboard History Gruvbox"
+  />
+</p>
