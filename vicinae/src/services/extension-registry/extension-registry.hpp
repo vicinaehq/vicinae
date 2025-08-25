@@ -5,6 +5,7 @@
 #include "services/local-storage/local-storage-service.hpp"
 #include <expected>
 #include <filesystem>
+#include <qfilesystemwatcher.h>
 #include <qjsonobject.h>
 #include <qobject.h>
 #include <qtmetamacros.h>
@@ -47,6 +48,7 @@ class ExtensionRegistry : public QObject {
 
   OmniCommandDatabase &m_db;
   LocalStorageService &m_storage;
+  QFileSystemWatcher *m_watcher = new QFileSystemWatcher(this);
 
   CommandArgument parseArgumentFromObject(const QJsonObject &obj);
   Preference parsePreferenceFromObject(const QJsonObject &obj);
