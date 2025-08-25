@@ -4,7 +4,7 @@
 #include <qwidget.h>
 
 FormField *FormWidget::fieldForWidget(QWidget *widget) const {
-  for (const auto &field : _fields) {
+  for (const auto &field : m_fields) {
     if (field->widget() == widget) return field;
   }
 
@@ -12,7 +12,7 @@ FormField *FormWidget::fieldForWidget(QWidget *widget) const {
 }
 
 QWidget *FormWidget::widgetForField(FormField *field) const {
-  for (const auto &f : _fields) {
+  for (const auto &f : m_fields) {
     if (f == field) { return f->widget(); }
   }
 
@@ -20,7 +20,7 @@ QWidget *FormWidget::widgetForField(FormField *field) const {
 }
 
 void FormWidget::addField(FormField *field) {
-  _fields.push_back(field);
+  m_fields.push_back(field);
   _layout->addWidget(field);
 }
 
@@ -32,25 +32,35 @@ FormField *FormWidget::addField() {
   return field;
 }
 
-FormField *FormWidget::addField(const QString &label, QWidget *widget) {
+FormField *FormWidget::addField(const QString &label, JsonFormItemWidget *widget) {
   auto field = addField();
 
   field->setName(label);
-  field->setWidget(widget);
+  field->setWidget(widget, widget->focusNotifier());
 
   return field;
 }
 
+bool FormWidget::validate() {
+  bool ok = true;
+
+  for (const auto &field : m_fields) {
+    if (!field->validate() && ok) ok = false;
+  }
+
+  return ok;
+}
+
 void FormWidget::clearFields() {
-  for (const auto &field : _fields) {
+  for (const auto &field : m_fields) {
     field->deleteLater();
   }
   clearAllErrors();
-  _fields.clear();
+  m_fields.clear();
 }
 
 bool FormWidget::isValid() const {
-  for (const auto field : _fields) {
+  for (const auto field : m_fields) {
     if (auto error = field->errorText(); !error.isEmpty()) { return false; }
   }
 
@@ -70,27 +80,27 @@ void FormWidget::setError(QWidget *widget, const QString &error) {
 
 void FormWidget::clearError(QWidget *widget) { setError(widget, ""); }
 
-const std::vector<FormField *> FormWidget::fields() const { return _fields; }
+const std::vector<FormField *> FormWidget::fields() const { return m_fields; }
 
 void FormWidget::clearAllErrors() {
-  for (const auto &field : _fields) {
+  for (const auto &field : m_fields) {
     field->clearError();
   }
 }
 
 std::optional<FormField *> FormWidget::fieldAt(int index) const {
-  if (_fields.size() < index) return std::nullopt;
+  if (m_fields.size() < index) return std::nullopt;
 
-  return _fields.at(index);
+  return m_fields.at(index);
 }
 
 void FormWidget::focusFirst() const {
-  if (_fields.empty()) {
+  if (m_fields.empty()) {
     qWarning() << "FormWidget::focusFirst() called on a form with no fields";
     return;
   }
 
-  return _fields[0]->focus();
+  return m_fields[0]->focus();
 }
 
 FormWidget::FormWidget(QWidget *parent) : QWidget(parent), _layout(new QVBoxLayout) {

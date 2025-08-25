@@ -39,7 +39,7 @@ public:
 
   QString id() const { return m_model->id; }
   bool autoFocusable() const { return m_model->autoFocus; }
-  QJsonValue valueAsJson() const { return m_widget ? m_widget->jsonValue() : QJsonValue(); }
+  QJsonValue valueAsJson() const { return m_widget ? m_widget->asJsonValue() : QJsonValue(); }
 
   void reset() {
     if (m_widget) { m_widget->reset(); }
@@ -67,7 +67,7 @@ public:
     m_widget->dispatchRender(model);
 
     // initialize default value the first time
-    if (auto value = m_model->defaultValue; value && !isSameType) { m_widget->setJsonValue(*value); }
+    if (auto value = m_model->defaultValue; value && !isSameType) { m_widget->setValueAsJson(*value); }
   }
 
   void handleFocusChanged(bool value) {

@@ -103,17 +103,22 @@ void GeneralSettings::setupUI() {
 
   FormWidget *form = new FormWidget;
 
-  auto fontField = new FormField(m_fontSelector, "Font");
+  auto checkField = form->addField("Root file search", m_rootFileSearch);
+
+  checkField->setInfo("Files are searched asynchronously, so if this is enabled you should expect a slight "
+                      "delay for file search results to show up");
+
+  auto popToRootOnCloseField = form->addField("Pop on close", m_popToRootOnClose);
+
+  popToRootOnCloseField->setInfo("Whether to reset the navigation state when the launcher window is closed.");
+
+  auto fontField = form->addField("Font", m_fontSelector);
 
   connect(m_fontSelector, &FontSelector::selectionChanged, this,
           [this](auto &&item) { handleFontChange(item.id()); });
 
-  auto themeField = new FormField(m_themeSelector, "Theme");
-
-  auto opacityField = new FormField;
-
-  opacityField->setName("Window opacity");
-  opacityField->setWidget(m_opacity, m_opacity->focusNotifier());
+  auto themeField = form->addField("Theme", m_themeSelector);
+  auto opacityField = form->addField("Window opacity", m_opacity);
 
   m_opacity->setText(QString::number(value.window.opacity));
 
@@ -139,7 +144,7 @@ void GeneralSettings::setupUI() {
 
   connect(m_csd, &CheckboxInput::valueChanged, this, &GeneralSettings::handleClientSideDecorationChange);
 
-  auto csdField = new FormField(m_csd, "CSD");
+  auto csdField = form->addField("CSD", m_csd);
 
   csdField->setInfo(
       R"(Let Vicinae draw its own rounded borders instead of relying on the windowing system to do so. You can usually get more refined results by properly configuring your window manager.)");
@@ -148,40 +153,24 @@ void GeneralSettings::setupUI() {
   m_fontSelector->setValue(value.font.normal.value_or(appFont));
 
   m_rootFileSearch->setLabel("Show files in root search");
-  auto checkField = new FormField;
 
-  auto qThemeField = new FormField;
+  auto qThemeField = form->addField("Icon Theme", m_qThemeSelector);
 
-  qThemeField->setWidget(m_qThemeSelector, m_qThemeSelector->focusNotifier());
-  qThemeField->setName("Icon Theme");
   qThemeField->setInfo("The icon theme used for system icons (applications, mime types, folder icons...). "
                        "This does not affect builtin Vicinae icons.");
 
-  auto faviconField = new FormField;
+  auto faviconField = form->addField("Favicon Fetching", m_faviconSelector);
 
-  faviconField->setWidget(m_faviconSelector, m_faviconSelector->focusNotifier());
-  faviconField->setName("Favicon Fetching");
   faviconField->setInfo("The favicon provider used to load favicons where needed. You can turn off favicon "
                         "loading by selecting 'None'.");
 
   connect(m_rootFileSearch, &CheckboxInput::valueChanged, this,
           &GeneralSettings::handleRootSearchFilesChange);
 
-  checkField->setWidget(m_rootFileSearch);
-  checkField->setName("Root file search");
-  checkField->setInfo("Files are searched asynchronously, so if this is enabled you should expect a slight "
-                      "delay for file search results to show up");
-
-  auto popToRootOnCloseField = new FormField;
-
   connect(m_popToRootOnClose, &CheckboxInput::valueChanged, this,
           [this](bool value) { handlePopToRootOnCloseChange(value); });
 
-  popToRootOnCloseField->setName("Pop on close");
-  popToRootOnCloseField->setWidget(m_popToRootOnClose);
-  popToRootOnCloseField->setInfo("Whether to reset the navigation state when the launcher window is closed.");
-
-  auto fontSizeField = new FormField;
+  auto fontSizeField = form->addField("Font size ", m_fontSize);
 
   connect(fontSizeField, &FormField::blurred, this, [this]() {
     bool ok = false;
@@ -193,21 +182,9 @@ void GeneralSettings::setupUI() {
     }
   });
 
-  fontSizeField->setName("Font size");
   fontSizeField->setInfo(
       "The base point size used to compute font sizes. Fractional values are accepted and should render as "
       "expected on most platforms. The recommended range is [10.0;12.0].");
-  fontSizeField->setWidget(m_fontSize, m_fontSize->focusNotifier());
-
-  form->addField(checkField);
-  form->addField(popToRootOnCloseField);
-  form->addField(themeField);
-  form->addField(qThemeField);
-  form->addField(fontField);
-  form->addField(faviconField);
-  form->addField(csdField);
-  form->addField(opacityField);
-  form->addField(fontSizeField);
 
   form->setMaximumWidth(650);
 

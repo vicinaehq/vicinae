@@ -40,12 +40,12 @@ class ExtensionDropdown : public ExtensionFormInput {
   }
 
 public:
-  QJsonValue jsonValue() const override {
+  QJsonValue asJsonValue() const override {
     if (auto value = m_input->value()) { return value->id(); }
     return QJsonValue();
   }
 
-  void setJsonValue(const QJsonValue &value) const override { m_input->setValue(value.toString()); }
+  void setValueAsJson(const QJsonValue &value) override { m_input->setValue(value.toString()); }
 
   void render(const std::shared_ptr<FormModel::IField> &field) override {
     OmniList::SelectionPolicy selectionPolicy = OmniList::PreserveSelection;

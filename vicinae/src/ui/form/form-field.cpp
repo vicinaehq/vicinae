@@ -1,21 +1,21 @@
 #include "ui/form/form-field.hpp"
+#include "common.hpp"
 #include "theme.hpp"
 #include "ui/focus-notifier.hpp"
 #include "ui/typography/typography.hpp"
 #include <qnamespace.h>
 #include <qwidget.h>
 
-FormField::FormField(QWidget *widget, const QString &name)
-    : _nameLabel(new TypographyWidget), _errorLabel(new TypographyWidget), _widget(widget),
+FormField::FormField(QWidget *parent)
+    : QWidget(parent), _nameLabel(new TypographyWidget), _errorLabel(new TypographyWidget), m_widget(nullptr),
       _layout(new QHBoxLayout) {
   setFocusPolicy(Qt::StrongFocus);
-  _nameLabel->setText(name);
   _nameLabel->setColor(SemanticColor::TextSecondary);
   _errorLabel->setColor(SemanticColor::Red);
   _layout->setSpacing(20);
   _layout->setContentsMargins(0, 0, 0, 0);
   _layout->addWidget(_nameLabel, 2, Qt::AlignVCenter | Qt::AlignRight);
-  _layout->addWidget(widget, 5, Qt::AlignVCenter);
+  _layout->addWidget(new QWidget, 5, Qt::AlignVCenter);
   _layout->addWidget(_errorLabel, 2, Qt::AlignVCenter);
 
   // m_info->setWordWrap(true);
@@ -70,6 +70,31 @@ void FormField::setInfo(const QString &info) {
   m_infoContainer->setVisible(!info.isEmpty());
 }
 
+void FormField::setValidator(const Validator &validator) { m_validator = validator; }
+
+bool FormField::eventFilter(QObject *obj, QEvent *event) {
+  if (event->type() == QEvent::FocusIn) {
+    emit focusChanged(true);
+  } else if (event->type() == QEvent::FocusOut) {
+    emit focusChanged(false);
+  }
+
+  return false;
+}
+
+bool FormField::validate() {
+  if (m_validator) {
+    if (auto error = m_validator(m_widget->asJsonValue()); !error.isEmpty()) {
+      setError(error);
+      return false;
+    }
+  }
+
+  clearError();
+
+  return true;
+}
+
 QString FormField::errorText() const { return _errorLabel->text(); }
 
 void FormField::setError(const QString &error) { _errorLabel->setText(error); }
@@ -78,19 +103,21 @@ void FormField::clearError() { _errorLabel->clear(); }
 
 bool FormField::hasError() const { return !_errorLabel->text().isEmpty(); }
 
-void FormField::focus() const { _widget->setFocus(); }
+void FormField::focus() const { m_widget->setFocus(); }
 
-QWidget *FormField::widget() const { return _widget; }
+QWidget *FormField::widget() const { return m_widget; }
 
-void FormField::setWidget(QWidget *widget, FocusNotifier *notifier) {
+void FormField::setWidget(JsonFormItemWidget *widget, FocusNotifier *notifier) {
   auto current = _layout->itemAt(1)->widget();
 
   if (notifier) {
     connect(notifier, &FocusNotifier::focusChanged, this, [this](bool focus) {
-      if (focus)
+      if (focus) {
         emit focused();
-      else
+      } else {
         emit blurred();
+        validate();
+      }
       emit focusChanged(focus);
     });
   }
@@ -98,5 +125,5 @@ void FormField::setWidget(QWidget *widget, FocusNotifier *notifier) {
   setFocusProxy(widget);
   _layout->replaceWidget(current, widget);
   current->deleteLater();
-  _widget = widget;
+  m_widget = widget;
 }

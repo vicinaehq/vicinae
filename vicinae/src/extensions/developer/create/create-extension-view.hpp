@@ -7,6 +7,8 @@
 #include "utils/utils.hpp"
 #include "service-registry.hpp"
 #include "services/toast/toast-service.hpp"
+#include <filesystem>
+#include <qjsonvalue.h>
 #include <qlogging.h>
 #include <ranges>
 #include "ui/preference-dropdown/preference-dropdown.hpp"
@@ -48,23 +50,50 @@ class CreateExtensionView : public ManagedFormView {
   std::vector<CreateExtensionCommandFrame> m_commands;
 
   void generateForm() {
+    auto isMinStrLen = [](int min) {
+      return [min](const QJsonValue &value) {
+        return value.toString().size() < min ? QString("Min. %1 chars").arg(min) : "";
+      };
+    };
+    auto isValidDir = [](const QJsonValue &value) {
+      namespace fs = std::filesystem;
+      std::error_code ec;
+      fs::path path = expandPath(value.toString().toStdString());
+
+      if (!fs::is_directory(path, ec)) { return "Must exist"; }
+
+      return "";
+    };
+
     form()->clearFields();
-    form()
-        ->addField("Author", m_username)
-        ->setInfo("For now, you can set any username. The username will be used in the command deeplink, and "
-                  "may carry more significance in the future.");
+    auto authorField = form()->addField("Author", m_username);
+
+    authorField->setInfo(
+        "For now, you can set any username. The username will be used in the command deeplink, and "
+        "may carry more significance in the future.");
+
+    authorField->setValidator(isMinStrLen(3));
 
     form()->addSeparator();
-    form()->addField("Extension Title", m_title);
-    form()->addField("Description", m_description);
-    form()->addField("Location", m_location);
+
+    auto title = form()->addField("Extension Title", m_title);
+    auto description = form()->addField("Description", m_description);
+    auto location = form()->addField("Location", m_location);
+
+    title->setValidator(isMinStrLen(3));
+    description->setValidator(isMinStrLen(16));
+    location->setValidator(isValidDir);
 
     for (const auto &cmd : m_commands) {
       form()->addSeparator();
-      form()->addField("Command Title", cmd.m_title);
-      form()->addField("Subtitle", cmd.m_subtitle);
-      form()->addField("Description", cmd.m_description);
-      form()->addField("Template", cmd.m_template);
+      auto title = form()->addField("Command Title", cmd.m_title);
+      auto subtitle = form()->addField("Subtitle", cmd.m_subtitle);
+      auto description = form()->addField("Description", cmd.m_description);
+      auto tmpl = form()->addField("Template", cmd.m_template);
+
+      title->setValidator(isMinStrLen(3));
+      subtitle->setValidator(isMinStrLen(3));
+      description->setValidator(isMinStrLen(3));
     }
   }
 
@@ -94,17 +123,24 @@ class CreateExtensionView : public ManagedFormView {
   }
 
   void onSubmit() override {
+    auto toast = context()->services->toastService();
+
+    if (!form()->validate()) {
+      toast->failure("Form has errors");
+      return;
+    }
+
     auto cfg = getConfig();
     ExtensionBoilerplateGenerator gen;
     std::filesystem::path targetDir = expandPath(m_location->text().toStdString());
 
     if (auto v = gen.generate(targetDir, cfg); !v) {
-      context()->services->toastService()->failure("Failed to create extension");
+      toast->failure("Failed to create extension");
       qCritical() << "Failed to create extension with error" << v.error();
       return;
     }
 
-    context()->services->toastService()->success("Created extension");
+    toast->success("Created extension");
   }
 
 public:
