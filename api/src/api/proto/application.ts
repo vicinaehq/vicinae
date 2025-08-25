@@ -14,8 +14,7 @@ export interface OpenApplicationRequest {
   appId?: string | undefined;
 }
 
-export interface ListApplicationRequest {
-}
+export interface ListApplicationRequest {}
 
 export interface ListApplicationResponse {
   apps: Application[];
@@ -41,7 +40,10 @@ function createBaseOpenApplicationRequest(): OpenApplicationRequest {
 }
 
 export const OpenApplicationRequest: MessageFns<OpenApplicationRequest> = {
-  encode(message: OpenApplicationRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: OpenApplicationRequest,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.target !== "") {
       writer.uint32(10).string(message.target);
     }
@@ -51,8 +53,12 @@ export const OpenApplicationRequest: MessageFns<OpenApplicationRequest> = {
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): OpenApplicationRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+  decode(
+    input: BinaryReader | Uint8Array,
+    length?: number,
+  ): OpenApplicationRequest {
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseOpenApplicationRequest();
     while (reader.pos < end) {
@@ -101,10 +107,14 @@ export const OpenApplicationRequest: MessageFns<OpenApplicationRequest> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<OpenApplicationRequest>, I>>(base?: I): OpenApplicationRequest {
+  create<I extends Exact<DeepPartial<OpenApplicationRequest>, I>>(
+    base?: I,
+  ): OpenApplicationRequest {
     return OpenApplicationRequest.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<OpenApplicationRequest>, I>>(object: I): OpenApplicationRequest {
+  fromPartial<I extends Exact<DeepPartial<OpenApplicationRequest>, I>>(
+    object: I,
+  ): OpenApplicationRequest {
     const message = createBaseOpenApplicationRequest();
     message.target = object.target ?? "";
     message.appId = object.appId ?? undefined;
@@ -117,12 +127,19 @@ function createBaseListApplicationRequest(): ListApplicationRequest {
 }
 
 export const ListApplicationRequest: MessageFns<ListApplicationRequest> = {
-  encode(_: ListApplicationRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    _: ListApplicationRequest,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): ListApplicationRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+  decode(
+    input: BinaryReader | Uint8Array,
+    length?: number,
+  ): ListApplicationRequest {
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseListApplicationRequest();
     while (reader.pos < end) {
@@ -146,10 +163,14 @@ export const ListApplicationRequest: MessageFns<ListApplicationRequest> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<ListApplicationRequest>, I>>(base?: I): ListApplicationRequest {
+  create<I extends Exact<DeepPartial<ListApplicationRequest>, I>>(
+    base?: I,
+  ): ListApplicationRequest {
     return ListApplicationRequest.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ListApplicationRequest>, I>>(_: I): ListApplicationRequest {
+  fromPartial<I extends Exact<DeepPartial<ListApplicationRequest>, I>>(
+    _: I,
+  ): ListApplicationRequest {
     const message = createBaseListApplicationRequest();
     return message;
   },
@@ -160,15 +181,22 @@ function createBaseListApplicationResponse(): ListApplicationResponse {
 }
 
 export const ListApplicationResponse: MessageFns<ListApplicationResponse> = {
-  encode(message: ListApplicationResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: ListApplicationResponse,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     for (const v of message.apps) {
       Application.encode(v!, writer.uint32(10).fork()).join();
     }
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): ListApplicationResponse {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+  decode(
+    input: BinaryReader | Uint8Array,
+    length?: number,
+  ): ListApplicationResponse {
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseListApplicationResponse();
     while (reader.pos < end) {
@@ -192,7 +220,11 @@ export const ListApplicationResponse: MessageFns<ListApplicationResponse> = {
   },
 
   fromJSON(object: any): ListApplicationResponse {
-    return { apps: globalThis.Array.isArray(object?.apps) ? object.apps.map((e: any) => Application.fromJSON(e)) : [] };
+    return {
+      apps: globalThis.Array.isArray(object?.apps)
+        ? object.apps.map((e: any) => Application.fromJSON(e))
+        : [],
+    };
   },
 
   toJSON(message: ListApplicationResponse): unknown {
@@ -203,10 +235,14 @@ export const ListApplicationResponse: MessageFns<ListApplicationResponse> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<ListApplicationResponse>, I>>(base?: I): ListApplicationResponse {
+  create<I extends Exact<DeepPartial<ListApplicationResponse>, I>>(
+    base?: I,
+  ): ListApplicationResponse {
     return ListApplicationResponse.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ListApplicationResponse>, I>>(object: I): ListApplicationResponse {
+  fromPartial<I extends Exact<DeepPartial<ListApplicationResponse>, I>>(
+    object: I,
+  ): ListApplicationResponse {
     const message = createBaseListApplicationResponse();
     message.apps = object.apps?.map((e) => Application.fromPartial(e)) || [];
     return message;
@@ -218,18 +254,28 @@ function createBaseRequest(): Request {
 }
 
 export const Request: MessageFns<Request> = {
-  encode(message: Request, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: Request,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.list !== undefined) {
-      ListApplicationRequest.encode(message.list, writer.uint32(10).fork()).join();
+      ListApplicationRequest.encode(
+        message.list,
+        writer.uint32(10).fork(),
+      ).join();
     }
     if (message.open !== undefined) {
-      OpenApplicationRequest.encode(message.open, writer.uint32(18).fork()).join();
+      OpenApplicationRequest.encode(
+        message.open,
+        writer.uint32(18).fork(),
+      ).join();
     }
     return writer;
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): Request {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseRequest();
     while (reader.pos < end) {
@@ -262,8 +308,12 @@ export const Request: MessageFns<Request> = {
 
   fromJSON(object: any): Request {
     return {
-      list: isSet(object.list) ? ListApplicationRequest.fromJSON(object.list) : undefined,
-      open: isSet(object.open) ? OpenApplicationRequest.fromJSON(object.open) : undefined,
+      list: isSet(object.list)
+        ? ListApplicationRequest.fromJSON(object.list)
+        : undefined,
+      open: isSet(object.open)
+        ? OpenApplicationRequest.fromJSON(object.open)
+        : undefined,
     };
   },
 
@@ -283,12 +333,14 @@ export const Request: MessageFns<Request> = {
   },
   fromPartial<I extends Exact<DeepPartial<Request>, I>>(object: I): Request {
     const message = createBaseRequest();
-    message.list = (object.list !== undefined && object.list !== null)
-      ? ListApplicationRequest.fromPartial(object.list)
-      : undefined;
-    message.open = (object.open !== undefined && object.open !== null)
-      ? OpenApplicationRequest.fromPartial(object.open)
-      : undefined;
+    message.list =
+      object.list !== undefined && object.list !== null
+        ? ListApplicationRequest.fromPartial(object.list)
+        : undefined;
+    message.open =
+      object.open !== undefined && object.open !== null
+        ? OpenApplicationRequest.fromPartial(object.open)
+        : undefined;
     return message;
   },
 };
@@ -298,15 +350,22 @@ function createBaseResponse(): Response {
 }
 
 export const Response: MessageFns<Response> = {
-  encode(message: Response, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: Response,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.list !== undefined) {
-      ListApplicationResponse.encode(message.list, writer.uint32(10).fork()).join();
+      ListApplicationResponse.encode(
+        message.list,
+        writer.uint32(10).fork(),
+      ).join();
     }
     return writer;
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): Response {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseResponse();
     while (reader.pos < end) {
@@ -317,7 +376,10 @@ export const Response: MessageFns<Response> = {
             break;
           }
 
-          message.list = ListApplicationResponse.decode(reader, reader.uint32());
+          message.list = ListApplicationResponse.decode(
+            reader,
+            reader.uint32(),
+          );
           continue;
         }
       }
@@ -330,7 +392,11 @@ export const Response: MessageFns<Response> = {
   },
 
   fromJSON(object: any): Response {
-    return { list: isSet(object.list) ? ListApplicationResponse.fromJSON(object.list) : undefined };
+    return {
+      list: isSet(object.list)
+        ? ListApplicationResponse.fromJSON(object.list)
+        : undefined,
+    };
   },
 
   toJSON(message: Response): unknown {
@@ -346,9 +412,10 @@ export const Response: MessageFns<Response> = {
   },
   fromPartial<I extends Exact<DeepPartial<Response>, I>>(object: I): Response {
     const message = createBaseResponse();
-    message.list = (object.list !== undefined && object.list !== null)
-      ? ListApplicationResponse.fromPartial(object.list)
-      : undefined;
+    message.list =
+      object.list !== undefined && object.list !== null
+        ? ListApplicationResponse.fromPartial(object.list)
+        : undefined;
     return message;
   },
 };
@@ -358,7 +425,10 @@ function createBaseApplication(): Application {
 }
 
 export const Application: MessageFns<Application> = {
-  encode(message: Application, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: Application,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.id !== "") {
       writer.uint32(10).string(message.id);
     }
@@ -372,7 +442,8 @@ export const Application: MessageFns<Application> = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): Application {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseApplication();
     while (reader.pos < end) {
@@ -436,7 +507,9 @@ export const Application: MessageFns<Application> = {
   create<I extends Exact<DeepPartial<Application>, I>>(base?: I): Application {
     return Application.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<Application>, I>>(object: I): Application {
+  fromPartial<I extends Exact<DeepPartial<Application>, I>>(
+    object: I,
+  ): Application {
     const message = createBaseApplication();
     message.id = object.id ?? "";
     message.name = object.name ?? "";
@@ -445,17 +518,31 @@ export const Application: MessageFns<Application> = {
   },
 };
 
-type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+type Builtin =
+  | Date
+  | Function
+  | Uint8Array
+  | string
+  | number
+  | boolean
+  | undefined;
 
-export type DeepPartial<T> = T extends Builtin ? T
-  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
-  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
-  : Partial<T>;
+export type DeepPartial<T> = T extends Builtin
+  ? T
+  : T extends globalThis.Array<infer U>
+    ? globalThis.Array<DeepPartial<U>>
+    : T extends ReadonlyArray<infer U>
+      ? ReadonlyArray<DeepPartial<U>>
+      : T extends {}
+        ? { [K in keyof T]?: DeepPartial<T[K]> }
+        : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & {
+      [K in Exclude<keyof I, KeysOfUnion<P>>]: never;
+    };
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;

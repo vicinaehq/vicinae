@@ -274,7 +274,15 @@
             "description": "The slugged property's name used internally."
           },
           "type": {
-            "enum": ["textfield", "password", "checkbox", "dropdown", "appPicker", "file", "directory"],
+            "enum": [
+              "textfield",
+              "password",
+              "checkbox",
+              "dropdown",
+              "appPicker",
+              "file",
+              "directory"
+            ],
             "type": "string",
             "title": "The preference type",
             "description": "Currently only 'textfield', 'password' (for secure entry), 'checkbox', 'dropdown', 'appPicker', 'file', and 'directory' are supported."
@@ -304,7 +312,16 @@
     }
   },
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "required": ["name", "title", "description", "icon", "author", "license", "commands", "dependencies"],
+  "required": [
+    "name",
+    "title",
+    "description",
+    "icon",
+    "author",
+    "license",
+    "commands",
+    "dependencies"
+  ],
   "properties": {
     "icon": {
       "type": "string",

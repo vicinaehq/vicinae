@@ -61,7 +61,10 @@ function createBaseRequest(): Request {
 }
 
 export const Request: MessageFns<Request> = {
-  encode(message: Request, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: Request,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.requestId !== "") {
       writer.uint32(10).string(message.requestId);
     }
@@ -72,7 +75,8 @@ export const Request: MessageFns<Request> = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): Request {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseRequest();
     while (reader.pos < end) {
@@ -105,7 +109,9 @@ export const Request: MessageFns<Request> = {
 
   fromJSON(object: any): Request {
     return {
-      requestId: isSet(object.requestId) ? globalThis.String(object.requestId) : "",
+      requestId: isSet(object.requestId)
+        ? globalThis.String(object.requestId)
+        : "",
       data: isSet(object.data) ? RequestData.fromJSON(object.data) : undefined,
     };
   },
@@ -127,19 +133,29 @@ export const Request: MessageFns<Request> = {
   fromPartial<I extends Exact<DeepPartial<Request>, I>>(object: I): Request {
     const message = createBaseRequest();
     message.requestId = object.requestId ?? "";
-    message.data = (object.data !== undefined && object.data !== null)
-      ? RequestData.fromPartial(object.data)
-      : undefined;
+    message.data =
+      object.data !== undefined && object.data !== null
+        ? RequestData.fromPartial(object.data)
+        : undefined;
     return message;
   },
 };
 
 function createBaseRequestData(): RequestData {
-  return { ui: undefined, app: undefined, clipboard: undefined, storage: undefined, oauth: undefined };
+  return {
+    ui: undefined,
+    app: undefined,
+    clipboard: undefined,
+    storage: undefined,
+    oauth: undefined,
+  };
 }
 
 export const RequestData: MessageFns<RequestData> = {
-  encode(message: RequestData, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: RequestData,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.ui !== undefined) {
       Request1.encode(message.ui, writer.uint32(10).fork()).join();
     }
@@ -159,7 +175,8 @@ export const RequestData: MessageFns<RequestData> = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): RequestData {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseRequestData();
     while (reader.pos < end) {
@@ -218,8 +235,12 @@ export const RequestData: MessageFns<RequestData> = {
     return {
       ui: isSet(object.ui) ? Request1.fromJSON(object.ui) : undefined,
       app: isSet(object.app) ? Request2.fromJSON(object.app) : undefined,
-      clipboard: isSet(object.clipboard) ? Request3.fromJSON(object.clipboard) : undefined,
-      storage: isSet(object.storage) ? Request4.fromJSON(object.storage) : undefined,
+      clipboard: isSet(object.clipboard)
+        ? Request3.fromJSON(object.clipboard)
+        : undefined,
+      storage: isSet(object.storage)
+        ? Request4.fromJSON(object.storage)
+        : undefined,
       oauth: isSet(object.oauth) ? Request5.fromJSON(object.oauth) : undefined,
     };
   },
@@ -247,19 +268,30 @@ export const RequestData: MessageFns<RequestData> = {
   create<I extends Exact<DeepPartial<RequestData>, I>>(base?: I): RequestData {
     return RequestData.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<RequestData>, I>>(object: I): RequestData {
+  fromPartial<I extends Exact<DeepPartial<RequestData>, I>>(
+    object: I,
+  ): RequestData {
     const message = createBaseRequestData();
-    message.ui = (object.ui !== undefined && object.ui !== null) ? Request1.fromPartial(object.ui) : undefined;
-    message.app = (object.app !== undefined && object.app !== null) ? Request2.fromPartial(object.app) : undefined;
-    message.clipboard = (object.clipboard !== undefined && object.clipboard !== null)
-      ? Request3.fromPartial(object.clipboard)
-      : undefined;
-    message.storage = (object.storage !== undefined && object.storage !== null)
-      ? Request4.fromPartial(object.storage)
-      : undefined;
-    message.oauth = (object.oauth !== undefined && object.oauth !== null)
-      ? Request5.fromPartial(object.oauth)
-      : undefined;
+    message.ui =
+      object.ui !== undefined && object.ui !== null
+        ? Request1.fromPartial(object.ui)
+        : undefined;
+    message.app =
+      object.app !== undefined && object.app !== null
+        ? Request2.fromPartial(object.app)
+        : undefined;
+    message.clipboard =
+      object.clipboard !== undefined && object.clipboard !== null
+        ? Request3.fromPartial(object.clipboard)
+        : undefined;
+    message.storage =
+      object.storage !== undefined && object.storage !== null
+        ? Request4.fromPartial(object.storage)
+        : undefined;
+    message.oauth =
+      object.oauth !== undefined && object.oauth !== null
+        ? Request5.fromPartial(object.oauth)
+        : undefined;
     return message;
   },
 };
@@ -269,7 +301,10 @@ function createBaseResponse(): Response {
 }
 
 export const Response: MessageFns<Response> = {
-  encode(message: Response, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: Response,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.requestId !== "") {
       writer.uint32(10).string(message.requestId);
     }
@@ -283,7 +318,8 @@ export const Response: MessageFns<Response> = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): Response {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseResponse();
     while (reader.pos < end) {
@@ -324,9 +360,13 @@ export const Response: MessageFns<Response> = {
 
   fromJSON(object: any): Response {
     return {
-      requestId: isSet(object.requestId) ? globalThis.String(object.requestId) : "",
+      requestId: isSet(object.requestId)
+        ? globalThis.String(object.requestId)
+        : "",
       data: isSet(object.data) ? ResponseData.fromJSON(object.data) : undefined,
-      error: isSet(object.error) ? ErrorResponse.fromJSON(object.error) : undefined,
+      error: isSet(object.error)
+        ? ErrorResponse.fromJSON(object.error)
+        : undefined,
     };
   },
 
@@ -350,22 +390,33 @@ export const Response: MessageFns<Response> = {
   fromPartial<I extends Exact<DeepPartial<Response>, I>>(object: I): Response {
     const message = createBaseResponse();
     message.requestId = object.requestId ?? "";
-    message.data = (object.data !== undefined && object.data !== null)
-      ? ResponseData.fromPartial(object.data)
-      : undefined;
-    message.error = (object.error !== undefined && object.error !== null)
-      ? ErrorResponse.fromPartial(object.error)
-      : undefined;
+    message.data =
+      object.data !== undefined && object.data !== null
+        ? ResponseData.fromPartial(object.data)
+        : undefined;
+    message.error =
+      object.error !== undefined && object.error !== null
+        ? ErrorResponse.fromPartial(object.error)
+        : undefined;
     return message;
   },
 };
 
 function createBaseResponseData(): ResponseData {
-  return { ui: undefined, app: undefined, clipboard: undefined, storage: undefined, oauth: undefined };
+  return {
+    ui: undefined,
+    app: undefined,
+    clipboard: undefined,
+    storage: undefined,
+    oauth: undefined,
+  };
 }
 
 export const ResponseData: MessageFns<ResponseData> = {
-  encode(message: ResponseData, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: ResponseData,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.ui !== undefined) {
       Response6.encode(message.ui, writer.uint32(10).fork()).join();
     }
@@ -385,7 +436,8 @@ export const ResponseData: MessageFns<ResponseData> = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): ResponseData {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseResponseData();
     while (reader.pos < end) {
@@ -444,9 +496,15 @@ export const ResponseData: MessageFns<ResponseData> = {
     return {
       ui: isSet(object.ui) ? Response6.fromJSON(object.ui) : undefined,
       app: isSet(object.app) ? Response7.fromJSON(object.app) : undefined,
-      clipboard: isSet(object.clipboard) ? Response8.fromJSON(object.clipboard) : undefined,
-      storage: isSet(object.storage) ? Response9.fromJSON(object.storage) : undefined,
-      oauth: isSet(object.oauth) ? Response10.fromJSON(object.oauth) : undefined,
+      clipboard: isSet(object.clipboard)
+        ? Response8.fromJSON(object.clipboard)
+        : undefined,
+      storage: isSet(object.storage)
+        ? Response9.fromJSON(object.storage)
+        : undefined,
+      oauth: isSet(object.oauth)
+        ? Response10.fromJSON(object.oauth)
+        : undefined,
     };
   },
 
@@ -470,22 +528,35 @@ export const ResponseData: MessageFns<ResponseData> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<ResponseData>, I>>(base?: I): ResponseData {
+  create<I extends Exact<DeepPartial<ResponseData>, I>>(
+    base?: I,
+  ): ResponseData {
     return ResponseData.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ResponseData>, I>>(object: I): ResponseData {
+  fromPartial<I extends Exact<DeepPartial<ResponseData>, I>>(
+    object: I,
+  ): ResponseData {
     const message = createBaseResponseData();
-    message.ui = (object.ui !== undefined && object.ui !== null) ? Response6.fromPartial(object.ui) : undefined;
-    message.app = (object.app !== undefined && object.app !== null) ? Response7.fromPartial(object.app) : undefined;
-    message.clipboard = (object.clipboard !== undefined && object.clipboard !== null)
-      ? Response8.fromPartial(object.clipboard)
-      : undefined;
-    message.storage = (object.storage !== undefined && object.storage !== null)
-      ? Response9.fromPartial(object.storage)
-      : undefined;
-    message.oauth = (object.oauth !== undefined && object.oauth !== null)
-      ? Response10.fromPartial(object.oauth)
-      : undefined;
+    message.ui =
+      object.ui !== undefined && object.ui !== null
+        ? Response6.fromPartial(object.ui)
+        : undefined;
+    message.app =
+      object.app !== undefined && object.app !== null
+        ? Response7.fromPartial(object.app)
+        : undefined;
+    message.clipboard =
+      object.clipboard !== undefined && object.clipboard !== null
+        ? Response8.fromPartial(object.clipboard)
+        : undefined;
+    message.storage =
+      object.storage !== undefined && object.storage !== null
+        ? Response9.fromPartial(object.storage)
+        : undefined;
+    message.oauth =
+      object.oauth !== undefined && object.oauth !== null
+        ? Response10.fromPartial(object.oauth)
+        : undefined;
     return message;
   },
 };
@@ -495,7 +566,10 @@ function createBaseEvent(): Event {
 }
 
 export const Event: MessageFns<Event> = {
-  encode(message: Event, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: Event,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.id !== "") {
       writer.uint32(10).string(message.id);
     }
@@ -509,7 +583,8 @@ export const Event: MessageFns<Event> = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): Event {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseEvent();
     while (reader.pos < end) {
@@ -551,8 +626,12 @@ export const Event: MessageFns<Event> = {
   fromJSON(object: any): Event {
     return {
       id: isSet(object.id) ? globalThis.String(object.id) : "",
-      generic: isSet(object.generic) ? GenericEventData.fromJSON(object.generic) : undefined,
-      crash: isSet(object.crash) ? CrashEventData.fromJSON(object.crash) : undefined,
+      generic: isSet(object.generic)
+        ? GenericEventData.fromJSON(object.generic)
+        : undefined,
+      crash: isSet(object.crash)
+        ? CrashEventData.fromJSON(object.crash)
+        : undefined,
     };
   },
 
@@ -576,12 +655,14 @@ export const Event: MessageFns<Event> = {
   fromPartial<I extends Exact<DeepPartial<Event>, I>>(object: I): Event {
     const message = createBaseEvent();
     message.id = object.id ?? "";
-    message.generic = (object.generic !== undefined && object.generic !== null)
-      ? GenericEventData.fromPartial(object.generic)
-      : undefined;
-    message.crash = (object.crash !== undefined && object.crash !== null)
-      ? CrashEventData.fromPartial(object.crash)
-      : undefined;
+    message.generic =
+      object.generic !== undefined && object.generic !== null
+        ? GenericEventData.fromPartial(object.generic)
+        : undefined;
+    message.crash =
+      object.crash !== undefined && object.crash !== null
+        ? CrashEventData.fromPartial(object.crash)
+        : undefined;
     return message;
   },
 };
@@ -591,7 +672,10 @@ function createBaseCrashEventData(): CrashEventData {
 }
 
 export const CrashEventData: MessageFns<CrashEventData> = {
-  encode(message: CrashEventData, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: CrashEventData,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.text !== "") {
       writer.uint32(10).string(message.text);
     }
@@ -599,7 +683,8 @@ export const CrashEventData: MessageFns<CrashEventData> = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): CrashEventData {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseCrashEventData();
     while (reader.pos < end) {
@@ -634,10 +719,14 @@ export const CrashEventData: MessageFns<CrashEventData> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<CrashEventData>, I>>(base?: I): CrashEventData {
+  create<I extends Exact<DeepPartial<CrashEventData>, I>>(
+    base?: I,
+  ): CrashEventData {
     return CrashEventData.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<CrashEventData>, I>>(object: I): CrashEventData {
+  fromPartial<I extends Exact<DeepPartial<CrashEventData>, I>>(
+    object: I,
+  ): CrashEventData {
     const message = createBaseCrashEventData();
     message.text = object.text ?? "";
     return message;
@@ -649,7 +738,10 @@ function createBaseGenericEventData(): GenericEventData {
 }
 
 export const GenericEventData: MessageFns<GenericEventData> = {
-  encode(message: GenericEventData, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: GenericEventData,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     if (message.json !== "") {
       writer.uint32(10).string(message.json);
     }
@@ -657,7 +749,8 @@ export const GenericEventData: MessageFns<GenericEventData> = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): GenericEventData {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseGenericEventData();
     while (reader.pos < end) {
@@ -692,27 +785,45 @@ export const GenericEventData: MessageFns<GenericEventData> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<GenericEventData>, I>>(base?: I): GenericEventData {
+  create<I extends Exact<DeepPartial<GenericEventData>, I>>(
+    base?: I,
+  ): GenericEventData {
     return GenericEventData.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<GenericEventData>, I>>(object: I): GenericEventData {
+  fromPartial<I extends Exact<DeepPartial<GenericEventData>, I>>(
+    object: I,
+  ): GenericEventData {
     const message = createBaseGenericEventData();
     message.json = object.json ?? "";
     return message;
   },
 };
 
-type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+type Builtin =
+  | Date
+  | Function
+  | Uint8Array
+  | string
+  | number
+  | boolean
+  | undefined;
 
-export type DeepPartial<T> = T extends Builtin ? T
-  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
-  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
-  : Partial<T>;
+export type DeepPartial<T> = T extends Builtin
+  ? T
+  : T extends globalThis.Array<infer U>
+    ? globalThis.Array<DeepPartial<U>>
+    : T extends ReadonlyArray<infer U>
+      ? ReadonlyArray<DeepPartial<U>>
+      : T extends {}
+        ? { [K in keyof T]?: DeepPartial<T[K]> }
+        : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & {
+      [K in Exclude<keyof I, KeysOfUnion<P>>]: never;
+    };
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;

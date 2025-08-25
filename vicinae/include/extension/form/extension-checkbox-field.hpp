@@ -14,8 +14,8 @@ class ExtensionCheckboxField : public ExtensionFormInput {
     if (auto change = m_model->onChange) { m_extensionNotifier->notify(*change, value); }
   }
 
-  void setJsonValue(const QJsonValue &value) const override { m_input->setValueAsJson(value); }
-  QJsonValue jsonValue() const override { return m_input->value(); }
+  void setValueAsJson(const QJsonValue &value) override { m_input->setValueAsJson(value); }
+  QJsonValue asJsonValue() const override { return m_input->value(); }
 
 public:
   void render(const std::shared_ptr<FormModel::IField> &field) override {

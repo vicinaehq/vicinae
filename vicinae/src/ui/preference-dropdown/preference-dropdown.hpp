@@ -1,3 +1,4 @@
+#pragma once
 #include "preference.hpp"
 #include "ui/form/selector-input.hpp"
 

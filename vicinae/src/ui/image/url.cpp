@@ -280,6 +280,15 @@ ImageURL ImageURL::http(const QUrl &httpUrl) {
   return url;
 }
 
+ImageURL ImageURL::emoji(const QString &emoji) {
+  ImageURL url;
+
+  url.setType(ImageURLType::Emoji);
+  url.setName(emoji);
+
+  return url;
+}
+
 ImageURL ImageURL::rawData(const QByteArray &data, const QString &mimeType) {
   ImageURL url;
 

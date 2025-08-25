@@ -7,13 +7,21 @@
 #include "utils/utils.hpp"
 #include "zip/unzip.hpp"
 #include <filesystem>
+#include <qfilesystemwatcher.h>
 #include <qjsonparseerror.h>
 #include <qlogging.h>
 
 namespace fs = std::filesystem;
 
 ExtensionRegistry::ExtensionRegistry(OmniCommandDatabase &commandDb, LocalStorageService &storage)
-    : m_db(commandDb), m_storage(storage) {}
+    : m_db(commandDb), m_storage(storage) {
+  m_watcher->addPath(extensionDir().c_str());
+
+  // XXX: we currently do not support removing extensions by filesystem removal
+  // An extension should be removed from within Vicinae directly so that other cleanup tasks
+  // can be performed.
+  connect(m_watcher, &QFileSystemWatcher::directoryChanged, this, [this]() { requestScan(); });
+}
 
 fs::path ExtensionRegistry::extensionDir() const { return Omnicast::dataDir() / "extensions"; }
 

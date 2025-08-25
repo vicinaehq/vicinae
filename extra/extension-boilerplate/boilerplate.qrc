@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RCC version="1.0">
+	<qresource prefix="/boilerplate">
+		<file alias="package.json">assets/package.json</file>
+		<file>tsconfig.json</file>
+		<file alias="README.md">assets/README.md</file>
+		<file alias="extension_icon">assets/extension_icon.png</file>
+		<file alias="tmpl-simple-detail">src/simple-detail.tsx</file>
+		<file alias="tmpl-no-view">src/no-view.tsx</file>
+		<file alias="tmpl-list">src/list.tsx</file>
+		<file alias="tmpl-list-detail">src/list-detail.tsx</file>
+		<file alias="tmpl-controlled-list">src/controlled-list.tsx</file>
+  </qresource>
+</RCC>

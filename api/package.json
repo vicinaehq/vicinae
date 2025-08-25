@@ -30,7 +30,7 @@
     "@oclif/plugin-help": "^6",
     "@oclif/plugin-plugins": "^5",
     "@types/react": "^18.1.0",
-	"@types/node": ">=18",
+    "@types/node": ">=18",
     "chalk": "^5.6.0",
     "chokidar": "^4.0.3",
     "esbuild": "^0.25.2",

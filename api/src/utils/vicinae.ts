@@ -6,7 +6,7 @@ export type VicinaeClientOptions = {
 
 export class VicinaeClient {
   constructor(
-    private readonly options: VicinaeClientOptions = { binaryPath: "vicinae" }
+    private readonly options: VicinaeClientOptions = { binaryPath: "vicinae" },
   ) {}
 
   ping() {
