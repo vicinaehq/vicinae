@@ -13,5 +13,7 @@ public:
   QFuture<std::vector<IndexerFileResult>> queryAsync(std::string_view query,
                                                      const AbstractFileIndexer::QueryParams &params = {});
 
+  void setEntrypoints(const std::vector<AbstractFileIndexer::Entrypoint> &entrypoints);
+
   FileService();
 };

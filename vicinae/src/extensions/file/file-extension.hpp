@@ -2,8 +2,8 @@
 #include "command-database.hpp"
 #include "../../ui/image/url.hpp"
 #include "common.hpp"
+#include "preference.hpp"
 #include "search-files-view.hpp"
-#include "single-view-command-context.hpp"
 #include "ui/alert/alert.hpp"
 #include "vicinae.hpp"
 
@@ -60,5 +60,29 @@ public:
   FileExtension() {
     registerCommand<SearchFilesCommand>();
     registerCommand<RebuildFileIndexCommand>();
+  }
+
+  std::vector<Preference> preferences() const override {
+    auto paths = Preference::makeText("paths");
+    paths.setTitle("Search paths");
+    paths.setDescription("Semicolon-separated list of paths that vicinae will search");
+    paths.setDefaultValue(homeDir().c_str());
+
+    return {paths};
+  }
+
+  void preferenceValuesChanged(const QJsonObject &preferences) const override {
+    QStringList searchPaths = preferences.value("paths").toString().split(';', Qt::SkipEmptyParts);
+    FileService *service = ServiceRegistry::instance()->fileService();
+
+    auto entrypointRange =
+      searchPaths | std::views::transform([](const QJsonValue &obj) -> AbstractFileIndexer::Entrypoint {
+        return {.root = obj.toString().toStdString()};
+      });
+
+    std::vector<AbstractFileIndexer::Entrypoint> entrypoints =
+      {entrypointRange.begin(), entrypointRange.end()};
+
+    service->setEntrypoints(entrypoints);
   }
 };
