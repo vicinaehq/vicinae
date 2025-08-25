@@ -67,7 +67,7 @@ bool XdpFileChooser::openFile() {
     filter.items.emplace_back(FilterItem{1, mime});
   }
 
-  payload["filters"] = QVariant::fromValue(QList<Filter>{filter});
+  if (!filter.items.empty()) { payload["filters"] = QVariant::fromValue(QList<Filter>{filter}); }
 
   QDBusReply<QDBusObjectPath> message = m_interface->call("OpenFile", windowHandle, "Open File", payload);
 

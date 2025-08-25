@@ -533,6 +533,11 @@ set(SRCS
 	src/services/window-manager/window-manager.cpp
 
 	src/services/extension-boilerplate-generator/extension-boilerplate-generator.cpp
+
+	src/ui/file-picker-button/file-picker-button.hpp
+	src/ui/file-picker-button/file-picker-button.cpp
+
+	src/ui/form/directory-input.cpp
 ) 
 
 

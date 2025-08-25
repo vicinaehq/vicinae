@@ -1,9 +1,11 @@
 #include "services/extension-boilerplate-generator/extension-boilerplate-generator.hpp"
 #include "ui/form/base-input.hpp"
+#include "ui/form/directory-input.hpp"
 #include "ui/form/form-field.hpp"
 #include "ui/form/form.hpp"
 #include "ui/form/text-area.hpp"
 #include "ui/views/form-view.hpp"
+#include "ui/file-picker-button/file-picker-button.hpp"
 #include "utils/utils.hpp"
 #include "service-registry.hpp"
 #include "services/toast/toast-service.hpp"
@@ -45,7 +47,7 @@ class CreateExtensionView : public ManagedFormView {
   BaseInput *m_username = new BaseInput;
   BaseInput *m_title = new BaseInput;
   TextArea *m_description = new TextArea;
-  BaseInput *m_location = new BaseInput;
+  DirectoryInput *m_location = new DirectoryInput;
 
   std::vector<CreateExtensionCommandFrame> m_commands;
 
