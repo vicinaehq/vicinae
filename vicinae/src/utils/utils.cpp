@@ -136,7 +136,6 @@ QString slugify(const QString &input, const QString &separator) {
 
   result = result.toLower();
   result = result.normalized(QString::NormalizationForm_D);
-  result.remove(QRegularExpression("[\\u0300-\\u036f]"));
   result.replace(QRegularExpression("[\\s_]+"), separator);
 
   QString pattern = QString("[^a-z0-9%1]+").arg(QRegularExpression::escape(separator));

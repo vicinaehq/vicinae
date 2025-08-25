@@ -25,10 +25,12 @@ struct CommandBoilerplate {
 };
 
 class ExtensionBoilerplateGenerator {
-  using BoilerplateGenRes = std::expected<void, QString>;
+  // returns the generated extension path or an error
+  using BoilerplateGenRes = std::expected<std::filesystem::path, QString>;
 
 public:
   const std::vector<CommandBoilerplate> &commandBoilerplates() const;
+
   BoilerplateGenRes generate(const std::filesystem::path &targetDir,
                              const ExtensionBoilerplateConfig &config);
 

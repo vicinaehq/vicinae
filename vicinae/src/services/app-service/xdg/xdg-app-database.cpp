@@ -228,7 +228,7 @@ std::vector<AppPtr> XdgAppDatabase::findOpeners(const QString &mimeName) const {
 
   if (!url.scheme().isEmpty()) {
     std::vector<AppPtr> apps;
-    QString mime = "x-scheme-handler/" + url.scheme();
+    QString mime = url.scheme() == "file" ? "inode/directory" : "x-scheme-handler/" + url.scheme();
 
     if (auto it = mimeToDefaultApp.find(mime); it != mimeToDefaultApp.end()) {
       if (auto it2 = appMap.find(it->second); it2 != appMap.end()) { apps.emplace_back(it2->second); }
@@ -255,7 +255,7 @@ std::vector<AppPtr> XdgAppDatabase::findOpeners(const QString &mimeName) const {
     mimes.push_back(mime);
   }
 
-  for (const auto &name : mime.parentMimeTypes()) {
+  for (const auto &name : mimes) {
     auto defaultApp = defaultForMime(name);
 
     if (defaultApp && !seen.contains(defaultApp->id())) {

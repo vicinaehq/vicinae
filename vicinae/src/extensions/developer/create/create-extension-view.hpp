@@ -13,6 +13,7 @@
 #include <qjsonvalue.h>
 #include <qlogging.h>
 #include <ranges>
+#include "create-extension-success-view.hpp"
 #include "ui/preference-dropdown/preference-dropdown.hpp"
 
 class CommandTemplateDropdown : public PreferenceDropdown {
@@ -136,13 +137,20 @@ class CreateExtensionView : public ManagedFormView {
     ExtensionBoilerplateGenerator gen;
     std::filesystem::path targetDir = expandPath(m_location->text().toStdString());
 
-    if (auto v = gen.generate(targetDir, cfg); !v) {
+    auto v = gen.generate(targetDir, cfg);
+
+    if (!v) {
       toast->failure("Failed to create extension");
       qCritical() << "Failed to create extension with error" << v.error();
       return;
     }
 
-    toast->success("Created extension");
+    auto successView = new CreateExtensionSuccessView(cfg, v.value());
+
+    popSelf();
+    context()->navigation->pushView(successView);
+    context()->navigation->setNavigationIcon(ImageURL::emoji("🥳"));
+    context()->navigation->setNavigationTitle("Extension created!");
   }
 
 public:
@@ -153,8 +161,6 @@ public:
     m_title->setPlaceholderText("My Extension");
     m_description->setPlaceholderText("An extension that does super cool things");
     m_location->setPlaceholderText("~/code/vicinae-extensions");
-
-    // at least one command
     m_commands.push_back({});
 
     generateForm();

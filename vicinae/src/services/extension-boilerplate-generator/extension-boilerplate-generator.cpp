@@ -26,7 +26,7 @@ const std::vector<CommandBoilerplate> &ExtensionBoilerplateGenerator::commandBoi
   return CMD_TEMPLATE_LIST;
 }
 
-std::expected<void, QString>
+std::expected<fs::path, QString>
 ExtensionBoilerplateGenerator::generate(const fs::path &targetDir, const ExtensionBoilerplateConfig &config) {
   std::error_code ec;
   QString extName = slugify(config.title);
@@ -119,7 +119,7 @@ ExtensionBoilerplateGenerator::generate(const fs::path &targetDir, const Extensi
   userCopy(":boilerplate/tsconfig.json", QString::fromStdString(extDir / "tsconfig.json"));
   userCopy(":boilerplate/extension_icon", QString::fromStdString(assetsDir / "extension_icon.png"));
 
-  return {};
+  return extDir;
 }
 
 ExtensionBoilerplateGenerator::ExtensionBoilerplateGenerator() {}
