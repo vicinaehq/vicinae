@@ -50,3 +50,19 @@ Vicinae currently runs best on **wlroots-based compositors**, such as **Hyprland
 ## 📚 Documentation
 
 For more details on installation, usage, configuration, extension development, and contributing, visit [docs.vicinae.com](https://docs.vicinae.com).
+
+## A few more sick screenshots :)
+
+<p align="center">
+  <img
+    src=".github/assets/clipboard-history-gruvbox.png"
+    alt="Clipboard History Gruvbox"
+  />
+</p>
+
+<p align="center">
+  <img
+    src=".github/assets/pokemon-night-owl.png"
+    alt="Clipboard History Gruvbox"
+  />
+</p>
