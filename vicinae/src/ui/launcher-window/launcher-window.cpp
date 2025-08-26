@@ -132,6 +132,11 @@ void LauncherWindow::handleShowHUD(const QString &text, const std::optional<Imag
   m_hudDismissTimer->start();
 }
 
+void LauncherWindow::hideEvent(QHideEvent *event) {
+  m_ctx.navigation->closeWindow();
+  QWidget::hideEvent(event);
+}
+
 void LauncherWindow::setupUI() {
   setWindowFlags(Qt::FramelessWindowHint);
   setAttribute(Qt::WA_TranslucentBackground, true);
