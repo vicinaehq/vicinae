@@ -5,7 +5,9 @@
 #include "extension/missing-extension-preference-view.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include <qlogging.h>
+#include "extension/manager/extension-manager.hpp"
 #include <qobjectdefs.h>
+#include "services/toast/toast-service.hpp"
 
 CommandController::CommandController(ApplicationContext *ctx) : m_ctx(ctx) {
   connect(ctx->navigation.get(), &NavigationController::viewPushed, this,
@@ -72,6 +74,11 @@ void CommandController::launch(const QString &id) {
 void CommandController::launch(const std::shared_ptr<AbstractCmd> &cmd) {
   // unload stalled no-view command
   if (!m_frames.empty() && m_frames.back()->viewCount == 0) { m_frames.pop_back(); }
+
+  if (cmd->type() == CommandType::CommandTypeExtension && !m_ctx->services->extensionManager()->isRunning()) {
+    m_ctx->services->toastService()->failure("Extension manager is not running");
+    return;
+  }
 
   LaunchProps props;
 
