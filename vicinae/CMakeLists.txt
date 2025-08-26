@@ -7,7 +7,6 @@ set(LIBS)
 
 set(TARGET vicinae)
 
-
 find_package(Qt6 REQUIRED COMPONENTS Widgets Sql Network Svg DBus Keychain)
 find_package(OpenSSL REQUIRED)
 
@@ -20,13 +19,11 @@ option(WAYLAND_LAYER_SHELL "Enable support for the Wayland layer shell
 protocol, required for proper window positioning on most wlroots-based
 compositors." ON)
 
-
 list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus qt6keychain cmark-gfm qalculate protobuf::libprotobuf minizip OpenSSL::Crypto)
 
 set(WLR_CLIP_BIN ${CMAKE_BINARY_DIR}/wlr-clip/wlr-clip${CMAKE_EXECUTABLE_SUFFIX})
 set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/assets)
 configure_file(resources.qrc.in resources.qrc)
-
 
 if (UNIX AND NOT APPLE)
 	message(STATUS "Compiling with wayland layer shell support (for wlroots-like compositors)")
@@ -345,7 +342,6 @@ set(SRCS
 	src/vicinae.hpp
 	src/vicinae.cpp
 
-	${CMAKE_CURRENT_BINARY_DIR}/resources.qrc
 
 	../extra/extension-boilerplate/boilerplate.qrc
 
@@ -548,6 +544,9 @@ set(SRCS
 	src/services/window-manager/abstract-window-manager.hpp
 ) 
 
+if (TYPESCRIPT_EXTENSIONS)
+	list(APPEND SRCS ${CMAKE_CURRENT_BINARY_DIR}/resources.qrc)
+endif()
 
 if (UNIX AND NOT APPLE)
 	list(APPEND SRCS
