@@ -28,7 +28,7 @@ void IndexerScanner::enqueueBatch(const std::vector<std::filesystem::path> &path
     }
 
     if (shouldWait) {
-      qWarning() << "Handling backpressure: too many batched";
+      qDebug() << "Handling backpressure: too many batched";
       std::this_thread::sleep_for(std::chrono::milliseconds(BACKPRESSURE_WAIT_MS));
     }
   }

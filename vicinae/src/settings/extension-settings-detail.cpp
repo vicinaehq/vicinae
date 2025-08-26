@@ -81,7 +81,4 @@ ExtensionSettingsDetail::ExtensionSettingsDetail(const QString &providerId,
   setupUI();
 }
 
-ExtensionSettingsDetail::~ExtensionSettingsDetail() {
-  qCritical() << "~ExtensionSettingsDetail" << this;
-  savePendingPreferences();
-}
+ExtensionSettingsDetail::~ExtensionSettingsDetail() { savePendingPreferences(); }
