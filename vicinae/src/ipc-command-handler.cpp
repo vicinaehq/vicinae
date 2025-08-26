@@ -2,6 +2,7 @@
 #include "common.hpp"
 #include "proto/daemon.pb.h"
 #include <algorithm>
+#include "services/config/config-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "services/extension-registry/extension-registry.hpp"
@@ -151,10 +152,22 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
       }
 
       QString id = components.at(1);
+      auto &service = ThemeService::instance();
+      auto cfg = m_ctx.services->config();
 
-      if (!ThemeService::instance().setTheme(id)) {
+      service.scanThemeDirectories();
+
+      auto theme = service.findTheme(id);
+
+      if (!theme) {
         qWarning() << "Failed to set theme with id" << id << "(this theme most likely doesn't exist)";
         return;
+      }
+
+      cfg->updateConfig([&](ConfigService::Value &value) { value.theme.name = theme->id; });
+
+      if (auto text = query.queryItemValue("openWindow"); text == "true" || text == "1") {
+        m_ctx.navigation->showWindow();
       }
 
       return;

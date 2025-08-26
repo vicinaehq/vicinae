@@ -433,9 +433,14 @@ void ThemeService::registerBuiltinThemes() {
 }
 
 std::optional<ThemeInfo> ThemeService::findTheme(const QString &name) {
-  auto it = std::ranges::find_if(m_themes, [&](const ThemeInfo &model) { return model.name == name; });
+  auto it = std::ranges::find_if(m_themes, [&](auto &&theme) { return theme.id == name; });
 
-  if (it == m_themes.end()) return std::nullopt;
+  if (it == m_themes.end()) {
+    QString normalized = QString("%1.json").arg(name);
+    it = std::ranges::find_if(m_themes, [&](auto &&theme) { return theme.id == normalized; });
+  }
+
+  if (it == m_themes.end()) return {};
 
   return *it;
 }
@@ -629,11 +634,9 @@ std::optional<ThemeInfo> ThemeService::theme(const QString &name) const {
 }
 
 bool ThemeService::setTheme(const QString &name) {
-  for (const auto &info : m_themes) {
-    if (info.id == name) {
-      setTheme(info);
-      return true;
-    }
+  if (auto theme = findTheme(name)) {
+    setTheme(*theme);
+    return true;
   }
 
   return false;
