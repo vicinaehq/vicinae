@@ -185,6 +185,8 @@ QString NavigationController::navigationTitle(const BaseView *caller) const {
 void NavigationController::setPopToRootOnClose(bool value) { m_popToRootOnClose = value; }
 
 void NavigationController::closeWindow(const CloseWindowOptions &settings) {
+  if (!m_windowOpened) return;
+
   auto resolveApplicablePopToRoot = [&]() {
     if (settings.popToRootType == PopToRootType::Default)
       return m_popToRootOnClose ? PopToRootType::Immediate : PopToRootType::Suspended;

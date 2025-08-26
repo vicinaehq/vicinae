@@ -1,6 +1,7 @@
 #pragma once
 #include "../image/url.hpp"
 #include <qdebug.h>
+#include <qevent.h>
 #include <qlogging.h>
 #include <qmainwindow.h>
 #include <qtmetamacros.h>
@@ -41,6 +42,7 @@ protected:
   void paintEvent(QPaintEvent *event) override;
   bool event(QEvent *event) override;
   void handleActionVisibilityChanged(bool visible);
+  void hideEvent(QHideEvent *event) override;
   void showEvent(QShowEvent *event) override;
 
 private:
