@@ -152,6 +152,7 @@ public:
   void processStarted();
   static QJsonObject serializeLaunchProps(const LaunchProps &props);
 
+  bool isRunning() const;
   bool start();
 
   void loadCommand(const QString &extensionId, const QString &cmd, const QJsonObject &preferenceValues = {},

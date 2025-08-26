@@ -36,7 +36,10 @@ const AbstractCommandRepository *CommandDatabase::findRepository(const QString &
 CommandDatabase::CommandDatabase() {
   registerRepository<ClipboardExtension>();
   registerRepository<FileExtension>();
+
+#ifdef HAS_TYPESCRIPT_EXTENSIONS
   registerRepository<RaycastCompatExtension>();
+#endif
   registerRepository<VicinaeExtension>();
   registerRepository<CalculatorExtension>();
   registerRepository<ShortcutExtension>();

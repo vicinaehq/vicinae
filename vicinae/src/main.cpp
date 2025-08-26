@@ -113,9 +113,14 @@ int startDaemon() {
     auto extensionRegistry = std::make_unique<ExtensionRegistry>(*commandDb, *localStorage);
     auto raycastStore = std::make_unique<RaycastStoreService>();
 
+#ifdef HAS_TYPESCRIPT_EXTENSIONS
     if (!extensionManager->start()) {
       qCritical() << "Failed to load extension manager. Extensions will not work";
     }
+#else
+    qInfo() << "Not starting extension manager has support for typescript extensions has been disabled for "
+               "this build.";
+#endif
 
     registry->setFileService(std::move(fileService));
     registry->setToastService(std::move(toastService));

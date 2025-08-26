@@ -143,7 +143,14 @@ ExtensionManager::ExtensionManager(OmniCommandDatabase &commandDb) : commandDb(c
   });
 }
 
+bool ExtensionManager::isRunning() const { return process.state() == QProcess::ProcessState::Running; }
+
 bool ExtensionManager::start() {
+#ifndef HAS_TYPESCRIPT_EXTENSIONS
+  qCritical() << "Cannot start extension manager as extension support was disabled at compile time";
+  return false;
+#endif
+
   int maxWaitForStart = 5000;
   QFile file(":bin/extension-manager");
 
