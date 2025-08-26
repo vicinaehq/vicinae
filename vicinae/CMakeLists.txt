@@ -36,7 +36,11 @@ if (UNIX AND NOT APPLE)
 	list(APPEND LIBS LayerShellQt::Interface)
 endif()
 
-add_compile_definitions(QT_MESSAGELOGCONTEXT)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+	add_compile_definitions(QT_MESSAGELOGCONTEXT)
+else()
+	add_compile_definitions(QT_NO_DEBUG_OUTPUT)
+endif()
 
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}/include
