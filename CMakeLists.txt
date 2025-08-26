@@ -3,9 +3,9 @@ set(PROJECT_NAME vicinae)
 project(${PROJECT_NAME} VERSION 1.0.0 LANGUAGES C CXX)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
-include(ExtensionManager)
 include(Git)
 include(Utils)
+
 
 get_git_commit(GIT_COMMIT)
 get_git_tag(GIT_TAG)
@@ -17,6 +17,12 @@ add_compile_definitions(VICINAE_GIT_COMMIT_HASH="${GIT_COMMIT}")
 option(IGNORE_CCACHE "Always ignore ccache even if it is installed" OFF)
 option(LTO "Enable Link Time Optimization (LTO). This will result in better performance, but greatly increased compile time. (Gentoo chads can't live without this)" OFF)
 option(NOSTRIP "Never strip debug symbols from the binary, even in release mode. Note that symbols are never stripped for debug releases." OFF)
+option(TYPESCRIPT_EXTENSIONS "Enable support for extensions built using the React/Typescript stack (no browser involved)" ON)
+
+if (TYPESCRIPT_EXTENSIONS)
+	include(ExtensionManager)
+	add_compile_definitions(HAS_TYPESCRIPT_EXTENSIONS=)
+endif()
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
@@ -31,11 +37,13 @@ if (NOT NOSTRIP)
 	message(STATUS "Built binaries will be stripped")
 endif()
 
-
 set(BUILD_INFO "${CXX_COMPILER_NAME} ${CMAKE_CXX_COMPILER_VERSION} - ${CMAKE_BUILD_TYPE}")
 
 find_program(CCACHE ccache)
 find_program(HAS_MOLD mold)
+
+if (TYPESCRIPT_EXTENSIONS)
+endif()
 
 if (HAS_MOLD)
 	message(STATUS "Using mold linker as it is present")

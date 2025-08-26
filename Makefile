@@ -17,6 +17,11 @@ debug:
 	cmake --build $(BUILD_DIR)
 .PHONY: debug
 
+no-ts-ext:
+	cmake -G Ninja -DTYPESCRIPT_EXTENSIONS=OFF -DCMAKE_BUILD_TYPE=Release -B $(BUILD_DIR)
+	cmake --build $(BUILD_DIR)
+.PHONY: no-ts-ext
+
 dev: debug
 .PHONY: dev
 
