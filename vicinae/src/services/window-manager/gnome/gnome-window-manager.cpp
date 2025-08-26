@@ -225,7 +225,11 @@ bool GnomeWindowManager::closeWindow(const AbstractWindow &window) const {
   QVariantList args;
   args << gnomeWindow->numericId();
 
-  return callDBusMethodVoid("Close", args);
+  if (!callDBusMethodVoid("Close", args)) { return false; }
+
+  emit windowsChanged();
+
+  return true;
 }
 
 std::shared_ptr<GnomeWindow> GnomeWindowManager::getWindowDetails(uint32_t windowId) const {

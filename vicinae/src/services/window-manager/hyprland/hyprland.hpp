@@ -28,7 +28,7 @@ public:
   std::optional<int> pid() const override { return m_pid; }
   QString title() const override { return m_title; }
   QString wmClass() const override { return m_wmClass; }
-  
+
   // Extended AbstractWindow interface - use defaults for now
   std::optional<int> workspace() const override { return std::nullopt; }
   bool canClose() const override { return true; }
@@ -54,4 +54,6 @@ public:
 
   bool ping() const override;
   void start() const override;
+
+  ~HyprlandWindowManager() override = default;
 };

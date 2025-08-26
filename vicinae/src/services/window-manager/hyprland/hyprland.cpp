@@ -65,6 +65,7 @@ void HyprlandWindowManager::focusWindowSync(const AbstractWindow &window) const 
 
 bool HyprlandWindowManager::closeWindow(const AbstractWindow &window) const {
   Hyprctl::oneshot(std::format("dispatch closewindow address:{}", window.id().toStdString()));
+  emit windowsChanged();
 
   return true;
 }
@@ -72,7 +73,7 @@ bool HyprlandWindowManager::closeWindow(const AbstractWindow &window) const {
 bool HyprlandWindowManager::isActivatable() const {
   bool isWayland = QGuiApplication::platformName() == "wayland";
 
-  return isWayland && QProcessEnvironment::systemEnvironment().contains("HYPRLAND_INSTANCE_SIGNATURE");
+  return QProcessEnvironment::systemEnvironment().contains("HYPRLAND_INSTANCE_SIGNATURE");
 }
 
 bool HyprlandWindowManager::ping() const {

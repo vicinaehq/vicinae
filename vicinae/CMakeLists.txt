@@ -544,6 +544,8 @@ set(SRCS
 	src/ui/file-picker-button/file-picker-button.cpp
 
 	src/ui/form/directory-input.cpp
+
+	src/services/window-manager/abstract-window-manager.hpp
 ) 
 
 

@@ -35,7 +35,7 @@ public:
   // using WorkspaceList = std::vector<std::shared_ptr<Workspace>>;
 
 public:
-  AbstractWindowManager() {}
+  virtual ~AbstractWindowManager() = default;
 
   /**
    * Unique identifier for this window manager.
@@ -111,4 +111,15 @@ public:
    * environment.
    */
   virtual void start() const = 0;
+
+private:
+  Q_OBJECT
+
+signals:
+  /**
+   * An event invalidating the current list of windows has occured and views
+   * dealing with them should request an update. This typically occurs when a new window is created, close, or
+   * killed.
+   */
+  void windowsChanged() const;
 };
