@@ -84,6 +84,10 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
   }
 
   if (url.host() == "open") {
+    if (auto text = query.queryItemValue("popToRoot"); text == "true" || text == "1") {
+      m_ctx.navigation->popToRoot();
+    }
+
     m_ctx.navigation->showWindow();
     return;
   }
