@@ -3,9 +3,9 @@ set(PROJECT_NAME vicinae)
 project(${PROJECT_NAME} VERSION 1.0.0 LANGUAGES C CXX)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
-include(ExtensionManager)
 include(Git)
 include(Utils)
+
 
 get_git_commit(GIT_COMMIT)
 get_git_tag(GIT_TAG)
@@ -31,11 +31,13 @@ if (NOT NOSTRIP)
 	message(STATUS "Built binaries will be stripped")
 endif()
 
-
 set(BUILD_INFO "${CXX_COMPILER_NAME} ${CMAKE_CXX_COMPILER_VERSION} - ${CMAKE_BUILD_TYPE}")
 
 find_program(CCACHE ccache)
 find_program(HAS_MOLD mold)
+
+if (TYPESCRIPT_EXTENSIONS)
+endif()
 
 if (HAS_MOLD)
 	message(STATUS "Using mold linker as it is present")
