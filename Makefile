@@ -20,8 +20,8 @@ release:
 	cmake --build $(BUILD_DIR)
 .PHONY: release
 
-optimized:
-	cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DLTO=ON -B $(BUILD_DIR)
+host-optimized:
+	CXXFLAGS="${CXXFLAGS} -march=native" cmake -DLTO=ON -G Ninja -B build
 	cmake --build $(BUILD_DIR)
 .PHONY: optimized
 
