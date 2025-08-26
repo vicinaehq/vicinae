@@ -17,12 +17,6 @@ add_compile_definitions(VICINAE_GIT_COMMIT_HASH="${GIT_COMMIT}")
 option(IGNORE_CCACHE "Always ignore ccache even if it is installed" OFF)
 option(LTO "Enable Link Time Optimization (LTO). This will result in better performance, but greatly increased compile time. (Gentoo chads can't live without this)" OFF)
 option(NOSTRIP "Never strip debug symbols from the binary, even in release mode. Note that symbols are never stripped for debug releases." OFF)
-option(TYPESCRIPT_EXTENSIONS "Enable support for extensions built using the React/Typescript stack (no browser involved)" ON)
-
-if (TYPESCRIPT_EXTENSIONS)
-	include(ExtensionManager)
-	add_compile_definitions(HAS_TYPESCRIPT_EXTENSIONS=)
-endif()
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)

@@ -18,6 +18,13 @@ unset(CMAKE_FIND_PACKAGE_PREFER_CONFIG)
 option(WAYLAND_LAYER_SHELL "Enable support for the Wayland layer shell
 protocol, required for proper window positioning on most wlroots-based
 compositors." ON)
+option(TYPESCRIPT_EXTENSIONS "Enable support for extensions built using the React/Typescript stack (no browser involved)" ON)
+
+
+if (TYPESCRIPT_EXTENSIONS)
+	include(ExtensionManager)
+	add_compile_definitions(HAS_TYPESCRIPT_EXTENSIONS=)
+endif()
 
 list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus qt6keychain cmark-gfm qalculate protobuf::libprotobuf minizip OpenSSL::Crypto)
 
