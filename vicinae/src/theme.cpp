@@ -461,6 +461,7 @@ void ThemeService::scanThemeDirectories() {
   auto configThemes = Omnicast::configDir() / "themes";
   auto dataThemes = Omnicast::dataDir() / "themes";
 
+  m_themes.clear();
   scanThemeDirectory(configThemes);
   scanThemeDirectory(dataThemes);
 
