@@ -168,7 +168,11 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
         return;
       }
 
-      cfg->updateConfig([&](ConfigService::Value &value) { value.theme.name = theme->id; });
+      if (theme->id == cfg->value().theme.name.value_or("")) {
+        service.reloadCurrentTheme();
+      } else {
+        cfg->updateConfig([&](ConfigService::Value &value) { value.theme.name = theme->id; });
+      }
 
       if (auto text = query.queryItemValue("openWindow"); text == "true" || text == "1") {
         m_ctx.navigation->showWindow();
