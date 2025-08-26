@@ -64,7 +64,8 @@ void HyprlandWindowManager::focusWindowSync(const AbstractWindow &window) const 
 }
 
 bool HyprlandWindowManager::closeWindow(const AbstractWindow &window) const {
-  // TODO: Implement close window for Hyprland
+  Hyprctl::oneshot(std::format("dispatch closewindow address:{}", window.id().toStdString()));
+
   return true;
 }
 
