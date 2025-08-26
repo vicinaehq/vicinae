@@ -173,27 +173,27 @@ class ExtensionListComponent : public ExtensionSimpleView {
 
   QWidget *searchBarAccessory() const override { return m_selector; }
 
-bool inputFilter(QKeyEvent *event) override {
-  if (event->modifiers() == Qt::ControlModifier) {
-    switch (event->key()) {
-    case Qt::Key_J:
-      return m_list->selectDown();
-    case Qt::Key_K:
-      return m_list->selectUp();
+  bool inputFilter(QKeyEvent *event) override {
+    if (event->modifiers() == Qt::ControlModifier) {
+      switch (event->key()) {
+      case Qt::Key_J:
+        return m_list->selectDown();
+      case Qt::Key_K:
+        return m_list->selectUp();
+      }
     }
-  }
 
-  if (event->modifiers().toInt() == 0) {
-    switch (event->key()) {
-    case Qt::Key_Up:
-      return m_list->selectUp();
-    case Qt::Key_Down:
-      return m_list->selectDown();
+    if (event->modifiers().toInt() == 0) {
+      switch (event->key()) {
+      case Qt::Key_Up:
+        return m_list->selectUp();
+      case Qt::Key_Down:
+        return m_list->selectDown();
+      }
     }
-  }
 
-  return ExtensionSimpleView::inputFilter(event);
-}
+    return ExtensionSimpleView::inputFilter(event);
+  }
 
   void onActivate() override {}
 

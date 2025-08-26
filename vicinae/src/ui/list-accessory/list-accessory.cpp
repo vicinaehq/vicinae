@@ -40,8 +40,8 @@ void ListAccessoryWidget::setAccessory(const ListAccessory &accessory) {
 }
 
 ListAccessoryWidget::ListAccessoryWidget(QWidget *parent)
-    : QWidget(parent), _layout(new QHBoxLayout), _icon(new ImageWidget),
-      _text(new TypographyWidget()), _tooltip(new TooltipWidget) {
+    : QWidget(parent), _layout(new QHBoxLayout), _icon(new ImageWidget), _text(new TypographyWidget()),
+      _tooltip(new TooltipWidget) {
   _layout->setContentsMargins(6, 3, 6, 3);
   _layout->setAlignment(Qt::AlignVCenter);
   _layout->addWidget(_icon);

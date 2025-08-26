@@ -50,8 +50,8 @@ void TwentyFaviconRequester::start() {
 }
 
 TwentyFaviconRequester::TwentyFaviconRequester(const QString &domain, QObject *parent)
-    : AbstractFaviconRequest(domain, parent),
-      placeholderUrl("https://twenty-icons.com/%1/%2"), _currentReply(nullptr) {}
+    : AbstractFaviconRequest(domain, parent), placeholderUrl("https://twenty-icons.com/%1/%2"),
+      _currentReply(nullptr) {}
 
 TwentyFaviconRequester::~TwentyFaviconRequester() {
   if (_currentReply) { _currentReply->deleteLater(); }

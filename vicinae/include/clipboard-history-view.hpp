@@ -641,13 +641,13 @@ class ClipboardHistoryView : public SimpleView {
       }
     }
 
-  if (event->keyCombination() == QKeyCombination(Qt::ControlModifier, Qt::Key_P)) {
-    m_filterInput->openSelector();
-    return true;
-  }
+    if (event->keyCombination() == QKeyCombination(Qt::ControlModifier, Qt::Key_P)) {
+      m_filterInput->openSelector();
+      return true;
+    }
 
-  return SimpleView::inputFilter(event);
-}
+    return SimpleView::inputFilter(event);
+  }
 
   void startSearch(const ClipboardListSettings &opts) {
     auto clipman = context()->services->clipman();

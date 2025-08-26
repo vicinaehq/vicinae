@@ -76,12 +76,12 @@ public:
     FileService *service = ServiceRegistry::instance()->fileService();
 
     auto entrypointRange =
-      searchPaths | std::views::transform([](const QJsonValue &obj) -> AbstractFileIndexer::Entrypoint {
-        return {.root = obj.toString().toStdString()};
-      });
+        searchPaths | std::views::transform([](const QJsonValue &obj) -> AbstractFileIndexer::Entrypoint {
+          return {.root = obj.toString().toStdString()};
+        });
 
-    std::vector<AbstractFileIndexer::Entrypoint> entrypoints =
-      {entrypointRange.begin(), entrypointRange.end()};
+    std::vector<AbstractFileIndexer::Entrypoint> entrypoints = {entrypointRange.begin(),
+                                                                entrypointRange.end()};
 
     service->setEntrypoints(entrypoints);
   }

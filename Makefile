@@ -2,19 +2,6 @@ BUILD_DIR := build
 RM := /usr/bin/rm
 TAG := $(shell git describe --tags --abbrev=0)
 
-vicinae: configure
-	cmake --build $(BUILD_DIR)
-
-.PHONY: vicinae
-
-wayland:
-	wayland-scanner client-header ./wlr-clipman/protocols/wlr-data-control-unstable-v1.xml wlr-clipman/include/wayland-wlr-data-control-client-protocol.h
-	wayland-scanner public-code ./wlr-clipman/protocols/wlr-data-control-unstable-v1.xml wlr-clipman/src/wayland-wlr-data-control-client-protocol.c
-
-all: vicinae
-	cmake --build $(BUILD_DIR)
-.PHONY: all
-
 release:
 	cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -B $(BUILD_DIR)
 	cmake --build $(BUILD_DIR)
@@ -30,13 +17,16 @@ debug:
 	cmake --build $(BUILD_DIR)
 .PHONY: debug
 
+dev: debug
+.PHONY: dev
+
 runner:
 	cd ./scripts/runners/ && ./start.sh
 .PHONY:
 	runner
 
 format:
-	@echo 'vicinae\nwlr-clip\nproto\nomnictl' | xargs -I{} find {} -type d -iname 'build' -prune -o -type f -iname '*.hpp' -o -type f -iname '*.cpp' | xargs -I{} bash -c '[ -f {} ] && clang-format -i {} && echo "Formatted {}" || echo "Failed to format {}"'
+	@echo -e 'vicinae\nwlr-clip' | xargs -I{} find {} -type d -iname 'build' -prune -o -type f -iname '*.hpp' -o -type f -iname '*.cpp' | xargs -I{} bash -c '[ -f {} ] && clang-format -i {} && echo "Formatted {}" || echo "Failed to format {}"'
 .PHONY: format
 
 # if we need to manually create a release
@@ -53,10 +43,7 @@ gen-contrib:
 	node ./scripts/gen-contrib.js
 .PHONY: gen-contrib
 
-configure:
-	cmake -G Ninja -B $(BUILD_DIR)
-.PHONY: configure
-
+# we run this from time to time only, it's not part of the build pipeline
 gen-emoji:
 	cd ./scripts/emoji && npm install && tsc --outDir dist && node dist/main.js
 .PHONY: gen-emoji
@@ -70,5 +57,8 @@ clean:
 	$(RM) -rf ./scripts/.tmp
 .PHONY: clean
 
-re: clean all
+re: clean release
 .PHONY: re
+
+redev: clean dev
+.PHONY: redev
