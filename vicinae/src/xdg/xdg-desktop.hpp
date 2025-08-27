@@ -13,6 +13,8 @@
 #include <qstringliteral.h>
 #include <qstringview.h>
 
+namespace fs = std::filesystem;
+
 struct Locale {
   QStringView lang;
   QStringView country;
@@ -144,14 +146,20 @@ class XdgDesktopEntry {
   XdgDesktopEntry() {}
 
 public:
-  XdgDesktopEntry(const QString &path) {
-    QFile file(path);
+  XdgDesktopEntry(fs::path parentPath, fs::path childPath) {
+    QFile file(parentPath / childPath);
 
     file.open(QIODevice::ReadOnly);
 
     QString data = file.readAll();
 
     *this = XdgDesktopEntry::Parser(data).parse();
+
+    for (auto dir: childPath.parent_path()) {
+      id += dir.c_str();
+      id += '-';
+    }
+    id += childPath.stem().c_str();
   }
 
   struct Action {
