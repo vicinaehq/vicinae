@@ -58,6 +58,7 @@ jobs:
           cd build
           cmake -G Ninja .. \
             -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5  \
             -DLTO=ON \
             -DUSE_SYSTEM_PROTOBUF=OFF \
             -DUSE_SYSTEM_ABSEIL=OFF \
