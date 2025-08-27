@@ -25,11 +25,18 @@ add_compile_definitions(VICINAE_GIT_COMMIT_HASH="${VICINAE_GIT_COMMIT_HASH}")
 option(IGNORE_CCACHE "Always ignore ccache even if it is installed" OFF)
 option(LTO "Enable Link Time Optimization (LTO). This will result in better performance, but greatly increased compile time. (Gentoo chads can't live without this)" OFF)
 option(NOSTRIP "Never strip debug symbols from the binary, even in release mode. Note that symbols are never stripped for debug releases." OFF)
+
 option(USE_SYSTEM_PROTOBUF "Use system protobuf instead of building it from source" ON)
 option(USE_SYSTEM_ABSEIL "Use system abseil (libabsl) instead of building it from source" ON)
 option(USE_SYSTEM_CMARK_GFM "Use system cmark-gfm (github's fork of cmark) instead of building it from source" ON)
+option(USE_SYSTEM_MINIZIP "Use system minizip instead of building it from source" ON)
 
 set(CMARK_LIBRARY "cmark-gfm")
+
+if (NOT USE_SYSTEM_MINIZIP)
+	include(Minizip)
+	checkout_minizip()
+endif()
 
 if (NOT USE_SYSTEM_CMARK_GFM)
 	include(CMark)
