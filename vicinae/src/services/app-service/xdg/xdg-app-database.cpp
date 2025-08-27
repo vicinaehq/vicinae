@@ -1,5 +1,6 @@
 #include "xdg-app-database.hpp"
 #include "vicinae.hpp"
+#include <exception>
 #include <filesystem>
 #include <qlogging.h>
 #include <qsettings.h>
@@ -67,7 +68,7 @@ bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
   apps.clear();
 
   std::vector<fs::path> traversed;
-  std::set<std::string> processedFilenames; // Track which .desktop filenames we've already processed
+  std::set<QString> processedIds; // Track which .desktop ids we've already processed
 
   // scan dirs
   for (const auto &dir : paths) {
@@ -79,16 +80,19 @@ bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
 
     std::error_code ec;
 
-    for (const auto &entry : fs::directory_iterator(dir, ec)) {
+    for (const auto &entry : fs::recursive_directory_iterator(dir, ec)) {
       if (ec) continue;
-      std::string filename = entry.path().filename().string();
-      if (!filename.ends_with(".desktop")) continue;
+      if (entry.path().extension() != ".desktop") continue;
 
-      // Only process this .desktop file if we haven't seen one with this filename before
-      // This ensures that the first occurrence (highest priority) wins
-      if (processedFilenames.find(filename) == processedFilenames.end()) {
-        processedFilenames.insert(filename);
-        addDesktopFile(entry.path().c_str());
+      try {
+        XdgDesktopEntry desktopEntry(dir, fs::relative(entry.path(), dir));
+
+        if (processedIds.find(desktopEntry.id) != processedIds.end()) continue;
+        processedIds.insert(desktopEntry.id);
+
+        addDesktopFile(dir, fs::relative(entry.path(), dir));
+      } catch(std::exception &except) {
+        qWarning() << "Failed to parse app at" << entry.path() << except.what();
       }
     }
   }
@@ -345,35 +349,28 @@ AppPtr XdgAppDatabase::findByClass(const QString &name) const {
 
 std::vector<AppPtr> XdgAppDatabase::list() const { return {apps.begin(), apps.end()}; }
 
-bool XdgAppDatabase::addDesktopFile(const QString &path) {
-  QFileInfo info(path);
+void XdgAppDatabase::addDesktopFile(fs::path parentPath, fs::path childPath) {
+  QFileInfo info(parentPath / childPath);
 
-  try {
-    XdgDesktopEntry ent(path);
-
-    // we should not track hidden apps as they are explictly removed, unlike apps with NoDisplay
-    // see: https://specifications.freedesktop.org/desktop-entry-spec/latest/recognized-keys.html
-    if (ent.hidden) return true;
-
-    auto entry = std::make_shared<XdgApplication>(info, ent);
-
-    for (const auto &mimeName : ent.mimeType) {
-      mimeToApps[mimeName].insert(entry->id());
-      appToMimes[entry->id()].insert(mimeName);
-    }
-
-    apps.push_back(entry);
-    appMap.insert({entry->id(), entry});
-
-    for (const auto &action : entry->actions()) {
-      appMap.insert({action->id(), action});
-    }
-  } catch (const std::exception &except) {
-    qWarning() << "Failed to parse app at" << path << except.what();
-    return false;
+  XdgDesktopEntry ent(parentPath, childPath);
+  
+  // we should not track hidden apps as they are explictly removed, unlike apps with NoDisplay
+  // see: https://specifications.freedesktop.org/desktop-entry-spec/latest/recognized-keys.html
+  if (ent.hidden) return;
+  
+  auto entry = std::make_shared<XdgApplication>(info, ent);
+  
+  for (const auto &mimeName : ent.mimeType) {
+  mimeToApps[mimeName].insert(entry->id());
+  appToMimes[entry->id()].insert(mimeName);
   }
-
-  return true;
+  
+  apps.push_back(entry);
+  appMap.insert({entry->id(), entry});
+  
+  for (const auto &action : entry->actions()) {
+  appMap.insert({action->id(), action});
+  }
 }
 
 XdgAppDatabase::XdgAppDatabase() { scan(defaultSearchPaths()); }
