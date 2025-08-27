@@ -1,5 +1,4 @@
 syntax = "proto3";
-import "google/protobuf/struct.proto";
 
 import "manager.proto";
 import "common.proto";
