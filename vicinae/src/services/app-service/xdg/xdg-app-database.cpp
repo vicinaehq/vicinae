@@ -88,7 +88,7 @@ bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
       // This ensures that the first occurrence (highest priority) wins
       if (processedFilenames.find(filename) == processedFilenames.end()) {
         processedFilenames.insert(filename);
-        addDesktopFile(entry.path().c_str());
+        addDesktopFile(dir, fs::relative(entry.path(), dir));
       }
     }
   }
@@ -345,11 +345,11 @@ AppPtr XdgAppDatabase::findByClass(const QString &name) const {
 
 std::vector<AppPtr> XdgAppDatabase::list() const { return {apps.begin(), apps.end()}; }
 
-bool XdgAppDatabase::addDesktopFile(const QString &path) {
-  QFileInfo info(path);
+bool XdgAppDatabase::addDesktopFile(fs::path parentPath, fs::path childPath) {
+  QFileInfo info(parentPath / childPath);
 
   try {
-    XdgDesktopEntry ent(path);
+    XdgDesktopEntry ent(parentPath, childPath);
 
     // we should not track hidden apps as they are explictly removed, unlike apps with NoDisplay
     // see: https://specifications.freedesktop.org/desktop-entry-spec/latest/recognized-keys.html
@@ -369,7 +369,7 @@ bool XdgAppDatabase::addDesktopFile(const QString &path) {
       appMap.insert({action->id(), action});
     }
   } catch (const std::exception &except) {
-    qWarning() << "Failed to parse app at" << path << except.what();
+    qWarning() << "Failed to parse app at" << (parentPath / childPath) << except.what();
     return false;
   }
 

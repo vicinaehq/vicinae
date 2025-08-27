@@ -71,7 +71,7 @@ public:
   std::vector<QString> exec() const override { return {_data.exec.begin(), _data.exec.end()}; }
 
   XdgApplication(const QFileInfo &info, const XdgDesktopEntry &data)
-      : _path(info.filePath()), _id(info.fileName()), _data(data) {}
+      : _path(info.filePath()), _id(data.id), _data(data) {}
 };
 
 class XdgAppDatabase : public AbstractAppDatabase {
@@ -84,7 +84,7 @@ class XdgAppDatabase : public AbstractAppDatabase {
   std::vector<std::shared_ptr<XdgApplication>> apps;
 
   std::shared_ptr<Application> defaultForMime(const QString &mime) const;
-  bool addDesktopFile(const QString &path);
+  bool addDesktopFile(fs::path parentPath, fs::path childPath);
 
   AppPtr findBestTerminalEmulator() const;
 
