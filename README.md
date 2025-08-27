@@ -30,8 +30,6 @@ Vicinae is designed for developers and power users who want fast, keyboard-first
 > ⚠️ **Note:** Some features may vary depending on your desktop environment.  
 > If something isn’t supported yet, contributions are fully welcome — many integrations are beginner-friendly, and helpful guides are available in the [docs](https://docs.vicinae.com).
 
-Vicinae currently runs best on **wlroots-based compositors**, such as **Hyprland** and **Sway**.
-
 - Start and retrieve information about installed applications
 - File indexing with full-text search across millions of files — available via the file search module or directly from root search
 - Smart emoji picker with support for custom indexing keywords
