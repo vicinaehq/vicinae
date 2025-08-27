@@ -253,7 +253,9 @@ public:
   int maxFallbackPosition();
   bool isFallback(const QString &id);
   bool disableFallback(const QString &id);
-  bool setFallback(const QString &id, int position = 0);
+  bool moveFallbackDown(const QString &id);
+  bool moveFallbackUp(const QString &id);
+  bool enableFallback(const QString &id);
   double computeScore(const RootItemMetadata &meta, int weight) const;
   double computeRecencyScore(const RootItemMetadata &meta) const;
   std::vector<std::shared_ptr<RootItem>> queryFavorites(int limit = 5);
@@ -282,5 +284,6 @@ signals:
   void itemRankingReset(const QString &id) const;
   void itemFavoriteChanged(const QString &id, bool favorite);
   void fallbackEnabled(const QString &id) const;
+  void fallbackOrderChanged(const QString &id) const;
   void fallbackDisabled(const QString &id) const;
 };
