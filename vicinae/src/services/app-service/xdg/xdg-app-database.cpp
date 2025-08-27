@@ -80,7 +80,7 @@ bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
 
     std::error_code ec;
 
-    for (const auto &entry : fs::directory_iterator(dir, ec)) {
+    for (const auto &entry : fs::recursive_directory_iterator(dir, ec)) {
       if (ec) continue;
       if (entry.path().extension() != ".desktop") continue;
 
