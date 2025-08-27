@@ -66,8 +66,10 @@ clean:
 	rm -rf $(BUILD_DIR)
 	$(RM) -rf ./api/node_modules
 	$(RM) -rf ./api/dist
+	$(RM) -rf ./api/src/proto
 	$(RM) -rf ./extension-manager/dist/
 	$(RM) -rf ./extension-manager/node_modules
+	$(RM) -rf ./extension-manager/src/proto
 	$(RM) -rf ./scripts/.tmp
 .PHONY: clean
 

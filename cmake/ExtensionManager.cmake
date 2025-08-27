@@ -32,7 +32,7 @@ file(MAKE_DIRECTORY ${EXT_PROTO_OUT})
 add_custom_command(
     OUTPUT ${EXT_MGR_OUT}
     COMMAND npm install
-	COMMAND protobuf::protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto -I ${protobuf_SOURCE_DIR}/src -I ${API_PROTO_PATH} ${API_PROTO_FILES} --ts_proto_out ${API_PROTO_OUT}
+	COMMAND protobuf::protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto -I ${protobuf_SOURCE_DIR}/src -I ${EXT_PROTO_PATH} ${EXT_PROTO_FILES} --ts_proto_out ${EXT_PROTO_OUT}
     COMMAND npm run build
     COMMAND ${CMAKE_COMMAND} -E copy
             ${EXT_MGR_SRC_DIR}/dist/runtime.js
