@@ -21,7 +21,7 @@ if (TYPESCRIPT_EXTENSIONS)
 	add_compile_definitions(HAS_TYPESCRIPT_EXTENSIONS=)
 endif()
 
-list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus qt6keychain cmark-gfm qalculate protobuf::libprotobuf minizip OpenSSL::Crypto)
+list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus qt6keychain ${CMARK_LIBRARY} qalculate protobuf::libprotobuf minizip OpenSSL::Crypto)
 
 set(WLR_CLIP_BIN ${CMAKE_BINARY_DIR}/wlr-clip/wlr-clip${CMAKE_EXECUTABLE_SUFFIX})
 set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/assets)

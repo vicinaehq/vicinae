@@ -27,6 +27,15 @@ option(LTO "Enable Link Time Optimization (LTO). This will result in better perf
 option(NOSTRIP "Never strip debug symbols from the binary, even in release mode. Note that symbols are never stripped for debug releases." OFF)
 option(USE_SYSTEM_PROTOBUF "Use system protobuf instead of building it from source" ON)
 option(USE_SYSTEM_ABSEIL "Use system abseil (libabsl) instead of building it from source" ON)
+option(USE_SYSTEM_CMARK_GFM "Use system cmark-gfm (github's fork of cmark) instead of building it from source" ON)
+
+set(CMARK_LIBRARY "cmark-gfm")
+
+if (NOT USE_SYSTEM_CMARK_GFM)
+	include(CMark)
+	checkout_cmark()
+	set(CMARK_LIBRARY "libcmark-gfm_static")
+endif()
 
 if (NOT USE_SYSTEM_ABSEIL)
 	include(Abseil)
