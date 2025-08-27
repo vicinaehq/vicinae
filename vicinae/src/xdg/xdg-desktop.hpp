@@ -37,18 +37,18 @@ class XdgDesktopEntry {
   public:
     static QStringList parse(const QString &key) {
       QStringList list;
-      size_t start = 0;
-      size_t end = 0;
+      size_t ptr = 0;
       State state = START;
       QString token;
 
-      while (end < key.size()) {
-        auto ch = key.at(end);
+      while (ptr < key.size()) {
+        auto ch = key.at(ptr);
 
         switch (state) {
         case START:
           if (ch == '"') {
             state = DQUOTE;
+            ++ptr;
           }
 
           else if (ch.isSpace()) {
@@ -59,33 +59,35 @@ class XdgDesktopEntry {
 
           else {
             token.push_back(ch);
+            ++ptr;
           }
 
           break;
         case WHITESPACE:
           if (!ch.isSpace()) {
-            --end;
-            start = end + 1;
             state = START;
+          } else {
+            ++ptr;
           }
           break;
         case DQUOTE:
           if (ch == '\\') {
             state = DQUOTE_ESCAPE;
-            ++end;
+            ++ptr;
           } else if (ch == '"') {
             state = START;
+            ++ptr;
           } else {
             token.push_back(ch);
+            ++ptr;
           }
           break;
         case DQUOTE_ESCAPE:
           token.push_back(ch);
           state = DQUOTE;
+          ++ptr;
           break;
         }
-
-        ++end;
       }
 
       if (!token.isEmpty()) list << token;
