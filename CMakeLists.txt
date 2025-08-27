@@ -6,13 +6,21 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 include(Git)
 include(Utils)
 
+if (NOT DEFINED VICINAE_GIT_TAG)
+	get_git_tag(VICINAE_GIT_TAG)
+endif()
 
-get_git_commit(GIT_COMMIT)
-get_git_tag(GIT_TAG)
+if (NOT DEFINED VICINAE_GIT_COMMIT_HASH)
+	get_git_commit(VICINAE_GIT_COMMIT_HASH)
+endif()
+
+message(STATUS "Vicinae version: ${VICINAE_GIT_TAG}")
+message(STATUS "Vicinae commit hash: ${VICINAE_GIT_COMMIT_HASH}")
+
 get_cxx_compiler_name(CXX_COMPILER_NAME)
 
-add_compile_definitions(VICINAE_GIT_TAG="${GIT_TAG}")
-add_compile_definitions(VICINAE_GIT_COMMIT_HASH="${GIT_COMMIT}")
+add_compile_definitions(VICINAE_GIT_TAG="${VICINAE_GIT_TAG}")
+add_compile_definitions(VICINAE_GIT_COMMIT_HASH="${VICINAE_GIT_COMMIT_HASH}")
 
 option(IGNORE_CCACHE "Always ignore ccache even if it is installed" OFF)
 option(LTO "Enable Link Time Optimization (LTO). This will result in better performance, but greatly increased compile time. (Gentoo chads can't live without this)" OFF)
@@ -35,9 +43,6 @@ set(BUILD_INFO "${CXX_COMPILER_NAME} ${CMAKE_CXX_COMPILER_VERSION} - ${CMAKE_BUI
 
 find_program(CCACHE ccache)
 find_program(HAS_MOLD mold)
-
-if (TYPESCRIPT_EXTENSIONS)
-endif()
 
 if (HAS_MOLD)
 	message(STATUS "Using mold linker as it is present")
