@@ -26,6 +26,38 @@ option(IGNORE_CCACHE "Always ignore ccache even if it is installed" OFF)
 option(LTO "Enable Link Time Optimization (LTO). This will result in better performance, but greatly increased compile time. (Gentoo chads can't live without this)" OFF)
 option(NOSTRIP "Never strip debug symbols from the binary, even in release mode. Note that symbols are never stripped for debug releases." OFF)
 
+option(USE_SYSTEM_PROTOBUF "Use system protobuf instead of building it from source" ON)
+option(USE_SYSTEM_ABSEIL "Use system abseil (libabsl) instead of building it from source" ON)
+option(USE_SYSTEM_CMARK_GFM "Use system cmark-gfm (github's fork of cmark) instead of building it from source" ON)
+option(USE_SYSTEM_MINIZIP "Use system minizip instead of building it from source" ON)
+
+set(CMARK_LIBRARY "cmark-gfm")
+
+if (NOT USE_SYSTEM_MINIZIP)
+	include(Minizip)
+	checkout_minizip()
+endif()
+
+if (NOT USE_SYSTEM_CMARK_GFM)
+	include(CMark)
+	checkout_cmark()
+	set(CMARK_LIBRARY "libcmark-gfm_static")
+endif()
+
+if (NOT USE_SYSTEM_ABSEIL)
+	include(Abseil)
+	checkout_abseil()
+endif()
+
+if (NOT USE_SYSTEM_PROTOBUF)
+	include(Protobuf)
+	checkout_protobuf()
+endif()
+
+set(CMAKE_FIND_PACKAGE_PREFER_CONFIG TRUE)
+find_package(Protobuf)
+unset(CMAKE_FIND_PACKAGE_PREFER_CONFIG)
+
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
 endif()

@@ -10,23 +10,18 @@ set(TARGET vicinae)
 find_package(Qt6 REQUIRED COMPONENTS Widgets Sql Network Svg DBus Keychain)
 find_package(OpenSSL REQUIRED)
 
-# https://cmake.org/cmake/help/latest/module/FindProtobuf.html#example-finding-protobuf-in-config-mode
-set(CMAKE_FIND_PACKAGE_PREFER_CONFIG TRUE)
-find_package(Protobuf)
-unset(CMAKE_FIND_PACKAGE_PREFER_CONFIG)
 
 option(WAYLAND_LAYER_SHELL "Enable support for the Wayland layer shell
 protocol, required for proper window positioning on most wlroots-based
 compositors." ON)
 option(TYPESCRIPT_EXTENSIONS "Enable support for extensions built using the React/Typescript stack (no browser involved)" ON)
 
-
 if (TYPESCRIPT_EXTENSIONS)
 	include(ExtensionManager)
 	add_compile_definitions(HAS_TYPESCRIPT_EXTENSIONS=)
 endif()
 
-list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus qt6keychain cmark-gfm qalculate protobuf::libprotobuf minizip OpenSSL::Crypto)
+list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus qt6keychain ${CMARK_LIBRARY} qalculate protobuf::libprotobuf minizip OpenSSL::Crypto)
 
 set(WLR_CLIP_BIN ${CMAKE_BINARY_DIR}/wlr-clip/wlr-clip${CMAKE_EXECUTABLE_SUFFIX})
 set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/assets)
@@ -576,10 +571,16 @@ target_link_libraries(${TARGET} PRIVATE ${LIBS})
 
 make_directory(${CMAKE_CURRENT_BINARY_DIR}/proto)
 
+set(PROTO_IMPORT_DIRS ${PROTO_SRC_DIR} ${COMMON_PROTO_DIR})
+
+if (NOT USE_SYSTEM_PROTOBUF)
+	list(APPEND PROTO_IMPORT_DIRS ${protobuf_SOURCE_DIR}/src)
+endif()
+
 protobuf_generate(
 	TARGET ${TARGET}
 	PROTOS ${PROTO_FILES}
-	IMPORT_DIRS ${PROTO_SRC_DIR} ${COMMON_PROTO_DIR}
+	IMPORT_DIRS ${PROTO_IMPORT_DIRS}
 	PROTOC_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/proto
 )
 
