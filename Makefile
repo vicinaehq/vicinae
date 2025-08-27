@@ -22,6 +22,15 @@ no-ts-ext:
 	cmake --build $(BUILD_DIR)
 .PHONY: no-ts-ext
 
+# optimize for portability (build problematic libs statically)
+# this will increase compile time as more libraries will have to be compiled from source,
+# but the resulting binary will be more portable across different distros, especially the ones
+# shipping older packages.
+portable:
+	cmake -G Ninja -DUSE_SYSTEM_PROTOBUF=OFF -DUSE_SYSTEM_ABSEIL=OFF -B $(BUILD_DIR)
+	cmake --build $(BUILD_DIR)
+.PHONY: portable
+
 dev: debug
 .PHONY: dev
 
