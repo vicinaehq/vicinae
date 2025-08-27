@@ -79,7 +79,7 @@ bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
 
     std::error_code ec;
 
-    for (const auto &entry : fs::directory_iterator(dir, ec)) {
+    for (const auto &entry : fs::recursive_directory_iterator(dir, ec)) {
       if (ec) continue;
       std::string filename = entry.path().filename().string();
       if (!filename.ends_with(".desktop")) continue;
