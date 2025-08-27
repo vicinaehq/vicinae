@@ -84,7 +84,7 @@ class XdgAppDatabase : public AbstractAppDatabase {
   std::vector<std::shared_ptr<XdgApplication>> apps;
 
   std::shared_ptr<Application> defaultForMime(const QString &mime) const;
-  bool addDesktopFile(fs::path parentPath, fs::path childPath);
+  void addDesktopFile(fs::path parentPath, fs::path childPath);
 
   AppPtr findBestTerminalEmulator() const;
 
