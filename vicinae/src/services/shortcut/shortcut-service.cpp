@@ -23,7 +23,7 @@ std::vector<std::shared_ptr<Shortcut>> ShortcutService::loadAll() {
     shortcut.setId(query.value(0).toString());
     shortcut.setName(query.value(1).toString());
     shortcut.setIcon(query.value(2).toString());
-    shortcut.setLink(query.value(3).toString());
+    shortcut.parseLink(query.value(3).toString());
     shortcut.setApp(query.value(4).toString());
     shortcut.setOpenCount(query.value(5).toInt());
     shortcut.setCreatedAt(QDateTime::fromSecsSinceEpoch(query.value(6).toULongLong()));
@@ -114,7 +114,7 @@ bool ShortcutService::updateShortcut(const QString &id, const QString &name, con
 
   shortcut->setName(name);
   shortcut->setIcon(icon);
-  shortcut->setLink(url);
+  shortcut->parseLink(url);
   shortcut->setApp(app);
   emit shortcutUpdated(id);
 
@@ -172,7 +172,7 @@ bool ShortcutService::createShortcut(const QString &name, const QString &icon, c
   shortcut.setId(query.value(0).toString());
   shortcut.setName(query.value(1).toString());
   shortcut.setIcon(query.value(2).toString());
-  shortcut.setLink(query.value(3).toString());
+  shortcut.parseLink(query.value(3).toString());
   shortcut.setApp(query.value(4).toString());
   shortcut.setOpenCount(query.value(5).toInt());
   shortcut.setCreatedAt(QDateTime::fromSecsSinceEpoch(query.value(6).toULongLong()));
