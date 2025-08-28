@@ -1,6 +1,8 @@
 #include "ui/views/base-view.hpp"
 #include "common.hpp"
 #include "navigation-controller.hpp"
+#include <qlogging.h>
+#include <stdexcept>
 
 void BaseView::createInitialize() {
   if (m_initialized) return;
@@ -63,7 +65,17 @@ void BaseView::onDeactivate() {}
 
 void BaseView::setContext(ApplicationContext *ctx) { m_ctx = ctx; }
 
-ApplicationContext *BaseView::context() const { return m_ctx; }
+ApplicationContext *BaseView::context() const {
+  if (!m_ctx) {
+    qCritical()
+        << "BaseView::context() was called before the view was registered by the navigation controller. "
+           "This is not supported and will most "
+           "likely cause a crash. If you need to access the application context when a view is first "
+           "shown, you should implement the `initialize` method and do what you need in there.";
+  }
+
+  return m_ctx;
+}
 
 void BaseView::destroyCompleter() { /*m_uiController->destroyCompleter();*/ }
 
