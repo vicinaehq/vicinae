@@ -9,12 +9,11 @@
 #include <QMetaObject>
 
 GnomeClipboardServer::GnomeClipboardServer() : m_bus(QDBusConnection::sessionBus()) {
-  qInfo() << "GnomeClipboardServer: Initializing GNOME clipboard server";
+  using namespace std::chrono_literals;
 
-  // Set up reconnection timer
   m_reconnectTimer = new QTimer(this);
   m_reconnectTimer->setSingleShot(false);
-  m_reconnectTimer->setInterval(5000); // Try reconnection every 5 seconds
+  m_reconnectTimer->setInterval(5s);
   connect(m_reconnectTimer, &QTimer::timeout, this, &GnomeClipboardServer::onReconnectTimer);
 }
 
@@ -22,10 +21,10 @@ GnomeClipboardServer::~GnomeClipboardServer() { cleanupDBusConnection(); }
 
 bool GnomeClipboardServer::isActivatable() const {
   const QString envDesc = Environment::getEnvironmentDescription();
-  qInfo() << "GnomeClipboardServer: Detected environment:" << envDesc;
+  qDebug() << "GnomeClipboardServer: Detected environment:" << envDesc;
 
   if (!Environment::isGnomeEnvironment()) {
-    qInfo() << "GnomeClipboardServer: Not in GNOME environment, skipping";
+    qDebug() << "GnomeClipboardServer: Not in GNOME environment, skipping";
     return false;
   }
 
