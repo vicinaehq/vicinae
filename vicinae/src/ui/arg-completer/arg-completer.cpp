@@ -18,7 +18,7 @@ void ArgCompleter::validate() {
 
 void ArgCompleter::setValues(const ArgumentValues values) {
   for (const auto &[val, input] : std::views::zip(values, m_inputs)) {
-    input->setText(val.second);
+    if (input->text() != val.second) { input->setText(val.second); }
   }
 }
 
