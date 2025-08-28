@@ -413,8 +413,6 @@ void ThemeService::setTheme(const ThemeInfo &info) {
 		}
 		)");
 
-  qInfo() << "style" << style;
-
   auto palette = QApplication::palette();
 
   palette.setBrush(QPalette::WindowText, info.colors.text);
