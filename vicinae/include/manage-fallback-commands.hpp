@@ -161,7 +161,6 @@ public:
 
 class ManageFallbackCommandsView : public ListView {
   void renderList(const QString &text, OmniList::SelectionPolicy selectionPolicy = OmniList::SelectFirst) {
-    qDebug() << "render list";
     QString query = text.trimmed();
     auto itemManager = ServiceRegistry::instance()->rootItemManager();
     auto results = query.isEmpty() ? itemManager->allItems() : itemManager->prefixSearch(query);
@@ -209,6 +208,7 @@ class ManageFallbackCommandsView : public ListView {
   void initialize() override {
     auto manager = ServiceRegistry::instance()->rootItemManager();
 
+    setSearchPlaceholderText("Manage fallback commands...");
     textChanged("");
     connect(manager, &RootItemManager::fallbackEnabled, this, [this]() { reloadInPlace(); });
     connect(manager, &RootItemManager::fallbackDisabled, this, [this]() { reloadInPlace(); });
