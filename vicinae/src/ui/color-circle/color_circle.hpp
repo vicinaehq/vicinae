@@ -6,7 +6,7 @@
 class ColorCircle : public QWidget {
   ColorLike color;
   QSize size;
-  QColor strokeColor;
+  ColorLike strokeColor;
   size_t strokeWidth;
 
 protected:
@@ -22,5 +22,5 @@ public:
 
   ColorCircle(QSize size, QWidget *parent = nullptr);
 
-  ColorCircle &setStroke(QColor color, size_t width = 3);
+  ColorCircle &setStroke(const ColorLike &color, size_t width = 3);
 };
