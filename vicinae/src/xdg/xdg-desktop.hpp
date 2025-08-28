@@ -32,7 +32,7 @@ class XdgDesktopEntry {
       START,
       WHITESPACE,
       DQUOTE,
-
+      ESCAPE,
       DQUOTE_ESCAPE,
     };
 
@@ -52,19 +52,21 @@ class XdgDesktopEntry {
             state = DQUOTE;
             ++ptr;
           }
-
           else if (ch.isSpace()) {
             list << token;
             token.clear();
             state = WHITESPACE;
           }
-
+          else if (ch == '\\') {
+            state = ESCAPE;
+            ++ptr;
+          }
           else {
             token.push_back(ch);
             ++ptr;
           }
-
           break;
+
         case WHITESPACE:
           if (!ch.isSpace()) {
             state = START;
@@ -72,6 +74,7 @@ class XdgDesktopEntry {
             ++ptr;
           }
           break;
+
         case DQUOTE:
           if (ch == '\\') {
             state = DQUOTE_ESCAPE;
@@ -84,6 +87,13 @@ class XdgDesktopEntry {
             ++ptr;
           }
           break;
+
+        case ESCAPE:
+          token.push_back(ch);
+          state = START;
+          ++ptr;
+          break;
+
         case DQUOTE_ESCAPE:
           token.push_back(ch);
           state = DQUOTE;
