@@ -43,7 +43,6 @@ public:
 
 protected:
   void resizeEvent(QResizeEvent *event) override;
-  void paintEvent(QPaintEvent *event) override;
   int heightForRowCount(int rowCount);
 
 private:

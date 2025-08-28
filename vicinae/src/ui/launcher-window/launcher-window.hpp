@@ -59,6 +59,7 @@ private:
   QStackedWidget *m_currentViewWrapper = nullptr;
   QStackedWidget *m_currentOverlayWrapper = nullptr;
   DialogWidget *m_dialog = nullptr;
+  QWidget *m_focusWidget = nullptr;
 
   void handleShowHUD(const QString &text, const std::optional<ImageURL> &icon);
   void handleDialog(DialogContentWidget *alert);
