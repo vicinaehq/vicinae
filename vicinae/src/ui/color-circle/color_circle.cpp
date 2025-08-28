@@ -1,4 +1,5 @@
 #include "ui/color-circle/color_circle.hpp"
+#include "theme.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
 
 ColorCircle::ColorCircle(QSize size, QWidget *parent) : QWidget(parent), size(size), strokeWidth(0) {
@@ -18,7 +19,7 @@ void ColorCircle::paintEvent(QPaintEvent *event) {
   qreal diam = strokeWidth * 2;
 
   if (strokeWidth > 0) {
-    painter.setBrush(strokeColor);
+    painter.setThemeBrush(strokeColor);
     painter.drawEllipse(0, 0, w, h);
   }
 
@@ -28,7 +29,7 @@ void ColorCircle::paintEvent(QPaintEvent *event) {
 
 QSize ColorCircle::sizeHint() const { return size; }
 
-ColorCircle &ColorCircle::setStroke(QColor color, size_t width) {
+ColorCircle &ColorCircle::setStroke(const ColorLike &color, size_t width) {
   strokeColor = color;
   strokeWidth = width;
 
