@@ -2,6 +2,7 @@
 #include "daemon/ipc-client.hpp"
 #include "favicon/favicon-service.hpp"
 #include "navigation-controller.hpp"
+#include "pid-file/pid-file.hpp"
 #include "ui/launcher-window/launcher-window.hpp"
 #include <QStyleHints>
 #include "common.hpp"
@@ -60,34 +61,16 @@
 #include "settings-controller/settings-controller.hpp"
 #include "settings/settings-window.hpp"
 #include "theme.hpp"
-#include "utils/utils.hpp"
 #include "log/message-handler.hpp"
+#include "lib/pid-file/pid-file.hpp"
 
 int startDaemon() {
   std::filesystem::create_directories(Omnicast::runtimeDir());
-  auto pidFile = Omnicast::pidFile();
+  PidFile pidFile(Omnicast::APP_ID.toStdString());
 
-  {
-    std::ifstream ifs(pidFile);
-    pid_t pid;
+  if (pidFile.exists() && pidFile.kill()) { qInfo() << "Killed existing vicinae instance"; }
 
-    if (ifs.is_open()) {
-      ifs >> pid;
-
-      if (kill(pid, SIGKILL) == 0) { qInfo() << "Killed existing vicinae instance with pid" << pid; }
-    }
-  }
-
-  {
-    std::ofstream ofs(pidFile);
-
-    if (!ofs.is_open()) {
-      qDebug() << "failed to open pid file for writing";
-      return 1;
-    }
-
-    ofs << qApp->applicationPid();
-  }
+  pidFile.write(qApp->applicationPid());
 
   {
     auto registry = ServiceRegistry::instance();

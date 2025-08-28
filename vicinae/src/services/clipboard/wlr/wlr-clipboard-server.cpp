@@ -1,4 +1,5 @@
 #include "wlr-clipboard-server.hpp"
+#include "pid-file/pid-file.hpp"
 #include "proto/wlr-clipboard.pb.h"
 #include "services/clipboard/clipboard-server.hpp"
 #include "utils/environment.hpp"
@@ -49,12 +50,12 @@ int WlrClipboardServer::activationPriority() const {
 }
 
 bool WlrClipboardServer::start() {
+  PidFile pidFile("wlr-clip");
   int maxWaitForStart = 5000;
-  process = new QProcess;
 
-  connect(process, &QProcess::readyReadStandardOutput, this, &WlrClipboardServer::handleRead);
-  connect(process, &QProcess::readyReadStandardError, this, &WlrClipboardServer::handleReadError);
-  connect(process, &QProcess::finished, this, &WlrClipboardServer::handleExit);
+  if (pidFile.exists() && pidFile.kill()) { qInfo() << "Killed existing wlr-clip instance"; }
+
+  process = new QProcess;
 
   process->start(WLR_CLIP_BIN, {});
 
@@ -62,6 +63,12 @@ bool WlrClipboardServer::start() {
     qCritical() << "Failed to start:" << WLR_CLIP_BIN << process->errorString();
     return false;
   }
+
+  pidFile.write(process->processId());
+
+  connect(process, &QProcess::readyReadStandardOutput, this, &WlrClipboardServer::handleRead);
+  connect(process, &QProcess::readyReadStandardError, this, &WlrClipboardServer::handleReadError);
+  connect(process, &QProcess::finished, this, &WlrClipboardServer::handleExit);
 
   return process;
 }
