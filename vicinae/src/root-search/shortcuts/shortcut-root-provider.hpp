@@ -15,7 +15,8 @@ class RootShortcutItem : public RootItem {
   QString uniqueId() const override;
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx,
                                                    const RootItemMetadata &metadata) override;
-  ActionPanelView *fallbackActionPanel() const override;
+  std::unique_ptr<ActionPanelState> fallbackActionPanel(ApplicationContext *ctx,
+                                                        const RootItemMetadata &metadata) override;
   QString typeDisplayName() const override;
 
 public:

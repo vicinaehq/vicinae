@@ -53,8 +53,11 @@ std::unique_ptr<ActionPanelState> RootShortcutItem::newActionPanel(ApplicationCo
   return panel;
 }
 
-ActionPanelView *RootShortcutItem::fallbackActionPanel() const {
-  auto panel = new ActionPanelStaticListView;
+std::unique_ptr<ActionPanelState> RootShortcutItem::fallbackActionPanel(ApplicationContext *ctx,
+                                                                        const RootItemMetadata &metadata) {
+  auto panel = std::make_unique<ActionPanelState>();
+  auto main = panel->createSection();
+
   auto open = new OpenShortcutFromSearchText(m_link);
   auto manage = new ManageFallbackActions;
 
@@ -62,8 +65,8 @@ ActionPanelView *RootShortcutItem::fallbackActionPanel() const {
   manage->setShortcut({.key = "return", .modifiers = {"shift"}});
   open->setPrimary(true);
   panel->setTitle(m_link->name());
-  panel->addAction(open);
-  panel->addAction(manage);
+  main->addAction(open);
+  main->addAction(manage);
 
   return panel;
 }

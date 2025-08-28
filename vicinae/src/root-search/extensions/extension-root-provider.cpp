@@ -1,6 +1,5 @@
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "actions/extension/extension-actions.hpp"
-#include "action-panel/action-panel.hpp"
 #include "actions/fallback-actions.hpp"
 #include "actions/root-search/root-search-actions.hpp"
 #include "clipboard-actions.hpp"
@@ -8,7 +7,6 @@
 #include "extension/extension-command.hpp"
 #include "navigation-controller.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
-#include "ui/action-pannel/action.hpp"
 
 QString CommandRootItem::displayName() const { return m_command->name(); }
 QString CommandRootItem::subtitle() const { return m_command->repositoryDisplayName(); }
@@ -45,13 +43,20 @@ std::unique_ptr<ActionPanelState> CommandRootItem::newActionPanel(ApplicationCon
   return panel;
 }
 
-ActionPanelView *CommandRootItem::fallbackActionPanel() const {
-  auto panel = new ActionPanelStaticListView;
-  // auto ui = ServiceRegistry::instance()->UI();
+std::unique_ptr<ActionPanelState> CommandRootItem::fallbackActionPanel(ApplicationContext *ctx,
+                                                                       const RootItemMetadata &metadata) {
+  auto panel = std::make_unique<ActionPanelState>();
+  auto main = panel->createSection();
+  auto open = new OpenBuiltinCommandAction(m_command, "Open command", "");
+  auto manage = new ManageFallbackActions;
 
-  // TODO: fix this
-  panel->addAction(new OpenBuiltinCommandAction(m_command, "Open command", ""));
-  panel->addAction(new ManageFallbackActions);
+  open->setShortcut({"return"});
+  open->setPrimary(true);
+  open->setForwardSearchText(true);
+  manage->setShortcut(KeyboardShortcutModel::submit());
+
+  main->addAction(open);
+  main->addAction(manage);
 
   return panel;
 }

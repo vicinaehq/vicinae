@@ -1,4 +1,5 @@
 #pragma once
+#include "common.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include <qjsonobject.h>
 #include <qwidget.h>
@@ -19,7 +20,8 @@ public:
   double baseScoreWeight() const override;
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx,
                                                    const RootItemMetadata &metadata) override;
-  ActionPanelView *fallbackActionPanel() const override;
+  std::unique_ptr<ActionPanelState> fallbackActionPanel(ApplicationContext *ctx,
+                                                        const RootItemMetadata &metadata) override;
   QString typeDisplayName() const override;
   QString uniqueId() const override;
   AccessoryList accessories() const override;
