@@ -146,7 +146,7 @@ class XdgDesktopEntry {
   XdgDesktopEntry() {}
 
 public:
-  XdgDesktopEntry(fs::path parentPath, fs::path childPath) {
+  XdgDesktopEntry(const fs::path &parentPath, const fs::path &childPath) {
     QFile file(parentPath / childPath);
 
     file.open(QIODevice::ReadOnly);
