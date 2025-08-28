@@ -146,7 +146,7 @@ class XdgDesktopEntry {
   XdgDesktopEntry() {}
 
 public:
-  XdgDesktopEntry(fs::path parentPath, fs::path childPath) {
+  XdgDesktopEntry(const fs::path &parentPath, const fs::path &childPath) {
     QFile file(parentPath / childPath);
 
     file.open(QIODevice::ReadOnly);
@@ -159,7 +159,7 @@ public:
       id += dir.c_str();
       id += '-';
     }
-    id += childPath.stem().c_str();
+    id += childPath.filename().c_str();
   }
 
   struct Action {
