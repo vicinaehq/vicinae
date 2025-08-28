@@ -65,6 +65,8 @@ set(SRCS
 
 	src/daemon/ipc-client.cpp
 
+	src/lib/template-engine/template-engine.cpp
+
 	include/favicon/favicon-service.hpp
 	src/favicon/favicon-service.cpp
 	include/favicon/favicon-request.hpp

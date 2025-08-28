@@ -6,6 +6,7 @@
 #include <qjsonobject.h>
 #include <qlineedit.h>
 #include <QFocusEvent>
+#include <qmargins.h>
 #include <qobject.h>
 #include <qproperty.h>
 #include <qtmetamacros.h>
@@ -17,8 +18,8 @@ class BaseInput : public JsonFormItemWidget {
   FocusNotifier *m_focusNotifier = new FocusNotifier(this);
   QWidget *rightAccessory;
   QWidget *leftAccessory;
+  QMargins m_defaultTextMargins = QMargins(10, 5, 10, 5);
 
-  void paintEvent(QPaintEvent *event) override;
   bool event(QEvent *) override;
   void resizeEvent(QResizeEvent *event) override;
   void setFocusState(bool value);
@@ -37,6 +38,7 @@ protected:
 public:
   void recalculate();
   void setLeftAccessory(QWidget *widget);
+  void setTextMargins(const QMargins &margins);
   void setRightAccessory(QWidget *widget);
   FocusNotifier *focusNotifier() const override { return m_focusNotifier; }
   void clear();
