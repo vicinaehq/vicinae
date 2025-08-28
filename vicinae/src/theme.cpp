@@ -1,4 +1,5 @@
 #include "theme.hpp"
+#include "template-engine/template-engine.hpp"
 #include "timer.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
 #include "vicinae.hpp"
@@ -367,38 +368,52 @@ void ThemeService::setTheme(const ThemeInfo &info) {
 
   double mainInputSize = std::round(m_baseFontPointSize * 1.20);
 
+  TemplateEngine engine;
+
+  engine.setVar("FONT_SIZE", QString::number(m_baseFontPointSize));
+  engine.setVar("INPUT_BORDER_COLOR", info.colors.border.name());
+  engine.setVar("INPUT_FOCUS_BORDER_COLOR", info.colors.inputBorderFocus.name());
+  engine.setVar("SEARCH_FONT_SIZE", QString::number(mainInputSize));
+
   /**
    * We try to not use stylesheets directly in most of the app, but some very high level
    * rules can help fix issues that would be hard to fix otherwise.
    */
-  auto style = QString(R"(
+  auto style = engine.build(R"(
   		QWidget {
-			font-size: %1pt;
+			font-size: {FONT_SIZE}pt;
 		}
 
 		QLineEdit, QTextEdit, QPlainTextEdit {
 			background-color: transparent;
 			border: none;
-		}
-		QLineEdit:focus[form-input="true"] {
-			border-color: %2;
-		}
-		QTextEdit {
-			font-family: monospace;
+ 		}
+
+		QWidget[form-input="true"] {
+		    border: 2px solid {INPUT_BORDER_COLOR};
+			border-radius: 5px;
 		}
 
-	   QLineEdit[search-input="true"] {
-			font-size: %3pt;
+		QLineEdit[form-input="true"]:focus {
+			border-color: {INPUT_FOCUS_BORDER_COLOR};
+		}
+
+		QPlainTextEdit[form-input="true"]:focus {
+			border-color: {INPUT_FOCUS_BORDER_COLOR};
+		}
+
+		QLineEdit[search-input="true"] {
+			font-size: {SEARCH_FONT_SIZE}pt;
 		}
 
 		QScrollArea, 
 		QScrollArea > QWidget,
-		QScrollArea > QWidget > QWidget
-		{ background: transparent; }
-		)")
-                   .arg(m_baseFontPointSize)
-                   .arg(info.colors.border.name())
-                   .arg(mainInputSize);
+		QScrollArea > QWidget > QWidget { 
+			background: transparent; 
+		}
+		)");
+
+  qInfo() << "style" << style;
 
   auto palette = QApplication::palette();
 

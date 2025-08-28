@@ -123,7 +123,7 @@ public:
 
   AliasInput(const QString &rootItemId) : m_id(rootItemId) {
     setPlaceholderText("Add alias");
-    input()->setContentsMargins(2, 2, 2, 2);
+    setTextMargins(QMargins{2, 2, 2, 2});
     connect(focusNotifier(), &FocusNotifier::focusChanged, this, [this](bool value) {
       if (!value) handleSave();
     });

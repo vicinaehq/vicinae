@@ -29,6 +29,7 @@ void TextArea::setupUI() {
   m_textEdit = new QPlainTextEdit;
   m_textEdit->setFrameShape(QFrame::NoFrame);
   m_textEdit->setVerticalScrollBar(new OmniScrollBar);
+  m_textEdit->setProperty("form-input", true);
   m_notifier->track(m_textEdit);
   setFocusProxy(m_textEdit);
   setGrowAsRequired(true);
@@ -54,17 +55,6 @@ void TextArea::resizeArea() {
     setFixedHeight(height);
     m_textEdit->setFixedHeight(height);
   }
-}
-
-void TextArea::paintEvent(QPaintEvent *event) {
-  int borderRadius = 6;
-  OmniPainter painter(this);
-
-  painter.setThemePen(hasFocus() ? SemanticColor::InputBorderFocus : SemanticColor::InputBorder, 3);
-  painter.setRenderHint(QPainter::Antialiasing, true);
-  painter.drawRoundedRect(rect(), borderRadius, borderRadius);
-
-  JsonFormItemWidget::paintEvent(event);
 }
 
 QJsonValue TextArea::asJsonValue() const { return m_textEdit->toPlainText(); };
