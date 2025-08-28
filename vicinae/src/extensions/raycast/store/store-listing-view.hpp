@@ -1,5 +1,5 @@
 #pragma once
-#include "actions/root-search/root-search-actions.hpp"
+#include "actions/extension/extension-actions.hpp"
 #include "ui/views/base-view.hpp"
 #include "extensions/raycast/store/store-detail-view.hpp"
 #include "navigation-controller.hpp"

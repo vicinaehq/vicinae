@@ -125,6 +125,8 @@ set(SRCS
 	src/actions/root-search/root-search-actions.hpp
 	src/actions/root-search/root-search-actions.cpp
 
+	src/actions/extension/extension-actions.cpp
+
 	src/actions/app/app-actions.hpp
 	src/actions/app/app-actions.cpp
 	
