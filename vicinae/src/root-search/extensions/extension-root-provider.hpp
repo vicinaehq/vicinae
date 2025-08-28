@@ -17,7 +17,6 @@ public:
   QString providerId() const override;
   bool isSuitableForFallback() const override;
   double baseScoreWeight() const override;
-  ActionPanelView *actionPanel(const RootItemMetadata &metadata) const override;
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx,
                                                    const RootItemMetadata &metadata) override;
   ActionPanelView *fallbackActionPanel() const override;

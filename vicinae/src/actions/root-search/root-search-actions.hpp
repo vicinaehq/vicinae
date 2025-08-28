@@ -47,17 +47,6 @@ public:
   DisableApplication(const QString &itemId) : DisableItemAction(itemId) {}
 };
 
-class UninstallExtensionAction : public AbstractAction {
-  QString m_id;
-
-  ImageURL icon() const override { return ImageURL::builtin("computer-chip"); }
-  void execute(ApplicationContext *ctx) override;
-  QString title() const override { return "Uninstall Extension"; }
-
-public:
-  UninstallExtensionAction(const QString &id) : m_id(id) { setStyle(AbstractAction::Danger); }
-};
-
 /**
  * Wrapper for the main action of a root item, automatically recording execution.
  */

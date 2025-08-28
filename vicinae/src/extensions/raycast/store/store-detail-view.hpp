@@ -1,4 +1,5 @@
 #pragma once
+#include "actions/extension/extension-actions.hpp"
 #include "ui/views/base-view.hpp"
 #include "common.hpp"
 #include "ui/action-pannel/action.hpp"
@@ -237,6 +238,10 @@ class RaycastStoreDetailView : public BaseView {
     return VStack().add(createPresentationSection()).add(createContentSection()).divided(1).buildWidget();
   }
 
+  void extensionInstalled() { m_installedAccessory->show(); }
+
+  void extensionUninstalled() { m_installedAccessory->hide(); }
+
   void createActions() {
     auto panel = std::make_unique<ActionPanelState>();
     auto install = new StaticAction(
@@ -262,31 +267,46 @@ class RaycastStoreDetailView : public BaseView {
 
           watcher->setFuture(downloadResult);
         });
+    auto uninstall = new UninstallExtensionAction(m_ext.id);
 
     install->setShortcut({.key = "return"});
 
     auto main = panel->createSection();
+    auto danger = panel->createSection();
 
     main->addAction(install);
     install->setPrimary(true);
+    danger->addAction(uninstall);
+    uninstall->setShortcut(KeyboardShortcutModel::cut());
 
     setActions(std::move(panel));
   }
 
   void initialize() override {
-    bool isInstalled = context()->services->extensionRegistry()->isInstalled(m_ext.id);
+    auto registry = context()->services->extensionRegistry();
+    bool isInstalled = registry->isInstalled(m_ext.id);
+
+    if (isInstalled) {
+      extensionInstalled();
+    } else {
+      extensionUninstalled();
+    }
 
     createActions();
-    m_installedAccessory->setVisible(isInstalled);
+    connect(registry, &ExtensionRegistry::extensionAdded, this, [this](const QString &id) {
+      if (id != m_ext.id) return;
+      extensionInstalled();
+    });
+
+    connect(registry, &ExtensionRegistry::extensionUninstalled, this, [this](const QString &id) {
+      if (id != m_ext.id) return;
+      extensionUninstalled();
+    });
   }
 
   void setupUI(const Raycast::Extension &extension) {
-    auto layout = new QVBoxLayout;
-
     m_scrollArea->setWidget(createUI(extension));
-    layout->addWidget(m_scrollArea);
-    layout->setContentsMargins(0, 0, 0, 0);
-    setLayout(layout);
+    VStack().add(m_scrollArea).imbue(this);
   }
 
 public:
