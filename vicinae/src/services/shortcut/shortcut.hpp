@@ -70,7 +70,7 @@ public:
   void setName(const QString &name);
   void setIcon(const QString &icon);
   void setId(const QString &id);
-  void setLink(const QString &link);
+  void parseLink(const QString &link);
   void setCreatedAt(const QDateTime &date);
   void setUpdatedAt(const QDateTime &date);
   void setLastOpenedAt(const std::optional<QDateTime> &date);

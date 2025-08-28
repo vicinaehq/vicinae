@@ -45,7 +45,7 @@ void Shortcut::setUpdatedAt(const QDateTime &date) { m_updatedAt = date; }
 void Shortcut::setLastOpenedAt(const std::optional<QDateTime> &date) { m_lastOpenedAt = date; }
 void Shortcut::setOpenCount(int openCount) { m_openCount = openCount; }
 
-void Shortcut::setLink(const QString &link) {
+void Shortcut::parseLink(const QString &link) {
   enum {
     BK_NORMAL,
     PH_ID,
@@ -60,6 +60,7 @@ void Shortcut::setLink(const QString &link) {
   ParsedPlaceholder parsed;
   std::pair<QString, QString> arg;
 
+  m_parts.clear();
   m_placeholders.clear();
   m_args.clear();
   m_raw = link;
