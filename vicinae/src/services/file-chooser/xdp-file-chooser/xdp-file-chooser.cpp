@@ -1,6 +1,5 @@
 #include "xdp-file-chooser.hpp"
 #include <cstdlib>
-#include <emmintrin.h>
 #include <qdbusmetatype.h>
 #include <qlogging.h>
 #include <qobject.h>
