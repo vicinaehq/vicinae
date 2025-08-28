@@ -82,7 +82,6 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
               m_actionVeil->hide();
               m_actionPanel->hide();
               if (m_focusWidget) {
-                qInfo() << "restore focus to" << m_focusWidget;
                 QTimer::singleShot(0, [this]() {
                   m_focusWidget->setFocus();
                   m_focusWidget = nullptr;
