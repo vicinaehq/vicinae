@@ -18,11 +18,13 @@ include_directories(
 
 set(SRCS
 	src/main.cpp
+	src/app.cpp
 	src/data-control-client.cpp
 	src/display.cpp
 	src/registry.cpp
 	src/seat.cpp
-	src/utils.cpp
+	src/data-device.cpp
+	src/data-offer.cpp
 )
 
 add_executable(${TARGET} ${SRCS})
