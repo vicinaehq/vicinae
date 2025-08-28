@@ -126,34 +126,6 @@ public:
 
 // Overrides item actions when no filtering is applied
 class RootFallbackListItem : public FallbackListItem {
-  QList<AbstractAction *> generateActions() const override {
-    auto manager = ServiceRegistry::instance()->rootItemManager();
-    auto metadata = manager->itemMetadata(m_item->uniqueId());
-    QList<AbstractAction *> actions;
-    int maxFallbackPosition = manager->maxFallbackPosition();
-
-    if (metadata.isFallback) {
-      auto disableFallback = new DisableFallbackAction(m_item->uniqueId());
-
-      disableFallback->setPrimary(true);
-      disableFallback->setShortcut({.key = "return"});
-      actions << disableFallback;
-
-      if (metadata.fallbackPosition > 0) { actions << new MoveFallbackUpAction(m_item->uniqueId()); }
-      if (metadata.fallbackPosition < maxFallbackPosition) {
-        actions << new MoveFallbackDownAction(m_item->uniqueId());
-      }
-    } else {
-      auto enableFallback = new EnableFallbackAction(m_item->uniqueId());
-
-      enableFallback->setPrimary(true);
-      enableFallback->setShortcut({.key = "return"});
-      actions << enableFallback;
-    }
-
-    return actions;
-  }
-
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
     auto panel = std::make_unique<ActionPanelState>();
     auto manager = ctx->services->rootItemManager();
@@ -161,7 +133,7 @@ class RootFallbackListItem : public FallbackListItem {
     auto metadata = manager->itemMetadata(m_item->uniqueId());
     int maxFallbackPosition = manager->maxFallbackPosition();
 
-    if (metadata.isFallback) {
+    if (metadata.isFallback()) {
       auto disableFallback = new DisableFallbackAction(m_item->uniqueId());
 
       disableFallback->setPrimary(true);

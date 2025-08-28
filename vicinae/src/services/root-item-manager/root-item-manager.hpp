@@ -54,13 +54,6 @@ public:
   virtual bool isSuitableForFallback() const { return false; }
 
   /**
-   * Whether this item should be marked as a fallback command
-   * the first time it is ever made available.
-   * Only affects the first time the command is loaded.
-   */
-  virtual bool isDefaultFallback() const { return false; }
-
-  /**
    * What type of item this is. For instance an application will return
    * "Application". This is used in the settings view.
    */
@@ -193,9 +186,10 @@ struct RootItemMetadata {
   // Alias can be made of multiple words, in which case each word is indexed separately
   QString alias;
   bool favorite = false;
-  bool isFallback = false;
   int fallbackPosition = -1;
   QString providerId;
+
+  bool isFallback() const { return fallbackPosition != -1; }
 };
 
 struct RootProviderMetadata {
@@ -251,7 +245,7 @@ public:
   QJsonObject getPreferenceValues(const QString &id) const;
   RootItemMetadata itemMetadata(const QString &id) const;
   int maxFallbackPosition();
-  bool isFallback(const QString &id);
+  bool isFallback(const QString &id) const;
   bool disableFallback(const QString &id);
   bool moveFallbackDown(const QString &id);
   bool moveFallbackUp(const QString &id);
@@ -276,6 +270,7 @@ public:
   void addProvider(std::unique_ptr<RootProvider> provider);
   RootProvider *provider(const QString &id) const;
   std::vector<std::shared_ptr<RootItem>> allItems() const { return m_items; }
+  std::vector<std::shared_ptr<RootItem>> fallbackItems() const;
   std::vector<std::shared_ptr<RootItem>> prefixSearch(const QString &query,
                                                       const RootItemPrefixSearchOptions &opts = {});
 

@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS root_provider_item (
 	provider_id TEXT,
 	preference_values JSON DEFAULT '{}',
 	enabled INT DEFAULT 1,
-	fallback INT DEFAULT 0,
+	fallback INT DEFAULT 0, -- not used anymore, we only look at fallback_position
 	fallback_position INT DEFAULT -1,
 	alias TEXT DEFAULT '',
 	favorite INT DEFAULT 0,
