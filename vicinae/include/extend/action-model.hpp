@@ -8,6 +8,8 @@ struct KeyboardShortcutModel {
   QStringList modifiers;
 
   static KeyboardShortcutModel submit() { return {.key = "return", .modifiers = {"shift"}}; }
+  static KeyboardShortcutModel cut() { return {.key = "X", .modifiers = {"ctrl"}}; }
+  static KeyboardShortcutModel enter() { return {.key = "return"}; }
 };
 
 struct ActionModel {
