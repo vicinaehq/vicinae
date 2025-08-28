@@ -11,6 +11,7 @@ class SearchFilesCommand : public BuiltinViewCommand<SearchFilesView> {
   QString id() const override { return "search"; }
   QString name() const override { return "Search Files"; }
   QString description() const override { return "Search files on your system"; }
+  bool isFallback() const override { return true; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("magnifying-glass").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }

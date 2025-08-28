@@ -2,7 +2,20 @@
 #include "root-search.hpp"
 #include <bits/chrono.h>
 #include <qlogging.h>
+#include <qobjectdefs.h>
 #include <ranges>
+
+std::vector<std::shared_ptr<RootItem>> RootItemManager::fallbackItems() const {
+  auto items = allItems() |
+               std::views::filter([&](const auto &item) { return isFallback(item->uniqueId()); }) |
+               std::ranges::to<std::vector>();
+
+  std::ranges::sort(items, [&](auto &&a, auto &&b) {
+    return itemMetadata(a->uniqueId()).fallbackPosition < itemMetadata(b->uniqueId()).fallbackPosition;
+  });
+
+  return items;
+}
 
 RootItemMetadata RootItemManager::loadMetadata(const QString &id) {
   RootItemMetadata item;
@@ -10,7 +23,7 @@ RootItemMetadata RootItemManager::loadMetadata(const QString &id) {
 
   query.prepare(R"(
 		SELECT
-			enabled, fallback, fallback_position, alias, rank_visit_count, rank_last_visited_at, provider_id, favorite
+			enabled, fallback_position, alias, rank_visit_count, rank_last_visited_at, provider_id, favorite
 		FROM
 			root_provider_item
 		WHERE id = :id
@@ -25,13 +38,12 @@ RootItemMetadata RootItemManager::loadMetadata(const QString &id) {
   if (!query.next()) { return {}; };
 
   item.isEnabled = query.value(0).toBool();
-  item.isFallback = query.value(1).toBool();
-  item.fallbackPosition = query.value(2).toInt();
-  item.alias = query.value(3).toString();
-  item.visitCount = query.value(4).toInt();
-  item.lastVisitedAt = std::chrono::system_clock::from_time_t(query.value(5).toULongLong());
-  item.providerId = query.value(6).toString();
-  item.favorite = query.value(7).toBool();
+  item.fallbackPosition = query.value(1).toInt();
+  item.alias = query.value(2).toString();
+  item.visitCount = query.value(3).toInt();
+  item.lastVisitedAt = std::chrono::system_clock::from_time_t(query.value(4).toULongLong());
+  item.providerId = query.value(5).toString();
+  item.favorite = query.value(6).toBool();
 
   return item;
 }
@@ -92,14 +104,13 @@ bool RootItemManager::upsertItem(const QString &providerId, const RootItem &item
 
   query.prepare(R"(
 		INSERT INTO 
-			root_provider_item (id, provider_id, enabled, fallback) 
-		VALUES (:id, :provider_id, :enabled, :fallback) 
+			root_provider_item (id, provider_id, enabled) 
+		VALUES (:id, :provider_id, :enabled) 
 		ON CONFLICT(id) DO NOTHING
 	)");
   query.bindValue(":id", item.uniqueId());
   query.bindValue(":provider_id", providerId);
   query.bindValue(":enabled", !item.isDefaultDisabled());
-  query.bindValue(":fallback", item.isDefaultFallback());
 
   if (!query.exec()) {
     qCritical() << "Failed to upsert provider with id" << item.uniqueId() << query.lastError();
@@ -475,75 +486,185 @@ int RootItemManager::maxFallbackPosition() {
   return max;
 }
 
-bool RootItemManager::isFallback(const QString &id) { return itemMetadata(id).isFallback; }
+bool RootItemManager::isFallback(const QString &id) const { return itemMetadata(id).fallbackPosition != -1; }
+
+bool RootItemManager::moveFallbackDown(const QString &id) {
+  QSqlQuery query = m_db.createQuery();
+  int pos = m_metadata[id].fallbackPosition;
+
+  query.prepare(
+      "SELECT id FROM root_provider_item WHERE fallback_position > :pos ORDER BY fallback_position ASC");
+  query.bindValue(":pos", pos);
+
+  if (!query.exec()) {
+    qWarning() << "Failed to exec" << query.lastError();
+    return false;
+  }
+
+  QSqlQuery updateQuery = m_db.createQuery();
+
+  updateQuery.prepare("UPDATE root_provider_item SET fallback_position = :pos WHERE id = :id");
+
+  int idx = 0;
+
+  while (query.next()) {
+    QString nextId = query.value(0).toString();
+
+    updateQuery.bindValue(":pos", pos);
+    updateQuery.bindValue(":id", nextId);
+
+    if (!updateQuery.exec()) {
+      qWarning() << "Failed to exec" << query.lastError();
+      return false;
+    }
+
+    m_metadata[nextId].fallbackPosition = pos;
+
+    if (idx == 0) {
+      updateQuery.bindValue(":pos", ++pos);
+      updateQuery.bindValue(":id", id);
+
+      if (!updateQuery.exec()) {
+        qWarning() << "Failed to exec" << query.lastError();
+        return false;
+      }
+
+      m_metadata[id].fallbackPosition = pos;
+    }
+
+    ++idx;
+    ++pos;
+  }
+
+  emit fallbackOrderChanged(id);
+
+  return true;
+}
 
 bool RootItemManager::disableFallback(const QString &id) {
   QSqlQuery query = m_db.createQuery();
 
-  query.prepare("UPDATE root_provider_item SET fallback = 0, fallback_position = -1 WHERE id = :id");
-  query.bindValue(":id", id);
+  query.prepare("SELECT id, fallback_position FROM root_provider_item WHERE fallback_position >= 0 ORDER BY "
+                "fallback_position");
+  query.exec();
 
-  if (!query.exec()) {
-    qCritical() << "Failed to disable fallback for id" << id;
-    return false;
+  QSqlQuery updateQuery = m_db.createQuery();
+
+  updateQuery.prepare("UPDATE root_provider_item SET fallback_position = :pos WHERE id = :id");
+  updateQuery.bindValue(":pos", -1);
+  updateQuery.bindValue(":id", id);
+  updateQuery.exec();
+  m_metadata[id].fallbackPosition = -1;
+
+  int normalizedPos = 0;
+
+  while (query.next()) {
+    QString nextId = query.value(0).toString();
+
+    if (nextId == id) continue;
+
+    updateQuery.bindValue(":pos", normalizedPos);
+    updateQuery.bindValue(":id", nextId);
+    updateQuery.exec();
+    m_metadata[nextId].fallbackPosition = normalizedPos;
+    ++normalizedPos;
   }
 
-  auto meta = itemMetadata(id);
-
-  meta.isFallback = false;
-  m_metadata[id] = meta;
   emit fallbackDisabled(id);
 
   return true;
 }
 
-bool RootItemManager::setFallback(const QString &id, int position) {
-  if (!m_db.db().transaction()) { return false; }
-
+bool RootItemManager::enableFallback(const QString &id) {
   QSqlQuery query = m_db.createQuery();
 
-  query.prepare(R"(
-		UPDATE root_provider_item
-		SET fallback_position = fallback_position + 1
-		WHERE fallback_position >= :position
-	)");
-  query.bindValue(":id", id);
-  query.bindValue(":position", position);
+  query.prepare("SELECT id, fallback_position FROM root_provider_item WHERE fallback_position >= 0 ORDER BY "
+                "fallback_position");
+  query.exec();
 
-  if (!query.exec()) {
-    qCritical() << "Failed to set fallback" << query.lastError();
-    m_db.db().rollback();
+  QSqlQuery updateQuery = m_db.createQuery();
+
+  updateQuery.prepare("UPDATE root_provider_item SET fallback_position = :pos WHERE id = :id");
+  updateQuery.bindValue(":pos", 0);
+  updateQuery.bindValue(":id", id);
+
+  if (!updateQuery.exec()) {
+    qWarning() << "failed to update" << updateQuery.lastError();
     return false;
   }
 
-  query.prepare(R"(
-		UPDATE root_provider_item 
-		SET fallback = 1, fallback_position = :position 
-		WHERE id = :id
-	)");
-  query.bindValue(":id", id);
-  query.bindValue(":position", position);
+  m_metadata[id].fallbackPosition = 0;
 
-  if (!query.exec()) {
-    qCritical() << "Failed to set fallback" << query.lastError();
-    m_db.db().rollback();
-    return false;
+  int normalizedPos = 1;
+
+  while (query.next()) {
+    QString nextId = query.value(0).toString();
+
+    if (nextId == id) continue;
+
+    updateQuery.bindValue(":pos", normalizedPos);
+    updateQuery.bindValue(":id", nextId);
+    updateQuery.exec();
+    m_metadata[nextId].fallbackPosition = normalizedPos;
+    ++normalizedPos;
   }
 
-  if (!m_db.db().commit()) { return false; }
-
-  qDebug() << "updated fallback pos for" << id << position;
-
-  for (auto &pair : m_metadata) {
-    if (pair.second.fallbackPosition >= position) pair.second.fallbackPosition += 1;
-  }
-
-  auto metadata = itemMetadata(id);
-
-  metadata.isFallback = true;
-  metadata.fallbackPosition = position;
-  m_metadata[id] = metadata;
   emit fallbackEnabled(id);
+
+  return true;
+}
+
+bool RootItemManager::moveFallbackUp(const QString &id) {
+  QSqlQuery query = m_db.createQuery();
+  int pos = m_metadata[id].fallbackPosition;
+
+  if (pos <= 0) return false;
+
+  query.prepare("SELECT id FROM root_provider_item WHERE fallback_position >= 0 AND fallback_position < :pos "
+                "ORDER BY fallback_position DESC");
+  query.bindValue(":pos", pos);
+
+  if (!query.exec()) {
+    qWarning() << "Failed to exec" << query.lastError();
+    return false;
+  }
+
+  QSqlQuery updateQuery = m_db.createQuery();
+
+  updateQuery.prepare("UPDATE root_provider_item SET fallback_position = :pos WHERE id = :id");
+
+  int idx = 0;
+
+  while (query.next()) {
+    QString nextId = query.value(0).toString();
+
+    updateQuery.bindValue(":pos", pos);
+    updateQuery.bindValue(":id", nextId);
+
+    if (!updateQuery.exec()) {
+      qWarning() << "Failed to exec" << query.lastError();
+      return false;
+    }
+
+    m_metadata[nextId].fallbackPosition = pos;
+
+    if (idx == 0) {
+      updateQuery.bindValue(":pos", --pos);
+      updateQuery.bindValue(":id", id);
+
+      if (!updateQuery.exec()) {
+        qWarning() << "Failed to exec" << query.lastError();
+        return false;
+      }
+
+      m_metadata[id].fallbackPosition = pos;
+    }
+
+    ++idx;
+    --pos;
+  }
+
+  emit fallbackOrderChanged(id);
 
   return true;
 }

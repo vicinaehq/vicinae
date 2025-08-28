@@ -54,13 +54,6 @@ public:
   virtual bool isSuitableForFallback() const { return false; }
 
   /**
-   * Whether this item should be marked as a fallback command
-   * the first time it is ever made available.
-   * Only affects the first time the command is loaded.
-   */
-  virtual bool isDefaultFallback() const { return false; }
-
-  /**
    * What type of item this is. For instance an application will return
    * "Application". This is used in the settings view.
    */
@@ -100,10 +93,6 @@ public:
    * when selected. The first action returned will become the default
    * action.
    */
-  virtual QList<AbstractAction *> actions() const { return {}; }
-
-  virtual ActionPanelView *actionPanel(const RootItemMetadata &metadata) const { return nullptr; }
-
   virtual std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx,
                                                            const RootItemMetadata &metadata) {
     return {};
@@ -112,13 +101,10 @@ public:
   /**
    * Action panel shown when this item is used as a fallback command.
    */
-  virtual ActionPanelView *fallbackActionPanel() const { return nullptr; }
-
-  /**
-   * Alternative list of actions to display in fallback mode.
-   * Calls actions() as its default implementation.
-   */
-  virtual QList<AbstractAction *> fallbackActions() const { return actions(); }
+  virtual std::unique_ptr<ActionPanelState> fallbackActionPanel(ApplicationContext *ctx,
+                                                                const RootItemMetadata &metadata) {
+    return {};
+  }
 
   virtual bool isDefaultDisabled() const { return false; }
 
@@ -193,9 +179,10 @@ struct RootItemMetadata {
   // Alias can be made of multiple words, in which case each word is indexed separately
   QString alias;
   bool favorite = false;
-  bool isFallback = false;
   int fallbackPosition = -1;
   QString providerId;
+
+  bool isFallback() const { return fallbackPosition != -1; }
 };
 
 struct RootProviderMetadata {
@@ -251,9 +238,11 @@ public:
   QJsonObject getPreferenceValues(const QString &id) const;
   RootItemMetadata itemMetadata(const QString &id) const;
   int maxFallbackPosition();
-  bool isFallback(const QString &id);
+  bool isFallback(const QString &id) const;
   bool disableFallback(const QString &id);
-  bool setFallback(const QString &id, int position = 0);
+  bool moveFallbackDown(const QString &id);
+  bool moveFallbackUp(const QString &id);
+  bool enableFallback(const QString &id);
   double computeScore(const RootItemMetadata &meta, int weight) const;
   double computeRecencyScore(const RootItemMetadata &meta) const;
   std::vector<std::shared_ptr<RootItem>> queryFavorites(int limit = 5);
@@ -274,6 +263,7 @@ public:
   void addProvider(std::unique_ptr<RootProvider> provider);
   RootProvider *provider(const QString &id) const;
   std::vector<std::shared_ptr<RootItem>> allItems() const { return m_items; }
+  std::vector<std::shared_ptr<RootItem>> fallbackItems() const;
   std::vector<std::shared_ptr<RootItem>> prefixSearch(const QString &query,
                                                       const RootItemPrefixSearchOptions &opts = {});
 
@@ -282,5 +272,6 @@ signals:
   void itemRankingReset(const QString &id) const;
   void itemFavoriteChanged(const QString &id, bool favorite);
   void fallbackEnabled(const QString &id) const;
+  void fallbackOrderChanged(const QString &id) const;
   void fallbackDisabled(const QString &id) const;
 };

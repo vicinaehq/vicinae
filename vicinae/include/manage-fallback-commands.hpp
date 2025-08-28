@@ -1,4 +1,6 @@
 #pragma once
+#include "common.hpp"
+#include "navigation-controller.hpp"
 #include "ui/views/list-view.hpp"
 #include "../src/ui/image/url.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
@@ -12,69 +14,67 @@
 class DisableFallbackAction : public AbstractAction {
   QString m_id;
 
-  // legacy, to be removed
-  void execute(AppWindow &app) override {}
-
-  void execute() override {
-    auto manager = ServiceRegistry::instance()->rootItemManager();
+  void execute(ApplicationContext *ctx) override {
+    auto manager = ctx->services->rootItemManager();
 
     manager->disableFallback(m_id);
   }
 
+  QString title() const override { return "Disable fallback"; }
+  ImageURL icon() const override { return ImageURL::builtin("trash"); }
+
 public:
-  DisableFallbackAction(const QString &id)
-      : AbstractAction("Disable fallback", ImageURL::builtin("trash")), m_id(id) {}
+  DisableFallbackAction(const QString &id) : m_id(id) {}
 };
 
 class MoveFallbackUpAction : public AbstractAction {
   QString m_id;
 
-  // legacy, to be removed
-  void execute(AppWindow &app) override {}
-
-  void execute() override {
-    auto manager = ServiceRegistry::instance()->rootItemManager();
+  void execute(ApplicationContext *ctx) override {
+    auto manager = ctx->services->rootItemManager();
     int pos = manager->itemMetadata(m_id).fallbackPosition;
 
-    manager->setFallback(m_id, std::max(0, pos - 1));
+    manager->moveFallbackUp(m_id);
   }
 
+  QString title() const override { return "Move fallback up"; }
+  ImageURL icon() const override { return ImageURL::builtin("arrow-up"); }
+
 public:
-  MoveFallbackUpAction(const QString &id)
-      : AbstractAction("Move fallback up", ImageURL::builtin("arrow-up")), m_id(id) {}
+  MoveFallbackUpAction(const QString &id) : m_id(id) {}
 };
 
 class MoveFallbackDownAction : public AbstractAction {
   QString m_id;
 
-  void execute(AppWindow &app) override {}
-
-  void execute() override {
-    auto manager = ServiceRegistry::instance()->rootItemManager();
+  void execute(ApplicationContext *ctx) override {
+    auto manager = ctx->services->rootItemManager();
     int pos = manager->itemMetadata(m_id).fallbackPosition;
 
-    manager->setFallback(m_id, pos + 1);
+    manager->moveFallbackDown(m_id);
   }
 
+  QString title() const override { return "Move fallback down"; }
+  ImageURL icon() const override { return ImageURL::builtin("arrow-down"); }
+
 public:
-  MoveFallbackDownAction(const QString &id)
-      : AbstractAction("Move fallback down", ImageURL::builtin("arrow-down")), m_id(id) {}
+  MoveFallbackDownAction(const QString &id) : m_id(id) {}
 };
 
 class EnableFallbackAction : public AbstractAction {
   QString m_id;
 
-  void execute(AppWindow &app) override {}
+  void execute(ApplicationContext *ctx) override {
+    auto manager = ctx->services->rootItemManager();
 
-  void execute() override {
-    auto manager = ServiceRegistry::instance()->rootItemManager();
-
-    manager->setFallback(m_id);
+    manager->enableFallback(m_id);
   }
 
+  QString title() const override { return "Enable fallback"; }
+  ImageURL icon() const override { return ImageURL::builtin("checkmark"); }
+
 public:
-  EnableFallbackAction(const QString &id)
-      : AbstractAction("Enable fallback", ImageURL::builtin("checkmark")), m_id(id) {}
+  EnableFallbackAction(const QString &id) : m_id(id) {}
 };
 
 class FallbackListItem : public AbstractDefaultListItem, public ListView::Actionnable {
@@ -96,24 +96,26 @@ protected:
     return QString("available.%1").arg(m_item->uniqueId());
   }
 
-  QList<AbstractAction *> generateActions() const override {
-    auto manager = ServiceRegistry::instance()->rootItemManager();
+  std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
+    auto panel = std::make_unique<ActionPanelState>();
+    auto manager = ctx->services->rootItemManager();
+    auto section = panel->createSection();
 
     if (manager->isFallback(m_item->uniqueId())) {
       auto disable = new DisableFallbackAction(m_item->uniqueId());
 
       disable->setPrimary(true);
       disable->setShortcut({.key = "return"});
+      section->addAction(disable);
+    } else {
+      auto enable = new EnableFallbackAction(m_item->uniqueId());
 
-      return {disable};
+      enable->setPrimary(true);
+      enable->setShortcut({.key = "return"});
+      section->addAction(enable);
     }
 
-    auto enable = new EnableFallbackAction(m_item->uniqueId());
-
-    enable->setPrimary(true);
-    enable->setShortcut({.key = "return"});
-
-    return {enable};
+    return panel;
   }
 
 public:
@@ -124,35 +126,34 @@ public:
 
 // Overrides item actions when no filtering is applied
 class RootFallbackListItem : public FallbackListItem {
-  /*
-QList<AbstractAction *> generateActions() const override {
-auto manager = ServiceRegistry::instance()->rootItemManager();
-auto metadata = manager->itemMetadata(m_item->uniqueId());
-QList<AbstractAction *> actions;
-int maxFallbackPosition = manager->maxFallbackPosition();
+  std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
+    auto panel = std::make_unique<ActionPanelState>();
+    auto manager = ctx->services->rootItemManager();
+    auto section = panel->createSection();
+    auto metadata = manager->itemMetadata(m_item->uniqueId());
+    int maxFallbackPosition = manager->maxFallbackPosition();
 
-if (metadata.isFallback) {
-auto disableFallback = new DisableFallbackAction(m_item->uniqueId());
+    if (metadata.isFallback()) {
+      auto disableFallback = new DisableFallbackAction(m_item->uniqueId());
 
-disableFallback->setPrimary(true);
-disableFallback->setShortcut({.key = "return"});
-actions << disableFallback;
+      disableFallback->setPrimary(true);
+      disableFallback->setShortcut({.key = "return"});
+      section->addAction(disableFallback);
 
-if (metadata.fallbackPosition > 0) { actions << new MoveFallbackUpAction(m_item->uniqueId()); }
-if (metadata.fallbackPosition < maxFallbackPosition) {
-  actions << new MoveFallbackDownAction(m_item->uniqueId());
-}
-} else {
-auto enableFallback = new EnableFallbackAction(m_item->uniqueId());
+      if (metadata.fallbackPosition > 0) { section->addAction(new MoveFallbackUpAction(m_item->uniqueId())); }
+      if (metadata.fallbackPosition < maxFallbackPosition) {
+        section->addAction(new MoveFallbackDownAction(m_item->uniqueId()));
+      }
+    } else {
+      auto enableFallback = new EnableFallbackAction(m_item->uniqueId());
 
-enableFallback->setPrimary(true);
-enableFallback->setShortcut({.key = "return"});
-actions << enableFallback;
-}
+      enableFallback->setPrimary(true);
+      enableFallback->setShortcut({.key = "return"});
+      section->addAction(enableFallback);
+    }
 
-return actions;
-}
-*/
+    return panel;
+  }
 
 public:
   RootFallbackListItem(const std::shared_ptr<RootItem> &item) : FallbackListItem(item) {}
@@ -160,7 +161,6 @@ public:
 
 class ManageFallbackCommandsView : public ListView {
   void renderList(const QString &text, OmniList::SelectionPolicy selectionPolicy = OmniList::SelectFirst) {
-    qDebug() << "render list";
     QString query = text.trimmed();
     auto itemManager = ServiceRegistry::instance()->rootItemManager();
     auto results = query.isEmpty() ? itemManager->allItems() : itemManager->prefixSearch(query);
@@ -190,7 +190,7 @@ class ManageFallbackCommandsView : public ListView {
     }
 
     auto available = fallbacks | std::views::filter([itemManager](const auto &item) {
-                       return !itemManager->itemMetadata(item->uniqueId()).isFallback;
+                       return !itemManager->isFallback(item->uniqueId());
                      });
 
     auto &availableSection = m_list->addSection("Available");
@@ -203,14 +203,16 @@ class ManageFallbackCommandsView : public ListView {
 
   void textChanged(const QString &text) override { renderList(text); }
 
+  void reloadInPlace() { renderList(searchText(), OmniList::PreserveSelection); }
+
   void initialize() override {
     auto manager = ServiceRegistry::instance()->rootItemManager();
 
+    setSearchPlaceholderText("Manage fallback commands...");
     textChanged("");
-    connect(manager, &RootItemManager::fallbackEnabled, this,
-            [this]() { renderList(searchText(), OmniList::PreserveSelection); });
-    connect(manager, &RootItemManager::fallbackDisabled, this,
-            [this]() { renderList(searchText(), OmniList::PreserveSelection); });
+    connect(manager, &RootItemManager::fallbackEnabled, this, [this]() { reloadInPlace(); });
+    connect(manager, &RootItemManager::fallbackDisabled, this, [this]() { reloadInPlace(); });
+    connect(manager, &RootItemManager::fallbackOrderChanged, this, [this]() { reloadInPlace(); });
   }
 
 public:
