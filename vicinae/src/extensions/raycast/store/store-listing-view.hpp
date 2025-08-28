@@ -1,4 +1,5 @@
 #pragma once
+#include "actions/extension/extension-actions.hpp"
 #include "ui/views/base-view.hpp"
 #include "extensions/raycast/store/store-detail-view.hpp"
 #include "navigation-controller.hpp"
@@ -10,6 +11,7 @@
 #include "ui/action-pannel/action.hpp"
 #include "ui/list-accessory/list-accessory.hpp"
 #include "ui/toast/toast.hpp"
+#include "ui/views/list-view.hpp"
 #include <chrono>
 #include <memory>
 #include <qboxlayout.h>
@@ -93,6 +95,7 @@ public:
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
     auto panel = std::make_unique<ActionPanelState>();
     auto section = panel->createSection();
+    auto danger = panel->createSection();
     auto icon = m_extension.themedIcon();
     auto showExtension = new StaticAction(
         "Show details", ImageURL::builtin("computer-chip"), [ext = m_extension, icon, ctx]() {
@@ -101,9 +104,14 @@ public:
           ctx->navigation->setNavigationIcon(
               ImageURL::builtin("raycast").setBackgroundTint(Omnicast::ACCENT_COLOR));
         });
+    auto uninstall = new UninstallExtensionAction(m_extension.id);
+
+    showExtension->setShortcut(KeyboardShortcutModel::enter());
+    uninstall->setShortcut(KeyboardShortcutModel::cut());
 
     panel->setTitle(m_extension.name);
     section->addAction(showExtension);
+    danger->addAction(uninstall);
     showExtension->setPrimary(true);
 
     return panel;
@@ -119,6 +127,8 @@ class RaycastStoreListingView : public ListView {
   QFutureWatcher<Raycast::ListResult> m_queryResultWatcher;
   QString lastQueryText;
   QTimer m_debounce;
+
+  void refresh() { setSearchText(searchText()); }
 
   void handleDebounce() {
     if (searchText().isEmpty()) return;
@@ -190,6 +200,8 @@ class RaycastStoreListingView : public ListView {
 
 public:
   void initialize() override {
+    auto registry = context()->services->extensionRegistry();
+
     m_store = context()->services->raycastStore();
     setLoading(true);
     setSearchPlaceholderText("Browse Raycast extensions");
@@ -197,6 +209,8 @@ public:
     auto result = m_store->fetchExtensions();
 
     m_listResultWatcher.setFuture(result);
+
+    connect(registry, &ExtensionRegistry::extensionsChanged, this, &RaycastStoreListingView::refresh);
   }
 
   RaycastStoreListingView() {

@@ -1,4 +1,5 @@
 #include "root-search/extensions/extension-root-provider.hpp"
+#include "actions/extension/extension-actions.hpp"
 #include "action-panel/action-panel.hpp"
 #include "actions/fallback-actions.hpp"
 #include "actions/root-search/root-search-actions.hpp"
@@ -7,7 +8,6 @@
 #include "extension/extension-command.hpp"
 #include "navigation-controller.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
-#include "services/toast/toast-service.hpp"
 #include "ui/action-pannel/action.hpp"
 
 QString CommandRootItem::displayName() const { return m_command->name(); }
@@ -18,32 +18,6 @@ QString CommandRootItem::providerId() const { return "command"; }
 bool CommandRootItem::isSuitableForFallback() const { return m_command->isFallback(); }
 double CommandRootItem::baseScoreWeight() const { return 1.1; }
 QString CommandRootItem::typeDisplayName() const { return "Command"; }
-
-ActionPanelView *CommandRootItem::actionPanel(const RootItemMetadata &metadata) const {
-  auto panel = new ActionPanelStaticListView;
-  auto open = new OpenBuiltinCommandAction(m_command, "Open command");
-  auto resetRanking = new ResetItemRanking(uniqueId());
-  auto markAsFavorite = new ToggleItemAsFavorite(uniqueId(), metadata.favorite);
-
-  panel->setTitle(m_command->name());
-  panel->addAction(new DefaultActionWrapper(uniqueId(), open));
-  panel->addSection();
-  panel->addAction(resetRanking);
-  panel->addAction(markAsFavorite);
-
-  auto deeplink = QString("omnicast://extensions/%1/%2/%3")
-                      .arg(m_command->author())
-                      .arg(m_command->extensionId())
-                      .arg(m_command->commandId());
-  auto action = new CopyToClipboardAction(Clipboard::Text(deeplink), "Copy to deeplink");
-
-  panel->addAction(action);
-
-  panel->addSection();
-  panel->addAction(new DisableApplication(uniqueId()));
-
-  return panel;
-}
 
 std::unique_ptr<ActionPanelState> CommandRootItem::newActionPanel(ApplicationContext *ctx,
                                                                   const RootItemMetadata &metadata) {
