@@ -28,8 +28,6 @@ class HorizontalColorPaletteWidget : public QWidget {
 public:
   HorizontalColorPaletteWidget() {}
 
-  void setStrokeColor(const QColor &color) { m_strokeColor = color; }
-
   void setColors(const std::vector<ColorLike> &colors) {
     HStack()
         .spacing(3)
@@ -37,7 +35,7 @@ public:
              [&](const ColorLike &color) {
                auto circle = new ColorCircle({16, 16});
                circle->setColor(color);
-               circle->setStroke(m_strokeColor, 2);
+               circle->setStroke(SemanticColor::TextPrimary, 2);
 
                return circle;
              })
@@ -58,7 +56,6 @@ public:
   void setTitle(const QString &title) { m_title->setText(title); }
   void setDescription(const QString &description) { m_description->setText(description); }
   void setColors(const std::vector<ColorLike> &colors) { m_palette->setColors(colors); }
-  void setStrokeColor(const QColor &color) { m_palette->setStrokeColor(color); }
 
   ThemeItemWidget(QWidget *parent = nullptr) : SelectableOmniListWidget(parent) {
     m_description->setColor(SemanticColor::TextSecondary);
@@ -101,7 +98,6 @@ public:
                                   m_theme.colors.text,    m_theme.colors.subtext};
 
     item->setColors(colors);
-    item->setStrokeColor(m_theme.colors.text);
   }
 
   OmniListItemWidget *createWidget() const override {
