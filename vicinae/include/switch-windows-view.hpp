@@ -145,14 +145,19 @@ public:
     auto &section = m_list->addSection("Open Windows");
 
     for (const auto &win : windows) {
-      if (win->title().contains(s, Qt::CaseInsensitive)) {
-        if (auto app = appDb->findByClass(win->wmClass())) {
-          section.addItem(std::make_unique<AppWindowListItem>(win, app));
-        } else if (auto app = appDb->findById(win->wmClass())) {
-          section.addItem(std::make_unique<AppWindowListItem>(win, app));
-        } else {
-          section.addItem(std::make_unique<UnamedWindowListItem>(win));
-        }
+      auto app = appDb->findByClass(win->wmClass());
+
+      if (!app) { app = appDb->findById(win->wmClass()); }
+
+      bool appMatches = app && app->name().contains(s, Qt::CaseInsensitive);
+      bool matches = appMatches || win->title().contains(s, Qt::CaseInsensitive);
+
+      if (!matches) continue;
+
+      if (app) {
+        section.addItem(std::make_unique<AppWindowListItem>(win, app));
+      } else {
+        section.addItem(std::make_unique<UnamedWindowListItem>(win));
       }
     }
 
