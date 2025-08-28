@@ -19,6 +19,7 @@ void VerticalScrollArea::resizeEvent(QResizeEvent *event) {
 }
 
 VerticalScrollArea::VerticalScrollArea(QWidget *parent) : QScrollArea(parent) {
+  setFocusPolicy(Qt::NoFocus);
   setWidgetResizable(true);
   setVerticalScrollBar(new OmniScrollBar);
   setHorizontalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
