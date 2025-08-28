@@ -490,6 +490,7 @@ set(SRCS
 
 	src/lib/zip/unzip.cpp
 	src/lib/data-uri/data-uri.cpp
+	src/lib/pid-file/pid-file.cpp
 
 	src/ui/hud/hud.hpp
 	src/ui/hud/hud.cpp

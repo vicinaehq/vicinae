@@ -6,6 +6,7 @@
 #include <qstringview.h>
 #include <string>
 #include <unordered_map>
+#include "pid-file/pid-file.hpp"
 #include "proto/extension.pb.h"
 #include "proto/manager.pb.h"
 
@@ -151,6 +152,7 @@ bool ExtensionManager::start() {
   return false;
 #endif
 
+  PidFile pidFile("extension-manager");
   int maxWaitForStart = 5000;
   QFile file(":bin/extension-manager");
 
@@ -173,12 +175,16 @@ bool ExtensionManager::start() {
 
   runtimeFile->write(file.readAll());
 
+  if (pidFile.exists() && pidFile.kill()) { qInfo() << "Killed existing extension manager instance"; }
+
   process.start("node", {runtimeFile->fileName()});
 
   if (!process.waitForStarted(maxWaitForStart)) {
     qCritical() << "Failed to start extension manager" << process.errorString();
     return false;
   }
+
+  pidFile.write(process.processId());
 
   qInfo() << "Started extension manager" << runtimeFile->fileName();
 
