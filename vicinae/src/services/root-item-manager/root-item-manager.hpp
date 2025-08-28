@@ -93,10 +93,6 @@ public:
    * when selected. The first action returned will become the default
    * action.
    */
-  virtual QList<AbstractAction *> actions() const { return {}; }
-
-  virtual ActionPanelView *actionPanel(const RootItemMetadata &metadata) const { return nullptr; }
-
   virtual std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx,
                                                            const RootItemMetadata &metadata) {
     return {};
@@ -105,13 +101,10 @@ public:
   /**
    * Action panel shown when this item is used as a fallback command.
    */
-  virtual ActionPanelView *fallbackActionPanel() const { return nullptr; }
-
-  /**
-   * Alternative list of actions to display in fallback mode.
-   * Calls actions() as its default implementation.
-   */
-  virtual QList<AbstractAction *> fallbackActions() const { return actions(); }
+  virtual std::unique_ptr<ActionPanelState> fallbackActionPanel(ApplicationContext *ctx,
+                                                                const RootItemMetadata &metadata) {
+    return {};
+  }
 
   virtual bool isDefaultDisabled() const { return false; }
 

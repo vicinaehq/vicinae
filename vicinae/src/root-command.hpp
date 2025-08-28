@@ -104,7 +104,12 @@ public:
 class FallbackRootSearchItem : public AbstractDefaultListItem, public ListView::Actionnable {
   std::shared_ptr<RootItem> m_item;
 
-  ActionPanelView *actionPanel() const override { return m_item->fallbackActionPanel(); }
+  std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
+    auto manager = ctx->services->rootItemManager();
+    auto metadata = manager->itemMetadata(m_item->uniqueId());
+
+    return m_item->fallbackActionPanel(ctx, metadata);
+  }
 
   QString generateId() const override { return QString("fallback.%1").arg(m_item->uniqueId()); }
 
