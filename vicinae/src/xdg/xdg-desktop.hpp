@@ -159,7 +159,7 @@ public:
       id += dir.c_str();
       id += '-';
     }
-    id += childPath.stem().c_str();
+    id += childPath.filename().c_str();
   }
 
   struct Action {
