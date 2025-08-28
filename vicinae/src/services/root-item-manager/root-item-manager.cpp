@@ -1,10 +1,21 @@
 #include "root-item-manager.hpp"
-#include "root-command.hpp"
 #include "root-search.hpp"
 #include <bits/chrono.h>
 #include <qlogging.h>
 #include <qobjectdefs.h>
 #include <ranges>
+
+std::vector<std::shared_ptr<RootItem>> RootItemManager::fallbackItems() const {
+  auto items = allItems() |
+               std::views::filter([&](const auto &item) { return isFallback(item->uniqueId()); }) |
+               std::ranges::to<std::vector>();
+
+  std::ranges::sort(items, [&](auto &&a, auto &&b) {
+    return itemMetadata(a->uniqueId()).fallbackPosition < itemMetadata(b->uniqueId()).fallbackPosition;
+  });
+
+  return items;
+}
 
 RootItemMetadata RootItemManager::loadMetadata(const QString &id) {
   RootItemMetadata item;
@@ -12,7 +23,7 @@ RootItemMetadata RootItemManager::loadMetadata(const QString &id) {
 
   query.prepare(R"(
 		SELECT
-			enabled, fallback, fallback_position, alias, rank_visit_count, rank_last_visited_at, provider_id, favorite
+			enabled, fallback_position, alias, rank_visit_count, rank_last_visited_at, provider_id, favorite
 		FROM
 			root_provider_item
 		WHERE id = :id
@@ -27,13 +38,12 @@ RootItemMetadata RootItemManager::loadMetadata(const QString &id) {
   if (!query.next()) { return {}; };
 
   item.isEnabled = query.value(0).toBool();
-  item.isFallback = query.value(1).toBool();
-  item.fallbackPosition = query.value(2).toInt();
-  item.alias = query.value(3).toString();
-  item.visitCount = query.value(4).toInt();
-  item.lastVisitedAt = std::chrono::system_clock::from_time_t(query.value(5).toULongLong());
-  item.providerId = query.value(6).toString();
-  item.favorite = query.value(7).toBool();
+  item.fallbackPosition = query.value(1).toInt();
+  item.alias = query.value(2).toString();
+  item.visitCount = query.value(3).toInt();
+  item.lastVisitedAt = std::chrono::system_clock::from_time_t(query.value(4).toULongLong());
+  item.providerId = query.value(5).toString();
+  item.favorite = query.value(6).toBool();
 
   return item;
 }
@@ -94,14 +104,13 @@ bool RootItemManager::upsertItem(const QString &providerId, const RootItem &item
 
   query.prepare(R"(
 		INSERT INTO 
-			root_provider_item (id, provider_id, enabled, fallback) 
-		VALUES (:id, :provider_id, :enabled, :fallback) 
+			root_provider_item (id, provider_id, enabled) 
+		VALUES (:id, :provider_id, :enabled) 
 		ON CONFLICT(id) DO NOTHING
 	)");
   query.bindValue(":id", item.uniqueId());
   query.bindValue(":provider_id", providerId);
   query.bindValue(":enabled", !item.isDefaultDisabled());
-  query.bindValue(":fallback", item.isDefaultFallback());
 
   if (!query.exec()) {
     qCritical() << "Failed to upsert provider with id" << item.uniqueId() << query.lastError();
@@ -477,7 +486,7 @@ int RootItemManager::maxFallbackPosition() {
   return max;
 }
 
-bool RootItemManager::isFallback(const QString &id) { return itemMetadata(id).fallbackPosition != -1; }
+bool RootItemManager::isFallback(const QString &id) const { return itemMetadata(id).fallbackPosition != -1; }
 
 bool RootItemManager::moveFallbackDown(const QString &id) {
   QSqlQuery query = m_db.createQuery();
@@ -578,12 +587,13 @@ bool RootItemManager::enableFallback(const QString &id) {
   updateQuery.prepare("UPDATE root_provider_item SET fallback_position = :pos WHERE id = :id");
   updateQuery.bindValue(":pos", 0);
   updateQuery.bindValue(":id", id);
+
   if (!updateQuery.exec()) {
     qWarning() << "failed to update" << updateQuery.lastError();
     return false;
   }
+
   m_metadata[id].fallbackPosition = 0;
-  m_metadata[id].isFallback = true;
 
   int normalizedPos = 1;
 
@@ -596,7 +606,6 @@ bool RootItemManager::enableFallback(const QString &id) {
     updateQuery.bindValue(":id", nextId);
     updateQuery.exec();
     m_metadata[nextId].fallbackPosition = normalizedPos;
-    m_metadata[nextId].isFallback = true;
     ++normalizedPos;
   }
 

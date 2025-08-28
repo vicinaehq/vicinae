@@ -384,12 +384,7 @@ class RootSearchView : public ListView {
 
     auto &fallbackSection = m_list->addSection(QString("Use \"%1\" with...").arg(text));
 
-    auto fallbackItems =
-        rootItemManager->allItems() | std::views::filter([rootItemManager](const auto &item) {
-          return rootItemManager->isFallback(item->uniqueId());
-        });
-
-    for (const auto &fallback : fallbackItems) {
+    for (const auto &fallback : rootItemManager->fallbackItems()) {
       fallbackSection.addItem(std::make_unique<FallbackRootSearchItem>(fallback));
     }
 
