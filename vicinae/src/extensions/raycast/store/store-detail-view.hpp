@@ -1,5 +1,5 @@
 #pragma once
-#include "actions/root-search/root-search-actions.hpp"
+#include "actions/extension/extension-actions.hpp"
 #include "ui/views/base-view.hpp"
 #include "common.hpp"
 #include "ui/action-pannel/action.hpp"
