@@ -55,11 +55,10 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
   setupUI();
 
   connect(m_actionPanel, &ActionPanelV2Widget::openChanged, this, [this](bool opened) {
-    if (opened)
+    if (opened) {
       m_ctx.navigation->openActionPanel();
-    else {
+    } else {
       m_ctx.navigation->closeActionPanel();
-      m_header->input()->setFocus();
     }
   });
 
@@ -73,6 +72,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
   connect(m_ctx.navigation.get(), &NavigationController::actionPanelVisibilityChanged, this,
           [this](bool value) {
             if (value) {
+              m_focusWidget = QApplication::focusWidget();
               m_actionVeil->setFixedSize(size());
               m_actionVeil->move(0, 0);
               m_actionVeil->raise();
@@ -81,6 +81,13 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
             } else {
               m_actionVeil->hide();
               m_actionPanel->hide();
+              if (m_focusWidget) {
+                qInfo() << "restore focus to" << m_focusWidget;
+                QTimer::singleShot(0, [this]() {
+                  m_focusWidget->setFocus();
+                  m_focusWidget = nullptr;
+                });
+              }
             }
           });
 
@@ -180,9 +187,8 @@ void LauncherWindow::setupUI() {
 void LauncherWindow::handleDialog(DialogContentWidget *alert) {
   m_dialog->setContent(alert);
   m_ctx.navigation->closeActionPanel();
-  m_header->input()->clearFocus();
   m_dialog->showDialog();
-  m_dialog->setFocus();
+  QTimer::singleShot(0, [this]() { m_dialog->setFocus(); });
 }
 
 void LauncherWindow::handleViewChange(const NavigationController::ViewState &state) {
@@ -199,7 +205,7 @@ bool LauncherWindow::event(QEvent *event) {
     auto keyEvent = static_cast<QKeyEvent *>(event);
 
     if (keyEvent->keyCombination() == QKeyCombination(Qt::ControlModifier, Qt::Key_B)) {
-      m_actionPanel->show();
+      m_ctx.navigation->openActionPanel();
       return true;
     }
 

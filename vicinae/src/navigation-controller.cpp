@@ -51,11 +51,15 @@ void NavigationController::clearSearchText() { setSearchText(""); }
 NavigationController::ViewState::~ViewState() { sender->deleteLater(); }
 
 void NavigationController::openActionPanel() {
+  if (m_isPanelOpened) return;
+
   m_isPanelOpened = true;
   emit actionPanelVisibilityChanged(m_isPanelOpened);
 }
 
 void NavigationController::closeActionPanel() {
+  if (!m_isPanelOpened) return;
+
   m_isPanelOpened = false;
   emit actionPanelVisibilityChanged(m_isPanelOpened);
 }

@@ -7,20 +7,6 @@
 #include <qnamespace.h>
 #include <qpainter.h>
 #include "ui/form/base-input.hpp"
-#include "theme.hpp"
-
-void BaseInput::paintEvent(QPaintEvent *event) {
-  auto &theme = ThemeService::instance().theme();
-  int borderRadius = 6;
-  QPainter painter(this);
-
-  QPen pen(hasFocus() ? theme.colors.inputBorderFocus : theme.colors.inputBorder, 3);
-  painter.setPen(pen);
-  painter.setRenderHint(QPainter::Antialiasing, true);
-  painter.drawRoundedRect(rect(), borderRadius, borderRadius);
-
-  JsonFormItemWidget::paintEvent(event);
-}
 
 bool BaseInput::event(QEvent *event) { return QWidget::event(event); }
 
@@ -30,7 +16,7 @@ void BaseInput::resizeEvent(QResizeEvent *event) {
 }
 
 void BaseInput::recalculate() {
-  QMargins margins{5, 0, 5, 0};
+  QMargins margins = m_defaultTextMargins;
 
   if (leftAccessory && leftAccessory->isVisible()) { margins.setLeft(leftAccessory->width() + 10); }
 
@@ -97,6 +83,8 @@ bool BaseInput::eventFilter(QObject *watched, QEvent *event) {
   return JsonFormItemWidget::eventFilter(watched, event);
 }
 
+void BaseInput::setTextMargins(const QMargins &margins) { m_defaultTextMargins = margins; }
+
 BaseInput::BaseInput(QWidget *parent) : leftAccessory(nullptr), rightAccessory(nullptr) {
   auto layout = new QVBoxLayout;
 
@@ -104,10 +92,12 @@ BaseInput::BaseInput(QWidget *parent) : leftAccessory(nullptr), rightAccessory(n
   layout->addWidget(m_input);
   m_input->setFrame(false);
   m_input->installEventFilter(this);
-  m_input->setContentsMargins(8, 8, 8, 8);
+  m_input->setContentsMargins(0, 0, 0, 0);
   setLayout(layout);
   setFocusProxy(m_input);
   setAttribute(Qt::WA_TranslucentBackground);
+
+  m_input->setProperty("form-input", true); // used for border styling
 
   connect(m_input, &QLineEdit::textChanged, this, &BaseInput::textChanged);
 }
