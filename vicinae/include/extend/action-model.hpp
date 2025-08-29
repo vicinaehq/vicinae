@@ -13,6 +13,10 @@ struct KeyboardShortcutModel {
   static KeyboardShortcutModel removeAll() { return {.key = "X", .modifiers = {"ctrl", "shift"}}; }
   static KeyboardShortcutModel open() { return {.key = "O", .modifiers = {"ctrl"}}; }
   static KeyboardShortcutModel enter() { return {.key = "return"}; }
+
+  bool operator==(const KeyboardShortcutModel &rhs) const {
+    return key == rhs.key && modifiers == rhs.modifiers;
+  }
 };
 
 struct ActionModel {

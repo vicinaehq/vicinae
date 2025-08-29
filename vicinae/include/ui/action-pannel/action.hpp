@@ -2,7 +2,9 @@
 #include "common.hpp"
 #include "extend/action-model.hpp"
 #include "../../../src/ui/image/url.hpp"
+#include "ui/keyboard.hpp"
 #include <qcontainerfwd.h>
+#include <qevent.h>
 #include <qlogging.h>
 #include <qtmetamacros.h>
 
@@ -16,18 +18,36 @@ public:
 private:
   Q_OBJECT
 
+  std::vector<KeyboardShortcutModel> m_shortcuts;
   bool m_primary = false;
-
   Style m_style = Normal;
 
 public:
   mutable QString m_id;
   QString _title;
   ImageURL iconUrl;
-  std::optional<KeyboardShortcutModel> shortcut;
+  // std::optional<KeyboardShortcutModel> shortcut;
   std::function<void(void)> _execCallback;
 
-  void setShortcut(const KeyboardShortcutModel &shortcut) { this->shortcut = shortcut; }
+  void setShortcut(const KeyboardShortcutModel &shortcut) { m_shortcuts = {shortcut}; }
+  void addShortcut(const KeyboardShortcutModel &shortcut) { m_shortcuts.emplace_back(shortcut); }
+
+  /**
+   * First registered keyboard shortcut, sometimes referred as "primary" keyboard shortcut.
+   */
+  std::optional<KeyboardShortcutModel> shortcut() const {
+    if (m_shortcuts.empty()) return std::nullopt;
+
+    return m_shortcuts.front();
+  }
+
+  bool isBoundTo(const QKeyEvent *event) { return isBoundTo(KeyboardShortcut(event)); }
+  bool isBoundTo(const KeyboardShortcutModel &model) { return std::ranges::contains(m_shortcuts, model); }
+  bool isBoundTo(const KeyboardShortcut &shortcut) {
+    return std::ranges::any_of(m_shortcuts,
+                               [&](auto &&model) { return KeyboardShortcut(model) == shortcut; });
+  }
+
   void setExecutionCallback(const std::function<void(void)> &cb) { _execCallback = cb; }
 
   virtual bool isSubmenu() const { return false; }

@@ -285,11 +285,7 @@ AbstractAction *NavigationController::findBoundAction(const QKeyEvent *event) co
 
   for (const auto &section : state->actionPanelState->sections()) {
     for (const auto &action : section->actions()) {
-      if (!action->shortcut) continue;
-
-      KeyboardShortcut shortcut(*action->shortcut);
-
-      if (action->shortcut && shortcut.matchesKeyEvent(event)) { return action.get(); }
+      if (action->isBoundTo(event)) { return action.get(); }
     }
   }
 

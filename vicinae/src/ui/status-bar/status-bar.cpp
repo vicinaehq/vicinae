@@ -50,7 +50,7 @@ void GlobalBar::actionsChanged(const ActionPanelState &actions) {
   if (primaryAction) {
     m_primaryActionButton->setText(primaryAction->title());
     m_primaryActionButton->setShortcut(
-        primaryAction->shortcut.value_or(KeyboardShortcutModel{.key = "return"}));
+        primaryAction->shortcut().value_or(KeyboardShortcutModel{.key = "return"}));
   }
 
   m_primaryActionButton->setVisible(primaryAction);
