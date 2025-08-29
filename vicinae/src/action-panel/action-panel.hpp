@@ -1,11 +1,9 @@
 #pragma once
 #include "common.hpp"
-#include "extend/action-model.hpp"
 #include "navigation-controller.hpp"
 #include "theme.hpp"
 #include "ui/action-pannel/action-list-item.hpp"
 #include "ui/action-pannel/action.hpp"
-#include "ui/keyboard.hpp"
 #include "ui/omni-list/omni-list-item-widget.hpp"
 #include "ui/omni-list/omni-list.hpp"
 #include "ui/popover/popover.hpp"
@@ -143,7 +141,6 @@ protected:
   bool eventFilter(QObject *watched, QEvent *event) override {
     if (watched == m_input && event->type() == QEvent::KeyPress) {
       auto keyEvent = static_cast<QKeyEvent *>(event);
-      auto hasShortcut = [](auto &&ac) { return ac->shortcut.has_value(); };
 
       if (keyEvent->modifiers() == Qt::ControlModifier) {
         switch (keyEvent->key()) {
@@ -175,10 +172,8 @@ protected:
         }
       }
 
-      for (const auto &action : actions() | std::views::filter(hasShortcut)) {
-        KeyboardShortcut shortcut(*action->shortcut);
-
-        if (shortcut.matchesKeyEvent(keyEvent)) {
+      for (const auto &action : actions()) {
+        if (action->isBoundTo(keyEvent)) {
           emit actionActivated(action);
           return true;
         }
