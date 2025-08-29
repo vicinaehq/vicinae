@@ -3,6 +3,7 @@
 #include "ui/views/base-view.hpp"
 #include <qlogging.h>
 #include <qwidget.h>
+#include <QProcessEnvironment>
 
 NavigationController::NavigationController(ApplicationContext &ctx) : m_ctx(ctx) {}
 
@@ -40,8 +41,15 @@ void NavigationController::setLoading(bool value, const BaseView *caller) {
 }
 
 void NavigationController::showHud(const QString &title, const std::optional<ImageURL> &icon) {
+  bool hudDisabled = QProcessEnvironment::systemEnvironment().value("VICINAE_DISABLE_HUD", "0") == "1";
+
   closeWindow();
-  emit showHudRequested(title, icon);
+
+  if (hudDisabled) {
+    qDebug() << "HUD disabled via VICINAE_DISABLE_HUD environment variable, skipping:" << title;
+  } else {
+    emit showHudRequested(title, icon);
+  }
 }
 
 void NavigationController::setDialog(DialogContentWidget *widget) { emit confirmAlertRequested(widget); }
