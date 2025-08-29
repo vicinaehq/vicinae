@@ -1,5 +1,6 @@
 #include "app.hpp"
 #include <iostream>
+#include <iomanip>
 #include "proto/wlr-clipboard.pb.h"
 
 void Clipman::global(WaylandRegistry &reg, uint32_t name, const char *interface, uint32_t version) {
