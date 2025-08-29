@@ -37,7 +37,7 @@ class PasteToFocusedWindowAction : public AbstractAction {
   QString title() const override {
     auto wm = ServiceRegistry::instance()->windowManager();
 
-    if (!wm->provider()->ping()) return _title;
+    if (!wm->provider()->ping()) return m_title;
 
     auto appDb = ServiceRegistry::instance()->appDb();
     auto window = wm->getFocusedWindow();

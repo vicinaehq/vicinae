@@ -239,7 +239,7 @@ class RemoveSelectionAction : public AbstractAction {
 public:
   RemoveSelectionAction(const QString &id)
       : AbstractAction("Remove entry", ImageURL::builtin("trash")), _id(id) {
-    setStyle(AbstractAction::Danger);
+    setStyle(AbstractAction::Style::Danger);
   }
 };
 
@@ -330,7 +330,7 @@ public:
   QString title() const override { return "Remove all"; }
   ImageURL icon() const override { return ImageURL::builtin("trash"); }
 
-  RemoveAllSelectionsAction() { setStyle(AbstractAction::Danger); }
+  RemoveAllSelectionsAction() { setStyle(AbstractAction::Style::Danger); }
 };
 
 class ClipboardHistoryItem : public OmniList::AbstractVirtualItem, public ListView::Actionnable {
@@ -349,7 +349,7 @@ public:
 
     editKeywords->setShortcut({.key = "E", .modifiers = {"ctrl"}});
 
-    remove->setStyle(AbstractAction::Danger);
+    remove->setStyle(AbstractAction::Style::Danger);
     remove->setShortcut({.key = "X", .modifiers = {"ctrl"}});
     removeAll->setShortcut({.key = "X", .modifiers = {"ctrl", "shift"}});
 
