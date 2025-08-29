@@ -54,7 +54,7 @@ public:
 class SystemRunView : public ListView {
   void generateRootSearch() {
     m_list->updateModel([&]() {
-      auto results = m_programDb.programs();
+      auto &results = m_programDb.programs();
       auto &section = m_list->addSection(QString("Programs (%1)").arg(results.size()));
 
       for (const auto &prog : results) {
