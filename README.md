@@ -54,20 +54,34 @@ For more details on installation, usage, configuration, extension development, a
 <p align="center">
   <img
     src=".github/assets/clipboard-history-gruvbox.png"
-    alt="Clipboard History Gruvbox"
+    alt="clipboard history gruvbox"
   />
 </p>
 
 <p align="center">
   <img
-    src=".github/assets/pokemon-night-owl.png"
-    alt="Clipboard History Gruvbox"
+    src=".github/assets/dmenu-run.png"
+    alt="dmenu-style run command"
   />
 </p>
 
 <p align="center">
   <img
-    src=".github/assets/svgl-rosepine-dawn.png"
-    alt="Clipboard History Gruvbox"
+    src=".github/assets/theme-view.png"
+    alt="manage themes view"
+  />
+</p>
+
+<p align="center">
+  <img
+    src=".github/assets/pikachu-detail.png"
+    alt="pikachu detail view from pokemon extension"
+  />
+</p>
+
+<p align="center">
+  <img
+    src=".github/assets/extension-settings.png"
+    alt="extension settings"
   />
 </p>
