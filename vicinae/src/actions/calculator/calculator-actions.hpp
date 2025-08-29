@@ -167,5 +167,5 @@ public:
   QString title() const override { return "Delete all entries"; }
   ImageURL icon() const override { return ImageURL::builtin("trash"); }
 
-  RemoveAllCalculatorHistoryRecordsAction() { setStyle(AbstractAction::Danger); }
+  RemoveAllCalculatorHistoryRecordsAction() { setStyle(AbstractAction::Style::Danger); }
 };

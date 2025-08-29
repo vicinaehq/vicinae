@@ -55,7 +55,7 @@ void ActionListWidget::setAction(const AbstractAction *action) {
   }
   }
 
-  if (auto shortcut = action->shortcut) {
+  if (auto shortcut = action->shortcut()) {
     m_shortcut->setShortcut(*shortcut);
     m_shortcut->show();
   } else {

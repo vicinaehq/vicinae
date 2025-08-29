@@ -123,9 +123,16 @@ public:
 
   KeyboardShortcut(Qt::Key key) : key(key) {}
 
+  KeyboardShortcut(const QKeyEvent *event)
+      : key(static_cast<Qt::Key>(event->key())), modifiers(event->modifiers()) {}
+
   KeyboardShortcut &withModifier(Qt::KeyboardModifier mod) {
     modifiers.setFlag(mod);
     return *this;
+  }
+
+  bool operator==(const KeyboardShortcut &other) const {
+    return key == other.key && modifiers.toInt() == other.modifiers.toInt();
   }
 
   KeyboardShortcut() {}

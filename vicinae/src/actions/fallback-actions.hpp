@@ -4,8 +4,6 @@
 #include "ui/action-pannel/action.hpp"
 
 class ManageFallbackActions : public AbstractAction {
-  void execute(AppWindow &app) override {}
-
   void execute(ApplicationContext *ctx) override {
     auto view = new ManageFallbackCommandsView();
 
