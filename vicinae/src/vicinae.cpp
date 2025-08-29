@@ -1,6 +1,7 @@
 #include "vicinae.hpp"
 #include "utils/utils.hpp"
 #include <qprocess.h>
+#include <ranges>
 
 namespace fs = std::filesystem;
 
@@ -36,6 +37,26 @@ std::vector<fs::path> Omnicast::xdgConfigDirs() {
     fs::path path = dir.toStdString();
 
     if (std::ranges::contains(seen, path)) { continue; }
+
+    seen.insert(path);
+    paths.emplace_back(path);
+  }
+
+  return paths;
+}
+
+std::vector<fs::path> Omnicast::systemPaths() {
+  const char *path = getenv("PATH");
+
+  if (!path) return {};
+
+  std::set<fs::path> seen;
+  std::vector<fs::path> paths;
+
+  for (const auto &part : std::views::split(std::string_view(path), std::string_view(":"))) {
+    fs::path path = std::string_view(part);
+
+    if (std::ranges::contains(seen, path)) continue;
 
     seen.insert(path);
     paths.emplace_back(path);

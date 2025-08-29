@@ -3,6 +3,7 @@
 #include "omni-database.hpp"
 #include <filesystem>
 #include <qfilesystemwatcher.h>
+#include <ranges>
 
 namespace fs = std::filesystem;
 
@@ -36,7 +37,30 @@ std::unique_ptr<AbstractAppDatabase> AppService::createLocalProvider() {
 }
 
 std::shared_ptr<Application> AppService::terminalEmulator() const {
-  return m_provider->findBestOpenerForMime("x-scheme-handler/terminal");
+  if (auto emulator = m_provider->findBestOpenerForMime("x-scheme-handler/terminal")) { return emulator; }
+
+  auto isTerminal = [](auto &&app) { return app->isTerminalEmulator(); };
+  auto result = list() | std::views::filter(isTerminal) | std::views::take(1);
+
+  if (result.empty()) return nullptr;
+
+  return *result.begin();
+}
+
+bool AppService::launchRaw(const QString &prog, const std::vector<QString> &args) {
+  QProcess process;
+
+  process.setProgram(prog);
+  process.setArguments(args | std::ranges::to<QStringList>());
+  process.setStandardOutputFile(QProcess::nullDevice());
+  process.setStandardErrorFile(QProcess::nullDevice());
+
+  if (!process.startDetached()) {
+    qWarning() << "Failed to start app" << prog << args << process.errorString();
+    return false;
+  }
+
+  return true;
 }
 
 std::shared_ptr<Application> AppService::findById(const QString &id) const {
