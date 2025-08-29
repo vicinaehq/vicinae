@@ -91,7 +91,7 @@ bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
         processedIds.insert(desktopEntry.id);
 
         addDesktopFile(entry.path(), desktopEntry);
-      } catch(std::exception &except) {
+      } catch (std::exception &except) {
         qWarning() << "Failed to parse app at" << entry.path() << except.what();
       }
     }
@@ -308,17 +308,28 @@ bool XdgAppDatabase::launch(const Application &app, const std::vector<QString> &
     offset = 1;
   }
 
+  bool injected = false;
+
   for (size_t i = offset; i != exec.size(); ++i) {
     auto &part = exec.at(i);
 
     if (part == "%u" || part == "%f") {
       if (!args.empty()) argv << args.at(0);
+      injected = true;
     } else if (part == "%U" || part == "%F") {
       for (const auto &arg : args) {
         argv.push_back(arg);
       }
+      injected = true;
     } else {
       argv << part;
+    }
+  }
+
+  // if no injection was possible, we simply append the args
+  if (!injected) {
+    for (const auto &arg : args) {
+      argv << arg;
     }
   }
 
@@ -350,23 +361,23 @@ AppPtr XdgAppDatabase::findByClass(const QString &name) const {
 std::vector<AppPtr> XdgAppDatabase::list() const { return {apps.begin(), apps.end()}; }
 
 void XdgAppDatabase::addDesktopFile(const fs::path &path, const XdgDesktopEntry &ent) {
-  
+
   // we should not track hidden apps as they are explictly removed, unlike apps with NoDisplay
   // see: https://specifications.freedesktop.org/desktop-entry-spec/latest/recognized-keys.html
   if (ent.hidden) return;
-  
+
   auto entry = std::make_shared<XdgApplication>(path, ent);
-  
+
   for (const auto &mimeName : ent.mimeType) {
-  mimeToApps[mimeName].insert(entry->id());
-  appToMimes[entry->id()].insert(mimeName);
+    mimeToApps[mimeName].insert(entry->id());
+    appToMimes[entry->id()].insert(mimeName);
   }
-  
+
   apps.push_back(entry);
   appMap.insert({entry->id(), entry});
-  
+
   for (const auto &action : entry->actions()) {
-  appMap.insert({action->id(), action});
+    appMap.insert({action->id(), action});
   }
 }
 

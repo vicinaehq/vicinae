@@ -13,6 +13,10 @@
 class XdgApplicationBase : public Application {
 public:
   virtual std::vector<QString> exec() const = 0;
+  QString program() const override {
+    auto ss = exec();
+    return ss.empty() ? QString() : ss.at(0);
+  }
 };
 
 class XdgApplicationAction : public XdgApplicationBase {
