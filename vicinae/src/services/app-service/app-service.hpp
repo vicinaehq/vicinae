@@ -39,6 +39,12 @@ public:
    */
   bool launch(const Application &app, const std::vector<QString> &args = {}) const;
 
+  /**
+   * Launch a new process using arbitrary prog name and args. No expansion of any kind
+   * will be performed.
+   */
+  bool launchRaw(const QString &prog, const std::vector<QString> &args);
+
   std::vector<std::filesystem::path> defaultSearchPaths() const;
 
   /**

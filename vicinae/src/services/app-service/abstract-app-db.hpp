@@ -19,6 +19,7 @@ public:
   virtual std::vector<std::shared_ptr<Application>> actions() const { return {}; }
   virtual std::vector<QString> keywords() const { return {}; }
   virtual std::filesystem::path path() const = 0;
+  virtual QString program() const = 0;
 
   /**
    * Current version of the installed application (if applicable)

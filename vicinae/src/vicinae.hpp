@@ -35,6 +35,8 @@ std::filesystem::path pidFile();
 std::filesystem::path dataDir();
 std::filesystem::path configDir();
 
+std::vector<std::filesystem::path> systemPaths();
+
 /**
  * Reads XDG_CONFIG_HOME and XDG_CONFIG_DIRS and returns a vector such as
  * [XDG_CONFIG_HOME, ...XDG_CONFIG_DIRS].
