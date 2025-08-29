@@ -9,6 +9,7 @@ struct KeyboardShortcutModel {
 
   static KeyboardShortcutModel submit() { return {.key = "return", .modifiers = {"shift"}}; }
   static KeyboardShortcutModel cut() { return {.key = "X", .modifiers = {"ctrl"}}; }
+  static KeyboardShortcutModel open() { return {.key = "O", .modifiers = {"ctrl"}}; }
   static KeyboardShortcutModel enter() { return {.key = "return"}; }
 };
 

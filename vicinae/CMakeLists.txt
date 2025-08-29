@@ -549,6 +549,9 @@ set(SRCS
 	src/ui/form/directory-input.cpp
 
 	src/services/window-manager/abstract-window-manager.hpp
+
+	src/lib/program-db/program-db.hpp
+	src/lib/program-db/program-db.cpp
 ) 
 
 if (TYPESCRIPT_EXTENSIONS)
