@@ -25,6 +25,7 @@
 #include <qsharedpointer.h>
 #include <qtimer.h>
 #include <qtmetamacros.h>
+#include "ui/form/form.hpp"
 #include <qtypes.h>
 #include <qvariant.h>
 #include <qwidget.h>
@@ -118,7 +119,7 @@ public:
   CompletionListItem(const LinkDynamicPlaceholder &data) : m_data(data) {}
 };
 
-class ShortcutFormView : public FormView {
+class ShortcutFormView : public ManagedFormView {
   std::vector<LinkDynamicPlaceholder> mainLinkArguments{
       LinkDynamicPlaceholder{
           .icon = ImageURL::builtin("text-cursor"), .title = "Selected Text", .id = "selected"},
@@ -279,7 +280,6 @@ class ShortcutFormView : public FormView {
   }
 
 protected:
-  FormWidget *form;
   BaseInput *name;
   CompletedInput *link;
   SelectorInput *appSelector;
@@ -290,7 +290,7 @@ public:
   void blurLink() { handleLinkBlurred(); }
 
   ShortcutFormView()
-      : form(new FormWidget), name(new BaseInput), link(new CompletedInput), appSelector(new SelectorInput),
+      : name(new BaseInput), link(new CompletedInput), appSelector(new SelectorInput),
         iconSelector(new SelectorInput) {
     Timer timer;
     name->setPlaceholderText("Shortcut Name");
@@ -312,10 +312,10 @@ public:
     iconField->setName("Icon");
     iconField->setWidget(iconSelector, iconSelector->focusNotifier());
 
-    form->addField(nameField);
-    form->addField(linkField);
-    form->addField(openField);
-    form->addField(iconField);
+    form()->addField(nameField);
+    form()->addField(linkField);
+    form()->addField(openField);
+    form()->addField(iconField);
 
     connect(link, &CompletedInput::textChanged, this, &ShortcutFormView::handleLinkChange);
     connect(linkField, &FormField::blurred, this, &ShortcutFormView::handleLinkBlurred);
@@ -329,8 +329,7 @@ public:
               insertLinkPlaceholder(completion.argument());
             });
 
-    form->setContentsMargins(0, 10, 0, 0);
-    setupUI(form);
+    form()->setContentsMargins(0, 10, 0, 0);
   }
 
   void initializeIconSelector() {
@@ -375,7 +374,7 @@ public:
   void initializeForm() override {
     initializeAppSelector();
     initializeIconSelector();
-    QTimer::singleShot(0, this, [this]() { form->focusFirst(); });
+    QTimer::singleShot(0, this, [this]() { form()->focusFirst(); });
   }
 
   void onSubmit() override {
@@ -383,21 +382,21 @@ public:
     auto toast = context()->services->toastService();
 
     if (link->text().isEmpty()) {
-      form->setError(link, "Required");
+      form()->setError(link, "Required");
       return;
     }
 
     auto item = static_cast<const AppSelectorItem *>(appSelector->value());
 
     if (!item) {
-      form->setError(appSelector, "Required");
+      form()->setError(appSelector, "Required");
       return;
     }
 
     auto icon = static_cast<const IconSelectorItem *>(iconSelector->value());
 
     if (!icon) {
-      form->setError(iconSelector, "Required");
+      form()->setError(iconSelector, "Required");
       return;
     }
 
@@ -434,14 +433,14 @@ public:
     auto item = static_cast<const AppSelectorItem *>(appSelector->value());
 
     if (!item) {
-      form->setError(appSelector, "Required");
+      form()->setError(appSelector, "Required");
       return;
     }
 
     auto icon = static_cast<const IconSelectorItem *>(iconSelector->value());
 
     if (!icon) {
-      form->setError(iconSelector, "Required");
+      form()->setError(iconSelector, "Required");
       return;
     }
 
@@ -487,14 +486,14 @@ public:
     auto item = static_cast<const AppSelectorItem *>(appSelector->value());
 
     if (!item) {
-      form->setError(appSelector, "Required");
+      form()->setError(appSelector, "Required");
       return;
     }
 
     auto icon = static_cast<const IconSelectorItem *>(iconSelector->value());
 
     if (!icon) {
-      form->setError(iconSelector, "Required");
+      form()->setError(iconSelector, "Required");
       return;
     }
 

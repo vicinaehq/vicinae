@@ -1,4 +1,5 @@
 #include "list-view.hpp"
+#include "navigation-controller.hpp"
 #include "ui/omni-list/omni-list.hpp"
 #include "ui/views/base-view.hpp"
 #include "ui/empty-view/empty-view.hpp"
@@ -43,6 +44,8 @@ void ListView::itemSelected(const OmniList::AbstractVirtualItem *item) {}
 
 void ListView::selectionChanged(const OmniList::AbstractVirtualItem *next,
                                 const OmniList::AbstractVirtualItem *previous) {
+  auto &nav = context()->navigation;
+
   if (!next) {
     m_split->setDetailVisibility(false);
     return;
@@ -58,9 +61,9 @@ void ListView::selectionChanged(const OmniList::AbstractVirtualItem *next,
     }
 
     if (auto completer = nextItem->createCompleter(); completer && completer->arguments.size() > 0) {
-      context()->navigation->createCompletion(completer->arguments, completer->iconUrl);
+      nav->createCompletion(completer->arguments, completer->iconUrl);
     } else {
-      context()->navigation->destroyCurrentCompletion();
+      nav->destroyCurrentCompletion();
     }
 
     // TODO: only expect suffix and automatically use command name from prefix
@@ -69,8 +72,10 @@ void ListView::selectionChanged(const OmniList::AbstractVirtualItem *next,
       //
     }
 
-    context()->navigation->setActions(nextItem->newActionPanel(context()));
+    auto panel = nextItem->newActionPanel(context());
 
+    panel->setShortcutPreset(ActionPanelState::ShortcutPreset::List);
+    nav->setActions(std::move(panel));
   } else {
     m_split->setDetailVisibility(false);
     context()->navigation->destroyCurrentCompletion();

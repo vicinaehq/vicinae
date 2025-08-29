@@ -5,7 +5,9 @@
 #include "ui/action-pannel/action.hpp"
 #include "ui/dialog/dialog.hpp"
 #include <QString>
+#include <google/protobuf/message.h>
 #include <qevent.h>
+#include <ranges>
 
 class BaseView;
 class DialogContentWidget;
@@ -35,19 +37,24 @@ struct PopToRootOptions {
   bool clearSearch = true;
 };
 
-struct ActionPanelState : public NonCopyable {
-  AbstractAction *findPrimaryAction() const {
-    for (const auto &section : m_sections) {
-      for (const auto &action : section->actions()) {
-        if (action->isPrimary()) return action.get();
-      }
-    }
+class ActionPanelState : public NonCopyable {
+public:
+  enum class ShortcutPreset {
+    None,
+    List,
+    Form,
+  };
 
-    return nullptr;
+  AbstractAction *primaryAction() const { return m_primary; }
+
+  /**
+   * Apply shortcut presets and other things that need to be computed
+   * at a given time.
+   */
+  void finalize() {
+    computePrimaryAction();
+    applyShortcuts();
   }
-
-  QString m_title;
-  std::vector<std::unique_ptr<ActionPanelSectionState>> m_sections;
 
   const std::vector<std::unique_ptr<ActionPanelSectionState>> &sections() const { return m_sections; }
 
@@ -61,8 +68,77 @@ struct ActionPanelState : public NonCopyable {
     return handle;
   }
 
+  /**
+   * The first action will be considered as the primary one, unless another
+   * action was explicitly marked as primary.
+   */
+  void setAutoSelectPrimary(bool value = true) { m_autoSelectPrimary = value; }
+
   void setTitle(const QString &title) { m_title = title; }
   QString title() const { return m_title; }
+
+  void setShortcutPreset(ShortcutPreset preset) { m_defaultShortcuts = shortcutsForPreset(preset); }
+
+  ActionPanelState() { setShortcutPreset(ShortcutPreset::None); }
+
+private:
+  void computePrimaryAction() {
+    AbstractAction *first = nullptr;
+
+    for (const auto &section : m_sections) {
+      for (const auto &action : section->actions()) {
+        if (!first) first = action.get();
+        if (action->isPrimary()) {
+          m_primarySection = section.get();
+          m_primary = action.get();
+          return;
+        }
+      }
+    }
+
+    m_primary = m_autoSelectPrimary ? first : nullptr;
+    m_primarySection = !m_sections.empty() ? m_sections.front().get() : nullptr;
+  }
+
+  void applyShortcuts() {
+    if (!m_primarySection) return;
+
+    auto actions = m_primarySection->actions();
+
+    for (const auto &[action, shortcut] : std::views::zip(actions, m_defaultShortcuts)) {
+      action->setShortcut(shortcut);
+    }
+  }
+
+  std::vector<KeyboardShortcutModel> shortcutsForPreset(ShortcutPreset preset) {
+    switch (preset) {
+    case ShortcutPreset::List:
+      return {KeyboardShortcutModel::enter(), KeyboardShortcutModel::submit()};
+    case ShortcutPreset::Form:
+      return {KeyboardShortcutModel::submit()};
+    default:
+      break;
+    }
+
+    return {KeyboardShortcutModel::enter()};
+  }
+
+  bool m_autoSelectPrimary = true;
+  QString m_title;
+  std::vector<std::unique_ptr<ActionPanelSectionState>> m_sections;
+  std::vector<KeyboardShortcutModel> m_defaultShortcuts;
+  AbstractAction *m_primary = nullptr;
+  ActionPanelSectionState *m_primarySection = nullptr;
+};
+
+class ListActionPanelState : public ActionPanelState {
+public:
+  ListActionPanelState() { setShortcutPreset(ShortcutPreset::List); }
+};
+
+class FormActionPanelState : public ActionPanelState {
+public:
+  FormActionPanelState() { setShortcutPreset(ShortcutPreset::Form); }
 };
 
 using ArgumentValues = std::vector<std::pair<QString, QString>>;

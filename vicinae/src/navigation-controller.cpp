@@ -229,7 +229,7 @@ bool NavigationController::executePrimaryAction() {
 
   if (!panel) return false;
 
-  auto action = panel->findPrimaryAction();
+  auto action = panel->primaryAction();
 
   if (!action) return false;
 
@@ -343,6 +343,9 @@ void NavigationController::setActions(std::unique_ptr<ActionPanelState> panel, c
     qWarning() << "setActions called with a null pointer";
     return;
   }
+
+  // Important: apply default shortcuts, select primary action...
+  panel->finalize();
 
   if (auto state = findViewState(VALUE_OR(caller, topView()))) {
     state->actionPanelState = std::move(panel);
