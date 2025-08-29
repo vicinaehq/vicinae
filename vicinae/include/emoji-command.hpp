@@ -14,7 +14,6 @@
 #include "services/emoji-service/emoji-service.hpp"
 #include "ui/action-pannel/action-item.hpp"
 #include "ui/action-pannel/action.hpp"
-#include "ui/form/base-input.hpp"
 #include "ui/form/form-field.hpp"
 #include "ui/form/form.hpp"
 #include "ui/image/image.hpp"
@@ -32,13 +31,11 @@
 #include <qtmetamacros.h>
 #include <qwidget.h>
 #include <unistd.h>
+#include "ui/form/text-area.hpp"
 
-class EditEmojiKeywordsView : public FormView {
-  FormWidget *m_form = new FormWidget;
-  BaseInput *m_keywords = new BaseInput;
+class EditEmojiKeywordsView : public ManagedFormView {
+  TextArea *m_keywords = new TextArea;
   std::string_view m_emoji;
-
-  void onActivate() override { m_form->focusFirst(); }
 
   void onSubmit() override {
     auto emojiService = context()->services->emojiService();
@@ -65,9 +62,8 @@ public:
 
     inputField->setWidget(m_keywords);
     inputField->setName("Keywords");
-
-    m_form->addField(inputField);
-    setupUI(m_form);
+    inputField->setInfo("Additional keywords that will be used to index this emoji.");
+    form()->addField(inputField);
   }
 };
 
@@ -207,6 +203,8 @@ public:
     auto editKeywords = new EditEmojiKeywordsAction(info.emoji);
     auto resetRanking = new ResetEmojiRankingAction(info.emoji);
     auto mainSection = panel->createSection();
+
+    editKeywords->setShortcut(KeyboardShortcutModel::edit());
 
     if (wm->canPaste()) {
       auto paste = new PasteEmojiAction(info.emoji);

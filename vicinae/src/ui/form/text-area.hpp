@@ -1,3 +1,4 @@
+#pragma once
 #include "common.hpp"
 #include "ui/focus-notifier.hpp"
 #include <qcoreevent.h>

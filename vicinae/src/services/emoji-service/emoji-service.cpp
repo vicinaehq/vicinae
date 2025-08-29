@@ -187,8 +187,6 @@ bool EmojiService::setCustomKeywords(std::string_view emoji, const QString &keyw
     return false;
   }
 
-  qCritical() << "updated keywords for" << emoji;
-
   // hot reload index
 
   if (oldMetadata.data && !oldMetadata.keywords.isEmpty()) {

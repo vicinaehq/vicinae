@@ -45,7 +45,7 @@ void GlobalBar::resizeEvent(QResizeEvent *event) {
 void GlobalBar::handleActionPanelVisiblityChange(bool visible) { m_actionButton->hoverChanged(visible); }
 
 void GlobalBar::actionsChanged(const ActionPanelState &actions) {
-  auto primaryAction = actions.findPrimaryAction();
+  auto primaryAction = actions.primaryAction();
 
   if (primaryAction) {
     m_primaryActionButton->setText(primaryAction->title());

@@ -1,16 +1,18 @@
 #pragma once
+#include "emoji-command.hpp"
 #include "navigation-controller.hpp"
 #include "services/clipboard/clipboard-db.hpp"
 #include "ui/alert/alert.hpp"
 #include "ui/action-pannel/push-action.hpp"
+#include "ui/preference-dropdown/preference-dropdown.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
 #include "ui/views/base-view.hpp"
 #include "clipboard-actions.hpp"
-#include "settings/command-metadata-settings-detail.hpp"
 #include "theme.hpp"
-#include "services/root-item-manager/root-item-manager.hpp"
 #include "ui/form/selector-input.hpp"
 #include "ui/selectable-omni-list-widget/selectable-omni-list-widget.hpp"
 #include "ui/views/form-view.hpp"
+#include "ui/views/simple-view.hpp"
 #include "utils/layout.hpp"
 #include "ui/empty-view/empty-view.hpp"
 #include "common.hpp"
@@ -262,12 +264,9 @@ public:
       : AbstractAction(value ? "Pin" : "Unpin", ImageURL::builtin("pin")), _id(id), _value(value) {}
 };
 
-class EditClipboardSelectionKeywordsView : public FormView {
-  FormWidget *m_form = new FormWidget;
-  BaseInput *m_keywords = new BaseInput;
+class EditClipboardSelectionKeywordsView : public ManagedFormView {
+  TextArea *m_keywords = new TextArea;
   QString m_selectionId;
-
-  void onActivate() override { m_form->focusFirst(); }
 
   void onSubmit() override {
     auto clipman = context()->services->clipman();
@@ -285,7 +284,6 @@ class EditClipboardSelectionKeywordsView : public FormView {
     auto clipman = context()->services->clipman();
 
     m_keywords->setText(clipman->retrieveKeywords(m_selectionId).value_or(""));
-    QTimer::singleShot(0, this, [this]() { m_form->focusFirst(); });
   }
 
 public:
@@ -294,9 +292,9 @@ public:
 
     inputField->setWidget(m_keywords);
     inputField->setName("Keywords");
+    inputField->setInfo("Additional keywords that will be used to index this selection.");
 
-    m_form->addField(inputField);
-    setupUI(m_form);
+    form()->addField(inputField);
   }
 };
 
