@@ -2,42 +2,56 @@
 #include "common.hpp"
 #include "extend/action-model.hpp"
 #include "../../../src/ui/image/url.hpp"
+#include "ui/keyboard.hpp"
 #include <qcontainerfwd.h>
+#include <qevent.h>
 #include <qlogging.h>
 #include <qtmetamacros.h>
 
 class AppWindow;
 class ActionPanelView;
 
-class AbstractAction : public QObject, public NonCopyable {
+/**
+ * The base class any action shown in the action panel inherits from.
+ *
+ * An action is often made of a title, icon, and one or many shortcuts bound to it.
+ *
+ * It must also implement the `execute` function that will execute the actual logic when
+ * selected by the user as the action to run.
+ * </br>
+ * Note that although binding many shortcuts for a same action is possible, you should generally try to
+ * avoid doing so for the sake of clarity.
+ *
+ * Also, note that only the first shortcut will be shown in the UI.
+ */
+class AbstractAction : public NonCopyable {
 public:
-  enum Style { Normal, Danger };
+  enum class Style { Normal, Danger };
 
-private:
-  Q_OBJECT
+  void setShortcut(const KeyboardShortcutModel &shortcut) { m_shortcuts = {shortcut}; }
+  void addShortcut(const KeyboardShortcutModel &shortcut) { m_shortcuts.emplace_back(shortcut); }
 
-  bool m_primary = false;
+  /**
+   * First registered keyboard shortcut, sometimes referred as "primary" keyboard shortcut.
+   */
+  std::optional<KeyboardShortcutModel> shortcut() const {
+    if (m_shortcuts.empty()) return std::nullopt;
 
-  Style m_style = Normal;
+    return m_shortcuts.front();
+  }
 
-public:
-  mutable QString m_id;
-  QString _title;
-  ImageURL iconUrl;
-  std::optional<KeyboardShortcutModel> shortcut;
-  std::function<void(void)> _execCallback;
+  bool isBoundTo(const QKeyEvent *event) { return isBoundTo(KeyboardShortcut(event)); }
+  bool isBoundTo(const KeyboardShortcutModel &model) { return std::ranges::contains(m_shortcuts, model); }
+  bool isBoundTo(const KeyboardShortcut &shortcut) {
+    return std::ranges::any_of(m_shortcuts,
+                               [&](auto &&model) { return KeyboardShortcut(model) == shortcut; });
+  }
 
-  void setShortcut(const KeyboardShortcutModel &shortcut) { this->shortcut = shortcut; }
-  void setExecutionCallback(const std::function<void(void)> &cb) { _execCallback = cb; }
-
+  // Note: submenu are currently not implemented and a good implementation will require
+  // good thinking on how to handle state (especially regarding extensions).
   virtual bool isSubmenu() const { return false; }
   virtual ActionPanelView *createSubmenu() const { return nullptr; }
 
-  /**
-   * Whether this action is a candidate to be primary action.
-   * The first primary action found (in order) is usually used as THE
-   * primary action.
-   */
   bool isPrimary() const { return m_primary; }
 
   void setPrimary(bool value) { m_primary = value; }
@@ -50,24 +64,27 @@ public:
     return m_id;
   }
 
-  std::function<void(void)> executionCallback() const { return _execCallback; }
-
-  virtual QString title() const { return _title; }
-  virtual ImageURL icon() const { return iconUrl; }
+  virtual QString title() const { return m_title; }
+  virtual ImageURL icon() const { return m_icon; }
 
   AbstractAction() {}
-  AbstractAction(const QString &title, const ImageURL &icon) : _title(title), iconUrl(icon) {}
+  AbstractAction(const QString &title, const ImageURL &icon) : m_title(title), m_icon(icon) {}
 
-  virtual void execute(AppWindow &app) {}
-  virtual void execute() { qWarning() << "Default execute"; }
   virtual void execute(ApplicationContext *context) {}
 
   virtual bool isPushView() const { return false; }
 
   ~AbstractAction() {}
 
-signals:
-  void didExecute();
+protected:
+  QString m_title;
+  ImageURL m_icon;
+  Style m_style = Style::Normal;
+  std::vector<KeyboardShortcutModel> m_shortcuts;
+  bool m_primary = false;
+
+private:
+  mutable QString m_id;
 };
 
 struct StaticAction : public AbstractAction {
@@ -89,7 +106,7 @@ public:
 class SubmitAction : public AbstractAction {
   std::function<void(void)> m_fn;
 
-  void execute() override {
+  void execute(ApplicationContext *ctx) override {
     if (m_fn) m_fn();
   }
 

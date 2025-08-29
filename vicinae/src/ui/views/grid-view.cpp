@@ -60,7 +60,10 @@ void GridView::selectionChanged(const OmniList::AbstractVirtualItem *next,
   }
 
   if (auto nextItem = dynamic_cast<const Actionnable *>(next)) {
-    setActions(nextItem->newActionPanel(context()));
+    auto panel = nextItem->newActionPanel(context());
+
+    panel->setShortcutPreset(ActionPanelState::ShortcutPreset::List);
+    setActions(std::move(panel));
     applyActionnable(nextItem);
   } else {
     context()->navigation->clearActions(this);

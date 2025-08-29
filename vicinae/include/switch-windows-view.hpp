@@ -35,7 +35,7 @@ class CloseWindowAction : public AbstractAction {
 public:
   CloseWindowAction(const std::shared_ptr<AbstractWindowManager::AbstractWindow> &window)
       : AbstractAction("Close window", ImageURL::builtin("xmark")), _window(window) {
-    setStyle(AbstractAction::Danger);
+    setStyle(AbstractAction::Style::Danger);
   }
 };
 

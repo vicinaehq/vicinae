@@ -93,8 +93,6 @@ public:
 class OpenShortcutFromSearchText : public AbstractAction {
   std::shared_ptr<Shortcut> m_shortcut;
 
-  void execute(AppWindow &app) override {}
-
   void execute(ApplicationContext *ctx) override {
     OpenShortcutAction open(m_shortcut, {ctx->navigation->searchText()});
 
@@ -123,8 +121,6 @@ public:
 struct RemoveShortcutAction : public AbstractAction {
   std::shared_ptr<Shortcut> m_shortcut;
 
-  void execute(AppWindow &app) override {}
-
 public:
   void execute(ApplicationContext *ctx) override {
     auto shortcutDb = ctx->services->shortcuts();
@@ -140,7 +136,7 @@ public:
 
   RemoveShortcutAction(const std::shared_ptr<Shortcut> &link)
       : AbstractAction("Remove link", ImageURL::builtin("trash")), m_shortcut(link) {
-    setStyle(AbstractAction::Danger);
+    setStyle(AbstractAction::Style::Danger);
     setShortcut({.key = "X", .modifiers = {"ctrl", "shift"}});
   }
 };
@@ -184,23 +180,26 @@ class OpenCompletedShortcutWithAction : public AbstractAction {
   bool isSubmenu() const override { return true; }
 
   ActionPanelView *createSubmenu() const override {
-    auto appDb = ServiceRegistry::instance()->appDb();
-    auto apps = appDb->findOpeners(m_shortcut->url());
-    auto mapAction = [&](auto &&app) { return new OpenAction(m_shortcut, app); };
-    auto panel = new ActionPanelStaticListView();
-    bool hasShortcutAction =
-        std::ranges::any_of(apps, [&](auto &&app) { return m_shortcut->app() == app->id(); });
+    /*
+auto appDb = ServiceRegistry::instance()->appDb();
+auto apps = appDb->findOpeners(m_shortcut->url());
+auto mapAction = [&](auto &&app) { return new OpenAction(m_shortcut, app); };
+auto panel = new ActionPanelStaticListView();
+bool hasShortcutAction =
+  std::ranges::any_of(apps, [&](auto &&app) { return m_shortcut->app() == app->id(); });
 
-    panel->setTitle("Open with...");
+panel->setTitle("Open with...");
 
-    if (!hasShortcutAction) {
-      if (auto app = appDb->findById(m_shortcut->app())) { panel->addAction(mapAction(app)); }
-    }
+if (!hasShortcutAction) {
+if (auto app = appDb->findById(m_shortcut->app())) { panel->addAction(mapAction(app)); }
+}
 
-    std::ranges::for_each(apps | std::views::transform(mapAction),
-                          [&](auto &&action) { panel->addAction(action); });
+std::ranges::for_each(apps | std::views::transform(mapAction),
+                    [&](auto &&action) { panel->addAction(action); });
 
-    return panel;
+return panel;
+  */
+    return nullptr;
   }
 
 public:

@@ -11,5 +11,5 @@ class UninstallExtensionAction : public AbstractAction {
   QString title() const override { return "Uninstall Extension"; }
 
 public:
-  UninstallExtensionAction(const QString &id) : m_id(id) { setStyle(AbstractAction::Danger); }
+  UninstallExtensionAction(const QString &id) : m_id(id) { setStyle(AbstractAction::Style::Danger); }
 };

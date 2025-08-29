@@ -6,7 +6,6 @@
 #include "ui/alert/alert.hpp"
 #include "ui/toast/toast.hpp"
 #include "navigation-controller.hpp"
-#include "services/extension-registry/extension-registry.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 
@@ -94,7 +93,7 @@ void DefaultActionWrapper::execute(ApplicationContext *ctx) {
 QString DefaultActionWrapper::title() const { return m_action->title(); }
 
 DefaultActionWrapper::DefaultActionWrapper(const QString &id, AbstractAction *action)
-    : AbstractAction(action->title(), action->iconUrl), m_id(id), m_action(action) {
+    : AbstractAction(action->title(), action->icon()), m_id(id), m_action(action) {
   setPrimary(true);
   setShortcut({.key = "return"});
 }
@@ -123,5 +122,5 @@ void DisableItemAction::execute(ApplicationContext *ctx) {
 
 DisableItemAction::DisableItemAction(const QString &id)
     : AbstractAction("Disable item", ImageURL::builtin("trash")), m_id(id) {
-  setStyle(AbstractAction::Danger);
+  setStyle(AbstractAction::Style::Danger);
 }
