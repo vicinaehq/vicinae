@@ -36,10 +36,10 @@ in {
     home.packages = [cfg.package];
 
     systemd.user.services.vicinae = {
-      environment = {
-        USE_LAYER_SHELL = if cfg.useLayerShell then 1 else 0;
-      };
       Unit = {
+        EnvironmentFile = pkgs.writeText "vicinae-env" ''
+          USE_LAYER_SHELL=${if cfg.useLayerShell then 1 else 0}
+        '';
         Description = "Vicinae server daemon";
         Documentation = ["https://docs.vicinae.com"];
         After = ["graphical-session.target"];
