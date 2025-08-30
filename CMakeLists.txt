@@ -30,6 +30,7 @@ option(USE_SYSTEM_PROTOBUF "Use system protobuf instead of building it from sour
 option(USE_SYSTEM_ABSEIL "Use system abseil (libabsl) instead of building it from source" ON)
 option(USE_SYSTEM_CMARK_GFM "Use system cmark-gfm (github's fork of cmark) instead of building it from source" ON)
 option(USE_SYSTEM_MINIZIP "Use system minizip instead of building it from source" ON)
+option(LIBQALCULATE_BACKEND "Compile in support for the Qalculate! calculator backend" ON)
 
 set(CMARK_LIBRARY "cmark-gfm")
 
@@ -72,6 +73,10 @@ if (NOT NOSTRIP)
 endif()
 
 set(BUILD_INFO "${CXX_COMPILER_NAME} ${CMAKE_CXX_COMPILER_VERSION} - ${CMAKE_BUILD_TYPE}")
+
+if (LIBQALCULATE_BACKEND)
+	message(STATUS "libqalculate! calculator backend is enabled")
+endif()
 
 find_program(CCACHE ccache)
 find_program(HAS_MOLD mold)
