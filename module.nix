@@ -37,9 +37,6 @@ in {
 
     systemd.user.services.vicinae = {
       Unit = {
-        EnvironmentFile = pkgs.writeText "vicinae-env" ''
-          USE_LAYER_SHELL=${if cfg.useLayerShell then builtins.toString 1 else builtins.toString 0}
-        '';
         Description = "Vicinae server daemon";
         Documentation = ["https://docs.vicinae.com"];
         After = ["graphical-session.target"];
@@ -47,6 +44,9 @@ in {
         BindsTo = ["graphical-session.target"];
       };
       Service = {
+        EnvironmentFile = pkgs.writeText "vicinae-env" ''
+          USE_LAYER_SHELL=${if cfg.useLayerShell then builtins.toString 1 else builtins.toString 0}
+        '';
         Type = "simple";
         ExecStart = "${lib.getExe' cfg.package "vicinae"} server";
         Restart = "always";
