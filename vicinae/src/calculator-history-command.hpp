@@ -1,5 +1,4 @@
 #pragma once
-#include "action-panel/action-panel.hpp"
 #include "actions/calculator/calculator-actions.hpp"
 #include "ui/views/base-view.hpp"
 #include "clipboard-actions.hpp"
@@ -160,7 +159,7 @@ class CalculatorHistoryView : public ListView {
       }
     }
 
-    if (!isComputable) {
+    if (!isComputable || !m_calculator->backend()) {
       m_calcRes.reset();
       return;
     }
