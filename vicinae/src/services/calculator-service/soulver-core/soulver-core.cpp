@@ -23,14 +23,17 @@ SoulverCoreCalculator::SoulverCoreCalculator() {
 
 bool SoulverCoreCalculator::isActivatable() const { return m_dlHandle && !availableResourcePaths().empty(); };
 
-void SoulverCoreCalculator::start() {
+bool SoulverCoreCalculator::start() {
   for (const auto &path : availableResourcePaths()) {
     m_abi.soulver_initialize(path.c_str());
 
     if (m_abi.soulver_is_initialized()) break;
   }
 
-  if (!m_abi.soulver_is_initialized()) { qCritical() << "SoulverCore calculator could not be initialized"; }
+  auto test = calculate("2+2*1");
+  bool canCompute = test.has_value() && test.value().result == "4";
+
+  return canCompute;
 }
 
 void SoulverCoreCalculator::loadABI() {
@@ -54,36 +57,49 @@ std::vector<fs::path> SoulverCoreCalculator::availableResourcePaths() const {
 
 std::expected<AbstractCalculatorBackend::CalculatorResult, AbstractCalculatorBackend::CalculatorError>
 SoulverCoreCalculator::compute(const QString &question) const {
-  char *answer = m_abi.soulver_evaluate(question.toStdString().c_str());
+  auto soulverRes = calculate(question);
+
+  if (!soulverRes) { return std::unexpected(CalculatorError(soulverRes.error())); }
+  if (soulverRes.value().type == "none") return std::unexpected(CalculatorError("Result type is none"));
+
+  CalculatorResult result;
+
+  result.question = question;
+  result.answer = soulverRes.value().result;
+  result.type = CalculatorAnswerType::NORMAL;
+
+  return result;
+};
+
+std::expected<SoulverCoreCalculator::SoulverResult, QString>
+SoulverCoreCalculator::calculate(const QString &expression) const {
+  char *answer = m_abi.soulver_evaluate(expression.toStdString().c_str());
 
   if (!answer) {
     qWarning() << "soulver_evaluate returned a null pointer. This suggests soulver crashed or wasn't "
                   "properly initialized.";
-    return std::unexpected(CalculatorError("Failed to parse json"));
+    return std::unexpected("Failed to parse json");
   }
 
-  qDebug() << answer;
+  qInfo() << answer;
 
   QJsonParseError parseError;
   auto doc = QJsonDocument::fromJson(answer, &parseError);
 
   free(answer);
 
-  if (parseError.error != QJsonParseError::NoError) {
-    return std::unexpected(CalculatorError("Failed to parse json"));
-  }
+  if (parseError.error != QJsonParseError::NoError) { return std::unexpected("Failed to parse json"); }
 
   auto json = doc.object();
-
-  CalculatorResult result;
   QString value = json.value("value").toString();
   QString type = json.value("type").toString();
 
-  if (type == "none") { return std::unexpected(CalculatorError("Result is of none type")); }
+  SoulverResult result;
 
-  result.question = question;
-  result.answer = value;
-  result.type = CalculatorAnswerType::NORMAL;
+  result.result = json.value("value").toString();
+  result.type = json.value("type").toString();
+
+  if (json.contains("error")) { result.error = json.value("error").toString(); }
 
   return result;
-};
+}
