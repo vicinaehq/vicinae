@@ -7,8 +7,8 @@
   };
 
   nixConfig = {
-    extra-substituters = ["https://tomromeo.cachix.org"];
-    extra-trusted-public-keys = ["tomromeo.cachix.org-1:RNtotxybU2sStsoulE4np6THs0bTw2SBtKFfKogBah0="];
+    extra-substituters = ["https://vicinae.cachix.org"];
+    extra-trusted-public-keys = ["vicinae.cachix.org-1:1kDrfienkGHPYbkpNj1mWTr7Fm1+zcenzgTizIcI3oc="];
   };
 
   outputs = { self, nixpkgs, flake-utils }:
