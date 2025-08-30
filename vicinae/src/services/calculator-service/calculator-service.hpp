@@ -48,6 +48,7 @@ private:
 public:
   AbstractCalculatorBackend *backend() const;
 
+  void startFirstHealthy();
   void setUpdateConversionsAfterRateUpdate(bool value);
   std::vector<CalculatorRecord> records() const;
   std::vector<std::pair<QString, std::vector<CalculatorRecord>>>
