@@ -23,11 +23,30 @@ public:
     CalculatorError(const QString &message) : m_message(message) {}
   };
 
-  virtual QString name() const = 0;
+  virtual QString id() const = 0;
+  virtual QString displayName() const { return id(); }
   virtual std::expected<CalculatorResult, CalculatorError> compute(const QString &question) const = 0;
 
   virtual bool supportsCurrencyConversion() const { return false; }
   virtual bool reloadExchangeRates() const { return false; }
+
+  /**
+   * Whether this calculator implementation can be used in the current environment.
+   * Called before `start`.
+   */
+  virtual bool isActivatable() const = 0;
+
+  /**
+   * The calculator backend has been selected and can now start.
+   * Use this to perform synchronous initialization stuff.
+   */
+  virtual void start() {}
+
+  /**
+   * The calculator backend has been deselected, this one is stopped for another one to be started in its
+   * stead. It's okay to not cleanup stuff here as hot backend swapping is not frequent, but do it if you can.
+   */
+  virtual void stop() {}
 
   virtual ~AbstractCalculatorBackend() = default;
 };

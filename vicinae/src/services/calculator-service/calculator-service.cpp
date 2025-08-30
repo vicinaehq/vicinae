@@ -9,9 +9,33 @@
 #include <qnamespace.h>
 #include <qobjectdefs.h>
 #include <qsqlquery.h>
+#include <ranges>
 #include "services/calculator-service/qalculate/qalculate-backend.hpp"
+#include "services/calculator-service/soulver-core/soulver-core.hpp"
 
 using CalculatorRecord = CalculatorService::CalculatorRecord;
+
+bool CalculatorService::setBackend(AbstractCalculatorBackend *newBackend) {
+  if (m_backend && m_backend->id() != newBackend->id()) {
+    m_backend->stop();
+    newBackend->start();
+  }
+
+  m_backend = newBackend;
+  return true;
+}
+
+bool CalculatorService::setBackend(const QString &id) {
+  auto pred = [&](auto &&backend) { return backend->id() == id; };
+  auto it = std::ranges::find_if(m_backends, pred);
+
+  if (it == m_backends.end()) {
+    qWarning() << "Trying to set non existent" << id << "as a calculator backend";
+    return false;
+  }
+
+  return setBackend(it->get());
+}
 
 std::vector<CalculatorService::CalculatorRecord> CalculatorService::loadAll() const {
   QSqlQuery query = m_db.createQuery();
@@ -138,7 +162,7 @@ CalculatorService::groupRecordsByTime(const std::vector<CalculatorRecord> &recor
   return groups;
 }
 
-AbstractCalculatorBackend *CalculatorService::backend() const { return m_backend.get(); }
+AbstractCalculatorBackend *CalculatorService::backend() const { return m_backend; }
 
 bool CalculatorService::addRecord(const AbstractCalculatorBackend::CalculatorResult &result) {
   QSqlQuery query = m_db.createQuery();
@@ -310,11 +334,24 @@ void CalculatorService::updateConversionRecords() {
   emit conversionRecordsUpdated();
 }
 
+const std::vector<std::unique_ptr<AbstractCalculatorBackend>> &CalculatorService::backends() const {
+  return m_backends;
+}
+
 CalculatorService::CalculatorService(OmniDatabase &db) : m_db(db) {
   m_records = loadAll();
-  /**
-   * We are doing proper backend abstraction, but for now it is not planned to add alternative backends.
-   * libqalculate is very complete and will probably support most of our future needs.
-   */
-  m_backend = std::make_unique<QalculateBackend>();
+
+  {
+    std::unique_ptr<AbstractCalculatorBackend> qalculate = std::make_unique<QalculateBackend>();
+
+    if (qalculate->isActivatable()) { m_backends.emplace_back(std::move(qalculate)); }
+  }
+
+  {
+    std::unique_ptr<AbstractCalculatorBackend> soulver = std::make_unique<SoulverCoreCalculator>();
+
+    if (soulver->isActivatable()) { m_backends.emplace_back(std::move(soulver)); }
+  }
+
+  if (!m_backends.empty()) { m_backend = m_backends.front().get(); }
 }
