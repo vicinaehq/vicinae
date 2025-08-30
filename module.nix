@@ -25,11 +25,20 @@ in {
       default = true;
       description = "If the vicinae daemon should be started automatically";
     };
+
+    useLayerShell = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "If vicinae should use the layer shell";
+    };
   };
   config = lib.mkIf cfg.enable {
     home.packages = [cfg.package];
 
     systemd.user.services.vicinae = {
+      environment = {
+        USE_LAYER_SHELL = if cfg.useLayerShell then 1 else 0;
+      };
       Unit = {
         Description = "Vicinae server daemon";
         After = ["graphical-session.target"];
