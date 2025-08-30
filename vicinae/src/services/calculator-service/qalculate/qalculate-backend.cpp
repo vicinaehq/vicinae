@@ -8,6 +8,14 @@
 using CalculatorResult = QalculateBackend::CalculatorResult;
 using CalculatorError = QalculateBackend::CalculatorError;
 
+bool QalculateBackend::isActivatable() const {
+  /**
+   * if QalculateBackend is considered as an option, it means support for it was compiled in
+   * and the vicinae binary links to the qalculate library already. That's why we don't need complex checks.
+   */
+  return true;
+}
+
 std::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const QString &question) const {
   EvaluationOptions evalOpts;
 
@@ -52,7 +60,9 @@ std::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const
   return calcRes;
 }
 
-QString QalculateBackend::name() const { return "qalculate"; }
+QString QalculateBackend::id() const { return "qalculate"; }
+
+QString QalculateBackend::displayName() const { return "Qalculate!"; }
 
 bool QalculateBackend::reloadExchangeRates() const {
   CALCULATOR->fetchExchangeRates();

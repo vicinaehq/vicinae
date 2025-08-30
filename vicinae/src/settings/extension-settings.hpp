@@ -11,7 +11,6 @@
 #include "ui/scroll-bar/scroll-bar.hpp"
 #include "ui/omni-tree/omni-tree.hpp"
 #include "ui/typography/typography.hpp"
-#include <libqalculate/Number.h>
 #include <memory>
 #include <qabstractitemmodel.h>
 #include <qboxlayout.h>

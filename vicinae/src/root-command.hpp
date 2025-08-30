@@ -416,7 +416,7 @@ class RootSearchView : public ListView {
   }
 
   void handleCalculatorTimeout() {
-    auto calculator = ServiceRegistry::instance()->calculatorService();
+    auto calculator = context()->services->calculatorService();
     QString expression = searchText().trimmed();
     bool isComputable = false;
 
@@ -427,7 +427,7 @@ class RootSearchView : public ListView {
       }
     }
 
-    if (!isComputable) {
+    if (!isComputable || !calculator->backend()) {
       m_currentCalculatorEntry.reset();
       render(searchText());
       return;

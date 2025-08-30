@@ -38,13 +38,17 @@ public:
 private:
   OmniDatabase &m_db;
   std::vector<CalculatorRecord> m_records;
-  std::unique_ptr<AbstractCalculatorBackend> m_backend;
+  AbstractCalculatorBackend *m_backend = nullptr;
+  std::vector<std::unique_ptr<AbstractCalculatorBackend>> m_backends;
+
   std::vector<CalculatorRecord> loadAll() const;
   bool m_updateConversionsAfterRateUpdate = true;
+  bool setBackend(AbstractCalculatorBackend *backend);
 
 public:
   AbstractCalculatorBackend *backend() const;
 
+  void startFirstHealthy();
   void setUpdateConversionsAfterRateUpdate(bool value);
   std::vector<CalculatorRecord> records() const;
   std::vector<std::pair<QString, std::vector<CalculatorRecord>>>
@@ -59,11 +63,25 @@ public:
   void updateConversionRecords();
 
   /**
+   * Set the calculator backend to use.
+   * If the specified backend is different than the one currently running, the current one
+   * will be stopped (and notified) before the new one can be started;
+   *
+   * returns whether the new backend was successfully set
+   */
+  bool setBackend(const QString &id);
+
+  /**
    * Refresh exchange rates if the backend supports it.
    * If m_updateConversionsAfterRateUpdate is set to true, records with a type hint of CONVERSION
    * will be updated to reflect the new rates.
    */
   bool refreshExchangeRates();
+
+  /**
+   * The list of activatable backends.
+   */
+  const std::vector<std::unique_ptr<AbstractCalculatorBackend>> &backends() const;
 
   CalculatorService(OmniDatabase &db);
 

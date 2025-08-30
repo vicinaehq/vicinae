@@ -9,9 +9,57 @@
 #include <qnamespace.h>
 #include <qobjectdefs.h>
 #include <qsqlquery.h>
-#include "services/calculator-service/qalculate/qalculate-backend.hpp"
+#include <ranges>
+
+#ifdef HAS_QALCULATE
+#include "qalculate/qalculate-backend.hpp"
+#endif
+
+#ifdef Q_OS_UNIX
+#include "soulver-core/soulver-core.hpp"
+#endif
 
 using CalculatorRecord = CalculatorService::CalculatorRecord;
+
+bool CalculatorService::setBackend(AbstractCalculatorBackend *newBackend) {
+  if (m_backend == newBackend) return true;
+
+  if (!newBackend->start()) {
+    qWarning() << "Failed to start new calculator backend" << newBackend->id();
+    return false;
+  }
+
+  qInfo() << "Started" << newBackend->displayName() << "calculator backend";
+
+  if (m_backend) { m_backend->stop(); }
+
+  m_backend = newBackend;
+  return true;
+}
+
+void CalculatorService::startFirstHealthy() {
+  if (m_backend) m_backend->stop();
+
+  for (const auto &backend : m_backends) {
+    if (backend->start()) {
+      qInfo() << "Started" << backend->displayName() << "calculator backend";
+      m_backend = backend.get();
+      return;
+    }
+  }
+}
+
+bool CalculatorService::setBackend(const QString &id) {
+  auto pred = [&](auto &&backend) { return backend->id() == id; };
+  auto it = std::ranges::find_if(m_backends, pred);
+
+  if (it == m_backends.end()) {
+    qWarning() << "Trying to set non existent" << id << "as a calculator backend";
+    return false;
+  }
+
+  return setBackend(it->get());
+}
 
 std::vector<CalculatorService::CalculatorRecord> CalculatorService::loadAll() const {
   QSqlQuery query = m_db.createQuery();
@@ -138,7 +186,7 @@ CalculatorService::groupRecordsByTime(const std::vector<CalculatorRecord> &recor
   return groups;
 }
 
-AbstractCalculatorBackend *CalculatorService::backend() const { return m_backend.get(); }
+AbstractCalculatorBackend *CalculatorService::backend() const { return m_backend; }
 
 bool CalculatorService::addRecord(const AbstractCalculatorBackend::CalculatorResult &result) {
   QSqlQuery query = m_db.createQuery();
@@ -310,11 +358,27 @@ void CalculatorService::updateConversionRecords() {
   emit conversionRecordsUpdated();
 }
 
+const std::vector<std::unique_ptr<AbstractCalculatorBackend>> &CalculatorService::backends() const {
+  return m_backends;
+}
+
 CalculatorService::CalculatorService(OmniDatabase &db) : m_db(db) {
   m_records = loadAll();
-  /**
-   * We are doing proper backend abstraction, but for now it is not planned to add alternative backends.
-   * libqalculate is very complete and will probably support most of our future needs.
-   */
-  m_backend = std::make_unique<QalculateBackend>();
+
+  {
+    std::vector<std::unique_ptr<AbstractCalculatorBackend>> candidates;
+
+#ifdef HAS_QALCULATE
+    candidates.emplace_back(std::make_unique<QalculateBackend>());
+#endif
+#include "services/calculator-service/soulver-core/soulver-core.hpp"
+#ifdef Q_OS_UNIX
+    // only activates if the libSoulverWrapper.so shared library is available
+    candidates.emplace_back(std::make_unique<SoulverCoreCalculator>());
+#endif
+
+    for (auto &candidate : candidates) {
+      if (candidate->isActivatable()) { m_backends.emplace_back(std::move(candidate)); }
+    }
+  }
 }
