@@ -21,6 +21,9 @@
         packages.default = vicinaePkg;
       }
     ) // {
+      overlays.default = final: prev: {
+        vicinae = self.packages.${final.system}.default;
+      };
       homeManagerModules.default = {config,pkgs,lib,...}: import ./module.nix {inherit config pkgs lib self;};
     };
 }
