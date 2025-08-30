@@ -86,10 +86,11 @@ bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
 
       try {
         XdgDesktopEntry desktopEntry(dir, fs::relative(entry.path(), dir));
+        QString filename = entry.path().filename().c_str();
 
-        if (processedIds.find(desktopEntry.id) != processedIds.end()) continue;
-        processedIds.insert(desktopEntry.id);
+        if (std::ranges::contains(processedIds, filename)) continue;
 
+        processedIds.insert(filename);
         addDesktopFile(entry.path(), desktopEntry);
       } catch (std::exception &except) {
         qWarning() << "Failed to parse app at" << entry.path() << except.what();
