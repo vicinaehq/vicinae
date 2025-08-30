@@ -10,14 +10,15 @@
 
 namespace fs = std::filesystem;
 
+constexpr const char *SHARED_LIB = "libSoulverWrapper.so";
+
 SoulverCoreCalculator::SoulverCoreCalculator() {
-  m_dlHandle = dlopen("libSoulverWrapper.so", RTLD_LAZY);
+  m_dlHandle = dlopen(SHARED_LIB, RTLD_LAZY);
 
   if (!m_dlHandle) {
     qDebug() << "unable to load libSoulverWrapper" << dlerror();
   } else {
     loadABI();
-    qDebug() << "loaded ABI for libSoulverWrapper";
   }
 }
 
@@ -30,7 +31,7 @@ bool SoulverCoreCalculator::start() {
     if (m_abi.soulver_is_initialized()) break;
   }
 
-  auto test = calculate("2+2*1");
+  auto test = calculate("2+2");
   bool canCompute = test.has_value() && test.value().result == "4";
 
   return canCompute;

@@ -10,17 +10,23 @@
 #include <qobjectdefs.h>
 #include <qsqlquery.h>
 #include <ranges>
-#include "services/calculator-service/qalculate/qalculate-backend.hpp"
-#include "services/calculator-service/soulver-core/soulver-core.hpp"
+
+#ifdef HAS_QALCULATE
+#include "qalculate/qalculate-backend.hpp"
+#endif
+
+#ifdef Q_OS_UNIX
+#include "soulver-core/soulver-core.hpp"
+#endif
 
 using CalculatorRecord = CalculatorService::CalculatorRecord;
 
 bool CalculatorService::setBackend(AbstractCalculatorBackend *newBackend) {
-  if (m_backend && m_backend->id() != newBackend->id()) {
-    m_backend->stop();
-    newBackend->start();
-  }
+  if (m_backend == newBackend) return true;
 
+  if (m_backend) { m_backend->stop(); }
+
+  newBackend->start();
   m_backend = newBackend;
   return true;
 }
@@ -342,16 +348,19 @@ CalculatorService::CalculatorService(OmniDatabase &db) : m_db(db) {
   m_records = loadAll();
 
   {
-    std::unique_ptr<AbstractCalculatorBackend> qalculate = std::make_unique<QalculateBackend>();
+    std::vector<std::unique_ptr<AbstractCalculatorBackend>> candidates;
 
-    if (qalculate->isActivatable()) { m_backends.emplace_back(std::move(qalculate)); }
+#ifdef HAS_QALCULATE
+    candidates.emplace_back(std::make_unique<QalculateBackend>());
+#endif
+#include "services/calculator-service/soulver-core/soulver-core.hpp"
+#ifdef Q_OS_UNIX
+    // only activates if the libSoulverWrapper.so shared library is available
+    candidates.emplace_back(std::make_unique<SoulverCoreCalculator>());
+#endif
+
+    for (auto &candidate : candidates) {
+      if (candidate->isActivatable()) { m_backends.emplace_back(std::move(candidate)); }
+    }
   }
-
-  {
-    std::unique_ptr<AbstractCalculatorBackend> soulver = std::make_unique<SoulverCoreCalculator>();
-
-    if (soulver->isActivatable()) { m_backends.emplace_back(std::move(soulver)); }
-  }
-
-  if (!m_backends.empty()) { m_backend = m_backends.front().get(); }
 }

@@ -1,6 +1,5 @@
 #pragma once
 #include <filesystem>
-#include <libqalculate/includes.h>
 #include <qapplication.h>
 #include <qcolor.h>
 #include <qfilesystemwatcher.h>
