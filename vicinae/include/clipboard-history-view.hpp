@@ -28,8 +28,6 @@
 #include "ui/toast/toast.hpp"
 #include <QtCore>
 #include <cstdio>
-#include <libqalculate/Number.h>
-#include <libqalculate/includes.h>
 #include "services/toast/toast-service.hpp"
 #include <memory>
 #include <qboxlayout.h>

@@ -2,7 +2,6 @@
 #include <algorithm>
 #include <cstdint>
 #include <functional>
-#include <libqalculate/includes.h>
 #include <memory>
 #include <string_view>
 #include <unordered_map>

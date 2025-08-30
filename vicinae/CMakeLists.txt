@@ -23,9 +23,6 @@ endif()
 
 list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus qt6keychain ${CMARK_LIBRARY} protobuf::libprotobuf minizip OpenSSL::Crypto)
 
-if (LIBQALCULATE_BACKEND)
-	list(APPEND LIBS qalculate)
-endif()
 
 set(WLR_CLIP_BIN ${CMAKE_BINARY_DIR}/wlr-clip/wlr-clip${CMAKE_EXECUTABLE_SUFFIX})
 set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/assets)
@@ -68,7 +65,6 @@ set(SRCS
 	src/font-service.cpp
 
 	src/daemon/ipc-client.cpp
-
 	src/lib/template-engine/template-engine.cpp
 
 	include/favicon/favicon-service.hpp
@@ -419,8 +415,6 @@ set(SRCS
 	src/services/emoji-service/emoji-service.hpp
 	src/services/emoji-service/emoji-service.cpp
 
-	src/services/calculator-service/qalculate/qalculate-backend.hpp
-	src/services/calculator-service/qalculate/qalculate-backend.cpp
 
 	src/services/calculator-service/soulver-core/soulver-core.cpp
 
@@ -561,6 +555,15 @@ set(SRCS
 	src/lib/program-db/program-db.cpp
 
 ) 
+
+if (LIBQALCULATE_BACKEND)
+	list(APPEND LIBS qalculate)
+	add_compile_definitions(HAS_QALCULATE=)
+	list(APPEND SRCS
+		src/services/calculator-service/qalculate/qalculate-backend.hpp
+		src/services/calculator-service/qalculate/qalculate-backend.cpp
+	)
+endif()
 
 if (TYPESCRIPT_EXTENSIONS)
 	list(APPEND SRCS ${CMAKE_CURRENT_BINARY_DIR}/resources.qrc)
