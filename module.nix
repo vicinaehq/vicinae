@@ -48,7 +48,7 @@ in {
       };
       Service = {
         Type = "simple";
-        ExecStart = "${lib.getExe cfg.package} server";
+        ExecStart = "${lib.getExe' cfg.package "vicinae"} server";
         Restart = "always";
         RestartSec = 5;
         KillMode = "process";
