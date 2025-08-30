@@ -421,6 +421,9 @@ set(SRCS
 
 	src/services/calculator-service/qalculate/qalculate-backend.hpp
 	src/services/calculator-service/qalculate/qalculate-backend.cpp
+
+	src/services/calculator-service/soulver-core/soulver-core.cpp
+
 	src/services/calculator-service/calculator-service.hpp
 	src/services/calculator-service/calculator-service.cpp
 
@@ -556,6 +559,7 @@ set(SRCS
 
 	src/lib/program-db/program-db.hpp
 	src/lib/program-db/program-db.cpp
+
 ) 
 
 if (TYPESCRIPT_EXTENSIONS)
