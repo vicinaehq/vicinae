@@ -41,15 +41,17 @@ in {
       };
       Unit = {
         Description = "Vicinae server daemon";
+        Documentation = ["https://docs.vicinae.com"];
         After = ["graphical-session.target"];
         PartOf = ["graphical-session.target"];
         BindsTo = ["graphical-session.target"];
       };
       Service = {
         Type = "simple";
-        ExecStart = "${cfg.package}/bin/vicinae server";
-        Restart = "on-failure";
-        RestartSec = 3;
+        ExecStart = "${lib.getExe cfg.package} server";
+        Restart = "always";
+        RestartSec = 5;
+        KillMode = "process";
       };
       Install = lib.mkIf cfg.autoStart {
         WantedBy = ["graphical-session.target"];
