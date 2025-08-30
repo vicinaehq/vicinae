@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <QStyleHints>
 #include <system_error>
+#include <stack>
 
 namespace fs = std::filesystem;
 
