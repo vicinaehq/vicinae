@@ -4,9 +4,16 @@
 #include <filesystem>
 
 class SoulverCoreCalculator : public AbstractCalculatorBackend {
+
 public:
+  struct SoulverResult {
+    QString type;
+    QString result;
+    std::optional<QString> error;
+  };
+
   bool isActivatable() const override;
-  void start() override;
+  bool start() override;
   std::expected<CalculatorResult, CalculatorError> compute(const QString &question) const override;
 
   QString displayName() const override { return "SoulverCore"; }
@@ -23,6 +30,7 @@ private:
 
   void loadABI();
 
+  std::expected<SoulverResult, QString> calculate(const QString &expression) const;
   std::vector<std::filesystem::path> availableResourcePaths() const;
   ABI m_abi;
 
