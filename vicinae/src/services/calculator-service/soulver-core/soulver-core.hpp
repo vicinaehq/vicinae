@@ -23,9 +23,9 @@ public:
 
 private:
   struct ABI {
-    void (*soulver_initialize)(const char *) = nullptr;
-    char *(*soulver_evaluate)(const char *) = nullptr;
+    bool (*soulver_initialize)(const char *) = nullptr;
     bool (*soulver_is_initialized)(void) = nullptr;
+    char *(*soulver_evaluate)(const char *) = nullptr;
   };
 
   void loadABI();
@@ -36,4 +36,3 @@ private:
 
   void *m_dlHandle = nullptr;
 };
-; // namespace SoulverCore

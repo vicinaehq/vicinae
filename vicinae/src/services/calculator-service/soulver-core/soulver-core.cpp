@@ -26,9 +26,7 @@ bool SoulverCoreCalculator::isActivatable() const { return m_dlHandle && !availa
 
 bool SoulverCoreCalculator::start() {
   for (const auto &path : availableResourcePaths()) {
-    m_abi.soulver_initialize(path.c_str());
-
-    if (m_abi.soulver_is_initialized()) break;
+    if (m_abi.soulver_initialize(path.c_str())) break;
   }
 
   auto test = calculate("2+2");
@@ -39,14 +37,14 @@ bool SoulverCoreCalculator::start() {
 
 void SoulverCoreCalculator::loadABI() {
   m_abi.soulver_initialize =
-      reinterpret_cast<void (*)(const char *)>(dlsym(m_dlHandle, "soulver_initialize"));
+      reinterpret_cast<bool (*)(const char *)>(dlsym(m_dlHandle, "soulver_initialize"));
   m_abi.soulver_is_initialized =
       reinterpret_cast<bool (*)(void)>(dlsym(m_dlHandle, "soulver_is_initialized"));
   m_abi.soulver_evaluate = reinterpret_cast<char *(*)(const char *)>(dlsym(m_dlHandle, "soulver_evaluate"));
 }
 
 std::vector<fs::path> SoulverCoreCalculator::availableResourcePaths() const {
-  auto toResource = [](const fs::path &path) { return path / "soulver-cpp" / "resources"; };
+  auto toResource = [](const fs::path &path) { return path / "soulver-core" / "resources"; };
   auto isValidResourceDir = [](const fs::path &path) {
     std::error_code ec;
     return fs::is_directory(path, ec);
