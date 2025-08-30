@@ -416,7 +416,6 @@ set(SRCS
 	src/services/emoji-service/emoji-service.cpp
 
 
-	src/services/calculator-service/soulver-core/soulver-core.cpp
 
 	src/services/calculator-service/calculator-service.hpp
 	src/services/calculator-service/calculator-service.cpp
@@ -555,6 +554,12 @@ set(SRCS
 	src/lib/program-db/program-db.cpp
 
 ) 
+
+if (UNIX)
+	list(APPEND SRCS
+		src/services/calculator-service/soulver-core/soulver-core.cpp
+	)
+endif()
 
 if (LIBQALCULATE_BACKEND)
 	list(APPEND LIBS qalculate)
