@@ -73,6 +73,7 @@ updatePast.setDescription("Update past calculations when the exchange rates are 
     auto calc = ServiceRegistry::instance()->calculatorService();
     QString backendId = value.value("backend").toString();
 
-    calc->setBackend(backendId);
+    // make sure we always have a backend running
+    if (!calc->setBackend(backendId) && !calc->backend()) { calc->startFirstHealthy(); }
   }
 };

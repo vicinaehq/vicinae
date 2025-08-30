@@ -82,8 +82,6 @@ SoulverCoreCalculator::calculate(const QString &expression) const {
     return std::unexpected("Failed to parse json");
   }
 
-  qInfo() << answer;
-
   QJsonParseError parseError;
   auto doc = QJsonDocument::fromJson(answer, &parseError);
 

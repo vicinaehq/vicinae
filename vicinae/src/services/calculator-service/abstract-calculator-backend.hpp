@@ -40,8 +40,6 @@ public:
    * The calculator backend has been selected and can now start.
    * Use this to perform synchronous initialization stuff.
    * The returned boolean indicates whether the initialization was successful.
-   * If false is retured, another activatable backend will be used instead.
-   * Note that in such situation, stop() will _not_ be called.
    */
   virtual bool start() { return true; }
 

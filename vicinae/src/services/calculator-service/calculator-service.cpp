@@ -24,11 +24,29 @@ using CalculatorRecord = CalculatorService::CalculatorRecord;
 bool CalculatorService::setBackend(AbstractCalculatorBackend *newBackend) {
   if (m_backend == newBackend) return true;
 
+  if (!newBackend->start()) {
+    qWarning() << "Failed to start new calculator backend" << newBackend->id();
+    return false;
+  }
+
+  qInfo() << "Started" << newBackend->displayName() << "calculator backend";
+
   if (m_backend) { m_backend->stop(); }
 
-  newBackend->start();
   m_backend = newBackend;
   return true;
+}
+
+void CalculatorService::startFirstHealthy() {
+  if (m_backend) m_backend->stop();
+
+  for (const auto &backend : m_backends) {
+    if (backend->start()) {
+      qInfo() << "Started" << backend->displayName() << "calculator backend";
+      m_backend = backend.get();
+      return;
+    }
+  }
 }
 
 bool CalculatorService::setBackend(const QString &id) {
