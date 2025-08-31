@@ -61,7 +61,7 @@ void IndexerScanner::run() {
     const auto expected = awaitScan();
     if (!expected.has_value()) break;
 
-    const Scan& sc = *expected;
+    const Scan &sc = *expected;
 
     auto result = m_db->createScan(sc.path, sc.type);
 

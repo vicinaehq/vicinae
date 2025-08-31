@@ -60,7 +60,7 @@ std::vector<fs::path> IncrementalScanner::getScannableDirectories(const fs::path
   return scannableDirs;
 }
 
-void IncrementalScanner::scan(const Scan& scan) {
+void IncrementalScanner::scan(const Scan &scan) {
   for (const auto &dir : getScannableDirectories(scan.path, scan.maxDepth)) {
     processDirectory(dir);
   }
@@ -75,7 +75,7 @@ void IncrementalScanner::run() {
     auto expected = awaitScan();
     if (!expected.has_value()) break;
 
-    const Scan& sc = *expected;
+    const Scan &sc = *expected;
 
     auto result = m_db->createScan(sc.path, sc.type);
 
@@ -93,6 +93,4 @@ void IncrementalScanner::run() {
   }
 }
 
-void IncrementalScanner::stop() {
-  AbstractScanner::stop();
-}
+void IncrementalScanner::stop() { AbstractScanner::stop(); }

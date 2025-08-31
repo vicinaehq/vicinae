@@ -14,7 +14,7 @@ class AbstractScanner {
 
 public:
   std::expected<Scan, bool> awaitScan();
-  void enqueue(const Scan& scan);
+  void enqueue(const Scan &scan);
   virtual void run();
   virtual void stop();
 };
