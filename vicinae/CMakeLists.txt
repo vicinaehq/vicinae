@@ -431,6 +431,8 @@ set(SRCS
 	src/services/files-service/file-indexer/indexer-scanner.cpp
 	src/services/files-service/file-indexer/home-directory-watcher.cpp
 	src/services/files-service/file-indexer/file-indexer-db.cpp
+	src/services/files-service/file-indexer/writer-worker.hpp
+	src/services/files-service/file-indexer/writer-worker.cpp
 
 	src/services/extension-registry/extension-registry.hpp
 	src/services/extension-registry/extension-registry.cpp
