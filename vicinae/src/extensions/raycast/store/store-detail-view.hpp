@@ -16,7 +16,6 @@
 #include "utils/layout.hpp"
 #include "utils/utils.hpp"
 #include "zip/unzip.hpp"
-#include <absl/container/internal/raw_hash_set.h>
 #include <qboxlayout.h>
 #include "services/extension-registry/extension-registry.hpp"
 #include "services/toast/toast-service.hpp"
