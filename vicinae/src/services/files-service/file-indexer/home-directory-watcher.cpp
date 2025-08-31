@@ -1,16 +1,17 @@
 #include "home-directory-watcher.hpp"
+#include "file-indexer.hpp"
 #include "scan.hpp"
 #include "services/files-service/file-indexer/filesystem-walker.hpp"
 #include "utils/utils.hpp"
 #include <chrono>
-#include <qobjectdefs.h>
+#include <QDebug>
 
 namespace fs = std::filesystem;
 
 void HomeDirectoryWatcher::directoryChanged(const QString &pathStr) {
   fs::path path(pathStr.toStdString());
 
-  m_scanner.enqueue({
+  m_dispatcher.enqueue({
       .type = ScanType::Incremental,
       .path = path,
       .maxDepth = 1});
@@ -33,7 +34,7 @@ void HomeDirectoryWatcher::rebuildWatch() {
 
   walker.walk(home, [&](auto &&entry) {
     if (!entry.is_directory()) return;
-    qDebug() << "watching path" << entry.path();
+    qDebug() << "watching path" << entry.path().c_str();
     m_watcher->addPath(entry.path().string().c_str());
   });
 }
@@ -42,7 +43,7 @@ void HomeDirectoryWatcher::dispatchHourlyUpdate() {
   if (!m_allowsBackgroundUpdates) return;
 
   for (const auto &dir : m_watcher->directories()) {
-    m_scanner.enqueue({
+    m_dispatcher.enqueue({
         .type = ScanType::Incremental,
         .path = dir.toStdString(),
         .maxDepth = BACKGROUND_UPDATE_DEPTH});
@@ -63,7 +64,7 @@ void HomeDirectoryWatcher::dispatchImportantUpdate() {
   for (const auto &dir : getImportantDirectories()) {
     if (m_watcher->directories().contains(dir.c_str())) {
       // 5 max depth
-      m_scanner.enqueue({
+      m_dispatcher.enqueue({
           .type = ScanType::Incremental,
           .path = dir,
           .maxDepth = BACKGROUND_UPDATE_DEPTH});
@@ -71,7 +72,7 @@ void HomeDirectoryWatcher::dispatchImportantUpdate() {
   }
 }
 
-HomeDirectoryWatcher::HomeDirectoryWatcher(IndexerScanner &scanner) : m_scanner(scanner) {
+HomeDirectoryWatcher::HomeDirectoryWatcher(ScanDispatcher &dispatcher) : m_dispatcher(dispatcher) {
   using namespace std::chrono_literals;
 
   m_importantUpdateTimer->setInterval(10min);

@@ -1,8 +1,11 @@
 #include <cstdlib>
 #include <filesystem>
+#include <memory>
 #include <mutex>
 #include <QtConcurrent/QtConcurrent>
 #include "services/files-service/abstract-file-indexer.hpp"
+#include "services/files-service/file-indexer/indexer-scanner.hpp"
+#include "services/files-service/file-indexer/incremental-scanner.hpp"
 #include "file-indexer-db.hpp"
 #include "file-indexer.hpp"
 #include "utils/utils.hpp"
@@ -110,6 +113,10 @@ QFuture<std::vector<IndexerFileResult>> FileIndexer::queryAsync(std::string_view
 }
 
 FileIndexer::FileIndexer():
-  m_dispatcher(m_scanner) {
+  m_dispatcher({
+      {ScanType::Full, std::make_shared<IndexerScanner>()},
+      {ScanType::Incremental, std::make_shared<IncrementalScanner>()}
+      }) {
+
   m_db.runMigrations();
 }
