@@ -1,5 +1,6 @@
 #pragma once
 #include "services/files-service/abstract-file-indexer.hpp"
+#include "services/files-service/file-indexer/scan.hpp"
 #include <expected>
 #include <qdatetime.h>
 #include <qobject.h>
@@ -18,7 +19,6 @@ class FileIndexerDatabase : public QObject {
   QString m_connectionId;
 
 public:
-  enum class ScanType { Full, Incremental };
   enum class ScanStatus {
     Pending,
     Started,

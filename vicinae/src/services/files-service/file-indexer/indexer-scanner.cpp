@@ -53,14 +53,14 @@ void IndexerScanner::scan(const std::filesystem::path &root) {
 }
 
 void IndexerScanner::enqueueFull(const std::filesystem::path &path) {
-  enqueue(path, FileIndexerDatabase::ScanType::Full);
+  enqueue(path, ScanType::Full);
 }
 
-void IndexerScanner::enqueue(const std::filesystem::path &path, FileIndexerDatabase::ScanType type,
+void IndexerScanner::enqueue(const std::filesystem::path &path, ScanType type,
                              std::optional<size_t> maxDepth) {
   {
     std::lock_guard lock(m_scanMutex);
-    m_scanPaths.push(EnqueuedScan{.type = type, .path = path, .maxDepth = maxDepth});
+    m_scanPaths.push(Scan{.type = type, .path = path, .maxDepth = maxDepth});
   }
   m_scanCv.notify_one();
 }
@@ -71,7 +71,7 @@ void IndexerScanner::run() {
   m_writerThread = std::thread([&]() { m_writerWorker->run(); });
 
   while (m_alive) {
-    EnqueuedScan sc;
+    Scan sc;
     {
       std::unique_lock<std::mutex> lock(m_scanMutex);
       m_scanCv.wait(lock, [&]() { return !m_scanPaths.empty(); });
@@ -92,10 +92,10 @@ void IndexerScanner::run() {
     m_db->updateScanStatus(scanRecord.id, FileIndexerDatabase::ScanStatus::Started);
 
     switch (sc.type) {
-    case FileIndexerDatabase::ScanType::Full:
+    case ScanType::Full:
       scan(sc.path);
       break;
-    case FileIndexerDatabase::ScanType::Incremental:
+    case ScanType::Incremental:
       IncrementalScanner(*m_db.get()).scan(sc.path, sc.maxDepth);
       break;
     }

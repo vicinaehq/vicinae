@@ -62,7 +62,7 @@ void FileIndexer::start() {
 
   if (startedScans.empty()) {
     for (const auto &entrypoint : m_entrypoints) {
-      m_scanner->enqueue(entrypoint.root, FileIndexerDatabase::ScanType::Incremental, 5);
+      m_scanner->enqueue(entrypoint.root, ScanType::Incremental, 5);
     }
   }
 }
