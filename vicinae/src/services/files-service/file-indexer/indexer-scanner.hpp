@@ -1,17 +1,11 @@
 #pragma once
 #include "common.hpp"
+#include "services/files-service/file-indexer/scan.hpp"
 #include "services/files-service/file-indexer/file-indexer-db.hpp"
 #include "services/files-service/file-indexer/writer-worker.hpp"
 #include <queue>
 
 class IndexerScanner : public NonCopyable {
-public:
-  struct EnqueuedScan {
-    FileIndexerDatabase::ScanType type;
-    std::filesystem::path path;
-    std::optional<size_t> maxDepth;
-  };
-
 private:
   static constexpr size_t INDEX_BATCH_SIZE = 10'000;
   static constexpr size_t MAX_PENDING_BATCH_COUNT = 10;
@@ -23,7 +17,7 @@ private:
   std::mutex m_batchMutex;
   std::condition_variable m_batchCv;
 
-  std::queue<EnqueuedScan> m_scanPaths;
+  std::queue<Scan> m_scanPaths;
   std::mutex m_scanMutex;
   std::condition_variable m_scanCv;
 
@@ -36,7 +30,7 @@ private:
 public:
   void enqueueFull(const std::filesystem::path &path);
   void enqueue(const std::filesystem::path &path,
-               FileIndexerDatabase::ScanType type = FileIndexerDatabase::ScanType::Incremental,
+               ScanType type = ScanType::Incremental,
                std::optional<size_t> maxDepth = std::nullopt);
   void run();
   void stop();

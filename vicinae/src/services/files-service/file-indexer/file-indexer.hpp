@@ -7,6 +7,7 @@
 #include "services/files-service/file-indexer/indexer-scanner.hpp"
 #include "services/files-service/file-indexer/home-directory-watcher.hpp"
 #include "services/files-service/file-indexer/file-indexer-db.hpp"
+#include "services/files-service/file-indexer/scan.hpp"
 #include <malloc.h>
 #include <qdatetime.h>
 #include <qsqldatabase.h>
@@ -22,6 +23,7 @@
 class FileIndexer : public AbstractFileIndexer {
   Q_OBJECT
 
+public:
   std::vector<Entrypoint> m_entrypoints;
   FileIndexerDatabase m_db;
   std::shared_ptr<IndexerScanner> m_scanner = std::make_shared<IndexerScanner>();
