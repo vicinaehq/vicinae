@@ -1,6 +1,7 @@
 #pragma once
-#include "services/files-service/file-indexer/indexer-scanner.hpp"
+#include "services/files-service/file-indexer/scan-dispatcher.hpp"
 #include <QTimer>
+#include <QFileSystemWatcher>
 #include <qobject.h>
 #include <qtimer.h>
 #include <qtmetamacros.h>
@@ -13,7 +14,7 @@
 class HomeDirectoryWatcher : public QObject {
   QTimer *m_hourlyUpdateTimer = new QTimer(this);
   QTimer *m_importantUpdateTimer = new QTimer(this);
-  IndexerScanner &m_scanner;
+  ScanDispatcher& m_dispatcher;
   QFileSystemWatcher *m_watcher = new QFileSystemWatcher(this);
   bool m_allowsBackgroundUpdates = true;
   static constexpr size_t BACKGROUND_UPDATE_DEPTH = 5;
@@ -29,5 +30,5 @@ class HomeDirectoryWatcher : public QObject {
   bool allowsBackgroundUpdates() const;
 
 public:
-  HomeDirectoryWatcher(IndexerScanner &scanner);
+  HomeDirectoryWatcher(ScanDispatcher& dispatcher);
 };

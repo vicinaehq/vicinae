@@ -1,7 +1,7 @@
 #include "incremental-scanner.hpp"
+#include "abstract-scanner.hpp"
 #include "services/files-service/file-indexer/file-indexer-db.hpp"
 #include "services/files-service/file-indexer/filesystem-walker.hpp"
-#include <algorithm>
 #include <ranges>
 #include <unordered_set>
 
@@ -59,10 +59,37 @@ std::vector<fs::path> IncrementalScanner::getScannableDirectories(const fs::path
   return scannableDirs;
 }
 
-void IncrementalScanner::scan(const fs::path &path, std::optional<size_t> maxDepth) {
-  for (const auto &dir : getScannableDirectories(path, maxDepth)) {
+void IncrementalScanner::scan(const Scan& scan) {
+  for (const auto &dir : getScannableDirectories(scan.path, scan.maxDepth)) {
     processDirectory(dir);
   }
 }
 
-IncrementalScanner::IncrementalScanner(FileIndexerDatabase &db) : m_db(db) {}
+void IncrementalScanner::run() {
+  AbstractScanner::run();
+
+  while (true) {
+    auto expected = awaitScan();
+    if (!expected.has_value()) break;
+
+    const Scan& sc = *expected;
+
+    auto result = m_db.createScan(sc.path, sc.type);
+
+    if (!result) {
+      qWarning() << "Not scanning" << sc.path << "because scan record creation failed with error"
+                 << result.error();
+      continue;
+    }
+
+    auto scanRecord = result.value();
+
+    m_db.updateScanStatus(scanRecord.id, FileIndexerDatabase::ScanStatus::Started);
+    scan(sc);
+    m_db.updateScanStatus(scanRecord.id, FileIndexerDatabase::ScanStatus::Finished);
+  }
+}
+
+void IncrementalScanner::stop() {
+  AbstractScanner::stop();
+}

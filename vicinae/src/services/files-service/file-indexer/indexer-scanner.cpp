@@ -1,7 +1,6 @@
 #include "indexer-scanner.hpp"
 #include "services/files-service/file-indexer/file-indexer-db.hpp"
 #include "services/files-service/file-indexer/filesystem-walker.hpp"
-#include "services/files-service/file-indexer/incremental-scanner.hpp"
 #include <qlogging.h>
 
 namespace fs = std::filesystem;
@@ -59,10 +58,10 @@ void IndexerScanner::run() {
   m_writerThread = std::thread([&]() { m_writerWorker->run(); });
 
   while (true) {
-    auto expected = awaitScan();
+    const auto expected = awaitScan();
     if (!expected.has_value()) break;
 
-    Scan sc = *expected;
+    const Scan& sc = *expected;
 
     auto result = m_db->createScan(sc.path, sc.type);
 
@@ -75,16 +74,7 @@ void IndexerScanner::run() {
     auto scanRecord = result.value();
 
     m_db->updateScanStatus(scanRecord.id, FileIndexerDatabase::ScanStatus::Started);
-
-    switch (sc.type) {
-    case ScanType::Full:
-      scan(sc.path);
-      break;
-    case ScanType::Incremental:
-      IncrementalScanner(*m_db.get()).scan(sc.path, sc.maxDepth);
-      break;
-    }
-
+    scan(sc.path);
     m_db->updateScanStatus(scanRecord.id, FileIndexerDatabase::ScanStatus::Finished);
   }
 }
