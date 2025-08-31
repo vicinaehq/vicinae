@@ -1,4 +1,5 @@
 #include "home-directory-watcher.hpp"
+#include "scan.hpp"
 #include "services/files-service/file-indexer/filesystem-walker.hpp"
 #include "utils/utils.hpp"
 #include <chrono>
@@ -9,7 +10,10 @@ namespace fs = std::filesystem;
 void HomeDirectoryWatcher::directoryChanged(const QString &pathStr) {
   fs::path path(pathStr.toStdString());
 
-  m_scanner.enqueue(path, ScanType::Incremental, 1);
+  m_scanner.enqueue({
+      .type = ScanType::Incremental,
+      .path = path,
+      .maxDepth = 1});
 
   if (path == homeDir()) { rebuildWatch(); }
 }
@@ -38,7 +42,10 @@ void HomeDirectoryWatcher::dispatchHourlyUpdate() {
   if (!m_allowsBackgroundUpdates) return;
 
   for (const auto &dir : m_watcher->directories()) {
-    m_scanner.enqueue(dir.toStdString(), ScanType::Incremental, BACKGROUND_UPDATE_DEPTH);
+    m_scanner.enqueue({
+        .type = ScanType::Incremental,
+        .path = dir.toStdString(),
+        .maxDepth = BACKGROUND_UPDATE_DEPTH});
   }
 }
 
@@ -56,7 +63,10 @@ void HomeDirectoryWatcher::dispatchImportantUpdate() {
   for (const auto &dir : getImportantDirectories()) {
     if (m_watcher->directories().contains(dir.c_str())) {
       // 5 max depth
-      m_scanner.enqueue(dir, ScanType::Incremental, BACKGROUND_UPDATE_DEPTH);
+      m_scanner.enqueue({
+          .type = ScanType::Incremental,
+          .path = dir,
+          .maxDepth = BACKGROUND_UPDATE_DEPTH});
     }
   }
 }
