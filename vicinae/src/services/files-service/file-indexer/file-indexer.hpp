@@ -7,6 +7,7 @@
 #include "services/files-service/file-indexer/indexer-scanner.hpp"
 #include "services/files-service/file-indexer/home-directory-watcher.hpp"
 #include "services/files-service/file-indexer/file-indexer-db.hpp"
+#include "services/files-service/file-indexer/scan-dispatcher.hpp"
 #include "services/files-service/file-indexer/scan.hpp"
 #include <malloc.h>
 #include <qdatetime.h>
@@ -27,8 +28,9 @@ public:
   std::vector<Entrypoint> m_entrypoints;
   FileIndexerDatabase m_db;
   std::shared_ptr<IndexerScanner> m_scanner = std::make_shared<IndexerScanner>();
-  std::thread m_scannerThread;
   std::unique_ptr<HomeDirectoryWatcher> m_homeWatcher;
+
+  ScanDispatcher m_dispatcher;
 
   // move that somewhere else later
   QString preparePrefixSearchQuery(std::string_view query) const;
@@ -42,5 +44,4 @@ public:
   void start() override;
 
   FileIndexer();
-  ~FileIndexer();
 };

@@ -28,10 +28,7 @@ private:
   void enqueueBatch(const std::vector<std::filesystem::path> &paths);
 
 public:
-  void enqueueFull(const std::filesystem::path &path);
-  void enqueue(const std::filesystem::path &path,
-               ScanType type = ScanType::Incremental,
-               std::optional<size_t> maxDepth = std::nullopt);
+  void enqueue(const Scan &scan);
   void run();
   void stop();
 };

@@ -52,15 +52,10 @@ void IndexerScanner::scan(const std::filesystem::path &root) {
   enqueueBatch(batchedIndex);
 }
 
-void IndexerScanner::enqueueFull(const std::filesystem::path &path) {
-  enqueue(path, ScanType::Full);
-}
-
-void IndexerScanner::enqueue(const std::filesystem::path &path, ScanType type,
-                             std::optional<size_t> maxDepth) {
+void IndexerScanner::enqueue(const Scan &scan) {
   {
     std::lock_guard lock(m_scanMutex);
-    m_scanPaths.push(Scan{.type = type, .path = path, .maxDepth = maxDepth});
+    m_scanPaths.push(scan);
   }
   m_scanCv.notify_one();
 }
