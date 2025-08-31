@@ -1,8 +1,11 @@
 #include <cstdlib>
 #include <filesystem>
+#include <memory>
 #include <mutex>
 #include <QtConcurrent/QtConcurrent>
 #include "services/files-service/abstract-file-indexer.hpp"
+#include "services/files-service/file-indexer/indexer-scanner.hpp"
+#include "services/files-service/file-indexer/incremental-scanner.hpp"
 #include "file-indexer-db.hpp"
 #include "file-indexer.hpp"
 #include "utils/utils.hpp"
@@ -30,43 +33,9 @@ static const std::vector<fs::path> EXCLUDED_PATHS = {"/sys", "/run",     "/proc"
 
                                                      "/mnt", "/var/tmp", "/efi",  "/dev"};
 
-void WriterWorker::stop() {
-  m_alive = false;
-  m_batchCv.notify_one();
-}
-
-void WriterWorker::run() {
-  db = std::make_unique<FileIndexerDatabase>();
-
-  while (m_alive) {
-    std::deque<std::vector<std::filesystem::path>> batch;
-
-    {
-      std::unique_lock<std::mutex> lock(batchMutex);
-
-      m_batchCv.wait(lock, [&]() { return !batchQueue.empty(); });
-      batch = std::move(batchQueue);
-      batchQueue.clear();
-    }
-
-    for (const auto &paths : batch) {
-      batchWrite(paths);
-    }
-  }
-}
-
-void WriterWorker::batchWrite(const std::vector<fs::path> &paths) {
-  // Writing is happening in the writerThread
-  db->indexFiles(paths);
-}
-
-WriterWorker::WriterWorker(std::mutex &batchMutex, std::deque<std::vector<std::filesystem::path>> &batchQueue,
-                           std::condition_variable &batchCv)
-    : batchMutex(batchMutex), batchQueue(batchQueue), m_batchCv(batchCv) {}
-
 void FileIndexer::startFullscan() {
   for (const auto &entrypoint : m_entrypoints) {
-    m_scanner->enqueueFull(entrypoint.root);
+    m_dispatcher.enqueue({.type = ScanType::Full, .path = entrypoint.root});
   }
 }
 
@@ -79,7 +48,7 @@ void FileIndexer::start() {
   if (!lastScan) {
     qInfo() << "This is our first startup, enqueuing a full scan...";
     for (const auto &entrypoint : m_entrypoints) {
-      m_scanner->enqueueFull(entrypoint.root);
+      m_dispatcher.enqueue({.type = ScanType::Full, .path = entrypoint.root});
     }
     return;
   }
@@ -91,12 +60,12 @@ void FileIndexer::start() {
   for (const auto &scan : startedScans) {
     qWarning() << "Creating new scan after previous scan for" << scan.path.c_str() << "was interrupted";
     m_db.setScanError(scan.id, "Interrupted");
-    m_scanner->enqueue(scan.path, scan.type);
+    m_dispatcher.enqueue({.type = scan.type, .path = scan.path});
   }
 
   if (startedScans.empty()) {
     for (const auto &entrypoint : m_entrypoints) {
-      m_scanner->enqueue(entrypoint.root, FileIndexerDatabase::ScanType::Incremental, 5);
+      m_dispatcher.enqueue({.type = ScanType::Incremental, .path = entrypoint.root, .maxDepth = 5});
     }
   }
 }
@@ -143,13 +112,9 @@ QFuture<std::vector<IndexerFileResult>> FileIndexer::queryAsync(std::string_view
   return future;
 }
 
-FileIndexer::FileIndexer() {
-  m_db.runMigrations();
-  // m_homeWatcher = std::make_unique<HomeDirectoryWatcher>(*m_scanner.get());
-  m_scannerThread = std::thread([&]() { m_scanner->run(); });
-}
+FileIndexer::FileIndexer()
+    : m_dispatcher({{ScanType::Full, std::make_shared<IndexerScanner>()},
+                    {ScanType::Incremental, std::make_shared<IncrementalScanner>()}}) {
 
-FileIndexer::~FileIndexer() {
-  m_scanner->stop();
-  m_scannerThread.join();
+  m_db.runMigrations();
 }
