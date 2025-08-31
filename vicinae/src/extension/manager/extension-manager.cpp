@@ -1,6 +1,5 @@
 #include "extension/manager/extension-manager.hpp"
 #include <QtConcurrent/qtconcurrentrun.h>
-#include <absl/strings/internal/str_format/extension.h>
 #include <qfuturewatcher.h>
 #include <qlogging.h>
 #include <qstringview.h>

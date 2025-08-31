@@ -15,7 +15,6 @@
 #include "ui/toast/toast.hpp"
 #include "ui/typography/typography.hpp"
 #include "utils/layout.hpp"
-#include <absl/strings/internal/str_format/extension.h>
 #include <qcoreevent.h>
 #include <qevent.h>
 #include <qfuture.h>

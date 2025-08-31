@@ -8,7 +8,6 @@
 #include "ui/omni-list/omni-list.hpp"
 #include "ui/popover/popover.hpp"
 #include "ui/typography/typography.hpp"
-#include <absl/strings/internal/str_format/extension.h>
 #include <qboxlayout.h>
 #include <qcoreevent.h>
 #include <qdnslookup.h>
