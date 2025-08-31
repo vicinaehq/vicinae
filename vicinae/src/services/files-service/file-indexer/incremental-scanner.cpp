@@ -2,13 +2,14 @@
 #include "abstract-scanner.hpp"
 #include "services/files-service/file-indexer/file-indexer-db.hpp"
 #include "services/files-service/file-indexer/filesystem-walker.hpp"
+#include <memory>
 #include <ranges>
 #include <unordered_set>
 
 namespace fs = std::filesystem;
 
 void IncrementalScanner::processDirectory(const std::filesystem::path &root) {
-  auto indexedFiles = m_db.listIndexedDirectoryFiles(root);
+  auto indexedFiles = m_db->listIndexedDirectoryFiles(root);
   std::unordered_set<fs::path> existingFiles(indexedFiles.begin(), indexedFiles.end());
   std::unordered_set<fs::path> currentFiles;
   std::vector<fs::path> deletedFiles;
@@ -28,8 +29,8 @@ void IncrementalScanner::processDirectory(const std::filesystem::path &root) {
     if (currentFiles.find(path) == currentFiles.end()) { deletedFiles.emplace_back(path); }
   }
 
-  m_db.deleteIndexedFiles(deletedFiles);
-  m_db.indexFiles(currentFiles | std::ranges::to<std::vector>());
+  m_db->deleteIndexedFiles(deletedFiles);
+  m_db->indexFiles(currentFiles | std::ranges::to<std::vector>());
 }
 
 std::vector<fs::path> IncrementalScanner::getScannableDirectories(const fs::path &path,
@@ -44,7 +45,7 @@ std::vector<fs::path> IncrementalScanner::getScannableDirectories(const fs::path
   walker.walk(path, [&](const fs::directory_entry &entry) {
     if (!entry.is_directory()) return;
 
-    auto lastScanned = m_db.retrieveIndexedLastModified(entry);
+    auto lastScanned = m_db->retrieveIndexedLastModified(entry);
 
     if (auto lastModified = fs::last_write_time(entry); lastScanned.has_value() && !ec) {
       using namespace std::chrono;
@@ -68,13 +69,15 @@ void IncrementalScanner::scan(const Scan& scan) {
 void IncrementalScanner::run() {
   AbstractScanner::run();
 
+  m_db = std::make_unique<FileIndexerDatabase>();
+
   while (true) {
     auto expected = awaitScan();
     if (!expected.has_value()) break;
 
     const Scan& sc = *expected;
 
-    auto result = m_db.createScan(sc.path, sc.type);
+    auto result = m_db->createScan(sc.path, sc.type);
 
     if (!result) {
       qWarning() << "Not scanning" << sc.path << "because scan record creation failed with error"
@@ -84,9 +87,9 @@ void IncrementalScanner::run() {
 
     auto scanRecord = result.value();
 
-    m_db.updateScanStatus(scanRecord.id, FileIndexerDatabase::ScanStatus::Started);
+    m_db->updateScanStatus(scanRecord.id, FileIndexerDatabase::ScanStatus::Started);
     scan(sc);
-    m_db.updateScanStatus(scanRecord.id, FileIndexerDatabase::ScanStatus::Finished);
+    m_db->updateScanStatus(scanRecord.id, FileIndexerDatabase::ScanStatus::Finished);
   }
 }
 
