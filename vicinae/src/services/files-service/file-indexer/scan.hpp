@@ -2,18 +2,13 @@
 #include <filesystem>
 #include <optional>
 
-enum ScanStatus {
-  Pending,
-  Started,
-  Failed,
-  Finished
-};
-
+// Add new types here for new scanner types (e.g. watchers)
 enum ScanType {
   Full,
   Incremental
 };
 
+// TODO: use unions for each ScanType
 struct Scan {
   ScanType type;
   std::filesystem::path path;
