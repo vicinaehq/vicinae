@@ -1,15 +1,13 @@
 #include "indexer-scanner.hpp"
 #include "services/files-service/file-indexer/file-indexer-db.hpp"
-#include "services/files-service/file-indexer/file-indexer.hpp"
 #include "services/files-service/file-indexer/filesystem-walker.hpp"
-#include "services/files-service/file-indexer/incremental-scanner.hpp"
 #include <qlogging.h>
 
 namespace fs = std::filesystem;
 
 void IndexerScanner::stop() {
-  m_alive = false;
-  m_scanCv.notify_one();
+  AbstractScanner::stop();
+
   m_writerThread.join();
 }
 
@@ -52,32 +50,18 @@ void IndexerScanner::scan(const std::filesystem::path &root) {
   enqueueBatch(batchedIndex);
 }
 
-void IndexerScanner::enqueueFull(const std::filesystem::path &path) {
-  enqueue(path, FileIndexerDatabase::ScanType::Full);
-}
-
-void IndexerScanner::enqueue(const std::filesystem::path &path, FileIndexerDatabase::ScanType type,
-                             std::optional<size_t> maxDepth) {
-  {
-    std::lock_guard lock(m_scanMutex);
-    m_scanPaths.push(EnqueuedScan{.type = type, .path = path, .maxDepth = maxDepth});
-  }
-  m_scanCv.notify_one();
-}
-
 void IndexerScanner::run() {
+  AbstractScanner::run();
+
   m_db = std::make_unique<FileIndexerDatabase>();
   m_writerWorker = std::make_unique<WriterWorker>(m_batchMutex, m_writeBatches, m_batchCv);
   m_writerThread = std::thread([&]() { m_writerWorker->run(); });
 
-  while (m_alive) {
-    EnqueuedScan sc;
-    {
-      std::unique_lock<std::mutex> lock(m_scanMutex);
-      m_scanCv.wait(lock, [&]() { return !m_scanPaths.empty(); });
-      sc = m_scanPaths.front();
-      m_scanPaths.pop();
-    }
+  while (true) {
+    const auto expected = awaitScan();
+    if (!expected.has_value()) break;
+
+    const Scan &sc = *expected;
 
     auto result = m_db->createScan(sc.path, sc.type);
 
@@ -90,16 +74,7 @@ void IndexerScanner::run() {
     auto scanRecord = result.value();
 
     m_db->updateScanStatus(scanRecord.id, FileIndexerDatabase::ScanStatus::Started);
-
-    switch (sc.type) {
-    case FileIndexerDatabase::ScanType::Full:
-      scan(sc.path);
-      break;
-    case FileIndexerDatabase::ScanType::Incremental:
-      IncrementalScanner(*m_db.get()).scan(sc.path, sc.maxDepth);
-      break;
-    }
-
+    scan(sc.path);
     m_db->updateScanStatus(scanRecord.id, FileIndexerDatabase::ScanStatus::Finished);
   }
 }
