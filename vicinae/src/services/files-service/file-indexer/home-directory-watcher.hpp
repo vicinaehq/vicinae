@@ -14,7 +14,7 @@
 class HomeDirectoryWatcher : public QObject {
   QTimer *m_hourlyUpdateTimer = new QTimer(this);
   QTimer *m_importantUpdateTimer = new QTimer(this);
-  ScanDispatcher& m_dispatcher;
+  ScanDispatcher &m_dispatcher;
   QFileSystemWatcher *m_watcher = new QFileSystemWatcher(this);
   bool m_allowsBackgroundUpdates = true;
   static constexpr size_t BACKGROUND_UPDATE_DEPTH = 5;
@@ -30,5 +30,5 @@ class HomeDirectoryWatcher : public QObject {
   bool allowsBackgroundUpdates() const;
 
 public:
-  HomeDirectoryWatcher(ScanDispatcher& dispatcher);
+  HomeDirectoryWatcher(ScanDispatcher &dispatcher);
 };

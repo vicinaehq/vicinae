@@ -9,7 +9,7 @@ class ScanDispatcher {
   std::map<ScanType, std::pair<std::shared_ptr<AbstractScanner>, std::thread>> m_scannerMap;
 
 public:
-  void enqueue(const Scan& scan);
+  void enqueue(const Scan &scan);
 
   ScanDispatcher(std::map<ScanType, std::shared_ptr<AbstractScanner>> scannerMap);
   ~ScanDispatcher();

@@ -13,7 +13,8 @@ class IncrementalScanner : public AbstractScanner, public NonCopyable {
                                                              std::optional<size_t> maxDepth) const;
   void processDirectory(const std::filesystem::path &path);
 
-  void scan(const Scan& scan);
+  void scan(const Scan &scan);
+
 public:
   void run() override;
   void stop() override;

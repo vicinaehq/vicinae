@@ -112,11 +112,9 @@ QFuture<std::vector<IndexerFileResult>> FileIndexer::queryAsync(std::string_view
   return future;
 }
 
-FileIndexer::FileIndexer():
-  m_dispatcher({
-      {ScanType::Full, std::make_shared<IndexerScanner>()},
-      {ScanType::Incremental, std::make_shared<IncrementalScanner>()}
-      }) {
+FileIndexer::FileIndexer()
+    : m_dispatcher({{ScanType::Full, std::make_shared<IndexerScanner>()},
+                    {ScanType::Incremental, std::make_shared<IncrementalScanner>()}}) {
 
   m_db.runMigrations();
 }
