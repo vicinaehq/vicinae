@@ -1,9 +1,8 @@
 #pragma once
 #include "common.hpp"
 #include "services/files-service/file-indexer/file-indexer-db.hpp"
+#include "services/files-service/file-indexer/writer-worker.hpp"
 #include <queue>
-
-class WriterWorker;
 
 class IndexerScanner : public NonCopyable {
 public:
