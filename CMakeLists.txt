@@ -65,6 +65,8 @@ endif()
 
 message(STATUS "Configured build type ${CMAKE_BUILD_TYPE}")
 
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Debug Release ReleaseHost)
 
 if (NOT NOSTRIP)
