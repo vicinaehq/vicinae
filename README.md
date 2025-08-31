@@ -27,13 +27,13 @@ Vicinae is designed for developers and power users who want fast, keyboard-first
 
 ## ✏️ Features
 
-> ⚠️ **Note:** Some features may vary depending on your desktop environment.  
-> If something isn’t supported yet, contributions are fully welcome — many integrations are beginner-friendly, and helpful guides are available in the [docs](https://docs.vicinae.com).
+> [!NOTE]
+> Some features may not be fully supported yet on some environments. 
 
 - Start and retrieve information about installed applications
 - File indexing with full-text search across millions of files — available via the file search module or directly from root search
 - Smart emoji picker with support for custom indexing keywords
-- Calculator module with unit and currency conversion, plus auto-updating history
+- Fully fledged inline calculator with history (multiple backends available)
 - Encrypted clipboard history tracker with full-text search across all copied content
 - Shortcuts — quickly open anything using dynamic links
 - Direct window manager integration (e.g. copy content directly to the focused window)
