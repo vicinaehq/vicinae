@@ -1,6 +1,5 @@
 #include "indexer-scanner.hpp"
 #include "services/files-service/file-indexer/file-indexer-db.hpp"
-#include "services/files-service/file-indexer/file-indexer.hpp"
 #include "services/files-service/file-indexer/filesystem-walker.hpp"
 #include "services/files-service/file-indexer/incremental-scanner.hpp"
 #include <qlogging.h>
@@ -8,8 +7,8 @@
 namespace fs = std::filesystem;
 
 void IndexerScanner::stop() {
-  m_alive = false;
-  m_scanCv.notify_one();
+  AbstractScanner::stop();
+
   m_writerThread.join();
 }
 
@@ -52,27 +51,18 @@ void IndexerScanner::scan(const std::filesystem::path &root) {
   enqueueBatch(batchedIndex);
 }
 
-void IndexerScanner::enqueue(const Scan &scan) {
-  {
-    std::lock_guard lock(m_scanMutex);
-    m_scanPaths.push(scan);
-  }
-  m_scanCv.notify_one();
-}
-
 void IndexerScanner::run() {
+  AbstractScanner::run();
+
   m_db = std::make_unique<FileIndexerDatabase>();
   m_writerWorker = std::make_unique<WriterWorker>(m_batchMutex, m_writeBatches, m_batchCv);
   m_writerThread = std::thread([&]() { m_writerWorker->run(); });
 
-  while (m_alive) {
-    Scan sc;
-    {
-      std::unique_lock<std::mutex> lock(m_scanMutex);
-      m_scanCv.wait(lock, [&]() { return !m_scanPaths.empty(); });
-      sc = m_scanPaths.front();
-      m_scanPaths.pop();
-    }
+  while (true) {
+    auto expected = awaitScan();
+    if (!expected.has_value()) break;
+
+    Scan sc = *expected;
 
     auto result = m_db->createScan(sc.path, sc.type);
 

@@ -433,6 +433,10 @@ set(SRCS
 	src/services/files-service/file-indexer/file-indexer-db.cpp
 	src/services/files-service/file-indexer/writer-worker.hpp
 	src/services/files-service/file-indexer/writer-worker.cpp
+        src/services/files-service/file-indexer/scan-dispatcher.hpp
+	src/services/files-service/file-indexer/scan-dispatcher.cpp
+        src/services/files-service/file-indexer/abstract-scanner.hpp
+	src/services/files-service/file-indexer/abstract-scanner.cpp
 
 	src/services/extension-registry/extension-registry.hpp
 	src/services/extension-registry/extension-registry.cpp
