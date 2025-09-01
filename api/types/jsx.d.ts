@@ -1,12 +1,12 @@
 import * as React from "react";
-import type { ListItemDetailProps } from "../components/list";
-import { SerializedImageLike } from "../image";
-import { SerializedColorLike } from "../color";
-import { Keyboard } from "../keyboard";
-type HandlerId = string;
+ 
+import type { ListItemDetailProps } from "../api/components/list";
+import { SerializedImageLike } from "../api/image";
+import { SerializedColorLike } from "../api/color";
+import { Keyboard } from "../api/keyboard";
+import { Grid } from "../api/components/grid";
 
-import "react";
-import { Grid } from "../src/components/grid";
+import 'react';
 
 declare module "react" {
   namespace JSX {
@@ -22,8 +22,8 @@ declare module "react" {
         isShowingDetail?: boolean;
         searchBarPlaceholder?: string;
         navigationTitle?: string;
-        onSearchTextChange?: HandlerId;
-        onSelectionChange?: HandlerId;
+        onSearchTextChange?: (text: string) => void;
+        onSelectionChange?: (selectedItemId: string) => void;
       };
       "list-section": {
         title?: string;
@@ -53,8 +53,8 @@ declare module "react" {
         isShowingDetail?: boolean;
         searchBarPlaceholder?: string;
         navigationTitle?: string;
-        onSearchTextChange?: HandlerId;
-        onSelectionChange?: HandlerId;
+        onSearchTextChange?: (text: string) => void;
+        onSelectionChange?: (selectedItemId: string) => void;
       };
       "grid-section": {
         inset?: Grid.Inset;
@@ -70,7 +70,7 @@ declare module "react" {
         title?: string;
         id?: string;
         subtitle?: string;
-        content?: SerializedImageLike | { color: ColorLike };
+        content?: SerializedImageLike | { color: ColorLike } | { value: SerializedImageLike, tooltip?: string };
         keywords?: string[];
       };
 
@@ -100,8 +100,8 @@ declare module "react" {
       "action-panel-submenu": {
         title: string;
         icon?: SerializedImageLike;
-        onOpen?: HandlerId;
-        onSearchTextChange?: HandlerId;
+        onOpen?: () => void;
+        onSearchTextChange?: (text: string) => void;
         children?: React.ReactNode;
       };
       "action-panel-section": {
@@ -110,8 +110,8 @@ declare module "react" {
       };
       action: {
         title: string;
-        onAction: HandlerId;
-        onSubmit?: HandlerId;
+        onAction: () => void;
+        onSubmit?: Function;
         shortcut?: Keyboard.Shortcut;
         icon?: SerializedImageLike;
         autoFocus?: boolean;
@@ -124,7 +124,7 @@ declare module "react" {
         color?: SerializedColorLike;
         icon?: SerializedImageLike;
         text?: string;
-        onAction: HandlerId;
+        onAction?: () => void;
       };
       form: {
         enableDrafts: boolean;
@@ -133,29 +133,29 @@ declare module "react" {
         children?: React.ReactNode;
       };
       "text-field": {
-        onBlur: EventHandler;
-        onFocus: EventHandler;
-        onChange: EventHandler;
+        onBlur?: Function;
+        onFocus?: Function;
+        onChange?: Function;
       };
       "dropdown-field": {
-        onBlur?: EventHandler;
-        onFocus?: EventHandler;
-        onChange?: EventHandler;
+        onBlur?: Function;
+        onFocus?: Function;
+        onChange?: Function;
         children?: ReactNode;
       };
       "date-picker-field": {};
       "checkbox-field": {
-        onBlur: EventHandler;
-        onFocus: EventHandler;
-        onChange: EventHandler;
+        onBlur?: Function;
+        onFocus?: Function;
+        onChange?: Function;
       };
       "password-field": {};
       "textarea-field": {};
 
       dropdown: {
-        onChange?: EventHandler;
-        onSearchTextChange?: EventHandler;
-        children?: React.Node;
+        onChange?: Function;
+        onSearchTextChange?: (text: string) => void;
+        children?: ReactNode;
       };
       "dropdown-section": {
         title?: string;

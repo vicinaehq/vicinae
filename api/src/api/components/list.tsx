@@ -3,7 +3,6 @@ import { Image, ImageLike, serializeImageLike } from "../image";
 import { randomUUID } from "crypto";
 import { Metadata } from "./metadata";
 import { EmptyView } from "./empty-view";
-import { useEventListener } from "../hooks";
 import { Color, ColorLike } from "../color";
 import { Dropdown } from "./dropdown";
 
@@ -67,16 +66,11 @@ export type ListItemDetailProps = {
 };
 
 const ListRoot: React.FC<ListProps> = ({
-  onSearchTextChange,
   searchBarAccessory,
-  onSelectionChange,
   children,
   actions,
   ...props
 }) => {
-  const searchTextChangeHandler = useEventListener(onSearchTextChange);
-  const selectionChangeHandler = useEventListener(onSelectionChange);
-
   if (
     typeof props.enableFiltering === "boolean" &&
     typeof props.filtering === "undefined"
@@ -86,8 +80,6 @@ const ListRoot: React.FC<ListProps> = ({
 
   return (
     <list
-      onSearchTextChange={searchTextChangeHandler}
-      onSelectionChange={selectionChangeHandler}
       {...props}
     >
       {searchBarAccessory}
