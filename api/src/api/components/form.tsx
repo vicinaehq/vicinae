@@ -1,6 +1,5 @@
 import { ReactNode, Ref } from "react";
 import { useImperativeFormHandle } from "../hooks/use-imperative-form-handle";
-import { useEventListener } from "../hooks";
 
 type FormProps = {
   actions?: React.ReactNode;
@@ -100,18 +99,12 @@ interface TextFieldProps
 
 const TextField: React.FC<TextFieldProps> = ({
   ref,
-  onChange,
-  onBlur,
-  onFocus,
   ...props
 }) => {
   useImperativeFormHandle(ref);
-  const blur = useEventListener(onBlur);
-  const focus = useEventListener(onFocus);
-  const change = useEventListener(onChange);
 
   return (
-    <text-field onBlur={blur} onFocus={focus} onChange={change} {...props} />
+    <text-field {...props} />
   );
 };
 
@@ -139,24 +132,12 @@ interface CheckboxProps
 
 const Checkbox: React.FC<CheckboxProps> = ({
   ref,
-  onBlur,
-  onFocus,
-  onChange,
   ...props
 }) => {
   useImperativeFormHandle(ref);
 
-  const blur = useEventListener(onBlur);
-  const focus = useEventListener(onFocus);
-  const change = useEventListener(onChange);
-
   return (
-    <checkbox-field
-      onBlur={blur}
-      onFocus={focus}
-      onChange={change}
-      {...props}
-    />
+    <checkbox-field {...props} />
   );
 };
 
@@ -174,19 +155,10 @@ interface DropdownProps
 
 const Dropdown: React.FC<DropdownProps> = ({
   children,
-  onBlur,
-  onFocus,
-  onChange,
   ...props
 }) => {
-  const onSearchTextChange = useEventListener(props.onSearchTextChange);
-  const blur = useEventListener(onBlur);
-  const focus = useEventListener(onFocus);
-  const change = useEventListener(onChange);
-  const rest = { ...props, onSearchTextChange };
-
   return (
-    <dropdown-field onBlur={blur} onFocus={focus} onChange={change} {...rest}>
+    <dropdown-field {...props}>
       {children}
     </dropdown-field>
   );

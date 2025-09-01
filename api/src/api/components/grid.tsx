@@ -2,7 +2,6 @@ import React, { ReactNode, useRef } from "react";
 import { Image, ImageLike, serializeImageLike } from "../image";
 import { randomUUID } from "crypto";
 import { EmptyView } from "./empty-view";
-import { useEventListener } from "../hooks";
 import { Color, ColorLike } from "../color";
 import { Dropdown } from "./dropdown";
 
@@ -95,9 +94,7 @@ type GridSectionProps = SectionConfig & {
 };
 
 const GridRoot: React.FC<GridProps> = ({
-  onSearchTextChange,
   searchBarAccessory,
-  onSelectionChange,
   children,
   actions,
   inset,
@@ -105,9 +102,6 @@ const GridRoot: React.FC<GridProps> = ({
   aspectRatio = "1",
   ...props
 }) => {
-  const searchTextChangeHandler = useEventListener(onSearchTextChange);
-  const selectionChangeHandler = useEventListener(onSelectionChange);
-
   if (
     typeof props.enableFiltering === "boolean" &&
     typeof props.filtering === "undefined"
@@ -120,8 +114,6 @@ const GridRoot: React.FC<GridProps> = ({
       fit={fit}
       inset={inset}
       aspectRatio={aspectRatio}
-      onSearchTextChange={searchTextChangeHandler}
-      onSelectionChange={selectionChangeHandler}
       {...props}
     >
       {searchBarAccessory}

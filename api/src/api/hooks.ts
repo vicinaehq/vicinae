@@ -8,6 +8,7 @@ const handlerIdFactory = {
   },
 };
 
+/*
 export const useEventListener = (
   fn: ((...args: any[]) => void) | undefined,
 ) => {
@@ -28,3 +29,4 @@ export const useEventListener = (
 
   return fn && id.current;
 };
+*/

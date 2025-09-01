@@ -1,7 +1,6 @@
 import { ReactNode } from "react";
-import { Image, ImageLike, serializeImageLike } from "../image";
+import { Image, serializeImageLike } from "../image";
 import { Keyboard } from "../keyboard";
-import { useEventListener } from "../hooks";
 
 export type ActionPanelProps = {
   title?: string;
@@ -49,13 +48,8 @@ const ActionPannelSubmenu: React.FC<ActionPanelSubmenuProps> = ({
   onSearchTextChange,
   ...props
 }) => {
-  const onSearchTextChangeHandler = useEventListener(onSearchTextChange);
-  const onOpenHandler = useEventListener(onOpen);
   const nativeProps: React.JSX.IntrinsicElements["action-panel-submenu"] =
     props;
-
-  nativeProps.onSearchTextChange = onSearchTextChangeHandler;
-  nativeProps.onOpen = onOpenHandler;
 
   if (icon) nativeProps.icon = serializeImageLike(icon);
 
