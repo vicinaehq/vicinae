@@ -53,7 +53,6 @@ export type ActionSubmitFormProps = Omit<BaseActionProps, "title"> & {
 const ActionRoot: React.FC<ActionProps> = ({ icon, ...props }) => {
   const nativeProps: React.JSX.IntrinsicElements["action"] = {
     ...props,
-    icon,
   };
 
   if (icon) {
@@ -153,7 +152,6 @@ const SubmitForm: React.FC<ActionSubmitFormProps> = ({
   const nativeProps: React.JSX.IntrinsicElements["action"] = {
     ...props,
     title,
-    icon,
     onAction: () => {}
   };
 

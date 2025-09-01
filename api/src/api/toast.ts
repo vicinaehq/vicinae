@@ -1,5 +1,4 @@
-import { randomBytes, randomUUID } from "crypto";
-import { HandlerId } from "../types/jsx";
+import { randomBytes } from "crypto";
 import { bus, createHandler } from "./bus";
 import { Keyboard } from "./keyboard";
 import { ToastStyle as ProtoToastStyle } from "./proto/ui";
@@ -32,8 +31,8 @@ export class Toast {
     secondaryAction?: Toast.ActionOptions;
   };
   private callbacks: {
-    primary?: HandlerId;
-    secondary?: HandlerId;
+    primary?: string;
+    secondary?: string;
   } = {};
   private id: string;
 
@@ -266,12 +265,12 @@ type SerializedShowToastPayload = {
   primaryAction?: {
     title: string;
     shortcut?: Keyboard.Shortcut;
-    onAction: HandlerId;
+    onAction: string;
   };
   secondaryAction?: {
     title: string;
     shortcut?: Keyboard.Shortcut;
-    onAction: HandlerId;
+    onAction: string;
   };
 };
 
