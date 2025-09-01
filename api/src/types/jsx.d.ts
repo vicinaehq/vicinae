@@ -110,8 +110,8 @@ declare module "react" {
       };
       action: {
         title: string;
-        onAction: HandlerId;
-        onSubmit?: HandlerId;
+        onAction: () => void;
+        onSubmit?: Function;
         shortcut?: Keyboard.Shortcut;
         icon?: SerializedImageLike;
         autoFocus?: boolean;

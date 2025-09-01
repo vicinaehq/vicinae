@@ -4,7 +4,6 @@ import { Clipboard } from "../clipboard";
 import { ImageLike, serializeImageLike } from "../image";
 import { Keyboard } from "../keyboard";
 import { Application, open } from "../utils";
-import { useEventListener } from "../hooks";
 import { Form } from "./form";
 import { Icon } from "../icon";
 import { closeMainWindow } from "../controls";
@@ -52,11 +51,9 @@ export type ActionSubmitFormProps = Omit<BaseActionProps, "title"> & {
 };
 
 const ActionRoot: React.FC<ActionProps> = ({ icon, ...props }) => {
-  const handler = useEventListener(props.onAction);
   const nativeProps: React.JSX.IntrinsicElements["action"] = {
     ...props,
     icon,
-    onAction: handler!,
   };
 
   if (icon) {
@@ -149,19 +146,15 @@ const Push: React.FC<ActionPushProps> = ({ target, ...props }) => {
 };
 
 const SubmitForm: React.FC<ActionSubmitFormProps> = ({
-  onSubmit,
   icon,
   title = "Submit",
   ...props
 }) => {
-  const submitHandler = useEventListener(onSubmit);
-  const handler = useEventListener(() => {});
   const nativeProps: React.JSX.IntrinsicElements["action"] = {
     ...props,
     title,
     icon,
-    onSubmit: submitHandler,
-    onAction: handler!,
+    onAction: () => {}
   };
 
   if (icon) {
