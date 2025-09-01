@@ -14,6 +14,7 @@ private:
   QString m_title;
   QString m_wmClass;
   QString m_wmClassInstance;
+  QString m_mappedWmClass; // Complex ID mapped from simple ID
   std::optional<int> m_pid;
   bool m_focused;
   bool m_inCurrentWorkspace;
@@ -29,7 +30,7 @@ public:
   // Required AbstractWindow interface
   QString id() const override { return m_id; }
   QString title() const override { return m_title; }
-  QString wmClass() const override { return m_wmClass; }
+  QString wmClass() const override { return m_mappedWmClass.isEmpty() ? m_wmClass : m_mappedWmClass; }
   std::optional<int> pid() const override { return m_pid; }
 
   // Extended AbstractWindow interface
@@ -45,6 +46,11 @@ public:
    * Update window with detailed information from Details() response
    */
   void updateWithDetails(const QJsonObject &detailsJson);
+
+  /**
+   * Set the mapped complex ID for this window
+   */
+  void setMappedWmClass(const QString &mappedId) { m_mappedWmClass = mappedId; }
 
   /**
    * Get the numeric window ID for D-Bus calls

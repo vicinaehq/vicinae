@@ -1,5 +1,7 @@
 #include "gnome-window-manager.hpp"
 #include "utils/environment.hpp"
+#include "service-registry.hpp"
+#include "services/app-service/app-service.hpp"
 #include <QDBusConnection>
 #include <QDBusReply>
 #include <QJsonDocument>
@@ -126,6 +128,12 @@ AbstractWindowManager::WindowList GnomeWindowManager::listWindowsSync() const {
 
     QJsonObject windowObj = windowValue.toObject();
     auto window = std::make_shared<GnomeWindow>(windowObj);
+
+    // Map simple Flatpak IDs to complex path-based IDs for app database matching
+    QString originalWmClass = windowObj.value("wm_class").toString();
+    QString mappedWmClass = mapToComplexId(originalWmClass);
+    if (mappedWmClass != originalWmClass) { window->setMappedWmClass(mappedWmClass); }
+
     windows.push_back(window);
   }
 
@@ -247,4 +255,22 @@ std::shared_ptr<GnomeWindow> GnomeWindowManager::getWindowDetails(uint32_t windo
   window->updateWithDetails(detailsObj);
 
   return window;
+}
+
+QString GnomeWindowManager::mapToComplexId(const QString &simpleId) const {
+  // Get the app database from the service registry
+  auto appDb = ServiceRegistry::instance()->appDb();
+  if (!appDb) {
+    qWarning() << "GnomeWindowManager: App database not available for ID mapping";
+    return simpleId;
+  }
+
+  // Find app with complex path-based ID that ends with the simple Flatpak ID
+  auto apps = appDb->list();
+  for (const auto &app : apps) {
+    QString appId = app->id();
+    if (appId.endsWith(simpleId + ".desktop") || appId.endsWith(simpleId)) { return appId; }
+  }
+
+  return simpleId;
 }
