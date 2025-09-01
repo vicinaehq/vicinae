@@ -1,7 +1,7 @@
 import { EventEmitter } from "stream";
-import { bus, createHandler } from "./bus";
 import { randomUUID } from "crypto";
 import { ImageLike } from "./image";
+import { bus } from "./bus";
 
 export namespace AI {
   /**

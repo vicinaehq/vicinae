@@ -3,8 +3,8 @@ import { setTimeout, clearTimeout } from 'node:timers';
 import { DefaultEventPriority } from 'react-reconciler/constants';
 import React, { ReactElement } from 'react';
 import { isDeepEqual } from './utils';
-import { appendFileSync, writeFileSync } from 'node:fs';
-import { before } from 'node:test';
+import { bus } from '@vicinae/api';
+import { writeFileSync } from 'node:fs';
 import { inspect } from 'node:util';
 
 type LinkNode = {
@@ -119,6 +119,7 @@ type Instance = {
 	propsDirty: boolean;
 	parent?: Instance;
 	children: Instance[];
+	_handlers: string[];
 };
 type Container = Instance & { _root?: OpaqueRoot };
 type TextInstance = any;
@@ -156,18 +157,28 @@ function traceWrap(hostConfig: any) {
   return traceWrappedHostConfig;
 }
 
-const sanitizeProps = (props: Record<string, any>): Record<string, any> => {
+const processProps = (props: Record<string, any>): Record<string, any> => {
 	const sanitized: Record<string, any> = {};
 
-	for (const key of Object.keys(props)) {
-		if (React.isValidElement(props[key])) {
-			console.error(`React element in props is ignored for key ${key}`);
-		} else if (key !== 'children') {
-			sanitized[key] = props[key];
+	for (const [k, v] of Object.entries(props)) {
+		if (React.isValidElement(v)) {
+			console.error(`React element in props is ignored for key ${k}`);
+		} else if (k !== 'children') {
+			sanitized[k] = v;
 		}
 	}
 
 	return sanitized;
+}
+
+/**
+ * Cleanup all event handlers and other things that are related to the instance
+ */
+const detachInstance = (instance: Instance) => {
+	for (const handler of instance._handlers) bus.removeEventHandler(handler);
+	for (const child of instance.children) {
+		detachInstance(child);
+	}
 }
 
 const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
@@ -193,13 +204,27 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 		createInstance(type, props, root, ctx, handle): Instance {
 			let { children, key, ...rest } = props;
 
+			const initialProps = rest;
+			const handlers: string[] = [];
+
+			for (const [k, v] of Object.entries(rest)) {
+				if (typeof v === 'function') {
+					const { id } = bus.addEventHandler(v);
+					initialProps[k] = id;
+					handlers.push(id);
+				} else {
+					initialProps[k] = v;
+				}
+			}
+
 			return {
 				id: Symbol(type),
 				type,
-				props: sanitizeProps(rest),
+				props: processProps(initialProps),
 				children: [],
 				dirty: true,
 				propsDirty: true,
+				_handlers: handlers
 			}
 		},
 
@@ -289,11 +314,9 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 		prepareScopeUpdate(scope, instance) {},
 		getInstanceFromScope(scope) { return null },
 
-		detachDeletedInstance(instance) {
-			// todo: detach handlers
-		},
+		// not sure what this one is really about, as it's undocumented
+		detachDeletedInstance(instance) {},
 
-		// mutation methods
 		appendChild(parent: Instance, child: Instance) {
 			const selfIdx = parent.children.indexOf(child);
 
@@ -334,10 +357,14 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 		},
 
 		removeChild(parent: Instance, child: Instance) {
-			emitDirty(parent);
 			const idx = parent.children.indexOf(child);
+
+			if (idx == -1) return ;
+
+			emitDirty(parent);
 			parent.children.splice(idx, 1);
 			delete child.parent;
+			detachInstance(child);
 		},
 
 		removeChildFromContainer(container: Instance, child: Instance) {
@@ -351,35 +378,47 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 		commitMount() {},
 
 		commitUpdate(instance: Instance, payload, type, prevProps, nextProps, handle) {
-			let i = 0;
+			if (payload.length === 0) return ;
 			
-			if (payload.length > 0) {
-				instance.propsDirty = true;
-				emitDirty(instance.parent);
+
+			const props: Record<string, any> = {};
+
+			for (const [k, v] of Object.entries(nextProps)) {
+				if (k == 'children') continue ;
+
+				if (React.isValidElement(v)) {
+					console.warn(`Received react element as prop (key '${k}'), which is unsupported.`);
+					continue ;
+				}
+
+				if (typeof v === 'function') {
+					const old = prevProps[k];
+
+					if (typeof old === 'string') {
+						bus.replaceEventHandler(old, v);
+						props[k] = old;
+						continue ;
+					}
+
+					const { id } = bus.addEventHandler(v); 
+
+					instance._handlers.push(id);
+					props[k] = id;
+					continue ;
+				}
+				
+				props[k] = v;
 			}
 
-
-			instance.props = sanitizeProps(nextProps);
-
-			/*
-			while (i < payload.length) {
-				const key = payload[i++];
-				const value = payload[i++];
-
-				instance.props[key] = value;
-			}
-			*/
+			emitDirty(instance.parent);
+			instance.propsDirty = true;
+			instance.props = props; 
 		},
 
-		replaceContainerChildren() {
-		},
-
+		replaceContainerChildren() {},
 		hideInstance() {},
-
 		hideTextInstance() {},
-		
 		unhideInstance() {},
-
 		unhideTextInstance() {},
 
 		clearContainer(container) {
@@ -414,17 +453,20 @@ const serializeInstance = (instance: Instance): SerializedInstance => {
 		type: instance.type,
 		dirty: instance.dirty,
 		propsDirty: instance.propsDirty,
-		children: new Array<SerializedInstance>(instance.children.length)
+		children: instance.children.map(serializeInstance)
 	};
 
 	instance.dirty = false;
 	instance.propsDirty = false;
 
+	/*
 	let i = 0;
 
 	for (const child of instance.children) {
 		obj.children[i++] = serializeInstance(child);
 	}
+	*/
+
 	
 	return obj;
 }
@@ -436,7 +478,8 @@ const createContainer = (): Container => {
 		dirty: true,
 		propsDirty: false,
 		props: {},
-		children: []
+		children: [],
+		_handlers: [],
 	}
 }
 
@@ -445,7 +488,6 @@ const MAX_RENDER_PER_SECOND = 60;
 export const createRenderer = (config: RendererConfig) => {
 	const container = createContainer(); 
 	let debounce: NodeJS.Timer | null = null;
-	// 60 renders per second at most
 	let debounceInterval = 1000 / MAX_RENDER_PER_SECOND;
 	let lastRender = performance.now();
 
@@ -467,8 +509,6 @@ export const createRenderer = (config: RendererConfig) => {
 
 					views.push({ root: view });
 				}
-
-				//console.error(JSON.stringify({ views }, null, 2));
 
 				config.onUpdate?.(views)
 

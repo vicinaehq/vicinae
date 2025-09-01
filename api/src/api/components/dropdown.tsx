@@ -1,6 +1,5 @@
 import { ReactNode } from "react";
 import { Image, serializeImageLike } from "../image";
-import { useEventListener } from "../hooks";
 
 export declare namespace Dropdown {
   type Props = DropdownProps;
@@ -36,11 +35,8 @@ type DropdownSectionProps = {
 };
 
 const DropdownRoot: React.FC<DropdownProps> = ({ children, ...props }) => {
-  const onSearchTextChange = useEventListener(props.onSearchTextChange);
-  const onChange = useEventListener(props.onChange);
-
   return (
-    <dropdown onSearchTextChange={onSearchTextChange} onChange={onChange}>
+    <dropdown {...props}>
       {children}
     </dropdown>
   );
@@ -51,7 +47,7 @@ const Item: React.FC<DropdownItemProps> = ({ title, value, icon }) => {
     <dropdown-item
       title={title}
       value={value}
-      icon={icon && serializeImageLike(icon)}
+      icon={icon ? serializeImageLike(icon) : undefined}
     />
   );
 };
