@@ -1,7 +1,7 @@
  {
     "version": "1.0.0",
     "appearance": "dark",
-    "icon": "icon.png",
+    "icon": "../icon.png",
     "name": "Dracula",
     "description": "The popular Dracula theme",
     "palette": {
