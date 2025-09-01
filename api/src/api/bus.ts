@@ -3,8 +3,6 @@ import { parentPort, MessagePort } from "worker_threads";
 
 import * as ipc from "./proto/ipc";
 import * as extension from "./proto/extension";
-import { PushViewRequest } from "./proto/ui";
-import { AckResponse } from "./proto/common";
 import { Err, Ok, Result } from "./lib/result";
 
 export type Message<T = Record<string, any>> = {
@@ -357,12 +355,8 @@ class Bus {
   }
 }
 
-export const createHandler = (handler: (...args: any[]) => void): string => {
-  const id = randomUUID();
-
-  bus.subscribe(id, handler);
-
-  return id;
-};
-
+/**
+ * IPC bus to communicate with the extension manager.
+ * If you are using this from inside your extension, you are WRONG and you should stop.
+ */
 export const bus = new Bus(parentPort!);

@@ -1,5 +1,5 @@
 import { randomBytes } from "crypto";
-import { bus, createHandler } from "./bus";
+import { bus } from "./bus";
 import { Keyboard } from "./keyboard";
 import { ToastStyle as ProtoToastStyle } from "./proto/ui";
 
@@ -56,16 +56,18 @@ export class Toast {
 
     if (props.primaryAction) {
       const { onAction } = props.primaryAction;
+	  const { id }  = bus.addEventHandler(() => onAction(this));
 
       this.options.primaryAction = props.primaryAction;
-      this.callbacks.primary = createHandler(() => onAction(this));
+      this.callbacks.primary = id;
     }
 
     if (props.secondaryAction) {
       const { onAction } = props.secondaryAction;
+	  const { id }  = bus.addEventHandler(() => onAction(this));
 
       this.options.secondaryAction = props.secondaryAction;
-      this.callbacks.secondary = createHandler(() => onAction(this));
+      this.callbacks.secondary = id;
     }
   }
 
