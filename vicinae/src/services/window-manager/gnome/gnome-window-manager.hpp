@@ -39,6 +39,11 @@ private:
   QJsonObject parseJsonResponse(const QString &response) const;
   QJsonArray parseJsonArrayResponse(const QString &response) const;
 
+  /**
+   * Map simple Flatpak IDs to complex path-based IDs for app database matching
+   */
+  QString mapToComplexId(const QString &simpleId) const;
+
 public:
   GnomeWindowManager();
   ~GnomeWindowManager() override = default;
