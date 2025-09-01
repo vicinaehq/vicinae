@@ -5,6 +5,12 @@ This package lets you extend the [Vicinae](https://docs.vicinae.com/) launcher u
 
 # Getting started
 
+The recommend way to start developing a new extension is to [read the docs](https://docs.vicinae.com/extensions/introduction).
+
+You can stop reading this.
+
+# Installation 
+
 Install the package:
 
 ```
