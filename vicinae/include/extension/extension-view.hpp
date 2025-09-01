@@ -24,6 +24,7 @@ class ExtensionSimpleView : public SimpleView {
 
   AbstractAction *createActionFromModel(const ActionModel &model) {
     return new StaticAction(model.title, model.icon.value_or(std::monostate()), [this, model]() {
+      qDebug() << "notify action" << model.onAction;
       notify(model.onAction, {});
 
       if (auto handler = model.onSubmit) {

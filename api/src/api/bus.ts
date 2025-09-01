@@ -250,6 +250,23 @@ class Bus {
     this.port.postMessage(ipc.ExtensionMessage.encode(message).finish());
   }
 
+  addEventHandler(cb: EventListenerInfo['callback']) {
+	  const id = `handler-${randomUUID()}`; 
+	  const { unsubscribe } = this.subscribe(id, cb);
+
+	  return { id, unsubscribe };
+  }
+
+  replaceEventHandler(id: string, handler: EventListenerInfo['callback']) {
+	  for (const listener of this.eventListeners.get(id) ?? []) {
+		  listener.callback = handler;
+	  }
+  }
+
+  removeEventHandler(id: string) {
+	  this.eventListeners.delete(id);
+  }
+
   request2(
     data: extension.RequestData,
     options: { timeout?: number } = {},
