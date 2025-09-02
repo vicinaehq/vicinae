@@ -49,92 +49,99 @@ let
   };
 
 in
-  stdenv.mkDerivation (finalAttrs: {
-    inherit src name pname version;
+stdenv.mkDerivation (finalAttrs: {
+  inherit
+    src
+    name
+    pname
+    version
+    ;
 
-    cmakeFlags = [
-        "-DVICINAE_GIT_TAG=${version}"
-        "-DCMAKE_INSTALL_PREFIX=${placeholder "out"}"
-        "-DCMAKE_INSTALL_DATAROOTDIR=share"
-        "-DCMAKE_INSTALL_BINDIR=bin"
-        "-DCMAKE_INSTALL_LIBDIR=lib"
-    ];
+  cmakeFlags = [
+    "-DVICINAE_GIT_TAG=${version}"
+    "-DCMAKE_INSTALL_PREFIX=${placeholder "out"}"
+    "-DCMAKE_INSTALL_DATAROOTDIR=share"
+    "-DCMAKE_INSTALL_BINDIR=bin"
+    "-DCMAKE_INSTALL_LIBDIR=lib"
+  ];
 
-    nativeBuildInputs = [
-      ts-protoc-gen-wrapper
-      extensionManagerDeps
-      autoPatchelfHook
-      cmake
-      ninja
-      nodejs
-      pkg-config
-      qt6.wrapQtAppsHook
-      rapidfuzz-cpp
-      protoc-gen-js
-      protobuf
-      grpc-tools
-      which
-      rsync
-      typescript
-    ];
+  nativeBuildInputs = [
+    ts-protoc-gen-wrapper
+    extensionManagerDeps
+    autoPatchelfHook
+    cmake
+    ninja
+    nodejs
+    pkg-config
+    qt6.wrapQtAppsHook
+    rapidfuzz-cpp
+    protoc-gen-js
+    protobuf
+    grpc-tools
+    which
+    rsync
+    typescript
+  ];
 
-    buildInputs = [
-      qt6.qtbase
-      qt6.qtsvg
-      qt6.qttools
-      qt6.qtwayland
-      qt6.qtdeclarative
-      qt6.qt5compat
-      wayland
-      kdePackages.qtkeychain
-      kdePackages.layer-shell-qt
-      minizip
-      grpc-tools
-      protobuf
-      nodejs
-      minizip-ng
-      cmark-gfm
-      libqalculate
-    ];
+  buildInputs = [
+    qt6.qtbase
+    qt6.qtsvg
+    qt6.qttools
+    qt6.qtwayland
+    qt6.qtdeclarative
+    qt6.qt5compat
+    wayland
+    kdePackages.qtkeychain
+    kdePackages.layer-shell-qt
+    minizip
+    grpc-tools
+    protobuf
+    nodejs
+    minizip-ng
+    cmark-gfm
+    libqalculate
+  ];
 
-    configurePhase = ''
-      cmake -G Ninja -B build $cmakeFlags
-    '';
+  configurePhase = ''
+    cmake -G Ninja -B build $cmakeFlags
+  '';
 
-    buildPhase = ''
-      buildDir=$PWD
-      echo $buildDir
-      export npm_config_cache=${apiDeps}
-      cd $buildDir/api
-      npm i --ignore-scripts
-      patchShebangs $buildDir/api
-      npm rebuild --foreground-scripts
-      export npm_config_cache=${extensionManagerDeps}
-      cd $buildDir/extension-manager
-      npm i --ignore-scripts
-      patchShebangs $buildDir/extension-manager
-      npm rebuild --foreground-scripts
-      cd $buildDir
-      substituteInPlace cmake/ExtensionApi.cmake cmake/ExtensionManager.cmake --replace "COMMAND npm install" ""
-      cmake --build build
-      cd $buildDir
-    '';
+  buildPhase = ''
+    buildDir=$PWD
+    echo $buildDir
+    export npm_config_cache=${apiDeps}
+    cd $buildDir/api
+    npm i --ignore-scripts
+    patchShebangs $buildDir/api
+    npm rebuild --foreground-scripts
+    export npm_config_cache=${extensionManagerDeps}
+    cd $buildDir/extension-manager
+    npm i --ignore-scripts
+    patchShebangs $buildDir/extension-manager
+    npm rebuild --foreground-scripts
+    cd $buildDir
+    substituteInPlace cmake/ExtensionApi.cmake cmake/ExtensionManager.cmake --replace "COMMAND npm install" ""
+    cmake --build build
+    cd $buildDir
+  '';
 
-    dontWrapQtApps = true;
-    preFixup = ''
-        wrapQtApp "$out/bin/vicinae" --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath finalAttrs.buildInputs}
-    '';
-    postFixup = ''
-        wrapProgram $out/bin/vicinae \
-        --prefix PATH : ${lib.makeBinPath [
-          nodejs
-          qt6.qtwayland
-          wayland
-          (placeholder "out")
-        ]}
-    '';
+  dontWrapQtApps = true;
+  preFixup = ''
+    wrapQtApp "$out/bin/vicinae" --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath finalAttrs.buildInputs}
+  '';
+  postFixup = ''
+    wrapProgram $out/bin/vicinae \
+    --prefix PATH : ${
+      lib.makeBinPath [
+        nodejs
+        qt6.qtwayland
+        wayland
+        (placeholder "out")
+      ]
+    }
+  '';
 
-    installPhase = ''
-      cmake --install build
-    '';
+  installPhase = ''
+    cmake --install build
+  '';
 })
