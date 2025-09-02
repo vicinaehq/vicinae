@@ -1,5 +1,3 @@
-# cmake/ExtensionApi.cmake
-
 set(EXT_API_SRC_DIR "${CMAKE_SOURCE_DIR}/api")
 set(EXT_API_OUT_DIR "${CMAKE_SOURCE_DIR}/api/dist")
 set(API_DIST_DIR "${CMAKE_SOURCE_DIR}/api/dist")
@@ -12,36 +10,31 @@ file(GLOB_RECURSE API_PROTO_FILES
 	"${API_PROTO_PATH}/*.proto"
 )
 
-file(GLOB_RECURSE EXT_API_TS_FILES
+file(GLOB_RECURSE API_TS_FILES
     "${EXT_API_SRC_DIR}/src/*.ts"
 )
 
-set(FILTERED_TS_FILES "")
+set(EXT_API_TS_FILES)
 
-foreach(file ${EXT_API_TS_FILES})
-    if(NOT file MATCHES "/proto/")
-		list(APPEND FILTERED_TS_FILES "${file}")
+foreach(file ${API_TS_FILES})
+    if(NOT file MATCHES ".*proto.*")
+		list(APPEND EXT_API_TS_FILES "${file}")
     endif()
-endforeach()
-
-set(API_OUT "")
-
-foreach(ts_file IN LISTS FILTERED_TS_FILES)
-    file(RELATIVE_PATH rel_path "${EXT_API_SRC_DIR}/src" "${ts_file}")
-    string(REPLACE ".ts" ".js" js_path "${rel_path}")
-    list(APPEND API_OUT "${EXT_API_OUT_DIR}/${js_path}")
 endforeach()
 
 file(MAKE_DIRECTORY ${API_PROTO_OUT})
 
+set(API_STAMP "${CMAKE_CURRENT_BINARY_DIR}/api.stamp")
+
 add_custom_command(
-	OUTPUT ${API_OUT}
+    OUTPUT ${API_STAMP}
     COMMAND npm install
-	COMMAND protobuf::protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto -I ${protobuf_SOURCE_DIR}/src -I ${API_PROTO_PATH} ${API_PROTO_FILES} --ts_proto_out ${API_PROTO_OUT}
-	COMMAND npm run build
+    COMMAND protobuf::protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto -I ${protobuf_SOURCE_DIR}/src -I ${API_PROTO_PATH} ${API_PROTO_FILES} --ts_proto_out ${API_PROTO_OUT}
+    COMMAND npm run build
+    COMMAND ${CMAKE_COMMAND} -E touch ${API_STAMP}
     WORKING_DIRECTORY ${EXT_API_SRC_DIR}
-	DEPENDS ${FILTERED_TS_FILES}
-	COMMENT "Build API"
+    DEPENDS ${EXT_API_TS_FILES}
+    COMMENT "Build API"
 )
 
-add_custom_target(api DEPENDS ${API_OUT})
+add_custom_target(api DEPENDS ${API_STAMP})
