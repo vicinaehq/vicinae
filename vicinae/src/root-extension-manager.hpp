@@ -15,6 +15,8 @@ class RootExtensionManager : public QObject {
 public:
   void start() {
     connect(&m_commandDb, &OmniCommandDatabase::registryAdded, this, [this](const auto &registry) {
+      // Remove existing provider first to avoid duplicates when refreshing extensions
+      m_manager.removeProvider(QString("extension.%1").arg(registry->id()));
       m_manager.addProvider(std::make_unique<ExtensionRootProvider>(registry));
     });
     connect(&m_commandDb, &OmniCommandDatabase::repositoryRemoved, this,
