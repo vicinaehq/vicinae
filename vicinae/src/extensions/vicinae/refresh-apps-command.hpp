@@ -7,8 +7,8 @@ class RefreshAppsCommand : public BuiltinCallbackCommand {
   QString id() const override { return "refresh-apps"; }
   QString name() const override { return "Refresh Apps"; }
   QString description() const override {
-    return R"("Configure what commands are to be presented as fallback options when nothing matches the
-search in the root search.)";
+    return "Force a refresh of the application database. The database should normally automatically update "
+           "itself on changes, but this can help working around some edge cases.";
   }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("redo").setBackgroundTint(Omnicast::ACCENT_COLOR);
