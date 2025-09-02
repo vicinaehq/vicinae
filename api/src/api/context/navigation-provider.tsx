@@ -10,9 +10,10 @@ export const NavigationProvider: React.FC<{ root: ReactNode }> = ({ root }) => {
   const [navStack, setNavStack] = useState<ReactNode[]>([root]);
 
   const pop = () => {
-    bus.turboRequest("ui.popView", {}).then(() => {
-      setNavStack((cur) => cur.slice(0, -1));
-    });
+	// we ask Vicinae to pop the current view, but we need to wait
+	// for the pop-view event to be fired in order to dismount it from
+	// our local view stack: otherwise Vicinae might miss a render.
+	bus.turboRequest("ui.popView", {});
   };
 
   const push = (node: ReactNode) => {
@@ -26,7 +27,7 @@ export const NavigationProvider: React.FC<{ root: ReactNode }> = ({ root }) => {
   }, [navStack]);
 
   useEffect(() => {
-    const listener = bus!.subscribe("pop-view", () => {
+    const listener = bus.subscribe("pop-view", () => {
       setNavStack((cur) => cur.slice(0, -1));
     });
 
