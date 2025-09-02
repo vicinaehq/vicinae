@@ -122,6 +122,7 @@ Bus::Bus(QIODevice *socket) : device(socket) {
 // Extension Manager
 
 ExtensionManager::ExtensionManager(OmniCommandDatabase &commandDb) : commandDb(commandDb), bus(&process) {
+
   QProcessEnvironment env;
 
   env.insert("VICINAE_VERSION", VICINAE_GIT_TAG);
@@ -153,30 +154,42 @@ bool ExtensionManager::start() {
 
   PidFile pidFile("extension-manager");
   int maxWaitForStart = 5000;
-  QFile file(":bin/extension-manager");
+  std::filesystem::path managerPath;
 
-  if (!file.exists()) {
-    qCritical("Could not find bundled extension runtime. Cannot start extension_manager.");
-    return false;
+  if (process.state() == QProcess::Running) { process.close(); }
+
+  auto sysEnv = QProcessEnvironment::systemEnvironment();
+
+  if (auto path = sysEnv.value("EXT_MANAGER_PATH"); !path.isEmpty()) {
+    managerPath = path.toStdString();
+    qInfo() << "EXT_MANAGER_PATH is set, and will override bundled version" << path;
+  } else {
+    QFile file(":bin/extension-manager");
+
+    if (!file.exists()) {
+      qCritical("Could not find bundled extension runtime. Cannot start extension_manager.");
+      return false;
+    }
+
+    if (!file.open(QIODevice::ReadOnly)) {
+      qCritical("Failed to open bundled extension-runtime for read");
+      return false;
+    }
+
+    auto runtimeFile = new QTemporaryFile(this);
+
+    if (!runtimeFile->open()) {
+      qCritical("Failed to open temporary file to write extension runtime code");
+      return false;
+    }
+
+    runtimeFile->write(file.readAll());
+    managerPath = runtimeFile->fileName().toStdString();
   }
-
-  if (!file.open(QIODevice::ReadOnly)) {
-    qCritical("Failed to open bundled extension-runtime for read");
-    return false;
-  }
-
-  auto runtimeFile = new QTemporaryFile(this);
-
-  if (!runtimeFile->open()) {
-    qCritical("Failed to open temporary file to write extension runtime code");
-    return false;
-  }
-
-  runtimeFile->write(file.readAll());
 
   if (pidFile.exists() && pidFile.kill()) { qInfo() << "Killed existing extension manager instance"; }
 
-  process.start("node", {runtimeFile->fileName()});
+  process.start("node", {managerPath.c_str()});
 
   if (!process.waitForStarted(maxWaitForStart)) {
     qCritical() << "Failed to start extension manager" << process.errorString();
@@ -185,7 +198,7 @@ bool ExtensionManager::start() {
 
   pidFile.write(process.processId());
 
-  qInfo() << "Started extension manager" << runtimeFile->fileName();
+  qInfo() << "Started extension manager" << managerPath;
 
   return true;
 }
@@ -226,7 +239,7 @@ void ExtensionManager::emitGenericExtensionEvent(const QString &sessionId, const
   emitExtensionEvent(qualified);
 }
 
-void ExtensionManager::processStarted() {}
+void ExtensionManager::processStarted() { emit started(); }
 
 QJsonObject ExtensionManager::serializeLaunchProps(const LaunchProps &props) {
   QJsonObject obj;

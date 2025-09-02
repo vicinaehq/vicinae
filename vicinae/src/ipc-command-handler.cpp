@@ -228,6 +228,15 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
     }
   }
 
+  if (url.host() == "internal") {
+    if (url.path() == "/restart-extension-runtime") {
+      qInfo() << "Restarting extension runtime....";
+      m_ctx.navigation->popToRoot();
+      m_ctx.services->extensionManager()->start();
+      return;
+    }
+  }
+
   qWarning() << "No handler for URL" << url;
 }
 
