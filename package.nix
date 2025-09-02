@@ -23,15 +23,20 @@
   qt6,
   typescript,
   wayland,
-  hash ? "unknown",
+
+  nix-support,
 }:
 let
+  name = "vicinae";
+  pname = "vicinae";
+  version = nix-support.version;
+
   src = ./.;
 
   # Prepare node_modules for api folder
   apiDeps = fetchNpmDeps {
     src = src + /api;
-    hash = "sha256-7rsaGjs1wMe0zx+/BD1Mx7DQj3IAEZQvdS768jVLl3E=";
+    hash = nix-support.apiDeps-hash;
   };
   ts-protoc-gen-wrapper = writeShellScriptBin "protoc-gen-ts_proto" ''
     exec node /build/source/vicinae-upstream/api/node_modules/.bin/protoc-gen-ts_proto
@@ -40,17 +45,15 @@ let
   # Prepare node_modules for extension-manager folder
   extensionManagerDeps = fetchNpmDeps {
     src = src + /extension-manager;
-    hash = "sha256-7kScWi1ySUBTDsGQqgpt2wYmujP9Mlwq3x2FKOlGwgo=";
+    hash = nix-support.extensionManagerDeps-hash;
   };
 
 in
-  stdenv.mkDerivation rec {
-    name = "vicinae";
-
-    inherit src;
+  stdenv.mkDerivation (finalAttrs: {
+    inherit src name pname version;
 
     cmakeFlags = [
-        "-DVICINAE_GIT_TAG=${placeholder "hash"}"
+        "-DVICINAE_GIT_TAG=${version}"
         "-DCMAKE_INSTALL_PREFIX=${placeholder "out"}"
         "-DCMAKE_INSTALL_DATAROOTDIR=share"
         "-DCMAKE_INSTALL_BINDIR=bin"
@@ -119,7 +122,7 @@ in
 
     dontWrapQtApps = true;
     preFixup = ''
-        wrapQtApp "$out/bin/vicinae" --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath buildInputs}
+        wrapQtApp "$out/bin/vicinae" --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath finalAttrs.buildInputs}
     '';
     postFixup = ''
         wrapProgram $out/bin/vicinae \
@@ -134,4 +137,4 @@ in
     installPhase = ''
       cmake --install build
     '';
-}
+})

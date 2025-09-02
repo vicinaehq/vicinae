@@ -15,10 +15,28 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-        vicinaePkg = pkgs.callPackage ./vicinae.nix { hash = self.rev ? self.dirtyRev; };
+        vicinaePkg = pkgs.callPackage ./package.nix { nix-support = (builtins.fromJSON (builtins.readFile ./nix-support.json));};
+	nix-update-script = pkgs.writeShellScriptBin "nix-update" ''
+		set -x
+		
+
+		VERSION=$(${pkgs.lib.getExe pkgs.git} describe --tags --abbrev=0)
+
+		${pkgs.lib.getExe pkgs.nix} flake update --accept-flake-config
+
+		cd api
+		API_DEPS_HASH=$(${pkgs.lib.getExe pkgs.prefetch-npm-deps} package-lock.json)
+		cd ../extension-manager
+		EXTMAN_DEPS_HASH=$(${pkgs.lib.getExe pkgs.prefetch-npm-deps} package-lock.json)
+		cd ..
+
+		#now we output the file
+		${pkgs.lib.getExe pkgs.jq} --null-input --arg version "$VERSION" --arg adh "$API_DEPS_HASH" --arg emdh "$EXTMAN_DEPS_HASH" '{"version": $version, "apiDeps-hash": $adh, "extensionManagerDeps-hash": $emdh}' > nix-support.json
+	'';
       in
       {
         packages.default = vicinaePkg;
+	packages.nix-update-script = nix-update-script;
       }
     ) // {
       overlays.default = final: prev: {

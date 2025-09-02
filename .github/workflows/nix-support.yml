@@ -1,0 +1,37 @@
+name: Nix hash updates
+
+on:
+  push:
+    paths:
+      - 'api/**'
+      - 'extension-manager/**'
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+
+jobs:
+  update-tags:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: cachix/install-nix-action@v31
+      - name: Update nix hashes
+        run: |
+          nix run .#nix-update-script --extra-experimental-features nix-command flakes --accept-flake-config
+      - name: Commit changes
+        run: |
+          if ! git diff --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "-"
+            git add flake.lock nix-support.json
+            git commit -m "[bot] chore: update nix hashes"
+            git push
+          fi
