@@ -2,12 +2,11 @@ import { randomUUID } from 'crypto';
 import { isMainThread, Worker } from "worker_threads";
 import { main as workerMain } from './worker';
 import { isatty } from "tty";
-
 import * as ipc from './proto/ipc';
 import * as common from './proto/common';
 import * as manager from './proto/manager';
 import * as extension from './proto/extension';
-import { existsSync, mkdirSync } from 'fs';
+import { existsSync } from 'fs';
 import { appendFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 

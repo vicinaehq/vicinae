@@ -3,6 +3,28 @@ set(PROJECT_NAME vicinae)
 project(${PROJECT_NAME} VERSION 1.0.0 LANGUAGES C CXX)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+
+# Viciane build configuration options
+
+option(IGNORE_CCACHE "Always ignore ccache even if it is installed" OFF)
+option(LTO "Enable Link Time Optimization (LTO). This will result in better performance, but greatly increased compile time. (Gentoo chads can't live without this)" OFF)
+option(NOSTRIP "Never strip debug symbols from the binary, even in release mode. Note that symbols are never stripped for debug releases." OFF)
+
+option(WAYLAND_LAYER_SHELL "Enable support for the layer shell Wayland protocol" OFF)
+option(TYPESCRIPT_EXTENSIONS "Enable support for extensions built with React/Typescript (no browser involved)" ON)
+
+option(USE_SYSTEM_PROTOBUF "Use system protobuf instead of building it from source" ON)
+option(USE_SYSTEM_ABSEIL "Use system abseil (libabsl) instead of building it from source" ON)
+option(USE_SYSTEM_CMARK_GFM "Use system cmark-gfm (github's fork of cmark) instead of building it from source" ON)
+option(USE_SYSTEM_MINIZIP "Use system minizip instead of building it from source" ON)
+option(LIBQALCULATE_BACKEND "Compile in support for the Qalculate! calculator backend" ON)
+
+if (UNIX AND NOT APPLE)
+	set(WAYLAND_LAYER_SHELL ON)
+endif()
+
+# End of Vicinae build configuration options
+
 include(Git)
 include(Utils)
 
@@ -21,16 +43,6 @@ get_cxx_compiler_name(CXX_COMPILER_NAME)
 
 add_compile_definitions(VICINAE_GIT_TAG="${VICINAE_GIT_TAG}")
 add_compile_definitions(VICINAE_GIT_COMMIT_HASH="${VICINAE_GIT_COMMIT_HASH}")
-
-option(IGNORE_CCACHE "Always ignore ccache even if it is installed" OFF)
-option(LTO "Enable Link Time Optimization (LTO). This will result in better performance, but greatly increased compile time. (Gentoo chads can't live without this)" OFF)
-option(NOSTRIP "Never strip debug symbols from the binary, even in release mode. Note that symbols are never stripped for debug releases." OFF)
-
-option(USE_SYSTEM_PROTOBUF "Use system protobuf instead of building it from source" ON)
-option(USE_SYSTEM_ABSEIL "Use system abseil (libabsl) instead of building it from source" ON)
-option(USE_SYSTEM_CMARK_GFM "Use system cmark-gfm (github's fork of cmark) instead of building it from source" ON)
-option(USE_SYSTEM_MINIZIP "Use system minizip instead of building it from source" ON)
-option(LIBQALCULATE_BACKEND "Compile in support for the Qalculate! calculator backend" ON)
 
 set(CMARK_LIBRARY "cmark-gfm")
 
@@ -69,7 +81,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Debug Release ReleaseHost)
 
-if (NOT NOSTRIP)
+if (NOT NOSTRIP AND NOT ${CMAKE_BUILD_TYPE} MATCHES "Debug")
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
 	message(STATUS "Built binaries will be stripped")
 endif()
@@ -96,7 +108,7 @@ if (LTO)
 endif()
 
 if (CCACHE AND NOT IGNORE_CCACHE) 
-	message(STATUS "Found ccache installed, changing CMAKE_CXX_COMPILER_LAUNCHER")
+	message(STATUS "ccache is installed, changing CMAKE_CXX_COMPILER_LAUNCHER")
 	set(CMAKE_CXX_COMPILER_LAUNCHER "ccache")
 endif()
 

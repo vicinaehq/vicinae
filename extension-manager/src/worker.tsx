@@ -56,10 +56,6 @@ const loadView = async () => {
 	const module = await import(workerData.entrypoint);
 	const Component = module.default.default;
 
-	process.on('uncaughtException', (error) => {
-		console.error('uncaught exception:', error);
-	});
-
 	let lastRender = performance.now();
 
 	const renderer = createRenderer({

@@ -101,7 +101,6 @@ void Shortcut::parseLink(const QString &link) {
     case PH_KEY:
       if (ch == '=') {
         arg.first = link.sliced(startPos, i - startPos);
-        qDebug() << "key" << arg.first;
         state = PH_VALUE_START;
       }
       break;
@@ -120,7 +119,6 @@ void Shortcut::parseLink(const QString &link) {
       }
       if (!ch.isLetterOrNumber()) {
         arg.second += link.sliced(startPos, i - startPos);
-        qDebug() << "value" << arg.second;
         parsed.args.insert(arg);
         --i;
         state = PH_KEY_START;
