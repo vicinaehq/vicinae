@@ -17,6 +17,7 @@
 class GetVicinaeSourceCodeCommand : public BuiltinUrlCommand {
   QString id() const override { return "get-source-code"; }
   QString name() const override { return "Get Vicinae Source Code"; }
+  QString description() const override { return "Navigate to the vicinae GitHub repository."; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("code").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
@@ -26,6 +27,7 @@ class GetVicinaeSourceCodeCommand : public BuiltinUrlCommand {
 class OpenDocumentationCommand : public BuiltinUrlCommand {
   QString id() const override { return "documentation"; }
   QString name() const override { return "Open Vicinae Documentation"; }
+  QString description() const override { return "Navigate to the official vicinae documentation website."; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("book").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
@@ -46,6 +48,9 @@ class OpenDiscordCommand : public BuiltinUrlCommand {
 class OpenSettingsCommand : public BuiltinCallbackCommand {
   QString id() const override { return "settings"; }
   QString name() const override { return "Open Vicinae Settings"; }
+  QString description() const override {
+    return "Open the vicinae settings window, which is an independent floating window.";
+  }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("cog").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
@@ -59,6 +64,7 @@ class OpenSettingsCommand : public BuiltinCallbackCommand {
 class VicinaeExtension : public BuiltinCommandRepository {
   QString id() const override { return "vicinae"; }
   QString displayName() const override { return "Vicinae"; }
+  QString description() const override { return "General vicinae-related commands."; }
   ImageURL iconUrl() const override {
     return ImageURL::builtin("vicinae").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
