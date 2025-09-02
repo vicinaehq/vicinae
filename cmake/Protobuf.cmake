@@ -4,6 +4,7 @@ function(checkout_protobuf)
 	set(FETCHCONTENT_QUIET OFF)
 	FetchContent_Declare(
 	  protobuf
+	  EXCLUDE_FROM_ALL
 	  GIT_REPOSITORY https://github.com/protocolbuffers/protobuf.git
 	  GIT_TAG        v32.0  #
 	)

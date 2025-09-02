@@ -38,11 +38,11 @@ add_custom_command(
             ${EXT_MGR_SRC_DIR}/dist/runtime.js
             ${EXT_MGR_OUT}
     WORKING_DIRECTORY ${EXT_MGR_SRC_DIR}
-	DEPENDS ${FILTERED_TS_FILES} ${API_OUT}
+	DEPENDS ${FILTERED_TS_FILES} ${API_STAMP}
     COMMENT "Building extension manager JavaScript bundle"
 )
 
 add_custom_target(extension-manager ALL
-    DEPENDS api ${EXT_MGR_OUT}
+	DEPENDS ${EXT_MGR_OUT}
 )
 

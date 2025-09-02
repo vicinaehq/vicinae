@@ -34,6 +34,10 @@ portable:
 dev: debug
 .PHONY: dev
 
+extdev: debug
+	./scripts/vicinae-ext-dev.sh
+.PHONY: extdev
+
 runner:
 	cd ./scripts/runners/ && ./start.sh
 .PHONY:

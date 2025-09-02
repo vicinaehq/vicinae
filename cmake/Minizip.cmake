@@ -5,6 +5,7 @@ function(checkout_minizip)
 
 	FetchContent_Declare(
 	  minizip
+	  EXCLUDE_FROM_ALL
 	  GIT_REPOSITORY https://github.com/zlib-ng/minizip-ng
 	  GIT_TAG        4.0.10
 	)
