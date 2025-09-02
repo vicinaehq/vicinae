@@ -3,6 +3,7 @@
 #include <qlogging.h>
 #include <qnamespace.h>
 #include <qprocess.h>
+#include <qtenvironmentvariables.h>
 
 static const std::vector<QString> UNIX_EMOJI_FONT_CANDIDATES = {
     "Twemoji",
@@ -19,9 +20,7 @@ QFont FontService::findEmojiFont() {
   return QFont("Apple Color Emoji");
 #endif
 
-  auto environ = QProcessEnvironment::systemEnvironment();
-
-  if (auto emojiFont = environ.value("EMOJI_FONT"); !emojiFont.isEmpty()) {
+  if (auto emojiFont = qEnvironmentVariable("EMOJI_FONT"); !emojiFont.isEmpty()) {
     if (!QFontDatabase::hasFamily(emojiFont)) {
       qWarning() << "EMOJI_FONT environment variable was set to" << emojiFont
                  << "but there is no such family installed.";
