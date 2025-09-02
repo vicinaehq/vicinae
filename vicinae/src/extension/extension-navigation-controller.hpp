@@ -40,10 +40,7 @@ public:
     m_views.pop_back();
   }
 
-  void popView() {
-    m_views.pop_back();
-    m_navigation->popCurrentView();
-  }
+  void popView() { m_navigation->popCurrentView(); }
 
   void setSessionId(const QString &id) {
     m_sessionId = id;
