@@ -5,6 +5,7 @@
 #include <qwidget.h>
 #include "ui/image/image.hpp"
 
+/*
 class FadeWidget : public QWidget {
 private:
   QGraphicsOpacityEffect *opacityEffect;
@@ -48,10 +49,11 @@ public:
     fadeAnimation->start();
   }
 };
+*/
 
 class TypographyWidget;
 
-class HudWidget : public FadeWidget {
+class HudWidget : public QWidget {
   TypographyWidget *m_text = nullptr;
   ImageWidget *m_icon = nullptr;
   bool m_shouldDrawBorders = true;

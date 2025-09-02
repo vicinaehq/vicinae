@@ -1,7 +1,8 @@
 #include "navigation-controller.hpp"
-#include "ui/keyboard.hpp"
 #include "ui/views/base-view.hpp"
+#include "utils/environment.hpp"
 #include <qlogging.h>
+#include <qtenvironmentvariables.h>
 #include <qwidget.h>
 #include <QProcessEnvironment>
 
@@ -41,15 +42,14 @@ void NavigationController::setLoading(bool value, const BaseView *caller) {
 }
 
 void NavigationController::showHud(const QString &title, const std::optional<ImageURL> &icon) {
-  bool hudDisabled = QProcessEnvironment::systemEnvironment().value("VICINAE_DISABLE_HUD", "0") == "1";
-
   closeWindow();
 
-  if (hudDisabled) {
+  if (Environment::isHudDisabled()) {
     qDebug() << "HUD disabled via VICINAE_DISABLE_HUD environment variable, skipping:" << title;
-  } else {
-    emit showHudRequested(title, icon);
+    return;
   }
+
+  emit showHudRequested(title, icon);
 }
 
 void NavigationController::setDialog(DialogContentWidget *widget) { emit confirmAlertRequested(widget); }

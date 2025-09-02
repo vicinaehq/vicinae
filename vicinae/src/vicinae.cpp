@@ -1,6 +1,7 @@
 #include "vicinae.hpp"
 #include "utils/utils.hpp"
 #include <qprocess.h>
+#include <qtenvironmentvariables.h>
 #include <ranges>
 
 namespace fs = std::filesystem;
@@ -23,17 +24,18 @@ fs::path Omnicast::commandSocketPath() { return runtimeDir() / "vicinae.sock"; }
 fs::path Omnicast::pidFile() { return runtimeDir() / "vicinae.pid"; }
 
 std::vector<fs::path> Omnicast::xdgConfigDirs() {
-  auto env = QProcessEnvironment::systemEnvironment();
   std::set<fs::path> seen;
   std::vector<fs::path> paths;
   fs::path configHome = homeDir() / ".config";
 
-  if (auto value = env.value("XDG_CONFIG_HOME"); !value.isEmpty()) { configHome = value.toStdString(); }
+  if (auto value = qEnvironmentVariable("XDG_CONFIG_HOME"); !value.isEmpty()) {
+    configHome = value.toStdString();
+  }
 
   paths.emplace_back(configHome);
   seen.insert(configHome);
 
-  for (const QString &dir : env.value("XDG_CONFIG_DIRS").split(':')) {
+  for (const QString &dir : qEnvironmentVariable("XDG_CONFIG_DIRS").split(':')) {
     fs::path path = dir.toStdString();
 
     if (std::ranges::contains(seen, path)) { continue; }
@@ -66,11 +68,10 @@ std::vector<fs::path> Omnicast::systemPaths() {
 }
 
 std::vector<fs::path> Omnicast::xdgDataDirs() {
-  auto env = QProcessEnvironment::systemEnvironment();
   std::set<fs::path> seen;
   std::vector<fs::path> paths;
 
-  for (const QString &dir : env.value("XDG_DATA_DIRS").split(':')) {
+  for (const QString &dir : qEnvironmentVariable("XDG_DATA_DIRS").split(':')) {
     fs::path path = dir.toStdString();
 
     if (std::ranges::contains(seen, path)) { continue; }
