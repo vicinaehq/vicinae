@@ -5,6 +5,7 @@ function(checkout_abseil)
 
 	FetchContent_Declare(
 	  abseil
+	  EXCLUDE_FROM_ALL
 	  GIT_REPOSITORY https://github.com/abseil/abseil-cpp
 	  GIT_TAG        20250814.0
 	)
