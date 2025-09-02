@@ -102,6 +102,7 @@ public:
       if (repositories[i]->id() == repository->id()) {
         repositories[i] = repository;
         index = i;
+        emit registryAdded(repository);
         break;
       }
     }
