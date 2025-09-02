@@ -3,6 +3,7 @@
 #include <qfuturewatcher.h>
 #include <qlogging.h>
 #include <qstringview.h>
+#include <qtenvironmentvariables.h>
 #include <string>
 #include <unordered_map>
 #include "pid-file/pid-file.hpp"
@@ -158,9 +159,7 @@ bool ExtensionManager::start() {
 
   if (process.state() == QProcess::Running) { process.close(); }
 
-  auto sysEnv = QProcessEnvironment::systemEnvironment();
-
-  if (auto path = sysEnv.value("EXT_MANAGER_PATH"); !path.isEmpty()) {
+  if (auto path = qEnvironmentVariable("EXT_MANAGER_PATH"); !path.isEmpty()) {
     managerPath = path.toStdString();
     qInfo() << "EXT_MANAGER_PATH is set, and will override bundled version" << path;
   } else {
