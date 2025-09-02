@@ -125,7 +125,7 @@ proto::ext::extension::Response *UIRequestRouter::route(const proto::ext::ui::Re
   case Request::kPushView:
     return wrapUI(pushView(req.push_view()));
   case Request::kPopView:
-    return wrapUI(pushView(req.push_view()));
+    return wrapUI(popView(req.pop_view()));
   case Request::kShowToast:
     return wrapUI(showToast(req.show_toast()));
   case Request::kHideToast:

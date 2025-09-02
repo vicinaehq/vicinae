@@ -11,7 +11,7 @@ file(GLOB_RECURSE API_PROTO_FILES
 )
 
 file(GLOB_RECURSE API_TS_FILES
-    "${EXT_API_SRC_DIR}/src/*.ts"
+    "${EXT_API_SRC_DIR}/src/api/**/*"
 )
 
 set(EXT_API_TS_FILES)
@@ -25,6 +25,11 @@ endforeach()
 file(MAKE_DIRECTORY ${API_PROTO_OUT})
 
 set(API_STAMP "${CMAKE_CURRENT_BINARY_DIR}/api.stamp")
+
+#foreach(file ${EXT_API_TS_FILES})
+#    file(RELATIVE_PATH rel_file "${EXT_API_SRC_DIR}" "${file}")
+#    message(STATUS "  ${rel_file}")
+#endforeach()
 
 add_custom_command(
     OUTPUT ${API_STAMP}
