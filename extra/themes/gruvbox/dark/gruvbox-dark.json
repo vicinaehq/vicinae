@@ -1,7 +1,7 @@
 {
 	"version": "1.0.0",
 	"appearance": "dark",
-	"icon": "./icon.png",
+	"icon": "../icon.png",
 	"name": "Gruvbox Dark",
 	"description": "Designed as a bright theme with pastel 'retro groove' colors",
 	"palette": {
