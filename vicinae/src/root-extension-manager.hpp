@@ -15,10 +15,10 @@ class RootExtensionManager : public QObject {
 public:
   void start() {
     connect(&m_commandDb, &OmniCommandDatabase::registryAdded, this, [this](const auto &registry) {
-      m_manager.addProvider(std::make_unique<ExtensionRootProvider>(registry));
+      m_manager.loadProvider(std::make_unique<ExtensionRootProvider>(registry));
     });
     connect(&m_commandDb, &OmniCommandDatabase::repositoryRemoved, this,
-            [this](const QString &id) { m_manager.removeProvider(QString("extension.%1").arg(id)); });
+            [this](const QString &id) { m_manager.unloadProvider(QString("extension.%1").arg(id)); });
   }
 
   RootExtensionManager(RootItemManager &manager, OmniCommandDatabase &commandDb)

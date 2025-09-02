@@ -1,5 +1,4 @@
 #pragma once
-#include "common.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include <qjsonobject.h>
 #include <qwidget.h>
@@ -54,6 +53,9 @@ public:
   void preferencesChanged(const QJsonObject &preferences) override {
     return m_repo->preferenceValuesChanged(preferences);
   }
+  QString repositoryId() const { return m_repo->id(); }
+  // TODO: user better logic
+  bool isBuiltin() const { return m_repo->author() == "vicinae"; }
 
   ExtensionRootProvider(const std::shared_ptr<AbstractCommandRepository> &repo) : m_repo(repo) {}
 };

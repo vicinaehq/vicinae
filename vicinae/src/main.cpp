@@ -3,6 +3,7 @@
 #include "favicon/favicon-service.hpp"
 #include "navigation-controller.hpp"
 #include "pid-file/pid-file.hpp"
+#include "root-search/extensions/extension-root-provider.hpp"
 #include "ui/launcher-window/launcher-window.hpp"
 #include <QStyleHints>
 #include "common.hpp"
@@ -44,6 +45,7 @@
 #include <qprocess.h>
 #include <qstringview.h>
 #include <qtmetamacros.h>
+#include <ranges>
 #include "extension/manager/extension-manager.hpp"
 #include "services/emoji-service/emoji-service.hpp"
 #include "services/extension-registry/extension-registry.hpp"
@@ -139,15 +141,33 @@ int startDaemon() {
     auto reg = ServiceRegistry::instance()->extensionRegistry();
 
     QObject::connect(reg, &ExtensionRegistry::extensionsChanged, [reg]() {
+      auto root = ServiceRegistry::instance()->rootItemManager();
+      auto cmdDb = ServiceRegistry::instance()->commandDb();
+      std::set<QString> scanned;
+
       for (const auto &manifest : reg->scanAll()) {
         auto extension = std::make_shared<Extension>(manifest);
 
-        ServiceRegistry::instance()->commandDb()->registerRepository(extension);
+        cmdDb->registerRepository(extension);
+        scanned.insert(extension->id());
       }
+
+      for (const auto &provider : root->providers()) {
+        if (!provider->isExtension()) continue;
+
+        auto extp = static_cast<ExtensionRootProvider *>(provider);
+
+        if (!extp->isBuiltin() && !scanned.contains(extp->repositoryId())) {
+          cmdDb->removeRepository(extp->repositoryId());
+        }
+      }
+
+      root->updateIndex();
     });
 
     QObject::connect(reg, &ExtensionRegistry::extensionUninstalled, [reg](const QString &id) {
       ServiceRegistry::instance()->commandDb()->removeRepository(id);
+      ServiceRegistry::instance()->rootItemManager()->uninstallProvider(id);
     });
 
     for (const auto &manifest : reg->scanAll()) {
@@ -158,11 +178,11 @@ int startDaemon() {
 
     // this one needs to be set last
 
-    registry->rootItemManager()->addProvider(std::make_unique<AppRootProvider>(*registry->appDb()));
-    registry->rootItemManager()->addProvider(std::make_unique<ShortcutRootProvider>(*registry->shortcuts()));
+    registry->rootItemManager()->loadProvider(std::make_unique<AppRootProvider>(*registry->appDb()));
+    registry->rootItemManager()->loadProvider(std::make_unique<ShortcutRootProvider>(*registry->shortcuts()));
 
     // Force reload providers to make sure items that depend on them are shown
-    registry->rootItemManager()->reloadProviders();
+    registry->rootItemManager()->updateIndex();
 
     // Start indexing after registerRepository() so that search paths are configured properly
     registry->fileService()->indexer()->start();

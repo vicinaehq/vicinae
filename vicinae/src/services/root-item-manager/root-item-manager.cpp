@@ -64,7 +64,7 @@ RootProvider *RootItemManager::findProviderById(const QString &id) const {
   return it->get();
 }
 
-void RootItemManager::reloadProviders() {
+void RootItemManager::updateIndex() {
   static bool isReloading = false;
 
   if (isReloading) {
@@ -850,45 +850,60 @@ std::vector<RootProvider *> RootItemManager::providers() const {
          std::ranges::to<std::vector>();
 }
 
-void RootItemManager::removeProvider(const QString &id) {
-  pruneProvider(id);
-  std::erase_if(m_providers, [&](auto &&p) { return p->uniqueId() == id; });
-  reloadProviders();
+void RootItemManager::uninstallProvider(const QString &id) {
+  if (pruneProvider(id)) { unloadProvider(id); }
 }
 
-void RootItemManager::addProvider(std::unique_ptr<RootProvider> provider) {
-  auto items = provider->loadItems();
+void RootItemManager::unloadProvider(const QString &id) {
+  auto it = std::ranges::find_if(m_providers, [&](auto &&p) { return p->uniqueId() == id; });
 
-  if (!m_db.db().transaction()) { qWarning() << "Failed to start upsert transaction"; }
+  if (it == m_providers.end()) return;
 
-  if (!upsertProvider(*provider.get())) {
-    m_db.db().rollback();
-    return;
-  }
+  m_providers.erase(it);
+  disconnect(it->get());
+}
 
-  m_items.insert(m_items.end(), items.begin(), items.end());
-
-  std::ranges::for_each(items, [&](const auto &item) { upsertItem(provider->uniqueId(), *item.get()); });
-
-  m_db.db().commit();
-
-  auto preferences = getProviderPreferenceValues(provider->uniqueId());
-
-  if (preferences.empty()) {
-    preferences = provider->generateDefaultPreferences();
-
-    if (!preferences.empty()) {
-      qCritical() << "set default preferences for app" << provider->uniqueId();
-      setProviderPreferenceValues(provider->uniqueId(), preferences);
-    }
-  }
-
-  provider->preferencesChanged(preferences);
+void RootItemManager::loadProvider(std::unique_ptr<RootProvider> provider) {
+  if (findProviderById(provider->uniqueId())) return;
 
   connect(provider.get(), &RootProvider::itemsChanged, this,
-          [this, name = provider->uniqueId()]() { reloadProviders(); });
+          [this, name = provider->uniqueId()]() { updateIndex(); });
   m_providers.emplace_back(std::move(provider));
-  emit itemsChanged();
+
+  /*
+auto items = provider->loadItems();
+
+if (!m_db.db().transaction()) { qWarning() << "Failed to start upsert transaction"; }
+
+if (!upsertProvider(*provider.get())) {
+m_db.db().rollback();
+return;
+}
+
+m_items.insert(m_items.end(), items.begin(), items.end());
+
+std::ranges::for_each(items, [&](const auto &item) { upsertItem(provider->uniqueId(), *item.get()); });
+
+m_db.db().commit();
+
+auto preferences = getProviderPreferenceValues(provider->uniqueId());
+
+if (preferences.empty()) {
+preferences = provider->generateDefaultPreferences();
+
+if (!preferences.empty()) {
+qCritical() << "set default preferences for app" << provider->uniqueId();
+setProviderPreferenceValues(provider->uniqueId(), preferences);
+}
+}
+
+provider->preferencesChanged(preferences);
+
+connect(provider.get(), &RootProvider::itemsChanged, this,
+    [this, name = provider->uniqueId()]() { reloadProviders(); });
+m_providers.emplace_back(std::move(provider));
+emit itemsChanged();
+*/
 }
 
 RootProvider *RootItemManager::provider(const QString &id) const {
