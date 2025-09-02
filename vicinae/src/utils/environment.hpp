@@ -31,6 +31,10 @@ inline bool isWlrootsCompositor() {
          desktop.contains("river", Qt::CaseInsensitive);
 }
 
+inline bool isHudDisabled() { return qEnvironmentVariable("VICINAE_DISABLE_HUD", "0") == "1"; }
+
+inline bool isLayerShellEnabled() { return qEnvironmentVariable("USE_LAYER_SHELL", "1") == "1"; }
+
 /**
  * Gets human-readable environment description
  */

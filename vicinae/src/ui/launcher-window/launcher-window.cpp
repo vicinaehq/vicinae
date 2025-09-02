@@ -4,6 +4,8 @@
 #include "ui/keyboard.hpp"
 #include "ui/status-bar/status-bar.hpp"
 #include "ui/top-bar/top-bar.hpp"
+#include "utils/environment.hpp"
+#include <qtenvironmentvariables.h>
 #ifdef WAYLAND_LAYER_SHELL
 #include <LayerShellQt/window.h>
 #endif
@@ -67,7 +69,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
     m_ctx.navigation->closeActionPanel();
   });
 
-  connect(m_hudDismissTimer, &QTimer::timeout, this, [this]() { m_hud->fadeOut(); });
+  connect(m_hudDismissTimer, &QTimer::timeout, this, [this]() { m_hud->hide(); });
 
   connect(m_ctx.navigation.get(), &NavigationController::actionPanelVisibilityChanged, this,
           [this](bool value) {
@@ -134,7 +136,7 @@ void LauncherWindow::handleShowHUD(const QString &text, const std::optional<Imag
   m_hud->clear();
   m_hud->setText(text);
   if (icon) m_hud->setIcon(*icon);
-  m_hud->showDirect();
+  m_hud->show();
   m_hudDismissTimer->start();
 }
 
@@ -152,9 +154,7 @@ void LauncherWindow::setupUI() {
   m_hud->setMaximumWidth(300);
 
 #ifdef WAYLAND_LAYER_SHELL
-  bool useLayerShell = QProcessEnvironment().systemEnvironment().value("USE_LAYER_SHELL", "1") == "1";
-
-  if (useLayerShell) {
+  if (Environment::isLayerShellEnabled()) {
     namespace Shell = LayerShellQt;
 
     createWinId();
