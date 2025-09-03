@@ -1,9 +1,7 @@
 #include "service-registry.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "font-service.hpp"
-#include "omni-command-db.hpp"
 #include "omni-database.hpp"
-#include "root-extension-manager.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/shortcut/shortcut-service.hpp"
 #include "services/calculator-service/calculator-service.hpp"
@@ -26,7 +24,6 @@ CalculatorService *ServiceRegistry::calculatorService() const { return m_calcula
 WindowManager *ServiceRegistry::windowManager() const { return m_windowManager.get(); }
 EmojiService *ServiceRegistry::emojiService() const { return m_emojiService.get(); }
 FontService *ServiceRegistry::fontService() const { return m_fontService.get(); }
-OmniCommandDatabase *ServiceRegistry::commandDb() const { return m_omniCommandDb.get(); }
 LocalStorageService *ServiceRegistry::localStorage() const { return m_localStorage.get(); }
 ExtensionManager *ServiceRegistry::extensionManager() const { return m_extensionManager.get(); }
 ClipboardService *ServiceRegistry::clipman() const { return m_clipman.get(); }
@@ -71,15 +68,9 @@ void ServiceRegistry::setEmojiService(std::unique_ptr<EmojiService> service) {
 void ServiceRegistry::setToastService(std::unique_ptr<ToastService> service) {
   m_toastService = std::move(service);
 }
-void ServiceRegistry::setRootExtMan(std::unique_ptr<RootExtensionManager> man) {
-  m_rootExtMan = std::move(man);
-}
 void ServiceRegistry::setFontService(std::unique_ptr<FontService> font) { m_fontService = std::move(font); }
 void ServiceRegistry::setOmniDb(std::unique_ptr<OmniDatabase> service) { m_omniDb = std::move(service); }
 
-void ServiceRegistry::setCommandDb(std::unique_ptr<OmniCommandDatabase> commandDb) {
-  m_omniCommandDb = std::move(commandDb);
-}
 void ServiceRegistry::setLocalStorage(std::unique_ptr<LocalStorageService> service) {
   m_localStorage = std::move(service);
 }

@@ -1,4 +1,5 @@
 #pragma once
+#include "common.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include <qjsonobject.h>
 #include <qwidget.h>
@@ -43,6 +44,7 @@ class ExtensionRootProvider : public RootProvider {
   std::shared_ptr<AbstractCommandRepository> m_repo;
 
 public:
+  const std::shared_ptr<AbstractCommandRepository> &repository() const { return m_repo; }
   PreferenceList preferences() const override { return m_repo->preferences(); }
   QString displayName() const override { return m_repo->displayName(); }
   QString uniqueId() const override { return QString("extension.%1").arg(m_repo->id()); }

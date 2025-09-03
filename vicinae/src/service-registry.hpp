@@ -6,13 +6,11 @@
 class AbstractWindowManager;
 class AppService;
 class OmniDatabase;
-class OmniCommandDatabase;
 class LocalStorageService;
 class ExtensionManager;
 class ClipboardService;
 class FontService;
 class RootItemManager;
-class RootExtensionManager;
 class ConfigService;
 class ShortcutService;
 class ToastService;
@@ -28,13 +26,11 @@ class ServiceRegistry : public QObject {
   std::unique_ptr<WindowManager> m_windowManager;
   std::unique_ptr<AppService> m_appDb;
   std::unique_ptr<OmniDatabase> m_omniDb;
-  std::unique_ptr<OmniCommandDatabase> m_omniCommandDb;
   std::unique_ptr<LocalStorageService> m_localStorage;
   std::unique_ptr<ExtensionManager> m_extensionManager;
   std::unique_ptr<ClipboardService> m_clipman;
   std::unique_ptr<FontService> m_fontService;
   std::unique_ptr<RootItemManager> m_rootItemManager;
-  std::unique_ptr<RootExtensionManager> m_rootExtMan;
   std::unique_ptr<ConfigService> m_config;
   std::unique_ptr<ShortcutService> m_shortcutService;
   std::unique_ptr<ToastService> m_toastService;
@@ -54,7 +50,6 @@ public:
   WindowManager *windowManager() const;
   EmojiService *emojiService() const;
   FontService *fontService() const;
-  OmniCommandDatabase *commandDb() const;
   LocalStorageService *localStorage() const;
   ExtensionManager *extensionManager() const;
   ClipboardService *clipman() const;
@@ -77,11 +72,9 @@ public:
   void setFileService(std::unique_ptr<FileService> service);
   void setEmojiService(std::unique_ptr<EmojiService> service);
   void setToastService(std::unique_ptr<ToastService> service);
-  void setRootExtMan(std::unique_ptr<RootExtensionManager> man);
   void setFontService(std::unique_ptr<FontService> font);
   void setOmniDb(std::unique_ptr<OmniDatabase> service);
   void setWindowManager(std::unique_ptr<AbstractWindowManager> service);
-  void setCommandDb(std::unique_ptr<OmniCommandDatabase> commandDb);
   void setLocalStorage(std::unique_ptr<LocalStorageService> service);
   void setExtensionManager(std::unique_ptr<ExtensionManager> service);
   void setClipman(std::unique_ptr<ClipboardService> service);

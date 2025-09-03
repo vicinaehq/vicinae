@@ -1,6 +1,5 @@
 #pragma once
 #include "common.hpp"
-#include "omni-command-db.hpp"
 #include "preference.hpp"
 #include "services/local-storage/local-storage-service.hpp"
 #include <expected>
@@ -46,7 +45,6 @@ struct ExtensionManifest {
 class ExtensionRegistry : public QObject {
   Q_OBJECT
 
-  OmniCommandDatabase &m_db;
   LocalStorageService &m_storage;
   QFileSystemWatcher *m_watcher = new QFileSystemWatcher(this);
 
@@ -65,7 +63,7 @@ public:
   bool isInstalled(const QString &id) const;
   bool uninstall(const QString &id);
 
-  ExtensionRegistry(OmniCommandDatabase &commandDb, LocalStorageService &storage);
+  ExtensionRegistry(LocalStorageService &storage);
 
   void requestScan() { emit extensionsChanged(); }
 

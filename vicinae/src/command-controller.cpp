@@ -3,6 +3,7 @@
 #include "extension/extension-command.hpp"
 #include "navigation-controller.hpp"
 #include "extension/missing-extension-preference-view.hpp"
+#include "root-search/extensions/extension-root-provider.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include <qlogging.h>
 #include "extension/manager/extension-manager.hpp"
@@ -68,7 +69,16 @@ void CommandController::handleViewPoped(const BaseView *view) {
 }
 
 void CommandController::launch(const QString &id) {
-  if (auto cmd = m_ctx->services->commandDb()->findCommand(id)) { launch(cmd->command); };
+  auto root = m_ctx->services->rootItemManager();
+
+  for (ExtensionRootProvider *extension : root->extensions()) {
+    for (const auto &cmd : extension->repository()->commands()) {
+      if (cmd->uniqueId() == id) {
+        launch(cmd);
+        return;
+      }
+    }
+  }
 }
 
 void CommandController::launch(const std::shared_ptr<AbstractCmd> &cmd) {

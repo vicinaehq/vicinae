@@ -122,7 +122,7 @@ Bus::Bus(QIODevice *socket) : device(socket) {
 
 // Extension Manager
 
-ExtensionManager::ExtensionManager(OmniCommandDatabase &commandDb) : commandDb(commandDb), bus(&process) {
+ExtensionManager::ExtensionManager() : bus(&process) {
 
   QProcessEnvironment env;
 
