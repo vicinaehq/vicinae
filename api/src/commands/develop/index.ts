@@ -1,4 +1,4 @@
-import { Command, Flags } from "@oclif/core";
+import { Command, CommandHelp, Flags } from "@oclif/core";
 import * as chokidar from "chokidar";
 import * as esbuild from "esbuild";
 import { spawn } from "node:child_process";
@@ -48,27 +48,30 @@ export default class Develop extends Command {
     const { flags } = await this.parse(Develop);
     const logger = new Logger();
     const pkgPath = join(flags.target, "package.json");
+	const parseManifest = () => {
+		if (!existsSync(pkgPath)) {
+		  logger.logError(
+			`No package.json found at ${pkgPath}. Does this location point to a valid extension repository?`,
+		  );
+		  process.exit(1);
+		}
 
-    if (!existsSync(pkgPath)) {
-      logger.logError(
-        `No package.json found at ${pkgPath}. Does this location point to a valid extension repository?`,
-      );
-      process.exit(1);
-    }
+		const json = JSON.parse(readFileSync(pkgPath, "utf8"));
 
-    const json = JSON.parse(readFileSync(pkgPath, "utf8"));
+		const e = ManifestSchema.safeParse(json);
 
-    const e = ManifestSchema.safeParse(json);
 
-    if (e.error) {
-      logger.logError(
-        `${pkgPath} is not a valid extension manifest: ${e.error}`,
-      );
-      process.exit(1);
-    }
+		if (e.error) {
+		  logger.logError(
+			`${pkgPath} is not a valid extension manifest: ${e.error}`,
+		  );
+		  process.exit(1);
+		}
 
-    const manifest = e.data;
+		return e.data;
+	}
 
+    let manifest = parseManifest();
     const vicinae = new VicinaeClient();
 
     const typeCheck = async (): Promise<TypeCheckResult> => {
@@ -87,8 +90,8 @@ export default class Develop extends Command {
     };
 
     const build = async (outDir: string) => {
+	  /*
       logger.logInfo("Started type checking in background thread");
-
       typeCheck().then(({ error, ok }) => {
         if (!ok) {
           logger.logInfo(`Type checking error: ${error}`);
@@ -96,11 +99,9 @@ export default class Develop extends Command {
 
         logger.logInfo("Done type checking");
       });
+	  */
 
-      const entryPoints = manifest.commands.map((cmd) =>
-        join("src", `${cmd.name}.tsx`),
-      );
-
+      const entryPoints = manifest.commands.map((cmd) => join("src", `${cmd.name}.tsx`)).filter(existsSync);
       logger.logInfo(`entrypoints [${entryPoints.join(", ")}]`);
 
       const promises = manifest.commands.map((cmd) => {
@@ -110,9 +111,7 @@ export default class Develop extends Command {
         let source = tsxSource;
 
         if (cmd.mode == "view" && !existsSync(tsxSource)) {
-          throw new Error(
-            `Unable to find view command ${cmd.name} at ${tsxSource}`,
-          );
+			throw new Error(`could not find entrypoint src/${cmd.name}.tsx for command ${cmd.name}.`);
         }
 
         // we allow .ts or .tsx for no-view
@@ -120,9 +119,7 @@ export default class Develop extends Command {
           if (!existsSync(tsxSource)) {
             source = tsSource;
             if (!existsSync(tsSource)) {
-              throw new Error(
-                `Unable to find no-view command ${cmd.name} at ${base}.{ts,tsx}`,
-              );
+				throw new Error(`could not find entrypoint src/${cmd.name}.{ts,tsx} for command ${cmd.name}.`);
             }
           }
         }
@@ -158,6 +155,22 @@ export default class Develop extends Command {
       return;
     }
 
+	const safeBuild = async (extensionDir: string) => {
+        try {
+		  const start = performance.now();
+          await build(extensionDir);
+		  const time = performance.now() - start;
+          logger.logReady(`Extension built in ${Math.round(time)}ms 🚀`);
+          vicinae.refreshDevSession(id);
+        } catch (error: unknown) {
+			if (error instanceof Error) {
+          		logger.logError(`Failed to build extension: ${error.message}`);
+			} else {
+				logger.logError(`Failed to build extension: ${error}`);
+			}
+        }
+	}
+
     process.chdir(flags.target);
 
     const dataDir = extensionDataDir();
@@ -167,10 +180,9 @@ export default class Develop extends Command {
     const pidFile = join(extensionDir, "cli.pid");
 
     mkdirSync(extensionDir, { recursive: true });
-    await build(extensionDir);
-    logger.logReady("built extension successfully");
     writeFileSync(pidFile, `${process.pid}`);
     writeFileSync(logFile, "");
+    await safeBuild(extensionDir);
 
     process.on("SIGINT", () => {
       logger.logInfo("Shutting down...");
@@ -190,16 +202,13 @@ export default class Develop extends Command {
         awaitWriteFinish: { pollInterval: 100, stabilityThreshold: 100 },
         ignoreInitial: true,
       })
-      .on("all", (_, path) => {
-        logger.logEvent(`changed file ${path}:`);
+      .on("all", async (_, path) => {
+		if (path.endsWith('package.json')) {
+			manifest = parseManifest();
+		}
 
-        try {
-          build(extensionDir);
-          logger.logReady("built extension successfully");
-          vicinae.refreshDevSession(id);
-        } catch (error: unknown) {
-          logger.logEvent(`Failed to build extension: ${error}`);
-        }
+        logger.logEvent(`changed file ${path}`);
+		await safeBuild(extensionDir);
       });
 
     const logFiles = new Map<string, LogFileData>();
@@ -210,7 +219,7 @@ export default class Develop extends Command {
       if (!stats.isFile()) return;
 
       if (!logFiles.has(path)) {
-        logger.logInfo(`Monitoring new log file at ${path}`);
+        //logger.logInfo(`Monitoring new log file at ${path}`);
         logFiles.set(path, { cursor: 0, path });
       }
 
