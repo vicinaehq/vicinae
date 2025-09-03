@@ -2,7 +2,9 @@
 #include "common.hpp"
 #include "proto/daemon.pb.h"
 #include <algorithm>
+#include "root-search/extensions/extension-root-provider.hpp"
 #include "services/config/config-service.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
 #include "services/toast/toast-service.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "services/extension-registry/extension-registry.hpp"
@@ -14,7 +16,6 @@
 #include <qurlquery.h>
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
-#include "omni-command-db.hpp"
 #include "command-controller.hpp"
 #include "theme.hpp"
 #include "ui/toast/toast.hpp"
@@ -115,6 +116,8 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
   }
 
   if (url.host() == "extensions") {
+    auto root = m_ctx.services->rootItemManager();
+
     auto components = url.path().sliced(1).split('/');
 
     if (components.size() < 3) {
@@ -127,18 +130,19 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
     QString extName = components[1];
     QString cmdName = components[2];
 
-    for (const auto &cmd : m_ctx.services->commandDb()->commands()) {
-      if (cmd.command->author() == author && cmd.command->commandId() == cmdName &&
-          cmd.command->repositoryName() == extName) {
-        m_ctx.command->launch(cmd.command);
+    for (ExtensionRootProvider *ext : root->extensions()) {
+      for (const auto &cmd : ext->repository()->commands()) {
+        if (cmd->author() == author && cmd->commandId() == cmdName && cmd->repositoryName() == extName) {
+          m_ctx.command->launch(cmd);
 
-        if (auto text = query.queryItemValue("fallbackText"); !text.isEmpty()) {
-          m_ctx.navigation->setSearchText(text);
+          if (auto text = query.queryItemValue("fallbackText"); !text.isEmpty()) {
+            m_ctx.navigation->setSearchText(text);
+          }
+
+          m_ctx.navigation->showWindow();
+
+          break;
         }
-
-        m_ctx.navigation->showWindow();
-
-        break;
       }
     }
 

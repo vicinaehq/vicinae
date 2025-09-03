@@ -10,7 +10,6 @@
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 #include "services/files-service/abstract-file-indexer.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
-#include "omni-command-db.hpp"
 #include "service-registry.hpp"
 #include "ui/action-pannel/action-item.hpp"
 #include "ui/action-pannel/action.hpp"
@@ -19,10 +18,7 @@
 #include "ui/omni-list/omni-list-item-widget.hpp"
 #include "ui/omni-list/omni-list.hpp"
 #include <QtConcurrent/QtConcurrent>
-#include <cfloat>
 #include <chrono>
-#include <cmath>
-#include "action-panel/action-panel.hpp"
 #include "actions/color/color-actions.hpp"
 #include "utils/utils.hpp"
 #include <memory>
@@ -282,11 +278,8 @@ class RootSearchView : public ListView {
     m_currentCalculatorEntry.reset();
 
     m_list->beginResetModel();
-    auto commandDb = ServiceRegistry::instance()->commandDb();
     auto appDb = ServiceRegistry::instance()->appDb();
-    // const auto &quicklinks = quicklinkDb->list();
     const auto &appEntries = appDb->list();
-    const auto &commandEntries = commandDb->commands();
     auto rootManager = ServiceRegistry::instance()->rootItemManager();
 
     {
@@ -345,11 +338,8 @@ class RootSearchView : public ListView {
 
   void render(const QString &text) {
     auto rootItemManager = ServiceRegistry::instance()->rootItemManager();
-    auto commandDb = ServiceRegistry::instance()->commandDb();
     auto appDb = ServiceRegistry::instance()->appDb();
     const auto &appEntries = appDb->list();
-    const auto &commandEntries = commandDb->commands();
-    size_t maxReserve = appEntries.size() + commandEntries.size();
 
     m_list->beginResetModel();
 

@@ -1,12 +1,10 @@
 #pragma once
-#include "action-panel/action-panel.hpp"
 #include "argument.hpp"
 #include "common.hpp"
 #include "navigation-controller.hpp"
 #include "omni-database.hpp"
 #include "../../ui/image/url.hpp"
 #include "preference.hpp"
-#include "ui/action-pannel/action.hpp"
 #include "ui/default-list-item-widget/default-list-item-widget.hpp"
 #include <qdnslookup.h>
 #include <qjsonobject.h>
@@ -22,6 +20,7 @@
 #include <qwidget.h>
 
 class RootItemMetadata;
+class ExtensionRootProvider;
 
 struct RootItemPrefixSearchOptions {
   bool includeDisabled = false;
@@ -260,6 +259,7 @@ public:
   bool enableItem(const QString &id);
 
   std::vector<RootProvider *> providers() const;
+  std::vector<ExtensionRootProvider *> extensions() const;
 
   void updateIndex();
 
