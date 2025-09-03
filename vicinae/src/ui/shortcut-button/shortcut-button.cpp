@@ -52,6 +52,7 @@ ShortcutButton::ShortcutButton()
   layout->addWidget(_label, 0, Qt::AlignLeft);
   layout->addWidget(_shortcut_indicator, 0, Qt::AlignRight);
   layout->setContentsMargins(8, 4, 8, 4);
+  resetColor();
 
   connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() { resetColor(); });
 
