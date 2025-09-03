@@ -205,33 +205,38 @@ root->updateIndex();
   commandServer.setHandler(new IpcCommandHandler(ctx));
   commandServer.start(Omnicast::commandSocketPath());
 
-  QObject::connect(ServiceRegistry::instance()->config(), &ConfigService::configChanged,
-                   [&ctx](const ConfigService::Value &next, const ConfigService::Value &prev) {
-                     auto &theme = ThemeService::instance();
-                     bool themeChangeRequired = next.theme.name.value_or("") != prev.theme.name.value_or("");
+  bool initalConfigPass = true;
 
-                     if (next.font.baseSize != prev.font.baseSize) {
-                       theme.setFontBasePointSize(next.font.baseSize);
+  auto configChanged = [&](const ConfigService::Value &next, const ConfigService::Value &prev) {
+    auto &theme = ThemeService::instance();
+    bool themeChangeRequired = next.theme.name.value_or("") != prev.theme.name.value_or("");
 
-                       if (!themeChangeRequired) { theme.reloadCurrentTheme(); }
-                     }
+    if (next.font.baseSize != prev.font.baseSize) {
+      theme.setFontBasePointSize(next.font.baseSize);
 
-                     if (themeChangeRequired) { theme.setTheme(*next.theme.name); }
+      if (!themeChangeRequired) { theme.reloadCurrentTheme(); }
+    }
 
-                     ctx.navigation->setPopToRootOnClose(next.popToRootOnClose);
+    if (themeChangeRequired) { theme.setTheme(*next.theme.name); }
 
-                     FaviconService::instance()->setService(next.faviconService);
+    ctx.navigation->setPopToRootOnClose(next.popToRootOnClose);
 
-                     if (auto icon = next.theme.iconTheme) { QIcon::setThemeName(icon.value()); }
+    FaviconService::instance()->setService(next.faviconService);
 
-                     if (next.font.normal && *next.font.normal != prev.font.normal.value_or("")) {
-                       QApplication::setFont(*next.font.normal);
-                       qApp->setStyleSheet(qApp->styleSheet());
-                     }
-                   });
+    if (auto icon = next.theme.iconTheme) { QIcon::setThemeName(icon.value()); }
 
-  SettingsWindow settings(&ctx);
+    if (next.font.normal && *next.font.normal != prev.font.normal.value_or("")) {
+      QApplication::setFont(*next.font.normal);
+      qApp->setStyleSheet(qApp->styleSheet());
+    }
+  };
+
+  QObject::connect(ServiceRegistry::instance()->config(), &ConfigService::configChanged, configChanged);
+
+  configChanged(ServiceRegistry::instance()->config()->value(), {});
+
   LauncherWindow launcher(ctx);
+  SettingsWindow settings(&ctx);
 
   qInfo() << "Vicinae server successfully started. Call vicinae without an argument to toggle the window";
 

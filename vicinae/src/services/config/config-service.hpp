@@ -202,8 +202,6 @@ public:
 
     connect(&m_watcher, &QFileSystemWatcher::directoryChanged, this, &ConfigService::handleDirectoryChanged);
     connect(&m_watcher, &QFileSystemWatcher::fileChanged, this, &ConfigService::handleFileChanged);
-
-    QTimer::singleShot(0, [this]() { emit configChanged(m_config, {}); });
   }
 
 signals:
