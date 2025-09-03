@@ -12,7 +12,7 @@ public:
   struct TextData {};
   struct PasswordData {};
   struct CheckboxData {
-    QString label;
+    std::optional<QString> label;
   };
   struct AppPickerData {};
   struct FilePickerData {};
