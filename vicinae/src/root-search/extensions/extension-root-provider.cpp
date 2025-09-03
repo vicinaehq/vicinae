@@ -3,6 +3,7 @@
 #include "actions/fallback-actions.hpp"
 #include "actions/root-search/root-search-actions.hpp"
 #include "clipboard-actions.hpp"
+#include "clipboard-history-view.hpp"
 #include "command-actions.hpp"
 #include "extension/extension-command.hpp"
 #include "navigation-controller.hpp"
@@ -25,6 +26,7 @@ std::unique_ptr<ActionPanelState> CommandRootItem::newActionPanel(ApplicationCon
   auto markAsFavorite = new ToggleItemAsFavorite(uniqueId(), metadata.favorite);
   auto mainSection = panel->createSection();
   auto itemSection = panel->createSection();
+  auto extensionSection = panel->createSection();
   auto dangerSection = panel->createSection();
   auto copyDeeplink = new CopyToClipboardAction(Clipboard::Text(m_command->deeplink()), "Copy deeplink");
 
@@ -36,7 +38,12 @@ std::unique_ptr<ActionPanelState> CommandRootItem::newActionPanel(ApplicationCon
 
   if (m_command->type() == CommandType::CommandTypeExtension) {
     auto cmd = static_cast<ExtensionCommand *>(m_command.get());
+    auto copyId = new CopyToClipboardAction(Clipboard::Text(cmd->extensionId()), "Copy extension ID");
+    auto copyLocation =
+        new CopyToClipboardAction(Clipboard::Text(cmd->path().c_str()), "Copy extension path");
 
+    extensionSection->addAction(copyId);
+    extensionSection->addAction(copyLocation);
     dangerSection->addAction(new UninstallExtensionAction(cmd->extensionId()));
   }
 

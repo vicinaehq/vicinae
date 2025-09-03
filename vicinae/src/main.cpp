@@ -3,6 +3,7 @@
 #include "favicon/favicon-service.hpp"
 #include "navigation-controller.hpp"
 #include "pid-file/pid-file.hpp"
+#include "root-search/extensions/extension-root-provider.hpp"
 #include "ui/launcher-window/launcher-window.hpp"
 #include <QStyleHints>
 #include "common.hpp"
@@ -23,14 +24,10 @@
 #include <memory>
 #include "services/window-manager/window-manager.hpp"
 #include <QtSql/QtSql>
-#include "root-extension-manager.hpp"
 #include <QXmlStreamReader>
 #include <QtSql/qsqldatabase.h>
 #include <arpa/inet.h>
-#include <csignal>
 #include <filesystem>
-#include <fstream>
-#include <iostream>
 #include <qapplication.h>
 #include <qbuffer.h>
 #include <qdebug.h>
@@ -77,8 +74,7 @@ int startDaemon() {
     auto omniDb = std::make_unique<OmniDatabase>(Omnicast::dataDir() / "vicinae.db");
     auto localStorage = std::make_unique<LocalStorageService>(*omniDb);
     auto rootItemManager = std::make_unique<RootItemManager>(*omniDb.get());
-    auto commandDb = std::make_unique<OmniCommandDatabase>();
-    auto extensionManager = std::make_unique<ExtensionManager>(*commandDb);
+    auto extensionManager = std::make_unique<ExtensionManager>();
     auto windowManager = std::make_unique<WindowManager>();
     auto appService = std::make_unique<AppService>(*omniDb.get());
     auto clipboardManager =
@@ -89,11 +85,10 @@ int startDaemon() {
     auto shortcutService = std::make_unique<ShortcutService>(*omniDb.get());
     auto toastService = std::make_unique<ToastService>();
     auto currentConfig = configService->value();
-    auto rootExtMan = std::make_unique<RootExtensionManager>(*rootItemManager.get(), *commandDb.get());
     auto emojiService = std::make_unique<EmojiService>(*omniDb.get());
     auto calculatorService = std::make_unique<CalculatorService>(*omniDb.get());
     auto fileService = std::make_unique<FileService>();
-    auto extensionRegistry = std::make_unique<ExtensionRegistry>(*commandDb, *localStorage);
+    auto extensionRegistry = std::make_unique<ExtensionRegistry>(*localStorage);
     auto raycastStore = std::make_unique<RaycastStoreService>();
 
 #ifdef HAS_TYPESCRIPT_EXTENSIONS
@@ -113,7 +108,6 @@ int startDaemon() {
     registry->setCalculatorService(std::move(calculatorService));
     registry->setAppDb(std::move(appService));
     registry->setOmniDb(std::move(omniDb));
-    registry->setCommandDb(std::move(commandDb));
     registry->setLocalStorage(std::move(localStorage));
     registry->setExtensionManager(std::move(extensionManager));
     registry->setClipman(std::move(clipboardManager));
@@ -124,45 +118,70 @@ int startDaemon() {
     registry->setExtensionRegistry(std::move(extensionRegistry));
     registry->setOAuthService(std::make_unique<OAuthService>());
 
-    auto p = rootExtMan.get();
-
-    registry->setRootExtMan(std::move(rootExtMan));
-
-    p->start();
-
+    auto root = registry->rootItemManager();
     auto builtinCommandDb = std::make_unique<CommandDatabase>();
 
     for (const auto &repo : builtinCommandDb->repositories()) {
-      registry->commandDb()->registerRepository(repo);
+      root->loadProvider(std::make_unique<ExtensionRootProvider>(repo));
     }
 
     auto reg = ServiceRegistry::instance()->extensionRegistry();
 
     QObject::connect(reg, &ExtensionRegistry::extensionsChanged, [reg]() {
+      auto reg = ServiceRegistry::instance()->extensionRegistry();
+      auto root = ServiceRegistry::instance()->rootItemManager();
+      std::set<QString> scanned;
+
       for (const auto &manifest : reg->scanAll()) {
-        auto extension = std::make_shared<Extension>(manifest);
+        auto extension = std::make_unique<ExtensionRootProvider>(std::make_shared<Extension>(manifest));
 
-        ServiceRegistry::instance()->commandDb()->registerRepository(extension);
+        // cmdDb->registerRepository(extension);
+        scanned.insert(extension->repositoryId());
+        root->loadProvider(std::move(extension));
       }
+
+      std::vector<QString> removed;
+
+      for (const auto &provider : root->providers()) {
+        if (!provider->isExtension()) continue;
+
+        auto extp = static_cast<ExtensionRootProvider *>(provider);
+
+        if (!extp->isBuiltin() && !scanned.contains(extp->repositoryId())) {
+          removed.emplace_back(extp->uniqueId());
+        }
+      }
+
+      for (const auto &id : removed) {
+        root->uninstallProvider(id);
+      }
+
+      root->updateIndex();
     });
 
-    QObject::connect(reg, &ExtensionRegistry::extensionUninstalled, [reg](const QString &id) {
-      ServiceRegistry::instance()->commandDb()->removeRepository(id);
-    });
+    /*
+QObject::connect(reg, &ExtensionRegistry::extensionUninstalled, [reg](const QString &id) {
+auto root = ServiceRegistry::instance()->rootItemManager();
+auto cmdDb = ServiceRegistry::instance()->commandDb();
+
+cmdDb->removeRepository(id);
+root->updateIndex();
+})
+*/
 
     for (const auto &manifest : reg->scanAll()) {
       auto extension = std::make_shared<Extension>(manifest);
 
-      ServiceRegistry::instance()->commandDb()->registerRepository(extension);
+      root->loadProvider(std::make_unique<ExtensionRootProvider>(extension));
     }
 
     // this one needs to be set last
 
-    registry->rootItemManager()->addProvider(std::make_unique<AppRootProvider>(*registry->appDb()));
-    registry->rootItemManager()->addProvider(std::make_unique<ShortcutRootProvider>(*registry->shortcuts()));
+    root->loadProvider(std::make_unique<AppRootProvider>(*registry->appDb()));
+    root->loadProvider(std::make_unique<ShortcutRootProvider>(*registry->shortcuts()));
 
     // Force reload providers to make sure items that depend on them are shown
-    registry->rootItemManager()->reloadProviders();
+    root->updateIndex();
 
     // Start indexing after registerRepository() so that search paths are configured properly
     registry->fileService()->indexer()->start();
@@ -186,33 +205,38 @@ int startDaemon() {
   commandServer.setHandler(new IpcCommandHandler(ctx));
   commandServer.start(Omnicast::commandSocketPath());
 
-  QObject::connect(ServiceRegistry::instance()->config(), &ConfigService::configChanged,
-                   [&ctx](const ConfigService::Value &next, const ConfigService::Value &prev) {
-                     auto &theme = ThemeService::instance();
-                     bool themeChangeRequired = next.theme.name.value_or("") != prev.theme.name.value_or("");
+  bool initalConfigPass = true;
 
-                     if (next.font.baseSize != prev.font.baseSize) {
-                       theme.setFontBasePointSize(next.font.baseSize);
+  auto configChanged = [&](const ConfigService::Value &next, const ConfigService::Value &prev) {
+    auto &theme = ThemeService::instance();
+    bool themeChangeRequired = next.theme.name.value_or("") != prev.theme.name.value_or("");
 
-                       if (!themeChangeRequired) { theme.reloadCurrentTheme(); }
-                     }
+    if (next.font.baseSize != prev.font.baseSize) {
+      theme.setFontBasePointSize(next.font.baseSize);
 
-                     if (themeChangeRequired) { theme.setTheme(*next.theme.name); }
+      if (!themeChangeRequired) { theme.reloadCurrentTheme(); }
+    }
 
-                     ctx.navigation->setPopToRootOnClose(next.popToRootOnClose);
+    if (themeChangeRequired) { theme.setTheme(*next.theme.name); }
 
-                     FaviconService::instance()->setService(next.faviconService);
+    ctx.navigation->setPopToRootOnClose(next.popToRootOnClose);
 
-                     if (auto icon = next.theme.iconTheme) { QIcon::setThemeName(icon.value()); }
+    FaviconService::instance()->setService(next.faviconService);
 
-                     if (next.font.normal && *next.font.normal != prev.font.normal.value_or("")) {
-                       QApplication::setFont(*next.font.normal);
-                       qApp->setStyleSheet(qApp->styleSheet());
-                     }
-                   });
+    if (auto icon = next.theme.iconTheme) { QIcon::setThemeName(icon.value()); }
 
-  SettingsWindow settings(&ctx);
+    if (next.font.normal && *next.font.normal != prev.font.normal.value_or("")) {
+      QApplication::setFont(*next.font.normal);
+      qApp->setStyleSheet(qApp->styleSheet());
+    }
+  };
+
+  QObject::connect(ServiceRegistry::instance()->config(), &ConfigService::configChanged, configChanged);
+
+  configChanged(ServiceRegistry::instance()->config()->value(), {});
+
   LauncherWindow launcher(ctx);
+  SettingsWindow settings(&ctx);
 
   qInfo() << "Vicinae server successfully started. Call vicinae without an argument to toggle the window";
 

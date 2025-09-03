@@ -7,7 +7,6 @@
 #include <cstdint>
 #include "common.hpp"
 #include "extension/extension.hpp"
-#include "omni-command-db.hpp"
 #include "proto/common.pb.h"
 #include "proto/extension.pb.h"
 #include "proto/ipc.pb.h"
@@ -132,11 +131,10 @@ class ExtensionManager : public QObject {
   QProcess process;
   Bus bus;
   std::vector<std::shared_ptr<Extension>> loadedExtensions;
-  OmniCommandDatabase &commandDb;
   std::unordered_set<QString> m_developmentSessions;
 
 public:
-  ExtensionManager(OmniCommandDatabase &commandDb);
+  ExtensionManager();
 
   const std::vector<std::shared_ptr<Extension>> &extensions() const;
 
