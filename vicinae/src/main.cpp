@@ -61,6 +61,15 @@
 #include "log/message-handler.hpp"
 #include "lib/pid-file/pid-file.hpp"
 
+#ifdef QT_STATIC
+#include <QtCore/QtPlugin>
+Q_IMPORT_PLUGIN(QXcbIntegrationPlugin)
+Q_IMPORT_PLUGIN(QWaylandIntegrationPlugin)
+//  Q_IMPORT_PLUGIN(QSvgPlugin)
+//  Q_IMPORT_PLUGIN(QJpegPlugin)
+//   Q_IMPORT_PLUGIN(QPngPlugin)
+#endif
+
 int startDaemon() {
   std::filesystem::create_directories(Omnicast::runtimeDir());
   PidFile pidFile(Omnicast::APP_ID.toStdString());

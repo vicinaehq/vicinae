@@ -10,5 +10,6 @@ function(checkout_abseil)
 	  GIT_TAG        20250814.0
 	)
 	
+	set(BUILD_SHARED_LIBS OFF)
 	FetchContent_MakeAvailable(abseil)
 endfunction()
