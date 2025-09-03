@@ -9,6 +9,7 @@
 #include "ui/form/password-input.hpp"
 #include "ui/switch/switch.hpp"
 #include "ui/typography/typography.hpp"
+#include "utils/layout.hpp"
 #include <qboxlayout.h>
 #include <qjsonobject.h>
 #include <qjsonvalue.h>
@@ -24,28 +25,20 @@ public:
 };
 
 class PreferenceSwitchFormItem : public AbstractPreferenceFormItem {
-  QVBoxLayout *m_vlayout = new QVBoxLayout;
-  QHBoxLayout *m_hlayout = new QHBoxLayout;
-  QWidget *m_labelContainer = new QWidget;
   TypographyWidget *m_label = new TypographyWidget;
   TypographyWidget *m_description = new TypographyWidget;
   Switch *m_switch = new Switch;
 
   void setupUI() {
-    m_labelContainer->setLayout(m_hlayout);
-
-    m_label->setColor(SemanticColor::TextSecondary);
     m_description->setWordWrap(true);
-    m_vlayout->setContentsMargins(0, 0, 0, 0);
-    m_vlayout->setSpacing(10);
+    m_description->setSize(TextSize::TextSmaller);
+    m_label->setColor(SemanticColor::TextSecondary);
 
-    m_hlayout->setContentsMargins(0, 0, 0, 0);
-    m_hlayout->addWidget(m_label, Qt::AlignLeft | Qt::AlignVCenter);
-    m_hlayout->addWidget(m_switch, Qt::AlignRight | Qt::AlignVCenter);
-
-    m_vlayout->addWidget(m_labelContainer);
-    m_vlayout->addWidget(m_description);
-    setLayout(m_vlayout);
+    VStack()
+        .spacing(10)
+        .add(HStack().add(m_label).add(m_switch).justifyBetween())
+        .add(m_description)
+        .imbue(this);
   }
 
   JsonFormItemWidget *formItem() const override { return m_switch; }
@@ -154,7 +147,7 @@ struct PreferenceWidgetVisitor {
   AbstractPreferenceFormItem *operator()(const Preference::CheckboxData &data) {
     auto item = new PreferenceSwitchFormItem;
 
-    item->setLabel(m_preference.title());
+    item->setLabel(data.label.value_or(m_preference.title()));
     item->setDescription(m_preference.description());
 
     return item;
