@@ -5,11 +5,8 @@ project(${PROJECT_NAME} VERSION 1.0.0 LANGUAGES C CXX)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
-set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".so" ".dylib")
-set(CMAKE_PREFIX_PATH "/home/aurelle/prog/perso/qt-build/qt6/qt-build" ${CMAKE_PREFIX_PATH})
-set(Qt6_DIR "/home/aurelle/prog/perso/qt-build/qt6/qt-build/lib/cmake/Qt6")
-
-#set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+set(Qt6_DIR "${CMAKE_SOURCE_DIR}/qt6/install/lib/cmake/Qt6")
+set(CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/qt6/install" ${CMAKE_PREFIX_PATH})
 
 # Viciane build configuration options
 
@@ -36,6 +33,7 @@ endif()
 # End of Vicinae build configuration options
 
 if (STATIC_BUILD)
+	set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".so" ".dylib")
 	set(BUILD_SHARED_LIBS OFF)
 	set(USE_SYSTEM_PROTOBUF OFF)
 	set(USE_SYSTEM_ABSEIL OFF)
@@ -71,7 +69,6 @@ if (NOT USE_SYSTEM_QT_KEYCHAIN)
 	include(QtKeychain)
 	checkout_qt_keychain()
 endif()
-
 
 if (NOT USE_SYSTEM_LAYER_SHELL)
 	include(QtLayerShell)

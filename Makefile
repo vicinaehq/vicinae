@@ -23,7 +23,7 @@ no-ts-ext:
 .PHONY: no-ts-ext
 
 static:
-	cmake -G Ninja -DSTATIC_BUILD=ON -DCMAKE_BUILD_TYPE=Release -B $(BUILD_DIR)
+	cmake --debug-output -G Ninja -DSTATIC_BUILD=ON -DCMAKE_BUILD_TYPE=Release -B $(BUILD_DIR)
 	cmake --build $(BUILD_DIR)
 .PHONY: static
 
