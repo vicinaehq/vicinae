@@ -13,8 +13,7 @@
 
 namespace fs = std::filesystem;
 
-ExtensionRegistry::ExtensionRegistry(OmniCommandDatabase &commandDb, LocalStorageService &storage)
-    : m_db(commandDb), m_storage(storage) {
+ExtensionRegistry::ExtensionRegistry(LocalStorageService &storage) : m_storage(storage) {
   m_watcher->addPath(extensionDir().c_str());
 
   // XXX: we currently do not support removing extensions by filesystem removal
@@ -80,7 +79,7 @@ bool ExtensionRegistry::uninstall(const QString &id) {
   m_storage.clearNamespace(id);
 
   emit extensionUninstalled(id);
-  emit extensionsChanged();
+  // emit extensionsChanged();
 
   return true;
 }

@@ -132,8 +132,6 @@ set(SRCS
 
 	src/action-panel/action-panel.hpp
 
-	include/omni-command-db.hpp
-
 	src/ui/split-detail/split-detail.hpp
 	src/ui/split-detail/split-detail.cpp
 

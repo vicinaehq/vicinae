@@ -44,6 +44,7 @@ class ExtensionRootProvider : public RootProvider {
   std::shared_ptr<AbstractCommandRepository> m_repo;
 
 public:
+  const std::shared_ptr<AbstractCommandRepository> &repository() const { return m_repo; }
   PreferenceList preferences() const override { return m_repo->preferences(); }
   QString displayName() const override { return m_repo->displayName(); }
   QString uniqueId() const override { return QString("extension.%1").arg(m_repo->id()); }
@@ -54,6 +55,9 @@ public:
   void preferencesChanged(const QJsonObject &preferences) override {
     return m_repo->preferenceValuesChanged(preferences);
   }
+  QString repositoryId() const { return m_repo->id(); }
+  // TODO: user better logic
+  bool isBuiltin() const { return m_repo->author() == "vicinae"; }
 
   ExtensionRootProvider(const std::shared_ptr<AbstractCommandRepository> &repo) : m_repo(repo) {}
 };

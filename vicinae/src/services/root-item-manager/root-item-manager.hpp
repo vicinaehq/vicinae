@@ -1,12 +1,10 @@
 #pragma once
-#include "action-panel/action-panel.hpp"
 #include "argument.hpp"
 #include "common.hpp"
 #include "navigation-controller.hpp"
 #include "omni-database.hpp"
 #include "../../ui/image/url.hpp"
 #include "preference.hpp"
-#include "ui/action-pannel/action.hpp"
 #include "ui/default-list-item-widget/default-list-item-widget.hpp"
 #include <qdnslookup.h>
 #include <qjsonobject.h>
@@ -22,6 +20,7 @@
 #include <qwidget.h>
 
 class RootItemMetadata;
+class ExtensionRootProvider;
 
 struct RootItemPrefixSearchOptions {
   bool includeDisabled = false;
@@ -143,6 +142,9 @@ public:
     }
   }
 
+  bool isExtension() const { return type() == Type::ExtensionProvider; }
+  bool isGroup() const { return type() == Type::GroupProvider; }
+
   /**
    * Generate the default set of preferences for this item.
    * This function is called on _each_ startup and diffed against the existing preference values.
@@ -207,12 +209,12 @@ private:
   bool upsertProvider(const RootProvider &provider);
   bool upsertItem(const QString &providerId, const RootItem &item);
   RootItem *findItemById(const QString &id) const;
-  RootProvider *findProviderById(const QString &id) const;
   bool pruneProvider(const QString &id);
 
 public:
   RootItemManager(OmniDatabase &db) : m_db(db) {}
 
+  RootProvider *findProviderById(const QString &id) const;
   bool setProviderPreferenceValues(const QString &id, const QJsonObject &preferences);
 
   bool setItemEnabled(const QString &id, bool value);
@@ -257,10 +259,25 @@ public:
   bool enableItem(const QString &id);
 
   std::vector<RootProvider *> providers() const;
+  std::vector<ExtensionRootProvider *> extensions() const;
 
-  void reloadProviders();
-  void removeProvider(const QString &id);
-  void addProvider(std::unique_ptr<RootProvider> provider);
+  void updateIndex();
+
+  /**
+   * DESTRUCTIVE!
+   * This will unload the provider AND wipe persisted data such as aliases, preferences, etc...
+   */
+  void uninstallProvider(const QString &id);
+
+  /**
+   * Unload provider from the tracked list of providers.
+   * You need to call reloadProviders() once you are done making changes in order
+   * to cleanup the old items from the index.
+   */
+  void unloadProvider(const QString &id);
+
+  void loadProvider(std::unique_ptr<RootProvider> provider);
+
   RootProvider *provider(const QString &id) const;
   std::vector<std::shared_ptr<RootItem>> allItems() const { return m_items; }
   std::vector<std::shared_ptr<RootItem>> fallbackItems() const;
