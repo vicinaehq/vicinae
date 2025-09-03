@@ -9,15 +9,20 @@ void Switch::paintEvent(QPaintEvent *event) {
   int radius = height() / 2;
 
   if (m_value) {
-    painter.setBrush(painter.colorBrush(theme.colors.blue));
+    painter.setThemeBrush(SemanticColor::Blue);
   } else {
-    painter.setBrush(painter.colorBrush(theme.colors.mainHoveredBackground));
+    painter.setThemeBrush(SemanticColor::MainHoverBackground);
   }
 
   painter.setRenderHint(QPainter::Antialiasing);
   painter.setPen(Qt::NoPen);
   painter.drawRoundedRect(rect(), radius, radius);
-  painter.setBrush(Qt::white);
+
+  if (m_value) {
+    painter.setThemeBrush(Qt::white);
+  } else {
+    painter.setThemeBrush(SemanticColor::TextSecondary);
+  }
 
   QRect geometry;
   int padding = 2;
