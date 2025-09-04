@@ -36,6 +36,11 @@ inline bool isHudDisabled() { return qEnvironmentVariable("VICINAE_DISABLE_HUD",
 inline bool isLayerShellEnabled() { return qEnvironmentVariable("USE_LAYER_SHELL", "1") == "1"; }
 
 /**
+ * Version of the Vicinae app.
+ */
+inline QString version() { return VICINAE_GIT_TAG; }
+
+/**
  * Gets human-readable environment description
  */
 inline QString getEnvironmentDescription() {
