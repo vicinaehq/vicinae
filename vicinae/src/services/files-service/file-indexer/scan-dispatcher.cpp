@@ -13,7 +13,7 @@ ScanDispatcher::ScanDispatcher(std::map<ScanType, std::shared_ptr<AbstractScanne
 
 ScanDispatcher::~ScanDispatcher() {
   for (auto &[type, pair] : m_scannerMap) {
-    pair.first->stop();
+    pair.first->stop(false);
     pair.second.join();
   }
 }
