@@ -4,6 +4,7 @@
 #include "common.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/dialog/dialog.hpp"
+#include "ui/image/url.hpp"
 #include <QString>
 #include <google/protobuf/message.h>
 #include <qevent.h>
@@ -80,6 +81,12 @@ public:
   void setShortcutPreset(ShortcutPreset preset) { m_defaultShortcuts = shortcutsForPreset(preset); }
 
   ActionPanelState() { setShortcutPreset(ShortcutPreset::None); }
+
+  int actionCount() const {
+    auto acc = [](int acc, auto &&cur) { return acc + cur->actions().size(); };
+
+    return std::ranges::fold_left(m_sections, 0, acc);
+  }
 
 private:
   void computePrimaryAction() {
@@ -223,6 +230,7 @@ public:
   void clearSearchText();
   void setNavigationTitle(const QString &navigationTitle, const BaseView *caller = nullptr);
   void setNavigationIcon(const ImageURL &icon);
+  void setNavigationSuffixIcon(const std::optional<ImageURL> &icon);
 
   bool executePrimaryAction();
   void executeAction(AbstractAction *action);
@@ -253,6 +261,7 @@ signals:
   void searchTextChanged(const QString &text) const;
   void searchPlaceholderTextChanged(const QString &text) const;
   void navigationStatusChanged(const QString &text, const ImageURL &icon) const;
+  void navigationSuffixIconChanged(const std::optional<ImageURL> &icon) const;
   void confirmAlertRequested(DialogContentWidget *widget);
   void loadingChanged(bool value) const;
   void showHudRequested(const QString &title, const std::optional<ImageURL> &icon);

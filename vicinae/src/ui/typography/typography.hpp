@@ -28,6 +28,9 @@ class TypographyWidget : public QWidget {
   Qt::TextElideMode m_elideMode = Qt::ElideRight;
   bool m_autoEllide = true;
 
+  // meant for visual debugging
+  bool m_debugBackground = false;
+
 protected:
   QLabel *measurementLabel() const;
 
@@ -47,6 +50,7 @@ public:
   QSize sizeHint() const override;
   void setAutoEllide(bool autoEllide = true);
   void setText(const QString &text);
+  void setDebugHighlight();
   QString text() const;
   void setEllideMode(Qt::TextElideMode mode);
   void setColor(const ColorLike &color);

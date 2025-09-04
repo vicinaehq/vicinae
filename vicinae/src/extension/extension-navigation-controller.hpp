@@ -3,6 +3,8 @@
 #include "extension/extension-command.hpp"
 #include "extension/extension-view-wrapper.hpp"
 #include "navigation-controller.hpp"
+#include "theme.hpp"
+#include "ui/image/url.hpp"
 #include <qobject.h>
 
 class ExtensionNavigationController : public QObject {
@@ -13,10 +15,7 @@ class ExtensionNavigationController : public QObject {
   QString m_sessionId;
   bool m_devMode = false;
 
-  QString defaultNavigationTitle() {
-    if (m_devMode) return QString("%1 (Dev)").arg(m_command->name());
-    return m_command->name();
-  }
+  QString defaultNavigationTitle() { return m_command->name(); }
 
 public:
   ExtensionCommandController *controller() const { return m_controller.get(); }
