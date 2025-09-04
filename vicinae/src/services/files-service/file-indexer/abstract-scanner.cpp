@@ -1,13 +1,14 @@
 #include "abstract-scanner.hpp"
 #include <expected>
+#include <mutex>
 #include <variant>
 
 std::expected<Scan, bool> AbstractScanner::awaitScan() {
-  if (!m_alive) return std::unexpected<bool>(false);
-
   std::unique_lock lock(m_scanLock);
+
   m_scanCv.wait(lock, [&]() { return !m_queuedScans.empty() || !m_alive; });
   if (!m_alive) { return std::unexpected<bool>(false); }
+
   Scan front = m_queuedScans.front();
 
   m_queuedScans.pop_front();
@@ -17,13 +18,13 @@ std::expected<Scan, bool> AbstractScanner::awaitScan() {
 }
 
 void AbstractScanner::finishScan(const Scan& scan) {
+  std::scoped_lock guard(m_scanLock);
   m_aliveScans.erase(scan);
 }
 
 void AbstractScanner::enqueue(const Scan &scan) {
-  m_scanLock.lock();
+  std::scoped_lock guard(m_scanLock);
   m_queuedScans.push_back(scan);
-  m_scanLock.unlock();
 
   m_scanCv.notify_one();
 }
