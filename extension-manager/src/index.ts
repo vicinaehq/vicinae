@@ -75,8 +75,8 @@ class Vicinae {
 
 				stdout: true,
 				env: {
+					...process.env,
 					'NODE_ENV': load.env == manager.CommandEnv.Development ? 'development' : 'production',
-					'RECONCILER_TRACE': process.env.RECONCILER_TRACE,
 				}
 			});
 
