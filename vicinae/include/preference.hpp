@@ -39,7 +39,7 @@ private:
   Preference(const QString &id, const Data &data) : m_name(id), m_data(data) {}
 
 public:
-  static Preference makeCheckbox(const QString &id, const QString &label = "") {
+  static Preference makeCheckbox(const QString &id, const std::optional<QString> &label = {}) {
     return {id, CheckboxData{.label = label}};
   }
   static Preference makeText(const QString &id) { return {id, TextData{}}; }
