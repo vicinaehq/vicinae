@@ -1,6 +1,7 @@
 #pragma once
 #include <QString>
 #include <QProcessEnvironment>
+#include <qapplication.h>
 
 namespace Environment {
 
@@ -17,10 +18,7 @@ inline bool isGnomeEnvironment() {
 /**
  * Detects if running on Wayland
  */
-inline bool isWaylandSession() {
-  const QString sessionType = qgetenv("XDG_SESSION_TYPE");
-  return sessionType.compare("wayland", Qt::CaseInsensitive) == 0;
-}
+inline bool isWaylandSession() { return QApplication::platformName() == "wayland"; }
 
 /**
  * Detects if running in wlroots-based compositor (Hyprland, Sway, etc.)
