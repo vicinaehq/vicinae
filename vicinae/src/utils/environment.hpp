@@ -1,4 +1,5 @@
 #pragma once
+#include "vicinae.hpp"
 #include <QString>
 #include <QProcessEnvironment>
 #include <qapplication.h>
@@ -32,6 +33,23 @@ inline bool isWlrootsCompositor() {
 inline bool isHudDisabled() { return qEnvironmentVariable("VICINAE_DISABLE_HUD", "0") == "1"; }
 
 inline bool isLayerShellEnabled() { return qEnvironmentVariable("USE_LAYER_SHELL", "1") == "1"; }
+
+inline QStringList fallbackIconSearchPaths() {
+  QStringList list;
+  auto dirs = Omnicast::xdgDataDirs();
+
+  list.reserve(dirs.size() * 2);
+
+  for (const auto &dir : dirs) {
+    list << (dir / "pixmaps").c_str();
+  }
+
+  for (const auto &dir : dirs) {
+    list << (dir / "icons").c_str();
+  }
+
+  return list;
+}
 
 /**
  * Version of the Vicinae app.
