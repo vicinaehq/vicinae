@@ -1,0 +1,139 @@
+app-id: com.yourcompany.vicinae
+runtime: org.kde.Platform
+runtime-version: '6.9'
+sdk: org.kde.Sdk
+command: vicinae
+
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.node20
+
+build-options:
+  build-args:
+    - --share=network
+
+finish-args:
+  - --share=ipc
+  - --socket=wayland
+  - --socket=x11
+  - --device=dri
+  - --share=network
+  - --talk-name=org.freedesktop.secrets
+  - --filesystem=home:ro  # if you need file access
+
+    
+modules:
+  - name: rapidfuzz-cpp
+    buildsystem: cmake-ninja
+    cleanup: ['*']   # don’t ship it in the final app, build-only
+    builddir: true
+    config-opts:
+    sources:
+      - type: git
+        url: https://github.com/rapidfuzz/rapidfuzz-cpp
+        tag: v3.3.0
+
+  - name: intltool
+    buildsystem: autotools
+    cleanup: ['*']   # don’t ship it in the final app, build-only
+    sources:
+      - type: git
+        url: https://salsa.debian.org/gnome-team/intltool.git
+        tag: debian/0.51.0-7
+
+#  - name: libqalculate
+#    buildsystem: autotools
+#    builddir: true
+#    config-opts:
+#      - #--prefix=/app
+#    sources:
+#      - type: git
+#        url: https://github.com/Qalculate/libqalculate
+#        tag: v5.7.0
+
+  - name: minizip
+    buildsystem: cmake-ninja
+    builddir: true
+    config-opts:
+      - -DCMAKE_INSTALL_PREFIX=/app
+      - -DMZ_BZIP2=OFF
+      - -DMZ_ZSTD=OFF
+      - -DMZ_LZMA=OFF
+      - -DMZ_OPENSSL=OFF
+      - -DMZ_LIBBSD=OFF
+      - -DMZ_PKCRYPT=OFF
+      - -DMZ_WZAES=OFF
+      - -DMZ_ICONV=OFF
+      #- -DMZ_FORCE_FETCH_LIBS=ON
+      #- -DMZ_FETCH_LIBS=ON
+    sources:
+      - type: git
+        url: https://github.com/zlib-ng/minizip-ng
+        tag: 4.0.10
+
+  - name: cmark-gfm
+    buildsystem: cmake-ninja
+    builddir: true
+    config-opts:
+      - -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+      - -DCMAKE_INSTALL_PREFIX=/app
+    sources:
+      - type: git
+        url: https://github.com/github/cmark-gfm
+        tag: 0.29.0.gfm.13
+
+  - name: qtkeychain 
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DCMAKE_INSTALL_PREFIX=/app
+      - -DLIBSECRET_SUPPORT=OFF
+      - -DBUILD_WITH_QT6=ON
+    sources:
+      - type: git
+        url: https://github.com/frankosterfeld/qtkeychain
+        tag: v0.14.0
+
+  - name: layer-shell-qt
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DCMAKE_INSTALL_PREFIX=/app
+    sources:
+      - type: git
+        url: https://github.com/KDE/layer-shell-qt.git
+        tag: v6.2.4
+
+  - name: abseil
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DCMAKE_INSTALL_PREFIX=/app
+    sources:
+      - type: git
+        url: https://github.com/abseil/abseil-cpp
+        tag: "20250814.0"
+
+
+  - name: protobuf
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DCMAKE_INSTALL_PREFIX=/app
+      - -Dprotobuf_BUILD_TESTS=OFF
+      - -Dprotobuf_BUILD_PROTOBUF_BINARIES=ON
+      - -Dprotobuf_BUILD_PROTOC_BINARIES=ON
+    sources:
+      - type: git
+        url: https://github.com/protocolbuffers/protobuf.git
+        tag: v32.0
+  
+  - name: vicinae
+    buildsystem: cmake-ninja
+    build-options:
+      append-path: /usr/lib/sdk/node20/bin
+    config-opts:
+      - -DCMAKE_INSTALL_PREFIX=/app
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DLIBQALCULATE_BACKEND=OFF
+    sources:
+      - type: dir
+        path: ..
+    post-install:
+      - install -Dm644 extra/vicinae.desktop /app/share/applications/com.vicinaehq.vicinae.desktop
+
