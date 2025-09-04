@@ -2,6 +2,7 @@
 
 #include "ui/dialog/dialog.hpp"
 #include "ui/image/image.hpp"
+#include <functional>
 
 class TypographyWidget;
 class OmniButtonWidget;
@@ -25,6 +26,7 @@ class AlertWidget : public DialogContentWidget {
 protected:
   virtual void confirm() const;
   virtual void canceled() const;
+  void interrupted() override;
 
 public:
   void setTitle(const QString &title);
@@ -41,6 +43,8 @@ signals:
 
 class CallbackAlertWidget : public AlertWidget {
   std::function<void(bool confirmed)> m_fn;
+  std::function<void()> m_confirm;
+  std::function<void()> m_cancel;
 
   void confirm() const override;
   void canceled() const override;
@@ -53,4 +57,6 @@ public:
    * capturing by value only.
    */
   void setCallback(const std::function<void(bool confirmed)> &fn);
+  void setConfirmCallback(const std::function<void()> &fn);
+  void setCancelCallback(const std::function<void()> &fn);
 };

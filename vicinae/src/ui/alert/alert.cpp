@@ -6,18 +6,26 @@
 
 void CallbackAlertWidget::confirm() const {
   if (m_fn) m_fn(true);
+  if (m_confirm) m_confirm();
 }
 
 void CallbackAlertWidget::canceled() const {
   if (m_fn) m_fn(false);
+  if (m_cancel) m_cancel();
 }
 
 void CallbackAlertWidget::setCallback(const std::function<void(bool confirmed)> &fn) { m_fn = fn; }
+
+void CallbackAlertWidget::setConfirmCallback(const std::function<void()> &fn) { m_confirm = fn; }
+
+void CallbackAlertWidget::setCancelCallback(const std::function<void()> &fn) { m_cancel = fn; }
 
 void AlertWidget::focusInEvent(QFocusEvent *event) {
   _cancelBtn->setFocus();
   DialogContentWidget::focusInEvent(event);
 }
+
+void AlertWidget::interrupted() { canceled(); }
 
 void AlertWidget::paintEvent(QPaintEvent *event) {
   auto &theme = ThemeService::instance().theme();

@@ -311,7 +311,7 @@ class RemoveAllSelectionsAction : public AbstractAction {
     alert->setTitle("Are you sure?");
     alert->setMessage("All your clipboard history will be lost forever");
     alert->setConfirmText("Delete all", SemanticColor::Red);
-    alert->setCallback([ctx](bool value) {
+    alert->setConfirmCallback([ctx]() {
       auto toast = ctx->services->toastService();
       auto clipman = ctx->services->clipman();
 
