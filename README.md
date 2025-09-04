@@ -6,7 +6,7 @@
   />
 </p>
 
-[![Discord](https://discord.com/api/guilds/1407488619765174273/widget.png?style=shield)](https://discord.gg/rP4ecD42p7)
+[![Discord](https://discord.com/api/guilds/1407488619765174273/widget.png?style=shield&nonce=1756955966)](https://discord.gg/rP4ecD42p7)
 
 **Vicinae** (pronounced _"vih-SIN-ay"_) is a high-performance, native launcher for your desktop — built with C++ and Qt.
 
