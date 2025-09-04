@@ -22,14 +22,16 @@ public:
                               "performed while this is turned off will not be recorded.");
     monitoring.setDefaultValue(true);
 
-    auto storeAllOfferings = Preference::makeCheckbox("store-all-offerings");
+    /*
+auto storeAllOfferings = Preference::makeCheckbox("store-all-offerings");
 
-    storeAllOfferings.setTitle("Store all offerings");
-    storeAllOfferings.setDescription("Store and index alternative mime type offerings. This will "
-                                     "increase total storage size, but will refine the search.");
-    storeAllOfferings.setDefaultValue(true);
+storeAllOfferings.setTitle("Store all offerings");
+storeAllOfferings.setDescription("Store and index alternative mime type offerings. This will "
+                                 "increase total storage size, but will refine the search.");
+storeAllOfferings.setDefaultValue(true);
+    */
 
-    return {monitoring, storeAllOfferings};
+    return {monitoring};
   }
 
   void preferenceValuesChanged(const QJsonObject &value) const override {
