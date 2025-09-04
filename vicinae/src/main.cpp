@@ -46,6 +46,7 @@
 #include "services/extension-registry/extension-registry.hpp"
 #include "services/files-service/file-service.hpp"
 #include "services/local-storage/local-storage-service.hpp"
+#include "utils/environment.hpp"
 #include "vicinae.hpp"
 #include "process-manager-service.hpp"
 #include "services/oauth/oauth-service.hpp"
@@ -232,6 +233,7 @@ root->updateIndex();
   };
 
   QObject::connect(ServiceRegistry::instance()->config(), &ConfigService::configChanged, configChanged);
+  QIcon::setFallbackSearchPaths(Environment::fallbackIconSearchPaths());
 
   configChanged(ServiceRegistry::instance()->config()->value(), {});
 
