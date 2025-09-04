@@ -15,3 +15,5 @@ vicinae/assets/extension-runtime.js
 
 __cmake*
 *.tgz
+
+/qt6
