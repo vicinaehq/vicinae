@@ -2,6 +2,7 @@
 #include "theme.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
 #include <qboxlayout.h>
+#include <qevent.h>
 #include <qlabel.h>
 #include <qnamespace.h>
 #include <qwidget.h>
@@ -21,7 +22,6 @@ void TypographyWidget::updateText() {
 
 void TypographyWidget::resizeEvent(QResizeEvent *event) {
   QWidget::resizeEvent(event);
-  // qCritical() << "size" << event->size() << "hint" << sizeHint() << m_text;
   updateText();
 }
 
@@ -35,13 +35,17 @@ void TypographyWidget::paintEvent(QPaintEvent *event) {
   QPalette pal = palette();
 
   pal.setBrush(QPalette::WindowText, painter.colorBrush(m_color));
+  if (m_debugBackground) { painter.fillRect(rect(), ColorLike(SemanticColor::Red), 0, 1); }
 
   m_label->setPalette(pal);
   QWidget::paintEvent(event);
 }
 
+void TypographyWidget::setDebugHighlight() { m_debugBackground = true; }
+
 QSize TypographyWidget::minimumSizeHint() const {
   if (!m_label->wordWrap()) { return QSize(fontMetrics().horizontalAdvance("..."), fontMetrics().height()); }
+
   return m_label->minimumSizeHint();
 }
 

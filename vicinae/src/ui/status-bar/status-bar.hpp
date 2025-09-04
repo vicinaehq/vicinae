@@ -18,22 +18,20 @@ public:
 
   void setTitle(const QString &title);
   void setIcon(const ImageURL &icon);
+  void setSuffixIcon(const std::optional<ImageURL> &icon);
 
 private:
   void setupUI();
 
   TypographyWidget *m_navigationTitle;
   ImageWidget *m_navigationIcon = new ImageWidget(this);
+  ImageWidget *m_suffixIcon = new ImageWidget(this);
 };
 
 class GlobalBar : public QWidget {
 
 public:
   GlobalBar(ApplicationContext &ctx);
-
-protected:
-  void paintEvent(QPaintEvent *event) override;
-  void resizeEvent(QResizeEvent *event) override;
 
 private:
   ApplicationContext &m_ctx;

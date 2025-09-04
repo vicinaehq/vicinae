@@ -3,6 +3,8 @@
 #include "navigation-controller.hpp"
 #include "../image/url.hpp"
 #include "service-registry.hpp"
+#include "theme.hpp"
+#include "utils/layout.hpp"
 #include "vicinae.hpp"
 #include "ui/shortcut-button/shortcut-button.hpp"
 #include <qboxlayout.h>
@@ -19,33 +21,32 @@ NavigationStatusWidget::NavigationStatusWidget() { setupUI(); }
 void NavigationStatusWidget::setTitle(const QString &title) { m_navigationTitle->setText(title); }
 void NavigationStatusWidget::setIcon(const ImageURL &icon) { m_navigationIcon->setUrl(icon); }
 
-void NavigationStatusWidget::setupUI() {
-  auto layout = new QHBoxLayout;
+void NavigationStatusWidget::setSuffixIcon(const std::optional<ImageURL> &icon) {
+  if (icon) m_suffixIcon->setUrl(*icon);
+  m_suffixIcon->setVisible(icon.has_value());
+}
 
+void NavigationStatusWidget::setupUI() {
   m_navigationTitle = new TypographyWidget(this);
   m_navigationIcon->setFixedSize(20, 20);
+  m_suffixIcon->setFixedSize(20, 20);
+  m_suffixIcon->hide();
 
-  layout->setAlignment(Qt::AlignVCenter);
-  layout->setContentsMargins(0, 0, 0, 0);
-  layout->setSpacing(10);
-  layout->addWidget(m_navigationIcon);
-  layout->addWidget(m_navigationTitle);
-  setLayout(layout);
+  HStack()
+      .spacing(10)
+      .add(m_navigationIcon)
+      .add(m_navigationTitle)
+      .add(m_suffixIcon)
+      .addStretch()
+      .imbue(this);
 }
 
 GlobalBar::GlobalBar(ApplicationContext &ctx) : m_ctx(ctx) { setupUI(); }
 
-void GlobalBar::paintEvent(QPaintEvent *event) { QWidget::paintEvent(event); }
-
-void GlobalBar::resizeEvent(QResizeEvent *event) {
-  QWidget::resizeEvent(event);
-  m_leftWidget->setMaximumWidth(width() * 0.5);
-}
-
 void GlobalBar::handleActionPanelVisiblityChange(bool visible) { m_actionButton->hoverChanged(visible); }
 
-void GlobalBar::actionsChanged(const ActionPanelState &actions) {
-  auto primaryAction = actions.primaryAction();
+void GlobalBar::actionsChanged(const ActionPanelState &panel) {
+  auto primaryAction = panel.primaryAction();
 
   if (primaryAction) {
     m_primaryActionButton->setText(primaryAction->title());
@@ -55,7 +56,7 @@ void GlobalBar::actionsChanged(const ActionPanelState &actions) {
 
   m_primaryActionButton->setVisible(primaryAction);
   m_actionButton->setText("Actions");
-  m_actionButton->setVisible(primaryAction);
+  m_actionButton->setVisible(panel.actionCount() > 1);
   m_actionButton->setShortcut(KeyboardShortcutModel{.key = "B", .modifiers = {"ctrl"}});
 }
 
@@ -78,25 +79,27 @@ void GlobalBar::setupUI() {
   m_status = new NavigationStatusWidget;
 
   setFixedHeight(Omnicast::STATUS_BAR_HEIGHT);
-  auto layout = new QHBoxLayout;
 
   m_primaryActionButton->hide();
   m_actionButton->hide();
 
-  layout->setContentsMargins(15, 5, 15, 5);
-  layout->setSpacing(0);
   m_leftWidget->addWidget(m_status);
   m_leftWidget->addWidget(m_toast);
   m_leftWidget->setCurrentWidget(m_status);
-  layout->addWidget(m_leftWidget, 0);
-  layout->addStretch();
-  layout->addWidget(m_primaryActionButton);
-  layout->addWidget(m_actionButton);
   m_status->setIcon(ImageURL::builtin("vicinae"));
 
+  // action buttons can never shrink
   m_actionButton->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+  m_primaryActionButton->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
-  setLayout(layout);
+  HStack()
+      .marginsX(15)
+      .marginsY(5)
+      .add(m_leftWidget)
+      .addStretch()
+      .add(m_primaryActionButton)
+      .add(m_actionButton)
+      .imbue(this);
 
   connect(m_primaryActionButton, &ShortcutButton::clicked, this,
           [this]() { m_ctx.navigation->executePrimaryAction(); });
@@ -114,6 +117,9 @@ void GlobalBar::setupUI() {
             m_status->setTitle(title);
             m_status->setIcon(icon);
           });
+
+  connect(m_ctx.navigation.get(), &NavigationController::navigationSuffixIconChanged, this,
+          [this](const std::optional<ImageURL> &icon) { m_status->setSuffixIcon(icon); });
 
   connect(m_ctx.navigation.get(), &NavigationController::currentViewStateChanged, this,
           &GlobalBar::handleViewStateChange);
