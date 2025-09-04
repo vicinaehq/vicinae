@@ -3,6 +3,7 @@
 #include "ui/dialog/dialog.hpp"
 #include "ui/image/image.hpp"
 #include <functional>
+#include <qevent.h>
 
 class TypographyWidget;
 class OmniButtonWidget;
@@ -27,6 +28,8 @@ protected:
   virtual void confirm() const;
   virtual void canceled() const;
   void interrupted() override;
+
+  void keyPressEvent(QKeyEvent *event) override;
 
 public:
   void setTitle(const QString &title);

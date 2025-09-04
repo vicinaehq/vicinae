@@ -85,6 +85,28 @@ void AlertWidget::setConfirmText(const QString &text, const ColorLike &color) {
   _actionBtn->setColor(color);
 }
 
+void AlertWidget::keyPressEvent(QKeyEvent *event) {
+  if (event->modifiers() == Qt::ControlModifier) {
+    switch (event->key()) {
+    case Qt::Key_H:
+      return _cancelBtn->setFocus();
+    case Qt::Key_L:
+      return _actionBtn->setFocus();
+    }
+  }
+
+  if (event->modifiers().toInt() == 0) {
+    switch (event->key()) {
+    case Qt::Key_Left:
+      return _cancelBtn->setFocus();
+    case Qt::Key_Right:
+      return _actionBtn->setFocus();
+    }
+  }
+
+  DialogContentWidget::keyPressEvent(event);
+}
+
 void AlertWidget::setTitle(const QString &title) { _title->setText(title); }
 
 AlertWidget::AlertWidget(QWidget *parent)
