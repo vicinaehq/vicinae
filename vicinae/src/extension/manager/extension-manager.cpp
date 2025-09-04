@@ -123,8 +123,7 @@ Bus::Bus(QIODevice *socket) : device(socket) {
 // Extension Manager
 
 ExtensionManager::ExtensionManager() : bus(&process) {
-
-  QProcessEnvironment env;
+  QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
 
   env.insert("VICINAE_VERSION", VICINAE_GIT_TAG);
   env.insert("VICINAE_COMMIT", VICINAE_GIT_COMMIT_HASH);
