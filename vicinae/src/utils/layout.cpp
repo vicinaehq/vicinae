@@ -132,6 +132,7 @@ QBoxLayout *Stack::buildLayout() const {
   switch (direction()) {
   case Stack::Horizontal:
     layout = new QHBoxLayout;
+    layout->setAlignment(Qt::AlignVCenter);
     break;
   case Stack::Vertical:
     layout = new QVBoxLayout;

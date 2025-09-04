@@ -147,6 +147,10 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
     return m_isDevMode ? CommandEnv::Development : CommandEnv::Production;
   };
 
+  if (m_isDevMode) {
+    context()->navigation->setNavigationSuffixIcon(ImageURL::builtin("hammer").setFill(SemanticColor::Green));
+  }
+
   auto load = new proto::ext::manager::ManagerLoadCommand;
   auto payload = new proto::ext::manager::RequestData;
 
@@ -185,6 +189,7 @@ void ExtensionCommandRuntime::unload() {
 
   auto manager = context()->services->extensionManager();
 
+  context()->navigation->setNavigationSuffixIcon(std::nullopt);
   manager->unloadCommand(m_sessionId);
 }
 

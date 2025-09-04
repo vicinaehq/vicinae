@@ -123,6 +123,12 @@ void NavigationController::setNavigationIcon(const ImageURL &icon) {
   }
 }
 
+void NavigationController::setNavigationSuffixIcon(const std::optional<ImageURL> &icon) {
+  if (auto state = topState()) {
+    if (state->sender == topView()) { emit navigationSuffixIconChanged(icon); }
+  }
+}
+
 void NavigationController::popCurrentView() {
   if (m_views.size() < 2) return;
 
