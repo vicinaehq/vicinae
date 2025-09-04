@@ -186,9 +186,9 @@ void GeneralSettings::setupUI() {
       "The base point size used to compute font sizes. Fractional values are accepted and should render as "
       "expected on most platforms. The recommended range is [10.0;12.0].");
 
-  form->setMaximumWidth(650);
+  form->setFixedWidth(650);
 
-  setWidget(VStack().margins(0, 20, 0, 20).add(HStack().add(form, Qt::AlignCenter)).buildWidget());
+  setWidget(VStack().margins(0, 20, 0, 20).add(HStack().add(form).center()).buildWidget());
 }
 
 GeneralSettings::GeneralSettings() {
