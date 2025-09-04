@@ -49,7 +49,8 @@ public:
     auto newModel = std::get<RootDetailModel>(model);
 
     setLoading(newModel.isLoading);
-    setNavigationTitle(newModel.navigationTitle);
+
+    if (newModel.navigationTitle) { setNavigationTitle(*newModel.navigationTitle); }
 
     markdownEditor->setMarkdown(newModel.markdown);
 

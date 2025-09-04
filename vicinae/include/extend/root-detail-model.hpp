@@ -9,7 +9,7 @@ struct RootDetailModel {
   QString markdown;
   std::optional<MetadataModel> metadata;
   std::optional<ActionPannelModel> actions;
-  QString navigationTitle;
+  std::optional<QString> navigationTitle;
 };
 
 class RootDetailModelParser {
