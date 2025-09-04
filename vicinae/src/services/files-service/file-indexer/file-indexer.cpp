@@ -42,6 +42,8 @@ void FileIndexer::startFullscan() {
 void FileIndexer::rebuildIndex() { startFullscan(); }
 
 void FileIndexer::start() {
+  m_dispatcher.enableAll();
+
   auto lastScan = m_db.getLastScan();
 
   // this is our first scan
