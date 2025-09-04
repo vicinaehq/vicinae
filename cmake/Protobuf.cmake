@@ -13,6 +13,7 @@ function(checkout_protobuf)
 	set(protobuf_BUILD_TESTS OFF)
 	set(protobuf_BUILD_PROTOBUF_BINARIES ON)
 	set(protobuf_BUILD_PROTOC_BINARIES ON)
+	set(protobuf_BUILD_SHARED_LIBS OFF)
 	FetchContent_MakeAvailable(protobuf)
 endfunction()
 

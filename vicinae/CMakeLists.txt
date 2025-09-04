@@ -6,7 +6,7 @@ set(CMAKE_AUTORCC ON)
 set(LIBS)
 set(TARGET vicinae)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets Sql Network Svg DBus Keychain)
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets Sql Network Svg DBus WaylandClient)
 find_package(OpenSSL REQUIRED)
 
 if (TYPESCRIPT_EXTENSIONS)
@@ -14,18 +14,39 @@ if (TYPESCRIPT_EXTENSIONS)
 	add_compile_definitions(HAS_TYPESCRIPT_EXTENSIONS=)
 endif()
 
-list(APPEND LIBS Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus qt6keychain ${CMARK_LIBRARY} protobuf::libprotobuf minizip OpenSSL::Crypto)
+list(APPEND LIBS  Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus qt6keychain ${CMARK_LIBRARY} protobuf::libprotobuf minizip OpenSSL::Crypto Qt6::WaylandClientPrivate)
 
 set(WLR_CLIP_BIN ${CMAKE_BINARY_DIR}/wlr-clip/wlr-clip${CMAKE_EXECUTABLE_SUFFIX})
 set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/assets)
 configure_file(resources.qrc.in resources.qrc)
 
+#if(Qt6_FOUND)
+#	find_package(Qt6 REQUIRED COMPONENTS QWaylandIntegrationPlugin)
+#    # Import static plugins
+#qt_import_plugins(${TARGET}
+#        INCLUDE Qt6::QWaylandIntegrationPlugin
+#    )
+#    
+#    # Also import other essential plugins you might need
+#    qt_import_plugins(${TARGET}
+#        INCLUDE_BY_TYPE platforms Qt6::QWaylandIntegrationPlugin
+#		#INCLUDE_BY_TYPE imageformats Qt6::QSvgPlugin Qt6::QJpegPlugin Qt6::QPngPlugin
+#    )
+#endif()
+
+
+
+
 if (WAYLAND_LAYER_SHELL)
 	message(STATUS "Compiling with wayland layer shell support (for wlroots-like compositors)")
 	find_package(Qt6 REQUIRED COMPONENTS WaylandClient)
-	find_package(LayerShellQt REQUIRED)
+	if (USE_SYSTEM_LAYER_SHELL)
+		find_package(LayerShellQt REQUIRED)
+		list(APPEND LIBS LayerShellQt::Interface)
+	else()
+		list(APPEND LIBS LayerShellQtInterface)
+	endif()
 	add_compile_definitions(-DWAYLAND_LAYER_SHELL)
-	list(APPEND LIBS LayerShellQt::Interface)
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -585,6 +606,12 @@ endif()
 	
 
 qt_add_executable(${TARGET} ${SRCS})
+
+if(Qt6_FOUND)
+	qt_import_plugins(${TARGET}
+        INCLUDE Qt6::QWaylandIntegrationPlugin
+    )
+endif()
 
 target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(${TARGET} PRIVATE ${LIBS})

@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 set(PROJECT_NAME vicinae)
+
 project(${PROJECT_NAME} VERSION 1.0.0 LANGUAGES C CXX)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
@@ -13,10 +14,13 @@ option(NOSTRIP "Never strip debug symbols from the binary, even in release mode.
 option(WAYLAND_LAYER_SHELL "Enable support for the layer shell Wayland protocol" OFF)
 option(TYPESCRIPT_EXTENSIONS "Enable support for extensions built with React/Typescript (no browser involved)" ON)
 
+option(PREFER_STATIC_LIBS "When available, link to a library statically instead of dynamically" OFF)
 option(USE_SYSTEM_PROTOBUF "Use system protobuf instead of building it from source" ON)
 option(USE_SYSTEM_ABSEIL "Use system abseil (libabsl) instead of building it from source" ON)
 option(USE_SYSTEM_CMARK_GFM "Use system cmark-gfm (github's fork of cmark) instead of building it from source" ON)
 option(USE_SYSTEM_MINIZIP "Use system minizip instead of building it from source" ON)
+option(USE_SYSTEM_LAYER_SHELL "Use system qt layer shell instead of building it from source" ON)
+option(USE_SYSTEM_QT_KEYCHAIN "Use system qt-keychain instead of building it from source. Note: still depends on system libsecret." ON)
 option(LIBQALCULATE_BACKEND "Compile in support for the Qalculate! calculator backend" ON)
 
 if (UNIX AND NOT APPLE)
@@ -24,6 +28,18 @@ if (UNIX AND NOT APPLE)
 endif()
 
 # End of Vicinae build configuration options
+
+if (PREFER_STATIC_LIBS)
+	set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".so" ".dylib")
+	set(BUILD_SHARED_LIBS OFF)
+	set(USE_SYSTEM_PROTOBUF OFF)
+	set(USE_SYSTEM_ABSEIL OFF)
+	set(USE_SYSTEM_CMARK_GFM OFF)
+	set(USE_SYSTEM_MINIZIP OFF)
+	set(USE_SYSTEM_LAYER_SHELL OFF)
+	set(USE_SYSTEM_QT_KEYCHAIN OFF)
+	set(LIBQALCULATE_BACKEND OFF)
+endif()
 
 include(Git)
 include(Utils)
@@ -45,6 +61,16 @@ add_compile_definitions(VICINAE_GIT_TAG="${VICINAE_GIT_TAG}")
 add_compile_definitions(VICINAE_GIT_COMMIT_HASH="${VICINAE_GIT_COMMIT_HASH}")
 
 set(CMARK_LIBRARY "cmark-gfm")
+
+if (NOT USE_SYSTEM_QT_KEYCHAIN)
+	include(QtKeychain)
+	checkout_qt_keychain()
+endif()
+
+if (NOT USE_SYSTEM_LAYER_SHELL)
+	include(QtLayerShell)
+	checkout_layer_shell_qt()
+endif()
 
 if (NOT USE_SYSTEM_MINIZIP)
 	include(Minizip)
