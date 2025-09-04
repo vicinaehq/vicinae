@@ -10,7 +10,10 @@ RootDetailModel RootDetailModelParser::parse(const QJsonObject &instance) {
   RootDetailModel model;
   auto props = instance.value("props").toObject();
 
-  model.navigationTitle = props.value("navigationTitle").toString();
+  if (props.contains("navigationTitle")) {
+    model.navigationTitle = props.value("navigationTitle").toString();
+  }
+
   model.markdown = props.value("markdown").toString();
   model.isLoading = props.value("isLoading").toBool();
 
