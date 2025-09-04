@@ -8,7 +8,6 @@
 #include <QTimer>
 #include "service-registry.hpp"
 #include "ui/action-pannel/action.hpp"
-#include "ui/keyboard.hpp"
 #include <qdnslookup.h>
 
 class CopyToClipboardAction : public AbstractAction {
