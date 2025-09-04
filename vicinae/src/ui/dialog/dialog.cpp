@@ -25,8 +25,9 @@ void DialogWidget::setContent(DialogContentWidget *content) {
   if (auto item = _layout->takeAt(0)) { item->widget()->deleteLater(); }
 
   setFocusProxy(content);
-  connect(content, &DialogContentWidget::closeRequested, this, &DialogContentWidget::close);
+  connect(content, &DialogContentWidget::closeRequested, this, &DialogWidget::hide);
 
+  _content = content;
   _layout->addWidget(content, 0, Qt::AlignCenter);
 }
 
@@ -46,6 +47,7 @@ void DialogWidget::showDialog() {
 
 void DialogWidget::keyPressEvent(QKeyEvent *event) {
   if (event->key() == Qt::Key_Escape) {
+    if (_content) _content->interrupted();
     hide();
     return;
   };
