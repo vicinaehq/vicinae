@@ -130,8 +130,6 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
   _model = newModel;
 
   if (auto selected = m_list->selected(); selected && newModel.dirty) {
-    m_split->setDetailVisibility(_model.isShowingDetail);
-
     if (auto detail = selected->detail) {
       m_split->detailWidget()->show();
       if (m_split->isDetailVisible()) {
@@ -146,6 +144,8 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
     if (auto panel = selected->actionPannel; panel && _model.dirty && panel->dirty) {
       setActionPanel(*panel);
     }
+
+    m_split->setDetailVisibility(_model.isShowingDetail);
   }
 
   if (m_list->empty()) {
