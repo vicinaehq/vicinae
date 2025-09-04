@@ -1,5 +1,4 @@
 #include "scan-dispatcher.hpp"
-#include "file-indexer.hpp"
 #include <map>
 #include <memory>
 
@@ -12,22 +11,22 @@ ScanDispatcher::ScanDispatcher(std::map<ScanType, std::shared_ptr<AbstractScanne
 }
 
 void ScanDispatcher::enableAll() {
-  for (const auto& [type, scanner]: m_scannerMap) {
+  for (const auto &[type, scanner] : m_scannerMap) {
     enable(type);
   }
 }
 
 void ScanDispatcher::enable(ScanType type) {
-  auto& element = m_scannerMap[type];
+  auto &element = m_scannerMap[type];
   if (element.alive) return;
 
   auto scannerPtr = element.scanner;
-  element.thread = std::thread([scannerPtr]() {scannerPtr->run();});
+  element.thread = std::thread([scannerPtr]() { scannerPtr->run(); });
   element.alive = true;
 }
 
 void ScanDispatcher::disable(ScanType type, bool regurgitate) {
-  auto& element = m_scannerMap[type];
+  auto &element = m_scannerMap[type];
   if (!element.alive) return;
 
   element.scanner->stop(regurgitate);

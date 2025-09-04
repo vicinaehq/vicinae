@@ -11,7 +11,7 @@ struct Scan {
   std::filesystem::path path;
   std::optional<size_t> maxDepth;
 
-  bool operator<(const Scan& other) const {
+  bool operator<(const Scan &other) const {
     // TODO: Find a proper way to suppport std::set
     return path < other.path;
   }

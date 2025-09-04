@@ -1,7 +1,6 @@
 #include "abstract-scanner.hpp"
 #include <expected>
 #include <mutex>
-#include <variant>
 
 std::expected<Scan, bool> AbstractScanner::awaitScan() {
   std::unique_lock lock(m_scanLock);
@@ -17,7 +16,7 @@ std::expected<Scan, bool> AbstractScanner::awaitScan() {
   return front;
 }
 
-void AbstractScanner::finishScan(const Scan& scan) {
+void AbstractScanner::finishScan(const Scan &scan) {
   std::scoped_lock guard(m_scanLock);
   m_aliveScans.erase(scan);
 }
@@ -36,7 +35,7 @@ void AbstractScanner::stop(bool regurgitate) {
   m_scanCv.notify_one();
 
   if (regurgitate) {
-    for (const auto& scan: m_aliveScans) {
+    for (const auto &scan : m_aliveScans) {
       m_queuedScans.push_front(scan);
     }
   }
