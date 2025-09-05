@@ -19,6 +19,12 @@
       in
       {
         packages.default = vicinaePkg;
+        devShells.default = pkgs.mkShell {
+          inputsFrom = [vicinaePkg]; # automatically pulls nativeBuildInputs + buildInputs
+          buildInputs = [
+            pkgs.ccache
+          ];
+        };
       }
     ) // {
       overlays.default = final: prev: {
