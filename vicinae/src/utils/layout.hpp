@@ -336,6 +336,8 @@ public:
   AlignStrategy align() const;
   QMargins margins() const;
   Stack &marginsX(int x);
+  Stack &mx(int x) { return marginsX(x); }
+  Stack &my(int y) { return marginsY(y); }
   Stack &marginsY(int y);
   Stack &margins(int margin);
   Stack &margins(int left, int top, int right, int bottom);
