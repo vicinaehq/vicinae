@@ -21,7 +21,9 @@ class FocusWindowAction : public AbstractAction {
 
 public:
   FocusWindowAction(const std::shared_ptr<AbstractWindowManager::AbstractWindow> &window)
-      : AbstractAction("Focus window", ImageURL::builtin("app-window")), _window(window) {}
+      : AbstractAction("Focus window", ImageURL::builtin("app-window")), _window(window) {
+    setAutoClose();
+  }
 };
 
 class CloseWindowAction : public AbstractAction {

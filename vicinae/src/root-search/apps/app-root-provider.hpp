@@ -19,6 +19,7 @@ class AppRootItem : public RootItem {
   ImageURL iconUrl() const override;
   QWidget *settingsDetail(const QJsonObject &preferences) const override;
   std::vector<QString> keywords() const override;
+  bool isActive() const override;
 
 public:
   const Application &app() const { return *m_app.get(); }

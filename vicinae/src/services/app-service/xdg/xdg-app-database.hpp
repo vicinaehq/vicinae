@@ -40,6 +40,8 @@ class XdgApplicationAction : public XdgApplicationBase {
   std::filesystem::path path() const override { return m_parentPath.toStdString(); };
   QString version() const override { return _parentData.version; }
 
+  QString windowClass() const override { return QString(); }
+
 public:
   XdgApplicationAction(const XdgDesktopEntry::Action &action, const XdgDesktopEntry &parentData,
                        const QString &parentPath, const QString &parentId)
@@ -50,6 +52,8 @@ class XdgApplication : public XdgApplicationBase {
   QString _path;
   QString _id;
   XdgDesktopEntry _data;
+
+  QString simplifiedId() const { return id().remove(".desktop"); }
 
 public:
   const XdgDesktopEntry &xdgData() const { return _data; }
@@ -62,6 +66,12 @@ public:
   QString description() const override { return _data.comment; }
   QString version() const override { return _data.version; }
 
+  QString windowClass() const override {
+    if (auto wmClass = _data.startupWMClass; !wmClass.isEmpty()) return wmClass;
+
+    return simplifiedId();
+  }
+
   std::vector<QString> keywords() const override { return {_data.keywords.begin(), _data.keywords.end()}; }
   ImageURL iconUrl() const override { return ImageURL::system(_data.icon); }
   std::vector<std::shared_ptr<Application>> actions() const override {
@@ -72,7 +82,7 @@ public:
     return _data.actions | std::views::transform(makeAction) | std::ranges::to<std::vector>();
   }
 
-  std::vector<QString> exec() const override { return {_data.exec.begin(), _data.exec.end()}; }
+  std::vector<QString> exec() const override { return _data.exec | std::ranges::to<std::vector>(); }
 
   XdgApplication(const fs::path &path, const XdgDesktopEntry &data)
       : _path(path.c_str()), _id(data.id), _data(data) {}

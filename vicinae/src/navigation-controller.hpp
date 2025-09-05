@@ -286,6 +286,7 @@ private:
   ViewState *findViewState(const BaseView *view);
   const ViewState *findViewState(const BaseView *view) const;
   const BaseView *topView() const;
+  bool isRootSearch() const;
 
   bool m_windowOpened = false;
   std::vector<std::unique_ptr<ViewState>> m_views;
