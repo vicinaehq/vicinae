@@ -1,29 +1,44 @@
 #include "abstract-scanner.hpp"
 #include <expected>
-#include <variant>
+#include <mutex>
 
 std::expected<Scan, bool> AbstractScanner::awaitScan() {
-  if (!m_alive) return std::unexpected<bool>(false);
-
   std::unique_lock lock(m_scanLock);
-  m_scanCv.wait(lock, [&]() { return !m_scans.empty() || !m_alive; });
+
+  m_scanCv.wait(lock, [&]() { return !m_queuedScans.empty() || !m_alive; });
   if (!m_alive) { return std::unexpected<bool>(false); }
-  Scan front = m_scans.front();
-  m_scans.pop();
+
+  Scan front = m_queuedScans.front();
+
+  m_queuedScans.pop_front();
+  m_aliveScans.insert(front);
+
   return front;
 }
 
+void AbstractScanner::finishScan(const Scan &scan) {
+  std::scoped_lock guard(m_scanLock);
+  m_aliveScans.erase(scan);
+}
+
 void AbstractScanner::enqueue(const Scan &scan) {
-  m_scanLock.lock();
-  m_scans.push(scan);
-  m_scanLock.unlock();
+  std::scoped_lock guard(m_scanLock);
+  m_queuedScans.push_back(scan);
 
   m_scanCv.notify_one();
 }
 
 void AbstractScanner::run() { m_alive = true; }
 
-void AbstractScanner::stop() {
+void AbstractScanner::stop(bool regurgitate) {
   m_alive = false;
   m_scanCv.notify_one();
+
+  if (regurgitate) {
+    for (const auto &scan : m_aliveScans) {
+      m_queuedScans.push_front(scan);
+    }
+  }
+
+  m_aliveScans.clear();
 }

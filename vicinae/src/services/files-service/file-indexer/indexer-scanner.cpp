@@ -5,8 +5,8 @@
 
 namespace fs = std::filesystem;
 
-void IndexerScanner::stop() {
-  AbstractScanner::stop();
+void IndexerScanner::stop(bool regurgitate) {
+  AbstractScanner::stop(regurgitate);
 
   m_writerThread.join();
 }
@@ -76,5 +76,7 @@ void IndexerScanner::run() {
     m_db->updateScanStatus(scanRecord.id, FileIndexerDatabase::ScanStatus::Started);
     scan(sc.path);
     m_db->updateScanStatus(scanRecord.id, FileIndexerDatabase::ScanStatus::Finished);
+
+    finishScan(sc);
   }
 }
