@@ -21,6 +21,7 @@ public:
   QString m_title;
   QString m_wmClass;
   int m_pid;
+  bool m_active;
   struct zwlr_foreign_toplevel_handle_v1 *m_handle;
   WaylandWindowManager *m_manager;
 };

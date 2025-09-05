@@ -30,13 +30,21 @@ static void foreign_toplevel_handle_output_leave(void *data,
 
 static void foreign_toplevel_handle_state(void *data,
     struct zwlr_foreign_toplevel_handle_v1 *handle, struct wl_array *value) {
-  // ignore
+  WaylandWindow *self = static_cast<WaylandWindow *>(data);
+
+  self->m_active = false;
+  size_t n = value->size / sizeof(uint32_t);
+  for (size_t i = 0; i < n; ++i) {
+      uint32_t *elem = (uint32_t *)value->data + i;
+      if (*elem == ZWLR_FOREIGN_TOPLEVEL_HANDLE_V1_STATE_ACTIVATED) {
+          self->m_active = true;
+      }
+  }
 }
 
 static void foreign_toplevel_handle_done(void *data,
     struct zwlr_foreign_toplevel_handle_v1 *handle) {
   WaylandWindow *self = static_cast<WaylandWindow *>(data);
-
   emit self->m_manager->windowsChanged();
 }
 
@@ -51,7 +59,6 @@ static void foreign_toplevel_handle_closed(void *data,
   }
 
   // the handle is inert and will receive no further events
-  delete self;
   emit self->m_manager->windowsChanged();
 }
 
@@ -78,6 +85,7 @@ WaylandWindow::WaylandWindow(WaylandWindowManager *wm,
   m_manager = wm;
   m_handle = handle;
   m_pid = 0;
+  m_active = false;
   zwlr_foreign_toplevel_handle_v1_add_listener(handle,
     &foreign_toplevel_handle_listener, this);
 }
@@ -97,7 +105,13 @@ AbstractWindowManager::WindowList WaylandWindowManager::listWindowsSync() const 
 }
 
 AbstractWindowManager::WindowPtr WaylandWindowManager::getFocusedWindowSync() const {
-    return nullptr;
+  for (auto window : m_toplevels) {
+      WaylandWindow *ww = static_cast<WaylandWindow *>(window.get());
+      if (ww->m_active) {
+          return window;
+      }
+  }
+  return nullptr;
 }
 
 void WaylandWindowManager::focusWindowSync(const AbstractWindow &window) const {
@@ -137,7 +151,9 @@ static void foreign_toplevel_manager_toplevel(void *data,
 
 static void foreign_toplevel_manager_finished(void *data,
     struct zwlr_foreign_toplevel_manager_v1 *manager) {
+  WaylandWindowManager *wm = static_cast<WaylandWindowManager *>(data);
   zwlr_foreign_toplevel_manager_v1_destroy(manager);
+  wm->m_manager = nullptr;
 }
 
 static struct zwlr_foreign_toplevel_manager_v1_listener
