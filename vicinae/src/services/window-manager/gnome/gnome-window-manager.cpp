@@ -221,7 +221,7 @@ bool GnomeWindowManager::ping() const {
   return !response.isEmpty();
 }
 
-void GnomeWindowManager::start() const {
+void GnomeWindowManager::start() {
   qDebug() << "GnomeWindowManager: Window manager started";
   // No special startup required for GNOME integration
 }

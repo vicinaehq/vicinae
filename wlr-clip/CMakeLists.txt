@@ -26,9 +26,10 @@ set(SRCS
 	src/data-device.cpp
 	src/data-offer.cpp
 )
+wayland_generate_protocol("${CMAKE_CURRENT_SOURCE_DIR}/protocols/wlr-data-control-unstable-v1.xml")
 
 add_executable(${TARGET} ${SRCS})
-wayland_generate_protocol(${TARGET} ${CMAKE_CURRENT_SOURCE_DIR}/protocols/wlr-data-control-unstable-v1.xml)
+target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 #target_compile_options(${TARGET} PUBLIC)
 target_link_libraries(${TARGET} PRIVATE wayland-client protobuf::libprotobuf) 
 
