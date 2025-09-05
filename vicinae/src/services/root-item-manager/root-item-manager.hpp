@@ -113,6 +113,13 @@ public:
   virtual std::vector<QString> keywords() const { return {}; }
 
   virtual void preferenceValuesChanged(const QJsonObject &values) const {}
+
+  /**
+   * Whether the itme should be marked as currently active. All this does is add a small dot as an
+   * right below the icon.
+   * This is typically used by apps that currently have active windows opened.
+   */
+  virtual bool isActive() const { return false; }
 };
 
 class RootProvider : public QObject {

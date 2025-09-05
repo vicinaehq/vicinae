@@ -22,6 +22,13 @@ public:
   virtual QString program() const = 0;
 
   /**
+   * A specific id that can be used to link the application to its active windows.
+   * This defaults to a normalized version of name().
+   */
+  virtual QString windowClass() const { return name().toLower(); }
+
+  /**
+   * This defaults to a normalized version of name().
    * Current version of the installed application (if applicable)
    * The empty string is interpreted as no version being available
    */

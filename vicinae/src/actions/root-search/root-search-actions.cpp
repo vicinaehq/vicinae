@@ -94,6 +94,7 @@ QString DefaultActionWrapper::title() const { return m_action->title(); }
 
 DefaultActionWrapper::DefaultActionWrapper(const QString &id, AbstractAction *action)
     : AbstractAction(action->title(), action->icon()), m_id(id), m_action(action) {
+  setAutoClose(action->autoClose());
   setPrimary(true);
   setShortcut({.key = "return"});
 }

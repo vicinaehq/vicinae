@@ -72,6 +72,9 @@ public:
 
   virtual void execute(ApplicationContext *context) {}
 
+  void setAutoClose(bool value = true) { m_autoClose = value; }
+  bool autoClose() const { return m_autoClose; }
+
   virtual bool isPushView() const { return false; }
 
   ~AbstractAction() {}
@@ -82,6 +85,7 @@ protected:
   Style m_style = Style::Normal;
   std::vector<KeyboardShortcutModel> m_shortcuts;
   bool m_primary = false;
+  bool m_autoClose = false;
 
 private:
   mutable QString m_id;

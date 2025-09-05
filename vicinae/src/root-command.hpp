@@ -66,6 +66,7 @@ protected:
         .subtitle = m_item->subtitle(),
         .accessories = m_item->accessories(),
         .alias = metadata.alias,
+        .active = m_item->isActive(),
     };
   }
 

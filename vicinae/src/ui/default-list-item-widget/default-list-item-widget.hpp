@@ -1,10 +1,13 @@
 #pragma once
 #include "../image/url.hpp"
+#include "ui/color-circle/color_circle.hpp"
 #include "ui/typography/typography.hpp"
 #include "ui/image/image.hpp"
 #include "ui/selectable-omni-list-widget/selectable-omni-list-widget.hpp"
+#include <fcntl.h>
 #include <qboxlayout.h>
 #include <qcolor.h>
+#include <qevent.h>
 #include <qnamespace.h>
 #include <qpainter.h>
 #include <qwidget.h>
@@ -46,13 +49,9 @@ public:
 using AccessoryList = std::vector<ListAccessory>;
 
 class DefaultListItemWidget : public SelectableOmniListWidget {
-  ImageWidget *_icon = new ImageWidget(this);
-  TypographyWidget *_name = new TypographyWidget(this);
-  TypographyWidget *_category = new TypographyWidget(this);
-  AccessoryListWidget *_accessoryList = new AccessoryListWidget(this);
-  ListAccessoryWidget *m_alias = new ListAccessoryWidget(this);
 
 public:
+  void setActive(bool active = true);
   void setAccessories(const AccessoryList &list);
   void setName(const QString &name);
   void setSubtitle(const std::variant<QString, std::filesystem::path> &subtitle);
@@ -60,4 +59,15 @@ public:
   void setAlias(const QString &title);
 
   DefaultListItemWidget(QWidget *parent = nullptr);
+
+private:
+  void positionActiveIndicator();
+  void resizeEvent(QResizeEvent *event) override;
+
+  ImageWidget *m_icon = new ImageWidget(this);
+  TypographyWidget *m_name = new TypographyWidget(this);
+  TypographyWidget *m_category = new TypographyWidget(this);
+  AccessoryListWidget *m_accessoryList = new AccessoryListWidget(this);
+  ListAccessoryWidget *m_alias = new ListAccessoryWidget(this);
+  ColorCircle *m_activeIndicator = new ColorCircle(this);
 };
