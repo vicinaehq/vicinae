@@ -1,4 +1,5 @@
 #include "window-manager.hpp"
+#include <algorithm>
 #include <ranges>
 #include "hyprland/hyprland.hpp"
 #include "gnome/gnome-window-manager.hpp"
@@ -45,9 +46,10 @@ AbstractWindowManager::WindowList WindowManager::findWindowByClass(const QString
 }
 
 AbstractWindowManager::WindowList WindowManager::findAppWindows(const Application &app) const {
-  QString wmClass = app.windowClass().toLower();
-
-  auto pred = [&](auto &&win) { return win->wmClass().toLower() == wmClass; };
+  auto pred = [&](auto &&win) {
+    return std::ranges::any_of(app.windowClasses(),
+                               [&](auto &&s) { return s.toLower() == win->wmClass().toLower(); });
+  };
 
   return listWindows() | std::views::filter(pred) | std::ranges::to<std::vector>();
 }
