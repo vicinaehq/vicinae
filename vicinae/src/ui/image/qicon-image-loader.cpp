@@ -1,60 +1,46 @@
 #include "qicon-image-loader.hpp"
+#include <QtConcurrent/QtConcurrent>
+#include <qfuturewatcher.h>
+
+// we need a way to know we have loaded a given icon at least one time so that we can avoid
+// useless parallelism.
+static std::set<QString> cachedIcons;
 
 void QIconImageLoader::render(const RenderConfig &config) {
-  QString savedTheme = QIcon::themeName();
+  if (m_watcher.isRunning()) { m_watcher.cancel(); }
 
-  if (m_theme) { QIcon::setThemeName(*m_theme); }
+  m_config = config;
 
-  auto icon = QIcon::fromTheme(m_icon);
-
-  // If icon fails to resolve, try loading it from the filesystem (QIcon does not resolve icons not part of a
-  // theme).
-  if (icon.isNull()) { icon = loadIconFromFileSystem(m_icon); }
-
-  if (icon.isNull()) {
-    emit errorOccured(QString("No icon with name: %1").arg(m_icon));
-    QIcon::setThemeName(savedTheme);
+  if (cachedIcons.contains(m_icon)) {
+    iconLoaded(QIcon::fromTheme(m_icon));
     return;
   }
 
-  auto sizes = icon.availableSizes();
-  auto it = std::ranges::max_element(
-      sizes, [](QSize a, QSize b) { return a.width() * a.height() < b.width() * b.height(); });
+  // XXX - provided as a temporary workaround. Some systems, especially Nix systems, can have a lot of
+  // fallback search paths seemingly causing huge slowdowns when we try load an icon that can't be found.
+  m_watcher.setFuture(QtConcurrent::run([icon = m_icon]() { return QIcon::fromTheme(icon); }));
+}
 
-  // most likely SVG, we can request the size we want
-  if (it == sizes.end()) {
-    emit dataUpdated(icon.pixmap(config.size));
-    QIcon::setThemeName(savedTheme);
+void QIconImageLoader::iconLoaded(const QIcon &icon) {
+  if (icon.isNull()) {
+    emit errorOccured(QString("No icon with name: %1").arg(m_icon));
     return;
   }
 
   auto pix =
-      icon.pixmap(config.size)
-          .scaled(config.size * config.devicePixelRatio, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+      icon.pixmap(m_config.size)
+          .scaled(m_config.size * m_config.devicePixelRatio, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
-  pix.setDevicePixelRatio(config.devicePixelRatio);
-  QIcon::setThemeName(savedTheme);
-
+  pix.setDevicePixelRatio(m_config.devicePixelRatio);
   emit dataUpdated(pix);
 }
 
-// Loads an icon not in a theme directory from the filesystem.
-QIcon QIconImageLoader::loadIconFromFileSystem(const QString &iconName) {
-  const QStringList searchPaths = {"/usr/share/pixmaps", "/usr/share/icons"};
-
-  const QStringList extensions = {".png", ".svg", ".xpm"};
-
-  // Try each search path with each extension
-  for (const QString &path : searchPaths) {
-    for (const QString &ext : extensions) {
-      QString iconPath = QString("%1/%2%3").arg(path, iconName, ext);
-      if (QFile::exists(iconPath)) { return QIcon(iconPath); }
-    }
-  }
-
-  // In case icon is specified as a full path.
-  return QIcon(iconName);
-}
-
 QIconImageLoader::QIconImageLoader(const QString &name, const std::optional<QString> &themeName)
-    : m_icon(name), m_theme(themeName) {}
+    : m_icon(name), m_theme(themeName) {
+  connect(&m_watcher, &QFutureWatcher<QIcon>::finished, this, [this]() {
+    if (m_watcher.isFinished()) {
+      cachedIcons.insert(m_icon);
+      iconLoaded(m_watcher.result());
+    }
+  });
+}
