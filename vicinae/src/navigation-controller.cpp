@@ -221,6 +221,8 @@ void NavigationController::closeWindow(const CloseWindowOptions &settings) {
   default:
     break;
   }
+
+  if (isRootSearch() && settings.clearRootSearch) clearSearchText();
 }
 
 void NavigationController::toggleWindow() {
@@ -289,6 +291,8 @@ void NavigationController::executeAction(AbstractAction *action) {
 
   action->execute(&m_ctx);
   closeActionPanel();
+
+  if (action->autoClose()) { closeWindow({.clearRootSearch = true}); }
 }
 
 AbstractAction *NavigationController::findBoundAction(const QKeyEvent *event) const {
@@ -385,6 +389,8 @@ const NavigationController::ViewState *NavigationController::topState() const {
 NavigationController::ViewState *NavigationController::findViewState(const BaseView *view) {
   return const_cast<ViewState *>(std::as_const(*this).findViewState(view));
 }
+
+bool NavigationController::isRootSearch() const { return m_views.size() == 1; }
 
 const NavigationController::ViewState *NavigationController::findViewState(const BaseView *view) const {
   auto pred = [&](auto &&state) { return state->sender == view; };

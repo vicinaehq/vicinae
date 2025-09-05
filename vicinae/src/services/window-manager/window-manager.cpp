@@ -1,4 +1,5 @@
 #include "window-manager.hpp"
+#include <ranges>
 #include "hyprland/hyprland.hpp"
 #include "gnome/gnome-window-manager.hpp"
 #include "dummy-window-manager.hpp"
@@ -35,6 +36,29 @@ AbstractWindowManager::WindowPtr WindowManager::getFocusedWindow() {
   return m_provider->getFocusedWindowSync();
 }
 
+AbstractWindowManager::WindowList WindowManager::listWindows() const { return m_windows; }
+
+AbstractWindowManager::WindowList WindowManager::findWindowByClass(const QString &wmClass) const {
+  auto pred = [&](auto &&win) { return win->wmClass() == wmClass; };
+
+  return listWindows() | std::views::filter(pred) | std::ranges::to<std::vector>();
+}
+
+AbstractWindowManager::WindowList WindowManager::findAppWindows(const Application &app) const {
+  QString wmClass = app.windowClass().toLower();
+
+  auto pred = [&](auto &&win) { return win->wmClass().toLower() == wmClass; };
+
+  return listWindows() | std::views::filter(pred) | std::ranges::to<std::vector>();
+}
+
+void WindowManager::updateWindowCache() { m_windows = m_provider->listWindowsSync(); }
+
 bool WindowManager::canPaste() const { return m_provider->supportsInputForwarding(); }
 
-WindowManager::WindowManager() { m_provider = createProvider(); }
+WindowManager::WindowManager() {
+  m_provider = createProvider();
+  updateWindowCache();
+
+  connect(m_provider.get(), &AbstractWindowManager::windowsChanged, this, &WindowManager::updateWindowCache);
+}

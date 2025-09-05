@@ -4,43 +4,51 @@
 #include "theme.hpp"
 #include "ui/image/image.hpp"
 #include "ui/list-accessory/list-accessory.hpp"
+#include "utils/layout.hpp"
 #include <qnamespace.h>
 #include <qsizepolicy.h>
 #include <qwidget.h>
 
+namespace fs = std::filesystem;
+
 void DefaultListItemWidget::setName(const QString &name) {
-  _name->setText(name);
-  _name->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-  _name->setVisible(!name.isEmpty());
+  m_name->setText(name);
+  m_name->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+  m_name->setVisible(!name.isEmpty());
   //_name->setFixedWidth(_name->sizeHint().width());
 }
 
 void DefaultListItemWidget::setIconUrl(const std::optional<ImageURL> &url) {
-  if (url) { _icon->setUrl(*url); }
+  if (url) { m_icon->setUrl(*url); }
 
-  _icon->setVisible(url.has_value());
+  m_icon->setVisible(url.has_value());
 }
 
 void DefaultListItemWidget::setAccessories(const AccessoryList &list) {
-  _accessoryList->setAccessories(list);
-  _accessoryList->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+  m_accessoryList->setAccessories(list);
+  m_accessoryList->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 }
 
 void DefaultListItemWidget::setSubtitle(const std::variant<QString, std::filesystem::path> &subtitle) {
   // clang-format off
   const auto visitor = overloads {
-	   [&](const std::filesystem::path& path){
-  		_category->setText(path.c_str());
-  		_category->setEllideMode(Qt::ElideMiddle);
+	   [&](const fs::path& path){
+  		m_category->setText(path.c_str());
+  		m_category->setEllideMode(Qt::ElideMiddle);
 	   },
 	   [&](const QString& text){
-  		_category->setText(text);
-  		_category->setEllideMode(Qt::ElideRight);
+  		m_category->setText(text);
+  		m_category->setEllideMode(Qt::ElideRight);
 	   }
   };
   // clang-format on
 
   std::visit(visitor, subtitle);
+}
+
+void DefaultListItemWidget::setActive(bool active) {
+  if (active) positionActiveIndicator();
+  m_activeIndicator->setVisible(active);
 }
 
 void DefaultListItemWidget::setAlias(const QString &alias) {
@@ -54,32 +62,28 @@ void DefaultListItemWidget::setAlias(const QString &alias) {
   m_alias->setVisible(!alias.isEmpty());
 }
 
+void DefaultListItemWidget::positionActiveIndicator() {
+  auto margins = layout()->contentsMargins();
+  int x = margins.left() + m_icon->width() / 2 - m_activeIndicator->width() / 2;
+  int y = margins.top() + m_icon->height() + 3;
+
+  m_activeIndicator->move(x, y);
+}
+
+void DefaultListItemWidget::resizeEvent(QResizeEvent *event) {
+  if (m_activeIndicator->isVisible()) positionActiveIndicator();
+  SelectableOmniListWidget::resizeEvent(event);
+}
+
 DefaultListItemWidget::DefaultListItemWidget(QWidget *parent) : SelectableOmniListWidget(parent) {
+  auto left = HStack().spacing(15).add(m_icon).add(m_name).add(m_category).add(m_alias);
 
-  _category->setColor(SemanticColor::TextSecondary);
-  _icon->setFixedSize(25, 25);
+  HStack().mx(10).my(8).add(left).add(m_accessoryList).justifyBetween().imbue(this);
 
-  setAttribute(Qt::WA_Hover);
-
-  auto mainLayout = new QHBoxLayout();
-
-  mainLayout->setContentsMargins(10, 8, 10, 8);
-
-  auto left = new QWidget();
-  auto leftLayout = new QHBoxLayout();
-
-  left->setLayout(leftLayout);
-  leftLayout->setSpacing(15);
-  leftLayout->setContentsMargins(0, 0, 0, 0);
-  leftLayout->addWidget(this->_icon);
-  leftLayout->addWidget(this->_name);
-  leftLayout->addWidget(this->_category);
-  leftLayout->addWidget(this->m_alias);
-
+  m_category->setColor(SemanticColor::TextSecondary);
+  m_icon->setFixedSize(25, 25);
+  m_activeIndicator->setFixedSize(4, 4);
+  m_activeIndicator->setColor(SemanticColor::TextSecondary);
   m_alias->hide();
-
-  mainLayout->addWidget(left, 0, Qt::AlignLeft);
-  mainLayout->addWidget(this->_accessoryList, 0, Qt::AlignRight);
-
-  setLayout(mainLayout);
+  setActive();
 }

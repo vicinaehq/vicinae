@@ -3,9 +3,12 @@
 #include "actions/root-search/root-search-actions.hpp"
 #include "navigation-controller.hpp"
 #include "../../ui/image/url.hpp"
+#include "service-registry.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "settings/app-metadata-settings-detail.hpp"
 #include "settings/app-settings-detail.hpp"
+#include "services/window-manager/window-manager.hpp"
+#include "switch-windows-view.hpp"
 #include <qwidget.h>
 
 namespace fs = std::filesystem;
@@ -24,6 +27,11 @@ QString AppRootItem::displayName() const { return m_app->name(); }
 
 QWidget *AppRootItem::settingsDetail(const QJsonObject &preferences) const {
   return new AppMetadataSettingsDetail(m_app);
+}
+
+bool AppRootItem::isActive() const {
+  auto wm = ServiceRegistry::instance()->windowManager();
+  return !wm->findAppWindows(*m_app).empty();
 }
 
 AccessoryList AppRootItem::accessories() const {
@@ -52,7 +60,15 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
   open->setClearSearch(true);
   panel->setTitle(m_app->name());
 
-  mainSection->addAction(new DefaultActionWrapper(uniqueId(), open));
+  auto activeWindows = ctx->services->windowManager()->findAppWindows(*m_app);
+
+  if (!activeWindows.empty()) {
+    auto focus = new FocusWindowAction(activeWindows.front());
+    mainSection->addAction(new DefaultActionWrapper(uniqueId(), focus));
+    mainSection->addAction(open);
+  } else {
+    mainSection->addAction(new DefaultActionWrapper(uniqueId(), open));
+  }
 
   auto makeAction = [](auto &&pair) -> OpenAppAction * {
     const auto &[index, appAction] = pair;

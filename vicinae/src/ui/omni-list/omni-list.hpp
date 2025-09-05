@@ -478,34 +478,15 @@ public:
     ItemDataSubtitle subtitle;
     AccessoryList accessories;
     QString alias;
+    bool active = false;
   };
   virtual ItemData data() const = 0;
 
   bool hasUniformHeight() const override { return true; }
-
   bool hasPartialUpdates() const override { return true; }
 
-  size_t recyclingId() const override { return typeid(AbstractDefaultListItem).hash_code(); }
-
   void refresh(QWidget *w) const override {
-    if (auto widget = dynamic_cast<DefaultListItemWidget *>(w)) {
-      auto itemData = data();
-
-      widget->setName(itemData.name);
-      widget->setSubtitle(itemData.subtitle);
-      widget->setIconUrl(itemData.iconUrl);
-      widget->setAccessories(itemData.accessories);
-      widget->setAlias(itemData.alias);
-    } else {
-      qDebug() << "not a defaut list itemw widget" << typeid(*w).name();
-    }
     auto widget = static_cast<DefaultListItemWidget *>(w);
-  }
-
-  bool recyclable() const override { return true; }
-
-  void recycle(QWidget *base) const override {
-    auto widget = static_cast<DefaultListItemWidget *>(base);
     auto itemData = data();
 
     widget->setName(itemData.name);
@@ -513,6 +494,7 @@ public:
     widget->setIconUrl(itemData.iconUrl);
     widget->setAccessories(itemData.accessories);
     widget->setAlias(itemData.alias);
+    widget->setActive(itemData.active);
   }
 
   OmniListItemWidget *createWidget() const override {
