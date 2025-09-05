@@ -1,5 +1,5 @@
 BUILD_DIR := build
-RM := /usr/bin/rm
+RM := rm
 TAG := $(shell git describe --tags --abbrev=0)
 
 release:
