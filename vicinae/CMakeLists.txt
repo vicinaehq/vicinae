@@ -598,10 +598,13 @@ if (UNIX AND NOT APPLE)
 		src/services/window-manager/hyprland/hyprland.cpp
 		src/services/window-manager/gnome/gnome-window-manager.cpp
 		src/services/window-manager/gnome/gnome-window.cpp
+		src/services/window-manager/wayland/wayland.cpp
 
 		# Hyprland
 		# End Hyprland
 	)
+    include("Wayland")
+    wayland_generate_protocol("${CMAKE_CURRENT_SOURCE_DIR}/protocols/wlr-foreign-toplevel-management-unstable-v1.xml")
 endif()
 	
 

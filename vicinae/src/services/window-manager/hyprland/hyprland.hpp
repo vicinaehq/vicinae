@@ -53,7 +53,7 @@ public:
   bool isActivatable() const override;
 
   bool ping() const override;
-  void start() const override;
+  void start() override;
 
   ~HyprlandWindowManager() override = default;
 };
