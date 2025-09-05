@@ -59,7 +59,7 @@ public:
 
   bool isActivatable() const override;
   bool ping() const override;
-  void start() const override;
+  void start() override;
 
   // GNOME-specific capabilities
   bool supportsInputForwarding() const override { return false; } // Not implemented yet

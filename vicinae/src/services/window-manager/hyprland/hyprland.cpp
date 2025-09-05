@@ -81,4 +81,4 @@ bool HyprlandWindowManager::ping() const {
   return true;
 }
 
-void HyprlandWindowManager::start() const {}
+void HyprlandWindowManager::start() {}

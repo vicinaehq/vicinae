@@ -110,7 +110,7 @@ public:
    * Called when the window manager is started, after it was deemed activatable for the current
    * environment.
    */
-  virtual void start() const = 0;
+  virtual void start() = 0;
 
 private:
   Q_OBJECT

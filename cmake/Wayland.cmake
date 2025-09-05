@@ -1,6 +1,6 @@
 set(WAYLAND_SCANNER_EXECUTABLE "wayland-scanner")
 
-function(wayland_generate_protocol target protocol_file)
+function(wayland_generate_protocol protocol_file)
     get_filename_component(protocol_name ${protocol_file} NAME_WE)
     
     set(client_header "${CMAKE_CURRENT_BINARY_DIR}/${protocol_name}-client-protocol.h")
@@ -22,7 +22,6 @@ function(wayland_generate_protocol target protocol_file)
         COMMENT "Generating ${protocol_name} private code"
     )
     
-    # Add generated files to target
-    target_sources(${target} PRIVATE ${client_header} ${private_code})
-    target_include_directories(${target} PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+    # Add generated files to sources
+    set(SRCS ${SRCS} ${client_header} ${private_code} PARENT_SCOPE)
 endfunction()

@@ -2,6 +2,7 @@
 #include "hyprland/hyprland.hpp"
 #include "gnome/gnome-window-manager.hpp"
 #include "dummy-window-manager.hpp"
+#include "wayland/wayland.hpp"
 #include "services/window-manager/abstract-window-manager.hpp"
 
 std::vector<std::unique_ptr<AbstractWindowManager>> WindowManager::createCandidates() {
@@ -10,13 +11,17 @@ std::vector<std::unique_ptr<AbstractWindowManager>> WindowManager::createCandida
 
   candidates.emplace_back(std::make_unique<HyprlandWindowManager>());
   candidates.emplace_back(std::make_unique<GnomeWindowManager>());
+  candidates.emplace_back(std::make_unique<WaylandWindowManager>());
 
   return candidates;
 }
 
 std::unique_ptr<AbstractWindowManager> WindowManager::createProvider() {
   for (auto &candidate : createCandidates()) {
-    if (candidate->isActivatable()) { return std::move(candidate); }
+    if (candidate->isActivatable()) {
+      candidate->start();
+      return std::move(candidate);
+    }
   }
 
   return std::make_unique<DummyWindowManager>();
