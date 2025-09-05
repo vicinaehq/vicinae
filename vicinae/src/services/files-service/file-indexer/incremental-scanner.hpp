@@ -17,5 +17,5 @@ class IncrementalScanner : public AbstractScanner, public NonCopyable {
 
 public:
   void run() override;
-  void stop() override;
+  void stop(bool regurgitate) override;
 };
