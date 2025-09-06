@@ -453,6 +453,7 @@ set(SRCS
 	src/services/extension-registry/extension-registry.cpp
 
 
+
 	src/utils/migration-manager/migration-manager.hpp
 	src/utils/migration-manager/migration-manager.cpp
 
@@ -494,6 +495,8 @@ set(SRCS
 
 	src/extensions/raycast/store/store-listing-view.hpp
 	src/extensions/raycast/store/store-detail-view.hpp
+
+	src/extensions/vicinae/vicinae-extension.cpp
 
 	src/services/raycast/raycast-store.cpp
 
