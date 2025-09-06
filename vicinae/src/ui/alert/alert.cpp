@@ -32,16 +32,14 @@ void AlertWidget::paintEvent(QPaintEvent *event) {
   int borderRadius = 6;
   QPainter painter(this);
   QPainterPath path;
-  QPen pen(theme.colors.border, 2);
+  QPen pen(theme.resolveTint(SemanticColor::Border), 2);
 
   painter.setRenderHint(QPainter::Antialiasing, true);
   path.addRoundedRect(rect(), borderRadius, borderRadius);
 
   painter.setClipPath(path);
 
-  QColor finalColor(theme.colors.statusBackground);
-
-  finalColor.setAlphaF(0.98);
+  QColor finalColor(theme.resolveTint(SemanticColor::StatusBackground));
   painter.setPen(pen);
   painter.fillPath(path, finalColor);
   painter.drawPath(path);
@@ -135,7 +133,7 @@ AlertWidget::AlertWidget(QWidget *parent)
   _cancelBtn->setText("Cancel");
   _actionBtn->setFixedHeight(btnHeight);
   _actionBtn->setText("Delete");
-  _actionBtn->setColor(SemanticColor::Red);
+  _actionBtn->setColor(SemanticColor::ButtonDestructive);
 
   _title->setAlignment(Qt::AlignCenter);
   _message->setAlignment(Qt::AlignCenter);

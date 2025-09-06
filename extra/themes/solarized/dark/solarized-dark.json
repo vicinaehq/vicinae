@@ -1,19 +1,25 @@
- {
+{
     "version": "1.0.0",
     "appearance": "dark",
-    "icon": "../solarized.png",
+    "icon": "../icon.png",
     "name": "Solarized Dark",
     "description": "Low-contrast theme designed to reduce eye strain",
     "palette": {
-      "background": "#002B36",
-      "foreground": "#839496",
-      "blue": "#268BD2",
-      "green": "#859900",
-      "magenta": "#D33682",
-      "orange": "#CB4B16",
-      "purple": "#6C71C4",
-      "red": "#DC322F",
-      "yellow": "#B58900",
-      "cyan": "#2AA198"
+      "base00": "#002b36",
+      "base01": "#073642",
+      "base02": "#586e75",
+      "base03": "#657b83",
+      "base04": "#839496",
+      "base05": "#93a1a1",
+      "base06": "#eee8d5",
+      "base07": "#fdf6e3",
+      "base08": "#dc322f",
+      "base09": "#cb4b16",
+      "base0A": "#b58900",
+      "base0B": "#859900",
+      "base0C": "#2aa198",
+      "base0D": "#268bd2",
+      "base0E": "#6c71c4",
+      "base0F": "#d33682"
     }
 }

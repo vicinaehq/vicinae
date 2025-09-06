@@ -134,8 +134,8 @@ void MarkdownRenderer::insertCodeBlock(cmark_node *node, bool isClosing) {
 
   format.setBorder(2);
   format.setBorderStyle(QTextFrameFormat::BorderStyle_Solid);
-  format.setBorderBrush(theme.colors.statusBackgroundBorder);
-  format.setBackground(theme.colors.statusBackground);
+  format.setBorderBrush(theme.resolveTint(SemanticColor::StatusBorder));
+  format.setBackground(theme.resolveTint(SemanticColor::StatusBackground));
   format.setPadding(10);
   format.setTopMargin(15);
   format.setBottomMargin(15);
@@ -244,11 +244,11 @@ void MarkdownRenderer::insertSpan(cmark_node *node, QTextCharFormat &fmt) {
   case CMARK_NODE_CODE:
     fmt.setFontFamilies({"monospace"});
     fmt.setForeground(painter.colorBrush(theme.resolveTint(SemanticColor::Red)));
-    fmt.setBackground(painter.colorBrush(theme.colors.statusBackground));
+    fmt.setBackground(painter.colorBrush(theme.resolveTint(SemanticColor::StatusBackground)));
     _cursor.insertText(cmark_node_get_literal(node), fmt);
     break;
   case CMARK_NODE_LINK:
-    fmt.setForeground(QBrush(QColor(240, 240, 240)));
+    fmt.setForeground(QBrush(theme.resolveTint(SemanticColor::LinkDefault)));
     fmt.setFontUnderline(true);
     fmt.setAnchor(true);
     fmt.setAnchorHref(cmark_node_get_url(node));

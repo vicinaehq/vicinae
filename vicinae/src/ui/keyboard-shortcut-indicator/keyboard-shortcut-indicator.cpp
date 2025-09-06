@@ -73,4 +73,5 @@ void KeyboardShortcutIndicatorWidget::setShortcut(const KeyboardShortcutModel &m
 }
 
 KeyboardShortcutIndicatorWidget::KeyboardShortcutIndicatorWidget(QWidget *parent)
-    : QWidget(parent), _backgroundColor("#222222") {}
+    : QWidget(parent),
+      _backgroundColor(ThemeService::instance().theme().resolveTint(SemanticColor::TertiaryBackground)) {}

@@ -1,0 +1,24 @@
+{
+  "version": "1.0.0",
+  "palette": {
+    "base00": "#FFFDFB",
+    "base01": "#FFF7ED",
+    "base02": "#F2E6D4",
+    "base03": "#CECECE",
+    "base04": "#9E9E9E",
+    "base05": "#636363",
+    "base06": "#24272B",
+    "base07": "#181B1F",
+    "base08": "#DF7F78",
+    "base09": "#CE9042",
+    "base0A": "#9CA748",
+    "base0B": "#50B584",
+    "base0C": "#00B3C2",
+    "base0D": "#61A3E6",
+    "base0E": "#A48FE1",
+    "base0F": "#D080B6"
+  },
+  "name": "Penumbra Light Contrast Plus",
+  "appearance": "light",
+  "description": "Penumbra Light Contrast Plus theme"
+}

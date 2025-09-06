@@ -15,6 +15,10 @@ void OmniButtonWidget::setColor(ButtonColor color) {
     setBackgroundColor(SemanticColor::ButtonSecondary);
     setHoverBackgroundColor(SemanticColor::ButtonSecondaryHover);
     break;
+  case ButtonColor::Destructive:
+    setBackgroundColor(SemanticColor::ButtonDestructive);
+    setHoverBackgroundColor(SemanticColor::ButtonDestructiveHover);
+    break;
   case ButtonColor::Transparent:
     setHoverBackgroundColor(SemanticColor::ButtonSecondaryHover);
     break;
@@ -111,7 +115,7 @@ void OmniButtonWidget::paintEvent(QPaintEvent *event) {
   int borderRadius = 4;
   OmniPainter painter(this);
   QPainterPath path;
-  QPen pen(theme.colors.text, 1);
+  QPen pen(theme.resolveTint(SemanticColor::TextPrimary), 1);
   QBrush brush;
 
   if (underMouse() && !m_disabled) {

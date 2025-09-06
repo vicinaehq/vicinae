@@ -1,0 +1,24 @@
+{
+  "version": "1.0.0",
+  "palette": {
+    "base00": "#f8f9fa",
+    "base01": "#edeff1",
+    "base02": "#d2d4d8",
+    "base03": "#a0a6ac",
+    "base04": "#8A9199",
+    "base05": "#5c6166",
+    "base06": "#4e5257",
+    "base07": "#404447",
+    "base08": "#f07171",
+    "base09": "#fa8d3e",
+    "base0A": "#f2ae49",
+    "base0B": "#6cbf49",
+    "base0C": "#4cbf99",
+    "base0D": "#399ee6",
+    "base0E": "#a37acc",
+    "base0F": "#e6ba7e"
+  },
+  "name": "Ayu Light",
+  "appearance": "light",
+  "description": "Ayu Light theme"
+}

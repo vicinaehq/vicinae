@@ -1,0 +1,24 @@
+{
+  "version": "1.0.0",
+  "palette": {
+    "base00": "#FFFDFB",
+    "base01": "#FFF7ED",
+    "base02": "#F2E6D4",
+    "base03": "#BEBEBE",
+    "base04": "#8F8F8F",
+    "base05": "#636363",
+    "base06": "#303338",
+    "base07": "#24272B",
+    "base08": "#CA736C",
+    "base09": "#BA823A",
+    "base0A": "#8D9741",
+    "base0B": "#47A477",
+    "base0C": "#00A2AF",
+    "base0D": "#5794D0",
+    "base0E": "#9481CC",
+    "base0F": "#BC73A4"
+  },
+  "name": "Penumbra Light",
+  "appearance": "light",
+  "description": "Penumbra Light theme"
+}

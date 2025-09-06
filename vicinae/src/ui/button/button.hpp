@@ -7,7 +7,7 @@
 
 class OmniButtonWidget : public QWidget {
 public:
-  enum ButtonColor { Primary, Secondary, Transparent };
+  enum ButtonColor { Primary, Secondary, Destructive, Transparent };
 
   Q_OBJECT
 

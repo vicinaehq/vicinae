@@ -1,6 +1,7 @@
-#include "ui/popover/popover.hpp"
+#include "popover.hpp"
 #include "theme.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
+#include <qpen.h>
 #include <qevent.h>
 #include <qnamespace.h>
 #include <qpainter.h>
@@ -12,7 +13,7 @@ void Popover::paintEvent(QPaintEvent *event) {
   int borderRadius = 10;
   OmniPainter painter(this);
   QPainterPath path;
-  QPen pen(theme.colors.border, 1);
+  QPen pen(theme.resolveTint(SemanticColor::Border), 1);
 
   painter.setRenderHint(QPainter::Antialiasing, true);
   path.addRoundedRect(rect(), borderRadius, borderRadius);
@@ -20,8 +21,6 @@ void Popover::paintEvent(QPaintEvent *event) {
   painter.setClipPath(path);
 
   QColor finalColor = painter.resolveColor(SemanticColor::SecondaryBackground);
-
-  finalColor.setAlphaF(0.98);
   painter.setPen(pen);
   painter.fillPath(path, finalColor);
   painter.drawPath(path);

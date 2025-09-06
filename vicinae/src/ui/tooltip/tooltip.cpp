@@ -33,10 +33,10 @@ void TooltipWidget::paintEvent(QPaintEvent *event) {
 
   painter.setClipPath(path);
 
-  painter.fillPath(path, theme.colors.mainBackground);
+  painter.fillPath(path, theme.colors.base00);
 
   // Draw the border
-  QPen pen(theme.colors.border, 1); // Border with a thickness of 2
+  QPen pen(theme.resolveTint(SemanticColor::Border), 1); // Border with a thickness of 2
   painter.setPen(pen);
   painter.drawPath(path);
 }

@@ -60,10 +60,10 @@ class SettingsNavPane : public QWidget {
   QColor backgroundColor() {
     auto &theme = ThemeService::instance().theme();
 
-    if (m_selected) { return theme.colors.mainSelectedBackground; }
-    if (m_hovered) { return theme.colors.mainHoveredBackground; }
+    if (m_selected) { return theme.colors.base02; }
+    if (m_hovered) { return theme.colors.base01; }
 
-    return theme.colors.mainBackground;
+    return theme.colors.base00;
   }
 
   void paintEvent(QPaintEvent *event) override {

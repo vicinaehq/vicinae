@@ -1,0 +1,24 @@
+{
+  "version": "1.0.0",
+  "palette": {
+    "base00": "#101600",
+    "base01": "#1A1E01",
+    "base02": "#242604",
+    "base03": "#2E2E05",
+    "base04": "#FFD129",
+    "base05": "#FFDA51",
+    "base06": "#FFE178",
+    "base07": "#FFEBA0",
+    "base08": "#EE2E00",
+    "base09": "#EE8800",
+    "base0A": "#EEBB00",
+    "base0B": "#63D932",
+    "base0C": "#3D94A5",
+    "base0D": "#5B4A9F",
+    "base0E": "#883E9F",
+    "base0F": "#A928B9"
+  },
+  "name": "Aztec",
+  "appearance": "dark",
+  "description": "Aztec theme"
+}

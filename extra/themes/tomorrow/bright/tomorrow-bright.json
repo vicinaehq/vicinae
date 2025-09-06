@@ -1,0 +1,25 @@
+{
+    "version": "1.0.0",
+    "appearance": "dark",
+    "icon": "../icon.png",
+    "name": "Tomorrow Night Bright",
+    "description": "Tomorrow, a theme with courage to shape the future.",
+    "palette": {
+        "base00": "#000000",
+        "base01": "#111111",
+        "base02": "#222222",
+        "base03": "#333333",
+        "base04": "#999999",
+        "base05": "#eaeaea",
+        "base06": "#f4f4f4",
+        "base07": "#ffffff",
+        "base08": "#d54e53",
+        "base09": "#e6c547",
+        "base0A": "#e6c547",
+        "base0B": "#b9ca4a",
+        "base0C": "#70c0ba",
+        "base0D": "#7aa6da",
+        "base0E": "#c397d8",
+        "base0F": "#9a806d"
+    }
+}
