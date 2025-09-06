@@ -2,7 +2,7 @@ set(EXT_API_SRC_DIR "${CMAKE_SOURCE_DIR}/api")
 set(EXT_API_OUT_DIR "${CMAKE_SOURCE_DIR}/api/dist")
 set(API_DIST_DIR "${CMAKE_SOURCE_DIR}/api/dist")
 set(API_PROTO_PATH "${CMAKE_SOURCE_DIR}/proto/extensions")
-set(API_PROTO_OUT "${EXT_API_SRC_DIR}/src/proto")
+set(API_PROTO_OUT "${EXT_API_SRC_DIR}/src/api/proto")
 
 message(STATUS ${API_PROTO_PATH})
 
@@ -12,6 +12,7 @@ file(GLOB_RECURSE API_PROTO_FILES
 
 file(GLOB_RECURSE API_TS_FILES
     "${EXT_API_SRC_DIR}/src/api/**/*"
+    "${EXT_API_SRC_DIR}/src/api/*"
 )
 
 set(EXT_API_TS_FILES)
