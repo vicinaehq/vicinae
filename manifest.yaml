@@ -1,0 +1,10 @@
+# This manifest can be used to inject the version and commit information
+# while building outside of the git tree.
+# To do so, one should pass the following options to cmake config step:
+# -DVICINAE_GIT_TAG=XXX
+# -DVICINAE_GIT_COMMIT_HASH=XXX (short rev)
+
+release:
+  tag: "v0.8.5"
+  rev: "7db3cf3328d78d0b256975308587abfdb0128cbc"
+  short_rev: "7db3cf33"
