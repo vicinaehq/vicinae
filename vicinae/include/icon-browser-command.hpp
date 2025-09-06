@@ -1,5 +1,6 @@
 #pragma once
 #include "actions/theme/theme-actions.hpp"
+#include "builtin_icon.hpp"
 #include "ui/views/base-view.hpp"
 #include "../src/ui/image/url.hpp"
 #include "ui/image/image.hpp"

@@ -27,6 +27,7 @@ static const QString DEFAULT_ICON_THEME_NAME = "vicinae";
  * about whether discord is installed on the desktop.
  */
 static const QString DISCORD_INVITE_LINK = "https://discord.gg/rP4ecD42p7";
+static const QString GH_SPONSOR_LINK = "https://github.com/sponsors/vicinaehq";
 
 static const SemanticColor ACCENT_COLOR = SemanticColor::Cyan;
 

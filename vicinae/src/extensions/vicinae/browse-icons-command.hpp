@@ -1,3 +1,4 @@
+#pragma once
 #include "icon-browser-command.hpp"
 #include "../../ui/image/url.hpp"
 #include "single-view-command-context.hpp"
