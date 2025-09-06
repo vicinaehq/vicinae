@@ -1,6 +1,7 @@
 #include "command-controller.hpp"
 #include "daemon/ipc-client.hpp"
 #include "favicon/favicon-service.hpp"
+#include "icon-theme-db/icon-theme-db.hpp"
 #include "navigation-controller.hpp"
 #include "pid-file/pid-file.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
@@ -210,7 +211,11 @@ root->updateIndex();
 
   auto configChanged = [&](const ConfigService::Value &next, const ConfigService::Value &prev) {
     auto &theme = ThemeService::instance();
-    bool themeChangeRequired = next.theme.name.value_or("") != prev.theme.name.value_or("");
+    bool themeChangeRequired =
+        next.theme.name && next.theme.name.value_or("") != prev.theme.name.value_or("");
+    bool iconThemeChangeRequired =
+        next.theme.iconTheme && next.theme.iconTheme.value_or("") != prev.theme.iconTheme.value_or("");
+    IconThemeDatabase iconThemeDb;
 
     if (next.font.baseSize != prev.font.baseSize) {
       theme.setFontBasePointSize(next.font.baseSize);
@@ -224,7 +229,12 @@ root->updateIndex();
 
     FaviconService::instance()->setService(next.faviconService);
 
-    QIcon::setThemeName(next.theme.iconTheme.value_or(Omnicast::DEFAULT_ICON_THEME_NAME));
+    if (next.theme.iconTheme) { QIcon::setThemeName(*next.theme.iconTheme); }
+
+    if (!iconThemeDb.isSuitableTheme(QIcon::themeName())) {
+      // try vicinae theme
+      QIcon::setThemeName(Omnicast::DEFAULT_ICON_THEME_NAME);
+    }
 
     if (next.font.normal && *next.font.normal != prev.font.normal.value_or("")) {
       QApplication::setFont(*next.font.normal);
@@ -232,10 +242,12 @@ root->updateIndex();
     }
   };
 
-  QObject::connect(ServiceRegistry::instance()->config(), &ConfigService::configChanged, configChanged);
+  auto cfgService = ServiceRegistry::instance()->config();
+
+  QObject::connect(cfgService, &ConfigService::configChanged, configChanged);
   QIcon::setFallbackSearchPaths(Environment::fallbackIconSearchPaths());
 
-  configChanged(ServiceRegistry::instance()->config()->value(), {});
+  configChanged(cfgService->value(), {});
 
   LauncherWindow launcher(ctx);
   SettingsWindow settings(&ctx);
