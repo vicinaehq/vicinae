@@ -54,7 +54,8 @@ void ExtensionCommandRuntime::handleOAuth(ExtensionRequest *request, const proto
   }
 }
 
-proto::ext::extension::Response *ExtensionCommandRuntime::dispatchRequest(ExtensionRequest *request) {
+PromiseLike<proto::ext::extension::Response *>
+ExtensionCommandRuntime::dispatchRequest(ExtensionRequest *request) {
   using Request = proto::ext::extension::RequestData;
   auto &data = request->requestData();
 
@@ -77,13 +78,26 @@ proto::ext::extension::Response *ExtensionCommandRuntime::dispatchRequest(Extens
   return makeErrorResponse("Unhandled top level request");
 }
 
-void ExtensionCommandRuntime::handleRequest(ExtensionRequest *request) {
-  if (request->sessionId() != m_sessionId) return;
+void ExtensionCommandRuntime::handleRequest(ExtensionRequest *req) {
+  if (req->sessionId() != m_sessionId) return;
 
-  if (auto res = dispatchRequest(request)) {
-    request->respond(res);
-    delete request;
+  auto request = std::shared_ptr<ExtensionRequest>(req);
+  auto result = dispatchRequest(request.get());
+
+  if (auto res = std::get_if<proto::ext::extension::Response *>(&result)) {
+    request->respond(*res);
+    return;
   }
+
+  auto future = std::get<QFuture<proto::ext::extension::Response *>>(result);
+  auto watcher = std::shared_ptr<ResponseWatcher>(new ResponseWatcher, QObjectDeleter{});
+
+  watcher->setFuture(future);
+  m_pendingFutures.insert({request, watcher});
+  connect(watcher.get(), &ResponseWatcher::finished, this, [this, watcher, request]() {
+    request->respond(watcher->result());
+    m_pendingFutures.erase(request);
+  });
 }
 
 void ExtensionCommandRuntime::handleCrash(const proto::ext::extension::CrashEventData &crash) {
@@ -191,6 +205,10 @@ void ExtensionCommandRuntime::unload() {
 
   context()->navigation->setNavigationSuffixIcon(std::nullopt);
   manager->unloadCommand(m_sessionId);
+
+  for (const auto &[_, watcher] : m_pendingFutures) {
+    watcher->cancel();
+  }
 }
 
 ExtensionCommandRuntime::ExtensionCommandRuntime(const std::shared_ptr<ExtensionCommand> &command)

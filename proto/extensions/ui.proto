@@ -75,7 +75,10 @@ message ConfirmAlertRequest {
   optional ConfirmAlertAction dismiss_action = 4;
   optional ConfirmAlertAction primary_action = 5;
   bool remember_user_choice = 6;
-  string handle = 7;
+};
+
+message ConfirmAlertResponse {
+  bool confirmed = 1;
 };
 
 message ConfirmAlertAction {
@@ -113,7 +116,7 @@ message Response {
     common.AckResponse close_main_window = 8;
     common.AckResponse show_hud = 9;
     common.AckResponse set_search_text = 10; 
-    common.AckResponse confirm_alert = 11;
+    ConfirmAlertResponse confirm_alert = 11;
     GetSelectedTextResponse get_selected_text = 12;
   };
 };

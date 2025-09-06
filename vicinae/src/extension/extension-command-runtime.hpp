@@ -1,6 +1,9 @@
 #pragma once
 #include "command.hpp"
+#include "common.hpp"
 #include "proto/extension.pb.h"
+#include "types.hpp"
+#include <qfuturewatcher.h>
 
 class ExtensionCommand;
 class StorageRequestRouter;
@@ -25,7 +28,9 @@ class ExtensionCommandRuntime : public CommandContext {
   QString m_sessionId;
 
   proto::ext::extension::Response *makeErrorResponse(const QString &errorText);
-  proto::ext::extension::Response *dispatchRequest(ExtensionRequest *request);
+
+  PromiseLike<proto::ext::extension::Response *> dispatchRequest(ExtensionRequest *request);
+
   void handleRequest(ExtensionRequest *request);
   void handleCrash(const proto::ext::extension::CrashEventData &crash);
 
@@ -41,4 +46,8 @@ public:
   void unload() override;
 
   ExtensionCommandRuntime(const std::shared_ptr<ExtensionCommand> &command);
+
+private:
+  using ResponseWatcher = QFutureWatcher<proto::ext::extension::Response *>;
+  std::unordered_map<std::shared_ptr<ExtensionRequest>, std::shared_ptr<ResponseWatcher>> m_pendingFutures;
 };
