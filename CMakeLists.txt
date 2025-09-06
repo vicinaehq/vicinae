@@ -11,7 +11,7 @@ option(IGNORE_CCACHE "Always ignore ccache even if it is installed" OFF)
 option(LTO "Enable Link Time Optimization (LTO). This will result in better performance, but greatly increased compile time. (Gentoo chads can't live without this)" OFF)
 option(NOSTRIP "Never strip debug symbols from the binary, even in release mode. Note that symbols are never stripped for debug releases." OFF)
 
-option(WAYLAND_LAYER_SHELL "Enable support for the layer shell Wayland protocol" OFF)
+option(WAYLAND_LAYER_SHELL "Enable support for the layer shell Wayland protocol" ON)
 option(TYPESCRIPT_EXTENSIONS "Enable support for extensions built with React/Typescript (no browser involved)" ON)
 
 option(PREFER_STATIC_LIBS "When available, link to a library statically instead of dynamically" OFF)
@@ -26,10 +26,6 @@ option(LIBQALCULATE_BACKEND "Compile in support for the Qalculate! calculator ba
 
 if (APPLE)
 	set(WAYLAND_LAYER_SHELL OFF)
-endif()
-
-if (UNIX AND NOT APPLE)
-	option(WAYLAND_LAYER_SHELL ON)
 endif()
 
 # End of Vicinae build configuration options
