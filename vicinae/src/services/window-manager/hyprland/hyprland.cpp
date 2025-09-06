@@ -3,11 +3,7 @@
 #include "services/window-manager/hyprland/hyprctl.hpp"
 #include <ranges>
 
-HyprlandWindow::HyprlandWindow(const QJsonObject &json) {
-  m_id = json.value("address").toString();
-  m_title = json.value("title").toString();
-  m_wmClass = json.value("class").toString();
-}
+using Hyprctl = Hyprland::Controller;
 
 QString HyprlandWindowManager::stringifyModifiers(QFlags<Qt::KeyboardModifier> mods) {
   QList<QString> smods;
@@ -18,6 +14,11 @@ QString HyprlandWindowManager::stringifyModifiers(QFlags<Qt::KeyboardModifier> m
   if (mods.testFlag(Qt::KeyboardModifier::AltModifier)) smods.emplace_back("ALT");
 
   return smods.join('&');
+}
+
+HyprlandWindowManager::HyprlandWindowManager() {
+  connect(&m_ev, &Hyprland::EventListener::openwindow, this, [this]() { emit windowsChanged(); });
+  connect(&m_ev, &Hyprland::EventListener::closewindow, this, [this]() { emit windowsChanged(); });
 }
 
 QString HyprlandWindowManager::stringifyKey(Qt::Key key) const { return QKeySequence(key).toString(); }
@@ -81,4 +82,4 @@ bool HyprlandWindowManager::ping() const {
   return true;
 }
 
-void HyprlandWindowManager::start() {}
+void HyprlandWindowManager::start() { m_ev.start(); }

@@ -66,10 +66,15 @@ public:
   QString description() const override { return _data.comment; }
   QString version() const override { return _data.version; }
 
-  QString windowClass() const override {
-    if (auto wmClass = _data.startupWMClass; !wmClass.isEmpty()) return wmClass;
+  std::vector<QString> windowClasses() const override {
+    std::vector<QString> classes;
 
-    return simplifiedId();
+    if (auto wmClass = _data.startupWMClass; !wmClass.isEmpty()) classes.emplace_back(wmClass);
+
+    classes.emplace_back(program());
+    classes.emplace_back(simplifiedId());
+
+    return classes;
   }
 
   std::vector<QString> keywords() const override { return {_data.keywords.begin(), _data.keywords.end()}; }

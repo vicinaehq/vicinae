@@ -597,6 +597,10 @@ if (UNIX AND NOT APPLE)
 		src/lib/icon-theme-db/icon-theme-db.cpp
 
 		src/services/window-manager/hyprland/hyprland.cpp
+		src/services/window-manager/hyprland/hypr-listener.hpp
+		src/services/window-manager/hyprland/hypr-listener.cpp
+		src/services/window-manager/hyprland/hyprctl.cpp
+		src/services/window-manager/hyprland/hypr-window.cpp
 		src/services/window-manager/gnome/gnome-window-manager.cpp
 		src/services/window-manager/gnome/gnome-window.cpp
 		src/services/window-manager/wayland/wayland.cpp
