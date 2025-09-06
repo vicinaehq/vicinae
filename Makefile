@@ -52,6 +52,20 @@ format:
 	@echo -e 'vicinae\nwlr-clip' | xargs -I{} find {} -type d -iname 'build' -prune -o -type f -iname '*.hpp' -o -type f -iname '*.cpp' | xargs -I{} bash -c '[ -f {} ] && clang-format -i {} && echo "Formatted {}" || echo "Failed to format {}"'
 .PHONY: format
 
+bump-patch:
+	./scripts/bump_version.sh patch
+	make update-manifest
+.PHONY: bump-patch
+
+bump-minor:
+	./scripts/bump_version.sh minor
+	make update-manifest
+.PHONY: bump-minor
+
+update-manifest:
+	./scripts/update-manifest.sh ./manifest.yaml
+.PHONY: update-manifest
+
 # if we need to manually create a release
 gh-release:
 	mkdir -p dist
