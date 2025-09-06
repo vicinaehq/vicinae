@@ -224,7 +224,7 @@ root->updateIndex();
 
     FaviconService::instance()->setService(next.faviconService);
 
-    if (auto icon = next.theme.iconTheme) { QIcon::setThemeName(icon.value()); }
+    QIcon::setThemeName(next.theme.iconTheme.value_or(Omnicast::DEFAULT_ICON_THEME_NAME));
 
     if (next.font.normal && *next.font.normal != prev.font.normal.value_or("")) {
       QApplication::setFont(*next.font.normal);

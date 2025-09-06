@@ -11,6 +11,7 @@ extension-manager/runtime/node_modules
 vicinae/assets/extension-runtime.js
 
 *.tar.gz
+!extra/icons/vicinae-icon-theme.tar.gz
 /dist
 
 __cmake*
