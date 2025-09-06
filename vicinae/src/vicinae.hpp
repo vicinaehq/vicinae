@@ -20,6 +20,7 @@ static const QString APP_ID = "vicinae";
 static const QString APP_SCHEME = APP_ID;
 static const std::array<QString, 2> APP_SCHEMES = {APP_SCHEME, "raycast"};
 static const QString DEFAULT_FAVICON_SERVICE = "twenty";
+static const QString DEFAULT_ICON_THEME_NAME = "vicinae";
 
 /**
  * We use the http:// scheme instead of discord:// as we don't make assumptions
