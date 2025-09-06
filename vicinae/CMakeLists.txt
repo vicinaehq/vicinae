@@ -569,7 +569,6 @@ set(SRCS
 
 	src/lib/program-db/program-db.hpp
 	src/lib/program-db/program-db.cpp
-
 ) 
 
 if (UNIX)
@@ -594,6 +593,8 @@ endif()
 if (UNIX AND NOT APPLE)
 	list(APPEND SRCS
 		src/lib/xkbcommon-utils.cpp
+
+		src/lib/icon-theme-db/icon-theme-db.cpp
 
 		src/services/window-manager/hyprland/hyprland.cpp
 		src/services/window-manager/hyprland/hypr-listener.hpp

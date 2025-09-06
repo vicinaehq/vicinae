@@ -40,6 +40,8 @@ class XdgApplicationAction : public XdgApplicationBase {
   std::filesystem::path path() const override { return m_parentPath.toStdString(); };
   QString version() const override { return _parentData.version; }
 
+  QString windowClass() const override { return QString(); }
+
 public:
   XdgApplicationAction(const XdgDesktopEntry::Action &action, const XdgDesktopEntry &parentData,
                        const QString &parentPath, const QString &parentId)

@@ -166,8 +166,36 @@ endif()
 set(INSTALL_SHARE ${CMAKE_INSTALL_PREFIX}/share)
 set(VICINAE_INSTALL_SHARE ${INSTALL_SHARE}/vicinae)
 
-make_directory(${CMAKE_INSTALL_PREFIX}/share/applications)
 make_directory(${VICINAE_INSTALL_SHARE})
 
-install(FILES ./extra/vicinae.desktop DESTINATION ${INSTALL_SHARE}/applications)
 install(DIRECTORY ./extra/themes DESTINATION ${VICINAE_INSTALL_SHARE})
+
+if (UNIX AND NOT APPLE)
+	# install desktop file
+	set(APP_DIR ${INSTALL_SHARE}/applications)
+	make_directory(${APP_DIR})
+	install(FILES ./extra/vicinae.desktop DESTINATION ${APP_DIR})
+
+	# install default icon set
+	set(ICON_DIR ${INSTALL_SHARE}/icons)
+	set(ICON_THEME_ARCHIVE ${CMAKE_SOURCE_DIR}/extra/icons/vicinae-icon-theme.tar.gz)
+	set(ICON_THEME_STAMP "${CMAKE_BINARY_DIR}/icon-theme.stamp")
+	set(ICON_BINARY_DIR "${CMAKE_BINARY_DIR}/icons")
+
+	add_custom_command(
+		OUTPUT "${ICON_THEME_STAMP}"
+		COMMAND ${CMAKE_COMMAND} -E tar xzf "${ICON_THEME_ARCHIVE}"
+		COMMAND ${CMAKE_COMMAND} -E touch "${ICON_THEME_STAMP}"
+		WORKING_DIRECTORY "${ICON_BINARY_DIR}"
+		DEPENDS "${ICON_THEME_ARCHIVE}"
+		COMMENT "Extracting icon theme..."
+	)
+	add_custom_target(extract_icons DEPENDS "${ICON_THEME_STAMP}")
+	add_dependencies(vicinae extract_icons)
+	make_directory(${ICON_BINARY_DIR})
+	make_directory(${ICON_DIR})
+	install(DIRECTORY ${ICON_BINARY_DIR}/vicinae DESTINATION ${ICON_DIR} COMPONENT icons)
+endif()
+
+
+

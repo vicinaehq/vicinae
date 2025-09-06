@@ -90,7 +90,9 @@ void IncrementalScanner::run() {
     m_db->updateScanStatus(scanRecord.id, FileIndexerDatabase::ScanStatus::Started);
     scan(sc);
     m_db->updateScanStatus(scanRecord.id, FileIndexerDatabase::ScanStatus::Finished);
+
+    finishScan(sc);
   }
 }
 
-void IncrementalScanner::stop() { AbstractScanner::stop(); }
+void IncrementalScanner::stop(bool regurgitate) { AbstractScanner::stop(regurgitate); }
