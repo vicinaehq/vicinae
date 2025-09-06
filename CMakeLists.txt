@@ -23,8 +23,12 @@ option(USE_SYSTEM_LAYER_SHELL "Use system qt layer shell instead of building it 
 option(USE_SYSTEM_QT_KEYCHAIN "Use system qt-keychain instead of building it from source. Note: still depends on system libsecret." ON)
 option(LIBQALCULATE_BACKEND "Compile in support for the Qalculate! calculator backend" ON)
 
+if (APPLE)
+	set(WAYLAND_LAYER_SHELL OFF)
+endif()
+
 if (UNIX AND NOT APPLE)
-	set(WAYLAND_LAYER_SHELL ON)
+	option(WAYLAND_LAYER_SHELL ON)
 endif()
 
 # End of Vicinae build configuration options
@@ -36,7 +40,7 @@ if (PREFER_STATIC_LIBS)
 	set(USE_SYSTEM_ABSEIL OFF)
 	set(USE_SYSTEM_CMARK_GFM OFF)
 	set(USE_SYSTEM_MINIZIP OFF)
-	#set(USE_SYSTEM_LAYER_SHELL OFF)
+	set(USE_SYSTEM_LAYER_SHELL OFF)
 	set(USE_SYSTEM_QT_KEYCHAIN OFF)
 	set(LIBQALCULATE_BACKEND OFF)
 endif()
