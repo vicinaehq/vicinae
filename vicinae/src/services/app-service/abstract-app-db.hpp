@@ -22,10 +22,10 @@ public:
   virtual QString program() const = 0;
 
   /**
-   * A specific id that can be used to link the application to its active windows.
-   * This defaults to a normalized version of name().
+   * A specific set of ids that can be used to link the application to its active windows.
+   * All are tried in order, until one matches.
    */
-  virtual QString windowClass() const { return name().toLower(); }
+  virtual std::vector<QString> windowClasses() const { return {}; }
 
   /**
    * This defaults to a normalized version of name().

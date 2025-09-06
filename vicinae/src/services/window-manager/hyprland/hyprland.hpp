@@ -1,5 +1,6 @@
 #pragma once
 #include "services/window-manager/abstract-window-manager.hpp"
+#include "services/window-manager/hyprland/hypr-listener.hpp"
 #include <QtConcurrent/qtconcurrentrun.h>
 #include <lib/xkbcommon-utils.hpp>
 #include <qapplication.h>
@@ -37,6 +38,8 @@ public:
 };
 
 class HyprlandWindowManager : public AbstractWindowManager {
+  Hyprland::EventListener m_ev;
+
   QString stringifyModifiers(QFlags<Qt::KeyboardModifier> mods);
 
   QString stringifyKey(Qt::Key key) const;
@@ -44,6 +47,8 @@ class HyprlandWindowManager : public AbstractWindowManager {
   QString displayName() const override;
 
 public:
+  HyprlandWindowManager();
+
   WindowList listWindowsSync() const override;
   AbstractWindowManager::WindowPtr getFocusedWindowSync() const override;
   bool supportsInputForwarding() const override;
