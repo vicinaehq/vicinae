@@ -3,15 +3,18 @@
 #include <qjsonarray.h>
 #include <qjsonobject.h>
 #include <qobject.h>
+#include "proto/extension.pb.h"
 #include "proto/ui.pb.h"
 #include "services/toast/toast-service.hpp"
+#include "types.hpp"
 #include "ui/toast/toast.hpp"
 
 class UIRequestRouter : public QObject {
-  QFutureWatcher<ParsedRenderData> m_modelWatcher;
-  ExtensionNavigationController *m_navigation = nullptr;
-  ToastService &m_toast;
+public:
+  PromiseLike<proto::ext::extension::Response *> route(const proto::ext::ui::Request &req);
+  UIRequestRouter(ExtensionNavigationController *navigation, ToastService &toast);
 
+private:
   ToastPriority parseProtoToastStyle(proto::ext::ui::ToastStyle style);
 
   proto::ext::ui::Response *showToast(const proto::ext::ui::ShowToastRequest &request);
@@ -22,18 +25,14 @@ class UIRequestRouter : public QObject {
   proto::ext::ui::Response *handleCloseWindow(const proto::ext::ui::CloseMainWindowRequest &req);
   proto::ext::ui::Response *pushView(const proto::ext::ui::PushViewRequest &req);
   proto::ext::ui::Response *popView(const proto::ext::ui::PopViewRequest &req);
-  proto::ext::ui::Response *confirmAlert(const proto::ext::ui::ConfirmAlertRequest &req);
+  QFuture<proto::ext::extension::Response *> confirmAlert(const proto::ext::ui::ConfirmAlertRequest &req);
   proto::ext::ui::Response *showHud(const proto::ext::ui::ShowHudRequest &req);
-
   proto::ext::ui::Response *getSelectedText(const proto::ext::ui::GetSelectedTextRequest &req);
-
   void modelCreated();
 
-public:
-  proto::ext::extension::Response *route(const proto::ext::ui::Request &req);
+  static proto::ext::extension::Response *wrapUI(proto::ext::ui::Response *uiRes);
 
-  UIRequestRouter(ExtensionNavigationController *navigation, ToastService &toast)
-      : m_navigation(navigation), m_toast(toast) {
-    connect(&m_modelWatcher, &QFutureWatcher<RenderModel>::finished, this, &UIRequestRouter::modelCreated);
-  }
+  QFutureWatcher<ParsedRenderData> m_modelWatcher;
+  ExtensionNavigationController *m_navigation = nullptr;
+  ToastService &m_toast;
 };

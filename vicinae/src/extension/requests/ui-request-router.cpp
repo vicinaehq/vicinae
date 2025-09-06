@@ -1,10 +1,13 @@
 #include "ui-request-router.hpp"
+#include "common.hpp"
+#include "proto/extension.pb.h"
 #include "proto/ui.pb.h"
 #include "timer.hpp"
 #include "ui/alert/alert.hpp"
 #include "ui/toast/toast.hpp"
 #include <QtConcurrent/QtConcurrent>
 #include <QClipboard>
+#include <qfuturewatcher.h>
 #include <unordered_map>
 
 namespace ui = proto::ext::ui;
@@ -14,6 +17,44 @@ static const std::unordered_map<ui::ToastStyle, ToastPriority> toastMap = {
     {ui::ToastStyle::Warning, ToastPriority::Warning}, {ui::ToastStyle::Error, ToastPriority::Danger},
     {ui::ToastStyle::Dynamic, ToastPriority::Dynamic},
 };
+
+UIRequestRouter::UIRequestRouter(ExtensionNavigationController *navigation, ToastService &toast)
+    : m_navigation(navigation), m_toast(toast) {
+  connect(&m_modelWatcher, &QFutureWatcher<RenderModel>::finished, this, &UIRequestRouter::modelCreated);
+}
+
+PromiseLike<proto::ext::extension::Response *> UIRequestRouter::route(const proto::ext::ui::Request &req) {
+  using Request = proto::ext::ui::Request;
+
+  switch (req.payload_case()) {
+  case Request::kRender:
+    return wrapUI(handleRender(req.render()));
+  case Request::kSetSearchText:
+    return wrapUI(handleSetSearchText(req.set_search_text()));
+  case Request::kCloseMainWindow:
+    return wrapUI(handleCloseWindow(req.close_main_window()));
+  case Request::kPushView:
+    return wrapUI(pushView(req.push_view()));
+  case Request::kPopView:
+    return wrapUI(popView(req.pop_view()));
+  case Request::kShowToast:
+    return wrapUI(showToast(req.show_toast()));
+  case Request::kHideToast:
+    return wrapUI(hideToast(req.hide_toast()));
+  case Request::kUpdateToast:
+    return wrapUI(updateToast(req.update_toast()));
+  case Request::kConfirmAlert:
+    return confirmAlert(req.confirm_alert());
+  case Request::kGetSelectedText:
+    return wrapUI(getSelectedText(req.get_selected_text()));
+
+  default:
+    break;
+  }
+
+  return nullptr;
+  // return makeErrorResponse("Unhandled UI request");
+}
 
 ToastPriority UIRequestRouter::parseProtoToastStyle(ui::ToastStyle style) {
   if (auto it = toastMap.find(style); it != toastMap.end()) return it->second;
@@ -103,72 +144,33 @@ UIRequestRouter::getSelectedText(const proto::ext::ui::GetSelectedTextRequest &r
   return res;
 }
 
-proto::ext::extension::Response *UIRequestRouter::route(const proto::ext::ui::Request &req) {
-  using Request = proto::ext::ui::Request;
-
-  auto wrapUI = [](proto::ext::ui::Response *uiRes) -> proto::ext::extension::Response * {
-    auto res = new proto::ext::extension::Response;
-    auto data = new proto::ext::extension::ResponseData;
-
-    data->set_allocated_ui(uiRes);
-    res->set_allocated_data(data);
-    return res;
-  };
-
-  switch (req.payload_case()) {
-  case Request::kRender:
-    return wrapUI(handleRender(req.render()));
-  case Request::kSetSearchText:
-    return wrapUI(handleSetSearchText(req.set_search_text()));
-  case Request::kCloseMainWindow:
-    return wrapUI(handleCloseWindow(req.close_main_window()));
-  case Request::kPushView:
-    return wrapUI(pushView(req.push_view()));
-  case Request::kPopView:
-    return wrapUI(popView(req.pop_view()));
-  case Request::kShowToast:
-    return wrapUI(showToast(req.show_toast()));
-  case Request::kHideToast:
-    return wrapUI(hideToast(req.hide_toast()));
-  case Request::kUpdateToast:
-    return wrapUI(updateToast(req.update_toast()));
-  case Request::kConfirmAlert:
-    return wrapUI(confirmAlert(req.confirm_alert()));
-  case Request::kGetSelectedText:
-    return wrapUI(getSelectedText(req.get_selected_text()));
-
-  default:
-    break;
-  }
-
-  return nullptr;
-  // return makeErrorResponse("Unhandled UI request");
-}
-
 class ExtensionAlert : public AlertWidget {
   void confirm() const override {}
 
   void canceled() const override {}
 };
 
-ui::Response *UIRequestRouter::confirmAlert(const ui::ConfirmAlertRequest &req) {
+QFuture<proto::ext::extension::Response *> UIRequestRouter::confirmAlert(const ui::ConfirmAlertRequest &req) {
   auto alert = new CallbackAlertWidget;
   auto controller = m_navigation->controller();
+  auto promise = std::make_shared<QPromise<proto::ext::extension::Response *>>();
+  auto future = promise->future();
 
   alert->setTitle(req.title().c_str());
   alert->setMessage(req.description().c_str());
+  alert->setCallback([promise](bool value) mutable {
+    auto res = new proto::ext::ui::Response;
+    auto ack = new proto::ext::ui::ConfirmAlertResponse;
 
-  // Alert is dismissed on navigation change, so capturing is safe here.
-  alert->setCallback([req, controller](bool value) { controller->notify(req.handle().c_str(), {value}); });
+    ack->set_confirmed(value);
+    res->set_allocated_confirm_alert(ack);
+    promise->addResult(wrapUI(res));
+    promise->finish();
+  });
 
   m_navigation->handle()->setDialog(alert);
 
-  auto res = new proto::ext::ui::Response;
-  auto ack = new proto::ext::common::AckResponse;
-
-  res->set_allocated_confirm_alert(ack);
-
-  return res;
+  return future;
 }
 
 proto::ext::ui::Response *UIRequestRouter::pushView(const proto::ext::ui::PushViewRequest &req) {
@@ -200,7 +202,7 @@ proto::ext::ui::Response *UIRequestRouter::handleRender(const proto::ext::ui::Re
   auto doc = QJsonDocument::fromJson(request.json().c_str(), &parseError);
 
   if (parseError.error) {
-    qCritical() << "Failed to parse render tree";
+    qWarning() << "Failed to parse render tree";
     return {};
   }
 
@@ -226,3 +228,12 @@ proto::ext::ui::Response *UIRequestRouter::handleRender(const proto::ext::ui::Re
   // render queued
   return response;
 }
+
+proto::ext::extension::Response *UIRequestRouter::wrapUI(proto::ext::ui::Response *uiRes) {
+  auto res = new proto::ext::extension::Response;
+  auto data = new proto::ext::extension::ResponseData;
+
+  data->set_allocated_ui(uiRes);
+  res->set_allocated_data(data);
+  return res;
+};

@@ -2,7 +2,6 @@ import { randomUUID } from "node:crypto";
 import { bus } from "./bus";
 import { Image } from "./image";
 import { ConfirmAlertActionStyle, ConfirmAlertRequest } from "./proto/ui";
-import { unsubscribe } from "node:diagnostics_channel";
 
 export namespace Alert {
   export type Options = {
@@ -37,24 +36,7 @@ export const confirmAlert = async (
   options: Alert.Options,
 ): Promise<boolean> => {
   return new Promise<boolean>(async (resolve) => {
-    const handle = randomUUID();
-    let confirmCallback = () => {};
-    let cancelCallback = () => {};
-
-    const { unsubscribe } = bus.subscribe(handle, (...args) => {
-      callback(!!args[0]);
-    });
-
-    const callback = (value: boolean) => {
-      if (value) confirmCallback();
-      else cancelCallback();
-
-      unsubscribe();
-      resolve(value);
-    };
-
     const req = ConfirmAlertRequest.create({
-      handle,
       title: options.title,
       description: options.message ?? "Are you sure?",
       rememberUserChoice: false,
@@ -70,14 +52,16 @@ export const confirmAlert = async (
       },
     });
 
-    if (options.primaryAction?.onAction) {
-      confirmCallback = options.primaryAction.onAction;
-    }
+    const res = await bus.turboRequest("ui.confirmAlert", req);
 
-    if (options.dismissAction?.onAction) {
-      cancelCallback = options.dismissAction.onAction;
-    }
+	if (!res.ok) return false;
 
-    await bus.turboRequest("ui.confirmAlert", req);
+	if (res.value.confirmed) {
+		options.primaryAction?.onAction?.();
+	} else {
+		options.dismissAction?.onAction?.();
+	}
+
+	resolve(res.value.confirmed);
   });
 };
