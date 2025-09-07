@@ -1,0 +1,69 @@
+syntax = "proto3";
+import "application.proto";
+
+package proto.ext.wm;
+
+message Size {
+  int32 width = 1;
+  int32 height = 2;
+};
+
+message Position {
+  int32 x = 1;
+  int32 y = 2;
+};
+
+message WindowBounds {
+  Size size = 1;
+  Position position = 2;
+};
+
+message Window {
+  string id = 1;
+  string workspace_id = 2;
+  bool active = 3;
+  WindowBounds bounds = 4;
+  optional application.Application app = 5;
+};
+
+message PingRequest {
+};
+
+message PingResponse {
+  bool ok = 1;
+};
+
+message GetActiveWindowRequest {};
+message GetActiveWindowResponse { Window window = 1; };
+
+message GetActiveWorkspaceWindowsRequest {};
+message GetActiveWorkspaceWindowsResponse {
+  repeated Window windows = 1;
+};
+
+message SetWindowBoundsRequest {
+  string id = 1;
+  WindowBounds bounds = 2;
+  optional string workspace_id = 3;
+};
+message SetWindowBoundsResponse {};
+
+message Request {
+  oneof payload {
+    PingRequest ping = 1;
+    GetActiveWindowRequest get_active_window = 2;
+    GetActiveWorkspaceWindowsRequest get_active_workspace_windows = 3;
+    SetWindowBoundsRequest set_window_bounds = 4;
+  };
+};
+
+
+message Response {
+  oneof payload {
+    PingResponse ping = 1;
+    GetActiveWindowResponse get_active_window = 2;
+    GetActiveWorkspaceWindowsResponse get_active_workspace_windows = 3;
+    SetWindowBoundsResponse set_window_bounds = 4;
+  };
+};
+
