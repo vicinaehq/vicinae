@@ -11,7 +11,7 @@ public:
   QString wmClass() const override { return m_wmClass; }
 
   // Extended AbstractWindow interface - use defaults for now
-  std::optional<int> workspace() const override { return std::nullopt; }
+  std::optional<QString> workspace() const override { return std::nullopt; }
   bool canClose() const override { return true; }
 
   WaylandWindow(WaylandWindowManager *manager, struct zwlr_foreign_toplevel_handle_v1 *handle);
@@ -31,7 +31,7 @@ public:
   QString id() const override;
   QString displayName() const override;
   WindowList listWindowsSync() const override;
-  
+
   AbstractWindowManager::WindowPtr getFocusedWindowSync() const override;
   void focusWindowSync(const AbstractWindow &window) const override;
 

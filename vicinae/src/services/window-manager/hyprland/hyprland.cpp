@@ -1,5 +1,6 @@
 #include "hyprland.hpp"
 #include "services/window-manager/abstract-window-manager.hpp"
+#include "services/window-manager/hyprland/hypr-workspace.hpp"
 #include "services/window-manager/hyprland/hyprctl.hpp"
 #include <ranges>
 
@@ -80,6 +81,27 @@ bool HyprlandWindowManager::isActivatable() const {
 bool HyprlandWindowManager::ping() const {
   // XXX - Implement actual ping
   return true;
+}
+
+bool HyprlandWindowManager::hasWorkspaces() const { return true; }
+
+AbstractWindowManager::WorkspacePtr HyprlandWindowManager::getActiveWorkspace() const {
+  auto response = Hyprctl::oneshot("-j/activeworkspace");
+  auto json = QJsonDocument::fromJson(response);
+
+  if (json.isEmpty()) { return nullptr; }
+
+  return std::make_shared<Hyprland::Workspace>(json.object());
+}
+
+AbstractWindowManager::WorkspaceList HyprlandWindowManager::listWorkspaces() const {
+  auto response = Hyprctl::oneshot("-j/workspaces");
+  auto json = QJsonDocument::fromJson(response);
+  auto tr = [](const QJsonValue &value) -> std::shared_ptr<AbstractWorkspace> {
+    return std::make_shared<Hyprland::Workspace>(value.toObject());
+  };
+
+  return json.array() | std::views::transform(tr) | std::ranges::to<std::vector>();
 }
 
 void HyprlandWindowManager::start() { m_ev.start(); }

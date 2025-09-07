@@ -14,10 +14,15 @@ public:
 
 private:
   proto::ext::wm::Response *getActiveWindow(const proto::ext::wm::GetActiveWindowRequest &req);
+  proto::ext::wm::Response *getActiveWorkspace(const proto::ext::wm::GetActiveWorkspaceRequest &req);
+  proto::ext::wm::Response *getWindows(const proto::ext::wm::GetWindowsRequest &req);
   proto::ext::wm::Response *ping(const proto::ext::wm::PingRequest &req);
 
   static proto::ext::extension::Response *wrapResponse(proto::ext::wm::Response *wmRes);
-  static proto::ext::wm::Window *serializeWindow(AbstractWindowManager::AbstractWindow &win);
+  proto::ext::wm::Window *serializeWindow(AbstractWindowManager::AbstractWindow &win);
+  void initWindow(AbstractWindowManager::AbstractWindow &win, proto::ext::wm::Window &obj);
+
+  proto::ext::wm::WindowBounds *serializeWindowBounds(const AbstractWindowManager::WindowBounds &bounds);
 
   WindowManager &m_wm;
   AppService &m_app;

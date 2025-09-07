@@ -3,27 +3,27 @@ import "application.proto";
 
 package proto.ext.wm;
 
-message Size {
-  int32 width = 1;
-  int32 height = 2;
-};
-
-message Position {
+message WindowBounds {
   int32 x = 1;
   int32 y = 2;
-};
-
-message WindowBounds {
-  Size size = 1;
-  Position position = 2;
+  int32 width = 3;
+  int32 height = 4;
 };
 
 message Window {
   string id = 1;
   string workspace_id = 2;
   bool active = 3;
-  WindowBounds bounds = 4;
-  optional application.Application app = 5;
+  bool fullscreen = 4;
+  WindowBounds bounds = 5;
+  optional application.Application app = 6;
+};
+
+message Workspace {
+  string id = 1;
+  string name = 2;
+  bool fullscreen = 3;
+  string monitor = 4;
 };
 
 message PingRequest {
@@ -36,8 +36,22 @@ message PingResponse {
 message GetActiveWindowRequest {};
 message GetActiveWindowResponse { Window window = 1; };
 
+message GetActiveWorkspaceRequest {};
+
+message GetActiveWorkspaceResponse {
+  Workspace workspace = 1;
+};
+
 message GetActiveWorkspaceWindowsRequest {};
 message GetActiveWorkspaceWindowsResponse {
+  repeated Window windows = 1;
+};
+
+message GetWindowsRequest {
+  optional string workspace_id = 1;
+};
+
+message GetWindowsResponse {
   repeated Window windows = 1;
 };
 
@@ -52,18 +66,19 @@ message Request {
   oneof payload {
     PingRequest ping = 1;
     GetActiveWindowRequest get_active_window = 2;
-    GetActiveWorkspaceWindowsRequest get_active_workspace_windows = 3;
-    SetWindowBoundsRequest set_window_bounds = 4;
+    GetActiveWorkspaceRequest get_active_workspace = 3;
+    GetWindowsRequest get_windows = 4;
+    SetWindowBoundsRequest set_window_bounds = 5;
   };
 };
-
 
 message Response {
   oneof payload {
     PingResponse ping = 1;
     GetActiveWindowResponse get_active_window = 2;
-    GetActiveWorkspaceWindowsResponse get_active_workspace_windows = 3;
-    SetWindowBoundsResponse set_window_bounds = 4;
+    GetActiveWorkspaceResponse get_active_workspace = 3;
+    GetWindowsResponse get_windows = 4;
+    SetWindowBoundsResponse set_window_bounds = 5;
   };
 };
 

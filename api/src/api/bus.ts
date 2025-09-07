@@ -69,6 +69,12 @@ type EndpointMapping = {
   "ui.confirmAlert": "ui.confirmAlert";
   "ui.getSelectedText": "ui.getSelectedText";
 
+  "wm.ping": "wm.ping",
+  "wm.getActiveWindow": "wm.getActiveWindow"
+  "wm.getActiveWorkspace": "wm.getActiveWorkspace"
+  "wm.getWindows": "wm.getWindows"
+  "wm.setWindowBounds": "wm.setWindowBounds"
+
   "fileSearch.search": "fileSearch.search";
 
   "ui.popToRoot": "ui.popToRoot",
