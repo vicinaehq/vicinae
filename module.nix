@@ -8,10 +8,13 @@
 let
   cfg = config.services.vicinae;
   vicinaePkg = self.outputs.packages.${pkgs.system}.default;
-in {
+in
+{
 
   options.services.vicinae = {
-    enable = lib.mkEnableOption "vicinae launcher daemon" // {default = false;};
+    enable = lib.mkEnableOption "vicinae launcher daemon" // {
+      default = false;
+    };
 
     package = lib.mkOption {
       type = lib.types.package;
@@ -33,15 +36,15 @@ in {
     };
   };
   config = lib.mkIf cfg.enable {
-    home.packages = [cfg.package];
+    home.packages = [ cfg.package ];
 
     systemd.user.services.vicinae = {
       Unit = {
         Description = "Vicinae server daemon";
-        Documentation = ["https://docs.vicinae.com"];
-        After = ["graphical-session.target"];
-        PartOf = ["graphical-session.target"];
-        BindsTo = ["graphical-session.target"];
+        Documentation = [ "https://docs.vicinae.com" ];
+        After = [ "graphical-session.target" ];
+        PartOf = [ "graphical-session.target" ];
+        BindsTo = [ "graphical-session.target" ];
       };
       Service = {
         EnvironmentFile = pkgs.writeText "vicinae-env" ''
@@ -54,7 +57,7 @@ in {
         KillMode = "process";
       };
       Install = lib.mkIf cfg.autoStart {
-        WantedBy = ["graphical-session.target"];
+        WantedBy = [ "graphical-session.target" ];
       };
     };
   };
