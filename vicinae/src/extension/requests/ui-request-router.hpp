@@ -23,6 +23,7 @@ private:
   proto::ext::ui::Response *handleRender(const proto::ext::ui::RenderRequest &request);
   proto::ext::ui::Response *handleSetSearchText(const proto::ext::ui::SetSearchTextRequest &req);
   proto::ext::ui::Response *handleCloseWindow(const proto::ext::ui::CloseMainWindowRequest &req);
+  proto::ext::ui::Response *popToRoot(const proto::ext::ui::PopToRootRequest &req);
   proto::ext::ui::Response *pushView(const proto::ext::ui::PushViewRequest &req);
   proto::ext::ui::Response *popView(const proto::ext::ui::PopViewRequest &req);
   QFuture<proto::ext::extension::Response *> confirmAlert(const proto::ext::ui::ConfirmAlertRequest &req);

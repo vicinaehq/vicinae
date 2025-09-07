@@ -47,6 +47,8 @@ PromiseLike<proto::ext::extension::Response *> UIRequestRouter::route(const prot
     return confirmAlert(req.confirm_alert());
   case Request::kGetSelectedText:
     return wrapUI(getSelectedText(req.get_selected_text()));
+  case Request::kPopToRoot:
+    return wrapUI(popToRoot(req.pop_to_root()));
 
   default:
     break;
@@ -171,6 +173,16 @@ QFuture<proto::ext::extension::Response *> UIRequestRouter::confirmAlert(const u
   m_navigation->handle()->setDialog(alert);
 
   return future;
+}
+
+proto::ext::ui::Response *UIRequestRouter::popToRoot(const proto::ext::ui::PopToRootRequest &req) {
+  auto res = new proto::ext::ui::Response;
+  auto ack = new proto::ext::common::AckResponse;
+
+  m_navigation->handle()->popToRoot({.clearSearch = req.clear_search_bar()});
+  res->set_allocated_pop_to_root(ack);
+
+  return res;
 }
 
 proto::ext::ui::Response *UIRequestRouter::pushView(const proto::ext::ui::PushViewRequest &req) {

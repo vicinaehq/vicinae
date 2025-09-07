@@ -86,6 +86,10 @@ message ConfirmAlertAction {
   ConfirmAlertActionStyle style = 2;
 };
 
+message PopToRootRequest {
+  bool clear_search_bar = 1;
+};
+
 message Request {
   oneof payload {
     RenderRequest render = 1;
@@ -100,6 +104,7 @@ message Request {
     SetSearchTextRequest set_search_text = 10;
     ConfirmAlertRequest confirm_alert = 11;
     GetSelectedTextRequest get_selected_text = 12;
+    PopToRootRequest pop_to_root = 13;
   };
 };
 
@@ -118,6 +123,7 @@ message Response {
     common.AckResponse set_search_text = 10; 
     ConfirmAlertResponse confirm_alert = 11;
     GetSelectedTextResponse get_selected_text = 12;
+    common.AckResponse pop_to_root = 13;
   };
 };
 
