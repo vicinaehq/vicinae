@@ -6,6 +6,7 @@ import "application.proto";
 import "clipboard.proto";
 import "common.proto";
 import "oauth.proto";
+import "file-search.proto";
 
 package proto.ext.extension;
 
@@ -21,6 +22,7 @@ message RequestData {
     clipboard.Request clipboard = 3;
     storage.Request storage = 4;
     oauth.Request oauth = 5;
+    file_search.Request file_search = 6;
   };
 };
 
@@ -39,6 +41,7 @@ message ResponseData {
     clipboard.Response clipboard = 3;
     storage.Response storage = 4;
     oauth.Response oauth = 5;
+    file_search.Response file_search = 6;
   };
 };
 

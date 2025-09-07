@@ -69,6 +69,8 @@ type EndpointMapping = {
   "ui.confirmAlert": "ui.confirmAlert";
   "ui.getSelectedText": "ui.getSelectedText";
 
+  "fileSearch.search": "fileSearch.search";
+
   "storage.get": "storage.get";
   "storage.set": "storage.set";
   "storage.remove": "storage.remove";
