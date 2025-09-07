@@ -157,4 +157,7 @@ stdenv.mkDerivation rec {
     license = licenses.gpl3Plus;
     mainProgram = "vicinae";
   };
+  passthru = {
+    inherit apiDeps extensionManagerDeps;
+  };
 }
