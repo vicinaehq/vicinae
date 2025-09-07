@@ -6,6 +6,7 @@
 #include "extension/requests/clipboard-request-router.hpp"
 #include "extension/requests/storage-request-router.hpp"
 #include "extension/requests/ui-request-router.hpp"
+#include "extension/requests/file-search-request-router.hpp"
 #include "proto/manager.pb.h"
 #include "proto/oauth.pb.h"
 #include "common.hpp"
@@ -68,6 +69,8 @@ ExtensionCommandRuntime::dispatchRequest(ExtensionRequest *request) {
     return m_appRouter->route(data.app());
   case Request::kClipboard:
     return m_clipboardRouter->route(data.clipboard());
+  case Request::kFileSearch:
+    return m_fileSearchRouter->route(data.file_search());
   case Request::kOauth:
     handleOAuth(request, data.oauth());
     return nullptr;
@@ -133,6 +136,7 @@ void ExtensionCommandRuntime::initialize() {
   m_isDevMode = manager->hasDevelopmentSession(m_command->extensionId());
   m_navigation->setDevMode(m_isDevMode);
   m_uiRouter = std::make_unique<UIRequestRouter>(m_navigation.get(), *context()->services->toastService());
+  m_fileSearchRouter = std::make_unique<FileSearchRequestRouter>(*context()->services->fileService());
   m_storageRouter =
       std::make_unique<StorageRequestRouter>(context()->services->localStorage(), m_command->extensionId());
   m_appRouter = std::make_unique<AppRequestRouter>(*context()->services->appDb());

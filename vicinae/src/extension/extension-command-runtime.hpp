@@ -13,6 +13,7 @@ class AppRequestRouter;
 class ClipboardRequestRouter;
 class ExtensionRequest;
 class ExtensionEvent;
+class FileSearchRequestRouter;
 
 class ExtensionCommandRuntime : public CommandContext {
   bool m_isDevMode = false;
@@ -24,6 +25,7 @@ class ExtensionCommandRuntime : public CommandContext {
   std::unique_ptr<UIRequestRouter> m_uiRouter;
   std::unique_ptr<AppRequestRouter> m_appRouter;
   std::unique_ptr<ClipboardRequestRouter> m_clipboardRouter;
+  std::unique_ptr<FileSearchRequestRouter> m_fileSearchRouter;
 
   QString m_sessionId;
 
