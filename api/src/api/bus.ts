@@ -71,6 +71,8 @@ type EndpointMapping = {
 
   "fileSearch.search": "fileSearch.search";
 
+  "ui.popToRoot": "ui.popToRoot",
+
   "storage.get": "storage.get";
   "storage.set": "storage.set";
   "storage.remove": "storage.remove";

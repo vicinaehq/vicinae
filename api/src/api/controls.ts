@@ -17,3 +17,7 @@ export const getSelectedText = async () => {
 
   return response.value.text;
 };
+
+export const popToRoot = async (options?: { clearSearchBar?: boolean }) => {
+	await bus.turboRequest('ui.popToRoot', { clearSearchBar: options?.clearSearchBar ?? false });
+}
