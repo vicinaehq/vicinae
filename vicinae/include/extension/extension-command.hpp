@@ -53,6 +53,8 @@ public:
   std::vector<CommandArgument> arguments() const override { return m_command.arguments; }
   std::vector<Preference> preferences() const override { return m_command.preferences; }
 
+  bool isRaycast() const { return m_command.provenance == ExtensionManifest::Provenance::Raycast; }
+
   QString uniqueId() const override;
   QString name() const override;
   QString commandId() const override;

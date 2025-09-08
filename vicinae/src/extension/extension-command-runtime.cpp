@@ -182,6 +182,8 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
     load->set_mode(proto::ext::manager::CommandMode::NoView);
   }
 
+  load->set_is_raycast(m_command->isRaycast());
+
   auto preferences = load->mutable_preference_values();
 
   for (const auto &key : preferenceValues.keys()) {

@@ -38,7 +38,7 @@ const App: React.FC<{ component: ComponentType, launchProps: any }> = ({ compone
 }
 
 const loadEnviron = () => {
-	const { supportPath, assetsPath, commandMode, vicinaeVersion } = workerData;
+	const { supportPath, assetsPath, commandMode, vicinaeVersion, isRaycast } = workerData;
 
 	environment.textSize = 'medium';
 	environment.appearance = 'dark';
@@ -50,6 +50,7 @@ const loadEnviron = () => {
 	environment.raycastVersion = '1.0.0'; // provided for compatibility only, not meaningful
 	environment.launchType = LaunchType.UserInitiated;
 	environment.vicinaeVersion = vicinaeVersion;
+	environment.isRaycast = isRaycast;
 }
 
 const loadView = async () => {
