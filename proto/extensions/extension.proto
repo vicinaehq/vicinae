@@ -7,6 +7,7 @@ import "clipboard.proto";
 import "common.proto";
 import "oauth.proto";
 import "file-search.proto";
+import "wm.proto";
 
 package proto.ext.extension;
 
@@ -23,6 +24,7 @@ message RequestData {
     storage.Request storage = 4;
     oauth.Request oauth = 5;
     file_search.Request file_search = 6;
+    wm.Request wm = 7;
   };
 };
 
@@ -42,6 +44,7 @@ message ResponseData {
     storage.Response storage = 4;
     oauth.Response oauth = 5;
     file_search.Response file_search = 6;
+    wm.Response wm = 7;
   };
 };
 
