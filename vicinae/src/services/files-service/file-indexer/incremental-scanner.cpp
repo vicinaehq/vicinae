@@ -3,6 +3,7 @@
 #include "services/files-service/file-indexer/file-indexer-db.hpp"
 #include "services/files-service/file-indexer/filesystem-walker.hpp"
 #include <memory>
+#include <qlogging.h>
 #include <ranges>
 #include <unordered_set>
 
@@ -43,11 +44,11 @@ std::vector<fs::path> IncrementalScanner::getScannableDirectories(const fs::path
 
   walker.setMaxDepth(maxDepth);
   walker.walk(path, [&](const fs::directory_entry &entry) {
-    if (!entry.is_directory()) return;
+    if (!entry.is_directory(ec)) return;
 
     auto lastScanned = m_db->retrieveIndexedLastModified(entry);
 
-    if (auto lastModified = fs::last_write_time(entry); lastScanned.has_value() && !ec) {
+    if (auto lastModified = fs::last_write_time(entry, ec); lastScanned.has_value() && !ec) {
       using namespace std::chrono;
       auto sctp = clock_cast<system_clock>(lastModified);
       auto lastModifiedDate =
@@ -88,8 +89,14 @@ void IncrementalScanner::run() {
     auto scanRecord = result.value();
 
     m_db->updateScanStatus(scanRecord.id, FileIndexerDatabase::ScanStatus::Started);
-    scan(sc);
-    m_db->updateScanStatus(scanRecord.id, FileIndexerDatabase::ScanStatus::Finished);
+
+    try {
+      scan(sc);
+      m_db->updateScanStatus(scanRecord.id, FileIndexerDatabase::ScanStatus::Finished);
+    } catch (const std::exception &error) {
+      qCritical() << "Caught exception during incremental scan" << error.what();
+      m_db->updateScanStatus(scanRecord.id, FileIndexerDatabase::ScanStatus::Failed);
+    }
 
     finishScan(sc);
   }
