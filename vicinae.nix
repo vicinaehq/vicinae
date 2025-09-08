@@ -23,10 +23,24 @@
   qt6,
   typescript,
   wayland,
-  hash ? "unknown",
 }:
 let
   src = ./.;
+
+  manifestRaw = builtins.readFile (src + /manifest.yaml);
+
+  get = key:
+    let
+      m = builtins.match ".*${key}:[[:space:]]*\"([^\"]+)\".*" manifestRaw;
+    in
+      if m == null then throw "Key ${key} not found in manifest.yaml"
+      else builtins.elemAt m 0;
+
+  manifest = {
+    tag = get "tag";
+    rev = get "rev";
+    short_rev = get "short_rev";
+  };
 
   # Prepare node_modules for api folder
   apiDeps = fetchNpmDeps {
@@ -50,7 +64,8 @@ in
     inherit src;
 
     cmakeFlags = [
-        "-DVICINAE_GIT_TAG=${placeholder "hash"}"
+        "-DVICINAE_GIT_TAG=${manifest.tag}"
+        "-DVICINAE_GIT_COMMIT_HASH=${manifest.short_rev}"
         "-DCMAKE_INSTALL_PREFIX=${placeholder "out"}"
         "-DCMAKE_INSTALL_DATAROOTDIR=share"
         "-DCMAKE_INSTALL_BINDIR=bin"

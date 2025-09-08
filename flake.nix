@@ -15,7 +15,7 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-        vicinaePkg = pkgs.callPackage ./vicinae.nix { hash = self.rev ? self.dirtyRev; };
+        vicinaePkg = pkgs.callPackage ./vicinae.nix { };
       in
       {
         packages.default = vicinaePkg;
