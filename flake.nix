@@ -7,29 +7,50 @@
   };
 
   nixConfig = {
-    extra-substituters = ["https://vicinae.cachix.org"];
-    extra-trusted-public-keys = ["vicinae.cachix.org-1:1kDrfienkGHPYbkpNj1mWTr7Fm1+zcenzgTizIcI3oc="];
+    extra-substituters = [ "https://vicinae.cachix.org" ];
+    extra-trusted-public-keys = [ "vicinae.cachix.org-1:1kDrfienkGHPYbkpNj1mWTr7Fm1+zcenzgTizIcI3oc=" ];
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
-    flake-utils.lib.eachDefaultSystem (system:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      flake-utils,
+    }:
+    flake-utils.lib.eachDefaultSystem (
+      system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-        vicinaePkg = pkgs.callPackage ./vicinae.nix { };
+        vicinaePkg = pkgs.callPackage ./package.nix { };
       in
       {
         packages.default = vicinaePkg;
         devShells.default = pkgs.mkShell {
-          inputsFrom = [vicinaePkg]; # automatically pulls nativeBuildInputs + buildInputs
+          inputsFrom = [ vicinaePkg ]; # automatically pulls nativeBuildInputs + buildInputs
           buildInputs = [
             pkgs.ccache
           ];
         };
       }
-    ) // {
+    )
+    // {
       overlays.default = final: prev: {
         vicinae = self.packages.${final.system}.default;
       };
-      homeManagerModules.default = {config,pkgs,lib,...}: import ./module.nix {inherit config pkgs lib self;};
+      homeManagerModules.default =
+        {
+          config,
+          pkgs,
+          lib,
+          ...
+        }:
+        import ./module.nix {
+          inherit
+            config
+            pkgs
+            lib
+            self
+            ;
+        };
     };
 }
