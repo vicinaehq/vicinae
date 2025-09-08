@@ -500,7 +500,7 @@ void ThemeService::scanThemeDirectory(const std::filesystem::path &path) {
     auto it = std::filesystem::directory_iterator(dir, ec);
 
     for (const auto &entry : it) {
-      if (entry.is_directory()) {
+      if (entry.is_directory(ec)) {
         dirs.push(entry.path());
         continue;
       }

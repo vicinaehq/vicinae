@@ -105,8 +105,9 @@ void ImageWidget::setUrlImpl(const ImageURL &url) {
     }
 
     std::filesystem::path suffixedPath = path.parent_path() / suffixed;
+    std::error_code ec;
 
-    if (std::filesystem::is_regular_file(suffixedPath)) { path = suffixedPath; }
+    if (std::filesystem::is_regular_file(suffixedPath, ec)) { path = suffixedPath; }
 
     m_loader.reset(new LocalImageLoader(path));
   }

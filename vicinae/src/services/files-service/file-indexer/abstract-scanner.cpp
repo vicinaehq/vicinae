@@ -1,6 +1,7 @@
 #include "abstract-scanner.hpp"
 #include <expected>
 #include <mutex>
+#include <QDebug>
 
 std::expected<Scan, bool> AbstractScanner::awaitScan() {
   std::unique_lock lock(m_scanLock);
@@ -24,6 +25,7 @@ void AbstractScanner::finishScan(const Scan &scan) {
 void AbstractScanner::enqueue(const Scan &scan) {
   std::scoped_lock guard(m_scanLock);
   m_queuedScans.push_back(scan);
+  qDebug() << "enqueued new scan" << scan.path.c_str();
 
   m_scanCv.notify_one();
 }
