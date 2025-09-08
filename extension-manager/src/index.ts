@@ -67,6 +67,7 @@ class Vicinae {
 					commandMode: load.mode == manager.CommandMode.View ? "view" : "no-view",
 					supportPath,
 					assetsPath,
+					isRaycast: load.isRaycast,
 					vicinaeVersion: {
 						tag: process.env.VICINAE_VERSION ?? 'unknown',
 						commit: process.env.VICINAE_COMMIT ?? 'unknown',

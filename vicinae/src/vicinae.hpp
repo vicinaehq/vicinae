@@ -22,6 +22,9 @@ static const std::array<QString, 2> APP_SCHEMES = {APP_SCHEME, "raycast"};
 static const QString DEFAULT_FAVICON_SERVICE = "twenty";
 static const QString DEFAULT_ICON_THEME_NAME = "vicinae";
 
+static const QString VICINAE_NPM_API_PACKAGE = "@vicinae/api";
+static const QString RAYCAST_NPM_API_PACKAGE = "@raycast/api";
+
 /**
  * We use the http:// scheme instead of discord:// as we don't make assumptions
  * about whether discord is installed on the desktop.

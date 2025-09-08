@@ -8,7 +8,7 @@
 #include "zip/unzip.hpp"
 #include <filesystem>
 #include <qfilesystemwatcher.h>
-#include <qjsonparseerror.h>
+#include <QJsonParseError>
 #include <qlogging.h>
 
 namespace fs = std::filesystem;
@@ -215,6 +215,18 @@ std::expected<ExtensionManifest, ManifestError> ExtensionRegistry::scanBundle(co
   manifest.icon = obj.value("icon").toString();
   manifest.author = obj.value("author").toString();
 
+  auto deps = obj.value("dependencies").toObject();
+
+  if (deps.contains(Omnicast::RAYCAST_NPM_API_PACKAGE)) {
+    manifest.provenance = ExtensionManifest::Provenance::Raycast;
+  } else if (deps.contains(Omnicast::VICINAE_NPM_API_PACKAGE)) {
+    manifest.provenance = ExtensionManifest::Provenance::Vicinae;
+  } else {
+    return std::unexpected(QString("Manifest does not list %1 or %2 as a runtime dependency.")
+                               .arg(Omnicast::VICINAE_NPM_API_PACKAGE)
+                               .arg(Omnicast::RAYCAST_NPM_API_PACKAGE));
+  }
+
   for (const auto &obj : obj.value("categories").toArray()) {
     manifest.categories.emplace_back(obj.toString());
   }
@@ -222,6 +234,7 @@ std::expected<ExtensionManifest, ManifestError> ExtensionRegistry::scanBundle(co
   for (const auto &obj : obj.value("commands").toArray()) {
     auto command = parseCommandFromObject(obj.toObject());
 
+    command.provenance = manifest.provenance;
     command.entrypoint = path / std::format("{}.js", command.name.toStdString());
 
     if (std::ranges::contains(supportedModes, command.mode)) { manifest.commands.emplace_back(command); }
