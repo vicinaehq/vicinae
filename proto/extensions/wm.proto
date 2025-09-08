@@ -1,0 +1,89 @@
+syntax = "proto3";
+import "application.proto";
+
+package proto.ext.wm;
+
+message Window {
+  string id = 1;
+  string workspace_id = 2;
+  bool active = 3;
+  bool fullscreen = 4;
+
+  int32 x = 5;
+  int32 y = 6;
+  int32 width = 7;
+  int32 height = 8;
+
+  optional application.Application app = 9;
+};
+
+message Workspace {
+  string id = 1;
+  string name = 2;
+  bool active = 3;
+  bool fullscreen = 4;
+  string monitor = 5;
+};
+
+message PingRequest {
+};
+
+message PingResponse {
+  bool ok = 1;
+};
+
+message GetActiveWindowRequest {};
+message GetActiveWindowResponse { Window window = 1; };
+
+message GetWorkspacesRequest {};
+message GetWorkspacesResponse {
+  repeated Workspace workspaces = 1;
+};
+
+message GetActiveWorkspaceRequest {};
+
+message GetActiveWorkspaceResponse {
+  Workspace workspace = 1;
+};
+
+message GetActiveWorkspaceWindowsRequest {};
+message GetActiveWorkspaceWindowsResponse {
+  repeated Window windows = 1;
+};
+
+message GetWindowsRequest {
+  optional string workspace_id = 1;
+};
+
+message GetWindowsResponse {
+  repeated Window windows = 1;
+};
+
+message SetWindowBoundsRequest {
+  string id = 1;
+  optional string workspace_id = 3;
+};
+message SetWindowBoundsResponse {};
+
+message Request {
+  oneof payload {
+    PingRequest ping = 1;
+    GetActiveWindowRequest get_active_window = 2;
+    GetActiveWorkspaceRequest get_active_workspace = 3;
+    GetWindowsRequest get_windows = 4;
+    GetWorkspacesRequest get_workspaces = 5;
+    SetWindowBoundsRequest set_window_bounds = 6;
+  };
+};
+
+message Response {
+  oneof payload {
+    PingResponse ping = 1;
+    GetActiveWindowResponse get_active_window = 2;
+    GetActiveWorkspaceResponse get_active_workspace = 3;
+    GetWindowsResponse get_windows = 4;
+    GetWorkspacesResponse get_workspaces = 5;
+    SetWindowBoundsResponse set_window_bounds = 6;
+  };
+};
+

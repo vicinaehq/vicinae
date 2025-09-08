@@ -53,9 +53,9 @@ protected:
 
     // Use abstract interface for workspace information
     if (auto workspace = _window->workspace()) {
-      accessories.push_back(ListAccessory{.text = QString("WS %1").arg(*workspace + 1),
+      accessories.push_back(ListAccessory{.text = QString("WS %1").arg(*workspace),
                                           .color = std::nullopt,
-                                          .tooltip = QString("Workspace %1").arg(*workspace + 1),
+                                          .tooltip = QString("Workspace %1").arg(*workspace),
                                           .fillBackground = false,
                                           .icon = std::nullopt});
     }

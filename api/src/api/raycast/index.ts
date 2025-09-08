@@ -23,3 +23,4 @@ export * from "../oauth.js";
 export * from "../ai.js";
 export * from "../alert.js";
 export * from "../preference.js";
+export * from './window-management.js';

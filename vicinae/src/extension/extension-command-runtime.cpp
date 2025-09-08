@@ -7,6 +7,7 @@
 #include "extension/requests/storage-request-router.hpp"
 #include "extension/requests/ui-request-router.hpp"
 #include "extension/requests/file-search-request-router.hpp"
+#include "extension/requests/wm-router.hpp"
 #include "proto/manager.pb.h"
 #include "proto/oauth.pb.h"
 #include "common.hpp"
@@ -14,6 +15,7 @@
 #include "services/asset-resolver/asset-resolver.hpp"
 #include "ui/oauth-view.hpp"
 #include <QString>
+#include <exception>
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "overlay-controller/overlay-controller.hpp"
 #include "utils/utils.hpp"
@@ -71,6 +73,8 @@ ExtensionCommandRuntime::dispatchRequest(ExtensionRequest *request) {
     return m_clipboardRouter->route(data.clipboard());
   case Request::kFileSearch:
     return m_fileSearchRouter->route(data.file_search());
+  case Request::kWm:
+    return m_wmRouter->route(data.wm());
   case Request::kOauth:
     handleOAuth(request, data.oauth());
     return nullptr;
@@ -85,22 +89,25 @@ void ExtensionCommandRuntime::handleRequest(ExtensionRequest *req) {
   if (req->sessionId() != m_sessionId) return;
 
   auto request = std::shared_ptr<ExtensionRequest>(req);
-  auto result = dispatchRequest(request.get());
 
-  if (auto res = std::get_if<proto::ext::extension::Response *>(&result)) {
-    request->respond(*res);
-    return;
-  }
+  try {
+    auto result = dispatchRequest(request.get());
 
-  auto future = std::get<QFuture<proto::ext::extension::Response *>>(result);
-  auto watcher = std::shared_ptr<ResponseWatcher>(new ResponseWatcher, QObjectDeleter{});
+    if (auto res = std::get_if<proto::ext::extension::Response *>(&result)) {
+      request->respond(*res);
+      return;
+    }
 
-  watcher->setFuture(future);
-  m_pendingFutures.insert({request, watcher});
-  connect(watcher.get(), &ResponseWatcher::finished, this, [this, watcher, request]() {
-    request->respond(watcher->result());
-    m_pendingFutures.erase(request);
-  });
+    auto future = std::get<QFuture<proto::ext::extension::Response *>>(result);
+    auto watcher = std::shared_ptr<ResponseWatcher>(new ResponseWatcher, QObjectDeleter{});
+
+    watcher->setFuture(future);
+    m_pendingFutures.insert({request, watcher});
+    connect(watcher.get(), &ResponseWatcher::finished, this, [this, watcher, request]() {
+      request->respond(watcher->result());
+      m_pendingFutures.erase(request);
+    });
+  } catch (const std::exception &except) { request->respondWithError(except.what()); }
 }
 
 void ExtensionCommandRuntime::handleCrash(const proto::ext::extension::CrashEventData &crash) {
@@ -141,6 +148,8 @@ void ExtensionCommandRuntime::initialize() {
       std::make_unique<StorageRequestRouter>(context()->services->localStorage(), m_command->extensionId());
   m_appRouter = std::make_unique<AppRequestRouter>(*context()->services->appDb());
   m_clipboardRouter = std::make_unique<ClipboardRequestRouter>(*context()->services->clipman());
+  m_wmRouter = std::make_unique<WindowManagementRouter>(*context()->services->windowManager(),
+                                                        *context()->services->appDb());
 
   connect(manager, &ExtensionManager::extensionRequest, this, &ExtensionCommandRuntime::handleRequest);
   connect(manager, &ExtensionManager::extensionEvent, this, &ExtensionCommandRuntime::handleEvent);

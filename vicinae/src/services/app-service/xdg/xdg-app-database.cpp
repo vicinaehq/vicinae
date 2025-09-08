@@ -349,10 +349,12 @@ bool XdgAppDatabase::launch(const Application &app, const std::vector<QString> &
 }
 
 AppPtr XdgAppDatabase::findByClass(const QString &name) const {
+  // TODO: if that's too slow we might need a map
   QString normalizedWmClass = name.toLower();
+  auto pred = [&](const QString &wmClass) { return wmClass.toLower() == normalizedWmClass; };
 
   for (const auto &app : apps) {
-    if (app->name().toLower() == normalizedWmClass) return app;
+    if (std::ranges::any_of(app->windowClasses(), pred)) { return app; }
   }
 
   return nullptr;

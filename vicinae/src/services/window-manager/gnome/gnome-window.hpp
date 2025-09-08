@@ -34,7 +34,9 @@ public:
   std::optional<int> pid() const override { return m_pid; }
 
   // Extended AbstractWindow interface
-  std::optional<int> workspace() const override { return m_workspace; }
+  std::optional<QString> workspace() const override {
+    return m_workspace.and_then([](int id) { return std::optional<QString>(QString::number(id)); });
+  }
   bool canClose() const override { return m_canClose.value_or(true); }
 
   // Additional GNOME-specific properties
