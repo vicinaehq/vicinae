@@ -18,6 +18,8 @@ PromiseLike<ext::Response *> WindowManagementRouter::route(const wm::Request &re
     return wrapResponse(ping(req.ping()));
   case wm::Request::kGetActiveWindow:
     return wrapResponse(getActiveWindow(req.get_active_window()));
+  case wm::Request::kGetWorkspaces:
+    return wrapResponse(getWorkspaces(req.get_workspaces()));
   case wm::Request::kGetActiveWorkspace:
     return wrapResponse(getActiveWorkspace(req.get_active_workspace()));
   case wm::Request::kGetWindows:
@@ -64,6 +66,25 @@ proto::ext::wm::Response *WindowManagementRouter::getWindows(const proto::ext::w
 }
 
 proto::ext::wm::Response *
+WindowManagementRouter::getWorkspaces(const proto::ext::wm::GetWorkspacesRequest &req) {
+  auto activeWorkspace = m_wm.provider()->getActiveWorkspace();
+  auto res = new wm::Response;
+  auto winRes = new wm::GetWorkspacesResponse;
+
+  res->set_allocated_get_workspaces(winRes);
+
+  for (const auto &workspace : m_wm.provider()->listWorkspaces()) {
+    bool isActive = activeWorkspace && activeWorkspace->id() == workspace->id();
+    auto serializedWorkspace = winRes->add_workspaces();
+
+    initWorkspace(*workspace, *serializedWorkspace);
+    serializedWorkspace->set_active(isActive);
+  }
+
+  return res;
+}
+
+proto::ext::wm::Response *
 WindowManagementRouter::getActiveWindow(const proto::ext::wm::GetActiveWindowRequest &req) {
   auto activeWindow = m_wm.getFocusedWindow();
 
@@ -104,6 +125,7 @@ WindowManagementRouter::getActiveWorkspace(const proto::ext::wm::GetActiveWorksp
   res->set_allocated_get_active_workspace(resData);
   resData->set_allocated_workspace(workspace);
   workspace->set_id(activeWorkspace->id().toStdString());
+  workspace->set_active(true);
   workspace->set_name(activeWorkspace->name().toStdString());
   workspace->set_fullscreen(activeWorkspace->hasFullScreen());
   workspace->set_monitor(activeWorkspace->monitor().toStdString());
@@ -115,26 +137,28 @@ void WindowManagementRouter::initWindow(AbstractWindowManager::AbstractWindow &w
                                         proto::ext::wm::Window &obj) {
   obj.set_id(win.id().toStdString());
   obj.set_workspace_id(win.workspace()->toStdString());
-  obj.set_allocated_bounds(serializeWindowBounds(win.bounds().value_or({})));
   obj.set_fullscreen(win.fullScreen());
+
+  if (auto bounds = win.bounds()) {
+    obj.set_x(bounds->x);
+    obj.set_y(bounds->y);
+    obj.set_width(bounds->width);
+    obj.set_height(bounds->height);
+  }
+}
+
+void WindowManagementRouter::initWorkspace(AbstractWindowManager::AbstractWorkspace &workspace,
+                                           proto::ext::wm::Workspace &obj) {
+  obj.set_id(workspace.id().toStdString());
+  obj.set_name(workspace.name().toStdString());
+  obj.set_fullscreen(workspace.hasFullScreen());
+  obj.set_monitor(workspace.monitor().toStdString());
 }
 
 proto::ext::wm::Window *WindowManagementRouter::serializeWindow(AbstractWindowManager::AbstractWindow &win) {
   auto serialized = new wm::Window;
 
   initWindow(win, *serialized);
-
-  return serialized;
-}
-
-proto::ext::wm::WindowBounds *
-WindowManagementRouter::serializeWindowBounds(const AbstractWindowManager::WindowBounds &bounds) {
-  auto serialized = new wm::WindowBounds;
-
-  serialized->set_x(bounds.x);
-  serialized->set_y(bounds.y);
-  serialized->set_width(bounds.width);
-  serialized->set_height(bounds.height);
 
   return serialized;
 }

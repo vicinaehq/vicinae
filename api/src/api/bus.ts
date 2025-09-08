@@ -73,6 +73,7 @@ type EndpointMapping = {
   "wm.getActiveWindow": "wm.getActiveWindow"
   "wm.getActiveWorkspace": "wm.getActiveWorkspace"
   "wm.getWindows": "wm.getWindows"
+  "wm.getWorkspaces": "wm.getWorkspaces"
   "wm.setWindowBounds": "wm.setWindowBounds"
 
   "fileSearch.search": "fileSearch.search";
