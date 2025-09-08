@@ -18,6 +18,8 @@ struct ManifestError {
 };
 
 struct ExtensionManifest {
+  enum class Provenance { Vicinae, Raycast };
+
   struct Command {
     QString name;
     QString title;
@@ -28,6 +30,7 @@ struct ExtensionManifest {
     std::optional<QString> icon;
     std::filesystem::path entrypoint;
     bool defaultDisabled;
+    Provenance provenance;
   };
 
   std::filesystem::path path;
@@ -40,6 +43,7 @@ struct ExtensionManifest {
   std::vector<QString> categories;
   std::vector<Preference> preferences;
   std::vector<Command> commands;
+  Provenance provenance;
 };
 
 class ExtensionRegistry : public QObject {

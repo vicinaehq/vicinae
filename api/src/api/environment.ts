@@ -129,6 +129,12 @@ export interface Environment {
     tag: string;
     commit: string;
   };
+
+  /**
+   * Whether we run an actual Raycast extension in compatibility mode.
+   * This is used internally to provide Raycast-compatible interfaces.
+   */
+  isRaycast: boolean;
 }
 
 export const environment: Environment = {} as any;
