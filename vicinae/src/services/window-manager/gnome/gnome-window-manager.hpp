@@ -57,6 +57,10 @@ public:
   void focusWindowSync(const AbstractWindow &window) const override;
   bool closeWindow(const AbstractWindow &window) const override;
 
+  bool hasWorkspaces() const override { return true; }
+  WorkspaceList listWorkspaces() const override;
+  std::shared_ptr<AbstractWorkspace> getActiveWorkspace() const override;
+
   bool isActivatable() const override;
   bool ping() const override;
   void start() override;
