@@ -90,8 +90,8 @@ export const main = async () => {
 		return ;
 	}
 
-	patchRequire();
 	loadEnviron();
+	patchRequire();
 
 	(process as any).noDeprecation = !environment.isDevelopment;
 
