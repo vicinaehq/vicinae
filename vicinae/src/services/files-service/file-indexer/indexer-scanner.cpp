@@ -63,6 +63,8 @@ void IndexerScanner::run() {
 
     const Scan &sc = *expected;
 
+    qDebug() << "IndexerScanner got new scan for" << sc.path.c_str();
+
     auto result = m_db->createScan(sc.path, sc.type);
 
     if (!result) {
@@ -74,8 +76,14 @@ void IndexerScanner::run() {
     auto scanRecord = result.value();
 
     m_db->updateScanStatus(scanRecord.id, FileIndexerDatabase::ScanStatus::Started);
-    scan(sc.path);
-    m_db->updateScanStatus(scanRecord.id, FileIndexerDatabase::ScanStatus::Finished);
+
+    try {
+      scan(sc.path);
+      m_db->updateScanStatus(scanRecord.id, FileIndexerDatabase::ScanStatus::Finished);
+    } catch (const std::exception &error) {
+      qCritical() << "Caught exception during fullscan" << error.what();
+      m_db->updateScanStatus(scanRecord.id, FileIndexerDatabase::ScanStatus::Failed);
+    }
 
     finishScan(sc);
   }

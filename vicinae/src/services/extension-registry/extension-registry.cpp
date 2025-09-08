@@ -72,8 +72,9 @@ bool ExtensionRegistry::installFromZip(const QString &id, std::string_view data)
 
 bool ExtensionRegistry::uninstall(const QString &id) {
   fs::path bundle = extensionDir() / id.toStdString();
+  std::error_code ec;
 
-  if (!fs::is_directory(bundle)) return false;
+  if (!fs::is_directory(bundle, ec)) return false;
 
   fs::remove_all(bundle);
   m_storage.clearNamespace(id);
@@ -161,7 +162,7 @@ std::vector<ExtensionManifest> ExtensionRegistry::scanAll() {
   std::vector<ExtensionManifest> manifests;
 
   for (const auto &entry : fs::directory_iterator(extensionDir(), ec)) {
-    if (!entry.is_directory()) continue;
+    if (!entry.is_directory(ec)) continue;
 
     auto manifest = scanBundle(entry.path());
 

@@ -82,7 +82,7 @@ std::vector<fs::path> homeRootDirectories() {
   std::error_code ec;
 
   for (const auto &entry : fs::directory_iterator(homeDir(), ec)) {
-    if (entry.is_directory() && !isHiddenPath(entry.path())) paths.emplace_back(entry.path());
+    if (entry.is_directory(ec) && !isHiddenPath(entry.path())) paths.emplace_back(entry.path());
   }
 
   return paths;

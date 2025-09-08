@@ -75,12 +75,13 @@ void FileSystemWalker::setIgnoreHiddenPaths(bool value) { m_ignoreHiddenFiles = 
 
 bool FileSystemWalker::isIgnored(const std::filesystem::path &path) const {
   fs::path p = path.parent_path();
+  std::error_code ec;
 
   while (p != p.root_directory()) {
     for (const auto &name : m_ignoreFiles) {
       fs::path ignorePath = p / name;
 
-      if (!fs::is_regular_file(ignorePath)) continue;
+      if (!fs::is_regular_file(ignorePath, ec)) continue;
       if (GitIgnoreReader(ignorePath).matches(path)) { return true; }
     }
 
@@ -116,7 +117,7 @@ void FileSystemWalker::walk(const fs::path &root, const WalkCallback &callback) 
       if (std::ranges::contains(EXCLUDED_FILENAMES, path.filename())) { continue; }
       if (isIgnored(path)) { continue; }
 
-      if (m_recursive && entry.is_directory()) {
+      if (m_recursive && entry.is_directory(ec)) {
         size_t depth = std::distance(path.begin(), path.end()) - rootDepth;
 
         if (!(m_maxDepth && depth > *m_maxDepth)) { dirStack.push(entry); }

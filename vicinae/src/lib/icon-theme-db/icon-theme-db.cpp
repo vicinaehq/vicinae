@@ -47,11 +47,11 @@ IconThemeDatabase::IconThemeList IconThemeDatabase::scan() {
     std::error_code ec;
 
     for (const auto &entry : fs::directory_iterator(path, ec)) {
-      if (!entry.is_directory()) continue;
+      if (!entry.is_directory(ec)) continue;
 
       fs::path manifest = entry.path() / "index.theme";
 
-      if (!fs::is_regular_file(manifest)) continue;
+      if (!fs::is_regular_file(manifest, ec)) continue;
 
       // I guess the correct way would be to parse this with xdg desktop file
       // format instead of plain ini stuff, but for this use case this is fine.
