@@ -1,5 +1,4 @@
 import { workerData } from "worker_threads";
-import { bus } from "./bus";
 
 export const getPreferenceValues = <
   T = { [preferenceName: string]: any },
@@ -10,9 +9,9 @@ export const getPreferenceValues = <
 };
 
 export const openExtensionPreferences = async (): Promise<void> => {
-  await bus.request("open-extension-preferences");
+	console.error('openExtensionPreferences is not implemented');
 };
 
 export const openCommandPreferences = async (): Promise<void> => {
-  await bus.request("open-command-preferences");
+	console.error('openCommandPreferences is not implemented');
 };

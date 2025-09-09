@@ -3,6 +3,7 @@
 #include <qjsonarray.h>
 #include <qjsonobject.h>
 #include <qobject.h>
+#include "navigation-controller.hpp"
 #include "proto/extension.pb.h"
 #include "proto/ui.pb.h"
 #include "services/toast/toast-service.hpp"
@@ -16,6 +17,7 @@ public:
 
 private:
   ToastPriority parseProtoToastStyle(proto::ext::ui::ToastStyle style);
+  static PopToRootType parseProtoPopToRoot(proto::ext::ui::PopToRootType type);
 
   proto::ext::ui::Response *showToast(const proto::ext::ui::ShowToastRequest &request);
   proto::ext::ui::Response *hideToast(const proto::ext::ui::HideToastRequest &request);

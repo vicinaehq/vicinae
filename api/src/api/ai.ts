@@ -39,48 +39,7 @@ export namespace AI {
   ): Promise<string> & {
     on(event: "data", listener: (chunk: string) => void): void;
   } {
-    const handlerId = randomUUID();
-    const emitter = new EventEmitter();
-    const promise = new Promise<string>((resolve, reject) => {
-      let answer = "";
-
-      bus
-        .request<{ started: boolean }>("ai.create-completion", {
-          prompt,
-          options,
-          callback: handlerId,
-        })
-        .then(({ data }) => {
-          if (!data.started) {
-            reject(new Error("Could not create completion"));
-          }
-
-          const { unsubscribe } = bus.subscribe(handlerId, (...args) => {
-            const data = args[0] as { token: string; done: boolean };
-
-            answer += data.token;
-            emitter.emit("data", data.token);
-
-            if (data.done) {
-              unsubscribe();
-              resolve(answer);
-            }
-          });
-
-          if (options?.signal) {
-            options.signal.addEventListener("abort", () => {
-              bus.request("ai.abort-completion");
-              unsubscribe();
-              resolve(answer);
-            });
-          }
-        })
-        .catch((err) => reject(err));
-    });
-
-    return Object.assign(promise, {
-      on: emitter.on.bind(emitter),
-    });
+	  throw new Error('not implemented');
   }
 
   export type AskOptions = {
@@ -178,9 +137,7 @@ export namespace AI {
   };
 
   export const getModels = async (): Promise<AI.ModelInfo[]> => {
-    const res = await bus.request<{ models: AI.ModelInfo[] }>("ai.get-models");
-
-    return res.data.models;
+	  throw new Error('not implemented');
   };
 }
 

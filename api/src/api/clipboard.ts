@@ -52,25 +52,14 @@ export const Clipboard = {
   },
 
   async read(options?: { offset?: number }): Promise<Clipboard.ReadContent> {
-    const res = await bus.request<{ content: Clipboard.ReadContent }>(
-      "clipboard.read",
-      {
-        options,
-      },
-    );
-
-    return res.data.content;
+	throw new Error('Clipboard.read not implemented');
   },
 
   async readText(options?: { offset?: number }): Promise<string | undefined> {
-    const res = await bus.request<{ content?: string }>("clipboard.read-text", {
-      options,
-    });
-
-    return res.data.content;
+	throw new Error('Clipboard.readText not implemented');
   },
 
   async clear(text: string) {
-    // TODO: implement
+	throw new Error('Clibpoard.clear not implemented');
   },
 };
