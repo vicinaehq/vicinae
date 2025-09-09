@@ -9,6 +9,7 @@
 #include <qstandardpaths.h>
 #include <qstringview.h>
 #include <qthread.h>
+#include <deque>
 #include <qtmetamacros.h>
 #include <qurl.h>
 #include <quuid.h>
