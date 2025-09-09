@@ -10,7 +10,7 @@ DetailModel DetailModelParser::parse(const QJsonObject &instance) {
   auto props = instance.value("props").toObject();
   auto children = instance.value("children").toArray();
 
-  detail.markdown = props["markdown"].toString();
+  if (props.contains("markdown")) { detail.markdown = props.value("markdown").toString(); }
 
   for (const auto &child : children) {
     auto obj = child.toObject();
