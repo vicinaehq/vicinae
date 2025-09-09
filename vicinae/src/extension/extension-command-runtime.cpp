@@ -94,6 +94,11 @@ void ExtensionCommandRuntime::handleRequest(ExtensionRequest *req) {
     auto result = dispatchRequest(request.get());
 
     if (auto res = std::get_if<proto::ext::extension::Response *>(&result)) {
+      if (!res) {
+        request->respondWithError("No handler for this request");
+        return;
+      }
+
       request->respond(*res);
       return;
     }
@@ -104,8 +109,15 @@ void ExtensionCommandRuntime::handleRequest(ExtensionRequest *req) {
     watcher->setFuture(future);
     m_pendingFutures.insert({request, watcher});
     connect(watcher.get(), &ResponseWatcher::finished, this, [this, watcher, request]() {
-      request->respond(watcher->result());
+      auto res = watcher->result();
       m_pendingFutures.erase(request);
+
+      if (!res) {
+        request->respondWithError("No handler for this request");
+        return;
+      }
+
+      request->respond(res);
     });
   } catch (const std::exception &except) { request->respondWithError(except.what()); }
 }
