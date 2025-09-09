@@ -277,7 +277,7 @@ class Bus {
 	  this.eventListeners.delete(id);
   }
 
-  request2(
+  private request2(
     data: extension.RequestData,
     options: { timeout?: number } = {},
   ): Promise<Result<extension.ResponseData, Error>> {
@@ -318,53 +318,6 @@ class Bus {
     );
   }
 
-  request<T = Record<string, any>>(
-    action: string,
-    data: Record<string, any> = {},
-    options: { timeout?: number; rejectOnError?: boolean } = {},
-  ): Promise<Message<T>> {
-    const id = randomUUID();
-    const { rejectOnError = true } = options;
-
-    return new Promise<Message<T>>((resolve, reject) => {
-      let timeout: NodeJS.Timeout | undefined;
-
-      if (options.timeout) {
-        timeout = setTimeout(
-          () => reject(new Error(`request timed out`)),
-          options.timeout,
-        );
-      }
-
-      const resolver = (message: Message) => {
-        clearTimeout(timeout);
-
-        if (message.error && rejectOnError) {
-          return reject(message.error.message ?? "Unknown error");
-        }
-
-        resolve(message as Message<T>);
-      };
-
-      try {
-        this.requestMap.set(id, { resolve: resolver });
-
-        const message: Message = {
-          envelope: {
-            type: "request",
-            action,
-            id,
-          },
-          data,
-          error: null,
-        };
-
-        this.port.postMessage(message);
-      } catch (error) {
-        reject(error);
-      }
-    });
-  }
 }
 
 /**
