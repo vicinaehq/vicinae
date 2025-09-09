@@ -13,6 +13,51 @@
 
 GnomeWindowManager::GnomeWindowManager() {
   qDebug() << "GnomeWindowManager: Initializing GNOME window manager";
+
+  m_eventListener = std::make_unique<Gnome::EventListener>();
+
+  // Connect event listener signals to our windowsChanged signal
+  connect(m_eventListener.get(), &Gnome::EventListener::openwindow, this, [this]() {
+    qDebug() << "GnomeWindowManager: Received openwindow event, emitting windowsChanged";
+    emit windowsChanged();
+  });
+
+  connect(m_eventListener.get(), &Gnome::EventListener::closewindow, this, [this]() {
+    qDebug() << "GnomeWindowManager: Received closewindow event, emitting windowsChanged";
+    emit windowsChanged();
+  });
+
+  connect(m_eventListener.get(), &Gnome::EventListener::focuswindow, this,
+          [this](const Gnome::WindowAddress &addr) {
+            qDebug() << "GnomeWindowManager: Received focuswindow event for window" << addr
+                     << ", emitting windowsChanged";
+            emit windowsChanged();
+          });
+
+  connect(m_eventListener.get(), &Gnome::EventListener::movewindow, this, [this]() {
+    qDebug() << "GnomeWindowManager: Received movewindow event, emitting windowsChanged";
+    emit windowsChanged();
+  });
+
+  connect(m_eventListener.get(), &Gnome::EventListener::statewindow, this, [this]() {
+    qDebug() << "GnomeWindowManager: Received statewindow event, emitting windowsChanged";
+    emit windowsChanged();
+  });
+
+  connect(m_eventListener.get(), &Gnome::EventListener::workspacechanged, this, [this]() {
+    qDebug() << "GnomeWindowManager: Received workspacechanged event, emitting windowsChanged";
+    emit windowsChanged();
+  });
+
+  connect(m_eventListener.get(), &Gnome::EventListener::monitorlayoutchanged, this, [this]() {
+    qDebug() << "GnomeWindowManager: Received monitorlayoutchanged event, emitting windowsChanged";
+    emit windowsChanged();
+  });
+}
+
+GnomeWindowManager::~GnomeWindowManager() {
+  // Event listener will be automatically cleaned up
+  qDebug() << "GnomeWindowManager: Destroyed";
 }
 
 QDBusInterface *GnomeWindowManager::getDBusInterface() const {
@@ -224,7 +269,15 @@ bool GnomeWindowManager::ping() const {
 
 void GnomeWindowManager::start() {
   qDebug() << "GnomeWindowManager: Window manager started";
-  // No special startup required for GNOME integration
+
+  // Start the event listener
+  if (m_eventListener && !m_eventListener->isActive()) {
+    if (m_eventListener->start()) {
+      qDebug() << "GnomeWindowManager: Event listener started successfully";
+    } else {
+      qWarning() << "GnomeWindowManager: Failed to start event listener";
+    }
+  }
 }
 
 bool GnomeWindowManager::closeWindow(const AbstractWindow &window) const {
@@ -356,4 +409,65 @@ std::shared_ptr<AbstractWindowManager::AbstractWorkspace> GnomeWindowManager::ge
   auto workspace = std::make_shared<Gnome::Workspace>(workspaceObj);
   qDebug() << "GnomeWindowManager: Found active workspace:" << workspace->name();
   return workspace;
+}
+
+AbstractWindowManager::WindowList GnomeWindowManager::findAppWindowsGnome(const Application &app) const {
+  // Use fresh window data for GNOME to ensure active window dots work correctly
+  auto freshWindows = listWindowsSync();
+
+  auto pred = [&](auto &&win) {
+    QString winWmClass = win->wmClass().toLower();
+    bool matches = false;
+
+    // Check all app window classes
+    for (const auto &appClass : app.windowClasses()) {
+      QString appClassLower = appClass.toLower();
+
+      // Exact match
+      if (appClassLower == winWmClass) {
+        matches = true;
+        break;
+      }
+
+      // GNOME-specific: Handle .desktop suffix mismatches
+      // GNOME reports with .desktop, app expects without
+      // e.g., GNOME: "org.gnome.Nautilus.desktop" vs App: "org.gnome.Nautilus"
+      if (winWmClass.endsWith(".desktop") && appClassLower == winWmClass.chopped(8)) {
+        matches = true;
+        break;
+      }
+
+      // Reverse: GNOME reports without .desktop, app has it
+      // e.g., GNOME: "equibop" vs App: "equibop.desktop"
+      if (appClassLower.endsWith(".desktop") && winWmClass == appClassLower.chopped(8)) {
+        matches = true;
+        break;
+      }
+    }
+
+    return matches;
+  };
+
+  return freshWindows | std::views::filter(pred) | std::ranges::to<std::vector>();
+}
+
+AbstractWindowManager::WindowList GnomeWindowManager::findWindowByClassGnome(const QString &wmClass) const {
+  // Use fresh window data for GNOME
+  auto freshWindows = listWindowsSync();
+
+  auto pred = [&](auto &&win) {
+    QString winWmClass = win->wmClass().toLower();
+    QString searchClass = wmClass.toLower();
+
+    // Exact match
+    if (winWmClass == searchClass) return true;
+
+    // GNOME-specific: Handle .desktop suffix mismatches
+    if (winWmClass.endsWith(".desktop") && searchClass == winWmClass.chopped(8)) return true;
+    if (searchClass.endsWith(".desktop") && winWmClass == searchClass.chopped(8)) return true;
+
+    return false;
+  };
+
+  return freshWindows | std::views::filter(pred) | std::ranges::to<std::vector>();
 }

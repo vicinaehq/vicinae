@@ -610,6 +610,7 @@ if (UNIX AND NOT APPLE)
 		src/services/window-manager/gnome/gnome-window-manager.cpp
 		src/services/window-manager/gnome/gnome-window.cpp
 		src/services/window-manager/gnome/gnome-workspace.cpp
+		src/services/window-manager/gnome/gnome-listener.cpp
 		src/services/window-manager/wayland/wayland.cpp
 
 		# Hyprland
