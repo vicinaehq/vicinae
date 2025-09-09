@@ -1,7 +1,8 @@
 import { randomBytes } from "crypto";
 import { bus } from "./bus";
 import { Keyboard } from "./keyboard";
-import { ToastStyle as ProtoToastStyle } from "./proto/ui";
+import * as ui from "./proto/ui";
+import { popToRoot } from "./controls";
 
 /**
  * A Toast with a certain style, title, and message.
@@ -36,10 +37,10 @@ export class Toast {
   } = {};
   private id: string;
 
-  private styleMap: Record<Toast.Style, ProtoToastStyle> = {
-    [Toast.Style.Success]: ProtoToastStyle.Success,
-    [Toast.Style.Failure]: ProtoToastStyle.Error,
-    [Toast.Style.Animated]: ProtoToastStyle.Dynamic,
+  private styleMap: Record<Toast.Style, ui.ToastStyle> = {
+    [Toast.Style.Success]: ui.ToastStyle.Success,
+    [Toast.Style.Failure]: ui.ToastStyle.Error,
+    [Toast.Style.Animated]: ui.ToastStyle.Dynamic,
   };
 
   /**
@@ -297,9 +298,19 @@ export enum PopToRootType {
   Suspended = "suspended",
 }
 
+const popToRootProtoMap: Record<PopToRootType, ui.PopToRootType> = {
+	[PopToRootType.Default]: ui.PopToRootType.PopToRootDefault,
+	[PopToRootType.Immediate]: ui.PopToRootType.PopToRootImmediate,
+	[PopToRootType.Suspended]: ui.PopToRootType.PopToRootSuspended,
+};
+
 export const showHUD = async (
   title: string,
   options?: { clearRootSearch?: boolean; popToRootType?: PopToRootType },
 ) => {
-  await bus.request("ui.show-hud", { title, options });
+  bus.turboRequest('ui.showHud', { 
+	  text: title, 
+	  clearRootSearch: options?.clearRootSearch ?? false, 
+	  popToRoot: popToRootProtoMap[options?.popToRootType ?? PopToRootType.Default]
+  });
 };

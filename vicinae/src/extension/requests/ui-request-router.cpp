@@ -1,5 +1,6 @@
 #include "ui-request-router.hpp"
 #include "common.hpp"
+#include "navigation-controller.hpp"
 #include "proto/extension.pb.h"
 #include "proto/ui.pb.h"
 #include "timer.hpp"
@@ -49,6 +50,8 @@ PromiseLike<proto::ext::extension::Response *> UIRequestRouter::route(const prot
     return wrapUI(getSelectedText(req.get_selected_text()));
   case Request::kPopToRoot:
     return wrapUI(popToRoot(req.pop_to_root()));
+  case Request::kShowHud:
+    return wrapUI(showHud(req.show_hud()));
 
   default:
     break;
@@ -89,6 +92,33 @@ proto::ext::ui::Response *UIRequestRouter::showToast(const proto::ext::ui::ShowT
   m_toast.setToast(req.title().c_str(), style);
 
   res->set_allocated_show_toast(ack);
+
+  return res;
+}
+
+PopToRootType UIRequestRouter::parseProtoPopToRoot(proto::ext::ui::PopToRootType type) {
+  using Type = proto::ext::ui::PopToRootType;
+
+  switch (type) {
+  case Type::PopToRootImmediate:
+    return PopToRootType::Immediate;
+  case Type::PopToRootSuspended:
+    return PopToRootType::Suspended;
+  default:
+    return PopToRootType::Default;
+  }
+}
+
+proto::ext::ui::Response *UIRequestRouter::showHud(const proto::ext::ui::ShowHudRequest &req) {
+  auto res = new proto::ext::ui::Response;
+  auto ack = new proto::ext::common::AckResponse;
+
+  res->set_allocated_show_hud(ack);
+  m_navigation->handle()->showHud(req.text().c_str());
+  m_navigation->handle()->closeWindow({
+      .popToRootType = parseProtoPopToRoot(req.pop_to_root()),
+      .clearRootSearch = req.clear_root_search(),
+  });
 
   return res;
 }
