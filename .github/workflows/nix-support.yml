@@ -1,0 +1,20 @@
+name: Nix hash check
+
+on:
+  push:
+  workflow_dispatch:
+
+
+jobs:
+  update-tags:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: cachix/install-nix-action@v31
+      - name: Check nix hashes
+        run: |
+          nix run .#nix-update-script --extra-experimental-features nix-command flakes --accept-flake-config
