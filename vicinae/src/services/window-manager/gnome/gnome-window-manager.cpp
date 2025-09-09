@@ -417,35 +417,16 @@ AbstractWindowManager::WindowList GnomeWindowManager::findAppWindowsGnome(const 
 
   auto pred = [&](auto &&win) {
     QString winWmClass = win->wmClass().toLower();
-    bool matches = false;
 
     // Check all app window classes
     for (const auto &appClass : app.windowClasses()) {
-      QString appClassLower = appClass.toLower();
-
       // Exact match
-      if (appClassLower == winWmClass) {
-        matches = true;
-        break;
-      }
+      if (appClass.toLower() == winWmClass) { return true; }
 
-      // GNOME-specific: Handle .desktop suffix mismatches
-      // GNOME reports with .desktop, app expects without
-      // e.g., GNOME: "org.gnome.Nautilus.desktop" vs App: "org.gnome.Nautilus"
-      if (winWmClass.endsWith(".desktop") && appClassLower == winWmClass.chopped(8)) {
-        matches = true;
-        break;
-      }
-
-      // Reverse: GNOME reports without .desktop, app has it
-      // e.g., GNOME: "equibop" vs App: "equibop.desktop"
-      if (appClassLower.endsWith(".desktop") && winWmClass == appClassLower.chopped(8)) {
-        matches = true;
-        break;
-      }
+      if (matchWmClassWithDesktopSuffix(winWmClass, appClass.toLower())) { return true; }
     }
 
-    return matches;
+    return false;
   };
 
   return freshWindows | std::views::filter(pred) | std::ranges::to<std::vector>();
@@ -462,12 +443,26 @@ AbstractWindowManager::WindowList GnomeWindowManager::findWindowByClassGnome(con
     // Exact match
     if (winWmClass == searchClass) return true;
 
-    // GNOME-specific: Handle .desktop suffix mismatches
-    if (winWmClass.endsWith(".desktop") && searchClass == winWmClass.chopped(8)) return true;
-    if (searchClass.endsWith(".desktop") && winWmClass == searchClass.chopped(8)) return true;
+    if (matchWmClassWithDesktopSuffix(winWmClass, searchClass)) return true;
 
     return false;
   };
 
   return freshWindows | std::views::filter(pred) | std::ranges::to<std::vector>();
+}
+
+bool GnomeWindowManager::matchWmClassWithDesktopSuffix(const QString &windowWmClass,
+                                                       const QString &targetClass) const {
+  // Handle .desktop suffix mismatches
+  if (windowWmClass.endsWith(".desktop")) {
+    if (targetClass == windowWmClass.chopped(8)) { return true; }
+    if (windowWmClass.endsWith(".desktop.desktop") && targetClass == windowWmClass.chopped(16)) {
+      return true;
+    }
+  }
+
+  // Reverse case: target class has .desktop, window doesn't
+  if (targetClass.endsWith(".desktop") && windowWmClass == targetClass.chopped(8)) { return true; }
+
+  return false;
 }

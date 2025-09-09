@@ -84,4 +84,10 @@ public:
    */
   WindowList findAppWindowsGnome(const Application &app) const;
   WindowList findWindowByClassGnome(const QString &wmClass) const;
+
+private:
+  /**
+   * Helper function to match wm_class with .desktop suffix variations
+   */
+  bool matchWmClassWithDesktopSuffix(const QString &windowWmClass, const QString &targetClass) const;
 };
