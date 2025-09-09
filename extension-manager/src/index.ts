@@ -68,6 +68,7 @@ class Vicinae {
 					supportPath,
 					assetsPath,
 					isRaycast: load.isRaycast,
+					commandName: load.commandName,
 					vicinaeVersion: {
 						tag: process.env.VICINAE_VERSION ?? 'unknown',
 						commit: process.env.VICINAE_COMMIT ?? 'unknown',
