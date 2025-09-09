@@ -38,12 +38,13 @@ const App: React.FC<{ component: ComponentType, launchProps: any }> = ({ compone
 }
 
 const loadEnviron = () => {
-	const { supportPath, assetsPath, commandMode, vicinaeVersion, isRaycast } = workerData;
+	const { supportPath, commandName, assetsPath, commandMode, vicinaeVersion, isRaycast } = workerData;
 
 	environment.textSize = 'medium';
 	environment.appearance = 'dark';
 	environment.canAccess = (api) => false,
 	environment.isDevelopment = process.env.NODE_ENV === 'development';
+	environment.commandName = commandName;
 	environment.commandMode = commandMode;
 	environment.supportPath = supportPath;
 	environment.assetsPath = assetsPath;
