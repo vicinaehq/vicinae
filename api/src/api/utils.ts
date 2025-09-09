@@ -1,11 +1,8 @@
 import { PathLike } from "fs";
 import { rm } from "fs/promises";
 import { bus } from "./bus";
-
-export const captureException = (exception: unknown): void => {
-  // maybe one day, if we have a developer hub, also...
-  console.error("captureException called on", exception);
-};
+import { WindowManagement } from "./window-management";
+import { Application } from "./proto/application";
 
 // Linux systems usually do not have a trash, but maybe we should support one...
 export const trash = async (path: PathLike | PathLike[]): Promise<void> => {
@@ -32,61 +29,38 @@ export const open = async (target: string, app?: Application | string) => {
   });
 };
 
-export type Application = {
-  id: string;
-  name: string;
-  icon: { iconName: string };
-};
-
-type MessageApp = { id: string; name: string; icon: string };
-
-const deserializeApp = (app: MessageApp): Application => ({
-  id: app.id,
-  name: app.name,
-  icon: { iconName: app.icon },
-});
-
 export const getFrontmostApplication = async (): Promise<Application> => {
-  const res = await bus.request<{ app: MessageApp | null }>(
-    "apps.get-frontmost",
-  );
+  const { application } = await WindowManagement.getActiveWindow();
 
-  if (!res.data.app) {
-    throw new Error("couldnt get frontmost app");
+  if (!application) {
+	throw new Error(`Could not get frontmost application`);
   }
 
-  return deserializeApp(res.data.app);
+  return application;
 };
 
 export const getApplications = async (
-  path?: PathLike,
+  target?: string
 ): Promise<Application[]> => {
-  const res = await bus.turboRequest("app.list", {});
+  const res = await bus.turboRequest("app.list", { target });
 
-  if (!res.ok) return [];
-
-  console.log("got turbo apps", { apps: res.value });
-
-  return [];
+  return res.unwrap().apps;
 };
 
 export const getDefaultApplication = async (
-  path: PathLike,
+  path: string,
 ): Promise<Application> => {
-  const res = await bus.request<{ app: MessageApp | null }>(
-    "apps.get-default",
-    {
-      target: path.toString(),
-    },
-  );
+   const res = await bus.turboRequest('app.getDefault', { target: path });
+   const app = res.unwrap().app
 
-  if (!res.data.app) {
-    throw new Error("couldnt get default app");
-  }
+   if (!app) throw new Error(`No default application for target ${path}`);
 
-  return deserializeApp(res.data.app);
+   return app;
 };
 
-export const showInFinder = async (path: PathLike): Promise<void> => {
-  await bus.request("show-in-finder");
+export const showInFileBrowser = async (path: PathLike): Promise<void> => {
+	const fileBrowser = await getDefaultApplication("inode/directory"); // FIXME: we may want something more robust
+	await open(path.toString(), fileBrowser);
 };
+
+export { Application } from "./proto/application";

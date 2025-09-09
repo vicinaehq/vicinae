@@ -1,4 +1,5 @@
 syntax = "proto3";
+import "common.proto";
 
 package proto.ext.application;
 
@@ -8,22 +9,34 @@ message OpenApplicationRequest {
 };
 
 message ListApplicationRequest {
+  optional string target = 1;
 };
 
 message ListApplicationResponse {
   repeated Application apps = 1;
 };
 
+message GetDefaultApplicationRequest {
+  string target = 1;
+};
+
+message GetDefaultApplicationResponse {
+  Application app = 1;
+};
+
 message Request {
   oneof payload {
     ListApplicationRequest list = 1;
     OpenApplicationRequest open = 2;
+    GetDefaultApplicationRequest get_default = 3;
   };
 };
 
 message Response {
   oneof payload {
     ListApplicationResponse list = 1;
+    common.AckResponse open = 2;
+    GetDefaultApplicationResponse get_default = 3;
   };
 };
 
@@ -31,4 +44,5 @@ message Application {
   string id = 1;
   string name = 2;
   string icon = 3;
+  string path = 4;
 };

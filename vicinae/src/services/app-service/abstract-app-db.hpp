@@ -6,6 +6,7 @@
 #include <qtmetamacros.h>
 #include <qurl.h>
 #include <quuid.h>
+#include "proto/application.pb.h"
 
 class Application {
 public:
@@ -41,6 +42,17 @@ public:
 
   // whether the executable can open url(s) or file(s)
   virtual bool isOpener() { return true; }
+
+  proto::ext::application::Application toProto() {
+    proto::ext::application::Application app;
+
+    app.set_name(name().toStdString());
+    app.set_icon(iconUrl().name().toStdString());
+    app.set_id(id().toStdString());
+    app.set_path(path());
+
+    return app;
+  }
 
   Application() {}
 };
