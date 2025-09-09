@@ -147,4 +147,11 @@ in
     installPhase = ''
       cmake --install build
     '';
-}
+
+    meta = with lib; {
+      description = "A focused launcher for your desktop — native, fast, extensible";
+      homepage = "https://github.com/vicinaehq/vicinae";
+      license = licenses.gpl3Plus;
+      mainProgram = "vicinae";
+    };
+  }
