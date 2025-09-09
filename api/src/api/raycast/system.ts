@@ -20,13 +20,13 @@ export const transformApp = (app: vicinae.Application): RaycastApplication => {
 };
 
 export const getApplications = async (path?: PathLike): Promise<RaycastApplication[]> => {
-	const apps = await vicinae.getApplications(path);
+	const apps = await vicinae.getApplications(path?.toString());
 
 	return apps.map<RaycastApplication>(transformApp);
 }
 
 export const getDefaultApplication = async (path: PathLike): Promise<RaycastApplication> => {
-	return transformApp(await vicinae.getDefaultApplication(path));
+	return transformApp(await vicinae.getDefaultApplication(path.toString()));
 }
 
 export const open = vicinae.open;
@@ -38,8 +38,13 @@ export const getFrontmostApplication = async (): Promise<RaycastApplication> => 
 };
 
 export const captureException = (exception: unknown): void => {
-  // maybe one day, if we have a developer hub, also...
+  // maybe one day, if we have a developer hub...
   console.error("captureException called on", exception);
 };
 
 export const showInFinder = (path: PathLike) => vicinae.showInFileBrowser(path);
+
+export const getSelectedFinderItems = async (): Promise<{ path: string }[]> => {
+	throw new Error('getSelectedFinderItems is not implemented');
+}
+

@@ -11,6 +11,9 @@ class AppRequestRouter {
   listApplications(const proto::ext::application::ListApplicationRequest &) const;
 
   proto::ext::application::Response *
+  getDefault(const proto::ext::application::GetDefaultApplicationRequest &) const;
+
+  proto::ext::application::Response *
   openApplication(const proto::ext::application::OpenApplicationRequest &) const;
 
 public:

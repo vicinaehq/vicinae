@@ -40,22 +40,27 @@ export const getFrontmostApplication = async (): Promise<Application> => {
 };
 
 export const getApplications = async (
-  path?: PathLike,
+  target?: string
 ): Promise<Application[]> => {
-  const res = await bus.turboRequest("app.list", {});
+  const res = await bus.turboRequest("app.list", { target });
 
   return res.unwrap().apps;
 };
 
 export const getDefaultApplication = async (
-  path: PathLike,
+  path: string,
 ): Promise<Application> => {
-	throw new Error("not implemented");
+   const res = await bus.turboRequest('app.getDefault', { target: path });
+   const app = res.unwrap().app
+
+   if (!app) throw new Error(`No default application for target ${path}`);
+
+   return app;
 };
 
 export const showInFileBrowser = async (path: PathLike): Promise<void> => {
-	// TODO: get default app for file browser
-	// open using it
+	const fileBrowser = await getDefaultApplication("inode/directory"); // FIXME: we may want something more robust
+	await open(path.toString(), fileBrowser);
 };
 
 export { Application } from "./proto/application";

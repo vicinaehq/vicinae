@@ -6,16 +6,29 @@ AppRequestRouter::listApplications(const proto::ext::application::ListApplicatio
   auto resData = new proto::ext::application::ListApplicationResponse;
   auto res = new proto::ext::application::Response;
 
-  for (const auto &app : m_appDb.list()) {
-    auto protoApp = resData->add_apps();
+  auto list = req.has_target() ? m_appDb.findOpeners(req.target().c_str()) : m_appDb.list();
 
-    protoApp->set_id(app->id().toStdString());
-    protoApp->set_name(app->name().toStdString());
-    protoApp->set_icon(app->iconUrl().name().toStdString());
-    protoApp->set_path(app->path());
+  for (const auto &app : list) {
+    auto protoApp = resData->add_apps();
+    *protoApp = app->toProto();
   }
 
   res->set_allocated_list(resData);
+  return res;
+}
+
+proto::ext::application::Response *
+AppRequestRouter::getDefault(const proto::ext::application::GetDefaultApplicationRequest &req) const {
+  auto res = new proto::ext::application::Response;
+  auto resData = new proto::ext::application::GetDefaultApplicationResponse;
+
+  res->set_allocated_get_default(resData);
+
+  if (auto opener = m_appDb.findBestOpener(req.target().c_str())) {
+    auto app = new proto::ext::application::Application(opener->toProto());
+    resData->set_allocated_app(app);
+  }
+
   return res;
 }
 
@@ -52,6 +65,8 @@ proto::ext::extension::Response *AppRequestRouter::route(const proto::ext::appli
     return wrap(listApplications(req.list()));
   case app::Request::kOpen:
     return wrap(openApplication(req.open()));
+  case app::Request::kGetDefault:
+    return wrap(getDefault(req.get_default()));
   default:
     break;
   }
