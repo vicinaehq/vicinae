@@ -1,5 +1,4 @@
 #include "window-manager.hpp"
-#include <algorithm>
 #include <ranges>
 #include "hyprland/hyprland.hpp"
 #include "gnome/gnome-window-manager.hpp"
@@ -40,18 +39,26 @@ AbstractWindowManager::WindowPtr WindowManager::getFocusedWindow() {
 AbstractWindowManager::WindowList WindowManager::listWindows() const { return m_windows; }
 
 AbstractWindowManager::WindowList WindowManager::findWindowByClass(const QString &wmClass) const {
-  auto pred = [&](auto &&win) { return win->wmClass() == wmClass; };
+  // Delegate to GNOME-specific implementation if we're using GNOME window manager
+  if (auto gnomeWm = dynamic_cast<const GnomeWindowManager *>(m_provider.get())) {
+    return gnomeWm->findWindowByClassGnome(wmClass);
+  }
 
-  return listWindows() | std::views::filter(pred) | std::ranges::to<std::vector>();
+  auto pred = [&](auto &&win) { return win->wmClass() == wmClass; };
+  return m_windows | std::views::filter(pred) | std::ranges::to<std::vector>();
 }
 
 AbstractWindowManager::WindowList WindowManager::findAppWindows(const Application &app) const {
+  // Delegate to GNOME-specific implementation if we're using GNOME window manager
+  if (auto gnomeWm = dynamic_cast<const GnomeWindowManager *>(m_provider.get())) {
+    return gnomeWm->findAppWindowsGnome(app);
+  }
+
   auto pred = [&](auto &&win) {
     return std::ranges::any_of(app.windowClasses(),
                                [&](auto &&s) { return s.toLower() == win->wmClass().toLower(); });
   };
-
-  return listWindows() | std::views::filter(pred) | std::ranges::to<std::vector>();
+  return m_windows | std::views::filter(pred) | std::ranges::to<std::vector>();
 }
 
 void WindowManager::updateWindowCache() { m_windows = m_provider->listWindowsSync(); }

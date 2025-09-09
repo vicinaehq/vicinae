@@ -1,6 +1,8 @@
 #pragma once
 #include "services/window-manager/abstract-window-manager.hpp"
+#include "services/app-service/abstract-app-db.hpp"
 #include "gnome-window.hpp"
+#include "gnome-listener.hpp"
 #include <QDBusInterface>
 #include <QJsonObject>
 #include <QJsonArray>
@@ -17,6 +19,7 @@ private:
   static constexpr const char *DBUS_INTERFACE = "org.gnome.Shell.Extensions.Windows";
 
   mutable std::unique_ptr<QDBusInterface> m_dbusInterface;
+  std::unique_ptr<Gnome::EventListener> m_eventListener;
 
   /**
    * Get or create the D-Bus interface
@@ -46,7 +49,7 @@ private:
 
 public:
   GnomeWindowManager();
-  ~GnomeWindowManager() override = default;
+  ~GnomeWindowManager() override;
 
   // AbstractWindowManager interface implementation
   QString id() const override { return "gnome"; }
@@ -56,6 +59,10 @@ public:
   std::shared_ptr<AbstractWindow> getFocusedWindowSync() const override;
   void focusWindowSync(const AbstractWindow &window) const override;
   bool closeWindow(const AbstractWindow &window) const override;
+
+  bool hasWorkspaces() const override { return true; }
+  WorkspaceList listWorkspaces() const override;
+  std::shared_ptr<AbstractWorkspace> getActiveWorkspace() const override;
 
   bool isActivatable() const override;
   bool ping() const override;
@@ -71,4 +78,16 @@ public:
    * Get detailed information for a specific window
    */
   std::shared_ptr<GnomeWindow> getWindowDetails(uint32_t windowId) const;
+
+  /**
+   * GNOME-specific window finding with .desktop suffix handling
+   */
+  WindowList findAppWindowsGnome(const Application &app) const;
+  WindowList findWindowByClassGnome(const QString &wmClass) const;
+
+private:
+  /**
+   * Helper function to match wm_class with .desktop suffix variations
+   */
+  bool matchWmClassWithDesktopSuffix(const QString &windowWmClass, const QString &targetClass) const;
 };

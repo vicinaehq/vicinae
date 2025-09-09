@@ -1,4 +1,5 @@
 #include "gnome-window-manager.hpp"
+#include "services/window-manager/gnome/gnome-workspace.hpp"
 #include "utils/environment.hpp"
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
@@ -12,6 +13,51 @@
 
 GnomeWindowManager::GnomeWindowManager() {
   qDebug() << "GnomeWindowManager: Initializing GNOME window manager";
+
+  m_eventListener = std::make_unique<Gnome::EventListener>();
+
+  // Connect event listener signals to our windowsChanged signal
+  connect(m_eventListener.get(), &Gnome::EventListener::openwindow, this, [this]() {
+    qDebug() << "GnomeWindowManager: Received openwindow event, emitting windowsChanged";
+    emit windowsChanged();
+  });
+
+  connect(m_eventListener.get(), &Gnome::EventListener::closewindow, this, [this]() {
+    qDebug() << "GnomeWindowManager: Received closewindow event, emitting windowsChanged";
+    emit windowsChanged();
+  });
+
+  connect(m_eventListener.get(), &Gnome::EventListener::focuswindow, this,
+          [this](const Gnome::WindowAddress &addr) {
+            qDebug() << "GnomeWindowManager: Received focuswindow event for window" << addr
+                     << ", emitting windowsChanged";
+            emit windowsChanged();
+          });
+
+  connect(m_eventListener.get(), &Gnome::EventListener::movewindow, this, [this]() {
+    qDebug() << "GnomeWindowManager: Received movewindow event, emitting windowsChanged";
+    emit windowsChanged();
+  });
+
+  connect(m_eventListener.get(), &Gnome::EventListener::statewindow, this, [this]() {
+    qDebug() << "GnomeWindowManager: Received statewindow event, emitting windowsChanged";
+    emit windowsChanged();
+  });
+
+  connect(m_eventListener.get(), &Gnome::EventListener::workspacechanged, this, [this]() {
+    qDebug() << "GnomeWindowManager: Received workspacechanged event, emitting windowsChanged";
+    emit windowsChanged();
+  });
+
+  connect(m_eventListener.get(), &Gnome::EventListener::monitorlayoutchanged, this, [this]() {
+    qDebug() << "GnomeWindowManager: Received monitorlayoutchanged event, emitting windowsChanged";
+    emit windowsChanged();
+  });
+}
+
+GnomeWindowManager::~GnomeWindowManager() {
+  // Event listener will be automatically cleaned up
+  qDebug() << "GnomeWindowManager: Destroyed";
 }
 
 QDBusInterface *GnomeWindowManager::getDBusInterface() const {
@@ -223,7 +269,15 @@ bool GnomeWindowManager::ping() const {
 
 void GnomeWindowManager::start() {
   qDebug() << "GnomeWindowManager: Window manager started";
-  // No special startup required for GNOME integration
+
+  // Start the event listener
+  if (m_eventListener && !m_eventListener->isActive()) {
+    if (m_eventListener->start()) {
+      qDebug() << "GnomeWindowManager: Event listener started successfully";
+    } else {
+      qWarning() << "GnomeWindowManager: Failed to start event listener";
+    }
+  }
 }
 
 bool GnomeWindowManager::closeWindow(const AbstractWindow &window) const {
@@ -273,4 +327,142 @@ QString GnomeWindowManager::mapToComplexId(const QString &simpleId) const {
   }
 
   return simpleId;
+}
+
+AbstractWindowManager::WorkspaceList GnomeWindowManager::listWorkspaces() const {
+  qDebug() << "GnomeWindowManager: Listing workspaces";
+
+  QString response = callDBusMethod("ListWorkspaces");
+  if (response.isEmpty()) {
+    qWarning() << "GnomeWindowManager: No response from ListWorkspaces method";
+    return {};
+  }
+
+  QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
+  if (doc.isNull()) {
+    qWarning() << "GnomeWindowManager: Failed to parse JSON response from ListWorkspaces";
+    return {};
+  }
+
+  QJsonArray workspacesArray;
+  if (doc.isArray()) {
+    workspacesArray = doc.array();
+  } else if (doc.isObject()) {
+    // Handle case where response is wrapped in an object
+    QJsonObject wrapper = doc.object();
+    if (wrapper.contains("workspaces") && wrapper.value("workspaces").isArray()) {
+      workspacesArray = wrapper.value("workspaces").toArray();
+    }
+  }
+
+  if (workspacesArray.isEmpty()) {
+    qDebug() << "GnomeWindowManager: No workspaces found";
+    return {};
+  }
+
+  WorkspaceList workspaces;
+  workspaces.reserve(workspacesArray.size());
+
+  for (const QJsonValue &workspaceValue : workspacesArray) {
+    if (!workspaceValue.isObject()) {
+      qWarning() << "GnomeWindowManager: Invalid workspace object in response";
+      continue;
+    }
+
+    QJsonObject workspaceObj = workspaceValue.toObject();
+    auto workspace = std::make_shared<Gnome::Workspace>(workspaceObj);
+    workspaces.push_back(workspace);
+  }
+
+  qDebug() << "GnomeWindowManager: Found" << workspaces.size() << "workspaces";
+  return workspaces;
+}
+
+std::shared_ptr<AbstractWindowManager::AbstractWorkspace> GnomeWindowManager::getActiveWorkspace() const {
+  qDebug() << "GnomeWindowManager: Getting active workspace";
+
+  QString response = callDBusMethod("GetActiveWorkspace");
+  if (response.isEmpty()) {
+    qWarning() << "GnomeWindowManager: No response from GetActiveWorkspace method";
+    return nullptr;
+  }
+
+  QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
+  if (doc.isNull()) {
+    qWarning() << "GnomeWindowManager: Failed to parse JSON response from GetActiveWorkspace";
+    return nullptr;
+  }
+
+  QJsonObject workspaceObj;
+  if (doc.isObject()) {
+    workspaceObj = doc.object();
+  } else {
+    qWarning() << "GnomeWindowManager: Expected JSON object for workspace";
+    return nullptr;
+  }
+
+  if (workspaceObj.isEmpty()) {
+    qWarning() << "GnomeWindowManager: Invalid workspace object in response";
+    return nullptr;
+  }
+
+  auto workspace = std::make_shared<Gnome::Workspace>(workspaceObj);
+  qDebug() << "GnomeWindowManager: Found active workspace:" << workspace->name();
+  return workspace;
+}
+
+AbstractWindowManager::WindowList GnomeWindowManager::findAppWindowsGnome(const Application &app) const {
+  // Use fresh window data for GNOME to ensure active window dots work correctly
+  auto freshWindows = listWindowsSync();
+
+  auto pred = [&](auto &&win) {
+    QString winWmClass = win->wmClass().toLower();
+
+    // Check all app window classes
+    for (const auto &appClass : app.windowClasses()) {
+      // Exact match
+      if (appClass.toLower() == winWmClass) { return true; }
+
+      if (matchWmClassWithDesktopSuffix(winWmClass, appClass.toLower())) { return true; }
+    }
+
+    return false;
+  };
+
+  return freshWindows | std::views::filter(pred) | std::ranges::to<std::vector>();
+}
+
+AbstractWindowManager::WindowList GnomeWindowManager::findWindowByClassGnome(const QString &wmClass) const {
+  // Use fresh window data for GNOME
+  auto freshWindows = listWindowsSync();
+
+  auto pred = [&](auto &&win) {
+    QString winWmClass = win->wmClass().toLower();
+    QString searchClass = wmClass.toLower();
+
+    // Exact match
+    if (winWmClass == searchClass) return true;
+
+    if (matchWmClassWithDesktopSuffix(winWmClass, searchClass)) return true;
+
+    return false;
+  };
+
+  return freshWindows | std::views::filter(pred) | std::ranges::to<std::vector>();
+}
+
+bool GnomeWindowManager::matchWmClassWithDesktopSuffix(const QString &windowWmClass,
+                                                       const QString &targetClass) const {
+  // Handle .desktop suffix mismatches
+  if (windowWmClass.endsWith(".desktop")) {
+    if (targetClass == windowWmClass.chopped(8)) { return true; }
+    if (windowWmClass.endsWith(".desktop.desktop") && targetClass == windowWmClass.chopped(16)) {
+      return true;
+    }
+  }
+
+  // Reverse case: target class has .desktop, window doesn't
+  if (targetClass.endsWith(".desktop") && windowWmClass == targetClass.chopped(8)) { return true; }
+
+  return false;
 }
