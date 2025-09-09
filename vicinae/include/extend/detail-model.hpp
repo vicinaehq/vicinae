@@ -4,7 +4,7 @@
 #include <qjsonvalue.h>
 
 struct DetailModel {
-  QString markdown;
+  std::optional<QString> markdown;
   MetadataModel metadata;
 };
 

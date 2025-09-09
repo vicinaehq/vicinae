@@ -9,7 +9,7 @@
 #include <qwidget.h>
 
 void HorizontalMetadata::setMetadata(const std::vector<MetadataItem> &metadatas) {
-  auto stack = VStack().spacing(10).margins(0, 0, 0, 0);
+  auto stack = VStack().spacing(10).marginsY(10);
 
   int marginX = 10;
   int minHorizontalSpacing = 10;
@@ -69,6 +69,7 @@ void HorizontalMetadata::setMetadata(const std::vector<MetadataItem> &metadatas)
     if (auto sep = std::get_if<MetadataSeparator>(&metadata)) { stack.add(new HDivider); }
   }
 
+  // stack.addStretch();
   stack.imbue(container);
 }
 
