@@ -411,6 +411,88 @@ std::shared_ptr<AbstractWindowManager::AbstractWorkspace> GnomeWindowManager::ge
   return workspace;
 }
 
+AbstractWindowManager::WorkspaceList GnomeWindowManager::listWorkspaces() const {
+  qDebug() << "GnomeWindowManager: Listing workspaces";
+
+  QString response = callDBusMethod("ListWorkspaces");
+  if (response.isEmpty()) {
+    qWarning() << "GnomeWindowManager: No response from ListWorkspaces method";
+    return {};
+  }
+
+  QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
+  if (doc.isNull()) {
+    qWarning() << "GnomeWindowManager: Failed to parse JSON response from ListWorkspaces";
+    return {};
+  }
+
+  QJsonArray workspacesArray;
+  if (doc.isArray()) {
+    workspacesArray = doc.array();
+  } else if (doc.isObject()) {
+    // Handle case where response is wrapped in an object
+    QJsonObject wrapper = doc.object();
+    if (wrapper.contains("workspaces") && wrapper.value("workspaces").isArray()) {
+      workspacesArray = wrapper.value("workspaces").toArray();
+    }
+  }
+
+  if (workspacesArray.isEmpty()) {
+    qDebug() << "GnomeWindowManager: No workspaces found";
+    return {};
+  }
+
+  WorkspaceList workspaces;
+  workspaces.reserve(workspacesArray.size());
+
+  for (const QJsonValue &workspaceValue : workspacesArray) {
+    if (!workspaceValue.isObject()) {
+      qWarning() << "GnomeWindowManager: Invalid workspace object in response";
+      continue;
+    }
+
+    QJsonObject workspaceObj = workspaceValue.toObject();
+    auto workspace = std::make_shared<Gnome::Workspace>(workspaceObj);
+    workspaces.push_back(workspace);
+  }
+
+  qDebug() << "GnomeWindowManager: Found" << workspaces.size() << "workspaces";
+  return workspaces;
+}
+
+std::shared_ptr<AbstractWindowManager::AbstractWorkspace> GnomeWindowManager::getActiveWorkspace() const {
+  qDebug() << "GnomeWindowManager: Getting active workspace";
+
+  QString response = callDBusMethod("GetActiveWorkspace");
+  if (response.isEmpty()) {
+    qWarning() << "GnomeWindowManager: No response from GetActiveWorkspace method";
+    return nullptr;
+  }
+
+  QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
+  if (doc.isNull()) {
+    qWarning() << "GnomeWindowManager: Failed to parse JSON response from GetActiveWorkspace";
+    return nullptr;
+  }
+
+  QJsonObject workspaceObj;
+  if (doc.isObject()) {
+    workspaceObj = doc.object();
+  } else {
+    qWarning() << "GnomeWindowManager: Expected JSON object for workspace";
+    return nullptr;
+  }
+
+  if (workspaceObj.isEmpty()) {
+    qWarning() << "GnomeWindowManager: Invalid workspace object in response";
+    return nullptr;
+  }
+
+  auto workspace = std::make_shared<Gnome::Workspace>(workspaceObj);
+  qDebug() << "GnomeWindowManager: Found active workspace:" << workspace->name();
+  return workspace;
+}
+
 AbstractWindowManager::WindowList GnomeWindowManager::findAppWindowsGnome(const Application &app) const {
   // Use fresh window data for GNOME to ensure active window dots work correctly
   auto freshWindows = listWindowsSync();

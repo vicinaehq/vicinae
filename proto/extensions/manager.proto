@@ -30,6 +30,7 @@ message ManagerLoadCommand {
   map<string, google.protobuf.Value> preference_values = 5;
   map<string, google.protobuf.Value> argument_values = 6;
   bool is_raycast = 7;
+  string command_name = 8;
 };
 
 enum CommandMode {

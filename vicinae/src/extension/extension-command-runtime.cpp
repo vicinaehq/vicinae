@@ -184,6 +184,7 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
   load->set_entrypoint(m_command->manifest().entrypoint);
   load->set_env(resolveCommandEnv());
   load->set_extension_path(m_command->path());
+  load->set_command_name(m_command->commandId().toStdString());
 
   if (m_command->mode() == CommandMode::CommandModeView) {
     load->set_mode(proto::ext::manager::CommandMode::View);
