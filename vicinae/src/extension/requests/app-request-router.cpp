@@ -12,6 +12,7 @@ AppRequestRouter::listApplications(const proto::ext::application::ListApplicatio
     protoApp->set_id(app->id().toStdString());
     protoApp->set_name(app->name().toStdString());
     protoApp->set_icon(app->iconUrl().name().toStdString());
+    protoApp->set_path(app->path());
   }
 
   res->set_allocated_list(resData);

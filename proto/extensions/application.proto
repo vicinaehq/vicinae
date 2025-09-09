@@ -31,4 +31,5 @@ message Application {
   string id = 1;
   string name = 2;
   string icon = 3;
+  string path = 4;
 };

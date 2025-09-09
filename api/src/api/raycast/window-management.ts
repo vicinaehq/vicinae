@@ -1,5 +1,5 @@
-import { Application } from '../proto/application';
-import { WindowManagement as WM } from '../window-management';
+import { RaycastApplication, transformApp } from './system';
+import * as vicinae from '..';
 
 type RaycastWindow = {
 	active: boolean;
@@ -9,7 +9,7 @@ type RaycastWindow = {
 	id: string;
 	positionable: boolean;
 	resizable: boolean;
-	application?: Application;
+	application?: RaycastApplication;
 };
 
 enum DesktopType {
@@ -25,7 +25,7 @@ type RaycastDesktop = {
 	type: DesktopType;
 };
 
-const transformNativeDesktop = (win: WM.Workspace): RaycastDesktop => {
+const transformNativeDesktop = (win: vicinae.WindowManagement.Workspace): RaycastDesktop => {
 	return {
 		id: win.id,
 		screenId: win.monitorId,
@@ -35,7 +35,7 @@ const transformNativeDesktop = (win: WM.Workspace): RaycastDesktop => {
 	};
 }
 
-const transformNativeWindow = (win: WM.Window): RaycastWindow => {
+const transformNativeWindow = (win: vicinae.WindowManagement.Window): RaycastWindow => {
 	return {
 		id: win.id,
 		fullScreenSettable: true,
@@ -44,25 +44,25 @@ const transformNativeWindow = (win: WM.Window): RaycastWindow => {
 		active: win.active,
 		bounds: win.bounds,
 		desktopId: win.workspaceId ?? '0',
-		application: win.application
+		application: win.application && transformApp(win.application)
 	};
 }
 
 class RaycastWindowManagement {
 	async getActiveWindow(): Promise<RaycastWindow> {
-		const window = await WM.getActiveWindow();
+		const window = await vicinae.WindowManagement.getActiveWindow();
 
 		return transformNativeWindow(window);
 	}
 
 	async getDesktops(): Promise<RaycastDesktop[]> {
-		const workspaces = await WM.getWorkspaces();
+		const workspaces = await vicinae.WindowManagement.getWorkspaces();
 
 		return workspaces.map(transformNativeDesktop);
 	}
 
 	async getWindowsOnActiveDesktop(): Promise<RaycastWindow[]> {
-		const wins = await WM.getWindowsOnActiveWorkspace();
+		const wins = await vicinae.WindowManagement.getWindowsOnActiveWorkspace();
 
 		return wins.map(transformNativeWindow);
 	}
