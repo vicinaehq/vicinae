@@ -482,6 +482,8 @@ public:
   };
   virtual ItemData data() const = 0;
 
+  int calculateHeight(int width) const override { return 41; }
+
   bool hasUniformHeight() const override { return true; }
   bool hasPartialUpdates() const override { return true; }
 
