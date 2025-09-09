@@ -203,19 +203,21 @@ XdgAppDatabase::AppPtr XdgAppDatabase::findBestOpener(const QString &target) con
 
   QMimeType mime = mimeDb.mimeTypeForFile(target);
 
-  if (!mime.isValid()) return nullptr;
+  if (mime.isValid()) {
+    if (auto app = defaultForMime(mime.name())) { return app; }
 
-  if (auto app = defaultForMime(mime.name())) { return app; }
+    for (const auto &mime : mime.parentMimeTypes()) {
+      if (auto app = defaultForMime(mime)) return app;
+    }
 
-  for (const auto &mime : mime.parentMimeTypes()) {
-    if (auto app = defaultForMime(mime)) return app;
-  }
-
-  if (auto it = mimeToApps.find(mime.name()); it != mimeToApps.end()) {
-    for (const auto id : it->second) {
-      if (auto app = findById(id)) return app;
+    if (auto it = mimeToApps.find(mime.name()); it != mimeToApps.end()) {
+      for (const auto id : it->second) {
+        if (auto app = findById(id)) return app;
+      }
     }
   }
+
+  if (auto app = findBestOpenerForMime(target)) { return app; }
 
   return nullptr;
 }
