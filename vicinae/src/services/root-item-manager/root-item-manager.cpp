@@ -461,10 +461,10 @@ QJsonObject RootItemManager::getPreferenceValues(const QString &id) const {
 
   for (auto pref : getMergedItemPreferences(id)) {
     auto dflt = pref.defaultValue();
+    auto value = preferenceValues.value(pref.name());
+    auto hasValue = !value.isUndefined() && !value.isNull();
 
-    if (!preferenceValues.contains(pref.name()) && !dflt.isUndefined()) {
-      preferenceValues[pref.name()] = dflt;
-    }
+    if (!hasValue && !dflt.isUndefined()) { preferenceValues[pref.name()] = dflt; }
   }
 
   return preferenceValues;
