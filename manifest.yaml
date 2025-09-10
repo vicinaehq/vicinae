@@ -5,6 +5,6 @@
 # -DVICINAE_GIT_COMMIT_HASH=XXX (short rev)
 
 release:
-  tag: "v0.9.3"
-  rev: "fce22226bd85ee7121f5cfb42bc75f8cf803fc4f"
-  short_rev: "fce22226b"
+  tag: "v0.9.4"
+  rev: "482f41e3a3553a50043bdf67f1b9ccc835707b52"
+  short_rev: "482f41e3a"
