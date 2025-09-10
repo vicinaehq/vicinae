@@ -50,6 +50,7 @@ IndexerScanner::IndexerScanner(const Scan &sc, FinishCallback callback) : Abstra
   m_writerThread = std::thread([&]() { m_writerWorker->run(); });
 
   m_scanThread = std::thread([this, sc]() {
+    dbAtThread();
     try {
       scan(sc.path);
       m_writerWorker->stop();

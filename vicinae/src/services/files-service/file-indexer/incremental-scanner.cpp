@@ -8,7 +8,7 @@
 namespace fs = std::filesystem;
 
 void IncrementalScanner::processDirectory(const std::filesystem::path &root) {
-  auto indexedFiles = m_db.listIndexedDirectoryFiles(root);
+  auto indexedFiles = m_db->listIndexedDirectoryFiles(root);
   std::unordered_set<fs::path> existingFiles(indexedFiles.begin(), indexedFiles.end());
   std::unordered_set<fs::path> currentFiles;
   std::vector<fs::path> deletedFiles;
@@ -28,8 +28,8 @@ void IncrementalScanner::processDirectory(const std::filesystem::path &root) {
     if (currentFiles.find(path) == currentFiles.end()) { deletedFiles.emplace_back(path); }
   }
 
-  m_db.deleteIndexedFiles(deletedFiles);
-  m_db.indexFiles(ranges_to<std::vector>(currentFiles));
+  m_db->deleteIndexedFiles(deletedFiles);
+  m_db->indexFiles(ranges_to<std::vector>(currentFiles));
 }
 
 std::vector<fs::path> IncrementalScanner::getScannableDirectories(const fs::path &path,
@@ -44,7 +44,7 @@ std::vector<fs::path> IncrementalScanner::getScannableDirectories(const fs::path
   walker.walk(path, [&](const fs::directory_entry &entry) {
     if (!entry.is_directory(ec)) return;
 
-    auto lastScanned = m_db.retrieveIndexedLastModified(entry);
+    auto lastScanned = m_db->retrieveIndexedLastModified(entry);
 
     if (auto lastModified = fs::last_write_time(entry, ec); lastScanned.has_value() && !ec) {
       using namespace std::chrono;
@@ -68,6 +68,7 @@ void IncrementalScanner::scan(const Scan &scan) {
 IncrementalScanner::IncrementalScanner(const Scan &sc, FinishCallback callback)
     : AbstractScanner(sc, callback) {
   m_scanThread = std::thread([this, sc]() {
+    dbAtThread();
     try {
       scan(sc);
       finish();

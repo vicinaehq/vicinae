@@ -2,6 +2,7 @@
 #include "services/files-service/file-indexer/scan.hpp"
 #include "services/files-service/file-indexer/file-indexer-db.hpp"
 #include <QDebug>
+#include <memory>
 
 class AbstractScanner {
   /*
@@ -21,21 +22,25 @@ private:
 
 protected:
   void finish() {
-    m_db.updateScanStatus(m_recordId, ScanStatus::Succeeded);
+    m_db->updateScanStatus(m_recordId, ScanStatus::Succeeded);
     m_finishCallback(ScanStatus::Succeeded);
   }
 
   void fail() {
-    m_db.updateScanStatus(m_recordId, ScanStatus::Failed);
+    m_db->updateScanStatus(m_recordId, ScanStatus::Failed);
     m_finishCallback(ScanStatus::Failed);
   }
 
+  void dbAtThread() {
+    m_db = std::make_unique<FileIndexerDatabase>();
+  }
+
 public:
-  FileIndexerDatabase m_db;
+  std::unique_ptr<FileIndexerDatabase> m_db;
 
   AbstractScanner(const Scan &scan, FinishCallback callback) : m_finishCallback(callback) {
-
-    auto result = m_db.createScan(scan.path, scan.type);
+    m_db = std::make_unique<FileIndexerDatabase>();
+    auto result = m_db->createScan(scan.path, scan.type);
 
     if (!result.has_value()) {
       qWarning() << "Not scanning" << scan.path.native() << "because scan record creation failed with error"
@@ -45,10 +50,11 @@ public:
       return;
     }
 
-    m_db.updateScanStatus(m_recordId, ScanStatus::Started);
+    m_recordId = result->id;
+    m_db->updateScanStatus(m_recordId, ScanStatus::Started);
   }
   virtual ~AbstractScanner() = default;
 
-  virtual void interrupt() { m_db.updateScanStatus(m_recordId, ScanStatus::Interrupted); }
+  virtual void interrupt() { m_db->updateScanStatus(m_recordId, ScanStatus::Interrupted); }
   virtual void join() = 0;
 };
