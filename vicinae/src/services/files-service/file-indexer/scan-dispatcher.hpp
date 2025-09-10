@@ -1,27 +1,36 @@
 #pragma once
 #include "services/files-service/file-indexer/scan.hpp"
 #include "services/files-service/file-indexer/abstract-scanner.hpp"
+#include <atomic>
 #include <map>
 #include <memory>
-#include <thread>
-#include <utility>
+#include <queue>
 
 class ScanDispatcher {
   struct Element {
-    std::shared_ptr<AbstractScanner> scanner;
-    std::thread thread;
-    bool alive;
+    Scan scan;
+    std::unique_ptr<AbstractScanner> scanner;
   };
 
-  std::map<ScanType, Element> m_scannerMap;
+  std::mutex m_scannerMapMtx;
+  std::map<int, Element> m_scannerMap;
+
+  std::mutex m_collectorQueueMtx;
+  std::queue<int> m_collectorQueue;
+
+  std::thread m_collectorThread;
+  std::condition_variable m_collectorCv;
+  std::atomic<bool> m_running;
+
+  void handleFinishedScan(int id, ScanStatus status);
 
 public:
-  void enableAll();
-
-  void enqueue(const Scan &scan);
-  void enable(ScanType type);
-  void disable(ScanType type, bool regurgitate);
-
-  ScanDispatcher(std::map<ScanType, std::shared_ptr<AbstractScanner>> scannerMap);
+  ScanDispatcher();
   ~ScanDispatcher();
+  int enqueue(const Scan &scan);
+
+  bool contains(const Scan &scan);
+
+  using Predicate = std::function<bool(const Scan &)>;
+  void interrupt(Predicate predicate);
 };

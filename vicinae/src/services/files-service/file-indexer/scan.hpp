@@ -5,6 +5,14 @@
 // Add new types here for new scanner types (e.g. watchers)
 enum ScanType { Full, Incremental };
 
+enum ScanStatus {
+  Pending,
+  Started,
+  Interrupted,
+  Failed,
+  Succeeded,
+};
+
 // TODO: use unions for each ScanType
 struct Scan {
   ScanType type;

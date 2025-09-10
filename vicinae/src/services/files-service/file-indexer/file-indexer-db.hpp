@@ -19,13 +19,6 @@ class FileIndexerDatabase : public QObject {
   QString m_connectionId;
 
 public:
-  enum class ScanStatus {
-    Pending,
-    Started,
-    Failed,
-    Finished,
-  };
-
   struct ScanRecord {
     int id;
     ScanStatus status;
