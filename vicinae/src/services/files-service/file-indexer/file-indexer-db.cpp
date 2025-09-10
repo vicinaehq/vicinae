@@ -250,13 +250,14 @@ std::vector<fs::path> FileIndexerDatabase::search(std::string_view searchQuery,
   if (!query.exec()) { qWarning() << "Search query failed" << query.lastError(); }
 
   std::vector<fs::path> results;
+  std::error_code ec;
 
   results.reserve(params.pagination.limit);
 
   while (query.next()) {
     fs::path path = query.value(0).toString().toStdString();
 
-    if (fs::exists(path)) { results.emplace_back(path); }
+    if (fs::exists(path, ec)) { results.emplace_back(path); }
   }
 
   return results;
