@@ -31,9 +31,18 @@ in {
       default = true;
       description = "If vicinae should use the layer shell";
     };
+
+    settings = lib.mkOption {
+      type = lib.types.attrs;
+      default = {};
+      description = "Settings to pass to vicinae";
+    };
   };
   config = lib.mkIf cfg.enable {
     home.packages = [cfg.package];
+
+    xdg.configFile."vicinae/vicinae.json".text = (
+      builtins.toJSON  cfg.settings   );
 
     systemd.user.services.vicinae = {
       Unit = {

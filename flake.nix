@@ -24,6 +24,11 @@
           buildInputs = [
             pkgs.ccache
           ];
+
+          packages = with pkgs; [
+            nixd
+            nixfmt-rfc-style
+          ];
         };
       }
     ) // {
