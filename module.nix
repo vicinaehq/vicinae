@@ -35,23 +35,6 @@ in
       description = "If vicinae should use the layer shell";
     };
 
-    settings = lib.mkOption {
-      type = lib.types.attrs;
-      default = {
-        faviconService = "twenty";
-        font.size = 10;
-        popToRootOnClose = false;
-        rootSearch.searchFiles = false;
-        theme = { };
-        window = {
-          csd = true;
-          opacity = 0.95;
-          rounding = 10;
-        };
-      };
-      description = "Settings to pass to vicinae";
-    };
-
     themes = lib.mkOption {
       default = { };
       description = ''
@@ -91,10 +74,7 @@ in
   config = lib.mkIf cfg.enable {
     home.packages = [ cfg.package ];
 
-    xdg.configFile = {
-      "vicinae/vicinae.json".text = builtins.toJSON cfg.settings;
-    }
-    // lib.mapAttrs' (
+    xdg.configFile = lib.mapAttrs' (
       name: theme:
       lib.nameValuePair "vicinae/themes/${name}.json" {
         text = builtins.toJSON theme;
