@@ -1,5 +1,4 @@
 #pragma once
-#include "ui/button-base/button-base.hpp"
 #include "ui/views/base-view.hpp"
 #include "common.hpp"
 #include "extension/manager/extension-manager.hpp"

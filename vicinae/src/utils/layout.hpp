@@ -156,7 +156,7 @@ public:
   }
 };
 
-class Button : public WidgetBuilder<OmniButtonWidget> {
+class Button : public WidgetBuilder<ButtonWidget> {
   std::function<void(void)> m_onClick;
   QString m_text;
   std::optional<ImageURL> m_leftIcon;
@@ -191,16 +191,16 @@ public:
     return *this;
   }
 
-  OmniButtonWidget *create() const override {
-    auto btn = new OmniButtonWidget;
+  ButtonWidget *create() const override {
+    auto btn = new ButtonWidget;
 
     btn->setText(m_text);
-    btn->setColor(m_color);
+    btn->setTextColor(m_color);
     btn->setDisabled(m_disabled);
 
     if (m_leftIcon) { btn->setLeftIcon(*m_leftIcon, {16, 16}); }
 
-    QObject::connect(btn, &OmniButtonWidget::clicked, [onClick = m_onClick]() {
+    QObject::connect(btn, &ButtonWidget::clicked, [onClick = m_onClick]() {
       if (onClick) onClick();
     });
 

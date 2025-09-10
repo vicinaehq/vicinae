@@ -64,7 +64,7 @@ void AlertWidget::setMessage(const QString &message) {
 
 void AlertWidget::setCancelText(const QString &text, const ColorLike &color) {
   _cancelBtn->setText(text);
-  _cancelBtn->setColor(color);
+  _cancelBtn->setTextColor(color);
 }
 
 void AlertWidget::setIcon(const std::optional<ImageURL> &url) {
@@ -82,7 +82,7 @@ void AlertWidget::canceled() const {}
 
 void AlertWidget::setConfirmText(const QString &text, const ColorLike &color) {
   _actionBtn->setText(text);
-  _actionBtn->setColor(color);
+  _actionBtn->setTextColor(color);
 }
 
 void AlertWidget::keyPressEvent(QKeyEvent *event) {
@@ -111,7 +111,7 @@ void AlertWidget::setTitle(const QString &title) { _title->setText(title); }
 
 AlertWidget::AlertWidget(QWidget *parent)
     : DialogContentWidget(parent), _icon(new ImageWidget), _title(new TypographyWidget),
-      _message(new TypographyWidget), _cancelBtn(new OmniButtonWidget), _actionBtn(new OmniButtonWidget) {
+      _message(new TypographyWidget), _cancelBtn(new ButtonWidget), _actionBtn(new ButtonWidget) {
   auto layout = new QVBoxLayout;
 
   _message->setColor(SemanticColor::TextSecondary);
@@ -135,7 +135,7 @@ AlertWidget::AlertWidget(QWidget *parent)
   _cancelBtn->setText("Cancel");
   _actionBtn->setFixedHeight(btnHeight);
   _actionBtn->setText("Delete");
-  _actionBtn->setColor(SemanticColor::Red);
+  _actionBtn->setTextColor(SemanticColor::Red);
 
   _title->setAlignment(Qt::AlignCenter);
   _message->setAlignment(Qt::AlignCenter);
@@ -149,6 +149,6 @@ AlertWidget::AlertWidget(QWidget *parent)
   layout->addWidget(HStack().add(_cancelBtn).add(_actionBtn).spacing(10).buildWidget());
   setLayout(layout);
 
-  connect(_cancelBtn, &OmniButtonWidget::activated, this, &AlertWidget::handleCancel);
-  connect(_actionBtn, &OmniButtonWidget::activated, this, &AlertWidget::handleConfirm);
+  connect(_cancelBtn, &ButtonWidget::activated, this, &AlertWidget::handleCancel);
+  connect(_actionBtn, &ButtonWidget::activated, this, &AlertWidget::handleConfirm);
 }
