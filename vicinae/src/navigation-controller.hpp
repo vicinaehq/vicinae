@@ -113,7 +113,7 @@ private:
     auto actions = m_primarySection->actions();
 
     for (const auto &[action, shortcut] : std::views::zip(actions, m_defaultShortcuts)) {
-      action->setShortcut(shortcut);
+      action->addShortcut(shortcut);
     }
   }
 
