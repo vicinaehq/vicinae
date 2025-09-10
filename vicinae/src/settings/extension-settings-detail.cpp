@@ -66,7 +66,13 @@ void ExtensionSettingsDetail::savePendingPreferences() {
   QJsonObject obj;
 
   for (const auto &[preferenceId, widget] : m_preferenceFields) {
-    obj[preferenceId] = widget->formItem()->asJsonValue();
+    auto value = widget->formItem()->asJsonValue();
+
+    // we do not store null or undefined values, so that the default value
+    // is used instead.
+    if (value.isNull() || value.isUndefined()) continue;
+
+    obj[preferenceId] = value;
   }
 
   manager->setProviderPreferenceValues(m_rootItemId, obj);
