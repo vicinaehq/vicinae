@@ -40,11 +40,18 @@ public:
     return m_shortcuts.front();
   }
 
-  bool isBoundTo(const QKeyEvent *event) { return isBoundTo(KeyboardShortcut(event)); }
-  bool isBoundTo(const KeyboardShortcutModel &model) { return std::ranges::contains(m_shortcuts, model); }
+  bool isBoundTo(const QKeyEvent *event) {
+    if (event->key() == Qt::Key_Enter) {
+      qDebug() << "remapping numpad enter to return";
+      return isBoundTo(KeyboardShortcut(Qt::Key_Return, event->modifiers()));
+    }
+
+    return isBoundTo(KeyboardShortcut(event));
+  }
+  bool isBoundTo(const KeyboardShortcutModel &model) { return isBoundTo(KeyboardShortcut(model)); }
   bool isBoundTo(const KeyboardShortcut &shortcut) {
     return std::ranges::any_of(m_shortcuts,
-                               [&](auto &&model) { return KeyboardShortcut(model) == shortcut; });
+                               [&](auto &&model) { return KeyboardShortcut(model).equals(shortcut); });
   }
 
   // Note: submenu are currently not implemented and a good implementation will require

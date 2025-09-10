@@ -121,7 +121,7 @@ public:
     }
   }
 
-  KeyboardShortcut(Qt::Key key) : key(key) {}
+  KeyboardShortcut(Qt::Key key, Qt::KeyboardModifiers mods = {}) : key(key), modifiers(mods) {}
 
   KeyboardShortcut(const QKeyEvent *event)
       : key(static_cast<Qt::Key>(event->key())), modifiers(event->modifiers()) {}
@@ -129,6 +129,15 @@ public:
   KeyboardShortcut &withModifier(Qt::KeyboardModifier mod) {
     modifiers.setFlag(mod);
     return *this;
+  }
+
+  bool equals(const KeyboardShortcut &other, bool ignoreNumpadMod = true) const {
+    if (ignoreNumpadMod) {
+      return key == other.key &&
+             (modifiers.toInt() & ~Qt::KeypadModifier) == (other.modifiers.toInt() & ~Qt::KeypadModifier);
+    }
+
+    return key == other.key && modifiers.toInt() == other.modifiers.toInt();
   }
 
   bool operator==(const KeyboardShortcut &other) const {

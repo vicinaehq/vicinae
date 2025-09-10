@@ -32,6 +32,7 @@ bool ListView::inputFilter(QKeyEvent *event) {
       return m_list->selectDown();
       break;
     case Qt::Key_Return:
+    case Qt::Key_Enter:
       m_list->activateCurrentSelection();
       return true;
     }
