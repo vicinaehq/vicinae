@@ -80,7 +80,7 @@ export class Cache {
    * @returns the data for the given key, or `undefined` if there is no data.
    * @remarks To solely check for existence of a key, use {@link has}.
    */
-  get(key: string): string | undefined {
+  get = (key: string): string | undefined => {
 	const info = this.index.keys[key];
 
 	if (!info) return undefined;
@@ -95,7 +95,7 @@ export class Cache {
    * @returns `true` if data for the key exists, `false` otherwise.
    * @remarks You can use this method to check for entries without affecting the LRU access.
    */
-  has(key: string): boolean {
+  has = (key: string): boolean => {
     return typeof this.index.keys[key] !== 'undefined';
   }
 
@@ -112,7 +112,7 @@ export class Cache {
    * This also notifies registered subscribers (see {@link subscribe}).
    * @remarks An individual cache entry cannot be bigger than the configured capacity. If this happens, an error will be thrown.
    */
-  set(key: string, data: string): void {
+  set = (key: string, data: string): void => {
 	if (data.length > this.capacity) {
 		throw new Error(`A single cache entry cannot be bigger than the total capacity of the cache. The data for key ${key} is ${data.length} bytes long while the capacity is set to ${this.capacity}. You should either reduce the amount of data stored or increase the cache's capacity.`);
 	}
@@ -142,7 +142,7 @@ export class Cache {
    * This also notifies registered subscribers (see {@link subscribe}).
    * @returns `true` if data for the key was removed, `false` otherwise.
    */
-  remove(key: string): boolean {
+  remove = (key: string): boolean => {
 	const removed = this.removeImpl(key);
 	this.syncIndex()
 
@@ -153,7 +153,7 @@ export class Cache {
    * Clears all stored data.
    * This also notifies registered subscribers (see {@link subscribe}) unless the  `notifySubscribers` option is set to `false`.
    */
-  clear(options?: { notifySubscribers: boolean }): void {
+  clear = (options?: { notifySubscribers: boolean }): void => {
 	  const notify = options?.notifySubscribers ?? true;
 
 	  this.removeCacheDirectory();
@@ -172,7 +172,7 @@ export class Cache {
    * Registers a new subscriber that gets notified when cache data is set or removed.
    * @returns a function that can be called to remove the subscriber.
    */
-  subscribe(subscriber: Cache.Subscriber): Cache.Subscription {
+  subscribe = (subscriber: Cache.Subscriber): Cache.Subscription => {
 	this.subscribers.push(subscriber);
 
     return () => {
