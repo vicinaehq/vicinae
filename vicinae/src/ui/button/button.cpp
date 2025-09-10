@@ -6,23 +6,23 @@
 #include <qnamespace.h>
 #include <qpainterpath.h>
 
-void OmniButtonWidget::setLeftAccessory(QWidget *w) {
+void ButtonWidget::setLeftAccessory(QWidget *w) {
   if (auto leftItem = layout()->itemAt(0)) {
     layout()->replaceWidget(leftItem->widget(), w);
     leftItem->widget()->deleteLater();
   }
 }
 
-void OmniButtonWidget::setRightAccessory(QWidget *w) {
+void ButtonWidget::setRightAccessory(QWidget *w) {
   if (auto rightItem = layout()->itemAt(2)) {
     layout()->replaceWidget(rightItem->widget(), w);
     rightItem->widget()->deleteLater();
   }
 }
 
-void OmniButtonWidget::setTextColor(const ColorLike &color) { label->setColor(color); }
+void ButtonWidget::setTextColor(const ColorLike &color) { label->setColor(color); }
 
-void OmniButtonWidget::setLeftIcon(const ImageURL &url, QSize size) {
+void ButtonWidget::setLeftIcon(const ImageURL &url, QSize size) {
   auto icon = new ImageWidget();
 
   icon->setFixedSize(size);
@@ -30,9 +30,9 @@ void OmniButtonWidget::setLeftIcon(const ImageURL &url, QSize size) {
   setLeftAccessory(icon);
 }
 
-void OmniButtonWidget::setText(const QString &text) { label->setText(text); }
+void ButtonWidget::setText(const QString &text) { label->setText(text); }
 
-void OmniButtonWidget::setRightAccessory(const ImageURL &url, QSize size) {
+void ButtonWidget::setRightAccessory(const ImageURL &url, QSize size) {
   auto icon = new ImageWidget;
 
   icon->setFixedSize(size);
@@ -40,7 +40,7 @@ void OmniButtonWidget::setRightAccessory(const ImageURL &url, QSize size) {
   setRightAccessory(icon);
 }
 
-OmniButtonWidget::OmniButtonWidget(QWidget *parent) : ButtonBase(parent) {
+ButtonWidget::ButtonWidget(QWidget *parent) : ButtonBase(parent) {
   auto layout = HStack()
                     .margins(5)
                     .spacing(5)

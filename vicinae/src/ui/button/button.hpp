@@ -7,11 +7,11 @@
 #include <qgraphicseffect.h>
 #include <qwidget.h>
 
-class OmniButtonWidget : public ButtonBase {
+class ButtonWidget : public ButtonBase {
 public:
   enum ButtonColor { Primary, Secondary, Transparent };
 
-  OmniButtonWidget(QWidget *parent = nullptr);
+  ButtonWidget(QWidget *parent = nullptr);
 
   void setLeftAccessory(QWidget *w);
   void setRightAccessory(QWidget *w);

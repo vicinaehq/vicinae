@@ -111,7 +111,7 @@ void AlertWidget::setTitle(const QString &title) { _title->setText(title); }
 
 AlertWidget::AlertWidget(QWidget *parent)
     : DialogContentWidget(parent), _icon(new ImageWidget), _title(new TypographyWidget),
-      _message(new TypographyWidget), _cancelBtn(new OmniButtonWidget), _actionBtn(new OmniButtonWidget) {
+      _message(new TypographyWidget), _cancelBtn(new ButtonWidget), _actionBtn(new ButtonWidget) {
   auto layout = new QVBoxLayout;
 
   _message->setColor(SemanticColor::TextSecondary);
@@ -149,6 +149,6 @@ AlertWidget::AlertWidget(QWidget *parent)
   layout->addWidget(HStack().add(_cancelBtn).add(_actionBtn).spacing(10).buildWidget());
   setLayout(layout);
 
-  connect(_cancelBtn, &OmniButtonWidget::activated, this, &AlertWidget::handleCancel);
-  connect(_actionBtn, &OmniButtonWidget::activated, this, &AlertWidget::handleConfirm);
+  connect(_cancelBtn, &ButtonWidget::activated, this, &AlertWidget::handleCancel);
+  connect(_actionBtn, &ButtonWidget::activated, this, &AlertWidget::handleConfirm);
 }

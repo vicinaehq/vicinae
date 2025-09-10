@@ -139,7 +139,7 @@ public:
   };
 
 private:
-  OmniButtonWidget *m_button = new OmniButtonWidget;
+  ButtonWidget *m_button = new ButtonWidget;
   QStringList m_mimeTypeFilters;
   std::vector<File> m_files;
   std::unique_ptr<AbstractDelegateFactory> m_delegateFactory;
@@ -165,7 +165,7 @@ public:
     return array;
   }
   std::vector<File> files() const;
-  OmniButtonWidget *button() const;
+  ButtonWidget *button() const;
   void removeFile(const std::filesystem::path &path);
   void addFile(const std::filesystem::path &path);
   void setMimeTypeFilters(const QStringList &filters);

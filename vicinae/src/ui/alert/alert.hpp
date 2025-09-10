@@ -6,7 +6,7 @@
 #include <qevent.h>
 
 class TypographyWidget;
-class OmniButtonWidget;
+class ButtonWidget;
 
 class AlertWidget : public DialogContentWidget {
   Q_OBJECT
@@ -14,8 +14,8 @@ class AlertWidget : public DialogContentWidget {
   ImageWidget *_icon;
   TypographyWidget *_title;
   TypographyWidget *_message;
-  OmniButtonWidget *_cancelBtn;
-  OmniButtonWidget *_actionBtn;
+  ButtonWidget *_cancelBtn;
+  ButtonWidget *_actionBtn;
   std::function<void(void)> m_confirmCallback;
   std::function<void(void)> m_cancelCallback;
 
