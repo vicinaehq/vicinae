@@ -37,10 +37,61 @@ in
 
     settings = lib.mkOption {
       type = lib.types.attrs;
-      default = { };
+      default = {
+        faviconService = "twenty";
+        font.size = 10;
+        popToRootOnClose = false;
+        rootSearch.searchFiles = false;
+        theme = { };
+        window = {
+          csd = true;
+          opacity = 0.95;
+          rounding = 10;
+        };
+      };
       description = "Settings to pass to vicinae";
     };
+
+    themes = lib.mkOption {
+      default = { };
+      description = ''
+        Theme settings to add to the themes folder in `~/.config/vicinae/themes`. 
+        The attribute name of the theme will be the name of theme json file, 
+        e.g. `base16-default-dark` will be `base16-default-dark.json`.
+      '';
+      example = {
+        themes.base16-default-dark = {
+          version = "1.0.0";
+          appearance = "dark";
+          icon = /path/to/icon.png;
+          name = "base16 default dark";
+          description = "base16 default dark by Chris Kempson";
+          palette = {
+            background = "#181818";
+            foreground = "#d8d8d8";
+            blue = "#7cafc2";
+            green = "#a3be8c";
+            magenta = "#ba8baf";
+            orange = "#dc9656";
+            purple = "#a16946";
+            red = "#ab4642";
+            yellow = "#f7ca88";
+            cyan = "#86c1b9";
+          };
+        };
+      };
+      type = lib.types.attrsOf (
+        lib.types.submodule {
+          theme = lib.mkOption {
+            default = { };
+            type = lib.types.attrs;
+            description = "Theme settings";
+          };
+        }
+      );
+    };
   };
+
   config = lib.mkIf cfg.enable {
     home.packages = [ cfg.package ];
 
