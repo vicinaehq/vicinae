@@ -92,7 +92,7 @@ export default class Build extends Command {
         return esbuild.build({
           bundle: true,
           entryPoints: [source],
-          external: ["react", "@vicinae/api"],
+          external: ["react", "@vicinae/api", "@raycast/api"],
           format: "cjs",
           outfile: join(outDir, `${cmd.name}.js`),
           platform: "node",
