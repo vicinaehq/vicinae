@@ -4,6 +4,7 @@
 #include "extend/image-model.hpp"
 #include "extension/extension-view.hpp"
 #include "../../src/ui/image/url.hpp"
+#include "ui/empty-view/empty-view.hpp"
 #include "ui/omni-grid/grid-item-content-widget.hpp"
 #include "ui/image/image.hpp"
 #include "ui/omni-grid/omni-grid.hpp"
@@ -13,6 +14,7 @@
 #include <qlogging.h>
 #include <qnamespace.h>
 #include <qresource.h>
+#include <qstackedwidget.h>
 #include <qtimer.h>
 
 class ExtensionGridItem : public OmniGrid::AbstractGridItem {
@@ -210,11 +212,6 @@ signals:
 };
 
 class ExtensionGridComponent : public ExtensionSimpleView {
-  GridModel _model;
-  ExtensionGridList *m_list = new ExtensionGridList;
-  bool _shouldResetSelection;
-  QTimer *_debounce;
-
 public:
   void render(const RenderModel &baseModel) override;
   void onSelectionChanged(const GridItemViewModel *item);
@@ -224,4 +221,12 @@ public:
   bool inputFilter(QKeyEvent *event) override;
 
   ExtensionGridComponent();
+
+private:
+  EmptyViewWidget *m_emptyView = new EmptyViewWidget(this);
+  QStackedWidget *m_content = new QStackedWidget(this);
+  GridModel _model;
+  ExtensionGridList *m_list = new ExtensionGridList;
+  bool _shouldResetSelection;
+  QTimer *_debounce;
 };
