@@ -95,16 +95,14 @@ in
   config = lib.mkIf cfg.enable {
     home.packages = [ cfg.package ];
 
-    xdg.configFile =
+    xdg =
       let
-        themes = lib.mapAttrs' (
-          name: theme: {
-            "vicinae/themes/${name}.json".text = (builtins.toJSON theme);
-          }
-        );
+        themes = lib.mapAttrs' (name: theme: {
+          configFile."vicinae/themes/${name}.json".text = (builtins.toJSON theme);
+        }) cfg.themes;
       in
       {
-        "vicinae/vicinae.json".text = (builtins.toJSON cfg.settings);
+        configFile."vicinae/vicinae.json".text = (builtins.toJSON cfg.settings);
       }
       // themes;
 
