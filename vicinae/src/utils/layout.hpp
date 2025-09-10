@@ -195,7 +195,7 @@ public:
     auto btn = new OmniButtonWidget;
 
     btn->setText(m_text);
-    btn->setColor(m_color);
+    btn->setTextColor(m_color);
     btn->setDisabled(m_disabled);
 
     if (m_leftIcon) { btn->setLeftIcon(*m_leftIcon, {16, 16}); }

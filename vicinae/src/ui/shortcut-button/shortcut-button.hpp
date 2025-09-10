@@ -12,7 +12,7 @@ class ShortcutButton : public ButtonBase {
   KeyboardShortcutIndicatorWidget *_shortcut_indicator;
 
 public:
-  void hoverChanged(bool hovered) override;
+  void hoverChanged(bool hovered);
   void setText(const QString &text);
   void setTextColor(const QColor &color);
   void setShortcut(const std::optional<KeyboardShortcutModel> &model);

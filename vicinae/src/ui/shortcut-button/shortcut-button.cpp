@@ -1,5 +1,6 @@
 #include "shortcut-button.hpp"
 #include "theme.hpp"
+#include "ui/button-base/button-base.hpp"
 #include "ui/keyboard-shortcut-indicator/keyboard-shortcut-indicator.hpp"
 #include "ui/typography/typography.hpp"
 #include <qboxlayout.h>
@@ -18,9 +19,9 @@ void ShortcutButton::hoverChanged(bool hovered) {
 void ShortcutButton::resetColor() {
   auto &theme = ThemeService::instance().theme();
 
-  _shortcut_indicator->setBackgroundColor(hovered() ? SemanticColor::SecondaryBackground
-                                                    : SemanticColor::ButtonSecondary);
-  setBackgroundColor(hovered() ? theme.resolveTint(SemanticColor::ButtonSecondaryHover) : Qt::transparent);
+  _shortcut_indicator->setBackgroundColor(underMouse() ? SemanticColor::SecondaryBackground
+                                                       : SemanticColor::ButtonSecondary);
+  setBackgroundColor(underMouse() ? theme.resolveTint(SemanticColor::ButtonSecondaryHover) : Qt::transparent);
   setTextColor(theme.colors.text);
 }
 
@@ -55,6 +56,7 @@ ShortcutButton::ShortcutButton()
   resetColor();
 
   connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() { resetColor(); });
+  connect(this, &ButtonBase::hoverChanged, this, &ShortcutButton::hoverChanged);
 
   setLayout(layout);
 }

@@ -1,20 +1,16 @@
 #include "ui/icon-button/icon-button.hpp"
 #include "ui/image/image.hpp"
+#include "utils/layout.hpp"
 #include <qnamespace.h>
 
-void IconButton::resizeEvent(QResizeEvent *event) {
-  auto margins = contentsMargins();
-  auto iconRect = rect().marginsRemoved(contentsMargins());
-
-  _icon->setFixedSize(iconRect.size());
-  _icon->move(margins.left(), margins.top());
-  OmniButtonWidget::resizeEvent(event);
-}
-
-IconButton::IconButton() : _icon(new ImageWidget(this)) {
+IconButton::IconButton() : m_icon(new ImageWidget(this)) {
   setFocusPolicy(Qt::NoFocus);
-  _icon->setContentsMargins(3, 3, 3, 3);
-  _icon->show();
+  HStack().add(m_icon).margins(3).imbue(this);
 }
 
-void IconButton::setUrl(const ImageURL &url) { _icon->setUrl(url); }
+void IconButton::resizeEvent(QResizeEvent *event) {
+  m_icon->setFixedSize(rect().marginsRemoved(layout()->contentsMargins()).size());
+  ButtonBase::resizeEvent(event);
+};
+
+void IconButton::setUrl(const ImageURL &url) { m_icon->setUrl(url); }

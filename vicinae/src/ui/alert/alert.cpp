@@ -64,7 +64,7 @@ void AlertWidget::setMessage(const QString &message) {
 
 void AlertWidget::setCancelText(const QString &text, const ColorLike &color) {
   _cancelBtn->setText(text);
-  _cancelBtn->setColor(color);
+  _cancelBtn->setTextColor(color);
 }
 
 void AlertWidget::setIcon(const std::optional<ImageURL> &url) {
@@ -82,7 +82,7 @@ void AlertWidget::canceled() const {}
 
 void AlertWidget::setConfirmText(const QString &text, const ColorLike &color) {
   _actionBtn->setText(text);
-  _actionBtn->setColor(color);
+  _actionBtn->setTextColor(color);
 }
 
 void AlertWidget::keyPressEvent(QKeyEvent *event) {
@@ -135,7 +135,7 @@ AlertWidget::AlertWidget(QWidget *parent)
   _cancelBtn->setText("Cancel");
   _actionBtn->setFixedHeight(btnHeight);
   _actionBtn->setText("Delete");
-  _actionBtn->setColor(SemanticColor::Red);
+  _actionBtn->setTextColor(SemanticColor::Red);
 
   _title->setAlignment(Qt::AlignCenter);
   _message->setAlignment(Qt::AlignCenter);
