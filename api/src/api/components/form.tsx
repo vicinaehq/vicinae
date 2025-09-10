@@ -1,6 +1,7 @@
 import { ReactNode, Ref } from "react";
 import { useImperativeFormHandle } from "../hooks/use-imperative-form-handle";
 import { ImageLike, serializeImageLike } from "../image";
+import { Dropdown as MainDropdown } from './dropdown';
 
 type FormProps = {
   actions?: React.ReactNode;
@@ -69,6 +70,16 @@ export declare namespace Form {
   };
 }
 
+const wrapFormItemProps = <T extends Form.Value,>(props: FormItemProps<T>) => {
+	// TODO: pass the current value in the event
+
+	return {
+		...props,
+		onFocus: () => props.onFocus?.({ type: 'focus', target: { id: props.id } }),
+		onBlur: () => props.onBlur?.({ type: 'blur', target: { id: props.id } })
+	};
+}
+
 const FormRoot: React.FC<Form.Props> = ({
   enableDrafts = false,
   actions,
@@ -105,7 +116,7 @@ const TextField: React.FC<TextFieldProps> = ({
   useImperativeFormHandle(ref);
 
   return (
-    <text-field {...props} />
+    <text-field {...wrapFormItemProps(props)} />
   );
 };
 
@@ -138,7 +149,7 @@ const Checkbox: React.FC<CheckboxProps> = ({
   useImperativeFormHandle(ref);
 
   return (
-    <checkbox-field {...props} />
+    <checkbox-field {...wrapFormItemProps(props)} />
   );
 };
 
@@ -154,16 +165,25 @@ interface DropdownProps
   onSearchTextChange?: (text: string) => void;
 }
 
-const Dropdown: React.FC<DropdownProps> = ({
+//FIXME: we probably need to reuse the existing dropdown in
+// a smarter way.
+const DropdownRoot: React.FC<DropdownProps> = ({
   children,
   ...props
 }) => {
+  // FIXME: testing stuff, we need to generalize this to all form items
+  
   return (
-    <dropdown-field {...props}>
+    <dropdown-field {...wrapFormItemProps(props)}>
       {children}
     </dropdown-field>
   );
 };
+
+const Dropdown = Object.assign(DropdownRoot, {
+	Item: MainDropdown.Item,
+	Section: MainDropdown.Section
+});
 
 interface TagPickerProps
   extends FormItemProps<string[]>,
@@ -176,7 +196,7 @@ const TagPickerRoot: React.FC<TagPickerProps> = ({
   ...props
 }) => {
   return (
-    <tag-picker-field {...props}>
+    <tag-picker-field {...wrapFormItemProps(props)}>
       {children}
     </tag-picker-field>
   );
@@ -197,7 +217,7 @@ interface TextAreaProps
 
 const TextArea: React.FC<TextAreaProps> = (props) => {
   return (
-    <text-area-field {...props} />
+    <text-area-field {...wrapFormItemProps(props)} />
   );
 };
 
@@ -206,7 +226,7 @@ interface FilePickerProps extends FormItemProps<string[]>, WithFormRef<Form.File
 
 const FilePicker: React.FC<FilePickerProps> = (props) => {
   return (
-    <file-picker-field {...props} />
+    <file-picker-field {...wrapFormItemProps(props)} />
   );
 };
 
