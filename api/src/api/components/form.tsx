@@ -1,5 +1,6 @@
 import { ReactNode, Ref } from "react";
 import { useImperativeFormHandle } from "../hooks/use-imperative-form-handle";
+import { ImageLike, serializeImageLike } from "../image";
 
 type FormProps = {
   actions?: React.ReactNode;
@@ -164,11 +165,69 @@ const Dropdown: React.FC<DropdownProps> = ({
   );
 };
 
+interface TagPickerProps
+  extends FormItemProps<string[]>,
+    WithFormRef<Form.TagPicker> {
+  children?: ReactNode;
+}
+
+const TagPickerRoot: React.FC<TagPickerProps> = ({
+  children,
+  ...props
+}) => {
+  return (
+    <tag-picker-field {...props}>
+      {children}
+    </tag-picker-field>
+  );
+};
+
+const TagPickerItem: React.FC<{ title: string, value: string, icon: ImageLike }> = ({ icon, ...props }) => {
+	return <tag-picker-item {...props} icon={icon && serializeImageLike(icon)}  />
+}
+
+const TagPicker = Object.assign(TagPickerRoot, {
+	Item: TagPickerItem
+});
+
+interface TextAreaProps
+  extends FormItemProps<string>,
+    WithFormRef<Form.TagPicker> {
+}
+
+const TextArea: React.FC<TextAreaProps> = (props) => {
+  return (
+    <text-area-field {...props} />
+  );
+};
+
+interface FilePickerProps extends FormItemProps<string[]>, WithFormRef<Form.FilePicker> {
+}
+
+const FilePicker: React.FC<FilePickerProps> = (props) => {
+  return (
+    <file-picker-field {...props} />
+  );
+};
+
+type DescriptionProps = {
+	text: string;
+	title?: string;
+};
+
+const Description: React.FC<DescriptionProps> = (props) => {
+	return <form-description {...props} />
+}
+
 export const Form = Object.assign(FormRoot, {
   TextField,
   PasswordField,
   DatePicker,
   Checkbox,
+  TextArea,
   Dropdown,
+  Description,
+  TagPicker,
+  FilePicker,
   Separator: () => <separator />,
 });

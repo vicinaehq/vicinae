@@ -8,6 +8,12 @@ import { Grid } from "../api/components/grid";
 
 import 'react';
 
+type BaseFormField = {
+    onBlur?: Function;
+    onFocus?: Function;
+    onChange?: Function;
+};
+
 declare module "react" {
   namespace JSX {
     interface IntrinsicElements {
@@ -132,23 +138,22 @@ declare module "react" {
         navigationTitle?: string;
         children?: React.ReactNode;
       };
-      "text-field": {
-        onBlur?: Function;
-        onFocus?: Function;
-        onChange?: Function;
-      };
-      "dropdown-field": {
-        onBlur?: Function;
-        onFocus?: Function;
-        onChange?: Function;
+      "text-field": BaseFormField & {};
+	  "tag-picker-field": BaseFormField & {},
+	  "tag-picker-item": {
+		  title: string;
+		  value: string;
+		  icon?: SerializedImageLike;
+	  },
+	  "text-area-field": BaseFormField & {
+	  }
+	  "file-picker-field": BaseFormField & {
+	  }
+      "dropdown-field": BaseFormField & {
         children?: ReactNode;
       };
       "date-picker-field": {};
-      "checkbox-field": {
-        onBlur?: Function;
-        onFocus?: Function;
-        onChange?: Function;
-      };
+      "checkbox-field": BaseFormField & {};
       "password-field": {};
       "textarea-field": {};
 
@@ -167,6 +172,11 @@ declare module "react" {
         icon?: SerializedImageLike;
         keywords?: string[];
       };
+
+	  "form-description": {
+		  title?: string;
+		  text: string;
+	  }
 
       separator: {};
       "menu-bar": {};
