@@ -3,6 +3,7 @@
 #include "navigation-controller.hpp"
 #include "proto/extension.pb.h"
 #include "proto/ui.pb.h"
+#include "theme.hpp"
 #include "timer.hpp"
 #include "ui/alert/alert.hpp"
 #include "ui/toast/toast.hpp"
@@ -190,6 +191,9 @@ QFuture<proto::ext::extension::Response *> UIRequestRouter::confirmAlert(const u
 
   alert->setTitle(req.title().c_str());
   alert->setMessage(req.description().c_str());
+  alert->setConfirmText(req.primary_action().title().c_str(), SemanticColor::Red);
+  alert->setCancelText(req.dismiss_action().title().c_str(), SemanticColor::TextPrimary);
+
   alert->setCallback([promise](bool value) mutable {
     auto res = new proto::ext::ui::Response;
     auto ack = new proto::ext::ui::ConfirmAlertResponse;

@@ -236,8 +236,8 @@ export interface ConfirmAlertRequest {
   description: string;
   /** TODO: replace with proper ImageLike message */
   icon?: string | undefined;
-  dismissAction?: ConfirmAlertAction | undefined;
-  primaryAction?: ConfirmAlertAction | undefined;
+  dismissAction: ConfirmAlertAction | undefined;
+  primaryAction: ConfirmAlertAction | undefined;
   rememberUserChoice: boolean;
 }
 
