@@ -23,18 +23,17 @@
   qt6,
   typescript,
   wayland,
-}:
-let
+}: let
   src = ./.;
 
   manifestRaw = builtins.readFile (src + /manifest.yaml);
 
-  get = key:
-    let
-      m = builtins.match ".*${key}:[[:space:]]*\"([^\"]+)\".*" manifestRaw;
-    in
-      if m == null then throw "Key ${key} not found in manifest.yaml"
-      else builtins.elemAt m 0;
+  get = key: let
+    m = builtins.match ".*${key}:[[:space:]]*\"([^\"]+)\".*" manifestRaw;
+  in
+    if m == null
+    then throw "Key ${key} not found in manifest.yaml"
+    else builtins.elemAt m 0;
 
   manifest = {
     tag = get "tag";
@@ -56,7 +55,6 @@ let
     src = src + /extension-manager;
     hash = "sha256-zoTe/n7PmC7h3bEYFX8OtLKr6T8WA7ijNhAekIhsgLc=";
   };
-
 in
   stdenv.mkDerivation rec {
     name = "vicinae";
@@ -64,12 +62,12 @@ in
     inherit src;
 
     cmakeFlags = [
-        "-DVICINAE_GIT_TAG=${manifest.tag}"
-        "-DVICINAE_GIT_COMMIT_HASH=${manifest.short_rev}"
-        "-DCMAKE_INSTALL_PREFIX=${placeholder "out"}"
-        "-DCMAKE_INSTALL_DATAROOTDIR=share"
-        "-DCMAKE_INSTALL_BINDIR=bin"
-        "-DCMAKE_INSTALL_LIBDIR=lib"
+      "-DVICINAE_GIT_TAG=${manifest.tag}"
+      "-DVICINAE_GIT_COMMIT_HASH=${manifest.short_rev}"
+      "-DCMAKE_INSTALL_PREFIX=${placeholder "out"}"
+      "-DCMAKE_INSTALL_DATAROOTDIR=share"
+      "-DCMAKE_INSTALL_BINDIR=bin"
+      "-DCMAKE_INSTALL_LIBDIR=lib"
     ];
 
     nativeBuildInputs = [
@@ -134,19 +132,26 @@ in
 
     dontWrapQtApps = true;
     preFixup = ''
-        wrapQtApp "$out/bin/vicinae" --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath buildInputs}
+      wrapQtApp "$out/bin/vicinae" --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath buildInputs}
     '';
     postFixup = ''
-        wrapProgram $out/bin/vicinae \
-        --prefix PATH : ${lib.makeBinPath [
-          nodejs
-          qt6.qtwayland
-          wayland
-          (placeholder "out")
-        ]}
+      wrapProgram $out/bin/vicinae \
+      --prefix PATH : ${lib.makeBinPath [
+        nodejs
+        qt6.qtwayland
+        wayland
+        (placeholder "out")
+      ]}
     '';
 
     installPhase = ''
       cmake --install build
     '';
-}
+
+    meta = with lib; {
+      description = "A focused launcher for your desktop — native, fast, extensible";
+      homepage = "https://github.com/vicinaehq/vicinae";
+      license = licenses.gpl3Plus;
+      mainProgram = "vicinae";
+    };
+  }
