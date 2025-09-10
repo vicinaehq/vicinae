@@ -100,7 +100,24 @@ void ExtensionGridComponent::render(const RenderModel &baseModel) {
   }
 
   if (m_list->empty()) {
-    if (auto pannel = newModel.actions) { setActionPanel(*pannel); }
+    if (auto panel = newModel.actions; panel && panel->dirty) { setActionPanel(*panel); }
+
+    if (auto empty = newModel.emptyView) {
+      m_emptyView->setTitle(empty->title);
+      m_emptyView->setDescription(empty->description);
+
+      if (auto icon = empty->icon) {
+        m_emptyView->setIcon(*icon);
+      } else {
+        m_emptyView->setIcon(ImageURL::builtin("magnifying-glass"));
+      }
+
+      m_content->setCurrentWidget(m_emptyView);
+    } else {
+      m_content->setCurrentWidget(m_list);
+    }
+  } else {
+    m_content->setCurrentWidget(m_list);
   }
 }
 
@@ -136,7 +153,11 @@ void ExtensionGridComponent::textChanged(const QString &text) {
 ExtensionGridComponent::ExtensionGridComponent() : _debounce(new QTimer(this)), _shouldResetSelection(true) {
   setDefaultActionShortcuts({primaryShortcut, secondaryShortcut});
   _debounce->setSingleShot(true);
-  setupUI(m_list);
+
+  m_content->addWidget(m_list);
+  m_content->addWidget(m_emptyView);
+  m_content->setCurrentWidget(m_list);
+  setupUI(m_content);
   connect(_debounce, &QTimer::timeout, this, &ExtensionGridComponent::handleDebouncedSearchNotification);
   connect(m_list, &ExtensionGridList::selectionChanged, this, &ExtensionGridComponent::onSelectionChanged);
   connect(m_list, &ExtensionGridList::itemActivated, this, &ExtensionGridComponent::onItemActivated);

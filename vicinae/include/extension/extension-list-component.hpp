@@ -4,6 +4,7 @@
 #include <qdebug.h>
 #include "extension/extension-list-detail.hpp"
 #include "extension/extension-view.hpp"
+#include "ui/empty-view/empty-view.hpp"
 #include "ui/form/selector-input.hpp"
 #include "ui/omni-list/omni-list.hpp"
 #include "ui/split-detail/split-detail.hpp"
@@ -12,6 +13,7 @@
 #include <qevent.h>
 #include <qnamespace.h>
 #include <qresource.h>
+#include <qstackedwidget.h>
 #include <qtimer.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
@@ -156,17 +158,17 @@ signals:
 };
 
 class ExtensionListComponent : public ExtensionSimpleView {
-  SelectorInput *m_selector = new SelectorInput(this);
-  SplitDetailWidget *m_split = new SplitDetailWidget(this);
-  ExtensionListDetail *m_detail = new ExtensionListDetail;
-  ListModel _model;
-  ExtensionList *m_list = new ExtensionList;
-  bool _shouldResetSelection;
-  QTimer *_debounce;
-  QTimer *m_dropdownDebounce = new QTimer(this);
-  bool m_dropdownShouldResetSelection = false;
-  int m_renderCount = 0;
+public:
+  void render(const RenderModel &baseModel) override;
+  void onSelectionChanged(const ListItemViewModel *next);
+  void onItemActivated(const ListItemViewModel &item);
+  void handleDebouncedSearchNotification();
+  void textChanged(const QString &text) override;
 
+  ExtensionListComponent();
+  ~ExtensionListComponent();
+
+private:
   void renderDropdown(const DropdownModel &dropdown);
   void handleDropdownSelectionChanged(const SelectorInput::AbstractItem &item);
   void handleDropdownSearchChanged(const QString &text);
@@ -197,13 +199,16 @@ class ExtensionListComponent : public ExtensionSimpleView {
 
   void onActivate() override {}
 
-public:
-  void render(const RenderModel &baseModel) override;
-  void onSelectionChanged(const ListItemViewModel *next);
-  void onItemActivated(const ListItemViewModel &item);
-  void handleDebouncedSearchNotification();
-  void textChanged(const QString &text) override;
-
-  ExtensionListComponent();
-  ~ExtensionListComponent();
+  QStackedWidget *m_content = new QStackedWidget(this);
+  EmptyViewWidget *m_emptyView = new EmptyViewWidget(this);
+  SelectorInput *m_selector = new SelectorInput(this);
+  SplitDetailWidget *m_split = new SplitDetailWidget(this);
+  ExtensionListDetail *m_detail = new ExtensionListDetail;
+  ListModel _model;
+  ExtensionList *m_list = new ExtensionList;
+  bool _shouldResetSelection;
+  QTimer *_debounce;
+  QTimer *m_dropdownDebounce = new QTimer(this);
+  bool m_dropdownShouldResetSelection = false;
+  int m_renderCount = 0;
 };

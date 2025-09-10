@@ -1,6 +1,9 @@
 #include "empty-view.hpp"
 #include "ui/typography/typography.hpp"
+#include "utils/layout.hpp"
+#include <google/protobuf/stubs/common.h>
 #include <qboxlayout.h>
+#include <qnamespace.h>
 
 void EmptyViewWidget::setupUi() {
   auto layout = new QVBoxLayout();
@@ -11,13 +14,15 @@ void EmptyViewWidget::setupUi() {
   m_description->setColor(SemanticColor::TextSecondary);
   m_description->setWordWrap(true);
   m_icon->setFixedSize(48, 48);
-  container->setAlignment(Qt::AlignCenter);
-  layout->setSpacing(10);
-  layout->addWidget(m_icon, 0, Qt::AlignCenter);
-  layout->addWidget(m_title, 0, Qt::AlignCenter);
-  layout->addWidget(m_description, 0, Qt::AlignCenter);
-  container->addLayout(layout);
-  setLayout(container);
+
+  auto content =
+      VStack().spacing(10).add(m_icon, 0, Qt::AlignCenter).add(m_title).add(m_description).buildWidget();
+
+  m_title->setAlignment(Qt::AlignCenter);
+  m_description->setAlignment(Qt::AlignCenter);
+  content->setFixedWidth(400);
+
+  HStack().add(VStack().add(content).center()).center().imbue(this);
 }
 
 void EmptyViewWidget::setTitle(const QString &title) {

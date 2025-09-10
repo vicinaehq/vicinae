@@ -1,4 +1,5 @@
 #include "extension/extension-list-component.hpp"
+#include "extend/image-model.hpp"
 #include "extend/list-model.hpp"
 #include "extension/extension-list-detail.hpp"
 #include <chrono>
@@ -103,6 +104,7 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
   setLoading(newModel.isLoading);
 
   if (newModel.dirty) {
+
     OmniList::SelectionPolicy policy = OmniList::SelectFirst;
 
     if (_shouldResetSelection) {
@@ -150,6 +152,23 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
 
   if (m_list->empty()) {
     if (auto panel = newModel.actions; panel && panel->dirty) { setActionPanel(*panel); }
+
+    if (auto empty = newModel.emptyView) {
+      m_emptyView->setTitle(empty->title);
+      m_emptyView->setDescription(empty->description);
+
+      if (auto icon = empty->icon) {
+        m_emptyView->setIcon(*icon);
+      } else {
+        m_emptyView->setIcon(ImageURL::builtin("magnifying-glass"));
+      }
+
+      m_content->setCurrentWidget(m_emptyView);
+    } else {
+      m_content->setCurrentWidget(m_split);
+    }
+  } else {
+    m_content->setCurrentWidget(m_split);
   }
 }
 
@@ -243,7 +262,11 @@ ExtensionListComponent::ExtensionListComponent() : _debounce(new QTimer(this)), 
   m_split->setMainWidget(m_list);
   m_split->setDetailWidget(m_detail);
   m_split->detailWidget()->hide();
-  setupUI(m_split);
+
+  m_content->addWidget(m_emptyView);
+  m_content->addWidget(m_split);
+  m_content->setCurrentWidget(m_split);
+  setupUI(m_content);
 
   _debounce->setSingleShot(true);
   connect(_debounce, &QTimer::timeout, this, &ExtensionListComponent::handleDebouncedSearchNotification);
