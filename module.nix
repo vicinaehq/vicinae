@@ -95,7 +95,18 @@ in
   config = lib.mkIf cfg.enable {
     home.packages = [ cfg.package ];
 
-    xdg.configFile."vicinae/vicinae.json".text = (builtins.toJSON cfg.settings);
+    xdg.configFile =
+      let
+        themes = lib.mapAttrs' (
+          name: theme: {
+            "vicinae/themes/${name}.json".text = (builtins.toJSON theme);
+          }
+        );
+      in
+      {
+        "vicinae/vicinae.json".text = (builtins.toJSON cfg.settings);
+      }
+      // themes;
 
     systemd.user.services.vicinae = {
       Unit = {
