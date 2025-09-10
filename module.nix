@@ -97,7 +97,7 @@ in
 
     xdg =
       let
-        themes = lib.mapAttrs' (name: theme: {
+        themes = lib.mapAttrs (name: theme: {
           configFile."vicinae/themes/${name}.json".text = (builtins.toJSON theme);
         }) cfg.themes;
       in
