@@ -517,8 +517,6 @@ set(SRCS
 	src/ui/hud/hud.hpp
 	src/ui/hud/hud.cpp
 
-	src/ui/button-base/button-base.hpp
-	src/ui/button-base/button-base.cpp
 	src/ui/button/button.hpp
 	src/ui/button/button.cpp
 
@@ -574,6 +572,9 @@ set(SRCS
 
 	src/lib/program-db/program-db.hpp
 	src/lib/program-db/program-db.cpp
+
+	src/ui/button-base/button-base.hpp
+	src/ui/button-base/button-base.cpp
 ) 
 
 if (UNIX)

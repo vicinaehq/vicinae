@@ -48,6 +48,8 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
   m_hudDismissTimer = new QTimer(this);
   m_actionVeil = new ActionVeilWidget(this);
 
+  m_hud->hide();
+  m_actionVeil->hide();
   m_header->setFixedHeight(Omnicast::TOP_BAR_HEIGHT);
   m_bar->setFixedHeight(Omnicast::STATUS_BAR_HEIGHT);
   m_hudDismissTimer->setInterval(1500ms);
@@ -295,7 +297,7 @@ QWidget *LauncherWindow::createWidget() const {
   layout->addWidget(m_header);
   layout->addWidget(m_currentViewWrapper, 1);
   layout->addWidget(m_barDivider);
-  layout->addWidget(m_bar, 1);
+  layout->addWidget(m_bar);
   m_mainWidget->setLayout(layout);
 
   m_currentView->addWidget(m_mainWidget);

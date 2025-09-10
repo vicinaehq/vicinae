@@ -49,7 +49,7 @@ void FilePicker::regenerateList() {
       OmniList::PreserveSelection);
 }
 
-OmniButtonWidget *FilePicker::button() const { return m_button; }
+ButtonWidget *FilePicker::button() const { return m_button; }
 
 void FilePicker::filesChosen(const std::vector<std::filesystem::path> &paths) {
   for (const auto &path : paths) {
@@ -107,7 +107,7 @@ void FilePicker::setupUI() {
 
   setLayout(layout);
 
-  connect(m_button, &OmniButtonWidget::clicked, this, &FilePicker::handleFileChoice);
+  connect(m_button, &ButtonWidget::clicked, this, &FilePicker::handleFileChoice);
   connect(m_fileChooser.get(), &AbstractFileChooser::filesChosen, this, &FilePicker::filesChosen);
   connect(m_fileList, &OmniList::virtualHeightChanged, this,
           [this](int height) { m_fileList->setFixedHeight(std::min(300, height)); });
