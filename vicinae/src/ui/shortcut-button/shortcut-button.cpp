@@ -49,6 +49,7 @@ ShortcutButton::ShortcutButton()
     : _label(new TypographyWidget), _shortcut_indicator(new KeyboardShortcutIndicatorWidget) {
   auto layout = new QHBoxLayout;
 
+  setFocusPolicy(Qt::NoFocus);
   layout->setAlignment(Qt::AlignVCenter);
   layout->addWidget(_label, 0, Qt::AlignLeft);
   layout->addWidget(_shortcut_indicator, 0, Qt::AlignRight);
