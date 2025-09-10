@@ -99,19 +99,21 @@ void ExtensionGridComponent::render(const RenderModel &baseModel) {
     if (auto panel = selected->actionPannel) { setActionPanel(*panel); }
   }
 
+  if (auto empty = newModel.emptyView) {
+    m_emptyView->setTitle(empty->title);
+    m_emptyView->setDescription(empty->description);
+
+    if (auto icon = empty->icon) {
+      m_emptyView->setIcon(*icon);
+    } else {
+      m_emptyView->setIcon(ImageURL::builtin("magnifying-glass"));
+    }
+  }
+
   if (m_list->empty()) {
     if (auto panel = newModel.actions; panel && panel->dirty) { setActionPanel(*panel); }
 
     if (auto empty = newModel.emptyView) {
-      m_emptyView->setTitle(empty->title);
-      m_emptyView->setDescription(empty->description);
-
-      if (auto icon = empty->icon) {
-        m_emptyView->setIcon(*icon);
-      } else {
-        m_emptyView->setIcon(ImageURL::builtin("magnifying-glass"));
-      }
-
       m_content->setCurrentWidget(m_emptyView);
     } else {
       m_content->setCurrentWidget(m_list);
@@ -147,6 +149,12 @@ void ExtensionGridComponent::textChanged(const QString &text) {
     _shouldResetSelection = !_model.filtering;
 
     notify(*handler, {text});
+  }
+
+  if (m_list->empty()) {
+    if (_model.emptyView) { m_content->setCurrentWidget(m_emptyView); }
+  } else {
+    m_content->setCurrentWidget(m_list);
   }
 }
 
