@@ -3,6 +3,7 @@
   <qresource prefix="/contribs">
     <file alias="ArjixWasTaken">contribs/ArjixWasTaken.png</file>
     <file alias="aurelien-brabant">contribs/aurelien-brabant.png</file>
+    <file alias="chmanie">contribs/chmanie.png</file>
     <file alias="cilginc">contribs/cilginc.png</file>
     <file alias="dagimg-dot">contribs/dagimg-dot.png</file>
     <file alias="Damnjelly">contribs/Damnjelly.png</file>
