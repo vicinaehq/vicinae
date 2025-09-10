@@ -31,6 +31,7 @@ bool GridView::inputFilter(QKeyEvent *event) {
     case Qt::Key_Right:
       return m_grid->selectRight();
     case Qt::Key_Return:
+    case Qt::Key_Enter:
       m_grid->activateCurrentSelection();
       return true;
     }
