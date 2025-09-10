@@ -163,6 +163,7 @@ protected:
         case Qt::Key_Down:
           return m_list->selectDown();
         case Qt::Key_Return:
+        case Qt::Key_Enter:
           m_list->activateCurrentSelection();
           return true;
         case Qt::Key_Escape:
