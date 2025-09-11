@@ -73,17 +73,19 @@ void FileIndexerDatabase::deleteIndexedFiles(const std::vector<fs::path> &paths)
     return;
   }
 
-  QSqlQuery query(m_db);
+  {
+    QSqlQuery query(m_db);
 
-  query.prepare("DELETE FROM indexed_file WHERE path = :path");
+    query.prepare("DELETE FROM indexed_file WHERE path = :path");
 
-  for (const auto &path : paths) {
-    query.addBindValue(path.c_str());
+    for (const auto &path : paths) {
+      query.addBindValue(path.c_str());
 
-    if (!query.exec()) {
-      qCritical() << "Failed to delete indexed file" << path.c_str();
-      m_db.rollback();
-      return;
+      if (!query.exec()) {
+        qCritical() << "Failed to delete indexed file" << path.c_str();
+        m_db.rollback();
+        return;
+      }
     }
   }
 
@@ -264,14 +266,16 @@ std::vector<fs::path> FileIndexerDatabase::search(std::string_view searchQuery,
 }
 
 void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &paths) {
-  QSqlQuery query(m_db);
 
   if (!m_db.transaction()) {
     qWarning() << "Failed to start batch insert transaction" << m_db.lastError();
     return;
   }
 
-  query.prepare(R"(
+  {
+    QSqlQuery query(m_db);
+
+    query.prepare(R"(
     INSERT INTO 
 	  	indexed_file (path, parent_path, name, last_modified_at, relevancy_score) 
 	VALUES 
@@ -279,32 +283,33 @@ void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &p
 	ON CONFLICT (path) DO UPDATE SET last_modified_at = :last_modified_at
   )");
 
-  std::error_code ec;
-  RelevancyScorer scorer;
-  double score = 1.0;
+    std::error_code ec;
+    RelevancyScorer scorer;
+    double score = 1.0;
 
-  for (const auto &path : paths) {
-    if (auto lastModified = fs::last_write_time(path, ec); !ec) {
-      using namespace std::chrono;
-      auto sctp = clock_cast<system_clock>(lastModified);
-      long long epoch = duration_cast<seconds>(sctp.time_since_epoch()).count();
+    for (const auto &path : paths) {
+      if (auto lastModified = fs::last_write_time(path, ec); !ec) {
+        using namespace std::chrono;
+        auto sctp = clock_cast<system_clock>(lastModified);
+        long long epoch = duration_cast<seconds>(sctp.time_since_epoch()).count();
 
-      query.bindValue(":last_modified_at", epoch);
-      score = scorer.computeScore(path, lastModified);
-    } else {
-      query.bindValue(":last_modified_at", QVariant());
-      score = scorer.computeScore(path, std::nullopt);
-    }
+        query.bindValue(":last_modified_at", epoch);
+        score = scorer.computeScore(path, lastModified);
+      } else {
+        query.bindValue(":last_modified_at", QVariant());
+        score = scorer.computeScore(path, std::nullopt);
+      }
 
-    query.bindValue(":path", path.c_str());
-    query.bindValue(":parent_path", path.parent_path().c_str());
-    query.bindValue(":name", path.filename().c_str());
-    query.bindValue(":relevancy_score", score);
+      query.bindValue(":path", path.c_str());
+      query.bindValue(":parent_path", path.parent_path().c_str());
+      query.bindValue(":name", path.filename().c_str());
+      query.bindValue(":relevancy_score", score);
 
-    if (!query.exec()) {
-      qCritical() << "Failed to insert file in index" << path << query.lastError();
-      m_db.rollback();
-      return;
+      if (!query.exec()) {
+        qCritical() << "Failed to insert file in index" << path << query.lastError();
+        m_db.rollback();
+        return;
+      }
     }
   }
 
