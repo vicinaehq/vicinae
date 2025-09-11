@@ -106,7 +106,8 @@ void FileSystemWalker::walk(const fs::path &root, const WalkCallback &callback) 
   std::error_code ec;
 
   if (!fs::is_directory(root, ec)) {
-    qWarning() << "FileSystemWalker needs to be passed a directory as its root entrypoint";
+    qWarning() << "FileSystemWalker needs to be passed a readable directory as its root entrypoint"
+               << (ec ? ec.message().c_str() : "");
     return;
   }
 
