@@ -8,10 +8,13 @@
 let
   cfg = config.services.vicinae;
   vicinaePkg = self.outputs.packages.${pkgs.system}.default;
-in {
+in
+{
 
   options.services.vicinae = {
-    enable = lib.mkEnableOption "vicinae launcher daemon" // {default = false;};
+    enable = lib.mkEnableOption "vicinae launcher daemon" // {
+      default = false;
+    };
 
     package = lib.mkOption {
       type = lib.types.package;
@@ -31,17 +34,60 @@ in {
       default = true;
       description = "If vicinae should use the layer shell";
     };
+
+    themes = lib.mkOption {
+      default = { };
+      description = ''
+        Theme settings to add to the themes folder in `~/.config/vicinae/themes`. 
+        The attribute name of the theme will be the name of theme json file, 
+        e.g. `base16-default-dark` will be `base16-default-dark.json`.
+      '';
+      example =
+        lib.literalExpression # nix
+          ''
+            {
+              base16-default-dark = {
+                version = "1.0.0";
+                appearance = "dark";
+                icon = /path/to/icon.png;
+                name = "base16 default dark";
+                description = "base16 default dark by Chris Kempson";
+                palette = {
+                  background = "#181818";
+                  foreground = "#d8d8d8";
+                  blue = "#7cafc2";
+                  green = "#a3be8c";
+                  magenta = "#ba8baf";
+                  orange = "#dc9656";
+                  purple = "#a16946";
+                  red = "#ab4642";
+                  yellow = "#f7ca88";
+                  cyan = "#86c1b9";
+                };
+              };
+            }
+          '';
+      type = lib.types.attrsOf lib.types.attrs;
+    };
   };
+
   config = lib.mkIf cfg.enable {
-    home.packages = [cfg.package];
+    home.packages = [ cfg.package ];
+
+    xdg.configFile = lib.mapAttrs' (
+      name: theme:
+      lib.nameValuePair "vicinae/themes/${name}.json" {
+        text = builtins.toJSON theme;
+      }
+    ) cfg.themes;
 
     systemd.user.services.vicinae = {
       Unit = {
         Description = "Vicinae server daemon";
-        Documentation = ["https://docs.vicinae.com"];
-        After = ["graphical-session.target"];
-        PartOf = ["graphical-session.target"];
-        BindsTo = ["graphical-session.target"];
+        Documentation = [ "https://docs.vicinae.com" ];
+        After = [ "graphical-session.target" ];
+        PartOf = [ "graphical-session.target" ];
+        BindsTo = [ "graphical-session.target" ];
       };
       Service = {
         EnvironmentFile = pkgs.writeText "vicinae-env" ''
@@ -54,7 +100,7 @@ in {
         KillMode = "process";
       };
       Install = lib.mkIf cfg.autoStart {
-        WantedBy = ["graphical-session.target"];
+        WantedBy = [ "graphical-session.target" ];
       };
     };
   };

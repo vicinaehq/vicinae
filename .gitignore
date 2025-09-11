@@ -7,6 +7,7 @@ extension-manager/runtime/node_modules
 /.idea
 /vgcore*
 .env
+.direnv
 
 vicinae/assets/extension-runtime.js
 
