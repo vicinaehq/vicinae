@@ -38,6 +38,7 @@ void IndexerScanner::scan(const std::filesystem::path &root) {
   std::vector<fs::path> batchedIndex;
   FileSystemWalker walker;
 
+  walker.setVerbose();
   walker.walk(root, [&](const fs::directory_entry &entry) {
     batchedIndex.emplace_back(entry);
 
@@ -63,7 +64,7 @@ void IndexerScanner::run() {
 
     const Scan &sc = *expected;
 
-    qDebug() << "IndexerScanner got new scan for" << sc.path.c_str();
+    qInfo() << "Processing a full filesystem scan for path" << sc.path.c_str();
 
     auto result = m_db->createScan(sc.path, sc.type);
 
@@ -79,6 +80,7 @@ void IndexerScanner::run() {
 
     try {
       scan(sc.path);
+      qInfo() << "Full scan of path" << sc.path.c_str() << "finished successfully";
       m_db->updateScanStatus(scanRecord.id, FileIndexerDatabase::ScanStatus::Finished);
     } catch (const std::exception &error) {
       qCritical() << "Caught exception during fullscan" << error.what();

@@ -19,7 +19,6 @@
 #include <QSqlError>
 #include <qthreadpool.h>
 #include <ranges>
-#include <thread>
 #include <unistd.h>
 
 namespace fs = std::filesystem;
@@ -49,9 +48,7 @@ void FileIndexer::start() {
   // this is our first scan
   if (!lastScan) {
     qInfo() << "This is our first startup, enqueuing a full scan...";
-    for (const auto &entrypoint : m_entrypoints) {
-      m_dispatcher.enqueue({.type = ScanType::Full, .path = entrypoint.root});
-    }
+    startFullscan();
     return;
   }
 
