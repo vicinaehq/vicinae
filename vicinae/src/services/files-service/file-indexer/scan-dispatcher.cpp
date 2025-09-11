@@ -36,21 +36,9 @@ int ScanDispatcher::enqueue(const Scan &scan) {
   return scanId;
 }
 
-void ScanDispatcher::interrupt(Predicate predicate) {
-  // TODO: Wait for all scanners simultaneously
-  {
-    std::scoped_lock l(m_scannerMapMtx);
-
-    for (auto &[id, element] : m_scannerMap) {
-      if (predicate(element.scan)) {
-        element.scanner->interrupt();
-        element.scanner->join();
-      }
-    }
-  }
-}
-
 ScanDispatcher::ScanDispatcher() {
+  m_running = true;
+
   m_collectorThread = std::thread([this]() {
     while (true) {
       std::unique_lock lock(m_collectorQueueMtx);
@@ -74,7 +62,20 @@ ScanDispatcher::ScanDispatcher() {
 }
 
 ScanDispatcher::~ScanDispatcher() {
-  interrupt([](const Scan &) { return true; });
+  m_running = false;
+
+  {
+    std::scoped_lock l(m_scannerMapMtx);
+
+    for (auto& [id, element]: m_scannerMap) {
+      {
+        element.scanner->interrupt();
+        element.scanner->join();
+      }
+    }
+
+    m_scannerMap.clear();
+  }
 
   m_collectorCv.notify_one();
   m_collectorThread.join();

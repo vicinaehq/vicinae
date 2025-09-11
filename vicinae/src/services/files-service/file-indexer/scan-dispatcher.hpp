@@ -28,9 +28,4 @@ public:
   ScanDispatcher();
   ~ScanDispatcher();
   int enqueue(const Scan &scan);
-
-  bool contains(const Scan &scan);
-
-  using Predicate = std::function<bool(const Scan &)>;
-  void interrupt(Predicate predicate);
 };
