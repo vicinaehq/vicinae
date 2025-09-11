@@ -15,13 +15,6 @@ public:
 };
 
 class FileSystemWalker {
-  std::vector<std::string> m_ignoreFiles = {".gitignore"};
-  bool m_recursive = true;
-  bool m_ignoreHiddenFiles = false;
-  std::optional<size_t> m_maxDepth;
-
-  bool isIgnored(const std::filesystem::path &path) const;
-
 public:
   using WalkCallback = std::function<void(const std::filesystem::directory_entry &path)>;
 
@@ -48,8 +41,18 @@ public:
    * Do not walk into files and directories that have a leading '.'.
    */
   void setIgnoreHiddenPaths(bool value);
-
+  void setVerbose(bool value = true);
   void setRecursive(bool value);
 
   void walk(const std::filesystem::path &path, const WalkCallback &fn);
+
+private:
+  // we don't use ignore files by default
+  std::vector<std::string> m_ignoreFiles = {};
+  bool m_recursive = true;
+  bool m_ignoreHiddenFiles = false;
+  std::optional<size_t> m_maxDepth;
+  bool m_verbose = false;
+
+  bool isIgnored(const std::filesystem::path &path) const;
 };

@@ -1,5 +1,6 @@
 #include "services/files-service/file-indexer/filesystem-walker.hpp"
 #include "utils/utils.hpp"
+#include <chrono>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
@@ -72,7 +73,11 @@ void FileSystemWalker::setMaxDepth(std::optional<size_t> maxDepth) { m_maxDepth 
 
 void FileSystemWalker::setIgnoreHiddenPaths(bool value) { m_ignoreHiddenFiles = value; }
 
+void FileSystemWalker::setVerbose(bool value) { m_verbose = value; }
+
 bool FileSystemWalker::isIgnored(const std::filesystem::path &path) const {
+  if (m_ignoreFiles.empty()) return false;
+
   fs::path p = path.parent_path();
   std::error_code ec;
 
@@ -91,38 +96,73 @@ bool FileSystemWalker::isIgnored(const std::filesystem::path &path) const {
 }
 
 void FileSystemWalker::walk(const fs::path &root, const WalkCallback &callback) {
+  using namespace std::chrono;
+
+  auto start = high_resolution_clock::now();
   std::stack<fs::path> dirStack;
   size_t rootDepth = std::distance(root.begin(), root.end());
+  size_t dirCount = 0;
+  size_t fileCount = 0;
+  std::error_code ec;
+
+  if (!fs::is_directory(root, ec)) {
+    qWarning() << "FileSystemWalker needs to be passed a directory as its root entrypoint";
+    return;
+  }
 
   dirStack.push(root);
 
   while (!dirStack.empty()) {
     auto path = dirStack.top();
-    std::error_code ec;
 
     dirStack.pop();
 
     for (const auto &entry : fs::directory_iterator(path, ec)) {
       if (ec) {
-        qDebug() << "walk error" << ec.message();
+        qWarning() << "walk error" << ec.message();
         continue;
       }
-      if (entry.is_symlink(ec)) continue;
+      if (entry.is_symlink(ec)) { continue; }
 
       auto path = entry.path();
 
-      if (m_ignoreHiddenFiles && isHiddenPath(path)) continue;
+      if (m_ignoreHiddenFiles && isHiddenPath(path)) {
+        if (m_verbose) { qInfo() << "FileSystemWalker: ignoring hidden path" << path.c_str(); }
+        continue;
+      }
+
       if (std::ranges::contains(EXCLUDED_PATHS, path)) { continue; }
       if (std::ranges::contains(EXCLUDED_FILENAMES, path.filename())) { continue; }
-      if (isIgnored(path)) { continue; }
+      if (isIgnored(path)) {
+        if (m_verbose) { qInfo() << "Indexing: ignoring git-ignored path" << path.c_str(); }
+        continue;
+      }
 
-      if (m_recursive && entry.is_directory(ec)) {
+      bool isDir = entry.is_directory(ec);
+
+      if (isDir) {
+        ++dirCount;
+      } else {
+        ++fileCount;
+      }
+
+      if (m_recursive && isDir) {
         size_t depth = std::distance(path.begin(), path.end()) - rootDepth;
+        bool isDepthLimited = m_maxDepth && depth > *m_maxDepth;
 
-        if (!(m_maxDepth && depth > *m_maxDepth)) { dirStack.push(entry); }
+        if (!isDepthLimited) dirStack.push(entry);
       }
 
       callback(entry);
     }
   }
+
+  double duration = duration_cast<seconds>(high_resolution_clock::now() - start).count();
+
+  qInfo().noquote()
+      << QString("Done walking file tree at %1. Processed %2 directories and %3 files in %4 seconds.")
+             .arg(root.c_str())
+             .arg(dirCount)
+             .arg(fileCount)
+             .arg(duration);
 }
