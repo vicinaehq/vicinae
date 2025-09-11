@@ -17,9 +17,8 @@ namespace fs = std::filesystem;
  * pseudo filesystems such as /run or /proc.
  * Contextual exclusions (using gitignore-like semantics) are handled separately.
  */
-static const std::vector<fs::path> EXCLUDED_PATHS = {"/sys", "/run",     "/proc", "/tmp",
-
-                                                     "/mnt", "/var/tmp", "/efi",  "/dev"};
+static const std::vector<fs::path> EXCLUDED_PATHS = {"/sys",     "/run", "/proc", "/tmp",
+                                                     "/var/tmp", "/efi", "/dev"};
 
 /**
  * Filenames that can always be ignored. If any file names are to be added here, it's important to make sure
