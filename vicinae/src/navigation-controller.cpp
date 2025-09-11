@@ -18,6 +18,19 @@ void NavigationController::setNavigationTitle(const QString &navigationTitle, co
   }
 }
 
+void NavigationController::setInstantDismiss(bool value) { m_instantDismiss = value; }
+
+void NavigationController::goBack(const GoBackOptions &opts) {
+  if (!opts.ignoreInstantDismiss && m_instantDismiss) return closeWindow();
+
+  if (isRootSearch()) {
+    if (searchText().isEmpty()) return closeWindow();
+    return clearSearchText();
+  }
+
+  popCurrentView();
+}
+
 void NavigationController::setSearchText(const QString &text, const BaseView *caller) {
   if (auto state = findViewState(VALUE_OR(caller, topView()))) {
     state->searchText = text;
@@ -130,12 +143,19 @@ void NavigationController::setNavigationSuffixIcon(const std::optional<ImageURL>
 }
 
 void NavigationController::popCurrentView() {
-  if (m_views.size() < 2) return;
+  if (isRootSearch()) return;
 
   auto &state = m_views.back();
 
   emit viewPoped(state->sender);
+
   m_views.pop_back();
+
+  // always turn off instant dismiss if we are back to the root search
+  // for any reason. This typically happens when `goToBack` is called with
+  // `ignoreInstantDismiss` set to true and we pop back to the root.
+  // This is the default behaviour of hitting backspace in an empty search bar.
+  if (isRootSearch()) { m_instantDismiss = false; }
 
   auto &next = m_views.back();
 
@@ -205,24 +225,35 @@ void NavigationController::setPopToRootOnClose(bool value) { m_popToRootOnClose 
 void NavigationController::closeWindow(const CloseWindowOptions &settings) {
   if (!m_windowOpened) return;
 
+  PopToRootOptions opts = {.clearSearch = settings.clearRootSearch};
+
   auto resolveApplicablePopToRoot = [&]() {
     if (settings.popToRootType == PopToRootType::Default)
       return m_popToRootOnClose ? PopToRootType::Immediate : PopToRootType::Suspended;
     return settings.popToRootType;
   };
 
+  PopToRootType popToRootType = resolveApplicablePopToRoot();
+
+  if (m_instantDismiss) {
+    qDebug() << "Consumed instantDismiss flag";
+    popToRootType = PopToRootType::Immediate;
+    opts.clearSearch = true;
+    m_instantDismiss = false;
+  }
+
   m_windowOpened = false;
   emit windowVisiblityChanged(false);
 
-  switch (resolveApplicablePopToRoot()) {
+  switch (popToRootType) {
   case PopToRootType::Immediate:
-    popToRoot({.clearSearch = settings.clearRootSearch});
+    popToRoot(opts);
     break;
   default:
     break;
   }
 
-  if (isRootSearch() && settings.clearRootSearch) clearSearchText();
+  if (isRootSearch() && opts.clearSearch) clearSearchText();
 }
 
 void NavigationController::toggleWindow() {
