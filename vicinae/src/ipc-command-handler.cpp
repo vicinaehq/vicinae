@@ -139,6 +139,7 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
             m_ctx.navigation->setSearchText(text);
           }
 
+          m_ctx.navigation->setInstantDismiss();
           m_ctx.navigation->showWindow();
 
           break;

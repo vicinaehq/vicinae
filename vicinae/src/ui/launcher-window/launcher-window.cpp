@@ -221,23 +221,9 @@ bool LauncherWindow::event(QEvent *event) {
       return true;
     }
 
-    switch (keyEvent->key()) {
-    case Qt::Key_Escape: {
-      if (m_ctx.navigation->viewStackSize() == 1) {
-        if (m_ctx.navigation->searchText().isEmpty()) {
-          m_ctx.navigation->closeWindow();
-          return true;
-        }
-
-        m_ctx.navigation->clearSearchText();
-        return true;
-      }
-
-      m_ctx.navigation->popCurrentView();
+    if (keyEvent->key() == Qt::Key_Escape && !keyEvent->modifiers().toInt()) {
+      m_ctx.navigation->goBack();
       return true;
-    }
-    default:
-      break;
     }
 
     if (AbstractAction *action = m_ctx.navigation->findBoundAction(keyEvent)) {
