@@ -31,7 +31,7 @@ enum class PopToRootType { Default, Immediate, Suspended };
 
 struct CloseWindowOptions {
   PopToRootType popToRootType = PopToRootType::Default;
-  bool clearRootSearch = true; // has no effect if we do not pop to root
+  bool clearRootSearch = false; // has no effect if we do not pop to root
 };
 
 struct PopToRootOptions {
@@ -158,6 +158,10 @@ struct CompleterState {
   CompleterState(const ArgumentList &args, const ImageURL &icon) : args(args), icon(icon) {}
 };
 
+struct GoBackOptions {
+  bool ignoreInstantDismiss = false;
+};
+
 class NavigationController : public QObject, NonCopyable {
   Q_OBJECT
 
@@ -186,6 +190,7 @@ public:
 
   bool m_isPanelOpened = false;
   bool m_popToRootOnClose = false;
+  bool m_instantDismiss = false;
 
   void closeWindow(const CloseWindowOptions &settings = {});
   void showWindow();
@@ -193,6 +198,16 @@ public:
   bool isWindowOpened() const;
 
   void setPopToRootOnClose(bool value);
+
+  /**
+   * If the instant dismiss flag is set to `true`, the next call to `goBack` or `closeWindow` will close the
+   * window and pop to root regardless of the state of the navigation stack.
+   *
+   * This is typically set when opening a command using an external mechanism such as a deeplink.
+   *
+   * This flag automatically resets to false when consumed.
+   */
+  void setInstantDismiss(bool value = true);
 
   void setSearchPlaceholderText(const QString &text, const BaseView *caller = nullptr);
   void setSearchText(const QString &text, const BaseView *caller = nullptr);
@@ -240,6 +255,15 @@ public:
   void setStatusBarVisibility(bool value, const BaseView *caller = nullptr);
 
   void showHud(const QString &title, const std::optional<ImageURL> &icon = std::nullopt);
+
+  /**
+   * Go back to previous navigation state.
+   * If the `instantDismiss` flag is set, this will close the window and pop to root
+   * no matter what and then clear the flag.
+   * The flag can be completely bypassed by passing `ignoreInstantDismiss`.
+   * See `setInstantDismiss`
+   */
+  void goBack(const GoBackOptions &opts = {});
 
   void popCurrentView();
   void pushView(BaseView *view);

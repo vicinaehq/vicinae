@@ -7,13 +7,14 @@
 #include "proto/oauth.pb.h"
 #include "services/oauth/oauth-service.hpp"
 #include "theme.hpp"
-#include "ui/dialog/dialog.hpp"
+#include "navigation-controller.hpp"
 #include "ui/icon-button/icon-button.hpp"
-#include "ui/button/button.hpp"
 #include "ui/overlay/overlay.hpp"
 #include "ui/toast/toast.hpp"
-#include "ui/typography/typography.hpp"
 #include "utils/layout.hpp"
+#include "service-registry.hpp"
+#include "services/toast/toast-service.hpp"
+#include "services/app-service/app-service.hpp"
 #include <qcoreevent.h>
 #include <qevent.h>
 #include <qfuture.h>
