@@ -21,9 +21,11 @@ void WriterWorker::run() {
       batchQueue.clear();
     }
 
+    m_isWorking = true;
     for (const auto &paths : batch) {
       batchWrite(paths);
     }
+    m_isWorking = false;
   }
 }
 

@@ -2,6 +2,7 @@
 #include "services/files-service/file-indexer/file-indexer-db.hpp"
 #include "services/files-service/file-indexer/filesystem-walker.hpp"
 #include <qlogging.h>
+#include <thread>
 
 namespace fs = std::filesystem;
 
@@ -77,9 +78,14 @@ void IndexerScanner::run() {
     auto scanRecord = result.value();
 
     m_db->updateScanStatus(scanRecord.id, FileIndexerDatabase::ScanStatus::Started);
-
     try {
       scan(sc.path);
+
+      while (m_writerWorker->isWorking()) {
+        qDebug() << "Writer worker is busy, waiting before marking scan as finished...";
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+      }
+
       qInfo() << "Full scan of path" << sc.path.c_str() << "finished successfully";
       m_db->updateScanStatus(scanRecord.id, FileIndexerDatabase::ScanStatus::Finished);
     } catch (const std::exception &error) {
