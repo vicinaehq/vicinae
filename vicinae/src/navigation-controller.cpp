@@ -225,8 +225,6 @@ void NavigationController::setPopToRootOnClose(bool value) { m_popToRootOnClose 
 void NavigationController::closeWindow(const CloseWindowOptions &settings) {
   if (!m_windowOpened) return;
 
-  PopToRootOptions opts = {.clearSearch = settings.clearRootSearch};
-
   auto resolveApplicablePopToRoot = [&]() {
     if (settings.popToRootType == PopToRootType::Default)
       return m_popToRootOnClose ? PopToRootType::Immediate : PopToRootType::Suspended;
@@ -238,7 +236,6 @@ void NavigationController::closeWindow(const CloseWindowOptions &settings) {
   if (m_instantDismiss) {
     qDebug() << "Consumed instantDismiss flag";
     popToRootType = PopToRootType::Immediate;
-    opts.clearSearch = true;
     m_instantDismiss = false;
   }
 
@@ -247,13 +244,13 @@ void NavigationController::closeWindow(const CloseWindowOptions &settings) {
 
   switch (popToRootType) {
   case PopToRootType::Immediate:
-    popToRoot(opts);
+    popToRoot({.clearSearch = true});
     break;
   default:
     break;
   }
 
-  if (isRootSearch() && opts.clearSearch) clearSearchText();
+  if (isRootSearch() && settings.clearRootSearch) clearSearchText();
 }
 
 void NavigationController::toggleWindow() {
