@@ -478,29 +478,7 @@ bool ClipboardService::copySelection(const ClipboardSelection &selection,
   QMimeData *mimeData = new QMimeData;
 
   for (const auto &offer : selection.offers) {
-    // Handle images specially - Qt expects them to be set as QImage objects
-    if (offer.mimeType.startsWith("image/")) {
-      QBuffer buffer;
-      buffer.setData(offer.data);
-      buffer.open(QIODevice::ReadOnly);
-
-      QImageReader reader(&buffer);
-      QImage image = reader.read();
-
-      if (!image.isNull()) {
-        // Set the image data properly for Qt applications
-        mimeData->setImageData(image);
-        // Also set raw data for applications that expect it
-        mimeData->setData(offer.mimeType, offer.data);
-      } else {
-        qWarning() << "Failed to load image data for MIME type:" << offer.mimeType;
-        // Fallback to raw data only
-        mimeData->setData(offer.mimeType, offer.data);
-      }
-    } else {
-      // Handle non-image data normally
-      mimeData->setData(offer.mimeType, offer.data);
-    }
+    mimeData->setData(offer.mimeType, offer.data);
   }
 
   return copyQMimeData(mimeData, options);
