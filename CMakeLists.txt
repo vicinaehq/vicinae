@@ -8,7 +8,6 @@ project(${PROJECT_NAME} VERSION 1.0.0 LANGUAGES C CXX)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
-set(COMMON_PROTO_DIR ${CMAKE_CURRENT_BINARY_DIR}/_deps/protobuf-src/src)
 
 # Viciane build configuration options
 
@@ -103,6 +102,7 @@ endif()
 if (NOT USE_SYSTEM_PROTOBUF)
 	include(Protobuf)
 	checkout_protobuf()
+	set(COMMON_PROTO_DIR ${CMAKE_CURRENT_BINARY_DIR}/_deps/protobuf-src/src)
 endif()
 
 set(CMAKE_FIND_PACKAGE_PREFER_CONFIG TRUE)
