@@ -6,8 +6,12 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 project(${PROJECT_NAME} VERSION 1.0.0 LANGUAGES C CXX)
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+if (QT_DIR)
+	set(CMAKE_PREFIX_PATH ${QT_DIR} ${CMAKE_PREFIX_PATH})
+	message(STATUS "Using QT installation at ${QT_DIR}")
+endif()
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 # Viciane build configuration options
 
@@ -30,6 +34,10 @@ option(LIBQALCULATE_BACKEND "Compile in support for the Qalculate! calculator ba
 
 if (APPLE)
 	set(WAYLAND_LAYER_SHELL OFF)
+endif()
+
+if (USE_SYSTEM_PROTOBUF)
+	set(USE_SYSTEM_ABSEIL ON)
 endif()
 
 # End of Vicinae build configuration options

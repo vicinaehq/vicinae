@@ -31,9 +31,6 @@ configure_file(resources.qrc.in resources.qrc)
 #    )
 #endif()
 
-
-
-
 if (WAYLAND_LAYER_SHELL)
 	message(STATUS "Compiling with wayland layer shell support (for wlroots-like compositors)")
 	#find_package(Qt6 REQUIRED COMPONENTS WaylandClient)
@@ -610,7 +607,7 @@ if (UNIX AND NOT APPLE)
 		src/services/window-manager/gnome/gnome-window.cpp
 		src/services/window-manager/gnome/gnome-workspace.cpp
 		src/services/window-manager/gnome/gnome-listener.cpp
-		#src/services/window-manager/wayland/wayland.cpp
+		src/services/window-manager/wayland/wayland.cpp
 
 		# Hyprland
 		# End Hyprland
