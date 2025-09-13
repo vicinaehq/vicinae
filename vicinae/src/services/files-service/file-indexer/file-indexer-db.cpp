@@ -133,9 +133,13 @@ tl::expected<FileIndexerDatabase::ScanRecord, QString>
 FileIndexerDatabase::createScan(const std::filesystem::path &path, ScanType type) {
   QSqlQuery query(m_db);
 
-  query.prepare("INSERT INTO scan_history (entrypoint, type, status) VALUES (:entrypoint, :type, :status) "
-                "RETURNING id, status, "
-                "created_at, entrypoint");
+  query.prepare(R"(
+  	INSERT INTO 
+		scan_history (created_at, entrypoint, type, status) 
+	VALUES 
+		(CAST(strftime('%s') as INT), :entrypoint, :type, :status)
+    RETURNING id, status, created_at, entrypoint
+	)");
   query.bindValue(":entrypoint", path.c_str());
   query.bindValue(":status", static_cast<quint8>(ScanStatus::Pending));
   query.bindValue(":type", static_cast<quint8>(type));

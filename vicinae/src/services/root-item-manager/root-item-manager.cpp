@@ -796,8 +796,8 @@ bool RootItemManager::registerVisit(const QString &id) {
 		SET 
 			visit_count = visit_count + 1,
 			rank_visit_count = rank_visit_count + 1,
-			last_visited_at = unixepoch(),
-			rank_last_visited_at = unixepoch()
+			last_visited_at = CAST(strftime('%s') as INT),
+			rank_last_visited_at = CAST(strftime('%s') as INT)
 		WHERE id = :id
 		RETURNING rank_visit_count, rank_last_visited_at, visit_count, last_visited_at
 	)");

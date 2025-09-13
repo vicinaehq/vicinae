@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS scan_history (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		status INTEGER NOT NULL,
-		created_at INT DEFAULT (unixepoch()),
+		created_at INT NOT NULL,
 		entrypoint TEXT NOT NULL,
 		error TEXT,
 		type INT NOT NULL, -- full/incremental
