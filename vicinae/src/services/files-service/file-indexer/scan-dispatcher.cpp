@@ -45,7 +45,7 @@ ScanDispatcher::ScanDispatcher() {
       std::unique_lock lock(m_collectorQueueMtx);
       m_collectorCv.wait(lock, [&]() { return !m_collectorQueue.empty() || !m_running; });
 
-      if (!m_running) break;
+      if (!m_running && m_collectorQueue.empty()) break;
 
       int id;
       {
@@ -62,32 +62,32 @@ ScanDispatcher::ScanDispatcher() {
   });
 }
 
-void ScanDispatcher::interrupt(int id) {
+bool ScanDispatcher::interrupt(int id) {
   {
     std::scoped_lock l(m_scannerMapMtx);
     auto element = m_scannerMap.find(id);
-    if (element == m_scannerMap.end()) throw std::runtime_error("Scanner not found");
+    if (element == m_scannerMap.end()) return false;
 
     element->second.scanner->interrupt();
   }
+  return true;
 }
 
-ScanDispatcher::~ScanDispatcher() {
-  m_running = false;
-
+void ScanDispatcher::interruptAll() {
   {
     std::scoped_lock l(m_scannerMapMtx);
 
     for (auto& [id, element]: m_scannerMap) {
-      {
-        element.scanner->interrupt();
-        element.scanner->join();
-      }
+      element.scanner->interrupt();
     }
-
-    m_scannerMap.clear();
   }
+}
 
+ScanDispatcher::~ScanDispatcher() {
+  interruptAll();
+
+  m_running = false;
   m_collectorCv.notify_one();
+
   m_collectorThread.join();
 }

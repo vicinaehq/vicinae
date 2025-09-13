@@ -28,5 +28,6 @@ public:
   ScanDispatcher();
   ~ScanDispatcher();
   int enqueue(const Scan &scan);
-  void interrupt(int id);
+  bool interrupt(int id);
+  void interruptAll();
 };
