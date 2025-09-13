@@ -4,6 +4,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <stdexcept>
 
 void ScanDispatcher::handleFinishedScan(int id, ScanStatus status) {
   {
@@ -59,6 +60,16 @@ ScanDispatcher::ScanDispatcher() {
       }
     }
   });
+}
+
+void ScanDispatcher::interrupt(int id) {
+  {
+    std::scoped_lock l(m_scannerMapMtx);
+    auto element = m_scannerMap.find(id);
+    if (element == m_scannerMap.end()) throw std::runtime_error("Scanner not found");
+
+    element->second.scanner->interrupt();
+  }
 }
 
 ScanDispatcher::~ScanDispatcher() {

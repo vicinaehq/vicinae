@@ -64,8 +64,8 @@ IndexerScanner::IndexerScanner(const Scan &sc, FinishCallback callback) : Abstra
 }
 
 void IndexerScanner::interrupt() {
+  setInterruptFlag();
   // TODO: Actually add signalling
-  AbstractScanner::interrupt();
 }
 
 void IndexerScanner::join() {

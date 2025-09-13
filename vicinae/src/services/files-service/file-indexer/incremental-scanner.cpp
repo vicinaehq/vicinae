@@ -80,8 +80,8 @@ IncrementalScanner::IncrementalScanner(const Scan &sc, FinishCallback callback)
 }
 
 void IncrementalScanner::interrupt() {
+  setInterruptFlag();
   // TODO: Actually add signalling
-  AbstractScanner::interrupt();
 }
 
 void IncrementalScanner::join() { m_scanThread.join(); }
