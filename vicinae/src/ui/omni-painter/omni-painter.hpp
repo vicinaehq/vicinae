@@ -28,7 +28,6 @@ public:
   QColor resolveColor(SemanticColor color) const;
 
   QBrush colorBrush(const ColorLike &color) const;
-  static QColor textColorForBackground(const ColorLike &colorLike);
 
   using QPainter::QPainter;
 };

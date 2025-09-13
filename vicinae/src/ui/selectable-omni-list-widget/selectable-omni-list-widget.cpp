@@ -21,10 +21,8 @@ void SelectableOmniListWidget::paintEvent(QPaintEvent *event) {
     auto &theme = ThemeService::instance().theme();
 
     // selection should always take precedence
-    QColor backgroundColor(isSelected ? theme.colors.mainSelectedBackground
-                                      : theme.colors.mainHoveredBackground);
-
-    backgroundColor.setAlphaF(0.8);
+    QColor backgroundColor(isSelected ? theme.resolveTint(SemanticColor::MainSelectedBackground)
+                                      : theme.resolveTint(SemanticColor::MainHoverBackground));
     painter.fillPath(path, backgroundColor);
   }
 }

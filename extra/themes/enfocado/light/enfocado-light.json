@@ -1,0 +1,25 @@
+{
+    "version": "1.0.0",
+    "appearance": "light",
+    "icon": "../icon.png",
+    "name": "Enfocado Light",
+    "description": "How themes should be.",
+    "palette": {
+        "base00": "#ffffff",
+        "base01": "#f4f4f4",
+        "base02": "#e5e5e5",
+        "base03": "#d6d6d6",
+        "base04": "#c7c7c7",
+        "base05": "#474747",
+        "base06": "#282828",
+        "base07": "#000000",
+        "base08": "#d6000c",
+        "base09": "#c49700",
+        "base0A": "#c49700",
+        "base0B": "#1d9700",
+        "base0C": "#00ad9c",
+        "base0D": "#0064e4",
+        "base0E": "#dd0f9d",
+        "base0F": "#a52c62"
+    }
+}

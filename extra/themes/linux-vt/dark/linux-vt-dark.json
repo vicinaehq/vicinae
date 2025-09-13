@@ -1,0 +1,24 @@
+{
+  "version": "1.0.0",
+  "palette": {
+    "base00": "#000000",
+    "base01": "#333333",
+    "base02": "#444444",
+    "base03": "#555555",
+    "base04": "#888888",
+    "base05": "#AAAAAA",
+    "base06": "#CCCCCC",
+    "base07": "#FFFFFF",
+    "base08": "#AA0000",
+    "base09": "#FF5555",
+    "base0A": "#FFFF55",
+    "base0B": "#00AA00",
+    "base0C": "#00AAAA",
+    "base0D": "#5555FF",
+    "base0E": "#FF55FF",
+    "base0F": "#AA5500"
+  },
+  "name": "Linux VT",
+  "appearance": "dark",
+  "description": "Linux VT theme"
+}

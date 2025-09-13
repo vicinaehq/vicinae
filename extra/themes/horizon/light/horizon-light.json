@@ -1,0 +1,24 @@
+{
+  "version": "1.0.0",
+  "palette": {
+    "base00": "#FDF0ED",
+    "base01": "#FADAD1",
+    "base02": "#F9CBBE",
+    "base03": "#BDB3B1",
+    "base04": "#948C8A",
+    "base05": "#403C3D",
+    "base06": "#302C2D",
+    "base07": "#201C1D",
+    "base08": "#F7939B",
+    "base09": "#F6661E",
+    "base0A": "#FBE0D9",
+    "base0B": "#94E1B0",
+    "base0C": "#DC3318",
+    "base0D": "#DA103F",
+    "base0E": "#1D8991",
+    "base0F": "#E58C92"
+  },
+  "name": "Horizon Light",
+  "appearance": "light",
+  "description": "Horizon Light theme"
+}

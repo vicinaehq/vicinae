@@ -96,8 +96,8 @@ void FilePicker::setupUI() {
   auto &theme = ThemeService::instance().theme();
 
   setDelegate<DefaultFilePickerItemDelegate>();
-  m_button->setBackgroundColor(theme.colors.mainHoveredBackground);
-  m_button->setHoverBackgroundColor(theme.colors.mainSelectedBackground);
+  m_button->setBackgroundColor(theme.resolveTint(SemanticColor::MainHoverBackground));
+  m_button->setHoverBackgroundColor(theme.resolveTint(SemanticColor::MainSelectedBackground));
   m_button->setText("Pick a file");
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(m_button);

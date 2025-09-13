@@ -24,12 +24,14 @@ void GridItemContentWidget::paintEvent(QPaintEvent *event) {
 
   painter.setClipPath(path);
 
-  QColor backgroundColor(theme.colors.mainHoveredBackground);
+  QColor backgroundColor(theme.resolveTint(SemanticColor::MainHoverBackground));
 
   painter.fillPath(path, backgroundColor);
 
   if (m_selected || underMouse()) {
-    QPen pen(m_selected ? theme.colors.text : theme.colors.subtext, 3);
+    QPen pen(m_selected ? theme.resolveTint(SemanticColor::TextPrimary)
+                        : theme.resolveTint(SemanticColor::TextSecondary),
+             3);
     painter.setPen(pen);
   } else {
     painter.setPen(Qt::NoPen);

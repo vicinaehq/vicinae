@@ -551,7 +551,7 @@ class ExtensionSettingsContextLeftPane : public QWidget {
     m_tree->setAlternateBackgroundColor(SemanticColor::MainHoverBackground);
 
     connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this](const ThemeInfo &theme) {
-      m_tree->setAlternateBackgroundColor(theme.colors.mainHoveredBackground);
+      m_tree->setAlternateBackgroundColor(theme.resolveTint(SemanticColor::MainHoverBackground));
     });
 
     connect(m_tree, &OmniTree::selectionUpdated, this, &ExtensionSettingsContextLeftPane::selectionUpdated);

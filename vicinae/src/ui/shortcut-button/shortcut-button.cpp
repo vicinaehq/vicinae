@@ -11,8 +11,9 @@ void ShortcutButton::hoverChanged(bool hovered) {
   auto &theme = ThemeService::instance().theme();
 
   _shortcut_indicator->setBackgroundColor(hovered ? SemanticColor::SecondaryBackground
-                                                  : SemanticColor::ButtonSecondary);
-  setBackgroundColor(hovered ? theme.resolveTint(SemanticColor::ButtonSecondaryHover) : Qt::transparent);
+                                                  : SemanticColor::TertiaryBackground);
+  setBackgroundColor(hovered ? theme.resolveTint(SemanticColor::ButtonSecondaryHover)
+                             : QColor(Qt::transparent));
   update();
 }
 
@@ -20,9 +21,10 @@ void ShortcutButton::resetColor() {
   auto &theme = ThemeService::instance().theme();
 
   _shortcut_indicator->setBackgroundColor(underMouse() ? SemanticColor::SecondaryBackground
-                                                       : SemanticColor::ButtonSecondary);
-  setBackgroundColor(underMouse() ? theme.resolveTint(SemanticColor::ButtonSecondaryHover) : Qt::transparent);
-  setTextColor(theme.colors.text);
+                                                    : SemanticColor::TertiaryBackground);
+  setBackgroundColor(underMouse() ? theme.resolveTint(SemanticColor::ButtonSecondaryHover)
+                               : QColor(Qt::transparent));
+  setTextColor(theme.resolveTint(SemanticColor::TextPrimary));
 }
 
 void ShortcutButton::setText(const QString &text) {
@@ -31,7 +33,7 @@ void ShortcutButton::setText(const QString &text) {
 }
 
 void ShortcutButton::setTextColor(const QColor &color) {
-  _label->setStyleSheet(QString("color: %1").arg(color.name()));
+  _label->setColor(color);
   updateGeometry();
 }
 

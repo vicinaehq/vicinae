@@ -1,0 +1,25 @@
+{
+    "version": "1.0.0",
+    "appearance": "dark",
+    "icon": "../icon.svg",
+    "name": "Github Dark Colorblind",
+    "description": "The official Github Dark Colorblind color palette",
+    "palette": {
+        "base00": "#0d1117",
+        "base01": "#161b22",
+        "base02": "#21262d",
+        "base03": "#30363d",
+        "base04": "#8b949e",
+        "base05": "#b3b1ad",
+        "base06": "#c9d1d9",
+        "base07": "#f0f6fc",
+        "base08": "#ff7b72",
+        "base09": "#d29922",
+        "base0A": "#d29922",
+        "base0B": "#3fb950",
+        "base0C": "#39c5cf",
+        "base0D": "#58a6ff",
+        "base0E": "#bc8cff",
+        "base0F": "#bb8009"
+    }
+}

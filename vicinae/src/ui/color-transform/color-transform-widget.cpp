@@ -5,7 +5,7 @@ void ColorTransformWidget::setColor(const QString &base, QColor color) {
   auto circle = new ColorCircle({60, 60});
 
   circle->setColor(color);
-  circle->setStroke("#BBB", 3);
+  circle->setStroke(SemanticColor::Border, 3);
   setBase(base, "color");
   setResult(circle, color.name());
 }

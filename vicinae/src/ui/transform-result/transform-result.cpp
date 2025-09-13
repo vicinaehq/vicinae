@@ -70,7 +70,7 @@ void TransformResult::paintEvent(QPaintEvent *event) {
   auto margins = contentsMargins();
 
   painter.setPen(Qt::NoPen);
-  painter.setBrush(theme.colors.border);
+  painter.setBrush(theme.resolveTint(SemanticColor::Border));
 
   m_base->setFixedSize({midW, availableHeight()});
   m_base->move(0, margins.top());

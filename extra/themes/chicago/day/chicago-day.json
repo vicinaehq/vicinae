@@ -1,0 +1,24 @@
+{
+  "version": "1.0.0",
+  "palette": {
+    "base00": "#e8f0ea",
+    "base01": "#d1e0d7",
+    "base02": "#b9d0c3",
+    "base03": "#8a9a91",
+    "base04": "#4b5a51",
+    "base05": "#364c40",
+    "base06": "#2a3b32",
+    "base07": "#1e2a24",
+    "base08": "#c60c30",
+    "base09": "#f9461c",
+    "base0A": "#968400",
+    "base0B": "#009b3a",
+    "base0C": "#00a1de",
+    "base0D": "#522398",
+    "base0E": "#e27ea6",
+    "base0F": "#62361b"
+  },
+  "name": "Chicago Day",
+  "appearance": "light",
+  "description": "Chicago Day theme"
+}

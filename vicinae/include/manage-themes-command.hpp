@@ -18,12 +18,13 @@
 #include <qobject.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
+#include <qcolor.h>
 #include <ranges>
 #include <sys/socket.h>
 
 class HorizontalColorPaletteWidget : public QWidget {
   std::vector<ColorCircle *> m_colors;
-  QColor m_strokeColor = "#CCCCCC";
+  ColorLike m_strokeColor = SemanticColor::Border;
 
 public:
   HorizontalColorPaletteWidget() {}
@@ -93,9 +94,11 @@ public:
       item->setIcon(ImageURL::builtin("vicinae"));
     }
 
-    std::vector<ColorLike> colors{m_theme.colors.red,     m_theme.colors.blue,   m_theme.colors.green,
-                                  m_theme.colors.magenta, m_theme.colors.purple, m_theme.colors.orange,
-                                  m_theme.colors.text,    m_theme.colors.subtext};
+    std::vector<ColorLike> colors{
+        m_theme.colors.base00, m_theme.colors.base01, m_theme.colors.base02, m_theme.colors.base03,
+        m_theme.colors.base04, m_theme.colors.base05, m_theme.colors.base06, m_theme.colors.base07,
+        m_theme.colors.base08, m_theme.colors.base09, m_theme.colors.base0A, m_theme.colors.base0B,
+        m_theme.colors.base0C, m_theme.colors.base0D, m_theme.colors.base0E, m_theme.colors.base0F};
 
     item->setColors(colors);
   }

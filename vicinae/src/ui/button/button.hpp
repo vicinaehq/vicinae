@@ -9,7 +9,7 @@
 
 class ButtonWidget : public ButtonBase {
 public:
-  enum ButtonColor { Primary, Secondary, Transparent };
+  enum ButtonColor { Primary, Secondary, Destructive, Transparent };
 
   ButtonWidget(QWidget *parent = nullptr);
 

@@ -1,0 +1,25 @@
+{
+	"version": "1.0.0",
+	"appearance": "dark",
+	"icon": "../icon.png",
+	"name": "VS Code Dark",
+	"description": "The official VS Code dark color palette",
+	"palette": {
+	  "base00": "#1E1E1E",
+	  "base01": "#252526",
+	  "base02": "#37373D",
+	  "base03": "#454545",
+	  "base04": "#CCCCCC",
+	  "base05": "#D4D4D4",
+	  "base06": "#F8F8F2",
+	  "base07": "#FFFFFF",
+	  "base08": "#F44747",
+	  "base09": "#CE9178",
+	  "base0A": "#DCDCAA",
+	  "base0B": "#4EC9B0",
+	  "base0C": "#4FC1FF",
+	  "base0D": "#569CD6",
+	  "base0E": "#C586C0",
+	  "base0F": "#B5CEA8"
+	}
+}

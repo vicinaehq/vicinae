@@ -1,15 +1,13 @@
 #pragma once
 #include <filesystem>
+#include <vector>
+#include <variant>
 #include <qapplication.h>
 #include <qcolor.h>
-#include <qfilesystemwatcher.h>
 #include <qjsondocument.h>
 #include <qjsonobject.h>
-#include <qlogging.h>
 #include <qobject.h>
 #include <QWidget>
-#include <qpalette.h>
-#include <qtmetamacros.h>
 
 enum SemanticColor {
   InvalidTint,
@@ -108,16 +106,23 @@ struct ThemeRadialGradient {
 using ColorLike = std::variant<QColor, ThemeLinearGradient, ThemeRadialGradient, SemanticColor>;
 
 struct ColorPalette {
-  QColor background;
-  QColor foreground;
-  QColor blue;
-  QColor green;
-  QColor magenta;
-  QColor orange;
-  QColor purple;
-  QColor red;
-  QColor yellow;
-  QColor cyan;
+  // Base16 colors
+  QColor base00;
+  QColor base01;
+  QColor base02;
+  QColor base03;
+  QColor base04;
+  QColor base05;
+  QColor base06;
+  QColor base07;
+  QColor base08;
+  QColor base09;
+  QColor base0A;
+  QColor base0B;
+  QColor base0C;
+  QColor base0D;
+  QColor base0E;
+  QColor base0F;
 };
 
 struct ParsedThemeData {
@@ -137,80 +142,25 @@ struct ThemeInfo {
   std::optional<std::filesystem::path> icon;
   std::optional<std::filesystem::path> path;
 
-  struct {
-    QColor text;
-    QColor subtext;
-    QColor border;
-
-    QColor mainBackground;
-    QColor mainSelectedBackground;
-    QColor mainHoveredBackground;
-
-    QColor statusBackground;
-    QColor statusBackgroundBorder;
-    QColor statusBackgroundHover;
-    QColor statusBackgroundLighter;
-
-    QColor blue;
-    QColor green;
-    QColor magenta;
-    QColor orange;
-    QColor purple;
-    QColor red;
-    QColor yellow;
-    QColor cyan;
-
-    QColor textTertiary;
-    QColor textDisabled;
-    QColor textOnAccent;
-
-    QColor secondaryBackground;
-    QColor tertiaryBackground;
-
-    QColor buttonPrimary;
-    QColor buttonPrimaryHover;
-    QColor buttonPrimaryPressed;
-    QColor buttonPrimaryDisabled;
-
-    QColor buttonSecondary;
-    QColor buttonSecondaryHover;
-    QColor buttonSecondaryPressed;
-    QColor buttonSecondaryDisabled;
-
-    QColor buttonDestructive;
-    QColor buttonDestructiveHover;
-    QColor buttonDestructivePressed;
-
-    QColor inputBackground;
-    QColor inputBorder;
-    QColor inputBorderFocus;
-    QColor inputBorderError;
-    QColor inputPlaceholder;
-
-    QColor borderSubtle;
-    QColor borderStrong;
-    QColor separator;
-    QColor shadow;
-
-    QColor errorBackground;
-    QColor errorBorder;
-    QColor successBackground;
-    QColor successBorder;
-    QColor warningBackground;
-    QColor warningBorder;
-
-    QColor linkDefault;
-    QColor linkHover;
-    QColor linkVisited;
-
-    QColor focus;
-    QColor overlay;
-    QColor tooltip;
-    QColor tooltipText;
+  struct Colors {
+    // Base16 colors
+    QColor base00;
+    QColor base01;
+    QColor base02;
+    QColor base03;
+    QColor base04;
+    QColor base05;
+    QColor base06;
+    QColor base07;
+    QColor base08;
+    QColor base09;
+    QColor base0A;
+    QColor base0B;
+    QColor base0C;
+    QColor base0D;
+    QColor base0E;
+    QColor base0F;
   } colors;
-
-  static QColor adjustColorHSL(const QColor &base, int hueShift = 0, float satMult = 1.0f,
-                               float lightMult = 1.0f);
 
   QColor resolveTint(SemanticColor tint) const;
 
@@ -266,6 +216,11 @@ public:
    * Scan themes in local config directory first, then try to load themes from data directories.
    */
   void scanThemeDirectories();
+
+private:
+  static void extractColorPalette(ColorPalette &palette, const QJsonObject &colors);
+  static bool validateThemeData(ParsedThemeData &theme, const QJsonObject &obj,
+                                const std::filesystem::path &entry, const std::filesystem::path &dir);
 
 signals:
   bool themeChanged(const ThemeInfo &info) const;

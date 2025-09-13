@@ -19,7 +19,7 @@ void Switch::paintEvent(QPaintEvent *event) {
   painter.drawRoundedRect(rect(), radius, radius);
 
   if (m_value) {
-    painter.setThemeBrush(Qt::white);
+    painter.setThemeBrush(SemanticColor::TextOnAccent);
   } else {
     painter.setThemeBrush(SemanticColor::TextSecondary);
   }

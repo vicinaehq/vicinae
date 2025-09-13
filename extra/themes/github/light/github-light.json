@@ -1,19 +1,25 @@
  {
     "version": "1.0.0",
     "appearance": "light",
-    "icon": "../github.svg",
+    "icon": "../icon@light.svg",
     "name": "GitHub Light",
     "description": "GitHub's official light theme",
     "palette": {
-      "background": "#FFFFFF",
-      "foreground": "#24292F",
-      "blue": "#0969DA",
-      "green": "#1A7F37",
-      "magenta": "#8250DF",
-      "orange": "#DA8100",
-      "purple": "#8250DF",
-      "red": "#CF222E",
-      "yellow": "#BF8700",
-      "cyan": "#0184BC"
+      "base00": "#eaeef2",
+      "base01": "#d0d7de",
+      "base02": "#afb8c1",
+      "base03": "#8c959f",
+      "base04": "#6e7781",
+      "base05": "#424a53",
+      "base06": "#32383f",
+      "base07": "#1f2328",
+      "base08": "#fa4549",
+      "base09": "#e16f24",
+      "base0A": "#bf8700",
+      "base0B": "#2da44e",
+      "base0C": "#339D9B",
+      "base0D": "#218bff",
+      "base0E": "#a475f9",
+      "base0F": "#4d2d00"
     }
 }

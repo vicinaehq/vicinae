@@ -10,6 +10,7 @@ class ActionListWidget : public SelectableOmniListWidget {
   ImageWidget *m_icon;
   TypographyWidget *m_label;
   KeyboardShortcutIndicatorWidget *m_shortcut;
+  AbstractAction::Style m_actionStyle = AbstractAction::Style::Normal;
 
 public:
   ActionListWidget &setIconUrl(const ImageURL &url);

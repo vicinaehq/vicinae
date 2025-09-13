@@ -12,8 +12,6 @@ void DialogWidget::paintEvent(QPaintEvent *event) {
   OmniPainter painter(this);
   QColor finalColor = painter.resolveColor(SemanticColor::MainBackground);
   auto config = ServiceRegistry::instance()->config()->value();
-
-  finalColor.setAlphaF(0.5);
   painter.setBrush(finalColor);
   painter.setPen(Qt::NoPen);
   painter.drawRoundedRect(rect(), config.window.rounding, config.window.rounding);

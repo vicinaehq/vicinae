@@ -1,0 +1,24 @@
+{
+  "version": "1.0.0",
+  "palette": {
+    "base00": "#24272B",
+    "base01": "#303338",
+    "base02": "#3E4044",
+    "base03": "#636363",
+    "base04": "#8F8F8F",
+    "base05": "#BEBEBE",
+    "base06": "#FFF7ED",
+    "base07": "#FFFDFB",
+    "base08": "#CA736C",
+    "base09": "#BA823A",
+    "base0A": "#8D9741",
+    "base0B": "#47A477",
+    "base0C": "#00A2AF",
+    "base0D": "#5794D0",
+    "base0E": "#9481CC",
+    "base0F": "#BC73A4"
+  },
+  "name": "Penumbra Dark",
+  "appearance": "dark",
+  "description": "Penumbra Dark theme"
+}

@@ -35,7 +35,8 @@ void InlineQLineEdit::setError(const QString &error) {
 void InlineQLineEdit::paintEvent(QPaintEvent *event) {
   auto &theme = ThemeService::instance().theme();
   int borderRadius = 5;
-  ColorLike borderColor = m_error.isEmpty() ? theme.colors.statusBackgroundBorder : theme.colors.red;
+  ColorLike borderColor = m_error.isEmpty() ? theme.resolveTint(SemanticColor::StatusBorder)
+                                            : theme.resolveTint(SemanticColor::Red);
   OmniPainter painter(this);
   QBrush borderBrush = painter.colorBrush(borderColor);
 
@@ -46,7 +47,7 @@ void InlineQLineEdit::paintEvent(QPaintEvent *event) {
 
   painter.setClipPath(path);
 
-  painter.fillPath(path, theme.colors.statusBackground);
+  painter.fillPath(path, theme.resolveTint(SemanticColor::StatusBackground));
 
   QPen pen(borderBrush, 1);
   painter.setPen(pen);

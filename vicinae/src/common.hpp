@@ -54,8 +54,8 @@ class HDivider : public QFrame {
     auto margins = contentsMargins();
     auto &theme = ThemeService::instance().theme();
 
-    painter.setBrush(QBrush(theme.colors.border));
-    painter.setPen(theme.colors.border);
+    painter.setBrush(QBrush(theme.resolveTint(SemanticColor::Border)));
+    painter.setPen(theme.resolveTint(SemanticColor::Border));
     painter.drawRect(0, margins.top(), width(), _height);
   }
 
@@ -71,7 +71,10 @@ public:
     update();
   }
 
-  HDivider(QWidget *parent = nullptr) : _height(1), _color("#222222") { setFixedHeight(_height); }
+  HDivider(QWidget *parent = nullptr)
+      : _height(1), _color(ThemeService::instance().theme().resolveTint(SemanticColor::Separator)) {
+    setFixedHeight(_height);
+  }
 };
 
 class VDivider : public QFrame {
@@ -83,8 +86,8 @@ class VDivider : public QFrame {
     auto margins = contentsMargins();
     auto &theme = ThemeService::instance().theme();
 
-    painter.setBrush(QBrush(theme.colors.border));
-    painter.setPen(theme.colors.border);
+    painter.setBrush(QBrush(theme.resolveTint(SemanticColor::Border)));
+    painter.setPen(theme.resolveTint(SemanticColor::Border));
     painter.drawRect(0, margins.top(), _width, height() - margins.top() - margins.bottom());
   }
 
@@ -100,7 +103,9 @@ public:
     update();
   }
 
-  VDivider(QWidget *parent = nullptr) : QFrame(parent), _width(1), _color("#222222") {
+  VDivider(QWidget *parent = nullptr)
+      : QFrame(parent), _width(1),
+        _color(ThemeService::instance().theme().resolveTint(SemanticColor::Separator)) {
     setFixedWidth(_width);
   }
 };

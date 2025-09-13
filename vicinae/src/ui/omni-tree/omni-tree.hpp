@@ -93,8 +93,8 @@ class HeaderWidget : public QWidget {
     int borderWidth = 1;
     QPainter painter(this);
 
-    QPen pen(theme.colors.border, borderWidth);
-    QBrush brush(theme.colors.mainHoveredBackground);
+    QPen pen(theme.resolveTint(SemanticColor::Border), borderWidth);
+    QBrush brush(theme.resolveTint(SemanticColor::MainHoverBackground));
     painter.setPen(pen);
     painter.setBrush(brush);
     painter.setRenderHint(QPainter::Antialiasing, true);

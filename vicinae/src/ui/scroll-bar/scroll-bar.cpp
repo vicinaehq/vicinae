@@ -36,7 +36,7 @@ void OmniScrollBar::paintEvent(QPaintEvent *event) {
 
   QRect handleRect = style()->subControlRect(QStyle::CC_ScrollBar, &opt, QStyle::SC_ScrollBarSlider, this);
 
-  painter.setBrush(theme.colors.mainSelectedBackground);
+  painter.setBrush(theme.resolveTint(SemanticColor::MainSelectedBackground));
   painter.setPen(Qt::NoPen);
 
   // Rounded scrollbar

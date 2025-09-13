@@ -82,7 +82,6 @@ void ImageWidget::setUrlImpl(const ImageURL &url) {
 
     if (url.backgroundTint()) {
       loader->setBackgroundColor(url.backgroundTint());
-      // loader->setFillColor(OmniPainter::textColorForBackground(url.backgroundTint()));
       loader->setFillColor(SemanticColor::TextOnAccent);
     } else {
       loader->setFillColor(url.fillColor());
