@@ -79,6 +79,9 @@ set(CMARK_LIBRARY "cmark-gfm")
 if (NOT USE_SYSTEM_RAPIDFUZZ)
 	include(RapidFuzz)
 	checkout_rapidfuzz()
+	# there is probably a better way, but the headers are not part of the build output
+	# so cmake won't find them
+	include_directories(${CMAKE_CURRENT_BINARY_DIR}/_deps/rapidfuzz-src/)
 endif()
 
 if (NOT USE_SYSTEM_QT_KEYCHAIN)

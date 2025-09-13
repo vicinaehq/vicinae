@@ -13,13 +13,9 @@ fs::path Omnicast::runtimeDir() {
   return osRundir / "vicinae";
 }
 
-fs::path Omnicast::dataDir() {
-  return QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation).toStdString();
-}
+fs::path Omnicast::dataDir() { return homeDir() / ".local" / "share" / "vicinae"; }
 
-fs::path Omnicast::configDir() {
-  return QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation).toStdString();
-}
+fs::path Omnicast::configDir() { return homeDir() / ".config" / "vicinae"; }
 
 fs::path Omnicast::commandSocketPath() { return runtimeDir() / "vicinae.sock"; }
 fs::path Omnicast::pidFile() { return runtimeDir() / "vicinae.pid"; }

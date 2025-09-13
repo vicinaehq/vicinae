@@ -32,9 +32,19 @@ static:
 # but the resulting binary will be more portable across different distros, especially the ones
 # shipping older packages.
 portable:
-	cmake -G Ninja -DUSE_SYSTEM_PROTOBUF=OFF -DUSE_SYSTEM_ABSEIL=OFF -DUSE_SYSTEM_CMARK_GFM=OFF -DUSE_SYSTEM_MINIZIP=OFF -DWAYLAND_LAYER_SHELL=OFF -B $(BUILD_DIR)
+	cmake -G Ninja -DQT_DIR=/opt/qt -DUSE_SYSTEM_RAPIDFUZZ=OFF -DUSE_SYSTEM_PROTOBUF=OFF -DUSE_SYSTEM_ABSEIL=OFF -DUSE_SYSTEM_CMARK_GFM=OFF -DUSE_SYSTEM_MINIZIP=OFF -B $(BUILD_DIR)
 	cmake --build $(BUILD_DIR)
 .PHONY: portable
+
+# for the ubuntu22 build environment we build appimage releases in, nothing else
+ubuntu22:
+	cmake -G Ninja -DQT_DIR=/opt/qt -DUSE_SYSTEM_RAPIDFUZZ=OFF -DUSE_SYSTEM_PROTOBUF=OFF -DUSE_SYSTEM_ABSEIL=OFF -DUSE_SYSTEM_CMARK_GFM=OFF -DUSE_SYSTEM_MINIZIP=OFF -DWAYLAND_LAYER_SHELL=OFF -B $(BUILD_DIR)
+	cmake --build $(BUILD_DIR)
+.PHONY: ubuntu22
+
+appimage: ubuntu22
+	./scripts/linuxdeploy.sh
+.PHONY: appimage
 
 dev: debug
 .PHONY: dev
