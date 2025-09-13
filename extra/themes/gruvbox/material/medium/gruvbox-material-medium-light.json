@@ -1,0 +1,25 @@
+{
+    "version": "1.0.0",
+    "appearance": "light",
+    "icon": "../../icon.png",
+    "name": "Gruvbox Material Medium Light",
+    "description": "Designed as a bright theme with pastel 'retro groove' colors",
+    "palette": {
+        "base00": "#fbf1c7",
+        "base01": "#f2e5bc",
+        "base02": "#d5c4a1",
+        "base03": "#bdae93",
+        "base04": "#a89984",
+        "base05": "#654735",
+        "base06": "#3c3836",
+        "base07": "#282828",
+        "base08": "#c14a4a",
+        "base09": "#b47109",
+        "base0A": "#b47109",
+        "base0B": "#6c782e",
+        "base0C": "#4c7a5d",
+        "base0D": "#45707a",
+        "base0E": "#945e80",
+        "base0F": "#e78a4e"
+    }
+}

@@ -8,6 +8,7 @@
 #include <qobjectdefs.h>
 #include <qsqlquery.h>
 #include <qtmetamacros.h>
+#include <QFileSystemWatcher>
 
 class AppService : public QObject, public NonCopyable {
   Q_OBJECT

@@ -1,0 +1,24 @@
+{
+  "version": "1.0.0",
+  "palette": {
+    "base00": "#000000",
+    "base01": "#4A806C",
+    "base02": "#4A8D7E",
+    "base03": "#7C8D7C",
+    "base04": "#919893",
+    "base05": "#00FF00",
+    "base06": "#C4CEC4",
+    "base07": "#D8E2DC",
+    "base08": "#C85A46",
+    "base09": "#C86428",
+    "base0A": "#A67A50",
+    "base0B": "#64C83C",
+    "base0C": "#468C78",
+    "base0D": "#5482AF",
+    "base0E": "#9472B4",
+    "base0F": "#B37C5E"
+  },
+  "name": "Digital Rain",
+  "appearance": "dark",
+  "description": "Digital Rain theme"
+}

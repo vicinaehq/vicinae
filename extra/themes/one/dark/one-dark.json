@@ -1,0 +1,19 @@
+{
+	"version": "1.0.0",
+	"appearance": "dark",
+	"icon": "icon.svg",
+	"name": "One Dark",
+	"description": "Atom's iconic One Dark theme",
+	"palette": {
+	  "base00": "#282C34",
+	  "base05": "#ABB2BF",
+	  "base0D": "#61AFEF",
+	  "base0B": "#98C379",
+	  "base0E": "#C678DD",
+	  "base09": "#D19A66",
+	  "base0F": "#C678DD",
+	  "base08": "#E06C75",
+	  "base0A": "#E5C07B",
+	  "base0C": "#56B6C2"
+	}
+}

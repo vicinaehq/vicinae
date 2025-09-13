@@ -127,40 +127,6 @@ void OmniPainter::setThemePen(const ColorLike &color, int width) {
 
 void OmniPainter::setThemeBrush(const ColorLike &color) { QPainter::setBrush(colorBrush(color)); }
 
-QColor OmniPainter::textColorForBackground(const ColorLike &colorLike) {
-  if (auto color = std::get_if<QColor>(&colorLike)) {
-    int n = 180;
-    while (n > 100) {
-      QColor candidate = color->lighter(n);
-
-      if (candidate.redF() == 1 && candidate.greenF() == 1 && candidate.blueF() == 1) {
-      } else {
-        return candidate;
-      }
-
-      n -= 5;
-    }
-
-    return *color;
-
-  } else if (auto lgrad = std::get_if<ThemeLinearGradient>(&colorLike)) {
-    return {};
-  } else if (auto rgrad = std::get_if<ThemeRadialGradient>(&colorLike)) {
-    return {};
-  } else if (auto tint = std::get_if<SemanticColor>(&colorLike)) {
-    auto color = ThemeService::instance().getTintColor(*tint);
-
-    if (std::get_if<SemanticColor>(&color)) {
-      qWarning() << "Theme color set to color tint, not allowed! No color will be set to avoid loop";
-      return {};
-    }
-
-    return textColorForBackground(color);
-  }
-
-  return {};
-}
-
 void OmniPainter::drawBlurredPixmap(const QPixmap &pixmap, int blurRadius) {
   auto blur = new QGraphicsBlurEffect;
 

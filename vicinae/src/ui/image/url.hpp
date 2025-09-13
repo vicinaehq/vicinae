@@ -16,6 +16,7 @@ static std::vector<std::pair<QString, ImageURLType>> iconTypes = {
 };
 
 static std::vector<std::pair<QString, SemanticColor>> colorTints = {
+    // Basic colors
     {"blue", SemanticColor::Blue},
     {"green", SemanticColor::Green},
     {"magenta", SemanticColor::Magenta},
@@ -23,8 +24,73 @@ static std::vector<std::pair<QString, SemanticColor>> colorTints = {
     {"purple", SemanticColor::Purple},
     {"red", SemanticColor::Red},
     {"yellow", SemanticColor::Yellow},
-    {"primary-text", SemanticColor::TextPrimary},
-    {"secondary-text", SemanticColor::TextSecondary}};
+    {"cyan", SemanticColor::Cyan},
+
+    // Text colors
+    {"text-primary", SemanticColor::TextPrimary},
+    {"text-secondary", SemanticColor::TextSecondary},
+    {"text-tertiary", SemanticColor::TextTertiary},
+    {"text-disabled", SemanticColor::TextDisabled},
+    {"text-on-accent", SemanticColor::TextOnAccent},
+    {"text-error", SemanticColor::TextError},
+    {"text-success", SemanticColor::TextSuccess},
+    {"text-warning", SemanticColor::TextWarning},
+
+    // Background colors
+    {"main-background", SemanticColor::MainBackground},
+    {"main-hover-background", SemanticColor::MainHoverBackground},
+    {"main-selected-background", SemanticColor::MainSelectedBackground},
+    {"secondary-background", SemanticColor::SecondaryBackground},
+    {"tertiary-background", SemanticColor::TertiaryBackground},
+
+    // Button states
+    {"button-primary", SemanticColor::ButtonPrimary},
+    {"button-primary-hover", SemanticColor::ButtonPrimaryHover},
+    {"button-primary-pressed", SemanticColor::ButtonPrimaryPressed},
+    {"button-primary-disabled", SemanticColor::ButtonPrimaryDisabled},
+    {"button-secondary", SemanticColor::ButtonSecondary},
+    {"button-secondary-hover", SemanticColor::ButtonSecondaryHover},
+    {"button-secondary-pressed", SemanticColor::ButtonSecondaryPressed},
+    {"button-secondary-disabled", SemanticColor::ButtonSecondaryDisabled},
+    {"button-destructive", SemanticColor::ButtonDestructive},
+    {"button-destructive-hover", SemanticColor::ButtonDestructiveHover},
+    {"button-destructive-pressed", SemanticColor::ButtonDestructivePressed},
+
+    // Input states
+    {"input-background", SemanticColor::InputBackground},
+    {"input-border", SemanticColor::InputBorder},
+    {"input-border-focus", SemanticColor::InputBorderFocus},
+    {"input-border-error", SemanticColor::InputBorderError},
+    {"input-placeholder", SemanticColor::InputPlaceholder},
+
+    // UI elements
+    {"border", SemanticColor::Border},
+    {"border-subtle", SemanticColor::BorderSubtle},
+    {"border-strong", SemanticColor::BorderStrong},
+    {"separator", SemanticColor::Separator},
+    {"shadow", SemanticColor::Shadow},
+
+    // Status colors
+    {"status-background", SemanticColor::StatusBackground},
+    {"status-border", SemanticColor::StatusBorder},
+    {"status-hover", SemanticColor::StatusHover},
+    {"error-background", SemanticColor::ErrorBackground},
+    {"error-border", SemanticColor::ErrorBorder},
+    {"success-background", SemanticColor::SuccessBackground},
+    {"success-border", SemanticColor::SuccessBorder},
+    {"warning-background", SemanticColor::WarningBackground},
+    {"warning-border", SemanticColor::WarningBorder},
+
+    // Interactive elements
+    {"link-default", SemanticColor::LinkDefault},
+    {"link-hover", SemanticColor::LinkHover},
+    {"link-visited", SemanticColor::LinkVisited},
+
+    // Special states
+    {"focus", SemanticColor::Focus},
+    {"overlay", SemanticColor::Overlay},
+    {"tooltip", SemanticColor::Tooltip},
+    {"tooltip-text", SemanticColor::TooltipText}};
 
 class ImageURL {
   ImageURLType _type = ImageURLType::Invalid;

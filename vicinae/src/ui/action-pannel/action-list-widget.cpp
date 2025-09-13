@@ -31,20 +31,34 @@ void ActionListWidget::selectionChanged(bool selected) {
   auto &theme = ThemeService::instance().theme();
 
   if (selected) {
-    m_shortcut->setBackgroundColor(theme.colors.statusBackground);
+    m_shortcut->setBackgroundColor(theme.resolveTint(SemanticColor::TertiaryBackground));
+    if (m_actionStyle == AbstractAction::Style::Danger) {
+      m_label->setColor(SemanticColor::Red);
+    } else {
+      m_label->setColor(SemanticColor::TextOnAccent);
+    }
   } else {
-    m_shortcut->setBackgroundColor(theme.colors.statusBackground);
+    m_shortcut->setBackgroundColor(theme.resolveTint(SemanticColor::TertiaryBackground));
+    if (m_actionStyle == AbstractAction::Style::Danger) {
+      m_label->setColor(SemanticColor::Red);
+    } else {
+      m_label->setColor(SemanticColor::TextPrimary);
+    }
   }
 }
 
 void ActionListWidget::setAction(const AbstractAction *action) {
   m_label->setText(action->title());
+  m_actionStyle = action->style();
 
   switch (action->style()) {
-  case AbstractAction::Style::Normal:
+  case AbstractAction::Style::Normal: {
     m_label->setColor(SemanticColor::TextPrimary);
-    m_icon->setUrl(action->icon());
+    auto url = action->icon();
+    url.setFill(SemanticColor::TextPrimary);
+    m_icon->setUrl(url);
     break;
+  }
   case AbstractAction::Style::Danger: {
     m_label->setColor(SemanticColor::Red);
     auto url = action->icon();
@@ -70,7 +84,7 @@ ActionListWidget::ActionListWidget()
   auto layout = new QHBoxLayout;
 
   m_shortcut->hide();
-  m_shortcut->setBackgroundColor(theme.colors.statusBackground);
+  m_shortcut->setBackgroundColor(theme.resolveTint(SemanticColor::TertiaryBackground));
 
   m_icon->setFixedSize(22, 22);
   layout->setAlignment(Qt::AlignVCenter);

@@ -15,11 +15,11 @@ void HorizontalLoadingBar::paintEvent(QPaintEvent *event) {
   QPainter painter(this);
 
   painter.setPen(Qt::NoPen);
-  painter.setBrush(theme.colors.border);
+  painter.setBrush(theme.resolveTint(SemanticColor::Border));
   painter.drawRect(rect());
 
   if (_isAnimationStarted) {
-    painter.setBrush(theme.colors.subtext);
+    painter.setBrush(theme.resolveTint(SemanticColor::TextSecondary));
     painter.drawRect(QRect(_position, 0, _barWidth, height()));
   }
 }

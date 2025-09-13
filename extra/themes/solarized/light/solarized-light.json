@@ -1,19 +1,19 @@
 {
 	"version": "1.0.0",
 	"appearance": "light",
-	"icon": "../solarized.png",
+	"icon": "../icon.png",
 	"name": "Solarized Light",
 	"description": "Light variant of the popular Solarized theme",
 	"palette": {
-	  "background": "#FDF6E3",
-	  "foreground": "#657B83",
-	  "blue": "#268BD2",
-	  "green": "#859900",
-	  "magenta": "#D33682",
-	  "orange": "#CB4B16",
-	  "purple": "#6C71C4",
-	  "red": "#DC322F",
-	  "yellow": "#B58900",
-	  "cyan": "#2AA198"
+	  "base00": "#FDF6E3",
+	  "base05": "#657B83",
+	  "base0D": "#268BD2",
+	  "base0B": "#859900",
+	  "base0E": "#D33682",
+	  "base09": "#CB4B16",
+	  "base0F": "#6C71C4",
+	  "base08": "#DC322F",
+	  "base0A": "#B58900",
+	  "base0C": "#2AA198"
 	}
 }

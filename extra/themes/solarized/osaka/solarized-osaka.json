@@ -5,15 +5,15 @@
     "name": "Solarized Osaka Dark",
     "description": "A calm, warm variant of Solarized Dark",
     "palette": {
-      "background": "#001419",
-      "foreground": "#9EABAC",
-      "blue": "#268BD3",
-      "green": "#849900",
-      "magenta": "#D23681",
-      "orange": "#B28500",
-      "purple": "#D23681",
-      "red": "#DB302D",
-      "yellow": "#B28500",
-      "cyan": "#29A298"
+      "base00": "#001419",
+      "base05": "#9EABAC",
+      "base0D": "#268BD3",
+      "base0B": "#849900",
+      "base0E": "#D23681",
+      "base09": "#B28500",
+      "base0F": "#D23681",
+      "base08": "#DB302D",
+      "base0A": "#B28500",
+      "base0C": "#29A298"
     }
 }

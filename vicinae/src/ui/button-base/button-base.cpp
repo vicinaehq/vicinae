@@ -77,7 +77,6 @@ void ButtonBase::paintEvent(QPaintEvent *event) {
   int borderRadius = 4;
   OmniPainter painter(this);
   QPainterPath path;
-  QPen pen(theme.colors.text, 1);
   QBrush brush;
 
   if (underMouse() && !m_disabled) {
@@ -89,7 +88,13 @@ void ButtonBase::paintEvent(QPaintEvent *event) {
   painter.setRenderHint(QPainter::Antialiasing, true);
   path.addRoundedRect(rect(), borderRadius, borderRadius);
   painter.setClipPath(path);
-  painter.setPen(m_focused ? pen : Qt::NoPen);
+
+  if (m_focused) {
+    painter.setThemePen(SemanticColor::TextPrimary, 1);
+  } else {
+    painter.setPen(Qt::NoPen);
+  }
+
   painter.fillPath(path, brush);
   painter.drawPath(path);
 

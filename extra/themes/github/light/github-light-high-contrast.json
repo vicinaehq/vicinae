@@ -1,0 +1,19 @@
+{
+    "version": "1.0.0",
+    "appearance": "light",
+    "icon": "../icon.svg",
+    "name": "Github Light High Contrast",
+    "description": "The official Github Light High Contrast color palette",
+    "palette": {
+        "background": "#ffffff",
+        "foreground": "#010409",
+        "blue": "#0349b4",
+        "green": "#024c1a",
+        "magenta": "#622cbc",
+        "orange": "#3f2200",
+        "purple": "#622cbc",
+        "red": "#a0111f",
+        "yellow": "#3f2200",
+        "cyan": "#1b7c83"
+    }
+}

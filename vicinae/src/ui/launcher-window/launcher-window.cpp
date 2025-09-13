@@ -236,13 +236,10 @@ bool LauncherWindow::event(QEvent *event) {
 }
 
 void LauncherWindow::handleActionVisibilityChanged(bool visible) {
-  qDebug() << "action panel visilibty" << visible;
   if (visible) {
     m_actionPanel->show();
     return;
   }
-
-  qDebug() << "close panel";
 
   m_actionPanel->hide();
 }
@@ -251,7 +248,7 @@ void LauncherWindow::paintEvent(QPaintEvent *event) {
   auto &config = ServiceRegistry::instance()->config()->value();
   auto &theme = ThemeService::instance().theme();
   int borderWidth = 2;
-  QColor finalBgColor = theme.colors.mainBackground;
+  QColor finalBgColor = theme.colors.base01;
   QPainter painter(this);
 
   finalBgColor.setAlphaF(config.window.opacity);
@@ -266,7 +263,7 @@ void LauncherWindow::paintEvent(QPaintEvent *event) {
 
     painter.fillPath(path, finalBgColor);
 
-    QPen pen(theme.colors.border, borderWidth);
+    QPen pen(theme.resolveTint(SemanticColor::Border), borderWidth);
     painter.setPen(pen);
 
     painter.drawPath(path);

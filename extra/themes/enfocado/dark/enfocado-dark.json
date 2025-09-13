@@ -1,0 +1,25 @@
+{
+    "version": "1.0.0",
+    "appearance": "dark",
+    "icon": "../icon.png",
+    "name": "Enfocado Dark",
+    "description": "How themes should be.",
+    "palette": {
+        "base00": "#181818",
+        "base01": "#252525",
+        "base02": "#3b3b3b",
+        "base03": "#525252",
+        "base04": "#696969",
+        "base05": "#b9b9b9",
+        "base06": "#e3e3e3",
+        "base07": "#f7f3f7",
+        "base08": "#ed4a46",
+        "base09": "#dbb32d",
+        "base0A": "#dbb32d",
+        "base0B": "#70b433",
+        "base0C": "#3fc5b7",
+        "base0D": "#368aeb",
+        "base0E": "#eb6eb7",
+        "base0F": "#bb0b4b"
+    }
+}
