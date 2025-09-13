@@ -133,7 +133,7 @@ RaycastStoreService::fetchExtensions(const Raycast::ListPaginationOptions &opts)
 RaycastStoreService::RaycastStoreService() {
   auto diskCache = new QNetworkDiskCache;
   auto cacheDir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) +
-                  QLatin1StringView("/omnicast/raycast-store");
+                  QString("/omnicast/raycast-store");
 
   diskCache->setCacheDirectory(cacheDir);
   m_net->setCache(diskCache);

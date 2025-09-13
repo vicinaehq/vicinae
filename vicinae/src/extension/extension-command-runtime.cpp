@@ -123,7 +123,7 @@ void ExtensionCommandRuntime::handleRequest(ExtensionRequest *req) {
 }
 
 void ExtensionCommandRuntime::handleCrash(const proto::ext::extension::CrashEventData &crash) {
-  qCritical() << "Got crash" << crash.text();
+  qCritical() << "Got crash" << crash.text().c_str();
   auto &nav = context()->navigation;
 
   nav->popToRoot();

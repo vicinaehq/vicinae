@@ -3,6 +3,7 @@
 #include <qdir.h>
 #include <qstandardpaths.h>
 #include <qsize.h>
+#include <set>
 #include "theme.hpp"
 
 namespace Omnicast {

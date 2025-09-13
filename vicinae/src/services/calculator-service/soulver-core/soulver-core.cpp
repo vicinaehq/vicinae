@@ -4,7 +4,6 @@
 #include <cstdlib>
 #include <dlfcn.h>
 #include <filesystem>
-#include <qjsonparseerror.h>
 #include <qlogging.h>
 #include <ranges>
 

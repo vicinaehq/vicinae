@@ -3,6 +3,7 @@
 #include "services/asset-resolver/asset-resolver.hpp"
 #include <qdir.h>
 #include <qstringview.h>
+#include <QIcon>
 #include <qurlquery.h>
 #include "url.hpp"
 

@@ -55,7 +55,7 @@ void EventListener::processEvent(const std::string &event) {
   auto ss = ranges_to<std::vector>(std::views::split(event, std::string_view(">>")));
 
   if (ss.size() != 2) {
-    qWarning() << "Hyprland event socket sent a malformed invalid event" << event;
+    qWarning() << "Hyprland event socket sent a malformed invalid event" << event.c_str();
     return;
   }
 

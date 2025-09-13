@@ -120,7 +120,7 @@ void FileSystemWalker::walk(const fs::path &root, const WalkCallback &callback) 
 
     for (const auto &entry : fs::directory_iterator(path, ec)) {
       if (ec) {
-        qWarning() << "walk error" << ec.message();
+        qWarning() << "walk error" << ec.message().c_str();
         continue;
       }
       if (entry.is_symlink(ec)) { continue; }

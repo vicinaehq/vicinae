@@ -7,7 +7,6 @@
 #include <qsqldatabase.h>
 #include <qsqlquery.h>
 #include <qtimer.h>
-#include <qtypes.h>
 #include <quuid.h>
 #include <qdebug.h>
 #include <QSqlError>
@@ -328,7 +327,7 @@ FileIndexerDatabase::FileIndexerDatabase() : m_connectionId(createRandomConnecti
   QSqlQuery query(m_db);
 
   for (const auto &pragma : SQLITE_PRAGMAS) {
-    if (!query.exec(pragma.c_str())) { qCritical() << "Failed to run file-indexer pragma" << pragma; }
+    if (!query.exec(pragma.c_str())) { qCritical() << "Failed to run file-indexer pragma" << pragma.c_str(); }
   }
 }
 

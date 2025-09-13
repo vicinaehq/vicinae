@@ -20,16 +20,19 @@ public:
     std::filesystem::create_directories(path.parent_path());
     _db.setDatabaseName(path.c_str());
 
-    if (!_db.open()) { qCritical() << "Could not open main omnicast SQLite database."; return; }
-
-    MigrationManager manager(_db, "omnicast");
-
-    manager.runMigrations();
+    if (!_db.open()) {
+      qCritical() << "Could not open main omnicast SQLite database.";
+      return;
+    }
 
     auto query = createQuery();
 
     for (const auto &pragma : pragmas) {
       query.exec(pragma);
     }
+
+    MigrationManager manager(_db, "omnicast");
+
+    manager.runMigrations();
   }
 };

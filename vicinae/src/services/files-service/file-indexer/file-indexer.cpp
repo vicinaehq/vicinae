@@ -1,12 +1,5 @@
-#include <filesystem>
-#include <memory>
 #include <QtConcurrent/QtConcurrent>
-#include "services/files-service/abstract-file-indexer.hpp"
-#include "services/files-service/file-indexer/indexer-scanner.hpp"
-#include "services/files-service/file-indexer/incremental-scanner.hpp"
-#include "file-indexer-db.hpp"
-#include "file-indexer.hpp"
-#include "utils/utils.hpp"
+#include <memory>
 #include <QDebug>
 #include <qcryptographichash.h>
 #include <qfilesystemwatcher.h>
@@ -18,6 +11,13 @@
 #include <qthreadpool.h>
 #include <ranges>
 #include <unistd.h>
+#include <filesystem>
+#include "services/files-service/abstract-file-indexer.hpp"
+#include "services/files-service/file-indexer/indexer-scanner.hpp"
+#include "services/files-service/file-indexer/incremental-scanner.hpp"
+#include "file-indexer-db.hpp"
+#include "file-indexer.hpp"
+#include "utils/utils.hpp"
 
 namespace fs = std::filesystem;
 
@@ -89,8 +89,8 @@ QFuture<std::vector<IndexerFileResult>> FileIndexer::queryAsync(std::string_view
                                                                 const QueryParams &params) const {
   auto searchQuery = qStringFromStdView(view);
   QString finalQuery = preparePrefixSearchQuery(view);
-  QPromise<std::vector<IndexerFileResult>> promise;
-  auto future = promise.future();
+  auto promise = std::make_shared<QPromise<std::vector<IndexerFileResult>>>();
+  auto future = promise->future();
 
   QThreadPool::globalInstance()->start([params, finalQuery, promise = std::move(promise)]() mutable {
     std::vector<fs::path> paths;
@@ -105,8 +105,8 @@ QFuture<std::vector<IndexerFileResult>> FileIndexer::queryAsync(std::string_view
       results.emplace_back(IndexerFileResult{.path = path});
     }
 
-    promise.addResult(results);
-    promise.finish();
+    promise->addResult(results);
+    promise->finish();
   });
 
   return future;

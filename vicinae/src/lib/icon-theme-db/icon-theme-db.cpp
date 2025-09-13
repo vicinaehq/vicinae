@@ -1,7 +1,7 @@
 #include <filesystem>
 #include <qicon.h>
 #include <qsettings.h>
-#include <system_error>
+#include <set>
 #include "icon-theme-db/icon-theme-db.hpp"
 
 namespace fs = std::filesystem;

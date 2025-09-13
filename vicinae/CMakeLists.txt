@@ -596,7 +596,7 @@ endif()
 
 if (UNIX AND NOT APPLE)
 	list(APPEND SRCS
-		src/lib/xkbcommon-utils.cpp
+		#src/lib/xkbcommon-utils.cpp
 
 		src/lib/icon-theme-db/icon-theme-db.cpp
 
@@ -610,7 +610,7 @@ if (UNIX AND NOT APPLE)
 		src/services/window-manager/gnome/gnome-window.cpp
 		src/services/window-manager/gnome/gnome-workspace.cpp
 		src/services/window-manager/gnome/gnome-listener.cpp
-		src/services/window-manager/wayland/wayland.cpp
+		#src/services/window-manager/wayland/wayland.cpp
 
 		# Hyprland
 		# End Hyprland

@@ -2,7 +2,6 @@
 #include "ui/views/base-view.hpp"
 #include "utils/environment.hpp"
 #include <qlogging.h>
-#include <qtenvironmentvariables.h>
 #include <qwidget.h>
 #include <QProcessEnvironment>
 

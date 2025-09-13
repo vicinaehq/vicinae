@@ -3,6 +3,7 @@
 #include <qprocess.h>
 #include <QProcessEnvironment>
 #include <ranges>
+#include <set>
 
 namespace fs = std::filesystem;
 
