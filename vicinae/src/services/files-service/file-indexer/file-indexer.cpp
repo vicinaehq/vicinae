@@ -3,9 +3,11 @@
 #include <memory>
 #include <mutex>
 #include <QtConcurrent/QtConcurrent>
+#include "scan.hpp"
 #include "services/files-service/abstract-file-indexer.hpp"
 #include "services/files-service/file-indexer/indexer-scanner.hpp"
 #include "services/files-service/file-indexer/incremental-scanner.hpp"
+#include "services/files-service/file-indexer/watcher-scanner.hpp"
 #include "file-indexer-db.hpp"
 #include "file-indexer.hpp"
 #include "utils/utils.hpp"
@@ -67,6 +69,11 @@ void FileIndexer::start() {
       m_dispatcher.enqueue({.type = ScanType::Incremental, .path = entrypoint.root, .maxDepth = 5});
     }
   }
+
+  // Watch for changes
+  for (const auto &entrypoint : m_entrypoints) {
+    m_dispatcher.enqueue({.type = ScanType::Watcher, .path = entrypoint.root});
+  }
 }
 
 void FileIndexer::setEntrypoints(const std::vector<Entrypoint> &entrypoints) { m_entrypoints = entrypoints; }
@@ -113,7 +120,8 @@ QFuture<std::vector<IndexerFileResult>> FileIndexer::queryAsync(std::string_view
 
 FileIndexer::FileIndexer()
     : m_dispatcher({{ScanType::Full, std::make_shared<IndexerScanner>()},
-                    {ScanType::Incremental, std::make_shared<IncrementalScanner>()}}) {
+                    {ScanType::Incremental, std::make_shared<IncrementalScanner>()},
+                    {ScanType::Watcher, std::make_shared<WatcherScanner>()}}) {
 
   m_db.runMigrations();
 }

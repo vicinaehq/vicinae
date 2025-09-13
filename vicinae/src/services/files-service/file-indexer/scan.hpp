@@ -3,7 +3,7 @@
 #include <optional>
 
 // Add new types here for new scanner types (e.g. watchers)
-enum ScanType { Full, Incremental };
+enum ScanType { Full, Incremental, Watcher };
 
 // TODO: use unions for each ScanType
 struct Scan {
