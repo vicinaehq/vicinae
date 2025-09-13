@@ -1,7 +1,7 @@
 #include "vicinae.hpp"
 #include "utils/utils.hpp"
 #include <qprocess.h>
-#include <qtenvironmentvariables.h>
+#include <QProcessEnvironment>
 #include <ranges>
 
 namespace fs = std::filesystem;
@@ -38,7 +38,7 @@ std::vector<fs::path> Omnicast::xdgConfigDirs() {
   for (const QString &dir : qEnvironmentVariable("XDG_CONFIG_DIRS").split(':')) {
     fs::path path = dir.toStdString();
 
-    if (std::ranges::contains(seen, path)) { continue; }
+    if (seen.contains(path)) { continue; }
 
     seen.insert(path);
     paths.emplace_back(path);
@@ -56,9 +56,9 @@ std::vector<fs::path> Omnicast::systemPaths() {
   std::vector<fs::path> paths;
 
   for (const auto &part : std::views::split(std::string_view(path), std::string_view(":"))) {
-    fs::path path = std::string_view(part);
+    fs::path path = std::string_view(part.begin(), part.end());
 
-    if (std::ranges::contains(seen, path)) continue;
+    if (seen.contains(path)) continue;
 
     seen.insert(path);
     paths.emplace_back(path);
@@ -74,7 +74,7 @@ std::vector<fs::path> Omnicast::xdgDataDirs() {
   for (const QString &dir : qEnvironmentVariable("XDG_DATA_DIRS").split(':')) {
     fs::path path = dir.toStdString();
 
-    if (std::ranges::contains(seen, path)) { continue; }
+    if (seen.contains(path)) { continue; }
 
     seen.insert(path);
     paths.emplace_back(path);

@@ -1,5 +1,4 @@
 #pragma once
-#include <filesystem>
 #include <qapplication.h>
 #include <qcolor.h>
 #include <qfilesystemwatcher.h>
@@ -10,6 +9,7 @@
 #include <QWidget>
 #include <qpalette.h>
 #include <qtmetamacros.h>
+#include <filesystem>
 
 enum SemanticColor {
   InvalidTint,

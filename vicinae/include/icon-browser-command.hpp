@@ -52,12 +52,6 @@ class IconBrowserView : public GridView {
   void textChanged(const QString &s) override {
     int inset = 20;
     auto filter = [&](const QString &name) { return name.contains(s, Qt::CaseInsensitive); };
-    auto makeIcon = [&](auto &&icon) -> std::unique_ptr<OmniList::AbstractVirtualItem> {
-      auto item = std::make_unique<IconBrowserItem>(icon);
-
-      item->setInset(GridItemContentWidget::Inset::Large);
-      return item;
-    };
 
     m_grid->updateModel([&]() {
       auto &section = m_grid->addSection("Icons");
@@ -66,10 +60,12 @@ class IconBrowserView : public GridView {
       section.setSpacing(10);
       m_grid->setInset(GridItemContentWidget::Inset::Large);
 
-      auto items = BuiltinIconService::icons() | std::views::filter(filter) |
-                   std::views::transform(makeIcon) | std::ranges::to<std::vector>();
+      for (const auto &icon : BuiltinIconService::icons() | std::views::filter(filter)) {
+        auto item = std::make_unique<IconBrowserItem>(icon);
 
-      section.addItems(std::move(items));
+        item->setInset(GridItemContentWidget::Inset::Large);
+        section.addItem(std::make_unique<IconBrowserItem>(icon));
+      }
     });
   }
 

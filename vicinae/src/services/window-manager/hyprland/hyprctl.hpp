@@ -17,7 +17,7 @@
 #include <sys/un.h>
 #include <qdebug.h>
 #include <unistd.h>
-#include <expected>
+#include "utils/expected.hpp"
 
 namespace Hyprland {
 class Controller : public QObject {

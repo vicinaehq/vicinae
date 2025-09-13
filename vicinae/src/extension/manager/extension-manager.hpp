@@ -29,7 +29,6 @@
 #include <qstringview.h>
 #include <qthread.h>
 #include <qtmetamacros.h>
-#include <qtypes.h>
 #include <quuid.h>
 #include <unistd.h>
 

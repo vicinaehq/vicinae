@@ -3,7 +3,6 @@
 #include <qfuturewatcher.h>
 #include <qlogging.h>
 #include <qstringview.h>
-#include <qtenvironmentvariables.h>
 #include <string>
 #include <unordered_map>
 #include "pid-file/pid-file.hpp"
@@ -218,7 +217,7 @@ void ExtensionManager::addDevelopmentSession(const QString &id) { m_developmentS
 void ExtensionManager::removeDevelopmentSession(const QString &id) { m_developmentSessions.erase(id); }
 
 bool ExtensionManager::hasDevelopmentSession(const QString &id) const {
-  return std::ranges::contains(m_developmentSessions, id);
+  return m_developmentSessions.contains(id);
 }
 
 void ExtensionManager::emitGenericExtensionEvent(const QString &sessionId, const QString &handlerId,

@@ -8,6 +8,7 @@
 #include "ui/omni-list/omni-list.hpp"
 #include "ui/popover/popover.hpp"
 #include "ui/typography/typography.hpp"
+#include "utils.hpp"
 #include <qboxlayout.h>
 #include <qcoreevent.h>
 #include <qdnslookup.h>
@@ -255,13 +256,16 @@ public:
           words, [&](const QString &word) { return word.startsWith(text, Qt::CaseInsensitive); });
     };
 
-    auto filteredActions = m_sections |
-                           std::views::transform([](const auto &section) { return section.actions; }) |
-                           std::views::join | std::views::filter(filterAction) |
-                           std::views::transform([](const auto &action) { return action.get(); }) |
-                           std::ranges::to<std::vector>();
+    std::vector<AbstractAction *> actions;
 
-    return filteredActions;
+    for (const auto &section : m_sections) {
+      for (const auto &action : section.actions) {
+        if (!filterAction(action)) continue;
+        actions.emplace_back(action.get());
+      }
+    }
+
+    return actions;
   }
 
   void buildEmpty() {

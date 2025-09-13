@@ -44,22 +44,23 @@ void SoulverCoreCalculator::loadABI() {
 }
 
 std::vector<fs::path> SoulverCoreCalculator::availableResourcePaths() const {
-  auto toResource = [](const fs::path &path) { return path / "soulver-core" / "resources"; };
-  auto isValidResourceDir = [](const fs::path &path) {
-    std::error_code ec;
-    return fs::is_directory(path, ec);
-  };
+  std::error_code ec;
+  std::vector<fs::path> paths;
 
-  return Omnicast::xdgDataDirs() | std::views::transform(toResource) |
-         std::views::filter(isValidResourceDir) | std::ranges::to<std::vector>();
+  for (const auto &dir : Omnicast::xdgDataDirs()) {
+    fs::path resource = dir / "soulver-core" / "resources";
+    if (fs::is_directory(resource, ec)) { paths.emplace_back(resource); }
+  }
+
+  return paths;
 }
 
-std::expected<AbstractCalculatorBackend::CalculatorResult, AbstractCalculatorBackend::CalculatorError>
+tl::expected<AbstractCalculatorBackend::CalculatorResult, AbstractCalculatorBackend::CalculatorError>
 SoulverCoreCalculator::compute(const QString &question) const {
   auto soulverRes = calculate(question);
 
-  if (!soulverRes) { return std::unexpected(CalculatorError(soulverRes.error())); }
-  if (soulverRes.value().type == "none") return std::unexpected(CalculatorError("Result type is none"));
+  if (!soulverRes) { return tl::unexpected(CalculatorError(soulverRes.error())); }
+  if (soulverRes.value().type == "none") return tl::unexpected(CalculatorError("Result type is none"));
 
   CalculatorResult result;
 
@@ -70,14 +71,14 @@ SoulverCoreCalculator::compute(const QString &question) const {
   return result;
 };
 
-std::expected<SoulverCoreCalculator::SoulverResult, QString>
+tl::expected<SoulverCoreCalculator::SoulverResult, QString>
 SoulverCoreCalculator::calculate(const QString &expression) const {
   char *answer = m_abi.soulver_evaluate(expression.toStdString().c_str());
 
   if (!answer) {
     qWarning() << "soulver_evaluate returned a null pointer. This suggests soulver crashed or wasn't "
                   "properly initialized.";
-    return std::unexpected("Failed to parse json");
+    return tl::unexpected("Failed to parse json");
   }
 
   QJsonParseError parseError;
@@ -85,7 +86,7 @@ SoulverCoreCalculator::calculate(const QString &expression) const {
 
   free(answer);
 
-  if (parseError.error != QJsonParseError::NoError) { return std::unexpected("Failed to parse json"); }
+  if (parseError.error != QJsonParseError::NoError) { return tl::unexpected("Failed to parse json"); }
 
   auto json = doc.object();
   QString value = json.value("value").toString();

@@ -11,14 +11,20 @@ void ArgCompleter::clear() {
 void ArgCompleter::setIconUrl(const ImageURL &url) { m_icon->setUrl(url); }
 
 void ArgCompleter::validate() {
-  for (const auto &[arg, input] : std::views::zip(m_args, m_inputs)) {
+  for (int i = 0; i != m_args.size() && i != m_inputs.size(); ++i) {
+    auto &arg = m_args[i];
+    auto &input = m_inputs[i];
+
     if (arg.required && input->text().isEmpty()) { input->setError("Required"); }
   }
 }
 
 void ArgCompleter::setValues(const ArgumentValues values) {
-  for (const auto &[val, input] : std::views::zip(values, m_inputs)) {
-    if (input->text() != val.second) { input->setText(val.second); }
+  for (int i = 0; i != values.size() && i != m_inputs.size(); ++i) {
+    auto &value = values[i];
+    auto &input = m_inputs[i];
+
+    if (input->text() != value.second) { input->setText(value.second); }
   }
 }
 

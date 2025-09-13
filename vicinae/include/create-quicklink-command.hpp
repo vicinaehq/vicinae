@@ -26,7 +26,6 @@
 #include <qtimer.h>
 #include <qtmetamacros.h>
 #include "ui/form/form.hpp"
-#include <qtypes.h>
 #include <qvariant.h>
 #include <qwidget.h>
 #include <ranges>

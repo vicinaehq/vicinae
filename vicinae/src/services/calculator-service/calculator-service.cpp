@@ -111,7 +111,13 @@ std::vector<CalculatorRecord> CalculatorService::query(const QString &query) {
            record.answer.contains(query, Qt::CaseInsensitive);
   };
 
-  return records() | std::views::filter(filter) | std::ranges::to<std::vector>();
+  std::vector<CalculatorRecord> results;
+
+  for (const auto &record : records() | std::views::filter(filter)) {
+    results.emplace_back(record);
+  }
+
+  return results;
 }
 
 std::vector<std::pair<QString, std::vector<CalculatorRecord>>>

@@ -132,8 +132,8 @@ void FileSystemWalker::walk(const fs::path &root, const WalkCallback &callback) 
         continue;
       }
 
-      if (std::ranges::contains(EXCLUDED_PATHS, path)) { continue; }
-      if (std::ranges::contains(EXCLUDED_FILENAMES, path.filename())) { continue; }
+      if (std::ranges::find(EXCLUDED_PATHS, path) != EXCLUDED_PATHS.end()) { continue; }
+      if (std::ranges::find(EXCLUDED_FILENAMES, path.filename()) != EXCLUDED_FILENAMES.end()) { continue; }
       if (isIgnored(path)) {
         if (m_verbose) { qInfo() << "Indexing: ignoring git-ignored path" << path.c_str(); }
         continue;

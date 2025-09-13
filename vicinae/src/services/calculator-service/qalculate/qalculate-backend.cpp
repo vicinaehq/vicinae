@@ -16,7 +16,7 @@ bool QalculateBackend::isActivatable() const {
   return true;
 }
 
-std::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const QString &question) const {
+tl::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const QString &question) const {
   EvaluationOptions evalOpts;
 
   evalOpts.auto_post_conversion = POST_CONVERSION_BEST;
@@ -28,7 +28,7 @@ std::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const
 
   MathStructure result = CALCULATOR->calculate(question.toStdString(), evalOpts);
 
-  if (result.containsUnknowns()) { return std::unexpected(CalculatorError("Unknown component in question")); }
+  if (result.containsUnknowns()) { return tl::unexpected(CalculatorError("Unknown component in question")); }
 
   bool error = false;
 
@@ -36,7 +36,7 @@ std::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const
     error = true;
   }
 
-  if (error) return std::unexpected(CalculatorError("Calculation error"));
+  if (error) return tl::unexpected(CalculatorError("Calculation error"));
 
   PrintOptions printOpts;
 

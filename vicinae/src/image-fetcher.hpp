@@ -45,7 +45,7 @@ public:
 
   void initialize() {
     QString directory =
-        QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QLatin1StringView("/omnicast/");
+        QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QString("/vicinae/");
 
     m_manager = new QNetworkAccessManager;
     m_diskCache = new QNetworkDiskCache;

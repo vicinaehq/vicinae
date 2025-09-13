@@ -94,7 +94,7 @@ void ExtensionCommandRuntime::handleRequest(ExtensionRequest *req) {
     auto result = dispatchRequest(request.get());
 
     if (auto res = std::get_if<proto::ext::extension::Response *>(&result)) {
-      if (!res) {
+      if (!*res) {
         request->respondWithError("No handler for this request");
         return;
       }

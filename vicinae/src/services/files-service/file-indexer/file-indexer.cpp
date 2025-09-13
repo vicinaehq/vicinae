@@ -1,7 +1,5 @@
-#include <cstdlib>
 #include <filesystem>
 #include <memory>
-#include <mutex>
 #include <QtConcurrent/QtConcurrent>
 #include "services/files-service/abstract-file-indexer.hpp"
 #include "services/files-service/file-indexer/indexer-scanner.hpp"
@@ -75,7 +73,7 @@ QString FileIndexer::preparePrefixSearchQuery(std::string_view query) const {
   QString finalQuery;
 
   for (const auto &word : std::views::split(query, std::string_view(" "))) {
-    std::string_view view(word);
+    std::string_view view(word.begin(), word.end());
 
     if (!finalQuery.isEmpty()) { finalQuery += ' '; }
 
@@ -100,9 +98,12 @@ QFuture<std::vector<IndexerFileResult>> FileIndexer::queryAsync(std::string_view
       FileIndexerDatabase db;
       paths = db.search(finalQuery.toStdString(), params);
     }
-    std::vector<IndexerFileResult> results =
-        paths | std::views::transform([](auto &&path) { return IndexerFileResult{.path = path}; }) |
-        std::ranges::to<std::vector>();
+
+    std::vector<IndexerFileResult> results;
+
+    for (const auto &path : paths) {
+      results.emplace_back(IndexerFileResult{.path = path});
+    }
 
     promise.addResult(results);
     promise.finish();

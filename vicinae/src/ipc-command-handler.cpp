@@ -39,7 +39,7 @@ proto::ext::daemon::Response *IpcCommandHandler::handleCommand(const proto::ext:
 }
 
 void IpcCommandHandler::handleUrl(const QUrl &url) {
-  if (!std::ranges::contains(Omnicast::APP_SCHEMES, url.scheme())) {
+  if (!Omnicast::APP_SCHEMES.contains(url.scheme())) {
     qWarning() << "Unsupported url scheme" << url.scheme() << "Supported schemes are"
                << Omnicast::APP_SCHEMES;
     return;

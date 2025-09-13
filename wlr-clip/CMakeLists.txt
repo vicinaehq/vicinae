@@ -5,8 +5,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(TARGET ${WLR_CLIP_BIN})
-set(PROTO_SRC_DIR ${CMAKE_SOURCE_DIR}/proto/extensions)
-set(PROTO_FILES "${PROTO_SRC_DIR}/wlr-clipboard.proto")
+set(PROTO_SRC_DIR ${CMAKE_SOURCE_DIR}/proto)
+#set(PROTO_FILES "${PROTO_SRC_DIR}/manager.proto ${PROTO_SRC_DIR}/wlr-clipboard.proto")
+file(GLOB PROTO_FILES "${PROTO_SRC_DIR}/*.proto")
 
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -28,12 +29,14 @@ set(SRCS
 )
 wayland_generate_protocol("${CMAKE_CURRENT_SOURCE_DIR}/protocols/wlr-data-control-unstable-v1.xml")
 
+message(STATUS "common proto dir ${COMMON_PROTO_DIR}")
+
 add_executable(${TARGET} ${SRCS})
 target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 #target_compile_options(${TARGET} PUBLIC)
 target_link_libraries(${TARGET} PRIVATE wayland-client protobuf::libprotobuf) 
 
-make_directory(${CMAKE_CURRENT_BINARY_DIR}/proto)
+make_directory(${CMAKE_CURRENT_BINARY_DIR}/proto/extensions)
 
 protobuf_generate(
 	TARGET ${TARGET}

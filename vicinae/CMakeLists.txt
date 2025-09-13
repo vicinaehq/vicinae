@@ -1,20 +1,17 @@
-set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(LIBS)
 set(TARGET vicinae)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets Sql Network Svg DBus WaylandClient)
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets Sql Network Svg DBus)
 find_package(OpenSSL REQUIRED)
 
 if (TYPESCRIPT_EXTENSIONS)
 	include(ExtensionManager)
-	add_compile_definitions(HAS_TYPESCRIPT_EXTENSIONS=)
+	add_compile_definitions(HAS_TYPESCRIPT_EXTENSIONS=1)
 endif()
 
-list(APPEND LIBS  Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus qt6keychain ${CMARK_LIBRARY} protobuf::libprotobuf minizip OpenSSL::Crypto Qt6::WaylandClientPrivate)
+list(APPEND LIBS  Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus qt6keychain ${CMARK_LIBRARY} protobuf::libprotobuf minizip OpenSSL::Crypto wayland-client)
 
 set(WLR_CLIP_BIN ${CMAKE_BINARY_DIR}/wlr-clip/wlr-clip${CMAKE_EXECUTABLE_SUFFIX})
 set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/assets)
@@ -39,14 +36,14 @@ configure_file(resources.qrc.in resources.qrc)
 
 if (WAYLAND_LAYER_SHELL)
 	message(STATUS "Compiling with wayland layer shell support (for wlroots-like compositors)")
-	find_package(Qt6 REQUIRED COMPONENTS WaylandClient)
+	#find_package(Qt6 REQUIRED COMPONENTS WaylandClient)
 	if (USE_SYSTEM_LAYER_SHELL)
 		find_package(LayerShellQt REQUIRED)
 		list(APPEND LIBS LayerShellQt::Interface)
 	else()
 		list(APPEND LIBS LayerShellQtInterface)
 	endif()
-	add_compile_definitions(-DWAYLAND_LAYER_SHELL)
+	add_compile_definitions(WAYLAND_LAYER_SHELL)
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -59,12 +56,13 @@ include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_SOURCE_DIR}/src
 	${CMAKE_CURRENT_SOURCE_DIR}/src/lib
+	${CMAKE_CURRENT_SOURCE_DIR}/src/utils
 	${CMAKE_CURRENT_SOURCE_DIR}/..
 	${Protobuf_INCLUDE_DIRS}
     ${CMAKE_CURRENT_BINARY_DIR}  # For generated headers
 )
 
-set(PROTO_SRC_DIR ${CMAKE_SOURCE_DIR}/proto/extensions)
+set(PROTO_SRC_DIR ${CMAKE_SOURCE_DIR}/proto)
 
 file(GLOB PROTO_FILES "${PROTO_SRC_DIR}/*.proto")
 
@@ -585,7 +583,7 @@ endif()
 
 if (LIBQALCULATE_BACKEND)
 	list(APPEND LIBS qalculate)
-	add_compile_definitions(HAS_QALCULATE=)
+	add_compile_definitions(HAS_QALCULATE=1)
 	list(APPEND SRCS
 		src/services/calculator-service/qalculate/qalculate-backend.hpp
 		src/services/calculator-service/qalculate/qalculate-backend.cpp
