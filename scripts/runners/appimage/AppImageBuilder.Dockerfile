@@ -1,10 +1,6 @@
-# This image is used as a build environment for the main vicinae CI
-# We start from a relatively old base (previous ubuntu LTS) so that we can keep the resulting
-# binary or app image compatible with older glibc versions.
 # We compile our own version of QT because Vicinae makes usage of newer QT features.
 # Note that we don't link to QT statically, the main goal of this is so that the AppImage can be bundled with these QT
 # shared libraries.
-# Users that want to run the raw binary produced from the CI will need QT >= QT_VERSION installed on their system.
 
 # Note: In order for linuxqtdeploy to work, the docker environment needs to be passed the fuse device.
 # Typically done like so: docker run --cap-add SYS_ADMIN --device /dev/fuse <image_name>
@@ -103,11 +99,25 @@ RUN apt-get install	-y	\
 	qtkeychain-qt6-dev	\
 	libqalculate-dev	\
 	libminizip-dev		\
-	liblayershellqtinterface-dev
+	wayland-protocols
+
+RUN git clone --branch v6.18.0 https://github.com/KDE/extra-cmake-modules ecm
+
+RUN cd ecm && mkdir build && cmake -DBUILD_DOC=OFF -DBUILD_TESTING=OFF -B build && cmake --build build && cmake --install build && rm -rf /ecm
+
+RUN git clone https://github.com/vicinaehq/layer-shell-qt
+RUN cd layer-shell-qt &&				\
+	mkdir build &&						\
+	cmake								\
+	-DLAYER_SHELL_QT_DECLARATIVE=OFF	\
+	-B build && 						\
+	cmake --build build &&				\
+	cmake --install build &&			\
+	rm -rf /layer-shell-qt
 
 # install node 22 (used to build the main vicinae binary and bundled in the app image)
 RUN wget https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz
-RUN tar -xf node-v22.19.0-linux-x64.tar.xz --strip-components=1 -C ${INSTALL_DIR}
+RUN tar -xf node-v${NODE_VERSION}-linux-x64.tar.xz --strip-components=1 -C ${INSTALL_DIR} && rm -rf *.tar.xz
 
 # install linuxdeployqt (tool to create appimage from qt app)
 
