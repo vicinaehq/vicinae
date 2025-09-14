@@ -46,6 +46,10 @@ appimage: ubuntu22
 	./scripts/linuxdeploy.sh
 .PHONY: appimage
 
+appimage-pack:
+	./scripts/linuxdeploy.sh
+.PHONY: appimage-pack
+
 dev: debug
 .PHONY: dev
 

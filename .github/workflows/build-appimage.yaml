@@ -1,0 +1,35 @@
+name: Build AppImage
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: [self-hosted, Linux, X64, appimage]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: self-hosted-prod
+          max-size: 0
+
+      - name: Configure CMake
+        run: |
+          cmake -S . -B build -G Ninja  \
+          -DCMAKE_BUILD_TYPE=Release    \
+          -DUSE_SYSTEM_PROTOBUF=OFF     \
+          -DUSE_SYSTEM_MINIZIP=OFF
+
+      - name: Build
+        run: cmake --build build --parallel ${nproc}
+
+      - name: Bundle AppImage
+        run: make appimage-pack 
