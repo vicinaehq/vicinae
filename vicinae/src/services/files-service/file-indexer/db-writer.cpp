@@ -37,6 +37,10 @@ DbWriter::~DbWriter() {
   m_workerThread.join();
 }
 
+void DbWriter::setScanError(int scanId, const QString &error) {
+  submit([scanId, error = std::move(error)](FileIndexerDatabase &db) { db.setScanError(scanId, error); });
+}
+
 void DbWriter::updateScanStatus(int scanId, ScanStatus status) {
   submit([scanId, status](FileIndexerDatabase &db) { db.updateScanStatus(scanId, status); });
 }

@@ -49,7 +49,7 @@ void FileIndexer::start() {
 
   for (const auto &scan : startedScans) {
     qWarning() << "Creating new scan after previous scan for" << scan.path.c_str() << "was interrupted";
-    m_db.setScanError(scan.id, "Interrupted");
+    m_writer->setScanError(scan.id, "Interrupted");
     m_dispatcher.enqueue({.type = scan.type, .path = scan.path});
   }
 

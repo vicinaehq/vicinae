@@ -32,6 +32,7 @@ public:
   // Utility functions
   void updateScanStatus(int scanId, ScanStatus status);
 
+  void setScanError(int scanId, const QString &error);
   tl::expected<FileIndexerDatabase::ScanRecord, QString>
   createScan(const std::filesystem::path& path, ScanType type);
 
