@@ -181,26 +181,26 @@ bool ExtensionRegistry::isInstalled(const QString &id) const {
   return fs::is_directory(extensionDir() / id.toStdString());
 }
 
-std::expected<ExtensionManifest, ManifestError> ExtensionRegistry::scanBundle(const fs::path &path) {
-  static const std::vector<CommandMode> supportedModes{CommandMode::CommandModeView, CommandModeNoView};
+tl::expected<ExtensionManifest, ManifestError> ExtensionRegistry::scanBundle(const fs::path &path) {
+  static const std::set<CommandMode> supportedModes{CommandMode::CommandModeView, CommandModeNoView};
   fs::path manifestPath = path / "package.json";
 
   if (!fs::exists(manifestPath)) {
-    return std::unexpected<ManifestError>(
+    return tl::unexpected<ManifestError>(
         QString("Could not find package.json file at %1").arg(manifestPath.c_str()));
   }
 
   QFile file(manifestPath);
 
   if (!file.open(QIODevice::ReadOnly)) {
-    return std::unexpected<ManifestError>(QString("Failed to open %1 for read").arg(manifestPath.c_str()));
+    return tl::unexpected<ManifestError>(QString("Failed to open %1 for read").arg(manifestPath.c_str()));
   }
 
   QJsonParseError jsonError;
   auto json = QJsonDocument::fromJson(file.readAll(), &jsonError);
 
   if (jsonError.error) {
-    return std::unexpected<ManifestError>(
+    return tl::unexpected<ManifestError>(
         QString("Failed to parse package.json at %1").arg(manifestPath.c_str()));
   }
 
@@ -222,9 +222,9 @@ std::expected<ExtensionManifest, ManifestError> ExtensionRegistry::scanBundle(co
   } else if (deps.contains(Omnicast::VICINAE_NPM_API_PACKAGE)) {
     manifest.provenance = ExtensionManifest::Provenance::Vicinae;
   } else {
-    return std::unexpected(QString("Manifest does not list %1 or %2 as a runtime dependency.")
-                               .arg(Omnicast::VICINAE_NPM_API_PACKAGE)
-                               .arg(Omnicast::RAYCAST_NPM_API_PACKAGE));
+    return tl::unexpected(QString("Manifest does not list %1 or %2 as a runtime dependency.")
+                              .arg(Omnicast::VICINAE_NPM_API_PACKAGE)
+                              .arg(Omnicast::RAYCAST_NPM_API_PACKAGE));
   }
 
   for (const auto &obj : obj.value("categories").toArray()) {
@@ -237,7 +237,7 @@ std::expected<ExtensionManifest, ManifestError> ExtensionRegistry::scanBundle(co
     command.provenance = manifest.provenance;
     command.entrypoint = path / std::format("{}.js", command.name.toStdString());
 
-    if (std::ranges::contains(supportedModes, command.mode)) { manifest.commands.emplace_back(command); }
+    if (supportedModes.contains(command.mode)) { manifest.commands.emplace_back(command); }
   }
 
   for (const auto &obj : obj.value("preferences").toArray()) {

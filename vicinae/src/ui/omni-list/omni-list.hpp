@@ -23,7 +23,6 @@
 #include <qscrollbar.h>
 #include <qtimer.h>
 #include <qtmetamacros.h>
-#include <qtpreprocessorsupport.h>
 #include <qwidget.h>
 #include <ranges>
 #include <stack>
@@ -391,6 +390,7 @@ public:
   std::vector<const AbstractVirtualItem *> visibleItems() const;
   std::vector<const AbstractVirtualItem *> items() const;
 
+  /*
   std::vector<Section const *> sections() const {
     return m_model |
            std::views::filter([](auto &&v) { return std::holds_alternative<std::unique_ptr<Section>>(v); }) |
@@ -398,6 +398,7 @@ public:
                [](auto &v) -> Section const * { return std::get<std::unique_ptr<Section>>(v).get(); }) |
            std::ranges::to<std::vector>();
   }
+  */
 
   OmniList();
   ~OmniList();

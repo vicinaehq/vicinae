@@ -1,5 +1,5 @@
 #include "ui/qtheme-selector/qtheme-selector.hpp"
-#include <ranges>
+#include <memory>
 #include <QIcon>
 #include "icon-theme-db/icon-theme-db.hpp"
 #include "qtheme-selector.hpp"
@@ -23,12 +23,11 @@ public:
 
 QThemeSelector::QThemeSelector() {
   IconThemeDatabase iconThemeDb;
+  std::vector<std::shared_ptr<AbstractItem>> items;
 
-  auto items = iconThemeDb.themes() | std::views::transform([](auto &&info) { return info.name; }) |
-               std::views::transform([](auto &&path) -> std::shared_ptr<SelectorInput::AbstractItem> {
-                 return std::make_shared<QThemeSelectorItem>(path);
-               }) |
-               std::ranges::to<std::vector>();
+  for (const auto &theme : iconThemeDb.themes()) {
+    items.emplace_back(std::make_shared<QThemeSelectorItem>(theme.name));
+  }
 
   addSection("", items);
   updateModel();

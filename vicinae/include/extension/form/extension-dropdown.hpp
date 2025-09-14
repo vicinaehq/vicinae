@@ -68,14 +68,10 @@ public:
               currentSection->addItem(std::make_unique<DropdownSelectorItem>(*listItem));
             } else if (auto section = std::get_if<DropdownModel::Section>(&item)) {
               auto &sec = m_input->list()->addSection(section->title);
-              auto items =
-                  section->items |
-                  std::views::transform([](auto &&item) -> std::unique_ptr<OmniList::AbstractVirtualItem> {
-                    return std::make_unique<DropdownSelectorItem>(item);
-                  }) |
-                  std::ranges::to<std::vector>();
 
-              sec.addItems(std::move(items));
+              for (const auto &item : section->items) {
+                sec.addItem(std::make_unique<DropdownSelectorItem>(item));
+              }
             }
           }
         },

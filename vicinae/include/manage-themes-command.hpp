@@ -18,7 +18,6 @@
 #include <qobject.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
-#include <ranges>
 #include <sys/socket.h>
 
 class HorizontalColorPaletteWidget : public QWidget {
@@ -143,16 +142,10 @@ class SetThemeView : public ListView {
       if (!themeService.themes().empty()) {
         auto &section = m_list->addSection("Available Themes");
 
-        auto filterTheme = [&](auto &&theme) {
-          return theme.name != current.name && theme.name.contains(query, Qt::CaseInsensitive);
-        };
-        auto mapTheme = [](auto &&theme) -> std::unique_ptr<OmniList::AbstractVirtualItem> {
-          return std::make_unique<ThemeItem>(theme);
-        };
-        auto items = themeService.themes() | std::views::filter(filterTheme) |
-                     std::views::transform(mapTheme) | std::ranges::to<std::vector>();
-
-        section.addItems(std::move(items));
+        for (const auto &theme : themeService.themes()) {
+          bool filtered = theme.name != current.name && theme.name.contains(query, Qt::CaseInsensitive);
+          if (filtered) { section.addItem(std::make_unique<ThemeItem>(theme)); }
+        }
       }
     });
   }

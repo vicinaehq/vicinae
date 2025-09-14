@@ -166,11 +166,12 @@ class ManageFallbackCommandsView : public ListView {
     auto results = query.isEmpty() ? itemManager->allItems() : itemManager->prefixSearch(query);
     auto fallbacks =
         results | std::views::filter([](const auto &item) { return item->isSuitableForFallback(); });
+    std::vector<std::shared_ptr<RootItem>> enabled;
 
-    auto enabled = fallbacks | std::views::filter([itemManager](const auto &item) {
-                     return itemManager->isFallback(item->uniqueId());
-                   }) |
-                   std::ranges::to<std::vector>();
+    for (const auto &item : fallbacks) {
+      if (itemManager->isFallback(item->uniqueId())) { enabled.emplace_back(item); };
+    }
+
     std::ranges::sort(enabled, [itemManager](const auto &a, const auto &b) {
       auto ma = itemManager->itemMetadata(a->uniqueId());
       auto mb = itemManager->itemMetadata(b->uniqueId());

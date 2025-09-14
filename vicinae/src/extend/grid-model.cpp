@@ -3,6 +3,7 @@
 #include "extend/empty-view-model.hpp"
 #include "extend/image-model.hpp"
 #include "extend/pagination-model.hpp"
+#include "utils.hpp"
 #include <qjsonvalue.h>
 #include <ranges>
 #include <qjsonarray.h>
@@ -31,9 +32,9 @@ GridItemViewModel GridModelParser::parseListItem(const QJsonObject &instance, si
   }
 
   if (props.contains("keywords")) {
-    model.keywords = props.value("keywords").toArray() |
-                     std::views::transform([](const QJsonValue &&a) { return a.toString(); }) |
-                     std::ranges::to<std::vector>();
+    model.keywords =
+        ranges_to<std::vector>(props.value("keywords").toArray() |
+                               std::views::transform([](const QJsonValue &&a) { return a.toString(); }));
   }
 
   for (const auto &child : children) {

@@ -1,9 +1,9 @@
-#include "relevancy-scorer.hpp"
 #include "utils/utils.hpp"
 #include <filesystem>
 #include <qlocale.h>
-#include <sys/select.h>
 #include <unordered_map>
+#include <optional>
+#include "relevancy-scorer.hpp"
 
 // clang-format off
 static const std::unordered_map<std::string, double> FILE_TYPE_WEIGHTS = {
