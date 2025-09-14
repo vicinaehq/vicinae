@@ -1,12 +1,9 @@
-#! /bin/bash
-# This will run a github action runner locally and connect it to GitHub
-# using the provided VICINAE_GH_RUNNER_TOKEN
+#!/bin/bash
 
-function fatal() {
-	echo $1
-	exit 1
-}
+cd /home/runner
 
-[ -n "$VICINAE_GH_RUNNER_TOKEN" ] || fatal "VICINAE_GH_RUNNER_TOKEN is not set."
+# Configure runner
+RUNNER_ALLOW_RUNASROOT=true ./config.sh --replace --url ${REPO_URL} --token ${RUNNER_TOKEN} --name ${RUNNER_NAME} --unattended
 
-RUNNER_TOKEN=${VICINAE_GH_RUNNER_TOKEN} docker compose up --force-recreate --build -d
+# Start runner
+RUNNER_ALLOW_RUNASROOT=true ./run.sh

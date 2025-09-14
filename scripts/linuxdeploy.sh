@@ -11,6 +11,7 @@ mkdir -p ${APPDIR}/usr/bin
 mkdir -p ${APPDIR}/usr/lib
 
 cp build/vicinae/vicinae ${APPDIR}/usr/bin/vicinae
+cp $(which node) ${APPDIR}/usr/bin/node
 cp extra/vicinae.png ${APPDIR}
 cp extra/vicinae.desktop ${APPDIR}
 
