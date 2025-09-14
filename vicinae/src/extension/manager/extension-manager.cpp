@@ -5,6 +5,7 @@
 #include <qstringview.h>
 #include <string>
 #include <unordered_map>
+#include "environment.hpp"
 #include "pid-file/pid-file.hpp"
 #include "proto/extension.pb.h"
 #include "proto/manager.pb.h"
@@ -145,6 +146,11 @@ ExtensionManager::ExtensionManager() : bus(&process) {
 
 bool ExtensionManager::isRunning() const { return process.state() == QProcess::ProcessState::Running; }
 
+QString ExtensionManager::nodeProgram() {
+  if (auto appDir = Environment::appImageDir()) { return (*appDir / "bin" / "node").c_str(); }
+  return "node";
+}
+
 bool ExtensionManager::start() {
 #ifndef HAS_TYPESCRIPT_EXTENSIONS
   qCritical() << "Cannot start extension manager as extension support was disabled at compile time";
@@ -186,7 +192,14 @@ bool ExtensionManager::start() {
 
   if (pidFile.exists() && pidFile.kill()) { qInfo() << "Killed existing extension manager instance"; }
 
-  process.start("node", {managerPath.c_str()});
+  QString nodeProgram = "node";
+
+  if (auto appDir = Environment::appImageDir()) {
+    nodeProgram = (*appDir / "usr" / "bin" / "node").c_str();
+    qInfo() << "We are running in an AppImage, using bundled node executable at" << nodeProgram;
+  }
+
+  process.start(nodeProgram, {managerPath.c_str()});
 
   if (!process.waitForStarted(maxWaitForStart)) {
     qCritical() << "Failed to start extension manager" << process.errorString();

@@ -133,6 +133,8 @@ class ExtensionManager : public QObject {
   std::unordered_set<QString> m_developmentSessions;
 
 public:
+  static QString nodeProgram();
+
   ExtensionManager();
 
   const std::vector<std::shared_ptr<Extension>> &extensions() const;
