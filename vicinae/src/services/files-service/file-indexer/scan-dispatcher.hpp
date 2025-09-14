@@ -30,4 +30,7 @@ public:
   int enqueue(const Scan &scan);
   bool interrupt(int id);
   void interruptAll();
+  
+  // A vector instead of a lazy range because m_scannerMap is very mutable
+  std::vector<std::pair<int, Scan>> scans();
 };

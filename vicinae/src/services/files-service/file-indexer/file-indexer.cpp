@@ -2,6 +2,8 @@
 
 #include <filesystem>
 #include <QtConcurrent/QtConcurrent>
+#include "services/files-service/file-indexer/scan.hpp"
+#include "services/files-service/abstract-file-indexer.hpp"
 #include "file-indexer-db.hpp"
 #include "utils/utils.hpp"
 #include <QDebug>
@@ -20,6 +22,11 @@ static const std::vector<fs::path> EXCLUDED_PATHS = {"/sys", "/run",     "/proc"
                                                      "/mnt", "/var/tmp", "/efi",  "/dev"};
 
 void FileIndexer::startFullscan() {
+  // TODO: Only interrupt relevant scans
+  for (auto const& [id, scan]: m_dispatcher.scans()) {
+      m_dispatcher.interrupt(id);
+  }
+
   for (const auto &entrypoint : m_entrypoints) {
     m_dispatcher.enqueue({.type = ScanType::Full, .path = entrypoint.root});
   }
