@@ -137,7 +137,6 @@ int startDaemon() {
       for (const auto &manifest : reg->scanAll()) {
         auto extension = std::make_unique<ExtensionRootProvider>(std::make_shared<Extension>(manifest));
 
-        // cmdDb->registerRepository(extension);
         scanned.insert(extension->repositoryId());
         root->loadProvider(std::move(extension));
       }
@@ -161,15 +160,11 @@ int startDaemon() {
       root->updateIndex();
     });
 
-    /*
-QObject::connect(reg, &ExtensionRegistry::extensionUninstalled, [reg](const QString &id) {
-auto root = ServiceRegistry::instance()->rootItemManager();
-auto cmdDb = ServiceRegistry::instance()->commandDb();
-
-cmdDb->removeRepository(id);
-root->updateIndex();
-})
-*/
+    QObject::connect(reg, &ExtensionRegistry::extensionUninstalled, [reg](const QString &id) {
+      auto root = ServiceRegistry::instance()->rootItemManager();
+      root->uninstallProvider(QString("extension.%1").arg(id));
+      root->updateIndex();
+    });
 
     for (const auto &manifest : reg->scanAll()) {
       auto extension = std::make_shared<Extension>(manifest);
