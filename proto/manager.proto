@@ -24,13 +24,14 @@ message ResponseData {
 message ManagerLoadCommand {
   CommandMode mode = 1;
   CommandEnv env = 2;
-  string extension_path = 3;
+  string vicinae_path = 3;
   // javascript source file to execute
   string entrypoint = 4;
   map<string, google.protobuf.Value> preference_values = 5;
   map<string, google.protobuf.Value> argument_values = 6;
   bool is_raycast = 7;
   string command_name = 8;
+  string extension_id = 9;
 };
 
 enum CommandMode {

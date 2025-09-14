@@ -50,8 +50,8 @@ class Vicinae {
 		if (request.payload?.load) {
 			const load = request.payload.load;
 			const sessionId = randomUUID();
-			const supportPath = join(load.extensionPath, "support");
-			const assetsPath = join(load.extensionPath, "assets");
+			const supportPath = join(load.vicinaePath, "support", load.extensionId);
+			const assetsPath = join(load.vicinaePath, "extensions/", load.extensionId, "assets");
 
 			await Promise.all([
 				mkdir(supportPath, { recursive: true }),
@@ -133,7 +133,7 @@ class Vicinae {
 				}
 			});
 
-			const devLogPath = join(load.extensionPath, "dev.log");
+			const devLogPath = join(load.vicinaePath, "extensions", load.extensionId, "dev.log");
 			const shouldLog = load.env === manager.CommandEnv.Development && existsSync(devLogPath);
 
 			worker.stdout.on('data', async (buf: Buffer) => {
