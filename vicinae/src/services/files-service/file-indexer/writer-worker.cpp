@@ -21,15 +21,15 @@ void WriterWorker::run() {
 
     m_isWorking = true;
     for (const auto &paths : batch) {
-      batchWrite(paths);
+      batchWrite(std::move(paths));
     }
     m_isWorking = false;
   }
 }
 
-void WriterWorker::batchWrite(const std::vector<fs::path> &paths) {
+void WriterWorker::batchWrite(std::vector<fs::path> paths) {
   // Writing is happening in the writerThread
-  m_writer->indexFiles(paths);
+  m_writer->indexFiles(std::move(paths));
 }
 
 WriterWorker::WriterWorker(std::shared_ptr<DbWriter> writer, std::mutex &batchMutex,

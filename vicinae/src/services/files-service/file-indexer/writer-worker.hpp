@@ -12,7 +12,7 @@ class WriterWorker : public NonCopyable {
   std::atomic<bool> m_alive = true;
   std::atomic<bool> m_isWorking = false;
 
-  void batchWrite(const std::vector<std::filesystem::path> &paths);
+  void batchWrite(std::vector<std::filesystem::path> paths);
 
 public:
   void run();
