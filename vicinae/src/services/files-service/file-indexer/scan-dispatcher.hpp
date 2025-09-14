@@ -1,12 +1,15 @@
 #pragma once
 #include "services/files-service/file-indexer/scan.hpp"
 #include "services/files-service/file-indexer/abstract-scanner.hpp"
+#include "services/files-service/file-indexer/db-writer.hpp"
 #include <atomic>
 #include <map>
 #include <memory>
 #include <queue>
 
 class ScanDispatcher {
+  std::shared_ptr<DbWriter> m_writer;
+
   struct Element {
     Scan scan;
     std::unique_ptr<AbstractScanner> scanner;
@@ -25,7 +28,7 @@ class ScanDispatcher {
   void handleFinishedScan(int id, ScanStatus status);
 
 public:
-  ScanDispatcher();
+  ScanDispatcher(std::shared_ptr<DbWriter> writer);
   ~ScanDispatcher();
   int enqueue(const Scan &scan);
   bool interrupt(int id);

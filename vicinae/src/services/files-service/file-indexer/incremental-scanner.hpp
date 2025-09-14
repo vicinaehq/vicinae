@@ -3,6 +3,8 @@
 #include "services/files-service/file-indexer/abstract-scanner.hpp"
 
 class IncrementalScanner : public AbstractScanner, public NonCopyable {
+  std::unique_ptr<FileIndexerDatabase> m_read_db;
+
   std::thread m_scanThread;
 
   std::vector<std::filesystem::path> getScannableDirectories(const std::filesystem::path &path,
@@ -12,7 +14,7 @@ class IncrementalScanner : public AbstractScanner, public NonCopyable {
   void scan(const Scan &scan);
 
 public:
-  IncrementalScanner(const Scan &scan, FinishCallback callback);
+  IncrementalScanner(std::shared_ptr<DbWriter> writer, const Scan &scan, FinishCallback callback);
   ~IncrementalScanner() = default;
 
   void interrupt() override;

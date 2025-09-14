@@ -45,12 +45,11 @@ void IndexerScanner::scan(const std::filesystem::path &root) {
   enqueueBatch(batchedIndex);
 }
 
-IndexerScanner::IndexerScanner(const Scan &sc, FinishCallback callback) : AbstractScanner(sc, callback) {
-  m_writerWorker = std::make_unique<WriterWorker>(m_batchMutex, m_writeBatches, m_batchCv);
+IndexerScanner::IndexerScanner(std::shared_ptr<DbWriter> writer, const Scan &sc, FinishCallback callback) : AbstractScanner(writer, sc, callback) {
+  m_writerWorker = std::make_unique<WriterWorker>(writer, m_batchMutex, m_writeBatches, m_batchCv);
   m_writerThread = std::thread([&]() { m_writerWorker->run(); });
 
   m_scanThread = std::thread([this, sc]() {
-    dbAtThread();
     try {
       scan(sc.path);
       m_writerWorker->stop();

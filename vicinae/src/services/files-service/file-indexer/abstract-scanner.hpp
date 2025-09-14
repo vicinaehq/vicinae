@@ -1,4 +1,5 @@
 #pragma once
+#include "services/files-service/file-indexer/db-writer.hpp"
 #include "services/files-service/file-indexer/scan.hpp"
 #include "services/files-service/file-indexer/file-indexer-db.hpp"
 #include <QDebug>
@@ -9,7 +10,6 @@ class AbstractScanner {
    * Runs a scanner in its own thread, calls `finishCallback` when finished.
    * `finish()` and `fail()` are internal functions that update the DB and call `finishCallback`.
    * `setInterruptFlag()` makes `finish()` write `Interrupted` instead of `Finished`.
-   * `dbAtThread()` re-constructs the database in the given thread - this is necessary.
    *
    * `interrupt()` signals the scanner to stop prematurely.
    * `join()` joins any threads and sets the scanner up for deconstruction.
@@ -25,16 +25,16 @@ private:
   std::atomic<bool> m_interrupted = false;
 
 protected:
-  std::unique_ptr<FileIndexerDatabase> m_db;
+  std::shared_ptr<DbWriter> m_writer;
 
   void finish() {
     ScanStatus status = m_interrupted? ScanStatus::Interrupted: ScanStatus::Succeeded;
-    m_db->updateScanStatus(m_recordId, status);
+    m_writer->updateScanStatus(m_recordId, status);
     m_finishCallback(status);
   }
 
   void fail() {
-    m_db->updateScanStatus(m_recordId, ScanStatus::Failed);
+    m_writer->updateScanStatus(m_recordId, ScanStatus::Failed);
     m_finishCallback(ScanStatus::Failed);
   }
 
@@ -42,14 +42,9 @@ protected:
     m_interrupted = true;
   }
 
-  void dbAtThread() {
-    m_db = std::make_unique<FileIndexerDatabase>();
-  }
-
 public:
-  AbstractScanner(const Scan &scan, FinishCallback callback) : m_finishCallback(callback) {
-    m_db = std::make_unique<FileIndexerDatabase>();
-    auto result = m_db->createScan(scan.path, scan.type);
+  AbstractScanner(std::shared_ptr<DbWriter> writer, const Scan &scan, FinishCallback callback) : m_writer(writer), m_finishCallback(callback) {
+    auto result = m_writer->createScan(scan.path, scan.type);
 
     if (!result.has_value()) {
       qWarning() << "Not scanning" << scan.path.native() << "because scan record creation failed with error"
@@ -60,7 +55,7 @@ public:
     }
 
     m_recordId = result->id;
-    m_db->updateScanStatus(m_recordId, ScanStatus::Started);
+    m_writer->updateScanStatus(m_recordId, ScanStatus::Started);
   }
   virtual ~AbstractScanner() = default;
 

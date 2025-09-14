@@ -28,17 +28,18 @@ int ScanDispatcher::enqueue(const Scan &scan) {
 
     switch (scan.type) {
     case ScanType::Full:
-      m_scannerMap[scanId] = {scan, std::make_unique<IndexerScanner>(scan, handler)};
+      m_scannerMap[scanId] = {scan, std::make_unique<IndexerScanner>(m_writer, scan, handler)};
       break;
     case ScanType::Incremental:
-      m_scannerMap[scanId] = {scan, std::make_unique<IncrementalScanner>(scan, handler)};
+      m_scannerMap[scanId] = {scan, std::make_unique<IncrementalScanner>(m_writer, scan, handler)};
       break;
     }
   }
   return scanId;
 }
 
-ScanDispatcher::ScanDispatcher() {
+ScanDispatcher::ScanDispatcher(std::shared_ptr<DbWriter> writer):
+m_writer(writer) {
   m_running = true;
 
   m_collectorThread = std::thread([this]() {

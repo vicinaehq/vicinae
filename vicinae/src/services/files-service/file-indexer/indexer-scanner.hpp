@@ -1,6 +1,5 @@
 #pragma once
 #include "common.hpp"
-#include "services/files-service/file-indexer/file-indexer-db.hpp"
 #include "services/files-service/file-indexer/writer-worker.hpp"
 #include "services/files-service/file-indexer/abstract-scanner.hpp"
 
@@ -23,7 +22,7 @@ private:
   void enqueueBatch(const std::vector<std::filesystem::path> &paths);
 
 public:
-  IndexerScanner(const Scan &scan, FinishCallback callback);
+  IndexerScanner(std::shared_ptr<DbWriter> writer, const Scan &scan, FinishCallback callback);
   ~IndexerScanner() = default;
 
   void interrupt() override;

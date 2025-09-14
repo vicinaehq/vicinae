@@ -106,4 +106,5 @@ QFuture<std::vector<IndexerFileResult>> FileIndexer::queryAsync(std::string_view
   return future;
 }
 
-FileIndexer::FileIndexer() { m_db.runMigrations(); }
+FileIndexer::FileIndexer():
+m_writer(std::make_shared<DbWriter>()), m_dispatcher(m_writer){ m_db.runMigrations(); }
