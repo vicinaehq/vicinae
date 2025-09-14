@@ -1,4 +1,5 @@
 #include "services/files-service/file-indexer/filesystem-walker.hpp"
+#include "file-indexer-db.hpp"
 #include "utils/utils.hpp"
 #include <chrono>
 #include <cstdlib>
@@ -114,6 +115,8 @@ void FileSystemWalker::walk(const fs::path &root, const WalkCallback &callback) 
   dirStack.push(root);
 
   while (!dirStack.empty()) {
+    if (!m_alive) break;
+
     auto path = dirStack.top();
 
     dirStack.pop();
@@ -166,4 +169,8 @@ void FileSystemWalker::walk(const fs::path &root, const WalkCallback &callback) 
              .arg(dirCount)
              .arg(fileCount)
              .arg(duration);
+}
+
+void FileSystemWalker::stop() {
+  m_alive = false;
 }

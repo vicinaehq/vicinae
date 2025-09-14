@@ -64,7 +64,7 @@ IndexerScanner::IndexerScanner(std::shared_ptr<DbWriter> writer, const Scan &sc,
 
 void IndexerScanner::interrupt() {
   setInterruptFlag();
-  // TODO: Actually add signalling
+  m_writerWorker->stop();
 }
 
 void IndexerScanner::join() {

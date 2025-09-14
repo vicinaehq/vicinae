@@ -2,7 +2,7 @@
 #include <filesystem>
 #include <functional>
 #include <vector>
-#include <optional>
+#include <atomic>
 
 class GitIgnoreReader {
   std::vector<std::string> m_patterns;
@@ -46,7 +46,7 @@ public:
   void setRecursive(bool value);
 
   void walk(const std::filesystem::path &path, const WalkCallback &fn);
-
+  void stop();
 private:
   // we don't use ignore files by default
   std::vector<std::string> m_ignoreFiles = {};
@@ -54,6 +54,7 @@ private:
   bool m_ignoreHiddenFiles = false;
   std::optional<size_t> m_maxDepth;
   bool m_verbose = false;
+  std::atomic<bool> m_alive = true;
 
   bool isIgnored(const std::filesystem::path &path) const;
 };
