@@ -69,12 +69,41 @@ in
           '';
       type = lib.types.attrsOf lib.types.attrs;
     };
+
+    settings = lib.mkOption {
+      type = lib.types.attrs;
+      default = { };
+      description = "Settings written as JSON to `~/.config/vicinae/vicinae.json.";
+      example = lib.literalExpression ''
+        {
+          faviconService = "twenty";
+          font = {
+            size = 10;
+          };
+          popToRootOnClose = false;
+          rootSearch = {
+            searchFiles = false;
+          };
+          theme = {
+            name = "vicinae-dark";
+          };
+          window = {
+           csd = true;
+           opacity = 0.95;
+           rounding = 10;
+          };
+        }
+      '';
+    };
   };
 
   config = lib.mkIf cfg.enable {
     home.packages = [ cfg.package ];
 
-    xdg.configFile = lib.mapAttrs' (
+    xdg.configFile = {
+      "vicinae/vicinae.json".text = builtins.toJSON cfg.settings;
+    }
+    // lib.mapAttrs' (
       name: theme:
       lib.nameValuePair "vicinae/themes/${name}.json" {
         text = builtins.toJSON theme;
