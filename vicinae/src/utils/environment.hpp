@@ -38,6 +38,15 @@ inline std::optional<std::filesystem::path> appImageDir() {
   return std::nullopt;
 }
 
+/**
+ * Optional override of the `node` executable to use to spawn the
+ * extension manager.
+ */
+inline std::optional<std::filesystem::path> nodeBinaryOverride() {
+  if (auto bin = getenv("NODE_BIN")) return bin;
+  return std::nullopt;
+}
+
 inline bool isAppImage() { return appImageDir().has_value(); }
 
 inline QStringList fallbackIconSearchPaths() {

@@ -1,9 +1,12 @@
 #include "extension/manager/extension-manager.hpp"
 #include <QtConcurrent/qtconcurrentrun.h>
+#include <filesystem>
 #include <qfuturewatcher.h>
 #include <qlogging.h>
 #include <qstringview.h>
+#include <streambuf>
 #include <string>
+#include <system_error>
 #include <unordered_map>
 #include "environment.hpp"
 #include "pid-file/pid-file.hpp"
@@ -192,14 +195,25 @@ bool ExtensionManager::start() {
 
   if (pidFile.exists() && pidFile.kill()) { qInfo() << "Killed existing extension manager instance"; }
 
-  QString nodeProgram = "node";
+  std::optional<QString> nodeProgram;
 
-  if (auto appDir = Environment::appImageDir()) {
+  if (auto bin = Environment::nodeBinaryOverride()) {
+    std::error_code ec;
+
+    if (std::filesystem::is_regular_file(*bin, ec)) {
+      qInfo() << "NODE_BIN was set to" << *bin << "using this as the node executable instead";
+      nodeProgram = bin->c_str();
+    } else {
+      qWarning() << "NODE_BIN was set but ignored because" << bin->c_str() << "is not a valid file";
+    }
+  }
+
+  if (auto appDir = Environment::appImageDir(); appDir && !nodeProgram) {
     nodeProgram = (*appDir / "usr" / "bin" / "node").c_str();
     qInfo() << "We are running in an AppImage, using bundled node executable at" << nodeProgram;
   }
 
-  process.start(nodeProgram, {managerPath.c_str()});
+  process.start(nodeProgram.value_or("node"), {managerPath.c_str()});
 
   if (!process.waitForStarted(maxWaitForStart)) {
     qCritical() << "Failed to start extension manager" << process.errorString();
@@ -208,7 +222,7 @@ bool ExtensionManager::start() {
 
   pidFile.write(process.processId());
 
-  qInfo() << "Started extension manager" << managerPath;
+  qInfo() << "Started extension manager" << managerPath.c_str();
 
   return true;
 }
