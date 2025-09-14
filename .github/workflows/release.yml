@@ -11,10 +11,13 @@ on:
         required: false
 
 jobs:
-  build-and-release:
+  build-binary:
     runs-on: [self-hosted, Linux, X64, prod]
     permissions:
       contents: write
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+      artifact: ${{ steps.meta.outputs.artifact }}
     env:
       BUILD_TYPE: Release
       INSTALL_DIR: ${{ github.workspace }}/install
@@ -89,4 +92,51 @@ jobs:
           generate_release_notes: true
           files: |
             ${{ steps.meta.outputs.artifact }}
+
+
+  build-appimage:
+    needs: build-binary
+    runs-on: [self-hosted, Linux, X64, appimage]
+    permissions:
+      contents: write
+    env:
+      BUILD_TYPE: Release
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.build-binary.outputs.tag }}
+
+      - name: Prepare dirs
+        run: mkdir -p build install
+
+      - name: Configure CMake
+        run: |
+          cd build
+          cmake -G Ninja ..                           \
+            -DCMAKE_BUILD_TYPE=${BUILD_TYPE}          \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5        \
+            -DLTO=ON                                  \
+            -DUSE_SYSTEM_PROTOBUF=OFF                 \
+            -DUSE_SYSTEM_CMARK_GFM=OFF                \
+            -DUSE_SYSTEM_MINIZIP=OFF                  \
+            -DUSE_SYSTEM_RAPIDFUZZ=OFF
+
+      - name: Build
+        run: |
+          cmake --build build --config ${BUILD_TYPE} --parallel $(nproc)
+
+      - name: Bundle AppImage
+        run: make appimage-pack
+
+      - name: Create GitHub Release and upload asset
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: ${{ steps.meta.outputs.tag }}
+          generate_release_notes: true
+          files: |
+            *.AppImage
 
