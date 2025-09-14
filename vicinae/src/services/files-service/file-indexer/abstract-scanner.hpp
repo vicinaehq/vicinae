@@ -28,8 +28,9 @@ protected:
   std::unique_ptr<FileIndexerDatabase> m_db;
 
   void finish() {
-    m_db->updateScanStatus(m_recordId, m_interrupted? ScanStatus::Interrupted: ScanStatus::Succeeded);
-    m_finishCallback(ScanStatus::Succeeded);
+    ScanStatus status = m_interrupted? ScanStatus::Interrupted: ScanStatus::Succeeded;
+    m_db->updateScanStatus(m_recordId, status);
+    m_finishCallback(status);
   }
 
   void fail() {
