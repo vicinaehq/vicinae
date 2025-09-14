@@ -297,7 +297,6 @@ void RootItemManager::setPreferenceValues(const QString &id, const QJsonObject &
   m_db.db().transaction();
   if (provider) { setProviderPreferenceValues(provider->uniqueId(), extensionPreferences); }
   setItemPreferenceValues(id, commandPreferences);
-  qDebug() << "set command prefs for" << id;
   m_db.db().commit();
 }
 
@@ -324,8 +323,6 @@ bool RootItemManager::setAlias(const QString &id, const QString &alias) {
 
   metadata.alias = alias;
   m_metadata[id] = metadata;
-
-  qDebug() << "Set alias";
 
   return true;
 }
@@ -365,7 +362,6 @@ QJsonObject RootItemManager::getProviderPreferenceValues(const QString &id) cons
   auto json = QJsonDocument::fromJson(rawJson.toUtf8()).object();
 
   for (const auto &pref : provider->preferences()) {
-    qDebug() << "pref" << pref.name();
     auto dflt = pref.defaultValue();
 
     if (!json.contains(pref.name()) && !dflt.isNull()) { json[pref.name()] = dflt; }
