@@ -26,7 +26,8 @@ jobs:
           cmake -S . -B build -G Ninja  \
           -DCMAKE_BUILD_TYPE=Release    \
           -DUSE_SYSTEM_PROTOBUF=OFF     \
-          -DUSE_SYSTEM_MINIZIP=OFF
+          -DUSE_SYSTEM_MINIZIP=OFF      \
+          -DUSE_SYSTEM_RAPIDFUZZ=OFF
 
       - name: Build
         run: cmake --build build --parallel ${nproc}
