@@ -43,11 +43,11 @@ ubuntu22:
 .PHONY: ubuntu22
 
 appimage: ubuntu22
-	./scripts/linuxdeploy.sh
+	bash ./scripts/linuxdeploy.sh
 .PHONY: appimage
 
 appimage-pack:
-	./scripts/linuxdeploy.sh
+	bash scripts/linuxdeploy.sh
 .PHONY: appimage-pack
 
 dev: debug
