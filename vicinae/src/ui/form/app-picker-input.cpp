@@ -1,6 +1,7 @@
 #include "ui/form/app-picker-input.hpp"
 #include "services/app-service/abstract-app-db.hpp"
 #include "ui/omni-list/omni-list.hpp"
+#include <ranges>
 
 class AppItem : public SelectorInput::AbstractItem {
 public:
@@ -26,14 +27,15 @@ public:
 
 AppPickerInput::AppPickerInput(const AbstractAppDatabase *appDb) : m_appDb(appDb) {
   auto filter = [](auto &&app) { return app->displayable(); };
+  auto map = [](auto &&app) -> std::unique_ptr<OmniList::AbstractVirtualItem> {
+    return std::make_unique<AppItem>(app);
+  };
 
   list()->updateModel([&]() {
+    auto items = m_appDb->list() | std::views::filter(filter) | std::views::transform(map) |
+                 std::ranges::to<std::vector>();
     auto &section = list()->addSection();
 
-    for (const auto &app : m_appDb->list()) {
-      if (!app->displayable()) continue;
-
-      section.addItem(std::make_unique<AppItem>(app));
-    }
+    section.addItems(std::move(items));
   });
 }

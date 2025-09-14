@@ -109,9 +109,10 @@ public:
       for (const auto &section : m_sections) {
         auto &sec = m_list->addSection(section.title);
 
-        for (const auto &item : section.items) {
-          sec.addItem(item);
-        }
+        sec.addItems(section.items |
+                     std::views::transform(
+                         [](auto &&v) -> std::shared_ptr<OmniList::AbstractVirtualItem> { return v; }) |
+                     std::ranges::to<std::vector>());
       }
     });
   }

@@ -1,13 +1,14 @@
 #include "preference-dropdown.hpp"
 #include "ui/form/selector-input.hpp"
 #include <qwidget.h>
+#include <ranges>
 
 void PreferenceDropdown::setOptions(const std::vector<Preference::DropdownData::Option> &opts) {
-  std::vector<std::shared_ptr<AbstractItem>> items;
+  auto transform = [&](auto &&option) -> std::shared_ptr<AbstractItem> {
+    return std::make_shared<PreferenceDropdownItem>(option);
+  };
 
-  for (const auto &opt : opts) {
-    items.emplace_back(std::make_shared<PreferenceDropdownItem>(opt));
-  }
+  auto items = opts | std::views::transform(transform) | std::ranges::to<std::vector>();
 
   addSection("", items);
   updateModel();

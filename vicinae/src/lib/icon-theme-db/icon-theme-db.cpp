@@ -1,7 +1,8 @@
 #include <filesystem>
 #include <qicon.h>
 #include <qsettings.h>
-#include <set>
+#include <system_error>
+#include <ranges>
 #include "icon-theme-db/icon-theme-db.hpp"
 
 namespace fs = std::filesystem;
@@ -20,15 +21,9 @@ IconThemeDatabase::IconThemeDatabase() {
 IconThemeDatabase::IconThemeList IconThemeDatabase::themes(bool includeHidden) const {
   if (includeHidden) return m_themes;
 
-  IconThemeDatabase::IconThemeList themeList;
+  auto isVisible = [](auto &&info) { return !info.hidden; };
 
-  themeList.reserve(m_themes.size());
-
-  for (const auto &theme : m_themes) {
-    if (!theme.hidden) { themeList.emplace_back(theme); }
-  }
-
-  return themeList;
+  return m_themes | std::views::filter(isVisible) | std::ranges::to<std::vector>();
 }
 
 bool IconThemeDatabase::hasTheme(const QString &name) const {

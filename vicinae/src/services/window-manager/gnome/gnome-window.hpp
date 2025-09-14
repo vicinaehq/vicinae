@@ -35,8 +35,7 @@ public:
 
   // Extended AbstractWindow interface
   std::optional<QString> workspace() const override {
-    if (!m_workspace) return std::nullopt;
-    return QString::number(*m_workspace);
+    return m_workspace.and_then([](int id) { return std::optional<QString>(QString::number(id)); });
   }
   bool canClose() const override { return m_canClose.value_or(true); }
 

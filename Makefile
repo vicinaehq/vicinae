@@ -32,7 +32,7 @@ static:
 # but the resulting binary will be more portable across different distros, especially the ones
 # shipping older packages.
 portable:
-	cmake -G Ninja -DUSE_SYSTEM_RAPIDFUZZ=OFF -DUSE_SYSTEM_PROTOBUF=OFF -DUSE_SYSTEM_ABSEIL=OFF -DUSE_SYSTEM_CMARK_GFM=OFF -DUSE_SYSTEM_MINIZIP=OFF -B $(BUILD_DIR)
+	cmake -G Ninja -DUSE_SYSTEM_PROTOBUF=OFF -DUSE_SYSTEM_ABSEIL=OFF -DUSE_SYSTEM_CMARK_GFM=OFF -DUSE_SYSTEM_MINIZIP=OFF -B $(BUILD_DIR)
 	cmake --build $(BUILD_DIR)
 .PHONY: portable
 

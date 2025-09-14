@@ -1,7 +1,6 @@
 #include <QClipboard>
 #include "clipboard-service.hpp"
 #include <filesystem>
-#include <numeric>
 #include <qimagereader.h>
 #include <qlogging.h>
 #include <qmimedata.h>
@@ -72,7 +71,7 @@ QFuture<ClipboardService::GetLocalEncryptionKeyResponse> ClipboardService::getLo
 
       qCritical() << "Failed to write encryption key to keychain" << writeJob->errorString();
 
-      promise->addResult(tl::unexpected(writeJob->error()));
+      promise->addResult(std::unexpected(writeJob->error()));
       promise->finish();
     });
   });
@@ -192,10 +191,11 @@ ClipboardOfferKind ClipboardService::getKind(const ClipboardDataOffer &offer) {
 
   // some of these can be text
   if (offer.mimeType.startsWith("application/")) {
-    static std::set<QString> applicationTexts{"application/json", "application/xml", "application/javascript",
-                                              "application/sql"};
+    static auto applicationTexts =
+        std::vector<QString>{"json", "xml", "javascript", "sql"} |
+        std::views::transform([](auto &&text) { return QString("application/%1").arg(text); });
 
-    if (applicationTexts.contains(offer.mimeType)) return ClipboardOfferKind::Text;
+    if (std::ranges::contains(applicationTexts, offer.mimeType)) return ClipboardOfferKind::Text;
   }
 
   return ClipboardOfferKind::Unknown;
@@ -304,8 +304,8 @@ QByteArray ClipboardService::computeSelectionHash(const ClipboardSelection &sele
 }
 
 bool ClipboardService::isClearSelection(const ClipboardSelection &selection) const {
-  return std::accumulate(selection.offers.begin(), selection.offers.end(), 0,
-                         [](size_t acc, auto &&item) { return acc + item.data.size(); }) == 0;
+  return std::ranges::fold_left(selection.offers, 0,
+                                [](size_t acc, auto &&item) { return acc + item.data.size(); }) == 0;
 }
 
 QString ClipboardService::getOfferTextPreview(const ClipboardDataOffer &offer) {

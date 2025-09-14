@@ -2,6 +2,7 @@
 #include "ui/views/base-view.hpp"
 #include "utils/environment.hpp"
 #include <qlogging.h>
+#include <qtenvironmentvariables.h>
 #include <qwidget.h>
 #include <QProcessEnvironment>
 
@@ -308,10 +309,7 @@ void NavigationController::executeAction(AbstractAction *action) {
   if (!state) return;
 
   if (auto cmpl = state->completer; cmpl && action->isPrimary()) {
-    for (int i = 0; i != cmpl->args.size() && i != cmpl->values.size(); ++i) {
-      const auto &arg = cmpl->args[i];
-      const auto &value = cmpl->values[i];
-
+    for (const auto &[arg, value] : std::views::zip(cmpl->args, cmpl->values)) {
       if (arg.required && value.second.isEmpty()) {
         emit invalidCompletionFired();
         return;

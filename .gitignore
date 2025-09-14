@@ -19,6 +19,4 @@ __cmake*
 *.tgz
 
 /qt6
-
-/appdir
 *AppImage

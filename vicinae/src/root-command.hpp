@@ -11,12 +11,15 @@
 #include "services/files-service/abstract-file-indexer.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "service-registry.hpp"
+#include "ui/action-pannel/action-item.hpp"
+#include "ui/action-pannel/action.hpp"
 #include "ui/calculator-list-item-widget.hpp"
 #include "ui/color-transform/color-transform-widget.hpp"
 #include "ui/omni-list/omni-list-item-widget.hpp"
 #include "ui/omni-list/omni-list.hpp"
 #include <QtConcurrent/QtConcurrent>
 #include <chrono>
+#include "actions/color/color-actions.hpp"
 #include "utils/utils.hpp"
 #include <memory>
 #include <qbrush.h>
@@ -146,6 +149,13 @@ class ColorListItem : public OmniList::AbstractVirtualItem, public ListView::Act
   }
 
   QString actionPanelTitle() const override { return "Copy color as"; }
+
+  QList<AbstractAction *> generateActions() const override {
+    return ColorFormatter().formats() | std::views::transform([&](auto format) {
+             return static_cast<AbstractAction *>(new CopyColorAs(m_color.color, format));
+           }) |
+           std::ranges::to<QList>();
+  }
 
 public:
   ColorListItem(const QString &name, const ColorFormatter::ParsedColor &color)

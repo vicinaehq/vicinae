@@ -7,7 +7,6 @@
 #include "ui/image/url.hpp"
 #include <QString>
 #include <google/protobuf/message.h>
-#include <numeric>
 #include <qevent.h>
 #include <ranges>
 
@@ -86,7 +85,7 @@ public:
   int actionCount() const {
     auto acc = [](int acc, auto &&cur) { return acc + cur->actions().size(); };
 
-    return std::accumulate(m_sections.begin(), m_sections.end(), 0, acc);
+    return std::ranges::fold_left(m_sections, 0, acc);
   }
 
 private:
@@ -113,10 +112,7 @@ private:
 
     auto actions = m_primarySection->actions();
 
-    for (int i = 0; i != actions.size() && i != m_defaultShortcuts.size(); ++i) {
-      auto &action = actions[i];
-      auto &shortcut = m_defaultShortcuts[i];
-
+    for (const auto &[action, shortcut] : std::views::zip(actions, m_defaultShortcuts)) {
       action->addShortcut(shortcut);
     }
   }

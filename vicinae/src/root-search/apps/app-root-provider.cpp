@@ -81,14 +81,8 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
     return openAction;
   };
 
-  auto actions = m_app->actions();
-
-  for (int i = 0; i != appActions.size(); ++i) {
-    auto action = actions[i];
-    auto openAction = new OpenAppAction(action, action->name(), {});
-
-    if (i < 9) { openAction->setShortcut({.key = QString::number(i + 1), .modifiers = {"ctrl", "shift"}}); }
-    mainSection->addAction(openAction);
+  for (const auto &action : m_app->actions() | std::views::enumerate | std::views::transform(makeAction)) {
+    mainSection->addAction(action);
   }
 
   if (fileBrowser) {
@@ -129,13 +123,13 @@ QWidget *AppRootProvider::settingsDetail() const { return new AppSettingsDetail;
 QString AppRootProvider::uniqueId() const { return "apps"; }
 
 std::vector<std::shared_ptr<RootItem>> AppRootProvider::loadItems() const {
-  std::vector<std::shared_ptr<RootItem>> items;
+  auto isDisplayable = [](const auto &app) { return app->displayable(); };
+  auto mapApp = [](const auto &app) -> std::shared_ptr<RootItem> {
+    return std::make_shared<AppRootItem>(app);
+  };
 
-  for (const auto &app : m_appService.list()) {
-    if (app->displayable()) { items.emplace_back(std::make_shared<AppRootItem>(app)); }
-  }
-
-  return items;
+  return m_appService.list() | std::views::filter(isDisplayable) | std::views::transform(mapApp) |
+         std::ranges::to<std::vector>();
 }
 
 AppRootProvider::AppRootProvider(AppService &appService) : m_appService(appService) {

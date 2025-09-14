@@ -1,6 +1,5 @@
 #pragma once
 #include <filesystem>
-#include <optional>
 
 class RelevancyScorer {
   double computeLocationMultiplier(const std::filesystem::path &path);

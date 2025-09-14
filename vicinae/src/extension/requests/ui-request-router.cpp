@@ -73,13 +73,15 @@ void UIRequestRouter::modelCreated() {
 
   auto views = m_navigation->views();
   auto models = m_modelWatcher.result();
+  auto items = models.items | std::views::take(views.size()) | std::views::enumerate;
 
-  for (int i = 0; i < models.items.size() && i < views.size(); ++i) {
-    auto &model = models.items[i];
-    auto &view = views[i];
+  for (const auto &[n, model] : items) {
+    auto view = views.at(n);
     bool shouldSkipRender = !model.dirty && !model.propsDirty;
 
-    if (!shouldSkipRender) view->render(model.root);
+    if (shouldSkipRender) { continue; }
+
+    view->render(model.root);
   }
 }
 

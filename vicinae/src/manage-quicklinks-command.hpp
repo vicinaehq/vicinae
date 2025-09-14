@@ -19,6 +19,7 @@
 #include <qobject.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
+#include <ranges>
 #include <sys/socket.h>
 #include <qscrollarea.h>
 #include "ui/views/list-view.hpp"
@@ -236,15 +237,19 @@ public:
 class ManageShortcutsView : public ListView {
   void renderList(const QString &s, OmniList::SelectionPolicy policy = OmniList::SelectFirst) {
     auto shortcutService = ServiceRegistry::instance()->shortcuts();
+    auto shortcuts =
+        shortcutService->shortcuts() |
+        std::views::filter([s](auto bk) { return bk->name().contains(s, Qt::CaseInsensitive); }) |
+        std::views::transform([](auto bk) -> std::unique_ptr<OmniList::AbstractVirtualItem> {
+          return std::make_unique<QuicklinkItem>(bk);
+        }) |
+        std::ranges::to<std::vector>();
 
     m_list->updateModel(
         [&]() {
           auto &section = m_list->addSection("Shortcuts");
 
-          for (const auto &shortcut : shortcutService->shortcuts()) {
-            if (!shortcut->name().contains(s, Qt::CaseInsensitive)) continue;
-            section.addItem(std::make_unique<QuicklinkItem>(shortcut));
-          }
+          section.addItems(std::move(shortcuts));
         },
         policy);
   }
@@ -265,12 +270,8 @@ class ManageShortcutsView : public ListView {
   }
 
   void argumentValuesChanged(const std::vector<std::pair<QString, QString>> &args) override {
-    std::vector<QString> values;
-
-    for (const auto &pair : args) {
-      values.emplace_back(pair.second);
-    }
-
+    auto values = args | std::views::transform([](auto &&pair) { return pair.second; }) |
+                  std::ranges::to<std::vector>();
     if (auto shortcutDetail = dynamic_cast<ShortcutDetailWidget *>(detail())) {
       shortcutDetail->updateArguments(values);
     }

@@ -3,7 +3,6 @@
 #include <qlogging.h>
 #include <qsqldatabase.h>
 #include <qsqlquery.h>
-#include <QDebug>
 #include <filesystem>
 
 static const std::vector<QString> pragmas = {"PRAGMA foreign_keys = ON;"};
@@ -20,19 +19,16 @@ public:
     std::filesystem::create_directories(path.parent_path());
     _db.setDatabaseName(path.c_str());
 
-    if (!_db.open()) {
-      qCritical() << "Could not open main omnicast SQLite database.";
-      return;
-    }
+    if (!_db.open()) { qFatal() << "Could not open main omnicast SQLite database."; }
+
+    MigrationManager manager(_db, "omnicast");
+
+    manager.runMigrations();
 
     auto query = createQuery();
 
     for (const auto &pragma : pragmas) {
       query.exec(pragma);
     }
-
-    MigrationManager manager(_db, "omnicast");
-
-    manager.runMigrations();
   }
 };

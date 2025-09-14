@@ -11,6 +11,7 @@
 #include <memory>
 #include <qclipboard.h>
 #include <qlogging.h>
+#include <ranges>
 
 class OpenShortcutAction : public AbstractAction {
   std::shared_ptr<Shortcut> m_shortcut;
@@ -74,12 +75,8 @@ class OpenCompletedShortcutAction : public AbstractAction {
 
 public:
   void execute(ApplicationContext *ctx) override {
-    std::vector<QString> values;
-
-    for (const auto &val : ctx->navigation->completionValues()) {
-      values.emplace_back(val.second);
-    }
-
+    auto values = ctx->navigation->completionValues() |
+                  std::views::transform([](auto &&p) { return p.second; }) | std::ranges::to<std::vector>();
     OpenShortcutAction open(m_shortcut, values, m_app);
 
     open.setClearSearch(m_clearSearch);

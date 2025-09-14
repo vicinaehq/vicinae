@@ -19,11 +19,11 @@ public:
 };
 
 FaviconServiceSelector::FaviconServiceSelector() {
-  std::vector<std::shared_ptr<AbstractItem>> items;
-
-  for (const auto &provider : FaviconService::providers()) {
-    items.emplace_back(std::make_shared<FaviconServiceItem>(provider));
-  }
+  auto items = FaviconService::providers() |
+               std::views::transform([](auto &&theme) -> std::shared_ptr<SelectorInput::AbstractItem> {
+                 return std::make_shared<FaviconServiceItem>(theme);
+               }) |
+               std::ranges::to<std::vector>();
 
   addSection("", items);
   updateModel();

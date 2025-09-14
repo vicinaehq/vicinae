@@ -7,7 +7,7 @@
 #include "services/window-manager/abstract-window-manager.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include <QString>
-#include "utils/expected.hpp"
+#include <expected>
 #include <filesystem>
 #include <QJsonObject>
 #include <qdir.h>
@@ -60,7 +60,7 @@ static Content fromJson(const QJsonObject &obj) {
 
 class ClipboardService : public QObject, public NonCopyable {
 public:
-  using GetLocalEncryptionKeyResponse = tl::expected<QByteArray, QKeychain::Error>;
+  using GetLocalEncryptionKeyResponse = std::expected<QByteArray, QKeychain::Error>;
 
 private:
   Q_OBJECT

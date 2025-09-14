@@ -3,6 +3,7 @@
 #include "actions/fallback-actions.hpp"
 #include "actions/root-search/root-search-actions.hpp"
 #include "clipboard-actions.hpp"
+#include "clipboard-history-view.hpp"
 #include "command-actions.hpp"
 #include "extension/extension-command.hpp"
 #include "navigation-controller.hpp"
@@ -74,11 +75,8 @@ AccessoryList CommandRootItem::accessories() const {
 }
 
 std::vector<std::shared_ptr<RootItem>> ExtensionRootProvider::loadItems() const {
-  std::vector<std::shared_ptr<RootItem>> items;
-
-  for (const auto &cmd : m_repo->commands()) {
-    items.emplace_back(std::make_shared<CommandRootItem>(cmd));
-  }
-
-  return items;
+  return m_repo->commands() | std::views::transform([](const auto &command) {
+           return std::static_pointer_cast<RootItem>(std::make_shared<CommandRootItem>(command));
+         }) |
+         std::ranges::to<std::vector>();
 }

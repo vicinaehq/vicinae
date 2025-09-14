@@ -7,11 +7,9 @@
 #include <ranges>
 
 std::vector<std::shared_ptr<RootItem>> RootItemManager::fallbackItems() const {
-  std::vector<std::shared_ptr<RootItem>> items;
-
-  for (const auto &item : allItems()) {
-    if (isFallback(item->uniqueId())) { items.emplace_back(item); }
-  }
+  auto items = allItems() |
+               std::views::filter([&](const auto &item) { return isFallback(item->uniqueId()); }) |
+               std::ranges::to<std::vector>();
 
   std::ranges::sort(items, [&](auto &&a, auto &&b) {
     return itemMetadata(a->uniqueId()).fallbackPosition < itemMetadata(b->uniqueId()).fallbackPosition;
@@ -152,12 +150,10 @@ RootItemManager::prefixSearch(const QString &query, const RootItemPrefixSearchOp
   std::vector<RootSearcher::ScoredItem> results;
 
   if (!opts.includeDisabled) {
-    std::vector<std::shared_ptr<RootItem>> candidates;
-
-    for (const auto &item : m_items) {
-      if (itemMetadata(item->uniqueId()).isEnabled) { candidates.emplace_back(item); }
-    }
-
+    auto candidates =
+        m_items |
+        std::views::filter([this](auto &&item) { return itemMetadata(item->uniqueId()).isEnabled; }) |
+        std::ranges::to<std::vector>();
     results = searcher.search(candidates, query);
   } else {
     results = searcher.search(m_items, query);
@@ -172,13 +168,8 @@ RootItemManager::prefixSearch(const QString &query, const RootItemPrefixSearchOp
     return ascore > bscore;
   });
 
-  std::vector<std::shared_ptr<RootItem>> items;
-
-  for (const auto &result : results) {
-    items.emplace_back(result.item);
-  }
-
-  return items;
+  return results | std::views::transform([](auto &&item) { return item.item; }) |
+         std::ranges::to<std::vector>();
 }
 
 bool RootItemManager::setItemEnabled(const QString &id, bool value) {
@@ -721,45 +712,48 @@ double RootItemManager::computeScore(const RootItemMetadata &meta, int weight) c
 }
 
 std::vector<std::shared_ptr<RootItem>> RootItemManager::queryFavorites(int limit) {
-  std::vector<std::shared_ptr<RootItem>> items;
-
-  for (const auto &item : m_items) {
-    RootItemMetadata meta = itemMetadata(item->uniqueId());
-
-    if (meta.isEnabled && meta.favorite) { items.emplace_back(item); }
-  }
+  auto items = m_items | std::views::transform([this](const std::shared_ptr<RootItem> &item) {
+                 RootItemMetadata meta = itemMetadata(item->uniqueId());
+                 return std::pair<std::shared_ptr<RootItem>, RootItemMetadata>(item, meta);
+               }) |
+               std::views::filter([](auto &&item) { return item.second.isEnabled && item.second.favorite; }) |
+               std::ranges::to<std::vector>();
 
   std::ranges::sort(items, [this](const auto &a, const auto &b) {
-    RootItemMetadata ameta = itemMetadata(a->uniqueId());
-    RootItemMetadata bmeta = itemMetadata(b->uniqueId());
-    auto ascore = computeScore(ameta, a->baseScoreWeight());
-    auto bscore = computeScore(ameta, b->baseScoreWeight());
+    const auto &[aitem, ameta] = a;
+    const auto &[bitem, bmeta] = b;
+
+    auto ascore = computeScore(ameta, aitem->baseScoreWeight());
+    auto bscore = computeScore(ameta, bitem->baseScoreWeight());
 
     return ameta.visitCount > bmeta.visitCount;
   });
 
-  return items;
+  return items | std::views::take(limit) | std::views::transform([](auto &&a) { return a.first; }) |
+         std::ranges::to<std::vector>();
 }
 
 std::vector<std::shared_ptr<RootItem>> RootItemManager::querySuggestions(int limit) {
-  std::vector<std::shared_ptr<RootItem>> items;
-
-  for (const auto &item : m_items) {
-    RootItemMetadata meta = itemMetadata(item->uniqueId());
-
-    if (meta.isEnabled && meta.visitCount > 0) { items.emplace_back(item); }
-  }
+  auto items =
+      m_items | std::views::transform([this](const std::shared_ptr<RootItem> &item) {
+        RootItemMetadata meta = itemMetadata(item->uniqueId());
+        return std::pair<std::shared_ptr<RootItem>, RootItemMetadata>(item, meta);
+      }) |
+      std::views::filter([](auto &&item) { return item.second.isEnabled && item.second.visitCount > 0; }) |
+      std::ranges::to<std::vector>();
 
   std::ranges::sort(items, [this](const auto &a, const auto &b) {
-    RootItemMetadata ameta = itemMetadata(a->uniqueId());
-    RootItemMetadata bmeta = itemMetadata(b->uniqueId());
-    auto ascore = computeScore(ameta, a->baseScoreWeight());
-    auto bscore = computeScore(ameta, b->baseScoreWeight());
+    const auto &[aitem, ameta] = a;
+    const auto &[bitem, bmeta] = b;
 
-    return ameta.visitCount > bmeta.visitCount;
+    auto ascore = computeScore(ameta, aitem->baseScoreWeight());
+    auto bscore = computeScore(bmeta, bitem->baseScoreWeight());
+
+    return ascore > bscore;
   });
 
-  return items;
+  return items | std::views::take(limit) | std::views::transform([](auto &&a) { return a.first; }) |
+         std::ranges::to<std::vector>();
 }
 
 bool RootItemManager::resetRanking(const QString &id) {
@@ -796,8 +790,8 @@ bool RootItemManager::registerVisit(const QString &id) {
 		SET 
 			visit_count = visit_count + 1,
 			rank_visit_count = rank_visit_count + 1,
-			last_visited_at = CAST(strftime('%s') as INT),
-			rank_last_visited_at = CAST(strftime('%s') as INT)
+			last_visited_at = unixepoch(),
+			rank_last_visited_at = unixepoch()
 		WHERE id = :id
 		RETURNING rank_visit_count, rank_last_visited_at, visit_count, last_visited_at
 	)");
@@ -852,13 +846,8 @@ bool RootItemManager::disableItem(const QString &id) { return setItemEnabled(id,
 bool RootItemManager::enableItem(const QString &id) { return setItemEnabled(id, true); }
 
 std::vector<RootProvider *> RootItemManager::providers() const {
-  std::vector<RootProvider *> providers;
-
-  for (const auto &provider : m_providers) {
-    providers.emplace_back(provider.get());
-  }
-
-  return providers;
+  return m_providers | std::views::transform([](const auto &p) { return p.get(); }) |
+         std::ranges::to<std::vector>();
 }
 
 void RootItemManager::uninstallProvider(const QString &id) {
@@ -866,13 +855,11 @@ void RootItemManager::uninstallProvider(const QString &id) {
 }
 
 std::vector<ExtensionRootProvider *> RootItemManager::extensions() const {
-  std::vector<ExtensionRootProvider *> providers;
+  auto isExtension = [](auto &&p) { return p->type() == RootProvider::Type::ExtensionProvider; };
+  auto tr = [](auto &&p) { return static_cast<ExtensionRootProvider *>(p); };
 
-  for (const auto &provider : m_providers) {
-    if (provider->isExtension()) providers.emplace_back(static_cast<ExtensionRootProvider *>(provider.get()));
-  }
-
-  return providers;
+  return providers() | std::views::filter(isExtension) | std::views::transform(tr) |
+         std::ranges::to<std::vector>();
 }
 
 void RootItemManager::unloadProvider(const QString &id) {

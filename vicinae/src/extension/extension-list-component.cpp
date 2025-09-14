@@ -43,11 +43,10 @@ void ExtensionListComponent::renderDropdown(const DropdownModel &dropdown) {
           freeSectionItems.clear();
         }
 
-        std::vector<std::shared_ptr<SelectorInput::AbstractItem>> items;
-
-        for (const auto &item : section->items) {
-          items.emplace_back(std::make_unique<DropdownSelectorItem>(item));
-        }
+        auto mapItem = [](auto &&item) -> std::shared_ptr<SelectorInput::AbstractItem> {
+          return std::make_unique<DropdownSelectorItem>(item);
+        };
+        auto items = section->items | std::views::transform(mapItem) | std::ranges::to<std::vector>();
 
         m_selector->addSection(section->title, items);
       }

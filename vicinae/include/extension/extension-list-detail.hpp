@@ -7,6 +7,7 @@
 #include <qcoreevent.h>
 #include <qevent.h>
 #include <qlogging.h>
+#include <qminmax.h>
 #include <qnamespace.h>
 #include <qobject.h>
 
@@ -41,8 +42,8 @@ public:
 
     markdownRenderer->setVisible(model.markdown.has_value());
 
-    m_metadata->setMetadata(model.metadata.children);
-    bool hasMeta = !model.metadata.children.empty();
+    m_metadata->setMetadata(model.metadata.children | std::ranges::to<std::vector>());
+    bool hasMeta = !model.metadata.children.isEmpty();
 
     m_metadata->setVisible(hasMeta);
     m_divider->setVisible(hasMeta && model.markdown.has_value());
@@ -60,9 +61,9 @@ public:
       }
     }
 
-    bool hasMeta = !model.metadata.children.empty();
+    bool hasMeta = !model.metadata.children.isEmpty();
 
-    m_metadata->setMetadata(model.metadata.children);
+    m_metadata->setMetadata(model.metadata.children | std::ranges::to<std::vector>());
     m_metadata->setVisible(hasMeta);
     m_divider->setVisible(hasMeta && model.markdown.has_value());
   }

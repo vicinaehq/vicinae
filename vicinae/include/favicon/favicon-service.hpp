@@ -2,7 +2,7 @@
 #include "ui/image/url.hpp"
 #include <QSqlError>
 #include <cassert>
-#include "utils/expected.hpp"
+#include <expected>
 #include <qbuffer.h>
 #include <qdir.h>
 #include <qfileinfo.h>
@@ -21,7 +21,7 @@ class FaviconService : public QObject {
   static constexpr size_t maxCacheCount = 50;
 
 public:
-  using FaviconResponse = tl::expected<QPixmap, QString>;
+  using FaviconResponse = std::expected<QPixmap, QString>;
   enum RequesterType { None, Google, Twenty, DuckDuckGo };
 
   struct FaviconServiceData {

@@ -1,47 +1,11 @@
 #pragma once
 #include <filesystem>
 #include <google/protobuf/struct.pb.h>
-#include <iterator>
 #include <qdatetime.h>
 #include <qjsonvalue.h>
 #include <qmimetype.h>
 #include <qstring.h>
 #include <string_view>
-
-template <template <typename...> class Template, typename T> struct is_specialization : std::false_type {};
-
-template <template <typename...> class Template, typename... Args>
-struct is_specialization<Template, Template<Args...>> : std::true_type {};
-
-// Custom implementation of ranges::to
-template <template <typename...> class Container, typename Range> auto ranges_to(Range &&range) {
-  using ValueType = std::decay_t<decltype(*std::begin(range))>;
-
-  if constexpr (std::is_same_v<Container<ValueType>, std::set<ValueType>> ||
-                std::is_same_v<Container<ValueType>, std::multiset<ValueType>>) {
-    // For associative containers
-    return Container<ValueType>(std::begin(range), std::end(range));
-  } else {
-    // For sequence containers
-    Container<ValueType> result;
-
-    // Try to reserve if possible (for vector, deque, etc.)
-    if constexpr (requires { result.reserve(0); }) {
-      if constexpr (requires { std::size(range); }) { result.reserve(std::size(range)); }
-    }
-
-    std::copy(std::begin(range), std::end(range), std::back_inserter(result));
-    return result;
-  }
-}
-
-// we can't yet use std::ranges::to
-template <typename U> U ranges_to(const auto &ct) {
-  U target;
-  std::copy(ct.begin(), ct.end(), std::back_inserter(target));
-
-  return target;
-}
 
 /**
  * Attempts to compress the path as much as possible to make it better
@@ -66,8 +30,6 @@ bool isTextMimeType(const QMimeType &mime);
 bool isHiddenPath(const std::filesystem::path &path);
 
 bool isInHomeDirectory(const std::filesystem::path &path);
-
-std::filesystem::path stripPathComponents(const std::filesystem::path &path, int n);
 
 QString formatCount(int count);
 

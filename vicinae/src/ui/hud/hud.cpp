@@ -2,6 +2,7 @@
 #include "utils/environment.hpp"
 #include "utils/layout.hpp"
 #include <qnamespace.h>
+#include <qtenvironmentvariables.h>
 #include "LayerShellQt/Window"
 #include "vicinae.hpp"
 

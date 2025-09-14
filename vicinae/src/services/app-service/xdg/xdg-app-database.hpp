@@ -8,6 +8,7 @@
 #include <qmimetype.h>
 #include <qprocess.h>
 #include <set>
+#include <ranges>
 
 class XdgApplicationBase : public Application {
 public:
@@ -77,24 +78,14 @@ public:
   std::vector<QString> keywords() const override { return {_data.keywords.begin(), _data.keywords.end()}; }
   ImageURL iconUrl() const override { return ImageURL::system(_data.icon); }
   std::vector<std::shared_ptr<Application>> actions() const override {
-    std::vector<std::shared_ptr<Application>> apps;
+    auto makeAction = [&](const XdgDesktopEntry::Action action) -> std::shared_ptr<Application> {
+      return std::shared_ptr<Application>(new XdgApplicationAction(action, _data, _path, id()));
+    };
 
-    for (const auto &action : _data.actions) {
-      apps.emplace_back(std::make_shared<XdgApplicationAction>(action, _data, _path, id()));
-    }
-
-    return apps;
+    return _data.actions | std::views::transform(makeAction) | std::ranges::to<std::vector>();
   }
 
-  std::vector<QString> exec() const override {
-    std::vector<QString> texec;
-
-    for (const auto &s : _data.exec) {
-      texec.emplace_back(s);
-    }
-
-    return texec;
-  }
+  std::vector<QString> exec() const override { return _data.exec | std::ranges::to<std::vector>(); }
 
   XdgApplication(const fs::path &path, const XdgDesktopEntry &data)
       : _path(path.c_str()), _id(data.id), _data(data) {}

@@ -2,7 +2,6 @@
 #include <filesystem>
 #include <functional>
 #include <vector>
-#include <optional>
 
 class GitIgnoreReader {
   std::vector<std::string> m_patterns;

@@ -29,6 +29,7 @@
 #include <qstringview.h>
 #include <qthread.h>
 #include <qtmetamacros.h>
+#include <qtypes.h>
 #include <quuid.h>
 #include <unistd.h>
 
@@ -133,8 +134,6 @@ class ExtensionManager : public QObject {
   std::unordered_set<QString> m_developmentSessions;
 
 public:
-  static QString nodeProgram();
-
   ExtensionManager();
 
   const std::vector<std::shared_ptr<Extension>> &extensions() const;

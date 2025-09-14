@@ -95,14 +95,9 @@ public:
    * of fetching windows for a specific workspace. In most cases, the performance impact is negligible.
    */
   virtual WindowList listWorkspaceWindows(const QString &workspaceId) {
-    WindowList windows;
-
-    for (const auto &win : listWindowsSync()) {
-      if (win->workspace() != workspaceId) continue;
-      windows.emplace_back(win);
-    }
-
-    return windows;
+    return listWindowsSync() |
+           std::views::filter([&](auto &&win) { return win->workspace() == workspaceId; }) |
+           std::ranges::to<std::vector>();
   }
 
   /**
