@@ -22,9 +22,10 @@ static const std::vector<fs::path> EXCLUDED_PATHS = {"/sys", "/run",     "/proc"
                                                      "/mnt", "/var/tmp", "/efi",  "/dev"};
 
 void FileIndexer::startFullscan() {
-  // TODO: Only interrupt relevant scans
   for (auto const& [id, scan]: m_dispatcher.scans()) {
+    if (scan.type == ScanType::Full) {
       m_dispatcher.interrupt(id);
+    }
   }
 
   for (const auto &entrypoint : m_entrypoints) {
