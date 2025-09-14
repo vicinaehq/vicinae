@@ -8,7 +8,7 @@ void MigrationManager::initialize() {
   bool created = query.exec(R"(
 	  	CREATE TABLE IF NOT EXISTS schema_migrations (
 			id TEXT PRIMARY KEY,
-			applied_at INTEGER,
+			applied_at INTEGER DEFAULT (unixepoch()),
 			version INTEGER,
 			checksum TEXT NOT NULL
 		);
@@ -128,8 +128,8 @@ void MigrationManager::insertMigration(const Migration &migration) {
   QSqlQuery query(m_db);
 
   query.prepare(R"(
-	  	INSERT INTO schema_migrations (id, version, checksum, applied_at)
-		VALUES (:id, :version, :checksum, CAST(strftime('%s') as INT))
+	  	INSERT INTO schema_migrations (id, version, checksum)
+		VALUES (:id, :version, :checksum)
 	  )");
   query.addBindValue(migration.id);
   query.addBindValue(migration.version);

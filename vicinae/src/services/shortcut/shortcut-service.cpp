@@ -52,10 +52,9 @@ bool ShortcutService::registerVisit(const QString &id) {
   {
     QSqlQuery query = m_db.createQuery();
 
-    query.prepare(R"(
-        UPDATE shortcut SET last_used_at = CAST(strftime('%s') as INT), open_count = open_count + 1 WHERE id = :id
-        RETURNING last_used_at, open_count
-	)");
+    query.prepare(
+        "UPDATE shortcut SET last_used_at = unixepoch(), open_count = open_count + 1 WHERE id = :id "
+        "RETURNING last_used_at, open_count");
     query.bindValue(":id", id);
 
     if (!query.exec()) {
@@ -104,7 +103,7 @@ bool ShortcutService::updateShortcut(const QString &id, const QString &name, con
 
     query.prepare(R"(
 		UPDATE shortcut
-		SET name = :name, icon = :icon, url = :url, app = :app, updated_at = CAST(strftime('%s') as INT)
+		SET name = :name, icon = :icon, url = :url, app = :app, updated_at = unixepoch()
 		WHERE id = :id
 	)");
     query.addBindValue(name);
@@ -160,8 +159,7 @@ bool ShortcutService::createShortcut(const QString &name, const QString &icon, c
     QString id = Crypto::UUID::v4();
 
     query.prepare(R"(
-		INSERT INTO shortcut (id, name, icon, url, app, created_at, updated_at) 
-		VALUES (:id, :name, :icon, :url, :app, CAST(strftime('%s') as INT), CAST(strftime('%s') as INT))
+		INSERT INTO shortcut (id, name, icon, url, app) VALUES (:id, :name, :icon, :url, :app)
 		RETURNING id, name, icon, url, app, open_count, created_at, updated_at
   )");
     query.bindValue(":id", id);

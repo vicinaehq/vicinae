@@ -1,6 +1,7 @@
 #include "emoji-service.hpp"
 #include "omni-database.hpp"
 #include "services/emoji-service/emoji.hpp"
+#include <cstdlib>
 #include <qcontainerfwd.h>
 #include <qlogging.h>
 #include "utils/utils.hpp"
@@ -42,11 +43,11 @@ bool EmojiService::registerVisit(std::string_view emoji) {
 
   query.prepare(R"(
   	INSERT INTO visited_emoji (emoji, visit_count, last_visited_at)
-	VALUES (:emoji, 1, CAST(strftime('%s') as INT))
+	VALUES (:emoji, 1, (unixepoch()))
 	ON CONFLICT(emoji) DO UPDATE 
 	SET 
 		visit_count = visit_count + 1, 
-		last_visited_at = CAST(strftime('%s') as INT)
+		last_visited_at = unixepoch()
 	)");
   query.addBindValue(QString::fromUtf8(emoji.data(), emoji.size()));
 
@@ -238,7 +239,7 @@ bool EmojiService::pin(std::string_view emoji) {
 
   QSqlQuery query = m_db.createQuery();
 
-  query.prepare(R"(UPDATE visited_emoji SET pinned_at = CAST(strftime('%s') AS INT) WHERE emoji = :emoji)");
+  query.prepare("UPDATE visited_emoji SET pinned_at = unixepoch() WHERE emoji = :emoji");
   query.addBindValue(QString::fromUtf8(emoji.data(), emoji.size()));
 
   if (!query.exec()) {

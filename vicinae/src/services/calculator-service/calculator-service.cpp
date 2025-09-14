@@ -198,8 +198,8 @@ bool CalculatorService::addRecord(const AbstractCalculatorBackend::CalculatorRes
   QSqlQuery query = m_db.createQuery();
 
   query.prepare(R"(
-		INSERT INTO calculator_history (id, created_at, type_hint, question, answer)
-		VALUES (:id, CAST(strftime('%s') as INT), :type_hint, :question, :answer)
+		INSERT INTO calculator_history (id, type_hint, question, answer)
+		VALUES (:id, :type_hint, :question, :answer)
 	)");
   query.bindValue(":id", Crypto::UUID::v4());
   query.bindValue(":type_hint", result.type);
@@ -233,7 +233,7 @@ bool CalculatorService::addRecord(const AbstractCalculatorBackend::CalculatorRes
 bool CalculatorService::pinRecord(const QString &id) {
   QSqlQuery query = m_db.createQuery();
 
-  query.prepare(R"(UPDATE calculator_history SET pinned_at = CAST(strftime('%s') as INT) WHERE id = :id)");
+  query.prepare("UPDATE calculator_history SET pinned_at = unixepoch() WHERE id = :id");
   query.addBindValue(id);
 
   if (!query.exec()) {
