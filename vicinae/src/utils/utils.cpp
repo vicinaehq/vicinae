@@ -60,6 +60,21 @@ QString getRelativeTimeString(const QDateTime &pastTime) {
   }
 }
 
+fs::path stripPathComponents(const fs::path &path, int n) {
+  fs::path stripedFilePath;
+  auto it = path.begin();
+
+  for (int i = 0; i != n && it != path.end(); ++i)
+    ++it;
+
+  while (it != path.end()) {
+    stripedFilePath /= *it;
+    ++it;
+  }
+
+  return stripedFilePath;
+}
+
 QString qStringFromStdView(std::string_view view) { return QString::fromUtf8(view.data(), view.size()); }
 
 bool isTextMimeType(const QMimeType &mime) {

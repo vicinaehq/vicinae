@@ -1,15 +1,16 @@
 #include "app-selector.hpp"
 #include "ui/form/selector-input.hpp"
+#include <memory>
 #include <qwidget.h>
 
 AppSelector::AppSelector(QWidget *parent) : SelectorInput(parent) {}
 
 void AppSelector::setApps(const std::vector<std::shared_ptr<Application>> &apps) {
-  auto transform = [&](auto &&option) -> std::shared_ptr<AbstractItem> {
-    return std::make_shared<AppSelectorItem2>(option);
-  };
+  std::vector<std::shared_ptr<AbstractItem>> items;
 
-  auto items = apps | std::views::transform(transform) | std::ranges::to<std::vector>();
+  for (const auto &app : apps) {
+    items.emplace_back(std::make_shared<AppSelectorItem2>(app));
+  }
 
   addSection("", items);
   updateModel();

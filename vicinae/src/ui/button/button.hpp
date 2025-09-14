@@ -1,11 +1,12 @@
 #pragma once
+#include <qboxlayout.h>
+#include <qgraphicseffect.h>
+#include <qwidget.h>
 #include "../image/url.hpp"
 #include "theme.hpp"
 #include "ui/button-base/button-base.hpp"
 #include "ui/typography/typography.hpp"
-#include <qboxlayout.h>
-#include <qgraphicseffect.h>
-#include <qwidget.h>
+
 
 class ButtonWidget : public ButtonBase {
 public:

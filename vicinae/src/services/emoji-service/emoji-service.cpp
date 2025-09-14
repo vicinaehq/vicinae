@@ -52,7 +52,7 @@ bool EmojiService::registerVisit(std::string_view emoji) {
   query.addBindValue(QString::fromUtf8(emoji.data(), emoji.size()));
 
   if (!query.exec()) {
-    qCritical() << "Failed to register visit for emoji" << emoji << query.lastError();
+    qCritical() << "Failed to register visit for emoji" << query.lastError();
     return false;
   }
 
@@ -153,7 +153,7 @@ EmojiWithMetadata EmojiService::mapMetadata(std::string_view emoji) {
   query.addBindValue(qStringFromStdView(emoji));
 
   if (!query.exec()) {
-    qCritical() << "Failed to map metadata for" << emoji << query.lastError();
+    qCritical() << "Failed to map metadata for" << query.lastError();
     return {.data = it->second};
   }
 
@@ -183,7 +183,7 @@ bool EmojiService::setCustomKeywords(std::string_view emoji, const QString &keyw
   query.addBindValue(qStringFromStdView(emoji));
 
   if (!query.exec()) {
-    qCritical() << "Failed to setCustomKeywords for emoji" << emoji << query.lastError();
+    qCritical() << "Failed to setCustomKeywords for emoji" << query.lastError();
     return false;
   }
 
@@ -225,7 +225,7 @@ bool EmojiService::unpin(std::string_view emoji) {
   query.addBindValue(QString::fromUtf8(emoji.data(), emoji.size()));
 
   if (!query.exec()) {
-    qCritical() << "Failed to pin emoji" << emoji;
+    qCritical() << "Failed to pin emoji";
     return false;
   }
 
@@ -243,7 +243,7 @@ bool EmojiService::pin(std::string_view emoji) {
   query.addBindValue(QString::fromUtf8(emoji.data(), emoji.size()));
 
   if (!query.exec()) {
-    qCritical() << "Failed to pin emoji" << emoji;
+    qCritical() << "Failed to pin emoji";
     return false;
   }
 

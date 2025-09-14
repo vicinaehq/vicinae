@@ -1,13 +1,13 @@
 #pragma once
-#include "abstract-app-db.hpp"
-#include "common.hpp"
-#include "omni-database.hpp"
 #include <memory>
 #include <qlogging.h>
 #include <qobject.h>
 #include <qobjectdefs.h>
 #include <qsqlquery.h>
 #include <qtmetamacros.h>
+#include "abstract-app-db.hpp"
+#include "common.hpp"
+#include "omni-database.hpp"
 
 class AppService : public QObject, public NonCopyable {
   Q_OBJECT

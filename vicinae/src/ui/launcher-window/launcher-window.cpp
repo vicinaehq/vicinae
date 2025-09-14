@@ -5,7 +5,6 @@
 #include "ui/status-bar/status-bar.hpp"
 #include "ui/top-bar/top-bar.hpp"
 #include "utils/environment.hpp"
-#include <qtenvironmentvariables.h>
 #ifdef WAYLAND_LAYER_SHELL
 #include <LayerShellQt/window.h>
 #endif

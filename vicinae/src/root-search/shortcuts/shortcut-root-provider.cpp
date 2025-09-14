@@ -1,5 +1,4 @@
 #include "root-search/shortcuts/shortcut-root-provider.hpp"
-#include "action-panel/action-panel.hpp"
 #include "actions/shortcut/shortcut-actions.hpp"
 #include "actions/fallback-actions.hpp"
 #include "actions/root-search/root-search-actions.hpp"
@@ -10,7 +9,6 @@
 #include "vicinae.hpp"
 #include <memory>
 #include <qlogging.h>
-#include <ranges>
 
 std::unique_ptr<ActionPanelState> RootShortcutItem::newActionPanel(ApplicationContext *ctx,
                                                                    const RootItemMetadata &metadata) {
@@ -88,17 +86,18 @@ AccessoryList RootShortcutItem::accessories() const {
 bool RootShortcutItem::isSuitableForFallback() const { return m_link->arguments().size() == 1; }
 
 ArgumentList RootShortcutItem::arguments() const {
-  auto mapArg = [](const Shortcut::Argument &arg) -> CommandArgument {
+  ArgumentList args;
+
+  for (const auto &arg : m_link->arguments()) {
     CommandArgument cmdArg;
 
     cmdArg.type = CommandArgument::Text;
     cmdArg.required = arg.defaultValue.isEmpty();
     cmdArg.placeholder = arg.name;
+    args.emplace_back(cmdArg);
+  }
 
-    return cmdArg;
-  };
-
-  return m_link->arguments() | std::views::transform(mapArg) | std::ranges::to<std::vector>();
+  return args;
 }
 
 ImageURL RootShortcutItem::iconUrl() const {
@@ -112,11 +111,13 @@ ImageURL RootShortcutItem::iconUrl() const {
 RootShortcutItem::RootShortcutItem(const std::shared_ptr<Shortcut> &link) : m_link(link) {}
 
 std::vector<std::shared_ptr<RootItem>> ShortcutRootProvider::loadItems() const {
-  auto mapShortcut = [](auto &&shortcut) -> std::shared_ptr<RootItem> {
-    return std::make_shared<RootShortcutItem>(shortcut);
-  };
+  std::vector<std::shared_ptr<RootItem>> items;
 
-  return m_db.shortcuts() | std::views::transform(mapShortcut) | std::ranges::to<std::vector>();
+  for (const auto &shortcut : m_db.shortcuts()) {
+    items.emplace_back(std::make_shared<RootShortcutItem>(shortcut));
+  }
+
+  return items;
 };
 
 QString ShortcutRootProvider::displayName() const { return "Shortcuts"; }

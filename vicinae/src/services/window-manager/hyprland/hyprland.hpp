@@ -2,7 +2,6 @@
 #include "services/window-manager/abstract-window-manager.hpp"
 #include "services/window-manager/hyprland/hypr-listener.hpp"
 #include <QtConcurrent/qtconcurrentrun.h>
-#include <lib/xkbcommon-utils.hpp>
 #include <qapplication.h>
 #include <qfuture.h>
 #include <qjsondocument.h>
@@ -16,7 +15,6 @@
 #include <QJsonObject>
 #include <qpromise.h>
 #include <qstringview.h>
-#include <qtcoreexports.h>
 
 class HyprlandWindow : public AbstractWindowManager::AbstractWindow {
   QString m_id;

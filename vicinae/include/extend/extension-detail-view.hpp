@@ -1,10 +1,4 @@
 #pragma once
-#include "extend/model-parser.hpp"
-#include "extension/extension-view.hpp"
-#include "ui/markdown/markdown-renderer.hpp"
-#include "ui/split-detail/split-detail.hpp"
-#include "ui/vertical-metadata/vertical-metadata.hpp"
-#include "utils/layout.hpp"
 #include <QListWidget>
 #include <QTextEdit>
 #include <qboxlayout.h>
@@ -19,6 +13,12 @@
 #include <qtextedit.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
+#include "extend/model-parser.hpp"
+#include "extension/extension-view.hpp"
+#include "ui/markdown/markdown-renderer.hpp"
+#include "ui/split-detail/split-detail.hpp"
+#include "ui/vertical-metadata/vertical-metadata.hpp"
+#include "utils/layout.hpp"
 
 class ExtensionDetailView : public ExtensionSimpleView {
   Q_OBJECT
@@ -57,7 +57,7 @@ public:
     if (auto actions = newModel.actions) { setActionPanel(*actions); }
 
     if (newModel.metadata) {
-      metadata->setMetadata(newModel.metadata->children | std::ranges::to<std::vector>());
+      metadata->setMetadata(newModel.metadata->children);
     } else {
       metadata->hide();
     }

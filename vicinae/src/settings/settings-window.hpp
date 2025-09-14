@@ -132,8 +132,10 @@ class SettingsNavWidget : public QWidget {
 
 public:
   void setSelected(const QString &id) {
-    for (const auto &[idx, paneId] : m_panes | std::views::enumerate) {
-      SettingsNavPane *pane = static_cast<SettingsNavPane *>(m_layout->itemAt(idx)->widget());
+    for (int i = 0; i != m_panes.size(); ++i) {
+      auto paneId = m_panes[i];
+      SettingsNavPane *pane = static_cast<SettingsNavPane *>(m_layout->itemAt(i)->widget());
+
       if (paneId == id) {
         pane->select();
       } else {

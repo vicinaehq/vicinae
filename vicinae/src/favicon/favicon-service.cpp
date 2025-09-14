@@ -100,7 +100,7 @@ QFuture<FaviconService::FaviconResponse> FaviconService::makeRequest(const QStri
     requester = new TwentyFaviconRequester(domain, parent);
     break;
   case None:
-    promise.addResult(std::unexpected("Favicon fetching is disabled"));
+    promise.addResult(tl::unexpected("Favicon fetching is disabled"));
     promise.finish();
     return future;
   default:
