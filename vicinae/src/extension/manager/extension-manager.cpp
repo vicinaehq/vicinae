@@ -1,11 +1,14 @@
 #include "extension/manager/extension-manager.hpp"
 #include <QtConcurrent/qtconcurrentrun.h>
+#include <filesystem>
 #include <qfuturewatcher.h>
 #include <qlogging.h>
 #include <qstringview.h>
-#include <qtenvironmentvariables.h>
+#include <streambuf>
 #include <string>
+#include <system_error>
 #include <unordered_map>
+#include "environment.hpp"
 #include "pid-file/pid-file.hpp"
 #include "proto/extension.pb.h"
 #include "proto/manager.pb.h"
@@ -146,6 +149,11 @@ ExtensionManager::ExtensionManager() : bus(&process) {
 
 bool ExtensionManager::isRunning() const { return process.state() == QProcess::ProcessState::Running; }
 
+QString ExtensionManager::nodeProgram() {
+  if (auto appDir = Environment::appImageDir()) { return (*appDir / "bin" / "node").c_str(); }
+  return "node";
+}
+
 bool ExtensionManager::start() {
 #ifndef HAS_TYPESCRIPT_EXTENSIONS
   qCritical() << "Cannot start extension manager as extension support was disabled at compile time";
@@ -187,7 +195,25 @@ bool ExtensionManager::start() {
 
   if (pidFile.exists() && pidFile.kill()) { qInfo() << "Killed existing extension manager instance"; }
 
-  process.start("node", {managerPath.c_str()});
+  std::optional<QString> nodeProgram;
+
+  if (auto bin = Environment::nodeBinaryOverride()) {
+    std::error_code ec;
+
+    if (std::filesystem::is_regular_file(*bin, ec)) {
+      qInfo() << "NODE_BIN was set to" << *bin << "using this as the node executable instead";
+      nodeProgram = bin->c_str();
+    } else {
+      qWarning() << "NODE_BIN was set but ignored because" << bin->c_str() << "is not a valid file";
+    }
+  }
+
+  if (auto appDir = Environment::appImageDir(); appDir && !nodeProgram) {
+    nodeProgram = (*appDir / "usr" / "bin" / "node").c_str();
+    qInfo() << "We are running in an AppImage, using bundled node executable at" << nodeProgram;
+  }
+
+  process.start(nodeProgram.value_or("node"), {managerPath.c_str()});
 
   if (!process.waitForStarted(maxWaitForStart)) {
     qCritical() << "Failed to start extension manager" << process.errorString();
@@ -196,7 +222,7 @@ bool ExtensionManager::start() {
 
   pidFile.write(process.processId());
 
-  qInfo() << "Started extension manager" << managerPath;
+  qInfo() << "Started extension manager" << managerPath.c_str();
 
   return true;
 }
@@ -218,7 +244,7 @@ void ExtensionManager::addDevelopmentSession(const QString &id) { m_developmentS
 void ExtensionManager::removeDevelopmentSession(const QString &id) { m_developmentSessions.erase(id); }
 
 bool ExtensionManager::hasDevelopmentSession(const QString &id) const {
-  return std::ranges::contains(m_developmentSessions, id);
+  return m_developmentSessions.contains(id);
 }
 
 void ExtensionManager::emitGenericExtensionEvent(const QString &sessionId, const QString &handlerId,

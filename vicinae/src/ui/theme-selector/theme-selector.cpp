@@ -2,12 +2,11 @@
 
 ThemeSelector::ThemeSelector() {
   auto &theme = ThemeService::instance();
+  std::vector<std::shared_ptr<AbstractItem>> items;
 
-  auto items = theme.themes() |
-               std::views::transform([](auto &&theme) -> std::shared_ptr<SelectorInput::AbstractItem> {
-                 return std::make_shared<ThemeSelectorItem>(theme);
-               }) |
-               std::ranges::to<std::vector>();
+  for (const auto &theme : theme.themes()) {
+    items.emplace_back(std::make_shared<ThemeSelectorItem>(theme));
+  }
 
   addSection("", items);
   updateModel();

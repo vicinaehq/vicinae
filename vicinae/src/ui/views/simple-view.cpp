@@ -11,7 +11,6 @@ void SimpleView::setupUI(QWidget *centerWidget) {
 }
 
 QWidget *SimpleView::centerWidget() const {
-  qCritical() << "default centerWidget()";
   return new QWidget;
 }
 

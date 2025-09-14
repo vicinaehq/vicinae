@@ -4,10 +4,10 @@ CREATE TABLE IF NOT EXISTS shortcut (
 		icon TEXT NOT NULL,
 		url TEXT NOT NULL,
 		app TEXT NOT NULL,
-		open_count INTEGER DEFAULT 0,
-		created_at INTEGER DEFAULT (unixepoch()),
-		updated_at INTEGER DEFAULT (unixepoch()),
-		last_used_at INTEGER
+		open_count INT DEFAULT 0,
+		created_at INT NOT NULL,
+		updated_at INT,
+		last_used_at INT
 );
 
 -- no used yet, but planned
@@ -62,17 +62,17 @@ CREATE TABLE IF NOT EXISTS storage_data_item (
 
 CREATE TABLE IF NOT EXISTS calculator_history (
 	id TEXT PRIMARY KEY,
-	type_hint INTEGER NOT NULL, -- unit conversion / regular arithmetic
+	type_hint INT NOT NULL, -- unit conversion / regular arithmetic
 	question TEXT NOT NULL,
 	answer TEXT NOT NULL,
-	created_at INTEGER DEFAULT (unixepoch()),
-	pinned_at INTEGER
+	created_at INT NOT NULL,
+	pinned_at INT
 );
 
 CREATE TABLE IF NOT EXISTS visited_emoji (
 	emoji TEXT PRIMARY KEY,
-	pinned_at INTEGER, -- if NULL, not pinned
-	last_visited_at INTEGER,
-	visit_count INTEGER DEFAULT 0,
+	pinned_at INT, -- if NULL, not pinned
+	last_visited_at INT,
+	visit_count INT DEFAULT 0,
 	custom_keywords TEXT
 );

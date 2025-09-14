@@ -1,14 +1,5 @@
-#include <cstdlib>
-#include <filesystem>
-#include <memory>
-#include <mutex>
 #include <QtConcurrent/QtConcurrent>
-#include "services/files-service/abstract-file-indexer.hpp"
-#include "services/files-service/file-indexer/indexer-scanner.hpp"
-#include "services/files-service/file-indexer/incremental-scanner.hpp"
-#include "file-indexer-db.hpp"
-#include "file-indexer.hpp"
-#include "utils/utils.hpp"
+#include <memory>
 #include <QDebug>
 #include <qcryptographichash.h>
 #include <qfilesystemwatcher.h>
@@ -20,6 +11,13 @@
 #include <qthreadpool.h>
 #include <ranges>
 #include <unistd.h>
+#include <filesystem>
+#include "services/files-service/abstract-file-indexer.hpp"
+#include "services/files-service/file-indexer/indexer-scanner.hpp"
+#include "services/files-service/file-indexer/incremental-scanner.hpp"
+#include "file-indexer-db.hpp"
+#include "file-indexer.hpp"
+#include "utils/utils.hpp"
 
 namespace fs = std::filesystem;
 
@@ -75,7 +73,7 @@ QString FileIndexer::preparePrefixSearchQuery(std::string_view query) const {
   QString finalQuery;
 
   for (const auto &word : std::views::split(query, std::string_view(" "))) {
-    std::string_view view(word);
+    std::string_view view(word.begin(), word.end());
 
     if (!finalQuery.isEmpty()) { finalQuery += ' '; }
 
@@ -91,8 +89,8 @@ QFuture<std::vector<IndexerFileResult>> FileIndexer::queryAsync(std::string_view
                                                                 const QueryParams &params) const {
   auto searchQuery = qStringFromStdView(view);
   QString finalQuery = preparePrefixSearchQuery(view);
-  QPromise<std::vector<IndexerFileResult>> promise;
-  auto future = promise.future();
+  auto promise = std::make_shared<QPromise<std::vector<IndexerFileResult>>>();
+  auto future = promise->future();
 
   QThreadPool::globalInstance()->start([params, finalQuery, promise = std::move(promise)]() mutable {
     std::vector<fs::path> paths;
@@ -100,12 +98,15 @@ QFuture<std::vector<IndexerFileResult>> FileIndexer::queryAsync(std::string_view
       FileIndexerDatabase db;
       paths = db.search(finalQuery.toStdString(), params);
     }
-    std::vector<IndexerFileResult> results =
-        paths | std::views::transform([](auto &&path) { return IndexerFileResult{.path = path}; }) |
-        std::ranges::to<std::vector>();
 
-    promise.addResult(results);
-    promise.finish();
+    std::vector<IndexerFileResult> results;
+
+    for (const auto &path : paths) {
+      results.emplace_back(IndexerFileResult{.path = path});
+    }
+
+    promise->addResult(results);
+    promise->finish();
   });
 
   return future;

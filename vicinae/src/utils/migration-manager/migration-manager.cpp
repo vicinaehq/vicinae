@@ -8,7 +8,7 @@ void MigrationManager::initialize() {
   bool created = query.exec(R"(
 	  	CREATE TABLE IF NOT EXISTS schema_migrations (
 			id TEXT PRIMARY KEY,
-			applied_at INTEGER DEFAULT (unixepoch()),
+			applied_at INTEGER,
 			version INTEGER,
 			checksum TEXT NOT NULL
 		);
@@ -41,7 +41,7 @@ std::vector<MigrationManager::RegisteredMigration> MigrationManager::loadDatabas
   return migrations;
 }
 
-std::expected<MigrationManager::Migration, MigrationLoadingError>
+tl::expected<MigrationManager::Migration, MigrationLoadingError>
 MigrationManager::loadMigrationFile(const std::filesystem::path &path) {
   Migration migration;
 
@@ -58,7 +58,7 @@ MigrationManager::loadMigrationFile(const std::filesystem::path &path) {
       error.path = path;
       error.message = QString("Could not parse version from migration file name: %1").arg(filename.c_str());
 
-      return std::unexpected(error);
+      return tl::unexpected(error);
     }
 
     migration.version = std::stoi(filenameMatch[1].str());
@@ -128,8 +128,8 @@ void MigrationManager::insertMigration(const Migration &migration) {
   QSqlQuery query(m_db);
 
   query.prepare(R"(
-	  	INSERT INTO schema_migrations (id, version, checksum)
-		VALUES (:id, :version, :checksum)
+	  	INSERT INTO schema_migrations (id, version, checksum, applied_at)
+		VALUES (:id, :version, :checksum, CAST(strftime('%s') as INT))
 	  )");
   query.addBindValue(migration.id);
   query.addBindValue(migration.version);
@@ -171,7 +171,8 @@ void MigrationManager::runMigrations() {
   size_t newExecCount = 0;
 
   try {
-    for (const auto &[idx, migration] : fsMigrations | std::views::enumerate) {
+    for (size_t idx = 0; idx != fsMigrations.size(); ++idx) {
+      const auto &migration = fsMigrations[idx];
       if (idx < dbMigrations.size()) {
         auto dbMigration = dbMigrations.at(idx);
 

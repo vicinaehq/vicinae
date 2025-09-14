@@ -1,14 +1,13 @@
-#include <ranges>
 #include "service-registry.hpp"
 #include "font-selector.hpp"
 
 FontSelector::FontSelector() {
   auto fonts = ServiceRegistry::instance()->fontService();
-  auto items = fonts->families() |
-               std::views::transform([](auto &&font) -> std::shared_ptr<SelectorInput::AbstractItem> {
-                 return std::make_shared<FontSelectorItem>(font);
-               }) |
-               std::ranges::to<std::vector>();
+  std::vector<std::shared_ptr<AbstractItem>> items;
+
+  for (const auto &family : fonts->families()) {
+    items.emplace_back(std::make_shared<FontSelectorItem>(family));
+  }
 
   addSection("", items);
   updateModel();

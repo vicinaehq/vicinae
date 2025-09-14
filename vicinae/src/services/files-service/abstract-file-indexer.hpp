@@ -1,9 +1,9 @@
 #pragma once
-#include <filesystem>
 #include <qfuture.h>
 #include <qobject.h>
 #include <qtmetamacros.h>
 #include <vector>
+#include <filesystem>
 
 /**
  * A file indexer capable of indexing a LOT of files (technically, a whole filesystem, if the user wants so)

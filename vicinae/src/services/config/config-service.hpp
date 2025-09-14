@@ -1,17 +1,16 @@
 #pragma once
-#include "vicinae.hpp"
-#include <filesystem>
-#include <optional>
 #include <qdir.h>
 #include <qfilesystemwatcher.h>
 #include <qjsondocument.h>
 #include <qjsonobject.h>
 #include <qlogging.h>
 #include <qobject.h>
-
 #include <qstring.h>
 #include <qtimer.h>
 #include <qtmetamacros.h>
+#include <optional>
+#include <filesystem>
+#include "vicinae.hpp"
 
 // XXX - Currently we store the config file on the filesystem as a json file
 // There is no guarantee that this will remain the case, and the config file should not be edited

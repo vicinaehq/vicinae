@@ -2,9 +2,9 @@
 #include "abstract-scanner.hpp"
 #include "services/files-service/file-indexer/file-indexer-db.hpp"
 #include "services/files-service/file-indexer/filesystem-walker.hpp"
+#include "utils.hpp"
 #include <memory>
 #include <qlogging.h>
-#include <ranges>
 #include <unordered_set>
 
 namespace fs = std::filesystem;
@@ -31,7 +31,7 @@ void IncrementalScanner::processDirectory(const std::filesystem::path &root) {
   }
 
   m_db->deleteIndexedFiles(deletedFiles);
-  m_db->indexFiles(currentFiles | std::ranges::to<std::vector>());
+  m_db->indexFiles(ranges_to<std::vector>(currentFiles));
 }
 
 std::vector<fs::path> IncrementalScanner::getScannableDirectories(const fs::path &path,

@@ -1,12 +1,11 @@
 [Desktop Entry]
 Type=Application
-Name=Vicinae URL handler
+Name=Vicinae
 GenericName=Vicinae
 Comment=Support for vicinae:// url scheme
 Exec=vicinae
-Icon=vicinae
 Terminal=false
+Icon=vicinae
 Categories=System;Utility;
 NoDisplay=true
-Terminal=False
 MimeType=x-scheme-handler/vicinae;x-scheme-handler/raycast;

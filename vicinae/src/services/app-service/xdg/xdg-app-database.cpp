@@ -173,7 +173,7 @@ std::vector<fs::path> XdgAppDatabase::defaultSearchPaths() const {
   if (ddir) {
     std::string s = ddir;
     for (const auto p : std::views::split(s, std::string_view(":"))) {
-      fs::path appDir = fs::path(std::string_view(p)) / "applications";
+      fs::path appDir = fs::path(std::string_view(p.begin(), p.end())) / "applications";
       paths.emplace_back(appDir);
     }
   } else {

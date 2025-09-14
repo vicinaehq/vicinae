@@ -1,6 +1,13 @@
 #pragma once
-#include "extend/grid-model.hpp"
 #include <qdebug.h>
+#include <QJsonArray>
+#include <qboxlayout.h>
+#include <qlogging.h>
+#include <qnamespace.h>
+#include <qresource.h>
+#include <qstackedwidget.h>
+#include <qtimer.h>
+#include "extend/grid-model.hpp"
 #include "extend/image-model.hpp"
 #include "extension/extension-view.hpp"
 #include "../../src/ui/image/url.hpp"
@@ -9,13 +16,6 @@
 #include "ui/image/image.hpp"
 #include "ui/omni-grid/omni-grid.hpp"
 #include "ui/omni-list/omni-list.hpp"
-#include <QJsonArray>
-#include <qboxlayout.h>
-#include <qlogging.h>
-#include <qnamespace.h>
-#include <qresource.h>
-#include <qstackedwidget.h>
-#include <qtimer.h>
 
 class ExtensionGridItem : public OmniGrid::AbstractGridItem {
   GridItemViewModel _item;
@@ -107,16 +107,14 @@ class ExtensionGridList : public QWidget {
             } else if (auto section = std::get_if<GridSectionModel>(&item)) {
               appendSectionLess();
 
-              auto items =
-                  section->children | std::views::filter(matches) |
-                  std::views::transform([&](auto &&item) -> std::unique_ptr<OmniList::AbstractVirtualItem> {
-                    auto gridItem = std::make_unique<ExtensionGridItem>(item, section->aspectRatio);
+              std::vector<std::shared_ptr<OmniList::AbstractVirtualItem>> items;
 
-                    gridItem->setInset(section->inset.value_or(m_inset));
+              for (auto &item : section->children | std::views::filter(matches)) {
+                auto gridItem = std::make_unique<ExtensionGridItem>(item, section->aspectRatio);
 
-                    return gridItem;
-                  }) |
-                  std::ranges::to<std::vector>();
+                gridItem->setInset(section->inset.value_or(m_inset));
+                items.emplace_back(std::move(gridItem));
+              }
 
               if (items.empty()) continue;
 

@@ -37,9 +37,6 @@ RUN curl -o actions-runner-linux-x64.tar.gz -L \
     tar xzf actions-runner-linux-x64.tar.gz && \
     rm actions-runner-linux-x64.tar.gz
 
-# manual install on arch
-#RUN ./bin/installdependencies.sh
-
 # Copy startup script
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
