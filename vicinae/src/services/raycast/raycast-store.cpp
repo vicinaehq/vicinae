@@ -83,7 +83,6 @@ RaycastStoreService::fetchExtensions(const Raycast::ListPaginationOptions &opts)
   QNetworkRequest request(endpoint);
 
   if (auto it = m_cachedPages.find(opts.page); it != m_cachedPages.end()) {
-    qDebug() << "cached page" << opts.page;
     promise.addResult(it->second);
     promise.finish();
     return future;
@@ -132,8 +131,8 @@ RaycastStoreService::fetchExtensions(const Raycast::ListPaginationOptions &opts)
 
 RaycastStoreService::RaycastStoreService() {
   auto diskCache = new QNetworkDiskCache;
-  auto cacheDir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) +
-                  QString("/omnicast/raycast-store");
+  auto cacheDir =
+      QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QString("/omnicast/raycast-store");
 
   diskCache->setCacheDirectory(cacheDir);
   m_net->setCache(diskCache);
