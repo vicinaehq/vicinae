@@ -2,6 +2,7 @@
 #include "root-search.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include <bits/chrono.h>
+#include <numbers>
 #include <qlogging.h>
 #include <qobjectdefs.h>
 #include <ranges>
@@ -332,6 +333,13 @@ bool RootItemManager::setAlias(const QString &id, const QString &alias) {
 bool RootItemManager::clearAlias(const QString &id) { return setAlias(id, ""); }
 
 QJsonObject RootItemManager::getProviderPreferenceValues(const QString &id) const {
+  auto provider = findProviderById(id);
+
+  if (!provider) {
+    qWarning() << "No provider with id" << id;
+    return {};
+  }
+
   auto query = m_db.createQuery();
 
   query.prepare(R"(
@@ -354,9 +362,16 @@ QJsonObject RootItemManager::getProviderPreferenceValues(const QString &id) cons
     return {};
   }
   auto rawJson = query.value(0).toString();
-  auto json = QJsonDocument::fromJson(rawJson.toUtf8());
+  auto json = QJsonDocument::fromJson(rawJson.toUtf8()).object();
 
-  return json.object();
+  for (const auto &pref : provider->preferences()) {
+    qDebug() << "pref" << pref.name();
+    auto dflt = pref.defaultValue();
+
+    if (!json.contains(pref.name()) && !dflt.isNull()) { json[pref.name()] = dflt; }
+  }
+
+  return json;
 }
 
 bool RootItemManager::pruneProvider(const QString &id) {
@@ -884,26 +899,24 @@ void RootItemManager::unloadProvider(const QString &id) {
 }
 
 void RootItemManager::loadProvider(std::unique_ptr<RootProvider> provider) {
-  auto it =
-      std::ranges::find_if(m_providers, [&](auto &&p) { return p->uniqueId() == provider->uniqueId(); });
-  auto preferences = getProviderPreferenceValues(provider->uniqueId());
+  if (!upsertProvider(*provider)) {
+    qWarning() << "Failed to upsert provider";
+    return;
+  };
 
-  if (preferences.empty()) {
-    preferences = provider->generateDefaultPreferences();
-
-    if (!preferences.empty()) { setProviderPreferenceValues(provider->uniqueId(), preferences); }
-  }
-
-  provider->preferencesChanged(preferences);
-
-  connect(provider.get(), &RootProvider::itemsChanged, this,
-          [this, name = provider->uniqueId()]() { updateIndex(); });
+  auto pred = [&](auto &&p) { return p->uniqueId() == provider->uniqueId(); };
+  auto it = std::ranges::find_if(m_providers, pred);
 
   if (it != m_providers.end()) {
     *it = std::move(provider);
-  } else {
-    m_providers.emplace_back(std::move(provider));
+    return;
   }
+
+  auto ptr = provider.get();
+
+  m_providers.emplace_back(std::move(provider));
+  ptr->preferencesChanged(getProviderPreferenceValues(ptr->uniqueId()));
+  connect(ptr, &RootProvider::itemsChanged, this, [this]() { updateIndex(); });
 }
 
 RootProvider *RootItemManager::provider(const QString &id) const {
