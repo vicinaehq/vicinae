@@ -1,13 +1,13 @@
 #include "abstract-scanner.hpp"
-#include <expected>
+#include "utils/expected.hpp"
 #include <mutex>
 #include <QDebug>
 
-std::expected<Scan, bool> AbstractScanner::awaitScan() {
+tl::expected<Scan, bool> AbstractScanner::awaitScan() {
   std::unique_lock lock(m_scanLock);
 
   m_scanCv.wait(lock, [&]() { return !m_queuedScans.empty() || !m_alive; });
-  if (!m_alive) { return std::unexpected<bool>(false); }
+  if (!m_alive) { return tl::unexpected<bool>(false); }
 
   Scan front = m_queuedScans.front();
 

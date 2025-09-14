@@ -1,9 +1,9 @@
 #pragma once
+#include <memory>
 #include "actions/app/app-actions.hpp"
+#include "navigation-controller.hpp"
 #include "services/extension-boilerplate-generator/extension-boilerplate-generator.hpp"
 #include "ui/views/detail-view.hpp"
-#include <memory>
-#include <ranges>
 #include "service-registry.hpp"
 #include "services/app-service/app-service.hpp"
 
@@ -36,18 +36,12 @@ protected:
   QString markdown() const override { return m_md; }
 
   std::unique_ptr<ActionPanelState> actionPanel() const override {
-    auto panel = std::make_unique<ActionPanelState>();
+    auto panel = std::make_unique<ListActionPanelState>();
     auto appDb = context()->services->appDb();
     auto section = panel->createSection();
 
-    for (const auto &[idx, opener] : appDb->findOpeners("inode/directory") | std::views::enumerate) {
+    for (const auto &opener : appDb->findOpeners("inode/directory")) {
       auto open = new OpenAppAction(opener, QString("Open in %1").arg(opener->name()), {m_path.c_str()});
-
-      if (idx == 0) {
-        open->setPrimary(true);
-        open->setShortcut({.key = "return"});
-      }
-
       section->addAction(open);
     }
 

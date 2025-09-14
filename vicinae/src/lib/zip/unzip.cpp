@@ -1,4 +1,5 @@
 #include "unzip.hpp"
+#include "utils.hpp"
 #include <qlogging.h>
 
 namespace fs = std::filesystem;
@@ -44,11 +45,7 @@ void Unzipper::extract(const std::filesystem::path &target, const Unzipper::Extr
   int sc = opts.stripComponents.value_or(0);
 
   for (auto &file : listFiles()) {
-    fs::path stripedFilePath =
-        std::ranges::fold_left(fs::path(file.path()) | std::views::drop(sc), fs::path(),
-                               [](auto &&p1, auto &&p2) { return p1 / p2; });
-
-    std::filesystem::path path = target / stripedFilePath;
+    std::filesystem::path path = target / stripPathComponents(file.path(), sc);
     std::filesystem::create_directories(path.parent_path());
     std::ofstream ofs(path);
     auto data = file.readAll();

@@ -44,8 +44,13 @@ AbstractWindowManager::WindowList WindowManager::findWindowByClass(const QString
     return gnomeWm->findWindowByClassGnome(wmClass);
   }
 
-  auto pred = [&](auto &&win) { return win->wmClass() == wmClass; };
-  return m_windows | std::views::filter(pred) | std::ranges::to<std::vector>();
+  AbstractWindowManager::WindowList filtered;
+
+  for (const auto &win : m_windows) {
+    if (win->wmClass() == wmClass) { filtered.emplace_back(win); }
+  }
+
+  return filtered;
 }
 
 AbstractWindowManager::WindowList WindowManager::findAppWindows(const Application &app) const {
@@ -58,7 +63,13 @@ AbstractWindowManager::WindowList WindowManager::findAppWindows(const Applicatio
     return std::ranges::any_of(app.windowClasses(),
                                [&](auto &&s) { return s.toLower() == win->wmClass().toLower(); });
   };
-  return m_windows | std::views::filter(pred) | std::ranges::to<std::vector>();
+  AbstractWindowManager::WindowList filtered;
+
+  for (const auto &win : m_windows | std::views::filter(pred)) {
+    filtered.emplace_back(win);
+  }
+
+  return filtered;
 }
 
 void WindowManager::updateWindowCache() { m_windows = m_provider->listWindowsSync(); }

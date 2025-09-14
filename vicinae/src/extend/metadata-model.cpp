@@ -7,7 +7,7 @@ MetadataModelParser::MetadataModelParser() {}
 
 MetadataModel MetadataModelParser::parse(const QJsonObject &instance) {
   auto children = instance["children"].toArray();
-  QList<MetadataItem> items;
+  std::vector<MetadataItem> items;
 
   for (const auto &ref : children) {
     auto child = ref.toObject();

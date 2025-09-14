@@ -145,7 +145,7 @@ void MarkdownRenderer::insertCodeBlock(cmark_node *node, bool isClosing) {
 
   if (isClosing && code.size() > 0) {
     while (code.at(code.size() - 1).isSpace()) {
-      code.removeLast();
+      code.remove(code.size() - 1, 1);
     }
   }
 
@@ -418,7 +418,7 @@ void MarkdownRenderer::appendMarkdown(QStringView markdown) {
         break;
       }
 
-      if (_markdown.at(i) == "\n") {
+      if (_markdown.at(i) == '\n') {
         ++l;
         c = 1;
       } else {

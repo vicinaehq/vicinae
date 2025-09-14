@@ -26,7 +26,6 @@
 #include <qtimer.h>
 #include <qtmetamacros.h>
 #include "ui/form/form.hpp"
-#include <qtypes.h>
 #include <qvariant.h>
 #include <qwidget.h>
 #include <ranges>
@@ -253,6 +252,7 @@ class ShortcutFormView : public ManagedFormView {
                          qDebug() << "title" << arg.title;
                          return std::make_unique<CompletionListItem>(arg);
                        });
+
       auto &mainSection = completer->addSection("");
 
       for (auto item : mainItems) {
@@ -352,13 +352,14 @@ public:
   void initializeAppSelector() {
     auto appDb = ServiceRegistry::instance()->appDb();
     std::vector<std::shared_ptr<SelectorInput::AbstractItem>> appItems;
-    auto appCandidates = appDb->list() | std::views::filter([](auto &&app) { return app->displayable(); });
 
     if (auto browser = appDb->webBrowser()) {
       appItems.emplace_back(std::make_unique<DefaultAppItem>(browser));
     }
 
-    for (const auto &app : appCandidates) {
+    for (const auto &app : appDb->list()) {
+      if (!app->displayable()) continue ;
+
       appItems.emplace_back(std::make_unique<AppSelectorItem>(app));
 
       for (const auto &action : app->actions()) {

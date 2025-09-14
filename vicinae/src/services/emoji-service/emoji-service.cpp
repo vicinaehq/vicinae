@@ -1,7 +1,6 @@
 #include "emoji-service.hpp"
 #include "omni-database.hpp"
 #include "services/emoji-service/emoji.hpp"
-#include <cstdlib>
 #include <qcontainerfwd.h>
 #include <qlogging.h>
 #include "utils/utils.hpp"
@@ -43,16 +42,16 @@ bool EmojiService::registerVisit(std::string_view emoji) {
 
   query.prepare(R"(
   	INSERT INTO visited_emoji (emoji, visit_count, last_visited_at)
-	VALUES (:emoji, 1, (unixepoch()))
+	VALUES (:emoji, 1, CAST(strftime('%s') as INT))
 	ON CONFLICT(emoji) DO UPDATE 
 	SET 
 		visit_count = visit_count + 1, 
-		last_visited_at = unixepoch()
+		last_visited_at = CAST(strftime('%s') as INT)
 	)");
   query.addBindValue(QString::fromUtf8(emoji.data(), emoji.size()));
 
   if (!query.exec()) {
-    qCritical() << "Failed to register visit for emoji" << emoji << query.lastError();
+    qCritical() << "Failed to register visit for emoji" << query.lastError();
     return false;
   }
 
@@ -153,7 +152,7 @@ EmojiWithMetadata EmojiService::mapMetadata(std::string_view emoji) {
   query.addBindValue(qStringFromStdView(emoji));
 
   if (!query.exec()) {
-    qCritical() << "Failed to map metadata for" << emoji << query.lastError();
+    qCritical() << "Failed to map metadata for" << query.lastError();
     return {.data = it->second};
   }
 
@@ -183,7 +182,7 @@ bool EmojiService::setCustomKeywords(std::string_view emoji, const QString &keyw
   query.addBindValue(qStringFromStdView(emoji));
 
   if (!query.exec()) {
-    qCritical() << "Failed to setCustomKeywords for emoji" << emoji << query.lastError();
+    qCritical() << "Failed to setCustomKeywords for emoji" << query.lastError();
     return false;
   }
 
@@ -225,7 +224,7 @@ bool EmojiService::unpin(std::string_view emoji) {
   query.addBindValue(QString::fromUtf8(emoji.data(), emoji.size()));
 
   if (!query.exec()) {
-    qCritical() << "Failed to pin emoji" << emoji;
+    qCritical() << "Failed to pin emoji";
     return false;
   }
 
@@ -239,11 +238,11 @@ bool EmojiService::pin(std::string_view emoji) {
 
   QSqlQuery query = m_db.createQuery();
 
-  query.prepare("UPDATE visited_emoji SET pinned_at = unixepoch() WHERE emoji = :emoji");
+  query.prepare(R"(UPDATE visited_emoji SET pinned_at = CAST(strftime('%s') AS INT) WHERE emoji = :emoji)");
   query.addBindValue(QString::fromUtf8(emoji.data(), emoji.size()));
 
   if (!query.exec()) {
-    qCritical() << "Failed to pin emoji" << emoji;
+    qCritical() << "Failed to pin emoji";
     return false;
   }
 

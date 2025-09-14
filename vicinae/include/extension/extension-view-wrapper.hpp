@@ -1,13 +1,12 @@
 #pragma once
+#include <qlogging.h>
+#include <qtmetamacros.h>
 #include "extend/extension-detail-view.hpp"
 #include "extension/extension-command-controller.hpp"
 #include "extension/extension-form-component.hpp"
 #include "extension/extension-grid-component.hpp"
 #include "extension/extension-list-component.hpp"
 #include "extension/extension-view.hpp"
-#include <qlogging.h>
-#include <qtmetamacros.h>
-#include <sys/un.h>
 
 struct ViewVisitor {
   ExtensionSimpleView *operator()(const ListModel &model) const { return new ExtensionListComponent; }

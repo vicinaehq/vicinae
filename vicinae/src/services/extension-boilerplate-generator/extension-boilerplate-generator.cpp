@@ -34,7 +34,7 @@ const std::vector<CommandBoilerplate> &ExtensionBoilerplateGenerator::commandBoi
   return CMD_TEMPLATE_LIST;
 }
 
-std::expected<fs::path, QString>
+tl::expected<fs::path, QString>
 ExtensionBoilerplateGenerator::generate(const fs::path &targetDir, const ExtensionBoilerplateConfig &config) {
   std::error_code ec;
   QString extName = slugify(config.title);
@@ -45,7 +45,7 @@ ExtensionBoilerplateGenerator::generate(const fs::path &targetDir, const Extensi
   };
 
   if (!fs::is_directory(targetDir, ec)) {
-    return std::unexpected(QString("%1 is not a directory. The boilerplate generator will not create the "
+    return tl::unexpected(QString("%1 is not a directory. The boilerplate generator will not create the "
                                    "containing directory for you")
                                .arg(targetDir.c_str()));
   }
@@ -53,7 +53,7 @@ ExtensionBoilerplateGenerator::generate(const fs::path &targetDir, const Extensi
   fs::path extDir = targetDir / extName.toStdString();
 
   if (fs::exists(extDir, ec)) {
-    return std::unexpected(QString("%1 already exists. Won't override.").arg(extDir.c_str()));
+    return tl::unexpected(QString("%1 already exists. Won't override.").arg(extDir.c_str()));
   }
 
   fs::path srcDir = extDir / "src";
@@ -64,7 +64,7 @@ ExtensionBoilerplateGenerator::generate(const fs::path &targetDir, const Extensi
   QFile packageJson(":boilerplate/package.json");
 
   if (!packageJson.open(QIODevice::ReadOnly)) {
-    return std::unexpected("Cannot open package.json boilerplate");
+    return tl::unexpected("Cannot open package.json boilerplate");
   }
 
   QString manifest = packageJson.readAll();
@@ -78,7 +78,7 @@ ExtensionBoilerplateGenerator::generate(const fs::path &targetDir, const Extensi
     auto it = std::ranges::find_if(CMD_TEMPLATE_LIST, pred);
 
     if (it == CMD_TEMPLATE_LIST.end()) {
-      return std::unexpected(QString("Unknown template with id %1").arg(cmd.templateId));
+      return tl::unexpected(QString("Unknown template with id %1").arg(cmd.templateId));
     }
 
     QString mode = it->mode == CommandModeView ? "view" : "no-view";
@@ -116,7 +116,7 @@ ExtensionBoilerplateGenerator::generate(const fs::path &targetDir, const Extensi
   {
     QFile file(extDir / "package.json");
 
-    if (!file.open(QIODevice::WriteOnly)) { return std::unexpected(QString("Failed to write manifest")); }
+    if (!file.open(QIODevice::WriteOnly)) { return tl::unexpected(QString("Failed to write manifest")); }
 
     file.write(manifest.toUtf8());
   }

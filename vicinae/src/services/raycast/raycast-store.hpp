@@ -2,7 +2,7 @@
 #include "common.hpp"
 #include "../../ui/image/url.hpp"
 #include "theme.hpp"
-#include <expected>
+#include "utils/expected.hpp"
 #include <qcontainerfwd.h>
 #include <qstringview.h>
 #include <vector>
@@ -474,9 +474,9 @@ struct ListPaginationOptions {
   int perPage = 50;
 };
 
-using ListResult = std::expected<Raycast::ListFrontPageResponse, QString>;
+using ListResult = tl::expected<Raycast::ListFrontPageResponse, QString>;
 
-using DownloadExtensionResult = std::expected<QByteArray, QString>;
+using DownloadExtensionResult = tl::expected<QByteArray, QString>;
 
 } // namespace Raycast
 

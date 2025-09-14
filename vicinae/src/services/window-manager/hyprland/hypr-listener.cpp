@@ -1,4 +1,5 @@
 #include "hypr-listener.hpp"
+#include "utils.hpp"
 #include <qlogging.h>
 #include <filesystem>
 #include <qsocketnotifier.h>
@@ -51,15 +52,15 @@ bool EventListener::start() {
 }
 
 void EventListener::processEvent(const std::string &event) {
-  auto ss = std::views::split(event, std::string_view(">>")) | std::ranges::to<std::vector>();
+  auto ss = ranges_to<std::vector>(std::views::split(event, std::string_view(">>")));
 
   if (ss.size() != 2) {
-    qWarning() << "Hyprland event socket sent a malformed invalid event" << event;
+    qWarning() << "Hyprland event socket sent a malformed invalid event" << event.c_str();
     return;
   }
 
-  auto name = std::string_view(ss[0]);
-  auto value = std::string_view(ss[1]);
+  auto name = std::string_view(ss[0].begin(), ss[0].end());
+  auto value = std::string_view(ss[1].begin(), ss[1].end());
 
   // TODO: parse real arguments if we really need them
   // for now we only use these to know windows have changed
