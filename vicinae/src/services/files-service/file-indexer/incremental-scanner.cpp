@@ -69,6 +69,8 @@ IncrementalScanner::IncrementalScanner(std::shared_ptr<DbWriter> writer, const S
     : AbstractScanner(writer, sc, callback) {
   m_scanThread = std::thread([this, sc]() {
     m_read_db = std::make_unique<FileIndexerDatabase>();
+    start(sc);
+
     try {
       scan(sc);
       finish();

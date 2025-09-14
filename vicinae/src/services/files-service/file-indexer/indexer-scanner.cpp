@@ -50,6 +50,8 @@ IndexerScanner::IndexerScanner(std::shared_ptr<DbWriter> writer, const Scan &sc,
   m_writerThread = std::thread([&]() { m_writerWorker->run(); });
 
   m_scanThread = std::thread([this, sc]() {
+    start(sc);
+
     try {
       scan(sc.path);
       m_writerWorker->stop();
