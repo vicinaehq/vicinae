@@ -38,8 +38,7 @@ int ScanDispatcher::enqueue(const Scan &scan) {
   return scanId;
 }
 
-ScanDispatcher::ScanDispatcher(std::shared_ptr<DbWriter> writer):
-m_writer(writer) {
+ScanDispatcher::ScanDispatcher(std::shared_ptr<DbWriter> writer) : m_writer(writer) {
   m_running = true;
 
   m_collectorThread = std::thread([this]() {
@@ -79,7 +78,7 @@ void ScanDispatcher::interruptAll() {
   {
     std::scoped_lock l(m_scannerMapMtx);
 
-    for (auto& [id, element]: m_scannerMap) {
+    for (auto &[id, element] : m_scannerMap) {
       element.scanner->interrupt();
     }
   }
@@ -89,11 +88,10 @@ std::vector<std::pair<int, Scan>> ScanDispatcher::scans() {
   {
     std::scoped_lock l(m_scannerMapMtx);
 
-    return m_scannerMap | std::views::transform(
-        [](auto const& it) -> std::pair<int, Scan> {
-        return {it.first, it.second.scan};
-        }
-        ) | std::ranges::to<std::vector>();
+    return m_scannerMap | std::views::transform([](auto const &it) -> std::pair<int, Scan> {
+             return {it.first, it.second.scan};
+           }) |
+           std::ranges::to<std::vector>();
   }
 }
 

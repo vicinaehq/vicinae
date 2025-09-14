@@ -7,7 +7,7 @@
 
 class DbWriter {
 public:
-  using Work = std::function<void(FileIndexerDatabase&)>;
+  using Work = std::function<void(FileIndexerDatabase &)>;
 
 private:
   std::mutex m_queueMtx;
@@ -31,6 +31,7 @@ public:
 
   // Utility functions
   void updateScanStatus(int scanId, ScanStatus status);
+
   tl::expected<FileIndexerDatabase::ScanRecord, QString>
   createScan(const std::filesystem::path& path, ScanType type);
 

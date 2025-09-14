@@ -7,7 +7,7 @@ void DbWriter::listen() {
 
   while (true) {
     std::unique_lock lock(m_queueMtx);
-    m_updateSignal.wait(lock, [&]() {return !m_queue.empty() || !m_active;});
+    m_updateSignal.wait(lock, [&]() { return !m_queue.empty() || !m_active; });
 
     if (m_queue.empty() && !m_active) break;
 
@@ -28,9 +28,7 @@ void DbWriter::submit(Work work) {
 }
 
 DbWriter::DbWriter() {
-  m_workerThread = std::thread([this]() {
-      listen();
-      });
+  m_workerThread = std::thread([this]() { listen(); });
 }
 
 DbWriter::~DbWriter() {
@@ -40,9 +38,7 @@ DbWriter::~DbWriter() {
 }
 
 void DbWriter::updateScanStatus(int scanId, ScanStatus status) {
-  submit([scanId, status](FileIndexerDatabase& db) {
-      db.updateScanStatus(scanId, status);
-      });
+  submit([scanId, status](FileIndexerDatabase &db) { db.updateScanStatus(scanId, status); });
 }
 
 tl::expected<FileIndexerDatabase::ScanRecord, QString>
@@ -53,21 +49,15 @@ DbWriter::createScan(const std::filesystem::path& path, ScanType type) {
   std::promise<tl::expected<FileIndexerDatabase::ScanRecord, QString>> result;
   auto future = result.get_future();
 
-  submit([&result, &path, type](FileIndexerDatabase& db) {
-      result.set_value(db.createScan(path, type));
-      });
+  submit([&result, &path, type](FileIndexerDatabase &db) { result.set_value(db.createScan(path, type)); });
 
   return future.get();
 }
 
 void DbWriter::indexFiles(std::vector<std::filesystem::path> paths) {
-  submit([paths = std::move(paths)](FileIndexerDatabase& db) {
-      db.indexFiles(paths);
-      });
+  submit([paths = std::move(paths)](FileIndexerDatabase &db) { db.indexFiles(paths); });
 }
 
 void DbWriter::deleteIndexedFiles(std::vector<std::filesystem::path> paths) {
-  submit([paths = std::move(paths)](FileIndexerDatabase& db) {
-      db.deleteIndexedFiles(paths);
-      });
+  submit([paths = std::move(paths)](FileIndexerDatabase &db) { db.deleteIndexedFiles(paths); });
 }

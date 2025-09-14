@@ -29,7 +29,7 @@ private:
 protected:
   std::shared_ptr<DbWriter> m_writer;
 
-  void start(const Scan& scan) {
+  void start(const Scan &scan) {
     auto result = m_writer->createScan(scan.path, scan.type);
 
     if (!result.has_value()) {
@@ -45,7 +45,7 @@ protected:
   }
 
   void finish() {
-    ScanStatus status = m_interrupted? ScanStatus::Interrupted: ScanStatus::Succeeded;
+    ScanStatus status = m_interrupted ? ScanStatus::Interrupted : ScanStatus::Succeeded;
     m_writer->updateScanStatus(m_recordId, status);
     m_finishCallback(status);
   }
@@ -55,12 +55,11 @@ protected:
     m_finishCallback(ScanStatus::Failed);
   }
 
-  void setInterruptFlag() {
-    m_interrupted = true;
-  }
+  void setInterruptFlag() { m_interrupted = true; }
 
 public:
-  AbstractScanner(std::shared_ptr<DbWriter> writer, const Scan &scan, FinishCallback callback) : m_writer(writer), m_finishCallback(callback) {}
+  AbstractScanner(std::shared_ptr<DbWriter> writer, const Scan &scan, FinishCallback callback)
+      : m_writer(writer), m_finishCallback(callback) {}
   virtual ~AbstractScanner() = default;
 
   virtual void interrupt() = 0;

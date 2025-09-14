@@ -171,6 +171,4 @@ void FileSystemWalker::walk(const fs::path &root, const WalkCallback &callback) 
              .arg(duration);
 }
 
-void FileSystemWalker::stop() {
-  m_alive = false;
-}
+void FileSystemWalker::stop() { m_alive = false; }

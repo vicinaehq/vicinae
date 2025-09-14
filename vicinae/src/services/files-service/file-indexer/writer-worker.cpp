@@ -32,6 +32,7 @@ void WriterWorker::batchWrite(const std::vector<fs::path> &paths) {
   m_writer->indexFiles(paths);
 }
 
-WriterWorker::WriterWorker(std::shared_ptr<DbWriter> writer, std::mutex &batchMutex, std::deque<std::vector<std::filesystem::path>> &batchQueue,
+WriterWorker::WriterWorker(std::shared_ptr<DbWriter> writer, std::mutex &batchMutex,
+                           std::deque<std::vector<std::filesystem::path>> &batchQueue,
                            std::condition_variable &batchCv)
     : m_writer(writer), batchMutex(batchMutex), batchQueue(batchQueue), m_batchCv(batchCv) {}

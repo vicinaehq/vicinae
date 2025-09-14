@@ -19,6 +19,6 @@ public:
   void stop();
   bool isWorking() const { return m_isWorking; }
 
-  WriterWorker(std::shared_ptr<DbWriter> writer, std::mutex &batchMutex, std::deque<std::vector<std::filesystem::path>> &batchQueue,
-               std::condition_variable &batchCv);
+  WriterWorker(std::shared_ptr<DbWriter> writer, std::mutex &batchMutex,
+               std::deque<std::vector<std::filesystem::path>> &batchQueue, std::condition_variable &batchCv);
 };

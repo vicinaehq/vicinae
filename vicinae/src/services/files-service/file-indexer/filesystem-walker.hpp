@@ -47,6 +47,7 @@ public:
 
   void walk(const std::filesystem::path &path, const WalkCallback &fn);
   void stop();
+
 private:
   // we don't use ignore files by default
   std::vector<std::string> m_ignoreFiles = {};

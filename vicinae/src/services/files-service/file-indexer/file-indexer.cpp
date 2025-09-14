@@ -22,10 +22,8 @@ static const std::vector<fs::path> EXCLUDED_PATHS = {"/sys", "/run",     "/proc"
                                                      "/mnt", "/var/tmp", "/efi",  "/dev"};
 
 void FileIndexer::startFullscan() {
-  for (auto const& [id, scan]: m_dispatcher.scans()) {
-    if (scan.type == ScanType::Full) {
-      m_dispatcher.interrupt(id);
-    }
+  for (auto const &[id, scan] : m_dispatcher.scans()) {
+    if (scan.type == ScanType::Full) { m_dispatcher.interrupt(id); }
   }
 
   for (const auto &entrypoint : m_entrypoints) {
@@ -107,5 +105,6 @@ QFuture<std::vector<IndexerFileResult>> FileIndexer::queryAsync(std::string_view
   return future;
 }
 
-FileIndexer::FileIndexer():
-m_writer(std::make_shared<DbWriter>()), m_dispatcher(m_writer){ m_db.runMigrations(); }
+FileIndexer::FileIndexer() : m_writer(std::make_shared<DbWriter>()), m_dispatcher(m_writer) {
+  m_db.runMigrations();
+}
