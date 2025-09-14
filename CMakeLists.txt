@@ -1,15 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 set(PROJECT_NAME vicinae)
-set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 project(${PROJECT_NAME} VERSION 1.0.0 LANGUAGES C CXX)
-
-if (QT_DIR)
-	set(CMAKE_PREFIX_PATH ${QT_DIR} ${CMAKE_PREFIX_PATH})
-	message(STATUS "Using QT installation at ${QT_DIR}")
-endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
@@ -34,10 +26,6 @@ option(LIBQALCULATE_BACKEND "Compile in support for the Qalculate! calculator ba
 
 if (APPLE)
 	set(WAYLAND_LAYER_SHELL OFF)
-endif()
-
-if (USE_SYSTEM_PROTOBUF)
-	set(USE_SYSTEM_ABSEIL ON)
 endif()
 
 # End of Vicinae build configuration options
@@ -79,9 +67,6 @@ set(CMARK_LIBRARY "cmark-gfm")
 if (NOT USE_SYSTEM_RAPIDFUZZ)
 	include(RapidFuzz)
 	checkout_rapidfuzz()
-	# there is probably a better way, but the headers are not part of the build output
-	# so cmake won't find them
-	include_directories(${CMAKE_CURRENT_BINARY_DIR}/_deps/rapidfuzz-src/)
 endif()
 
 if (NOT USE_SYSTEM_QT_KEYCHAIN)
@@ -113,7 +98,6 @@ endif()
 if (NOT USE_SYSTEM_PROTOBUF)
 	include(Protobuf)
 	checkout_protobuf()
-	set(COMMON_PROTO_DIR ${CMAKE_CURRENT_BINARY_DIR}/_deps/protobuf-src/src)
 endif()
 
 set(CMAKE_FIND_PACKAGE_PREFER_CONFIG TRUE)

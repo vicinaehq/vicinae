@@ -1,6 +1,6 @@
 #pragma once
 #include <qstring.h>
-#include "utils/expected.hpp"
+#include <expected>
 
 class AbstractCalculatorBackend {
 public:
@@ -25,7 +25,7 @@ public:
 
   virtual QString id() const = 0;
   virtual QString displayName() const { return id(); }
-  virtual tl::expected<CalculatorResult, CalculatorError> compute(const QString &question) const = 0;
+  virtual std::expected<CalculatorResult, CalculatorError> compute(const QString &question) const = 0;
 
   virtual bool supportsCurrencyConversion() const { return false; }
   virtual bool reloadExchangeRates() const { return false; }

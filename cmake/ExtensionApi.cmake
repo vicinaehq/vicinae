@@ -1,7 +1,7 @@
 set(EXT_API_SRC_DIR "${CMAKE_SOURCE_DIR}/api")
 set(EXT_API_OUT_DIR "${CMAKE_SOURCE_DIR}/api/dist")
 set(API_DIST_DIR "${CMAKE_SOURCE_DIR}/api/dist")
-set(API_PROTO_PATH "${CMAKE_SOURCE_DIR}/proto")
+set(API_PROTO_PATH "${CMAKE_SOURCE_DIR}/proto/extensions")
 set(API_PROTO_OUT "${EXT_API_SRC_DIR}/src/api/proto")
 
 message(STATUS ${API_PROTO_PATH})

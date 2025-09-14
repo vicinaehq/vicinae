@@ -1,11 +1,11 @@
 #pragma once
+#include "../image/url.hpp"
 #include <qdebug.h>
 #include <qevent.h>
 #include <qlogging.h>
 #include <qmainwindow.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
-#include "../image/url.hpp"
 #include "navigation-controller.hpp"
 
 class ApplicationContext;

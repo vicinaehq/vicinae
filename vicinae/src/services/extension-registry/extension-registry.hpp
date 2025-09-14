@@ -2,7 +2,7 @@
 #include "common.hpp"
 #include "preference.hpp"
 #include "services/local-storage/local-storage-service.hpp"
-#include "utils/expected.hpp"
+#include <expected>
 #include <filesystem>
 #include <qfilesystemwatcher.h>
 #include <qjsonobject.h>
@@ -61,7 +61,7 @@ class ExtensionRegistry : public QObject {
 public:
   bool installFromZip(const QString &id, std::string_view data);
 
-  tl::expected<ExtensionManifest, ManifestError> scanBundle(const std::filesystem::path &path);
+  std::expected<ExtensionManifest, ManifestError> scanBundle(const std::filesystem::path &path);
   std::vector<ExtensionManifest> scanAll();
   void rescanBundle();
   bool isInstalled(const QString &id) const;

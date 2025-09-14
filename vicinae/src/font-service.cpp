@@ -3,7 +3,7 @@
 #include <qlogging.h>
 #include <qnamespace.h>
 #include <qprocess.h>
-#include <QProcessEnvironment>
+#include <qtenvironmentvariables.h>
 
 static const std::vector<QString> UNIX_EMOJI_FONT_CANDIDATES = {
     "Twemoji",

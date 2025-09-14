@@ -1,5 +1,4 @@
 #include "program-db/program-db.hpp"
-#include "utils.hpp"
 #include "vicinae.hpp"
 #include <filesystem>
 #include <qnamespace.h>
@@ -24,15 +23,7 @@ std::vector<fs::path> ProgramDb::search(const QString &query, int limit) const {
     return QString(path.filename().c_str()).contains(query, Qt::CaseInsensitive);
   };
 
-  std::vector<fs::path> filtered;
-
-  for (const auto &prog : m_progs) {
-    if (!filter(prog)) continue;
-    filtered.emplace_back(prog);
-    if (filtered.size() >= limit) break;
-  }
-
-  return filtered;
+  return m_progs | std::views::filter(filter) | std::views::take(limit) | std::ranges::to<std::vector>();
 }
 
 void ProgramDb::scanSync() { m_progs = scan(); }

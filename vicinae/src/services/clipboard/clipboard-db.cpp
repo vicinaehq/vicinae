@@ -226,7 +226,7 @@ bool ClipboardDatabase::setPinned(const QString &id, bool pinned) {
   QSqlQuery query(m_db);
 
   if (pinned) {
-    query.prepare(R"(UPDATE selection SET pinned_at = CAST(strftime('%s') as INT) WHERE id = :id)");
+    query.prepare("UPDATE selection SET pinned_at = unixepoch() WHERE id = :id");
   } else {
     query.prepare("UPDATE selection SET pinned_at = NULL WHERE id = :id");
   }
@@ -240,8 +240,8 @@ bool ClipboardDatabase::insertSelection(const InsertSelectionPayload &payload) {
   QSqlQuery query(m_db);
 
   query.prepare(R"(
-  	INSERT INTO selection (id, created_at, updated_at, kind, offer_count, hash_md5, preferred_mime_type, source)
-	VALUES (:id, CAST(strftime('%s') as INT), CAST(strftime('%s') as INT), :kind, :offer_count, :hash_md5, :preferred_mime_type, :source)
+  	INSERT INTO selection (id, kind, offer_count, hash_md5, preferred_mime_type, source)
+	VALUES (:id, :kind, :offer_count, :hash_md5, :preferred_mime_type, :source)
 	RETURNING id, created_at;
   )");
   query.bindValue(":id", payload.id);
@@ -274,7 +274,7 @@ bool ClipboardDatabase::transaction(const TxHandle &handle) {
 bool ClipboardDatabase::tryBubbleUpSelection(const QString &selectionHash) {
   QSqlQuery query(m_db);
 
-  query.prepare(R"(UPDATE selection SET updated_at = CAST(strftime('%s') as INT) WHERE hash_md5 = :hash)");
+  query.prepare("UPDATE selection SET updated_at = unixepoch() WHERE hash_md5 = :hash");
   query.addBindValue(selectionHash);
 
   if (!query.exec()) { qCritical() << "Failed to execute clipboard update"; }

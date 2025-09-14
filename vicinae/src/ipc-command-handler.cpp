@@ -1,7 +1,6 @@
 #include "ipc-command-handler.hpp"
 #include "common.hpp"
 #include "proto/daemon.pb.h"
-#include <QDebug>
 #include <algorithm>
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "services/config/config-service.hpp"
@@ -9,6 +8,7 @@
 #include "services/toast/toast-service.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "services/extension-registry/extension-registry.hpp"
+#include <qlogging.h>
 #include <qobjectdefs.h>
 #include "extension/manager/extension-manager.hpp"
 #include <qsqlquery.h>
@@ -39,8 +39,9 @@ proto::ext::daemon::Response *IpcCommandHandler::handleCommand(const proto::ext:
 }
 
 void IpcCommandHandler::handleUrl(const QUrl &url) {
-  if (!Omnicast::APP_SCHEMES.contains(url.scheme())) {
-    qWarning() << "Unsupported url scheme" << url.scheme();
+  if (!std::ranges::contains(Omnicast::APP_SCHEMES, url.scheme())) {
+    qWarning() << "Unsupported url scheme" << url.scheme() << "Supported schemes are"
+               << Omnicast::APP_SCHEMES;
     return;
   }
 

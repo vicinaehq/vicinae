@@ -2,10 +2,8 @@
 #include "timer.hpp"
 #include "ui/list-section-header.hpp"
 #include "ui/omni-list/omni-list-item-widget-wrapper.hpp"
-#include "utils.hpp"
 #include <algorithm>
 #include <chrono>
-#include <numeric>
 #include <qabstractitemview.h>
 #include <qapplication.h>
 #include <qevent.h>
@@ -240,7 +238,7 @@ void OmniList::calculateHeights() {
               std::views::transform([](const auto &section) {
                 return std::get<std::unique_ptr<Section>>(section)->itemCount();
               });
-  auto totalSize = std::accumulate(view.begin(), view.end(), 0, std::plus<size_t>());
+  auto totalSize = std::ranges::fold_left(view, 0, std::plus<size_t>());
 
   m_items.reserve(totalSize);
   m_items.clear();
@@ -427,10 +425,10 @@ std::vector<const OmniList::AbstractVirtualItem *> OmniList::items() const {
 }
 
 std::vector<const OmniList::AbstractVirtualItem *> OmniList::visibleItems() const {
-  return ranges_to<std::vector>(
-      m_items | std::views::drop(visibleIndexRange.start) | std::views::take(visibleIndexRange.size) |
-      std::views::filter([](auto &&v) { return v.enumerable; }) |
-      std::views::transform([](auto &&v) -> const AbstractVirtualItem * { return v.item; }));
+  return m_items | std::views::drop(visibleIndexRange.start) | std::views::take(visibleIndexRange.size) |
+         std::views::filter([](auto &&v) { return v.enumerable; }) |
+         std::views::transform([](auto &&v) -> const AbstractVirtualItem * { return v.item; }) |
+         std::ranges::to<std::vector>();
 }
 
 void OmniList::setSelected(SelectionPolicy policy) {

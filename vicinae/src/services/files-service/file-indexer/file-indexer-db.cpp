@@ -7,6 +7,7 @@
 #include <qsqldatabase.h>
 #include <qsqlquery.h>
 #include <qtimer.h>
+#include <qtypes.h>
 #include <quuid.h>
 #include <qdebug.h>
 #include <QSqlError>
@@ -129,29 +130,25 @@ bool FileIndexerDatabase::updateScanStatus(int scanId, ScanStatus status) {
   return true;
 }
 
-tl::expected<FileIndexerDatabase::ScanRecord, QString>
+std::expected<FileIndexerDatabase::ScanRecord, QString>
 FileIndexerDatabase::createScan(const std::filesystem::path &path, ScanType type) {
   QSqlQuery query(m_db);
 
-  query.prepare(R"(
-  	INSERT INTO 
-		scan_history (created_at, entrypoint, type, status) 
-	VALUES 
-		(CAST(strftime('%s') as INT), :entrypoint, :type, :status)
-    RETURNING id, status, created_at, entrypoint
-	)");
+  query.prepare("INSERT INTO scan_history (entrypoint, type, status) VALUES (:entrypoint, :type, :status) "
+                "RETURNING id, status, "
+                "created_at, entrypoint");
   query.bindValue(":entrypoint", path.c_str());
   query.bindValue(":status", static_cast<quint8>(ScanStatus::Pending));
   query.bindValue(":type", static_cast<quint8>(type));
 
   if (!query.exec()) {
     qWarning() << "Failed to create scan history" << query.lastError();
-    return tl::unexpected("Failed to create scan history");
+    return std::unexpected("Failed to create scan history");
   }
 
   if (!query.next()) {
     qWarning() << "No next entry after createScan" << query.lastError();
-    return tl::unexpected("No next entry after createScan");
+    return std::unexpected("No next entry after createScan");
   }
 
   ScanRecord record;
@@ -331,7 +328,7 @@ FileIndexerDatabase::FileIndexerDatabase() : m_connectionId(createRandomConnecti
   QSqlQuery query(m_db);
 
   for (const auto &pragma : SQLITE_PRAGMAS) {
-    if (!query.exec(pragma.c_str())) { qCritical() << "Failed to run file-indexer pragma" << pragma.c_str(); }
+    if (!query.exec(pragma.c_str())) { qCritical() << "Failed to run file-indexer pragma" << pragma; }
   }
 }
 

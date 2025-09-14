@@ -12,6 +12,7 @@
 #include <filesystem>
 #include <qjsonvalue.h>
 #include <qlogging.h>
+#include <ranges>
 #include "create-extension-success-view.hpp"
 #include "ui/preference-dropdown/preference-dropdown.hpp"
 
@@ -19,15 +20,14 @@ class CommandTemplateDropdown : public PreferenceDropdown {
 public:
   CommandTemplateDropdown() {
     ExtensionBoilerplateGenerator gen;
-    std::vector<Preference::DropdownData::Option> options;
+    auto tr = [](auto &&tmpl) {
+      return Preference::DropdownData::Option({.title = tmpl.name, .value = tmpl.resource});
+    };
+    auto tmpls = gen.commandBoilerplates();
 
-    for (const auto &tmpl : gen.commandBoilerplates()) {
-      options.emplace_back(Preference::DropdownData::Option{.title = tmpl.name, .value = tmpl.resource});
-    }
+    setOptions(tmpls | std::views::transform(tr) | std::ranges::to<std::vector>());
 
-    setOptions(options);
-
-    if (!options.empty()) { setValue(options.front().value); }
+    if (!tmpls.empty()) { setValue(tmpls.at(0).resource); }
   }
 };
 
@@ -118,11 +118,9 @@ class CreateExtensionView : public ManagedFormView {
     cfg.author = m_username->text();
     cfg.title = m_title->text();
     cfg.description = m_description->text();
-    cfg.commands.clear();
-
-    for (const auto &cmd : m_commands) {
-      cfg.commands.emplace_back(mapCommandToConfig(cmd));
-    }
+    cfg.commands = m_commands |
+                   std::views::transform([this](auto &&cfg) { return mapCommandToConfig(cfg); }) |
+                   std::ranges::to<std::vector>();
 
     return cfg;
   }

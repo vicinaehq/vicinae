@@ -2,6 +2,7 @@
 #include "services/window-manager/abstract-window-manager.hpp"
 #include "services/window-manager/hyprland/hypr-workspace.hpp"
 #include "services/window-manager/hyprland/hyprctl.hpp"
+#include <ranges>
 
 using Hyprctl = Hyprland::Controller;
 
@@ -28,11 +29,11 @@ QString HyprlandWindowManager::displayName() const { return "Hyprland"; }
 AbstractWindowManager::WindowList HyprlandWindowManager::listWindowsSync() const {
   auto response = Hyprctl::oneshot("-j/clients");
   auto json = QJsonDocument::fromJson(response);
-  WindowList windows;
-
-  for (const auto &item : json.array()) {
-    windows.emplace_back(std::make_shared<HyprlandWindow>(item.toObject()));
-  }
+  auto windows = json.array() |
+                 std::views::transform([](const QJsonValue &value) -> std::shared_ptr<AbstractWindow> {
+                   return std::make_shared<HyprlandWindow>(value.toObject());
+                 }) |
+                 std::ranges::to<std::vector>();
 
   return windows;
 }
@@ -96,13 +97,11 @@ AbstractWindowManager::WorkspacePtr HyprlandWindowManager::getActiveWorkspace() 
 AbstractWindowManager::WorkspaceList HyprlandWindowManager::listWorkspaces() const {
   auto response = Hyprctl::oneshot("-j/workspaces");
   auto json = QJsonDocument::fromJson(response);
-  WorkspaceList workspaces;
+  auto tr = [](const QJsonValue &value) -> std::shared_ptr<AbstractWorkspace> {
+    return std::make_shared<Hyprland::Workspace>(value.toObject());
+  };
 
-  for (const auto &item : json.array()) {
-    workspaces.emplace_back(std::make_shared<Hyprland::Workspace>(item.toObject()));
-  }
-
-  return workspaces;
+  return json.array() | std::views::transform(tr) | std::ranges::to<std::vector>();
 }
 
 void HyprlandWindowManager::start() { m_ev.start(); }

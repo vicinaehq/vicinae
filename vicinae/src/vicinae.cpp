@@ -1,9 +1,8 @@
 #include "vicinae.hpp"
 #include "utils/utils.hpp"
 #include <qprocess.h>
-#include <QProcessEnvironment>
+#include <qtenvironmentvariables.h>
 #include <ranges>
-#include <set>
 
 namespace fs = std::filesystem;
 
@@ -13,9 +12,13 @@ fs::path Omnicast::runtimeDir() {
   return osRundir / "vicinae";
 }
 
-fs::path Omnicast::dataDir() { return homeDir() / ".local" / "share" / "vicinae"; }
+fs::path Omnicast::dataDir() {
+  return QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation).toStdString();
+}
 
-fs::path Omnicast::configDir() { return homeDir() / ".config" / "vicinae"; }
+fs::path Omnicast::configDir() {
+  return QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation).toStdString();
+}
 
 fs::path Omnicast::commandSocketPath() { return runtimeDir() / "vicinae.sock"; }
 fs::path Omnicast::pidFile() { return runtimeDir() / "vicinae.pid"; }
@@ -35,7 +38,7 @@ std::vector<fs::path> Omnicast::xdgConfigDirs() {
   for (const QString &dir : qEnvironmentVariable("XDG_CONFIG_DIRS").split(':')) {
     fs::path path = dir.toStdString();
 
-    if (seen.contains(path)) { continue; }
+    if (std::ranges::contains(seen, path)) { continue; }
 
     seen.insert(path);
     paths.emplace_back(path);
@@ -53,9 +56,9 @@ std::vector<fs::path> Omnicast::systemPaths() {
   std::vector<fs::path> paths;
 
   for (const auto &part : std::views::split(std::string_view(path), std::string_view(":"))) {
-    fs::path path = std::string_view(part.begin(), part.end());
+    fs::path path = std::string_view(part);
 
-    if (seen.contains(path)) continue;
+    if (std::ranges::contains(seen, path)) continue;
 
     seen.insert(path);
     paths.emplace_back(path);
@@ -71,7 +74,7 @@ std::vector<fs::path> Omnicast::xdgDataDirs() {
   for (const QString &dir : qEnvironmentVariable("XDG_DATA_DIRS").split(':')) {
     fs::path path = dir.toStdString();
 
-    if (seen.contains(path)) { continue; }
+    if (std::ranges::contains(seen, path)) { continue; }
 
     seen.insert(path);
     paths.emplace_back(path);

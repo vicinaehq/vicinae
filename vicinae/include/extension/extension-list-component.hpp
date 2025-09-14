@@ -1,6 +1,13 @@
 #pragma once
+#include "extend/list-model.hpp"
 #include <memory>
 #include <qdebug.h>
+#include "extension/extension-list-detail.hpp"
+#include "extension/extension-view.hpp"
+#include "ui/empty-view/empty-view.hpp"
+#include "ui/form/selector-input.hpp"
+#include "ui/omni-list/omni-list.hpp"
+#include "ui/split-detail/split-detail.hpp"
 #include <QJsonArray>
 #include <qboxlayout.h>
 #include <qevent.h>
@@ -10,13 +17,6 @@
 #include <qtimer.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
-#include "extend/list-model.hpp"
-#include "extension/extension-list-detail.hpp"
-#include "extension/extension-view.hpp"
-#include "ui/empty-view/empty-view.hpp"
-#include "ui/form/selector-input.hpp"
-#include "ui/omni-list/omni-list.hpp"
-#include "ui/split-detail/split-detail.hpp"
 
 class AppWindow;
 
@@ -77,11 +77,18 @@ class ExtensionList : public QWidget {
             } else if (auto section = std::get_if<ListSectionModel>(&item)) {
               appendSectionLess();
 
+              auto items =
+                  section->children | std::views::filter(matches) |
+                  std::views::transform([](auto &&item) -> std::unique_ptr<OmniList::AbstractVirtualItem> {
+                    return std::make_unique<ExtensionListItem>(item);
+                  }) |
+                  std::ranges::to<std::vector>();
+
+              if (items.empty()) continue;
+
               auto &sec = m_list->addSection(section->title);
 
-              for (const auto &item : section->children | std::views::filter(matches)) {
-                sec.addItem(std::make_unique<ExtensionListItem>(item));
-              }
+              sec.addItems(std::move(items));
             }
           }
           appendSectionLess();

@@ -1,9 +1,7 @@
 #include "app-service.hpp"
 #include "services/app-service/xdg/xdg-app-database.hpp"
 #include "omni-database.hpp"
-#include "utils.hpp"
 #include <filesystem>
-#include <qcontainerfwd.h>
 #include <qfilesystemwatcher.h>
 #include <ranges>
 
@@ -53,7 +51,7 @@ bool AppService::launchRaw(const QString &prog, const std::vector<QString> &args
   QProcess process;
 
   process.setProgram(prog);
-  process.setArguments(ranges_to<QStringList>(args));
+  process.setArguments(args | std::ranges::to<QStringList>());
   process.setStandardOutputFile(QProcess::nullDevice());
   process.setStandardErrorFile(QProcess::nullDevice());
 

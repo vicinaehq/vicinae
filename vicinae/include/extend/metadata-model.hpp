@@ -20,7 +20,7 @@ struct MetadataSeparator {};
 using MetadataItem = std::variant<MetadataLabel, MetadataLink, MetadataSeparator, TagListModel>;
 
 struct MetadataModel {
-  std::vector<MetadataItem> children;
+  QList<MetadataItem> children;
 };
 
 class MetadataModelParser {

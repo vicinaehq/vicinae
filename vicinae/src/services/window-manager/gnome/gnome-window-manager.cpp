@@ -1,5 +1,4 @@
 #include "gnome-window-manager.hpp"
-#include "services/window-manager/abstract-window-manager.hpp"
 #include "services/window-manager/gnome/gnome-workspace.hpp"
 #include "utils/environment.hpp"
 #include "service-registry.hpp"
@@ -430,13 +429,7 @@ AbstractWindowManager::WindowList GnomeWindowManager::findAppWindowsGnome(const 
     return false;
   };
 
-  AbstractWindowManager::WindowList windows;
-
-  for (const auto &win : freshWindows | std::views::filter(pred)) {
-    windows.emplace_back(win);
-  }
-
-  return windows;
+  return freshWindows | std::views::filter(pred) | std::ranges::to<std::vector>();
 }
 
 AbstractWindowManager::WindowList GnomeWindowManager::findWindowByClassGnome(const QString &wmClass) const {
@@ -455,13 +448,7 @@ AbstractWindowManager::WindowList GnomeWindowManager::findWindowByClassGnome(con
     return false;
   };
 
-  AbstractWindowManager::WindowList windows;
-
-  for (const auto &win : freshWindows | std::views::filter(pred)) {
-    windows.emplace_back(win);
-  }
-
-  return windows;
+  return freshWindows | std::views::filter(pred) | std::ranges::to<std::vector>();
 }
 
 bool GnomeWindowManager::matchWmClassWithDesktopSuffix(const QString &windowWmClass,

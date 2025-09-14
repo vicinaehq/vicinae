@@ -3,7 +3,7 @@
 #include <QColor>
 #include <QString>
 #include <QRgb>
-#include "utils/expected.hpp"
+#include <expected>
 #include <optional>
 
 class ColorFormatter {
@@ -53,7 +53,7 @@ public:
   /**
    * Parse provided text to QColor, with format information.
    */
-  tl::expected<ParsedColor, GenericError> parse(const QString &text);
+  std::expected<ParsedColor, GenericError> parse(const QString &text);
 
   ColorFormatter() = default;
 

@@ -3,7 +3,7 @@ include(ExtensionApi)
 
 set(EXT_MGR_SRC_DIR "${CMAKE_SOURCE_DIR}/extension-manager")
 set(EXT_MGR_OUT "${CMAKE_SOURCE_DIR}/vicinae/assets/extension-runtime.js")
-set(EXT_PROTO_PATH "${CMAKE_SOURCE_DIR}/proto")
+set(EXT_PROTO_PATH "${CMAKE_SOURCE_DIR}/proto/extensions")
 set(EXT_PROTO_OUT "${EXT_MGR_SRC_DIR}/src/proto")
 
 file(GLOB_RECURSE EXT_MGR_TS_FILES

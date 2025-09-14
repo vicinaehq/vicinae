@@ -2,7 +2,7 @@
 #include "services/files-service/file-indexer/scan.hpp"
 
 #include <condition_variable>
-#include "utils/expected.hpp"
+#include <expected>
 #include <mutex>
 #include <deque>
 #include <set>
@@ -15,7 +15,7 @@ class AbstractScanner {
   std::condition_variable m_scanCv;
 
 public:
-  tl::expected<Scan, bool> awaitScan();
+  std::expected<Scan, bool> awaitScan();
   void finishScan(const Scan &scan);
 
   void enqueue(const Scan &scan);

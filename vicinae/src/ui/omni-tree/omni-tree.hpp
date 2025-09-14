@@ -4,6 +4,7 @@
 #include "theme.hpp"
 #include "ui/image/image.hpp"
 #include "ui/omni-list/omni-list.hpp"
+#include "ui/selectable-omni-list-widget/selectable-omni-list-widget.hpp"
 #include "ui/typography/typography.hpp"
 #include <QtConcurrent/qtconcurrentiteratekernel.h>
 #include <memory>
@@ -16,6 +17,7 @@
 #include <qstackedlayout.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
+#include <ranges>
 
 class VirtualTreeItemDelegate {
   bool m_expanded = false;
@@ -54,10 +56,8 @@ public:
 public:
   std::vector<ColumnInfo> columns() const { return m_columns; }
   void setColumns(const std::vector<QString> &cols) {
-    m_columns.clear();
-    for (const auto &col : cols) {
-      m_columns.emplace_back(ColumnInfo{.name = col});
-    }
+    m_columns = cols | std::views::transform([](auto &&str) { return ColumnInfo{.name = str}; }) |
+                std::ranges::to<std::vector>();
   }
   void setColumns(const std::vector<ColumnInfo> &cols) { m_columns = cols; }
   void setColumnSizePolicy(int index, ColumnSizePolicy policy) {
@@ -103,13 +103,11 @@ class HeaderWidget : public QWidget {
 
   void setupUI(HeaderInfo *info) {
     m_layout->setContentsMargins(5, 5, 5, 5);
-    auto cols = info->columns();
 
-    for (int i = 0; i != cols.size(); ++i) {
-      auto &col = cols[i];
+    for (const auto [idx, col] : info->columns() | std::views::enumerate) {
       HeaderColumn *column = new HeaderColumn;
 
-      if (i > 0) { m_layout->addWidget(new VDivider); }
+      if (idx > 0) { m_layout->addWidget(new VDivider); }
 
       if (col.sizePolicy == HeaderInfo::ColumnSizePolicy::Fixed) {
         column->setFixedWidth(col.width);
@@ -242,10 +240,8 @@ public:
     }
 
     m_sceneLayout->addSpacing(computeLeftSpacing());
-    auto cols = header->columns();
 
-    for (int i = 0; i != cols.size(); ++i) {
-      auto &col = cols[i];
+    for (const auto &[i, col] : header->columns() | std::views::enumerate) {
       QWidget *widget = nullptr;
       int stretch = 1;
 
@@ -293,11 +289,9 @@ class VirtualTreeItemRow : public OmniList::AbstractVirtualItem {
 
   void forEachColumn(QWidget *widget, const std::function<void(QWidget *, size_t)> &fn) const {
     auto omniWidget = static_cast<OmniTreeRowWidget *>(widget);
-    auto widgets = omniWidget->widgets();
 
-    for (int i = 0; i != widgets.size(); ++i) {
-      auto &widget = widgets[i];
-      fn(widget, i);
+    for (const auto &[idx, widget] : omniWidget->widgets() | std::views::enumerate) {
+      fn(widget, idx);
     }
   }
 
