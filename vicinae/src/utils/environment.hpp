@@ -26,9 +26,16 @@ inline bool isWlrootsCompositor() {
          desktop.contains("river", Qt::CaseInsensitive);
 }
 
-inline bool isHudDisabled() { return qEnvironmentVariable("VICINAE_DISABLE_HUD", "0") == "1"; }
+inline bool isLayerShellEnabled() {
+#ifndef WAYLAND_LAYER_SHELL
+  return false;
+#endif
+  return !isGnomeEnvironment() && qEnvironmentVariable("USE_LAYER_SHELL", "1") == "1";
+}
 
-inline bool isLayerShellEnabled() { return qEnvironmentVariable("USE_LAYER_SHELL", "1") == "1"; }
+inline bool isHudDisabled() {
+  return !isLayerShellEnabled() || qEnvironmentVariable("VICINAE_DISABLE_HUD", "0") == "1";
+}
 
 /**
  * App image directory if we are running in an appimage.
