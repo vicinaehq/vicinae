@@ -1,7 +1,6 @@
 #include "launcher-window.hpp"
 #include "action-panel/action-panel.hpp"
 #include "common.hpp"
-#include "ui/keyboard.hpp"
 #include "ui/status-bar/status-bar.hpp"
 #include "ui/top-bar/top-bar.hpp"
 #include "utils/environment.hpp"
@@ -27,7 +26,12 @@
 #include <QStackedWidget>
 #include "settings-controller/settings-controller.hpp"
 
-void LauncherWindow::showEvent(QShowEvent *event) { m_hud->hide(); }
+void LauncherWindow::showEvent(QShowEvent *event) {
+  m_hud->hide();
+  m_ctx.navigation->closeActionPanel();
+  QWidget::showEvent(event);
+  activateWindow();
+}
 
 LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
   using namespace std::chrono_literals;
@@ -147,7 +151,7 @@ void LauncherWindow::hideEvent(QHideEvent *event) {
 }
 
 void LauncherWindow::setupUI() {
-  setWindowFlags(Qt::FramelessWindowHint);
+  setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
   setAttribute(Qt::WA_TranslucentBackground, true);
   setMinimumSize(Omnicast::WINDOW_SIZE);
   setCentralWidget(createWidget());
