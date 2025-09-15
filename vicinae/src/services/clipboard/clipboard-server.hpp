@@ -59,6 +59,18 @@ public:
    */
   virtual bool isActivatable() const = 0;
 
+  /**
+   * Sent when clipboard monitoring is disabled.
+   * Ideally, you should close all open connections and/or terminate monitoring processes
+   * upon receiving this.
+   *
+   * It is guaranteed that `start` has been called at least once before this.
+   *
+   * The method returns whether the server could be stopped successfully. This is only used for
+   * reporting and no retry will be attempted.
+   */
+  virtual bool stop() { return true; }
+
   AbstractClipboardServer() {}
 
 signals:

@@ -38,6 +38,8 @@ bool ClipboardService::clear() {
   return true;
 }
 
+bool ClipboardService::supportsMonitoring() const { return m_clipboardServer->id() != "dummy"; }
+
 QFuture<ClipboardService::GetLocalEncryptionKeyResponse> ClipboardService::getLocalEncryptionKey() {
   using namespace QKeychain;
 
@@ -143,11 +145,27 @@ bool ClipboardService::copyFile(const std::filesystem::path &path, const Clipboa
 void ClipboardService::setRecordAllOffers(bool value) { m_recordAllOffers = value; }
 
 void ClipboardService::setMonitoring(bool value) {
+  if (m_monitoring == value) return;
+
+  if (value) {
+    qInfo() << "Starting clipboard server" << m_clipboardServer->id();
+    if (m_clipboardServer->start()) {
+      qInfo() << "Clipboard server" << m_clipboardServer->id() << "started successfully.";
+    } else {
+      qWarning() << "Failed to start clipboard server" << m_clipboardServer->id();
+    }
+  } else {
+    qInfo() << "Stopping clipboard server" << m_clipboardServer->id();
+    if (m_clipboardServer->stop()) {
+      qInfo() << "Clipboard server" << m_clipboardServer->id() << "stopped successfully.";
+    } else {
+      qWarning() << "Failed to stop clipboard server" << m_clipboardServer->id();
+    }
+  }
+
   m_monitoring = value;
   emit monitoringChanged(value);
 }
-
-bool ClipboardService::isServerRunning() const { return m_clipboardServer->isAlive(); }
 
 bool ClipboardService::monitoring() const { return m_monitoring; }
 
@@ -514,11 +532,6 @@ ClipboardService::ClipboardService(const std::filesystem::path &path, WindowMana
   }
 
   fs::create_directories(m_dataDir);
-
-  if (!m_clipboardServer->start()) {
-    qCritical() << "Failed to start clipboard server, clipboard monitoring will not work";
-  }
-
   ClipboardDatabase().runMigrations();
 
   auto watcher = new QFutureWatcher<GetLocalEncryptionKeyResponse>;
