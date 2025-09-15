@@ -37,8 +37,6 @@ void HudWidget::setupUI() {
     } else {
       qWarning() << "Unable apply layer shell rules to hud window: LayerShellQt::Window::get() returned null";
     }
-  } else {
-    qInfo() << "USE_LAYER_SHELL=0 is set, not using layer shell";
   }
 #endif
 
