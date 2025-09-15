@@ -672,7 +672,7 @@ public:
     auto clipman = ServiceRegistry::instance()->clipman();
     auto layout = new QVBoxLayout;
 
-    if (!clipman->isServerRunning()) {
+    if (!clipman->supportsMonitoring()) {
       m_statusToolbar->setClipboardStatus(ClipboardStatusToobar::ClipboardStatus::Unavailable);
     } else {
       handleMonitoringChanged(clipman->monitoring());

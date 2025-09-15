@@ -69,7 +69,7 @@ private:
   AppService &m_appDb;
 
   bool m_recordAllOffers = true;
-  bool m_monitoring = true;
+  bool m_monitoring = false;
   std::optional<QByteArray> m_localEncryptionKey;
   bool m_isEncryptionReady = false;
 
@@ -123,7 +123,12 @@ public:
   bool copySelection(const ClipboardSelection &selection, const Clipboard::CopyOptions &options);
   bool copyQMimeData(QMimeData *data, const Clipboard::CopyOptions &options = {});
 
-  bool isServerRunning() const;
+  /**
+   * Whether we have a working clipboard server implementation to use.
+   * This does not take into account the current monitoring preference, only
+   * whether we are able to monitor.
+   */
+  bool supportsMonitoring() const;
   bool monitoring() const;
   void setMonitoring(bool value);
 
