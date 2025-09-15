@@ -88,8 +88,6 @@ void RootItemManager::updateIndex() {
   for (const auto &provider : m_providers) {
     auto items = provider->loadItems();
 
-    if (!upsertProvider(*provider.get())) continue;
-
     for (const auto &item : items) {
       upsertItem(provider->uniqueId(), *item.get());
     }

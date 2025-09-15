@@ -92,7 +92,7 @@ bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
 
         addDesktopFile(entry.path(), desktopEntry);
       } catch (std::exception &except) {
-        qWarning() << "Failed to parse app at" << entry.path() << except.what();
+        qWarning() << "Failed to parse app at" << entry.path().c_str() << except.what();
       }
     }
   }
