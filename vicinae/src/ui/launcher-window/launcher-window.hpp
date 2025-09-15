@@ -61,6 +61,8 @@ private:
   DialogWidget *m_dialog = nullptr;
   QWidget *m_focusWidget = nullptr;
 
+  void tryCenter();
+
   void handleShowHUD(const QString &text, const std::optional<ImageURL> &icon);
   void handleDialog(DialogContentWidget *alert);
   void handleViewChange(const NavigationController::ViewState &state);

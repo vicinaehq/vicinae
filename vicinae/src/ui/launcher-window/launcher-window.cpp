@@ -29,8 +29,18 @@
 void LauncherWindow::showEvent(QShowEvent *event) {
   m_hud->hide();
   m_ctx.navigation->closeActionPanel();
+  tryCenter();
   QWidget::showEvent(event);
-  activateWindow();
+  activateWindow(); // gnome needs this
+}
+
+void LauncherWindow::tryCenter() {
+  if (!Environment::supportsArbitraryWindowPlacement()) return;
+
+  QPoint center(screen()->geometry().center().x() - width() / 2,
+                screen()->geometry().center().y() - height() / 2);
+
+  move(center);
 }
 
 LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
@@ -153,7 +163,7 @@ void LauncherWindow::hideEvent(QHideEvent *event) {
 void LauncherWindow::setupUI() {
   setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
   setAttribute(Qt::WA_TranslucentBackground, true);
-  setMinimumSize(Omnicast::WINDOW_SIZE);
+  setFixedSize(Omnicast::WINDOW_SIZE);
   setCentralWidget(createWidget());
 
   m_hud->setMaximumWidth(300);
