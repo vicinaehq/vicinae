@@ -15,6 +15,8 @@ inline bool isGnomeEnvironment() {
 
 inline bool isWaylandSession() { return QApplication::platformName() == "wayland"; }
 
+inline bool supportsArbitraryWindowPlacement() { return !isWaylandSession(); }
+
 /**
  * Detects if running in wlroots-based compositor (Hyprland, Sway, etc.)
  */
