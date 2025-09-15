@@ -30,7 +30,7 @@ inline bool isLayerShellEnabled() {
 #ifndef WAYLAND_LAYER_SHELL
   return false;
 #endif
-  return !isGnomeEnvironment() && qEnvironmentVariable("USE_LAYER_SHELL", "1") == "1";
+  return isWaylandSession() && !isGnomeEnvironment() && qEnvironmentVariable("USE_LAYER_SHELL", "1") == "1";
 }
 
 inline bool isHudDisabled() {
