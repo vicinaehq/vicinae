@@ -134,8 +134,8 @@ jobs:
       - name: Create GitHub Release and upload asset
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.meta.outputs.tag }}
-          name: ${{ steps.meta.outputs.tag }}
+          tag_name: ${{ needs.build-binary.outputs.tag }}
+          name: ${{ needs.build-binary.outputs.tag }}
           generate_release_notes: true
           files: |
             *.AppImage
