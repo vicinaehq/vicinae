@@ -12,7 +12,7 @@
 #include <qresource.h>
 #include <qstringview.h>
 
-bool WlrClipboardServer::isAlive() const { return process->isOpen(); }
+bool WlrClipboardServer::isAlive() const { return m_process.isOpen(); }
 
 bool WlrClipboardServer::isActivatable() const {
   return Environment::isWaylandSession() && !Environment::isGnomeEnvironment();
@@ -36,34 +36,33 @@ QString WlrClipboardServer::id() const { return "wlr-clipboard"; }
 
 int WlrClipboardServer::activationPriority() const { return 1; }
 
+bool WlrClipboardServer::stop() {
+  m_process.terminate();
+  return true;
+}
+
 bool WlrClipboardServer::start() {
   PidFile pidFile("wlr-clip");
   int maxWaitForStart = 5000;
 
   if (pidFile.exists() && pidFile.kill()) { qInfo() << "Killed existing wlr-clip instance"; }
 
-  process = new QProcess;
+  m_process.start(WLR_CLIP_BIN, {});
 
-  process->start(WLR_CLIP_BIN, {});
-
-  if (!process->waitForStarted(maxWaitForStart)) {
-    qCritical() << "Failed to start:" << WLR_CLIP_BIN << process->errorString();
+  if (!m_process.waitForStarted(maxWaitForStart)) {
+    qCritical() << "Failed to start:" << WLR_CLIP_BIN << m_process.errorString();
     return false;
   }
 
-  pidFile.write(process->processId());
+  pidFile.write(m_process.processId());
 
-  connect(process, &QProcess::readyReadStandardOutput, this, &WlrClipboardServer::handleRead);
-  connect(process, &QProcess::readyReadStandardError, this, &WlrClipboardServer::handleReadError);
-  connect(process, &QProcess::finished, this, &WlrClipboardServer::handleExit);
-
-  return process;
+  return m_process.state() == QProcess::ProcessState::Running;
 }
 
-void WlrClipboardServer::handleReadError() { QTextStream(stderr) << process->readAllStandardError(); }
+void WlrClipboardServer::handleReadError() { QTextStream(stderr) << m_process.readAllStandardError(); }
 
 void WlrClipboardServer::handleRead() {
-  auto array = process->readAllStandardOutput();
+  auto array = m_process.readAllStandardOutput();
   auto _buf = array.constData();
 
   _message.insert(_message.end(), _buf, _buf + array.size());
@@ -88,4 +87,8 @@ void WlrClipboardServer::handleRead() {
   }
 }
 
-WlrClipboardServer::WlrClipboardServer() {}
+WlrClipboardServer::WlrClipboardServer() {
+  connect(&m_process, &QProcess::readyReadStandardOutput, this, &WlrClipboardServer::handleRead);
+  connect(&m_process, &QProcess::readyReadStandardError, this, &WlrClipboardServer::handleReadError);
+  connect(&m_process, &QProcess::finished, this, &WlrClipboardServer::handleExit);
+}
