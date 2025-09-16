@@ -88,6 +88,11 @@ void BaseView::setSearchPlaceholderText(const QString &value) const {
 
 void BaseView::clearSearchAccessory() { m_ctx->navigation->clearSearchAccessory(m_navProxy); }
 
+void BaseView::setSearchAccessoryVisiblity(bool value) {
+  if (!m_ctx) return;
+  m_ctx->navigation->setSearchAccessoryVisibility(value, m_navProxy);
+}
+
 void BaseView::setTopBarVisiblity(bool visible) {
   if (!m_ctx) return;
   m_ctx->navigation->setHeaderVisiblity(visible, m_navProxy);

@@ -86,7 +86,7 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
     renderDropdown(dropdown);
   }
 
-  m_selector->setVisible(newModel.searchBarAccessory.has_value() && isVisible());
+  setSearchAccessoryVisiblity(newModel.searchBarAccessory.has_value() && isVisible());
 
   if (!newModel.navigationTitle.isEmpty()) { setNavigationTitle(newModel.navigationTitle); }
   if (!newModel.searchPlaceholderText.isEmpty()) { setSearchPlaceholderText(newModel.searchPlaceholderText); }
@@ -263,10 +263,11 @@ void ExtensionListComponent::textChanged(const QString &text) {
   //_debounce->start();
 }
 
+void ExtensionListComponent::initialize() { setSearchAccessoryVisiblity(false); }
+
 ExtensionListComponent::ExtensionListComponent() : _debounce(new QTimer(this)), _shouldResetSelection(true) {
   m_selector->setMinimumWidth(300);
   m_selector->setEnableDefaultFilter(false);
-  m_selector->hide();
   setDefaultActionShortcuts({primaryShortcut, secondaryShortcut});
   m_split->setMainWidget(m_list);
   m_split->setDetailWidget(m_detail);

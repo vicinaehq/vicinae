@@ -51,6 +51,7 @@ public:
 
   QString navigationTitle() const;
   void setSearchAccessory(QWidget *accessory);
+  void setSearchAccessoryVisiblity(bool value);
 
   /**
    * Called when the view becomes visible. This is called the first time the view is shown
