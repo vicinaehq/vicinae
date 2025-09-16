@@ -88,10 +88,9 @@ std::vector<std::pair<int, Scan>> ScanDispatcher::scans() {
   {
     std::scoped_lock l(m_scannerMapMtx);
 
-    return m_scannerMap | std::views::transform([](auto const &it) -> std::pair<int, Scan> {
+    return ranges_to<std::vector>(m_scannerMap | std::views::transform([](auto const &it) -> std::pair<int, Scan> {
              return {it.first, it.second.scan};
-           }) |
-           std::ranges::to<std::vector>();
+           }));
   }
 }
 

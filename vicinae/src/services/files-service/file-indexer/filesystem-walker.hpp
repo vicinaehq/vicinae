@@ -1,4 +1,5 @@
 #pragma once
+#include <optional>
 #include <filesystem>
 #include <functional>
 #include <vector>
