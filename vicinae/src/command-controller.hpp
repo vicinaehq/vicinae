@@ -1,35 +1,21 @@
 #pragma once
-#include "ui/views/base-view.hpp"
-#include "command.hpp"
 #include "common.hpp"
-#include "navigation-controller.hpp"
+#include "services/local-storage/scoped-local-storage.hpp"
+#include <qjsonobject.h>
 #include <qobject.h>
 
-class CommandController : public QObject {
+class CommandController {
 public:
-  struct CommandFrame {
-    QObjectUniquePtr<CommandContext> context;
-    std::shared_ptr<AbstractCmd> command;
-    size_t viewCount;
+  CommandController(ApplicationContext &ctx, const AbstractCmd &cmd, const LaunchProps &props);
 
-    ~CommandFrame() {
-      context->unload();
-      qInfo() << "Unloading command" << command->uniqueId();
-    }
-  };
-
-  CommandController(ApplicationContext *ctx);
-
-  void launch(const std::shared_ptr<AbstractCmd> &cmd);
-  void launch(const QString &id);
-  const AbstractCmd *activeCommand() const;
-  bool reloadActiveCommand();
-  void unloadActiveCommand();
+  const LaunchProps &launchProps() const;
+  const AbstractCmd &info() const;
+  ScopedLocalStorage storage() const;
+  QJsonObject preferenceValues() const;
+  void setPreferenceValues(const QJsonObject &value) const;
 
 private:
-  void handleViewPushed(const BaseView *view);
-  void handleViewPoped(const BaseView *view);
-
-  ApplicationContext *m_ctx;
-  std::vector<std::unique_ptr<CommandFrame>> m_frames;
+  ApplicationContext &m_ctx;
+  const AbstractCmd &m_cmd;
+  LaunchProps m_props;
 };

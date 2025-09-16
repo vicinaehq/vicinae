@@ -15,6 +15,7 @@
 #include "ui/search-bar/search-bar.hpp"
 #include "ui/icon-button/icon-button.hpp"
 #include "utils/layout.hpp"
+#include "ui/search-bar/search-bar.hpp"
 
 void GlobalHeader::setupUI() {
   m_input = new SearchBar(this);

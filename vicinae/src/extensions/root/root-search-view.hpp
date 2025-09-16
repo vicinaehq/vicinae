@@ -1,6 +1,8 @@
 #pragma once
 #include "actions/app/app-actions.hpp"
 #include "ui/views/base-view.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
+#include "service-registry.hpp"
 #include "services/config/config-service.hpp"
 #include "services/files-service/file-service.hpp"
 #include "navigation-controller.hpp"

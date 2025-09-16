@@ -168,6 +168,8 @@ set(SRCS
 	src/services/local-storage/local-storage-service.hpp
 	src/services/local-storage/local-storage.cpp
 
+	src/services/local-storage/scoped-local-storage.cpp
+
 	src/settings-controller/settings-controller.hpp
 	src/settings-controller/settings-controller.cpp
 
@@ -345,7 +347,6 @@ set(SRCS
 	src/image-fetcher.hpp
 
 
-	src/root-command.hpp
 	src/command.hpp
 	
 
