@@ -255,7 +255,10 @@ class RaycastStoreDetailView : public BaseView {
 
             watcher->deleteLater();
 
-            if (!result) { ctx->services->toastService()->setToast("Failed to download extension"); }
+            if (!result) {
+              ctx->services->toastService()->setToast("Failed to download extension");
+              return;
+            }
 
             ctx->services->extensionRegistry()->installFromZip(ext.id,
                                                                std::string_view(result->toStdString()));

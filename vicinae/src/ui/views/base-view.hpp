@@ -1,5 +1,8 @@
 #pragma once
 #include "argument.hpp"
+#include "command-controller.hpp"
+#include "common.hpp"
+#include <qjsonobject.h>
 #include <qwidget.h>
 
 class ApplicationContext;
@@ -8,9 +11,6 @@ class Toast;
 class ImageURL;
 
 class BaseView : public QWidget {
-  bool m_initialized = false;
-  ApplicationContext *m_ctx = nullptr;
-  const BaseView *m_navProxy = this;
 
 public:
   void createInitialize();
@@ -69,6 +69,14 @@ public:
   }
 
   void setContext(ApplicationContext *ctx);
+  void setCommandController(CommandController *commandController) { m_cmd = commandController; }
+
+  CommandController *command() const { return m_cmd; }
+
+  /**
+   * Sets the command this view belongs to. You normally shouldn't call this,
+   * as this is automatically injected by the
+   */
 
   /**
    * The entire application context.
@@ -137,4 +145,11 @@ public:
   virtual std::vector<QString> argumentValues() const;
 
   BaseView(QWidget *parent = nullptr);
+
+private:
+  bool m_initialized = false;
+  ApplicationContext *m_ctx = nullptr;
+  CommandController *m_cmd = nullptr;
+
+  const BaseView *m_navProxy = this;
 };

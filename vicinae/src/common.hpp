@@ -156,6 +156,14 @@ public:
   virtual bool isFallback() const { return false; }
   virtual void preferenceValuesChanged(const QJsonObject &value) const {}
 
+  /**
+   * Optional override of the navigation title that is to be shown when
+   * the command is execute from the root search. This only applies to view commands.
+   * The default is to use the name of the command.
+   */
+  virtual QString navigationTitle() const { return name(); }
+  virtual ImageURL navigationIcon() const { return iconUrl(); }
+
   virtual bool isDefaultDisabled() const { return false; }
 
   QString deeplink() const {
@@ -207,7 +215,6 @@ class SettingsController;
 
 struct ApplicationContext {
   std::unique_ptr<NavigationController> navigation;
-  std::unique_ptr<CommandController> command;
   std::unique_ptr<OverlayController> overlay;
   ServiceRegistry *services;
   std::unique_ptr<SettingsController> settings;

@@ -4,10 +4,21 @@
 #include <qjsonobject.h>
 
 class OmniDatabase;
+class ScopedLocalStorage;
 
 class LocalStorageService {
 public:
   enum ValueType { Number, String, Boolean };
+
+  LocalStorageService(OmniDatabase &db);
+
+  bool clearNamespace(const QString &namespaceId);
+  QJsonObject listNamespaceItems(const QString &namespaceId);
+  bool removeItem(const QString &namespaceId, const QString &key);
+  bool setItem(const QString &namespaceId, const QString &key, const QJsonValue &json);
+  QJsonValue getItem(const QString &namespaceId, const QString &key);
+  QJsonObject getItemAsJson(const QString &namespaceId, const QString &key);
+  ScopedLocalStorage scoped(const QString &scope);
 
 private:
   OmniDatabase &db;
@@ -20,14 +31,4 @@ private:
   std::pair<QString, ValueType> serializeValue(const QJsonValue &value) const;
 
   QJsonValue deserializeValue(const QString &value, ValueType type);
-
-public:
-  bool clearNamespace(const QString &namespaceId);
-  QJsonObject listNamespaceItems(const QString &namespaceId);
-  bool removeItem(const QString &namespaceId, const QString &key);
-  bool setItem(const QString &namespaceId, const QString &key, const QJsonValue &json);
-  QJsonValue getItem(const QString &namespaceId, const QString &key);
-  QJsonObject getItemAsJson(const QString &namespaceId, const QString &key);
-
-  LocalStorageService(OmniDatabase &db);
 };

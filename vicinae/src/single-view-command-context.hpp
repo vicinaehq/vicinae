@@ -17,8 +17,8 @@ public:
     auto &nav = context()->navigation;
 
     nav->pushView(new T());
-    nav->setNavigationTitle(command()->name());
-    nav->setNavigationIcon(command()->iconUrl());
+    nav->setNavigationTitle(command()->navigationTitle());
+    nav->setNavigationIcon(command()->navigationIcon());
   }
 };
 

@@ -2,7 +2,6 @@
 #include "common.hpp"
 #include "proto/daemon.pb.h"
 #include <QDebug>
-#include <algorithm>
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "services/config/config-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
@@ -16,7 +15,6 @@
 #include <qurlquery.h>
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
-#include "command-controller.hpp"
 #include "theme.hpp"
 #include "ui/toast/toast.hpp"
 #include "vicinae.hpp"
@@ -132,7 +130,7 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
     for (ExtensionRootProvider *ext : root->extensions()) {
       for (const auto &cmd : ext->repository()->commands()) {
         if (cmd->author() == author && cmd->commandId() == cmdName && cmd->repositoryName() == extName) {
-          m_ctx.command->launch(cmd);
+          m_ctx.navigation->launch(cmd);
 
           if (auto text = query.queryItemValue("fallbackText"); !text.isEmpty()) {
             m_ctx.navigation->setSearchText(text);
@@ -214,9 +212,9 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
       // implement properly)
       registry->requestScan();
 
-      if (auto cmd = m_ctx.command->activeCommand(); cmd && cmd->extensionId() == id) {
+      if (auto cmd = m_ctx.navigation->activeCommand(); cmd && cmd->extensionId() == id) {
         qInfo() << "Reloading active command following extension refresh";
-        m_ctx.command->reloadActiveCommand();
+        m_ctx.navigation->reloadActiveCommand();
       }
 
       return;
