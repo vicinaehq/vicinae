@@ -9,7 +9,7 @@ void WriterWorker::stop() {
 
 void WriterWorker::run() {
   while (m_alive) {
-    std::deque<std::vector<std::filesystem::path>> batch;
+    std::deque<std::vector<FileEvent>> batch;
 
     {
       std::unique_lock<std::mutex> lock(batchMutex);
@@ -27,12 +27,11 @@ void WriterWorker::run() {
   }
 }
 
-void WriterWorker::batchWrite(std::vector<fs::path> paths) {
+void WriterWorker::batchWrite(std::vector<FileEvent> paths) {
   // Writing is happening in the writerThread
-  m_writer->indexFiles(std::move(paths));
+  m_writer->indexEvents(std::move(paths));
 }
 
 WriterWorker::WriterWorker(std::shared_ptr<DbWriter> writer, std::mutex &batchMutex,
-                           std::deque<std::vector<std::filesystem::path>> &batchQueue,
-                           std::condition_variable &batchCv)
+                           std::deque<std::vector<FileEvent>> &batchQueue, std::condition_variable &batchCv)
     : m_writer(writer), batchMutex(batchMutex), batchQueue(batchQueue), m_batchCv(batchCv) {}
