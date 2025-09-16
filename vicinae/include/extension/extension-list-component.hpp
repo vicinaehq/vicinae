@@ -157,6 +157,7 @@ public:
   void onItemActivated(const ListItemViewModel &item);
   void handleDebouncedSearchNotification();
   void textChanged(const QString &text) override;
+  void initialize() override;
 
   ExtensionListComponent();
   ~ExtensionListComponent();
