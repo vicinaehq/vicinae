@@ -23,11 +23,15 @@ static const std::vector<fs::path> EXCLUDED_PATHS = {"/sys", "/run",     "/proc"
 
 void FileIndexer::startFullscan() {
   for (auto const &[id, scan] : m_dispatcher.scans()) {
-    if (scan.type == ScanType::Full) { m_dispatcher.interrupt(id); }
+    if (scan.type == ScanType::Full || scan.type == ScanType::Watcher) { m_dispatcher.interrupt(id); }
   }
 
   for (const auto &entrypoint : m_entrypoints) {
-    m_dispatcher.enqueue({.type = ScanType::Full, .path = entrypoint.root});
+    m_dispatcher.enqueue({.type = ScanType::Full, .path = entrypoint});
+  }
+
+  for (const auto &entrypoint : m_watcherPaths) {
+    m_dispatcher.enqueue({.type = ScanType::Watcher, .path = entrypoint});
   }
 }
 
@@ -48,6 +52,7 @@ void FileIndexer::start() {
   auto startedScans = m_db.listStartedScans();
 
   for (const auto &scan : startedScans) {
+    if (scan.type != ScanType::Full) continue;
     qWarning() << "Creating new scan after previous scan for" << scan.path.c_str() << "was interrupted";
     m_writer->setScanError(scan.id, "Interrupted");
     m_dispatcher.enqueue({.type = scan.type, .path = scan.path});
@@ -55,12 +60,14 @@ void FileIndexer::start() {
 
   if (startedScans.empty()) {
     for (const auto &entrypoint : m_entrypoints) {
-      m_dispatcher.enqueue({.type = ScanType::Incremental, .path = entrypoint.root, .maxDepth = 5});
+      m_dispatcher.enqueue({.type = ScanType::Incremental, .path = entrypoint, .maxDepth = 5});
     }
   }
-}
 
-void FileIndexer::setEntrypoints(const std::vector<Entrypoint> &entrypoints) { m_entrypoints = entrypoints; }
+  for (const auto &entrypoint : m_watcherPaths) {
+    m_dispatcher.enqueue({.type = ScanType::Watcher, .path = entrypoint});
+  }
+}
 
 QString FileIndexer::preparePrefixSearchQuery(std::string_view query) const {
   QString finalQuery;
@@ -76,6 +83,18 @@ QString FileIndexer::preparePrefixSearchQuery(std::string_view query) const {
   finalQuery += '*';
 
   return finalQuery;
+}
+
+void FileIndexer::preferenceValuesChanged(const QJsonObject &preferences) {
+  m_entrypoints = preferences.value("paths").toString().split(';', Qt::SkipEmptyParts)
+    | std::views::transform([](const QStringView& v) {
+      return fs::path(v.toString().toStdString());
+      }) | std::ranges::to<std::vector>();
+
+  m_watcherPaths = preferences.value("watcherPaths").toString().split(';', Qt::SkipEmptyParts)
+    | std::views::transform([](const QStringView& v) {
+      return fs::path(v.toString().toStdString());
+      }) | std::ranges::to<std::vector>();
 }
 
 QFuture<std::vector<IndexerFileResult>> FileIndexer::queryAsync(std::string_view view,

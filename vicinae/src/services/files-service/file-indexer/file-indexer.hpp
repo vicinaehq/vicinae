@@ -24,7 +24,8 @@ class FileIndexer : public AbstractFileIndexer {
 
 public:
   std::shared_ptr<DbWriter> m_writer;
-  std::vector<Entrypoint> m_entrypoints;
+  std::vector<std::filesystem::path> m_entrypoints;
+  std::vector<std::filesystem::path> m_watcherPaths;
   FileIndexerDatabase m_db;
 
   ScanDispatcher m_dispatcher;
@@ -37,7 +38,7 @@ public:
 public:
   void startFullscan();
   void rebuildIndex() override;
-  void setEntrypoints(const std::vector<Entrypoint> &entrypoints) override;
+  void preferenceValuesChanged(const QJsonObject &preferences) override;
   QFuture<std::vector<IndexerFileResult>> queryAsync(std::string_view view,
                                                      const QueryParams &params = {}) const override;
   void start() override;

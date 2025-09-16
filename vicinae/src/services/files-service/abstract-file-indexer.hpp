@@ -40,13 +40,6 @@ struct Pagination {
 
 class AbstractFileIndexer : public QObject {
 public:
-  /**
-   * An indexing entrypoint.
-   */
-  struct Entrypoint {
-    std::filesystem::path root;
-  };
-
   struct QueryParams {
     Pagination pagination;
   };
@@ -54,7 +47,7 @@ public:
 public:
   virtual void start() = 0;
   virtual void rebuildIndex() = 0;
-  virtual void setEntrypoints(const std::vector<Entrypoint> &entrypoints) = 0;
+  virtual void preferenceValuesChanged(const QJsonObject &preferences) = 0;
   virtual QFuture<std::vector<IndexerFileResult>> queryAsync(std::string_view view,
                                                              const QueryParams &params = {}) const = 0;
 
