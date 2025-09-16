@@ -4,7 +4,6 @@
  * `@raycast/api` package instead of `@vicinae/api`.
  */
 
-export * from "../components/index.js";
 export * from "../hooks/index.js";
 export * from "../context/index.js";
 export * from "../bus.js";
@@ -17,9 +16,14 @@ export * from "../controls.js";
 export * from "../cache";
 export * from "../toast";
 export * from "../clipboard.js";
-export * from "../local-storage.js";
 export * from "../oauth.js";
 export * from "../alert.js";
 export * from "../preference.js";
 export * from "./system.js";
+
+export * from "./local-storage.js";
 export * from './window-management.js';
+
+export { randomId } from './utils.js';
+export { List, Grid, Form, Detail, Action } from '../components';
+export { ActionPanel } from "./components/action-panel.js";
