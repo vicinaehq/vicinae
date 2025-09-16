@@ -2,7 +2,7 @@ import { bus } from "./bus";
 
 // Implementation of Raycast's storage API: https://developers.raycast.com/api-reference/storage
 
-export declare namespace LocalStorage {
+export  namespace LocalStorage {
   export type Value = string | number | boolean;
   export type Values = { [key: string]: Value };
 }
@@ -13,7 +13,7 @@ export class LocalStorage {
   ): Promise<T | undefined> {
     const res = await bus.turboRequest("storage.get", { key });
 
-    if (!res.ok) {
+    if (!res.ok || res.value.value === null) {
       return undefined;
     }
 
