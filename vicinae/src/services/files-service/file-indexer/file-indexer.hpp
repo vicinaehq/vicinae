@@ -23,6 +23,7 @@ class FileIndexer : public AbstractFileIndexer {
   Q_OBJECT
 
 public:
+  std::shared_ptr<DbWriter> m_writer;
   std::vector<Entrypoint> m_entrypoints;
   FileIndexerDatabase m_db;
 
