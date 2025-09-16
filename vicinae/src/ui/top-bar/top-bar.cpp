@@ -136,6 +136,8 @@ GlobalHeader::GlobalHeader(NavigationController &controller) : m_navigation(cont
     }
   });
   connect(&m_navigation, &NavigationController::searchAccessoryChanged, this, &GlobalHeader::setAccessory);
+  connect(&m_navigation, &NavigationController::searchAccessoryVisiblityChanged, m_accessoryContainer,
+          &QStackedWidget::setVisible);
   connect(&m_navigation, &NavigationController::searchAccessoryCleared, this, &GlobalHeader::clearAccessory);
   connect(&m_navigation, &NavigationController::searchTextChanged, m_input, [this](const QString &text) {
     if (m_input->text() == text) return; // prevents losing cursor position during editing

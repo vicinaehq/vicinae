@@ -195,6 +195,7 @@ public:
     QString placeholderText;
     QString searchText;
     QObjectUniquePtr<QWidget> searchAccessory;
+    bool accessoryVisibility = true;
     std::optional<CompleterState> completer;
     std::unique_ptr<ActionPanelState> actionPanelState;
     bool loading;
@@ -274,6 +275,13 @@ public:
   void setSearchVisibility(bool value, const BaseView *caller = nullptr);
   void setStatusBarVisibility(bool value, const BaseView *caller = nullptr);
 
+  /**
+   * Unlike clear accessory, this only alters the visiblity: doesn't delete anything.
+   * We need to rework the search accessory system anyways, as the ownership rules
+   * are beyond confusing.
+   */
+  void setSearchAccessoryVisibility(bool value, const BaseView *caller = nullptr);
+
   void showHud(const QString &title, const std::optional<ImageURL> &icon = std::nullopt);
 
   void launch(const std::shared_ptr<AbstractCmd> &cmd);
@@ -323,6 +331,7 @@ signals:
 
   void searchAccessoryChanged(QWidget *widget) const;
   void searchAccessoryCleared() const;
+  void searchAccessoryVisiblityChanged(bool visible) const;
 
   void completionCreated(const CompleterState &completer) const;
   void completionDestroyed() const;

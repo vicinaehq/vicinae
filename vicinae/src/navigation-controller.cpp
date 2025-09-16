@@ -180,6 +180,7 @@ void NavigationController::popCurrentView() {
   emit headerVisiblityChanged(next->needsTopBar);
   emit searchVisibilityChanged(next->supportsSearch);
   emit statusBarVisiblityChanged(next->needsStatusBar);
+  emit searchAccessoryVisiblityChanged(next->accessoryVisibility);
   emit loadingChanged(next->isLoading);
 
   if (auto cmpl = next->completer) {
@@ -214,6 +215,13 @@ void NavigationController::clearSearchAccessory(const BaseView *caller) {
   if (auto state = findViewState(VALUE_OR(caller, topView()))) {
     state->searchAccessory.reset();
     if (state->sender == topView()) { emit searchAccessoryCleared(); }
+  }
+}
+
+void NavigationController::setSearchAccessoryVisibility(bool value, const BaseView *caller) {
+  if (auto state = findViewState(VALUE_OR(caller, topView()))) {
+    state->accessoryVisibility = value;
+    if (state->sender == topView()) { emit searchAccessoryVisiblityChanged(value); }
   }
 }
 
