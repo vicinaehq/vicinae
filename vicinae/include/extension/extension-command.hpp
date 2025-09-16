@@ -32,7 +32,12 @@ class ExtensionCommand : public AbstractCmd {
 public:
   ExtensionCommand(const ExtensionManifest::Command &command) : m_command(command) {}
 
-  QString author() const override { return m_author; }
+  QString author() const override {
+    // as we plan on having our own store, we want raycast extension authors
+    // to be properly segmented.
+    if (isRaycast()) return m_author + "@raycast";
+    return m_author;
+  }
 
   QString extensionId() const override;
   void setExtensionId(const QString &text);
