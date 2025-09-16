@@ -2,6 +2,8 @@
 #include "action-panel/action-panel.hpp"
 #include "common.hpp"
 #include "ui/status-bar/status-bar.hpp"
+#include "service-registry.hpp"
+#include "services/config/config-service.hpp"
 #include "ui/top-bar/top-bar.hpp"
 #include "utils/environment.hpp"
 #ifdef WAYLAND_LAYER_SHELL
@@ -15,10 +17,9 @@
 #include <qwidget.h>
 #include "../image/url.hpp"
 #include "vicinae.hpp"
-#include "services/config/config-service.hpp"
 #include "overlay-controller/overlay-controller.hpp"
-#include "root-command.hpp"
 #include "ui/action-pannel/action.hpp"
+#include "ui/search-bar/search-bar.hpp"
 #include "ui/dialog/dialog.hpp"
 #include "ui/overlay/overlay.hpp"
 #include "ui/hud/hud.hpp"
@@ -128,9 +129,6 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
 
   connect(m_ctx.navigation.get(), &NavigationController::windowVisiblityChanged, this,
           [this](bool visible) { setVisible(visible); });
-
-  ctx.navigation->pushView(new RootSearchView);
-  ctx.navigation->setNavigationIcon(ImageURL::builtin("vicinae"));
 
   connect(m_ctx.navigation.get(), &NavigationController::headerVisiblityChanged, this, [this](bool value) {
     if (m_currentOverlayWrapper->isVisible()) return;
@@ -258,7 +256,7 @@ void LauncherWindow::handleActionVisibilityChanged(bool visible) {
 }
 
 void LauncherWindow::paintEvent(QPaintEvent *event) {
-  auto &config = ServiceRegistry::instance()->config()->value();
+  auto &config = m_ctx.services->config()->value();
   auto &theme = ThemeService::instance().theme();
   int borderWidth = 2;
   QColor finalBgColor = theme.colors.mainBackground;

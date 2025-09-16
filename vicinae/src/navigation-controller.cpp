@@ -1,4 +1,12 @@
 #include "navigation-controller.hpp"
+#include "command-controller.hpp"
+#include "extension/extension-command.hpp"
+#include "root-search/extensions/extension-root-provider.hpp"
+#include "service-registry.hpp"
+#include "extension/missing-extension-preference-view.hpp"
+#include "services/root-item-manager/root-item-manager.hpp"
+#include "extension/manager/extension-manager.hpp"
+#include "services/toast/toast-service.hpp"
 #include "ui/views/base-view.hpp"
 #include "utils/environment.hpp"
 #include <qlogging.h>
@@ -184,6 +192,14 @@ void NavigationController::popCurrentView() {
   if (auto &ac = next->actionPanelState) emit actionsChanged(*ac);
 
   selectSearchText();
+
+  if (m_frames.empty()) return;
+
+  auto &frame = m_frames.back();
+
+  frame->viewCount -= 1;
+
+  if (frame->viewCount == 0) { m_frames.pop_back(); }
 }
 
 void NavigationController::popToRoot(const PopToRootOptions &opts) {
@@ -349,6 +365,9 @@ void NavigationController::pushView(BaseView *view) {
   state->needsStatusBar = view->needsGlobalStatusBar();
   state->searchAccessory.reset(view->searchBarAccessory());
   state->sender->setContext(&m_ctx);
+  state->sender->setCommandController(m_frames.back()->controller.get());
+
+  // state->sender->attachCommand(std::make_unique<CommandInterface>(m_ctx.command->activeFrame()));
 
   if (auto &accessory = state->searchAccessory) {
     emit searchAccessoryChanged(accessory.get());
@@ -372,6 +391,11 @@ void NavigationController::pushView(BaseView *view) {
   destroyCurrentCompletion();
   emit currentViewChanged(*m_views.back());
   emit viewPushed(view);
+
+  if (m_frames.empty()) return;
+
+  auto &frame = m_frames.back();
+  frame->viewCount += 1;
 }
 
 void NavigationController::setSearchAccessory(QWidget *accessory, const BaseView *caller) {
@@ -434,4 +458,105 @@ const BaseView *NavigationController::topView() const {
   if (m_views.empty()) return nullptr;
 
   return m_views.back()->sender;
+}
+
+bool NavigationController::reloadActiveCommand() {
+  auto cmd = activeCommand();
+
+  if (!cmd) return false;
+
+  // we only store the id, as the pointer will likely become invalid
+  // after unloading.
+  QString id = cmd->uniqueId();
+
+  unloadActiveCommand();
+  launch(id);
+
+  return true;
+}
+
+const AbstractCmd *NavigationController::activeCommand() const {
+  if (m_frames.empty()) return nullptr;
+
+  return m_frames.back()->command.get();
+}
+
+void NavigationController::unloadActiveCommand() {
+  if (m_frames.empty()) {
+    qWarning() << "unloadActiveCommand called while no commands are loaded";
+    return;
+  }
+
+  auto size = m_frames.back()->viewCount;
+
+  for (int i = 0; i < size; ++i) {
+    popCurrentView();
+  }
+}
+
+void NavigationController::launch(const QString &id) {
+  auto root = m_ctx.services->rootItemManager();
+
+  for (ExtensionRootProvider *extension : root->extensions()) {
+    for (const auto &cmd : extension->repository()->commands()) {
+      if (cmd->uniqueId() == id) {
+        launch(cmd);
+        return;
+      }
+    }
+  }
+}
+
+void NavigationController::launch(const std::shared_ptr<AbstractCmd> &cmd) {
+  // unload stalled no-view command
+  if (!m_frames.empty() && m_frames.back()->viewCount == 0) { m_frames.pop_back(); }
+
+  if (cmd->type() == CommandType::CommandTypeExtension && !m_ctx.services->extensionManager()->isRunning()) {
+    m_ctx.services->toastService()->failure("Extension manager is not running");
+    return;
+  }
+
+  bool shouldCheckPreferences =
+      cmd->type() == CommandType::CommandTypeExtension && !cmd->preferences().empty();
+  LaunchProps props;
+
+  props.arguments = completionValues();
+
+  if (shouldCheckPreferences) {
+    auto itemId = QString("extension.%1").arg(cmd->uniqueId());
+    auto manager = m_ctx.services->rootItemManager();
+    auto preferences = manager->getMergedItemPreferences(itemId);
+    auto preferenceValues = manager->getPreferenceValues(itemId);
+
+    for (const auto &preference : preferences) {
+      QJsonValue value = preferenceValues.value(preference.name());
+      bool hasValue = !(value.isUndefined() || value.isNull());
+      bool hasDefault = !preference.defaultValue().isUndefined();
+      bool isMissing = preference.required() && !hasValue && !hasDefault;
+
+      if (!isMissing) continue;
+
+      if (cmd->type() == CommandType::CommandTypeExtension) {
+        auto extensionCommand = std::static_pointer_cast<ExtensionCommand>(cmd);
+
+        m_ctx.navigation->pushView(
+            new MissingExtensionPreferenceView(extensionCommand, preferences, preferenceValues));
+        m_ctx.navigation->setNavigationTitle(cmd->name());
+        m_ctx.navigation->setNavigationIcon(cmd->iconUrl());
+        return;
+      }
+
+      qDebug() << "MISSING PREFERENCE" << preference.title();
+    }
+  }
+
+  auto frame = std::make_unique<CommandFrame>();
+
+  frame->controller = std::make_unique<CommandController>(m_ctx, *cmd, props);
+  frame->context.reset(cmd->createContext(cmd));
+  frame->command = cmd;
+  frame->viewCount = 0;
+  frame->context->setContext(&m_ctx);
+  m_frames.emplace_back(std::move(frame));
+  m_frames.back()->context->load(props);
 }

@@ -3,6 +3,7 @@
 #include <qsqlquery.h>
 #include <qvariant.h>
 #include "local-storage-service.hpp"
+#include "scoped-local-storage.hpp"
 #include "omni-database.hpp"
 
 using ValueType = LocalStorageService::ValueType;
@@ -130,4 +131,8 @@ LocalStorageService::LocalStorageService(OmniDatabase &db) : db(db) {
 	)");
   m_getQuery.prepare(
       "SELECT value, value_type FROM storage_data_item WHERE namespace_id = :namespace_id AND key = :key");
+}
+
+ScopedLocalStorage LocalStorageService::scoped(const QString &scope) {
+  return ScopedLocalStorage(*this, scope);
 }

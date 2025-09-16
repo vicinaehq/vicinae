@@ -1,67 +1,35 @@
-#include "command-controller.hpp"
 #include "daemon/ipc-client.hpp"
-#include "favicon/favicon-service.hpp"
-#include "icon-theme-db/icon-theme-db.hpp"
-#include "navigation-controller.hpp"
-#include "pid-file/pid-file.hpp"
-#include "root-search/extensions/extension-root-provider.hpp"
-#include "ui/launcher-window/launcher-window.hpp"
-#include <QStyleHints>
-#include "common.hpp"
-#include "ipc-command-server.hpp"
-#include "ipc-command-handler.hpp"
-#include "overlay-controller/overlay-controller.hpp"
-#include "services/app-service/app-service.hpp"
-#include "command-database.hpp"
-#include "root-search/apps/app-root-provider.hpp"
-#include "services/shortcut/shortcut-service.hpp"
-#include <QApplication>
-#include "services/calculator-service/calculator-service.hpp"
-#include "services/clipboard/clipboard-service.hpp"
-#include "services/config/config-service.hpp"
-#include "font-service.hpp"
-#include <QFontDatabase>
-#include <QSurfaceFormat>
-#include <memory>
-#include "services/window-manager/window-manager.hpp"
-#include <QtSql/QtSql>
-#include <QXmlStreamReader>
-#include <QtSql/qsqldatabase.h>
-#include <arpa/inet.h>
-#include <filesystem>
-#include <qapplication.h>
-#include <qbuffer.h>
-#include <qdebug.h>
-#include <qfontdatabase.h>
-#include <qlist.h>
-#include <qlocalserver.h>
-#include <qlocalsocket.h>
-#include <qlogging.h>
-#include <qnamespace.h>
-#include <qobject.h>
-#include <qprocess.h>
-#include <qstringview.h>
-#include <qtmetamacros.h>
+#include "environment.hpp"
 #include "extension/manager/extension-manager.hpp"
-#include "services/emoji-service/emoji-service.hpp"
-#include "services/extension-registry/extension-registry.hpp"
-#include "services/files-service/file-service.hpp"
-#include "services/local-storage/local-storage-service.hpp"
-#include "utils/environment.hpp"
-#include "vicinae.hpp"
-#include "process-manager-service.hpp"
-#include "services/oauth/oauth-service.hpp"
-#include "services/raycast/raycast-store.hpp"
-#include "services/root-item-manager/root-item-manager.hpp"
+#include "favicon/favicon-service.hpp"
+#include "font-service.hpp"
+#include "icon-theme-db/icon-theme-db.hpp"
+#include "ipc-command-handler.hpp"
+#include "ipc-command-server.hpp"
+#include "log/message-handler.hpp"
+#include "overlay-controller/overlay-controller.hpp"
+#include "pid-file/pid-file.hpp"
+#include "extensions/root/root-command.hpp"
 #include "root-search/apps/app-root-provider.hpp"
+#include "root-search/extensions/extension-root-provider.hpp"
 #include "root-search/shortcuts/shortcut-root-provider.hpp"
 #include "service-registry.hpp"
+#include "services/calculator-service/calculator-service.hpp"
+#include "services/clipboard/clipboard-service.hpp"
+#include "services/emoji-service/emoji-service.hpp"
+#include "services/files-service/file-service.hpp"
+#include "services/local-storage/local-storage-service.hpp"
+#include "services/oauth/oauth-service.hpp"
+#include "services/raycast/raycast-store.hpp"
+#include "services/shortcut/shortcut-service.hpp"
 #include "services/toast/toast-service.hpp"
+#include "services/window-manager/window-manager.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "settings/settings-window.hpp"
-#include "theme.hpp"
-#include "log/message-handler.hpp"
-#include "lib/pid-file/pid-file.hpp"
+#include "ui/image/url.hpp"
+#include "ui/launcher-window/launcher-window.hpp"
+#include "vicinae.hpp"
+#include <QString>
 
 int startDaemon() {
   std::filesystem::create_directories(Omnicast::runtimeDir());
@@ -81,7 +49,6 @@ int startDaemon() {
     auto appService = std::make_unique<AppService>(*omniDb.get());
     auto clipboardManager =
         std::make_unique<ClipboardService>(Omnicast::dataDir() / "clipboard.db", *windowManager, *appService);
-    auto processManager = std::make_unique<ProcessManagerService>();
     auto fontService = std::make_unique<FontService>();
     auto configService = std::make_unique<ConfigService>();
     auto shortcutService = std::make_unique<ShortcutService>(*omniDb.get());
@@ -192,7 +159,6 @@ int startDaemon() {
   ApplicationContext ctx;
 
   ctx.navigation = std::make_unique<NavigationController>(ctx);
-  ctx.command = std::make_unique<CommandController>(&ctx);
   ctx.overlay = std::make_unique<OverlayController>(&ctx);
   ctx.settings = std::make_unique<SettingsController>();
   ctx.services = ServiceRegistry::instance();
@@ -246,6 +212,8 @@ int startDaemon() {
 
   LauncherWindow launcher(ctx);
   SettingsWindow settings(&ctx);
+
+  ctx.navigation->launch(std::make_shared<RootCommand>());
 
   qInfo() << "Vicinae server successfully started. Call vicinae without an argument to toggle the window";
 

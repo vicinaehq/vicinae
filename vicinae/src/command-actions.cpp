@@ -1,10 +1,10 @@
 #include "command-actions.hpp"
-#include "command-controller.hpp"
+#include "navigation-controller.hpp"
 
 void OpenBuiltinCommandAction::execute(ApplicationContext *context) {
   QString searchText = context->navigation->searchText();
 
-  context->command->launch(cmd);
+  context->navigation->launch(cmd);
 
   if (m_forwardSearchText) { context->navigation->setSearchText(searchText); }
 }

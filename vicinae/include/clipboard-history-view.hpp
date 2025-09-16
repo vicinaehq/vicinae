@@ -1,11 +1,10 @@
 #pragma once
-#include "emoji-command.hpp"
 #include "navigation-controller.hpp"
 #include "services/clipboard/clipboard-db.hpp"
 #include "ui/alert/alert.hpp"
 #include "ui/action-pannel/push-action.hpp"
+#include "ui/form/text-area.hpp"
 #include "ui/preference-dropdown/preference-dropdown.hpp"
-#include "services/root-item-manager/root-item-manager.hpp"
 #include "ui/views/base-view.hpp"
 #include "clipboard-actions.hpp"
 #include "theme.hpp"
@@ -558,6 +557,8 @@ class ClipboardHistoryView : public SimpleView {
   void initialize() override {
     setSearchPlaceholderText("Browse clipboard history...");
     textChanged("");
+    m_filterInput->setValue(getSavedDropdownFilter().value_or("all"));
+    handleFilterChange(*m_filterInput->value());
   }
 
   void selectionChanged(const OmniList::AbstractVirtualItem *next,
@@ -596,9 +597,7 @@ class ClipboardHistoryView : public SimpleView {
   }
 
   void handleStatusClipboard() {
-    auto manager = context()->services->rootItemManager();
-    QString provider = "extension.clipboard";
-    auto preferences = manager->getProviderPreferenceValues(provider);
+    auto preferences = command()->preferenceValues();
 
     if (m_statusToolbar->clipboardStatus() == ClipboardStatusToobar::Paused) {
       preferences["monitoring"] = true;
@@ -606,7 +605,7 @@ class ClipboardHistoryView : public SimpleView {
       preferences["monitoring"] = false;
     }
 
-    manager->setProviderPreferenceValues(provider, preferences);
+    command()->setPreferenceValues(preferences);
   }
 
   bool inputFilter(QKeyEvent *event) override {
@@ -654,6 +653,8 @@ class ClipboardHistoryView : public SimpleView {
   }
 
   void handleFilterChange(const SelectorInput::AbstractItem &item) {
+    saveDropdownFilter(item.id());
+
     if (auto it = typeToOfferKind.find(item.id()); it != typeToOfferKind.end()) {
       m_kindFilter = it->second;
     } else {
@@ -666,6 +667,15 @@ class ClipboardHistoryView : public SimpleView {
       reloadCurrentSearch();
     }
   }
+
+  std::optional<QString> getSavedDropdownFilter() {
+    auto value = command()->storage().getItem("filter");
+
+    if (value.isNull()) return std::nullopt;
+
+    return value.toString();
+  }
+  void saveDropdownFilter(const QString &value) { command()->storage().setItem("filter", value); }
 
 public:
   ClipboardHistoryView() {
@@ -681,7 +691,6 @@ public:
     m_filterInput->setMinimumWidth(200);
     m_filterInput->setFocusPolicy(Qt::NoFocus);
     m_filterInput->setOptions(filterSelectorOptions);
-    m_filterInput->setValue("all");
 
     m_content->addWidget(m_split);
     m_content->addWidget(m_emptyView);

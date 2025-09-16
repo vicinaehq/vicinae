@@ -1,6 +1,8 @@
 #pragma once
 
 #include "argument.hpp"
+#include "command-controller.hpp"
+#include "command.hpp"
 #include "common.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/dialog/dialog.hpp"
@@ -170,6 +172,20 @@ class NavigationController : public QObject, NonCopyable {
   Q_OBJECT
 
 public:
+  struct CommandFrame {
+    QObjectUniquePtr<CommandContext> context;
+    std::unique_ptr<CommandController> controller;
+
+    std::shared_ptr<AbstractCmd> command;
+    LaunchProps launchProps;
+    size_t viewCount;
+
+    ~CommandFrame() {
+      context->unload();
+      qDebug() << "Unloading command" << command->uniqueId();
+    }
+  };
+
   struct ViewState {
     BaseView *sender = nullptr;
     struct {
@@ -260,6 +276,13 @@ public:
 
   void showHud(const QString &title, const std::optional<ImageURL> &icon = std::nullopt);
 
+  void launch(const std::shared_ptr<AbstractCmd> &cmd);
+  void launch(const QString &id);
+  const AbstractCmd *activeCommand() const;
+  CommandFrame *activeFrame() const { return m_frames.back().get(); }
+  bool reloadActiveCommand();
+  void unloadActiveCommand();
+
   /**
    * Go back to previous navigation state.
    * If the `instantDismiss` flag is set, this will close the window and pop to root
@@ -310,6 +333,7 @@ signals:
 
 private:
   ApplicationContext &m_ctx;
+  std::vector<std::unique_ptr<CommandFrame>> m_frames;
 
   ViewState *findViewState(const BaseView *view);
   const ViewState *findViewState(const BaseView *view) const;

@@ -2,7 +2,6 @@
 #include "extension/extension-command.hpp"
 #include "service-registry.hpp"
 #include "theme.hpp"
-#include "command-controller.hpp"
 #include "ui/form/preference-field.hpp"
 #include "ui/form/form.hpp"
 #include "ui/typography/typography.hpp"
@@ -119,7 +118,7 @@ public:
 
     manager->setPreferenceValues(QString("extension.%1").arg(m_command->uniqueId()), obj);
     context()->navigation->popCurrentView();
-    context()->command->launch(m_command);
+    context()->navigation->launch(m_command);
   }
 
   void onActivate() override {
