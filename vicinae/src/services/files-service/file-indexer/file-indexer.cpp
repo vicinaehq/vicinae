@@ -1,23 +1,14 @@
+#include "file-indexer.hpp"
+
+#include <filesystem>
 #include <QtConcurrent/QtConcurrent>
-#include <memory>
+#include "services/files-service/file-indexer/scan.hpp"
+#include "services/files-service/abstract-file-indexer.hpp"
+#include "file-indexer-db.hpp"
+#include "utils/utils.hpp"
 #include <QDebug>
-#include <qcryptographichash.h>
-#include <qfilesystemwatcher.h>
-#include <qlogging.h>
-#include <qobjectdefs.h>
-#include <qsqldatabase.h>
-#include <qsqlquery.h>
-#include <QSqlError>
-#include <qthreadpool.h>
 #include <ranges>
 #include <unistd.h>
-#include <filesystem>
-#include "services/files-service/abstract-file-indexer.hpp"
-#include "services/files-service/file-indexer/indexer-scanner.hpp"
-#include "services/files-service/file-indexer/incremental-scanner.hpp"
-#include "file-indexer-db.hpp"
-#include "file-indexer.hpp"
-#include "utils/utils.hpp"
 
 namespace fs = std::filesystem;
 
@@ -31,6 +22,10 @@ static const std::vector<fs::path> EXCLUDED_PATHS = {"/sys", "/run",     "/proc"
                                                      "/mnt", "/var/tmp", "/efi",  "/dev"};
 
 void FileIndexer::startFullscan() {
+  for (auto const &[id, scan] : m_dispatcher.scans()) {
+    if (scan.type == ScanType::Full) { m_dispatcher.interrupt(id); }
+  }
+
   for (const auto &entrypoint : m_entrypoints) {
     m_dispatcher.enqueue({.type = ScanType::Full, .path = entrypoint.root});
   }
@@ -39,8 +34,6 @@ void FileIndexer::startFullscan() {
 void FileIndexer::rebuildIndex() { startFullscan(); }
 
 void FileIndexer::start() {
-  m_dispatcher.enableAll();
-
   auto lastScan = m_db.getLastScan();
 
   // this is our first scan
@@ -56,7 +49,7 @@ void FileIndexer::start() {
 
   for (const auto &scan : startedScans) {
     qWarning() << "Creating new scan after previous scan for" << scan.path.c_str() << "was interrupted";
-    m_db.setScanError(scan.id, "Interrupted");
+    m_writer->setScanError(scan.id, "Interrupted");
     m_dispatcher.enqueue({.type = scan.type, .path = scan.path});
   }
 
@@ -112,9 +105,6 @@ QFuture<std::vector<IndexerFileResult>> FileIndexer::queryAsync(std::string_view
   return future;
 }
 
-FileIndexer::FileIndexer()
-    : m_dispatcher({{ScanType::Full, std::make_shared<IndexerScanner>()},
-                    {ScanType::Incremental, std::make_shared<IncrementalScanner>()}}) {
-
+FileIndexer::FileIndexer() : m_writer(std::make_shared<DbWriter>()), m_dispatcher(m_writer) {
   m_db.runMigrations();
 }

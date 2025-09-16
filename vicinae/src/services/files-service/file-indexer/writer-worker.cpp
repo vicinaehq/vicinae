@@ -8,8 +8,6 @@ void WriterWorker::stop() {
 }
 
 void WriterWorker::run() {
-  db = std::make_unique<FileIndexerDatabase>();
-
   while (m_alive) {
     std::deque<std::vector<std::filesystem::path>> batch;
 
@@ -23,17 +21,18 @@ void WriterWorker::run() {
 
     m_isWorking = true;
     for (const auto &paths : batch) {
-      batchWrite(paths);
+      batchWrite(std::move(paths));
     }
     m_isWorking = false;
   }
 }
 
-void WriterWorker::batchWrite(const std::vector<fs::path> &paths) {
+void WriterWorker::batchWrite(std::vector<fs::path> paths) {
   // Writing is happening in the writerThread
-  db->indexFiles(paths);
+  m_writer->indexFiles(std::move(paths));
 }
 
-WriterWorker::WriterWorker(std::mutex &batchMutex, std::deque<std::vector<std::filesystem::path>> &batchQueue,
+WriterWorker::WriterWorker(std::shared_ptr<DbWriter> writer, std::mutex &batchMutex,
+                           std::deque<std::vector<std::filesystem::path>> &batchQueue,
                            std::condition_variable &batchCv)
-    : batchMutex(batchMutex), batchQueue(batchQueue), m_batchCv(batchCv) {}
+    : m_writer(writer), batchMutex(batchMutex), batchQueue(batchQueue), m_batchCv(batchCv) {}
