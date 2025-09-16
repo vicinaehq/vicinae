@@ -516,8 +516,7 @@ void NavigationController::launch(const std::shared_ptr<AbstractCmd> &cmd) {
     return;
   }
 
-  bool shouldCheckPreferences =
-      cmd->type() == CommandType::CommandTypeExtension && !cmd->preferences().empty();
+  bool shouldCheckPreferences = cmd->type() == CommandType::CommandTypeExtension;
   LaunchProps props;
 
   props.arguments = completionValues();
