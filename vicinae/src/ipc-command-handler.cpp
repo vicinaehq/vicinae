@@ -130,14 +130,17 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
     for (ExtensionRootProvider *ext : root->extensions()) {
       for (const auto &cmd : ext->repository()->commands()) {
         if (cmd->author() == author && cmd->commandId() == cmdName && cmd->repositoryName() == extName) {
+          m_ctx.navigation->popToRoot({.clearSearch = false});
           m_ctx.navigation->launch(cmd);
 
           if (auto text = query.queryItemValue("fallbackText"); !text.isEmpty()) {
             m_ctx.navigation->setSearchText(text);
           }
 
-          m_ctx.navigation->setInstantDismiss();
-          m_ctx.navigation->showWindow();
+          if (!m_ctx.navigation->isWindowOpened()) {
+            m_ctx.navigation->setInstantDismiss();
+            m_ctx.navigation->showWindow();
+          }
 
           break;
         }
