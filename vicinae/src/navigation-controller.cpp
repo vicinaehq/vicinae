@@ -278,8 +278,12 @@ void NavigationController::closeWindow(const CloseWindowOptions &settings) {
 
 bool NavigationController::windowActivated() { return m_windowActivated; }
 
+void NavigationController::setCloseOnFocusLoss(bool value) { m_closeOnFocusLoss = value; }
+
 void NavigationController::setWindowActivated(bool value) {
   if (m_windowActivated == value) return;
+
+  if (!value && m_closeOnFocusLoss) { closeWindow(); }
 
   m_windowActivated = value;
   emit windowActivationChanged(value);

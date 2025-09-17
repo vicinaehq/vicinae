@@ -187,6 +187,7 @@ int startDaemon() {
     if (themeChangeRequired) { theme.setTheme(*next.theme.name); }
 
     ctx.navigation->setPopToRootOnClose(next.popToRootOnClose);
+    ctx.navigation->setCloseOnFocusLoss(next.closeOnFocusLoss);
 
     FaviconService::instance()->setService(next.faviconService);
 
