@@ -6,6 +6,7 @@
 #include "services/config/config-service.hpp"
 #include "ui/top-bar/top-bar.hpp"
 #include "utils/environment.hpp"
+#include <qcoreevent.h>
 #ifdef WAYLAND_LAYER_SHELL
 #include <LayerShellQt/window.h>
 #endif
@@ -158,6 +159,12 @@ void LauncherWindow::hideEvent(QHideEvent *event) {
   QWidget::hideEvent(event);
 }
 
+void LauncherWindow::changeEvent(QEvent *event) {
+  if (event->type() == QEvent::ActivationChange) { m_ctx.navigation->setWindowActivated(isActiveWindow()); }
+
+  QWidget::changeEvent(event);
+}
+
 void LauncherWindow::setupUI() {
   setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
   setAttribute(Qt::WA_TranslucentBackground, true);
@@ -175,7 +182,7 @@ void LauncherWindow::setupUI() {
       lshell->setLayer(Shell::Window::LayerOverlay);
       lshell->setScope("vicinae");
       lshell->setScreenConfiguration(Shell::Window::ScreenFromCompositor);
-      lshell->setKeyboardInteractivity(Shell::Window::KeyboardInteractivityExclusive);
+      lshell->setKeyboardInteractivity(Shell::Window::KeyboardInteractivityOnDemand);
       lshell->setExclusiveZone(-1);
       lshell->setAnchors(Shell::Window::AnchorNone);
     } else {

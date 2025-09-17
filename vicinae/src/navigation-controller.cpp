@@ -276,11 +276,28 @@ void NavigationController::closeWindow(const CloseWindowOptions &settings) {
   if (isRootSearch() && settings.clearRootSearch) clearSearchText();
 }
 
+bool NavigationController::windowActivated() { return m_windowActivated; }
+
+void NavigationController::setWindowActivated(bool value) {
+  if (m_windowActivated == value) return;
+
+  m_windowActivated = value;
+  emit windowActivationChanged(value);
+}
+
 void NavigationController::toggleWindow() {
-  if (m_windowOpened)
+  if (m_windowOpened) {
+    if (m_windowActivated) {
+      closeWindow();
+      return;
+    }
+
+    // if window was not activated, we reactivate it by closing then showing (most reliable way to ensure
+    // reactivation)
     closeWindow();
-  else
-    showWindow();
+  }
+
+  showWindow();
 }
 
 bool NavigationController::isWindowOpened() const { return m_windowOpened; }

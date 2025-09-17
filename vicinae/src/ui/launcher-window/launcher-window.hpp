@@ -1,4 +1,5 @@
 #pragma once
+#include <qcoreevent.h>
 #include <qdebug.h>
 #include <qevent.h>
 #include <qlogging.h>
@@ -44,6 +45,7 @@ protected:
   void handleActionVisibilityChanged(bool visible);
   void hideEvent(QHideEvent *event) override;
   void showEvent(QShowEvent *event) override;
+  void changeEvent(QEvent *event) override;
 
 private:
   ActionVeilWidget *m_actionVeil;
