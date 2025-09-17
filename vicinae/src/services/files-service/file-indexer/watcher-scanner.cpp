@@ -12,9 +12,9 @@ void WatcherScanner::handleMessage(const wtr::event &ev) {
     // TODO
     if (ev.path_name.native().starts_with("w/sys/not_watched@")) {
       qCritical()
-        << "Ran out of inotify watchers.\n"
-        << "    Please increase /proc/sys/fs/inotify/max_user_watches, or set it parmanently:\n"
-        << "    `echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p`";
+          << "Ran out of inotify watchers.\n"
+          << "    Please increase /proc/sys/fs/inotify/max_user_watches, or set it parmanently:\n"
+          << "    `echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p`";
       fail();
       return;
     }
@@ -44,22 +44,17 @@ void WatcherScanner::handleEvent(const wtr::event &ev) {
   switch (ev.effect_type) {
   case wtr::event::effect_type::create:
   case wtr::event::effect_type::modify:
-    m_writer->indexEvents({
-        FileEvent(FileEventType::Modify, ev.path_name, toFileTimeType(ev.effect_time))
-        });
+    m_writer->indexEvents({FileEvent(FileEventType::Modify, ev.path_name, toFileTimeType(ev.effect_time))});
     break;
 
   case wtr::event::effect_type::destroy:
-    m_writer->indexEvents({
-        FileEvent(FileEventType::Delete, ev.path_name, toFileTimeType(ev.effect_time))
-        });
+    m_writer->indexEvents({FileEvent(FileEventType::Delete, ev.path_name, toFileTimeType(ev.effect_time))});
     break;
 
   case wtr::event::effect_type::rename:
-    m_writer->indexEvents({
-        FileEvent(FileEventType::Delete, ev.path_name, toFileTimeType(ev.effect_time)),
-        FileEvent(FileEventType::Modify, ev.associated->path_name, toFileTimeType(ev.associated->effect_time))
-        });
+    m_writer->indexEvents({FileEvent(FileEventType::Delete, ev.path_name, toFileTimeType(ev.effect_time)),
+                           FileEvent(FileEventType::Modify, ev.associated->path_name,
+                                     toFileTimeType(ev.associated->effect_time))});
     break;
 
   case wtr::event::effect_type::owner:
@@ -68,15 +63,13 @@ void WatcherScanner::handleEvent(const wtr::event &ev) {
   }
 }
 
-WatcherScanner::WatcherScanner(std::shared_ptr<DbWriter> writer, const Scan& scan, FinishCallback callback):
-  AbstractScanner(writer, scan, callback) {
+WatcherScanner::WatcherScanner(std::shared_ptr<DbWriter> writer, const Scan &scan, FinishCallback callback)
+    : AbstractScanner(writer, scan, callback) {
 
   qInfo() << "Creating inotify watchers in" << scan.path.c_str();
   start(scan);
 
-  m_watch = std::make_unique<wtr::watch>(scan.path, [this](const wtr::event& ev) {
-      handleEvent(ev);
-      });
+  m_watch = std::make_unique<wtr::watch>(scan.path, [this](const wtr::event &ev) { handleEvent(ev); });
 }
 
 void WatcherScanner::interrupt() {
