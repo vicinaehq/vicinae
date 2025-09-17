@@ -69,21 +69,16 @@ public:
     paths.setDescription("Semicolon-separated list of paths that vicinae will search");
     paths.setDefaultValue(homeDir().c_str());
 
-    return {paths};
+    auto watcherPaths = Preference::makeText("watcherPaths");
+    watcherPaths.setTitle("Watcher paths");
+    watcherPaths.setDescription("Semicolon-separated list of paths watched by experimental watcher");
+    watcherPaths.setDefaultValue("");
+
+    return {paths, watcherPaths};
   }
 
   void preferenceValuesChanged(const QJsonObject &preferences) const override {
     QStringList searchPaths = preferences.value("paths").toString().split(';', Qt::SkipEmptyParts);
-    FileService *service = ServiceRegistry::instance()->fileService();
-
-    auto entrypointRange =
-        searchPaths | std::views::transform([](const QJsonValue &obj) -> AbstractFileIndexer::Entrypoint {
-          return {.root = obj.toString().toStdString()};
-        });
-
-    std::vector<AbstractFileIndexer::Entrypoint> entrypoints = {entrypointRange.begin(),
-                                                                entrypointRange.end()};
-
-    service->setEntrypoints(entrypoints);
+    ServiceRegistry::instance()->fileService()->preferenceValuesChanged(preferences);
   }
 };

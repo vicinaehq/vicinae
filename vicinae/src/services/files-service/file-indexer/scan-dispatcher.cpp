@@ -1,6 +1,7 @@
 #include "scan-dispatcher.hpp"
 #include "services/files-service/file-indexer/indexer-scanner.hpp"
 #include "services/files-service/file-indexer/incremental-scanner.hpp"
+#include "services/files-service/file-indexer/watcher-scanner.hpp"
 #include <map>
 #include <memory>
 #include <mutex>
@@ -32,6 +33,9 @@ int ScanDispatcher::enqueue(const Scan &scan) {
       break;
     case ScanType::Incremental:
       m_scannerMap[scanId] = {scan, std::make_unique<IncrementalScanner>(m_writer, scan, handler)};
+      break;
+    case ScanType::Watcher:
+      m_scannerMap[scanId] = {scan, std::make_unique<WatcherScanner>(m_writer, scan, handler)};
       break;
     }
   }
