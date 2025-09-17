@@ -26,6 +26,7 @@ void GeneralSettings::setConfig(const ConfigService::Value &value) {
   m_qThemeSelector->setValue(value.theme.iconTheme.value_or(currentIconTheme));
   m_faviconSelector->setValue(value.faviconService);
   m_popToRootOnClose->setValueAsJson(value.popToRootOnClose);
+  m_closeOnFocusLoss->setValueAsJson(value.closeOnFocusLoss);
   m_fontSize->setText(QString::number(value.font.baseSize));
 }
 
@@ -84,6 +85,12 @@ void GeneralSettings::handleFontSizeChange(double size) {
       [&](ConfigService::Value &value) { value.font.baseSize = std::clamp(size, 1.0, 99.0); });
 }
 
+void GeneralSettings::handleCloseOnFocusLossChange(bool value) {
+  auto config = ServiceRegistry::instance()->config();
+
+  config->updateConfig([&](ConfigService::Value &cfg) { cfg.closeOnFocusLoss = value; });
+}
+
 void GeneralSettings::setupUI() {
   auto config = ServiceRegistry::instance()->config();
   auto appFont = QApplication::font().family();
@@ -97,6 +104,7 @@ void GeneralSettings::setupUI() {
   m_fontSelector = new FontSelector;
   m_faviconSelector = new FaviconServiceSelector;
   m_popToRootOnClose = new CheckboxInput;
+  m_closeOnFocusLoss = new CheckboxInput;
   m_fontSize = new BaseInput;
 
   m_popToRootOnClose->setLabel("Pop to root on window close");
@@ -111,6 +119,12 @@ void GeneralSettings::setupUI() {
   auto popToRootOnCloseField = form->addField("Pop on close", m_popToRootOnClose);
 
   popToRootOnCloseField->setInfo("Whether to reset the navigation state when the launcher window is closed.");
+
+  form->addField("Focus handling", m_closeOnFocusLoss);
+  m_closeOnFocusLoss->setLabel("Close on focus loss");
+
+  connect(m_closeOnFocusLoss, &CheckboxInput::valueChanged, this,
+          &GeneralSettings::handleCloseOnFocusLossChange);
 
   auto fontField = form->addField("Font", m_fontSelector);
 

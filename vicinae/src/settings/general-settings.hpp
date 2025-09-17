@@ -11,9 +11,11 @@
 #include <qwidget.h>
 #include <QFont>
 
+// We will implement something better than this, eventually
 class GeneralSettings : public VerticalScrollArea {
   CheckboxInput *m_rootFileSearch;
   CheckboxInput *m_csd;
+  CheckboxInput *m_closeOnFocusLoss;
   BaseInput *m_opacity;
   ThemeSelector *m_themeSelector;
   FontSelector *m_fontSelector;
@@ -24,6 +26,7 @@ class GeneralSettings : public VerticalScrollArea {
 
   void setupUI();
 
+  void handleCloseOnFocusLossChange(bool value);
   void handleRootSearchFilesChange(bool value);
   void handleThemeChange(const QString &id);
   void handleClientSideDecorationChange(bool value);

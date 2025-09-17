@@ -290,6 +290,8 @@ public:
   bool reloadActiveCommand();
   void unloadActiveCommand();
 
+  void setCloseOnFocusLoss(bool value);
+
   /**
    * Go back to previous navigation state.
    * If the `instantDismiss` flag is set, this will close the window and pop to root
@@ -354,5 +356,6 @@ private:
   bool m_isPanelOpened = false;
   bool m_popToRootOnClose = false;
   bool m_instantDismiss = false;
+  bool m_closeOnFocusLoss = false;
   std::vector<std::unique_ptr<ViewState>> m_views;
 };
