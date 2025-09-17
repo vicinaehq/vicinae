@@ -209,14 +209,13 @@ public:
     ~ViewState();
   };
 
-  bool m_isPanelOpened = false;
-  bool m_popToRootOnClose = false;
-  bool m_instantDismiss = false;
-
   void closeWindow(const CloseWindowOptions &settings = {});
   void showWindow();
   void toggleWindow();
   bool isWindowOpened() const;
+
+  bool windowActivated();
+  void setWindowActivated(bool value = true);
 
   void setPopToRootOnClose(bool value);
 
@@ -339,6 +338,7 @@ signals:
   void headerVisiblityChanged(bool value);
   void searchVisibilityChanged(bool value);
   void statusBarVisiblityChanged(bool value);
+  void windowActivationChanged(bool value) const;
 
 private:
   ApplicationContext &m_ctx;
@@ -350,5 +350,9 @@ private:
   bool isRootSearch() const;
 
   bool m_windowOpened = false;
+  bool m_windowActivated = false;
+  bool m_isPanelOpened = false;
+  bool m_popToRootOnClose = false;
+  bool m_instantDismiss = false;
   std::vector<std::unique_ptr<ViewState>> m_views;
 };
