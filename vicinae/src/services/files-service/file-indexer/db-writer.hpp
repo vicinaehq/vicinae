@@ -39,4 +39,6 @@ public:
   // Receive by value because `paths` could mutate while the work is waiting in queue
   void indexFiles(std::vector<std::filesystem::path> paths);
   void deleteIndexedFiles(std::vector<std::filesystem::path> paths);
+
+  void indexEvents(std::vector<FileEvent> events);
 };

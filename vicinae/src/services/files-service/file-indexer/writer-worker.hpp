@@ -7,12 +7,12 @@ class WriterWorker : public NonCopyable {
   std::shared_ptr<DbWriter> m_writer;
 
   std::mutex &batchMutex;
-  std::deque<std::vector<std::filesystem::path>> &batchQueue;
+  std::deque<std::vector<FileEvent>> &batchQueue;
   std::condition_variable &m_batchCv;
   std::atomic<bool> m_alive = true;
   std::atomic<bool> m_isWorking = false;
 
-  void batchWrite(std::vector<std::filesystem::path> paths);
+  void batchWrite(std::vector<FileEvent> paths);
 
 public:
   void run();
@@ -20,5 +20,5 @@ public:
   bool isWorking() const { return m_isWorking; }
 
   WriterWorker(std::shared_ptr<DbWriter> writer, std::mutex &batchMutex,
-               std::deque<std::vector<std::filesystem::path>> &batchQueue, std::condition_variable &batchCv);
+               std::deque<std::vector<FileEvent>> &batchQueue, std::condition_variable &batchCv);
 };

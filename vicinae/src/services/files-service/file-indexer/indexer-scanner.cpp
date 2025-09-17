@@ -5,7 +5,7 @@
 
 namespace fs = std::filesystem;
 
-void IndexerScanner::enqueueBatch(const std::vector<std::filesystem::path> &paths) {
+void IndexerScanner::enqueueBatch(const std::vector<FileEvent> &paths) {
   bool shouldWait = true;
 
   while (shouldWait) {
@@ -29,12 +29,14 @@ void IndexerScanner::enqueueBatch(const std::vector<std::filesystem::path> &path
 }
 
 void IndexerScanner::scan(const std::filesystem::path &root) {
-  std::vector<fs::path> batchedIndex;
+  std::vector<FileEvent> batchedIndex;
   FileSystemWalker walker;
 
   walker.setVerbose();
   walker.walk(root, [&](const fs::directory_entry &entry) {
-    batchedIndex.emplace_back(entry);
+    std::error_code ec;
+    // In case of error, returns file_time_time::min() - erroring entries deserve a bad relevance score anyway
+    batchedIndex.emplace_back(FileEventType::Modify, entry.path(), entry.last_write_time(ec));
 
     if (batchedIndex.size() > INDEX_BATCH_SIZE) {
       enqueueBatch(batchedIndex);
