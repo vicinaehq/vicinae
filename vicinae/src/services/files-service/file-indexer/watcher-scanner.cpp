@@ -11,7 +11,10 @@ void WatcherScanner::handleMessage(const wtr::event &ev) {
   case 'w':
     // TODO
     if (ev.path_name.native().starts_with("w/sys/not_watched@")) {
-      qCritical() << "Watcher for" << ev.path_name.c_str() << ": Ran out of inotify watchers.";
+      qCritical()
+        << "Ran out of inotify watchers.\n"
+        << "    Please increase /proc/sys/fs/inotify/max_user_watches, or set it parmanently:\n"
+        << "    `echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p`";
       fail();
       return;
     }
