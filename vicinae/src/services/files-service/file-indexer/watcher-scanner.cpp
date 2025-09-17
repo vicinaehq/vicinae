@@ -1,5 +1,6 @@
 #include "watcher-scanner.hpp"
 #include <QtLogging>
+#include <filesystem>
 
 void WatcherScanner::handleMessage(const wtr::event &ev) {
   switch (ev.path_name.native().front()) {
@@ -30,22 +31,32 @@ void WatcherScanner::handleEvent(const wtr::event &ev) {
     return;
   }
 
+  // WHY
+  auto toFileTimeType = [](long long t) {
+    using namespace std::chrono;
+    using namespace std::filesystem;
+    return file_time_type::clock::now() + duration_cast<file_time_type::duration>(nanoseconds(t));
+  };
+
   switch (ev.effect_type) {
   case wtr::event::effect_type::create:
-    m_writer->indexFiles({ev.path_name});
+  case wtr::event::effect_type::modify:
+    m_writer->indexEvents({
+        FileEvent(FileEventType::Modify, ev.path_name, toFileTimeType(ev.effect_time))
+        });
     break;
 
   case wtr::event::effect_type::destroy:
-    m_writer->deleteIndexedFiles({ev.path_name});
+    m_writer->indexEvents({
+        FileEvent(FileEventType::Delete, ev.path_name, toFileTimeType(ev.effect_time))
+        });
     break;
 
   case wtr::event::effect_type::rename:
-    m_writer->deleteIndexedFiles({ev.path_name});
-    m_writer->indexFiles({ev.associated->path_name});
-    break;
-
-  case wtr::event::effect_type::modify:
-    m_writer->indexFiles({ev.path_name});
+    m_writer->indexEvents({
+        FileEvent(FileEventType::Delete, ev.path_name, toFileTimeType(ev.effect_time)),
+        FileEvent(FileEventType::Modify, ev.associated->path_name, toFileTimeType(ev.associated->effect_time))
+        });
     break;
 
   case wtr::event::effect_type::owner:
