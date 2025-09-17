@@ -130,14 +130,12 @@ bool ClipboardService::pasteContent(const Clipboard::Content &content, const Cli
 }
 
 bool ClipboardService::copyFile(const std::filesystem::path &path, const Clipboard::CopyOptions &options) {
-  QMimeType mime = _mimeDb.mimeTypeForFile(path.c_str());
-  QFile file(path);
-
-  if (!file.open(QIODevice::ReadOnly)) { return false; }
-
   QMimeData *data = new QMimeData;
 
-  data->setData(mime.name(), file.readAll());
+  // copying files should normally copy a link to the file, not the file itself
+  // This is what text/uri-list is used for. On Windows or other systems we might have
+  // to do something else, I'm not sure.
+  data->setData("text/uri-list", QString("file://%1").arg(path.c_str()).toUtf8());
 
   return copyQMimeData(data, options);
 }
