@@ -87,14 +87,12 @@ QString FileIndexer::preparePrefixSearchQuery(std::string_view query) const {
 
 void FileIndexer::preferenceValuesChanged(const QJsonObject &preferences) {
   m_entrypoints =
-      preferences.value("paths").toString().split(';', Qt::SkipEmptyParts) |
-      std::views::transform([](const QStringView &v) { return fs::path(v.toString().toStdString()); }) |
-      std::ranges::to<std::vector>();
+      ranges_to<std::vector>(preferences.value("paths").toString().split(';', Qt::SkipEmptyParts) |
+      std::views::transform([](const QStringView &v) { return fs::path(v.toString().toStdString()); }));
 
   m_watcherPaths =
-      preferences.value("watcherPaths").toString().split(';', Qt::SkipEmptyParts) |
-      std::views::transform([](const QStringView &v) { return fs::path(v.toString().toStdString()); }) |
-      std::ranges::to<std::vector>();
+      ranges_to<std::vector>(preferences.value("watcherPaths").toString().split(';', Qt::SkipEmptyParts) |
+      std::views::transform([](const QStringView &v) { return fs::path(v.toString().toStdString()); }));
 }
 
 QFuture<std::vector<IndexerFileResult>> FileIndexer::queryAsync(std::string_view view,
