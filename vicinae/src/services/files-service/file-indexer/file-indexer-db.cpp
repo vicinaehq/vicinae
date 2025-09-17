@@ -1,8 +1,10 @@
 #include "file-indexer-db.hpp"
+#include "scan.hpp"
 #include "vicinae.hpp"
 #include "services/files-service/file-indexer/relevancy-scorer.hpp"
 #include "utils/migration-manager/migration-manager.hpp"
 #include "utils/utils.hpp"
+#include <chrono>
 #include <qlogging.h>
 #include <qsqldatabase.h>
 #include <qsqlquery.h>
@@ -64,31 +66,6 @@ FileIndexerDatabase::listIndexedDirectoryFiles(const std::filesystem::path &path
   }
 
   return paths;
-}
-
-void FileIndexerDatabase::deleteIndexedFiles(const std::vector<fs::path> &paths) {
-  if (!m_db.transaction()) {
-    qCritical() << "Failed to start transaction";
-    return;
-  }
-
-  {
-    QSqlQuery query(m_db);
-
-    query.prepare("DELETE FROM indexed_file WHERE path = :path");
-
-    for (const auto &path : paths) {
-      query.addBindValue(path.c_str());
-
-      if (!query.exec()) {
-        qCritical() << "Failed to delete indexed file" << path.c_str();
-        m_db.rollback();
-        return;
-      }
-    }
-  }
-
-  if (!m_db.commit()) { qCritical() << "Failed to commit"; }
 }
 
 void FileIndexerDatabase::runMigrations() {
@@ -262,6 +239,91 @@ std::vector<fs::path> FileIndexerDatabase::search(std::string_view searchQuery,
   }
 
   return results;
+}
+
+void FileIndexerDatabase::deleteIndexedFiles(const std::vector<fs::path> &paths) {
+  if (!m_db.transaction()) {
+    qCritical() << "Failed to start transaction";
+    return;
+  }
+
+  {
+    QSqlQuery query(m_db);
+
+    query.prepare("DELETE FROM indexed_file WHERE path = :path");
+
+    for (const auto &path : paths) {
+      query.addBindValue(path.c_str());
+
+      if (!query.exec()) {
+        qCritical() << "Failed to delete indexed file" << path.c_str();
+        m_db.rollback();
+        return;
+      }
+    }
+  }
+
+  if (!m_db.commit()) { qCritical() << "Failed to commit"; }
+}
+
+void FileIndexerDatabase::indexEvents(const std::vector<FileEvent> &events) {
+  if (!m_db.transaction()) {
+    qWarning() << "Failed to start batch transaction" << m_db.lastError();
+    return;
+  }
+
+  {
+    QSqlQuery modifyQuery(m_db);
+    modifyQuery.prepare(R"(
+    INSERT INTO 
+                indexed_file (path, parent_path, name, last_modified_at, relevancy_score) 
+        VALUES 
+                (:path, :parent_path, :name, :last_modified_at, :relevancy_score) 
+        ON CONFLICT (path) DO UPDATE SET last_modified_at = :last_modified_at
+    )");
+
+    QSqlQuery deleteQuery(m_db);
+    deleteQuery.prepare("DELETE FROM indexed_file WHERE path = :path");
+
+    QSqlQuery *activeQuery;
+
+    for (const auto &event : events) {
+      switch (event.type) {
+      case FileEventType::Modify: {
+        using namespace std::chrono;
+        long long secondsSinceEpoch = duration_cast<seconds>(event.eventTime.time_since_epoch()).count();
+        modifyQuery.bindValue(":last_modified_at", secondsSinceEpoch);
+
+        modifyQuery.bindValue(":path", event.path.c_str());
+        modifyQuery.bindValue(":parent_path", event.path.parent_path().c_str());
+        modifyQuery.bindValue(":name", event.path.filename().c_str());
+
+        // Move this out of the loop if RelevancyScore ends up having any state
+        RelevancyScorer scorer;
+        modifyQuery.bindValue(":relevancy_score", scorer.computeScore(event.path, event.eventTime));
+
+        activeQuery = &modifyQuery;
+        break;
+      }
+
+      case FileEventType::Delete: {
+        deleteQuery.bindValue(":path", event.path.c_str());
+
+        activeQuery = &deleteQuery;
+        break;
+      }
+      }
+      if (!activeQuery->exec()) {
+        static std::map<FileEventType, std::string> verbMap = {{FileEventType::Delete, "deleted"},
+                                                               {FileEventType::Modify, "modified"}};
+        qCritical() << "Failed to index" << verbMap[event.type] << "file" << event.path
+                    << activeQuery->lastError();
+        m_db.rollback();
+        return;
+      }
+    }
+  }
+  if (!m_db.commit()) { qCritical() << "Failed to commit"; }
 }
 
 void FileIndexerDatabase::indexFiles(const std::vector<std::filesystem::path> &paths) {

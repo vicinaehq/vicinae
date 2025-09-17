@@ -49,6 +49,8 @@ public:
   std::vector<std::filesystem::path> search(std::string_view searchQuery,
                                             const AbstractFileIndexer::QueryParams &params);
 
+  void indexEvents(const std::vector<FileEvent> &events);
+
   void runMigrations();
 
   QSqlDatabase *database();

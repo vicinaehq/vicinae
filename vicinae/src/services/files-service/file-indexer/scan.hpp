@@ -24,3 +24,11 @@ struct Scan {
     return path < other.path;
   }
 };
+
+enum class FileEventType { Modify, Delete };
+
+struct FileEvent {
+  FileEventType type;
+  std::filesystem::path path;
+  std::filesystem::file_time_type eventTime;
+};

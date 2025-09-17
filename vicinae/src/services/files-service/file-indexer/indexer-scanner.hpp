@@ -9,7 +9,7 @@ private:
   static constexpr size_t MAX_PENDING_BATCH_COUNT = 10;
   static constexpr size_t BACKPRESSURE_WAIT_MS = 100;
 
-  std::deque<std::vector<std::filesystem::path>> m_writeBatches;
+  std::deque<std::vector<FileEvent>> m_writeBatches;
   std::mutex m_batchMutex;
   std::condition_variable m_batchCv;
 
@@ -19,7 +19,7 @@ private:
   std::thread m_scanThread;
 
   void scan(const std::filesystem::path &path);
-  void enqueueBatch(const std::vector<std::filesystem::path> &paths);
+  void enqueueBatch(const std::vector<FileEvent> &paths);
 
 public:
   IndexerScanner(std::shared_ptr<DbWriter> writer, const Scan &scan, FinishCallback callback);
