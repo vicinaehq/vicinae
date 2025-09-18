@@ -7,6 +7,7 @@
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "services/toast/toast-service.hpp"
+#include "ui/alert/alert.hpp"
 #include "ui/views/base-view.hpp"
 #include "utils/environment.hpp"
 #include <qlogging.h>
@@ -73,6 +74,16 @@ void NavigationController::showHud(const QString &title, const std::optional<Ima
 }
 
 void NavigationController::setDialog(DialogContentWidget *widget) { emit confirmAlertRequested(widget); }
+
+void NavigationController::confirmAlert(const QString &title, const QString &description,
+                                        const std::function<void()> &onConfirm) {
+  auto widget = new CallbackAlertWidget;
+
+  widget->setTitle(title);
+  widget->setMessage(description);
+  widget->setConfirmCallback(onConfirm);
+  setDialog(widget);
+}
 
 void NavigationController::clearSearchText() { setSearchText(""); }
 

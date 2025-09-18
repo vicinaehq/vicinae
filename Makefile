@@ -13,7 +13,7 @@ host-optimized:
 .PHONY: optimized
 
 debug:
-	cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -B $(BUILD_DIR)
+	cmake -G Ninja -DLTO=OFF -DCMAKE_BUILD_TYPE=Debug -B $(BUILD_DIR)
 	cmake --build $(BUILD_DIR)
 .PHONY: debug
 

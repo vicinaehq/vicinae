@@ -2,6 +2,7 @@
 #include "extensions/clipboard/clipboard-extension.hpp"
 #include "extensions/calculator/calculator-extension.hpp"
 #include "extensions/file/file-extension.hpp"
+#include "extensions/power-management/power-management-extension.hpp"
 #include "extensions/shortcut/shortcut-extension.hpp"
 #include "extensions/font/font-extension.hpp"
 #include "extensions/theme/theme-extension.hpp"
@@ -37,6 +38,7 @@ const AbstractCommandRepository *CommandDatabase::findRepository(const QString &
 CommandDatabase::CommandDatabase() {
   registerRepository<ClipboardExtension>();
   registerRepository<FileExtension>();
+  registerRepository<PowerManagementExtension>();
 
 #ifdef HAS_TYPESCRIPT_EXTENSIONS
   registerRepository<RaycastCompatExtension>();

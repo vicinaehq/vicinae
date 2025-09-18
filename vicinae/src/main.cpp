@@ -20,6 +20,7 @@
 #include "services/files-service/file-service.hpp"
 #include "services/local-storage/local-storage-service.hpp"
 #include "services/oauth/oauth-service.hpp"
+#include "services/power-manager/power-manager.hpp"
 #include "services/raycast/raycast-store.hpp"
 #include "services/shortcut/shortcut-service.hpp"
 #include "services/toast/toast-service.hpp"
@@ -86,6 +87,7 @@ int startDaemon() {
     registry->setRaycastStore(std::move(raycastStore));
     registry->setExtensionRegistry(std::move(extensionRegistry));
     registry->setOAuthService(std::make_unique<OAuthService>());
+    registry->setPowerManager(std::make_unique<PowerManager>());
 
     auto root = registry->rootItemManager();
     auto builtinCommandDb = std::make_unique<CommandDatabase>();

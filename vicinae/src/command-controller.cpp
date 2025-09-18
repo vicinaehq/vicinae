@@ -28,3 +28,5 @@ void CommandController::setPreferenceValues(const QJsonObject &value) const {
 
   m_ctx.services->rootItemManager()->setPreferenceValues(id, value);
 }
+
+const ApplicationContext *CommandController::context() const { return &m_ctx; }

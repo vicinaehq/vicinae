@@ -1,13 +1,9 @@
 #include "extensions/vicinae/open-documentation-command.hpp"
-#include "service-registry.hpp"
-#include "services/app-service/app-service.hpp"
-#include "services/toast/toast-service.hpp"
-#include "ui/toast/toast.hpp"
 #include <qlogging.h>
 
 static const char *DOC_URL = "https://docs.vicinae.com";
 
-void OpenDocumentationCommand::execute(ApplicationContext *ctx) const {
+void OpenDocumentationCommand::execute(CommandController *ctx) const {
   auto appDb = ctx->services->appDb();
 
   if (auto browser = appDb->webBrowser()) {
