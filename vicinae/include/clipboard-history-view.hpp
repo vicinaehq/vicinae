@@ -62,16 +62,9 @@ class PasteClipboardSelection : public PasteToFocusedWindowAction {
   QString m_id;
 
   void execute(ApplicationContext *ctx) override {
-    auto clipman = ctx->services->clipman();
-    auto toast = ctx->services->toastService();
-
-    if (auto selection = clipman->retrieveSelectionById(m_id)) {
-      loadClipboardData(*selection);
-      PasteToFocusedWindowAction::execute(ctx);
-      return;
-    }
-
-    toast->setToast(QString("No selection with ID %1").arg(m_id));
+    setConcealed();
+    loadClipboardData(Clipboard::SelectionRecordHandle{m_id});
+    PasteToFocusedWindowAction::execute(ctx);
   }
 
 public:
@@ -85,8 +78,7 @@ class CopyClipboardSelection : public AbstractAction {
     auto clipman = ctx->services->clipman();
     auto toast = ctx->services->toastService();
 
-    if (auto selection = clipman->retrieveSelectionById(m_id)) {
-      clipman->copySelection(*selection, {.concealed = true});
+    if (clipman->copySelectionRecord(m_id, {.concealed = true})) {
       ctx->navigation->showHud("Selection copied to clipboard");
       return;
     }
@@ -587,6 +579,8 @@ class ClipboardHistoryView : public SimpleView {
   void handlePinChanged(int entryId, bool value) { reloadCurrentSearch(); }
   void handleRemoved(int entryId) { reloadCurrentSearch(); }
 
+  void onSelectionUpdated() { reloadCurrentSearch(); }
+
   void handleMonitoringChanged(bool monitor) {
     if (monitor) {
       m_statusToolbar->setClipboardStatus(ClipboardStatusToobar::ClipboardStatus::Monitoring);
@@ -717,6 +711,7 @@ public:
     connect(m_list, &OmniList::itemActivated, this, [this]() { executePrimaryAction(); });
     connect(clipman, &ClipboardService::itemInserted, this,
             &ClipboardHistoryView::clipboardSelectionInserted);
+    connect(clipman, &ClipboardService::selectionUpdated, this, &ClipboardHistoryView::onSelectionUpdated);
     connect(clipman, &ClipboardService::monitoringChanged, this,
             &ClipboardHistoryView::handleMonitoringChanged);
     connect(m_statusToolbar, &ClipboardStatusToobar::statusIconClicked, this,

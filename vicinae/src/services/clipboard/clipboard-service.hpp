@@ -34,11 +34,15 @@ struct Html {
   std::optional<QString> text;
 };
 
+struct SelectionRecordHandle {
+  QString id;
+};
+
 struct CopyOptions {
   bool concealed = false;
 };
 
-using Content = std::variant<NoData, File, Text, Html, ClipboardSelection>;
+using Content = std::variant<NoData, File, Text, Html, SelectionRecordHandle, ClipboardSelection>;
 
 static Content fromJson(const QJsonObject &obj) {
   if (obj.contains("path")) { return File{.path = obj.value("path").toString().toStdString()}; }
@@ -120,6 +124,7 @@ public:
   void saveSelection(ClipboardSelection selection);
   ClipboardSelection retrieveSelection(int offset = 0);
   std::optional<ClipboardSelection> retrieveSelectionById(const QString &id);
+  bool copySelectionRecord(const QString &id, const Clipboard::CopyOptions &options);
   bool copySelection(const ClipboardSelection &selection, const Clipboard::CopyOptions &options);
   bool copyQMimeData(QMimeData *data, const Clipboard::CopyOptions &options = {});
 
@@ -138,5 +143,10 @@ signals:
   void itemInserted(const ClipboardHistoryEntry &entry) const;
   void selectionPinStatusChanged(const QString &id, bool pinned) const;
   void selectionRemoved(const QString &id) const;
+  /**
+   * When a selection is copied, its update time is modified which makes it appear on top
+   * of the list.
+   */
+  void selectionUpdated() const;
   void monitoringChanged(bool value) const;
 };

@@ -271,11 +271,11 @@ bool ClipboardDatabase::transaction(const TxHandle &handle) {
   return m_db.rollback();
 }
 
-bool ClipboardDatabase::tryBubbleUpSelection(const QString &selectionHash) {
+bool ClipboardDatabase::tryBubbleUpSelection(const QString &idLike) {
   QSqlQuery query(m_db);
 
-  query.prepare("UPDATE selection SET updated_at = unixepoch() WHERE hash_md5 = :hash");
-  query.addBindValue(selectionHash);
+  query.prepare("UPDATE selection SET updated_at = unixepoch() WHERE hash_md5 = :id OR id = :id");
+  query.bindValue(":id", idLike);
 
   if (!query.exec()) { qCritical() << "Failed to execute clipboard update"; }
 
