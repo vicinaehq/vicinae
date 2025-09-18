@@ -3,6 +3,7 @@
 #include "font-service.hpp"
 #include "omni-database.hpp"
 #include "services/app-service/app-service.hpp"
+#include "services/power-manager/power-manager.hpp"
 #include "services/shortcut/shortcut-service.hpp"
 #include "services/calculator-service/calculator-service.hpp"
 #include "services/clipboard/clipboard-service.hpp"
@@ -34,6 +35,12 @@ FileService *ServiceRegistry::fileService() const { return m_fileService.get(); 
 RaycastStoreService *ServiceRegistry::raycastStore() const { return m_raycastStoreService.get(); }
 ExtensionRegistry *ServiceRegistry::extensionRegistry() const { return m_extensionRegistry.get(); }
 OAuthService *ServiceRegistry::oauthService() const { return m_oauthService.get(); }
+
+PowerManager *ServiceRegistry::powerManager() const { return m_powerManager.get(); }
+
+void ServiceRegistry::setPowerManager(std::unique_ptr<PowerManager> powman) {
+  m_powerManager = std::move(powman);
+}
 
 void ServiceRegistry::setWindowManager(std::unique_ptr<WindowManager> manager) {
   m_windowManager = std::move(manager);

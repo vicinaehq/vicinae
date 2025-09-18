@@ -1,4 +1,5 @@
 #include "vicinae-extension.hpp"
+#include "command-controller.hpp"
 #include "common.hpp"
 #include "extensions/vicinae/report-bug-command.hpp"
 #include "navigation-controller.hpp"
@@ -65,7 +66,9 @@ class OpenSettingsCommand : public BuiltinCallbackCommand {
     return ImageURL::builtin("cog").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 
-  void execute(const LaunchProps &_, ApplicationContext *ctx) const override {
+  void execute(CommandController *controller) const override {
+    auto ctx = controller->context();
+
     ctx->navigation->closeWindow();
     ctx->settings->openWindow();
   }

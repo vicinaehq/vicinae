@@ -1,4 +1,5 @@
 #pragma once
+#include "command-controller.hpp"
 #include "common.hpp"
 #include "../../ui/image/url.hpp"
 #include "settings-controller/settings-controller.hpp"
@@ -13,7 +14,9 @@ class OpenAboutCommand : public BuiltinCallbackCommand {
     return ImageURL::builtin("info-01").setBackgroundTint(Omnicast::ACCENT_COLOR);
   }
 
-  void execute(const LaunchProps &props, ApplicationContext *ctx) const override {
+  void execute(CommandController *controller) const override {
+    auto ctx = controller->context();
+
     ctx->navigation->closeWindow();
     ctx->settings->openTab("about");
   }

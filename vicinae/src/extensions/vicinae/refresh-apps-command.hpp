@@ -1,5 +1,6 @@
 #pragma once
 #include "../../ui/image/url.hpp"
+#include "command-controller.hpp"
 #include "common.hpp"
 #include "single-view-command-context.hpp"
 
@@ -15,5 +16,5 @@ class RefreshAppsCommand : public BuiltinCallbackCommand {
   }
 
 public:
-  void execute(const LaunchProps &values, ApplicationContext *ctx) const override;
+  void execute(CommandController *controller) const override;
 };

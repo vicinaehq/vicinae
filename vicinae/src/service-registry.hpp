@@ -21,6 +21,7 @@ class RaycastStoreService;
 class ExtensionRegistry;
 class OAuthService;
 class WindowManager;
+class PowerManager;
 
 class ServiceRegistry : public QObject {
   std::unique_ptr<WindowManager> m_windowManager;
@@ -40,6 +41,7 @@ class ServiceRegistry : public QObject {
   std::unique_ptr<RaycastStoreService> m_raycastStoreService;
   std::unique_ptr<ExtensionRegistry> m_extensionRegistry;
   std::unique_ptr<OAuthService> m_oauthService;
+  std::unique_ptr<PowerManager> m_powerManager;
 
 public:
   static ServiceRegistry *instance();
@@ -60,7 +62,9 @@ public:
   RaycastStoreService *raycastStore() const;
   ExtensionRegistry *extensionRegistry() const;
   OAuthService *oauthService() const;
+  PowerManager *powerManager() const;
 
+  void setPowerManager(std::unique_ptr<PowerManager> manager);
   void setWindowManager(std::unique_ptr<WindowManager> manager);
   void setRootItemManager(std::unique_ptr<RootItemManager> manager);
   void setRaycastStore(std::unique_ptr<RaycastStoreService> service);

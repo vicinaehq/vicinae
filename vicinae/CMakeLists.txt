@@ -390,6 +390,7 @@ set(SRCS
 
 	src/extensions/vicinae/refresh-apps-command.hpp
 	src/extensions/vicinae/refresh-apps-command.cpp
+	src/extensions/power-management/power-management-extension.cpp
 
 	src/ui/switch/switch.hpp
 	src/ui/switch/switch.cpp
@@ -571,6 +572,9 @@ set(SRCS
 
 	src/ui/button-base/button-base.hpp
 	src/ui/button-base/button-base.cpp
+
+	src/services/power-manager/systemd/systemd-power-manager.cpp
+
 ) 
 
 if (UNIX)

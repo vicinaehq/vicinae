@@ -32,8 +32,9 @@ class RebuildFileIndexCommand : public BuiltinCallbackCommand {
   std::vector<Preference> preferences() const override { return {}; }
   void preferenceValuesChanged(const QJsonObject &value) const override {}
 
-  void execute(const LaunchProps &props, ApplicationContext *ctx) const override {
+  void execute(CommandController *controller) const override {
     auto alert = new CallbackAlertWidget;
+    auto ctx = controller->context();
 
     alert->setTitle("Are you sure?");
     alert->setMessage("Rebuilding the entire index can be time consuming and CPU intensive, depending on the "
