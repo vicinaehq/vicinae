@@ -97,8 +97,9 @@ public:
    * Tries to take an existing selection and update its created_at date
    * to make it appear as new without duplicating it. Return whether a record
    * was updated or not.
+   * The id can either be the selection id or the selection hash.
    */
-  bool tryBubbleUpSelection(const QString &selectionHash);
+  bool tryBubbleUpSelection(const QString &idLike);
   bool insertSelection(const InsertSelectionPayload &payload);
   bool insertOffer(const InsertClipboardOfferPayload &payload);
   bool indexSelectionContent(const QString &selectionId, const QString &content);

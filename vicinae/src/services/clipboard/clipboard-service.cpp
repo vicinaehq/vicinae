@@ -5,6 +5,7 @@
 #include <qimagereader.h>
 #include <qlogging.h>
 #include <qmimedata.h>
+#include <qnamespace.h>
 #include <qsqlquery.h>
 #include <qt6keychain/keychain.h>
 #include <QtConcurrent/QtConcurrent>
@@ -96,6 +97,9 @@ bool ClipboardService::copyContent(const Clipboard::Content &content, const Clip
     bool operator()(const Clipboard::Text &text) const { return service.copyText(text.text, options); }
     bool operator()(const ClipboardSelection &selection) const {
       return service.copySelection(selection, options);
+    }
+    bool operator()(const Clipboard::SelectionRecordHandle &handle) const {
+      return service.copySelectionRecord(handle.id, options);
     }
 
     ContentVisitor(ClipboardService &service, const Clipboard::CopyOptions &options)
@@ -376,7 +380,12 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
       std::ranges::find_if(selection.offers, [&](auto &&o) { return o.mimeType == preferredMimeType; });
 
   cdb.transaction([&](ClipboardDatabase &db) {
-    if (db.tryBubbleUpSelection(selectionHash)) return true;
+    if (db.tryBubbleUpSelection(selectionHash)) {
+      qDebug() << "bubbled up selection hash" << selectionHash;
+      return true;
+    }
+
+    qDebug() << "process selectionHash" << selectionHash;
 
     QString selectionId = Crypto::UUID::v4();
     ClipboardOfferKind kind = getKind(*preferredOfferIt);
@@ -498,6 +507,27 @@ bool ClipboardService::copySelection(const ClipboardSelection &selection,
   }
 
   return copyQMimeData(mimeData, options);
+}
+
+bool ClipboardService::copySelectionRecord(const QString &id, const Clipboard::CopyOptions &options) {
+  auto selection = retrieveSelectionById(id);
+
+  if (!selection) {
+    qWarning() << "copySelectionRecord: no selection matching id" << id;
+    return false;
+  }
+
+  ClipboardDatabase db;
+
+  if (!db.tryBubbleUpSelection(id)) {
+    qWarning() << "Failed to bubble up selection with id" << id;
+    return false;
+  }
+
+  // we don't want subscribers to block before the actual copy happens
+  QMetaObject::invokeMethod(this, [this]() { emit selectionUpdated(); }, Qt::QueuedConnection);
+
+  return copySelection(*selection, options);
 }
 
 bool ClipboardService::removeAllSelections() {

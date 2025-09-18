@@ -31,7 +31,9 @@ public:
 };
 
 class PasteToFocusedWindowAction : public AbstractAction {
-  Clipboard::Content m_content;
+
+public:
+  void setConcealed(bool value = true) { m_concealed = value; }
 
   QString title() const override {
     auto wm = ServiceRegistry::instance()->windowManager();
@@ -51,17 +53,21 @@ class PasteToFocusedWindowAction : public AbstractAction {
     return name;
   }
 
+  PasteToFocusedWindowAction(const Clipboard::Content &content = Clipboard::NoData{})
+      : AbstractAction("Copy to focused window", ImageURL::builtin("copy-clipboard")), m_content(content) {}
+
 protected:
   void execute(ApplicationContext *ctx) override {
     auto clipman = ctx->services->clipman();
-
     ctx->navigation->closeWindow();
-    QTimer::singleShot(100, [content = m_content, clipman]() { clipman->pasteContent(content, {}); });
+    QTimer::singleShot(100, [content = m_content, concealed = m_concealed, clipman]() {
+      clipman->pasteContent(content, {.concealed = concealed});
+    });
   }
 
   void loadClipboardData(const Clipboard::Content &content) { m_content = content; }
 
-public:
-  PasteToFocusedWindowAction(const Clipboard::Content &content = Clipboard::NoData{})
-      : AbstractAction("Copy to focused window", ImageURL::builtin("copy-clipboard")), m_content(content) {}
+private:
+  Clipboard::Content m_content;
+  bool m_concealed = false;
 };
