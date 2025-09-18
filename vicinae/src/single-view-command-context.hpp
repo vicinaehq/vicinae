@@ -1,4 +1,5 @@
 #pragma once
+#include "command-controller.hpp"
 #include "command-database.hpp"
 #include "command.hpp"
 #include "common.hpp"
@@ -46,9 +47,19 @@ class BuiltinCallbackCommand : public BuiltinCommand {
 public:
   CommandMode mode() const override { return CommandMode::CommandModeNoView; }
 
-  virtual void execute(const LaunchProps &props, ApplicationContext *ctx) const {}
+  /**
+   * The code to execute when running the command.
+   * The command controller that is passed over is only valid for the time
+   * of the execution.
+   * You can, however, access the global application state by calling the
+   * `context` method of the controller.
+   */
+  virtual void execute(CommandController *controller) const {}
 
   CommandContext *createContext(const std::shared_ptr<AbstractCmd> &command) const override {
-    return new CallbackContext(command, [this](auto &&props, auto &&ctx) { execute(props, ctx); });
+    return new CallbackContext(command, [this, command](auto &&props, auto &&ctx) {
+      CommandController ctrl(*ctx, *command, props);
+      execute(&ctrl);
+    });
   }
 };

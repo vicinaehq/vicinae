@@ -14,6 +14,11 @@ public:
   QJsonObject preferenceValues() const;
   void setPreferenceValues(const QJsonObject &value) const;
 
+  /**
+   * Access the global application context.
+   */
+  ApplicationContext const *context() const;
+
 private:
   ApplicationContext &m_ctx;
   const AbstractCmd &m_cmd;

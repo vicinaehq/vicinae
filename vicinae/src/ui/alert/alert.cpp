@@ -134,7 +134,7 @@ AlertWidget::AlertWidget(QWidget *parent)
   _cancelBtn->setFixedHeight(btnHeight);
   _cancelBtn->setText("Cancel");
   _actionBtn->setFixedHeight(btnHeight);
-  _actionBtn->setText("Delete");
+  _actionBtn->setText("Confirm");
   _actionBtn->setTextColor(SemanticColor::Red);
 
   _title->setAlignment(Qt::AlignCenter);

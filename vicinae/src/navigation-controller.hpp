@@ -243,6 +243,7 @@ public:
   AbstractAction *findBoundAction(const QKeyEvent *event) const;
 
   void setDialog(DialogContentWidget *dialog);
+  void confirmAlert(const QString &title, const QString &description, const std::function<void()> &onConfirm);
 
   void createCompletion(const ArgumentList &args, const ImageURL &icon);
   void destroyCurrentCompletion();
