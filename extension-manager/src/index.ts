@@ -7,7 +7,7 @@ import * as common from './proto/common';
 import * as manager from './proto/manager';
 import * as extension from './proto/extension';
 import { existsSync } from 'fs';
-import { appendFile, mkdir } from 'fs/promises';
+import { appendFile, mkdir, rename } from 'fs/promises';
 import { join } from 'path';
 
 class Vicinae {
@@ -57,6 +57,14 @@ class Vicinae {
 				mkdir(supportPath, { recursive: true }),
 				mkdir(assetsPath, { recursive: true })
 			]);
+
+			// move directories from old to new support path
+			// this should be removed in a future version
+			const oldSupportPath = join(load.vicinaePath, "extensions", load.extensionId, "support");
+			if (existsSync(oldSupportPath)) {
+				console.error(`Moving support directory from ${oldSupportPath} to ${supportPath}`);
+				await rename(oldSupportPath, supportPath);
+			}
 
 			const worker = new Worker(__filename, {
 				workerData: {
