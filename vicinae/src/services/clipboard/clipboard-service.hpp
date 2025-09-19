@@ -92,6 +92,13 @@ private:
    */
   QByteArray computeSelectionHash(const ClipboardSelection &selection) const;
   bool isClearSelection(const ClipboardSelection &selection) const;
+  static bool isConcealedSelection(const ClipboardSelection &selection);
+
+  /**
+   * Sanitize the passed selection by removing duplicate offers.
+   * The selection is sanitized in place, no copy is made.
+   */
+  static ClipboardSelection &sanitizeSelection(ClipboardSelection &selection);
 
   QByteArray decryptOffer(const QByteArray &data, ClipboardEncryptionType enc) const;
 
