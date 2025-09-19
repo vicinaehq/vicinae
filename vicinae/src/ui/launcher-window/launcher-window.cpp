@@ -8,7 +8,7 @@
 #include "utils/environment.hpp"
 #include <qcoreevent.h>
 #ifdef WAYLAND_LAYER_SHELL
-#include <LayerShellQt/window.h>
+#include <LayerShellQt/Window>
 #endif
 #include <qboxlayout.h>
 #include <qevent.h>
