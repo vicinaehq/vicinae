@@ -1,5 +1,6 @@
 #pragma once
 #include "actions/app/app-actions.hpp"
+#include "actions/files/file-actions.hpp"
 #include "ui/views/base-view.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "service-registry.hpp"
@@ -214,7 +215,7 @@ class RootFileListItem : public AbstractDefaultListItem, public ListView::Action
     auto openInFolder = new OpenAppAction(appDb->fileBrowser(), "Open in folder", {m_path.c_str()});
 
     if (auto app = appDb->findBestOpener(m_path.c_str())) {
-      auto open = new OpenAppAction(app, "Open", {m_path.c_str()});
+      auto open = new OpenFileAction(m_path, app);
       open->setPrimary(true);
       section->addAction(open);
     } else {
