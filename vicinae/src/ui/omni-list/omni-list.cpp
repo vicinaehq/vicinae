@@ -824,6 +824,11 @@ OmniList::AbstractVirtualItem *OmniList::itemAt(const QString &id) {
 }
 
 bool OmniList::selectFirst() {
+  if (m_items.empty()) {
+    setSelectedIndex(-1);
+    return false;
+  }
+
   for (int i = 0; i < m_items.size(); ++i) {
     auto item = m_items[i].item;
 
