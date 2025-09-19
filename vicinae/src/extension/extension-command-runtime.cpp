@@ -109,8 +109,14 @@ void ExtensionCommandRuntime::handleRequest(ExtensionRequest *req) {
     watcher->setFuture(future);
     m_pendingFutures.insert({request, watcher});
     connect(watcher.get(), &ResponseWatcher::finished, this, [this, watcher, request]() {
-      auto res = watcher->result();
       m_pendingFutures.erase(request);
+
+      if (!watcher->isFinished()) {
+        request->respondWithError("Failed to send response");
+        return;
+      }
+
+      auto res = watcher->result();
 
       if (!res) {
         request->respondWithError("No handler for this request");
