@@ -7,7 +7,7 @@ This package lets you extend the [Vicinae](https://docs.vicinae.com/) launcher u
 
 The recommend way to start developing a new extension is to [read the docs](https://docs.vicinae.com/extensions/introduction).
 
-You can stop reading this.
+The full API reference (expect breaking changes) can be found [here](./docs/README.md).
 
 # Installation 
 
@@ -32,15 +32,6 @@ npx vici --help
 
 # assuming vicinae is running
 npx vici develop
+
 npx vici build -o my/output/path
 ```
-
-# API developers
-
-If you are working on developing the API, it is recommended to point `@vicinae/api` to the local api directory:
-
-```
-npm install /path/to/vicinae/source/api
-```
-
-Note that you need to recompile the `api` package on every change you make to it.

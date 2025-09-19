@@ -1,16 +1,6 @@
 import { bus } from './bus';
 import { FileInfo as ProtoFileInfo } from './proto/file-search';
 
-export namespace FileSearch {
-	/**
-	 * For now we provide no options, but in the future we will implement mime type and file type filtering.
-	 * */
-	export type SearchOptions = {
-	};
-
-	export type FileInfo = ProtoFileInfo;
-};
-
 /**
  * Access Vicinae's built-in file search functionality.
  * 
@@ -29,7 +19,15 @@ export namespace FileSearch {
  * 
  * @public
  */
-class FileSearchImpl {
+export namespace FileSearch {
+	/**
+	 * For now we provide no options, but in the future we will implement mime type and file type filtering.
+	 * */
+	export type SearchOptions = {
+	};
+
+	export type FileInfo = ProtoFileInfo;
+
    /**
    * Search for files matching the provided query string.
    * 
@@ -48,11 +46,11 @@ class FileSearchImpl {
    * const files = await fileSearch.search('invoice');
    * ```
    */
-	async search(query: string, _: FileSearch.SearchOptions = {}): Promise<FileSearch.FileInfo[]> {
+   export async function search(query: string, _: FileSearch.SearchOptions = {}): Promise<FileSearch.FileInfo[]> {
 		const res = await bus.turboRequest('fileSearch.search', { query });
 
 		return res.unwrap().files;
-	}
+   }
 };
 
-export const FileSearch = new FileSearchImpl();
+
