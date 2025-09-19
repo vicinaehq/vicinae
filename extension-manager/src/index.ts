@@ -7,7 +7,7 @@ import * as common from './proto/common';
 import * as manager from './proto/manager';
 import * as extension from './proto/extension';
 import { existsSync } from 'fs';
-import { appendFile, mkdir } from 'fs/promises';
+import { appendFile, mkdir, rename } from 'fs/promises';
 import { join } from 'path';
 
 class Vicinae {
@@ -50,13 +50,21 @@ class Vicinae {
 		if (request.payload?.load) {
 			const load = request.payload.load;
 			const sessionId = randomUUID();
-			const supportPath = join(load.extensionPath, "support");
-			const assetsPath = join(load.extensionPath, "assets");
+			const supportPath = join(load.vicinaePath, "support", load.extensionId);
+			const assetsPath = join(load.vicinaePath, "extensions/", load.extensionId, "assets");
 
 			await Promise.all([
 				mkdir(supportPath, { recursive: true }),
 				mkdir(assetsPath, { recursive: true })
 			]);
+
+			// move directories from old to new support path
+			// this should be removed in a future version
+			const oldSupportPath = join(load.vicinaePath, "extensions", load.extensionId, "support");
+			if (existsSync(oldSupportPath)) {
+				console.error(`Moving support directory from ${oldSupportPath} to ${supportPath}`);
+				await rename(oldSupportPath, supportPath);
+			}
 
 			const worker = new Worker(__filename, {
 				workerData: {
@@ -133,7 +141,7 @@ class Vicinae {
 				}
 			});
 
-			const devLogPath = join(load.extensionPath, "dev.log");
+			const devLogPath = join(load.vicinaePath, "extensions", load.extensionId, "dev.log");
 			const shouldLog = load.env === manager.CommandEnv.Development && existsSync(devLogPath);
 
 			worker.stdout.on('data', async (buf: Buffer) => {
