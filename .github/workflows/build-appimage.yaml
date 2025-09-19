@@ -27,6 +27,7 @@ jobs:
           -DCMAKE_BUILD_TYPE=Release    \
           -DUSE_SYSTEM_PROTOBUF=OFF     \
           -DUSE_SYSTEM_MINIZIP=OFF      \
+          -DUSE_SYSTEM_LAYER_SHELL=OFF  \
           -DUSE_SYSTEM_RAPIDFUZZ=OFF
 
       - name: Build
