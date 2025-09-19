@@ -1,4 +1,5 @@
 #pragma once
+#include <qjsondocument.h>
 #include <qsqlquery.h>
 #include <qsqlerror.h>
 #include <qjsonobject.h>
@@ -17,7 +18,8 @@ public:
   bool removeItem(const QString &namespaceId, const QString &key);
   bool setItem(const QString &namespaceId, const QString &key, const QJsonValue &json);
   QJsonValue getItem(const QString &namespaceId, const QString &key);
-  QJsonObject getItemAsJson(const QString &namespaceId, const QString &key);
+  QJsonDocument getItemAsJson(const QString &namespaceId, const QString &key);
+  void setItemAsJson(const QString &namespaceId, const QString &key, const QJsonDocument &json);
   ScopedLocalStorage scoped(const QString &scope);
 
 private:
