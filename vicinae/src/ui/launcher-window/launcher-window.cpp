@@ -182,7 +182,9 @@ void LauncherWindow::setupUI() {
       lshell->setLayer(Shell::Window::LayerOverlay);
       lshell->setScope("vicinae");
       lshell->setScreenConfiguration(Shell::Window::ScreenFromCompositor);
-      lshell->setKeyboardInteractivity(Shell::Window::KeyboardInteractivityOnDemand);
+      // we will switch to on demand in future version of layer-shell-qt when proper activation
+      // requests are sent.
+      lshell->setKeyboardInteractivity(Shell::Window::KeyboardInteractivityExclusive);
       lshell->setExclusiveZone(-1);
       lshell->setAnchors(Shell::Window::AnchorNone);
     } else {
