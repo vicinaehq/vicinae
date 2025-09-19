@@ -1,5 +1,6 @@
 #include <QClipboard>
 #include "clipboard-service.hpp"
+#include <algorithm>
 #include <filesystem>
 #include <numeric>
 #include <qimagereader.h>
@@ -16,6 +17,8 @@
 #include "crypto.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/clipboard/clipboard-db.hpp"
+#include "services/clipboard/clipboard-server.hpp"
+#include "utils.hpp"
 #include "wlr/wlr-clipboard-server.hpp"
 #include "gnome/gnome-clipboard-server.hpp"
 #include "services/window-manager/abstract-window-manager.hpp"
@@ -355,17 +358,31 @@ bool ClipboardService::setKeywords(const QString &id, const QString &keywords) {
   return ClipboardDatabase().setKeywords(id, keywords);
 }
 
+bool ClipboardService::isConcealedSelection(const ClipboardSelection &selection) {
+  return std::ranges::any_of(selection.offers,
+                             [](auto &&offer) { return offer.mimeType == Clipboard::CONCEALED_MIME_TYPE; });
+}
+
+ClipboardSelection &ClipboardService::sanitizeSelection(ClipboardSelection &selection) {
+  std::ranges::sort(selection.offers, [](auto &&a, auto &&b) {
+    return std::ranges::lexicographical_compare(a.mimeType, b.mimeType);
+  });
+  std::ranges::unique(selection.offers, [](auto &&a, auto &&b) { return a.mimeType == b.mimeType; });
+
+  return selection;
+}
+
 void ClipboardService::saveSelection(ClipboardSelection selection) {
   if (!m_monitoring || !m_isEncryptionReady) return;
 
-  std::ranges::unique(selection.offers, [](auto &&a, auto &&b) { return a.mimeType == b.mimeType; });
+  sanitizeSelection(selection);
 
-  if (isClearSelection(selection)) { return; }
+  if (isClearSelection(selection)) {
+    qDebug() << "Ignored clipboard clear selection";
+    return;
+  }
 
-  bool isConcealed = std::ranges::any_of(
-      selection.offers, [](auto &&offer) { return offer.mimeType == Clipboard::CONCEALED_MIME_TYPE; });
-
-  if (isConcealed) {
+  if (isConcealedSelection(selection)) {
     qDebug() << "Ignoring concealed selection";
     return;
   }
@@ -375,7 +392,18 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
   ClipboardDatabase cdb;
   auto preferredOfferIt =
       std::ranges::find_if(selection.offers, [&](auto &&o) { return o.mimeType == preferredMimeType; });
+
+  if (preferredOfferIt == selection.offers.end()) {
+    qCritical() << "preferredOfferIt is invalid, this should not be possible!";
+    return;
+  }
+
   auto selectionHash = QCryptographicHash::hash(preferredOfferIt->data, QCryptographicHash::Md5).toHex();
+
+  if (preferredMimeType.startsWith("text/") && preferredOfferIt->data.trimmed().isEmpty()) {
+    qDebug() << "Ignore empty text for preferred offer of type" << preferredMimeType;
+    return;
+  }
 
   cdb.transaction([&](ClipboardDatabase &db) {
     if (db.tryBubbleUpSelection(selectionHash)) {
