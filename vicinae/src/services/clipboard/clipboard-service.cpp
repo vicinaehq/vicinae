@@ -370,14 +370,12 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
     return;
   }
 
-  auto selectionHash = QString::fromUtf8(computeSelectionHash(selection).toHex());
   QString preferredMimeType = getSelectionPreferredMimeType(selection);
-
   ClipboardHistoryEntry insertedEntry;
   ClipboardDatabase cdb;
-
   auto preferredOfferIt =
       std::ranges::find_if(selection.offers, [&](auto &&o) { return o.mimeType == preferredMimeType; });
+  auto selectionHash = QCryptographicHash::hash(preferredOfferIt->data, QCryptographicHash::Md5).toHex();
 
   cdb.transaction([&](ClipboardDatabase &db) {
     if (db.tryBubbleUpSelection(selectionHash)) {
