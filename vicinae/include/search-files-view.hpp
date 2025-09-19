@@ -155,6 +155,7 @@ class SearchFilesView : public ListView {
   }
 
   void handleSearchResults() {
+    setLoading(false);
     if (!m_pendingFileResults.isFinished()) return;
 
     if (currentQuery != m_lastSearchText) return;
@@ -174,6 +175,7 @@ class SearchFilesView : public ListView {
 
     if (m_pendingFileResults.isRunning()) { m_pendingFileResults.cancel(); }
     m_lastSearchText = query;
+    setLoading(true);
     m_pendingFileResults.setFuture(fileService->queryAsync(query.toStdString()));
   }
 
