@@ -27,7 +27,9 @@ option(USE_SYSTEM_PROTOBUF "Use system protobuf instead of building it from sour
 option(USE_SYSTEM_ABSEIL "Use system abseil (libabsl) instead of building it from source" ON)
 option(USE_SYSTEM_CMARK_GFM "Use system cmark-gfm (github's fork of cmark) instead of building it from source" ON)
 option(USE_SYSTEM_MINIZIP "Use system minizip instead of building it from source" ON)
-option(USE_SYSTEM_LAYER_SHELL "Use system qt layer shell instead of building it from source" ON)
+# we turn this off by default until distributions ship a newer version of it, as the latest version
+# features a very valuable fix.
+option(USE_SYSTEM_LAYER_SHELL "Use system qt layer shell instead of building it from source" OFF)
 option(USE_SYSTEM_QT_KEYCHAIN "Use system qt-keychain instead of building it from source. Note: still depends on system libsecret." ON)
 option(USE_SYSTEM_RAPIDFUZZ "Use system version of the rapidfuzz-cpp header only library" ON)
 option(LIBQALCULATE_BACKEND "Compile in support for the Qalculate! calculator backend" ON)
