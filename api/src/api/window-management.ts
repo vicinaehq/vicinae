@@ -2,24 +2,6 @@ import { bus } from './bus';
 import { Application } from './proto/application';
 import * as wm from './proto/wm';
 
-export namespace WindowManagement {
-	export type Window = {
-		id: string;
-		active: boolean;
-		bounds: { position: { x: number; y: number }; size: { height: number; width: number } };
-		workspaceId?: string;
-		application?: Application;
-	};
-
-	export type Workspace = {
-		id: string;
-		name: string;
-		monitorId: string;
-		active: boolean;
-	};
-};
-
-
 const transformWorkspace = (proto: wm.Workspace): WindowManagement.Workspace => {
 	return {
 		id: proto.id,
@@ -40,46 +22,74 @@ const transformWindow = (proto: wm.Window): WindowManagement.Window => {
 };
 
 /**
+ * Access Vicinae's window management features.
+ * 
+ * @remarks
+ * Window management features are available to a different degree depending on what environment vicinae runs
+ * in.
+ * 
+ * @example
+ * ```typescript
+ * import { WindowManagement } from '@vicinae/api';
+ * 
+ * const windows = await WindowManagement.getWindows();
+ * ```
+ * 
+ * @public
  */
-class WindowManagementImpl {
-	async ping() {
+export namespace WindowManagement {
+	export type Window = {
+		id: string;
+		active: boolean;
+		bounds: { position: { x: number; y: number }; size: { height: number; width: number } };
+		workspaceId?: string;
+		application?: Application;
+	};
+
+	export type Workspace = {
+		id: string;
+		name: string;
+		monitorId: string;
+		active: boolean;
+	};
+
+	export async function ping() {
 		const res = await bus.turboRequest('wm.ping', {});
 		return res.unwrap().ok;
 	}
 
-	async getWindows(options: wm.GetWindowsRequest = {}): Promise<WindowManagement.Window[]> {
+	export async function getWindows(options: wm.GetWindowsRequest = {}): Promise<WindowManagement.Window[]> {
 		const res = await bus.turboRequest('wm.getWindows', options);
 
 		return res.unwrap().windows.map(transformWindow);
 	}
 
-	async getActiveWorkspace(): Promise<WindowManagement.Workspace> {
+	export async function getActiveWorkspace(): Promise<WindowManagement.Workspace> {
 		const res = await bus.turboRequest('wm.getActiveWorkspace', {});
 
 		return transformWorkspace(res.unwrap().workspace!);
 	}
 
-	async getWorkspaces(): Promise<WindowManagement.Workspace[]> {
+	export async function getWorkspaces(): Promise<WindowManagement.Workspace[]> {
 		const res = await bus.turboRequest('wm.getWorkspaces', {});
 
 		return res.unwrap().workspaces.map(transformWorkspace);
 	}
 
-	async getWindowsOnActiveWorkspace(): Promise<WindowManagement.Window[]> {
-		const workspace = await this.getActiveWorkspace();
+	export async function getWindowsOnActiveWorkspace(): Promise<WindowManagement.Window[]> {
+		const workspace = await getActiveWorkspace();
 
-		return this.getWindows({ workspaceId: workspace.id });
+		return getWindows({ workspaceId: workspace.id });
 	}
 
-	async setWindowBounds(payload: wm.SetWindowBoundsRequest) {
+	export async function setWindowBounds(payload: wm.SetWindowBoundsRequest) {
 		await bus.turboRequest('wm.setWindowBounds', payload);
 	}
 
-	async getActiveWindow(): Promise<WindowManagement.Window> {
+	export async function getActiveWindow(): Promise<WindowManagement.Window> {
 		const res = await bus.turboRequest('wm.getActiveWindow', {});
 
 		return transformWindow(res.unwrap().window!);
 	}
-};
 
-export const WindowManagement = new WindowManagementImpl();
+};

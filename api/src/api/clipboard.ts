@@ -14,10 +14,8 @@ export namespace Clipboard {
   export type CopyOptions = {
     concealed?: boolean;
   };
-}
 
-export const Clipboard = {
-  mapContent(content: string | number | Clipboard.Content): ClipboardContent {
+  function mapContent(content: string | number | Clipboard.Content): ClipboardContent {
     let ct = ClipboardContent.create();
 
     if (typeof content != "object") {
@@ -33,33 +31,33 @@ export const Clipboard = {
     }
 
     return ct;
-  },
+  }
 
-  async copy(
+  export async function copy(
     text: string | number | Clipboard.Content,
     options: Clipboard.CopyOptions = {},
   ) {
     await bus.turboRequest("clipboard.copy", {
-      content: this.mapContent(text),
+      content: mapContent(text),
       options: { concealed: options.concealed ?? false },
     });
-  },
+  }
 
-  async paste(text: string | Clipboard.Content) {
+  export async function paste(text: string | Clipboard.Content) {
     await bus.turboRequest("clipboard.paste", {
-      content: this.mapContent(text),
+      content: mapContent(text),
     });
-  },
+  }
 
-  async read(options?: { offset?: number }): Promise<Clipboard.ReadContent> {
+  export async function read(options?: { offset?: number }): Promise<Clipboard.ReadContent> {
 	throw new Error('Clipboard.read not implemented');
-  },
+  }
 
-  async readText(options?: { offset?: number }): Promise<string | undefined> {
+  export async function readText(options?: { offset?: number }): Promise<string | undefined> {
 	throw new Error('Clipboard.readText not implemented');
-  },
+  }
 
-  async clear(text: string) {
+  export async function clear(text: string) {
 	throw new Error('Clibpoard.clear not implemented');
-  },
-};
+  }
+}

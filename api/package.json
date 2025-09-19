@@ -5,7 +5,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc --outDir dist",
-    "pack": "npm run build && npm pack"
+    "pack": "npm run build && npm pack",
+    "docgen-html": "typedoc src/api/index.ts",
+    "docgen-md": "typedoc src/api/index.ts --readme none --plugin typedoc-plugin-markdown --out ./docs"
   },
   "bin": {
     "vici": "./bin/run.js"
@@ -57,6 +59,8 @@
     "shx": "^0.3.3",
     "ts-node": "^10",
     "ts-proto": "^2.7.5",
+    "typedoc": "^0.28.13",
+    "typedoc-plugin-markdown": "^4.8.1",
     "typescript": "^5"
   },
   "oclif": {
