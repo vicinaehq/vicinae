@@ -29,12 +29,17 @@ QJsonValue LocalStorageService::deserializeValue(const QString &value, ValueType
   return {};
 }
 
-QJsonObject LocalStorageService::getItemAsJson(const QString &namespaceId, const QString &key) {
+QJsonDocument LocalStorageService::getItemAsJson(const QString &namespaceId, const QString &key) {
   QJsonValue json = getItem(namespaceId, key);
 
   if (!json.isString()) return {};
 
-  return QJsonDocument::fromJson(json.toString().toUtf8()).object();
+  return QJsonDocument::fromJson(json.toString().toUtf8());
+}
+
+void LocalStorageService::setItemAsJson(const QString &namespaceId, const QString &key,
+                                        const QJsonDocument &json) {
+  setItem(namespaceId, key, QString::fromUtf8(json.toJson(QJsonDocument::JsonFormat::Compact)));
 }
 
 QJsonValue LocalStorageService::getItem(const QString &namespaceId, const QString &key) {

@@ -1,5 +1,4 @@
 #pragma once
-#include "action-panel/action-panel.hpp"
 #include "actions/app/app-actions.hpp"
 #include "ui/views/base-view.hpp"
 #include "clipboard-history-view.hpp"
@@ -8,9 +7,9 @@
 #include "../src/ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "services/files-service/abstract-file-indexer.hpp"
-#include "timer.hpp"
 #include "ui/omni-list/omni-list.hpp"
 #include "utils/utils.hpp"
+#include "actions/files/file-actions.hpp"
 #include <filesystem>
 #include <qfuturewatcher.h>
 #include <qlocale.h>
@@ -119,7 +118,7 @@ class FileListItem : public AbstractDefaultListItem, public ListView::Actionnabl
     auto openInFolder = new OpenAppAction(appDb->fileBrowser(), "Open in folder", {m_path.c_str()});
 
     if (auto app = appDb->findBestOpener(m_path.c_str())) {
-      auto open = new OpenAppAction(app, "Open", {m_path.c_str()});
+      auto open = new OpenFileAction(m_path, app);
       open->setPrimary(true);
       section->addAction(open);
     } else {
@@ -148,12 +147,15 @@ class SearchFilesView : public ListView {
   using Watcher = QFutureWatcher<std::vector<IndexerFileResult>>;
   Watcher m_pendingFileResults;
   QString m_lastSearchText;
-
   QString currentQuery;
 
-  void initialize() override { setSearchPlaceholderText("Search for files..."); }
+  void initialize() override {
+    setSearchPlaceholderText("Search for files...");
+    renderRecentFiles();
+  }
 
   void handleSearchResults() {
+    setLoading(false);
     if (!m_pendingFileResults.isFinished()) return;
 
     if (currentQuery != m_lastSearchText) return;
@@ -171,14 +173,27 @@ class SearchFilesView : public ListView {
   void generateFilteredList(const QString &query) {
     auto fileService = context()->services->fileService();
 
-    currentQuery = query;
     if (m_pendingFileResults.isRunning()) { m_pendingFileResults.cancel(); }
     m_lastSearchText = query;
+    setLoading(true);
     m_pendingFileResults.setFuture(fileService->queryAsync(query.toStdString()));
   }
 
+  void renderRecentFiles() {
+    auto fileService = context()->services->fileService();
+
+    m_list->updateModel([&]() {
+      auto &section = m_list->addSection("Recently Accessed");
+      for (const auto &file : fileService->getRecentlyAccessed()) {
+        section.addItem(std::make_unique<FileListItem>(file.path));
+      }
+    });
+  }
+
   void textChanged(const QString &query) override {
-    if (!query.isEmpty()) generateFilteredList(query);
+    currentQuery = query;
+    if (query.isEmpty()) return renderRecentFiles();
+    generateFilteredList(query);
   }
 
 public:

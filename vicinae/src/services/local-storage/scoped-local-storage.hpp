@@ -1,5 +1,6 @@
 #pragma once
 #include "local-storage-service.hpp"
+#include <qjsondocument.h>
 
 /**
  * Wrapper around LocalStorage with a predefined namespace.
@@ -11,7 +12,8 @@ public:
   bool removeItem(const QString &key);
   bool setItem(const QString &key, const QJsonValue &json);
   QJsonValue getItem(const QString &key);
-  QJsonObject getItemAsJson(const QString &key);
+  QJsonDocument getItemAsJson(const QString &key);
+  void setItemAsJson(const QString &key, const QJsonDocument &doc);
   bool clear();
   QJsonObject list();
 

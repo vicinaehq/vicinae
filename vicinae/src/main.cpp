@@ -57,7 +57,7 @@ int startDaemon() {
     auto currentConfig = configService->value();
     auto emojiService = std::make_unique<EmojiService>(*omniDb.get());
     auto calculatorService = std::make_unique<CalculatorService>(*omniDb.get());
-    auto fileService = std::make_unique<FileService>();
+    auto fileService = std::make_unique<FileService>(*omniDb);
     auto extensionRegistry = std::make_unique<ExtensionRegistry>(*localStorage);
     auto raycastStore = std::make_unique<RaycastStoreService>();
 
