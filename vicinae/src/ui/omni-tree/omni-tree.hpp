@@ -363,138 +363,45 @@ public:
   }
 };
 
+/**
+ * Wrapper around OmniList to render a tree-like list.
+ * This is a bit hacky in its very essence but it gets the job done
+ */
 class OmniTree : public QWidget {
   Q_OBJECT
 
+signals:
+  void selectionUpdated(VirtualTreeItemDelegate *next, VirtualTreeItemDelegate *previous) const;
+
+public:
+  OmniTree(QWidget *parent = nullptr);
+
+  bool selectUp() const;
+  bool selectDown();
+  void activateCurrentSelection();
+  bool selectFirst() const;
+  bool select(const QString &id);
+  VirtualTreeItemDelegate *value() const;
+  void setHeader(HeaderWidget *widget);
+
+  void setColumns(const std::vector<QString> &columns);
+  void setColumnSizePolicy(int idx, HeaderInfo::ColumnSizePolicy policy);
+  void setColumnWidth(int index, int width);
+  void setAlternateBackgroundColor(const std::optional<ColorLike> &color);
+  void activateDelegate(const OmniList::AbstractVirtualItem &item);
+  void handleSelectionChanged(const OmniList::AbstractVirtualItem *next,
+                              const OmniList::AbstractVirtualItem *previous);
+  auto model() const;
+  void refresh();
+  VirtualTreeItemDelegate *itemAt(const QString &id);
+  void renderModel(OmniList::SelectionPolicy policy = OmniList::PreserveSelection);
+  void addRows(std::vector<std::shared_ptr<VirtualTreeItemDelegate>> rows);
+
+private:
   OmniList *m_list = new OmniList;
   std::vector<std::shared_ptr<VirtualTreeItemDelegate>> m_model;
   HeaderInfo m_header;
   QWidget *m_widget = new QWidget;
   QVBoxLayout *layout = new QVBoxLayout;
   std::optional<ColorLike> m_alternateBackgroundColor;
-
-public:
-  OmniTree(QWidget *parent = nullptr) : QWidget(parent) {
-    m_list->setMargins(5, 0, 5, 0);
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->addWidget(m_widget);
-    layout->addWidget(m_list, 1);
-    setLayout(layout);
-    connect(m_list, &OmniList::itemActivated, this, &OmniTree::activateDelegate);
-    connect(m_list, &OmniList::selectionChanged, this, &OmniTree::handleSelectionChanged);
-  }
-
-  bool selectUp() const { return m_list->selectUp(); }
-  bool selectDown() { return m_list->selectDown(); }
-  void activateCurrentSelection() { m_list->activateCurrentSelection(); }
-  bool selectFirst() const { return m_list->selectFirst(); }
-
-  bool select(const QString &id) {
-    // make sure we expand the section `id` is in if it is not, as it is technically
-    // no part of the tree until expanded.
-    for (const auto &row : m_model) {
-      for (const auto &child : row->children()) {
-        if (child->id() == id && !row->expanded()) {
-          row->setExpandable(true);
-          renderModel();
-          break;
-        }
-      }
-    }
-
-    return m_list->setSelected(id);
-  }
-
-  void setHeader(HeaderWidget *widget) {
-    if (auto item = layout->itemAt(0)) {
-      if (auto previous = item->widget()) {
-        layout->replaceWidget(previous, widget);
-        previous->deleteLater();
-      }
-    }
-  }
-
-  void setColumns(const std::vector<QString> &columns) {
-    m_header.setColumns(columns);
-    setHeader(new HeaderWidget(&m_header));
-  }
-  void setColumnSizePolicy(int idx, HeaderInfo::ColumnSizePolicy policy) {
-    m_header.setColumnSizePolicy(idx, policy);
-    setHeader(new HeaderWidget(&m_header));
-  }
-  void setColumnWidth(int index, int width) {
-    m_header.setColumnWidth(index, width);
-    setHeader(new HeaderWidget(&m_header));
-  }
-
-  void setAlternateBackgroundColor(const std::optional<ColorLike> &color) {
-    m_alternateBackgroundColor = color;
-  }
-
-  void activateDelegate(const OmniList::AbstractVirtualItem &item) {
-    auto &row = static_cast<const VirtualTreeItemRow &>(item);
-
-    row.delegate()->setExpandable(!row.delegate()->expanded());
-    renderModel();
-  }
-
-  void handleSelectionChanged(const OmniList::AbstractVirtualItem *next,
-                              const OmniList::AbstractVirtualItem *previous) {
-    VirtualTreeItemDelegate *nextDelegate = nullptr;
-    VirtualTreeItemDelegate *previousDelegate = nullptr;
-
-    if (next) nextDelegate = static_cast<const VirtualTreeItemRow *>(next)->delegate();
-    if (previous) previousDelegate = static_cast<const VirtualTreeItemRow *>(previous)->delegate();
-
-    emit selectionUpdated(nextDelegate, previousDelegate);
-  }
-
-  auto model() const { return m_model; }
-
-  void refresh() { m_list->refresh(); }
-
-  VirtualTreeItemDelegate *itemAt(const QString &id) {
-    auto item = m_list->itemAt(id);
-
-    if (!item) return nullptr;
-
-    return static_cast<const VirtualTreeItemRow *>(item)->delegate();
-  }
-
-  void renderModel(OmniList::SelectionPolicy policy = OmniList::PreserveSelection) {
-    m_list->updateModel(
-        [&]() {
-          auto &section = m_list->addSection();
-          size_t idx = 0;
-
-          for (const auto &row : m_model) {
-            auto item = std::make_shared<VirtualTreeItemRow>(row.get(), &m_header);
-
-            if (idx % 2) item->setBackgroundColor(m_alternateBackgroundColor);
-
-            section.addItem(item);
-            ++idx;
-
-            if (row->expanded()) {
-              for (const auto &row2 : row->children()) {
-                auto item = std::make_shared<VirtualTreeItemRow>(row2.get(), &m_header);
-
-                if (idx % 2) item->setBackgroundColor(m_alternateBackgroundColor);
-                item->setIndentLevel(1);
-                section.addItem(item);
-                ++idx;
-              }
-            }
-          }
-        },
-        policy);
-  }
-
-  void addRows(std::vector<std::shared_ptr<VirtualTreeItemDelegate>> rows) {
-    m_model = rows;
-    renderModel(OmniList::SelectionPolicy::SelectNone);
-  }
-
-signals:
-  void selectionUpdated(VirtualTreeItemDelegate *next, VirtualTreeItemDelegate *previous) const;
 };

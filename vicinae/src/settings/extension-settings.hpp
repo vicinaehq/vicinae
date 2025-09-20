@@ -570,34 +570,24 @@ class ExtensionSettingsContextLeftPane : public QWidget {
   void setupUI() {
     auto manager = ServiceRegistry::instance()->rootItemManager();
     auto theme = ThemeService::instance().theme();
-    auto layout = new QVBoxLayout;
-    // m_tree->setHeaderLabels({"Name", "Type", "Alias", "Enabled"});
     m_searchDebounce.setInterval(50);
     m_searchDebounce.setSingleShot(true);
     m_toolbar->input()->installEventFilter(this);
-
-    layout->setSpacing(0);
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->addWidget(m_toolbar);
-    layout->addWidget(m_tree, 1);
-
-    connect(m_toolbar->input(), &QLineEdit::textChanged, this,
-            &ExtensionSettingsContextLeftPane::handleTextChange);
-    connect(&m_searchDebounce, &QTimer::timeout, this,
-            &ExtensionSettingsContextLeftPane::handleDebouncedSearch);
-
     m_tree->setAlternateBackgroundColor(SemanticColor::MainHoverBackground);
+    populateTreeFromQuery("");
+
+    VStack().add(m_toolbar).add(m_tree, 1).imbue(this);
 
     connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this](const ThemeInfo &theme) {
       m_tree->setAlternateBackgroundColor(theme.colors.mainHoveredBackground);
     });
-
     connect(m_tree, &OmniTree::selectionUpdated, this, &ExtensionSettingsContextLeftPane::selectionUpdated);
     connect(manager, &RootItemManager::itemsChanged, this,
             [this]() { populateTreeFromQuery(m_toolbar->input()->text()); });
-
-    setLayout(layout);
-    populateTreeFromQuery("");
+    connect(m_toolbar->input(), &QLineEdit::textChanged, this,
+            &ExtensionSettingsContextLeftPane::handleTextChange);
+    connect(&m_searchDebounce, &QTimer::timeout, this,
+            &ExtensionSettingsContextLeftPane::handleDebouncedSearch);
   }
 
 public:
