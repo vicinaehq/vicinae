@@ -385,6 +385,7 @@ set(SRCS
 	src/settings/app-settings-detail.cpp
 
 	src/ui/omni-tree/omni-tree.hpp
+	src/ui/omni-tree/omni-tree.cpp
 
 	src/extensions/clipboard/clipboard-history-command.cpp
 

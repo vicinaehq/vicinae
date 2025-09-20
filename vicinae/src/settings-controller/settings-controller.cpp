@@ -4,4 +4,9 @@ void SettingsController::openWindow() const { emit windowVisiblityChangeRequeste
 void SettingsController::closeWindow() const { emit windowVisiblityChangeRequested(false); }
 void SettingsController::openTab(const QString &tabId) { emit tabIdOpened(tabId); }
 
+void SettingsController::openExtensionPreferences(const QString &id) {
+  openTab("extensions");
+  emit openExtensionPreferencesRequested(id);
+}
+
 SettingsController::SettingsController() {}
