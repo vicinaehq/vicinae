@@ -484,6 +484,13 @@ class ExtensionSettingsContextLeftPane : public QWidget {
         case Qt::Key_Down:
           return m_tree->selectDown();
           break;
+        case Qt::Key_Escape: {
+          if (!m_toolbar->input()->text().isEmpty()) {
+            m_toolbar->input()->clear();
+            return true;
+          }
+          break;
+        }
         case Qt::Key_Return:
         case Qt::Key_Enter:
           m_tree->activateCurrentSelection();

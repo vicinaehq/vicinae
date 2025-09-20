@@ -1,4 +1,5 @@
 #include <qevent.h>
+#include <qnamespace.h>
 #include <qwidget.h>
 #include "settings-window.hpp"
 #include "common.hpp"
@@ -30,6 +31,15 @@ void SettingsWindow::paintEvent(QPaintEvent *event) {
   painter.setPen(pen);
 
   painter.drawPath(path);
+}
+
+void SettingsWindow::keyPressEvent(QKeyEvent *event) {
+  if (event->modifiers().toInt() == 0 && event->key() == Qt::Key_Escape) {
+    close();
+    return;
+  }
+
+  return QWidget::keyPressEvent(event);
 }
 
 QWidget *SettingsWindow::createWidget() {

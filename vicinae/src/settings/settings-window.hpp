@@ -180,6 +180,7 @@ class SettingsWindow : public QMainWindow {
   void showEvent(QShowEvent *event) override;
   void paintEvent(QPaintEvent *event) override;
   QWidget *createWidget();
+  void keyPressEvent(QKeyEvent *) override;
 
 public:
   SettingsWindow(ApplicationContext *ctx);
