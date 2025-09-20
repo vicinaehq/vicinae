@@ -221,6 +221,11 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
     preferences->insert({key.toStdString(), transformJsonValueToProto(value)});
   }
 
+  auto arguments = load->mutable_argument_values();
+  for (const auto &[key, value] : props.arguments) {
+      arguments->insert({key.toStdString(), transformJsonValueToProto(value)});
+  }
+
   payload->set_allocated_load(load);
 
   auto loadRequest = manager->requestManager(payload);
