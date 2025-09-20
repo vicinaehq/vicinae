@@ -380,6 +380,10 @@ public:
     connect(m_list, &OmniList::selectionChanged, this, &OmniTree::handleSelectionChanged);
   }
 
+  bool selectUp() const { return m_list->selectUp(); }
+  bool selectDown() { return m_list->selectDown(); }
+  void activateCurrentSelection() { m_list->activateCurrentSelection(); }
+
   void setHeader(HeaderWidget *widget) {
     if (auto item = layout->itemAt(0)) {
       if (auto previous = item->widget()) {

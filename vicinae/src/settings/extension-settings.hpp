@@ -14,9 +14,11 @@
 #include <memory>
 #include <qabstractitemmodel.h>
 #include <qboxlayout.h>
+#include <qcoreevent.h>
 #include <qdnslookup.h>
 #include <qevent.h>
 #include <qjsonobject.h>
+#include <qkeysequenceedit.h>
 #include <qlogging.h>
 #include <qnamespace.h>
 #include <qobject.h>
@@ -91,6 +93,7 @@ public:
 
     m_checkbox->setFillColor(Qt::transparent);
     m_checkbox->setFixedSize(20, 20);
+    m_checkbox->setFocusPolicy(Qt::ClickFocus);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(m_checkbox, 0, Qt::AlignCenter);
     setLayout(layout);
@@ -103,6 +106,11 @@ class AliasInput : public BaseInput {
   void showEvent(QShowEvent *event) override {
     refreshAlias();
     BaseInput::showEvent(event);
+  }
+
+  void keyPressEvent(QKeyEvent *event) override {
+    if (event->key() == Qt::Key_Return) return;
+    BaseInput::keyPressEvent(event);
   }
 
 public:
@@ -121,6 +129,7 @@ public:
   }
 
   AliasInput(const QString &rootItemId) : m_id(rootItemId) {
+    setFocusPolicy(Qt::ClickFocus);
     setPlaceholderText("Add alias");
     setTextMargins(QMargins{2, 2, 2, 2});
     connect(focusNotifier(), &FocusNotifier::focusChanged, this, [this](bool value) {
@@ -475,6 +484,29 @@ class ExtensionSettingsContextLeftPane : public QWidget {
     m_tree->refresh();
   }
 
+  bool eventFilter(QObject *watched, QEvent *event) override {
+    if (watched == m_toolbar->input() && event->type() == QEvent::KeyPress) {
+      auto ev = static_cast<QKeyEvent *>(event);
+
+      if (ev->modifiers().toInt() == 0) {
+        switch (ev->key()) {
+        case Qt::Key_Up:
+          return m_tree->selectUp();
+          break;
+        case Qt::Key_Down:
+          return m_tree->selectDown();
+          break;
+        case Qt::Key_Return:
+        case Qt::Key_Enter:
+          m_tree->activateCurrentSelection();
+          break;
+        }
+      }
+    }
+
+    return QWidget::eventFilter(watched, event);
+  }
+
   void populateTreeFromQuery(const QString &query) {
     auto manager = ServiceRegistry::instance()->rootItemManager();
     RootItemPrefixSearchOptions opts;
@@ -537,6 +569,7 @@ class ExtensionSettingsContextLeftPane : public QWidget {
     // m_tree->setHeaderLabels({"Name", "Type", "Alias", "Enabled"});
     m_searchDebounce.setInterval(50);
     m_searchDebounce.setSingleShot(true);
+    m_toolbar->input()->installEventFilter(this);
 
     layout->setSpacing(0);
     layout->setContentsMargins(0, 0, 0, 0);
