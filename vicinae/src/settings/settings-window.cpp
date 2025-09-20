@@ -38,7 +38,7 @@ QWidget *SettingsWindow::createWidget() {
 
   for (const auto &category : m_categories) {
     m_navigation->addPane(category->id(), category->title(), category->icon());
-    content->addWidget(category->createContent());
+    content->addWidget(category->createContent(m_ctx));
   }
 
   connect(m_navigation, &SettingsNavWidget::rowChanged, this, [this](int idx) {

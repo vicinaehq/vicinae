@@ -1,8 +1,10 @@
 #pragma once
 #include "common.hpp"
 #include "../ui/image/url.hpp"
+#include "layout.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "service-registry.hpp"
+#include "settings-controller/settings-controller.hpp"
 #include "theme.hpp"
 #include "ui/form/base-input.hpp"
 #include "ui/form/checkbox.hpp"
@@ -387,9 +389,8 @@ signals:
 
 class ExtensionSettingsDetailPane : public QWidget {
   ImageWidget *m_icon = new ImageWidget;
-  QVBoxLayout *m_layout = new QVBoxLayout;
   TypographyWidget *m_title = new TypographyWidget;
-  QWidget *m_header = new QWidget;
+  QWidget *m_header = nullptr;
   QScrollArea *m_content = new VerticalScrollArea(this);
   HDivider *m_divider = new HDivider;
 
@@ -421,29 +422,16 @@ public:
   }
 
   void setupUI() {
-    QHBoxLayout *headerLayout = new QHBoxLayout;
-
+    m_header = HStack().margins(20).spacing(10).add(m_icon).add(m_title).addStretch().buildWidget();
     m_content->setWidgetResizable(true);
     m_content->setVerticalScrollBar(new OmniScrollBar);
     m_content->setHorizontalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
-
-    headerLayout->setContentsMargins(20, 20, 20, 20);
     m_icon->hide();
     m_divider->hide();
-
     m_icon->setFixedSize(30, 30);
-    headerLayout->setSpacing(10);
-    headerLayout->addWidget(m_icon);
-    headerLayout->addWidget(m_title);
-    headerLayout->addStretch();
-    m_header->setLayout(headerLayout);
     m_header->setFixedHeight(76);
 
-    m_layout->setContentsMargins(0, 0, 0, 0);
-    m_layout->addWidget(m_header);
-    m_layout->addWidget(m_divider);
-    m_layout->addWidget(m_content, 1);
-    setLayout(m_layout);
+    VStack().add(m_header).add(m_divider).add(m_content, 1).imbue(this);
   }
 
   ExtensionSettingsDetailPane() { setupUI(); }
@@ -558,6 +546,7 @@ class ExtensionSettingsContextLeftPane : public QWidget {
     m_tree->setColumnWidth(2, 100);
     m_tree->setColumnWidth(3, 80);
     m_tree->addRows(delegates);
+    m_tree->selectFirst();
   }
 
   void handleDebouncedSearch() {
@@ -607,12 +596,16 @@ class ExtensionSettingsContextLeftPane : public QWidget {
 public:
   ExtensionSettingsContextLeftPane() { setupUI(); }
 
+  void select(const QString &id) {
+    m_toolbar->input()->clear();
+    m_tree->select(id);
+  }
+
 signals:
   void itemSelectionChanged(AbstractRootItemDelegate *next, AbstractRootItemDelegate *previous);
 };
 
 class ExtensionSettingsContent : public QWidget {
-  QHBoxLayout *m_layout = new QHBoxLayout;
   ExtensionSettingsContextLeftPane *m_left = new ExtensionSettingsContextLeftPane;
   ExtensionSettingsDetailPane *m_detail = new ExtensionSettingsDetailPane;
 
@@ -625,24 +618,24 @@ class ExtensionSettingsContent : public QWidget {
   }
 
   void itemSelectionChanged(AbstractRootItemDelegate *next, AbstractRootItemDelegate *previous) {
-    if (next)
+    if (next) {
       m_detail->setData(next->generateDetail());
-    else
+    } else {
       m_detail->clearData();
+    }
   }
 
 public:
   void setupUI() {
-    m_layout->setContentsMargins(0, 0, 0, 0);
-    m_layout->setSpacing(0);
-    m_layout->addWidget(m_left);
-    m_layout->addWidget(new VDivider);
-    m_layout->addWidget(m_detail);
-    setLayout(m_layout);
+    HStack().divided(1).add(m_left).add(m_detail).imbue(this);
 
     connect(m_left, &ExtensionSettingsContextLeftPane::itemSelectionChanged, this,
             &ExtensionSettingsContent::itemSelectionChanged);
   }
 
-  ExtensionSettingsContent() { setupUI(); }
+  ExtensionSettingsContent(const ApplicationContext *ctx) {
+    connect(ctx->settings.get(), &SettingsController::openExtensionPreferencesRequested, this,
+            [this](const QString &id) { m_left->select(id); });
+    setupUI();
+  }
 };

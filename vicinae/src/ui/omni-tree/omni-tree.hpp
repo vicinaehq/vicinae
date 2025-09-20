@@ -387,6 +387,23 @@ public:
   bool selectUp() const { return m_list->selectUp(); }
   bool selectDown() { return m_list->selectDown(); }
   void activateCurrentSelection() { m_list->activateCurrentSelection(); }
+  bool selectFirst() const { return m_list->selectFirst(); }
+
+  bool select(const QString &id) {
+    // make sure we expand the section `id` is in if it is not, as it is technically
+    // no part of the tree until expanded.
+    for (const auto &row : m_model) {
+      for (const auto &child : row->children()) {
+        if (child->id() == id && !row->expanded()) {
+          row->setExpandable(true);
+          renderModel();
+          break;
+        }
+      }
+    }
+
+    return m_list->setSelected(id);
+  }
 
   void setHeader(HeaderWidget *widget) {
     if (auto item = layout->itemAt(0)) {

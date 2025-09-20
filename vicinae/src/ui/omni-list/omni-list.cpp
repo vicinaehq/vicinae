@@ -916,6 +916,8 @@ const OmniList::AbstractVirtualItem *OmniList::setSelected(const QString &id,
     }
   }
 
+  qWarning() << "setSelected called on id" << id << "does not match any valid list item";
+
   return nullptr;
 }
 

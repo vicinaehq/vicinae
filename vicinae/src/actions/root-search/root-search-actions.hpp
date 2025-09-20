@@ -40,6 +40,17 @@ public:
   ToggleItemAsFavorite(const QString &id, bool currentValue);
 };
 
+class OpenItemPreferencesAction : public AbstractAction {
+public:
+  OpenItemPreferencesAction(const QString &id) : m_id(id) {}
+  void execute(ApplicationContext *context) override;
+  QString title() const override { return "Open Preferences"; }
+  ImageURL icon() const override { return ImageURL::builtin("cog"); }
+
+private:
+  QString m_id;
+};
+
 class DisableApplication : public DisableItemAction {
   QString title() const override { return "Disable item"; }
 
