@@ -338,6 +338,7 @@ void OmniList::calculateHeights() {
               QWidget *widget = it->second.widget->widget();
 
               widget->setUpdatesEnabled(false);
+              item->attached(widget);
               item->refresh(widget);
               widget->setUpdatesEnabled(true);
               updatedCache[item->id()] = it->second;
