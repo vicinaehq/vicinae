@@ -1,4 +1,5 @@
 #include "../ui/image/url.hpp"
+#include "common.hpp"
 #include "settings/extension-settings.hpp"
 #include "general-settings.hpp"
 #include "settings-about.hpp"
@@ -10,7 +11,7 @@ public:
    * The category content.
    * The content of each category is created when creating the settings window, not on the fly.
    */
-  virtual QWidget *createContent() = 0;
+  virtual QWidget *createContent(const ApplicationContext *ctx) = 0;
 
   virtual QString id() const = 0;
 
@@ -32,26 +33,26 @@ public:
   QString id() const override { return "extensions"; }
   QString title() const override { return "Extensions"; }
   ImageURL icon() const override { return ImageURL::builtin("computer-chip"); }
-  QWidget *createContent() override { return new ExtensionSettingsContent(); }
+  QWidget *createContent(const ApplicationContext *ctx) override { return new ExtensionSettingsContent(ctx); }
 };
 
 class GeneralSettingsCategory : public SettingsCategory {
   QString id() const override { return "general"; }
   QString title() const override { return "General"; }
   ImageURL icon() const override { return ImageURL::builtin("cog"); }
-  QWidget *createContent() override { return new GeneralSettings(); }
+  QWidget *createContent(const ApplicationContext *ctx) override { return new GeneralSettings(); }
 };
 
 class AdvancedSettingsCategory : public SettingsCategory {
   QString id() const override { return "advanced"; }
   QString title() const override { return "Advanced"; }
   ImageURL icon() const override { return ImageURL::builtin("wrench-screwdriver"); }
-  QWidget *createContent() override { return new QWidget; }
+  QWidget *createContent(const ApplicationContext *ctx) override { return new QWidget; }
 };
 
 class AboutSettingsCategory : public SettingsCategory {
   QString id() const override { return "about"; }
   QString title() const override { return "About"; }
   ImageURL icon() const override { return ImageURL::builtin("vicinae"); }
-  QWidget *createContent() override { return new SettingsAbout; }
+  QWidget *createContent(const ApplicationContext *ctx) override { return new SettingsAbout; }
 };

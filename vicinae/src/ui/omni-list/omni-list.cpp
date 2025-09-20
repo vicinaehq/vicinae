@@ -338,6 +338,7 @@ void OmniList::calculateHeights() {
               QWidget *widget = it->second.widget->widget();
 
               widget->setUpdatesEnabled(false);
+              item->attached(widget);
               item->refresh(widget);
               widget->setUpdatesEnabled(true);
               updatedCache[item->id()] = it->second;
@@ -914,6 +915,8 @@ const OmniList::AbstractVirtualItem *OmniList::setSelected(const QString &id,
       return m_items[i].item;
     }
   }
+
+  qWarning() << "setSelected called on id" << id << "does not match any valid list item";
 
   return nullptr;
 }

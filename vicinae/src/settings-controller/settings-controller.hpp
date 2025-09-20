@@ -5,6 +5,11 @@
 class SettingsController : public QObject {
   Q_OBJECT
 
+signals:
+  void windowVisiblityChangeRequested(bool value) const;
+  void openExtensionPreferencesRequested(const QString &id) const;
+  void tabIdOpened(const QString &id) const;
+
 public:
   void openWindow() const;
   void closeWindow() const;
@@ -12,8 +17,4 @@ public:
   void openTab(const QString &tabId);
 
   SettingsController();
-
-signals:
-  void windowVisiblityChangeRequested(bool value) const;
-  void tabIdOpened(const QString &id) const;
 };

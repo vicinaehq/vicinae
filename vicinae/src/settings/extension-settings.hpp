@@ -1,8 +1,10 @@
 #pragma once
 #include "common.hpp"
 #include "../ui/image/url.hpp"
+#include "layout.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "service-registry.hpp"
+#include "settings-controller/settings-controller.hpp"
 #include "theme.hpp"
 #include "ui/form/base-input.hpp"
 #include "ui/form/checkbox.hpp"
@@ -14,9 +16,11 @@
 #include <memory>
 #include <qabstractitemmodel.h>
 #include <qboxlayout.h>
+#include <qcoreevent.h>
 #include <qdnslookup.h>
 #include <qevent.h>
 #include <qjsonobject.h>
+#include <qkeysequenceedit.h>
 #include <qlogging.h>
 #include <qnamespace.h>
 #include <qobject.h>
@@ -91,6 +95,7 @@ public:
 
     m_checkbox->setFillColor(Qt::transparent);
     m_checkbox->setFixedSize(20, 20);
+    m_checkbox->setFocusPolicy(Qt::ClickFocus);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(m_checkbox, 0, Qt::AlignCenter);
     setLayout(layout);
@@ -103,6 +108,11 @@ class AliasInput : public BaseInput {
   void showEvent(QShowEvent *event) override {
     refreshAlias();
     BaseInput::showEvent(event);
+  }
+
+  void keyPressEvent(QKeyEvent *event) override {
+    if (event->key() == Qt::Key_Return) return;
+    BaseInput::keyPressEvent(event);
   }
 
 public:
@@ -121,6 +131,7 @@ public:
   }
 
   AliasInput(const QString &rootItemId) : m_id(rootItemId) {
+    setFocusPolicy(Qt::ClickFocus);
     setPlaceholderText("Add alias");
     setTextMargins(QMargins{2, 2, 2, 2});
     connect(focusNotifier(), &FocusNotifier::focusChanged, this, [this](bool value) {
@@ -378,9 +389,8 @@ signals:
 
 class ExtensionSettingsDetailPane : public QWidget {
   ImageWidget *m_icon = new ImageWidget;
-  QVBoxLayout *m_layout = new QVBoxLayout;
   TypographyWidget *m_title = new TypographyWidget;
-  QWidget *m_header = new QWidget;
+  QWidget *m_header = nullptr;
   QScrollArea *m_content = new VerticalScrollArea(this);
   HDivider *m_divider = new HDivider;
 
@@ -412,29 +422,16 @@ public:
   }
 
   void setupUI() {
-    QHBoxLayout *headerLayout = new QHBoxLayout;
-
+    m_header = HStack().margins(20).spacing(10).add(m_icon).add(m_title).addStretch().buildWidget();
     m_content->setWidgetResizable(true);
     m_content->setVerticalScrollBar(new OmniScrollBar);
     m_content->setHorizontalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
-
-    headerLayout->setContentsMargins(20, 20, 20, 20);
     m_icon->hide();
     m_divider->hide();
-
     m_icon->setFixedSize(30, 30);
-    headerLayout->setSpacing(10);
-    headerLayout->addWidget(m_icon);
-    headerLayout->addWidget(m_title);
-    headerLayout->addStretch();
-    m_header->setLayout(headerLayout);
     m_header->setFixedHeight(76);
 
-    m_layout->setContentsMargins(0, 0, 0, 0);
-    m_layout->addWidget(m_header);
-    m_layout->addWidget(m_divider);
-    m_layout->addWidget(m_content, 1);
-    setLayout(m_layout);
+    VStack().add(m_header).add(m_divider).add(m_content, 1).imbue(this);
   }
 
   ExtensionSettingsDetailPane() { setupUI(); }
@@ -475,10 +472,43 @@ class ExtensionSettingsContextLeftPane : public QWidget {
     m_tree->refresh();
   }
 
+  bool eventFilter(QObject *watched, QEvent *event) override {
+    if (watched == m_toolbar->input() && event->type() == QEvent::KeyPress) {
+      auto ev = static_cast<QKeyEvent *>(event);
+
+      if (ev->modifiers().toInt() == 0) {
+        switch (ev->key()) {
+        case Qt::Key_Up:
+          return m_tree->selectUp();
+          break;
+        case Qt::Key_Down:
+          return m_tree->selectDown();
+          break;
+        case Qt::Key_Escape: {
+          if (!m_toolbar->input()->text().isEmpty()) {
+            m_toolbar->input()->clear();
+            return true;
+          }
+          break;
+        }
+        case Qt::Key_Return:
+        case Qt::Key_Enter:
+          m_tree->activateCurrentSelection();
+          break;
+        }
+      }
+    }
+
+    return QWidget::eventFilter(watched, event);
+  }
+
   void populateTreeFromQuery(const QString &query) {
     auto manager = ServiceRegistry::instance()->rootItemManager();
     RootItemPrefixSearchOptions opts;
-    std::map<QString, std::vector<std::shared_ptr<RootItem>>> map;
+
+    // we use a vector of pairs so that providers are ranked by their best ranked
+    // items
+    std::vector<std::pair<QString, std::vector<std::shared_ptr<RootItem>>>> map;
 
     opts.includeDisabled = true;
 
@@ -487,7 +517,13 @@ class ExtensionSettingsContextLeftPane : public QWidget {
 
       if (providerId.isEmpty()) continue;
 
-      map[providerId].emplace_back(item);
+      auto pred = [&](auto &&pair) { return pair.first == providerId; };
+
+      if (auto it = std::ranges::find_if(map, pred); it != map.end()) {
+        it->second.emplace_back(item);
+      } else {
+        map.push_back({providerId, {item}});
+      }
     }
 
     std::vector<std::shared_ptr<VirtualTreeItemDelegate>> delegates;
@@ -517,6 +553,7 @@ class ExtensionSettingsContextLeftPane : public QWidget {
     m_tree->setColumnWidth(2, 100);
     m_tree->setColumnWidth(3, 80);
     m_tree->addRows(delegates);
+    m_tree->selectFirst();
   }
 
   void handleDebouncedSearch() {
@@ -533,44 +570,39 @@ class ExtensionSettingsContextLeftPane : public QWidget {
   void setupUI() {
     auto manager = ServiceRegistry::instance()->rootItemManager();
     auto theme = ThemeService::instance().theme();
-    auto layout = new QVBoxLayout;
-    // m_tree->setHeaderLabels({"Name", "Type", "Alias", "Enabled"});
     m_searchDebounce.setInterval(50);
     m_searchDebounce.setSingleShot(true);
-
-    layout->setSpacing(0);
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->addWidget(m_toolbar);
-    layout->addWidget(m_tree, 1);
-
-    connect(m_toolbar->input(), &QLineEdit::textChanged, this,
-            &ExtensionSettingsContextLeftPane::handleTextChange);
-    connect(&m_searchDebounce, &QTimer::timeout, this,
-            &ExtensionSettingsContextLeftPane::handleDebouncedSearch);
-
+    m_toolbar->input()->installEventFilter(this);
     m_tree->setAlternateBackgroundColor(SemanticColor::MainHoverBackground);
+    populateTreeFromQuery("");
+
+    VStack().add(m_toolbar).add(m_tree, 1).imbue(this);
 
     connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this](const ThemeInfo &theme) {
       m_tree->setAlternateBackgroundColor(theme.colors.mainHoveredBackground);
     });
-
     connect(m_tree, &OmniTree::selectionUpdated, this, &ExtensionSettingsContextLeftPane::selectionUpdated);
     connect(manager, &RootItemManager::itemsChanged, this,
             [this]() { populateTreeFromQuery(m_toolbar->input()->text()); });
-
-    setLayout(layout);
-    populateTreeFromQuery("");
+    connect(m_toolbar->input(), &QLineEdit::textChanged, this,
+            &ExtensionSettingsContextLeftPane::handleTextChange);
+    connect(&m_searchDebounce, &QTimer::timeout, this,
+            &ExtensionSettingsContextLeftPane::handleDebouncedSearch);
   }
 
 public:
   ExtensionSettingsContextLeftPane() { setupUI(); }
+
+  void select(const QString &id) {
+    m_toolbar->input()->clear();
+    m_tree->select(id);
+  }
 
 signals:
   void itemSelectionChanged(AbstractRootItemDelegate *next, AbstractRootItemDelegate *previous);
 };
 
 class ExtensionSettingsContent : public QWidget {
-  QHBoxLayout *m_layout = new QHBoxLayout;
   ExtensionSettingsContextLeftPane *m_left = new ExtensionSettingsContextLeftPane;
   ExtensionSettingsDetailPane *m_detail = new ExtensionSettingsDetailPane;
 
@@ -583,24 +615,24 @@ class ExtensionSettingsContent : public QWidget {
   }
 
   void itemSelectionChanged(AbstractRootItemDelegate *next, AbstractRootItemDelegate *previous) {
-    if (next)
+    if (next) {
       m_detail->setData(next->generateDetail());
-    else
+    } else {
       m_detail->clearData();
+    }
   }
 
 public:
   void setupUI() {
-    m_layout->setContentsMargins(0, 0, 0, 0);
-    m_layout->setSpacing(0);
-    m_layout->addWidget(m_left);
-    m_layout->addWidget(new VDivider);
-    m_layout->addWidget(m_detail);
-    setLayout(m_layout);
+    HStack().divided(1).add(m_left).add(m_detail).imbue(this);
 
     connect(m_left, &ExtensionSettingsContextLeftPane::itemSelectionChanged, this,
             &ExtensionSettingsContent::itemSelectionChanged);
   }
 
-  ExtensionSettingsContent() { setupUI(); }
+  ExtensionSettingsContent(const ApplicationContext *ctx) {
+    connect(ctx->settings.get(), &SettingsController::openExtensionPreferencesRequested, this,
+            [this](const QString &id) { m_left->select(id); });
+    setupUI();
+  }
 };

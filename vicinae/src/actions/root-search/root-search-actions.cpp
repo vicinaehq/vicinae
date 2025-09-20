@@ -8,6 +8,7 @@
 #include "navigation-controller.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
+#include "settings-controller/settings-controller.hpp"
 
 void ResetItemRanking::execute(ApplicationContext *ctx) {
   auto id = m_id;
@@ -124,4 +125,9 @@ void DisableItemAction::execute(ApplicationContext *ctx) {
 DisableItemAction::DisableItemAction(const QString &id)
     : AbstractAction("Disable item", ImageURL::builtin("trash")), m_id(id) {
   setStyle(AbstractAction::Style::Danger);
+}
+
+void OpenItemPreferencesAction::execute(ApplicationContext *ctx) {
+  ctx->navigation->closeWindow();
+  ctx->settings->openExtensionPreferences(m_id);
 }
