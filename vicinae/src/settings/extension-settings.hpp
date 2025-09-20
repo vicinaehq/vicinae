@@ -510,7 +510,10 @@ class ExtensionSettingsContextLeftPane : public QWidget {
   void populateTreeFromQuery(const QString &query) {
     auto manager = ServiceRegistry::instance()->rootItemManager();
     RootItemPrefixSearchOptions opts;
-    std::map<QString, std::vector<std::shared_ptr<RootItem>>> map;
+
+    // we use a vector of pairs so that providers are ranked by their best ranked
+    // items
+    std::vector<std::pair<QString, std::vector<std::shared_ptr<RootItem>>>> map;
 
     opts.includeDisabled = true;
 
@@ -519,7 +522,13 @@ class ExtensionSettingsContextLeftPane : public QWidget {
 
       if (providerId.isEmpty()) continue;
 
-      map[providerId].emplace_back(item);
+      auto pred = [&](auto &&pair) { return pair.first == providerId; };
+
+      if (auto it = std::ranges::find_if(map, pred); it != map.end()) {
+        it->second.emplace_back(item);
+      } else {
+        map.push_back({providerId, {item}});
+      }
     }
 
     std::vector<std::shared_ptr<VirtualTreeItemDelegate>> delegates;

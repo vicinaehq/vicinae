@@ -316,6 +316,10 @@ public:
 
   void refresh(QWidget *widget) const override {
     auto row = static_cast<OmniTreeRowWidget *>(widget);
+
+    row->setExpanded(m_delegate->expanded());
+    row->setIndent(m_indent);
+    row->setExpandable(m_delegate->expandable());
     styleRow(row);
     forEachColumn(widget, [this](QWidget *widget, int idx) { m_delegate->refreshForColumn(widget, idx); });
   }
