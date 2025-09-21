@@ -101,16 +101,9 @@ in
     home.packages = [ cfg.package ];
 
     xdg.configFile =
-      let
-        settingsFile =
-          if cfg.settings == null then
-            { }
-          else
-            {
-              "vicinae/vicinae.json".text = builtins.toJSON cfg.settings;
-            };
-      in
-      settingsFile
+      lib.optionalAttrs (cfg.settings == null) {
+        "vicinae/vicinae.json".text = builtins.toJSON cfg.settings;
+      }
       // lib.mapAttrs' (
         name: theme:
         lib.nameValuePair "vicinae/themes/${name}.json" {
