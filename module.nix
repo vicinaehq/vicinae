@@ -101,7 +101,7 @@ in
     home.packages = [ cfg.package ];
 
     xdg.configFile =
-      lib.optionalAttrs (cfg.settings == null) {
+      lib.optionalAttrs (cfg.settings != null) {
         "vicinae/vicinae.json".text = builtins.toJSON cfg.settings;
       }
       // lib.mapAttrs' (
