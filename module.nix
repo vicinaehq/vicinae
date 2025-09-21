@@ -71,8 +71,8 @@ in
     };
 
     settings = lib.mkOption {
-      type = lib.types.attrs;
-      default = { };
+      type = lib.types.nullOr lib.types.attrs;
+      default = null;
       description = "Settings written as JSON to `~/.config/vicinae/vicinae.json.";
       example = lib.literalExpression ''
         {
@@ -100,15 +100,23 @@ in
   config = lib.mkIf cfg.enable {
     home.packages = [ cfg.package ];
 
-    xdg.configFile = {
-      "vicinae/vicinae.json".text = builtins.toJSON cfg.settings;
-    }
-    // lib.mapAttrs' (
-      name: theme:
-      lib.nameValuePair "vicinae/themes/${name}.json" {
-        text = builtins.toJSON theme;
-      }
-    ) cfg.themes;
+    xdg.configFile =
+      let
+        settingsFile =
+          if cfg.settings == null then
+            { }
+          else
+            {
+              "vicinae/vicinae.json".text = builtins.toJSON cfg.settings;
+            };
+      in
+      settingsFile
+      // lib.mapAttrs' (
+        name: theme:
+        lib.nameValuePair "vicinae/themes/${name}.json" {
+          text = builtins.toJSON theme;
+        }
+      ) cfg.themes;
 
     systemd.user.services.vicinae = {
       Unit = {
