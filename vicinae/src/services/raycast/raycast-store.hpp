@@ -485,6 +485,8 @@ class RaycastStoreService : public QObject, NonCopyable {
   QNetworkAccessManager *m_net = new QNetworkAccessManager(this);
   static constexpr const char *BASE_URL = "https://backend.raycast.com/api/v1";
 
+  static QNetworkRequest createJsonApiRequest(const QUrl &url);
+
 public:
   RaycastStoreService();
 

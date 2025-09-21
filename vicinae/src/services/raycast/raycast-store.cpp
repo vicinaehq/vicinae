@@ -4,15 +4,25 @@
 #include <qnetworkreply.h>
 #include "utils/expected.hpp"
 
+QNetworkRequest RaycastStoreService::createJsonApiRequest(const QUrl &url) {
+  QNetworkRequest request(url);
+
+  // WORKAROUND: Explicitly disable HTTP/2.
+  // Qt's default HTTP/2 implementation hangs and causes a ~25-second timeout on the first
+  // request. Forcing HTTP/1.1 resolves it.
+  request.setAttribute(QNetworkRequest::Http2AllowedAttribute, false);
+
+  request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+  request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
+  return request;
+}
+
 QFuture<Raycast::ListResult> RaycastStoreService::search(const QString &query) {
 
   QUrl endpoint = QString("%1/store_listings/search?q=%2").arg(BASE_URL).arg(query);
   QPromise<Raycast::ListResult> promise;
   auto future = promise.future();
-  QNetworkRequest request(endpoint);
-
-  request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-  request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
+  QNetworkRequest request = createJsonApiRequest(endpoint);
 
   auto reply = m_net->get(request);
 
@@ -58,6 +68,7 @@ QFuture<Raycast::DownloadExtensionResult> RaycastStoreService::downloadExtension
   auto reply = m_net->get(request);
 
   request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
+  request.setAttribute(QNetworkRequest::Http2AllowedAttribute, false);
 
   connect(reply, &QNetworkReply::finished, this, [this, reply, promise = std::move(promise)]() mutable {
     if (reply->error() != QNetworkReply::NoError) {
@@ -80,16 +91,13 @@ RaycastStoreService::fetchExtensions(const Raycast::ListPaginationOptions &opts)
       QString("%1/store_listings?page=%2&per_page=%3").arg(BASE_URL).arg(opts.page).arg(opts.perPage);
   QPromise<Raycast::ListResult> promise;
   auto future = promise.future();
-  QNetworkRequest request(endpoint);
+  const QNetworkRequest request = createJsonApiRequest(endpoint);
 
   if (auto it = m_cachedPages.find(opts.page); it != m_cachedPages.end()) {
     promise.addResult(it->second);
     promise.finish();
     return future;
   }
-
-  request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-  request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
 
   auto reply = m_net->get(request);
 
