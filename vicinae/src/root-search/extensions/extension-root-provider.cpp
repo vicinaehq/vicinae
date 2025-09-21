@@ -28,11 +28,13 @@ std::unique_ptr<ActionPanelState> CommandRootItem::newActionPanel(ApplicationCon
   auto extensionSection = panel->createSection();
   auto dangerSection = panel->createSection();
   auto copyDeeplink = new CopyToClipboardAction(Clipboard::Text(m_command->deeplink()), "Copy deeplink");
+  auto openPreferences = new OpenItemPreferencesAction(uniqueId());
 
   mainSection->addAction(new DefaultActionWrapper(uniqueId(), open));
   itemSection->addAction(resetRanking);
   itemSection->addAction(markAsFavorite);
   itemSection->addAction(copyDeeplink);
+  itemSection->addAction(openPreferences);
   dangerSection->addAction(new DisableApplication(uniqueId()));
 
   if (m_command->type() == CommandType::CommandTypeExtension) {

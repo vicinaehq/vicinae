@@ -1,4 +1,5 @@
 #include <qevent.h>
+#include <qnamespace.h>
 #include <qwidget.h>
 #include "settings-window.hpp"
 #include "common.hpp"
@@ -32,13 +33,22 @@ void SettingsWindow::paintEvent(QPaintEvent *event) {
   painter.drawPath(path);
 }
 
+void SettingsWindow::keyPressEvent(QKeyEvent *event) {
+  if (event->modifiers().toInt() == 0 && event->key() == Qt::Key_Escape) {
+    close();
+    return;
+  }
+
+  return QWidget::keyPressEvent(event);
+}
+
 QWidget *SettingsWindow::createWidget() {
   QWidget *widget = new QWidget;
   QVBoxLayout *layout = new QVBoxLayout;
 
   for (const auto &category : m_categories) {
     m_navigation->addPane(category->id(), category->title(), category->icon());
-    content->addWidget(category->createContent());
+    content->addWidget(category->createContent(m_ctx));
   }
 
   connect(m_navigation, &SettingsNavWidget::rowChanged, this, [this](int idx) {
