@@ -13,7 +13,7 @@ public:
   }
 
   OpenFileAction(const std::filesystem::path &path, const std::shared_ptr<Application> &app)
-      : OpenAppAction(app, "Open", {path.c_str()}), m_path(path) {}
+      : OpenAppAction(app, "Open with " + app->name(), {path.c_str()}), m_path(path) {}
 
 private:
   std::filesystem::path m_path;

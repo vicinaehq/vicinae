@@ -36,6 +36,10 @@ if (APPLE)
 	set(WAYLAND_LAYER_SHELL OFF)
 endif()
 
+if (UNIX AND NOT APPLE)
+	add_subdirectory("./lib/xdgpp")
+endif()
+
 if (USE_SYSTEM_PROTOBUF)
 	set(USE_SYSTEM_ABSEIL ON)
 endif()

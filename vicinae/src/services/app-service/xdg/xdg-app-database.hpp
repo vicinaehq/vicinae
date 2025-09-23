@@ -1,13 +1,16 @@
 #pragma once
 #include "services/app-service/abstract-app-db.hpp"
 #include "../../../ui/image/url.hpp"
-#include "xdg/xdg-desktop.hpp"
+#include "xdgpp/desktop-entry/file.hpp"
+#include "xdgpp/mime/mime-apps-list.hpp"
 #include <qfileinfo.h>
 #include <qlogging.h>
 #include <qmimedatabase.h>
 #include <qmimetype.h>
+#include <qobjectdefs.h>
 #include <qprocess.h>
 #include <set>
+#include <xdgpp/xdgpp.hpp>
 
 class XdgApplicationBase : public Application {
 public:
@@ -18,19 +21,22 @@ public:
   }
 };
 
+/*
 class XdgApplicationAction : public XdgApplicationBase {
   QString _id;
-  XdgDesktopEntry::Action _data;
-  XdgDesktopEntry _parentData;
+  xdgpp::DesktopEntryAction m_data;
+  xdgpp::DesktopEntry m_parentData;
   QString m_parentPath;
 
   ImageURL iconUrl() const override {
-    return _data.icon.isEmpty() ? ImageURL::system(_parentData.icon) : ImageURL::system(_data.icon);
+    auto icon = m_data.icon().value_or(m_parentData.icon().value_or(""));
+    return ImageURL::system(icon.c_str());
   }
 
-  QString description() const override { return _parentData.comment; }
+  QString description() const override { return m_parentData.comment().value_or("").c_str(); }
 
-  std::vector<QString> exec() const override { return {_data.exec.begin(), _data.exec.end()}; }
+  std::vector<QString> exec() const override { return {}; }
+
   bool displayable() const override { return !_parentData.noDisplay; }
   bool isTerminalApp() const override { return _parentData.terminal; }
   QString fullyQualifiedName() const override { return _parentData.name + ": " + _data.name; }
@@ -44,29 +50,34 @@ public:
                        const QString &parentPath, const QString &parentId)
       : _id(parentId + "." + action.id), _data(action), _parentData(parentData), m_parentPath(parentPath) {}
 };
+*/
 
 class XdgApplication : public XdgApplicationBase {
-  QString _path;
-  QString _id;
-  XdgDesktopEntry _data;
+  xdgpp::DesktopFile m_entry;
 
   QString simplifiedId() const { return id().remove(".desktop"); }
 
 public:
-  const XdgDesktopEntry &xdgData() const { return _data; }
-  QString id() const override { return _id; }
-  QString name() const override { return _data.name; }
-  bool displayable() const override { return !_data.noDisplay; }
-  bool isTerminalApp() const override { return _data.terminal; }
-  bool isTerminalEmulator() const override { return _data.categories.contains("TerminalEmulator"); }
-  std::filesystem::path path() const override { return _path.toStdString(); };
-  QString description() const override { return _data.comment; }
-  QString version() const override { return _data.version; }
+  QString id() const override { return QString::fromStdString(std::string(m_entry.id())); }
+  QString name() const override { return QString::fromStdString(m_entry.name()); }
+
+  const xdgpp::DesktopFile &data() const { return m_entry; }
+
+  bool displayable() const override { return m_entry.shouldBeShownInCurrentContext(); }
+
+  bool isTerminalApp() const override { return m_entry.terminal(); }
+  // bool isTerminalEmulator() const override { return _data.categories.contains("TerminalEmulator"); }
+  //
+  bool isTerminalEmulator() const override { return false; }
+  std::filesystem::path path() const override { return m_entry.path(); };
+  QString description() const override { return QString::fromStdString(m_entry.comment().value_or("")); }
 
   std::vector<QString> windowClasses() const override {
     std::vector<QString> classes;
 
-    if (auto wmClass = _data.startupWMClass; !wmClass.isEmpty()) classes.emplace_back(wmClass);
+    if (auto wmClass = m_entry.startupWMClass()) {
+      classes.emplace_back(QString::fromStdString(wmClass.value()));
+    }
 
     classes.emplace_back(program());
     classes.emplace_back(simplifiedId());
@@ -74,30 +85,44 @@ public:
     return classes;
   }
 
-  std::vector<QString> keywords() const override { return {_data.keywords.begin(), _data.keywords.end()}; }
-  ImageURL iconUrl() const override { return ImageURL::system(_data.icon); }
-  std::vector<std::shared_ptr<Application>> actions() const override {
-    std::vector<std::shared_ptr<Application>> apps;
+  std::vector<QString> keywords() const override {
+    std::vector<QString> strs;
 
-    for (const auto &action : _data.actions) {
-      apps.emplace_back(std::make_shared<XdgApplicationAction>(action, _data, _path, id()));
+    for (const auto &kw : m_entry.keywords()) {
+      strs.emplace_back(QString::fromStdString(kw));
     }
 
-    return apps;
+    return strs;
+  }
+
+  ImageURL iconUrl() const override {
+    auto icon = QString::fromStdString(m_entry.icon().value_or(""));
+    return ImageURL::system(icon);
+  }
+  std::vector<std::shared_ptr<Application>> actions() const override {
+    /*
+std::vector<std::shared_ptr<Application>> apps;
+
+for (const auto &action : _data.actions) {
+apps.emplace_back(std::make_shared<XdgApplicationAction>(action, _data, _path, id()));
+}
+
+return apps;
+  */
+    return {};
   }
 
   std::vector<QString> exec() const override {
     std::vector<QString> texec;
 
-    for (const auto &s : _data.exec) {
-      texec.emplace_back(s);
+    for (const auto &s : m_entry.parseExec()) {
+      texec.emplace_back(QString::fromStdString(s));
     }
 
     return texec;
   }
 
-  XdgApplication(const fs::path &path, const XdgDesktopEntry &data)
-      : _path(path.c_str()), _id(data.id), _data(data) {}
+  XdgApplication(const xdgpp::DesktopFile &file) : m_entry(file) {}
 };
 
 class XdgAppDatabase : public AbstractAppDatabase {
@@ -106,11 +131,14 @@ class XdgAppDatabase : public AbstractAppDatabase {
   std::unordered_map<QString, std::set<QString>> mimeToApps;
   std::unordered_map<QString, std::set<QString>> appToMimes;
   std::unordered_map<QString, QString> mimeToDefaultApp;
+  std::vector<xdgpp::MimeAppsList> m_mimeAppsLists;
   QMimeDatabase mimeDb;
-  std::vector<std::shared_ptr<XdgApplication>> apps;
+  std::vector<std::shared_ptr<XdgApplication>> m_apps;
+
+  // apps segmented by data dir (needed for association resolution)
+  std::unordered_map<std::filesystem::path, std::vector<std::shared_ptr<XdgApplication>>> m_dataDirToApps;
 
   std::shared_ptr<Application> defaultForMime(const QString &mime) const;
-  void addDesktopFile(const fs::path &path, const XdgDesktopEntry &ent);
 
   AppPtr findBestTerminalEmulator() const;
 

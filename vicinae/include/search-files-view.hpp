@@ -116,6 +116,8 @@ class FileListItem : public AbstractDefaultListItem, public ListView::Actionnabl
     auto appDb = ctx->services->appDb();
     auto section = panel->createSection();
     auto openInFolder = new OpenAppAction(appDb->fileBrowser(), "Open in folder", {m_path.c_str()});
+    auto mime = m_mimeDb.mimeTypeForFile(m_path.c_str());
+    auto openers = appDb->findOpeners(mime.name());
 
     if (auto app = appDb->findBestOpener(m_path.c_str())) {
       auto open = new OpenFileAction(m_path, app);
@@ -126,6 +128,10 @@ class FileListItem : public AbstractDefaultListItem, public ListView::Actionnabl
     }
 
     section->addAction(openInFolder);
+
+    for (const auto &opener : openers) {
+      section->addAction(new OpenFileAction(m_path, opener));
+    }
 
     return panel;
   }

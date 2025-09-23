@@ -22,3 +22,5 @@ __cmake*
 
 /appdir
 *AppImage
+
+/lib

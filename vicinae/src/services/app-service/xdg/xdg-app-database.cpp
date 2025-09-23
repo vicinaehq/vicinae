@@ -1,23 +1,27 @@
 #include "xdg-app-database.hpp"
-#include "vicinae.hpp"
-#include <exception>
+#include "xdgpp/desktop-entry/entry.hpp"
+#include "xdgpp/desktop-entry/file.hpp"
 #include <filesystem>
 #include <qlogging.h>
 #include <qsettings.h>
 #include <ranges>
 #include <set>
 #include <QDir>
+#include <xdgpp/desktop-entry/iterator.hpp>
+#include <xdgpp/env/env.hpp>
+#include <xdgpp/mime/mime-db.hpp>
+#include <xdgpp/mime/mime-apps-list.hpp>
 
 namespace fs = std::filesystem;
 
 using AppPtr = XdgAppDatabase::AppPtr;
 
-static const std::vector<fs::path> wellKnownPaths = {"/usr/share/applications",
-                                                     "/usr/local/share/applications"};
-
 std::shared_ptr<Application> XdgAppDatabase::defaultForMime(const QString &mime) const {
-  if (auto it = mimeToDefaultApp.find(mime); it != mimeToDefaultApp.end()) {
-    if (auto appIt = appMap.find(it->second); appIt != appMap.end()) { return appIt->second; }
+
+  for (const auto &list : m_mimeAppsLists) {
+    for (const auto &appId : list.defaultAssociations(mime.toStdString())) {
+      if (auto appIt = appMap.find(appId.c_str()); appIt != appMap.end()) { return appIt->second; }
+    }
   }
 
   return nullptr;
@@ -62,98 +66,50 @@ AppPtr XdgAppDatabase::findBestTerminalEmulator() const {
 
 bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
   appMap.clear();
-  mimeToApps.clear();
-  appToMimes.clear();
-  mimeToDefaultApp.clear();
-  apps.clear();
+  m_apps.clear();
+  m_mimeAppsLists.clear();
+  m_dataDirToApps.clear();
 
-  std::vector<fs::path> traversed;
-  std::set<QString> processedIds; // Track which .desktop ids we've already processed
+  QMimeDatabase db;
 
-  // scan dirs
-  for (const auto &dir : paths) {
-    if (std::ranges::any_of(traversed, [&](auto &&path) { return path == dir; })) continue;
+  for (const auto &path : xdgpp::MimeDatabase::mimeappsPaths()) {
+    m_mimeAppsLists.emplace_back(xdgpp::MimeAppsList::fromFile(path));
+  }
 
-    traversed.emplace_back(dir);
+  std::set<std::string> seen;
 
-    if (!fs::is_directory(dir)) continue;
-
+  for (const auto &dir : xdgpp::appDirs()) {
     std::error_code ec;
 
     for (const auto &entry : fs::recursive_directory_iterator(dir, ec)) {
-      if (ec) continue;
-      if (entry.path().extension() != ".desktop") continue;
+      if (!entry.is_regular_file(ec)) continue;
+      if (!entry.path().filename().string().ends_with(".desktop")) continue;
 
-      try {
-        XdgDesktopEntry desktopEntry(dir, entry.path().lexically_relative(dir));
+      std::string id = xdgpp::DesktopFile::relativeId(entry.path(), dir);
 
-        if (processedIds.contains(desktopEntry.id)) continue;
-        processedIds.insert(desktopEntry.id);
+      if (seen.contains(id)) continue;
+      seen.insert(id);
 
-        addDesktopFile(entry.path(), desktopEntry);
-      } catch (std::exception &except) {
-        qWarning() << "Failed to parse app at" << entry.path().c_str() << except.what();
-      }
+      auto file = xdgpp::DesktopFile::fromFile(entry.path(), dir);
+
+      if (file.hidden()) continue;
+
+      auto app = std::make_shared<XdgApplication>(file);
+
+      m_apps.emplace_back(app);
+      m_dataDirToApps[dir].emplace_back(app);
+
+      appMap.insert({app->id(), app});
     }
-  }
-
-  auto toMimeApp = [](const fs::path &path) { return path / "mimeapps.list"; };
-  auto isFile = [](const fs::path &path) {
-    std::error_code ec;
-    return fs::is_regular_file(path, ec);
-  };
-  // we reverse the config dir order to scan the directories with the least priority first
-  auto mimeAppPaths = Omnicast::xdgConfigDirs() | std::views::reverse | std::views::transform(toMimeApp) |
-                      std::views::filter(isFile);
-
-  for (const auto &path : mimeAppPaths) {
-    QSettings ini(path.c_str(), QSettings::IniFormat);
-
-    ini.beginGroup("Default Applications");
-    for (const auto &key : ini.allKeys()) {
-      auto appId = ini.value(key).toString();
-
-      mimeToDefaultApp[key] = appId;
-    }
-    ini.endGroup();
-
-    ini.beginGroup("Added Associations");
-    for (const auto &mime : ini.childKeys()) {
-      for (const auto app : ini.value(mime).toString().split(";")) {
-        // add mime -> apps mapping
-        if (auto it = mimeToApps.find(mime); it != mimeToApps.end()) {
-          it->second.insert(app);
-        } else {
-          mimeToApps.insert({mime, {app}});
-        }
-
-        // add app -> mimes mapping
-        if (auto it = appToMimes.find(app); it != appToMimes.end()) {
-          it->second.insert(mime);
-        } else {
-          appToMimes.insert({app, {mime}});
-        }
-      }
-    }
-    ini.endGroup();
-
-    ini.beginGroup("Removed Associations");
-    for (const auto &mime : ini.childKeys()) {
-      for (const auto app : ini.value(mime).toString().split(";")) {
-        // add mime -> apps mapping
-        if (auto it = mimeToApps.find(mime); it != mimeToApps.end()) { mimeToApps.erase(it); }
-
-        // add app -> mimes mapping
-        if (auto it = appToMimes.find(app); it != appToMimes.end()) { appToMimes.erase(it); }
-      }
-    }
-    ini.endGroup();
   }
 
   return true;
 }
 
 std::vector<fs::path> XdgAppDatabase::defaultSearchPaths() const {
+  return xdgpp::appDirs();
+
+  /*
   std::vector<fs::path> paths;
 
   // First, add XDG_DATA_HOME (highest priority after manually added paths)
@@ -182,6 +138,7 @@ std::vector<fs::path> XdgAppDatabase::defaultSearchPaths() const {
   }
 
   return paths;
+  */
 }
 
 XdgAppDatabase::AppPtr XdgAppDatabase::findBestOpener(const QString &target) const {
@@ -229,7 +186,58 @@ AppPtr XdgAppDatabase::findById(const QString &id) const {
   return nullptr;
 }
 
+// https://specifications.freedesktop.org/mime-apps-spec/latest/associations.html
 std::vector<AppPtr> XdgAppDatabase::findOpeners(const QString &mimeName) const {
+  std::set<std::string> seen;
+  std::vector<AppPtr> openers;
+  QMimeDatabase db;
+
+  auto mime = db.mimeTypeForName(mimeName);
+  auto parentMimes = mime.parentMimeTypes();
+  std::vector<QString> mimes;
+
+  mimes.emplace_back(mimeName);
+  mimes.insert(mimes.end(), parentMimes.begin(), parentMimes.end());
+
+  for (const auto &mime : mimes) {
+    std::set<std::string> removed;
+
+    size_t i = 0;
+    auto mimeappsPaths = xdgpp::MimeDatabase::mimeappsPaths();
+
+    for (const auto &list : m_mimeAppsLists) {
+      auto dataDir = mimeappsPaths.at(i++).parent_path();
+
+      for (const auto &appId : list.addedAssociations(mime.toStdString())) {
+        if (removed.contains(appId) || seen.contains(appId)) continue;
+
+        seen.insert(appId);
+        if (auto appIt = appMap.find(appId.c_str()); appIt != appMap.end()) {
+          openers.emplace_back(appIt->second);
+        }
+      }
+
+      for (const auto &appId : list.removedAssociations(mime.toStdString())) {
+        removed.insert(appId);
+      }
+
+      if (auto it = m_dataDirToApps.find(dataDir); it != m_dataDirToApps.end()) {
+        for (const auto &app : it->second) {
+          std::string appId = app->id().toStdString();
+
+          if (removed.contains(appId) || seen.contains(appId)) continue;
+          if (app->data().supportsMime(mime.toStdString())) {
+            seen.insert(appId);
+            openers.emplace_back(app);
+          }
+        }
+      }
+    }
+  }
+
+  return openers;
+
+  /*
   QUrl url(mimeName);
 
   if (!url.scheme().isEmpty()) {
@@ -281,6 +289,7 @@ std::vector<AppPtr> XdgAppDatabase::findOpeners(const QString &mimeName) const {
   }
 
   return apps;
+  */
 }
 
 bool XdgAppDatabase::launch(const Application &app, const std::vector<QString> &args) const {
@@ -355,34 +364,13 @@ AppPtr XdgAppDatabase::findByClass(const QString &name) const {
   QString normalizedWmClass = name.toLower();
   auto pred = [&](const QString &wmClass) { return wmClass.toLower() == normalizedWmClass; };
 
-  for (const auto &app : apps) {
+  for (const auto &app : m_apps) {
     if (std::ranges::any_of(app->windowClasses(), pred)) { return app; }
   }
 
   return nullptr;
 }
 
-std::vector<AppPtr> XdgAppDatabase::list() const { return {apps.begin(), apps.end()}; }
-
-void XdgAppDatabase::addDesktopFile(const fs::path &path, const XdgDesktopEntry &ent) {
-
-  // we should not track hidden apps as they are explictly removed, unlike apps with NoDisplay
-  // see: https://specifications.freedesktop.org/desktop-entry-spec/latest/recognized-keys.html
-  if (ent.hidden) return;
-
-  auto entry = std::make_shared<XdgApplication>(path, ent);
-
-  for (const auto &mimeName : ent.mimeType) {
-    mimeToApps[mimeName].insert(entry->id());
-    appToMimes[entry->id()].insert(mimeName);
-  }
-
-  apps.push_back(entry);
-  appMap.insert({entry->id(), entry});
-
-  for (const auto &action : entry->actions()) {
-    appMap.insert({action->id(), action});
-  }
-}
+std::vector<AppPtr> XdgAppDatabase::list() const { return {m_apps.begin(), m_apps.end()}; }
 
 XdgAppDatabase::XdgAppDatabase() { scan(defaultSearchPaths()); }

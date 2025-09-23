@@ -29,13 +29,6 @@ public:
   virtual std::vector<QString> windowClasses() const { return {}; }
 
   /**
-   * This defaults to a normalized version of name().
-   * Current version of the installed application (if applicable)
-   * The empty string is interpreted as no version being available
-   */
-  virtual QString version() const { return {}; }
-
-  /**
    * A short multiline description that explains what the app does.
    */
   virtual QString description() const = 0;
