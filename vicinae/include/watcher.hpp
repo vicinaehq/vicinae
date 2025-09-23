@@ -87,17 +87,19 @@ public:
     other,
   };
 
-  std::filesystem::path const path_name{};
+  std::filesystem::path path_name{};
 
-  enum effect_type const effect_type {};
+  enum effect_type effect_type{};
 
-  enum path_type const path_type {};
+  enum path_type path_type{};
 
-  long long const effect_time{std::chrono::duration_cast<Nanos>(
-                                TimePoint{Clock::now()}.time_since_epoch())
-                                .count()};
+  long long effect_time{std::chrono::duration_cast<Nanos>(
+                          TimePoint{Clock::now()}.time_since_epoch())
+                          .count()};
 
-  std::unique_ptr<event> const associated{nullptr};
+  std::unique_ptr<event> associated{nullptr};
+
+  inline event() noexcept = default;
 
   inline event(event const& from) noexcept
       : path_name{from.path_name}
@@ -123,6 +125,18 @@ public:
       , associated{std::make_unique<event>(std::forward<event>(associated))} {};
 
   inline ~event() noexcept = default;
+
+  inline auto operator=(event const& from) noexcept -> event const&
+  {
+    this->path_name = from.path_name;
+    this->effect_type = from.effect_type;
+    this->path_type = from.path_type;
+    this->effect_time = from.effect_time;
+    this->associated = from.associated
+                     ? std::make_unique<event>(*from.associated)
+                     : nullptr;
+    return *this;
+  };
 
   /*  An equality comparison for all the fields in this object.
       Includes the `effect_time`, which might not be wanted,
@@ -719,7 +733,7 @@ inline auto wait(semabin const& sb)
     When we flood the filesystem with events, Darwin may choose,
     for reason I don't fully understand, to tell us about events
     after we are long gone. Maybe the FSEvent stream (which should
-    be f'ing closed) sometimes ignores us having asking it to stop.
+    be f'ing closed) sometimes ignores us having asked it to stop.
     Maybe some tasks in the dispatch queue are not being cleared
     properly. I'm not sure.
 
@@ -730,20 +744,16 @@ inline auto wait(semabin const& sb)
     streams either during or shortly after the events stop happening
     to the filesystem, but before they have all been reported.
 
-    A minimal-ish reproducer is in /etc/wip-fsevents-issue.
-
     Whatever the reason, sometimes, Darwin seems happy call into
-    our event handler with resource after we have left the memory
+    our event handler with resources after we have left the memory
     space those resources belong to. I consider that a bug somewhere
     in FSEvents, Dispatch or maybe something deeper.
 
     At one point, I thought that purging events for the device
     would help. Even that fails under sufficiently high load.
-    The positive side effect may have effectively been a sleep.
-    Sometimes I even consider adding a deliberate  sleep here.
-    Because time is not a synchronization primitive, that will
-    also eventually fail. Though, if it's the best we can do,
-    despite the kernel, maybe it's worth it. I'm not sure.
+    The positive side effect of that may have effectively been
+    a sleep; We spent time processing the purge, which avoided
+    an unrelated race condition.
 
     Before that, I added a bunch of synchronization primitives
     to the context and made the lifetime of the context a bit
@@ -753,8 +763,6 @@ inline auto wait(semabin const& sb)
     on before cleaning up. All well and good, but then again,
     it's not like any of that memory *even exists* when Darwin
     calls into it after we've asked it to stop and left.
-
-    There's a minimal-ish reproducer in /etc/wip-fsevents-issue.
 
     "Worse is better."
 
@@ -793,8 +801,7 @@ close_event_stream(FSEventStreamRef stream, ContextData& ctx) -> bool
     is self-inconsistent but well-meaning. Sometimes, Apple
     will use our resources after we've asked it not to. I
     consider that a bug somewhere in FSEvents, Dispatch or
-    maybe something deeper. There's a minimal-ish reproducer
-    in the `/etc/wip-fsevents-issue` directory.  */
+    maybe something deeper.  */
 inline auto watch(
   std::filesystem::path const& path,
   ::wtr::watcher::event::callback const& cb,
@@ -1370,6 +1377,8 @@ struct ke_in_ev {
     | IN_MOVED_TO;
 
   int fd = -1;
+  ::wtr::watcher::event last_rename_ev{};
+  uint32_t last_rename_cookie = 0;
   using paths = std::unordered_map<int, std::filesystem::path>;
   paths dm{};
   alignas(inotify_event) char ev_buf[buf_len]{0};
@@ -1467,11 +1476,23 @@ struct parsed {
   inotify_event* next = nullptr;
 };
 
+/* Constructs a `parsed` event from an read(2)-populated inotify event buffer.
+   If there is another `inotify_event` available after `in`, it is returned
+   along with the `watcher::event`. This can be used to update the caller's
+   position in the buffer.
+
+   If the event is a rename event, and there is no associated event immediately
+   following the the current event, then `cookie` is set to a unique value
+   which can be used to associate this event with a future event by the caller.
+   The cookie is otherwise set to zero, and the event is fully parsed.
+   Generally, rename events are a pair of adjacent `MOVED_FROM`/`TO` events in
+   the same buffer. In some rare cases (see issue #89), they are not adjacent,
+   or not in the same buffer. */
 inline auto parse_ev = [](
                          ke_in_ev::paths const& dm,
                          inotify_event const* const in,
                          inotify_event const* const tail,
-                         int* ec) -> parsed
+                         uint32_t* cookie) -> parsed
 {
   using ev = ::wtr::watcher::event;
   using ev_pt = enum ev::path_type;
@@ -1488,18 +1509,19 @@ inline auto parse_ev = [](
           : in->mask & IN_MODIFY ? ev_et::modify
                                  : ev_et::other;
   auto isassoc = [&](auto* a, auto* b) -> bool
-  { return b && b->cookie && b->cookie == a->cookie && et == ev_et::rename; };
-  auto isfromto = [](auto* a, auto* b) -> bool
+  { return b && b->cookie && b->cookie == a->cookie; };
+  auto isfromto = [&](auto* a, auto* b) -> bool
   { return (a->mask & IN_MOVED_FROM) && (b->mask & IN_MOVED_TO); };
   auto one = [&](auto* next) -> parsed
   { return {ev(in_path, et, pt), next}; };
   auto assoc = [&](auto* a, auto* b) -> parsed
   { return {ev(ev(pathof(a), et, pt), ev(pathof(b), et, pt)), peek(b, tail)}; };
   auto next = peek(in, tail);
+  *cookie = et == ev_et::rename && ! isassoc(in, next) ? in->cookie : 0;
   return ! isassoc(in, next) ? one(next)
-       : isfromto(in, next)  ? assoc(in, next)
-       : isfromto(next, in)  ? assoc(next, in)
-                             : (*ec = 1, one(next));
+         : isfromto(in, next) ? assoc(in, next)
+         : isfromto(next, in) ? assoc(next, in)
+         : one(next);
 };
 
 struct defer_dm_rm_wd {
@@ -1622,6 +1644,7 @@ inline auto do_ev_recv = [](auto const& cb, sysres& sr) -> result
     auto const* in_ev = (inotify_event*)(sr.ke.ev_buf);
     auto const* const in_ev_tail = (inotify_event*)(sr.ke.ev_buf + read_len);
     unsigned in_ev_c = 0;
+    uint32_t cookie = 0;
     auto dmrm = defer_dm_rm_wd{sr.ke};
     while (in_ev && in_ev < in_ev_tail) {
       auto in_ev_next = peek(in_ev, in_ev_tail);
@@ -1633,14 +1656,17 @@ inline auto do_ev_recv = [](auto const& cb, sysres& sr) -> result
       else if (msk & IN_Q_OVERFLOW)
         send_msg(result::w_sys_q_overflow, "", cb);
       else if (is_real_event(msk)) {
-        int ec = 0;
-        auto parsed = parse_ev(sr.ke.dm, in_ev, in_ev_tail, &ec);
-        if (msk & IN_ISDIR && msk & IN_CREATE)
+        auto parsed = parse_ev(sr.ke.dm, in_ev, in_ev_tail, &cookie);
+        if (cookie && sr.ke.last_rename_cookie != cookie)
+          sr.ke.last_rename_ev = parsed.ev, sr.ke.last_rename_cookie = cookie;
+        else if (cookie)
+          cb({sr.ke.last_rename_ev, parse_ev(sr.ke.dm, in_ev, in_ev_tail, &cookie).ev});
+        else if (msk & IN_ISDIR && msk & IN_CREATE)
           walkdir_do(parsed.ev.path_name.c_str(), [&](auto dir) {
             do_mark(dir, sr.ke.fd, sr.ke.dm, cb);
             cb({dir, parsed.ev.effect_type, parsed.ev.path_type});
           });
-        else if (! ec)
+        else
           cb(parsed.ev);
         in_ev_next = parsed.next;
       }
@@ -1995,8 +2021,15 @@ inline auto watch(
       - Only support `kqueue` (`warthog` beats `kqueue`)
       - Only support the C++ standard library */
 
-#if ! defined(__linux__) && ! defined(__ANDROID_API__) && ! defined(__APPLE__) \
-  && ! defined(_WIN32)
+#ifndef WATER_WATCHER_USE_WARTHOG
+#if ! defined(__linux__) && ! defined(__ANDROID_API__) && ! defined(__APPLE__)  && ! defined(_WIN32)
+#define WATER_WATCHER_USE_WARTHOG 1
+#else
+#define WATER_WATCHER_USE_WARTHOG 0
+#endif
+#endif
+
+#if WATER_WATCHER_USE_WARTHOG
 
 #include <chrono>
 #include <filesystem>
@@ -2025,15 +2058,18 @@ using bucket_type =
     - Returns false if the file tree cannot be scanned. */
 inline bool scan(
   std::filesystem::path const& path,
-  auto const& send_event,
+  ::wtr::watcher::event::callback const& callback,
   bucket_type& bucket) noexcept
 {
+  auto bucket_contains = [&](std::filesystem::path const& p) {
+    return bucket.find(p) != bucket.end();
+  };
   /*  - Scans a (single) file for changes.
       - Updates our bucket to match the changes.
       - Calls `send_event` when changes happen.
       - Returns false if the file cannot be scanned. */
   auto scan_file =
-    [&](std::filesystem::path const& file, auto const& send_event) -> bool
+    [&](std::filesystem::path const& file) -> bool
   {
     using namespace ::wtr::watcher;
     using namespace std::filesystem;
@@ -2046,16 +2082,16 @@ inline bool scan(
         /*  the file changed while we were looking at it.
             so, we call the closure, indicating destruction,
             and remove it from the bucket. */
-        send_event(
+        callback(
           event{file, event::effect_type::destroy, event::path_type::file});
-        if (bucket.contains(file)) bucket.erase(file);
+        if (bucket_contains(file)) bucket.erase(file);
       }
       /*  if it's not in our bucket, */
-      else if (! bucket.contains(file)) {
+      else if (! bucket_contains(file)) {
         /*  we put it in there and call the closure,
             indicating creation. */
         bucket[file] = timestamp;
-        send_event(
+        callback(
           event{file, event::effect_type::create, event::path_type::file});
       }
       /*  otherwise, it is already in our bucket. */
@@ -2065,7 +2101,7 @@ inline bool scan(
           bucket[file] = timestamp;
           /*  and call the closure on them,
               indicating modification */
-          send_event(
+          callback(
             event{file, event::effect_type::modify, event::path_type::file});
         }
       }
@@ -2080,7 +2116,7 @@ inline bool scan(
       - Calls `send_event` when changes happen.
       - Returns false if the directory cannot be scanned. */
   auto const& scan_directory =
-    [&](std::filesystem::path const& dir, auto const& send_event) -> bool
+    [&](std::filesystem::path const& dir) -> bool
   {
     using namespace std::filesystem;
     if (is_directory(dir)) {
@@ -2089,23 +2125,23 @@ inline bool scan(
         if (ec)
           return false;
         else
-          scan_file(file.path(), send_event);
+          scan_file(file.path());
       return true;
     }
     else
       return false;
   };
 
-  return scan_directory(path, send_event) ? true
-       : scan_file(path, send_event)      ? true
-                                          : false;
+  return scan_directory(path) ? true
+       : scan_file(path)      ? true
+                              : false;
 };
 
 /*  If the bucket is empty, try to populate it.
     otherwise, prune it. */
 inline bool tend_bucket(
   std::filesystem::path const& path,
-  auto const& send_event,
+  ::wtr::watcher::event::callback const& callback,
   bucket_type& bucket) noexcept
 {
   /*  Creates a file map, the "bucket", from `path`. */
@@ -2118,7 +2154,7 @@ inline bool tend_bucket(
     auto lwt_ec = std::error_code{};
     if (! exists(path))
       return false;
-    else if (! is_directory(path))
+    if (! is_directory(path))
       bucket[path] = last_write_time(path);
     else {
       for (auto file :
@@ -2131,8 +2167,8 @@ inline bool tend_bucket(
             bucket[file.path()] = last_write_time(path);
         }
       }
-      return true;
     }
+    return true;
   };
 
   /*  Removes files which no longer exist from our bucket. */
@@ -2168,9 +2204,9 @@ inline bool tend_bucket(
     return true;
   };
 
-  return bucket.empty() ? populate(path)          ? true
-                        : prune(path, send_event) ? true
-                                                  : false
+  return bucket.empty() ? populate(path)        ? true
+                        : prune(path, callback) ? true
+                                                : false
                         : true;
 };
 

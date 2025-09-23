@@ -1,4 +1,5 @@
 #include "watcher-scanner.hpp"
+#include "scan.hpp"
 #include <QtLogging>
 #include <filesystem>
 
@@ -52,9 +53,13 @@ void WatcherScanner::handleEvent(const wtr::event &ev) {
     break;
 
   case wtr::event::effect_type::rename:
-    m_writer->indexEvents({FileEvent(FileEventType::Delete, ev.path_name, toFileTimeType(ev.effect_time)),
-                           FileEvent(FileEventType::Modify, ev.associated->path_name,
-                                     toFileTimeType(ev.associated->effect_time))});
+    m_writer->indexEvents({FileEvent(FileEventType::Delete, ev.path_name, toFileTimeType(ev.effect_time))});
+    if (ev.associated) { // Sometimes we don't get the associated event, looking more into it
+      m_writer->indexEvents({FileEvent(FileEventType::Modify, ev.associated->path_name, toFileTimeType(ev.associated->effect_time))});
+    }
+    else {
+      qWarning() << "Got rename event for" << ev.path_name.c_str() <<  ", but didn't get any associated event";
+    }
     break;
 
   case wtr::event::effect_type::owner:
