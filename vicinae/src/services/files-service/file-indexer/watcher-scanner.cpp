@@ -57,6 +57,9 @@ void WatcherScanner::handleEvent(const wtr::event &ev) {
     if (ev.associated) { // Sometimes we don't get the associated event, looking more into it
       m_writer->indexEvents({FileEvent(FileEventType::Modify, ev.associated->path_name, toFileTimeType(ev.associated->effect_time))});
     }
+    else {
+      qWarning() << "Got rename event for" << ev.path_name.c_str() <<  ", but didn't get any associated event";
+    }
     break;
 
   case wtr::event::effect_type::owner:
