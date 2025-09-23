@@ -3,6 +3,7 @@
 #include "navigation-controller.hpp"
 #include "../image/url.hpp"
 #include "service-registry.hpp"
+#include "services/config/config-service.hpp"
 #include "theme.hpp"
 #include "utils/layout.hpp"
 #include "vicinae.hpp"
@@ -57,7 +58,16 @@ void GlobalBar::actionsChanged(const ActionPanelState &panel) {
   m_primaryActionButton->setVisible(primaryAction);
   m_actionButton->setText("Actions");
   m_actionButton->setVisible(panel.actionCount() > 1);
-  m_actionButton->setShortcut(KeyboardShortcutModel{.key = "B", .modifiers = {"ctrl"}});
+
+  // Show shortcut hint based on keybinding scheme to avoid conflicts
+  auto config = ServiceRegistry::instance()->config();
+  const QString keybinding = config ? config->value().keybinding : QString("default");
+  if (keybinding == "emacs") {
+    m_actionButton->setShortcut(KeyboardShortcutModel{.key = "return", .modifiers = {"alt"}});
+  } else {
+    // Avoid Ctrl+B to preserve original meaning elsewhere; use Ctrl+; instead
+    m_actionButton->setShortcut(KeyboardShortcutModel{.key = ";", .modifiers = {"ctrl"}});
+  }
 }
 
 void GlobalBar::handleViewStateChange(const NavigationController::ViewState &state) {}

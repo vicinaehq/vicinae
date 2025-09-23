@@ -6,6 +6,9 @@
 #include "ui/action-pannel/action.hpp"
 #include "ui/omni-list/omni-list-item-widget.hpp"
 #include "ui/omni-list/omni-list.hpp"
+#include "service-registry.hpp"
+#include "services/config/config-service.hpp"
+#include "services/keybinding/keybinding-service.hpp"
 #include "ui/popover/popover.hpp"
 #include "ui/typography/typography.hpp"
 #include "utils.hpp"
@@ -143,15 +146,20 @@ protected:
       auto keyEvent = static_cast<QKeyEvent *>(event);
 
       if (keyEvent->modifiers() == Qt::ControlModifier) {
-        switch (keyEvent->key()) {
-        case Qt::Key_J:
+        auto config = ServiceRegistry::instance()->config();
+        const QString keybinding = config ? config->value().keybinding : QString("default");
+
+        if (KeyBindingService::isDownKey(keyEvent, keybinding)) {
           return m_list->selectDown();
-        case Qt::Key_K:
+        }
+        if (KeyBindingService::isUpKey(keyEvent, keybinding)) {
           return m_list->selectUp();
-        case Qt::Key_H:
+        }
+        if (KeyBindingService::isLeftKey(keyEvent, keybinding)) {
           pop();
           return true;
-        case Qt::Key_L:
+        }
+        if (KeyBindingService::isRightKey(keyEvent, keybinding)) {
           m_list->activateCurrentSelection();
           return true;
         }

@@ -23,6 +23,7 @@ public:
     QString faviconService = Omnicast::DEFAULT_FAVICON_SERVICE;
     bool popToRootOnClose = false;
     bool closeOnFocusLoss = false;
+    QString keybinding = "default";
     struct {
       std::optional<QString> name;
       std::optional<QString> iconTheme;
@@ -61,6 +62,7 @@ private:
     cfg.faviconService = obj.value("faviconService").toString("google");
     cfg.popToRootOnClose = obj.value("popToRootOnClose").toBool(false);
     cfg.closeOnFocusLoss = obj.value("closeOnFocusLoss").toBool(false);
+    cfg.keybinding = obj.value("keybinding").toString("default");
 
     {
       auto font = obj.value("font").toObject();
@@ -137,6 +139,7 @@ public:
     obj["faviconService"] = value.faviconService;
     obj["popToRootOnClose"] = value.popToRootOnClose;
     obj["closeOnFocusLoss"] = value.closeOnFocusLoss;
+    obj["keybinding"] = value.keybinding;
 
     {
       QJsonObject font;

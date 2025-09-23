@@ -2,21 +2,28 @@
 #include "ui/action-pannel/action-item.hpp"
 #include "ui/action-pannel/action-list-item.hpp"
 #include "ui/action-pannel/action.hpp"
+#include "services/keybinding/keybinding-service.hpp"
+#include "services/config/config-service.hpp"
+#include "service-registry.hpp"
 
 bool ActionPannelListView::eventFilter(QObject *sender, QEvent *event) {
   if (event->type() == QEvent::KeyPress) {
     auto keyEvent = static_cast<QKeyEvent *>(event);
+    auto config = ServiceRegistry::instance()->config();
+    const QString &keybinding = config->value().keybinding;
 
     if (keyEvent->modifiers() == Qt::ControlModifier) {
-      switch (keyEvent->key()) {
-      case Qt::Key_J:
+      if (KeyBindingService::isDownKey(keyEvent, keybinding)) {
         return _list->selectDown();
-      case Qt::Key_K:
+      }
+      if (KeyBindingService::isUpKey(keyEvent, keybinding)) {
         return _list->selectUp();
-      case Qt::Key_H:
+      }
+      if (KeyBindingService::isLeftKey(keyEvent, keybinding)) {
         context()->navigation->popCurrentView();
         return true;
-      case Qt::Key_L:
+      }
+      if (KeyBindingService::isRightKey(keyEvent, keybinding)) {
         _list->activateCurrentSelection();
         return true;
       }

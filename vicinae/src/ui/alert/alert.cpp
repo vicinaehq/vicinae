@@ -2,6 +2,9 @@
 #include "theme.hpp"
 #include "utils/layout.hpp"
 #include <qnamespace.h>
+#include "service-registry.hpp"
+#include "services/config/config-service.hpp"
+#include "services/keybinding/keybinding-service.hpp"
 #include <qpainterpath.h>
 
 void CallbackAlertWidget::confirm() const {
@@ -87,10 +90,13 @@ void AlertWidget::setConfirmText(const QString &text, const ColorLike &color) {
 
 void AlertWidget::keyPressEvent(QKeyEvent *event) {
   if (event->modifiers() == Qt::ControlModifier) {
-    switch (event->key()) {
-    case Qt::Key_H:
+    auto config = ServiceRegistry::instance()->config();
+    const QString keybinding = config ? config->value().keybinding : QString("default");
+
+    if (KeyBindingService::isLeftKey(event, keybinding)) {
       return _cancelBtn->setFocus();
-    case Qt::Key_L:
+    }
+    if (KeyBindingService::isRightKey(event, keybinding)) {
       return _actionBtn->setFocus();
     }
   }
