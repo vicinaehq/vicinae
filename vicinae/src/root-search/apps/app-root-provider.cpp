@@ -23,7 +23,7 @@ QString AppRootItem::subtitle() const { return m_app->description(); }
 
 QString AppRootItem::providerId() const { return "app"; }
 
-QString AppRootItem::displayName() const { return m_app->name(); }
+QString AppRootItem::displayName() const { return m_app->displayName(); }
 
 QWidget *AppRootItem::settingsDetail(const QJsonObject &preferences) const {
   return new AppMetadataSettingsDetail(m_app);
@@ -58,7 +58,7 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
   auto appActions = m_app->actions();
 
   open->setClearSearch(true);
-  panel->setTitle(m_app->name());
+  panel->setTitle(m_app->displayName());
 
   auto activeWindows = ctx->services->windowManager()->findAppWindows(*m_app);
 
@@ -85,7 +85,7 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
 
   for (int i = 0; i != appActions.size(); ++i) {
     auto action = actions[i];
-    auto openAction = new OpenAppAction(action, action->name(), {});
+    auto openAction = new OpenAppAction(action, action->displayName(), {});
 
     if (i < 9) { openAction->setShortcut({.key = QString::number(i + 1), .modifiers = {"ctrl", "shift"}}); }
     mainSection->addAction(openAction);

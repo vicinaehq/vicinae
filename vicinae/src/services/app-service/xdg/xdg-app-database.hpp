@@ -1,18 +1,16 @@
 #pragma once
 #include "services/app-service/abstract-app-db.hpp"
-#include "../../../ui/image/url.hpp"
-#include "xdgpp/desktop-entry/file.hpp"
-#include "xdgpp/mime/mime-apps-list.hpp"
+#include "ui/image/url.hpp"
+#include <xdgpp/desktop-entry/file.hpp>
 #include <qfileinfo.h>
 #include <qlogging.h>
 #include <qmimedatabase.h>
 #include <qmimetype.h>
 #include <qobjectdefs.h>
 #include <qprocess.h>
-#include <set>
 #include <xdgpp/xdgpp.hpp>
 
-class XdgApplicationBase : public Application {
+class XdgApplicationBase : public AbstractApplication {
 public:
   virtual std::vector<QString> exec() const = 0;
   QString program() const override {
@@ -59,7 +57,7 @@ class XdgApplication : public XdgApplicationBase {
 
 public:
   QString id() const override { return QString::fromStdString(std::string(m_entry.id())); }
-  QString name() const override { return QString::fromStdString(m_entry.name()); }
+  QString displayName() const override { return QString::fromStdString(m_entry.name()); }
 
   const xdgpp::DesktopFile &data() const { return m_entry; }
 
@@ -99,7 +97,7 @@ public:
     auto icon = QString::fromStdString(m_entry.icon().value_or(""));
     return ImageURL::system(icon);
   }
-  std::vector<std::shared_ptr<Application>> actions() const override {
+  std::vector<std::shared_ptr<AbstractApplication>> actions() const override {
     /*
 std::vector<std::shared_ptr<Application>> apps;
 
@@ -126,33 +124,30 @@ return apps;
 };
 
 class XdgAppDatabase : public AbstractAppDatabase {
-  std::vector<QDir> paths;
-  std::unordered_map<QString, std::shared_ptr<Application>> appMap;
-  std::unordered_map<QString, std::set<QString>> mimeToApps;
-  std::unordered_map<QString, std::set<QString>> appToMimes;
-  std::unordered_map<QString, QString> mimeToDefaultApp;
-  std::vector<xdgpp::MimeAppsList> m_mimeAppsLists;
-  QMimeDatabase mimeDb;
-  std::vector<std::shared_ptr<XdgApplication>> m_apps;
-
-  // apps segmented by data dir (needed for association resolution)
-  std::unordered_map<std::filesystem::path, std::vector<std::shared_ptr<XdgApplication>>> m_dataDirToApps;
-
-  std::shared_ptr<Application> defaultForMime(const QString &mime) const;
-
-  AppPtr findBestTerminalEmulator() const;
-
 public:
   bool scan(const std::vector<std::filesystem::path> &paths) override;
   std::vector<std::filesystem::path> defaultSearchPaths() const override;
   AppPtr findByClass(const QString &name) const override;
-  AppPtr findBestOpener(const QString &target) const override;
-  AppPtr findBestOpenerForMime(const QString &target) const override;
+  AppPtr findDefaultOpener(const QString &target) const override;
   std::vector<AppPtr> findOpeners(const QString &mime) const override;
   AppPtr findById(const QString &id) const override;
   std::vector<AppPtr> list() const override;
   std::vector<AppPtr> findOpeners(const QString &mimeName);
-  bool launch(const Application &exec, const std::vector<QString> &args = {}) const override;
+  bool launch(const AbstractApplication &exec, const std::vector<QString> &args = {}) const override;
 
   XdgAppDatabase();
+
+private:
+  AppPtr defaultForMime(const QString &mime) const;
+  std::vector<AppPtr> findAssociations(const QString &mime) const;
+  QString mimeNameForTarget(const QString &target) const;
+  AppPtr findBestTerminalEmulator() const;
+
+  std::unordered_map<QString, std::shared_ptr<AbstractApplication>> appMap;
+  std::vector<xdgpp::MimeAppsListFile> m_mimeAppsLists;
+  QMimeDatabase m_mimeDb;
+  std::vector<std::shared_ptr<XdgApplication>> m_apps;
+
+  // apps segmented by data dir (needed for association resolution)
+  std::unordered_map<std::filesystem::path, std::vector<std::shared_ptr<XdgApplication>>> m_dataDirToApps;
 };

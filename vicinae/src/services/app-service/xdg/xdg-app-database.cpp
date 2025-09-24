@@ -1,22 +1,24 @@
 #include "xdg-app-database.hpp"
-#include "xdgpp/desktop-entry/entry.hpp"
+#include "timer.hpp"
 #include "xdgpp/desktop-entry/file.hpp"
+#include "xdgpp/mime/iterator.hpp"
 #include <filesystem>
 #include <qlogging.h>
 #include <qsettings.h>
+#include <queue>
 #include <ranges>
 #include <set>
 #include <QDir>
+#include <stack>
 #include <xdgpp/desktop-entry/iterator.hpp>
 #include <xdgpp/env/env.hpp>
-#include <xdgpp/mime/mime-db.hpp>
 #include <xdgpp/mime/mime-apps-list.hpp>
 
 namespace fs = std::filesystem;
 
 using AppPtr = XdgAppDatabase::AppPtr;
 
-std::shared_ptr<Application> XdgAppDatabase::defaultForMime(const QString &mime) const {
+std::shared_ptr<AbstractApplication> XdgAppDatabase::defaultForMime(const QString &mime) const {
 
   for (const auto &list : m_mimeAppsLists) {
     for (const auto &appId : list.defaultAssociations(mime.toStdString())) {
@@ -24,29 +26,17 @@ std::shared_ptr<Application> XdgAppDatabase::defaultForMime(const QString &mime)
     }
   }
 
-  return nullptr;
+  auto openers = findOpeners(mime);
+
+  return openers.empty() ? nullptr : openers.front();
 }
 
-AppPtr XdgAppDatabase::findBestOpenerForMime(const QString &mimeName) const {
-  QMimeType mime = mimeDb.mimeTypeForName(mimeName);
-
-  if (auto app = defaultForMime(mimeName)) { return app; }
-
-  for (const auto &mime : mime.parentMimeTypes()) {
-    if (auto app = defaultForMime(mime)) return app;
-  }
-
-  if (auto it = mimeToApps.find(mime.name()); it != mimeToApps.end()) {
-    for (const auto id : it->second) {
-      if (auto app = findById(id)) return app;
-    }
-  }
-
-  return nullptr;
+AppPtr XdgAppDatabase::findDefaultOpener(const QString &target) const {
+  return defaultForMime(mimeNameForTarget(target));
 }
 
 AppPtr XdgAppDatabase::findBestTerminalEmulator() const {
-  if (auto emulator = findBestOpenerForMime("x-scheme-handler/terminal")) { return emulator; }
+  if (auto emulator = defaultForMime("x-scheme-handler/terminal")) { return emulator; }
 
   qWarning()
       << "Vicinae was unable to find a default terminal emulator by looking for a x-scheme-handler/terminal "
@@ -69,12 +59,7 @@ bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
   m_apps.clear();
   m_mimeAppsLists.clear();
   m_dataDirToApps.clear();
-
-  QMimeDatabase db;
-
-  for (const auto &path : xdgpp::MimeDatabase::mimeappsPaths()) {
-    m_mimeAppsLists.emplace_back(xdgpp::MimeAppsList::fromFile(path));
-  }
+  m_mimeAppsLists = xdgpp::getAllMimeAppsLists();
 
   std::set<std::string> seen;
 
@@ -106,78 +91,7 @@ bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
   return true;
 }
 
-std::vector<fs::path> XdgAppDatabase::defaultSearchPaths() const {
-  return xdgpp::appDirs();
-
-  /*
-  std::vector<fs::path> paths;
-
-  // First, add XDG_DATA_HOME (highest priority after manually added paths)
-  char *dataHome = std::getenv("XDG_DATA_HOME");
-  if (dataHome) {
-    fs::path appDir = fs::path(dataHome) / "applications";
-    paths.emplace_back(appDir);
-  } else {
-    // Default to $HOME/.local/share/applications if XDG_DATA_HOME is not set
-    QString homeDir = QDir::homePath();
-    fs::path appDir = fs::path(homeDir.toStdString()) / ".local" / "share" / "applications";
-    paths.emplace_back(appDir);
-  }
-
-  // Then add XDG_DATA_DIRS
-  char *ddir = std::getenv("XDG_DATA_DIRS");
-  if (ddir) {
-    std::string s = ddir;
-    for (const auto p : std::views::split(s, std::string_view(":"))) {
-      fs::path appDir = fs::path(std::string_view(p.begin(), p.end())) / "applications";
-      paths.emplace_back(appDir);
-    }
-  } else {
-    // Fallback to well-known paths if XDG_DATA_DIRS is not set
-    paths.insert(paths.end(), wellKnownPaths.begin(), wellKnownPaths.end());
-  }
-
-  return paths;
-  */
-}
-
-XdgAppDatabase::AppPtr XdgAppDatabase::findBestOpener(const QString &target) const {
-  QUrl url(target);
-
-  if (!url.scheme().isEmpty()) {
-    QString mime = "x-scheme-handler/" + url.scheme();
-
-    if (auto it = mimeToDefaultApp.find(mime); it != mimeToDefaultApp.end()) {
-      if (auto it2 = appMap.find(it->second); it2 != appMap.end()) return it2->second;
-    }
-
-    if (auto it = mimeToApps.find(mime); it != mimeToApps.end()) {
-      for (const auto &appId : it->second) {
-        if (auto it2 = appMap.find(appId); it2 != appMap.end()) return it2->second;
-      }
-    }
-  }
-
-  QMimeType mime = mimeDb.mimeTypeForFile(target);
-
-  if (mime.isValid()) {
-    if (auto app = defaultForMime(mime.name())) { return app; }
-
-    for (const auto &mime : mime.parentMimeTypes()) {
-      if (auto app = defaultForMime(mime)) return app;
-    }
-
-    if (auto it = mimeToApps.find(mime.name()); it != mimeToApps.end()) {
-      for (const auto id : it->second) {
-        if (auto app = findById(id)) return app;
-      }
-    }
-  }
-
-  if (auto app = findBestOpenerForMime(target)) { return app; }
-
-  return nullptr;
-}
+std::vector<fs::path> XdgAppDatabase::defaultSearchPaths() const { return xdgpp::appDirs(); }
 
 AppPtr XdgAppDatabase::findById(const QString &id) const {
   if (auto it = appMap.find(id); it != appMap.end()) { return it->second; }
@@ -186,27 +100,35 @@ AppPtr XdgAppDatabase::findById(const QString &id) const {
   return nullptr;
 }
 
+std::vector<AppPtr> XdgAppDatabase::findOpeners(const QString &target) const {
+  return findAssociations(mimeNameForTarget(target));
+}
+
 // https://specifications.freedesktop.org/mime-apps-spec/latest/associations.html
-std::vector<AppPtr> XdgAppDatabase::findOpeners(const QString &mimeName) const {
+std::vector<AppPtr> XdgAppDatabase::findAssociations(const QString &mimeName) const {
   std::set<std::string> seen;
   std::vector<AppPtr> openers;
-  QMimeDatabase db;
+  std::queue<QString> mimeStack;
 
-  auto mime = db.mimeTypeForName(mimeName);
-  auto parentMimes = mime.parentMimeTypes();
-  std::vector<QString> mimes;
+  mimeStack.emplace(mimeName);
 
-  mimes.emplace_back(mimeName);
-  mimes.insert(mimes.end(), parentMimes.begin(), parentMimes.end());
+  while (!mimeStack.empty()) {
+    auto mime = mimeStack.front();
+    mimeStack.pop();
 
-  for (const auto &mime : mimes) {
+    for (const auto &parent : m_mimeDb.mimeTypeForName(mime).parentMimeTypes()) {
+      mimeStack.emplace(parent);
+    }
+
     std::set<std::string> removed;
 
-    size_t i = 0;
-    auto mimeappsPaths = xdgpp::MimeDatabase::mimeappsPaths();
-
     for (const auto &list : m_mimeAppsLists) {
-      auto dataDir = mimeappsPaths.at(i++).parent_path();
+      for (const auto &appId : list.defaultAssociations(mime.toStdString())) {
+        if (auto appIt = appMap.find(appId.c_str()); appIt != appMap.end()) {
+          seen.insert(appIt->second->id().toStdString());
+          openers.emplace_back(appIt->second);
+        }
+      }
 
       for (const auto &appId : list.addedAssociations(mime.toStdString())) {
         if (removed.contains(appId) || seen.contains(appId)) continue;
@@ -220,6 +142,8 @@ std::vector<AppPtr> XdgAppDatabase::findOpeners(const QString &mimeName) const {
       for (const auto &appId : list.removedAssociations(mime.toStdString())) {
         removed.insert(appId);
       }
+
+      auto dataDir = list.path().parent_path();
 
       if (auto it = m_dataDirToApps.find(dataDir); it != m_dataDirToApps.end()) {
         for (const auto &app : it->second) {
@@ -236,63 +160,9 @@ std::vector<AppPtr> XdgAppDatabase::findOpeners(const QString &mimeName) const {
   }
 
   return openers;
-
-  /*
-  QUrl url(mimeName);
-
-  if (!url.scheme().isEmpty()) {
-    std::vector<AppPtr> apps;
-    QString mime = url.scheme() == "file" ? "inode/directory" : "x-scheme-handler/" + url.scheme();
-
-    if (auto it = mimeToDefaultApp.find(mime); it != mimeToDefaultApp.end()) {
-      if (auto it2 = appMap.find(it->second); it2 != appMap.end()) { apps.emplace_back(it2->second); }
-    }
-
-    if (auto it = mimeToApps.find(mime); it != mimeToApps.end()) {
-      for (const auto &appId : it->second) {
-        if (auto it2 = appMap.find(appId); it2 != appMap.end()) {
-          bool alreadyIn = std::ranges::any_of(apps, [&](auto &&app) { return app->id() == appId; });
-          if (!alreadyIn) { apps.emplace_back(it2->second); }
-        }
-      }
-    }
-
-    return apps;
-  }
-
-  std::vector<AppPtr> apps;
-  std::set<QString> seen;
-  std::vector<QString> mimes = {mimeName};
-  auto mime = mimeDb.mimeTypeForName(mimeName);
-
-  for (const auto &mime : mime.parentMimeTypes()) {
-    mimes.push_back(mime);
-  }
-
-  for (const auto &name : mimes) {
-    auto defaultApp = defaultForMime(name);
-
-    if (defaultApp && !seen.contains(defaultApp->id())) {
-      apps.push_back(defaultApp);
-      seen.insert(defaultApp->id());
-    }
-
-    if (auto it = mimeToApps.find(name); it != mimeToApps.end()) {
-      for (const auto id : it->second) {
-        if (seen.contains(id)) continue;
-        if (auto app = findById(id)) {
-          apps.push_back(app);
-          seen.insert(id);
-        }
-      }
-    }
-  }
-
-  return apps;
-  */
 }
 
-bool XdgAppDatabase::launch(const Application &app, const std::vector<QString> &args) const {
+bool XdgAppDatabase::launch(const AbstractApplication &app, const std::vector<QString> &args) const {
   auto &xdgApp = static_cast<const XdgApplicationBase &>(app);
   auto exec = xdgApp.exec();
 
@@ -357,6 +227,25 @@ bool XdgAppDatabase::launch(const Application &app, const std::vector<QString> &
   }
 
   return true;
+}
+
+QString XdgAppDatabase::mimeNameForTarget(const QString &target) const {
+  QString source = target;
+
+  if (m_mimeDb.mimeTypeForName(source).isValid()) { return source; }
+
+  {
+    QUrl url(source);
+
+    if (!url.scheme().isEmpty()) {
+      if (url.scheme() != "file") { return "x-scheme-handler/" + url.scheme(); }
+      source = url.toDisplayString(QUrl::RemoveScheme);
+    }
+  }
+
+  auto mime = m_mimeDb.mimeTypeForFile(source);
+
+  return mime.isValid() ? mime.name() : source;
 }
 
 AppPtr XdgAppDatabase::findByClass(const QString &name) const {

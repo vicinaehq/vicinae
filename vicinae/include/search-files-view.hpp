@@ -119,7 +119,7 @@ class FileListItem : public AbstractDefaultListItem, public ListView::Actionnabl
     auto mime = m_mimeDb.mimeTypeForFile(m_path.c_str());
     auto openers = appDb->findOpeners(mime.name());
 
-    if (auto app = appDb->findBestOpener(m_path.c_str())) {
+    if (auto app = appDb->findDefaultOpener(m_path.c_str())) {
       auto open = new OpenFileAction(m_path, app);
       open->setPrimary(true);
       section->addAction(open);
