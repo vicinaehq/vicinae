@@ -78,6 +78,13 @@ public:
 
   std::vector<std::shared_ptr<AbstractApplication>> findOpeners(const QString &target) const;
 
+  /**
+   * Calls findOpeners and applies additonal dedupe logic to the list of results.
+   * For instance, it will get rid of entries that have a similar name, although they are different
+   * applications on a technical perspective.
+   */
+  std::vector<std::shared_ptr<AbstractApplication>> findCuratedOpeners(const QString &target) const;
+
   AppService(OmniDatabase &db);
 
 signals:

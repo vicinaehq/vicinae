@@ -1,6 +1,7 @@
 #pragma once
 #include "actions/app/app-actions.hpp"
 #include "actions/files/file-actions.hpp"
+#include "misc/file-list-item.hpp"
 #include "ui/views/base-view.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "service-registry.hpp"
@@ -192,49 +193,13 @@ public:
   BaseCalculatorListItem(const AbstractCalculatorBackend::CalculatorResult &item) : item(item) {}
 };
 
-class RootFileListItem : public AbstractDefaultListItem, public ListView::Actionnable {
-  std::filesystem::path m_path;
-  QMimeDatabase m_mimeDb;
-
-  ImageURL getIcon() const {
-    auto mime = m_mimeDb.mimeTypeForFile(m_path.c_str());
-
-    if (!mime.name().isEmpty()) {
-      if (!QIcon::fromTheme(mime.iconName()).isNull()) { return ImageURL::system(mime.iconName()); }
-
-      return ImageURL::system(mime.genericIconName());
-    }
-
-    return ImageURL::builtin("question-mark-circle");
-  }
-
-  std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
-    auto panel = std::make_unique<ActionPanelState>();
-    auto appDb = ctx->services->appDb();
-    auto section = panel->createSection();
-    auto openInFolder = new OpenAppAction(appDb->fileBrowser(), "Open in folder", {m_path.c_str()});
-
-    if (auto app = appDb->findDefaultOpener(m_path.c_str())) {
-      auto open = new OpenFileAction(m_path, app);
-      open->setPrimary(true);
-      section->addAction(open);
-    } else {
-      openInFolder->setPrimary(true);
-    }
-
-    section->addAction(openInFolder);
-
-    return panel;
-  }
-
+class RootFileListItem : public FileListItemBase {
 public:
-  QString generateId() const override { return m_path.c_str(); }
-
   ItemData data() const override {
     return {.iconUrl = getIcon(), .name = m_path.filename().c_str(), .subtitle = compressPath(m_path)};
   }
 
-  RootFileListItem(const std::filesystem::path &path) : m_path(path) {}
+  RootFileListItem(const std::filesystem::path &path) : FileListItemBase(path) {}
 };
 
 class RootSearchView : public ListView {

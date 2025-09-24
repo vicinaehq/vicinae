@@ -117,6 +117,23 @@ std::vector<std::shared_ptr<AbstractApplication>> AppService::findOpeners(const 
   return m_provider->findOpeners(target);
 }
 
+std::vector<std::shared_ptr<AbstractApplication>>
+AppService::findCuratedOpeners(const QString &target) const {
+  std::set<QString> seenNames;
+  std::vector<std::shared_ptr<AbstractApplication>> results;
+  auto openers = findOpeners(target);
+
+  results.reserve(openers.size());
+
+  for (const auto &opener : openers) {
+    if (seenNames.contains(opener->displayName())) continue;
+    seenNames.insert(opener->displayName());
+    results.emplace_back(opener);
+  }
+
+  return results;
+}
+
 bool AppService::reinstallWatches(const std::vector<fs::path> &paths) {
   for (const auto &path : m_watcher->directories()) {
     m_watcher->removePath(path);
