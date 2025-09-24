@@ -1,6 +1,8 @@
 #include "root-search/apps/app-root-provider.hpp"
 #include "actions/app/app-actions.hpp"
 #include "actions/root-search/root-search-actions.hpp"
+#include "clipboard-actions.hpp"
+#include "clipboard-history-view.hpp"
 #include "navigation-controller.hpp"
 #include "../../ui/image/url.hpp"
 #include "service-registry.hpp"
@@ -46,13 +48,15 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
                                                               const RootItemMetadata &metadata) {
   auto panel = std::make_unique<ActionPanelState>();
   auto appDb = ctx->services->appDb();
-  auto fileBrowser = appDb->fileBrowser();
-  auto textEditor = appDb->textEditor();
   auto open = new OpenAppAction(m_app, "Open Application", {});
+  auto copyId = new CopyToClipboardAction(Clipboard::Text(m_app->id()), "Copy App ID");
+  auto copyLocation = new CopyToClipboardAction(Clipboard::Text(m_app->path().c_str()), "Copy App Location");
   auto resetRanking = new ResetItemRanking(uniqueId());
   auto markAsFavorite = new ToggleItemAsFavorite(uniqueId(), metadata.favorite);
   auto disable = new DisableApplication(uniqueId());
+
   auto mainSection = panel->createSection();
+  auto utils = panel->createSection();
   auto itemSection = panel->createSection();
   auto dangerSection = panel->createSection();
   auto appActions = m_app->actions();
@@ -91,13 +95,14 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
     mainSection->addAction(openAction);
   }
 
-  if (fileBrowser) {
-    auto openLocation = new OpenAppAction(fileBrowser, "Open Location", {m_app->path().c_str()});
-
+  if (auto opener = appDb->findDefaultOpener(m_app->path().c_str())) {
+    auto openLocation = new OpenAppAction(opener, "Open Location", {m_app->path().c_str()});
     openLocation->setShortcut({.key = "O", .modifiers = {"ctrl"}});
-    mainSection->addAction(openLocation);
+    utils->addAction(openLocation);
   }
 
+  utils->addAction(copyId);
+  utils->addAction(copyLocation);
   itemSection->addAction(resetRanking);
   itemSection->addAction(markAsFavorite);
   dangerSection->addAction(disable);
