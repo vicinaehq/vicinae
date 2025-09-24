@@ -1,5 +1,5 @@
 #pragma once
-#include "../../ui/image/url.hpp"
+#include "ui/image/url.hpp"
 #include <QString>
 #include <qmimetype.h>
 #include <qobject.h>
@@ -40,9 +40,16 @@ public:
   virtual ImageURL iconUrl() const = 0;
 
   /**
+   * Whether this application is an alternative action for an existing
+   * application.
+   */
+  virtual bool isAction() const { return false; }
+
+  /**
    * List of additional actions or commands the app can execute.
    * Note that every action is considered as its own app, although they are not displayed in the root
    * search directly.
+   * Note that every action should be searchable by its full id using the app service's `findById` method.
    * It is expected that an action can live independently from its owning application.
    * Currently, on the XdgApplicationDatabase supports this.
    */
@@ -151,20 +158,20 @@ public:
   /**
    * The preferred file browser to use to open directories.
    */
-  virtual AppPtr fileBrowser() const { return findDefaultOpener("inode/directory"); }
+  virtual AppPtr fileBrowser() const = 0;
 
   /**
    * The preferred text editor to use to open generic plain text files.
    */
-  virtual AppPtr genericTextEditor() const { return findDefaultOpener("text/plain"); }
+  virtual AppPtr genericTextEditor() const = 0;
 
   /**
    * The preferred web browser to use on this system.
    */
-  virtual AppPtr webBrowser() const { return findDefaultOpener("https://example.com"); }
+  virtual AppPtr webBrowser() const = 0;
 
   /**
    * The preferred terminal emulator to use on this system.
    */
-  virtual AppPtr terminalEmulator() const { return findDefaultOpener("x-scheme-handler/terminal"); }
+  virtual AppPtr terminalEmulator() const = 0;
 };

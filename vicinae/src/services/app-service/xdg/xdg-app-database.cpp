@@ -1,15 +1,14 @@
 #include "xdg-app-database.hpp"
-#include "timer.hpp"
+#include "services/app-service/xdg/xdg-app.hpp"
 #include "xdgpp/desktop-entry/file.hpp"
 #include "xdgpp/mime/iterator.hpp"
 #include <filesystem>
 #include <qlogging.h>
 #include <qsettings.h>
+
 #include <queue>
-#include <ranges>
 #include <set>
 #include <QDir>
-#include <stack>
 #include <xdgpp/desktop-entry/iterator.hpp>
 #include <xdgpp/env/env.hpp>
 #include <xdgpp/mime/mime-apps-list.hpp>
@@ -33,25 +32,6 @@ std::shared_ptr<AbstractApplication> XdgAppDatabase::defaultForMime(const QStrin
 
 AppPtr XdgAppDatabase::findDefaultOpener(const QString &target) const {
   return defaultForMime(mimeNameForTarget(target));
-}
-
-AppPtr XdgAppDatabase::findBestTerminalEmulator() const {
-  if (auto emulator = defaultForMime("x-scheme-handler/terminal")) { return emulator; }
-
-  qWarning()
-      << "Vicinae was unable to find a default terminal emulator by looking for a x-scheme-handler/terminal "
-         "mime association. We may fallback on whatever emulator is available, but you should set a default "
-         "terminal to use if you want predictable behavior. On Linux, you should be able to use the "
-         "following: 'xdg-mime default <desktop_file_name>.desktop x-scheme-handler/terminal'. Note that "
-         "this warning can also be shown if you added an invalid association, typically with an invalid "
-         "desktop file.";
-
-  auto isTerminal = [](auto &&app) { return app->isTerminalEmulator(); };
-  auto result = list() | std::views::filter(isTerminal) | std::views::take(1);
-
-  if (result.empty()) return nullptr;
-
-  return *result.begin();
 }
 
 bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
@@ -84,12 +64,24 @@ bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
       m_apps.emplace_back(app);
       m_dataDirToApps[dir].emplace_back(app);
 
-      appMap.insert({app->id(), app});
+      appMap[app->id()] = app;
+
+      for (const auto &action : app->actions()) {
+        appMap[action->id()] = action;
+      }
     }
   }
 
   return true;
 }
+
+AppPtr XdgAppDatabase::terminalEmulator() const { return defaultForMime("x-scheme-handler/terminal"); }
+
+AppPtr XdgAppDatabase::fileBrowser() const { return defaultForMime("inode/directory"); }
+
+AppPtr XdgAppDatabase::genericTextEditor() const { return defaultForMime("plain/text"); }
+
+AppPtr XdgAppDatabase::webBrowser() const { return defaultForMime("x-scheme-handler/https"); }
 
 std::vector<fs::path> XdgAppDatabase::defaultSearchPaths() const { return xdgpp::appDirs(); }
 
@@ -124,7 +116,7 @@ std::vector<AppPtr> XdgAppDatabase::findAssociations(const QString &mimeName) co
 
     for (const auto &list : m_mimeAppsLists) {
       for (const auto &appId : list.defaultAssociations(mime.toStdString())) {
-        if (auto appIt = appMap.find(appId.c_str()); appIt != appMap.end()) {
+        if (auto appIt = appMap.find(appId.c_str()); appIt != appMap.end() && appIt->second->displayable()) {
           seen.insert(appIt->second->id().toStdString());
           openers.emplace_back(appIt->second);
         }
@@ -132,6 +124,7 @@ std::vector<AppPtr> XdgAppDatabase::findAssociations(const QString &mimeName) co
 
       for (const auto &appId : list.addedAssociations(mime.toStdString())) {
         if (removed.contains(appId) || seen.contains(appId)) continue;
+        qDebug() << "added from association" << appId;
 
         seen.insert(appId);
         if (auto appIt = appMap.find(appId.c_str()); appIt != appMap.end()) {
@@ -163,60 +156,33 @@ std::vector<AppPtr> XdgAppDatabase::findAssociations(const QString &mimeName) co
 }
 
 bool XdgAppDatabase::launch(const AbstractApplication &app, const std::vector<QString> &args) const {
-  auto &xdgApp = static_cast<const XdgApplicationBase &>(app);
-  auto exec = xdgApp.exec();
+  auto &xdgApp = static_cast<const XdgApplication &>(app);
+  auto exec = xdgApp.parseExec(args);
 
-  if (exec.empty()) { return false; }
-
-  QString program;
-  QStringList argv;
-  size_t offset = 0;
-
-  if (xdgApp.isTerminalApp()) {
-    if (auto emulator = findBestTerminalEmulator()) {
-      auto xdgEmulator = static_cast<const XdgApplicationBase *>(emulator.get());
-      if (auto exec = xdgEmulator->exec(); !exec.empty()) { program = exec.at(0); }
-    }
-
-    if (program.isEmpty()) {
-      qWarning() << "XdgAppDatabase::launch: no default terminal could be found, we will default on the "
-                    "generic 'xterm'";
-      program = "xterm";
-    }
-    argv << "-e";
-  } else {
-    program = exec.at(0);
-    offset = 1;
-  }
-
-  bool injected = false;
-
-  for (size_t i = offset; i != exec.size(); ++i) {
-    auto &part = exec.at(i);
-
-    if (part == "%u" || part == "%f") {
-      if (!args.empty()) argv << args.at(0);
-      injected = true;
-    } else if (part == "%U" || part == "%F") {
-      for (const auto &arg : args) {
-        argv.push_back(arg);
-      }
-      injected = true;
-    } else {
-      argv << part;
-    }
-  }
-
-  // if no injection was possible, we simply append the args
-  if (!injected) {
-    for (const auto &arg : args) {
-      argv << arg;
-    }
+  if (exec.empty()) {
+    qWarning() << "No program to start the app";
+    return false;
   }
 
   QProcess process;
+  QStringList argv;
 
-  process.setProgram(program);
+  if (xdgApp.isTerminalApp()) {
+    if (auto emulator = terminalEmulator()) {
+      process.setProgram(emulator->program());
+
+      argv << "-e"; // to instruct the emulator to run the command
+      for (const auto &part : exec) {
+        argv << part;
+      }
+    }
+  } else {
+    process.setProgram(exec.at(0));
+    for (int i = 1; i < exec.size(); ++i) {
+      argv << exec[i];
+    }
+  }
+
   process.setArguments(argv);
   process.setStandardOutputFile(QProcess::nullDevice());
   process.setStandardErrorFile(QProcess::nullDevice());

@@ -180,6 +180,7 @@ set(SRCS
 	# begin app-database
 	src/services/app-service/xdg/xdg-app-database.hpp
 	src/services/app-service/xdg/xdg-app-database.cpp
+	src/services/app-service/xdg/xdg-app.cpp
 	src/services/app-service/abstract-app-db.hpp
 
 	# end app-database
