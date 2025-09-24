@@ -57,7 +57,11 @@ bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
 
       auto file = xdgpp::DesktopFile::fromFile(entry.path(), dir);
 
-      if (file.hidden()) continue;
+      if (file.deleted()) continue;
+      if (file.errorMessage()) {
+        qWarning() << "Desktop file" << file.path().c_str() << "is invalid" << *file.errorMessage();
+        continue;
+      }
 
       auto app = std::make_shared<XdgApplication>(file);
 
@@ -124,8 +128,6 @@ std::vector<AppPtr> XdgAppDatabase::findAssociations(const QString &mimeName) co
 
       for (const auto &appId : list.addedAssociations(mime.toStdString())) {
         if (removed.contains(appId) || seen.contains(appId)) continue;
-        qDebug() << "added from association" << appId;
-
         seen.insert(appId);
         if (auto appIt = appMap.find(appId.c_str()); appIt != appMap.end()) {
           openers.emplace_back(appIt->second);
@@ -141,7 +143,6 @@ std::vector<AppPtr> XdgAppDatabase::findAssociations(const QString &mimeName) co
       if (auto it = m_dataDirToApps.find(dataDir); it != m_dataDirToApps.end()) {
         for (const auto &app : it->second) {
           std::string appId = app->id().toStdString();
-
           if (removed.contains(appId) || seen.contains(appId)) continue;
           if (app->data().supportsMime(mime.toStdString())) {
             seen.insert(appId);
@@ -186,6 +187,8 @@ bool XdgAppDatabase::launch(const AbstractApplication &app, const std::vector<QS
   process.setArguments(argv);
   process.setStandardOutputFile(QProcess::nullDevice());
   process.setStandardErrorFile(QProcess::nullDevice());
+
+  if (auto wd = xdgApp.data().workingDirectory()) { process.setWorkingDirectory(wd->c_str()); }
 
   if (!process.startDetached()) {
     qWarning() << "Failed to start app" << argv << process.errorString();
