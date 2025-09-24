@@ -1,5 +1,6 @@
 #include "xdg-app-database.hpp"
 #include "services/app-service/xdg/xdg-app.hpp"
+#include "timer.hpp"
 #include "xdgpp/desktop-entry/file.hpp"
 #include "xdgpp/mime/iterator.hpp"
 #include <filesystem>
@@ -188,7 +189,13 @@ bool XdgAppDatabase::launch(const AbstractApplication &app, const std::vector<QS
     if (auto emulator = terminalEmulator()) {
       process.setProgram(emulator->program());
 
-      argv << "-e"; // to instruct the emulator to run the command
+      // because yes, gnome-terminal does not support -e properly
+      if (emulator->program() == "gnome-terminal") {
+        argv << "--";
+      } else {
+        argv << "-e";
+      }
+
       for (const auto &part : exec) {
         argv << part;
       }

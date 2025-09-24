@@ -6,10 +6,10 @@
 namespace xdgpp {
 
 /**
- * Current desktop, as provided by the optional XDG_CURRENT_DESKTOP environment
+ * Current desktop values as provided by the optional XDG_CURRENT_DESKTOP environment
  * variable.
  */
-std::optional<std::string> currentDesktop();
+std::vector<std::string> currentDesktop();
 
 std::filesystem::path dataHome();
 

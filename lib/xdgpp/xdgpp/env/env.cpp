@@ -17,9 +17,9 @@ static std::string &toLowerCase(std::string &s) {
   return s;
 }
 
-static std::vector<fs::path> parseDirs(std::string_view data) {
+template <typename T> static std::vector<T> parseDirs(std::string_view data) {
   std::set<fs::path> seen;
-  std::vector<fs::path> paths;
+  std::vector<T> paths;
   std::string current;
 
   for (const auto &c : data) {
@@ -39,8 +39,8 @@ static std::vector<fs::path> parseDirs(std::string_view data) {
   return paths;
 }
 
-std::optional<std::string> xdgpp::currentDesktop() {
-  if (auto v = getenv("XDG_CURRENT_DESKTOP")) return v;
+std::vector<std::string> xdgpp::currentDesktop() {
+  if (auto v = getenv("XDG_CURRENT_DESKTOP")) return parseDirs<std::string>(v);
   return {};
 }
 
@@ -65,7 +65,7 @@ std::vector<fs::path> xdgpp::dataDirs() {
   // the spec doesn't require to add the local dir as a default but we do
   if (!xdd) { return {homeDir() / ".local" / "share", "/usr/local/share", "/usr/share"}; };
 
-  return parseDirs(xdd);
+  return parseDirs<fs::path>(xdd);
 }
 
 std::vector<fs::path> xdgpp::appDirs() {
@@ -91,7 +91,7 @@ std::vector<fs::path> xdgpp::configDirs() {
 
   if (!xcd) { return {"/etc/xdg"}; };
 
-  return parseDirs(xcd);
+  return parseDirs<fs::path>(xcd);
 }
 
 std::optional<std::filesystem::path> xdgpp::runtimeDir() {
@@ -100,29 +100,45 @@ std::optional<std::filesystem::path> xdgpp::runtimeDir() {
 }
 
 std::vector<std::filesystem::path> xdgpp::mimeAppsListPaths() {
-  std::string desktop = xdgpp::currentDesktop().value_or("unknown");
+  std::vector<std::string> desktops = xdgpp::currentDesktop();
+  std::transform(desktops.begin(), desktops.end(), desktops.begin(), toLowerCase);
 
-  toLowerCase(desktop);
   std::vector<fs::path> paths;
   std::string fileName = "mimeapps.list";
-  std::string desktopFileName = desktop + "-" + fileName;
   auto configDirs = xdgpp::configDirs();
   auto dataDirs = xdgpp::dataDirs();
 
-  paths.reserve(configDirs.size() + dataDirs.size() + 4);
-  paths.emplace_back(xdgpp::configHome() / desktopFileName);
+  paths.reserve(configDirs.size() + dataDirs.size() + desktops.size() * 4);
+
+  for (const auto &desktop : desktops) {
+    std::string desktopFileName = desktop + "-" + fileName;
+    paths.emplace_back(xdgpp::configHome() / desktopFileName);
+  }
+
   paths.emplace_back(xdgpp::configHome() / fileName);
 
   for (const auto &dir : configDirs) {
-    paths.emplace_back(dir / desktopFileName);
+    for (const auto &desktop : desktops) {
+      std::string desktopFileName = desktop + "-" + fileName;
+      paths.emplace_back(dir / desktopFileName);
+    }
+
     paths.emplace_back(dir / fileName);
   }
 
-  paths.emplace_back(xdgpp::dataHome() / "applications" / desktopFileName);
+  for (const auto &desktop : desktops) {
+    std::string desktopFileName = desktop + "-" + fileName;
+    paths.emplace_back(xdgpp::dataHome() / "applications" / desktopFileName);
+  }
+
   paths.emplace_back(xdgpp::dataHome() / "applications" / fileName);
 
   for (const auto &dir : dataDirs) {
-    paths.emplace_back(dir / "applications" / desktopFileName);
+    for (const auto &desktop : desktops) {
+      std::string desktopFileName = desktop + "-" + fileName;
+      paths.emplace_back(dir / "applications" / desktopFileName);
+    }
+
     paths.emplace_back(dir / "applications" / fileName);
   }
 

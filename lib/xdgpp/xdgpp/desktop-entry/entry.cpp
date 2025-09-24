@@ -90,14 +90,20 @@ bool DesktopEntry::isValid() const { return !m_error.has_value(); }
 bool DesktopEntry::shouldBeShownInCurrentContext() const {
   if (deleted() || noDisplay()) return false;
 
+  auto desktops = xdgpp::currentDesktop();
+  auto hasDesktopMatch = [&](const std::string &in) {
+    return std::ranges::find(desktops, in) != desktops.end();
+  };
+
   {
     auto &in = onlyShowIn();
-    if (!in.empty() && std::ranges::find(in, xdgpp::currentDesktop()) == in.end()) { return false; }
+
+    if (!in.empty() && !std::ranges::any_of(in, hasDesktopMatch)) { return false; }
   }
 
   {
     auto &notIn = notShowIn();
-    if (!notIn.empty() && std::ranges::find(notIn, xdgpp::currentDesktop()) != notIn.end()) { return false; }
+    if (!notIn.empty() && std::ranges::any_of(notIn, hasDesktopMatch)) { return false; }
   }
 
   return true;
