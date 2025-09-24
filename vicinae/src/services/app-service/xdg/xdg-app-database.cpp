@@ -130,14 +130,18 @@ std::vector<AppPtr> XdgAppDatabase::findAssociations(const QString &mimeName) co
 
     std::set<std::string> removed;
 
+    // perform a full file tour to find the default if there is one
     for (const auto &list : m_mimeAppsLists) {
       for (const auto &appId : list.defaultAssociations(mime.toStdString())) {
-        if (auto appIt = appMap.find(appId.c_str()); appIt != appMap.end() && appIt->second->displayable()) {
+        if (auto appIt = appMap.find(appId.c_str()); appIt != appMap.end()) {
           seen.insert(appIt->second->id().toStdString());
           openers.emplace_back(appIt->second);
+          break;
         }
       }
+    }
 
+    for (const auto &list : m_mimeAppsLists) {
       for (const auto &appId : list.addedAssociations(mime.toStdString())) {
         if (removed.contains(appId) || seen.contains(appId)) continue;
         seen.insert(appId);
