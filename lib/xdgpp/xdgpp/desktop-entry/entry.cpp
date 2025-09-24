@@ -65,6 +65,10 @@ const std::vector<std::string> &DesktopEntry::mimes() const { return m_mimes; }
 
 const std::vector<std::string> &DesktopEntry::categories() const { return m_categories; }
 
+bool DesktopEntry::hasCategory(std::string_view category) const {
+  return std::ranges::find(categories(), category) != categories().end();
+}
+
 bool DesktopEntry::supportsMime(std::string_view mime) const {
   return std::ranges::find(mimes(), mime) != mimes().end();
 }

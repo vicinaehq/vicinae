@@ -17,9 +17,7 @@ public:
   bool displayable() const override { return m_entry.shouldBeShownInCurrentContext(); }
 
   bool isTerminalApp() const override { return m_entry.terminal(); }
-  // bool isTerminalEmulator() const override { return _data.categories.contains("TerminalEmulator"); }
-  //
-  bool isTerminalEmulator() const override { return false; }
+  bool isTerminalEmulator() const override { return m_entry.hasCategory("TerminalEmulator"); }
   std::filesystem::path path() const override { return m_entry.path(); };
   QString description() const override { return QString::fromStdString(m_entry.comment().value_or("")); }
 

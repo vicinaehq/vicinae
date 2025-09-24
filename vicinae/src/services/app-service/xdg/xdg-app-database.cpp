@@ -79,7 +79,19 @@ bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
   return true;
 }
 
-AppPtr XdgAppDatabase::terminalEmulator() const { return defaultForMime("x-scheme-handler/terminal"); }
+AppPtr XdgAppDatabase::terminalEmulator() const {
+  if (auto emulator = defaultForMime("x-scheme-handler/terminal")) { return emulator; }
+
+  qWarning()
+      << "No default terminal emulator could be found, will fallback on the first terminal emulator "
+         "we find. To learn how to set one for vicinae to use: https://docs.vicinae.com/default-terminal";
+
+  for (const auto &app : m_apps) {
+    if (app->isTerminalEmulator()) return app;
+  }
+
+  return nullptr;
+}
 
 AppPtr XdgAppDatabase::fileBrowser() const { return defaultForMime("inode/directory"); }
 

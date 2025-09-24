@@ -147,6 +147,8 @@ public:
 
   const std::vector<std::string> &categories() const;
 
+  bool hasCategory(std::string_view category) const;
+
   bool supportsMime(std::string_view mime) const;
 
   /**

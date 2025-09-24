@@ -14,6 +14,9 @@ For now, this library (roughly) implements:
 
 # Build and install
 
+This is only if you care about dealing with this library on its own.
+Otherwise, it is automatically compiled as part of the vicinae build process.
+
 ## Build
 
 To build the library:
@@ -28,12 +31,4 @@ make shared
 
 ```bash
 make install
-```
-
-## Test
-
-To run the test suite:
-
-```bash
-make test
 ```
