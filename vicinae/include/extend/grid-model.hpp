@@ -27,7 +27,7 @@ struct GridSectionModel {
   QString title;
   QString subtitle;
 
-  double aspectRatio;
+  std::optional<double> aspectRatio;
   std::optional<int> columns;
   GridFit fit;
   std::optional<GridItemContentWidget::Inset> inset;
