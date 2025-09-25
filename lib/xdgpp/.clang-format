@@ -1,0 +1,7 @@
+Language:        Cpp
+BasedOnStyle:    LLVM
+ColumnLimit:     110
+AllowShortIfStatementsOnASingleLine: true
+AllowShortBlocksOnASingleLine: Always
+AllowShortFunctionsOnASingleLine: All
+SortIncludes:    false

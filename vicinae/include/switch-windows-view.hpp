@@ -97,18 +97,18 @@ public:
 };
 
 class AppWindowListItem : public WindowItem {
-  std::shared_ptr<Application> _app;
+  std::shared_ptr<AbstractApplication> _app;
 
   ItemData data() const override {
     return {.iconUrl = _app->iconUrl(),
             .name = _window->title(),
-            .subtitle = _app->name(),
+            .subtitle = _app->displayName(),
             .accessories = generateWorkspaceAccessories()};
   }
 
 public:
   AppWindowListItem(const std::shared_ptr<AbstractWindowManager::AbstractWindow> &item,
-                    const std::shared_ptr<Application> &app)
+                    const std::shared_ptr<AbstractApplication> &app)
       : WindowItem(item), _app(app) {}
 };
 
@@ -151,7 +151,7 @@ public:
 
       if (!app) { app = appDb->findById(win->wmClass()); }
 
-      bool appMatches = app && app->name().contains(s, Qt::CaseInsensitive);
+      bool appMatches = app && app->displayName().contains(s, Qt::CaseInsensitive);
       bool matches = appMatches || win->title().contains(s, Qt::CaseInsensitive);
 
       if (!matches) continue;

@@ -41,7 +41,8 @@ protected:
     auto section = panel->createSection();
 
     for (const auto &opener : appDb->findOpeners("inode/directory")) {
-      auto open = new OpenAppAction(opener, QString("Open in %1").arg(opener->name()), {m_path.c_str()});
+      auto open =
+          new OpenAppAction(opener, QString("Open in %1").arg(opener->displayName()), {m_path.c_str()});
       section->addAction(open);
     }
 

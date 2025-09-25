@@ -24,7 +24,7 @@ std::vector<std::filesystem::path> AppService::mergedPaths() const {
 
 AbstractAppDatabase *AppService::provider() const { return m_provider.get(); }
 
-bool AppService::launch(const Application &app, const std::vector<QString> &args) const {
+bool AppService::launch(const AbstractApplication &app, const std::vector<QString> &args) const {
   return m_provider->launch(app, args);
 }
 
@@ -38,8 +38,8 @@ std::unique_ptr<AbstractAppDatabase> AppService::createLocalProvider() {
 #endif
 }
 
-std::shared_ptr<Application> AppService::terminalEmulator() const {
-  if (auto emulator = m_provider->findBestOpenerForMime("x-scheme-handler/terminal")) { return emulator; }
+std::shared_ptr<AbstractApplication> AppService::terminalEmulator() const {
+  if (auto emulator = m_provider->findDefaultOpener("x-scheme-handler/terminal")) { return emulator; }
 
   auto isTerminal = [](auto &&app) { return app->isTerminalEmulator(); };
   auto result = list() | std::views::filter(isTerminal) | std::views::take(1);
@@ -65,33 +65,35 @@ bool AppService::launchRaw(const QString &prog, const std::vector<QString> &args
   return true;
 }
 
-std::shared_ptr<Application> AppService::findById(const QString &id) const {
+std::shared_ptr<AbstractApplication> AppService::findById(const QString &id) const {
   return m_provider->findById(id);
 }
 
-std::shared_ptr<Application> AppService::findByClass(const QString &wmClass) const {
+std::shared_ptr<AbstractApplication> AppService::findByClass(const QString &wmClass) const {
   return m_provider->findByClass(wmClass);
 }
 
 bool AppService::openTarget(const QString &target) const {
-  if (auto app = findBestOpener(target)) { return launch(*app, {target}); }
+  if (auto app = findDefaultOpener(target)) { return launch(*app, {target}); }
   return false;
 }
 
 std::vector<fs::path> AppService::defaultSearchPaths() const { return m_provider->defaultSearchPaths(); }
 
-std::shared_ptr<Application> AppService::textEditor() const { return m_provider->textEditor(); }
-
-std::shared_ptr<Application> AppService::webBrowser() const { return m_provider->webBrowser(); }
-std::shared_ptr<Application> AppService::fileBrowser() const { return m_provider->fileBrowser(); }
-
-std::vector<std::shared_ptr<Application>> AppService::list() const { return m_provider->list(); }
-
-std::shared_ptr<Application> AppService::findBestOpener(const QString &target) const {
-  return m_provider->findBestOpener(target);
+std::shared_ptr<AbstractApplication> AppService::textEditor() const {
+  return m_provider->genericTextEditor();
 }
 
-std::shared_ptr<Application> AppService::find(const QString &target) const {
+std::shared_ptr<AbstractApplication> AppService::webBrowser() const { return m_provider->webBrowser(); }
+std::shared_ptr<AbstractApplication> AppService::fileBrowser() const { return m_provider->fileBrowser(); }
+
+std::vector<std::shared_ptr<AbstractApplication>> AppService::list() const { return m_provider->list(); }
+
+std::shared_ptr<AbstractApplication> AppService::findDefaultOpener(const QString &target) const {
+  return m_provider->findDefaultOpener(target);
+}
+
+std::shared_ptr<AbstractApplication> AppService::find(const QString &target) const {
   if (auto app = m_provider->findById(target)) { return app; }
   if (auto app = m_provider->findByClass(target)) { return app; }
 
@@ -111,8 +113,25 @@ void AppService::setAdditionalSearchPaths(const std::vector<std::filesystem::pat
   reinstallWatches(mergedPaths());
 }
 
-std::vector<std::shared_ptr<Application>> AppService::findOpeners(const QString &target) const {
+std::vector<std::shared_ptr<AbstractApplication>> AppService::findOpeners(const QString &target) const {
   return m_provider->findOpeners(target);
+}
+
+std::vector<std::shared_ptr<AbstractApplication>>
+AppService::findCuratedOpeners(const QString &target) const {
+  std::set<QString> seenNames;
+  std::vector<std::shared_ptr<AbstractApplication>> results;
+  auto openers = findOpeners(target);
+
+  results.reserve(openers.size());
+
+  for (const auto &opener : openers) {
+    if (seenNames.contains(opener->displayName())) continue;
+    seenNames.insert(opener->displayName());
+    results.emplace_back(opener);
+  }
+
+  return results;
 }
 
 bool AppService::reinstallWatches(const std::vector<fs::path> &paths) {

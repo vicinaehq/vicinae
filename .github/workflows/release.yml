@@ -62,6 +62,7 @@ jobs:
           cmake -G Ninja .. \
             -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
             -DCMAKE_POLICY_VERSION_MINIMUM=3.5  \
+            -DBUILD_TESTS=ON  \
             -DLTO=ON \
             -DUSE_SYSTEM_PROTOBUF=OFF \
             -DUSE_SYSTEM_ABSEIL=OFF \
@@ -73,6 +74,9 @@ jobs:
       - name: Build
         run: |
           cmake --build build --config ${BUILD_TYPE} --parallel $(nproc)
+
+      - name: Run Tests
+        run: ./build/tests/all_tests
 
       - name: Install
         run: |

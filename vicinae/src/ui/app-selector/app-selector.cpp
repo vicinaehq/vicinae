@@ -5,7 +5,7 @@
 
 AppSelector::AppSelector(QWidget *parent) : SelectorInput(parent) {}
 
-void AppSelector::setApps(const std::vector<std::shared_ptr<Application>> &apps) {
+void AppSelector::setApps(const std::vector<std::shared_ptr<AbstractApplication>> &apps) {
   std::vector<std::shared_ptr<AbstractItem>> items;
 
   for (const auto &app : apps) {
