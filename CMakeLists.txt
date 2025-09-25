@@ -32,8 +32,18 @@ option(USE_SYSTEM_QT_KEYCHAIN "Use system qt-keychain instead of building it fro
 option(USE_SYSTEM_RAPIDFUZZ "Use system version of the rapidfuzz-cpp header only library" ON)
 option(LIBQALCULATE_BACKEND "Compile in support for the Qalculate! calculator backend" ON)
 
+option(BUILD_TESTS "Build all vicinae tests" OFF)
+
+if (BUILD_TESTS)
+	add_subdirectory(tests)
+endif()
+
 if (APPLE)
 	set(WAYLAND_LAYER_SHELL OFF)
+endif()
+
+if (UNIX AND NOT APPLE)
+	add_subdirectory("./lib/xdgpp")
 endif()
 
 if (USE_SYSTEM_PROTOBUF)

@@ -11,7 +11,7 @@ if (TYPESCRIPT_EXTENSIONS)
 	add_compile_definitions(HAS_TYPESCRIPT_EXTENSIONS=1)
 endif()
 
-list(APPEND LIBS  Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus qt6keychain ${CMARK_LIBRARY} protobuf::libprotobuf minizip OpenSSL::Crypto wayland-client)
+list(APPEND LIBS  Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus qt6keychain ${CMARK_LIBRARY} protobuf::libprotobuf minizip OpenSSL::Crypto wayland-client xdgpp)
 
 set(WLR_CLIP_BIN ${CMAKE_BINARY_DIR}/wlr-clip/wlr-clip${CMAKE_EXECUTABLE_SUFFIX})
 set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/assets)
@@ -180,6 +180,7 @@ set(SRCS
 	# begin app-database
 	src/services/app-service/xdg/xdg-app-database.hpp
 	src/services/app-service/xdg/xdg-app-database.cpp
+	src/services/app-service/xdg/xdg-app.cpp
 	src/services/app-service/abstract-app-db.hpp
 
 	# end app-database

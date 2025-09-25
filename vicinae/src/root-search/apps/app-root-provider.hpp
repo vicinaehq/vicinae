@@ -5,7 +5,7 @@
 #include <qwidget.h>
 
 class AppRootItem : public RootItem {
-  std::shared_ptr<Application> m_app;
+  std::shared_ptr<AbstractApplication> m_app;
 
   double baseScoreWeight() const override;
   QString providerId() const override;
@@ -22,8 +22,8 @@ class AppRootItem : public RootItem {
   bool isActive() const override;
 
 public:
-  const Application &app() const { return *m_app.get(); }
-  AppRootItem(const std::shared_ptr<Application> &app) : m_app(app) {}
+  const AbstractApplication &app() const { return *m_app.get(); }
+  AppRootItem(const std::shared_ptr<AbstractApplication> &app) : m_app(app) {}
 };
 
 class AppRootProvider : public RootProvider {

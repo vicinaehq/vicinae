@@ -53,7 +53,7 @@ AbstractWindowManager::WindowList WindowManager::findWindowByClass(const QString
   return filtered;
 }
 
-AbstractWindowManager::WindowList WindowManager::findAppWindows(const Application &app) const {
+AbstractWindowManager::WindowList WindowManager::findAppWindows(const AbstractApplication &app) const {
   // Delegate to GNOME-specific implementation if we're using GNOME window manager
   if (auto gnomeWm = dynamic_cast<const GnomeWindowManager *>(m_provider.get())) {
     return gnomeWm->findAppWindowsGnome(app);

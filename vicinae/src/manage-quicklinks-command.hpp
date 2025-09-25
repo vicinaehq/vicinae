@@ -125,7 +125,7 @@ public:
 
     if (auto app = appDb->findById(shortcut->app())) {
       meta.emplace_back(MetadataLabel{
-          .text = app->name(),
+          .text = app->displayName(),
           .title = "Application",
           .icon = app->iconUrl(),
       });

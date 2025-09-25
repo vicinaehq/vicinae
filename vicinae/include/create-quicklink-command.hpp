@@ -37,7 +37,7 @@
 
 class AppSelectorItem : public SelectorInput::AbstractItem {
 public:
-  std::shared_ptr<Application> app;
+  std::shared_ptr<AbstractApplication> app;
   bool isDefault;
 
   std::optional<ImageURL> icon() const override { return app->iconUrl(); }
@@ -50,11 +50,11 @@ public:
 
   AbstractItem *clone() const override { return new AppSelectorItem(*this); }
 
-  void setApp(const std::shared_ptr<Application> &app) { this->app = app; }
+  void setApp(const std::shared_ptr<AbstractApplication> &app) { this->app = app; }
 
   QString generateId() const override { return app->id(); }
 
-  AppSelectorItem(const std::shared_ptr<Application> &app) : app(app) {}
+  AppSelectorItem(const std::shared_ptr<AbstractApplication> &app) : app(app) {}
 };
 
 class DefaultAppItem : public AppSelectorItem {
@@ -63,7 +63,7 @@ class DefaultAppItem : public AppSelectorItem {
   AbstractItem *clone() const override { return new DefaultAppItem(*this); }
 
 public:
-  DefaultAppItem(const std::shared_ptr<Application> &app) : AppSelectorItem(app) {}
+  DefaultAppItem(const std::shared_ptr<AbstractApplication> &app) : AppSelectorItem(app) {}
 };
 
 class IconSelectorItem : public SelectorInput::AbstractItem {
@@ -182,7 +182,7 @@ class ShortcutFormView : public ManagedFormView {
     auto appDb = ServiceRegistry::instance()->appDb();
     QUrl url(text);
 
-    if (auto app = appDb->findBestOpener(text)) {
+    if (auto app = appDb->findDefaultOpener(text)) {
       appSelector->updateItem("default", [&app](SelectorInput::AbstractItem *item) {
         static_cast<AppSelectorItem *>(item)->setApp(app);
       });
@@ -358,7 +358,7 @@ public:
     }
 
     for (const auto &app : appDb->list()) {
-      if (!app->displayable()) continue ;
+      if (!app->displayable()) continue;
 
       appItems.emplace_back(std::make_unique<AppSelectorItem>(app));
 

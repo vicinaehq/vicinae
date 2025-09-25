@@ -82,7 +82,7 @@ public:
   /**
    * GNOME-specific window finding with .desktop suffix handling
    */
-  WindowList findAppWindowsGnome(const Application &app) const;
+  WindowList findAppWindowsGnome(const AbstractApplication &app) const;
   WindowList findWindowByClassGnome(const QString &wmClass) const;
 
 private:

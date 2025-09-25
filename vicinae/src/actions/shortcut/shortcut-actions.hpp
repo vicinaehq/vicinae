@@ -15,7 +15,7 @@
 class OpenShortcutAction : public AbstractAction {
   std::shared_ptr<Shortcut> m_shortcut;
   std::vector<QString> m_arguments;
-  std::shared_ptr<Application> m_app;
+  std::shared_ptr<AbstractApplication> m_app;
   bool m_clearSearch = false;
 
 public:
@@ -62,14 +62,14 @@ public:
   void setClearSearch(bool value) { m_clearSearch = value; }
 
   OpenShortcutAction(const std::shared_ptr<Shortcut> &shortcut, const std::vector<QString> &arguments,
-                     const std::shared_ptr<Application> &app = nullptr)
+                     const std::shared_ptr<AbstractApplication> &app = nullptr)
       : AbstractAction("Open shortcut", shortcut->icon()), m_shortcut(shortcut), m_arguments(arguments),
         m_app(app) {}
 };
 
 class OpenCompletedShortcutAction : public AbstractAction {
   std::shared_ptr<Shortcut> m_shortcut;
-  std::shared_ptr<Application> m_app;
+  std::shared_ptr<AbstractApplication> m_app;
   bool m_clearSearch = false;
 
 public:
@@ -89,7 +89,7 @@ public:
   void setClearSearch(bool value) { m_clearSearch = value; }
 
   OpenCompletedShortcutAction(const std::shared_ptr<Shortcut> &shortcut,
-                              const std::shared_ptr<Application> &app = nullptr)
+                              const std::shared_ptr<AbstractApplication> &app = nullptr)
       : AbstractAction("Open shortcut", shortcut->icon()), m_shortcut(shortcut), m_app(app) {}
 };
 
@@ -165,7 +165,7 @@ public:
 class OpenCompletedShortcutWithAction : public AbstractAction {
   class OpenAction : public AbstractAction {
     std::shared_ptr<Shortcut> m_shortcut;
-    std::shared_ptr<Application> m_app;
+    std::shared_ptr<AbstractApplication> m_app;
 
     void execute(ApplicationContext *ctx) override {
       OpenCompletedShortcutAction(m_shortcut, m_app).execute(ctx);
@@ -174,8 +174,8 @@ class OpenCompletedShortcutWithAction : public AbstractAction {
     QString id() const override { return m_app->id(); }
 
   public:
-    OpenAction(const std::shared_ptr<Shortcut> &shortcut, const std::shared_ptr<Application> &app)
-        : AbstractAction(app->name(), app->iconUrl()), m_shortcut(shortcut), m_app(app) {}
+    OpenAction(const std::shared_ptr<Shortcut> &shortcut, const std::shared_ptr<AbstractApplication> &app)
+        : AbstractAction(app->displayName(), app->iconUrl()), m_shortcut(shortcut), m_app(app) {}
   };
 
   std::shared_ptr<Shortcut> m_shortcut;

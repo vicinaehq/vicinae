@@ -87,3 +87,23 @@ QJsonValue protoToJsonValue(const google::protobuf::Value &value);
 QString formatSize(size_t bytes);
 
 QString slugify(const QString &input, const QString &separator = "-");
+
+namespace Utils {
+inline std::vector<QString> toQStringVec(const std::vector<std::string> &strings) {
+  std::vector<QString> list;
+  list.reserve(strings.size());
+  for (const auto &str : strings) {
+    list.emplace_back(QString::fromStdString(str));
+  }
+  return list;
+}
+
+inline std::vector<std::string> toStdStringVec(const std::vector<QString> &strings) {
+  std::vector<std::string> list;
+  list.reserve(strings.size());
+  for (const auto &str : strings) {
+    list.emplace_back(str.toStdString());
+  }
+  return list;
+}
+}; // namespace Utils

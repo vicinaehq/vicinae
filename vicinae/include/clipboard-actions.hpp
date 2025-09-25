@@ -45,7 +45,7 @@ public:
     QString name;
 
     if (auto app = appDb->find(window->wmClass())) {
-      name = QString("Paste to %1").arg(app->name());
+      name = QString("Paste to %1").arg(app->displayName());
     } else {
       name = QString("Paste to %1").arg(window->title());
     }

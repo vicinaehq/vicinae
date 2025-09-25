@@ -46,7 +46,7 @@ public:
 };
 
 class AppMetadataSettingsDetail : public QWidget {
-  std::shared_ptr<Application> m_app;
+  std::shared_ptr<AbstractApplication> m_app;
   MetadataRowWidget *m_description = new MetadataRowWidget(this);
   TypographyWidget *m_descriptionParagraph = new TypographyWidget(this);
   MetadataRowWidget *m_id = new MetadataRowWidget(this);
@@ -56,7 +56,7 @@ class AppMetadataSettingsDetail : public QWidget {
 
   void resizeEvent(QResizeEvent *event) override { QWidget::resizeEvent(event); }
 
-  void setupUI(const std::shared_ptr<Application> &app) {
+  void setupUI(const std::shared_ptr<AbstractApplication> &app) {
     auto layout = new QVBoxLayout;
 
     m_descriptionParagraph->setWordWrap(true);
@@ -64,7 +64,7 @@ class AppMetadataSettingsDetail : public QWidget {
     m_id->setLabel("ID");
     m_id->setText(app->id());
     m_name->setLabel("Name");
-    m_name->setText(app->name());
+    m_name->setText(app->displayName());
     m_where->setLabel("Where");
     m_where->setText(compressPath(app->path().parent_path()).c_str());
 
@@ -92,5 +92,5 @@ class AppMetadataSettingsDetail : public QWidget {
   }
 
 public:
-  AppMetadataSettingsDetail(const std::shared_ptr<Application> &app) : m_app(app) { setupUI(app); }
+  AppMetadataSettingsDetail(const std::shared_ptr<AbstractApplication> &app) : m_app(app) { setupUI(app); }
 };

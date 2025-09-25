@@ -412,7 +412,8 @@ std::shared_ptr<AbstractWindowManager::AbstractWorkspace> GnomeWindowManager::ge
   return workspace;
 }
 
-AbstractWindowManager::WindowList GnomeWindowManager::findAppWindowsGnome(const Application &app) const {
+AbstractWindowManager::WindowList
+GnomeWindowManager::findAppWindowsGnome(const AbstractApplication &app) const {
   // Use fresh window data for GNOME to ensure active window dots work correctly
   auto freshWindows = listWindowsSync();
 
