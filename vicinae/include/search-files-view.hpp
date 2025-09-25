@@ -1,5 +1,7 @@
 #pragma once
 #include "actions/app/app-actions.hpp"
+#include "clipboard-actions.hpp"
+#include "misc/file-list-item.hpp"
 #include "ui/views/base-view.hpp"
 #include "clipboard-history-view.hpp"
 #include "manage-quicklinks-command.hpp"
@@ -88,46 +90,12 @@ public:
   }
 };
 
-class FileListItem : public AbstractDefaultListItem, public ListView::Actionnable {
-  std::filesystem::path m_path;
-  QMimeDatabase m_mimeDb;
-
-  ImageURL getIcon() const {
-    auto mime = m_mimeDb.mimeTypeForFile(m_path.c_str());
-
-    if (!mime.name().isEmpty()) {
-      if (!QIcon::fromTheme(mime.iconName()).isNull()) { return ImageURL::system(mime.iconName()); }
-
-      return ImageURL::system(mime.genericIconName());
-    }
-
-    return ImageURL::builtin("question-mark-circle");
-  }
-
+class FileListItem : public FileListItemBase {
   QWidget *generateDetail() const override {
     auto detail = new FileListItemMetadata();
     detail->setPath(m_path);
 
     return detail;
-  }
-
-  std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
-    auto panel = std::make_unique<ActionPanelState>();
-    auto appDb = ctx->services->appDb();
-    auto section = panel->createSection();
-    auto openInFolder = new OpenAppAction(appDb->fileBrowser(), "Open in folder", {m_path.c_str()});
-
-    if (auto app = appDb->findBestOpener(m_path.c_str())) {
-      auto open = new OpenFileAction(m_path, app);
-      open->setPrimary(true);
-      section->addAction(open);
-    } else {
-      openInFolder->setPrimary(true);
-    }
-
-    section->addAction(openInFolder);
-
-    return panel;
   }
 
 public:
@@ -140,7 +108,7 @@ public:
     };
   }
 
-  FileListItem(const std::filesystem::path &path) : m_path(path) {}
+  FileListItem(const std::filesystem::path &path) : FileListItemBase(path) {}
 };
 
 class SearchFilesView : public ListView {

@@ -11,7 +11,7 @@ public:
   bool canPaste() const;
 
   AbstractWindowManager::WindowList findWindowByClass(const QString &wmClass) const;
-  AbstractWindowManager::WindowList findAppWindows(const Application &app) const;
+  AbstractWindowManager::WindowList findAppWindows(const AbstractApplication &app) const;
   AbstractWindowManager::WindowList listWindows() const;
 
   WindowManager();

@@ -4,7 +4,7 @@
 
 class AppItem : public SelectorInput::AbstractItem {
 public:
-  std::shared_ptr<Application> app;
+  std::shared_ptr<AbstractApplication> app;
   bool isDefault;
 
   std::optional<ImageURL> icon() const override { return app->iconUrl(); }
@@ -17,11 +17,11 @@ public:
 
   AbstractItem *clone() const override { return new AppItem(*this); }
 
-  void setApp(const std::shared_ptr<Application> &app) { this->app = app; }
+  void setApp(const std::shared_ptr<AbstractApplication> &app) { this->app = app; }
 
   QString generateId() const override { return app->id(); }
 
-  AppItem(const std::shared_ptr<Application> &app) : app(app) {}
+  AppItem(const std::shared_ptr<AbstractApplication> &app) : app(app) {}
 };
 
 AppPickerInput::AppPickerInput(const AbstractAppDatabase *appDb) : m_appDb(appDb) {

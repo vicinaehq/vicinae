@@ -24,7 +24,7 @@ AppRequestRouter::getDefault(const proto::ext::application::GetDefaultApplicatio
 
   res->set_allocated_get_default(resData);
 
-  if (auto opener = m_appDb.findBestOpener(req.target().c_str())) {
+  if (auto opener = m_appDb.findDefaultOpener(req.target().c_str())) {
     auto app = new proto::ext::application::Application(opener->toProto());
     resData->set_allocated_app(app);
   }
@@ -43,7 +43,7 @@ AppRequestRouter::openApplication(const proto::ext::application::OpenApplication
     }
   }
 
-  if (auto opener = m_appDb.findBestOpener(target)) { m_appDb.launch(*opener, {target}); }
+  if (auto opener = m_appDb.findDefaultOpener(target)) { m_appDb.launch(*opener, {target}); }
 
   return nullptr;
 }

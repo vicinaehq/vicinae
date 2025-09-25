@@ -8,11 +8,11 @@ public:
   void setClearSearch(bool value) { m_clearSearch = value; }
   void execute(ApplicationContext *context) override;
 
-  OpenAppAction(const std::shared_ptr<Application> &app, const QString &title,
+  OpenAppAction(const std::shared_ptr<AbstractApplication> &app, const QString &title,
                 const std::vector<QString> args);
 
 private:
-  std::shared_ptr<Application> application;
+  std::shared_ptr<AbstractApplication> application;
   std::vector<QString> args;
   bool m_clearSearch = false;
 };
