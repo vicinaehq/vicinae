@@ -112,10 +112,9 @@ bool GnomeClipboardServer::setupDBusConnection() {
   }
 
   // Connect to ClipboardChanged signal
-  // Signal signature: (stssssts) = string, uint64, string, string, string, string, uint64, string
+  // Signal signature: (ayss) = array of bytes, string, string
   bool connected = m_bus.connect(DBUS_SERVICE, DBUS_PATH, DBUS_INTERFACE, "ClipboardChanged", this,
-                                 SLOT(handleClipboardChanged(QString, qulonglong, QString, QString, QString,
-                                                             QString, qulonglong, QString)));
+                                 SLOT(handleClipboardChanged(QByteArray, QString, QString)));
 
   if (!connected) {
     qWarning() << "GnomeClipboardServer: Failed to connect to ClipboardChanged signal";
@@ -149,8 +148,7 @@ void GnomeClipboardServer::cleanupDBusConnection() {
 
     // Disconnect from D-Bus signal
     m_bus.disconnect(DBUS_SERVICE, DBUS_PATH, DBUS_INTERFACE, "ClipboardChanged", this,
-                     SLOT(handleClipboardChanged(QString, qulonglong, QString, QString, QString, QString,
-                                                 qulonglong, QString)));
+                     SLOT(handleClipboardChanged(QByteArray, QString, QString)));
 
     delete m_interface;
     m_interface = nullptr;
@@ -159,76 +157,23 @@ void GnomeClipboardServer::cleanupDBusConnection() {
   m_isConnected = false;
 }
 
-void GnomeClipboardServer::handleClipboardChanged(const QString &content, qulonglong timestamp,
-                                                  const QString &source, const QString &mimeType,
-                                                  const QString &contentType, const QString &contentHash,
-                                                  qulonglong size, const QString &sourceApp) {
+void GnomeClipboardServer::handleClipboardChanged(const QByteArray &content, const QString &mimeType,
+                                                  const QString &sourceApp) {
   qDebug() << "GnomeClipboardServer: Received clipboard change from" << sourceApp << "with mime type"
-           << mimeType << "and size" << size;
+           << mimeType << "and size" << content.size() << "bytes";
 
   try {
-    // Create ClipboardSelection from D-Bus signal data
     ClipboardSelection selection;
 
-    // Create the main data offer
     ClipboardDataOffer offer;
     offer.mimeType = mimeType;
+    offer.data = content;
 
-    // Handle different content types appropriately
-    if (mimeType.startsWith("image/") || mimeType.startsWith("application/")) {
-      // For images and binary data, handle both data URLs and plain base64
-      QString base64String;
-
-      if (content.startsWith("data:")) {
-        // Handle data URL format: data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...
-        int commaIndex = content.indexOf(',');
-        if (commaIndex != -1) {
-          base64String = content.mid(commaIndex + 1);
-          qDebug() << "GnomeClipboardServer: Extracted base64 from data URL";
-        } else {
-          qWarning() << "GnomeClipboardServer: Invalid data URL format for" << mimeType;
-          base64String = content; // Fallback to treating as plain base64
-        }
-      } else {
-        // Plain base64 data
-        base64String = content;
-        qDebug() << "GnomeClipboardServer: Processing plain base64 data";
-      }
-
-      QByteArray base64Content = base64String.toUtf8();
-      offer.data = QByteArray::fromBase64(base64Content);
-
-      if (offer.data.isEmpty() && !base64Content.isEmpty()) {
-        qWarning() << "GnomeClipboardServer: Failed to decode base64 data for" << mimeType;
-        qWarning() << "GnomeClipboardServer: First 100 chars:" << base64String.left(100);
-        // Fall back to treating as text
-        offer.data = base64Content;
-      } else {
-        qDebug() << "GnomeClipboardServer: Successfully decoded" << mimeType
-                 << "data, original size:" << base64Content.size() << "decoded size:" << offer.data.size()
-                 << "bytes";
-      }
-    } else {
-      // For text data, use as-is
-      offer.data = content.toUtf8();
-      qDebug() << "GnomeClipboardServer: Processing text data (" << mimeType
-               << "), size:" << offer.data.size() << "bytes";
-    }
+    qDebug() << "GnomeClipboardServer: Processing binary data (" << mimeType
+             << "), size:" << offer.data.size() << "bytes";
 
     selection.offers.push_back(offer);
     selection.sourceApp = sourceApp.isEmpty() ? std::nullopt : std::optional<QString>(sourceApp);
-
-    // Handle additional common MIME types based on content type
-    if (contentType == "text" && mimeType == "text/plain") {
-      // For plain text, we might also want to offer text/html if it contains markup
-      // This is a simple heuristic - in practice, the extension should provide multiple offers
-      if (content.contains("<") && content.contains(">")) {
-        ClipboardDataOffer htmlOffer;
-        htmlOffer.mimeType = "text/html";
-        htmlOffer.data = content.toUtf8();
-        selection.offers.push_back(htmlOffer);
-      }
-    }
 
     // Emit the selection to the clipboard service
     emit selectionAdded(selection);
