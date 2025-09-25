@@ -43,7 +43,12 @@ Vicinae is designed for developers and power users who want fast, keyboard-first
   → Includes access to the official Raycast extension store, with one-click installs directly from within the launcher  
   → Many extensions may not work yet due to missing APIs or general Linux incompatibilities (improvements in progress)
 
----
+
+## Breaking changes
+
+Until we reach version 1 you should expect breaking changes from release to release. Watch the changelogs to learn about them.
+
+We try to not introduce breaking changes that result in a definitive loss of data, but you should expect to have to redo your configuration from time to time.
 
 ## 📚 Documentation
 

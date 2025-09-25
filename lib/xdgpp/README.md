@@ -9,7 +9,7 @@ Use in your own project at your own risk.
 The goal of this library is to provide high-level interfaces to deal with various specifications, such as the desktop entry one.
 
 For now, this library (roughly) implements:
-- [mime-apps](https://specifications.freedesktop.org/mime-apps-spec/latest/)~
+- [mime-apps](https://specifications.freedesktop.org/mime-apps-spec/latest/)
 - [desktop-entry](https://specifications.freedesktop.org/desktop-entry-spec/latest/)
 
 # Build and install
