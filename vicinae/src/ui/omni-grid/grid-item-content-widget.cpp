@@ -1,5 +1,7 @@
 #include "grid-item-content-widget.hpp"
+#include "layout.hpp"
 #include "theme.hpp"
+#include <absl/strings/internal/str_format/extension.h>
 #include <qnamespace.h>
 #include <qwidget.h>
 
@@ -7,39 +9,39 @@ int GridItemContentWidget::borderWidth() const { return 3; }
 
 void GridItemContentWidget::resizeEvent(QResizeEvent *event) {
   QWidget::resizeEvent(event);
-
-  if (m_widget) repositionCenterWidget();
+  recalculate();
 }
 
 void GridItemContentWidget::paintEvent(QPaintEvent *event) {
   auto &theme = ThemeService::instance().theme();
   int borderRadius = 10;
-
+  QColor backgroundColor(theme.colors.mainHoveredBackground);
   QPainter painter(this);
+  QPainterPath path;
 
   painter.setRenderHint(QPainter::Antialiasing, true);
 
-  QPainterPath path;
-  path.addRoundedRect(rect(), borderRadius, borderRadius);
-
-  painter.setClipPath(path);
-
-  QColor backgroundColor(theme.colors.mainHoveredBackground);
-
-  painter.fillPath(path, backgroundColor);
-
   if (m_selected || underMouse()) {
-    QPen pen(m_selected ? theme.colors.text : theme.colors.subtext, 3);
+    QPen pen(m_selected ? theme.colors.text : theme.colors.subtext, borderWidth());
     painter.setPen(pen);
-  } else {
-    painter.setPen(Qt::NoPen);
+    path.addRoundedRect(rect(), borderRadius, borderRadius);
+    painter.setClipPath(path);
+    painter.drawPath(path);
   }
 
+  painter.setPen(Qt::NoPen);
+  path.clear();
+  path.addRoundedRect(rect().adjusted(borderWidth(), borderWidth(), -borderWidth(), -borderWidth()),
+                      borderRadius, borderRadius);
+  painter.fillPath(path, backgroundColor);
+  painter.setClipPath(path);
   painter.drawPath(path);
 }
 
 int GridItemContentWidget::insetForSize(Inset inset, QSize size) const {
   switch (inset) {
+  case Inset::None:
+    return 5;
   case Inset::Small:
     return size.width() * 0.10;
   case Inset::Medium:
@@ -49,6 +51,36 @@ int GridItemContentWidget::insetForSize(Inset inset, QSize size) const {
   }
 
   return 0;
+}
+
+bool GridItemContentWidget::event(QEvent *event) {
+  if (event->type() == QEvent::HoverEnter || event->type() == QEvent::HoverLeave) { recalculate(); }
+
+  return QWidget::event(event);
+}
+
+void GridItemContentWidget::recalculate() {
+  if (!m_widget) return;
+
+  int margin = insetForSize(m_inset, size());
+
+  layout()->setContentsMargins(margin, margin, margin, margin);
+  m_widget->setFixedSize(rect().marginsRemoved(layout()->contentsMargins()).size());
+
+  // if no margin we apply a mask to make sure the content doesn't overlap
+  // the rounded borders. Masks are not ideal as they produce jagged corners
+  // but it's okay for now.
+  /*
+  if (margin == 0) {
+    QPainterPath path;
+    auto rect = (m_selected || underMouse()) ? m_widget->rect().adjusted(1, 1, -1, -1) : m_widget->rect();
+    path.addRoundedRect(rect, 10, 10);
+    QRegion mask = QRegion(path.toFillPolygon().toPolygon());
+    m_widget->setMask(mask);
+  } else {
+    m_widget->clearMask();
+  }
+  */
 }
 
 void GridItemContentWidget::mousePressEvent(QMouseEvent *event) { emit clicked(); }
@@ -70,23 +102,27 @@ void GridItemContentWidget::repositionCenterWidget() {
 }
 
 void GridItemContentWidget::setWidget(QWidget *widget) {
-  if (m_widget) { m_widget->deleteLater(); }
+  // if (m_widget) { m_widget->deleteLater(); }
+
+  HStack().add(widget).imbue(this);
 
   m_widget = widget;
-  widget->setParent(this);
-  repositionCenterWidget();
+  recalculate();
+  // widget->setParent(this);
+  // repositionCenterWidget();
 }
 
 QWidget *GridItemContentWidget::widget() const { return m_widget; }
 
 void GridItemContentWidget::setSelected(bool selected) {
-  this->m_selected = selected;
+  m_selected = selected;
+  recalculate();
   update();
 }
 
 void GridItemContentWidget::setInset(Inset inset) {
   m_inset = inset;
-  if (m_widget) repositionCenterWidget();
+  recalculate();
   update();
 }
 

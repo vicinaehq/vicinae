@@ -1,4 +1,5 @@
 #include "image.hpp"
+#include "theme.hpp"
 #include "ui/image/data-uri-image-loader.hpp"
 #include "ui/image/favicon-image-loader.hpp"
 #include "ui/image/http-image-loader.hpp"
@@ -20,10 +21,12 @@ void ImageWidget::render() {
   if (!m_loader) { return; }
 
   QSize drawableSize = rect().marginsRemoved(contentsMargins()).size();
+  qreal pixelRatio = 1;
+
+  if (auto sc = screen()) { pixelRatio = sc->devicePixelRatio(); }
 
   m_renderCount += 1;
-  m_loader->render(
-      RenderConfig{.size = drawableSize, .fit = m_fit, .devicePixelRatio = qApp->devicePixelRatio()});
+  m_loader->render(RenderConfig{.size = drawableSize, .fit = m_fit, .devicePixelRatio = pixelRatio});
 }
 
 void ImageWidget::setAlignment(Qt::Alignment alignment) {
@@ -166,6 +169,8 @@ void ImageWidget::paintEvent(QPaintEvent *event) {
   if (m_alignment.testFlag(Qt::AlignVCenter)) { pos.setY(verticalMargins / 2); }
 
   OmniPainter painter(this);
+
+  // painter.fillRect(rect(), ColorLike(SemanticColor::Red), 0, 1);
 
   painter.setClipRegion(event->region());
   painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
