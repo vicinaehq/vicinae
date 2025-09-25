@@ -1,6 +1,7 @@
 #include "app.hpp"
 #include <iostream>
 #include <iomanip>
+#include <unistd.h>
 #include "proto/wlr-clipboard.pb.h"
 
 void Clipman::global(WaylandRegistry &reg, uint32_t name, const char *interface, uint32_t version) {
@@ -13,6 +14,21 @@ void Clipman::global(WaylandRegistry &reg, uint32_t name, const char *interface,
   if (strcmp(interface, wl_seat_interface.name) == 0) {
     _seat = std::make_unique<WaylandSeat>(reg.bind<wl_seat>(name, &wl_seat_interface, std::min(version, 1u)));
   }
+}
+
+void Clipman::primarySelection(DataDevice &device, DataOffer &offer) {
+  if (isatty(STDOUT_FILENO)) {
+    std::cout << "********** " << "BEGIN PRIMARY SELECTION" << "**********" << std::endl;
+    for (const auto &mime : offer.mimes()) {
+      auto path = offer.receive(mime);
+      std::cout << std::left << std::setw(30) << mime << path << std::endl;
+    }
+    std::cout << "********** " << "END PRIMARY SELECTION" << "**********" << std::endl;
+
+    return;
+  }
+
+  // we don't do anything with the primary selection
 }
 
 void Clipman::selection(DataDevice &device, DataOffer &offer) {

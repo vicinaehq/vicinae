@@ -1,4 +1,5 @@
 #include "data-device.hpp"
+#include "data-offer.hpp"
 #include <iostream>
 
 void DataDevice::dataOffer(void *data, zwlr_data_control_device_v1 *device, zwlr_data_control_offer_v1 *id) {
@@ -42,7 +43,15 @@ void DataDevice::finished(void *data, zwlr_data_control_device_v1 *device) {
 void DataDevice::primarySelection(void *data, zwlr_data_control_device_v1 *device,
                                   zwlr_data_control_offer_v1 *id) {
   auto self = static_cast<DataDevice *>(data);
-  // we don't use primary selection
+
+  if (!self->m_pendingOffer) return;
+
+  // will destroy the previous offer (as requested by the protocol)
+  self->m_offer = std::move(self->m_pendingOffer);
+
+  for (auto lstn : self->_listeners) {
+    lstn->primarySelection(*self, *self->m_offer);
+  }
 }
 
 DataDevice::DataDevice(zwlr_data_control_device_v1 *dev) : _dev(dev) {
