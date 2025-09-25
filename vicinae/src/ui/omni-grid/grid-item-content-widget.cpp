@@ -41,7 +41,7 @@ void GridItemContentWidget::paintEvent(QPaintEvent *event) {
 int GridItemContentWidget::insetForSize(Inset inset, QSize size) const {
   switch (inset) {
   case Inset::None:
-    return 5;
+    return borderWidth() + 2; // minimum gap between hover/selected border and content
   case Inset::Small:
     return size.width() * 0.10;
   case Inset::Medium:
@@ -66,21 +66,6 @@ void GridItemContentWidget::recalculate() {
 
   layout()->setContentsMargins(margin, margin, margin, margin);
   m_widget->setFixedSize(rect().marginsRemoved(layout()->contentsMargins()).size());
-
-  // if no margin we apply a mask to make sure the content doesn't overlap
-  // the rounded borders. Masks are not ideal as they produce jagged corners
-  // but it's okay for now.
-  /*
-  if (margin == 0) {
-    QPainterPath path;
-    auto rect = (m_selected || underMouse()) ? m_widget->rect().adjusted(1, 1, -1, -1) : m_widget->rect();
-    path.addRoundedRect(rect, 10, 10);
-    QRegion mask = QRegion(path.toFillPolygon().toPolygon());
-    m_widget->setMask(mask);
-  } else {
-    m_widget->clearMask();
-  }
-  */
 }
 
 void GridItemContentWidget::mousePressEvent(QMouseEvent *event) { emit clicked(); }
