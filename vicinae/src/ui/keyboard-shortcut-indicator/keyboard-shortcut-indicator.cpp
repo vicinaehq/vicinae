@@ -41,7 +41,7 @@ void KeyboardShortcutIndicatorWidget::drawKey(const QString &key, QRect rect, Om
     painter.drawPixmap(contentRect, pix);
   } else {
     painter.setThemePen(SemanticColor::TextPrimary);
-    painter.drawText(contentRect, Qt::AlignCenter, _shortcutModel.key);
+    painter.drawText(contentRect, Qt::AlignCenter, key.toUpper());
   }
 }
 

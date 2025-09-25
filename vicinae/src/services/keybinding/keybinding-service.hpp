@@ -16,12 +16,15 @@ public:
     return KeyBindingMode::Default;
   }
 
+  static bool usesOnly(QKeyEvent *event, Qt::KeyboardModifiers required) {
+    auto mods = event->modifiers();
+    return (mods & required) == required && (mods & ~(required | Qt::KeypadModifier | Qt::GroupSwitchModifier)) == 0;
+  }
+
   static bool isDownKey(QKeyEvent *event, const QString &keybinding) {
     KeyBindingMode mode = getMode(keybinding);
-    
-    if (event->modifiers() != Qt::ControlModifier) {
-      return false;
-    }
+
+    if (!usesOnly(event, Qt::ControlModifier)) { return false; }
 
     switch (mode) {
     case KeyBindingMode::Default:
@@ -34,10 +37,8 @@ public:
 
   static bool isUpKey(QKeyEvent *event, const QString &keybinding) {
     KeyBindingMode mode = getMode(keybinding);
-    
-    if (event->modifiers() != Qt::ControlModifier) {
-      return false;
-    }
+
+    if (!usesOnly(event, Qt::ControlModifier)) { return false; }
 
     switch (mode) {
     case KeyBindingMode::Default:
@@ -49,29 +50,23 @@ public:
   }
 
   static bool isLeftKey(QKeyEvent *event, const QString &keybinding) {
-    if (event->modifiers() != Qt::ControlModifier) {
-      return false;
-    }
     KeyBindingMode mode = getMode(keybinding);
     switch (mode) {
     case KeyBindingMode::Default:
-      return event->key() == Qt::Key_H;
+      return usesOnly(event, Qt::ControlModifier) && event->key() == Qt::Key_H;
     case KeyBindingMode::Emacs:
-      return event->key() == Qt::Key_B;
+      return usesOnly(event, Qt::ControlModifier | Qt::AltModifier) && event->key() == Qt::Key_B;
     }
     return false;
   }
 
   static bool isRightKey(QKeyEvent *event, const QString &keybinding) {
-    if (event->modifiers() != Qt::ControlModifier) {
-      return false;
-    }
     KeyBindingMode mode = getMode(keybinding);
     switch (mode) {
     case KeyBindingMode::Default:
-      return event->key() == Qt::Key_L;
+      return usesOnly(event, Qt::ControlModifier) && event->key() == Qt::Key_L;
     case KeyBindingMode::Emacs:
-      return event->key() == Qt::Key_F;
+      return usesOnly(event, Qt::ControlModifier | Qt::AltModifier) && event->key() == Qt::Key_F;
     }
     return false;
   }

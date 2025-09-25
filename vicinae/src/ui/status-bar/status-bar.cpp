@@ -63,10 +63,9 @@ void GlobalBar::actionsChanged(const ActionPanelState &panel) {
   auto config = ServiceRegistry::instance()->config();
   const QString keybinding = config ? config->value().keybinding : QString("default");
   if (keybinding == "emacs") {
-    m_actionButton->setShortcut(KeyboardShortcutModel{.key = "return", .modifiers = {"alt"}});
+    m_actionButton->setShortcut(KeyboardShortcutModel{.key = "X", .modifiers = {"alt"}});
   } else {
-    // Avoid Ctrl+B to preserve original meaning elsewhere; use Ctrl+; instead
-    m_actionButton->setShortcut(KeyboardShortcutModel{.key = ";", .modifiers = {"ctrl"}});
+    m_actionButton->setShortcut(KeyboardShortcutModel{.key = "B", .modifiers = {"ctrl"}});
   }
 }
 
