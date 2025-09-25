@@ -16,6 +16,7 @@ private:
   zwlr_data_control_device_v1 *_dev;
   std::vector<Listener *> _listeners;
   std::unique_ptr<DataOffer> m_pendingOffer;
+  std::unique_ptr<DataOffer> m_pendingPrimarySelectionOffer;
   std::unique_ptr<DataOffer> m_offer;
 
   static void dataOffer(void *data, zwlr_data_control_device_v1 *device, zwlr_data_control_offer_v1 *id);
