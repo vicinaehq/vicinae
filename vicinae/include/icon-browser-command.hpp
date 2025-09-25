@@ -58,12 +58,12 @@ class IconBrowserView : public GridView {
 
       section.setColumns(8);
       section.setSpacing(10);
-      m_grid->setInset(GridItemContentWidget::Inset::Large);
+      m_grid->setInset(GridItemContentWidget::Inset::Small);
 
       for (const auto &icon : BuiltinIconService::icons() | std::views::filter(filter)) {
         auto item = std::make_unique<IconBrowserItem>(icon);
 
-        item->setInset(GridItemContentWidget::Inset::Large);
+        item->setInset(GridItemContentWidget::Inset::Small);
         section.addItem(std::make_unique<IconBrowserItem>(icon));
       }
     });

@@ -1,5 +1,4 @@
 #pragma once
-
 #include "common.hpp"
 #include "ui/image/url.hpp"
 #include <qfont.h>
@@ -10,11 +9,10 @@
 #include <qsize.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
-enum ObjectFit { ObjectFitContain, ObjectFitFill };
 
 struct RenderConfig {
   QSize size;
-  ObjectFit fit = ObjectFitContain;
+  ObjectFit fit = ObjectFit::Contain;
   qreal devicePixelRatio = 1;
 };
 
@@ -41,12 +39,22 @@ signals:
 };
 
 class ImageWidget : public QWidget {
+public:
+  void render();
+  void setAlignment(Qt::Alignment alignment);
+  void setObjectFit(ObjectFit fit);
+  const ImageURL &url() const;
+  void setUrl(const ImageURL &url);
+  ImageWidget(QWidget *parent = nullptr);
+  ~ImageWidget();
+
+private:
   QObjectUniquePtr<AbstractImageLoader> m_loader;
   QPixmap m_data;
   ImageURL m_source;
   QString m_fallback;
   int m_renderCount = 0;
-  ObjectFit m_fit = ObjectFit::ObjectFitContain;
+  ObjectFit m_fit = ObjectFit::Contain;
   QFlags<Qt::AlignmentFlag> m_alignment = Qt::AlignCenter;
   std::optional<ColorLike> m_backgroundColor;
   int m_borderRadius = 4;
@@ -59,14 +67,4 @@ class ImageWidget : public QWidget {
   QSize sizeHint() const override;
   void setUrlImpl(const ImageURL &url);
   void refreshTheme(const ThemeInfo &theme);
-
-public:
-  void render();
-  void setAlignment(Qt::Alignment alignment);
-  void setObjectFit(ObjectFit fit);
-  const ImageURL &url() const;
-  void setUrl(const ImageURL &url);
-
-  ImageWidget(QWidget *parent = nullptr);
-  ~ImageWidget();
 };
