@@ -40,6 +40,7 @@ export namespace Grid {
     export type Props = GridSectionProps;
   }
 
+  export type Fit = GridFit;
   export type Props = GridProps;
   export type Inset = GridInset;
   export type AspectRatio = GridAspectRatio;
@@ -177,7 +178,7 @@ const GridItem: React.FC<Grid.Item.Props> = ({
 };
 
 const GridSection: React.FC<Grid.Section.Props> = ({
-  fit = GridFit.Contain,
+  fit,
   aspectRatio,
   inset,
   ...props
@@ -200,6 +201,7 @@ export const Grid = Object.assign(GridRoot, {
   Section: GridSection,
   EmptyView,
   Dropdown,
+  Fit: GridFit,
   Inset: GridInset,
   Item: Object.assign(GridItem, {
     Accessory: GridAccessory,
