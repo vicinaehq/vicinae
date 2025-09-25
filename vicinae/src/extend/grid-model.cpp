@@ -55,8 +55,8 @@ GridSectionModel GridModelParser::parseSection(const QJsonObject &instance) {
 
   model.title = props.value("title").toString();
   model.subtitle = props.value("subtitle").toString();
-  model.aspectRatio = props.value("aspectRatio").toDouble(1);
 
+  if (props.contains("aspectRatio")) { model.aspectRatio = props.value("aspectRatio").toDouble(1); }
   if (props.contains("columns")) { model.columns = props.value("columns").toInt(); }
   if (auto inset = props.value("inset"); inset.isString()) { model.inset = parseInset(inset.toString()); }
 
@@ -101,7 +101,7 @@ GridModel GridModelParser::parse(const QJsonObject &instance) {
   if (auto cols = props.value("columns"); cols.isDouble()) { model.columns = cols.toInt(); }
 
   model.fit = GridFit::GridContain;
-  model.aspectRatio = 1;
+  model.aspectRatio = props.value("aspectRatio").toDouble(1);
   model.searchPlaceholderText = props["searchBarPlaceholder"].toString();
   model.filtering = props["filtering"].toBool(defaultFiltering);
 

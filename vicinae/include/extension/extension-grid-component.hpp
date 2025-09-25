@@ -60,6 +60,8 @@ class ExtensionGridItem : public OmniGrid::AbstractGridItem {
   double aspectRatio() const override { return m_aspectRatio; }
 
 public:
+  void setAspectRatio(double ratio) { m_aspectRatio = ratio; }
+
   const GridItemViewModel &model() const { return _item; }
 
   ExtensionGridItem(const GridItemViewModel &model, double aspectRatio = 1)
@@ -68,87 +70,6 @@ public:
 
 class ExtensionGridList : public QWidget {
   Q_OBJECT
-
-  OmniList *m_list = new OmniList;
-  std::vector<GridChild> m_model;
-  int m_columns = 1;
-  GridItemContentWidget::Inset m_inset = GridItemContentWidget::Inset::Small;
-  QString m_filter;
-
-  bool matchesFilter(const GridItemViewModel &item, const QString &query) {
-    bool keywordMatches = std::ranges::any_of(
-        item.keywords, [&](auto &&keyword) { return keyword.contains(query, Qt::CaseInsensitive); });
-
-    return keywordMatches || item.title.contains(query, Qt::CaseInsensitive);
-  }
-
-  void render(OmniList::SelectionPolicy selectionPolicy) {
-    auto matches = [&](const GridItemViewModel &item) { return matchesFilter(item, m_filter); };
-    std::vector<std::shared_ptr<OmniList::AbstractVirtualItem>> currentSectionItems;
-    auto appendSectionLess = [&]() {
-      if (!currentSectionItems.empty()) {
-        auto &listSection = m_list->addSection();
-
-        listSection.setSpacing(10);
-        listSection.setColumns(m_columns);
-        listSection.addItems(currentSectionItems);
-        currentSectionItems.clear();
-      }
-    };
-
-    m_list->updateModel(
-        [&]() {
-          for (const auto &item : m_model) {
-            if (auto listItem = std::get_if<GridItemViewModel>(&item)) {
-              if (!matches(*listItem)) continue;
-              currentSectionItems.emplace_back(std::static_pointer_cast<OmniList::AbstractVirtualItem>(
-                  std::make_shared<ExtensionGridItem>(*listItem)));
-
-            } else if (auto section = std::get_if<GridSectionModel>(&item)) {
-              appendSectionLess();
-
-              std::vector<std::shared_ptr<OmniList::AbstractVirtualItem>> items;
-
-              for (auto &item : section->children | std::views::filter(matches)) {
-                auto gridItem = std::make_unique<ExtensionGridItem>(item, section->aspectRatio);
-
-                gridItem->setInset(section->inset.value_or(m_inset));
-                items.emplace_back(std::move(gridItem));
-              }
-
-              if (items.empty()) continue;
-
-              auto &sec = m_list->addSection(section->title);
-
-              if (section->title.isEmpty()) { sec.addSpacing(10); }
-
-              sec.setSpacing(10);
-              sec.setColumns(section->columns.value_or(m_columns));
-              sec.addItems(std::move(items));
-            }
-          }
-          appendSectionLess();
-        },
-        selectionPolicy);
-  }
-
-  void handleSelectionChanged(const OmniList::AbstractVirtualItem *next,
-                              const OmniList::AbstractVirtualItem *previous) {
-    if (!next) {
-      emit selectionChanged(nullptr);
-      return;
-    }
-
-    if (auto qualifiedNext = dynamic_cast<const ExtensionGridItem *>(next)) {
-      emit selectionChanged(&qualifiedNext->model());
-    }
-  }
-
-  void handleItemActivated(const OmniList::AbstractVirtualItem &item) {
-    if (auto qualified = dynamic_cast<const ExtensionGridItem *>(&item)) {
-      emit itemActivated(qualified->model());
-    }
-  }
 
 public:
   ExtensionGridList() {
@@ -168,6 +89,8 @@ public:
     m_columns = cols;
     render(OmniList::PreserveSelection);
   }
+
+  void setAspectRatio(double ratio) { m_aspectRatio = ratio; }
 
   void setInset(GridItemContentWidget::Inset inset) {
     if (m_inset == inset) return;
@@ -207,6 +130,90 @@ public:
 signals:
   void selectionChanged(const GridItemViewModel *);
   void itemActivated(const GridItemViewModel &);
+
+private:
+  OmniList *m_list = new OmniList;
+  std::vector<GridChild> m_model;
+  int m_columns = 1;
+  double m_aspectRatio = 1;
+  GridItemContentWidget::Inset m_inset = GridItemContentWidget::Inset::Small;
+  QString m_filter;
+
+  bool matchesFilter(const GridItemViewModel &item, const QString &query) {
+    bool keywordMatches = std::ranges::any_of(
+        item.keywords, [&](auto &&keyword) { return keyword.contains(query, Qt::CaseInsensitive); });
+
+    return keywordMatches || item.title.contains(query, Qt::CaseInsensitive);
+  }
+
+  void render(OmniList::SelectionPolicy selectionPolicy) {
+    auto matches = [&](const GridItemViewModel &item) { return matchesFilter(item, m_filter); };
+    std::vector<std::shared_ptr<OmniList::AbstractVirtualItem>> currentSectionItems;
+    auto appendSectionLess = [&]() {
+      if (!currentSectionItems.empty()) {
+        auto &listSection = m_list->addSection();
+
+        listSection.setSpacing(10);
+        listSection.setColumns(m_columns);
+        listSection.addItems(currentSectionItems);
+        currentSectionItems.clear();
+      }
+    };
+
+    m_list->updateModel(
+        [&]() {
+          for (const auto &item : m_model) {
+            if (auto listItem = std::get_if<GridItemViewModel>(&item)) {
+              if (!matches(*listItem)) continue;
+              currentSectionItems.emplace_back(std::static_pointer_cast<OmniList::AbstractVirtualItem>(
+                  std::make_shared<ExtensionGridItem>(*listItem)));
+
+            } else if (auto section = std::get_if<GridSectionModel>(&item)) {
+              appendSectionLess();
+
+              std::vector<std::shared_ptr<OmniList::AbstractVirtualItem>> items;
+
+              for (auto &item : section->children | std::views::filter(matches)) {
+                auto gridItem = std::make_unique<ExtensionGridItem>(item);
+
+                gridItem->setAspectRatio(section->aspectRatio.value_or(m_aspectRatio));
+                gridItem->setInset(section->inset.value_or(m_inset));
+                items.emplace_back(std::move(gridItem));
+              }
+
+              if (items.empty()) continue;
+
+              auto &sec = m_list->addSection(section->title);
+
+              if (section->title.isEmpty()) { sec.addSpacing(10); }
+
+              sec.setSpacing(10);
+              sec.setColumns(section->columns.value_or(m_columns));
+              sec.addItems(std::move(items));
+            }
+          }
+          appendSectionLess();
+        },
+        selectionPolicy);
+  }
+
+  void handleSelectionChanged(const OmniList::AbstractVirtualItem *next,
+                              const OmniList::AbstractVirtualItem *previous) {
+    if (!next) {
+      emit selectionChanged(nullptr);
+      return;
+    }
+
+    if (auto qualifiedNext = dynamic_cast<const ExtensionGridItem *>(next)) {
+      emit selectionChanged(&qualifiedNext->model());
+    }
+  }
+
+  void handleItemActivated(const OmniList::AbstractVirtualItem &item) {
+    if (auto qualified = dynamic_cast<const ExtensionGridItem *>(&item)) {
+      emit itemActivated(qualified->model());
+    }
+  }
 };
 
 class ExtensionGridComponent : public ExtensionSimpleView {

@@ -81,6 +81,7 @@ void ExtensionGridComponent::render(const RenderModel &baseModel) {
 
   m_list->setColumns(newModel.columns.value_or(1));
   m_list->setInset(newModel.inset.value_or(GridItemContentWidget::Inset::Small));
+  m_list->setAspectRatio(newModel.aspectRatio);
   m_list->setModel(newModel.items, policy);
 
   if (!newModel.searchText) {
