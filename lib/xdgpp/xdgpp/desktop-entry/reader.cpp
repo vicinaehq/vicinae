@@ -1,4 +1,5 @@
 #include "reader.hpp"
+#include <iostream>
 
 namespace xdgpp {
 
@@ -83,23 +84,34 @@ std::string DesktopEntryReader::parseRawLocale() {
 }
 
 size_t DesktopEntryReader::computeLocalScore(const Locale &locale) {
-  if (m_locale.lang() != locale.lang()) return 0;
+  using F = Locale::Component;
 
-  if (m_locale.country() && m_locale.modifier()) {
-    if (locale.country() == m_locale.country() && locale.modifier() == m_locale.modifier()) return 4;
-    if (locale.country() == m_locale.country()) return 3;
-    if (locale.modifier() == m_locale.modifier()) return 2;
+  if (m_locale.exactFlags(F::LANG | F::COUNTRY | F::MODIFIER)) {
+    if (m_locale.matchesOnly(locale, F::LANG | F::COUNTRY | F::MODIFIER)) return 4;
+    if (m_locale.matchesOnly(locale, F::LANG || Locale::COUNTRY)) return 3;
+    if (m_locale.matchesOnly(locale, F::LANG | Locale::MODIFIER)) return 2;
+    if (m_locale.matchesOnly(locale, F::LANG)) return 1;
+    return 0;
   }
 
-  else if (m_locale.country()) {
-    if (m_locale.country() == locale.country()) return 2;
+  if (m_locale.exactFlags(F::LANG | F::COUNTRY)) {
+    if (m_locale.matchesOnly(locale, F::LANG | F::COUNTRY)) return 2;
+    if (m_locale.matchesOnly(locale, F::LANG)) return 1;
+    return 0;
   }
 
-  else if (m_locale.modifier()) {
-    if (m_locale.modifier() == locale.modifier()) return 2;
+  if (m_locale.exactFlags(F::LANG | F::MODIFIER)) {
+    if (m_locale.matchesOnly(locale, F::LANG | F::MODIFIER)) return 2;
+    if (m_locale.matchesOnly(locale, F::LANG)) return 1;
+    return 0;
   }
 
-  return 1;
+  if (m_locale.exactFlags(F::LANG)) {
+    if (m_locale.lang() == locale.lang()) return 1;
+    return 0;
+  }
+
+  return 0;
 }
 
 void DesktopEntryReader::parse() {
