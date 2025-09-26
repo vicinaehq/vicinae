@@ -46,7 +46,7 @@ class IconBrowserView : public GridView {
   public:
     const QString &name() const { return _name; }
 
-    IconBrowserItem(const QString &name) : _name(name) {}
+    IconBrowserItem(const QString &name) : _name(name) { setInset(GridItemContentWidget::Inset::Large); }
   };
 
   void textChanged(const QString &s) override {
@@ -58,7 +58,6 @@ class IconBrowserView : public GridView {
 
       section.setColumns(8);
       section.setSpacing(10);
-      m_grid->setInset(GridItemContentWidget::Inset::Small);
 
       for (const auto &icon : BuiltinIconService::icons() | std::views::filter(filter)) {
         auto item = std::make_unique<IconBrowserItem>(icon);
