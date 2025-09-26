@@ -90,6 +90,7 @@ const FormRoot: React.FC<Form.Props> = ({
 }) => {
   return (
     <form
+	  //@ts-ignore
       enableDrafts={enableDrafts}
       isLoading={isLoading}
       navigationTitle={navigationTitle}
