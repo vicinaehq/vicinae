@@ -274,6 +274,7 @@ class EditClipboardSelectionKeywordsView : public ManagedFormView {
     auto clipman = context()->services->clipman();
 
     m_keywords->setText(clipman->retrieveKeywords(m_selectionId).value_or(""));
+    m_keywords->textEdit()->selectAll();
   }
 
 public:
@@ -635,8 +636,7 @@ class ClipboardHistoryView : public SimpleView {
     // Open filter dropdown: Default Ctrl+P; in Emacs mode, remap to Opt+P.
     auto config = ServiceRegistry::instance()->config();
     const QString keybinding = config ? config->value().keybinding : QString("default");
-    if ((keybinding == "emacs" &&
-         (event->keyCombination() == QKeyCombination(Qt::AltModifier, Qt::Key_P))) ||
+    if ((keybinding == "emacs" && (event->keyCombination() == QKeyCombination(Qt::AltModifier, Qt::Key_P))) ||
         (keybinding != "emacs" &&
          (event->keyCombination() == QKeyCombination(Qt::ControlModifier, Qt::Key_P)))) {
       m_filterInput->openSelector();
