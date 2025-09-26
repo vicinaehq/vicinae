@@ -1,6 +1,5 @@
 #include "text-area.hpp"
 #include "common.hpp"
-#include "theme.hpp"
 #include "ui/scroll-bar/scroll-bar.hpp"
 #include "utils/layout.hpp"
 #include <QPlainTextEdit>
@@ -25,11 +24,16 @@ void TextArea::resizeEvent(QResizeEvent *event) {
   resizeArea();
 }
 
+void TextArea::setForwardShiftReturn(bool value) { m_forwardShiftReturn = value; }
+
+bool TextArea::forwardShiftReturn() const { return m_forwardShiftReturn; }
+
 void TextArea::setupUI() {
   m_textEdit = new QPlainTextEdit;
   m_textEdit->setFrameShape(QFrame::NoFrame);
   m_textEdit->setVerticalScrollBar(new OmniScrollBar);
   m_textEdit->setProperty("form-input", true);
+  m_textEdit->installEventFilter(this);
   m_notifier->track(m_textEdit);
   setFocusProxy(m_textEdit);
   setGrowAsRequired(true);
@@ -39,6 +43,21 @@ void TextArea::setupUI() {
   VStack().add(m_textEdit).imbue(this);
 
   connect(m_textEdit, &QPlainTextEdit::textChanged, this, &TextArea::resizeArea);
+}
+
+bool TextArea::eventFilter(QObject *watched, QEvent *event) {
+  if (watched == m_textEdit && event->type() == QEvent::KeyPress) {
+    auto keyEvent = static_cast<QKeyEvent *>(event);
+    bool hasShift = keyEvent->modifiers().testFlag(Qt::KeyboardModifier::ShiftModifier);
+
+    if (hasShift && m_forwardShiftReturn &&
+        (keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter)) {
+      QApplication::sendEvent(parentWidget(), keyEvent);
+      return true;
+    }
+  }
+
+  return QWidget::eventFilter(watched, event);
 }
 
 void TextArea::setMargins(int margins) { m_textEdit->document()->setDocumentMargin(margins); }

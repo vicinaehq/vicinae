@@ -9,7 +9,6 @@
 class QPlainTextEdit;
 
 class TextArea : public JsonFormItemWidget {
-  int m_rows = 3;
 
 public:
   TextArea(QWidget *m_parent = nullptr);
@@ -38,20 +37,29 @@ public:
   bool growAsRequired() const;
 
   /**
-   * Whether tab should be ignored (the default) or be inserted as part of the text.
+   * Whether we should forward Shift+Return to the parent widget instead
+   * of letting QPlainTextEdit handle it as it normally does (inserts a newline).
+   * This is on by default because Shift+Return is commonly used to submit forms.
    */
-  bool ignoreTab() const;
+  bool forwardShiftReturn() const;
+
+  /**
+   * @see forwardShiftReturn
+   */
+  void setForwardShiftReturn(bool value = true);
 
 protected:
+  bool eventFilter(QObject *watched, QEvent *event) override;
   void resizeEvent(QResizeEvent *event) override;
   int heightForRowCount(int rowCount);
 
 private:
   void resizeArea();
+  void setupUI();
 
   QPlainTextEdit *m_textEdit = nullptr;
   FocusNotifier *m_notifier = new FocusNotifier(this);
   bool m_growAsRequired = false;
-
-  void setupUI();
+  bool m_forwardShiftReturn = true;
+  int m_rows = 3;
 };
