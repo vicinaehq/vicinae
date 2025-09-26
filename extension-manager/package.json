@@ -18,13 +18,13 @@
   "license": "ISC",
   "dependencies": {
     "@vicinae/api": "file:../api",
-    "react-reconciler": "0.28.0"
+    "react-reconciler": "0.32.0"
   },
   "devDependencies": {
     "@bufbuild/protobuf": "^2.7.0",
     "@types/node": "^22.10.1",
-    "@types/react": "^18.1.0",
-    "@types/react-reconciler": "0.28.0",
+    "@types/react": "19.0.10",
+    "@types/react-reconciler": "0.32.1",
     "esbuild": "^0.25.9",
     "nodemon": "^3.1.10",
     "npm-run-all": "^4.1.5",
