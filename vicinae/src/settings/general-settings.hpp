@@ -6,6 +6,7 @@
 #include "ui/form/checkbox-input.hpp"
 #include "ui/qtheme-selector/qtheme-selector.hpp"
 #include "ui/theme-selector/theme-selector.hpp"
+#include "ui/keybinding-selector/keybinding-selector.hpp"
 #include "ui/vertical-scroll-area/vertical-scroll-area.hpp"
 #include <qnamespace.h>
 #include <qwidget.h>
@@ -21,6 +22,7 @@ class GeneralSettings : public VerticalScrollArea {
   FontSelector *m_fontSelector;
   QThemeSelector *m_qThemeSelector;
   FaviconServiceSelector *m_faviconSelector;
+  KeyBindingSelector *m_keybindingSelector;
   CheckboxInput *m_popToRootOnClose;
   BaseInput *m_fontSize;
 
@@ -34,6 +36,7 @@ class GeneralSettings : public VerticalScrollArea {
   void handleOpacityChange(double opacity);
   void handleIconThemeChange(const QString &iconTheme);
   void handleFaviconServiceChange(const QString &service);
+  void handleKeybindingChange(const QString &keybinding);
   void handlePopToRootOnCloseChange(bool popToRootOnClose);
   void handleFontSizeChange(double size);
 

@@ -4,20 +4,28 @@
 #include "ui/views/base-view.hpp"
 #include "ui/empty-view/empty-view.hpp"
 #include "ui/split-detail/split-detail.hpp"
+#include "services/keybinding/keybinding-service.hpp"
+#include "services/config/config-service.hpp"
+#include "service-registry.hpp"
 #include <qlogging.h>
 #include <qstackedwidget.h>
 
 bool ListView::inputFilter(QKeyEvent *event) {
+  auto config = ServiceRegistry::instance()->config();
+  const QString &keybinding = config->value().keybinding;
+
   if (event->modifiers() == Qt::ControlModifier) {
-    switch (event->key()) {
-    case Qt::Key_J:
+    if (KeyBindingService::isDownKey(event, keybinding)) {
       return m_list->selectDown();
-    case Qt::Key_K:
+    }
+    if (KeyBindingService::isUpKey(event, keybinding)) {
       return m_list->selectUp();
-    case Qt::Key_H:
+    }
+    if (KeyBindingService::isLeftKey(event, keybinding)) {
       context()->navigation->popCurrentView();
       return true;
-    case Qt::Key_L:
+    }
+    if (KeyBindingService::isRightKey(event, keybinding)) {
       m_list->activateCurrentSelection();
       return true;
     }

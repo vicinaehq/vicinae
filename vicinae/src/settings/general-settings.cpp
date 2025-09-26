@@ -8,6 +8,7 @@
 #include "ui/form/form.hpp"
 #include "ui/qtheme-selector/qtheme-selector.hpp"
 #include "ui/theme-selector/theme-selector.hpp"
+#include "ui/keybinding-selector/keybinding-selector.hpp"
 #include "utils/layout.hpp"
 #include "ui/font-selector/font-selector.hpp"
 #include "services/config/config-service.hpp"
@@ -25,6 +26,7 @@ void GeneralSettings::setConfig(const ConfigService::Value &value) {
   m_rootFileSearch->setValueAsJson(value.rootSearch.searchFiles);
   m_qThemeSelector->setValue(value.theme.iconTheme.value_or(currentIconTheme));
   m_faviconSelector->setValue(value.faviconService);
+  m_keybindingSelector->setValue(value.keybinding);
   m_popToRootOnClose->setValueAsJson(value.popToRootOnClose);
   m_closeOnFocusLoss->setValueAsJson(value.closeOnFocusLoss);
   m_fontSize->setText(QString::number(value.font.baseSize));
@@ -34,6 +36,12 @@ void GeneralSettings::handleFaviconServiceChange(const QString &service) {
   auto config = ServiceRegistry::instance()->config();
 
   config->updateConfig([&](ConfigService::Value &value) { value.faviconService = service; });
+}
+
+void GeneralSettings::handleKeybindingChange(const QString &keybinding) {
+  auto config = ServiceRegistry::instance()->config();
+
+  config->updateConfig([&](ConfigService::Value &value) { value.keybinding = keybinding; });
 }
 
 void GeneralSettings::handleIconThemeChange(const QString &iconTheme) {
@@ -103,6 +111,7 @@ void GeneralSettings::setupUI() {
   m_qThemeSelector = new QThemeSelector;
   m_fontSelector = new FontSelector;
   m_faviconSelector = new FaviconServiceSelector;
+  m_keybindingSelector = new KeyBindingSelector;
   m_popToRootOnClose = new CheckboxInput;
   m_closeOnFocusLoss = new CheckboxInput;
   m_fontSize = new BaseInput;
@@ -177,6 +186,16 @@ void GeneralSettings::setupUI() {
 
   faviconField->setInfo("The favicon provider used to load favicons where needed. You can turn off favicon "
                         "loading by selecting 'None'.");
+
+  auto keybindingField = form->addField("Keybinding Scheme", m_keybindingSelector);
+
+  keybindingField->setInfo(
+      "The keybinding scheme used for navigation. Default uses Vim-style Ctrl+J/K and Ctrl+H/L; "
+      "Emacs uses Ctrl+N/P and Ctrl+Opt+B/F for navigation, plus Emacs editing in the search bar (Ctrl+A/B/E/F/K/U, Opt+B/F/Backspace/Delete)."
+  );
+
+  connect(m_keybindingSelector, &KeyBindingSelector::selectionChanged, this,
+          [this](auto &&item) { handleKeybindingChange(item.id()); });
 
   connect(m_rootFileSearch, &CheckboxInput::valueChanged, this,
           &GeneralSettings::handleRootSearchFilesChange);

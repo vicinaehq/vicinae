@@ -3,21 +3,29 @@
 #include "extension/extension-view.hpp"
 #include "ui/omni-grid/grid-item-content-widget.hpp"
 #include "ui/omni-list/omni-list.hpp"
+#include "services/keybinding/keybinding-service.hpp"
+#include "services/config/config-service.hpp"
+#include "service-registry.hpp"
 
 static const std::chrono::milliseconds THROTTLE_DEBOUNCE_DURATION(300);
 static const KeyboardShortcutModel primaryShortcut{.key = "return"};
 static const KeyboardShortcutModel secondaryShortcut{.key = "return", .modifiers = {"shift"}};
 
 bool ExtensionGridComponent::inputFilter(QKeyEvent *event) {
+  auto config = ServiceRegistry::instance()->config();
+  const QString &keybinding = config->value().keybinding;
+
   if (event->modifiers() == Qt::ControlModifier) {
-    switch (event->key()) {
-    case Qt::Key_H:
+    if (KeyBindingService::isLeftKey(event, keybinding)) {
       return m_list->selectLeft();
-    case Qt::Key_L:
+    }
+    if (KeyBindingService::isRightKey(event, keybinding)) {
       return m_list->selectRight();
-    case Qt::Key_K:
+    }
+    if (KeyBindingService::isUpKey(event, keybinding)) {
       return m_list->selectUp();
-    case Qt::Key_J:
+    }
+    if (KeyBindingService::isDownKey(event, keybinding)) {
       return m_list->selectDown();
     }
   }
