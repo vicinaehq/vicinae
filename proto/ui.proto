@@ -29,7 +29,10 @@ message UpdateToastRequest {
 
 message PushViewRequest {}
 message PopViewRequest {}
-message CloseMainWindowRequest {};
+message CloseMainWindowRequest {
+  bool clear_root_search = 1;
+  PopToRootType pop_to_root = 2;
+};
 message ClearSearchBarRequest {};
 
 message SetSearchTextRequest {
