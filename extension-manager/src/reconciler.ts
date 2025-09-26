@@ -181,6 +181,8 @@ const detachInstance = (instance: Instance) => {
 	}
 }
 
+type FormInstance = any;
+
 const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 	const hostConfig: Reconciler.HostConfig<
 		InstanceType,
@@ -190,6 +192,7 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 		TextInstance,
 		SuspenseInstance,
 		HydratableInstance,
+		FormInstance,
 		PublicInstance,
 		HostContext,
 		UpdatePayload,
@@ -200,6 +203,8 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 		supportsMutation: true,
 		supportsPersistence: false,
 		supportsHydration: false,
+
+
 
 		createInstance(type, props, root, ctx, handle): Instance {
 			let { children, key, ...rest } = props;
@@ -240,6 +245,7 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 			return false;
 		},
 
+		/*
 		prepareUpdate(instance, type, oldProps, newProps, root, ctx) {
 			const changes = [];
 
@@ -268,6 +274,7 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 
 			return changes.length > 0 ? changes : null;
 		},
+		*/
 
 		shouldSetTextContent() {
 			return false;
@@ -295,16 +302,18 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 		preparePortalMount(container) {},
 
 		scheduleTimeout: setTimeout,
-		cancelTimeout: (id) => clearTimeout(id),
+		cancelTimeout: (id: MyTimeoutHandle) => clearTimeout(id),
 		noTimeout: -1,
 		//supportsMicrotasks: false,
 		scheduleMicrotask: queueMicrotask,
 
 		isPrimaryRenderer: true,
 
+		/*
 		getCurrentEventPriority() {
 			return DefaultEventPriority;
 		},
+		*/
 
 		getInstanceFromNode() { return null; },
 
@@ -377,10 +386,7 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 
 		commitMount() {},
 
-		commitUpdate(instance: Instance, payload, type, prevProps, nextProps, handle) {
-			if (payload.length === 0) return ;
-			
-
+		commitUpdate(instance: Instance, type, prevProps, nextProps, handle) {
 			const props: Record<string, any> = {};
 
 			for (const [k, v] of Object.entries(nextProps)) {
@@ -424,6 +430,35 @@ const createHostConfig = (hostCtx: HostContext, callback: () => void) => {
 		clearContainer(container) {
 			container.children = [];
 		},
+
+		/** added for react 19 - we don't have to implement most of this */
+		NotPendingTransition: null,
+		HostTransitionContext: {} as any,
+
+		setCurrentUpdatePriority(priority) {
+		},
+
+		getCurrentUpdatePriority() {
+			return DefaultEventPriority;
+		},
+
+		resolveUpdatePriority() {
+			return DefaultEventPriority;
+		},
+
+		resetFormInstance(form) {},
+		requestPostPaintCallback() {},
+		shouldAttemptEagerTransition() { return false },
+
+		trackSchedulerEvent() {},
+		resolveEventType() { return null },
+		resolveEventTimeStamp() { return Date.now(); },
+		maySuspendCommit() { return false },
+
+		preloadInstance(type, props) { return false; },
+		startSuspendingCommit() {},
+		suspendInstance(type, props) {},
+		waitForCommitToBeReady() { return null; },
 	};
 
 	return hostConfig;
