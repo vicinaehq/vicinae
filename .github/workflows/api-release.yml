@@ -12,7 +12,7 @@ on:
 
 jobs:
   publish:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64, prod]
     defaults:
       run:
         working-directory: ./api
@@ -34,9 +34,8 @@ jobs:
 
           npm version "$TAG_NAME" --no-git-tag-version
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 'latest'
+      - name: Compile proto files
+        run: npm run protogen
       - run: npm install
       - run: npm run build
       - uses: JS-DevTools/npm-publish@19c28f1ef146469e409470805ea4279d47c3d35c
