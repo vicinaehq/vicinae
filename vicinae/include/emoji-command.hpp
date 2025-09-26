@@ -54,6 +54,7 @@ class EditEmojiKeywordsView : public ManagedFormView {
     auto metadata = emojiService->mapMetadata(m_emoji);
 
     m_keywords->setText(metadata.keywords);
+    m_keywords->textEdit()->selectAll();
   }
 
 public:
