@@ -191,7 +191,7 @@ void GeneralSettings::setupUI() {
 
   keybindingField->setInfo(
       "The keybinding scheme used for navigation. Default uses Vim-style Ctrl+J/K and Ctrl+H/L; "
-      "Emacs uses Ctrl+N/P and Ctrl+Alt+B/F for navigation, plus Emacs editing in the search bar (Ctrl+A/B/E/F/K/U, Alt+B/F/Backspace/Delete)."
+      "Emacs uses Ctrl+N/P and Ctrl+Opt+B/F for navigation, plus Emacs editing in the search bar (Ctrl+A/B/E/F/K/U, Opt+B/F/Backspace/Delete)."
   );
 
   connect(m_keybindingSelector, &KeyBindingSelector::selectionChanged, this,

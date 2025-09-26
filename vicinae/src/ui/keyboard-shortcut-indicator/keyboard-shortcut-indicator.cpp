@@ -13,7 +13,8 @@ static std::unordered_map<QString, QString> keyToIcon = {
 	{"ctrl", ":icons/chevron-up.svg"},
 	{"shift", ":icons/keyboard-shift.svg"},
 	{"return", ":icons/enter-key.svg"},
-	{"cmd", ":icons/command-symbol.svg"}
+	{"cmd", ":icons/command-symbol.svg"},
+	{"opt", ":icons/option-symbol.svg"}
 };
 // clang-format on
 

@@ -222,17 +222,17 @@ bool LauncherWindow::event(QEvent *event) {
   if (event->type() == QEvent::KeyPress) {
     auto keyEvent = static_cast<QKeyEvent *>(event);
 
-    // Toggle action panel: default Ctrl+B ; Emacs uses Alt+X to stay clear of navigation bindings
+    // Toggle action panel: Default Ctrl+B ; Emacs Ctrl+O
     auto config = ServiceRegistry::instance()->config();
     const QString keybinding = config ? config->value().keybinding : QString("default");
     if (keybinding == "emacs") {
-      if (keyEvent->modifiers().testFlag(Qt::AltModifier) && keyEvent->key() == Qt::Key_X) {
-        m_ctx.navigation->openActionPanel();
+      if (keyEvent->keyCombination() == QKeyCombination(Qt::ControlModifier, Qt::Key_O)) {
+        m_ctx.navigation->toggleActionPanel();
         return true;
       }
     } else {
       if (keyEvent->keyCombination() == QKeyCombination(Qt::ControlModifier, Qt::Key_B)) {
-        m_ctx.navigation->openActionPanel();
+        m_ctx.navigation->toggleActionPanel();
         return true;
       }
     }

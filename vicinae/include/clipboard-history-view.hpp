@@ -632,7 +632,7 @@ class ClipboardHistoryView : public SimpleView {
       }
     }
 
-    // Open filter dropdown: Default Ctrl+P; in Emacs mode, remap to Alt+P.
+    // Open filter dropdown: Default Ctrl+P; in Emacs mode, remap to Opt+P.
     auto config = ServiceRegistry::instance()->config();
     const QString keybinding = config ? config->value().keybinding : QString("default");
     if ((keybinding == "emacs" &&

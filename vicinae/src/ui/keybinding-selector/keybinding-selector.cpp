@@ -4,7 +4,7 @@
 KeyBindingSelector::KeyBindingSelector() {
   std::vector<KeyBindingInfo> keybindings = {
       {"default", "Default", "Vim-style navigation (Ctrl+J/K, Ctrl+H/L)"},
-      {"emacs", "Emacs", "Emacs-style navigation (Ctrl+N/P, Ctrl+Alt+B/F) and editing in search (Ctrl+A/B/E/F/K/U, Alt+B/F/Backspace/Delete)"}
+      {"emacs", "Emacs", "Emacs-style navigation (Ctrl+N/P, Ctrl+Opt+B/F) and editing in search (Ctrl+A/B/E/F/K/U, Opt+B/F/Backspace/Delete)"}
   };
 
   std::vector<std::shared_ptr<AbstractItem>> items;
