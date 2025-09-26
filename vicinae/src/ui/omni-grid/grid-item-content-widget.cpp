@@ -49,7 +49,7 @@ int GridItemContentWidget::insetForSize(Inset inset, QSize size) const {
   case Inset::Medium:
     return base * 0.15;
   case Inset::Large:
-    return base * 0.20;
+    return base * 0.25;
   }
 
   return 0;
