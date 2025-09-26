@@ -8,8 +8,6 @@
 
 > `const` **Detail**: `FC`\<[`DetailProps`](../type-aliases/DetailProps.md)\> & `object`
 
-Defined in: [components/detail.tsx:22](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/components/detail.tsx#L22)
-
 ## Type Declaration
 
 ### Metadata

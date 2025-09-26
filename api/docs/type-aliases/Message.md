@@ -8,8 +8,6 @@
 
 > **Message**\<`T`\> = `object`
 
-Defined in: [bus.ts:8](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/bus.ts#L8)
-
 ## Type Parameters
 
 ### T
@@ -22,15 +20,11 @@ Defined in: [bus.ts:8](https://github.com/vicinaehq/vicinae/blob/c742d5fc5093363
 
 > **data**: `T`
 
-Defined in: [bus.ts:15](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/bus.ts#L15)
-
 ***
 
 ### envelope
 
 > **envelope**: `object`
-
-Defined in: [bus.ts:9](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/bus.ts#L9)
 
 #### action
 
@@ -49,5 +43,3 @@ Defined in: [bus.ts:9](https://github.com/vicinaehq/vicinae/blob/c742d5fc5093363
 ### error
 
 > **error**: \{ `message?`: `string`; \} \| `null`
-
-Defined in: [bus.ts:14](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/bus.ts#L14)

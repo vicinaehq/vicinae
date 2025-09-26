@@ -6,9 +6,22 @@
 
 # Function: closeMainWindow()
 
-> **closeMainWindow**(): `Promise`\<`void`\>
+> **closeMainWindow**(`options`): `Promise`\<`void`\>
 
-Defined in: [controls.ts:3](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/controls.ts#L3)
+Close the vicinae launcher window immediately.
+It is possible to override the `popToRoot` behavior defined in the settings using the options object.
+
+## Parameters
+
+### options
+
+#### clearRootSearch?
+
+`boolean`
+
+#### popToRootType?
+
+[`PopToRootType`](../enumerations/PopToRootType.md)
 
 ## Returns
 

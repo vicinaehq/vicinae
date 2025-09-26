@@ -6,15 +6,11 @@
 
 # Class: PKCEClient
 
-Defined in: [oauth.ts:256](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/oauth.ts#L256)
-
 ## Constructors
 
 ### Constructor
 
 > **new PKCEClient**(`options`): `PKCEClient`
-
-Defined in: [oauth.ts:265](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/oauth.ts#L265)
 
 #### Parameters
 
@@ -32,15 +28,11 @@ Defined in: [oauth.ts:265](https://github.com/vicinaehq/vicinae/blob/c742d5fc509
 
 > `optional` **description**: `string`
 
-Defined in: [oauth.ts:261](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/oauth.ts#L261)
-
 ***
 
 ### providerIcon?
 
 > `optional` **providerIcon**: [`ImageLike`](../@vicinae/namespaces/Image/type-aliases/ImageLike.md)
-
-Defined in: [oauth.ts:259](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/oauth.ts#L259)
 
 ***
 
@@ -48,15 +40,11 @@ Defined in: [oauth.ts:259](https://github.com/vicinaehq/vicinae/blob/c742d5fc509
 
 > `optional` **providerId**: `string`
 
-Defined in: [oauth.ts:260](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/oauth.ts#L260)
-
 ***
 
 ### providerName
 
 > **providerName**: `string`
-
-Defined in: [oauth.ts:258](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/oauth.ts#L258)
 
 ***
 
@@ -64,15 +52,11 @@ Defined in: [oauth.ts:258](https://github.com/vicinaehq/vicinae/blob/c742d5fc509
 
 > **redirectMethod**: `OauthRedirectMethod`
 
-Defined in: [oauth.ts:257](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/oauth.ts#L257)
-
 ## Methods
 
 ### authorizationRequest()
 
 > **authorizationRequest**(`options`): `Promise`\<[`AuthorizationRequest`](../@vicinae/namespaces/OAuth/interfaces/AuthorizationRequest.md)\>
-
-Defined in: [oauth.ts:314](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/oauth.ts#L314)
 
 Creates an authorization request for the provided authorization endpoint, client ID, and scopes.
 You need to first create the authorization request before calling OAuth.PKCEClient.authorize.
@@ -99,8 +83,6 @@ The generated code challenge for the PKCE request uses the S256 method.
 
 > **authorize**(`options`): `Promise`\<[`AuthorizationResponse`](../@vicinae/namespaces/OAuth/interfaces/AuthorizationResponse.md)\>
 
-Defined in: [oauth.ts:342](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/oauth.ts#L342)
-
 Starts the authorization and shows the OAuth overlay in Raycast.
 As parameter you can either directly use the returned request from OAuth.PKCEClient.authorizationRequest,
 or customize the URL by extracting parameters from [OAuth.AuthorizationRequest](../@vicinae/namespaces/OAuth/interfaces/AuthorizationRequest.md) and providing your own URL via AuthorizationOptions.
@@ -124,8 +106,6 @@ The promise is resolved when the user was redirected back from the provider's au
 ### buildAuthUrl()
 
 > **buildAuthUrl**(`options`, `state`, `codeChallenge`, `redirectURI`): `string`
-
-Defined in: [oauth.ts:275](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/oauth.ts#L275)
 
 #### Parameters
 
@@ -155,8 +135,6 @@ Defined in: [oauth.ts:275](https://github.com/vicinaehq/vicinae/blob/c742d5fc509
 
 > **getRedirectURI**(): `"https://raycast.com/redirect?packageName=Extension"` \| `"raycast://oauth?package_name=Extension"` \| `"com.raycast:/oauth?package_name=Extension"`
 
-Defined in: [oauth.ts:295](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/oauth.ts#L295)
-
 #### Returns
 
 `"https://raycast.com/redirect?packageName=Extension"` \| `"raycast://oauth?package_name=Extension"` \| `"com.raycast:/oauth?package_name=Extension"`
@@ -166,8 +144,6 @@ Defined in: [oauth.ts:295](https://github.com/vicinaehq/vicinae/blob/c742d5fc509
 ### getTokens()
 
 > **getTokens**(): `Promise`\<`undefined` \| [`TokenSet`](../@vicinae/namespaces/OAuth/interfaces/TokenSet.md)\>
-
-Defined in: [oauth.ts:391](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/oauth.ts#L391)
 
 Retrieves the stored [OAuth.TokenSet](../variables/OAuth.md#tokenset) for the client.
 You can use this to initially check whether the authorization flow should be initiated or
@@ -185,8 +161,6 @@ A promise that resolves when the token set has been retrieved.
 
 > **removeTokens**(): `Promise`\<`void`\>
 
-Defined in: [oauth.ts:401](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/oauth.ts#L401)
-
 Removes the stored [OAuth.TokenSet](../variables/OAuth.md#tokenset) for the client.
 
 #### Returns
@@ -203,8 +177,6 @@ Use this method only if you need to provide an additional logout option in your 
 ### setTokens()
 
 > **setTokens**(`options`): `Promise`\<`void`\>
-
-Defined in: [oauth.ts:381](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/oauth.ts#L381)
 
 Securely stores a [OAuth.TokenSet](../variables/OAuth.md#tokenset) for the provider. Use this after fetching the access token from the provider.
 If the provider returns a a standard OAuth JSON token response, you can directly pass the [OAuth.TokenResponse](../@vicinae/namespaces/OAuth/interfaces/TokenResponse.md).

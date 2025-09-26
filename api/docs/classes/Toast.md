@@ -6,8 +6,6 @@
 
 # Class: Toast
 
-Defined in: [toast.ts:26](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/toast.ts#L26)
-
 A Toast with a certain style, title, and message.
 
 ## Example
@@ -32,8 +30,6 @@ export default async () => {
 
 > **new Toast**(`props`): `Toast`
 
-Defined in: [toast.ts:50](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/toast.ts#L50)
-
 Deprecated - Use `showToast` instead
 
 #### Parameters
@@ -54,8 +50,6 @@ Deprecated - Use `showToast` instead
 
 > **get** **message**(): `undefined` \| `string`
 
-Defined in: [toast.ts:96](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/toast.ts#L96)
-
 An additional message for the Toast. Useful to show more information, e.g. an identifier of a newly created asset.
 
 ##### Returns
@@ -65,8 +59,6 @@ An additional message for the Toast. Useful to show more information, e.g. an id
 #### Set Signature
 
 > **set** **message**(`message`): `void`
-
-Defined in: [toast.ts:99](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/toast.ts#L99)
 
 ##### Parameters
 
@@ -86,8 +78,6 @@ Defined in: [toast.ts:99](https://github.com/vicinaehq/vicinae/blob/c742d5fc5093
 
 > **get** **primaryAction**(): `undefined` \| [`ActionOptions`](../@vicinae/namespaces/Toast/interfaces/ActionOptions.md)
 
-Defined in: [toast.ts:105](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/toast.ts#L105)
-
 The primary Action the user can take when hovering on the Toast.
 
 ##### Returns
@@ -97,8 +87,6 @@ The primary Action the user can take when hovering on the Toast.
 #### Set Signature
 
 > **set** **primaryAction**(`action`): `void`
-
-Defined in: [toast.ts:108](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/toast.ts#L108)
 
 ##### Parameters
 
@@ -118,8 +106,6 @@ Defined in: [toast.ts:108](https://github.com/vicinaehq/vicinae/blob/c742d5fc509
 
 > **get** **secondaryAction**(): `undefined` \| [`ActionOptions`](../@vicinae/namespaces/Toast/interfaces/ActionOptions.md)
 
-Defined in: [toast.ts:114](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/toast.ts#L114)
-
 The secondary Action the user can take when hovering on the Toast.
 
 ##### Returns
@@ -129,8 +115,6 @@ The secondary Action the user can take when hovering on the Toast.
 #### Set Signature
 
 > **set** **secondaryAction**(`action`): `void`
-
-Defined in: [toast.ts:117](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/toast.ts#L117)
 
 ##### Parameters
 
@@ -150,8 +134,6 @@ Defined in: [toast.ts:117](https://github.com/vicinaehq/vicinae/blob/c742d5fc509
 
 > **get** **style**(): [`Style`](../@vicinae/namespaces/Toast/enumerations/Style.md)
 
-Defined in: [toast.ts:78](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/toast.ts#L78)
-
 The style of a Toast.
 
 ##### Returns
@@ -161,8 +143,6 @@ The style of a Toast.
 #### Set Signature
 
 > **set** **style**(`style`): `void`
-
-Defined in: [toast.ts:81](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/toast.ts#L81)
 
 ##### Parameters
 
@@ -182,8 +162,6 @@ Defined in: [toast.ts:81](https://github.com/vicinaehq/vicinae/blob/c742d5fc5093
 
 > **get** **title**(): `string`
 
-Defined in: [toast.ts:87](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/toast.ts#L87)
-
 The title of a Toast. Displayed on the top.
 
 ##### Returns
@@ -193,8 +171,6 @@ The title of a Toast. Displayed on the top.
 #### Set Signature
 
 > **set** **title**(`title`): `void`
-
-Defined in: [toast.ts:90](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/toast.ts#L90)
 
 ##### Parameters
 
@@ -212,8 +188,6 @@ Defined in: [toast.ts:90](https://github.com/vicinaehq/vicinae/blob/c742d5fc5093
 
 > **hide**(): `Promise`\<`void`\>
 
-Defined in: [toast.ts:164](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/toast.ts#L164)
-
 Hides the Toast.
 
 #### Returns
@@ -227,8 +201,6 @@ A Promise that resolves when toast is hidden.
 ### show()
 
 > **show**(): `Promise`\<`void`\>
-
-Defined in: [toast.ts:125](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/toast.ts#L125)
 
 Shows the Toast.
 

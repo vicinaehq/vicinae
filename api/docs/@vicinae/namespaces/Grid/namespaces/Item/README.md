@@ -10,5 +10,3 @@
 
 - [Accessory](type-aliases/Accessory.md)
 - [Props](type-aliases/Props.md)
-- [Tag](type-aliases/Tag.md)
-- [Text](type-aliases/Text.md)
