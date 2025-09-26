@@ -26,7 +26,7 @@ public:
     virtual QString actionPanelTitle() const { return "Actions"; }
   };
 
-  virtual QString rootNavigationTitle() const { return ""; }
+  virtual QString rootNavigationTitle() const { return command()->info().name(); }
 
   void onActivate() override;
   void applyActionnable(const Actionnable *actionnable);

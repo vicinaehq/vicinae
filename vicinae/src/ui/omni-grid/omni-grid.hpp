@@ -86,7 +86,7 @@ public:
   public:
     void setInset(GridItemContentWidget::Inset inset) { m_inset = inset; }
 
-    AbstractGridItem() : m_inset(GridItemContentWidget::Inset::Small) {}
+    AbstractGridItem() : m_inset(GridItemContentWidget::Inset::None) {}
   };
 
 public:
@@ -95,7 +95,6 @@ public:
   int spacing() const { return _spacing; }
 
   void setColumns(int n) { _ncols = n; }
-  void setInset(GridItemContentWidget::Inset inset) { _inset = inset; }
   void setSpacing(int n) { _spacing = n; }
 
   OmniGrid() : _ncols(8), _spacing(10), _inset(GridItemContentWidget::Inset::Small) {

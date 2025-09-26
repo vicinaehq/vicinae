@@ -173,7 +173,6 @@ public:
     url.setType(ImageURLType::Emoji);
     url.setName(QString::fromStdString(std::string(info.emoji)));
     icon->setUrl(url);
-    icon->setContentsMargins(10, 10, 10, 10);
 
     return icon;
   }
@@ -187,7 +186,6 @@ public:
     url.setType(ImageURLType::Emoji);
     url.setName(QString::fromStdString(std::string(info.emoji)));
     icon->setUrl(url);
-    icon->setContentsMargins(10, 10, 10, 10);
   }
 
   QString generateId() const override { return QString::fromUtf8(info.emoji.data(), info.emoji.size()); }
@@ -232,7 +230,7 @@ public:
   QString navigationTitle() const override { return qStringFromStdView(info.name); }
 
   EmojiGridItem(const EmojiData &info, bool pinned = false) : info(info), m_pinned(pinned) {
-    setInset(GridItemContentWidget::Inset::Medium);
+    setInset(GridItemContentWidget::Inset::Large);
   }
 };
 

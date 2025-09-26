@@ -39,15 +39,17 @@ void GridItemContentWidget::paintEvent(QPaintEvent *event) {
 }
 
 int GridItemContentWidget::insetForSize(Inset inset, QSize size) const {
+  int base = std::min(width(), height());
+
   switch (inset) {
   case Inset::None:
     return borderWidth() + 2; // minimum gap between hover/selected border and content
   case Inset::Small:
-    return size.width() * 0.10;
+    return base * 0.10;
   case Inset::Medium:
-    return size.width() * 0.20;
+    return base * 0.15;
   case Inset::Large:
-    return size.width() * 0.30;
+    return base * 0.25;
   }
 
   return 0;
