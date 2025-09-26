@@ -17,6 +17,12 @@ debug:
 	cmake --build $(BUILD_DIR)
 .PHONY: debug
 
+test:
+	cmake -G Ninja -DBUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -B $(BUILD_DIR)
+	cmake --build $(BUILD_DIR)
+	./build/tests/all_tests
+.PHONY: test
+
 no-ts-ext:
 	cmake -G Ninja -DTYPESCRIPT_EXTENSIONS=OFF -DCMAKE_BUILD_TYPE=Release -B $(BUILD_DIR)
 	cmake --build $(BUILD_DIR)

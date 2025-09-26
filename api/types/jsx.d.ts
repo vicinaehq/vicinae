@@ -65,8 +65,8 @@ declare module "react" {
       "grid-section": {
         inset?: Grid.Inset;
         columns?: number;
-        fit: Grid.Fit;
-        aspectRatio: Grid.AspectRatio;
+        fit?: Grid.Fit;
+        aspectRatio?: Grid.AspectRatio;
 
         title?: string;
         subtitle?: string;

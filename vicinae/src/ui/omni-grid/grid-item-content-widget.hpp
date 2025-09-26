@@ -10,29 +10,15 @@
 #include <qwidget.h>
 
 class GridItemContentWidget : public QWidget {
-public:
-  enum Inset { Small, Medium, Large };
-
-private:
   Q_OBJECT
-  bool m_selected;
-  Inset m_inset;
-  TooltipWidget *m_tooltip;
-  QWidget *m_widget;
 
-protected:
-  int borderWidth() const;
-  void paintEvent(QPaintEvent *event) override;
-  void hideEvent(QHideEvent *event) override;
-
-  void resizeEvent(QResizeEvent *event) override;
-  void mousePressEvent(QMouseEvent *event) override;
-  void mouseDoubleClickEvent(QMouseEvent *event) override;
-  QSize innerWidgetSize() const;
-  int insetForSize(Inset inset, QSize size) const;
-  void repositionCenterWidget();
+signals:
+  void clicked();
+  void doubleClicked();
 
 public:
+  enum class Inset { None, Small, Medium, Large };
+
   GridItemContentWidget();
   virtual ~GridItemContentWidget() override;
 
@@ -45,7 +31,24 @@ public:
   void setWidget(QWidget *widget);
   QWidget *widget() const;
 
-signals:
-  void clicked();
-  void doubleClicked();
+protected:
+  int borderWidth() const;
+  void paintEvent(QPaintEvent *event) override;
+  void hideEvent(QHideEvent *event) override;
+  // bool event(QEvent *event) override;
+
+  bool event(QEvent *event) override;
+  void resizeEvent(QResizeEvent *event) override;
+  void mousePressEvent(QMouseEvent *event) override;
+  void mouseDoubleClickEvent(QMouseEvent *event) override;
+  QSize innerWidgetSize() const;
+  int insetForSize(Inset inset, QSize size) const;
+  void repositionCenterWidget();
+  void recalculate();
+
+private:
+  bool m_selected;
+  Inset m_inset = Inset::None;
+  TooltipWidget *m_tooltip;
+  QWidget *m_widget;
 };

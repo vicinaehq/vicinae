@@ -1,8 +1,5 @@
 #pragma once
 #include <cstdint>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
 #include <netinet/in.h>
 #include <memory>
 #include <sys/syscall.h>
@@ -27,4 +24,5 @@ private:
 
   void global(WaylandRegistry &reg, uint32_t name, const char *interface, uint32_t version) override;
   void selection(DataDevice &device, DataOffer &offer) override;
+  void primarySelection(DataDevice &device, DataOffer &offer) override;
 };

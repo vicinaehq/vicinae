@@ -3,6 +3,7 @@
 #include "extend/empty-view-model.hpp"
 #include "extend/image-model.hpp"
 #include "extend/pagination-model.hpp"
+#include "ui/image/image.hpp"
 #include "utils.hpp"
 #include <qjsonvalue.h>
 #include <ranges>
@@ -55,8 +56,9 @@ GridSectionModel GridModelParser::parseSection(const QJsonObject &instance) {
 
   model.title = props.value("title").toString();
   model.subtitle = props.value("subtitle").toString();
-  model.aspectRatio = props.value("aspectRatio").toDouble(1);
 
+  if (props.contains("fit")) { model.fit = parseFit(props.value("fit").toString()); }
+  if (props.contains("aspectRatio")) { model.aspectRatio = props.value("aspectRatio").toDouble(1); }
   if (props.contains("columns")) { model.columns = props.value("columns").toInt(); }
   if (auto inset = props.value("inset"); inset.isString()) { model.inset = parseInset(inset.toString()); }
 
@@ -87,6 +89,11 @@ GridItemContentWidget::Inset GridModelParser::parseInset(const QString &s) {
   return Inset::Small;
 }
 
+ObjectFit GridModelParser::parseFit(const QString &fit) {
+  if (fit == "fill") return ObjectFit::Fill;
+  return ObjectFit::Contain;
+}
+
 GridModel GridModelParser::parse(const QJsonObject &instance) {
   GridModel model;
   auto props = instance.value("props").toObject();
@@ -96,14 +103,13 @@ GridModel GridModelParser::parse(const QJsonObject &instance) {
   model.dirty = instance.value("dirty").toBool(true);
   model.isLoading = props["isLoading"].toBool(false);
   model.throttle = props["throttle"].toBool(false);
+  model.fit = parseFit(props.value("fit").toString());
+  model.aspectRatio = props.value("aspectRatio").toDouble(1);
+  model.searchPlaceholderText = props["searchBarPlaceholder"].toString();
+  model.filtering = props["filtering"].toBool(defaultFiltering);
 
   if (auto inset = props.value("inset"); inset.isString()) { model.inset = parseInset(inset.toString()); }
   if (auto cols = props.value("columns"); cols.isDouble()) { model.columns = cols.toInt(); }
-
-  model.fit = GridFit::GridContain;
-  model.aspectRatio = 1;
-  model.searchPlaceholderText = props["searchBarPlaceholder"].toString();
-  model.filtering = props["filtering"].toBool(defaultFiltering);
 
   if (props.contains("navigationTitle")) {
     model.navigationTitle = props.value("navigationTitle").toString();

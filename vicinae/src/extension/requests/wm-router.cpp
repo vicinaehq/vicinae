@@ -56,7 +56,7 @@ proto::ext::wm::Response *WindowManagementRouter::getWindows(const proto::ext::w
     if (auto app = m_app.findByClass(win->wmClass())) {
       auto sapp = new proto::ext::application::Application;
       sapp->set_id(app->id().toStdString());
-      sapp->set_name(app->name().toStdString());
+      sapp->set_name(app->displayName().toStdString());
       sapp->set_icon(app->iconUrl().name().toStdString());
       serializedWin->set_allocated_app(sapp);
     }
@@ -99,7 +99,7 @@ WindowManagementRouter::getActiveWindow(const proto::ext::wm::GetActiveWindowReq
   if (auto app = m_app.findByClass(activeWindow->wmClass())) {
     auto sapp = new proto::ext::application::Application;
     sapp->set_id(app->id().toStdString());
-    sapp->set_name(app->name().toStdString());
+    sapp->set_name(app->displayName().toStdString());
     sapp->set_icon(app->iconUrl().name().toStdString());
     win->set_allocated_app(sapp);
   }

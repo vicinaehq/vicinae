@@ -3,6 +3,7 @@
 #include "extend/empty-view-model.hpp"
 #include "extend/image-model.hpp"
 #include "extend/pagination-model.hpp"
+#include "ui/image/image.hpp"
 #include "ui/omni-grid/grid-item-content-widget.hpp"
 #include <qjsonobject.h>
 
@@ -27,9 +28,10 @@ struct GridSectionModel {
   QString title;
   QString subtitle;
 
-  double aspectRatio;
+  std::optional<double> aspectRatio;
   std::optional<int> columns;
-  GridFit fit;
+  std::optional<ObjectFit> fit;
+
   std::optional<GridItemContentWidget::Inset> inset;
   std::vector<GridItemViewModel> children;
 };
@@ -43,8 +45,8 @@ struct GridModel {
   double aspectRatio;
   bool dirty;
   std::optional<int> columns;
-  std::optional<GridItemContentWidget::Inset> inset;
-  GridFit fit;
+  GridItemContentWidget::Inset inset = GridItemContentWidget::Inset::None;
+  ObjectFit fit = ObjectFit::Contain;
 
   QString navigationTitle;
   QString searchPlaceholderText;
@@ -65,6 +67,7 @@ class GridModelParser {
   GridItemContentWidget::Inset parseInset(const QString &s);
   GridItemViewModel parseListItem(const QJsonObject &instance, size_t index);
   GridSectionModel parseSection(const QJsonObject &instance);
+  ObjectFit parseFit(const QString &fit);
 
 public:
   GridModelParser();

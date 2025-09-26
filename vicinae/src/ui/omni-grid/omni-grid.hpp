@@ -7,7 +7,7 @@
 
 class OmniGrid : public OmniList {
   int _ncols;
-  int _inset;
+  GridItemContentWidget::Inset _inset;
   int _spacing;
 
 public:
@@ -91,12 +91,14 @@ public:
 
 public:
   int columns() const { return _ncols; }
-  int inset() const { return _inset; }
+  GridItemContentWidget::Inset inset() const { return _inset; }
   int spacing() const { return _spacing; }
 
   void setColumns(int n) { _ncols = n; }
-  void setInset(int inset) { _inset = inset; }
+  void setInset(GridItemContentWidget::Inset inset) { _inset = inset; }
   void setSpacing(int n) { _spacing = n; }
 
-  OmniGrid() : _ncols(8), _spacing(10), _inset(10) { setMargins(20, 10, 20, 10); }
+  OmniGrid() : _ncols(8), _spacing(10), _inset(GridItemContentWidget::Inset::Small) {
+    setMargins(20, 10, 20, 10);
+  }
 };

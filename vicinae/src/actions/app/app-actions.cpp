@@ -18,7 +18,7 @@ void OpenAppAction::execute(ApplicationContext *ctx) {
   if (m_clearSearch) ctx->navigation->clearSearchText();
 }
 
-OpenAppAction::OpenAppAction(const std::shared_ptr<Application> &app, const QString &title,
+OpenAppAction::OpenAppAction(const std::shared_ptr<AbstractApplication> &app, const QString &title,
                              const std::vector<QString> args)
     : AbstractAction(title, app->iconUrl()), application(app), args(args) {}
 

@@ -20,16 +20,27 @@ type SectionConfig = {
 
 type GridAspectRatio = "1" | "3/2" | "2/3" | "4/3" | "3/4" | "16/9" | "9/16";
 
+const aspectRatioMap: Record<GridAspectRatio, number> = {
+	'1': 1,
+	'3/2': 3 / 2,
+	'2/3': 2 / 3,
+	'4/3': 4 / 3,
+	'3/4': 3 / 4,
+	'16/9': 16 / 9,
+	'9/16': 9 / 16
+};
+
 enum GridFit {
   Contain = "contain",
   Fill = "fill",
 }
 
-export declare namespace Grid {
+export namespace Grid {
   export namespace Section {
     export type Props = GridSectionProps;
   }
 
+  export type Fit = GridFit;
   export type Props = GridProps;
   export type Inset = GridInset;
   export type AspectRatio = GridAspectRatio;
@@ -113,7 +124,7 @@ const GridRoot: React.FC<GridProps> = ({
     <grid
       fit={fit}
       inset={inset}
-      aspectRatio={aspectRatio}
+      aspectRatio={aspectRatioMap[aspectRatio]}
       {...props}
     >
       {searchBarAccessory}
@@ -167,14 +178,14 @@ const GridItem: React.FC<Grid.Item.Props> = ({
 };
 
 const GridSection: React.FC<Grid.Section.Props> = ({
-  fit = GridFit.Contain,
-  aspectRatio = "1",
+  fit,
+  aspectRatio,
   inset,
   ...props
 }) => {
   const nativeProps: React.JSX.IntrinsicElements["grid-section"] = {
     fit,
-    aspectRatio,
+    aspectRatio: aspectRatio ? aspectRatioMap[aspectRatio] : aspectRatio,
     inset,
     ...props,
   };
@@ -190,6 +201,7 @@ export const Grid = Object.assign(GridRoot, {
   Section: GridSection,
   EmptyView,
   Dropdown,
+  Fit: GridFit,
   Inset: GridInset,
   Item: Object.assign(GridItem, {
     Accessory: GridAccessory,
