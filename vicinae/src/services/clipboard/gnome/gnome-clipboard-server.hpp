@@ -27,9 +27,7 @@ private:
   void attemptReconnection();
 
 private slots:
-  void handleClipboardChanged(const QString &content, qulonglong timestamp, const QString &source,
-                              const QString &mimeType, const QString &contentType, const QString &contentHash,
-                              qulonglong size, const QString &sourceApp);
+  void handleClipboardChanged(const QByteArray &content, const QString &mimeType, const QString &sourceApp);
   void handleDBusDisconnection();
   void onReconnectTimer();
 
