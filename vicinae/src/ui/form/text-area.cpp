@@ -45,6 +45,8 @@ void TextArea::setupUI() {
   connect(m_textEdit, &QPlainTextEdit::textChanged, this, &TextArea::resizeArea);
 }
 
+QPlainTextEdit *TextArea::textEdit() const { return m_textEdit; }
+
 bool TextArea::eventFilter(QObject *watched, QEvent *event) {
   if (watched == m_textEdit && event->type() == QEvent::KeyPress) {
     auto keyEvent = static_cast<QKeyEvent *>(event);

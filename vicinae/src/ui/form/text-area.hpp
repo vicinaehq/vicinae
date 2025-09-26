@@ -5,8 +5,7 @@
 #include <qevent.h>
 #include <qobject.h>
 #include <qwidget.h>
-
-class QPlainTextEdit;
+#include <QPlainTextEdit>
 
 class TextArea : public JsonFormItemWidget {
 
@@ -24,6 +23,12 @@ public:
   void setGrowAsRequired(bool value);
   void setRows(size_t rowCount);
   void setMargins(int margins);
+
+  /**
+   * The QPlainTextEdit instance used internally.
+   * Use this if you want to get/set the cursor.
+   */
+  QPlainTextEdit *textEdit() const;
 
   /**
    * If this is true (the default) the text area will expand as the text
