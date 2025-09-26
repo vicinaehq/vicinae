@@ -54,7 +54,7 @@ let
   # Prepare node_modules for extension-manager folder
   extensionManagerDeps = fetchNpmDeps {
     src = src + /extension-manager;
-    hash = "sha256-JXyQJfPFHXOhYGSqRdDzGGEZVlFrX97T/WNQaeYdEAk=";
+    hash = "sha256-FUXkXIhLtshps+cV9exYasKXsXt0rxDjjUol3Sya47c=";
   };
 in
 stdenv.mkDerivation rec {
