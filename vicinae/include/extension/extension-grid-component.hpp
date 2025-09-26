@@ -18,9 +18,17 @@
 #include "ui/omni-list/omni-list.hpp"
 
 class ExtensionGridItem : public OmniGrid::AbstractGridItem {
-  GridItemViewModel _item;
-  double m_aspectRatio = 1;
 
+public:
+  void setAspectRatio(double ratio) { m_aspectRatio = ratio; }
+  void setFit(ObjectFit fit) { m_fit = fit; }
+
+  const GridItemViewModel &model() const { return _item; }
+
+  ExtensionGridItem(const GridItemViewModel &model, double aspectRatio = 1)
+      : _item(model), m_aspectRatio(aspectRatio) {}
+
+private:
   QString generateId() const override { return _item.id; }
 
   QWidget *centerWidget() const override {
@@ -52,6 +60,7 @@ class ExtensionGridItem : public OmniGrid::AbstractGridItem {
     const auto visitor = overloads{[](const ImageLikeModel &model) { return model; },
                                    [](const ImageContentWithTooltip &model) { return model.value; }};
 
+    icon->setObjectFit(m_fit.value_or(ObjectFit::Contain));
     icon->setUrl(std::visit(visitor, _item.content));
   }
 
@@ -59,13 +68,9 @@ class ExtensionGridItem : public OmniGrid::AbstractGridItem {
 
   double aspectRatio() const override { return m_aspectRatio; }
 
-public:
-  void setAspectRatio(double ratio) { m_aspectRatio = ratio; }
-
-  const GridItemViewModel &model() const { return _item; }
-
-  ExtensionGridItem(const GridItemViewModel &model, double aspectRatio = 1)
-      : _item(model), m_aspectRatio(aspectRatio) {}
+  GridItemViewModel _item;
+  double m_aspectRatio = 1;
+  std::optional<ObjectFit> m_fit;
 };
 
 class ExtensionGridList : public QWidget {
@@ -91,6 +96,7 @@ public:
   }
 
   void setAspectRatio(double ratio) { m_aspectRatio = ratio; }
+  void setFit(ObjectFit fit) { m_fit = fit; }
 
   void setInset(GridItemContentWidget::Inset inset) {
     if (m_inset == inset) return;
@@ -132,13 +138,6 @@ signals:
   void itemActivated(const GridItemViewModel &);
 
 private:
-  OmniList *m_list = new OmniList;
-  std::vector<GridChild> m_model;
-  int m_columns = 1;
-  double m_aspectRatio = 1;
-  GridItemContentWidget::Inset m_inset = GridItemContentWidget::Inset::Small;
-  QString m_filter;
-
   bool matchesFilter(const GridItemViewModel &item, const QString &query) {
     bool keywordMatches = std::ranges::any_of(
         item.keywords, [&](auto &&keyword) { return keyword.contains(query, Qt::CaseInsensitive); });
@@ -165,17 +164,23 @@ private:
           for (const auto &item : m_model) {
             if (auto listItem = std::get_if<GridItemViewModel>(&item)) {
               if (!matches(*listItem)) continue;
-              currentSectionItems.emplace_back(std::static_pointer_cast<OmniList::AbstractVirtualItem>(
-                  std::make_shared<ExtensionGridItem>(*listItem)));
 
+              auto item = std::make_shared<ExtensionGridItem>(*listItem);
+
+              item->setFit(m_fit);
+              item->setAspectRatio(m_aspectRatio);
+              item->setInset(m_inset);
+              currentSectionItems.emplace_back(std::static_pointer_cast<OmniList::AbstractVirtualItem>(item));
             } else if (auto section = std::get_if<GridSectionModel>(&item)) {
               appendSectionLess();
-
               std::vector<std::shared_ptr<OmniList::AbstractVirtualItem>> items;
+
+              items.reserve(section->children.size());
 
               for (auto &item : section->children | std::views::filter(matches)) {
                 auto gridItem = std::make_unique<ExtensionGridItem>(item);
 
+                gridItem->setFit(section->fit.value_or(m_fit));
                 gridItem->setAspectRatio(section->aspectRatio.value_or(m_aspectRatio));
                 gridItem->setInset(section->inset.value_or(m_inset));
                 items.emplace_back(std::move(gridItem));
@@ -214,6 +219,14 @@ private:
       emit itemActivated(qualified->model());
     }
   }
+
+  OmniList *m_list = new OmniList;
+  std::vector<GridChild> m_model;
+  int m_columns = 1;
+  double m_aspectRatio = 1;
+  ObjectFit m_fit = ObjectFit::Contain;
+  GridItemContentWidget::Inset m_inset = GridItemContentWidget::Inset::None;
+  QString m_filter;
 };
 
 class ExtensionGridComponent : public ExtensionSimpleView {

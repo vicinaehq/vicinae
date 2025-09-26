@@ -8,6 +8,7 @@
 #include <vector>
 #include <QString>
 
+enum class ObjectFit { Contain, Fill, Stretch };
 enum ImageURLType { Invalid, Builtin, Favicon, System, Http, Local, Emoji, DataURI };
 
 static std::vector<std::pair<QString, ImageURLType>> iconTypes = {
@@ -27,17 +28,6 @@ static std::vector<std::pair<QString, SemanticColor>> colorTints = {
     {"secondary-text", SemanticColor::TextSecondary}};
 
 class ImageURL {
-  ImageURLType _type = ImageURLType::Invalid;
-  bool _isValid = false;
-  QString _name;
-  SemanticColor _bgTint;
-  SemanticColor _fgTint;
-  OmniPainter::ImageMaskType _mask = OmniPainter::ImageMaskType::NoMask;
-  std::optional<QString> _fallback;
-  std::optional<ColorLike> _fillColor = std::nullopt;
-
-  // url dependant custom params
-  std::map<QString, QString> m_params;
 
 public:
   ImageURL &circle() {
@@ -96,7 +86,9 @@ public:
   SemanticColor backgroundTint() const;
   const std::optional<ColorLike> &fillColor() const;
   OmniPainter::ImageMaskType mask() const;
+  std::optional<ObjectFit> fit() const { return m_fit; }
 
+  void setFit(ObjectFit fit) { m_fit = fit; }
   void setType(ImageURLType type);
   void setName(const QString &name);
   void setSize(QSize size);
@@ -123,4 +115,18 @@ public:
   static ImageURL http(const QUrl &httpUrl);
   static ImageURL emoji(const QString &emoji);
   static ImageURL rawData(const QByteArray &data, const QString &mimeType);
+
+private:
+  ImageURLType _type = ImageURLType::Invalid;
+  bool _isValid = false;
+  QString _name;
+  SemanticColor _bgTint;
+  SemanticColor _fgTint;
+  OmniPainter::ImageMaskType _mask = OmniPainter::ImageMaskType::NoMask;
+  std::optional<QString> _fallback;
+  std::optional<ColorLike> _fillColor = std::nullopt;
+  std::optional<ObjectFit> m_fit;
+
+  // url dependant custom params
+  std::map<QString, QString> m_params;
 };
