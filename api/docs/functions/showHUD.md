@@ -8,7 +8,10 @@
 
 > **showHUD**(`title`, `options?`): `Promise`\<`void`\>
 
-Defined in: [toast.ts:307](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/toast.ts#L307)
+Close the window and show a small HUD where the window was previously opened.
+Note that the HUD may not be shown in some environments.
+Similarly to `closeWindow`, it is possible to override the pop to root behavior directly
+by passing options to this function.
 
 ## Parameters
 
@@ -29,3 +32,7 @@ Defined in: [toast.ts:307](https://github.com/vicinaehq/vicinae/blob/c742d5fc509
 ## Returns
 
 `Promise`\<`void`\>
+
+## See
+
+closeWindow

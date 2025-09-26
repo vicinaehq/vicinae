@@ -6,9 +6,7 @@
 
 # Type Alias: Accessory
 
-> **Accessory** = \{ `tag?`: [`Tag`](Tag.md); \} \| \{ `text?`: [`Text`](Text.md); \} & `object`
-
-Defined in: [components/grid.tsx:66](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/components/grid.tsx#L66)
+> **Accessory** = \{ `tag?`: `Tag`; \} \| \{ `text?`: `Text`; \} & `object`
 
 ## Type Declaration
 

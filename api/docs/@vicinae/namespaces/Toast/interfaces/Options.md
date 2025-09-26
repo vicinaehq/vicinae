@@ -6,8 +6,6 @@
 
 # Interface: Options
 
-Defined in: [toast.ts:195](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/toast.ts#L195)
-
 The options to create a [Toast](../../../../classes/Toast.md).
 
 ## Example
@@ -41,8 +39,6 @@ export default async () => {
 
 > `optional` **message**: `string`
 
-Defined in: [toast.ts:203](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/toast.ts#L203)
-
 An additional message for the Toast. Useful to show more information, e.g. an identifier of a newly created asset.
 
 ***
@@ -50,8 +46,6 @@ An additional message for the Toast. Useful to show more information, e.g. an id
 ### primaryAction?
 
 > `optional` **primaryAction**: [`ActionOptions`](ActionOptions.md)
-
-Defined in: [toast.ts:211](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/toast.ts#L211)
 
 The primary Action the user can take when hovering on the Toast.
 
@@ -61,8 +55,6 @@ The primary Action the user can take when hovering on the Toast.
 
 > `optional` **secondaryAction**: [`ActionOptions`](ActionOptions.md)
 
-Defined in: [toast.ts:215](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/toast.ts#L215)
-
 The secondary Action the user can take when hovering on the Toast.
 
 ***
@@ -71,8 +63,6 @@ The secondary Action the user can take when hovering on the Toast.
 
 > `optional` **style**: [`Style`](../enumerations/Style.md)
 
-Defined in: [toast.ts:207](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/toast.ts#L207)
-
 The style of a Toast.
 
 ***
@@ -80,7 +70,5 @@ The style of a Toast.
 ### title
 
 > **title**: `string`
-
-Defined in: [toast.ts:199](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/toast.ts#L199)
 
 The title of a Toast. Displayed on the top.

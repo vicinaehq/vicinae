@@ -6,8 +6,6 @@
 
 # Class: Cache
 
-Defined in: [cache.ts:6](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/cache.ts#L6)
-
 Caching abstraction that stores data on disk and supports LRU (least recently used) access.
 Values can only be stored as plain text strings, so it is up to you to serialize your data in an appropriate way.
 For instance, you could store json using `JSON.stringify` and `JSON.parse` it back.
@@ -23,8 +21,6 @@ Another major difference is that cache data is not encrypted, so it's not suitab
 ### Constructor
 
 > **new Cache**(`options?`): `Cache`
-
-Defined in: [cache.ts:53](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/cache.ts#L53)
 
 #### Parameters
 
@@ -44,8 +40,6 @@ Defined in: [cache.ts:53](https://github.com/vicinaehq/vicinae/blob/c742d5fc5093
 
 > **get** **isEmpty**(): `boolean`
 
-Defined in: [cache.ts:105](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/cache.ts#L105)
-
 ##### Returns
 
 `boolean`
@@ -59,8 +53,6 @@ whether the cache is empty.
 #### Get Signature
 
 > **get** **storageDirectory**(): `string`
-
-Defined in: [cache.ts:75](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/cache.ts#L75)
 
 ##### Remarks
 
@@ -79,8 +71,6 @@ the full path to the directory where the data is stored on disk.
 ### clear()
 
 > **clear**(`options?`): `void`
-
-Defined in: [cache.ts:156](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/cache.ts#L156)
 
 Clears all stored data.
 This also notifies registered subscribers (see [subscribe](#subscribe)) unless the  `notifySubscribers` option is set to `false`.
@@ -102,8 +92,6 @@ This also notifies registered subscribers (see [subscribe](#subscribe)) unless t
 ### get()
 
 > **get**(`key`): `undefined` \| `string`
-
-Defined in: [cache.ts:83](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/cache.ts#L83)
 
 #### Parameters
 
@@ -127,8 +115,6 @@ To solely check for existence of a key, use [has](#has).
 
 > **has**(`key`): `boolean`
 
-Defined in: [cache.ts:98](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/cache.ts#L98)
-
 #### Parameters
 
 ##### key
@@ -151,8 +137,6 @@ You can use this method to check for entries without affecting the LRU access.
 
 > **remove**(`key`): `boolean`
 
-Defined in: [cache.ts:145](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/cache.ts#L145)
-
 Removes the data for the given key.
 This also notifies registered subscribers (see [subscribe](#subscribe)).
 
@@ -173,8 +157,6 @@ This also notifies registered subscribers (see [subscribe](#subscribe)).
 ### set()
 
 > **set**(`key`, `data`): `void`
-
-Defined in: [cache.ts:115](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/cache.ts#L115)
 
 Sets the data for the given key.
 If the data exceeds the configured `capacity`, the least recently used entries are removed.
@@ -203,8 +185,6 @@ An individual cache entry cannot be bigger than the configured capacity. If this
 ### subscribe()
 
 > **subscribe**(`subscriber`): [`Subscription`](../@vicinae/namespaces/Cache/type-aliases/Subscription.md)
-
-Defined in: [cache.ts:175](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/cache.ts#L175)
 
 Registers a new subscriber that gets notified when cache data is set or removed.
 

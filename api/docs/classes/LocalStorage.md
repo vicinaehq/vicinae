@@ -6,8 +6,6 @@
 
 # Class: LocalStorage
 
-Defined in: [local-storage.ts:5](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/local-storage.ts#L5)
-
 ## Constructors
 
 ### Constructor
@@ -24,8 +22,6 @@ Defined in: [local-storage.ts:5](https://github.com/vicinaehq/vicinae/blob/c742d
 
 > `static` **allItems**(): `Promise`\<[`Values`](../@vicinae/namespaces/LocalStorage/type-aliases/Values.md)\>
 
-Defined in: [local-storage.ts:31](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/local-storage.ts#L31)
-
 #### Returns
 
 `Promise`\<[`Values`](../@vicinae/namespaces/LocalStorage/type-aliases/Values.md)\>
@@ -36,8 +32,6 @@ Defined in: [local-storage.ts:31](https://github.com/vicinaehq/vicinae/blob/c742
 
 > `static` **clear**(): `Promise`\<`void`\>
 
-Defined in: [local-storage.ts:39](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/local-storage.ts#L39)
-
 #### Returns
 
 `Promise`\<`void`\>
@@ -47,8 +41,6 @@ Defined in: [local-storage.ts:39](https://github.com/vicinaehq/vicinae/blob/c742
 ### getItem()
 
 > `static` **getItem**\<`T`\>(`key`): `Promise`\<`undefined` \| `T`\>
-
-Defined in: [local-storage.ts:11](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/local-storage.ts#L11)
 
 #### Type Parameters
 
@@ -72,8 +64,6 @@ Defined in: [local-storage.ts:11](https://github.com/vicinaehq/vicinae/blob/c742
 
 > `static` **removeItem**(`key`): `Promise`\<`void`\>
 
-Defined in: [local-storage.ts:27](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/local-storage.ts#L27)
-
 #### Parameters
 
 ##### key
@@ -89,8 +79,6 @@ Defined in: [local-storage.ts:27](https://github.com/vicinaehq/vicinae/blob/c742
 ### setItem()
 
 > `static` **setItem**(`key`, `value`): `Promise`\<`void`\>
-
-Defined in: [local-storage.ts:23](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/local-storage.ts#L23)
 
 #### Parameters
 

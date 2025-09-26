@@ -14,5 +14,6 @@
 ## Type Aliases
 
 - [AspectRatio](type-aliases/AspectRatio.md)
+- [Fit](type-aliases/Fit.md)
 - [Inset](type-aliases/Inset.md)
 - [Props](type-aliases/Props.md)
