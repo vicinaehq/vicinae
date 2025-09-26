@@ -7,7 +7,7 @@
     "build": "tsc --outDir dist",
     "pack": "npm run build && npm pack",
     "docgen-html": "typedoc src/api/index.ts",
-    "docgen-md": "typedoc src/api/index.ts --readme none --plugin typedoc-plugin-markdown --out ./docs"
+    "docgen-md": "typedoc src/api/index.ts --disableSources --readme none --plugin typedoc-plugin-markdown --out ./docs"
   },
   "bin": {
     "vici": "./bin/run.js"

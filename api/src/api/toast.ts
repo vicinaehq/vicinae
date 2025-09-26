@@ -2,7 +2,6 @@ import { randomBytes } from "crypto";
 import { bus } from "./bus";
 import { Keyboard } from "./keyboard";
 import * as ui from "./proto/ui";
-import { popToRoot } from "./controls";
 
 /**
  * A Toast with a certain style, title, and message.
@@ -290,27 +289,4 @@ export const showToast = async (
   await toast.show();
 
   return toast;
-};
-
-export enum PopToRootType {
-  Default = "default",
-  Immediate = "immediate",
-  Suspended = "suspended",
 }
-
-const popToRootProtoMap: Record<PopToRootType, ui.PopToRootType> = {
-	[PopToRootType.Default]: ui.PopToRootType.PopToRootDefault,
-	[PopToRootType.Immediate]: ui.PopToRootType.PopToRootImmediate,
-	[PopToRootType.Suspended]: ui.PopToRootType.PopToRootSuspended,
-};
-
-export const showHUD = async (
-  title: string,
-  options?: { clearRootSearch?: boolean; popToRootType?: PopToRootType },
-) => {
-  bus.turboRequest('ui.showHud', { 
-	  text: title, 
-	  clearRootSearch: options?.clearRootSearch ?? false, 
-	  popToRoot: popToRootProtoMap[options?.popToRootType ?? PopToRootType.Default]
-  });
-};

@@ -8,8 +8,6 @@
 
 > **search**(`query`, `_`): `Promise`\<`FileInfo`[]\>
 
-Defined in: [file-search.ts:49](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/file-search.ts#L49)
-
 Search for files matching the provided query string.
 
 ## Parameters

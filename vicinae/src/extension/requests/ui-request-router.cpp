@@ -157,7 +157,8 @@ UIRequestRouter::handleCloseWindow(const proto::ext::ui::CloseMainWindowRequest 
   auto res = new proto::ext::ui::Response;
   auto ack = new proto::ext::common::AckResponse;
 
-  m_navigation->handle()->closeWindow();
+  m_navigation->handle()->closeWindow(
+      {.popToRootType = parseProtoPopToRoot(req.pop_to_root()), .clearRootSearch = req.clear_root_search()});
   res->set_allocated_close_main_window(ack);
 
   return res;

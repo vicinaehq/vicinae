@@ -8,7 +8,7 @@
 
 > **popToRoot**(`options?`): `Promise`\<`void`\>
 
-Defined in: [controls.ts:21](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/controls.ts#L21)
+Pop to the root of the navigation stack, optionally clearing the search bar.
 
 ## Parameters
 

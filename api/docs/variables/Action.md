@@ -8,8 +8,6 @@
 
 > `const` **Action**: `FC`\<[`ActionProps`](../type-aliases/ActionProps.md)\> & `object`
 
-Defined in: [components/actions.tsx:165](https://github.com/vicinaehq/vicinae/blob/c742d5fc509336339909dd669955b863f086bf4e/api/src/api/components/actions.tsx#L165)
-
 ## Type Declaration
 
 ### CopyToClipboard
