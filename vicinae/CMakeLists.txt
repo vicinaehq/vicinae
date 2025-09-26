@@ -547,6 +547,7 @@ set(SRCS
 	src/ui/qtheme-selector/qtheme-selector.cpp
 	src/ui/font-selector/font-selector.cpp
 	src/ui/favicon-service-selector/favicon-service-selector.cpp
+	src/ui/keybinding-selector/keybinding-selector.cpp
 
 	src/settings/general-settings.cpp
 	src/settings/settings-about.cpp

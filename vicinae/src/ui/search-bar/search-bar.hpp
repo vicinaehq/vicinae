@@ -4,6 +4,8 @@
 #include <qcontainerfwd.h>
 #include <qlineedit.h>
 #include <qtimer.h>
+#include "service-registry.hpp"
+#include "services/config/config-service.hpp"
 
 struct CompleterData {
   QList<QString> placeholders;
@@ -24,6 +26,61 @@ protected:
       if (keyEvent->key() == Qt::Key_Backspace && text().isEmpty()) {
         emit pop();
         return true;
+      }
+
+      // Emacs-style editing bindings for the search bar
+      auto config = ServiceRegistry::instance()->config();
+      const bool emacsMode = (config && config->value().keybinding == "emacs");
+
+      if (emacsMode) {
+        // Ctrl-based bindings
+        if (keyEvent->modifiers() == Qt::ControlModifier) {
+          switch (keyEvent->key()) {
+          case Qt::Key_A: // beginning of line
+            setCursorPosition(0);
+            return true;
+          case Qt::Key_E: // end of line
+            setCursorPosition(text().size());
+            return true;
+          case Qt::Key_K: { // kill to end of line
+            int pos = cursorPosition();
+            setText(text().left(pos));
+            setCursorPosition(text().size());
+            return true;
+          }
+          case Qt::Key_U: { // kill to beginning of line
+            int pos = cursorPosition();
+            setText(text().mid(pos));
+            setCursorPosition(0);
+            return true;
+          }
+          default:
+            break;
+          }
+        }
+
+        // Alt/Meta-based bindings
+        if (keyEvent->modifiers() == Qt::AltModifier) {
+          switch (keyEvent->key()) {
+          case Qt::Key_B: // backward word
+            cursorWordBackward(false);
+            return true;
+          case Qt::Key_F: // forward word
+            cursorWordForward(false);
+            return true;
+          case Qt::Key_Backspace: // delete word backward
+            cursorWordBackward(true);
+            insert("");
+            return true;
+          case Qt::Key_Delete: // delete word forward
+          case Qt::Key_D:      // M-d also deletes word forward
+            cursorWordForward(true);
+            insert("");
+            return true;
+          default:
+            break;
+          }
+        }
       }
     }
 

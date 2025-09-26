@@ -13,7 +13,8 @@ static std::unordered_map<QString, QString> keyToIcon = {
 	{"ctrl", ":icons/chevron-up.svg"},
 	{"shift", ":icons/keyboard-shift.svg"},
 	{"return", ":icons/enter-key.svg"},
-	{"cmd", ":icons/command-symbol.svg"}
+	{"cmd", ":icons/command-symbol.svg"},
+	{"opt", ":icons/option-symbol.svg"}
 };
 // clang-format on
 
@@ -41,7 +42,7 @@ void KeyboardShortcutIndicatorWidget::drawKey(const QString &key, QRect rect, Om
     painter.drawPixmap(contentRect, pix);
   } else {
     painter.setThemePen(SemanticColor::TextPrimary);
-    painter.drawText(contentRect, Qt::AlignCenter, _shortcutModel.key);
+    painter.drawText(contentRect, Qt::AlignCenter, key.toUpper());
   }
 }
 

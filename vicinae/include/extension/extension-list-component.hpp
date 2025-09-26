@@ -17,6 +17,9 @@
 #include "ui/form/selector-input.hpp"
 #include "ui/omni-list/omni-list.hpp"
 #include "ui/split-detail/split-detail.hpp"
+#include "service-registry.hpp"
+#include "services/config/config-service.hpp"
+#include "services/keybinding/keybinding-service.hpp"
 
 class AppWindow;
 
@@ -171,12 +174,11 @@ private:
 
   bool inputFilter(QKeyEvent *event) override {
     if (event->modifiers() == Qt::ControlModifier) {
-      switch (event->key()) {
-      case Qt::Key_J:
-        return m_list->selectDown();
-      case Qt::Key_K:
-        return m_list->selectUp();
-      }
+      auto config = ServiceRegistry::instance()->config();
+      const QString keybinding = config ? config->value().keybinding : QString("default");
+
+      if (KeyBindingService::isDownKey(event, keybinding)) { return m_list->selectDown(); }
+      if (KeyBindingService::isUpKey(event, keybinding)) { return m_list->selectUp(); }
     }
 
     if (event->modifiers().toInt() == 0) {

@@ -25,6 +25,7 @@
 #include "ui/omni-list/omni-list.hpp"
 #include "ui/split-detail/split-detail.hpp"
 #include "ui/toast/toast.hpp"
+#include "services/keybinding/keybinding-service.hpp"
 #include <QtCore>
 #include <cstdio>
 #include "services/toast/toast-service.hpp"
@@ -604,15 +605,16 @@ class ClipboardHistoryView : public SimpleView {
 
   bool inputFilter(QKeyEvent *event) override {
     if (event->modifiers() == Qt::ControlModifier) {
-      switch (event->key()) {
-      case Qt::Key_J:
-        return m_list->selectDown();
-      case Qt::Key_K:
-        return m_list->selectUp();
-      case Qt::Key_H:
+      auto config = ServiceRegistry::instance()->config();
+      const QString keybinding = config ? config->value().keybinding : QString("default");
+
+      if (KeyBindingService::isDownKey(event, keybinding)) { return m_list->selectDown(); }
+      if (KeyBindingService::isUpKey(event, keybinding)) { return m_list->selectUp(); }
+      if (KeyBindingService::isLeftKey(event, keybinding)) {
         context()->navigation->popCurrentView();
         return true;
-      case Qt::Key_L:
+      }
+      if (KeyBindingService::isRightKey(event, keybinding)) {
         m_list->activateCurrentSelection();
         return true;
       }
@@ -630,7 +632,13 @@ class ClipboardHistoryView : public SimpleView {
       }
     }
 
-    if (event->keyCombination() == QKeyCombination(Qt::ControlModifier, Qt::Key_P)) {
+    // Open filter dropdown: Default Ctrl+P; in Emacs mode, remap to Opt+P.
+    auto config = ServiceRegistry::instance()->config();
+    const QString keybinding = config ? config->value().keybinding : QString("default");
+    if ((keybinding == "emacs" &&
+         (event->keyCombination() == QKeyCombination(Qt::AltModifier, Qt::Key_P))) ||
+        (keybinding != "emacs" &&
+         (event->keyCombination() == QKeyCombination(Qt::ControlModifier, Qt::Key_P)))) {
       m_filterInput->openSelector();
       return true;
     }
