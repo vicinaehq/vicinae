@@ -15,19 +15,21 @@ type SectionConfig = {
   inset?: GridInset;
   columns?: number;
   fit?: GridFit;
-  aspectRatio?: GridAspectRatio;
+  aspectRatio?: Grid.AspectRatio;
 };
 
-type GridAspectRatio = "1" | "3/2" | "2/3" | "4/3" | "3/4" | "16/9" | "9/16";
-
-const aspectRatioMap: Record<GridAspectRatio, number> = {
+const aspectRatioMap: Record<Grid.AspectRatio, number> = {
 	'1': 1,
 	'3/2': 3 / 2,
 	'2/3': 2 / 3,
 	'4/3': 4 / 3,
 	'3/4': 3 / 4,
 	'16/9': 16 / 9,
-	'9/16': 9 / 16
+	'9/16': 9 / 16,
+	'21/9': 21 / 9,
+	'9/21': 9 / 21,
+	'32/9': 32 / 9,
+	'9/32': 9 / 32
 };
 
 enum GridFit {
@@ -43,7 +45,7 @@ export namespace Grid {
   export type Fit = GridFit;
   export type Props = GridProps;
   export type Inset = GridInset;
-  export type AspectRatio = GridAspectRatio;
+  export type AspectRatio = "1" | "3/2" | "2/3" | "4/3" | "3/4" | "16/9" | "9/16" | '21/9' | '9/21' | '32/9' | '9/32';
 
   export namespace Item {
     export type Props = {
