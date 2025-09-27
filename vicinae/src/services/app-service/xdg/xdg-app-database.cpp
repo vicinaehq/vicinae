@@ -211,7 +211,9 @@ bool XdgAppDatabase::launch(const AbstractApplication &app, const std::vector<QS
   process.setStandardOutputFile(QProcess::nullDevice());
   process.setStandardErrorFile(QProcess::nullDevice());
 
-  if (auto wd = xdgApp.data().workingDirectory()) { process.setWorkingDirectory(wd->c_str()); }
+  if (auto wd = xdgApp.data().workingDirectory(); wd && !wd->empty()) {
+    process.setWorkingDirectory(wd->c_str());
+  }
 
   if (!process.startDetached()) {
     qWarning() << "Failed to start app" << argv << process.errorString();
