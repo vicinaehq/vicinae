@@ -111,6 +111,8 @@ inline std::vector<std::string> toStdStringVec(const std::vector<QString> &strin
  */
 QString normalizeMimeName(const QString &name);
 
+bool isX11TextTarget(const QString &text);
+
 bool isTextMimeType(const QMimeType &mime);
 
 /**

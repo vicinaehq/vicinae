@@ -77,11 +77,6 @@ fs::path stripPathComponents(const fs::path &path, int n) {
 
 QString qStringFromStdView(std::string_view view) { return QString::fromUtf8(view.data(), view.size()); }
 
-static bool isX11TextTarget(const QString &text) {
-  static const std::set<QString> types = {"UTF8_STRING", "STRING", "TEXT", "COMPOUND_TEXT"};
-  return types.contains(text);
-}
-
 bool isHiddenPath(const std::filesystem::path &path) {
   return std::ranges::any_of(path, [](auto &&path) { return path.string().starts_with('.'); });
 }
@@ -206,6 +201,11 @@ namespace Utils {
  * in 'text/plain;charset-utf8
  */
 QString normalizeMimeName(const QString &name) { return name.split(';').at(0); }
+
+bool isX11TextTarget(const QString &text) {
+  static const std::set<QString> types = {"UTF8_STRING", "STRING", "TEXT", "COMPOUND_TEXT"};
+  return types.contains(text);
+}
 
 bool isTextMimeType(const QString &mimeName) {
   if (isX11TextTarget(mimeName)) return true;

@@ -1,6 +1,7 @@
 #include "clipboard-history-view.hpp"
 #include "clipboard-actions.hpp"
 #include "manage-quicklinks-command.hpp"
+#include "services/clipboard/clipboard-db.hpp"
 #include "services/toast/toast-service.hpp"
 #include "layout.hpp"
 #include "ui/text-file-viewer/text-file-viewer.hpp"
@@ -64,6 +65,19 @@ public:
 };
 
 class ClipboardHistoryItemWidget : public SelectableOmniListWidget {
+public:
+  void setEntry(const ClipboardHistoryEntry &entry) {
+    auto createdAt = QDateTime::fromSecsSinceEpoch(entry.updatedAt);
+    m_title->setText(entry.textPreview);
+    m_pinIcon->setVisible(entry.pinnedAt);
+    m_description->setText(QString("%1").arg(getRelativeTimeString(createdAt)));
+    m_icon->setFixedSize(25, 25);
+    m_icon->setUrl(iconForMime(entry));
+  }
+
+  ClipboardHistoryItemWidget() { setupUI(); }
+
+private:
   TypographyWidget *m_title = new TypographyWidget;
   TypographyWidget *m_description = new TypographyWidget;
   ImageWidget *m_icon = new ImageWidget;
@@ -85,6 +99,8 @@ class ClipboardHistoryItemWidget : public SelectableOmniListWidget {
       return getLinkIcon(entry.urlHost);
     case ClipboardOfferKind::Text:
       return ImageURL::builtin("text");
+    case ClipboardOfferKind::File:
+      return ImageURL::builtin("folder");
     default:
       break;
     }
@@ -102,18 +118,6 @@ class ClipboardHistoryItemWidget : public SelectableOmniListWidget {
 
     setLayout(layout.buildLayout());
   }
-
-public:
-  void setEntry(const ClipboardHistoryEntry &entry) {
-    auto createdAt = QDateTime::fromSecsSinceEpoch(entry.updatedAt);
-    m_title->setText(entry.textPreview);
-    m_pinIcon->setVisible(entry.pinnedAt);
-    m_description->setText(QString("%1").arg(getRelativeTimeString(createdAt)));
-    m_icon->setFixedSize(25, 25);
-    m_icon->setUrl(iconForMime(entry));
-  }
-
-  ClipboardHistoryItemWidget() { setupUI(); }
 };
 
 class ClipboardHistoryDetail : public DetailWithMetadataWidget {
@@ -152,7 +156,7 @@ class ClipboardHistoryDetail : public DetailWithMetadataWidget {
 
     if (Utils::isTextMimeType(mime)) {
       auto viewer = new TextFileViewer;
-      viewer->load(path);
+      viewer->load(QByteArray(path.c_str()));
       return VStack().add(viewer).buildWidget();
     }
 
@@ -175,7 +179,7 @@ class ClipboardHistoryDetail : public DetailWithMetadataWidget {
       if (paths.size() == 1) {
         QUrl url(paths.at(0));
 
-        if (url.isLocalFile()) {
+        if (url.scheme() == "file") {
           std::error_code ec;
           fs::path path = url.path().toStdString();
           if (fs::is_regular_file(path, ec)) { return detailForFilePath(path); }
@@ -197,7 +201,7 @@ class ClipboardHistoryDetail : public DetailWithMetadataWidget {
       return icon;
     }
 
-    if (Utils::isTextMimeType(mime)) {
+    if (Utils::isTextMimeType(mimeName)) {
       auto viewer = new TextFileViewer;
       viewer->load(data);
       return VStack().add(viewer).buildWidget();
@@ -420,16 +424,14 @@ public:
 };
 
 static const std::vector<Preference::DropdownData::Option> filterSelectorOptions = {
-    {"All", "all"},
-    {"Text", "text"},
-    {"Images", "image"},
-    {"Links", "link"},
+    {"All", "all"}, {"Text", "text"}, {"Images", "image"}, {"Links", "link"}, {"Files", "file"},
 };
 
 static const std::unordered_map<QString, ClipboardOfferKind> typeToOfferKind{
     {"image", ClipboardOfferKind::Image},
     {"link", ClipboardOfferKind::Link},
     {"text", ClipboardOfferKind::Text},
+    {"file", ClipboardOfferKind::File},
 };
 
 ClipboardHistoryView::ClipboardHistoryView() {
