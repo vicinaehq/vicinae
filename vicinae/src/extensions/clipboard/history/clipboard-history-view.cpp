@@ -150,7 +150,7 @@ class ClipboardHistoryDetail : public DetailWithMetadataWidget {
       return icon;
     }
 
-    if (isTextMimeType(mime)) {
+    if (Utils::isTextMimeType(mime)) {
       auto viewer = new TextFileViewer;
       viewer->load(path);
       return VStack().add(viewer).buildWidget();
@@ -166,7 +166,7 @@ class ClipboardHistoryDetail : public DetailWithMetadataWidget {
   }
 
   QWidget *detailForMime(const QByteArray &data, const QString &mimeName) {
-    QMimeType mime = QMimeDatabase().mimeTypeForName(mimeName);
+    QMimeType mime = QMimeDatabase().mimeTypeForName(Utils::normalizeMimeName(mimeName));
 
     if (mimeName == "text/uri-list") {
       QString text(data);
@@ -197,7 +197,7 @@ class ClipboardHistoryDetail : public DetailWithMetadataWidget {
       return icon;
     }
 
-    if (isTextMimeType(mime)) {
+    if (Utils::isTextMimeType(mime)) {
       auto viewer = new TextFileViewer;
       viewer->load(data);
       return VStack().add(viewer).buildWidget();

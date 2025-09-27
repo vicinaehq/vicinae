@@ -56,7 +56,7 @@ class FileListItemMetadata : public DetailWithMetadataWidget {
       return icon;
     }
 
-    if (isTextMimeType(mime)) {
+    if (Utils::isTextMimeType(mime)) {
       auto viewer = new TextFileViewer;
       viewer->load(path);
 

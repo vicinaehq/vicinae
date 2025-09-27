@@ -77,11 +77,9 @@ fs::path stripPathComponents(const fs::path &path, int n) {
 
 QString qStringFromStdView(std::string_view view) { return QString::fromUtf8(view.data(), view.size()); }
 
-bool isTextMimeType(const QMimeType &mime) {
-  QMimeDatabase db;
-  QMimeType textPlain = db.mimeTypeForName("text/plain");
-
-  return mime.inherits(textPlain.name());
+static bool isX11TextTarget(const QString &text) {
+  static const std::set<QString> types = {"UTF8_STRING", "STRING", "TEXT", "COMPOUND_TEXT"};
+  return types.contains(text);
 }
 
 bool isHiddenPath(const std::filesystem::path &path) {
@@ -200,3 +198,21 @@ QString formatCount(int count) {
 
   return QString::number(count);
 }
+
+namespace Utils {
+
+/**
+ * Strips the encoding part in a mime name, typically
+ * in 'text/plain;charset-utf8
+ */
+QString normalizeMimeName(const QString &name) { return name.split(';').at(0); }
+
+bool isTextMimeType(const QString &mimeName) {
+  if (isX11TextTarget(mimeName)) return true;
+
+  QMimeDatabase db;
+  return isTextMimeType(db.mimeTypeForName(normalizeMimeName(mimeName)));
+}
+
+bool isTextMimeType(const QMimeType &mime) { return mime.inherits("text/plain"); }
+}; // namespace Utils
