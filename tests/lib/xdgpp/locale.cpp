@@ -1,3 +1,4 @@
+#include "xdgpp/locale/locale.hpp"
 #include <xdgpp/xdgpp.hpp>
 #include <catch2/catch_test_macros.hpp>
 
@@ -17,4 +18,9 @@ TEST_CASE("should parse LANG.ENCODING") { REQUIRE(xdgpp::Locale::parse("en.utf8"
 
 TEST_CASE("should parse LANG@MODIFIER") {
   REQUIRE(xdgpp::Locale::parse("en@latin").toString() == "en@latin");
+}
+
+TEST_CASE("lang_COUNTRY.ENCODING == should match lang_COUNTRY") {
+  REQUIRE(xdgpp::Locale("en_US.utf8")
+              .matchesOnly(xdgpp::Locale("en_US"), xdgpp::Locale::COUNTRY | xdgpp::Locale::LANG));
 }

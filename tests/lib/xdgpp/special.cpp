@@ -44,3 +44,109 @@ StartupWMClass=ftwa-youtube-music
   REQUIRE(exec.at(0) == "vivaldi");
   REQUIRE(exec.at(1) == "--app=https://music.youtube.com");
 }
+
+TEST_CASE("localization test", XDGPP_GROUP) {
+  auto entry = xdgpp::DesktopEntry::fromData(R"(
+[Desktop Entry]
+Name[ab]=Авидео
+Name[af]=Video's
+Name[ar]=فيديو
+Name[as]=ভিডিঅ'সমূহ
+Name[be]=Відэа
+Name[be@latin]=Videa
+Name[bg]=Видео клипове
+Name[bn]=ভিডিও
+Name[bn_IN]=ভিডিও
+Name[bs]=Video
+Name[ca]=Vídeos
+Name[ca@valencia]=Vídeos
+Name[crh]=Videolar
+Name[cs]=Videa
+Name[da]=Videoer
+Name[de]=Videos
+Name[el]=Βίντεο
+Name[en_GB]=Videos
+Name[en@shaw]=𐑝𐑦𐑛𐑰𐑴𐑟
+Name[eo]=Videaĵoj
+Name[es]=Vídeos
+Name[et]=Videod
+Name[eu]=Bideoak
+Name[fa]=ویدیوها
+Name[fi]=Videot
+Name[fr]=Vidéos
+Name[fur]=Videos
+Name[ga]=Físeáin
+Name[gd]=Videothan
+Name[gl]=Vídeos
+Name[gu]=વિડીઓ
+Name[gv]=Feeshanyn
+Name[he]=סרטים
+Name[hi]=वीडियो
+Name[hr]=Snimke
+Name[hu]=Videók
+Name[id]=Video
+Name[ie]=Videos
+Name[is]=Myndskeið
+Name[it]=Video
+Name[ja]=ビデオ
+Name[ka]=ვიდეო
+Name[kab]=Tividyutin
+Name[kk]=Видеолар
+Name[km]=វីដេអូ
+Name[kn]=ವೀಡಿಯೋಗಳು
+Name[ko]=동영상
+Name[ky]=Видео
+Name[lt]=Vaizdo įrašai
+Name[lv]=Video
+Name[mjw]=Videos
+Name[ml]=വീഡിയോകള്‍
+Name[mr]=व्हिडीओज्
+Name[ms]=Video
+Name[my]=ဗီဒီယိုများ
+Name[nb]=Filmer
+Name[ne]=भिडियो
+Name[nl]=Video’s
+Name[nn]=Videoar
+Name[oc]=Vidèos
+Name[or]=ଭିଡିଓ
+Name[pa]=ਵਿਡੀਓ
+Name[pl]=Filmy
+Name[pt]=Vídeos
+Name[pt_BR]=Vídeos
+Name[ro]=Videouri
+Name[ru]=Видео
+Name[sk]=Videá
+Name[sl]=Video
+Name[sq]=Video
+Name[sr]=Филмови
+Name[sr@latin]=Filmovi
+Name[sv]=Videoklipp
+Name[ta]=வீடியோக்கள்
+Name[te]=వీడియోలు
+Name[tg]=Видеоҳо
+Name[th]=วิดีโอ
+Name[tr]=Videolar
+Name[ug]=سىنلار
+Name[uk]=Відео
+Name[uz]=Videolar
+Name[vi]=Xem phim
+Name[zh_CN]=视频
+Name[zh_HK]=影片
+Name[zh_TW]=影片
+Name[zu]=Amavidiyo
+Name=Videos
+Exec=totem %U
+# Translators: Do NOT translate or transliterate this text (this is an icon file name)!
+Icon=org.gnome.Totem
+DBusActivatable=true
+Terminal=false
+Type=Application
+Categories=GTK;GNOME;AudioVideo;Player;Video;
+X-GNOME-DocPath=totem/totem.xml
+StartupNotify=true
+)",
+                                             {.locale = xdgpp::Locale("en_US.utf8")});
+
+  auto exec = entry.parseExec();
+  REQUIRE(entry.name() == "Videos");
+}
