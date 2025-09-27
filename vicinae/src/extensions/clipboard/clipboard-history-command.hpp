@@ -1,5 +1,5 @@
 #pragma once
-#include "clipboard-history-view.hpp"
+#include "history/clipboard-history-view.hpp"
 #include "single-view-command-context.hpp"
 #include "vicinae.hpp"
 #include <qjsonobject.h>

@@ -2,6 +2,7 @@
 #include "clipboard-service.hpp"
 #include <algorithm>
 #include <filesystem>
+#include <numbers>
 #include <numeric>
 #include <qimagereader.h>
 #include <qlogging.h>
@@ -204,21 +205,23 @@ ClipboardService::listAll(int limit, int offset, const ClipboardListSettings &op
 }
 
 ClipboardOfferKind ClipboardService::getKind(const ClipboardDataOffer &offer) {
-  if (offer.mimeType.startsWith("image/")) return ClipboardOfferKind::Image;
-  if (offer.mimeType.startsWith("text/")) {
-    if (offer.mimeType == "text/html") { return ClipboardOfferKind::Text; }
-    auto url = QUrl::fromEncoded(offer.data, QUrl::StrictMode);
-    if (url.isValid() && !url.scheme().isEmpty()) { return ClipboardOfferKind::Link; }
-
+  if (offer.mimeType == "text/uri-list") {
+    QString text = offer.data;
+    auto uris = text.split("\r\n", Qt::SkipEmptyParts);
+    if (uris.size() == 1 && QUrl(uris.front()).isLocalFile()) return ClipboardOfferKind::File;
     return ClipboardOfferKind::Text;
   }
 
-  // some of these can be text
-  if (offer.mimeType.startsWith("application/")) {
-    static std::set<QString> applicationTexts{"application/json", "application/xml", "application/javascript",
-                                              "application/sql"};
+  if (offer.mimeType.startsWith("image/")) { return ClipboardOfferKind::Image; }
+  if (offer.mimeType == "text/html") { return ClipboardOfferKind::Text; }
 
-    if (applicationTexts.contains(offer.mimeType)) return ClipboardOfferKind::Text;
+  if (Utils::isTextMimeType(offer.mimeType)) {
+    auto url = QUrl::fromEncoded(offer.data, QUrl::StrictMode);
+
+    if (url.isLocalFile()) { return ClipboardOfferKind::File; }
+    if (!url.scheme().isEmpty()) { return ClipboardOfferKind::Link; }
+
+    return ClipboardOfferKind::Text;
   }
 
   return ClipboardOfferKind::Unknown;
@@ -226,34 +229,30 @@ ClipboardOfferKind ClipboardService::getKind(const ClipboardDataOffer &offer) {
 
 QString ClipboardService::getSelectionPreferredMimeType(const ClipboardSelection &selection) {
   static const std::vector<QString> plainTextMimeTypes = {
-      "text/plain", "text/plain;charset=utf-8", "UTF8_STRING", "STRING", "TEXT", "COMPOUND_TEXT"};
+      "text/uri-list", "text/plain",   "text/plain;charset=utf-8", "UTF8_STRING", "STRING",
+      "TEXT",          "COMPOUND_TEXT"};
 
-  // 1. Prefer plain text (non-empty)
   for (const auto &mime : plainTextMimeTypes) {
     auto it = std::ranges::find_if(
         selection.offers, [&](const auto &offer) { return offer.mimeType == mime && !offer.data.isEmpty(); });
     if (it != selection.offers.end()) return it->mimeType;
   }
 
-  // 2. Then image types (non-empty)
   auto imageIt = std::ranges::find_if(selection.offers, [](const auto &offer) {
     return offer.mimeType.startsWith("image/") && !offer.data.isEmpty();
   });
   if (imageIt != selection.offers.end()) return imageIt->mimeType;
 
-  // 3. Then HTML (non-empty)
   auto htmlIt = std::ranges::find_if(selection.offers, [](const auto &offer) {
     return offer.mimeType == "text/html" && !offer.data.isEmpty();
   });
   if (htmlIt != selection.offers.end()) return htmlIt->mimeType;
 
-  // 4. Otherwise, fallback to first non-Firefox/Zen custom type (non-empty)
   auto fallbackIt = std::ranges::find_if(selection.offers, [](const auto &offer) {
     return !offer.mimeType.startsWith("text/_moz_html") && !offer.data.isEmpty();
   });
   if (fallbackIt != selection.offers.end()) return fallbackIt->mimeType;
 
-  // 5. If nothing else, fallback to first offer (even if empty)
   if (!selection.offers.empty()) return selection.offers.front().mimeType;
 
   return {};
@@ -332,22 +331,24 @@ bool ClipboardService::isClearSelection(const ClipboardSelection &selection) con
 }
 
 QString ClipboardService::getOfferTextPreview(const ClipboardDataOffer &offer) {
-  if (offer.mimeType.startsWith("text/")) { return offer.data.simplified().mid(0, 50); }
-
-  if (offer.mimeType.startsWith("image/")) {
+  switch (getKind(offer)) {
+  case ClipboardOfferKind::Text:
+  case ClipboardOfferKind::Link:
+  case ClipboardOfferKind::File:
+    return offer.data.simplified().mid(0, 50);
+  case ClipboardOfferKind::Image: {
     QBuffer buffer;
     QImageReader reader(&buffer);
 
     buffer.setData(offer.data);
-
     if (auto size = reader.size(); size.isValid()) {
       return QString("Image (%1x%2)").arg(size.width()).arg(size.height());
     }
-
     return "Image";
   }
-
-  return "Unnamed";
+  default:
+    return "Unknown";
+  }
 }
 
 std::optional<QString> ClipboardService::retrieveKeywords(const QString &id) {
@@ -398,9 +399,10 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
     return;
   }
 
+  auto preferredKind = getKind(*preferredOfferIt);
   auto selectionHash = QCryptographicHash::hash(preferredOfferIt->data, QCryptographicHash::Md5).toHex();
 
-  if (preferredMimeType.startsWith("text/") && preferredOfferIt->data.trimmed().isEmpty()) {
+  if (preferredKind == ClipboardOfferKind::Text && preferredOfferIt->data.trimmed().isEmpty()) {
     qDebug() << "Ignore empty text for preferred offer of type" << preferredMimeType;
     return;
   }
@@ -414,13 +416,12 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
     qDebug() << "process selectionHash" << selectionHash;
 
     QString selectionId = Crypto::UUID::v4();
-    ClipboardOfferKind kind = getKind(*preferredOfferIt);
 
     if (!db.insertSelection({.id = selectionId,
                              .offerCount = static_cast<int>(selection.offers.size()),
                              .hash = selectionHash,
                              .preferredMimeType = preferredMimeType,
-                             .kind = kind,
+                             .kind = preferredKind,
                              .source = selection.sourceApp})) {
       qWarning() << "failed to insert selection";
       return false;
