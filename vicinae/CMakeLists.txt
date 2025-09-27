@@ -17,20 +17,6 @@ set(WLR_CLIP_BIN ${CMAKE_BINARY_DIR}/wlr-clip/wlr-clip${CMAKE_EXECUTABLE_SUFFIX}
 set(ASSET_PATH ${CMAKE_CURRENT_SOURCE_DIR}/assets)
 configure_file(resources.qrc.in resources.qrc)
 
-#if(Qt6_FOUND)
-#	find_package(Qt6 REQUIRED COMPONENTS QWaylandIntegrationPlugin)
-#    # Import static plugins
-#qt_import_plugins(${TARGET}
-#        INCLUDE Qt6::QWaylandIntegrationPlugin
-#    )
-#    
-#    # Also import other essential plugins you might need
-#    qt_import_plugins(${TARGET}
-#        INCLUDE_BY_TYPE platforms Qt6::QWaylandIntegrationPlugin
-#		#INCLUDE_BY_TYPE imageformats Qt6::QSvgPlugin Qt6::QJpegPlugin Qt6::QPngPlugin
-#    )
-#endif()
-
 if (WAYLAND_LAYER_SHELL)
 	message(STATUS "Compiling with wayland layer shell support (for wlroots-like compositors)")
 	#find_package(Qt6 REQUIRED COMPONENTS WaylandClient)
@@ -210,8 +196,6 @@ set(SRCS
 	src/lib/crypto.cpp
 
 
-	include/clipboard-history-view.hpp
-
 	src/ui/omni-painter/omni-painter.hpp
 	src/ui/omni-painter/omni-painter.cpp
 
@@ -389,6 +373,8 @@ set(SRCS
 	src/ui/omni-tree/omni-tree.cpp
 
 	src/extensions/clipboard/clipboard-history-command.cpp
+	src/extensions/clipboard/history/clipboard-history-view.hpp
+	src/extensions/clipboard/history/clipboard-history-view.cpp
 
 	src/extensions/vicinae/refresh-apps-command.hpp
 	src/extensions/vicinae/refresh-apps-command.cpp
@@ -400,6 +386,8 @@ set(SRCS
 	src/ui/file-picker/file-picker.cpp
 	src/ui/file-picker/file-picker-default-item-delegate.hpp
 	src/ui/file-picker/file-picker-default-item-delegate.cpp
+
+	src/ui/text-file-viewer/text-file-viewer.cpp
 
 	src/ui/typography/typography.hpp
 	src/ui/typography/typography.cpp

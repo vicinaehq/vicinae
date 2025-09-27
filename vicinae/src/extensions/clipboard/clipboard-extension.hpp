@@ -1,9 +1,11 @@
 #pragma once
 #include "command-database.hpp"
 #include "extensions/clipboard/clipboard-history-command.hpp"
-#include "../../ui/image/url.hpp"
+#include "ui/image/url.hpp"
 #include "vicinae.hpp"
 #include <qlogging.h>
+#include "service-registry.hpp"
+#include "services/clipboard/clipboard-service.hpp"
 
 class ClipboardExtension : public BuiltinCommandRepository {
 public:

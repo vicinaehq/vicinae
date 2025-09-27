@@ -1,21 +1,19 @@
 #pragma once
-#include "actions/app/app-actions.hpp"
-#include "clipboard-actions.hpp"
+#include "layout.hpp"
 #include "misc/file-list-item.hpp"
 #include "ui/views/base-view.hpp"
-#include "clipboard-history-view.hpp"
 #include "manage-quicklinks-command.hpp"
 #include "services/files-service/file-service.hpp"
-#include "../src/ui/image/url.hpp"
+#include "ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "services/files-service/abstract-file-indexer.hpp"
 #include "ui/omni-list/omni-list.hpp"
 #include "utils/utils.hpp"
-#include "actions/files/file-actions.hpp"
 #include <filesystem>
 #include <qfuturewatcher.h>
 #include <qlocale.h>
 #include <qmimedatabase.h>
+#include "ui/text-file-viewer/text-file-viewer.hpp"
 
 class FileListItemMetadata : public DetailWithMetadataWidget {
   std::filesystem::path m_path;
@@ -59,13 +57,10 @@ class FileListItemMetadata : public DetailWithMetadataWidget {
     }
 
     if (isTextMimeType(mime)) {
-      auto container = new TextContainer;
       auto viewer = new TextFileViewer;
-
-      container->setWidget(viewer);
       viewer->load(path);
 
-      return container;
+      return VStack().add(viewer).buildWidget();
     }
 
     auto icon = new ImageWidget;

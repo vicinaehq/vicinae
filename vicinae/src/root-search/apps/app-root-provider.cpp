@@ -2,7 +2,6 @@
 #include "actions/app/app-actions.hpp"
 #include "actions/root-search/root-search-actions.hpp"
 #include "clipboard-actions.hpp"
-#include "clipboard-history-view.hpp"
 #include "navigation-controller.hpp"
 #include "../../ui/image/url.hpp"
 #include "service-registry.hpp"
