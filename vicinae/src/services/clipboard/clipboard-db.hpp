@@ -13,12 +13,7 @@ struct PreferredClipboardOfferRecord {
   ClipboardEncryptionType encryption;
 };
 
-enum class ClipboardOfferKind {
-  Unknown = 0,
-  Text,
-  Link,
-  Image,
-};
+enum class ClipboardOfferKind { Unknown = 0, Text, Link, Image, File, Count /* a link ot a file */ };
 
 struct InsertSelectionPayload {
   QString id;

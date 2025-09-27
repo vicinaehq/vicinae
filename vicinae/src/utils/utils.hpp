@@ -56,8 +56,6 @@ QString getRelativeTimeString(const QDateTime &pastTime);
 
 QString qStringFromStdView(std::string_view view);
 
-bool isTextMimeType(const QMimeType &mime);
-
 /**
  * Whether the path points to a file that is considered to be hidden.
  * A file or directory is considered hidden when itself or one of its ancestor's name
@@ -106,4 +104,23 @@ inline std::vector<std::string> toStdStringVec(const std::vector<QString> &strin
   }
   return list;
 }
+
+/**
+ * Strips the encoding part in a mime name, typically
+ * in 'text/plain;charset-utf8
+ */
+QString normalizeMimeName(const QString &name);
+
+bool isX11TextTarget(const QString &text);
+
+bool isTextMimeType(const QMimeType &mime);
+
+/**
+ * Returns whether the mime name refers to a text mime type.
+ * This will also return true if `mimeName` is one of the X11 clipboard
+ * text targets (UTF8_STRING, STRING, TEXT...)
+ * Content described by such a mime type should be safe to render as plain text.
+ */
+bool isTextMimeType(const QString &mimeName);
+
 }; // namespace Utils

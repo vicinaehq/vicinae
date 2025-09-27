@@ -1,4 +1,5 @@
 #include "ui/image/image.hpp"
+#include <qnamespace.h>
 #include "svg-image-loader.hpp"
 
 void SvgImageLoader::render(QPixmap &pixmap, const QRect &bounds) {
@@ -13,6 +14,7 @@ void SvgImageLoader::render(QPixmap &pixmap, const QRect &bounds) {
   {
     OmniPainter painter(&filledSvg);
 
+    m_renderer.setAspectRatioMode(Qt::AspectRatioMode::KeepAspectRatio);
     m_renderer.render(&painter, filledSvg.rect());
 
     if (m_fill) {

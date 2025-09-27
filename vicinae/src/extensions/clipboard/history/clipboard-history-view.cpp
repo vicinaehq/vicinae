@@ -1,0 +1,660 @@
+#include "clipboard-history-view.hpp"
+#include "clipboard-actions.hpp"
+#include "manage-quicklinks-command.hpp"
+#include "services/clipboard/clipboard-db.hpp"
+#include "services/toast/toast-service.hpp"
+#include "layout.hpp"
+#include "ui/text-file-viewer/text-file-viewer.hpp"
+#include "ui/action-pannel/push-action.hpp"
+#include "ui/alert/alert.hpp"
+#include "ui/form/text-area.hpp"
+#include "utils.hpp"
+#include <qmimedata.h>
+#include <qmimedatabase.h>
+#include <qmimetype.h>
+#include <qnamespace.h>
+#include <qwidget.h>
+#include <filesystem>
+#include <system_error>
+
+namespace fs = std::filesystem;
+
+class TextContainer : public QWidget {
+  QVBoxLayout *_layout;
+
+public:
+  void setWidget(QWidget *widget) { _layout->addWidget(widget); }
+
+  TextContainer() {
+    _layout = new QVBoxLayout;
+    setLayout(_layout);
+  }
+};
+
+class PasteClipboardSelection : public PasteToFocusedWindowAction {
+  QString m_id;
+
+  void execute(ApplicationContext *ctx) override {
+    setConcealed();
+    loadClipboardData(Clipboard::SelectionRecordHandle{m_id});
+    PasteToFocusedWindowAction::execute(ctx);
+  }
+
+public:
+  PasteClipboardSelection(const QString &id) : PasteToFocusedWindowAction(), m_id(id) {}
+};
+
+class CopyClipboardSelection : public AbstractAction {
+  QString m_id;
+
+  void execute(ApplicationContext *ctx) override {
+    auto clipman = ctx->services->clipman();
+    auto toast = ctx->services->toastService();
+
+    if (clipman->copySelectionRecord(m_id, {.concealed = true})) {
+      ctx->navigation->showHud("Selection copied to clipboard");
+      return;
+    }
+
+    toast->setToast("Failed to copy to clipboard", ToastPriority::Danger);
+  }
+
+public:
+  CopyClipboardSelection(const QString &id)
+      : AbstractAction("Copy to clipboard", ImageURL::builtin("copy-clipboard")), m_id(id) {}
+};
+
+class ClipboardHistoryItemWidget : public SelectableOmniListWidget {
+public:
+  void setEntry(const ClipboardHistoryEntry &entry) {
+    auto createdAt = QDateTime::fromSecsSinceEpoch(entry.updatedAt);
+    m_title->setText(entry.textPreview);
+    m_pinIcon->setVisible(entry.pinnedAt);
+    m_description->setText(QString("%1").arg(getRelativeTimeString(createdAt)));
+    m_icon->setFixedSize(25, 25);
+    m_icon->setUrl(iconForMime(entry));
+  }
+
+  ClipboardHistoryItemWidget() { setupUI(); }
+
+private:
+  TypographyWidget *m_title = new TypographyWidget;
+  TypographyWidget *m_description = new TypographyWidget;
+  ImageWidget *m_icon = new ImageWidget;
+  ImageWidget *m_pinIcon = new ImageWidget;
+
+  ImageURL getLinkIcon(const std::optional<QString> &urlHost) const {
+    auto dflt = ImageURL::builtin("link");
+
+    if (urlHost) return ImageURL::favicon(*urlHost).withFallback(dflt);
+
+    return dflt;
+  }
+
+  ImageURL iconForMime(const ClipboardHistoryEntry &entry) const {
+    switch (entry.kind) {
+    case ClipboardOfferKind::Image:
+      return ImageURL::builtin("image");
+    case ClipboardOfferKind::Link:
+      return getLinkIcon(entry.urlHost);
+    case ClipboardOfferKind::Text:
+      return ImageURL::builtin("text");
+    case ClipboardOfferKind::File:
+      return ImageURL::builtin("folder");
+    default:
+      break;
+    }
+    return ImageURL::builtin("question-mark-circle");
+  }
+
+  void setupUI() {
+    m_pinIcon->setUrl(ImageURL::builtin("pin").setFill(SemanticColor::Red));
+    m_pinIcon->setFixedSize(16, 16);
+    m_description->setColor(SemanticColor::TextSecondary);
+    m_description->setSize(TextSize::TextSmaller);
+
+    auto layout = HStack().margins(5).spacing(10).add(m_icon).add(
+        VStack().add(m_title).add(HStack().add(m_pinIcon).add(m_description).spacing(5)));
+
+    setLayout(layout.buildLayout());
+  }
+};
+
+class ClipboardHistoryDetail : public DetailWithMetadataWidget {
+  QTemporaryFile m_tmpFile;
+
+  std::vector<MetadataItem> createEntryMetadata(const ClipboardHistoryEntry &entry) const {
+    auto mime = MetadataLabel{
+        .text = entry.mimeType,
+        .title = "Mime",
+    };
+    auto size = MetadataLabel{
+        .text = formatSize(entry.size),
+        .title = "Size",
+    };
+    auto copiedAt = MetadataLabel{
+        .text = QDateTime::fromSecsSinceEpoch(entry.updatedAt).toString(),
+        .title = "Copied at",
+    };
+    auto checksum = MetadataLabel{
+        .text = entry.md5sum,
+        .title = "Checksum (MD5)",
+    };
+
+    return {mime, size, copiedAt, checksum};
+  }
+
+  QWidget *detailForFilePath(const fs::path &path) {
+    auto mime = QMimeDatabase().mimeTypeForFile(path.c_str());
+
+    if (mime.name().startsWith("image/")) {
+      auto icon = new ImageWidget;
+      icon->setContentsMargins(10, 10, 10, 10);
+      icon->setUrl(ImageURL::local(path));
+      return icon;
+    }
+
+    if (Utils::isTextMimeType(mime)) {
+      auto viewer = new TextFileViewer;
+      viewer->load(QByteArray(path.c_str()));
+      return VStack().add(viewer).buildWidget();
+    }
+
+    return detailForUnmatchedMime(mime);
+  }
+
+  QWidget *detailForUnmatchedMime(const QMimeType &mime) {
+    auto icon = new ImageWidget;
+    icon->setUrl(ImageURL::system(mime.genericIconName()));
+    return icon;
+  }
+
+  QWidget *detailForMime(const QByteArray &data, const QString &mimeName) {
+    QMimeType mime = QMimeDatabase().mimeTypeForName(Utils::normalizeMimeName(mimeName));
+
+    if (mimeName == "text/uri-list") {
+      QString text(data);
+      auto paths = text.split("\r\n", Qt::SkipEmptyParts);
+
+      if (paths.size() == 1) {
+        QUrl url(paths.at(0));
+
+        if (url.scheme() == "file") {
+          std::error_code ec;
+          fs::path path = url.path().toStdString();
+          if (fs::is_regular_file(path, ec)) { return detailForFilePath(path); }
+        }
+      }
+    }
+
+    if (mimeName.startsWith("image/")) {
+      if (!m_tmpFile.open()) {
+        qWarning() << "Failed to open file";
+        return detailForUnmatchedMime(mime);
+      }
+
+      m_tmpFile.write(data);
+      m_tmpFile.close();
+      auto icon = new ImageWidget;
+      icon->setContentsMargins(10, 10, 10, 10);
+      icon->setUrl(ImageURL::local(m_tmpFile.filesystemFileName()));
+      return icon;
+    }
+
+    if (Utils::isTextMimeType(mimeName)) {
+      auto viewer = new TextFileViewer;
+      viewer->load(data);
+      return VStack().add(viewer).buildWidget();
+    }
+
+    return detailForUnmatchedMime(mime);
+  }
+
+  QWidget *createEntryWidget(const ClipboardHistoryEntry &entry) {
+    auto data = ServiceRegistry::instance()->clipman()->decryptMainSelectionOffer(entry.id);
+
+    return detailForMime(data, entry.mimeType);
+  }
+
+public:
+  void setEntry(const ClipboardHistoryEntry &entry) {
+    if (auto previous = content()) { previous->deleteLater(); }
+
+    auto widget = createEntryWidget(entry);
+    auto metadata = createEntryMetadata(entry);
+
+    setContent(widget);
+    setMetadata(metadata);
+  }
+};
+
+class RemoveSelectionAction : public AbstractAction {
+  QString _id;
+
+  void execute(ApplicationContext *ctx) override {
+    auto clipman = ctx->services->clipman();
+    auto toast = ctx->services->toastService();
+
+    if (clipman->removeSelection(_id)) {
+      toast->setToast("Entry removed");
+    } else {
+      toast->setToast("Failed to remove entry", ToastPriority::Danger);
+    }
+  }
+
+public:
+  RemoveSelectionAction(const QString &id)
+      : AbstractAction("Remove entry", ImageURL::builtin("trash")), _id(id) {
+    setStyle(AbstractAction::Style::Danger);
+  }
+};
+
+class PinClipboardAction : public AbstractAction {
+  QString _id;
+  bool _value;
+
+  void execute(ApplicationContext *ctx) override {
+    QString action = _value ? "pinned" : "unpinned";
+
+    if (ctx->services->clipman()->setPinned(_id, _value)) {
+      ctx->services->toastService()->success(QString("Selection %1").arg(action));
+    } else {
+      ctx->services->toastService()->failure("Failed to change pin status");
+    }
+  }
+
+public:
+  QString entryId() const { return _id; }
+
+  PinClipboardAction(const QString &id, bool value)
+      : AbstractAction(value ? "Pin" : "Unpin", ImageURL::builtin("pin")), _id(id), _value(value) {}
+};
+
+class EditClipboardSelectionKeywordsView : public ManagedFormView {
+  TextArea *m_keywords = new TextArea;
+  QString m_selectionId;
+
+  void onSubmit() override {
+    auto clipman = context()->services->clipman();
+    auto toast = context()->services->toastService();
+
+    if (clipman->setKeywords(m_selectionId, m_keywords->text())) {
+      toast->setToast("Keywords edited", ToastPriority::Success);
+      popSelf();
+    } else {
+      toast->setToast("Failed to edit keywords", ToastPriority::Danger);
+    }
+  }
+
+  void initializeForm() override {
+    auto clipman = context()->services->clipman();
+
+    m_keywords->setText(clipman->retrieveKeywords(m_selectionId).value_or(""));
+    m_keywords->textEdit()->selectAll();
+  }
+
+public:
+  EditClipboardSelectionKeywordsView(const QString &id) : m_selectionId(id) {
+    auto inputField = new FormField();
+
+    inputField->setWidget(m_keywords);
+    inputField->setName("Keywords");
+    inputField->setInfo("Additional keywords that will be used to index this selection.");
+
+    form()->addField(inputField);
+  }
+};
+
+class EditClipboardKeywordsAction : public PushAction<EditClipboardSelectionKeywordsView, QString> {
+  QString title() const override { return "Edit keywords"; }
+  ImageURL icon() const override { return ImageURL::builtin("text"); }
+
+public:
+  EditClipboardKeywordsAction(const QString &id) : PushAction(id) {}
+};
+
+class RemoveAllSelectionsAction : public AbstractAction {
+  void execute(ApplicationContext *ctx) override {
+    auto alert = new CallbackAlertWidget();
+
+    alert->setTitle("Are you sure?");
+    alert->setMessage("All your clipboard history will be lost forever");
+    alert->setConfirmText("Delete all", SemanticColor::Red);
+    alert->setConfirmCallback([ctx]() {
+      auto toast = ctx->services->toastService();
+      auto clipman = ctx->services->clipman();
+
+      if (clipman->removeAllSelections()) {
+        toast->success("All selections were removed");
+      } else {
+        toast->failure("Failed to remove all selections");
+      }
+    });
+    ctx->navigation->setDialog(alert);
+  }
+
+public:
+  QString title() const override { return "Remove all"; }
+  ImageURL icon() const override { return ImageURL::builtin("trash"); }
+
+  RemoveAllSelectionsAction() { setStyle(AbstractAction::Style::Danger); }
+};
+
+class ClipboardHistoryItem : public OmniList::AbstractVirtualItem, public ListView::Actionnable {
+public:
+  ClipboardHistoryEntry info;
+
+  std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
+    auto panel = std::make_unique<ActionPanelState>();
+    auto wm = ctx->services->windowManager();
+    auto pin = new PinClipboardAction(info.id, !info.pinnedAt);
+    auto copyToClipboard = new CopyClipboardSelection(info.id);
+    auto editKeywords = new EditClipboardKeywordsAction(info.id);
+    auto remove = new RemoveSelectionAction(info.id);
+    auto removeAll = new RemoveAllSelectionsAction();
+    auto mainSection = panel->createSection();
+
+    editKeywords->setShortcut({.key = "E", .modifiers = {"ctrl"}});
+
+    remove->setStyle(AbstractAction::Style::Danger);
+    remove->setShortcut({.key = "X", .modifiers = {"ctrl"}});
+    removeAll->setShortcut({.key = "X", .modifiers = {"ctrl", "shift"}});
+
+    pin->setShortcut({.key = "P", .modifiers = {"shift", "ctrl"}});
+
+    if (wm->canPaste()) {
+      auto paste = new PasteClipboardSelection(info.id);
+
+      paste->setShortcut({.key = "return"});
+      paste->setPrimary(true);
+      mainSection->addAction(paste);
+      copyToClipboard->setShortcut({.key = "return", .modifiers = {"shift"}});
+    } else {
+      copyToClipboard->setPrimary(true);
+      copyToClipboard->setShortcut({.key = "return"});
+    }
+
+    mainSection->addAction(copyToClipboard);
+
+    auto toolsSection = panel->createSection();
+    auto dangerSection = panel->createSection();
+
+    toolsSection->addAction(pin);
+    toolsSection->addAction(editKeywords);
+    dangerSection->addAction(remove);
+    dangerSection->addAction(removeAll);
+
+    return panel;
+  }
+
+  OmniListItemWidget *createWidget() const override {
+    auto widget = new ClipboardHistoryItemWidget();
+
+    widget->setEntry(info);
+
+    return widget;
+  }
+
+  void refresh(QWidget *widget) const override {
+    static_cast<ClipboardHistoryItemWidget *>(widget)->setEntry(info);
+  }
+
+  bool recyclable() const override { return true; }
+
+  void recycle(QWidget *widget) const override {
+    static_cast<ClipboardHistoryItemWidget *>(widget)->setEntry(info);
+  }
+
+  bool hasUniformHeight() const override { return true; }
+
+  const QString &name() const { return info.textPreview; }
+
+  QWidget *generateDetail() const override {
+    auto detail = new ClipboardHistoryDetail();
+
+    detail->setEntry(info);
+
+    return detail;
+  }
+
+  QString generateId() const override { return info.id; }
+
+public:
+  ClipboardHistoryItem(const ClipboardHistoryEntry &info) : info(info) {}
+};
+
+static const std::vector<Preference::DropdownData::Option> filterSelectorOptions = {
+    {"All", "all"}, {"Text", "text"}, {"Images", "image"}, {"Links", "link"}, {"Files", "file"},
+};
+
+static const std::unordered_map<QString, ClipboardOfferKind> typeToOfferKind{
+    {"image", ClipboardOfferKind::Image},
+    {"link", ClipboardOfferKind::Link},
+    {"text", ClipboardOfferKind::Text},
+    {"file", ClipboardOfferKind::File},
+};
+
+ClipboardHistoryView::ClipboardHistoryView() {
+  auto clipman = ServiceRegistry::instance()->clipman();
+
+  m_statusToolbar = new ClipboardStatusToolbar;
+
+  if (!clipman->supportsMonitoring()) {
+    m_statusToolbar->setClipboardStatus(ClipboardStatusToolbar::ClipboardStatus::Unavailable);
+  } else {
+    handleMonitoringChanged(clipman->monitoring());
+  }
+
+  m_filterInput->setMinimumWidth(200);
+  m_filterInput->setFocusPolicy(Qt::NoFocus);
+  m_filterInput->setOptions(filterSelectorOptions);
+
+  m_content->addWidget(m_split);
+  m_content->addWidget(m_emptyView);
+  m_content->setCurrentWidget(m_split);
+
+  m_emptyView->setTitle("No clipboard entries");
+  m_emptyView->setDescription("No results matching your search. You can try to refine your search.");
+  m_emptyView->setIcon(ImageURL::builtin("magnifying-glass"));
+
+  m_split->setMainWidget(m_list);
+  m_split->setDetailVisibility(false);
+
+  VStack().add(m_statusToolbar).add(m_content, 1).divided(1).imbue(this);
+
+  connect(clipman, &ClipboardService::selectionPinStatusChanged, this, [this]() { reloadCurrentSearch(); });
+  connect(clipman, &ClipboardService::selectionRemoved, this, [this]() { reloadCurrentSearch(); });
+  connect(clipman, &ClipboardService::allSelectionsRemoved, this, [this]() { reloadCurrentSearch(); });
+
+  connect(m_list, &OmniList::selectionChanged, this, &ClipboardHistoryView::selectionChanged);
+  connect(m_list, &OmniList::itemActivated, this, [this]() { executePrimaryAction(); });
+  connect(clipman, &ClipboardService::itemInserted, this, &ClipboardHistoryView::clipboardSelectionInserted);
+  connect(clipman, &ClipboardService::selectionUpdated, this, &ClipboardHistoryView::onSelectionUpdated);
+  connect(clipman, &ClipboardService::monitoringChanged, this,
+          &ClipboardHistoryView::handleMonitoringChanged);
+  connect(m_statusToolbar, &ClipboardStatusToolbar::statusIconClicked, this,
+          &ClipboardHistoryView::handleStatusClipboard);
+  connect(m_filterInput, &SelectorInput::selectionChanged, this, &ClipboardHistoryView::handleFilterChange);
+  connect(&m_watcher, &Watcher::finished, this, &ClipboardHistoryView::handleListFinished);
+}
+
+void ClipboardHistoryView::generateList(const PaginatedResponse<ClipboardHistoryEntry> &result) {
+  size_t i = 0;
+
+  if (result.data.empty()) {
+    m_content->setCurrentWidget(m_emptyView);
+  } else {
+    m_content->setCurrentWidget(m_split);
+  }
+
+  m_statusToolbar->setLeftText(QString("%1 Items").arg(result.data.size()));
+
+  m_list->updateModel([&]() {
+    auto &pinnedSection = m_list->addSection();
+
+    while (i < result.data.size() && result.data[i].pinnedAt) {
+      auto &entry = result.data[i];
+      auto candidate = std::make_unique<ClipboardHistoryItem>(entry);
+
+      pinnedSection.addItem(std::move(candidate));
+      ++i;
+    }
+
+    while (i < result.data.size()) {
+      auto &entry = result.data[i];
+      auto candidate = std::make_unique<ClipboardHistoryItem>(entry);
+
+      pinnedSection.addItem(std::move(candidate));
+      ++i;
+    }
+  });
+}
+
+void ClipboardHistoryView::initialize() {
+  setSearchPlaceholderText("Browse clipboard history...");
+  textChanged("");
+  m_filterInput->setValue(getSavedDropdownFilter().value_or("all"));
+  handleFilterChange(*m_filterInput->value());
+}
+
+void ClipboardHistoryView::reloadCurrentSearch() {
+  startSearch({.query = searchText(), .kind = m_kindFilter});
+}
+
+void ClipboardHistoryView::handleListFinished() {
+  if (!m_watcher.isFinished()) return;
+
+  generateList(m_watcher.result());
+}
+
+void ClipboardHistoryView::selectionChanged(const OmniList::AbstractVirtualItem *next,
+                                            const OmniList::AbstractVirtualItem *previous) const {
+  if (!next) {
+    m_split->setDetailVisibility(false);
+    return;
+  }
+
+  auto entry = static_cast<const ClipboardHistoryItem *>(next);
+
+  context()->navigation->setActions(entry->newActionPanel(context()));
+
+  if (auto detail = entry->generateDetail()) {
+    if (auto current = m_split->detailWidget()) { current->deleteLater(); }
+
+    m_split->setDetailWidget(detail);
+    m_split->setDetailVisibility(true);
+  }
+}
+
+void ClipboardHistoryView::textChanged(const QString &value) {
+  startSearch({.query = value, .kind = m_kindFilter});
+}
+
+void ClipboardHistoryView::clipboardSelectionInserted(const ClipboardHistoryEntry &entry) {
+  reloadCurrentSearch();
+}
+
+void ClipboardHistoryView::handlePinChanged(int entryId, bool value) { reloadCurrentSearch(); }
+
+void ClipboardHistoryView::handleRemoved(int entryId) { reloadCurrentSearch(); }
+
+void ClipboardHistoryView::onSelectionUpdated() { reloadCurrentSearch(); }
+
+void ClipboardHistoryView::handleMonitoringChanged(bool monitor) {
+  if (monitor) {
+    m_statusToolbar->setClipboardStatus(ClipboardStatusToolbar::ClipboardStatus::Monitoring);
+    return;
+  }
+
+  m_statusToolbar->setClipboardStatus(ClipboardStatusToolbar::ClipboardStatus::Paused);
+}
+
+void ClipboardHistoryView::handleStatusClipboard() {
+  auto preferences = command()->preferenceValues();
+
+  if (m_statusToolbar->clipboardStatus() == ClipboardStatusToolbar::Paused) {
+    preferences["monitoring"] = true;
+  } else {
+    preferences["monitoring"] = false;
+  }
+
+  command()->setPreferenceValues(preferences);
+}
+
+bool ClipboardHistoryView::inputFilter(QKeyEvent *event) {
+  if (event->modifiers() == Qt::ControlModifier) {
+    auto config = ServiceRegistry::instance()->config();
+    const QString keybinding = config ? config->value().keybinding : QString("default");
+
+    if (KeyBindingService::isDownKey(event, keybinding)) { return m_list->selectDown(); }
+    if (KeyBindingService::isUpKey(event, keybinding)) { return m_list->selectUp(); }
+    if (KeyBindingService::isLeftKey(event, keybinding)) {
+      context()->navigation->popCurrentView();
+      return true;
+    }
+    if (KeyBindingService::isRightKey(event, keybinding)) {
+      m_list->activateCurrentSelection();
+      return true;
+    }
+  }
+
+  if (event->modifiers().toInt() == 0) {
+    switch (event->key()) {
+    case Qt::Key_Up:
+      return m_list->selectUp();
+    case Qt::Key_Down:
+      return m_list->selectDown();
+    case Qt::Key_Return:
+      m_list->activateCurrentSelection();
+      return true;
+    }
+  }
+
+  // Open filter dropdown: Default Ctrl+P; in Emacs mode, remap to Opt+P.
+  auto config = ServiceRegistry::instance()->config();
+  const QString keybinding = config ? config->value().keybinding : QString("default");
+  if ((keybinding == "emacs" && (event->keyCombination() == QKeyCombination(Qt::AltModifier, Qt::Key_P))) ||
+      (keybinding != "emacs" &&
+       (event->keyCombination() == QKeyCombination(Qt::ControlModifier, Qt::Key_P)))) {
+    m_filterInput->openSelector();
+    return true;
+  }
+
+  return SimpleView::inputFilter(event);
+}
+
+void ClipboardHistoryView::startSearch(const ClipboardListSettings &opts) {
+  auto clipman = context()->services->clipman();
+
+  if (m_watcher.isRunning()) { m_watcher.cancel(); }
+
+  m_watcher.setFuture(clipman->listAll(1000, 0, opts));
+}
+
+void ClipboardHistoryView::handleFilterChange(const SelectorInput::AbstractItem &item) {
+  saveDropdownFilter(item.id());
+
+  if (auto it = typeToOfferKind.find(item.id()); it != typeToOfferKind.end()) {
+    m_kindFilter = it->second;
+  } else {
+    m_kindFilter.reset();
+  }
+
+  if (!searchText().isEmpty()) {
+    clearSearchText();
+  } else {
+    reloadCurrentSearch();
+  }
+}
+
+void ClipboardHistoryView::saveDropdownFilter(const QString &value) {
+  command()->storage().setItem("filter", value);
+}
+
+std::optional<QString> ClipboardHistoryView::getSavedDropdownFilter() {
+  auto value = command()->storage().getItem("filter");
+
+  if (value.isNull()) return std::nullopt;
+
+  return value.toString();
+}
