@@ -12,6 +12,7 @@ std::vector<std::string> ExecParser::parse(std::string_view data,
   size_t i = 0;
   size_t uriIdx = 0;
   std::string part;
+  bool uriExpanded = false;
   char quoteChar = 0; // the current quotation char
 
   while (i < data.size()) {
@@ -46,10 +47,12 @@ std::vector<std::string> ExecParser::parse(std::string_view data,
       switch (ch) {
       case 'f':
       case 'u':
+        uriExpanded = true;
         if (!uris.empty()) args.emplace_back(uris.at(0));
         break;
       case 'F':
       case 'U':
+        uriExpanded = true;
         args.insert(args.end(), uris.begin(), uris.end());
         break;
       case 'i':
@@ -90,6 +93,7 @@ std::vector<std::string> ExecParser::parse(std::string_view data,
   }
 
   if (!part.empty()) { args.emplace_back(part); }
+  if (!uriExpanded && m_forceAppend) { args.insert(args.end(), uris.begin(), uris.end()); }
 
   return args;
 }

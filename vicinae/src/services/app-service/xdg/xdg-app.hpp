@@ -57,7 +57,7 @@ public:
   std::vector<std::shared_ptr<AbstractApplication>> actions() const override;
 
   virtual std::vector<QString> parseExec(const std::vector<QString> &args) const {
-    return Utils::toQStringVec(m_entry.parseExec(Utils::toStdStringVec(args)));
+    return Utils::toQStringVec(m_entry.parseExec(Utils::toStdStringVec(args), true));
   }
 
   XdgApplication(const xdgpp::DesktopFile &file) : m_entry(file) {}
