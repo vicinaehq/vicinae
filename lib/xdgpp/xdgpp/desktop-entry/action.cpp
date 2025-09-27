@@ -8,10 +8,13 @@ std::string DesktopEntryAction::name() const { return m_name; }
 std::optional<std::string> DesktopEntryAction::icon() const { return m_icon; }
 std::optional<std::string> DesktopEntryAction::exec() const { return m_exec; }
 
-std::vector<std::string> DesktopEntryAction::parseExec(const std::vector<std::string> &uris) const {
+std::vector<std::string> DesktopEntryAction::parseExec(const std::vector<std::string> &uris,
+                                                       bool forceAppend) const {
   if (!m_exec) return {};
 
   ExecParser parser(m_name);
+
+  parser.setForceAppend(forceAppend);
 
   if (m_icon) { parser.setIcon(*m_icon); }
 

@@ -507,3 +507,45 @@ NotShowIn  = Gnome;KDE;
   REQUIRE(file.notShowIn().at(0) == "Gnome");
   REQUIRE(file.notShowIn().at(1) == "KDE");
 }
+
+TEST_CASE("should force append one uri if no field code was expanded") {
+  auto file = DesktopEntry::fromData(R"(
+[Desktop Entry]
+Name=MyFile
+Exec = firefox
+)");
+
+  auto exec = file.parseExec({"https://example.com"}, true);
+
+  REQUIRE(exec.at(0) == "firefox");
+  REQUIRE(exec.at(1) == "https://example.com");
+}
+
+TEST_CASE("should force append many uris if no field code was expanded") {
+  auto file = DesktopEntry::fromData(R"(
+[Desktop Entry]
+Name=MyFile
+Exec = firefox
+)");
+
+  auto exec = file.parseExec({"1", "2", "3"}, true);
+
+  REQUIRE(exec.at(0) == "firefox");
+  REQUIRE(exec.at(1) == "1");
+  REQUIRE(exec.at(2) == "2");
+  REQUIRE(exec.at(3) == "3");
+}
+
+TEST_CASE("should not force append many uris if a field code was expanded") {
+  auto file = DesktopEntry::fromData(R"(
+[Desktop Entry]
+Name=MyFile
+Exec = firefox %f
+)");
+
+  auto exec = file.parseExec({"1", "2", "3"}, true);
+
+  REQUIRE(exec.at(0) == "firefox");
+  REQUIRE(exec.at(1) == "1");
+  REQUIRE(exec.size() == 2);
+}

@@ -21,7 +21,7 @@ public:
   }
 
   std::vector<QString> parseExec(const std::vector<QString> &args) const override {
-    return Utils::toQStringVec(m_data.parseExec(Utils::toStdStringVec(args)));
+    return Utils::toQStringVec(m_data.parseExec(Utils::toStdStringVec(args), true));
   }
 
   QString id() const override {
