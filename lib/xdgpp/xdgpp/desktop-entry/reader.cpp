@@ -107,7 +107,7 @@ size_t DesktopEntryReader::computeLocalScore(const Locale &locale) {
   }
 
   if (m_locale.exactFlags(F::LANG)) {
-    if (m_locale.lang() == locale.lang()) return 1;
+    if (m_locale.matchesOnly(locale, F::LANG)) return 1;
     return 0;
   }
 
