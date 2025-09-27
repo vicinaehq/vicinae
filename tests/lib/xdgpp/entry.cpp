@@ -55,7 +55,8 @@ Name=Unlocalized Name
 Name[en_US]=Name US
 Name[en_CA.utf8]=Name CA
 Name[en_GB.utf8]=Name GB
-Name[fr_FR.utf8]=Name FR
+Name[fr.utf8]=Name FR
+Name[fr_CA.utf8]=Name FR_CA
 )";
 
   {
