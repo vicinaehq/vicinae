@@ -63,7 +63,7 @@ std::vector<fs::path> xdgpp::dataDirs() {
   const char *xdd = getenv("XDG_DATA_DIRS");
 
   // the spec doesn't require to add the local dir as a default but we do
-  if (!xdd) { return {homeDir() / ".local" / "share", "/usr/local/share", "/usr/share"}; };
+  if (!xdd) { return {"/usr/local/share", "/usr/share"}; };
 
   return parseDirs<fs::path>(xdd);
 }
@@ -71,11 +71,13 @@ std::vector<fs::path> xdgpp::dataDirs() {
 std::vector<fs::path> xdgpp::appDirs() {
   std::vector<fs::path> paths;
   auto dirs = xdgpp::dataDirs();
+  auto home = dataHome();
 
-  paths.reserve(dirs.size());
+  paths.reserve(dirs.size() + 1);
+  paths.emplace_back(home / "applications");
 
   for (const auto &dir : dirs) {
-    paths.emplace_back(dir / "applications");
+    if (dir != home) { paths.emplace_back(dir / "applications"); }
   }
 
   return paths;

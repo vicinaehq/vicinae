@@ -10,6 +10,21 @@ Locale Locale::system() {
   return Locale::parse(messagesLocale);
 }
 
+bool Locale::matchesOnly(const Locale &rhs, int components) {
+  if (rhs.flags() != components) return false;
+  if (components & LANG && m_lang != rhs.lang()) return false;
+  if (components & COUNTRY && m_country != rhs.country()) return false;
+  if (components & MODIFIER && m_modifier != rhs.modifier()) return false;
+  return true;
+}
+
+int Locale::flags() const {
+  int value = LANG;
+  if (m_country) value |= COUNTRY;
+  if (m_modifier) value |= MODIFIER;
+  return value;
+}
+
 Locale Locale::parse(std::string_view data) {
   enum State { Lang, Country, Encoding, Mod } state = Lang;
   size_t i = 0;

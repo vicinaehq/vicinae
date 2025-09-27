@@ -7,6 +7,9 @@
 namespace xdgpp {
 class Locale {
 public:
+  enum Component { LANG = 1, COUNTRY = 1 << 1, MODIFIER = 1 << 2 };
+  ;
+
   /**
    * Returns a suitable system locale.
    */
@@ -20,6 +23,16 @@ public:
   const std::optional<std::string> &country() const { return m_country; }
   const std::optional<std::string> &encoding() const { return m_encoding; }
   const std::optional<std::string> &modifier() const { return m_modifier; }
+
+  int flags() const;
+
+  /**
+   * Matches only if `rhs` is only made of the provided components
+   * and they are all equal to the ones in `lhs`.
+   */
+  bool matchesOnly(const Locale &rhs, int components);
+
+  bool exactFlags(int rhs) const { return rhs == flags(); }
 
   void setLang(const std::string &lang) { m_lang = lang; }
   void setCountry(const std::optional<std::string> &country) { m_country = country; }
