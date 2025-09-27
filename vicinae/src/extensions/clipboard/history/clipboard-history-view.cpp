@@ -7,6 +7,16 @@
 #include "ui/action-pannel/push-action.hpp"
 #include "ui/alert/alert.hpp"
 #include "ui/form/text-area.hpp"
+#include "utils.hpp"
+#include <qmimedata.h>
+#include <qmimedatabase.h>
+#include <qmimetype.h>
+#include <qnamespace.h>
+#include <qwidget.h>
+#include <filesystem>
+#include <system_error>
+
+namespace fs = std::filesystem;
 
 class TextContainer : public QWidget {
   QVBoxLayout *_layout;
@@ -98,7 +108,6 @@ public:
     auto createdAt = QDateTime::fromSecsSinceEpoch(entry.updatedAt);
     m_title->setText(entry.textPreview);
     m_pinIcon->setVisible(entry.pinnedAt);
-    // TODO: add char count / size
     m_description->setText(QString("%1").arg(getRelativeTimeString(createdAt)));
     m_icon->setFixedSize(25, 25);
     m_icon->setUrl(iconForMime(entry));
@@ -131,32 +140,76 @@ class ClipboardHistoryDetail : public DetailWithMetadataWidget {
     return {mime, size, copiedAt, checksum};
   }
 
-  QWidget *createEntryWidget(const ClipboardHistoryEntry &entry) {
-    auto data = ServiceRegistry::instance()->clipman()->decryptMainSelectionOffer(entry.id);
+  QWidget *detailForFilePath(const fs::path &path) {
+    auto mime = QMimeDatabase().mimeTypeForFile(path.c_str());
 
-    if (entry.mimeType.startsWith("text/")) {
-      auto viewer = new TextFileViewer;
-
-      viewer->load(data);
-
-      return VStack().add(viewer).buildWidget();
-    }
-
-    if (entry.mimeType.startsWith("image/")) {
-      if (!m_tmpFile.open()) { qWarning() << "Failed to open file"; }
-
-      m_tmpFile.write(data);
-      m_tmpFile.close();
-
+    if (mime.name().startsWith("image/")) {
       auto icon = new ImageWidget;
-
       icon->setContentsMargins(10, 10, 10, 10);
-      icon->setUrl(ImageURL::local(m_tmpFile.filesystemFileName()));
-
+      icon->setUrl(ImageURL::local(path));
       return icon;
     }
 
-    return new QWidget();
+    if (isTextMimeType(mime)) {
+      auto viewer = new TextFileViewer;
+      viewer->load(path);
+      return VStack().add(viewer).buildWidget();
+    }
+
+    return detailForUnmatchedMime(mime);
+  }
+
+  QWidget *detailForUnmatchedMime(const QMimeType &mime) {
+    auto icon = new ImageWidget;
+    icon->setUrl(ImageURL::system(mime.genericIconName()));
+    return icon;
+  }
+
+  QWidget *detailForMime(const QByteArray &data, const QString &mimeName) {
+    QMimeType mime = QMimeDatabase().mimeTypeForName(mimeName);
+
+    if (mimeName == "text/uri-list") {
+      QString text(data);
+      auto paths = text.split("\r\n", Qt::SkipEmptyParts);
+
+      if (paths.size() == 1) {
+        QUrl url(paths.at(0));
+
+        if (url.isLocalFile()) {
+          std::error_code ec;
+          fs::path path = url.path().toStdString();
+          if (fs::is_regular_file(path, ec)) { return detailForFilePath(path); }
+        }
+      }
+    }
+
+    if (mimeName.startsWith("image/")) {
+      if (!m_tmpFile.open()) {
+        qWarning() << "Failed to open file";
+        return detailForUnmatchedMime(mime);
+      }
+
+      m_tmpFile.write(data);
+      m_tmpFile.close();
+      auto icon = new ImageWidget;
+      icon->setContentsMargins(10, 10, 10, 10);
+      icon->setUrl(ImageURL::local(m_tmpFile.filesystemFileName()));
+      return icon;
+    }
+
+    if (isTextMimeType(mime)) {
+      auto viewer = new TextFileViewer;
+      viewer->load(data);
+      return VStack().add(viewer).buildWidget();
+    }
+
+    return detailForUnmatchedMime(mime);
+  }
+
+  QWidget *createEntryWidget(const ClipboardHistoryEntry &entry) {
+    auto data = ServiceRegistry::instance()->clipman()->decryptMainSelectionOffer(entry.id);
+
+    return detailForMime(data, entry.mimeType);
   }
 
 public:
