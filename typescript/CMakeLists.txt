@@ -1,7 +1,9 @@
 include(cmake/Api.cmake)
 include(cmake/RaycastCompat.cmake)
 
-find_package(Protobuf REQUIRED)
+set(CMAKE_FIND_PACKAGE_PREFER_CONFIG TRUE)
+find_package(Protobuf)
+unset(CMAKE_FIND_PACKAGE_PREFER_CONFIG)
 
 set(EXT_MGR_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/extension-manager")
 set(EXT_MGR_OUT "${CMAKE_SOURCE_DIR}/vicinae/assets/extension-runtime.js")

@@ -54,7 +54,7 @@ let
   # Prepare node_modules for extension-manager folder
   extensionManagerDeps = fetchNpmDeps {
     src = src + /typescript/extension-manager;
-    hash = "sha256-FUXkXIhLtshps+cV9exYasKXsXt0rxDjjUol3Sya47c=";
+    hash = "sha256-TCT7uZRZn4rsLA/z2yLeK5Bt4DJPmdSC4zkmuCxTtc8=";
   };
 in
 stdenv.mkDerivation rec {
