@@ -1,4 +1,4 @@
-import { LocalStorage } from '../local-storage';
+import { LocalStorage } from '@vicinae/api';
 
 // We support deprecated local storage methods:
 // https://developers.raycast.com/misc/migration/v1.28.0#storage
@@ -12,4 +12,4 @@ export const clearLocalStorage = LocalStorage.clear;
 export type LocalStorageValues = LocalStorage.Values;
 export type LocalStorageValue = LocalStorage.Value;
 
-export { LocalStorage } from '../local-storage';
+export { LocalStorage } from '@vicinae/api';

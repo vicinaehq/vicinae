@@ -6,10 +6,7 @@ set(TARGET vicinae)
 find_package(Qt6 REQUIRED COMPONENTS Core Widgets Sql Network Svg DBus)
 find_package(OpenSSL REQUIRED)
 
-if (TYPESCRIPT_EXTENSIONS)
-	include(ExtensionManager)
-	add_compile_definitions(HAS_TYPESCRIPT_EXTENSIONS=1)
-endif()
+
 
 list(APPEND LIBS  Qt6::Widgets Qt6::Sql Qt6::Network Qt6::Svg Qt6::DBus qt6keychain ${CMARK_LIBRARY} protobuf::libprotobuf minizip OpenSSL::Crypto wayland-client xdgpp)
 

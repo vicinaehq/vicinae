@@ -6,7 +6,7 @@ const requireOverrides: Record<string, any> = {
 	'react': require('react'),
 	'react/jsx-runtime': require('react/jsx-runtime'),
 	'@vicinae/api': require('@vicinae/api'),
-	'@raycast/api': require('@vicinae/api/raycast')
+	'@raycast/api': require('@vicinae/raycast-api-compat')
 };
 
 const injectJsxGlobals = () => {
