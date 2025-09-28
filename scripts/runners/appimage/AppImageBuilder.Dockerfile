@@ -5,7 +5,7 @@
 # Note: In order for linuxqtdeploy to work, the docker environment needs to be passed the fuse device.
 # Typically done like so: docker run --cap-add SYS_ADMIN --device /dev/fuse <image_name>
 
-FROM ubuntu:22.04
+FROM ubuntu:22.04 as base-builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -49,14 +49,42 @@ RUN apt-get -y update &&	\
     libxcb-render-util0-dev \
     libxcb-xinerama0-dev	\
     libxcb-xkb-dev			\
-    pkg-config
+    pkg-config				\
+	wget
 
+FROM base-builder AS gcc-builder
+
+RUN wget 'https://ftp.fu-berlin.de/unix/languages/gcc/releases/gcc-15.2.0/gcc-15.2.0.tar.gz' \
+    && tar xzf gcc-15.2.0.tar.gz \
+    && rm gcc-15.2.0.tar.gz
+
+WORKDIR /gcc-15.2.0
+RUN ./contrib/download_prerequisites \
+    && mkdir build \
+    && cd build \
+    && ../configure \
+        --prefix=/opt/gcc \
+        --disable-multilib \
+        --enable-languages=c,c++ \
+        --disable-bootstrap \
+        --disable-libstdcxx-pch \
+    && make -j$(nproc) \
+    && make install \
+    && cd / \
+    && rm -rf /gcc-15.2.0
+
+
+# Build QT
+FROM gcc-builder AS qt-builder
+
+ENV PATH="/opt/gcc/bin:${PATH}"
+ENV LD_LIBRARY_PATH="/opt/gcc/lib64:${PATH}"
+ENV CC=/opt/gcc/bin/gcc
+ENV CXX=/opt/gcc/bin/g++
 ARG QT_VERSION=6.8.3
 ARG INSTALL_DIR=/usr/local
-ARG NODE_VERSION=22.19.0
 
-RUN git clone --branch v${QT_VERSION} https://code.qt.io/qt/qt5.git qt6
-
+RUN git clone --branch v${QT_VERSION} https://code.qt.io/qt/qt5.git /qt6
 WORKDIR /qt6
 
 RUN perl init-repository --module-subset=qtbase,qtsvg,qtwayland
@@ -65,7 +93,7 @@ RUN ./configure					\
     -release					\
     -ltcg						\
     -reduce-exports				\
-    -prefix ${INSTALL_DIR}		\
+    -prefix /opt/qt				\
     -xcb						\
     -feature-wayland-client		\
     -no-feature-wayland-server	\
@@ -79,55 +107,126 @@ RUN ./configure					\
     --							\
     -DBUILD_qtdeclarative=OFF
 
-RUN cmake --build . --parallel $(nproc)
-RUN cmake --install .
+RUN cmake --build . --parallel $(nproc) \
+    && cmake --install . \
+    && cd / \
+    && rm -rf /qt6
 
-WORKDIR /work
-
-RUN rm -rf /qt6
-
-# Install C++20 capable compiler
-RUN apt-get -y install software-properties-common
-RUN add-apt-repository ppa:ubuntu-toolchain-r/test
-RUN apt-get update -y && apt-get install -y gcc-13 g++-13
+# other dep builders
+FROM qt-builder AS deps-builder
+ARG NODE_VERSION=22.19.0
 
 # extra vicinae deps
 RUN apt-get install	-y	\
-	curl				\
-	wget				\
-	libcmark-gfm-dev	\
-	qtkeychain-qt6-dev	\
-	libqalculate-dev	\
-	libminizip-dev		\
 	wayland-protocols
 
 RUN git clone --branch v6.18.0 https://github.com/KDE/extra-cmake-modules ecm
 
-RUN cd ecm && mkdir build && cmake -DBUILD_DOC=OFF -DBUILD_TESTING=OFF -B build && cmake --build build && cmake --install build && rm -rf /ecm
+RUN cd ecm			\
+	&& mkdir build	\
+	&& cmake 		\
+	-DBUILD_DOC=OFF	\
+	-DBUILD_TESTING=OFF	\
+	-B build			\
+	&& cmake --build build	\
+	&& cmake --install build	\
+	&& rm -rf /ecm
+
+ENV PATH="/opt/qt/bin:${PATH}"
 
 RUN git clone https://github.com/vicinaehq/layer-shell-qt
-RUN cd layer-shell-qt &&				\
-	mkdir build &&						\
-	cmake								\
-	-DLAYER_SHELL_QT_DECLARATIVE=OFF	\
-	-B build && 						\
-	cmake --build build &&				\
-	cmake --install build &&			\
+RUN cd layer-shell-qt &&						\
+	mkdir build &&								\
+	cmake										\
+	-DCMAKE_PREFIX_PATH="/opt/qt:${CMAKE_PREFIX_PATH}"	\
+	-DCMAKE_INSTALL_PREFIX=/opt/layer-shell		\
+	-DLAYER_SHELL_QT_DECLARATIVE=OFF			\
+	-B build && 								\
+	cmake --build build &&						\
+	cmake --install build &&					\
 	rm -rf /layer-shell-qt
 
 # install node 22 (used to build the main vicinae binary and bundled in the app image)
 RUN wget https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz
-RUN tar -xf node-v${NODE_VERSION}-linux-x64.tar.xz --strip-components=1 -C ${INSTALL_DIR} && rm -rf *.tar.xz
+RUN mkdir /opt/node && tar -xf node-v${NODE_VERSION}-linux-x64.tar.xz --strip-components=1 -C /opt/node && rm -rf *.tar.xz
 
 # install linuxdeployqt (tool to create appimage from qt app)
 
-RUN apt-get install -y libfuse2 file
+FROM ubuntu:22.04 AS runtime
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install only runtime dependencies
+RUN apt-get update \
+    && apt-get install -y \
+		make			\
+		cmake			\
+		ninja-build		\
+		git				\
+		zlib1g-dev		\
+		libwayland-dev	\
+        libgl1-mesa-glx \
+    	libgl1-mesa-dev	\
+        libglu1-mesa \
+        libxrender1 \
+        libxi6 \
+        libxkbcommon0 \
+        libxkbcommon-x11-0 \
+        libfontconfig1 \
+        libfreetype6 \
+        libx11-6 \
+        libxext6 \
+        libxfixes3 \
+        libxcb1 \
+        libxcb-cursor0 \
+        libxcb-glx0 \
+        libxcb-keysyms1 \
+        libxcb-image0 \
+        libxcb-shm0 \
+        libxcb-icccm4 \
+        libxcb-sync1 \
+        libxcb-xfixes0 \
+        libxcb-shape0 \
+        libxcb-randr0 \
+        libxcb-render-util0 \
+        libxcb-xinerama0 \
+        libxcb-xkb1 \
+        libwayland-client0 \
+        libwayland-egl1 \
+    	libssl-dev		\
+        libcmark-gfm-dev \
+        libqalculate-dev \
+        libminizip1 \
+        wayland-protocols \
+        libfuse2 \
+        file \
+        ca-certificates \
+		curl				\
+		wget				\
+		libcmark-gfm-dev	\
+		qtkeychain-qt6-dev	\
+		libqalculate-dev	\
+		libminizip-dev		\
+		wayland-protocols	\
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=deps-builder /opt/gcc /opt/gcc
+COPY --from=deps-builder /opt/qt /opt/qt
+COPY --from=deps-builder /opt/layer-shell /opt/layer-shell
+COPY --from=deps-builder /opt/node /opt/node
+
 RUN wget -O linuxdeployqt https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage
 RUN chmod +x linuxdeployqt && mv linuxdeployqt /usr/local/bin/linuxdeployqt
 
-ENV CC=gcc-13
-ENV CXX=g++-13
+ENV PATH="/opt/gcc/bin:/opt/qt/bin:/opt/node/bin:${PATH}"
+ENV LD_LIBRARY_PATH="/opt/gcc/lib64:/opt/qt/lib:/opt/layer-shell/lib:/opt/node/lib:${LD_LIBRARY_PATH}"
+ENV PKG_CONFIG_PATH="/opt/qt/lib/pkgconfig:/opt/layer-shell/lib/pkgconfig:${PKG_CONFIG_PATH}"
+ENV CMAKE_PREFIX_PATH="/opt/qt:/opt/layer-shell:${CMAKE_PREFIX_PATH}"
+ENV CC=/opt/gcc/bin/gcc
+ENV CXX=/opt/gcc/bin/g++
 
 WORKDIR /work
 
 ENTRYPOINT ["/bin/bash"]
+
