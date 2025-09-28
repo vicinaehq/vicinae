@@ -65,6 +65,7 @@ stdenv.mkDerivation rec {
   cmakeFlags = [
     "-DVICINAE_GIT_TAG=${manifest.tag}"
     "-DVICINAE_GIT_COMMIT_HASH=${manifest.short_rev}"
+    "-DINSTALL_NODE_MODULES=OFF"
     "-DCMAKE_INSTALL_PREFIX=${placeholder "out"}"
     "-DCMAKE_INSTALL_DATAROOTDIR=share"
     "-DCMAKE_INSTALL_BINDIR=bin"
@@ -126,7 +127,6 @@ stdenv.mkDerivation rec {
     patchShebangs $buildDir/typescript/extension-manager
     npm rebuild --foreground-scripts
     cd $buildDir
-    substituteInPlace typescript/cmake/Api.cmake typescript/CMakeLists.txt --replace "COMMAND npm install" ""
     cmake --build build
     cd $buildDir
   '';

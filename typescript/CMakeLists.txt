@@ -7,6 +7,7 @@ set(EXT_MGR_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/extension-manager")
 set(EXT_MGR_OUT "${CMAKE_SOURCE_DIR}/vicinae/assets/extension-runtime.js")
 set(EXT_PROTO_PATH "${CMAKE_SOURCE_DIR}/proto")
 set(EXT_PROTO_OUT "${EXT_MGR_SRC_DIR}/src/proto")
+set(EXT_MGR_NODE_MODULES "${EXT_MGR_SRC_DIR}/node_modules")
 
 file(GLOB_RECURSE EXT_MGR_TS_FILES
     "${EXT_MGR_SRC_DIR}/src/*.ts"
@@ -31,16 +32,24 @@ endforeach()
 
 file(MAKE_DIRECTORY ${EXT_PROTO_OUT})
 
+if (INSTALL_NODE_MODULES)
+	add_custom_command(
+		OUTPUT ${EXT_MGR_NODE_MODULES}
+		COMMAND npm install
+		WORKING_DIRECTORY ${EXT_MGR_SRC_DIR}
+		COMMENT "Installing extension manager node_modules"
+	)
+endif()
+
 add_custom_command(
     OUTPUT ${EXT_MGR_OUT}
-    COMMAND npm install
 	COMMAND protobuf::protoc --plugin=${EXT_MGR_SRC_DIR}/node_modules/.bin/protoc-gen-ts_proto -I ${protobuf_SOURCE_DIR}/src -I ${EXT_PROTO_PATH} ${EXT_PROTO_FILES} --ts_proto_out ${EXT_PROTO_OUT}
     COMMAND npm run build
     COMMAND ${CMAKE_COMMAND} -E copy
             ${EXT_MGR_SRC_DIR}/dist/runtime.js
             ${EXT_MGR_OUT}
     WORKING_DIRECTORY ${EXT_MGR_SRC_DIR}
-	DEPENDS ${FILTERED_TS_FILES} ${API_STAMP} ${RAY_COMPAT_STAMP}
+	DEPENDS ${FILTERED_TS_FILES} ${API_STAMP} ${RAY_COMPAT_STAMP} ${EXT_MGR_NODE_MODULES}
     COMMENT "Building extension manager JavaScript bundle"
 )
 
