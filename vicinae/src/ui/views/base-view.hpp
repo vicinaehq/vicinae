@@ -36,6 +36,12 @@ public:
   virtual bool needsGlobalTopBar() const;
 
   /**
+   * Search placeholder text to set when first rendering the view, if
+   * applicable.
+   */
+  virtual QString initialSearchPlaceholderText() const { return QString(); }
+
+  /**
    * Called before the view is first shown on screen.
    * You can use this hook to setup UI.
    */
