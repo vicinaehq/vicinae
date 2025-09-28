@@ -1,0 +1,20 @@
+{
+  "name": "@vicinae/raycast-api-compat",
+  "version": "0.0.0",
+  "description": "Raycast compatible entrypoint to the vicinae API",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@vicinae/api": "file:../api"
+  },
+  "devDependencies": {
+    "@types/node": "^24.5.2",
+    "typescript": "^5.9.2"
+  }
+}

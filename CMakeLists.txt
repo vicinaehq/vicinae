@@ -18,6 +18,13 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 option(IGNORE_CCACHE "Always ignore ccache even if it is installed" OFF)
 option(LTO "Enable Link Time Optimization (LTO). This will result in better performance, but greatly increased compile time. (Gentoo chads can't live without this)" OFF)
 option(NOSTRIP "Never strip debug symbols from the binary, even in release mode. Note that symbols are never stripped for debug releases." OFF)
+option(
+	INSTALL_NODE_MODULES 
+	"Install required node_modules dependencies as part of the build process. 
+	You can turn this off if you have another way to install the node_modules,
+	but they are still required build the project." 
+	ON
+)
 
 option(WAYLAND_LAYER_SHELL "Enable support for the layer shell Wayland protocol" ON)
 option(TYPESCRIPT_EXTENSIONS "Enable support for extensions built with React/Typescript (no browser involved)" ON)
@@ -31,6 +38,7 @@ option(USE_SYSTEM_LAYER_SHELL "Use system qt layer shell instead of building it 
 option(USE_SYSTEM_QT_KEYCHAIN "Use system qt-keychain instead of building it from source. Note: still depends on system libsecret." ON)
 option(USE_SYSTEM_RAPIDFUZZ "Use system version of the rapidfuzz-cpp header only library" ON)
 option(LIBQALCULATE_BACKEND "Compile in support for the Qalculate! calculator backend" ON)
+
 
 option(BUILD_TESTS "Build all vicinae tests" OFF)
 
@@ -67,6 +75,7 @@ endif()
 
 include(Git)
 include(Utils)
+
 
 if (NOT DEFINED VICINAE_GIT_TAG)
 	get_git_tag(VICINAE_GIT_TAG)
@@ -129,6 +138,11 @@ endif()
 set(CMAKE_FIND_PACKAGE_PREFER_CONFIG TRUE)
 find_package(Protobuf)
 unset(CMAKE_FIND_PACKAGE_PREFER_CONFIG)
+
+if (TYPESCRIPT_EXTENSIONS)
+	add_subdirectory(typescript)
+	add_compile_definitions(HAS_TYPESCRIPT_EXTENSIONS=1)
+endif()
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)

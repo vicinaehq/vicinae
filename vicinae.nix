@@ -44,17 +44,17 @@ let
 
   # Prepare node_modules for api folder
   apiDeps = fetchNpmDeps {
-    src = src + /api;
+    src = src + /typescript/api;
     hash = "sha256-dSHEzw15lSRRbldl9PljuWFf2htdG+HgSeKPAB88RBg=";
   };
   ts-protoc-gen-wrapper = writeShellScriptBin "protoc-gen-ts_proto" ''
-    exec node /build/source/vicinae-upstream/api/node_modules/.bin/protoc-gen-ts_proto
+    exec node /build/source/vicinae-upstream/typescript/api/node_modules/.bin/protoc-gen-ts_proto
   '';
 
   # Prepare node_modules for extension-manager folder
   extensionManagerDeps = fetchNpmDeps {
-    src = src + /extension-manager;
-    hash = "sha256-FUXkXIhLtshps+cV9exYasKXsXt0rxDjjUol3Sya47c=";
+    src = src + /typescript/extension-manager;
+    hash = "sha256-TCT7uZRZn4rsLA/z2yLeK5Bt4DJPmdSC4zkmuCxTtc8=";
   };
 in
 stdenv.mkDerivation rec {
@@ -65,6 +65,7 @@ stdenv.mkDerivation rec {
   cmakeFlags = [
     "-DVICINAE_GIT_TAG=${manifest.tag}"
     "-DVICINAE_GIT_COMMIT_HASH=${manifest.short_rev}"
+    "-DINSTALL_NODE_MODULES=OFF"
     "-DCMAKE_INSTALL_PREFIX=${placeholder "out"}"
     "-DCMAKE_INSTALL_DATAROOTDIR=share"
     "-DCMAKE_INSTALL_BINDIR=bin"
@@ -116,17 +117,16 @@ stdenv.mkDerivation rec {
     buildDir=$PWD
     echo $buildDir
     export npm_config_cache=${apiDeps}
-    cd $buildDir/api
+    cd $buildDir/typescript/api
     npm i --ignore-scripts
-    patchShebangs $buildDir/api
+    patchShebangs $buildDir/typescript/api
     npm rebuild --foreground-scripts
     export npm_config_cache=${extensionManagerDeps}
-    cd $buildDir/extension-manager
+    cd $buildDir/typescript/extension-manager
     npm i --ignore-scripts
-    patchShebangs $buildDir/extension-manager
+    patchShebangs $buildDir/typescript/extension-manager
     npm rebuild --foreground-scripts
     cd $buildDir
-    substituteInPlace cmake/ExtensionApi.cmake cmake/ExtensionManager.cmake --replace "COMMAND npm install" ""
     cmake --build build
     cd $buildDir
   '';
