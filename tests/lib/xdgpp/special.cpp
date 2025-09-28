@@ -45,6 +45,34 @@ StartupWMClass=ftwa-youtube-music
   REQUIRE(exec.at(1) == "--app=https://music.youtube.com");
 }
 
+TEST_CASE("handle empty keys properly", XDGPP_GROUP) {
+  auto entry = xdgpp::DesktopEntry::fromData(R"(
+[Desktop Entry]
+Categories=Network;WebBrowser;
+Comment=
+Exec=zen %U
+GenericName=A sleek browser
+Icon=/home/user/icons/Zen128.png
+MimeType=text/html;text/xml;application/xhtml+xml;application/vnd.mozilla.xul+xml;text/mml;x-scheme-handler/http;x-scheme-handler/https;
+Name=Zen Browser
+Path=
+StartupNotify=true
+StartupWMClass=zen-beta
+Terminal=false
+TerminalOptions=
+Type=Application
+Version=1.0
+X-KDE-SubstituteUID=false
+X-KDE-Username=
+)");
+
+  REQUIRE(entry.comment() == "");
+  REQUIRE(entry.workingDirectory() == "");
+
+  auto exec = entry.exec();
+  REQUIRE(exec == "zen %U");
+}
+
 TEST_CASE("localization test", XDGPP_GROUP) {
   auto entry = xdgpp::DesktopEntry::fromData(R"(
 [Desktop Entry]

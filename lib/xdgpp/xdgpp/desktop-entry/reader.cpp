@@ -49,7 +49,7 @@ std::string DesktopEntryReader::parseRawValue() {
 }
 
 void DesktopEntryReader::skipSpace() {
-  while (std::isspace(peek())) {
+  while (isInlineSpace(peek())) {
     consume();
   }
 }
