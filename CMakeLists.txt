@@ -68,6 +68,7 @@ endif()
 include(Git)
 include(Utils)
 
+
 if (NOT DEFINED VICINAE_GIT_TAG)
 	get_git_tag(VICINAE_GIT_TAG)
 endif()
@@ -124,6 +125,12 @@ if (NOT USE_SYSTEM_PROTOBUF)
 	include(Protobuf)
 	checkout_protobuf()
 	set(COMMON_PROTO_DIR ${CMAKE_CURRENT_BINARY_DIR}/_deps/protobuf-src/src)
+endif()
+
+
+if (TYPESCRIPT_EXTENSIONS)
+	add_subdirectory(typescript)
+	add_compile_definitions(HAS_TYPESCRIPT_EXTENSIONS=1)
 endif()
 
 set(CMAKE_FIND_PACKAGE_PREFER_CONFIG TRUE)

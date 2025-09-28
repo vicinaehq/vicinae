@@ -5,7 +5,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc --outDir dist",
-	"protogen": "mkdir ./src/api/proto && protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto -I../proto ../proto/*.proto --ts_proto_out ./src/api/proto",
+	"protogen": "mkdir -p ./src/api/proto && protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto -I../../proto ../../proto/*.proto --ts_proto_out ./src/api/proto",
     "pack": "npm run build && npm pack",
     "docgen-html": "typedoc src/api/index.ts",
     "docgen-md": "typedoc src/api/index.ts --disableSources --readme none --plugin typedoc-plugin-markdown --out ./docs"

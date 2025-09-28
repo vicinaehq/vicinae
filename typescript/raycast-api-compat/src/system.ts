@@ -1,5 +1,5 @@
 import { PathLike } from 'fs';
-import * as vicinae from '..';
+import * as vicinae from '@vicinae/api';
 
 export type RaycastApplication = {
 	name: string;
@@ -29,9 +29,6 @@ export const getDefaultApplication = async (path: PathLike): Promise<RaycastAppl
 	return transformApp(await vicinae.getDefaultApplication(path.toString()));
 }
 
-export const open = vicinae.open;
-
-export const trash = vicinae.trash;
 
 export const getFrontmostApplication = async (): Promise<RaycastApplication> => {
   return transformApp(await vicinae.getFrontmostApplication());
