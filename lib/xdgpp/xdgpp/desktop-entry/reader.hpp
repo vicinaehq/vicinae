@@ -59,7 +59,7 @@ public:
 
 private:
   static bool isGroupHeaderChar(char c) { return c != '[' && c != ']' && c != '\n'; }
-
+  static bool isInlineSpace(char c) { return c == ' ' || c == '\t' || c == '\v' || c == '\r' || c == '\f'; }
   static bool isKeyChar(char c) { return c != '=' && c != LF && c != '[' && !std::isspace(c); }
 
   // [Desktop Entry]
