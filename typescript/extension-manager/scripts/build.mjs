@@ -23,7 +23,7 @@ export const build = async () => {
 	  platform: 'node',
 		alias: {
 			'@vicinae/api': '../api/src/', // we bundle the local api directly
-			'raycast-api-compat': '../raycast-api-compat/src', // raycast-compatible index
+			'@vicinae/raycast-api-compat': '../raycast-api-compat/src', // raycast-compatible index
 			'react': '../api/node_modules/react' // we want the react version specified in the api package
 		}
 	})

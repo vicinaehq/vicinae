@@ -19,7 +19,7 @@
   "license": "ISC",
   "dependencies": {
     "@vicinae/api": "file:../api",
-    "raycast-api-compat": "file:../raycast-api-compat",
+    "@vicinae/raycast-api-compat": "file:../raycast-api-compat",
     "react-reconciler": "0.32.0"
   },
   "devDependencies": {

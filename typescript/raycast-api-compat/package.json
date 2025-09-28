@@ -1,5 +1,5 @@
 {
-  "name": "raycast-api-compat",
+  "name": "@vicinae/raycast-api-compat",
   "version": "0.0.0",
   "description": "Raycast compatible entrypoint to the vicinae API",
   "main": "index.js",
