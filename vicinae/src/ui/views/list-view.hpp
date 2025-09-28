@@ -5,6 +5,7 @@
 #include "ui/omni-list/omni-list.hpp"
 #include "ui/search-bar/search-bar.hpp"
 #include <qwidget.h>
+#include <ranges>
 
 class SplitDetailWidget;
 class QStackedWidget;
@@ -67,4 +68,66 @@ protected:
 
 public:
   ListView(QWidget *parent = nullptr);
+};
+
+/**
+ * Simple list view handling search automatically
+ * This offers less flexibility than the regular list view: this is mostly
+ * meant for views where the dataset changes not so often and just needs to be
+ * displayed and searched on.
+ */
+class SearchableListView : public ListView {
+public:
+  class Actionnable : public AbstractDefaultListItem, public ListView::Actionnable {
+  public:
+    virtual std::vector<QString> searchStrings() const = 0;
+  };
+  using ItemPtr = std::shared_ptr<Actionnable>;
+  using Data = std::vector<ItemPtr>;
+  using ScoreData = std::pair<ItemPtr, int>;
+
+  void setData(Data items) {
+    m_filtered.reserve(items.size());
+    m_data = std::move(items);
+  }
+
+  void render(const Data &filtered) {
+    m_list->updateModel([&]() {
+      auto &section = m_list->addSection(QString("%1 (%2)").arg(sectionName()).arg(filtered.size()));
+      for (const auto &item : filtered) {
+        section.addItem(item);
+      }
+    });
+  }
+
+  void initialize() final override {
+    setData(initData());
+    textChanged(searchText());
+  }
+
+  virtual Data initData() const = 0;
+  virtual QString sectionName() const { return "Results"; }
+
+  const Data &filterData(const QString &query) {
+    Data filtered;
+    auto matches = [&](const QString &kw) { return kw.contains(query, Qt::CaseInsensitive); };
+    auto anyMatches = [&](const ItemPtr &ss) { return std::ranges::any_of(ss->searchStrings(), matches); };
+
+    m_filtered.clear();
+
+    for (const auto &match : m_data | std::views::filter(anyMatches)) {
+      m_filtered.emplace_back(match);
+    }
+
+    return m_filtered;
+  }
+
+  void textChanged(const QString &text) override {
+    if (text.trimmed().isEmpty()) return render(m_data);
+    return render(filterData(text));
+  }
+
+private:
+  Data m_filtered;
+  Data m_data;
 };

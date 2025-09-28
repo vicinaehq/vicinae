@@ -403,6 +403,7 @@ void NavigationController::pushView(BaseView *view) {
   state->supportsSearch = view->supportsSearch();
   state->needsTopBar = view->needsGlobalTopBar();
   state->needsStatusBar = view->needsGlobalStatusBar();
+  state->placeholderText = view->initialSearchPlaceholderText();
   state->searchAccessory.reset(view->searchBarAccessory());
   state->sender->setContext(&m_ctx);
   state->sender->setCommandController(m_frames.back()->controller.get());
@@ -424,7 +425,7 @@ void NavigationController::pushView(BaseView *view) {
 
   emit actionsChanged({});
   emit searchTextChanged(QString());
-  emit searchPlaceholderTextChanged(QString());
+  emit searchPlaceholderTextChanged(topState()->placeholderText);
   view->initialize();
   view->activate();
 
