@@ -22,6 +22,10 @@ export {
 	open, showInFileBrowser,
 	closeMainWindow, showHUD, clearSearchBar, getSelectedText, popToRoot, PopToRootType,
 
+	openCommandPreferences, openExtensionPreferences,
+	LaunchType,
+
+
 	OAuth,
 
 	List, Grid, Form, Detail,
