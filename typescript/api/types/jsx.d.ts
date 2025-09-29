@@ -7,7 +7,7 @@ import { Keyboard } from "../api/keyboard";
 import { Grid } from "../api/components/grid";
 
 import 'react';
-import { ImageLike } from "../src";
+import { ImageLike, List } from "../src";
 
 type BaseFormField = {
     onBlur?: Function;
@@ -47,9 +47,6 @@ declare module "react" {
       };
       "list-item-detail": ListItemDetailProps;
       "list-item-detail-metadata": any;
-
-      "list-accessory": {
-	  };
 
       grid: {
         inset?: Grid.Inset;

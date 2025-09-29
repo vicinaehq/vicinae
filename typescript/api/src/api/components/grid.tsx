@@ -164,10 +164,6 @@ const GridSection: React.FC<Grid.Section.Props> = ({
   return <grid-section {...nativeProps} />;
 };
 
-export const GridAccessory: React.FC<Grid.Item.Accessory> = (props) => {
-  return <list-accessory />;
-};
-
 export const Grid = Object.assign(GridRoot, {
   Section: GridSection,
   EmptyView,
@@ -175,6 +171,5 @@ export const Grid = Object.assign(GridRoot, {
   Fit: GridFit,
   Inset: GridInset,
   Item: Object.assign(GridItem, {
-    Accessory: GridAccessory,
   }),
 });

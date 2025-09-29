@@ -118,10 +118,6 @@ const ListSection: React.FC<List.Section.Props> = (props) => {
   return <list-section {...props} />;
 };
 
-export const ListAccessory: React.FC<List.Item.Accessory> = (props) => {
-  return <list-accessory />;
-};
-
 export const List = Object.assign(ListRoot, {
   Section: ListSection,
   EmptyView,
@@ -130,6 +126,5 @@ export const List = Object.assign(ListRoot, {
     Detail: Object.assign(ListItemDetail, {
       Metadata,
     }),
-    Accessory: ListAccessory,
   }),
 });
