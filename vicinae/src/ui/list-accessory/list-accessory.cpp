@@ -1,4 +1,5 @@
 #include "list-accessory.hpp"
+#include "theme.hpp"
 #include "ui/image/image.hpp"
 #include "ui/typography/typography.hpp"
 
@@ -28,7 +29,7 @@ void ListAccessoryWidget::setAccessory(const ListAccessory &accessory) {
   if (accessory.icon) {
     auto url = *accessory.icon;
 
-    url.setFill(accessory.color);
+    url.setFill(accessory.color.value_or(url.fillColor().value_or(SemanticColor::TextPrimary)));
     _icon->setUrl(url);
   }
 

@@ -26,7 +26,8 @@ void ImageWidget::render() {
   if (auto sc = screen()) { pixelRatio = sc->devicePixelRatio(); }
 
   m_renderCount += 1;
-  m_loader->render(RenderConfig{.size = drawableSize, .fit = m_fit, .devicePixelRatio = pixelRatio});
+  m_loader->render(RenderConfig{
+      .size = drawableSize, .fit = m_fit, .devicePixelRatio = pixelRatio, .fill = m_source.fillColor()});
 }
 
 void ImageWidget::setAlignment(Qt::Alignment alignment) {
@@ -83,13 +84,7 @@ void ImageWidget::setUrlImpl(const ImageURL &url) {
     QString icon = QString(":icons/%1.svg").arg(url.name());
     auto loader = new BuiltinIconLoader(icon);
 
-    if (url.backgroundTint()) {
-      loader->setBackgroundColor(url.backgroundTint());
-      // loader->setFillColor(OmniPainter::textColorForBackground(url.backgroundTint()));
-      loader->setFillColor(SemanticColor::TextOnAccent);
-    } else {
-      loader->setFillColor(url.fillColor());
-    }
+    if (url.backgroundTint()) { loader->setBackgroundColor(url.backgroundTint()); }
 
     m_loader.reset(loader);
   }

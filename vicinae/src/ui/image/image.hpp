@@ -1,5 +1,6 @@
 #pragma once
 #include "common.hpp"
+#include "theme.hpp"
 #include "ui/image/url.hpp"
 #include <qfont.h>
 #include <qicon.h>
@@ -14,6 +15,12 @@ struct RenderConfig {
   QSize size;
   ObjectFit fit = ObjectFit::Contain;
   qreal devicePixelRatio = 1;
+
+  /**
+   * Fill color, if applicable. Most loaders
+   * will just ignore this.
+   */
+  std::optional<ColorLike> fill;
 };
 
 class AbstractImageLoader : public QObject {

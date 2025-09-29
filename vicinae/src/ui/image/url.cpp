@@ -208,7 +208,7 @@ ImageURL::ImageURL(const ImageLikeModel &imageLike)
 
     if (QFile(":icons/" + source + ".svg").exists()) {
       setType(ImageURLType::Builtin);
-      setFill(image->tintColor.value_or(SemanticColor::TextPrimary));
+      setFill(image->tintColor);
       setName(source);
       return;
     }
