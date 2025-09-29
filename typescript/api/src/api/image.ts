@@ -1,11 +1,6 @@
 import { Color } from "./color";
 import * as ui from "./proto/ui";
 
-export type SerializedImageLike =
-  | Image
-  | { fileIcon: string }
-  | { light: URL | Image.Asset; dark: URL | Image.Asset };
-
 export type Image = {
   source: Image.Source;
   fallback?: Image.Fallback;
@@ -32,20 +27,6 @@ export namespace Image {
 const maskMap: Record<Image.Mask, ui.ImageMask> = {
   [Image.Mask.Circle]: ui.ImageMask.Circle,
   [Image.Mask.RoundedRectangle]: ui.ImageMask.RoundedRectangle,
-};
-
-export const serializeImageLike = (
-  image: Image.ImageLike,
-): SerializedImageLike => {
-  if (image instanceof URL) {
-    return { source: image.toString() };
-  }
-
-  if (typeof image == "string") {
-    return { source: image };
-  }
-
-  return image;
 };
 
 export const serializeProtoImage = (image: ImageLike): ui.Image => {

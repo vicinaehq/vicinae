@@ -20,7 +20,7 @@ struct DropdownModel {
       model.title = props.value("title").toString();
       model.value = props.value("value").toString();
 
-      if (props.contains("icon")) { model.icon = ImageModelParser().parse(props.value("icon").toObject()); }
+      if (props.contains("icon")) { model.icon = ImageModelParser().parse(props.value("icon")); }
 
       auto keywords = props.value("keywords").toArray();
 

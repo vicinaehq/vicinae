@@ -1,7 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
-import { Image, serializeImageLike, serializeProtoImage } from "./image";
+import { Image, serializeProtoImage } from "./image";
 import { bus } from "./bus";
-import { RedirectMethod } from "./proto/oauth";
 
 enum OauthRedirectMethod {
   /**

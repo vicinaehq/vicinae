@@ -1,4 +1,5 @@
 #include "extend/list-model.hpp"
+#include "extend/accessory-model.hpp"
 #include "extend/action-model.hpp"
 #include "extend/detail-model.hpp"
 #include "extend/empty-view-model.hpp"
@@ -14,22 +15,27 @@ ListItemViewModel ListModelParser::parseListItem(const QJsonObject &instance, si
   auto children = instance.value("children").toArray();
 
   model.id = props["id"].toString(QString::number(index));
+
   model.title = props["title"].toString();
   model.subtitle = props["subtitle"].toString();
 
-  if (props.contains("icon")) { model.icon = ImageModelParser().parse((props.value("icon").toObject())); }
+  if (props.contains("icon")) { model.icon = ImageModelParser().parse((props.value("icon"))); }
 
-  size_t i = 0;
+  {
+    auto accessories = props.value("accessories").toArray();
+
+    model.accessories.reserve(accessories.size());
+    for (const auto &value : accessories) {
+      model.accessories.emplace_back(AccessoryModel::fromJson(value));
+    }
+  }
 
   for (const auto &child : children) {
     auto obj = child.toObject();
     auto type = obj["type"].toString();
 
     if (type == "action-panel") { model.actionPannel = ActionPannelParser().parse(obj); }
-
     if (type == "list-item-detail") { model.detail = DetailModelParser().parse(obj); }
-
-    i += 1;
   }
 
   return model;

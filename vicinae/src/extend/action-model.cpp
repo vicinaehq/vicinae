@@ -28,7 +28,7 @@ ActionModel ActionPannelParser::parseAction(const QJsonObject &instance) {
     action.shortcut = parseKeyboardShortcut(props.value("shortcut").toObject());
   }
 
-  if (props.contains("icon")) { action.icon = ImageModelParser().parse(props.value("icon").toObject()); }
+  if (props.contains("icon")) { action.icon = ImageModelParser().parse(props.value("icon")); }
 
   return action;
 }
@@ -41,7 +41,7 @@ ActionPannelSubmenuModel ActionPannelParser::parseActionPannelSubmenu(const QJso
   model.onOpen = props.value("onOpen").toString();
   model.onSearchTextChange = props.value("onSearchTextChange").toString();
 
-  if (props.contains("icon")) { model.icon = ImageModelParser().parse(props.value("icon").toObject()); }
+  if (props.contains("icon")) { model.icon = ImageModelParser().parse(props.value("icon")); }
 
   for (const auto &child : instance.value("children").toArray()) {
     auto obj = child.toObject();

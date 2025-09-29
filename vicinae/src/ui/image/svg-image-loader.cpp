@@ -1,11 +1,11 @@
+#include "theme.hpp"
 #include "ui/image/image.hpp"
 #include <qnamespace.h>
 #include "svg-image-loader.hpp"
 
-void SvgImageLoader::render(QPixmap &pixmap, const QRect &bounds) {
+void SvgImageLoader::render(QPixmap &pixmap, const QRect &bounds, const std::optional<ColorLike> &fill) {
   auto svgSize = m_renderer.defaultSize();
   // QRect targetRect = QRect(QPoint(0, 0), svgSize.scaled(bounds.size(), Qt::KeepAspectRatio));
-
   QPixmap filledSvg(bounds.size());
 
   filledSvg.fill(Qt::transparent);
@@ -17,9 +17,9 @@ void SvgImageLoader::render(QPixmap &pixmap, const QRect &bounds) {
     m_renderer.setAspectRatioMode(Qt::AspectRatioMode::KeepAspectRatio);
     m_renderer.render(&painter, filledSvg.rect());
 
-    if (m_fill) {
+    if (fill) {
       painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
-      painter.fillRect(filledSvg.rect(), *m_fill);
+      painter.fillRect(filledSvg.rect(), *fill);
     }
   }
 
@@ -33,12 +33,11 @@ void SvgImageLoader::render(QPixmap &pixmap, const QRect &bounds) {
 void SvgImageLoader::render(const RenderConfig &config) {
   QPixmap pixmap(config.size * config.devicePixelRatio);
 
-  render(pixmap, pixmap.rect());
+  pixmap.fill(Qt::transparent);
+  render(pixmap, pixmap.rect(), config.fill);
   pixmap.setDevicePixelRatio(config.devicePixelRatio);
   emit dataUpdated(pixmap);
 }
-
-void SvgImageLoader::setFillColor(const std::optional<ColorLike> &color) { m_fill = color; }
 
 SvgImageLoader::SvgImageLoader(const QByteArray &data) { m_renderer.load(data); }
 SvgImageLoader::SvgImageLoader(const QString &filename) { m_renderer.load(filename); }

@@ -1,4 +1,5 @@
 #pragma once
+#include "extend/accessory-model.hpp"
 #include "extend/action-model.hpp"
 #include "extend/detail-model.hpp"
 #include "extend/empty-view-model.hpp"
@@ -15,6 +16,7 @@ struct ListItemViewModel {
   std::optional<ImageLikeModel> icon;
   std::optional<DetailModel> detail;
   std::optional<ActionPannelModel> actionPannel;
+  std::vector<AccessoryModel> accessories;
 };
 
 struct ListSectionModel {

@@ -26,8 +26,12 @@ QPixmap BuiltinIconLoader::renderSync(const RenderConfig &config) {
   QRect iconRect = canva.rect().marginsRemoved(margins);
   SvgImageLoader loader(m_iconName);
 
-  loader.setFillColor(m_fillColor);
-  loader.render(canva, iconRect);
+  if (m_backgroundColor) {
+    loader.render(canva, iconRect, SemanticColor::TextOnAccent);
+  } else {
+    loader.render(canva, iconRect, config.fill.value_or(SemanticColor::TextPrimary));
+  }
+
   canva.setDevicePixelRatio(config.devicePixelRatio);
 
   return canva;

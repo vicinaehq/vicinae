@@ -10,9 +10,11 @@
 #include <qtimer.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
+#include "common.hpp"
 #include "extend/list-model.hpp"
 #include "extension/extension-list-detail.hpp"
 #include "extension/extension-view.hpp"
+#include "ui/default-list-item-widget/default-list-item-widget.hpp"
 #include "ui/empty-view/empty-view.hpp"
 #include "ui/form/selector-input.hpp"
 #include "ui/omni-list/omni-list.hpp"
@@ -21,27 +23,34 @@
 #include "services/config/config-service.hpp"
 #include "services/keybinding/keybinding-service.hpp"
 
-class AppWindow;
-
 class ExtensionListItem : public AbstractDefaultListItem {
-  ListItemViewModel _item;
+public:
+  const ListItemViewModel &model() const { return _item; }
+
+  ExtensionListItem(const ListItemViewModel &model) : _item(model) {}
+
+private:
+  AccessoryList accessories() const {
+    AccessoryList list;
+
+    list.reserve(_item.accessories.size());
+    for (const auto &accessory : _item.accessories) {
+      list.emplace_back(accessory.toAccessory());
+    }
+
+    return list;
+  }
 
   ItemData data() const override {
     return {
-        .iconUrl = _item.icon,
-        .name = _item.title,
-        .subtitle = _item.subtitle,
-    };
+        .iconUrl = _item.icon, .name = _item.title, .subtitle = _item.subtitle, .accessories = accessories()};
   }
 
   bool hasPartialUpdates() const override { return true; }
 
   QString generateId() const override { return _item.id; }
 
-public:
-  const ListItemViewModel &model() const { return _item; }
-
-  ExtensionListItem(const ListItemViewModel &model) : _item(model) {}
+  ListItemViewModel _item;
 };
 
 class ExtensionList : public QWidget {

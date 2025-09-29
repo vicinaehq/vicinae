@@ -1,9 +1,8 @@
 #pragma once
 #include "ui/image/image.hpp"
-#include "io-image-loader.hpp"
 
 class LocalImageLoader : public AbstractImageLoader {
-  std::unique_ptr<IODeviceImageLoader> m_loader;
+  std::unique_ptr<AbstractImageLoader> m_loader;
   std::filesystem::path m_path;
 
 public:

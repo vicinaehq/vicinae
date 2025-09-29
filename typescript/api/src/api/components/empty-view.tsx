@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-import { ImageLike, serializeImageLike } from "../image";
+import { ImageLike } from "../image";
 
 export type EmptyViewProps = {
   title?: string;
@@ -9,13 +9,8 @@ export type EmptyViewProps = {
 };
 
 export const EmptyView: React.FC<EmptyViewProps> = ({
-  icon,
   actions,
   ...props
 }) => {
-  const nativeProps: React.JSX.IntrinsicElements["empty-view"] = props;
-
-  if (icon) nativeProps.icon = serializeImageLike(icon);
-
-  return <empty-view {...nativeProps}>{actions}</empty-view>;
+  return <empty-view {...props}>{actions}</empty-view>;
 };

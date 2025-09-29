@@ -41,7 +41,6 @@ void QIconImageLoader::render(const RenderConfig &config) {
 // Loads an icon not in a theme directory from the filesystem.
 QIcon QIconImageLoader::loadIconFromFileSystem(const QString &iconName) {
   const QStringList searchPaths = {"/usr/share/pixmaps", "/usr/share/icons"};
-
   const QStringList extensions = {".png", ".svg", ".xpm"};
 
   // Try each search path with each extension

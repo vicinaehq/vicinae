@@ -13,7 +13,7 @@ EmptyViewModel EmptyViewModelParser::parse(const QJsonObject &instance) {
   model.title = props.value("title").toString();
   model.description = props.value("description").toString();
 
-  if (props.contains("icon")) { model.icon = ImageModelParser().parse(props.value("icon").toObject()); }
+  if (props.contains("icon")) { model.icon = ImageModelParser().parse(props.value("icon")); }
 
   for (const auto &child : instance.value("children").toArray()) {
     auto obj = child.toObject();
