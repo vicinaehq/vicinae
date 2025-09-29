@@ -1,5 +1,5 @@
 import React, { ReactNode, useRef } from "react";
-import { Image, ImageLike, serializeImageLike } from "../image";
+import { Image, ImageLike } from "../image";
 import { randomUUID } from "crypto";
 import { Metadata } from "./metadata";
 import { EmptyView } from "./empty-view";
@@ -7,20 +7,62 @@ import { Color, ColorLike } from "../color";
 import { Dropdown } from "./dropdown";
 
 export declare namespace List {
+  export type Props = {
+	  actions?: React.ReactNode;
+	  children?: React.ReactNode;
+	  filtering?: boolean;
+	  /**
+	   * @deprecated use filtering
+	   */
+	  enableFiltering?: boolean;
+	  isLoading?: boolean;
+	  isShowingDetail?: boolean;
+	  searchText?: string;
+	  searchBarPlaceholder?: string;
+	  navigationTitle?: string;
+	  searchBarAccessory?: ReactNode;
+	  onSearchTextChange?: (text: string) => void;
+	  onSelectionChange?: (id: string) => void;
+  }
+
+	export namespace Section {
+		export type Props = {
+			title?: string;
+  			subtitle?: string;
+  			children?: ReactNode;
+		};
+  	}
+
   export namespace Item {
-    export type Props = ListItemProps;
+    export type Props = {
+	  title: string;
+	  keywords?: string[];
+	  detail?: React.ReactNode;
+	  icon?: ImageLike;
+	  id?: string;
+	  subtitle?: string;
+	  actions?: ReactNode;
+	  accessories?: List.Item.Accessory[];
+	};
+
+	export namespace Detail {
+		export type Props = {
+  			isLoading?: boolean;
+  			markdown?: string;
+  			metadata?: React.ReactNode;
+		};
+	}
+
+	type AccessoryBase = string
+      | Date
+      | undefined
+      | null;
 
     type Tag =
-      | string
-      | Date
-      | undefined
-      | null
+	  AccessoryBase
       | { color: ColorLike; value: string | Date | undefined | null };
     type Text =
-      | string
-      | Date
-      | undefined
-      | null
+	  AccessoryBase
       | { color: Color; value: string | Date | undefined | null };
 
     export type Accessory = ({ tag?: Tag } | { text?: Text }) & {
@@ -30,42 +72,7 @@ export declare namespace List {
   }
 }
 
-type ListProps = {
-  actions?: React.ReactNode;
-  children?: React.ReactNode;
-  filtering?: boolean;
-  /**
-   * @deprecated use filtering
-   */
-  enableFiltering?: boolean;
-  isLoading?: boolean;
-  isShowingDetail?: boolean;
-  searchText?: string;
-  searchBarPlaceholder?: string;
-  navigationTitle?: string;
-  searchBarAccessory?: ReactNode;
-  onSearchTextChange?: (text: string) => void;
-  onSelectionChange?: (id: string) => void;
-};
-
-export type ListItemProps = {
-  title: string;
-  keywords?: string[];
-  detail?: React.ReactNode;
-  icon?: ImageLike;
-  id?: string;
-  subtitle?: string;
-  actions?: ReactNode;
-  accessories?: List.Item.Accessory[];
-};
-
-export type ListItemDetailProps = {
-  isLoading?: boolean;
-  markdown?: string;
-  metadata?: React.ReactNode;
-};
-
-const ListRoot: React.FC<ListProps> = ({
+const ListRoot: React.FC<List.Props> = ({
   searchBarAccessory,
   children,
   actions,
@@ -89,45 +96,26 @@ const ListRoot: React.FC<ListProps> = ({
   );
 };
 
-const ListItem: React.FC<ListItemProps> = ({ detail, actions, ...props }) => {
+const ListItem: React.FC<List.Item.Props> = ({ detail, actions, ...props }) => {
   const id = useRef(props.id ?? randomUUID());
-  const nativeProps: React.JSX.IntrinsicElements["list-item"] = {
-    title: props.title,
-    subtitle: props.subtitle,
-    id: id.current,
-  };
-
-  if (props.icon) nativeProps.icon = serializeImageLike(props.icon);
 
   return (
-    <list-item {...nativeProps}>
+    <list-item {...props} id={id.current}>
       {detail}
       {actions}
     </list-item>
   );
 };
 
-const ListItemDetail: React.FC<ListItemDetailProps> = ({
+const ListItemDetail: React.FC<List.Item.Detail.Props> = ({
   metadata,
   ...props
 }) => {
   return <list-item-detail {...props}>{metadata}</list-item-detail>;
 };
 
-type ListSectionProps = {
-  title?: string;
-  subtitle?: string;
-  children?: ReactNode;
-};
-
-const ListSection: React.FC<ListSectionProps> = (props) => {
-  const nativeProps: React.JSX.IntrinsicElements["list-section"] = props;
-
-  return <list-section {...nativeProps} />;
-};
-
-export const ListAccessory: React.FC<List.Item.Accessory> = (props) => {
-  return <list-accessory />;
+const ListSection: React.FC<List.Section.Props> = (props) => {
+  return <list-section {...props} />;
 };
 
 export const List = Object.assign(ListRoot, {
@@ -138,6 +126,5 @@ export const List = Object.assign(ListRoot, {
     Detail: Object.assign(ListItemDetail, {
       Metadata,
     }),
-    Accessory: ListAccessory,
   }),
 });

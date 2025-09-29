@@ -1,12 +1,13 @@
 import * as React from "react";
  
 import type { ListItemDetailProps } from "../api/components/list";
-import { SerializedImageLike } from "../api/image";
+import { ImageLike } from "../api/image";
 import { SerializedColorLike } from "../api/color";
 import { Keyboard } from "../api/keyboard";
 import { Grid } from "../api/components/grid";
 
 import 'react';
+import { ImageLike, List } from "../src";
 
 type BaseFormField = {
     onBlur?: Function;
@@ -40,12 +41,12 @@ declare module "react" {
         title: string;
         id?: string;
         subtitle?: string;
-        icon?: SerializedImageLike;
+        icon?: ImageLike;
         keywords?: string[];
+		children?: ReactNode;
       };
       "list-item-detail": ListItemDetailProps;
       "list-item-detail-metadata": any;
-      "list-accessory": {};
 
       grid: {
         inset?: Grid.Inset;
@@ -76,14 +77,15 @@ declare module "react" {
         title?: string;
         id?: string;
         subtitle?: string;
-        content?: SerializedImageLike | { color: ColorLike } | { value: SerializedImageLike, tooltip?: string };
+        content?: ImageLike | { color: ColorLike } | { value: ImageLike, tooltip?: string };
         keywords?: string[];
+		children?: ReactNode;
       };
 
       "empty-view": {
         description?: string;
         title?: string;
-        icon?: SerializedImageLike;
+        icon?: ImageLike;
       };
       metadata: {
         children?: React.ReactNode;
@@ -91,7 +93,7 @@ declare module "react" {
       "metadata-label": {
         title: string;
         text: string;
-        icon?: SerializedImageLike;
+        icon?: ImageLike;
       };
       "metadata-separator": {};
       "metadata-link": {
@@ -105,7 +107,7 @@ declare module "react" {
       };
       "action-panel-submenu": {
         title: string;
-        icon?: SerializedImageLike;
+        icon?: ImageLike;
         onOpen?: () => void;
         onSearchTextChange?: (text: string) => void;
         children?: React.ReactNode;
@@ -119,7 +121,7 @@ declare module "react" {
         onAction: () => void;
         onSubmit?: Function;
         shortcut?: Keyboard.Shortcut;
-        icon?: SerializedImageLike;
+        icon?: ImageLike;
         autoFocus?: boolean;
       };
       "tag-list": {
@@ -128,7 +130,7 @@ declare module "react" {
       };
       "tag-item": {
         color?: SerializedColorLike;
-        icon?: SerializedImageLike;
+        icon?: ImageLike;
         text?: string;
         onAction?: () => void;
       };
@@ -143,7 +145,7 @@ declare module "react" {
 	  "tag-picker-item": {
 		  title: string;
 		  value: string;
-		  icon?: SerializedImageLike;
+		  icon?: ImageLike;
 	  },
 	  "text-area-field": BaseFormField & {
 	  }
@@ -169,7 +171,7 @@ declare module "react" {
       "dropdown-item": {
         title: string;
         value: string;
-        icon?: SerializedImageLike;
+        icon?: ImageLike;
         keywords?: string[];
       };
 

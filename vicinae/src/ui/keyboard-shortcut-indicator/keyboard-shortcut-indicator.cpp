@@ -33,10 +33,9 @@ void KeyboardShortcutIndicatorWidget::drawKey(const QString &key, QRect rect, Om
 
   if (auto it = keyToIcon.find(key); it != keyToIcon.end()) {
     BuiltinIconLoader loader(it->second);
-    loader.setFillColor(SemanticColor::TextPrimary);
-
-    QPixmap pix =
-        loader.renderSync({.size = contentRect.size(), .devicePixelRatio = qApp->devicePixelRatio()});
+    QPixmap pix = loader.renderSync({.size = contentRect.size(),
+                                     .devicePixelRatio = qApp->devicePixelRatio(),
+                                     .fill = SemanticColor::TextPrimary});
 
     painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
     painter.drawPixmap(contentRect, pix);

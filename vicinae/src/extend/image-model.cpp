@@ -5,12 +5,17 @@
 
 ImageModelParser::ImageModelParser() {}
 
-ImageLikeModel ImageModelParser::parse(const QJsonObject &imageLike) {
+ImageLikeModel ImageModelParser::parse(const QJsonValue &imageLike) {
   ImageLikeModel model;
 
-  if (imageLike.contains("source")) {
+  if (imageLike.isString()) { return ExtensionImageModel{.source = imageLike.toString()}; }
+  if (!imageLike.isObject()) { return InvalidImageModel(); }
+
+  auto obj = imageLike.toObject();
+
+  if (obj.contains("source")) {
     ExtensionImageModel model;
-    auto source = imageLike.value("source");
+    auto source = obj.value("source");
 
     if (source.isObject()) {
       auto obj = source.toObject();
@@ -20,26 +25,23 @@ ImageLikeModel ImageModelParser::parse(const QJsonObject &imageLike) {
           .dark = obj.value("dark").toString(),
       };
     } else {
-      model.source = imageLike.value("source").toString();
+      model.source = obj.value("source").toString();
     }
 
-    if (imageLike.contains("fallback")) { model.fallback = imageLike.value("fallback").toString(); }
+    if (obj.contains("fallback")) { model.fallback = obj.value("fallback").toString(); }
 
-    if (imageLike.contains("tintColor")) {
-      model.tintColor = ImageURL::tintForName(imageLike.value("tintColor").toString());
+    if (obj.contains("tintColor")) {
+      model.tintColor = ImageURL::tintForName(obj.value("tintColor").toString());
     }
 
-    if (imageLike.contains("mask")) {
-      model.mask = OmniPainter::maskForName(imageLike.value("mask").toString());
-    }
+    if (obj.contains("mask")) { model.mask = OmniPainter::maskForName(obj.value("mask").toString()); }
 
     return model;
   }
 
-  if (imageLike.contains("fileIcon")) {
+  if (obj.contains("fileIcon")) {
     ExtensionFileIconModel model;
-
-    model.file = imageLike.value("fileIcon").toString().toStdString();
+    model.file = obj.value("fileIcon").toString().toStdString();
 
     return model;
   }

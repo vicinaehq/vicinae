@@ -188,8 +188,6 @@ set(SRCS
 	src/ui/markdown/markdown-renderer.cpp
 	# end markdown renderer
 
-	include/lib/emoji-detect.hpp
-	src/lib/emoji-detect.cpp
 	src/lib/crypto.cpp
 
 
@@ -309,6 +307,7 @@ set(SRCS
 	src/ui/vertical-metadata/vertical-metadata.hpp
 	src/ui/vertical-metadata/vertical-metadata.cpp
 
+	src/extend/accessory-model.cpp
 	src/extend/action-model.cpp
 	src/extend/color-model.cpp
 	src/extend/detail-model.cpp

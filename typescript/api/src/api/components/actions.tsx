@@ -1,7 +1,7 @@
 import React, { ReactNode } from "react";
 import { useNavigation } from "../hooks/index";
 import { Clipboard } from "../clipboard";
-import { ImageLike, serializeImageLike } from "../image";
+import { ImageLike } from "../image";
 import { Keyboard } from "../keyboard";
 import { Application, open } from "../utils";
 import { Form } from "./form";
@@ -50,16 +50,8 @@ export type ActionSubmitFormProps = Omit<BaseActionProps, "title"> & {
   title?: string;
 };
 
-const ActionRoot: React.FC<ActionProps> = ({ icon, ...props }) => {
-  const nativeProps: React.JSX.IntrinsicElements["action"] = {
-    ...props,
-  };
-
-  if (icon) {
-    nativeProps.icon = serializeImageLike(icon);
-  }
-
-  return <action {...nativeProps} />;
+const ActionRoot: React.FC<ActionProps> = (props) => {
+  return <action {...props} />;
 };
 
 const CopyToClipboard: React.FC<CopyToClipboardProps> = ({
@@ -145,7 +137,6 @@ const Push: React.FC<ActionPushProps> = ({ target, ...props }) => {
 };
 
 const SubmitForm: React.FC<ActionSubmitFormProps> = ({
-  icon,
   title = "Submit",
   ...props
 }) => {
@@ -154,10 +145,6 @@ const SubmitForm: React.FC<ActionSubmitFormProps> = ({
     title,
     onAction: () => {}
   };
-
-  if (icon) {
-    nativeProps.icon = serializeImageLike(icon);
-  }
 
   return <action {...nativeProps} />;
 };

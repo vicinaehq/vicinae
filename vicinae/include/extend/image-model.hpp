@@ -31,5 +31,5 @@ class ImageModelParser {
 public:
   ImageModelParser();
 
-  ImageLikeModel parse(const QJsonObject &root);
+  ImageLikeModel parse(const QJsonValue &root);
 };
