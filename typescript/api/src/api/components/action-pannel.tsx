@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { Image, serializeImageLike } from "../image";
+import { Image } from "../image";
 import { Keyboard } from "../keyboard";
 
 export type ActionPanelProps = {
@@ -42,19 +42,11 @@ export type ActionPanelSubmenuProps = {
 };
 
 const ActionPannelSubmenu: React.FC<ActionPanelSubmenuProps> = ({
-  icon,
   children,
-  onOpen,
-  onSearchTextChange,
   ...props
 }) => {
-  const nativeProps: React.JSX.IntrinsicElements["action-panel-submenu"] =
-    props;
-
-  if (icon) nativeProps.icon = serializeImageLike(icon);
-
   return (
-    <action-panel-submenu {...nativeProps}>{children}</action-panel-submenu>
+    <action-panel-submenu {...props}>{children}</action-panel-submenu>
   );
 };
 

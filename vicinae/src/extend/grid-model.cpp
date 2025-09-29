@@ -3,7 +3,6 @@
 #include "extend/empty-view-model.hpp"
 #include "extend/image-model.hpp"
 #include "extend/pagination-model.hpp"
-#include "ui/image/image.hpp"
 #include "utils.hpp"
 #include <qjsonvalue.h>
 #include <ranges>
@@ -19,15 +18,21 @@ GridItemViewModel GridModelParser::parseListItem(const QJsonObject &instance, si
   model.title = props["title"].toString();
   model.subtitle = props["subtitle"].toString();
 
-  auto content = props.value("content").toObject();
+  auto content = props.value("content");
 
-  if (content.contains("value")) {
-    ImageContentWithTooltip data;
+  if (content.isObject()) {
+    auto obj = content.toObject();
 
-    if (content.contains("tooltip")) { data.tooltip = content.value("tooltip").toString(); }
+    if (obj.contains("value")) {
+      ImageContentWithTooltip data;
 
-    data.value = ImageModelParser().parse(content.value("value").toObject());
-    model.content = data;
+      if (obj.contains("tooltip")) { data.tooltip = obj.value("tooltip").toString(); }
+
+      data.value = ImageModelParser().parse(obj.value("value"));
+      model.content = data;
+    } else {
+      model.content = ImageModelParser().parse(obj);
+    }
   } else {
     model.content = ImageModelParser().parse(content);
   }

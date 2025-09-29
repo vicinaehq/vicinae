@@ -1,5 +1,5 @@
 import React from "react";
-import { ImageLike, serializeImageLike } from "../image";
+import { ImageLike } from "../image";
 import { TagList } from "./tag";
 
 export type MetadataProps = {
@@ -18,14 +18,7 @@ const MetadataRoot: React.FC<MetadataProps> = (props) => {
   return <metadata {...props} />;
 };
 
-const MetadataLabel: React.FC<ListItemDetailMetadataLabelProps> = ({
-  icon,
-  ...props
-}) => {
-  const nativeProps: React.JSX.IntrinsicElements["metadata-label"] = props;
-
-  if (icon) nativeProps.icon = serializeImageLike(icon);
-
+const MetadataLabel: React.FC<ListItemDetailMetadataLabelProps> = (props) => {
   return <metadata-label {...props} />;
 };
 

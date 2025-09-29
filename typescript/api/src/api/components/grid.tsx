@@ -1,5 +1,5 @@
 import React, { ReactNode, useRef } from "react";
-import { Image, ImageLike, serializeImageLike } from "../image";
+import { Image, ImageLike } from "../image";
 import { randomUUID } from "crypto";
 import { EmptyView } from "./empty-view";
 import { Color, ColorLike } from "../color";
@@ -10,13 +10,6 @@ enum GridInset {
   Medium = "medium",
   Large = "large",
 }
-
-type SectionConfig = {
-  inset?: GridInset;
-  columns?: number;
-  fit?: GridFit;
-  aspectRatio?: Grid.AspectRatio;
-};
 
 const aspectRatioMap: Record<Grid.AspectRatio, number> = {
 	'1': 1,
@@ -38,12 +31,39 @@ enum GridFit {
 }
 
 export namespace Grid {
+  type BaseSection = {
+	  inset?: GridInset;
+	  columns?: number;
+	  fit?: GridFit;
+	  aspectRatio?: Grid.AspectRatio;
+  };
+
+  export type Props = BaseSection & {
+	  actions?: React.ReactNode;
+	  children?: React.ReactNode;
+	  filtering?: boolean;
+	  /**
+	   * @deprecated use filtering
+	   */
+	  enableFiltering?: boolean;
+	  isLoading?: boolean;
+	  searchText?: string;
+	  searchBarPlaceholder?: string;
+	  navigationTitle?: string;
+	  searchBarAccessory?: ReactNode;
+	  onSearchTextChange?: (text: string) => void;
+	  onSelectionChange?: (id: string) => void;
+  };
+
   export namespace Section {
-    export type Props = GridSectionProps;
+    export type Props = BaseSection & {
+	  title?: string;
+	  subtitle?: string;
+	  children?: ReactNode;
+	}
   }
 
   export type Fit = GridFit;
-  export type Props = GridProps;
   export type Inset = GridInset;
   export type AspectRatio = "1" | "3/2" | "2/3" | "4/3" | "3/4" | "16/9" | "9/16" | '21/9' | '9/21' | '32/9' | '9/32';
 
@@ -83,30 +103,7 @@ export namespace Grid {
   }
 }
 
-type GridProps = SectionConfig & {
-  actions?: React.ReactNode;
-  children?: React.ReactNode;
-  filtering?: boolean;
-  /**
-   * @deprecated use filtering
-   */
-  enableFiltering?: boolean;
-  isLoading?: boolean;
-  searchText?: string;
-  searchBarPlaceholder?: string;
-  navigationTitle?: string;
-  searchBarAccessory?: ReactNode;
-  onSearchTextChange?: (text: string) => void;
-  onSelectionChange?: (id: string) => void;
-};
-
-type GridSectionProps = SectionConfig & {
-  title?: string;
-  subtitle?: string;
-  children?: ReactNode;
-};
-
-const GridRoot: React.FC<GridProps> = ({
+const GridRoot: React.FC<Grid.Props> = ({
   searchBarAccessory,
   children,
   actions,
@@ -139,40 +136,12 @@ const GridRoot: React.FC<GridProps> = ({
 const GridItem: React.FC<Grid.Item.Props> = ({
   detail,
   actions,
-  keywords,
   ...props
 }) => {
   const id = useRef(props.id ?? randomUUID());
-  const nativeProps: React.JSX.IntrinsicElements["grid-item"] = {
-    title: props.title,
-    subtitle: props.subtitle,
-    id: id.current,
-    keywords,
-  };
-  const isColor = (
-    content: Grid.Item.Props["content"],
-  ): content is { color: ColorLike } => {
-    return !!content["color"];
-  };
-  const isDataWithTooltip = (
-    content: Grid.Item.Props["content"],
-  ): content is { value: ImageLike; tooltip?: string } => {
-    return !!content["value"];
-  };
-
-  if (isColor(props.content)) {
-    nativeProps.content = { color: props.content.color };
-  } else if (isDataWithTooltip(props.content)) {
-    nativeProps.content = {
-      value: serializeImageLike(props.content.value),
-      tooltip: props.content.tooltip,
-    };
-  } else {
-    nativeProps.content = serializeImageLike(props.content);
-  }
 
   return (
-    <grid-item {...nativeProps}>
+    <grid-item {...props} id={id.current}>
       {detail}
       {actions}
     </grid-item>
