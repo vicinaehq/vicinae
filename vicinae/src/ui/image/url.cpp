@@ -1,6 +1,6 @@
 #include "extend/image-model.hpp"
-#include "lib/emoji-detect.hpp"
 #include "services/asset-resolver/asset-resolver.hpp"
+#include "services/emoji-service/emoji.hpp"
 #include <qdir.h>
 #include <qstringview.h>
 #include <QIcon>
@@ -200,7 +200,7 @@ ImageURL::ImageURL(const ImageLikeModel &imageLike)
       }
     }
 
-    if (isEmoji(source)) {
+    if (StaticEmojiDatabase::mapping().contains(source.toStdString())) {
       setType(ImageURLType::Emoji);
       setName(source);
       return;

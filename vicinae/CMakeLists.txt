@@ -188,8 +188,6 @@ set(SRCS
 	src/ui/markdown/markdown-renderer.cpp
 	# end markdown renderer
 
-	include/lib/emoji-detect.hpp
-	src/lib/emoji-detect.cpp
 	src/lib/crypto.cpp
 
 
