@@ -185,7 +185,6 @@ void LauncherWindow::setupUI() {
       // we will switch to on demand in future version of layer-shell-qt when proper activation
       // requests are sent.
       lshell->setKeyboardInteractivity(Shell::Window::KeyboardInteractivityExclusive);
-      lshell->setExclusiveZone(-1);
       lshell->setAnchors(Shell::Window::AnchorNone);
     } else {
       qWarning()
