@@ -1,6 +1,7 @@
 #include "extend/image-model.hpp"
 #include "services/asset-resolver/asset-resolver.hpp"
 #include "services/emoji-service/emoji.hpp"
+#include "theme.hpp"
 #include <qdir.h>
 #include <qstringview.h>
 #include <QIcon>
@@ -208,7 +209,7 @@ ImageURL::ImageURL(const ImageLikeModel &imageLike)
 
     if (QFile(":icons/" + source + ".svg").exists()) {
       setType(ImageURLType::Builtin);
-      setFill(image->tintColor);
+      setFill(image->tintColor.value_or(SemanticColor::TextPrimary));
       setName(source);
       return;
     }
