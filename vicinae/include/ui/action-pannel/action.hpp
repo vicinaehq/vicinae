@@ -98,6 +98,28 @@ private:
   mutable QString m_id;
 };
 
+/**
+ * An action that wraps another action, providing an `executeAfter` method
+ * to execute logic after the wrapped action is done executing.
+ */
+class ProxyAction : public AbstractAction {
+public:
+  ProxyAction(AbstractAction *action) : m_proxy(action) {}
+
+  void execute(ApplicationContext *context) override {
+    m_proxy->execute(context);
+    executeAfter(context);
+  }
+
+  virtual void executeAfter(ApplicationContext *ctx) {}
+
+  QString title() const override { return m_proxy->title(); }
+  ImageURL icon() const override { return m_proxy->icon(); }
+
+private:
+  std::unique_ptr<AbstractAction> m_proxy;
+};
+
 struct StaticAction : public AbstractAction {
   std::function<void(ApplicationContext *ctx)> m_fn;
 

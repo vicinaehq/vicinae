@@ -295,7 +295,6 @@ set(SRCS
 	src/ui/keyboard-shortcut-indicator/keyboard-shortcut-indicator.hpp
 	src/ui/keyboard-shortcut-indicator/keyboard-shortcut-indicator.cpp
 
-	include/emoji-command.hpp
 
 	src/manage-quicklinks-command.hpp
 
@@ -368,6 +367,8 @@ set(SRCS
 	src/ui/omni-tree/omni-tree.hpp
 	src/ui/omni-tree/omni-tree.cpp
 
+	src/extensions/vicinae/search-emojis/search-emojis-view.hpp
+	src/extensions/vicinae/search-emojis/search-emojis-view.cpp
 	src/extensions/clipboard/clipboard-history-command.cpp
 	src/extensions/clipboard/history/clipboard-history-view.hpp
 	src/extensions/clipboard/history/clipboard-history-view.cpp
