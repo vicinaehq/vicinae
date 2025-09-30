@@ -32,7 +32,6 @@ void HudWidget::setupUI() {
       lshell->setScope(Omnicast::APP_ID);
       lshell->setScreenConfiguration(Shell::Window::ScreenFromCompositor);
       lshell->setKeyboardInteractivity(Shell::Window::KeyboardInteractivityNone);
-      lshell->setExclusiveZone(-1);
       lshell->setAnchors(Shell::Window::AnchorNone);
     } else {
       qWarning() << "Unable apply layer shell rules to hud window: LayerShellQt::Window::get() returned null";
