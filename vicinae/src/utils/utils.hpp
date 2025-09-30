@@ -123,4 +123,6 @@ bool isTextMimeType(const QMimeType &mime);
  */
 bool isTextMimeType(const QString &mimeName);
 
+QColor colorFromString(const QString &str);
+
 }; // namespace Utils
