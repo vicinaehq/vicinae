@@ -37,7 +37,11 @@ void TagWidget::setColor(const std::optional<ColorLike> &color) {
 }
 
 void TagWidget::setIcon(const ImageURL &icon) {
-  m_image->setUrl(ImageURL(icon).setFill(m_color.value_or(SemanticColor::TextPrimary)));
+  ImageURL url(icon);
+
+  if (m_color && !url.fillColor()) { url.setFill(*m_color); }
+
+  m_image->setUrl(url);
   m_image->show();
 }
 

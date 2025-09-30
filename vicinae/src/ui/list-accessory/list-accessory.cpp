@@ -29,7 +29,7 @@ void ListAccessoryWidget::setAccessory(const ListAccessory &accessory) {
   if (accessory.icon) {
     auto url = *accessory.icon;
 
-    url.setFill(accessory.color.value_or(url.fillColor().value_or(SemanticColor::TextPrimary)));
+    if (accessory.color && !url.fillColor()) { url.setFill(accessory.color.value()); }
     _icon->setUrl(url);
   }
 
