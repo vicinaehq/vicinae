@@ -1,6 +1,6 @@
 #pragma once
-#include "emoji-command.hpp"
-#include "../../ui/image/url.hpp"
+#include "search-emojis/search-emojis-view.hpp"
+#include "ui/image/url.hpp"
 #include "single-view-command-context.hpp"
 
 class SearchEmojiCommand : public BuiltinViewCommand<EmojiView> {
