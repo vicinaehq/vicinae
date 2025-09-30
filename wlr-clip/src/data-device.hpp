@@ -12,11 +12,14 @@ public:
     virtual void primarySelection(DataDevice &device, DataOffer &offer) {}
   };
 
+  void registerListener(Listener *listener) { _listeners.push_back(listener); }
+
+  DataDevice(zwlr_data_control_device_v1 *dev);
+  ~DataDevice();
+
 private:
   zwlr_data_control_device_v1 *_dev;
   std::vector<Listener *> _listeners;
-  std::unique_ptr<DataOffer> m_pendingOffer;
-  std::unique_ptr<DataOffer> m_pendingPrimarySelectionOffer;
   std::unique_ptr<DataOffer> m_offer;
 
   static void dataOffer(void *data, zwlr_data_control_device_v1 *device, zwlr_data_control_offer_v1 *id);
@@ -30,10 +33,4 @@ private:
                                                                                   .finished = finished,
                                                                                   .primary_selection =
                                                                                       primarySelection};
-
-public:
-  void registerListener(Listener *listener) { _listeners.push_back(listener); }
-
-  DataDevice(zwlr_data_control_device_v1 *dev);
-  ~DataDevice();
 };

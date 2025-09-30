@@ -1,6 +1,8 @@
 #include "app.hpp"
 #include <iostream>
 #include <iomanip>
+#include <ranges>
+#include <string>
 #include <unistd.h>
 #include "proto/wlr-clipboard.pb.h"
 
@@ -32,9 +34,33 @@ void Clipman::primarySelection(DataDevice &device, DataOffer &offer) {
 }
 
 void Clipman::selection(DataDevice &device, DataOffer &offer) {
+
+  // for now, we apply a simplistic filtering so that we ignore
+  // all the X11 clipboard types (STRING, UTF8_STRING and the like)
+  // we also limit to one image/* type, as it is common for applications
+  // to offer the same content as many different image types.
+  // we keep all text/* types as well as other types, ignoring any encoding part.
+  std::set<std::string> filteredMimes;
+  bool hasImage = false;
+  auto isMime = [](auto &&mime) { return mime.find('/') != std::string::npos; };
+
+  auto stripEncoding = [](const std::string &mime) {
+    if (auto pos = mime.find(';'); pos != std::string::npos) { return mime.substr(0, pos); }
+    return mime;
+  };
+
+  for (const auto &mime : offer.mimes() | std::views::filter(isMime) | std::views::transform(stripEncoding)) {
+    if (mime.starts_with("image/")) {
+      if (hasImage) continue;
+      hasImage = true;
+    }
+
+    filteredMimes.insert(mime);
+  }
+
   if (isatty(STDOUT_FILENO)) {
     std::cout << "********** " << "BEGIN SELECTION" << "**********" << std::endl;
-    for (const auto &mime : offer.mimes()) {
+    for (const auto &mime : filteredMimes) {
       auto path = offer.receive(mime);
       std::cout << std::left << std::setw(30) << mime << path << std::endl;
     }
@@ -45,7 +71,7 @@ void Clipman::selection(DataDevice &device, DataOffer &offer) {
 
   proto::ext::wlrclip::Selection selection;
 
-  for (const auto &mime : offer.mimes()) {
+  for (const auto &mime : filteredMimes) {
     auto dataOffer = selection.add_offers();
 
     dataOffer->set_data(offer.receive(mime));
