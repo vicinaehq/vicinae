@@ -1,6 +1,7 @@
 #include "list-accessory.hpp"
 #include "theme.hpp"
 #include "ui/image/image.hpp"
+#include "ui/image/url.hpp"
 #include "ui/typography/typography.hpp"
 
 void ListAccessoryWidget::paintEvent(QPaintEvent *event) {
@@ -29,7 +30,8 @@ void ListAccessoryWidget::setAccessory(const ListAccessory &accessory) {
   if (accessory.icon) {
     auto url = *accessory.icon;
 
-    if (accessory.color && !url.fillColor()) { url.setFill(accessory.color.value()); }
+    if (accessory.color && url.type() == ImageURLType::Builtin) { url.setFill(accessory.color.value()); }
+
     _icon->setUrl(url);
   }
 

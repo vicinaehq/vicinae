@@ -428,7 +428,7 @@ void ThemeService::setTheme(const ThemeInfo &info) {
   OmniPainter painter;
 
   palette.setBrush(QPalette::PlaceholderText, placeholderText);
-  palette.setBrush(QPalette::Highlight, painter.colorBrush(info.colors.blue));
+  palette.setBrush(QPalette::Highlight, info.colors.blue);
   palette.setBrush(QPalette::HighlightedText, info.colors.text);
 
   QApplication::setPalette(palette);
