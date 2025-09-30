@@ -105,7 +105,13 @@ struct ThemeRadialGradient {
   std::vector<QColor> points;
 };
 
-using ColorLike = std::variant<QColor, ThemeLinearGradient, ThemeRadialGradient, SemanticColor>;
+struct DynamicColor {
+  QColor light;
+  QColor dark;
+  bool adjustContrast = false;
+};
+
+using ColorLike = std::variant<QColor, SemanticColor, DynamicColor>;
 
 struct ColorPalette {
   QColor background;

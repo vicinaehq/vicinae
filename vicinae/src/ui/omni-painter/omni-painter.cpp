@@ -7,6 +7,30 @@
 #include <qnamespace.h>
 #include <qsvgrenderer.h>
 
+class ColorResolver {
+public:
+  static QColor resolve(const ColorLike &color, const ThemeInfo &theme) {
+    ColorResolver resolver(theme);
+    auto result = std::visit(resolver, color);
+
+    return result;
+  }
+
+  ColorResolver(const ThemeInfo &theme) : m_theme(theme) {}
+
+  QColor operator()(const DynamicColor &dynamic) const {
+    // for now, we ignore `adjustContrast`
+    if (m_theme.appearance == "light") return dynamic.light;
+    return dynamic.dark;
+  }
+  QColor operator()(const QColor &color) const { return color; }
+  QColor operator()(const SemanticColor &color) const { return m_theme.resolveTint(color); }
+  QColor operator()(const QString &text) const { return QColor(text); }
+
+private:
+  const ThemeInfo &m_theme;
+};
+
 OmniPainter::ImageMaskType OmniPainter::maskForName(const QString &name) {
   if (name == "circle") {
     return CircleMask;
@@ -25,100 +49,15 @@ void OmniPainter::fillRect(QRect rect, const QColor &color, int radius, float al
   drawRoundedRect(rect, radius, radius);
 }
 
-void OmniPainter::fillRect(QRect rect, const ThemeLinearGradient &lgrad, int radius, float alpha) {
-  QLinearGradient gradient;
+QBrush OmniPainter::colorBrush(const ColorLike &colorLike) const { return QBrush(resolveColor(colorLike)); }
 
-  for (int i = 0; i != lgrad.points.size(); ++i) {
-    QColor finalPoint = lgrad.points[i];
-
-    finalPoint.setAlphaF(alpha);
-    gradient.setColorAt(i, finalPoint);
-  }
-
-  setBrush(gradient);
-  drawRoundedRect(rect, radius, radius);
-}
-
-QColor OmniPainter::resolveColor(SemanticColor color) const {
-  return ThemeService::instance().theme().resolveTint(color);
-}
-
-void OmniPainter::fillRect(QRect rect, const ThemeRadialGradient &rgrad, int radius, float alpha) {
-  QRadialGradient gradient(rect.center(), rect.width() / 2.0);
-
-  gradient.setSpread(QGradient::PadSpread);
-  gradient.setCoordinateMode(QGradient::ObjectBoundingMode);
-
-  for (int i = 0; i != rgrad.points.size(); ++i) {
-    QColor finalPoint = rgrad.points[i];
-
-    finalPoint.setAlphaF(alpha);
-    gradient.setColorAt(i, finalPoint);
-  }
-
-  setBrush(gradient);
-  drawRoundedRect(rect, radius, radius);
-}
-
-QBrush OmniPainter::colorBrush(const ColorLike &colorLike) const {
-  if (auto color = std::get_if<QColor>(&colorLike)) {
-    return *color;
-  } else if (auto lgrad = std::get_if<ThemeLinearGradient>(&colorLike)) {
-    QLinearGradient gradient;
-
-    for (int i = 0; i != lgrad->points.size(); ++i) {
-      QColor finalPoint = lgrad->points[i];
-
-      finalPoint.setAlphaF(1);
-      gradient.setColorAt(i, finalPoint);
-    }
-
-    return gradient;
-  } else if (auto rgrad = std::get_if<ThemeRadialGradient>(&colorLike)) {
-    QRadialGradient gradient;
-
-    gradient.setSpread(QGradient::PadSpread);
-    gradient.setCoordinateMode(QGradient::ObjectBoundingMode);
-
-    for (int i = 0; i != rgrad->points.size(); ++i) {
-      QColor finalPoint = rgrad->points[i];
-
-      finalPoint.setAlphaF(1);
-      gradient.setColorAt(i, finalPoint);
-    }
-
-    return gradient;
-  } else if (auto tint = std::get_if<SemanticColor>(&colorLike)) {
-    auto color = ThemeService::instance().getTintColor(*tint);
-
-    if (std::get_if<SemanticColor>(&color)) {
-      qWarning() << "Theme color set to color tint, not allowed! No color will be set to avoid loop";
-      return {};
-    }
-
-    return colorBrush(color);
-  }
-
-  return {};
+QColor OmniPainter::resolveColor(const ColorLike &colorLike) const {
+  return ColorResolver::resolve(colorLike, ThemeService::instance().theme());
 }
 
 void OmniPainter::fillRect(QRect rect, const ColorLike &colorLike, int radius, float alpha) {
-  if (auto color = std::get_if<QColor>(&colorLike)) {
-    fillRect(rect, *color, radius, alpha);
-  } else if (auto lgrad = std::get_if<ThemeLinearGradient>(&colorLike)) {
-    fillRect(rect, *lgrad, radius, alpha);
-  } else if (auto rgrad = std::get_if<ThemeRadialGradient>(&colorLike)) {
-    fillRect(rect, *rgrad, radius, alpha);
-  } else if (auto tint = std::get_if<SemanticColor>(&colorLike)) {
-    auto color = ThemeService::instance().getTintColor(*tint);
-
-    if (std::get_if<SemanticColor>(&color)) {
-      qWarning() << "Theme color set to color tint, not allowed! No color will be set to avoid loop";
-      return;
-    }
-
-    fillRect(rect, color, radius, alpha);
-  }
+  auto color = resolveColor(colorLike);
+  fillRect(rect, color, radius, alpha);
 }
 
 void OmniPainter::setThemePen(const ColorLike &color, int width) {
@@ -126,56 +65,6 @@ void OmniPainter::setThemePen(const ColorLike &color, int width) {
 }
 
 void OmniPainter::setThemeBrush(const ColorLike &color) { QPainter::setBrush(colorBrush(color)); }
-
-QColor OmniPainter::textColorForBackground(const ColorLike &colorLike) {
-  if (auto color = std::get_if<QColor>(&colorLike)) {
-    int n = 180;
-    while (n > 100) {
-      QColor candidate = color->lighter(n);
-
-      if (candidate.redF() == 1 && candidate.greenF() == 1 && candidate.blueF() == 1) {
-      } else {
-        return candidate;
-      }
-
-      n -= 5;
-    }
-
-    return *color;
-
-  } else if (auto lgrad = std::get_if<ThemeLinearGradient>(&colorLike)) {
-    return {};
-  } else if (auto rgrad = std::get_if<ThemeRadialGradient>(&colorLike)) {
-    return {};
-  } else if (auto tint = std::get_if<SemanticColor>(&colorLike)) {
-    auto color = ThemeService::instance().getTintColor(*tint);
-
-    if (std::get_if<SemanticColor>(&color)) {
-      qWarning() << "Theme color set to color tint, not allowed! No color will be set to avoid loop";
-      return {};
-    }
-
-    return textColorForBackground(color);
-  }
-
-  return {};
-}
-
-void OmniPainter::drawBlurredPixmap(const QPixmap &pixmap, int blurRadius) {
-  auto blur = new QGraphicsBlurEffect;
-
-  blur->setBlurRadius(blurRadius); // Adjust radius as needed
-  blur->setBlurHints(QGraphicsBlurEffect::PerformanceHint);
-
-  // Apply the blur using QGraphicsScene
-  QGraphicsScene scene;
-  QGraphicsPixmapItem item;
-  item.setPixmap(pixmap);
-  item.setGraphicsEffect(blur);
-  scene.addItem(&item);
-  scene.render(this);
-  delete blur;
-}
 
 void OmniPainter::drawPixmap(const QRect &rect, const QPixmap &pixmap, ImageMaskType mask) {
   QPainterPath path;

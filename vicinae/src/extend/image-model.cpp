@@ -1,5 +1,5 @@
 #include "extend/image-model.hpp"
-#include "../ui/image/url.hpp"
+#include "extend/color-model.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
 #include <qjsonobject.h>
 
@@ -30,9 +30,7 @@ ImageLikeModel ImageModelParser::parse(const QJsonValue &imageLike) {
 
     if (obj.contains("fallback")) { model.fallback = obj.value("fallback").toString(); }
 
-    if (obj.contains("tintColor")) {
-      model.tintColor = ImageURL::tintForName(obj.value("tintColor").toString());
-    }
+    if (obj.contains("tintColor")) { model.tintColor = ColorLikeModelParser().parse(obj.value("tintColor")); }
 
     if (obj.contains("mask")) { model.mask = OmniPainter::maskForName(obj.value("mask").toString()); }
 
