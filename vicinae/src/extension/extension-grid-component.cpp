@@ -1,7 +1,6 @@
 #include "extension/extension-grid-component.hpp"
 #include "extend/grid-model.hpp"
 #include "extension/extension-view.hpp"
-#include "ui/omni-grid/grid-item-content-widget.hpp"
 #include "ui/omni-list/omni-list.hpp"
 #include "services/keybinding/keybinding-service.hpp"
 #include "services/config/config-service.hpp"
@@ -16,18 +15,10 @@ bool ExtensionGridComponent::inputFilter(QKeyEvent *event) {
   const QString &keybinding = config->value().keybinding;
 
   if (event->modifiers() == Qt::ControlModifier) {
-    if (KeyBindingService::isLeftKey(event, keybinding)) {
-      return m_list->selectLeft();
-    }
-    if (KeyBindingService::isRightKey(event, keybinding)) {
-      return m_list->selectRight();
-    }
-    if (KeyBindingService::isUpKey(event, keybinding)) {
-      return m_list->selectUp();
-    }
-    if (KeyBindingService::isDownKey(event, keybinding)) {
-      return m_list->selectDown();
-    }
+    if (KeyBindingService::isLeftKey(event, keybinding)) { return m_list->selectLeft(); }
+    if (KeyBindingService::isRightKey(event, keybinding)) { return m_list->selectRight(); }
+    if (KeyBindingService::isUpKey(event, keybinding)) { return m_list->selectUp(); }
+    if (KeyBindingService::isDownKey(event, keybinding)) { return m_list->selectDown(); }
   }
 
   if (event->modifiers().toInt() == 0) {

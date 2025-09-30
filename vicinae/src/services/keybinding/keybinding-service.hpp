@@ -1,24 +1,21 @@
 #pragma once
 #include <QKeyEvent>
 #include <QString>
+#include <qevent.h>
 
-enum class KeyBindingMode {
-  Default,
-  Emacs
-};
+enum class KeyBindingMode { Default, Emacs };
 
 class KeyBindingService {
 public:
   static KeyBindingMode getMode(const QString &keybinding) {
-    if (keybinding == "emacs") {
-      return KeyBindingMode::Emacs;
-    }
+    if (keybinding == "emacs") { return KeyBindingMode::Emacs; }
     return KeyBindingMode::Default;
   }
 
   static bool usesOnly(QKeyEvent *event, Qt::KeyboardModifiers required) {
     auto mods = event->modifiers();
-    return (mods & required) == required && (mods & ~(required | Qt::KeypadModifier | Qt::GroupSwitchModifier)) == 0;
+    return (mods & required) == required &&
+           (mods & ~(required | Qt::KeypadModifier | Qt::GroupSwitchModifier)) == 0;
   }
 
   static bool isDownKey(QKeyEvent *event, const QString &keybinding) {
@@ -69,5 +66,14 @@ public:
       return usesOnly(event, Qt::ControlModifier | Qt::AltModifier) && event->key() == Qt::Key_F;
     }
     return false;
+  }
+
+  static bool isSearchAccessoryKey(QKeyEvent *event, const QString &keybinding) {
+    switch (getMode(keybinding)) {
+    case KeyBindingMode::Emacs:
+      return event->keyCombination() == QKeyCombination(Qt::AltModifier, Qt::Key_P);
+    default:
+      return event->keyCombination() == QKeyCombination(Qt::ControlModifier, Qt::Key_P);
+    }
   }
 };
