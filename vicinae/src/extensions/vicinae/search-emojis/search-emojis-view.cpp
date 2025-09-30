@@ -1,37 +1,16 @@
-#pragma once
-#include "navigation-controller.hpp"
-#include "ui/views/form-view.hpp"
-#include "ui/views/grid-view.hpp"
+#include "search-emojis-view.hpp"
 #include "clipboard-actions.hpp"
-#include "common-actions.hpp"
 #include "common.hpp"
 #include "service-registry.hpp"
-#include "services/clipboard/clipboard-service.hpp"
-#include "../src/ui/image/url.hpp"
-#include "services/emoji-service/emoji.hpp"
-#include "services/toast/toast-service.hpp"
-#include "timer.hpp"
 #include "services/emoji-service/emoji-service.hpp"
-#include "ui/action-pannel/action-item.hpp"
+#include "timer.hpp"
 #include "ui/action-pannel/action.hpp"
-#include "ui/form/form-field.hpp"
-#include "ui/form/form.hpp"
-#include "ui/image/image.hpp"
-#include "ui/omni-grid/omni-grid.hpp"
-#include "ui/omni-list/omni-list.hpp"
-#include "ui/toast/toast.hpp"
-#include "utils/utils.hpp"
-#include <QtConcurrent/qtconcurrentrun.h>
-#include <memory>
-#include <qevent.h>
-#include <qfuturewatcher.h>
-#include <qlabel.h>
-#include <qnamespace.h>
-#include <qobjectdefs.h>
-#include <qtmetamacros.h>
-#include <qwidget.h>
-#include <unistd.h>
+#include "ui/action-pannel/push-action.hpp"
 #include "ui/form/text-area.hpp"
+#include "ui/omni-grid/omni-grid.hpp"
+#include "ui/views/form-view.hpp"
+#include "services/toast/toast-service.hpp"
+#include "utils.hpp"
 
 class EditEmojiKeywordsView : public ManagedFormView {
   TextArea *m_keywords = new TextArea;
@@ -88,19 +67,18 @@ public:
   ResetEmojiRankingAction(std::string_view emoji) : m_emoji(emoji) {}
 };
 
-class PasteEmojiAction : public PasteToFocusedWindowAction {
-  std::string_view m_emoji;
-
+class VisitEmojiActionWrapper : public ProxyAction {
 public:
-  void execute(ApplicationContext *ctx) override {
-    auto emojiService = ctx->services->emojiService();
-    PasteToFocusedWindowAction::execute(ctx);
+  VisitEmojiActionWrapper(std::string_view emoji, AbstractAction *action)
+      : ProxyAction(action), m_emoji(emoji) {}
 
+  void executeAfter(ApplicationContext *ctx) override {
+    auto emojiService = ctx->services->emojiService();
     emojiService->registerVisit(m_emoji);
   }
 
-  PasteEmojiAction(std::string_view emoji)
-      : PasteToFocusedWindowAction(Clipboard::Text(qStringFromStdView(emoji))), m_emoji(emoji) {}
+private:
+  std::string_view m_emoji;
 };
 
 class PinEmojiAction : public AbstractAction {
@@ -123,20 +101,12 @@ public:
   PinEmojiAction(std::string_view emoji) : m_emoji(emoji) {}
 };
 
-class EditEmojiKeywordsAction : public AbstractAction {
-  std::string_view m_emoji;
-
-  void execute(ApplicationContext *ctx) override {
-    PushViewAction pushAction(title(), new EditEmojiKeywordsView(m_emoji), icon());
-
-    pushAction.execute(ctx);
-  }
-
+class EditEmojiKeywordsAction : public PushAction<EditEmojiKeywordsView, std::string_view> {
   QString title() const override { return "Edit custom keywords"; }
   ImageURL icon() const override { return ImageURL::builtin("text"); }
 
 public:
-  EditEmojiKeywordsAction(std::string_view emoji) : m_emoji(emoji) {}
+  EditEmojiKeywordsAction(std::string_view emoji) : PushAction(emoji) {}
 };
 
 class UnpinEmojiAction : public AbstractAction {
@@ -206,14 +176,14 @@ public:
     editKeywords->setShortcut(KeyboardShortcutModel::edit());
 
     if (wm->canPaste()) {
-      auto paste = new PasteEmojiAction(info.emoji);
+      auto paste = new PasteToFocusedWindowAction(Clipboard::Text(QString::fromUtf8(info.emoji)));
       paste->setPrimary(true);
-      mainSection->addAction(paste);
+      mainSection->addAction(new VisitEmojiActionWrapper(info.emoji, paste));
     } else {
       copyEmoji->setPrimary(true);
     }
 
-    mainSection->addAction(copyEmoji);
+    mainSection->addAction(new VisitEmojiActionWrapper(info.emoji, copyEmoji));
     mainSection->addAction(copyName);
     mainSection->addAction(copyGroup);
     mainSection->addAction(editKeywords);
@@ -245,112 +215,107 @@ class RecentlyUsedEmojiGridItem : public EmojiGridItem {
   using EmojiGridItem::EmojiGridItem;
 };
 
-class EmojiView : public GridView {
-public:
-  void initialize() override {
-    setSearchPlaceholderText("Search for emojis...");
-    textChanged(searchText());
-  }
+EmojiView::EmojiView() {
+  auto emojiService = ServiceRegistry::instance()->emojiService();
 
-  void resetList() {
-    if (isVisible() && context()->navigation->searchText().isEmpty()) {
-      generateRootList(OmniList::SelectionPolicy::PreserveSelection);
+  connect(emojiService, &EmojiService::pinned, this, &EmojiView::handlePinned);
+  connect(emojiService, &EmojiService::unpinned, this, &EmojiView::handleUnpinned);
+  connect(emojiService, &EmojiService::visited, this, &EmojiView::handleVisited);
+}
+
+void EmojiView::textChanged(const QString &s) {
+  if (s.isEmpty()) return generateRootList();
+
+  return generateFilteredList(s);
+}
+
+void EmojiView::initialize() {
+  setSearchPlaceholderText("Search for emojis...");
+  textChanged(searchText());
+}
+
+void EmojiView::resetList() {
+  if (isVisible() && context()->navigation->searchText().isEmpty()) {
+    generateRootList(OmniList::SelectionPolicy::PreserveSelection);
+  }
+}
+
+void EmojiView::handlePinned(std::string_view emoji) { resetList(); }
+
+void EmojiView::handleUnpinned(std::string_view emoji) { resetList(); }
+
+void EmojiView::handleVisited(std::string_view emoji) { resetList(); }
+
+void EmojiView::generateFilteredList(const QString &s) {
+  auto emojiService = context()->services->emojiService();
+  auto matches = emojiService->mapMetadata(emojiService->search(s.toStdString()));
+
+  m_grid->updateModel([&]() {
+    if (matches.empty()) { return; }
+
+    auto &results = m_grid->addSection("Results");
+
+    results.setColumns(8);
+    results.setSpacing(10);
+
+    for (const auto &match : matches) {
+      results.addItem(std::make_unique<EmojiGridItem>(*match.data, match.pinnedAt.has_value()));
     }
-  }
+  });
+}
 
-  void handlePinned(std::string_view emoji) { resetList(); }
+void EmojiView::generateRootList(OmniList::SelectionPolicy selectionPolicy) {
+  m_grid->updateModel(
+      [&]() {
+        auto makeEmojiItem = [](auto &&item) -> std::unique_ptr<OmniList::AbstractVirtualItem> {
+          return std::make_unique<EmojiGridItem>(*item);
+        };
+        auto emojiService = ServiceRegistry::instance()->emojiService();
+        Timer timer;
+        auto visited = emojiService->getVisited();
+        std::unordered_map<std::string_view, EmojiWithMetadata> metadataMap;
 
-  void handleUnpinned(std::string_view emoji) { resetList(); }
+        for (const auto &item : visited) {
+          metadataMap.insert({item.data->emoji, item});
+        }
 
-  void handleVisited(std::string_view emoji) { resetList(); }
+        size_t i = 0;
 
-  void generateRootList(OmniList::SelectionPolicy selectionPolicy = OmniList::SelectFirst) {
-    m_grid->updateModel(
-        [&]() {
-          auto makeEmojiItem = [](auto &&item) -> std::unique_ptr<OmniList::AbstractVirtualItem> {
-            return std::make_unique<EmojiGridItem>(*item);
-          };
-          auto emojiService = ServiceRegistry::instance()->emojiService();
-          Timer timer;
-          auto visited = emojiService->getVisited();
-          std::unordered_map<std::string_view, EmojiWithMetadata> metadataMap;
+        auto &pinnedSection = m_grid->addSection("Pinned");
 
-          for (const auto &item : visited) {
-            metadataMap.insert({item.data->emoji, item});
+        pinnedSection.setColumns(8);
+        pinnedSection.setSpacing(10);
+
+        for (; i < visited.size() && visited[i].pinnedAt; ++i) {
+          pinnedSection.addItem(std::make_unique<PinnedEmojiGridItem>(*visited[i].data, true));
+        }
+
+        auto &recentSection = m_grid->addSection("Recently used");
+
+        recentSection.setColumns(8);
+        recentSection.setSpacing(10);
+
+        for (; i < visited.size(); ++i) {
+          if (visited[i].visitCount > 0) {
+            recentSection.addItem(std::make_unique<RecentlyUsedEmojiGridItem>(*visited[i].data, false));
           }
+        }
 
-          size_t i = 0;
+        for (const auto &[group, emojis] : emojiService->grouped()) {
+          auto &section = m_grid->addSection(QString::fromStdString(std::string(group)));
 
-          auto &pinnedSection = m_grid->addSection("Pinned");
+          section.setColumns(8);
+          section.setSpacing(10);
 
-          pinnedSection.setColumns(8);
-          pinnedSection.setSpacing(10);
-
-          for (; i < visited.size() && visited[i].pinnedAt; ++i) {
-            pinnedSection.addItem(std::make_unique<PinnedEmojiGridItem>(*visited[i].data, true));
-          }
-
-          auto &recentSection = m_grid->addSection("Recently used");
-
-          recentSection.setColumns(8);
-          recentSection.setSpacing(10);
-
-          for (; i < visited.size(); ++i) {
-            if (visited[i].visitCount > 0) {
-              recentSection.addItem(std::make_unique<RecentlyUsedEmojiGridItem>(*visited[i].data, false));
+          for (const auto &item : emojis) {
+            if (auto it = metadataMap.find(item->emoji); it != metadataMap.end()) {
+              section.addItem(
+                  std::make_unique<EmojiGridItem>(*it->second.data, it->second.pinnedAt.has_value()));
+            } else {
+              section.addItem(std::make_unique<EmojiGridItem>(*item, false));
             }
           }
-
-          for (const auto &[group, emojis] : emojiService->grouped()) {
-            auto &section = m_grid->addSection(QString::fromStdString(std::string(group)));
-
-            section.setColumns(8);
-            section.setSpacing(10);
-
-            for (const auto &item : emojis) {
-              if (auto it = metadataMap.find(item->emoji); it != metadataMap.end()) {
-                section.addItem(
-                    std::make_unique<EmojiGridItem>(*it->second.data, it->second.pinnedAt.has_value()));
-              } else {
-                section.addItem(std::make_unique<EmojiGridItem>(*item, false));
-              }
-            }
-          }
-        },
-        selectionPolicy);
-  }
-
-  void generateFilteredList(const QString &s) {
-    auto emojiService = ServiceRegistry::instance()->emojiService();
-    auto matches = emojiService->mapMetadata(emojiService->search(s.toStdString()));
-
-    m_grid->updateModel([&]() {
-      if (matches.empty()) { return; }
-
-      auto &results = m_grid->addSection("Results");
-
-      results.setColumns(8);
-      results.setSpacing(10);
-
-      for (const auto &match : matches) {
-        results.addItem(std::make_unique<EmojiGridItem>(*match.data, match.pinnedAt.has_value()));
-      }
-    });
-  }
-
-  QString rootNavigationTitle() const override { return "Search Emojis"; }
-
-  EmojiView() {
-    auto emojiService = ServiceRegistry::instance()->emojiService();
-
-    connect(emojiService, &EmojiService::pinned, this, &EmojiView::handlePinned);
-    connect(emojiService, &EmojiService::unpinned, this, &EmojiView::handleUnpinned);
-    connect(emojiService, &EmojiService::visited, this, &EmojiView::handleVisited);
-  }
-
-  void textChanged(const QString &s) override {
-    if (s.isEmpty()) return generateRootList();
-
-    return generateFilteredList(s);
-  }
-};
+        }
+      },
+      selectionPolicy);
+}
