@@ -76,6 +76,32 @@ void ExtensionListComponent::renderDropdown(const DropdownModel &dropdown) {
   m_selector->setIsLoading(dropdown.isLoading);
 }
 
+bool ExtensionListComponent::inputFilter(QKeyEvent *event) {
+  auto config = ServiceRegistry::instance()->config();
+  const QString keybinding = config->value().keybinding;
+
+  if (event->modifiers() == Qt::ControlModifier) {
+    if (KeyBindingService::isDownKey(event, keybinding)) { return m_list->selectDown(); }
+    if (KeyBindingService::isUpKey(event, keybinding)) { return m_list->selectUp(); }
+  }
+
+  if (event->modifiers().toInt() == 0) {
+    switch (event->key()) {
+    case Qt::Key_Up:
+      return m_list->selectUp();
+    case Qt::Key_Down:
+      return m_list->selectDown();
+    }
+  }
+
+  if (m_selector->isVisible() && KeyBindingService::isSearchAccessoryKey(event, keybinding)) {
+    m_selector->openSelector();
+    return true;
+  }
+
+  return ExtensionSimpleView::inputFilter(event);
+}
+
 void ExtensionListComponent::render(const RenderModel &baseModel) {
   ++m_renderCount;
   auto newModel = std::get<ListModel>(baseModel);

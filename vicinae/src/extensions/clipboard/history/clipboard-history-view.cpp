@@ -2,6 +2,7 @@
 #include "clipboard-actions.hpp"
 #include "manage-quicklinks-command.hpp"
 #include "services/clipboard/clipboard-db.hpp"
+#include "services/keybinding/keybinding-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "layout.hpp"
 #include "ui/text-file-viewer/text-file-viewer.hpp"
@@ -582,10 +583,10 @@ void ClipboardHistoryView::handleStatusClipboard() {
 }
 
 bool ClipboardHistoryView::inputFilter(QKeyEvent *event) {
-  if (event->modifiers() == Qt::ControlModifier) {
-    auto config = ServiceRegistry::instance()->config();
-    const QString keybinding = config ? config->value().keybinding : QString("default");
+  auto config = ServiceRegistry::instance()->config();
+  auto &keybinding = config->value().keybinding;
 
+  if (event->modifiers() == Qt::ControlModifier) {
     if (KeyBindingService::isDownKey(event, keybinding)) { return m_list->selectDown(); }
     if (KeyBindingService::isUpKey(event, keybinding)) { return m_list->selectUp(); }
     if (KeyBindingService::isLeftKey(event, keybinding)) {
@@ -610,12 +611,7 @@ bool ClipboardHistoryView::inputFilter(QKeyEvent *event) {
     }
   }
 
-  // Open filter dropdown: Default Ctrl+P; in Emacs mode, remap to Opt+P.
-  auto config = ServiceRegistry::instance()->config();
-  const QString keybinding = config ? config->value().keybinding : QString("default");
-  if ((keybinding == "emacs" && (event->keyCombination() == QKeyCombination(Qt::AltModifier, Qt::Key_P))) ||
-      (keybinding != "emacs" &&
-       (event->keyCombination() == QKeyCombination(Qt::ControlModifier, Qt::Key_P)))) {
+  if (KeyBindingService::isSearchAccessoryKey(event, keybinding)) {
     m_filterInput->openSelector();
     return true;
   }
