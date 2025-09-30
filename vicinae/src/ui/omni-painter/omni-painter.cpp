@@ -1,5 +1,7 @@
 #include "ui/omni-painter/omni-painter.hpp"
 #include "theme.hpp"
+#include "ui/image/url.hpp"
+#include "utils.hpp"
 #include <qgraphicseffect.h>
 #include <qgraphicsitem.h>
 #include <qgraphicsscene.h>
@@ -10,18 +12,15 @@
 class ColorResolver {
 public:
   static QColor resolve(const ColorLike &color, const ThemeInfo &theme) {
-    ColorResolver resolver(theme);
-    auto result = std::visit(resolver, color);
-
-    return result;
+    return std::visit(ColorResolver(theme), color);
   }
 
   ColorResolver(const ThemeInfo &theme) : m_theme(theme) {}
 
   QColor operator()(const DynamicColor &dynamic) const {
     // for now, we ignore `adjustContrast`
-    if (m_theme.appearance == "light") return dynamic.light;
-    return dynamic.dark;
+    if (m_theme.appearance == "light") return Utils::colorFromString(dynamic.light);
+    return Utils::colorFromString(dynamic.dark);
   }
   QColor operator()(const QColor &color) const { return color; }
   QColor operator()(const SemanticColor &color) const { return m_theme.resolveTint(color); }
@@ -30,6 +29,32 @@ public:
 private:
   const ThemeInfo &m_theme;
 };
+
+class ColorSerializer {
+public:
+  static QColor resolve(const ColorLike &color, const ThemeInfo &theme) {
+    auto result = std::visit(ColorResolver(theme), color);
+    return result;
+  }
+
+  ColorSerializer(const ThemeInfo &theme) : m_theme(theme) {}
+
+  QString operator()(const DynamicColor &dynamic) const {
+    if (m_theme.appearance == "light") return dynamic.light;
+    return dynamic.dark;
+  }
+
+  QString operator()(const QColor &color) const { return color.name(); }
+  QString operator()(const SemanticColor &color) const { return ImageURL::nameForTint(color); }
+  QColor operator()(const QString &text) const { return text; }
+
+private:
+  const ThemeInfo &m_theme;
+};
+
+QString OmniPainter::serializeColor(const ColorLike &color) {
+  return std::visit(ColorSerializer(ThemeService::instance().theme()), color);
+}
 
 OmniPainter::ImageMaskType OmniPainter::maskForName(const QString &name) {
   if (name == "circle") {

@@ -8,6 +8,8 @@
 
 class OmniPainter : public QPainter {
 public:
+  static QString serializeColor(const ColorLike &color);
+
   enum ImageMaskType { NoMask, CircleMask, RoundedRectangleMask };
 
   static ImageMaskType maskForName(const QString &name);

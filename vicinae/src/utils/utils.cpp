@@ -4,6 +4,9 @@
 #include <filesystem>
 #include <qmimedatabase.h>
 #include <qmimetype.h>
+#include <QColor>
+#include <QString>
+#include <QRegularExpression>
 
 namespace fs = std::filesystem;
 
@@ -212,6 +215,73 @@ bool isTextMimeType(const QString &mimeName) {
 
   QMimeDatabase db;
   return isTextMimeType(db.mimeTypeForName(normalizeMimeName(mimeName)));
+}
+
+QColor colorFromString(const QString &str) {
+  QString trimmed = str.trimmed();
+  QColor color(trimmed);
+
+  if (color.isValid()) { return color; }
+
+  QRegularExpression rgbRegex(R"(rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+)\s*)?\))",
+                              QRegularExpression::CaseInsensitiveOption);
+  QRegularExpressionMatch rgbMatch = rgbRegex.match(trimmed);
+
+  if (rgbMatch.hasMatch()) {
+    int r = rgbMatch.captured(1).toInt();
+    int g = rgbMatch.captured(2).toInt();
+    int b = rgbMatch.captured(3).toInt();
+    int a = 255;
+
+    if (!rgbMatch.captured(4).isEmpty()) {
+      double alphaFloat = rgbMatch.captured(4).toDouble();
+      a = qBound(0, static_cast<int>(alphaFloat * 255), 255);
+    }
+
+    return QColor(r, g, b, a);
+  }
+
+  // Handle rgb/rgba percentage format: rgb(100%, 0%, 0%, 1.0)
+  QRegularExpression rgbPercentRegex(
+      R"(rgba?\s*\(\s*([\d.]+)%\s*,\s*([\d.]+)%\s*,\s*([\d.]+)%\s*(?:,\s*([\d.]+)\s*)?\))",
+      QRegularExpression::CaseInsensitiveOption);
+  QRegularExpressionMatch rgbPercentMatch = rgbPercentRegex.match(trimmed);
+
+  if (rgbPercentMatch.hasMatch()) {
+    int r = qBound(0, static_cast<int>(rgbPercentMatch.captured(1).toDouble() * 2.55), 255);
+    int g = qBound(0, static_cast<int>(rgbPercentMatch.captured(2).toDouble() * 2.55), 255);
+    int b = qBound(0, static_cast<int>(rgbPercentMatch.captured(3).toDouble() * 2.55), 255);
+    int a = 255;
+
+    if (!rgbPercentMatch.captured(4).isEmpty()) {
+      double alphaFloat = rgbPercentMatch.captured(4).toDouble();
+      a = qBound(0, static_cast<int>(alphaFloat * 255), 255);
+    }
+
+    return QColor(r, g, b, a);
+  }
+
+  // Handle hsl/hsla format: hsl(200, 20%, 33%) or hsla(200, 20%, 33%, 0.2)
+  QRegularExpression hslRegex(
+      R"(hsla?\s*\(\s*([\d.]+)\s*,\s*([\d.]+)%\s*,\s*([\d.]+)%\s*(?:,\s*([\d.]+)\s*)?\))",
+      QRegularExpression::CaseInsensitiveOption);
+  QRegularExpressionMatch hslMatch = hslRegex.match(trimmed);
+
+  if (hslMatch.hasMatch()) {
+    int h = hslMatch.captured(1).toInt() % 360;
+    int s = qBound(0, hslMatch.captured(2).toInt(), 100) * 255 / 100;
+    int l = qBound(0, hslMatch.captured(3).toInt(), 100) * 255 / 100;
+    int a = 255;
+
+    if (!hslMatch.captured(4).isEmpty()) {
+      double alphaFloat = hslMatch.captured(4).toDouble();
+      a = qBound(0, static_cast<int>(alphaFloat * 255), 255);
+    }
+
+    return QColor::fromHsl(h, s, l, a);
+  }
+
+  return Qt::transparent;
 }
 
 bool isTextMimeType(const QMimeType &mime) { return mime.inherits("text/plain"); }

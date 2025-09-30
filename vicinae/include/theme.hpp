@@ -106,8 +106,8 @@ struct ThemeRadialGradient {
 };
 
 struct DynamicColor {
-  QColor light;
-  QColor dark;
+  QString light;
+  QString dark;
   bool adjustContrast = false;
 };
 

@@ -2,6 +2,7 @@
 #include "services/asset-resolver/asset-resolver.hpp"
 #include "services/emoji-service/emoji.hpp"
 #include "theme.hpp"
+#include "ui/omni-painter/omni-painter.hpp"
 #include <qdir.h>
 #include <qstringview.h>
 #include <QIcon>
@@ -50,11 +51,7 @@ QUrl ImageURL::url() const {
 
   if (_fallback) query.addQueryItem("fallback", *_fallback);
   if (_bgTint != InvalidTint) query.addQueryItem("bg_tint", nameForTint(_bgTint));
-  if (_fillColor) {
-    if (auto tint = std::get_if<SemanticColor>(&*_fillColor); tint && *tint != InvalidTint) {
-      query.addQueryItem("fill", nameForTint(*tint));
-    }
-  }
+  if (_fillColor) { query.addQueryItem("fill", OmniPainter::serializeColor(_fillColor.value())); }
 
   for (const auto &[k, v] : m_params) {
     query.addQueryItem(k, v);
