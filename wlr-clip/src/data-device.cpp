@@ -1,31 +1,27 @@
 #include "data-device.hpp"
 #include "data-offer.hpp"
-#include <iostream>
 
 void DataDevice::dataOffer(void *data, zwlr_data_control_device_v1 *device, zwlr_data_control_offer_v1 *id) {
   auto self = static_cast<DataDevice *>(data);
+
+  if (!id) {
+    self->m_offer.reset();
+    return;
+  }
+
   auto offer = std::make_unique<DataOffer>(id);
 
   for (auto lstn : self->_listeners) {
     lstn->dataOffer(*self, *offer);
   }
 
-  self->m_pendingOffer = std::move(offer);
+  self->m_offer = std::move(offer);
 }
 
 void DataDevice::selection(void *data, zwlr_data_control_device_v1 *device, zwlr_data_control_offer_v1 *id) {
   auto self = static_cast<DataDevice *>(data);
 
-  if (!self->m_pendingOffer) return;
-
-  // safety debug check, this should normally never happen
-  if (id != self->m_pendingOffer->pointer()) {
-    std::cerr << "[Warning] DataDevice::selection: offer id in selection handler does not match "
-                 "pending offer's";
-  }
-
-  // will destroy the previous offer (as requested by the protocol)
-  self->m_offer = std::move(self->m_pendingOffer);
+  if (!self->m_offer) return;
 
   for (auto lstn : self->_listeners) {
     lstn->selection(*self, *self->m_offer);
@@ -44,10 +40,7 @@ void DataDevice::primarySelection(void *data, zwlr_data_control_device_v1 *devic
                                   zwlr_data_control_offer_v1 *id) {
   auto self = static_cast<DataDevice *>(data);
 
-  if (!self->m_pendingOffer) return;
-
-  // will destroy the previous offer (as requested by the protocol)
-  self->m_offer = std::move(self->m_pendingOffer);
+  if (!self->m_offer) return;
 
   for (auto lstn : self->_listeners) {
     lstn->primarySelection(*self, *self->m_offer);
