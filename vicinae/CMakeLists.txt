@@ -52,6 +52,11 @@ set(SRCS
 	include/theme.hpp
 	src/theme.cpp
 
+	src/cli/cli.hpp
+	src/cli/cli.cpp
+	src/cli/server.hpp
+	src/cli/server.cpp
+
 	include/font-service.hpp
 	src/font-service.cpp
 
