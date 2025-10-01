@@ -57,6 +57,8 @@ set(SRCS
 	src/cli/server.hpp
 	src/cli/server.cpp
 
+	src/ui/dmenu-view/dmenu-view.hpp
+
 	include/font-service.hpp
 	src/font-service.cpp
 

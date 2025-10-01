@@ -12,14 +12,29 @@
 #include <QIODevice>
 
 class DaemonIpcClient {
-  QLocalSocket m_conn;
-
-  void writeRequest(const proto::ext::daemon::Request &req);
-
 public:
+  struct DmenuPayload {
+    std::string raw;
+    std::string navigationTitle;
+    std::string placeholder;
+    std::string sectionTitle;
+    bool noSection;
+  };
+
+  /**
+   * Returns the selected item text, if any.
+   * Closing the launcher window or exiting from the dmenu view using
+   * backspace will return std::nullopt.
+   */
+  std::optional<std::string> dmenu(DmenuPayload payload);
+
   void toggle();
-  void passUrl(const QUrl &url);
+  void sendDeeplink(const QUrl &url);
   bool connect();
 
   DaemonIpcClient();
+
+private:
+  QLocalSocket m_conn;
+  void writeRequest(const proto::ext::daemon::Request &req);
 };

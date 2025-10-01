@@ -8,14 +8,29 @@ message UrlRequest {
   string url = 1;
 };
 
+message DmenuRequest {
+  string raw_content = 1;
+  string navigation_title = 2;
+  string placeholder = 3;
+  bool no_icon = 4;
+  string section_title = 5;
+  bool no_section = 6;
+};
+
+message DmenuResponse {
+  string output = 1;
+};
+
 message Request {
   oneof payload {
     UrlRequest url = 1;
+    DmenuRequest dmenu = 2;
   };
 };
 
 message Response {
   oneof payload {
     UrlResponse url = 1;
+    DmenuResponse dmenu = 2;
   };
 };

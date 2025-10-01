@@ -165,6 +165,7 @@ void NavigationController::popCurrentView() {
 
   auto &state = m_views.back();
 
+  state->sender->beforePop();
   emit viewPoped(state->sender);
 
   m_views.pop_back();
@@ -400,13 +401,15 @@ void NavigationController::pushView(BaseView *view) {
   auto state = std::make_unique<ViewState>();
 
   state->sender = view;
+  state->sender->setContext(&m_ctx);
+  state->sender->setCommandController(m_frames.back()->controller.get());
   state->supportsSearch = view->supportsSearch();
   state->needsTopBar = view->needsGlobalTopBar();
   state->needsStatusBar = view->needsGlobalStatusBar();
   state->placeholderText = view->initialSearchPlaceholderText();
+  state->navigation.title = view->initialNavigationTitle();
+  state->navigation.icon = view->initialNavigationIcon();
   state->searchAccessory.reset(view->searchBarAccessory());
-  state->sender->setContext(&m_ctx);
-  state->sender->setCommandController(m_frames.back()->controller.get());
 
   // state->sender->attachCommand(std::make_unique<CommandInterface>(m_ctx.command->activeFrame()));
 
@@ -420,6 +423,7 @@ void NavigationController::pushView(BaseView *view) {
   emit searchVisibilityChanged(state->supportsSearch);
   emit statusBarVisiblityChanged(state->needsStatusBar);
   emit loadingChanged(state->isLoading);
+  emit navigationStatusChanged(state->navigation.title, state->navigation.icon);
 
   m_views.emplace_back(std::move(state));
 

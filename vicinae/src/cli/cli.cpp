@@ -5,6 +5,8 @@
 #include "vicinae.hpp"
 #include "ping.hpp"
 #include "server.hpp"
+#include <array>
+#include <iostream>
 #include <qobjectdefs.h>
 
 class ToggleCommand : public AbstractCommandLineCommand {
@@ -24,17 +26,43 @@ class DmenuCommand : public AbstractCommandLineCommand {
   std::string description() const override { return "Render a list view from stdin"; }
 
   void setup(CLI::App *app) override {
-    app->add_option("-t,--title", m_navigationTitle, "Set the navigation title");
+    app->add_option("-n,--navigation-title", m_navigationTitle, "Set the navigation title");
+    app->add_option(
+        "-s,--section-title", m_sectionTitle,
+        "Set the title of the main section. Use the {count} placeholder to render the current count.");
+    app->add_option("-p,--placeholder", m_placeholder, "Placeholder text to use in the search bar");
+    app->add_flag("--no-section", m_noSection, "Do not insert a section heading");
   }
 
   void run(CLI::App *app) override {
+    DaemonIpcClient::DmenuPayload payload;
     DaemonIpcClient client;
+    std::array<char, 1 << 16> buf;
+
+    payload.navigationTitle = m_navigationTitle;
+    payload.placeholder = m_placeholder;
+    payload.sectionTitle = m_sectionTitle;
+    payload.noSection = m_noSection;
+
+    while (std::cin) {
+      std::cin.read(buf.data(), buf.size());
+      payload.raw += std::string{buf.data(), buf.data() + std::cin.gcount()};
+    }
 
     client.connect();
+
+    auto output = client.dmenu(payload);
+
+    if (!output) { exit(1); }
+
+    std::cout << output.value() << std::endl;
   }
 
 private:
   std::string m_navigationTitle;
+  std::string m_placeholder;
+  std::string m_sectionTitle;
+  bool m_noSection = false;
 };
 
 class VersionCommand : public AbstractCommandLineCommand {
@@ -60,7 +88,7 @@ public:
   void run(CLI::App *app) override {
     DaemonIpcClient client;
     client.connect();
-    client.passUrl(QString(link.c_str()));
+    client.sendDeeplink(QString(link.c_str()));
   }
 
 private:

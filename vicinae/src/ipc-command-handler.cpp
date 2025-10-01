@@ -1,5 +1,7 @@
 #include "ipc-command-handler.hpp"
 #include "common.hpp"
+#include "daemon/ipc-client.hpp"
+#include "ipc-command-server.hpp"
 #include "proto/daemon.pb.h"
 #include <QDebug>
 #include "root-search/extensions/extension-root-provider.hpp"
@@ -8,6 +10,7 @@
 #include "services/toast/toast-service.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "services/extension-registry/extension-registry.hpp"
+#include <qapplication.h>
 #include <qobjectdefs.h>
 #include "extension/manager/extension-manager.hpp"
 #include <qsqlquery.h>
@@ -16,24 +19,70 @@
 #include "navigation-controller.hpp"
 #include "service-registry.hpp"
 #include "theme.hpp"
+#include "ui/dmenu-view/dmenu-view.hpp"
 #include "ui/toast/toast.hpp"
+#include "utils.hpp"
 #include "vicinae.hpp"
 
-proto::ext::daemon::Response *IpcCommandHandler::handleCommand(const proto::ext::daemon::Request &request) {
+PromiseLike<proto::ext::daemon::Response *>
+IpcCommandHandler::handleCommand(const proto::ext::daemon::Request &request) {
   auto res = new proto::ext::daemon::Response;
   auto &nav = m_ctx.navigation;
 
+  using Req = proto::ext::daemon::Request;
+
   switch (request.payload_case()) {
-  case proto::ext::daemon::Request::kUrl: {
+  case Req::kUrl: {
     handleUrl(QUrl(request.url().url().c_str()));
     res->set_allocated_url(new proto::ext::daemon::UrlResponse());
     break;
   }
+  case Req::kDmenu:
+    return processDmenu(request.dmenu());
   default:
     break;
   }
 
   return res;
+}
+
+QFuture<proto::ext::daemon::Response *>
+IpcCommandHandler::processDmenu(const proto::ext::daemon::DmenuRequest &request) {
+  using Watcher = QFutureWatcher<proto::ext::daemon::Response *>;
+  auto &nav = m_ctx.navigation;
+  QPromise<proto::ext::daemon::Response *> promise;
+  auto future = promise.future();
+  DaemonIpcClient::DmenuPayload payload;
+
+  payload.raw = request.raw_content();
+  payload.placeholder = request.placeholder();
+  payload.sectionTitle = request.section_title();
+  payload.noSection = request.no_section();
+  payload.navigationTitle = request.navigation_title();
+
+  auto view = new DMenuListView(payload);
+  auto watcher = new Watcher;
+
+  watcher->setFuture(future);
+
+  QObject::connect(watcher, &Watcher::canceled, [nav = nav.get()]() { nav->closeWindow(); });
+  QObject::connect(watcher, &Watcher::finished, [watcher]() { watcher->deleteLater(); });
+  QObject::connect(view, &DMenuListView::selected,
+                   [promise = std::move(promise)](const QString &text) mutable {
+                     auto dmenuRes = new proto::ext::daemon::DmenuResponse;
+                     auto res = new proto::ext::daemon::Response;
+                     res->set_allocated_dmenu(dmenuRes);
+                     dmenuRes->set_output(text.toStdString());
+                     promise.addResult(res);
+                     promise.finish();
+                   });
+
+  nav->popToRoot({.clearSearch = false});
+  nav->pushView(view);
+  nav->setInstantDismiss(true);
+  nav->showWindow();
+
+  return future;
 }
 
 void IpcCommandHandler::handleUrl(const QUrl &url) {

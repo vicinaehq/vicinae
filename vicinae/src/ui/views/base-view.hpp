@@ -40,6 +40,8 @@ public:
    * applicable.
    */
   virtual QString initialSearchPlaceholderText() const { return QString(); }
+  virtual QString initialNavigationTitle() const { return command()->info().name(); }
+  virtual ImageURL initialNavigationIcon() const { return command()->info().iconUrl(); }
 
   /**
    * Called before the view is first shown on screen.
@@ -70,6 +72,23 @@ public:
    * another view is pushed on top of it.
    */
   virtual void onDeactivate();
+
+  /**
+   * When backspace is pressed and the search bar is empty.
+   * The return value indicates whether we should consume the backspace
+   * handling and not let it propagate. By returning true, you can effectively
+   * override the normal handling of backspace completely.
+   */
+  virtual bool onBackspace() { return false; }
+
+  /**
+   * Whether this view should show a back button if it's not the only one on the stack.
+   * This is tweakable so that some pushed views can look as if they are the only view on the stack,
+   * even if they are technically not.
+   */
+  virtual bool showBackButton() const { return true; }
+
+  virtual void beforePop() {}
 
   void activateCompleter(const ArgumentList &args, const ImageURL &icon) {
     // m_uiController->activateCompleter(args, icon);
