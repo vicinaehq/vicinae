@@ -747,6 +747,8 @@ std::vector<std::shared_ptr<RootItem>> RootItemManager::queryFavorites(int limit
     return ameta.visitCount > bmeta.visitCount;
   });
 
+  if (items.size() > limit) { items.resize(limit); }
+
   return items;
 }
 
@@ -767,6 +769,8 @@ std::vector<std::shared_ptr<RootItem>> RootItemManager::querySuggestions(int lim
 
     return ameta.visitCount > bmeta.visitCount;
   });
+
+  if (items.size() > limit) { items.resize(limit); }
 
   return items;
 }
