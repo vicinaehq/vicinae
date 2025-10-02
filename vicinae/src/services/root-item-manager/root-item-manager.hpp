@@ -169,9 +169,7 @@ public:
   virtual QWidget *settingsDetail() const { return new QWidget; }
 
   // Called the first time the root provider is loaded by the root item manager
-  // The preference object can be mutated and will be saved on disk not long after this
-  // function is called.
-  void intialize(QJsonObject &preference) {}
+  virtual void initialized(const QJsonObject &preference) {}
 
   virtual std::vector<std::shared_ptr<RootItem>> loadItems() const = 0;
   virtual PreferenceList preferences() const { return {}; }

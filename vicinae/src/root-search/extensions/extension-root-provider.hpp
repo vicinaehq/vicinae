@@ -55,6 +55,9 @@ public:
   void preferencesChanged(const QJsonObject &preferences) override {
     return m_repo->preferenceValuesChanged(preferences);
   }
+
+  void initialized(const QJsonObject &preferences) override { return m_repo->initialized(preferences); }
+
   QString repositoryId() const { return m_repo->id(); }
   // TODO: user better logic
   bool isBuiltin() const { return m_repo->author() == "vicinae"; }
