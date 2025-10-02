@@ -6,7 +6,7 @@
 
 # Variable: Grid
 
-> **Grid**: `FC`\<`GridProps`\> & `object`
+> **Grid**: `FC`\<[`Props`](../@vicinae/namespaces/Grid/type-aliases/Props.md)\> & `object`
 
 ## Type Declaration
 
@@ -38,14 +38,8 @@
 
 ### Item
 
-> **Item**: `FC`\<[`Props`](../@vicinae/namespaces/Grid/namespaces/Item/type-aliases/Props.md)\> & `object`
-
-#### Type Declaration
-
-##### Accessory
-
-> **Accessory**: `FC`\<[`Accessory`](../@vicinae/namespaces/Grid/namespaces/Item/type-aliases/Accessory.md)\> = `GridAccessory`
+> **Item**: `FC`\<[`Props`](../@vicinae/namespaces/Grid/namespaces/Item/type-aliases/Props.md)\>
 
 ### Section
 
-> **Section**: `FC`\<`GridSectionProps`\> = `GridSection`
+> **Section**: `FC`\<[`Props`](../@vicinae/namespaces/Grid/namespaces/Section/type-aliases/Props.md)\> = `GridSection`

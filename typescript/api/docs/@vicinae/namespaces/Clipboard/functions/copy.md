@@ -8,6 +8,10 @@
 
 > **copy**(`text`, `options`): `Promise`\<`void`\>
 
+Copy the provided content in the clipboard.
+The `concealed` option can be passed so that the created clipboard selection
+does not get indexed by the Vicinae clipboard manager.
+
 ## Parameters
 
 ### text

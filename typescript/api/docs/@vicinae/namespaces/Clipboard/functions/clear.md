@@ -6,13 +6,9 @@
 
 # Function: clear()
 
-> **clear**(`text`): `Promise`\<`void`\>
+> **clear**(): `Promise`\<`void`\>
 
-## Parameters
-
-### text
-
-`string`
+Clear the current clipboard content.
 
 ## Returns
 
