@@ -91,6 +91,8 @@ type EndpointMapping = {
 
   "clipboard.copy": "clipboard.copy";
   "clipboard.paste": "clipboard.paste";
+  "clipboard.readContent": "clipboard.readContent";
+  "clipboard.clear": "clipboard.clear";
 };
 
 type RequestEndpoint = keyof EndpointMapping;

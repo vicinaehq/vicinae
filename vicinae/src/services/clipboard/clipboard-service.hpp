@@ -44,6 +44,12 @@ struct CopyOptions {
 
 using Content = std::variant<NoData, File, Text, Html, SelectionRecordHandle, ClipboardSelection>;
 
+struct ReadContent {
+  QString text;
+  std::optional<QString> html;
+  std::optional<QString> file;
+};
+
 static Content fromJson(const QJsonObject &obj) {
   if (obj.contains("path")) { return File{.path = obj.value("path").toString().toStdString()}; }
   if (obj.contains("html")) {
@@ -106,6 +112,9 @@ private:
 
 public:
   ClipboardService(const std::filesystem::path &path, WindowManager &wm, AppService &app);
+
+  static QString readText();
+  static Clipboard::ReadContent readContent();
 
   bool removeAllSelections();
 
