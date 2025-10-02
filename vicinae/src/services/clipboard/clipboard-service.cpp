@@ -568,7 +568,10 @@ bool ClipboardService::copySelectionRecord(const QString &id, const Clipboard::C
 bool ClipboardService::removeAllSelections() {
   ClipboardDatabase db;
 
-  if (!db.removeAll()) return false;
+  if (!db.removeAll()) {
+    qWarning() << "Failed to remove all clipboard selections";
+    return false;
+  }
 
   fs::remove_all(m_dataDir);
   fs::create_directories(m_dataDir);
