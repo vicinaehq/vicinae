@@ -257,34 +257,40 @@ class RootSearchView : public ListView {
       }
     }
 
-    auto commandItems =
-        rootManager->providers() | std::views::filter([](const auto &provider) {
-          return provider->type() == RootProvider::Type::ExtensionProvider;
-        }) |
-        std::views::transform([](const auto &provider) { return provider->loadItems(); }) | std::views::join |
-        std::views::transform([](const auto &item) { return std::make_unique<RootSearchItem>(item); });
+    auto isEnabled = [&](const std::shared_ptr<RootItem> &item) {
+      return rootManager->itemMetadata(item->uniqueId()).isEnabled;
+    };
 
-    auto &section = m_list->addSection("Commands");
+    if (auto provider = rootManager->provider("shortcuts")) {
+      auto &section = m_list->addSection("Shortcuts");
 
-    for (auto item : commandItems)
-      section.addItem(std::move(item));
-
-    if (auto provider = rootManager->provider("apps")) {
-      auto &section = m_list->addSection("Apps");
-      auto items = provider->loadItems() | std::views::transform([](const auto &item) {
-                     return std::make_unique<RootSearchItem>(item);
-                   });
+      auto items =
+          provider->loadItems() | std::views::filter(isEnabled) |
+          std::views::transform([](const auto &item) { return std::make_unique<RootSearchItem>(item); });
 
       for (auto item : items)
         section.addItem(std::move(item));
     }
 
-    if (auto provider = rootManager->provider("shortcuts")) {
-      auto &section = m_list->addSection("Shortcuts");
+    auto commandItems =
+        rootManager->providers() | std::views::filter([](const auto &provider) {
+          return provider->type() == RootProvider::Type::ExtensionProvider;
+        }) |
+        std::views::transform([](const auto &provider) { return provider->loadItems(); }) | std::views::join |
+        std::views::filter(isEnabled) |
+        std::views::transform([](const auto &item) { return std::make_unique<RootSearchItem>(item); });
 
-      auto items = provider->loadItems() | std::views::transform([](const auto &item) {
-                     return std::make_unique<RootSearchItem>(item);
-                   });
+    auto &section = m_list->addSection("Commands");
+
+    for (auto item : commandItems) {
+      section.addItem(std::move(item));
+    }
+
+    if (auto provider = rootManager->provider("apps")) {
+      auto &section = m_list->addSection("Apps");
+      auto items =
+          provider->loadItems() | std::views::filter(isEnabled) |
+          std::views::transform([](const auto &item) { return std::make_unique<RootSearchItem>(item); });
 
       for (auto item : items)
         section.addItem(std::move(item));
@@ -368,6 +374,8 @@ class RootSearchView : public ListView {
     auto calculator = context()->services->calculatorService();
     QString expression = searchText().trimmed();
     bool isComputable = false;
+
+    if (expression.isEmpty()) return;
 
     for (const auto &ch : expression) {
       if (!ch.isLetterOrNumber() || ch.isSpace()) {
