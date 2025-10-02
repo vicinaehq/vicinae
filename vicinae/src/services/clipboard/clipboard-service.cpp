@@ -29,6 +29,14 @@ namespace fs = std::filesystem;
 
 static const QString KEYCHAIN_ENCRYPTION_KEY_NAME = "clipboard-data-key";
 
+/**
+ * If any of these is found in a selection, we ignore the entire selection.
+ */
+static const std::set<QString> IGNORED_MIME_TYPES = {
+    Clipboard::CONCEALED_MIME_TYPE,
+    "x-kde-passwordManagerHint",
+};
+
 bool ClipboardService::setPinned(const QString id, bool pinned) {
   if (!ClipboardDatabase().setPinned(id, pinned)) { return false; }
 
@@ -229,8 +237,8 @@ ClipboardOfferKind ClipboardService::getKind(const ClipboardDataOffer &offer) {
 
 QString ClipboardService::getSelectionPreferredMimeType(const ClipboardSelection &selection) {
   static const std::vector<QString> plainTextMimeTypes = {
-      "text/uri-list", "text/plain",   "text/plain;charset=utf-8", "UTF8_STRING", "STRING",
-      "TEXT",          "COMPOUND_TEXT"};
+      "text/uri-list", "text/plain;charset=utf-8", "text/plain", "UTF8_STRING", "STRING", "TEXT",
+      "COMPOUND_TEXT"};
 
   for (const auto &mime : plainTextMimeTypes) {
     auto it = std::ranges::find_if(
@@ -361,7 +369,7 @@ bool ClipboardService::setKeywords(const QString &id, const QString &keywords) {
 
 bool ClipboardService::isConcealedSelection(const ClipboardSelection &selection) {
   return std::ranges::any_of(selection.offers,
-                             [](auto &&offer) { return offer.mimeType == Clipboard::CONCEALED_MIME_TYPE; });
+                             [](auto &&offer) { return IGNORED_MIME_TYPES.contains(offer.mimeType); });
 }
 
 ClipboardSelection &ClipboardService::sanitizeSelection(ClipboardSelection &selection) {
@@ -378,13 +386,13 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
 
   sanitizeSelection(selection);
 
-  if (isClearSelection(selection)) {
-    qDebug() << "Ignored clipboard clear selection";
+  if (isConcealedSelection(selection)) {
+    qDebug() << "Ignoring concealed selection";
     return;
   }
 
-  if (isConcealedSelection(selection)) {
-    qDebug() << "Ignoring concealed selection";
+  if (isClearSelection(selection)) {
+    qDebug() << "Ignored clipboard clear selection";
     return;
   }
 
