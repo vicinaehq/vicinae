@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <numbers>
 #include <numeric>
+#include <qapplication.h>
 #include <qimagereader.h>
 #include <qlogging.h>
 #include <qmimedata.h>
@@ -563,6 +564,29 @@ bool ClipboardService::copySelectionRecord(const QString &id, const Clipboard::C
   QMetaObject::invokeMethod(this, [this]() { emit selectionUpdated(); }, Qt::QueuedConnection);
 
   return copySelection(*selection, options);
+}
+
+QString ClipboardService::readText() { return QApplication::clipboard()->text(); }
+
+Clipboard::ReadContent ClipboardService::readContent() {
+  Clipboard::ReadContent content;
+  const QMimeData *mimeData = QApplication::clipboard()->mimeData();
+
+  if (!mimeData) return content;
+
+  if (mimeData->hasUrls()) {
+    for (const auto &url : mimeData->urls()) {
+      if (url.isLocalFile()) {
+        content.file = url.toLocalFile();
+        break;
+      }
+    }
+  }
+
+  if (mimeData->hasHtml()) { content.html = mimeData->html(); }
+  if (mimeData->hasText()) { content.text = mimeData->text(); }
+
+  return content;
 }
 
 bool ClipboardService::removeAllSelections() {

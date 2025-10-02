@@ -7,10 +7,13 @@ export namespace Clipboard {
     | { text: string }
     | { file: PathLike }
     | { html: string; text?: string };
-  export type ReadContent =
-    | { text: string }
-    | { file?: string }
-    | { html?: string };
+
+  export type ReadContent = {
+	  text: string;
+	  file?: string;
+	  html?: string;
+  };
+
   export type CopyOptions = {
     concealed?: boolean;
   };
@@ -33,6 +36,11 @@ export namespace Clipboard {
     return ct;
   }
 
+  /**
+   * Copy the provided content in the clipboard.
+   * The `concealed` option can be passed so that the created clipboard selection
+   * does not get indexed by the Vicinae clipboard manager.
+   */
   export async function copy(
     text: string | number | Clipboard.Content,
     options: Clipboard.CopyOptions = {},
@@ -43,21 +51,50 @@ export namespace Clipboard {
     });
   }
 
+  /**
+   * Paste the provided clipboard content to the active window.
+   * If the environment does not support either getting the active window
+   * or pasting content to it directly, this will fallback to a regular
+   * clipboard copy.
+   */
   export async function paste(text: string | Clipboard.Content) {
     await bus.turboRequest("clipboard.paste", {
       content: mapContent(text),
     });
   }
 
+  /**
+   * Read the current content of the clipboard, which can contain text, html and a file path.
+   * Note: the offset option is not yet implemented
+   *
+   * ```ts
+   * const { text, html, file } = await Clipboard.read();
+   * ```
+   */
   export async function read(options?: { offset?: number }): Promise<Clipboard.ReadContent> {
-	throw new Error('Clipboard.read not implemented');
+    const res = await bus.turboRequest('clipboard.readContent', {});
+	return res.unwrap().content!;
   }
 
-  export async function readText(options?: { offset?: number }): Promise<string | undefined> {
-	throw new Error('Clipboard.readText not implemented');
+  /**
+   * Read the text representation of the current clipboard data. If the data is not text at all, this 
+   * returns an empty string.
+   * If you want to read optional html or file path, consider @see {Clipboard.read}
+   * Note: the offset option is not yet implemented.
+   *
+   * ```ts
+   * const text = await Clipboard.readText();
+   * ```
+   */
+  export async function readText(options?: { offset?: number }): Promise<string> {
+	const { text } = await read(options);
+	return text;
   }
 
-  export async function clear(text: string) {
-	throw new Error('Clibpoard.clear not implemented');
+  /**
+   * Clear the current clipboard content.
+   */
+  export async function clear() {
+	  await bus.turboRequest('clipboard.clear', {});
   }
 }
