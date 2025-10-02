@@ -1,7 +1,5 @@
 #include "ipc-command-handler.hpp"
 #include "common.hpp"
-#include "daemon/ipc-client.hpp"
-#include "ipc-command-server.hpp"
 #include "proto/daemon.pb.h"
 #include <QDebug>
 #include "root-search/extensions/extension-root-provider.hpp"
@@ -21,7 +19,6 @@
 #include "theme.hpp"
 #include "ui/dmenu-view/dmenu-view.hpp"
 #include "ui/toast/toast.hpp"
-#include "utils.hpp"
 #include "vicinae.hpp"
 
 PromiseLike<proto::ext::daemon::Response *>
@@ -32,6 +29,9 @@ IpcCommandHandler::handleCommand(const proto::ext::daemon::Request &request) {
   using Req = proto::ext::daemon::Request;
 
   switch (request.payload_case()) {
+  case Req::kPing:
+    res->set_allocated_ping(new proto::ext::daemon::PingResponse());
+    break;
   case Req::kUrl: {
     handleUrl(QUrl(request.url().url().c_str()));
     res->set_allocated_url(new proto::ext::daemon::UrlResponse());
@@ -52,7 +52,7 @@ IpcCommandHandler::processDmenu(const proto::ext::daemon::DmenuRequest &request)
   auto &nav = m_ctx.navigation;
   QPromise<proto::ext::daemon::Response *> promise;
   auto future = promise.future();
-  DaemonIpcClient::DmenuPayload payload;
+  DMenuListView::DmenuPayload payload;
 
   payload.raw = request.raw_content();
   payload.placeholder = request.placeholder();

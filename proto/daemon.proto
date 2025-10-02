@@ -8,6 +8,12 @@ message UrlRequest {
   string url = 1;
 };
 
+message PingRequest {
+};
+
+message PingResponse {
+};
+
 message DmenuRequest {
   string raw_content = 1;
   string navigation_title = 2;
@@ -23,14 +29,16 @@ message DmenuResponse {
 
 message Request {
   oneof payload {
-    UrlRequest url = 1;
-    DmenuRequest dmenu = 2;
+    PingRequest ping = 1;
+    UrlRequest url = 2;
+    DmenuRequest dmenu = 3;
   };
 };
 
 message Response {
   oneof payload {
-    UrlResponse url = 1;
-    DmenuResponse dmenu = 2;
+    PingResponse ping = 1;
+    UrlResponse url = 2;
+    DmenuResponse dmenu = 3;
   };
 };

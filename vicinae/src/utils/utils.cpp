@@ -285,4 +285,16 @@ QColor colorFromString(const QString &str) {
 }
 
 bool isTextMimeType(const QMimeType &mime) { return mime.inherits("text/plain"); }
+
+std::string slurp(std::istream &ifs) {
+  std::array<char, 1 << 16> buf;
+  std::string data;
+
+  while (ifs) {
+    ifs.read(buf.data(), buf.size());
+    data += std::string{buf.data(), buf.data() + std::cin.gcount()};
+  }
+
+  return data;
+}
 }; // namespace Utils

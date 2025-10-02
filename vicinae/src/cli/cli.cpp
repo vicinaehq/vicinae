@@ -1,19 +1,13 @@
 #include "cli.hpp"
 #include "daemon/ipc-client.hpp"
 #include "lib/CLI11.hpp"
+#include "ui/dmenu-view/dmenu-view.hpp"
 #include "vicinae.hpp"
 #include "server.hpp"
 #include <array>
-#include <exception>
 #include <iostream>
 #include <qobjectdefs.h>
-
-class FailedToConnectException : public std::exception {
-  const char *what() const noexcept override {
-    return "Failed to connect to vicinae server. You should first start the vicinae "
-           "server using the `vicinae server` command.";
-  }
-};
+#include <stdexcept>
 
 class CliPing : public AbstractCommandLineCommand {
   std::string id() const override { return "ping"; }
@@ -22,7 +16,7 @@ class CliPing : public AbstractCommandLineCommand {
   void run(CLI::App *app) override {
     DaemonIpcClient client;
 
-    if (!client.connect()) { throw FailedToConnectException(); }
+    if (!client.ping()) { throw std::runtime_error("Failed to ping"); }
 
     std::cout << "Pinged successfully." << std::endl;
   }
@@ -34,8 +28,6 @@ class ToggleCommand : public AbstractCommandLineCommand {
 
   void run(CLI::App *app) override {
     DaemonIpcClient client;
-
-    if (!client.connect()) { throw FailedToConnectException(); }
     client.toggle();
   }
 };
@@ -54,27 +46,21 @@ class DMenuCommand : public AbstractCommandLineCommand {
   }
 
   void run(CLI::App *app) override {
-    DaemonIpcClient::DmenuPayload payload;
+    DMenuListView::DmenuPayload payload;
     DaemonIpcClient client;
-    std::array<char, 1 << 16> buf;
 
+    client.connectOrThrow();
     payload.navigationTitle = m_navigationTitle;
     payload.placeholder = m_placeholder;
     payload.sectionTitle = m_sectionTitle;
     payload.noSection = m_noSection;
-
-    if (!client.connect()) { throw FailedToConnectException(); }
-
-    while (std::cin) {
-      std::cin.read(buf.data(), buf.size());
-      payload.raw += std::string{buf.data(), buf.data() + std::cin.gcount()};
-    }
+    payload.raw = Utils::slurp(std::cin);
 
     auto output = client.dmenu(payload);
 
-    if (!output) { exit(1); }
+    if (output.empty()) { exit(1); }
 
-    std::cout << output.value() << std::endl;
+    std::cout << output << std::endl;
   }
 
 private:
@@ -106,7 +92,6 @@ public:
 
   void run(CLI::App *app) override {
     DaemonIpcClient client;
-    if (!client.connect()) { throw FailedToConnectException(); }
     client.sendDeeplink(QString(link.c_str()));
   }
 
