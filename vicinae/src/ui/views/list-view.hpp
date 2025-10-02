@@ -1,9 +1,11 @@
 #pragma once
 #include "action-panel/action-panel.hpp"
+#include "actions/theme/theme-actions.hpp"
 #include "navigation-controller.hpp"
 #include "simple-view.hpp"
 #include "ui/omni-list/omni-list.hpp"
 #include "ui/search-bar/search-bar.hpp"
+#include <absl/strings/str_format.h>
 #include <qwidget.h>
 #include <ranges>
 
@@ -91,9 +93,13 @@ public:
     m_data = std::move(items);
   }
 
+  virtual QString sectionName() const { return "Results ({count})"; }
+
   void render(const Data &filtered) {
+    auto name = sectionName();
+    name.replace("{count}", QString::number(filtered.size()));
     m_list->updateModel([&]() {
-      auto &section = m_list->addSection(QString("%1 (%2)").arg(sectionName()).arg(filtered.size()));
+      auto &section = m_list->addSection(name);
       for (const auto &item : filtered) {
         section.addItem(item);
       }
@@ -106,7 +112,6 @@ public:
   }
 
   virtual Data initData() const = 0;
-  virtual QString sectionName() const { return "Results"; }
 
   const Data &filterData(const QString &query) {
     Data filtered;

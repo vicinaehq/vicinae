@@ -121,6 +121,10 @@ bool GlobalHeader::eventFilter(QObject *watched, QEvent *event) {
 void GlobalHeader::handleSearchPop() {
   if (!m_input->isVisible()) return;
 
+  if (auto state = m_navigation.topState()) {
+    if (state->sender->onBackspace()) return;
+  }
+
   m_navigation.popCurrentView();
 }
 
@@ -129,7 +133,7 @@ GlobalHeader::GlobalHeader(NavigationController &controller) : m_navigation(cont
   connect(&m_navigation, &NavigationController::searchTextSelected, m_input, &SearchBar::selectAll);
   connect(&m_navigation, &NavigationController::currentViewChanged, this, [this]() {
     if (auto state = m_navigation.topState()) {
-      bool needsBackButton = m_navigation.viewStackSize() > 1;
+      bool needsBackButton = m_navigation.viewStackSize() > 1 && state->sender->showBackButton();
 
       m_backButton->setVisible(needsBackButton);
       m_backButtonSpacer->setVisible(needsBackButton);

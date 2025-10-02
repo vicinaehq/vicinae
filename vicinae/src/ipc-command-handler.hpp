@@ -6,8 +6,11 @@
 class IpcCommandHandler : public ICommandHandler {
 
 public:
-  proto::ext::daemon::Response *handleCommand(const proto::ext::daemon::Request &message) override;
+  PromiseLike<proto::ext::daemon::Response *>
+  handleCommand(const proto::ext::daemon::Request &message) override;
   void handleUrl(const QUrl &url);
+
+  QFuture<proto::ext::daemon::Response *> processDmenu(const proto::ext::daemon::DmenuRequest &request);
 
   IpcCommandHandler(ApplicationContext &ctx);
 
