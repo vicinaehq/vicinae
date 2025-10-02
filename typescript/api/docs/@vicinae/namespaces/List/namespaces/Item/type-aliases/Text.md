@@ -6,4 +6,4 @@
 
 # Type Alias: Text
 
-> **Text** = `string` \| `Date` \| `undefined` \| `null` \| \{ `color`: [`Color`](../../../../../../enumerations/Color.md); `value`: `string` \| `Date` \| `undefined` \| `null`; \}
+> **Text** = [`AccessoryBase`](AccessoryBase.md) \| \{ `color`: [`Color`](../../../../../../enumerations/Color.md); `value`: `string` \| `Date` \| `undefined` \| `null`; \}

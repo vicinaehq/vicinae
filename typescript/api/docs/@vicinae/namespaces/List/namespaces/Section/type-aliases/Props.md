@@ -2,21 +2,25 @@
 
 ***
 
-[@vicinae/api](../../../../../../README.md) / [Grid](../../../README.md) / [Section](../README.md) / Props
+[@vicinae/api](../../../../../../README.md) / [List](../../../README.md) / [Section](../README.md) / Props
 
 # Type Alias: Props
 
-> **Props** = `BaseSection` & `object`
+> **Props** = `object`
 
-## Type Declaration
+## Properties
 
 ### children?
 
 > `optional` **children**: `ReactNode`
 
+***
+
 ### subtitle?
 
 > `optional` **subtitle**: `string`
+
+***
 
 ### title?
 

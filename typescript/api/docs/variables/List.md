@@ -6,7 +6,7 @@
 
 # Variable: List
 
-> **List**: `FC`\<`ListProps`\> & `object`
+> **List**: `FC`\<[`Props`](../@vicinae/namespaces/List/type-aliases/Props.md)\> & `object`
 
 ## Type Declaration
 
@@ -30,17 +30,13 @@
 
 ### Item
 
-> **Item**: `FC`\<[`ListItemProps`](../type-aliases/ListItemProps.md)\> & `object`
+> **Item**: `FC`\<[`Props`](../@vicinae/namespaces/List/namespaces/Item/type-aliases/Props.md)\> & `object`
 
 #### Type Declaration
 
-##### Accessory
-
-> **Accessory**: `FC`\<[`Accessory`](../@vicinae/namespaces/List/namespaces/Item/type-aliases/Accessory.md)\> = `ListAccessory`
-
 ##### Detail
 
-> **Detail**: `FC`\<[`ListItemDetailProps`](../type-aliases/ListItemDetailProps.md)\> & `object`
+> **Detail**: `FC`\<[`Props`](../@vicinae/namespaces/List/namespaces/Item/namespaces/Detail/type-aliases/Props.md)\> & `object`
 
 ###### Type Declaration
 
@@ -74,4 +70,4 @@
 
 ### Section
 
-> **Section**: `FC`\<`ListSectionProps`\> = `ListSection`
+> **Section**: `FC`\<[`Props`](../@vicinae/namespaces/List/namespaces/Section/type-aliases/Props.md)\> = `ListSection`

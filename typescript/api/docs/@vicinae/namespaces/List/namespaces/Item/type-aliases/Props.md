@@ -6,4 +6,52 @@
 
 # Type Alias: Props
 
-> **Props** = [`ListItemProps`](../../../../../../type-aliases/ListItemProps.md)
+> **Props** = `object`
+
+## Properties
+
+### accessories?
+
+> `optional` **accessories**: [`Accessory`](Accessory.md)[]
+
+***
+
+### actions?
+
+> `optional` **actions**: `ReactNode`
+
+***
+
+### detail?
+
+> `optional` **detail**: `React.ReactNode`
+
+***
+
+### icon?
+
+> `optional` **icon**: [`ImageLike`](../../../../../../type-aliases/ImageLike.md)
+
+***
+
+### id?
+
+> `optional` **id**: `string`
+
+***
+
+### keywords?
+
+> `optional` **keywords**: `string`[]
+
+***
+
+### subtitle?
+
+> `optional` **subtitle**: `string`
+
+***
+
+### title
+
+> **title**: `string`

@@ -65,11 +65,8 @@
 - [KeyEquivalent](type-aliases/KeyEquivalent.md)
 - [KeyModifier](type-aliases/KeyModifier.md)
 - [LaunchProps](type-aliases/LaunchProps.md)
-- [ListItemDetailProps](type-aliases/ListItemDetailProps.md)
-- [ListItemProps](type-aliases/ListItemProps.md)
 - [Message](type-aliases/Message.md)
 - [SerializedColorLike](type-aliases/SerializedColorLike.md)
-- [SerializedImageLike](type-aliases/SerializedImageLike.md)
 
 ## Variables
 
@@ -81,10 +78,8 @@
 - [environment](variables/environment.md)
 - [Form](variables/Form.md)
 - [Grid](variables/Grid.md)
-- [GridAccessory](variables/GridAccessory.md)
 - [Keyboard](variables/Keyboard.md)
 - [List](variables/List.md)
-- [ListAccessory](variables/ListAccessory.md)
 - [MenuBarExtra](variables/MenuBarExtra.md)
 - [NavigationProvider](variables/NavigationProvider.md)
 - [OAuth](variables/OAuth.md)
@@ -105,7 +100,6 @@
 - [openExtensionPreferences](functions/openExtensionPreferences.md)
 - [popToRoot](functions/popToRoot.md)
 - [serializeColorLike](functions/serializeColorLike.md)
-- [serializeImageLike](functions/serializeImageLike.md)
 - [serializeProtoImage](functions/serializeProtoImage.md)
 - [showHUD](functions/showHUD.md)
 - [showInFileBrowser](functions/showInFileBrowser.md)

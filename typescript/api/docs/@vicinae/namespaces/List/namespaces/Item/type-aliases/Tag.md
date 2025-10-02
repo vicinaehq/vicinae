@@ -6,4 +6,4 @@
 
 # Type Alias: Tag
 
-> **Tag** = `string` \| `Date` \| `undefined` \| `null` \| \{ `color`: [`ColorLike`](../../../../../../type-aliases/ColorLike.md); `value`: `string` \| `Date` \| `undefined` \| `null`; \}
+> **Tag** = [`AccessoryBase`](AccessoryBase.md) \| \{ `color`: [`ColorLike`](../../../../../../type-aliases/ColorLike.md); `value`: `string` \| `Date` \| `undefined` \| `null`; \}
