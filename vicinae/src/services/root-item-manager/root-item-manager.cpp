@@ -909,7 +909,9 @@ void RootItemManager::loadProvider(std::unique_ptr<RootProvider> provider) {
   auto ptr = provider.get();
 
   m_providers.emplace_back(std::move(provider));
-  ptr->preferencesChanged(getProviderPreferenceValues(ptr->uniqueId()));
+  auto preferenceValues = getProviderPreferenceValues(ptr->uniqueId());
+  ptr->initialized(preferenceValues);
+  ptr->preferencesChanged(preferenceValues);
   connect(ptr, &RootProvider::itemsChanged, this, [this]() { updateIndex(); });
 }
 

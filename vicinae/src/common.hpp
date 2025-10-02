@@ -194,6 +194,12 @@ public:
   virtual ImageURL iconUrl() const = 0;
   virtual std::vector<Preference> preferences() const { return {}; }
   virtual QWidget *settingsDetail() const { return new QWidget; }
+
+  /**
+   * Triggered the first time the provider is registered
+   */
+  virtual void initialized(const QJsonObject &preferences) const {}
+
   virtual void preferenceValuesChanged(const QJsonObject &value) const {}
 };
 

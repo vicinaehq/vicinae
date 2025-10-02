@@ -18,22 +18,25 @@ public:
 
   std::vector<Preference> preferences() const override {
     auto monitoring = Preference::makeCheckbox("monitoring");
+    auto eraseOnStartup = Preference::makeCheckbox("eraseOnStartup");
+
+    eraseOnStartup.setTitle("Erase on startup");
+    eraseOnStartup.setDescription("Erase clipboard history every time the vicinae server is started");
+    eraseOnStartup.setDefaultValue(false);
 
     monitoring.setTitle("Clipboard monitoring");
     monitoring.setDescription("Whether clipboard activity is recorded in the history. Every clipboard action "
                               "performed while this is turned off will not be recorded.");
     monitoring.setDefaultValue(true);
 
-    /*
-auto storeAllOfferings = Preference::makeCheckbox("store-all-offerings");
+    return {monitoring, eraseOnStartup};
+  }
 
-storeAllOfferings.setTitle("Store all offerings");
-storeAllOfferings.setDescription("Store and index alternative mime type offerings. This will "
-                                 "increase total storage size, but will refine the search.");
-storeAllOfferings.setDefaultValue(true);
-    */
+  virtual void initialized(const QJsonObject &preferences) const override {
+    auto clipman = ServiceRegistry::instance()->clipman();
+    bool eraseOnStartup = preferences.value("eraseOnStartup").toBool();
 
-    return {monitoring};
+    if (eraseOnStartup) { clipman->removeAllSelections(); }
   }
 
   void preferenceValuesChanged(const QJsonObject &value) const override {
