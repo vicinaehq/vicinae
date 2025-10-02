@@ -1,7 +1,9 @@
 #pragma once
 #include "lib/CLI11.hpp"
 #include "lib/rang.hpp"
+#include <exception>
 #include <type_traits>
+#include "vicinae.hpp"
 
 class AbstractCommandLineCommand {
 public:
@@ -37,6 +39,18 @@ public:
       return 0;
     }
 
+    // we still support direct deeplink usage
+    // i.e vicinae vicinae://extensions/vicinae/clipboard/history
+    if (ac == 2) {
+      QString arg = av[1];
+      auto pred = [&](const QString &scheme) { return arg.startsWith(scheme + "://"); };
+      bool hasScheme = std::ranges::any_of(Omnicast::APP_SCHEMES, pred);
+      if (hasScheme) {
+        char *subAv[] = {av[0], strdup("deeplink"), strdup(arg.toStdString().c_str()), nullptr};
+        return run(3, subAv);
+      }
+    }
+
     app.require_subcommand();
 
     std::atexit([]() { std::cout << rang::style::reset; });
@@ -47,6 +61,9 @@ public:
     } catch (const CLI::ParseError &e) {
       if (e.get_exit_code() != 0) { std::cout << rang::fg::red; }
       return app.exit(e);
+    } catch (const std::exception &except) {
+      std::cout << rang::fg::red;
+      return app.exit(CLI::Error("Exception", except.what()));
     }
   }
 

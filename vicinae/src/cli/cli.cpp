@@ -1,13 +1,32 @@
 #include "cli.hpp"
 #include "daemon/ipc-client.hpp"
 #include "lib/CLI11.hpp"
-#include "lib/rang.hpp"
 #include "vicinae.hpp"
-#include "ping.hpp"
 #include "server.hpp"
 #include <array>
+#include <exception>
 #include <iostream>
 #include <qobjectdefs.h>
+
+class FailedToConnectException : public std::exception {
+  const char *what() const noexcept override {
+    return "Failed to connect to vicinae server. You should first start the vicinae "
+           "server using the `vicinae server` command.";
+  }
+};
+
+class CliPing : public AbstractCommandLineCommand {
+  std::string id() const override { return "ping"; }
+  std::string description() const override { return "Ping the vicinae server"; }
+
+  void run(CLI::App *app) override {
+    DaemonIpcClient client;
+
+    if (!client.connect()) { throw FailedToConnectException(); }
+
+    std::cout << "Pinged successfully." << std::endl;
+  }
+};
 
 class ToggleCommand : public AbstractCommandLineCommand {
   std::string id() const override { return "toggle"; }
@@ -16,12 +35,12 @@ class ToggleCommand : public AbstractCommandLineCommand {
   void run(CLI::App *app) override {
     DaemonIpcClient client;
 
-    client.connect();
+    if (!client.connect()) { throw FailedToConnectException(); }
     client.toggle();
   }
 };
 
-class DmenuCommand : public AbstractCommandLineCommand {
+class DMenuCommand : public AbstractCommandLineCommand {
   std::string id() const override { return "dmenu"; }
   std::string description() const override { return "Render a list view from stdin"; }
 
@@ -44,12 +63,12 @@ class DmenuCommand : public AbstractCommandLineCommand {
     payload.sectionTitle = m_sectionTitle;
     payload.noSection = m_noSection;
 
+    if (!client.connect()) { throw FailedToConnectException(); }
+
     while (std::cin) {
       std::cin.read(buf.data(), buf.size());
       payload.raw += std::string{buf.data(), buf.data() + std::cin.gcount()};
     }
-
-    client.connect();
 
     auto output = client.dmenu(payload);
 
@@ -87,7 +106,7 @@ public:
 
   void run(CLI::App *app) override {
     DaemonIpcClient client;
-    client.connect();
+    if (!client.connect()) { throw FailedToConnectException(); }
     client.sendDeeplink(QString(link.c_str()));
   }
 
@@ -104,7 +123,7 @@ bool CommandLineInterface::execute(int ac, char **av) {
   app.registerCommand<CliPing>();
   app.registerCommand<ToggleCommand>();
   app.registerCommand<DeeplinkCommand>();
-  app.registerCommand<DmenuCommand>();
+  app.registerCommand<DMenuCommand>();
 
   return app.run(ac, av) == 0;
 }
