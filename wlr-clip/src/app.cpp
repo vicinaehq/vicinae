@@ -1,10 +1,26 @@
 #include "app.hpp"
+#include <cctype>
 #include <iostream>
 #include <iomanip>
 #include <ranges>
 #include <string>
 #include <unistd.h>
 #include "proto/wlr-clipboard.pb.h"
+
+// such as STRING, UTF8_STRING, MULTIPLE...
+static bool isLegacyContentType(const std::string &str) {
+  if (str.starts_with("-x") || str.starts_with("-X")) return false;
+
+  auto isOnlyUpperCase = [](const std::string &str) {
+    return std::ranges::all_of(str, [](char c) -> bool {
+      if (std::isalpha(c)) return std::isupper(c);
+      return true;
+    });
+  };
+  bool isMimeType = str.find('/') != std::string::npos;
+
+  return isOnlyUpperCase(str) && !isMimeType;
+}
 
 void Clipman::global(WaylandRegistry &reg, uint32_t name, const char *interface, uint32_t version) {
   if (strcmp(interface, zwlr_data_control_manager_v1_interface.name) == 0) {
@@ -42,20 +58,24 @@ void Clipman::selection(DataDevice &device, DataOffer &offer) {
   // we keep all text/* types as well as other types, ignoring any encoding part.
   std::set<std::string> filteredMimes;
   bool hasImage = false;
-  auto isMime = [](auto &&mime) { return mime.find('/') != std::string::npos; };
 
   auto stripEncoding = [](const std::string &mime) {
     if (auto pos = mime.find(';'); pos != std::string::npos) { return mime.substr(0, pos); }
     return mime;
   };
+  auto filter = std::not_fn(isLegacyContentType);
 
-  for (const auto &mime : offer.mimes() | std::views::filter(isMime) | std::views::transform(stripEncoding)) {
+  for (const auto &mime : offer.mimes() | std::views::filter(filter)) {
     if (mime.starts_with("image/")) {
       if (hasImage) continue;
       hasImage = true;
     }
-
     filteredMimes.insert(mime);
+  }
+
+  // utf-8 is always preferrable
+  if (filteredMimes.contains("text/plain") && filteredMimes.contains("text/plain;charset=utf-8")) {
+    filteredMimes.erase("text/plain");
   }
 
   if (isatty(STDOUT_FILENO)) {
