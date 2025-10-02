@@ -375,6 +375,8 @@ class RootSearchView : public ListView {
     QString expression = searchText().trimmed();
     bool isComputable = false;
 
+    if (expression.isEmpty()) return;
+
     for (const auto &ch : expression) {
       if (!ch.isLetterOrNumber() || ch.isSpace()) {
         isComputable = true;
