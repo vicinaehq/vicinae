@@ -30,7 +30,7 @@ namespace fs = std::filesystem;
 static const QString KEYCHAIN_ENCRYPTION_KEY_NAME = "clipboard-data-key";
 
 /**
- * If any of these is find in a selection, we ignore the entire selection.
+ * If any of these is found in a selection, we ignore the entire selection.
  */
 static const std::set<QString> IGNORED_MIME_TYPES = {
     Clipboard::CONCEALED_MIME_TYPE,
