@@ -2,21 +2,25 @@
 
 ***
 
-[@vicinae/api](../../../../README.md) / [Grid](../README.md) / Props
+[@vicinae/api](../../../../README.md) / [List](../README.md) / Props
 
 # Type Alias: Props
 
-> **Props** = `BaseSection` & `object`
+> **Props** = `object`
 
-## Type Declaration
+## Properties
 
 ### actions?
 
 > `optional` **actions**: `React.ReactNode`
 
+***
+
 ### children?
 
 > `optional` **children**: `React.ReactNode`
+
+***
 
 ### ~~enableFiltering?~~
 
@@ -26,17 +30,31 @@
 
 use filtering
 
+***
+
 ### filtering?
 
 > `optional` **filtering**: `boolean`
+
+***
 
 ### isLoading?
 
 > `optional` **isLoading**: `boolean`
 
+***
+
+### isShowingDetail?
+
+> `optional` **isShowingDetail**: `boolean`
+
+***
+
 ### navigationTitle?
 
 > `optional` **navigationTitle**: `string`
+
+***
 
 ### onSearchTextChange()?
 
@@ -52,6 +70,8 @@ use filtering
 
 `void`
 
+***
+
 ### onSelectionChange()?
 
 > `optional` **onSelectionChange**: (`id`) => `void`
@@ -66,13 +86,19 @@ use filtering
 
 `void`
 
+***
+
 ### searchBarAccessory?
 
 > `optional` **searchBarAccessory**: `ReactNode`
 
+***
+
 ### searchBarPlaceholder?
 
 > `optional` **searchBarPlaceholder**: `string`
+
+***
 
 ### searchText?
 

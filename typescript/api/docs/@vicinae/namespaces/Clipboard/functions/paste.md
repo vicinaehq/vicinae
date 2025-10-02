@@ -8,6 +8,11 @@
 
 > **paste**(`text`): `Promise`\<`void`\>
 
+Paste the provided clipboard content to the active window.
+If the environment does not support either getting the active window
+or pasting content to it directly, this will fallback to a regular
+clipboard copy.
+
 ## Parameters
 
 ### text

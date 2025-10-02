@@ -6,4 +6,22 @@
 
 # Type Alias: ReadContent
 
-> **ReadContent** = \{ `text`: `string`; \} \| \{ `file?`: `string`; \} \| \{ `html?`: `string`; \}
+> **ReadContent** = `object`
+
+## Properties
+
+### file?
+
+> `optional` **file**: `string`
+
+***
+
+### html?
+
+> `optional` **html**: `string`
+
+***
+
+### text
+
+> **text**: `string`

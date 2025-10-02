@@ -6,7 +6,11 @@
 
 # Function: readText()
 
-> **readText**(`options?`): `Promise`\<`undefined` \| `string`\>
+> **readText**(`options?`): `Promise`\<`string`\>
+
+Read the text representation of the current clipboard data. If the data is not text at all, this 
+returns an empty string.
+If you want to read optional html or file path, consider
 
 ## Parameters
 
@@ -18,4 +22,12 @@
 
 ## Returns
 
-`Promise`\<`undefined` \| `string`\>
+`Promise`\<`string`\>
+
+## See
+
+Note: the offset option is not yet implemented.
+
+```ts
+const text = await Clipboard.readText();
+```
