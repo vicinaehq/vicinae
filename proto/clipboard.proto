@@ -15,6 +15,18 @@ message ClipboardOptions {
   bool concealed = 1;
 };
 
+message ClearRequest {
+};
+
+message ClearResponse {};
+
+message ReadContentRequest {
+};
+
+message ReadContentResponse {
+  ClipboardReadContent content = 1;
+};
+
 message CopyToClipboardRequest {
   ClipboardContent content = 1;
   ClipboardOptions options = 2;
@@ -32,6 +44,12 @@ message ClipboardContent {
   };
 };
 
+message ClipboardReadContent {
+  string text = 1;
+  optional string file = 2;
+  optional string html = 3;
+};
+
 message CopyToClipboardResponse {
 };
 
@@ -42,6 +60,8 @@ message Request {
   oneof payload {
     CopyToClipboardRequest copy = 1;
     PasteToClipboardRequest paste = 2;
+    ReadContentRequest read_content = 3;
+    ClearRequest clear = 4;
   };
 };
 
@@ -49,5 +69,7 @@ message Response {
   oneof payload {
     CopyToClipboardResponse copy = 1;
     PasteToClipboardResponse paste = 2;
+    ReadContentResponse read_content = 3;
+    ClearResponse clear = 4;
   };
 };
