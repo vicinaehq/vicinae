@@ -1,8 +1,15 @@
 #include "ipc-command-server.hpp"
+#include "common.hpp"
 #include "proto/daemon.pb.h"
+#include <qfuturewatcher.h>
+#include <qlocalsocket.h>
 #include <qlogging.h>
 
 void IpcCommandServer::processFrame(QLocalSocket *conn, QByteArrayView frame) {
+  auto clientInfoIt = std::find_if(_clients.begin(), _clients.end(),
+                                   [conn](const ClientInfo &info) { return info.conn == conn; });
+
+  if (clientInfoIt == _clients.end()) return;
 
   proto::ext::daemon::Request req;
 
@@ -14,9 +21,29 @@ void IpcCommandServer::processFrame(QLocalSocket *conn, QByteArrayView frame) {
   }
 
   auto handlerResult = _handler->handleCommand(req);
+
+  if (auto future = std::get_if<QFuture<proto::ext::daemon::Response *>>(&handlerResult)) {
+    auto watcher = QObjectUniquePtr<Watcher>(new Watcher);
+
+    watcher->setFuture(*future);
+    connect(watcher.get(), &Watcher::finished, this, [watcher = watcher.get(), conn]() {
+      if (watcher->isCanceled()) { return; }
+
+      std::string packet;
+      auto result = watcher->result();
+
+      result->SerializeToString(&packet);
+      conn->write(packet.data(), packet.size());
+    });
+    clientInfoIt->m_pending.emplace_back(std::move(watcher));
+
+    return;
+  }
+
+  auto result = std::get<proto::ext::daemon::Response *>(handlerResult);
   std::string packet;
 
-  handlerResult->SerializeToString(&packet);
+  result->SerializeToString(&packet);
   conn->write(packet.data(), packet.size());
 }
 
@@ -51,6 +78,10 @@ void IpcCommandServer::handleRead(QLocalSocket *conn) {
 void IpcCommandServer::handleDisconnection(QLocalSocket *conn) {
   auto it = std::find_if(_clients.begin(), _clients.end(),
                          [conn](const ClientInfo &info) { return info.conn == conn; });
+
+  for (const auto &watcher : it->m_pending) {
+    if (!watcher->isFinished()) { watcher->cancel(); }
+  }
 
   _clients.erase(it);
   conn->deleteLater();
