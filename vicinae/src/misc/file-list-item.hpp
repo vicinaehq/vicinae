@@ -41,7 +41,7 @@ protected:
     }
 
     if (fileBrowser && (!openers.empty() && openers.front()->id() != fileBrowser->id())) {
-      auto open = new OpenAppAction(fileBrowser, "Open in folder", {m_path.c_str()});
+      auto open = new OpenFileInAppAction(m_path, fileBrowser, "Open in folder");
       section->addAction(open);
     }
 
@@ -50,7 +50,8 @@ protected:
     for (int i = 1; i < openers.size(); ++i) {
       auto opener = openers[i];
       if (fileBrowser && fileBrowser->id() == opener->id()) continue;
-      suggested->addAction(new OpenFileAction(m_path, opener));
+      auto open = new OpenFileAction(m_path, opener);
+      suggested->addAction(open);
     }
 
     auto utils = panel->createSection();
