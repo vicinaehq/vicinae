@@ -3,6 +3,7 @@
 #include "timer.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
 #include "vicinae.hpp"
+#include "xdgpp/env/env.hpp"
 #include <QLinearGradient>
 #include <filesystem>
 #include <QStyleHints>
@@ -478,7 +479,7 @@ void ThemeService::scanThemeDirectories() {
   scanThemeDirectory(configThemes);
   scanThemeDirectory(dataThemes);
 
-  for (const auto dir : Omnicast::xdgDataDirs()) {
+  for (const auto dir : xdgpp::dataDirs()) {
     fs::path themeDir = dir / "vicinae" / "themes";
     std::error_code ec;
 
