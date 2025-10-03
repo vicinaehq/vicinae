@@ -125,7 +125,9 @@ interface PasswordFieldProps
   extends FormItemProps<string>,
     WithFormRef<Form.PasswordField> {}
 
-const PasswordField: React.FC<PasswordFieldProps> = ({ ...props }) => {
+const PasswordField: React.FC<PasswordFieldProps> = ({ ref, ...props }) => {
+  useImperativeFormHandle(ref);
+
   return <password-field {...props} />;
 };
 
@@ -133,7 +135,9 @@ interface DatePickerProps
   extends FormItemProps<Date | null>,
     WithFormRef<Form.DatePicker> {}
 
-const DatePicker: React.FC<DatePickerProps> = ({ ...props }) => {
+const DatePicker: React.FC<DatePickerProps> = ({ ref, ...props }) => {
+  useImperativeFormHandle(ref);
+
   return <date-picker-field {...props} />;
 };
 
@@ -169,10 +173,12 @@ interface DropdownProps
 //FIXME: we probably need to reuse the existing dropdown in
 // a smarter way.
 const DropdownRoot: React.FC<DropdownProps> = ({
+  ref, 
   children,
   ...props
 }) => {
   // FIXME: testing stuff, we need to generalize this to all form items
+  useImperativeFormHandle(ref);
   
   return (
     <dropdown-field {...wrapFormItemProps(props)}>
@@ -216,7 +222,9 @@ interface TextAreaProps
     WithFormRef<Form.TagPicker> {
 }
 
-const TextArea: React.FC<TextAreaProps> = (props) => {
+const TextArea: React.FC<TextAreaProps> = ({ ref, ...props }) => {
+  useImperativeFormHandle(ref);
+
   return (
     <text-area-field {...wrapFormItemProps(props)} />
   );
@@ -225,7 +233,9 @@ const TextArea: React.FC<TextAreaProps> = (props) => {
 interface FilePickerProps extends FormItemProps<string[]>, WithFormRef<Form.FilePicker> {
 }
 
-const FilePicker: React.FC<FilePickerProps> = (props) => {
+const FilePicker: React.FC<FilePickerProps> = ({ ref, ...props }) => {
+  useImperativeFormHandle(ref);
+
   return (
     <file-picker-field {...wrapFormItemProps(props)} />
   );

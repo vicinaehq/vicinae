@@ -562,10 +562,22 @@ export const createRenderer = (config: RendererConfig) => {
 	return {
 		render(element: ReactElement) {
 			if (!container._root) {
-				container._root = reconciler.createContainer(container, 0, null, false, null, '', (error) => {console.error('recoverable error', error)}, null);
+				container._root = reconciler.createContainer(
+					container, 
+					0, 
+					null, 
+					false, 
+					null, 
+					'', 
+					(error) => { throw error },
+					(error) => { throw error },
+					(error) => { throw error; },
+					() => {},
+					null
+				);
 			}
 
 			reconciler.updateContainer(element, container._root, null, renderImpl);
-		}
+		}	
 	}
 }
