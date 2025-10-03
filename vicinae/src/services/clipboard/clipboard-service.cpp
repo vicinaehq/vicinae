@@ -2,7 +2,6 @@
 #include "clipboard-service.hpp"
 #include <algorithm>
 #include <filesystem>
-#include <numbers>
 #include <numeric>
 #include <qapplication.h>
 #include <qimagereader.h>
@@ -409,6 +408,12 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
   }
 
   auto preferredKind = getKind(*preferredOfferIt);
+
+  if (preferredKind == ClipboardOfferKind::Unknown) {
+    qDebug() << "Ignoring selection with primary offer of unknown kind" << preferredMimeType;
+    return;
+  }
+
   auto selectionHash = QCryptographicHash::hash(preferredOfferIt->data, QCryptographicHash::Md5).toHex();
 
   if (preferredKind == ClipboardOfferKind::Text && preferredOfferIt->data.trimmed().isEmpty()) {
