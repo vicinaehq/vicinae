@@ -63,6 +63,11 @@ class ExtensionSettingsToolbar : public QWidget {
 public:
   QLineEdit *input() const { return m_input->input(); }
 
+  void showEvent(QShowEvent *event) override {
+    QWidget::showEvent(event);
+    m_input->setFocus();
+  }
+
   ExtensionSettingsToolbar() {
     m_searchIcon->setFixedSize({20, 20});
     m_searchIcon->setUrl(ImageURL::builtin("magnifying-glass"));
