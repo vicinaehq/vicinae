@@ -562,10 +562,38 @@ export const createRenderer = (config: RendererConfig) => {
 	return {
 		render(element: ReactElement) {
 			if (!container._root) {
-				container._root = reconciler.createContainer(container, 0, null, false, null, '', (error) => {console.error('recoverable error', error)}, null);
+				const onCaughtError = (error: any) => {
+					throw error;
+				}
+				const onUncaughtError = (error: any) => {
+					throw error;
+				}
+				const onRecoverableError = (error: any) => {
+					throw error;
+				}
+
+				container._root = reconciler.createContainer(
+					container, 
+					0, 
+					null, 
+					false, 
+					null, 
+					'', 
+					// I'm pretty sure the types are broken...
+					//@ts-ignore
+					onUncaughtError,
+					//@ts-ignore
+					onCaughtError,
+					//@ts-ignore
+					onRecoverableError,
+					//@ts-ignore
+					() => {},
+					//@ts-ignore
+					null
+				);
 			}
 
 			reconciler.updateContainer(element, container._root, null, renderImpl);
-		}
+		}	
 	}
 }
