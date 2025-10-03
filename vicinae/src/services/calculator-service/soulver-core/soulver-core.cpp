@@ -1,11 +1,12 @@
 #include "soulver-core.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
-#include "vicinae.hpp"
+#include "xdgpp/env/env.hpp"
 #include <cstdlib>
 #include <dlfcn.h>
 #include <filesystem>
-#include <qlogging.h>
-#include <ranges>
+#include <QDebug>
+#include <QJsonDocument>
+#include <QJsonObject>
 
 namespace fs = std::filesystem;
 
@@ -46,7 +47,7 @@ std::vector<fs::path> SoulverCoreCalculator::availableResourcePaths() const {
   std::error_code ec;
   std::vector<fs::path> paths;
 
-  for (const auto &dir : Omnicast::xdgDataDirs()) {
+  for (const auto &dir : xdgpp::dataDirs()) {
     fs::path resource = dir / "soulver-core" / "resources";
     if (fs::is_directory(resource, ec)) { paths.emplace_back(resource); }
   }
