@@ -1,5 +1,6 @@
 #pragma once
 #include "actions/files/file-actions.hpp"
+#include "actions/files/file-action-wrapper.hpp"
 #include "clipboard-actions.hpp"
 #include "common.hpp"
 #include "navigation-controller.hpp"
@@ -42,7 +43,7 @@ protected:
 
     if (fileBrowser && (!openers.empty() && openers.front()->id() != fileBrowser->id())) {
       auto open = new OpenAppAction(fileBrowser, "Open in folder", {m_path.c_str()});
-      section->addAction(open);
+      section->addAction(new FileActionWrapper(open, m_path));
     }
 
     auto suggested = panel->createSection("Suggested apps");
@@ -50,16 +51,20 @@ protected:
     for (int i = 1; i < openers.size(); ++i) {
       auto opener = openers[i];
       if (fileBrowser && fileBrowser->id() == opener->id()) continue;
-      suggested->addAction(new OpenFileAction(m_path, opener));
+      auto open = new OpenFileAction(m_path, opener);
+      suggested->addAction(open);
     }
 
     auto utils = panel->createSection();
 
-    utils->addAction(new CopyToClipboardAction(Clipboard::Text(m_path.c_str()), "Copy file path"));
-    utils->addAction(new CopyToClipboardAction(Clipboard::Text(m_path.filename().c_str()), "Copy file name"));
+    utils->addAction(new FileActionWrapper(
+        new CopyToClipboardAction(Clipboard::Text(m_path.c_str()), "Copy file path"), m_path));
+    utils->addAction(new FileActionWrapper(
+        new CopyToClipboardAction(Clipboard::Text(m_path.filename().c_str()), "Copy file name"), m_path));
 
     if (mime.isValid()) {
-      utils->addAction(new CopyToClipboardAction(Clipboard::Text(mime.name()), "Copy mime type"));
+      utils->addAction(new FileActionWrapper(
+          new CopyToClipboardAction(Clipboard::Text(mime.name()), "Copy mime type"), m_path));
     }
 
     return panel;
