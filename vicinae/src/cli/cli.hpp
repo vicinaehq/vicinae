@@ -59,11 +59,12 @@ public:
       app.parse(ac, av);
       return 0;
     } catch (const CLI::ParseError &e) {
-      if (e.get_exit_code() != 0) { std::cout << rang::fg::red; }
+      if (e.get_exit_code() != 0) { std::cerr << rang::fg::red; }
       return app.exit(e);
     } catch (const std::exception &except) {
-      std::cout << rang::fg::red;
-      return app.exit(CLI::Error("Exception", except.what()));
+      std::cerr << rang::fg::red;
+      app.exit(CLI::Error("Exception", except.what()));
+      return 1;
     }
   }
 
@@ -74,7 +75,7 @@ private:
 
 class CommandLineInterface {
 public:
-  static bool execute(int ac, char **av);
+  static int execute(int ac, char **av);
 
 private:
   static void launchServer(bool detach = false);

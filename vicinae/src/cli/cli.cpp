@@ -4,10 +4,8 @@
 #include "ui/dmenu-view/dmenu-view.hpp"
 #include "vicinae.hpp"
 #include "server.hpp"
-#include <array>
 #include <iostream>
 #include <qobjectdefs.h>
-#include <stdexcept>
 
 class CliPing : public AbstractCommandLineCommand {
   std::string id() const override { return "ping"; }
@@ -15,9 +13,7 @@ class CliPing : public AbstractCommandLineCommand {
 
   void run(CLI::App *app) override {
     DaemonIpcClient client;
-
-    if (!client.ping()) { throw std::runtime_error("Failed to ping"); }
-
+    client.ping();
     std::cout << "Pinged successfully." << std::endl;
   }
 };
@@ -99,7 +95,7 @@ private:
   std::string link;
 };
 
-bool CommandLineInterface::execute(int ac, char **av) {
+int CommandLineInterface::execute(int ac, char **av) {
   std::vector<std::unique_ptr<AbstractCommandLineCommand>> commands;
   CommandLineApp app(Omnicast::HEADLINE.toStdString());
 
@@ -110,5 +106,5 @@ bool CommandLineInterface::execute(int ac, char **av) {
   app.registerCommand<DeeplinkCommand>();
   app.registerCommand<DMenuCommand>();
 
-  return app.run(ac, av) == 0;
+  return app.run(ac, av);
 }
