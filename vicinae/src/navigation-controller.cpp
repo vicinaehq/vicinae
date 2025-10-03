@@ -216,6 +216,8 @@ void NavigationController::popCurrentView() {
 }
 
 void NavigationController::popToRoot(const PopToRootOptions &opts) {
+  if (!m_frames.empty() && m_frames.back()->viewCount == 0) { m_frames.pop_back(); }
+
   while (m_views.size() > 1) {
     popCurrentView();
   }
