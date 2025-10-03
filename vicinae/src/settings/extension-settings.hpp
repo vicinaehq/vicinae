@@ -598,6 +598,8 @@ class ExtensionSettingsContextLeftPane : public QWidget {
 public:
   ExtensionSettingsContextLeftPane() { setupUI(); }
 
+  auto selected() { return static_cast<AbstractRootItemDelegate *>(m_tree->value()); }
+
   void select(const QString &id) {
     m_toolbar->input()->clear();
     m_tree->select(id);
@@ -633,6 +635,8 @@ public:
 
     connect(m_left, &ExtensionSettingsContextLeftPane::itemSelectionChanged, this,
             &ExtensionSettingsContent::itemSelectionChanged);
+
+    itemSelectionChanged(m_left->selected(), nullptr);
   }
 
   ExtensionSettingsContent(const ApplicationContext *ctx) {
