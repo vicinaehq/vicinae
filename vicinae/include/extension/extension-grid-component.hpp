@@ -4,21 +4,68 @@
 #include <qboxlayout.h>
 #include <qlogging.h>
 #include <qnamespace.h>
+#include <qpainterpath.h>
 #include <qresource.h>
 #include <qstackedwidget.h>
 #include <qtimer.h>
+#include <qwidget.h>
 #include "extend/grid-model.hpp"
 #include "extend/image-model.hpp"
 #include "extension/extension-view.hpp"
-#include "../../src/ui/image/url.hpp"
+#include "ui/color-box/color-box.hpp"
+#include "ui/image/url.hpp"
+#include "layout.hpp"
+#include "theme.hpp"
 #include "ui/empty-view/empty-view.hpp"
 #include "ui/omni-grid/grid-item-content-widget.hpp"
 #include "ui/image/image.hpp"
 #include "ui/omni-grid/omni-grid.hpp"
 #include "ui/omni-list/omni-list.hpp"
 
-class ExtensionGridItem : public OmniGrid::AbstractGridItem {
+class ExtensionGridContentWidget : public QWidget {
+public:
+  void render(const GridItemViewModel::Content &content) {
+    if (content.index() != m_idx) {
+      m_widget = createWidget(content);
+      m_idx = content.index();
+      HStack().add(m_widget).imbue(this);
+    }
 
+    applyWidget(content);
+  }
+
+  void setFit(const std::optional<ObjectFit> fit) { m_fit = fit; }
+
+private:
+  void applyWidget(const GridItemViewModel::Content &content) {
+    const auto visitor =
+        overloads{[&](const ImageLikeModel &model) {
+                    auto icon = static_cast<ImageWidget *>(m_widget);
+                    icon->setObjectFit(m_fit.value_or(ObjectFit::Contain));
+                    icon->setUrl(model);
+                  },
+                  [&](const ColorLike &color) { static_cast<ColorBox *>(m_widget)->setColor(color); }};
+
+    std::visit(visitor, content);
+  }
+
+  QWidget *createWidget(const GridItemViewModel::Content &content) {
+    const auto visitor = overloads{[](const ColorLike &color) -> QWidget * {
+                                     auto widget = new ColorBox();
+                                     widget->setBorderRadius(6);
+                                     return widget;
+                                   },
+                                   [](const ImageLikeModel &image) -> QWidget * { return new ImageWidget; }};
+
+    return std::visit(visitor, content);
+  }
+
+  std::optional<ObjectFit> m_fit = ObjectFit::Contain;
+  QWidget *m_widget = nullptr;
+  size_t m_idx = -1;
+};
+
+class ExtensionGridItem : public OmniGrid::AbstractGridItem {
 public:
   void setAspectRatio(double ratio) { m_aspectRatio = ratio; }
   void setFit(ObjectFit fit) { m_fit = fit; }
@@ -32,20 +79,12 @@ private:
   QString generateId() const override { return _item.id; }
 
   QWidget *centerWidget() const override {
-    auto icon = new ImageWidget;
-
-    refreshCenterWidget(icon);
-
-    return icon;
+    auto widget = new ExtensionGridContentWidget();
+    refreshCenterWidget(widget);
+    return widget;
   }
 
-  QString tooltip() const override {
-    const auto visitor =
-        overloads{[](const ImageLikeModel &model) { return QString(""); },
-                  [](const ImageContentWithTooltip &model) { return model.tooltip.value_or(""); }};
-
-    return std::visit(visitor, _item.content);
-  }
+  QString tooltip() const override { return _item.tooltip.value_or(""); }
 
   QString title() const override { return _item.title; }
 
@@ -56,12 +95,9 @@ private:
   bool centerWidgetRecyclable() const override { return true; }
 
   void refreshCenterWidget(QWidget *widget) const override {
-    auto icon = static_cast<ImageWidget *>(widget);
-    const auto visitor = overloads{[](const ImageLikeModel &model) { return model; },
-                                   [](const ImageContentWithTooltip &model) { return model.value; }};
-
-    icon->setObjectFit(m_fit.value_or(ObjectFit::Contain));
-    icon->setUrl(std::visit(visitor, _item.content));
+    auto w = static_cast<ExtensionGridContentWidget *>(widget);
+    w->setFit(m_fit);
+    w->render(_item.content);
   }
 
   const QString &name() const { return _item.title; }
