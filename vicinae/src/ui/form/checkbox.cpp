@@ -6,23 +6,20 @@
 #include <qevent.h>
 #include <qjsonvalue.h>
 #include <qnamespace.h>
+#include <qpainterpath.h>
 #include <qwidget.h>
 
 void Checkbox::paintEvent(QPaintEvent *event) {
   auto &theme = ThemeService::instance().theme();
   OmniPainter painter(this);
+  QPainterPath path;
 
   painter.setRenderHint(QPainter::Antialiasing);
   painter.setRenderHint(QPainter::SmoothPixmapTransform);
   painter.setThemePen(hasFocus() ? SemanticColor::InputBorderFocus : SemanticColor::Border, 2);
-
-  if (m_value) {
-    painter.setBrush(painter.colorBrush(m_fillColor));
-  } else {
-    painter.setBrush(Qt::transparent);
-  }
-
-  painter.drawRoundedRect(rect(), 6, 6);
+  path.addRoundedRect(rect(), 4, 4);
+  painter.setClipPath(path);
+  painter.drawPath(path);
 
   if (m_value) {
     auto check = rect().marginsRemoved(contentsMargins());
