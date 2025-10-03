@@ -1,5 +1,6 @@
 #include "extend/grid-model.hpp"
 #include "extend/action-model.hpp"
+#include "extend/color-model.hpp"
 #include "extend/empty-view-model.hpp"
 #include "extend/image-model.hpp"
 #include "extend/pagination-model.hpp"
@@ -23,15 +24,11 @@ GridItemViewModel GridModelParser::parseListItem(const QJsonObject &instance, si
   if (content.isObject()) {
     auto obj = content.toObject();
 
-    if (obj.contains("value")) {
-      ImageContentWithTooltip data;
-
-      if (obj.contains("tooltip")) { data.tooltip = obj.value("tooltip").toString(); }
-
-      data.value = ImageModelParser().parse(obj.value("value"));
-      model.content = data;
-    } else {
-      model.content = ImageModelParser().parse(obj);
+    if (obj.contains("tooltip")) { model.tooltip = obj.value("tooltip").toString(); }
+    if (obj.contains("color")) {
+      model.content = ColorLikeModelParser().parse(obj.value("color"));
+    } else if (obj.contains("value")) {
+      model.content = ImageModelParser().parse(obj.value("value"));
     }
   } else {
     model.content = ImageModelParser().parse(content);

@@ -15,11 +15,13 @@ struct ImageContentWithTooltip {
 };
 
 struct GridItemViewModel {
+  using Content = std::variant<ImageLikeModel, ColorLike>;
+
   QString id;
   QString title;
   QString subtitle;
-  // Handle color display
-  std::variant<ImageLikeModel, ImageContentWithTooltip> content;
+  Content content;
+  std::optional<QString> tooltip;
   std::vector<QString> keywords;
   std::optional<ActionPannelModel> actionPannel;
 };
