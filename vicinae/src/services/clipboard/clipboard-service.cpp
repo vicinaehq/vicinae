@@ -2,11 +2,9 @@
 #include "clipboard-service.hpp"
 #include <algorithm>
 #include <filesystem>
-#include <numbers>
 #include <numeric>
 #include <qapplication.h>
 #include <qimagereader.h>
-#include <qlibrary.h>
 #include <qlogging.h>
 #include <qmimedata.h>
 #include <qnamespace.h>
