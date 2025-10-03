@@ -360,6 +360,7 @@ set(SRCS
 	src/ui/color-circle/color_circle.cpp
 	src/ui/toast/toast.hpp
 	src/ui/toast/toast.cpp
+	src/ui/color-box/color-box.cpp
 
 	# settings
 	src/settings/settings-window.hpp
