@@ -338,8 +338,6 @@ set(SRCS
 	src/command.hpp
 	
 
-	src/xdg/xdg-desktop.cpp
-
 	src/vicinae.hpp
 	src/vicinae.cpp
 

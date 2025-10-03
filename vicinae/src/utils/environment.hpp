@@ -1,5 +1,6 @@
 #pragma once
 #include "vicinae.hpp"
+#include "xdgpp/env/env.hpp"
 #include <QString>
 #include <QProcessEnvironment>
 #include <cstdlib>
@@ -60,7 +61,7 @@ inline bool isAppImage() { return appImageDir().has_value(); }
 
 inline QStringList fallbackIconSearchPaths() {
   QStringList list;
-  auto dirs = Omnicast::xdgDataDirs();
+  auto dirs = xdgpp::dataDirs();
 
   list.reserve(dirs.size() * 2);
 
