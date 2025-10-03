@@ -562,16 +562,6 @@ export const createRenderer = (config: RendererConfig) => {
 	return {
 		render(element: ReactElement) {
 			if (!container._root) {
-				const onCaughtError = (error: any) => {
-					throw error;
-				}
-				const onUncaughtError = (error: any) => {
-					throw error;
-				}
-				const onRecoverableError = (error: any) => {
-					throw error;
-				}
-
 				container._root = reconciler.createContainer(
 					container, 
 					0, 
@@ -579,16 +569,10 @@ export const createRenderer = (config: RendererConfig) => {
 					false, 
 					null, 
 					'', 
-					// I'm pretty sure the types are broken...
-					//@ts-ignore
-					onUncaughtError,
-					//@ts-ignore
-					onCaughtError,
-					//@ts-ignore
-					onRecoverableError,
-					//@ts-ignore
+					(error) => { throw error },
+					(error) => { throw error },
+					(error) => { throw error; },
 					() => {},
-					//@ts-ignore
 					null
 				);
 			}
