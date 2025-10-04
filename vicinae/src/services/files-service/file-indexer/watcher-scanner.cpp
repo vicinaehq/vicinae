@@ -4,9 +4,7 @@
 #include <filesystem>
 
 void WatcherScanner::handleMessage(const wtr::event &ev) {
-  auto err_case = [ev](const char* str) {
-    return ev.path_name.native().starts_with(str);
-  };
+  auto err_case = [ev](const char *str) { return ev.path_name.native().starts_with(str); };
 
   switch (ev.path_name.native().front()) {
     // TODO: Handle common messages specially
@@ -37,10 +35,8 @@ void WatcherScanner::handleMessage(const wtr::event &ev) {
     }
     if (err_case("e/self/live@")) {
       // Failed to start
-      qWarning()
-        << "Watcher failed to start: is" << scan.path.c_str() << "a correct path?";
-    }
-    else {
+      qWarning() << "Watcher failed to start: is" << scan.path.c_str() << "a correct path?";
+    } else {
       qWarning() << "Fatal Watcher error:" << ev.path_name.c_str();
     }
     fail();
@@ -74,10 +70,10 @@ void WatcherScanner::handleEvent(const wtr::event &ev) {
   case wtr::event::effect_type::rename:
     m_writer->indexEvents({FileEvent(FileEventType::Delete, ev.path_name, toFileTimeType(ev.effect_time))});
     if (ev.associated) { // Sometimes we don't get the associated event, looking more into it
-      m_writer->indexEvents({FileEvent(FileEventType::Modify, ev.associated->path_name, toFileTimeType(ev.associated->effect_time))});
-    }
-    else {
-      qWarning() << "Got rename event for" << ev.path_name.c_str() <<  ", but didn't get any associated event";
+      m_writer->indexEvents({FileEvent(FileEventType::Modify, ev.associated->path_name,
+                                       toFileTimeType(ev.associated->effect_time))});
+    } else {
+      qWarning() << "Got rename event for" << ev.path_name.c_str() << ", but didn't get any associated event";
     }
     break;
 
@@ -98,6 +94,4 @@ void WatcherScanner::interrupt() {
   finish();
 }
 
-void WatcherScanner::join() {
-  m_watch->close();
-}
+void WatcherScanner::join() { m_watch->close(); }
