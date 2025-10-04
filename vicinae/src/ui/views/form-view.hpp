@@ -68,7 +68,7 @@ public:
     auto submit = new StaticAction(submitTitle(), ImageURL::builtin("enter-key"), [this]() { onSubmit(); });
 
     submit->setPrimary(true);
-    submit->setShortcut({.key = "return", .modifiers = {"shift"}});
+    submit->setShortcut(Keyboard::Shortcut::submit());
     section->addAction(submit);
     setActions(std::move(panel));
   }

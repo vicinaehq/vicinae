@@ -1,7 +1,7 @@
 #pragma once
 #include "theme.hpp"
 #include "ui/keyboard-shortcut-indicator/keyboard-shortcut-indicator.hpp"
-#include "ui/keyboard.hpp"
+#include "lib/keyboard/keyboard.hpp"
 #include "ui/popover/popover.hpp"
 #include "ui/typography/typography.hpp"
 #include <qevent.h>
@@ -13,10 +13,10 @@ class ShortcutRecorder : public Popover {
   Q_OBJECT
 
 signals:
-  void shortcutChanged(const KeyboardShortcut &shortcut);
+  void shortcutChanged(const Keyboard::Shortcut &shortcut);
 
 public:
-  using Validator = std::function<QString(const KeyboardShortcut &shortcut)>;
+  using Validator = std::function<QString(const Keyboard::Shortcut &shortcut)>;
 
   ShortcutRecorder();
   void attach(QWidget *widget);

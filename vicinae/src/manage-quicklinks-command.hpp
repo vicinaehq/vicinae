@@ -197,11 +197,9 @@ public:
     auto duplicate = new DuplicateShortcutAction(link);
     auto remove = new RemoveShortcutAction(link);
 
-    open->setPrimary(true);
-    open->setShortcut({.key = "return"});
-    duplicate->setShortcut({.key = "N", .modifiers = {"ctrl"}});
-    edit->setShortcut({.key = "E", .modifiers = {"ctrl"}});
-    remove->setShortcut({.key = "X", .modifiers = {"ctrl"}});
+    duplicate->setShortcut(Keyboard::Shortcut::duplicate());
+    edit->setShortcut(Keyboard::Shortcut::edit());
+    remove->setShortcut(Keyboard::Shortcut::remove());
 
     panel->setTitle(link->name());
     mainSection->addAction(open);

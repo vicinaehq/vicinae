@@ -12,12 +12,14 @@ public:
   ShortcutRecorderInput() {
     VStack().add(m_button).imbue(this);
     m_button->setLeftAccessory(m_indicator);
-    m_indicator->setShortcut({.key = "B", .modifiers = {"ctrl"}});
+    m_button->setText("No shortcut");
 
     m_indicator->setBackgroundColor(Qt::transparent);
     connect(m_button, &ShortcutButton::clicked, this, [this]() { m_recorder->attach(this); });
-    connect(m_recorder, &ShortcutRecorder::shortcutChanged, this,
-            [this](auto shortcut) { m_indicator->setShortcut(shortcut.toModel()); });
+    connect(m_recorder, &ShortcutRecorder::shortcutChanged, this, [this](auto shortcut) {
+      m_button->setText("");
+      m_indicator->setShortcut(shortcut);
+    });
   }
 
   QJsonValue asJsonValue() const override { return ""; }

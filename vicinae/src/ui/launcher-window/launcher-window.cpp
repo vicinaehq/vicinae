@@ -4,6 +4,7 @@
 #include "ui/status-bar/status-bar.hpp"
 #include "service-registry.hpp"
 #include "services/config/config-service.hpp"
+#include "lib/keyboard/keyboard.hpp"
 #include "ui/top-bar/top-bar.hpp"
 #include "utils/environment.hpp"
 #include <qcoreevent.h>
@@ -225,23 +226,23 @@ bool LauncherWindow::event(QEvent *event) {
     auto config = ServiceRegistry::instance()->config();
     const QString keybinding = config ? config->value().keybinding : QString("default");
     if (keybinding == "emacs") {
-      if (keyEvent->keyCombination() == QKeyCombination(Qt::ControlModifier, Qt::Key_O)) {
+      if (keyEvent == Keyboard::Shortcut("ctrl+O")) {
         m_ctx.navigation->toggleActionPanel();
         return true;
       }
     } else {
-      if (keyEvent->keyCombination() == QKeyCombination(Qt::ControlModifier, Qt::Key_B)) {
+      if (keyEvent == Keyboard::Shortcut("ctrl+B")) {
         m_ctx.navigation->toggleActionPanel();
         return true;
       }
     }
 
-    if (keyEvent->keyCombination() == QKeyCombination(Qt::ShiftModifier, Qt::Key_Escape)) {
+    if (keyEvent == Keyboard::Shortcut(Qt::Key_Escape, Qt::ShiftModifier)) {
       m_ctx.navigation->popToRoot();
       return true;
     }
 
-    if (keyEvent->keyCombination() == QKeyCombination(Qt::ControlModifier, Qt::Key_Comma)) {
+    if (keyEvent == Keyboard::Shortcut(Qt::Key_Comma, Qt::ControlModifier)) {
       m_ctx.navigation->closeWindow();
       m_ctx.settings->openWindow();
       return true;

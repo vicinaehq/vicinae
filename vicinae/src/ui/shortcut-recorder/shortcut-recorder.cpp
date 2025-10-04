@@ -24,8 +24,8 @@ void ShortcutRecorder::setupUI() {
   m_indicator->setBackgroundColor(SemanticColor::TertiaryBackground);
   m_indicator->hide();
 
-  auto modifierRequired = [](const KeyboardShortcut &shortcut) {
-    if (shortcut.modifiers.toInt() == 0) return "A modifier is required";
+  auto modifierRequired = [](const Keyboard::Shortcut &shortcut) {
+    if (!shortcut.hasMods()) return "A modifier is required";
     return "";
   };
 
@@ -82,9 +82,9 @@ void ShortcutRecorder::keyPressEvent(QKeyEvent *event) {
   if (event->key() == Qt::Key_Escape) { return QWidget::keyPressEvent(event); }
   clear();
 
-  KeyboardShortcut shortcut(event);
+  Keyboard::Shortcut shortcut(event);
 
-  m_indicator->setShortcut(shortcut.toModel());
+  m_indicator->setShortcut(shortcut);
   m_indicator->show();
 
   if (m_validator) {

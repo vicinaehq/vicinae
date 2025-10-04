@@ -4,7 +4,7 @@
 #include "extend/action-model.hpp"
 #include "extend/model-parser.hpp"
 #include "extension/extension-command-controller.hpp"
-#include "../../src/ui/image/url.hpp"
+#include "ui/image/url.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/views/simple-view.hpp"
 #include <qboxlayout.h>
@@ -20,7 +20,7 @@ class ExtensionSimpleView : public SimpleView {
   Q_OBJECT
 
   ExtensionCommandController *m_controller;
-  std::vector<KeyboardShortcutModel> m_defaultActionShortcuts;
+  std::vector<Keyboard::Shortcut> m_defaultActionShortcuts;
 
   AbstractAction *createActionFromModel(const ActionModel &model) {
     return new StaticAction(model.title, model.icon.value_or(std::monostate()), [this, model]() {
@@ -58,7 +58,7 @@ class ExtensionSimpleView : public SimpleView {
 public:
   virtual void render(const RenderModel &model) {}
 
-  void setDefaultActionShortcuts(const std::vector<KeyboardShortcutModel> &models) {
+  void setDefaultActionShortcuts(const std::vector<Keyboard::Shortcut> &models) {
     m_defaultActionShortcuts = models;
   }
 

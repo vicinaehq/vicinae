@@ -3,7 +3,7 @@
 #include "ui/views/base-view.hpp"
 #include "extensions/raycast/store/store-detail-view.hpp"
 #include "navigation-controller.hpp"
-#include "../../../ui/image/url.hpp"
+#include "ui/image/url.hpp"
 #include "services/raycast/raycast-store.hpp"
 #include "services/toast/toast-service.hpp"
 #include "services/extension-registry/extension-registry.hpp"
@@ -106,8 +106,8 @@ public:
         });
     auto uninstall = new UninstallExtensionAction(m_extension.id);
 
-    showExtension->setShortcut(KeyboardShortcutModel::enter());
-    uninstall->setShortcut(KeyboardShortcutModel::remove());
+    showExtension->setShortcut(Keyboard::Shortcut::enter());
+    uninstall->setShortcut(Keyboard::Shortcut::remove());
 
     panel->setTitle(m_extension.name);
     section->addAction(showExtension);

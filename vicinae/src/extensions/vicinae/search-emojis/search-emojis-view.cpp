@@ -173,7 +173,7 @@ public:
     auto resetRanking = new ResetEmojiRankingAction(info.emoji);
     auto mainSection = panel->createSection();
 
-    editKeywords->setShortcut(KeyboardShortcutModel::edit());
+    editKeywords->setShortcut(Keyboard::Shortcut::edit());
 
     if (wm->canPaste()) {
       auto paste = new PasteToFocusedWindowAction(Clipboard::Text(QString::fromUtf8(info.emoji)));

@@ -355,24 +355,19 @@ public:
     auto removeAll = new RemoveAllSelectionsAction();
     auto mainSection = panel->createSection();
 
-    editKeywords->setShortcut({.key = "E", .modifiers = {"ctrl"}});
+    editKeywords->setShortcut(Keyboard::Shortcut::edit());
 
     remove->setStyle(AbstractAction::Style::Danger);
-    remove->setShortcut({.key = "X", .modifiers = {"ctrl"}});
-    removeAll->setShortcut({.key = "X", .modifiers = {"ctrl", "shift"}});
+    remove->setShortcut(Keyboard::Shortcut::remove());
+    removeAll->setShortcut(Keyboard::Shortcut::remove().shifted());
 
-    pin->setShortcut({.key = "P", .modifiers = {"shift", "ctrl"}});
+    pin->setShortcut(Keyboard::Shortcut::pin());
 
     if (wm->canPaste()) {
       auto paste = new PasteClipboardSelection(info.id);
-
-      paste->setShortcut({.key = "return"});
-      paste->setPrimary(true);
       mainSection->addAction(paste);
-      copyToClipboard->setShortcut({.key = "return", .modifiers = {"shift"}});
     } else {
       copyToClipboard->setPrimary(true);
-      copyToClipboard->setShortcut({.key = "return"});
     }
 
     mainSection->addAction(copyToClipboard);

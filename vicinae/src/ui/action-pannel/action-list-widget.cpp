@@ -10,7 +10,7 @@ ActionListWidget &ActionListWidget::setIconUrl(const ImageURL &url) {
   return *this;
 }
 
-ActionListWidget &ActionListWidget::setShortcut(const KeyboardShortcutModel &shortcut) {
+ActionListWidget &ActionListWidget::setShortcut(const Keyboard::Shortcut &shortcut) {
   m_shortcut->setShortcut(shortcut);
   m_shortcut->show();
   return *this;

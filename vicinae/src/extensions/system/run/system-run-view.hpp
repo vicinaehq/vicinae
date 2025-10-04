@@ -1,5 +1,6 @@
 #pragma once
 #include "actions/app/app-actions.hpp"
+#include "keyboard/keyboard.hpp"
 #include "program-db/program-db.hpp"
 #include "ui/views/list-view.hpp"
 #include <qlogging.h>
@@ -19,27 +20,24 @@ public:
   }
 
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
-    auto panel = std::make_unique<ActionPanelState>();
+    auto panel = std::make_unique<ListActionPanelState>();
     auto section = panel->createSection();
     auto appDb = ctx->services->appDb();
 
     auto open = new OpenRawProgramAction(m_path.c_str(), {});
 
     section->addAction(open);
-    open->setPrimary(true);
-    open->setShortcut(KeyboardShortcutModel::enter());
     open->setClearSearch(true);
 
     if (auto app = appDb->terminalEmulator()) {
       auto openInTerminal = new OpenAppAction(app, "Open in terminal", {"-e", m_path.c_str()});
-      openInTerminal->setShortcut(KeyboardShortcutModel::submit());
       section->addAction(openInTerminal);
     }
 
     if (auto app = appDb->fileBrowser()) {
       auto openLocation = new OpenAppAction(app, "Open location", {m_path.c_str()});
 
-      openLocation->setShortcut(KeyboardShortcutModel::open());
+      openLocation->setShortcut(Keyboard::Shortcut::open());
       section->addAction(openLocation);
     }
 

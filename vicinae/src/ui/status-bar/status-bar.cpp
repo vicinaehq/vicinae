@@ -1,10 +1,9 @@
 #include "status-bar.hpp"
 #include "common.hpp"
 #include "navigation-controller.hpp"
-#include "../image/url.hpp"
+#include "ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "services/config/config-service.hpp"
-#include "theme.hpp"
 #include "utils/layout.hpp"
 #include "vicinae.hpp"
 #include "ui/shortcut-button/shortcut-button.hpp"
@@ -51,8 +50,7 @@ void GlobalBar::actionsChanged(const ActionPanelState &panel) {
 
   if (primaryAction) {
     m_primaryActionButton->setText(primaryAction->title());
-    m_primaryActionButton->setShortcut(
-        primaryAction->shortcut().value_or(KeyboardShortcutModel{.key = "return"}));
+    m_primaryActionButton->setShortcut(primaryAction->shortcut().value_or(Keyboard::Shortcut::enter()));
   }
 
   m_primaryActionButton->setVisible(primaryAction);
@@ -63,9 +61,9 @@ void GlobalBar::actionsChanged(const ActionPanelState &panel) {
   auto config = ServiceRegistry::instance()->config();
   const QString keybinding = config ? config->value().keybinding : QString("default");
   if (keybinding == "emacs") {
-    m_actionButton->setShortcut(KeyboardShortcutModel{.key = "O", .modifiers = {"ctrl"}});
+    m_actionButton->setShortcut(Keyboard::Shortcut::open());
   } else {
-    m_actionButton->setShortcut(KeyboardShortcutModel{.key = "B", .modifiers = {"ctrl"}});
+    m_actionButton->setShortcut(Keyboard::Shortcut(Qt::Key_B, Qt::ControlModifier));
   }
 }
 

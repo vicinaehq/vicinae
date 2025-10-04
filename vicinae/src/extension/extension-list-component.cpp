@@ -1,5 +1,4 @@
 #include "extension/extension-list-component.hpp"
-#include "extend/image-model.hpp"
 #include "extend/list-model.hpp"
 #include "extension/extension-list-detail.hpp"
 #include <chrono>
@@ -7,16 +6,12 @@
 #include <qcoreevent.h>
 #include <qlogging.h>
 #include <qnamespace.h>
-#include <ranges>
 #include "extension/form/extension-dropdown.hpp"
 #include "ui/form/app-picker-input.hpp"
 #include "ui/form/selector-input.hpp"
 #include "ui/omni-list/omni-list.hpp"
 
 static const std::chrono::milliseconds THROTTLE_DEBOUNCE_DURATION(300);
-
-static const KeyboardShortcutModel primaryShortcut{.key = "return"};
-static const KeyboardShortcutModel secondaryShortcut{.key = "return", .modifiers = {"shift"}};
 
 void ExtensionListComponent::renderDropdown(const DropdownModel &dropdown) {
   OmniList::SelectionPolicy selectionPolicy = OmniList::PreserveSelection;
@@ -292,9 +287,9 @@ void ExtensionListComponent::textChanged(const QString &text) {
 void ExtensionListComponent::initialize() { setSearchAccessoryVisiblity(false); }
 
 ExtensionListComponent::ExtensionListComponent() : _debounce(new QTimer(this)), _shouldResetSelection(true) {
+  setDefaultActionShortcuts({Keyboard::Shortcut::enter(), Keyboard::Shortcut::submit()});
   m_selector->setMinimumWidth(300);
   m_selector->setEnableDefaultFilter(false);
-  setDefaultActionShortcuts({primaryShortcut, secondaryShortcut});
   m_split->setMainWidget(m_list);
   m_split->setDetailWidget(m_detail);
   m_split->detailWidget()->hide();

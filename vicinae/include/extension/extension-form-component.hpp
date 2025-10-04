@@ -182,8 +182,7 @@ public:
     auto layout = new QVBoxLayout;
     auto form = new QWidget;
 
-    setDefaultActionShortcuts({KeyboardShortcutModel::submit()});
-
+    setDefaultActionShortcuts({Keyboard::Shortcut::submit()});
     m_layout->setAlignment(Qt::AlignTop);
     form->setLayout(m_layout);
 

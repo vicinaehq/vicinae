@@ -1,6 +1,7 @@
 #pragma once
-#include "extend/action-model.hpp"
+#include "lib/keyboard/keyboard.hpp"
 #include "theme.hpp"
+#include <qnamespace.h>
 #include <qwidget.h>
 
 class OmniPainter;
@@ -10,17 +11,18 @@ public:
   KeyboardShortcutIndicatorWidget(QWidget *parent = nullptr);
 
   QSize sizeHint() const override;
-  void setShortcut(const KeyboardShortcutModel &model);
+  void setShortcut(const Keyboard::Shortcut &shortcut);
   void setBackgroundColor(ColorLike color);
   void setColor(ColorLike color);
-  KeyboardShortcutModel shortcut() const { return _shortcutModel; }
+  Keyboard::Shortcut shortcut() const { return m_shortcut; }
 
 protected:
   void paintEvent(QPaintEvent *event) override;
-  void drawKey(const QString &key, QRect rect, OmniPainter &painter);
+  void drawKey(Qt::Key key, QRect rect, OmniPainter &painter);
+  void drawModifier(Qt::KeyboardModifier, QRect rect, OmniPainter &painter);
 
 private:
-  KeyboardShortcutModel _shortcutModel;
+  Keyboard::Shortcut m_shortcut;
   int _hspacing = 5;
   int _boxSize = 25;
   ColorLike m_backgroundColor = SemanticColor::MainBackground;

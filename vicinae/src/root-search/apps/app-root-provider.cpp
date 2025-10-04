@@ -3,7 +3,7 @@
 #include "actions/root-search/root-search-actions.hpp"
 #include "clipboard-actions.hpp"
 #include "navigation-controller.hpp"
-#include "../../ui/image/url.hpp"
+#include "ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "settings/app-metadata-settings-detail.hpp"
@@ -90,13 +90,13 @@ std::unique_ptr<ActionPanelState> AppRootItem::newActionPanel(ApplicationContext
     auto action = actions[i];
     auto openAction = new OpenAppAction(action, action->displayName(), {});
 
-    if (i < 9) { openAction->setShortcut({.key = QString::number(i + 1), .modifiers = {"ctrl", "shift"}}); }
+    if (i < 9) { openAction->setShortcut(QString("ctrl+shift+%1").arg(i + 1)); }
     mainSection->addAction(openAction);
   }
 
   if (auto opener = appDb->findDefaultOpener(m_app->path().c_str())) {
     auto openLocation = new OpenAppAction(opener, "Open Location", {m_app->path().c_str()});
-    openLocation->setShortcut({.key = "O", .modifiers = {"ctrl"}});
+    openLocation->setShortcut(Keyboard::Shortcut::open());
     utils->addAction(openLocation);
   }
 

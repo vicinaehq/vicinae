@@ -48,10 +48,11 @@ AbstractWindowManager::WindowPtr HyprlandWindowManager::getFocusedWindowSync() c
 
 bool HyprlandWindowManager::supportsInputForwarding() const { return true; }
 
-bool HyprlandWindowManager::sendShortcutSync(const AbstractWindow &window, const KeyboardShortcut &shortcut) {
+bool HyprlandWindowManager::sendShortcutSync(const AbstractWindow &window,
+                                             const Keyboard::Shortcut &shortcut) {
   auto cmd = QString("dispatch sendshortcut %1,%2,address:%3")
-                 .arg(stringifyModifiers(shortcut.modifiers))
-                 .arg(stringifyKey(shortcut.key))
+                 .arg(stringifyModifiers(shortcut.mods()))
+                 .arg(stringifyKey(shortcut.key()))
                  .arg(window.id());
 
   // qWarning() << "send dispatcher" << cmd;
