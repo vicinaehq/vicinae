@@ -221,11 +221,14 @@ bool LauncherWindow::event(QEvent *event) {
   if (event->type() == QEvent::KeyPress) {
     auto keyEvent = static_cast<QKeyEvent *>(event);
 
-    // Toggle action panel: Default Ctrl+B ; Emacs Ctrl+O
-    auto config = ServiceRegistry::instance()->config();
-    const QString keybinding = config ? config->value().keybinding : QString("default");
-    if (keybinding == "emacs") {
-      if (keyEvent->keyCombination() == QKeyCombination(Qt::ControlModifier, Qt::Key_O)) {
+	// Toggle action panel: Default Ctrl+B ; Emacs: Ctrl+., Ctrl+H
+	auto config = ServiceRegistry::instance()->config();
+	const QString keybinding = config ? config->value().keybinding : QString("default");
+
+	if (keybinding == "emacs") {
+      // Use both Ctrl+., and Ctrl+H for action panel
+      if (keyEvent->keyCombination() == QKeyCombination(Qt::ControlModifier, Qt::Key_Period) ||
+        keyEvent->keyCombination() == QKeyCombination(Qt::ControlModifier, Qt::Key_H)) {
         m_ctx.navigation->toggleActionPanel();
         return true;
       }

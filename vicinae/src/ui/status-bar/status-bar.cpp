@@ -63,7 +63,7 @@ void GlobalBar::actionsChanged(const ActionPanelState &panel) {
   auto config = ServiceRegistry::instance()->config();
   const QString keybinding = config ? config->value().keybinding : QString("default");
   if (keybinding == "emacs") {
-    m_actionButton->setShortcut(KeyboardShortcutModel{.key = "O", .modifiers = {"ctrl"}});
+    m_actionButton->setShortcut(KeyboardShortcutModel{.key = "H", .modifiers = {"ctrl"}});
   } else {
     m_actionButton->setShortcut(KeyboardShortcutModel{.key = "B", .modifiers = {"ctrl"}});
   }
