@@ -61,8 +61,13 @@ ScanDispatcher::ScanDispatcher(std::shared_ptr<DbWriter> writer) : m_writer(writ
       }
       {
         std::scoped_lock l(m_scannerMapMtx);
-        m_scannerMap[id].scanner->join();
-        m_scannerMap.erase(id);
+        auto it = m_scannerMap.find(id);
+        if (it == m_scannerMap.end()) {
+          // Attempted to close the same scanner twice
+          continue;
+        }
+        it->second.scanner->join();
+        m_scannerMap.erase(it);
       }
     }
   });
