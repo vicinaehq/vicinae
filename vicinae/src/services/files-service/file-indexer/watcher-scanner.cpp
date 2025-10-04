@@ -4,14 +4,21 @@
 #include <filesystem>
 
 void WatcherScanner::handleMessage(const wtr::event &ev) {
+  auto err_case = [ev](const char *str) { return ev.path_name.native().starts_with(str); };
+
   switch (ev.path_name.native().front()) {
     // TODO: Handle common messages specially
 
   case 's':
+    if (err_case("s/self/live@")) {
+      qInfo() << "Creating inotify watchers in" << scan.path.c_str();
+      start(scan);
+      return;
+    }
     break;
   case 'w':
     // TODO
-    if (ev.path_name.native().starts_with("w/sys/not_watched@")) {
+    if (err_case("w/sys/not_watched@")) {
       qCritical()
           << "Ran out of inotify watchers.\n"
           << "    Please increase /proc/sys/fs/inotify/max_user_watches, or set it parmanently:\n"
@@ -22,8 +29,16 @@ void WatcherScanner::handleMessage(const wtr::event &ev) {
     qWarning() << "Watcher error:" << ev.path_name.c_str();
     break;
   case 'e':
-    qWarning() << "Fatal Watcher error:" << ev.path_name.c_str();
-    // TODO: Log error
+    if (err_case("e/self/die@")) {
+      // Follow-up message for prior errors, ignore
+      return;
+    }
+    if (err_case("e/self/live@")) {
+      // Failed to start
+      qWarning() << "Watcher failed to start: is" << scan.path.c_str() << "a correct path?";
+    } else {
+      qWarning() << "Fatal Watcher error:" << ev.path_name.c_str();
+    }
     fail();
     break;
   }
@@ -55,10 +70,10 @@ void WatcherScanner::handleEvent(const wtr::event &ev) {
   case wtr::event::effect_type::rename:
     m_writer->indexEvents({FileEvent(FileEventType::Delete, ev.path_name, toFileTimeType(ev.effect_time))});
     if (ev.associated) { // Sometimes we don't get the associated event, looking more into it
-      m_writer->indexEvents({FileEvent(FileEventType::Modify, ev.associated->path_name, toFileTimeType(ev.associated->effect_time))});
-    }
-    else {
-      qWarning() << "Got rename event for" << ev.path_name.c_str() <<  ", but didn't get any associated event";
+      m_writer->indexEvents({FileEvent(FileEventType::Modify, ev.associated->path_name,
+                                       toFileTimeType(ev.associated->effect_time))});
+    } else {
+      qWarning() << "Got rename event for" << ev.path_name.c_str() << ", but didn't get any associated event";
     }
     break;
 
@@ -69,20 +84,14 @@ void WatcherScanner::handleEvent(const wtr::event &ev) {
 }
 
 WatcherScanner::WatcherScanner(std::shared_ptr<DbWriter> writer, const Scan &scan, FinishCallback callback)
-    : AbstractScanner(writer, scan, callback) {
-
-  qInfo() << "Creating inotify watchers in" << scan.path.c_str();
-  start(scan);
-
+    : AbstractScanner(writer, scan, callback), scan(scan) {
   m_watch = std::make_unique<wtr::watch>(scan.path, [this](const wtr::event &ev) { handleEvent(ev); });
 }
 
 void WatcherScanner::interrupt() {
   setInterruptFlag();
-  m_watch->close();
+  // m_watch->close() can take a long time, so do it in join()
   finish();
 }
 
-void WatcherScanner::join() {
-  // Everything was set up in `interrupt()`
-}
+void WatcherScanner::join() { m_watch->close(); }

@@ -47,9 +47,10 @@ ScanDispatcher::ScanDispatcher(std::shared_ptr<DbWriter> writer) : m_writer(writ
 
   m_collectorThread = std::thread([this]() {
     while (true) {
-      std::unique_lock lock(m_collectorQueueMtx);
-      m_collectorCv.wait(lock, [&]() { return !m_collectorQueue.empty() || !m_running; });
-
+      {
+        std::unique_lock lock(m_collectorQueueMtx);
+        m_collectorCv.wait(lock, [&]() { return !m_collectorQueue.empty() || !m_running; });
+      }
       if (!m_running && m_collectorQueue.empty()) break;
 
       int id;
@@ -60,8 +61,13 @@ ScanDispatcher::ScanDispatcher(std::shared_ptr<DbWriter> writer) : m_writer(writ
       }
       {
         std::scoped_lock l(m_scannerMapMtx);
-        m_scannerMap[id].scanner->join();
-        m_scannerMap.erase(id);
+        auto it = m_scannerMap.find(id);
+        if (it == m_scannerMap.end()) {
+          // Attempted to close the same scanner twice
+          continue;
+        }
+        it->second.scanner->join();
+        m_scannerMap.erase(it);
       }
     }
   });
