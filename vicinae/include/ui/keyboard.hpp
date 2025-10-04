@@ -83,6 +83,81 @@ static QHash<QString, Qt::Key> keyMap = {
 	{"backspace", Qt::Key_Backspace}
 };
 
+static QHash<Qt::Key, QString> keyMapReverse{
+	{Qt::Key_A, "a"},
+	{Qt::Key_B, "b"},
+	{Qt::Key_C, "c"},
+	{Qt::Key_D, "d"},
+	{Qt::Key_E, "e"},
+	{Qt::Key_F, "f"},
+	{Qt::Key_G, "g"},
+	{Qt::Key_H, "h"},
+	{Qt::Key_I, "i"},
+	{Qt::Key_J, "j"},
+	{Qt::Key_K, "k"},
+	{Qt::Key_L, "l"},
+	{Qt::Key_M, "m"},
+	{Qt::Key_N, "n"},
+	{Qt::Key_O, "o"},
+	{Qt::Key_P, "p"},
+	{Qt::Key_Q, "q"},
+	{Qt::Key_R, "r"},
+	{Qt::Key_S, "s"},
+	{Qt::Key_T, "t"},
+	{Qt::Key_U, "u"},
+	{Qt::Key_V, "v"},
+	{Qt::Key_W, "w"},
+	{Qt::Key_X, "x"},
+	{Qt::Key_Y, "y"},
+	{Qt::Key_Z, "z"},
+	{Qt::Key_0, "0"},
+	{Qt::Key_1, "1"},
+	{Qt::Key_2, "2"},
+	{Qt::Key_3, "3"},
+	{Qt::Key_4, "4"},
+	{Qt::Key_5, "5"},
+	{Qt::Key_6, "6"},
+	{Qt::Key_7, "7"},
+	{Qt::Key_8, "8"},
+	{Qt::Key_9, "9"},
+	{Qt::Key_Period, "."},
+	{Qt::Key_Comma, ","},
+	{Qt::Key_Semicolon, ";"},
+	{Qt::Key_Equal, "="},
+	{Qt::Key_Plus, "+"},
+	{Qt::Key_Minus, "-"},
+	{Qt::Key_BracketLeft, "["},
+	{Qt::Key_BracketRight, "]"},
+	{Qt::Key_BraceLeft, "{"},
+	{Qt::Key_BraceRight, "}"},
+	{Qt::Key_ParenLeft, "("},
+	{Qt::Key_ParenRight, ")"},
+	{Qt::Key_Slash, "/"},
+	{Qt::Key_Backslash, "\\"},
+	{Qt::Key_Apostrophe, "'"},
+	{Qt::Key_QuoteLeft, "`"},
+	{Qt::Key_AsciiCircum, "^"},
+	{Qt::Key_At, "@"},
+	{Qt::Key_Dollar, "$"},
+	{Qt::Key_Return, "return"},
+	{Qt::Key_Delete, "delete"},
+	{Qt::Key_Backspace, "deleteForward"},
+	{Qt::Key_Tab, "tab"},
+	{Qt::Key_Up, "arrowUp"},
+	{Qt::Key_Down, "arrowDown"},
+	{Qt::Key_Left, "arrowLeft"},
+	{Qt::Key_Right, "arrowRight"},
+	{Qt::Key_PageUp, "pageUp"},
+	{Qt::Key_PageDown, "pageDown"},
+	{Qt::Key_Home, "home"},
+	{Qt::Key_End, "end"},
+	{Qt::Key_Space, "space"},
+	{Qt::Key_Escape, "escape"},
+	{Qt::Key_Enter, "enter"},
+	{Qt::Key_Backspace, "backspace"}
+};
+
+
 static QHash<QString, Qt::KeyboardModifier> modifierMap = {
 	{"cmd", Qt::MetaModifier},
 	{"ctrl", Qt::ControlModifier},
@@ -119,6 +194,19 @@ public:
     for (const auto &mod : model.modifiers) {
       modifiers.setFlag(modifierMap.value(mod));
     }
+  }
+
+  KeyboardShortcutModel toModel() const {
+    KeyboardShortcutModel model;
+
+    model.key = keyMapReverse.value(key);
+
+    if (modifiers.testFlag(Qt::MetaModifier)) { model.modifiers.emplace_back("cd"); }
+    if (modifiers.testFlag(Qt::ControlModifier)) { model.modifiers.emplace_back("ctrl"); }
+    if (modifiers.testFlag(Qt::AltModifier)) { model.modifiers.emplace_back("opt"); }
+    if (modifiers.testFlag(Qt::ShiftModifier)) { model.modifiers.emplace_back("shift"); }
+
+    return model;
   }
 
   KeyboardShortcut(Qt::Key key, Qt::KeyboardModifiers mods = {}) : key(key), modifiers(mods) {}

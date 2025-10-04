@@ -9,6 +9,7 @@
 #include "ui/form/base-input.hpp"
 #include "ui/form/checkbox.hpp"
 #include "ui/image/image.hpp"
+#include "ui/shortcut-recorder/shortcut-recorder.hpp"
 #include "ui/vertical-scroll-area/vertical-scroll-area.hpp"
 #include "ui/scroll-bar/scroll-bar.hpp"
 #include "ui/omni-tree/omni-tree.hpp"
@@ -109,6 +110,7 @@ public:
 
 class AliasInput : public BaseInput {
   QString m_id;
+  ShortcutRecorder *m_recorder = new ShortcutRecorder;
 
   void showEvent(QShowEvent *event) override {
     refreshAlias();
@@ -140,6 +142,7 @@ public:
     setPlaceholderText("Add alias");
     setTextMargins(QMargins{2, 2, 2, 2});
     connect(focusNotifier(), &FocusNotifier::focusChanged, this, [this](bool value) {
+      if (value) m_recorder->attach(this);
       if (!value) handleSave();
     });
   }

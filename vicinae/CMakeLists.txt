@@ -362,6 +362,8 @@ set(SRCS
 	src/ui/toast/toast.cpp
 	src/ui/color-box/color-box.cpp
 
+	src/ui/shortcut-recorder/shortcut-recorder.hpp
+
 	# settings
 	src/settings/settings-window.hpp
 	src/settings/settings-window.cpp

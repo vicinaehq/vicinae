@@ -4,6 +4,7 @@
 #include "ui/font-selector/font-selector.hpp"
 #include "ui/form/base-input.hpp"
 #include "ui/form/checkbox-input.hpp"
+#include "ui/shortcut-recorder-input/shortcut-recorder-input.hpp"
 #include "ui/form/form-field.hpp"
 #include "ui/form/form.hpp"
 #include "ui/qtheme-selector/qtheme-selector.hpp"
@@ -120,6 +121,8 @@ void GeneralSettings::setupUI() {
 
   FormWidget *form = new FormWidget;
 
+  auto field = form->addField("Actions shortcut", new ShortcutRecorderInput);
+
   auto checkField = form->addField("Root file search", m_rootFileSearch);
 
   checkField->setInfo("Files are searched asynchronously, so if this is enabled you should expect a slight "
@@ -191,8 +194,8 @@ void GeneralSettings::setupUI() {
 
   keybindingField->setInfo(
       "The keybinding scheme used for navigation. Default uses Vim-style Ctrl+J/K and Ctrl+H/L; "
-      "Emacs uses Ctrl+N/P and Ctrl+Opt+B/F for navigation, plus Emacs editing in the search bar (Ctrl+A/B/E/F/K/U, Opt+B/F/Backspace/Delete)."
-  );
+      "Emacs uses Ctrl+N/P and Ctrl+Opt+B/F for navigation, plus Emacs editing in the search bar "
+      "(Ctrl+A/B/E/F/K/U, Opt+B/F/Backspace/Delete).");
 
   connect(m_keybindingSelector, &KeyBindingSelector::selectionChanged, this,
           [this](auto &&item) { handleKeybindingChange(item.id()); });
@@ -219,7 +222,7 @@ void GeneralSettings::setupUI() {
       "The base point size used to compute font sizes. Fractional values are accepted and should render as "
       "expected on most platforms. The recommended range is [10.0;12.0].");
 
-  form->setFixedWidth(650);
+  form->setFixedWidth(700);
 
   setWidget(VStack().margins(0, 20, 0, 20).add(HStack().add(form).center()).buildWidget());
 }
