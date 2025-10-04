@@ -4,6 +4,10 @@
 #include <filesystem>
 
 void WatcherScanner::handleMessage(const wtr::event &ev) {
+  auto err_case = [ev](const char* str) {
+    return ev.path_name.native().starts_with(str);
+  };
+
   switch (ev.path_name.native().front()) {
     // TODO: Handle common messages specially
 
@@ -11,7 +15,7 @@ void WatcherScanner::handleMessage(const wtr::event &ev) {
     break;
   case 'w':
     // TODO
-    if (ev.path_name.native().starts_with("w/sys/not_watched@")) {
+    if (err_case("w/sys/not_watched@")) {
       qCritical()
           << "Ran out of inotify watchers.\n"
           << "    Please increase /proc/sys/fs/inotify/max_user_watches, or set it parmanently:\n"
@@ -22,8 +26,19 @@ void WatcherScanner::handleMessage(const wtr::event &ev) {
     qWarning() << "Watcher error:" << ev.path_name.c_str();
     break;
   case 'e':
-    qWarning() << "Fatal Watcher error:" << ev.path_name.c_str();
-    // TODO: Log error
+    if (err_case("e/self/die@")) {
+      // Follow-up message for prior errors, ignore
+      return;
+    }
+    if (err_case("e/self/live@")) {
+      // Failed to start
+      qWarning()
+        << "Watcher failed to start:" << ev.path_name.c_str() << '\n'
+        << "    Is the provided path correct?";
+    }
+    else {
+      qWarning() << "Fatal Watcher error:" << ev.path_name.c_str();
+    }
     fail();
     break;
   }
@@ -79,10 +94,10 @@ WatcherScanner::WatcherScanner(std::shared_ptr<DbWriter> writer, const Scan &sca
 
 void WatcherScanner::interrupt() {
   setInterruptFlag();
-  m_watch->close();
+  // m_watch->close() can take a long time, so do it in join()
   finish();
 }
 
 void WatcherScanner::join() {
-  // Everything was set up in `interrupt()`
+  m_watch->close();
 }
