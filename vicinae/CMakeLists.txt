@@ -363,6 +363,7 @@ set(SRCS
 	src/ui/color-box/color-box.cpp
 
 	src/ui/shortcut-recorder/shortcut-recorder.hpp
+	src/ui/shortcut-recorder/shortcut-recorder.cpp
 
 	# settings
 	src/settings/settings-window.hpp
