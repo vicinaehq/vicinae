@@ -86,12 +86,12 @@ QString FileIndexer::preparePrefixSearchQuery(std::string_view query) const {
 }
 
 void FileIndexer::preferenceValuesChanged(const QJsonObject &preferences) {
-  m_entrypoints =
-      ranges_to<std::vector>(preferences.value("paths").toString().split(';', Qt::SkipEmptyParts) |
+  m_entrypoints = ranges_to<std::vector>(
+      preferences.value("paths").toString().split(';', Qt::SkipEmptyParts) |
       std::views::transform([](const QStringView &v) { return fs::path(v.toString().toStdString()); }));
 
-  m_watcherPaths =
-      ranges_to<std::vector>(preferences.value("watcherPaths").toString().split(';', Qt::SkipEmptyParts) |
+  m_watcherPaths = ranges_to<std::vector>(
+      preferences.value("watcherPaths").toString().split(';', Qt::SkipEmptyParts) |
       std::views::transform([](const QStringView &v) { return fs::path(v.toString().toStdString()); }));
 }
 
