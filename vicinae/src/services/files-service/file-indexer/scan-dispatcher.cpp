@@ -47,9 +47,10 @@ ScanDispatcher::ScanDispatcher(std::shared_ptr<DbWriter> writer) : m_writer(writ
 
   m_collectorThread = std::thread([this]() {
     while (true) {
-      std::unique_lock lock(m_collectorQueueMtx);
-      m_collectorCv.wait(lock, [&]() { return !m_collectorQueue.empty() || !m_running; });
-
+      {
+        std::unique_lock lock(m_collectorQueueMtx);
+        m_collectorCv.wait(lock, [&]() { return !m_collectorQueue.empty() || !m_running; });
+      }
       if (!m_running && m_collectorQueue.empty()) break;
 
       int id;
