@@ -12,6 +12,11 @@ void WatcherScanner::handleMessage(const wtr::event &ev) {
     // TODO: Handle common messages specially
 
   case 's':
+    if (err_case("s/self/live@")) {
+      qInfo() << "Creating inotify watchers in" << scan.path.c_str();
+      start(scan);
+      return;
+    }
     break;
   case 'w':
     // TODO
@@ -33,8 +38,7 @@ void WatcherScanner::handleMessage(const wtr::event &ev) {
     if (err_case("e/self/live@")) {
       // Failed to start
       qWarning()
-        << "Watcher failed to start:" << ev.path_name.c_str() << '\n'
-        << "    Is the provided path correct?";
+        << "Watcher failed to start: is" << scan.path.c_str() << "a correct path?";
     }
     else {
       qWarning() << "Fatal Watcher error:" << ev.path_name.c_str();
@@ -84,11 +88,7 @@ void WatcherScanner::handleEvent(const wtr::event &ev) {
 }
 
 WatcherScanner::WatcherScanner(std::shared_ptr<DbWriter> writer, const Scan &scan, FinishCallback callback)
-    : AbstractScanner(writer, scan, callback) {
-
-  qInfo() << "Creating inotify watchers in" << scan.path.c_str();
-  start(scan);
-
+    : AbstractScanner(writer, scan, callback), scan(scan) {
   m_watch = std::make_unique<wtr::watch>(scan.path, [this](const wtr::event &ev) { handleEvent(ev); });
 }
 
