@@ -58,7 +58,6 @@ IndexerScanner::IndexerScanner(std::shared_ptr<DbWriter> writer, const Scan &sc,
     try {
       scan(sc.path);
       m_writerWorker->stop();
-      m_writerThread.join();
       finish();
     } catch (const std::exception &error) {
       qCritical() << "Caught exception during fullscan" << error.what();
