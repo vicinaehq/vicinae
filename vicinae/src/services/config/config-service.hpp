@@ -40,6 +40,7 @@ public:
       std::optional<QString> normal;
       double baseSize = 10.0;
     } font;
+    std::unordered_map<QString, QString> keybinds;
   };
 
 private:
@@ -70,6 +71,14 @@ private:
       if (font.contains("normal")) { cfg.font.normal = font.value("normal").toString(); }
 
       cfg.font.baseSize = font.value("size").toDouble(10.0);
+    }
+
+    {
+      auto keybinds = obj.value("keybinds").toObject();
+
+      for (const auto &key : keybinds.keys()) {
+        cfg.keybinds[key] = keybinds.value(key).toString();
+      }
     }
 
     {
@@ -140,6 +149,14 @@ public:
     obj["popToRootOnClose"] = value.popToRootOnClose;
     obj["closeOnFocusLoss"] = value.closeOnFocusLoss;
     obj["keybinding"] = value.keybinding;
+
+    {
+      QJsonObject binds;
+      for (const auto &[k, v] : value.keybinds) {
+        binds[k] = v;
+      }
+      obj["keybinds"] = binds;
+    }
 
     {
       QJsonObject font;

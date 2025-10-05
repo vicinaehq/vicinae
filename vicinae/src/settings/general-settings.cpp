@@ -121,8 +121,6 @@ void GeneralSettings::setupUI() {
 
   FormWidget *form = new FormWidget;
 
-  auto field = form->addField("Actions shortcut", new ShortcutRecorderInput);
-
   auto checkField = form->addField("Root file search", m_rootFileSearch);
 
   checkField->setInfo("Files are searched asynchronously, so if this is enabled you should expect a slight "

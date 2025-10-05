@@ -363,6 +363,7 @@ set(SRCS
 	src/ui/color-box/color-box.cpp
 
 	src/lib/keyboard/keybind-manager.hpp
+	src/lib/keyboard/keyboard.cpp
 
 	src/ui/shortcut-recorder/shortcut-recorder.hpp
 	src/ui/shortcut-recorder/shortcut-recorder.cpp

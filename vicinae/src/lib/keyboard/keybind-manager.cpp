@@ -1,5 +1,5 @@
-#pragma once
 #include "common.hpp"
+#include "keybind-manager.hpp"
 #include "keyboard/keyboard.hpp"
 #include <qjsonobject.h>
 #include <qnamespace.h>
@@ -8,33 +8,6 @@
 #include <qtmetamacros.h>
 #include <unordered_map>
 #include <vector>
-
-enum class Keybind : uint8_t {
-  ToggleActionPanel = 0,
-  OpenSettings,
-
-  // common action keybinds
-  OpenAction,
-  CopyAction,
-  PasteAction,
-  NewAction,
-  PinAction,
-  RemoveAction,
-  DangerousRemoveAction,
-
-  EditAction,
-  EditSecondaryAction,
-
-  KeybindEnd,
-};
-
-struct KeybindInfo {
-  QString id;
-  QString name;
-  QString description;
-  QString icon;
-  Keyboard::Shortcut dflt;
-};
 
 // clang-format off
 static const std::unordered_map<Keybind, KeybindInfo> infos{
@@ -109,102 +82,4 @@ static const std::unordered_map<Keybind, KeybindInfo> infos{
 		.dflt = Keyboard::Shortcut(Qt::Key_E, Qt::ControlModifier | Qt::ShiftModifier)
 	}}
 };
-
 // clang-format on
-
-class KeybindManager : public QObject, NonCopyable {
-  Q_OBJECT
-
-signals:
-  void keybindChanged(Keybind bind, const Keyboard::Shortcut &shortcut) const;
-
-public:
-  static KeybindManager *instance() {
-    static KeybindManager manager;
-    return &manager;
-  }
-
-  KeybindManager() {
-    for (const auto &[bind, info] : infos) {
-      m_shortcuts[bind] = info.dflt;
-      m_idToBind[info.id] = bind;
-    }
-  }
-
-  using KeybindMap = std::unordered_map<Keybind, Keyboard::Shortcut>;
-  // [keybind_id]: shortcut string
-  using SerializedKeybindMap = std::unordered_map<QString, QString>;
-
-  std::optional<Keyboard::Shortcut> resolve(Keybind bind) const {
-    if (auto it = m_shortcuts.find(bind); it != m_shortcuts.end()) { return it->second; }
-    return {};
-  }
-
-  auto list() const { return infos; }
-
-  bool isBound(Keybind bind) const { return m_shortcuts.contains(bind); }
-  bool isBound(const Keyboard::Shortcut &shortcut) const {
-    for (const auto &[bind, stcut] : m_shortcuts) {
-      if (stcut == shortcut) return true;
-    }
-    return false;
-  }
-
-  /**
-   * Get info about the keybind this shortcut is bound to, if any.
-   */
-  std::optional<KeybindInfo> findBoundInfo(const Keyboard::Shortcut &shortcut) const {
-    for (const auto &[bind, stcut] : m_shortcuts) {
-      if (stcut == shortcut) {
-        if (auto it = infos.find(bind); it != infos.end()) { return it->second; }
-      }
-    }
-
-    return {};
-  }
-
-  void setMap(const KeybindMap &map) { m_shortcuts = map; }
-  const KeybindMap &map() const { return m_shortcuts; }
-
-  void setKeybind(Keybind bind, const Keyboard::Shortcut &shortcut) {
-    m_shortcuts[bind] = shortcut;
-    emit keybindChanged(bind, shortcut);
-  }
-
-  void fromSerializedMap(const SerializedKeybindMap &map) {
-    SerializedKeybindMap mp;
-
-    for (const auto &[id, str] : map) {
-      m_shortcuts[m_idToBind[id]] = Keyboard::Shortcut(str);
-    }
-  }
-
-  std::vector<std::pair<Keybind, const KeybindInfo *>> orderedInfoList() {
-    std::vector<std::pair<Keybind, const KeybindInfo *>> list;
-    list.reserve(static_cast<uint8_t>(Keybind::KeybindEnd));
-
-    for (uint8_t i = 0; i != static_cast<uint8_t>(Keybind::KeybindEnd); ++i) {
-      auto bind = static_cast<Keybind>(i);
-      if (auto it = infos.find(bind); it != infos.end()) { list.push_back({bind, &it->second}); }
-    }
-
-    return list;
-  }
-
-  SerializedKeybindMap toSerializedMap() {
-    SerializedKeybindMap mp;
-
-    for (const auto &[bind, shortcut] : m_shortcuts) {
-      auto it = infos.find(bind);
-      if (it == infos.end()) { continue; }
-      auto &info = it->second;
-      mp[info.id] = shortcut.toString();
-    }
-
-    return mp;
-  }
-
-private:
-  std::unordered_map<Keybind, Keyboard::Shortcut> m_shortcuts;
-  std::unordered_map<QString, Keybind> m_idToBind;
-};

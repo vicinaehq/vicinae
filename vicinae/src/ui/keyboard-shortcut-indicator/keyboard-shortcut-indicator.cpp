@@ -42,7 +42,7 @@ void KeyboardShortcutIndicatorWidget::drawKey(Qt::Key key, QRect rect, OmniPaint
   painter.setThemePen(m_color);
 
   if (key == Qt::Key_Return) {
-    painter.drawText(contentRect, Qt::AlignCenter, "⏎");
+    painter.drawText(contentRect, Qt::AlignCenter, "↵");
   } else {
 
     if (auto keyStr = Keyboard::stringForKey(key)) {

@@ -18,7 +18,7 @@ signals:
 public:
   using Validator = std::function<QString(const Keyboard::Shortcut &shortcut)>;
 
-  ShortcutRecorder();
+  ShortcutRecorder(QWidget *parent);
   void attach(QWidget *widget);
 
   /**
@@ -36,6 +36,7 @@ protected:
   void setError(const QString &text);
   void setSuccess();
   void clear();
+  void recompute();
 
   void hideEvent(QHideEvent *event) override;
   void keyPressEvent(QKeyEvent *event) override;
@@ -47,4 +48,5 @@ private:
   size_t m_successDismissTimeout = 2000;
   static constexpr const QSize m_defaultSize = {250, 80};
   Validator m_validator;
+  QWidget *m_parent = nullptr;
 };

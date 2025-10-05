@@ -1,5 +1,6 @@
 #include "status-bar.hpp"
 #include "common.hpp"
+#include "keyboard/keybind-manager.hpp"
 #include "navigation-controller.hpp"
 #include "ui/image/url.hpp"
 #include "service-registry.hpp"
@@ -63,7 +64,7 @@ void GlobalBar::actionsChanged(const ActionPanelState &panel) {
   if (keybinding == "emacs") {
     m_actionButton->setShortcut(Keyboard::Shortcut::open());
   } else {
-    m_actionButton->setShortcut(Keyboard::Shortcut(Qt::Key_B, Qt::ControlModifier));
+    m_actionButton->setShortcut(KeybindManager::instance()->resolve(Keybind::ToggleActionPanel));
   }
 }
 
@@ -127,6 +128,11 @@ void GlobalBar::setupUI() {
 
   connect(m_ctx.navigation.get(), &NavigationController::navigationSuffixIconChanged, this,
           [this](const std::optional<ImageURL> &icon) { m_status->setSuffixIcon(icon); });
+
+  connect(KeybindManager::instance(), &KeybindManager::keybindChanged, this,
+          [this](const Keybind &bind, const Keyboard::Shortcut &shortcut) {
+            if (bind == Keybind::ToggleActionPanel) { m_actionButton->setShortcut(shortcut); }
+          });
 
   connect(m_ctx.navigation.get(), &NavigationController::currentViewStateChanged, this,
           &GlobalBar::handleViewStateChange);

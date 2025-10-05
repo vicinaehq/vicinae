@@ -31,7 +31,7 @@ public:
 
 private:
   KeyboardShortcutIndicatorWidget *m_indicator = new KeyboardShortcutIndicatorWidget;
-  ShortcutRecorder *m_recorder = new ShortcutRecorder;
+  ShortcutRecorder *m_recorder = new ShortcutRecorder(this);
   ButtonWidget *m_button = new ButtonWidget;
   FocusNotifier *m_notifier = new FocusNotifier(this);
 };

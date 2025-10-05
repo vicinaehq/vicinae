@@ -110,7 +110,6 @@ public:
 
 class AliasInput : public BaseInput {
   QString m_id;
-  ShortcutRecorder *m_recorder = new ShortcutRecorder;
 
   void showEvent(QShowEvent *event) override {
     refreshAlias();
@@ -142,7 +141,6 @@ public:
     setPlaceholderText("Add alias");
     setTextMargins(QMargins{2, 2, 2, 2});
     connect(focusNotifier(), &FocusNotifier::focusChanged, this, [this](bool value) {
-      if (value) m_recorder->attach(this);
       if (!value) handleSave();
     });
   }

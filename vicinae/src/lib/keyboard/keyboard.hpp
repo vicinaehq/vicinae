@@ -182,20 +182,17 @@ inline std::optional<QString> stringForKey(Qt::Key key) {
 
 class Shortcut {
 public:
-  static Shortcut copy() { return Shortcut(Qt::Key_C).withModifier(Qt::KeyboardModifier::ControlModifier); }
-  static Shortcut duplicate() { return Shortcut(Qt::Key_N, Qt::ControlModifier); }
-  static Shortcut pin() { return Shortcut(Qt::Key_P, Qt::ControlModifier | Qt::ShiftModifier); }
-  static Shortcut paste() { return Shortcut(Qt::Key_V).withModifier(Qt::KeyboardModifier::ControlModifier); }
-  static Shortcut enter() { return Shortcut(Qt::Key_Return); }
-  static Shortcut open() { return Shortcut(Qt::Key_O, Qt::ControlModifier); }
-  static Shortcut edit() { return Shortcut(Qt::Key_E, Qt::ControlModifier); }
-  static Shortcut submit() { return Shortcut(Qt::Key_Return, Qt::ShiftModifier); }
-  static Shortcut remove() { return Shortcut(Qt::Key_X, Qt::ControlModifier); }
-  static Shortcut dangerousRemove() { return Shortcut(Qt::Key_X, Qt::ControlModifier | Qt::ShiftModifier); }
-  static Shortcut actionPanel() {
-    return Shortcut(Qt::Key_B).withModifier(Qt::KeyboardModifier::ControlModifier);
-  }
-
+  static Shortcut copy();
+  static Shortcut duplicate();
+  static Shortcut pin();
+  static Shortcut paste();
+  static Shortcut enter();
+  static Shortcut open();
+  static Shortcut edit();
+  static Shortcut submit();
+  static Shortcut remove();
+  static Shortcut dangerousRemove();
+  static Shortcut actionPanel();
   static Shortcut shiftPaste() {
     return Shortcut(Qt::Key_V)
         .withModifier(Qt::KeyboardModifier::ControlModifier)
@@ -254,7 +251,7 @@ public:
   // This form is used to serialize shortcut data in config files/database.
   // It can be parsed back using Shortcut::fromString
   // e.g meta+shift+A
-  QString toString() {
+  QString toString() const {
     QStringList strs;
 
     if (m_modifiers.testFlag(Qt::MetaModifier)) { strs << "super"; }

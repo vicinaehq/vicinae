@@ -5,6 +5,7 @@
 #include "icon-theme-db/icon-theme-db.hpp"
 #include "ipc-command-handler.hpp"
 #include "ipc-command-server.hpp"
+#include "keyboard/keybind-manager.hpp"
 #include "log/message-handler.hpp"
 #include "overlay-controller/overlay-controller.hpp"
 #include "pid-file/pid-file.hpp"
@@ -15,6 +16,7 @@
 #include "service-registry.hpp"
 #include "services/calculator-service/calculator-service.hpp"
 #include "services/clipboard/clipboard-service.hpp"
+#include "services/config/config-service.hpp"
 #include "services/emoji-service/emoji-service.hpp"
 #include "services/files-service/file-service.hpp"
 #include "services/local-storage/local-storage-service.hpp"
@@ -219,10 +221,17 @@ void CliServerCommand::run(CLI::App *app) {
 
   auto cfgService = ServiceRegistry::instance()->config();
 
+  QObject::connect(KeybindManager::instance(), &KeybindManager::keybindChanged, [cfgService]() {
+    cfgService->updateConfig(
+        [](ConfigService::Value &value) { value.keybinds = KeybindManager::instance()->toSerializedMap(); });
+  });
+
   QObject::connect(cfgService, &ConfigService::configChanged, configChanged);
   QIcon::setFallbackSearchPaths(Environment::fallbackIconSearchPaths());
 
   configChanged(cfgService->value(), {});
+
+  KeybindManager::instance()->fromSerializedMap(cfgService->value().keybinds);
 
   LauncherWindow launcher(ctx);
   SettingsWindow settings(&ctx);

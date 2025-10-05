@@ -1,6 +1,7 @@
 #include "launcher-window.hpp"
 #include "action-panel/action-panel.hpp"
 #include "common.hpp"
+#include "keyboard/keybind-manager.hpp"
 #include "ui/status-bar/status-bar.hpp"
 #include "service-registry.hpp"
 #include "services/config/config-service.hpp"
@@ -219,22 +220,14 @@ void LauncherWindow::handleViewChange(const NavigationController::ViewState &sta
 }
 
 bool LauncherWindow::event(QEvent *event) {
+  auto kb = KeybindManager::instance();
+
   if (event->type() == QEvent::KeyPress) {
     auto keyEvent = static_cast<QKeyEvent *>(event);
 
-    // Toggle action panel: Default Ctrl+B ; Emacs Ctrl+O
-    auto config = ServiceRegistry::instance()->config();
-    const QString keybinding = config ? config->value().keybinding : QString("default");
-    if (keybinding == "emacs") {
-      if (keyEvent == Keyboard::Shortcut("ctrl+O")) {
-        m_ctx.navigation->toggleActionPanel();
-        return true;
-      }
-    } else {
-      if (keyEvent == Keyboard::Shortcut("ctrl+B")) {
-        m_ctx.navigation->toggleActionPanel();
-        return true;
-      }
+    if (kb->resolve(Keybind::ToggleActionPanel) == keyEvent) {
+      m_ctx.navigation->toggleActionPanel();
+      return true;
     }
 
     if (keyEvent == Keyboard::Shortcut(Qt::Key_Escape, Qt::ShiftModifier)) {
@@ -242,13 +235,13 @@ bool LauncherWindow::event(QEvent *event) {
       return true;
     }
 
-    if (keyEvent == Keyboard::Shortcut(Qt::Key_Comma, Qt::ControlModifier)) {
+    if (kb->resolve(Keybind::OpenSettings) == keyEvent) {
       m_ctx.navigation->closeWindow();
       m_ctx.settings->openWindow();
       return true;
     }
 
-    if (keyEvent->key() == Qt::Key_Escape && !keyEvent->modifiers().toInt()) {
+    if (keyEvent == Keyboard::Shortcut(Qt::Key_Escape)) {
       m_ctx.navigation->goBack();
       return true;
     }

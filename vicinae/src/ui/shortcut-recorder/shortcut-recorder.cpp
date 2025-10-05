@@ -2,26 +2,29 @@
 #include "layout.hpp"
 #include "theme.hpp"
 #include <qevent.h>
+#include <qwidget.h>
 
-ShortcutRecorder::ShortcutRecorder() { setupUI(); }
+ShortcutRecorder::ShortcutRecorder(QWidget *parent) {
+  m_parent = parent;
+  setupUI();
+}
 
 void ShortcutRecorder::attach(QWidget *widget) {
   clear();
-  auto targetPos = widget->mapToGlobal(QPoint(widget->width() / 2 - width() / 2, -(height() + 10)));
-  move(targetPos);
-  show();
+  recompute();
 }
 
 void ShortcutRecorder::setupUI() {
   setWindowFlags(Qt::Popup);
-  setFixedSize(m_defaultSize);
+  setMinimumSize(m_defaultSize);
   setFocusPolicy(Qt::StrongFocus);
   m_closeTimer.setSingleShot(true);
   m_closeTimer.setInterval(m_successDismissTimeout);
   m_text->setText("Recording...");
   m_text->setSize(TextSize::TextSmaller);
+  m_text->setWordWrap(true);
   m_text->setAlignment(Qt::AlignHCenter);
-  m_indicator->setBackgroundColor(SemanticColor::TertiaryBackground);
+  m_indicator->setBackgroundColor(SemanticColor::MainBackground);
   m_indicator->hide();
 
   auto modifierRequired = [](const Keyboard::Shortcut &shortcut) {
@@ -31,10 +34,12 @@ void ShortcutRecorder::setupUI() {
 
   setValidator(modifierRequired);
 
-  VStack()
-      .center()
-      .add(VStack().margins(10).spacing(10).add(m_indicator, 0, Qt::AlignHCenter).add(m_text))
-      .imbue(this);
+  auto layout =
+      VStack().margins(10).spacing(5).add(m_indicator, 0, Qt::AlignCenter).add(m_text).buildLayout();
+
+  m_indicator->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+  layout->setAlignment(Qt::AlignCenter);
+  setLayout(layout);
 
   connect(&m_closeTimer, &QTimer::timeout, this, [this]() { close(); });
 }
@@ -55,11 +60,21 @@ void ShortcutRecorder::setError(const QString &text) {
   OmniPainter painter;
   m_text->setText(text);
   setColor(SemanticColor::Red);
+  recompute();
+}
+
+void ShortcutRecorder::recompute() {
+  updateGeometry();
+  adjustSize();
+  show();
+  auto targetPos = m_parent->mapToGlobal(QPoint(m_parent->width() / 2 - width() / 2, -(height() + 10)));
+  move(targetPos);
 }
 
 void ShortcutRecorder::setSuccess() {
   setColor(SemanticColor::Green);
   m_text->setText("Keybind updated");
+  recompute();
 }
 
 void ShortcutRecorder::hideEvent(QHideEvent *event) {

@@ -11,7 +11,6 @@
 #include "services/keybinding/keybinding-service.hpp"
 #include "ui/popover/popover.hpp"
 #include "ui/typography/typography.hpp"
-#include "utils.hpp"
 #include <qboxlayout.h>
 #include <qcoreevent.h>
 #include <qdnslookup.h>
@@ -24,7 +23,6 @@
 #include <qstackedwidget.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
-#include <ranges>
 
 class NoResultListItem : public OmniList::AbstractVirtualItem {
   class NoResultWidget : public OmniListItemWidget {
@@ -149,12 +147,8 @@ protected:
         auto config = ServiceRegistry::instance()->config();
         const QString keybinding = config ? config->value().keybinding : QString("default");
 
-        if (KeyBindingService::isDownKey(keyEvent, keybinding)) {
-          return m_list->selectDown();
-        }
-        if (KeyBindingService::isUpKey(keyEvent, keybinding)) {
-          return m_list->selectUp();
-        }
+        if (KeyBindingService::isDownKey(keyEvent, keybinding)) { return m_list->selectDown(); }
+        if (KeyBindingService::isUpKey(keyEvent, keybinding)) { return m_list->selectUp(); }
         if (KeyBindingService::isLeftKey(keyEvent, keybinding)) {
           pop();
           return true;
