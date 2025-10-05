@@ -1,6 +1,7 @@
 #pragma once
 #include "common.hpp"
 #include "ui/focus-notifier.hpp"
+#include "ui/image/url.hpp"
 #include <qcoreevent.h>
 #include <qevent.h>
 #include <qjsonobject.h>
@@ -40,6 +41,7 @@ public:
   void setLeftAccessory(QWidget *widget);
   void setTextMargins(const QMargins &margins);
   void setRightAccessory(QWidget *widget);
+  void setRightIcon(const ImageURL &icon);
   FocusNotifier *focusNotifier() const override { return m_focusNotifier; }
   void clear();
   QString text() const { return m_input->text(); }
