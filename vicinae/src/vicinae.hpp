@@ -10,6 +10,7 @@ namespace Omnicast {
 
 constexpr long long GB = 1e9;
 constexpr long long IMAGE_DISK_CACHE_MAX_SIZE = GB * 5;
+constexpr const int WINDOW_BORDER_WIDTH = 3;
 
 static const QString GH_REPO = "https://github.com/vicinaehq/vicinae";
 static const QString GH_REPO_CREATE_ISSUE = GH_REPO + "/issues/new";

@@ -270,7 +270,6 @@ void LauncherWindow::handleActionVisibilityChanged(bool visible) {
 void LauncherWindow::paintEvent(QPaintEvent *event) {
   auto &config = m_ctx.services->config()->value();
   auto &theme = ThemeService::instance().theme();
-  int borderWidth = 2;
   QColor finalBgColor = theme.colors.mainBackground;
   QPainter painter(this);
 
@@ -286,7 +285,7 @@ void LauncherWindow::paintEvent(QPaintEvent *event) {
 
     painter.fillPath(path, finalBgColor);
 
-    QPen pen(theme.colors.border, borderWidth);
+    QPen pen(theme.colors.border, Omnicast::WINDOW_BORDER_WIDTH);
     painter.setPen(pen);
 
     painter.drawPath(path);
