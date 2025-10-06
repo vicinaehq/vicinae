@@ -74,20 +74,34 @@ export type KeyEquivalent =
   | "enter"
   | "backspace";
 
+export type KeyModifier = "cmd" | "ctrl" | "opt" | "shift";
+
 export namespace Keyboard {
+	export namespace Shortcut {
+	   export type Common = 'copy' | 'copy-deeplink' | 'copy-name' | 'copy-path' | 'save' | 'duplicate' | 'edit' | 'move-down' | 'move-up' | 'new' | 'open' | 'open-with' | 'pin' | 'refresh' | 'remove' | 'remove-all';
+
+		export const Common = {
+			Copy: "copy",
+			CopyDeeplink: 'copy',
+			CopyName: 'copy',
+			CopyPath: 'copy',
+			Save: 'save',
+			Duplicate: 'duplicate',
+			Edit: 'edit',
+			MoveDown: 'move-down',
+			MoveUp: 'move-up',
+			New: 'new',
+			Open: 'open',
+			OpenWith: 'open-with',
+			Pin: 'pin',
+			Refresh: 'refresh',
+			Remove: 'remove',
+			RemoveAll: 'remove-all',
+		}
+	};
+
   export type Shortcut = {
     key: KeyEquivalent;
     modifiers: KeyModifier[];
   };
-}
-
-export type KeyModifier = "cmd" | "ctrl" | "opt" | "shift";
-
-export const Keyboard = {
-  Shortcut: {
-    Common: {
-      Copy: { modifiers: ["cmd", "shift"], key: "c" } as Keyboard.Shortcut,
-      CopyName: { modifiers: ["cmd", "shift"], key: "." } as Keyboard.Shortcut,
-    },
-  },
 };

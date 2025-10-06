@@ -1,16 +1,23 @@
 #include "extend/action-model.hpp"
 #include "extend/image-model.hpp"
+#include "keyboard/keyboard.hpp"
 #include <qjsonarray.h>
 #include <qjsonobject.h>
+#include <qjsonvalue.h>
 
-KeyboardShortcutModel ActionPannelParser::parseKeyboardShortcut(const QJsonObject &shortcut) {
-  KeyboardShortcutModel model{.key = shortcut.value("key").toString()};
+Keyboard::Shortcut ActionPannelParser::parseKeyboardShortcut(const QJsonValue &shortcut) {
+  if (shortcut.isString()) { return Keyboard::Shortcut::fromString(shortcut.toString()); }
 
-  for (const auto &mod : shortcut.value("modifiers").toArray()) {
-    model.modifiers << mod.toString();
+  auto obj = shortcut.toObject();
+  QStringList strs;
+
+  strs << obj.value("key").toString();
+
+  for (const auto &mod : obj.value("modifiers").toArray()) {
+    strs << mod.toString();
   }
 
-  return model;
+  return Keyboard::Shortcut::fromString(strs.join('+'));
 }
 
 ActionModel ActionPannelParser::parseAction(const QJsonObject &instance) {
@@ -24,9 +31,7 @@ ActionModel ActionPannelParser::parseAction(const QJsonObject &instance) {
 
   auto type = props.value("type").toString("callback");
 
-  if (props.contains("shortcut")) {
-    action.shortcut = parseKeyboardShortcut(props.value("shortcut").toObject());
-  }
+  if (props.contains("shortcut")) { action.shortcut = parseKeyboardShortcut(props.value("shortcut")); }
 
   if (props.contains("icon")) { action.icon = ImageModelParser().parse(props.value("icon")); }
 

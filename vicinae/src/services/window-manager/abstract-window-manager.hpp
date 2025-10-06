@@ -143,7 +143,7 @@ public:
 
     if (!window) return false;
 
-    return sendShortcutSync(*window.get(), Keyboard::Shortcut::paste());
+    return sendShortcutSync(*window.get(), Keyboard::Shortcut::osPaste());
   }
 
   /**

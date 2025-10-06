@@ -37,7 +37,7 @@ public:
     if (auto app = appDb->fileBrowser()) {
       auto openLocation = new OpenAppAction(app, "Open location", {m_path.c_str()});
 
-      openLocation->setShortcut(Keyboard::Shortcut::open());
+      openLocation->setShortcut(Keybind::OpenAction);
       section->addAction(openLocation);
     }
 

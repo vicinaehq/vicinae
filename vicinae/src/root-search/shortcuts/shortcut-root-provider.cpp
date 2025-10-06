@@ -29,10 +29,10 @@ std::unique_ptr<ActionPanelState> RootShortcutItem::newActionPanel(ApplicationCo
 
   open->setClearSearch(true);
   // openWith->setShortcut({.key = "return", .modifiers = {"shift"}});
-  duplicate->setShortcut(Keyboard::Shortcut::duplicate());
-  edit->setShortcut(Keyboard::Shortcut::edit());
-  remove->setShortcut(Keyboard::Shortcut::remove());
-  disable->setShortcut(Keyboard::Shortcut::dangerousRemove());
+  duplicate->setShortcut(Keybind::DuplicateAction);
+  edit->setShortcut(Keybind::EditAction);
+  remove->setShortcut(Keybind::RemoveAction);
+  disable->setShortcut(Keybind::DangerousRemoveAction);
 
   panel->setTitle(m_link->name());
   mainSection->addAction(new DefaultActionWrapper(uniqueId(), open));

@@ -81,9 +81,11 @@ public:
           if (idx == 0) { action->setPrimary(true); }
 
           if (idx < m_defaultActionShortcuts.size()) {
-            action->setShortcut(m_defaultActionShortcuts.at(idx));
+            action->addShortcut(m_defaultActionShortcuts.at(idx));
             ++idx;
           }
+
+          if (model.shortcut) { action->addShortcut(model.shortcut.value()); }
 
           sec->addAction(action);
         }
@@ -100,6 +102,8 @@ public:
           action->setShortcut(m_defaultActionShortcuts.at(idx));
           ++idx;
         }
+
+        if (actionModel->shortcut) { action->addShortcut(actionModel->shortcut.value()); }
 
         outsideSection->addAction(action);
       }

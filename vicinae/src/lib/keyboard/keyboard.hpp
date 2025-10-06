@@ -4,6 +4,7 @@
 #include <qlogging.h>
 #include <qnamespace.h>
 #include <unordered_map>
+#include "keybind.hpp"
 
 // clang-format off
 static const std::unordered_map<QString, Qt::Key> keyMap = {
@@ -208,22 +209,12 @@ inline std::optional<QString> stringForKey(Qt::Key key) {
 
 class Shortcut {
 public:
-  static Shortcut copy();
-  static Shortcut duplicate();
-  static Shortcut pin();
-  static Shortcut paste();
-  static Shortcut enter();
-  static Shortcut open();
-  static Shortcut edit();
-  static Shortcut submit();
-  static Shortcut remove();
-  static Shortcut dangerousRemove();
-  static Shortcut actionPanel();
-  static Shortcut shiftPaste() {
-    return Shortcut(Qt::Key_V)
-        .withModifier(Qt::KeyboardModifier::ControlModifier)
-        .withModifier(Qt::KeyboardModifier::ShiftModifier);
-  }
+  static Shortcut osCopy() { return Shortcut(Qt::Key_C, Qt::ControlModifier); }
+  static Shortcut osPaste() { return Shortcut(Qt::Key_P, Qt::ControlModifier); }
+  static Shortcut enter() { return Qt::Key_Return; }
+  static Shortcut submit() { return enter().shifted(); }
+
+  static Shortcut shiftPaste() { return osPaste().shifted(); }
   static Shortcut fromString(const QString &str) { return str; }
   static Shortcut fromKeyPress(const QKeyEvent &event) { return Shortcut(&event); }
 
@@ -231,6 +222,11 @@ public:
   Shortcut(Qt::Key key, Qt::KeyboardModifiers mods = {}) : m_key(key), m_modifiers(mods) {}
   Shortcut(const QKeyEvent *event)
       : m_key(static_cast<Qt::Key>(event->key())), m_modifiers(event->modifiers()) {}
+
+  /**
+   * Construct shortcut from a named keybind, which are application keybinds that are configurable by the user
+   */
+  Shortcut(Keybind bind);
 
   Shortcut(const QString &str) {
     auto sequence = QKeySequence::fromString(str);

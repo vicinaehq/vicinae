@@ -8,26 +8,7 @@
 #include <qtmetamacros.h>
 #include <unordered_map>
 #include <vector>
-
-enum class Keybind : uint8_t {
-  ToggleActionPanel = 0,
-  OpenSearchAccessorySelector,
-  OpenSettings,
-
-  // common action keybinds
-  OpenAction,
-  CopyAction,
-  PasteAction,
-  NewAction,
-  PinAction,
-  RemoveAction,
-  DangerousRemoveAction,
-
-  EditAction,
-  EditSecondaryAction,
-
-  KeybindEnd,
-};
+#include "keybind.hpp"
 
 struct KeybindInfo {
   QString id;
@@ -74,12 +55,61 @@ static const std::unordered_map<Keybind, KeybindInfo> infos{
 		.icon = "copy-clipboard",
 		.dflt = Keyboard::Shortcut(Qt::Key_C, Qt::ControlModifier | Qt::ShiftModifier)
 	}},
+	{Keybind::CopyNameAction, KeybindInfo{
+		.id = "action.copy-name", 
+		.name = "Copy Name Action",
+		.description = "Can be used by actions that can copy the name of the selected item",
+		.icon = "copy-clipboard",
+		.dflt = Keyboard::Shortcut(Qt::Key_Period, Qt::ControlModifier | Qt::ShiftModifier)
+	}},
+	{Keybind::CopyPathAction, KeybindInfo{
+		.id = "action.copy-path", 
+		.name = "Copy Path Action",
+		.description = "Can be used by actions that can copy the path of the selected item",
+		.icon = "copy-clipboard",
+		.dflt = Keyboard::Shortcut(Qt::Key_Comma, Qt::ControlModifier | Qt::ShiftModifier)
+	}},
+	{Keybind::SaveAction, KeybindInfo{
+		.id = "action.save", 
+		.name = "Save Action",
+		.description = "Can be used by actions that can save the selected item",
+		.icon = "save-document",
+		.dflt = Keyboard::Shortcut(Qt::Key_S, Qt::ControlModifier)
+	}},
+	{Keybind::DuplicateAction, KeybindInfo{
+		.id = "action.duplicate", 
+		.name = "Duplicate Action",
+		.description = "Can be used by actions that can duplicate the selected item",
+		.icon = "duplicate",
+		.dflt = Keyboard::Shortcut(Qt::Key_D, Qt::ControlModifier)
+	}},
 	{Keybind::NewAction, KeybindInfo{
 			.id = "action.new",
 			.name = "Generic New Action",
-			.description = "Can be used by actions that create or duplicate something",
+			.description = "Can be used by actions that create something",
 			 .icon = "new-document",
 			.dflt = Keyboard::Shortcut(Qt::Key_N, Qt::ControlModifier)
+	}},
+	{Keybind::MoveUpAction, KeybindInfo{
+			.id = "action.move-up",
+			.name = "Generic Move Up Action",
+			.description = "Can be used by actions that can move up the selected item. This does not affect list navigation controls.",
+			 .icon = "arrow-up",
+			.dflt = Keyboard::Shortcut(Qt::Key_Up, Qt::ControlModifier | Qt::ShiftModifier)
+	}},
+	{Keybind::MoveDownAction, KeybindInfo{
+			.id = "action.move-down",
+			.name = "Generic Move Down Action",
+			.description = "Can be used by actions that can move down the selected item. This does not affect list navigation controls.",
+			 .icon = "arrow-down",
+			.dflt = Keyboard::Shortcut(Qt::Key_Down, Qt::ControlModifier | Qt::ShiftModifier)
+	}},
+	{Keybind::RefreshAction, KeybindInfo{
+			.id = "action.refresh",
+			.name = "Generic Refresh Action",
+			.description = "Can be used by actions that can refresh the selected item",
+			 .icon = "arrow-clockwise",
+			.dflt = Keyboard::Shortcut(Qt::Key_R, Qt::ControlModifier)
 	}},
 	{Keybind::PinAction, KeybindInfo{
 		.id = "action.pin",
@@ -143,9 +173,12 @@ public:
   // [keybind_id]: shortcut string
   using SerializedKeybindMap = std::unordered_map<QString, QString>;
 
-  std::optional<Keyboard::Shortcut> resolve(Keybind bind) const {
+  Keyboard::Shortcut resolve(Keybind bind) const {
     if (auto it = m_shortcuts.find(bind); it != m_shortcuts.end()) { return it->second; }
-    return {};
+
+    if (auto it = infos.find(bind); it != infos.end()) { return it->second.dflt; }
+
+    return Keyboard::Shortcut();
   }
 
   auto list() const { return infos; }

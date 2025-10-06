@@ -277,7 +277,7 @@ class RaycastStoreDetailView : public BaseView {
     main->addAction(install);
     install->setPrimary(true);
     danger->addAction(uninstall);
-    uninstall->setShortcut(Keyboard::Shortcut::remove());
+    uninstall->setShortcut(Keybind::RemoveAction);
 
     setActions(std::move(panel));
   }

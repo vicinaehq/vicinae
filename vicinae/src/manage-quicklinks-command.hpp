@@ -197,9 +197,9 @@ public:
     auto duplicate = new DuplicateShortcutAction(link);
     auto remove = new RemoveShortcutAction(link);
 
-    duplicate->setShortcut(Keyboard::Shortcut::duplicate());
-    edit->setShortcut(Keyboard::Shortcut::edit());
-    remove->setShortcut(Keyboard::Shortcut::remove());
+    duplicate->setShortcut(Keybind::DuplicateAction);
+    edit->setShortcut(Keybind::EditAction);
+    remove->setShortcut(Keybind::RemoveAction);
 
     panel->setTitle(link->name());
     mainSection->addAction(open);

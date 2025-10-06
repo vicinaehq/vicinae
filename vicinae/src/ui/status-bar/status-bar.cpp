@@ -57,15 +57,7 @@ void GlobalBar::actionsChanged(const ActionPanelState &panel) {
   m_primaryActionButton->setVisible(primaryAction);
   m_actionButton->setText("Actions");
   m_actionButton->setVisible(panel.actionCount() > 1);
-
-  // Show shortcut hint based on keybinding scheme to avoid conflicts
-  auto config = ServiceRegistry::instance()->config();
-  const QString keybinding = config ? config->value().keybinding : QString("default");
-  if (keybinding == "emacs") {
-    m_actionButton->setShortcut(Keyboard::Shortcut::open());
-  } else {
-    m_actionButton->setShortcut(KeybindManager::instance()->resolve(Keybind::ToggleActionPanel));
-  }
+  m_actionButton->setShortcut(Keybind::ToggleActionPanel);
 }
 
 void GlobalBar::handleViewStateChange(const NavigationController::ViewState &state) {}

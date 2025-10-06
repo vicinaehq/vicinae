@@ -107,7 +107,7 @@ public:
     auto uninstall = new UninstallExtensionAction(m_extension.id);
 
     showExtension->setShortcut(Keyboard::Shortcut::enter());
-    uninstall->setShortcut(Keyboard::Shortcut::remove());
+    uninstall->setShortcut(Keybind::RemoveAction);
 
     panel->setTitle(m_extension.name);
     section->addAction(showExtension);

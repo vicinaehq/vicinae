@@ -356,13 +356,11 @@ public:
     auto removeAll = new RemoveAllSelectionsAction();
     auto mainSection = panel->createSection();
 
-    editKeywords->setShortcut(Keyboard::Shortcut::edit());
-
+    editKeywords->setShortcut(Keybind::EditAction);
     remove->setStyle(AbstractAction::Style::Danger);
-    remove->setShortcut(Keyboard::Shortcut::remove());
-    removeAll->setShortcut(Keyboard::Shortcut::remove().shifted());
-
-    pin->setShortcut(Keyboard::Shortcut::pin());
+    remove->setShortcut(Keybind::RemoveAction);
+    removeAll->setShortcut(Keybind::DangerousRemoveAction);
+    pin->setShortcut(Keybind::PinAction);
 
     if (wm->canPaste()) {
       auto paste = new PasteClipboardSelection(info.id);
