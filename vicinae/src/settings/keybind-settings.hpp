@@ -40,7 +40,7 @@ private:
   ImageWidget *m_icon = new ImageWidget;
 };
 
-class KeybindField : public QWidget {
+class KeybindField : public OmniTreeActivatableWidget {
 public:
   KeybindField() {
     m_indicator->setBackgroundColor(Qt::transparent);
@@ -64,6 +64,8 @@ public:
     });
     setFixedHeight(25);
   }
+
+  void activated() override { m_recorder->attach(this); }
 
   void setBind(Keybind bind) { m_bind = bind; }
 

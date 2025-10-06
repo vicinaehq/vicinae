@@ -733,6 +733,12 @@ void OmniList::scrollTo(int idx, ScrollBehaviour behaviour) {
 void OmniList::activateCurrentSelection() const {
   if (!isSelectionValid()) return;
 
+  auto &selected = m_items[m_selected].item;
+
+  if (auto it = _widgetCache.find(selected->id()); it != _widgetCache.end()) {
+    it->second.widget->widget()->activated();
+  }
+
   emit itemActivated(*m_items[m_selected].item);
 }
 

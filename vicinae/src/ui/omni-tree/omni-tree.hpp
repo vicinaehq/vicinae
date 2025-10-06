@@ -160,6 +160,13 @@ public:
   }
 };
 
+class OmniTreeActivatableWidget : public QWidget {
+  Q_OBJECT
+
+public:
+  virtual void activated() {}
+};
+
 class OmniTreeRowWidget : public OmniListItemWidget {
   QGraphicsOpacityEffect *m_opacityEffect = new QGraphicsOpacityEffect(this);
   std::vector<QWidget *> m_columns;
@@ -175,6 +182,12 @@ class OmniTreeRowWidget : public OmniListItemWidget {
   void selectionChanged(bool selected) override {
     m_selected = selected;
     update();
+  }
+
+  void activated() override {
+    for (const auto &column : m_columns) {
+      if (auto w = qobject_cast<OmniTreeActivatableWidget *>(column)) { w->activated(); }
+    }
   }
 
   void paintEvent(QPaintEvent *event) override {
