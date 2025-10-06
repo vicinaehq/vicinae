@@ -134,10 +134,10 @@ bool ClipboardService::pasteContent(const Clipboard::Content &content, const Cli
   }
 
   auto window = m_wm.getFocusedWindow();
-  KeyboardShortcut shortcut = KeyboardShortcut::paste();
+  Keyboard::Shortcut shortcut = Keyboard::Shortcut::osPaste();
 
   if (auto app = m_appDb.find(window->wmClass())) {
-    if (app->isTerminalEmulator()) { shortcut = KeyboardShortcut::shiftPaste(); }
+    if (app->isTerminalEmulator()) { shortcut = shortcut.shifted(); }
   }
 
   m_wm.provider()->sendShortcutSync(*window, shortcut);

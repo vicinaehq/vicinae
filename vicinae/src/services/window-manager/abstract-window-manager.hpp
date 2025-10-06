@@ -1,10 +1,10 @@
 #pragma once
-#include "ui/keyboard.hpp"
 #include <cstdint>
 #include <qfuture.h>
 #include <qobject.h>
 #include <qpromise.h>
 #include <qstringview.h>
+#include "lib/keyboard/keyboard.hpp"
 #include <ranges>
 #include <qtmetamacros.h>
 #include <vector>
@@ -134,7 +134,7 @@ public:
    * Note that for now, we only send CTRL-V shortcuts using this method, so hardcoding the logic for only that
    * specific one is OK (for now).
    */
-  virtual bool sendShortcutSync(const AbstractWindow &window, const KeyboardShortcut &shortcut) {
+  virtual bool sendShortcutSync(const AbstractWindow &window, const Keyboard::Shortcut &shortcut) {
     return false;
   }
 
@@ -143,7 +143,7 @@ public:
 
     if (!window) return false;
 
-    return sendShortcutSync(*window.get(), KeyboardShortcut::paste());
+    return sendShortcutSync(*window.get(), Keyboard::Shortcut::osPaste());
   }
 
   /**

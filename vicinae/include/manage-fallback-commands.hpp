@@ -2,7 +2,7 @@
 #include "common.hpp"
 #include "navigation-controller.hpp"
 #include "ui/views/list-view.hpp"
-#include "../src/ui/image/url.hpp"
+#include "ui/image/url.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "service-registry.hpp"
 #include "ui/action-pannel/action.hpp"
@@ -97,21 +97,15 @@ protected:
   }
 
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
-    auto panel = std::make_unique<ActionPanelState>();
+    auto panel = std::make_unique<ListActionPanelState>();
     auto manager = ctx->services->rootItemManager();
     auto section = panel->createSection();
 
     if (manager->isFallback(m_item->uniqueId())) {
       auto disable = new DisableFallbackAction(m_item->uniqueId());
-
-      disable->setPrimary(true);
-      disable->setShortcut({.key = "return"});
       section->addAction(disable);
     } else {
       auto enable = new EnableFallbackAction(m_item->uniqueId());
-
-      enable->setPrimary(true);
-      enable->setShortcut({.key = "return"});
       section->addAction(enable);
     }
 
@@ -127,7 +121,7 @@ public:
 // Overrides item actions when no filtering is applied
 class RootFallbackListItem : public FallbackListItem {
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
-    auto panel = std::make_unique<ActionPanelState>();
+    auto panel = std::make_unique<ListActionPanelState>();
     auto manager = ctx->services->rootItemManager();
     auto section = panel->createSection();
     auto metadata = manager->itemMetadata(m_item->uniqueId());
@@ -136,19 +130,13 @@ class RootFallbackListItem : public FallbackListItem {
     if (metadata.isFallback()) {
       auto disableFallback = new DisableFallbackAction(m_item->uniqueId());
 
-      disableFallback->setPrimary(true);
-      disableFallback->setShortcut({.key = "return"});
       section->addAction(disableFallback);
-
       if (metadata.fallbackPosition > 0) { section->addAction(new MoveFallbackUpAction(m_item->uniqueId())); }
       if (metadata.fallbackPosition < maxFallbackPosition) {
         section->addAction(new MoveFallbackDownAction(m_item->uniqueId()));
       }
     } else {
       auto enableFallback = new EnableFallbackAction(m_item->uniqueId());
-
-      enableFallback->setPrimary(true);
-      enableFallback->setShortcut({.key = "return"});
       section->addAction(enableFallback);
     }
 

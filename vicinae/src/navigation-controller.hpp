@@ -123,23 +123,23 @@ private:
     }
   }
 
-  std::vector<KeyboardShortcutModel> shortcutsForPreset(ShortcutPreset preset) {
+  std::vector<Keyboard::Shortcut> shortcutsForPreset(ShortcutPreset preset) {
     switch (preset) {
     case ShortcutPreset::List:
-      return {KeyboardShortcutModel::enter(), KeyboardShortcutModel::submit()};
+      return {Keyboard::Shortcut::enter(), Keyboard::Shortcut::submit()};
     case ShortcutPreset::Form:
-      return {KeyboardShortcutModel::submit()};
+      return {Keyboard::Shortcut::submit()};
     default:
       break;
     }
 
-    return {KeyboardShortcutModel::enter()};
+    return {Keyboard::Shortcut::enter()};
   }
 
   bool m_autoSelectPrimary = true;
   QString m_title;
   std::vector<std::unique_ptr<ActionPanelSectionState>> m_sections;
-  std::vector<KeyboardShortcutModel> m_defaultShortcuts;
+  std::vector<Keyboard::Shortcut> m_defaultShortcuts;
   AbstractAction *m_primary = nullptr;
   ActionPanelSectionState *m_primarySection = nullptr;
 };

@@ -30,7 +30,10 @@ void ButtonWidget::setLeftIcon(const ImageURL &url, QSize size) {
   setLeftAccessory(icon);
 }
 
-void ButtonWidget::setText(const QString &text) { label->setText(text); }
+void ButtonWidget::setText(const QString &text) {
+  label->setText(text);
+  label->setVisible(!text.isEmpty());
+}
 
 void ButtonWidget::setRightAccessory(const ImageURL &url, QSize size) {
   auto icon = new ImageWidget;

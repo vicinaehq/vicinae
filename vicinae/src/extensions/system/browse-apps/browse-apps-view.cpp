@@ -78,13 +78,13 @@ private:
       auto action = actions[i];
       auto openAction = new OpenAppAction(action, action->displayName(), {});
 
-      if (i < 9) { openAction->setShortcut({.key = QString::number(i + 1), .modifiers = {"ctrl", "shift"}}); }
+      if (i < 9) { openAction->setShortcut(QString("control+shift+%1").arg(i + 1)); }
       mainSection->addAction(openAction);
     }
 
     if (auto opener = appDb->findDefaultOpener(m_app->path().c_str())) {
       auto openLocation = new OpenAppAction(opener, "Open Location", {m_app->path().c_str()});
-      openLocation->setShortcut({.key = "O", .modifiers = {"ctrl"}});
+      openLocation->setShortcut(Keybind::OpenAction);
       utils->addAction(openLocation);
     }
 

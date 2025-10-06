@@ -33,16 +33,12 @@ public:
   ExtensionDetailView()
       : markdownEditor(new MarkdownRenderer), metadata(new VerticalMetadata()),
         m_split(new SplitDetailWidget) {
+    setDefaultActionShortcuts({Keyboard::Shortcut::enter(), Keyboard::Shortcut::submit()});
     m_split->setMainWidget(markdownEditor);
     m_split->setDetailWidget(metadata);
     m_split->setRatio(0.40);
 
     VStack().add(m_split).imbue(this);
-
-    setDefaultActionShortcuts({
-        {.key = "return"},
-        {.key = "return", .modifiers = {"shift"}},
-    });
   }
 
   void render(const RenderModel &model) override {

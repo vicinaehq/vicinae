@@ -1,5 +1,6 @@
 #include "cli.hpp"
 #include "daemon/ipc-client.hpp"
+#include "utils.hpp"
 #include "lib/CLI11.hpp"
 #include "ui/dmenu-view/dmenu-view.hpp"
 #include "vicinae.hpp"

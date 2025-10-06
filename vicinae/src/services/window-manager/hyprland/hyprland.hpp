@@ -46,7 +46,7 @@ public:
   WorkspacePtr getActiveWorkspace() const override;
 
   bool supportsInputForwarding() const override;
-  bool sendShortcutSync(const AbstractWindow &window, const KeyboardShortcut &shortcut) override;
+  bool sendShortcutSync(const AbstractWindow &window, const Keyboard::Shortcut &shortcut) override;
   void focusWindowSync(const AbstractWindow &window) const override;
   bool closeWindow(const AbstractWindow &window) const override;
   bool isActivatable() const override;

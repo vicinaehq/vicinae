@@ -70,9 +70,6 @@ public:
 
   // GNOME-specific capabilities
   bool supportsInputForwarding() const override { return false; } // Not implemented yet
-  bool sendShortcutSync(const AbstractWindow &window, const KeyboardShortcut &shortcut) override {
-    return false;
-  }
 
   /**
    * Get detailed information for a specific window

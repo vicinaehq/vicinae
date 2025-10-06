@@ -4,7 +4,7 @@
 #include "common.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/text-link/text-link.hpp"
-#include "../../../ui/image/url.hpp"
+#include "ui/image/url.hpp"
 #include "services/raycast/raycast-store.hpp"
 #include "settings/extension-settings.hpp"
 #include "theme.hpp"
@@ -271,15 +271,13 @@ class RaycastStoreDetailView : public BaseView {
         });
     auto uninstall = new UninstallExtensionAction(m_ext.id);
 
-    install->setShortcut({.key = "return"});
-
     auto main = panel->createSection();
     auto danger = panel->createSection();
 
     main->addAction(install);
     install->setPrimary(true);
     danger->addAction(uninstall);
-    uninstall->setShortcut(KeyboardShortcutModel::remove());
+    uninstall->setShortcut(Keybind::RemoveAction);
 
     setActions(std::move(panel));
   }

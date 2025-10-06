@@ -362,6 +362,13 @@ set(SRCS
 	src/ui/toast/toast.cpp
 	src/ui/color-box/color-box.cpp
 
+	src/lib/keyboard/keybind-manager.hpp
+	src/lib/keyboard/keybind-manager.cpp
+	src/lib/keyboard/keyboard.cpp
+
+	src/ui/shortcut-recorder/shortcut-recorder.hpp
+	src/ui/shortcut-recorder/shortcut-recorder.cpp
+
 	# settings
 	src/settings/settings-window.hpp
 	src/settings/settings-window.cpp
@@ -370,6 +377,7 @@ set(SRCS
 	src/settings/command-metadata-settings-detail.cpp
 	src/settings/extension-settings-detail.cpp
 	src/settings/app-settings-detail.cpp
+	src/settings/keybind-settings.cpp
 
 	src/ui/omni-tree/omni-tree.hpp
 	src/ui/omni-tree/omni-tree.cpp
@@ -397,6 +405,7 @@ set(SRCS
 
 	src/ui/typography/typography.hpp
 	src/ui/typography/typography.cpp
+
 
 	src/ui/preference-dropdown/preference-dropdown.hpp
 	src/ui/preference-dropdown/preference-dropdown.cpp

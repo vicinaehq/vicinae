@@ -112,9 +112,6 @@ public:
     auto section = panel->createSection();
     auto setTheme = new SetThemeAction(m_theme.id);
 
-    setTheme->setShortcut({.key = "return"});
-    setTheme->setPrimary(true);
-
     panel->setTitle(m_theme.name);
     section->addAction(setTheme);
 
