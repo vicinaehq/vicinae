@@ -210,7 +210,7 @@ Shortcut::Shortcut(const QString &str) {
   bool gotKey = false;
 
   for (const auto &str : strs) {
-    if (auto it = modifierMap.find(str); it != modifierMap.end()) {
+    if (auto it = modifierMap.find(str.toLower()); it != modifierMap.end()) {
       m_modifiers.setFlag(it->second);
     } else if (auto it = keyMap.find(str.toLower()); it != keyMap.end()) {
       gotKey = true;
