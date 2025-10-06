@@ -309,7 +309,7 @@ public:
 
 class EditClipboardKeywordsAction : public PushAction<EditClipboardSelectionKeywordsView, QString> {
   QString title() const override { return "Edit keywords"; }
-  ImageURL icon() const override { return ImageURL::builtin("text"); }
+  std::optional<ImageURL> icon() const override { return ImageURL::builtin("text"); }
 
 public:
   EditClipboardKeywordsAction(const QString &id) : PushAction(id) {}
@@ -337,7 +337,7 @@ class RemoveAllSelectionsAction : public AbstractAction {
 
 public:
   QString title() const override { return "Remove all"; }
-  ImageURL icon() const override { return ImageURL::builtin("trash"); }
+  std::optional<ImageURL> icon() const override { return ImageURL::builtin("trash"); }
 
   RemoveAllSelectionsAction() { setStyle(AbstractAction::Style::Danger); }
 };

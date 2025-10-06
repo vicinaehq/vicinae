@@ -47,7 +47,7 @@ void MarkItemAsFavorite::execute(ApplicationContext *ctx) {
 MarkItemAsFavorite::MarkItemAsFavorite(const QString &id)
     : AbstractAction("Mark as favorite", ImageURL::builtin("stars")), m_id(id) {}
 
-ImageURL ToggleItemAsFavorite::icon() const {
+std::optional<ImageURL> ToggleItemAsFavorite::icon() const {
   if (m_value) return ImageURL::builtin("star-disabled");
   return ImageURL::builtin("star");
 }

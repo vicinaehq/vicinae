@@ -23,7 +23,7 @@ class ExtensionSimpleView : public SimpleView {
   std::vector<Keyboard::Shortcut> m_defaultActionShortcuts;
 
   AbstractAction *createActionFromModel(const ActionModel &model) {
-    return new StaticAction(model.title, model.icon.value_or(std::monostate()), [this, model]() {
+    return new StaticAction(model.title, model.icon, [this, model]() {
       qDebug() << "notify action" << model.onAction;
       notify(model.onAction, {});
 

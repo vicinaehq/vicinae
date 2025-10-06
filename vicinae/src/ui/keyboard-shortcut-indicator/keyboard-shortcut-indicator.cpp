@@ -130,4 +130,6 @@ void KeyboardShortcutIndicatorWidget::setShortcut(const Keyboard::Shortcut &mode
   update();
 }
 
-KeyboardShortcutIndicatorWidget::KeyboardShortcutIndicatorWidget(QWidget *parent) : QWidget(parent) {}
+KeyboardShortcutIndicatorWidget::KeyboardShortcutIndicatorWidget(QWidget *parent) : QWidget(parent) {
+  setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+}

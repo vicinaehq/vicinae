@@ -50,6 +50,7 @@ ShortcutButton::ShortcutButton()
   auto layout = new QHBoxLayout;
 
   setFocusPolicy(Qt::NoFocus);
+  _shortcut_indicator->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   layout->setAlignment(Qt::AlignVCenter);
   layout->addWidget(_label, 0, Qt::AlignLeft);
   layout->addWidget(_shortcut_indicator, 0, Qt::AlignRight);
