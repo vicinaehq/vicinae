@@ -19,10 +19,10 @@ public:
   static Shortcut fromString(const QString &str) { return str; }
   static Shortcut fromKeyPress(const QKeyEvent &event) { return Shortcut(&event); }
 
-  Shortcut() { m_isValid = false; }
-  Shortcut(Qt::Key key, Qt::KeyboardModifiers mods = {}) : m_key(key), m_modifiers(mods) {}
+  Shortcut() : m_isValid(false) {}
+  Shortcut(Qt::Key key, Qt::KeyboardModifiers mods = {}) : m_key(key), m_modifiers(mods), m_isValid(true) {}
   Shortcut(const QKeyEvent *event)
-      : m_key(static_cast<Qt::Key>(event->key())), m_modifiers(event->modifiers()) {}
+      : m_key(static_cast<Qt::Key>(event->key())), m_modifiers(event->modifiers()), m_isValid(true) {}
 
   /**
    * Construct shortcut from a named keybind, which are application keybinds that are configurable by the user

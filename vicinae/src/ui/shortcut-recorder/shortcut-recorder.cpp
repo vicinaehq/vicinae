@@ -124,7 +124,7 @@ void ShortcutRecorder::keyPressEvent(QKeyEvent *event) {
     }
   }
 
-  if (isModKey(static_cast<Qt::Key>(event->key()))) {
+  if (!shortcut.isValid() || !shortcut.isValidKey() || isModKey(static_cast<Qt::Key>(event->key()))) {
     m_text->setText("Recording...");
     return;
   }
