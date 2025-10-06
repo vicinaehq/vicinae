@@ -7,6 +7,7 @@
 #include <qlogging.h>
 #include <qnamespace.h>
 #include "extension/form/extension-dropdown.hpp"
+#include "keyboard/keybind-manager.hpp"
 #include "ui/form/app-picker-input.hpp"
 #include "ui/form/selector-input.hpp"
 #include "ui/omni-list/omni-list.hpp"
@@ -89,7 +90,8 @@ bool ExtensionListComponent::inputFilter(QKeyEvent *event) {
     }
   }
 
-  if (m_selector->isVisible() && KeyBindingService::isSearchAccessoryKey(event, keybinding)) {
+  if (m_selector->isVisible() &&
+      KeybindManager::instance()->resolve(Keybind::OpenSearchAccessorySelector) == event) {
     m_selector->openSelector();
     return true;
   }

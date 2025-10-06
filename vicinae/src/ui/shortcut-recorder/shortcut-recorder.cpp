@@ -6,7 +6,7 @@
 #include <qwidget.h>
 
 ShortcutRecorder::ShortcutRecorder(QWidget *parent) {
-  m_parent = parent;
+  m_target = parent;
   setupUI();
 }
 
@@ -68,7 +68,7 @@ void ShortcutRecorder::recompute() {
   updateGeometry();
   adjustSize();
   show();
-  auto targetPos = m_parent->mapToGlobal(QPoint(m_parent->width() / 2 - width() / 2, -(height() + 10)));
+  auto targetPos = m_target->mapToGlobal(QPoint(m_target->width() / 2 - width() / 2, -(height() + 10)));
   move(targetPos);
 }
 
@@ -94,6 +94,12 @@ void ShortcutRecorder::clear() {
 
 bool ShortcutRecorder::isModKey(Qt::Key key) { return key >= Qt::Key_Shift && key <= Qt::Key_Alt; }
 bool ShortcutRecorder::isCloseKey(Qt::Key key) { return key == Qt::Key_Escape || key == Qt::Key_Backspace; }
+
+bool ShortcutRecorder::eventFilter(QObject *sender, QEvent *event) {
+  if (sender == m_target && event->type() == QEvent::Destroy) { deleteLater(); }
+
+  return Popover::eventFilter(sender, event);
+}
 
 void ShortcutRecorder::keyPressEvent(QKeyEvent *event) {
   m_closeTimer.stop();

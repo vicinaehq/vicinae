@@ -43,10 +43,6 @@ private:
 class KeybindField : public QWidget {
 public:
   KeybindField() {
-    // m_removeBtn->setFixedSize(16, 16);
-    // m_removeBtn->layout()->setContentsMargins(0, 0, 0, 0);
-    // m_removeBtn->setUrl(ImageURL::builtin("xmark"));
-    // m_removeBtn->setBackgroundColor(Qt::transparent);
     m_indicator->setBackgroundColor(Qt::transparent);
     m_indicator->hide();
 
@@ -104,7 +100,6 @@ protected:
 private:
   QGraphicsOpacityEffect *m_opacityEffect = new QGraphicsOpacityEffect;
   KeyboardShortcutIndicatorWidget *m_indicator = new KeyboardShortcutIndicatorWidget;
-  // IconButton *m_removeBtn = new IconButton;
   ShortcutRecorder *m_recorder = new ShortcutRecorder(this);
   Keybind m_bind;
 };
@@ -251,6 +246,7 @@ protected:
     m_tree->setAlternateBackgroundColor(SemanticColor::MainHoverBackground);
     m_input->setRightIcon(ImageURL::builtin("magnifying-glass"));
     m_input->installEventFilter(this);
+    m_input->setPlaceholderText("Search for keybinds...");
 
     HStack().divided(1).add(m_leftPane).add(m_rightPane).imbue(this);
 

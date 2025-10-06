@@ -67,13 +67,4 @@ public:
     }
     return false;
   }
-
-  static bool isSearchAccessoryKey(QKeyEvent *event, const QString &keybinding) {
-    switch (getMode(keybinding)) {
-    case KeyBindingMode::Emacs:
-      return event->keyCombination() == QKeyCombination(Qt::AltModifier, Qt::Key_P);
-    default:
-      return event->keyCombination() == QKeyCombination(Qt::ControlModifier, Qt::Key_P);
-    }
-  }
 };

@@ -11,6 +11,7 @@
 
 enum class Keybind : uint8_t {
   ToggleActionPanel = 0,
+  OpenSearchAccessorySelector,
   OpenSettings,
 
   // common action keybinds
@@ -44,6 +45,13 @@ static const std::unordered_map<Keybind, KeybindInfo> infos{
 		.description = "Toggle the action panel to access and filter through the list of available actions for the currently selected item",
 		.icon = "switch",
 		.dflt = Keyboard::Shortcut(Qt::Key_B, Qt::ControlModifier)
+	}},
+	{Keybind::OpenSearchAccessorySelector, KeybindInfo{
+		.id = "open-search-filter", 
+		.name = "Open Search Filter",
+		.description = "Open the search filter selector if present",
+		.icon = "arrow-up",
+		.dflt = Keyboard::Shortcut(Qt::Key_P, Qt::ControlModifier)
 	}},
 	{Keybind::OpenSettings, KeybindInfo{
 		.id = "open-settings", 

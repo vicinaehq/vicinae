@@ -1,5 +1,6 @@
 #include "clipboard-history-view.hpp"
 #include "clipboard-actions.hpp"
+#include "keyboard/keybind-manager.hpp"
 #include "manage-quicklinks-command.hpp"
 #include "services/clipboard/clipboard-db.hpp"
 #include "services/keybinding/keybinding-service.hpp"
@@ -606,7 +607,7 @@ bool ClipboardHistoryView::inputFilter(QKeyEvent *event) {
     }
   }
 
-  if (KeyBindingService::isSearchAccessoryKey(event, keybinding)) {
+  if (KeybindManager::instance()->resolve(Keybind::OpenSearchAccessorySelector) == event) {
     m_filterInput->openSelector();
     return true;
   }
