@@ -29,6 +29,7 @@ void NavigationStatusWidget::setSuffixIcon(const std::optional<ImageURL> &icon) 
 
 void NavigationStatusWidget::setupUI() {
   m_navigationTitle = new TypographyWidget(this);
+  m_navigationTitle->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   m_navigationIcon->setFixedSize(20, 20);
   m_suffixIcon->setFixedSize(20, 20);
   m_suffixIcon->hide();

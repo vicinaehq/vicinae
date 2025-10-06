@@ -15,10 +15,13 @@ template <typename T, typename... Args> class PushAction : public AbstractAction
   }
 
   virtual QString title() const override = 0;
-  virtual ImageURL icon() const override = 0;
+  virtual std::optional<ImageURL> icon() const override = 0;
 
   virtual QString navigationTitle() const { return title(); }
-  virtual QString navigationIcon() const { return icon(); }
+  virtual QString navigationIcon() const {
+    if (auto i = icon()) { return i.value(); }
+    return QString();
+  }
 
 public:
   PushAction(Args... args) : m_viewArgs(std::make_tuple(args...)) {}
