@@ -27,6 +27,7 @@ void ShortcutRecorder::setupUI() {
   m_text->setAlignment(Qt::AlignHCenter);
   m_indicator->setBackgroundColor(SemanticColor::MainBackground);
   m_indicator->hide();
+  m_target->installEventFilter(this);
 
   auto modifierRequired = [](const Keyboard::Shortcut &shortcut) {
     if (!shortcut.hasMods()) return "A modifier is required";

@@ -21,6 +21,7 @@ public:
   using Validator = std::function<QString(const Keyboard::Shortcut &shortcut)>;
 
   ShortcutRecorder(QWidget *parent);
+
   void attach(QWidget *widget);
 
   /**
