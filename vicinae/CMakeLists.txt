@@ -363,6 +363,7 @@ set(SRCS
 	src/ui/color-box/color-box.cpp
 
 	src/lib/keyboard/keybind-manager.hpp
+	src/lib/keyboard/keybind-manager.cpp
 	src/lib/keyboard/keyboard.cpp
 
 	src/ui/shortcut-recorder/shortcut-recorder.hpp
@@ -403,6 +404,7 @@ set(SRCS
 
 	src/ui/typography/typography.hpp
 	src/ui/typography/typography.cpp
+
 
 	src/ui/preference-dropdown/preference-dropdown.hpp
 	src/ui/preference-dropdown/preference-dropdown.cpp
