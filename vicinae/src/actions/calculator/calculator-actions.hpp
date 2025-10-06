@@ -76,7 +76,7 @@ class PutCalculatorAnswerInSearchBar : public AbstractAction {
 
 public:
   QString title() const override { return "Put answer in search bar"; }
-  ImageURL icon() const override { return ImageURL::builtin("text"); }
+  std::optional<ImageURL> icon() const override { return ImageURL::builtin("text"); }
 
   PutCalculatorAnswerInSearchBar(const AbstractCalculatorBackend::CalculatorResult &item) : m_item(item) {}
 };
@@ -93,7 +93,7 @@ public:
   }
 
   QString title() const override { return "Pin entry"; }
-  ImageURL icon() const override { return ImageURL::builtin("pin"); }
+  std::optional<ImageURL> icon() const override { return ImageURL::builtin("pin"); }
 
   PinCalculatorHistoryRecordAction(const QString &id) : m_id(id) {}
 };
@@ -111,7 +111,7 @@ public:
   }
 
   QString title() const override { return "Unpin entry"; }
-  ImageURL icon() const override { return ImageURL::builtin("pin-disabled"); }
+  std::optional<ImageURL> icon() const override { return ImageURL::builtin("pin-disabled"); }
 
   UnpinCalculatorHistoryRecordAction(const QString &id) : m_id(id) {}
 };
@@ -129,7 +129,7 @@ public:
   }
 
   QString title() const override { return "Delete entry"; }
-  ImageURL icon() const override { return ImageURL::builtin("trash"); }
+  std::optional<ImageURL> icon() const override { return ImageURL::builtin("trash"); }
 
   RemoveCalculatorHistoryRecordAction(const QString &id) : m_id(id) {
     setStyle(AbstractAction::Style::Danger);
@@ -165,7 +165,7 @@ setConfirmText("Remove entries", SemanticColor::Red);
 
 public:
   QString title() const override { return "Delete all entries"; }
-  ImageURL icon() const override { return ImageURL::builtin("trash"); }
+  std::optional<ImageURL> icon() const override { return ImageURL::builtin("trash"); }
 
   RemoveAllCalculatorHistoryRecordsAction() { setStyle(AbstractAction::Style::Danger); }
 };

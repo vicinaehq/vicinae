@@ -1,12 +1,14 @@
 #include "ui/action-pannel/action-list-widget.hpp"
+#include "layout.hpp"
 #include "theme.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/image/image.hpp"
 #include "ui/typography/typography.hpp"
 #include <qlogging.h>
 
-ActionListWidget &ActionListWidget::setIconUrl(const ImageURL &url) {
-  m_icon->setUrl(url);
+ActionListWidget &ActionListWidget::setIconUrl(const std::optional<ImageURL> &url) {
+  if (url) { m_icon->setUrl(url.value()); }
+  m_icon->setVisible(url.has_value());
   return *this;
 }
 
@@ -43,14 +45,14 @@ void ActionListWidget::setAction(const AbstractAction *action) {
   switch (action->style()) {
   case AbstractAction::Style::Normal:
     m_label->setColor(SemanticColor::TextPrimary);
-    m_icon->setUrl(action->icon());
+    setIconUrl(action->icon());
     break;
   case AbstractAction::Style::Danger: {
     m_label->setColor(SemanticColor::Red);
-    auto url = action->icon();
-
-    url.setFill(SemanticColor::Red);
-    m_icon->setUrl(url);
+    if (auto url = action->icon()) {
+      url->setFill(SemanticColor::Red);
+      setIconUrl(url);
+    }
     break;
   }
   }
@@ -67,18 +69,17 @@ ActionListWidget::ActionListWidget()
     : m_icon(new ImageWidget), m_label(new TypographyWidget),
       m_shortcut(new KeyboardShortcutIndicatorWidget) {
   auto &theme = ThemeService::instance().theme();
-  auto layout = new QHBoxLayout;
 
+  setFixedHeight(45);
   m_shortcut->hide();
-  m_shortcut->setBackgroundColor(theme.colors.statusBackground);
-
+  m_icon->hide();
   m_icon->setFixedSize(22, 22);
-  layout->setAlignment(Qt::AlignVCenter);
-  layout->setSpacing(10);
-  layout->addWidget(m_icon);
-  layout->addWidget(m_label);
-  layout->addWidget(m_shortcut, 0, Qt::AlignRight);
-  layout->setContentsMargins(8, 8, 8, 8);
-
-  setLayout(layout);
+  m_shortcut->setBackgroundColor(SemanticColor::StatusBackground);
+  HStack()
+      .margins(8)
+      .spacing(10)
+      .add(HStack().spacing(10).add(m_icon).add(m_label))
+      .add(m_shortcut)
+      .justifyBetween()
+      .imbue(this);
 }

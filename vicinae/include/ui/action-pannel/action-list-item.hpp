@@ -9,11 +9,11 @@ public:
 
   QString generateId() const override;
   OmniListItemWidget *createWidget() const override;
-  int calculateHeight(int width) const override;
   bool recyclable() const override;
   void setup(ActionListWidget *widget) const;
   void recycle(QWidget *base) const override;
   size_t recyclingId() const override;
+  int calculateHeight(int width) const override;
 
 public:
   ActionListItem(AbstractAction *action);

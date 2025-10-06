@@ -27,7 +27,7 @@ class OpenRawProgramAction : public AbstractAction {
 public:
   void setClearSearch(bool value) { m_clearSearch = value; }
   QString title() const override { return "Execute program"; }
-  ImageURL icon() const override { return ImageURL::builtin("terminal"); }
+  std::optional<ImageURL> icon() const override { return ImageURL::builtin("terminal"); }
 
   OpenRawProgramAction(const QString &prog, const std::vector<QString> args);
 };

@@ -27,6 +27,10 @@ class AbstractAction : public NonCopyable {
 public:
   enum class Style { Normal, Danger };
 
+  AbstractAction() {}
+  AbstractAction(const QString &title, const std::optional<ImageURL> &icon) : m_title(title), m_icon(icon) {}
+  ~AbstractAction() {}
+
   void setShortcut(const Keyboard::Shortcut &shortcut) { m_shortcuts = {shortcut}; }
   void addShortcut(const Keyboard::Shortcut &shortcut) { m_shortcuts.emplace_back(shortcut); }
 
@@ -70,10 +74,7 @@ public:
   }
 
   virtual QString title() const { return m_title; }
-  virtual ImageURL icon() const { return m_icon; }
-
-  AbstractAction() {}
-  AbstractAction(const QString &title, const ImageURL &icon) : m_title(title), m_icon(icon) {}
+  virtual std::optional<ImageURL> icon() const { return m_icon; }
 
   virtual void execute(ApplicationContext *context) {}
 
@@ -82,11 +83,9 @@ public:
 
   virtual bool isPushView() const { return false; }
 
-  ~AbstractAction() {}
-
 protected:
   QString m_title;
-  ImageURL m_icon;
+  std::optional<ImageURL> m_icon;
   Style m_style = Style::Normal;
   std::vector<Keyboard::Shortcut> m_shortcuts;
   bool m_primary = false;
@@ -112,7 +111,7 @@ public:
   virtual void executeAfter(ApplicationContext *ctx) {}
 
   QString title() const override { return m_proxy->title(); }
-  ImageURL icon() const override { return m_proxy->icon(); }
+  std::optional<ImageURL> icon() const override { return m_proxy->icon(); }
 
 private:
   std::unique_ptr<AbstractAction> m_proxy;
@@ -126,10 +125,10 @@ struct StaticAction : public AbstractAction {
   }
 
 public:
-  StaticAction(const QString &title, const ImageURL &url, const std::function<void()> &fn)
+  StaticAction(const QString &title, const std::optional<ImageURL> &url, const std::function<void()> &fn)
       : AbstractAction(title, url), m_fn([fn](ApplicationContext *ctx) { fn(); }) {}
 
-  StaticAction(const QString &title, const ImageURL &url,
+  StaticAction(const QString &title, const std::optional<ImageURL> &url,
                const std::function<void(ApplicationContext *ctx)> &fn)
       : AbstractAction(title, url), m_fn(fn) {}
 };

@@ -34,7 +34,7 @@ class ToggleItemAsFavorite : public AbstractAction {
 
   void execute(ApplicationContext *ctx) override;
   QString title() const override;
-  ImageURL icon() const override;
+  std::optional<ImageURL> icon() const override;
 
 public:
   ToggleItemAsFavorite(const QString &id, bool currentValue);
@@ -45,7 +45,7 @@ public:
   OpenItemPreferencesAction(const QString &id) : m_id(id) {}
   void execute(ApplicationContext *context) override;
   QString title() const override { return "Open Preferences"; }
-  ImageURL icon() const override { return ImageURL::builtin("cog"); }
+  std::optional<ImageURL> icon() const override { return ImageURL::builtin("cog"); }
 
 private:
   QString m_id;

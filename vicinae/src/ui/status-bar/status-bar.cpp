@@ -29,6 +29,7 @@ void NavigationStatusWidget::setSuffixIcon(const std::optional<ImageURL> &icon) 
 
 void NavigationStatusWidget::setupUI() {
   m_navigationTitle = new TypographyWidget(this);
+  m_navigationTitle->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   m_navigationIcon->setFixedSize(20, 20);
   m_suffixIcon->setFixedSize(20, 20);
   m_suffixIcon->hide();
@@ -95,10 +96,10 @@ void GlobalBar::setupUI() {
   HStack()
       .marginsX(15)
       .marginsY(5)
+      .spacing(10)
       .add(m_leftWidget)
       .addStretch()
-      .add(m_primaryActionButton)
-      .add(m_actionButton)
+      .add(HStack().add(m_primaryActionButton).add(m_actionButton))
       .imbue(this);
 
   connect(m_primaryActionButton, &ShortcutButton::clicked, this,

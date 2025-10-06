@@ -62,7 +62,7 @@ public:
     }
   }
   QString title() const override { return "Reset ranking"; }
-  ImageURL icon() const override { return ImageURL::builtin("arrow-counter-clockwise"); }
+  std::optional<ImageURL> icon() const override { return ImageURL::builtin("arrow-counter-clockwise"); }
 
   ResetEmojiRankingAction(std::string_view emoji) : m_emoji(emoji) {}
 };
@@ -95,7 +95,7 @@ public:
     }
   }
 
-  ImageURL icon() const override { return ImageURL::builtin("pin"); }
+  std::optional<ImageURL> icon() const override { return ImageURL::builtin("pin"); }
   QString title() const override { return "Pin emoji"; };
 
   PinEmojiAction(std::string_view emoji) : m_emoji(emoji) {}
@@ -103,7 +103,7 @@ public:
 
 class EditEmojiKeywordsAction : public PushAction<EditEmojiKeywordsView, std::string_view> {
   QString title() const override { return "Edit custom keywords"; }
-  ImageURL icon() const override { return ImageURL::builtin("text"); }
+  std::optional<ImageURL> icon() const override { return ImageURL::builtin("text"); }
 
 public:
   EditEmojiKeywordsAction(std::string_view emoji) : PushAction(emoji) {}
@@ -124,7 +124,7 @@ public:
     }
   }
 
-  ImageURL icon() const override { return ImageURL::builtin("pin-disabled"); }
+  std::optional<ImageURL> icon() const override { return ImageURL::builtin("pin-disabled"); }
   QString title() const override { return "Unpin emoji"; };
 
   UnpinEmojiAction(std::string_view emoji) : m_emoji(emoji) {}

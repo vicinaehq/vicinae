@@ -21,7 +21,7 @@ class DisableFallbackAction : public AbstractAction {
   }
 
   QString title() const override { return "Disable fallback"; }
-  ImageURL icon() const override { return ImageURL::builtin("trash"); }
+  std::optional<ImageURL> icon() const override { return ImageURL::builtin("trash"); }
 
 public:
   DisableFallbackAction(const QString &id) : m_id(id) {}
@@ -38,7 +38,7 @@ class MoveFallbackUpAction : public AbstractAction {
   }
 
   QString title() const override { return "Move fallback up"; }
-  ImageURL icon() const override { return ImageURL::builtin("arrow-up"); }
+  std::optional<ImageURL> icon() const override { return ImageURL::builtin("arrow-up"); }
 
 public:
   MoveFallbackUpAction(const QString &id) : m_id(id) {}
@@ -55,7 +55,7 @@ class MoveFallbackDownAction : public AbstractAction {
   }
 
   QString title() const override { return "Move fallback down"; }
-  ImageURL icon() const override { return ImageURL::builtin("arrow-down"); }
+  std::optional<ImageURL> icon() const override { return ImageURL::builtin("arrow-down"); }
 
 public:
   MoveFallbackDownAction(const QString &id) : m_id(id) {}
@@ -71,7 +71,7 @@ class EnableFallbackAction : public AbstractAction {
   }
 
   QString title() const override { return "Enable fallback"; }
-  ImageURL icon() const override { return ImageURL::builtin("checkmark"); }
+  std::optional<ImageURL> icon() const override { return ImageURL::builtin("checkmark"); }
 
 public:
   EnableFallbackAction(const QString &id) : m_id(id) {}

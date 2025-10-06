@@ -12,7 +12,7 @@ class ActionListWidget : public SelectableOmniListWidget {
   KeyboardShortcutIndicatorWidget *m_shortcut;
 
 public:
-  ActionListWidget &setIconUrl(const ImageURL &url);
+  ActionListWidget &setIconUrl(const std::optional<ImageURL> &url);
   ActionListWidget &setShortcut(const Keyboard::Shortcut &shortcut);
   ActionListWidget &clearShortcut();
   ActionListWidget &setTitle(const QString &title);
