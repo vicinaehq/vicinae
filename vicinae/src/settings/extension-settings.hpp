@@ -9,6 +9,7 @@
 #include "ui/form/base-input.hpp"
 #include "ui/form/checkbox.hpp"
 #include "ui/image/image.hpp"
+#include "ui/shortcut-recorder/shortcut-recorder.hpp"
 #include "ui/vertical-scroll-area/vertical-scroll-area.hpp"
 #include "ui/scroll-bar/scroll-bar.hpp"
 #include "ui/omni-tree/omni-tree.hpp"

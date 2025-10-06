@@ -3,10 +3,16 @@
 #include <qwidget.h>
 
 class OmniListItemWidget : public QWidget {
-  Q_OBJECT;
+  Q_OBJECT
+
+signals:
+  void clicked();
+  void doubleClicked();
+  void rightClicked();
 
 public:
   virtual void selectionChanged(bool selected) { Q_UNUSED(selected); }
+  virtual void activated() {}
 
   /**
    * Explicitly clears conditional state on the widget such as hover status
@@ -17,9 +23,4 @@ public:
   virtual void clearTransientState() {}
 
   OmniListItemWidget(QWidget *parent = nullptr) : QWidget(parent) {}
-
-signals:
-  void clicked();
-  void doubleClicked();
-  void rightClicked();
 };

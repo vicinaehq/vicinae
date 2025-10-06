@@ -160,6 +160,13 @@ public:
   }
 };
 
+class OmniTreeActivatableWidget : public QWidget {
+  Q_OBJECT
+
+public:
+  virtual void activated() {}
+};
+
 class OmniTreeRowWidget : public OmniListItemWidget {
   QGraphicsOpacityEffect *m_opacityEffect = new QGraphicsOpacityEffect(this);
   std::vector<QWidget *> m_columns;
@@ -175,6 +182,12 @@ class OmniTreeRowWidget : public OmniListItemWidget {
   void selectionChanged(bool selected) override {
     m_selected = selected;
     update();
+  }
+
+  void activated() override {
+    for (const auto &column : m_columns) {
+      if (auto w = qobject_cast<OmniTreeActivatableWidget *>(column)) { w->activated(); }
+    }
   }
 
   void paintEvent(QPaintEvent *event) override {
@@ -223,18 +236,12 @@ public:
   void setExpandable(bool value) {
     m_expandable = value;
     m_left->setFoldIconVisiblity(value);
+    m_left->setFolded(false);
   }
 
   auto widgets() const { return m_columns; }
 
-  int computeLeftSpacing() const {
-    int spacing = 0;
-
-    if (!m_expandable) spacing += 20; // account for missing icon
-    spacing += m_indent * 15;
-
-    return spacing;
-  }
+  int computeLeftSpacing() const { return m_indent * 15 + ((!m_expandable && m_indent) * 20); }
 
   void setColumnWidgets(HeaderInfo *header, const std::vector<QWidget *> &widgets) {
     while (m_sceneLayout->count() > 0) {
@@ -347,7 +354,9 @@ public:
 
     for (int i = 0; i != cols.size(); ++i) {
       auto &column = cols.at(i);
-      widgets.emplace_back(m_delegate->widgetForColumn(i));
+      auto widget = m_delegate->widgetForColumn(i);
+      m_delegate->refreshForColumn(widget, i);
+      widgets.emplace_back(widget);
     }
 
     widget->setColumnWidgets(m_header, widgets);

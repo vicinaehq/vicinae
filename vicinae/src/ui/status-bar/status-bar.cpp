@@ -1,10 +1,10 @@
 #include "status-bar.hpp"
 #include "common.hpp"
+#include "keyboard/keybind-manager.hpp"
 #include "navigation-controller.hpp"
-#include "../image/url.hpp"
+#include "ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "services/config/config-service.hpp"
-#include "theme.hpp"
 #include "utils/layout.hpp"
 #include "vicinae.hpp"
 #include "ui/shortcut-button/shortcut-button.hpp"
@@ -51,22 +51,13 @@ void GlobalBar::actionsChanged(const ActionPanelState &panel) {
 
   if (primaryAction) {
     m_primaryActionButton->setText(primaryAction->title());
-    m_primaryActionButton->setShortcut(
-        primaryAction->shortcut().value_or(KeyboardShortcutModel{.key = "return"}));
+    m_primaryActionButton->setShortcut(primaryAction->shortcut().value_or(Keyboard::Shortcut::enter()));
   }
 
   m_primaryActionButton->setVisible(primaryAction);
   m_actionButton->setText("Actions");
   m_actionButton->setVisible(panel.actionCount() > 1);
-
-  // Show shortcut hint based on keybinding scheme to avoid conflicts
-  auto config = ServiceRegistry::instance()->config();
-  const QString keybinding = config ? config->value().keybinding : QString("default");
-  if (keybinding == "emacs") {
-    m_actionButton->setShortcut(KeyboardShortcutModel{.key = "O", .modifiers = {"ctrl"}});
-  } else {
-    m_actionButton->setShortcut(KeyboardShortcutModel{.key = "B", .modifiers = {"ctrl"}});
-  }
+  m_actionButton->setShortcut(Keybind::ToggleActionPanel);
 }
 
 void GlobalBar::handleViewStateChange(const NavigationController::ViewState &state) {}
@@ -129,6 +120,11 @@ void GlobalBar::setupUI() {
 
   connect(m_ctx.navigation.get(), &NavigationController::navigationSuffixIconChanged, this,
           [this](const std::optional<ImageURL> &icon) { m_status->setSuffixIcon(icon); });
+
+  connect(KeybindManager::instance(), &KeybindManager::keybindChanged, this,
+          [this](const Keybind &bind, const Keyboard::Shortcut &shortcut) {
+            if (bind == Keybind::ToggleActionPanel) { m_actionButton->setShortcut(shortcut); }
+          });
 
   connect(m_ctx.navigation.get(), &NavigationController::currentViewStateChanged, this,
           &GlobalBar::handleViewStateChange);

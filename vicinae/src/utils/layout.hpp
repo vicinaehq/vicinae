@@ -1,7 +1,7 @@
 #pragma once
 #include <algorithm>
 #include <qboxlayout.h>
-#include "../ui/image/url.hpp"
+#include "ui/image/url.hpp"
 #include "theme.hpp"
 #include "ui/image/image.hpp"
 #include "ui/button/button.hpp"

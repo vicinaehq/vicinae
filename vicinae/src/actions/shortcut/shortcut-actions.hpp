@@ -140,7 +140,7 @@ public:
   RemoveShortcutAction(const std::shared_ptr<Shortcut> &link)
       : AbstractAction("Remove link", ImageURL::builtin("trash")), m_shortcut(link) {
     setStyle(AbstractAction::Style::Danger);
-    setShortcut({.key = "X", .modifiers = {"ctrl", "shift"}});
+    setShortcut(Keybind::DangerousRemoveAction);
   }
 };
 

@@ -1,9 +1,11 @@
 #include "launcher-window.hpp"
 #include "action-panel/action-panel.hpp"
 #include "common.hpp"
+#include "keyboard/keybind-manager.hpp"
 #include "ui/status-bar/status-bar.hpp"
 #include "service-registry.hpp"
 #include "services/config/config-service.hpp"
+#include "lib/keyboard/keyboard.hpp"
 #include "ui/top-bar/top-bar.hpp"
 #include "utils/environment.hpp"
 #include <qcoreevent.h>
@@ -218,36 +220,28 @@ void LauncherWindow::handleViewChange(const NavigationController::ViewState &sta
 }
 
 bool LauncherWindow::event(QEvent *event) {
+  auto kb = KeybindManager::instance();
+
   if (event->type() == QEvent::KeyPress) {
     auto keyEvent = static_cast<QKeyEvent *>(event);
 
-    // Toggle action panel: Default Ctrl+B ; Emacs Ctrl+O
-    auto config = ServiceRegistry::instance()->config();
-    const QString keybinding = config ? config->value().keybinding : QString("default");
-    if (keybinding == "emacs") {
-      if (keyEvent->keyCombination() == QKeyCombination(Qt::ControlModifier, Qt::Key_O)) {
-        m_ctx.navigation->toggleActionPanel();
-        return true;
-      }
-    } else {
-      if (keyEvent->keyCombination() == QKeyCombination(Qt::ControlModifier, Qt::Key_B)) {
-        m_ctx.navigation->toggleActionPanel();
-        return true;
-      }
+    if (kb->resolve(Keybind::ToggleActionPanel) == keyEvent) {
+      m_ctx.navigation->toggleActionPanel();
+      return true;
     }
 
-    if (keyEvent->keyCombination() == QKeyCombination(Qt::ShiftModifier, Qt::Key_Escape)) {
+    if (keyEvent == Keyboard::Shortcut(Qt::Key_Escape, Qt::ShiftModifier)) {
       m_ctx.navigation->popToRoot();
       return true;
     }
 
-    if (keyEvent->keyCombination() == QKeyCombination(Qt::ControlModifier, Qt::Key_Comma)) {
+    if (kb->resolve(Keybind::OpenSettings) == keyEvent) {
       m_ctx.navigation->closeWindow();
       m_ctx.settings->openWindow();
       return true;
     }
 
-    if (keyEvent->key() == Qt::Key_Escape && !keyEvent->modifiers().toInt()) {
+    if (keyEvent == Keyboard::Shortcut(Qt::Key_Escape)) {
       m_ctx.navigation->goBack();
       return true;
     }
@@ -276,7 +270,6 @@ void LauncherWindow::handleActionVisibilityChanged(bool visible) {
 void LauncherWindow::paintEvent(QPaintEvent *event) {
   auto &config = m_ctx.services->config()->value();
   auto &theme = ThemeService::instance().theme();
-  int borderWidth = 2;
   QColor finalBgColor = theme.colors.mainBackground;
   QPainter painter(this);
 
@@ -292,7 +285,7 @@ void LauncherWindow::paintEvent(QPaintEvent *event) {
 
     painter.fillPath(path, finalBgColor);
 
-    QPen pen(theme.colors.border, borderWidth);
+    QPen pen(theme.colors.border, Omnicast::WINDOW_BORDER_WIDTH);
     painter.setPen(pen);
 
     painter.drawPath(path);

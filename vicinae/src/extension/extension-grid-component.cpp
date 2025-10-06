@@ -160,9 +160,8 @@ void ExtensionGridComponent::textChanged(const QString &text) {
 }
 
 ExtensionGridComponent::ExtensionGridComponent() : _debounce(new QTimer(this)), _shouldResetSelection(true) {
-  setDefaultActionShortcuts({primaryShortcut, secondaryShortcut});
+  setDefaultActionShortcuts({Keyboard::Shortcut::enter(), Keyboard::Shortcut::submit()});
   _debounce->setSingleShot(true);
-
   m_content->addWidget(m_list);
   m_content->addWidget(m_emptyView);
   m_content->setCurrentWidget(m_list);

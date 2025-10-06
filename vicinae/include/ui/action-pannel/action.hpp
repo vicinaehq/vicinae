@@ -1,8 +1,7 @@
 #pragma once
 #include "common.hpp"
-#include "extend/action-model.hpp"
-#include "../../../src/ui/image/url.hpp"
-#include "ui/keyboard.hpp"
+#include "ui/image/url.hpp"
+#include "lib/keyboard/keyboard.hpp"
 #include <qcontainerfwd.h>
 #include <qevent.h>
 #include <qlogging.h>
@@ -28,13 +27,13 @@ class AbstractAction : public NonCopyable {
 public:
   enum class Style { Normal, Danger };
 
-  void setShortcut(const KeyboardShortcutModel &shortcut) { m_shortcuts = {shortcut}; }
-  void addShortcut(const KeyboardShortcutModel &shortcut) { m_shortcuts.emplace_back(shortcut); }
+  void setShortcut(const Keyboard::Shortcut &shortcut) { m_shortcuts = {shortcut}; }
+  void addShortcut(const Keyboard::Shortcut &shortcut) { m_shortcuts.emplace_back(shortcut); }
 
   /**
    * First registered keyboard shortcut, sometimes referred as "primary" keyboard shortcut.
    */
-  std::optional<KeyboardShortcutModel> shortcut() const {
+  std::optional<Keyboard::Shortcut> shortcut() const {
     if (m_shortcuts.empty()) return std::nullopt;
 
     return m_shortcuts.front();
@@ -43,15 +42,14 @@ public:
   bool isBoundTo(const QKeyEvent *event) {
     if (event->key() == Qt::Key_Enter) {
       qDebug() << "remapping numpad enter to return";
-      return isBoundTo(KeyboardShortcut(Qt::Key_Return, event->modifiers()));
+      return isBoundTo(Keyboard::Shortcut(Qt::Key_Return, event->modifiers()));
     }
 
-    return isBoundTo(KeyboardShortcut(event));
+    return isBoundTo(Keyboard::Shortcut(event));
   }
-  bool isBoundTo(const KeyboardShortcutModel &model) { return isBoundTo(KeyboardShortcut(model)); }
-  bool isBoundTo(const KeyboardShortcut &shortcut) {
-    return std::ranges::any_of(m_shortcuts,
-                               [&](auto &&model) { return KeyboardShortcut(model).equals(shortcut); });
+
+  bool isBoundTo(const Keyboard::Shortcut &shortcut) {
+    return std::ranges::any_of(m_shortcuts, [&](auto &&model) { return model == shortcut; });
   }
 
   // Note: submenu are currently not implemented and a good implementation will require
@@ -90,7 +88,7 @@ protected:
   QString m_title;
   ImageURL m_icon;
   Style m_style = Style::Normal;
-  std::vector<KeyboardShortcutModel> m_shortcuts;
+  std::vector<Keyboard::Shortcut> m_shortcuts;
   bool m_primary = false;
   bool m_autoClose = false;
 

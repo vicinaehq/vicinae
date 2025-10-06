@@ -1,6 +1,6 @@
 #include "actions/root-search/root-search-actions.hpp"
 #include "common.hpp"
-#include "../../ui/image/url.hpp"
+#include "ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/alert/alert.hpp"
@@ -96,8 +96,6 @@ QString DefaultActionWrapper::title() const { return m_action->title(); }
 DefaultActionWrapper::DefaultActionWrapper(const QString &id, AbstractAction *action)
     : AbstractAction(action->title(), action->icon()), m_id(id), m_action(action) {
   setAutoClose(action->autoClose());
-  setPrimary(true);
-  setShortcut({.key = "return"});
 }
 
 void DisableItemAction::execute(ApplicationContext *ctx) {

@@ -1,5 +1,6 @@
 #include "clipboard-history-view.hpp"
 #include "clipboard-actions.hpp"
+#include "keyboard/keybind-manager.hpp"
 #include "manage-quicklinks-command.hpp"
 #include "services/clipboard/clipboard-db.hpp"
 #include "services/keybinding/keybinding-service.hpp"
@@ -355,24 +356,17 @@ public:
     auto removeAll = new RemoveAllSelectionsAction();
     auto mainSection = panel->createSection();
 
-    editKeywords->setShortcut({.key = "E", .modifiers = {"ctrl"}});
-
+    editKeywords->setShortcut(Keybind::EditAction);
     remove->setStyle(AbstractAction::Style::Danger);
-    remove->setShortcut({.key = "X", .modifiers = {"ctrl"}});
-    removeAll->setShortcut({.key = "X", .modifiers = {"ctrl", "shift"}});
-
-    pin->setShortcut({.key = "P", .modifiers = {"shift", "ctrl"}});
+    remove->setShortcut(Keybind::RemoveAction);
+    removeAll->setShortcut(Keybind::DangerousRemoveAction);
+    pin->setShortcut(Keybind::PinAction);
 
     if (wm->canPaste()) {
       auto paste = new PasteClipboardSelection(info.id);
-
-      paste->setShortcut({.key = "return"});
-      paste->setPrimary(true);
       mainSection->addAction(paste);
-      copyToClipboard->setShortcut({.key = "return", .modifiers = {"shift"}});
     } else {
       copyToClipboard->setPrimary(true);
-      copyToClipboard->setShortcut({.key = "return"});
     }
 
     mainSection->addAction(copyToClipboard);
@@ -611,7 +605,7 @@ bool ClipboardHistoryView::inputFilter(QKeyEvent *event) {
     }
   }
 
-  if (KeyBindingService::isSearchAccessoryKey(event, keybinding)) {
+  if (KeybindManager::instance()->resolve(Keybind::OpenSearchAccessorySelector) == event) {
     m_filterInput->openSelector();
     return true;
   }

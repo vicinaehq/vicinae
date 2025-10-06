@@ -7,12 +7,19 @@
 #include <qnamespace.h>
 #include <qpainter.h>
 #include "ui/form/base-input.hpp"
+#include "ui/image/image.hpp"
 
 bool BaseInput::event(QEvent *event) { return QWidget::event(event); }
 
 void BaseInput::resizeEvent(QResizeEvent *event) {
   JsonFormItemWidget::resizeEvent(event);
   recalculate();
+}
+
+void BaseInput::setRightIcon(const ImageURL &icon) {
+  auto image = new ImageWidget;
+  image->setUrl(icon);
+  setRightAccessory(image);
 }
 
 void BaseInput::recalculate() {

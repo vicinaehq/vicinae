@@ -3,7 +3,7 @@
 #include "actions/fallback-actions.hpp"
 #include "actions/root-search/root-search-actions.hpp"
 #include "argument.hpp"
-#include "../../ui/image/url.hpp"
+#include "ui/image/url.hpp"
 #include "services/shortcut/shortcut-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "vicinae.hpp"
@@ -28,13 +28,11 @@ std::unique_ptr<ActionPanelState> RootShortcutItem::newActionPanel(ApplicationCo
   auto disable = new DisableItemAction(uniqueId());
 
   open->setClearSearch(true);
-  open->setPrimary(true);
-  open->setShortcut({.key = "return"});
   // openWith->setShortcut({.key = "return", .modifiers = {"shift"}});
-  duplicate->setShortcut({.key = "N", .modifiers = {"ctrl"}});
-  edit->setShortcut({.key = "E", .modifiers = {"ctrl"}});
-  remove->setShortcut({.key = "X", .modifiers = {"ctrl"}});
-  disable->setShortcut({.key = "X", .modifiers = {"ctrl", "shift"}});
+  duplicate->setShortcut(Keybind::DuplicateAction);
+  edit->setShortcut(Keybind::EditAction);
+  remove->setShortcut(Keybind::RemoveAction);
+  disable->setShortcut(Keybind::DangerousRemoveAction);
 
   panel->setTitle(m_link->name());
   mainSection->addAction(new DefaultActionWrapper(uniqueId(), open));
@@ -59,9 +57,6 @@ std::unique_ptr<ActionPanelState> RootShortcutItem::fallbackActionPanel(Applicat
   auto open = new OpenShortcutFromSearchText(m_link);
   auto manage = new ManageFallbackActions;
 
-  open->setShortcut({.key = "return"});
-  manage->setShortcut({.key = "return", .modifiers = {"shift"}});
-  open->setPrimary(true);
   panel->setTitle(m_link->name());
   main->addAction(open);
   main->addAction(manage);

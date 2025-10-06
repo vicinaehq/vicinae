@@ -1,16 +1,48 @@
 #include "extend/action-model.hpp"
 #include "extend/image-model.hpp"
+#include "keyboard/keybind.hpp"
+#include "keyboard/keyboard.hpp"
 #include <qjsonarray.h>
 #include <qjsonobject.h>
+#include <qjsonvalue.h>
 
-KeyboardShortcutModel ActionPannelParser::parseKeyboardShortcut(const QJsonObject &shortcut) {
-  KeyboardShortcutModel model{.key = shortcut.value("key").toString()};
+static const std::unordered_map<QString, Keybind> NAMED_SHORTCUT_MAP = {
+    {"copy", Keybind::CopyAction},
+    {"copy-deeplink", Keybind::CopyAction},
+    {"copy-name", Keybind::CopyNameAction},
+    {"copy-path", Keybind::CopyPathAction},
+    {"save", Keybind::SaveAction},
+    {"duplicate", Keybind::DuplicateAction},
+    {"edit", Keybind::EditAction},
+    {"move-down", Keybind::MoveDownAction},
+    {"move-up", Keybind::MoveUpAction},
+    {"new", Keybind::NewAction},
+    {"open", Keybind::OpenAction},
+    {"open-with", Keybind::OpenAction},
+    {"pin", Keybind::PinAction},
+    {"refresh", Keybind::RefreshAction},
+    {"remove", Keybind::RemoveAction},
+    {"remove-all", Keybind::DangerousRemoveAction},
+};
 
-  for (const auto &mod : shortcut.value("modifiers").toArray()) {
-    model.modifiers << mod.toString();
+Keyboard::Shortcut ActionPannelParser::parseKeyboardShortcut(const QJsonValue &shortcut) {
+  if (shortcut.isString()) {
+    auto str = shortcut.toString();
+
+    if (auto it = NAMED_SHORTCUT_MAP.find(str); it != NAMED_SHORTCUT_MAP.end()) { return it->second; }
+    return Keyboard::Shortcut::fromString(shortcut.toString());
   }
 
-  return model;
+  auto obj = shortcut.toObject();
+  QStringList strs;
+
+  strs << obj.value("key").toString();
+
+  for (const auto &mod : obj.value("modifiers").toArray()) {
+    strs << mod.toString();
+  }
+
+  return Keyboard::Shortcut::fromString(strs.join('+'));
 }
 
 ActionModel ActionPannelParser::parseAction(const QJsonObject &instance) {
@@ -24,9 +56,7 @@ ActionModel ActionPannelParser::parseAction(const QJsonObject &instance) {
 
   auto type = props.value("type").toString("callback");
 
-  if (props.contains("shortcut")) {
-    action.shortcut = parseKeyboardShortcut(props.value("shortcut").toObject());
-  }
+  if (props.contains("shortcut")) { action.shortcut = parseKeyboardShortcut(props.value("shortcut")); }
 
   if (props.contains("icon")) { action.icon = ImageModelParser().parse(props.value("icon")); }
 

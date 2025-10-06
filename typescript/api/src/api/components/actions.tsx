@@ -11,7 +11,12 @@ import { closeMainWindow } from "../controls";
 export type BaseActionProps = {
   title: string;
   icon?: ImageLike;
-  shortcut?: Keyboard.Shortcut;
+  /**
+   * The shortcut to bind this action to.
+   * It is highly recommended to use named shortcuts such as
+   * Keyboard.Shortcut.Common.Copy as they will respect user preferences.
+   */
+  shortcut?: Keyboard.Shortcut | Keyboard.Shortcut.Common;
   autoFocus?: boolean;
   style?: "regular" | "destructive";
 };

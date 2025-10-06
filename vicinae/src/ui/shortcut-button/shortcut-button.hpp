@@ -1,23 +1,22 @@
 #pragma once
 #include "ui/button-base/button-base.hpp"
+#include "lib/keyboard/keyboard.hpp"
 
 class TypographyWidget;
 class KeyboardShortcutIndicatorWidget;
-class KeyboardShortcutModel;
 
 class ShortcutButton : public ButtonBase {
-  Q_OBJECT
-
-  TypographyWidget *_label;
-  KeyboardShortcutIndicatorWidget *_shortcut_indicator;
-
 public:
+  ShortcutButton();
+
   void hoverChanged(bool hovered);
   void setText(const QString &text);
   void setTextColor(const QColor &color);
-  void setShortcut(const std::optional<KeyboardShortcutModel> &model);
-  KeyboardShortcutModel shortcut() const;
+  void setShortcut(const std::optional<Keyboard::Shortcut> &model);
+  Keyboard::Shortcut shortcut() const;
   void resetColor();
 
-  ShortcutButton();
+private:
+  TypographyWidget *_label;
+  KeyboardShortcutIndicatorWidget *_shortcut_indicator;
 };

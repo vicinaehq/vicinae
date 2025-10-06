@@ -1,4 +1,5 @@
 #include "top-bar.hpp"
+#include "keyboard/keybind-manager.hpp"
 #include "navigation-controller.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/arg-completer/arg-completer.hpp"
@@ -88,6 +89,11 @@ void GlobalHeader::handleTextEdited(const QString &text) { m_navigation.setSearc
 bool GlobalHeader::filterInputEvents(QEvent *event) {
   if (event->type() == QEvent::KeyPress) {
     auto keyEvent = static_cast<QKeyEvent *>(event);
+
+    if (KeybindManager::instance()->resolve(Keybind::ToggleActionPanel) == keyEvent) {
+      m_navigation.toggleActionPanel();
+      return true;
+    }
 
     // Escape behaviour can't be overriden: navigation primitives need to remain
     // predictable.

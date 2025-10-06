@@ -64,13 +64,11 @@ protected:
   }
 
   virtual std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
-    auto state = std::make_unique<ActionPanelState>();
+    auto state = std::make_unique<ListActionPanelState>();
     auto focusAction = new FocusWindowAction(_window);
-    focusAction->setPrimary(true);
-    focusAction->setShortcut({.key = "return"});
-
     auto closeAction = new CloseWindowAction(_window);
-    closeAction->setShortcut({.key = "Q", .modifiers = {"ctrl"}});
+
+    closeAction->setShortcut(Keyboard::Shortcut(Qt::Key_Q, Qt::ControlModifier));
 
     auto section = state->createSection("Window Actions");
     section->addAction(focusAction);

@@ -58,10 +58,8 @@ std::unique_ptr<ActionPanelState> CommandRootItem::fallbackActionPanel(Applicati
   auto open = new OpenBuiltinCommandAction(m_command, "Open command", "");
   auto manage = new ManageFallbackActions;
 
-  open->setShortcut({"return"});
-  open->setPrimary(true);
   open->setForwardSearchText(true);
-  manage->setShortcut(KeyboardShortcutModel::submit());
+  manage->setShortcut(Keyboard::Shortcut::submit());
 
   main->addAction(open);
   main->addAction(manage);

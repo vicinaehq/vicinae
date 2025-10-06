@@ -39,8 +39,6 @@ public:
 
   bool supportsInputForwarding() const override;
 
-  bool sendShortcutSync(const AbstractWindow &window, const KeyboardShortcut &shortcut) override;
-
   bool ping() const override;
 
   bool isActivatable() const override;
