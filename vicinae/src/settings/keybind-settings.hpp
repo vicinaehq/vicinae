@@ -53,7 +53,7 @@ public:
     HStack().mx(10).add(m_indicator).justifyBetween().imbue(this);
 
     m_recorder->setValidator([this](const Keyboard::Shortcut &shortcut) {
-      if (!shortcut.hasMods()) return QString("Modifier required");
+      if (!shortcut.hasMods() && !shortcut.isFunctionKey()) return QString("Modifier required");
       if (auto existing = KeybindManager::instance()->findBoundInfo(shortcut)) {
         return QString("Already bound to \"%1\"").arg(existing->name);
       }

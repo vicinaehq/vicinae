@@ -2,6 +2,7 @@
 #include "layout.hpp"
 #include "theme.hpp"
 #include <qevent.h>
+#include <qnamespace.h>
 #include <qwidget.h>
 
 ShortcutRecorder::ShortcutRecorder(QWidget *parent) {
@@ -92,12 +93,19 @@ void ShortcutRecorder::clear() {
 }
 
 bool ShortcutRecorder::isModKey(Qt::Key key) { return key >= Qt::Key_Shift && key <= Qt::Key_Alt; }
+bool ShortcutRecorder::isCloseKey(Qt::Key key) { return key == Qt::Key_Escape || key == Qt::Key_Backspace; }
 
 void ShortcutRecorder::keyPressEvent(QKeyEvent *event) {
-  if (event->key() == Qt::Key_Escape) { return QWidget::keyPressEvent(event); }
-  clear();
+  m_closeTimer.stop();
 
   Keyboard::Shortcut shortcut(event);
+
+  if (!shortcut.hasMods() && isCloseKey(shortcut.key())) {
+    close();
+    return;
+  }
+
+  clear();
 
   m_indicator->setShortcut(shortcut);
   m_indicator->show();

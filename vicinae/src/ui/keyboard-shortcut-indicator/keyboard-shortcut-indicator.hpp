@@ -21,6 +21,8 @@ protected:
   void drawKey(Qt::Key key, QRect rect, OmniPainter &painter);
   void drawModifier(Qt::KeyboardModifier, QRect rect, OmniPainter &painter);
 
+  QSize sizeForKey(Qt::Key key) const;
+
 private:
   Keyboard::Shortcut m_shortcut;
   int _hspacing = 5;

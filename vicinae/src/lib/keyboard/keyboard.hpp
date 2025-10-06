@@ -80,7 +80,20 @@ static const std::unordered_map<QString, Qt::Key> keyMap = {
 	{"space", Qt::Key_Space},
 	{"escape", Qt::Key_Escape},
 	{"enter", Qt::Key_Enter},
-	{"backspace", Qt::Key_Backspace}
+	{"backspace", Qt::Key_Backspace},
+
+	{"f1", Qt::Key_F1},
+	{"f2", Qt::Key_F2},
+	{"f3", Qt::Key_F3},
+	{"f4", Qt::Key_F4},
+	{"f5", Qt::Key_F5},
+	{"f6", Qt::Key_F6},
+	{"f7", Qt::Key_F7},
+	{"f8", Qt::Key_F8},
+	{"f9", Qt::Key_F9},
+	{"f10", Qt::Key_F10},
+	{"f11", Qt::Key_F11},
+	{"f12", Qt::Key_F12},
 };
 
 static const std::unordered_map<Qt::Key, QString> keyMapReverse{
@@ -154,7 +167,20 @@ static const std::unordered_map<Qt::Key, QString> keyMapReverse{
 	{Qt::Key_Space, "space"},
 	{Qt::Key_Escape, "escape"},
 	{Qt::Key_Enter, "enter"},
-	{Qt::Key_Backspace, "backspace"}
+	{Qt::Key_Backspace, "backspace"},
+
+	{Qt::Key_F1, "F1"},
+	{Qt::Key_F2, "F2"},
+	{Qt::Key_F3, "F3"},
+	{Qt::Key_F4, "F4"},
+	{Qt::Key_F5, "F5"},
+	{Qt::Key_F6, "F6"},
+	{Qt::Key_F7, "F7"},
+	{Qt::Key_F8, "F8"},
+	{Qt::Key_F9, "F9"},
+	{Qt::Key_F10, "F10"},
+	{Qt::Key_F11, "F11"},
+	{Qt::Key_F12, "F12"},
 };
 
 
@@ -207,6 +233,8 @@ public:
       : m_key(static_cast<Qt::Key>(event->key())), m_modifiers(event->modifiers()) {}
 
   Shortcut(const QString &str) {
+    auto sequence = QKeySequence::fromString(str);
+
     auto strs = str.split('+', Qt::SkipEmptyParts);
     bool gotKey = false;
 
@@ -234,6 +262,30 @@ public:
   bool isValid() const { return m_isValid; }
   operator bool() const { return isValid(); }
 
+  /**
+   * All unique keys in the shortcut, including modifiers.
+   * For instance, ctrl+shift+a returns {Qt::Key_Control, Qt::Key_Shift, Qt::Key_A}
+   */
+  std::vector<Qt::Key> allKeys() const {
+    auto mods = modKeys();
+
+    if (std::ranges::find(mods, m_key) == mods.end()) { mods.emplace_back(m_key); }
+
+    return mods;
+  }
+
+  std::vector<Qt::Key> modKeys() const {
+    std::vector<Qt::Key> keys;
+    keys.reserve(4);
+
+    if (m_modifiers.testFlag(Qt::MetaModifier)) { keys.emplace_back(Qt::Key_Meta); }
+    if (m_modifiers.testFlag(Qt::ControlModifier)) { keys.emplace_back(Qt::Key_Control); }
+    if (m_modifiers.testFlag(Qt::AltModifier)) { keys.emplace_back(Qt::Key_Alt); }
+    if (m_modifiers.testFlag(Qt::ShiftModifier)) { keys.emplace_back(Qt::Key_Shift); }
+
+    return keys;
+  }
+
   std::vector<Qt::KeyboardModifier> modList() const {
     std::vector<Qt::KeyboardModifier> modifiers;
 
@@ -246,6 +298,9 @@ public:
 
     return modifiers;
   }
+
+  bool isValidKey() const { return stringForKey(m_key).has_value(); }
+  bool isFunctionKey() const { return m_key >= Qt::Key_F1 && m_key <= Qt::Key_F12; }
 
   // The keyboard shortcut as a string.
   // This form is used to serialize shortcut data in config files/database.

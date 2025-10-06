@@ -30,6 +30,7 @@ public:
 
 protected:
   static bool isModKey(Qt::Key key);
+  static bool isCloseKey(Qt::Key key);
 
   void setupUI();
   void setColor(const ColorLike &color);
