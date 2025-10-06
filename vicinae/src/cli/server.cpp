@@ -229,7 +229,7 @@ void CliServerCommand::run(CLI::App *app) {
 
   ctx.navigation->launch(std::make_shared<RootCommand>());
 
-  qInfo() << "Vicinae server successfully started. Call vicinae without an argument to toggle the window";
+  qInfo() << "Vicinae server successfully started. Call \"vicinae toggle\" to toggle the window";
 
   qApp->exec();
 }
