@@ -85,6 +85,12 @@ if (NOT DEFINED VICINAE_GIT_COMMIT_HASH)
 	get_git_commit(VICINAE_GIT_COMMIT_HASH)
 endif()
 
+if (DEFINED VICINAE_PROVENANCE)
+	message(STATUS "Provenance was explicitly set to ${VICINAE_PROVENANCE}")
+else()
+	set(VICINAE_PROVENANCE "local")
+endif()
+
 message(STATUS "Vicinae version: ${VICINAE_GIT_TAG}")
 message(STATUS "Vicinae commit hash: ${VICINAE_GIT_COMMIT_HASH}")
 
@@ -92,6 +98,7 @@ get_cxx_compiler_name(CXX_COMPILER_NAME)
 
 add_compile_definitions(VICINAE_GIT_TAG="${VICINAE_GIT_TAG}")
 add_compile_definitions(VICINAE_GIT_COMMIT_HASH="${VICINAE_GIT_COMMIT_HASH}")
+add_compile_definitions(VICINAE_PROVENANCE="${VICINAE_PROVENANCE}")
 
 set(CMARK_LIBRARY "cmark-gfm")
 

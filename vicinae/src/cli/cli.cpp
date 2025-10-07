@@ -73,7 +73,8 @@ class VersionCommand : public AbstractCommandLineCommand {
 
   void run(CLI::App *app) override {
     std::cout << "Version " << VICINAE_GIT_TAG << " (commit " << VICINAE_GIT_COMMIT_HASH << ")\n"
-              << "Build: " << BUILD_INFO << "\n";
+              << "Build: " << BUILD_INFO << "\n"
+              << "Provenance: " << VICINAE_PROVENANCE << "\n";
   }
 };
 
