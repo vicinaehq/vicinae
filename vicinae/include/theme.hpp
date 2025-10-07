@@ -111,7 +111,7 @@ struct DynamicColor {
   bool adjustContrast = false;
 };
 
-using ColorLike = std::variant<QColor, SemanticColor, DynamicColor>;
+using ColorLike = std::variant<QColor, QString, SemanticColor, DynamicColor>;
 
 struct ColorPalette {
   QColor background;

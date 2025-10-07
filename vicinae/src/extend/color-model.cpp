@@ -10,8 +10,7 @@ ColorLike ColorLikeModelParser::parse(const QJsonValue &colorLike) {
     if (auto tint = ImageURL::tintForName(colorLike.toString()); tint != SemanticColor::InvalidTint) {
       return tint;
     }
-
-    return QColor(colorLike.toString());
+    return colorLike.toString();
   }
 
   if (colorLike.isObject()) {
