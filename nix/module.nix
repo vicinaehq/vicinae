@@ -35,6 +35,15 @@ in
       description = "If vicinae should use the layer shell";
     };
 
+    extensions = lib.mkOption {
+      type = lib.types.listOf lib.types.package;
+      default = [ ];
+      description = ''
+        List of Vicinae extensions to install.
+        You can use the `mkVicinaeExtension` function from the overlay to create extensions.
+      '';
+    };
+
     themes = lib.mkOption {
       default = { };
       description = ''
@@ -110,6 +119,13 @@ in
           text = builtins.toJSON theme;
         }
       ) cfg.themes;
+
+    xdg.dataFile = builtins.listToAttrs (
+      builtins.map (item: {
+        name = "vicinae/extensions/${item.name}";
+        value.source = item;
+      }) config.services.vicinae.extensions
+    );
 
     systemd.user.services.vicinae = {
       Unit = {

@@ -25,7 +25,7 @@
   wayland,
 }:
 let
-  src = ./.;
+  src = ../.;
 
   manifestRaw = builtins.readFile (src + /manifest.yaml);
 
