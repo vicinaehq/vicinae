@@ -31,7 +31,6 @@ void TagWidget::paintEvent(QPaintEvent *event) {
 
 void TagWidget::setColor(const std::optional<ColorLike> &color) {
   m_text->setColor(color.value_or(SemanticColor::TextPrimary));
-  m_image->setUrl(ImageURL(m_image->url()).setFill(color));
   m_color = color;
   update();
 }
@@ -39,7 +38,8 @@ void TagWidget::setColor(const std::optional<ColorLike> &color) {
 void TagWidget::setIcon(const ImageURL &icon) {
   ImageURL url(icon);
 
-  if (m_color && !url.fillColor()) { url.setFill(*m_color); }
+  if (m_color && url.type() == ImageURLType::Builtin) { url.setFill(m_color.value()); }
+  // if (m_color && !url.fillColor()) { url.setFill(*m_color); }
 
   m_image->setUrl(url);
   m_image->show();
