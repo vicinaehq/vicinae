@@ -37,9 +37,11 @@ public:
     m_split->setMainWidget(markdownEditor);
     m_split->setDetailWidget(metadata);
     m_split->setRatio(0.40);
-
+    markdownEditor->textEdit()->setFocusPolicy(Qt::StrongFocus);
     VStack().add(m_split).imbue(this);
   }
+
+  void initialize() override { markdownEditor->textEdit()->setFocus(); }
 
   void render(const RenderModel &model) override {
     auto newModel = std::get<RootDetailModel>(model);
