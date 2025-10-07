@@ -1,5 +1,6 @@
 #pragma once
 #include "favicon/favicon-service.hpp"
+#include "theme.hpp"
 #include "ui/views/base-view.hpp"
 #include "builtin_icon.hpp"
 #include "services/shortcut/shortcut-service.hpp"
@@ -34,6 +35,7 @@
 #include "services/app-service/app-service.hpp"
 #include "ui/views/form-view.hpp"
 #include "services/toast/toast-service.hpp"
+#include "vicinae.hpp"
 
 class AppSelectorItem : public SelectorInput::AbstractItem {
 public:
@@ -416,6 +418,11 @@ class EditShortcutView : public ShortcutFormView {
 public:
   EditShortcutView(const std::shared_ptr<Shortcut> &shortcut) : m_shortcut(shortcut) {}
 
+  QString initialNavigationTitle() const override { return "Edit Shortcut"; }
+  ImageURL initialNavigationIcon() const override {
+    return ImageURL::builtin("link").setBackgroundTint(Omnicast::ACCENT_COLOR);
+  }
+
   void initializeForm() override {
     auto appDb = context()->services->appDb();
 
@@ -462,6 +469,12 @@ class DuplicateShortcutView : public ShortcutFormView {
 
 public:
   DuplicateShortcutView(const std::shared_ptr<Shortcut> &shortcut) : m_shortcut(shortcut) {}
+
+  QString initialNavigationTitle() const override { return "Duplicate Shortcut"; }
+
+  ImageURL initialNavigationIcon() const override {
+    return ImageURL::builtin("link").setBackgroundTint(Omnicast::ACCENT_COLOR);
+  }
 
   void initializeForm() override {
     ShortcutFormView::initializeForm();
