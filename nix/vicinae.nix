@@ -65,6 +65,7 @@ stdenv.mkDerivation rec {
   cmakeFlags = [
     "-DVICINAE_GIT_TAG=${manifest.tag}"
     "-DVICINAE_GIT_COMMIT_HASH=${manifest.short_rev}"
+    "-DVICINAE_PROVENANCE=nix"
     "-DINSTALL_NODE_MODULES=OFF"
     "-DCMAKE_INSTALL_PREFIX=${placeholder "out"}"
     "-DCMAKE_INSTALL_DATAROOTDIR=share"

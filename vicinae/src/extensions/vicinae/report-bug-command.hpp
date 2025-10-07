@@ -8,8 +8,9 @@ static const QString ISSUE_TEMPLATE = R"(**System information**
 
 - Version: %1 (%2)
 - Build info: %3
-- OS: %4
-- QT Platform: %5
+- Provenance: %4
+- OS: %5
+- QT Platform: %6
 
 **Describe the bug**
 
@@ -59,6 +60,7 @@ class ReportVicinaeBugCommand : public BuiltinUrlCommand {
     QString content = ISSUE_TEMPLATE.arg(VICINAE_GIT_TAG)
                           .arg(VICINAE_GIT_COMMIT_HASH)
                           .arg(BUILD_INFO)
+                          .arg(VICINAE_PROVENANCE)
                           .arg(osString)
                           .arg(QApplication::platformName());
     QUrl url(Omnicast::GH_REPO_CREATE_ISSUE);

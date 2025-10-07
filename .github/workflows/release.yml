@@ -63,6 +63,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
             -DCMAKE_POLICY_VERSION_MINIMUM=3.5  \
             -DBUILD_TESTS=ON  \
+            -DVICINAE_PROVENANCE=binary_release \
             -DLTO=ON \
             -DUSE_SYSTEM_PROTOBUF=OFF \
             -DUSE_SYSTEM_ABSEIL=OFF \
@@ -122,6 +123,7 @@ jobs:
           cmake -G Ninja ..                           \
             -DCMAKE_BUILD_TYPE=${BUILD_TYPE}          \
             -DCMAKE_POLICY_VERSION_MINIMUM=3.5        \
+            -DVICINAE_PROVENANCE=appimage             \
             -DLTO=ON                                  \
             -DUSE_SYSTEM_PROTOBUF=OFF                 \
             -DUSE_SYSTEM_CMARK_GFM=OFF                \
