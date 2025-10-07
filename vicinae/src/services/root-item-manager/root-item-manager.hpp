@@ -35,6 +35,12 @@ public:
   virtual QString uniqueId() const = 0;
 
   /**
+   * If true, the 'space' key can be used to activate the item in the root search
+   * if the alias starts with the current search text.
+   */
+  virtual bool supportsAliasSpaceShortcut() const { return false; }
+
+  /**
    * The name of the item as it will be shown in the root menu.
    * This name is indexed by splitting it in multiple tokens at
    * word boundaries (assuming latin text).

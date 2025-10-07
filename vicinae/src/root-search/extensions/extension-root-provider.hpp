@@ -22,6 +22,9 @@ public:
                                                    const RootItemMetadata &metadata) override;
   std::unique_ptr<ActionPanelState> fallbackActionPanel(ApplicationContext *ctx,
                                                         const RootItemMetadata &metadata) override;
+
+  bool supportsAliasSpaceShortcut() const override { return m_command->isView(); }
+
   QString typeDisplayName() const override;
   QString uniqueId() const override;
   AccessoryList accessories() const override;
