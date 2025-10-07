@@ -24,7 +24,7 @@ public:
   }
   QColor operator()(const QColor &color) const { return color; }
   QColor operator()(const SemanticColor &color) const { return m_theme.resolveTint(color); }
-  QColor operator()(const QString &text) const { return QColor(text); }
+  QColor operator()(const QString &text) const { return Utils::colorFromString(text); }
 
 private:
   const ThemeInfo &m_theme;
@@ -46,7 +46,7 @@ public:
 
   QString operator()(const QColor &color) const { return color.name(); }
   QString operator()(const SemanticColor &color) const { return ImageURL::nameForTint(color); }
-  QColor operator()(const QString &text) const { return text; }
+  QString operator()(const QString &text) const { return text; }
 
 private:
   const ThemeInfo &m_theme;

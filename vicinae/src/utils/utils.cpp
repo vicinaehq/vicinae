@@ -219,9 +219,14 @@ bool isTextMimeType(const QString &mimeName) {
 
 QColor colorFromString(const QString &str) {
   QString trimmed = str.trimmed();
-  QColor color(trimmed);
 
-  if (color.isValid()) { return color; }
+  {
+    QColor color(trimmed);
+
+    if (color.isValid()) { return color; }
+    color = "#" + str;
+    if (color.isValid()) { return color; }
+  }
 
   QRegularExpression rgbRegex(R"(rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+)\s*)?\))",
                               QRegularExpression::CaseInsensitiveOption);
