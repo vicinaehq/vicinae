@@ -1,8 +1,5 @@
 #pragma once
 #include "ui/views/list-view.hpp"
-#include <qconstructormacros.h>
-#include <qnamespace.h>
-#include <qtmetamacros.h>
 
 class DMenuListView : public SearchableListView {
   Q_OBJECT
