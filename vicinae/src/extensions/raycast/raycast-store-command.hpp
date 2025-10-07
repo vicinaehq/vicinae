@@ -1,5 +1,6 @@
 #include "single-view-command-context.hpp"
 #include "store/store-listing-view.hpp"
+#include "theme.hpp"
 
 class RaycastStoreCommand : public BuiltinViewCommand<RaycastStoreListingView> {
   QString id() const override { return "store"; }
@@ -9,7 +10,7 @@ class RaycastStoreCommand : public BuiltinViewCommand<RaycastStoreListingView> {
   QString commandId() const override { return "store"; }
   ImageURL iconUrl() const override {
     auto icon = ImageURL::builtin("raycast");
-    icon.setBackgroundTint(Omnicast::ACCENT_COLOR);
+    icon.setBackgroundTint(SemanticColor::Red);
     return icon;
   }
   std::vector<Preference> preferences() const override { return {}; }
