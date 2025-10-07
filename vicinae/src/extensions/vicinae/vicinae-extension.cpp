@@ -74,6 +74,22 @@ class OpenSettingsCommand : public BuiltinCallbackCommand {
   }
 };
 
+class OpenKeybindSettingsCommand : public BuiltinCallbackCommand {
+  QString id() const override { return "keybind-settings"; }
+  QString name() const override { return "Open Vicinae Keybind Settings"; }
+  QString description() const override { return "Open the vicinae keybind settings window"; }
+  ImageURL iconUrl() const override {
+    return ImageURL::builtin("keyboard").setBackgroundTint(Omnicast::ACCENT_COLOR);
+  }
+
+  void execute(CommandController *controller) const override {
+    auto ctx = controller->context();
+
+    ctx->navigation->closeWindow();
+    ctx->settings->openTab("keybinds");
+  }
+};
+
 VicinaeExtension::VicinaeExtension() {
   registerCommand<OpenDocumentationCommand>();
   registerCommand<OpenAboutCommand>();
@@ -86,4 +102,5 @@ VicinaeExtension::VicinaeExtension() {
   registerCommand<OpenSettingsCommand>();
   registerCommand<OpenDiscordCommand>();
   registerCommand<SponsorVicinaeCommand>();
+  registerCommand<OpenKeybindSettingsCommand>();
 }
