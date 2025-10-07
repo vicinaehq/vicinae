@@ -18,8 +18,6 @@ class ListView : public SimpleView {
   QStackedWidget *m_content;
   EmptyViewWidget *m_emptyView;
 
-  virtual bool inputFilter(QKeyEvent *event) override;
-
 public:
   struct Actionnable {
     virtual QList<AbstractAction *> generateActions() const { return {}; };
@@ -54,6 +52,7 @@ protected:
   OmniList *m_list;
 
   virtual void itemSelected(const OmniList::AbstractVirtualItem *item);
+  virtual bool inputFilter(QKeyEvent *event) override;
 
   virtual void selectionChanged(const OmniList::AbstractVirtualItem *next,
                                 const OmniList::AbstractVirtualItem *previous);

@@ -394,6 +394,7 @@ set(SRCS
 	src/extensions/vicinae/refresh-apps-command.hpp
 	src/extensions/vicinae/refresh-apps-command.cpp
 	src/extensions/power-management/power-management-extension.cpp
+	src/extensions/root/root-search-view.cpp
 
 	src/extensions/system/browse-apps/browse-apps-view.cpp
 
