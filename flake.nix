@@ -21,7 +21,7 @@
       system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-        vicinaePkg = pkgs.callPackage ./vicinae.nix { };
+        vicinaePkg = pkgs.callPackage ./nix/vicinae.nix { };
         nix-update-script = pkgs.writeShellScriptBin "nix-update-script" ''
           OLD_API_DEPS_HASH=$(${pkgs.lib.getExe pkgs.nix} eval --raw .#packages.x86_64-linux.default.passthru.apiDeps.hash)
           OLD_EXT_MAN_DEPS_HASH=$(${pkgs.lib.getExe pkgs.nix} eval --raw .#packages.x86_64-linux.default.passthru.extensionManagerDeps.hash)
@@ -40,6 +40,7 @@
       {
         packages.default = vicinaePkg;
         packages.nix-update-script = nix-update-script;
+        mkVicinaeExtension = import ./nix/mkVicinaeExtension.nix;
         devShells.default = pkgs.mkShell {
           inputsFrom = [ vicinaePkg ]; # automatically pulls nativeBuildInputs + buildInputs
           buildInputs = [
@@ -56,6 +57,7 @@
     // {
       overlays.default = final: prev: {
         vicinae = self.packages.${final.system}.default;
+        mkVicinaeExtension = import ./nix/mkVicinaeExtension.nix;
       };
       homeManagerModules.default =
         {
@@ -64,7 +66,7 @@
           lib,
           ...
         }:
-        import ./module.nix {
+        import ./nix/module.nix {
           inherit
             config
             pkgs

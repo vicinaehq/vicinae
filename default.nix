@@ -2,5 +2,5 @@
   pkgs ? import <nixpkgs> { },
 }:
 {
-  vicinae = pkgs.callPackage ./vicinae.nix { };
+  vicinae = pkgs.callPackage ./nix/vicinae.nix { };
 }
