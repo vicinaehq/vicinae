@@ -388,12 +388,16 @@ set(SRCS
 	src/extensions/clipboard/history/clipboard-history-view.hpp
 	src/extensions/clipboard/history/clipboard-history-view.cpp
 
+	src/extensions/raycast/store/store-detail-view.cpp
+	src/extensions/raycast/store/store-listing-view.cpp
+
 	src/extensions/vicinae/refresh-apps-command.hpp
 	src/extensions/vicinae/refresh-apps-command.cpp
 	src/extensions/power-management/power-management-extension.cpp
 
 	src/extensions/system/browse-apps/browse-apps-view.cpp
 
+	src/ui/screenshot-list/screenshot-list.hpp
 	src/ui/switch/switch.hpp
 	src/ui/switch/switch.cpp
 	src/ui/file-picker/file-picker.hpp

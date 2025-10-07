@@ -1,14 +1,14 @@
 #pragma once
-#include "common.hpp"
 #include "../../ui/image/url.hpp"
 #include "raycast-store-command.hpp"
+#include "theme.hpp"
 
 class RaycastCompatExtension : public BuiltinCommandRepository {
 public:
   QString id() const override { return "raycast-compat"; }
   QString displayName() const override { return "Raycast Compat"; }
   ImageURL iconUrl() const override {
-    return ImageURL::builtin("raycast").setBackgroundTint(Omnicast::ACCENT_COLOR);
+    return ImageURL::builtin("raycast").setBackgroundTint(SemanticColor::Red);
   }
   QString description() const override { return "Raycast compatiblity features"; }
 
