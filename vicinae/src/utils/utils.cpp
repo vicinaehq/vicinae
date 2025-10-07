@@ -224,7 +224,7 @@ QColor colorFromString(const QString &str) {
     QColor color(trimmed);
 
     if (color.isValid()) { return color; }
-    color = "#" + str;
+    color = "#" + trimmed;
     if (color.isValid()) { return color; }
   }
 
