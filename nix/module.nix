@@ -2,12 +2,11 @@
   config,
   pkgs,
   lib,
-  self,
   ...
 }:
 let
   cfg = config.services.vicinae;
-  vicinaePkg = self.outputs.packages.${pkgs.system}.default;
+  vicinaePkg = pkgs.callPackage ./vicinae.nix { };
 in
 {
 

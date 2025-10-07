@@ -59,20 +59,6 @@
         vicinae = self.packages.${final.system}.default;
         mkVicinaeExtension = import ./nix/mkVicinaeExtension.nix;
       };
-      homeManagerModules.default =
-        {
-          config,
-          pkgs,
-          lib,
-          ...
-        }:
-        import ./nix/module.nix {
-          inherit
-            config
-            pkgs
-            lib
-            self
-            ;
-        };
+      homeManagerModules.default = import ./nix/module.nix;
     };
 }
