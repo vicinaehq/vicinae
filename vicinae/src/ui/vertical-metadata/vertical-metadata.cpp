@@ -42,8 +42,8 @@ void VerticalMetadata::setMetadata(const std::vector<MetadataItem> &metadatas) {
                                auto widget = new TagWidget;
 
                                widget->setText(tag.text);
-                               if (tag.icon) widget->setIcon(*tag.icon);
                                if (tag.color) widget->setColor(tag.color);
+                               if (tag.icon) widget->setIcon(*tag.icon);
 
                                return widget;
                              })
