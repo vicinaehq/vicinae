@@ -175,10 +175,8 @@ signals:
 
 private:
   bool matchesFilter(const GridItemViewModel &item, const QString &query) {
-    bool keywordMatches = std::ranges::any_of(
-        item.keywords, [&](auto &&keyword) { return keyword.contains(query, Qt::CaseInsensitive); });
-
-    return keywordMatches || item.title.contains(query, Qt::CaseInsensitive);
+    auto pred = [&](const QString &text) { return text.contains(query, Qt::CaseInsensitive); };
+    return pred(item.title) || pred(item.subtitle) || std::ranges::any_of(item.keywords, pred);
   }
 
   void render(OmniList::SelectionPolicy selectionPolicy) {

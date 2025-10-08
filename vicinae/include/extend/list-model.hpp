@@ -17,6 +17,7 @@ struct ListItemViewModel {
   std::optional<DetailModel> detail;
   std::optional<ActionPannelModel> actionPannel;
   std::vector<AccessoryModel> accessories;
+  std::vector<QString> keywords;
 };
 
 struct ListSectionModel {

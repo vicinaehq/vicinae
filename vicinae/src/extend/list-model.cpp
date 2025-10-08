@@ -22,6 +22,15 @@ ListItemViewModel ListModelParser::parseListItem(const QJsonObject &instance, si
   if (props.contains("icon")) { model.icon = ImageModelParser().parse((props.value("icon"))); }
 
   {
+    auto keywords = props.value("keywords").toArray();
+
+    model.keywords.reserve(keywords.size());
+    for (const auto &value : keywords) {
+      model.keywords.emplace_back(value.toString());
+    }
+  }
+
+  {
     auto accessories = props.value("accessories").toArray();
 
     model.accessories.reserve(accessories.size());
