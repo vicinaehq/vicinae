@@ -24,9 +24,11 @@ GridItemViewModel GridModelParser::parseListItem(const QJsonObject &instance, si
   if (content.isObject()) {
     auto obj = content.toObject();
 
-    if (obj.contains("value")) {
-      if (obj.contains("tooltip")) { model.tooltip = obj.value("tooltip").toString(); }
-      if (obj.contains("color")) { model.content = ColorLikeModelParser().parse(obj.value("color")); }
+    if (obj.contains("tooltip")) { model.tooltip = obj.value("tooltip").toString(); }
+
+    if (obj.contains("color")) {
+      model.content = ColorLikeModelParser().parse(obj.value("color"));
+    } else if (obj.contains("value")) {
       model.content = ImageModelParser().parse(obj.value("value"));
     } else {
       model.content = ImageModelParser().parse(content);
