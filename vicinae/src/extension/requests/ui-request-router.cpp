@@ -191,6 +191,13 @@ QFuture<proto::ext::extension::Response *> UIRequestRouter::confirmAlert(const u
   alert->setTitle(req.title().c_str());
   alert->setMessage(req.description().c_str());
   alert->setConfirmText(req.primary_action().title().c_str(), SemanticColor::Red);
+
+  if (req.has_icon()) {
+    ImageURL url(req.icon());
+    if (url.isBuiltin()) { url.setFill(SemanticColor::Red); }
+    alert->setIcon(url);
+  }
+
   alert->setCancelText(req.dismiss_action().title().c_str(), SemanticColor::TextPrimary);
 
   alert->setCallback([promise](bool value) mutable {

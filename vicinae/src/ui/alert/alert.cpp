@@ -5,6 +5,7 @@
 #include "service-registry.hpp"
 #include "services/config/config-service.hpp"
 #include "services/keybinding/keybinding-service.hpp"
+#include "vicinae.hpp"
 #include <qpainterpath.h>
 
 void CallbackAlertWidget::confirm() const {
@@ -33,19 +34,17 @@ void AlertWidget::interrupted() { canceled(); }
 void AlertWidget::paintEvent(QPaintEvent *event) {
   auto &theme = ThemeService::instance().theme();
   int borderRadius = 6;
-  QPainter painter(this);
+  OmniPainter painter(this);
   QPainterPath path;
-  QPen pen(theme.colors.border, 2);
 
   painter.setRenderHint(QPainter::Antialiasing, true);
   path.addRoundedRect(rect(), borderRadius, borderRadius);
-
   painter.setClipPath(path);
 
   QColor finalColor(theme.colors.statusBackground);
 
   finalColor.setAlphaF(0.98);
-  painter.setPen(pen);
+  painter.setThemePen(SemanticColor::Border, Omnicast::WINDOW_BORDER_WIDTH);
   painter.fillPath(path, finalColor);
   painter.drawPath(path);
 }
@@ -93,12 +92,8 @@ void AlertWidget::keyPressEvent(QKeyEvent *event) {
     auto config = ServiceRegistry::instance()->config();
     const QString keybinding = config ? config->value().keybinding : QString("default");
 
-    if (KeyBindingService::isLeftKey(event, keybinding)) {
-      return _cancelBtn->setFocus();
-    }
-    if (KeyBindingService::isRightKey(event, keybinding)) {
-      return _actionBtn->setFocus();
-    }
+    if (KeyBindingService::isLeftKey(event, keybinding)) { return _cancelBtn->setFocus(); }
+    if (KeyBindingService::isRightKey(event, keybinding)) { return _actionBtn->setFocus(); }
   }
 
   if (event->modifiers().toInt() == 0) {
@@ -123,7 +118,7 @@ AlertWidget::AlertWidget(QWidget *parent)
   _message->setColor(SemanticColor::TextSecondary);
   setFocusPolicy(Qt::StrongFocus);
 
-  _icon->setFixedSize(25, 25);
+  _icon->setFixedSize(30, 30);
   _icon->setUrl(ImageURL::builtin("warning").setFill(SemanticColor::Red));
   _title->setSize(TextSize::TextTitle);
   _title->setText("Are you sure?");

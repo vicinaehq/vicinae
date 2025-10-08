@@ -75,6 +75,8 @@ public:
   std::optional<QString> fallback() const { return _fallback; }
   ImageURL &withFallback(const ImageURL &fallback);
 
+  bool isBuiltin() const { return type() == Builtin; }
+
   QUrl url() const;
 
   ImageURL &param(const QString &name, const QString &value);
