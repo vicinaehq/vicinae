@@ -87,6 +87,7 @@ void Shortcut::parseLink(const QString &link) {
       if (ch == '}') {
         m_parts.emplace_back(parsed);
         insertPlaceholder(parsed);
+        parsed = {};
         startPos = i + 1;
         state = BK_NORMAL;
         break;
