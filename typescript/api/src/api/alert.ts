@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { bus } from "./bus";
-import { Image } from "./image";
+import { Image, serializeProtoImage } from "./image";
 import { ConfirmAlertActionStyle, ConfirmAlertRequest } from "./proto/ui";
 
 export namespace Alert {
@@ -39,6 +39,7 @@ export const confirmAlert = async (
     const req = ConfirmAlertRequest.create({
       title: options.title,
       description: options.message ?? "Are you sure?",
+	  icon: options.icon && serializeProtoImage(options.icon),
       rememberUserChoice: false,
       primaryAction: {
         title: options.primaryAction?.title ?? "Confirm",
