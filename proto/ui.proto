@@ -73,8 +73,7 @@ enum ConfirmAlertActionStyle {
 message ConfirmAlertRequest {
   string title = 1;
   string description = 2;
-  // TODO: replace with proper ImageLike message
-  optional string icon = 3;
+  Image icon = 3;
   ConfirmAlertAction dismiss_action = 4;
   ConfirmAlertAction primary_action = 5;
   bool remember_user_choice = 6;
