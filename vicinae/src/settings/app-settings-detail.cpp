@@ -32,7 +32,7 @@ void AppSettingsDetail::setupUI() {
 
   m_filePickerItem->setLabel("Application folders");
   m_filePickerItem->setDescription(
-      "Application folders searched by Omnicast to index applications shown in the root search. System "
+      "Application folders searched by Vicinae to index applications shown in the root search. System "
       "search paths are computed at runtime and cannot be removed.");
 
   layout->addWidget(m_filePickerItem);
