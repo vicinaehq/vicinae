@@ -10,7 +10,6 @@
 #include <qtimer.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
-#include "common.hpp"
 #include "extend/list-model.hpp"
 #include "extension/extension-list-detail.hpp"
 #include "extension/extension-view.hpp"
@@ -19,9 +18,6 @@
 #include "ui/form/selector-input.hpp"
 #include "ui/omni-list/omni-list.hpp"
 #include "ui/split-detail/split-detail.hpp"
-#include "service-registry.hpp"
-#include "services/config/config-service.hpp"
-#include "services/keybinding/keybinding-service.hpp"
 
 class ExtensionListItem : public AbstractDefaultListItem {
 public:
@@ -61,9 +57,10 @@ class ExtensionList : public QWidget {
   QString m_filter;
 
   bool matchesFilter(const ListItemViewModel &item, const QString &query) {
+    auto pred = [&](const QString &kw) { return kw.contains(query, Qt::CaseInsensitive); };
+
     // TODO: use better search algorithm if we run into issues
-    return item.title.contains(query, Qt::CaseInsensitive) ||
-           item.subtitle.contains(query, Qt::CaseInsensitive);
+    return pred(item.title) || pred(item.subtitle) || std::ranges::any_of(item.keywords, pred);
   }
 
   void render(OmniList::SelectionPolicy selectionPolicy) {

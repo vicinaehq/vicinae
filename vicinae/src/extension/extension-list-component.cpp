@@ -10,7 +10,10 @@
 #include "keyboard/keybind-manager.hpp"
 #include "ui/form/app-picker-input.hpp"
 #include "ui/form/selector-input.hpp"
+#include "services/keybinding/keybinding-service.hpp"
 #include "ui/omni-list/omni-list.hpp"
+#include "services/config/config-service.hpp"
+#include "service-registry.hpp"
 
 static const std::chrono::milliseconds THROTTLE_DEBOUNCE_DURATION(300);
 
