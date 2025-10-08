@@ -119,7 +119,7 @@ class FontListItem : public AbstractDefaultListItem, public ListView::Actionnabl
 
   public:
     SetAppFont(const QFont &font)
-        : AbstractAction("Set as omnicast font", ImageURL::builtin("text")), m_font(font) {}
+        : AbstractAction("Set as vicinae font", ImageURL::builtin("text")), m_font(font) {}
   };
 
   QString m_family;

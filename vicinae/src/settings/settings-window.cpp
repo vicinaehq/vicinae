@@ -6,30 +6,24 @@
 #include "services/config/config-service.hpp"
 #include "service-registry.hpp"
 #include "settings-controller/settings-controller.hpp"
+#include "theme.hpp"
+#include "vicinae.hpp"
 
 static constexpr QSize windowSize(1000, 600);
 
 void SettingsWindow::paintEvent(QPaintEvent *event) {
   auto &config = ServiceRegistry::instance()->config()->value();
   auto &theme = ThemeService::instance().theme();
-  int borderWidth = 1;
-  QColor finalBgColor = theme.colors.mainBackground;
-  QPainter painter(this);
+  OmniPainter painter(this);
+  QColor finalBgColor = painter.resolveColor(SemanticColor::MainBackground);
 
   finalBgColor.setAlphaF(config.window.opacity);
-
-  painter.setRenderHint(QPainter::Antialiasing, true);
-
+  painter.setRenderHint(QPainter::Antialiasing);
   QPainterPath path;
   path.addRoundedRect(rect(), config.window.rounding, config.window.rounding);
-
   painter.setClipPath(path);
-
   painter.fillPath(path, finalBgColor);
-
-  QPen pen(theme.colors.border, borderWidth);
-  painter.setPen(pen);
-
+  painter.setThemePen(SemanticColor::Border, Omnicast::WINDOW_BORDER_WIDTH);
   painter.drawPath(path);
 }
 
