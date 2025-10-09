@@ -11,7 +11,7 @@ std::optional<QString> stringForKey(Qt::Key key);
 class Shortcut {
 public:
   static Shortcut osCopy() { return Shortcut(Qt::Key_C, Qt::ControlModifier); }
-  static Shortcut osPaste() { return Shortcut(Qt::Key_P, Qt::ControlModifier); }
+  static Shortcut osPaste() { return Shortcut(Qt::Key_V, Qt::ControlModifier); }
   static Shortcut enter() { return Qt::Key_Return; }
   static Shortcut submit() { return enter().shifted(); }
 
