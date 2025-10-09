@@ -42,6 +42,12 @@ protected:
           case Qt::Key_E: // end of line
             setCursorPosition(text().size());
             return true;
+          case Qt::Key_B: // backward char
+            cursorBackward(false);
+            return true;
+          case Qt::Key_F: // forward char
+            cursorForward(false);
+            return true;
           case Qt::Key_K: { // kill to end of line
             int pos = cursorPosition();
             setText(text().left(pos));
