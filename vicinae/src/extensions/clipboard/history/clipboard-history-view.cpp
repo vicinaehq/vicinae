@@ -58,7 +58,7 @@ class CopyClipboardSelection : public AbstractAction {
       return;
     }
 
-    toast->setToast("Failed to copy to clipboard", ToastPriority::Danger);
+    toast->setToast("Failed to copy to clipboard", ToastStyle::Danger);
   }
 
 public:
@@ -240,7 +240,7 @@ class RemoveSelectionAction : public AbstractAction {
     if (clipman->removeSelection(_id)) {
       toast->setToast("Entry removed");
     } else {
-      toast->setToast("Failed to remove entry", ToastPriority::Danger);
+      toast->setToast("Failed to remove entry", ToastStyle::Danger);
     }
   }
 
@@ -281,10 +281,10 @@ class EditClipboardSelectionKeywordsView : public ManagedFormView {
     auto toast = context()->services->toastService();
 
     if (clipman->setKeywords(m_selectionId, m_keywords->text())) {
-      toast->setToast("Keywords edited", ToastPriority::Success);
+      toast->setToast("Keywords edited", ToastStyle::Success);
       popSelf();
     } else {
-      toast->setToast("Failed to edit keywords", ToastPriority::Danger);
+      toast->setToast("Failed to edit keywords", ToastStyle::Danger);
     }
   }
 

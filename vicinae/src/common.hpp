@@ -13,6 +13,7 @@
 #include <qboxlayout.h>
 #include <qevent.h>
 #include <qframe.h>
+#include <qfuturewatcher.h>
 #include <qicon.h>
 #include <qjsonobject.h>
 #include <qjsonvalue.h>
@@ -208,6 +209,7 @@ struct QObjectDeleter {
 };
 
 template <typename T = QObject> using QObjectUniquePtr = std::unique_ptr<T, QObjectDeleter>;
+template <typename T> using UniqueFutureWatcher = QObjectUniquePtr<QFutureWatcher<T>>;
 
 class AbstractArgumentProvider {
   virtual std::vector<std::pair<QString, QString>> args() const = 0;

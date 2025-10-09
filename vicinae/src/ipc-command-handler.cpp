@@ -157,7 +157,7 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
 
   if (url.host() == "toast") {
     QString title = query.hasQueryItem("title") ? query.queryItemValue("title") : "Toast";
-    m_ctx.services->toastService()->setToast(title, ToastPriority::Info);
+    m_ctx.services->toastService()->setToast(title, ToastStyle::Info);
     return;
   }
 

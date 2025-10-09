@@ -21,10 +21,10 @@ class EditEmojiKeywordsView : public ManagedFormView {
     auto toast = context()->services->toastService();
 
     if (emojiService->setCustomKeywords(m_emoji, m_keywords->text())) {
-      toast->setToast("Keywords edited", ToastPriority::Success);
+      toast->setToast("Keywords edited", ToastStyle::Success);
       popSelf();
     } else {
-      toast->setToast("Failed to edit keywords", ToastPriority::Danger);
+      toast->setToast("Failed to edit keywords", ToastStyle::Danger);
     }
   }
 
@@ -58,7 +58,7 @@ public:
     if (emojiService->resetRanking(m_emoji)) {
       toast->setToast("Ranking successfuly reset");
     } else {
-      toast->setToast("Failed to reset ranking", ToastPriority::Danger);
+      toast->setToast("Failed to reset ranking", ToastStyle::Danger);
     }
   }
   QString title() const override { return "Reset ranking"; }
@@ -91,7 +91,7 @@ public:
     if (ctx->services->emojiService()->pin(m_emoji)) {
       toast->setToast("Emoji pinned");
     } else {
-      toast->setToast("Failed to pin emoji", ToastPriority::Danger);
+      toast->setToast("Failed to pin emoji", ToastStyle::Danger);
     }
   }
 
@@ -120,7 +120,7 @@ public:
     if (emojiService->unpin(m_emoji)) {
       toast->setToast("Emoji unpinned");
     } else {
-      toast->setToast("Failed to unpin emoji", ToastPriority::Danger);
+      toast->setToast("Failed to unpin emoji", ToastStyle::Danger);
     }
   }
 

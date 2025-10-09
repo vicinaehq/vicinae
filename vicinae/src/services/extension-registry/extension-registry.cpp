@@ -6,9 +6,11 @@
 #include "services/extension-registry/extension-registry.hpp"
 #include "utils/utils.hpp"
 #include "zip/unzip.hpp"
+#include <QtConcurrent/qtconcurrentrun.h>
 #include <filesystem>
 #include <qfilesystemwatcher.h>
 #include <QJsonParseError>
+#include <qfuturewatcher.h>
 #include <qlogging.h>
 
 namespace fs = std::filesystem;
@@ -54,20 +56,37 @@ CommandArgument ExtensionRegistry::parseArgumentFromObject(const QJsonObject &ob
   return arg;
 }
 
-bool ExtensionRegistry::installFromZip(const QString &id, std::string_view data) {
+QFuture<bool> ExtensionRegistry::installFromZip(const QString &id, std::string data,
+                                                std::function<void(bool)> cb) {
   fs::path extractDir = extensionDir() / id.toStdString();
-  Unzipper unzip(data);
+  auto future = QtConcurrent::run([id, data, extractDir]() {
+    Unzipper unzip = std::string_view(data);
 
-  if (!unzip) {
-    qCritical() << "Failed to create unzipper";
-    return false;
-  }
+    if (!unzip) {
+      qCritical() << "Failed to create unzipper";
+      return false;
+    }
 
-  unzip.extract(extractDir, {.stripComponents = 1});
-  emit extensionAdded(id);
-  emit extensionsChanged();
+    unzip.extract(extractDir, {.stripComponents = 1});
+    return true;
+  });
 
-  return true;
+  auto watcher = new QFutureWatcher<bool>;
+
+  watcher->setFuture(future);
+
+  connect(watcher, &QFutureWatcher<bool>::finished, this, [this, id, cb, watcher = std::move(watcher)]() {
+    if (watcher->isCanceled()) return;
+    auto result = watcher->result();
+    if (cb) { cb(result); }
+    if (result) {
+      emit extensionAdded(id);
+      emit extensionsChanged();
+    }
+    watcher->deleteLater();
+  });
+
+  return future;
 }
 
 bool ExtensionRegistry::uninstall(const QString &id) {

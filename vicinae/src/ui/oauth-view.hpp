@@ -32,7 +32,7 @@ class OAuthView : public OverlayView {
   void handleError(const QString &error) {
     auto toast = m_ctx->services->toastService();
 
-    toast->setToast(error, ToastPriority::Danger);
+    toast->setToast(error, ToastStyle::Danger);
     m_request->respondWithError(error);
   }
 

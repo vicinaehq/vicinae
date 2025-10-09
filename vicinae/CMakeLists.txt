@@ -57,6 +57,8 @@ set(SRCS
 	src/cli/server.hpp
 	src/cli/server.cpp
 
+	src/ui/spinner/spinner.hpp
+
 	src/ui/dmenu-view/dmenu-view.hpp
 	src/ui/dmenu-view/dmenu-view.cpp
 
@@ -244,6 +246,9 @@ set(SRCS
 	src/ui/image/builtin-icon-loader.cpp
 	src/ui/image/qicon-image-loader.cpp
 	src/ui/image/emoji-image-loader.cpp
+
+	src/ui/spinner/spinner.hpp
+	src/ui/spinner/spinner.cpp
 
 	src/ui/icon-button/icon-button.hpp
 	src/ui/icon-button/icon-button.cpp

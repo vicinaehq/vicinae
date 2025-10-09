@@ -148,7 +148,7 @@ void RaycastStoreListingView::handleFinishedQuery() {
   auto result = m_queryResultWatcher.result();
 
   if (!result) {
-    context()->services->toastService()->setToast("Failed to search extensions", ToastPriority::Danger);
+    context()->services->toastService()->setToast("Failed to search extensions", ToastStyle::Danger);
     return;
   }
 
@@ -195,7 +195,7 @@ void RaycastStoreListingView::handleFinishedPage() {
   auto result = m_listResultWatcher.result();
 
   if (!result) {
-    context()->services->toastService()->setToast("Failed to fetch extensions", ToastPriority::Danger);
+    context()->services->toastService()->setToast("Failed to fetch extensions", ToastStyle::Danger);
     return;
   }
 

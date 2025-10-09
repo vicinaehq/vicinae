@@ -72,7 +72,7 @@ void ToggleItemAsFavorite::execute(ApplicationContext *ctx) {
     if (targetValue) {
       toast->setToast("Failed to add to favorites");
     } else {
-      toast->setToast("Failed to remove from favorites", ToastPriority::Danger);
+      toast->setToast("Failed to remove from favorites", ToastStyle::Danger);
     }
   }
 };
@@ -111,9 +111,9 @@ void DisableItemAction::execute(ApplicationContext *ctx) {
     if (!ok) return;
 
     if (manager->disableItem(id)) {
-      toast->setToast("Item disabled", ToastPriority::Success);
+      toast->setToast("Item disabled", ToastStyle::Success);
     } else {
-      toast->setToast("Failed to disable", ToastPriority::Danger);
+      toast->setToast("Failed to disable", ToastStyle::Danger);
     }
   });
 
