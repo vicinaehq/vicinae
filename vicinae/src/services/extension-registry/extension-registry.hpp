@@ -59,7 +59,14 @@ class ExtensionRegistry : public QObject {
   std::filesystem::path extensionDir() const;
 
 public:
-  bool installFromZip(const QString &id, std::string_view data);
+  /**
+   * Unzip and install extension from a background thread.
+   * The `extensionAdded` and `extensionsChanged` signals are emitted
+   * once the bundle has been fully extracted out.
+   * You can pass a callback if you want to do something (such as displaying a confirmation toast)
+   * right after the unzipping was done.
+   */
+  QFuture<bool> installFromZip(const QString &id, std::string data, std::function<void(bool)> cb = {});
 
   tl::expected<ExtensionManifest, ManifestError> scanBundle(const std::filesystem::path &path);
   std::vector<ExtensionManifest> scanAll();

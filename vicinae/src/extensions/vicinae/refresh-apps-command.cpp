@@ -14,6 +14,6 @@ void RefreshAppsCommand::execute(CommandController *controller) const {
   if (appDb->scanSync()) {
     toast->setToast("Apps successfully refreshed");
   } else {
-    toast->setToast("Failed to refresh apps", ToastPriority::Danger);
+    toast->setToast("Failed to refresh apps", ToastStyle::Danger);
   }
 }

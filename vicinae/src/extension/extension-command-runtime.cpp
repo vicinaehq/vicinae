@@ -223,7 +223,7 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
 
   auto arguments = load->mutable_argument_values();
   for (const auto &[key, value] : props.arguments) {
-      arguments->insert({key.toStdString(), transformJsonValueToProto(value)});
+    arguments->insert({key.toStdString(), transformJsonValueToProto(value)});
   }
 
   payload->set_allocated_load(load);
@@ -240,11 +240,12 @@ void ExtensionCommandRuntime::load(const LaunchProps &props) {
 
 void ExtensionCommandRuntime::unload() {
   RelativeAssetResolver::instance()->removePath(m_command->assetPath());
-
   auto manager = context()->services->extensionManager();
+  auto toast = context()->services->toastService();
 
   context()->navigation->setNavigationSuffixIcon(std::nullopt);
   manager->unloadCommand(m_sessionId);
+  toast->clear();
 
   for (const auto &[_, watcher] : m_pendingFutures) {
     watcher->cancel();
