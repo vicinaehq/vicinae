@@ -79,6 +79,7 @@ export class Toast {
   }
   set style(style: Toast.Style) {
     this.options.style = style;
+	this.update();
   }
   /**
    * The title of a Toast. Displayed on the top.
@@ -88,7 +89,10 @@ export class Toast {
   }
   set title(title: string) {
     this.options.title = title;
+	this.update();
   }
+
+
   /**
    * An additional message for the Toast. Useful to show more information, e.g. an identifier of a newly created asset.
    */
@@ -116,6 +120,15 @@ export class Toast {
   set secondaryAction(action: Toast.ActionOptions | undefined) {
     this.options.secondaryAction = action;
   }
+
+  async update() {
+    await bus.turboRequest("ui.showToast", {
+      id: this.id,
+      title: this.title,
+      style: this.styleMap[this.style],
+    });
+  }
+
   /**
    * Shows the Toast.
    *
@@ -164,7 +177,6 @@ export class Toast {
     await bus.turboRequest("ui.hideToast", { id: this.id });
   }
 
-  private update;
 }
 
 export namespace Toast {

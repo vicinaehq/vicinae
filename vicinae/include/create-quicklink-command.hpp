@@ -407,7 +407,7 @@ public:
       toast->setToast("Created shortcut");
       popSelf();
     } else {
-      toast->setToast("Failed to create shortcut", ToastPriority::Danger);
+      toast->setToast("Failed to create shortcut", ToastStyle::Danger);
     }
   }
 };
@@ -515,7 +515,7 @@ public:
       toast->setToast("Created shortcut");
       popSelf();
     } else {
-      toast->setToast("Failed to create shortcut", ToastPriority::Danger);
+      toast->setToast("Failed to create shortcut", ToastStyle::Danger);
     }
   }
 };

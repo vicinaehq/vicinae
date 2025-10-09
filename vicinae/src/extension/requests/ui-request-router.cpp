@@ -14,10 +14,10 @@
 
 namespace ui = proto::ext::ui;
 
-static const std::unordered_map<ui::ToastStyle, ToastPriority> toastMap = {
-    {ui::ToastStyle::Success, ToastPriority::Success}, {ui::ToastStyle::Info, ToastPriority::Info},
-    {ui::ToastStyle::Warning, ToastPriority::Warning}, {ui::ToastStyle::Error, ToastPriority::Danger},
-    {ui::ToastStyle::Dynamic, ToastPriority::Dynamic},
+static const std::unordered_map<ui::ToastStyle, ToastStyle> toastMap = {
+    {ui::ToastStyle::Success, ToastStyle::Success}, {ui::ToastStyle::Info, ToastStyle::Info},
+    {ui::ToastStyle::Warning, ToastStyle::Warning}, {ui::ToastStyle::Error, ToastStyle::Danger},
+    {ui::ToastStyle::Dynamic, ToastStyle::Dynamic},
 };
 
 UIRequestRouter::UIRequestRouter(ExtensionNavigationController *navigation, ToastService &toast)
@@ -62,10 +62,10 @@ PromiseLike<proto::ext::extension::Response *> UIRequestRouter::route(const prot
   // return makeErrorResponse("Unhandled UI request");
 }
 
-ToastPriority UIRequestRouter::parseProtoToastStyle(ui::ToastStyle style) {
+ToastStyle UIRequestRouter::parseProtoToastStyle(ui::ToastStyle style) {
   if (auto it = toastMap.find(style); it != toastMap.end()) return it->second;
 
-  return ToastPriority::Success;
+  return ToastStyle::Success;
 }
 
 void UIRequestRouter::modelCreated() {

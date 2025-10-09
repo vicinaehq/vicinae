@@ -25,7 +25,7 @@ class CopyCalculatorAnswerAction : public AbstractAction {
     if (clip->copyText(m_item.answer)) {
       ctx->navigation->showHud("Answer copied to clipboard", ImageURL::builtin("copy-clipboard"));
     } else {
-      ctx->services->toastService()->setToast("Failed to copy answer", ToastPriority::Danger);
+      ctx->services->toastService()->setToast("Failed to copy answer", ToastStyle::Danger);
     }
   }
 
@@ -50,7 +50,7 @@ class CopyCalculatorQuestionAndAnswerAction : public AbstractAction {
     if (clip->copyText(result)) {
       ctx->navigation->showHud("Answer copied to clipboard", ImageURL::builtin("copy-clipboard"));
     } else {
-      ctx->services->toastService()->setToast("Failed to copy answer", ToastPriority::Danger);
+      ctx->services->toastService()->setToast("Failed to copy answer", ToastStyle::Danger);
     }
   }
 
@@ -124,7 +124,7 @@ public:
     if (ServiceRegistry::instance()->calculatorService()->removeRecord(m_id)) {
       ctx->services->toastService()->setToast("Entry removed");
     } else {
-      ctx->services->toastService()->setToast("Failed to remove entry", ToastPriority::Danger);
+      ctx->services->toastService()->setToast("Failed to remove entry", ToastStyle::Danger);
     }
   }
 

@@ -47,7 +47,7 @@ public:
     } else if (auto app = appDb->findById(m_shortcut->app())) {
       appDb->launch(*app, {expanded});
     } else {
-      toast->setToast("No app with id " + m_shortcut->app(), ToastPriority::Danger);
+      toast->setToast("No app with id " + m_shortcut->app(), ToastStyle::Danger);
       return;
     }
 
@@ -133,7 +133,7 @@ public:
     if (removeResult) {
       toast->setToast("Removed link");
     } else {
-      toast->setToast("Failed to remove link", ToastPriority::Danger);
+      toast->setToast("Failed to remove link", ToastStyle::Danger);
     }
   }
 

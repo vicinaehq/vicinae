@@ -16,7 +16,7 @@ class BuiltinUrlCommand : public BuiltinCallbackCommand {
     auto &props = controller->launchProps();
 
     if (!browser) {
-      ctx->services->toastService()->setToast("No browser to open the link", ToastPriority::Danger);
+      ctx->services->toastService()->setToast("No browser to open the link", ToastStyle::Danger);
       return;
     }
 

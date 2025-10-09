@@ -18,7 +18,7 @@ void UninstallExtensionAction::execute(ApplicationContext *ctx) {
     if (ctx->services->extensionRegistry()->uninstall(id)) {
       ctx->services->toastService()->setToast("Extension uninstalled");
     } else {
-      ctx->services->toastService()->setToast("Failed to uninstall extension", ToastPriority::Danger);
+      ctx->services->toastService()->setToast("Failed to uninstall extension", ToastStyle::Danger);
     }
   });
 

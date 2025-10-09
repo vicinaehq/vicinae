@@ -42,7 +42,7 @@ private:
   ToastWidget *m_toast;
 
   void handleToast(const Toast *toast);
-  void handleToastDestroyed(const Toast *toast);
+  void handleToastDestroyed();
   void handleViewStateChange(const NavigationController::ViewState &state);
   void actionsChanged(const ActionPanelState &actions);
   void handleActionPanelVisiblityChange(bool visible);

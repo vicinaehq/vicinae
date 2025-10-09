@@ -1,4 +1,5 @@
 #pragma once
+#include "common.hpp"
 #include "ui/toast/toast.hpp"
 #include <deque>
 #include <qobject.h>
@@ -8,22 +9,23 @@
 class Toast : public QObject {
   Q_OBJECT
 
-  QString m_title;
-  ToastPriority m_priority;
+signals:
+  void updated() const;
+  void destroyRequested() const;
 
 public:
-  Toast(const QString &title, ToastPriority priority) : m_title(title), m_priority(priority) {}
+  Toast(const QString &title, ToastStyle priority) : m_title(title), m_priority(priority) {}
 
   const QString &title() const { return m_title; }
 
-  ToastPriority priority() const { return m_priority; }
+  ToastStyle priority() const { return m_priority; }
 
   void setTitle(const QString &title) {
     m_title = title;
     emit updated();
   }
 
-  void setPriority(ToastPriority priority) { m_priority = priority; }
+  void setPriority(ToastStyle priority) { m_priority = priority; }
 
   void update() const { emit updated(); }
 
@@ -31,53 +33,65 @@ public:
 
   ~Toast() { close(); }
 
-signals:
-  void updated() const;
-  void destroyRequested() const;
+  QString m_title;
+  ToastStyle m_priority;
 };
 
 class ToastService : public QObject {
   Q_OBJECT
 
-  std::deque<Toast *> m_queue;
-  const Toast *m_toast = nullptr;
-
-  void destroyToast(Toast *toast) {
-    if (auto it = std::ranges::find(m_queue, toast); it != m_queue.end()) {
-      (*it)->deleteLater();
-      m_queue.erase(it);
-    }
-  }
+signals:
+  void toastActivated(const Toast *toast) const;
+  void toastHidden() const;
 
 public:
-  Toast const *currentToast() { return m_toast; }
+  Toast *currentToast() { return m_queue.empty() ? nullptr : m_queue.back().get(); }
 
-  void registerToast(Toast *toast) {
-    m_toast = toast;
-    emit toastActivated(toast);
-    connect(toast, &Toast::destroyRequested, this, [toast, this]() {
-      if (m_toast == toast) {
-        emit toastHidden(toast);
-        m_toast = nullptr;
-      }
-    });
+  void success(const QString &title) { setToast(title, ToastStyle::Success); }
+  void failure(const QString &title) { setToast(title, ToastStyle::Danger); }
+  void dynamic(const QString &title) { setToast(title, ToastStyle::Dynamic); }
+
+  void clear() {
+    m_queue.clear();
+    emit toastHidden();
   }
 
-  void success(const QString &title) { setToast(title, ToastPriority::Success); }
-  void failure(const QString &title) { setToast(title, ToastPriority::Danger); }
+  void setToast(const QString &title, ToastStyle priority = ToastStyle::Success, int duration = 2000) {
+    // for now we only handle one toast and we replace it every time. We will use the stack if we find the
+    // need to handle many toasts concurrently.
+    clear();
+    auto toast = std::shared_ptr<Toast>(new Toast(title, priority), QObjectDeleter());
 
-  void setToast(const QString &title, ToastPriority priority = ToastPriority::Success, int duration = 2000) {
-    auto toast = new Toast(title, priority);
-
-    QTimer::singleShot(duration, toast, [this, toast]() {
-      toast->close();
-      toast->deleteLater();
-    });
-
+    if (priority != ToastStyle::Dynamic) {
+      QTimer::singleShot(duration, toast.get(), [this, toast]() { toast->close(); });
+    }
     registerToast(toast);
   }
 
-signals:
-  void toastActivated(const Toast *toast) const;
-  void toastHidden(const Toast *toast) const;
+private:
+  void updateCurrent() {
+    if (m_queue.empty()) {
+      emit toastHidden();
+      return;
+    }
+    emit toastActivated(m_queue.back().get());
+  }
+
+  void destroyToast(Toast *toast) {
+    auto pred = [&](auto &&ptr) { return ptr.get() == toast; };
+    if (auto it = std::ranges::find_if(m_queue, pred); it != m_queue.end()) {
+      m_queue.erase(it);
+      updateCurrent();
+    }
+  }
+
+  void registerToast(std::shared_ptr<Toast> toast) {
+    m_queue.push_back(toast);
+    updateCurrent();
+    connect(toast.get(), &Toast::destroyRequested, this,
+            [this, toast = toast.get()]() { destroyToast(toast); });
+    connect(toast.get(), &Toast::updated, this, &ToastService::updateCurrent);
+  }
+
+  std::vector<std::shared_ptr<Toast>> m_queue;
 };

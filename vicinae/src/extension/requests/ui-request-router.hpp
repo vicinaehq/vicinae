@@ -16,7 +16,7 @@ public:
   UIRequestRouter(ExtensionNavigationController *navigation, ToastService &toast);
 
 private:
-  ToastPriority parseProtoToastStyle(proto::ext::ui::ToastStyle style);
+  ToastStyle parseProtoToastStyle(proto::ext::ui::ToastStyle style);
   static PopToRootType parseProtoPopToRoot(proto::ext::ui::PopToRootType type);
 
   proto::ext::ui::Response *showToast(const proto::ext::ui::ShowToastRequest &request);

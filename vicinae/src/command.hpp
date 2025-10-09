@@ -34,7 +34,7 @@ signals:
   void requestPushView(View *view) const;
   void requestTitleChange(const QString &title) const;
   void requestSearchTextChange(const QString &text) const;
-  void requestToast(const QString &text, ToastPriority priority = ToastPriority::Success) const;
+  void requestToast(const QString &text, ToastStyle priority = ToastStyle::Success) const;
   void requestPopView() const;
   void requestPopToRoot() const;
   void requestWindowClose() const;

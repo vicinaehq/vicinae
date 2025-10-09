@@ -5,6 +5,7 @@
 #include "ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "services/config/config-service.hpp"
+#include "ui/spinner/spinner.hpp"
 #include "utils/layout.hpp"
 #include "vicinae.hpp"
 #include "ui/shortcut-button/shortcut-button.hpp"
@@ -68,7 +69,7 @@ void GlobalBar::handleToast(const Toast *toast) {
   m_leftWidget->setCurrentWidget(m_toast);
 }
 
-void GlobalBar::handleToastDestroyed(const Toast *toast) { m_leftWidget->setCurrentWidget(m_status); }
+void GlobalBar::handleToastDestroyed() { m_leftWidget->setCurrentWidget(m_status); }
 
 void GlobalBar::setupUI() {
   auto toast = m_ctx.services->toastService();

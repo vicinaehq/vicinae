@@ -1,8 +1,10 @@
 #include "store-detail-view.hpp"
+#include "common.hpp"
 #include "navigation-controller.hpp"
 #include "services/extension-registry/extension-registry.hpp"
 #include "ui/screenshot-list/screenshot-list.hpp"
 #include "ui/thumbnail/thumbnail.hpp"
+#include "ui/toast/toast.hpp"
 #include "utils.hpp"
 #include "services/toast/toast-service.hpp"
 
@@ -174,25 +176,31 @@ void RaycastStoreDetailView::createActions() {
           using Watcher = QFutureWatcher<Raycast::DownloadExtensionResult>;
           auto store = ctx->services->raycastStore();
           auto watcher = new Watcher;
-          ctx->services->toastService()->setToast("Downloading extension...");
+          auto toast = ctx->services->toastService();
+          auto registry = ctx->services->extensionRegistry();
 
-          QObject::connect(watcher, &Watcher::finished, [ctx, ext, watcher]() {
+          toast->dynamic("Downloading extension...");
+
+          QObject::connect(watcher, &Watcher::finished, [ctx, registry, toast, ext, watcher]() {
             auto result = watcher->result();
 
             watcher->deleteLater();
 
             if (!result) {
-              ctx->services->toastService()->setToast("Failed to download extension");
+              toast->failure("Failed to download extension");
               return;
             }
 
-            ctx->services->extensionRegistry()->installFromZip(ext.id,
-                                                               std::string_view(result->toStdString()));
-            ctx->services->toastService()->setToast("Extension downloaded");
+            registry->installFromZip(ext.id, result->toStdString(), [toast](bool ok) {
+              if (!ok) {
+                toast->failure("Failed to extract extension archive");
+                return;
+              }
+              toast->success("Extension installed");
+            });
           });
 
           auto downloadResult = store->downloadExtension(ext.download_url);
-
           watcher->setFuture(downloadResult);
         });
     main->addAction(install);
