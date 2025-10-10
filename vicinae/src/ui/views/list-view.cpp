@@ -81,7 +81,7 @@ void ListView::selectionChanged(const OmniList::AbstractVirtualItem *next,
     auto panel = nextItem->newActionPanel(context());
 
     panel->setShortcutPreset(ActionPanelState::ShortcutPreset::List);
-    nav->setActions(std::move(panel));
+    setActions(std::move(panel));
   } else {
     m_split->setDetailVisibility(false);
     context()->navigation->destroyCurrentCompletion();
