@@ -1,10 +1,12 @@
 #include "crypto.hpp"
+#include "expected.hpp"
 #include <openssl/rand.h>
 #include <QDebug>
+#include <qlcdnumber.h>
 #include <quuid.h>
 
 namespace Crypto::AES256GCM {
-QByteArray encrypt(const QByteArray &data, const QByteArray &key) {
+tl::expected<QByteArray, EncryptError> encrypt(const QByteArray &data, const QByteArray &key) {
   QByteArray iv(12, 0);
 
   RAND_bytes(reinterpret_cast<unsigned char *>(iv.data()), iv.size());
@@ -19,7 +21,7 @@ QByteArray encrypt(const QByteArray &data, const QByteArray &key) {
   if (EVP_EncryptUpdate(ctx, reinterpret_cast<unsigned char *>(ciphertext.data()), &len,
                         reinterpret_cast<const unsigned char *>(data.constData()), data.size()) != 1) {
     EVP_CIPHER_CTX_free(ctx);
-    return {};
+    return tl::unexpected(EncryptError::OpenSslError);
   }
 
   int ciphertext_len = len;
@@ -27,7 +29,7 @@ QByteArray encrypt(const QByteArray &data, const QByteArray &key) {
   // Finalize encryption
   if (EVP_EncryptFinal_ex(ctx, reinterpret_cast<unsigned char *>(ciphertext.data()) + len, &len) != 1) {
     EVP_CIPHER_CTX_free(ctx);
-    return {};
+    return tl::unexpected(EncryptError::OpenSslError);
   }
   ciphertext_len += len;
 
@@ -35,7 +37,7 @@ QByteArray encrypt(const QByteArray &data, const QByteArray &key) {
   QByteArray tag(16, 0);
   if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, 16, tag.data()) != 1) {
     EVP_CIPHER_CTX_free(ctx);
-    return {};
+    return tl::unexpected(EncryptError::OpenSslError);
   }
 
   EVP_CIPHER_CTX_free(ctx);
@@ -45,15 +47,11 @@ QByteArray encrypt(const QByteArray &data, const QByteArray &key) {
   return iv + ciphertext + tag;
 }
 
-QByteArray decrypt(const QByteArray &encrypted, const QByteArray &key) {
-  if (key.size() != 32) {
-    qWarning() << "Key must be exactly 32 bytes (256 bits)";
-    return QByteArray();
-  }
+tl::expected<QByteArray, DecryptError> decrypt(const QByteArray &encrypted, const QByteArray &key) {
+  if (key.size() != 32) { return tl::unexpected(DecryptError::InvalidKeySize); }
 
   if (encrypted.size() < 28) { // IV(12) + tag(16) = minimum 28 bytes
-    qWarning() << "Encrypted data too short";
-    return QByteArray();
+    return tl::unexpected(DecryptError::DataTooShort);
   }
 
   // Extract components
@@ -63,14 +61,15 @@ QByteArray decrypt(const QByteArray &encrypted, const QByteArray &key) {
 
   // Create cipher context
   EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
-  if (!ctx) return QByteArray();
+
+  if (!ctx) { return tl::unexpected(DecryptError::OpenSslError); }
 
   // Initialize decryption
   if (EVP_DecryptInit_ex(ctx, EVP_aes_256_gcm(), nullptr,
                          reinterpret_cast<const unsigned char *>(key.constData()),
                          reinterpret_cast<const unsigned char *>(iv.constData())) != 1) {
     EVP_CIPHER_CTX_free(ctx);
-    return QByteArray();
+    return tl::unexpected(DecryptError::OpenSslError);
   }
 
   // Decrypt
@@ -80,14 +79,14 @@ QByteArray decrypt(const QByteArray &encrypted, const QByteArray &key) {
                         reinterpret_cast<const unsigned char *>(ciphertext.constData()),
                         ciphertext.size()) != 1) {
     EVP_CIPHER_CTX_free(ctx);
-    return QByteArray();
+    return tl::unexpected(DecryptError::OpenSslError);
   }
 
   // Set expected tag
   if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, 16,
                           const_cast<void *>(reinterpret_cast<const void *>(tag.constData()))) != 1) {
     EVP_CIPHER_CTX_free(ctx);
-    return QByteArray();
+    return tl::unexpected(DecryptError::OpenSslError);
   }
 
   // Finalize and verify
@@ -95,7 +94,7 @@ QByteArray decrypt(const QByteArray &encrypted, const QByteArray &key) {
   if (EVP_DecryptFinal_ex(ctx, reinterpret_cast<unsigned char *>(plaintext.data()) + len, &len) != 1) {
     EVP_CIPHER_CTX_free(ctx);
     qWarning() << "Authentication failed - data may be corrupted";
-    return QByteArray();
+    return tl::unexpected(DecryptError::AuthFailed);
   }
 
   plaintext_len += len;
