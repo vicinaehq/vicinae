@@ -14,18 +14,10 @@ bool GridView::inputFilter(QKeyEvent *event) {
   const QString &keybinding = config->value().keybinding;
 
   if (event->modifiers() == Qt::ControlModifier) {
-    if (KeyBindingService::isDownKey(event, keybinding)) {
-      return m_grid->selectDown();
-    }
-    if (KeyBindingService::isUpKey(event, keybinding)) {
-      return m_grid->selectUp();
-    }
-    if (KeyBindingService::isLeftKey(event, keybinding)) {
-      return m_grid->selectLeft();
-    }
-    if (KeyBindingService::isRightKey(event, keybinding)) {
-      return m_grid->selectRight();
-    }
+    if (KeyBindingService::isDownKey(event, keybinding)) { return m_grid->selectDown(); }
+    if (KeyBindingService::isUpKey(event, keybinding)) { return m_grid->selectUp(); }
+    if (KeyBindingService::isLeftKey(event, keybinding)) { return m_grid->selectLeft(); }
+    if (KeyBindingService::isRightKey(event, keybinding)) { return m_grid->selectRight(); }
   }
 
   if (event->modifiers().toInt() == 0) {
@@ -63,8 +55,8 @@ void GridView::applyActionnable(const Actionnable *actionnable) {
 void GridView::selectionChanged(const OmniList::AbstractVirtualItem *next,
                                 const OmniList::AbstractVirtualItem *previous) {
   if (!next) {
-    context()->navigation->clearActions(this);
     setNavigationTitle(rootNavigationTitle());
+    clearActions();
     return;
   }
 

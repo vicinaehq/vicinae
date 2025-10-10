@@ -15,12 +15,8 @@ bool ListView::inputFilter(QKeyEvent *event) {
   const QString &keybinding = config->value().keybinding;
 
   if (event->modifiers() == Qt::ControlModifier) {
-    if (KeyBindingService::isDownKey(event, keybinding)) {
-      return m_list->selectDown();
-    }
-    if (KeyBindingService::isUpKey(event, keybinding)) {
-      return m_list->selectUp();
-    }
+    if (KeyBindingService::isDownKey(event, keybinding)) { return m_list->selectDown(); }
+    if (KeyBindingService::isUpKey(event, keybinding)) { return m_list->selectUp(); }
     if (KeyBindingService::isLeftKey(event, keybinding)) {
       context()->navigation->popCurrentView();
       return true;
@@ -57,6 +53,7 @@ void ListView::selectionChanged(const OmniList::AbstractVirtualItem *next,
 
   if (!next) {
     m_split->setDetailVisibility(false);
+    clearActions();
     return;
   }
 
