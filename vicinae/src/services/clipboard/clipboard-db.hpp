@@ -52,6 +52,7 @@ struct ClipboardHistoryEntry {
   uint64_t size;
   ClipboardOfferKind kind;
   std::optional<QString> urlHost;
+  ClipboardEncryptionType encryption;
 };
 
 struct ClipboardListSettings {

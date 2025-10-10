@@ -60,6 +60,7 @@ protected:
   void execute(ApplicationContext *ctx) override {
     auto clipman = ctx->services->clipman();
     ctx->navigation->closeWindow();
+
     QTimer::singleShot(100, [content = m_content, concealed = m_concealed, clipman]() {
       clipman->pasteContent(content, {.concealed = concealed});
     });

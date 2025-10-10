@@ -17,6 +17,7 @@ public:
   QString description() const override { return "System clipboard integration"; }
 
   std::vector<Preference> preferences() const override {
+    auto encryption = Preference::makeCheckbox("encryption");
     auto monitoring = Preference::makeCheckbox("monitoring");
     auto eraseOnStartup = Preference::makeCheckbox("eraseOnStartup");
 
@@ -24,12 +25,18 @@ public:
     eraseOnStartup.setDescription("Erase clipboard history every time the vicinae server is started");
     eraseOnStartup.setDefaultValue(false);
 
+    encryption.setTitle("Disk encryption");
+    encryption.setDescription("Whether to encrypt the clipboard data on disk. The "
+                              "encryption key is stored and retrieved from the system keychain. Enabling "
+                              "this might trigger your keychain's unlock dialog.");
+    encryption.setDefaultValue(false);
+
     monitoring.setTitle("Clipboard monitoring");
     monitoring.setDescription("Whether clipboard activity is recorded in the history. Every clipboard action "
                               "performed while this is turned off will not be recorded.");
     monitoring.setDefaultValue(true);
 
-    return {monitoring, eraseOnStartup};
+    return {monitoring, encryption, eraseOnStartup};
   }
 
   virtual void initialized(const QJsonObject &preferences) const override {
@@ -44,6 +51,7 @@ public:
 
     clipman->setRecordAllOffers(value.value("store-all-offerings").toBool());
     clipman->setMonitoring(value.value("monitoring").toBool());
+    clipman->setEncryption(value.value("encryption").toBool());
   }
 
   ClipboardExtension() { registerCommand<ClipboardHistoryCommand>(); }
