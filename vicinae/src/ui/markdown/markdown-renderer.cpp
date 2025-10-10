@@ -194,6 +194,7 @@ QTextList *MarkdownRenderer::insertList(cmark_node *list, int indent) {
       auto *node = cmark_node_first_child(item);
 
       while (node) {
+        if (i > 0) _cursor.insertBlock();
         switch (cmark_node_get_type(node)) {
         case CMARK_NODE_PARAGRAPH:
           insertParagraph(node);
