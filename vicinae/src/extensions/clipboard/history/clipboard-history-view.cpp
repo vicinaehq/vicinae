@@ -1,11 +1,15 @@
 #include "clipboard-history-view.hpp"
+#include "actions/root-search/root-search-actions.hpp"
 #include "clipboard-actions.hpp"
 #include "keyboard/keybind-manager.hpp"
 #include "manage-quicklinks-command.hpp"
 #include "services/clipboard/clipboard-db.hpp"
+#include "services/clipboard/clipboard-service.hpp"
 #include "services/keybinding/keybinding-service.hpp"
 #include "services/toast/toast-service.hpp"
 #include "layout.hpp"
+#include "theme.hpp"
+#include "ui/empty-view/empty-view.hpp"
 #include "ui/text-file-viewer/text-file-viewer.hpp"
 #include "ui/action-pannel/push-action.hpp"
 #include "ui/alert/alert.hpp"
@@ -38,7 +42,7 @@ class PasteClipboardSelection : public PasteToFocusedWindowAction {
 
   void execute(ApplicationContext *ctx) override {
     setConcealed();
-    loadClipboardData(Clipboard::SelectionRecordHandle{m_id});
+    loadClipboardData(Clipboard::SelectionRecordHandle(m_id));
     PasteToFocusedWindowAction::execute(ctx);
   }
 
@@ -58,7 +62,7 @@ class CopyClipboardSelection : public AbstractAction {
       return;
     }
 
-    toast->setToast("Failed to copy to clipboard", ToastStyle::Danger);
+    toast->failure("Failed to copy to clipboard");
   }
 
 public:
@@ -130,6 +134,11 @@ class ClipboardHistoryDetail : public DetailWithMetadataWidget {
         .text = entry.mimeType,
         .title = "Mime",
     };
+
+    if (entry.encryption != ClipboardEncryptionType::None) {
+      mime.icon = ImageURL::builtin("key").setFill(SemanticColor::Green);
+    }
+
     auto size = MetadataLabel{
         .text = formatSize(entry.size),
         .title = "Size",
@@ -212,10 +221,45 @@ class ClipboardHistoryDetail : public DetailWithMetadataWidget {
     return detailForUnmatchedMime(mime);
   }
 
-  QWidget *createEntryWidget(const ClipboardHistoryEntry &entry) {
-    auto data = ServiceRegistry::instance()->clipman()->decryptMainSelectionOffer(entry.id);
+  QWidget *detailForFailedDecryption() {
+    auto empty = new EmptyViewWidget;
+    empty->setIcon(ImageURL::builtin("key").setFill(SemanticColor::Red));
+    empty->setTitle("Decryption failed");
+    empty->setDescription(
+        "Vicinae could not decrypt the data for this selection. This is most likely caused by a "
+        "keychain software change. To fix this disable encryption in the clipboard extension settings.");
 
-    return detailForMime(data, entry.mimeType);
+    return empty;
+  }
+
+  QWidget *detailForMissingEncryption() {
+    auto empty = new EmptyViewWidget;
+    empty->setIcon(ImageURL::builtin("key").setFill(SemanticColor::Orange));
+    empty->setTitle("Data is encrypted");
+    empty->setDescription(
+        "Data for this selection was previously encrypted but the clipboard is not currently "
+        "configured to use encryption. You should be able to fix this by enabling it in the clipboard "
+        "extension settings.");
+
+    return empty;
+  }
+
+  QWidget *detailForError(ClipboardService::OfferDecryptionError error) {
+    switch (error) {
+    case ClipboardService::OfferDecryptionError::DecryptionRequired:
+      return detailForMissingEncryption();
+    case ClipboardService::OfferDecryptionError::DecryptionFailed:
+      return detailForFailedDecryption();
+    }
+    return nullptr;
+  }
+
+  QWidget *createEntryWidget(const ClipboardHistoryEntry &entry) {
+    auto clipman = ServiceRegistry::instance()->clipman();
+    auto data = clipman->getMainOfferData(entry.id);
+
+    if (!data) { return detailForError(data.error()); }
+    return detailForMime(data.value(), entry.mimeType);
   }
 
 public:
@@ -348,13 +392,17 @@ public:
 
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
     auto panel = std::make_unique<ActionPanelState>();
+    auto clipman = ctx->services->clipman();
+    auto mainSection = panel->createSection();
+    bool isCopyable = info.encryption == ClipboardEncryptionType::None || clipman->isEncryptionReady();
+
+    if (!isCopyable) { mainSection->addAction(new OpenItemPreferencesAction("extension.clipboard")); }
+
     auto wm = ctx->services->windowManager();
     auto pin = new PinClipboardAction(info.id, !info.pinnedAt);
-    auto copyToClipboard = new CopyClipboardSelection(info.id);
     auto editKeywords = new EditClipboardKeywordsAction(info.id);
     auto remove = new RemoveSelectionAction(info.id);
     auto removeAll = new RemoveAllSelectionsAction();
-    auto mainSection = panel->createSection();
 
     editKeywords->setShortcut(Keybind::EditAction);
     remove->setStyle(AbstractAction::Style::Danger);
@@ -362,14 +410,17 @@ public:
     removeAll->setShortcut(Keybind::DangerousRemoveAction);
     pin->setShortcut(Keybind::PinAction);
 
-    if (wm->canPaste()) {
-      auto paste = new PasteClipboardSelection(info.id);
-      mainSection->addAction(paste);
-    } else {
-      copyToClipboard->setPrimary(true);
-    }
+    if (isCopyable) {
+      auto copyToClipboard = new CopyClipboardSelection(info.id);
+      if (wm->canPaste()) {
+        auto paste = new PasteClipboardSelection(info.id);
+        mainSection->addAction(paste);
+      } else {
+        copyToClipboard->setPrimary(true);
+      }
 
-    mainSection->addAction(copyToClipboard);
+      mainSection->addAction(copyToClipboard);
+    }
 
     auto toolsSection = panel->createSection();
     auto dangerSection = panel->createSection();
@@ -523,9 +574,10 @@ void ClipboardHistoryView::handleListFinished() {
 }
 
 void ClipboardHistoryView::selectionChanged(const OmniList::AbstractVirtualItem *next,
-                                            const OmniList::AbstractVirtualItem *previous) const {
+                                            const OmniList::AbstractVirtualItem *previous) {
   if (!next) {
     m_split->setDetailVisibility(false);
+    setActions({});
     return;
   }
 

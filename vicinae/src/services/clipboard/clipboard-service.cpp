@@ -1,6 +1,5 @@
 #include <QClipboard>
 #include "clipboard-service.hpp"
-#include <algorithm>
 #include <filesystem>
 #include <numeric>
 #include <qapplication.h>
@@ -9,6 +8,7 @@
 #include <qmimedata.h>
 #include <qnamespace.h>
 #include <qsqlquery.h>
+#include <qstringview.h>
 #include <qt6keychain/keychain.h>
 #include <QtConcurrent/QtConcurrent>
 #include <QFutureWatcher>
@@ -18,16 +18,15 @@
 #include "crypto.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/clipboard/clipboard-db.hpp"
+#include "services/clipboard/clipboard-encrypter.hpp"
 #include "services/clipboard/clipboard-server.hpp"
+#include "services/clipboard/gnome/gnome-clipboard-server.hpp"
 #include "utils.hpp"
 #include "wlr/wlr-clipboard-server.hpp"
-#include "gnome/gnome-clipboard-server.hpp"
 #include "services/window-manager/abstract-window-manager.hpp"
 #include "services/window-manager/window-manager.hpp"
 
 namespace fs = std::filesystem;
-
-static const QString KEYCHAIN_ENCRYPTION_KEY_NAME = "clipboard-data-key";
 
 /**
  * If any of these is found in a selection, we ignore the entire selection.
@@ -52,48 +51,6 @@ bool ClipboardService::clear() {
 }
 
 bool ClipboardService::supportsMonitoring() const { return m_clipboardServer->id() != "dummy"; }
-
-QFuture<ClipboardService::GetLocalEncryptionKeyResponse> ClipboardService::getLocalEncryptionKey() {
-  using namespace QKeychain;
-
-  auto promise = std::make_shared<QPromise<ClipboardService::GetLocalEncryptionKeyResponse>>();
-  auto future = promise->future();
-
-  auto readJob = new ReadPasswordJob(Omnicast::APP_ID);
-
-  readJob->setKey(KEYCHAIN_ENCRYPTION_KEY_NAME);
-  readJob->start();
-
-  connect(readJob, &ReadPasswordJob::finished, this, [this, readJob, promise](Job *job) {
-    if (readJob->error() == QKeychain::NoError) {
-      promise->addResult(readJob->binaryData());
-      promise->finish();
-      return;
-    }
-
-    auto writeJob = new QKeychain::WritePasswordJob(Omnicast::APP_ID);
-    auto keyData = Crypto::AES256GCM::generateKey();
-
-    writeJob->setKey(KEYCHAIN_ENCRYPTION_KEY_NAME);
-    writeJob->setBinaryData(keyData);
-    writeJob->start();
-
-    connect(writeJob, &WritePasswordJob::finished, this, [promise, keyData, writeJob]() {
-      if (writeJob->error() == QKeychain::NoError) {
-        promise->addResult(keyData);
-        promise->finish();
-        return;
-      }
-
-      qCritical() << "Failed to write encryption key to keychain" << writeJob->errorString();
-
-      promise->addResult(tl::unexpected(writeJob->error()));
-      promise->finish();
-    });
-  });
-
-  return future;
-}
 
 bool ClipboardService::copyContent(const Clipboard::Content &content, const Clipboard::CopyOptions options) {
   struct ContentVisitor {
@@ -157,6 +114,17 @@ bool ClipboardService::copyFile(const std::filesystem::path &path, const Clipboa
 }
 
 void ClipboardService::setRecordAllOffers(bool value) { m_recordAllOffers = value; }
+
+void ClipboardService::setEncryption(bool value) {
+  m_encrypter.reset();
+
+  if (value) {
+    m_encrypter = std::make_unique<ClipboardEncrypter>();
+    m_encrypter->loadKey();
+  }
+}
+
+bool ClipboardService::isEncryptionReady() const { return m_encrypter.get(); }
 
 void ClipboardService::setMonitoring(bool value) {
   if (m_monitoring == value) return;
@@ -278,28 +246,22 @@ bool ClipboardService::removeSelection(const QString &selectionId) {
   return true;
 }
 
-QByteArray ClipboardService::decryptOffer(const QByteArray &data, ClipboardEncryptionType enc) const {
-  switch (enc) {
-  case ClipboardEncryptionType::None:
-    return data;
+tl::expected<QByteArray, ClipboardService::OfferDecryptionError>
+ClipboardService::decryptOffer(const QByteArray &data, ClipboardEncryptionType type) const {
+  switch (type) {
   case ClipboardEncryptionType::Local: {
-    if (!m_localEncryptionKey) {
-      qWarning() << "No local encryption key available for decryption";
-      return {};
-    }
-
-    return Crypto::AES256GCM::decrypt(data, *m_localEncryptionKey);
+    if (!m_encrypter) { return tl::unexpected(OfferDecryptionError::DecryptionRequired); }
+    auto decryption = m_encrypter->decrypt(data);
+    if (!decryption) { return tl::unexpected(OfferDecryptionError::DecryptionFailed); }
+    return decryption.value();
   }
   default:
-    break;
+    return data;
   }
-
-  qWarning() << "unknown encryption kind" << static_cast<int>(enc);
-
-  return {};
 }
 
-QByteArray ClipboardService::decryptMainSelectionOffer(const QString &selectionId) const {
+tl::expected<QByteArray, ClipboardService::OfferDecryptionError>
+ClipboardService::getMainOfferData(const QString &selectionId) const {
   ClipboardDatabase cdb;
 
   auto offer = cdb.findPreferredOffer(selectionId);
@@ -318,9 +280,7 @@ QByteArray ClipboardService::decryptMainSelectionOffer(const QString &selectionI
     return {};
   }
 
-  auto data = file.readAll();
-
-  return decryptOffer(data, offer->encryption);
+  return decryptOffer(file.readAll(), offer->encryption);
 }
 
 QByteArray ClipboardService::computeSelectionHash(const ClipboardSelection &selection) const {
@@ -382,7 +342,7 @@ ClipboardSelection &ClipboardService::sanitizeSelection(ClipboardSelection &sele
 }
 
 void ClipboardService::saveSelection(ClipboardSelection selection) {
-  if (!m_monitoring || !m_isEncryptionReady) return;
+  if (!m_monitoring) return;
 
   sanitizeSelection(selection);
 
@@ -455,7 +415,7 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
       auto offerId = Crypto::UUID::v4();
       ClipboardEncryptionType encryption = ClipboardEncryptionType::None;
 
-      if (m_localEncryptionKey) encryption = ClipboardEncryptionType::Local;
+      if (m_encrypter) encryption = ClipboardEncryptionType::Local;
 
       InsertClipboardOfferPayload dto{
           .id = offerId,
@@ -479,8 +439,13 @@ void ClipboardService::saveSelection(ClipboardSelection selection) {
 
       if (!targetFile.open(QIODevice::WriteOnly)) { continue; }
 
-      if (m_localEncryptionKey) {
-        targetFile.write(Crypto::AES256GCM::encrypt(offer.data, *m_localEncryptionKey));
+      if (m_encrypter) {
+        if (auto encrypted = m_encrypter->encrypt(offer.data)) {
+          targetFile.write(encrypted.value());
+        } else {
+          qWarning() << "Failed to encrypt clipboard selection";
+          return false;
+        }
       } else {
         targetFile.write(offer.data);
       }
@@ -516,7 +481,11 @@ std::optional<ClipboardSelection> ClipboardService::retrieveSelectionById(const 
 
     if (!file.open(QIODevice::ReadOnly)) { continue; }
 
-    populatedOffer.data = decryptOffer(file.readAll(), offer.encryption);
+    auto data = decryptOffer(file.readAll(), offer.encryption);
+
+    if (!data) return {};
+
+    populatedOffer.data = data.value();
     populatedOffer.mimeType = offer.mimeType;
     populatedSelection.offers.emplace_back(populatedOffer);
   }
@@ -554,7 +523,7 @@ bool ClipboardService::copySelectionRecord(const QString &id, const Clipboard::C
   auto selection = retrieveSelectionById(id);
 
   if (!selection) {
-    qWarning() << "copySelectionRecord: no selection matching id" << id;
+    qWarning() << "copySelectionRecord: could not get selection for ID" << id;
     return false;
   }
 
@@ -612,35 +581,21 @@ bool ClipboardService::removeAllSelections() {
 
 AbstractClipboardServer *ClipboardService::clipboardServer() const { return m_clipboardServer.get(); }
 
-ClipboardService::ClipboardService(const std::filesystem::path &path, WindowManager &wm, AppService &app)
-    : m_wm(wm), m_appDb(app) {
+ClipboardService::ClipboardService(const std::filesystem::path &path, WindowManager &wm, AppService &appDb)
+    : m_wm(wm), m_appDb(appDb) {
   m_dataDir = path.parent_path() / "clipboard-data";
 
   {
     ClipboardServerFactory factory;
 
-    factory.registerServer<GnomeClipboardServer>(); // Priority 20 (GNOME + extension)
-    factory.registerServer<WlrClipboardServer>();   // Priority 15 (Wayland non-GNOME)
+    factory.registerServer<GnomeClipboardServer>();
+    factory.registerServer<WlrClipboardServer>();
     m_clipboardServer = factory.createFirstActivatable();
-
     qInfo() << "Activated clipboard server" << m_clipboardServer->id();
   }
 
   fs::create_directories(m_dataDir);
   ClipboardDatabase().runMigrations();
-
-  auto watcher = new QFutureWatcher<GetLocalEncryptionKeyResponse>;
-
-  watcher->setFuture(getLocalEncryptionKey());
-
-  connect(watcher, &QFutureWatcher<GetLocalEncryptionKeyResponse>::finished, this, [watcher, this]() {
-    if (!watcher->isFinished()) return;
-
-    auto res = watcher->result();
-
-    if (res) { m_localEncryptionKey = res.value(); }
-    m_isEncryptionReady = true; // at that point, we know whether we can encrypt or not
-  });
 
   connect(m_clipboardServer.get(), &AbstractClipboardServer::selectionAdded, this,
           &ClipboardService::saveSelection);

@@ -113,7 +113,7 @@ private:
 
   void generateList(const PaginatedResponse<ClipboardHistoryEntry> &result);
   void selectionChanged(const OmniList::AbstractVirtualItem *next,
-                        const OmniList::AbstractVirtualItem *previous) const;
+                        const OmniList::AbstractVirtualItem *previous);
 
   void clipboardSelectionInserted(const ClipboardHistoryEntry &entry);
   void handlePinChanged(int entryId, bool value);

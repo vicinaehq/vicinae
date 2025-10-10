@@ -3,6 +3,7 @@
 #include "extensions/wm/wm-extension.hpp"
 #include "services/app-service/app-service.hpp"
 #include "services/clipboard/clipboard-db.hpp"
+#include "services/clipboard/clipboard-encrypter.hpp"
 #include "services/clipboard/clipboard-server.hpp"
 #include "services/window-manager/abstract-window-manager.hpp"
 #include "services/window-manager/window-manager.hpp"
@@ -69,49 +70,28 @@ static Content fromJson(const QJsonObject &obj) {
 }; // namespace Clipboard
 
 class ClipboardService : public QObject, public NonCopyable {
-public:
-  using GetLocalEncryptionKeyResponse = tl::expected<QByteArray, QKeychain::Error>;
-
-private:
   Q_OBJECT
 
-  WindowManager &m_wm;
-  AppService &m_appDb;
-
-  bool m_recordAllOffers = true;
-  bool m_monitoring = false;
-  std::optional<QByteArray> m_localEncryptionKey;
-  bool m_isEncryptionReady = false;
-
-  QMimeDatabase _mimeDb;
-  std::filesystem::path m_dataDir;
-  std::unique_ptr<AbstractClipboardServer> m_clipboardServer;
-
-  static QString getSelectionPreferredMimeType(const ClipboardSelection &selection);
-  static QString getOfferTextPreview(const ClipboardDataOffer &offer);
-
-  QFuture<GetLocalEncryptionKeyResponse> getLocalEncryptionKey();
-
+signals:
+  void allSelectionsRemoved() const;
+  void itemCopied(const InsertClipboardHistoryLine &item) const;
+  void itemInserted(const ClipboardHistoryEntry &entry) const;
+  void selectionPinStatusChanged(const QString &id, bool pinned) const;
+  void selectionRemoved(const QString &id) const;
   /**
-   * Unique selection hash obtained by hashing all the data offer hashes together.
-   * This is used to prevent reinserting the exact same selection multiple times.
+   * When a selection is copied, its update time is modified which makes it appear on top
+   * of the list.
    */
-  QByteArray computeSelectionHash(const ClipboardSelection &selection) const;
-  bool isClearSelection(const ClipboardSelection &selection) const;
-  static bool isConcealedSelection(const ClipboardSelection &selection);
-
-  /**
-   * Sanitize the passed selection by removing duplicate offers.
-   * The selection is sanitized in place, no copy is made.
-   */
-  static ClipboardSelection &sanitizeSelection(ClipboardSelection &selection);
-
-  QByteArray decryptOffer(const QByteArray &data, ClipboardEncryptionType enc) const;
-
-  static ClipboardOfferKind getKind(const ClipboardDataOffer &offer);
+  void selectionUpdated() const;
+  void monitoringChanged(bool value) const;
 
 public:
-  ClipboardService(const std::filesystem::path &path, WindowManager &wm, AppService &app);
+  enum class OfferDecryptionError {
+    DecryptionRequired, // if encryption is disabled and data was previous encrypted
+    DecryptionFailed,
+  };
+
+  ClipboardService(const std::filesystem::path &path, WindowManager &wm, AppService &appDb);
 
   static QString readText();
   static Clipboard::ReadContent readContent();
@@ -121,7 +101,7 @@ public:
   std::optional<QString> retrieveKeywords(const QString &id);
   bool setKeywords(const QString &id, const QString &keywords);
 
-  QByteArray decryptMainSelectionOffer(const QString &selectionId) const;
+  tl::expected<QByteArray, OfferDecryptionError> getMainOfferData(const QString &selectionId) const;
   AbstractClipboardServer *clipboardServer() const;
   bool removeSelection(const QString &id);
   bool setPinned(const QString id, bool pinned);
@@ -152,17 +132,41 @@ public:
   bool supportsMonitoring() const;
   bool monitoring() const;
   void setMonitoring(bool value);
+  void setEncryption(bool value);
+  bool isEncryptionReady() const;
 
-signals:
-  void allSelectionsRemoved() const;
-  void itemCopied(const InsertClipboardHistoryLine &item) const;
-  void itemInserted(const ClipboardHistoryEntry &entry) const;
-  void selectionPinStatusChanged(const QString &id, bool pinned) const;
-  void selectionRemoved(const QString &id) const;
+private:
+  WindowManager &m_wm;
+  AppService &m_appDb;
+
+  bool m_recordAllOffers = true;
+  bool m_monitoring = false;
+
+  std::unique_ptr<ClipboardEncrypter> m_encrypter;
+
+  QMimeDatabase _mimeDb;
+  std::filesystem::path m_dataDir;
+  std::unique_ptr<AbstractClipboardServer> m_clipboardServer;
+
+  static QString getSelectionPreferredMimeType(const ClipboardSelection &selection);
+  static QString getOfferTextPreview(const ClipboardDataOffer &offer);
+
   /**
-   * When a selection is copied, its update time is modified which makes it appear on top
-   * of the list.
+   * Unique selection hash obtained by hashing all the data offer hashes together.
+   * This is used to prevent reinserting the exact same selection multiple times.
    */
-  void selectionUpdated() const;
-  void monitoringChanged(bool value) const;
+  QByteArray computeSelectionHash(const ClipboardSelection &selection) const;
+  bool isClearSelection(const ClipboardSelection &selection) const;
+  static bool isConcealedSelection(const ClipboardSelection &selection);
+
+  /**
+   * Sanitize the passed selection by removing duplicate offers.
+   * The selection is sanitized in place, no copy is made.
+   */
+  static ClipboardSelection &sanitizeSelection(ClipboardSelection &selection);
+
+  tl::expected<QByteArray, ClipboardService::OfferDecryptionError>
+  decryptOffer(const QByteArray &data, ClipboardEncryptionType type) const;
+
+  static ClipboardOfferKind getKind(const ClipboardDataOffer &offer);
 };
