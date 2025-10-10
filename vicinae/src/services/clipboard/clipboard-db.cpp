@@ -52,7 +52,7 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::listAll(int limit, i
 
   QString queryString = R"(
 	  	SELECT
-			selection.id, o.mime_type, o.text_preview, pinned_at, o.content_hash_md5, updated_at, o.size, selection.kind, o.url_host
+			selection.id, o.mime_type, o.text_preview, pinned_at, o.content_hash_md5, updated_at, o.size, selection.kind, o.url_host, o.encryption_type
 		FROM
 			selection
 		JOIN
@@ -96,16 +96,15 @@ PaginatedResponse<ClipboardHistoryEntry> ClipboardDatabase::listAll(int limit, i
 
   while (query.next()) {
     auto sum = query.value(4).toString();
-    ClipboardHistoryEntry dto{
-        .id = query.value(0).toString(),
-        .mimeType = query.value(1).toString(),
-        .textPreview = query.value(2).toString(),
-        .pinnedAt = query.value(3).toULongLong(),
-        .md5sum = sum,
-        .updatedAt = query.value(5).toULongLong(),
-        .size = query.value(6).toULongLong(),
-        .kind = static_cast<ClipboardOfferKind>(query.value(7).toUInt()),
-    };
+    ClipboardHistoryEntry dto{.id = query.value(0).toString(),
+                              .mimeType = query.value(1).toString(),
+                              .textPreview = query.value(2).toString(),
+                              .pinnedAt = query.value(3).toULongLong(),
+                              .md5sum = sum,
+                              .updatedAt = query.value(5).toULongLong(),
+                              .size = query.value(6).toULongLong(),
+                              .kind = static_cast<ClipboardOfferKind>(query.value(7).toUInt()),
+                              .encryption = static_cast<ClipboardEncryptionType>(query.value(9).toUInt())};
 
     if (auto val = query.value(8); !val.isNull()) { dto.urlHost = val.toString(); }
 
