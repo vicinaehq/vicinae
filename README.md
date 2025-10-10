@@ -6,7 +6,7 @@
   />
 </p>
 
-[![Discord](https://discord.com/api/guilds/1407488619765174273/widget.png?style=shield&nonce=1756955966)](https://discord.gg/rP4ecD42p7)
+[![Discord](https://discord.com/api/guilds/1407488619765174273/widget.png?style=shield&nonce=1756955967)](https://discord.gg/rP4ecD42p7)
 
 **Vicinae** (pronounced _"vih-SIN-ay"_) is a high-performance, native launcher for your desktop — built with C++ and Qt.
 
@@ -17,11 +17,12 @@ Inspired by the popular [Raycast launcher](https://www.raycast.com/), Vicinae pr
 Vicinae is designed for developers and power users who want fast, keyboard-first access to common system actions — without unnecessary overhead.
 
 <p align="center">
-  <img
-    src=".github/assets/demo.gif"
-    alt="Vicinae text logo"
-  />
+  
+https://github.com/user-attachments/assets/b5831ba7-dd16-407e-a05c-c2dbb468a0d6
+
 </p>
+
+We can't show everything in the demo, far from it, so please [go read the docs](https://docs.vicinae.com)!
 
 ---
 
