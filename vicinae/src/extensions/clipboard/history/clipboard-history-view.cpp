@@ -212,7 +212,7 @@ class ClipboardHistoryDetail : public DetailWithMetadataWidget {
       return icon;
     }
 
-    if (Utils::isTextMimeType(mimeName)) {
+    if (Utils::isTextMimeType(mimeName) || mimeName == "text/uri-list") {
       auto viewer = new TextFileViewer;
       viewer->load(data);
       return VStack().add(viewer).buildWidget();
