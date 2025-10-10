@@ -167,7 +167,7 @@ class ClipboardHistoryDetail : public DetailWithMetadataWidget {
 
     if (Utils::isTextMimeType(mime)) {
       auto viewer = new TextFileViewer;
-      viewer->load(QByteArray(path.c_str()));
+      viewer->load(path);
       return VStack().add(viewer).buildWidget();
     }
 
