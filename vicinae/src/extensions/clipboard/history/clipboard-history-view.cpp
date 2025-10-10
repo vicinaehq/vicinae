@@ -577,7 +577,7 @@ void ClipboardHistoryView::selectionChanged(const OmniList::AbstractVirtualItem 
                                             const OmniList::AbstractVirtualItem *previous) {
   if (!next) {
     m_split->setDetailVisibility(false);
-    setActions({});
+    clearActions();
     return;
   }
 

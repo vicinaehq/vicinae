@@ -25,6 +25,7 @@ public:
   void setProxy(BaseView *proxy);
 
   void setActions(std::unique_ptr<ActionPanelState> actions);
+  void clearActions();
 
   /**
    * Whether to show the search bar for this view. Calling setSearchText or searchText() is still

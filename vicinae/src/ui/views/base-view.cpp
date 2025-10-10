@@ -25,6 +25,8 @@ void BaseView::setProxy(BaseView *proxy) {
   setContext(proxy->context());
 }
 
+void BaseView::clearActions() { setActions(std::make_unique<ActionPanelState>()); }
+
 void BaseView::setActions(std::unique_ptr<ActionPanelState> actions) {
   if (!m_ctx) return;
   m_ctx->navigation->setActions(std::move(actions), m_navProxy);
