@@ -1,4 +1,5 @@
 #include "qt-clipboard-server.hpp"
+#include <ranges>
 
 bool AbstractQtClipboardServer::start() {
   auto clip = QApplication::clipboard();
@@ -51,5 +52,21 @@ void AbstractQtClipboardServer::dataChanged() {
     selection.offers.emplace_back(offer);
   }
 
+  // We also want to index other formats that are not text, image, or legacy X11 target types.
+
+  auto isIndexableFormat = [](const QString &fmt) {
+    return !isLegacyContentType(fmt) && !fmt.startsWith("text/") && !fmt.startsWith("image/");
+  };
+
+  for (const auto &format : mimeData->formats() | std::views::filter(isIndexableFormat)) {
+    QByteArray data = mimeData->data(format);
+    selection.offers.emplace_back(ClipboardDataOffer{format, data});
+  }
+
   emit selectionAdded(selection);
+}
+
+bool AbstractQtClipboardServer::isLegacyContentType(const QString &str) {
+  if (str.startsWith("-x") || str.startsWith("-X")) return false;
+  return str.isUpper() && !str.contains('/');
 }

@@ -15,5 +15,6 @@ public:
   bool isAlive() const override { return true; }
 
 private:
+  static bool isLegacyContentType(const QString &str);
   void dataChanged();
 };
