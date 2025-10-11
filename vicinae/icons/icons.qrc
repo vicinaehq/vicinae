@@ -1,7 +1,6 @@
 <!DOCTYPE RCC>
 <RCC version="1.0">
 	<qresource prefix="/icons">
-		<file>vicinae.svg</file>
 		<file>aarch64.svg</file>
 		<file>add-person.svg</file>
 		<file>adonisjs.svg</file>
@@ -184,7 +183,6 @@
 		<file>coin.svg</file>
 		<file>coins.svg</file>
 		<file>command-symbol.svg</file>
-		<file>option-symbol.svg</file>
 		<file>compass.svg</file>
 		<file>composer.svg</file>
 		<file>computer-chip.svg</file>
@@ -221,6 +219,7 @@
 		<file>devices.svg</file>
 		<file>devicon.svg</file>
 		<file>digitalocean.svg</file>
+		<file>discord.svg</file>
 		<file>discordjs.svg</file>
 		<file>django.svg</file>
 		<file>djangorest.svg</file>
@@ -253,8 +252,6 @@
 		<file>emoji-sad.svg</file>
 		<file>emoji.svg</file>
 		<file>enter-key.svg</file>
-		<file>tab-key.svg</file>
-		<file>space-key.svg</file>
 		<file>envelope.svg</file>
 		<file>envoy.svg</file>
 		<file>eraser.svg</file>
@@ -529,6 +526,7 @@
 		<file>opensuse.svg</file>
 		<file>opentelemetry.svg</file>
 		<file>opera.svg</file>
+		<file>option-symbol.svg</file>
 		<file>oracle.svg</file>
 		<file>ory.svg</file>
 		<file>p5js.svg</file>
@@ -613,6 +611,7 @@
 		<file>raindrop.svg</file>
 		<file>rancher.svg</file>
 		<file>raspberrypi.svg</file>
+		<file>raycast.svg</file>
 		<file>reach.svg</file>
 		<file>react.svg</file>
 		<file>reactbootstrap.svg</file>
@@ -684,6 +683,7 @@
 		<file>solidjs.svg</file>
 		<file>sonarqube.svg</file>
 		<file>sourcetree.svg</file>
+		<file>space-key.svg</file>
 		<file>spack.svg</file>
 		<file>speaker-down.svg</file>
 		<file>speaker-high.svg</file>
@@ -734,6 +734,7 @@
 		<file>switch.svg</file>
 		<file>symfony.svg</file>
 		<file>syringe.svg</file>
+		<file>tab-key.svg</file>
 		<file>tack-disabled.svg</file>
 		<file>tack.svg</file>
 		<file>tag.svg</file>
@@ -794,6 +795,7 @@
 		<file>vault.svg</file>
 		<file>vercel.svg</file>
 		<file>vertx.svg</file>
+		<file>vicinae.svg</file>
 		<file>video-disabled.svg</file>
 		<file>video.svg</file>
 		<file>vim.svg</file>
@@ -844,8 +846,7 @@
 		<file>yugabytedb.svg</file>
 		<file>yunohost.svg</file>
 		<file>zend.svg</file>
+		<file>zendesk.svg</file>
 		<file>zig.svg</file>
-		<file>raycast.svg</file>
-		<file>discord.svg</file>
 	</qresource>
 </RCC>
