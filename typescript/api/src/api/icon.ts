@@ -427,6 +427,7 @@ export enum Icon {
   XMarkCircle = "x-mark-circle",
   XMarkCircleFilled = "x-mark-circle-filled",
   XMarkTopRightSquare = "x-mark-top-right-square",
+  Zendesk = "zendesk",
   /** @deprecated Use {@link Icon.ArrowClockwise} instead. */
   TwoArrowsClockwise = "arrow-clockwise",
   /** @deprecated Use {@link Icon.EyeDisabled} instead. */
