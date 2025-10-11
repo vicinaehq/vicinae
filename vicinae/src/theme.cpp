@@ -382,11 +382,8 @@ void ThemeService::setTheme(const ThemeInfo &info) {
    * rules can help fix issues that would be hard to fix otherwise.
    */
   auto style = engine.build(R"(
-  		QWidget {
-			font-size: {FONT_SIZE}pt;
-		}
-
 		QLineEdit, QTextEdit, QPlainTextEdit {
+			font-size: {FONT_SIZE}pt;
 			background-color: transparent;
 			border: none;
  		}
