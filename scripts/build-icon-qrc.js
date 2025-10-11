@@ -1,6 +1,6 @@
 const { join } = require('path');
 const { readdirSync, writeFileSync } = require('fs');
-const OMNI_ICON_DIR = join("..", "omnicast", "icons");
+const OMNI_ICON_DIR = join("..", "vicinae", "icons");
 
 const generateQrc = (files) => {
 	const serializedFiles = files.map(file => `<file>${file}</file>`);
@@ -34,5 +34,5 @@ const icons = readdirSync(OMNI_ICON_DIR).filter((file) => file.endsWith('.svg'))
 const qrc = generateQrc(icons);
 const source = generateSource(icons);
 
-writeFileSync(join("..", "omnicast", "icons", "icons.qrc"), qrc);
-writeFileSync(join("..", "omnicast", "src", "builtin_icon.cpp"), source);
+writeFileSync(join("..", "vicinae", "icons", "icons.qrc"), qrc);
+writeFileSync(join("..", "vicinae", "src", "builtin_icon.cpp"), source);

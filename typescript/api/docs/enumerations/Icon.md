@@ -2643,3 +2643,9 @@ Use [Icon.XMarkCircle](#xmarkcircle-1) instead.
 ### XMarkTopRightSquare
 
 > **XMarkTopRightSquare**: `"x-mark-top-right-square"`
+
+***
+
+### Zendesk
+
+> **Zendesk**: `"zendesk"`
