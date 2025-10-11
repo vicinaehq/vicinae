@@ -147,6 +147,9 @@ set(SRCS
 	src/services/clipboard/clipboard-db.cpp
 	src/services/clipboard/wlr/wlr-clipboard-server.hpp
 	src/services/clipboard/wlr/wlr-clipboard-server.cpp
+	src/services/clipboard/qt/qt-clipboard-server.hpp
+	src/services/clipboard/qt/qt-clipboard-server.cpp
+	src/services/clipboard/x11/x11-clipboard-server.hpp
 	src/services/clipboard/dummy/dummy-clipboard-server.hpp
 	src/services/clipboard/dummy/dummy-clipboard-server.cpp
 	src/services/clipboard/clipboard-server-factory.hpp
