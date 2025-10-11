@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <numeric>
 #include <qapplication.h>
+#include "x11/x11-clipboard-server.hpp"
 #include <qimagereader.h>
 #include <qlogging.h>
 #include <qmimedata.h>
@@ -590,6 +591,7 @@ ClipboardService::ClipboardService(const std::filesystem::path &path, WindowMana
 
     factory.registerServer<GnomeClipboardServer>();
     factory.registerServer<WlrClipboardServer>();
+    factory.registerServer<X11ClipboardServer>();
     m_clipboardServer = factory.createFirstActivatable();
     qInfo() << "Activated clipboard server" << m_clipboardServer->id();
   }

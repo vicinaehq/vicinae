@@ -65,10 +65,7 @@ void NavigationController::setLoading(bool value, const BaseView *caller) {
 void NavigationController::showHud(const QString &title, const std::optional<ImageURL> &icon) {
   closeWindow();
 
-  if (Environment::isHudDisabled()) {
-    qDebug() << "HUD disabled via VICINAE_DISABLE_HUD environment variable, skipping:" << title;
-    return;
-  }
+  if (Environment::isHudDisabled()) return;
 
   emit showHudRequested(title, icon);
 }
