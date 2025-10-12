@@ -206,11 +206,14 @@ void CliServerCommand::run(CLI::App *app) {
 
     FaviconService::instance()->setService(next.faviconService);
 
-    if (next.theme.iconTheme) { QIcon::setThemeName(*next.theme.iconTheme); }
+    if (next.theme.iconTheme) {
+      QIcon::setThemeName(*next.theme.iconTheme);
+    } else {
+      QIcon::setThemeName(iconThemeDb.guessBestTheme());
+    }
 
     if (!iconThemeDb.isSuitableTheme(QIcon::themeName())) {
-      // try vicinae theme
-      QIcon::setThemeName(Omnicast::DEFAULT_ICON_THEME_NAME);
+      QIcon::setThemeName(iconThemeDb.guessBestTheme());
     }
 
     if (next.font.normal && *next.font.normal != prev.font.normal.value_or("")) {
