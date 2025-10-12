@@ -15,7 +15,7 @@ version = "1"
 name = "My Theme"
 description = "This is a wonderful theme"
 variant = "dark"
-icon = "./icon.png" # optional: path is relative to the directory the theme is found in
+#icon = "./icon.png" # optional: path is relative to the directory the theme is found in
 hidden = false # optional, if hidden the theme will not be shown in selectors but can be inherited from
 inherits = "vicinae-dark"
 
@@ -23,7 +23,7 @@ inherits = "vicinae-dark"
 # base16 colors required, base24 additions are optional
 [tints]
 # === Backgrounds & UI ===
-base00 = "#000000"  # Default Background
+base00 = { .color = "#000000", opacity = 0.7 }  # Default Background
 base01 = "#1a1a1a"  # Lighter Background (Used for status bars)
 base02 = "#2d2d2d"  # Selection Background
 base03 = "#4d4d4d"  # Comments, Invisibles, Line Highlighting
@@ -59,4 +59,6 @@ base17 = "#ff88ff"  # Bright Magenta
 # If you need even more granular control, you can override the color used on a per
 # element basis.
 [semantic]
+
+selected_text_background = "base"
 
