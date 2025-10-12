@@ -9,7 +9,8 @@ class QalculateBackend : public AbstractCalculatorBackend {
   QString id() const override;
   bool supportsCurrencyConversion() const override;
   bool reloadExchangeRates() const override;
-  tl::expected<CalculatorResult, CalculatorError> compute(const QString &question) const override;
+  ComputeResult compute(const QString &question) const override;
+  QFuture<ComputeResult> asyncCompute(const QString &question) const override;
 
   bool isActivatable() const override;
 

@@ -288,8 +288,6 @@ set(SRCS
 		src/ui/image/url.hpp
 
 
-	src/calculator-history-command.hpp
-
 	include/create-quicklink-command.hpp
 
 	include/builtin_icon.hpp
@@ -394,6 +392,8 @@ set(SRCS
 	src/extensions/clipboard/clipboard-history-command.cpp
 	src/extensions/clipboard/history/clipboard-history-view.hpp
 	src/extensions/clipboard/history/clipboard-history-view.cpp
+	src/extensions/calculator/history/calculator-history-view.hpp
+	src/extensions/calculator/history/calculator-history-view.cpp
 
 	src/extensions/raycast/store/store-detail-view.cpp
 	src/extensions/raycast/store/store-listing-view.cpp

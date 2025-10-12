@@ -7,6 +7,9 @@
 #include <qtimer.h>
 
 class RootSearchView : public ListView {
+  using CalculatorWatcher = QFutureWatcher<AbstractCalculatorBackend::ComputeResult>;
+  using FileSearchWatcher = QFutureWatcher<std::vector<IndexerFileResult>>;
+
   void handleFileResults();
   void handleFileSearchTimeout();
 
@@ -18,12 +21,14 @@ class RootSearchView : public ListView {
   void handleFavoriteChanged(const QString &itemId, bool value);
   void handleItemChange();
   void initialize() override;
+  void handleCalculationResult();
 
   QTimer *m_calcDebounce = new QTimer(this);
   QTimer *m_fileSearchDebounce = new QTimer(this);
   std::optional<AbstractCalculatorBackend::CalculatorResult> m_currentCalculatorEntry;
   std::vector<IndexerFileResult> m_fileResults;
-  QFutureWatcher<std::vector<IndexerFileResult>> m_pendingFileSearchResults;
+  CalculatorWatcher m_pendingCalculation;
+  FileSearchWatcher m_pendingFileSearchResults;
   QString m_lastFileSearchQuery;
   QString m_searchText;
 };

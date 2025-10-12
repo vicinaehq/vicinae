@@ -1,4 +1,5 @@
 #pragma once
+#include <qfuture.h>
 #include <qstring.h>
 #include "utils/expected.hpp"
 
@@ -23,9 +24,13 @@ public:
     CalculatorError(const QString &message) : m_message(message) {}
   };
 
+  using ComputeResult = tl::expected<CalculatorResult, CalculatorError>;
+
   virtual QString id() const = 0;
   virtual QString displayName() const { return id(); }
-  virtual tl::expected<CalculatorResult, CalculatorError> compute(const QString &question) const = 0;
+
+  virtual ComputeResult compute(const QString &question) const = 0;
+  virtual QFuture<ComputeResult> asyncCompute(const QString &question) const = 0;
 
   virtual bool supportsCurrencyConversion() const { return false; }
   virtual bool reloadExchangeRates() const { return false; }
