@@ -1,7 +1,8 @@
 #pragma once
-#include "calculator-history-command.hpp"
+#include "history/calculator-history-view.hpp"
+#include "services/calculator-service/calculator-service.hpp"
 #include "command-database.hpp"
-#include "../../ui/image/url.hpp"
+#include "ui/image/url.hpp"
 #include "preference.hpp"
 #include "service-registry.hpp"
 #include "single-view-command-context.hpp"

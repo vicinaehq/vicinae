@@ -1,20 +1,11 @@
-#pragma once
+#include "calculator-history-view.hpp"
 #include "actions/calculator/calculator-actions.hpp"
 #include "ui/views/base-view.hpp"
 #include "clipboard-actions.hpp"
 #include "ui/image/url.hpp"
-#include "service-registry.hpp"
-#include "services/calculator-service/abstract-calculator-backend.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/calculator-list-item-widget.hpp"
 #include "ui/omni-list/omni-list.hpp"
-#include <qnamespace.h>
-#include <qobject.h>
-#include <qsharedpointer.h>
-#include <qthreadpool.h>
-#include <qtimer.h>
-#include <qtmetamacros.h>
-#include "ui/views/list-view.hpp"
 
 class CalculatorListItem : public OmniList::AbstractVirtualItem, public ListView::Actionnable {
 protected:
@@ -106,100 +97,101 @@ public:
   CalculatorHistoryListItem(const CalculatorService::CalculatorRecord &record) : m_record(record) {}
 };
 
-class CalculatorHistoryView : public ListView {
-  QString m_searchQuery;
-  CalculatorService *m_calculator;
-  QTimer *m_calcDebounce = new QTimer(this);
-  std::optional<AbstractCalculatorBackend::CalculatorResult> m_calcRes;
+CalculatorHistoryView::CalculatorHistoryView()
+    : m_calculator(ServiceRegistry::instance()->calculatorService()) {
+  m_calcDebounce->setSingleShot(true);
+  connect(&m_pendingComputation, &CalculatorWatcher::finished, this,
+          &CalculatorHistoryView::handleComputationFinished);
+  connect(m_calculator, &CalculatorService::recordPinned, this, &CalculatorHistoryView::handlePinned);
+  connect(m_calculator, &CalculatorService::recordUnpinned, this, &CalculatorHistoryView::handleUnpinned);
+  connect(m_calculator, &CalculatorService::recordRemoved, this, &CalculatorHistoryView::handleRemoved);
+  connect(m_calculator, &CalculatorService::allRecordsRemoved, this,
+          &CalculatorHistoryView::handleAllRemoved);
+  connect(m_calcDebounce, &QTimer::timeout, this, &CalculatorHistoryView::handleCalculatorTimeout);
+}
 
-  void handlePinned(const QString &id) { textChanged(m_searchQuery); }
+void CalculatorHistoryView::handlePinned(const QString &id) { textChanged(m_searchQuery); }
 
-  void handleUnpinned(const QString &id) { textChanged(m_searchQuery); }
+void CalculatorHistoryView::handleUnpinned(const QString &id) { textChanged(m_searchQuery); }
 
-  void handleRemoved(const QString &id) { textChanged(m_searchQuery); }
+void CalculatorHistoryView::handleRemoved(const QString &id) { textChanged(m_searchQuery); }
 
-  void handleAllRemoved() { textChanged(m_searchQuery); }
+void CalculatorHistoryView::handleAllRemoved() { textChanged(m_searchQuery); }
 
-  void generateRootList() {
-    m_list->updateModel([&]() {
-      for (const auto &[group, records] : m_calculator->groupRecordsByTime(m_calculator->records())) {
-        auto &section = m_list->addSection(group);
+void CalculatorHistoryView::generateRootList() {
+  m_list->updateModel([&]() {
+    for (const auto &[group, records] : m_calculator->groupRecordsByTime(m_calculator->records())) {
+      auto &section = m_list->addSection(group);
 
-        for (const auto &record : records) {
-          section.addItem(std::make_unique<CalculatorHistoryListItem>(record));
-        }
-      }
-    });
-  }
-
-  void generateFilteredList(const QString &text) {
-    m_list->updateModel([&]() {
-      if (m_calcRes) {
-        m_list->addSection("Calculator").addItem(std::make_unique<CalculatorListItem>(*m_calcRes));
-      }
-
-      for (const auto &[group, records] : m_calculator->groupRecordsByTime(m_calculator->query(text))) {
-        auto &section = m_list->addSection(group);
-
-        for (const auto &record : records) {
-          section.addItem(std::make_unique<CalculatorHistoryListItem>(record));
-        }
-      }
-    });
-  }
-
-  void handleCalculatorTimeout() {
-    QString expression = searchText().trimmed();
-    bool isComputable = false;
-
-    for (const auto &ch : expression) {
-      if (!ch.isLetterOrNumber() || ch.isSpace()) {
-        isComputable = true;
-        break;
+      for (const auto &record : records) {
+        section.addItem(std::make_unique<CalculatorHistoryListItem>(record));
       }
     }
+  });
+}
 
-    if (!isComputable || !m_calculator->backend()) {
-      m_calcRes.reset();
-      return;
+void CalculatorHistoryView::generateFilteredList(const QString &text) {
+  m_list->updateModel([&]() {
+    if (m_calcRes) {
+      m_list->addSection("Calculator").addItem(std::make_unique<CalculatorListItem>(*m_calcRes));
     }
 
-    auto result = m_calculator->backend()->compute(expression);
+    for (const auto &[group, records] : m_calculator->groupRecordsByTime(m_calculator->query(text))) {
+      auto &section = m_list->addSection(group);
 
-    if (result) {
-      m_calcRes = *result;
-    } else {
-      m_calcRes.reset();
+      for (const auto &record : records) {
+        section.addItem(std::make_unique<CalculatorHistoryListItem>(record));
+      }
     }
-    generateFilteredList(m_searchQuery);
-  }
+  });
+}
 
-  void textChanged(const QString &text) override {
-    m_searchQuery = text;
+void CalculatorHistoryView::handleCalculatorTimeout() {
+  QString expression = searchText().trimmed();
+  bool isComputable = false;
 
-    if (text.isEmpty()) {
-      m_calcRes.reset();
-      return generateRootList();
+  for (const auto &ch : expression) {
+    if (!ch.isLetterOrNumber() || ch.isSpace()) {
+      isComputable = true;
+      break;
     }
-
-    m_calcDebounce->start(100);
-
-    return generateFilteredList(text);
   }
 
-  void initialize() override {
-    setSearchPlaceholderText("Do maths, convert units or search past calculations...");
-    generateRootList();
+  if (!isComputable || !m_calculator->backend()) {
+    m_calcRes.reset();
+    return;
   }
 
-public:
-  CalculatorHistoryView() : m_calculator(ServiceRegistry::instance()->calculatorService()) {
-    m_calcDebounce->setSingleShot(true);
-    connect(m_calculator, &CalculatorService::recordPinned, this, &CalculatorHistoryView::handlePinned);
-    connect(m_calculator, &CalculatorService::recordUnpinned, this, &CalculatorHistoryView::handleUnpinned);
-    connect(m_calculator, &CalculatorService::recordRemoved, this, &CalculatorHistoryView::handleRemoved);
-    connect(m_calculator, &CalculatorService::allRecordsRemoved, this,
-            &CalculatorHistoryView::handleAllRemoved);
-    connect(m_calcDebounce, &QTimer::timeout, this, &CalculatorHistoryView::handleCalculatorTimeout);
+  m_pendingComputation.setFuture(m_calculator->backend()->asyncCompute(expression));
+}
+
+void CalculatorHistoryView::textChanged(const QString &text) {
+  m_searchQuery = text;
+
+  if (m_pendingComputation.isRunning()) { m_pendingComputation.cancel(); }
+  if (text.isEmpty()) {
+    m_calcRes.reset();
+    return generateRootList();
   }
-};
+
+  m_calcDebounce->start(100);
+
+  return generateFilteredList(text);
+}
+
+void CalculatorHistoryView::initialize() {
+  setSearchPlaceholderText("Do maths, convert units or search past calculations...");
+  generateRootList();
+}
+
+void CalculatorHistoryView::handleComputationFinished() {
+  if (m_pendingComputation.isCanceled()) return;
+  auto result = m_pendingComputation.result();
+
+  if (result) {
+    m_calcRes = *result;
+  } else {
+    m_calcRes.reset();
+  }
+  generateFilteredList(m_searchQuery);
+}
