@@ -1,6 +1,7 @@
 #include "soulver-core.hpp"
 #include "services/calculator-service/abstract-calculator-backend.hpp"
 #include "xdgpp/env/env.hpp"
+#include <QtConcurrent/qtconcurrentrun.h>
 #include <cstdlib>
 #include <dlfcn.h>
 #include <filesystem>
@@ -70,6 +71,14 @@ SoulverCoreCalculator::compute(const QString &question) const {
 
   return result;
 };
+
+QFuture<SoulverCoreCalculator::ComputeResult>
+SoulverCoreCalculator::asyncCompute(const QString &question) const {
+  QPromise<ComputeResult> promise;
+  promise.addResult(compute(question));
+  promise.finish();
+  return promise.future();
+}
 
 tl::expected<SoulverCoreCalculator::SoulverResult, QString>
 SoulverCoreCalculator::calculate(const QString &expression) const {

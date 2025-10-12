@@ -4,6 +4,7 @@
 #include <libqalculate/QalculateDateTime.h>
 #include <libqalculate/includes.h>
 #include <qlogging.h>
+#include <QtConcurrent/QtConcurrent>
 
 using CalculatorResult = QalculateBackend::CalculatorResult;
 using CalculatorError = QalculateBackend::CalculatorError;
@@ -58,6 +59,13 @@ tl::expected<CalculatorResult, CalculatorError> QalculateBackend::compute(const 
   }
 
   return calcRes;
+}
+
+QFuture<QalculateBackend::ComputeResult> QalculateBackend::asyncCompute(const QString &question) const {
+  QPromise<ComputeResult> promise;
+  promise.addResult(compute(question));
+  promise.finish();
+  return promise.future();
 }
 
 QString QalculateBackend::id() const { return "qalculate"; }

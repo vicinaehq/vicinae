@@ -239,6 +239,8 @@ void RootSearchView::textChanged(const QString &text) {
   m_searchText = text;
   QString query = text.trimmed();
 
+  if (m_pendingCalculation.isRunning()) { m_pendingCalculation.cancel(); }
+  if (m_pendingFileSearchResults.isRunning()) { m_pendingFileSearchResults.cancel(); }
   if (query.isEmpty()) return renderEmpty();
 
   m_calcDebounce->start();
@@ -273,8 +275,10 @@ void RootSearchView::initialize() {
   connect(manager, &RootItemManager::itemFavoriteChanged, this, &RootSearchView::handleFavoriteChanged);
   connect(m_calcDebounce, &QTimer::timeout, this, &RootSearchView::handleCalculatorTimeout);
   connect(m_fileSearchDebounce, &QTimer::timeout, this, &RootSearchView::handleFileSearchTimeout);
-  connect(&m_pendingFileSearchResults, &QFutureWatcher<std::vector<IndexerFileResult>>::finished, this,
+  connect(&m_pendingFileSearchResults, &FileSearchWatcher::finished, this,
           &RootSearchView::handleFileResults);
+  connect(&m_pendingCalculation, &CalculatorWatcher::finished, this,
+          &RootSearchView::handleCalculationResult);
 }
 
 void RootSearchView::handleCalculatorTimeout() {
@@ -297,7 +301,13 @@ void RootSearchView::handleCalculatorTimeout() {
     return;
   }
 
-  auto result = calculator->backend()->compute(expression);
+  m_pendingCalculation.setFuture(calculator->backend()->asyncCompute(expression));
+}
+
+void RootSearchView::handleCalculationResult() {
+  if (m_pendingCalculation.isCanceled()) return;
+
+  auto result = m_pendingCalculation.result();
 
   if (result) {
     m_currentCalculatorEntry = *result;

@@ -8,6 +8,7 @@
 #include "ui/action-pannel/action.hpp"
 #include "ui/calculator-list-item-widget.hpp"
 #include "ui/omni-list/omni-list.hpp"
+#include <qfuturewatcher.h>
 #include <qnamespace.h>
 #include <qobject.h>
 #include <qsharedpointer.h>
@@ -107,10 +108,12 @@ public:
 };
 
 class CalculatorHistoryView : public ListView {
+  using CalculatorWatcher = QFutureWatcher<AbstractCalculatorBackend::ComputeResult>;
   QString m_searchQuery;
   CalculatorService *m_calculator;
   QTimer *m_calcDebounce = new QTimer(this);
   std::optional<AbstractCalculatorBackend::CalculatorResult> m_calcRes;
+  CalculatorWatcher m_pendingComputation;
 
   void handlePinned(const QString &id) { textChanged(m_searchQuery); }
 
@@ -164,19 +167,13 @@ class CalculatorHistoryView : public ListView {
       return;
     }
 
-    auto result = m_calculator->backend()->compute(expression);
-
-    if (result) {
-      m_calcRes = *result;
-    } else {
-      m_calcRes.reset();
-    }
-    generateFilteredList(m_searchQuery);
+    m_pendingComputation.setFuture(m_calculator->backend()->asyncCompute(expression));
   }
 
   void textChanged(const QString &text) override {
     m_searchQuery = text;
 
+    if (m_pendingComputation.isRunning()) { m_pendingComputation.cancel(); }
     if (text.isEmpty()) {
       m_calcRes.reset();
       return generateRootList();
@@ -192,9 +189,23 @@ class CalculatorHistoryView : public ListView {
     generateRootList();
   }
 
+  void handleComputationFinished() {
+    if (m_pendingComputation.isCanceled()) return;
+    auto result = m_pendingComputation.result();
+
+    if (result) {
+      m_calcRes = *result;
+    } else {
+      m_calcRes.reset();
+    }
+    generateFilteredList(m_searchQuery);
+  }
+
 public:
   CalculatorHistoryView() : m_calculator(ServiceRegistry::instance()->calculatorService()) {
     m_calcDebounce->setSingleShot(true);
+    connect(&m_pendingComputation, &CalculatorWatcher::finished, this,
+            &CalculatorHistoryView::handleComputationFinished);
     connect(m_calculator, &CalculatorService::recordPinned, this, &CalculatorHistoryView::handlePinned);
     connect(m_calculator, &CalculatorService::recordUnpinned, this, &CalculatorHistoryView::handleUnpinned);
     connect(m_calculator, &CalculatorService::recordRemoved, this, &CalculatorHistoryView::handleRemoved);
