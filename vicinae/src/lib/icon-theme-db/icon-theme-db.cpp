@@ -1,5 +1,6 @@
 #include <filesystem>
 #include <qicon.h>
+#include <qlogging.h>
 #include <qsettings.h>
 #include <set>
 #include "icon-theme-db/icon-theme-db.hpp"
@@ -31,17 +32,28 @@ IconThemeDatabase::IconThemeList IconThemeDatabase::themes(bool includeHidden) c
   return themeList;
 }
 
+QString IconThemeDatabase::guessBestTheme() const {
+  std::vector<QString> wellKnown = {"Breeze Dark", "Adwaita Dark", "Breeze", "Adwaita"};
+
+  for (const auto &theme : wellKnown) {
+    if (hasTheme(theme)) { return theme; }
+  }
+
+  if (auto it = std::ranges::find_if(m_themes, [&](auto &&info) { return !info.hidden; });
+      it != m_themes.end()) {
+    return it->name;
+  }
+
+  if (!m_themes.empty()) { return m_themes.front().name; }
+
+  return "hicolor";
+}
+
 bool IconThemeDatabase::hasTheme(const QString &name) const {
   return std::ranges::any_of(m_themes, [&](auto &&info) { return info.name == name; });
 }
 
-bool IconThemeDatabase::isSuitableTheme(const QString &name) const {
-  auto isTheme = [&](auto &&info) { return info.name == name; };
-
-  if (auto it = std::ranges::find_if(m_themes, isTheme); it != m_themes.end()) { return !it->hidden; }
-
-  return false;
-}
+bool IconThemeDatabase::isSuitableTheme(const QString &name) const { return hasTheme(name); }
 
 IconThemeDatabase::IconThemeList IconThemeDatabase::scan() {
   IconThemeDatabase::IconThemeList themes;
@@ -56,7 +68,10 @@ IconThemeDatabase::IconThemeList IconThemeDatabase::scan() {
 
       fs::path manifest = entry.path() / "index.theme";
 
-      if (!fs::is_regular_file(manifest, ec)) continue;
+      if (!fs::is_regular_file(manifest, ec)) {
+        qWarning() << "Ignoring icon theme directory with no index.theme at" << manifest.c_str();
+        continue;
+      }
 
       // I guess the correct way would be to parse this with xdg desktop file
       // format instead of plain ini stuff, but for this use case this is fine.

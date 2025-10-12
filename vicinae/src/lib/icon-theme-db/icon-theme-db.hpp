@@ -16,10 +16,14 @@ public:
   };
   using IconThemeList = std::vector<IconThemeInfo>;
 
-  IconThemeList themes(bool includeHidden = false) const;
+  IconThemeList themes(bool includeHidden = true) const;
 
   bool hasTheme(const QString &name) const;
   bool isSuitableTheme(const QString &name) const;
+  /**
+   * Tries to get the best theme we can from the system list.
+   */
+  QString guessBestTheme() const;
 
   IconThemeDatabase();
 
