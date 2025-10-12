@@ -1,0 +1,62 @@
+# Example vicinae v0.15.0+ theme format
+# This theme file only affects the color that are used to theme Vicinae.
+# Font size and window opacity are configured inside Vicinae directly, independently
+# from the current theme.
+
+# colors can be expressed as hex:
+# base01 = "#FFFFFF"
+# short hex:
+# base01 = "#FFF"
+# and optionally specify an opacity:
+# base01 = { color = "#FFF", opacity = 0.8 }
+
+[meta]
+version = "1"
+name = "My Theme"
+description = "This is a wonderful theme"
+variant = "dark"
+icon = "./icon.png" # optional: path is relative to the directory the theme is found in
+hidden = false # optional, if hidden the theme will not be shown in selectors but can be inherited from
+inherits = "vicinae-dark"
+
+# https://github.com/tinted-theming/base24/blob/main/styling.md
+# base16 colors required, base24 additions are optional
+[tints]
+# === Backgrounds & UI ===
+base00 = "#000000"  # Default Background
+base01 = "#1a1a1a"  # Lighter Background (Used for status bars)
+base02 = "#2d2d2d"  # Selection Background
+base03 = "#4d4d4d"  # Comments, Invisibles, Line Highlighting
+
+# === Foregrounds ===
+base04 = "#b3b3b3"  # Dark Foreground (Used for status bars)
+base05 = "#d9d9d9"  # Default Foreground, Caret, Delimiters, Operators
+base06 = "#e6e6e6"  # Light Foreground (Not often used)
+base07 = "#ffffff"  # The Lightest Foreground (Not often used)
+
+# === Syntax Colors ===
+base08 = "#ff5555"  # Red - Variables, XML Tags, Markup Link Text, Markup Lists, Diff Deleted
+base09 = "#ffaa55"  # Orange - Integers, Boolean, Constants, XML Attributes, Markup Link Url
+base0A = "#ffff55"  # Yellow - Classes, Markup Bold, Search Text Background
+base0B = "#55ff55"  # Green - Strings, Inherited Class, Markup Code, Diff Inserted
+base0C = "#55ffff"  # Cyan - Support, Regular Expressions, Escape Characters, Markup Quotes
+base0D = "#5555ff"  # Blue - Functions, Methods, Attribute IDs, Headings
+base0E = "#ff55ff"  # Magenta - Keywords, Storage, Selector, Markup Italic, Diff Changed
+base0F = "#aa5555"  # Brown - Deprecated, Opening/Closing Embedded Language Tags
+
+# === Base24 Extensions - Darker Backgrounds ===
+base10 = "#0a0a0a"  # Darker Background
+base11 = "#050505"  # The Darkest Background
+
+# === Base24 Extensions - Bright Variants ===
+base12 = "#ff8888"  # Bright Red
+base13 = "#ffff88"  # Bright Yellow
+base14 = "#88ff88"  # Bright Green
+base15 = "#88ffff"  # Bright Cyan
+base16 = "#8888ff"  # Bright Blue
+base17 = "#ff88ff"  # Bright Magenta
+
+# If you need even more granular control, you can override the color used on a per
+# element basis.
+[semantic]
+

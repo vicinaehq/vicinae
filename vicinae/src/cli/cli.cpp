@@ -1,12 +1,78 @@
 #include "cli.hpp"
 #include "daemon/ipc-client.hpp"
+#include "lib/rang.hpp"
+#include "theme/theme-db.hpp"
 #include "utils.hpp"
 #include "lib/CLI11.hpp"
 #include "ui/dmenu-view/dmenu-view.hpp"
 #include "vicinae.hpp"
 #include "server.hpp"
+#include <fstream>
 #include <iostream>
+#include <qdir.h>
 #include <qobjectdefs.h>
+#include <stdexcept>
+
+class CheckThemeCommand : public AbstractCommandLineCommand {
+  std::string id() const override { return "check"; }
+  std::string description() const override { return "Check whether the target theme file is valid"; }
+  void setup(CLI::App *app) override { app->add_option("file", m_path)->required(); }
+
+  void run(CLI::App *app) override {
+    auto res = ThemeFile::fromFile(m_path);
+    if (!res) { throw std::runtime_error("Theme is invalid: " + res.error().toStdString()); }
+    std::cout << rang::fg::green << "Theme file is valid" << rang::fg::reset << "\n";
+  }
+
+private:
+  std::filesystem::path m_path;
+};
+
+class TemplateThemeCommand : public AbstractCommandLineCommand {
+  std::string id() const override { return "template"; }
+  std::string description() const override { return "Print out template"; }
+  void setup(CLI::App *app) override { app->add_option("-o,--output", m_path); }
+
+  void run(CLI::App *app) override {
+    QFile file(":assets/example-theme.toml");
+    file.open(QIODevice::ReadOnly);
+    auto content = file.readAll().toStdString();
+
+    if (!m_path) {
+      std::cout << content;
+      return;
+    }
+
+    std::ofstream(m_path.value()) << content;
+    std::cout << "Theme file written to " << m_path.value() << "\n";
+    return;
+  }
+
+private:
+  std::optional<std::filesystem::path> m_path;
+};
+
+class ThemeSearchPathsCommand : public AbstractCommandLineCommand {
+  std::string id() const override { return "paths"; }
+  std::string description() const override { return "Print the paths themes are searched at"; }
+
+  void run(CLI::App *app) override {
+    for (const auto &path : ThemeDatabase().searchPaths()) {
+      std::cout << path << "\n";
+    }
+  }
+};
+
+class ThemeCommand : public AbstractCommandLineCommand {
+public:
+  std::string id() const override { return "theme"; }
+  std::string description() const override { return "Theme-related commands"; }
+  ThemeCommand() {
+    registerCommand<CheckThemeCommand>();
+    registerCommand<ThemeSearchPathsCommand>();
+    registerCommand<TemplateThemeCommand>();
+  }
+};
 
 class CliPing : public AbstractCommandLineCommand {
   std::string id() const override { return "ping"; }
@@ -107,6 +173,7 @@ int CommandLineInterface::execute(int ac, char **av) {
   app.registerCommand<ToggleCommand>();
   app.registerCommand<DeeplinkCommand>();
   app.registerCommand<DMenuCommand>();
+  app.registerCommand<ThemeCommand>();
 
   return app.run(ac, av);
 }

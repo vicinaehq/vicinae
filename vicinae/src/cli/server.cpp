@@ -28,6 +28,7 @@
 #include "services/window-manager/window-manager.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "settings/settings-window.hpp"
+#include "theme/theme-db.hpp"
 #include "ui/launcher-window/launcher-window.hpp"
 #include "vicinae.hpp"
 #include <QString>
@@ -165,6 +166,11 @@ void CliServerCommand::run(CLI::App *app) {
     // Start indexing after registerRepository() so that search paths are configured properly
     registry->fileService()->indexer()->start();
   }
+
+  ThemeDatabase themeDb;
+
+  themeDb.setSearchPaths({"./extra/themes"});
+  themeDb.scan();
 
   FaviconService::initialize(new FaviconService(Omnicast::dataDir() / "favicon"));
 

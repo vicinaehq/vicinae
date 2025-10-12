@@ -3,4 +3,7 @@
   <qresource prefix="/bin">
   	<file alias="extension-manager">@ASSET_PATH@/extension-runtime.js</file>
   </qresource>
+  <qresource prefix="/assets">
+	<file alias="example-theme.toml">@EXTRA_PATH@/example-theme.toml</file>
+  </qresource>
 </RCC>
