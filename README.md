@@ -28,19 +28,18 @@ We can't show everything in the demo, far from it, so please [go read the docs](
 
 ## ✏️ Features
 
-> [!NOTE]
-> Some features may not be fully supported yet on some environments. 
-
-- Start and retrieve information about installed applications
-- File indexing with full-text search across millions of files — available via the file search module or directly from root search
-- Smart emoji picker with support for custom indexing keywords
-- Fully fledged inline calculator with history (multiple backends available)
-- Encrypted clipboard history tracker with full-text search across all copied content
-- Shortcuts — quickly open anything using dynamic links
-- Direct window manager integration (e.g. copy content directly to the focused window)
-- Built-in theming system with light and dark palettes  
-  → Custom themes can be added via config (see docs)
-- Raycast compatibility module  
+- Launch apps
+- File search
+- Emoji picker 
+- Calculator with history (multiple backends available)
+- Clipboard history
+- Quickly open links using any app (can be used to set up web search)
+- Focus open windows
+- `dmenu` compatibility mode
+- Theming system 
+- Fallback commands
+- React/Typescript extension SDK, allowing to build complex search-focused UIs
+- Raycast compatibility support  
   → Includes access to the official Raycast extension store, with one-click installs directly from within the launcher  
   → Many extensions may not work yet due to missing APIs or general Linux incompatibilities (improvements in progress)
 
