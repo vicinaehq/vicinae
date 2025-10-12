@@ -389,17 +389,6 @@ void RootSearchView::renderEmpty() {
     return rootManager->itemMetadata(item->uniqueId()).isEnabled;
   };
 
-  if (auto provider = rootManager->provider("shortcuts")) {
-    auto &section = m_list->addSection("Shortcuts");
-
-    auto items =
-        provider->loadItems() | std::views::filter(isEnabled) |
-        std::views::transform([](const auto &item) { return std::make_unique<RootSearchItem>(item); });
-
-    for (auto item : items)
-      section.addItem(std::move(item));
-  }
-
   auto commandItems =
       rootManager->providers() | std::views::filter([](const auto &provider) {
         return provider->type() == RootProvider::Type::ExtensionProvider;
@@ -412,6 +401,17 @@ void RootSearchView::renderEmpty() {
 
   for (auto item : commandItems) {
     section.addItem(std::move(item));
+  }
+
+  if (auto provider = rootManager->provider("shortcuts")) {
+    auto &section = m_list->addSection("Shortcuts");
+
+    auto items =
+        provider->loadItems() | std::views::filter(isEnabled) |
+        std::views::transform([](const auto &item) { return std::make_unique<RootSearchItem>(item); });
+
+    for (auto item : items)
+      section.addItem(std::move(item));
   }
 
   if (auto provider = rootManager->provider("apps")) {

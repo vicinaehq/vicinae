@@ -30,7 +30,9 @@
 #include "settings/settings-window.hpp"
 #include "ui/launcher-window/launcher-window.hpp"
 #include "vicinae.hpp"
+#include "services/shortcut-seeder/shortcut-seeder.hpp"
 #include <QString>
+#include <filesystem>
 #include "lib/CLI11.hpp"
 #include "server.hpp"
 
@@ -54,8 +56,12 @@ void CliServerCommand::run(CLI::App *app) {
   pidFile.write(qApp->applicationPid());
 
   {
+    auto mainDbPath = Omnicast::dataDir() / "vicinae.db";
+    std::error_code ec;
+    bool canSeed = !std::filesystem::exists(mainDbPath);
+
     auto registry = ServiceRegistry::instance();
-    auto omniDb = std::make_unique<OmniDatabase>(Omnicast::dataDir() / "vicinae.db");
+    auto omniDb = std::make_unique<OmniDatabase>(mainDbPath);
     auto localStorage = std::make_unique<LocalStorageService>(*omniDb);
     auto rootItemManager = std::make_unique<RootItemManager>(*omniDb.get());
     auto extensionManager = std::make_unique<ExtensionManager>();
@@ -104,6 +110,12 @@ void CliServerCommand::run(CLI::App *app) {
 
     auto root = registry->rootItemManager();
     auto builtinCommandDb = std::make_unique<CommandDatabase>();
+
+    if (canSeed) {
+      qDebug() << "First startup, seeding base shortcuts...";
+      ShortcutSeeder seeder(*registry->shortcuts(), *registry->appDb());
+      seeder.seed();
+    }
 
     for (const auto &repo : builtinCommandDb->repositories()) {
       root->loadProvider(std::make_unique<ExtensionRootProvider>(repo));

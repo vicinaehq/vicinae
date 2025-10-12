@@ -387,6 +387,9 @@ set(SRCS
 	src/ui/omni-tree/omni-tree.hpp
 	src/ui/omni-tree/omni-tree.cpp
 
+	src/services/shortcut-seeder/shortcut-seeder.hpp
+	src/services/shortcut-seeder/shortcut-seeder.cpp
+
 	src/extensions/vicinae/search-emojis/search-emojis-view.hpp
 	src/extensions/vicinae/search-emojis/search-emojis-view.cpp
 	src/extensions/clipboard/clipboard-history-command.cpp
