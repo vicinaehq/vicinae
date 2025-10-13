@@ -8,15 +8,15 @@
 void ButtonBase::setColor(ButtonColor color) {
   switch (color) {
   case ButtonColor::Primary:
-    setBackgroundColor(SemanticColor::ButtonPrimary);
-    setHoverBackgroundColor(SemanticColor::ButtonPrimaryHover);
+    setBackgroundColor(SemanticColor::SelectionBackground);
+    setHoverBackgroundColor(SemanticColor::LighterBackground);
     break;
   case ButtonColor::Secondary:
-    setBackgroundColor(SemanticColor::ButtonSecondary);
-    setHoverBackgroundColor(SemanticColor::ButtonSecondaryHover);
+    setBackgroundColor(SemanticColor::SelectionBackground);
+    setHoverBackgroundColor(SemanticColor::LighterBackground);
     break;
   case ButtonColor::Transparent:
-    setHoverBackgroundColor(SemanticColor::ButtonSecondaryHover);
+    setHoverBackgroundColor(SemanticColor::LighterBackground);
     break;
   }
 }

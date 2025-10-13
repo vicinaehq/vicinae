@@ -34,7 +34,7 @@ public:
              [&](const ColorLike &color) {
                auto circle = new ColorCircle({16, 16});
                circle->setColor(color);
-               circle->setStroke(SemanticColor::TextPrimary, 2);
+               circle->setStroke(SemanticColor::Foreground, 2);
 
                return circle;
              })
@@ -57,7 +57,7 @@ public:
   void setColors(const std::vector<ColorLike> &colors) { m_palette->setColors(colors); }
 
   ThemeItemWidget(QWidget *parent = nullptr) : SelectableOmniListWidget(parent) {
-    m_description->setColor(SemanticColor::TextSecondary);
+    m_description->setColor(SemanticColor::LightForeground);
     m_icon->setFixedSize(30, 30);
 
     HStack()

@@ -38,7 +38,7 @@ class MarkdownRenderer : public QWidget {
   QTextCursor _cursor;
   int _basePointSize;
   bool m_growAsRequired = false;
-  std::optional<ColorLike> m_baseTextColor = SemanticColor::TextPrimary;
+  std::optional<ColorLike> m_baseTextColor = SemanticColor::Foreground;
   bool m_isFirstBlock = true;
 
   int _lastNodeType = CMARK_NODE_NONE;

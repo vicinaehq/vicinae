@@ -33,64 +33,24 @@ QColor ThemeInfo::resolveTint(SemanticColor tint) const {
     return colors.cyan;
 
   // Text colors
-  case SemanticColor::TextPrimary:
+  case SemanticColor::Foreground:
     return colors.text;
-  case SemanticColor::TextSecondary:
+  case SemanticColor::LightForeground:
     return colors.subtext;
-  case SemanticColor::TextTertiary:
-    return colors.textTertiary;
-  case SemanticColor::TextDisabled:
-    return colors.textDisabled;
-  case SemanticColor::TextOnAccent:
+  case SemanticColor::AccentForeground:
     return colors.textOnAccent;
-  case SemanticColor::TextError:
-    return colors.red;
-  case SemanticColor::TextSuccess:
-    return colors.green;
-  case SemanticColor::TextWarning:
-    return colors.orange;
 
   // Backgrounds
-  case SemanticColor::MainBackground:
+  case SemanticColor::Background:
     return colors.mainBackground;
-  case SemanticColor::MainHoverBackground:
+  case SemanticColor::HoverBackground:
     return colors.mainHoveredBackground;
-  case SemanticColor::MainSelectedBackground:
+  case SemanticColor::SelectionBackground:
     return colors.mainSelectedBackground;
-  case SemanticColor::SecondaryBackground:
+  case SemanticColor::LighterBackground:
     return colors.secondaryBackground;
-  case SemanticColor::TertiaryBackground:
-    return colors.tertiaryBackground;
-
-  // Button states
-  case SemanticColor::ButtonPrimary:
-    return colors.buttonPrimary;
-  case SemanticColor::ButtonPrimaryHover:
-    return colors.buttonPrimaryHover;
-  case SemanticColor::ButtonPrimaryPressed:
-    return colors.buttonPrimaryPressed;
-  case SemanticColor::ButtonPrimaryDisabled:
-    return colors.buttonPrimaryDisabled;
-
-  case SemanticColor::ButtonSecondary:
-    return colors.buttonSecondary;
-  case SemanticColor::ButtonSecondaryHover:
-    return colors.buttonSecondaryHover;
-  case SemanticColor::ButtonSecondaryPressed:
-    return colors.buttonSecondaryPressed;
-  case SemanticColor::ButtonSecondaryDisabled:
-    return colors.buttonSecondaryDisabled;
-
-  case SemanticColor::ButtonDestructive:
-    return colors.buttonDestructive;
-  case SemanticColor::ButtonDestructiveHover:
-    return colors.buttonDestructiveHover;
-  case SemanticColor::ButtonDestructivePressed:
-    return colors.buttonDestructivePressed;
 
   // Input states
-  case SemanticColor::InputBackground:
-    return colors.inputBackground;
   case SemanticColor::InputBorder:
     return colors.inputBorder;
   case SemanticColor::InputBorderFocus:
@@ -101,55 +61,8 @@ QColor ThemeInfo::resolveTint(SemanticColor tint) const {
     return colors.inputPlaceholder;
 
   // Borders
-  case SemanticColor::Border:
+  case SemanticColor::BackgroundBorder:
     return colors.border;
-  case SemanticColor::BorderSubtle:
-    return colors.borderSubtle;
-  case SemanticColor::BorderStrong:
-    return colors.borderStrong;
-  case SemanticColor::Separator:
-    return colors.separator;
-  case SemanticColor::Shadow:
-    return colors.shadow;
-
-  // Status colors
-  case SemanticColor::StatusBackground:
-    return colors.statusBackground;
-  case SemanticColor::StatusBorder:
-    return colors.statusBackgroundBorder;
-  case SemanticColor::StatusHover:
-    return colors.statusBackgroundHover;
-
-  case SemanticColor::ErrorBackground:
-    return colors.errorBackground;
-  case SemanticColor::ErrorBorder:
-    return colors.errorBorder;
-  case SemanticColor::SuccessBackground:
-    return colors.successBackground;
-  case SemanticColor::SuccessBorder:
-    return colors.successBorder;
-  case SemanticColor::WarningBackground:
-    return colors.warningBackground;
-  case SemanticColor::WarningBorder:
-    return colors.warningBorder;
-
-  // Interactive
-  case SemanticColor::LinkDefault:
-    return colors.linkDefault;
-  case SemanticColor::LinkHover:
-    return colors.linkHover;
-  case SemanticColor::LinkVisited:
-    return colors.linkVisited;
-
-  // Special
-  case SemanticColor::Focus:
-    return colors.focus;
-  case SemanticColor::Overlay:
-    return colors.overlay;
-  case SemanticColor::Tooltip:
-    return colors.tooltip;
-  case SemanticColor::TooltipText:
-    return colors.tooltipText;
 
   default:
     break;

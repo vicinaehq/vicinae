@@ -11,7 +11,7 @@ void Switch::paintEvent(QPaintEvent *event) {
   if (m_value) {
     painter.setThemeBrush(SemanticColor::Blue);
   } else {
-    painter.setThemeBrush(SemanticColor::MainHoverBackground);
+    painter.setThemeBrush(SemanticColor::HoverBackground);
   }
 
   painter.setRenderHint(QPainter::Antialiasing);
@@ -21,7 +21,7 @@ void Switch::paintEvent(QPaintEvent *event) {
   if (m_value) {
     painter.setThemeBrush(Qt::white);
   } else {
-    painter.setThemeBrush(SemanticColor::TextSecondary);
+    painter.setThemeBrush(SemanticColor::LightForeground);
   }
 
   QRect geometry;

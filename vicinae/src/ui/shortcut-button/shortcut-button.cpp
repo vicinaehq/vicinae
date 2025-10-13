@@ -10,18 +10,18 @@
 void ShortcutButton::hoverChanged(bool hovered) {
   auto &theme = ThemeService::instance().theme();
 
-  _shortcut_indicator->setBackgroundColor(hovered ? SemanticColor::SecondaryBackground
-                                                  : SemanticColor::ButtonSecondary);
-  setBackgroundColor(hovered ? theme.resolveTint(SemanticColor::ButtonSecondaryHover) : Qt::transparent);
+  _shortcut_indicator->setBackgroundColor(hovered ? SemanticColor::LighterHoverBackground
+                                                  : SemanticColor::LighterSelectionBackground);
+  setBackgroundColor(hovered ? theme.resolveTint(SemanticColor::LighterBackground) : Qt::transparent);
   update();
 }
 
 void ShortcutButton::resetColor() {
   auto &theme = ThemeService::instance().theme();
 
-  _shortcut_indicator->setBackgroundColor(underMouse() ? SemanticColor::SecondaryBackground
-                                                       : SemanticColor::ButtonSecondary);
-  setBackgroundColor(underMouse() ? theme.resolveTint(SemanticColor::ButtonSecondaryHover) : Qt::transparent);
+  _shortcut_indicator->setBackgroundColor(underMouse() ? SemanticColor::LighterHoverBackground
+                                                       : SemanticColor::LighterSelectionBackground);
+  setBackgroundColor(underMouse() ? theme.resolveTint(SemanticColor::LighterBackground) : Qt::transparent);
   setTextColor(theme.colors.text);
 }
 

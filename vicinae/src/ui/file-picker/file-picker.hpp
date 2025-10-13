@@ -73,9 +73,9 @@ public:
   void setRemovable(bool removable) {
     m_removeButton->setVisible(removable);
     if (!removable) {
-      m_title->setColor(SemanticColor::TextSecondary);
+      m_title->setColor(SemanticColor::LightForeground);
     } else {
-      m_title->setColor(SemanticColor::TextPrimary);
+      m_title->setColor(SemanticColor::Foreground);
     }
   }
 

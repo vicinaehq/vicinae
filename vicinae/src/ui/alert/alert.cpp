@@ -44,7 +44,7 @@ void AlertWidget::paintEvent(QPaintEvent *event) {
   QColor finalColor(theme.colors.statusBackground);
 
   finalColor.setAlphaF(0.98);
-  painter.setThemePen(SemanticColor::Border, Omnicast::WINDOW_BORDER_WIDTH);
+  painter.setThemePen(SemanticColor::BackgroundBorder, Omnicast::WINDOW_BORDER_WIDTH);
   painter.fillPath(path, finalColor);
   painter.drawPath(path);
 }
@@ -115,7 +115,7 @@ AlertWidget::AlertWidget(QWidget *parent)
       _message(new TypographyWidget), _cancelBtn(new ButtonWidget), _actionBtn(new ButtonWidget) {
   auto layout = new QVBoxLayout;
 
-  _message->setColor(SemanticColor::TextSecondary);
+  _message->setColor(SemanticColor::LightForeground);
   setFocusPolicy(Qt::StrongFocus);
 
   _icon->setFixedSize(30, 30);

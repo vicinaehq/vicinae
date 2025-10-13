@@ -198,7 +198,7 @@ QFuture<proto::ext::extension::Response *> UIRequestRouter::confirmAlert(const u
     alert->setIcon(url);
   }
 
-  alert->setCancelText(req.dismiss_action().title().c_str(), SemanticColor::TextPrimary);
+  alert->setCancelText(req.dismiss_action().title().c_str(), SemanticColor::Foreground);
 
   alert->setCallback([promise](bool value) mutable {
     auto res = new proto::ext::ui::Response;

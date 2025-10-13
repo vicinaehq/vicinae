@@ -2,6 +2,9 @@
 #include "expected.hpp"
 #include <filesystem>
 #include <qcolor.h>
+#include <unordered_map>
+#include "lib/toml.hpp"
+#include "theme.hpp"
 
 struct ThemeFileParsingError {};
 
@@ -38,17 +41,36 @@ enum class ThemeFileTint {
 class ThemeFile {
 public:
   static tl::expected<ThemeFile, QString> fromFile(const std::filesystem::path &path);
+  using Tints = std::unordered_map<ThemeFileTint, QColor>;
+  using Semantics = std::unordered_map<SemanticColor, QColor>;
+  struct InitData {
+    QString name;
+    QString description;
+    std::optional<std::filesystem::path> icon;
+    Tints tints;
+    Semantics semantics;
+  };
+
+  QColor resolveSemantic(SemanticColor color) {
+    if (auto it = m_data.semantics.find(color); it != m_data.semantics.end()) { return it->second; }
+    return deriveSemantic(color);
+  }
 
   QColor resolveTint(ThemeFileTint tint) const {
-    if (auto it = m_tints.find(tint); it != m_tints.end()) { return it->second; }
+    if (auto it = m_data.tints.find(tint); it != m_data.tints.end()) { return it->second; }
     return QColor();
   }
 
-private:
-  ThemeFile(const std::filesystem::path &path);
+  static QColor parseColorName(const QString &colorName, const Tints &tints);
+  static QColor parseColor(toml::node_view<toml::node> node, const Tints &tints);
 
-  QString m_name;
-  QString m_description;
-  std::filesystem::path m_icon;
-  std::unordered_map<ThemeFileTint, QColor> m_tints;
+  explicit ThemeFile(const InitData &data) : m_data(data) {}
+
+private:
+  /**
+   * Derive semantic color from base16 palette
+   */
+  QColor deriveSemantic(SemanticColor color);
+
+  InitData m_data;
 };

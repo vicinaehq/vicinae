@@ -27,9 +27,9 @@ QPixmap BuiltinIconLoader::renderSync(const RenderConfig &config) {
   SvgImageLoader loader(m_iconName);
 
   if (m_backgroundColor) {
-    loader.render(canva, iconRect, SemanticColor::TextOnAccent);
+    loader.render(canva, iconRect, SemanticColor::AccentForeground);
   } else {
-    loader.render(canva, iconRect, config.fill.value_or(SemanticColor::TextPrimary));
+    loader.render(canva, iconRect, config.fill.value_or(SemanticColor::Foreground));
   }
 
   canva.setDevicePixelRatio(config.devicePixelRatio);
@@ -43,4 +43,4 @@ void BuiltinIconLoader::setBackgroundColor(const std::optional<ColorLike> &color
 }
 
 BuiltinIconLoader::BuiltinIconLoader(const QString &iconName)
-    : m_iconName(iconName), m_fillColor(SemanticColor::TextPrimary) {}
+    : m_iconName(iconName), m_fillColor(SemanticColor::Foreground) {}

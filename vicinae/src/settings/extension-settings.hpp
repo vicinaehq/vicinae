@@ -86,7 +86,7 @@ public:
   NonApplicableTextPlaceholder() {
     setText("--");
     setAlignment(Qt::AlignCenter);
-    setColor(SemanticColor::TextSecondary);
+    setColor(SemanticColor::LightForeground);
   }
 };
 
@@ -579,7 +579,7 @@ class ExtensionSettingsContextLeftPane : public QWidget {
     m_searchDebounce.setInterval(50);
     m_searchDebounce.setSingleShot(true);
     m_toolbar->input()->installEventFilter(this);
-    m_tree->setAlternateBackgroundColor(SemanticColor::MainHoverBackground);
+    m_tree->setAlternateBackgroundColor(SemanticColor::HoverBackground);
     populateTreeFromQuery("");
 
     VStack().add(m_toolbar).add(m_tree, 1).imbue(this);

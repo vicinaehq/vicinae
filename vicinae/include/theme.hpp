@@ -19,80 +19,37 @@ enum SemanticColor {
   Green,
   Magenta,
   Orange,
-  Purple,
   Red,
   Yellow,
   Cyan,
-
-  // Text colors
-  TextPrimary,
-  TextSecondary,
-  TextTertiary, // Even more subtle than secondary
-  TextDisabled, // For disabled text
-  TextOnAccent, // White/black text on colored backgrounds
-  TextError,    // Error messages
-  TextSuccess,  // Success messages
-  TextWarning,  // Warning messages
+  Purple, // for now, aliased to magenta
 
   // Background colors
-  MainBackground,
-  MainHoverBackground,
-  MainSelectedBackground,
-  SecondaryBackground, // Cards, panels
-  TertiaryBackground,  // Deep inset areas
+  Background,
+  BackgroundBorder,
+  LighterBackground,
+  LighterBackgroundBorder,
+  SelectionBackground,
+  HoverBackground,
+  LighterSelectionBackground,
+  LighterHoverBackground,
 
-  // Button states
-  ButtonPrimary,
-  ButtonPrimaryHover,
-  ButtonPrimaryPressed,
-  ButtonPrimaryDisabled,
+  // foreground
+  Foreground,
+  LightForeground,
+  DarkForeground,
+  LightestForeground,
+  AccentForeground,
 
-  ButtonSecondary,
-  ButtonSecondaryHover,
-  ButtonSecondaryPressed,
-  ButtonSecondaryDisabled,
+  // text selection
+  TextSelectionBackground,
+  TextSelectionForeground,
 
-  ButtonDestructive, // Delete, remove actions
-  ButtonDestructiveHover,
-  ButtonDestructivePressed,
-
-  // Input/form states
-  InputBackground,
+  // input
   InputBorder,
   InputBorderFocus,
   InputBorderError,
   InputPlaceholder,
-
-  // UI elements
-  Border,
-  BorderSubtle, // Very light borders
-  BorderStrong, // Emphasized borders
-
-  Separator, // Divider lines
-  Shadow,    // Drop shadows
-
-  // Status/feedback colors
-  StatusBackground,
-  StatusBorder,
-  StatusHover,
-
-  ErrorBackground, // Error state backgrounds
-  ErrorBorder,
-  SuccessBackground, // Success state backgrounds
-  SuccessBorder,
-  WarningBackground, // Warning state backgrounds
-  WarningBorder,
-
-  // Interactive elements
-  LinkDefault,
-  LinkHover,
-  LinkVisited,
-
-  // Special states
-  Focus,       // Focus rings
-  Overlay,     // Modal overlays, tooltips
-  Tooltip,     // Tooltip backgrounds
-  TooltipText, // Tooltip text
 };
 
 enum TextSize { TextRegular, TextTitle, TextSmaller };

@@ -135,7 +135,7 @@ SelectorInput::SelectorInput(QWidget *parent)
 
   emptyTypography->setContentsMargins(10, 10, 10, 10);
   emptyTypography->setText("No results");
-  emptyTypography->setColor(SemanticColor::TextPrimary);
+  emptyTypography->setColor(SemanticColor::Foreground);
   emptyTypography->setAlignment(Qt::AlignCenter);
   emptyLayout->addWidget(emptyTypography);
   m_emptyView->setLayout(emptyLayout);

@@ -23,7 +23,7 @@ inherits = "vicinae-dark"
 # base16 colors required, base24 additions are optional
 [tints]
 # === Backgrounds & UI ===
-base00 = { .color = "#000000", opacity = 0.7 }  # Default Background
+base00 = { name = "#000000", opacity = 0.7 }  # Default Background
 base01 = "#1a1a1a"  # Lighter Background (Used for status bars)
 base02 = "#2d2d2d"  # Selection Background
 base03 = "#4d4d4d"  # Comments, Invisibles, Line Highlighting
@@ -54,11 +54,13 @@ base13 = "#ffff88"  # Bright Yellow
 base14 = "#88ff88"  # Bright Green
 base15 = "#88ffff"  # Bright Cyan
 base16 = "#8888ff"  # Bright Blue
-base17 = "#ff88ff"  # Bright Magenta
+#base17 = "#ff88ff"  # Bright Magenta
+base17 = "base14"  # Bright Magenta
 
 # If you need even more granular control, you can override the color used on a per
 # element basis.
+# You can use any tint key as a color name in this section.
 [semantic]
 
-selected_text_background = "base"
-
+selected_text_background = "base0D"
+selected_text_foreground = "#0000000"

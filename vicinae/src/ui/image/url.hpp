@@ -20,12 +20,12 @@ static std::vector<std::pair<QString, SemanticColor>> colorTints = {
     {"blue", SemanticColor::Blue},
     {"green", SemanticColor::Green},
     {"magenta", SemanticColor::Magenta},
-    {"orange", SemanticColor::Orange},
     {"purple", SemanticColor::Purple},
+    {"orange", SemanticColor::Orange},
     {"red", SemanticColor::Red},
     {"yellow", SemanticColor::Yellow},
-    {"primary-text", SemanticColor::TextPrimary},
-    {"secondary-text", SemanticColor::TextSecondary}};
+    {"primary-text", SemanticColor::Foreground},
+    {"secondary-text", SemanticColor::LightForeground}};
 
 class ImageURL {
 

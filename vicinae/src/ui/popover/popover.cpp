@@ -19,7 +19,7 @@ void Popover::paintEvent(QPaintEvent *event) {
 
   painter.setClipPath(path);
 
-  QColor finalColor = painter.resolveColor(SemanticColor::SecondaryBackground);
+  QColor finalColor = painter.resolveColor(SemanticColor::LighterBackground);
 
   finalColor.setAlphaF(0.98);
   painter.setPen(pen);

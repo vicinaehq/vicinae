@@ -278,7 +278,7 @@ void MarkdownRenderer::insertParagraph(cmark_node *node) {
   size_t i = 0;
 
   defaultFormat.setFont(_document->defaultFont());
-  defaultFormat.setForeground(theme.resolveTint(SemanticColor::TextPrimary));
+  defaultFormat.setForeground(theme.resolveTint(SemanticColor::Foreground));
   defaultFormat.setFontPointSize(_basePointSize);
 
   while (child) {

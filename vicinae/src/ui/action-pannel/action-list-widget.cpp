@@ -44,7 +44,7 @@ void ActionListWidget::setAction(const AbstractAction *action) {
 
   switch (action->style()) {
   case AbstractAction::Style::Normal:
-    m_label->setColor(SemanticColor::TextPrimary);
+    m_label->setColor(SemanticColor::Foreground);
     setIconUrl(action->icon());
     break;
   case AbstractAction::Style::Danger: {
@@ -74,7 +74,7 @@ ActionListWidget::ActionListWidget()
   m_shortcut->hide();
   m_icon->hide();
   m_icon->setFixedSize(22, 22);
-  m_shortcut->setBackgroundColor(SemanticColor::StatusBackground);
+  m_shortcut->setBackgroundColor(SemanticColor::LighterBackground);
   HStack()
       .margins(8)
       .spacing(10)
