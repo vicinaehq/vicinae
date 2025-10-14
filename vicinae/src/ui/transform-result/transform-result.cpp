@@ -1,6 +1,7 @@
 #include "ui/transform-result/transform-result.hpp"
 #include "../image/url.hpp"
 #include "theme.hpp"
+#include "theme/colors.hpp"
 #include "ui/selectable-omni-list-widget/selectable-omni-list-widget.hpp"
 #include "ui/typography/typography.hpp"
 #include <qboxlayout.h>
@@ -62,15 +63,14 @@ void TransformResult::selectionChanged(bool value) {
 }
 
 void TransformResult::paintEvent(QPaintEvent *event) {
-  auto &theme = ThemeService::instance().theme();
   SelectableOmniListWidget::paintEvent(event);
-  QPainter painter(this);
+  OmniPainter painter(this);
   int midW = width() / 2;
   int midH = height() / 2;
   auto margins = contentsMargins();
 
   painter.setPen(Qt::NoPen);
-  painter.setBrush(theme.colors.border);
+  painter.setThemeBrush(SemanticColor::BackgroundBorder);
 
   m_base->setFixedSize({midW, availableHeight()});
   m_base->move(0, margins.top());

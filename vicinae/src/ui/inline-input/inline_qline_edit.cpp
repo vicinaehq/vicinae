@@ -1,5 +1,6 @@
 #include "ui/inline-input/inline_qline_edit.hpp"
 #include "theme.hpp"
+#include "theme/colors.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
 #include <QLineEdit>
 #include <qpainter.h>
@@ -33,24 +34,17 @@ void InlineQLineEdit::setError(const QString &error) {
 }
 
 void InlineQLineEdit::paintEvent(QPaintEvent *event) {
-  auto &theme = ThemeService::instance().theme();
   int borderRadius = 5;
-  ColorLike borderColor = m_error.isEmpty() ? theme.colors.statusBackgroundBorder : theme.colors.red;
   OmniPainter painter(this);
-  QBrush borderBrush = painter.colorBrush(borderColor);
+  QPainterPath path;
 
   painter.setRenderHint(QPainter::Antialiasing, true);
 
-  QPainterPath path;
   path.addRoundedRect(rect(), borderRadius, borderRadius);
-
   painter.setClipPath(path);
-
-  painter.fillPath(path, theme.colors.statusBackground);
-
-  QPen pen(borderBrush, 1);
-  painter.setPen(pen);
+  painter.setThemeBrush(SemanticColor::LighterBackground);
   painter.drawPath(path);
-
+  painter.setThemePen(m_error.isEmpty() ? SemanticColor::InputBorder : SemanticColor::InputBorderError);
+  painter.drawPath(path);
   QLineEdit::paintEvent(event);
 }

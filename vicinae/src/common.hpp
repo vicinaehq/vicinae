@@ -2,12 +2,11 @@
 #include "argument.hpp"
 #include "ui/image/url.hpp"
 #include "preference.hpp"
-#include "theme.hpp"
 #include "ui/focus-notifier.hpp"
 #include "vicinae.hpp"
+#include "ui/divider/divider.hpp"
 #include <QHBoxLayout>
 #include <QString>
-#include <cmath>
 #include <functional>
 #include <optional>
 #include <qboxlayout.h>
@@ -45,66 +44,6 @@ public:
 };
 
 template <class T> using OptionalRef = std::optional<std::reference_wrapper<T>>;
-
-class HDivider : public QFrame {
-  QColor _color;
-  size_t _height;
-
-  void paintEvent(QPaintEvent *event) override {
-    QPainter painter(this);
-    auto margins = contentsMargins();
-    auto &theme = ThemeService::instance().theme();
-
-    painter.setBrush(QBrush(theme.colors.border));
-    painter.setPen(theme.colors.border);
-    painter.drawRect(0, margins.top(), width(), _height);
-  }
-
-public:
-  void setHeight(int height) {
-    _height = height;
-    setFixedHeight(height);
-    updateGeometry();
-  }
-
-  void setColor(QColor color) {
-    _color = color;
-    update();
-  }
-
-  HDivider(QWidget *parent = nullptr) : _height(1), _color("#222222") { setFixedHeight(_height); }
-};
-
-class VDivider : public QFrame {
-  QColor _color;
-  size_t _width;
-
-  void paintEvent(QPaintEvent *event) override {
-    QPainter painter(this);
-    auto margins = contentsMargins();
-    auto &theme = ThemeService::instance().theme();
-
-    painter.setBrush(QBrush(theme.colors.border));
-    painter.setPen(theme.colors.border);
-    painter.drawRect(0, margins.top(), _width, height() - margins.top() - margins.bottom());
-  }
-
-public:
-  void setWidth(int width) {
-    _width = width;
-    setFixedWidth(width);
-    updateGeometry();
-  }
-
-  void setColor(QColor color) {
-    _color = color;
-    update();
-  }
-
-  VDivider(QWidget *parent = nullptr) : QFrame(parent), _width(1), _color("#222222") {
-    setFixedWidth(_width);
-  }
-};
 
 struct JsonFormItemWidget : public QWidget {
   virtual QJsonValue asJsonValue() const = 0;

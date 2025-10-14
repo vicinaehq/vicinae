@@ -20,12 +20,14 @@ public:
       sub->callback([cmd = cmd.get(), sub]() { cmd->run(sub); });
     }
 
-    if (!m_cmds.empty()) { app->require_subcommand(); }
+    //.if (!m_cmds.empty()) { app->require_subcommand(); }
   }
 
   virtual void setup(CLI::App *app) {}
 
-  virtual void run(CLI::App *app) {}
+  virtual void run(CLI::App *app) {
+    if (!m_cmds.empty() && app->get_subcommands().empty()) { std::cout << app->help() << std::endl; }
+  }
 
   virtual ~AbstractCommandLineCommand() = default;
 

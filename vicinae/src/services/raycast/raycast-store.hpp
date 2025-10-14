@@ -1,7 +1,8 @@
 #pragma once
 #include "common.hpp"
-#include "../../ui/image/url.hpp"
+#include "ui/image/url.hpp"
 #include "theme.hpp"
+#include "theme/theme-file.hpp"
 #include "utils/expected.hpp"
 #include <qcontainerfwd.h>
 #include <qstringview.h>
@@ -134,13 +135,13 @@ struct Command {
   Icons extensionIcons;
 
   ImageURL extensionThemedIcon() const {
-    auto appearance = ThemeService::instance().theme().appearance;
-
-    if (appearance == "light" && !extensionIcons.light.isEmpty()) {
-      return ImageURL::http(extensionIcons.light);
-    }
-    if (appearance == "dark" && !extensionIcons.dark.isEmpty()) {
-      return ImageURL::http(extensionIcons.dark);
+    switch (ThemeService::instance().theme().variant()) {
+    case ThemeVariant::Light:
+      if (!extensionIcons.light.isEmpty()) { return ImageURL::http(extensionIcons.light); }
+      break;
+    case ThemeVariant::Dark:
+      if (!extensionIcons.dark.isEmpty()) { return ImageURL::http(extensionIcons.dark); }
+      break;
     }
 
     if (!extensionIcons.light.isEmpty()) { return ImageURL::http(extensionIcons.light); }
@@ -150,10 +151,14 @@ struct Command {
   }
 
   ImageURL themedIcon() const {
-    auto appearance = ThemeService::instance().theme().appearance;
-
-    if (appearance == "light" && !icons.light.isEmpty()) { return ImageURL::http(icons.light); }
-    if (appearance == "dark" && !icons.dark.isEmpty()) { return ImageURL::http(icons.dark); }
+    switch (ThemeService::instance().theme().variant()) {
+    case ThemeVariant::Light:
+      if (!icons.light.isEmpty()) { return ImageURL::http(icons.light); }
+      break;
+    case ThemeVariant::Dark:
+      if (!icons.dark.isEmpty()) { return ImageURL::http(icons.dark); }
+      break;
+    }
 
     if (!icons.light.isEmpty()) { return ImageURL::http(icons.light); }
     if (!icons.dark.isEmpty()) { return ImageURL::http(icons.dark); }
@@ -408,13 +413,17 @@ struct Extension {
    * Return appropriate icon given the current theme.
    */
   ImageURL themedIcon() const {
-    auto appearance = ThemeService::instance().theme().appearance;
-
-    if (appearance == "light" && !icons.light.isEmpty()) { return ImageURL::http(icons.light); }
-
-    if (appearance == "dark" && !icons.dark.isEmpty()) { return ImageURL::http(icons.dark); }
+    switch (ThemeService::instance().theme().variant()) {
+    case ThemeVariant::Light:
+      if (!icons.light.isEmpty()) { return ImageURL::http(icons.light); }
+      break;
+    case ThemeVariant::Dark:
+      if (!icons.dark.isEmpty()) { return ImageURL::http(icons.dark); }
+      break;
+    }
 
     if (!icons.light.isEmpty()) { return ImageURL::http(icons.light); }
+    if (!icons.dark.isEmpty()) { return ImageURL::http(icons.dark); }
 
     return ImageURL::http(icons.dark);
   }

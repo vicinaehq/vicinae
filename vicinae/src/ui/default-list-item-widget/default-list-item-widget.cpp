@@ -80,10 +80,10 @@ DefaultListItemWidget::DefaultListItemWidget(QWidget *parent) : SelectableOmniLi
 
   HStack().mx(10).my(8).add(left).add(m_accessoryList).justifyBetween().imbue(this);
 
-  m_category->setColor(SemanticColor::LightForeground);
+  m_category->setColor(SemanticColor::TextSecondary);
   m_icon->setFixedSize(25, 25);
   m_activeIndicator->setFixedSize(4, 4);
-  m_activeIndicator->setColor(SemanticColor::LightForeground);
+  m_activeIndicator->setColor(SemanticColor::TextSecondary);
   m_alias->hide();
   setActive();
 }

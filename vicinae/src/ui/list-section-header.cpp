@@ -14,7 +14,7 @@ OmniListSectionHeader::OmniListSectionHeader(const QString &title, const QString
 
   auto titleLabel = new TypographyWidget();
 
-  titleLabel->setColor(SemanticColor::LightForeground);
+  titleLabel->setColor(SemanticColor::TextSecondary);
   titleLabel->setText(title);
   titleLabel->setFontWeight(QFont::Bold);
   titleLabel->setSize(TextSize::TextSmaller);

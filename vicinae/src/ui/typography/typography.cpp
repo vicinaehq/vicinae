@@ -123,7 +123,7 @@ void TypographyWidget::setFontWeight(QFont::Weight weight) {
 
 void TypographyWidget::clear() { setText(""); }
 
-TypographyWidget::TypographyWidget(QWidget *parent) : QWidget(parent), m_color(SemanticColor::Foreground) {
+TypographyWidget::TypographyWidget(QWidget *parent) : QWidget(parent), m_color(SemanticColor::TextPrimary) {
   m_label = new QLabel(this);
   m_label->setOpenExternalLinks(true);
   VStack().add(m_label).imbue(this);

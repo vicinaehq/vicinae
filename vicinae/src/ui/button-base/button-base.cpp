@@ -1,4 +1,5 @@
 #include "button-base.hpp"
+#include "theme/colors.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
 #include <qcoreevent.h>
 #include <qevent.h>
@@ -77,19 +78,24 @@ void ButtonBase::paintEvent(QPaintEvent *event) {
   int borderRadius = 4;
   OmniPainter painter(this);
   QPainterPath path;
-  QPen pen(theme.colors.text, 1);
-  QBrush brush;
+  QColor brush;
 
   if (underMouse() && !m_disabled) {
-    brush = painter.colorBrush(m_hoverColor);
+    brush = painter.resolveColor(m_hoverColor);
   } else {
-    brush = painter.colorBrush(m_color);
+    brush = painter.resolveColor(m_color);
   }
 
   painter.setRenderHint(QPainter::Antialiasing, true);
   path.addRoundedRect(rect(), borderRadius, borderRadius);
   painter.setClipPath(path);
-  painter.setPen(m_focused ? pen : Qt::NoPen);
+
+  if (m_focused) {
+    painter.setThemePen(SemanticColor::Foreground);
+  } else {
+    painter.setPen(Qt::NoPen);
+  }
+
   painter.fillPath(path, brush);
   painter.drawPath(path);
 

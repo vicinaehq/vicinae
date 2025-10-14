@@ -2,6 +2,7 @@
 #include "vicinae.hpp"
 #include "xdgpp/env/env.hpp"
 #include <QString>
+#include <QApplication>
 #include <QProcessEnvironment>
 #include <cstdlib>
 #include <filesystem>

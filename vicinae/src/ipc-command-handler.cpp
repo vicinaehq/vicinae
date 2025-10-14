@@ -2,6 +2,7 @@
 #include "common.hpp"
 #include "proto/daemon.pb.h"
 #include <QDebug>
+#include "theme/theme-db.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
 #include "services/config/config-service.hpp"
 #include "services/root-item-manager/root-item-manager.hpp"
@@ -213,7 +214,7 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
       auto &service = ThemeService::instance();
       auto cfg = m_ctx.services->config();
 
-      service.scanThemeDirectories();
+      service.db().scan();
 
       auto theme = service.findTheme(id);
 
@@ -222,10 +223,10 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
         return;
       }
 
-      if (theme->id == cfg->value().theme.name.value_or("")) {
+      if (theme->id() == cfg->value().theme.name.value_or("")) {
         service.reloadCurrentTheme();
       } else {
-        cfg->updateConfig([&](ConfigService::Value &value) { value.theme.name = theme->id; });
+        cfg->updateConfig([&](ConfigService::Value &value) { value.theme.name = theme->id(); });
       }
 
       if (auto text = query.queryItemValue("openWindow"); text == "true" || text == "1") {

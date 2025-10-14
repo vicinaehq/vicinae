@@ -2,6 +2,7 @@
 #include "common.hpp"
 #include "../ui/image/url.hpp"
 #include "theme.hpp"
+#include "theme/colors.hpp"
 #include "ui/image/image.hpp"
 #include <qevent.h>
 #include <ranges>
@@ -59,11 +60,12 @@ class SettingsNavPane : public QWidget {
 
   QColor backgroundColor() {
     auto &theme = ThemeService::instance().theme();
+    OmniPainter painter;
 
-    if (m_selected) { return theme.colors.mainSelectedBackground; }
-    if (m_hovered) { return theme.colors.mainHoveredBackground; }
+    if (m_selected) { return painter.resolveColor(SemanticColor::SelectionBackground); }
+    if (m_hovered) { return painter.resolveColor(SemanticColor::HoverBackground); }
 
-    return theme.colors.mainBackground;
+    return painter.resolveColor(SemanticColor::Background);
   }
 
   void paintEvent(QPaintEvent *event) override {

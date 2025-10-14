@@ -1,4 +1,5 @@
 #pragma once
+#include "theme.hpp"
 #include <QWidget>
 #include <QTimer>
 #include <QPainter>
@@ -11,7 +12,7 @@ public:
 
   void start();
   void stop();
-  void setColor(const QColor &color);
+  void setColor(const ColorLike &color);
   void setSize(int size);
   void setThickness(int thickness);
 
@@ -24,5 +25,5 @@ private:
   int m_size;
   int m_thickness;
   int m_startAngle;
-  QColor m_color;
+  ColorLike m_color;
 };

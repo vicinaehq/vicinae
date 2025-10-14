@@ -1,5 +1,6 @@
 #include "alert.hpp"
 #include "theme.hpp"
+#include "theme/colors.hpp"
 #include "utils/layout.hpp"
 #include <qnamespace.h>
 #include "service-registry.hpp"
@@ -36,13 +37,11 @@ void AlertWidget::paintEvent(QPaintEvent *event) {
   int borderRadius = 6;
   OmniPainter painter(this);
   QPainterPath path;
+  QColor finalColor = painter.resolveColor(SemanticColor::LighterBackground);
 
   painter.setRenderHint(QPainter::Antialiasing, true);
   path.addRoundedRect(rect(), borderRadius, borderRadius);
   painter.setClipPath(path);
-
-  QColor finalColor(theme.colors.statusBackground);
-
   finalColor.setAlphaF(0.98);
   painter.setThemePen(SemanticColor::BackgroundBorder, Omnicast::WINDOW_BORDER_WIDTH);
   painter.fillPath(path, finalColor);

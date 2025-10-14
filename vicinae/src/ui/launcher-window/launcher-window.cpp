@@ -2,6 +2,7 @@
 #include "action-panel/action-panel.hpp"
 #include "common.hpp"
 #include "keyboard/keybind-manager.hpp"
+#include "theme/colors.hpp"
 #include "ui/status-bar/status-bar.hpp"
 #include "service-registry.hpp"
 #include "services/config/config-service.hpp"
@@ -269,25 +270,18 @@ void LauncherWindow::handleActionVisibilityChanged(bool visible) {
 
 void LauncherWindow::paintEvent(QPaintEvent *event) {
   auto &config = m_ctx.services->config()->value();
-  auto &theme = ThemeService::instance().theme();
-  QColor finalBgColor = theme.colors.mainBackground;
-  QPainter painter(this);
+  OmniPainter painter(this);
+  QColor finalBgColor = painter.resolveColor(SemanticColor::Background);
 
   finalBgColor.setAlphaF(config.window.opacity);
-
   painter.setRenderHint(QPainter::Antialiasing, true);
 
   if (config.window.csd) {
     QPainterPath path;
     path.addRoundedRect(rect(), config.window.rounding, config.window.rounding);
-
     painter.setClipPath(path);
-
     painter.fillPath(path, finalBgColor);
-
-    QPen pen(theme.colors.border, Omnicast::WINDOW_BORDER_WIDTH);
-    painter.setPen(pen);
-
+    painter.setThemePen(SemanticColor::MainWindowBorder, Omnicast::WINDOW_BORDER_WIDTH);
     painter.drawPath(path);
   } else {
     painter.fillRect(rect(), finalBgColor);

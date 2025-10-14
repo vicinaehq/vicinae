@@ -1,5 +1,6 @@
 #include "shortcut-button.hpp"
 #include "theme.hpp"
+#include "theme/colors.hpp"
 #include "ui/button-base/button-base.hpp"
 #include "ui/keyboard-shortcut-indicator/keyboard-shortcut-indicator.hpp"
 #include "ui/typography/typography.hpp"
@@ -8,21 +9,17 @@
 #include <qnamespace.h>
 
 void ShortcutButton::hoverChanged(bool hovered) {
-  auto &theme = ThemeService::instance().theme();
+  _shortcut_indicator->setBackgroundColor(SemanticColor::SelectionBackground);
+  setBackgroundColor(hovered ? ColorLike(SemanticColor::HoverBackground) : Qt::transparent);
 
-  _shortcut_indicator->setBackgroundColor(hovered ? SemanticColor::LighterHoverBackground
-                                                  : SemanticColor::LighterSelectionBackground);
-  setBackgroundColor(hovered ? theme.resolveTint(SemanticColor::LighterBackground) : Qt::transparent);
   update();
 }
 
 void ShortcutButton::resetColor() {
-  auto &theme = ThemeService::instance().theme();
-
-  _shortcut_indicator->setBackgroundColor(underMouse() ? SemanticColor::LighterHoverBackground
-                                                       : SemanticColor::LighterSelectionBackground);
-  setBackgroundColor(underMouse() ? theme.resolveTint(SemanticColor::LighterBackground) : Qt::transparent);
-  setTextColor(theme.colors.text);
+  setBackgroundColor(Qt::transparent);
+  setHoverBackgroundColor(SemanticColor::HoverBackground);
+  _shortcut_indicator->setColor(SemanticColor::Foreground);
+  _shortcut_indicator->setBackgroundColor(SemanticColor::SelectionBackground);
 }
 
 void ShortcutButton::setText(const QString &text) {

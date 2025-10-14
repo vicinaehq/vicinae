@@ -1,4 +1,6 @@
 #include "tooltip.hpp"
+#include "theme/colors.hpp"
+#include "ui/omni-painter/omni-painter.hpp"
 #include "ui/typography/typography.hpp"
 
 bool TooltipWidget::eventFilter(QObject *watched, QEvent *event) {
@@ -21,23 +23,15 @@ bool TooltipWidget::eventFilter(QObject *watched, QEvent *event) {
 }
 
 void TooltipWidget::paintEvent(QPaintEvent *event) {
-  auto &theme = ThemeService::instance().theme();
   int borderRadius = 10;
-
-  QPainter painter(this);
+  OmniPainter painter(this);
+  QPainterPath path;
 
   painter.setRenderHint(QPainter::Antialiasing, true);
-
-  QPainterPath path;
   path.addRoundedRect(rect(), borderRadius, borderRadius);
-
   painter.setClipPath(path);
-
-  painter.fillPath(path, theme.colors.mainBackground);
-
-  // Draw the border
-  QPen pen(theme.colors.border, 1); // Border with a thickness of 2
-  painter.setPen(pen);
+  painter.setThemeBrush(SemanticColor::TooltipBackground);
+  painter.setThemePen(SemanticColor::TooltipBorder, 1);
   painter.drawPath(path);
 }
 

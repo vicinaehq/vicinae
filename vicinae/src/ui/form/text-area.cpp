@@ -3,6 +3,7 @@
 #include "ui/scroll-bar/scroll-bar.hpp"
 #include "utils/layout.hpp"
 #include <QPlainTextEdit>
+#include <qapplication.h>
 #include <qevent.h>
 #include <qnamespace.h>
 #include <qplaintextedit.h>

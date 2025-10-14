@@ -13,6 +13,33 @@
 #include <qobjectdefs.h>
 #include <stdexcept>
 
+class DescribeThemeCommand : public AbstractCommandLineCommand {
+  std::string id() const override { return "describe"; }
+  std::string description() const override { return "Print out the fully derived theme file"; }
+  void setup(CLI::App *app) override {
+    app->alias("desc");
+    app->add_option("file", m_path)->required();
+    app->add_flag("-j,--json", m_json,
+                  "Output theme as json. Themes placed in the theme directories must only be TOML.");
+  }
+
+  void run(CLI::App *app) override {
+    auto res = ThemeFile::fromFile(m_path);
+    if (!res) { throw std::runtime_error("Theme is invalid: " + res.error().toStdString()); }
+
+    if (m_json) {
+      std::cout << res->toJson().toJson(QJsonDocument::JsonFormat::Indented).toStdString() << std::endl;
+      return;
+    }
+
+    std::cout << res->toToml() << std::endl;
+  }
+
+private:
+  std::filesystem::path m_path;
+  bool m_json = false;
+};
+
 class CheckThemeCommand : public AbstractCommandLineCommand {
   std::string id() const override { return "check"; }
   std::string description() const override { return "Check whether the target theme file is valid"; }
@@ -31,7 +58,10 @@ private:
 class TemplateThemeCommand : public AbstractCommandLineCommand {
   std::string id() const override { return "template"; }
   std::string description() const override { return "Print out template"; }
-  void setup(CLI::App *app) override { app->add_option("-o,--output", m_path); }
+  void setup(CLI::App *app) override {
+    app->alias("tmpl");
+    app->add_option("-o,--output", m_path);
+  }
 
   void run(CLI::App *app) override {
     QFile file(":assets/example-theme.toml");
@@ -67,10 +97,13 @@ class ThemeCommand : public AbstractCommandLineCommand {
 public:
   std::string id() const override { return "theme"; }
   std::string description() const override { return "Theme-related commands"; }
+  void setup(CLI::App *app) override { app->alias("th"); }
+
   ThemeCommand() {
     registerCommand<CheckThemeCommand>();
     registerCommand<ThemeSearchPathsCommand>();
     registerCommand<TemplateThemeCommand>();
+    registerCommand<DescribeThemeCommand>();
   }
 };
 

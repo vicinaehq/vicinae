@@ -1,6 +1,7 @@
 #include "ui/action-pannel/action-list-widget.hpp"
 #include "layout.hpp"
 #include "theme.hpp"
+#include "theme/colors.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/image/image.hpp"
 #include "ui/typography/typography.hpp"
@@ -30,12 +31,12 @@ ActionListWidget &ActionListWidget::setTitle(const QString &title) {
 
 void ActionListWidget::selectionChanged(bool selected) {
   SelectableOmniListWidget::selectionChanged(selected);
-  auto &theme = ThemeService::instance().theme();
+  OmniPainter painter;
 
   if (selected) {
-    m_shortcut->setBackgroundColor(theme.colors.statusBackground);
+    m_shortcut->setBackgroundColor(SemanticColor::LighterBackground);
   } else {
-    m_shortcut->setBackgroundColor(theme.colors.statusBackground);
+    m_shortcut->setBackgroundColor(SemanticColor::LighterBackground);
   }
 }
 

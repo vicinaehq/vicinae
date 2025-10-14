@@ -62,5 +62,5 @@ base17 = "base14"  # Bright Magenta
 # You can use any tint key as a color name in this section.
 [semantic]
 
-selected_text_background = "base0D"
-selected_text_foreground = "#0000000"
+text_selection_background = { name = "base08", lighter = 1.1  }
+text_selection_foreground = "#000000"

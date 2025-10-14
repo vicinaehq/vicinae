@@ -391,6 +391,7 @@ set(SRCS
 	src/theme/theme-file.hpp
 	src/theme/theme-file.cpp
 	src/theme/theme-db.hpp
+	src/theme/theme-db.cpp
 
 	src/extensions/vicinae/search-emojis/search-emojis-view.hpp
 	src/extensions/vicinae/search-emojis/search-emojis-view.cpp

@@ -6,6 +6,7 @@
 #include "service-registry.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "theme.hpp"
+#include "theme/colors.hpp"
 #include "ui/form/base-input.hpp"
 #include "ui/form/checkbox.hpp"
 #include "ui/image/image.hpp"
@@ -584,8 +585,8 @@ class ExtensionSettingsContextLeftPane : public QWidget {
 
     VStack().add(m_toolbar).add(m_tree, 1).imbue(this);
 
-    connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this](const ThemeInfo &theme) {
-      m_tree->setAlternateBackgroundColor(theme.colors.mainHoveredBackground);
+    connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this](const ThemeFile &theme) {
+      m_tree->setAlternateBackgroundColor(theme.resolve(SemanticColor::HoverBackground));
     });
     connect(m_tree, &OmniTree::selectionUpdated, this, &ExtensionSettingsContextLeftPane::selectionUpdated);
     connect(manager, &RootItemManager::itemsChanged, this,

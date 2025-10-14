@@ -84,8 +84,8 @@ public:
 
   ImageURLType type() const;
   const QString &name() const;
-  SemanticColor foregroundTint() const;
-  SemanticColor backgroundTint() const;
+  std::optional<SemanticColor> foregroundTint() const;
+  std::optional<SemanticColor> backgroundTint() const;
   const std::optional<ColorLike> &fillColor() const;
   OmniPainter::ImageMaskType mask() const;
   std::optional<ObjectFit> fit() const { return m_fit; }
@@ -122,8 +122,8 @@ private:
   ImageURLType _type = ImageURLType::Invalid;
   bool _isValid = false;
   QString _name;
-  SemanticColor _bgTint;
-  SemanticColor _fgTint;
+  std::optional<SemanticColor> _bgTint;
+  std::optional<SemanticColor> _fgTint;
   OmniPainter::ImageMaskType _mask = OmniPainter::ImageMaskType::NoMask;
   std::optional<QString> _fallback;
   std::optional<ColorLike> _fillColor = std::nullopt;

@@ -1,6 +1,8 @@
 #pragma once
 #include "actions/theme/theme-actions.hpp"
+#include "theme/colors.hpp"
 #include "ui/views/base-view.hpp"
+#include "theme/theme-db.hpp"
 #include "../src/ui/image/url.hpp"
 #include "ui/views/list-view.hpp"
 #include "theme.hpp"
@@ -71,30 +73,34 @@ public:
 };
 
 class ThemeItem : public OmniList::AbstractVirtualItem, public ListView::Actionnable {
-  ThemeInfo m_theme;
 
 public:
   bool hasUniformHeight() const override { return true; }
 
-  QString generateId() const override { return m_theme.id; }
+  QString generateId() const override { return m_theme.id(); }
 
   bool recyclable() const override { return false; }
 
   void refresh(QWidget *widget) const override {
     auto item = static_cast<ThemeItemWidget *>(widget);
 
-    item->setTitle(m_theme.name);
-    item->setDescription(m_theme.description.isEmpty() ? "Default theme description" : m_theme.description);
+    item->setTitle(m_theme.name());
+    item->setDescription(m_theme.description().isEmpty() ? "Default theme description"
+                                                         : m_theme.description());
 
-    if (m_theme.icon) {
-      item->setIcon(ImageURL::local(*m_theme.icon).withFallback(ImageURL::builtin("vicinae")));
+    if (m_theme.icon()) {
+      item->setIcon(ImageURL::local(*m_theme.icon()).withFallback(ImageURL::builtin("vicinae")));
     } else {
       item->setIcon(ImageURL::builtin("vicinae"));
     }
 
-    std::vector<ColorLike> colors{m_theme.colors.red,     m_theme.colors.blue,   m_theme.colors.green,
-                                  m_theme.colors.magenta, m_theme.colors.purple, m_theme.colors.orange,
-                                  m_theme.colors.text,    m_theme.colors.subtext};
+    std::vector<ColorLike> colors{SemanticColor::Red,
+                                  SemanticColor::Blue,
+                                  SemanticColor::Green,
+                                  SemanticColor::Magenta,
+                                  SemanticColor::Orange,
+                                  SemanticColor::Foreground,
+                                  SemanticColor::LightForeground};
 
     item->setColors(colors);
   }
@@ -110,17 +116,19 @@ public:
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
     auto panel = std::make_unique<ActionPanelState>();
     auto section = panel->createSection();
-    auto setTheme = new SetThemeAction(m_theme.id);
+    auto setTheme = new SetThemeAction(m_theme.id());
 
-    panel->setTitle(m_theme.name);
+    panel->setTitle(m_theme.name());
     section->addAction(setTheme);
 
     return panel;
   }
 
-  const ThemeInfo &theme() const { return m_theme; }
+  const ThemeFile &theme() const { return m_theme; }
 
-  ThemeItem(const ThemeInfo &theme) : m_theme(theme) {}
+  ThemeItem(const ThemeFile &theme) : m_theme(theme) {}
+
+  ThemeFile m_theme;
 };
 
 class SetThemeView : public ListView {
@@ -130,7 +138,7 @@ class SetThemeView : public ListView {
     m_list->updateModel([&]() {
       auto &current = themeService.theme();
 
-      if (current.name.contains(query, Qt::CaseInsensitive)) {
+      if (current.name().contains(query, Qt::CaseInsensitive)) {
         auto &section = m_list->addSection("Current Theme");
 
         section.addItem(std::make_unique<ThemeItem>(current));
@@ -140,8 +148,9 @@ class SetThemeView : public ListView {
         auto &section = m_list->addSection("Available Themes");
 
         for (const auto &theme : themeService.themes()) {
-          bool filtered = theme.name != current.name && theme.name.contains(query, Qt::CaseInsensitive);
-          if (filtered) { section.addItem(std::make_unique<ThemeItem>(theme)); }
+          bool filtered =
+              theme->name() != current.name() && theme->name().contains(query, Qt::CaseInsensitive);
+          if (filtered) { section.addItem(std::make_unique<ThemeItem>(*theme)); }
         }
       }
     });
@@ -156,7 +165,7 @@ class SetThemeView : public ListView {
 
 public:
   SetThemeView() {
-    ThemeService::instance().scanThemeDirectories();
+    ThemeService::instance().db().scan();
     connect(&ThemeService::instance(), &ThemeService::themeChanged, this,
             [this](const auto &info) { generateList(searchText()); });
   }
