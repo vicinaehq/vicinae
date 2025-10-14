@@ -77,7 +77,7 @@ void OmniPainter::fillRect(QRect rect, const QColor &color, int radius, float al
 
 QBrush OmniPainter::colorBrush(const ColorLike &colorLike) const { return QBrush(resolveColor(colorLike)); }
 
-QColor OmniPainter::resolveColor(const ColorLike &colorLike) const {
+QColor OmniPainter::resolveColor(const ColorLike &colorLike) {
   return ColorResolver::resolve(colorLike, ThemeService::instance().theme());
 }
 

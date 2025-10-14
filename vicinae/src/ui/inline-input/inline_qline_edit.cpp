@@ -1,8 +1,6 @@
 #include "ui/inline-input/inline_qline_edit.hpp"
-#include "theme.hpp"
-#include "theme/colors.hpp"
-#include "ui/omni-painter/omni-painter.hpp"
 #include <QLineEdit>
+#include <QStyle>
 #include <qpainter.h>
 #include <qpainterpath.h>
 
@@ -12,6 +10,7 @@ InlineQLineEdit::InlineQLineEdit(const QString &placeholder, QWidget *parent) : 
   setPlaceholderText(placeholder);
   resizeFromText(placeholder + "...");
   setTextMargins(5, 5, 0, 5);
+  setProperty("arg-form-input", true);
 }
 
 void InlineQLineEdit::resizeFromText(const QString &s) {
@@ -30,21 +29,9 @@ void InlineQLineEdit::clearError() { setError(""); }
 
 void InlineQLineEdit::setError(const QString &error) {
   m_error = error;
+  setProperty("arg-form-input", error.isEmpty());
+  setProperty("error", !error.isEmpty());
+  style()->unpolish(this);
+  style()->polish(this);
   update();
-}
-
-void InlineQLineEdit::paintEvent(QPaintEvent *event) {
-  int borderRadius = 5;
-  OmniPainter painter(this);
-  QPainterPath path;
-
-  painter.setRenderHint(QPainter::Antialiasing, true);
-
-  path.addRoundedRect(rect(), borderRadius, borderRadius);
-  painter.setClipPath(path);
-  painter.setThemeBrush(SemanticColor::LighterBackground);
-  painter.drawPath(path);
-  painter.setThemePen(m_error.isEmpty() ? SemanticColor::InputBorder : SemanticColor::InputBorderError);
-  painter.drawPath(path);
-  QLineEdit::paintEvent(event);
 }

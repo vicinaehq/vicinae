@@ -1,7 +1,6 @@
 #include "theme-file.hpp"
 #include "theme.hpp"
 #include "theme/colors.hpp"
-#include <absl/strings/internal/str_format/extension.h>
 #include <filesystem>
 #include <qfont.h>
 #include <qjsondocument.h>
@@ -285,6 +284,7 @@ QColor ThemeFile::deriveSemantic(SemanticColor color) const {
     return resolve(SemanticColor::Purple);
 
   case SemanticColor::LoadingBar:
+    return resolve(SemanticColor::TextSecondary);
   case SemanticColor::DynamicToastSpinner:
     return resolve(SemanticColor::Foreground);
 
@@ -473,26 +473,6 @@ tl::expected<ThemeFile, QString> ThemeFile::fromFile(const fs::path &path) {
       data.tints[tint] = color;
     }
   }
-
-  /*
-  for (const auto &key : base24Keys) {
-    if (auto it = tintToKey.find(key); it != tintToKey.end()) {
-      // map b24 value to its lossy b16 equivalent, as specified in the spec
-      if (!tintTable->contains(it->second)) {
-        if (auto it2 = b24tob16.find(key); it2 != b24tob16.end()) {
-          data.tints[key] = data.tints[it2->second];
-        }
-      }
-
-      auto value = (*tintTable)[it->second];
-      QColor color = parseColor(value, data.tints);
-      if (!color.isValid()) {
-        return tl::unexpected(QString("tints.%1 is not a valid color").arg(it->second.c_str()));
-      }
-      data.tints[key] = color;
-    }
-  }
-  */
 
   if (auto table = file["semantic"].as_table()) {
     for (const auto &[k, v] : *table) {

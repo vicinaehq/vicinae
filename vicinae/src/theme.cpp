@@ -1,5 +1,6 @@
 #include "theme.hpp"
 #include "template-engine/template-engine.hpp"
+#include "theme/colors.hpp"
 #include "theme/theme-db.hpp"
 #include "theme/theme-file.hpp"
 #include "timer.hpp"
@@ -18,6 +19,8 @@ void ThemeService::setTheme(const ThemeFile &info) {
   engine.setVar("FONT_SIZE", QString::number(m_baseFontPointSize));
   engine.setVar("INPUT_BORDER_COLOR", info.resolve(SemanticColor::InputBorder).name());
   engine.setVar("INPUT_FOCUS_BORDER_COLOR", info.resolve(SemanticColor::InputBorderFocus).name());
+  engine.setVar("INPUT_BORDER_ERROR", info.resolve(SemanticColor::InputBorderError).name());
+  engine.setVar("STATUS_BACKGROUND", info.resolve(SemanticColor::LighterBackground).name());
   engine.setVar("SEARCH_FONT_SIZE", QString::number(mainInputSize));
 
   /**
@@ -38,6 +41,26 @@ void ThemeService::setTheme(const ThemeFile &info) {
 
 		QLineEdit[form-input="true"]:focus {
 			border-color: {INPUT_FOCUS_BORDER_COLOR};
+		}
+
+		QLineEdit[arg-form-input="true"]:focus {
+			border-color: {INPUT_FOCUS_BORDER_COLOR};
+		}
+
+		QLineEdit[error="true"] {
+			background-color: {STATUS_BACKGROUND};
+			border: 2px solid {INPUT_BORDER_ERROR};
+			border-radius: 5px;
+		}
+
+		QLineEdit[arg-form-input="true"]:focus {
+			border-color: {INPUT_FOCUS_BORDER_COLOR};
+		}
+
+		QLineEdit[arg-form-input="true"] {
+			background-color: {STATUS_BACKGROUND};
+			border: 2px solid {INPUT_BORDER_COLOR};
+			border-radius: 5px;
 		}
 
 		QPlainTextEdit[form-input="true"]:focus {
