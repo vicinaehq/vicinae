@@ -140,4 +140,7 @@ ColorLike ThemeService::getTintColor(SemanticColor tint) const { return m_theme-
 ThemeService::ThemeService() : m_themeDb(std::make_shared<ThemeDatabase>()) {
   m_themeDb->scan();
   setTheme("vicinae-dark");
+  connect(m_themeDb.get(), &ThemeDatabase::themeChanged, this, [this](const ThemeFile &theme) {
+    if (m_theme->id() == theme.id()) { setTheme(theme); }
+  });
 }
