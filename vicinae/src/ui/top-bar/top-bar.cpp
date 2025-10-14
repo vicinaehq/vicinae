@@ -19,6 +19,7 @@
 #include "ui/search-bar/search-bar.hpp"
 
 void GlobalHeader::setupUI() {
+  setAttribute(Qt::WA_TranslucentBackground);
   m_input = new SearchBar(this);
   m_backButton = new IconButton;
   m_accessoryContainer = new QStackedWidget(this);

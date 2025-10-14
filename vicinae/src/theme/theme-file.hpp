@@ -5,7 +5,6 @@
 #include <qjsondocument.h>
 #include <unordered_map>
 #include "theme/colors.hpp"
-#include "lib/toml.hpp"
 
 enum class ThemeTint {
   Base00,
@@ -67,7 +66,7 @@ public:
   QColor resolve(SemanticColor color) const;
   QColor resolve(ThemeTint tint) const;
 
-  toml::table toToml() const;
+  std::string toToml() const;
   QJsonDocument toJson() const;
 
   static ThemeFile vicinaeDark();
@@ -80,8 +79,6 @@ private:
   static std::optional<ThemeTint> tintFromKey(const std::string &key);
   static std::optional<std::string> keyFromTint(ThemeTint tint);
   static std::optional<std::string> keyFromSemantic(SemanticColor color);
-  static QColor parseColorName(const QString &colorName, const Tints &tints);
-  static QColor parseColor(toml::node_view<toml::node> node, const Tints &tints);
   static QColor withAlphaF(const QColor &color, float alpha = 1.0f);
 
   /**

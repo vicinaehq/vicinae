@@ -43,6 +43,8 @@ enum SemanticColor {
   LightestForeground,
   AccentForeground,
 
+  Accent,
+
   // text selection
   TextSelectionBackground,
   TextSelectionForeground,

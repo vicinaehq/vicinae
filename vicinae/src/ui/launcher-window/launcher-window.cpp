@@ -170,7 +170,7 @@ void LauncherWindow::changeEvent(QEvent *event) {
 
 void LauncherWindow::setupUI() {
   setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
-  setAttribute(Qt::WA_TranslucentBackground, true);
+  setAttribute(Qt::WA_TranslucentBackground);
   setFixedSize(Omnicast::WINDOW_SIZE);
   setCentralWidget(createWidget());
 

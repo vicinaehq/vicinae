@@ -1,4 +1,5 @@
 #include "theme-file.hpp"
+#include "lib/toml.hpp"
 #include "theme.hpp"
 #include "theme/colors.hpp"
 #include <filesystem>
@@ -7,6 +8,7 @@
 #include <qjsonobject.h>
 #include <qlogging.h>
 #include <qobjectdefs.h>
+#include <sstream>
 
 namespace fs = std::filesystem;
 
@@ -82,6 +84,8 @@ static const std::unordered_map<std::string, SemanticColor> keyToSemantic = {
 
 	{"link_default", SemanticColor::LinkDefault},
 	{"link_visited", SemanticColor::LinkVisited},
+
+	{"accent", SemanticColor::Accent},
 };
 
 static const std::array<ThemeTint, 16> base16Keys = {
@@ -114,7 +118,7 @@ QColor ThemeFile::resolve(ThemeTint tint) const {
   return QColor();
 }
 
-QColor ThemeFile::parseColorName(const QString &colorName, const Tints &tints) {
+static QColor parseColorName(const QString &colorName, const ThemeFile::Tints &tints) {
   if (auto it = keyToTint.find(colorName.toStdString()); it != keyToTint.end()) {
     if (auto it2 = tints.find(it->second); it2 != tints.end()) { return it2->second; }
     return QColor();
@@ -156,7 +160,7 @@ QJsonDocument ThemeFile::toJson() const {
   return doc;
 }
 
-toml::table ThemeFile::toToml() const {
+std::string ThemeFile::toToml() const {
   toml::table toml;
 
   {
@@ -194,7 +198,9 @@ toml::table ThemeFile::toToml() const {
     toml.insert("semantic", semantics);
   }
 
-  return toml;
+  std::ostringstream oss;
+  oss << toml;
+  return oss.str();
 }
 
 ThemeFile ThemeFile::vicinaeDark() {
@@ -239,7 +245,7 @@ ThemeFile ThemeFile::vicinaeLight() {
   return ThemeFile(data);
 }
 
-QColor ThemeFile::parseColor(toml::node_view<toml::node> node, const Tints &tints) {
+static QColor parseColor(toml::node_view<toml::node> node, const ThemeFile::Tints &tints) {
   if (auto str = node.as_string()) { return parseColorName(str->value_or(""), tints); }
   if (auto table = node.as_table()) {
     QColor color;
@@ -331,14 +337,14 @@ QColor ThemeFile::deriveSemantic(SemanticColor color) const {
     return QColor("#FFFFFF");
 
   case SemanticColor::TextSelectionBackground:
-    return resolve(SemanticColor::Blue);
+    return resolve(SemanticColor::Accent);
   case SemanticColor::TextSelectionForeground:
     return resolve(SemanticColor::AccentForeground);
 
   case SemanticColor::InputBorder:
     return resolve(SemanticColor::BackgroundBorder);
   case SemanticColor::InputBorderFocus:
-    return resolve(SemanticColor::Blue);
+    return resolve(SemanticColor::Accent);
   case SemanticColor::InputBorderError:
     return resolve(SemanticColor::Red);
   case SemanticColor::InputPlaceholder:
@@ -357,6 +363,9 @@ QColor ThemeFile::deriveSemantic(SemanticColor color) const {
     return resolve(SemanticColor::BackgroundBorder);
   case SemanticColor::SettingsWindowBorder:
     return resolve(SemanticColor::BackgroundBorder);
+
+  case SemanticColor::Accent:
+    return resolve(SemanticColor::Blue);
 
   default:
     break;

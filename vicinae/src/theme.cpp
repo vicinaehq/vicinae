@@ -87,6 +87,7 @@ void ThemeService::setTheme(const ThemeFile &info) {
   palette.setBrush(QPalette::PlaceholderText, info.resolve(SemanticColor::InputPlaceholder));
   palette.setBrush(QPalette::Highlight, info.resolve(SemanticColor::TextSelectionBackground));
   palette.setBrush(QPalette::HighlightedText, info.resolve(SemanticColor::TextSelectionForeground));
+  palette.setBrush(QPalette::Accent, info.resolve(SemanticColor::TextSelectionBackground));
 
   QApplication::setPalette(palette);
 
