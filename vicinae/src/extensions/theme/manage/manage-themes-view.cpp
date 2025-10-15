@@ -1,10 +1,3 @@
-#pragma once
-#include "actions/theme/theme-actions.hpp"
-#include "theme/colors.hpp"
-#include "ui/views/base-view.hpp"
-#include "theme/theme-db.hpp"
-#include "../src/ui/image/url.hpp"
-#include "ui/views/list-view.hpp"
 #include "theme.hpp"
 #include "ui/color-circle/color_circle.hpp"
 #include "ui/default-list-item-widget/default-list-item-widget.hpp"
@@ -13,14 +6,13 @@
 #include "ui/selectable-omni-list-widget/selectable-omni-list-widget.hpp"
 #include "ui/typography/typography.hpp"
 #include "utils/layout.hpp"
+#include "actions/theme/theme-actions.hpp"
+#include "theme/colors.hpp"
+#include "ui/views/base-view.hpp"
+#include "ui/image/url.hpp"
+
 #include <memory>
-#include <qboxlayout.h>
-#include <qlabel.h>
-#include <qnamespace.h>
-#include <qobject.h>
-#include <qtmetamacros.h>
-#include <qwidget.h>
-#include <sys/socket.h>
+#include "manage-themes-view.hpp"
 
 class HorizontalColorPaletteWidget : public QWidget {
   std::vector<ColorCircle *> m_colors;
@@ -36,8 +28,7 @@ public:
              [&](const ColorLike &color) {
                auto circle = new ColorCircle({16, 16});
                circle->setColor(color);
-               circle->setStroke(SemanticColor::Foreground, 2);
-
+               circle->setStroke(SemanticColor::SelectionBackground, 2);
                return circle;
              })
         .imbue(this);
@@ -59,7 +50,7 @@ public:
   void setColors(const std::vector<ColorLike> &colors) { m_palette->setColors(colors); }
 
   ThemeItemWidget(QWidget *parent = nullptr) : SelectableOmniListWidget(parent) {
-    m_description->setColor(SemanticColor::LightForeground);
+    m_description->setColor(SemanticColor::TextMuted);
     m_icon->setFixedSize(30, 30);
 
     HStack()
@@ -89,18 +80,17 @@ public:
                                                          : m_theme.description());
 
     if (m_theme.icon()) {
+      qDebug() << "icon" << m_theme.icon();
       item->setIcon(ImageURL::local(*m_theme.icon()).withFallback(ImageURL::builtin("vicinae")));
     } else {
       item->setIcon(ImageURL::builtin("vicinae"));
     }
 
-    std::vector<ColorLike> colors{SemanticColor::Red,
-                                  SemanticColor::Blue,
-                                  SemanticColor::Green,
-                                  SemanticColor::Magenta,
-                                  SemanticColor::Orange,
-                                  SemanticColor::Foreground,
-                                  SemanticColor::LightForeground};
+    std::vector<ColorLike> colors{
+        m_theme.resolve(SemanticColor::Red),        m_theme.resolve(SemanticColor::Blue),
+        m_theme.resolve(SemanticColor::Cyan),       m_theme.resolve(SemanticColor::Green),
+        m_theme.resolve(SemanticColor::Magenta),    m_theme.resolve(SemanticColor::Orange),
+        m_theme.resolve(SemanticColor::Foreground), m_theme.resolve(SemanticColor::TextMuted)};
 
     item->setColors(colors);
   }
@@ -131,42 +121,37 @@ public:
   ThemeFile m_theme;
 };
 
-class SetThemeView : public ListView {
-  void generateList(const QString &query) {
-    auto &themeService = ThemeService::instance();
+ManageThemesView::ManageThemesView() {
+  connect(&ThemeService::instance(), &ThemeService::themeChanged, this,
+          [this](const auto &info) { generateList(searchText()); });
+}
 
-    m_list->updateModel([&]() {
-      auto &current = themeService.theme();
+void ManageThemesView::initialize() {
+  textChanged("");
+  setSearchPlaceholderText("Search for a theme...");
+}
 
-      if (current.name().contains(query, Qt::CaseInsensitive)) {
-        auto &section = m_list->addSection("Current Theme");
+void ManageThemesView::textChanged(const QString &s) { generateList(s); }
 
-        section.addItem(std::make_unique<ThemeItem>(current));
+void ManageThemesView::generateList(const QString &query) {
+  auto &themeService = ThemeService::instance();
+
+  m_list->updateModel([&]() {
+    auto &current = themeService.theme();
+
+    if (current.name().contains(query, Qt::CaseInsensitive)) {
+      auto &section = m_list->addSection("Current Theme");
+
+      section.addItem(std::make_unique<ThemeItem>(current));
+    }
+
+    if (!themeService.themes().empty()) {
+      auto &section = m_list->addSection("Available Themes");
+
+      for (const auto &theme : themeService.themes()) {
+        bool filtered = theme->name() != current.name() && theme->name().contains(query, Qt::CaseInsensitive);
+        if (filtered) { section.addItem(std::make_unique<ThemeItem>(*theme)); }
       }
-
-      if (!themeService.themes().empty()) {
-        auto &section = m_list->addSection("Available Themes");
-
-        for (const auto &theme : themeService.themes()) {
-          bool filtered =
-              theme->name() != current.name() && theme->name().contains(query, Qt::CaseInsensitive);
-          if (filtered) { section.addItem(std::make_unique<ThemeItem>(*theme)); }
-        }
-      }
-    });
-  }
-
-  void initialize() override {
-    textChanged("");
-    setSearchPlaceholderText("Search for a theme...");
-  }
-
-  void textChanged(const QString &s) override { generateList(s); }
-
-public:
-  SetThemeView() {
-    ThemeService::instance().db().scan();
-    connect(&ThemeService::instance(), &ThemeService::themeChanged, this,
-            [this](const auto &info) { generateList(searchText()); });
-  }
-};
+    }
+  });
+}

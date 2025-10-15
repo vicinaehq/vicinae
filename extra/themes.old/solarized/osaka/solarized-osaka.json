@@ -1,0 +1,19 @@
+ {
+    "version": "1.0.0",
+    "appearance": "dark",
+    "icon": "icon.png",
+    "name": "Solarized Osaka Dark",
+    "description": "A calm, warm variant of Solarized Dark",
+    "palette": {
+      "background": "#001419",
+      "foreground": "#9EABAC",
+      "blue": "#268BD3",
+      "green": "#849900",
+      "magenta": "#D23681",
+      "orange": "#B28500",
+      "purple": "#D23681",
+      "red": "#DB302D",
+      "yellow": "#B28500",
+      "cyan": "#29A298"
+    }
+}

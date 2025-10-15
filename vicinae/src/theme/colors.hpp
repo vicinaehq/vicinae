@@ -18,12 +18,15 @@ enum SemanticColor {
   // Background colors
   Background,
   BackgroundBorder,
-  LighterBackground,
-  LighterBackgroundBorder,
+  SecondaryBackground,
+  SecondaryBackgroundBorder,
+
   SelectionBackground,
+  SelectionForeground,
   HoverBackground,
-  LighterSelectionBackground,
-  LighterHoverBackground,
+  HoverForegroud,
+  SecondarySelectionBackground,
+  SecondarySelectionForeground,
 
   PopoverBackground,
   PopoverBorder,
@@ -35,12 +38,10 @@ enum SemanticColor {
   DynamicToastSpinner,
 
   ScrollBarBackground,
+  SecondaryScrollBarBackground,
 
   // foreground
   Foreground,
-  LightForeground,
-  DarkForeground,
-  LightestForeground,
   AccentForeground,
 
   Accent,
@@ -56,8 +57,8 @@ enum SemanticColor {
   InputPlaceholder,
 
   TextPrimary,
-  TextSecondary,
-  TextError,
+  TextMuted,
+  TextDanger,
   TextSuccess,
 
   // link

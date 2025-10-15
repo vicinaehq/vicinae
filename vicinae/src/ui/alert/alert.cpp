@@ -37,7 +37,7 @@ void AlertWidget::paintEvent(QPaintEvent *event) {
   int borderRadius = 6;
   OmniPainter painter(this);
   QPainterPath path;
-  QColor finalColor = painter.resolveColor(SemanticColor::LighterBackground);
+  QColor finalColor = painter.resolveColor(SemanticColor::SecondaryBackground);
 
   painter.setRenderHint(QPainter::Antialiasing, true);
   path.addRoundedRect(rect(), borderRadius, borderRadius);
@@ -114,7 +114,7 @@ AlertWidget::AlertWidget(QWidget *parent)
       _message(new TypographyWidget), _cancelBtn(new ButtonWidget), _actionBtn(new ButtonWidget) {
   auto layout = new QVBoxLayout;
 
-  _message->setColor(SemanticColor::LightForeground);
+  _message->setColor(SemanticColor::TextMuted);
   setFocusPolicy(Qt::StrongFocus);
 
   _icon->setFixedSize(30, 30);

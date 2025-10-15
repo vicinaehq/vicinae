@@ -2,6 +2,7 @@
 #include "common.hpp"
 #include "../image/url.hpp"
 #include "theme.hpp"
+#include "theme/colors.hpp"
 #include "ui/image/image.hpp"
 #include "ui/list-accessory/list-accessory.hpp"
 #include "utils/layout.hpp"
@@ -62,6 +63,12 @@ void DefaultListItemWidget::setAlias(const QString &alias) {
   m_alias->setVisible(!alias.isEmpty());
 }
 
+void DefaultListItemWidget::selectionChanged(bool selected) {
+  m_name->setColor(selected ? SemanticColor::SelectionForeground : SemanticColor::TextPrimary);
+  m_category->setColor(selected ? SemanticColor::SelectionForeground : SemanticColor::TextMuted);
+  SelectableOmniListWidget::selectionChanged(selected);
+}
+
 void DefaultListItemWidget::positionActiveIndicator() {
   auto margins = layout()->contentsMargins();
   int x = margins.left() + m_icon->width() / 2 - m_activeIndicator->width() / 2;
@@ -80,10 +87,10 @@ DefaultListItemWidget::DefaultListItemWidget(QWidget *parent) : SelectableOmniLi
 
   HStack().mx(10).my(8).add(left).add(m_accessoryList).justifyBetween().imbue(this);
 
-  m_category->setColor(SemanticColor::TextSecondary);
+  m_category->setColor(SemanticColor::TextMuted);
   m_icon->setFixedSize(25, 25);
   m_activeIndicator->setFixedSize(4, 4);
-  m_activeIndicator->setColor(SemanticColor::TextSecondary);
+  m_activeIndicator->setColor(SemanticColor::TextMuted);
   m_alias->hide();
   setActive();
 }

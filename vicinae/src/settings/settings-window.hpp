@@ -47,7 +47,7 @@ class SettingsNavPane : public QWidget {
       break;
     }
     case QEvent::HoverLeave: {
-      setForeground(m_selected ? SemanticColor::Foreground : SemanticColor::LightForeground);
+      setForeground(m_selected ? SemanticColor::Foreground : SemanticColor::TextMuted);
       m_hovered = false;
       break;
     }
@@ -94,7 +94,7 @@ public:
 
   void deselect() {
     m_selected = false;
-    setForeground(SemanticColor::LightForeground);
+    setForeground(SemanticColor::TextMuted);
     update();
   }
 
@@ -103,7 +103,7 @@ public:
 
     setAttribute(Qt::WA_Hover);
     m_title->setAlignment(Qt::AlignCenter);
-    m_title->setColor(SemanticColor::LightForeground);
+    m_title->setColor(SemanticColor::TextMuted);
     m_icon->setFixedSize(20, 20);
     layout->setContentsMargins(0, 5, 0, 5);
     layout->addWidget(m_icon, 0, Qt::AlignCenter);
@@ -115,7 +115,7 @@ public:
   void setIcon(const ImageURL &url) {
     ImageURL finalUrl = url;
 
-    finalUrl.setFill(SemanticColor::LightForeground);
+    finalUrl.setFill(SemanticColor::TextMuted);
     m_icon->setUrl(finalUrl);
   }
   void setTitle(const QString &title) { m_title->setText(title); }

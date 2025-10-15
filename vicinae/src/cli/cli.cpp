@@ -64,17 +64,7 @@ class TemplateThemeCommand : public AbstractCommandLineCommand {
   }
 
   void run(CLI::App *app) override {
-    QFile file(":assets/example-theme.toml");
-    file.open(QIODevice::ReadOnly);
-    auto content = file.readAll().toStdString();
-
-    if (!m_path) {
-      std::cout << content;
-      return;
-    }
-
-    std::ofstream(m_path.value()) << content;
-    std::cout << "Theme file written to " << m_path.value() << "\n";
+    std::cout << ThemeFile::vicinaeDark().toToml() << std::endl;
     return;
   }
 

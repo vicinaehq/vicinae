@@ -110,7 +110,7 @@ public:
   }
 
   Text &secondary() {
-    color(SemanticColor::LightForeground);
+    color(SemanticColor::TextMuted);
     return *this;
   }
 

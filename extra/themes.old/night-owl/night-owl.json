@@ -1,0 +1,19 @@
+{
+  "version": "1.0.0",
+  "appearance": "dark",
+  "icon": "./night-owl.png",
+  "name": "Night Owl",
+  "description": "Sarah Drasner's popular Night Owl theme for night owls",
+  "palette": {
+    "background": "#011627",
+    "foreground": "#D6DEEB",
+    "blue": "#82AAFF",
+    "green": "#ADDB67",
+    "magenta": "#C792EA",
+    "orange": "#F78C6C",
+    "purple": "#C792EA",
+    "red": "#EF5350",
+    "yellow": "#FFCB6B",
+    "cyan": "#21C7A8"
+  }
+}

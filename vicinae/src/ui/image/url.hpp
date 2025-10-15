@@ -25,7 +25,7 @@ static std::vector<std::pair<QString, SemanticColor>> colorTints = {
     {"red", SemanticColor::Red},
     {"yellow", SemanticColor::Yellow},
     {"primary-text", SemanticColor::Foreground},
-    {"secondary-text", SemanticColor::LightForeground}};
+    {"secondary-text", SemanticColor::TextMuted}};
 
 class ImageURL {
 

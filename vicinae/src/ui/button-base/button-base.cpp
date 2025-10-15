@@ -10,14 +10,14 @@ void ButtonBase::setColor(ButtonColor color) {
   switch (color) {
   case ButtonColor::Primary:
     setBackgroundColor(SemanticColor::SelectionBackground);
-    setHoverBackgroundColor(SemanticColor::LighterBackground);
+    setHoverBackgroundColor(SemanticColor::SecondaryBackground);
     break;
   case ButtonColor::Secondary:
     setBackgroundColor(SemanticColor::SelectionBackground);
-    setHoverBackgroundColor(SemanticColor::LighterBackground);
+    setHoverBackgroundColor(SemanticColor::SecondaryBackground);
     break;
   case ButtonColor::Transparent:
-    setHoverBackgroundColor(SemanticColor::LighterBackground);
+    setHoverBackgroundColor(SemanticColor::SecondaryBackground);
     break;
   }
 }

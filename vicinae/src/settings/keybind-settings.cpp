@@ -83,7 +83,7 @@ protected:
 
       if (!m_indicator->isVisible()) {
         QRect contentRect = rect().marginsRemoved(layout()->contentsMargins());
-        painter.setThemePen(SemanticColor::LightForeground);
+        painter.setThemePen(SemanticColor::TextMuted);
         painter.drawText(contentRect, Qt::AlignLeft | Qt::AlignVCenter, "Record shortcut");
       }
     }

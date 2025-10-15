@@ -12,66 +12,23 @@
 
 namespace fs = std::filesystem;
 
-static const std::unordered_map<ThemeTint, std::string> tintToKey = {
-    {ThemeTint::Base00, "base00"}, {ThemeTint::Base01, "base01"}, {ThemeTint::Base02, "base02"},
-    {ThemeTint::Base03, "base03"}, {ThemeTint::Base04, "base04"}, {ThemeTint::Base05, "base05"},
-    {ThemeTint::Base06, "base06"}, {ThemeTint::Base07, "base07"}, {ThemeTint::Base08, "base08"},
-    {ThemeTint::Base09, "base09"}, {ThemeTint::Base0A, "base0A"}, {ThemeTint::Base0B, "base0B"},
-    {ThemeTint::Base0C, "base0C"}, {ThemeTint::Base0D, "base0D"}, {ThemeTint::Base0E, "base0E"},
-    {ThemeTint::Base0F, "base0F"},
-
-    {ThemeTint::Base10, "base10"}, {ThemeTint::Base11, "base11"}, {ThemeTint::Base12, "base12"},
-    {ThemeTint::Base13, "base13"}, {ThemeTint::Base14, "base14"}, {ThemeTint::Base15, "base15"},
-    {ThemeTint::Base16, "base16"}, {ThemeTint::Base17, "base17"},
-};
-
-static const std::unordered_map<std::string, ThemeTint> keyToTint = {
-    {"base00", ThemeTint::Base00}, {"base01", ThemeTint::Base01}, {"base02", ThemeTint::Base02},
-    {"base03", ThemeTint::Base03}, {"base04", ThemeTint::Base04}, {"base05", ThemeTint::Base05},
-    {"base06", ThemeTint::Base06}, {"base07", ThemeTint::Base07}, {"base08", ThemeTint::Base08},
-    {"base09", ThemeTint::Base09}, {"base0A", ThemeTint::Base0A}, {"base0B", ThemeTint::Base0B},
-    {"base0C", ThemeTint::Base0C}, {"base0D", ThemeTint::Base0D}, {"base0E", ThemeTint::Base0E},
-    {"base0F", ThemeTint::Base0F}, {"base10", ThemeTint::Base10}, {"base11", ThemeTint::Base11},
-    {"base12", ThemeTint::Base12}, {"base13", ThemeTint::Base13}, {"base14", ThemeTint::Base14},
-    {"base15", ThemeTint::Base15}, {"base16", ThemeTint::Base16}, {"base17", ThemeTint::Base17},
-};
-
-static const std::unordered_map<ThemeTint, ThemeTint> b24tob16 = {
-    {ThemeTint::Base10, ThemeTint::Base00}, {ThemeTint::Base11, ThemeTint::Base00},
-    {ThemeTint::Base12, ThemeTint::Base08}, {ThemeTint::Base13, ThemeTint::Base0A},
-    {ThemeTint::Base14, ThemeTint::Base0B}, {ThemeTint::Base15, ThemeTint::Base0C},
-    {ThemeTint::Base16, ThemeTint::Base0D}, {ThemeTint::Base17, ThemeTint::Base0E},
-};
+using ColorMap = std::unordered_map<std::string, SemanticColor>;
 
 // clang-format off
 static const std::unordered_map<std::string, SemanticColor> keyToSemantic = {
-    {"red", SemanticColor::Red},
-    {"orange", SemanticColor::Orange},
-    {"yellow", SemanticColor::Yellow},
-    {"green", SemanticColor::Green},
-    {"cyan", SemanticColor::Cyan},
-    {"blue", SemanticColor::Blue},
-    {"magenta", SemanticColor::Magenta},
-
-    {"purple", SemanticColor::Purple},
-
 	{"main_window_border", SemanticColor::MainWindowBorder},
 	{"settings_window_border", SemanticColor::SettingsWindowBorder},
 	{"popover_border", SemanticColor::PopoverBorder},
 
 	{"background", SemanticColor::Background},
 	{"background_border", SemanticColor::BackgroundBorder},
-	{"lighter_background", SemanticColor::LighterBackground},
-	{"lighter_background_border", SemanticColor::LighterBackgroundBorder},
+	{"lighter_background", SemanticColor::SecondaryBackground},
+	{"lighter_background_border", SemanticColor::SecondaryBackgroundBorder},
 	{"selection_background", SemanticColor::SelectionBackground},
 	{"hover_background", SemanticColor::HoverBackground},
-	{"lighter_selection_background", SemanticColor::LighterSelectionBackground},
-	{"lighter_hover_background", SemanticColor::LighterHoverBackground},
 
 	{"foreground", SemanticColor::Foreground},
-	{"dark_foreground", SemanticColor::DarkForeground},
-	{"light_foreground", SemanticColor::LightForeground},
-	{"lightest_foreground", SemanticColor::LightestForeground},
+	{"light_foreground", SemanticColor::TextMuted},
 	{"accent_foreground", SemanticColor::AccentForeground},
 
 	{"text_selection_background", SemanticColor::TextSelectionBackground},
@@ -88,20 +45,87 @@ static const std::unordered_map<std::string, SemanticColor> keyToSemantic = {
 	{"accent", SemanticColor::Accent},
 };
 
-static const std::array<ThemeTint, 16> base16Keys = {
-    ThemeTint::Base00, ThemeTint::Base01, ThemeTint::Base02, ThemeTint::Base03,
-    ThemeTint::Base04, ThemeTint::Base05, ThemeTint::Base06, ThemeTint::Base07,
-    ThemeTint::Base08, ThemeTint::Base09, ThemeTint::Base0A, ThemeTint::Base0B,
-    ThemeTint::Base0C, ThemeTint::Base0D, ThemeTint::Base0E, ThemeTint::Base0F};
+static const std::unordered_map<std::string, ColorMap> groups = {
+	{"core", {
+		{"accent", SemanticColor::Accent},
+		{"accent_foreground", SemanticColor::AccentForeground},
+		{"foreground", SemanticColor::Foreground},
+	}},
 
-static const std::array<ThemeTint, 8> base24Keys = {
-    ThemeTint::Base10, ThemeTint::Base11, ThemeTint::Base12, ThemeTint::Base13,
-    ThemeTint::Base14, ThemeTint::Base15, ThemeTint::Base16, ThemeTint::Base17};
+	{"accents", {
+		{"blue", SemanticColor::Blue},
+		{"green", SemanticColor::Green},
+		{"magenta", SemanticColor::Magenta},
+		{"orange", SemanticColor::Orange},
+		{"red", SemanticColor::Red},
+		{"yellow", SemanticColor::Yellow},
+		{"cyan", SemanticColor::Cyan},
+		{"purple", SemanticColor::Purple},
+	}},
+
+	{"text", {
+		{"default", SemanticColor::TextPrimary},
+		{"muted", SemanticColor::TextMuted},
+		{"danger", SemanticColor::TextDanger},
+		{"success", SemanticColor::TextSuccess}
+	}},
+
+	{"backgrounds", {
+		{"main", SemanticColor::Background},
+		{"secondary", SemanticColor::SecondaryBackground},
+		{"secondary_border", SemanticColor::SecondaryBackgroundBorder}
+	}},
+
+	{"borders", {
+		{"default", SemanticColor::BackgroundBorder},
+		{"main_window", SemanticColor::MainWindowBorder},
+		{"settings_window", SemanticColor::SettingsWindowBorder},
+		{"input", SemanticColor::InputBorder},
+		{"input_focus", SemanticColor::InputBorderFocus},
+		{"input_error", SemanticColor::InputBorderError},
+	}},
+
+	{"interactive", {
+		{"selection_background", SemanticColor::SelectionBackground},
+		{"selection_foreground", SemanticColor::SelectionForeground},
+		{"hover_background", SemanticColor::HoverBackground},
+		{"hover_foreground", SemanticColor::HoverForegroud},
+		{"secondary_selection_background", SemanticColor::SecondarySelectionBackground},
+		{"secondary_selection_foreground", SemanticColor::SecondarySelectionForeground},
+	}},
+
+	{"scrollbars", {
+		{"default", SemanticColor::ScrollBarBackground},
+		{"secondary", SemanticColor::SecondaryScrollBarBackground}
+	}},
+
+	{"links", {
+		{"default", SemanticColor::LinkDefault},
+		{"visited", SemanticColor::LinkVisited}
+	}},
+
+	{"text_selection", {
+		{"background", SemanticColor::TextSelectionBackground},
+		{"foreground", SemanticColor::TextSelectionForeground}
+	}},
+
+	{"tooltip", {
+		{"background", SemanticColor::TooltipBackground},
+	}},
+
+	{"activity", {
+		{"loading_bar", SemanticColor::LoadingBar},
+		{"spinner", SemanticColor::DynamicToastSpinner},
+	}}
+};
 
 // clang-format on
 
+void ThemeFile::setParent(const std::shared_ptr<ThemeFile> &file) { m_parent = file; }
+
 const QString &ThemeFile::id() const { return m_data.id; }
 const QString &ThemeFile::name() const { return m_data.name; }
+const QString &ThemeFile::inherits() const { return m_data.inherits; }
 ThemeVariant ThemeFile::variant() const { return m_data.variant; }
 const QString &ThemeFile::description() const { return m_data.description; }
 const ThemeFile::Icon &ThemeFile::icon() const { return m_data.icon; }
@@ -113,18 +137,12 @@ QColor ThemeFile::resolve(SemanticColor color) const {
   return deriveSemantic(color);
 }
 
-QColor ThemeFile::resolve(ThemeTint tint) const {
-  if (auto it = m_data.tints.find(tint); it != m_data.tints.end()) { return it->second; }
-  return QColor();
-}
+static QColor parseColorName(const QString &colorName) {
+  QColor color(colorName);
 
-static QColor parseColorName(const QString &colorName, const ThemeFile::Tints &tints) {
-  if (auto it = keyToTint.find(colorName.toStdString()); it != keyToTint.end()) {
-    if (auto it2 = tints.find(it->second); it2 != tints.end()) { return it2->second; }
-    return QColor();
-  }
+  if (color.isValid()) return color;
 
-  return QColor(colorName);
+  return QColor("#" + colorName);
 }
 
 QJsonDocument ThemeFile::toJson() const {
@@ -137,15 +155,6 @@ QJsonDocument ThemeFile::toJson() const {
   obj["variant"] = serializeVariant(m_data.variant).c_str();
 
   if (m_data.icon) { obj["icon"] = m_data.icon->c_str(); }
-
-  {
-    QJsonObject tints;
-    for (uint8_t i = 0; i != 15; ++i) {
-      auto tint = static_cast<ThemeTint>(i);
-      if (auto key = keyFromTint(tint)) { tints[key->c_str()] = resolve(tint).name(); }
-    }
-    obj["tints"] = tints;
-  }
 
   {
     QJsonObject semantics;
@@ -175,27 +184,15 @@ std::string ThemeFile::toToml() const {
     toml.insert("meta", meta);
   }
 
-  {
-    toml::table tints;
+  for (const auto &[group, colorMap] : groups) {
+    toml::table tbl;
 
-    for (uint8_t i = 0; i != 15; ++i) {
-      auto tint = static_cast<ThemeTint>(i);
-      if (auto key = keyFromTint(tint)) { tints.insert(*key, resolve(tint).name().toStdString()); }
+    for (const auto &[k, v] : colorMap) {
+      QColor color = resolve(v);
+      tbl.insert(k, color.name().toStdString());
     }
 
-    toml.insert("tints", tints);
-  }
-
-  {
-    toml::table semantics;
-
-    for (uint8_t i = 0; i != SemanticColor::InvalidTint; ++i) {
-      auto semantic = static_cast<SemanticColor>(i);
-      if (auto key = keyFromSemantic(semantic)) {
-        semantics.insert(*key, resolve(semantic).name().toStdString());
-      }
-    }
-    toml.insert("semantic", semantics);
+    toml.insert(std::string("colors.") + group, tbl);
   }
 
   std::ostringstream oss;
@@ -207,18 +204,24 @@ ThemeFile ThemeFile::vicinaeDark() {
   InitData data;
   data.id = "vicinae-dark";
   data.name = "Vicinae Dark";
+  data.variant = ThemeVariant::Dark;
   data.description = "Default Vicinae dark palette";
+  data.semantics = {
+      {SemanticColor::Background, QColor("#1A1A1A")},
+      {SemanticColor::SelectionBackground, QColor("#2E2E2E")},
+      {SemanticColor::Foreground, QColor("#E8E6E1")},
+      {SemanticColor::BackgroundBorder, QColor("#2E2E2E")},
+      {SemanticColor::SecondaryBackground, QColor("#242424")},
+      {SemanticColor::PopoverBackground, QColor("#242424")},
 
-  data.tints = {
-      {ThemeTint::Base00, QColor("#1A1A1A")}, {ThemeTint::Base01, QColor("#242424")},
-      {ThemeTint::Base02, QColor("#2E2E2E")}, {ThemeTint::Base03, QColor("#505050")},
-      {ThemeTint::Base04, QColor("#B0B0B0")}, {ThemeTint::Base05, QColor("#E8E6E1")},
-      {ThemeTint::Base06, QColor("#F0EFEB")}, {ThemeTint::Base07, QColor("#FFFFFF")},
-
-      {ThemeTint::Base08, QColor("#B9543B")}, {ThemeTint::Base09, QColor("#F0883E")},
-      {ThemeTint::Base0A, QColor("#BFAE78")}, {ThemeTint::Base0B, QColor("#3A9C61")},
-      {ThemeTint::Base0C, QColor("#18A5B3")}, {ThemeTint::Base0D, QColor("#2F6FED")},
-      {ThemeTint::Base0E, QColor("#BC8CFF")}, {ThemeTint::Base0F, QColor("#7267B0")},
+      {SemanticColor::Red, QColor("#B9543B")},
+      {SemanticColor::Orange, QColor("#F0883E")},
+      {SemanticColor::Yellow, QColor("#BFAE78")},
+      {SemanticColor::Green, QColor("#3A9C61")},
+      {SemanticColor::Cyan, QColor("#18A5B3")},
+      {SemanticColor::Blue, QColor("#2F6FED")},
+      {SemanticColor::Magenta, QColor("#BC8CFF")},
+      {SemanticColor::Purple, QColor("#BC8CFF")},
   };
 
   return ThemeFile(data);
@@ -227,30 +230,28 @@ ThemeFile ThemeFile::vicinaeDark() {
 ThemeFile ThemeFile::vicinaeLight() {
   InitData data;
   data.id = "vicinae-light";
+  data.variant = ThemeVariant::Light;
   data.name = "Vicinae Light";
   data.description = "Default Vicinae light palette";
+  data.semantics = {
+      {SemanticColor::Background, QColor("#F4F2EE")}, {SemanticColor::SelectionBackground, QColor("#D8D6D1")},
+      {SemanticColor::Foreground, QColor("#1A1A1A")},
 
-  data.tints = {
-      {ThemeTint::Base00, QColor("#F4F2EE")}, {ThemeTint::Base01, QColor("#E6E4DF")},
-      {ThemeTint::Base02, QColor("#D8D6D1")}, {ThemeTint::Base03, QColor("#A0A0A0")},
-      {ThemeTint::Base04, QColor("#707070")}, {ThemeTint::Base05, QColor("#1A1A1A")},
-      {ThemeTint::Base06, QColor("#000000")}, {ThemeTint::Base07, QColor("#FFFFFF")},
-
-      {ThemeTint::Base08, QColor("#C25C49")}, {ThemeTint::Base09, QColor("#DA8A48")},
-      {ThemeTint::Base0A, QColor("#BFAE78")}, {ThemeTint::Base0B, QColor("#3A9C61")},
-      {ThemeTint::Base0C, QColor("#18A5B3")}, {ThemeTint::Base0D, QColor("#1F6FEB")},
-      {ThemeTint::Base0E, QColor("#A48ED6")}, {ThemeTint::Base0F, QColor("#8374B7")},
+      {SemanticColor::Red, QColor("#C25C49")},        {SemanticColor::Orange, QColor("#DA8A48")},
+      {SemanticColor::Yellow, QColor("#BFAE78")},     {SemanticColor::Green, QColor("#3A9C61")},
+      {SemanticColor::Cyan, QColor("#18A5B3")},       {SemanticColor::Blue, QColor("#1F6FEB")},
+      {SemanticColor::Magenta, QColor("#A48ED6")},    {SemanticColor::Purple, QColor("#A48ED6")},
   };
 
   return ThemeFile(data);
 }
 
-static QColor parseColor(toml::node_view<toml::node> node, const ThemeFile::Tints &tints) {
-  if (auto str = node.as_string()) { return parseColorName(str->value_or(""), tints); }
+static QColor parseColor(toml::node_view<toml::node> node) {
+  if (auto str = node.as_string()) { return parseColorName(str->value_or("")); }
   if (auto table = node.as_table()) {
     QColor color;
 
-    if (auto name = (*table)["name"].as_string()) { color = parseColorName(name->value_or(""), tints); }
+    if (auto name = (*table)["name"].as_string()) { color = parseColorName(name->value_or("")); }
     if (auto opacity = (*table)["opacity"].as_floating_point()) { color.setAlphaF(opacity->value_or(1)); }
     if (auto lighter = (*table)["lighter"].as_floating_point()) {
       color = color.lighter(lighter->value_or(1) * 100);
@@ -265,40 +266,35 @@ static QColor parseColor(toml::node_view<toml::node> node, const ThemeFile::Tint
   return QColor();
 }
 
+QColor ThemeFile::inherit(SemanticColor color) const {
+  return m_parent ? m_parent->resolve(color) : QColor();
+}
+
 QColor ThemeFile::deriveSemantic(SemanticColor color) const {
   switch (color) {
-  case SemanticColor::Red:
-    return resolve(ThemeTint::Base08);
-  case SemanticColor::Orange:
-    return resolve(ThemeTint::Base09);
-  case SemanticColor::Yellow:
-    return resolve(ThemeTint::Base0A);
-  case SemanticColor::Green:
-    return resolve(ThemeTint::Base0B);
-  case SemanticColor::Cyan:
-    return resolve(ThemeTint::Base0C);
-  case SemanticColor::Blue:
-    return resolve(ThemeTint::Base0D);
-  case SemanticColor::Magenta:
-    return resolve(ThemeTint::Base0E);
-  case SemanticColor::Purple:
-    return resolve(SemanticColor::Magenta);
-
   case SemanticColor::LinkDefault:
     return resolve(SemanticColor::Blue);
   case SemanticColor::LinkVisited:
     return resolve(SemanticColor::Purple);
 
   case SemanticColor::LoadingBar:
-    return resolve(SemanticColor::TextSecondary);
+    return resolve(SemanticColor::TextMuted);
   case SemanticColor::DynamicToastSpinner:
     return resolve(SemanticColor::Foreground);
+
+  case SemanticColor::SelectionForeground:
+    return resolve(SemanticColor::Foreground);
+
+  case SemanticColor::SecondarySelectionForeground:
+    return resolve(SemanticColor::SelectionForeground);
+  case SemanticColor::SecondarySelectionBackground:
+    return resolve(SemanticColor::SelectionBackground);
 
   case SemanticColor::ScrollBarBackground:
     return resolve(SemanticColor::SelectionBackground);
 
   case SemanticColor::PopoverBackground:
-    return resolve(SemanticColor::LighterBackground);
+    return resolve(SemanticColor::SecondaryBackground);
   case SemanticColor::PopoverBorder:
     return resolve(SemanticColor::BackgroundBorder);
 
@@ -307,32 +303,11 @@ QColor ThemeFile::deriveSemantic(SemanticColor color) const {
   case SemanticColor::TooltipBorder:
     return resolve(SemanticColor::PopoverBorder);
 
-  case SemanticColor::Background:
-    return resolve(ThemeTint::Base00);
-  case SemanticColor::BackgroundBorder:
-    return resolve(ThemeTint::Base02);
-  case SemanticColor::LighterBackground:
-    return resolve(ThemeTint::Base01);
-  case SemanticColor::LighterBackgroundBorder:
-    return resolve(ThemeTint::Base02);
-  case SemanticColor::SelectionBackground:
-    return resolve(ThemeTint::Base02);
-  case SemanticColor::HoverBackground: {
+  case SemanticColor::SecondaryBackgroundBorder:
+    return resolve(SemanticColor::BackgroundBorder).lighter();
+  case SemanticColor::HoverBackground:
     return withAlphaF(resolve(SemanticColor::SelectionBackground), 0.7);
-  }
-  case SemanticColor::LighterSelectionBackground:
-    return QColor();
-  case SemanticColor::LighterHoverBackground:
-    return QColor();
 
-  case SemanticColor::Foreground:
-    return resolve(ThemeTint::Base05);
-  case SemanticColor::DarkForeground:
-    return resolve(ThemeTint::Base04);
-  case SemanticColor::LightForeground:
-    return resolve(ThemeTint::Base06);
-  case SemanticColor::LightestForeground:
-    return resolve(ThemeTint::Base07);
   case SemanticColor::AccentForeground:
     return QColor("#FFFFFF");
 
@@ -348,30 +323,30 @@ QColor ThemeFile::deriveSemantic(SemanticColor color) const {
   case SemanticColor::InputBorderError:
     return resolve(SemanticColor::Red);
   case SemanticColor::InputPlaceholder:
-    return withAlphaF(resolve(SemanticColor::Foreground), 0.6);
+    return withAlphaF(resolve(SemanticColor::TextPrimary), 0.6);
+
+  case SemanticColor::Accent:
+    return resolve(SemanticColor::Blue);
 
   case SemanticColor::TextPrimary:
     return resolve(SemanticColor::Foreground);
-  case SemanticColor::TextSecondary:
+  case SemanticColor::TextMuted:
     return withAlphaF(resolve(SemanticColor::TextPrimary), 0.7);
-  case SemanticColor::TextError:
+  case SemanticColor::TextDanger:
     return resolve(SemanticColor::Red);
   case SemanticColor::TextSuccess:
-    return resolve(SemanticColor::TextSuccess);
+    return resolve(SemanticColor::Green);
 
   case SemanticColor::MainWindowBorder:
     return resolve(SemanticColor::BackgroundBorder);
   case SemanticColor::SettingsWindowBorder:
     return resolve(SemanticColor::BackgroundBorder);
 
-  case SemanticColor::Accent:
-    return resolve(SemanticColor::Blue);
-
   default:
     break;
   }
 
-  return QColor();
+  return inherit(color);
 }
 
 QColor ThemeFile::withAlphaF(const QColor &color, float alpha) {
@@ -401,16 +376,6 @@ std::optional<SemanticColor> ThemeFile::semanticFromKey(const std::string &key) 
   return {};
 }
 
-std::optional<ThemeTint> ThemeFile::tintFromKey(const std::string &key) {
-  if (auto it = keyToTint.find(key); it != keyToTint.end()) { return it->second; }
-  return {};
-}
-
-std::optional<std::string> ThemeFile::keyFromTint(ThemeTint tint) {
-  if (auto it = tintToKey.find(tint); it != tintToKey.end()) { return it->second; }
-  return {};
-}
-
 ThemeVariant ThemeFile::parseVariant(const std::string &variant) {
   if (variant == "light") return ThemeVariant::Light;
   return ThemeVariant::Dark;
@@ -429,8 +394,9 @@ std::string ThemeFile::serializeVariant(ThemeVariant variant) {
 tl::expected<ThemeFile, QString> ThemeFile::fromFile(const fs::path &path) {
   ThemeFile::InitData data;
   auto file = toml::parse_file(path.c_str());
+  QString filename = path.filename().c_str();
 
-  data.id = path.filename().c_str();
+  data.id = filename.slice(0, filename.lastIndexOf('.'));
 
   auto metaPtr = file["meta"].as_table();
 
@@ -450,51 +416,48 @@ tl::expected<ThemeFile, QString> ThemeFile::fromFile(const fs::path &path) {
 
   data.name = QString::fromStdString(name->value_or(""));
   data.description = QString::fromStdString(description->value_or(""));
-  data.variant = parseVariant(description->value_or(""));
+  data.variant = parseVariant(variant->value_or(""));
+
+  if (meta.contains("inherits")) {
+    data.inherits = meta.get("inherits")->as_string()->value_or("");
+  } else {
+    data.inherits = data.variant == ThemeVariant::Dark ? "vicinae-dark" : "vicinae-light";
+  }
 
   if (auto ptr = meta["icon"].as_string()) {
     std::string icon = ptr->value_or("");
     fs::path iconPath = icon;
     std::error_code ec;
 
-    if (icon.starts_with('.')) { iconPath = path / icon; }
-    if (!fs::is_regular_file(icon, ec)) {
+    if (!icon.starts_with('/')) { iconPath = path.parent_path() / icon; }
+    if (!fs::is_regular_file(iconPath, ec)) {
       return tl::unexpected(QString("%1 does not point to a valid file").arg(iconPath.c_str()));
     }
 
     data.icon = iconPath;
   }
 
-  auto tintTable = file["tints"].as_table();
+  if (file.contains("colors")) {
+    if (auto colors = file.get("colors")->as_table()) {
+      for (const auto &[group, colorMap] : groups) {
+        auto groupPath = std::string("colors.") + group;
+        if (!colors->contains(group)) continue;
+        auto table = colors->get(group)->as_table();
+        if (!table) continue;
 
-  if (!tintTable) { return tl::unexpected("a [tints] table is required"); }
+        for (const auto &[k, v] : *table) {
+          std::string key(k.str());
+          std::string keyPath = groupPath + "." + key;
 
-  for (const auto &tint : base16Keys) {
-    if (auto key = keyFromTint(tint)) {
-      if (!tintTable->contains(*key)) {
-        return tl::unexpected(QString("tints.%1 is required").arg(key->c_str()));
+          if (auto it = colorMap.find(std::string(k.str())); it != colorMap.end()) {
+            QColor color = parseColor(toml::node_view(v));
+            if (!color.isValid()) {
+              return tl::unexpected(QString("%1 is not a valid color").arg(keyPath.c_str()));
+            }
+            data.semantics[it->second] = color;
+          }
+        }
       }
-      auto value = (*tintTable)[*key];
-      QColor color = parseColor(value, data.tints);
-      if (!color.isValid()) {
-        return tl::unexpected(QString("tints.%1 is not a valid color").arg(key->c_str()));
-      }
-      data.tints[tint] = color;
-    }
-  }
-
-  if (auto table = file["semantic"].as_table()) {
-    for (const auto &[k, v] : *table) {
-      std::string key(k.str());
-      auto semantic = semanticFromKey(std::string(k.str()));
-
-      if (!semantic) { return tl::unexpected(QString("%1 is not a valid semantic color").arg(key)); }
-
-      QColor color = parseColor(toml::node_view(v), data.tints);
-
-      if (!color.isValid()) { return tl::unexpected(QString("semantic.%1 is not a valid color").arg(key)); }
-
-      data.semantics[*semantic] = color;
     }
   }
 

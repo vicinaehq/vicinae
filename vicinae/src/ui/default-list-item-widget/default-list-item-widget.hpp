@@ -63,6 +63,7 @@ public:
 private:
   void positionActiveIndicator();
   void resizeEvent(QResizeEvent *event) override;
+  void selectionChanged(bool selected) override;
 
   ImageWidget *m_icon = new ImageWidget(this);
   TypographyWidget *m_name = new TypographyWidget(this);

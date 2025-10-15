@@ -34,9 +34,9 @@ void ActionListWidget::selectionChanged(bool selected) {
   OmniPainter painter;
 
   if (selected) {
-    m_shortcut->setBackgroundColor(SemanticColor::LighterBackground);
+    m_shortcut->setBackgroundColor(SemanticColor::SecondaryBackground);
   } else {
-    m_shortcut->setBackgroundColor(SemanticColor::LighterBackground);
+    m_shortcut->setBackgroundColor(SemanticColor::SecondaryBackground);
   }
 }
 
@@ -75,7 +75,7 @@ ActionListWidget::ActionListWidget()
   m_shortcut->hide();
   m_icon->hide();
   m_icon->setFixedSize(22, 22);
-  m_shortcut->setBackgroundColor(SemanticColor::LighterBackground);
+  m_shortcut->setBackgroundColor(SemanticColor::SecondaryBackground);
   HStack()
       .margins(8)
       .spacing(10)

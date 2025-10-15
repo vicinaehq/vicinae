@@ -23,7 +23,7 @@ class TextLinkWidget : public QWidget {
       setArrowIcon(SemanticColor::Foreground);
       break;
     case QEvent::HoverLeave:
-      setArrowIcon(SemanticColor::LightForeground);
+      setArrowIcon(SemanticColor::TextMuted);
       break;
     default:
       break;
@@ -45,7 +45,7 @@ class TextLinkWidget : public QWidget {
   void setupUI() {
     m_icon->setFixedSize(20, 20);
     setAttribute(Qt::WA_Hover);
-    setArrowIcon(SemanticColor::LightForeground);
+    setArrowIcon(SemanticColor::TextMuted);
     HStack().add(m_text).add(m_icon).justifyBetween().imbue(this);
   }
 

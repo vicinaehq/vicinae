@@ -87,7 +87,7 @@ public:
   NonApplicableTextPlaceholder() {
     setText("--");
     setAlignment(Qt::AlignCenter);
-    setColor(SemanticColor::LightForeground);
+    setColor(SemanticColor::TextMuted);
   }
 };
 

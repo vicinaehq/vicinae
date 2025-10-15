@@ -400,6 +400,8 @@ set(SRCS
 	src/extensions/clipboard/history/clipboard-history-view.cpp
 	src/extensions/calculator/history/calculator-history-view.hpp
 	src/extensions/calculator/history/calculator-history-view.cpp
+	src/extensions/theme/manage/manage-themes-view.hpp
+	src/extensions/theme/manage/manage-themes-view.cpp
 
 	src/extensions/raycast/store/store-detail-view.cpp
 	src/extensions/raycast/store/store-listing-view.cpp

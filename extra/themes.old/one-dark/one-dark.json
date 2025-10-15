@@ -1,0 +1,19 @@
+{
+	"version": "1.0.0",
+	"appearance": "dark",
+	"icon": "icon.svg",
+	"name": "One Dark",
+	"description": "Atom's iconic One Dark theme",
+	"palette": {
+	  "background": "#282C34",
+	  "foreground": "#ABB2BF",
+	  "blue": "#61AFEF",
+	  "green": "#98C379",
+	  "magenta": "#C678DD",
+	  "orange": "#D19A66",
+	  "purple": "#C678DD",
+	  "red": "#E06C75",
+	  "yellow": "#E5C07B",
+	  "cyan": "#56B6C2"
+	}
+}

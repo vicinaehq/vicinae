@@ -6,47 +6,18 @@
 #include <unordered_map>
 #include "theme/colors.hpp"
 
-enum class ThemeTint {
-  Base00,
-  Base01,
-  Base02,
-  Base03,
-  Base04,
-  Base05,
-  Base06,
-  Base07,
-  Base08,
-  Base09,
-  Base0A,
-  Base0B,
-  Base0C,
-  Base0D,
-  Base0E,
-  Base0F,
-
-  Base10,
-  Base11,
-  Base12,
-  Base13,
-  Base14,
-  Base15,
-  Base16,
-  Base17
-};
-
 enum class ThemeVariant { Light, Dark };
 
 class ThemeFile {
 public:
-  using Tints = std::unordered_map<ThemeTint, QColor>;
   using Semantics = std::unordered_map<SemanticColor, QColor>;
   using Icon = std::optional<std::filesystem::path>;
   struct InitData {
     QString id;
     QString name;
     QString description;
+    QString inherits;
     std::optional<std::filesystem::path> icon;
-    Tints tints;
     ThemeVariant variant;
     Semantics semantics;
   };
@@ -55,16 +26,21 @@ public:
   explicit ThemeFile(const InitData &data) : m_data(data) {}
   ThemeFile(const ThemeFile &file) = default;
 
+  void setParent(const std::shared_ptr<ThemeFile> &file);
   const QString &id() const;
   const QString &name() const;
   const QString &description() const;
   const Icon &icon() const;
   ThemeVariant variant() const;
+  /**
+   * A theme always inherits either one of the two base themes (vicinae-dark/vicinae-light)
+   * or any other theme that is loaded.
+   */
+  const QString &inherits() const;
   bool isLight() const;
   bool isDark() const;
 
   QColor resolve(SemanticColor color) const;
-  QColor resolve(ThemeTint tint) const;
 
   std::string toToml() const;
   QJsonDocument toJson() const;
@@ -76,8 +52,6 @@ private:
   static ThemeVariant parseVariant(const std::string &variant);
   static std::string serializeVariant(ThemeVariant variant);
   static std::optional<SemanticColor> semanticFromKey(const std::string &key);
-  static std::optional<ThemeTint> tintFromKey(const std::string &key);
-  static std::optional<std::string> keyFromTint(ThemeTint tint);
   static std::optional<std::string> keyFromSemantic(SemanticColor color);
   static QColor withAlphaF(const QColor &color, float alpha = 1.0f);
 
@@ -85,6 +59,8 @@ private:
    * Derive semantic color from base16 palette
    */
   QColor deriveSemantic(SemanticColor color) const;
+  QColor inherit(SemanticColor color) const;
 
+  std::shared_ptr<ThemeFile> m_parent;
   InitData m_data;
 };

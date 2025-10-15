@@ -20,7 +20,7 @@ void ThemeService::setTheme(const ThemeFile &info) {
   engine.setVar("INPUT_BORDER_COLOR", info.resolve(SemanticColor::InputBorder).name());
   engine.setVar("INPUT_FOCUS_BORDER_COLOR", info.resolve(SemanticColor::InputBorderFocus).name());
   engine.setVar("INPUT_BORDER_ERROR", info.resolve(SemanticColor::InputBorderError).name());
-  engine.setVar("STATUS_BACKGROUND", info.resolve(SemanticColor::LighterBackground).name());
+  engine.setVar("STATUS_BACKGROUND", info.resolve(SemanticColor::SecondaryBackground).name());
   engine.setVar("SEARCH_FONT_SIZE", QString::number(mainInputSize));
 
   /**
