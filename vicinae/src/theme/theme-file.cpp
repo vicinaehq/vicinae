@@ -289,6 +289,8 @@ QColor ThemeFile::deriveSemantic(SemanticColor color) const {
     return resolve(SemanticColor::SelectionForeground);
   case SemanticColor::SecondarySelectionBackground:
     return resolve(SemanticColor::SelectionBackground);
+  case SemanticColor::SecondaryHoverBackground:
+    return withAlphaF(resolve(SemanticColor::SecondarySelectionBackground), 0.7);
 
   case SemanticColor::ScrollBarBackground:
     return resolve(SemanticColor::SelectionBackground);

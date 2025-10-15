@@ -35,7 +35,9 @@ public:
      */
     virtual AbstractItem *clone() const = 0;
 
-    ItemData data() const override { return {.iconUrl = icon(), .name = displayName()}; }
+    ItemData data() const override {
+      return {.iconUrl = icon(), .name = displayName(), .secondaryBackground = true};
+    }
   };
 
   QJsonValue asJsonValue() const override;

@@ -25,6 +25,7 @@ enum SemanticColor {
   SelectionForeground,
   HoverBackground,
   HoverForegroud,
+  SecondaryHoverBackground,
   SecondarySelectionBackground,
   SecondarySelectionForeground,
 

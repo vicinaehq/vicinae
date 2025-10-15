@@ -23,7 +23,7 @@ void SelectableOmniListWidget::paintEvent(QPaintEvent *event) {
 
     // selection should always take precedence
 
-    painter.setThemeBrush(isSelected ? SemanticColor::SelectionBackground : SemanticColor::HoverBackground);
+    painter.setThemeBrush(isSelected ? selectedColor() : hoverColor());
     painter.setPen(Qt::NoPen);
     painter.drawPath(path);
   }
