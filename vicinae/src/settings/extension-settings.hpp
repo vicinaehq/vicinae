@@ -580,13 +580,13 @@ class ExtensionSettingsContextLeftPane : public QWidget {
     m_searchDebounce.setInterval(50);
     m_searchDebounce.setSingleShot(true);
     m_toolbar->input()->installEventFilter(this);
-    m_tree->setAlternateBackgroundColor(SemanticColor::HoverBackground);
+    m_tree->setAlternateBackgroundColor(SemanticColor::ListItemHoverBackground);
     populateTreeFromQuery("");
 
     VStack().add(m_toolbar).add(m_tree, 1).imbue(this);
 
     connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this](const ThemeFile &theme) {
-      m_tree->setAlternateBackgroundColor(theme.resolve(SemanticColor::HoverBackground));
+      m_tree->setAlternateBackgroundColor(theme.resolve(SemanticColor::ListItemHoverBackground));
     });
     connect(m_tree, &OmniTree::selectionUpdated, this, &ExtensionSettingsContextLeftPane::selectionUpdated);
     connect(manager, &RootItemManager::itemsChanged, this,

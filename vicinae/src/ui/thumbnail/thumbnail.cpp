@@ -14,7 +14,7 @@ void Thumbnail::paintEvent(QPaintEvent *event) {
   painter.setRenderHint(QPainter::Antialiasing);
 
   painter.setThemePen(SemanticColor::BackgroundBorder);
-  painter.setThemeBrush(SemanticColor::HoverBackground);
+  painter.setThemeBrush(SemanticColor::ListItemHoverBackground);
   painter.drawRoundedRect(rect(), m_borderRadius, m_borderRadius);
 
   m_opacityEffect->setOpacity(underMouse() && m_clickable ? 0.8 : 1);

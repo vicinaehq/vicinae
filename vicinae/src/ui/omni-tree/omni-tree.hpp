@@ -93,7 +93,7 @@ class HeaderWidget : public QWidget {
     OmniPainter painter(this);
 
     painter.setThemePen(SemanticColor::BackgroundBorder, borderWidth);
-    painter.setThemeBrush(SemanticColor::HoverBackground);
+    painter.setThemeBrush(SemanticColor::ListItemHoverBackground);
     painter.setRenderHint(QPainter::Antialiasing, true);
     painter.drawRect(rect());
   }

@@ -28,7 +28,7 @@ public:
              [&](const ColorLike &color) {
                auto circle = new ColorCircle({16, 16});
                circle->setColor(color);
-               circle->setStroke(SemanticColor::SelectionBackground, 2);
+               circle->setStroke(SemanticColor::TextPrimary, 2);
                return circle;
              })
         .imbue(this);

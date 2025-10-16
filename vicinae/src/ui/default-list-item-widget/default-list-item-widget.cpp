@@ -64,8 +64,8 @@ void DefaultListItemWidget::setAlias(const QString &alias) {
 }
 
 void DefaultListItemWidget::selectionChanged(bool selected) {
-  m_name->setColor(selected ? SemanticColor::SelectionForeground : SemanticColor::TextPrimary);
-  m_category->setColor(selected ? SemanticColor::SelectionForeground : SemanticColor::TextMuted);
+  m_name->setColor(selected ? SemanticColor::ListItemSelectionForeground : SemanticColor::TextPrimary);
+  m_category->setColor(selected ? SemanticColor::ListItemSelectionForeground : SemanticColor::TextMuted);
   SelectableOmniListWidget::selectionChanged(selected);
 }
 

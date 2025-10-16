@@ -18,12 +18,14 @@ void GridItemContentWidget::paintEvent(QPaintEvent *event) {
   int borderRadius = 10;
   OmniPainter painter(this);
   QPainterPath path;
-  QColor backgroundColor = painter.resolveColor(SemanticColor::HoverBackground);
+  QColor backgroundColor = painter.resolveColor(SemanticColor::GridItemBackground);
 
   painter.setRenderHint(QPainter::Antialiasing, true);
 
   if (m_selected || underMouse()) {
-    painter.setThemePen(m_selected ? SemanticColor::Foreground : SemanticColor::TextMuted, borderWidth());
+    painter.setThemePen(m_selected ? SemanticColor::GridItemSelectionOutline
+                                   : SemanticColor::GridItemHoverOutline,
+                        borderWidth());
     path.addRoundedRect(rect(), borderRadius, borderRadius);
     painter.setClipPath(path);
     painter.drawPath(path);

@@ -200,7 +200,7 @@ void KeybindSettingsView::setupUI() {
   m_currentDescription->setWordWrap(true);
 
   m_tree->setColumns({"Name", "Shortcut"});
-  m_tree->setAlternateBackgroundColor(SemanticColor::HoverBackground);
+  m_tree->setAlternateBackgroundColor(SemanticColor::ListItemHoverBackground);
   m_input->setRightIcon(ImageURL::builtin("magnifying-glass"));
   m_input->installEventFilter(this);
   m_input->setPlaceholderText("Search for keybinds...");

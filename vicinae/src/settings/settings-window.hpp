@@ -62,8 +62,8 @@ class SettingsNavPane : public QWidget {
     auto &theme = ThemeService::instance().theme();
     OmniPainter painter;
 
-    if (m_selected) { return painter.resolveColor(SemanticColor::SelectionBackground); }
-    if (m_hovered) { return painter.resolveColor(SemanticColor::HoverBackground); }
+    if (m_selected) { return painter.resolveColor(SemanticColor::ListItemSelectionBackground); }
+    if (m_hovered) { return painter.resolveColor(SemanticColor::ListItemHoverBackground); }
 
     return painter.resolveColor(SemanticColor::Background);
   }

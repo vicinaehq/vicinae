@@ -495,8 +495,8 @@ public:
     auto itemData = data();
 
     if (itemData.secondaryBackground) {
-      widget->setSelectedColor(SemanticColor::SecondarySelectionBackground);
-      widget->setHoverColor(SemanticColor::SecondaryHoverBackground);
+      widget->setSelectedColor(SemanticColor::ListItemSecondarySelectionBackground);
+      widget->setHoverColor(SemanticColor::ListItemSecondaryHoverBackground);
     }
 
     widget->setName(itemData.name);

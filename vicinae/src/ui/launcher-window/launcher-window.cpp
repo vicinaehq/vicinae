@@ -291,7 +291,7 @@ void LauncherWindow::paintEvent(QPaintEvent *event) {
 QWidget *LauncherWindow::createWidget() const {
   auto layout = new QVBoxLayout;
 
-  layout->setContentsMargins(0, 0, 0, 0);
+  layout->setContentsMargins(2, 2, 2, 2);
   layout->setSpacing(0);
   layout->addWidget(m_header);
   layout->addWidget(m_currentViewWrapper, 1);

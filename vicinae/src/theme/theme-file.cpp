@@ -1,4 +1,6 @@
 #include "theme-file.hpp"
+#include "common.hpp"
+#include "expected.hpp"
 #include "lib/toml.hpp"
 #include "theme.hpp"
 #include "theme/colors.hpp"
@@ -12,112 +14,66 @@
 
 namespace fs = std::filesystem;
 
-using ColorMap = std::unordered_map<std::string, SemanticColor>;
-
-// clang-format off
 static const std::unordered_map<std::string, SemanticColor> keyToSemantic = {
-	{"main_window_border", SemanticColor::MainWindowBorder},
-	{"settings_window_border", SemanticColor::SettingsWindowBorder},
-	{"popover_border", SemanticColor::PopoverBorder},
+    {"core.accent", SemanticColor::Accent},
+    {"core.accent_foreground", SemanticColor::AccentForeground},
+    {"core.background", SemanticColor::Background},
+    {"core.foreground", SemanticColor::Foreground},
+    {"core.secondary_background", SemanticColor::SecondaryBackground},
+    {"core.border", SemanticColor::BackgroundBorder},
 
-	{"background", SemanticColor::Background},
-	{"background_border", SemanticColor::BackgroundBorder},
-	{"lighter_background", SemanticColor::SecondaryBackground},
-	{"lighter_background_border", SemanticColor::SecondaryBackgroundBorder},
-	{"selection_background", SemanticColor::SelectionBackground},
-	{"hover_background", SemanticColor::HoverBackground},
+    {"main_window.border", SemanticColor::MainWindowBorder},
+    {"settings_window.border", SemanticColor::SettingsWindowBorder},
 
-	{"foreground", SemanticColor::Foreground},
-	{"light_foreground", SemanticColor::TextMuted},
-	{"accent_foreground", SemanticColor::AccentForeground},
+    {"accents.blue", SemanticColor::Blue},
+    {"accents.green", SemanticColor::Green},
+    {"accents.magenta", SemanticColor::Magenta},
+    {"accents.orange", SemanticColor::Orange},
+    {"accents.red", SemanticColor::Red},
+    {"accents.yellow", SemanticColor::Yellow},
+    {"accents.cyan", SemanticColor::Cyan},
+    {"accents.purple", SemanticColor::Purple},
 
-	{"text_selection_background", SemanticColor::TextSelectionBackground},
-	{"text_selection_foreground", SemanticColor::TextSelectionForeground},
+    {"text.default", SemanticColor::TextPrimary},
+    {"text.muted", SemanticColor::TextMuted},
+    {"text.danger", SemanticColor::TextDanger},
+    {"text.success", SemanticColor::TextSuccess},
+    {"text.links.default", SemanticColor::LinkDefault},
+    {"text.links.visited", SemanticColor::LinkVisited},
 
-	{"input_placeholder", SemanticColor::InputPlaceholder},
-	{"input_border", SemanticColor::InputBorder},
-	{"input_border_focus", SemanticColor::InputBorderFocus},
-	{"input_border_error", SemanticColor::InputBorderError},
+    {"text.selection.background", SemanticColor::TextSelectionBackground},
+    {"text.selection.foreground", SemanticColor::TextSelectionForeground},
 
-	{"link_default", SemanticColor::LinkDefault},
-	{"link_visited", SemanticColor::LinkVisited},
+    {"input.border", SemanticColor::InputBorder},
+    {"input.border_focus", SemanticColor::InputBorderFocus},
+    {"input.border_error", SemanticColor::InputBorderError},
+    {"input.placeholder", SemanticColor::InputPlaceholder},
 
-	{"accent", SemanticColor::Accent},
+    {"list.item.hover.background", SemanticColor::ListItemHoverBackground},
+    {"list.item.hover.foreground", SemanticColor::ListItemHoverForegroud},
+    {"list.item.selection.background", SemanticColor::ListItemSelectionBackground},
+    {"list.item.selection.foreground", SemanticColor::ListItemSelectionForeground},
+    {"list.item.selection.secondary_background", SemanticColor::ListItemSecondarySelectionBackground},
+    {"list.item.selection.secondary_foreground", SemanticColor::ListItemSecondarySelectionForeground},
+
+    {"grid.item.selection.outline", SemanticColor::GridItemSelectionOutline},
+    {"grid.item.hover.outline", SemanticColor::GridItemHoverOutline},
+    {"grid.item.background", SemanticColor::GridItemBackground},
+
+    {"scrollbars.background", SemanticColor::ScrollBarBackground},
+    {"scrollbars.secondary_background", SemanticColor::SecondaryScrollBarBackground},
+
+    {"tooltip.background", SemanticColor::TooltipBackground},
+    {"tooltip.foreground", SemanticColor::TooltipForeground},
+    {"tooltip.border", SemanticColor::TooltipBorder},
+
+    {"loading.bar", SemanticColor::LoadingBar},
+    {"loading.spinner", SemanticColor::DynamicToastSpinner},
 };
 
-static const std::unordered_map<std::string, ColorMap> groups = {
-	{"core", {
-		{"accent", SemanticColor::Accent},
-		{"accent_foreground", SemanticColor::AccentForeground},
-		{"foreground", SemanticColor::Foreground},
-	}},
-
-	{"accents", {
-		{"blue", SemanticColor::Blue},
-		{"green", SemanticColor::Green},
-		{"magenta", SemanticColor::Magenta},
-		{"orange", SemanticColor::Orange},
-		{"red", SemanticColor::Red},
-		{"yellow", SemanticColor::Yellow},
-		{"cyan", SemanticColor::Cyan},
-		{"purple", SemanticColor::Purple},
-	}},
-
-	{"text", {
-		{"default", SemanticColor::TextPrimary},
-		{"muted", SemanticColor::TextMuted},
-		{"danger", SemanticColor::TextDanger},
-		{"success", SemanticColor::TextSuccess}
-	}},
-
-	{"backgrounds", {
-		{"main", SemanticColor::Background},
-		{"secondary", SemanticColor::SecondaryBackground},
-		{"secondary_border", SemanticColor::SecondaryBackgroundBorder}
-	}},
-
-	{"borders", {
-		{"default", SemanticColor::BackgroundBorder},
-		{"main_window", SemanticColor::MainWindowBorder},
-		{"settings_window", SemanticColor::SettingsWindowBorder},
-		{"input", SemanticColor::InputBorder},
-		{"input_focus", SemanticColor::InputBorderFocus},
-		{"input_error", SemanticColor::InputBorderError},
-	}},
-
-	{"interactive", {
-		{"selection_background", SemanticColor::SelectionBackground},
-		{"selection_foreground", SemanticColor::SelectionForeground},
-		{"hover_background", SemanticColor::HoverBackground},
-		{"hover_foreground", SemanticColor::HoverForegroud},
-		{"secondary_selection_background", SemanticColor::SecondarySelectionBackground},
-		{"secondary_selection_foreground", SemanticColor::SecondarySelectionForeground},
-	}},
-
-	{"scrollbars", {
-		{"default", SemanticColor::ScrollBarBackground},
-		{"secondary", SemanticColor::SecondaryScrollBarBackground}
-	}},
-
-	{"links", {
-		{"default", SemanticColor::LinkDefault},
-		{"visited", SemanticColor::LinkVisited}
-	}},
-
-	{"text_selection", {
-		{"background", SemanticColor::TextSelectionBackground},
-		{"foreground", SemanticColor::TextSelectionForeground}
-	}},
-
-	{"tooltip", {
-		{"background", SemanticColor::TooltipBackground},
-	}},
-
-	{"activity", {
-		{"loading_bar", SemanticColor::LoadingBar},
-		{"spinner", SemanticColor::DynamicToastSpinner},
-	}}
-};
+static const std::vector<std::string> orderedGroupKeys = {
+    "core",      "backgrounds", "accents", "text",           "input",   "borders",
+    "selection", "scrollbars",  "links",   "text_selection", "tooltip", "activity"};
 
 // clang-format on
 
@@ -133,16 +89,37 @@ bool ThemeFile::isLight() const { return variant() == ThemeVariant::Light; }
 bool ThemeFile::isDark() const { return variant() == ThemeVariant::Dark; }
 
 QColor ThemeFile::resolve(SemanticColor color) const {
-  if (auto it = m_data.semantics.find(color); it != m_data.semantics.end()) { return it->second; }
+  if (auto it = m_data.semantics.find(color); it != m_data.semantics.end()) {
+    auto visitor = overloads{[](const QColor &color) { return color; },
+                             [&](const ColorRef &ref) {
+                               if (ref.color == color) return QColor();
+                               auto color = resolve(ref.color);
+                               color.setAlphaF(ref.opacity);
+                               if (ref.darker) color = color.darker(*ref.darker);
+                               if (ref.lighter) color = color.lighter(*ref.lighter);
+                               return color;
+                             }};
+
+    return std::visit(visitor, it->second);
+  }
   return deriveSemantic(color);
 }
 
-static QColor parseColorName(const QString &colorName) {
+static tl::expected<ThemeFile::MappedColor, std::string> parseColorName(const QString &colorName) {
+  if (colorName.startsWith("colors.")) {
+    std::string name = colorName.sliced(7).toStdString();
+    if (auto it = keyToSemantic.find(name); it != keyToSemantic.end()) {
+      return ThemeFile::ColorRef{.color = it->second};
+    }
+  }
+
   QColor color(colorName);
 
   if (color.isValid()) return color;
+  color = QColor("#" + colorName);
+  if (color.isValid()) return color;
 
-  return QColor("#" + colorName);
+  return tl::unexpected("Invalid color name");
 }
 
 QJsonDocument ThemeFile::toJson() const {
@@ -170,34 +147,31 @@ QJsonDocument ThemeFile::toJson() const {
 }
 
 std::string ThemeFile::toToml() const {
-  toml::table toml;
+  std::ostringstream doc;
 
-  {
-    toml::table meta{
-        {"version", "1"},
-        {"name", m_data.name.toStdString()},
-        {"description", m_data.description.toStdString()},
-        {"variant", serializeVariant(m_data.variant)},
-    };
+  doc << "[meta]\n";
+  doc << "version = 1\n";
+  doc << "name = " << std::quoted(m_data.name.toStdString()) << "\n";
+  doc << "description = " << std::quoted(m_data.description.toStdString()) << "\n";
+  doc << "variant = " << std::quoted(serializeVariant(m_data.variant)) << "\n";
 
-    if (m_data.icon) { meta.insert("icon", m_data.icon->c_str()); }
-    toml.insert("meta", meta);
-  }
+  if (m_data.icon) { doc << "icon = " << std::quoted(m_data.icon->c_str()) << "\n"; }
 
-  for (const auto &[group, colorMap] : groups) {
-    toml::table tbl;
-
-    for (const auto &[k, v] : colorMap) {
-      QColor color = resolve(v);
-      tbl.insert(k, color.name().toStdString());
+  /*
+  for (const auto &group : orderedGroupKeys) {
+    if (auto it = groups.find(group); it != groups.end()) {
+      auto &colorMap = it->second;
+      doc << "\n";
+      doc << "[colors." << group << "]\n";
+      for (const auto &[k, v] : colorMap) {
+        QColor color = resolve(v);
+        doc << k << " = " << std::quoted(color.name().toStdString()) << "\n";
+      }
     }
-
-    toml.insert(std::string("colors.") + group, tbl);
   }
+  */
 
-  std::ostringstream oss;
-  oss << toml;
-  return oss.str();
+  return doc.str();
 }
 
 ThemeFile ThemeFile::vicinaeDark() {
@@ -208,7 +182,7 @@ ThemeFile ThemeFile::vicinaeDark() {
   data.description = "Default Vicinae dark palette";
   data.semantics = {
       {SemanticColor::Background, QColor("#1A1A1A")},
-      {SemanticColor::SelectionBackground, QColor("#2E2E2E")},
+      {SemanticColor::ListItemSelectionBackground, QColor("#2E2E2E")},
       {SemanticColor::Foreground, QColor("#E8E6E1")},
       {SemanticColor::BackgroundBorder, QColor("#2E2E2E")},
       {SemanticColor::SecondaryBackground, QColor("#242424")},
@@ -234,36 +208,55 @@ ThemeFile ThemeFile::vicinaeLight() {
   data.name = "Vicinae Light";
   data.description = "Default Vicinae light palette";
   data.semantics = {
-      {SemanticColor::Background, QColor("#F4F2EE")}, {SemanticColor::SelectionBackground, QColor("#D8D6D1")},
+      {SemanticColor::Background, QColor("#F4F2EE")},
+      {SemanticColor::ListItemSelectionBackground, QColor("#D8D6D1")},
       {SemanticColor::Foreground, QColor("#1A1A1A")},
 
-      {SemanticColor::Red, QColor("#C25C49")},        {SemanticColor::Orange, QColor("#DA8A48")},
-      {SemanticColor::Yellow, QColor("#BFAE78")},     {SemanticColor::Green, QColor("#3A9C61")},
-      {SemanticColor::Cyan, QColor("#18A5B3")},       {SemanticColor::Blue, QColor("#1F6FEB")},
-      {SemanticColor::Magenta, QColor("#A48ED6")},    {SemanticColor::Purple, QColor("#A48ED6")},
+      {SemanticColor::Red, QColor("#C25C49")},
+      {SemanticColor::Orange, QColor("#DA8A48")},
+      {SemanticColor::Yellow, QColor("#BFAE78")},
+      {SemanticColor::Green, QColor("#3A9C61")},
+      {SemanticColor::Cyan, QColor("#18A5B3")},
+      {SemanticColor::Blue, QColor("#1F6FEB")},
+      {SemanticColor::Magenta, QColor("#A48ED6")},
+      {SemanticColor::Purple, QColor("#A48ED6")},
   };
 
   return ThemeFile(data);
 }
 
-static QColor parseColor(toml::node_view<toml::node> node) {
+static tl::expected<ThemeFile::MappedColor, std::string> parseColor(toml::node_view<toml::node> node) {
   if (auto str = node.as_string()) { return parseColorName(str->value_or("")); }
+
   if (auto table = node.as_table()) {
-    QColor color;
+    auto name = (*table)["name"].value<std::string>();
 
-    if (auto name = (*table)["name"].as_string()) { color = parseColorName(name->value_or("")); }
-    if (auto opacity = (*table)["opacity"].as_floating_point()) { color.setAlphaF(opacity->value_or(1)); }
-    if (auto lighter = (*table)["lighter"].as_floating_point()) {
-      color = color.lighter(lighter->value_or(1) * 100);
-    }
-    if (auto darker = (*table)["darker"].as_floating_point()) {
-      color = color.darker(darker->value_or(1) * 100);
-    }
+    if (!name) { return tl::unexpected("Color value expressed as a map should have a name key"); }
 
-    return color;
+    auto color = parseColorName(name->c_str());
+
+    if (!color) return color;
+
+    float opacity = (*table)["opacity"].value_or(1.0f);
+    auto lighter = (*table)["lighter"].value<int>();
+    std::optional<int> darker = (*table)["darker"].value<int>();
+    const auto visitor = overloads{[&](QColor &color) -> ThemeFile::MappedColor {
+                                     color.setAlphaF(opacity);
+                                     if (lighter) color = color.lighter(*lighter);
+                                     if (darker) color = color.darker(*darker);
+                                     return color;
+                                   },
+                                   [&](ThemeFile::ColorRef &ref) -> ThemeFile::MappedColor {
+                                     ref.opacity = opacity;
+                                     if (lighter) ref.lighter = lighter;
+                                     if (darker) ref.darker = darker;
+                                     return ref;
+                                   }};
+
+    return std::visit(visitor, *color);
   }
 
-  return QColor();
+  return tl::unexpected("Not a valid color");
 }
 
 QColor ThemeFile::inherit(SemanticColor color) const {
@@ -282,18 +275,18 @@ QColor ThemeFile::deriveSemantic(SemanticColor color) const {
   case SemanticColor::DynamicToastSpinner:
     return resolve(SemanticColor::Foreground);
 
-  case SemanticColor::SelectionForeground:
+  case SemanticColor::ListItemSelectionForeground:
     return resolve(SemanticColor::Foreground);
 
-  case SemanticColor::SecondarySelectionForeground:
-    return resolve(SemanticColor::SelectionForeground);
-  case SemanticColor::SecondarySelectionBackground:
-    return resolve(SemanticColor::SelectionBackground);
-  case SemanticColor::SecondaryHoverBackground:
-    return withAlphaF(resolve(SemanticColor::SecondarySelectionBackground), 0.7);
+  case SemanticColor::ListItemSecondarySelectionForeground:
+    return resolve(SemanticColor::ListItemSelectionForeground);
+  case SemanticColor::ListItemSecondarySelectionBackground:
+    return resolve(SemanticColor::ListItemSelectionBackground);
+  case SemanticColor::ListItemSecondaryHoverBackground:
+    return withAlphaF(resolve(SemanticColor::ListItemSecondarySelectionBackground), 0.7);
 
   case SemanticColor::ScrollBarBackground:
-    return resolve(SemanticColor::SelectionBackground);
+    return resolve(SemanticColor::ListItemSelectionBackground);
 
   case SemanticColor::PopoverBackground:
     return resolve(SemanticColor::SecondaryBackground);
@@ -307,8 +300,17 @@ QColor ThemeFile::deriveSemantic(SemanticColor color) const {
 
   case SemanticColor::SecondaryBackgroundBorder:
     return resolve(SemanticColor::BackgroundBorder).lighter();
-  case SemanticColor::HoverBackground:
-    return withAlphaF(resolve(SemanticColor::SelectionBackground), 0.7);
+  case SemanticColor::ListItemHoverBackground:
+    return withAlphaF(resolve(SemanticColor::ListItemSelectionBackground), 0.7);
+  case SemanticColor::ListItemHoverForegroud:
+    return resolve(SemanticColor::Foreground);
+
+  case SemanticColor::GridItemBackground:
+    return resolve(SemanticColor::SecondaryBackground);
+  case SemanticColor::GridItemSelectionOutline:
+    return resolve(SemanticColor::Foreground);
+  case SemanticColor::GridItemHoverOutline:
+    return withAlphaF(resolve(SemanticColor::GridItemSelectionOutline));
 
   case SemanticColor::AccentForeground:
     return QColor("#FFFFFF");
@@ -439,29 +441,39 @@ tl::expected<ThemeFile, QString> ThemeFile::fromFile(const fs::path &path) {
     data.icon = iconPath;
   }
 
-  if (file.contains("colors")) {
-    if (auto colors = file.get("colors")->as_table()) {
-      for (const auto &[group, colorMap] : groups) {
-        auto groupPath = std::string("colors.") + group;
-        if (!colors->contains(group)) continue;
-        auto table = colors->get(group)->as_table();
-        if (!table) continue;
+  using Traverser = std::function<void(toml::table & table, const std::string &root)>;
+  std::vector<std::string> diagnostics;
 
-        for (const auto &[k, v] : *table) {
-          std::string key(k.str());
-          std::string keyPath = groupPath + "." + key;
+  Traverser traverse = [&](toml::table &table, const std::string &root = "") {
+    for (const auto &[k, v] : table) {
+      std::string path = root;
+      std::string key(k.str());
+      if (!path.empty()) path += '.';
+      path += key;
 
-          if (auto it = colorMap.find(std::string(k.str())); it != colorMap.end()) {
-            QColor color = parseColor(toml::node_view(v));
-            if (!color.isValid()) {
-              return tl::unexpected(QString("%1 is not a valid color").arg(keyPath.c_str()));
-            }
-            data.semantics[it->second] = color;
+      if (path.starts_with("colors.")) {
+        std::string colorPath = path.substr(7);
+        if (auto it = keyToSemantic.find(colorPath); it != keyToSemantic.end()) {
+          auto color = parseColor(toml::node_view(v));
+          if (!color) {
+            qWarning() << path << "is not a valid color:" << color.error();
+            continue;
           }
+          data.semantics[it->second] = *color;
+          continue;
         }
       }
+
+      if (auto table = v.as_table()) {
+        traverse(*table, path);
+        continue;
+      }
+
+      qWarning() << "unused config key" << path;
     }
-  }
+  };
+
+  traverse(*file.as_table(), "");
 
   return ThemeFile(data);
 }

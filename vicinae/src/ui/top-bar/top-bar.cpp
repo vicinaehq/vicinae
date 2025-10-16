@@ -28,7 +28,7 @@ void GlobalHeader::setupUI() {
 
   m_backButton->setFixedSize(25, 25);
   m_backButton->setFocusPolicy(Qt::NoFocus);
-  m_backButton->setBackgroundColor(SemanticColor::SelectionBackground);
+  m_backButton->setBackgroundColor(SemanticColor::ListItemSelectionBackground);
   m_backButton->setUrl(ImageURL::builtin("arrow-left"));
   m_backButtonSpacer->setFixedWidth(10);
   m_backButtonSpacer->hide();

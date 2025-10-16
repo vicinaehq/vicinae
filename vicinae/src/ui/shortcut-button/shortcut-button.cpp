@@ -9,17 +9,17 @@
 #include <qnamespace.h>
 
 void ShortcutButton::hoverChanged(bool hovered) {
-  _shortcut_indicator->setBackgroundColor(SemanticColor::SelectionBackground);
-  setBackgroundColor(hovered ? ColorLike(SemanticColor::HoverBackground) : Qt::transparent);
+  _shortcut_indicator->setBackgroundColor(SemanticColor::ListItemSelectionBackground);
+  setBackgroundColor(hovered ? ColorLike(SemanticColor::ListItemHoverBackground) : Qt::transparent);
 
   update();
 }
 
 void ShortcutButton::resetColor() {
   setBackgroundColor(Qt::transparent);
-  setHoverBackgroundColor(SemanticColor::HoverBackground);
+  setHoverBackgroundColor(SemanticColor::ListItemHoverBackground);
   _shortcut_indicator->setColor(SemanticColor::Foreground);
-  _shortcut_indicator->setBackgroundColor(SemanticColor::SelectionBackground);
+  _shortcut_indicator->setBackgroundColor(SemanticColor::ListItemSelectionBackground);
 }
 
 void ShortcutButton::setText(const QString &text) {

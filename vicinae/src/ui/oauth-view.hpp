@@ -90,7 +90,7 @@ public:
 
     backButton->setFixedSize(25, 25);
     backButton->setUrl(ImageURL::builtin("arrow-left"));
-    backButton->setBackgroundColor(SemanticColor::SelectionBackground);
+    backButton->setBackgroundColor(SemanticColor::ListItemSelectionBackground);
 
     connect(backButton, &IconButton::clicked, this, &OAuthView::abort);
 

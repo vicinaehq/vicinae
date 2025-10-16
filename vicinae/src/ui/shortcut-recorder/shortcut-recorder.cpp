@@ -88,7 +88,7 @@ void ShortcutRecorder::clear() {
   OmniPainter painter;
   m_text->setText("Recording...");
   m_text->setColor(SemanticColor::Foreground);
-  m_indicator->setBackgroundColor(SemanticColor::SelectionBackground);
+  m_indicator->setBackgroundColor(SemanticColor::ListItemSelectionBackground);
   m_indicator->setColor(SemanticColor::Foreground);
   m_indicator->hide();
 }

@@ -10,7 +10,15 @@ enum class ThemeVariant { Light, Dark };
 
 class ThemeFile {
 public:
-  using Semantics = std::unordered_map<SemanticColor, QColor>;
+  struct ColorRef {
+    SemanticColor color;
+    double opacity = 1;
+    std::optional<double> lighter;
+    std::optional<double> darker;
+  };
+
+  using MappedColor = std::variant<QColor, ColorRef>;
+  using Semantics = std::unordered_map<SemanticColor, MappedColor>;
   using Icon = std::optional<std::filesystem::path>;
   struct InitData {
     QString id;

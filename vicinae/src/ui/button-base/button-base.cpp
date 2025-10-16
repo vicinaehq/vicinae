@@ -9,11 +9,11 @@
 void ButtonBase::setColor(ButtonColor color) {
   switch (color) {
   case ButtonColor::Primary:
-    setBackgroundColor(SemanticColor::SelectionBackground);
+    setBackgroundColor(SemanticColor::ListItemSelectionBackground);
     setHoverBackgroundColor(SemanticColor::SecondaryBackground);
     break;
   case ButtonColor::Secondary:
-    setBackgroundColor(SemanticColor::SelectionBackground);
+    setBackgroundColor(SemanticColor::ListItemSelectionBackground);
     setHoverBackgroundColor(SemanticColor::SecondaryBackground);
     break;
   case ButtonColor::Transparent:

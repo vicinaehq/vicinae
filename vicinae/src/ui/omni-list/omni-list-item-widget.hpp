@@ -31,6 +31,6 @@ public:
   OmniListItemWidget(QWidget *parent = nullptr) : QWidget(parent) {}
 
 private:
-  ColorLike m_hoverColor = SemanticColor::HoverBackground;
-  ColorLike m_selectedColor = SemanticColor::SelectionBackground;
+  ColorLike m_hoverColor = SemanticColor::ListItemHoverBackground;
+  ColorLike m_selectedColor = SemanticColor::ListItemSelectionBackground;
 };

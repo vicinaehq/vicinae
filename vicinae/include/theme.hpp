@@ -32,6 +32,13 @@ signals:
 public:
   static ThemeService &instance();
 
+  /**
+   * Generate a stylesheet for use by most vicinae inputs.
+   * We generally need a stylesheet to style theme because
+   * it's the most reliable way.
+   */
+  QString inputStyleSheet();
+
   ThemeService();
 
   double pointSize(TextSize size) const;
@@ -57,6 +64,8 @@ public:
 private:
   std::shared_ptr<ThemeDatabase> m_themeDb;
   std::unique_ptr<ThemeFile> m_theme;
+
+  void applyBaseStyle();
 
   double m_baseFontPointSize = 10;
 

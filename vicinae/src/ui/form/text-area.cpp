@@ -1,5 +1,6 @@
 #include "text-area.hpp"
 #include "common.hpp"
+#include "theme.hpp"
 #include "ui/scroll-bar/scroll-bar.hpp"
 #include "utils/layout.hpp"
 #include <QPlainTextEdit>
@@ -43,6 +44,9 @@ void TextArea::setupUI() {
   setRows(2);
   VStack().add(m_textEdit).imbue(this);
 
+  setStyleSheet(ThemeService::instance().inputStyleSheet());
+  connect(&ThemeService::instance(), &ThemeService::themeChanged, this,
+          [this]() { setStyleSheet(ThemeService::instance().inputStyleSheet()); });
   connect(m_textEdit, &QPlainTextEdit::textChanged, this, &TextArea::resizeArea);
 }
 

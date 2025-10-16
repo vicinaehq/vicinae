@@ -128,4 +128,6 @@ TypographyWidget::TypographyWidget(QWidget *parent) : QWidget(parent), m_color(S
   m_label->setOpenExternalLinks(true);
   VStack().add(m_label).imbue(this);
   setSize(TextSize::TextRegular);
+
+  connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() { setFont(font()); });
 }

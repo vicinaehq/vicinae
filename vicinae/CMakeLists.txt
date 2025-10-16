@@ -546,6 +546,7 @@ set(SRCS
 	src/ui/shortcut-button/shortcut-button.cpp
 
 	src/ui/search-bar/search-bar.hpp
+	src/ui/search-bar/search-bar.cpp
 
 	src/ui/vertical-scroll-area/vertical-scroll-area.cpp
 

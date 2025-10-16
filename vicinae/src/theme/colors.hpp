@@ -12,6 +12,7 @@ enum SemanticColor {
   Cyan,
   Purple, // for now, aliased to magenta
 
+  MainBackground,
   MainWindowBorder,
   SettingsWindowBorder,
 
@@ -21,18 +22,23 @@ enum SemanticColor {
   SecondaryBackground,
   SecondaryBackgroundBorder,
 
-  SelectionBackground,
-  SelectionForeground,
-  HoverBackground,
-  HoverForegroud,
-  SecondaryHoverBackground,
-  SecondarySelectionBackground,
-  SecondarySelectionForeground,
+  ListItemSelectionBackground,
+  ListItemSelectionForeground,
+  ListItemHoverBackground,
+  ListItemHoverForegroud,
+  ListItemSecondaryHoverBackground,
+  ListItemSecondarySelectionBackground,
+  ListItemSecondarySelectionForeground,
+
+  GridItemSelectionOutline,
+  GridItemHoverOutline,
+  GridItemBackground,
 
   PopoverBackground,
   PopoverBorder,
 
   TooltipBackground,
+  TooltipForeground,
   TooltipBorder,
 
   LoadingBar,

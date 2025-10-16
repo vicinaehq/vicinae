@@ -47,6 +47,7 @@ muted = "<color>"            # less important text
 danger = "<color>"           # destructive/warning text
 success = "<color>"          # confirmation text
 
+
 # ------------------------------------------------------------------------------
 # Surfaces & Backgrounds
 # ------------------------------------------------------------------------------
@@ -65,6 +66,7 @@ settings_window = "<color>"   # outer settings window border
 input = "<color>"             # generic input border
 input_focus = "<color>"       # input border when focused
 input_error = "<color>"       # input border in error state
+
 
 # ------------------------------------------------------------------------------
 # Interactive States

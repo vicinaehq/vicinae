@@ -95,8 +95,8 @@ void FilePicker::setupUI() {
   auto layout = new QVBoxLayout;
 
   setDelegate<DefaultFilePickerItemDelegate>();
-  m_button->setBackgroundColor(SemanticColor::HoverBackground);
-  m_button->setHoverBackgroundColor(SemanticColor::SelectionBackground);
+  m_button->setBackgroundColor(SemanticColor::ListItemHoverBackground);
+  m_button->setHoverBackgroundColor(SemanticColor::ListItemSelectionBackground);
   m_button->setText("Pick a file");
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(m_button);

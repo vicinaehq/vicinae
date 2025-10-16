@@ -71,8 +71,8 @@ ActionListWidget::ActionListWidget()
       m_shortcut(new KeyboardShortcutIndicatorWidget) {
   auto &theme = ThemeService::instance().theme();
 
-  setSelectedColor(SemanticColor::SecondarySelectionBackground);
-  setHoverColor(SemanticColor::SecondaryHoverBackground);
+  setSelectedColor(SemanticColor::ListItemSecondarySelectionBackground);
+  setHoverColor(SemanticColor::ListItemSecondaryHoverBackground);
 
   setFixedHeight(45);
   m_shortcut->hide();
