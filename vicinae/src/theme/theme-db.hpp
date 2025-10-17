@@ -5,6 +5,7 @@
 #include <QDebug>
 #include <qfilesystemwatcher.h>
 #include <qobject.h>
+#include <qtimer.h>
 #include <qtmetamacros.h>
 #include <unordered_map>
 
@@ -38,4 +39,5 @@ private:
   std::vector<std::filesystem::path> m_searchPaths;
   QObjectUniquePtr<QFileSystemWatcher> m_watcher;
   ThemeList m_themes;
+  QTimer m_watcherDebounce;
 };

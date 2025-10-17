@@ -1,5 +1,6 @@
 #include "theme/theme-db.hpp"
 #include "theme/theme-file.hpp"
+#include "theme/theme-parser.hpp"
 #include "xdgpp/env/env.hpp"
 #include <filesystem>
 #include <qfilesystemwatcher.h>
@@ -7,18 +8,23 @@
 #include <QApplication>
 
 ThemeDatabase::ThemeDatabase() : m_watcher(new QFileSystemWatcher) {
+  using namespace std::chrono_literals;
+
   m_searchPaths = defaultSearchPaths();
   reinstallWatches();
+  m_watcherDebounce.setInterval(50ms);
+  m_watcherDebounce.setSingleShot(true);
+  connect(&m_watcherDebounce, &QTimer::timeout, this, &ThemeDatabase::scan);
   connect(m_watcher.get(), &QFileSystemWatcher::directoryChanged, this, &ThemeDatabase::directoryChanged);
 }
 
 void ThemeDatabase::scan() {
   std::error_code ec;
-
   std::vector<std::shared_ptr<ThemeFile>> themes;
   std::unordered_map<QString, std::shared_ptr<ThemeFile>> mapping;
   auto defaultDark = std::make_shared<ThemeFile>(ThemeFile::vicinaeDark());
   auto defaultLight = std::make_shared<ThemeFile>(ThemeFile::vicinaeLight());
+  ThemeParser parser;
 
   themes.emplace_back(defaultDark);
   mapping[defaultDark->id()] = defaultDark;
@@ -29,7 +35,7 @@ void ThemeDatabase::scan() {
     for (const auto &entry : std::filesystem::directory_iterator(path, ec)) {
       if (entry.is_directory()) continue;
       if (entry.path().extension() != ".toml") continue;
-      auto res = ThemeFile::fromFile(entry.path());
+      auto res = parser.parse(entry.path());
 
       if (!res) {
         qWarning() << "Failed to parse theme file at" << entry.path().c_str() << res.error();
@@ -38,18 +44,22 @@ void ThemeDatabase::scan() {
 
       if (mapping.contains(res.value().id())) { continue; }
 
+      for (const auto &diagnostic : parser.diagnostics()) {
+        qWarning() << "Warning for theme" << res->id() << ":" << diagnostic.c_str();
+      }
+
       auto file = std::make_shared<ThemeFile>(res.value());
       themes.emplace_back(file);
       mapping[file->id()] = file;
     }
   }
 
-  for (const auto theme : m_themes) {
+  for (const auto theme : themes) {
     if (theme->id() == defaultDark->id() || theme->id() == defaultLight->id()) continue;
     if (auto it = mapping.find(theme->inherits()); it != mapping.end()) {
       theme->setParent(it->second);
     } else {
-      qWarning() << "failed to find inherited theme" << theme->inherits();
+      qWarning() << "failed to find inherited theme" << theme->inherits() << "falling back to default";
       theme->setParent(theme->variant() == ThemeVariant::Dark ? defaultDark : defaultLight);
     }
     emit themeChanged(*theme);
@@ -80,7 +90,7 @@ void ThemeDatabase::scanPath(const std::filesystem::path &path) {}
 
 void ThemeDatabase::directoryChanged(const QString &path) {
   qDebug() << "theme directory changed" << path;
-  scan();
+  m_watcherDebounce.start();
 }
 
 void ThemeDatabase::reinstallWatches() {

@@ -162,84 +162,88 @@ static tl::expected<ThemeFile::MappedColor, std::string> parseColor(toml::node_v
 }
 
 tl::expected<ThemeFile, std::string> ThemeParser::parse(const fs::path &path) {
-  ThemeFile::InitData data;
-  auto file = toml::parse_file(path.c_str());
-  QString filename = path.filename().c_str();
+  try {
+    ThemeFile::InitData data;
+    auto file = toml::parse_file(path.c_str());
+    QString filename = path.filename().c_str();
 
-  data.id = filename.slice(0, filename.lastIndexOf('.'));
+    data.id = filename.slice(0, filename.lastIndexOf('.'));
 
-  auto metaPtr = file["meta"].as_table();
+    auto metaPtr = file["meta"].as_table();
 
-  if (!metaPtr) { return tl::unexpected("a [meta] table is required"); }
+    if (!metaPtr) { return tl::unexpected("a [meta] table is required"); }
 
-  auto &meta = *metaPtr;
+    auto &meta = *metaPtr;
 
-  auto name = meta["name"].as_string();
-  auto description = meta["description"].as_string();
-  auto variant = meta["variant"].as_string();
+    auto name = meta["name"].as_string();
+    auto description = meta["description"].as_string();
+    auto variant = meta["variant"].as_string();
 
-  if (!name) return tl::unexpected("meta.name must be a string");
-  if (!description) return tl::unexpected("meta.description must be a string");
-  if (!variant) return tl::unexpected("meta.variant must be a string (\"light\" | \"dark\")");
+    if (!name) return tl::unexpected("meta.name must be a string");
+    if (!description) return tl::unexpected("meta.description must be a string");
+    if (!variant) return tl::unexpected("meta.variant must be a string (\"light\" | \"dark\")");
 
-  data.name = QString::fromStdString(name->value_or(""));
-  data.description = QString::fromStdString(description->value_or(""));
-  data.variant = parseVariant(variant->value_or(""));
-  data.path = path;
+    data.name = QString::fromStdString(name->value_or(""));
+    data.description = QString::fromStdString(description->value_or(""));
+    data.variant = parseVariant(variant->value_or(""));
+    data.path = path;
 
-  if (meta.contains("inherits")) {
-    data.inherits = meta.get("inherits")->as_string()->value_or("");
-  } else {
-    data.inherits = data.variant == ThemeVariant::Dark ? "vicinae-dark" : "vicinae-light";
-  }
+    if (meta.contains("inherits")) {
+      data.inherits = meta.get("inherits")->as_string()->value_or("");
+    } else {
+      data.inherits = data.variant == ThemeVariant::Dark ? "vicinae-dark" : "vicinae-light";
+    }
 
-  if (auto ptr = meta["icon"].as_string()) {
-    std::string icon = ptr->value_or("");
-    fs::path iconPath = icon;
-    std::error_code ec;
+    if (auto ptr = meta["icon"].as_string()) {
+      std::string icon = ptr->value_or("");
+      fs::path iconPath = icon;
+      std::error_code ec;
 
-    if (!icon.starts_with('/')) { iconPath = path.parent_path() / icon; }
+      if (!icon.starts_with('/')) { iconPath = path.parent_path() / icon; }
 
-    data.icon = iconPath;
-  }
+      data.icon = iconPath;
+    }
 
-  using Traverser = std::function<void(toml::table & table, const std::string &root)>;
-  std::vector<std::string> diagnostics;
+    using Traverser = std::function<void(toml::table & table, const std::string &root)>;
+    std::vector<std::string> diagnostics;
 
-  Traverser traverse = [&](toml::table &table, const std::string &root = "") {
-    for (const auto &[k, v] : table) {
-      if (k == "meta") continue;
+    Traverser traverse = [&](toml::table &table, const std::string &root = "") {
+      for (const auto &[k, v] : table) {
+        if (k == "meta") continue;
 
-      std::string path = root;
-      std::string key(k.str());
-      if (!path.empty()) path += '.';
-      path += key;
+        std::string path = root;
+        std::string key(k.str());
+        if (!path.empty()) path += '.';
+        path += key;
 
-      if (path.starts_with("colors.")) {
-        std::string colorPath = path.substr(7);
-        if (auto semantic = semanticFromKey(colorPath)) {
-          auto color = parseColor(toml::node_view(v));
-          if (!color) {
-            m_diagnostics.emplace_back(path + " is not a valid color: " + color.error());
+        if (path.starts_with("colors.")) {
+          std::string colorPath = path.substr(7);
+          if (auto semantic = semanticFromKey(colorPath)) {
+            auto color = parseColor(toml::node_view(v));
+            if (!color) {
+              m_diagnostics.emplace_back(path + " is not a valid color: " + color.error());
+              continue;
+            }
+            data.semantics[*semantic] = *color;
             continue;
           }
-          data.semantics[*semantic] = *color;
+        }
+
+        if (auto table = v.as_table()) {
+          traverse(*table, path);
           continue;
         }
+
+        m_diagnostics.emplace_back("unused config key " + path);
       }
+    };
 
-      if (auto table = v.as_table()) {
-        traverse(*table, path);
-        continue;
-      }
+    traverse(*file.as_table(), "");
 
-      m_diagnostics.emplace_back("unused config key " + path);
-    }
-  };
-
-  traverse(*file.as_table(), "");
-
-  return ThemeFile(data);
+    return ThemeFile(data);
+  } catch (const std::exception &error) {
+    return tl::unexpected(std::string("Parsing error: ") + error.what());
+  }
 }
 
 ThemeParser::DiagnosticList ThemeParser::diagnostics() const { return m_diagnostics; }
