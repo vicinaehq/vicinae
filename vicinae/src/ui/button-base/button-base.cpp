@@ -9,15 +9,16 @@
 void ButtonBase::setColor(ButtonColor color) {
   switch (color) {
   case ButtonColor::Primary:
-    setBackgroundColor(SemanticColor::ListItemSelectionBackground);
-    setHoverBackgroundColor(SemanticColor::SecondaryBackground);
+    setBackgroundColor(SemanticColor::ButtonPrimaryBackground);
+    setHoverBackgroundColor(SemanticColor::ButtonPrimaryHoverBackground);
     break;
   case ButtonColor::Secondary:
     setBackgroundColor(SemanticColor::ListItemSelectionBackground);
     setHoverBackgroundColor(SemanticColor::SecondaryBackground);
     break;
   case ButtonColor::Transparent:
-    setHoverBackgroundColor(SemanticColor::SecondaryBackground);
+    setBackgroundColor(Qt::transparent);
+    setHoverBackgroundColor(SemanticColor::ButtonPrimaryHoverBackground);
     break;
   }
 }
@@ -105,7 +106,7 @@ void ButtonBase::paintEvent(QPaintEvent *event) {
 ButtonBase::ButtonBase(QWidget *parent) : QWidget(parent) {
   setAttribute(Qt::WA_Hover);
   setFocusPolicy(Qt::FocusPolicy::TabFocus);
-  setColor(Secondary);
+  setColor(Primary);
   setGraphicsEffect(m_opacityEffect);
   m_opacityEffect->setOpacity(1);
 }

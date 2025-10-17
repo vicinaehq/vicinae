@@ -27,8 +27,6 @@ void ThemeService::setTheme(const ThemeFile &info) {
 
   Timer timer;
   QApplication::setPalette(palette);
-
-  // qApp->setStyleSheet(style);
   timer.time("Theme changed");
   emit themeChanged(info);
 }

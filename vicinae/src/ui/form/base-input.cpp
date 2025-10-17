@@ -105,16 +105,11 @@ BaseInput::BaseInput(QWidget *parent) : leftAccessory(nullptr), rightAccessory(n
   setLayout(layout);
   setFocusProxy(m_input);
   setAttribute(Qt::WA_TranslucentBackground);
-
   m_input->setProperty("form-input", true); // used for border styling
 
   setStyleSheet(ThemeService::instance().inputStyleSheet());
-  connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() {
-    qDebug() << "changed input stylesheet";
-    setStyleSheet(ThemeService::instance().inputStyleSheet());
-    style()->unpolish(this);
-    style()->polish(this);
-  });
+  connect(&ThemeService::instance(), &ThemeService::themeChanged, this,
+          [this]() { setStyleSheet(ThemeService::instance().inputStyleSheet()); });
 
   connect(m_input, &QLineEdit::textChanged, this, &BaseInput::textChanged);
 }

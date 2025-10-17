@@ -56,6 +56,11 @@ static const std::unordered_map<std::string, SemanticColor> keyToSemantic = {
     {"list.item.selection.secondary_background", SemanticColor::ListItemSecondarySelectionBackground},
     {"list.item.selection.secondary_foreground", SemanticColor::ListItemSecondarySelectionForeground},
 
+    {"button.primary.background", SemanticColor::ButtonPrimaryBackground},
+    {"button.primary.foreground", SemanticColor::ButtonPrimaryForeground},
+    {"button.primary.hover.background", SemanticColor::ButtonPrimaryHoverBackground},
+    {"button.primary.hover.foreground", SemanticColor::ButtonPrimaryHoverForeground},
+
     {"grid.item.selection.outline", SemanticColor::GridItemSelectionOutline},
     {"grid.item.hover.outline", SemanticColor::GridItemHoverOutline},
     {"grid.item.background", SemanticColor::GridItemBackground},
@@ -284,6 +289,15 @@ QColor ThemeFile::deriveSemantic(SemanticColor color) const {
     return resolve(SemanticColor::ListItemSelectionBackground);
   case SemanticColor::ListItemSecondaryHoverBackground:
     return withAlphaF(resolve(SemanticColor::ListItemSecondarySelectionBackground), 0.7);
+
+  case ButtonPrimaryBackground:
+    return resolve(SemanticColor::ListItemSelectionBackground);
+  case ButtonPrimaryForeground:
+    return resolve(SemanticColor::Foreground);
+  case ButtonPrimaryHoverBackground:
+    return withAlphaF(resolve(SemanticColor::ButtonPrimaryBackground), 0.7);
+  case ButtonPrimaryHoverForeground:
+    return resolve(SemanticColor::ButtonPrimaryBackground);
 
   case SemanticColor::ScrollBarBackground:
     return resolve(SemanticColor::ListItemSelectionBackground);

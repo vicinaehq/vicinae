@@ -9,17 +9,18 @@
 #include <qnamespace.h>
 
 void ShortcutButton::hoverChanged(bool hovered) {
-  _shortcut_indicator->setBackgroundColor(SemanticColor::ListItemSelectionBackground);
-  setBackgroundColor(hovered ? ColorLike(SemanticColor::ListItemHoverBackground) : Qt::transparent);
+  _shortcut_indicator->setBackgroundColor(SemanticColor::SecondaryBackground);
+  setBackgroundColor(hovered ? ColorLike(SemanticColor::ButtonPrimaryHoverBackground) : Qt::transparent);
 
   update();
 }
 
 void ShortcutButton::resetColor() {
   setBackgroundColor(Qt::transparent);
-  setHoverBackgroundColor(SemanticColor::ListItemHoverBackground);
-  _shortcut_indicator->setColor(SemanticColor::Foreground);
-  _shortcut_indicator->setBackgroundColor(SemanticColor::ListItemSelectionBackground);
+  setHoverBackgroundColor(SemanticColor::ButtonPrimaryHoverBackground);
+  _shortcut_indicator->setColor(SemanticColor::ButtonPrimaryForeground);
+  _shortcut_indicator->setBackgroundColor(SemanticColor::SecondaryBackground);
+  update();
 }
 
 void ShortcutButton::setText(const QString &text) {
@@ -47,6 +48,7 @@ ShortcutButton::ShortcutButton()
   auto layout = new QHBoxLayout;
 
   setFocusPolicy(Qt::NoFocus);
+  setColor(ButtonColor::Transparent);
   _shortcut_indicator->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   layout->setAlignment(Qt::AlignVCenter);
   layout->addWidget(_label, 0, Qt::AlignLeft);

@@ -29,16 +29,18 @@ void ThemeDatabase::scan() {
       auto themeFile = std::make_shared<ThemeFile>(res.value());
 
       m_themes.insert({themeFile->id(), themeFile});
-      emit themeChanged(*themeFile);
     }
   }
 
   for (const auto &[k, v] : m_themes) {
+    if (k == "vicinae-dark" || k == "vicinae-light") continue;
+
     if (auto it = m_themes.find(v->inherits()); it != m_themes.end()) {
       v->setParent(it->second);
     } else {
       qWarning() << "failed to find inherited theme" << v->inherits();
     }
+    emit themeChanged(*v);
   }
 }
 

@@ -2,6 +2,7 @@
 #include "action-panel/action-panel.hpp"
 #include "common.hpp"
 #include "keyboard/keybind-manager.hpp"
+#include "theme.hpp"
 #include "theme/colors.hpp"
 #include "ui/status-bar/status-bar.hpp"
 #include "service-registry.hpp"
@@ -147,6 +148,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
     if (m_currentOverlayWrapper->isVisible()) return;
     m_bar->setVisible(value);
   });
+  connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() { repaint(); });
 }
 
 void LauncherWindow::handleShowHUD(const QString &text, const std::optional<ImageURL> &icon) {

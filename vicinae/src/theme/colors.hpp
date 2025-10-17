@@ -30,6 +30,11 @@ enum SemanticColor {
   ListItemSecondarySelectionBackground,
   ListItemSecondarySelectionForeground,
 
+  ButtonPrimaryBackground,
+  ButtonPrimaryForeground,
+  ButtonPrimaryHoverBackground,
+  ButtonPrimaryHoverForeground,
+
   GridItemSelectionOutline,
   GridItemHoverOutline,
   GridItemBackground,

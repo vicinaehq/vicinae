@@ -73,12 +73,12 @@ ActionListWidget::ActionListWidget()
 
   setSelectedColor(SemanticColor::ListItemSecondarySelectionBackground);
   setHoverColor(SemanticColor::ListItemSecondaryHoverBackground);
-
   setFixedHeight(45);
   m_shortcut->hide();
   m_icon->hide();
   m_icon->setFixedSize(22, 22);
   m_shortcut->setBackgroundColor(SemanticColor::SecondaryBackground);
+
   HStack()
       .margins(8)
       .spacing(10)

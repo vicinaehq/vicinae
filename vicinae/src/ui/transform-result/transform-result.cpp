@@ -68,18 +68,17 @@ void TransformResult::paintEvent(QPaintEvent *event) {
   int midW = width() / 2;
   int midH = height() / 2;
   auto margins = contentsMargins();
+  auto color = painter.resolveColor(SemanticColor::ListItemSelectionBackground);
 
   painter.setPen(Qt::NoPen);
-  painter.setThemeBrush(SemanticColor::BackgroundBorder);
-
+  painter.setBrush(QBrush(color.lighter(150)));
   m_base->setFixedSize({midW, availableHeight()});
   m_base->move(0, margins.top());
-
   m_result->setFixedSize({midW, availableHeight()});
   m_result->move(midW, margins.top());
 
   if (selected() || hovered()) {
-    painter.drawRect(midW, 0, 1, midH - m_arrowMid.height());
+    painter.drawRect(midW, 1, 1, midH - m_arrowMid.height() - 1);
     painter.drawRect(midW, midH + m_arrowMid.width(), 1, midH - m_arrowMid.height());
   }
 

@@ -2,6 +2,7 @@
 #include "common.hpp"
 #include "keyboard/keybind-manager.hpp"
 #include "navigation-controller.hpp"
+#include "theme/colors.hpp"
 #include "ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "services/config/config-service.hpp"
