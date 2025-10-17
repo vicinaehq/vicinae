@@ -1,114 +1,91 @@
-# Example vicinae v0.15.0+ theme format
-# This theme file only affects the color that are used to theme Vicinae.
-# Font size and window opacity are configured inside Vicinae directly, independently
-# from the current theme.
-
-# colors can be expressed as hex:
-# base01 = "#FFFFFF"
-# short hex:
-# base01 = "#FFF"
-# and optionally specify an opacity:
-# base01 = { color = "#FFF", opacity = 0.8 }
-
 [meta]
-version = "1"
-name = "My Theme"
-description = "This is a wonderful theme"
+version = 1
+name = "Vicinae Dark"
+description = "Default Vicinae dark palette"
 variant = "dark"
-#icon = "./icon.png" # optional: path is relative to the directory the theme is found in
+inherits = ""
 
-# ------------------------------------------------------------------------------
-# Core / Accent colors
-# ------------------------------------------------------------------------------
 [colors.core]
-accent = "<color>"             # general accent color (selection, focus)
-accent_foreground = "<color>"  # foreground on accent backgrounds
-foreground = "<color>"         # main text/icon color
+accent = "#2f6fed"
+accent_foreground = "#ffffff"
+background = "#1a1a1a"
+foreground = "#e8e6e1"
+secondary_background = "#242424"
+border = "#2e2e2e"
 
-# ------------------------------------------------------------------------------
-# Base Palette
-# ------------------------------------------------------------------------------
+[colors.main_window]
+border = "#2e2e2e"
+
+[colors.settings_window]
+border = "#2e2e2e"
+
 [colors.accents]
-blue = "<color>"
-green = "<color>"
-magenta = "<color>"
-orange = "<color>"
-red = "<color>"
-yellow = "<color>"
-cyan = "<color>"
-purple = "<color>"
+blue = "#2f6fed"
+green = "#3a9c61"
+magenta = "#bc8cff"
+orange = "#f0883e"
+red = "#b9543b"
+yellow = "#bfae78"
+cyan = "#18a5b3"
+purple = "#bc8cff"
 
-# ------------------------------------------------------------------------------
-# Text
-# ------------------------------------------------------------------------------
 [colors.text]
-default = "<color>"          # primary text color
-muted = "<color>"            # less important text
-danger = "<color>"           # destructive/warning text
-success = "<color>"          # confirmation text
+default = "#e8e6e1"
+muted = "#e8e6e1"
+danger = "#b9543b"
+success = "#3a9c61"
 
+[colors.text.links]
+default = "#2f6fed"
+visited = "#bc8cff"
 
-# ------------------------------------------------------------------------------
-# Surfaces & Backgrounds
-# ------------------------------------------------------------------------------
-[colors.backgrounds]
-main = "<color>"              # main window background
-secondary = "<color>"         # surfaces on top of main background
-secondary_border = "<color>"  # border around secondary surfaces
+[colors.text.selection]
+background = "#2f6fed"
+foreground = "#ffffff"
 
-# ------------------------------------------------------------------------------
-# Borders
-# ------------------------------------------------------------------------------
-[colors.border]
-default = "<color>"           # default border
-main_window = "<color>"       # outer main window border
-settings_window = "<color>"   # outer settings window border
-input = "<color>"             # generic input border
-input_focus = "<color>"       # input border when focused
-input_error = "<color>"       # input border in error state
+[colors.input]
+border = "#2e2e2e"
+border_focus = "#2f6fed"
+border_error = "#b9543b"
+placeholder = "#e8e6e1"
 
+[colors.button.primary]
+background = "#2e2e2e"
+foreground = "#e8e6e1"
 
-# ------------------------------------------------------------------------------
-# Interactive States
-# ------------------------------------------------------------------------------
-[colors.interactive]
-selection_background = "<color>"          # selected item background
-selection_foreground = "<color>"          # text/icon on selected background
-hover_background = "<color>"              # background on hover
-secondary_selection_background = "<color>" # selection background on secondary surfaces
-secondary_selection_foreground = "<color>" # text/icon on secondary selection
+[colors.button.primary.hover]
+background = "#2e2e2e"
+foreground = "#2e2e2e"
 
-# ------------------------------------------------------------------------------
-# Scrollbars
-# ------------------------------------------------------------------------------
+[colors.list.item.hover]
+background = "#2e2e2e"
+foreground = "#e8e6e1"
+
+[colors.list.item.selection]
+background = "#2e2e2e"
+foreground = "#e8e6e1"
+secondary_background = "#2e2e2e"
+secondary_foreground = "#e8e6e1"
+
+[colors.grid.item.selection]
+outline = "#e8e6e1"
+
+[colors.grid.item.hover]
+outline = "#e8e6e1"
+
+[colors.grid.item]
+background = "#242424"
+
 [colors.scrollbars]
-default = "<color>"
-secondary = "<color>"
+background = "#2e2e2e"
+secondary_background = "#2e2e2e"
 
-# ------------------------------------------------------------------------------
-# Links
-# ------------------------------------------------------------------------------
-[colors.links]
-default = "<color>"
-visited = "<color>"
-
-# ------------------------------------------------------------------------------
-# Text Selection (input fields)
-# ------------------------------------------------------------------------------
-[colors.text_selection]
-background = "<color>"
-foreground = "<color>"
-
-# ------------------------------------------------------------------------------
-# Tooltips
-# ------------------------------------------------------------------------------
 [colors.tooltip]
-background = "<color>"
-foreground = "<color>"
+background = "#242424"
+foreground = "#e8e6e1"
+border = "#2e2e2e"
 
-# ------------------------------------------------------------------------------
-# Loading / Activity
-# ------------------------------------------------------------------------------
-[colors.activity]
-loading_bar = "<color>"
-spinner = "<color>"
+[colors.loading]
+bar = "#e8e6e1"
+spinner = "#e8e6e1"
+

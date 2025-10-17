@@ -174,7 +174,6 @@ tl::expected<ThemeFile, std::string> ThemeParser::parse(const fs::path &path) {
 
   auto &meta = *metaPtr;
 
-  auto version = meta["version"].as_string();
   auto name = meta["name"].as_string();
   auto description = meta["description"].as_string();
   auto variant = meta["variant"].as_string();
@@ -182,7 +181,6 @@ tl::expected<ThemeFile, std::string> ThemeParser::parse(const fs::path &path) {
   if (!name) return tl::unexpected("meta.name must be a string");
   if (!description) return tl::unexpected("meta.description must be a string");
   if (!variant) return tl::unexpected("meta.variant must be a string (\"light\" | \"dark\")");
-  if (!version) return tl::unexpected("meta.version must should be set to \"1\"");
 
   data.name = QString::fromStdString(name->value_or(""));
   data.description = QString::fromStdString(description->value_or(""));
@@ -201,9 +199,6 @@ tl::expected<ThemeFile, std::string> ThemeParser::parse(const fs::path &path) {
     std::error_code ec;
 
     if (!icon.starts_with('/')) { iconPath = path.parent_path() / icon; }
-    if (!fs::is_regular_file(iconPath, ec)) {
-      return tl::unexpected(std::string(iconPath) + " does not point to a valid file");
-    }
 
     data.icon = iconPath;
   }
@@ -251,7 +246,6 @@ std::string ThemeSerializer::toToml(const ThemeFile &file) const {
   std::ostringstream doc;
 
   doc << "[meta]\n";
-  doc << "version = 1\n";
   doc << "name = " << std::quoted(file.name().toStdString()) << "\n";
   doc << "description = " << std::quoted(file.description().toStdString()) << "\n";
   doc << "variant = " << std::quoted(serializeVariant(file.variant())) << "\n";
