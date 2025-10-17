@@ -197,7 +197,6 @@ class CheckThemeCommand : public AbstractCommandLineCommand {
     for (const auto &diag : parser.diagnostics()) {
       std::cout << rang::fg::yellow << "Warning: " << rang::fg::reset << diag << "\n";
     }
-
     std::cout << rang::fg::green << "Theme file is valid" << rang::fg::reset << "\n";
   }
 
@@ -227,7 +226,7 @@ class ThemeSearchPathsCommand : public AbstractCommandLineCommand {
   std::string description() const override { return "Print the paths themes are searched at"; }
 
   void run(CLI::App *app) override {
-    for (const auto &path : ThemeDatabase().searchPaths()) {
+    for (const auto &path : ThemeDatabase::defaultSearchPaths()) {
       std::cout << path << "\n";
     }
   }

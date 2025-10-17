@@ -20,6 +20,8 @@ public:
   using ThemeMap = std::unordered_map<QString, std::shared_ptr<ThemeFile>>;
   using ThemeList = std::vector<std::shared_ptr<ThemeFile>>;
 
+  static std::vector<std::filesystem::path> defaultSearchPaths();
+
   ThemeDatabase();
   std::vector<std::filesystem::path> searchPaths() const { return m_searchPaths; }
   void setSearchPaths(const std::vector<std::filesystem::path> &paths) { m_searchPaths = paths; }
@@ -33,8 +35,7 @@ private:
   void reinstallWatches();
   void scanPath(const std::filesystem::path &path);
 
-  std::vector<std::filesystem::path> defaultSearchPaths() const;
   std::vector<std::filesystem::path> m_searchPaths;
   QObjectUniquePtr<QFileSystemWatcher> m_watcher;
-  ThemeMap m_themes;
+  ThemeList m_themes;
 };

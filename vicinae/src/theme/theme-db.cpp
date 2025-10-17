@@ -1,6 +1,7 @@
 #include "theme/theme-db.hpp"
 #include "theme/theme-file.hpp"
 #include "xdgpp/env/env.hpp"
+#include <filesystem>
 #include <qfilesystemwatcher.h>
 #include <qlogging.h>
 #include <QApplication>
@@ -12,13 +13,20 @@ ThemeDatabase::ThemeDatabase() : m_watcher(new QFileSystemWatcher) {
 }
 
 void ThemeDatabase::scan() {
-  m_themes.clear();
-  m_themes.insert({"vicinae-dark", std::make_shared<ThemeFile>(ThemeFile::vicinaeDark())});
-  m_themes.insert({"vicinae-light", std::make_shared<ThemeFile>(ThemeFile::vicinaeLight())});
   std::error_code ec;
 
+  std::vector<std::shared_ptr<ThemeFile>> themes;
+  std::unordered_map<QString, std::shared_ptr<ThemeFile>> mapping;
+  auto defaultDark = std::make_shared<ThemeFile>(ThemeFile::vicinaeDark());
+  auto defaultLight = std::make_shared<ThemeFile>(ThemeFile::vicinaeLight());
+
+  themes.emplace_back(defaultDark);
+  mapping[defaultDark->id()] = defaultDark;
+  themes.emplace_back(defaultLight);
+  mapping[defaultLight->id()] = defaultLight;
+
   for (const auto &path : m_searchPaths) {
-    for (const auto &entry : std::filesystem::recursive_directory_iterator(path, ec)) {
+    for (const auto &entry : std::filesystem::directory_iterator(path, ec)) {
       if (entry.is_directory()) continue;
       if (entry.path().extension() != ".toml") continue;
       auto res = ThemeFile::fromFile(entry.path());
@@ -27,39 +35,38 @@ void ThemeDatabase::scan() {
         qWarning() << "Failed to parse theme file at" << entry.path().c_str() << res.error();
         continue;
       }
-      auto themeFile = std::make_shared<ThemeFile>(res.value());
 
-      m_themes.insert({themeFile->id(), themeFile});
+      if (mapping.contains(res.value().id())) { continue; }
+
+      auto file = std::make_shared<ThemeFile>(res.value());
+      themes.emplace_back(file);
+      mapping[file->id()] = file;
     }
   }
 
-  for (const auto &[k, v] : m_themes) {
-    if (k == "vicinae-dark" || k == "vicinae-light") continue;
-
-    if (auto it = m_themes.find(v->inherits()); it != m_themes.end()) {
-      v->setParent(it->second);
+  for (const auto theme : m_themes) {
+    if (theme->id() == defaultDark->id() || theme->id() == defaultLight->id()) continue;
+    if (auto it = mapping.find(theme->inherits()); it != mapping.end()) {
+      theme->setParent(it->second);
     } else {
-      qWarning() << "failed to find inherited theme" << v->inherits();
+      qWarning() << "failed to find inherited theme" << theme->inherits();
+      theme->setParent(theme->variant() == ThemeVariant::Dark ? defaultDark : defaultLight);
     }
-    emit themeChanged(*v);
+    emit themeChanged(*theme);
   }
+
+  m_themes = themes;
 }
 
-ThemeDatabase::ThemeList ThemeDatabase::themes() const {
-  ThemeList list;
-  list.reserve(m_themes.size());
-  for (const auto &[k, v] : m_themes) {
-    list.emplace_back(v);
-  }
-  return list;
-}
+ThemeDatabase::ThemeList ThemeDatabase::themes() const { return m_themes; }
 
 const ThemeFile *ThemeDatabase::ThemeDatabase::theme(const QString &id) {
-  if (auto it = m_themes.find(id); it != m_themes.end()) return it->second.get();
+  auto pred = [&](const std::shared_ptr<ThemeFile> &file) { return file->id() == id; };
+  if (auto it = std::ranges::find_if(m_themes, pred); it != m_themes.end()) return it->get();
   return nullptr;
 }
 
-std::vector<std::filesystem::path> ThemeDatabase::defaultSearchPaths() const {
+std::vector<std::filesystem::path> ThemeDatabase::defaultSearchPaths() {
   std::vector<std::filesystem::path> paths;
   auto dd = xdgpp::dataDirs();
   paths.reserve(dd.size());
