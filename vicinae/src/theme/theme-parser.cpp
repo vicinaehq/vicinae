@@ -266,7 +266,6 @@ std::string ThemeSerializer::toToml(const ThemeFile &file) const {
     auto pos = k.find_last_of('.');
     std::string tableName = k.substr(0, pos);
     std::string key = k.substr(pos + 1);
-
     if (!mapped.contains(tableName)) { tableNames.emplace_back(tableName); }
     mapped[tableName].emplace_back(std::pair<std::string, SemanticColor>({key, v}));
   }
@@ -277,7 +276,8 @@ std::string ThemeSerializer::toToml(const ThemeFile &file) const {
     for (const auto [k, v] : mapped[tableName]) {
       std::string full = "colors." + tableName + "." + k;
       QColor color = file.resolve(v);
-      doc << k << " = " << std::quoted(color.name().toStdString()) << "\n";
+      QString colorName = color.name(color.alpha() == 0xFF ? QColor::NameFormat::HexRgb : QColor::HexArgb);
+      doc << k << " = " << std::quoted(colorName.toStdString()) << "\n";
     }
   }
 
