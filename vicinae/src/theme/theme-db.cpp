@@ -3,6 +3,7 @@
 #include "xdgpp/env/env.hpp"
 #include <qfilesystemwatcher.h>
 #include <qlogging.h>
+#include <QApplication>
 
 ThemeDatabase::ThemeDatabase() : m_watcher(new QFileSystemWatcher) {
   m_searchPaths = defaultSearchPaths();

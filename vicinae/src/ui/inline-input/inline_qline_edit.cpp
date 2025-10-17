@@ -2,11 +2,11 @@
 #include "template-engine/template-engine.hpp"
 #include "theme.hpp"
 #include "theme/colors.hpp"
-#include "ui/omni-painter/omni-painter.hpp"
 #include <QLineEdit>
 #include <QStyle>
 #include <qpainter.h>
 #include <qpainterpath.h>
+#include "theme/theme-file.hpp"
 
 InlineQLineEdit::InlineQLineEdit(const QString &placeholder, QWidget *parent) : QLineEdit(parent) {
   setPlaceholderText(placeholder);
@@ -43,13 +43,13 @@ void InlineQLineEdit::setError(const QString &error) {
 
 void InlineQLineEdit::updateStyle() {
   TemplateEngine engine;
-  auto &theme = ThemeService::instance();
+  auto &themeService = ThemeService::instance();
+  auto &theme = ThemeService::instance().theme();
 
-  engine.setVar("FONT_SIZE", QString::number(theme.pointSize(TextSize::TextRegular)));
-  engine.setVar("INPUT_BORDER_COLOR", OmniPainter::resolveColor(SemanticColor::InputBorder).name());
-  engine.setVar("INPUT_FOCUS_BORDER_COLOR",
-                OmniPainter::resolveColor(SemanticColor::InputBorderFocus).name());
-  engine.setVar("INPUT_BORDER_ERROR", OmniPainter::resolveColor(SemanticColor::InputBorderError).name());
+  engine.setVar("FONT_SIZE", QString::number(themeService.pointSize(TextSize::TextRegular)));
+  engine.setVar("INPUT_BORDER_COLOR", theme.resolveAsString(SemanticColor::InputBorder));
+  engine.setVar("INPUT_FOCUS_BORDER_COLOR", theme.resolveAsString(SemanticColor::InputBorderFocus));
+  engine.setVar("INPUT_BORDER_ERROR", theme.resolveAsString(SemanticColor::InputBorderError));
 
   auto style = engine.build(R"(
   		QLineEdit {

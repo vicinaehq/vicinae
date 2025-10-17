@@ -1,5 +1,6 @@
 #pragma once
 #include "expected.hpp"
+#include <algorithm>
 #include <filesystem>
 #include <qcolor.h>
 #include <qjsondocument.h>
@@ -26,11 +27,12 @@ public:
     QString description;
     QString inherits;
     std::optional<std::filesystem::path> icon;
+    std::optional<std::filesystem::path> path;
     ThemeVariant variant;
     Semantics semantics;
   };
 
-  static tl::expected<ThemeFile, QString> fromFile(const std::filesystem::path &path);
+  static tl::expected<ThemeFile, std::string> fromFile(const std::filesystem::path &path);
   explicit ThemeFile(const InitData &data) : m_data(data) {}
   ThemeFile(const ThemeFile &file) = default;
 
@@ -48,19 +50,29 @@ public:
   bool isLight() const;
   bool isDark() const;
 
+  /**
+   * The path to the theme file, if the theme was loaded from an actual file.
+   */
+  std::optional<std::filesystem::path> path() const;
+
   QColor resolve(SemanticColor color) const;
 
+  /**
+   * Resolve the color and convert it to a string representation
+   * suitable for use in CSS stylesheets or general display.
+   * This defaults to rgba(R, G, B, A)
+   */
+  QString resolveAsString(SemanticColor color) const;
+
   std::string toToml() const;
-  QJsonDocument toJson() const;
 
   static ThemeFile vicinaeDark();
   static ThemeFile vicinaeLight();
 
-private:
-  static ThemeVariant parseVariant(const std::string &variant);
-  static std::string serializeVariant(ThemeVariant variant);
   static std::optional<SemanticColor> semanticFromKey(const std::string &key);
   static std::optional<std::string> keyFromSemantic(SemanticColor color);
+
+private:
   static QColor withAlphaF(const QColor &color, float alpha = 1.0f);
 
   /**

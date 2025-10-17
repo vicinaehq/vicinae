@@ -96,7 +96,7 @@ AppPtr XdgAppDatabase::terminalEmulator() const {
 
 AppPtr XdgAppDatabase::fileBrowser() const { return defaultForMime("inode/directory"); }
 
-AppPtr XdgAppDatabase::genericTextEditor() const { return defaultForMime("plain/text"); }
+AppPtr XdgAppDatabase::genericTextEditor() const { return defaultForMime("text/plain"); }
 
 AppPtr XdgAppDatabase::webBrowser() const { return defaultForMime("x-scheme-handler/https"); }
 

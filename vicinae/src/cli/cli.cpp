@@ -2,12 +2,12 @@
 #include "daemon/ipc-client.hpp"
 #include "lib/rang.hpp"
 #include "theme/theme-db.hpp"
+#include "theme/theme-parser.hpp"
 #include "utils.hpp"
 #include "lib/CLI11.hpp"
 #include "ui/dmenu-view/dmenu-view.hpp"
 #include "vicinae.hpp"
 #include "server.hpp"
-#include <fstream>
 #include <iostream>
 #include <qdir.h>
 #include <qobjectdefs.h>
@@ -19,25 +19,26 @@ class DescribeThemeCommand : public AbstractCommandLineCommand {
   void setup(CLI::App *app) override {
     app->alias("desc");
     app->add_option("file", m_path)->required();
-    app->add_flag("-j,--json", m_json,
-                  "Output theme as json. Themes placed in the theme directories must only be TOML.");
   }
 
   void run(CLI::App *app) override {
     auto res = ThemeFile::fromFile(m_path);
-    if (!res) { throw std::runtime_error("Theme is invalid: " + res.error().toStdString()); }
+    if (!res) { throw std::runtime_error("Theme is invalid: " + res.error()); }
 
-    if (m_json) {
-      std::cout << res->toJson().toJson(QJsonDocument::JsonFormat::Indented).toStdString() << std::endl;
-      return;
+    ThemeDatabase db;
+    db.scan();
+
+    auto parent = db.theme(res->inherits());
+    if (!parent) {
+      throw std::runtime_error("Inherited theme " + res->inherits().toStdString() +
+                               " does not reference a valid theme");
     }
-
+    res->setParent(std::make_shared<ThemeFile>(*parent));
     std::cout << res->toToml() << std::endl;
   }
 
 private:
   std::filesystem::path m_path;
-  bool m_json = false;
 };
 
 class CheckThemeCommand : public AbstractCommandLineCommand {
@@ -46,8 +47,15 @@ class CheckThemeCommand : public AbstractCommandLineCommand {
   void setup(CLI::App *app) override { app->add_option("file", m_path)->required(); }
 
   void run(CLI::App *app) override {
-    auto res = ThemeFile::fromFile(m_path);
-    if (!res) { throw std::runtime_error("Theme is invalid: " + res.error().toStdString()); }
+    ThemeParser parser;
+    auto res = parser.parse(m_path);
+
+    if (!res) { throw std::runtime_error("Theme is invalid: " + res.error()); }
+
+    for (const auto &diag : parser.diagnostics()) {
+      std::cout << rang::fg::yellow << "Warning: " << rang::fg::reset << diag << "\n";
+    }
+
     std::cout << rang::fg::green << "Theme file is valid" << rang::fg::reset << "\n";
   }
 

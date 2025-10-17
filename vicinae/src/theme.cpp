@@ -75,10 +75,10 @@ QString ThemeService::inputStyleSheet() {
   TemplateEngine engine;
 
   engine.setVar("FONT_SIZE", QString::number(m_baseFontPointSize));
-  engine.setVar("INPUT_BORDER_COLOR", m_theme->resolve(SemanticColor::InputBorder).name());
-  engine.setVar("INPUT_FOCUS_BORDER_COLOR", m_theme->resolve(SemanticColor::InputBorderFocus).name());
-  engine.setVar("INPUT_BORDER_ERROR", m_theme->resolve(SemanticColor::InputBorderError).name());
-  engine.setVar("STATUS_BACKGROUND", m_theme->resolve(SemanticColor::SecondaryBackground).name());
+  engine.setVar("INPUT_BORDER_COLOR", m_theme->resolveAsString(SemanticColor::InputBorder));
+  engine.setVar("INPUT_FOCUS_BORDER_COLOR", m_theme->resolveAsString(SemanticColor::InputBorderFocus));
+  engine.setVar("INPUT_BORDER_ERROR", m_theme->resolveAsString(SemanticColor::InputBorderError));
+  engine.setVar("STATUS_BACKGROUND", m_theme->resolveAsString(SemanticColor::SecondaryBackground));
   // engine.setVar("SEARCH_FONT_SIZE", QString::number(mainInputSize));
 
   /**

@@ -125,5 +125,7 @@ bool isTextMimeType(const QString &mimeName);
 
 QColor colorFromString(const QString &str);
 
+QString rgbaFromColor(const QColor &color);
+
 std::string slurp(std::istream &ifs);
 }; // namespace Utils

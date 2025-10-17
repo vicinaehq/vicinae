@@ -1,6 +1,11 @@
+#include "actions/app/app-actions.hpp"
+#include "clipboard-actions.hpp"
+#include "common.hpp"
+#include "keyboard/keybind.hpp"
 #include "service-registry.hpp"
 #include "services/config/config-service.hpp"
 #include "theme.hpp"
+#include "ui/action-pannel/action.hpp"
 #include "ui/color-circle/color_circle.hpp"
 #include "ui/default-list-item-widget/default-list-item-widget.hpp"
 #include "ui/image/image.hpp"
@@ -71,57 +76,83 @@ class ThemeItem : public OmniList::AbstractVirtualItem, public ListView::Actionn
 public:
   bool hasUniformHeight() const override { return true; }
 
-  QString generateId() const override { return m_theme.id(); }
+  QString generateId() const override { return m_theme->id(); }
 
   bool recyclable() const override { return false; }
 
   void refresh(QWidget *widget) const override {
     auto item = static_cast<ThemeItemWidget *>(widget);
 
-    item->setTitle(m_theme.name());
-    item->setDescription(m_theme.description().isEmpty() ? "Default theme description"
-                                                         : m_theme.description());
+    item->setTitle(m_theme->name());
+    item->setDescription(m_theme->description().isEmpty() ? "Default theme description"
+                                                          : m_theme->description());
 
-    if (m_theme.icon()) {
-      qDebug() << "icon" << m_theme.icon();
-      item->setIcon(ImageURL::local(*m_theme.icon()).withFallback(ImageURL::builtin("vicinae")));
+    if (m_theme->icon()) {
+      qDebug() << "icon" << m_theme->icon();
+      item->setIcon(ImageURL::local(*m_theme->icon()).withFallback(ImageURL::builtin("vicinae")));
     } else {
       item->setIcon(ImageURL::builtin("vicinae"));
     }
 
     std::vector<ColorLike> colors{
-        m_theme.resolve(SemanticColor::Red),        m_theme.resolve(SemanticColor::Blue),
-        m_theme.resolve(SemanticColor::Cyan),       m_theme.resolve(SemanticColor::Green),
-        m_theme.resolve(SemanticColor::Magenta),    m_theme.resolve(SemanticColor::Orange),
-        m_theme.resolve(SemanticColor::Foreground), m_theme.resolve(SemanticColor::TextMuted)};
+        m_theme->resolve(SemanticColor::Red),        m_theme->resolve(SemanticColor::Blue),
+        m_theme->resolve(SemanticColor::Cyan),       m_theme->resolve(SemanticColor::Green),
+        m_theme->resolve(SemanticColor::Magenta),    m_theme->resolve(SemanticColor::Orange),
+        m_theme->resolve(SemanticColor::Foreground), m_theme->resolve(SemanticColor::TextMuted)};
 
     item->setColors(colors);
   }
 
   OmniListItemWidget *createWidget() const override {
     auto item = new ThemeItemWidget;
-
     refresh(item);
-
     return item;
   }
 
   std::unique_ptr<ActionPanelState> newActionPanel(ApplicationContext *ctx) const override {
     auto panel = std::make_unique<ActionPanelState>();
     auto section = panel->createSection();
-    auto setTheme = new SetThemeAction(m_theme.id());
+    auto setTheme = new SetThemeAction(m_theme->id());
+    auto textEditor = ctx->services->appDb()->textEditor();
 
-    panel->setTitle(m_theme.name());
+    panel->setTitle(m_theme->name());
     section->addAction(setTheme);
+
+    if (m_theme->path() && textEditor) {
+      auto open = new OpenAppAction(textEditor, "Open theme file", {m_theme->path()->c_str()});
+      open->setShortcut(Keybind::OpenAction);
+      section->addAction(open);
+    }
+
+    auto utils = panel->createSection();
+
+    // we don't want to generate toml right now, we wait for action
+    auto copyAsToml = new StaticAction(
+        "Copy as TOML", ImageURL::builtin("copy-clipboard"), [theme = m_theme](ApplicationContext *ctx) {
+          CopyToClipboardAction copy(Clipboard::Text(theme->toToml().c_str()), "");
+          copy.execute(ctx);
+        });
+    auto copyId = new CopyToClipboardAction(Clipboard::Text(m_theme->id()), "Copy ID");
+
+    copyAsToml->setShortcut(Keybind::CopyAction);
+    copyId->setShortcut(Keybind::CopyNameAction);
+    utils->addAction(copyAsToml);
+    utils->addAction(copyId);
+
+    if (m_theme->path()) {
+      auto copyPath = new CopyToClipboardAction(Clipboard::Text(m_theme->path()->c_str()), "Copy path");
+      copyPath->setShortcut(Keybind::CopyPathAction);
+      utils->addAction(copyPath);
+    }
 
     return panel;
   }
 
-  const ThemeFile &theme() const { return m_theme; }
+  const ThemeFile &theme() const { return *m_theme; }
 
-  ThemeItem(const ThemeFile &theme) : m_theme(theme) {}
+  ThemeItem(const ThemeFile &theme) : m_theme(std::make_shared<ThemeFile>(theme)) {}
 
-  ThemeFile m_theme;
+  std::shared_ptr<ThemeFile> m_theme;
 };
 
 ManageThemesView::ManageThemesView() {
@@ -148,11 +179,6 @@ void ManageThemesView::beforePop() {
 }
 
 void ManageThemesView::itemSelected(const OmniList::AbstractVirtualItem *item) {
-  static QString previousId;
-
-  if (previousId == item->id()) return;
-
-  previousId = item->id();
   auto &service = ThemeService::instance();
   auto themeItem = static_cast<const ThemeItem *>(item);
   service.setTheme(themeItem->theme());
