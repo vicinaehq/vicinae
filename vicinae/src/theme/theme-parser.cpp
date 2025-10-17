@@ -30,6 +30,7 @@ static const std::vector<std::pair<std::string, SemanticColor>> recognizedKeys =
     {"text.muted", SemanticColor::TextMuted},
     {"text.danger", SemanticColor::TextDanger},
     {"text.success", SemanticColor::TextSuccess},
+    {"text.placeholder", SemanticColor::TextPlaceholder},
     {"text.links.default", SemanticColor::LinkDefault},
     {"text.links.visited", SemanticColor::LinkVisited},
 
@@ -39,7 +40,6 @@ static const std::vector<std::pair<std::string, SemanticColor>> recognizedKeys =
     {"input.border", SemanticColor::InputBorder},
     {"input.border_focus", SemanticColor::InputBorderFocus},
     {"input.border_error", SemanticColor::InputBorderError},
-    {"input.placeholder", SemanticColor::InputPlaceholder},
 
     {"button.primary.background", SemanticColor::ButtonPrimaryBackground},
     {"button.primary.foreground", SemanticColor::ButtonPrimaryForeground},
@@ -208,6 +208,8 @@ tl::expected<ThemeFile, std::string> ThemeParser::parse(const fs::path &path) {
 
   Traverser traverse = [&](toml::table &table, const std::string &root = "") {
     for (const auto &[k, v] : table) {
+      if (k == "meta") continue;
+
       std::string path = root;
       std::string key(k.str());
       if (!path.empty()) path += '.';

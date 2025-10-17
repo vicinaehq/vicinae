@@ -66,12 +66,12 @@ enum SemanticColor {
   InputBorder,
   InputBorderFocus,
   InputBorderError,
-  InputPlaceholder,
 
   TextPrimary,
   TextMuted,
   TextDanger,
   TextSuccess,
+  TextPlaceholder,
 
   // link
   LinkDefault,

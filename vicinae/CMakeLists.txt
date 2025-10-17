@@ -53,6 +53,8 @@ set(SRCS
 
 	src/cli/cli.hpp
 	src/cli/cli.cpp
+	src/cli/theme.hpp
+	src/cli/theme.cpp
 	src/cli/server.hpp
 	src/cli/server.cpp
 

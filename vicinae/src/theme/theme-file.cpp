@@ -179,7 +179,7 @@ QColor ThemeFile::deriveSemantic(SemanticColor color) const {
     return resolve(SemanticColor::Accent);
   case SemanticColor::InputBorderError:
     return resolve(SemanticColor::Red);
-  case SemanticColor::InputPlaceholder:
+  case SemanticColor::TextPlaceholder:
     return withAlphaF(resolve(SemanticColor::TextPrimary), 0.6);
 
   case SemanticColor::Accent:

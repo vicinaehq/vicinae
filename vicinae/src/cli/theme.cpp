@@ -1,4 +1,9 @@
-# Example Theme Configuration
+#include "theme.hpp"
+#include "cli/theme.hpp"
+#include "theme/theme-db.hpp"
+#include "theme/theme-parser.hpp"
+
+static const char *THEME_TEMPLATE = R"(# Example Theme Configuration
 # This file demonstrates all available theme configuration options for Vicinae.
 # You don't need to define all of these - only override what you want to customize.
 # Undefined colors will be automatically derived from core colors or inherited from base themes.
@@ -148,3 +153,89 @@ background = "#2e2e2e"
 [colors.loading]
 bar = "#e8e6e1"     # shown right below the search bar when something is loading
 spinner = "#e8e6e1" # used by dynamic toasts
+)";
+
+class DescribeThemeCommand : public AbstractCommandLineCommand {
+  std::string id() const override { return "describe"; }
+  std::string description() const override { return "Print out the fully derived theme file"; }
+  void setup(CLI::App *app) override {
+    app->alias("desc");
+    app->add_option("file", m_path)->required();
+  }
+
+  void run(CLI::App *app) override {
+    auto res = ThemeFile::fromFile(m_path);
+    if (!res) { throw std::runtime_error("Theme is invalid: " + res.error()); }
+
+    ThemeDatabase db;
+    db.scan();
+
+    auto parent = db.theme(res->inherits());
+    if (!parent) {
+      throw std::runtime_error("Inherited theme " + res->inherits().toStdString() +
+                               " does not reference a valid theme");
+    }
+    res->setParent(std::make_shared<ThemeFile>(*parent));
+    std::cout << res->toToml() << std::endl;
+  }
+
+private:
+  std::filesystem::path m_path;
+};
+
+class CheckThemeCommand : public AbstractCommandLineCommand {
+  std::string id() const override { return "check"; }
+  std::string description() const override { return "Check whether the target theme file is valid"; }
+  void setup(CLI::App *app) override { app->add_option("file", m_path)->required(); }
+
+  void run(CLI::App *app) override {
+    ThemeParser parser;
+    auto res = parser.parse(m_path);
+
+    if (!res) { throw std::runtime_error("Theme is invalid: " + res.error()); }
+
+    for (const auto &diag : parser.diagnostics()) {
+      std::cout << rang::fg::yellow << "Warning: " << rang::fg::reset << diag << "\n";
+    }
+
+    std::cout << rang::fg::green << "Theme file is valid" << rang::fg::reset << "\n";
+  }
+
+private:
+  std::filesystem::path m_path;
+};
+
+class TemplateThemeCommand : public AbstractCommandLineCommand {
+  std::string id() const override { return "template"; }
+  std::string description() const override { return "Print out template"; }
+  void setup(CLI::App *app) override {
+    app->alias("tmpl");
+    app->add_option("-o,--output", m_path);
+  }
+
+  void run(CLI::App *app) override {
+    std::cout << THEME_TEMPLATE << std::endl;
+    return;
+  }
+
+private:
+  std::optional<std::filesystem::path> m_path;
+};
+
+class ThemeSearchPathsCommand : public AbstractCommandLineCommand {
+  std::string id() const override { return "paths"; }
+  std::string description() const override { return "Print the paths themes are searched at"; }
+
+  void run(CLI::App *app) override {
+    for (const auto &path : ThemeDatabase().searchPaths()) {
+      std::cout << path << "\n";
+    }
+  }
+};
+
+ThemeCommand::ThemeCommand() {
+  registerCommand<CheckThemeCommand>();
+  registerCommand<ThemeSearchPathsCommand>();
+  registerCommand<TemplateThemeCommand>();
+  registerCommand<DescribeThemeCommand>();
+}
