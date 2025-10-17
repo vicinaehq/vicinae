@@ -1,16 +1,21 @@
 #include "ui/inline-input/inline_qline_edit.hpp"
+#include "template-engine/template-engine.hpp"
+#include "theme.hpp"
+#include "theme/colors.hpp"
+#include "ui/omni-painter/omni-painter.hpp"
 #include <QLineEdit>
 #include <QStyle>
 #include <qpainter.h>
 #include <qpainterpath.h>
 
 InlineQLineEdit::InlineQLineEdit(const QString &placeholder, QWidget *parent) : QLineEdit(parent) {
-  connect(this, &QLineEdit::textChanged, this, &InlineQLineEdit::handleTextChanged);
-
   setPlaceholderText(placeholder);
   resizeFromText(placeholder + "...");
   setTextMargins(5, 5, 0, 5);
   setProperty("arg-form-input", true);
+  updateStyle();
+  connect(this, &QLineEdit::textChanged, this, &InlineQLineEdit::handleTextChanged);
+  connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() { updateStyle(); });
 }
 
 void InlineQLineEdit::resizeFromText(const QString &s) {
@@ -34,4 +39,34 @@ void InlineQLineEdit::setError(const QString &error) {
   style()->unpolish(this);
   style()->polish(this);
   update();
+}
+
+void InlineQLineEdit::updateStyle() {
+  TemplateEngine engine;
+  auto &theme = ThemeService::instance();
+
+  engine.setVar("FONT_SIZE", QString::number(theme.pointSize(TextSize::TextRegular)));
+  engine.setVar("INPUT_BORDER_COLOR", OmniPainter::resolveColor(SemanticColor::InputBorder).name());
+  engine.setVar("INPUT_FOCUS_BORDER_COLOR",
+                OmniPainter::resolveColor(SemanticColor::InputBorderFocus).name());
+  engine.setVar("INPUT_BORDER_ERROR", OmniPainter::resolveColor(SemanticColor::InputBorderError).name());
+
+  auto style = engine.build(R"(
+  		QLineEdit {
+			font-size: {FONT_SIZE}pt;
+			background-color: transparent;
+			border: 2px solid {INPUT_BORDER_COLOR};
+			border-radius: 5px;
+		}
+
+		QLineEdit[arg-form-input="true"]:focus {
+			border-color: {INPUT_FOCUS_BORDER_COLOR};
+		}
+
+		QLineEdit[error="true"] {
+			border-color: {INPUT_BORDER_ERROR};
+		}
+	)");
+
+  setStyleSheet(style);
 }
