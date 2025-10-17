@@ -22,11 +22,12 @@ void TextFileViewer::updateStyle() {
   TemplateEngine engine;
   double size = ThemeService::instance().pointSize(TextSize::TextRegular);
   engine.setVar("FONT_SIZE", QString::number(size));
-  setStyleSheet(R"(
-		QPlainTextEdit {
+  QString stylesheet = engine.build(R"(
+		QTextEdit {
 			font-size: {FONT_SIZE}pt;
 		}
 	)");
+  setStyleSheet(stylesheet);
 }
 
 TextFileViewer::TextFileViewer() : edit(new QTextEdit()) {
