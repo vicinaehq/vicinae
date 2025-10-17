@@ -1,3 +1,5 @@
+#include "service-registry.hpp"
+#include "services/config/config-service.hpp"
 #include "theme.hpp"
 #include "ui/color-circle/color_circle.hpp"
 #include "ui/default-list-item-widget/default-list-item-widget.hpp"
@@ -12,6 +14,7 @@
 #include "ui/image/url.hpp"
 
 #include <memory>
+#include <qnamespace.h>
 #include "manage-themes-view.hpp"
 
 class HorizontalColorPaletteWidget : public QWidget {
@@ -122,8 +125,15 @@ public:
 };
 
 ManageThemesView::ManageThemesView() {
-  connect(&ThemeService::instance(), &ThemeService::themeChanged, this,
-          [this](const auto &info) { generateList(searchText()); });
+  auto config = ServiceRegistry::instance()->config();
+
+  connect(
+      config, &ConfigService::configChanged, this,
+      [this](const ConfigService::Value &next, const ConfigService::Value &prev) {
+        if (next.theme.name != prev.theme.name) { generateList(searchText()); }
+      },
+      Qt::QueuedConnection); // queued matters here, we want the list to regenerate after control is returned
+                             // to the event loop
 }
 
 void ManageThemesView::initialize() {
@@ -131,25 +141,43 @@ void ManageThemesView::initialize() {
   setSearchPlaceholderText("Search for a theme...");
 }
 
+void ManageThemesView::beforePop() {
+  auto config = ServiceRegistry::instance()->config();
+  auto &service = ThemeService::instance();
+  service.setTheme(config->value().theme.name.value_or("vicinae-dark"));
+}
+
+void ManageThemesView::itemSelected(const OmniList::AbstractVirtualItem *item) {
+  static QString previousId;
+
+  if (previousId == item->id()) return;
+
+  previousId = item->id();
+  auto &service = ThemeService::instance();
+  auto themeItem = static_cast<const ThemeItem *>(item);
+  service.setTheme(themeItem->theme());
+}
+
 void ManageThemesView::textChanged(const QString &s) { generateList(s); }
 
 void ManageThemesView::generateList(const QString &query) {
   auto &themeService = ThemeService::instance();
+  auto config = ServiceRegistry::instance()->config();
+  auto currentThemeName = config->value().theme.name.value_or("vicinae-dark");
 
   m_list->updateModel([&]() {
-    auto &current = themeService.theme();
-
-    if (current.name().contains(query, Qt::CaseInsensitive)) {
+    if (currentThemeName.contains(query, Qt::CaseInsensitive)) {
       auto &section = m_list->addSection("Current Theme");
-
-      section.addItem(std::make_unique<ThemeItem>(current));
+      if (auto theme = themeService.findTheme(currentThemeName)) {
+        section.addItem(std::make_unique<ThemeItem>(*theme));
+      }
     }
 
     if (!themeService.themes().empty()) {
       auto &section = m_list->addSection("Available Themes");
 
       for (const auto &theme : themeService.themes()) {
-        bool filtered = theme->name() != current.name() && theme->name().contains(query, Qt::CaseInsensitive);
+        bool filtered = theme->id() != currentThemeName && theme->name().contains(query, Qt::CaseInsensitive);
         if (filtered) { section.addItem(std::make_unique<ThemeItem>(*theme)); }
       }
     }

@@ -8,5 +8,7 @@ public:
 private:
   void generateList(const QString &query);
   void initialize() override;
+  void beforePop() override;
   void textChanged(const QString &s) override;
+  void itemSelected(const OmniList::AbstractVirtualItem *item) override;
 };

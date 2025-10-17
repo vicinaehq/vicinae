@@ -1,12 +1,14 @@
 #include "theme-actions.hpp"
 #include "service-registry.hpp"
 #include "services/config/config-service.hpp"
+#include "services/toast/toast-service.hpp"
 
 void SetThemeAction::execute(ApplicationContext *ctx) {
   auto configService = ctx->services->config();
+  auto toast = ctx->services->toastService();
 
   configService->updateConfig([&](ConfigService::Value &value) { value.theme.name = m_themeId; });
-  // ui->setToast("Theme successfully updated");
+  toast->success("Theme successfully updated");
 }
 
 SetThemeAction::SetThemeAction(const QString &themeName)
