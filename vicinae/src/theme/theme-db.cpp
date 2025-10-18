@@ -1,11 +1,13 @@
 #include "theme/theme-db.hpp"
 #include "theme/theme-file.hpp"
 #include "theme/theme-parser.hpp"
+#include "vicinae.hpp"
 #include "xdgpp/env/env.hpp"
 #include <filesystem>
 #include <qfilesystemwatcher.h>
 #include <qlogging.h>
-#include <QApplication>
+
+namespace fs = std::filesystem;
 
 ThemeDatabase::ThemeDatabase() : m_watcher(new QFileSystemWatcher) {
   using namespace std::chrono_literals;
@@ -14,6 +16,13 @@ ThemeDatabase::ThemeDatabase() : m_watcher(new QFileSystemWatcher) {
   reinstallWatches();
   m_watcherDebounce.setInterval(50ms);
   m_watcherDebounce.setSingleShot(true);
+
+  {
+    std::error_code ec;
+    fs::path localThemes = Omnicast::dataDir() / "themes";
+    if (!fs::exists(localThemes, ec)) { fs::create_directories(localThemes, ec); }
+  }
+
   connect(&m_watcherDebounce, &QTimer::timeout, this, &ThemeDatabase::scan);
   connect(m_watcher.get(), &QFileSystemWatcher::directoryChanged, this, &ThemeDatabase::directoryChanged);
 }

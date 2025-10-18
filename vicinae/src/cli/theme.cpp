@@ -155,34 +155,6 @@ bar = "#e8e6e1"     # shown right below the search bar when something is loading
 spinner = "#e8e6e1" # used by dynamic toasts
 )";
 
-class DescribeThemeCommand : public AbstractCommandLineCommand {
-  std::string id() const override { return "describe"; }
-  std::string description() const override { return "Print out the fully derived theme file"; }
-  void setup(CLI::App *app) override {
-    app->alias("desc");
-    app->add_option("file", m_path)->required();
-  }
-
-  void run(CLI::App *app) override {
-    auto res = ThemeFile::fromFile(m_path);
-    if (!res) { throw std::runtime_error("Theme is invalid: " + res.error()); }
-
-    ThemeDatabase db;
-    db.scan();
-
-    auto parent = db.theme(res->inherits());
-    if (!parent) {
-      throw std::runtime_error("Inherited theme " + res->inherits().toStdString() +
-                               " does not reference a valid theme");
-    }
-    res->setParent(std::make_shared<ThemeFile>(*parent));
-    std::cout << res->toToml() << std::endl;
-  }
-
-private:
-  std::filesystem::path m_path;
-};
-
 class SetCliThemeCommand : public AbstractCommandLineCommand {
   std::string id() const override { return "set"; }
   std::string description() const override { return "Set theme command"; }
@@ -252,6 +224,5 @@ ThemeCommand::ThemeCommand() {
   registerCommand<CheckThemeCommand>();
   registerCommand<ThemeSearchPathsCommand>();
   registerCommand<TemplateThemeCommand>();
-  registerCommand<DescribeThemeCommand>();
   registerCommand<SetCliThemeCommand>();
 }

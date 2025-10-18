@@ -73,6 +73,7 @@ private:
 class VersionCommand : public AbstractCommandLineCommand {
   std::string id() const override { return "version"; }
   std::string description() const override { return "Show version and build information"; }
+  void setup(CLI::App *app) override { app->alias("ver"); }
 
   void run(CLI::App *app) override {
     std::cout << "Version " << VICINAE_GIT_TAG << " (commit " << VICINAE_GIT_COMMIT_HASH << ")\n"
@@ -87,6 +88,7 @@ public:
   std::string description() const override { return "Open a deeplink"; }
 
   void setup(CLI::App *app) override {
+    app->alias("link");
     app->add_option("link", link, "The deeplink to open (see https://docs.vicinae.com/deeplinks)")
         ->required();
   }
