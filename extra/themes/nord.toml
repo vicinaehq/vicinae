@@ -29,6 +29,3 @@ cyan = "#88C0D0"              # nord8
 background = "#434C5E"        # nord2
 secondary_background = "#4C566A"  # nord3
 
-[colors.list.item.hover]
-background = "#3B4252"        # nord1 with reduced opacity
-

@@ -33,6 +33,3 @@ muted = "#586E75"             # base01 (comments)
 background = "#073642"        # base02
 secondary_background = "#586E75"  # base01
 
-[colors.list.item.hover]
-background = "#073642"        # base02 with reduced opacity
-

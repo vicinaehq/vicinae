@@ -29,6 +29,3 @@ cyan = "#8BE9FD"
 background = "#44475A"        # Current Line
 secondary_background = "#6272A4"  # Comment (slightly highlighted)
 
-[colors.list.item.hover]
-background = "#44475A"        # Current Line with reduced opacity
-

@@ -192,13 +192,13 @@ protected:
 
 public:
   ActionPanelListView() {
-    m_layout->setContentsMargins(0, 0, 0, 0);
+    m_layout->setContentsMargins(2, 2, 2, 2);
     m_layout->setSpacing(0);
     m_layout->addWidget(m_list);
     m_layout->addWidget(new HDivider);
     m_layout->addWidget(m_input);
     m_input->setContentsMargins(10, 10, 10, 10);
-    m_list->setMargins(5, 5, 5, 5);
+    m_list->setMargins(3, 3, 3, 3);
     m_input->installEventFilter(this);
 
     setLayout(m_layout);

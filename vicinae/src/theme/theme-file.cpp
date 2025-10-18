@@ -146,7 +146,7 @@ QColor ThemeFile::deriveSemantic(SemanticColor color) const {
   case SemanticColor::PopoverBackground:
     return resolve(SemanticColor::SecondaryBackground);
   case SemanticColor::PopoverBorder:
-    return resolve(SemanticColor::BackgroundBorder);
+    return resolve(SemanticColor::MainWindowBorder);
 
   case SemanticColor::TooltipBackground:
     return resolve(SemanticColor::PopoverBackground);
@@ -198,10 +198,12 @@ QColor ThemeFile::deriveSemantic(SemanticColor color) const {
   case SemanticColor::TextSuccess:
     return resolve(SemanticColor::Green);
 
-  case SemanticColor::MainWindowBorder:
-    return resolve(SemanticColor::BackgroundBorder);
+  case SemanticColor::MainWindowBorder: {
+    auto color = resolve(SemanticColor::BackgroundBorder);
+    return isLight() ? color.darker(120) : color.lighter(120);
+  }
   case SemanticColor::SettingsWindowBorder:
-    return resolve(SemanticColor::BackgroundBorder);
+    return resolve(SemanticColor::MainWindowBorder);
   default:
     break;
   }

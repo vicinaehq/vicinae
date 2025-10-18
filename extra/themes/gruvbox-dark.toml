@@ -29,6 +29,3 @@ cyan = "#83A598"              # aqua (bright)
 background = "#504945"        # bg2
 secondary_background = "#665C54"  # bg3
 
-[colors.list.item.hover]
-background = "#3C3836"        # bg1 with reduced opacity
-

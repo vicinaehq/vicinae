@@ -29,6 +29,3 @@ cyan = "#7DCFFF"
 background = "#292E42"        # bg_highlight
 secondary_background = "#3B4261"  # blue0 (subtle highlight)
 
-[colors.list.item.hover]
-background = "#292E42"        # bg_highlight with reduced opacity
-
