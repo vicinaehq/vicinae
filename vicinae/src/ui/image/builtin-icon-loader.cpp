@@ -134,10 +134,8 @@ QPixmap BuiltinIconLoader::renderSync(const RenderConfig &config) {
   if (m_backgroundColor) {
     OmniPainter painter(&canva);
     int side = qMin(config.size.width(), config.size.height());
-    qreal radius = qRound(side * 0.25);
-    int m = side * 0.15;
-
-    margin = qRound(side * 0.15);
+    qreal radius = side * 0.25 * config.devicePixelRatio;
+    margin = qRound(side * 0.15 * config.devicePixelRatio);
     painter.setRenderHint(QPainter::Antialiasing, true);
     painter.setBrush(painter.colorBrush(*m_backgroundColor));
     painter.setPen(Qt::NoPen);
