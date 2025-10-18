@@ -33,7 +33,7 @@ IconThemeDatabase::IconThemeList IconThemeDatabase::themes(bool includeHidden) c
 }
 
 QString IconThemeDatabase::guessBestTheme() const {
-  std::vector<QString> wellKnown = {"Breeze Dark", "Adwaita Dark", "Breeze", "Adwaita"};
+  std::vector<QString> wellKnown = {"Adwaita Dark", "Adwaita", "Breeze", "Breeze Dark"};
 
   for (const auto &theme : wellKnown) {
     if (hasTheme(theme)) { return theme; }

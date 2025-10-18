@@ -182,8 +182,6 @@ void CliServerCommand::run(CLI::App *app) {
   commandServer.setHandler(new IpcCommandHandler(ctx));
   commandServer.start(Omnicast::commandSocketPath());
 
-  bool initalConfigPass = true;
-
   auto configChanged = [&](const ConfigService::Value &next, const ConfigService::Value &prev) {
     auto &theme = ThemeService::instance();
     bool themeChangeRequired =
@@ -192,9 +190,9 @@ void CliServerCommand::run(CLI::App *app) {
         next.theme.iconTheme && next.theme.iconTheme.value_or("") != prev.theme.iconTheme.value_or("");
     IconThemeDatabase iconThemeDb;
 
-    if (next.font.baseSize != prev.font.baseSize) {
-      theme.setFontBasePointSize(next.font.baseSize);
+    theme.setFontBasePointSize(next.font.baseSize);
 
+    if (next.font.baseSize != prev.font.baseSize) {
       if (!themeChangeRequired) { theme.reloadCurrentTheme(); }
     }
 
