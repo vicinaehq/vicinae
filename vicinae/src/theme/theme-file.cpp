@@ -61,7 +61,6 @@ ThemeFile ThemeFile::vicinaeDark() {
       {SemanticColor::Foreground, QColor("#E8E6E1")},
       {SemanticColor::BackgroundBorder, QColor("#2E2E2E")},
       {SemanticColor::SecondaryBackground, QColor("#242424")},
-      {SemanticColor::PopoverBackground, QColor("#242424")},
 
       {SemanticColor::Red, QColor("#B9543B")},
       {SemanticColor::Orange, QColor("#F0883E")},
@@ -86,6 +85,8 @@ ThemeFile ThemeFile::vicinaeLight() {
       {SemanticColor::Background, QColor("#F4F2EE")},
       {SemanticColor::ListItemSelectionBackground, QColor("#D8D6D1")},
       {SemanticColor::Foreground, QColor("#1A1A1A")},
+      {SemanticColor::BackgroundBorder, QColor("#D8D6D1")},
+      {SemanticColor::SecondaryBackground, QColor("#E6E4DF")},
 
       {SemanticColor::Red, QColor("#C25C49")},
       {SemanticColor::Orange, QColor("#DA8A48")},
