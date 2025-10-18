@@ -6,7 +6,7 @@ version = 1
 name = "Solarized Dark"
 description = "Low-contrast theme designed to reduce eye strain"
 variant = "dark"
-icon = "icons/solarized-dark.png"
+icon = "icons/solarized.png"
 
 [colors.core]
 background = "#002B36"        # base03

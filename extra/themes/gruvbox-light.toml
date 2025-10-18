@@ -6,7 +6,7 @@ version = 1
 name = "Gruvbox Light"
 description = "Designed as a bright theme with pastel 'retro groove' colors"
 variant = "light"
-icon = "icons/gruvbox-light.png"
+icon = "icons/gruvbox.png"
 
 [colors.core]
 background = "#FBF1C7"        # bg0_h (hard contrast bg)

@@ -6,7 +6,7 @@ version = 1
 name = "Tokyo Night Storm"
 description = "A clean theme that celebrates the lights of Downtown Tokyo at night."
 variant = "dark"
-icon = "icons/tokyo-night-storm.png"
+icon = "icons/tokyo-night.png"
 
 [colors.core]
 background = "#24283B"        # bg (storm variant)

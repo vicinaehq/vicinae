@@ -6,7 +6,7 @@ version = 1
 name = "Catppuccin Frappé"
 description = "A less vibrant alternative using subdued colors for a muted aesthetic."
 variant = "dark"
-icon = "icons/catppuccin-frappe.png"
+icon = "icons/catppuccin.png"
 
 [colors.core]
 background = "#303446"        # Base

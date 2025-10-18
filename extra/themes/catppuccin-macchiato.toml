@@ -6,7 +6,7 @@ version = 1
 name = "Catppuccin Macchiato"
 description = "Medium contrast with gentle colors creating a soothing atmosphere."
 variant = "dark"
-icon = "icons/catppuccin-macchiato.png"
+icon = "icons/catppuccin.png"
 
 [colors.core]
 background = "#24273A"        # Base

@@ -6,7 +6,7 @@ version = 1
 name = "Rosé Pine Dawn"
 description = "All natural pine, faux fur and a bit of soho vibes for the classy minimalist"
 variant = "light"
-icon = "icons/rose-pine-dawn.png"
+icon = "icons/rose-pine.png"
 
 [colors.core]
 background = "#FAF4ED"        # base

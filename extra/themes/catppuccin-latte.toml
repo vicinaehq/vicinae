@@ -6,7 +6,7 @@ version = 1
 name = "Catppuccin Latte"
 description = "Our lightest theme harmoniously inverting the essence of Catppuccin's dark themes."
 variant = "light"
-icon = "icons/catppuccin-latte.png"
+icon = "icons/catppuccin.png"
 
 [colors.core]
 background = "#EFF1F5"        # Base

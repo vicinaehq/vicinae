@@ -6,7 +6,7 @@ version = 1
 name = "Solarized Light"
 description = "Light variant of the popular Solarized theme"
 variant = "light"
-icon = "icons/solarized-light.png"
+icon = "icons/solarized.png"
 
 [colors.core]
 background = "#FDF6E3"        # base3
