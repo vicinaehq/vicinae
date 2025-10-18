@@ -205,11 +205,7 @@ void CliServerCommand::run(CLI::App *app) {
 
     if (next.theme.iconTheme) {
       QIcon::setThemeName(*next.theme.iconTheme);
-    } else {
-      QIcon::setThemeName(iconThemeDb.guessBestTheme());
-    }
-
-    if (!iconThemeDb.isSuitableTheme(QIcon::themeName())) {
+    } else if (QIcon::themeName() == "hicolor") {
       QIcon::setThemeName(iconThemeDb.guessBestTheme());
     }
 
