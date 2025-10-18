@@ -13,9 +13,9 @@ class ThemeFile {
 public:
   struct ColorRef {
     SemanticColor color;
-    double opacity = 1;
-    std::optional<double> lighter;
-    std::optional<double> darker;
+    std::optional<double> opacity;
+    std::optional<int> lighter;
+    std::optional<int> darker;
   };
 
   using MappedColor = std::variant<QColor, ColorRef>;
@@ -74,6 +74,7 @@ public:
 
 private:
   static QColor withAlphaF(const QColor &color, float alpha = 1.0f);
+  // QColor recursiveResolve(SemanticColor color) const;
 
   /**
    * Derive semantic color from base16 palette

@@ -38,7 +38,7 @@ void ThemeDatabase::scan() {
       auto res = parser.parse(entry.path());
 
       if (!res) {
-        qWarning() << "Failed to parse theme file at" << entry.path().c_str() << res.error();
+        qCritical() << "Failed to parse theme file at" << entry.path().c_str() << res.error();
         continue;
       }
 

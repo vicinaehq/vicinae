@@ -3,6 +3,7 @@
 #include "lib/toml.hpp"
 #include "theme/colors.hpp"
 #include "theme/theme-file.hpp"
+#include <variant>
 
 namespace fs = std::filesystem;
 
@@ -139,17 +140,17 @@ static tl::expected<ThemeFile::MappedColor, std::string> parseColor(toml::node_v
 
     if (!color) return color;
 
-    float opacity = (*table)["opacity"].value_or(1.0f);
+    auto opacity = (*table)["opacity"].value<double>();
     auto lighter = (*table)["lighter"].value<int>();
-    std::optional<int> darker = (*table)["darker"].value<int>();
+    auto darker = (*table)["darker"].value<int>();
     const auto visitor = overloads{[&](QColor &color) -> ThemeFile::MappedColor {
-                                     color.setAlphaF(opacity);
+                                     if (opacity) color.setAlphaF(*opacity);
                                      if (lighter) color = color.lighter(*lighter);
                                      if (darker) color = color.darker(*darker);
                                      return color;
                                    },
                                    [&](ThemeFile::ColorRef &ref) -> ThemeFile::MappedColor {
-                                     ref.opacity = opacity;
+                                     if (opacity) ref.opacity = opacity;
                                      if (lighter) ref.lighter = lighter;
                                      if (darker) ref.darker = darker;
                                      return ref;
@@ -239,6 +240,27 @@ tl::expected<ThemeFile, std::string> ThemeParser::parse(const fs::path &path) {
     };
 
     traverse(*file.as_table(), "");
+
+    std::set<SemanticColor> refCallStack;
+    std::function<bool(void)> fn;
+
+    std::function<bool(const ThemeFile::ColorRef &)> checkRef = [&](const ThemeFile::ColorRef &ref) {
+      if (refCallStack.contains(ref.color)) return false;
+      refCallStack.insert(ref.color);
+      if (auto it = data.semantics.find(ref.color); it != data.semantics.end()) {
+        if (auto ref = std::get_if<ThemeFile::ColorRef>(&it->second)) { return checkRef(*ref); }
+      }
+      return true;
+    };
+
+    for (const auto &[k, v] : data.semantics) {
+      if (auto ref = std::get_if<ThemeFile::ColorRef>(&v)) {
+        refCallStack.clear();
+        if (!checkRef(*ref)) {
+          return tl::unexpected("Detected circular binding for key " + keyFromSemantic(k).value_or("???"));
+        }
+      }
+    }
 
     return ThemeFile(data);
   } catch (const std::exception &error) {

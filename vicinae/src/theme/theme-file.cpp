@@ -31,15 +31,16 @@ QColor ThemeFile::resolve(SemanticColor color) const {
   if (auto it = m_data.semantics.find(color); it != m_data.semantics.end()) {
     auto visitor = overloads{[](const QColor &color) { return color; },
                              [&](const ColorRef &ref) {
-                               if (ref.color == color) return QColor();
+                               if (ref.color == color) { return inherit(ref.color); }
                                auto color = resolve(ref.color);
-                               color.setAlphaF(ref.opacity);
-                               if (ref.darker) color = color.darker(*ref.darker);
-                               if (ref.lighter) color = color.lighter(*ref.lighter);
+                               if (ref.opacity) color.setAlphaF(std::clamp(*ref.opacity, 0.0, 1.0));
+                               if (ref.darker) color = color.darker(std::max(0, *ref.darker + 100));
+                               if (ref.lighter) color = color.lighter(std::max(0, *ref.lighter + 100));
                                return color;
                              }};
 
-    return std::visit(visitor, it->second);
+    auto color = std::visit(visitor, it->second);
+    return color;
   }
   return deriveSemantic(color);
 }
@@ -198,7 +199,6 @@ QColor ThemeFile::deriveSemantic(SemanticColor color) const {
     return resolve(SemanticColor::BackgroundBorder);
   case SemanticColor::SettingsWindowBorder:
     return resolve(SemanticColor::BackgroundBorder);
-
   default:
     break;
   }
