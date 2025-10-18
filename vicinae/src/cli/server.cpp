@@ -167,16 +167,9 @@ void CliServerCommand::run(CLI::App *app) {
     registry->fileService()->indexer()->start();
   }
 
-  ThemeDatabase themeDb;
-
-  themeDb.setSearchPaths({"./extra/themes"});
-  themeDb.scan();
-
   FaviconService::initialize(new FaviconService(Omnicast::dataDir() / "favicon"));
-
   QApplication::setApplicationName("vicinae");
   QApplication::setQuitOnLastWindowClosed(false);
-
   ApplicationContext ctx;
 
   ctx.navigation = std::make_unique<NavigationController>(ctx);

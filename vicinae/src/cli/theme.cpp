@@ -1,7 +1,9 @@
 #include "theme.hpp"
 #include "cli/theme.hpp"
+#include "daemon/ipc-client.hpp"
 #include "theme/theme-db.hpp"
 #include "theme/theme-parser.hpp"
+#include <stdexcept>
 
 static const char *THEME_TEMPLATE = R"(# Example Theme Configuration
 # This file demonstrates all available theme configuration options for Vicinae.
@@ -183,6 +185,22 @@ private:
   std::filesystem::path m_path;
 };
 
+class SetCliThemeCommand : public AbstractCommandLineCommand {
+  std::string id() const override { return "set"; }
+  std::string description() const override { return "Set theme command"; }
+  void setup(CLI::App *app) override { app->add_option("theme_id", m_path)->required(); }
+
+  void run(CLI::App *app) override {
+    DaemonIpcClient client;
+    if (auto res = client.deeplink(QString("vicinae://theme/set/%1").arg(m_path.c_str())); !res) {
+      throw std::runtime_error("Failed to set theme: " + res.error().toStdString());
+    }
+  }
+
+private:
+  std::filesystem::path m_path;
+};
+
 class CheckThemeCommand : public AbstractCommandLineCommand {
   std::string id() const override { return "check"; }
   std::string description() const override { return "Check whether the target theme file is valid"; }
@@ -227,7 +245,7 @@ class ThemeSearchPathsCommand : public AbstractCommandLineCommand {
 
   void run(CLI::App *app) override {
     for (const auto &path : ThemeDatabase::defaultSearchPaths()) {
-      std::cout << path << "\n";
+      std::cout << path.c_str() << "\n";
     }
   }
 };
@@ -237,4 +255,5 @@ ThemeCommand::ThemeCommand() {
   registerCommand<ThemeSearchPathsCommand>();
   registerCommand<TemplateThemeCommand>();
   registerCommand<DescribeThemeCommand>();
+  registerCommand<SetCliThemeCommand>();
 }

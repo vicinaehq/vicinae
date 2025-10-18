@@ -9,6 +9,7 @@
 #include <iostream>
 #include <qdir.h>
 #include <qobjectdefs.h>
+#include <stdexcept>
 
 class CliPing : public AbstractCommandLineCommand {
   std::string id() const override { return "ping"; }
@@ -92,7 +93,9 @@ public:
 
   void run(CLI::App *app) override {
     DaemonIpcClient client;
-    client.sendDeeplink(QString(link.c_str()));
+    if (auto res = client.deeplink(QString(link.c_str())); !res) {
+      throw std::runtime_error("Failed: " + res.error().toStdString());
+    }
   }
 
 private:

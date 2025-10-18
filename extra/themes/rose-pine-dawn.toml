@@ -34,4 +34,3 @@ secondary_background = "#F2E9E1"  # overlay (lighter/subtle on lighter surface)
 
 [colors.list.item.hover]
 background = "#F2E9E1"        # overlay (subtle hover)
-

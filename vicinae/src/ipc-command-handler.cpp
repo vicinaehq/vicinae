@@ -34,9 +34,11 @@ IpcCommandHandler::handleCommand(const proto::ext::daemon::Request &request) {
     res->set_allocated_ping(new proto::ext::daemon::PingResponse());
     break;
   case Req::kUrl: {
-    handleUrl(QUrl(request.url().url().c_str()));
-    res->set_allocated_url(new proto::ext::daemon::UrlResponse());
-    break;
+    auto verbRes = handleUrl(QUrl(request.url().url().c_str()));
+    auto urlRes = new proto::ext::daemon::UrlResponse();
+    if (!verbRes) { urlRes->set_error(verbRes.error()); }
+    res->set_allocated_url(urlRes);
+    return res;
   }
   case Req::kDmenu:
     return processDmenu(request.dmenu());
@@ -86,19 +88,18 @@ IpcCommandHandler::processDmenu(const proto::ext::daemon::DmenuRequest &request)
   return future;
 }
 
-void IpcCommandHandler::handleUrl(const QUrl &url) {
+tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
   if (!Omnicast::APP_SCHEMES.contains(url.scheme())) {
-    qWarning() << "Unsupported url scheme" << url.scheme();
-    return;
+    return tl::unexpected("Unsupported url scheme " + url.scheme().toStdString());
   }
 
   QUrlQuery query(url.query());
 
-  if (url.host() == "ping") { return; }
+  if (url.host() == "ping") { return {}; }
 
   if (url.host() == "toggle") {
     m_ctx.navigation->toggleWindow();
-    return;
+    return {};
   }
 
   if (url.host() == "settings") {
@@ -107,11 +108,11 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
 
       if (auto text = query.queryItemValue("tab"); !text.isEmpty()) { m_ctx.settings->openTab(text); }
 
-      return;
+      return {};
     }
     if (url.path() == "/close") {
       m_ctx.settings->closeWindow();
-      return;
+      return {};
     }
   }
 
@@ -128,7 +129,7 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
     }
 
     m_ctx.navigation->closeWindow(opts);
-    return;
+    return {};
   }
 
   if (url.host() == "open") {
@@ -137,12 +138,12 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
     }
 
     m_ctx.navigation->showWindow();
-    return;
+    return {};
   }
 
   if (url.host() == "pop_current") {
     m_ctx.navigation->popCurrentView();
-    return;
+    return {};
   }
 
   if (url.host() == "pop_to_root") {
@@ -153,13 +154,13 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
     }
 
     m_ctx.navigation->popToRoot(opts);
-    return;
+    return {};
   }
 
   if (url.host() == "toast") {
     QString title = query.hasQueryItem("title") ? query.queryItemValue("title") : "Toast";
     m_ctx.services->toastService()->setToast(title, ToastStyle::Info);
-    return;
+    return {};
   }
 
   if (url.host() == "extensions") {
@@ -170,7 +171,7 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
     if (components.size() < 3) {
       qWarning() << "Invalid use of extensions verb: expected format is "
                     "vicinae://extensions/<author>/<ext_name>/<cmd_name>";
-      return;
+      return {};
     }
 
     QString author = components[0];
@@ -197,7 +198,7 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
       }
     }
 
-    return;
+    return {};
   }
 
   if (url.host() == "theme") {
@@ -206,8 +207,7 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
 
     if (verb == "set") {
       if (components.size() != 2) {
-        qCritical() << "Correct usage is vicinae://theme/set/<theme_id>";
-        return;
+        return tl::unexpected("Correct usage is vicinae://theme/set/<theme_id>");
       }
 
       QString id = components.at(1);
@@ -219,8 +219,7 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
       auto theme = service.findTheme(id);
 
       if (!theme) {
-        qWarning() << "Failed to set theme with id" << id << "(this theme most likely doesn't exist)";
-        return;
+        return tl::unexpected(std::string("theme with id ") + id.toStdString() + " does not exist");
       }
 
       if (theme->id() == cfg->value().theme.name.value_or("")) {
@@ -233,7 +232,7 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
         m_ctx.navigation->showWindow();
       }
 
-      return;
+      return {};
     }
   }
 
@@ -243,7 +242,7 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
 
     if (id.isEmpty()) {
       qWarning() << "Missing valid extension id from URI";
-      return;
+      return {};
     }
 
     if (url.path() == "/extensions/develop/start") {
@@ -254,7 +253,7 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
       // so all we have to do is to rescan.
       // this hook is how we can know to launch an extension in development mode instead of production
       registry->requestScan();
-      return;
+      return {};
     }
 
     if (url.path() == "/extensions/develop/refresh") {
@@ -270,7 +269,7 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
         m_ctx.navigation->reloadActiveCommand();
       }
 
-      return;
+      return {};
     }
 
     if (url.path() == "/extensions/develop/stop") {
@@ -279,7 +278,7 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
       // stopping a development session doesn't remove the bundle, but if a command
       // from the extension is launched outside of dev mode it's going to be run in
       // the production environment (although the bundle itself won't be optimized for production)
-      return;
+      return {};
     }
   }
 
@@ -288,11 +287,11 @@ void IpcCommandHandler::handleUrl(const QUrl &url) {
       qInfo() << "Restarting extension runtime....";
       m_ctx.navigation->popToRoot();
       m_ctx.services->extensionManager()->start();
-      return;
+      return {};
     }
   }
 
-  qWarning() << "No handler for URL" << url;
+  return tl::unexpected(std::string("invalid deeplink ") + url.toString().toStdString());
 }
 
 IpcCommandHandler::IpcCommandHandler(ApplicationContext &ctx) : m_ctx(ctx) {}
