@@ -25,10 +25,6 @@ red = "#DC322F"
 yellow = "#B58900"
 cyan = "#2AA198"
 
-[colors.text]
-default = "#93A1A1"           # base1 (body text)
-muted = "#586E75"             # base01 (comments)
-
 [colors.list.item.selection]
 background = "#073642"        # base02
 secondary_background = "#586E75"  # base01

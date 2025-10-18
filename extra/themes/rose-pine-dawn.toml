@@ -25,9 +25,6 @@ red = "#B4637A"               # love
 yellow = "#EA9D34"            # gold
 cyan = "#56949F"              # foam
 
-[colors.text]
-muted = "#9893A5"             # muted
-
 [colors.list.item.selection]
 background = "#DFDAD9"        # highlight_med (darker/stronger on main bg)
 secondary_background = "#F2E9E1"  # overlay (lighter/subtle on lighter surface)

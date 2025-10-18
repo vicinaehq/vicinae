@@ -25,9 +25,6 @@ red = "#BF616A"               # nord11
 yellow = "#EBCB8B"            # nord13
 cyan = "#88C0D0"              # nord8
 
-[colors.text]
-default = "#3B4252"           # nord1 (readable on light bg)
-
 [colors.list.item.selection]
 background = "#D8DEE9"        # nord4 (noticeable on main bg)
 secondary_background = "#CCD1DA"  # Between nord4 and nord5 (better contrast)

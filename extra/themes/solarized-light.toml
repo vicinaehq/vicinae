@@ -25,10 +25,6 @@ red = "#DC322F"
 yellow = "#B58900"
 cyan = "#2AA198"
 
-[colors.text]
-default = "#586E75"           # base01 (body text)
-muted = "#93A1A1"             # base1 (comments)
-
 [colors.list.item.selection]
 background = "#EEE8D5"        # base2 (darker/stronger on main bg)
 secondary_background = "#F6F0DC"  # Between base3 and base2 (lighter/subtle on lighter surface)

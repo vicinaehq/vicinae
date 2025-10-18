@@ -25,9 +25,6 @@ red = "#F07178"               # Error/VCS removed
 yellow = "#FFB454"            # Function
 cyan = "#95E6CB"              # Regexp
 
-[colors.text]
-muted = "#565B66"             # UI foreground (very muted)
-
 [colors.list.item.selection]
 background = "#131721"        # Slightly lighter than UI bg
 secondary_background = "#1A1F29"  # Line color on secondary
