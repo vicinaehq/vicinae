@@ -1,0 +1,31 @@
+# Dracula - The Popular Dark Theme
+# A dark theme with vibrant colors
+
+[meta]
+version = 1
+name = "Dracula"
+description = "The popular Dracula theme"
+variant = "dark"
+icon = "icons/dracula.png"
+
+[colors.core]
+background = "#282A36"        # Background
+foreground = "#F8F8F2"        # Foreground
+secondary_background = "#21222C"  # Slightly darker for surfaces
+border = "#44475A"            # Current Line (subtle border)
+accent = "#8BE9FD"            # Cyan
+
+[colors.accents]
+blue = "#8BE9FD"              # Cyan (Dracula uses cyan as primary blue)
+green = "#50FA7B"
+magenta = "#FF79C6"
+orange = "#FFB86C"
+purple = "#BD93F9"
+red = "#FF5555"
+yellow = "#F1FA8C"
+cyan = "#8BE9FD"
+
+[colors.list.item.selection]
+background = "#44475A"        # Current Line
+secondary_background = "#6272A4"  # Comment (slightly highlighted)
+

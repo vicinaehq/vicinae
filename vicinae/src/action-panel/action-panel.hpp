@@ -1,6 +1,7 @@
 #pragma once
 #include "common.hpp"
 #include "navigation-controller.hpp"
+#include "template-engine/template-engine.hpp"
 #include "theme.hpp"
 #include "ui/action-pannel/action-list-item.hpp"
 #include "ui/action-pannel/action.hpp"
@@ -33,7 +34,7 @@ class NoResultListItem : public OmniList::AbstractVirtualItem {
       auto layout = new QVBoxLayout(this);
 
       m_text->setText("No Results");
-      m_text->setColor(SemanticColor::TextSecondary);
+      m_text->setColor(SemanticColor::TextMuted);
       m_text->setAlignment(Qt::AlignCenter);
       layout->addWidget(m_text, Qt::AlignCenter);
       setLayout(layout);
@@ -58,7 +59,7 @@ class ActionSectionTitleListItem : public OmniList::AbstractVirtualItem {
 
       layout->setContentsMargins(10, 5, 5, 5);
       layout->addWidget(m_text);
-      m_text->setColor(SemanticColor::TextSecondary);
+      m_text->setColor(SemanticColor::TextMuted);
       m_text->setText(title);
       m_text->setSize(TextSize::TextSmaller);
       setLayout(layout);
@@ -190,20 +191,32 @@ protected:
 
   QString searchText() const override { return m_input->text(); }
 
+  void updateStyle() {
+    TemplateEngine engine;
+    double pointSize = ThemeService::instance().pointSize(TextSize::TextRegular);
+    engine.setVar("FONT_SIZE", QString::number(pointSize));
+    auto stylesheet = engine.build(R"(
+	  	QLineEdit { font-size: {FONT_SIZE}pt; }
+	)");
+    setStyleSheet(stylesheet);
+  }
+
 public:
   ActionPanelListView() {
-    m_layout->setContentsMargins(0, 0, 0, 0);
+    m_layout->setContentsMargins(2, 2, 2, 2);
     m_layout->setSpacing(0);
     m_layout->addWidget(m_list);
     m_layout->addWidget(new HDivider);
     m_layout->addWidget(m_input);
     m_input->setContentsMargins(10, 10, 10, 10);
-    m_list->setMargins(5, 5, 5, 5);
+    m_list->setMargins(3, 3, 3, 3);
     m_input->installEventFilter(this);
+    updateStyle();
 
     setLayout(m_layout);
     connect(m_input, &QLineEdit::textChanged, this, &ActionPanelListView::onSearchChanged);
     connect(m_list, &OmniList::itemActivated, this, &ActionPanelListView::itemActivated);
+    connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() { updateStyle(); });
     connect(m_list, &OmniList::virtualHeightChanged, this, [this](int height) {
       m_list->setFixedHeight(std::min(height, 180));
       updateGeometry();

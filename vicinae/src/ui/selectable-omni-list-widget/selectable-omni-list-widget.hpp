@@ -1,13 +1,14 @@
 #pragma once
-
 #include "ui/omni-list/omni-list-item-widget.hpp"
 #include <qevent.h>
 #include <qpainter.h>
 #include <qpainterpath.h>
 
 class SelectableOmniListWidget : public OmniListItemWidget {
-  bool isSelected;
-  bool isHovered;
+public:
+  SelectableOmniListWidget(QWidget *parent = nullptr);
+  bool selected() const;
+  bool hovered() const;
 
 protected:
   void paintEvent(QPaintEvent *event) override;
@@ -18,8 +19,7 @@ protected:
   void enterEvent(QEnterEvent *event) override;
   void leaveEvent(QEvent *event) override;
 
-public:
-  bool selected() const;
-  bool hovered() const;
-  SelectableOmniListWidget(QWidget *parent = nullptr);
+private:
+  bool isSelected;
+  bool isHovered;
 };

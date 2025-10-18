@@ -2,6 +2,8 @@
 #include "action-panel/action-panel.hpp"
 #include "common.hpp"
 #include "keyboard/keybind-manager.hpp"
+#include "theme.hpp"
+#include "theme/colors.hpp"
 #include "ui/status-bar/status-bar.hpp"
 #include "service-registry.hpp"
 #include "services/config/config-service.hpp"
@@ -146,6 +148,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
     if (m_currentOverlayWrapper->isVisible()) return;
     m_bar->setVisible(value);
   });
+  connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() { repaint(); });
 }
 
 void LauncherWindow::handleShowHUD(const QString &text, const std::optional<ImageURL> &icon) {
@@ -169,7 +172,7 @@ void LauncherWindow::changeEvent(QEvent *event) {
 
 void LauncherWindow::setupUI() {
   setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
-  setAttribute(Qt::WA_TranslucentBackground, true);
+  setAttribute(Qt::WA_TranslucentBackground);
   setFixedSize(Omnicast::WINDOW_SIZE);
   setCentralWidget(createWidget());
 
@@ -269,25 +272,18 @@ void LauncherWindow::handleActionVisibilityChanged(bool visible) {
 
 void LauncherWindow::paintEvent(QPaintEvent *event) {
   auto &config = m_ctx.services->config()->value();
-  auto &theme = ThemeService::instance().theme();
-  QColor finalBgColor = theme.colors.mainBackground;
-  QPainter painter(this);
+  OmniPainter painter(this);
+  QColor finalBgColor = painter.resolveColor(SemanticColor::Background);
 
   finalBgColor.setAlphaF(config.window.opacity);
-
   painter.setRenderHint(QPainter::Antialiasing, true);
 
   if (config.window.csd) {
     QPainterPath path;
     path.addRoundedRect(rect(), config.window.rounding, config.window.rounding);
-
     painter.setClipPath(path);
-
     painter.fillPath(path, finalBgColor);
-
-    QPen pen(theme.colors.border, Omnicast::WINDOW_BORDER_WIDTH);
-    painter.setPen(pen);
-
+    painter.setThemePen(SemanticColor::MainWindowBorder, Omnicast::WINDOW_BORDER_WIDTH);
     painter.drawPath(path);
   } else {
     painter.fillRect(rect(), finalBgColor);
@@ -297,7 +293,7 @@ void LauncherWindow::paintEvent(QPaintEvent *event) {
 QWidget *LauncherWindow::createWidget() const {
   auto layout = new QVBoxLayout;
 
-  layout->setContentsMargins(0, 0, 0, 0);
+  layout->setContentsMargins(2, 2, 2, 2);
   layout->setSpacing(0);
   layout->addWidget(m_header);
   layout->addWidget(m_currentViewWrapper, 1);

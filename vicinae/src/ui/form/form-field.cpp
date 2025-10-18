@@ -10,7 +10,7 @@ FormField::FormField(QWidget *parent)
     : QWidget(parent), _nameLabel(new TypographyWidget), _errorLabel(new TypographyWidget), m_widget(nullptr),
       _layout(new QHBoxLayout) {
   setFocusPolicy(Qt::StrongFocus);
-  _nameLabel->setColor(SemanticColor::TextSecondary);
+  _nameLabel->setColor(SemanticColor::TextMuted);
   _errorLabel->setColor(SemanticColor::Red);
   _layout->setSpacing(20);
   _layout->setContentsMargins(0, 0, 0, 0);
@@ -32,7 +32,7 @@ FormField::FormField(QWidget *parent)
   m_infoLayout->addStretch(2);
   m_infoContainer->setLayout(m_infoLayout);
 
-  m_info->setColor(SemanticColor::TextSecondary);
+  m_info->setColor(SemanticColor::TextMuted);
   m_info->setSize(TextSize::TextSmaller);
   m_info->setWordWrap(true);
   m_mainLayout->addWidget(fieldRow);

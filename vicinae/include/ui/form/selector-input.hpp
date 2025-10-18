@@ -18,6 +18,8 @@
 #include <qwidget.h>
 
 class SelectorInput : public JsonFormItemWidget {
+  Q_OBJECT
+
 public:
   class AbstractItem : public AbstractDefaultListItem {
   public:
@@ -35,7 +37,9 @@ public:
      */
     virtual AbstractItem *clone() const = 0;
 
-    ItemData data() const override { return {.iconUrl = icon(), .name = displayName()}; }
+    ItemData data() const override {
+      return {.iconUrl = icon(), .name = displayName(), .secondaryBackground = true};
+    }
   };
 
   QJsonValue asJsonValue() const override;
@@ -60,17 +64,32 @@ public:
     }
   };
 
-private:
-  Q_OBJECT
+signals:
+  void textChanged(const QString &s);
+  void selectionChanged(const AbstractItem &item);
 
-  FocusNotifier *m_focusNotifier = new FocusNotifier(this);
-  bool m_focused = false;
-  bool m_defaultFilterEnabled = true;
-  int POPOVER_HEIGHT = 300;
+public:
+  using UpdateItemCallback = std::function<void(AbstractItem *item)>;
 
-  void listHeightChanged(int height);
+  SelectorInput(QWidget *parent = nullptr);
+  ~SelectorInput();
 
-  std::vector<DropdownSection> m_sections;
+  void addSection(const QString &title, const std::vector<std::shared_ptr<AbstractItem>> &items);
+  void resetModel();
+  void updateModel();
+
+  FocusNotifier *focusNotifier() const override;
+  void setIsLoading(bool value);
+  void clear();
+  OmniList *list() const { return m_list; }
+
+  void updateItem(const QString &id, const UpdateItemCallback &cb);
+  const AbstractItem *value() const;
+  bool setValue(const QString &id);
+  void setValueAsJson(const QJsonValue &value) override;
+  QString searchText();
+  void setEnableDefaultFilter(bool value);
+  void openSelector() { showPopover(); }
 
 protected:
   OmniList *m_list;
@@ -87,55 +106,24 @@ protected:
 
   bool eventFilter(QObject *obj, QEvent *event) override;
 
-  using UpdateItemCallback = std::function<void(AbstractItem *item)>;
-
   struct UpdateItemPayload {
     QString icon;
     QString displayName;
   };
-
-public:
-  SelectorInput(QWidget *parent = nullptr);
-  ~SelectorInput();
-
-  void addSection(const QString &title, const std::vector<std::shared_ptr<AbstractItem>> &items) {
-    m_sections.emplace_back(DropdownSection(title, items));
-  }
-
-  void resetModel() { m_sections.clear(); }
-
-  void updateModel() {
-    m_list->updateModel([&]() {
-      for (const auto &section : m_sections) {
-        auto &sec = m_list->addSection(section.title);
-
-        for (const auto &item : section.items) {
-          sec.addItem(item);
-        }
-      }
-    });
-  }
-
-  FocusNotifier *focusNotifier() const override;
-  void setIsLoading(bool value);
-  void clear();
-  OmniList *list() const { return m_list; }
-
-  void updateItem(const QString &id, const UpdateItemCallback &cb);
-  const AbstractItem *value() const;
-  bool setValue(const QString &id);
-  void setValueAsJson(const QJsonValue &value) override;
-  QString searchText();
-  void setEnableDefaultFilter(bool value);
-  void openSelector() { showPopover(); }
-
-signals:
-  void textChanged(const QString &s);
-  void selectionChanged(const AbstractItem &item);
 
 private slots:
   void handleTextChanged(const QString &text);
   void itemActivated(const OmniList::AbstractVirtualItem &vitem);
   void itemUpdated(const OmniList::AbstractVirtualItem &item);
   void showPopover();
+
+private:
+  FocusNotifier *m_focusNotifier = new FocusNotifier(this);
+  bool m_focused = false;
+  bool m_defaultFilterEnabled = true;
+  int POPOVER_HEIGHT = 300;
+
+  void listHeightChanged(int height);
+
+  std::vector<DropdownSection> m_sections;
 };

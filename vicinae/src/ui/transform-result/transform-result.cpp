@@ -1,6 +1,7 @@
 #include "ui/transform-result/transform-result.hpp"
 #include "../image/url.hpp"
 #include "theme.hpp"
+#include "theme/colors.hpp"
 #include "ui/selectable-omni-list-widget/selectable-omni-list-widget.hpp"
 #include "ui/typography/typography.hpp"
 #include <qboxlayout.h>
@@ -62,24 +63,22 @@ void TransformResult::selectionChanged(bool value) {
 }
 
 void TransformResult::paintEvent(QPaintEvent *event) {
-  auto &theme = ThemeService::instance().theme();
   SelectableOmniListWidget::paintEvent(event);
-  QPainter painter(this);
+  OmniPainter painter(this);
   int midW = width() / 2;
   int midH = height() / 2;
   auto margins = contentsMargins();
+  auto color = painter.resolveColor(SemanticColor::ListItemSelectionBackground);
 
   painter.setPen(Qt::NoPen);
-  painter.setBrush(theme.colors.border);
-
+  painter.setBrush(QBrush(color.lighter(150)));
   m_base->setFixedSize({midW, availableHeight()});
   m_base->move(0, margins.top());
-
   m_result->setFixedSize({midW, availableHeight()});
   m_result->move(midW, margins.top());
 
   if (selected() || hovered()) {
-    painter.drawRect(midW, 0, 1, midH - m_arrowMid.height());
+    painter.drawRect(midW, 1, 1, midH - m_arrowMid.height() - 1);
     painter.drawRect(midW, midH + m_arrowMid.width(), 1, midH - m_arrowMid.height());
   }
 

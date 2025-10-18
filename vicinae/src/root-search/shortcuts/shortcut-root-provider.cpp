@@ -75,7 +75,7 @@ double RootShortcutItem::baseScoreWeight() const { return 1.4; }
 QString RootShortcutItem::providerId() const { return "shortcut"; }
 
 AccessoryList RootShortcutItem::accessories() const {
-  return {{.text = "Shortcut", .color = SemanticColor::TextSecondary}};
+  return {{.text = "Shortcut", .color = SemanticColor::TextMuted}};
 }
 
 bool RootShortcutItem::isSuitableForFallback() const { return m_link->arguments().size() == 1; }

@@ -24,7 +24,7 @@ public:
   void setThemePen(const ColorLike &color, int width = 1);
   void setThemeBrush(const ColorLike &color);
 
-  QColor resolveColor(const ColorLike &color) const;
+  static QColor resolveColor(const ColorLike &color);
   QBrush colorBrush(const ColorLike &color) const;
 
   using QPainter::QPainter;

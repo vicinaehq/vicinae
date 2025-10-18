@@ -106,7 +106,11 @@ private:
       }
     }
 
-    m_primary = m_autoSelectPrimary ? first : nullptr;
+    if (m_autoSelectPrimary) {
+      m_primary = first;
+      if (first) { first->setPrimary(true); }
+    }
+
     m_primarySection = !m_sections.empty() ? m_sections.front().get() : nullptr;
   }
 

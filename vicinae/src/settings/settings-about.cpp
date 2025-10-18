@@ -70,7 +70,7 @@ void SettingsAbout::setupUI() {
                        .spacing(12)
                        .margins(16)
                        .addIcon(ImageURL::builtin("vicinae"), QSize(64, 64), Qt::AlignCenter)
-                       .addTitle("Vicinae", SemanticColor::TextPrimary, Qt::AlignCenter)
+                       .addTitle("Vicinae", SemanticColor::Foreground, Qt::AlignCenter)
                        .add(UI::Text(Omnicast::HEADLINE).align(Qt::AlignCenter).paragraph())
                        .add(UI::Text(QString("Version %1 - Commit %2\n(%3)")
                                          .arg(VICINAE_GIT_TAG)

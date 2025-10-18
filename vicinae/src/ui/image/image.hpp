@@ -1,6 +1,7 @@
 #pragma once
 #include "common.hpp"
 #include "theme.hpp"
+#include "theme/theme-file.hpp"
 #include "ui/image/url.hpp"
 #include <qfont.h>
 #include <qicon.h>
@@ -73,5 +74,5 @@ private:
   void handleDataUpdated(const QPixmap &data);
   QSize sizeHint() const override;
   void setUrlImpl(const ImageURL &url);
-  void refreshTheme(const ThemeInfo &theme);
+  void refreshTheme(const ThemeFile &theme);
 };

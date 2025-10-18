@@ -1,0 +1,19 @@
+ {
+    "version": "1.0.0",
+    "appearance": "dark",
+    "icon": "../solarized.png",
+    "name": "Solarized Dark",
+    "description": "Low-contrast theme designed to reduce eye strain",
+    "palette": {
+      "background": "#002B36",
+      "foreground": "#839496",
+      "blue": "#268BD2",
+      "green": "#859900",
+      "magenta": "#D33682",
+      "orange": "#CB4B16",
+      "purple": "#6C71C4",
+      "red": "#DC322F",
+      "yellow": "#B58900",
+      "cyan": "#2AA198"
+    }
+}

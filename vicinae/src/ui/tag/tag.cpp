@@ -30,7 +30,7 @@ void TagWidget::paintEvent(QPaintEvent *event) {
 }
 
 void TagWidget::setColor(const std::optional<ColorLike> &color) {
-  m_text->setColor(color.value_or(SemanticColor::TextPrimary));
+  m_text->setColor(color.value_or(SemanticColor::Foreground));
   m_color = color;
   update();
 }

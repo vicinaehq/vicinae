@@ -36,7 +36,7 @@ bool AppRootItem::isActive() const {
 }
 
 AccessoryList AppRootItem::accessories() const {
-  return {{.text = "Application", .color = SemanticColor::TextSecondary}};
+  return {{.text = "Application", .color = SemanticColor::TextMuted}};
 }
 
 QString AppRootItem::uniqueId() const { return QString("apps.%1").arg(m_app->id()); }

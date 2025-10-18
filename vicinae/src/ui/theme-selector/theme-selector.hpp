@@ -1,25 +1,27 @@
 #pragma once
-#include "../image/url.hpp"
-#include "theme.hpp"
+#include "ui/image/url.hpp"
+#include "theme/theme-file.hpp"
 #include "ui/form/selector-input.hpp"
 
 class ThemeSelectorItem : public SelectorInput::AbstractItem {
-  ThemeInfo m_theme;
 
-  QString displayName() const override { return m_theme.name; }
+public:
+  const ThemeFile &theme() const { return *m_theme; }
+  ThemeSelectorItem(const std::shared_ptr<ThemeFile> &theme) : m_theme(theme) {}
 
-  QString generateId() const override { return m_theme.id; }
+private:
+  QString displayName() const override { return m_theme->name(); }
+
+  QString generateId() const override { return m_theme->id(); }
 
   std::optional<ImageURL> icon() const override {
-    if (m_theme.icon) return ImageURL::local(*m_theme.icon);
+    if (m_theme->icon()) return ImageURL::local(*m_theme->icon());
     return ImageURL::builtin("vicinae");
   }
 
   AbstractItem *clone() const override { return new ThemeSelectorItem(*this); }
 
-public:
-  const ThemeInfo &theme() const { return m_theme; }
-  ThemeSelectorItem(const ThemeInfo &theme) : m_theme(theme) {}
+  std::shared_ptr<ThemeFile> m_theme;
 };
 
 class ThemeSelector : public SelectorInput {

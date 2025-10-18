@@ -1,15 +1,16 @@
 #include "ui/selectable-omni-list-widget/selectable-omni-list-widget.hpp"
 #include "theme.hpp"
+#include "theme/colors.hpp"
 #include "ui/omni-list/omni-list-item-widget.hpp"
+#include "ui/omni-painter/omni-painter.hpp"
 #include <qevent.h>
 #include <qnamespace.h>
 
 void SelectableOmniListWidget::paintEvent(QPaintEvent *event) {
-  QPainter painter(this);
+  OmniPainter painter(this);
 
   if (isSelected || isHovered) {
     int borderRadius = 10;
-    QPainter painter(this);
 
     painter.setRenderHint(QPainter::Antialiasing, true);
 
@@ -21,11 +22,10 @@ void SelectableOmniListWidget::paintEvent(QPaintEvent *event) {
     auto &theme = ThemeService::instance().theme();
 
     // selection should always take precedence
-    QColor backgroundColor(isSelected ? theme.colors.mainSelectedBackground
-                                      : theme.colors.mainHoveredBackground);
 
-    backgroundColor.setAlphaF(0.8);
-    painter.fillPath(path, backgroundColor);
+    painter.setThemeBrush(isSelected ? selectedColor() : hoverColor());
+    painter.setPen(Qt::NoPen);
+    painter.drawPath(path);
   }
 }
 

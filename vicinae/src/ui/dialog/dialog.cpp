@@ -10,7 +10,7 @@ DialogContentWidget::DialogContentWidget(QWidget *parent) : QWidget(parent) {}
 
 void DialogWidget::paintEvent(QPaintEvent *event) {
   OmniPainter painter(this);
-  QColor finalColor = painter.resolveColor(SemanticColor::MainBackground);
+  QColor finalColor = painter.resolveColor(SemanticColor::Background);
   auto config = ServiceRegistry::instance()->config()->value();
 
   finalColor.setAlphaF(0.5);

@@ -15,7 +15,7 @@ void SettingsWindow::paintEvent(QPaintEvent *event) {
   auto &config = ServiceRegistry::instance()->config()->value();
   auto &theme = ThemeService::instance().theme();
   OmniPainter painter(this);
-  QColor finalBgColor = painter.resolveColor(SemanticColor::MainBackground);
+  QColor finalBgColor = painter.resolveColor(SemanticColor::Background);
 
   finalBgColor.setAlphaF(config.window.opacity);
   painter.setRenderHint(QPainter::Antialiasing);
@@ -23,7 +23,7 @@ void SettingsWindow::paintEvent(QPaintEvent *event) {
   path.addRoundedRect(rect(), config.window.rounding, config.window.rounding);
   painter.setClipPath(path);
   painter.fillPath(path, finalBgColor);
-  painter.setThemePen(SemanticColor::Border, Omnicast::WINDOW_BORDER_WIDTH);
+  painter.setThemePen(SemanticColor::BackgroundBorder, Omnicast::WINDOW_BORDER_WIDTH);
   painter.drawPath(path);
 }
 

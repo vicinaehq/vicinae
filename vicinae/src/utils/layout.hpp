@@ -110,7 +110,7 @@ public:
   }
 
   Text &secondary() {
-    color(SemanticColor::TextSecondary);
+    color(SemanticColor::TextMuted);
     return *this;
   }
 
@@ -160,7 +160,7 @@ class Button : public WidgetBuilder<ButtonWidget> {
   std::function<void(void)> m_onClick;
   QString m_text;
   std::optional<ImageURL> m_leftIcon;
-  ColorLike m_color = SemanticColor::TextPrimary;
+  ColorLike m_color = SemanticColor::Foreground;
   bool m_disabled = false;
 
 public:
@@ -305,12 +305,12 @@ public:
 
   Stack &add(QWidget *widget, int stretch = 0, Qt::Alignment align = {});
   Stack &addSpacer(int space);
-  Stack &addText(const QString &text, SemanticColor color = SemanticColor::TextPrimary,
+  Stack &addText(const QString &text, SemanticColor color = SemanticColor::Foreground,
                  TextSize size = TextSize::TextRegular, Qt::Alignment align = {});
-  Stack &addTitle(const QString &title, SemanticColor color = SemanticColor::TextPrimary,
+  Stack &addTitle(const QString &title, SemanticColor color = SemanticColor::Foreground,
                   Qt::Alignment align = {});
   Stack &addIcon(const ImageURL &url, QSize size = {20, 20}, Qt::Alignment align = {});
-  Stack &addParagraph(const QString &text, SemanticColor color = SemanticColor::TextPrimary,
+  Stack &addParagraph(const QString &text, SemanticColor color = SemanticColor::Foreground,
                       TextSize size = TextSize::TextRegular, Qt::Alignment align = {});
 
   Stack &wrapped() {

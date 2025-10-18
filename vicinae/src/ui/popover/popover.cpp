@@ -1,5 +1,6 @@
 #include "ui/popover/popover.hpp"
 #include "theme.hpp"
+#include "theme/colors.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
 #include <qevent.h>
 #include <qnamespace.h>
@@ -8,21 +9,16 @@
 #include <qpixmap.h>
 
 void Popover::paintEvent(QPaintEvent *event) {
-  auto &theme = ThemeService::instance().theme();
-  int borderRadius = 10;
   OmniPainter painter(this);
+  int borderRadius = 10;
   QPainterPath path;
-  QPen pen(theme.colors.border, 3);
 
   painter.setRenderHint(QPainter::Antialiasing, true);
   path.addRoundedRect(rect(), borderRadius, borderRadius);
-
   painter.setClipPath(path);
-
-  QColor finalColor = painter.resolveColor(SemanticColor::SecondaryBackground);
-
-  finalColor.setAlphaF(0.98);
-  painter.setPen(pen);
+  QColor finalColor = painter.resolveColor(SemanticColor::PopoverBackground);
+  // finalColor.setAlphaF(0.98);
+  painter.setThemePen(SemanticColor::PopoverBorder, 3);
   painter.fillPath(path, finalColor);
   painter.drawPath(path);
 }
@@ -31,5 +27,3 @@ Popover::Popover(QWidget *parent) : QWidget(parent) {
   setWindowFlags(Qt::FramelessWindowHint);
   setAttribute(Qt::WA_TranslucentBackground);
 }
-
-void Popover::resizeEvent(QResizeEvent *event) { QWidget::resizeEvent(event); }

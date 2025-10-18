@@ -19,6 +19,7 @@
 #include "ui/search-bar/search-bar.hpp"
 
 void GlobalHeader::setupUI() {
+  setAttribute(Qt::WA_TranslucentBackground);
   m_input = new SearchBar(this);
   m_backButton = new IconButton;
   m_accessoryContainer = new QStackedWidget(this);
@@ -27,7 +28,6 @@ void GlobalHeader::setupUI() {
 
   m_backButton->setFixedSize(25, 25);
   m_backButton->setFocusPolicy(Qt::NoFocus);
-  m_backButton->setBackgroundColor(SemanticColor::MainSelectedBackground);
   m_backButton->setUrl(ImageURL::builtin("arrow-left"));
   m_backButtonSpacer->setFixedWidth(10);
   m_backButtonSpacer->hide();

@@ -1,4 +1,5 @@
 #include "cli.hpp"
+#include "cli/theme.hpp"
 #include "daemon/ipc-client.hpp"
 #include "utils.hpp"
 #include "lib/CLI11.hpp"
@@ -6,7 +7,9 @@
 #include "vicinae.hpp"
 #include "server.hpp"
 #include <iostream>
+#include <qdir.h>
 #include <qobjectdefs.h>
+#include <stdexcept>
 
 class CliPing : public AbstractCommandLineCommand {
   std::string id() const override { return "ping"; }
@@ -70,6 +73,7 @@ private:
 class VersionCommand : public AbstractCommandLineCommand {
   std::string id() const override { return "version"; }
   std::string description() const override { return "Show version and build information"; }
+  void setup(CLI::App *app) override { app->alias("ver"); }
 
   void run(CLI::App *app) override {
     std::cout << "Version " << VICINAE_GIT_TAG << " (commit " << VICINAE_GIT_COMMIT_HASH << ")\n"
@@ -84,13 +88,16 @@ public:
   std::string description() const override { return "Open a deeplink"; }
 
   void setup(CLI::App *app) override {
+    app->alias("link");
     app->add_option("link", link, "The deeplink to open (see https://docs.vicinae.com/deeplinks)")
         ->required();
   }
 
   void run(CLI::App *app) override {
     DaemonIpcClient client;
-    client.sendDeeplink(QString(link.c_str()));
+    if (auto res = client.deeplink(QString(link.c_str())); !res) {
+      throw std::runtime_error("Failed: " + res.error().toStdString());
+    }
   }
 
 private:
@@ -107,6 +114,7 @@ int CommandLineInterface::execute(int ac, char **av) {
   app.registerCommand<ToggleCommand>();
   app.registerCommand<DeeplinkCommand>();
   app.registerCommand<DMenuCommand>();
+  app.registerCommand<ThemeCommand>();
 
   return app.run(ac, av);
 }

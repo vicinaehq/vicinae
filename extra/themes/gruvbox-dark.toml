@@ -1,0 +1,31 @@
+# Gruvbox Dark - Retro Groove
+# Designed as a bright theme with pastel 'retro groove' colors
+
+[meta]
+version = 1
+name = "Gruvbox Dark"
+description = "Designed as a bright theme with pastel 'retro groove' colors"
+variant = "dark"
+icon = "icons/gruvbox.png"
+
+[colors.core]
+background = "#282828"        # bg0_h (hard contrast bg)
+foreground = "#EBDBB2"        # fg1
+secondary_background = "#1D2021"  # bg0_h (darker bg for surfaces)
+border = "#504945"            # bg2 (subtle border)
+accent = "#458588"            # blue (neutral)
+
+[colors.accents]
+blue = "#458588"              # blue (neutral)
+green = "#98971A"             # green (neutral)
+magenta = "#D3869B"           # purple (bright)
+orange = "#D65D0E"            # orange (neutral)
+purple = "#B16286"            # purple (neutral)
+red = "#CC241D"               # red (neutral)
+yellow = "#D79921"            # yellow (neutral)
+cyan = "#83A598"              # aqua (bright)
+
+[colors.list.item.selection]
+background = "#504945"        # bg2
+secondary_background = "#665C54"  # bg3
+

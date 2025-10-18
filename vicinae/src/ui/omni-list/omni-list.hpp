@@ -1,6 +1,7 @@
 #pragma once
 #include "common.hpp"
 #include "../image/url.hpp"
+#include "theme/colors.hpp"
 #include "ui/omni-list/omni-list-item-widget.hpp"
 #include "ui/omni-list/omni-list-item-widget-wrapper.hpp"
 #include "ui/default-list-item-widget/default-list-item-widget.hpp"
@@ -480,6 +481,7 @@ public:
     AccessoryList accessories;
     QString alias;
     bool active = false;
+    bool secondaryBackground = false;
   };
   virtual ItemData data() const = 0;
 
@@ -491,6 +493,11 @@ public:
   void refresh(QWidget *w) const override {
     auto widget = static_cast<DefaultListItemWidget *>(w);
     auto itemData = data();
+
+    if (itemData.secondaryBackground) {
+      widget->setSelectedColor(SemanticColor::ListItemSecondarySelectionBackground);
+      widget->setHoverColor(SemanticColor::ListItemSecondaryHoverBackground);
+    }
 
     widget->setName(itemData.name);
     widget->setSubtitle(itemData.subtitle);

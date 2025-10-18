@@ -1,5 +1,6 @@
 #include "shortcut-button.hpp"
 #include "theme.hpp"
+#include "theme/colors.hpp"
 #include "ui/button-base/button-base.hpp"
 #include "ui/keyboard-shortcut-indicator/keyboard-shortcut-indicator.hpp"
 #include "ui/typography/typography.hpp"
@@ -8,21 +9,18 @@
 #include <qnamespace.h>
 
 void ShortcutButton::hoverChanged(bool hovered) {
-  auto &theme = ThemeService::instance().theme();
+  _shortcut_indicator->setBackgroundColor(SemanticColor::ListItemSelectionBackground);
+  setBackgroundColor(hovered ? ColorLike(SemanticColor::ButtonPrimaryHoverBackground) : Qt::transparent);
 
-  _shortcut_indicator->setBackgroundColor(hovered ? SemanticColor::SecondaryBackground
-                                                  : SemanticColor::ButtonSecondary);
-  setBackgroundColor(hovered ? theme.resolveTint(SemanticColor::ButtonSecondaryHover) : Qt::transparent);
   update();
 }
 
 void ShortcutButton::resetColor() {
-  auto &theme = ThemeService::instance().theme();
-
-  _shortcut_indicator->setBackgroundColor(underMouse() ? SemanticColor::SecondaryBackground
-                                                       : SemanticColor::ButtonSecondary);
-  setBackgroundColor(underMouse() ? theme.resolveTint(SemanticColor::ButtonSecondaryHover) : Qt::transparent);
-  setTextColor(theme.colors.text);
+  setBackgroundColor(Qt::transparent);
+  setHoverBackgroundColor(SemanticColor::ButtonPrimaryHoverBackground);
+  _shortcut_indicator->setColor(SemanticColor::ButtonPrimaryForeground);
+  _shortcut_indicator->setBackgroundColor(SemanticColor::ListItemSelectionBackground);
+  update();
 }
 
 void ShortcutButton::setText(const QString &text) {
@@ -50,6 +48,7 @@ ShortcutButton::ShortcutButton()
   auto layout = new QHBoxLayout;
 
   setFocusPolicy(Qt::NoFocus);
+  setColor(ButtonColor::Transparent);
   _shortcut_indicator->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   layout->setAlignment(Qt::AlignVCenter);
   layout->addWidget(_label, 0, Qt::AlignLeft);

@@ -37,7 +37,7 @@ public:
   RaycastStoreExtensionItemWidget(QWidget *parent = nullptr) : SelectableOmniListWidget(parent) {
     m_downloadCount->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     m_author->setFixedSize(20, 20);
-    m_description->setColor(ColorTint::TextSecondary);
+    m_description->setColor(ColorTint::TextMuted);
     m_textLayout->addWidget(m_title);
     m_textLayout->setContentsMargins(0, 0, 0, 0);
     m_textLayout->setSpacing(2);

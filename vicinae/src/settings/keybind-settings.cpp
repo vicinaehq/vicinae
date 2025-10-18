@@ -76,14 +76,14 @@ protected:
       m_opacityEffect->setOpacity(underMouse() ? 0.8 : 1);
       painter.setRenderHint(QPainter::RenderHint::Antialiasing);
       painter.setBrush(Qt::NoBrush);
-      painter.setThemePen(hasFocus() ? SemanticColor::InputBorderFocus : SemanticColor::Border, 3);
+      painter.setThemePen(hasFocus() ? SemanticColor::InputBorderFocus : SemanticColor::BackgroundBorder, 3);
       path.addRoundedRect(rect(), 6, 6);
       painter.setClipPath(path);
       painter.drawPath(path);
 
       if (!m_indicator->isVisible()) {
         QRect contentRect = rect().marginsRemoved(layout()->contentsMargins());
-        painter.setThemePen(SemanticColor::TextSecondary);
+        painter.setThemePen(SemanticColor::TextMuted);
         painter.drawText(contentRect, Qt::AlignLeft | Qt::AlignVCenter, "Record shortcut");
       }
     }
@@ -200,7 +200,7 @@ void KeybindSettingsView::setupUI() {
   m_currentDescription->setWordWrap(true);
 
   m_tree->setColumns({"Name", "Shortcut"});
-  m_tree->setAlternateBackgroundColor(SemanticColor::MainHoverBackground);
+  m_tree->setAlternateBackgroundColor(SemanticColor::ListItemHoverBackground);
   m_input->setRightIcon(ImageURL::builtin("magnifying-glass"));
   m_input->installEventFilter(this);
   m_input->setPlaceholderText("Search for keybinds...");

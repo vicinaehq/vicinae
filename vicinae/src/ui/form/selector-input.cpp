@@ -1,6 +1,7 @@
 #include "ui/form/selector-input.hpp"
 #include "common.hpp"
 #include "../image/url.hpp"
+#include "theme.hpp"
 #include "ui/focus-notifier.hpp"
 #include "ui/image/image.hpp"
 #include <memory>
@@ -9,6 +10,25 @@
 #include <qlogging.h>
 #include <qnamespace.h>
 #include <qwidget.h>
+
+void SelectorInput::updateModel() {
+  m_list->updateModel([&]() {
+    for (const auto &section : m_sections) {
+      auto &sec = m_list->addSection(section.title);
+
+      for (const auto &item : section.items) {
+        sec.addItem(item);
+      }
+    }
+  });
+}
+
+void SelectorInput::addSection(const QString &title,
+                               const std::vector<std::shared_ptr<AbstractItem>> &items) {
+  m_sections.emplace_back(DropdownSection(title, items));
+}
+
+void SelectorInput::resetModel() { m_sections.clear(); }
 
 void SelectorInput::listHeightChanged(int height) {
 
@@ -135,7 +155,7 @@ SelectorInput::SelectorInput(QWidget *parent)
 
   emptyTypography->setContentsMargins(10, 10, 10, 10);
   emptyTypography->setText("No results");
-  emptyTypography->setColor(SemanticColor::TextPrimary);
+  emptyTypography->setColor(SemanticColor::Foreground);
   emptyTypography->setAlignment(Qt::AlignCenter);
   emptyLayout->addWidget(emptyTypography);
   m_emptyView->setLayout(emptyLayout);
@@ -152,6 +172,10 @@ SelectorInput::SelectorInput(QWidget *parent)
   connect(m_list, &OmniList::itemActivated, this, &SelectorInput::itemActivated);
   connect(m_list, &OmniList::itemUpdated, this, &SelectorInput::itemUpdated);
   connect(m_list, &OmniList::virtualHeightChanged, this, &SelectorInput::listHeightChanged);
+  connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() {
+    style()->unpolish(this);
+    style()->polish(this);
+  });
 
   setLayout(layout);
 }

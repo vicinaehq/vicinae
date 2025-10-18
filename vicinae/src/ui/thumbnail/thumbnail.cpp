@@ -13,8 +13,8 @@ void Thumbnail::paintEvent(QPaintEvent *event) {
 
   painter.setRenderHint(QPainter::Antialiasing);
 
-  painter.setThemePen(SemanticColor::Border);
-  painter.setThemeBrush(SemanticColor::MainHoverBackground);
+  painter.setThemePen(SemanticColor::BackgroundBorder);
+  painter.setThemeBrush(SemanticColor::ListItemHoverBackground);
   painter.drawRoundedRect(rect(), m_borderRadius, m_borderRadius);
 
   m_opacityEffect->setOpacity(underMouse() && m_clickable ? 0.8 : 1);
@@ -26,7 +26,7 @@ void Thumbnail::setupUI() {
   auto layout = new QVBoxLayout;
 
   m_placeholder->setFixedSize(25, 25);
-  m_placeholder->setUrl(ImageURL::builtin("image").setFill(SemanticColor::TextSecondary));
+  m_placeholder->setUrl(ImageURL::builtin("image").setFill(SemanticColor::TextMuted));
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(m_placeholder, 0, Qt::AlignCenter);
 

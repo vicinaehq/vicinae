@@ -1,0 +1,33 @@
+# Rosé Pine Dawn - Light Variant
+# All natural pine, faux fur and a bit of soho vibes for the classy minimalist
+
+[meta]
+version = 1
+name = "Rosé Pine Dawn"
+description = "All natural pine, faux fur and a bit of soho vibes for the classy minimalist"
+variant = "light"
+icon = "icons/rose-pine.png"
+
+[colors.core]
+background = "#FAF4ED"        # base
+foreground = "#575279"        # text
+secondary_background = "#FFFAF3"  # surface
+border = "#CECACD"            # highlight_high (more visible)
+accent = "#286983"            # pine
+
+[colors.accents]
+blue = "#286983"              # pine
+green = "#56949F"             # foam
+magenta = "#907AA9"           # iris
+orange = "#D7827E"            # rose
+purple = "#907AA9"            # iris
+red = "#B4637A"               # love
+yellow = "#EA9D34"            # gold
+cyan = "#56949F"              # foam
+
+[colors.list.item.selection]
+background = "#DFDAD9"        # highlight_med (darker/stronger on main bg)
+secondary_background = "#F2E9E1"  # overlay (lighter/subtle on lighter surface)
+
+[colors.list.item.hover]
+background = "#F2E9E1"        # overlay (subtle hover)

@@ -20,6 +20,7 @@ class TextFileViewer : public QWidget {
 public:
   void load(const std::filesystem::path &path);
   void load(const QByteArray &data);
+  void updateStyle();
 
   TextFileViewer();
 };

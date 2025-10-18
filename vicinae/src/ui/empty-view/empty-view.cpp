@@ -11,7 +11,7 @@ void EmptyViewWidget::setupUi() {
 
   m_title = new TypographyWidget(this);
   m_description = new TypographyWidget(this);
-  m_description->setColor(SemanticColor::TextSecondary);
+  m_description->setColor(SemanticColor::TextMuted);
   m_description->setWordWrap(true);
   m_icon->setFixedSize(48, 48);
 

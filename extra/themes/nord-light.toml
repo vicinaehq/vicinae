@@ -1,0 +1,34 @@
+# Nord Light - Arctic Light
+# Arctic, north-bluish clean and elegant theme
+
+[meta]
+version = 1
+name = "Nord Light"
+description = "Arctic, north-bluish clean and elegant theme"
+variant = "light"
+icon = "icons/nord.svg"
+
+[colors.core]
+background = "#ECEFF4"        # nord6 (Snow Storm)
+foreground = "#2E3440"        # nord0 (Polar Night for text)
+secondary_background = "#E5E9F0"  # nord5 (slightly darker surface)
+border = "#C4CDD8"            # Between nord3 and nord4 (more visible)
+accent = "#5E81AC"            # nord10 (darker blue for light theme)
+
+[colors.accents]
+blue = "#5E81AC"              # nord10 (darker for contrast)
+green = "#A3BE8C"             # nord14
+magenta = "#B48EAD"           # nord15
+orange = "#D08770"            # nord12
+purple = "#B48EAD"            # nord15
+red = "#BF616A"               # nord11
+yellow = "#EBCB8B"            # nord13
+cyan = "#88C0D0"              # nord8
+
+[colors.list.item.selection]
+background = "#D8DEE9"        # nord4 (noticeable on main bg)
+secondary_background = "#CCD1DA"  # Between nord4 and nord5 (better contrast)
+
+[colors.list.item.hover]
+background = "#E5E9F0"        # nord5 (lighter than selection)
+

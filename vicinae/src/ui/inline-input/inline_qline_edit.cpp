@@ -1,16 +1,21 @@
 #include "ui/inline-input/inline_qline_edit.hpp"
+#include "template-engine/template-engine.hpp"
 #include "theme.hpp"
-#include "ui/omni-painter/omni-painter.hpp"
+#include "theme/colors.hpp"
 #include <QLineEdit>
+#include <QStyle>
 #include <qpainter.h>
 #include <qpainterpath.h>
+#include "theme/theme-file.hpp"
 
 InlineQLineEdit::InlineQLineEdit(const QString &placeholder, QWidget *parent) : QLineEdit(parent) {
-  connect(this, &QLineEdit::textChanged, this, &InlineQLineEdit::handleTextChanged);
-
   setPlaceholderText(placeholder);
   resizeFromText(placeholder + "...");
   setTextMargins(5, 5, 0, 5);
+  setProperty("arg-form-input", true);
+  updateStyle();
+  connect(this, &QLineEdit::textChanged, this, &InlineQLineEdit::handleTextChanged);
+  connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() { updateStyle(); });
 }
 
 void InlineQLineEdit::resizeFromText(const QString &s) {
@@ -29,28 +34,39 @@ void InlineQLineEdit::clearError() { setError(""); }
 
 void InlineQLineEdit::setError(const QString &error) {
   m_error = error;
+  setProperty("arg-form-input", error.isEmpty());
+  setProperty("error", !error.isEmpty());
+  style()->unpolish(this);
+  style()->polish(this);
   update();
 }
 
-void InlineQLineEdit::paintEvent(QPaintEvent *event) {
+void InlineQLineEdit::updateStyle() {
+  TemplateEngine engine;
+  auto &themeService = ThemeService::instance();
   auto &theme = ThemeService::instance().theme();
-  int borderRadius = 5;
-  ColorLike borderColor = m_error.isEmpty() ? theme.colors.statusBackgroundBorder : theme.colors.red;
-  OmniPainter painter(this);
-  QBrush borderBrush = painter.colorBrush(borderColor);
 
-  painter.setRenderHint(QPainter::Antialiasing, true);
+  engine.setVar("FONT_SIZE", QString::number(themeService.pointSize(TextSize::TextRegular)));
+  engine.setVar("INPUT_BORDER_COLOR", theme.resolveAsString(SemanticColor::InputBorder));
+  engine.setVar("INPUT_FOCUS_BORDER_COLOR", theme.resolveAsString(SemanticColor::InputBorderFocus));
+  engine.setVar("INPUT_BORDER_ERROR", theme.resolveAsString(SemanticColor::InputBorderError));
 
-  QPainterPath path;
-  path.addRoundedRect(rect(), borderRadius, borderRadius);
+  auto style = engine.build(R"(
+  		QLineEdit {
+			font-size: {FONT_SIZE}pt;
+			background-color: transparent;
+			border: 2px solid {INPUT_BORDER_COLOR};
+			border-radius: 5px;
+		}
 
-  painter.setClipPath(path);
+		QLineEdit[arg-form-input="true"]:focus {
+			border-color: {INPUT_FOCUS_BORDER_COLOR};
+		}
 
-  painter.fillPath(path, theme.colors.statusBackground);
+		QLineEdit[error="true"] {
+			border-color: {INPUT_BORDER_ERROR};
+		}
+	)");
 
-  QPen pen(borderBrush, 1);
-  painter.setPen(pen);
-  painter.drawPath(path);
-
-  QLineEdit::paintEvent(event);
+  setStyleSheet(style);
 }

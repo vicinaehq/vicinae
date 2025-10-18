@@ -116,7 +116,7 @@ private:
   void setupUI() {
     m_pinIcon->setUrl(ImageURL::builtin("pin").setFill(SemanticColor::Red));
     m_pinIcon->setFixedSize(16, 16);
-    m_description->setColor(SemanticColor::TextSecondary);
+    m_description->setColor(SemanticColor::TextMuted);
     m_description->setSize(TextSize::TextSmaller);
 
     auto layout = HStack().margins(5).spacing(10).add(m_icon).add(

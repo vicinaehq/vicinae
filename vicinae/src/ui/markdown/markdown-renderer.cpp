@@ -1,6 +1,7 @@
 #include "ui/markdown/markdown-renderer.hpp"
 #include "service-registry.hpp"
 #include "theme.hpp"
+#include "theme/colors.hpp"
 #include "ui/image/http-image-loader.hpp"
 #include "ui/image/image.hpp"
 #include "ui/image/local-image-loader.hpp"
@@ -125,7 +126,7 @@ void MarkdownRenderer::insertImage(cmark_node *node) {
 }
 
 void MarkdownRenderer::insertCodeBlock(cmark_node *node, bool isClosing) {
-  auto &theme = ThemeService::instance().theme();
+  OmniPainter painter;
   QTextFrameFormat format;
   QTextCharFormat fontFormat;
 
@@ -134,8 +135,8 @@ void MarkdownRenderer::insertCodeBlock(cmark_node *node, bool isClosing) {
 
   format.setBorder(2);
   format.setBorderStyle(QTextFrameFormat::BorderStyle_Solid);
-  format.setBorderBrush(theme.colors.statusBackgroundBorder);
-  format.setBackground(theme.colors.statusBackground);
+  format.setBorderBrush(painter.resolveColor(SemanticColor::SecondaryBackgroundBorder));
+  format.setBackground(painter.resolveColor(SemanticColor::SecondaryBackground));
   format.setPadding(10);
   format.setTopMargin(15);
   format.setBottomMargin(15);
@@ -230,7 +231,6 @@ void MarkdownRenderer::insertBlockParagraph(cmark_node *node) {
 }
 
 void MarkdownRenderer::insertSpan(cmark_node *node, QTextCharFormat &fmt) {
-  auto &theme = ThemeService::instance().theme();
   OmniPainter painter;
 
   switch (cmark_node_get_type(node)) {
@@ -244,8 +244,8 @@ void MarkdownRenderer::insertSpan(cmark_node *node, QTextCharFormat &fmt) {
     break;
   case CMARK_NODE_CODE:
     fmt.setFontFamilies({"monospace"});
-    fmt.setForeground(painter.colorBrush(theme.resolveTint(SemanticColor::Red)));
-    fmt.setBackground(painter.colorBrush(theme.colors.statusBackground));
+    fmt.setForeground(painter.colorBrush(SemanticColor::Red));
+    fmt.setBackground(painter.colorBrush(SemanticColor::SecondaryBackground));
     _cursor.insertText(cmark_node_get_literal(node), fmt);
     break;
   case CMARK_NODE_LINK:
@@ -271,14 +271,13 @@ void MarkdownRenderer::insertSpan(cmark_node *node, QTextCharFormat &fmt) {
 }
 
 void MarkdownRenderer::insertParagraph(cmark_node *node) {
-  auto &theme = ThemeService::instance().theme();
   OmniPainter painter;
   cmark_node *child = cmark_node_first_child(node);
   QTextCharFormat defaultFormat;
   size_t i = 0;
 
   defaultFormat.setFont(_document->defaultFont());
-  defaultFormat.setForeground(theme.resolveTint(SemanticColor::TextPrimary));
+  defaultFormat.setForeground(painter.resolveColor(SemanticColor::Foreground));
   defaultFormat.setFontPointSize(_basePointSize);
 
   while (child) {

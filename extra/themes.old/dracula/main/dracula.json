@@ -1,0 +1,19 @@
+ {
+    "version": "1.0.0",
+    "appearance": "dark",
+    "icon": "../icon.png",
+    "name": "Dracula",
+    "description": "The popular Dracula theme",
+    "palette": {
+      "background": "#282A36",
+      "foreground": "#F8F8F2",
+      "blue": "#8BE9FD",
+      "green": "#50FA7B",
+      "magenta": "#FF79C6",
+      "orange": "#FFB86C",
+      "purple": "#BD93F9",
+      "red": "#FF5555",
+      "yellow": "#F1FA8C",
+      "cyan": "#8BE9FD"
+    }
+}

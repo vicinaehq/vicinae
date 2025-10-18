@@ -197,10 +197,11 @@ public:
     if (!file.open(QIODevice::WriteOnly)) { return; }
 
     doc.setObject(obj);
+    m_watcher.blockSignals(true);
     file.write(doc.toJson());
-
     emit configChanged(value, m_config);
     m_config = value;
+    m_watcher.blockSignals(false);
   }
 
   ConfigService() {

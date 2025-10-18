@@ -35,7 +35,7 @@ public:
   }
 
   MetadataRowWidget(QWidget *parent = nullptr) : QWidget(parent) {
-    m_name->setColor(SemanticColor::TextSecondary);
+    m_name->setColor(SemanticColor::TextMuted);
     m_name->setFontWeight(QFont::Weight::DemiBold);
 
     m_layout->setContentsMargins(0, 0, 0, 0);

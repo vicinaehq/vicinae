@@ -1,6 +1,8 @@
 #include "grid-item-content-widget.hpp"
 #include "layout.hpp"
 #include "theme.hpp"
+#include "theme/colors.hpp"
+#include "ui/omni-painter/omni-painter.hpp"
 #include <absl/strings/internal/str_format/extension.h>
 #include <qnamespace.h>
 #include <qwidget.h>
@@ -13,17 +15,17 @@ void GridItemContentWidget::resizeEvent(QResizeEvent *event) {
 }
 
 void GridItemContentWidget::paintEvent(QPaintEvent *event) {
-  auto &theme = ThemeService::instance().theme();
   int borderRadius = 10;
-  QColor backgroundColor(theme.colors.mainHoveredBackground);
-  QPainter painter(this);
+  OmniPainter painter(this);
   QPainterPath path;
+  QColor backgroundColor = painter.resolveColor(SemanticColor::GridItemBackground);
 
   painter.setRenderHint(QPainter::Antialiasing, true);
 
   if (m_selected || underMouse()) {
-    QPen pen(m_selected ? theme.colors.text : theme.colors.subtext, borderWidth());
-    painter.setPen(pen);
+    painter.setThemePen(m_selected ? SemanticColor::GridItemSelectionOutline
+                                   : SemanticColor::GridItemHoverOutline,
+                        borderWidth());
     path.addRoundedRect(rect(), borderRadius, borderRadius);
     painter.setClipPath(path);
     painter.drawPath(path);

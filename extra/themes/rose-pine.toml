@@ -1,0 +1,34 @@
+# Rosé Pine - Natural Pine
+# All natural pine, faux fur and a bit of soho vibes for the classy minimalist
+
+[meta]
+version = 1
+name = "Rosé Pine"
+description = "All natural pine, faux fur and a bit of soho vibes for the classy minimalist"
+variant = "dark"
+icon = "icons/rose-pine.png"
+
+[colors.core]
+background = "#191724"        # base
+foreground = "#E0DEF4"        # text
+secondary_background = "#1F1D2E"  # surface
+border = "#26233A"            # overlay (subtle border)
+accent = "#31748F"            # pine
+
+[colors.accents]
+blue = "#31748F"              # pine
+green = "#9CCFD8"             # foam
+magenta = "#C4A7E7"           # iris
+orange = "#EBBCBA"            # rose
+purple = "#C4A7E7"            # iris
+red = "#EB6F92"               # love
+yellow = "#F6C177"            # gold
+cyan = "#9CCFD8"              # foam
+
+[colors.list.item.selection]
+background = "#26233A"        # overlay
+secondary_background = "#403D52"  # highlight_med
+
+[colors.list.item.hover]
+background = "#21202E"        # highlight_low with reduced opacity
+

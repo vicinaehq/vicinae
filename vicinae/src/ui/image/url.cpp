@@ -3,6 +3,7 @@
 #include "services/emoji-service/emoji.hpp"
 #include "theme.hpp"
 #include "ui/omni-painter/omni-painter.hpp"
+#include "theme/theme-file.hpp"
 #include <qdir.h>
 #include <qstringview.h>
 #include <QIcon>
@@ -30,8 +31,8 @@ ImageURL &ImageURL::setBackgroundTint(SemanticColor tint) {
 
 ImageURLType ImageURL::type() const { return _type; }
 const QString &ImageURL::name() const { return _name; }
-SemanticColor ImageURL::foregroundTint() const { return _fgTint; }
-SemanticColor ImageURL::backgroundTint() const { return _bgTint; }
+std::optional<SemanticColor> ImageURL::foregroundTint() const { return _fgTint; }
+std::optional<SemanticColor> ImageURL::backgroundTint() const { return _bgTint; }
 const std::optional<ColorLike> &ImageURL::fillColor() const { return _fillColor; }
 OmniPainter::ImageMaskType ImageURL::mask() const { return _mask; }
 
@@ -50,7 +51,7 @@ QUrl ImageURL::url() const {
   QUrlQuery query;
 
   if (_fallback) query.addQueryItem("fallback", *_fallback);
-  if (_bgTint != InvalidTint) query.addQueryItem("bg_tint", nameForTint(_bgTint));
+  if (_bgTint) query.addQueryItem("bg_tint", nameForTint(*_bgTint));
   if (_fillColor) { query.addQueryItem("fill", OmniPainter::serializeColor(_fillColor.value())); }
 
   for (const auto &[k, v] : m_params) {
@@ -80,7 +81,7 @@ bool ImageURL::operator==(const ImageURL &rhs) const { return toString() == rhs.
 
 ImageURL::ImageURL(const QString &s) noexcept { *this = std::move(QUrl(s)); }
 
-ImageURL::ImageURL() : _bgTint(InvalidTint), _fgTint(InvalidTint) {}
+ImageURL::ImageURL() {}
 
 ImageURL::ImageURL(const proto::ext::ui::Image &image) {
   using Source = proto::ext::ui::ImageSource;
@@ -127,7 +128,7 @@ ImageURL::ImageURL(const proto::ext::ui::Image &image) {
   *this = ImageLikeModel(model);
 }
 
-ImageURL::ImageURL(const QUrl &url) : _bgTint(InvalidTint), _fgTint(InvalidTint), _mask(OmniPainter::NoMask) {
+ImageURL::ImageURL(const QUrl &url) : _mask(OmniPainter::NoMask) {
   if (url.scheme() != "icon") { return; }
 
   _type = typeForName(url.host());
@@ -156,12 +157,11 @@ ImageURL::ImageURL(const QUrl &url) : _bgTint(InvalidTint), _fgTint(InvalidTint)
   _isValid = true;
 }
 
-ImageURL::ImageURL(const ImageLikeModel &imageLike)
-    : _bgTint(InvalidTint), _fgTint(InvalidTint), _mask(OmniPainter::NoMask) {
+ImageURL::ImageURL(const ImageLikeModel &imageLike) : _mask(OmniPainter::NoMask) {
   if (auto image = std::get_if<ExtensionImageModel>(&imageLike)) {
     struct {
       QString operator()(const ThemedIconSource &icon) {
-        if (ThemeService::instance().theme().appearance == "light") { return icon.light; }
+        if (ThemeService::instance().theme().isLight()) { return icon.light; }
         return icon.dark;
       }
       QString operator()(const QString &icon) { return icon; }
@@ -206,7 +206,7 @@ ImageURL::ImageURL(const ImageLikeModel &imageLike)
 
     if (QFile(":icons/" + source + ".svg").exists()) {
       setType(ImageURLType::Builtin);
-      setFill(image->tintColor.value_or(SemanticColor::TextPrimary));
+      setFill(image->tintColor.value_or(SemanticColor::Foreground));
       setName(source);
       return;
     }
@@ -236,7 +236,7 @@ ImageURL ImageURL::builtin(const QString &name) {
 
   url.setType(ImageURLType::Builtin);
   url.setName(name);
-  url.setFill(SemanticColor::TextPrimary);
+  url.setFill(SemanticColor::Foreground);
 
   return url;
 }

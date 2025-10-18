@@ -2,9 +2,9 @@
 #include "common.hpp"
 #include "services/file-chooser/abstract-file-chooser.hpp"
 #include "theme.hpp"
+#include "theme/colors.hpp"
 #include "ui/file-picker/file-picker-default-item-delegate.hpp"
 #include "ui/button/button.hpp"
-#include <cstdio>
 #include <filesystem>
 #include <qboxlayout.h>
 #include <qcontainerfwd.h>
@@ -93,11 +93,10 @@ void FilePicker::addFile(const std::filesystem::path &path) {
 
 void FilePicker::setupUI() {
   auto layout = new QVBoxLayout;
-  auto &theme = ThemeService::instance().theme();
 
   setDelegate<DefaultFilePickerItemDelegate>();
-  m_button->setBackgroundColor(theme.colors.mainHoveredBackground);
-  m_button->setHoverBackgroundColor(theme.colors.mainSelectedBackground);
+  m_button->setBackgroundColor(SemanticColor::ListItemHoverBackground);
+  m_button->setHoverBackgroundColor(SemanticColor::ListItemSelectionBackground);
   m_button->setText("Pick a file");
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(m_button);

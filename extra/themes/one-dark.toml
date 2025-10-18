@@ -1,0 +1,33 @@
+# One Dark - Atom's Iconic Theme
+# The iconic dark theme from Atom editor, loved by millions
+
+[meta]
+version = 1
+name = "One Dark"
+description = "The iconic dark theme from Atom editor"
+variant = "dark"
+icon = "icons/one-dark.png"
+
+[colors.core]
+background = "#282C34"        # Main background
+foreground = "#ABB2BF"        # Main text
+secondary_background = "#21252B"  # Sidebar/panel background
+border = "#434957"            # Borders
+accent = "#61AFEF"            # Blue accent
+
+[colors.accents]
+blue = "#61AFEF"
+green = "#98C379"
+magenta = "#C678DD"
+orange = "#D19A66"
+purple = "#C678DD"
+red = "#E06C75"
+yellow = "#E5C07B"
+cyan = "#56B6C2"
+
+[colors.list.item.selection]
+background = "#2C313C"        # Slightly lighter than background
+secondary_background = "#3E4451"  # More visible on secondary bg
+
+[colors.list.item.hover]
+background = "#2C313A"        # Subtle hover
