@@ -135,6 +135,8 @@ QColor ThemeFile::deriveSemantic(SemanticColor color) const {
     return withAlphaF(resolve(SemanticColor::ButtonPrimaryBackground), 0.7);
   case ButtonPrimaryHoverForeground:
     return resolve(SemanticColor::ButtonPrimaryBackground);
+  case SemanticColor::ButtonPrimaryFocusOutline:
+    return resolve(SemanticColor::Accent);
 
   case SemanticColor::ScrollBarBackground:
     return resolve(SemanticColor::ListItemSelectionBackground);

@@ -92,7 +92,7 @@ void ButtonBase::paintEvent(QPaintEvent *event) {
   painter.setClipPath(path);
 
   if (m_focused) {
-    painter.setThemePen(SemanticColor::Accent);
+    painter.setThemePen(SemanticColor::ButtonPrimaryFocusOutline, 3);
   } else {
     painter.setPen(Qt::NoPen);
   }

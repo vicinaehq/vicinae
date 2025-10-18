@@ -109,10 +109,8 @@ border_error = "#b9543b"
 [colors.button.primary]
 background = "#2e2e2e"
 foreground = "#e8e6e1"
-
-[colors.button.primary.hover]
-background = "#2e2e2e"
-foreground = "#2e2e2e"
+hover = { background = "#bb2e2e2e" }
+focus = { outline = "colors.core.accent" }
 
 # ============================================================================
 # Lists

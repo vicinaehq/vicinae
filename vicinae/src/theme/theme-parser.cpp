@@ -46,6 +46,7 @@ static const std::vector<std::pair<std::string, SemanticColor>> recognizedKeys =
     {"button.primary.foreground", SemanticColor::ButtonPrimaryForeground},
     {"button.primary.hover.background", SemanticColor::ButtonPrimaryHoverBackground},
     {"button.primary.hover.foreground", SemanticColor::ButtonPrimaryHoverForeground},
+    {"button.primary.focus.outline", SemanticColor::ButtonPrimaryFocusOutline},
 
     {"list.item.hover.background", SemanticColor::ListItemHoverBackground},
     {"list.item.hover.foreground", SemanticColor::ListItemHoverForegroud},

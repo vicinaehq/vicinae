@@ -34,6 +34,7 @@ enum SemanticColor {
   ButtonPrimaryForeground,
   ButtonPrimaryHoverBackground,
   ButtonPrimaryHoverForeground,
+  ButtonPrimaryFocusOutline,
 
   GridItemSelectionOutline,
   GridItemHoverOutline,
