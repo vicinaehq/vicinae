@@ -27,6 +27,6 @@ private:
   Keyboard::Shortcut m_shortcut;
   int _hspacing = 5;
   int _boxSize = 25;
-  ColorLike m_backgroundColor = SemanticColor::MainBackground;
-  ColorLike m_color = SemanticColor::TextPrimary;
+  ColorLike m_backgroundColor = SemanticColor::Background;
+  ColorLike m_color = SemanticColor::Foreground;
 };

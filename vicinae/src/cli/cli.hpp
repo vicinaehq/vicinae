@@ -10,10 +10,29 @@ public:
   virtual std::string id() const = 0;
   virtual std::string description() const { return std::string(); }
 
+  template <typename T> void registerCommand() { m_cmds.emplace_back(std::make_unique<T>()); }
+
+  void prepare(CLI::App *app) {
+    for (const auto &cmd : m_cmds) {
+      auto sub = app->add_subcommand(cmd->id(), cmd->description());
+      cmd->prepare(sub);
+      cmd->setup(sub);
+      sub->callback([cmd = cmd.get(), sub]() { cmd->run(sub); });
+    }
+
+    //.if (!m_cmds.empty()) { app->require_subcommand(); }
+  }
+
   virtual void setup(CLI::App *app) {}
-  virtual void run(CLI::App *app) = 0;
+
+  virtual void run(CLI::App *app) {
+    if (!m_cmds.empty() && app->get_subcommands().empty()) { std::cout << app->help() << std::endl; }
+  }
 
   virtual ~AbstractCommandLineCommand() = default;
+
+private:
+  std::vector<std::unique_ptr<AbstractCommandLineCommand>> m_cmds;
 };
 
 template <typename T>
@@ -30,6 +49,7 @@ public:
 
     for (const auto &cmd : m_cmds) {
       auto sub = app.add_subcommand(cmd->id(), cmd->description());
+      cmd->prepare(sub);
       cmd->setup(sub);
       sub->callback([cmd = cmd.get(), sub]() { cmd->run(sub); });
     }

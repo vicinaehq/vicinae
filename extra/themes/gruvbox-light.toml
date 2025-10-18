@@ -1,0 +1,34 @@
+# Gruvbox Light - Retro Groove Light
+# Designed as a bright theme with pastel 'retro groove' colors
+
+[meta]
+version = 1
+name = "Gruvbox Light"
+description = "Designed as a bright theme with pastel 'retro groove' colors"
+variant = "light"
+icon = "icons/gruvbox.png"
+
+[colors.core]
+background = "#FBF1C7"        # bg0_h (hard contrast bg)
+foreground = "#3C3836"        # fg1
+secondary_background = "#F9F5D7"  # bg0_s (soft bg for surfaces)
+border = "#A89984"            # bg3 (more visible)
+accent = "#458588"            # blue (neutral)
+
+[colors.accents]
+blue = "#458588"              # blue (neutral)
+green = "#98971A"             # green (neutral)
+magenta = "#B16286"           # purple (neutral)
+orange = "#D79921"            # orange (bright - also yellow)
+purple = "#B16286"            # purple (neutral)
+red = "#CC241D"               # red (neutral)
+yellow = "#D79921"            # yellow (neutral)
+cyan = "#689D6A"              # aqua (neutral)
+
+[colors.list.item.selection]
+background = "#EBDBB2"        # bg1 (darker/stronger on main bg)
+secondary_background = "#F5E8C6"  # Between bg0_h and bg0_s (lighter/subtle on lighter surface)
+
+[colors.list.item.hover]
+background = "#F2E5BC"        # Between bg0 and bg1 (lighter than selection)
+

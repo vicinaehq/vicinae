@@ -1,5 +1,6 @@
 #include "image.hpp"
 #include "theme.hpp"
+#include "theme/theme-file.hpp"
 #include "ui/image/data-uri-image-loader.hpp"
 #include "ui/image/favicon-image-loader.hpp"
 #include "ui/image/http-image-loader.hpp"
@@ -58,7 +59,7 @@ ImageWidget::~ImageWidget() {
 
 const ImageURL &ImageWidget::url() const { return m_source; }
 
-void ImageWidget::refreshTheme(const ThemeInfo &theme) { setUrlImpl(m_source); }
+void ImageWidget::refreshTheme(const ThemeFile &theme) { setUrlImpl(m_source); }
 
 void ImageWidget::setUrlImpl(const ImageURL &url) {
   auto &theme = ThemeService::instance().theme();
@@ -94,7 +95,7 @@ void ImageWidget::setUrlImpl(const ImageURL &url) {
     auto filename = path.filename().string();
     auto pos = filename.find('.');
     std::string suffixed;
-    std::string suffix = "@" + theme.appearance.toStdString();
+    std::string suffix = "@" + std::string(theme.variant() == ThemeVariant::Dark ? "dark" : "light");
 
     if (pos != std::string::npos) {
       suffixed = filename.substr(0, pos) + suffix + filename.substr(pos);

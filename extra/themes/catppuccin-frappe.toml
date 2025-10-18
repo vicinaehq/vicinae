@@ -1,0 +1,34 @@
+# Catppuccin Frappé - Muted Dark
+# A less vibrant alternative using subdued colors for a muted aesthetic
+
+[meta]
+version = 1
+name = "Catppuccin Frappé"
+description = "A less vibrant alternative using subdued colors for a muted aesthetic."
+variant = "dark"
+icon = "icons/catppuccin.png"
+
+[colors.core]
+background = "#303446"        # Base
+foreground = "#C6D0F5"        # Text
+secondary_background = "#292C3C"  # Mantle
+border = "#414559"            # Surface0
+accent = "#8CAAEE"            # Blue
+
+[colors.accents]
+blue = "#8CAAEE"
+green = "#A6D189"
+magenta = "#F4B8E4"
+orange = "#EF9F76"
+purple = "#CA9EE6"
+red = "#E78284"
+yellow = "#E5C890"
+cyan = "#81C8BE"
+
+[colors.list.item.selection]
+background = "#414559"        # Surface0
+secondary_background = "#51576D"  # Surface1
+
+[colors.list.item.hover]
+background = "#626880"        # Surface2 with reduced opacity
+

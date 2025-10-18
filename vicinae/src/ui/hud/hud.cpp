@@ -8,7 +8,7 @@
 void HudWidget::paintEvent(QPaintEvent *event) {
   OmniPainter painter(this);
   int radius = m_shouldDrawBorders ? (height() / 2) : 0;
-  auto color = painter.resolveColor(SemanticColor::MainBackground);
+  auto color = painter.resolveColor(SemanticColor::Background);
 
   color.setAlphaF(0.6);
   painter.setRenderHint(QPainter::Antialiasing);

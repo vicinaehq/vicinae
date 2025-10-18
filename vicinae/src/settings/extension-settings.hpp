@@ -6,6 +6,7 @@
 #include "service-registry.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "theme.hpp"
+#include "theme/colors.hpp"
 #include "ui/form/base-input.hpp"
 #include "ui/form/checkbox.hpp"
 #include "ui/image/image.hpp"
@@ -86,7 +87,7 @@ public:
   NonApplicableTextPlaceholder() {
     setText("--");
     setAlignment(Qt::AlignCenter);
-    setColor(SemanticColor::TextSecondary);
+    setColor(SemanticColor::TextMuted);
   }
 };
 
@@ -579,13 +580,13 @@ class ExtensionSettingsContextLeftPane : public QWidget {
     m_searchDebounce.setInterval(50);
     m_searchDebounce.setSingleShot(true);
     m_toolbar->input()->installEventFilter(this);
-    m_tree->setAlternateBackgroundColor(SemanticColor::MainHoverBackground);
+    m_tree->setAlternateBackgroundColor(SemanticColor::ListItemHoverBackground);
     populateTreeFromQuery("");
 
     VStack().add(m_toolbar).add(m_tree, 1).imbue(this);
 
-    connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this](const ThemeInfo &theme) {
-      m_tree->setAlternateBackgroundColor(theme.colors.mainHoveredBackground);
+    connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this](const ThemeFile &theme) {
+      m_tree->setAlternateBackgroundColor(theme.resolve(SemanticColor::ListItemHoverBackground));
     });
     connect(m_tree, &OmniTree::selectionUpdated, this, &ExtensionSettingsContextLeftPane::selectionUpdated);
     connect(manager, &RootItemManager::itemsChanged, this,

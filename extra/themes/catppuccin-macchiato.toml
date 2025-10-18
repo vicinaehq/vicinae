@@ -1,0 +1,34 @@
+# Catppuccin Macchiato - Medium Contrast
+# Medium contrast with gentle colors creating a soothing atmosphere
+
+[meta]
+version = 1
+name = "Catppuccin Macchiato"
+description = "Medium contrast with gentle colors creating a soothing atmosphere."
+variant = "dark"
+icon = "icons/catppuccin.png"
+
+[colors.core]
+background = "#24273A"        # Base
+foreground = "#CAD3F5"        # Text
+secondary_background = "#1E2030"  # Mantle
+border = "#363A4F"            # Surface0
+accent = "#8AADF4"            # Blue
+
+[colors.accents]
+blue = "#8AADF4"
+green = "#A6DA95"
+magenta = "#F5BDE6"
+orange = "#F5A97F"
+purple = "#C6A0F6"
+red = "#ED8796"
+yellow = "#EED49F"
+cyan = "#8BD5CA"
+
+[colors.list.item.selection]
+background = "#363A4F"        # Surface0
+secondary_background = "#494D64"  # Surface1
+
+[colors.list.item.hover]
+background = "#5B6078"        # Surface2 with reduced opacity
+

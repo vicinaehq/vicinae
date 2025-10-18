@@ -1,0 +1,33 @@
+# Ayu Dark - Modern Minimal Dark Theme
+# The darkest variant of the beautiful Ayu theme
+
+[meta]
+version = 1
+name = "Ayu Dark"
+description = "Modern minimal dark theme with deep colors"
+variant = "dark"
+icon = "icons/ayu.png"
+
+[colors.core]
+background = "#0B0E14"        # UI background (darker than editor)
+foreground = "#BFBDB6"        # Main text
+secondary_background = "#0F131A"  # Editor background (elevated)
+border = "#1A1F29"            # Line color
+accent = "#59C2FF"            # Tag color
+
+[colors.accents]
+blue = "#59C2FF"              # Entity
+green = "#AAD94C"             # String
+magenta = "#D2A6FF"           # Constant
+orange = "#FF8F40"            # Keyword
+purple = "#D2A6FF"            # Constant
+red = "#F07178"               # Error/VCS removed
+yellow = "#FFB454"            # Function
+cyan = "#95E6CB"              # Regexp
+
+[colors.list.item.selection]
+background = "#131721"        # Slightly lighter than UI bg
+secondary_background = "#1A1F29"  # Line color on secondary
+
+[colors.list.item.hover]
+background = "#0E1017"        # Very subtle hover

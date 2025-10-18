@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include <qfilesystemwatcher.h>
 #include <qlogging.h>
 #include <qobject.h>
 #include <qobjectdefs.h>

@@ -1,0 +1,19 @@
+ {
+    "version": "1.0.0",
+    "appearance": "light",
+    "icon": "../github.svg",
+    "name": "GitHub Light",
+    "description": "GitHub's official light theme",
+    "palette": {
+      "background": "#FFFFFF",
+      "foreground": "#24292F",
+      "blue": "#0969DA",
+      "green": "#1A7F37",
+      "magenta": "#8250DF",
+      "orange": "#DA8100",
+      "purple": "#8250DF",
+      "red": "#CF222E",
+      "yellow": "#BF8700",
+      "cyan": "#0184BC"
+    }
+}

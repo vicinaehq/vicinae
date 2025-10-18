@@ -1,4 +1,7 @@
 #include "text-file-viewer.hpp"
+#include "layout.hpp"
+#include "template-engine/template-engine.hpp"
+#include "theme.hpp"
 #include "ui/scroll-bar/scroll-bar.hpp"
 
 void TextFileViewer::load(const std::filesystem::path &path) {
@@ -15,16 +18,26 @@ void TextFileViewer::load(const std::filesystem::path &path) {
 
 void TextFileViewer::load(const QByteArray &data) { edit->setPlainText(data); }
 
+void TextFileViewer::updateStyle() {
+  TemplateEngine engine;
+  double size = ThemeService::instance().pointSize(TextSize::TextRegular);
+  engine.setVar("FONT_SIZE", QString::number(size));
+  QString stylesheet = engine.build(R"(
+		QTextEdit {
+			font-size: {FONT_SIZE}pt;
+		}
+	)");
+  setStyleSheet(stylesheet);
+}
+
 TextFileViewer::TextFileViewer() : edit(new QTextEdit()) {
   setAttribute(Qt::WA_TranslucentBackground, true);
-  auto layout = new QVBoxLayout;
-
   edit->setFocusPolicy(Qt::FocusPolicy::NoFocus);
   edit->document()->setDocumentMargin(10);
   edit->setTabStopDistance(40);
   edit->setReadOnly(true);
   edit->setVerticalScrollBar(new OmniScrollBar);
-  layout->setContentsMargins(0, 0, 0, 0);
-  layout->addWidget(edit);
-  setLayout(layout);
+  updateStyle();
+  VStack().add(edit).imbue(this);
+  connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() { updateStyle(); });
 }

@@ -2,6 +2,7 @@
 #include "common.hpp"
 #include "keyboard/keybind-manager.hpp"
 #include "navigation-controller.hpp"
+#include "theme/colors.hpp"
 #include "ui/image/url.hpp"
 #include "service-registry.hpp"
 #include "services/config/config-service.hpp"
@@ -89,6 +90,7 @@ void GlobalBar::setupUI() {
   m_leftWidget->addWidget(m_toast);
   m_leftWidget->setCurrentWidget(m_status);
   m_status->setIcon(ImageURL::builtin("vicinae"));
+  setAttribute(Qt::WA_TranslucentBackground);
 
   // action buttons can never shrink
   m_actionButton->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);

@@ -7,6 +7,7 @@
 #include <QColor>
 #include <QString>
 #include <QRegularExpression>
+#include <qrgb.h>
 
 namespace fs = std::filesystem;
 
@@ -215,6 +216,11 @@ bool isTextMimeType(const QString &mimeName) {
 
   QMimeDatabase db;
   return isTextMimeType(db.mimeTypeForName(normalizeMimeName(mimeName)));
+}
+
+QString rgbaFromColor(const QColor &color) {
+  QColor rgb = color.toRgb();
+  return QString("rgba(%1, %2, %3, %4)").arg(rgb.red()).arg(rgb.green()).arg(rgb.blue()).arg(rgb.alphaF());
 }
 
 QColor colorFromString(const QString &str) {

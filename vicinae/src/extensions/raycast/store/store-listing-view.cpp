@@ -31,7 +31,7 @@ public:
 
     m_downloadCount->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     m_author->setFixedSize(20, 20);
-    m_description->setColor(SemanticColor::TextSecondary);
+    m_description->setColor(SemanticColor::TextMuted);
     m_icon->setFixedSize(30, 30);
     layout.imbue(this);
   }

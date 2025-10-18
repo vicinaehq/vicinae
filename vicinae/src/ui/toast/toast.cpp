@@ -17,7 +17,7 @@ ToastWidget::ToastWidget() {
   OmniPainter painter;
 
   m_spinner->setSize(12);
-  m_spinner->setColor(painter.resolveColor(SemanticColor::TextPrimary));
+  m_spinner->setColor(painter.resolveColor(SemanticColor::Foreground));
   m_spinner->hide();
   m_circle->hide();
   m_spinner->setThickness(2);

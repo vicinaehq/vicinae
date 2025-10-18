@@ -1,7 +1,7 @@
 #pragma once
-#include "common.hpp"
 #include "../image/url.hpp"
 #include "theme.hpp"
+#include "theme/colors.hpp"
 #include "ui/image/image.hpp"
 #include "ui/omni-list/omni-list.hpp"
 #include "ui/typography/typography.hpp"
@@ -89,14 +89,11 @@ class HeaderWidget : public QWidget {
   };
 
   void paintEvent(QPaintEvent *event) override {
-    auto &theme = ThemeService::instance().theme();
     int borderWidth = 1;
-    QPainter painter(this);
+    OmniPainter painter(this);
 
-    QPen pen(theme.colors.border, borderWidth);
-    QBrush brush(theme.colors.mainHoveredBackground);
-    painter.setPen(pen);
-    painter.setBrush(brush);
+    painter.setThemePen(SemanticColor::BackgroundBorder, borderWidth);
+    painter.setThemeBrush(SemanticColor::ListItemHoverBackground);
     painter.setRenderHint(QPainter::Antialiasing, true);
     painter.drawRect(rect());
   }
@@ -192,16 +189,14 @@ class OmniTreeRowWidget : public OmniListItemWidget {
 
   void paintEvent(QPaintEvent *event) override {
     OmniPainter painter(this);
-    auto &theme = ThemeService::instance().theme();
 
     if (m_color || m_selected) {
       painter.setRenderHint(QPainter::Antialiasing);
 
       if (m_selected) {
-        QColor color = theme.resolveTint(SemanticColor::Blue);
-
+        QColor color = painter.resolveColor(SemanticColor::Accent);
         color.setAlphaF(0.5);
-        painter.setBrush(color);
+        painter.setThemeBrush(color);
       } else {
         painter.setBrush(painter.colorBrush(*m_color));
       }

@@ -12,6 +12,5 @@ class Popover : public QWidget {
 public:
   Popover(QWidget *parent = nullptr);
 
-  void resizeEvent(QResizeEvent *event) override;
   void paintEvent(QPaintEvent *event) override;
 };

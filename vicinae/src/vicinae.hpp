@@ -34,7 +34,7 @@ static const QString RAYCAST_NPM_API_PACKAGE = "@raycast/api";
 static const QString DISCORD_INVITE_LINK = "https://discord.gg/rP4ecD42p7";
 static const QString GH_SPONSOR_LINK = "https://github.com/sponsors/vicinaehq";
 
-static const SemanticColor ACCENT_COLOR = SemanticColor::Cyan;
+static const SemanticColor ACCENT_COLOR = SemanticColor::Blue;
 
 std::filesystem::path runtimeDir();
 std::filesystem::path commandSocketPath();

@@ -2,7 +2,10 @@ syntax = "proto3";
 
 package proto.ext.daemon;
 
-message UrlResponse {};
+message UrlResponse {
+  // empty string if no error
+  string error = 1;
+};
 
 message UrlRequest {
   string url = 1;

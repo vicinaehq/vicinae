@@ -2,6 +2,7 @@
 #include "proto/daemon.pb.h"
 #include "vicinae.hpp"
 #include <qlocalsocket.h>
+#include <stdexcept>
 
 namespace Daemon = proto::ext::daemon;
 
@@ -28,7 +29,9 @@ void DaemonIpcClient::toggle() {
 
   url.setScheme(Omnicast::APP_SCHEME);
   url.setHost("toggle");
-  sendDeeplink(url);
+  if (auto res = deeplink(url); !res) {
+    throw std::runtime_error("Failed to toggle: " + res.error().toStdString());
+  }
 }
 
 proto::ext::daemon::Response DaemonIpcClient::request(const proto::ext::daemon::Request &req) {
@@ -72,13 +75,16 @@ std::string DaemonIpcClient::dmenu(DMenuListView::DmenuPayload payload) {
   return res.dmenu().output();
 }
 
-void DaemonIpcClient::sendDeeplink(const QUrl &url) {
+tl::expected<void, QString> DaemonIpcClient::deeplink(const QUrl &url) {
   proto::ext::daemon::Request req;
   auto urlReq = new Daemon::UrlRequest();
 
   urlReq->set_url(url.toString().toStdString());
   req.set_allocated_url(urlReq);
-  request(req);
+  auto res = request(req);
+
+  if (auto error = res.url().error(); !error.empty()) { return tl::unexpected(error.c_str()); }
+  return {};
 }
 
 void DaemonIpcClient::connectOrThrow() {

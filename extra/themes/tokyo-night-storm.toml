@@ -1,0 +1,31 @@
+# Tokyo Night Storm - Storm Variant
+# A clean theme that celebrates the lights of Downtown Tokyo at night
+
+[meta]
+version = 1
+name = "Tokyo Night Storm"
+description = "A clean theme that celebrates the lights of Downtown Tokyo at night."
+variant = "dark"
+icon = "icons/tokyo-night.png"
+
+[colors.core]
+background = "#24283B"        # bg (storm variant)
+foreground = "#A9B1D6"        # fg
+secondary_background = "#1F2335"  # bg_dark
+border = "#414868"            # fg_dark (subtle border)
+accent = "#7AA2F7"            # blue
+
+[colors.accents]
+blue = "#7AA2F7"
+green = "#9ECE6A"
+magenta = "#AD8EE6"
+orange = "#E0AF68"
+purple = "#AD8EE6"
+red = "#F7768E"
+yellow = "#E0AF68"
+cyan = "#449DAB"
+
+[colors.list.item.selection]
+background = "#292E42"        # bg_highlight
+secondary_background = "#3B4261"  # blue0 (subtle highlight)
+

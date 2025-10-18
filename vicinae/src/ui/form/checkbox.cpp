@@ -16,7 +16,7 @@ void Checkbox::paintEvent(QPaintEvent *event) {
 
   painter.setRenderHint(QPainter::Antialiasing);
   painter.setRenderHint(QPainter::SmoothPixmapTransform);
-  painter.setThemePen(hasFocus() ? SemanticColor::InputBorderFocus : SemanticColor::Border, 2);
+  painter.setThemePen(hasFocus() ? SemanticColor::InputBorderFocus : SemanticColor::BackgroundBorder, 2);
   path.addRoundedRect(rect(), 4, 4);
   painter.setClipPath(path);
   painter.drawPath(path);
@@ -24,7 +24,7 @@ void Checkbox::paintEvent(QPaintEvent *event) {
   if (m_value) {
     auto check = rect().marginsRemoved(contentsMargins());
     BuiltinIconLoader loader(":icons/checkmark.svg");
-    loader.setFillColor(SemanticColor::TextPrimary);
+    loader.setFillColor(SemanticColor::Foreground);
     QPixmap pix = loader.renderSync({.size = check.size(), .devicePixelRatio = qApp->devicePixelRatio()});
 
     painter.drawPixmap(check, pix);

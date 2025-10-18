@@ -1,0 +1,19 @@
+{
+	"version": "1.0.0",
+	"appearance": "dark",
+	"icon": "./vscode.png",
+	"name": "VS Code Dark",
+	"description": "The official VS Code dark color palette",
+	"palette": {
+	  "background": "#1E1E1E",
+	  "foreground": "#D4D4D4",
+	  "blue": "#569CD6",
+	  "green": "#4EC9B0",
+	  "magenta": "#C586C0",
+	  "orange": "#CE9178",
+	  "purple": "#B5CEA8",
+	  "red": "#F44747",
+	  "yellow": "#DCDCAA",
+	  "cyan": "#4FC1FF"
+	}
+}

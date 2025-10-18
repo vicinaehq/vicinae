@@ -1,6 +1,7 @@
 #include "ui/action-pannel/action-list-widget.hpp"
 #include "layout.hpp"
 #include "theme.hpp"
+#include "theme/colors.hpp"
 #include "ui/action-pannel/action.hpp"
 #include "ui/image/image.hpp"
 #include "ui/typography/typography.hpp"
@@ -30,12 +31,12 @@ ActionListWidget &ActionListWidget::setTitle(const QString &title) {
 
 void ActionListWidget::selectionChanged(bool selected) {
   SelectableOmniListWidget::selectionChanged(selected);
-  auto &theme = ThemeService::instance().theme();
+  OmniPainter painter;
 
   if (selected) {
-    m_shortcut->setBackgroundColor(theme.colors.statusBackground);
+    m_shortcut->setBackgroundColor(SemanticColor::SecondaryBackground);
   } else {
-    m_shortcut->setBackgroundColor(theme.colors.statusBackground);
+    m_shortcut->setBackgroundColor(SemanticColor::SecondaryBackground);
   }
 }
 
@@ -44,7 +45,7 @@ void ActionListWidget::setAction(const AbstractAction *action) {
 
   switch (action->style()) {
   case AbstractAction::Style::Normal:
-    m_label->setColor(SemanticColor::TextPrimary);
+    m_label->setColor(SemanticColor::Foreground);
     setIconUrl(action->icon());
     break;
   case AbstractAction::Style::Danger: {
@@ -70,11 +71,14 @@ ActionListWidget::ActionListWidget()
       m_shortcut(new KeyboardShortcutIndicatorWidget) {
   auto &theme = ThemeService::instance().theme();
 
+  setSelectedColor(SemanticColor::ListItemSecondarySelectionBackground);
+  setHoverColor(SemanticColor::ListItemSecondaryHoverBackground);
   setFixedHeight(45);
   m_shortcut->hide();
   m_icon->hide();
   m_icon->setFixedSize(22, 22);
-  m_shortcut->setBackgroundColor(SemanticColor::StatusBackground);
+  m_shortcut->setBackgroundColor(SemanticColor::SecondaryBackground);
+
   HStack()
       .margins(8)
       .spacing(10)

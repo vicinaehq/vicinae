@@ -1,5 +1,6 @@
 #include "ui/omni-painter/omni-painter.hpp"
 #include "theme.hpp"
+#include "theme/theme-file.hpp"
 #include "ui/image/url.hpp"
 #include "utils.hpp"
 #include <qgraphicseffect.h>
@@ -11,36 +12,36 @@
 
 class ColorResolver {
 public:
-  static QColor resolve(const ColorLike &color, const ThemeInfo &theme) {
+  static QColor resolve(const ColorLike &color, const ThemeFile &theme) {
     return std::visit(ColorResolver(theme), color);
   }
 
-  ColorResolver(const ThemeInfo &theme) : m_theme(theme) {}
+  ColorResolver(const ThemeFile &theme) : m_theme(theme) {}
 
   QColor operator()(const DynamicColor &dynamic) const {
     // for now, we ignore `adjustContrast`
-    if (m_theme.appearance == "light") return Utils::colorFromString(dynamic.light);
+    if (m_theme.isLight()) return Utils::colorFromString(dynamic.light);
     return Utils::colorFromString(dynamic.dark);
   }
   QColor operator()(const QColor &color) const { return color; }
-  QColor operator()(const SemanticColor &color) const { return m_theme.resolveTint(color); }
+  QColor operator()(const SemanticColor &color) const { return m_theme.resolve(color); }
   QColor operator()(const QString &text) const { return Utils::colorFromString(text); }
 
 private:
-  const ThemeInfo &m_theme;
+  const ThemeFile &m_theme;
 };
 
 class ColorSerializer {
 public:
-  static QColor resolve(const ColorLike &color, const ThemeInfo &theme) {
+  static QColor resolve(const ColorLike &color, const ThemeFile &theme) {
     auto result = std::visit(ColorResolver(theme), color);
     return result;
   }
 
-  ColorSerializer(const ThemeInfo &theme) : m_theme(theme) {}
+  ColorSerializer(const ThemeFile &theme) : m_theme(theme) {}
 
   QString operator()(const DynamicColor &dynamic) const {
-    if (m_theme.appearance == "light") return dynamic.light;
+    if (m_theme.isLight()) return dynamic.light;
     return dynamic.dark;
   }
 
@@ -49,7 +50,7 @@ public:
   QString operator()(const QString &text) const { return text; }
 
 private:
-  const ThemeInfo &m_theme;
+  const ThemeFile &m_theme;
 };
 
 QString OmniPainter::serializeColor(const ColorLike &color) {
@@ -76,7 +77,7 @@ void OmniPainter::fillRect(QRect rect, const QColor &color, int radius, float al
 
 QBrush OmniPainter::colorBrush(const ColorLike &colorLike) const { return QBrush(resolveColor(colorLike)); }
 
-QColor OmniPainter::resolveColor(const ColorLike &colorLike) const {
+QColor OmniPainter::resolveColor(const ColorLike &colorLike) {
   return ColorResolver::resolve(colorLike, ThemeService::instance().theme());
 }
 

@@ -28,6 +28,7 @@
 #include "services/window-manager/window-manager.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "settings/settings-window.hpp"
+#include "theme/theme-db.hpp"
 #include "ui/launcher-window/launcher-window.hpp"
 #include "vicinae.hpp"
 #include <QString>
@@ -167,10 +168,8 @@ void CliServerCommand::run(CLI::App *app) {
   }
 
   FaviconService::initialize(new FaviconService(Omnicast::dataDir() / "favicon"));
-
   QApplication::setApplicationName("vicinae");
   QApplication::setQuitOnLastWindowClosed(false);
-
   ApplicationContext ctx;
 
   ctx.navigation = std::make_unique<NavigationController>(ctx);

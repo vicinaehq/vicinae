@@ -1,5 +1,7 @@
 #include "ui/loading-bar/horizontal-loading-bar.hpp"
 #include "theme.hpp"
+#include "theme/colors.hpp"
+#include "ui/omni-painter/omni-painter.hpp"
 #include <chrono>
 #include <qnamespace.h>
 #include <qpainter.h>
@@ -11,15 +13,14 @@ static const int DEFAULT_STEP = 10;
 static const std::chrono::milliseconds DEFAULT_TICK(10);
 
 void HorizontalLoadingBar::paintEvent(QPaintEvent *event) {
-  auto &theme = ThemeService::instance().theme();
-  QPainter painter(this);
+  OmniPainter painter(this);
 
   painter.setPen(Qt::NoPen);
-  painter.setBrush(theme.colors.border);
+  painter.setThemeBrush(SemanticColor::BackgroundBorder);
   painter.drawRect(rect());
 
   if (_isAnimationStarted) {
-    painter.setBrush(theme.colors.subtext);
+    painter.setThemeBrush(SemanticColor::LoadingBar);
     painter.drawRect(QRect(_position, 0, _barWidth, height()));
   }
 }

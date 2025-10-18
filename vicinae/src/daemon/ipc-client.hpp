@@ -14,24 +14,23 @@
 
 class DaemonIpcClient {
 public:
+  DaemonIpcClient();
+
   /**
    * Returns the selected item text, if any.
    * Closing the launcher window or exiting from the dmenu view using
    * backspace will return std::nullopt.
    */
   std::string dmenu(DMenuListView::DmenuPayload payload);
-
   void toggle();
-  void sendDeeplink(const QUrl &url);
+  tl::expected<void, QString> deeplink(const QUrl &url);
   bool connect();
   void connectOrThrow();
   bool ping();
 
-  DaemonIpcClient();
-
 private:
-  QLocalSocket m_conn;
   void writeRequest(const proto::ext::daemon::Request &req);
-
   proto::ext::daemon::Response request(const proto::ext::daemon::Request &req);
+
+  QLocalSocket m_conn;
 };

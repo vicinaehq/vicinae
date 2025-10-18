@@ -1,0 +1,33 @@
+# Ayu Mirage - Modern Minimal Theme
+# A beautiful, modern theme with perfect color balance
+
+[meta]
+version = 1
+name = "Ayu Mirage"
+description = "Modern minimal theme with perfect color balance"
+variant = "dark"
+icon = "icons/ayu.png"
+
+[colors.core]
+background = "#1F2430"        # UI background
+foreground = "#CCCAC2"        # Main text
+secondary_background = "#232834"  # Elevated surfaces (between UI and editor bg)
+border = "#343C4D"            # Darker for borders
+accent = "#5CCFE6"            # Cyan tag color
+
+[colors.accents]
+blue = "#73D0FF"              # Entity
+green = "#D5FF80"             # String
+magenta = "#DFBFFF"           # Constant
+orange = "#FFAD66"            # Keyword
+purple = "#DFBFFF"            # Constant
+red = "#F27983"               # VCS removed/error
+yellow = "#FFD173"            # Function
+cyan = "#95E6CB"              # Regexp
+
+[colors.list.item.selection]
+background = "#292E3E"        # Slightly lighter than UI bg
+secondary_background = "#343C4D"  # Border color on secondary
+
+[colors.list.item.hover]
+background = "#252A37"        # Subtle hover

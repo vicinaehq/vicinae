@@ -91,10 +91,10 @@ Stack RaycastStoreDetailView::createMainWidget() {
   return VStack()
       .add(VStack()
                .addText("Description")
-               .addParagraph(m_ext.description, SemanticColor::TextSecondary)
+               .addParagraph(m_ext.description, SemanticColor::TextMuted)
                .spacing(10))
       .add(VStack()
-               .addText("Commands", SemanticColor::TextSecondary)
+               .addText("Commands", SemanticColor::TextMuted)
                .add(VStack()
                         .map(m_ext.commands,
                              [&](const auto &cmd) {
@@ -103,7 +103,7 @@ Stack RaycastStoreDetailView::createMainWidget() {
                                             .addIcon(cmd.themedIcon(), {20, 20})
                                             .addText(cmd.title)
                                             .spacing(10))
-                                   .addParagraph(cmd.description, SemanticColor::TextSecondary)
+                                   .addParagraph(cmd.description, SemanticColor::TextMuted)
                                    .spacing(10);
                              })
                         .divided(1)
@@ -119,17 +119,17 @@ Stack RaycastStoreDetailView::createMainWidget() {
 
 QWidget *RaycastStoreDetailView::createSideMetadataSection() {
   auto readmeLink = VStack()
-                        .addText("README", SemanticColor::TextSecondary)
+                        .addText("README", SemanticColor::TextMuted)
                         .add(new TextLinkWidget("Open README", QUrl(m_ext.readme_assets_path)))
                         .spacing(5);
   auto viewSource = VStack()
-                        .addText("Source Code", SemanticColor::TextSecondary)
+                        .addText("Source Code", SemanticColor::TextMuted)
                         .add(new TextLinkWidget("View Code", QUrl(m_ext.source_url)))
                         .spacing(5);
 
   auto lastUpdate = VStack()
-                        .addText("Last update", SemanticColor::TextSecondary)
-                        .addText(getRelativeTimeString(m_ext.updatedAtDateTime()), SemanticColor::TextPrimary)
+                        .addText("Last update", SemanticColor::TextMuted)
+                        .addText(getRelativeTimeString(m_ext.updatedAtDateTime()), SemanticColor::Foreground)
                         .spacing(5);
 
   return VStack()
@@ -138,7 +138,7 @@ QWidget *RaycastStoreDetailView::createSideMetadataSection() {
       .addIf(!m_ext.contributors.isEmpty(),
              [&]() {
                return VStack()
-                   .addText("Contributors", SemanticColor::TextSecondary)
+                   .addText("Contributors", SemanticColor::TextMuted)
                    .add(createContributorList())
                    .spacing(5);
              })

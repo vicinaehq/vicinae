@@ -1,0 +1,34 @@
+# Catppuccin Latte - Light Variant
+# Our lightest theme harmoniously inverting the essence of Catppuccin's dark themes
+
+[meta]
+version = 1
+name = "Catppuccin Latte"
+description = "Our lightest theme harmoniously inverting the essence of Catppuccin's dark themes."
+variant = "light"
+icon = "icons/catppuccin.png"
+
+[colors.core]
+background = "#EFF1F5"        # Base
+foreground = "#4C4F69"        # Text
+secondary_background = "#E6E9EF"  # Mantle
+border = "#ACB0BE"            # Surface2 (more visible)
+accent = "#1E66F5"            # Blue
+
+[colors.accents]
+blue = "#1E66F5"
+green = "#40A02B"
+magenta = "#EA76CB"
+orange = "#DF8E1D"
+purple = "#8839EF"
+red = "#D20F39"
+yellow = "#DF8E1D"
+cyan = "#179299"
+
+[colors.list.item.selection]
+background = "#CCD0DA"        # Surface0 (darker/stronger on main bg)
+secondary_background = "#DCE0E8"  # Crust (lighter/subtle on lighter surface)
+
+[colors.list.item.hover]
+background = "#DCE0E8"        # Crust (lighter than selection)
+

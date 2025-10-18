@@ -2,11 +2,13 @@
 #include <qcoreevent.h>
 #include <qevent.h>
 #include <qjsonvalue.h>
+#include <qstyle.h>
 #include <qlineedit.h>
 #include <qlogging.h>
 #include <qnamespace.h>
 #include <qpainter.h>
 #include "ui/form/base-input.hpp"
+#include "theme.hpp"
 #include "ui/image/image.hpp"
 
 bool BaseInput::event(QEvent *event) { return QWidget::event(event); }
@@ -103,8 +105,11 @@ BaseInput::BaseInput(QWidget *parent) : leftAccessory(nullptr), rightAccessory(n
   setLayout(layout);
   setFocusProxy(m_input);
   setAttribute(Qt::WA_TranslucentBackground);
-
   m_input->setProperty("form-input", true); // used for border styling
+
+  setStyleSheet(ThemeService::instance().inputStyleSheet());
+  connect(&ThemeService::instance(), &ThemeService::themeChanged, this,
+          [this]() { setStyleSheet(ThemeService::instance().inputStyleSheet()); });
 
   connect(m_input, &QLineEdit::textChanged, this, &BaseInput::textChanged);
 }

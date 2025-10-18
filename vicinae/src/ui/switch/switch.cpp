@@ -9,9 +9,9 @@ void Switch::paintEvent(QPaintEvent *event) {
   int radius = height() / 2;
 
   if (m_value) {
-    painter.setThemeBrush(SemanticColor::Blue);
+    painter.setThemeBrush(SemanticColor::Accent);
   } else {
-    painter.setThemeBrush(SemanticColor::MainHoverBackground);
+    painter.setThemeBrush(SemanticColor::SecondaryBackground);
   }
 
   painter.setRenderHint(QPainter::Antialiasing);
@@ -21,7 +21,7 @@ void Switch::paintEvent(QPaintEvent *event) {
   if (m_value) {
     painter.setThemeBrush(Qt::white);
   } else {
-    painter.setThemeBrush(SemanticColor::TextSecondary);
+    painter.setThemeBrush(SemanticColor::TextMuted);
   }
 
   QRect geometry;
