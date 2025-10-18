@@ -200,7 +200,7 @@ QColor ThemeFile::deriveSemantic(SemanticColor color) const {
 
   case SemanticColor::MainWindowBorder: {
     auto color = resolve(SemanticColor::BackgroundBorder);
-    return isLight() ? color.darker(120) : color.lighter(120);
+    return isLight() ? color.darker(110) : color.lighter(110);
   }
   case SemanticColor::SettingsWindowBorder:
     return resolve(SemanticColor::MainWindowBorder);

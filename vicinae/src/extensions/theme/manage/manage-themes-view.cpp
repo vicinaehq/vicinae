@@ -5,7 +5,6 @@
 #include "service-registry.hpp"
 #include "services/config/config-service.hpp"
 #include "theme.hpp"
-#include "ui/action-pannel/action.hpp"
 #include "ui/color-circle/color_circle.hpp"
 #include "ui/default-list-item-widget/default-list-item-widget.hpp"
 #include "ui/image/image.hpp"
@@ -88,7 +87,6 @@ public:
                                                           : m_theme->description());
 
     if (m_theme->icon()) {
-      qDebug() << "icon" << m_theme->icon();
       item->setIcon(ImageURL::local(*m_theme->icon()).withFallback(ImageURL::builtin("vicinae")));
     } else {
       item->setIcon(ImageURL::builtin("vicinae"));
@@ -127,16 +125,9 @@ public:
     auto utils = panel->createSection();
 
     // we don't want to generate toml right now, we wait for action
-    auto copyAsToml = new StaticAction(
-        "Copy as TOML", ImageURL::builtin("copy-clipboard"), [theme = m_theme](ApplicationContext *ctx) {
-          CopyToClipboardAction copy(Clipboard::Text(theme->toToml().c_str()), "");
-          copy.execute(ctx);
-        });
     auto copyId = new CopyToClipboardAction(Clipboard::Text(m_theme->id()), "Copy ID");
 
-    copyAsToml->setShortcut(Keybind::CopyAction);
     copyId->setShortcut(Keybind::CopyNameAction);
-    utils->addAction(copyAsToml);
     utils->addAction(copyId);
 
     if (m_theme->path()) {

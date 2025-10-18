@@ -1,6 +1,7 @@
 #pragma once
 #include "common.hpp"
 #include "navigation-controller.hpp"
+#include "template-engine/template-engine.hpp"
 #include "theme.hpp"
 #include "ui/action-pannel/action-list-item.hpp"
 #include "ui/action-pannel/action.hpp"
@@ -190,6 +191,16 @@ protected:
 
   QString searchText() const override { return m_input->text(); }
 
+  void updateStyle() {
+    TemplateEngine engine;
+    double pointSize = ThemeService::instance().pointSize(TextSize::TextRegular);
+    engine.setVar("FONT_SIZE", QString::number(pointSize));
+    auto stylesheet = engine.build(R"(
+	  	QLineEdit { font-size: {FONT_SIZE}pt; }
+	)");
+    setStyleSheet(stylesheet);
+  }
+
 public:
   ActionPanelListView() {
     m_layout->setContentsMargins(2, 2, 2, 2);
@@ -200,10 +211,12 @@ public:
     m_input->setContentsMargins(10, 10, 10, 10);
     m_list->setMargins(3, 3, 3, 3);
     m_input->installEventFilter(this);
+    updateStyle();
 
     setLayout(m_layout);
     connect(m_input, &QLineEdit::textChanged, this, &ActionPanelListView::onSearchChanged);
     connect(m_list, &OmniList::itemActivated, this, &ActionPanelListView::itemActivated);
+    connect(&ThemeService::instance(), &ThemeService::themeChanged, this, [this]() { updateStyle(); });
     connect(m_list, &OmniList::virtualHeightChanged, this, [this](int height) {
       m_list->setFixedHeight(std::min(height, 180));
       updateGeometry();
