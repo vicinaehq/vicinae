@@ -21,7 +21,7 @@ class ConfigService : public QObject {
 public:
   struct Value {
     QString faviconService = Omnicast::DEFAULT_FAVICON_SERVICE;
-    bool popToRootOnClose = false;
+    bool popToRootOnClose = true;
     bool closeOnFocusLoss = false;
     QString keybinding = "default";
     struct {
@@ -30,7 +30,7 @@ public:
     } theme;
     struct {
       int rounding = 10;
-      double opacity = 0.95;
+      double opacity = 0.98;
       bool csd = true;
     } window;
     struct {
@@ -38,7 +38,7 @@ public:
     } rootSearch;
     struct {
       std::optional<QString> normal;
-      double baseSize = 10.0;
+      double baseSize = 10.5;
     } font;
     std::unordered_map<QString, QString> keybinds;
   };
@@ -61,7 +61,7 @@ private:
     Value cfg;
 
     cfg.faviconService = obj.value("faviconService").toString("google");
-    cfg.popToRootOnClose = obj.value("popToRootOnClose").toBool(false);
+    cfg.popToRootOnClose = obj.value("popToRootOnClose").toBool(true);
     cfg.closeOnFocusLoss = obj.value("closeOnFocusLoss").toBool(false);
     cfg.keybinding = obj.value("keybinding").toString("default");
 
@@ -70,7 +70,7 @@ private:
 
       if (font.contains("normal")) { cfg.font.normal = font.value("normal").toString(); }
 
-      cfg.font.baseSize = font.value("size").toDouble(10.0);
+      cfg.font.baseSize = font.value("size").toDouble(10.5);
     }
 
     {
@@ -98,7 +98,7 @@ private:
       auto window = obj.value("window").toObject();
 
       cfg.window.rounding = window.value("rounding").toInt(10);
-      cfg.window.opacity = window.value("opacity").toDouble(0.95);
+      cfg.window.opacity = window.value("opacity").toDouble(0.98);
       cfg.window.csd = window.value("csd").toBool(true);
     }
 

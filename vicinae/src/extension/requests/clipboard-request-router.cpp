@@ -54,8 +54,7 @@ clip_proto::Response *ClipboardRequestRouter::clear(const clip_proto::ClearReque
 clip_proto::Response *ClipboardRequestRouter::paste(const clip_proto::PasteToClipboardRequest &req) {
   auto content = parseProtoClipboardContent(req.content());
 
-  // wait for the window which might be closing
-  QTimer::singleShot(100, this, [this, content]() { m_clipboard.pasteContent(content); });
+  QTimer::singleShot(100, [&clip = m_clipboard, content]() { clip.pasteContent(content); });
 
   auto resData = new clip_proto::PasteToClipboardResponse;
   auto res = new clip_proto::Response;
