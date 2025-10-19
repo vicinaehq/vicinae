@@ -17,6 +17,10 @@ debug:
 	cmake --build $(BUILD_DIR)
 .PHONY: debug
 
+strip:
+	strip -s ./build/vicinae/vicinae
+.PHONY: strip
+
 test:
 	cmake -G Ninja -DBUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -B $(BUILD_DIR)
 	cmake --build $(BUILD_DIR)

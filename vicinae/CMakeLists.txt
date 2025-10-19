@@ -664,6 +664,14 @@ endif()
 target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(${TARGET} PRIVATE ${LIBS})
 
+if (USE_PRECOMPILED_HEADERS)
+	message(STATUS "Precompiled headers are enabled")
+	target_precompile_headers(${TARGET} PUBLIC "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/src/pch.h>")
+	set(CMAKE_PCH_INSTANTIATE_TEMPLATES ON)
+else()
+	message(STATUS "Precompiled headers are disabled")
+endif()
+
 make_directory(${CMAKE_CURRENT_BINARY_DIR}/proto)
 
 set(PROTO_IMPORT_DIRS ${PROTO_SRC_DIR} ${COMMON_PROTO_DIR})
