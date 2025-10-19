@@ -1,0 +1,34 @@
+#pragma once
+
+#include <QApplication>
+#include <QWidget>
+#include <QObject>
+#include <QString>
+#include <QDebug>
+#include <QTimer>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QVariant>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QJsonValue>
+#include <QJsonDocument>
+#include <QUrl>
+#include <QColor>
+#include <QtConcurrent/QtConcurrent>
+#include <QDBusConnection>
+#include <QDBusInterface>
+#include <QEvent>
+#include <QPainter>
+#include <QSqlQuery>
+#include <QFutureWatcher>
+#include <QStackedWidget>
+
+#include <memory>
+#include <vector>
+#include <optional>
+#include <variant>
+#include <unordered_map>
+#include <filesystem>
+#include <ranges>
+#include <string>
