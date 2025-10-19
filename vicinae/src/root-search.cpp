@@ -4,6 +4,9 @@
 #include <qlogging.h>
 #include <qnamespace.h>
 
+static const double NAME_WEIGHT = 0.8;
+static const double SUBTITLE_WEIGHT = 0.3;
+
 double RootSearcher::computeExactStringScore(QStringView str, QStringView query) {
   if (str == query) { return 1; };
   if (str.startsWith(query, Qt::CaseInsensitive)) { return 0.9; };
@@ -33,9 +36,9 @@ RootItemMetadata RootSearcher::metadata(const QString &id) const {
 
 double RootSearcher::computeExactScore(const RootItem &item, QStringView query) {
   auto meta = metadata(item.uniqueId());
-  double nameScore = computeExactStringScore(item.displayName(), query) * 0.8;
-  double aliasScore = computeExactStringScore(meta.alias, query) * 0.8;
-  double subtitleScore = computeExactStringScore(item.subtitle(), query) * 0.5;
+  double nameScore = computeExactStringScore(item.displayName(), query) * NAME_WEIGHT;
+  double aliasScore = computeExactStringScore(meta.alias, query) * NAME_WEIGHT;
+  double subtitleScore = computeExactStringScore(item.subtitle(), query) * SUBTITLE_WEIGHT;
   double keywordScore = 0;
 
   for (const auto &kw : item.keywords()) {

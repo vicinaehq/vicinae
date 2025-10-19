@@ -1,10 +1,7 @@
 #include "root-item-manager.hpp"
 #include "root-search.hpp"
 #include "root-search/extensions/extension-root-provider.hpp"
-#include <bits/chrono.h>
-#include <numbers>
 #include <qlogging.h>
-#include <qobjectdefs.h>
 #include <ranges>
 
 std::vector<std::shared_ptr<RootItem>> RootItemManager::fallbackItems() const {
@@ -162,9 +159,14 @@ RootItemManager::prefixSearch(const QString &query, const RootItemPrefixSearchOp
     results = searcher.search(m_items, query);
   }
 
-  std::ranges::sort(results, [this](const auto &a, const auto &b) {
+  std::ranges::sort(results, [this, &query](const auto &a, const auto &b) {
     auto ameta = itemMetadata(a.item->uniqueId());
     auto bmeta = itemMetadata(b.item->uniqueId());
+    bool aHasAlias = !ameta.alias.isEmpty() && ameta.alias.startsWith(query, Qt::CaseInsensitive);
+    bool bHasAlias = !bmeta.alias.isEmpty() && bmeta.alias.startsWith(query, Qt::CaseInsensitive);
+
+    if (aHasAlias - bHasAlias) { return aHasAlias > bHasAlias; }
+
     auto ascore = a.score * computeScore(ameta, a.item->baseScoreWeight());
     auto bscore = b.score * computeScore(bmeta, b.item->baseScoreWeight());
 
@@ -172,7 +174,7 @@ RootItemManager::prefixSearch(const QString &query, const RootItemPrefixSearchOp
   });
 
   std::vector<std::shared_ptr<RootItem>> items;
-
+  items.reserve(results.size());
   for (const auto &result : results) {
     items.emplace_back(result.item);
   }
