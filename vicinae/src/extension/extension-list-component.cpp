@@ -170,8 +170,10 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
       m_split->detailWidget()->hide();
     }
 
-    if (auto panel = selected->actionPannel; panel && _model.dirty && panel->dirty) {
-      setActionPanel(*panel);
+    if (auto panel = selected->actionPannel) {
+      if (_model.dirty && panel->dirty) { setActionPanel(*panel); }
+    } else {
+      clearActions();
     }
 
     m_split->setDetailVisibility(_model.isShowingDetail);
@@ -189,7 +191,11 @@ void ExtensionListComponent::render(const RenderModel &baseModel) {
   }
 
   if (m_list->empty()) {
-    if (auto panel = newModel.actions; panel && panel->dirty) { setActionPanel(*panel); }
+    if (auto panel = newModel.actions) {
+      if (panel->dirty) { setActionPanel(*panel); }
+    } else {
+      clearActions();
+    }
 
     if (auto empty = newModel.emptyView) {
       m_content->setCurrentWidget(m_emptyView);
@@ -208,7 +214,7 @@ void ExtensionListComponent::onSelectionChanged(const ListItemViewModel *next) {
     if (auto &pannel = _model.actions) {
       setActionPanel(*pannel);
     } else {
-      setActionPanel({});
+      clearActions();
     }
     return;
   }
@@ -219,7 +225,11 @@ void ExtensionListComponent::onSelectionChanged(const ListItemViewModel *next) {
 
   if (auto detail = next->detail) { m_detail->setDetail(*detail); }
 
-  if (auto pannel = next->actionPannel) { setActionPanel(*pannel); }
+  if (auto pannel = next->actionPannel) {
+    setActionPanel(*pannel);
+  } else {
+    clearActions();
+  }
 }
 
 void ExtensionListComponent::handleDropdownSelectionChanged(const SelectorInput::AbstractItem &item) {
