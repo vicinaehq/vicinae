@@ -9,6 +9,7 @@ set(PROTO_SRC_DIR ${CMAKE_SOURCE_DIR}/proto)
 #set(PROTO_FILES "${PROTO_SRC_DIR}/manager.proto ${PROTO_SRC_DIR}/wlr-clipboard.proto")
 file(GLOB PROTO_FILES "${PROTO_SRC_DIR}/*.proto")
 
+
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_SOURCE_DIR}/src

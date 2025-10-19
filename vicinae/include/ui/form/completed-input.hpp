@@ -90,7 +90,7 @@ public:
   CompletedInput(QWidget *parent = nullptr);
   ~CompletedInput();
 
-  FocusNotifier *focusNotifier() const;
+  FocusNotifier *focusNotifier() const override;
   void clear();
 
   void setPlaceholderText(const QString &text);

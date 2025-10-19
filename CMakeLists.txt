@@ -38,7 +38,7 @@ option(USE_SYSTEM_LAYER_SHELL "Use system qt layer shell instead of building it 
 option(USE_SYSTEM_QT_KEYCHAIN "Use system qt-keychain instead of building it from source. Note: still depends on system libsecret." ON)
 option(USE_SYSTEM_RAPIDFUZZ "Use system version of the rapidfuzz-cpp header only library" ON)
 option(LIBQALCULATE_BACKEND "Compile in support for the Qalculate! calculator backend" ON)
-
+option(USE_PRECOMPILED_HEADERS "Use precompiled headers to speed up compilation" ON)
 
 option(BUILD_TESTS "Build all vicinae tests" OFF)
 
@@ -162,7 +162,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Debug Release ReleaseHost)
 
 if (NOT NOSTRIP AND NOT ${CMAKE_BUILD_TYPE} MATCHES "Debug")
-	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
+	#set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
 	message(STATUS "Built binaries will be stripped")
 endif()
 
@@ -185,6 +185,7 @@ if (LTO)
 	message(STATUS "Link Time Optimization (LTO) is enabled")
 	# gcc needs 'auto' to enable parallel compilation: https://stackoverflow.com/questions/72218980/gcc-v12-1-warning-about-serial-compilation
 	add_compile_options(-flto=auto)
+	add_link_options(-flto=auto)
 endif()
 
 if (CCACHE AND NOT IGNORE_CCACHE) 
