@@ -650,6 +650,7 @@ if (UNIX AND NOT APPLE)
 	)
     include("Wayland")
     wayland_generate_protocol("${CMAKE_CURRENT_SOURCE_DIR}/protocols/wlr-foreign-toplevel-management-unstable-v1.xml")
+	wayland_generate_protocol("${CMAKE_CURRENT_SOURCE_DIR}/protocols/wlr-data-control-unstable-v1.xml")
 endif()
 	
 
