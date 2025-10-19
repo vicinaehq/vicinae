@@ -88,10 +88,16 @@ const ThemeFile *ThemeDatabase::ThemeDatabase::theme(const QString &id) {
 std::vector<std::filesystem::path> ThemeDatabase::defaultSearchPaths() {
   std::vector<std::filesystem::path> paths;
   auto dd = xdgpp::dataDirs();
-  paths.reserve(dd.size());
+
+  paths.reserve(dd.size() + 1);
+  paths.emplace_back(xdgpp::dataHome());
+
   for (const auto &dir : dd) {
-    paths.emplace_back(dir / "vicinae" / "themes");
+    fs::path path = dir / "vicinae" / "themes";
+
+    if (std::ranges::find(paths, dir) == paths.end()) { paths.emplace_back(path); }
   }
+
   return paths;
 }
 
