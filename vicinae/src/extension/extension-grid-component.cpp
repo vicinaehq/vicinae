@@ -97,7 +97,11 @@ void ExtensionGridComponent::render(const RenderModel &baseModel) {
   _model = newModel;
 
   if (auto selected = m_list->selected()) {
-    if (auto panel = selected->actionPannel) { setActionPanel(*panel); }
+    if (auto panel = selected->actionPannel) {
+      setActionPanel(*panel);
+    } else {
+      clearActions();
+    }
   }
 
   if (auto empty = newModel.emptyView) {
@@ -112,7 +116,11 @@ void ExtensionGridComponent::render(const RenderModel &baseModel) {
   }
 
   if (m_list->empty()) {
-    if (auto panel = newModel.actions; panel && panel->dirty) { setActionPanel(*panel); }
+    if (auto panel = newModel.actions) {
+      if (panel->dirty) { setActionPanel(*panel); }
+    } else {
+      clearActions();
+    }
 
     if (auto empty = newModel.emptyView) {
       m_content->setCurrentWidget(m_emptyView);
@@ -126,11 +134,19 @@ void ExtensionGridComponent::render(const RenderModel &baseModel) {
 
 void ExtensionGridComponent::onSelectionChanged(const GridItemViewModel *next) {
   if (!next) {
-    if (auto &pannel = _model.actions) { setActionPanel(*pannel); }
+    if (auto &pannel = _model.actions) {
+      setActionPanel(*pannel);
+    } else {
+      clearActions();
+    }
     return;
   }
 
-  if (auto &panel = next->actionPannel) { setActionPanel(*panel); }
+  if (auto &panel = next->actionPannel) {
+    setActionPanel(*panel);
+  } else {
+    clearActions();
+  }
   if (auto handler = _model.onSelectionChanged) { notify(*handler, {next->id}); }
 }
 
