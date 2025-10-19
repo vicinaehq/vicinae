@@ -2,6 +2,9 @@
 #include <qobject.h>
 #include <qstringview.h>
 #include <qtmetamacros.h>
+#include <QMimeData>
+#include <QClipboard>
+#include <QApplication>
 #include <vector>
 
 struct ClipboardDataOffer {
@@ -70,6 +73,15 @@ public:
    * reporting and no retry will be attempted.
    */
   virtual bool stop() { return true; }
+
+  /**
+   * Set clipboard content synchronously.
+   * Default implementation uses Qt's clipboard.
+   */
+  virtual bool setClipboardContent(QMimeData *data) {
+    QApplication::clipboard()->setMimeData(data);
+    return true;
+  }
 
   AbstractClipboardServer() {}
 

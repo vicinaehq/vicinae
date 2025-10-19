@@ -5,6 +5,7 @@
 #include <QtDBus/qdbusinterface.h>
 #include <QObject>
 #include <QTimer>
+#include <QMimeData>
 
 class GnomeClipboardServer : public AbstractClipboardServer {
   Q_OBJECT
@@ -26,6 +27,11 @@ private:
   bool testExtensionAvailability() const;
   void attemptReconnection();
 
+  // Clipboard content helpers
+  QString selectPreferredFormat(const QStringList &formats);
+  bool setTextContent(const QString &text);
+  bool setBinaryContent(const QByteArray &data, const QString &mimeType);
+
 private slots:
   void handleClipboardChanged(const QByteArray &content, const QString &mimeType, const QString &sourceApp);
   void handleDBusDisconnection();
@@ -41,4 +47,5 @@ public:
   bool isAlive() const override;
   bool isActivatable() const override;
   int activationPriority() const override;
+  bool setClipboardContent(QMimeData *data) override;
 };

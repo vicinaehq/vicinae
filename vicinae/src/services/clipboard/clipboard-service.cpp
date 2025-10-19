@@ -495,13 +495,9 @@ std::optional<ClipboardSelection> ClipboardService::retrieveSelectionById(const 
 }
 
 bool ClipboardService::copyQMimeData(QMimeData *data, const Clipboard::CopyOptions &options) {
-  QClipboard *clipboard = QApplication::clipboard();
-
   if (options.concealed) { data->setData(Clipboard::CONCEALED_MIME_TYPE, "1"); }
 
-  clipboard->setMimeData(data);
-
-  return true;
+  return m_clipboardServer->setClipboardContent(data);
 }
 
 bool ClipboardService::copySelection(const ClipboardSelection &selection,
