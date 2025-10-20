@@ -85,6 +85,11 @@ signals:
    */
   void selectionUpdated() const;
   void monitoringChanged(bool value) const;
+  /**
+   * Emitted when the clipboard server status changes (e.g., fails to start or dies).
+   * @param errorMessage human-readable error message, empty string if server is healthy
+   */
+  void serverStatusChanged(const QString &errorMessage) const;
 
 public:
   enum class OfferDecryptionError {
@@ -135,6 +140,10 @@ public:
   void setMonitoring(bool value);
   void setEncryption(bool value);
   bool isEncryptionReady() const;
+  /**
+   * Returns the current server error message, or empty string if the server is healthy.
+   */
+  QString serverErrorMessage() const;
 
 private:
   WindowManager &m_wm;
@@ -148,6 +157,7 @@ private:
   QMimeDatabase _mimeDb;
   std::filesystem::path m_dataDir;
   std::unique_ptr<AbstractClipboardServer> m_clipboardServer;
+  QString m_serverErrorMessage;
 
   static QString getSelectionPreferredMimeType(const ClipboardSelection &selection);
   static QString getOfferTextPreview(const ClipboardDataOffer &offer);

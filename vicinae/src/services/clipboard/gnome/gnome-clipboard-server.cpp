@@ -64,6 +64,7 @@ bool GnomeClipboardServer::start() {
 
   if (!setupDBusConnection()) {
     qCritical() << "GnomeClipboardServer: Failed to set up D-Bus connection";
+    emit statusChanged("Failed to connect to GNOME extension");
     return false;
   }
 
@@ -188,6 +189,7 @@ void GnomeClipboardServer::handleClipboardChanged(const QByteArray &content, con
 void GnomeClipboardServer::handleDBusDisconnection() {
   qWarning() << "GnomeClipboardServer: D-Bus connection lost, attempting to reconnect...";
   m_isConnected = false;
+  emit statusChanged("GNOME extension connection lost");
 
   if (!m_reconnectTimer->isActive()) { m_reconnectTimer->start(); }
 }
@@ -197,6 +199,7 @@ void GnomeClipboardServer::onReconnectTimer() {
 
   if (testExtensionAvailability() && setupDBusConnection()) {
     qInfo() << "GnomeClipboardServer: Reconnection successful";
+    emit statusChanged("");
     m_reconnectTimer->stop();
   } else {
     qDebug() << "GnomeClipboardServer: Reconnection failed, will retry...";

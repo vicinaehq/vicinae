@@ -83,6 +83,18 @@ inline QStringList fallbackIconSearchPaths() {
 inline QString version() { return VICINAE_GIT_TAG; }
 
 /**
+ * Whether we are running the COSMIC desktop environment.
+ *
+ */
+inline bool isCosmicDesktop() {
+#ifndef Q_OS_LINUX
+  return false;
+#endif
+  auto desktops = xdgpp::currentDesktop();
+  return std::ranges::find(desktops, "COSMIC") != desktops.end();
+}
+
+/**
  * Gets human-readable environment description
  */
 inline QString getEnvironmentDescription() {

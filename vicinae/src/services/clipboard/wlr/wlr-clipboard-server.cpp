@@ -91,6 +91,7 @@ bool WlrClipboardServer::start() {
   m_display = wl_display_connect(nullptr);
   if (!m_display) {
     qCritical() << "Failed to connect to Wayland display";
+    emit statusChanged("Could not connect to Wayland display");
     return false;
   }
 
@@ -116,6 +117,7 @@ bool WlrClipboardServer::start() {
   m_seat = foundSeat;
   if (!m_seat) {
     qCritical() << "Failed to get Wayland seat";
+    emit statusChanged("Could not get Wayland seat");
     wl_display_disconnect(m_display);
     m_display = nullptr;
     return false;
@@ -126,11 +128,19 @@ bool WlrClipboardServer::start() {
   wl_display_roundtrip(m_display);
 
   if (!m_manager) {
-    qCritical()
-        << "zwlr_data_control_manager_v1 is not available in your current environment vicinae think is "
-        << Environment::getEnvironmentDescription()
-        << "This might indicate that your environment does not implement the wlr-data-control protocol or "
-           "that it is default-disabled as a security mechanism (Cosmic does this)";
+    QString error = "zwlr_data_control_manager_v1 is not exposed by your Wayland compositor.";
+    QString shortError = "Compositor doesn't support wlr-data-control";
+
+    if (Environment::isCosmicDesktop()) {
+      error += " You seem to be using the COSMIC compositor: Note that the wlr-data-control protocol is not "
+               "exposed by the COSMIC compositor for "
+               "security reasons. In order to enable it, you need to set COSMIC_DATA_CONTROL_ENABLED=1 "
+               "before starting COSMIC.";
+      shortError += " COSMIC needs to be launched with COSMIC_DATA_CONTROL_ENABLED=1";
+    }
+
+    qCritical() << error;
+    emit statusChanged(shortError);
     return false;
   }
 

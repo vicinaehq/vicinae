@@ -127,6 +127,8 @@ void ClipboardService::setEncryption(bool value) {
 
 bool ClipboardService::isEncryptionReady() const { return m_encrypter.get(); }
 
+QString ClipboardService::serverErrorMessage() const { return m_serverErrorMessage; }
+
 void ClipboardService::setMonitoring(bool value) {
   if (m_monitoring == value) return;
 
@@ -134,8 +136,11 @@ void ClipboardService::setMonitoring(bool value) {
     qInfo() << "Starting clipboard server" << m_clipboardServer->id();
     if (m_clipboardServer->start()) {
       qInfo() << "Clipboard server" << m_clipboardServer->id() << "started successfully.";
+      m_serverErrorMessage = "";
+      emit serverStatusChanged("");
     } else {
       qWarning() << "Failed to start clipboard server" << m_clipboardServer->id();
+      return;
     }
   } else {
     qInfo() << "Stopping clipboard server" << m_clipboardServer->id();
@@ -144,6 +149,8 @@ void ClipboardService::setMonitoring(bool value) {
     } else {
       qWarning() << "Failed to stop clipboard server" << m_clipboardServer->id();
     }
+    m_serverErrorMessage = "";
+    emit serverStatusChanged("");
   }
 
   m_monitoring = value;
@@ -603,4 +610,9 @@ ClipboardService::ClipboardService(const std::filesystem::path &path, WindowMana
 
   connect(m_clipboardServer.get(), &AbstractClipboardServer::selectionAdded, this,
           &ClipboardService::saveSelection);
+  connect(m_clipboardServer.get(), &AbstractClipboardServer::statusChanged, this,
+          [this](const QString &errorMessage) {
+            m_serverErrorMessage = errorMessage;
+            emit serverStatusChanged(errorMessage);
+          });
 }

@@ -75,4 +75,9 @@ public:
 
 signals:
   void selectionAdded(const ClipboardSelection &selection);
+  /**
+   * Emitted when the server encounters an error or recovers from one.
+   * @param errorMessage Short error message describing the issue, empty string if server recovered/healthy
+   */
+  void statusChanged(const QString &errorMessage);
 };

@@ -499,10 +499,6 @@ ClipboardHistoryView::ClipboardHistoryView() {
   m_content->addWidget(m_emptyView);
   m_content->setCurrentWidget(m_split);
 
-  m_emptyView->setTitle("No clipboard entries");
-  m_emptyView->setDescription("No results matching your search. You can try to refine your search.");
-  m_emptyView->setIcon(ImageURL::builtin("magnifying-glass"));
-
   m_split->setMainWidget(m_list);
   m_split->setDetailVisibility(false);
 
@@ -518,6 +514,8 @@ ClipboardHistoryView::ClipboardHistoryView() {
   connect(clipman, &ClipboardService::selectionUpdated, this, &ClipboardHistoryView::onSelectionUpdated);
   connect(clipman, &ClipboardService::monitoringChanged, this,
           &ClipboardHistoryView::handleMonitoringChanged);
+  connect(clipman, &ClipboardService::serverStatusChanged, this,
+          &ClipboardHistoryView::handleServerStatusChanged);
   connect(m_statusToolbar, &ClipboardStatusToolbar::statusIconClicked, this,
           &ClipboardHistoryView::handleStatusClipboard);
   connect(m_filterInput, &SelectorInput::selectionChanged, this, &ClipboardHistoryView::handleFilterChange);
@@ -528,9 +526,9 @@ void ClipboardHistoryView::generateList(const PaginatedResponse<ClipboardHistory
   size_t i = 0;
 
   if (result.data.empty()) {
-    m_content->setCurrentWidget(m_emptyView);
+    showNoResultsView();
   } else {
-    m_content->setCurrentWidget(m_split);
+    hideEmptyView();
   }
 
   m_statusToolbar->setLeftText(QString("%1 Items").arg(result.data.size()));
@@ -558,9 +556,17 @@ void ClipboardHistoryView::generateList(const PaginatedResponse<ClipboardHistory
 
 void ClipboardHistoryView::initialize() {
   setSearchPlaceholderText("Browse clipboard history...");
-  textChanged("");
   m_filterInput->setValue(getSavedDropdownFilter().value_or("all"));
   handleFilterChange(*m_filterInput->value());
+
+  auto clipman = ServiceRegistry::instance()->clipman();
+  QString errorMessage = clipman->serverErrorMessage();
+  if (!errorMessage.isEmpty()) {
+    showServerError(errorMessage);
+    m_statusToolbar->setClipboardStatus(ClipboardStatusToolbar::ClipboardStatus::Unavailable);
+  } else {
+    textChanged("");
+  }
 }
 
 void ClipboardHistoryView::reloadCurrentSearch() {
@@ -616,7 +622,24 @@ void ClipboardHistoryView::handleMonitoringChanged(bool monitor) {
   m_statusToolbar->setClipboardStatus(ClipboardStatusToolbar::ClipboardStatus::Paused);
 }
 
+void ClipboardHistoryView::handleServerStatusChanged(const QString &errorMessage) {
+  if (errorMessage.isEmpty()) {
+    auto clipman = ServiceRegistry::instance()->clipman();
+    handleMonitoringChanged(clipman->monitoring());
+    if (m_content->currentWidget() == m_emptyView) {
+      reloadCurrentSearch();
+    }
+  } else {
+    showServerError(errorMessage);
+    m_statusToolbar->setClipboardStatus(ClipboardStatusToolbar::ClipboardStatus::Unavailable);
+  }
+}
+
 void ClipboardHistoryView::handleStatusClipboard() {
+  if (m_statusToolbar->clipboardStatus() == ClipboardStatusToolbar::Unavailable) {
+    return;
+  }
+
   auto preferences = command()->preferenceValues();
 
   if (m_statusToolbar->clipboardStatus() == ClipboardStatusToolbar::Paused) {
@@ -699,4 +722,22 @@ std::optional<QString> ClipboardHistoryView::getSavedDropdownFilter() {
   if (value.isNull()) return std::nullopt;
 
   return value.toString();
+}
+
+void ClipboardHistoryView::showServerError(const QString &errorMessage) {
+  m_emptyView->setIcon(ImageURL::builtin("xmark-circle").setFill(SemanticColor::Red));
+  m_emptyView->setTitle("Clipboard Server Unavailable");
+  m_emptyView->setDescription(errorMessage);
+  m_content->setCurrentWidget(m_emptyView);
+}
+
+void ClipboardHistoryView::showNoResultsView() {
+  m_emptyView->setIcon(ImageURL::builtin("magnifying-glass"));
+  m_emptyView->setTitle("No clipboard entries");
+  m_emptyView->setDescription("No results matching your search. You can try to refine your search.");
+  m_content->setCurrentWidget(m_emptyView);
+}
+
+void ClipboardHistoryView::hideEmptyView() {
+  m_content->setCurrentWidget(m_split);
 }

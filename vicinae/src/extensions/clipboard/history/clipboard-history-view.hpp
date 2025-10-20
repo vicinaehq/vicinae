@@ -121,12 +121,16 @@ private:
 
   void onSelectionUpdated();
   void handleMonitoringChanged(bool monitor);
+  void handleServerStatusChanged(const QString &errorMessage);
   void handleStatusClipboard();
   bool inputFilter(QKeyEvent *event) override;
   void startSearch(const ClipboardListSettings &opts);
   void handleFilterChange(const SelectorInput::AbstractItem &item);
   std::optional<QString> getSavedDropdownFilter();
   void saveDropdownFilter(const QString &value);
+  void showServerError(const QString &errorMessage);
+  void showNoResultsView();
+  void hideEmptyView();
 
   OmniList *m_list = new OmniList();
   ClipboardStatusToolbar *m_statusToolbar;
