@@ -626,9 +626,7 @@ void ClipboardHistoryView::handleServerStatusChanged(const QString &errorMessage
   if (errorMessage.isEmpty()) {
     auto clipman = ServiceRegistry::instance()->clipman();
     handleMonitoringChanged(clipman->monitoring());
-    if (m_content->currentWidget() == m_emptyView) {
-      reloadCurrentSearch();
-    }
+    if (m_content->currentWidget() == m_emptyView) { reloadCurrentSearch(); }
   } else {
     showServerError(errorMessage);
     m_statusToolbar->setClipboardStatus(ClipboardStatusToolbar::ClipboardStatus::Unavailable);
@@ -636,9 +634,7 @@ void ClipboardHistoryView::handleServerStatusChanged(const QString &errorMessage
 }
 
 void ClipboardHistoryView::handleStatusClipboard() {
-  if (m_statusToolbar->clipboardStatus() == ClipboardStatusToolbar::Unavailable) {
-    return;
-  }
+  if (m_statusToolbar->clipboardStatus() == ClipboardStatusToolbar::Unavailable) { return; }
 
   auto preferences = command()->preferenceValues();
 
@@ -691,9 +687,7 @@ bool ClipboardHistoryView::inputFilter(QKeyEvent *event) {
 void ClipboardHistoryView::startSearch(const ClipboardListSettings &opts) {
   auto clipman = context()->services->clipman();
 
-  if (!clipman->serverErrorMessage().isEmpty()) {
-    return;
-  }
+  if (!clipman->serverErrorMessage().isEmpty()) { return; }
 
   if (m_watcher.isRunning()) { m_watcher.cancel(); }
 
@@ -729,7 +723,7 @@ std::optional<QString> ClipboardHistoryView::getSavedDropdownFilter() {
 }
 
 void ClipboardHistoryView::showServerError(const QString &errorMessage) {
-  m_emptyView->setIcon(ImageURL::builtin("xmark-circle").setFill(SemanticColor::Red));
+  m_emptyView->setIcon(ImageURL::builtin("x-mark-circle").setFill(SemanticColor::Red));
   m_emptyView->setTitle("Clipboard Server Unavailable");
   m_emptyView->setDescription(errorMessage);
   m_content->setCurrentWidget(m_emptyView);
@@ -742,6 +736,4 @@ void ClipboardHistoryView::showNoResultsView() {
   m_content->setCurrentWidget(m_emptyView);
 }
 
-void ClipboardHistoryView::hideEmptyView() {
-  m_content->setCurrentWidget(m_split);
-}
+void ClipboardHistoryView::hideEmptyView() { m_content->setCurrentWidget(m_split); }
