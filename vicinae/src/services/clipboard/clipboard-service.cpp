@@ -496,9 +496,11 @@ std::optional<ClipboardSelection> ClipboardService::retrieveSelectionById(const 
 
 bool ClipboardService::copyQMimeData(QMimeData *data, const Clipboard::CopyOptions &options) {
   QClipboard *clipboard = QApplication::clipboard();
+  QByteArray token = QUuid::createUuid().toByteArray(QUuid::StringFormat::WithoutBraces);
 
   if (options.concealed) { data->setData(Clipboard::CONCEALED_MIME_TYPE, "1"); }
 
+  data->setData(Clipboard::SELECTION_TOKEN_MIME_TYPE, token);
   clipboard->setMimeData(data);
 
   return true;

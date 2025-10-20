@@ -1,12 +1,19 @@
 #include "wlr-clipboard-server.hpp"
+#include "services/clipboard/clipboard-service.hpp"
 #include "utils/environment.hpp"
 #include "wlr-data-control-unstable-v1-client-protocol.h"
 #include <QApplication>
 #include <QSocketNotifier>
 #include <QGuiApplication>
+#include <QClipboard>
+#include <QMimeData>
+#include <QBuffer>
+#include <QCryptographicHash>
+#include <cstdint>
 #include <qlogging.h>
 #include <algorithm>
 #include <array>
+#include <qmimedata.h>
 #include <set>
 #include <unistd.h>
 #include <fcntl.h>
@@ -32,9 +39,7 @@ static void data_control_device_selection(void *data, zwlr_data_control_device_v
   server->onSelectionChanged(offer);
 }
 
-static void data_control_device_finished(void *data, zwlr_data_control_device_v1 *device) {
-  qWarning() << "wlr-data-control device finished";
-}
+static void data_control_device_finished(void *data, zwlr_data_control_device_v1 *device) {}
 
 static void data_control_device_primary_selection(void *data, zwlr_data_control_device_v1 *device,
                                                   zwlr_data_control_offer_v1 *offer) {}
@@ -137,7 +142,6 @@ bool WlrClipboardServer::start() {
   int displayFd = wl_display_get_fd(m_display);
   m_displayNotifier = new QSocketNotifier(displayFd, QSocketNotifier::Read, this);
   connect(m_displayNotifier, &QSocketNotifier::activated, this, [this]() {
-    qDebug() << "[WLR] Display fd readable, dispatching";
     if (wl_display_prepare_read(m_display) == 0) {
       wl_display_read_events(m_display);
       wl_display_dispatch_pending(m_display);
@@ -145,6 +149,9 @@ bool WlrClipboardServer::start() {
       wl_display_dispatch_pending(m_display);
     }
   });
+
+  auto clip = QApplication::clipboard();
+  connect(clip, &QClipboard::dataChanged, this, &WlrClipboardServer::qtClipboardChanged);
 
   m_started = true;
   qInfo() << "WlrClipboardServer started successfully";
@@ -156,6 +163,9 @@ bool WlrClipboardServer::stop() {
   qInfo() << "Stopping WlrClipboardServer";
 
   cancelPendingReads();
+
+  auto clip = QApplication::clipboard();
+  disconnect(clip, &QClipboard::dataChanged, this, &WlrClipboardServer::qtClipboardChanged);
 
   if (m_displayNotifier) {
     m_displayNotifier->setEnabled(false);
@@ -210,42 +220,39 @@ void WlrClipboardServer::onDataOffer(zwlr_data_control_offer_v1 *offer) {
 void WlrClipboardServer::onOfferMimeType(zwlr_data_control_offer_v1 *offer, const char *mime_type) {
   QString mimeStr = QString::fromUtf8(mime_type);
   if (isLegacyContentType(mimeStr)) { return; }
+  if (mimeStr == "vicinae/concealed") {
+    m_pending.mimeTypes.clear();
+    return;
+  }
   m_pending.mimeTypes.push_back(mimeStr);
 }
 
 void WlrClipboardServer::onSelectionChanged(zwlr_data_control_offer_v1 *offer) {
-  qDebug() << "[WLR] Selection changed, offer:" << offer;
   cancelPendingReads();
 
+  if (std::ranges::find(m_pending.mimeTypes, Clipboard::SELECTION_TOKEN_MIME_TYPE) !=
+      m_pending.mimeTypes.end()) {
+    qWarning() << "Found" << Clipboard::SELECTION_TOKEN_MIME_TYPE << "so ignoring onSelectionChanged";
+    return;
+  }
+
   if (!offer) {
-    qDebug() << "[WLR] Clipboard cleared";
     m_pending.mimeTypes.clear();
     return;
   }
 
-  if (offer != m_currentOffer) {
-    qWarning() << "[WLR] Selection offer mismatch";
-    return;
-  }
+  if (isVicinaeFocused()) { return; }
 
-  qDebug() << "[WLR] MIME types collected:" << m_pending.mimeTypes.size();
-  for (const auto &mime : m_pending.mimeTypes) {
-    qDebug() << "[WLR]   -" << mime;
-  }
+  if (offer != m_currentOffer) { return; }
 
-  qDebug() << "[WLR] Deferring receive to next event loop";
   QTimer::singleShot(0, this, [this]() { receiveOffersAsync(); });
 }
 
 void WlrClipboardServer::cancelPendingReads() { m_pending.cancelReads(); }
 
 void WlrClipboardServer::receiveOffersAsync() {
-  if (m_pending.mimeTypes.empty()) {
-    qDebug() << "[WLR] No MIME types to receive";
-    return;
-  }
+  if (m_pending.mimeTypes.empty()) { return; }
 
-  qDebug() << "[WLR] Starting async receive";
   m_pending.selection.offers.clear();
   m_pending.offerCount = 0;
   m_pending.receivedCount = 0;
@@ -266,16 +273,13 @@ void WlrClipboardServer::receiveOffersAsync() {
   }
 
   m_pending.offerCount = filteredMimes.size();
-  qDebug() << "[WLR] Will receive" << m_pending.offerCount << "offers after filtering";
 
   for (const auto &mime : filteredMimes) {
     int pipefd[2];
     if (pipe(pipefd) == -1) {
-      qCritical() << "[WLR] Failed to create pipe:" << strerror(errno);
+      qCritical() << "Failed to create pipe:" << strerror(errno);
       continue;
     }
-
-    qDebug() << "[WLR] Requesting offer for" << mime << "on pipe fd" << pipefd[0];
 
     zwlr_data_control_offer_v1_receive(m_currentOffer, mime.toUtf8().constData(), pipefd[1]);
     close(pipefd[1]);
@@ -287,25 +291,16 @@ void WlrClipboardServer::receiveOffersAsync() {
     int readFd = pipefd[0];
     auto buffer = std::make_shared<QByteArray>();
 
-    qDebug() << "[WLR] Setup notifier for" << mimeType << "fd" << readFd;
-
     connect(notifier.data(), &QSocketNotifier::activated, this, [this, notifier, readFd, mimeType, buffer]() {
       ssize_t n = read(readFd, m_readBuffer.data(), m_readBuffer.size());
 
       if (n > 0) {
-        qDebug() << "[WLR] Read" << n << "bytes for" << mimeType << "(total:" << (buffer->size() + n) << ")";
         buffer->append(m_readBuffer.data(), n);
         return;
       }
 
-      if (n < 0) {
-        if (errno != EAGAIN && errno != EWOULDBLOCK) {
-          qWarning() << "[WLR] Read error for" << mimeType << ":" << strerror(errno);
-        } else {
-          qDebug() << "[WLR] EAGAIN/EWOULDBLOCK for" << mimeType;
-        }
-      } else {
-        qDebug() << "[WLR] EOF for" << mimeType << ", total size:" << buffer->size();
+      if (n < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
+        qWarning() << "Read error for" << mimeType << ":" << strerror(errno);
       }
 
       notifier->setEnabled(false);
@@ -320,63 +315,116 @@ void WlrClipboardServer::receiveOffersAsync() {
       m_pending.selection.offers.push_back(offer);
 
       m_pending.receivedCount++;
-      qDebug() << "[WLR] Received" << m_pending.receivedCount << "/" << m_pending.offerCount << "offers";
 
       if (m_pending.receivedCount >= m_pending.offerCount) { processSelection(); }
     });
   }
 
-  qDebug() << "[WLR] Flushing display after setting up all notifiers";
   int flushResult = wl_display_flush(m_display);
-  if (flushResult < 0) {
-    qWarning() << "[WLR] Failed to flush display:" << strerror(errno);
-  } else {
-    qDebug() << "[WLR] Display flushed, wrote" << flushResult << "bytes";
-  }
+  if (flushResult < 0) { qWarning() << "Failed to flush display:" << strerror(errno); }
 
   int err = wl_display_get_error(m_display);
-  if (err) { qWarning() << "[WLR] Display has error:" << err << strerror(err); }
+  if (err) { qWarning() << "Display has error:" << err << strerror(err); }
 
   m_pending.timeoutTimer = new QTimer(this);
-  m_pending.timeoutTimer->setInterval(100);
+  m_pending.timeoutTimer->setInterval(10000);
   connect(m_pending.timeoutTimer, &QTimer::timeout, this, [this]() {
-    static int ticks = 0;
-    ticks++;
-    if (ticks % 10 == 0) {
-      qDebug() << "[WLR] Still waiting... received" << m_pending.receivedCount << "/" << m_pending.offerCount
-               << "after" << ticks / 10 << "seconds";
-    }
-    if (ticks >= 100) {
-      qWarning() << "[WLR] Timeout! Received" << m_pending.receivedCount << "/" << m_pending.offerCount;
-      qWarning() << "[WLR] Active notifiers:" << m_pending.activeNotifiers.size();
-      ticks = 0;
-      cancelPendingReads();
-    }
+    qWarning() << "Clipboard receive timeout";
+    cancelPendingReads();
   });
   m_pending.timeoutTimer->start();
-  qDebug() << "[WLR] Started timeout timer with 100ms ticks";
 }
 
 void WlrClipboardServer::processSelection() {
-  qDebug() << "[WLR] Processing selection with" << m_pending.selection.offers.size() << "offers";
-  if (m_pending.selection.offers.empty()) {
-    qWarning() << "[WLR] No offers to process!";
-    return;
-  }
-
-  for (const auto &offer : m_pending.selection.offers) {
-    qDebug() << "[WLR]   - Offer:" << offer.mimeType << "size:" << offer.data.size();
-  }
+  if (m_pending.selection.offers.empty()) { return; }
 
   emit selectionAdded(m_pending.selection);
 
   m_pending.selection.offers.clear();
   m_pending.mimeTypes.clear();
-  qDebug() << "[WLR] Selection processed and emitted";
 }
 
 bool WlrClipboardServer::isLegacyContentType(const QString &str) {
   if (str.startsWith("-x") || str.startsWith("-X")) { return false; }
 
   return str.isUpper() && !str.contains('/');
+}
+
+bool WlrClipboardServer::isVicinaeFocused() { return QApplication::activeWindow() != nullptr; }
+
+void WlrClipboardServer::qtClipboardChanged() {
+  static QString previousToken;
+  auto clip = QApplication::clipboard();
+
+  if (!clip->ownsClipboard()) return;
+
+  auto mimeData = clip->mimeData();
+
+  if (!mimeData) return;
+
+  ClipboardSelection selection;
+
+  if (mimeData->hasFormat(Clipboard::SELECTION_TOKEN_MIME_TYPE)) {
+    auto token = mimeData->data(Clipboard::SELECTION_TOKEN_MIME_TYPE);
+    if (token == previousToken) return;
+    previousToken = token;
+  }
+
+  for (const auto &format : mimeData->formats()) {
+    if (format.startsWith("image/")) {
+      ClipboardDataOffer offer;
+      offer.mimeType = format;
+      offer.data = mimeData->data(format);
+      selection.offers.emplace_back(offer);
+      break;
+    }
+  }
+
+  if (mimeData->hasText()) {
+    selection.offers.emplace_back(
+        ClipboardDataOffer{.mimeType = "text/plain;charset=utf-8", .data = mimeData->text().toUtf8()});
+  }
+
+  if (mimeData->hasHtml()) {
+    selection.offers.emplace_back(
+        ClipboardDataOffer{.mimeType = "text/html", .data = mimeData->html().toUtf8()});
+  }
+
+  if (mimeData->hasUrls()) {
+    ClipboardDataOffer offer;
+    offer.mimeType = "text/uri-list";
+    for (const auto &url : mimeData->urls()) {
+      if (!offer.data.isEmpty()) { offer.data += ';'; }
+      offer.data += url.toString().toUtf8();
+    }
+    selection.offers.emplace_back(offer);
+  }
+
+  auto isIndexableFormat = [](const QString &fmt) {
+    return !isLegacyContentType(fmt) && !fmt.startsWith("text/") && !fmt.startsWith("image/");
+  };
+
+  for (const auto &format : mimeData->formats()) {
+    if (isIndexableFormat(format)) {
+      QByteArray data = mimeData->data(format);
+      selection.offers.emplace_back(ClipboardDataOffer{format, data});
+    }
+  }
+
+  if (selection.offers.empty()) { return; }
+
+  QCryptographicHash hash(QCryptographicHash::Sha256);
+  for (const auto &offer : selection.offers) {
+    hash.addData(offer.mimeType.toUtf8());
+    hash.addData(offer.data);
+  }
+  QByteArray currentHash = hash.result();
+
+  if (currentHash == m_lastQtClipboardHash) { return; }
+
+  m_lastQtClipboardHash = currentHash;
+
+  qDebug() << "got qt clipboard data" << mimeData->formats();
+
+  emit selectionAdded(selection);
 }

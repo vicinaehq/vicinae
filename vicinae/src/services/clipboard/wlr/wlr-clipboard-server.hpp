@@ -30,6 +30,8 @@ public:
   void setDataControlManager(zwlr_data_control_manager_v1 *manager);
 
 private:
+  void qtClipboardChanged();
+  static bool isVicinaeFocused();
   struct PendingSelectionState {
     std::vector<QString> mimeTypes;
     ClipboardSelection selection;
@@ -92,4 +94,6 @@ private:
   static constexpr size_t READ_BUFFER_SIZE = 64 * 1024;
   std::array<char, READ_BUFFER_SIZE> m_readBuffer;
   bool m_started = false;
+  bool m_ignoreNextDataControlSelection = false;
+  QByteArray m_lastQtClipboardHash;
 };

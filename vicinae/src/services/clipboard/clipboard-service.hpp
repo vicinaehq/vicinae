@@ -23,6 +23,7 @@
 
 namespace Clipboard {
 static const char *CONCEALED_MIME_TYPE = "vicinae/concealed";
+static const char *SELECTION_TOKEN_MIME_TYPE = "vicinae/selection-token";
 using NoData = std::monostate;
 struct File {
   std::filesystem::path path;
