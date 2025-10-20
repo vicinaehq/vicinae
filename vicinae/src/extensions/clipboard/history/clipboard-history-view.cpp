@@ -563,7 +563,6 @@ void ClipboardHistoryView::initialize() {
   QString errorMessage = clipman->serverErrorMessage();
   if (!errorMessage.isEmpty()) {
     showServerError(errorMessage);
-    m_statusToolbar->setClipboardStatus(ClipboardStatusToolbar::ClipboardStatus::Unavailable);
   } else {
     textChanged("");
   }
@@ -629,7 +628,6 @@ void ClipboardHistoryView::handleServerStatusChanged(const QString &errorMessage
     if (m_content->currentWidget() == m_emptyView) { reloadCurrentSearch(); }
   } else {
     showServerError(errorMessage);
-    m_statusToolbar->setClipboardStatus(ClipboardStatusToolbar::ClipboardStatus::Unavailable);
   }
 }
 

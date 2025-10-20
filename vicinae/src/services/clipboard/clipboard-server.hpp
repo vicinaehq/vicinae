@@ -80,4 +80,14 @@ signals:
    * @param errorMessage Short error message describing the issue, empty string if server recovered/healthy
    */
   void statusChanged(const QString &errorMessage);
+
+protected:
+  /**
+   * Converts QMimeData to ClipboardSelection.
+   * - Prefers PNG for images if available, otherwise takes first image format
+   * - Handles text, HTML, URLs
+   * - Filters out legacy X11 target types
+   */
+  static ClipboardSelection convertQMimeDataToSelection(const QMimeData *mimeData);
+  static bool isLegacyContentType(const QString &str);
 };

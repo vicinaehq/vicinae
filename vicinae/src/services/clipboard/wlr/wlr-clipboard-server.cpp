@@ -228,13 +228,7 @@ void WlrClipboardServer::onDataOffer(zwlr_data_control_offer_v1 *offer) {
 }
 
 void WlrClipboardServer::onOfferMimeType(zwlr_data_control_offer_v1 *offer, const char *mime_type) {
-  QString mimeStr = QString::fromUtf8(mime_type);
-  if (isLegacyContentType(mimeStr)) { return; }
-  if (mimeStr == "vicinae/concealed") {
-    m_pending.mimeTypes.clear();
-    return;
-  }
-  m_pending.mimeTypes.push_back(mimeStr);
+  m_pending.mimeTypes.push_back(mime_type);
 }
 
 void WlrClipboardServer::onSelectionChanged(zwlr_data_control_offer_v1 *offer) {
@@ -354,12 +348,6 @@ void WlrClipboardServer::processSelection() {
   m_pending.mimeTypes.clear();
 }
 
-bool WlrClipboardServer::isLegacyContentType(const QString &str) {
-  if (str.startsWith("-x") || str.startsWith("-X")) { return false; }
-
-  return str.isUpper() && !str.contains('/');
-}
-
 bool WlrClipboardServer::isVicinaeFocused() { return QApplication::activeWindow() != nullptr; }
 
 void WlrClipboardServer::qtClipboardChanged() {
@@ -372,54 +360,13 @@ void WlrClipboardServer::qtClipboardChanged() {
 
   if (!mimeData) return;
 
-  ClipboardSelection selection;
-
   if (mimeData->hasFormat(Clipboard::SELECTION_TOKEN_MIME_TYPE)) {
     auto token = mimeData->data(Clipboard::SELECTION_TOKEN_MIME_TYPE);
     if (token == previousToken) return;
     previousToken = token;
   }
 
-  for (const auto &format : mimeData->formats()) {
-    if (format.startsWith("image/")) {
-      ClipboardDataOffer offer;
-      offer.mimeType = format;
-      offer.data = mimeData->data(format);
-      selection.offers.emplace_back(offer);
-      break;
-    }
-  }
-
-  if (mimeData->hasText()) {
-    selection.offers.emplace_back(
-        ClipboardDataOffer{.mimeType = "text/plain;charset=utf-8", .data = mimeData->text().toUtf8()});
-  }
-
-  if (mimeData->hasHtml()) {
-    selection.offers.emplace_back(
-        ClipboardDataOffer{.mimeType = "text/html", .data = mimeData->html().toUtf8()});
-  }
-
-  if (mimeData->hasUrls()) {
-    ClipboardDataOffer offer;
-    offer.mimeType = "text/uri-list";
-    for (const auto &url : mimeData->urls()) {
-      if (!offer.data.isEmpty()) { offer.data += ';'; }
-      offer.data += url.toString().toUtf8();
-    }
-    selection.offers.emplace_back(offer);
-  }
-
-  auto isIndexableFormat = [](const QString &fmt) {
-    return !isLegacyContentType(fmt) && !fmt.startsWith("text/") && !fmt.startsWith("image/");
-  };
-
-  for (const auto &format : mimeData->formats()) {
-    if (isIndexableFormat(format)) {
-      QByteArray data = mimeData->data(format);
-      selection.offers.emplace_back(ClipboardDataOffer{format, data});
-    }
-  }
+  ClipboardSelection selection = convertQMimeDataToSelection(mimeData);
 
   if (selection.offers.empty()) { return; }
 
