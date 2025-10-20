@@ -216,16 +216,16 @@ QString ClipboardService::getSelectionPreferredMimeType(const ClipboardSelection
       "text/uri-list", "text/plain;charset=utf-8", "text/plain", "UTF8_STRING", "STRING", "TEXT",
       "COMPOUND_TEXT"};
 
+  auto imageIt = std::ranges::find_if(selection.offers, [](const auto &offer) {
+    return offer.mimeType.startsWith("image/") && !offer.data.isEmpty();
+  });
+  if (imageIt != selection.offers.end()) return imageIt->mimeType;
+
   for (const auto &mime : plainTextMimeTypes) {
     auto it = std::ranges::find_if(
         selection.offers, [&](const auto &offer) { return offer.mimeType == mime && !offer.data.isEmpty(); });
     if (it != selection.offers.end()) return it->mimeType;
   }
-
-  auto imageIt = std::ranges::find_if(selection.offers, [](const auto &offer) {
-    return offer.mimeType.startsWith("image/") && !offer.data.isEmpty();
-  });
-  if (imageIt != selection.offers.end()) return imageIt->mimeType;
 
   auto htmlIt = std::ranges::find_if(selection.offers, [](const auto &offer) {
     return offer.mimeType == "text/html" && !offer.data.isEmpty();
