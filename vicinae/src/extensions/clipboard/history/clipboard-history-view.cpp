@@ -691,6 +691,10 @@ bool ClipboardHistoryView::inputFilter(QKeyEvent *event) {
 void ClipboardHistoryView::startSearch(const ClipboardListSettings &opts) {
   auto clipman = context()->services->clipman();
 
+  if (!clipman->serverErrorMessage().isEmpty()) {
+    return;
+  }
+
   if (m_watcher.isRunning()) { m_watcher.cancel(); }
 
   m_watcher.setFuture(clipman->listAll(1000, 0, opts));
