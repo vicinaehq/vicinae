@@ -727,6 +727,7 @@ void ClipboardHistoryView::showServerError(const QString &errorMessage) {
   m_emptyView->setTitle("Clipboard Server Unavailable");
   m_emptyView->setDescription(errorMessage);
   m_content->setCurrentWidget(m_emptyView);
+  m_statusToolbar->setVisible(false);
 }
 
 void ClipboardHistoryView::showNoResultsView() {
@@ -734,6 +735,10 @@ void ClipboardHistoryView::showNoResultsView() {
   m_emptyView->setTitle("No clipboard entries");
   m_emptyView->setDescription("No results matching your search. You can try to refine your search.");
   m_content->setCurrentWidget(m_emptyView);
+  m_statusToolbar->setVisible(true);
 }
 
-void ClipboardHistoryView::hideEmptyView() { m_content->setCurrentWidget(m_split); }
+void ClipboardHistoryView::hideEmptyView() {
+  m_content->setCurrentWidget(m_split);
+  m_statusToolbar->setVisible(true);
+}
