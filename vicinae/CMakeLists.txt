@@ -148,8 +148,6 @@ set(SRCS
 	src/services/clipboard/clipboard-server.hpp
 	src/services/clipboard/clipboard-db.hpp
 	src/services/clipboard/clipboard-db.cpp
-	src/services/clipboard/wlr/wlr-clipboard-server.hpp
-	src/services/clipboard/wlr/wlr-clipboard-server.cpp
 	src/services/clipboard/qt/qt-clipboard-server.hpp
 	src/services/clipboard/qt/qt-clipboard-server.cpp
 	src/services/clipboard/x11/x11-clipboard-server.hpp
@@ -620,6 +618,15 @@ if (LIBQALCULATE_BACKEND)
 	list(APPEND SRCS
 		src/services/calculator-service/qalculate/qalculate-backend.hpp
 		src/services/calculator-service/qalculate/qalculate-backend.cpp
+	)
+endif()
+
+if (WLR_DATA_CONTROL)
+	add_compile_definitions(WLR_DATA_CONTROL=1)
+	list(APPEND LIBS wlrclip)
+	list(APPEND SRCS
+		src/services/clipboard/wlr/wlr-clipboard-server.hpp
+		src/services/clipboard/wlr/wlr-clipboard-server.cpp
 	)
 endif()
 

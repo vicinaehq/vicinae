@@ -27,6 +27,7 @@ option(
 )
 
 option(WAYLAND_LAYER_SHELL "Enable support for the layer shell Wayland protocol" ON)
+option(WLR_DATA_CONTROL "Enable WLR_DATA_CONTROL powered clipboard server" ON)
 option(TYPESCRIPT_EXTENSIONS "Enable support for extensions built with React/Typescript (no browser involved)" ON)
 
 option(PREFER_STATIC_LIBS "When available, link to a library statically instead of dynamically" OFF)
@@ -48,6 +49,7 @@ endif()
 
 if (APPLE)
 	set(WAYLAND_LAYER_SHELL OFF)
+	set(WLR_DATA_CONTROL OFF)
 endif()
 
 if (UNIX AND NOT APPLE)
@@ -99,6 +101,8 @@ get_cxx_compiler_name(CXX_COMPILER_NAME)
 add_compile_definitions(VICINAE_GIT_TAG="${VICINAE_GIT_TAG}")
 add_compile_definitions(VICINAE_GIT_COMMIT_HASH="${VICINAE_GIT_COMMIT_HASH}")
 add_compile_definitions(VICINAE_PROVENANCE="${VICINAE_PROVENANCE}")
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/lib)
 
 set(CMARK_LIBRARY "cmark-gfm")
 
@@ -211,11 +215,10 @@ else()
 endif()
 
 add_compile_definitions(BUILD_INFO="${BUILD_INFO}")
-
 add_subdirectory(vicinae)
 
-if (UNIX AND NOT APPLE)
-	add_subdirectory(wlr-clip)
+if (WLR_DATA_CONTROL)
+	add_subdirectory(lib/wlr-clip)
 endif()
 
 set(INSTALL_SHARE ${CMAKE_INSTALL_PREFIX}/share)

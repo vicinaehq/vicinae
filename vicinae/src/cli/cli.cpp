@@ -10,6 +10,11 @@
 #include <qdir.h>
 #include <qobjectdefs.h>
 #include <stdexcept>
+#include "lib/rang.hpp"
+#include <exception>
+#include "vicinae.hpp"
+#include "wlr-clip/src/app.hpp"
+#include "services/clipboard/wlr/wlr-clipboard-server.hpp"
 
 class CliPing : public AbstractCommandLineCommand {
   std::string id() const override { return "ping"; }
@@ -103,6 +108,57 @@ public:
 private:
   std::string link;
 };
+
+int CommandLineApp::run(int ac, char **av) {
+  CLI::App app(m_name);
+
+  for (const auto &cmd : m_cmds) {
+    auto sub = app.add_subcommand(cmd->id(), cmd->description());
+    cmd->prepare(sub);
+    cmd->setup(sub);
+    sub->callback([cmd = cmd.get(), sub]() { cmd->run(sub); });
+  }
+
+  if (ac == 1) {
+    std::cout << app.help() << std::endl;
+    return 0;
+  }
+
+#ifdef WLR_DATA_CONTROL
+  if (ac == 2 && strcmp(av[1], WlrClipboardServer::ENTRYPOINT) == 0) {
+    Clipman::instance()->start();
+    return 0;
+  }
+#endif
+
+  // we still support direct deeplink usage
+  // i.e vicinae vicinae://extensions/vicinae/clipboard/history
+  if (ac == 2) {
+    QString arg = av[1];
+    auto pred = [&](const QString &scheme) { return arg.startsWith(scheme + "://"); };
+    bool hasScheme = std::ranges::any_of(Omnicast::APP_SCHEMES, pred);
+    if (hasScheme) {
+      char *subAv[] = {av[0], strdup("deeplink"), strdup(arg.toStdString().c_str()), nullptr};
+      return run(3, subAv);
+    }
+  }
+
+  app.require_subcommand();
+
+  std::atexit([]() { std::cout << rang::style::reset; });
+
+  try {
+    app.parse(ac, av);
+    return 0;
+  } catch (const CLI::ParseError &e) {
+    if (e.get_exit_code() != 0) { std::cerr << rang::fg::red; }
+    return app.exit(e);
+  } catch (const std::exception &except) {
+    std::cerr << rang::fg::red;
+    app.exit(CLI::Error("Exception", except.what()));
+    return 1;
+  }
+}
 
 int CommandLineInterface::execute(int ac, char **av) {
   std::vector<std::unique_ptr<AbstractCommandLineCommand>> commands;

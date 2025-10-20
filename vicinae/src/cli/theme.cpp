@@ -2,6 +2,7 @@
 #include "cli/theme.hpp"
 #include "daemon/ipc-client.hpp"
 #include "theme/theme-db.hpp"
+#include "rang.hpp"
 #include "theme/theme-parser.hpp"
 #include <stdexcept>
 
