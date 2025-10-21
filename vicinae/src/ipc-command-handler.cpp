@@ -188,7 +188,7 @@ tl::expected<void, std::string> IpcCommandHandler::handleUrl(const QUrl &url) {
             m_ctx.navigation->setSearchText(text);
           }
 
-          if (!m_ctx.navigation->isWindowOpened()) {
+          if (cmd->isView() && !m_ctx.navigation->isWindowOpened()) {
             m_ctx.navigation->setInstantDismiss();
             m_ctx.navigation->showWindow();
           }
