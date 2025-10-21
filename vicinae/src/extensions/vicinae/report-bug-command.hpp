@@ -2,6 +2,7 @@
 #include "builtin-url-command.hpp"
 #include <qapplication.h>
 #include <qurlquery.h>
+#include "environment.hpp"
 #include "lib/os-release.hpp"
 #include "version.h"
 
@@ -12,6 +13,7 @@ static const QString ISSUE_TEMPLATE = R"(**System information**
 - Provenance: %4
 - OS: %5
 - QT Platform: %6
+- DE: %7
 
 **Describe the bug**
 
@@ -63,7 +65,8 @@ class ReportVicinaeBugCommand : public BuiltinUrlCommand {
                           .arg(BUILD_INFO)
                           .arg(VICINAE_PROVENANCE)
                           .arg(osString)
-                          .arg(QApplication::platformName());
+                          .arg(QApplication::platformName())
+                          .arg(Environment::getEnvironmentDescription());
     QUrl url(Omnicast::GH_REPO_CREATE_ISSUE);
     QUrlQuery query;
 
