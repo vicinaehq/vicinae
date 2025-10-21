@@ -26,9 +26,17 @@ void DaemonIpcClient::writeRequest(const Daemon::Request &req) {
 
 void DaemonIpcClient::toggle() {
   QUrl url;
-
   url.setScheme(Omnicast::APP_SCHEME);
   url.setHost("toggle");
+  if (auto res = deeplink(url); !res) {
+    throw std::runtime_error("Failed to toggle: " + res.error().toStdString());
+  }
+}
+
+void DaemonIpcClient::open() {
+  QUrl url;
+  url.setScheme(Omnicast::APP_SCHEME);
+  url.setHost("open");
   if (auto res = deeplink(url); !res) {
     throw std::runtime_error("Failed to toggle: " + res.error().toStdString());
   }

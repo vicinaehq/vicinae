@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Vicinae Deeplink Handler
+GenericName=Vicinae Deeplink Handler
+Comment=Open Vicinae Deeplinks
+Exec=vicinae %u
+Terminal=false
+Icon=vicinae
+Categories=System;Utility;
+NoDisplay=true
+MimeType=x-scheme-handler/vicinae;x-scheme-handler/raycast;
