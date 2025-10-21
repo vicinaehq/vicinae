@@ -47,7 +47,6 @@ bool ClipboardService::setPinned(const QString id, bool pinned) {
 
 bool ClipboardService::clear() {
   QApplication::clipboard()->clear();
-
   return true;
 }
 
