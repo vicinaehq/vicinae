@@ -6,6 +6,7 @@
 #include <QProcessEnvironment>
 #include <cstdlib>
 #include <filesystem>
+#include "version.h"
 
 namespace Environment {
 

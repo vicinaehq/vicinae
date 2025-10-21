@@ -12,6 +12,7 @@
 #include "pid-file/pid-file.hpp"
 #include "proto/extension.pb.h"
 #include "proto/manager.pb.h"
+#include "version.h"
 
 void Bus::sendMessage(const QByteArray &data) {
   QByteArray message;

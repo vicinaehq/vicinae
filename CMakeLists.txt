@@ -99,9 +99,12 @@ message(STATUS "Vicinae commit hash: ${VICINAE_GIT_COMMIT_HASH}")
 
 get_cxx_compiler_name(CXX_COMPILER_NAME)
 
-add_compile_definitions(VICINAE_GIT_TAG="${VICINAE_GIT_TAG}")
-add_compile_definitions(VICINAE_GIT_COMMIT_HASH="${VICINAE_GIT_COMMIT_HASH}")
-add_compile_definitions(VICINAE_PROVENANCE="${VICINAE_PROVENANCE}")
+# Generate version header from template
+configure_file(
+	"${CMAKE_SOURCE_DIR}/cmake/version.h.in"
+	"${CMAKE_BINARY_DIR}/generated/version.h"
+	@ONLY
+)
 
 set(CMARK_LIBRARY "cmark-gfm")
 
