@@ -1,3 +1,4 @@
+#include "daemon/ipc-client.hpp"
 #include "environment.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "favicon/favicon-service.hpp"
@@ -28,7 +29,6 @@
 #include "services/window-manager/window-manager.hpp"
 #include "settings-controller/settings-controller.hpp"
 #include "settings/settings-window.hpp"
-#include "theme/theme-db.hpp"
 #include "ui/launcher-window/launcher-window.hpp"
 #include "vicinae.hpp"
 #include <QString>
@@ -38,21 +38,36 @@
 static char *argv[] = {strdup("command"), nullptr};
 
 void CliServerCommand::setup(CLI::App *app) {
-  app->add_flag("-d,--detach", m_detach, "Run server in the background");
+  app->add_flag("--open", m_open, "Open the main window once the server is started");
+  app->add_flag("--no-replace", m_noReplace, "Exit with non-zero error code if a server is already running");
 }
 
 void CliServerCommand::run(CLI::App *app) {
   int argc = 1;
-  QApplication qapp(argc, argv);
+  PidFile pidFile(Omnicast::APP_ID.toStdString());
+  DaemonIpcClient client;
+  bool killed = false;
 
   qInstallMessageHandler(coloredMessageHandler);
 
-  std::filesystem::create_directories(Omnicast::runtimeDir());
-  PidFile pidFile(Omnicast::APP_ID.toStdString());
+  if (client.connect() && client.ping() && pidFile.exists()) {
+    if (m_noReplace) {
+      std::cerr
+          << "A server is already running. Omit --no-replace if you want to replace the existing instance."
+          << std::endl;
+      exit(1);
+      if (m_open) { client.open(); }
+      return;
+    }
 
-  if (pidFile.exists() && pidFile.kill()) { qInfo() << "Killed existing vicinae instance"; }
+    pidFile.kill();
+    qInfo() << "Killed existing vicinae instance";
+  }
+
+  QApplication qapp(argc, argv);
 
   pidFile.write(qApp->applicationPid());
+  std::filesystem::create_directories(Omnicast::runtimeDir());
 
   {
     auto registry = ServiceRegistry::instance();
@@ -234,7 +249,11 @@ void CliServerCommand::run(CLI::App *app) {
 
   ctx.navigation->launch(std::make_shared<RootCommand>());
 
-  qInfo() << "Vicinae server successfully started. Call \"vicinae toggle\" to toggle the window";
+  if (m_open) {
+    ctx.navigation->showWindow();
+  } else {
+    qInfo() << "Vicinae server successfully started. Call \"vicinae toggle\" to toggle the window";
+  }
 
   qApp->exec();
 }

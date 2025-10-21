@@ -228,10 +228,21 @@ file(REMOVE_RECURSE ${VICINAE_THEME_DIR})
 install(DIRECTORY ./extra/themes DESTINATION ${VICINAE_INSTALL_SHARE})
 
 if (UNIX AND NOT APPLE)
-	# install desktop file
+	# install desktop files
 	set(APP_DIR ${INSTALL_SHARE}/applications)
 	make_directory(${APP_DIR})
 	install(FILES ./extra/vicinae.desktop DESTINATION ${APP_DIR})
+	install(FILES ./extra/vicinae-url-handler.desktop DESTINATION ${APP_DIR})
+
+	# install icon
+	set(ICON_DIR ${INSTALL_SHARE}/icons/hicolor/512x512/apps)
+	make_directory(${ICON_DIR})
+	install(FILES ./extra/vicinae.png DESTINATION ${ICON_DIR})
+
+	# install systemd user service
+	set(SYSTEMD_USER_DIR ${CMAKE_INSTALL_PREFIX}/lib/systemd/user)
+	make_directory(${SYSTEMD_USER_DIR})
+	install(FILES ./extra/vicinae.service DESTINATION ${SYSTEMD_USER_DIR})
 endif()
 
 

@@ -8,5 +8,6 @@ class CliServerCommand : public AbstractCommandLineCommand {
   void run(CLI::App *app) override;
 
 private:
-  bool m_detach = false;
+  bool m_open = false;
+  bool m_noReplace = false;
 };
