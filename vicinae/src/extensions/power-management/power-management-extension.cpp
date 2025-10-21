@@ -31,12 +31,15 @@ public:
     bool shouldConfirm = controller->preferenceValues().value("confirm").toBool();
 
     if (shouldConfirm) {
-      nav->confirmAlert("Are you sure", "High-impact operation, please confirm",
-                        [this, ctx]() { confirm(ctx); });
+      nav->confirmAlert("Are you sure", "High-impact operation, please confirm", [this, ctx, &nav]() {
+        confirm(ctx);
+        nav->closeWindow();
+      });
       return;
     }
 
     confirm(controller->context());
+    nav->closeWindow();
   }
 
   /**
@@ -78,12 +81,12 @@ class LockCommand : public BuiltinCallbackCommand {
 
       process.start(program);
       if (!process.waitForFinished()) { toast->failure("Failed to lock using custom program " + program); }
-
-      return;
+    } else {
+      if (!pm->provider()->canLock()) { return toast->failure("System can't lock"); }
+      if (!pm->provider()->lock()) { return toast->failure("Failed to lock"); }
     }
 
-    if (!pm->provider()->canLock()) { return toast->failure("System can't lock"); }
-    if (!pm->provider()->lock()) { return toast->failure("Failed to lock"); }
+    ctx->navigation->closeWindow();
   }
 };
 
