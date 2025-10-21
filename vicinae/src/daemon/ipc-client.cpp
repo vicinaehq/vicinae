@@ -38,7 +38,16 @@ void DaemonIpcClient::open() {
   url.setScheme(Omnicast::APP_SCHEME);
   url.setHost("open");
   if (auto res = deeplink(url); !res) {
-    throw std::runtime_error("Failed to toggle: " + res.error().toStdString());
+    throw std::runtime_error("Failed to open: " + res.error().toStdString());
+  }
+}
+
+void DaemonIpcClient::close() {
+  QUrl url;
+  url.setScheme(Omnicast::APP_SCHEME);
+  url.setHost("close");
+  if (auto res = deeplink(url); !res) {
+    throw std::runtime_error("Failed to close: " + res.error().toStdString());
   }
 }
 
