@@ -5,6 +5,8 @@
 
 class WlrClipboardServer : public AbstractClipboardServer {
 public:
+  static constexpr const char *ENTRYPOINT = "wlr-clip";
+
   WlrClipboardServer();
   bool start() override;
   bool stop() override;

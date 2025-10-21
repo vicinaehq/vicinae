@@ -590,7 +590,9 @@ ClipboardService::ClipboardService(const std::filesystem::path &path, WindowMana
     ClipboardServerFactory factory;
 
     factory.registerServer<GnomeClipboardServer>();
+#ifdef WLR_DATA_CONTROL
     factory.registerServer<WlrClipboardServer>();
+#endif
     factory.registerServer<X11ClipboardServer>();
     m_clipboardServer = factory.createFirstActivatable();
     qInfo() << "Activated clipboard server" << m_clipboardServer->id();
