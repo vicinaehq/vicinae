@@ -4,8 +4,10 @@
 #include <QString>
 #include <QApplication>
 #include <QProcessEnvironment>
+#include <algorithm>
 #include <cstdlib>
 #include <filesystem>
+#include <qtenvironmentvariables.h>
 #include "version.h"
 
 namespace Environment {
@@ -29,11 +31,17 @@ inline bool isWlrootsCompositor() {
          desktop.contains("river", Qt::CaseInsensitive);
 }
 
+inline bool isCosmicDesktop() {
+  auto dd = xdgpp::currentDesktop();
+  return std::ranges::find(dd, "COSMIC") != dd.end();
+}
+
 inline bool isLayerShellEnabled() {
 #ifndef WAYLAND_LAYER_SHELL
   return false;
 #endif
-  return isWaylandSession() && !isGnomeEnvironment() && qEnvironmentVariable("USE_LAYER_SHELL", "1") == "1";
+  if (auto value = qEnvironmentVariable("USE_LAYER_SHELL"); !value.isEmpty()) { return value == "1"; }
+  return isWaylandSession() && !isCosmicDesktop() && !isGnomeEnvironment();
 }
 
 inline bool isHudDisabled() {
