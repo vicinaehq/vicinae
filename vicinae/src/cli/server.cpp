@@ -39,7 +39,7 @@ static char *argv[] = {strdup("command"), nullptr};
 
 void CliServerCommand::setup(CLI::App *app) {
   app->add_flag("--open", m_open, "Open the main window once the server is started");
-  app->add_flag("--replace", m_replace, "If a server is already running, kill it and start a new one");
+  app->add_flag("--no-replace", m_noReplace, "Exit with non-zero error code if a server is already running");
 }
 
 void CliServerCommand::run(CLI::App *app) {
@@ -51,9 +51,10 @@ void CliServerCommand::run(CLI::App *app) {
   qInstallMessageHandler(coloredMessageHandler);
 
   if (client.connect() && client.ping() && pidFile.exists()) {
-    if (!m_replace) {
-      std::cerr << "A server is already running. Pass --replace if you want to replace the existing instance."
-                << std::endl;
+    if (m_noReplace) {
+      std::cerr
+          << "A server is already running. Omit --no-replace if you want to replace the existing instance."
+          << std::endl;
       exit(1);
       if (m_open) { client.open(); }
       return;

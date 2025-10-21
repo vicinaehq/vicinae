@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
-Name=Vicinae
-GenericName=Vicinae
+Name=Vicinae Deeplink Handler
+GenericName=Vicinae Deeplink Handler
 Comment=Open Vicinae Deeplinks
 Exec=vicinae %u
 Terminal=false
