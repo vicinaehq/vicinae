@@ -15,6 +15,7 @@
 #include "vicinae.hpp"
 #include "wlr-clip/app.hpp"
 #include "services/clipboard/wlr/wlr-clipboard-server.hpp"
+#include "version.h"
 
 class CliPing : public AbstractCommandLineCommand {
   std::string id() const override { return "ping"; }

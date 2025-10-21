@@ -3,6 +3,7 @@
 #include <qapplication.h>
 #include <qurlquery.h>
 #include "lib/os-release.hpp"
+#include "version.h"
 
 static const QString ISSUE_TEMPLATE = R"(**System information**
 
