@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 OPTION(XDGPP_BUILD_TESTS "Build the xdgpp test suite" OFF)
+OPTION(XDGPP_INSTALL "Install xdgpp library and headers" ON)
 
 add_library(${PROJECT_NAME}
 	xdgpp/locale/locale.cpp
@@ -27,20 +28,22 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
-install(TARGETS ${PROJECT_NAME}
-    EXPORT ${PROJECT_NAME}Targets
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-    RUNTIME DESTINATION bin
-    INCLUDES DESTINATION include
-)
+if(XDGPP_INSTALL)
+    install(TARGETS ${PROJECT_NAME}
+        EXPORT ${PROJECT_NAME}Targets
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+        RUNTIME DESTINATION bin
+        INCLUDES DESTINATION include
+    )
 
-install(DIRECTORY xdgpp
-    DESTINATION include
-    FILES_MATCHING 
-    PATTERN "*.hpp"
-    PATTERN "*.h"
-)
+    install(DIRECTORY xdgpp
+        DESTINATION include
+        FILES_MATCHING
+        PATTERN "*.hpp"
+        PATTERN "*.h"
+    )
+endif()
 
 if (XDGPP_BUILD_TESTS)
 	set(TEST_TARGET tests)
