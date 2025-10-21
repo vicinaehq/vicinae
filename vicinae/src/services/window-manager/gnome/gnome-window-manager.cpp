@@ -189,23 +189,31 @@ AbstractWindowManager::WindowList GnomeWindowManager::listWindowsSync() const {
 }
 
 std::shared_ptr<AbstractWindowManager::AbstractWindow> GnomeWindowManager::getFocusedWindowSync() const {
-  qDebug() << "GnomeWindowManager: Getting focused window";
+  qDebug() << "GnomeWindowManager: Getting focused window via D-Bus";
 
-  // Get all windows and find the focused one
-  auto windows = listWindowsSync();
-
-  for (const auto &window : windows) {
-    // Cast to GnomeWindow to access GNOME-specific properties
-    if (auto gnomeWindow = std::dynamic_pointer_cast<GnomeWindow>(window)) {
-      if (gnomeWindow->focused()) {
-        qDebug() << "GnomeWindowManager: Found focused window:" << gnomeWindow->title();
-        return gnomeWindow;
-      }
-    }
+  // Use the D-Bus method that handles Vicinae window filtering
+  QString response = callDBusMethod("GetFocusedWindowSync");
+  if (response.isEmpty()) {
+    qWarning() << "GnomeWindowManager: No response from GetFocusedWindowSync method";
+    return nullptr;
   }
 
-  qDebug() << "GnomeWindowManager: No focused window found";
-  return nullptr;
+  QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
+  if (doc.isNull() || !doc.isObject()) {
+    qWarning() << "GnomeWindowMinto clipboard and window managementanager: Invalid JSON response from GetFocusedWindowSync";
+    return nullptr;
+  }
+
+  QJsonObject windowObj = doc.object();
+  if (windowObj.isEmpty()) {
+    qDebug() << "GnomeWindowManager: No focused window (null response)";
+    return nullptr;
+  }
+
+  // Create a GnomeWindow from the response
+  auto window = std::make_shared<GnomeWindow>(windowObj);
+  qDebug() << "GnomeWindowManager: Found focused window:" << window->title();
+  return window;
 }
 
 void GnomeWindowManager::focusWindowSync(const AbstractWindow &window) const {
@@ -479,4 +487,49 @@ bool GnomeWindowManager::matchWmClassWithDesktopSuffix(const QString &windowWmCl
   if (targetClass.endsWith(".desktop") && windowWmClass == targetClass.chopped(8)) { return true; }
 
   return false;
+}
+
+bool GnomeWindowManager::sendShortcutSync(const AbstractWindow &window, const Keyboard::Shortcut &shortcut) {
+  qDebug() << "GnomeWindowManager: Sending shortcut to window:" << window.title();
+
+  // Cast to GnomeWindow to get numeric ID
+  const GnomeWindow *gnomeWindow = dynamic_cast<const GnomeWindow *>(&window);
+  if (!gnomeWindow) {
+    qWarning() << "GnomeWindowManager: Window is not a GnomeWindow instance";
+    return false;
+  }
+
+  uint32_t windowId = gnomeWindow->numericId();
+  if (windowId == 0) {
+    qWarning() << "GnomeWindowManager: Invalid window ID";
+    return false;
+  }
+
+  // Convert modifiers to string format expected by GNOME extension
+  QStringList modStrings;
+  if (shortcut.mods().testFlag(Qt::KeyboardModifier::ControlModifier)) { modStrings << "CONTROL"; }
+  if (shortcut.mods().testFlag(Qt::KeyboardModifier::ShiftModifier)) { modStrings << "SHIFT"; }
+  if (shortcut.mods().testFlag(Qt::KeyboardModifier::AltModifier)) { modStrings << "ALT"; }
+  if (shortcut.mods().testFlag(Qt::KeyboardModifier::MetaModifier)) { modStrings << "SUPER"; }
+
+  QString modifiersStr = modStrings.join("|");
+  if (modifiersStr.isEmpty()) { modifiersStr = "NONE"; }
+
+  // Convert Qt key to string
+  QString keyStr = QKeySequence(shortcut.key()).toString().toLower();
+
+  qDebug() << "GnomeWindowManager: Sending shortcut - key:" << keyStr << "modifiers:" << modifiersStr
+           << "to window ID:" << windowId;
+
+  QVariantList args;
+  args << windowId << keyStr << modifiersStr;
+
+  bool success = callDBusMethodVoid("SendShortcut", args);
+  if (success) {
+    qDebug() << "GnomeWindowManager: Successfully sent shortcut to window ID:" << windowId;
+  } else {
+    qWarning() << "GnomeWindowManager: Failed to send shortcut to window ID:" << windowId;
+  }
+
+  return success;
 }

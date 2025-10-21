@@ -69,7 +69,12 @@ public:
   void start() override;
 
   // GNOME-specific capabilities
-  bool supportsInputForwarding() const override { return false; } // Not implemented yet
+  bool supportsInputForwarding() const override { return true; } // Now implemented
+
+  /**
+   * Send a keyboard shortcut to a specific window
+   */
+  bool sendShortcutSync(const AbstractWindow &window, const Keyboard::Shortcut &shortcut) override;
 
   /**
    * Get detailed information for a specific window
