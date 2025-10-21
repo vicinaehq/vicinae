@@ -1,5 +1,6 @@
 #pragma once
 #include "vicinae.hpp"
+#include "xdgpp/desktop-entry/iterator.hpp"
 #include "xdgpp/env/env.hpp"
 #include <QString>
 #include <QApplication>
@@ -96,14 +97,14 @@ inline QString version() { return VICINAE_GIT_TAG; }
  */
 inline QString getEnvironmentDescription() {
   QString desc;
+  const QString desktop = qgetenv("XDG_CURRENT_DESKTOP");
 
-  if (isGnomeEnvironment()) {
+  if (!desktop.isEmpty()) {
+    desc = desktop;
+  } else if (isGnomeEnvironment()) {
     desc = "GNOME";
   } else if (isWlrootsCompositor()) {
     desc = "wlroots";
-  } else {
-    const QString desktop = qgetenv("XDG_CURRENT_DESKTOP");
-    desc = desktop.isEmpty() ? "Unknown" : desktop;
   }
 
   if (isWaylandSession()) {
