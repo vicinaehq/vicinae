@@ -1,7 +1,7 @@
 <p align="center">
   <img
-    width="500"
-    src=".github/assets/vicinae-banner.png"
+    width="100"
+    src="extra/vicinae.png"
     alt="Vicinae text logo"
   />
 </p>
