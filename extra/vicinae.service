@@ -2,7 +2,6 @@
 Description=Vicinae Launcher Daemon
 Documentation=https://docs.vicinae.com
 After=graphical-session.target
-Wants=graphical-session.target
 Requires=dbus.socket
 PartOf=graphical-session.target
 
