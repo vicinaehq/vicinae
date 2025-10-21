@@ -38,6 +38,26 @@ class ToggleCommand : public AbstractCommandLineCommand {
   }
 };
 
+class OpenCommand : public AbstractCommandLineCommand {
+  std::string id() const override { return "open"; }
+  std::string description() const override { return "Open the vicinae window"; }
+
+  void run(CLI::App *app) override {
+    DaemonIpcClient client;
+    client.open();
+  }
+};
+
+class CloseCommand : public AbstractCommandLineCommand {
+  std::string id() const override { return "close"; }
+  std::string description() const override { return "Close the vicinae window"; }
+
+  void run(CLI::App *app) override {
+    DaemonIpcClient client;
+    client.close();
+  }
+};
+
 class DMenuCommand : public AbstractCommandLineCommand {
   std::string id() const override { return "dmenu"; }
   std::string description() const override { return "Render a list view from stdin"; }
@@ -169,6 +189,8 @@ int CommandLineInterface::execute(int ac, char **av) {
   app.registerCommand<CliServerCommand>();
   app.registerCommand<CliPing>();
   app.registerCommand<ToggleCommand>();
+  app.registerCommand<OpenCommand>();
+  app.registerCommand<CloseCommand>();
   app.registerCommand<DeeplinkCommand>();
   app.registerCommand<DMenuCommand>();
   app.registerCommand<ThemeCommand>();

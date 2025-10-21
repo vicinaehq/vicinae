@@ -2,13 +2,18 @@
 Type=Application
 Name=Vicinae
 GenericName=Vicinae
-Comment=A focused launcher for your desktop — native, fast, extensible
-Exec=/bin/sh -c "vicinae server --no-replace || vicinae toggle"
+Comment=A focused launcher for your desktop
+Exec=/bin/sh -c "vicinae server --no-replace || vicinae open"
 Terminal=false
 Icon=vicinae
 Categories=Utility;Launcher;Accessibility;
 NoDisplay=false
+Actions=restart;close
 
 [Desktop Action restart]
 Name=Restart Vicinae Server
 Exec=vicinae server --replace
+
+[Desktop Action close]
+Name=Close Vicinae Window
+Exec=vicinae close
