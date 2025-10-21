@@ -102,8 +102,6 @@ add_compile_definitions(VICINAE_GIT_TAG="${VICINAE_GIT_TAG}")
 add_compile_definitions(VICINAE_GIT_COMMIT_HASH="${VICINAE_GIT_COMMIT_HASH}")
 add_compile_definitions(VICINAE_PROVENANCE="${VICINAE_PROVENANCE}")
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/lib)
-
 set(CMARK_LIBRARY "cmark-gfm")
 
 if (NOT USE_SYSTEM_RAPIDFUZZ)
@@ -216,10 +214,6 @@ endif()
 
 add_compile_definitions(BUILD_INFO="${BUILD_INFO}")
 add_subdirectory(vicinae)
-
-if (WLR_DATA_CONTROL)
-	add_subdirectory(lib/wlr-clip)
-endif()
 
 set(INSTALL_SHARE ${CMAKE_INSTALL_PREFIX}/share)
 set(VICINAE_INSTALL_SHARE ${INSTALL_SHARE}/vicinae)

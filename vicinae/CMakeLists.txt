@@ -621,14 +621,7 @@ if (LIBQALCULATE_BACKEND)
 	)
 endif()
 
-if (WLR_DATA_CONTROL)
-	add_compile_definitions(WLR_DATA_CONTROL=1)
-	list(APPEND LIBS wlrclip)
-	list(APPEND SRCS
-		src/services/clipboard/wlr/wlr-clipboard-server.hpp
-		src/services/clipboard/wlr/wlr-clipboard-server.cpp
-	)
-endif()
+
 
 if (TYPESCRIPT_EXTENSIONS)
 	list(APPEND SRCS ${CMAKE_CURRENT_BINARY_DIR}/resources.qrc)
@@ -655,8 +648,26 @@ if (UNIX AND NOT APPLE)
 		# Hyprland
 		# End Hyprland
 	)
+
     include("Wayland")
+
     wayland_generate_protocol("${CMAKE_CURRENT_SOURCE_DIR}/protocols/wlr-foreign-toplevel-management-unstable-v1.xml")
+
+	if (WLR_DATA_CONTROL)
+		add_compile_definitions(WLR_DATA_CONTROL=1)
+		list(APPEND SRCS
+			src/wlr-clip/app.cpp
+			src/wlr-clip/data-control-client.cpp
+			src/wlr-clip/display.cpp
+			src/wlr-clip/registry.cpp
+			src/wlr-clip/seat.cpp
+			src/wlr-clip/data-device.cpp
+			src/wlr-clip/data-offer.cpp
+			src/services/clipboard/wlr/wlr-clipboard-server.hpp
+			src/services/clipboard/wlr/wlr-clipboard-server.cpp
+		)
+		wayland_generate_protocol("${CMAKE_CURRENT_SOURCE_DIR}/protocols/wlr-data-control-unstable-v1.xml")
+	endif()
 endif()
 	
 

@@ -13,7 +13,7 @@
 #include "lib/rang.hpp"
 #include <exception>
 #include "vicinae.hpp"
-#include "wlr-clip/src/app.hpp"
+#include "wlr-clip/app.hpp"
 #include "services/clipboard/wlr/wlr-clipboard-server.hpp"
 
 class CliPing : public AbstractCommandLineCommand {
