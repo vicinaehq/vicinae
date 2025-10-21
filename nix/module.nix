@@ -1,4 +1,4 @@
-{
+self: {
   config,
   pkgs,
   lib,
@@ -6,7 +6,9 @@
 }:
 let
   cfg = config.services.vicinae;
-  vicinaePkg = pkgs.callPackage ./vicinae.nix { };
+
+  inherit (pkgs.stdenv.hostPlatform) system;
+  vicinaePkg = self.packages.${system}.default;
 in
 {
 
