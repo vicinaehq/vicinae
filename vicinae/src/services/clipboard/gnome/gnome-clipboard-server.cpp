@@ -209,3 +209,59 @@ void GnomeClipboardServer::attemptReconnection() {
     m_reconnectTimer->start();
   }
 }
+
+bool GnomeClipboardServer::setClipboardContent(QMimeData *data) {
+  if (!m_interface || !m_interface->isValid()) {
+    qWarning() << "GnomeClipboardServer: D-Bus interface not available";
+    return false;
+  }
+
+  QStringList formats = data->formats();
+  QString preferredFormat = selectPreferredFormat(formats);
+
+  if (preferredFormat.isEmpty()) {
+    qWarning() << "GnomeClipboardServer: No supported formats in QMimeData";
+    return false;
+  }
+
+  QByteArray contentData = data->data(preferredFormat);
+  if (contentData.isEmpty()) {
+    qWarning() << "GnomeClipboardServer: Empty data for format" << preferredFormat;
+    return false;
+  }
+
+  qDebug() << "GnomeClipboardServer: Setting clipboard content" << preferredFormat << contentData.size()
+           << "bytes";
+
+  return preferredFormat.startsWith("text/") ? setTextContent(data->text())
+                                             : setBinaryContent(contentData, preferredFormat);
+}
+
+QString GnomeClipboardServer::selectPreferredFormat(const QStringList &formats) {
+  if (formats.contains("text/plain")) return "text/plain";
+  if (formats.contains("text/html")) return "text/html";
+
+  for (const QString &format : formats) {
+    if (format.startsWith("image/")) return format;
+  }
+
+  return formats.isEmpty() ? QString() : formats.first();
+}
+
+bool GnomeClipboardServer::setTextContent(const QString &text) {
+  QDBusReply<void> reply = m_interface->call("SetContent", text);
+  if (!reply.isValid()) {
+    qWarning() << "GnomeClipboardServer: Failed to set text content:" << reply.error().message();
+    return false;
+  }
+  return true;
+}
+
+bool GnomeClipboardServer::setBinaryContent(const QByteArray &data, const QString &mimeType) {
+  QDBusReply<void> reply = m_interface->call("SetContentBinary", data, mimeType);
+  if (!reply.isValid()) {
+    qWarning() << "GnomeClipboardServer: Failed to set binary content:" << reply.error().message();
+    return false;
+  }
+  return true;
+}

@@ -163,16 +163,13 @@ bool ClipboardService::copyHtml(const Clipboard::Html &data, const Clipboard::Co
 }
 
 bool ClipboardService::copyText(const QString &text, const Clipboard::CopyOptions &options) {
-  QClipboard *clipboard = QApplication::clipboard();
   auto mimeData = new QMimeData;
 
   mimeData->setData("text/plain", text.toUtf8());
 
   if (options.concealed) mimeData->setData(Clipboard::CONCEALED_MIME_TYPE, "1");
 
-  clipboard->setMimeData(mimeData);
-
-  return true;
+  return copyQMimeData(mimeData, options);
 }
 
 QFuture<PaginatedResponse<ClipboardHistoryEntry>>
@@ -495,13 +492,9 @@ std::optional<ClipboardSelection> ClipboardService::retrieveSelectionById(const 
 }
 
 bool ClipboardService::copyQMimeData(QMimeData *data, const Clipboard::CopyOptions &options) {
-  QClipboard *clipboard = QApplication::clipboard();
-
   if (options.concealed) { data->setData(Clipboard::CONCEALED_MIME_TYPE, "1"); }
 
-  clipboard->setMimeData(data);
-
-  return true;
+  return m_clipboardServer->setClipboardContent(data);
 }
 
 bool ClipboardService::copySelection(const ClipboardSelection &selection,
