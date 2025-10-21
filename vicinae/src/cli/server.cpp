@@ -33,6 +33,7 @@
 #include "vicinae.hpp"
 #include <QString>
 #include <qlogging.h>
+#include <qstylefactory.h>
 #include "lib/CLI11.hpp"
 #include "server.hpp"
 
@@ -67,6 +68,8 @@ void CliServerCommand::run(CLI::App *app) {
 
   QApplication qapp(argc, argv);
 
+  // discard system specific qt theming
+  qapp.setStyle(QStyleFactory::create("fusion"));
   pidFile.write(qApp->applicationPid());
   std::filesystem::create_directories(Omnicast::runtimeDir());
 
