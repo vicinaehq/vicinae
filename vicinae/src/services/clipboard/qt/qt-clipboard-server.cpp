@@ -18,16 +18,32 @@ void AbstractQtClipboardServer::dataChanged() {
   auto mimeData = clip->mimeData();
 
   if (mimeData->hasImage()) {
-    ClipboardDataOffer offer;
-    QImage image = qvariant_cast<QImage>(mimeData->imageData());
-    QByteArray data;
-    QBuffer buf(&data);
+    // Prefer image formats in order: PNG > JPEG/JPG > SVG > anything else
+    auto formats = mimeData->formats();
+    QString selectedFormat;
 
-    buf.open(QIODevice::WriteOnly);
+    if (formats.contains("image/png")) {
+      selectedFormat = "image/png";
+    } else if (formats.contains("image/jpeg")) {
+      selectedFormat = "image/jpeg";
+    } else if (formats.contains("image/jpg")) {
+      selectedFormat = "image/jpg";
+    } else if (formats.contains("image/svg+xml")) {
+      selectedFormat = "image/svg+xml";
+    } else {
+      // Find any other image format
+      for (const auto &format : formats) {
+        if (format.startsWith("image/")) {
+          selectedFormat = format;
+          break;
+        }
+      }
+    }
 
-    if (image.save(&buf, "png")) {
-      offer.mimeType = "image/png";
-      offer.data = data;
+    if (!selectedFormat.isEmpty()) {
+      ClipboardDataOffer offer;
+      offer.mimeType = selectedFormat;
+      offer.data = mimeData->data(selectedFormat);
       selection.offers.emplace_back(offer);
     }
   }
