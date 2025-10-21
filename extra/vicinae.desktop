@@ -6,7 +6,7 @@ Comment=A focused launcher for your desktop
 Exec=/bin/sh -c "vicinae server --no-replace || vicinae open"
 Terminal=false
 Icon=vicinae
-Categories=Utility;Launcher;Accessibility;
+Categories=Utility;Accessibility;
 NoDisplay=false
 Actions=restart;close
 
