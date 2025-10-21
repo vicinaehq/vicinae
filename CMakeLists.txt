@@ -53,6 +53,7 @@ if (APPLE)
 endif()
 
 if (UNIX AND NOT APPLE)
+	set(XDGPP_INSTALL OFF CACHE BOOL "Don't install xdgpp when building vicinae" FORCE)
 	add_subdirectory("./lib/xdgpp")
 endif()
 
