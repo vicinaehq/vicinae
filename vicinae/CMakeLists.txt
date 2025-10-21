@@ -39,6 +39,7 @@ include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}/..
 	${Protobuf_INCLUDE_DIRS}
     ${CMAKE_CURRENT_BINARY_DIR}  # For generated headers
+    ${CMAKE_BINARY_DIR}/generated  # For version.h
 )
 
 set(PROTO_SRC_DIR ${CMAKE_SOURCE_DIR}/proto)

@@ -9,6 +9,7 @@
 #include <qwidget.h>
 #include "services/app-service/app-service.hpp"
 #include "vicinae.hpp"
+#include "version.h"
 
 class ContributorWidget : public QWidget {
   Contributor::Contributor m_contrib;
