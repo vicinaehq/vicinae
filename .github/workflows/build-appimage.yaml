@@ -25,11 +25,11 @@ jobs:
 
       - name: Configure CMake
         run: |
-          cmake -S . -B build -G Ninja          \
-          -DCMAKE_BUILD_TYPE=Release            \
-          -DCMAKE_PREFIX_PATH="${INSTALL_DIR}"  \
-          -DUSE_SYSTEM_PROTOBUF=OFF             \
-          -DUSE_SYSTEM_MINIZIP=OFF              \
+          cmake -S . -B build -G Ninja              \
+          -DCMAKE_BUILD_TYPE=Release                \
+          -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}"   \
+          -DUSE_SYSTEM_PROTOBUF=OFF                 \
+          -DUSE_SYSTEM_MINIZIP=OFF                  \
           -DUSE_SYSTEM_RAPIDFUZZ=OFF
 
       - name: Build
