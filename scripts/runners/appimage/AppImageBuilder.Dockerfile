@@ -120,9 +120,8 @@ ARG NODE_VERSION=22.19.0
 RUN apt-get install	-y	\
 	wayland-protocols
 
-RUN git clone --branch v6.18.0 https://github.com/KDE/extra-cmake-modules ecm
-
-RUN cd ecm			\
+RUN git clone --branch v6.18.0 https://github.com/KDE/extra-cmake-modules ecm &&	\
+	cd ecm			\
 	&& mkdir build	\
 	&& cmake 		\
 	-DBUILD_DOC=OFF	\
@@ -132,25 +131,65 @@ RUN cd ecm			\
 	&& cmake --install build	\
 	&& rm -rf /ecm
 
-RUN git clone https://github.com/vicinaehq/layer-shell-qt
-RUN cd layer-shell-qt &&						\
+
+# we install latest cmake cause we depend on some newer features
+RUN git clone https://github.com/Kitware/CMake --branch v4.1.2 &&	\
+	cd CMake &&									\
+	mkdir build &&								\
+	cmake										\
+	-B build && 								\
+	cmake --build build --parallel $(nproc)	&&	\
+	cmake --install build &&					\
+	rm -rf /CMake
+
+RUN git clone https://github.com/vicinaehq/layer-shell-qt &&	\
+	cd layer-shell-qt &&						\
 	mkdir build &&								\
 	cmake										\
 	-DLAYER_SHELL_QT_DECLARATIVE=OFF			\
 	-B build && 								\
-	cmake --build build &&						\
+	cmake --build build --parallel $(nproc) &&	\
 	cmake --install build &&					\
 	rm -rf /layer-shell-qt
 
-# we install latest cmake cause we depend on some newer features
-RUN git clone https://github.com/Kitware/CMake --branch v4.1.2
-RUN cd CMake &&						\
+RUN git clone https://github.com/protocolbuffers/protobuf.git --branch v32.0 &&	\
+	cd protobuf &&																\
 	mkdir build &&								\
 	cmake										\
+	-Dprotobuf_BUILD_TESTS=OFF					\
 	-B build && 								\
-	cmake --build build &&						\
+	cmake --build build --parallel $(nproc) &&	\
 	cmake --install build &&					\
-	rm -rf /CMake
+	rm -rf /protobuf
+
+RUN git clone https://github.com/github/cmark-gfm --branch 0.29.0.gfm.13 &&	\
+	cd cmark-gfm &&															\
+	mkdir build &&															\
+	cmake																	\
+	-DCMAKE_POLICY_VERSION_MINIMUM=3.5										\
+	-DCMARK_TESTS=OFF														\
+	-B build && 															\
+	cmake --build build --parallel $(nproc) &&								\
+	cmake --install build &&												\
+	rm -rf /cmark-gfm
+
+RUN git clone https://github.com/zlib-ng/minizip-ng --branch 4.0.10 &&	\
+	cd minizip-ng &&													\
+	mkdir build &&														\
+	cmake																\
+	-B build && 														\
+	cmake --build build --parallel $(nproc) &&							\
+	cmake --install build &&											\
+	rm -rf /minizip-ng
+
+RUN git clone https://github.com/rapidfuzz/rapidfuzz-cpp --branch v3.3.3 &&	\
+    cd rapidfuzz-cpp &&														\
+	mkdir build &&															\
+	cmake																	\
+	-B build && 															\
+	cmake --build build --parallel $(nproc) &&								\
+	cmake --install build &&												\
+	rm -rf /rapidfuzz-cpp
 
 # install node 22 (used to build the main vicinae binary and bundled in the app image)
 RUN wget https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz

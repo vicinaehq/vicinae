@@ -27,10 +27,7 @@ jobs:
         run: |
           cmake -S . -B build -G Ninja              \
           -DCMAKE_BUILD_TYPE=Release                \
-          -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}"   \
-          -DUSE_SYSTEM_PROTOBUF=OFF                 \
-          -DUSE_SYSTEM_MINIZIP=OFF                  \
-          -DUSE_SYSTEM_RAPIDFUZZ=OFF
+          -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}"
 
       - name: Build
         run: cmake --build build --parallel ${nproc}
