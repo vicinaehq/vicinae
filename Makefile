@@ -50,7 +50,7 @@ appimage:
 	cmake -G Ninja -DCMAKE_INSTALL_PREFIX=./build/install -DUSE_SYSTEM_RAPIDFUZZ=OFF -DUSE_SYSTEM_PROTOBUF=OFF -DUSE_SYSTEM_CMARK_GFM=OFF -DUSE_SYSTEM_MINIZIP=OFF -DVICINAE_PROVENANCE=appimage -B $(BUILD_DIR)
 	cmake --build $(BUILD_DIR)
 	cmake --install $(BUILD_DIR)
-	bash scripts/linuxdeploy.sh ./build/install AppDir
+	./scripts/mkappimage.sh ./build/install AppDir
 .PHONY: appimage
 
 dev: debug

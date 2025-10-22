@@ -141,9 +141,10 @@ jobs:
         run: |
           cmake --install build
 
-      - name: Bundle AppImage
+      - name: Make AppImage
         run: |
-          bash scripts/linuxdeploy.sh "${INSTALL_DIR}" "${APP_DIR}"
+          chmod +x ./scripts/mkappimage.sh
+          ./scripts/mkappimage.sh "${INSTALL_DIR}" "${APP_DIR}"
 
       - name: Create GitHub Release and upload asset
         uses: softprops/action-gh-release@v2

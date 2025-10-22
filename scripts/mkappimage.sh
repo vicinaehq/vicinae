@@ -8,7 +8,7 @@ function die() {
 	exit 1
 }
 
-[ $# -ne 2 ] && die "Usage: ./linuxdeploy.sh <install_dir> <app_dir>"
+[ $# -ne 2 ] && die "Usage: $0 <install_dir> <app_dir>"
 
 command -v linuxdeployqt || die "linuxdeployqt needs to be in PATH"
 
