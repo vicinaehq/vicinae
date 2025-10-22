@@ -327,7 +327,22 @@ main() {
 
 		echo ""
 		echo "🎉 Vicinae $latest_version has been successfully installed!"
-		echo "You can now run 'vicinae' from anywhere in your terminal."
+		echo ""
+
+		local local_bin_path="$HOME/.local/bin"
+		if [[ ":$PATH:" == *":$local_bin_path:"* ]]; then
+			echo "✓ ~/.local/bin is already in your PATH"
+			echo "You can now run 'vicinae' from anywhere in your terminal."
+		else
+			echo "To use Vicinae, add ~/.local/bin to your PATH:"
+			echo "  export PATH=\"\$HOME/.local/bin:\$PATH\""
+			echo ""
+			echo "You can add this to your shell profile (~/.bashrc, ~/.zshrc, etc.) for permanent access."
+			echo "Then restart your terminal or run the export command above."
+		fi
+
+		echo ""
+		echo "Check the quickstart section for your Desktop Environment at https://docs.vicinae.com"
 	else
 		echo "✓ Vicinae is already up to date ($installed_version)"
 	fi
