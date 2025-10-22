@@ -93,7 +93,7 @@ RUN ./configure					\
     -release					\
     -ltcg						\
     -reduce-exports				\
-    -prefix /opt/qt				\
+    -prefix ${INSTALL_DIR}		\
     -xcb						\
     -feature-wayland-client		\
     -no-feature-wayland-server	\
@@ -132,19 +132,25 @@ RUN cd ecm			\
 	&& cmake --install build	\
 	&& rm -rf /ecm
 
-ENV PATH="/opt/qt/bin:${PATH}"
-
 RUN git clone https://github.com/vicinaehq/layer-shell-qt
 RUN cd layer-shell-qt &&						\
 	mkdir build &&								\
 	cmake										\
-	-DCMAKE_PREFIX_PATH="/opt/qt:${CMAKE_PREFIX_PATH}"	\
-	-DCMAKE_INSTALL_PREFIX=/opt/layer-shell		\
 	-DLAYER_SHELL_QT_DECLARATIVE=OFF			\
 	-B build && 								\
 	cmake --build build &&						\
 	cmake --install build &&					\
 	rm -rf /layer-shell-qt
+
+# we install latest cmake cause we depend on some newer features
+RUN git clone https://github.com/Kitware/CMake --branch v4.1.2
+RUN cd CMake &&						\
+	mkdir build &&								\
+	cmake										\
+	-B build && 								\
+	cmake --build build &&						\
+	cmake --install build &&					\
+	rm -rf /CMake
 
 # install node 22 (used to build the main vicinae binary and bundled in the app image)
 RUN wget https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz
@@ -207,24 +213,25 @@ RUN apt-get update \
 		qtkeychain-qt6-dev	\
 		libqalculate-dev	\
 		libminizip-dev		\
+		squashfs-tools		\
+		ccache				\
 		wayland-protocols	\
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=deps-builder /opt/gcc /opt/gcc
-COPY --from=deps-builder /opt/qt /opt/qt
-COPY --from=deps-builder /opt/layer-shell /opt/layer-shell
+COPY --from=deps-builder /usr/local /usr/local
 COPY --from=deps-builder /opt/node /opt/node
 
 RUN wget -O linuxdeployqt https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage
 RUN chmod +x linuxdeployqt && mv linuxdeployqt /usr/local/bin/linuxdeployqt
 
-ENV PATH="/opt/gcc/bin:/opt/qt/bin:/opt/node/bin:${PATH}"
-ENV LD_LIBRARY_PATH="/opt/gcc/lib64:/opt/qt/lib:/opt/layer-shell/lib:/opt/node/lib:${LD_LIBRARY_PATH}"
-ENV PKG_CONFIG_PATH="/opt/qt/lib/pkgconfig:/opt/layer-shell/lib/pkgconfig:${PKG_CONFIG_PATH}"
-ENV CMAKE_PREFIX_PATH="/opt/qt:/opt/layer-shell:${CMAKE_PREFIX_PATH}"
+ENV PATH="/opt/gcc/bin:/opt/node/bin:${PATH}"
+ENV LD_LIBRARY_PATH="/opt/gcc/lib64:/usr/local/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH}"
 ENV CC=/opt/gcc/bin/gcc
 ENV CXX=/opt/gcc/bin/g++
+
+RUN git config --global --add safe.directory /work
 
 WORKDIR /work
 

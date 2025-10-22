@@ -3,19 +3,31 @@
 # This is meant to be run from a built vicinae source tree, inside
 # the ubuntu-22.04 based build environment.
 
-APPDIR=$PWD/build/appdir
+function die() {
+	echo $1
+	exit 1
+}
 
-rm -rf $APPDIR
+[ $# -ne 2 ] && die "Usage: ./linuxdeploy.sh <install_dir> <app_dir>"
 
-mkdir -p ${APPDIR}/usr/bin
-mkdir -p ${APPDIR}/usr/lib
+command -v linuxdeployqt || die "linuxdeployqt needs to be in PATH"
 
-cp build/vicinae/vicinae ${APPDIR}/usr/bin/vicinae
+APPDIR=$2
+
+mkdir -p $APPDIR/usr
+cp -r $1/* $APPDIR/usr
+
 cp $(which node) ${APPDIR}/usr/bin/node
 cp extra/vicinae.png ${APPDIR}
 cp extra/vicinae.desktop ${APPDIR}
 
 # for some reason we need this, otherewise libssl is not getting included
-cp /usr/lib/x86_64-linux-gnu/libssl.so.3 ${APPDIR}/usr/lib/
+cp /usr/lib/x86_64-linux-gnu/libssl.so.3 ${APPDIR}/lib/
 
-linuxdeployqt ${APPDIR}/usr/bin/vicinae -verbose=2 -appimage -extra-plugins=platforms/libqwayland-generic.so,platforms/libqwayland-egl.so,wayland-graphics-integration-client,wayland-decoration-client,wayland-shell-integration,tls
+export VERSION="$(git describe --tags --abbrev=0)"
+
+linuxdeployqt					\
+	$APPDIR/usr/bin/vicinae		\
+	-verbose=2					\
+	-appimage					\
+	-extra-plugins=platforms/libqwayland-generic.so,platforms/libqwayland-egl.so,wayland-graphics-integration-client,wayland-decoration-client,wayland-shell-integration,tls

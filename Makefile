@@ -46,19 +46,12 @@ portable:
 	cmake --build $(BUILD_DIR)
 .PHONY: portable
 
-# for the ubuntu22 build environment we build appimage releases in, nothing else
-ubuntu22:
-	cmake -G Ninja -DUSE_SYSTEM_RAPIDFUZZ=OFF -DUSE_SYSTEM_PROTOBUF=OFF -DUSE_SYSTEM_CMARK_GFM=OFF -DUSE_SYSTEM_MINIZIP=OFF -B $(BUILD_DIR)
+appimage:
+	cmake -G Ninja -DCMAKE_INSTALL_PREFIX=./build/install -DUSE_SYSTEM_RAPIDFUZZ=OFF -DUSE_SYSTEM_PROTOBUF=OFF -DUSE_SYSTEM_CMARK_GFM=OFF -DUSE_SYSTEM_MINIZIP=OFF -DVICINAE_PROVENANCE=appimage -B $(BUILD_DIR)
 	cmake --build $(BUILD_DIR)
-.PHONY: ubuntu22
-
-appimage: ubuntu22
-	bash ./scripts/linuxdeploy.sh
+	cmake --install $(BUILD_DIR)
+	bash scripts/linuxdeploy.sh ./build/install AppDir
 .PHONY: appimage
-
-appimage-pack:
-	bash scripts/linuxdeploy.sh
-.PHONY: appimage-pack
 
 dev: debug
 .PHONY: dev
