@@ -22,9 +22,7 @@ cp extra/vicinae.png ${APPDIR}
 cp extra/vicinae.desktop ${APPDIR}
 
 # for some reason we need this, otherewise libssl is not getting included
-cp /usr/lib/x86_64-linux-gnu/libssl.so.3 ${APPDIR}/lib/
-
-export VERSION="$(git describe --tags --abbrev=0)"
+cp /usr/lib/x86_64-linux-gnu/libssl.so* ${APPDIR}/usr/lib/
 
 linuxdeployqt					\
 	$APPDIR/usr/bin/vicinae		\
