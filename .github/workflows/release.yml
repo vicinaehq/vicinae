@@ -127,11 +127,7 @@ jobs:
             -DCMAKE_POLICY_VERSION_MINIMUM=3.5        \
             -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}"   \
             -DVICINAE_PROVENANCE=appimage             \
-            -DLTO=ON                                  \
-            -DUSE_SYSTEM_PROTOBUF=OFF                 \
-            -DUSE_SYSTEM_CMARK_GFM=OFF                \
-            -DUSE_SYSTEM_MINIZIP=OFF                  \
-            -DUSE_SYSTEM_RAPIDFUZZ=OFF
+            -DLTO=ON
 
       - name: Build
         run: |
