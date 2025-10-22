@@ -106,6 +106,8 @@ jobs:
       contents: write
     env:
       BUILD_TYPE: Release
+      INSTALL_DIR: ${{ github.workspace }}/install
+      APP_DIR: ${{ github.workspace }}/appdir
 
     steps:
       - name: Checkout
@@ -123,6 +125,7 @@ jobs:
           cmake -G Ninja ..                           \
             -DCMAKE_BUILD_TYPE=${BUILD_TYPE}          \
             -DCMAKE_POLICY_VERSION_MINIMUM=3.5        \
+            -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}"   \
             -DVICINAE_PROVENANCE=appimage             \
             -DLTO=ON                                  \
             -DUSE_SYSTEM_PROTOBUF=OFF                 \
@@ -134,8 +137,13 @@ jobs:
         run: |
           cmake --build build --config ${BUILD_TYPE} --parallel $(nproc)
 
+      - name: Install
+        run: |
+          cmake --install build
+
       - name: Bundle AppImage
-        run: make appimage-pack
+        run: |
+          bash scripts/linuxdeploy.sh "${INSTALL_DIR}" "${APP_DIR}"
 
       - name: Create GitHub Release and upload asset
         uses: softprops/action-gh-release@v2
