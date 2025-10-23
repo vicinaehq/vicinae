@@ -127,17 +127,23 @@ struct PendingManagerRequestInfo {
 class ExtensionManager : public QObject {
   Q_OBJECT
 
-  QProcess process;
-  Bus bus;
-  std::vector<std::shared_ptr<Extension>> loadedExtensions;
-  std::unordered_set<QString> m_developmentSessions;
+signals:
+  void managerResponse(const proto::ext::ManagerResponse &res);
+  void extensionRequest(ExtensionRequest *req);
+  void extensionEvent(const ExtensionEvent &event);
+  void started() const;
 
 public:
-  static QString nodeProgram();
-
   ExtensionManager();
 
-  const std::vector<std::shared_ptr<Extension>> &extensions() const;
+  /**
+   * Return the node executable used to spawn the extension manager.
+   * We first look for the first `vicinae-node` binary in PATH and then do the same for `node`.
+   * `vicinae-node` is used by script installations and have a specific name to ensure we do not
+   * create conflict with existing node installations.
+   * If we are running from an appimage, the path to the internal distribution of node is returned.
+   */
+  std::optional<std::filesystem::path> nodeExecutable();
 
   ManagerRequest *requestManager(proto::ext::manager::RequestData *req);
   bool respondToExtension(const QString &requestId, proto::ext::extension::ResponseData *data);
@@ -162,10 +168,8 @@ public:
   void finished(int exitCode, QProcess::ExitStatus status);
   void readError();
 
-signals:
-  void managerResponse(const proto::ext::ManagerResponse &res);
-  void extensionRequest(ExtensionRequest *req);
-  void extensionEvent(const ExtensionEvent &event);
-
-  void started() const;
+private:
+  QProcess m_process;
+  Bus m_bus;
+  std::unordered_set<QString> m_developmentSessions;
 };
