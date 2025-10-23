@@ -1,5 +1,7 @@
 #pragma once
 #include "services/window-manager/abstract-window-manager.hpp"
+#include "lib/wayland/virtual-keyboard.hpp"
+#include <xkbcommon/xkbcommon-keysyms.h>
 
 class WaylandWindowManager;
 
@@ -39,6 +41,13 @@ public:
 
   bool supportsInputForwarding() const override;
 
+  bool sendShortcutSync(const AbstractWindow &window, const Keyboard::Shortcut &shortcut) override {
+    if (shortcut == Keyboard::Shortcut::osPaste() && m_keyboard.isAvailable()) {
+      return m_keyboard.sendKeySequence(XKB_KEY_V, Wayland::VirtualKeyboard::MOD_CTRL);
+    }
+    return false;
+  }
+
   bool ping() const override;
 
   bool isActivatable() const override;
@@ -52,6 +61,7 @@ public:
   WindowList m_toplevels;
 
 private:
+  Wayland::VirtualKeyboard m_keyboard;
   struct wl_display *m_display;
   struct wl_seat *m_seat;
 };

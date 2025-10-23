@@ -113,7 +113,7 @@ bool WaylandWindowManager::closeWindow(const AbstractWindow &window) const {
   return true;
 }
 
-bool WaylandWindowManager::supportsInputForwarding() const { return false; }
+bool WaylandWindowManager::supportsInputForwarding() const { return m_keyboard.isAvailable(); }
 
 bool WaylandWindowManager::isActivatable() const { return QGuiApplication::platformName() == "wayland"; }
 

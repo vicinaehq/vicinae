@@ -10,7 +10,7 @@ std::vector<std::unique_ptr<AbstractWindowManager>> WindowManager::createCandida
   // XXX - For all new window managers, it is needed to add it to this vector
   std::vector<std::unique_ptr<AbstractWindowManager>> candidates;
 
-  candidates.emplace_back(std::make_unique<HyprlandWindowManager>());
+  // candidates.emplace_back(std::make_unique<HyprlandWindowManager>());
   candidates.emplace_back(std::make_unique<GnomeWindowManager>());
   candidates.emplace_back(std::make_unique<WaylandWindowManager>());
 

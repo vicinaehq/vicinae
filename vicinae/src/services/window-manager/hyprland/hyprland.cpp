@@ -2,6 +2,7 @@
 #include "services/window-manager/abstract-window-manager.hpp"
 #include "services/window-manager/hyprland/hypr-workspace.hpp"
 #include "services/window-manager/hyprland/hyprctl.hpp"
+#include "lib/wayland/virtual-keyboard.hpp"
 
 using Hyprctl = Hyprland::Controller;
 
@@ -106,4 +107,8 @@ AbstractWindowManager::WorkspaceList HyprlandWindowManager::listWorkspaces() con
   return workspaces;
 }
 
-void HyprlandWindowManager::start() { m_ev.start(); }
+void HyprlandWindowManager::start() {
+  Wayland::VirtualKeyboard kb;
+
+  m_ev.start();
+}

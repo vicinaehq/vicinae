@@ -5,7 +5,6 @@
 #include <qpromise.h>
 #include <qstringview.h>
 #include "lib/keyboard/keyboard.hpp"
-#include <ranges>
 #include <qtmetamacros.h>
 #include <vector>
 
@@ -16,6 +15,16 @@
  * implementations.
  */
 class AbstractWindowManager : public QObject {
+  Q_OBJECT
+
+signals:
+  /**
+   * An event invalidating the current list of windows has occured and views
+   * dealing with them should request an update. This typically occurs when a new window is created, close, or
+   * killed.
+   */
+  void windowsChanged() const;
+
 public:
   struct WindowBounds {
     uint32_t x = 0;
@@ -167,13 +176,4 @@ public:
   virtual void start() = 0;
 
 private:
-  Q_OBJECT
-
-signals:
-  /**
-   * An event invalidating the current list of windows has occured and views
-   * dealing with them should request an update. This typically occurs when a new window is created, close, or
-   * killed.
-   */
-  void windowsChanged() const;
 };
