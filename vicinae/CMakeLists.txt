@@ -648,10 +648,19 @@ if (UNIX AND NOT APPLE)
 		src/services/window-manager/gnome/gnome-workspace.cpp
 		src/services/window-manager/gnome/gnome-listener.cpp
 		src/services/window-manager/wayland/wayland.cpp
+		src/services/window-manager/x11/x11-window-manager.cpp
+		src/services/window-manager/x11/x11-window.cpp
 
 		src/lib/wayland/virtual-keyboard.hpp
 		src/lib/wayland/virtual-keyboard.cpp
 	)
+
+	# Add XCB (X11 C Bindings) library for X11 window manager support
+	find_package(X11 REQUIRED)
+	if (X11_FOUND)
+		list(APPEND LIBS X11::xcb)
+		message(STATUS "XCB library found for X11 window manager support")
+	endif()
 
     include("Wayland")
 
