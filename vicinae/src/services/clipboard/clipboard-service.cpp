@@ -83,21 +83,15 @@ bool ClipboardService::copyContent(const Clipboard::Content &content, const Clip
 bool ClipboardService::pasteContent(const Clipboard::Content &content, const Clipboard::CopyOptions options) {
   if (!copyContent(content, options)) return false;
 
-  if (!m_wm.provider()->supportsInputForwarding()) {
-    qWarning()
-        << "pasteContent called but no window manager capable of input forwarding is running. Falling i"
-           "back to regular clipboard copy";
+  if (!m_wm.provider()->supportsPaste()) {
+    qWarning() << "pasteContent called but the current window manager cannot paste, ignoring...";
     return false;
   }
 
   auto window = m_wm.getFocusedWindow();
-  Keyboard::Shortcut shortcut = Keyboard::Shortcut::osPaste();
+  auto app = m_appDb.find(window->wmClass());
 
-  if (auto app = m_appDb.find(window->wmClass())) {
-    if (app->isTerminalEmulator()) { shortcut = shortcut.shifted(); }
-  }
-
-  m_wm.provider()->sendShortcutSync(*window, shortcut);
+  m_wm.provider()->pasteToWindow(*window, app.get());
 
   return true;
 }

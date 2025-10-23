@@ -1,6 +1,7 @@
 #pragma once
 #include "services/window-manager/abstract-window-manager.hpp"
 #include "services/app-service/abstract-app-db.hpp"
+#include "lib/keyboard/keyboard.hpp"
 #include "gnome-window.hpp"
 #include "gnome-listener.hpp"
 #include <QDBusInterface>
@@ -60,6 +61,8 @@ public:
   void focusWindowSync(const AbstractWindow &window) const override;
   bool closeWindow(const AbstractWindow &window) const override;
 
+  bool pasteToWindow(const AbstractWindow &window, const AbstractApplication *app) override;
+
   bool hasWorkspaces() const override { return true; }
   WorkspaceList listWorkspaces() const override;
   std::shared_ptr<AbstractWorkspace> getActiveWorkspace() const override;
@@ -69,12 +72,12 @@ public:
   void start() override;
 
   // GNOME-specific capabilities
-  bool supportsInputForwarding() const override { return true; } // Now implemented
+  bool supportsPaste() const override { return true; } // Now implemented
 
   /**
    * Send a keyboard shortcut to a specific window
    */
-  bool sendShortcutSync(const AbstractWindow &window, const Keyboard::Shortcut &shortcut) override;
+  bool sendShortcutSync(const AbstractWindow &window, const Keyboard::Shortcut &shortcut);
 
   /**
    * Get detailed information for a specific window

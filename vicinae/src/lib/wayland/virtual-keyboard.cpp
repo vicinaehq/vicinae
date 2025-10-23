@@ -33,7 +33,7 @@ VirtualKeyboard::VirtualKeyboard() {
 }
 
 VirtualKeyboard::~VirtualKeyboard() {
-  if (isAvailable()) { releaseMods(); }
+  if (!m_map.empty()) { releaseMods(); }
 }
 
 bool VirtualKeyboard::isAvailable() const { return m_iface && m_keyboard; }

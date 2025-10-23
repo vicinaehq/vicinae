@@ -39,17 +39,9 @@ public:
 
   bool closeWindow(const AbstractWindow &window) const override;
 
-  bool supportsInputForwarding() const override;
-
-  bool sendShortcutSync(const AbstractWindow &window, const Keyboard::Shortcut &shortcut) override {
-    if (shortcut == Keyboard::Shortcut::osPaste() && m_keyboard.isAvailable()) {
-      return m_keyboard.sendKeySequence(XKB_KEY_V, Wayland::VirtualKeyboard::MOD_CTRL);
-    }
-    return false;
-  }
-
+  bool supportsPaste() const override;
+  bool pasteToWindow(const AbstractWindow &window, const AbstractApplication *app) override;
   bool ping() const override;
-
   bool isActivatable() const override;
 
   void start() override;
