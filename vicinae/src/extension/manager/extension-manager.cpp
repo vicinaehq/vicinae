@@ -3,8 +3,8 @@
 #include <filesystem>
 #include <qfuturewatcher.h>
 #include <qlogging.h>
+#include <qstandardpaths.h>
 #include <qstringview.h>
-#include <streambuf>
 #include <string>
 #include <system_error>
 #include <unordered_map>
@@ -13,6 +13,9 @@
 #include "proto/extension.pb.h"
 #include "proto/manager.pb.h"
 #include "version.h"
+#include "vicinae.hpp"
+
+namespace fs = std::filesystem;
 
 void Bus::sendMessage(const QByteArray &data) {
   QByteArray message;
@@ -126,33 +129,57 @@ Bus::Bus(QIODevice *socket) : device(socket) {
 
 // Extension Manager
 
-ExtensionManager::ExtensionManager() : bus(&process) {
+ExtensionManager::ExtensionManager() : m_bus(&m_process) {
   QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
 
   env.insert("VICINAE_VERSION", VICINAE_GIT_TAG);
   env.insert("VICINAE_COMMIT", VICINAE_GIT_COMMIT_HASH);
-  process.setProcessEnvironment(env);
+  m_process.setProcessEnvironment(env);
 
-  connect(&process, &QProcess::readyReadStandardError, this, &ExtensionManager::readError);
-  connect(&process, &QProcess::finished, this, &ExtensionManager::finished);
-  connect(&process, &QProcess::started, this, &ExtensionManager::processStarted);
+  connect(&m_process, &QProcess::readyReadStandardError, this, &ExtensionManager::readError);
+  connect(&m_process, &QProcess::finished, this, &ExtensionManager::finished);
+  connect(&m_process, &QProcess::started, this, &ExtensionManager::processStarted);
 
   /// TODO: implement
   // connect(&bus, &Bus::managerResponse, this, &ExtensionManager::handleManagerResponse);
-  connect(&bus, &Bus::extensionEvent, this,
+  connect(&m_bus, &Bus::extensionEvent, this,
           [this](const proto::ext::QualifiedExtensionEvent &proto) { emit extensionEvent(proto); });
 
-  connect(&bus, &Bus::extensionRequest, this, [this](const proto::ext::QualifiedExtensionRequest &req) {
-    auto request = new ExtensionRequest(bus, req);
+  connect(&m_bus, &Bus::extensionRequest, this, [this](const proto::ext::QualifiedExtensionRequest &req) {
+    auto request = new ExtensionRequest(m_bus, req);
     emit extensionRequest(request);
   });
 }
 
-bool ExtensionManager::isRunning() const { return process.state() == QProcess::ProcessState::Running; }
+bool ExtensionManager::isRunning() const { return m_process.state() == QProcess::ProcessState::Running; }
 
-QString ExtensionManager::nodeProgram() {
-  if (auto appDir = Environment::appImageDir()) { return (*appDir / "bin" / "node").c_str(); }
-  return "node";
+std::optional<fs::path> ExtensionManager::nodeExecutable() {
+  static const std::array<const char *, 2> candidates = {"vicinae-node", "node"};
+
+  if (auto bin = Environment::nodeBinaryOverride()) {
+    std::error_code ec;
+
+    if (fs::is_regular_file(*bin, ec)) { return bin; }
+
+    if (auto path = QStandardPaths::findExecutable(bin->c_str()); !path.isEmpty()) {
+      return path.toStdString();
+    }
+
+    // we do not fallback if we got an explicit override
+    return {};
+  }
+
+  if (auto appDir = Environment::appImageDir()) {
+    std::error_code ec;
+    fs::path path = *appDir / "usr" / "bin" / "node";
+    if (fs::is_regular_file(path, ec)) return path;
+  }
+
+  for (auto candidate : candidates) {
+    if (auto path = QStandardPaths::findExecutable(candidate); !path.isEmpty()) { return path.toStdString(); }
+  }
+
+  return {};
 }
 
 bool ExtensionManager::start() {
@@ -161,83 +188,44 @@ bool ExtensionManager::start() {
   return false;
 #endif
 
-  PidFile pidFile("extension-manager");
   int maxWaitForStart = 5000;
-  std::filesystem::path managerPath;
 
-  if (process.state() == QProcess::Running) { process.close(); }
+  if (m_process.state() == QProcess::Running) { m_process.close(); }
 
-  if (auto path = qEnvironmentVariable("EXT_MANAGER_PATH"); !path.isEmpty()) {
-    managerPath = path.toStdString();
-    qInfo() << "EXT_MANAGER_PATH is set, and will override bundled version" << path;
-  } else {
-    QFile file(":bin/extension-manager");
+  auto node = nodeExecutable();
 
-    if (!file.exists()) {
-      qCritical("Could not find bundled extension runtime. Cannot start extension_manager.");
-      return false;
-    }
-
-    if (!file.open(QIODevice::ReadOnly)) {
-      qCritical("Failed to open bundled extension-runtime for read");
-      return false;
-    }
-
-    auto runtimeFile = new QTemporaryFile(this);
-
-    if (!runtimeFile->open()) {
-      qCritical("Failed to open temporary file to write extension runtime code");
-      return false;
-    }
-
-    runtimeFile->write(file.readAll());
-    managerPath = runtimeFile->fileName().toStdString();
-  }
-
-  if (pidFile.exists() && pidFile.kill()) { qInfo() << "Killed existing extension manager instance"; }
-
-  std::optional<QString> nodeProgram;
-
-  if (auto bin = Environment::nodeBinaryOverride()) {
-    std::error_code ec;
-
-    if (std::filesystem::is_regular_file(*bin, ec)) {
-      qInfo() << "NODE_BIN was set to" << *bin << "using this as the node executable instead";
-      nodeProgram = bin->c_str();
-    } else {
-      qWarning() << "NODE_BIN was set but ignored because" << bin->c_str() << "is not a valid file";
-    }
-  }
-
-  if (auto appDir = Environment::appImageDir(); appDir && !nodeProgram) {
-    nodeProgram = (*appDir / "usr" / "bin" / "node").c_str();
-    qInfo() << "We are running in an AppImage, using bundled node executable at" << nodeProgram;
-  }
-
-  process.start(nodeProgram.value_or("node"), {managerPath.c_str()});
-
-  if (!process.waitForStarted(maxWaitForStart)) {
-    qCritical() << "Failed to start extension manager" << process.errorString();
+  if (!node) {
+    qCritical() << "Unable to find a suitable node executable. TypeScript extensions will not work.";
     return false;
   }
 
-  pidFile.write(process.processId());
+  fs::path managerPath = Omnicast::runtimeDir() / "extension-manager.js";
 
-  qInfo() << "Started extension manager" << managerPath.c_str();
+  QFile::remove(managerPath);
+  QFile::copy(":bin/extension-manager", managerPath.c_str());
+  PidFile pidFile("extension-manager");
+
+  if (pidFile.exists() && pidFile.kill()) { qInfo() << "Killed existing extension manager instance"; }
+
+  m_process.start(node->c_str(), {managerPath.c_str()});
+
+  if (!m_process.waitForStarted(maxWaitForStart)) {
+    qCritical() << "Failed to start extension manager" << m_process.errorString();
+    return false;
+  }
+
+  pidFile.write(m_process.processId());
+  qInfo() << "Started extension manager" << managerPath.c_str() << "with" << node->c_str();
 
   return true;
 }
 
-const std::vector<std::shared_ptr<Extension>> &ExtensionManager::extensions() const {
-  return loadedExtensions;
-}
-
 ManagerRequest *ExtensionManager::requestManager(proto::ext::manager::RequestData *req) {
-  return bus.requestManager(req);
+  return m_bus.requestManager(req);
 }
 
 void ExtensionManager::emitExtensionEvent(proto::ext::QualifiedExtensionEvent *event) {
-  return bus.emitExtensionEvent(event);
+  return m_bus.emitExtensionEvent(event);
 }
 
 void ExtensionManager::addDevelopmentSession(const QString &id) { m_developmentSessions.insert(id); }
@@ -284,7 +272,7 @@ void ExtensionManager::finished(int exitCode, QProcess::ExitStatus status) {
 }
 
 void ExtensionManager::readError() {
-  auto buf = process.readAllStandardError();
+  auto buf = m_process.readAllStandardError();
 
   for (const auto &line : buf.trimmed().split('\n')) {
     qInfo() << "[EXTENSION]" << line;
