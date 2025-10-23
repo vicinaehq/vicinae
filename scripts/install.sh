@@ -8,6 +8,12 @@ INSTALL_DIR="$HOME/.local/vicinae"
 BIN_DIR="$HOME/.local/bin"
 BINARY_NAME="vicinae"
 TEMP_DIR="/tmp"
+THEMES_SYSTEM_DIR="/usr/share/vicinae/themes"
+THEMES_USER_DIR="$HOME/.local/share/vicinae/themes"
+APPLICATIONS_SYSTEM_DIR="/usr/share/applications"
+APPLICATIONS_USER_DIR="$HOME/.local/share/applications"
+SYSTEMD_SERVICE_NAME="vicinae.service"
+SYSTEMD_USER_DIR="$HOME/.config/systemd/user"
 
 TEMP_FILES=()
 PRESERVE_FILES=()
@@ -206,6 +212,69 @@ extract_appimage() {
 	fi
 }
 
+install_themes() {
+	echo "Installing themes..." >&2
+
+	if [[ -d "$THEMES_SYSTEM_DIR" ]]; then
+		mkdir -p "$THEMES_USER_DIR"
+
+		cp -r "$THEMES_SYSTEM_DIR"/* "$THEMES_USER_DIR/" 2>/dev/null || true
+
+		if [[ -n "$(ls -A "$THEMES_USER_DIR" 2>/dev/null)" ]]; then
+			echo "✓ Themes installed to $THEMES_USER_DIR" >&2
+		else
+			echo "Note: No themes found in $THEMES_SYSTEM_DIR" >&2
+		fi
+	else
+		echo "Note: System themes directory not found at $THEMES_SYSTEM_DIR" >&2
+	fi
+}
+
+install_desktop_files() {
+	echo "Installing desktop application files..." >&2
+
+	if [[ -d "$APPLICATIONS_SYSTEM_DIR" ]]; then
+		mkdir -p "$APPLICATIONS_USER_DIR"
+
+		# Copy only vicinae-related desktop files
+		if ls "$APPLICATIONS_SYSTEM_DIR"/vicinae*.desktop >/dev/null 2>&1; then
+			cp "$APPLICATIONS_SYSTEM_DIR"/vicinae*.desktop "$APPLICATIONS_USER_DIR/" 2>/dev/null || true
+			echo "✓ Desktop files installed to $APPLICATIONS_USER_DIR" >&2
+
+			# Update desktop database if available
+			if command -v update-desktop-database >/dev/null 2>&1; then
+				update-desktop-database "$APPLICATIONS_USER_DIR" 2>/dev/null || true
+				echo "✓ Desktop database updated" >&2
+			fi
+		else
+			echo "Note: No vicinae desktop files found in $APPLICATIONS_SYSTEM_DIR" >&2
+		fi
+	else
+		echo "Note: System applications directory not found at $APPLICATIONS_SYSTEM_DIR" >&2
+	fi
+}
+
+install_systemd_service() {
+	echo "Installing systemd user service..." >&2
+
+	local service_source="$INSTALL_DIR/usr/lib/systemd/user/$SYSTEMD_SERVICE_NAME"
+
+	if [[ -f "$service_source" ]]; then
+		mkdir -p "$SYSTEMD_USER_DIR"
+
+		ln -sf "$service_source" "$SYSTEMD_USER_DIR/$SYSTEMD_SERVICE_NAME"
+		echo "✓ Systemd service linked to $SYSTEMD_USER_DIR/$SYSTEMD_SERVICE_NAME" >&2
+
+		# Reload systemd user daemon if available
+		if command -v systemctl >/dev/null 2>&1; then
+			systemctl --user daemon-reload 2>/dev/null || true
+			echo "✓ Systemd user daemon reloaded" >&2
+		fi
+	else
+		echo "Note: Systemd service file not found at $service_source" >&2
+	fi
+}
+
 install_vicinae() {
 	local extract_dir="$1"
 
@@ -227,6 +296,13 @@ install_vicinae() {
 
 		ln -sf "$binary_path" "$BIN_DIR/$BINARY_NAME"
 
+		# Symlink node binary if it exists (to avoid conflicts with system node)
+		local node_path="$INSTALL_DIR/usr/bin/node"
+		if [[ -f "$node_path" ]]; then
+			ln -sf "$node_path" "$BIN_DIR/vicinae-node"
+			echo "✓ Node.js binary symlinked to $BIN_DIR/vicinae-node" >&2
+		fi
+
 		# After successful installation, mark the AppImage for cleanup
 		# (we pass the appimage_path as a second argument now)
 		if [[ -n "${2:-}" ]]; then
@@ -234,6 +310,11 @@ install_vicinae() {
 		fi
 
 		echo "✓ Installation completed" >&2
+
+		# Install themes, desktop files, and systemd service
+		install_themes
+		install_desktop_files
+		install_systemd_service
 	else
 		echo "Error: Vicinae binary not found in extracted files" >&2
 		echo "Looking in: $extract_dir" >&2
@@ -257,6 +338,39 @@ uninstall_vicinae() {
 		echo "✓ Removed binary symlink: $BIN_DIR/$BINARY_NAME"
 	else
 		echo "No binary symlink found"
+	fi
+
+	if [[ -L "$BIN_DIR/vicinae-node" ]]; then
+		rm -f "$BIN_DIR/vicinae-node"
+		echo "✓ Removed Node.js symlink: $BIN_DIR/vicinae-node"
+	fi
+
+	if [[ -d "$THEMES_USER_DIR" ]]; then
+		rm -rf "$THEMES_USER_DIR"
+		echo "✓ Removed themes directory: $THEMES_USER_DIR"
+	fi
+
+	if ls "$APPLICATIONS_USER_DIR"/vicinae*.desktop >/dev/null 2>&1; then
+		rm -f "$APPLICATIONS_USER_DIR"/vicinae*.desktop
+		echo "✓ Removed desktop files from: $APPLICATIONS_USER_DIR"
+		# Update desktop database if available
+		if command -v update-desktop-database >/dev/null 2>&1; then
+			update-desktop-database "$APPLICATIONS_USER_DIR" 2>/dev/null || true
+		fi
+	fi
+
+	if [[ -L "$SYSTEMD_USER_DIR/$SYSTEMD_SERVICE_NAME" ]]; then
+		# Stop and disable the service if it's running
+		if command -v systemctl >/dev/null 2>&1; then
+			systemctl --user stop "$SYSTEMD_SERVICE_NAME" 2>/dev/null || true
+			systemctl --user disable "$SYSTEMD_SERVICE_NAME" 2>/dev/null || true
+		fi
+		rm -f "$SYSTEMD_USER_DIR/$SYSTEMD_SERVICE_NAME"
+		echo "✓ Removed systemd service: $SYSTEMD_USER_DIR/$SYSTEMD_SERVICE_NAME"
+		# Reload systemd user daemon
+		if command -v systemctl >/dev/null 2>&1; then
+			systemctl --user daemon-reload 2>/dev/null || true
+		fi
 	fi
 
 	echo "✓ Vicinae has been uninstalled"

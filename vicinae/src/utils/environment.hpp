@@ -64,7 +64,7 @@ inline std::optional<std::filesystem::path> appImageDir() {
  * extension manager.
  */
 inline std::optional<std::filesystem::path> nodeBinaryOverride() {
-  if (auto bin = getenv("NODE_BIN")) return bin;
+  if (auto bin = getenv("VICINAE_NODE_BIN")) return bin;
   return std::nullopt;
 }
 
