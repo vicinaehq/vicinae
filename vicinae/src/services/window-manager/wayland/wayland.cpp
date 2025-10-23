@@ -1,4 +1,5 @@
 #include "wayland.hpp"
+#include "environment.hpp"
 #include "services/window-manager/abstract-window-manager.hpp"
 
 #include <wayland-client-protocol.h>
@@ -128,7 +129,10 @@ bool WaylandWindowManager::closeWindow(const AbstractWindow &window) const {
 
 bool WaylandWindowManager::supportsPaste() const { return m_keyboard.isAvailable(); }
 
-bool WaylandWindowManager::isActivatable() const { return QGuiApplication::platformName() == "wayland"; }
+// cosmic needs its own top level management protocol integration
+bool WaylandWindowManager::isActivatable() const {
+  return QGuiApplication::platformName() == "wayland" && !Environment::isCosmicDesktop();
+}
 
 bool WaylandWindowManager::ping() const { return m_manager != nullptr; }
 

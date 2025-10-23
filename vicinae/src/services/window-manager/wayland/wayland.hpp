@@ -36,7 +36,6 @@ public:
 
   AbstractWindowManager::WindowPtr getFocusedWindowSync() const override;
   void focusWindowSync(const AbstractWindow &window) const override;
-
   bool closeWindow(const AbstractWindow &window) const override;
 
   bool supportsPaste() const override;
