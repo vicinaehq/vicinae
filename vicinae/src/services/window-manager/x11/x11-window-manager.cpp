@@ -218,26 +218,78 @@ void X11WindowManager::focusWindowSync(const AbstractWindow &window) const {
   const X11Window &x11_window = static_cast<const X11Window &>(window);
   xcb_window_t window_id = x11_window.windowId();
 
-  xcb_atom_t net_active_window = internAtom("_NET_ACTIVE_WINDOW");
-  if (net_active_window == XCB_ATOM_NONE) {
-    qWarning() << "X11WindowManager: Failed to intern _NET_ACTIVE_WINDOW atom";
-    return;
+  // Method 1: Check if window is on a different desktop and switch to it first
+  xcb_atom_t net_wm_desktop = internAtom("_NET_WM_DESKTOP");
+  xcb_atom_t net_current_desktop = internAtom("_NET_CURRENT_DESKTOP");
+
+  if (net_wm_desktop != XCB_ATOM_NONE && net_current_desktop != XCB_ATOM_NONE) {
+    // Get window's desktop
+    xcb_get_property_cookie_t win_desk_cookie =
+        xcb_get_property(conn, 0, window_id, net_wm_desktop, XCB_ATOM_CARDINAL, 0, 1);
+    xcb_get_property_reply_t *win_desk_reply = xcb_get_property_reply(conn, win_desk_cookie, nullptr);
+
+    if (win_desk_reply && xcb_get_property_value_length(win_desk_reply) >= 4) {
+      uint32_t window_desktop = *static_cast<uint32_t *>(xcb_get_property_value(win_desk_reply));
+
+      // Get current desktop
+      xcb_get_property_cookie_t cur_desk_cookie =
+          xcb_get_property(conn, 0, root, net_current_desktop, XCB_ATOM_CARDINAL, 0, 1);
+      xcb_get_property_reply_t *cur_desk_reply = xcb_get_property_reply(conn, cur_desk_cookie, nullptr);
+
+      if (cur_desk_reply && xcb_get_property_value_length(cur_desk_reply) >= 4) {
+        uint32_t current_desktop = *static_cast<uint32_t *>(xcb_get_property_value(cur_desk_reply));
+
+        // If window is on a different desktop, switch to it
+        if (window_desktop != current_desktop && window_desktop != 0xFFFFFFFF) {
+          xcb_client_message_event_t switch_event;
+          memset(&switch_event, 0, sizeof(switch_event));
+          switch_event.response_type = XCB_CLIENT_MESSAGE;
+          switch_event.window = root;
+          switch_event.format = 32;
+          switch_event.type = net_current_desktop;
+          switch_event.data.data32[0] = window_desktop;
+          switch_event.data.data32[1] = XCB_CURRENT_TIME;
+
+          xcb_send_event(conn, 0, root,
+                        XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY,
+                        reinterpret_cast<const char *>(&switch_event));
+        }
+
+        free(cur_desk_reply);
+      }
+
+      free(win_desk_reply);
+    }
   }
 
-  // Send _NET_ACTIVE_WINDOW client message to root window
-  xcb_client_message_event_t event;
-  memset(&event, 0, sizeof(event));
+  // Method 2: Map the window (make it visible)
+  xcb_map_window(conn, window_id);
 
-  event.response_type = XCB_CLIENT_MESSAGE;
-  event.window = window_id;
-  event.format = 32;
-  event.type = net_active_window;
-  event.data.data32[0] = 1;                    // source indication: 1 = application
-  event.data.data32[1] = XCB_CURRENT_TIME;     // timestamp
-  event.data.data32[2] = 0;                    // requestor's currently active window (none)
+  // Method 3: Raise window to top
+  const uint32_t values[] = {XCB_STACK_MODE_ABOVE};
+  xcb_configure_window(conn, window_id, XCB_CONFIG_WINDOW_STACK_MODE, values);
 
-  xcb_send_event(conn, 0, root, XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY,
-                 reinterpret_cast<const char *>(&event));
+  // Method 4: Send _NET_ACTIVE_WINDOW (EWMH way)
+  xcb_atom_t net_active_window = internAtom("_NET_ACTIVE_WINDOW");
+  if (net_active_window != XCB_ATOM_NONE) {
+    xcb_client_message_event_t event;
+    memset(&event, 0, sizeof(event));
+
+    event.response_type = XCB_CLIENT_MESSAGE;
+    event.window = window_id;
+    event.format = 32;
+    event.type = net_active_window;
+    event.data.data32[0] = 2;                // source indication: 2 = pager
+    event.data.data32[1] = XCB_CURRENT_TIME; // timestamp
+    event.data.data32[2] = 0;                // requestor's currently active window
+
+    xcb_send_event(conn, 0, root, XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY,
+                   reinterpret_cast<const char *>(&event));
+  }
+
+  // Method 5: Direct input focus (fallback for non-EWMH WMs)
+  xcb_set_input_focus(conn, XCB_INPUT_FOCUS_PARENT, window_id, XCB_CURRENT_TIME);
+
   xcb_flush(conn);
 }
 
