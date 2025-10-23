@@ -490,9 +490,11 @@ bool GnomeWindowManager::matchWmClassWithDesktopSuffix(const QString &windowWmCl
   return false;
 }
 
-bool GnomeWindowManager::pasteToWindow(const AbstractWindow &window, const AbstractApplication *app) {
-  if (app->isTerminalEmulator()) { return sendShortcutSync(window, Keyboard::Shortcut::osPaste().shifted()); }
-  return sendShortcutSync(window, Keyboard::Shortcut::osPaste());
+bool GnomeWindowManager::pasteToWindow(const AbstractWindow *window, const AbstractApplication *app) {
+  if (app->isTerminalEmulator()) {
+    return sendShortcutSync(*window, Keyboard::Shortcut::osPaste().shifted());
+  }
+  return sendShortcutSync(*window, Keyboard::Shortcut::osPaste());
 }
 
 bool GnomeWindowManager::sendShortcutSync(const AbstractWindow &window, const Keyboard::Shortcut &shortcut) {

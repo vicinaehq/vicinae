@@ -61,7 +61,7 @@ public:
   void focusWindowSync(const AbstractWindow &window) const override;
   bool closeWindow(const AbstractWindow &window) const override;
 
-  bool pasteToWindow(const AbstractWindow &window, const AbstractApplication *app) override;
+  bool pasteToWindow(const AbstractWindow *window, const AbstractApplication *app) override;
 
   bool hasWorkspaces() const override { return true; }
   WorkspaceList listWorkspaces() const override;

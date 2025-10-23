@@ -48,7 +48,7 @@ public:
   WorkspacePtr getActiveWorkspace() const override;
 
   bool supportsPaste() const override;
-  bool pasteToWindow(const AbstractWindow &window, const AbstractApplication *app) override;
+  bool pasteToWindow(const AbstractWindow *window, const AbstractApplication *app) override;
   void focusWindowSync(const AbstractWindow &window) const override;
   bool closeWindow(const AbstractWindow &window) const override;
   bool isActivatable() const override;

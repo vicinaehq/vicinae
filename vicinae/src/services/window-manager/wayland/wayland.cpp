@@ -102,7 +102,7 @@ AbstractWindowManager::WindowPtr WaylandWindowManager::getFocusedWindowSync() co
   return nullptr;
 }
 
-bool WaylandWindowManager::pasteToWindow(const AbstractWindow &window, const AbstractApplication *app) {
+bool WaylandWindowManager::pasteToWindow(const AbstractWindow *window, const AbstractApplication *app) {
   using VK = Wayland::VirtualKeyboard;
 
   if (!m_keyboard.isAvailable()) { return false; }

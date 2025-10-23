@@ -135,15 +135,16 @@ public:
   /**
    * Paste the current content of the clipboard to the specified window.
    *
-   * The `window` object is the currently focused window.
+   * The `window` object is the currently focused window, if this information is available. Some environments
+   * may be paste-capable but not have a way to get the currently focused window.
    *
    * `app` refers to the application `window` refers to, if such an information is known. It is null
    * otherwise. This is typically used to figure out whether the window is a terminal emulator so that a
-   * different shortcut can be sent (ctrl+shift+V on most UNIX terminals).
+   * different shortcut can be sent (ctrl+shift+V for most UNIX terminals).
    *
    *
    */
-  virtual bool pasteToWindow(const AbstractWindow &window, const AbstractApplication *app) { return false; }
+  virtual bool pasteToWindow(const AbstractWindow *window, const AbstractApplication *app) { return false; }
 
   /**
    * To make sure the window manager IPC link is healthy.

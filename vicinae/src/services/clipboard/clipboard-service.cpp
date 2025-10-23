@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <numeric>
 #include <qapplication.h>
+#include "services/app-service/abstract-app-db.hpp"
 #include "x11/x11-clipboard-server.hpp"
 #include <qimagereader.h>
 #include <qlogging.h>
@@ -89,9 +90,11 @@ bool ClipboardService::pasteContent(const Clipboard::Content &content, const Cli
   }
 
   auto window = m_wm.getFocusedWindow();
-  auto app = m_appDb.find(window->wmClass());
+  std::shared_ptr<AbstractApplication> app;
 
-  m_wm.provider()->pasteToWindow(*window, app.get());
+  if (window) { app = m_appDb.find(window->wmClass()); }
+
+  m_wm.provider()->pasteToWindow(window.get(), app.get());
 
   return true;
 }
