@@ -8,9 +8,7 @@ INSTALL_DIR="$HOME/.local/vicinae"
 BIN_DIR="$HOME/.local/bin"
 BINARY_NAME="vicinae"
 TEMP_DIR="/tmp"
-THEMES_SYSTEM_DIR="/usr/share/vicinae/themes"
 THEMES_USER_DIR="$HOME/.local/share/vicinae/themes"
-APPLICATIONS_SYSTEM_DIR="/usr/share/applications"
 APPLICATIONS_USER_DIR="$HOME/.local/share/applications"
 SYSTEMD_SERVICE_NAME="vicinae.service"
 SYSTEMD_USER_DIR="$HOME/.config/systemd/user"
@@ -215,30 +213,34 @@ extract_appimage() {
 install_themes() {
 	echo "Installing themes..." >&2
 
-	if [[ -d "$THEMES_SYSTEM_DIR" ]]; then
+	local themes_source="$INSTALL_DIR/usr/share/vicinae/themes"
+
+	if [[ -d "$themes_source" ]]; then
 		mkdir -p "$THEMES_USER_DIR"
 
-		cp -r "$THEMES_SYSTEM_DIR"/* "$THEMES_USER_DIR/" 2>/dev/null || true
+		cp -r "$themes_source"/* "$THEMES_USER_DIR/" 2>/dev/null || true
 
 		if [[ -n "$(ls -A "$THEMES_USER_DIR" 2>/dev/null)" ]]; then
 			echo "✓ Themes installed to $THEMES_USER_DIR" >&2
 		else
-			echo "Note: No themes found in $THEMES_SYSTEM_DIR" >&2
+			echo "Note: No themes found in $themes_source" >&2
 		fi
 	else
-		echo "Note: System themes directory not found at $THEMES_SYSTEM_DIR" >&2
+		echo "Note: Themes directory not found at $themes_source" >&2
 	fi
 }
 
 install_desktop_files() {
 	echo "Installing desktop application files..." >&2
 
-	if [[ -d "$APPLICATIONS_SYSTEM_DIR" ]]; then
+	local applications_source="$INSTALL_DIR/usr/share/applications"
+
+	if [[ -d "$applications_source" ]]; then
 		mkdir -p "$APPLICATIONS_USER_DIR"
 
 		# Copy only vicinae-related desktop files
-		if ls "$APPLICATIONS_SYSTEM_DIR"/vicinae*.desktop >/dev/null 2>&1; then
-			cp "$APPLICATIONS_SYSTEM_DIR"/vicinae*.desktop "$APPLICATIONS_USER_DIR/" 2>/dev/null || true
+		if ls "$applications_source"/vicinae*.desktop >/dev/null 2>&1; then
+			cp "$applications_source"/vicinae*.desktop "$APPLICATIONS_USER_DIR/" 2>/dev/null || true
 			echo "✓ Desktop files installed to $APPLICATIONS_USER_DIR" >&2
 
 			# Update desktop database if available
@@ -247,10 +249,10 @@ install_desktop_files() {
 				echo "✓ Desktop database updated" >&2
 			fi
 		else
-			echo "Note: No vicinae desktop files found in $APPLICATIONS_SYSTEM_DIR" >&2
+			echo "Note: No vicinae desktop files found in $applications_source" >&2
 		fi
 	else
-		echo "Note: System applications directory not found at $APPLICATIONS_SYSTEM_DIR" >&2
+		echo "Note: Applications directory not found at $applications_source" >&2
 	fi
 }
 
