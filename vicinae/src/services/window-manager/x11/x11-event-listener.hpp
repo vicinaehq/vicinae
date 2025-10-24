@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QObject>
+#include <QTimer>
 #include <unordered_set>
 #include <xcb/xcb.h>
 
@@ -30,6 +31,7 @@ signals:
 
 private slots:
   void drainEvents();
+  void emitDebouncedSignals();
 
 private:
   void subscribeToRootEvents();
@@ -48,5 +50,11 @@ private:
 
   std::unordered_set<xcb_window_t> m_clients;
   xcb_window_t m_activeWindow = XCB_WINDOW_NONE;
+
+  // Debouncing
+  QTimer m_debounceTimer;
+  bool m_pendingWindowListChanged = false;
+  bool m_pendingActiveWindowChanged = false;
+  std::unordered_set<xcb_window_t> m_pendingTitlesChanged;
 };
 

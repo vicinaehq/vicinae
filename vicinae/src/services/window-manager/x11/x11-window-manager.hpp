@@ -36,7 +36,8 @@ public:
   WorkspaceList listWorkspaces() const override;
   std::shared_ptr<AbstractWorkspace> getActiveWorkspace() const override;
 
-  bool supportsInputForwarding() const override { return false; }
+  bool supportsPaste() const override { return false; }
+  bool pasteToWindow(const AbstractWindow *window, const AbstractApplication *app) override { return false; }
   bool ping() const override;
   bool isActivatable() const override;
   void start() override;
