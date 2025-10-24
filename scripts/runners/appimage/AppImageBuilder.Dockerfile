@@ -215,6 +215,7 @@ RUN apt-get update \
         libglu1-mesa \
         libxrender1 \
         libxi6 \
+		libxkbcommon-dev	\
         libxkbcommon0 \
         libxkbcommon-x11-0 \
         libfontconfig1 \
