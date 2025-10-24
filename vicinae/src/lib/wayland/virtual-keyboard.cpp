@@ -18,10 +18,20 @@ namespace Wayland {
 static constexpr const auto delayMs = chrono::duration_cast<chrono::microseconds>(2ms).count();
 
 VirtualKeyboard::VirtualKeyboard() {
-  m_display = qApp->nativeInterface<QNativeInterface::QWaylandApplication>()->display();
-  wl_seat *seat = qApp->nativeInterface<QNativeInterface::QWaylandApplication>()->seat();
-  wl_keyboard *kb = qApp->nativeInterface<QNativeInterface::QWaylandApplication>()->keyboard();
+  auto *waylandApp = qApp->nativeInterface<QNativeInterface::QWaylandApplication>();
+  if (!waylandApp) { return; }
+
+  m_display = waylandApp->display();
+  if (!m_display) { return; }
+
+  wl_seat *seat = waylandApp->seat();
+  if (!seat) { return; }
+
+  wl_keyboard *kb = waylandApp->keyboard();
+  if (!kb) { return; }
+
   wl_registry *registry = wl_display_get_registry(m_display);
+  if (!registry) { return; }
 
   wl_registry_add_listener(registry, &_listener, this);
   wl_display_dispatch(m_display);
