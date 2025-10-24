@@ -1,6 +1,8 @@
 #include <chrono>
 #include <cstdlib>
+#include <cstring>
 #include <iterator>
+#include <qlogging.h>
 #include <qnamespace.h>
 #include <strings.h>
 #include <wayland-client-core.h>
@@ -106,11 +108,19 @@ std::string VirtualKeyboard::generateKeymap(const std::vector<xkb_keysym_t> &key
 bool VirtualKeyboard::uploadKeymap(const std::vector<xkb_keysym_t> &keysyms) {
   int fd = memfd_create("vicinae-virtual-keymap", MFD_CLOEXEC);
 
-  if (fd < 0) return -1;
+  if (fd < 0) {
+    qWarning() << "VirtualKeyboard::uploadKeymap: memfd_create failed" << strerror(errno);
+    return -1;
+  }
 
   std::string keymap = generateKeymap(keysyms);
 
-  write(fd, keymap.c_str(), keymap.size());
+  if (write(fd, keymap.data(), keymap.size()) < 0) {
+    qWarning() << "VirtualKeyboard::uploadKeymap: failed to write" << strerror(errno);
+    close(fd);
+    return false;
+  }
+
   lseek(fd, 0, SEEK_SET);
   zwp_virtual_keyboard_v1_keymap(m_keyboard, WL_KEYBOARD_KEYMAP_FORMAT_XKB_V1, fd, keymap.size());
   wl_display_roundtrip(m_display);
