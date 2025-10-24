@@ -1,5 +1,6 @@
 #include "ui-request-router.hpp"
 #include "common.hpp"
+#include "environment.hpp"
 #include "navigation-controller.hpp"
 #include "proto/extension.pb.h"
 #include "proto/ui.pb.h"
@@ -157,9 +158,14 @@ UIRequestRouter::handleCloseWindow(const proto::ext::ui::CloseMainWindowRequest 
   using namespace std::chrono_literals;
   auto res = new proto::ext::ui::Response;
   auto ack = new proto::ext::common::AckResponse;
+  auto popToRoot = parseProtoPopToRoot(req.pop_to_root());
+  auto clear = req.clear_root_search();
 
-  m_navigation->handle()->closeWindow(
-      {.popToRootType = parseProtoPopToRoot(req.pop_to_root()), .clearRootSearch = req.clear_root_search()});
+  // FIXME: this slight delay was introduced so that we can process a copy or paste that directly follows
+  // a call to closeWindow. Some compositors such as niri just don't register the copy at all if it's done
+  // after the window is closed.
+  // This is very much a hack and we should figure out a way to fix this.
+  m_navigation->handle()->closeWindow({.popToRootType = popToRoot, .clearRootSearch = clear}, 50ms);
   res->set_allocated_close_main_window(ack);
 
   return res;
