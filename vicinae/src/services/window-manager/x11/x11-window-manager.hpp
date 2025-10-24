@@ -1,9 +1,12 @@
 #pragma once
 #include "services/window-manager/abstract-window-manager.hpp"
 #include "x11-window.hpp"
-#include <xcb/xcb.h>
 #include <QHash>
 #include <QString>
+#include <xcb/xcb.h>
+#include <memory>
+
+class X11EventListener;
 
 /**
  * Window manager implementation for X11 using XCB (X C Bindings).
@@ -93,4 +96,5 @@ private:
   mutable xcb_screen_t *m_screen;
   mutable QHash<QString, xcb_atom_t> m_atomCache;
   bool m_ewmhSupported;
+  std::unique_ptr<X11EventListener> m_eventListener;
 };

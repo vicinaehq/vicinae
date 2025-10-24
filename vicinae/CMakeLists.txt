@@ -649,6 +649,7 @@ if (UNIX AND NOT APPLE)
 		src/services/window-manager/gnome/gnome-listener.cpp
 		src/services/window-manager/wayland/wayland.cpp
 		src/services/window-manager/x11/x11-window-manager.cpp
+		src/services/window-manager/x11/x11-event-listener.cpp
 		src/services/window-manager/x11/x11-window.cpp
 
 		src/lib/wayland/virtual-keyboard.hpp
