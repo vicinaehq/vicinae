@@ -48,15 +48,15 @@ void X11WindowManager::start() {
 
     connect(m_eventListener.get(), &X11EventListener::windowListChanged, this,
             [this]() {
-            qInfo() << "X11WindowManager: Window list changed, emitting windowsChanged";
+            qDebug() << "X11WindowManager: Window list changed, emitting windowsChanged";
             emit windowsChanged(); });
     connect(m_eventListener.get(), &X11EventListener::activeWindowChanged, this,
             [this]() {
-            qInfo() << "X11WindowManager: Active window changed, emitting windowsChanged";
+            qDebug() << "X11WindowManager: Active window changed, emitting windowsChanged";
             emit windowsChanged(); });
     connect(m_eventListener.get(), &X11EventListener::windowTitleChanged, this,
             [this](xcb_window_t window) {
-            qInfo() << "X11WindowManager: Window title changed for window" << window << ", emitting windowsChanged";
+            qDebug() << "X11WindowManager: Window title changed for window" << window << ", emitting windowsChanged";
             emit windowsChanged(); });
 
     if (!m_eventListener->start()) {
