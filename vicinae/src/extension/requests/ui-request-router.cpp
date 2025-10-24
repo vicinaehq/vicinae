@@ -159,10 +159,7 @@ UIRequestRouter::handleCloseWindow(const proto::ext::ui::CloseMainWindowRequest 
   auto popToRoot = parseProtoPopToRoot(req.pop_to_root());
   auto clear = req.clear_root_search();
 
-  QTimer::singleShot(0, this, [handle = m_navigation->handle(), clear, popToRoot]() {
-    handle->closeWindow({.popToRootType = popToRoot, .clearRootSearch = clear});
-  });
-
+  m_navigation->handle()->closeWindow({.popToRootType = popToRoot, .clearRootSearch = clear});
   res->set_allocated_close_main_window(ack);
   return res;
 }

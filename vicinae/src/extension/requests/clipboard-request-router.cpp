@@ -61,11 +61,8 @@ clip_proto::Response *ClipboardRequestRouter::clear(const clip_proto::ClearReque
 clip_proto::Response *ClipboardRequestRouter::paste(const clip_proto::PasteToClipboardRequest &req) {
   auto content = parseProtoClipboardContent(req.content());
 
-  m_clipboard.copyContent(content); // copy has to happen before we close, otherwise some compositors like
-                                    // niri may discard it for some reason
-  m_nav.handle()->closeWindow();
-  qDebug() << "paste to focused window";
-  m_wm.pasteToFocusedWindow(m_appDb);
+  m_clipboard.copyContent(content);
+  QTimer::singleShot(0, [wm = &m_wm, &app = m_appDb]() { wm->pasteToFocusedWindow(app); });
 
   auto resData = new clip_proto::PasteToClipboardResponse;
   auto res = new clip_proto::Response;

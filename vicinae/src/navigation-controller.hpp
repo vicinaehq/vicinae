@@ -348,6 +348,11 @@ signals:
   void windowActivationChanged(bool value) const;
 
 private:
+  struct PopToRootInfo {
+    PopToRootType m_type = PopToRootType::Default;
+    bool clearSearch = false;
+  };
+
   ApplicationContext &m_ctx;
   std::vector<std::unique_ptr<CommandFrame>> m_frames;
 
@@ -362,5 +367,8 @@ private:
   bool m_popToRootOnClose = false;
   bool m_instantDismiss = false;
   bool m_closeOnFocusLoss = false;
+
+  std::optional<PopToRootInfo> m_pendingPopToRoot;
+
   std::vector<std::unique_ptr<ViewState>> m_views;
 };

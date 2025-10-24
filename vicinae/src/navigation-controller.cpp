@@ -7,6 +7,7 @@
 #include "services/root-item-manager/root-item-manager.hpp"
 #include "extension/manager/extension-manager.hpp"
 #include "services/toast/toast-service.hpp"
+#include "timer.hpp"
 #include "ui/alert/alert.hpp"
 #include "ui/views/base-view.hpp"
 #include "utils/environment.hpp"
@@ -41,6 +42,8 @@ void NavigationController::goBack(const GoBackOptions &opts) {
 
 void NavigationController::setSearchText(const QString &text, const BaseView *caller) {
   if (auto state = findViewState(VALUE_OR(caller, topView()))) {
+    if (state->searchText == text) return;
+
     state->searchText = text;
     state->sender->textChanged(text);
 
@@ -213,6 +216,7 @@ void NavigationController::popCurrentView() {
 }
 
 void NavigationController::popToRoot(const PopToRootOptions &opts) {
+  Timer timer;
   if (!m_frames.empty() && m_frames.back()->viewCount == 0) { m_frames.pop_back(); }
 
   while (m_views.size() > 1) {
@@ -220,6 +224,7 @@ void NavigationController::popToRoot(const PopToRootOptions &opts) {
   }
 
   if (opts.clearSearch) clearSearchText();
+  timer.time("popToRoot");
 }
 
 void NavigationController::clearSearchAccessory(const BaseView *caller) {
@@ -258,7 +263,6 @@ void NavigationController::setPopToRootOnClose(bool value) { m_popToRootOnClose 
 
 void NavigationController::closeWindow(const CloseWindowOptions &settings) {
   if (!m_windowOpened) return;
-
   auto resolveApplicablePopToRoot = [&]() {
     if (settings.popToRootType == PopToRootType::Default)
       return m_popToRootOnClose ? PopToRootType::Immediate : PopToRootType::Suspended;
@@ -267,15 +271,23 @@ void NavigationController::closeWindow(const CloseWindowOptions &settings) {
 
   PopToRootType popToRootType = resolveApplicablePopToRoot();
 
+  if (popToRootType != PopToRootType::Suspended) {
+    m_pendingPopToRoot =
+        PopToRootInfo{.m_type = settings.popToRootType, .clearSearch = settings.clearRootSearch};
+  }
+
+  /*
   if (m_instantDismiss) {
     qDebug() << "Consumed instantDismiss flag";
     popToRootType = PopToRootType::Immediate;
     m_instantDismiss = false;
   }
+  */
 
   m_windowOpened = false;
   emit windowVisiblityChanged(false);
 
+  /*
   switch (popToRootType) {
   case PopToRootType::Immediate:
     popToRoot({.clearSearch = true});
@@ -285,6 +297,7 @@ void NavigationController::closeWindow(const CloseWindowOptions &settings) {
   }
 
   if (isRootSearch() && settings.clearRootSearch) clearSearchText();
+  */
 }
 
 bool NavigationController::windowActivated() { return m_windowActivated; }
@@ -468,8 +481,40 @@ void NavigationController::setActions(std::unique_ptr<ActionPanelState> panel, c
 size_t NavigationController::viewStackSize() const { return m_views.size(); }
 
 void NavigationController::showWindow() {
+  Timer timer;
+
+  if (auto pending = m_pendingPopToRoot) {
+    Timer popTimer;
+    auto resolveApplicablePopToRoot = [&]() {
+      if (pending->m_type == PopToRootType::Default)
+        return m_popToRootOnClose ? PopToRootType::Immediate : PopToRootType::Suspended;
+      return pending->m_type;
+    };
+
+    PopToRootType popToRootType = resolveApplicablePopToRoot();
+
+    if (m_instantDismiss) {
+      qDebug() << "Consumed instantDismiss flag";
+      popToRootType = PopToRootType::Immediate;
+      m_instantDismiss = false;
+    }
+
+    switch (popToRootType) {
+    case PopToRootType::Immediate:
+      popToRoot({.clearSearch = true});
+      break;
+    default:
+      break;
+    }
+
+    if (isRootSearch() && pending->clearSearch) clearSearchText();
+    m_pendingPopToRoot.reset();
+    popTimer.time("pop on show");
+  }
+
   m_windowOpened = true;
   emit windowVisiblityChanged(true);
+  timer.time("showWindow");
 }
 
 NavigationController::ViewState *NavigationController::topState() {
