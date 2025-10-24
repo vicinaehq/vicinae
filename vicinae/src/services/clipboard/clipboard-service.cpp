@@ -3,8 +3,10 @@
 #include <filesystem>
 #include <numeric>
 #include <qapplication.h>
+#include "environment.hpp"
 #include "services/app-service/abstract-app-db.hpp"
 #include "x11/x11-clipboard-server.hpp"
+#include <qclipboard.h>
 #include <qimagereader.h>
 #include <qlogging.h>
 #include <qmimedata.h>
@@ -89,12 +91,12 @@ bool ClipboardService::pasteContent(const Clipboard::Content &content, const Cli
     return false;
   }
 
-  auto window = m_wm.getFocusedWindow();
-  std::shared_ptr<AbstractApplication> app;
-
-  if (window) { app = m_appDb.find(window->wmClass()); }
-
-  m_wm.provider()->pasteToWindow(window.get(), app.get());
+  QTimer::singleShot(Environment::pasteDelay(), [wm = &m_wm, appDb = &m_appDb]() {
+    auto window = wm->getFocusedWindow();
+    std::shared_ptr<AbstractApplication> app;
+    if (window) { app = appDb->find(window->wmClass()); }
+    wm->provider()->pasteToWindow(window.get(), app.get());
+  });
 
   return true;
 }
@@ -574,6 +576,7 @@ AbstractClipboardServer *ClipboardService::clipboardServer() const { return m_cl
 ClipboardService::ClipboardService(const std::filesystem::path &path, WindowManager &wm, AppService &appDb)
     : m_wm(wm), m_appDb(appDb) {
   m_dataDir = path.parent_path() / "clipboard-data";
+  auto clip = QApplication::clipboard();
 
   {
     ClipboardServerFactory factory;
