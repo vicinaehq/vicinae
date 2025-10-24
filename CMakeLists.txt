@@ -28,6 +28,7 @@ option(
 
 option(WAYLAND_LAYER_SHELL "Enable support for the layer shell Wayland protocol" ON)
 option(WLR_DATA_CONTROL "Enable WLR_DATA_CONTROL powered clipboard server" ON)
+option(COSMIC_DESKTOP "Enable support for COSMIC Desktop window management" ON)
 option(TYPESCRIPT_EXTENSIONS "Enable support for extensions built with React/Typescript (no browser involved)" ON)
 
 option(PREFER_STATIC_LIBS "When available, link to a library statically instead of dynamically" OFF)
@@ -50,6 +51,7 @@ endif()
 if (APPLE)
 	set(WAYLAND_LAYER_SHELL OFF)
 	set(WLR_DATA_CONTROL OFF)
+	set(COSMIC_DESKTOP OFF)
 endif()
 
 if (UNIX AND NOT APPLE)

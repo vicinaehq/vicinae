@@ -658,6 +658,18 @@ if (UNIX AND NOT APPLE)
     wayland_generate_protocol("${CMAKE_CURRENT_SOURCE_DIR}/protocols/wlr-foreign-toplevel-management-unstable-v1.xml")
 	wayland_generate_protocol("${CMAKE_CURRENT_SOURCE_DIR}/protocols/virtual-keyboard-unstable-v1.xml")
 
+	if (COSMIC_DESKTOP)
+		add_compile_definitions(COSMIC_DESKTOP=1)
+		wayland_generate_protocol("${CMAKE_CURRENT_SOURCE_DIR}/protocols/ext-foreign-toplevel-list-v1.xml")
+		wayland_generate_protocol("${CMAKE_CURRENT_SOURCE_DIR}/protocols/cosmic/cosmic-toplevel-info-unstable-v1.xml")
+		wayland_generate_protocol("${CMAKE_CURRENT_SOURCE_DIR}/protocols/cosmic/cosmic-toplevel-management-unstable-v1.xml")
+		list(APPEND SRCS
+			src/services/window-manager/cosmic/cosmic.hpp
+			src/services/window-manager/cosmic/cosmic.cpp
+			src/services/window-manager/cosmic/workspace-stubs.c
+		)
+	endif()
+
 	list(APPEND LIBS xkbcommon)
 
 	if (WLR_DATA_CONTROL)
