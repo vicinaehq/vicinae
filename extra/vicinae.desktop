@@ -9,6 +9,7 @@ Icon=vicinae
 Categories=Utility;Accessibility;
 NoDisplay=false
 Actions=restart;close
+StartupWMClass=vicinae
 
 [Desktop Action restart]
 Name=Restart Vicinae Server
