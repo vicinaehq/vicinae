@@ -42,15 +42,15 @@ public:
 
     auto appDb = ServiceRegistry::instance()->appDb();
     auto window = wm->getFocusedWindow();
-    QString name;
 
-    if (auto app = appDb->find(window->wmClass())) {
-      name = QString("Paste to %1").arg(app->displayName());
-    } else {
-      name = QString("Paste to %1").arg(window->title());
+    if (window) {
+      if (auto app = appDb->find(window->wmClass())) {
+        return QString("Paste to %1").arg(app->displayName());
+      }
+      return QString("Paste to %1").arg(window->title());
     }
 
-    return name;
+    return "Paste entry";
   }
 
   PasteToFocusedWindowAction(const Clipboard::Content &content = Clipboard::NoData{})
