@@ -156,11 +156,14 @@ proto::ext::ui::Response *
 UIRequestRouter::handleCloseWindow(const proto::ext::ui::CloseMainWindowRequest &req) {
   auto res = new proto::ext::ui::Response;
   auto ack = new proto::ext::common::AckResponse;
+  auto popToRoot = parseProtoPopToRoot(req.pop_to_root());
+  auto clear = req.clear_root_search();
 
-  m_navigation->handle()->closeWindow(
-      {.popToRootType = parseProtoPopToRoot(req.pop_to_root()), .clearRootSearch = req.clear_root_search()});
+  QTimer::singleShot(0, this, [handle = m_navigation->handle(), clear, popToRoot]() {
+    handle->closeWindow({.popToRootType = popToRoot, .clearRootSearch = clear});
+  });
+
   res->set_allocated_close_main_window(ack);
-
   return res;
 }
 

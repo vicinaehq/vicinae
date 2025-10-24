@@ -1,6 +1,7 @@
 #pragma once
 #include "abstract-window-manager.hpp"
 #include "services/app-service/abstract-app-db.hpp"
+#include "services/app-service/app-service.hpp"
 #include <qobject.h>
 
 class WindowManager : public QObject {
@@ -13,6 +14,7 @@ public:
   AbstractWindowManager::WindowList findWindowByClass(const QString &wmClass) const;
   AbstractWindowManager::WindowList findAppWindows(const AbstractApplication &app) const;
   AbstractWindowManager::WindowList listWindows() const;
+  bool pasteToFocusedWindow(const AppService &appDb);
 
   WindowManager();
 

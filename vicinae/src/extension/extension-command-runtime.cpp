@@ -153,6 +153,8 @@ void ExtensionCommandRuntime::handleEvent(const ExtensionEvent &event) {
 
 void ExtensionCommandRuntime::initialize() {
   auto manager = context()->services->extensionManager();
+  auto appDb = context()->services->appDb();
+  auto wm = context()->services->windowManager();
 
   RelativeAssetResolver::instance()->addPath(m_command->assetPath());
 
@@ -165,7 +167,8 @@ void ExtensionCommandRuntime::initialize() {
   m_storageRouter =
       std::make_unique<StorageRequestRouter>(context()->services->localStorage(), m_command->extensionId());
   m_appRouter = std::make_unique<AppRequestRouter>(*context()->services->appDb());
-  m_clipboardRouter = std::make_unique<ClipboardRequestRouter>(*context()->services->clipman());
+  m_clipboardRouter =
+      std::make_unique<ClipboardRequestRouter>(*context()->services->clipman(), *wm, *appDb, *m_navigation);
   m_wmRouter = std::make_unique<WindowManagementRouter>(*context()->services->windowManager(),
                                                         *context()->services->appDb());
 

@@ -94,7 +94,6 @@ const Paste: React.FC<ActionPasteProps> = ({
       {...props}
       icon={Icon.CopyClipboard}
       onAction={async () => {
-        closeMainWindow(); // we close before pasting to make sure focus has been properly restored
         Clipboard.paste(content);
         onPaste?.(content);
       }}

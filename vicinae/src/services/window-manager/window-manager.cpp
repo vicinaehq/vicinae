@@ -3,6 +3,8 @@
 #include "hyprland/hyprland.hpp"
 #include "gnome/gnome-window-manager.hpp"
 #include "dummy-window-manager.hpp"
+#include "services/app-service/abstract-app-db.hpp"
+#include "services/app-service/app-service.hpp"
 #include "wayland/wayland.hpp"
 #include "services/window-manager/abstract-window-manager.hpp"
 
@@ -36,6 +38,15 @@ AbstractWindowManager::WindowList WindowManager::listWindowsSync() { return m_pr
 
 AbstractWindowManager::WindowPtr WindowManager::getFocusedWindow() {
   return m_provider->getFocusedWindowSync();
+}
+
+bool WindowManager::pasteToFocusedWindow(const AppService &appDb) {
+  auto window = getFocusedWindow();
+  std::shared_ptr<AbstractApplication> app;
+
+  if (window) { app = appDb.find(window->wmClass()); }
+
+  return m_provider->pasteToWindow(window.get(), app.get());
 }
 
 AbstractWindowManager::WindowList WindowManager::listWindows() const { return m_windows; }

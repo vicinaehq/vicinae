@@ -59,11 +59,13 @@ public:
 protected:
   void execute(ApplicationContext *ctx) override {
     auto clipman = ctx->services->clipman();
-    ctx->navigation->closeWindow();
+    auto wm = ctx->services->windowManager();
 
-    QTimer::singleShot(100, [content = m_content, concealed = m_concealed, clipman]() {
-      clipman->pasteContent(content, {.concealed = concealed});
-    });
+    clipman->copyContent(m_content, {.concealed = m_concealed});
+    ctx->navigation->closeWindow();
+    wm->pasteToFocusedWindow(*ctx->services->appDb());
+
+    // QTimer::singleShot(100, [content = m_content, concealed = m_concealed, clipman]() {});
   }
 
   void loadClipboardData(const Clipboard::Content &content) { m_content = content; }

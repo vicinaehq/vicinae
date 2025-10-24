@@ -1,12 +1,20 @@
 #pragma once
+#include "extension/extension-navigation-controller.hpp"
 #include "proto/clipboard.pb.h"
 #include "proto/extension.pb.h"
+#include "services/app-service/app-service.hpp"
 #include "services/clipboard/clipboard-service.hpp"
+#include "services/window-manager/window-manager.hpp"
 #include <qobject.h>
 
 class ClipboardRequestRouter : public QObject {
-  ClipboardService &m_clipboard;
 
+public:
+  proto::ext::extension::Response *route(const proto::ext::clipboard::Request &req);
+  ClipboardRequestRouter(ClipboardService &clipboard, WindowManager &wm, const AppService &appDb,
+                         ExtensionNavigationController &nav);
+
+private:
   Clipboard::Content parseProtoClipboardContent(const proto::ext::clipboard::ClipboardContent &content);
 
   proto::ext::clipboard::Response *copy(const proto::ext::clipboard::CopyToClipboardRequest &req);
@@ -14,7 +22,8 @@ class ClipboardRequestRouter : public QObject {
   proto::ext::clipboard::Response *readContent(const proto::ext::clipboard::ReadContentRequest &req);
   proto::ext::clipboard::Response *clear(const proto::ext::clipboard::ClearRequest &req);
 
-public:
-  proto::ext::extension::Response *route(const proto::ext::clipboard::Request &req);
-  ClipboardRequestRouter(ClipboardService &clipboard);
+  ClipboardService &m_clipboard;
+  WindowManager &m_wm;
+  const AppService &m_appDb;
+  ExtensionNavigationController &m_nav;
 };

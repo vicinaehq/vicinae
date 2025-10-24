@@ -1,8 +1,15 @@
 #include "clipboard-request-router.hpp"
+#include "extension/extension-navigation-controller.hpp"
 #include "proto/clipboard.pb.h"
+#include "services/app-service/app-service.hpp"
+#include "services/window-manager/window-manager.hpp"
 #include <qclipboard.h>
 
 namespace clip_proto = proto::ext::clipboard;
+
+ClipboardRequestRouter::ClipboardRequestRouter(ClipboardService &clipboard, WindowManager &wm,
+                                               const AppService &appDb, ExtensionNavigationController &nav)
+    : m_clipboard(clipboard), m_wm(wm), m_appDb(appDb), m_nav(nav) {}
 
 Clipboard::Content
 ClipboardRequestRouter::parseProtoClipboardContent(const clip_proto::ClipboardContent &content) {
@@ -54,7 +61,11 @@ clip_proto::Response *ClipboardRequestRouter::clear(const clip_proto::ClearReque
 clip_proto::Response *ClipboardRequestRouter::paste(const clip_proto::PasteToClipboardRequest &req) {
   auto content = parseProtoClipboardContent(req.content());
 
-  QTimer::singleShot(100, [&clip = m_clipboard, content]() { clip.pasteContent(content); });
+  m_clipboard.copyContent(content); // copy has to happen before we close, otherwise some compositors like
+                                    // niri may discard it for some reason
+  m_nav.handle()->closeWindow();
+  qDebug() << "paste to focused window";
+  m_wm.pasteToFocusedWindow(m_appDb);
 
   auto resData = new clip_proto::PasteToClipboardResponse;
   auto res = new clip_proto::Response;
@@ -105,5 +116,3 @@ proto::ext::extension::Response *ClipboardRequestRouter::route(const clip_proto:
 
   return nullptr;
 }
-
-ClipboardRequestRouter::ClipboardRequestRouter(ClipboardService &clipboard) : m_clipboard(clipboard) {}
