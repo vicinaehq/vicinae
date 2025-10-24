@@ -154,12 +154,15 @@ UIRequestRouter::handleSetSearchText(const proto::ext::ui::SetSearchTextRequest 
 
 proto::ext::ui::Response *
 UIRequestRouter::handleCloseWindow(const proto::ext::ui::CloseMainWindowRequest &req) {
+  using namespace std::chrono_literals;
+
   auto res = new proto::ext::ui::Response;
   auto ack = new proto::ext::common::AckResponse;
   auto popToRoot = parseProtoPopToRoot(req.pop_to_root());
   auto clear = req.clear_root_search();
 
-  m_navigation->handle()->closeWindow({.popToRootType = popToRoot, .clearRootSearch = clear});
+  m_navigation->handle()->closeWindow(
+      {.popToRootType = popToRoot, .clearRootSearch = clear, .debounce = 50ms});
   res->set_allocated_close_main_window(ack);
   return res;
 }

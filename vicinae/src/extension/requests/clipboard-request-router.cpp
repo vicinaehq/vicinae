@@ -1,7 +1,9 @@
 #include "clipboard-request-router.hpp"
+#include "environment.hpp"
 #include "extension/extension-navigation-controller.hpp"
 #include "proto/clipboard.pb.h"
 #include "services/app-service/app-service.hpp"
+#include "services/clipboard/clipboard-service.hpp"
 #include "services/window-manager/window-manager.hpp"
 #include <qclipboard.h>
 
@@ -61,8 +63,10 @@ clip_proto::Response *ClipboardRequestRouter::clear(const clip_proto::ClearReque
 clip_proto::Response *ClipboardRequestRouter::paste(const clip_proto::PasteToClipboardRequest &req) {
   auto content = parseProtoClipboardContent(req.content());
 
-  m_clipboard.copyContent(content);
-  QTimer::singleShot(0, [wm = &m_wm, &app = m_appDb]() { wm->pasteToFocusedWindow(app); });
+  ensureCopy(content, Clipboard::CopyOptions{}, [this]() {
+    QTimer::singleShot(Environment::pasteDelay(),
+                       [wm = &m_wm, &app = m_appDb]() { wm->pasteToFocusedWindow(app); });
+  });
 
   auto resData = new clip_proto::PasteToClipboardResponse;
   auto res = new clip_proto::Response;
@@ -112,4 +116,35 @@ proto::ext::extension::Response *ClipboardRequestRouter::route(const clip_proto:
   }
 
   return nullptr;
+}
+
+void ClipboardRequestRouter::ensureCopy(const Clipboard::Content &content,
+                                        const Clipboard::CopyOptions options,
+                                        const std::function<void(void)> &cb) {
+  qDebug() << "ensure copy";
+  // if window is not opened we need to show it for copy time, as some wayland compositors such as niri
+  // do seem to have a hard time with copying in the background in some circumstances.
+
+  bool closeAborted = false;
+
+  if (m_nav.handle()->isScheduledToClose()) {
+    qDebug() << "aborting scheduled close";
+    m_nav.handle()->abortScheduledClose();
+    closeAborted = true;
+  }
+
+  if (!m_nav.handle()->isWindowOpened()) {
+    m_nav.handle()->showWindow();
+    closeAborted = true;
+    QTimer::singleShot(Environment::pasteDelay(), this, [this, cb, content, options]() {
+      m_clipboard.copyContent(content, options);
+      m_nav.handle()->closeWindow();
+      if (cb) { cb(); };
+    });
+  } else {
+    m_clipboard.copyContent(content, options);
+    if (cb) cb();
+  }
+
+  if (closeAborted) m_nav.handle()->closeWindow();
 }

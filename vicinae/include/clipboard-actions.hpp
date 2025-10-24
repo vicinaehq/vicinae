@@ -1,5 +1,6 @@
 #pragma once
 #include "common.hpp"
+#include "environment.hpp"
 #include "services/clipboard/clipboard-service.hpp"
 #include "../src/ui/image/url.hpp"
 #include "services/window-manager/window-manager.hpp"
@@ -63,9 +64,8 @@ protected:
 
     clipman->copyContent(m_content, {.concealed = m_concealed});
     ctx->navigation->closeWindow();
-    wm->pasteToFocusedWindow(*ctx->services->appDb());
-
-    // QTimer::singleShot(100, [content = m_content, concealed = m_concealed, clipman]() {});
+    QTimer::singleShot(Environment::pasteDelay(),
+                       [wm, ctx]() { wm->pasteToFocusedWindow(*ctx->services->appDb()); });
   }
 
   void loadClipboardData(const Clipboard::Content &content) { m_content = content; }

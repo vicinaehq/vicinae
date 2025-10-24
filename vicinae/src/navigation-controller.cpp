@@ -15,7 +15,12 @@
 #include <qwidget.h>
 #include <QProcessEnvironment>
 
-NavigationController::NavigationController(ApplicationContext &ctx) : m_ctx(ctx) {}
+NavigationController::NavigationController(ApplicationContext &ctx) : m_ctx(ctx) {
+  connect(&m_closeDebounce, &QTimer::timeout, this, [this]() {
+    qDebug() << "close debounce";
+    closeWindow();
+  });
+}
 
 void NavigationController::setNavigationTitle(const QString &navigationTitle, const BaseView *caller) {
   if (auto state = findViewState(VALUE_OR(caller, topView()))) {
@@ -262,7 +267,15 @@ QString NavigationController::navigationTitle(const BaseView *caller) const {
 void NavigationController::setPopToRootOnClose(bool value) { m_popToRootOnClose = value; }
 
 void NavigationController::closeWindow(const CloseWindowOptions &settings) {
+  m_closeDebounce.stop();
   if (!m_windowOpened) return;
+
+  if (auto debounce = settings.debounce) {
+    m_closeDebounce.setSingleShot(true);
+    m_closeDebounce.start(*debounce);
+    return;
+  }
+
   auto resolveApplicablePopToRoot = [&]() {
     if (settings.popToRootType == PopToRootType::Default)
       return m_popToRootOnClose ? PopToRootType::Immediate : PopToRootType::Suspended;
@@ -285,7 +298,7 @@ void NavigationController::closeWindow(const CloseWindowOptions &settings) {
   */
 
   m_windowOpened = false;
-  emit windowVisiblityChanged(false);
+  emit windowVisiblityChangeRequested(false);
 
   /*
   switch (popToRootType) {
@@ -513,7 +526,7 @@ void NavigationController::showWindow() {
   }
 
   m_windowOpened = true;
-  emit windowVisiblityChanged(true);
+  emit windowVisiblityChangeRequested(true);
   timer.time("showWindow");
 }
 

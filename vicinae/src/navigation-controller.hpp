@@ -8,9 +8,11 @@
 #include "ui/dialog/dialog.hpp"
 #include "ui/image/url.hpp"
 #include <QString>
+#include <chrono>
 #include <google/protobuf/message.h>
 #include <numeric>
 #include <qevent.h>
+#include <qlogging.h>
 #include <ranges>
 
 class BaseView;
@@ -35,6 +37,13 @@ enum class PopToRootType { Default, Immediate, Suspended };
 struct CloseWindowOptions {
   PopToRootType popToRootType = PopToRootType::Default;
   bool clearRootSearch = false; // has no effect if we do not pop to root
+
+  /**
+   * Optional debounce for the close operation.
+   * If a show operation is triggered before the debounce time is out,
+   * the close operation is effectively aborted.
+   */
+  std::optional<std::chrono::milliseconds> debounce;
 };
 
 struct PopToRootOptions {
@@ -312,6 +321,15 @@ public:
   const ViewState *topState() const;
   ViewState *topState();
 
+  bool isScheduledToClose() { return m_closeDebounce.isActive(); }
+  void abortScheduledClose() {
+    if (!m_closeDebounce.isActive()) {
+      qWarning() << "abortScheduledClose called while not scheduled to close";
+      return;
+    }
+    m_closeDebounce.stop();
+  }
+
   NavigationController(ApplicationContext &ctx);
 
 signals:
@@ -321,7 +339,7 @@ signals:
   void viewPoped(const BaseView *view);
   void actionPanelVisibilityChanged(bool visible);
   void actionsChanged(const ActionPanelState &actions) const;
-  void windowVisiblityChanged(bool visible);
+  void windowVisiblityChangeRequested(bool visible);
   void searchTextSelected() const;
   void searchTextChanged(const QString &text) const;
   void searchPlaceholderTextChanged(const QString &text) const;
@@ -330,6 +348,9 @@ signals:
   void confirmAlertRequested(DialogContentWidget *widget);
   void loadingChanged(bool value) const;
   void showHudRequested(const QString &title, const std::optional<ImageURL> &icon);
+
+  // window activation status changed
+  void activationChanged(bool value) const;
 
   void completionValuesChanged(const ArgumentValues &values) const;
 
@@ -367,6 +388,8 @@ private:
   bool m_popToRootOnClose = false;
   bool m_instantDismiss = false;
   bool m_closeOnFocusLoss = false;
+
+  QTimer m_closeDebounce;
 
   std::optional<PopToRootInfo> m_pendingPopToRoot;
 

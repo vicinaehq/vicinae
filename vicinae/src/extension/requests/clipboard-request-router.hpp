@@ -17,6 +17,9 @@ public:
 private:
   Clipboard::Content parseProtoClipboardContent(const proto::ext::clipboard::ClipboardContent &content);
 
+  void ensureCopy(const Clipboard::Content &content, const Clipboard::CopyOptions options,
+                  const std::function<void(void)> &cb);
+
   proto::ext::clipboard::Response *copy(const proto::ext::clipboard::CopyToClipboardRequest &req);
   proto::ext::clipboard::Response *paste(const proto::ext::clipboard::PasteToClipboardRequest &req);
   proto::ext::clipboard::Response *readContent(const proto::ext::clipboard::ReadContentRequest &req);

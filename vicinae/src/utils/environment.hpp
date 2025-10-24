@@ -6,6 +6,7 @@
 #include <QApplication>
 #include <QProcessEnvironment>
 #include <algorithm>
+#include <chrono>
 #include <cstdlib>
 #include <filesystem>
 #include <qtenvironmentvariables.h>
@@ -66,6 +67,12 @@ inline std::optional<std::filesystem::path> appImageDir() {
 inline std::optional<std::filesystem::path> nodeBinaryOverride() {
   if (auto bin = getenv("VICINAE_NODE_BIN")) return bin;
   return std::nullopt;
+}
+
+inline std::chrono::milliseconds pasteDelay() {
+  using namespace std::chrono_literals;
+  if (auto delay = getenv("VICINAE_PASTE_DELAY")) { return std::chrono::milliseconds(std::stoi(delay)); }
+  return 100ms;
 }
 
 inline bool isAppImage() { return appImageDir().has_value(); }

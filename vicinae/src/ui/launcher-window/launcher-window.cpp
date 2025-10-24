@@ -132,7 +132,7 @@ LauncherWindow::LauncherWindow(ApplicationContext &ctx) : m_ctx(ctx) {
   connect(m_ctx.navigation.get(), &NavigationController::actionsChanged, this,
           [this](auto &&actions) { m_actionPanel->setNewActions(actions); });
 
-  connect(m_ctx.navigation.get(), &NavigationController::windowVisiblityChanged, this,
+  connect(m_ctx.navigation.get(), &NavigationController::windowVisiblityChangeRequested, this,
           [this](bool visible) { setVisible(visible); });
 
   connect(m_ctx.navigation.get(), &NavigationController::headerVisiblityChanged, this, [this](bool value) {
@@ -165,7 +165,10 @@ void LauncherWindow::hideEvent(QHideEvent *event) {
 }
 
 void LauncherWindow::changeEvent(QEvent *event) {
-  if (event->type() == QEvent::ActivationChange) { m_ctx.navigation->setWindowActivated(isActiveWindow()); }
+  if (event->type() == QEvent::ActivationChange) {
+    m_ctx.navigation->setWindowActivated(isActiveWindow());
+    emit m_ctx.navigation->activationChanged(isActiveWindow());
+  }
 
   QWidget::changeEvent(event);
 }
