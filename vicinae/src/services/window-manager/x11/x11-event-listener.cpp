@@ -8,7 +8,11 @@
 #include <utility>
 #include <xcb/xproto.h>
 
-X11EventListener::X11EventListener(QObject *parent) : QObject(parent) {}
+X11EventListener::X11EventListener(QObject *parent) : QObject(parent) {
+  m_debounceTimer.setSingleShot(true);
+  m_debounceTimer.setInterval(50);
+  connect(&m_debounceTimer, &QTimer::timeout, this, &X11EventListener::emitDebouncedSignals);
+}
 
 X11EventListener::~X11EventListener() {
   if (m_notifier) { m_notifier->setEnabled(false); }
@@ -86,7 +90,8 @@ bool X11EventListener::start() {
 void X11EventListener::subscribeToRootEvents() {
   if (!m_connection || m_root == XCB_WINDOW_NONE) { return; }
 
-  //uint32_t mask = XCB_EVENT_MASK_PROPERTY_CHANGE | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY;
+  // Only subscribe to substructure events for window creation/destruction
+  // Property change events were commented out as they may cause compatibility issues
   uint32_t mask = XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY;
   xcb_change_window_attributes(m_connection, m_root, XCB_CW_EVENT_MASK, &mask);
   xcb_flush(m_connection);
@@ -150,7 +155,7 @@ void X11EventListener::drainEvents() {
 
   while (auto *event = xcb_poll_for_event(m_connection)) {
     uint8_t type = event->response_type & ~0x80;
-    qDebug() << "Got xcb event" << type << "!!";
+    qInfo() << "X11: Got event type" << type;
     switch (type) {
     case XCB_PROPERTY_NOTIFY: {
       auto *property = reinterpret_cast<xcb_property_notify_event_t *>(event);
@@ -158,42 +163,32 @@ void X11EventListener::drainEvents() {
         auto now = fetchClientList();
         if (now != m_clients) {
           m_clients = std::move(now);
-          emit windowListChanged();
+          m_pendingWindowListChanged = true;
         }
       } else if (property->atom == m_atomActiveWindow) {
         xcb_window_t active = fetchActiveWindow();
         if (active != m_activeWindow) {
           m_activeWindow = active;
-          emit activeWindowChanged();
+          m_pendingActiveWindowChanged = true;
         }
       } else if (property->atom == m_atomWmName) {
         if (m_clients.empty() || m_clients.contains(property->window)) {
-          emit windowTitleChanged(property->window);
+          m_pendingTitlesChanged.insert(property->window);
         }
       }
       break;
     }
     case XCB_CREATE_NOTIFY:
-      qInfo() << "Got Notify event";
-      emit windowListChanged();
+      qInfo() << "X11: Window created";
+      m_pendingWindowListChanged = true;
       break;
     case XCB_DESTROY_NOTIFY:
-      qInfo() << "Got destroy event";
-      emit windowListChanged();
-      break;
-    case XCB_MAP_NOTIFY:
-      qInfo() << "Got Map event";
-      emit windowListChanged();
-      break;
-    case XCB_UNMAP_NOTIFY:
-      qInfo() << "Got unmap event";
-      emit windowListChanged();
+      qInfo() << "X11: Window destroyed";
+      m_pendingWindowListChanged = true;
       break;
     case XCB_REPARENT_NOTIFY:
-      qInfo() << "Got reparent event";
-      emit windowListChanged();
-      break;
-      emit windowListChanged();
+      qInfo() << "X11: Window reparented";
+      m_pendingWindowListChanged = true;
       break;
     default:
       break;
@@ -202,5 +197,31 @@ void X11EventListener::drainEvents() {
     free(event);
   }
 
+  // Restart debounce timer if any signal is pending
+  if (m_pendingWindowListChanged || m_pendingActiveWindowChanged || !m_pendingTitlesChanged.empty()) {
+    m_debounceTimer.start();
+  }
+
   if (m_notifier) { m_notifier->setEnabled(true); }
+}
+
+void X11EventListener::emitDebouncedSignals() {
+  // Emit all collected signals
+  if (m_pendingWindowListChanged) {
+    qInfo() << "X11: Emitting windowListChanged signal";
+    emit X11EventListener::windowListChanged();
+    m_pendingWindowListChanged = false;
+  }
+
+  if (m_pendingActiveWindowChanged) {
+    qInfo() << "X11: Emitting activeWindowChanged signal";
+    emit X11EventListener::activeWindowChanged();
+    m_pendingActiveWindowChanged = false;
+  }
+
+  for (auto window : m_pendingTitlesChanged) {
+    qInfo() << "X11: Emitting windowTitleChanged signal for window" << window;
+    emit windowTitleChanged(window);
+  }
+  m_pendingTitlesChanged.clear();
 }
