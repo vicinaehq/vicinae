@@ -89,12 +89,14 @@ bool ClipboardService::pasteContent(const Clipboard::Content &content, const Cli
     return false;
   }
 
-  auto window = m_wm.getFocusedWindow();
-  std::shared_ptr<AbstractApplication> app;
+  QTimer::singleShot(100, [wm = &m_wm, appDb = &m_appDb]() {
+    auto window = wm->getFocusedWindow();
+    std::shared_ptr<AbstractApplication> app;
 
-  if (window) { app = m_appDb.find(window->wmClass()); }
+    if (window) { app = appDb->find(window->wmClass()); }
 
-  m_wm.provider()->pasteToWindow(window.get(), app.get());
+    wm->provider()->pasteToWindow(window.get(), app.get());
+  });
 
   return true;
 }
