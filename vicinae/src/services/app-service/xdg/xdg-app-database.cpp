@@ -40,6 +40,7 @@ bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
   m_apps.clear();
   m_mimeAppsLists.clear();
   m_dataDirToApps.clear();
+  m_wmClassToApp.clear();
   m_mimeAppsLists = xdgpp::getAllMimeAppsLists();
 
   std::set<std::string> seen;
@@ -68,6 +69,8 @@ bool XdgAppDatabase::scan(const std::vector<std::filesystem::path> &paths) {
 
       m_apps.emplace_back(app);
       m_dataDirToApps[dir].emplace_back(app);
+
+      if (auto wmClass = app->wmClass()) { m_wmClassToApp[wmClass->toLower()] = app; }
 
       appMap[app->id()] = app;
 
@@ -245,8 +248,13 @@ QString XdgAppDatabase::mimeNameForTarget(const QString &target) const {
 AppPtr XdgAppDatabase::findByClass(const QString &name) const {
   // TODO: if that's too slow we might need a map
   QString normalizedWmClass = name.toLower();
-  auto pred = [&](const QString &wmClass) { return wmClass.toLower() == normalizedWmClass; };
 
+  // try direct wm class match first
+  if (auto it = m_wmClassToApp.find(normalizedWmClass); it != m_wmClassToApp.end()) { return it->second; }
+
+  auto pred = [&](const QString &str) { return str.toLower() == normalizedWmClass; };
+
+  // try to find by id
   for (const auto &app : m_apps) {
     if (std::ranges::any_of(app->windowClasses(), pred)) { return app; }
   }

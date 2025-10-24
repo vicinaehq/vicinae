@@ -41,4 +41,5 @@ private:
 
   // apps segmented by data dir (needed for association resolution)
   std::unordered_map<std::filesystem::path, std::vector<std::shared_ptr<XdgApplication>>> m_dataDirToApps;
+  std::unordered_map<QString, std::shared_ptr<XdgApplication>> m_wmClassToApp;
 };

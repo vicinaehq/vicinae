@@ -26,6 +26,11 @@ public:
     return ss.empty() ? QString() : ss.at(0);
   }
 
+  std::optional<QString> wmClass() const {
+    return m_entry.startupWMClass().transform(
+        [](const std::string &str) { return QString::fromStdString(str); });
+  }
+
   std::vector<QString> windowClasses() const override {
     std::vector<QString> classes;
 
