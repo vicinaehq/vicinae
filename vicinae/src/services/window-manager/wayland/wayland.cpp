@@ -1,7 +1,9 @@
 #include "wayland.hpp"
+#include "environment.hpp"
 #include "services/window-manager/abstract-window-manager.hpp"
 
 #include <wayland-client-protocol.h>
+#include "wayland/virtual-keyboard.hpp"
 #include "wlr-foreign-toplevel-management-unstable-v1-client-protocol.h"
 
 // Events
@@ -101,6 +103,18 @@ AbstractWindowManager::WindowPtr WaylandWindowManager::getFocusedWindowSync() co
   return nullptr;
 }
 
+bool WaylandWindowManager::pasteToWindow(const AbstractWindow *window, const AbstractApplication *app) {
+  using VK = Wayland::VirtualKeyboard;
+
+  if (!m_keyboard.isAvailable()) { return false; }
+
+  if (app && app->isTerminalEmulator()) {
+    return m_keyboard.sendKeySequence(XKB_KEY_V, VK::MOD_CTRL | VK::MOD_SHIFT);
+  }
+
+  return m_keyboard.sendKeySequence(XKB_KEY_V, VK::MOD_CTRL);
+}
+
 void WaylandWindowManager::focusWindowSync(const AbstractWindow &window) const {
   const WaylandWindow &ww = static_cast<const WaylandWindow &>(window);
   zwlr_foreign_toplevel_handle_v1_activate(ww.m_handle, m_seat);
@@ -113,9 +127,12 @@ bool WaylandWindowManager::closeWindow(const AbstractWindow &window) const {
   return true;
 }
 
-bool WaylandWindowManager::supportsInputForwarding() const { return false; }
+bool WaylandWindowManager::supportsPaste() const { return m_keyboard.isAvailable(); }
 
-bool WaylandWindowManager::isActivatable() const { return QGuiApplication::platformName() == "wayland"; }
+// cosmic needs its own top level management protocol integration
+bool WaylandWindowManager::isActivatable() const {
+  return QGuiApplication::platformName() == "wayland" && !Environment::isCosmicDesktop();
+}
 
 bool WaylandWindowManager::ping() const { return m_manager != nullptr; }
 

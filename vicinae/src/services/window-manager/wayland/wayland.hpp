@@ -1,5 +1,7 @@
 #pragma once
 #include "services/window-manager/abstract-window-manager.hpp"
+#include "lib/wayland/virtual-keyboard.hpp"
+#include <xkbcommon/xkbcommon-keysyms.h>
 
 class WaylandWindowManager;
 
@@ -34,13 +36,11 @@ public:
 
   AbstractWindowManager::WindowPtr getFocusedWindowSync() const override;
   void focusWindowSync(const AbstractWindow &window) const override;
-
   bool closeWindow(const AbstractWindow &window) const override;
 
-  bool supportsInputForwarding() const override;
-
+  bool supportsPaste() const override;
+  bool pasteToWindow(const AbstractWindow *window, const AbstractApplication *app) override;
   bool ping() const override;
-
   bool isActivatable() const override;
 
   void start() override;
@@ -52,6 +52,7 @@ public:
   WindowList m_toplevels;
 
 private:
+  Wayland::VirtualKeyboard m_keyboard;
   struct wl_display *m_display;
   struct wl_seat *m_seat;
 };

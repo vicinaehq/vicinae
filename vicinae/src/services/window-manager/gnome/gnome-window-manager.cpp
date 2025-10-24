@@ -200,7 +200,8 @@ std::shared_ptr<AbstractWindowManager::AbstractWindow> GnomeWindowManager::getFo
 
   QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
   if (doc.isNull() || !doc.isObject()) {
-    qWarning() << "GnomeWindowMinto clipboard and window managementanager: Invalid JSON response from GetFocusedWindowSync";
+    qWarning() << "GnomeWindowMinto clipboard and window managementanager: Invalid JSON response from "
+                  "GetFocusedWindowSync";
     return nullptr;
   }
 
@@ -487,6 +488,13 @@ bool GnomeWindowManager::matchWmClassWithDesktopSuffix(const QString &windowWmCl
   if (targetClass.endsWith(".desktop") && windowWmClass == targetClass.chopped(8)) { return true; }
 
   return false;
+}
+
+bool GnomeWindowManager::pasteToWindow(const AbstractWindow *window, const AbstractApplication *app) {
+  if (app->isTerminalEmulator()) {
+    return sendShortcutSync(*window, Keyboard::Shortcut::osPaste().shifted());
+  }
+  return sendShortcutSync(*window, Keyboard::Shortcut::osPaste());
 }
 
 bool GnomeWindowManager::sendShortcutSync(const AbstractWindow &window, const Keyboard::Shortcut &shortcut) {
