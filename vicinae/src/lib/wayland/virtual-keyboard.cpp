@@ -74,20 +74,15 @@ void VirtualKeyboard::releaseMods() {
   roundtrip();
 }
 
-bool VirtualKeyboard::uploadKeymap(const std::vector<xkb_keysym_t> &keysyms) {
-  int fd = memfd_create("vicinae-virtual-keymap", MFD_CLOEXEC);
-
-  if (fd < 0) return -1;
-
+std::string VirtualKeyboard::generateKeymap(const std::vector<xkb_keysym_t> &keys) const {
   std::ostringstream keymap;
 
-  // Build keymap string
   keymap << "xkb_keymap {\n";
   keymap << "xkb_keycodes \"(unnamed)\" {\n";
   keymap << "minimum = 8;\n";
-  keymap << "maximum = " << (keysyms.size() + 9) << ";\n";
+  keymap << "maximum = " << (keys.size() + 9) << ";\n";
 
-  for (size_t i = 0; i < keysyms.size(); i++) {
+  for (size_t i = 0; i < keys.size(); i++) {
     keymap << "<K" << (i + 1) << "> = " << (i + 9) << ";\n";
   }
   keymap << "};\n";
@@ -96,27 +91,28 @@ bool VirtualKeyboard::uploadKeymap(const std::vector<xkb_keysym_t> &keysyms) {
   keymap << "xkb_compatibility \"(unnamed)\" { include \"complete\" };\n";
 
   keymap << "xkb_symbols \"(unnamed)\" {\n";
-  for (size_t i = 0; i < keysyms.size(); i++) {
+  for (size_t i = 0; i < keys.size(); i++) {
     char sym_name[256];
-    xkb_keysym_get_name(keysyms[i], sym_name, sizeof(sym_name));
+    xkb_keysym_get_name(keys[i], sym_name, sizeof(sym_name));
     keymap << "key <K" << (i + 1) << "> {[" << sym_name << "]};\n";
   }
   keymap << "};\n";
   keymap << "};\n";
   keymap << '\0';
 
-  qDebug() << "uploaded keymap to compositor" << keymap.str();
+  return keymap.str();
+}
 
-  // Write once
-  std::string data = keymap.str();
-  write(fd, data.c_str(), data.size());
+bool VirtualKeyboard::uploadKeymap(const std::vector<xkb_keysym_t> &keysyms) {
+  int fd = memfd_create("vicinae-virtual-keymap", MFD_CLOEXEC);
+
+  if (fd < 0) return -1;
+
+  std::string keymap = generateKeymap(keysyms);
+
+  write(fd, keymap.c_str(), keymap.size());
   lseek(fd, 0, SEEK_SET);
-
-  qDebug() << "written bytes" << data.size();
-  qDebug() << "keyboard" << m_keyboard;
-
-  // Pass to Wayland
-  zwp_virtual_keyboard_v1_keymap(m_keyboard, WL_KEYBOARD_KEYMAP_FORMAT_XKB_V1, fd, data.size());
+  zwp_virtual_keyboard_v1_keymap(m_keyboard, WL_KEYBOARD_KEYMAP_FORMAT_XKB_V1, fd, keymap.size());
   wl_display_roundtrip(m_display);
   close(fd);
   return true;

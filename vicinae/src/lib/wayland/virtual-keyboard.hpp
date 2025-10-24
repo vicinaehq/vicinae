@@ -30,6 +30,8 @@ public:
    */
   bool sendKeySequence(xkb_keysym_t key, uint32_t mods = Modifier::MOD_NONE);
 
+  bool isMapped(xkb_keysym_t sym) const;
+
   /**
    * Upload the keymap to the compositor. If the keyboard attempts to send an unregisted key
    * the keymap is reuploaded automatically, but you can set the keymap beforehand to avoid
@@ -46,8 +48,8 @@ private:
                                                                   .global_remove = globalRemove};
 
   void roundtrip();
+  std::string generateKeymap(const std::vector<xkb_keysym_t> &keys) const;
   uint32_t mappedKeyCode(xkb_keysym_t sym);
-  bool isMapped(xkb_keysym_t sym) const;
   std::optional<size_t> indexOfKey(xkb_keysym_t sym) const;
   void applyMods(uint32_t mods);
   void releaseMods();
