@@ -8,10 +8,10 @@
 #include "ui/dialog/dialog.hpp"
 #include "ui/image/url.hpp"
 #include <QString>
+#include <chrono>
 #include <google/protobuf/message.h>
 #include <numeric>
 #include <qevent.h>
-#include <ranges>
 
 class BaseView;
 class DialogContentWidget;
@@ -214,6 +214,7 @@ public:
   };
 
   void closeWindow(const CloseWindowOptions &settings = {});
+  void closeWindow(const CloseWindowOptions &settings, std::chrono::milliseconds delay);
   void showWindow();
   void toggleWindow();
   bool isWindowOpened() const;
@@ -351,6 +352,13 @@ private:
   ApplicationContext &m_ctx;
   std::vector<std::unique_ptr<CommandFrame>> m_frames;
 
+  struct PendingPopToRoot {
+    PopToRootType type = PopToRootType::Immediate;
+    bool clearSearch = false;
+  };
+
+  void applyPopToRoot(const PendingPopToRoot &popToRoot);
+
   ViewState *findViewState(const BaseView *view);
   const ViewState *findViewState(const BaseView *view) const;
   const BaseView *topView() const;
@@ -363,4 +371,5 @@ private:
   bool m_instantDismiss = false;
   bool m_closeOnFocusLoss = false;
   std::vector<std::unique_ptr<ViewState>> m_views;
+  std::optional<PendingPopToRoot> m_pendingPopToRoot;
 };

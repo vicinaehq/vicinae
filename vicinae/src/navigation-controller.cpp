@@ -10,6 +10,7 @@
 #include "ui/alert/alert.hpp"
 #include "ui/views/base-view.hpp"
 #include "utils/environment.hpp"
+#include <chrono>
 #include <qlogging.h>
 #include <qwidget.h>
 #include <QProcessEnvironment>
@@ -41,9 +42,9 @@ void NavigationController::goBack(const GoBackOptions &opts) {
 
 void NavigationController::setSearchText(const QString &text, const BaseView *caller) {
   if (auto state = findViewState(VALUE_OR(caller, topView()))) {
+    if (state->searchText == text) return;
     state->searchText = text;
     state->sender->textChanged(text);
-
     if (state->sender == topView()) { emit searchTextChanged(state->searchText); }
   }
 }
@@ -68,6 +69,32 @@ void NavigationController::showHud(const QString &title, const std::optional<Ima
   if (Environment::isHudDisabled()) return;
 
   emit showHudRequested(title, icon);
+}
+
+void NavigationController::applyPopToRoot(const PendingPopToRoot &settings) {
+  auto resolveApplicablePopToRoot = [&]() {
+    if (settings.type == PopToRootType::Default)
+      return m_popToRootOnClose ? PopToRootType::Immediate : PopToRootType::Suspended;
+    return settings.type;
+  };
+
+  PopToRootType popToRootType = resolveApplicablePopToRoot();
+
+  if (m_instantDismiss) {
+    qDebug() << "Consumed instantDismiss flag";
+    popToRootType = PopToRootType::Immediate;
+    m_instantDismiss = false;
+  }
+
+  switch (popToRootType) {
+  case PopToRootType::Immediate:
+    popToRoot({.clearSearch = true});
+    break;
+  default:
+    break;
+  }
+
+  if (isRootSearch() && settings.clearSearch) clearSearchText();
 }
 
 void NavigationController::setDialog(DialogContentWidget *widget) { emit confirmAlertRequested(widget); }
@@ -256,35 +283,16 @@ QString NavigationController::navigationTitle(const BaseView *caller) const {
 
 void NavigationController::setPopToRootOnClose(bool value) { m_popToRootOnClose = value; }
 
+void NavigationController::closeWindow(const CloseWindowOptions &settings, std::chrono::milliseconds delay) {
+  QTimer::singleShot(delay, [this, settings]() { return closeWindow(settings); });
+}
+
 void NavigationController::closeWindow(const CloseWindowOptions &settings) {
   if (!m_windowOpened) return;
-
-  auto resolveApplicablePopToRoot = [&]() {
-    if (settings.popToRootType == PopToRootType::Default)
-      return m_popToRootOnClose ? PopToRootType::Immediate : PopToRootType::Suspended;
-    return settings.popToRootType;
-  };
-
-  PopToRootType popToRootType = resolveApplicablePopToRoot();
-
-  if (m_instantDismiss) {
-    qDebug() << "Consumed instantDismiss flag";
-    popToRootType = PopToRootType::Immediate;
-    m_instantDismiss = false;
-  }
-
+  m_pendingPopToRoot =
+      PendingPopToRoot{.type = settings.popToRootType, .clearSearch = settings.clearRootSearch};
   m_windowOpened = false;
   emit windowVisiblityChanged(false);
-
-  switch (popToRootType) {
-  case PopToRootType::Immediate:
-    popToRoot({.clearSearch = true});
-    break;
-  default:
-    break;
-  }
-
-  if (isRootSearch() && settings.clearRootSearch) clearSearchText();
 }
 
 bool NavigationController::windowActivated() { return m_windowActivated; }
@@ -468,6 +476,7 @@ void NavigationController::setActions(std::unique_ptr<ActionPanelState> panel, c
 size_t NavigationController::viewStackSize() const { return m_views.size(); }
 
 void NavigationController::showWindow() {
+  if (auto popToRoot = m_pendingPopToRoot) { applyPopToRoot(*popToRoot); }
   m_windowOpened = true;
   emit windowVisiblityChanged(true);
 }
