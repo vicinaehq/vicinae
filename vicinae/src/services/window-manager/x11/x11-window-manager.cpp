@@ -1,7 +1,11 @@
 #include "x11-window-manager.hpp"
+#include "x11-event-listener.hpp"
 #include "x11-window.hpp"
 #include <QGuiApplication>
 #include <QLoggingCategory>
+#include <QtCore/qnativeinterface.h>
+#include <qlogging.h>
+#include <qnumeric.h>
 #include <xcb/xcb.h>
 #include <xcb/xproto.h>
 #include <cstring>
@@ -37,6 +41,30 @@ void X11WindowManager::start() {
     qWarning() << "X11WindowManager: Some features may not work correctly";
   } else {
     qDebug() << "X11WindowManager: EWMH support detected";
+  }
+
+  if (!m_eventListener) {
+    m_eventListener = std::make_unique<X11EventListener>();
+
+    connect(m_eventListener.get(), &X11EventListener::windowListChanged, this,
+            [this]() {
+            qDebug() << "Window Changed";
+            emit windowsChanged(); });
+    connect(m_eventListener.get(), &X11EventListener::activeWindowChanged, this,
+            [this]() {
+            qDebug() << "Acitive Window Changed";
+            emit windowsChanged(); });
+    connect(m_eventListener.get(), &X11EventListener::windowTitleChanged, this,
+            [this](xcb_window_t) {
+            qDebug() << "Window Title Changed";
+            emit windowsChanged(); });
+
+    if (!m_eventListener->start()) {
+      qWarning() << "X11WindowManager: Failed to start X11 event listener";
+      m_eventListener.reset();
+    } else {
+      qDebug() << "X11WindowManager: X11 event listener started";
+    }
   }
 }
 
