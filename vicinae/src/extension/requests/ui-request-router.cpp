@@ -113,11 +113,11 @@ proto::ext::ui::Response *UIRequestRouter::showHud(const proto::ext::ui::ShowHud
   auto ack = new proto::ext::common::AckResponse;
 
   res->set_allocated_show_hud(ack);
-  m_navigation->handle()->showHud(req.text().c_str());
   m_navigation->handle()->closeWindow({
       .popToRootType = parseProtoPopToRoot(req.pop_to_root()),
       .clearRootSearch = req.clear_root_search(),
   });
+  m_navigation->handle()->showHud(req.text().c_str());
 
   return res;
 }
@@ -154,6 +154,7 @@ UIRequestRouter::handleSetSearchText(const proto::ext::ui::SetSearchTextRequest 
 
 proto::ext::ui::Response *
 UIRequestRouter::handleCloseWindow(const proto::ext::ui::CloseMainWindowRequest &req) {
+  using namespace std::chrono_literals;
   auto res = new proto::ext::ui::Response;
   auto ack = new proto::ext::common::AckResponse;
 

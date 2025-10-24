@@ -136,12 +136,6 @@ public:
   bool isEncryptionReady() const;
 
 private:
-  WindowManager &m_wm;
-  AppService &m_appDb;
-
-  bool m_recordAllOffers = true;
-  bool m_monitoring = false;
-
   std::unique_ptr<ClipboardEncrypter> m_encrypter;
 
   QMimeDatabase _mimeDb;
@@ -169,4 +163,10 @@ private:
   decryptOffer(const QByteArray &data, ClipboardEncryptionType type) const;
 
   static ClipboardOfferKind getKind(const ClipboardDataOffer &offer);
+
+  WindowManager &m_wm;
+  AppService &m_appDb;
+
+  bool m_recordAllOffers = true;
+  bool m_monitoring = false;
 };
